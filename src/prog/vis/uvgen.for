@@ -96,9 +96,6 @@ c	or
 c	  yymmmdd:hh:mm:ss.s
 c	The default is 80JAN01.0. A function of this is also used
 c	as a seed for the random number generator.
-c	With the unix date command you can use 
-c                date +%y%b%d:%H:%M:%S | tr '[A-Z]' '[a-z]'
-c
 c@ freq
 c	Frequency and IF frequency in GHz.
 c	Defaults are 100,0.0 GHz. 
@@ -317,8 +314,7 @@ c    12jan99 rjs   Doc changes only.
 c     9may00 rjs   Write primary beam type out correctly.
 c    17may00 mchw  allow for saturated spectral absorption model.
 c    18may00 rjs   Merge rjs/mchw changes.
-c    29sep00 pjt   Put appending data back in  uvgen
-c     4sep01 pjt   time= example for random number generations
+c    27oct00 rjs/mchw changes to allow up to 2047 antennas.
 c
 c  Bugs/Shortcomings:
 c    * Frequency and time smearing is not simulated.
@@ -347,7 +343,7 @@ c	pbfwhm=76,137,-0.2 simulates a primary beam pattern between
 c	10m and 6m antennas at 100 GHz. 
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version = 'Uvgen: version 1.0 29-sep-00')
+	parameter(version = 'Uvgen: version 1.0 27-Oct-00')
 	integer ALTAZ,EQUATOR
 	parameter(ALTAZ=0,EQUATOR=1)
 	integer PolRR,PolLL,PolRL,PolLR,PolXX,PolYY,PolXY,PolYX
@@ -377,7 +373,7 @@ c
 	real systemp(MAXANT*maxspect),inttime
 	double precision restfreq(maxspect),lst
 	double precision antpos(3*MAXANT),ra,dec
-	integer item, unit, newiostat
+	integer item, unit
 	character line*132, umsg*80
 	complex gatm
 	real baseline,patm,pslope,pelev,xx,xxamp
@@ -412,6 +408,7 @@ c
 	real rang
         integer PolsP2C,len1,tinNext
 	logical keyprsnt
+	double precision antbas
 c
 c  Data initialisation.
 c
@@ -574,18 +571,12 @@ c
 	  endif
 	endif
 c
-c  Open the output dataset (append mode if it exists)
+c  Open the output dataset.
 c
-        call hopen(unit,outfile,'old',newiostat)
-        if(newiostat.eq.0) then
-	  call hclose(unit)
-	  call uvopen(unit,outfile,'append')
-	  call hisopen(unit,'append')
-        else
-	  call uvopen(unit,outfile,'new')
-	  call hisopen(unit,'write')
-        endif
+	call uvopen(unit,outfile,'new')
+	call hisopen(unit,'write')
 	call uvset(unit,'preamble','uvw/time/baseline',0,0.,0.,0.)
+c
         call hiswrite(unit,'UVGEN: Miriad '//version)
         call hisinput(unit,'UVGEN')
         umsg = 'UVGEN: '//line
@@ -676,9 +667,9 @@ c
 	    b2(nant) = abs(utns) * b2(nant)
 	    b3(nant) = abs(utns) * b3(nant)
  	  end if
-	  write(line,'(a,3f12.4)') 'Equatorial (ns):',
+	  write(line,'(a,3f15.4)') 'Equatorial (ns):',
      *				b1(nant),b2(nant),b3(nant)
-	  call output(line(1:53))
+	  call output(line)
 	enddo
 c
 	call tinClose
@@ -971,7 +962,7 @@ c  Compute visibility for each baseline.
 c
 	    do n = 2, nant
 	      do m = 1, n-1
-	        preamble(5) = 256*m + n
+	        preamble(5) = antbas(m,n)
 	        bxx = b1(n) - b1(m)
 	        byy = b2(n) - b2(m)
 	        bzz = b3(n) - b3(m)
@@ -1094,13 +1085,8 @@ c
 c
 c  All done. Summarize, tidy up and exit.
 c
-        if(newiostat.eq.0) then
-	  write(line,'(i7,a,a)')
-     *	  Item,' records appended to file: ',outfile
-        else
-	  write(line,'(i7,a,a)')
+	write(line,'(i7,a,a)')
      *	  Item,' records written to file: ',outfile
-	endif
 	call output(line)
 	umsg = 'UVGEN: '//line
 	call hiswrite(unit, umsg )
