@@ -40,6 +40,7 @@ c  mchw 30may96  Based on RP's subroutine atm_model.f from hatcreek.
 c  mchw 12jun96  Add mmh2o as alternate input.
 c  mchw 22jul96  Add trx and compute systemp.
 c  mchw 17jan97  compute airmass from elevation.
+c  pjt  25jun98  removed double decl (linux/g77)
 c   12may99 rp change scale height to 1.6 km
 c----------------------------------------------------------------------c
 	character version*(*)
@@ -83,7 +84,7 @@ c
         write(line,'(a,a)') 'altitude  freq  relhumid ',
      *	  ' airtemp  mmh2o  airmass  trx  tauzenith  skytemp  Tsys'
 	call output(line)
-        write(line,'(f8.3,f8.1,2f8.0,2f8.1,f7.0,f8.3,x,2f8.0)') 
+        write(line,'(f8.3,f8.1,2f8.0,2f8.1,f7.0,f8.2,1x,2f8.0)') 
      *    altitude,freq,relhumid,airtemp,mmh2o,airmass,trx,
      *		tauzenith,skytemp,systemp
 	call output(line)
@@ -110,7 +111,7 @@ c  output: zenith opacity
 c		   estimated sky temp at current airmass
 c   12may99 rp change scale height to 1.6 km
 c----------------------------------------------------------------------c
-	real dkm,skytemp,tauzenith,tau,elev
+	real dkm,tau,elev
 	real koxy,kwat,kwat2,tempK,psat,pwat,ghum
 	real t,p,rho,dtau
 c
