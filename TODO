@@ -32,3 +32,7 @@
 
 - design a fftw interface to miriad's fft routines - should give an impressive
   speedup on intel hardware
+
+
+- miriad name collisions:
+	solaris:/usr/ucb/implot
