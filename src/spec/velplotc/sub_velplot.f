@@ -4,13 +4,14 @@
 	data first/.true./
 	include "cut.h"
 	include "header.h"
-	if (.not.first) then
-	  if (acmaj.eq.cmaj.and.acmin.eq.cmin.and.acpa.eq.cpa) return
-	end if
-	first=.false.
+c	if (.not.first) then
+c	  if (acmaj.eq.cmaj.and.acmin.eq.cmin.and.acpa.eq.cpa) return
+c	end if
+c	first=.false.
 	cmaj=acmaj
 	cmin=acmin
 	cpa=acpa
+c	write(*,*) cmaj,cmin,cpa
 c
 c       Calculate the conversion factor for map units.
 c	We don't do the conversion her and let the Unit be Jy/beam
@@ -56,10 +57,10 @@ c-----------------------------------------------------------------------
 
 	pi = 3.141592654
 c
-
-c	write(*,*) midx,midy,xy,xc,yc
 	ix = nint(xc/xy) + midx
 	iy = nint(yc/xy) + midy
+c	write(*,*) midx,midy,xy,xc,yc,ix,iy
+c	write(*,*) nx,ny,blc(1),blc(2),trc(1),trc(2)
 	if(ix.lt.1 .or. ix.gt.nx .or. iy.lt.1 .or. iy.gt.ny) then
 	  call output('pos-vel requested center is outside array')
 	  return
