@@ -1,4 +1,4 @@
-c**********************************************************************c
+**********************************************************************c
         program ellint
         implicit none
 c
@@ -27,6 +27,7 @@ c	Input image name. xyz images only. No default.
 c@ out
 c       Optional output image containing the residuals from the average values
 c       in each annulus. By default this image is not created.
+c       See also options=spline to get better results for noise free images.
 c@ region
 c	Region of image to be integrated. E.g.
 c	  % ellint region=relpix,box(-4,-4,5,5)(1,2)
@@ -70,6 +71,8 @@ c         table     Output ring data in logfile. No fitting done. Logfile
 c                   now contains coordinates w.r.t. the reference pixel 
 c                   (in arcsec), the image value, and the radius in the disk
 c                   defined by PA and INCLINE.
+c         spline    use a spline fit unstead of a step function to estimate
+c                   the intensity at any radius for residual images
 c@ log
 c	The output log file. The default is the terminal.
 c--
@@ -107,12 +110,13 @@ c                       some code (memfree)
 c    mchw  09nov01	Added intensity scale factor of convenience.
 c    pjt   11aug02      added optional out= for residual map
 c          19sep02      fixed bug when no output given
+c    pjt   23oct02      add spline option 
 c----------------------------------------------------------------------c
         include 'mirconst.h'
 	include 'maxdim.h'
 	include 'mem.h'
         character*(*) label,version
-        parameter(version='version 1.0 19-sep-2002')
+        parameter(version='version 1.0 23-oct-2002')
         double precision rts,value
         parameter(label='Integrate a Miriad image in elliptical annuli')
         integer maxnax,maxboxes,maxruns,naxis,axis,plane,maxring
@@ -121,13 +125,15 @@ c----------------------------------------------------------------------c
 c
         integer boxes(maxboxes)
         integer i,j,ir,lin,lout,nsize(maxnax),blc(maxnax),trc(maxnax)
-        integer irmin,irmax,pbobj,ipm(maxring),axnum(maxnax)
+        integer irmin,irmax,pbobj,ipm(maxring),axnum(maxnax),nspl
         real crpix(maxnax),cdelt(maxnax),var,med, xmode
         real center(2),pa,incline,rmin,rmax,rstep,scale
         real buf(maxdim),cospa,sinpa,cosi,x,y,r,ave,rms,fsum,cbof
         real pixe(maxdim),flux(maxdim),flsq(maxdim),pbfac
+        double precision rd, rad(maxdim), fluxfit(maxdim)
+        double precision bspl(maxdim),cspl(maxdim),dspl(maxdim)
         logical mask(maxdim),dopb,keep,domedian,domode,natural,dotab
-        logical dout
+        logical dout,dospline
         character in*80,logf*80,line*132,cin*1,ctype*9,caxis*13,units*13
         character btype*25,pbtype*16,out*80
 c
@@ -136,6 +142,7 @@ c
         integer len1
         character*1 itoaf
         real pbget
+        double precision seval
 c
 c Get inputs.
 c
@@ -155,7 +162,7 @@ c
         call keyr('radius',rstep,0.)
         call keyr('scale',scale,1.)
         call keya('telescop',pbtype,' ')
-        call getopt(dopb,domedian,domode,natural,dotab)
+        call getopt(dopb,domedian,domode,natural,dotab,dospline)
         call keya('log',logf,' ')
         call keyfin
 c
@@ -324,6 +331,19 @@ c
 c     if output residual map requested
 c
           if (dout) then
+          if (dospline) then
+             write(*,*) 'New option=spline used: irmin,max=',irmin,irmax
+             do i=irmin,irmax
+                rad(i) = rmin + (i-irmin+0.5)*rstep
+                fluxfit(i) = flux(i)/pixe(i)
+             enddo
+             nspl = irmax-irmin+1
+             call spline(nspl,rad(irmin),fluxfit(irmin),bspl,cspl,dspl)
+             write(*,*) 'ring center min,max=',rad(irmin),rad(irmax)
+             write(*,*) 'intensity @ edges',
+     *            fluxfit(irmin),fluxfit(irmax)
+
+          endif
           do j = blc(2),trc(2)
             call xyread(lin,j,buf)
             call xyflgrd(lin,j,mask)
@@ -339,7 +359,13 @@ c
               r = sqrt((y*cospa-x*sinpa)**2+((y*sinpa+x*cospa)/cosi)**2)
               if(r.ge.rmin .and. r.lt.rmax .and. keep)then
                 ir = (r-rmin)/rstep + 1
-                buf(i) = buf(i) - flux(ir)/pixe(ir)
+                if (dospline) then
+                   rd = r
+                   buf(i) = buf(i) - seval(nspl,rd,
+     *                         rad(irmin),fluxfit(irmin),bspl,cspl,dspl)
+                else
+                   buf(i) = buf(i) - flux(ir)/pixe(ir)
+                endif
               endif
             enddo
             call xywrite(lout,j,buf)
@@ -497,10 +523,10 @@ c
       call logclose
       end
 c********1*********2*********3*********4*********5*********6*********7*c
-      subroutine getopt (dopb,median,mode,natural,dotab)
+      subroutine getopt (dopb,median,mode,natural,dotab,dospline)
       implicit none
 c
-      logical dopb, median, mode, natural, dotab
+      logical dopb, median, mode, natural, dotab,dospline
 c
 c  Decode options array into named variables.
 c
@@ -510,14 +536,15 @@ c     median     Use medians not means
 c     mode	 Use modes not means.
 c     natural	 Use natural units rather than arcsec.
 c     table      Output ring values in a table,no fitting done
+c     spline     Use a spline fit for interpolating
 c-----------------------------------------------------------------------
       integer maxopt
-      parameter (maxopt = 5)
+      parameter (maxopt = 6)
 c
       character opshuns(maxopt)*8
       logical present(maxopt)
       data opshuns /'pbcorr  ', 'median  ', 'mode    ','natural ',
-     *              'table   '/
+     *              'table   ', 'spline  '/
 c-----------------------------------------------------------------------
       call options ('options', opshuns, present, maxopt)
 c
@@ -526,6 +553,7 @@ c
       mode = present(3)
       natural = present(4)
       dotab = present(5)
+      dospline = present(6)
 c
       end
 c************************************************************************
