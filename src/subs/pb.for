@@ -703,7 +703,7 @@ c
 c  The Hat Ck primary beam is a gaussian of size is 191.67 arcmin.GHz
 c  according to "John L"
 c
-	call pbAdd('HATCREEK',24.0,116.0,   191.67, 0.05, GAUS,0,0.,
+	call pbAdd('HATCREEK',24.0,270.0,   191.67, 0.05, GAUS,0,0.,
      *				   'Truncated Gaussian')
 c
 c  The following values for the WSRT are derived from the NEWSTAR
