@@ -1,0 +1,227 @@
+#! /bin/csh -f
+#
+#* mosaical - A-priori calibration using selfcal
+#& mchw
+#: user tool
+#+
+#  MOSAICAL is a csh script to calibrate and image mosaiced uvdata.
+#  The user specifies the calibrator uv-data and line type to be used
+#  for the antenna gain calibration versus time, and the source uv-data
+#  and line type to be imaged. The antenna gains are derived from the
+#  calibration data with a 30 min time interval and applied to the
+#  source data. The script plots the calibrator amplitude and phase
+#  versus time, the antenna gains, and maps of the calibrator and
+#  source. The script uses some fixed parameters, and some options
+#  are omitted. To customize your data reduction, copy $MIRBIN/mosaical
+#  to your directory.
+#
+#  Inputs:
+#    P1 uv-data file for calibrator
+#    P2 uv-data file for source
+#    P3 PGPLOT device. e.g. /xw (if P3 = /ps , plots are printed)
+#    P4 MIRIAD line type for calibrator. e.g. wide,1
+#    P5 MIRIAD line type for source, e.g. channel,4,40,4,10
+#    P6 MIRIAD data select. e.g. 'amp(0,30),-ant(1)(3)'
+#
+#  Outputs:
+#    calibrator map and cleaned image.
+#    source map and mem image.
+#--
+#  History:
+#    mchw  27aug91  Unix version.
+#    mchw  08apr93  Updated for 6 antenna array.
+#    mchw  28apr93  added uvdata selection.
+#    mchw  28jul93  set some parameters. echo some comments.
+#    mchw  28oct94  change to cgdisp. Default natural weighting.
+#    mchw  21nov96  Use on-line amplitude calibration to Jy units.
+#    mchw  19feb97  Let invert choose cell size.
+#    mchw  10oct97  Let plots chose nxy
+#    mchw  03mar99  Mosaic version of autocal.
+#..................................................................
+# set some parameters:
+set refant=5
+set minants=3
+set interval=30
+
+echo "**************************************************************"
+echo "    Calibrate and image mosaiced data. (03-MAR-99 version)"
+echo "**************************************************************"
+
+if($#argv<6) then
+  echo " "
+  echo "Usage: mosaical calib source device cal_line source_line select"
+  echo " "
+  echo "  calib		uv-data file for calibrator."
+  echo "  source	uv-data file for source."
+  echo "  device	PGPLOT device. e.g. /xw"
+  echo "  cal_line	MIRIAD line type for calibrator. e.g. wide,1"
+  echo "  source_line	MIRIAD line type for source. e.g. channel,4,30,3,1"
+  echo "  select        MIRIAD data select. e.g. 'amp(0,30),-ant(1)(3)'"
+  exit 1
+endif
+
+goto start
+echo EDIT OUT HIGH AMPLITUDES
+uvflag vis=$2 line=$5 flagval=unflag
+uvflag vis=$2 line=$5 flagval=flag 'select=amp(25)'
+
+start:
+
+echo Check if uvdata files exist
+if (!(-e $1)) then
+  echo "  Can't find uv-data file for calibrator."
+  goto end
+endif
+if (!(-e $2)) then
+  echo "  Can't find uv-data file for source."
+  goto end
+endif
+
+echo ""
+echo PLOT THE OBSERVED CALIBRATOR AMPLITUDE AND PHASE
+echo Edit the data to remove amplitudes which are too high or too low.
+echo Phase jumps may corrupt adjacent data.
+echo ""
+
+uvplt vis=$1 device=$3 line=$4 axis=time,amp select=$6 options=nocal size=2 select=$6
+if ( $3 == /ps ) then
+  lpr pgplot.ps
+endif
+
+uvplt vis=$1 device=$3 line=$4 axis=time,phase yrange=-180,180 options=nocal,dots size=2 select=$6
+if ( $3 == /ps ) then
+  lpr pgplot.ps
+endif
+
+selfcal:
+echo ""
+echo RUN SELFCAL ON THE CALIBRATOR
+echo ""
+echo Use on-line amplitude calibration to Jy units:
+selfcal vis=$1 refant=$refant line=$4 interval=$interval select=$6 minants=$minants
+
+#echo Calibrate the amplitude scale using cals.fluxes table.
+#selfcal vis=$1 options=apriori,amplitude,noscale refant=$refant line=$4 \
+#	interval=$interval select=$6 minants=$minants
+
+gains:
+echo ""
+echo PLOT THE ANTENNA GAINS
+echo Edit the calibrator data to remove gains which are too high or too low.
+echo ""
+
+gpplt vis=$1 device=$3 yaxis=amp 
+if ( $3 == /ps ) then
+  lpr pgplot.ps
+endif
+
+gpplt vis=$1 device=$3 yaxis=phase yrange=-360,360 options=dots
+if ( $3 == /ps ) then
+  lpr pgplot.ps
+endif
+
+uvplt:
+echo ""
+echo PLOT THE CORRECTED AMPLITUDE AND PHASE FOR THE SELFCAL CHANNEL
+echo The calibrated amplitude should be the calibrator flux density.
+echo The phase should be zero. Estimate the rms phase scatter.
+echo Edit both calibrator and source data to remove bad time intervals.
+echo ""
+
+uvplt vis=$1 device=$3 line=$4 axis=time,amp select=$6
+if ( $3 == /ps ) then
+  lpr pgplot.ps
+endif
+
+uvplt vis=$1 device=$3 line=$4 axis=time,phase yrange=-180,180 options=dots select=$6
+if ( $3 == /ps ) then
+  lpr pgplot.ps
+endif
+if ($status != 0) goto err
+
+map:
+echo ""
+echo "MAP THE CALIBRATOR"
+echo The peak is the calibrator flux density, multiplied by
+echo " exp(-phase_rms**2/2)"
+echo ""
+if (-e $1.mp)  rm -r $1.mp
+if (-e $1.bm) rm -r $1.bm
+invert vis=$1 map=$1.mp beam=$1.bm line=$4 select=$6 sup=0
+cgdisp in=$1.mp device=$3 labtyp=arcsec options=fiddle 
+if ( $3 == /ps ) then
+  lpr pgplot.ps
+endif
+
+clean:
+echo ""
+echo "CLEAN THE CALIBRATOR"
+echo ""
+if (-e $1.clean) rm -r $1.clean
+if (-e $1.cm) rm -r $1.cm
+clean map=$1.mp beam=$1.bm niters=200 out=$1.clean
+restor:
+restor map=$1.mp beam=$1.bm model=$1.clean out=$1.cm
+cgdisp in=$1.cm device=$3  labtyp=arcsec options=fiddle
+if ( $3 == /ps ) then
+  lpr pgplot.ps
+endif
+if ($status != 0) goto err
+
+xfer:
+echo ""
+echo TRANSFER THE GAINS TO THE SOURCE
+echo ""
+copyhd in=$1 out=$2 items=gains,ngains,nsols,interval
+itemize in=$2
+if ($status != 0) goto err
+
+souplt:
+echo ""
+echo PLOT THE CORRECTED AMPLITUDE AND PHASE FOR SOURCE
+echo Edit the source data to remove bad time intervals.
+echo ""
+uvplt vis=$2 device=$3 line=$5 axis=time,amp select=$6
+if ( $3 == /ps ) then
+  lpr pgplot.ps
+endif
+
+uvplt vis=$2 device=$3 line=$5 axis=time,phase yrange=-180,180 options=dots select=$6
+if ( $3 == /ps ) then
+  lpr pgplot.ps
+endif
+if ($status != 0) goto err
+
+smap:
+echo ""
+echo MAP THE SOURCE
+echo ""
+if (-e $2.mp)  rm -r $2.mp
+if (-e $2.bm) rm -r $2.bm
+invert vis=$2 map=$2.mp beam=$2.bm line=$5 select=$6 sup=0 options=mosaic,double
+cgdisp in=$2.mp device=$3 labtyp=arcsec options=fiddle
+if ( $3 == /ps ) then
+  lpr pgplot.ps
+endif
+
+mem:
+echo ""
+echo DECONVOLVE THE SOURCE
+echo ""
+if (-e $2.mem)  rm -r $2.mem
+if (-e $2.cm) rm -r $2.cm
+mosmem map=$2.mp beam=$2.bm out=$2.mem
+restor map=$2.mp beam=$2.bm model=$2.mem out=$2.cm
+if ($status != 0) goto err
+cgdisp in=$2.cm device=$3 labtyp=arcsec options=fiddle
+if ( $3 == /ps ) then
+  lpr pgplot.ps
+endif
+imlist in=$2.cm options=stat
+echo "copy $MIRBIN/mosaical to your directory and edit it there to continue"
+echo "Move the start: pointer to avoid repetition of completed steps."
+goto end
+
+err:
+echo "Some error occured; premature termination"
+end:
