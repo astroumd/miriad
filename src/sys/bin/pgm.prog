@@ -32,7 +32,7 @@ set spec  = (`ls $srcdir/spec`)
 set theDirs = (tools        prog/analysis prog/calib \
 	       prog/convert prog/deconv   prog/disp  \
 	       prog/map     prog/misc     prog/vis \
-	       prog/atnf    prog/wsrt)
+	       prog/atnf    prog/wsrt     subs)
 #
 if (! -e $bindir/doc   ) $prog_c $srcdir/tools/doc
 if (! -e $bindir/ratty ) $prog_c $srcdir/tools/ratty
@@ -92,8 +92,12 @@ foreach i ($argv)
       if (-e ${in}.for && ($in == hatmap || $in == hatfft)) then
 	 echo "$srcdir/$j/${in}.for is VMS-only:  ignored."
       else if (-e $srcdir/$j/${in}.c  ) then
-	 $prog_c   $srcdir/$j/${in}.c
-	 (cd $docdir; doc -p $srcdir/$j/${in}.c)
+         if ($in == uvio) then
+	 
+	 else
+	    $prog_c   $srcdir/$j/${in}.c
+	    (cd $docdir; doc -p $srcdir/$j/${in}.c)
+	 endif
       else if (-e $srcdir/$j/${in}.for) then
 	 $prog_for $srcdir/$j/${in}.for
 	 (cd $docdir; doc -p $srcdir/$j/${in}.for)
