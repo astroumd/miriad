@@ -1,0 +1,286 @@
+\documentclass{article}
+\usepackage{html}
+\usepackage{graphicx}
+
+% Softwares
+\newcommand{\MIRIAD}{\htmladdnormallink{\texttt{MIRIAD}}{http://bima.astro.umd.edu/miriad/}}
+\newcommand{\GILDAS}{\htmladdnormallink{\texttt{GILDAS}}{http://www.iram.fr/IRAMFR/GS/gildas.htm}}
+\newcommand{\python}{\htmladdnormallink{\texttt{python}}{http://www.python.org/}}
+\newcommand{\fpig}{\htmladdnormallink{\texttt{f2py}}{http://cens.ioc.ee/projects/f2py2e/}}
+\newcommand{\numpy}{\htmladdnormallink{\texttt{numpy}}{http://www.pfdubois.com/numpy/}}
+
+% Instruments
+\newcommand{\PdBI}{\htmladdnormallink{PdBI}{http://www.iram.fr/IRAMFR/index.htm}}
+\newcommand{\IRAMthm}{\htmladdnormallink{IRAM-30m}{http://www.iram.fr/IRAMES/index.htm}}
+\newcommand{\CSO}{\htmladdnormallink{CSO}{http://www.submm.caltech.edu/cso/}}
+
+\title{First steps to interoperate \GILDAS{} and \MIRIAD{}\\[3\bigskipamount]}
+
+\author{%
+  J.~Pety~(1,2), F.~Gueth~(2), S.~Guilloteau~(2,3), R.~Lucas~(2), \\
+  P.~Teuben~(4) and M.~Wright~(5) \\[0.5cm]
+  1. \htmladdnormallink{LERMA}{http://aramis.obspm.fr/lerma.shtml}, \htmladdnormallink{Observatoire de Paris}{http://www.obspm.fr/obsparis.fr.shtml}\\
+  2. \htmladdnormallink{IRAM}{http://www.iram.fr/index.htm} (Grenoble)\\
+  3. Observatoire de Bordeaux\\
+  4. Astronomy Department, U. Maryland\\
+  5. Radio Astronomy Laboratory, U.C. Berkeley\\[3\bigskipamount]}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{document}
+
+\maketitle{} %
+
+\GILDAS{} and \MIRIAD{} are two state-of-the-art data reduction packages
+for the current generation of millimeter instruments. \GILDAS{} is used
+daily at the Plateau de Bure Interferometer (\PdBI{}) as well as several
+single dish telescopes (e.g. \IRAMthm{}, \CSO{}) while \MIRIAD{} is used at
+BIMA, ATCA, OVRO and WSRT.  Although the core functionalities needed to
+reduce millimeter interferometry data are well covered in both packages, it
+has recently been recognized that the strength of both packages are
+complementary.  \GILDAS{} has good data analysis programs while \MIRIAD{}
+has a complete set of calibration and imaging algorithms in particular to
+handle polarization. It is thus interesting to study the possibility of
+interoperating both packages in a user-friendly way. Both packages have
+pretty different implementation philosophy: \GILDAS{} is principally made
+of large stand-alone programs while \MIRIAD{} is built around a large
+collection of individual tasks. Moreover, they use different command line
+interfaces and, in detail, data models. In a first step toward
+interoperability, we decided to run both packages under python and to
+exchange data using FITS.  This poster describes the porting of both
+packages under python. It also shows an example where data from Plateau de
+Bure interferometer has been calibrated inside \GILDAS{} and imaged inside
+\MIRIAD{}, both packages being called from the same python process.
+
+\section{Installation}
+\label{sec:installation}
+
+Total duration: about ??~h. As all the other time given, this is just an
+indication. It just takes into account the compilation on a Athlon PC with
+756~MB of RAM.
+
+\subsection{Needed parts}
+
+\begin{itemize}
+\item \python{} + \fpig{} + \numpy{} (Numeric Python is needed by \fpig{})
+\item \GILDAS{} (GNU make, Intel f90, LessTif)
+\item \MIRIAD{}  
+\end{itemize}
+
+For your convenience, the version of the softs used for this test may be
+download here: %
+\htmladdnormallink{\texttt{python}}{src/Python-2.2.2.tar.gz}, %
+\htmladdnormallink{\texttt{f2py}}{src/F2PY-2.32.225-1419.tar.gz}, %
+\htmladdnormallink{\texttt{numpy}}{src/Numeric-22.0.tar.gz}, %
+\htmladdnormallink{\texttt{GILDAS}}{src/gildas-oct03a.tar.gz}, %
+\htmladdnormallink{\texttt{MIRIAD}}{src/miriad-4.0.3.tar.gz}.
+The cumulative size of those software is 28~MB.
+
+\subsection{Preparation}
+
+\begin{verbatim}
+  pctcp104> mkdir $HOME/gildas-miriad
+  pctcp104> cd $HOME/gildas-miriad
+\end{verbatim}
+
+\subsection{Installation of \python{} (about ?? min.)}
+
+For your convenience, the version of \python{} used for this test may be
+download \htmladdnormallink{here}{src/Python-2.2.2.tar.gz} (6.4~MB).
+
+\begin{verbatim}
+  pctcp104> cd $HOME/gildas-miriad
+  pctcp104> tar -xzvf Python-2.2.2.tar.gz
+  pctcp104> cd Python-2.2.2
+  ~(pctcp104> more README)
+  pctcp104> mkdir local  
+  pctcp104> ./configure prefix=$HOME/gildas-miriad/local
+  pctcp104> make
+  pctcp104> make altinstall
+  pctcp104> export PATH=$PATH:$HOME/gildas-miriad/local/bin
+  pctcp104> python2.2
+  >>> help~()
+  >>> CTRL-D 
+  pctcp104> cd ..
+\end{verbatim}
+
+\subsection{Installation of \numpy{} (about ?? min.)}
+
+For your convenience, the version of \numpy{} used for this test may be
+download \htmladdnormallink{here}{src/Numeric-22.0.tar.gz} (712~kB).
+
+\begin{verbatim}
+  pctcp104> cd $HOME/gildas-miriad
+  pctcp104> tar -xzvf Numeric-22.0.tar.gz
+  pctcp104> cd Numeric-22.0
+  pctcp104> more README
+  pctcp104> python2.2 setup.py install
+  pctcp104> python2.2
+  >>> import Numeric
+  >>> help~(Numeric)
+  >>> CTRL-D
+\end{verbatim} %$
+
+\subsection{Installation of \fpig{} (about ?? min.)}
+
+For your convenience, the version of \fpig{} used for this test may be
+download \htmladdnormallink{here}{src/F2PY-2.32.225-1419.tar.gz} (152~kB).
+
+\begin{verbatim}
+  pctcp104> cd $HOME/gildas-miriad
+  pctcp104> tar -xzvf F2PY-2-latest.tar.gz
+  pctcp104> cd F2PY-2.32.225-1419
+  pctcp104> more docs/README
+  pctcp104> python2.2 setup.py install
+  pctcp104> f2py2.2  -m hello -c hello.f
+  pctcp104> python2.2
+  >>> import hello
+  >>> help~(hello)
+  >>> print hello.__doc__
+  This module 'hello' is auto-generated with f2py ~(version:2.32.225-1419).
+  Functions:
+    foo~(a).
+  >>> hello.foo~(44)
+   Hello from Fortran!
+   a=          44
+  >>> CTRL-D
+\end{verbatim} %$
+
+\subsection{Installation of \GILDAS{} (about ?? min.)}
+
+For your convenience, the version of \GILDAS{} used for this test may be
+download \htmladdnormallink{here}{src/gildas-oct03a.tar.gz} (14~MB).
+
+\begin{verbatim}
+  pctcp104> cd $HOME/gildas-miriad
+  pctcp104> bash
+  pctcp104> tar -xzvf gildas-oct03a.tar.gz
+  pctcp104> cd gildas-oct03a
+  pctcp104> source admin/gildas-env.sh
+  pctcp104> make python
+  pctcp104> make install-python
+  pctcp104> source $HOME/gildas-miriad/gildas-exe/pc-redhat7.2-ifc/bash_profile
+\end{verbatim}
+
+Alternatively you may want to directly access the CVS repository:
+\begin{verbatim}
+  pctcp104> cd $HOME/gildas-miriad
+  pctcp104> bash
+  pctcp104> export CVSROOT=:pserver:anonymous@netsrv1.iram.fr:/CVS/GILDAS
+  pctcp104> cvs co -r oct03a -d gildas-oct03a gildas
+  pctcp104> cd gildas-oct03a
+  pctcp104> source admin/gildas-env.sh
+  pctcp104> make python
+  pctcp104> make install-python
+  pctcp104> source $HOME/gildas-miriad/gildas-exe/pc-redhat7.2-ifc/bash_profile
+\end{verbatim}
+
+\subsection{Installation of \MIRIAD{} (about ?? min.)}
+
+For your convenience, the version of \MIRIAD{} used for this test may be
+download \htmladdnormallink{here}{src/miriad-4.0.3.tar.gz} (7.1~MB).
+
+\begin{verbatim}
+  pctcp104> cd $HOME/gildas-miriad
+  pctcp104> tar -xzvf miriad-4.0.3.tar.gz
+  pctcp104> cd miriad/install
+  pctcp104> ./install.linux
+  pctcp104> source ../MIRSRC.linux.good
+  pctcp104> export PYTHONPATH=$PYTHONPATH:$MIR/src/scripts/python
+\end{verbatim} %$
+
+Alternatively you may want to directly access the CVS repository:
+\begin{verbatim}
+  pctcp104> cd $HOME/gildas-miriad
+  pctcp104> export CVSROOT=:pserver:anonymous@cvs.astro.umd.edu:/home/cvsroot
+  pctcp104> cvs co miriad
+  pctcp104> cd miriad/install
+  pctcp104> ./install.linux
+  pctcp104> source ../MIRSRC.linux
+  pctcp104> export PYTHONPATH=$PYTHONPATH:$MIR/src/scripts/python
+\end{verbatim} %$
+
+\section{Demonstration}
+\label{sec:demo}
+
+Raw data from \PdBI{} easily amount to hundred of MB. It has thus been
+decided to leave the choice between two demonstration:
+\begin{itemize}
+\item In the first one, we start from the calibrated visibilities in uvfits
+  format. The imaging and deconvolution steps are made inside \MIRIAD{} and
+  the visualization inside \GILDAS{}.  
+\item In the second one, we start from the raw visibilities in native
+  \PdBI{} format. Visibilities are calibrated inside \GILDAS{}, the imaging
+  and deconvolution steps are made inside \MIRIAD{} and the visualization
+  inside \GILDAS{}. All communication between \GILDAS{} and \MIRIAD{} is
+  done through FITS.
+\end{itemize}
+In both cases, both packages are called from the same python process.
+
+\subsection{Shell environment}
+
+To be ready to run the demonstration, we installed (\ref{sec:installation})
+no less than five different softwares. If you leaved the xterm you were
+working in, you have lost all the needed shell environment. So we gathered
+here what is mandatory to allow the demonstrations to run smoothly. 
+\begin{verbatim}
+  pctcp104> export PATH=$PATH:$HOME/gildas-miriad/local/bin                    
+  pctcp104> source $HOME/gildas-miriad/gildas-exe/pc-redhat7.2-ifc/bash_profile
+  pctcp104> source $HOME/gildas-miriad/miriad/MIRSRC.linux                     
+  pctcp104> export PYTHONPATH=$PYTHONPATH:$MIR/src/scripts/python                   
+\end{verbatim}
+Those probably need a bit of adaptation to your own installation. For
+instance, \texttt{pc-redhat-7.2-ifc} may not be the system you are working
+on. To know what is correct for you, just look in the
+\texttt{\$HOME/gildas-miriad/gildas-exe} directory.
+
+\subsection{Partial demonstration}
+
+The data and script needed to run the partial demonstration are available
+as a gzip tarball \htmladdnormallink{here}{demo/partdemo.tar.gz} (7.4~MB).
+
+\begin{verbatim}
+  pctcp104> cd $HOME/gildas-miriad
+  pctcp104> tar -xzvf partdemo.tar.gz
+  pctcp104> cd partdemo
+  pctcp104> ./partdemo.py
+\end{verbatim} %$
+If you want to come back to the orginal state, just type \texttt{make
+  clean} at the prompt.
+
+\subsection{Full demonstration}
+
+Right now only the calibration inside \GILDAS{} is implemented.
+
+The data and script needed to run the partial demonstration are available
+as a gzip tarball \htmladdnormallink{here}{demo/fulldemo.tar.gz}
+(140~MB).
+
+\begin{verbatim}
+  pctcp104> cd $HOME/gildas-miriad
+  pctcp104> tar -xzvf fulldemo.tar.gz
+  pctcp104> cd fulldemo
+  pctcp104> ./fulldemo.py
+\end{verbatim} %$
+If you want to come back to the orginal state, just type \texttt{make
+  clean} at the prompt.
+
+\end{document}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%\begin{htmlonly}
+%\begin{rawhtml}
+%<BODY BACKGROUND="bure3.jpeg">
+%\end{rawhtml}
+%\end{htmlonly}
+
+\begin{htmlonly}
+\htmladdftplink{The FITS file.}{Images/turbulence.fits}
+\end{htmlonly}
+
+\begin{figure}
+\includegraphics[width=10.0cm,angle=270.0]{Images/turbulence.eps}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
