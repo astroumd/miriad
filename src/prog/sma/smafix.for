@@ -6,9 +6,13 @@ c= smafix -- Plot and fit Tsys and do Tsys corrections.
 c& jhz
 c: plotting, analysis and uvdata correction
 c+
-c	SmaFix is a MIRIAD task which plots and fits Tsys and do corrections 
-c       for SMA uv data. The applied Tsys is stored as a new variable
-c       systmp in the output uv data file.
+c	SmaFix plots and does least square fits with an order
+c       of polynomial to the antenna-based Tsys measurements.
+c       Tsys corrections for SMA uv data can be made with 
+c       either the original Tsys measurements or the fitted 
+c       polynomial values. The values of the variable systemp 
+c       will be replaced by the values that are used in the Tsys
+c       corrections. 
 c@ vis
 c	The name of the input data-set. No default.
 c@ out
@@ -64,10 +68,20 @@ c	             each is plotted on a separate plot. The overlay
 c	             option makes a single plot.
 c	  "unwrap"   Unwrap the phases on the yaxis variable. Cannot unwrap
 c	             an xaxis variable. By default phases are not unwrapped.
-c         "tsyscorr" If the y-axis is "systemp", Tsys correction will be
-c                    applied.
-c         "dosour"   If dofit is positive, then the polynomial fit is source
+c         "tsyscorr" If the y-axis is "systmp", Tsys correction will be
+c                    applied. 
+c                    By default, no Tsys corrections are made.
+c         "dosour"   If dofit is true, then the polynomial fit is source
 c                    dependent.
+c                    By default, no source separation is made.
+c         "tsysswap" Swaps the values of systemp with a polynomial fit
+c                    in the Tsys corrections, saves the values from 
+c                    the polynomial fit to replace the original
+c                    systemp and creates a new variable systmp to
+c                    save the original Tsys measurements.
+c                    By default, the original Tsys measurements will
+c                    be used in the Tsys corrections and the variables
+c                    from the input uvdata file remains unchanged. 
 c--
 c  History:
 c  jhz: 2004-7-26  made the original by modifying miriad tasks varplot 
@@ -81,6 +95,11 @@ c                  1000 to 15000
 c  jhz: 2004-12-16 initialized input parameters of the fitting routines
 c  jhz: 2005-1-12 attached subroutine regpol.for to end of this program
 c                 so that compiling no longer use libdatsrc.a
+c  jhz: 2005-2-8  changed systemp with systmp which has been
+c                 named for the original SMA systemp temperature
+c                 variable in smalod.
+c                 added systmp in the data matrix.
+c  jhz: 2005-2-10 added options tsysswap. 
 c    ?? Perfect?:
 c------------------------------------------------------------------------
         character version*(*)
@@ -99,11 +118,12 @@ c------------------------------------------------------------------------
         real rmsflag
         integer dofit, antid, xaxisparm, nterms
         integer i,j,k,l,bant(10),gant(10),rant(10)
-        logical dotsys, tsysplt, dosour
+        logical dotsys, tsysplt, dosour, dotswap
 c       apl(ant,sour,aplfit),xapl(ant,sour,MAXNR),bppl(ant,sour,MAXNR,MAXNR)    
         real apl(10,32,10)
         double precision xapl(10,32,10),bppl(10,32,10,10)
-        common/smfix/rmsflag,dofit,dotsys,tsysplt,xaxisparm,dosour 
+        common/smfix/rmsflag,dofit,dotsys,dotswap,
+     *               tsysplt,xaxisparm,dosour 
         common/cpolfit/apl,xapl,bppl,antid,nterms 
 c
 c  Externals.
@@ -171,10 +191,7 @@ c
         call keyi('rant',rant(8), -1)
         call keyi('rant',rant(9), -1)
         call keyi('rant',rant(10), -1)
-c           do i=1, 8
-c        write(*,*) 'i bant gant rant', i,bant(i),gant(i),rant(i)
-c           end do
-          call keya('xaxis',xaxis,'time')
+        call keya('xaxis',xaxis,'time')
           if(xaxis.eq.' ')
      *    call bug('f','Bad Xaxis value')
              if(xaxis.eq.'time') xaxisparm=1
@@ -183,24 +200,25 @@ c           end do
         if(yaxis.eq.' ')
      *    call bug('f','Yaxis variable name must be given')
         if(yaxis.eq.'systemp') tsysplt= .true.
-        call getopt(compress,dtime,overlay,dounwrap,dotsys,dosour,equal)
+        call getopt(compress,dtime,overlay,dounwrap,dotsys,
+     *              dosour,equal,dotswap)
         if(xaxis.eq.'time')then
-          call keyt('xrange',xtime1,'time',0.d0)
-          call keyt('xrange',xtime2,'time',0.d0)
+        call keyt('xrange',xtime1,'time',0.d0)
+        call keyt('xrange',xtime2,'time',0.d0)
         else
-          call keyr('xrange',xrange(1),0.)
-          call keyr('xrange',xrange(2),xrange(1)-1.)
+        call keyr('xrange',xrange(1),0.)
+        call keyr('xrange',xrange(2),xrange(1)-1.)
         endif
         if(yaxis.eq.'time')then
-          call keyt('yrange',ytime1,'time',0.d0)
-          call keyt('yrange',ytime2,'time',0.d0)
+        call keyt('yrange',ytime1,'time',0.d0)
+        call keyt('yrange',ytime2,'time',0.d0)
         else
-          call keyr('yrange',yrange(1),0.)
-          call keyr('yrange',yrange(2),yrange(1)-1.)
+        call keyr('yrange',yrange(1),0.)
+        call keyr('yrange',yrange(2),yrange(1)-1.)
         endif
-           call keyr('rmsflag',rmsflag,2.)
+        call keyr('rmsflag',rmsflag,2.)
            if(rmsflag<0.) rmsflag=2.
-           call keyi('dofit',dofit,2)
+        call keyi('dofit',dofit,2)
            if(dofit<0) dofit=2 
         call keyfin
 c
@@ -346,9 +364,10 @@ c
         end
 c************************************************************************
         subroutine getopt(compress,dtime,overlay,dounwrap,
-     *                    dotsys,dosour,equal)
+     *                    dotsys,dosour,equal,dotswap)
 c
-        logical compress,dtime,overlay,dounwrap,dotsys,dosour,equal
+        logical compress,dtime,overlay,dounwrap,dotsys,
+     *     dosour,equal,dotswap
 c
 c  Get extra processing options.
 c
@@ -356,16 +375,18 @@ c  Output:
 c    compress	True if we are to compress the variables.
 c    dtime	Show time as fractions of a day (xaxis only).
 c    overlay	Do all the plots on one plot.
-c    dounwrap   Unwrap phases
-c    dotsys     tsys correction
+c    dounwrap   Unwrap phasesi.
+c    dotsys     Do Tsys correction.
+c    dosour     do source-based fit to Tsys. 
 c    equal	Make axes equal scales.
+c    dotswap    swap systemp with the polynomial fit.
 c------------------------------------------------------------------------
         integer nopts
-        parameter(nopts=7)
+        parameter(nopts=8)
         character opts(nopts)*8
         logical present(nopts)
         data opts/'compress','dtime   ','overlay ','unwrap  ',
-     *            'tsyscorr','dosour  ','equal   '/
+     *            'tsyscorr','dosour  ','equal   ','tsysswap '/
 c
         call options('options',opts,present,nopts)
         compress = present(1)
@@ -375,6 +396,7 @@ c
         dotsys   = present(5)
         dosour   = present(6)
         equal    = present(7)
+        dotswap  = present(8)
         end
 c************************************************************************
         subroutine compact(vals,n1,n2,n3)
@@ -569,8 +591,9 @@ c------------------------------------------------------------------------
         common/sour/soupnt,source,nsource
         real rmsflag
         integer dofit, xaxisparm
-        logical dotsys, tsysplt,dosour
-        common/smfix/rmsflag,dofit,dotsys,tsysplt,xaxisparm,dosour
+        logical dotsys, tsysplt,dosour,dotswap
+        common/smfix/rmsflag,dofit,dotsys,dotswap,
+     *               tsysplt,xaxisparm,dosour
 c
 c  Determine if we have to extract the data. Also determine offsets
 c  of were we have to extract it to.
@@ -685,10 +708,11 @@ C-----------------------------------------------------------------------
         character xaxis*16, yaxis*16
         real rmsflag
         integer dofit, antid, xaxisparm
-        logical dotsys, tsysplt, dosour
+        logical dotsys, tsysplt, dosour, dotswap
         real apl(10,32,10)
         double precision xapl(10,32,10),bppl(10,32,10,10)
-        common/smfix/rmsflag,dofit,dotsys,tsysplt,xaxisparm, dosour
+        common/smfix/rmsflag,dofit,dotsys,dotswap,
+     *               tsysplt,xaxisparm, dosour
         common/cpolfit/apl,xapl,bppl,antid,nterms
 C
       IF (N.LT.1) RETURN
@@ -774,12 +798,6 @@ c
            call pgsci(k)
            call regrmsflags(nterms,xa,bp,Ns(k),xsfit(1,k),YsFIT(1,k),
      *          FsFIT(1,k))
-c           do i=1, Ns(k)
-c           write(*,*) 'x=',xsfit(i,k),dxsfit(i,k),
-c     *                'y=',ysfit(i,k),dysfit(i,k),FsFIT(i,k)
-c           end do
-c           call rmsflags(nterms,a,Ns(k),XsFIT(1,k),YsFIT(1,k),
-c     *          FsFIT(1,k))
                  end if
             end do
            end if
@@ -864,9 +882,6 @@ c           call polfit(XFIT,YFIT,yerr,NPL,nterms,mode,a,chisq)
 c            call regpolfitg(nterms,xa,bp,N,XFIT,YFIT)
 
                sourid=1
-c               do i=1, nterms
-c               apl(antid,sourid,i) =a(i)
-c               end do
                 do i=1,MAXNR
                 xapl(antid,sourid,i) = xa(i)
                 do j=1,MAXNR
@@ -913,10 +928,6 @@ c           call polfit(XsFIT(1,k),YsFIT(1,k),yserr(1,k),
 c     *                 Ns(k),nterms,mode,a,chisq)
            CALL REGPOL(dxsfit(1,k),dysfit(1,k),dyserr(1,k),Ns(k),
      *          MAXNR,XA,BP,AP,CHI2)
-c               do i=1, nterms
-c               apl(antid,k,i) =a(i)
-c               end do
-            
              do i=1,MAXNR
                 xapl(antid,k,i) = xa(i)
                 do j=1,MAXNR
@@ -1010,8 +1021,9 @@ c sort the data in x sequence
            real a(nterms), XPTS(N), YPTS(N), pl(N), YD(N)
            real rmsflag
            integer dofit, xaxisparm
-           logical dotsys, tsysplt,dosour
-            common/smfix/rmsflag,dofit,dotsys,tsysplt,xaxisparm,dosour
+           logical dotsys,tsysplt,dosour,dotswap
+           common/smfix/rmsflag,dofit,dotsys,dotswap,
+     *                  tsysplt,xaxisparm,dosour
             do i=1, N
                    plf = 0.
              if (nterms) 500, 500, 501
@@ -1024,8 +1036,6 @@ c sort the data in x sequence
              end do
 c call avevar
            call avevar(YD, N, ave, var)
-c          write (*,*) 'N ave rms', N, ave, sqrt(var)
-c           write(*,*) 'rmsflag', rmsflag
                do i=1, N
                  FPTS(i) = 1
                if(abs(YD(i)-ave).ge.(rmsflag*sqrt(var))) then 
@@ -1046,7 +1056,8 @@ c                       YPTS(i) =pl(i)
            PARAMETER (ZERO=0.0)
            integer dofit, xaxisparm
            logical dotsys, tsysplt,dosour
-           common/smfix/rmsflag,dofit,dotsys,tsysplt,xaxisparm,dosour
+           common/smfix/rmsflag,dofit,dotsys,dotswap,
+     *                  tsysplt,xaxisparm,dosour
         do 40 i=1,N
         do 30 j=1,nterms
           XPL(i,j)=XPTS(i)
@@ -1286,7 +1297,6 @@ c
           nsource=1
         dowhile(iostat.eq.0.and.npnts.lt.maxpnt)
           call uvgetvra(tin,'source',souread)
-c         call uvgetvri(tin,'sourid',sourid,1)
        if (souread.ne.' '.and.sourid.eq.1) then
           sourid=sourid+1
           nsource=nsource+1
@@ -1306,13 +1316,11 @@ c         call uvgetvri(tin,'sourid',sourid,1)
           end if
 555        continue
 
-c          source(sourid)=souread
-
           call uvprobvr(tin,xaxis,xt,xdims,xupd)
           call uvprobvr(tin,yaxis,yt,ydims,yupd)
              if(xupd) then
             xsoupnt=xsoupnt+1
-         soupnt(xsoupnt) = sourid 
+            soupnt(xsoupnt) = sourid 
                  end if
           if((xupd.or.yupd).and.(xdims.eq.xdim.and.ydims.eq.ydim))then
             if(max(xpnt+xdim,ypnt+ydim).gt.maxruns)then
@@ -1343,9 +1351,6 @@ c
            
             xpnt = xpnt + xdim
             ypnt = ypnt + ydim
-c            soupnt(xpnt) = sourid
-c            write(*,*) 'xpnt soupnt', xpnt, soupnt(xpnt)
-c
           endif
           iostat = uvscan(tin,' ')
         enddo
@@ -1522,7 +1527,7 @@ c  in the table.
 c
         integer nvars
         double precision rad2deg,rad2arc,rad2hr
-        parameter(nvars=62)
+        parameter(nvars=63)
         parameter(rad2deg=180.d0/pi,rad2arc=3600.d0*rad2deg)
         parameter(rad2hr=12.d0/pi)
 c
@@ -1578,7 +1583,7 @@ c
      *    'phasem1 ','degrees ',        1, rad2deg,
      *    'plangle ','degrees ',        1, 1.d0,
      *    'plmaj   ','arcsec  ',        1, 1.d0/
-        data (names(i),units(i),dim2s(i),scales(i),i=35,50)/
+        data (names(i),units(i),dim2s(i),scales(i),i=35,51)/
      *    'plmin   ','arcsec  ',        1, 1.d0,
      *    'pltb    ','Kelvin  ',        1, 1.d0,
      *    'precipmm','mm      ',        1, 1.d0,
@@ -1589,13 +1594,14 @@ c
      *    'sdf     ','GHz     ',        1, 1.d0,
      *    'sfreq   ','GHz     ',        1, 1.d0,
      *    'systemp ','Kelvin  ',   nspect, 1.d0,
+     *    'systmp  ','Kelvin  ',   nspect, 1.d0,
      *    'temp    ','celsius ',    ntemp, 1.d0,
      *    'time    ','hours   ',        1, 0.d0,
      *    'tpower  ','volts   ',  ntpower, 1.d0,
      *    'ut      ','hours   ',        1, rad2hr,
      *    'veldop  ','km/sec  ',        1, 1.d0,
      *    'vsource ','km/sec  ',        1, 1.d0/
-        data (names(i),units(i),dim2s(i),scales(i),i=51,nvars)/
+        data (names(i),units(i),dim2s(i),scales(i),i=52,nvars)/
      *    'wfreq   ','GHz     ',        1, 1.d0,
      *    'wind    ','km/h    ',        1, 1.d0,
      *    'winddir ','degrees ',        1, 1.d0,
@@ -1716,17 +1722,6 @@ c
 c         dimension sumx(19), sumy(10), array(10,10)
           dimension sumx(39), sumy(20), array(20,20)
          integer mode, npts, nterms
-c               do i=1, 10
-c             write(*,*) 'xsfit ysfit', i, x(i), y(i)
-c               end do
-c
-c   accumulate weighted sums
-c
-c  check the data
-c             do i = 1, npts
-c             write(*,*) x(i), y(i)
-c             end do
-c             write(*,*) 'mode=', mode
               wf = 1.
 11            nmax = 2*nterms -1
            do 13 n = 1, nmax
@@ -1922,7 +1917,7 @@ c
         character vis*64,out*64,type*1
         integer nschan(maxwin),nif,nchan,nants,length,tcorr,na
         real xtsys(maxant*maxwin),ytsys(maxant*maxwin)
-        real tsys(maxant*maxwin)
+        real tsys(maxant*maxwin), otsys(maxant*maxwin)
         real gel, tscale
         logical dojpk
 c
@@ -1943,14 +1938,15 @@ c
         character yaxis*16, xaxis*16
         real rmsflag, antel, tsysv, timev
         integer dofit, antid, xaxisparm, nterms
-        logical dotsys, tsysplt, dotime, dosour
+        logical dotsys, tsysplt, dotime, dosour,dotswap
         real apl(10,32,10)
         double precision xapl(10,32,10),bppl(10,32,10,10) 
         real a(10)
         double precision XA(10), BP(10,10) 
         real aveapl(32,10)
         double precision aveXA(32,10), aveBP(32,10,10)
-        common/smfix/rmsflag,dofit,dotsys,tsysplt,xaxisparm,dosour
+        common/smfix/rmsflag,dofit,dotsys,dotswap,
+     *               tsysplt,xaxisparm,dosour
         common/cpolfit/apl, xapl, bppl, antid, nterms
         character source(32)*32, souread*32
         integer soupnt(10000*10),nsource, sourid
@@ -1958,7 +1954,7 @@ c
         integer nave, navel
 c  
 c   process replacement of Tsys from ant1 to ant2
-c    apl(ant,sour,term)
+c   apl(ant,sour,term)
 c     
         do j=1,32
         do k=1,10 
@@ -1978,24 +1974,19 @@ c
                 nave=nave+1
 c               aveapl(j,k) = aveapl(j,k)+apl(gant(i),j,k)
                 aveXA(j,k) = aveXA(j,k) + xapl(gant(i),j,k)
-c                write(*,*) 'xapl=', xapl(gant(i),j,k)
                end if
                end do
 c               aveapl(j,k) = aveapl(j,k)/nave
                 aveXA(j,k) = aveXA(j,k)/nave
-c                write(*,*) 'aveXA=', aveXA(j,k)
-
                do l=1, 10
                navel=0
                do i=1, 8
              if (gant(i).gt.0) then
           navel=navel+1
           aveBP(j,k,l)=aveBP(j,k,l)+bppl(gant(i),j,k,l)
-c   write(*,*) 'bppl=', bppl(gant(i),j,k,l)
          end if
                end do
                 aveBP(j,k,l) = aveBP(j,k,l)/navel
-c               write(*,*) 'aveBP=', aveBP(j,k,l)
                end do
            end do
            end do
@@ -2168,8 +2159,6 @@ c
      *   call bug('f','Inconsistency in number of IFs')
          call uvgetvrr(lvis,'systemp',tsys,nants)
                                   endif
-
-
          call basant(preamble(5),i1,i2)
 c    check if the polynomial fitting parameters have been calculated.
               if((dofit.gt.0).and.(tsysplt)) then
@@ -2180,10 +2169,6 @@ c    axis = time for xaxisparm.eq.1
                      if(.not.dosour) sourid=1
                        if(xaxisparm.eq.1)  then
                          do i=1, nants
-c                            do j=1, nterms
-c                            a(j) = apl(i,sourid,j)
-c                            end do
-c         call curvefit(nterms,a,1, timev, tsysv)
                             do j=1, 10
                             XA(j) = xapl(i,sourid,j)
                             do k=1, 10
@@ -2191,16 +2176,13 @@ c         call curvefit(nterms,a,1, timev, tsysv)
                             end do
                             end do
          call regpolfitg(nterms,xa,bp,1,timev,tsysv)
-                            tsys(i)=tsysv
+                            otsys(i) = tsys(i)
+                             tsys(i) = tsysv
                          end do
                                            end if
 c    axis = antel for xaxisparm.eq.2
                 if(xaxisparm.eq.2)  then
                          do i=1, nants
-c                            do j=1, nterms
-c                            a(j) = apl(i,sourid,j)
-c                            end do
-c         call curvefit(nterms,a,1,antel,tsysv)
                             do j=1, 10
                             XA(j) = xapl(i,sourid,j)
                             do k=1, 10
@@ -2208,28 +2190,35 @@ c         call curvefit(nterms,a,1,antel,tsysv)
                             end do
                             end do
           call regpolfitg(nterms,xa,bp,1,antel,tsysv)
-                            tsys(i) = tsysv
+                             otsys(i) = tsys(i) 
+                             tsys(i) = tsysv
                          end do
-                                    end if
-           endif
-      if(dotsys) call tsysap(data,nchan,nschan,xtsys,ytsys,tsys,
-     *  nants,nif,i1,i2,pol)
-cc           endif
-c              
+                end if
+                endif
+         if(dotsys.and.dotswap) 
+     *   call tsysap(data,nchan,nschan,xtsys,ytsys,tsys,
+     *               nants,nif,i1,i2,pol)
+         if(dotsys.and.(.not.dotswap))
+     *   call tsysap(data,nchan,nschan,xtsys,ytsys,otsys,
+     *               nants,nif,i1,i2,pol)              
          if(npol.gt.0)then
          call uvputvri(lout,'npol',npol,1)
          call uvputvri(lout,'pol',pol,1)
           endif
-c             if(dojpk.and.jyperk.gt.0)
-c     *       call uvputvrr(lout,'jyperk',jyperk,1)
-c              call uvwrite(lout,preamble,data,flags,nchan)
 c 
-c  store the fitted Tsys data to systmp once for a new prime time
-c      
+c  if(dotsys.and.dotswap)
+c  fitted Tsys is applied to vis; store the fitted Tsys data 
+c  to replace the original systemp once for a new prime time
+c  and save the original systemp to systmp. 
+c  
+c  if(dotsys.and.(.not.dotswap)
+c  the original Tsys is applied to vis; the systemp remains
+c  unchanged.    
               if((day-ptime).gt.0) then
-         call uvputvrr(lout, 'systmp', tsys, nants)
-                 ptime=day
-                 end if 
+       if(dotswap) call uvputvrr(lout, 'systemp', tsys, nants)
+       if(dotswap) call uvputvrr(lout, 'systmp', otsys, nants)
+       ptime=day
+              end if 
          call uvwrite(lout,preamble,data,flags,nchan)
          call uvread(lvis,preamble,data,flags,maxchan,nchan)
               newel = .false.
@@ -2346,7 +2335,8 @@ c------------------------------------------------------------------------
          logical dotsys,tsysplt,dosour
          real apl(10,32,10)
          double precision  xapl(10,32,10),bppl(10,32,10,10)
-         common/smfix/rmsflag,dofit,dotsys,tsysplt,xaxisparm,dosour
+         common/smfix/rmsflag,dofit,dotsys,dotswap,
+     *                tsysplt,xaxisparm,dosour
          common/cpolfit/apl,xapl,bppl,antid, nterms
 c
       
