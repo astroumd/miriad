@@ -67,7 +67,7 @@ c+debug
 c-debug
 c
       INTEGER nphase
-      REAL phlinfit(2,MAXANT)
+      REAL phlinfit(2,MAXANT2)
 c
 c  Only used by gapply...
 c

@@ -1470,7 +1470,7 @@ c
       INTEGER baseline, b, nread, i, islot, nclips, a1, a2, k
       INTEGER ix, nants, thissrc
       REAL    dt, oldvolts, volts
-      REAL    focus(MAXANT)
+      REAL    focus(MAXANT2)
       DOUBLE PRECISION t1, t2, dtime
       DOUBLE PRECISION preamble(4)
       COMPLEX cval
@@ -1515,7 +1515,7 @@ c
             b = findbase(baseline,base,nbl)
             IF (b.EQ.0) THEN
                nbl = nbl + 1
-               CALL assertl(nbl.LE.MAXBASE,'Too many baselines')
+               CALL assertl(nbl.LE.MAXBASE2,'Too many baselines')
                base(nbl) = baseline
             ENDIF
             IF(tmin.LT.0.0) THEN
@@ -1749,7 +1749,7 @@ c
 c  Set all windows as having no associated fits      
 c
       DO k=1,MAXBREAK+1
-      DO i=1,MAXBASE
+      DO i=1,MAXBASE2
          fitdone(k,i,1) = .FALSE.
          fitdone(k,i,2) = .FALSE.
          fitdone(k,i,3) = .FALSE.
@@ -2631,7 +2631,7 @@ c
 c
       lkey = key
       nphase = 0
-      DO a=1,MAXANT
+      DO a=1,MAXANT2
          DO b=1,2
             phlinfit(b,a) = 0.0
          ENDDO
@@ -2643,7 +2643,7 @@ c
          IF (index('1Ll',band(1:1)).GT.0) b=1
          IF (index('2Uu',band(1:1)).GT.0) b=2
          CALL keyr(key,pdrift,0.0)
-         IF (a.LT.1  .OR. a.GT.MAXANT) CALL bug('f',
+         IF (a.LT.1  .OR. a.GT.MAXANT2) CALL bug('f',
      *         'Antenna number out of range for keyword '//lkey)
          IF (b.EQ.0) CALL bug('f',
      *         'Error specifying LSB/USB (band 1/2) for keyword '//lkey)
