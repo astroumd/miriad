@@ -1,0 +1,112 @@
+#!/bin/csh -f
+# --------------------------------------------------- 
+set mir    = $MIR
+set host   = $MIRHOST
+set lsys   = $mir/bin/localsys
+set srcdir = $mir/src/spec/xcorf
+set bindir = $mir/bin/$host
+set libdir = $mir/lib/$host
+set docdir = $mir/doc/prog
+# --------------------------------------------------- 
+if (-e $lsys/stub.xcorf && ! $?local_compile) then
+  echo $lsys/stub.xcorf exists =================
+  setenv local_compile
+  exec $lsys/stub.xcorf
+endif
+# --------------------------------------------------- 
+# See if /usr/dt/include needs to be added to includes.
+#
+set inc = "-I$srcdir $Cinclude"
+set adddt = 0
+if (($host == sun4sol) && (`echo $inc | grep -c openwin` > 0)) then
+  if (`echo $inc | grep -c '/usr/dt'` == 0) then
+    set inc = "$inc -I/usr/dt/include"
+    set adddt = 1
+  endif
+endif
+# --------------------------------------------------- 
+# See if the Xm include files even exist.
+#
+set xmexists = 0
+foreach idir (`echo $inc | sed 's/-I//g'`)
+  if (-e $idir/Xm/Xm.h) then
+    set xmexists = 1
+  else if (-e ${idir:h}/Xm/Xm.h) then
+    if ($xmexists == 0) set xmexists = 2
+  endif
+end
+#
+if ($xmexists == 0) then
+  echo 'Could not find the Motif libraries in $MIRXINC or in the standard locations.'
+  echo 'Exiting...'
+  exit 1
+else if ($xmexists == 2) then
+  foreach idir (`echo $inc | sed 's/-I//g'`)
+    if (-e ${idir:h}/Xm/Xm.h) then
+      set inc = "$inc -I${idir:h}"
+    endif
+  end
+endif
+# --------------------------------------------------- 
+# Check to see if /usr/dt/lib needs to be added.
+#
+set libs = "$Clinkdir"
+if ($adddt > 0) then
+  set libs = "$libs -L/usr/dt/lib"
+  if (($host == sun4sol) && (`echo $Clinkdir | grep -c '\-R'` > 0)) then
+    set libs = "$libs -R/usr/dt/lib"
+  endif
+endif
+# --------------------------------------------------- 
+# X11R6 needs to add -lSM -lICE between -lXt and -lXext.
+# This section tries to find out the X11 spec number.
+#
+set release = 0
+foreach idir (`echo $inc | sed 's/-I//g'`)
+  foreach file ( ${idir}/X11/Intrinsic.h ${idir}/Intrinsic.h )
+    if (-e $file) then
+      set i = `grep XtSpecificationRelease $file`
+      if ($status == 0) then
+        set release = `echo $i | awk '{print $NF}'`
+        break
+      endif
+    endif
+  end
+  if ($release > 0) break
+end
+switch ($release)
+  case 6:
+    set libs = "$libs -lXm -lXmu -lXt -lSM -lICE -lXext -lX11 -lm"
+    breaksw
+  case 5:
+    set libs = "$libs -lXm -lXmu -lXt -lXext -lX11 -lm"
+    breaksw
+  default:
+    echo 'Can not build this application with X11 release less than 5.'
+    exit 1
+    breaksw
+endsw
+if ($host == sun4sol) set libs = "$libs -lsocket -lnsl -lgen"
+# --------------------------------------------------- 
+# Get a list of the files to compile.
+#
+cd $srcdir
+set tmp = "xcorf.c `ls *.c | grep -v xcorf.c`"
+set src = ""
+set obj = ""
+foreach i ($tmp)
+   set src = "$src $srcdir/$i"
+   set obj = "$obj ${i:r}.o"
+end
+# --------------------------------------------------- 
+cd $libdir
+rm -fr $obj >& /dev/null
+echo $Ccompile $Coptions -o $bindir/xcorf $inc $src $libs
+     $Ccompile $Coptions -o $bindir/xcorf $inc $src $libs
+rm -fr $obj >& /dev/null
+
+(cd $docdir; doc -p $srcdir/xcorf.c)
+#
+ls -l $bindir/xcorf
+unsetenv local_compile
+exit 0
