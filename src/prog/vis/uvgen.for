@@ -96,6 +96,9 @@ c	or
 c	  yymmmdd:hh:mm:ss.s
 c	The default is 80JAN01.0. A function of this is also used
 c	as a seed for the random number generator.
+c	With the unix date command you can use 
+c                date +%y%b%d:%H:%M:%S | tr '[A-Z]' '[a-z]'
+c
 c@ freq
 c	Frequency and IF frequency in GHz.
 c	Defaults are 100,0.0 GHz. 
@@ -315,6 +318,7 @@ c     9may00 rjs   Write primary beam type out correctly.
 c    17may00 mchw  allow for saturated spectral absorption model.
 c    18may00 rjs   Merge rjs/mchw changes.
 c    29sep00 pjt   Put appending data back in  uvgen
+c     4sep01 pjt   time= example for random number generations
 c
 c  Bugs/Shortcomings:
 c    * Frequency and time smearing is not simulated.
