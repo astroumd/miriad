@@ -48,6 +48,9 @@ c
 c	11. Primary beam pattern cos**6 fit.
 c		z = a1*cos(x)**6  "x" is in units of arcmin*GHz.
 c
+c	12. line length fit:
+c		z = a1*cos(2pi*a2*x + a3)  "x" is in MHz, a1 is amplitude, 
+c		a2 is the line length in microsec, and a3 is the phase offset.
 c@ opt
 c	specifies which function is to be fitted. Default opt=1.
 c@ col
@@ -86,14 +89,18 @@ c    02dec97 mchw  Drift curve analysis (equation 8).
 c    25jun98 pjt   some standard fortran fixes (linux/g77: x->1x, double decl)
 c    09jul98 mchw  Improved doc. Increased line length to 320 in dstring.
 c    15jun99 mchw  Added primary beam fits.
+c    14apr00 mchw  npts=nread fixes bug for 2nd. time.
+c    14nov00 mchw  added line length fit.
+c    05feb01 mchw added plot
+c    17mar01 pjt  documented new version
 c-----------------------------------------------------------------------
       implicit none
       double precision pi,rtd
       integer nbin,MAXDIM
-      parameter(nbin=16,MAXDIM=2000,pi=3.141592654d0,rtd=180.d0/pi)
+      parameter(nbin=16,MAXDIM=4096,pi=3.141592654d0,rtd=180.d0/pi)
       integer bin(nbin)
       character version*(*)
-      parameter(version='(RMSFIT 15-Jun-99)')
+      parameter(version='(RMSFIT 17-mar-01)')
       double precision xm(MAXDIM),ym(MAXDIM),zm(MAXDIM)
       double precision xvar(3,MAXDIM)
       double precision guess(6),an(6)
@@ -101,9 +108,15 @@ c-----------------------------------------------------------------------
       double precision sumdev,sigma2,devmax,smean,rms
       integer i,iostat,n,ipoint,len1,nguess,nread, opt, col(3)
 	integer nvar, maxpts, npts
-      character infile*128,outfile*128
+      character infile*128,outfile*128, device*128
       real a(10)
+c plot variables
+      real x(MAXDIM), y(MAXDIM), xlo,xhi,ylo,yhi
 	data guess/6*0.d0/
+c
+c External functions.
+c
+      integer pgbeg
 c-----------------------------------------------------------------------
       call output('Non-linear Least Squares Fitting '//version)
 
@@ -117,6 +130,7 @@ c-----------------------------------------------------------------------
       call mkeyd('par',guess,6,nguess)
       call keyi('nfit',n,2)
       call keya('log',outfile,' ')
+      call keya('device', device, ' ')
       call keyfin
 c
 c  Check the user inputs.
@@ -162,6 +176,7 @@ c
 	  zm(i) = xvar(3,i)
 	enddo
       endif
+	if(npts.eq.MAXDIM) npts = nread
 
 	if(opt.eq.4) opt=2
 
@@ -274,6 +289,44 @@ c
 	  enddo
 	  close(7)
       endif
+c
+c  Plot data
+c
+	if(device.ne.' ') then
+	  do i=1,npts
+	    x(i) = xm(i)
+	    y(i) = delz(i)
+	  enddo
+c        
+c  Determine the plot box.
+c
+	xlo = x(1)
+	xhi = x(1)
+	ylo = x(1)
+	yhi = x(1)
+        do i=2,npts
+          if(x(i).lt.xlo) xlo=x(i)
+          if(y(i).lt.ylo) ylo=y(i)
+          if(x(i).gt.xhi) xhi=x(i)
+          if(y(i).gt.yhi) yhi=y(i)
+        enddo
+
+        if (pgbeg(0, device, 1, 1) .ne. 1) then
+          call pgldev
+          call bug('f', 'RMSFIT: Error opening the graphics device.')
+        endif
+        call pgpage
+        call pgvstd
+        call pgbbuf
+        call pgswin(xlo, xhi, ylo, yhi)
+        call pgslw(2)
+        call pgtbox('BCNST', 0.0, 0, 'BCNSTV', 0.0, 0)
+        call pgline(npts, x, y)
+        call pglab('frequency [Hz]', 'amplitude', infile )
+        call pgebuf
+        call pgend
+
+	endif
 c
 7     format(a,6f10.4)
 9     format(i4,5(1x,f13.5))
@@ -478,6 +531,7 @@ c       Primary beam patterns: "x" is in units of arcmin*GHz.
 c    9.   z = 1 + a1*x**2 + a2*x**4 + ...      
 c    10.  z = 1/(1 + a1*x**2 + a2*x**4 + ... )
 c    11.  z = a1*cos(x)**6
+c    12.  z = a1*cos(2pi*a2*x+a3)
 c
 c  Inputs:
 c    npts		The number of measured points.
@@ -557,6 +611,12 @@ c
 	do i=1,npts
           f(i) = zm(i) - x(1) * cos(xm(i))**6
 	enddo
+c
+      else if(opt.eq.12)then
+	do i=1,npts
+          f(i) = zm(i) - x(1) * cos(2.*pi*x(2)*xm(i) + x(3))
+	enddo
+c
       endif
 c
       end

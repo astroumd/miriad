@@ -28,9 +28,10 @@ c	   level      An offset (DC) level.
 c	   noise      Noise (gaussian distribution).
 c	   point      A point source.
 c	   gaussian   An elliptical or circular gaussian.
-c	   gauss3     A 3D elliptical or circular gaussian (for cubes).
+c	   gauss3     3D elliptical or circular gaussian (for cubes).
 c	   disk       An elliptical or circular disk.
-c	   j1x        A J1(x)/x function
+c	   j1x        J1(x)/x function
+c	   jet        Jet model with power law brightness.
 c	   shell      2D projection of an optically-thin spherical shell
 c	   comet      2D projection of a parent molecule in comet.
 c	   cluster    standard isothermal 2D projection for cluster gas.
@@ -50,6 +51,7 @@ c	   gaussian               amp,x,y,bmaj,bmin,pa
 c	   gauss3                 amp,x,y,z,bmaj,bmin,pa,bz
 c	   disk                   amp,x,y,bmaj,bmin,pa
 c	   j1x                    amp,x,y,bmaj,bmin,pa
+c	   jet                    amp,x,y,bmaj,bmin,pa
 c	   shell                  amp,x,y,bmaj
 c	   comet                  amp,x,y,scalelength
 c	   cluster                amp,x,y,core radius 
@@ -60,11 +62,14 @@ c       see options=totflux below), "x" and "y" are the offset positions (in
 c       arcsec) of the object relative to the reference pixel, "z" is the
 c       absolute pixel position on the third axis, "bmaj" and "bmin" are the 
 c       major and minor axes FWHM (in arcsec), "pa" is the position angle of
-c       an elliptical component (in degrees), and "bz" is the FWHM (in pixels)
+c       the major axis (in degrees), and "bz" is the FWHM (in pixels)
 c       in the 3rd dimension. The position angle is measured from north 
-c       towards east. The default is an object of unit amplitude, at the 
-c       reference pixel, with a FWHM of 5 arcsec in x and y and 5 pixels in
-c       z. Comet scalelength, and cluster core radius are in arcsec units.
+c       towards east. 
+c	The default is an object of unit amplitude, at the reference 
+c	pixel, with a FWHM of 5 arcsec in x and y and 5 pixels in z. 
+c	Comet scalelength, and cluster core radius are in arcsec units.
+c	Jet model has brightness with power law index bmaj and bmin along
+c	major and minor axes.
 c@ imsize
 c	If not input image is given, then this determines the size, in
 c	pixels, of the output image. Either one or two numbers can be
@@ -134,10 +139,11 @@ c    rjs   19mar98  Copy across mosaic table.
 c    mchw  19mar99  Add model isothermal 2D projection for cluster gas.
 c    lss   07jul99  Add 3D gaussian model for cubes.
 c    rjs   10jan00  Added "seed" parameter.
+c    mchw  16jan01  Jet model.
 c  Bugs/Wishlist:
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version='Imgen: version 1.1 10-Jan-00' )
+	parameter(version='Imgen: version 1.1 16-Jan-01')
 	include 'mirconst.h'
 	include 'maxdim.h'
 	include 'maxnax.h'
@@ -161,7 +167,7 @@ c
 	character objs(MAXOBJS)*8
 c
 	integer NOBJECTS
-	parameter(NOBJECTS=10)
+	parameter(NOBJECTS=11)
 	integer nobjs
 	character objects(NOBJECTS)*8
 c
@@ -172,7 +178,7 @@ c
 	data objects/'level   ','noise   ','point   ',
      *		     'gaussian','disk    ','j1x     ',
      *               'shell   ','comet   ','cluster ',
-     *               'gauss3  '/
+     *               'gauss3  ','jet     '/
 c
 c  Get the parameters from the user.
 c
@@ -203,16 +209,18 @@ c
 	  endif
 	  if(objs(i).eq.'gauss3') call keyr('spar',z(i),0.)
 	  if(objs(i)(1:5).eq.'gauss'.or.objs(i).eq.'disk'.or.
-     *	     objs(i).eq.'j1x')then
+     *	     objs(i).eq.'j1x'.or.objs(i).eq.'jet')then
 	    call keyr('spar',fwhm1(i),5.)
 	    call keyr('spar',fwhm2(i),5.)
 	    call keyr('spar',posang(i),0.)
-	    if(objs(i).eq.'gauss3') call keyr('spar',fwhm3(i),5.)
-	    fwhm1(i) = fwhm1(i) / 3600. * pi/180.
-	    fwhm2(i) = fwhm2(i) / 3600. * pi/180.
-	    if(min(fwhm1(i),fwhm2(i)).le.0)
-     *	      call bug('f','BMAJ and BMIN parameters must be positive')
+	    if(objs(i).ne.'jet')then
+	      fwhm1(i) = fwhm1(i) / 3600. * pi/180.
+	      fwhm2(i) = fwhm2(i) / 3600. * pi/180.
+	      if(min(fwhm1(i),fwhm2(i)).le.0)
+     * 	      call bug('f','BMAJ and BMIN parameters must be positive')
+	    endif
 	    posang(i) = posang(i) * pi/180.
+	    if(objs(i).eq.'gauss3') call keyr('spar',fwhm3(i),5.)
 	  elseif(objs(i).eq.'shell'.or.objs(i).eq.'comet') then
             call keyr('spar',fwhm1(i),5.)
 	    fwhm1(i) = fwhm1(i) / 3600. * pi/180.
@@ -332,14 +340,19 @@ c
 	    call coCvt(lOut,'ow/ow/p',x1,'ap/ap/ap',x2)
 	    xd(i) = x2(1)
 	    yd(i) = x2(2)
-	    if(fwhm1(i)*fwhm2(i).gt.0)then
+	    if(objs(i).ne.'jet')then
+	     if(fwhm1(i)*fwhm2(i).gt.0.and.objs(i).ne.'jet')then
 	      call coGauCvt(lOut,'ow/ow/p',x1,
      *	        'w',fwhm1(i), fwhm2(i), posang(i),
      *	        'p',fwhm1d(i),fwhm2d(i),posangd(i))
-	    else
+	     else
 	      fwhm1d(i) = 0
 	      fwhm2d(i) = 0
 	      posangd(i) = 0
+	     endif
+	    else
+	      fwhm1d(i) = fwhm1(i)
+	      fwhm2d(i) = fwhm2(i)
 	    endif
 	  enddo
 c
@@ -560,6 +573,22 @@ c
             xp = -yy*sinpa + xx*cospa
             t = (xp*xp)/(fwhm2*fwhm2) + (yp*yp)/(fwhm1*fwhm1)
 	    data(i) = data(i) + 2 * a * j1xbyx(sqrt(t))
+	  enddo
+c
+c  Handle a jet model with power law brightness.
+c
+	else if(object.eq.'jet')then
+	  cospa = cos(posang)
+	  sinpa = sin(posang)
+	  yy =  (j0-y)
+	  do i=1,n1
+	    xx = (i-x)
+            yp =  yy*cospa + xx*sinpa
+            xp = -yy*sinpa + xx*cospa
+	    if(xp.ne.0.and.yp.ne.0)then
+              a = amp * abs(yp)**fwhm1 * abs(xp)**fwhm2
+    	      data(i) = data(i) + a 
+	    endif
 	  enddo
 c
 c  Handle a comet.

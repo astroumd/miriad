@@ -94,7 +94,7 @@ c	This file is updated after each observation scheduled.
 c@ options
 c       Extra processing options. Possible values are:
 c         debug    Print more output to monitor scheduled observations,
-c			 and calculate contiguous run time statistics.
+c	  stat     Print contiguous run time statistics.
 c         histo    Print histogram for atmospheric phase,
 c			 and run time statistics..
 c--
@@ -111,10 +111,12 @@ c    mchw 20oct97  calculate contiguous run time statistics.
 c    mchw 24nov97  Sort input status. Discard unused projects.
 c    mchw 23dec97  Write out CMD start and stop times.
 c			Use HA max and min from input list.
-c    pjt  20jun98  fixed local char*(*) declaration problem (g77)
+c    mchw 28oct98  Adapt for Phase monitor data.
+c (( pjt  20jun98  fixed local char*(*) declaration problem (g77) ))
+c    pjt  17mar01  Retrofitted the 20jun98 ONCE AGAIN
 c------------------------------------------------------------------------
       character version*(*)
-      parameter(version='TAC version 20-jun-98')
+      parameter(version='TAC version 17-mar-01')
 c
 	integer MAXP
 	real pi
@@ -130,7 +132,7 @@ c
 	real elevlim,interval,maxtime,mintime,wait
 	real lst,stoplst,goodtime,badtime,minint,obsint,ha,halimit
 	real atmos,atave,atrms,atime,phday,phfac
-	logical ok,histo,debug
+	logical ok,histo,debug,stat
 	integer nlst,started,complete,done,mlst
 	data started/0/, complete/0/, done/0/
 c
@@ -164,7 +166,7 @@ c
       call keyr ('phfac',phfac,1.)
       call keyf ('statin',statin,' ')
       call keyf ('statout',statout,' ')
-      call GetOpt(histo,debug)
+      call GetOpt(histo,debug,stat)
       call keyfin
 c
 c Check the input parameters
@@ -261,8 +263,8 @@ c********1*********2*********3*********4*********5*********6*********7**
 	    write(line,'(i3,3f7.2,x,24i3)')
      *                     j,lst,atmos,inttime(j),(lstdone(i,j),i=1,24)
 	    call output(line)
-	    call runstat(0,j,obsint,histo)
 	  endif
+	  if(stat) call runstat(0,j,obsint,histo)
 	  goto 10
 	else if(j.lt.np)then
 	  j = j + 1
@@ -314,7 +316,7 @@ c
 	  call logwrit(line)
 	write(line,'(a,i5)')   'Projects complete:  ',complete
 	  call logwrit(line)
-	if(debug) then
+	if(stat) then
 	  call runstat(0,0,interval,histo)
 	  call runstat(1,j,interval,histo)
 	endif
@@ -473,7 +475,9 @@ c-----------------------------------------------------------------------
 	integer NBIN
 	parameter (NBIN=12)
 	integer i,bin(NBIN),under,over
-	real blo,binc,interval
+	real blo,binc,interval,junk(2)
+c        double precision array(4)
+c        logical          ok
 	data bin/NBIN*0/,under/0/,over/0/,blo/0./,binc/0.1/
 	data oday/0./, phave/0./, phrms/0./, phnum/0./,ophi/0./
 c
@@ -498,8 +502,8 @@ c
 		call bug('f','problem reading phase monitor data')
 	      else
                 if(line(1:1).ne.'#')then
-c	          read(line,'(f8.3,f7.2)') oday,ophi
-	          read(line,*) oday,ophi
+c      		  call matodf( line, array, 4, ok )
+	          read(line,*) oday,junk,ophi
 		  atmos = ophi*phfac
 	        endif
 	      endif
@@ -684,8 +688,8 @@ c
           call output(' ')
           call output('Read the project status')
           call txtopen(lin,statfile,'old',iostat)
-	  lstatfil = statfile
-          if(iostat.ne.0) call bug('f','problem opening '// lstatfil)
+	  lstatfile = statfile
+          if(iostat.ne.0) call bug('f','problem opening '// lstatfile)
           call txtread(lin,line,length,iostat)
           do while(iostat.eq.0.and.j.lt.maxp)
 c            call output(line)
@@ -709,8 +713,8 @@ c
 c          call output(' ')
 c          call output('Write the project status')
           call txtopen(lin,statfile,'new',iostat)
-	  lstatfil = statfile
-          if(iostat.ne.0) call bug('f','problem opening '// lstatfil)
+	  lstatfile = statfile
+          if(iostat.ne.0) call bug('f','problem opening '// lstatfile)
           write(line,'(a,10x,a,17x,a,20x,a)')
      *				 '#','project','inttime','lstdone'
           call txtwrite(lin,line,len1(line),iostat)
@@ -756,22 +760,23 @@ c
 c
 	end
 c********1*********2*********3*********4*********5*********6*********7**
-        subroutine GetOpt(histo,debug)
+        subroutine GetOpt(histo,debug,stat)
 c
         implicit none
-        logical histo,debug
+        logical histo,debug,stat
 c
 c  Get extra processing options.
 c------------------------------------------------------------------------
         integer nopts
-        parameter(nopts=2)
+        parameter(nopts=3)
         logical present(nopts)
         character opts(nopts)*8
-        data opts/'histo   ','debug    '/
+        data opts/'histo   ','debug    ','stat    '/
 c
         call options('options',opts,present,nopts)
         histo = present(1)
         debug = present(2)
+        stat  = present(3)
         end
 c********1*********2*********3*********4*********5*********6*********7**
 	real function elev(ha,dec,latitude)

@@ -65,10 +65,12 @@ c	Mode can be 'inter' or 'batch'. Default is inter. In either mode,
 c	the user is prompted for options after each plot on a non-hardcopy
 c	device. The options are applied to the current spectrum, which can
 c	then be replotted. mode=inter displays the cursor. Type the first
-c	character and <cr> to select option. The cursor handling is device
-c	dependent, and the character and <cr> may need to given several times.
+c	character and <cr> to select option. The cursor handling is network
+c	dependent, and the character and <cr> may need to typed several times.
 c	Options:
-c	  Device - enter new plot device.
+c	  <cr>   - [Left Mouse]   go to next time average.
+c	  Device - [Middle Mouse] enter new plot device.
+c	  Quit   - [Right Mouse]  exit from task.
 c	  Limits - change plot limits.
 c	  Channel - change x-axis to channel number in the line keyword.
 c	  Velocity - change x-axis to velocity.
@@ -76,9 +78,7 @@ c	  Frequency - change x-axis to frequency.
 c	  Replot - replot current spectrum.
 c	  Position - display cursor position. (if device supports a cursor)
 c	  Write - write out current spectrum to an ascii file.
-c	  Quit - stop processing and exit from task.
 c	  End - end of options, get next average.
-c	  <cr> - go to next time average.
 c	The original inputs are restored for the next time average.
 c--
 c
@@ -117,6 +117,7 @@ c    16dec93 mchw   Added option to switch x-axis to channel number.
 c    10apr94 mchw   Put MAXWIN into maxdim.h
 c    20oct94 mchw - Added colour. Changed default mode=inter.
 c    25dec94 pjt    Added pgask for interactive mode - nice with /xs !! 
+c    17mar01 pjt    documented some doc changes Mel made 24-may-99
 c-----------------------------------------------------------------------
 	include 'maxdim.h'
 	integer maxsels
@@ -135,7 +136,7 @@ c-----------------------------------------------------------------------
 c
 c  Get the parameters given by the user.
 c
-        call output('UVSPECT: version 1.0 25-Dec-94')
+        call output('UVSPECT: version 1.0 17-mar-01')
 	call keyini
 	call keyf('vis',vis,' ')
 	call keya('line',line,'channel')
@@ -547,7 +548,7 @@ c
 	  else if(ans.eq.'R') then
 	    loop = .false.
 	    replot = .true.
- 	  else if(ans.eq.'Q') then
+ 	  else if(ans.eq.'Q'.or.ans.eq.'X') then
 	    call output('OK - I Quit')
 	    call pgend
 	    stop
@@ -566,14 +567,15 @@ c***********************************************************************
 c***********************************************************************
 	subroutine help
 	call output('Type 1st character to select option:')
-	call output('Device - enter new plot device')
+	call output('Advance - [Left Mouse] go to next average')
+	call output('Device - [Middle Mouse] enter new plot device')
 	call output('Limits - change plot limits')
 	call output('Velocity - change x-axis to velocity')
 	call output('Frequency - change x-axis to frequency')
 	call output('Replot - replot current spectrum')
 	call output('Position - display cursor position')
 	call output('Write - write out current spectrum')
-	call output('Quit - stop processing and exit from task')
+	call output('Quit [Right Mouse] - Exit from task')
 	call output('End - end of options, get next average')
 	end
 c****************************************************************

@@ -159,14 +159,15 @@ c    mchw 29aug96 No Polarization selection of uv-data for options=polcal.
 c    mchw 20may97 Swap p,q in  options=polcal.
 c    mchw 22may97 copy across telescop and not pbfwhm in options=imhead.
 c    mchw 05nov97 Add options=poleak.
+c    pjt  17mar01 documented the change Mel made with increased maxsels in 98
 c  Bugs:
 c    * Polarisation processing is pretty crude.
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='version 1.0 05-NOV-97')
+	parameter(version='version 1.0 17-mar-01')
 	integer maxsels,nhead,nbuf
-	parameter(maxsels=64,nhead=1,nbuf=5*maxchan+nhead)
+	parameter(maxsels=1024,nhead=1,nbuf=5*maxchan+nhead)
 c
 	character vis*64,modl*64,out*64,oper*8,ltype*32,type*1
 	character flag1*8,flag2*8

@@ -57,6 +57,12 @@ c	Only one of 'psf' 'allan' and spect' can be chosen.
 c	The default is the phase structure function 'psf'. 
 c@ log
 c	The list output file name. The default is the terminal.
+c@ device
+c       PGPLOT device to plot PSF. Default is no plot.
+c@ xrange
+c       Plot range in the x-direction. 2 values. Default is 10m to self scale.
+c@ yrange
+c       Plot range in the y-direction. 2 values. Default is to self scale.
 c--
 c  History:
 c   22mar94 mchw
@@ -72,21 +78,26 @@ c   15feb96 mchw  Add 'psf' as the default option.
 c   26aug97 mchw  keyword base; add options=mm
 c   02oct97 mchw  Add psf_fit.
 c   17jun98 mchw  more checks on reasonable values.
-c   25jun98 pjt   better fortran standard for linux/g77 [x->1x]
+c   27oct98 mchw   sigma = sqrt(variance(1)) in subroutine psf.
+c   08jan99 mchw  Plot PSF.
+c   27oct00 mchw  Changes to support more antennas.
+c   17mar01 pjt   retrofitten fortran standard format fix (x->1x)
+c                 that was made earlier on 25jun98 in RCS
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='Atmos: version 25-JUN-98')
+	parameter(version='Atmos: version 17-mar-01')
 	integer maxsels
 	parameter(maxsels=1024)
 	real sels(maxsels)
 	real start,step,width
-	character linetype*132,vis*132,log*132
+	real xlo,xhi,ylo,yhi
+	character*132 linetype,vis,log,device
 	character source*10,oldsource*10
 	complex data(MAXCHAN)
 	logical flags(MAXCHAN)
 	logical domm,doallan,dowrap,dotopo,dospect
-	integer unit,numchan,nants,b1,b2
+	integer unit,numchan,nants,ant1,ant2
 	double precision antel,avetime,deltime,startime,interval
 	double precision antpos(3*MAXANT),sample
 	double precision uin,vin,timein,basein,time0,timein1
@@ -94,6 +105,10 @@ c------------------------------------------------------------------------
 	character telescop*9,calday*20
 	logical ok
 	common/preamb/uin,vin,timein,basein
+c
+c External functions.
+c
+      integer pgbeg
 c
 c  Read the inputs.
 c
@@ -112,6 +127,11 @@ c
 	call keyd('base',base,100.d0)
  	call keya('log',log,' ')
 	call GetOpt(domm,doallan,dowrap,dotopo,dospect)
+	call keya('device', device, ' ')
+	call keyr('xrange', xlo, 0.)
+	call keyr('xrange', xhi, 2.)
+	call keyr('yrange', ylo, 0.)
+	call keyr('yrange', yhi, 2.)
 	call keyfin
 c
 c  Check the inputs.
@@ -122,6 +142,20 @@ c
 c  Open the output text file.
 c
  	call LogOpen(log,' ')
+c
+c  Open the plot device
+c
+	if(device.ne.' ') then
+	  if (pgbeg(0, device, 1, 1) .ne. 1) then
+            call pgldev
+            call bug('f', 'Error opening the graphics device.')
+          endif
+          call pgpage
+          call pgvstd
+          call pgbbuf
+          call pgswin(xlo, xhi, ylo, yhi)
+          call pgbox('BCNST', 0., 0, 'BCNSTV', 0., 0)
+	endif
 c
 c  Open the data file, apply selection, do linetype initialisation.
 c
@@ -167,12 +201,10 @@ c
 c  Get topographic or projected baseline length.
 c
 	  if(dotopo)then
-	    b2 = nint(basein)
-	    b1 = b2 / 256
-	    b2 = b2 - 256 * b1
-	    uin = sqrt((antpos(b1)-antpos(b2))**2 +
-     *		       (antpos(b1+nants)-antpos(b2+nants))**2 +
-     *		       (antpos(b1+2*nants)-antpos(b2+2*nants))**2)
+	    call basant(basein,ant1,ant2)
+	    uin = sqrt((antpos(ant1)-antpos(ant2))**2 +
+     *		       (antpos(ant1+nants)-antpos(ant2+nants))**2 +
+     *		       (antpos(ant1+2*nants)-antpos(ant2+2*nants))**2)
 	  else
             uin = sqrt(uin*uin+vin*vin)
 	  endif
@@ -190,7 +222,7 @@ c
             call spect(uin,timein,basein,1,avetime,
      *                                      data,flags,numchan,dowrap)
 	  else
-	    call psf(uin,timein,basein,1,antel,domm,unit,
+	    call psf(uin,timein,basein,1,antel,domm,unit,device,
      *					    data,flags,numchan,dowrap)
 	  endif
 c
@@ -213,7 +245,7 @@ c
 	    call spect(uin,timein,basein,-1,avetime,
      *					    data,flags,numchan,dowrap)
 	else
-	    call psf(uin,timein,basein,-1,antel,domm,unit,
+	    call psf(uin,timein,basein,-1,antel,domm,unit,device,
      *					    data,flags,numchan,dowrap)
 	endif
 c
@@ -225,9 +257,17 @@ c  Close up shop.
 c
 	call LogClose
 	call uvclose(unit)
+c 
+c  Close the plot device 
+c 
+        if(device.ne.' ') then 
+	  call pglab('Baseline','Path Rms','Phase Structure Function')
+          call pgebuf
+          call pgend
+	endif
 	end
 c********1*********2*********3*********4*********5*********6*********7*c
-	subroutine psf(uin,timein,basein,VisNo,antel,domm,unit,
+	subroutine psf(uin,timein,basein,VisNo,antel,domm,unit,device,
      *					    data,flags,numchan,dowrap)
 	implicit none
 	integer numchan,VisNo,unit
@@ -236,6 +276,7 @@ c********1*********2*********3*********4*********5*********6*********7*c
 	complex data(numchan)
 	double precision uin,timein,basein
 	double precision antel
+	character*(*) device
 c
 c  List average and rms of the data.
 c
@@ -254,7 +295,7 @@ c------------------------------------------------------------------------
 	include 'maxdim.h'
 	integer MCHAN,MAXAVE
 	parameter(MCHAN=4,MAXAVE=MCHAN*MAXBASE)
-	integer nchan,j,length,b1,b2,bl
+	integer nchan,j,length,ant1,ant2,bl
 	logical more
 	character line*128,source*10
 	real amp(MCHAN),arg(MCHAN)
@@ -301,7 +342,7 @@ c
 	  call uvrdvrr(unit,'relhumid',relhumid,0.)
 	  call uvrdvrr(unit,'precipmm',precipmm,0.)
 	  freq = sfreq(1)
-	  sigma = variance(1)
+	  sigma = sqrt(variance(1))
 	  newave = .FALSE.
 	endif
 	if(numchan.ne.0)nchan = min(MCHAN,numchan)
@@ -366,9 +407,7 @@ c
 	timeave(bl) = timeave(bl) / recave(bl)
 	baseave(bl) = baseave(bl) / recave(bl)
 	avel(bl) = avel(bl) / recave(bl)
-	b2 = nint(baseave(bl))
-	b1 = b2 / 256
-	b2 = b2 - 256 * b1
+        call basant(baseave(bl),ant1,ant2)
 	do j=1,nchan
 	 if(numave(j,bl).gt.0.)then
 	  amp(j) = ampave(j,bl) / numave(j,bl)
@@ -385,9 +424,9 @@ c
 c  Write out the results.
 c
 	write(line,100) recave(bl),timeave(bl),
-     *   	       b1,b2,uave(bl),avel(bl),
+     *   	       ant1,ant2,uave(bl),avel(bl),
      *		 (arg(j),phirms(j,bl),cflag(j),j=1,nchan)
- 100	format(f6.0,1x,f9.4, i3,1x,i3,1x,f8.2,f6.2, 
+ 100	format(f6.0,1x,f9.4, i4,1x,i4,1x,f8.2,f6.2, 
      *         4(1x,f6.2,1x,f6.2,1x,a))
 	length = len1(line)
 	call LogWrite(line(1:length),more)
@@ -420,6 +459,7 @@ c
      *	  npts,freq,precipmm,airtemp,min(relhumid,99.9),windmph,source
 	  call output(line)
 	endif
+	if(device.ne.' ') call psf_plot(npts,xm,zm)
 c********1*********2*********3*********4*********5*********6*********7*c
 c
 c  initialize the accumulators
@@ -503,7 +543,7 @@ c------------------------------------------------------------------------
 	include 'maxdim.h'
 	integer MCHAN,MAXSIZE,MAXAVE
 	parameter(MCHAN=4,MAXSIZE=1000,MAXAVE=MCHAN*MAXBASE)
-	integer nchan,i,j,k, k0,length,b1,b2,bl
+	integer nchan,i,j,k, k0,length,ant1,ant2,bl
 	logical more
 	character line*128
 	real amp(MCHAN),arg(MCHAN),count
@@ -581,9 +621,7 @@ c
 	uave(bl) = uave(bl) / num(bl)
 	timeave(bl) = timeave(bl) / num(bl)
 	baseave(bl) = baseave(bl) / num(bl)
-	b2 = nint(baseave(bl))
-	b1 = b2 / 256
-	b2 = b2 - 256 * b1
+        call basant(baseave(bl),ant1,ant2)
 c set initial shift to get at least k0 points in the average
 	k0 = 10
 	k = (num(bl)-k0) / 2
@@ -611,9 +649,9 @@ c
 c  Write out the results.
 c
 	 write(line,100) count,timeave(bl),
-     *		 b1,b2, k*avetime/num(bl)*24.*3600., uave(bl),
+     *		 ant1,ant2, k*avetime/num(bl)*24.*3600., uave(bl),
      *		       (amp(j),nint(arg(j)),cflag(j),j=1,nchan)
- 100	 format(f6.0,1x,f9.4, i3,1x,i3,1x,f9.2,1x,f9.2, 
+ 100	 format(f6.0,1x,f9.4, i4,1x,i4,1x,f9.2,1x,f9.2, 
      *          4(f9.3,1x,i4,1x,a))
 	 length = len1(line)
 	 call LogWrite(line(1:length),more)
@@ -659,7 +697,7 @@ c------------------------------------------------------------------------
 	include 'maxdim.h'
 	integer MCHAN,MAXSIZE,MAXAVE
 	parameter(MCHAN=4,MAXSIZE=1024,MAXAVE=MCHAN*MAXBASE)
-	integer nchan,i,j,length,b1,b2,bl,size,n
+	integer nchan,i,j,length,ant1,ant2,bl,size,n
 	logical more
 	character line*128
 	real amp(MCHAN),arg(MCHAN)
@@ -739,9 +777,7 @@ c
 	uave(bl) = uave(bl) / num(bl)
 	timeave(bl) = timeave(bl) / num(bl)
 	baseave(bl) = baseave(bl) / num(bl)
-	b2 = nint(baseave(bl))
-	b1 = b2 / 256
-	b2 = b2 - 256 * b1
+        call basant(baseave(bl),ant1,ant2)
 	do j=1,nchan
 	  if(num(bl).gt.0.)then
 	   n = log(num(bl))/log(2.) + 1
@@ -767,10 +803,10 @@ c  Write out the results. Omit zero and negative frequencies.
 c
 	step_hz = 1. / (size/num(bl) * avetime * 24. * 3600.)
 	do i=3,size/2
-	 write(line,100) i,timeave(bl),b1,b2,(i-1)*step_hz, uave(bl),
+	 write(line,100) i,timeave(bl),ant1,ant2,(i-1)*step_hz, uave(bl),
      * (((amps(i,j,bl)/57.)**2)*step_hz,((amps(i,j,bl)/57.)**2)*step_hz,
      *    cflag(j),j=1,nchan)
- 100	 format(i4,1x,f6.4,1x,i3,1x,i3,1x,f9.7,1x,f9.2,1x,
+ 100	 format(i4,1x,f6.4,1x,i4,1x,i4,1x,f9.7,1x,f9.2,1x,
      *          4(2f9.4,1x,a))
 	 length = len1(line)
 	 call LogWrite(line(1:length),more)
@@ -789,6 +825,21 @@ c
       enddo
 c
       end
+c********1*********2*********3*********4*********5*********6*********7**
+        subroutine psf_plot(npts,xm,zm)
+        implicit none
+        integer npts
+        double precision xm(npts),zm(npts)
+c
+	real x(256),y(256)
+	integer j
+c
+	do j=1,npts
+	  x(j)=xm(j)
+	  y(j)=zm(j)
+	enddo
+        call pgpt(npts, x, y, 16)
+	end
 c********1*********2*********3*********4*********5*********6*********7**
 	subroutine psf_fit(npts,xm,ym,zm,delz,an,rms)
 	implicit none

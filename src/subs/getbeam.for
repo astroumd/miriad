@@ -47,7 +47,9 @@ c
 	call rdhda(lIn,'bunit',bunit,' ')
 	call rdhdr(lIn,'bmaj',bmaj,0.)
 	call rdhdr(lIn,'bmin',bmin,0.)
-	if(count.eq.2.and.bunit.eq.'JY/BEAM'
+
+       if(count.eq.2.and.
+     *		((bunit.eq.'JY/BEAM').or.(bunit.eq.'JY/BEAM.KM/S'))
      *		.and.bmaj*bmin*omega.ne.0.)then
 	  cbof = abs(bmaj*bmin/omega)*pi/(4.*log(2.))
 	  omega = pi * bmaj * bmin /(4.*log(2.))

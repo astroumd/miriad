@@ -168,12 +168,14 @@ c		   call pgask(.FALSE.)
 c    14jul95 mchw  Made equation 4 the default with 9 parameters in file.
 c    17jul95 mchw  Option to remove the wrong on-line equation 5.
 c    09may97 mchw  Increased MAXANT=10 in pnt.h
-c    20jun98 pjt   various format (x->1x, missing comma's), 
-c                  fixed b(7) -> b(9) array size decl. bug
+c    17feb99 mchw  Edit data for elevation collimation error.
+c    ((20jun98 pjt   various format (x->1x, missing comma's), ))
+c    ((              fixed b(7) -> b(9) array size decl. bug  ))
+c    17mar01 pjt   re-fixed that previous #@# fix 
 c----------------------------------------------------------------------c
 	include 'pnt.h'
 	character version*(*)
-	parameter(version='(version 3.0  20-jun-98)')
+	parameter(version='(version 3.0  17-mar-01)')
 c
 	integer i,iant,kans
 	character ans*20,options*1,log*80,buffer*80
@@ -202,6 +204,7 @@ c
 	call output(' FI   Fit pointing constants')
 	call output(' FL   Fit flux densities')
 	call output(' ED   Edit data to new pointing constants')
+	call output(' EC   Edit data for elevation collimation')
 	call output(' LI   List pointing data')
 	call output(' HI   Histogram plot of pointing errors')
 	call output(' EX   Exit')
@@ -215,6 +218,7 @@ c
 	if(ans.eq.'FI') call PTFIT
 	if(ans.eq.'GR') call PTPLOT
 	if(ans.eq.'ED') call PTEDIT
+	if(ans.eq.'EC') call PTCOL
 	if(ans.eq.'LI') call PTLIST
 	if(ans.eq.'HI') call PTHIST
 	if(ans.eq.'CO') call comment
@@ -1192,7 +1196,7 @@ c
      *	    ('   Data are edited to the initial pointing constants')
 	  if(diag.eq.'Y') then
 	    write(line,115)
-115	    format(/,6X,'Source    Day   Ut(hrs)   Az  El(degs)',
+115	    format(/,6X,'Source    Day   Ut(hrs)   Az  El(degs)'
      *	    '   Daz & Del (observed) (edited)',/)
 	    call output(line)
 	  endif
@@ -1679,7 +1683,7 @@ c
 100	format('Antenna ',f3.0,3x,a,3x,a)
 	call pgmtxt('T',4.5,.15,0.,buffer)
 	write(buffer,110) apcs,equ
-110	format('APC ',2f7.2,5f6.2,' Eq:',f3.0)
+110	format('APC ',2f7.2,5f6.2' Eq:',f3.0)
 	call pgmtxt('T',3.,.15,0.,buffer)
 	write(buffer,120) epcs
 120	format('EPC ',2f7.2,5f6.2,' arcmin')
@@ -2098,3 +2102,32 @@ c		this routine appears more than once and needs to be in SUBS
 	dat = '  xx-xx-xx'
 	end
 #endif
+c********1*********2*********3*********4*********5*********6*********7*c
+	subroutine ptcol
+	implicit none
+c
+c  Edit pointing data for 2nd order collimation error in elevation.
+c
+	include 'pnt.h'
+        real PI
+        parameter(PI=3.141592654)
+	integer n
+	real ecol
+	character*80 line
+c
+	call outlog(' ')
+	call outlog('Edit data for elevation collimation error.')
+c
+c  Edit the pointing offsets.
+c
+	write(line,'(a,f7.3)')  'Azimuth collimation =', apcs(4)
+	call outlog(line)
+	ecol = apcs(4)*PI/180./60.
+	ecol= ecol*ecol*180.*60./PI
+	write(line,'(a,f7.3)')  'Elevation collimation =', ecol
+	call outlog(line)
+	do n=1,np
+	  del(n) = del(n)-ecol*tan(el(n))
+	enddo
+	end
+c********1*********2*********3*********4*********5*********6*********7*c

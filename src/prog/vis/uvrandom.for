@@ -36,14 +36,17 @@ c    11may93 mchw  write out nants=2
 c    28aug98 pjt   added check for MAXPTS > npts
 c    31aug98 tth/pjt    added gauss option to distribute points
 c    10may99 mchw  increased MAXPTS=100000; Add Gaussian noise.
+c    19aug99 mchw  increased to 1e6
+c    17mar01  pjt documented and changed to 1e6 to 1000000  :-)
+c    
 c-----------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*),uvfile*80
-	parameter(version='(version 1.1  10-may-99)')
+	parameter(version='(version 1.1  17-mar-01)')
 	double precision preamble(4),sfreq,sdf,restfreq,timeout
 	complex wcorr(MAXCHAN),corr(MAXCHAN),data(MAXCHAN)
 	integer i,j,npts,nwide,nchan,unit,MAXPTS,ischan,nschan,nspect
-	parameter(MAXPTS=100000)
+	parameter(MAXPTS=1000000)
 	real umax,vmax,uns(MAXPTS),vns(MAXPTS),wfreq,wwidth,freq
 	real inttime,noise
 	logical flags(MAXCHAN), qgauss

@@ -92,10 +92,9 @@ c	Output filename containing the status of the observations.
 c	This file is updated after each observation scheduled.
 c@ options
 c       Extra processing options. Possible values are:
-c         debug    Print more output to monitor scheduled observations,
-c			 and calculate contiguous run time statistics.
+c         debug    Print more output to monitor scheduled observations.
 c         histo    Print histogram for atmospheric phase,
-c			 and run time statistics..
+c			 and run time statistics.
 c--
 c
 c  History:
@@ -110,10 +109,12 @@ c    mchw 20oct97  calculate contiguous run time statistics.
 c    mchw 24nov97  Sort input status. Discard unused projects.
 c    mchw 23dec97  Write out project start time.
 c    mchw 31dec97  More debugging info for Dick.
-c    pjt  20jun98  fixed freakin' same problem as in tac.for
+c    mchw 05jan00  Print run time statistics indep of debug option.
+c (( pjt  20jun98  fixed freakin' same problem as in tac.for ))
+c    pjt  17mar01  and retrofitted the SAME THING AGAIN...geez Mel
 c------------------------------------------------------------------------
       character version*(*)
-      parameter(version='version 20-jun-98')
+      parameter(version='version 17-mar-01')
 c
 	integer MAXP
 	real pi
@@ -229,7 +230,6 @@ c  Get next valid project.
 c
         if(debug)
      *    call output('# ha, halimit, minint, obsint, inttime, lstdone')
-c********1*********2*********3*********4*********5*********6*********7**
 20	ha = mod(lst-ra(j)*12./pi+36.,24.) - 12.
 	halimit = halim(elevlim,dec(j),latitude)
 	minint = min(mintime,1.6*halimit)
@@ -267,8 +267,8 @@ c********1*********2*********3*********4*********5*********6*********7**
 	    write(line,'(i3,3f7.2,x,24i3)')
      *                     j,lst,atmos,inttime(j),(lstdone(i,j),i=1,24)
 	    call output(line)
-	    call runstat(0,j,obsint,histo)
 	  endif
+	  call runstat(0,j,obsint,histo)
 	  goto 10
 	else if(j.lt.np)then
 	  j = j + 1
@@ -321,10 +321,8 @@ c
 	  call logwrit(line)
 	write(line,'(a,i5)')   'Projects complete:  ',complete
 	  call logwrit(line)
-	if(debug) then
 	  call runstat(0,0,interval,histo)
 	  call runstat(1,j,interval,histo)
-	endif
 c
 c  weather statistics.
 c
@@ -645,7 +643,7 @@ c    inttime	integration time aquired.
 c    lstdone	lst done. 
 c
 c-----------------------------------------------------------------------
-        character line*153,proj*33,lstatfil*80
+        character line*153,proj*33,lstatfile*80
         integer lin,i,j,length,iostat
 c
 c  Externals.
@@ -658,8 +656,8 @@ c
           call output(' ')
           call output('Read the project status')
           call txtopen(lin,statfile,'old',iostat)
-	  lstatfil = statfile
-          if(iostat.ne.0) call bug('f','problem opening '// lstatfil)
+	  lstatfile = statfile
+          if(iostat.ne.0) call bug('f','problem opening '// lstatfile)
           call txtread(lin,line,length,iostat)
           do while(iostat.eq.0.and.j.lt.maxp)
 c            call output(line)
@@ -684,7 +682,7 @@ c          call output(' ')
 c          call output('Write the project status')
           call txtopen(lin,statfile,'new',iostat)
 	  lstatfil = statfile
-          if(iostat.ne.0) call bug('f','problem opening '// lstatfil)
+          if(iostat.ne.0) call bug('f','problem opening '// lstatfile)
           write(line,'(a,10x,a,17x,a,20x,a)')
      *				 '#','project','inttime','lstdone'
           call txtwrite(lin,line,len1(line),iostat)
