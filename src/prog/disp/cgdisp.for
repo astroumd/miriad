@@ -233,6 +233,8 @@ c	                "B" is one of "l" or "r"
 c	  means draw the beam FWHM on the plot in the corner indicated
 c	  by the "AB" location. This option is deprecated: use the
 c         keyword "beamtyp" instead.
+c       "blacklab" means that, if the device is white-background, draw
+c         the axis labels in black. Default is red. 
 c	"conlabel" means label the contour values on the actual contours.
 c	  The PGPLOT routine that does this is not very bright. You will
 c	  probably get too many labels.  If you bin the image up with
@@ -276,8 +278,6 @@ c	"noerase" means don't erase a rectangle into which the "3-axis"
 c	  values and the overlay ID strings are written.
 c	"nofirst" means don't write the first x-axis label on any subplots
 c	  except for the left-most one. This may avoid label overwrite.
-c       "corner" means only write labels in the lower left corner of any
-c         subplot
 c	"relax" means issue warnings when image axis descriptors are
 c	  inconsistent (e.g. different pixel increments) instead
 c	  of a fatal error.  Use at your peril.
@@ -661,7 +661,8 @@ c    rjs  13jul00  Correct angle of beam plotting when there is a rotation
 c		   between sky and pixel grid.
 c    dpr  14feb01  Add beamtyp keyword
 c    dpr  27feb01  Added scale-bar
-c    pjt  15jan02  Added options=corner
+c    dpr  18jun01  Add option blacklabel
+c    nebk 14nov01  For box type, make sure abs max comes from entire image
 c-----------------------------------------------------------------------
       implicit none
 c
@@ -686,7 +687,7 @@ c
       real levs(maxlev,maxcon), pixr(2,maxchan), tr(6), bmin(maxcon+4), 
      +  bmaj(maxcon+4), bpa(maxcon+4), scale(2), cs(4), pixr2(2), 
      +  slev(maxcon), break(maxcon), vfac(2), bfac(5), tfvp(4), 
-     +  wdgvp(4), cumhis(nbins), gmm(2), cmm(2,maxcon), dmm(2)
+     +  wdgvp(4), cumhis(nbins), gmm(3), cmm(3,maxcon), dmm(3), bmm(3)
       real vxmin, vymin, vymax, vx, vy, vxsize, vysize, vxgap, vygap, 
      +  ydispb, xdispl, groff, blankg, blankc, blankv, blankb, 
      +  vecfac, vecmax, vecmaxpix, boxfac, hs(3)
@@ -706,10 +707,10 @@ c
 c
       logical solneg(maxcon), doblv(2), bemprs(maxcon+4)
       logical do3val, do3pix, dofull, gaps, eqscale, doblc, doblg,
-     -     dobeam, candobeam, beaml, beamb, relax, rot90, signs, mirror,
-     -     dowedge, doerase, doepoch, bdone, doblb, doblm, dofid, dosing
-     -     , nofirst, grid, dotr, dodist, conlab, doabut, getvsc, noflab
-     -     , docorner, donum
+     +  dobeam, candobeam, beaml, beamb, relax, rot90, signs, mirror,
+     +  dowedge, doerase, doepoch, bdone, doblb, doblm, dofid, dosing,
+     +  nofirst, grid, dotr, dodist, conlab, doabut, getvsc, noflab,
+     +  blacklab
 c
       data blankc, blankv, blankb /-99999999.0, -99999999.0, 
      +                             -99999999.0/
@@ -721,25 +722,26 @@ c
      +             'arcmin', 'absghz', 'relghz', 'abskms', 'relkms',
      +             'absnat', 'relnat', 'absdeg', 'reldeg', 'none',
      +             'abslin', 'rellin'/
-      data dmm /2*0.0/
+      data dmm /1.0e30, -1.0e30, -1.0/
+      data bmm /1.0e30, -1.0e30, -1.0/
       data coltab /maxchan*0/
       data lwid /maxconp3*1/
       data getvsc /.true./
 c-----------------------------------------------------------------------
-      call output ('CgDisp: version 15-Jan-02')
+      call output ('CgDisp: version 14-Nov-01')
       call output (' ')
 c
 c Get user inputs
 c
       call inputs (maxchan, maxlev, maxcon, maxtyp, ltypes, ncon, cin,
-     -     gin, nvec, vin, bin, mskin, ibin, jbin, kbin, levtyp, slev,
-     -     levs, nlevs, npixr, pixr, trfun, coltab, vecfac, vecmax,
-     -     vecinc, boxfac, boxinc, pdev, labtyp, dofull, do3val, do3pix
-     -     , eqscale, gaps, solneg, nx, ny, lwid, break, cs, scale,
-     -     ofile, dobeam, beaml, beamb, relax, rot90, signs, mirror,
-     -     dowedge, doerase, doepoch, dofid, dosing, nofirst, grid, dotr
-     -     , dodist, conlab, doabut, docorner, val3form, ncols1, cols1, 
-     -     fs, hs, firstimage)
+     +  gin, nvec, vin, bin, mskin, ibin, jbin, kbin, levtyp, slev,
+     +  levs, nlevs, npixr, pixr, trfun, coltab, vecfac, vecmax,
+     +  vecinc, boxfac, boxinc, pdev, labtyp, dofull, do3val, do3pix,
+     +  eqscale, gaps, solneg, nx, ny, lwid, break, cs, scale,
+     +  ofile, dobeam, beaml, beamb, relax, rot90, signs, mirror,
+     +  dowedge, doerase, doepoch, dofid, dosing, nofirst, grid, dotr,
+     +  dodist, conlab, doabut, val3form, ncols1, cols1, fs, hs,
+     +  firstimage, blacklab)
 c
 c Open images as required
 c
@@ -824,7 +826,7 @@ c
 c Set colours for line graphics
 c
       call setlgc (bgcol, labcol, concol, veccol, boxcol, 
-     +             ovrcol, bemcol)
+     +             ovrcol, bemcol, blacklab)
 c
 c Init OFM routines 
 c
@@ -855,6 +857,25 @@ c requested or if scales provided by user
 c
       call vpadjcg (lhead, hard, eqscale, scale, vxmin, vymin, vymax, 
      +   nx, ny, blc, trc, tfvp, wdgvp, vxsize, vysize)
+
+c
+c Find abs max of full image for box display
+c
+      if (bin.ne.' ') then
+         do j = 1, ngrps
+           if (bsize(3).gt.1) then
+             krng(1) = grpbeg(j)
+             krng(2) = ngrp(j)
+           else
+             krng(1) = 1
+             krng(2) = 1
+           end if
+c
+           call readimcg (.true., blankb, lb, ibin, jbin, krng, blc,
+     +       trc, .true., memi(ipnim), memr(ipim), doblb, bmm)
+         end do          
+         bfac(1) = bmm(3)
+       end if
 c
 c Set viewport location of first sub-plot
 c
@@ -963,8 +984,7 @@ c
 c
 c Write on ascii axis labels
 c
-         if (.not.docorner  .or.  jj.eq.(nx*ny-nx+1))
-     +    call aaxlabcg (doaxlab, doaylab, xdispl, ydispb, 
+         call aaxlabcg (doaxlab, doaylab, xdispl, ydispb, 
      +                  xlabel, ylabel)
 c
 c Draw frame, write numeric labels, ticks and optional grid
@@ -973,8 +993,7 @@ c
          krng(2) = ngrp(j)
          jplot = mod(j,nx*ny)
          noflab = nofirst .and. mod(jplot,nx).ne.1
-         donum = .not.docorner  .or.  jj.eq.(nx*ny-nx+1)
-         call naxlabcg (lhead, donum, blc, trc, krng, labtyp, 
+         call naxlabcg (lhead, .true., blc, trc, krng, labtyp, 
      +                  donxlab, donylab, noflab, grid)
 c
 c Draw wedge now so that it overwrites axis label ticks when wedge
@@ -1074,6 +1093,7 @@ c
              krng(1) = 1
              krng(2) = 1
            end if
+c
            call readimcg (.true., blankb, lb, ibin, jbin, krng, blc,
      +       trc, .true., memi(ipnim), memr(ipim), doblb, dmm)
            if (mskin.ne.' ' .and. doblm) then
@@ -1752,12 +1772,12 @@ c
       subroutine decopt  (dofull, do3val, do3pix, eqscale, gaps, solneg,
      +   beambl, beambr, beamtl, beamtr, relax, rot90, signs, 
      +   mirror, dowedge, doerase, doepoch, dofid, dosing, nofirst,
-     +   grid, dotr, dodist, conlab, doabut, docorner)
+     +   grid, dotr, dodist, conlab, doabut, blacklab)
 c----------------------------------------------------------------------
 c     Decode options array into named variables.
 c
 c   Output:
-c     dofull    True means do full annotation of plot
+c     dofull    True means do full annotaiton of plot
 c     do3val    True means label sub-plots with value of third axis
 c     do3pix    True means label sub-plots with pixel of third axis
 c     doerase   True means erase rectangle into which 3-axis label written
@@ -1785,14 +1805,14 @@ c     dotr      Label top and right as well as left and bottom axes
 c     dodist    Distort overlays with grid
 c     conlab    Label contours
 c     doabut    No white space between subplots
-c     docorner  Only lower left corner gets labels
+c     blacklab  True if labels are black for white background devices
 c-----------------------------------------------------------------------
       implicit none
 c
       logical dofull, do3val, do3pix, eqscale, gaps, solneg(*),
      +  beambl, beambr, beamtl, beamtr, relax, rot90, signs,
      +  mirror, dowedge, doerase, doepoch, dofid, dosing, nofirst,
-     +  grid, dotr, dodist, conlab, doabut, docorner
+     +  grid, dotr, dodist, conlab, doabut, blacklab
 
 cc
       integer maxopt
@@ -1806,7 +1826,7 @@ c
      +              'relax   ', 'rot90   ', 'signs   ', 'mirror',
      +              'wedge   ', 'noerase ', 'noepoch ', 'fiddle',
      +              'single  ', 'nofirst',  'grid    ', 'trlab',
-     +              'nodistort', 'conlabel','abut    ', 'corner'/
+     +              'nodistort', 'conlabel','abut    ', 'blacklab'/
 c-----------------------------------------------------------------------
       call optcg ('options', opshuns, present, maxopt)
 c
@@ -1837,7 +1857,7 @@ c
       dodist    = .not.present(25)
       conlab    =      present(26)
       doabut    =      present(27)
-      docorner  =      present(28)
+      blacklab  =      present(28)
 c
       end
 c
@@ -1895,12 +1915,6 @@ c
 c Find maximum selected pixel from first sub-plot
 c
       if (iplot.eq.1) then
-        bfac(1) = -1.0e30
-        do j = 1, npixy, boxinc(2)
-          do i = 1, npixx, boxinc(1)
-            if (nimage(i,j).gt.0) bfac(1) = max(bfac(1),abs(image(i,j)))
-          end do
-        end do
 c
 c Make maximum box width on the plot equal to 99% of the selected
 c pixel increment, multiplied by the users factor. 
@@ -2459,8 +2473,8 @@ c
      -     do3pix, eqscale, gaps, solneg, nx, ny, lwid, break, cs, scale
      -     , ofile, dobeam, beaml, beamb, relax, rot90, signs, mirror,
      -     dowedge, doerase, doepoch, dofid, dosing, nofirst, grid, dotr
-     -     , dodist, conlab, doabut, docorner, val3form, ncols1, cols1, 
-     -     fs, hs, firstimage)
+     -     , dodist, conlab, doabut, val3form, ncols1, cols1, fs, hs,
+     -     firstimage, blacklab)
 c-----------------------------------------------------------------------
 c     Get the unfortunate user's long list of inputs
 c
@@ -2536,7 +2550,6 @@ c   dotr       Label top and right axes as well as bototm and left
 c   dodist     Distort overlays with grid
 c   conlab     Label contours
 c   doabut     No white space bewteen subplots
-c   docorner   Only draw labels with lower left subplot
 c   val3form   Format for options=3val labelling
 c   cols1      Colours for LEVS1 contours
 c   ncols1
@@ -2544,6 +2557,7 @@ c   fs         PGPLOT fill style
 c   hs         PGPLOT hatching style
 c   firstimage first image specified (used for beam plotting). Given
 c              in bemprs format (see below)
+c   blacklab   True if labels are black for white background devices
 c-----------------------------------------------------------------------
       implicit none
 c
@@ -2559,7 +2573,7 @@ c
       logical do3val, do3pix, dofull, gaps, eqscale, solneg(maxcon),
      +  dobeam, beaml, beamb, relax, rot90, signs, mirror, dowedge,
      +  doerase, doepoch, dofid, dosing, nofirst, grid, dotr, 
-     +  dodist, dunw, conlab, doabut, docorner
+     +  dodist, dunw, conlab, doabut, blacklab
 cc
       integer nmaxim
       parameter (nmaxim = 8)
@@ -2780,7 +2794,7 @@ c
       call decopt (dofull, do3val, do3pix, eqscale, gaps, solneg,
      +   beambl, beambr, beamtl, beamtr, relax, rot90, signs, 
      +   mirror, dowedge, doerase, doepoch, dofid, dosing, nofirst,
-     +   grid, dotr, dodist, conlab, doabut, docorner)
+     +   grid, dotr, dodist, conlab, doabut, blacklab)
 c
       call keya ('3format', val3form, ' ')
 c
@@ -4055,7 +4069,7 @@ c
 c
 c
       subroutine setlgc (bgcol, labcol, concol, veccol, boxcol, 
-     +                   ovrcol, bemcol)
+     +                   ovrcol, bemcol,blacklab)
 c-----------------------------------------------------------------------
 c     Set line graphics colours
 c
@@ -4064,11 +4078,14 @@ c    bgcol 0 -> background is black
 c	   1 ->               white
 c         -1 ->               something else
 c
+c    blacklab - true if labels are to be black for white background
+c               devices (default is red?!)
 c  OUtput
 c    colour indices to use
 c-----------------------------------------------------------------------
       implicit none
       integer bgcol, concol(*), veccol, boxcol, ovrcol, bemcol, labcol
+      logical blacklab
 c-----------------------------------------------------------------------
 c
 c Labels first
@@ -4078,7 +4095,12 @@ c
 c
 c White background
 c
-        labcol = 2
+        if (blacklab) then
+          labcol = 1
+        else 
+          labcol = 2
+        end if
+
       else if (bgcol.eq.0) then
 c
 c Black background
