@@ -33,11 +33,11 @@ c
      &	       " can be specified"
 	   call exit(1)
 	end if
+c	stop
 	if (ncut.gt.0.and.ncut.ne.3) then
 	   write(*,*) "Error!! Need 3 parameters for 'cut'." 
 	   call exit(1)
 	end if
-
 	if (ncutr.gt.0.and.ncutr.ne.7) then
 	   write(*,*) "Error!! Need 7 parameters for 'cutr'." 
 	   call exit(1)

@@ -83,7 +83,7 @@ c     +    nconarg,(conargs(i),i=1,nconarg)
 	if (image.ne.0) then
 	  call PALETT(image)
 	  if (range(1).eq.range(2)) then
-	    range(1)=0.0
+	    range(1)=mapmin
 	    range(2)=mapmax
 	  endif
 	endif
@@ -102,6 +102,8 @@ c     +    nconarg,(conargs(i),i=1,nconarg)
 	   call pgvsiz(0.78*schi,0.98*schi,sdlo,sdhi)
 	   call annot_implot(lIn,filename,mapmax,mapmin,poslevs,
      +        npos,range,sclo,schi,sdlo,sdhi)
+	   if (.not.animate.and.image.ne.0) 
+     +       CALL PGWEDG('BI',1.0,2.0,range(2),range(1), '')
 	   call pgvsiz(sclo,schi,sdlo,sdhi)
 	endif
 	call labels(lIn,blc,trc,Units_p,ablc,atrc,tr,label2s)
