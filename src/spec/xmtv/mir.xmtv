@@ -1,0 +1,130 @@
+#!/bin/csh -f
+# 
+#* mir.xmtv - Load MIRIAD's Xaw TV server.
+#& jm
+#: system operation
+#+
+#  Load MIRIAD program XMTV from source code to $MIRBIN/xmtv.
+#
+#    Usage:  mir.xmtv
+#--
+#
+set bindir  = $MIRBIN
+set bin  = ${bindir}/xmtv
+set appdef  = ${MIRDOC}/misc/XMtv
+# set slib = "-lXaw -lXmu -lXt -lX11 -lm"
+set slib = "-lXaw -lXmu -lXt -lXext -lX11 -lm"
+#
+set theI = ""
+if ($?MIRXINC != 0) then
+    foreach i ($MIRXINC)
+      set theI = ($theI "-I${i}")
+    end
+endif
+#
+set theX = ""
+if ($?MIRXLIB != 0) then
+    foreach i ($MIRXLIB)
+      set theX = ($theX "-L${i}")
+    end
+endif
+#
+if      ('sun3' == $MIRHOST && $MIRSW == 'p') then
+        set theC = "cc $theI -c	 -f68881 -O"
+        set theM = "cc $theI	 -f68881 -O"
+else if ('sun3' == $MIRHOST) then
+        set theC = "cc $theI -c	 -f68881 -g"
+        set theM = "cc $theI	 -f68881 -g"
+else if ('sun4' == $MIRHOST && $MIRSW == 'p') then
+        set theC = "cc $theI -c	 -O"
+        set theM = "cc $theI	 -O"
+else if ('sun4' == $MIRHOST) then
+        set theC = "cc $theI -c	 -g"
+        set theM = "cc $theI	 -g"
+else if ('convex' == $MIRHOST && $MIRSW == 'p') then
+        set theC = "cc $theI -c -fi -O1 -Dconvex"
+        set theM = "cc $theI    -fi -O1 -Dconvex"
+else if ('convex' == $MIRHOST) then
+        set theC = "cc $theI -c -fi -g -Dconvex"
+        set theM = "cc $theI    -fi -g -Dconvex"
+else
+        echo "Unrecognized arch - exit 1"
+	echo "arch = $MIRHOST"
+	exit 1
+endif
+#
+pushd $MIR/src/spec/xmtv
+#
+echo "----- ----- ----- ----- ----- ----- ----- -----"
+echo "Begin loading MIRIAD XMTV on $MIRHOST."
+echo "`date`"
+echo "----- ----- ----- ----- ----- ----- ----- -----"
+echo ""
+#
+set theList = (`ls *.c`)
+if ($#argv != 0) then
+	echo "--- Parameters ignored:  xmtv to be rebuilt from source ---"
+endif
+#
+rm -fr *.o >& /dev/null
+#
+foreach i ($theList)
+    set out = $i:t
+    set out = $out:r
+    switch ($i)
+    case xmtv.c:
+        breaksw
+    case *.c:
+        echo "$theC $i"
+        $theC $i
+        breaksw
+    default:
+        echo "$i Ignored."
+        breaksw
+    endsw
+end
+#
+echo "$theM -o ${bin}.exe xmtv.c `ls *.o` $theX $slib"
+$theM -o ${bin}.exe xmtv.c `ls *.o` $theX $slib
+(${bindir}/mir.mkpdoc xmtv.c) >& /dev/null
+rm -fr *.o >& /dev/null
+#
+echo "Creating execution script..."
+#
+#----- ----- ----- ----- ----- ----- ----- -----
+cat <<END_OF_TEXT > $bin
+#!/bin/csh -f
+# This script will enable you to run the XMtv application without
+# having to move the XMtv resource file to your home or defaults directory.
+
+set noglob
+
+setenv XAPPLRESDIR ${appdef:h}
+
+exec ${bin}.exe \${*:q}
+
+END_OF_TEXT
+chmod 755 $bin
+#----- ----- ----- ----- ----- ----- ----- -----
+#
+echo "...done."
+#
+set docopy = 1
+if (-e ${appdef}) then
+    set adtmp = (`find . -name ${appdef:t}.ad -type f -newer ${appdef} -print`)
+    if ($#adtmp == 0) set docopy = 0
+endif
+if ($docopy == 1) then
+    echo "cp ${appdef:t}.ad ${appdef}"
+    cp ${appdef:t}.ad ${appdef}
+endif
+#
+echo ""
+echo "----- ----- ----- ----- ----- ----- ----- -----"
+echo "`date`"
+echo "Finished loading MIRIAD XMTV on $MIRHOST."
+echo "`ls -l $bin`"
+echo "`ls -l ${bin}.exe`"
+echo "----- ----- ----- ----- ----- ----- ----- -----"
+popd
+exit 0
