@@ -210,6 +210,7 @@ void xyzplnwr_c ARGS((int tno, int planenr, Const float *data, Const int *mask, 
 
 /* bug.c */
 
+void bugrecover_c ARGS((void (*recover)(void)));
 void buglabel_c ARGS((Const char *name));
 void bugno_c ARGS((char s, int n));
 void bug_c ARGS((char s, Const char *m));
