@@ -296,6 +296,7 @@ c    rjs  06jun96  Change frequency behaviour to default to all channels.
 c    mchw 26jun96  Call varmint to get parang in case not in uvdata.
 c    pjt  12oct97  Push MAXBASE2 upto 45 for Hat Creek.  Does not affect ATCA
 c    mchw 14feb02  Changes to accomodate more antennas.
+c    pjt  11dec02  subroutine IZERO to bypass big DATA statement that makes big binaries
 c
 c To do:
 c
@@ -423,13 +424,17 @@ c
       data none, allfull /.true., .false./
       data ivis, title /0, ' '/
       data plfidx, ifile, ofile /0, 0, 0/
-      data npts, plpts, basmsk /ifac1*0, ifac1*0, ifac2*0/
+c      data npts, plpts, basmsk /ifac1*0, ifac1*0, ifac2*0/ -- see izero
       data polmsk /13*0/
 c-----------------------------------------------------------------------
-      call output ('UvPlt: version 14-Feb-02')
+      call output ('UvPlt: version 10-dec-02')
       call output ('New frequency behaviour '//
      *	'(see parameters line and options=nofqav)')
       call output (' ')
+
+      call izero(ifac1,npts)
+      call izero(ifac1,plpts)
+      call izero(ifac2,basmsk)
 c
 c  Get the parameters given by the user and check them for blunders
 c
@@ -4017,4 +4022,12 @@ c
       call uvdatrew
 c
       end
-************************************************************************
+c-----------------------------------------------------------------------
+      subroutine izero(n, iarr)
+      integer n, iarr(n)
+      integer i
+      do i=1,n
+         iarr(i) = 0
+      enddo
+      end
+c-----------------------------------------------------------------------

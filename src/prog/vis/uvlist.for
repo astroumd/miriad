@@ -322,7 +322,7 @@ c------------------------------------------------------------------------
 	character line*128,ctime*10,pol*2
 	real amp(mchan),arg(mchan),count
 	character cflag(mchan)*1
-	logical doave(MAXBASE)
+	logical doave(MAXBASE),first
 	double precision preambl(4)
 	real num(MAXBASE)
 	real amps(maxpts,mchan,MAXBASE),args(maxpts,mchan,MAXBASE)
@@ -334,11 +334,21 @@ c
 	character PolsC2P*2
 	integer len1
 c
-	data doave/MAXBASE*.false./
-	data num/MAXBASE*0./
-	data uave,vave,timeave/MAXBASE*0.d0,MAXBASE*0.d0,MAXBASE*0.d0/
-	data baseave/MAXBASE*0.d0/
+	data first/.TRUE./
+cpjt	data doave/MAXBASE*.false./
+cpjt	data num/MAXBASE*0./
+cpjt	data uave,vave,timeave/MAXBASE*0.d0,MAXBASE*0.d0,MAXBASE*0.d0/
+cpjt	data baseave/MAXBASE*0.d0/
 c
+	if(first)then
+	   call qzero(MAXBASE,doave)
+	   call rzero(MAXBASE,num)
+	   call dzero(MAXBASE,uave)
+	   call dzero(MAXBASE,vave)
+	   call dzero(MAXBASE,timeave)
+	   call dzero(MAXBASE,baseave)
+	   first = .FALSE.
+	endif
 	if(needhd)then
 	  nchan = min(mchan,numchan)
 	  call LogWrite(' ',more)
@@ -474,7 +484,7 @@ c------------------------------------------------------------------------
 	character line*128,ctime*10,pol*2
 	real amp(mchan),arg(mchan)
 	character cflag(mchan)*1
-	logical doave(MAXBASE)
+	logical doave(MAXBASE),first
 	double precision preambl(4)
 	real numave(mchan,MAXBASE),recave(MAXBASE)
 	real ampave(mchan,MAXBASE),phiave(mchan,MAXBASE)
@@ -488,13 +498,28 @@ c
 	character PolsC2P*2
 	integer len1
 c
-	data doave/MAXBASE*.false./
-	data numave/MAXAVE*0./,recave/MAXBASE*0./
-	data ampave,phiave/MAXAVE*0.,MAXAVE*0./
-	data amprms,phirms/MAXAVE*0.,MAXAVE*0./
-	data uave,vave,timeave/MAXBASE*0.d0,MAXBASE*0.d0,MAXBASE*0.d0/
-	data baseave/MAXBASE*0.d0/
+	data first/.TRUE./
+cpjt	data doave/MAXBASE*.false./
+cpjt	data numave/MAXAVE*0./,recave/MAXBASE*0./
+cpjt	data ampave,phiave/MAXAVE*0.,MAXAVE*0./
+cpjt	data amprms,phirms/MAXAVE*0.,MAXAVE*0./
+cpjt	data uave,vave,timeave/MAXBASE*0.d0,MAXBASE*0.d0,MAXBASE*0.d0/
+cpjt	data baseave/MAXBASE*0.d0/
 c
+	if(first)then
+	   call qzero(MAXBASE,doave)
+	   call rzero(MAXAVE,numave)
+	   call rzero(MAXAVE,recave)
+	   call rzero(MAXAVE,ampave)
+	   call rzero(MAXAVE,phiave)
+	   call rzero(MAXAVE,amprms)
+	   call rzero(MAXAVE,phirms)
+	   call dzero(MAXAVE,uave)
+	   call dzero(MAXAVE,vave)
+	   call dzero(MAXAVE,timeave)
+	   call dzero(MAXAVE,baseave)
+	   first = .FALSE.
+	endif
 	if(needhd)then
 	  nchan = min(mchan,numchan)
 	  call LogWrite(' ',more)
@@ -1848,4 +1873,32 @@ c
 	  call LogWrite(line(1:length),more)
 	endif
 	end
+c-----------------------------------------------------------------------
+      subroutine qzero(n, qarr)
+      integer n
+      logical qarr(n)
+      integer i
+      do i=1,n
+         qarr(i) = .FALSE.
+      enddo
+      end
+c-----------------------------------------------------------------------
+      subroutine rzero(n, rarr)
+      integer n
+      real rarr(n)
+      integer i
+      do i=1,n
+         rarr(i) = 0.0
+      enddo
+      end
+c-----------------------------------------------------------------------
+      subroutine dzero(n, darr)
+      integer n
+      double precision darr(n)
+      integer i
+      do i=1,n
+         darr(i) = 0.0d0
+      enddo
+      end
+c-----------------------------------------------------------------------
 c********1*********2*********3*********4*********5*********6*********7**
