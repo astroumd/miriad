@@ -38,7 +38,7 @@ set linklib = ""
 cd $srcdir
 switch ($out)
      case miriad:
-		  if (-e $libdir/libreadline.a) then
+		  if (-e $libdir/libreadline.a || -e $libdir/libreadline.so) then
 		     set options = "$options -DREADLINE"
 		     set linklib = "-lreadline -ltermcap -lm"
 		  endif
