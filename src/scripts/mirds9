@@ -3,7 +3,7 @@
 
 if ($#argv == 0) then
     echo "Usage: $0 [-options] miriad_dataset [plane1] [plane2 ...]"
-    echo "  Load selected planes from a miriad dataset into ds9"
+    echo "  Load selected planes, or a cube, from a miriad dataset into ds9"
     echo "  Options:"
     echo "      -minmax data_min data_max"
     echo "                  clipped display values from data_min to data_max"
@@ -12,7 +12,7 @@ if ($#argv == 0) then
     echo "      -wcs"
     echo "                  do not load WCS, even if it has one"
     echo ""
-    echo "  Version 2.5 - 7-nov-02 PJT"
+    echo "  Version 3.0 - 19-jun-03 PJT"
     echo ""
     echo "  Be sure 'ds9' and the XPA routines are in your environment."
     echo "  You do need to start ds9 manually yourself."
@@ -85,8 +85,13 @@ if (-d $name) then
     set ndim=`itemize in=$name/naxis | tail -1 | awk '{print $3}'`
     set n1=`itemize in=$name/naxis1 | tail -1 | awk '{print $3}'`
     set n2=`itemize in=$name/naxis2 | tail -1 | awk '{print $3}'`
+    if ($ndim > 2) then
+      set n3=`itemize in=$name/naxis3 | tail -1 | awk '{print $3}'`
+    else 
+      set n3=1
+    endif
     set dims=(`itemize in=$name | grep naxis | tail +2 | awk '{print $3}'`)
-    echo "Found $ndim-dim cube, ($dims) : maps $n1 x $n2"
+    echo "Found $ndim-dim cube, ($dims) : maps $n1 x $n2 x $n3"
     if ($dowcs) then
         set wcs=/tmp/saotng$$.wcs
         # work around an earlier bug by adding NAXIS=2
@@ -108,6 +113,14 @@ if (-d $name) then
         echo CRPIX2 `imhead in=$name key=crpix2 | awk '{print $1}'` >> $wcs
         echo CTYPE1 \'`imhead in=$name key=ctype1`\' >> $wcs
         echo CTYPE2 \'`imhead in=$name key=ctype2`\' >> $wcs
+	if ($n3 > 1) then
+	  # TODO: should check per axis if ascl=1 or 57....
+	  set ascl=1
+          echo CDELT3 `imhead in=$name key=cdelt3 | awk '{printf("%.10f\n",$1*'$ascl')}'` >> $wcs
+          echo CRVAL3 `imhead in=$name key=crval3 | awk '{printf("%.10f\n",$1*'$ascl')}'` >> $wcs
+          echo CRPIX3 `imhead in=$name key=crpix3 | awk '{print $1}'` >> $wcs
+          echo CTYPE3 \'`imhead in=$name key=ctype3`\' >> $wcs
+  	endif
     endif
 else if (-f $name) then
    set type=`file $name | awk '{print $2}'`
@@ -165,9 +178,9 @@ foreach p ($planes)
 
     set skip=`echo " $n1 $n2 $p " | awk '{printf("%d",($1*$2*($3-1)*4)+4)}'`
 
-    echo $name $n1 $n2 -32 $skip 
+    echo $name $n1 $n2 $n3 -32 $skip 
 
-    cat $name/image | $pipe | xpaset $title array  $name/image\[xdim=$n1,ydim=$n2,bitpix=-32,skip=$skip\]
+    cat $name/image | $pipe | xpaset $title array  $name/image\[xdim=$n1,ydim=$n2,zdim=$n3,bitpix=-32,skip=$skip\]
 
 #    echo array $name/image $n1 $n2 -32 $skip | $pipe | xpaset $title
 
