@@ -135,7 +135,8 @@ c
         double precision rfreq(2)
         logical doauto,docross,docomp,dosam,relax,unflag,dohann
         logical dobary,doif,birdie,dowt,dopmps,doxyp,doop
-        logical polflag,hires,nopol,sing,circular,oldpol,dsb,dospc,doengrd
+        logical polflag,hires,nopol,sing,circular,oldpol,dsb,
+     *          dospc,doengrd
         integer fileskip,fileproc,scanskip,scanproc,sb, dosporder
         integer doeng
 	integer rsNCHAN
