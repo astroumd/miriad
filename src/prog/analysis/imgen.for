@@ -75,6 +75,8 @@ c@ imsize
 c	If not input image is given, then this determines the size, in
 c	pixels, of the output image. Either one or two numbers can be
 c	given. If only one number is given, then the output is square.
+c       For testing purposes a third number can be given to create a cube,
+c       no good coordinate headers however are written for such cubes.
 c	The default is 256 pixels square. 
 c@ cell
 c	The increment between pixels, in arcseconds. This is only used if
@@ -144,10 +146,15 @@ c    mchw  16jan01  Jet model.
 c    pjt    6sep01  using MAXDIM1 instead of MAXDIM
 c    pjt    3nov01  changed radec default to reflect those in uvgen
 c    pjt   21jan02  using MAXDIM1
+c    pjt   25jun02  allow imsize to be 3 dimensional [for MIR4]
 c    pjt    3dec02  using MAXDIM again, MAXDIM1 retired; MAXDIM2 is new
+c    pjt   30jan03  merged MIR4 into current release
+c---
+c ToDo: 
+c    write good headers if 3D cubes written
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version='Imgen: version 1.1 3-dec-02')
+	parameter(version='Imgen: version 30-jan-03')
 	include 'mirconst.h'
 	include 'maxdim.h'
 	include 'maxnax.h'
@@ -252,7 +259,7 @@ c
 	cdelt2 =  abs(cdelt2/3600 * pi/180.)
 	call keyi('imsize',n1,256)
 	call keyi('imsize',n2,n1)
-	n3 = 1
+	call keyi('imsize',n3,1)
 	call keyt('radec',crval1,'hms',0.d0)
 	call keyt('radec',crval2,'dms',dpi/6.0d0)
 	crpix1 = n1/2 + 1
@@ -287,7 +294,11 @@ c
 	  call rdhdd(lIn,'cdelt1',cdelt1,1d0*cdelt1)
 	  call rdhdd(lIn,'cdelt2',cdelt2,1d0*cdelt2)
 	else
-	  naxis = 2
+	  if (n3.eq.1) then
+	     naxis = 2
+	  else
+	     naxis = 3
+	  endif
 	  nsize(1) = n1
 	  nsize(2) = n2
 	  nsize(3) = n3
