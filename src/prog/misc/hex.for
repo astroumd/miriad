@@ -16,7 +16,7 @@ c
 c@ rings
 c	number of rings. Default rings=2 makes a hexagonal grid of
 c	7 pointings.
-c& cell
+c@ cell
 c	Horizontal grid spacing in arcsecs.
 c	The vertical spacing is sqrt(3)/2 times the
 c	horizontal spacing.  
