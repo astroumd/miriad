@@ -1,6 +1,6 @@
 	program velplot
 	character version*(*)
-        parameter(version='version 13-Mar-01')
+        parameter(version='version 17-April-01')
 	character task*20,device*20,file*120,logfile*120
 	character trans*20
 	include "data.h"
@@ -398,7 +398,11 @@ c
 	call keya ('units', Units_p, "s")
 	call keya ('conflag', conflag, "pn")
 	call mkeyr('Cbeam',value,3,nval)
-	if (nval.ne.3) then
+	if (nval.eq.0) then
+	  cmaj=0.0
+	  cmin=0.0
+	  cpa=0.0
+	else  if (nval.ne.3) then
 	  write(*,*) "##Warning: Error input of Cbeam, use defaults"
 	  cmaj=0.0
 	  cmin=0.0
@@ -408,7 +412,7 @@ c
 	  cmin=max(0,value(2))
 	  cpa=max(0,value(3))
 	end if
-	write(*,*) "boxc",boxc
+c	write(*,*) "boxc",boxc
 c
 c	Original, convolution_information need cdelt1(xy) from the data
 c	however, we make it 0.0 and convolution size is always 3 pixels
