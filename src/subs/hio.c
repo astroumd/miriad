@@ -37,6 +37,7 @@
        23-feb-03  pjt   merged MIR4
        22-jul-04  jwr	changed type of "size" in hexists_c() from int to size_t
        05-nov-04  jwr	changed file sizes from size_t to off_t
+       01-jan-05  pjt   a few bug_c() -> bugv_c()
 */
 
 
@@ -445,16 +446,13 @@ void hclose_c(int tno)
   TREE *t;
   ITEM *item,*it1,*it2;
   int iostat;
-  char message[40];
 
 /* Close any open items. */
 
   t = hget_tree(tno);
   for(item=t->itemlist; item != NULL; item = item->fwd){
     if(item->flags & ACCESS_MODE){
-      Strcpy(message,"Closing item -- ");
-      Strcat(message,item->name);
-      bug_c('w',message);
+      bugv_c('w',"Closing item -- %s",item->name);
       hdaccess_c(item->handle,&iostat);			check(iostat);
     }
   }
@@ -523,7 +521,7 @@ void hdelete_c(int tno,Const char *keyword,int *iostat)
 
   if(item != NULL){
     if(item->flags & ACCESS_MODE)
-      bug_c('f',"hdelete: Attempt to delete an accessed item");
+      bugv_c('f',"hdelete: Attempt to delete accessed item: %s",keyword);
     if(item->flags & ITEM_CACHE) t->flags |= TREE_CACHEMOD;
     hrelease_item_c(item);
     ent_del = TRUE;
@@ -579,7 +577,7 @@ void haccess_c(int tno,int *ihandle,Const char *keyword,Const char *status,int *
   else if(!strcmp("write",status))  mode = ITEM_WRITE;
   else if(!strcmp("scratch",status))mode = ITEM_SCRATCH;
   else if(!strcmp("append",status)) mode = ITEM_APPEND;
-  else bug_c('f',"haccess_c: Unrecognised STATUS");
+  else bugv_c('f',"haccess_c: unrecognised STATUS=%d",status);
 
   if(!strcmp("header",keyword) || !strcmp(".",keyword) ||
      !strcmp("history",keyword)|| tno == 0 	       ||
@@ -615,7 +613,8 @@ void haccess_c(int tno,int *ihandle,Const char *keyword,Const char *status,int *
 
 /* Check and set the read/write flags. */
 
-  if(item->flags & ACCESS_MODE) bug_c('f',"haccess_c: Multiple access to item");  
+  if(item->flags & ACCESS_MODE) 
+    bugv_c('f',"haccess_c: Multiple access to item %s",keyword);  
   item->flags |= mode;
 
 /* Open the file if necessary. */
@@ -694,7 +693,7 @@ void hmode_c(int tno,char *mode)
 
   if(t->rdwr == RDWR_RDONLY)    Strcpy(mode,"r");
   else if(t->rdwr == RDWR_RDWR) Strcpy(mode,"rw");
-  else bug_c('f',"Algorithmic failure, in HMODE");
+  else bugv_c('f',"hmode_c: Algorithmic failure rdwr=%d",t->rdwr);
 
 }
 /************************************************************************/
@@ -748,10 +747,10 @@ int hexists_c(int tno,Const char *keyword)
 
 
   dopen_c(&fd,path,"read",&size,&iostat);
-  if(iostat)return(FALSE);
+  if(iostat)return FALSE;
   dclose_c(fd,&iostat);
-  if(iostat != 0)bug_c('f',"hexists_c: Error closing item");
-  return(TRUE);
+  if(iostat != 0)bugv_c('f',"hexists_c: Error closing item %s",keyword);
+  return TRUE;
 }
 /************************************************************************/
 void hdaccess_c(int ihandle,int *iostat)
@@ -1070,7 +1069,7 @@ void hio_c(int ihandle,int dowrite,int type,char *buf,
         case H_TXT:	Memcpy(s,buf,len);
 			if(*(buf+len-1) == 0)*(iob1->buf+off+len-1) = '\n';
 			break;
-        default:	bug_c('f',"hio_c: Unrecognised type");
+        default:	bugv_c('f',"hio_c: Unrecognised write type %d",type);
       }
       if(off % size) Memcpy(iob1->buf+off,align_buf,len);
     } else {
@@ -1103,7 +1102,7 @@ void hio_c(int ihandle,int dowrite,int type,char *buf,
 			  *(buf+len-1) = 0;
 			}
 			break;
-        default:	bug_c('f',"hio_c: Unrecognised type");
+        default:	bugv_c('f',"hio_c: Unrecognised read type %d",type);
       }
     }
     buf += expansion[type] * len;
@@ -1446,7 +1445,8 @@ private ITEM *hcreate_item_c(TREE *tree,char *name)
 
   s = name;
   hash = nitem++;
-  if(nitem > MAXITEM)bug_c('f',"Item address table overflow, in hio");
+  if(nitem > MAXITEM)
+    bugv_c('f',"Item address table overflow, in hio; nitem=%d MAXITEM=%d",nitem,MAXITEM);
   while(*s) hash += *s++;
   hash %= MAXITEM;
 
@@ -1492,7 +1492,8 @@ private TREE *hcreate_tree_c(char *name)
 
   s = name;
   hash = ntree++;
-  if(ntree > MAXOPEN)bug_c('f',"Tree address table overflow, in hio");
+  if(ntree > MAXOPEN)
+    bugv_c('f',"Tree address table overflow, in hio, ntree=%d MAXOPEN=%d",ntree,MAXOPEN);
   while(*s) hash += *s++;
   hash %= MAXOPEN;
 
