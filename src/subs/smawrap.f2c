@@ -41,12 +41,14 @@ fortran subroutine rsmiriadwrite(character datapath, integer jstat)
 fortran subroutine rssmaflush(logical mflag, logical scinit, integer tcorr,
     logical scbuf, logical xflag, logical yflag,
     integer maxif, integer maxant, integer scanskip,
-    integer scanproc, integer sb, integer rxif)
+    integer scanproc, integer sb, integer rxif, integer dosporder,
+    integer doeng)
 {
    rssmaflush_c(mflag.addr, scinit.addr, tcorr.val,
               scbuf.addr, xflag.addr, yflag.addr,
               maxif.val, maxant.val, scanskip.val,
-              scanproc.val, sb.val, rxif.val);
+              scanproc.val, sb.val, rxif.val, dosporder.val,
+              doeng.val);
 }
 
 fortran subroutine rspokeinisma(integer tbd, integer tno1,
