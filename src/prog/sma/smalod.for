@@ -3,7 +3,7 @@ c************************************************************************
         implicit none
 c
 c= smalod - Convert an Sma archive data (Caltech MIR) into Miriad uv format
-c& jhz 15-jul-04
+c& Jun-Hui Zhao 
 c: data transfer
 c+
 c       SMALOD is a MIRIAD task, which converts a uv data-set from the MIR
@@ -145,7 +145,9 @@ c    jhz  10-mar-05 removed uvputvra for file name which somehow
 c                   is rejected by miriad program uvlist.
 c    jhz  18-mar-05 added linear in options for polarization;
 c                   made default for nopol
-c    jhz  18-mar-05 correct size for mount in uvputvr 
+c    jhz  18-mar-05 corrected size for mount in uvputvr
+c    jhz  23-mar-05 fixed a bug in decoding antenna position
+c                   for antennas with id > reference antenna's id.  
 c------------------------------------------------------------------------
         integer maxfiles
         parameter(maxfiles=128)
