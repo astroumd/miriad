@@ -8,6 +8,7 @@
 /*  rjs  25jan90   Changed "addr" to "adr" to avoid a conflict on Convex*/
 /*  rjs  23dec92   Rewrite in f2c format, mere all versions.		*/
 /*  mjs  21sep93   #define bcopy -> memcpy, bzero -> memset on sun.	*/
+/*  pjt  20jun02   pedantic headers                                     */
 /*									*/
 /************************************************************************/
 
@@ -19,6 +20,8 @@
 #include <netdb.h>
 #include <ctype.h>
 #include <errno.h>
+#include <unistd.h>
+#include <string.h>
 
 #ifdef sun
 #define bcopy(a,b,c) memcpy((b),(a),(c))
@@ -29,9 +32,6 @@ extern int vmserrno;
 #  define ERRNO vmserrno
 #else
 #  define ERRNO errno
-#endif
-#ifdef trace
-extern int errno;
 #endif
 
 /************************************************************************/

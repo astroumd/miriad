@@ -27,7 +27,15 @@
  *    pjt 14jun01 use WORDS_BIGENDIAN to figure out the pack routines
  *                removed 'trace' clutter from the old multiflow
  *    pjt 24jun01 PPC/powerpc is a BIGENDIAN (linux) machine
+ *    pjt 21jun02 MIR4
  */
+
+#if !defined(MIR_SYSDEP_H)
+#define MIR_SYSDEP_H
+
+#include <sys/types.h>
+#include <unistd.h>
+
 
 #ifndef Null
 #define Null '\0'
@@ -64,9 +72,10 @@ typedef char Void;
 #define Const /* NULL */
 #define ARGS(s) ()
 #endif /* __STDC__ */
-#endif
+#endif /* MIRIAD_TYPES_DEFINED */
 
 typedef int int2;
+typedef long long int int8;
 
 /************************************************************************/
 /*									*/
@@ -92,7 +101,7 @@ typedef int int2;
 /************************************************************************/
 
 #ifndef defined_params
-#if defined(convex) || defined(alpha)
+#if defined(convex) || defined(alpha) || defined(__alpha)
 #  define FORT_TRUE  -1
 #else
 #  define FORT_TRUE 1
@@ -116,12 +125,13 @@ typedef int int2;
  */
 
 
-#if defined (sun) || defined (convex) || defined (mips) || defined(sgi) || defined(hpux)
-#define WORDS_BIGENDIAN
-#endif
-
-#if defined(PPC) || defined(powerpc)
-#define WORDS_BIGENDIAN
+#ifndef WORDS_BIGENDIAN
+# if defined (sun) || defined (convex) || defined (mips) || defined(sgi) || defined(hpux)
+#  define WORDS_BIGENDIAN
+# endif
+# if defined(PPC) || defined(powerpc)
+#  define WORDS_BIGENDIAN
+# endif
 #endif
 
 #ifdef WORDS_BIGENDIAN 
@@ -131,5 +141,26 @@ typedef int int2;
 #  define unpackd_c(a,b,c)  memcpy((char *)(b),(a),sizeof(double)*(c))
 #  define pack32_c(a,b,c)   memcpy((b),(char *)(a),sizeof(int)*(c))
 #  define unpack32_c(a,b,c) memcpy((char *)(b),(a),sizeof(int)*(c))
+
+void pack16_c(int *in, char *out, int n);
+void unpack16_c(char *in, int *out, int n);
+
+#else
+
+#if 1
+void pack16_c(int *in, char *out, int n);
+void unpack16_c(char *in, int *out, int n);
+void pack32_c(int *in, char *out, int n);
+void unpack32_c(char *in, int *out, int n);
+void pack64_c(int8 *in, char *out, int n);
+void unpack64_c(char *in, int8 *out, int n);
+void packr_c(float *in, char *out, int n);
+void unpackr_c(char *in, float *out, int n);
+void packd_c(double *in, char *out, int n);
+void unpackd_c(char *in, double *out, int n);
+#endif
+
 #endif
 #endif
+
+#endif /* MIR_SYSDEP_H */

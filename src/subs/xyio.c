@@ -11,11 +11,17 @@
 /*    rjs   6nov94   Change item handle to an integer.			*/
 /*    rjs  27feb96   Added xyflush.					*/
 /*    rjs  15mar96   Inlcude an exrta include file.			*/
+/*    pjt  17jun02   MIR4 prototypes, > 2GB patches                     */
 /*----------------------------------------------------------------------*/
 
+#include <stdio.h>
 #include <string.h>
+#include <sys/types.h>
+#include <unistd.h>
+
 #include "maxdimc.h"
 #include "io.h"
+#include "miriad.h"
 
 #define OLD 1
 #define NEW 2
@@ -29,21 +35,19 @@
 
 static char message[132];
 
-static struct { char *mask;
-	 int image;
-	 int naxis,axes[MAXNAX],offset,mask_exists,image_exists;} images[MAXOPEN];
+static struct { 
+  char *mask;
+  int image;
+  int naxis,axes[MAXNAX],mask_exists,image_exists;
+  off_t offset;
+} images[MAXOPEN];
 
 #define Strcpy (void)strcpy
-void bug_c(),bugno_c();
-void rdhdi_c(),wrhdi_c();
-void mkclose_c(),mkwrite_c();
-char *mkopen_c();
-int mkread_c();
-static void xymkopen_c();
+
+static void xymkopen_c(int thandle,int mode);
+
 /************************************************************************/
-void xyopen_c(thandle,name,status,naxis,axes)
-int *thandle,naxis,axes[];
-char *name,*status;
+void xyopen_c(int *thandle,Const char *name,Const char *status,int naxis,int *axes)
 /**xyopen -- Open an image file.					*/
 /*:image-i/o								*/
 /*+ FORTRAN call sequence:
@@ -155,8 +159,7 @@ char *name,*status;
   *thandle = tno;
 }
 /************************************************************************/
-void xyflush_c(thandle)
-int thandle;
+void xyflush_c(int thandle)
 /**xyflush -- Flush out any image changes to disk.			*/
 /*:image-i/o								*/
 /*+ FORTRAN call sequence:
@@ -170,7 +173,9 @@ This flushes any changes to an image to disk.
     tno		The handle of the image file.				*/
 /*----------------------------------------------------------------------*/
 {
-  int iostat,i,offset,nbytes,length;
+  int iostat,i;
+  off_t offset;
+  size_t nbytes, length;
   float buf[MAXDIM];
 
 /* Simply flush out the mask. */
@@ -203,8 +208,7 @@ This flushes any changes to an image to disk.
   hflush_c(thandle,&iostat); 			check(iostat);
 }
 /************************************************************************/
-void xyclose_c(thandle)
-int thandle;
+void xyclose_c(int thandle)
 /**xyclose -- Close up an image file.					*/
 /*:image-i/o								*/
 /*+ FORTRAN call sequence:
@@ -225,9 +229,7 @@ int thandle;
   hclose_c(thandle);
 }
 /************************************************************************/
-void xyread_c(thandle,index,array)
-int thandle,index;
-float array[];
+void xyread_c(int thandle,int index,float *array)
 /**xyread -- Read a row from an image.					*/
 /*:image-i/o								*/
 /*+ FORTRAN call sequence:
@@ -246,7 +248,9 @@ float array[];
     array	The read row. NAXIS1 elements are returned.		*/
 /*----------------------------------------------------------------------*/
 {
-  int offset,length,iostat;
+  off_t offset;
+  size_t length;
+  int iostat;
 
   length = H_REAL_SIZE * images[thandle].axes[0];
   offset = H_REAL_SIZE * images[thandle].offset + (index-1) * length +
@@ -255,9 +259,7 @@ float array[];
   check(iostat);
 }
 /************************************************************************/
-void xywrite_c(thandle,index,array)
-int thandle,index;
-float array[];
+void xywrite_c(int thandle,int index,Const float *array)
 /**xywrite -- Write a row to an image.					*/
 /*:image-i/o								*/
 /*+ FORTRAN call sequence:
@@ -275,7 +277,9 @@ float array[];
     array	The read row. NAXIS1 elements are written.		*/
 /*----------------------------------------------------------------------*/
 {
-  int offset,length,iostat;
+  off_t offset;
+  size_t length;
+  int iostat;
 
   length = H_REAL_SIZE * images[thandle].axes[0];
   offset = H_REAL_SIZE * images[thandle].offset + (index-1) * length +
@@ -284,8 +288,7 @@ float array[];
   check(iostat);
 }
 /************************************************************************/
-void xymkrd_c(thandle,index,runs,n,nread)
-int thandle,index,runs[],n,*nread;
+void xymkrd_c(int thandle,int index,int *runs,int n,int *nread)
 /**xymkrd -- Read the masking information for an image (runs format).	*/
 /*:image-i/o								*/
 /*+ FORTRAN call sequence:
@@ -309,7 +312,9 @@ int thandle,index,runs[],n,*nread;
     nread	The number of "runs" read.				*/
 /*----------------------------------------------------------------------*/
 {
-  int offset,length;
+  off_t offset;
+  size_t length;
+
   if(images[thandle].mask == NULL && images[thandle].mask_exists)
 						xymkopen_c(thandle,OLD);
   if(images[thandle].mask_exists){
@@ -325,8 +330,7 @@ int thandle,index,runs[],n,*nread;
   }
 }
 /************************************************************************/
-void xymkwr_c(thandle,index,runs,n)
-int thandle,index,n,runs[];
+void xymkwr_c(int thandle,int index,Const int *runs,int n)
 /**xymkwr -- write image masking information (runs format).		*/
 /*:image-i/o								*/
 /*+ FORTRAN call sequence:
@@ -348,7 +352,9 @@ int thandle,index,n,runs[];
 		good, whereas pixels runs(2*i) to runs(2*i+1) are bad.	*/
 /*----------------------------------------------------------------------*/
 {
-  int offset,length;
+  off_t offset;
+  size_t length;
+
   if(images[thandle].mask == NULL) xymkopen_c(thandle,NEW);
   if(images[thandle].mask == NULL) 
     bug_c('f',"xymkwr_c: Error writing to image mask file");
@@ -357,8 +363,7 @@ int thandle,index,n,runs[];
   mkwrite_c(images[thandle].mask,MK_RUNS,runs,offset,length,n);
 }
 /************************************************************************/
-void xyflgwr_c(thandle,index,flags)
-int thandle,index,flags[];
+void xyflgwr_c(int thandle,int index,Const int *flags)
 /**xyflgwr -- Write image masking information (flags format).		*/
 /*:image-i/o								*/
 /*+ FORTRAN call sequence:
@@ -377,7 +382,9 @@ int thandle,index,flags[];
 		that the pixel is good.					*/
 /*----------------------------------------------------------------------*/
 {
-  int offset,length;
+  off_t offset;
+  size_t length;
+
   if(images[thandle].mask == NULL)xymkopen_c(thandle,NEW);
   if(images[thandle].mask == NULL) 
     bug_c('f',"xyflgwr_c: Error writing to image mask file");
@@ -386,8 +393,7 @@ int thandle,index,flags[];
   mkwrite_c(images[thandle].mask,MK_FLAGS,flags,offset,length,length);
 }
 /************************************************************************/
-void xyflgrd_c(thandle,index,flags)
-int thandle,index,flags[];
+void xyflgrd_c(int thandle,int index,int *flags)
 /**xyflgrd -- Read image masking information (flags format).		*/
 /*:image-i/o								*/
 /*+ FORTRAN call sequence:
@@ -406,7 +412,10 @@ int thandle,index,flags[];
 		that the pixel is good.					*/
 /*----------------------------------------------------------------------*/
 {
-  int offset,length,n,i;
+  int n,i;
+  off_t offset;
+  size_t length;
+
   if(images[thandle].mask == NULL && images[thandle].mask_exists)
 						xymkopen_c(thandle,OLD);
   if(images[thandle].mask_exists){
@@ -419,8 +428,7 @@ int thandle,index,flags[];
   }
 }
 /************************************************************************/
-static void xymkopen_c(thandle,mode)
-int thandle,mode;
+static void xymkopen_c(int thandle,int mode)
 /*
   This opens the masking file.
 
@@ -433,8 +441,7 @@ int thandle,mode;
   if(images[thandle].mask == NULL) images[thandle].mask_exists = FALSE;
 }
 /************************************************************************/
-void xysetpl_c(thandle,naxis,axes)
-int thandle,naxis,axes[];
+void xysetpl_c(int thandle,int naxis,Const int *axes)
 /**xysetpl -- Set which plane of a cube is to be accessed.		*/
 /*:image-i/o								*/
 /*+ FORTRAN call sequence:
@@ -452,7 +459,8 @@ int thandle,naxis,axes[];
 		corresponds to the index along the 3rd dimension.	*/
 /*----------------------------------------------------------------------*/
 {
-  int size,i;
+  int i;
+  size_t size;
 
   if(naxis+2 > MAXNAX)
      bug_c('f',"xysetpl_c: Too many dimensions");

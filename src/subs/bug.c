@@ -10,23 +10,26 @@
 /*    pjt     23sep01 darwin						*/
 /*    pjt      4dec01 bypass fatal errors (for alien clients) if req'd  */
 /*                    through the new bugrecover_c() routine            */
+/*    pjt     17jun02 prototypes for MIR4                               */
 /************************************************************************/
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include "miriad.h"
 
-static char *errmsg_c();
-void bug_c();
+static char *errmsg_c(int n);
 
 char *Name = NULL;
 int reentrant=0;
+
+/*  HPUX cannot handle the (void) thing */
 
 typedef void (*proc)(void);  /* helper definition for function pointers */
 static proc bug_cleanup=NULL;
 
 /************************************************************************/
-void bugrecover_c(cl)
-void (*cl)(void);
+void bugrecover_c(void (*cl)(void))
 /** bugrecover_c -- bypass fatal bug calls for alien clients            */
 /*& pjt                                                                 */
 /*: error-handling                                                      */
@@ -44,7 +47,7 @@ void (*cl)(void);
 
     ..
     bugrecover_c(my_handler);
-    ..
+    ..                                                                  */
 /*--                                                                    */
 /*----------------------------------------------------------------------*/
 {
@@ -52,10 +55,9 @@ void (*cl)(void);
 }
 
 /************************************************************************/
-void buglabel_c(name)
-char *name;
+void buglabel_c(Const char *name)
 /** buglabel -- Give the "program name" to be used as a label in messages. */
-/*& mjs									*/
+/*& pjt									*/
 /*: error-handling							*/
 /*+ FORTRAN call sequence:
 	subroutine buglabel(name)
@@ -75,36 +77,9 @@ char *name;
   strcpy(Name,name);
 }
 /************************************************************************/
-void bugno_c(s,n)
-char s;
-int n;
-/** bugno -- Issue an error message, given a system error number.	*/
-/*& mjs									*/
-/*: error-handling							*/
-/*+ FORTRAN call sequence:
-	subroutine bugno(severity,errno)
-
-	implicit none
-	character severity*1
-	integer errno
-
-  Output the error message associated with a particular error number.
-
-  Input:
-    severity	Error severity. Can be one of 'i', 'w', 'e' or 'f'
-		for "informational", "warning", "error", or "fatal"
-    errno	host error number.					*/
-/*--									*/
-/*----------------------------------------------------------------------*/
-{
-  if (n == -1)bug_c(s,"End of file detected");
-  else bug_c(s,errmsg_c(n));
-}
-/************************************************************************/
-void bug_c(s,m)
-char s,*m;
+void bug_c(char s,Const char *m)
 /** bug -- Issue an error message, given by the caller.			*/
-/*& mjs									*/
+/*& pjt									*/
 /*: error-handling							*/
 /*+ FORTRAN call sequence:
 	subroutine bug(severity,message)
@@ -150,8 +125,31 @@ char s,*m;
   }
 }
 /************************************************************************/
-static char *errmsg_c(n)
-int n;
+void bugno_c(char s,int n)
+/** bugno -- Issue an error message, given a system error number.	*/
+/*& pjt									*/
+/*: error-handling							*/
+/*+ FORTRAN call sequence:
+	subroutine bugno(severity,errno)
+
+	implicit none
+	character severity*1
+	integer errno
+
+  Output the error message associated with a particular error number.
+
+  Input:
+    severity	Error severity. Can be one of 'i', 'w', 'e' or 'f'
+		for "informational", "warning", "error", or "fatal"
+    errno	host error number.					*/
+/*--									*/
+/*----------------------------------------------------------------------*/
+{
+  if (n == -1)bug_c(s,"End of file detected");
+  else bug_c(s,errmsg_c(n));
+}
+/************************************************************************/
+static char *errmsg_c(int n)
 /*
   Return the error message associated with some error number.
 ------------------------------------------------------------------------*/
