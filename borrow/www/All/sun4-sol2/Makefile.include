@@ -1,0 +1,46 @@
+#  Make WWW under unix for solaris 2.2
+#
+
+# For W3 distribution, machine type for subdirectories
+WWW_MACH = sun4-sol2
+
+# The ASIS repository's name for the machine we are on
+ASIS_MACH = sun-4
+# Not important - changing all the time!
+
+#CC = gcc
+CC = cc
+
+#CFLAGS = -Wall -D__svr4__ -DNO_GETWD -DHAS_GETCWD -DPOSIXWAIT
+CFLAGS = -g -D__svr4__ -DNO_GETWD -DHAS_GETCWD -DPOSIXWAIT
+
+#  Ask for static linking so that binary will be transportable
+LFLAGS = -lresolv -lnsl -lsocket -ldl -Bstatic
+# LFLAGS = -lresolv -lnsl -lsocket -ldl
+
+# Directory for installed binary:
+# BINDIR = /opt/bin
+BINDIR = /usr/local/bin
+
+#_________________ OK if normal W3 distribution
+# Where is the WWW source root?
+WWW = ../..
+
+#  Where should temporary (object) files go?
+WTMP = ../..
+
+# Where is the W3 object library?
+LIBDIR = $(WWW)/Library/Implementation/$(WWW_MACH):/usr/lib
+
+#
+#	WHEN COMPILING WITH DIRECT WAIS SUPPORT:
+#
+#	Uncomment these six lines (and edit them, if necessary).
+#
+# WAIS = ../../../freeWAIS-0.3
+# WAISLIB =  $(WAIS)/bin/client.a $(WAIS)/bin/wais.a
+# MATHLIB = -lm
+# WAISINC = -I$(WAIS)/ir
+# WAISCFLAGS = -DDIRECT_WAIS
+# HTWAIS = $(WTMP)/Library/$(WWW_MACH)/HTWAIS.o
+
