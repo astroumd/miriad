@@ -1,0 +1,91 @@
+#!/bin/csh
+
+#
+#* beamcheck - Plot uvtracks and synthesized beam patterns.
+#& mchw
+#: user tool
+#+
+#  Plot uvtracks and synthesized beam patterns.
+#  This script uses uvgen to generate uv-data for a point source.
+#--
+# History:
+#   06aug98 mchw original version.
+
+echo "beamcheck - Check beam size and uvrange for $1 (06-aug-98 version)"
+# check inputs
+  if($#argv<1) then
+        echo " Usage:  beamcheck array"
+        echo "   e.g. beamcheck bima9_b.ant"
+        echo " Inputs :"
+        echo "   array"
+        echo "          Antenna array used by uvgen task."
+        echo "            e.g. $MIRCAT/*.ant" . No default.
+	exit 1
+  endif
+
+goto start
+start:
+
+echo ""
+more $1
+
+echo ""
+beamgen $1 30  /xs 15 -4,4,.2 1 -1 '-shadow(5)' | grep fwhm
+beamgen $1 10  /xs 15 -4,4,.2 1 -1 '-shadow(5)' | grep fwhm
+beamgen $1 -5  /xs 15 -4,4,.2 1 -1 '-shadow(5)' | grep fwhm
+beamgen $1 -15 /xs 15 -4,4,.2 1 -1 '-shadow(5)' | grep fwhm
+beamgen $1 -30 /xs 15 -4,4,.2 1 -1 '-shadow(5)' | grep fwhm
+
+rm -r $1.catmap
+imcat in=$1.30.map,$1.10.map,$1.-5.map,$1.-15.map,$1.-30.map out=$1.catmap options=relax
+cgdisp in=$1.catmap type=con labtyp=arcsec region=quarter device=/xs
+
+echo ""
+echo Full uvrange
+uvcheck vis=$1.30.uv  | grep uvrange
+uvcheck vis=$1.10.uv  | grep uvrange
+uvcheck vis=$1.-5.uv  | grep uvrange
+uvcheck vis=$1.-15.uv | grep uvrange
+uvcheck vis=$1.-30.uv | grep uvrange
+
+echo ""
+echo uvpoints beyond 120m.
+uvcheck vis=$1.30.uv  'select=uvnrange(400,100000)' | grep uvrange
+uvcheck vis=$1.10.uv  'select=uvnrange(400,100000)' | grep uvrange
+uvcheck vis=$1.-5.uv  'select=uvnrange(400,100000)' | grep uvrange
+uvcheck vis=$1.-15.uv 'select=uvnrange(400,100000)' | grep uvrange
+uvcheck vis=$1.-30.uv 'select=uvnrange(400,100000)' | grep uvrange
+
+echo ""
+echo uvpoints from 60 to 120m.
+uvcheck vis=$1.30.uv  'select=uvnrange(200,400)' | grep uvrange
+uvcheck vis=$1.10.uv  'select=uvnrange(200,400)' | grep uvrange
+uvcheck vis=$1.-5.uv  'select=uvnrange(200,400)' | grep uvrange
+uvcheck vis=$1.-15.uv 'select=uvnrange(200,400)' | grep uvrange
+uvcheck vis=$1.-30.uv 'select=uvnrange(200,400)' | grep uvrange
+
+echo ""
+echo uvpoints from 30 to 60m.
+uvcheck vis=$1.30.uv  'select=uvnrange(100,200)' | grep uvrange
+uvcheck vis=$1.10.uv  'select=uvnrange(100,200)' | grep uvrange
+uvcheck vis=$1.-5.uv  'select=uvnrange(100,200)' | grep uvrange
+uvcheck vis=$1.-15.uv 'select=uvnrange(100,200)' | grep uvrange
+uvcheck vis=$1.-30.uv 'select=uvnrange(100,200)' | grep uvrange
+
+echo ""
+echo uvpoints from 6 to 30m.
+uvcheck vis=$1.30.uv  'select=uvnrange(20,100)' | grep uvrange
+uvcheck vis=$1.10.uv  'select=uvnrange(20,100)' | grep uvrange
+uvcheck vis=$1.-5.uv  'select=uvnrange(20,100)' | grep uvrange
+uvcheck vis=$1.-15.uv 'select=uvnrange(20,100)' | grep uvrange
+uvcheck vis=$1.-30.uv 'select=uvnrange(20,100)' | grep uvrange
+
+echo ""
+echo shadowed uvpoints from 0 to 6m.
+uvcheck vis=$1.30.uv  'select=uvnrange(0,20)' | grep uvrange
+uvcheck vis=$1.10.uv  'select=uvnrange(0,20)' | grep uvrange
+uvcheck vis=$1.-5.uv  'select=uvnrange(0,20)' | grep uvrange
+uvcheck vis=$1.-15.uv 'select=uvnrange(0,20)' | grep uvrange
+uvcheck vis=$1.-30.uv 'select=uvnrange(0,20)' | grep uvrange
+
+end:
