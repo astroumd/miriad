@@ -48,6 +48,7 @@ c   peter   10jul02 image header, why wasn't this done before.....
 c   peter   31jul02 added green=, noticing that original POTFFT broken
 c                   with a 1/2 pixel offset. Renamed softe= to eps=
 c Todo:
+c   implement sech^2
 c   scaleheight should be allowed to vary
 c
 c-----------------------------------------------------------------------     
