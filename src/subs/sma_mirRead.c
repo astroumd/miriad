@@ -31,8 +31,10 @@
 // 2005-03-07 changed the chunk order in frequnecy for the first
 //            three blocks in the data observed during the
 //            690 campaign spring 2005
-// 2005-03-07 added the polarization options cirpol for waveplates
+// 2005-03-07 added the polarization options circular for waveplates
 //            and default for linear
+// 2005-03-08 changed the options name cirpol to circular
+//            to match the same options in miriad program elsewhere.
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -198,7 +200,7 @@ extern smlodd smabuffer;
     
 void rspokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1,
   int *doop1, int *dohann1, int *birdie1, int *dowt1, int *dopmps1,
-  int *dobary1, int *doif1, int *hires1, int *nopol1, int *cirpol1,
+  int *dobary1, int *doif1, int *hires1, int *nopol1, int *circular1,
   int *oldpol1, 
   double lat1, double long1, int rsnchan1)
 { /* rspokeflshsma_c == pokeflsh */
@@ -221,7 +223,7 @@ void rspokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1,
         smabuffer.dopmps = *dopmps1;
         smabuffer.hires  = *hires1;
         smabuffer.nopol  = *nopol1;
-        smabuffer.cirpol = *cirpol1;
+        smabuffer.circular = *circular1;
         smabuffer.oldpol = *oldpol1;
         smabuffer.lat    = lat1;
         smabuffer.longi  = long1;
@@ -853,7 +855,7 @@ case 4: uvwbsln[inhset]->uvwID[set-blhset].ipol=-6; break;
 //LR       3   VH               -8
 //LL       4   VV               -6
               }} else {
-     if(smabuffer.cirpol==1) {
+     if(smabuffer.circular==1) {
      uvwbsln[set]->uvwID[blset-blhid_hdr].ipol= -blh[set]->ipol;
       } else {
    switch(blh[set]->ipol) {
