@@ -102,6 +102,9 @@ else if ($hosttype == sun4sol) then
 	# sunos 5.6
   set mirxinc="/usr/include/X11"
   set mirxlib="/usr/X/lib"
+else if ($hosttype == darwin) then
+  set mirxinc="/usr/X11R6/include"
+  set mirxlib="/usr/X11R6/lib"
 else
   set mirxinc="/usr/include/X11"
   set mirxlib="/usr/X11R6/lib"
