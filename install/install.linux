@@ -1,6 +1,6 @@
 #! /bin/csh -f
 #
-# Version: 25-nov-04
+# Version: 4-jan-05
 #
 #  2-aug-99 Updated for Sebok's Mandrake setup
 #  1-aug-00 Updated to allow to build private PGPLOT version
@@ -24,6 +24,7 @@
 # 17-apr-03 fix up MIRSRC from skel
 # 23-oct-04 configure now controls maxdim.h and maxdimc.h
 # 25-nov-04 fortran compiler choice
+#  4-jan-05 MacOSX (10.3=panther)
 #
 #   Simple single-architecture installation of MIRIAD
 #   (linux)
@@ -90,6 +91,8 @@ else
  set hosttype=`uname -s | tr A-Z a-z`
 endif
 
+# hosttypes we support:  linux, darwin (MacOSX), sunos (->sun4sol)
+
 #	patch to use Stupar's original names
 if ($hosttype == sunos) set hosttype=sun4sol
 #       patch for the new sun blade ?
@@ -125,7 +128,8 @@ else
   set mirxlib="/usr/X11R6/lib"
 endif
 
-set searchlibs=(/usr/lib /usr/X11R6/lib /local/lib /usr/local/lib)
+# /sw/lib is for Fink (on MacOSX)
+set searchlibs=(/usr/lib /usr/X11R6/lib /local/lib /usr/local/lib /sw/lib)
 
 set log=/tmp/miriad.install.$$.log
 
@@ -146,7 +150,7 @@ set install_root=`pwd`
 #               turn on(1)/off(0) certain install options (command line)
 set official=0              #  also modify the system (c)shrc.MIRIAD?
 set shared=1                #  also build shared library libmir.so?
-set pgplot=1                #  include PGPLOT in $MIRLIB ?
+set pgplot=1                #  include PGPLOT in $MIRLIB ? (you almost ALWAYS want this to be 1)
 set newcode=1               #  include 'newcode' not in CVS (yet) ; aim is to add in future
 set debug=0                 #  compile in debug (-g) mode ?
 set cvs=1                   #  use CVS archive to get miriad.tar.gz ?
@@ -322,17 +326,19 @@ chmod -R +w $MIR
 #cp $MIR/src/sys/bin/compile.linux $MIR/bin/localsys
 #echo Edit compile.linux and make g77 the default compiler
 #vi $MIR/bin/localsys/compile.linux
-
-echo Installing scripts....
+ 
+echo Installing scripts.... (failed on darwin, did we not have $MIR/tmp  ????
 mir.install scripts 
 
-#  another bug in the cvs setup, should also be fixed
+#  another bug in the cvs setup, should also be fixed -- is now fixed
 echo Yuck, resetting xbit in MIRBIN
 chmod +x $MIRBIN/*
 
-#	linux
-if (-e /usr/lib/libbsd-compat.a) echo Warning: you have /usr/lib/libbsd-compat.a
-if (! -e /usr/lib/libbsd.a) echo Warning: you do not have /usr/lib/libbsd.a
+#	what was this for again?
+if ($hosttype == linux) then
+  if (-e /usr/lib/libbsd-compat.a) echo Warning: you have /usr/lib/libbsd-compat.a
+  if (! -e /usr/lib/libbsd.a) echo Warning: you do not have /usr/lib/libbsd.a
+endif
 
 # special: linux generally has readline...   (this test failed on mdk71 ??)
 #          it may also work on other systems
@@ -342,6 +348,7 @@ foreach ldir ($searchlibs)
     if (-e $ldir/libreadline.$ext) then
         echo Borrowing the system version of libreadline.$ext for $hosttype from $ldir
         cp -p $ldir/libreadline.$ext $MIRLIB
+        if (-e /usr/bin/ranlib && $ext == a) ranlib $MIRLIB/libreadline.$ext
         set dorl=1
         break
     endif
@@ -352,8 +359,8 @@ if ($dorl == 0) then
    echo Your system does not seem to have readline, and miriad.c will not use it
 endif
 
-echo LIB: linpack subs www
-mir.install linpack subs www
+echo LIB: linpack subs 
+mir.install linpack subs 
 if ($pgplot) then
   mir.install pgplot
 endif
@@ -387,8 +394,8 @@ if ($shared) then
   endif
 endif
 
-echo PGM: prog wip rad xmrecvlist
-mir.install prog wip rad xmrecvlist
+echo PGM: prog wip rad 
+mir.install prog wip rad 
 
 
 # special things....
