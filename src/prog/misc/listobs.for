@@ -50,6 +50,8 @@ c                        giving user choice of UT or LST output. (time=)
 c          22-may-96 pjt Another historic day: Ant # 10 is online!!!!
 c	   09-oct-97 mchw  more format changes to fit onto page.
 c          19-jun-98 pjt fixed some ansi problems for linux g77
+c          14-mar-01 pjt realigned Mel's versino with test for missing systemp
+c			 (originally done 20jan99)
 c
 c Note:  for nants>10 the code must once more be updated !! 
 c       See fmt # 2201, 2202, 2305
@@ -60,7 +62,7 @@ c-----------------------------------------------------------------------
         include 'listobs.h'
 c
 	character pversion*10
-	parameter (pversion = '19-jun-98')
+	parameter (pversion = '14-mar-01')
 c
         integer ipt,nfiles,uvflag,order(MAXP),nameidx(100),nnames
         integer isys(MAXANT),i,uvscan,j,ii,jj,ipicked,ifix
@@ -428,13 +430,13 @@ c
         include 'caldefs.h'
         include 'listobs.h'
 
-	integer tin,ipt,iants,j,i
+	integer tin,ipt,iants,j,i,length
 	double precision utdouble,dlst,dlinef,dlo1,dif,draobs,
      1                   ddecobs
 	real cbw(MAXSPECT/2),systemps(MAXSPECT*MAXANT)
         real cfreq(MAXSPECT/2),haobs,decobs,sum
         character vtype*4
-        logical vupd
+        logical vupd,systhere
 c
 c   get all of the desired uv variables from header
 c
@@ -454,7 +456,9 @@ c	call uvgetvrd(tin,'dec',dec(ipt),1)
 	  call uvgetvri(tin,'nchan',nchan,1)
           call uvprobvr(tin,'corfin',vtype,ncorfin,vupd)
 	  call uvgetvrr(tin,'corfin',cfreq,ncorfin)
-	  call uvgetvrr(tin,'systemp',systemps,iants*nspec)
+	  call uvprobvr(tin,'systemp',vtype,length,systhere)
+	  if(systhere)
+     *	  	call uvgetvrr(tin,'systemp',systemps,iants*nspec)
 	else
 	  call uvrdvri(tin,'nwide',nspec,0)
 	  if(nspec.ne.0)

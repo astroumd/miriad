@@ -6,8 +6,18 @@ BIMA and ATNF, MIRIAD is also known to handle e.g. VLA and WSRT data.
 
 This BIMA release of MIRIAD is under CVS control, and daily snapshots
 are available.  If you see a file 'VERSION.cvs' in the root directory,
-this is not an officially blessed MIRIAD release. The VERSION file
-contains the official release number (3.0.0 or higher in CVS)
+this is not an officially blessed MIRIAD release, but the daily
+snapshot. The VERSION file contains the official release number (3.0.0
+or higher in CVS)
+
+To install the BIMA version of MIRIAD, there are a few options:
+	- binary releases (astromake/linux versions now available)
+	- follow 'install.MIR' (the classical method)
+	- use the scripts in the install/ directory  [NOT YET IN CVS]
+		(this is how our binary releases are built)
+
+
+
 
 					Peter Teuben
 					miriad@astro.umd.edu
