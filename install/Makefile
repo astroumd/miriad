@@ -34,15 +34,17 @@
 #	11-mar-93   -s f77 back to -s sun
 #	31-aug-98  linux version
 #	27-jul-99  add linux fix to remake shared library
+#       23-jan-04  MIR4
 
 # For station identification:
-VERSION = Makefile.linux    31-aug-98
+VERSION = Makefile.linux    23-jan-04
 MESG = Default Makefile for MIRIAD tasks in `pwd`
 
 
 #	Default Flags for C, Fortran and Ratty compiler
-CFLAGS = -g 
-FFLAGS = -g 
+IFLAGS = -I$(MIRINC) -I$(MIRLIB)
+CFLAGS = -g -DMIR4 -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -Wall 
+FFLAGS = -g -DMIR4 -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE
 RFLAGS = -b -s f2c -D linux -I $(MIRINC)
 #	Default compilers
 CC = cc
@@ -85,6 +87,11 @@ BINS =
 .o:
 	$(FC) $(FFLAGS) -o $@ $*.o $(MIRLIBS) $(EL)
 
+#       this odd rules is merely uvio
+.c:
+	$(CC) -DTESTBED $(IFLAGS) $(CFLAGS) -c $*.c
+	$(FC) $(FFLAGS) -o $@ $*.o $(MIRLIBS) $(EL)
+
 #	Since this is the first target, we'll make it act like
 #	a ``help''. This will prevent a simple 'make' command to
 #	start doing all kinds of unwanted things.
@@ -110,7 +117,7 @@ lib:	$(L)
 $(L):	$(OBJS)
 	ar ruv $(L) $?
 	ranlib $(L)
-	
+
 install:  $(BINS)
 	chmod g+w $?
 	-mv $? $(MIRBIN)
