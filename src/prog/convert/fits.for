@@ -337,9 +337,10 @@ c    dpr  02-jul-01  Relax AN restrictions properly (I hope!!)
 c    rjs  04-oct-01  Get GLS history comment right.
 c    nebk 08-jan-02  In AntWrite, set POLAA and POLAB to 45/135 for ATCA
 c    pjt  13-may-03  Use basant/antbas and report > 256 cases?
+c    pjt  17-oct-03  listen to badly returned basant ant's
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version='Fits: version 13-may-03')
+	parameter(version='Fits: version 17-oct-03')
 	integer maxboxes
 	parameter(maxboxes=2048)
 	character in*128,out*128,op*8,uvdatop*12
@@ -716,20 +717,21 @@ c
 c
 	call output('Reading the correlation data')
 	do i=1,nvis
-	  call fuvread(lu,visibs,i,1)
+	 call fuvread(lu,visibs,i,1)
 c
 c  Unpack the preamble.
 c
-	  uu = 1.0e9 * visibs(uvU)
-	  vv = 1.0e9 * visibs(uvV)
-	  if(uvW.gt.0)then
+	 uu = 1.0e9 * visibs(uvU)
+	 vv = 1.0e9 * visibs(uvV)
+	 if(uvW.gt.0)then
 	    ww = 1.0e9 * visibs(uvW)
-	  else
+	 else
 	    ww = 0
-	  endif
-	  time = visibs(uvT) + T0
-	  bl = int(visibs(uvBl) + 0.01)
-	  call basant(DBLE(visibs(uvBl)),ant1,ant2)
+	 endif
+	 time = visibs(uvT) + T0
+	 bl = int(visibs(uvBl) + 0.01)
+	 call basant(DBLE(visibs(uvBl)),ant1,ant2)
+	 if (ant1.gt.0 .and. ant2.gt.0) then
 c	  ant1 = bl/256
 c	  ant2 = mod(bl,256)
 	  config = nint(100*(visibs(uvBl)-bl))+1
@@ -744,6 +746,8 @@ c
 c  In both cases, ant1 < ant2.
 c  the variables ant1,ant2 are Miriad antenna numbers.
 c
+c  A new option here is that ant1=ant2=0 when something is invalid, the record needs to
+c  be skipped (e.g. GILDAS can return a trick record)
 	  conj = ant2.gt.ant1
 	  if(conj)then
 	    uu = -uu
@@ -831,6 +835,7 @@ c	endif
 	    if(sfudge.and.P.eq.PolYX)call Negate(nfreq,corr)
 	    call uvwrite(tno,preamble,corr,flags,nfreq)
 	  enddo
+	 endif
 	enddo
 c
 c  Work out the integration time now, and use override mechanism to set

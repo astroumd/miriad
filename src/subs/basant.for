@@ -8,6 +8,7 @@ c    pjt    8mar95    &!@$*(*& when ant1||ant2 out of range 1..256
 c    rjs   27oct00    New baseline numbering convention.
 c    pjt   12may03    documented some thoughts on allowing MAXANT 32768
 c                     and included maxdim.h
+c    pjt   17oct03    return 0's if record has invalid baseline
 c***********************************************************************
 c* BasAnt - determine antennas from baseline number.
 c& pjt
@@ -51,8 +52,11 @@ c               call uvset(tvis,'preamble','uvw/time/baseline',0,0.,0.,0.)
 c             was used.
 c
 c  Output:
-c    ant1     The first antenna number.
-c    ant2     The second antenna number.
+c    ant1     The first antenna number. Numbered 1...maxant
+c    ant2     The second antenna number. Numbered 1...maxant
+c
+c  NOTE::::   For GILDAS it can now reteurn ant1=ant2=0 if the record
+c             is invalid and should be skipped.
 c
 c--
 c-----------------------------------------------------------------------
@@ -72,15 +76,21 @@ c
      *  'BASANT: possibly a bad baseline number!')
       if (ant1 .gt. ant2) then
          write(*,*) baseline,ant1,ant2
-         call bug('f','BASANT: a1>a2: badly formatted baseline number!')
+         call bug('w','BASANT: a1>a2: badly formatted baseline number!')
+         ant1 = 0
+         ant2 = 0
       endif
       if (ant1 .lt. 1) then
          write(*,*) baseline,ant1,ant2
-         call bug('f','BASANT: ant1<1: possibly a bad baseline number!')
+         call bug('w','BASANT: ant1<1: possibly a bad baseline number!')
+         ant1 = 0
+         ant2 = 0
       endif
       if (ant2 .lt. 1) then
          write(*,*) baseline,ant1,ant2
-         call bug('f','BASANT: ant2<1: possibly a bad baseline number!')
+         call bug('w','BASANT: ant2<1: possibly a bad baseline number!')
+         ant1 = 0
+         ant2 = 0
       endif
       end
 c************************************************************************
