@@ -243,6 +243,12 @@ c
             ENDDO
             CALL uvputvrr(lout,'wfreq',wfreq,nwide)
             CALL uvputvrr(lout,'wwidth',wwidth,nwide)
+            IF (first) THEN
+               write(*,*) 'Creating new wideband ',nwide
+               IF(wwidth(1).EQ.0.0) call bug('w',
+     *               'Found zero wideband bandwidth, not good')
+               first = .FALSE.
+            ENDIF
          ELSE
             CALL getwide(lin, MAXCHAN, nwide, wfreq)
             CALL getcoor(lin, MAXCHAN, nspect, nschan, ischan, 
