@@ -1,0 +1,54 @@
+#-----------------------------------------------------------
+# source'd file compile.sun4sol
+#-----------------------------------------------------------
+set mmir  = $MIR
+set mhost = $MIRHOST
+set mlsys = $mmir/bin/localsys
+#
+setenv Fcompile "/opt/SUNWspro/bin/f77"
+setenv Foptions  "-u -O3 -cg92 -libmil -noqueue"
+setenv FoptionsN "-u     -cg92 -libmil -noqueue"
+set tFlinkdir = "$mmir/lib/$mhost $MIRXLIB"
+setenv Flinkdir "-R `echo $tFlinkdir | sed 's/ /:/g'`"
+setenv Flinkdir "${Flinkdir}:/opt/SUNWspro/lib"
+setenv Flinkdir "$Flinkdir -L`echo $tFlinkdir | sed 's/ / -L/g'`"
+setenv Flinklib "-lmir -llinpack -lpgplot -lX11 -lsocket -lnsl"
+setenv Finclude "-I`echo $mmir/src/inc $MIRXINC | sed 's/ / -I/g'`"
+#
+setenv Ccompile "/opt/SUNWspro/bin/cc"
+setenv Coptions "-DSYSV -noqueue -Xa -xlibmieee -xlibmil -xstrconst -xO2 -xcg92"
+setenv CoptionsN "-DSYSV -noqueue -Xa -xlibmieee -xlibmil -xstrconst     -xcg92"
+setenv Clinkdir "-R `echo $mmir/lib/$mhost $MIRXLIB | sed 's/ /:/g'`"
+setenv Clinkdir "$Clinkdir -L`echo $mmir/lib/$mhost $MIRXLIB | sed 's/ / -L/g'`"
+setenv Clinklib "-lmir -llinpack -lpgplot -lX11 -lsocket -lnsl"
+setenv Cinclude "-I`echo $mmir/src/inc $MIRXINC | sed 's/ / -I/g'`"
+#
+setenv Ratty 	"$mmir/bin/$mhost/ratty -D SYSV -s sun -b"
+setenv Intf2c 	"$mmir/bin/$mhost/intf2c -s sun"
+#
+#-----------------------------------------------------------
+if ($?MIRDEBUG)   then
+   setenv Coptions  "$Coptions  -g"
+   setenv CoptionsN "$CoptionsN -g"
+   setenv Foptions  "$Foptions  -g"
+   setenv FoptionsN "$FoptionsN -g"
+endif
+if ($?MIRTESTBED) then
+   setenv Coptions  "$Coptions  -DTESTBED"
+   setenv CoptionsN "$CoptionsN -DTESTBED"
+   setenv Foptions  "$Foptions  -DTESTBED"
+   setenv FoptionsN "$FoptionsN -DTESTBED"
+   setenv Ratty     "$Ratty -D TESTBED"
+endif
+#-----------------------------------------------------------
+if  (-e $mlsys/compile.sun4sol && ! $?local_compile ) then
+  echo $mlsys/compile.sun4sol exists =======================
+  setenv local_compile
+  source $mlsys/compile.sun4sol
+endif
+#-----------------------------------------------------------
+unset mmir
+unset mhost
+unset mlsys
+unsetenv local_compile
+#-----------------------------------------------------------

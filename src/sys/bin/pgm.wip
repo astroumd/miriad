@@ -1,0 +1,48 @@
+#!/bin/csh -f
+# -------------------------------------------------------------------
+set mir    = $MIR
+set host   = $MIRHOST
+set lsys   = $mir/bin/localsys
+set libdir = $mir/lib/$host
+set bindir = $mir/bin/$host
+set admdir = $mir/src/sys/bin
+set wipdir = $mir/borrow/wip
+# -------------------------------------------------------------------
+if (-e $lsys/pgm.wip && ! $?local_compile) then
+  echo $lsys/pgm.wip exists =======================
+  setenv local_compile
+  exec $lsys/pgm.wip $argv
+endif
+# -------------------------------------------------------------------
+if ($?Compile == 0) then
+   if (-e $admdir/compile.${host}) then
+      source $admdir/compile.${host}
+   else
+      echo "Cannot find $admdir/compile.${host} - exiting."
+      exit 1
+   endif
+endif
+# -------------------------------------------------------------------
+if (-e $libdir/libwip.a) then
+  rm -f $libdir/libwip.a
+endif
+#
+set copts = ""
+set linkopts = ""
+set options = ( )
+if (`echo $Coptions | grep -c "cg92"` > 0) then
+  set copts = "$copts -xcg92"
+  set linkopts = "$linkopts -cg92"
+endif
+if (`echo $Coptions | grep -c "ansi"` > 0) then
+  set copts = "$copts -ansi"
+endif
+if (-e $libdir/libreadline.a) set options = ( $options -readline "$libdir" )
+if ($?MIRDEBUG != 0) set options = ( $options -debug )
+#
+$wipdir/makewip -wip "$wipdir" -pgplot "$libdir" -lib "$libdir" \
+  -bin "$bindir" -xlib "$MIRXLIB" -host "$host" -cc "$Ccompile" \
+  -copts "$copts" -linkopts "$linkopts" ${options:q} $*
+# -------------------------------------------------------------------
+unsetenv local_compile
+exit 0

@@ -1,0 +1,50 @@
+#-----------------------------------------------------------
+# source'd file compile.sun3
+#-----------------------------------------------------------
+set mmir  = $MIR
+set mhost = $MIRHOST
+set mlsys = $mmir/bin/localsys
+#
+setenv Fcompile "`which f77`"
+setenv Foptions  "-f68881 -O"
+setenv FoptionsN "-f68881   "
+setenv Flinkdir "-L`echo $mmir/lib/$mhost $MIRXLIB | sed 's/ / -L/g'`"
+setenv Flinklib "-lmir -llinpack -lpgplot -lX11"
+setenv Finclude "-I`echo $mmir/src/inc $MIRXINC | sed 's/ / -I/g'`"
+#
+setenv Ccompile "`which cc`"
+setenv Coptions  "-f68881 -O"
+setenv CoptionsN "-f68881   "
+setenv Clinkdir "-L`echo $mmir/lib/$mhost $MIRXLIB | sed 's/ / -L/g'`"
+setenv Clinklib "-lmir -llinpack -lpgplot -lX11"
+setenv Cinclude "-I`echo $mmir/src/inc $mhost | sed 's/ / -I/g'`"
+#
+setenv Ratty 	"$mmir/bin/$mhost/ratty -s sun -b"
+setenv Intf2c 	"$mmir/bin/$mhost/intf2c -s sun"
+#
+#-----------------------------------------------------------
+if ($?MIRDEBUG)   then
+   setenv Coptions  "$Coptions  -g"
+   setenv CoptionsN "$CoptionsN -g"
+   setenv Foptions  "$Foptions  -g"
+   setenv FoptionsN "$FoptionsN -g"
+endif
+if ($?MIRTESTBED) then
+   setenv Coptions  "$Coptions  -DTESTBED"
+   setenv CoptionsN "$CoptionsN -DTESTBED"
+   setenv Foptions  "$Foptions  -DTESTBED"
+   setenv FoptionsN "$FoptionsN -DTESTBED"
+   setenv Ratty    "$Ratty -D TESTBED"
+endif
+#-----------------------------------------------------------
+if  (-e $mlsys/compile.sun3 && ! $?local_compile ) then
+  echo $mlsys/compile.sun3 exists =======================
+  setenv local_compile
+  source $mlsys/compile.sun3
+endif
+#-----------------------------------------------------------
+unset mmir
+unset mhost
+unset mlsys
+unsetenv local_compile
+#-----------------------------------------------------------

@@ -1,0 +1,54 @@
+#-----------------------------------------------------------
+# source'd file compile.convex
+#-----------------------------------------------------------
+set mmir  = $MIR
+set mhost = $MIRHOST
+set mlsys = $mmir/bin/localsys
+#
+setenv Fcompile "`which fc`"
+#setenv Foptions  "-fi -O3 -sa -ur -ds -peelall -ptstall -re -rl -or none"
+#setenv FoptionsN "-fi     -sa -ur -ds -peelall -ptstall -re -rl -or none"
+setenv Foptions  "-fi -O3 -or none"
+setenv FoptionsN "-fi     -or none"
+setenv Flinkdir "-L`echo $mmir/lib/$mhost $MIRXLIB | sed 's/ / -L/g'`"
+setenv Flinklib "-lmir -lveclib -lpgplot -lX11"
+setenv Finclude "-I`echo $mmir/src/inc $MIRXINC | sed 's/ / -I/g'`"
+#
+setenv Ccompile "`which cc`"
+#setenv Coptions  "-fi -O3 -ur -ds -peelall -ptstall -or none -Dconvex"
+#setenv CoptionsN "-fi     -ur -ds -peelall -ptstall -or none -Dconvex"
+setenv Coptions  "-fi -O1 -or none -Dconvex"
+setenv CoptionsN "-fi     -or none -Dconvex"
+setenv Clinkdir "-L`echo $mmir/lib/$mhost $MIRXLIB | sed 's/ / -L/g'`"
+setenv Clinklib "-lmir -lveclib -lpgplot -lX11"
+setenv Cinclude "-I`echo $mmir/src/inc $MIRXINC | sed 's/ / -I/g'`"
+#
+setenv Ratty 	"$mmir/bin/$mhost/ratty -s convex"
+setenv Intf2c 	"$mmir/bin/$mhost/intf2c -s convex"
+#
+#-----------------------------------------------------------
+if ($?MIRDEBUG)   then
+   setenv Coptions  "$Coptions  -g -cxdb"
+   setenv CoptionsN "$CoptionsN -g -cxdb"
+   setenv Foptions  "$Foptions  -g -cxdb"
+   setenv FoptionsN "$FoptionsN -g -cxdb"
+endif
+if ($?MIRTESTBED) then
+   setenv Coptions  "$Coptions  -DTESTBED"
+   setenv CoptionsN "$CoptionsN -DTESTBED"
+   setenv Foptions  "$Foptions  -DTESTBED"
+   setenv FoptionsN "$FoptionsN -DTESTBED"
+   setenv Ratty     "$Ratty -D TESTBED"
+endif
+#-----------------------------------------------------------
+if (-e  $mlsys/compile.convex && ! $?local_compile) then
+  echo $mlsys/compile.convex exists =======================
+  setenv local_compile
+  source $mlsys/compile.convex
+endif
+#-----------------------------------------------------------
+unset mmir
+unset mhost
+unset mlsys
+unsetenv local_compile
+#-----------------------------------------------------------
