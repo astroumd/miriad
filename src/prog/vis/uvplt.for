@@ -297,6 +297,7 @@ c    mchw 26jun96  Call varmint to get parang in case not in uvdata.
 c    pjt  12oct97  Push MAXBASE2 upto 45 for Hat Creek.  Does not affect ATCA
 c    mchw 14feb02  Changes to accomodate more antennas.
 c    pjt  11dec02  subroutine IZERO to bypass big DATA statement that makes big binaries
+c    mchw 14aug03  replace varmint.
 c
 c To do:
 c
@@ -526,7 +527,7 @@ c
           if (.not.keep) goto 950
 c
           call uvrdvrd (lin, 'obsra', ra, 0.0d0)
-          call varmintr (lin, 'chi', parang)
+          call uvrdvrr (lin, 'chi', parang, 0.0)
           call uvrdvrr (lin, 'evector', evec, 0.0)
           parang = (parang-evec) * 180.0 / dpi
 c
@@ -2817,7 +2818,7 @@ c
       character polsc2p*2
 c
       save cols
-      data fmt /'i1', 'i3'/
+      data fmt /'i3', 'i3'/
       data cols1 /1, 7, 2, 5, 3, 4, 6, 8, 9,  10, 11, 12/
       data cols2 /1, 2, 5, 3, 4, 6, 8, 9, 10, 11, 12, 13/
 c----------------------------------------------------------------------

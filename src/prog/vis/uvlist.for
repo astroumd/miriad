@@ -123,10 +123,11 @@ c   19jan02 pjt  - basant needs double precision argument
 c   27jun02 mchw - use latitude uv-variable if present.
 c   11dec02 pjt  - subroutine q/r/d/ZERO to bypass big DATA statement that makes big binaries
 c   13mar03 pjt  - need to use MAXBASE2 mor multidim arrays...
+c   14aug03 mchw - replace varmint with parang in options=list.
 c-----------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='UVLIST: version  13-may-03')
+	parameter(version='UVLIST: version  14-Aug-03')
 	real rtoh,rtod,pi
 	integer maxsels
 	parameter(pi=3.141592653589793,rtoh=12/pi,rtod=180/pi)
@@ -753,7 +754,7 @@ c
 	sinl = sin(latitude)
 	cosl = cos(latitude)
 	elev = asin(sinl*sind+cosl*cosd*cosha)
-	call varmintr(unit,'chi',chi)
+	call parang(obsra,obsdec,lst,latitude,chi)
 c
 c  Give the preamble.
 c
