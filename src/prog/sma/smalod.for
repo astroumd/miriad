@@ -17,9 +17,11 @@ c@ out
 c       Name of the output Miriad uv data-set. No default.
 c
 c@ rxif
-c       selete from dual receivers/IFs; rxif=0 for receiver 0;
-c       rxif=2 for receiver 2; Default is for receiver 0;
-c       rxif=-1 is  no seperation in receivers.
+c       selete from dual receivers/IFs; 
+c       rxif=0 for receiver id = 0 -> 230 GHz band;
+c       rxif=1 for receiver id = 1 -> 340 GHz band;
+c       rxif=2 for receiver id = 2 -> 690 GHz band;
+c       No default.
 c
 c@ restfreq
 c       The rest frequency, in GHz, for line observations.  By default,
@@ -39,33 +41,35 @@ c       'oldpol'   Converts MIR polarization data observed before
 c                  2004-9-1.
 c                  Defaults assumes non-polarization state is assigned.
 c       'dospc'    reverses the order of the spectral chunks for
-c                  the last three blocks (4 5 6).
+c                  the first three blocks (1 2 3).
 c                  spectral window orders:
 c                   spcode iband 
-c		       	 1 1
-c			 2 2
-c			 3 3
-c			 4 4
-c			 5 5
-c			 6 6
-c			 7 7
-c		 	 8 8
-c			 9 9
-c			10 10
-c			11 11
-c			12 12
-c			16 13
-c			15 14
-c			14 15
-c			13 16
-c			20 17
-c			19 18
-c			18 19
-c 			17 20
-c	  		24 21
-c			23 22
-c			22 23
-c			21 24 
+c		       	 4 1
+c			 3 2
+c			 2 3
+c			 1 4
+c			 8 5
+c			 7 6
+c			 6 7
+c		 	 5 8
+c			12 9
+c			11 10
+c			10 11
+c			 9 12
+c			13 13
+c			14 14
+c			15 15
+c			16 16
+c			17 17
+c			18 18
+c			19 19
+c 			20 20
+c	  		21 21
+c			22 22
+c			23 23
+c			24 24 
+c       'doengrd'  to read the engineer file for Tsys and LST.
+c
 c       No extra processing options have been given yet. The default
 c       works.
 c
@@ -112,6 +116,7 @@ c    jhz  11-jan-05 added Key word rsnchan controls the resmapling vis
 c                   spectra output.  
 c    jhz  28-feb-05 added option dospc
 c    jhz  01-mar-05 added rx id label to the output file
+c    jhz  02-mar-05 added option doengrd to read engineer data file
 c------------------------------------------------------------------------
         integer maxfiles
         parameter(maxfiles=128)
@@ -124,8 +129,9 @@ c
         double precision rfreq(2)
         logical doauto,docross,docomp,dosam,relax,unflag,dohann
         logical dobary,doif,birdie,dowt,dopmps,doxyp,doop
-        logical polflag,hires,nopol,sing, oldpol, dsb, dospc
+        logical polflag,hires,nopol,sing, oldpol, dsb, dospc, doengrd
         integer fileskip,fileproc,scanskip,scanproc,sb, dosporder
+        integer doeng
 	integer rsNCHAN
 c
 c  Externals.
@@ -143,19 +149,28 @@ c
         call keya('out',out,' ')
         if(out.eq.' ')
      *    call bug('f','Output name must be given')
-         call keyi('rxif',rxif,1)
+         call keyi('rxif',rxif,-2)
             if(rxif==0) rxc='_rx0'
             if(rxif==1) rxc='_rx1'
             if(rxif==2) rxc='_rx2'
+c
+        if(rxif==-2) then 
+             call bug('f','No defualt for rxif!')
+             write(*,*) 'rxif=0 -> 230 band'
+             write(*,*) 'rxif=1 -> 340 band'
+             write(*,*) 'rxif=2 -> 690 band' 
+             end if
          if(rxif.lt.-1.or.rxif.gt.2) 
      *   call bug('f','Invalid Receiver ID.')
 
         call mkeyd('restfreq',rfreq,2,nfreq)
         call getopt(doauto,docross,docomp,dosam,doxyp,doop,relax,
      *    sing,unflag,dohann,birdie,dobary,doif,dowt,dopmps,polflag,
-     *    hires,nopol,oldpol,dospc)
+     *    hires,nopol,oldpol,dospc,doengrd)
             dosporder=-1
             if(dospc) dosporder=1
+            doeng =-1
+            if(doengrd) doeng=1
         call keyi('rsnchan',rsnchan,-1)
        if(rsnchan.gt.0) then 
          rsnchan=2**(int(log(real(rsnchan))/log(2.)+0.5))
@@ -230,7 +245,7 @@ c
             endif
             call smadisp(in(i),scanskip,scanproc,doauto,docross,
      *          relax,sing,unflag,polflag,rxif,rfreq,nfreq,sb,
-     *          iostat, dosporder)
+     *          iostat, dosporder,doeng)
           endif
         enddo
         if(iostat.ne.0)then
@@ -274,11 +289,11 @@ c
 c************************************************************************
         subroutine getopt(doauto,docross,docomp,dosam,doxyp,doop,
      *    relax,sing,unflag,dohann,birdie,dobary,doif,dowt,dopmps,
-     *    polflag,hires,nopol,oldpol,dospc)
+     *    polflag,hires,nopol,oldpol,dospc,doengrd)
 c
         logical doauto,docross,dosam,relax,unflag,dohann,dobary,doop
         logical docomp,doif,birdie,dowt,dopmps,doxyp,polflag,hires,sing
-        logical nopol,oldpol,dospc
+        logical nopol,oldpol,dospc, doengrd
 c
 c  Get the user options.
 c
@@ -304,9 +319,10 @@ c    sing	Single dish mode.
 c    nopol      Disable polarization.
 c    dospc      reverse the order of spectral windows for
 c               the last three blocks.
+c    doengrd read engineer file.
 c------------------------------------------------------------------------
         integer nopt
-        parameter(nopt=21)
+        parameter(nopt=22)
         character opts(nopt)*8
         logical present(nopt)
         data opts/'noauto  ','nocross ','compress','relax   ',
@@ -314,7 +330,7 @@ c------------------------------------------------------------------------
      *            'noif    ','birdie  ','reweight','xycorr  ',
      *            'opcorr  ',
      *            'nopflag ','hires   ','pmps    ','mmrelax ',
-     *            'single  ','nopol   ','oldpol','dospc'/
+     *            'single  ','nopol   ','oldpol','dospc', 'doengrd'/
         call options('options',opts,present,nopt)
         doauto = .not.present(1)
         docross = .not.present(2)
@@ -340,6 +356,7 @@ c       mmrelax = present(17)
         nopol   = present(19)
         oldpol  = present(20)
         dospc   = present(21)
+        doengrd = present(22)
 c
         if((dosam.or.doxyp.or.doop).and.relax)call bug('f',
      *    'You cannot use options samcorr, xycorr or opcorr with relax')
@@ -630,10 +647,11 @@ c------------------------------------------------------------------------
         end
 c************************************************************************
         subroutine smadisp(in,scanskip,scanproc,doauto,docross,relax,
-     *    sing,unflag,polflag,rxif,userfreq,nuser,sb,iostat, dosporder)
+     *    sing,unflag,polflag,rxif,userfreq,nuser,sb,iostat, 
+     *    dosporder,doeng)
 c
         character in*(*)
-        integer scanskip,scanproc,rxif,nuser,sb,iostat,dosporder
+        integer scanskip,scanproc,rxif,nuser,sb,iostat,dosporder,doeng
         double precision userfreq(*)
         logical doauto,docross,relax,unflag,polflag,sing
 c  jhz
@@ -826,7 +844,8 @@ c  Initialize.
 c
         call pokename(in)
         call rssmaflush(mflag,scinit,tcorr,scbuf,xflag,yflag,
-     *       max_if,ant_max,  scanskip, scanproc, sb, rxif, dosporder)
+     *       max_if,ant_max,  scanskip, scanproc, sb, rxif, 
+     *       dosporder, doeng)
                   kstat= 666
         call rspokeflshsma(kstat);
 c
