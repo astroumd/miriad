@@ -1,0 +1,153 @@
+#!/bin/csh -f
+# 
+# --------------------------------------------------------------
+# subscript lib.pgplot
+# --------------------------------------------------------------
+set mir    = $MIR
+set host   = $MIRHOST
+set lsys   = $mir/bin/localsys
+set libdir = $mir/lib/$host
+set bindir = $mir/bin/$host
+set docdir = $mir/doc/subs
+set admdir = $mir/src/sys/bin
+set srcdir = $mir/borrow/pgplot
+# -------------------------------------------------------------------
+if (-e $lsys/lib.pgplot && ! $?local_compile) then
+  echo $lsys/lib.pgplot exists =======================
+  setenv local_compile
+  exec $lsys/lib.pgplot $argv
+endif
+# -------------------------------------------------------------------
+if ($?Ccompile == 0) then
+   if (-e $admdir/compile.${host}) then
+      source $admdir/compile.${host}
+   else
+      echo "Cannot find $admdir/compile.${host} - exiting."
+      exit 1
+   endif
+endif
+# -------------------------------------------------------------------
+switch ($host)
+   case convex:
+                set pgsys = convex
+                breaksw
+   case sun4sol:
+                set pgsys = sol2
+                breaksw
+   case sun4:
+                set pgsys = sun4
+                breaksw
+   case sun3:
+                set pgsys = sun4
+                breaksw
+   case mips:
+                set pgsys = irix
+                breaksw
+   case linux:
+                set pgsys = linux
+                breaksw
+   default:
+                echo "Miriad's PGPLOT not installed on $host - exiting."
+                exit 1
+                breaksw
+endsw
+# -------------------------------------------------------------------
+if (! -e $srcdir/makemake) then
+   echo "Cannot find $srcdir/makemake - exiting."
+   exit 1
+endif
+# -------------------------------------------------------------------
+set f77name = $Fcompile
+set f77name = $f77name:t
+set  ccname = $Ccompile
+set  ccname = $ccname:t
+set configfile = ${f77name}_${ccname}.conf
+set sconf = $srcdir/sys_${pgsys}/${configfile}
+set configfile = mir${configfile}
+set mconf = $srcdir/sys_${pgsys}/${configfile}
+if (! -e $mconf) then
+   echo "Cannot find Miriad configuration file $mconf - will try to create it."
+   if (! -e $sconf) then
+      echo "Cannot find standard PGPLOT configuration file $sconf - exiting."
+      exit 1
+   endif
+   cat > pg$$.sed << EODsed
+/XINCL=/a\
+   XINCL="${Finclude} \$XINCL"
+/[^_]LIBS=/a\
+   LIBS="${Flinkdir} \$LIBS"
+/MOTIF_INCL=/a\
+   MOTIF_INCL="${Finclude} \$MOTIF_INCL"
+/MOTIF_LIBS=/a\
+   MOTIF_LIBS="${Flinkdir} \$MOTIF_LIBS"
+EODsed
+   sed -f pg$$.sed $sconf > $mconf
+   rm pg$$.sed
+endif
+# -------------------------------------------------------------------
+set driverfile = $libdir/drivers.list
+if (! -e $driverfile) then
+   echo "Cannot find $driverfile - will try to create it."
+   if (! -e $srcdir/drivers.list) then
+     echo "Cannot find $srcdir/drivers.list - exiting."
+     exit 1
+   endif
+#  Do some sed magic to turn on (select) the ps/tt/xw/gi/pp drivers...
+   if ($pgsys == linux) then
+     sed -e '/^\! PSDRIV/s/^\!/ /' $srcdir/drivers.list  | \
+     sed -e '/^\! XWDRIV/s/^\!/ /' > $driverfile
+   else
+     sed -e '/^\! PSDRIV/s/^\!/ /' $srcdir/drivers.list  | \
+     sed -e '/^\! TTDRIV/s/^\!/ /' -e '/^\! XWDRIV/s/^\!/ /' | \
+     sed -e '/^\! GIDRIV/s/^\!/ /' -e '/^\! PPDRIV/s/^\!/ /' > $driverfile
+   endif
+endif
+# -------------------------------------------------------------------
+cd $libdir
+$srcdir/makemake $srcdir $pgsys ${configfile:r}
+# -------------------------------------------------------------------
+#  Get the default all: directive and remove the items not needed.
+#  Note that the 'cpg' string is manually added for the C bindings.
+set makeargs = `grep '^all' ./makefile | sed -e 's/all://'`
+set makeargs = `echo $makeargs cpg | sed -e 's/prog //'`
+set makeargs = `echo $makeargs | sed -e 's/pgplot.doc //'`
+set makeargs = `echo $makeargs | sed -e 's/[a-zA-Z]*demo[a-zA-Z\.]*//'`
+set olibs = `echo $makeargs | awk '{for(i=1;i<=NF;i++) print $i}' | egrep 'lib[a-zA-Z]' | awk '{printf("%s ", $0)} END{printf("\n")}'`
+set servers = `echo $makeargs | awk '{for(i=1;i<=NF;i++) print $i}' | egrep '(pgdisp|pgxwin_server|pgview.app)' | awk '{printf("%s ", $0)} END{printf("\n")}'`
+# -------------------------------------------------------------------
+#  Remove the static libraries and include files to insure they get
+#  (re)built correctly.
+rm -f $libdir/libpgplot.a
+foreach ilib (libcpgplot.a $olibs)
+  set hfile = `echo $ilib | sed -e 's/lib\([^\.]*\.\)a/\1h/'`
+  rm -f $libdir/$ilib
+  rm -f $libdir/$hfile
+end
+# -------------------------------------------------------------------
+#  Compile the code.
+echo make -f ./makefile $makeargs
+make -f ./makefile $makeargs
+echo ' '
+ls -l $libdir/grfont.dat
+ls -l $libdir/libpgplot.*
+foreach ilib (libcpgplot.a $olibs)
+  ls -l $libdir/$ilib
+end
+echo ' '
+# -------------------------------------------------------------------
+#  Clean up intermediate files and remove files that clean missed.
+make -f ./makefile clean
+rm -fr pgplot.inc grpckg1.inc grexec.f makefile pgbind
+rm -fr cpgdemo pg*demo*
+# -------------------------------------------------------------------
+#  Now, if any servers exist, move them to the bin directory.
+if ($#servers > 0) then
+  mv $servers $bindir
+endif
+# -------------------------------------------------------------------
+if (! -e $bindir/doc) mir.prog doc
+cd $docdir
+$bindir/doc -p -o $srcdir/src $srcdir/src/pg*
+# -------------------------------------------------------------------
+unsetenv local_compile
+exit 0
