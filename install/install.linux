@@ -89,8 +89,9 @@ set pgplot=1                #  include PGPLOT in $MIRLIB ?
 set newcode=1               #  include 'newcode' not in CVS (yet) ; aim is to add in future
 set debug=0                 #  compile in debug (-g) mode ?
 set cvs=1                   #  use CVS archive to get miriad.tar.gz ?
-set local=0                 #  ??? not used ???
-set bench=0,512,1           #  mirbench nchan,mapsize,cell  (nchan=0 will skip the test)
+set test=1                  #  mir.test  baseline test (batch oriented)
+set testx=0		    #  mir.testx testing X routines (interactive)
+set bench=0,512,1           #  mir.bench nchan,mapsize,cell  (nchan=0 will skip bench)
 
 #		   	remember from where we were installing, since we have stuff here.....
 set install_dir=`pwd`
@@ -266,7 +267,6 @@ if (-e $install_root/do_patch) then
     # mkdir -p $MIR/local/install
 	#  oops, what about the directories.....
     # cp -pr * $MIR/local/install
-    ./mir.test
     popd
 endif
 
@@ -296,6 +296,14 @@ if (-d atnf) then
    mv atlod.doc $MIRPDOC
    rm -f atlod.*
    popd
+endif
+
+if ($test) then
+    ./mir.test
+endif
+
+if ($testx) then
+   mir.testx
 endif
 
 set benchpars=(`echo $bench | awk -F, '{print $1,$2,$3}'`)
