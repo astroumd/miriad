@@ -233,6 +233,7 @@ if ($newcode) then
 endif
 
 if ($intel) then
+  echo "Using intel compiler"
   cp $MIR/src/sys/bin/compile.linux_intel $MIR/bin/localsys/compile.linux
 endif
 
