@@ -123,6 +123,11 @@ struct codeh_def {
 
 };
 
+struct xyz {
+        double x;
+        double y;
+        double z;
+           };
 /* the size of codeh is 42 bytes char=1 short=2 */
 
 
@@ -225,7 +230,7 @@ struct sph_config {
         short   nch[25]       ; /*  # channels in spectrum    */
         int     dataoff       ; /*  byte offset for data      */
         double  rfreq[25]     ; /*  rest frequency (GHz)      */
-        double  veldop        ; /*  velocity of observatory in the 
+        float  veldop        ; /*  velocity of observatory in the 
                                     direction of the source tracked 
                                     with doppler correction   */
         short   isb           ; /*  sideband int code         */
@@ -497,6 +502,7 @@ struct smlodd {
         int tno;
         int rsnchan;
         int nants;
+        int refant;
         int nifs;
         int nfreq[SMIF+1];
         int nstoke[SMIF+1];
