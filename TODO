@@ -1,3 +1,8 @@
+- no more maxdim.h and maxdimc.h in $MIRINC, since they are 
+  generated via configure (planned for 4.0.4)
+
+- SMA code integration
+
 - integer*8 support; ratty flag to go back to the old situation if
   the fortran compiler does not support integer*8
   [this will support scratchfiles > 8GB]
