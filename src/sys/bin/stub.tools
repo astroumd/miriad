@@ -1,0 +1,60 @@
+#!/bin/csh -f
+# -----------------------------------------------------------
+# sub-script stub.tools
+# -----------------------------------------------------------
+set mir    = $MIR
+set host   = $MIRHOST
+set lsys   = $mir/bin/localsys
+set srcdir = $mir/src/tools
+set libdir = $mir/lib/$host
+set bindir = $mir/bin/$host
+set admdir = $mir/src/sys/bin
+
+set i   = $1
+set d   = ${i:h}
+set out = ${i:t}
+set out = ${out:r}
+set in  = ${d}/${out}.c
+# -----------------------------------------------------------
+if (-e $lsys/stub.tools && ! $?local_compile) then
+  echo $lsys/stub.tools exists =================
+  setenv local_compile
+  exec $lsys/stub.tools $argv
+endif
+if (! -e $in) exit 0
+# -----------------------------------------------------------
+if ($?Ccompile == 0) then
+   if (-e $admdir/compile.${host}) then
+      source $admdir/compile.${host}
+   else
+      echo "Cannot find $admdir/compile.${host} - exiting."
+      exit 1
+   endif
+endif
+# -----------------------------------------------------------
+set options = "$Cinclude"
+set linklib = ""
+
+cd $srcdir
+switch ($out)
+     case miriad:
+		  if (-e $libdir/libreadline.a) then
+		     set options = "$options -DREADLINE"
+		     set linklib = "-lreadline -ltermcap -lm"
+		  endif
+		  breaksw
+     case xpanel:
+		  set linklib = "-lXaw -lXmu -lXt -lXext -lX11"
+                  if ($host == sun4sol) set linklib = "$linklib -lsocket"
+		  breaksw
+     case default:
+		  breaksw
+endsw
+
+echo "$Ccompile $Coptions $options -I$srcdir -o $bindir/$out $in $Clinkdir $linklib"
+      $Ccompile $Coptions $options -I$srcdir -o $bindir/$out $in $Clinkdir $linklib
+
+echo "`ls -l $bindir/$out`"
+unsetenv local_compile
+exit 0
+# -----------------------------------------------------------
