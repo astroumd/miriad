@@ -48,6 +48,7 @@ if ($?MIRDEBUG != 0) set options = ( $options -debug )
 #
 $wipdir/makewip -wip "$wipdir" -pgplot "$libdir" -lib "$libdir" \
   -bin "$bindir" -xlib "$MIRXLIB" -host "$host" -cc "$Ccompile" \
+  -fc "$Fcompile" \
   -copts "$copts" -linkopts "$linkopts" ${options:q} $*
 # -------------------------------------------------------------------
 unsetenv local_compile
