@@ -105,6 +105,7 @@ else
 endif
 
 #	try and be intelligent about X  (the mirdefs script may help here if you need to modify)
+#       AMD64 may use /usr/X11R6/lib64 here !!!
 if ($hosttype == linux) then
   set mirxinc="/usr/include/X11"
   set mirxlib="/usr/X11R6/lib"
@@ -120,7 +121,7 @@ else
   set mirxlib="/usr/X11R6/lib"
 endif
 
-set searchlibs=(/usr/lib /local/lib /usr/local/lib)
+set searchlibs=(/usr/lib /usr/X11R6/lib /local/lib /usr/local/lib)
 #		care, wip still uses something else, it won't listen to $fortran
 #		and you probably need 'f77' in your path
 # set fortran=g77		# not used right now (WIP might need it)
@@ -416,6 +417,8 @@ if (-e $install_root/do_patch) then
 endif
 
 # velplotc: - make it depend on if Xforms is present
+#       check http://world.std.com/~xforms/
+#             http://savannah.nongnu.org/files/?group=xforms
 set dofl=0
 foreach ldir ($searchlibs)
     if (-e $ldir/libforms.a) then
