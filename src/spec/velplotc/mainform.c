@@ -1168,18 +1168,30 @@ type=1 ==> fl_set_choice_text
 type=2 ==> settingConflag
 */
 int set_user(FL_OBJECT *obj,char *label, char *defau, int type)
-{ int lenlabel;
+{ int lenlabel,i,nitems,found=0;
   char valuestr[35];
   lenlabel=strlen(label);
   checkkeyword_(label,&lenlabel,valuestr);
-  /*printf("Hi label[%s]=[%s]\n",label,valuestr);*/
+  /* printf("Hi label[%s]=[%s]\n",label,valuestr);*/
   if (type == 0) {
     if (strlen(valuestr) > 0) fl_set_input(obj,valuestr);
     else 		      fl_set_input(obj,defau);
   }
   if (type == 1) {
-    if (strlen(valuestr) > 0) fl_set_choice_text(obj,valuestr);
-    else 		      fl_set_choice_text(obj,defau);
+    if (strlen(valuestr) > 0) {
+       nitems=fl_get_choice_maxitems(obj);
+       for (i=1;i<=nitems;i++) {
+         if (!strcmp(fl_get_choice_item_text(obj, i),valuestr)) {
+            found=1;
+            break;
+         }  
+       }
+       if (found == 1) fl_set_choice_text(obj,valuestr);
+       else printf("Warning:## Request [%s=%s] is invalid.\n",label,valuestr);
+    }
+    else {
+     	fl_set_choice_text(obj,defau);
+    }
   }
   if (type == 2) {
     if (strlen(valuestr) > 0) strcpy(conflag_s,valuestr);
@@ -1209,8 +1221,8 @@ static void cb_userrequest(FL_OBJECT *obj, long arg)
      if (!strcmp(label,"conflag")) set_user(taskobj[i],label,"pn",2);
      if (!strcmp(label,"Contour")) set_user(taskobj[i],label,"1",1);
      if (!strcmp(label,"Box")) {
-       if (!strcmp(r,"PosVel")) fl_set_choice_text(taskobj[i],"Untouch");
-       if (!strcmp(r,"Implot")) fl_set_choice_text(taskobj[i],"Square");
+       if (!strcmp(r,"PosVel")) set_user(taskobj[i],label,"Untouch",1);
+       if (!strcmp(r,"Implot")) set_user(taskobj[i],label,"Square",1);
      }
      if (!strcmp(label,"Palette")) set_user(taskobj[i],label,"0",1);
      if (!strcmp(label,"Note")) set_user(taskobj[i],label,"1",1);

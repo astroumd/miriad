@@ -71,14 +71,16 @@ c	Note: Pass only the pointer memr(ary)
 	write(*,*) "      [Cbeam=?] [nxy=?] [Palette=?]"
 	write(*,*) "\t    [cutfile | cut | cutr=?]"
 	write(*,*) "\tin: input file"
+	write(*,*) "\ttask: Use velplot, implot or doposvel"
 	write(*,*) "\tregion: conform to miriad format"
 	write(*,*) "\tdevice: conform to miriad format"
 	write(*,*) "\tCbeam: 3 values: bmin, bmaj, pa"
 	write(*,*) "\tnxy: conform to miriad format"
+	write(*,*) "\tBox: For implot, use Square or Touch"
+	write(*,*) "\t     For velplot, use UnTouch, Touch or Grid"
 	write(*,*) "\tPalette: any value from 0 to 12"
-	write(*,*) "\ttask: implot or velplot or doposvel"
 	write(*,*) "\tcutfile | cut | cutr: ",
-     &      "at most one can be specied"
+     &      "only one can be specied at a time"
 	write(*,*) "\tfor cutfile, will read cut from a file"
 	write(*,*) "\t\te.g. cutfile=a.cut"
 	write(*,*) "\tfor cut, use cut=-dra,ddec,PA, eg cut=30,40,10"
@@ -109,7 +111,7 @@ c	Note: Pass only the pointer memr(ary)
 	parameter(ckms=299793.)
 	integer i,j,k,ipt
 	real cdelt,crval,crpix1,crpix2,crpix,row(MAXDIM),blank
-	data blank/0.0/
+	data blank/-99.0/
 	character*9 objecto
 	common/objecto/objecto
 
@@ -159,12 +161,17 @@ c	  write(*,*) i,vlsr(i)
 	  do j = blc(2),trc(2)
 	    call xyread(lIn,j,row)
             CALL xyflgrd(lIn,j,mask)
+c
+cc	    mask(i) =true ==> good data
+c
 	    do i = blc(1),trc(1)
 	      if (.not.mask(i)) row(i)=blank
 	      ary(ipt) = row(i)
 c	      write(*,*) ary(i),i,j,k
-	      mapmax = max(mapmax,row(i))
-              mapmin = min(mapmin,row(i))
+	      if (mask(i)) then
+	        mapmax = max(mapmax,row(i))
+                mapmin = min(mapmin,row(i))
+	      end if
 	      ipt = ipt + 1
 	    enddo
 	  enddo

@@ -8,8 +8,8 @@ C	It's good for both implot and velplot
 	integer annotate,contour,image,windx,windy,boxc,Beam,nconarg
 	common/plotinteger/annotate,contour,image,windx,
      &        windy,boxc,Beam,nconarg
-	character conflag*10,Units_p*1
-	common/plotcharacter/conflag,Units_p
+	character conflag*10,Units_p*1,boxa*10
+	common/plotcharacter/conflag,Units_p,boxa
 	
 	character itask*1
 	common/itask/itask
