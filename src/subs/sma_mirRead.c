@@ -28,6 +28,9 @@
 // 2005-03-01 added a function to fix the spectral chunk order
 //            which is a temporal problem in the mir file
 // 2005-03-02 added an option to read engineer file.
+// 2005-03-07 changed the chunk order in frequnecy for the first
+//            three blocks in the data observed during the
+//            690 campaign spring 2005
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -541,7 +544,7 @@ int firstbsl,lastbsl,inhid;
 int numberBaselines,numberSpectra,numberSidebands,numberRxif;
 int blhid,firstsp,lastsp;
 int inhset,blhset,sphset;
-int spcode[25];
+int spcode[25], frcode[25];
 short int realvisS,imagvisS,scale;
 float realvisF[128],imagvisF[128];
 short int *shortdata;
@@ -1387,20 +1390,50 @@ smabuffer.nifs = smaCorr.n_chunk;
 /* reverse the spectral chunk order for blocks
    1 2 3 4 */
 if(smabuffer.doChunkOrder==1) {
-   spcode[1]=4;
-   spcode[2]=3;
-   spcode[3]=2;
-   spcode[4]=1;
+//   spcode[1]=4;
+//   spcode[2]=3;
+//   spcode[3]=2;
+//   spcode[4]=1;
 
-   spcode[5]=8;
-   spcode[6]=7;
-   spcode[7]=6;
-   spcode[8]=5;
+//   spcode[5]=8;
+//   spcode[6]=7;
+//   spcode[7]=6;
+//   spcode[8]=5;
 
-   spcode[9]=12;
-   spcode[10]=11;
-   spcode[11]=10;
-   spcode[12]=9;
+//   spcode[9]=12;
+//   spcode[10]=11;
+//   spcode[11]=10;
+//   spcode[12]=9;
+
+   frcode[1]=4;
+   frcode[2]=3;
+   frcode[3]=2;
+   frcode[4]=1;
+
+   frcode[5]=8;
+   frcode[6]=7;
+   frcode[7]=6;
+   frcode[8]=5;
+
+   frcode[9]=12;
+   frcode[10]=11;
+   frcode[11]=10;
+   frcode[12]=9;
+
+   frcode[13]=13;
+   frcode[14]=14;
+   frcode[15]=15;
+   frcode[16]=16;
+
+   frcode[17]=17;
+   frcode[18]=18;
+   frcode[19]=19;
+   frcode[20]=20;
+
+   frcode[21]=21;
+   frcode[22]=22;
+   frcode[23]=23;
+   frcode[24]=24;
                      }
 
 switch(smabuffer.sb) {
@@ -1552,6 +1585,11 @@ uvputvri_c(tno,"sourid", &sourceID, 1);
 // for the rest three blocks (4,5,6), the chunk order is reversed in each block.
 // 1 2 3 4 5 6 7 8 9 10 12 16 15 14 13 20 19 18 17 24 23 22 21
    smabuffer.sfreq[spcode[i]-1]    = spn[inhset]->fsky[i]
+                                   - spn[inhset]->fres[i]/1000.0*
+                                     (spn[inhset]->nch[i]/2-0.5);
+// reverse chunk order for the frequnecy only
+   if(smabuffer.doChunkOrder==1) 
+   smabuffer.sfreq[frcode[i]-1]    = spn[inhset]->fsky[i]
                                    - spn[inhset]->fres[i]/1000.0*
                                      (spn[inhset]->nch[i]/2-0.5);
 //   printf("smabuffer.sfreq=%f\n", smabuffer.sfreq[spcode[i]-1]);
