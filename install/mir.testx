@@ -2,7 +2,6 @@
 #
 echo TEST a few X related things:
 
-
 echo -n "XCORF: " ; set ans=$<
 xcorf
 
