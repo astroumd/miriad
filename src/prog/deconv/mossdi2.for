@@ -35,14 +35,19 @@ c@ options
 c	Extra processing options. There is just one of these at the moment.
 c	  positive   Constrain the deconvolved image to be positive valued.
 c@ maxmiter
-c       Maximum number of minor iterators in a major iteration. 
+c       Maximum number of minor iterations for which change in
+c       sqrt(thresh) is < eps; if maxmiter is exceeded, deconvolution
+c       of plane terminates.  In some cases, mossdi doesn't make it to
+c       rmsfac if iter is large, it can run for hours and hours and   
+c       hours.  maxmiter and eps can be used to keep mossdi from      
+c       wasting time.
 c       Default: 20
 c@ eps
-c       Small value to allow minor loops an early exist if improvement is
-c       not above this value.
+c       Deconvolution terminates if the change in sqrt(thresh) is less
+c       than eps for maxmiter consecutive minor iterations
 c       Default: 0.0001
 c@ log
-c       Logfile with a summary of the major iterations. 
+c       Logfile with a summary of the deconvolution for each plane.
 c       Default: mossdi2_iteration.log
 c--
 c  History:
