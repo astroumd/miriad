@@ -29,6 +29,9 @@ c  mjs  13mar93  Use maxnax.h file instead of setting own value.
 c   jm  15nov93  Added scaling of cos(declination) to cdelt for RA.
 c  pjt  15sep93  Recognize GLON/GLAT/ELON/ELAT
 c  pjt   3jan99  More char* space for item descriptors 
+c  pjt  31jul01  more char* space for keywords - only showed up as a bug
+c                on solaris (native cc), not linux (gcc). Probably
+c                an f2c interface problem with now room for the terminating 0?
 c***********************************************************************
 c= Imhead - List items and pixel values from an image.
 c& jm
@@ -67,14 +70,14 @@ c
       character	PROG*(*)
       character	VERSION*(*)
       parameter	(PROG='IMHEAD: ')
-      parameter	(VERSION=PROG //'version 1.6 3-jan-00')
+      parameter	(VERSION=PROG //'version 1.6 31-jul-01')
 c
 c  Internal Variables.
 c
       integer Lin, length
       integer nsize(MAXNAX)
       character line*132
-      character In*132, Out*132, Keyword*8
+      character In*132, Out*132, Keyword*9
       logical more
 c
 c  Externals.
