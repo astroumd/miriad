@@ -67,14 +67,6 @@ if ($hosttype == SunOS) set hosttype=sun4sol
 
 #
 echo MIRIAD installation $version, for $hosttype
-echo Running configure, telescope=$telescope, logfile in configure.LOG:
-./configure --with-telescope=$telescope >& configure.LOG
-if ($status) then
-  echo Problems running configure, check configure.LOG
-  exit 1
-else
-  echo OK.
-endif
 
 #	try and be intelligent about X  (the mirdefs script may help here if you need to modify)
 #       AMD64 may use /usr/X11R6/lib64 here !!!
@@ -134,6 +126,15 @@ set install_dir=`pwd`
 foreach a ($*)
   set $a
 end
+
+echo Running configure, telescope=$telescope, logfile in configure.LOG:
+./configure --with-telescope=$telescope >& configure.LOG
+if ($status) then
+  echo Problems running configure, check configure.LOG
+  exit 1
+else
+  echo OK.
+endif
 
 #		care, wip still uses something else, it won't listen to $fortran
 #		and you probably need 'f77' in your path
