@@ -6,18 +6,18 @@ set lsys   = $mir/bin/localsys
 set libdir = $mir/lib/$host
 set bindir = $mir/bin/$host
 set admdir = $mir/src/sys/bin
-set wipdir = $mir/borrow/wip
+set raddir = $mir/borrow/rad
 # -------------------------------------------------------------------
-if (! -d $mir/borrow/wip || ! -e $mir/borrow/wip/README) then
-  echo WIP does not seem to exist within your miriad distribution.
-  echo Installation skipped
+if (! -d $mir/borrow/rad || ! -e $mir/borrow/rad/README) then
+  echo RAD does not seem to exist within your miriad distribution.
+  echo Installation skipped  
   exit 0
 endif
 # -------------------------------------------------------------------
-if (-e $lsys/pgm.wip && ! $?local_compile) then
-  echo $lsys/pgm.wip exists =======================
+if (-e $lsys/pgm.rad && ! $?local_compile) then
+  echo $lsys/pgm.rad exists =======================
   setenv local_compile
-  exec $lsys/pgm.wip $argv
+  exec $lsys/pgm.rad $argv
 endif
 # -------------------------------------------------------------------
 if ($?Compile == 0) then
@@ -29,9 +29,9 @@ if ($?Compile == 0) then
    endif
 endif
 # -------------------------------------------------------------------
-if (-e $libdir/libwip.a) then
-  rm -f $libdir/libwip.a
-endif
+#if (-e $libdir/libwip.a) then
+#  rm -f $libdir/libwip.a
+#endif
 #
 set copts = ""
 set linkopts = ""
@@ -46,9 +46,6 @@ endif
 if (-e $libdir/libreadline.a) set options = ( $options -readline "$libdir" )
 if ($?MIRDEBUG != 0) set options = ( $options -debug )
 #
-$wipdir/makewip -wip "$wipdir" -pgplot "$libdir" -lib "$libdir" \
-  -bin "$bindir" -xlib "$MIRXLIB" -host "$host" -cc "$Ccompile" \
-  -copts "$copts" -linkopts "$linkopts" ${options:q} $*
 # -------------------------------------------------------------------
 unsetenv local_compile
 exit 0

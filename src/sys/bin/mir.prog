@@ -8,7 +8,7 @@
 #
 #    Usage:  mir.prog [$argv]
 #
-#            argv = [mxv] [wip] [prog] [miriad tasks]
+#            argv = [mxv] [wip] [rad] [prog] [miriad tasks]
 #
 #    $argv = name of source code file(s).  If none are given,
 #            all tasks will be loaded.  Input files may be
