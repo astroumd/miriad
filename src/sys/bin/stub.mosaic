@@ -1,0 +1,53 @@
+#!/bin/csh -f
+# --------------------------------------------------- 
+set mir    = $MIR
+set host   = $MIRHOST
+set lsys   = $mir/bin/localsys
+set srcdir = $mir/src/spec/mosaic
+set bindir = $mir/bin/$host
+set libdir = $mir/lib/$host
+set docdir = $mir/doc/prog
+set resdir = $mir/doc/misc
+# --------------------------------------------------- 
+if (-e $lsys/stub.mosaic && ! $?local_compile) then
+  echo $lsys/stub.mosaic exists =================
+  setenv local_compile
+  exec $lsys/stub.mosaic
+endif
+# --------------------------------------------------- 
+
+cd $srcdir
+set tmp = (mosaic_main.c `ls *.c | grep -v mosaic_main.c`)
+set src = ""
+set obj = ""
+foreach i ($tmp)
+   set src = ($src $srcdir/$i)
+   set obj = ($obj ${i:r}.o)
+end
+# --------------------------------------------------- 
+set inc  = "-I$srcdir $Cinclude"
+set cops = "-DMIRIADFFT -DDODISKIO "
+if ($MIRHOST == mips || $MIRHOST == sun4sol) then
+set cops = (-DSYSV $cops)
+endif
+
+set libs = "$Clinkdir -ldtm -lm"
+if ($host == sun4sol) set libs = "$libs -lsocket -lnsl"
+# --------------------------------------------------- 
+cd $libdir
+rm -fr $obj >& /dev/null
+#echo "$Ccompile $Coptions -c $cops $inc $src"
+echo "$Ccompile $Coptions -c $cops $inc <source files>"
+      $Ccompile $Coptions -c $cops $inc $src
+#echo "$Fcompile $Foptions -o $bindir/mosaic $obj $Flinkdir $libs $Flinklib"
+echo "$Fcompile $Foptions -o $bindir/mosaic <obj files> $Flinkdir $libs $Flinklib"
+      $Fcompile $Foptions -o $bindir/mosaic $obj $Flinkdir $libs $Flinklib
+rm -fr $obj >& /dev/null
+
+(cd $docdir; doc -p $srcdir/mosaic_main.c)
+# --------------------------------------------------- 
+chmod 755 $bindir/mosaic
+#
+echo "`ls -l $bindir/mosaic`"
+unsetenv local_compile
+exit 0
