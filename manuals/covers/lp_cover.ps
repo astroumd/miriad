@@ -1,0 +1,52 @@
+%!
+
+/TM 775 def  %top margin
+/BM -12 def   %bottom
+/LM 0 def    %left
+/RM 612 def  %right
+
+
+/newline
+ {currentpoint 13 sub
+  exch pop LM
+  exch moveto} def
+
+/nlIfNec
+ {currentpoint pop RM gt  %beyond RM?
+   {newline}if} def       %yes:next line
+
+
+/done?    %stack:---bool.
+ {currentpoint exch pop   %below BM?
+  BM lt} def
+
+/fillpage     %stack:str
+ {/strg exch def
+  { {pop pop nlIfNec} strg kshow
+     done? {exit} if
+  }loop
+}def
+
+/Times-Bold findfont 10 scalefont setfont
+LM TM moveto
+.7 setgray
+( MIRIAD ) fillpage
+
+/Times-Roman findfont 50 scalefont setfont
+
+
+RM LM sub      %center the words
+(LINPACK)stringwidth pop sub
+2 div 500 moveto
+0 setgray
+(LINPACK)show
+/Times-Roman findfont 50 scalefont setfont
+RM LM sub (Subroutine Library) stringwidth pop sub
+2 div 360 moveto
+(Subroutine Library)show
+/Times-Roman findfont 20 scalefont setfont
+RM LM sub (1989) stringwidth pop sub
+2 div 50 moveto
+(1989) show
+
+showpage

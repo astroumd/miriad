@@ -1,0 +1,400 @@
+%------------------------------------------------------------------------
+% MIRIAD Executable Modules Manual
+%------------------------------------------------------------------------
+%  History:
+%            27jan91  mjs  Original version.
+%            11feb91  bpw  Capture info from in-code documentation.
+%            14feb91  mjs  Fix some glitches.
+%            17mar91  mjs  Changed "Miriad" to "MIRIAD"
+%------------------------------------------------------------------------
+\input em_format
+\pageno=1
+%------------------------------------------------------------------------
+% Chapter 1
+%------------------------------------------------------------------------
+\beginchapter{1}{HOW TO USE THIS MANUAL}
+
+The {\bf MIRIAD Executable Modules Manual} is a collection of facts
+useful to MIRIAD programmers. It contains lists of executable
+programs (MIRIAD tasks and tools), executable scripts (Sun and
+Cray), executable commands (VMS), and aliases for those scripts and
+commands. The sole purpose of this manual is to serve as a look-up
+reference book of MIRIAD programs, scripts, commands and aliases.
+
+\vskip 0.5in
+\par It does not explain how to use programs or scripts or commands,
+ nor gives any reasoning as to why they are used (see the {\bf MIRIAD
+ User's Guide} or the {\bf MIRIAD Programmer's Guide} for that information).
+\vskip 0.5in
+\par Chapters 3 to 6 comprise an index of the different executables
+usable in MIRIAD: user programs; and scripts, commands and aliases.
+Chapters 7 through 10 give the full documentation of all MIRIAD
+executables.
+
+\vskip 0.5in
+\par There is no information in this manual that is intended to be useful
+to MIRIAD users (see the {\bf MIRIAD User's Guide} or the {\bf MIRIAD
+Cookbook} for that information).
+
+\endchapter
+%------------------------------------------------------------------------
+% Chapter 2
+%------------------------------------------------------------------------
+\beginchapter{2}{GENERAL INFORMATION}
+
+\beginsection MIRIAD Programmers
+\par The ``Pgmr'' field (the programmer's initials) is the means by which
+programmers identify themselves within MIRIAD source code. This
+is typically used in comment statements within the source code to
+identify program ownership or responsibility, and to specify who
+made changes to the code.
+{\eightpoint\begintt
+Pgmr     Name                      INTERNET               phone
+----  --------------    ------------------------------ ------------
+bpw   Bart Wakker       wakker@sirius.astro.uiuc.edu   217-244-4207
+jm    Jim Morgan        morgan@astro.umd.edu           301-405-6853
+lgm   Lee Mundy         lgm@astro.umd.edu              301-405-1529
+mjs   Mark Stupar       mstupar@sirius.astro.uiuc.edu  217-244-4208
+mchw  Mel Wright        wright@bkyast.berkeley.edu     415-642-0420
+nebk  Neil Killeen      nkilleen@rpepping.oz.au
+pjt   Peter Teuben      teuben@astro.umd.edu           301-405-1540
+rjs   Robert Sault      rsault@rpepping.oz.au
+wh    Wilson Hoffman    hoffman@bkyast.berkeley.edu    415-642-7768
+hr    Harold Ravlin     hr@sirius.astro.uiuc.edu       217-244-4208
+rmc   Dick Crutcher     crutcher@sirius.astro.uiuc.edu 217-333-9581
+----  --------------    ------------------------------ ------------
+\endtt}
+
+\beginsection Program Category Description
+\par This section lists the functional categories of MIRIAD programs.
+All programs are placed into one of the categories below. For descriptions,
+see the section on documentation formats in the {\bf MIRIAD Programmer's
+Manual}.
+{\eightpoint\begintt
+-----------------   -----------------   -----------------   -----------------
+Calibration         Data Transfer       Deconvolution       General
+Map Analysis        Map Combination     Map Making          Map Manipulation
+Model Fitting       Plotting            Profile Analysis    Tools
+Utility             uv Analysis         Visual Display      Other
+-----------------   -----------------   -----------------   -----------------
+\endtt}
+
+\beginsection Scripts, Commands, and Aliases Category Description
+\par This section lists the functional categories of MIRIAD scripts,
+commands and aliases. All of these are placed into one of the categories
+below. For descriptions, see the section on documentation formats in the
+{\bf MIRIAD Programmer's Manual}.
+{\eightpoint\begintt
+-----------------   -----------------   -----------------   -----------------
+Programmer Tool     System Operation    User Utility        Other
+-----------------   -----------------   -----------------   -----------------
+\endtt}
+
+\beginsection List of MIRIAD Manuals
+\par Below is a list of all MIRIAD manuals. \par
+\medskip\par{\parindent=0.5cm
+MIRIAD Cookbook                    \par
+MIRIAD User's Guide                \par
+MIRIAD Programmer's Guide          \par
+MIRIAD Subroutine Libraries Manual \par
+MIRIAD Executable Modules Manual   \par
+MIRIAD PGPLOT Manual               \par
+MIRIAD LINPACK Manual              \par
+}
+
+\endchapter
+%------------------------------------------------------------------------
+% Chapter 3
+%------------------------------------------------------------------------
+\beginchapter{3}{LIST OF EXECUTABLE PROGRAMS}
+
+This chapter lists MIRIAD programs compiled into MIRIAD's
+binary directory. All source code is in FORTRAN (in which case it
+has file extension ``.for'' and is processed by MIRIAD's RATTY
+preprocessor) or C. Refer to Chapter 7 of this manual for descriptions
+and specification of the input parameters.
+
+\beginsection Sorted by Functional Category
+\par\input em_ch3f
+
+\beginsection Sorted Source Code Directory
+\par\input em_ch3s
+
+\beginsection Sorted Alphabetically
+\par\input em_ch3a
+
+\beginsection Sorted by Responsible Programmer
+\par\input em_ch3p
+\vfill\eject
+
+\endchapter
+%------------------------------------------------------------------------
+% Chapter 4
+%------------------------------------------------------------------------
+\beginchapter{4}{LIST OF SCRIPTS AND ALIASES (SUN)}
+
+This chapter lists MIRIAD scripts and aliases MIRIAD's
+binary directory (\$MIRBIN). All source code is in ``csh''. Refer to
+Chapter 8 of this manual for descriptions and specification of the input
+parameters.
+
+\beginsection Sorted by Functional Category
+\par\centerline {\bf Programmer Tool}
+{\eightpoint\begintt
+mir.find .......... bpw ... Search for a file in MIRIAD source code
+mir.help .......... bpw ... Obtain programmer-useful help about MIRIAD source files.
+mir.pindex ........ bpw ... Make alphabetic index of MIRIAD tasks
+mir.sindex ........ bpw ... Make alphabetic index of MIRIAD subroutines
+mirfind ........... bpw ... Search for a file in MIRIAD source code
+\endtt}
+{\eightpoint\begintt
+mirhelp ........... bpw ... Obtain programmer-useful help about MIRIAD source files.
+\endtt}
+\par\centerline {\bf System Operation}
+{\eightpoint\begintt
+mir.filetar ....... mjs ... Make a tarfile of selected MIRIAD files
+mir.gendoc ........ mjs ... Generate on-line MIRIAD documentation
+mir.hcconv ........ mjs ... Load MIRIAD program HCCONV from source to $MIRBIN
+mir.hdf ........... mjs ... Compile HDF source code into $MIRLIB/libdf.a
+mir.linpack ....... mjs ... Compile linpack source into $MIRLIB/liblinpack.a
+\endtt}
+{\eightpoint\begintt
+mir.loadall ....... mjs ... Load MIRIAD subsystems from source code
+mir.mkdirs ........ mjs ... Make the directories for a MIRIAD system
+mir.mkdirs1 ....... mjs ... Internal subscript for script mir.mkdirs
+mir.msss .......... mjs ... Load MIRIAD's version of the AIPS' SSS
+mir.mxds .......... mjs ... Load MIRIAD's version of NCSA's XDS
+\endtt}
+{\eightpoint\begintt
+mir.pgfont ........ mjs ... Load PGPLOT fonts from source code
+mir.pgplot ........ mjs ... Load the PGPLOT library from source code
+mir.prog .......... mjs ... Load MIRIAD tasks from source code to $MIRBIN
+mir.prog1 ......... mjs ... Internal subscript for script mir.prog
+mir.scripts ....... mjs ... Copy scripts from source to $MIRBIN
+\endtt}
+{\eightpoint\begintt
+mir.setpath.awk ... mjs ... Awk script to insert $MIRBIN in searchpath
+mir.submit ........ pjt ... Programmer submission of code to MIRIAD
+mir.subs .......... mjs ... Compile MIRIAD subroutines into $MIRLIB/libmir.a
+mir.systar ........ mjs ... Make a tarfile of MIRIAD source files.
+mir.tar2sys ....... mjs ... Update system from a MIRIAD tarfile
+\endtt}
+{\eightpoint\begintt
+mir.tools ......... mjs ... Load MIRIAD's tools from source code into $MIRBIN
+mir.uvdisplay ..... mjs ... Load UVDISPLAY from source code to $MIRBIN
+mir.uvhat ......... mjs ... Load UNIX UVHAT from source code to $MIRBIN
+MIRRCsun3 ......... mjs ... MIRRC skeleton for MIRIAD sun3 installation
+MIRRCsun3sun4 ..... mjs ... MIRRC skeleton for MIRIAD sun3/4 installation
+\endtt}
+{\eightpoint\begintt
+MIRRCsun4 ......... mjs ... MIRRC skeleton for MIRIAD sun4 installation
+MIRRCumd .......... pjt ... AMIRRC csh skeleton for MIRIAD unix installation
+mirsubmit ......... pjt ... Programmer submission of code to MIRIAD
+unMIRRC ........... mjs ... Unset MIRIAD environment variables
+\endtt}
+\par\centerline {\bf User Utility}
+{\eightpoint\begintt
+mir.bug.csh ....... bpw ... Send mail about bugs to appropriate person
+mirbug ............ bpw ... Send mail about bugs to appropriate person
+mirfeedback ....... bpw ... Send feedback to the appropriate person
+mirindex .......... bpw ... Give one-line description of MIRIAD programs
+\endtt}
+\par\centerline {\bf Other}
+{\eightpoint\begintt
+(none)
+\endtt}
+
+\beginsection Sorted Alphabetically
+\par {\eightpoint\begintt
+MIRRCsun3 ......... mjs ... MIRRC skeleton for MIRIAD sun3 installation
+MIRRCsun3sun4 ..... mjs ... MIRRC skeleton for MIRIAD sun3/4 installation
+MIRRCsun4 ......... mjs ... MIRRC skeleton for MIRIAD sun4 installation
+MIRRCumd .......... pjt ... AMIRRC csh skeleton for MIRIAD unix installation
+mir.bug.csh ....... bpw ... Send mail about bugs to appropriate person
+\endtt}
+{\eightpoint\begintt
+MIRRCsun3 ......... mjs ... MIRRC skeleton for MIRIAD sun3 installation
+mir.filetar ....... mjs ... Make a tarfile of selected MIRIAD files
+mir.find .......... bpw ... Search for a file in MIRIAD source code
+mir.gendoc ........ mjs ... Generate on-line MIRIAD documentation
+mir.hcconv ........ mjs ... Load MIRIAD program HCCONV from source to $MIRBIN
+\endtt}
+{\eightpoint\begintt
+mir.hdf ........... mjs ... Compile HDF source code into $MIRLIB/libdf.a
+mir.help .......... bpw ... Obtain programmer-useful help about MIRIAD source files.
+mir.linpack ....... mjs ... Compile linpack source into $MIRLIB/liblinpack.a
+mir.loadall ....... mjs ... Load MIRIAD subsystems from source code
+mir.mkdirs ........ mjs ... Make the directories for a MIRIAD system
+\endtt}
+{\eightpoint\begintt
+mir.mkdirs1 ....... mjs ... Internal subscript for script mir.mkdirs
+mir.msss .......... mjs ... Load MIRIAD's version of the AIPS' SSS
+mir.mxds .......... mjs ... Load MIRIAD's version of NCSA's XDS
+mir.pgfont ........ mjs ... Load PGPLOT fonts from source code
+mir.pgplot ........ mjs ... Load the PGPLOT library from source code
+\endtt}
+{\eightpoint\begintt
+mir.pindex ........ bpw ... Make alphabetic index of MIRIAD tasks
+mir.prog .......... mjs ... Load MIRIAD tasks from source code to $MIRBIN
+mir.prog1 ......... mjs ... Internal subscript for script mir.prog
+mir.scripts ....... mjs ... Copy scripts from source to $MIRBIN
+mir.setpath.awk ... mjs ... Awk script to insert $MIRBIN in searchpath
+\endtt}
+{\eightpoint\begintt
+mir.sindex ........ bpw ... Make alphabetic index of MIRIAD subroutines
+mir.submit ........ pjt ... Programmer submission of code to MIRIAD
+mir.subs .......... mjs ... Compile MIRIAD subroutines into $MIRLIB/libmir.a
+mir.systar ........ mjs ... Make a tarfile of MIRIAD source files.
+mir.tar2sys ....... mjs ... Update system from a MIRIAD tarfile
+\endtt}
+{\eightpoint\begintt
+mir.tools ......... mjs ... Load MIRIAD's tools from source code into $MIRBIN
+mir.uvdisplay ..... mjs ... Load UVDISPLAY from source code to $MIRBIN
+mir.uvhat ......... mjs ... Load UNIX UVHAT from source code to $MIRBIN
+mirbug ............ bpw ... Send mail about bugs to appropriate person
+mirfeedback ....... bpw ... Send feedback to the appropriate person
+\endtt}
+{\eightpoint\begintt
+mirfind ........... bpw ... Search for a file in MIRIAD source code
+mirhelp ........... bpw ... Obtain programmer-useful help about MIRIAD source files.
+mirindex .......... bpw ... Give one-line description of MIRIAD programs
+mirsubmit ......... pjt ... Programmer submission of code to MIRIAD
+unMIRRC ........... mjs ... Unset MIRIAD environment variables
+\endtt}
+
+\endchapter
+%------------------------------------------------------------------------
+% Chapter 5
+%------------------------------------------------------------------------
+\beginchapter{5}{LIST OF SCRIPTS AND ALIASES (CRAY)}
+
+This chapter lists MIRIAD scripts and aliases MIRIAD's
+binary directory (\$MIRBIN). All source code is in ``csh''. Refer to
+Chapter 9 of this manual for descriptions and specification of the input
+parameters.
+
+\beginsection Sorted by Functional Category
+\par {\eightpoint\begintt
+(currently under revision)
+\endtt}
+
+\beginsection Sorted Alphabetically
+\par {\eightpoint\begintt
+(currently under revision)
+\endtt}
+
+\endchapter
+%------------------------------------------------------------------------
+% Chapter 6
+%------------------------------------------------------------------------
+\beginchapter{6}{LIST OF COMMANDS AND ALIASES (VMS)}
+
+This chapter lists MIRIAD scripts and aliases MIRIAD's
+binary directory (\$MIRBIN). All source code is in ``csh''. Refer to
+Chapter 10 of this manual for descriptions and specification of the input
+parameters.
+
+\beginsection Sorted by Functional Category
+\par\centerline {\bf Programmer Tool}
+\par{\eightpoint\begintt
+mirhelp.com ....... bpw  ... Online help utility; prints tasks or routine documentation
+\endtt}
+\par\centerline {\bf System Operation}
+\par{\eightpoint\begintt
+exportbck.com ..... bpw  ... Delete junk from miriad directories
+MIRRC.com ......... bpw  ... MIRRC file for VAX
+mkmanuals.com ..... bpw  ... Construct file to make miriad manual
+note.com .......... bpw  ... Adds a note to the updates.dat file.
+oneoff.com ........ bpw  ... Perform selective updates
+\endtt}
+{\eightpoint\begintt
+update.com ........ bpw  ... Updates on VAX
+vsubmit.com ....... bpw  ... Submit vsubproc.com
+vsubproc.com ...... bpw  ... Generic subprocess command file for vmenu
+\endtt}
+\par\centerline {\bf User Utility}
+\par{\eightpoint\begintt
+mirbug ............ bpw  ... Send mail about bugs to appropriate person
+mirbug.com ........ bpw  ... Send mail about bugs to appropriate person
+mirfeedback ....... bpw  ... Send feedback to the appropriate person
+\endtt}
+\par\centerline {\bf Other}
+\par{\eightpoint\begintt
+rmdir.com ......... bpw  ... Command procedure to remove a directory tree.
+\endtt}
+
+\beginsection Sorted Alphabetically
+\par{\eightpoint\begintt
+exportbck.com ..... bpw  ... Delete junk from miriad directories
+mirbug ............ bpw  ... Send mail about bugs to appropriate person
+mirbug.com ........ bpw  ... Send mail about bugs to appropriate person
+mirfeedback ....... bpw  ... Send feedback to the appropriate person
+mirhelp.com ....... bpw  ... Online help utility; prints tasks or routine documentation
+\endtt}
+{\eightpoint\begintt
+MIRRC.com ......... bpw  ... MIRRC file for VAX
+mkmanuals.com ..... bpw  ... Construct file to make miriad manual
+note.com .......... bpw  ... Adds a note to the updates.dat file.
+oneoff.com ........ bpw  ... Perform selective updates
+rmdir.com ......... bpw  ... Command procedure to remove a directory tree.
+\endtt}
+{\eightpoint\begintt
+update.com ........ bpw  ... Updates on VAX
+vsubmit.com ....... bpw  ... Submit vsubproc.com
+vsubproc.com ...... bpw  ... Generic subprocess command file for vmenu
+\endtt}
+
+\endchapter
+%------------------------------------------------------------------------
+% Chapter 7
+%------------------------------------------------------------------------
+\beginchapter{7}{MIRIAD PROGRAM DOCUMENTATION}
+
+\par\input em_pgmdoc
+
+\par\endchapter
+%------------------------------------------------------------------------
+% Chapter 8
+%------------------------------------------------------------------------
+\beginchapter{8}{MIRIAD SCRIPT DOCUMENTATION (SUN)}
+
+\par\input em_sundoc
+
+\par\endchapter
+%------------------------------------------------------------------------
+% Chapter 9
+%------------------------------------------------------------------------
+\beginchapter{9}{MIRIAD SCRIPT DOCUMENTATION (CRAY)}
+
+\par{\eightpoint\begintt
+(under revision)
+\endtt}
+
+\par\endchapter
+%------------------------------------------------------------------------
+% Chapter 10
+%------------------------------------------------------------------------
+\beginchapter{10}{MIRIAD COMMAND DOCUMENTATION (VMS)}
+
+\par\input em_vmsdoc
+
+\par\endchapter
+%------------------------------------------------------------------------
+% Table of Contents
+%------------------------------------------------------------------------
+
+\closeout\toc
+
+\bgroup
+\pageno=-1
+\footline={\hss}
+\headline={\hss}
+\input em_title
+
+\footline={\hss\tenrm\folio\hss}
+\centerline{\bit Contents}
+\vskip 0.5in
+\input toc
+\endchapter
+
+\end
