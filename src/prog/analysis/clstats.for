@@ -81,9 +81,10 @@ c  13jul98  pjt  linux g77 cleanup
 c  25aug98  pjt  change keywords in doc section to lower case
 c                and removed that awkward case checking code
 c  14mar00  ks/pjt format and output changes
+c  20nov01  pjt  minor output format change
 c-------------------------------------------------------------------------
       character version*(*)
-      parameter(version='version 1.5 14-mar-00' )
+      parameter(version='version 1.5 20-nov-01' )
       include 'clstats.h'
 
       integer lenline,imax,ncmax
@@ -363,10 +364,10 @@ c.......whether relative or absolute positions are requested
       enddo
 
  200  format(i3,1x,f7.2,1x,f7.2,1x,f7.2,1x,f6.2,1x,f6.2,
-     *         1x,f7.2,1x,f7.2,1x,f7.2,1x,f5.2,1x,
+     *         1x,f7.2,1x,f7.2,1x,f7.2,1x,f7.2,1x,
      *         1pe9.2,1x,0pf7.1,1x,1pe9.2,2x,i4,1x,a4)
  201    format(i3,1x,f7.2,1x,f7.2,1x,f7.2,1x,f6.2,1x,f6.2,
-     *         1x,f7.2,1x,f7.2,1x,f7.2,1x,f5.2,1x,
+     *         1x,f7.2,1x,f7.2,1x,f7.2,1x,f7.2,1x,
      *         1pe9.2,1x,0pf7.1,1x,1pe9.2,2x,i4,1x,a4)
 
       return
@@ -534,8 +535,8 @@ c.....contour level and (nmin-1) at the first
  103  format('Beam size =',
      *        f5.2,' by ',f5.2,' (arcmin) with pa = ',f7.2)
  104  format('Beam size =',f5.2,' by ',f5.2,' (arcmin)')
- 110  format('Distance to source =',i6,' pc')
- 111  format('Distance to source =',i6,' pc (error = ',f4.2,')')
+ 110  format('Distance to source =',i10,' pc')
+ 111  format('Distance to source =',i10,' pc (error = ',f8.2,')')
  120  format('Reference position (degrees) = (',f7.3,',',f7.3,')')
  140  format('Starting contour level =',i2)
  141  format('Delta T = ',f5.3)
