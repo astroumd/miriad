@@ -11,15 +11,15 @@ c	The default is to list the data
 c	when the source, freq, or number of channels change. 
 c       The number of records, uvrange and time range are printed.
 c       The statistics for a selected uv-variable can 
-c	be printed. uv-data can be flagged if the uv-variable is 
-c	out of range, or if the amplitude of a reference channel,
-c	or the geometric delay is out of range.
+c	be printed. uv-data can be flagged if the uv-variable,
+c	the amplitude of a reference channel, the geometric delay, 
+c	or the fringe frequency is outside a specified  range.
 c@ vis
 c	The input visibility file. No default.
 c@ select
 c	This selects which visibilities to be used. Default is
 c	all visibilities. See the Users Guide for information about
-c	how to specify uv data selection.
+c	how to specify uv-data selection.
 c@ line
 c	Linetype of the data in the format line,nchan,start,width,step
 c	"line" must be either `channel' or `wide'  for flagging data.
@@ -34,7 +34,7 @@ c	Default: no reference line.
 c@ refamp
 c       Minimum and maximum values for the reference line amplitude.
 c	Flag the uv-data when the reference amplitude
-c	is outside the selected range.
+c	is OUTSIDE the selected range.
 c	The flags are set to the value given by flagval.
 c	Calibration files (gains and passband) are NOT applied. 
 c       Default: 0,1e20    i.e. don't flag any uv-data.
@@ -43,15 +43,17 @@ c       set to either 'flag' or 'unflag' to flag the data.
 c       Default: don't change the flags.
 c@ var
 c	Name of uv-variable to check. Default is none.
-c	Print mean and rms values of variable within the selected range.
+c	Print mean and rms values of variable WITHIN the selected range.
 c	A histogram plot can be printed (options=histo).
-c	The statistics and distribution of uv-points can be checked using
-c	var=uvdist, where "uvdist" is computed from the u,v coordinates 
-c	in nanosec units.
+c	Special variables calculated from other uv-variables:
+c	1) var=uvdist, where uvdist is in nanosecs.
+c	2) var=fringe, where fringe is the fringe frequency in Hz.
 c@ range
 c	Minimum and maximum values for uv-variable.
-c	Flag the uv-data when the uv-variable is outside this range.
-c	Default range=0,1e20.
+c	Flag the uv-data when the uv-variable is OUTSIDE this range.
+c	Default range=-1E20,1E20. Note that in in order to flag
+c	data within a selected range, first flag everything, then
+c	unflag those outside the selected range.
 c@ delayflag
 c	Flag the uv-data for each baseline if the absolute value of the
 c	difference in the delay lines is less than the specified value.
@@ -92,20 +94,21 @@ c    mchw 20mar98  Added options=histo,debug
 c    mchw 30jun98  Get uvw in preamble to flag correlator interference.
 c    mchw 24jul98  Added delayflag and delayoff code. 
 c		   Fixed problems flagging the wideband, and elsewhere.
-c    mchw 07aug98  Added uvdistance as a dummy uv variable.
+c    mchw 07aug98  Added uvdistance as a special variable.
 c    mchw 27aug98  Rename flagged "channels" if linetype.eq.'wide'
 c    mchw 21jan99  Change delayflag to delay line difference.
+c    mchw 05sep01  Added fringe frequency as a special variable.
 c----------------------------------------------------------------------c
 	include 'maxdim.h'
 	character*(*) version
-	parameter(version='UVCHECK: version 1.0 21-Jan-99')
+	parameter(version='UVCHECK: version 1.0 05-Sep-2001')
 	integer maxsels, ochan, nbugs, nflag, nwflag
 	parameter(MAXSELS=512)
 	real sels(MAXSELS)
 	complex data(MAXCHAN)
-	double precision preamble(5),freq,ofreq,delayflag,ddelay
+	double precision preamble(5),freq,ofreq,delayflag,ddelay,obsdec
 	integer lIn,nchan,nread,nvis,nspect,onspect,varlen,nwide,onwide
-	real start,width,step,varmin,varmax,uvdist,uvmin,uvmax
+	real start,width,step,varmin,varmax,uvdist,uvmin,uvmax,fringe
 	real refstart, refwidth, reflo, refhi
 	character vis*64,log*64,line*80,date*18,var*9,vartype*1
 	character source*9,osource*9,linetype*20,refline*20,flagval*10
@@ -142,7 +145,7 @@ c
 	call keyr ('refamp',refhi,1.e20)
 	call SelInput ('select',sels,maxsels)
 	call keya ('var',var,' ')
-	call keyr ('range',varmin,0.)
+	call keyr ('range',varmin,-1.e20)
 	call keyr ('range',varmax,1.e20)
 	call keya ('log',log,' ')
 	call keyd ('delayflag',delayflag,0.d0)
@@ -167,7 +170,7 @@ c
 	call uvopen (lIn,vis,'old')
 c
 	varcheck=var.ne.' '
-	if(var.ne.'uvdist')then
+	if(var.ne.'uvdist'.and.var.ne.'fringe')then
 	  if(varcheck)call uvprobvr(lIn,var,vartype,varlen,updated)
 	  if(vartype.eq.' ')then
 	    write(line,'(a)') '"'//var//'" is not in uv-data'
@@ -233,6 +236,7 @@ c
 	  call uvrdvri(lIn,'nspect',nspect,0)
 	  call uvrdvri(lIn,'nwide',nwide,0)
 	  call uvrdvrd(lIn,'freq',freq,0.d0)
+          call uvrdvrd(lIn,'obsdec',obsdec,0.d0)
 c
 c  Check if source, freq, or number of channels or spectra change.
 c
@@ -250,9 +254,10 @@ c
 	    ochan = nread
 	  endif
 c
-c  Get uvrange.
+c  Get uvrange and fringe frequency.
 c
 	  uvdist = sqrt(preamble(1)*preamble(1)+preamble(2)*preamble(2))
+	  fringe = 7.29115e-5 * preamble(1) * freq * cos(obsdec)
 	  uvmin = min(uvdist,uvmin)
 	  uvmax = max(uvdist,uvmax)
 c
@@ -261,7 +266,7 @@ c
           varflag = .FALSE.
 	  if(varcheck) call checkvar(histo,debug,
      *      lIn,date,var,varmin,varmax,varflag,nvar,vmin,vmax,ave,rms,
-     *          blo,binc,bin,nbin,under,over,uvdist)
+     *          blo,binc,bin,nbin,under,over,uvdist,fringe)
 c
 c  Check for known problems in the data.
 c
@@ -342,11 +347,11 @@ c
 c********1*********2*********3*********4*********5*********6*********7**
 	subroutine checkvar(histo,debug,
      *      lIn,date,var,varmin,varmax,varflag,nvar,vmin,vmax,ave,rms,
-     *          blo,binc,bin,nbin,under,over,uvdist)
+     *          blo,binc,bin,nbin,under,over,uvdist,fringe)
 	implicit none
 	character*(*) date,var
 	integer lIn,nvar
-	real varmin,varmax,ave,rms,uvdist
+	real varmin,varmax,ave,rms,uvdist,fringe
 	double precision vmin,vmax
         logical varflag
         integer nbin,bin(nbin),under,over
@@ -362,6 +367,7 @@ c    var	Name of uv-variable.
 c    varmin	Minimum acceptable value.
 c    varmax	Maximum acceptable value.
 c    uvdist	uvdistance
+c    fringe	fringe frequency in Hz
 c  Output
 c    varflag    variable out of range?
 c    nvar	number of variable in range.
@@ -389,7 +395,7 @@ c
 c
 c  Get the type and length of the variable to be checked.
 c
-	if(var.ne.'uvdist')then
+	if(var.ne.'uvdist'.and.var.ne.'fringe')then
       call uvprobvr(lIn,var,vartype,varlen,updated)
       if(updated.and.varlen.gt.MAXANT*MAXWIDE)then
          write(line,'(a,i3,a,i3,a)')
@@ -406,23 +412,26 @@ c
 	if(var.eq.'uvdist')then
 	  varlen=1
 	  ddata(1)=uvdist
-      else if(vartype.eq.'d') then
+	else if(var.eq.'fringe')then
+	  varlen=1
+	  ddata(1)=fringe
+	else if(vartype.eq.'d') then
 	  call uvgetvrd(lIn,var,ddata,varlen)
-      else if(vartype.eq.'r') then
+	else if(vartype.eq.'r') then
 	  call uvgetvrr(lIn,var,data,varlen)
 	  do i=1,varlen
 	    ddata(i)=data(i)
 	  enddo
-      else if(vartype.eq.'i') then
+	else if(vartype.eq.'i') then
 	  call uvgetvri(lIn,var,idata,varlen)
 	  do i=1,varlen
 	    ddata(i)=idata(i)
           enddo
-      else if(vartype.eq.'a') then
+	else if(vartype.eq.'a') then
 	  call uvgetvra(lIn,var,avar)
-      else
+	else
 	  call output('unknown variable type')
-      endif
+	endif
 c
 c  Print the values.
 c
