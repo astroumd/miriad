@@ -278,7 +278,8 @@ struct anttsys {
 #define MAXWIN 16
 #define MAXWIDE 18
 #define MAXSOURCE 50
-#define SMIF 48 
+#define SMIF 48
+#define SMRX  5 
 #define SMANT 10
 #define SMPOL 5 
 #define SMBAS 90   /* smant*(smant-1) */
@@ -496,7 +497,7 @@ struct smlodd {
         float axisrms[SMANT+1];
         float axismax[SMANT+1];
 /*        int pnt[SMIF+1][SMPOL+1][SMBAS+1][SMBIN+1];*/
-        int pnt[SMIF+1][SMPOL+1][SMBAS+1][SMSB];
+        int pnt[SMIF+1][SMPOL+1][SMBAS+1][SMSB][SMRX];
         int nbin[SMIF+1];
         int nused;
         int tno;
