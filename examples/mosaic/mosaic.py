@@ -8,7 +8,7 @@
 #  25sep02 mchw. Re-import improvements from hex7.csh to hex19.csh
 #  26sep02 mchw. Increase imsize from 129 to 257.
 #  12mar03 mchw. convert to PYTHON.
-#  13mar03 pjt   more conversion to PYTHON, now at 200ft, renamed to cas-mosaic.py
+#  13mar03 pjt   more conversion to PYTHON, now at 200ft, renamed to mosaic.py
 
 import sys, os, time, string, math
 from Miriad import *
@@ -38,40 +38,7 @@ The minimum amount of information you need to run this task is:
    an antenna configuration file (<config>.ant) for uvgen
 """
 
-# -----------------------------------------------------------------------------
-#
-def show_keyval(keyval,help=0,quit=0):
-    if help != 0:
-        print help
-    print "Current keywords and their defaults are:"
-    print "------------------------------------------------------------"
-    for k in keyval.keys():
-        print k + '=' + keyval[k]
-    print "------------------------------------------------------------"
-    if quit:
-        os._exit(0)
-    
-#                                       parse command line (must be 'key=val')
-quit = 0
-for arg in sys.argv[1:]:
-    i=string.find(arg,"=")
-    if arg == "--help":
-        quit=1
-    elif i > 0:
-        key = arg[0:i]
-        val = arg[i+1:]
-        print arg,i,key
-        if keyval.has_key(key):
-            keyval[key] = val
-        else:
-            print "### Error: keyword in %s not understood, try --help" % arg
-            os._exit(0)            
-    else:
-        print "### Error: argument %s not understood, try --help" % arg
-        os._exit(0)
-
-        
-show_keyval(keyval,help,quit)
+keyini(keyval,help,0)
 #                                report current defaults, exit if --help given
 setlogger('mosaic.log')
 #

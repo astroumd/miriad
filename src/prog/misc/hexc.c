@@ -4,6 +4,7 @@
 /*: utility
 /*+
 /*  calculate hexagonal grid patterns for mosaic observations */
+/*  See also hex.py in $MIR/examples/mosaic
 /*---------------------------------------------------------------------*/
 /*  History */
 /*   03feb99 mchw - Miriad:  misc */

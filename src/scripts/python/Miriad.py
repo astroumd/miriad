@@ -9,19 +9,22 @@ import sys, os, time, string, math
 
 #   some global variables (should class this up and hide the data)
 logger = ""
+quit   = 0
 
-def miriad(command,log=0):
+def miriad(command,log=0,fatal=1):
     """
     miriad        execute a miriad 'command' (as a list of strings) and accumulate a log
                   either from the default logfile (see setlogger) or by overriding using
-                  log=
+                  log=. By default an error results into an exit, though this can be
+                  overriden by using fatal=0
                   Example:    miriad(['itemize','in=ngc1365.cm'],log='ngc1365.log')
 
     Other commands available in PYRAMID are:
     
     doc           show specific help for a MIRIAD task , e.g. doc('invert')
     keys          show all keywords for a MIRIAD task , e.g. keys('invert')
-    setlogger     change the default logger for subsequent miriad() commands, e.g. setlogger('rubbish.log')
+    setlogger     change the default logger for subsequent miriad() commands,
+                  e.g. setlogger('rubbish.log')
 
     zap           delete a miriad dataset (with existence check), e.g. zap('ngc1365.cm')
     zap_all       delate a set of data (unchecked), e.g. zap_all('ncg1365*')
@@ -39,27 +42,65 @@ def miriad(command,log=0):
     can be found in and below $MIR/examples/
     
     """
-    
-    
     global logger
     if (log != 0):
         mycmd = cmd(command) + '> %s 2>&1' % log
     else:
         mycmd = cmd(command) + logger;
-    return os.system(mycmd)
+    retval = os.system(mycmd)
+    if retval:
+        print "###: Error %d from %s" % (retval,command[0])
+        if fatal:
+            os._exit(retval)
 
-
-
-def setlogger(log):
-    """ set the logfile for the miriad() function"""
+def setlogger(log,append=0):
+    """ set the logfile for the miriad() function. By default any old logfile is removed"""
     global logger
+    print "setlogger: default logfile now " + log
     logger = '>> %s 2>&1' % log
-    zap(log)
+    if append==0:
+        zap(log)
+
+def keyini(keyval,help=0,show=0):
+    global quit
+    for arg in sys.argv[1:]:
+        i=string.find(arg,"=")
+        if arg == "--help":
+            quit=1
+        elif i > 0:
+            key = arg[0:i]
+            val = arg[i+1:]
+            if keyval.has_key(key):
+                keyval[key] = val
+            else:
+                print "### Error: keyword in %s not understood, try --help" % arg
+                os._exit(0)            
+        else:
+            print "### Error: argument %s not understood, try --help" % arg
+            os._exit(0)
+    if quit:
+        show_keyval(keyval,help,quit)
+    elif show:
+        show_keyval(keyval,help,quit)
+    
+def show_keyval(keyval,help=0,quit=0):
+    if help != 0:
+        print help
+    print "Current keywords and their defaults are:"
+    print "------------------------------------------------------------"
+    for k in keyval.keys():
+        print k + '=' + keyval[k]
+    print "------------------------------------------------------------"
+    if quit:
+        os._exit(0)
+
 
 def zap(file):
     """ remove a possibly existing miriad dataset (no wildcards)"""
     if os.path.isdir(file):
         os.system('rm -rf ' + file)
+    elif os.path.isfile(file):
+        os.system('rm -f ' + file)
 
 def zap_all(files):
     """ remove all datasets (wildcards now allowed via the shell)"""
