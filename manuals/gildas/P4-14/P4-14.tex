@@ -1,0 +1,455 @@
+%APN3_PROCEEDINGS_FORM%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% TEMPLATE.TEX -- APN3 (2003) ASP Conference Proceedings template.
+%
+% Derived from ADASS VIII (98) ASP Conference Proceedings template
+% Updated by N. Manset for ADASS IX (99), F. Primini for ADASS 2000,
+% D.Bohlender for ADASS 2001, and H. Payne for ADASS XII and LaTeX2e.
+%
+% Use this template to create your proceedings paper in LaTeX format
+% by following the instructions given below.  Much of the input will
+% be enclosed by braces (i.e., { }).  The percent sign, "%", denotes
+% the start of a comment; text after it will be ignored by LaTeX.  
+% You might also notice in some of the examples below the use of "\ "
+% after a period; this prevents LaTeX from interpreting the period as
+% the end of a sentence and putting extra space after it.  
+% 
+% You should check your paper by processing it with LaTeX.  For
+% details about how to run LaTeX as well as how to print out the User
+% Guide, consult the README file.  You should also consult the sample
+% LaTeX papers, sample1.tex and sample2.tex, for examples of including
+% figures, html links, special symbols, and other advanced features.
+%
+% If you do not have access to the LaTeX software or a laser printer
+% at your site, you can still prepare your paper following the
+% instructions in the User Guide.  In such cases, the editors will
+% process the file and make any necessary editorial adjustments.
+% 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+\documentclass[11pt,twoside]{article}  % Leave intact
+\usepackage{adassconf}
+
+% If you have the old LaTeX 2.09, and not the current LaTeX2e, comment
+% out the \documentclass and \usepackage lines above and uncomment
+% the following:
+
+%\documentstyle[11pt,twoside,adassconf]{article}
+
+% Software
+\newcommand{\FORTRAN}{\texttt{FORTRAN}}
+\newcommand{\AIPSpp}{\texttt{AIPS$++$}}
+\newcommand{\GILDAS}{\texttt{GILDAS}}
+\newcommand{\MIRIAD}{\texttt{MIRIAD}}
+\newcommand{\python}{\texttt{python}}
+\newcommand{\fpig}{\texttt{f2py}}
+\newcommand{\numpy}{\texttt{numpy}}
+
+%
+\newcommand{\SIC}{\texttt{SIC}}
+\newcommand{\GREG}{\texttt{GREG}}
+\newcommand{\CLASS}{\texttt{CLASS}}
+\newcommand{\NIC}{\texttt{NIC}}
+\newcommand{\CLIC}{\texttt{CLIC}}
+\newcommand{\MAPPING}{\texttt{MAPPING}}
+
+% Instruments
+\newcommand{\ALMA}{\textrm{ALMA}}
+\newcommand{\IRAM}{\textrm{IRAM}}
+\newcommand{\IRAMthm}{\textrm{IRAM-30m}}
+\newcommand{\PdBI}{\textrm{PdBI}}
+\newcommand{\CSO}{\textrm{CSO}}
+
+%
+\newcommand{\ie} {{\em i.e.}}
+\newcommand{\eg} {{\em e.g.}}
+\newcommand{\emm}[1]{\ensuremath{#1}} % Ensures math mode.
+\newcommand{\implication}{\emm{\Rightarrow}}
+
+\newcommand{\thCO} {\mbox{$^{13}$CO}} % 13CO
+\newcommand{\HCOp} {\mbox{HCO$^{+}$}} % HCO+
+\newcommand{\Jone}{\mbox{(J=1--0)}}
+\newcommand{\Jtwo}{\mbox{(J=2--1)}}
+
+\begin{document}   % Leave intact
+
+%-----------------------------------------------------------------------
+%                           Paper ID Code
+%-----------------------------------------------------------------------
+% Enter the proper paper identification code.  The ID code for your
+% paper is the session number associated with your presentation as
+% published in the official conference proceedings.  You can           
+% find this number locating your abstract in the printed proceedings
+% that you received at the meeting or on-line at the conference web
+% site; the ID code is the letter/number sequence proceeding the title 
+% of your presentation. 
+%
+% This will not appear in your paper; however, it allows different
+% papers in the proceedings to cross-reference each other.  Note that
+% you should only have one \paperID, and it should not include a
+% trailing period.
+%
+% EXAMPLE: \paperID{O4-1}
+% EXAMPLE: \paperID{P7-7}
+%
+
+\paperID{P4-14}
+
+%-----------------------------------------------------------------------
+%                           Paper Title 
+%-----------------------------------------------------------------------
+% Enter the title of the paper.
+%
+% EXAMPLE: \title{A Breakthrough in Astronomical Software Development}
+% 
+% If your title is so long as to fill the page header when you print it,
+% then please supply a short form as a \titlemark.
+%
+% EXAMPLE: 
+%  \title{Rapid Development for Distributed Computing, with Implications
+%         for the Virtual Observatory}
+%  \titlemark{Rapid Development for Distributed Computing}
+%
+
+\title{Interoperating \GILDAS{} and \MIRIAD{}}
+
+%\titlemark{}
+
+%-----------------------------------------------------------------------
+%                         Authors of Paper
+%-----------------------------------------------------------------------
+% Enter the authors followed by their affiliations.  The \author and
+% \affil commands may appear multiple times as necessary (see example
+% below).  List each author by giving the first name or initials first
+% followed by the last name.  Authors with the same affiliations
+% should grouped together. 
+%
+% EXAMPLE: \author{Raymond Plante, Doug Roberts, 
+%                  R.\ M.\ Crutcher\altaffilmark{1}}
+%          \affil{National Center for Supercomputing Applications, 
+%                 University of Illinois Urbana-Champaign, Urbana, IL
+%                 61801}
+%          \author{Tom Troland}
+%          \affil{University of Kentucky}
+%
+%          \altaffiltext{1}{Astronomy Department, UIUC}
+%
+% In this example, the first three authors, "Plante", "Roberts", and
+% "Crutcher" are affiliated with "NCSA".  "Crutcher" has an alternate 
+% affiliation with the "Astronomy Department".  The fourth author,
+% "Troland", is affiliated with "University of Kentucky"
+
+\author{J.~Pety\altaffilmark{1}}
+\affil{Observatoire de Paris, France}
+\author{F.~Gueth, S.~Guilloteau\altaffilmark{2}, R.~Lucas}
+\affil{IRAM Grenoble, France}
+\author{P.~J.~Teuben}
+\affil{Astronomy Department, U. Maryland}
+\author{M.~C.~H.~Wright}
+\affil{Radio Astronomy Laboratory, U.C. Berkeley}
+
+\altaffiltext{1}{IRAM Grenoble, France}
+\altaffiltext{2}{Observatoire de Bordeaux, France}
+
+%-----------------------------------------------------------------------
+%                        Contact Information
+%-----------------------------------------------------------------------
+% This information will not appear in the paper but will be used by
+% the editors in case you need to be contacted concerning your
+% submission.  Enter your name as the contact along with your email
+% address.
+% 
+% EXAMPLE:  \contact{Dennis Crabtree}
+%           \email{crabtree@cfht.hawaii.edu}
+%
+
+\contact{J\'er\^ome Pety}
+\email{pety@iram.fr}
+
+%-----------------------------------------------------------------------
+%                     Author Index Specification
+%-----------------------------------------------------------------------
+% Specify how each author name should appear in the author index.  The 
+% \paindex{ } should be used to indicate the primary author, and the
+% \aindex for all other co-authors.  You MUST use the following
+% syntax: 
+%
+% SYNTAX:  \aindex{Lastname, F. M.}
+% 
+% where F is the first initial and M is the second initial (if
+% used).  This guarantees that authors that appear in multiple papers
+% will appear only once in the author index.  
+%
+% EXAMPLE: \paindex{Crabtree, D.}
+%          \aindex{Manset, N.}        
+%          \aindex{Veillet, C.}        
+%
+% NOTE: this information is also used to build the author list that
+% appears in the table of contents.  Authors will be listed in the order
+% of the \paindex and \aindex commmands.
+%
+
+\paindex{Pety, J.}
+\aindex{Gueth, F.}     % Remove this line if there is only one author
+\aindex{Guilloteau, S.}
+\aindex{Lucas, S.}
+\aindex{Teuben, P. J.}
+\aindex{Wright, M. C. H.}
+
+%-----------------------------------------------------------------------
+%                     Author list for page header       
+%-----------------------------------------------------------------------
+% Please supply a list of author last names for the page header. in
+% one of these formats:
+%
+% EXAMPLES:
+% \authormark{Lastname}
+% \authormark{Lastname1 \& Lastname2}
+% \authormark{Lastname1, Lastname2, ... \& LastnameN}
+% \authormark{Lastname et al.}
+%
+% Use the "et al." form in the case of seven or more authors, or if
+% the preferred form is too long to fit in the header.
+
+\authormark{Pety, Gueth, Guilloteau, Lucas, Teuben \& Wright}
+
+%-----------------------------------------------------------------------
+%                       Subject Index keywords
+%-----------------------------------------------------------------------
+% Enter a comma separated list of up to 6 keywords describing your
+% paper.  These will NOT be printed as part of your paper; however,
+% they will be used to generate the subject index for the proceedings.
+% There is no standard list; however, you can consult the indices
+% for past proceedings (http://adass.org/adass/proceedings/).
+%
+% EXAMPLE:  \keywords{visualization, astronomy: radio, parallel
+%                     computing, AIPS++, Galactic Center}
+%
+% In this example, the author noticed that "radio astronomy" appeared
+% in the ADASS VII Index as "astronomy" being the major keyword and
+% "radio" as the minor keyword.  The colon is used to introduce another
+% level into the index.
+
+\keywords{GILDAS, MIRIAD, astronomy: radio, interoperability, python}
+
+%-----------------------------------------------------------------------
+%                              Abstract
+%-----------------------------------------------------------------------
+% Type abstract in the space below.  Consult the User Guide and Latex
+% Information file for a list of supported macros (e.g. for typesetting 
+% special symbols). Do not leave a blank line between \begin{abstract} 
+% and the start of your text.
+
+\begin{abstract}          % Leave intact
+  We describe here the first step we took to interoperate \GILDAS{} and
+  \MIRIAD{}, two current state--of--the--art data reduction packages of
+  millimeter radioastronomy.
+\end{abstract}
+
+%-----------------------------------------------------------------------
+%                             Main Body
+%-----------------------------------------------------------------------
+% Place the text for the main body of the paper here.  You should use
+% the \section command to label the various sections; use of
+% \subsection is optional.  Significant words in section titles should
+% be capitalized.  Sections and subsections will be numbered
+% automatically. 
+%
+% EXAMPLE:  \section{Introduction}
+%           ...
+%           \subsection{Our View of the World}
+%           ...
+%           \section{A New Approach}
+%
+% It is recommended that you look at the sample papers, sample1.tex
+% and sample2.tex, for examples for formatting references, footnotes,
+% figures, equations, html links, lists, and other special features.  
+
+\section{Introduction to \GILDAS{} and \MIRIAD{} packages}
+
+\GILDAS{} and \MIRIAD{} are two state-of-the-art data reduction packages
+for the current generation of millimeter instruments. \GILDAS{} is
+\emph{daily} used at the Plateau de Bure Interferometer as well as several
+single dish telescopes (\eg{} \IRAMthm{}, \CSO{}) while \MIRIAD{} is
+\emph{daily} used at BIMA, ATCA, OVRO and WSRT. Moreover, as revealed by
+publicly available evaluations for compliance with the \ALMA{} off-line
+data processing requirements (Gueth et al. 2003 and Wright et al. 2003),
+almost 2/3 of the core functionalities needed by mm interferometers are
+adequately covered by \GILDAS{} and \MIRIAD{}.  Going further,
+Fig.~\ref{fig:P4-14_1} shows that, between them, \GILDAS{} and \MIRIAD{}
+cover more that 75\% of the \ALMA{} requirements for off-line.  Indeed,
+although the core functionalities needed to reduce millimeter
+interferometry data are well covered in both packages, the strength of both
+packages are complementary. \GILDAS{} has good data analysis and
+visualization tools, while \MIRIAD{} has a complete set of calibration and
+imaging algorithms including polarization (for more details, see Pety et
+al. 2003a). It is thus interesting to study the possibility of
+interoperating both packages in a user-friendly way (Pety et al. 2003b).
+
+Both packages have rather different implementation philosophy. \GILDAS{} is
+made of large stand-alone programs like \CLIC{} for the data calibration
+and \MAPPING{} for data imaging, deconvolution and analysis. In addition,
+\GILDAS{} has the ability to launch fully separated tasks. \MIRIAD{} is
+build around a large collection of individual, well focused tasks.  Both
+packages also have different user interfaces. \GILDAS{} is build around
+\SIC{}, an homemade command line interface enabling direct insight into the
+data, and \GREG{}, a very efficient, homemade plotting environment. Every
+unix shell may serve as \MIRIAD{} user interface. Finally, used data models
+are different in their implementation.
+
+In a first step toward interoperability, we thus decided to run both
+packages under \python{} and to exchange data using FITS.  The porting of both
+packages under \python{} is described in the next section. Section~3 describes
+a concrete example of \GILDAS{}/\MIRIAD{} interoperability. This gives us
+the opportunity to compare the imaging and deconvolution algorithms of
+\GILDAS{} and \MIRIAD{}.
+
+\begin{figure}
+  \centering
+  \plotone{P4-14_1.eps}
+  \caption{Results of the evaluation of the \GILDAS{} and \MIRIAD{}
+    packages for compliance with the \ALMA{} off-line data processing
+    requirements. Those requirements have been prioritized: All takes into
+    account all the requirements without prioriti while Critical only
+    evaluate the 49\% more important requirements. In the legend, A means
+    Adequate, A/E Enhancements are desired, I/N Inadequate of Not available
+    and U Unable to evaluate.  Low/Medium/High is the severity of the
+    failure to meet the requirement.  Many more details may be found in
+    Pety et al. (2003a).}
+  \label{fig:P4-14_1}
+\end{figure}
+
+\section{Python Ports}
+
+The main difficulty to port \GILDAS{} under \python{} is the different
+characteristics of \SIC{} vs.\ \python{}, \ie{} strongly vs.\ weakly typed
+languages and procedural vs.\ object oriented languages. As a first
+approach, we used \fpig{} (a \FORTRAN{} to \python{} interface generator)
+to produce \emph{i)} a generic interface to the \SIC{} command line
+interpretor and a direct interface to some of the most commonly used
+commands. All \GILDAS{} capabilities are thus directly available from the
+\python{} prompt. No one--to--one correspondance between \FORTRAN{} and
+\python{} variables is yet provided impairing the good interaction with
+data. Progresses are currently made in this direction. Another foreseen
+evolution is the possibility to swap on--the--fly from \python{} to \SIC{}
+and vice-versa, as this is an important property for the community of
+current users.
+
+In \MIRIAD{} case, a generic \python{} interface was written to \emph{i)}
+pass informations to \MIRIAD{} tasks and recover their output.  Nor direct
+access to \MIRIAD{} internal datastructure neither automatic translation of
+template procedures from \texttt{csh} to \python{} are yet available. The
+next improvement will be to automate the building of task access in
+\python{}, decreasing the size of current \python{} script by about 50\%.
+Finally, the ATA group have recently implemented a \texttt{Jython}
+interface to \MIRIAD{} dubbed \texttt{J-MIRIAD} (Harp \& Wright 2003).
+
+\section{Interoperability Demonstration}
+
+\begin{figure}[t]
+  \plotone{P4-14_2.eps}
+  \caption{Top images: The 1mm continuum imaged in \GILDAS{} (right) and
+    \MIRIAD{} (left), both using the same map resolution and restoring beam.
+    Bottom left: $|$\GILDAS{}$-$\MIRIAD{}$|$. Bottom right:
+    \GILDAS{}/$|$\GILDAS{}$-$\MIRIAD{}$|$. In all panels except the
+    fidelity image, the same color scale and 3--$\sigma$ contours levels
+    have been used. Please, note the absence of contours on the difference
+    image and the high fidelities similar as the image dynamic, which imply
+    an excellent agreement between \GILDAS{} and \MIRIAD{}.}
+  \label{fig:P4-14_2}
+\end{figure}
+
+An example of the current interoperability capabilities of \GILDAS{} and
+\MIRIAD{} is available with all needed details to rerun it on your own
+PC\footnote{The URL is:
+  \texttt{http://www.iram.fr/\~{}gildas/gildas-miriad/gildas-miriad.html}.}.
+In this example, we start from the raw visibilities (in native \PdBI{}
+format) of the Young Stellar Object GG~Tau (Guilloteau, Dutrey \& Simon
+1999). The data is calibrated inside \GILDAS{}, imaged and deconvolved
+inside \MIRIAD{} and finally visualized back inside \GILDAS{}, both
+packages being called from the \emph{same \python{} process}. This is about
+1.5~GB of data that has been processed in about 10 minutes end--to--end on
+a 1.5~GHz AMD Athlon with 768~MB of RAM memory. We had to adapt our FITS
+readers/writers as uvfit is an ill-defined standard that does not fully
+support the flexible \GILDAS{} and \MIRIAD{} data structures. No others
+difficulties were encountered. The main results are velocity channel maps
+of the \HCOp{} \Jone{} line (not shown here) and a 1mm continuum map.
+
+As a by-product, we also imaged and deconvolved the 1mm continuum map
+inside \GILDAS{}. Fig.~\ref{fig:P4-14_2} shows a detailed comparison of the
+\GILDAS{} and \MIRIAD{} images, which allows us to conclude that \GILDAS{}
+and \MIRIAD{} imaging and deconvolution performances are similar.
+
+%-----------------------------------------------------------------------
+%                             References
+%-----------------------------------------------------------------------
+% List your references below within the reference environment
+% (i.e. between the \begin{references} and \end{references} tags).
+% Each new reference should begin with a \reference command which sets
+% up the proper indentation.  Observe the following order when listing
+% bibliographical information for each reference:  author name(s),
+% publication year, journal name, volume, and page number for
+% articles.  Note that many journal names are available as macros; see
+% the User Guide listing "macro-ized" journals.   
+%
+% EXAMPLE:  \reference Hagiwara, K., \& Zeppenfeld, D.\  1986, 
+%                Nucl.Phys., 274, 1
+%           \reference H\'enon, M.\  1961, Ann.d'Ap., 24, 369
+%           \reference King, I.\ R.\  1966, \aj, 71, 276
+%           \reference King, I.\ R.\  1975, in Dynamics of Stellar 
+%                Systems, ed.\ A.\ Hayli (Dordrecht: Reidel), 99
+%           \reference Tody, D.\  1998, \adassvii, 146
+%           \reference Zacharias, N.\ \& Zacharias, M.\ 2003,
+%                \adassxii, \paperref{P7.6}
+% 
+% Note the following tricks used in the example above:
+%
+%   o  \& is used to format an ampersand symbol (&).
+%   o  \'e puts an accent agu over the letter e.  See the User Guide
+%      and the sample files for details on formatting special
+%      characters.  
+%   o  "\ " after a period prevents LaTeX from interpreting the period 
+%      as an end of a sentence.
+%   o  \aj is a macro that expands to "Astron. J."  See the User Guide
+%      for a full list of journal macros
+%   o  \adassvii is a macro that expands to the full title, editor,
+%      and publishing information for the ADASS VII conference
+%      proceedings.  Such macros are defined for ADASS conferences I
+%      through XI.
+%   o  When referencing a paper in the current volume, use the
+%      \adassxii and \paperref macros.  The argument to \paperref is
+%      the paper ID code for the paper you are referencing.  See the 
+%      note in the "Paper ID Code" section above for details on how to 
+%      determine the paper ID code for the paper you reference.  
+%
+\begin{references}
+\reference Gueth, F., Guilloteau, S., Lucas, R., Pety, J., \&
+    Wright, M.~C.~H., 2003, BIMA Memo 96 \& IRAM Memo 2003-2.
+\reference Wright, M.~C.~H., Teuben, P.~J., \& Pety, J., 2003,
+     BIMA Memo 95 \& IRAM Memo 2003-1.
+\reference Pety, J., Gueth, F., Guilloteau, S., Teuben, P.~J. \&
+    Wright, M.~C.~H., 2003, \ALMA{} Memo 464.
+\reference Pety, J., Gueth, F., Guilloteau, S., Teuben, P.~J. \&
+    Wright, M.~C.~H., 2003, \ALMA{} Memo 465.
+\reference Harp, G.~R. \& Wright, M.~C.~H., 2003, BIMA Memo 98 \& 
+    ATA Memo 58.
+\reference Guilloteau, S., Dutrey, A. \& Simon, M., 1999, \aap, 348, 570.
+\end{references}
+
+% Do not place any material after the references section
+
+\end{document}  % Leave intact
+
+Although the core functionalities needed to reduce millimeter
+interferometry data are well covered in both packages, it has recently been
+recognized that the strength of both packages are complementary. GILDAS has
+good data analysis programs while MIRIAD has a complete set of calibration
+and imaging algorithms in particular to handle polarization. It is thus
+interesting to study the possibility of interoperating both packages in a
+user-friendly way. Both packages have pretty different implementation
+philosophy: GILDAS is principally made of large stand-alone programs while
+MIRIAD is built around a large collection of individual tasks. Moreover,
+they use different command line interfaces and, in detail, data models. In
+a first step toward interoperability, we decided to run both packages under
+\python{} and to exchange data using FITS.  This poster describes the
+porting of both packages under \python{}. The 
