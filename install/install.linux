@@ -1,6 +1,6 @@
 #! /bin/csh -f
 #
-# Version: 14-jun-01
+# Version: 18-jun-01
 #
 #  2-aug-99 Updated for Sebok's Mandrake setup
 #  1-aug-00 Updated to allow to build private PGPLOT version
@@ -8,9 +8,10 @@
 # 28-aug-00 added xmrecvlist, fixed HTTPC bug for libwww
 #  8-oct-00 added velplotc as special program, if libforms.so present
 # 17-oct-00 allow compilation with -g
-#  7-mar-01 optionally use CVS archive
+#  7-mar-01 optionally use CVS archive to bootstrap from
 # 12-jun-01 pgplot522
 # 14-jun-01 atlod
+# 18-jun-01 allow option to install from with CVS source code tree
 #
 #   Simple single-architecture installation of MIRIAD
 #   (linux)
@@ -89,6 +90,7 @@ set pgplot=1                #  include PGPLOT in $MIRLIB ?
 set newcode=1               #  include 'newcode' not in CVS (yet) ; aim is to add in future
 set debug=0                 #  compile in debug (-g) mode ?
 set cvs=1                   #  use CVS archive to get miriad.tar.gz ?
+set internal=1              #  internal build; overrides cvs, mirroot and newdir
 set test=1                  #  mir.test  baseline test (batch oriented)
 set testx=0		    #  mir.testx testing X routines (interactive)
 set bench=0,512,1           #  mir.bench nchan,mapsize,cell  (nchan=0 will skip bench)
@@ -96,16 +98,28 @@ set bench=0,512,1           #  mir.bench nchan,mapsize,cell  (nchan=0 will skip 
 #		   	remember from where we were installing, since we have stuff here.....
 set install_dir=`pwd`
 
-#			but install from the install root
-cd $mirroot
-echo "Working in $mirroot"
+#                       parse optional command line arguments of the form keyword=value
+foreach a ($*)
+  set $a
+end
 
-if ($cvs) then
-   echo "Extract current CVS snapshot into $newdir"
+if ($internal) then
+   # override newdir and mirroot if we do an internal build....
+   set newdir=.
+   pushd .. 
+   set mirroot=`pwd`
+   popd
+   set cvs=0
+   echo "Using internal build with mirroot=$mirroot"
+else if ($cvs) then
+   cd $mirroot
+   echo "Working in $mirroot - extracting current CVS snapshot into $newdir"
    cvs export -D tomorrow -d $newdir miriad >>& $log
    echo "Extracting current CVS snapshot of wip into $newdir/borrow/wip" >>& $log
    (cd $newdir/borrow; cvs export -D tomorrow wip) >>& $log
 else
+   cd $mirroot
+   echo "Working in $mirroot - getting a tarball"
    if (-e $tar) then
       echo "### Warning: $tar already present, using it"
    else
@@ -125,7 +139,11 @@ else
 
 endif
 
-setenv MIRTEMP $mirroot/$newdir
+if ($internal) then
+  setenv MIRTEMP $mirroot
+else
+  setenv MIRTEMP $mirroot/$newdir
+endif
 if ($debug == 1) setenv MIRDEBUG 1
 
 set path = ( $MIRTEMP/src/sys/bin $path )
