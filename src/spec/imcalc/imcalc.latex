@@ -1,0 +1,649 @@
+\nonstopmode
+\documentstyle{article}
+\setlength{\hoffset}{0mm}
+\setlength{\voffset}{-16mm}
+\setlength{\textwidth}{150mm}
+\setlength{\textheight}{240mm}
+\title{Miriad Imcalc -- An Image Calculator and Programming Language}
+\author{Bob Sault}
+\begin{document}
+\maketitle
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{2.5mm}
+
+Imcalc is a image calculator and analysis tool. It reads commands
+and assignment statements from the user, and executes them. Commands
+generally consist of one or more arguments, each argument separated
+by a space. Spaces are not permitted within an argument (except
+within a quoted string). The arguments to a command are generally
+either variable names, or expressions, or several expressions
+separated by commas. Some arguments can be omitted. In this case
+a default value will be used.
+
+\section*{Invoking Imcalc}
+Imcalc is a typical UNIX command. It reads its commands from either
+a given script file, or interactively from the standard input, and
+echos any messages to either the standard output or standard error.
+
+Examples:
+
+To get Imcalc to execute the sequence of commands in the file ``clean'',
+use:
+\begin{verbatim}
+    % imcalc clean
+\end{verbatim}
+To run Imcalc interactively, use
+\begin{verbatim}
+    % imcalc
+\end{verbatim}
+In the latter case, Imcalc will prompt for commands.
+
+\section*{Expressions}
+Expressions are in a FORTRAN-like syntax, involving all the normal
+FORTRAN operators and functions, as well as a number of special
+functions (e.g. fft, convolution, etc). Normal FORTRAN precedence applies
+and brackets can be used. Both constants and variables can be used
+within an expression. The data types consist of real and complex
+numbers, strings, integer-pairs and images. A logical value is
+represented by a real number which is either zero, for false, or
+or non-zero -- generally 1 -- for true.
+
+\subsection*{Real and Complex Numbers}
+Real and complex numbers are treated in much the same way as
+FORTRAN.
+
+\subsection*{Strings}
+These are again FORTRAN-like, a string constant being enclosed
+in quotes (e.g. 'a string constant'). The only operator for
+strings is the concatenation operator (e.g. 'string'//'string').
+
+\subsection*{Integer Pairs}
+Integer pairs are another form of data-type, which are typically
+used to represent a coordinate, a shift or an image size. They are
+represented by:
+\begin{verbatim}
+	[a,b]
+\end{verbatim}
+where ``a'' and ``b'' are real-valued expressions. The first value is
+associated with the x-axis, and the second associates with the y-axis.
+For example, the
+following are legitimate integer-pairs, all having the same value:
+\begin{verbatim}
+	[2,2], [1+1,3-1], [1.414*1.414,sqrt(4)]
+\end{verbatim}
+Some functions expect an integer-pair for one of their arguments, whereas
+others return an integer-pair as their result.
+Most of the normal FORTRAN operators can be used with integer-pairs
+with each operation being performed on each element individually.
+For example:
+\begin{verbatim}
+	[4,4]/[2,4]
+\end{verbatim}
+is equal to
+\begin{verbatim}
+[2,1]
+\end{verbatim}
+
+\subsection*{Images}
+Images may be real or complex valued.
+Most of the normal operations are permitted on images, with them
+being performed pixel-by-pixel. That is, for example, the
+multiplication of two images involves multiplying each pixel in the
+first image by the corresponding pixel in the second (it is not
+matrix multiplication). Similarly a function of an image is
+calculated on a pixel-by-pixel basis.
+Some functions are specifically intended for images (e.g. the fft
+function), and an error is flagged if you pass such a function a
+scalar value.
+
+\section*{Summary of Functions and Operators}
+Most of these are the same as the FORTRAN functions and operators of
+the same name. Many functions or operators take two operands which can be
+either real or complex, scalars or images. In these cases you can mix data
+types of the arguments, and the result will have the `more general' of
+two input data types. For example, adding a real value to a complex image
+will result in a complex output image. For each pixel in the output, the
+value will be the sum of the real value with the corresponding input pixel
+value. You cannot mix operations on integer-pairs and other data types.
+
+In the following table, these abbreviations are used to indicate valid
+input arguments, and the type of the result.
+\pagebreak[4]
+\begin{description}
+\item[R] Real value.
+\item[C] Complex value.
+\item[IP] Integer-pair.
+\item[RI] Real image.
+\item[CI] Complex image.
+\item[S] String.
+\end{description}
+
+\begin{tabbing}
+xxxxxxxxxxx\= xxxxxxxxxx\= xxxxxxxxxxxxxx\= xxxxxxxxxxxxxxxxx\= xxxxxxxxx \kill
+{\em Name}\>{\em No.-of-Args}\>{\em Argument-Type}\>{\em Result-Type} \> {\em Definition} \\
++\>		2\>	R C IP RI CI\>	Same as inputs. \> Fortran. \\
+-\>	      1 or 2\>	R C IP RI CI\>	Same as inputs. \> Fortran. \\
+/\>		2\>	R C IP RI CI\>	Same as inputs.	\> Fortran. \\
+*\>		2\>	R C IP RI CI\>	Same as inputs. \> Fortran. \\
+**\>		2\>	R      RI\>	Same as inputs.	\> Fortran. \\
+//\>		2\>	S\>		S.		\> Fortran. \\
+.lt.\>		2\>	R      RI\>	Same as inputs.	\> Fortran, note 8. \\
+.le.\>		2\>	R      RI\>	Same as inputs. \> Fortran, note 8. \\
+.gt.\>		2\>	R      RI\>	Same as inputs. \> Fortran, note 8. \\
+.ge.\>		2\>	R      RI\>	Same as inputs. \> Fortran, note 8. \\
+.eq.\>		2\>	R      RI\>	Same as inputs.	\> Fortran, note 8. \\
+.ne.\>		2\>	R      RI\>	Same as inputs.	\> Fortran, note 8. \\
+.not.\>		1\>	R      RI\>	Same as input.	\> Fortran, note 3. \\
+.and.\>		2\>	R      RI\>	Same as inputs.	\> Fortran, note 3. \\
+.or.\>		2\>	R      RI\>	Same as inputs.	\> Fortran, note 3. \\
+.eqv.\>		2\>	R      RI\>	Same as inputs.	\> Fortran, note 3. \\
+.neqv.\>	2\>	R      RI\>	Same as inputs.	\> Fortran, note 3. \\
+abs\>		1\>	R C IP RI CI \>	Same as input,  \> Fortran. \\
+   \>		 \>		     \> except that complex \\
+   \>		 \>		     \> numbers become real. \\
+acos\>		1\>	R   IP RI\>	Same as input.  \> Fortran. \\
+aimag\>		1\>	  C       CI\>	R or RI.        \> Fortran. \\
+aint\>		1\>	R   IP RI\>	Same as input.  \> Fortran. \\
+arg\>		1\>	  C       CI\>	R or RI.	\> Note 4. \\
+asin\>		1\>	R   IP RI\>	Same as input.  \> Fortran. \\
+atan\>		1\>	R   IP RI\>	Same as input.	\> Fortran. \\
+atan2\>		2\>	R      RI\>	Same as input.	\> Fortran. \\
+ceil\>		1\>	R   IP RI\>	Same as input.	\> C, note 5. \\
+cmplx\>		2\>	R      RI\>	C or CI.        \> Fortran. \\
+conjg\>		1\>	  C       CI\>	Same as input.	\> Fortran. \\
+convolve\>	2\>	       RI\>	RI.		\> Note 6. \\
+cos\>		1\>	R   IP RI\>	Same as input.	\> Fortran. \\
+cosh\>		1\>	R   IP RI\>	Same as input.	\> Fortran. \\
+dim\>		2\>	R      RI\>	Same as input.	\> Fortran. \\
+dims\>		1\>	       RI CI\>	IP		\> Note 7. \\
+exp\>		1\>	R C IP RI CI\>	Same as input.	\> Fortran. \\
+extract	or ()\>	2\>	RI,IP\>		R.		\> Note 8. \\
+fft\>		2\>	RI or CI,R\>	CI.		\> Note 9. \\
+floor\>		1\>	R   IP RI\>	Same as input.	\> C, note 5.\\
+gamma\>		1\>	R   IP RI\>	Same as input.	\> C, note 5.\\
+ismax\>		1\>	       RI\>	IP.		\> Note 10. \\
+ismin\>		1\>	       RI\>	IP.		\> Note 10. \\
+j0\>		1\>	R   IP RI\>	Same as input.	\> C, note 5. \\
+j1\>		1\>	R   IP RI\>	Same as input.	\> C, note 5. \\
+load\>		1\>		   S\>	RI.		\> Note 11. \\
+loadc\>		2\>	S,IP\>		CI.		\> Note 12. \\
+loadr\>		2\>	S,IP\>		RI.		\> Note 12. \\
+log\>		1\>	R   IP RI\>	Same as input.	\> Fortran. \\
+log10\>		1\>	R   IP RI\>	Same as input.	\> Fortran. \\
+max\>		2\>	R      RI\>	Same as inputs.	\> Fortran. \\
+min\>		2\>	R      RI\>	Same as inputs.	\> Fortran. \\
+mod\>		2\>	R      RI\>	Same as inputs.	\> Fortran. \\
+read\>		1\>	S\>		Output determined\> Note 13. \\
+    \>		 \>	 \>		by the form of the\\
+    \>		 \>	 \>		expression entered by the user.\\
+real\>		1\>	  C	  CI\>	R or RI.	\> Fortran. \\
+shift or []\>	2\>	RI or CI,IP\>	RI or CI.	\> See note 2. \\
+sign\>		2\>	R      RI\>	Same as inputs.	\> Fortran. \\
+sin\>		1\>	R   IP RI\>	Same as input.	\> Fortran. \\
+sinh\>		1\>	R   IP RI\>	Same as input.	\> Fortran. \\
+sqrt\>		1\>	R   IP RI\>	Same as input.	\> Fortran. \\
+sum\>		1\>	       RI\>	R.		\> Note 14. \\
+tan\>		1\>	R   IP RI\>	Same as input.	\> Fortran. \\
+tanh\>		1\>	R   IP RI\>	Same as input.	\> Fortran. \\
+y0\>		1\>	R   IP RI\>	Same as input.	\> C, note 5. \\
+y1\>		1\>	R   IP RI\>	Same as input.	\> C, note 5. \\
+\end{tabbing}
+
+\subsection*{Notes:}
+Most of the functions are the same as FORTRAN, but some require
+extra explanation.
+\begin{enumerate}
+\item shift or []: These perform cyclic shifts of images. The shift
+function takes two arguments, first the image to be shifted, and
+secondly a integer-pair indicating the number of pixels to shift.
+A shift of [1,1], causes pixel [i,j] in the input to move to pixel
+[i+1,j+1] in the output. An alternate, sometimes more convenient, way
+of specifying a shift is to follow the image name with an integer-pair.
+The image is then shifted. For example, assuming ``a'' is an image, the
+following two are equivalent
+\begin{verbatim}
+	shift(a,[1,1])
+	a[1,1]
+\end{verbatim}
+as are
+\begin{verbatim}
+	shift(a+1,[1,1])
+	(a+1)[1,1]
+\end{verbatim}
+The image-shift operator ([]), has the same precedance as the ``raise to
+the power of'' (**) operator.
+
+\item extract or (): These extract a pixel value from an image. The extract
+function takes two arguments, first the image, the second an integer-pair
+giving the coordinate value (running from 1 to N). An alternate, more
+FORTRAN-like, way of specifying the extraction is to follow the image
+name with the coordinate to extract (in brackets). For example, assume ``a''
+is an image, the following two are equivalent
+\begin{verbatim}
+	extract(a,[1,1])
+	a([1,1])
+\end{verbatim}
+as are
+\begin{verbatim}
+	extract(a+1,[1,1])
+	(a+1)([1,1])
+	a([1,1])+1
+\end{verbatim}
+The image-extraction operator (()), has the same precedence as the
+``raise to the power of'' (**) operator.
+
+\item Logical operators: These take real values or images as inputs, and
+treat a zero value as false, and non-zero value as true. The result
+will have values of 0 or 1.
+
+\item arg: This returns the argument (angle), in radians, of a complex
+number.
+
+\item These all follow the definition described in the man (3M) pages on
+   a UNIX system.
+\begin{description}
+\item[ceil] Return next integer greater than or equal to the argument.
+\item[floor] Return the next integer less than or equal to the argument.
+\item[gamma] Actually the log of the gamma function.
+\item[j0] Zeroth order Bessel function.
+\item[j1] First order Bessel function.
+\item[y0] Zeroth order Bessel function of the second kind.
+\item[y1] First order Bessel function of the second kind.
+\end{description}
+
+\item convolve: This convolves two real images, returning a resultant
+image. It is done directly (not using FFTs), and so would be very
+slow if both the input images are of moderate or large size.
+
+\item dims: This returns the integer pair which gives the size of an image.
+
+\item Relational operators: These take real values or images as inputs,
+and produce results of 0 or 1. (false or true).
+
+\item fft: This performs an FFT on a real or complex image (the first argument).
+The second argument is either 1 or -1, giving the sign of the transform.
+If the sign is 1, 1/N scaling of the output is performed.
+
+\item ismax,ismin: These return the coordinate (as an integer-pair) of the
+maximum and minimum pixel of the input image. The values in the coordinate run
+from 1 to N.
+
+\item load: This reads a Miriad image from disk. The input argument is a string
+giving the name of the file. The output is a real image.
+
+\item loadc,loadr: These read an image, stored as a text file, on disk. The
+loadc function reads a complex image, whereas loadr reads a real image.
+The pixel values in the text file are free format. A hash character (\#)
+can be used to indicate the start of a comment. The first argument to the
+function is a string giving the file name. The second argument is an
+integer-pair giving the size of the image.
+
+\item read: This reads a value from the user (standard input). The user can
+give constants, or an expression. This expression is evaluated and
+then returned as the result of the function.
+
+\item sum: This sums up all the pixel values in an image, returning a single
+real value.
+\end{enumerate}
+
+\section*{Commands}
+
+This describes the possible commands. All commands can be abbreviated to
+the shortest string which unambiguously determines the command.
+
+\subsection*{Assignment}
+
+Format:
+\begin{verbatim}
+    varname = expression
+\end{verbatim}
+This command differs (in form) from other commands. This assigns the value
+of an expression to a new variable. Any old variable, with the same name,
+is overwritten. The expression can be of any data type.
+
+Examples:
+\begin{verbatim}
+    pi = 4*atan(1)
+    image = load('input.miriad')
+    i = (0,1)
+\end{verbatim}
+
+\subsection*{Comments}
+Format:
+\begin{verbatim}
+    # Any comment
+\end{verbatim}
+
+This allows you to annotate a run of imcalc. It is particularly useful
+in ``source'' files (see 'source' command).
+
+Examples:
+\begin{verbatim}
+    # This is an example of a comment.
+    # This is another comment line.
+\end{verbatim}
+
+%\subsection*{Contour command}
+%Format:
+%\begin{verbatim}
+%    contour image-expression [contour-levels,....]
+%\end{verbatim}
+
+%This draws a contour image of an real image. Here ``image-expression'' can be
+%any expression which gives an image as its result. The optional argument
+%``contour-levels'' consists of one or more contour levels to plot. Each of these
+%are real expressions or values. The default is to plot 10% contours (excluding
+%0).
+
+%Examples:
+%\begin{verbatim}
+%    contour load('input.fit') 1,2,3,4
+%    contour image
+%\end{verbatim}
+
+\subsection*{Do-End commands}
+Format:
+\begin{verbatim}
+    do varname exp1,exp2[,exp3]
+    end
+\end{verbatim}
+
+These commands are used for do-loop structures, starting with the ``do''
+command, and ending with ``end''. The do-loop variable is ``varname'' (its
+value should not be changed inside the loop). The range of the do-loop
+is given by the real expressions ``exp1'' and ``exp2''. The increment is
+given by the optional argument ``exp3'', which defaults to 1.
+
+Note that do-loop commands need to be read from a file (rather than a
+terminal) to work correctly.
+
+Example:
+\begin{verbatim}
+    do i 1,10
+      write 'The loop index is ',i
+    end
+\end{verbatim}
+
+\subsection*{Dump command}
+Format:
+\begin{verbatim}
+    dump image-expression
+\end{verbatim}
+
+This writes, to the standard output, the pixel values of a real image,
+``image-expression''. The
+pixel values are converted to integers before the operation. No scaling is
+performed on the image.
+
+Examples:
+\begin{verbatim}
+    dump load('input.fit')
+    dump image
+\end{verbatim}
+
+\subsection*{Help command}
+Format:
+\begin{verbatim}
+    help
+\end{verbatim}
+
+This gives a list and one line description of Imcalc commands.
+
+\subsection*{Histogram command}
+Format:
+\begin{verbatim}
+    histogram image-expression [lo-value,hi-value]
+\end{verbatim}
+
+This gives a crude histogram of an image, given by ``image-expression''
+The optional argument ``lo-value'' and ``hi-value'' are expressions giving
+the real numbers that are
+the lower and upper pixel values to include in the histogram. Their
+default values are the image minimum and maximium value.
+
+Examples:
+\begin{verbatim}
+    histogram load('input.fit') 0,100
+    histogram image
+    histogram image
+\end{verbatim}
+
+\subsection*{If-Elif-Else-End commands}
+Format:
+\begin{verbatim}
+    if expression
+    elif expression
+    else
+    end
+\end{verbatim}
+
+These provide a if-then-else blocks, allowing conditional execution of a
+number of commands. The if-block must start with an ``if'' command, and end
+with an ``end'' command. The ``elif'' (else-if) and ``else'' commands can appear
+between the ``if'' and ``end''. The ``expression'' is a real expression. It is
+considered true if it is non-zero.
+
+Examples:
+\begin{verbatim}
+    if alpha.gt.10
+      write 'Alpha is greater than 10'
+    elif alpha.lt.0
+      write 'Alpha is negative'
+    else
+      write 'Alpha is in the range [0,10]'
+    end
+\end{verbatim}
+
+\subsection*{Insert command}
+Format:
+\begin{verbatim}
+    insert image value coord
+\end{verbatim}
+
+This inserts a value into an image, at a particular pixel coordinate. The
+first argument, ``image'' is the name of the image. The second, ``value'', is the
+value to be inserted, and the last argument, ``coord'', is an integer-pair giving
+the coordinate of the pixel (in the range 1 to N).
+
+Examples:
+\begin{verbatim}
+   insert image 1.0 [65,65]
+\end{verbatim}
+
+\subsection*{Quit command}
+Format:
+\begin{verbatim}
+    quit
+\end{verbatim}
+
+This exits from imcalc.
+
+\subsection*{Save command}
+Format:
+\begin{verbatim}
+    save filename
+\end{verbatim}
+
+This saves all the current values of variables in a script file, given by
+``filename''. Also all images are written to Miriad files on disk. The names of
+the Miriad files are formed by appending ``.miriad'' to the images name. Note
+that if a file already exists with this name, it is not overwritten.
+
+  Examples:
+\begin{verbatim}
+    save 'current.values'
+\end{verbatim}
+
+\subsection*{Store command}
+Format:
+\begin{verbatim}
+    store filename image-expression
+\end{verbatim}
+
+This saves an images as a Miriad file on disk (i.e. it is the converse operation
+of the ``load'' function). The argument ``filename'' is a string value or
+expression, giving the name of the output file. The argument ``image-expression''
+is an expression giving an image.
+
+Examples:
+
+The first example effectively copies an input file to an output. The
+second example saves a previously computed image (named ``image'') to a file.
+\begin{verbatim}
+    store 'output.miriad' load('input.miriad')
+    store 'output.miriad' image
+\end{verbatim}
+
+\subsection*{Source command}
+Format:
+\begin{verbatim}
+    source filename
+\end{verbatim}
+
+This causes imcalc to execute the commands in the file, whose name is
+given by the string expression ``filename''.
+
+Example:
+\begin{verbatim}
+    source 'imcalc.coms'
+\end{verbatim}
+
+\subsection*{Spawn command}
+Format:
+\begin{verbatim}
+    !command
+\end{verbatim}
+
+This causes a host command to be spawned.
+
+Examples:
+\begin{verbatim}
+    !ls
+    !date
+\end{verbatim}
+
+\subsection*{Standard command}
+Format:
+\begin{verbatim}
+    standard size
+\end{verbatim}
+
+This causes the creation of three `standard' images, with variable names ``i'',
+``j'' and ``zero''. The image ``i'' is one that varies from 1 to the N along the
+X direction, but is constant in the Y direction. The image ``j'' is one that
+varies from 1 to N along the Y dimension, but is constant along the X dimension.
+The image ``zero'' is zero everywhere. Typically the images ``i'' and ``j''
+ would
+be used for computing images that are a function of image coordinate, rather
+than pixel values. The ``size'' argument is an integer-pair, giving the size
+of the output images.
+
+Examples:
+To create a 128x128 gaussian, use:
+\begin{verbatim}
+    standard [128,128]
+    gaussian = exp(-0.05*((i-65)*(i-65)+(j-65)*(j-65)))
+\end{verbatim}
+
+\subsection*{Summary command}
+Format:
+\begin{verbatim}
+    summary expression
+\end{verbatim}
+
+This gives a one line summary of what a particular expression (the argument
+``expression'') represents. The expression can be of any data type.
+
+Examples:
+\begin{verbatim}
+    summary load('input.miriad')
+    summary 4*atan(1)
+\end{verbatim}
+
+\subsection*{While-End commands}
+Format:
+\begin{verbatim}
+    while expression
+    end
+\end{verbatim}
+
+These are used to form a ``while'' (or ``dowhile'') loop. Imcalc loops
+between the ``while'' and ``end'' commands, as long as ``expression'' remains
+true (i.e. non-zero).
+
+Note that while-loop commands need to be read from a file (rather than a
+terminal) to work correctly.
+
+Example:
+\begin{verbatim}
+    n = 1
+    while n.lt.k
+      n = n+n
+    end
+    write 'Log2(k) = ',n
+\end{verbatim}
+
+\subsection*{Write command}
+Format:
+\begin{verbatim}
+    write exp1[,exp2...]
+\end{verbatim}
+
+This writes out the values of several expressions. The expressions (``exp1'',
+``exp2'', etc) can be of any data type other than images.
+
+Examples:
+\begin{verbatim}
+    write 'The value of pi is ',4*atan(1)
+    write 'The square root of -1 is ',(0,1)
+\end{verbatim}
+
+
+\section*{An Annotated Example}
+\begin{verbatim}
+#  This is an example script to show how imcalc could be used to
+#  write a Hogbom CLEAN algorithm. It takes two input Miriad files,
+#  a map and a beam, and produces two outputs, a residual map and a
+#  components image. All these images must be the same size.
+
+# Load the map to be cleaned, and its corresponding beam.
+# There is no way to check that the map and beam are of the same
+# size. It also assumes that the center of the beam is at the
+# max value of the beam.
+
+map = load(read('Give the name of the map (enclosed in quotes):'))
+beam = load(read('Give the name of the beam (enclosed in quotes):'))
+bcenter = ismax(beam)
+
+# Generate a components image. Initially this is all zeros.
+
+standard dims(map)
+components = zero
+
+# Here we set other parameters.
+# The loop gain is 10%.
+# The cutoff level: we take 5% of the map maximum.
+
+gain = 0.1
+cutoff = 0.05*map(ismax(map))
+
+# The main CLEAN loop. It first determines the location of the abs. max
+# value, and then the value of the component to subtract off. The beam
+# has to be shifted to the location of the peak before being subtracted
+# off. Finally the component image is updated by adding in the component
+# just found.
+
+imax = ismax(abs(map))
+while abs(map(imax)).gt.cutoff
+  x = gain*map(imax)
+  map = map-x*shift(beam,imax-bcenter)
+  insert components components(imax)+x imax
+  imax = ismax(abs(map))
+end
+
+# Save the residuals and the CLEAN components in output files.
+
+store read('Give output residual name (enclosed in quotes):') map
+store read('Give output component name (enclosed in quotes):') components
+\end{verbatim}
+\end{document}
