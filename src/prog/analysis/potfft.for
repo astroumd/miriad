@@ -70,7 +70,7 @@ c
       INTEGER INVPARM
       PARAMETER(INVPARM=1)
       CHARACTER VERSION*(*)
-      PARAMETER (VERSION='Version 9-aug-02')
+      PARAMETER (VERSION='Version 11-aug-02')
 c
       CHARACTER in*128,out*128,outg*128
       INTEGER nin(MAXNAX),nout(MAXNAX),npadin(MAXNAX)
@@ -432,10 +432,17 @@ c
 c**************************************************************************
 c   Numerical Recipes FOURN routine:
 c
+
       SUBROUTINE FFTND(DATA,NN,NDIM,ISIGN)
-c      IMPLICIT NONE
+      IMPLICIT NONE
+      REAL data(*)
+      INTEGER isign,ndim,nn(ndim)
+c
       REAL*8 WR,WI,WPR,WPI,WTEMP,THETA
-      DIMENSION NN(NDIM),DATA(*)
+      INTEGER ntot,idim,nprev,n,nrem,ip1,ip2,ip3,i2rev,i2,i1,i3,i3rev
+      INTEGER ibit,ifp1,ifp2,k1,k2
+      REAL  tempr,tempi
+
       NTOT=1
       DO 11 IDIM=1,NDIM
         NTOT=NTOT*NN(IDIM)
