@@ -54,6 +54,7 @@ c     24-jul-02 pjt  0 maskvalue, not -1
 c      6-aug-02 pjt  doc
 c     16-dec-03 pjt  long forgotten MAXDIM2 conversion
 c     01-jun-04 snv  implemented 3d
+c     06-jul-04 pjt  did 3d ever work?
 c***********************************************************************
 c
       include   'maxdim.h'
@@ -61,7 +62,7 @@ c
       integer   MAXNAX
       parameter (MAXNAX=3)
       character VERSION*(*)
-      parameter (VERSION='1-jun-2004')
+      parameter (VERSION='6-jul-2004')
 c
       character infile*128, oufile*128, rmode*10, ctype1*10,ctype2*10
       character ctype3*10
@@ -184,10 +185,10 @@ c     Open output file
 c
       ousize(1) = outnx
       ousize(2) = outny
-      if (nz .eq. 2) then
+      if (nz .eq. 1) then
         write (*,*) 'Output map size angle,radius: ',outnx,outny
-        call xyopen(tout,oufile,'new',nz,ousize)
-      elseif (nz .gt.2) then
+        call xyopen(tout,oufile,'new',2,ousize)
+      elseif (nz .gt.1) then
         ousize(3) = nz
         write (*,*) 'Output map size angle,radius: ',outnx,outny,nz
         call xyopen(tout,oufile,'new',3,ousize)
@@ -205,22 +206,22 @@ c
       call wrhdr(tout,'cdelt2',cdelt2)
       call wrhdr(tout,'phase',phase)
 
-      if (nz .gt. 2) then
+      if (nz .gt. 1) then
         call rdhdr(tin,'crpix3',crpix3,0.0)
         call rdhdr(tin,'crval3',crval3,0.0)
         call rdhdr(tin,'cdelt3',cdelt3,0.0)
-        call rdhdr(tin,'ctype3',ctype3,0.0)
-        call wrhda(tout,'ctype3',ctype3)
-        call wrhdr(tout,'crval3',crval3)
+        call rdhda(tin,'ctype3',ctype3,0.0)
         call wrhdr(tout,'crpix3',crpix3)
+        call wrhdr(tout,'crval3',crval3)
         call wrhdr(tout,'cdelt3',cdelt3)
+        call wrhda(tout,'ctype3',ctype3)
       endif
 c
 c
 c     Read in the data plane.
 c
       do iz = 1, nz
-      if (nz .gt. 2) call xysetpl(tin,1,iz)
+      if (nz .gt. 1) call xysetpl(tin,1,iz)
       do iy=1,ny
          call xyread(tin,iy,indat(1,iy))
          call xyflgrd(tin,iy,flags(1,iy))
@@ -284,7 +285,7 @@ c
           endif
           oudat(ix)=sum
        enddo
-       if(nz .gt. 2) call xysetpl(tout,1,iz)
+       if(nz .gt. 1) call xysetpl(tout,1,iz)
        call xywrite(tout,iy,oudat)
        call xyflgwr(tout,iy,ouflg)
       enddo
