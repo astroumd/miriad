@@ -21,6 +21,8 @@ c    pjt  12oct98    Apply jyperka() array values if present (BIMA)
 c    pjt  11jan99    Check for jyperka() and use 1 [needed for old data]
 c    pjt  28jul99    Bypass "Unexpected baseline numbers" and flag them
 c		     as bad
+c    pjt  27dec01    Option to enforce single channel (LSB) usage for all channels
+c                    which is useful for single sideband OVRO data
 c
 c= gapply - apply gains of one dataset to another
 c& pjt
@@ -54,8 +56,9 @@ c       phase       only apply phase, use unity amplitude
 c       amp         only apply amplitude, use zero phase
 c       extra       also use extrapolation for matching gain values
 c	jyperk	    add baseline based jyperk (useful for INVERT)
+c       single      single side band usage: LSB applied to all channels
 c     By default interpolation of phase and amplitude is
-c     done, and no output of jyperk.
+c     done, and no output of jyperk. jyperk only useful for BIMA
 c@ out
 c     The name of the output uv dataset. All data from the
 c     input files will be calibrated, and appended to this
@@ -67,7 +70,7 @@ c-----------------------------------------------------------------------
 c  Constants
       INTEGER MAXFILE, MAXSELS
       CHARACTER VERSION*(*)
-      PARAMETER(VERSION='GAPPLY: Version 28-jul-99 PJT')
+      PARAMETER(VERSION='GAPPLY: Version 27-dec-01 PJT')
       PARAMETER(MAXFILE=64, MAXSELS = 100)
 c  Local variables
       CHARACTER in(MAXFILE)*80, viso*80, gvis*80, line*100, linetype*20
@@ -78,7 +81,7 @@ c  Local variables
       REAL jyperka(MAXANT)
       COMPLEX corr(MAXCHAN), wcorr(MAXCHAN)
       LOGICAL flags(MAXCHAN), wflags(MAXCHAN), doamp, dophase, doext,
-     *        dojyperk, Qjpka
+     *        dojyperk, Qjpka, dosingle
       DOUBLE PRECISION preamble(4)
 c-----------------------------------------------------------------------
 c  Announce
@@ -91,7 +94,7 @@ c
       CALL mkeyf('vis',in,MAXFILE,nfile)
       CALL keyf('gvis',gvis,' ')
       CALL keyf('out',viso,' ')
-      CALL getopt(debug,doamp,dophase,doext,dojyperk)
+      CALL getopt(debug,doamp,dophase,doext,dojyperk,dosingle)
       CALL selinput('select',sels,MAXSELS)
       CALL keya('line',linetype,'unknown')
       CALL keyi('line',numchan,0)
@@ -176,7 +179,7 @@ c -- new
 	       CALL apply(tin,MAXCHAN,preamble,
      *			  ncorr,corr,flags,nwcorr,wcorr,wflags,
      *                    calcntg, calcntb, doamp, dophase, doext,
-     *                    dojyperk,jyperk,jyperka, nants)
+     *                    dojyperk,jyperk,jyperka, nants, dosingle)
                CALL uvcopyvr(tin, tout)
                IF (dojyperk) THEN
                   CALL uvputvrr(tout,'jyperk',jyperk,1)
@@ -528,16 +531,17 @@ c-debug
 
       END
 c***********************************************************************
-      SUBROUTINE getopt(debug,doamp,dophase,doext,dojyperk)
+      SUBROUTINE getopt(debug,doamp,dophase,doext,dojyperk,dosingle)
 c
       IMPLICIT NONE
-      LOGICAL debug, doamp, dophase, doext, dojyperk
+      LOGICAL debug, doamp, dophase, doext, dojyperk,dosingle
 c-----------------------------------------------------------------------
       INTEGER NOPT
-      PARAMETER (NOPT=5)
+      PARAMETER (NOPT=6)
       CHARACTER opts(NOPT)*10
       LOGICAL present(NOPT)
-      DATA opts /'debug','phase','amplitude','extrapol','jyperk'/
+      DATA opts /'debug','phase','amplitude','extrapol','jyperk',
+     *           'single'/
 c
       CALL options('options',opts, present, NOPT)
       debug = present(1)
@@ -549,6 +553,7 @@ c
         doamp = .TRUE.
         dophase = .TRUE.
       ENDIF
+      dosingle = present(6)
 
       IF(debug)THEN
          write(*,*) 'Debug is  ',debug
@@ -556,6 +561,7 @@ c
          write(*,*) 'PHASE: ', dophase
          write(*,*) 'Extrapolation: ', doext
          write(*,*) 'JyperK: ',dojyperk
+         write(*,*) 'Single: ',dosingle
       ENDIF
  
       END
@@ -563,14 +569,14 @@ c***********************************************************************
       SUBROUTINE apply(tin, numchan, preamble,
      *                 ncorr,corr,flags,nwcorr,wcorr,wflags,
      *                 calcntg, calcntb, doamp, dophase, doext, 
-     *                 dojyperk,jyperk,jyperka,nants)
+     *                 dojyperk,jyperk,jyperka,nants,dosingle)
       IMPLICIT NONE
       INTEGER tin, numchan, ncorr, nwcorr, calcntg, calcntb, nants
       REAL jyperk, jyperka(nants)
       DOUBLE PRECISION preamble(4)
       COMPLEX corr(numchan), wcorr(numchan)
       LOGICAL flags(numchan), wflags(numchan), doamp, dophase, doext,
-     *        dojyperk
+     *        dojyperk,dosingle
 c
 c  Apply one particular correllation slot in (baseline,time) space
 c
@@ -777,7 +783,7 @@ c
            lochan = starwin(iwin)
            hichan = starwin(iwin)+chanwin(iwin)-1
            DO ic=lochan,hichan
-              IF(delfreq(iwin) .LT. 0.0) THEN
+              IF(dosingle .OR. delfreq(iwin) .LT. 0.0) THEN
 c                 corr(ic) = gains(1)*corr(ic)*factor(b,ic)
                  corr(ic) = gains(1)*corr(ic)
               ELSE
