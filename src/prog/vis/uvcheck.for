@@ -99,10 +99,12 @@ c    mchw 27aug98  Rename flagged "channels" if linetype.eq.'wide'
 c    mchw 21jan99  Change delayflag to delay line difference.
 c    mchw 05sep01  Added fringe frequency as a special variable.
 c    mchw 17dec02  Make Check for known problems a debug option so output format is constant.
+c    mchw 07mar03  Added 1 to bin in histo plot.
+c    mchw 21mar03  Add cummulative sum in histo plot.
 c----------------------------------------------------------------------c
 	include 'maxdim.h'
 	character*(*) version
-	parameter(version='UVCHECK: version 1.0 17-Dec-2002')
+	parameter(version='UVCHECK: version 3.0 21-Mar-2003')
 	integer maxsels, ochan, nbugs, nflag, nwflag
 	parameter(MAXSELS=512)
 	real sels(MAXSELS)
@@ -472,7 +474,7 @@ c
           if(histo)then
 	    blo  = vmin
 	    binc = (vmax-vmin)/NBIN
-            j = (ddata(i)-vmin)/binc
+            j = (ddata(i)-vmin)/binc + 1
             if(j.gt.0.and.j.le.NBIN)then
               bin(j) = bin(j) + 1
             else if(j.le.0)then
@@ -653,9 +655,9 @@ c    under      number of points under blo
 c    over       number of points over blo + nbin*binc
 c------------------------------------------------------------------------
         integer maxbin
-        integer i,j
+        integer i,j,sum
         real x,r
-        character asterisk*30,line*64
+        character asterisk*30,line*80
 c
 c  Check if inputs are reasonable.
 c
@@ -682,14 +684,16 @@ c
         asterisk = '******************************'
         write(line,'(7x,a,3x,i8)')'Underflow',under
         call logwrit(line)
+	    sum = 0
         do i=1,nbin
           j = nint( r * bin(i) )+1
-          write(line,600)i,x,bin(i),asterisk(1:j)
-  600     format(i5,1x,1pe13.6,i8,1x,a)
+          sum = sum + bin(i)
+          write(line,600)i,x,bin(i),sum,asterisk(1:j)
+  600     format(i5,1x,1pe13.6,i8,1x,i8,1x,a)
           call logwrit(line)
           x = x + binc
         enddo
-        write(line,'(7x,a,4x,i8)')'Overflow',over
+        write(line,'(7x,a,4x,i8,1x,i8)')'Overflow',over, sum+over
         call logwrit(line)
         end
 c********1*********2*********3*********4*********5*********6*********7**
