@@ -1,0 +1,78 @@
+#  -------------------------------------------------------------
+#	Skeleton MIRRC file ... to be put in the local MIRIAD's
+#	home directory.  It is essential that "standard" system
+#	directories be in the user's search path (eg, to find
+#	"awk").
+# -------------------------------------------------------------
+#  Environment variables to be locally specified:
+#
+#    $MIR ....... location of MIRIAD's home directory
+#    $MIRHOST ... "sun3", "sun4", "sun4sol", "mips", or "convex"
+#    $MIRXINC ... include directory that contains the X11 and Xm
+#                 directories.  If you don't have the Motif libraries,
+#                 then this is the directory that contains just the
+#                 X11 directory.  If these reside in different
+#                 directories or additional directories need to be
+#                 specified, include them in a space separated list,
+#                 eg, "/usr/openwin/include /usr/dt/include"
+#                 would search for X11 and Xm include directories
+#                 first /usr/openwin/include and then
+#                 /usr/dt/include.
+#    $MIRXLIB ... directory that contains the X11 libraries (set to 
+#                 null string if -X11 is not installed).  Note that
+#                 additional directories can be specified in a
+#                 space separated list, eg,
+#                 "/usr/local/lib/X11 /usr/tmp/lib/X11" will cause the
+#                 linker to search first /usr/local/lib/X11 and then
+#                 /usr/tmp/lib/X11 to resolve external references.
+#  -------------------------------------------------------------
+#  The example shown below is for a sun4sol (solaris) installation.
+#  Modification for a convex or sun3 installation is
+#  straightforward.
+#  -------------------------------------------------------------
+setenv MIR      "/appl/lai/miriad/mirdir"
+setenv MIRHOST  "sun4sol"
+setenv MIRXINC  "/usr/openwin/include"
+setenv MIRXLIB  "/usr/local/lib/X11"
+setenv AIPSTV   "XASIN"
+setenv MIRBIN   $MIR/bin/$MIRHOST
+setenv MIRCAT   $MIR/cat
+setenv MIRDEF   .
+setenv MIRDOC   $MIR/doc
+setenv MIRINC   $MIR/src/inc
+setenv MIRLIB   $MIR/lib/$MIRHOST
+setenv MIRNEWS  $MIR/news
+setenv MIRPAGER "doc"
+setenv MIRPDOC  $MIR/doc/prog
+setenv MIRPROG  $MIR/src/prog
+setenv MIRSDOC  $MIR/doc/subs
+setenv MIRSRC   $MIR/src
+setenv MIRSUBS  $MIR/src/subs
+setenv PGPLOT_FONT $MIRLIB/grfont.dat
+
+if (`echo ":${PATH}:" | grep -c ":\.:"` > 0) then
+   set path = (`echo ":${PATH}:"|sed "s&:.:&:.:${MIRBIN}:&"|sed 's/:/ /g'`)
+else
+   set path = ($MIRBIN $path)
+endif
+
+alias   mirfind         mir.find
+alias   mirhelp         mir.help
+alias   mirindex        mir.index
+alias   mirbug          mir.bug.csh bug
+alias   mirfeedback     mir.bug.csh feedback
+#  -------------------------------------------------------------
+#
+#  If the file $MIR/MIRRC.local exists, execute it now.
+#
+if (-e $MIR/MIRRC.local) then
+  source $MIR/MIRRC.local
+endif
+#
+#  If the user's file $HOME/.mirrc exists, execute it now.
+#
+if (-e $HOME/.mirrc) then
+  source $HOME/.mirrc
+endif
+
+#  -------------------------------------------------------------
