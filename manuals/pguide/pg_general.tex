@@ -1,0 +1,82 @@
+%------------------------------------------------------------------------
+% Chapter 10 - General Discussions
+%------------------------------------------------------------------------
+%
+%  History:
+%
+%   rjs  28mar90  First version for System Guide
+%   mjs  22mar91  Adapted into Programmer's Guide
+%------------------------------------------------------------------------
+\beginsection{Numeric Routines}
+
+The following numeric routines should be used in preference to others that do
+the same function, as these are reasonably optimized.  Generally, these are
+tailored to the target machine:  on the Cray these are based on Cray SCILIB
+routines; on the Convex, they are partially based on VECLIB routines.
+
+\beginsub{FFT Routines}
+
+There are three FFT routines, namely:
+{\ninepoint\begintt
+      subroutine fftrc(in,out,sign,n)
+      subroutine fftcr(in,out,sign,n)
+      subroutine fftcc(in,out,sign,n)
+\endtt}
+These perform one-dimensional FFTs. In all cases, {\tt sign} is the sign
+of the exponent in the transform (i.e. a {\tt sign} of -1 is conventionally
+viewed as a forward transform), and {\tt n} is a power of 2 giving the
+length of the (full) sequence. ${1\over N}$ scaling is never performed
+(it is up to you to scale at the best time). {\it In} is the input
+array, and {\it Out} is the output array. These routines
+evaluate:
+$$\eqalign{Out(l) &= \sum_{k=1}^N In(k)\exp(\pm j {2\pi\over N} (k-1)(l-1))\cr}$$
+where $k$ and $l$ vary from $1$ to $N$.
+{\tt fftrc} transforms a real
+sequence (i.e. {\tt in} is a real array) and outputs only the first $N/2 + 1$
+complex values. No information is lost because of the conjugate
+symmetry of FFTs of real sequences. Conversely {\tt fftcr} takes a
+complex sequence of length $N/2+1$ and produces a real sequence of length $N$.
+Finally, {\tt fftcc} performs a complex to complex transform, with
+both input and output being of length $N$.
+
+\beginsub {Min and Max Value Routines}
+
+There are two routines to find the index of the minimum and maximum values
+of an array, namely:
+{\ninepoint\begintt
+      integer function ismin(n,data,step)
+      integer function ismax(n,data,step)
+\endtt}
+
+\beginsub{WHEN and ISRCH Routines}
+
+{\ninepoint\begintt
+      subroutine whenxxx(n,array,step,target,index,nindex)
+      integer function isrchxxx(n,array,step,target)
+\endtt}
+The {\tt when} routines return the indices of all locations in an array that
+have a ``true relational value'' to the target. See page 4-64 of the
+Cray ``Library Reference Manual'' for more information. The {\tt isrch}
+routines return the first location in an array that has a ``true
+relational value'' to the target. See page 4-59 of the Cray ``Library
+Reference Manual''. For both routines, ``{\tt xxx}'' can be one of
+{\tt ieq}, {\tt ine}, {\tt ilt}, {\tt ile}, {\tt igt}, {\tt ige}, {\tt feq},
+{\tt fne}, {\tt flt}, {\tt fle}, {\tt fgt} or {\tt fge}.
+These give the type of {\tt array} (Integer or Floating), and the relation
+(equal, not equal, less than, etc).
+
+Because these are well optimized routines, these routines should be used in
+preference to straightforward FORTRAN code that performs an equivalent
+function.
+
+\beginsub{BLAS and LINPACK Routines}
+
+The BLAS routines are ``Basic Linear Algebra Subprograms'', while the
+LINPACK routines are a suite of linear equation solving routines. It is
+common to find these routines, in an optimized form, on vector computers.
+Additionally they are public domain routines in standard FORTRAN, making them
+easy to port. The MIRIAD library (or a system library) has these routines in
+their single precision real and complex forms.
+There are a number of good references on BLAS and LINPACK routines
+available (e.g. 4-1 and 4-38 in the Cray ``Library Reference Manual''),
+or the Convex ``VECLIB Users Manual'').
