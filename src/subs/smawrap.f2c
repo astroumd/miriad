@@ -1,5 +1,6 @@
 /************************************************************************/
-/*   10-dec-2004   pjt    from sma.f2c for SMA integration              */
+/*   10-dec-2004   pjt      from sma.f2c for SMA integration            */
+/*   14-jan-2005   jhz/pjt  for the new merged sma_mirRead.c            */
 /************************************************************************/
 #include <string.h>
 #include "miriad.h"
@@ -7,59 +8,36 @@
 #include "io.h"
 
 /************************************************************************/
-/* jhz 2004-5-25 */
-#if 0
-fortran subroutine jpllinerd(real fmx, real fmn, real strl,
+
+fortran subroutine jpllinerd(real fmx, real fmn, real strl, 
  integer nmol,
  integer moltag,
  integer mxnline,
  real freq, real intensity,
  integer uqst, integer lqst, integer mtag)
 {
-    jpllinerd_c(fmx.val, fmn.val, strl.val, nmol.val,moltag.addr,
+    jpllinerd_c(fmx.val, fmn.val, strl.val, nmol.val,moltag.addr, 
     (char *)mxnline.addr,
-    freq.addr, intensity.addr,
+    freq.addr, intensity.addr, 
     uqst.addr, lqst.addr, mtag.addr);
 }
-fortran subroutine molselect(character jplpath, integer pathlen,
+
+fortran subroutine molselect(character jplpath, integer pathlen, 
         integer mtag, integer nmline, character mname)
-{     molselect_c(jplpath.addr, pathlen.val, mtag.addr,
+{     molselect_c(jplpath.addr, pathlen.val, mtag.addr, 
            (char *)nmline.addr, mname.addr, mname.len);
 }
 
-fortran subroutine mirread(character datapath, integer jstat)
-{
-  mirread_c(datapath.zterm, (char *)jstat.addr);
-}
-#endif
 fortran subroutine rsmirread(character datapath, integer jstat)
 {
   rsmirread_c(datapath.zterm, (char *)jstat.addr);
 }
 
-#if 0
-fortran subroutine miriadwrite(character datapath, integer jstat)
-{
-  miriadwrite_c(datapath.zterm, (char *)jstat.addr);
-}
-#endif
 fortran subroutine rsmiriadwrite(character datapath, integer jstat)
 {
   rsmiriadwrite_c(datapath.zterm, (char *)jstat.addr);
 }
 
-#if 0
-fortran subroutine smaflush(logical mflag, logical scinit, integer tcorr,
-    logical scbuf, logical xflag, logical yflag,
-    integer maxif, integer maxant, integer scanskip, 
-    integer scanproc, integer sb, integer rxif)
-{
-   smaflush_c(mflag.addr, scinit.addr, tcorr.val, 
-              scbuf.addr, xflag.addr, yflag.addr,
-              maxif.val, maxant.val, scanskip.val, 
-              scanproc.val, sb.val, rxif.val); 
-}
-#endif
 fortran subroutine rssmaflush(logical mflag, logical scinit, integer tcorr,
     logical scbuf, logical xflag, logical yflag,
     integer maxif, integer maxant, integer scanskip,
@@ -71,23 +49,6 @@ fortran subroutine rssmaflush(logical mflag, logical scinit, integer tcorr,
               scanproc.val, sb.val, rxif.val);
 }
 
-
-
-#if 0
-fortran subroutine pokeinisma(integer tbd, integer tno1,
- logical dosam1, logical doxyp1, logical doop1,
- logical dohann1, logical birdie1, logical dowt1,
- logical dopmps1, logical dobary1, logical doif1, 
- logical hires1, logical nopol1, logical oldpol1,
- double lat1, double long1)
-        {
-      pokeinisma_c((char *)tbd.addr, tno1.val,
-          dosam1.addr, doxyp1.addr, doop1.addr, dohann1.addr,
-          birdie1.addr, dowt1.addr, dopmps1.addr, dobary1.addr,
-          doif1.addr, hires1.addr, nopol1.addr,
-          oldpol1.addr, lat1.val, long1.val);
-        }
-#endif
 fortran subroutine rspokeinisma(integer tbd, integer tno1,
  logical dosam1, logical doxyp1, logical doop1,
  logical dohann1, logical birdie1, logical dowt1,
@@ -101,14 +62,8 @@ fortran subroutine rspokeinisma(integer tbd, integer tno1,
           doif1.addr, hires1.addr, nopol1.addr,
           oldpol1.addr, lat1.val, long1.val, rsnchan1.val);
         }
-#if 0
-fortran subroutine pokeflshsma(integer tbd)
-        {
-            pokeflshsma_c((char *)tbd.addr);
-        }
-#endif
 fortran subroutine rspokeflshsma(integer tbd)
-        {
-            rspokeflshsma_c((char *)tbd.addr);
-        }
+{
+    rspokeflshsma_c((char *)tbd.addr);
+}
 
