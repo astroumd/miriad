@@ -12,7 +12,7 @@ if ($#argv == 0) then
     echo "      -wcs"
     echo "                  do not load WCS, even if it has one"
     echo ""
-    echo "  Version 2.3 - 14-feb-01 PJT"
+    echo "  Version 2.5 - 7-nov-02 PJT"
     echo ""
     echo "  Be sure 'ds9' and the XPA routines are in your environment."
     echo "  You do need to start ds9 manually yourself."
@@ -80,7 +80,7 @@ if ($#xpasets > 1) then
   exit 0
 endif
 
-
+set wcsmsg=""
 if (-d $name) then
     set ndim=`itemize in=$name/naxis | tail -1 | awk '{print $3}'`
     set n1=`itemize in=$name/naxis1 | tail -1 | awk '{print $3}'`
@@ -91,11 +91,19 @@ if (-d $name) then
         set wcs=/tmp/saotng$$.wcs
         # work around an earlier bug by adding NAXIS=2
         # note this method isn't robust, it doesn't really check the header
+        imhead in=$name key=ctype1 | egrep -q '(RA|DEC|LON)'
+        if ($status == 0) then
+ 	   set wcsmsg="Astronomical WCS assumed"
+	   set ascl=57.2957795131
+        else
+ 	   set wcsmsg="Linear WCS assumed"
+           set ascl=1
+        endif
         echo "NAXIS  2" > $wcs
-        echo CDELT1 `imhead in=$name key=cdelt1 | awk '{print $1*57.2957795131}'` >> $wcs
-        echo CDELT2 `imhead in=$name key=cdelt2 | awk '{print $1*57.2957795131}'` >> $wcs
-        echo CRVAL1 `imhead in=$name key=crval1 | awk '{print $1*57.2957795131}'` >> $wcs
-        echo CRVAL2 `imhead in=$name key=crval2 | awk '{print $1*57.2957795131}'` >> $wcs
+        echo CDELT1 `imhead in=$name key=cdelt1 | awk '{printf("%.10f\n",$1*'$ascl')}'` >> $wcs
+        echo CDELT2 `imhead in=$name key=cdelt2 | awk '{printf("%.10f\n",$1*'$ascl')}'` >> $wcs
+        echo CRVAL1 `imhead in=$name key=crval1 | awk '{printf("%.10f\n",$1*'$ascl')}'` >> $wcs
+        echo CRVAL2 `imhead in=$name key=crval2 | awk '{printf("%.10f\n",$1*'$ascl')}'` >> $wcs
         echo CRPIX1 `imhead in=$name key=crpix1 | awk '{print $1}'` >> $wcs
         echo CRPIX2 `imhead in=$name key=crpix2 | awk '{print $1}'` >> $wcs
         echo CTYPE1 \'`imhead in=$name key=ctype1`\' >> $wcs
@@ -168,7 +176,7 @@ foreach p ($planes)
     endif
     if ($wcs != 0) then
       # ??? echo autoflip true | xpaset $title   ??? does this work ?
-      echo "Adding WCS from $wcs"
+      echo "Adding WCS from $wcs. $wcsmsg"
       cat $wcs | xpaset $title wcs replace
       # echo 'flip y | xpaset $title'
     endif
