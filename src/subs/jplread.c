@@ -3,6 +3,13 @@
 //             retrieve jpl line catalog and plot them on xterm device
 //             using pgplot routine and compare with the uv spectral
 //             line data.
+#define CATDATA struct catdata
+CATDATA {
+  double freq, derr, str, elow;
+  int itd, igup, tag, ifmt;
+  short iqn[12];
+};
+char *catfil(int num);
 #include <stdio.h>
 #include <stdlib.h>
 #define OK 1
@@ -325,11 +332,7 @@ int len;
   }
   return f;
 }
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-#include "catread.h"
-#include "catutil.h"
 
 #define NSPC 512
 static int cat_nmol = 0;
@@ -604,7 +607,6 @@ struct catdata *pdata;
   pdata->ifmt = (int) dval[7];
   return (readqn(buf + 55, pdata->iqn, 12));
 }
-#include "catutil.h"
 #include <limits.h>
 #if INT_MAX > 0x7fff
 #define MAXDEC 9
@@ -838,7 +840,6 @@ const int *fmtlen;
   }
   return kval;
 } /* pcard */
-#include <stdio.h>
 
 #define LF 10
 #define CR 13
