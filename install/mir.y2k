@@ -1,8 +1,9 @@
-#! /bin/csh -fvx
+#! /bin/csh -f
 #
 #  MIRIAD shell script to emulate the ClassicAIPS DDT/Y2K tests
 #  (currently can only do DDT due to the nature of the Y2K visibilities)
 #
+#  21-aug-2001      Created                              Peter Teuben
 #  
 
 #					all  Y2K and DDT files should live here
@@ -20,17 +21,19 @@ foreach a ($*)
   set $a
 end
 
-#					DDT problem size dependant parameters
+#			                DDT (S/M/L) and Y2K (M/L/H) problem size dependant parameters
 
-set problem=(          S                  M                       L)
-set cell=(           1.3               1.15                     0.1)
-set imsize=(         256                512                    1024)
-set niters=(        2000               5000                   15000)
-set box=(102,108,194,155    138,178,353,352         340,390,630,630)
-set flux=(          14.7                5.5                    0.83)
-set noise=(          0.1               0.01                   0.001)
-set shift=(         -5.2               6,-6           -0.049,+0.026)
-set rotat=(           56                 -5                      30)
+set problem=(          S                  M                       L               H)
+set uvdata=(           0                  0                       0               0)
+set cell=(           1.3               1.15                     0.1             0.2)
+set imsize=(         256                512                    1024            2048)
+set niters=(        2000               5000                   15000           25000)
+set nbox=(             1                  1                       1               2)
+set box=(102,108,194,155    138,178,353,352         340,390,630,630 711,730,1061,1053,1017,1016,1367,133)
+set flux=(          14.7                5.5                    0.83             200)
+set noise=(          0.1               0.01                   0.001          0.0024)
+set shift=(    -5.2,-5.2               6,-6           -0.049,+0.026             0,0)
+set rotat=(           56                 -5                      30              23)
 
 # (See also /AIPS/31DEC01/RUN/DDTLOAD.001)
 #
@@ -54,7 +57,7 @@ set rotat=(           56                 -5                      30)
 
 
 if (1) then
-  mkdir $rundir
+  mkdir -p $rundir
   cd $rundir
 endif
 
@@ -64,7 +67,25 @@ set p=$problem[$size]
 #  miriad cannot handle those (yet). DDT still uses 
 
 fits in=$y2kdir/${test}${p}UVDATA out=vis op=uvin
+
+
+#  simple mapping and cleaning
+
 invert vis=vis map=mp beam=bm cell=$cell[$size] imsize=$imsize[$size]
 clean map=mp beam=bm out=cc niters=$niters[$size] region="box($box[$size])"
 restor model=cc map=mp beam=bm out=cm
+
+#  add selfcal gains to the visibilities
+selfcal vis=vis model=cc flux=$flux[$size]
+
+#  map again
+invert vis=vis map=mp1 beam=bm1 cell=$cell[$size] imsize=$imsize[$size]
+clean map=mp1 beam=bm1 out=cc1 niters=$niters[$size] region="box($box[$size])"
+restor model=cc1 map=mp1 beam=bm1 out=cm1
+
+#  maximum entropy
+maxen map=mp beam=bm out=cc2 niters=$niters[$size] \
+    region="box($box[$size])"  rms=$noise[$size] flux=$flux[$size]
+restor model=cc2 map=mp beam=bm out=cm2
+
 
