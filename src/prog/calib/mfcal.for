@@ -98,17 +98,19 @@ c		  line step.
 c    jwr  03may04 Increased MAXHASH by a factor 8.
 c    rjs   7oct04 Set senmodel parameter.
 c    pjt   4jan05 merged in the previous two changes, oh joy outside of CVS
+c    pjt  11feb05 MAXSPECT=MAXWIN, to better reflect different telescopes
 c
 c  Problems:
 c    * Should do simple spectral index fit.
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	integer MAXSPECT,MAXVIS,MAXSOLN,MAXITER,MAXPOL
-	parameter(MAXSPECT=33,MAXVIS=700000,MAXITER=30,MAXSOLN=1024)
+	parameter(MAXVIS=700000,MAXITER=30,MAXSOLN=1024)
+	parameter(MAXSPECT=MAXWIN)
 	parameter(MAXPOL=2)
 c
 	character version*(*)
-	parameter(version='MfCal: version 4-jan-05')
+	parameter(version='MfCal: version 11-feb-05')
 c
 	integer tno
 	integer pWGains,pFreq,pSource,pPass,pGains,pTau
