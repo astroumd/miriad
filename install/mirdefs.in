@@ -1,0 +1,4 @@
+#! /bin/csh -f
+
+echo XINCS=@XINCS@
+echo XLIBS=@XLIBS@
