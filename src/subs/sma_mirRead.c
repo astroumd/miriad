@@ -141,9 +141,9 @@ void rsmirread_c(char *datapath, char *jst[])
   float u, v, w;
   int flag, bin, if_no, sourceno;
        strcpy(pathname,datapath);
-        jstat=(int)*jst;
-        jstat = rsmir_Read(pathname,jstat);
-        *jst = (char *)jstat; 
+       jstat=(int)*jst;
+       jstat = rsmir_Read(pathname,jstat);
+       *jst = (char *)jstat; 
    return;
 }
 
@@ -219,23 +219,24 @@ void rspokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1,
   int *dobary1, int *doif1, int *hires1, int *nopol1, int *circular1,
   int *linear1, int *oldpol1, double lat1, double long1, int rsnchan1, 
   int refant1)
-{ /* rspokeflshsma_c == pokeflsh */
+{ 
+/* rspokeflshsma_c == pokeflsh */
     int buffer;
     extern char sname[];
     extern smlodd smabuffer;
     
-  /* initialize the external buffers */   
+/* initialize the external buffers */   
    strcpy(sname, " ");
-        smabuffer.tno    = tno1;
-        smabuffer.rsnchan= rsnchan1;
-        smabuffer.dosam  = *dosam1;
-        smabuffer.doxyp  = *doxyp1;
-        smabuffer.opcorr = *doop1;
-        smabuffer.dohann = *dohann1;
-        smabuffer.doif   = *doif1;
-        smabuffer.dobary = *dobary1;
-        smabuffer.birdie = *birdie1;
-        smabuffer.dowt   = *dowt1;
+   smabuffer.tno    = tno1;
+   smabuffer.rsnchan= rsnchan1;
+   smabuffer.dosam  = *dosam1;
+   smabuffer.doxyp  = *doxyp1;
+   smabuffer.opcorr = *doop1;
+   smabuffer.dohann = *dohann1;
+   smabuffer.doif   = *doif1;
+   smabuffer.dobary = *dobary1;
+   smabuffer.birdie = *birdie1;
+   smabuffer.dowt   = *dowt1;
         smabuffer.dopmps = *dopmps1;
         smabuffer.hires  = *hires1;
         smabuffer.nopol  = *nopol1;
@@ -299,18 +300,18 @@ void rspokeflshsma_c(char *kst[])
        uvputvra_c(tno, "version", version);
          }
 
-           if(smabuffer.newfreq>0) {
-           if(smabuffer.doif>0) {
-           for (ifs=1; ifs < smabuffer.nifs; ifs++) {
-           if(smabuffer.nstoke[ifs-1]!=smabuffer.nstoke[0]) 
+       if(smabuffer.newfreq>0) {
+       if(smabuffer.doif>0) {
+       for (ifs=1; ifs < smabuffer.nifs; ifs++) {
+       if(smabuffer.nstoke[ifs-1]!=smabuffer.nstoke[0]) 
  bug_c( "f", "Number of polarisations differ between IFs. Use options=noif.\n"); 
-           for (p=1; p< smabuffer.nstoke[ifs-1]; p++) {
-           if(smabuffer.polcode[ifs-1][p-1][0]!=smabuffer.polcode[0][p-1][0]) 
+       for (p=1; p< smabuffer.nstoke[ifs-1]; p++) {
+       if(smabuffer.polcode[ifs-1][p-1][0]!=smabuffer.polcode[0][p-1][0]) 
  bug_c( "f", "Polarisation types differ between IFs. Use options=noif.\n");
-                                                }
-                                                      }
-                             }
-                                 }
+                              }
+                              }
+                              }
+                              }
         else 
              {
              if(smabuffer.hires > 0) 
@@ -320,7 +321,6 @@ void rspokeflshsma_c(char *kst[])
       "Number of bins in different IFs must agree for options=hires\n");
                                                   }
             } 
-                  
             tdash  = smabuffer.time;
             tbinhi = 1;
 /* store apparent LST */
@@ -348,8 +348,8 @@ void rspokeflshsma_c(char *kst[])
                uvputvrd_c(tno,"sdf",  &(smabuffer.sdf[ifs]),  1);
                uvputvrd_c(tno,"restfreq",&(smabuffer.restfreq[ifs]),1);
                bl=0;
-                   for(i2=1; i2<smabuffer.nants+1; i2++){
-                   for(i1=1; i1<i2+1; i2++){
+                 for(i2=1; i2<smabuffer.nants+1; i2++){
+                 for(i1=1; i1<i2+1; i2++){
                   preamble[0] = smabuffer.u[bl];
                   preamble[1] = smabuffer.v[bl];
                   preamble[2] = smabuffer.w[bl];
@@ -386,7 +386,6 @@ void rspokeflshsma_c(char *kst[])
           uvputvrd_c(tno,"sdf",&(smabuffer.sdf),smabuffer.nifs);
           uvputvrd_c(tno,"restfreq",&(smabuffer.restfreq),smabuffer.nifs);
           uvputvrr_c(tno,"veldop",&(smabuffer.veldop),1);
-
                                          }
 /* call tsysStore */
             uvputvri_c(tno,"tcorr",&(smabuffer.tcorr),1);
@@ -418,7 +417,6 @@ void rspokeflshsma_c(char *kst[])
                     }
                                                   }
              }
-//           }
      smabuffer.newfreq=-1;
 /* re-initialize the pntr */
     for (ifs=0; ifs<SMIF; ifs++) {
@@ -631,7 +629,6 @@ for (file=0;file<nfiles;file++){
     nsets[file] = imax / headerbytes[file];
                  }
                                }
-
 break;
 case 0:   /*read header & vis */
 startTime = time(NULL);
@@ -803,9 +800,11 @@ printf("to load data for all receivers.\n");
                                                                    }
      }
 // loading data to baseline coordinate structure
-     uvwbsln[set]->uvwID[blset-blhid_hdr].u = blh[blset]->u;
-     uvwbsln[set]->uvwID[blset-blhid_hdr].v = blh[blset]->v;
-     uvwbsln[set]->uvwID[blset-blhid_hdr].w = blh[blset]->w;
+// convert ovro sign convention to miriad convention
+// by multiplying a negative sign to uvw coordinates
+     uvwbsln[set]->uvwID[blset-blhid_hdr].u = -blh[blset]->u;
+     uvwbsln[set]->uvwID[blset-blhid_hdr].v = -blh[blset]->v;
+     uvwbsln[set]->uvwID[blset-blhid_hdr].w = -blh[blset]->w;
      uvwbsln[set]->inhid = blh[blset]->inhid;
      uvwbsln[set]->uvwID[blset-blhid_hdr].blhid = blh[blset]->blhid;
      uvwbsln[set]->uvwID[blset-blhid_hdr].blsid = blh[blset]->blsid;
@@ -1305,7 +1304,6 @@ printf("FINISHED READING SP HEADERS\n");
       atsys[set]->refant = tsys[blset]->itel1;
       atsys[set]->tssb[atsys[set]->refant]=tsys[blset]->tssb[0];
       atsys[set]->refpair1  = tsys[blset]->itel2;
-//      printf("set %d %f blset %d\n", set, atsys[set]->tssb[atsys[set]->refant], blset);
                       }
        }}}
 next:
@@ -1441,9 +1439,7 @@ for (i=1; i<smabuffer.nants+1; i++){
                             }
                                          }
                                     }
-
 // initialize the tsys for the polarization components
-
   for(j=1;j<smabuffer.nants+1;j++) {
   for(i=1;i<smaCorr.n_chunk+1;i++) {
   smabuffer.xtsys[i-1][j-1]=0.;
@@ -1520,9 +1516,6 @@ smabuffer.nused=0;
     free(sph);
     rewind(fpin[3]);
     rewind(fpin[2]);
-/*break;
-case 0:
-visread:*/
 rewind(fpin[5]);
 sch = (struct sch_def **) malloc(nsets[0]*sizeof( struct sch_def *));
   for (set=0; set<nsets[0];set++) {
@@ -1578,8 +1571,6 @@ visSMAscan.time.UTCtime = jday+inh[inhset]->dhrs/24.000; /*hrs*/
 /* loading smabuffer */
 smabuffer.currentscan=inhset-smabuffer.scanskip;
 smabuffer.time = visSMAscan.time.UTCtime;
-//if(inh[inhset]->inhid!=smaEngdata[inhset]->inhid) 
-//bug_c("e", "LST in the engineer data may corrupted!\n");
 /* handle source information */
 sourceID = visSMAscan.blockID.sourID;
 smabuffer.obsra = multisour[sourceID].ra_app;
@@ -1775,7 +1766,7 @@ for (set=0; set< sphSizeBuffer; set++) {
     scale = shortdata[4];
 /* Now the data There is only one channel for the continuum*/
    visSMAscan.bsline.continuum.real = pow(2.,(double)scale)*shortdata[5];
-   visSMAscan.bsline.continuum.imag = pow(2.,(double)scale)*shortdata[6];
+   visSMAscan.bsline.continuum.imag = pow(2.,(double)scale)*(-shortdata[6]);
     free(shortdata);
     sphset++;  
 /* The file is positioned at the record header for the next spectrum. */
@@ -1812,9 +1803,9 @@ if (smabuffer.rsnchan> 0) {
 /* average the channel to the desired resolution */
      if(avenchan< (sph[kk]->nch/smabuffer.rsnchan) ) {
 avereal = avereal + (float)pow(2.,(double)scale)*shortdata[5+2*i];
-aveimag = aveimag + (float)pow(2.,(double)scale)*shortdata[6+2*i];
+// convert ovro sign convention to miriad
+aveimag = aveimag + (float)pow(2.,(double)scale)*(-shortdata[6+2*i]);
 avenchan++;
-/*printf("avenchan=%d\n", avenchan);*/
                                              } else {
 avereal = avereal/avenchan;
 aveimag = aveimag/avenchan;
@@ -1822,22 +1813,20 @@ smabuffer.data[ipnt].real=avereal;
 smabuffer.data[ipnt].imag=aveimag;
 ipnt++;
 avenchan = 1;
+// convert ovro sign convention to miriad
 avereal  = (float)pow(2.,(double)scale)*shortdata[5+2*i];
-aveimag  = (float)pow(2.,(double)scale)*shortdata[6+2*i];
+aveimag  = (float)pow(2.,(double)scale)*(-shortdata[6+2*i]);
                                                  }
                             } else {
 /* loading the original vis with no average */
-
+// convert ovro sign convention to miriad
 smabuffer.data[ipnt].real=(float)pow(2.,(double)scale)*shortdata[5+2*i];
-smabuffer.data[ipnt].imag=(float)pow(2.,(double)scale)*shortdata[6+2*i];
+smabuffer.data[ipnt].imag=(float)pow(2.,(double)scale)*(-shortdata[6+2*i]);
 
 ipnt++;    }
 
 }
 
-/*smabuffer.data[ipnt].real=(float)pow(2.,(double)scale)*shortdata[5+2*i];
-smabuffer.data[ipnt].imag=(float)pow(2.,(double)scale)*shortdata[6+2*i];
-ipnt++;    }*/
     free(shortdata);
     sphset++;  /* count for each spectral chunk */
            }
