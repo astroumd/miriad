@@ -1,0 +1,231 @@
+% LATEX document - also needs a 'makeindex' utility to generate the index
+%
+% HISTORY:
+%   xx-xxx-88   rjs Original version
+%   xx-jul-90   mjs 
+%   19-feb-91   pjt assembled together from previous versions
+%   22-feb-91   pjt included cookbook stuff
+%    1-mar-91   pjt glossary and many more fixes
+%    6-mar-91   pjt various user suggested improvements - added \newif's
+%   17-apr-91   pjt final version for the Spring 91 Release
+
+\nonstopmode	% keeps latex running despite certain errors...
+\newcommand{\manual}{ug}           % Used in a 'typeout' command at the end...%%
+
+% use a few TeX tricks to conditionally compile the manual...
+% Just add a new variable when one needed
+\newif\ifdebug
+\newif\ifbima
+\newif\ifindex
+\newif\ifnemo
+
+%% Define variables {var} needed in this document: \{var}true or \{var}false
+%% These are TeX tricks...
+%% DEBUG:  if true, margins contain index, as well as label stuff
+%% BIMA:   if true, manual may contain some BIMA specific stuff
+%% INDEX:  if true, an index is required
+%% NEMO:   if true, manual may contain some NEMO specific stuff
+\debugfalse
+\bimatrue
+\indextrue
+\nemofalse
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%                                                                            %%
+%% To print this LaTex document (name.tex):                                   %%
+%%                                                                            %%
+%%	latex name		(2 or 3 times to get page numbers right)      %%
+%%	makeindex < name.idx > name.ind	(convert index file)                  %%
+%%	latex name		(2 or 3 times, includes the .ind file)        %%
+%%	dvipr name		(print it)                                    %%
+%%                                                                            %%
+%%      (If you don't have makeindex, created a zero-length file name.ind)    %%
+%%	(or remove the makeidx,showidx and \printindex at end of document)    %%
+%%                                                                            %%
+%%                              Peter Teuben                                  %%
+%%                                                                            %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\ifindex
+   % do nothing
+\else
+ \def\index#1{} 		                % no \index{} available or wanted
+\fi
+
+\ifdebug
+ \def\mylabel#1{\index{label,#1} \label{#1}}     % debug version (label index)
+ \def\myfile#1{\index{myfile,#1}}		 % create index for filename
+\else
+ \def\mylabel#1{\label{#1}}                     % final version
+ \def\myfile#1{}				% ignore file
+\fi
+
+
+
+\ifdebug
+ \ifindex
+  \documentstyle[miriad,twoside,makeidx,showidx]{report} % Debug;add [lablst]??
+ \else
+  \documentstyle[miriad,twoside,lablst,showlabels]{report} % Debug, no index
+ \fi
+\else
+ \ifindex
+  \documentstyle[miriad,twoside,makeidx]{report}           % Final w/index
+ \else 
+  \documentstyle[miriad,twoside]{report}                   % Final no index
+ \fi
+\fi
+
+
+\makeindex
+
+\title{Miriad Users Guide \\
+    (replace this cover with the ug\_cover.ps file)}
+
+\author	{Radio Astronomy Laboratory, University of California at Berkeley
+	\and
+	 Laboratory for Astronomical Imaging, University of Illinois
+	\and
+	 Laboratory for Millimeter Astronomy, University of Maryland}
+
+\date{Version 1.0  March 1991 \\
+      Document printed: \today}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{document}
+\pagenumbering{roman}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{2.5mm}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% First page (fake, since real cover page is done by a postscript file)
+\maketitle
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Backside of coverpage is a disclaimer
+\newpage
+\pagestyle{empty}
+ \input disclaimer.inc
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\cleardoublepage
+\pagestyle{headings}
+\addcontentsline{toc}{chapter}{Table of Contents}
+\tableofcontents
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\addcontentsline{toc}{chapter}{List of Tables}
+\listoftables
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% The real start of the manual
+\cleardoublepage
+\pagenumbering{arabic}
+\part{General Introduction}
+\mylabel{p:intro}
+\chapter		{How to Use This Manual}
+\input howto.inc
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\cleardoublepage
+\chapter		{The User Interface}
+ \input iface.inc
+
+ \newpage
+ \section		{Command Line Interface}
+ \input cmdline.inc
+
+ \newpage
+ \section		{Miriad - A ``Dumb'' Terminal Front-End}
+ \input miriad.inc
+
+ \newpage
+ \section		{Mirtool - A SunView Front-End}
+ \input mirtool.inc
+
+ \newpage
+ \section		{GO - A VT100 Front-End}
+ \input go.inc
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\cleardoublepage
+\chapter		{General Task Concepts}
+\input concepts.inc
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\cleardoublepage
+\part{Hat Creek Data Flow and Conversion}
+\mylabel{p:bima}
+\chapter		{Data Flow}
+ \input flow.inc
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\cleardoublepage
+\chapter		{Data Conversion to MIRIAD format}
+ \input convert.inc
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\cleardoublepage
+\part{Miriad Cookbook}
+\mylabel{p:cookbook}
+\chapter		{Data Inspection, Editing, and Flagging}
+ \input inspect.inc
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\cleardoublepage
+\chapter		{Calibration}
+ \input calib.inc
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\cleardoublepage
+\chapter		{Map Making}
+ \input mapmake.inc
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\cleardoublepage
+\chapter		{Map Display and Analysis}
+ \input mapana.inc
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\cleardoublepage
+\chapter		{Programming - A Brief Introduction}
+ \input program.inc
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\appendix
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\cleardoublepage
+\part{Appendices}
+\mylabel{p:appendix}
+\chapter		{Setting Up Your Account}
+ \input setup.inc
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\cleardoublepage
+\chapter		{UNIX and VMS Crib Sheet}
+ \input crib.inc
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% == CURRENTLY UNDER REVISION == not even exported to $MIR anymore
+%\cleardoublepage
+%\chapter		{Using MIRIAD Under UNICOS}  
+%\input unicos.inc
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\cleardoublepage
+\chapter		{Image Items}
+ \input image.inc
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\cleardoublepage
+\chapter		{UV Variables}
+ \input uvvars.inc
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\cleardoublepage
+\chapter		{List of Executable Programs}
+ \input progs.inc
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\cleardoublepage
+\chapter		{Glossary}
+ \input glossary.inc
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\cleardoublepage
+\chapter		{Troubleshooting}
+ \input trouble.inc
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% END OF DOCUMENT - The rest if index stuff
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\cleardoublepage
+
+\ifindex
+ \addcontentsline{toc}{chapter}{Index}
+ \printindex		% only when using the [makeidx] document-style option
+\fi
+
+%
+\typeout{### Type: makeindex <\manual.idx > \manual.ind}
+\typeout{###   To convert the .idx file to an .ind file}
+\typeout{###   in case the index file needs to be regenerated}
+
+\end{document}
