@@ -46,6 +46,7 @@ c--
 c
 c  History:
 c    14aug01 pjt/snv  Created to try some fancier masking in bimasong data
+c     3dec02 pjt      MAXDIM2 is now meant for 2D arrays
 c
 c  Todo:
 c       see if this can be written with only single MAXDIM arrays
@@ -53,17 +54,17 @@ c       or does that force a VEL-RA-DEC cube or so?
 c------------------------------------------------------------------------
 	include 'maxdim.h'
  	character version*(*)
-	parameter(version='version 1.0 15-aug-01')
+	parameter(version='version 1.0 3-dec-02')
 	integer MAXNAX,naxis,naxis2
 	parameter(MAXNAX=3)
 	integer i,j,k,lin,lout,nsize(MAXNAX),blc(MAXNAX),trc(MAXNAX)
 	integer size(MAXNAX),axis,nsize2(MAXNAX),lrotmod,lmom2
 	real blo,bhi,clip(2),minsigma,window
-	real velmap(MAXDIM,MAXDIM),mommap(MAXDIM,MAXDIM)
-	real data(MAXDIM),kvel,vel,crval3,cdelt3,crpix3,v1,v2
+	real velmap(MAXDIM2,MAXDIM2),mommap(MAXDIM2,MAXDIM2)
+	real data(MAXDIM2),kvel,vel,crval3,cdelt3,crpix3,v1,v2
 	character in*80, out*80, rotmod*80, mom2*80
 	character line*72
-	logical Qmom2,mask(MAXDIM)
+	logical Qmom2,mask(MAXDIM2)
 	integer mom,ok
 c
 c Get inputs.

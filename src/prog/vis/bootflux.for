@@ -75,6 +75,7 @@ c    pjt 11feb97 Fixed formatting bug
 c    dar 17oct97 Changed calls to imax0 and imin0 to generic max0 and min0
 c                   for compatability with SGI 64-bit compiler.
 c    pjt 20jun98 fixed 0 -> .FALSE. for flags(i) assignment
+c    pjt  3dec02 using MAXBASE2 
 c  Bugs:
 c   Polarization mode not tested.
 c------------------------------------------------------------------------
@@ -83,7 +84,7 @@ c------------------------------------------------------------------------
       integer MAXPOL,MAXSRC,PolMin,PolMax
       character version*(*),defdir*(*)
       parameter(MAXPOL=4,MAXSRC=256,PolMin=-9,PolMax=4)
-      parameter(version='BootFlux: version 1.0 20-jun-98')
+      parameter(version='BootFlux: version 3-dec-02')
       parameter(defdir=
 c     *         '/home/bima2/data/flux/measured_fluxes/')
 c     *          '/lma/mirth/programmers/lgm/measured_fluxes/')
@@ -92,14 +93,14 @@ c
       character uvflags*16,polcode*2,line*132
       logical docal,dopol,dopass,found,valid(MAXSRC)
       character sources(MAXSRC)*16,source*16
-      complex flux(MAXPOL,MAXBASE,MAXSRC)
-      real amp(MAXPOL,MAXBASE,MAXSRC),amp2(MAXPOL,MAXBASE,MAXSRC)
-      complex vecaver,newvec(MAXBASE)
-      real vecscat(MAXPOL,MAXBASE,MAXSRC),scalscat(MAXBASE),temp
-      real vecamp(MAXBASE)
-      real vecpha(MAXBASE),scalamp,scalsig,vamp,vsig
+      complex flux(MAXPOL,MAXBASE2,MAXSRC)
+      real amp(MAXPOL,MAXBASE2,MAXSRC),amp2(MAXPOL,MAXBASE2,MAXSRC)
+      complex vecaver,newvec(MAXBASE2)
+      real vecscat(MAXPOL,MAXBASE2,MAXSRC),scalscat(MAXBASE2),temp
+      real vecamp(MAXBASE2)
+      real vecpha(MAXBASE2),scalamp,scalsig,vamp,vsig
       integer i,j,ii,jj,t
-      integer ncnt(MAXPOL,MAXBASE,MAXSRC)
+      integer ncnt(MAXPOL,MAXBASE2,MAXSRC)
       integer PolIndx(PolMin:PolMax),p(MAXPOL),pp(MAXPOL)
       integer nsrc,npol,isrc,ipol,vsource,tno
 c
@@ -109,7 +110,7 @@ c
       complex data(MAXCHAN)
       logical flags(MAXCHAN)
 c
-      integer base,bases(MAXBASE),ibl,nbase,ant1,ant2,bigant
+      integer base,bases(MAXBASE2),ibl,nbase,ant1,ant2,bigant
       integer blmatrx(MAXANT,MAXANT),ncal,calscan(MAXSRC),iclose
       integer nsamp,fno,iostat,nants,nspec,nsys
       real dtime,temp1,temp2,temp3,scalamp2,pltb,factor,sumw,weight
