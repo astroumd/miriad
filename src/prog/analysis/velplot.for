@@ -36,7 +36,7 @@ c
 c	An options menu provides a choice of display style, contour levels,
 c	and units. Further interactive help is available within the task.
 c
-c       For an interactive X windows interface, see VELPLOTC 
+c       For an interactive X windows interface, see VELPLOTC
 c       (limited distribution)
 c@ in
 c	Input image name. No default.
@@ -127,11 +127,12 @@ c    05apr00 mchw  specify RA and DEC cuts with a range and increment.
 c    29aug00 mchw  Label RA, DEC on spectra and position-velocity plots.
 c    19sep00 pjt   increased filenames
 c    27jan01 pjt   fixed bug due to above
+c    22mar02 mchw  better logarithmic contour levels.
 c----------------------------------------------------------------------c
 	include 'velplot.h'
 	include 'mem.h'
 	character*(*) version
-	parameter(version='(version 3.0 27-jan-01)')
+	parameter(version='(version 3.0 22-mar-2002)')
 	integer maxnax,maxboxes
 	parameter(maxnax=3,maxboxes=128)
 	integer boxes(maxboxes),nsize(maxnax),blc(maxnax),trc(maxnax)
@@ -1175,9 +1176,10 @@ c
 	if(l.eq.0)return
 	call ucase(percent)
 	if(percent.eq.'L')then
-	  percent='Y'
+	  write(line,'(a,)') '>Enter lowest level:'
+          call output(line)
+          read(5,*) levels(1)
 	  nlevels=10
-	  levels(1)=1.584893
 	  do i=2,nlevels
 	    levels(i)=1.584893*levels(i-1)
 	  enddo
