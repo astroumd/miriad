@@ -1,0 +1,226 @@
+===========================================================================
+===========================================================================
+
+PORTING MIRIAD FROM AN EXISTING SITE
+
+    ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+1.  Make a tarfile of the essential parts of the system.  You'll need 
+    about 9 MB for the gzipped tarfile.
+
+    cd $MIR
+    tar -cvf - borrow cat manuals src install.MIR | gzip > mir.tar.gz
+    ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+2.  Port this tarfile to the new site.
+
+    cd ~
+    ftp new.site
+	[enter logonid]
+	[enter password]
+	[enter "bin" for binary mode transmission]
+	[enter "put mir.tar.gz"]
+	[enter "quit"]
+
+===========================================================================
+===========================================================================
+
+SETTING UP MIRIAD AT A SITE
+
+    ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+0.  Preconditions
+
+    You must not have MIRIAD environment variables set.
+
+    This procedure assumes the use of "csh".
+
+    It is important to use fully qualified directory names, not relative
+    ones; and to list them relative to the automounter, if this is how
+    directories are mounted.
+
+    For purposes of this example, assume that the logonid of the MIRIAD
+    owner is "miriad", and that that logonid's home directory is
+    "/home/babbage/miriad".
+
+    It is not required that the miriad system be installed in the MIRIAD
+    logonid's home directory.
+    ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+1.  Create the directory that will be the MIRIAD system's root
+    directory.  Uncompress and untar the transferred tarfile and create
+    MIRIAD's directory structure.  The environment variable MIRTEMP is 
+    used just to help you set things up.
+
+    setenv MIRTEMP /home/babbage/miriad/miriad.home
+    mkdir $MIRTEMP
+    cd $MIRTEMP
+    gunzip -c mir.tar.gz | tar -xvf -
+    >> Edit the miriad logonid's .cshrc file to set the path:
+    >> set path = ( $MIRTEMP/src/sys/bin $path )
+    >> This setting is required permanently of the miriad logonid, but
+    >> not for any other account.  The directory contains scripts used
+    >> in installing and maintaining miriad.
+    rehash
+    mir.mkdirs $MIRTEMP
+    ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+2.  Set up the MIRRC file.
+
+    cp $MIRTEMP/src/sys/files/MIRRC.skel $MIRTEMP/MIRRC.{mirhosttype}
+      (e.g. cp $MIRTEMP/src/sys/files/MIRRC.skel $MIRTEMP/MIRRC.sun4sol)
+    cd $MIRTEMP
+
+    [edit MIRRC: the changes for this example are]
+
+	  setenv MIR     /home/babbage/miriad/miriad.home
+	  setenv MIRHOST "sun4"
+	  setenv MIRXLIB ""
+	  setenv MIRXINC ""
+
+    MIRXLIB and MIRXINC were intended to point to a local system's X lib
+    directory and include files (they're different for OpenWindows and
+    MIT X).  If the X libraries and include files that you want to use
+    are not set up automatically by your system, you will need to
+    specify them (as many directories as you want, space-separated,
+    within the quote marks).
+    ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+3.  Set up the controlling file for users.
+
+    cp $MIRTEMP/src/sys/files/thisfile.skel ~/cshrc.MIRIAD
+    cd ~
+    [edit cshrc.MIRIAD to refer to the MIRRC file that you set up in
+    step 2 above; pitch lines that are unneeded]
+
+    Note that this small file goes into the miriad logonid's home 
+    directory.
+    ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+4.  Set up astronomy-related files.  These files control the maximum
+    sizes of images (eg, 512x512 pixels) that can be handled by MIRIAD.
+
+    [edit $MIRTEMP/src/inc/maxdim.h] ... set MAXBUF, MAXDIM, MAXANT, and
+					    MAXCHAN
+
+    [edit $MIRTEMP/src/inc/tmpdim.h] ... set MAXBUF, MAXDIM, MAXANT, and
+					    MAXCHAN
+
+    [edit $MIRTEMP/src/inc/maxdimc.h] ... set MAXBUF, MAXDIM, MAXANT,
+					    and MAXCHAN to be the same
+					    as above
+
+    [edit $MIRTEMP/src/inc/maxnax.h] ... set MAXNAX
+
+    Note:  for most applications, MAXDIM in file maxdim.h can be set 
+    very high (2048 is a good choice); for certain programs, a setting
+    of 512 is appropriate - that is a good choice for MAXDIM in
+    tmpdim.h; otherwise, settings in maxdim.h/tmpdim.h should be
+    identical.  Settings in maxdimc.h should agree with settings in
+    maxdim.h.
+
+    MAXDIM is the maximum dimension allowed for an image.  Static
+    allocation of a plane of data (size MAXDIM**2) is done in some
+    programs, so swap space considerations on your machines are
+    pertinent.  MIRIAD's dynamic space allocation is like a malloc in
+    C, and is unlike fortran-ish hardcoding of static arrays.
+
+    MAXBUF is an "internal buffer size".  1 MB (1048576) is a good choice
+    for sun's.
+
+    MAXANT is the maximum number of antennas that a MIRIAD dataset can 
+    have.
+
+    MAXCHAN is the maximum number of channels that a MIRIAD dataset can
+    have.
+
+    MAXNAX is the maximum number of axes that a MIRIAD dataset can have.
+
+===========================================================================
+===========================================================================
+
+INSTALLING MIRIAD
+
+    ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+1.  Set up the MIRIAD account owners ~/.cshrc file:  anywhere AFTER the
+    path has been set, insert the lines
+
+    if (-e ~miriad/cshrc.MIRIAD)   then
+       source ~miriad/cshrc.MIRIAD
+    endif
+
+    Then "source" the .cshrc file:
+
+    source ~miriad/.cshrc
+    ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+2.  Start the installation.
+
+    mir.install &
+
+    Log files are left in $MIR/tmp.  See the in-code docs in the script
+    $MIRTEMP/src/sys/bin/mir.install to see how MIRIAD is loaded.  Once
+    the job has completed, enter 
+
+    cd $MIR/tmp
+    ls -ltr
+
+    grep -i error * | more	(to show any errors)
+    grep -i fail  * | more	(to show any failed compilations)
+
+    You'll need to deal with any problems that have arisen.  Scroll
+    through the logfiles where you suspect that there may be problems.
+    You can re-install any subsystem by itself using the mir.install
+    script.
+    ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+3.  Some information on the scripts
+
+    compile.convex ..... compilation options for the convex
+    compile.mips ....... compilation options for the sgi/mips
+    compile.sun3 ....... compilation options for the sun3
+    compile.sun4 ....... compilation options for the sun4 (OS 4)
+    compile.sun4sol .... compilation options for the sun4 (Solaris)
+
+    lib.hdf ............ install the HDF library
+    lib.linpack ........ install the linpack subroutine library
+    lib.pgplot  ........ install the pgplot subroutine library
+    lib.readline ....... install the GNU readline library
+    lib.subs ........... install the MIRIAD subroutine library
+
+    mir.gendoc ......... generate on-line docs
+    mir.install ........ install MIRIAD or parts of it
+    mir.mkdirs ......... make a MIRIAD directory structure
+    mir.prog ........... install any MIRIAD task/tasks
+    mir.scripts ........ install MIRIAD scripts
+    mir.subs ........... install any MIRIAD subroutine/subroutines
+    mir.tar2m .......... install an incremental update
+
+    pgm.mxv ............ install the MXV visualizer
+    pgm.pgdisp ......... install PGPLOT's screen server
+    pgm.prog ........... install MIRIAD's tasks
+    pgm.wip ............ install the WIP compositing package
+
+	Scripts beginning with "stub" are intended for use as subscripts
+	of other scripts.
+
+    stub.hcconv
+    stub.imcalc
+    stub.mkdirs1
+    stub.prog_c
+    stub.prog_for
+    stub.subs_c
+    stub.subs_for
+    stub.tools
+    stub.uvhat
+    stub.xmtv
+
+    The scripts all check for the existence of a like-named script in
+    directory $MIR/bin/localsys, and use that script if it exists; that
+    directory is the place to insert local overrides of any MIRIAD script
+    (eg, to use different compile options, write script 
+    $MIR/bin/localsys/compile.sun4, and MIRIAD will use it in preference to
+    its own script).
+
+===========================================================================
+===========================================================================
+
+SETTING UP THE USER COMMUNITY
+
+Tell them to repeat step 1 (above) in INSTALLING MIRIAD (they should source
+their own .cshrc file, of course, not miriad's).  After doing this, they
+are set up automatically at logon.
+
+===========================================================================
+===========================================================================
