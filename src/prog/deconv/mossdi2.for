@@ -62,7 +62,7 @@ c    pjt/snv jan02 - keyword
 c    pjt 12feb02 - submitted to miriad
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version='MosSDI2: version 1.0 12-Feb-02')
+	parameter(version='MosSDI2: version 1.0 28-Feb-02')
 	include 'maxdim.h'
 	include 'maxnax.h'
 	include 'mem.h'
