@@ -1,0 +1,335 @@
+All MIRIAD datasets are, in reality, directories containing
+files.  These files contain the actual data.  A reference to a
+MIRIAD dataset always refers to the directory that contains
+the files, and not to the files themselves.  One of the files
+contained in a MIRIAD dataset MUST be named ``header''
+(when there is no ``header'' information, the file still exists,
+but contains 0 bytes of data).
+
+All MIRIAD datasets use the same format to store data, whatever
+the representation of particular storage types on any given machine.
+Thus, for example, ``real'' data is stored as 32 bit IEEE on all
+machines even though a ``real'' might be 64 bit IEEE on some machines
+(for example, the Cray).  MIRIAD routines exist to pack and unpack
+the data as appropriate to the machine on which MIRIAD will be
+run, while any actual computations are done to the precision of the
+particular machine in question.
+
+This means that any MIRIAD dataset is completely portable to
+any other machine on which MIRIAD is supported.  Possible MIRIAD
+storage types for all data consist of the following:
+
+{\ninepoint\begintt
+char ...... null-terminated character string
+string .... character string, not null-terminated
+real ...... (32 bit IEEE)
+double .... (64 bit IEEE)
+complex ... (2 * 32 bit IEEE)
+integer ... (32 bit 2's complement)
+short ..... (16 bit 2's complement)
+\endtt}
+
+MIRIAD supports both {\bf visibility} datasets and {\bf image}
+datasets, and though each MIRIAD dataset may not contain every
+possible file, each must contain a ``header''.  Their formats are
+discussed below.  An effort is made to discuss only the files, rather
+than the MIRIAD subroutines that actually use them; when
+necessary, a reference to a sourcecode file containing MIRIAD
+subroutines will be given in all-caps, without the filename extension
+(example:  a reference to a routine in \$MIR/src/subs/uvio.c will be
+made as {\tt UVIO}).
+
+\beginsection MIRIAD Data Items
+
+In general, MIRIAD programmers need not worry about which
+particular file contains which particular data item:  the lowest
+level data item is referenced by name, and MIRIAD's subroutines
+find the information, largely relieving programmers from memorizing
+where things are specifically located.
+
+Dataset item names have the following characteristics:
+\item{$\bullet$} no more than 8 lower-case characters, not counting
+terminators such as null characters.
+\item{$\bullet$} contain no underscore or dollar-sign characters.
+\item{$\bullet$} follow conventions in determining names (for example,
+item name ``image'' is always used to store the pixel data of an image;
+``naxis'' is the number of dimensions in an image).
+\item{$\bullet$} new data items can be invented as the need arises.
+\item{$\bullet$} every item is not stored in every dataset; only those
+data items that are pertinent to a given dataset are stored in that
+dataset.
+
+Listings of existing uv Variables and Image Items can be found in the
+appendices.
+
+\beginsection MIRIAD uv Datasets
+
+{\raggedright
+\def\bbox#1{$\underline{\smash{\hbox{#1}}}$}
+\ninepoint
+\tabskip=0em
+\halign {#\tabskip=2em&#\tabskip=2em&#\hfil\cr
+
+\bbox{File name}&\bbox{Type}&\bbox{Description}\cr
+\cr
+header      & binary  & ``short'' data items\cr
+history     & text    & history text file (in principle editable) \cr
+vartable    & text    & lookup table for all uv variables (do not edit!) \cr
+visdata     & binary  & mixed-mode data stream of uv variables \cr
+flags       & integer & flags for narrow band data (optional) \cr
+wflags      & integer & flags for wideband data (optional) \cr
+}
+}
+
+\beginsub{header}
+
+The {\tt header} file contains ``short'' data items (such as the number
+of antennas).  If no {\tt header} data exists, then the file still exists,
+with 0 bytes of data.
+
+The format is undocumented.  Examples seen to date have multiples of 32
+bytes, where the last 8 bytes of the last {\tt header} item are discarded
+when they contain no information (that is, the last {\tt header} item
+may consist of 24 bytes.  For those particulars not described, it is not
+unreasonale to base guesses on alignment requirements.  Formats observed
+to date are consistent with the following for each {\tt header} item:
+
+{\raggedright
+\vskip .2in
+\def\bbox#1{$\underline{\smash{\hbox{#1}}}$}
+\ninepoint
+\tabskip=0em
+\halign {#\tabskip=2em&#\tabskip=2em&#\hfil\cr
+
+\bbox{Bytes}&\bbox{Type}&\bbox{Description}\cr
+\cr
+00-09   & char    & uv variable name\cr
+10-11   & -       & not used\cr
+12-15   & integer & code\cr
+        &         & = 6 + strlen for char data\cr
+        &         & = 10 for real and integer\cr
+        &         & = 20 for double\cr
+        &         & = ?  for others\cr
+16-19   & integer & code for data type\cr
+        &         & = 1 for char\cr
+        &         & = 2 for integer\cr
+        &         & = 3 for short\cr
+        &         & = 4 for real\cr
+        &         & = 5 for double\cr
+        &         & = 6 for complex\cr
+        &         & = 7 for string\cr
+20-31   & (data)  & char, int, and real begin\cr
+        &         & in byte 20; double begins\cr
+        &         & in byte 24.  Character data\cr
+        &         & is not null-terminated, its\cr
+        &         & stringlength determined in\cr
+        &         & bytes 12-15.\cr
+}
+}
+
+\beginsub{vartable - The Variable Table}
+
+This model of variables is implemented using two items, {\tt vartable} (a text
+file) and {\tt visdata} (a binary file). {\tt Vartable} gives an ordered list
+of the names and types of the variables present in a particular uv dataset.
+A simple {\tt vartable} file might look like:
+
+{\ninepoint\begintt
+j corr
+d coord
+t time
+i nchan
+r baseline
+\endtt}
+
+Here, the first character gives the data type in which the variable is
+stored on disk. This will be one of `a', `j', `i', `r', `d' or `c',
+indicating ascii, 16-bit integer, 32-bit integer, 32-bit floating point,
+64-bit floating point, or 64-bit complex data respectively.  Then follows
+the name of the variable. The list is ``ordered'' in the sense that the
+first line of {\tt vartable} describes variable number 0, the second line
+describes variable number 1, etc. The {\tt vartable} item is the only
+place where a variable's name and type are given -- elsewhere the variable
+number is used. Note that {\tt vartable} does not give the number of elements
+in a variable -- this is allowed to change within a data-set, and so is
+encoded elsewhere.
+
+For an old data-set, reading {\tt vartable} is the first operation performed
+by the {\tt uvopen} routine. For a new data-set, writing {\tt vartable}
+is one of the last operations before completing the close of the data-set.
+
+{\raggedright
+\vskip .2in
+\def\bbox#1{$\underline{\smash{\hbox{#1}}}$}
+\ninepoint
+\tabskip=0em
+\halign {#\tabskip=2em&#\tabskip=2em&#\hfil\cr
+
+\bbox{Bytes}&\bbox{Type}&\bbox{Description}\cr
+\cr
+00-00   & char    & `a' for char data\cr
+        &         & `j' for short data\cr,
+        &         & `i' for integer data\cr
+        &         & `r' for real data\cr
+        &         & `d' for double data\cr
+        &         & `c' for complex data\cr
+01-01   & char    & a blank character\cr
+02-     & char    & the name of the variable,\cr
+        &         & all but the last line terminated\cr
+        &         & by a ``newline'' character.\cr
+}
+}
+
+\beginsub{visdata - The Actual Data}
+
+The {\tt visdata} item contains the actual values of the variables. It is
+an item of mixed data types. A {\tt visdata} item can be viewed as consisting
+of records and subrecords. A record contains all the changes to variables,
+etc, which change simultaneously. It will typically consist of many subrecords.
+
+A subrecord consists of a four-byte subrecord header,
+possibly followed by a value. The four bytes consist of a byte giving the
+subrecord type, a byte giving the number of the variable affected (if
+any), and two bytes which are spare. These spare bytes must be zero. They
+are there to help keep subrecord headers on four byte boundaries. They may
+also be used in the future if more than 256 variables are needed (i.e.,
+more than 1 byte is needed to give the variable number). There are three
+types of subrecords:
+\item{$\bullet$} A subrecord giving the size of a variable. The value of
+this subrecord is a 32-bit integer, giving the variable's size in bytes,
+as it exists on disk.
+\item{$\bullet$} A subrecord giving the value of a variable. The size of the
+value field of this subrecord is given by a preceding ``size'' subrecord.
+The value may also contain extra padding to ensure that {\tt HIO}'s
+alignment requirements are met, and that a subrecord starts on a four byte
+boundary. The size given in a ``size'' subrecord does not include such padding.
+\item{$\bullet$} An end-of-record subrecord. This is a marker indicating the
+end of this record. When reading from {\tt visdata} (performed by
+{\tt uv\_scan}), the {\tt UVIO} routines always read to the end of a record
+before they return.
+Because of the size of subrecords, and the number of subrecords in a
+record, are not fixed, the {\tt visdata} item must be processed in a sequential
+manner.
+
+
+\beginsub{history}
+
+Most datasets will have an associated history item.  This is a text file
+containing a description of the dataset and the processing that has been
+performed on it.  When a MIRIAD dataset which already has a history
+file is processed, it is customary to append the new information to the
+old history, thus providing a complete history of the dataset.
+
+For uniformities sake, history comments follow a standard format. The
+following is an example of the history comments written by the task
+DEMOS:
+
+{\ninepoint\begintt
+DEMOS: Miriad DeMos (version 30-apr-90 rjs)'
+DEMOS: Input parameters are
+DEMOS:   vis=uvn
+DEMOS:   map=mosclean
+DEMOS: Pointing offset used (arcsec):   24.0 -30.0
+\endtt}
+
+Note that all comments start with the task name. The first comment gives a
+version date of the program. The next three lines were generated by
+subroutine {\tt hisinput}, and the last line was an extra comment.
+
+The following example shows the history of a dataset's processing:
+
+{\ninepoint\begintt
+UVHAT: Translated by UVHAT (version 1.0 09-Nov-90)
+UVHAT: File            ant         weight          delphi            sca
+newhat: CHICYGR.05MAR  123   1.00  1.00  1.00   0.0  0.0  0.0   1.00  1.
+UVCAT: Miriad UvCat (version 1.0 25-Jan-91)
+UVCAT: Command line inputs follow:
+UVCAT:   vis=new
+UVCAT:   select=window(1)
+UVCAT:   out=junk
+AIPS WTSCAL =  3.01425438374E-02
+FITS (MIRIAD)
+FITS: Input FITS file = uvfits
+FITS: Output MIRIAD file = fitsuv
+FITS: Stokes parameter = 0
+\endtt}
+
+\beginsub{flags}
+
+Discussion: Flags for narrow band data, if they are present.  The flags
+specify whether data is described as ``good'' data or ``bad'' data.
+The absence of this file implies that all data is ``good'' data.
+
+File format:  not available.
+
+\beginsub{wflags}
+
+Discussion: Flags for wideband data.  The flags specify whether data is
+described as ``good'' data or ``bad'' data.  The absence of this file
+implies that all data is ``good'' data.
+
+File format:  not available.
+
+
+\beginsection MIRIAD Image Datasets
+
+{\raggedright
+\def\bbox#1{$\underline{\smash{\hbox{#1}}}$}
+\ninepoint
+\tabskip=0em
+\halign {#\tabskip=2em&#\tabskip=2em&#\hfil\cr
+
+\bbox{Item name}&\bbox{Type}&\bbox{Description}\cr
+\cr
+header      & binary  & ``short'' data items\cr
+history     & text    & history text file (in principle editable) \cr
+image       & binary  & multi-dimensional pixel data\cr
+flags       & integer & flags for the image data\cr
+}
+}
+
+\beginsub{header}
+
+Image dataset header files follow the same format as uv dataset header
+files.
+
+\beginsub{history}
+
+Image dataset history files follow the same format as uv dataset history
+files.
+
+\beginsub{image}
+
+This is the multi-dimensional image.  The first 4 bytes of the file are
+an integer code specifying the type of data represented.  The remainder
+of the file is the data.
+
+{\raggedright
+\vskip .2in
+\def\bbox#1{$\underline{\smash{\hbox{#1}}}$}
+\ninepoint
+\tabskip=0em
+\halign {#\tabskip=2em&#\hfil\cr
+
+\bbox{Code}&\bbox{Type of Data}\cr
+\cr
+1 & character data (one byte per data point)\cr
+2 & integer data (four bytes per data point)\cr
+3 & short data (two bytes per data point)\cr
+4 & real data (four bytes per data point)\cr
+5 & double data (eight bytes per data point)\cr
+6 & complex data (eight bytes per data point)\cr
+7 & string data (one byte per data point)\cr
+}
+}
+
+\beginsub{flags}
+
+Discussion: Flags for the pixel data.  The flags specify whether data is
+described as ``good'' data or ``bad'' data.  The absence of this file
+implies that all data is ``good'' data.
+
+File format:  not available, but the file is logical, with every data
+point corresponding to a particular point within the pixel data, and
+with the value of the bit setting determining whether a pixel data point
+has been flagged ``good'' or ``bad''.
