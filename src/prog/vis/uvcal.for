@@ -992,7 +992,7 @@ c  Least squares fit to y = a1*x + b1
 c
 c  Input:
 c    x		The x values
-c    y		The x values
+c    y		The y values
 c    w		The weight array.
 c    n		The number of points in the arrays.
 c  Output:
