@@ -111,17 +111,23 @@ c    mchw  09nov01	Added intensity scale factor of convenience.
 c    pjt   11aug02      added optional out= for residual map
 c          19sep02      fixed bug when no output given
 c    pjt   23oct02      add spline option 
+c    pjt   24nov03      maxring was defined too short, didn't write out
+c                       rows before blc(2) and above trc(2)
+c
+c  TODO: figure out how not to corrupt crpix when a (edge) mask is present
+c        headcopy appears to do this. 
+c
 c----------------------------------------------------------------------c
         include 'mirconst.h'
 	include 'maxdim.h'
 	include 'mem.h'
         character*(*) label,version
-        parameter(version='version 1.0 23-oct-2002')
+        parameter(version='version 24-nov-2003')
         double precision rts,value
         parameter(label='Integrate a Miriad image in elliptical annuli')
         integer maxnax,maxboxes,maxruns,naxis,axis,plane,maxring
         parameter(maxnax=3,maxboxes=2048)
-        parameter(maxruns=3*maxdim,maxring=200)
+        parameter(maxruns=3*maxdim,maxring=maxdim*2)
 c
         integer boxes(maxboxes)
         integer i,j,ir,lin,lout,nsize(maxnax),blc(maxnax),trc(maxnax)
@@ -129,7 +135,7 @@ c
         real crpix(maxnax),cdelt(maxnax),var,med, xmode
         real center(2),pa,incline,rmin,rmax,rstep,scale
         real buf(maxdim),cospa,sinpa,cosi,x,y,r,ave,rms,fsum,cbof
-        real pixe(maxdim),flux(maxdim),flsq(maxdim),pbfac
+        real pixe(maxdim*2),flux(maxdim),flsq(maxdim),pbfac
         double precision rd, rad(maxdim), fluxfit(maxdim)
         double precision bspl(maxdim),cspl(maxdim),dspl(maxdim)
         logical mask(maxdim),dopb,keep,domedian,domode,natural,dotab
@@ -339,6 +345,7 @@ c
              enddo
              nspl = irmax-irmin+1
              call spline(nspl,rad(irmin),fluxfit(irmin),bspl,cspl,dspl)
+             write(*,*) 'new spline mode:',nspl
              write(*,*) 'ring center min,max=',rad(irmin),rad(irmax)
              write(*,*) 'intensity @ edges',
      *            fluxfit(irmin),fluxfit(irmax)
@@ -369,9 +376,22 @@ c
               endif
             enddo
             call xywrite(lout,j,buf)
+            call xyflgwr(lout,j,mask)
           enddo
-          endif
+          do i=1,nsize(1)
+             buf(i)  = 0.0
+             mask(i) = .FALSE.
+          enddo
+          do j=1,blc(2)-1
+            call xywrite(lout,j,buf)
+            call xyflgwr(lout,j,mask)             
+          enddo
+          do j=trc(2)+1,nsize(2)
+            call xywrite(lout,j,buf)
+            call xyflgwr(lout,j,mask)             
+          enddo
 
+          endif
 
 c
 c If we want the median or mode, make a second pass through the plane.
