@@ -1,0 +1,39 @@
+#! /bin/csh -f
+#
+
+
+
+set ntry=10
+set tmp=tmp$$
+set clean=1
+
+foreach a ($*)
+  set 
+end
+
+
+# --------------------------------------------------
+
+
+loop:
+
+(time mir.bench nchan=1 >& $tmp.1) >& $tmp.2
+set benchdir=`grep ^benchdir= $tmp.1 | awk -F= '{print $2}'`
+set times=(`cat $tmp.2 | sed s/u// | sed s/s// | awk '{print $1,$2,$3}' | awk -F: '{print $1,$2}'`)
+if ($#times == 4) then
+  set utime=$times[1]
+  set stime=$times[2]
+  set wtime=`echo "$times[3]*60+$times[4]" | bc -l`
+else
+  echo Fatal error: times=$times
+  echo $tmp.2 = `cat $tmp.2`
+  exit 1
+endif
+if ($clean) rm -rf $tmp.* $benchdir
+
+set wbench=`echo 300/$wtime | bc -l`
+set ubench=`echo 300/$utime | bc -l`
+echo $wtime $utime `printf %.2f $wbench` `printf %.2f $ubench`
+
+ @ ntry--
+ if ($ntry) goto loop
