@@ -121,6 +121,7 @@ c    pjt   25nov03      fix problems in headcopy if blc/trc are sub-imaged
 c    snv   25nov03      Added radial profile smooth option
 c    pjt   13dec03      Documented the previous, add output history,
 c                       fixed residual map computation
+c    pjt   15dec03      make sure median .or. mode is selected, not both
 c
 c----------------------------------------------------------------------c
         include 'mirconst.h'
@@ -628,6 +629,8 @@ c
       natural = present(4)
       dotab = present(5)
       dospline = present(6)
+
+      if (median .and. mode) call bug('f','Cannot select median+mode')
 c
       end
 c************************************************************************
