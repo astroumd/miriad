@@ -60,10 +60,11 @@ stub.mkdirs1 $1/manuals
 foreach i (covers uguide pguide sguide eguide linpack mxv hdf)
    stub.mkdirs1 $1/manuals/$i
 end
-#
-stub.mkdirs1 $1/news
-#
-stub.mkdirs1 $1/oldsrc
+#	stupid MacOSX still can't deal with NEWS and news
+#  	since we don't use it.... skip it
+#stub.mkdirs1 $1/news
+#	don't use this anymore, old relic from the pre-CVS age
+#stub.mkdirs1 $1/oldsrc
 #
 stub.mkdirs1 $1/src
 foreach i (inc prog subs spec tools scripts sys)
