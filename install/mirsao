@@ -1,0 +1,116 @@
+#! /bin/csh -f
+#
+#   11-mar-92  pjt      Created to appease Stuart (*even checking maoimage*)
+#   26-jul-94  pjt      also allow fits files 
+#   16-mar-97  rag      allows display of planes in a cube by calculating the proper offset
+#   20-mar-97  mwp      allows -plane option for FITS (system must have nawk)
+#   15-dec-98  pjt      -plane now supported by saoimage (linux -> awk)
+#
+#
+
+if ($#argv == 0) then
+  echo "Usage: $0 <image> [saoimage flags]"
+  echo "  Display a MIRIAD or FITS image using SAOIMAGE"
+  exit 0
+endif
+
+# temp warning:
+# As of our new saoimage-1.25 the -plane is now official, so no more skip's
+# needed:
+# echo "Warning: this is a new version that can also use the -plane option"
+# echo "         for fits files."
+ 
+set name=$1
+shift argv 
+set image=$name/image
+set saoimage=saoimage
+set sname=`uname -s`
+
+set awk=nawk
+if (X-$sname == X-Linux) then
+  set swap=(-byteswap)
+  set awk=awk
+else
+  set swap=()
+endif
+
+
+ 
+if (! -e $name) then
+ echo "$name does not exist"
+ exit 0
+endif
+ 
+if (! -d $name) then
+  set isfits=0
+  file $name|grep -s FITS
+  if ($status == 0) set isfits=1
+  if ($isfits == 0) then
+    if ($name:e == fits || $name:e == FITS) set isfits=1
+  endif
+  if ($isfits) then
+#
+# find the word size
+#
+    set bitpix = `dd if=$name cbs=80 conv=unblock | sed '/^END$/q' | grep BITPIX | $awk '{print $3}'`
+    switch($bitpix) 
+	case 8:
+		set size=2;
+		breaksw
+	case 16
+		set size=4;
+		breaksw
+	case 32:
+		set size=8;
+		breaksw
+	case -32:
+		set size=8;
+		breaksw
+	default:
+		echo Unrecognized bitpix: $bitpix; exit 0;
+		breaksw
+    endsw
+#
+# get the header size, and round up to nearest 2880.
+#
+    set hdrsize=`dd if=$name cbs=80 conv=unblock | sed '/^END$/q' | wc -c`
+    set padhdrsize = `echo $hdrsize | $awk '{printf("%d",(($1 % 2880) > 0 ? 1 + $1/2880 : $1/2880))}'`
+#
+# get naxis lengths
+#
+    set naxis1 = `dd if=$name cbs=80 conv=unblock | sed '/^END$/q' | grep NAXIS1 | $awk '{print $3}'`
+    set naxis2 = `dd if=$name cbs=80 conv=unblock | sed '/^END$/q' | grep NAXIS2 | $awk '{print $3}'`
+    set skip=0
+    if (X$1 == X-old_plane) then
+       shift argv
+       set plane=$1
+       shift argv
+       set skip=`echo " $naxis1 $naxis2 $plane $size" | $awk '{printf("%d",($1*$2*($3-1)*$4)+2880)}'`
+    endif
+    echo $saoimage -fits $name $* &
+    $saoimage -fits $name $* &
+    exit 0
+  endif
+endif
+ 
+if (! -e $image) then
+  echo "$name doesn't seem like a miriad image datset"
+  exit 0
+endif
+ 
+set naxis1=`itemize in=$name/naxis1 | tail -1 | $awk '{print $3}'`
+set naxis2=`itemize in=$name/naxis2 | tail -1 | $awk '{print $3}'`
+
+set skip=4
+if (X$1 == X-old_plane) then
+   shift argv
+   set plane=$1
+   shift argv
+   set skip=`echo " $naxis1 $naxis2 $plane " | $awk '{printf("%d",($1*$2*($3-1)*4)+4)}'`
+endif
+ 
+echo $saoimage $image $swap -v -r4 $naxis1 $naxis2 -skip 4 $*
+$saoimage $image $swap -v -r4 $naxis1 $naxis2 -skip 4 $* &
+
+
+
