@@ -33,6 +33,7 @@ c    mchw 24may01 Added RPA
 c    mchw 03jan02 Added SZA
 c    mchw 09jul02 Added ALMA
 c    mchw 26aug03 Added SMA
+c    gxm  27jan04 Added generic systemp for WSRT (to please wsrtfits).
 c************************************************************************
 c* ObsPrint -- Print list of known observatories.
 c: utility
@@ -461,6 +462,9 @@ c
 	call obsad('wsrt/longitude',	obsdms( 1,  6,36,15.01))
 	call obsad('wsrt/mount',	EQUATOR)
 	call obsad('wsrt/nants',	14.d0)
+c       gmx (Jan 27, 2004): Added system temperature
+c       see http://www.astron.nl/wsrt/wsrtGuide/node6.html
+	call obsad('wsrt/systemp',	30.0d0)
 c
 c
 	end
