@@ -15,7 +15,7 @@
 # 18-aug-01 protect if newdir exists? comments on lesstif/openmotif
 # 12-sep-01 unified script so it also works for solaris, and the default
 #           is now to use internal=1
-# 22-sep-01 fixes for darwin (Mac-OS X)
+# 23-sep-01 varaious fixes for darwin (Mac-OS X)
 #
 #   Simple single-architecture installation of MIRIAD
 #   (linux)
@@ -272,10 +272,13 @@ endif
 
 #                   linux only
 if ($shared) then
-  echo SHARED - remove iscoords and r8tyx : conflicts
-  echo it also needs a special -fPIC compile option in compile.linux
-  cd $MIRLIB 
-  ar dv libmir.a iscoords.o r8tyx.o
+  if (1) then
+    echo SHARED - remove iscoords and r8tyx : conflicts
+    echo it also needs a special -fPIC compile option in compile.linux
+    cd $MIRLIB 
+    ar dv libmir.a iscoords.o r8tyx.o
+    if (-e /usr/bin/ranlib) ranlib libmir.a
+  endif
   if ($hosttype == linux) then
     ld -shared -o libmir.so --whole-archive libmir.a
       if (-e libpgplot.a && ! -e libpgplot.so) then
