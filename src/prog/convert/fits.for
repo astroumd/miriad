@@ -140,6 +140,11 @@ c      POLAA and POLAB are ignored.
 c    * A general mechanism to override wrong stuff from the FITS header
 c      is needed. Probably need the user to give an auxillary text file.
 c
+c-- 
+c  ToDo:
+c    * read and write a mostable for images ??  E.g.:
+c      imlist in=MAP options=mosaic > MAP/history
+c
 c  History:
 c    rjs         89
 c    nebk 05-may-89  Add new FITS history
