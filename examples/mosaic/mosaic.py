@@ -26,7 +26,9 @@ keyval = {
     "method"  : "mosmem",            # mosmem, joint, or default
     "image"   : "casc.vla",          # image to test (nice Cas-A VLA image as default)
     "flux"    : "732.063",           # expected flux in the image (for mosmem)
-    "center"  : "hex19_12",          # file with pointing offsets (uvgen format)
+    "nring"   : "3",                 # number of rings in the mosaic
+    "grid"    : "12.0",              # gridsize (in arcsec) for the mosaic
+    "center"  : "",                  # optional center file that overrides (nring,grid)
     "VERSION" : "1.0 mchw"           # VERSION id for the user interface
     }
 
@@ -70,7 +72,7 @@ for arg in sys.argv[1:]:
         
 show_keyval(keyval,help,quit)
 #                                report current defaults, exit if --help given
-setlogger('cas-mosaic.log')
+setlogger('mosaic.log')
 #
 # -----------------------------------------------------------------------------
 
@@ -86,26 +88,35 @@ method  = keyval['method']
 center  = keyval['center']
 flux    = string.atof(keyval['flux'])
 image   = keyval['image']
+nring   = string.atoi(keyval['nring'])
+grid    = string.atof(keyval['grid'])
 
 harange = '-1,1,0.013'
 select  = '-shadow\(12\)'
 freq    = 230.0
 imsize  = 257                    # avoid 2**N, image size 2**N + 1 is good.
-npoint  = 19                     # TODO:: should be #pointings the @center file 
 
 mir = os.environ['MIR']
 
 # -----------------------------------------------------------------------------
 
-def hex(nring,grid,dec):
-    for row in range(-nring+1,nring):
+#   returns a list of strings that are the ascii centers as uvgen wants them
+#   (in a file) via the center= keyword
+def hex(nring,grid):
+    center=""
+    npoint=0
+    for row in range(-nring+1,nring,1):
         y = 0.866025403 * grid * row
-        for k in range(2*nring+abs(row)-2, 2*nring-abs(row)-1, 2):
+        lo = 2-2*nring+abs(row)
+        hi = 2*nring-abs(row)-1
+        for k in range(lo,hi,2):
             x = 0.5*grid*k
-            print "%.2f %.2f" (x,y)
-    
-
-#
+            npoint = npoint + 1
+            if center=="":
+                center = center + "%.2f,%.2f" % (x,y)
+            else:
+                center = center + ",%.2f,%.2f" % (x,y)
+    return (npoint,center)
 
 #   get the (as a string) value of an item in a dataset
 def itemize(data,item):
@@ -302,7 +313,7 @@ def uvgen(ant,dec,harange,freq,nchan,out,center):
         'freq=%g' % freq,
         'corr=%d,1,0,8000' % nchan,
         'out=%s' % out,
-        'center=@%s' % center
+        'center=%s' % center                     # notice we don't use a file, but a string of numbers
         ]
     zap(out)
     return cmd
@@ -352,7 +363,17 @@ mp     = base1 + '.mp'
 res    = base1 + '.resid'
 conv   = base1 + '.conv'
 
-
+if center == "":
+    (npoint,center) = hex(nring,grid)
+    print "MOSAIC FIELD, using hexagonal field with nring=%d and grid=%g (%d pointings) " % (nring,grid,npoint)
+else:
+    centerfile = center
+    f = open(centerfile,"r")
+    center=f.read()
+    f.close()
+    npoint = len(string.split(center,","))-1
+    center=string.replace(center,'\n',',')
+    print "MOSAIC FIELD, using center file %s (%d pointings) " % (centerfile,npoint)
 
 print "   ---  ALMA Mosaicing (Cas A model)   ---   "
 
@@ -373,8 +394,6 @@ if method == "mosmem":
     print "Generate mosaic grid"
     #  lambda/2*antdiam (arcsec)
     print 300/freq/2/12e3*2e5
-
-    print "Using %s mosaic listing with %d pointings" % (center,npoint)
 
     print "Generate uv-data. Tsys=40K, bandwidth=8 GHz " 
     miriad(uvgen(ant,dec,harange,freq,nchan,uv,center))
