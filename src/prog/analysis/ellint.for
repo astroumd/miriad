@@ -106,12 +106,13 @@ c    pjt   02may01      Optional table output (options=table), rearranged
 c                       some code (memfree)
 c    mchw  09nov01	Added intensity scale factor of convenience.
 c    pjt   11aug02      added optional out= for residual map
+c          19sep02      fixed bug when no output given
 c----------------------------------------------------------------------c
         include 'mirconst.h'
 	include 'maxdim.h'
 	include 'mem.h'
         character*(*) label,version
-        parameter(version='version 1.0 11-aug-2002')
+        parameter(version='version 1.0 19-sep-2002')
         double precision rts,value
         parameter(label='Integrate a Miriad image in elliptical annuli')
         integer maxnax,maxboxes,maxruns,naxis,axis,plane,maxring
@@ -492,7 +493,7 @@ c
 c  All done.
 c
       call xyclose(lin)
-      call xyclose(lout)
+      if (dout) call xyclose(lout)
       call logclose
       end
 c********1*********2*********3*********4*********5*********6*********7*c
