@@ -8,18 +8,19 @@ c   and also e.g. Hockney and Eastwood, p213 (1st ed.).
 c   The units are such that the Gravitation Constant is 1.0.
 c
 c   Currently this routine assumes the scaleheight of the mass distribution
-c   is constant as function of radius.
+c   is constant as function of radius, which can also be choosen as 0.0
 c
-c= potfft - Calculates the potential corresponding to 2D mass distribution
+c= potfft - Calculates the potential and Green's function for a 2D mass distribution
 c: map manipulation
 c& pjt
 c+
 c   POTFFT is a MIRIAD task that calculates the gravitational potential
 c   corresponding to a two-dimensional mass distribution, which is given
-c   to it in the form of an image.
+c   to it in the form of an image. The image should be a face on view of
+c   a galaxy. See DEPROJECT and REGRID for tasks helping with this.
 c@ in
 c   The input image. It must be a two-dimensional image with the number of
-c   pixels along each axis a power of two and no larger than 256 x 256.
+c   pixels along each axis a power of two.
 c   No default.
 c@ out
 c   Optional output image. It has the same dimensions as the input, with the
@@ -60,10 +61,10 @@ c
       CHARACTER VERSION*(*)
       PARAMETER (VERSION='Version 31-jul-02')
 c
-      CHARACTER in*100,out*100,outg*100
+      CHARACTER in*128,out*128,outg*128
       INTEGER nin(MAXNAX),nout(MAXNAX),npadin(MAXNAX)
-      INTEGER naxis,lin,lout,nn,i,j,k
-      REAL softe,xsq,ysq,tmp
+      INTEGER naxis,lin,lout,nn,i,j,k,loutg
+      REAL softe,h,xsq,ysq,tmp,crpix1,crpix2
       REAL data(8*MAXDIM*MAXDIM),datacon(8*MAXDIM*MAXDIM)
       REAL rhopot(MAXDIM,MAXDIM)
 c
@@ -87,8 +88,11 @@ c
       CALL keya('out',Out,' ')
       CALL keya('green',OutG,' ')
       CALL keyr('eps',softe,1.0)
-      IF(in.EQ.' '.OR.out.EQ.' ')
-     *    CALL bug('f','Input and output names for images required')
+      CALL keyr('h',h,0.0)
+      IF(in.EQ.' ')
+     *  CALL bug('f','Input name (in=) required')
+      IF(out.EQ.' '.AND.outg.EQ.' ')
+     *  CALL bug('f','At least one of out= or green= should be used')
       CALL keyfin
 
       IF (softe.LE.0.0) CALL bug('f','Need positive value for softe=')
@@ -109,11 +113,28 @@ c     *   CALL bug('f','The image is too big')
          nout(i) = nin(i)
          npadin(i) = 2*nin(i)
       ENDDO
-cc     lg2n1 = LOG10(nin(1))/LOG10(2.0)
-cc     lg2n2 = LOG10(nin(2))/LOG10(2.0)
-cc     IF (lg2n1.NE.INT(lg2n1).OR.lg2n2.NE.INT(lg2n2))
-cc   *    CALL bug('f','Each axis must be a power of two')
-      CALL xyopen(lout,out,'new',MAXNAX,nout)
+      IF(outg.ne.' ') then
+         CALL bug('i','Also writing GREEN function')
+         CALL xyopen(loutg,outg,'new',MAXNAX,nout)
+         CALL rdhdr(lin,'crpix1',crpix1,1.0)
+         CALL rdhdr(lin,'crpix2',crpix2,1.0)
+         CALL green(MAXDIM,nout(1),nout(2),rhopot,crpix1,crpix2,softe,h)
+         DO j = 1,nin(2)
+            CALL xywrite(loutg,j,rhopot(1,j))
+         ENDDO
+         CALL hisopen(loutg,'append')
+         CALL hiswrite(loutg,'POTFFT (MIRIAD)'//version)
+         CALL hiswrite(loutg,'Green function')
+         CALL hisinput(loutg,'potfft')
+         CALL hisclose(loutg)
+         DO i=1,NKEYS
+            CALL hdcopy(lin,loutg,keyw(i))
+         ENDDO
+         CALL xyclose(loutg)
+      ENDIF
+
+      IF (out.ne.' ') then
+         CALL xyopen(lout,out,'new',MAXNAX,nout)
 c
 c   Reading the input (the whole plane will be read in at once),
 c   filling in zero buffers on each side so that the input occupies
@@ -123,32 +144,32 @@ c   for the complex argument that will be produced by the FFT:
 c
 c   Dimensions of the 1d and 2d data arrays:
 c
-       nn = 2*npadin(1)*npadin(2)
+         nn = 2*npadin(1)*npadin(2)
 c
 c   Initializing the arrays:
 c
-       DO k = 1,nn
-         data(k) = 0.0
-         datacon(k) = 0.0
-       ENDDO
-c
-       DO j = 1,nin(2)
-         DO i = 1,nin(1)
-           rhopot(i,j) = 0.0
+         DO k = 1,nn
+            data(k) = 0.0
+            datacon(k) = 0.0
          ENDDO
-       ENDDO
 c
-       DO j = 1,nin(2)
-         CALL xyread(lin,j,rhopot(1,j))
-         DO i = 1,nin(1)
-           data(4*(j-1)*nin(1)+2*i-1) = rhopot(i,j)
+         DO j = 1,nin(2)
+            DO i = 1,nin(1)
+               rhopot(i,j) = 0.0
+            ENDDO
          ENDDO
-       ENDDO
+c
+         DO j = 1,nin(2)
+            CALL xyread(lin,j,rhopot(1,j))
+            DO i = 1,nin(1)
+               data(4*(j-1)*nin(1)+2*i-1) = rhopot(i,j)
+            ENDDO
+         ENDDO
 c
 c   Calculating the FFT of the density distribution and multiplying 
 c   by the convolution coefficients:
 c
-      CALL fftnd(data,npadin,MAXNAX,INVPARM)
+         CALL fftnd(data,npadin,MAXNAX,INVPARM)
 c
 c   From now on data is the FFT of the input map data, i.e. the
 c   subroutine fftnd overwrites the input.
@@ -156,24 +177,24 @@ c
 c   Calculating the inverse-distance function and taking its FFT (see
 c   Hockney and Eastwood, p213):
 c
-      DO j = 1,npadin(2)
-        IF (j.LE.nout(2)) THEN
-           ysq = (j-1)**2
-        ELSEIF (j.GT.nout(2)) THEN
-           ysq = (2*nout(2)-j)**2
-        ENDIF
-        DO i = 1,npadin(1)
-          IF (i.LE.nout(1)) THEN
-            xsq = (i-1)**2
-          ELSEIF (i.GT.nout(1)) THEN
-            xsq = (2*nout(1)-i)**2
-          ENDIF
-          datacon(2*(j-1)*npadin(1)+2*i-1) = 1.0/
-     *                    SQRT(xsq + ysq + softe*softe)
-        ENDDO
-      ENDDO
-c
-      CALL fftnd(datacon,npadin,MAXNAX,INVPARM)
+         DO j = 1,npadin(2)
+            IF (j.LE.nout(2)) THEN
+               ysq = (j-1)**2
+            ELSEIF (j.GT.nout(2)) THEN
+               ysq = (2*nout(2)-j)**2
+            ENDIF
+            DO i = 1,npadin(1)
+               IF (i.LE.nout(1)) THEN
+                  xsq = (i-1)**2
+               ELSEIF (i.GT.nout(1)) THEN
+                  xsq = (2*nout(1)-i)**2
+               ENDIF
+               datacon(2*(j-1)*npadin(1)+2*i-1) = 1.0/
+     *              SQRT(xsq + ysq + softe*softe)
+            ENDDO
+         ENDDO
+c     
+         CALL fftnd(datacon,npadin,MAXNAX,INVPARM)
 c
 c Convolution:
 c
@@ -183,53 +204,77 @@ c   of the inverse-distance function (we're doing complex arithmetic
 c   with a real array in which the first element of each pair of 
 c   elements is the real part, and the second the imaginary part):
 c
-      DO k = 1,nn-1,2
-        tmp = (data(k)*datacon(k) - 
-     *             data(k+1)*datacon(k+1))/
-     *             FLOAT(npadin(1)*npadin(2))
-        data(k+1) = (data(k)*datacon(k+1) + 
-     *               data(k+1)*datacon(k))/
-     *               FLOAT(npadin(1)*npadin(2))
-        data(k) = tmp
-      ENDDO
-c
+         DO k = 1,nn-1,2
+            tmp = (data(k)*datacon(k) - 
+     *           data(k+1)*datacon(k+1))/
+     *           FLOAT(npadin(1)*npadin(2))
+            data(k+1) = (data(k)*datacon(k+1) + 
+     *           data(k+1)*datacon(k))/
+     *           FLOAT(npadin(1)*npadin(2))
+            data(k) = tmp
+         ENDDO
+c     
 c   Calculating the potential, which is the inverse FFT of data.
 c
-      CALL fftnd(data,npadin,MAXNAX,-INVPARM)
+         CALL fftnd(data,npadin,MAXNAX,-INVPARM)
 c
 c   The first quarter of the two-dimensional array equivalent to data 
 c   contains the potential array (the rest is spurious and must be 
 c   discarded):
 c
-      DO j = 1,nin(2)
-        DO i = 1,nin(1)
-	  rhopot(i,j) = data(4*(j-1)*nin(1)+2*i-1)
-	ENDDO
-      ENDDO
-c
+         DO j = 1,nin(2)
+            DO i = 1,nin(1)
+               rhopot(i,j) = data(4*(j-1)*nin(1)+2*i-1)
+            ENDDO
+         ENDDO
+c     
 c   Writing rhopot out as an image:
 c
-      DO j = 1,nin(2)
-         CALL xywrite(lout,j,rhopot(1,j))
-      ENDDO
-c
+         DO j = 1,nin(2)
+            CALL xywrite(lout,j,rhopot(1,j))
+         ENDDO
+c     
 c   Adding to the history of the output:
 c
-      CALL hisopen(lout,'append')
-      CALL hiswrite(lout,'POTFFT (MIRIAD)'//version)
-      CALL hiswrite(lout,'Gravitational Potential')
-      CALL hisinput(lout,'potfft')
-      CALL hisclose(lout)
-      DO i=1,NKEYS
-         CALL hdcopy(lin,lout,keyw(i))
-      ENDDO
+         CALL hisopen(lout,'append')
+         CALL hiswrite(lout,'POTFFT (MIRIAD)'//version)
+         CALL hiswrite(lout,'Gravitational Potential')
+         CALL hisinput(lout,'potfft')
+         CALL hisclose(lout)
+         DO i=1,NKEYS
+            CALL hdcopy(lin,lout,keyw(i))
+         ENDDO
 c
+         CALL xyclose(lout)
+      ENDIF
       CALL xyclose(lin)
-      CALL xyclose(lout)
 c
       END
       SUBROUTINE FFTWND(DATA,NN,NDIM,ISIGN)
 	
+      END
+c**************************************************************************
+      SUBROUTINE green(maxx,nx,ny,g,c1,c2,eps,h)
+      INTEGER nx,ny
+      REAL g(maxx,ny),eps,h,c1,c2
+c
+      INTEGER i,j
+      REAL x,y,eps2
+
+
+      eps2 = eps*eps
+      IF(h.LE.0.0)THEN
+         DO j=1,ny
+            y = j-c2
+            DO i=1,nx
+               x = i-c1
+               g(i,j) = 1.0/sqrt(x*x+y*y+eps2)
+            ENDDO
+         ENDDO
+      ELSE
+         CALL bug('f','Cannot do sech^2 disks yet, ask Mousumi')
+      ENDIF
+      RETURN
       END
 c**************************************************************************
 c   Numerical Recipes FOURN routine:
