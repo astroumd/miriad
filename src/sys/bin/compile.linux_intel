@@ -11,7 +11,7 @@ set mlsys = $mmir/bin/localsys
 # -finit-local-zero              if you debug code and need initialized data
 # -mcpu=i686 -march=i686 -malign-double -ffast-math         architecture opt
 #
-setenv Fcompile  "ifc"
+setenv Fcompile  "ifort"
 setenv Foptions  "-O -Vaxlib"
 setenv FoptionsN ""
 setenv Flinkdir  "-L`echo $mmir/lib/$mhost $MIRXLIB | sed 's/ / -L/g'`"
