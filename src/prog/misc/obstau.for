@@ -8,7 +8,7 @@ c: utility
 c+
 c	OBSTAU computes tau, sky temperature and single sideband
 c	systemp from an atmospheric model.
-c	The program assumes scale height for water is 2 km. 
+c	The program assumes scale height for water is 1.6 km. 
 c	You must specify the water content of the atmosphere.
 c	This can be input as precipitable water (mm), 
 c	or relative humidity (%) and temperature (C).
@@ -40,10 +40,10 @@ c  mchw 30may96  Based on RP's subroutine atm_model.f from hatcreek.
 c  mchw 12jun96  Add mmh2o as alternate input.
 c  mchw 22jul96  Add trx and compute systemp.
 c  mchw 17jan97  compute airmass from elevation.
-c  pjt  25jun98  removed double decl (linux/g77)
+c   12may99 rp change scale height to 1.6 km
 c----------------------------------------------------------------------c
 	character version*(*)
-	parameter(version='version 20-JUN-98')
+	parameter(version='version 12-MAY-99')
         include 'mirconst.h'
 	character telescop*20,line*100
 	real altitude,freq,relhumid,airtemp,mmh2o,airmass,trx,
@@ -83,7 +83,7 @@ c
         write(line,'(a,a)') 'altitude  freq  relhumid ',
      *	  ' airtemp  mmh2o  airmass  trx  tauzenith  skytemp  Tsys'
 	call output(line)
-        write(line,'(f8.3,f8.1,2f8.0,2f8.1,f7.0,f8.2,1x,2f8.0)') 
+        write(line,'(f8.3,f8.1,2f8.0,2f8.1,f7.0,f8.3,x,2f8.0)') 
      *    altitude,freq,relhumid,airtemp,mmh2o,airmass,trx,
      *		tauzenith,skytemp,systemp
 	call output(line)
@@ -108,8 +108,9 @@ c		  airmass
 c
 c  output: zenith opacity
 c		   estimated sky temp at current airmass
+c   12may99 rp change scale height to 1.6 km
 c----------------------------------------------------------------------c
-	real dkm,tau,elev
+	real dkm,skytemp,tauzenith,tau,elev
 	real koxy,kwat,kwat2,tempK,psat,pwat,ghum
 	real t,p,rho,dtau
 c
@@ -123,10 +124,10 @@ c  partial pressure of water (mmHg) at current relative humidity
 c  ground level water vapor density in grams/cubic meter
 c  reference: Allen, Astrophysical Quantities, 1973
 	  ghum = 288.6 * pwat/tempK
-	  mmh2o = 2. * ghum
+	  mmh2o = 1.6 * ghum
 	else
-c  Assumes scale height 2km.
-	  ghum = mmh2o/2.
+c  Assumes scale height 1.6 km.
+	  ghum = mmh2o/1.6
 	endif
 c
 c  altitude increment in km
