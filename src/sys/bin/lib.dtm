@@ -1,0 +1,57 @@
+#!/bin/csh -f
+# ------------------------------------------------------------------- 
+# lib.dtm subscript
+# ------------------------------------------------------------------- 
+set mir    = $MIR
+set host   = $MIRHOST
+set lsys   = $mir/bin/localsys
+set srcdir = $mir/borrow/dtm/libsrc
+set libdir = $mir/lib/$host
+set admdir = $mir/src/sys/bin
+# ------------------------------------------------------------------- 
+if (-e $lsys/lib.dtm && ! $?local_compile) then
+  echo $lsys/lib.dtm exists =======================
+  setenv local_compile
+  exec $lsys/lib.dtm $argv
+endif
+# ------------------------------------------------------------------- 
+if ($?Ccompile == 0) then
+   if (-e $admdir/compile.${host}) then
+      source $admdir/compile.${host}
+   else
+      echo "Cannot find $admdir/compile.${host} - exiting."
+      exit 1
+   endif
+endif
+# ------------------------------------------------------------------- 
+set ops    = "$Cinclude"
+if ($host == convex)  set ops = "$ops -DCONVEX"
+if ($host == sun4sol) set ops = "$ops -DBSD_COMP"
+
+set cin = (dtminit.c dtm.c dtmmisc.c socket.c rwrtns.c fatal.c \
+	   sds.c sdl.c ris.c dtmnserv.c ninit.c nmsg.c callback.c \
+	   x.c vdata.c convert.c mdd.c)
+
+cd $libdir
+set out = ""
+foreach i ($cin)
+   rm -fr ${i:r}.o >& /dev/null
+   echo ""
+   echo "$Ccompile $Coptions $ops -c -o ${i:r}.o -I$srcdir $srcdir/$i"
+         $Ccompile $Coptions $ops -c -o ${i:r}.o -I$srcdir $srcdir/$i
+   if ($status == 0) set out = "$out ${i:r}.o"
+end
+
+rm -fr libdtm.a >& /dev/null
+echo "ar ru libdtm.a <dot-o files>"
+      ar ru libdtm.a `echo $out | sort | uniq`
+if (-e /usr/bin/ranlib) then
+   echo "/usr/bin/ranlib libdtm.a"
+         /usr/bin/ranlib libdtm.a
+endif
+rm -fr $out >& /dev/null
+echo ""
+echo "`ls -l $libdir/libdtm.a`"
+unsetenv local_compile
+exit 0
+# --------------------------------------------------------------
