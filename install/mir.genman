@@ -47,6 +47,7 @@
 # ToDo:
 #	catman stuff needs to be working right, linux is confusing now.
 #	different man versions work different...
+#       e.g. redhat7.1 fails again with the -n method....
 
 ### local test (old UMD version)
 # set mirman=$MIR/local/man

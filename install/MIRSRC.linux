@@ -31,7 +31,9 @@
 #  Modification for a convex or sun3 installation is
 #  straightforward.
 #  -------------------------------------------------------------
-export MIR="/usr/local/miriad/yymmmdd"
+if test -n "$MIR"; then
+  export MIR="/usr/local/miriad/yymmmdd"
+fi
 export MIRHOST="linux"
 export MIRXINC="/usr/include/X11"
 export MIRXLIB="/usr/X11R6/lib"

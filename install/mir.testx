@@ -1,5 +1,5 @@
 #! /bin/csh -f
-#
+# --
 echo TEST a few X related things:
 
 echo -n "WIP: "; set ans=$<

@@ -16,8 +16,8 @@ cat MIRSRC.linux |\
   sed s,/appl/lai/miriad/mirdir,$MIRTEMP, |\
   sed s,yymmmdd,$version, >! $MIR/MIRSRC.linux
 
-mkdir -p $MIR/local/install
 
+#    works on mandrake8, but fails on redhat 7.1
 if (1) then
   echo Keeping log in $MIR/tmp/mir.genman.log
   mir.genman -n >& $MIR/tmp/mir.genman.log
@@ -26,12 +26,3 @@ else
 endif
 
 
-if (0) then
-if (-e /usr/lib/libforms.so) then
-   echo Compiling velplotc
-   cd velplotc
-   make clean velplotc >& /tmp/mir.velplotc.log
-   mv velplotc $MIRBIN
-   make clean
-endif
-endif
