@@ -1,7 +1,11 @@
 #! /bin/csh -f
 #
 #  Generate a standalone WIP version from a compiled MIRIAD
-#  somewhat linux specific
+#  somewhat linux specific, but works on darwin
+#  
+#  TODO:  should write a wip shell script that detects where wip
+#         is located and set the environment and pass the args
+#         to the wip executable....
 
 if ($?MIR == 0) then
   echo MIR is not defined, you need to have a running MIRIAD to clone wip
@@ -15,11 +19,6 @@ set src=wip
 foreach _a ($*)
   set $_a
 end
-
-if ($tar) then
-  set version=`cat $MIR/VERSION`
-  set src=mirlib-$version
-endif
 
 set bins=(wip pgxwin_server)
 set libs=(drivers.list grfont.dat libpgplot.so rgb.txt)
@@ -51,7 +50,6 @@ echo 'setenv LD_LIBRARY_PATH $wip'                        >> $wiprc
 
 if ($tar) then
   echo Creating export tar $src.tar.gz 
-  cd ..
   tar zcf $src.tar.gz $src
   rm -rf $src
 endif
