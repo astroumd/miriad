@@ -67,14 +67,32 @@
 #   'newdir' is something that tags the date this version was made (e.g. 98jun08)
 #   later on this will also be stored again in the file $MIR/DATE, where the CVS miriad
 #   version will be stored in $MIR/VERSION
-set newdir=`date +%y%b%d | tr A-Z a-z`
-set hosttype=linux
-set mirxinc="/usr/include/X11"
-set mirxlib="/usr/X11R6/lib"
+set newdir=`date +%y%b%d | tr '[A-Z]' '[a-z]'`
+set hosttype=`uname -s | tr '[A-Z]' '[a-z]'`
+
+#	patch to use Stupar's original names
+if ($hosttype == sunos) set hosttype=sun4sol
+
+#
+echo MIRIAD installation for $hosttype
+
+#	try and be intelligent about X
+if ($hosttype == linux) then
+  set mirxinc="/usr/include/X11"
+  set mirxlib="/usr/X11R6/lib"
+else if ($hosttype == sun4sol) then
+	# sunos 5.6
+  set mirxinc="/usr/include/X11"
+  set mirxlib="/usr/X/lib"
+else
+  set mirxinc="/usr/include/X11"
+  set mirxlib="/usr/X11R6/lib"
+endif
+
 set searchlibs=(/usr/lib /local/lib /usr/local/lib)
 #		care, wip still uses something else, it won't listen to $fortran
 #		and you probably need 'f77' in your path
-set fortran=g77
+# set fortran=g77		# not used right now (WIP might need it)
 set log=/tmp/miriad.install.$$.log
 
 # 		MIRIAD V3:  (can be overriden with cvs=1, see below)
@@ -165,7 +183,7 @@ rehash
 echo mir.mkdirs $MIRTEMP
 mir.mkdirs $MIRTEMP >& /tmp/mir.mkdirs.log
 
-#    	Linux really ...
+#    	Linux really ... should work for SunOS to...
 cat $MIRTEMP/src/sys/files/MIRRC.skel |\
   sed s,/mir_rootdir,$MIRTEMP, |\
   sed s,mir_hosttype,$hosttype, |\
@@ -255,9 +273,13 @@ if ($shared) then
   echo is also needs a special -fPIC compile option in compile.linux
   cd $MIRLIB 
   ar dv libmir.a iscoords.o
-  ld -shared -o libmir.so --whole-archive libmir.a
-  if (-e libpgplot.a && ! -e libpgplot.so) then
-    ld -shared -o libpgplot.so --whole-archive libpgplot.a
+  if ($hosttype == linux) then
+    ld -shared -o libmir.so --whole-archive libmir.a
+      if (-e libpgplot.a && ! -e libpgplot.so) then
+        ld -shared -o libpgplot.so --whole-archive libpgplot.a
+    endif
+  else
+    echo No shared support for $hosttype yet
   endif
 endif
 
@@ -268,7 +290,7 @@ mir.install prog wip xmrecvlist
 # special things....
 
 echo Compiling UVIO:
-cc -O -DTESTBED -I$MIRINC $MIRSUBS/uvio.c -o $MIRBIN/uvio $MIRLIB/libmir.a -lm >& $MIR/tmp/uvio.$$.linux
+cc -O -DTESTBED -I$MIRINC $MIRSUBS/uvio.c -o $MIRBIN/uvio $MIRLIB/libmir.a -lm >& $MIR/tmp/uvio.$$.$hosttype
 
 # xcorf: (open)motif or lesstiff needs to have been installed for this
 # aug 2001: newer versions of lesstiff use /usr/X11R6/LessTif/Motif1.2/include
@@ -284,7 +306,7 @@ cd $MIR/src/spec/xcorf
 make sol6 SOLARISLIBS= \
           CFLAGS="-O -I$inc_motif[$imotif]" \
 	  RFLAGS6= \
-	  LFLAGS6=-L$lib_motif[$imotif] >& $MIR/tmp/xcorf.$$.linux
+	  LFLAGS6=-L$lib_motif[$imotif] >& $MIR/tmp/xcorf.$$.$hosttype
 mv xcorf $MIRBIN
 make cleanup
 
@@ -320,7 +342,7 @@ end
 if ($dofl) then
    echo Compiling velplotc:
    pushd $MIR/src/spec/velplotc
-   make clean velplotc LIBFORMS=$MIRLIB/libforms.a >& $MIR//tmp/velplotc.$$.linux
+   make clean velplotc LIBFORMS=$MIRLIB/libforms.a >& $MIR//tmp/velplotc.$$.$hosttype
    mv velplotc $MIRBIN
    make clean
    popd
@@ -329,6 +351,7 @@ else
 endif
 
 # ATNF stuff, linux only for now
+if ($hosttype == linux) then
 pushd $install_dir
 if (-d atnf) then
    echo Compiling atnf code: atlod
@@ -341,6 +364,7 @@ if (-d atnf) then
    mv atlod.doc $MIRPDOC
    rm -f atlod.*
    popd
+endif
 endif
 
 if ($test) then
