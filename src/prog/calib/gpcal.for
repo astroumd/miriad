@@ -199,6 +199,7 @@ c    rjs     22may98 Turn off xyref on early iterations of weakly polarised
 c		     source.
 c    rjs     19aug98 Changes in ampsolxy and ampsol to avoid an SGI compiler bug.
 c    rjs     12oct99 Attempts to perform absolute flux calibration.
+c    pjt      7jul03 MAXANT,MAXBASE -> MAXANT2,MAXBASE2
 c
 c  Bugs:
 c    * Polarisation solutions when using noamp are wrong! The equations it
@@ -210,11 +211,11 @@ c------------------------------------------------------------------------
 	integer MAXITER
 	character version*(*)
 	parameter(MAXITER=30)
-	parameter(version='Gpcal: version 1.0 12-Oct-99')
+	parameter(version='Gpcal: version 1.0 7-jul-03')
 c
 	integer tIn
 	double precision interval(2), freq
-	real fac,flux(4),OldFlux(4),xyphase(MAXANT)
+	real fac,flux(4),OldFlux(4),xyphase(MAXANT2)
 	real pcent,epsi,epsi1,tol,ttol
 	integer refant,minant,nants,nbl,nxyphase,nsoln,niter,i,j,jmax
 	integer maxsoln,off
@@ -223,15 +224,15 @@ c
 	logical circular
 	character line*80,source*32,uvflags*8
 c
-	complex D(2,MAXANT),xyp(MAXANT),Gains(2,MAXDANTS)
- 	complex OldD(2,MAXANT),OldGains(2,MAXDANTS)
+	complex D(2,MAXANT2),xyp(MAXANT2),Gains(2,MAXDANTS)
+ 	complex OldD(2,MAXANT2),OldGains(2,MAXDANTS)
 	complex Vis(4,MAXDBL)
 	complex VisCos(4,MAXDBL),VisSin(4,MAXDBL)
 	real SumS(MAXDBL),SumC(MAXDBL)
 	real SumS2(MAXDBL),SumCS(MAXDBL)
 	integer Count(MAXDBL)
 	double precision time(MAXDSOLN)
-	logical present(MAXANT)
+	logical present(MAXANT2)
 c
 c  Externals.
 c
@@ -254,7 +255,7 @@ c
 	call keyr('flux',flux(4),0.)
 	call keyi('refant',refant,3)
 	call keyi('minants',minant,2)
-	call mkeyr('xyphase',xyphase,MAXANT,nxyphase)
+	call mkeyr('xyphase',xyphase,MAXANT2,nxyphase)
 	call keyd('interval',interval(1),5.d0)
 	call keyd('interval',interval(2),interval(1))
 	call keyr('tol',tol,0.001)
@@ -311,7 +312,7 @@ c
 	if(nants.le.0)call bug('f',
      *	  'Unable to determine the number of antennae')
 	call output('Number of antennae: '//itoaf(nants))
-	if(nants.gt.MAXANT)
+	if(nants.gt.MAXANT2)
      *	  call bug('f','Too many antennae for me to handle')
 	if(refant.gt.nants)
      *	  call bug('f','Bad reference antenna number')
@@ -508,9 +509,9 @@ c  Output:
 c    xyp
 c------------------------------------------------------------------------
 	include 'gpcal.h'
-	real phase(MAXANT),phase2(MAXANT),theta,t
+	real phase(MAXANT2),phase2(MAXANT2),theta,t
 	complex w
-	integer i,j,count(MAXANT),sd
+	integer i,j,count(MAXANT2),sd
 	character line*80
 c
 c  Initialise the counters.
@@ -859,7 +860,7 @@ c    V,VC,VS
 c------------------------------------------------------------------------
 	include 'gpcal.h'
 	integer i,j,k,l,m
-	integer b1(4*MAXBASE),b2(4*MAXBASE),p1(4),p2(4)
+	integer b1(4*MAXBASE2),b2(4*MAXBASE2),p1(4),p2(4)
 	complex g
 c	
 	data p1/X,Y,X,Y/
@@ -1006,11 +1007,11 @@ c
 c------------------------------------------------------------------------
 	include 'gpcal.h'
 	integer i,j,k,m
-	real ar(0:3,4,MAXBASE),ai(0:3,4,MAXBASE)
-	real br(0:3,4,MAXBASE),bi(0:3,4,MAXBASE)
-	real cr(0:3,4,MAXBASE),ci(0:3,4,MAXBASE)
+	real ar(0:3,4,MAXBASE2),ai(0:3,4,MAXBASE2)
+	real br(0:3,4,MAXBASE2),bi(0:3,4,MAXBASE2)
+	real cr(0:3,4,MAXBASE2),ci(0:3,4,MAXBASE2)
 	double precision temp
-	complex V(4,MAXBASE),VS(4,MAXBASE),VC(4,MAXBASE)
+	complex V(4,MAXBASE2),VS(4,MAXBASE2),VC(4,MAXBASE2)
 c
 	call SumVis(nsoln,nants,nbl,Gains,Count(1,1),
      *	  Vis,VisCos,VisSin,V,VS,VC)
@@ -1103,7 +1104,7 @@ c------------------------------------------------------------------------
 	integer k,m
 	integer ar0(0:3,4),ai0(0:3,4),br0(0:3,4),bi0(0:3,4)
 	integer cr0(0:3,4),ci0(0:3,4)
-	complex a(4,MAXBASE),b(4,MAXBASE),c(4,MAXBASE)
+	complex a(4,MAXBASE2),b(4,MAXBASE2),c(4,MAXBASE2)
 c
 	data ar0/ 0, 0,-4,0,  0, 0,4,0,  0, 0, 0,0,  0, 0, 0,0/
 	data ai0/ 0, 0,0,0,  0, 0, 0,0,  0, 0, 0,0,  0, 0, 0,0/
@@ -1305,12 +1306,12 @@ c    xyp	XY phase sstimate.
 c    epsi	The relative change in the gains, etc.
 c------------------------------------------------------------------------
 	include 'gpcal.h'	
-	integer Dvar(2,2,MAXANT),QUvar,Tvar(2,MAXANT),nvar,ifail
-	integer Vars(8,4,MAXBASE),pivot(6*MAXANT+1)
+	integer Dvar(2,2,MAXANT2),QUvar,Tvar(2,MAXANT2),nvar,ifail
+	integer Vars(8,4,MAXBASE2),pivot(6*MAXANT2+1)
 	integer i,j,ngood
-	complex expix(MAXANT),expiy(MAXANT),dD(2,MAXANT),Sum1,Sum2
+	complex expix(MAXANT2),expiy(MAXANT2),dD(2,MAXANT2),Sum1,Sum2
 	complex dDx,dDy
-	real b(6*MAXANT+1),A((6*MAXANT+1)*(6*MAXANT+1)),temp,dv
+	real b(6*MAXANT2+1),A((6*MAXANT2+1)*(6*MAXANT2+1)),temp,dv
 	logical polref1,xyref1
 c
 c  Determine if we are really going to do polref.
@@ -1455,7 +1456,7 @@ c		    b = Ax
 c------------------------------------------------------------------------
 	include 'gpcal.h'
 	integer i,j,k,m,v1,v2
-	complex V(4,MAXBASE),VS(4,MAXBASE),VC(4,MAXBASE)
+	complex V(4,MAXBASE2),VS(4,MAXBASE2),VC(4,MAXBASE2)
 	real ar(0:8,4),ai(0:8,4),br(0:8,4),bi(0:8,4),cr(0:8,4),ci(0:8,4)
 	real Cconst(0:8,0:8,4),Csin(0:8,0:8,4),Ccos(0:8,0:8,4)
 	real Ccossin(0:8,0:8,4),Csin2(0:8,0:8,4)
@@ -1554,7 +1555,7 @@ c    V,VC,VS
 c------------------------------------------------------------------------
 	include 'gpcal.h'
 	integer i,j,k,p
-	complex a(4,MAXBASE),b(4,MAXBASE),c(4,MAXBASE)
+	complex a(4,MAXBASE2),b(4,MAXBASE2),c(4,MAXBASE2)
 c
 c  Determine the nominal response in each thingo.
 c
@@ -1977,7 +1978,7 @@ c------------------------------------------------------------------------
 	integer ncorr,nr,b1,b2,b3
 	double precision preamble(4),tfirst,tlast,epsi
 	real Cos2Chi,Sin2Chi,chi
-	logical accept,flag(MAXCHAN,4),okscan,trip,tied(MAXANT),ok
+	logical accept,flag(MAXCHAN,4),okscan,trip,tied(MAXANT2),ok
 	complex data(MAXCHAN,4),d(4)
 c
 c  Externals.
@@ -2250,7 +2251,7 @@ c    doaccept	True if we are to accept this solution interval.
 c------------------------------------------------------------------------
 	include 'gpcal.h'
 	integer i,j,k,npresent,lnvis
-	logical present(MAXANT)
+	logical present(MAXANT2)
 	character string*32,nvis*8,line*80
 c
 c  Externals.
@@ -2311,8 +2312,8 @@ c    xyp	The initial xyphases.
 c------------------------------------------------------------------------
 	include 'gpcal.h'
 	integer i,n,item,iostat
-	real theta,phase(MAXANT)
-	integer count(MAXANT)
+	real theta,phase(MAXANT2)
+	integer count(MAXANT2)
 c
 c  Externals.
 c
@@ -2321,7 +2322,7 @@ c
 c  Get the user-specified XY phases.
 c
 	fac = 1
-	call GetXY(tIn,fac,phase,count,MAXANT,n)
+	call GetXY(tIn,fac,phase,count,MAXANT2,n)
 	do i=n+1,nants
 	  count(i) = 0
 	enddo
@@ -2406,7 +2407,7 @@ c    nsoln	Number of solution intervals.
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	integer iostat,off,item,i,j
-	complex G(2*MAXANT)
+	complex G(2*MAXANT2)
 c
 	call haccess(tIn,item,'gains','write',iostat)
 	if(iostat.ne.0)then
@@ -2702,7 +2703,7 @@ c    Gain	The antenna gain solution.
 c    epsi	Chanle in solution during the iterations.
 c------------------------------------------------------------------------
 	include 'gpcal.h'
-	complex SVM(MAXBASE),Sum(MAXANT)
+	complex SVM(MAXBASE2),Sum(MAXANT2)
 	logical convrg
 	real Factor,Change
 	complex Temp
@@ -2841,8 +2842,8 @@ c
 	integer i,niter
 	logical convrg
 	real t,Factor,ChangeX,ChangeY,SumWtX,SumWtY,t1,t2,t3,t4
-	real Sum2(2,MAXANT)
-	complex Sum(2,MAXANT),Temp
+	real Sum2(2,MAXANT2)
+	complex Sum(2,MAXANT2),Temp
 c
 	real Factors(11)
 	data Factors/0.5,0.75,8*0.9,0.5/
@@ -2980,8 +2981,8 @@ c
 	logical convrg
 	real t,Factor,ChangeX,ChangeY,SumWtX,SumWtY
 	real t1,t2
-	real Sum2(2,MAXANT)
-	complex Sum(2,MAXANT),Temp
+	real Sum2(2,MAXANT2)
+	complex Sum(2,MAXANT2),Temp
 c
 	real Factors(11)
 	data Factors/0.5,0.75,8*0.9,0.5/
