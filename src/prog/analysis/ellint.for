@@ -24,6 +24,9 @@ c	the cumulative sum for all annuli so far.
 c
 c@ in
 c	Input image name. xyz images only. No default.
+c@ out
+c       Optional output image containing the residuals from the average values
+c       in each annulus. By default this image is not created.
 c@ region
 c	Region of image to be integrated. E.g.
 c	  % ellint region=relpix,box(-4,-4,5,5)(1,2)
@@ -102,12 +105,13 @@ c    dpr   02jan01      Allow radii with non-integral number steps
 c    pjt   02may01      Optional table output (options=table), rearranged
 c                       some code (memfree)
 c    mchw  09nov01	Added intensity scale factor of convenience.
+c    pjt   11aug02      added optional out= for residual map
 c----------------------------------------------------------------------c
-	include 'mirconst.h'
+        include 'mirconst.h'
 	include 'maxdim.h'
 	include 'mem.h'
         character*(*) label,version
-        parameter(version='version 1.0 09-nov-2001')
+        parameter(version='version 1.0 11-aug-2002')
         double precision rts,value
         parameter(label='Integrate a Miriad image in elliptical annuli')
         integer maxnax,maxboxes,maxruns,naxis,axis,plane,maxring
@@ -115,15 +119,16 @@ c----------------------------------------------------------------------c
         parameter(maxruns=3*maxdim,maxring=200)
 c
         integer boxes(maxboxes)
-        integer i,j,ir,lin,nsize(maxnax),blc(maxnax),trc(maxnax)
-        integer irmin,irmax,pbobj,ipm(maxring)
+        integer i,j,ir,lin,lout,nsize(maxnax),blc(maxnax),trc(maxnax)
+        integer irmin,irmax,pbobj,ipm(maxring),axnum(maxnax)
         real crpix(maxnax),cdelt(maxnax),var,med, xmode
         real center(2),pa,incline,rmin,rmax,rstep,scale
         real buf(maxdim),cospa,sinpa,cosi,x,y,r,ave,rms,fsum,cbof
         real pixe(maxdim),flux(maxdim),flsq(maxdim),pbfac
         logical mask(maxdim),dopb,keep,domedian,domode,natural,dotab
+        logical dout
         character in*80,logf*80,line*132,cin*1,ctype*9,caxis*13,units*13
-        character btype*25,pbtype*16
+        character btype*25,pbtype*16,out*80
 c
 c  Externals.
 c
@@ -137,6 +142,8 @@ c
         call keyini
         call keya('in',in,' ')
         if(in .eq. ' ') call bug('f','No input specified.')
+        call keya('out',out,' ')
+        dout = out.ne.' '
         call boxinput('region',in,boxes,maxboxes)
         call keyr('center',center(1),0.)
         call keyr('center',center(2),0.)
@@ -151,7 +158,7 @@ c
         call keya('log',logf,' ')
         call keyfin
 c
-c  Open the input.
+c  Open the input, and output, if needed
 c
         call xyopen(lin,in,'old',maxnax,nsize)
         call rdhdi(lin,'naxis',naxis,0)
@@ -164,6 +171,22 @@ c
         call boxmask(lin,boxes,maxboxes)
         call boxset(boxes,maxnax,nsize,'s')
         call boxinfo(boxes,maxnax,blc,trc)
+
+c
+c  Output
+c
+        if (dout) then
+           call xyopen(lout,out,'new',naxis,nsize)
+           do i=1,naxis
+              if (i.le.3) then
+                 axnum(i) = i
+              else
+                 axnum(i) = 0
+              endif
+           enddo
+           call headcopy(lin,lout,axnum,naxis,blc,trc)
+        endif
+
 c
 c  Get center and pixel size from image.
 c
@@ -261,6 +284,8 @@ c
 c  Integrate in elliptical annuli.
 c
           call xysetpl(lin,1,plane)
+          if (dout) call xysetpl(lout,1,plane)
+
           do j = blc(2),trc(2)
             call xyread(lin,j,buf)
             call xyflgrd(lin,j,mask)
@@ -294,6 +319,33 @@ c
               endif
             enddo
           enddo
+c
+c     if output residual map requested
+c
+          if (dout) then
+          do j = blc(2),trc(2)
+            call xyread(lin,j,buf)
+            call xyflgrd(lin,j,mask)
+            y = (j-crpix(2))*cdelt(2) - center(2)
+            do i = blc(1),trc(1)
+              x = (i-crpix(1))*cdelt(1) - center(1)
+              keep  = mask(i)
+              if (keep.and.dopb) then
+                pbfac = pbget(pbobj,real(i),real(j))
+                keep = pbfac.gt.0
+                if(keep) buf(i)=buf(i)/pbfac
+              endif
+              r = sqrt((y*cospa-x*sinpa)**2+((y*sinpa+x*cospa)/cosi)**2)
+              if(r.ge.rmin .and. r.lt.rmax .and. keep)then
+                ir = (r-rmin)/rstep + 1
+                buf(i) = buf(i) - flux(ir)/pixe(ir)
+              endif
+            enddo
+            call xywrite(lout,j,buf)
+          enddo
+          endif
+
+
 c
 c If we want the median or mode, make a second pass through the plane.
 c We now know how big the arrays need to be for each annulus
@@ -440,6 +492,7 @@ c
 c  All done.
 c
       call xyclose(lin)
+      call xyclose(lout)
       call logclose
       end
 c********1*********2*********3*********4*********5*********6*********7*c
