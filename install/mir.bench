@@ -27,10 +27,11 @@ if ($standalone) then
    setenv  LD_LIBRARY_PATH ..
 endif	
 
-echo "MIRBENCH: (2002-04-04) $tmp : nchan=$nchan mapsize=$mapsize"
-echo `hostname` 
-echo `uname -a`  
-echo `date`
+echo "MIRBENCH: (2002-10-21) $tmp : nchan=$nchan mapsize=$mapsize"
+echo hostname=`hostname` 
+echo system=`uname -a`  
+echo date=`date`
+echo MIR=$MIR
 echo 'Needs:  uvgen uvcat invert clean restor'
 echo 'Also from $MIRCAT it needs: bima9_a.ant bima9_b.ant bima9_c.ant.equ'
 echo 'cd $MIR;tar cf /tmp/mirbench.tar $MIRBIN/{uvgen,uvcat,invert,clean,restor} $MIRCAT/{bima9_a.ant,bima9_b.ant,bima9_c.ant.equ}'
