@@ -1637,11 +1637,11 @@ case 1: blpnt=uvwbsln[inhset]->uvwID[j].blsid;
 //        break;
 //              }
 //                   }
-//flush=1;
+flush=1;
 //printf("smabuffer.rxif uvwID[j].irec %d %d %d\n", smabuffer.rxif,
 //          uvwbsln[inhset]->uvwID[j].irec, j);
-if(smabuffer.rxif==uvwbsln[inhset]->uvwID[j].irec||smabuffer.rxif==-1) 
-{flush = 1; } else { flush =-1; }
+//if(smabuffer.rxif==uvwbsln[inhset]->uvwID[j].irec||smabuffer.rxif==-1) 
+//{flush = 1; } else { flush =-1; }
 
 if(smabuffer.nopol==1) visSMAscan.blockID.polid=-5;
 switch(visSMAscan.blockID.polid)  {
