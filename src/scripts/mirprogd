@@ -1,0 +1,101 @@
+#!/bin/csh -f
+# -----------------------------------------------------------------
+#* mirprogd - Debugging script for miriad subroutines
+#& mjs
+#: programmer tool
+#+
+#  Debugging script for miriad fortran programs.  Compile and link
+#  programs using miriad's default libraries, taking any local
+#  relocatables (subroutine dot-o files) in preference to the
+#  installed miriad subroutines.  -DMIRDEBUG is defined (so
+#  compilation is with the -g option and rattyoutput is retained).
+#  Users may define -DTESTBED prior to invocation.
+#
+#  Users are expected to put source code in a private directory and
+#  work from that directory; input source code is expected to be in
+#  the current working directory, and all output will be placed
+#  there.
+#
+#    Usage:  mirprogd  [-O] <prog-name>
+#
+#  If the -O flag is given, the compile is optimized (making the
+#  code generally unuseful for stepping through a program/subroutine
+#  with dbx); omitting this flag produces unoptimized code.
+#
+#  Filename extensions (.for, .f) are required.
+#
+#  Sample session:
+#
+#    mkdir mydir
+#    cd mydir
+#    cp $MIR/borrow/pgplot/src/pgbeg.f .
+#    cp $MIR/borrow/pgplot/src/pgplot.inc .
+#    mirsubsd pgbeg.f
+#    cp $MIRSUBS/wrap.f2c $MIRSUBS/key.for .
+#    mirsubsd wrap.f2c
+#    mirsubsd key.for
+#    cp $MIRSUBS/key.h .
+#    mirsubsd key.for
+#    mirsubsd key.f
+#    mirsubsd wrap.c
+#    cp $MIRPROG/analysis/implot.for .
+#    mirprogd implot.for
+#    mirprogd implot.f
+#
+#--
+# -----------------------------------------------------------------
+setenv MIRDEBUG
+source $MIR/src/sys/bin/compile.$MIRHOST
+set fops = "$FoptionsN"
+if ($#argv != 1 && $#argv != 2) then
+  echo "### Usage: check documentation - exiting with return code 1."
+  exit 1
+endif
+set name = $1
+if ($#argv == 2) then
+   if ($name == "-O") then
+      set name = $2
+      set fops = "$Foptions"
+   else
+      echo "### Usage: check documentation - exiting with return code 1."
+      exit 1
+   endif
+endif
+# -----------------------------------------------------------------
+# Find the file
+#
+if (! -e $name) then
+   echo "Cannot find $name - exiting"
+   exit 1
+endif
+set tail = ${name:e}
+if ($tail != for && $tail != f) then
+   echo "File must have filename extension for or  f - exiting"
+   exit 1
+endif
+# -----------------------------------------------------------------
+# do it
+#
+set doto = "`ls *.o|grep -v ${name:r}`"
+set tmp  = "$Flinkdir $Flinklib"
+echo "	==================================="
+switch ($tail)
+   case for:
+        echo "$Ratty -I $MIRINC $name ${name:r}.f"
+              $Ratty -I $MIRINC $name ${name:r}.f
+        echo ""
+        echo "`ls -l ${name:r}.f`"
+        echo "	==================================="
+   case   f:
+        echo "$Fcompile -o ${name:r} $fops $Finclude ${name:r}.f $doto $tmp"
+              $Fcompile -o ${name:r} $fops $Finclude ${name:r}.f $doto $tmp
+        echo ""
+        echo "`ls -l ${name:r}`"
+        echo "	==================================="
+	breaksw
+endsw
+#
+# -----------------------------------------------------------------
+# all done
+#
+exit 0

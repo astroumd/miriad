@@ -1,0 +1,104 @@
+#!/bin/csh -f
+#
+#* beam - Plot uvtracks and synthesized beam patterns.
+#& mchw
+#: user tool
+#+
+#  Plot uvtracks and synthesized beam patterns.
+#--
+#------------------------------------------------------
+#		 beam
+#
+# script to plot uvtracks and synthesized beam patterns.
+# History:
+#   mchw 27jul93  documented.
+#   pjt   4aug93  allow all pgplot /*ps devices, fixed /xw
+#   mchw 06aug93  updated documentation..
+#   mchw 10aug93  change keyword in uvtrack.
+#   mchw 17aug94  Added harange.
+#------------------------------------------------------
+
+# define the valid printername that cause spooling
+  set valid_printers=(/ps /vps /vcps /cps)
+
+echo "**************************************************************"
+echo "   Plot uvtracks and synthesized beam. 10-Aug-93 version)"
+echo "**************************************************************"
+
+# check inputs
+  if($#argv<3) then
+        echo " "
+	echo " Usage:  beam array  declination  device  [elevation] [harange]"
+	echo "	 e.g. beam c1.ary 30 /xw"
+        echo " "
+        echo " Inputs :"
+	echo "   array"
+	echo "          Antenna array generated from uvtrack task."
+	echo "            e.g. $MIRCAT/*.ary" . No default.
+	echo "   declination"
+	echo "          Source declination in degrees. No default."
+	echo "   device"
+	echo "          PGPLOT device. No default."
+	echo "          For devices $valid_printers the plot is sent to"
+	echo "          the printer."
+	echo "   [elevation]"
+	echo " 	        Elevation limit. Default is 15 degrees."
+	echo "   [harange]"
+	echo " 	        harange (start,stop,step) in hours."
+	echo "		Default is to use the elevation limit, with step=0.2"
+        echo " "
+	exit 1
+  endif
+
+  if($#argv<4) then
+        set elev=15
+  else
+        set elev=$4
+  endif
+
+  echo -n "Check if array file exists: "
+  if (! -e $1) then
+    set ary=$MIRCAT/$1
+    if (! -e $ary) then
+      echo ""
+      echo "  Can neither find array file $1 nor $ary"
+      echo "	copy $MIRCAT/*.ary to user area"
+      echo "   	or run uvtrack interactively to generate an antenna array"
+      goto end
+    endif
+  else
+    set ary=$1
+  endif
+  echo "found $ary"
+
+# clean up datasets that are created by this script
+  rm -rf $1.$2* >& /dev/null
+
+# figure out if to spool or not
+  set lpr=0
+  foreach v ($valid_printers)
+    if ($3 == $v) then
+      set lpr=1
+      break
+    endif
+  end
+  if ($lpr) echo Spooling pgplot.ps to printer
+
+# create tracks
+  uvtrack mode=batch ary=$ary dec=$2 device=$3 elev=$elev out=$1.$2.uv harange=$5
+  if($lpr) lpr pgplot.ps
+
+# uv -> map
+  invert vis=$1.$2.uv map=$1.$2.map beam=$1.$2.beam cell=2 imsize=64
+  implot in=$1.$2.map device=$3
+  if($lpr) lpr pgplot.ps
+  clean map=$1.$2.map beam=$1.$2.beam niters=1 out=$1.$2.cl
+  restor map=$1.$2.map beam=$1.$2.beam  model=$1.$2.cl out=$1.$2.cm
+
+  echo "-------- script finished -------"
+  echo "VIS        in $1.$2.uv"
+  echo "DIRTY MAP  in $1.$2.map"
+  echo "DIRTY BEAM in $1.$2.beam"
+  echo "CLEAN MAP  in $1.$2.cm"
+
+end:

@@ -1,0 +1,88 @@
+#! /bin/csh
+#* mir.sndex - List MIRIAD subroutines and 1-line descriptions
+#& mjs
+#: user utility
+#+
+#    List MIRIAD subroutines and 1-line descriptions.
+#
+#    Usage:  mir.sndex [-k] [arguments]
+#
+#            -k    [arguments] are a set of strings, and the
+#                  output lists all subroutines whose name
+#                  or 1-line description contains the strings.
+#                  The string search is case insensitive.
+#
+#            If [-k] is not used, then [arguments] are the
+#            name(s) of MIRIAD subroutines to be listed.
+#
+#            Without [-k] and [arguments], all subroutines
+#            are listed.
+#
+#--
+#
+set sdoc = $MIRSDOC
+set ttmp = /tmp
+set theD = $ttmp/${user}.{$$}
+set theT = $theD/tmpfile
+set theF = $theD/file
+set theA = $theD/awk
+set theX  = "off"
+#
+if ($#argv == 1) then
+	if (${argv[1]} == '-k') exit 0
+endif
+#
+set theL = ""
+if ($#argv) then
+	if (${argv[1]} != '-k') then
+		cd $sdoc
+		foreach i ($argv)
+			if (-e ${i}.sdoc) then
+				set theL = ($theL ${i}.sdoc)
+			else
+				echo "--- $i ... no doc found	---"
+			endif
+		end
+	else
+		set theX = "on"
+	endif
+else
+	set theX = "on"
+endif
+#
+cd $ttmp
+if (-e $theD) rm -fr $theD
+mkdir $theD
+echo '/%N/ {a = $2;}'				       >>! $theA
+chmod 644						   $theA
+echo '/%D/{for(i=2;i<=NF;i++)b=sprintf("%s %s",b,$i)}' >>  $theA
+echo 'END{c=sprintf("%-11.10s%-65.65s",a,b);print c;}' >>  $theA
+#
+if ($theX == "off") then
+	foreach i ($theL)
+		cat $sdoc/$i | awk -f $theA >>! $theF
+	end
+else
+	cd $sdoc
+	ls *.sdoc > $theT
+	foreach i (`cat $theT`)
+		cat $sdoc/$i | awk -f $theA >>! $theF
+	end
+endif
+#
+if ($#argv) then
+	if (${argv[1]} != '-k' || ! $#argv) then
+		cat $theF
+	else
+		foreach i (${argv[2-]})
+			echo ""
+			grep -i $i $theF
+			echo ""
+		end
+	endif
+else
+	cat $theF
+endif
+rm -fr $theD
+#
+exit 0

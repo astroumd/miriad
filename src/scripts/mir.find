@@ -1,0 +1,46 @@
+#! /bin/csh -f
+#
+#* mir.find - Search for files/dirs in MIRIAD source code
+#& mjs
+#: programmer tool
+#+
+#  Execute a ``find'' for each of the arguments (does not
+#  find code in the $MIR/borrow subdirectories).  Partial
+#  file names and directory names may be given.
+#
+#    Usage:  mir.find  args
+#
+#     args ... <character strings>
+#
+#  Alias:  ``mirfind'' is an alias for ``mir.find''.
+#--
+#* mirfind - Search for files/dirs in MIRIAD source code
+#& mjs
+#: programmer tool
+#+
+#  Execute a ``find'' for each of the arguments (does not
+#  find code in the $MIR/borrow subdirectories).  Partial
+#  file names and directory names may be given.
+#
+#    Usage:  mirfind  args
+#
+#     args ... <character strings>
+#
+#  Alias:  ``mirfind'' is an alias for ``mir.find''.
+#--
+#
+cd $MIR
+set m = '$MIR'
+if( ! $#argv ) then
+	echo "### Argument(s) required ###"
+	echo "    mir.find argv1 [argv2 ...]"
+	echo "       or"
+	echo "    mirfind  argv1 [argv2 ...]"
+else
+	foreach i ($argv)
+		set n = (`find src -name \*${i:t}\* -print`)
+		foreach j ($n)
+			echo "${m}/${j}"
+		end
+	end
+endif
