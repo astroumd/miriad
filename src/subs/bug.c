@@ -8,7 +8,8 @@
 /*    rjs     14jul98 Add a caste operation in errmsg_c, to attempt	*/
 /*		      to appease some compilers.			*/
 /*    pjt     23sep01 darwin						*/
-/*    pjt      3dec01 bypass fatal errors (for alien clients) if req'd  */
+/*    pjt      4dec01 bypass fatal errors (for alien clients) if req'd  */
+/*                    through the new bugrecover_c() routine            */
 /************************************************************************/
 
 #include <stdio.h>
@@ -139,7 +140,11 @@ char s,*m;
     lib$stop(SS$_ABORT);
 #else
 /*    fprintf(stderr,"### Program exiting with return code = 1 ###\n"); */
-    if (bug_cleanup) return;
+    if (bug_cleanup) {
+        (*bug_cleanup)();       /* call it */
+        fprintf(stderr,"### bug_cleanup: code should not come here, goodbye\n");
+        /* and not it will fall through and exit the bug way */
+    }
     exit (1);
 #endif
   }

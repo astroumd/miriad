@@ -8,6 +8,8 @@ c    rjs  18dec95 Make sub-Earth point a right handed coordinate system.
 c    rjs  17jun96 Added some parameters about the Earth.
 c    rjs  04feb01 Added subroutine pltbs.
 c    rjs  03mar01 Improved brightness temps for the planets from Ulrich etc.
+c    rjs  31jul01 Empirical fix to Mercury's temperature.
+c    rjs  20nov01 Included Bryan Butler's brightness temp data of Venus.
 c
 c  Bugs:
 c    Need to understand the brightness temperature fluctuations of the
@@ -30,7 +32,7 @@ c    pltbs    Brightness temperature, in Kelvin.
 c
 c------------------------------------------------------------------------
 	integer NVEN
-	parameter(NVEN=3)
+	parameter(NVEN=75)
 	real ven(2,NVEN)
 c
 	integer NMAR
@@ -55,21 +57,105 @@ c
 c------------------------------------------------------------------------
 c  Misc planets
 c     Ref: Ulich, AJ, 86, 1619 (1981).
+c     Mercury deduced from own observations.
 c
 c	          Mer   Ven   Ear   Mar   Jup   Sat   Ura   Nep   Plu
-	data pltb/440.0,  0.0,288.0,  0.0,  0.0,  0.0,134.1,126.9,68.0/
+	data pltb/660.0,  0.0,288.0,  0.0,  0.0,  0.0,134.1,126.9,68.0/
 c------------------------------------------------------------------------
 c  Venus
-c     Ref: Ulich, AJ, 86, 1619 (1981).
+c     Ref: Bryan Butler bbutler@nrao.edu (personal communication, 19 Nov 2001)
 c
-c                      Freq(GHz)        Temp (Kelvin)
-c                      -----            ------
-	data ven(1,1) / 31.4/, ven(2,1) /466.0/
-	data ven(1,2) / 90.0/, ven(2,2) /367.1/
-	data ven(1,3) /150.0/, ven(2,3) /294.0/
+c     For wavelengths shorter than 4cm, the points are a theoretical
+c     model fitted to observed data. For wavelengths longer than
+c     4cm, the points are just an empirical fit to observed data.
+c
+c                        Freq(GHz)        Temp (Kelvin)
+c                        -----            ------
+        data ven(1, 1)/  0.303/, ven(2, 1)/520.0/
+        data ven(1, 2)/  0.333/, ven(2, 2)/525.0/
+        data ven(1, 3)/  0.366/, ven(2, 3)/530.0/
+        data ven(1, 4)/  0.403/, ven(2, 4)/535.0/
+        data ven(1, 5)/  0.443/, ven(2, 5)/540.0/
+        data ven(1, 6)/  0.487/, ven(2, 6)/545.0/
+        data ven(1, 7)/  0.536/, ven(2, 7)/550.0/
+        data ven(1, 8)/  0.590/, ven(2, 8)/555.0/
+        data ven(1, 9)/  0.649/, ven(2, 9)/560.0/
+        data ven(1,10)/  0.714/, ven(2,10)/565.0/
+        data ven(1,11)/  0.785/, ven(2,11)/570.0/
+        data ven(1,12)/  0.864/, ven(2,12)/575.0/
+        data ven(1,13)/  0.950/, ven(2,13)/580.0/
+        data ven(1,14)/  1.045/, ven(2,14)/586.0/
+        data ven(1,15)/  1.149/, ven(2,15)/592.0/
+        data ven(1,16)/  1.264/, ven(2,16)/598.0/
+        data ven(1,17)/  1.391/, ven(2,17)/604.0/
+        data ven(1,18)/  1.530/, ven(2,18)/610.0/
+        data ven(1,19)/  1.683/, ven(2,19)/617.0/
+        data ven(1,20)/  1.851/, ven(2,20)/624.0/
+        data ven(1,21)/  2.036/, ven(2,21)/631.0/
+        data ven(1,22)/  2.240/, ven(2,22)/638.0/
+        data ven(1,23)/  2.464/, ven(2,23)/646.0/
+        data ven(1,24)/  2.710/, ven(2,24)/655.0/
+        data ven(1,25)/  2.981/, ven(2,25)/664.0/
+        data ven(1,26)/  3.280/, ven(2,26)/671.0/
+        data ven(1,27)/  3.608/, ven(2,27)/676.0/
+        data ven(1,28)/  3.968/, ven(2,28)/679.0/
+        data ven(1,29)/  4.365/, ven(2,29)/680.0/
+        data ven(1,30)/  4.802/, ven(2,30)/680.0/
+        data ven(1,31)/  5.282/, ven(2,31)/679.0/
+        data ven(1,32)/  5.810/, ven(2,32)/676.0/
+        data ven(1,33)/  6.391/, ven(2,33)/671.0/
+        data ven(1,34)/  7.030/, ven(2,34)/665.0/
+        data ven(1,35)/  7.733/, ven(2,35)/657.0/
+        data ven(1,36)/  8.507/, ven(2,36)/648.0/
+        data ven(1,37)/  9.357/, ven(2,37)/638.9/
+        data ven(1,38)/ 10.293/, ven(2,38)/626.5/
+        data ven(1,39)/ 11.322/, ven(2,39)/613.0/
+        data ven(1,40)/ 12.454/, ven(2,40)/598.7/
+        data ven(1,41)/ 13.700/, ven(2,41)/583.8/
+        data ven(1,42)/ 15.070/, ven(2,42)/568.7/
+        data ven(1,43)/ 16.577/, ven(2,43)/553.7/
+        data ven(1,44)/ 18.235/, ven(2,44)/538.8/
+        data ven(1,45)/ 20.058/, ven(2,45)/524.1/
+        data ven(1,46)/ 22.064/, ven(2,46)/509.9/
+        data ven(1,47)/ 24.270/, ven(2,47)/496.1/
+        data ven(1,48)/ 26.697/, ven(2,48)/482.8/
+        data ven(1,49)/ 29.367/, ven(2,49)/469.8/
+        data ven(1,50)/ 32.304/, ven(2,50)/457.3/
+        data ven(1,51)/ 35.534/, ven(2,51)/445.3/
+        data ven(1,52)/ 39.087/, ven(2,52)/433.8/
+        data ven(1,53)/ 42.996/, ven(2,53)/422.8/
+        data ven(1,54)/ 47.296/, ven(2,54)/412.3/
+        data ven(1,55)/ 52.025/, ven(2,55)/402.3/
+        data ven(1,56)/ 57.228/, ven(2,56)/392.7/
+        data ven(1,57)/ 62.951/, ven(2,57)/383.6/
+        data ven(1,58)/ 69.246/, ven(2,58)/374.9/
+        data ven(1,59)/ 76.170/, ven(2,59)/366.7/
+        data ven(1,60)/ 83.787/, ven(2,60)/358.7/
+        data ven(1,61)/ 92.166/, ven(2,61)/351.1/
+        data ven(1,62)/101.383/, ven(2,62)/343.7/
+        data ven(1,63)/111.521/, ven(2,63)/336.6/
+        data ven(1,64)/122.673/, ven(2,64)/329.6/
+        data ven(1,65)/134.940/, ven(2,65)/322.8/
+        data ven(1,66)/148.434/, ven(2,66)/316.1/
+        data ven(1,67)/163.278/, ven(2,67)/309.7/
+        data ven(1,68)/179.605/, ven(2,68)/303.5/
+        data ven(1,69)/197.566/, ven(2,69)/297.6/
+        data ven(1,70)/217.322/, ven(2,70)/292.1/
+        data ven(1,71)/239.055/, ven(2,71)/286.8/
+        data ven(1,72)/262.960/, ven(2,72)/282.0/
+        data ven(1,73)/289.256/, ven(2,73)/277.7/
+        data ven(1,74)/318.182/, ven(2,74)/273.8/
+        data ven(1,75)/350.000/, ven(2,75)/270.2/
 c------------------------------------------------------------------------
 c  Mars
 c     Ref: Ulich, AJ, 86, 1619 (1981).
+c
+c  The value of Muhleman & Berge(1991) at 2.66 mm is 197+/-6K. 
+c  They argue that the spectrum is very flat longwards of a few mm.
+c  The value of Janssen & Welch (1973) at 1.35cm is 181+/-11K.
+c  Bryan Butler (personal communication Nov 2001) says the brightness
+c  temperature is 192 and 190 K at 8.64 and 4.8 GHz, and that there
+c  is some variation with the side facing the Earth.
 c
 c                     Freq(GHz)         Temp (Kelvin)
 c                      -----             -----
@@ -126,6 +212,11 @@ c------------------------------------------------------------------------
 c  Saturn
 c     Ref: 31.4,90,150 GHz -- Ulich, AJ, 86, 1619 (1981).
 c          1.4 GHz         -- ATCA measurement by Sault (1999?)
+c
+c    A preferred spectrum is available from de Pater & Massie,
+c      Icarus, 62, 143 (1985). Muhleman & Berge (1991) discuss the
+c      contribution of the ring, which is less than 10K at wavelengths
+c      longwards of a few cm.
 c
 c                      Freq(GHz)         Temp (Kelvin)
 c                      -----             -----
