@@ -1,0 +1,5 @@
+#!/bin/csh -f
+
+sed -e "/^\*/d" $MIR/changes.txt | tail -27 > changes.doc
+echo " " >> changes.doc
+echo See \$MIR/changes.txt for a history of earlier changes. >> changes.doc
