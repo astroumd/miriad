@@ -227,8 +227,8 @@ c
 	call obsad('carma/evector',	0.5*dpi)
 	call obsad('carma/height',	2200.0d0)
 	call obsad('carma/jyperk',	80.d0)
-        call obsad('carma/latitude',     obsdms( 1, 37,16, 43.00))
-        call obsad('carma/longitude',    obsdms(-1,118, 8, 32.00))
+        call obsad('carma/latitude',    obsdms( 1, 37,16, 43.00))
+        call obsad('carma/longitude',   obsdms(-1,118, 8, 32.00))
 	call obsad('carma/mount',	ALTAZ)
 	call obsad('carma/nants',	15.d0)
 	call obsad('carma/systemp',	200.d0)
@@ -236,12 +236,12 @@ c
 c  The Ceduna 30m dish.
 c  Ref: Richard Dodson 22/05/01
 c
-	call obsad('ceduna30m/antdiam',	30.d0)
-	call obsad('ceduna30m/height', 161.d0)
+	call obsad('ceduna30m/antdiam',	  30.d0)
+	call obsad('ceduna30m/height',    161.d0)
 	call obsad('ceduna30m/latitude',  obsdms(-1, 31,52,05.04))
 	call obsad('ceduna30m/longitude', obsdms( 1,133,48,36.565))
-	call obsad('ceduna30m/mount',	ALTAZ)
-	call obsad('ceduna30m/nants',	1.d0)
+	call obsad('ceduna30m/mount',	  ALTAZ)
+	call obsad('ceduna30m/nants',  	  1.d0)
 c
 c  CSO (from Oliver Lay -> MCHW 20may1997 - some values need confirmation)
 c
@@ -252,8 +252,8 @@ c
 	call obsad('cso/jyperk',	60.d0)
 	call obsad('cso/latitude',	obsdms( 1, 19,49,33.8))
 	call obsad('cso/longitude',	obsdms(-1,155,28,46.4))
-	call obsad('cso/mount',	ALTAZ)
-	call obsad('cso/nants',	2.d0)
+	call obsad('cso/mount',	        ALTAZ)
+	call obsad('cso/nants',	        2.d0)
 	call obsad('cso/systemp',	500.d0)
 c
 c  GMRT.
@@ -270,7 +270,7 @@ c
 	call obsad('hatcreek/latitude', obsdms( 1, 40,49, 2.50))
 	call obsad('hatcreek/longitude',obsdms(-1,121,28,18.49))
 	call obsad('hatcreek/mount',	ALTAZ)
-	call obsad('hatcreek/nants',   10.d0)
+	call obsad('hatcreek/nants',    10.d0)
 	call obsad('hatcreek/subdiam',	0.61d0)
 	call obsad('hatcreek/systemp',	300.d0)
 c
