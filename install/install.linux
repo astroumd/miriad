@@ -442,6 +442,7 @@ if ($test) then
     ./mir.test
 endif
 
+chmod +x mir.testx
 if ($testx) then
    mir.testx
 endif
