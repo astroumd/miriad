@@ -1,9 +1,9 @@
 c************************************************************************
-	program mossdi
+	program mossdi2
 	implicit none
 c
 c= mossdi2 - Mosaic Steer CLEAN algorithm
-c& rjs
+c& mxr
 c: deconvolution
 c+
 c	MOSSDI is a MIRIAD task which performs a Steer CLEAN on a mosaiced
@@ -34,6 +34,16 @@ c	more information. The default is the entire image.
 c@ options
 c	Extra processing options. There is just one of these at the moment.
 c	  positive   Constrain the deconvolved image to be positive valued.
+c@ maxmiter
+c       Maximum number of minor iterators in a major iteration. 
+c       Default: 20
+c@ eps
+c       Small value to allow minor loops an early exist if improvement is
+c       not above this value.
+c       Default: 0.0001
+c@ log
+c       Logfile with a summary of the major iterations. 
+c       Default: mossdi2_iteration.log
 c--
 c  History:
 c    rjs 31oct94 - Original version.
@@ -42,16 +52,20 @@ c    rjs 27feb97 - Fix glaring bug in the default value for "clip".
 c    rjs 28feb97 - Last day of summer. Add options=positive.
 c    rjs 02jul97 - cellscal change.
 c    rjs 23jul97 - add pbtype.
+c    mxr ??????? - derived from MOSSDI for BIMASONG (to be placed back as mossdi)
+c    pjt/snv jan02 - keyword
+c    pjt 12feb02 - submitted to miriad
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version='MosSDI: version 1.0 28-Feb-97')
+	parameter(version='MosSDI2: version 1.0 12-Feb-02')
 	include 'maxdim.h'
 	include 'maxnax.h'
 	include 'mem.h'
 	integer MAXRUN,MAXBOXES
 	parameter(MAXRUN=3*maxdim,MAXBOXES=1024)
 c
-	character MapNam*64,BeamNam*64,ModelNam*64,OutNam*64,line*80
+	character MapNam*80,BeamNam*80,ModelNam*80,OutNam*80,line*80
+	character LogFile*80
 	integer Boxes(MAXBOXES),Run(3,MAXRUN),nRun,blc(3),trc(3),nAlloc
 	integer nPoint
 	integer lMap,lBeam,lModel,lOut
@@ -61,6 +75,9 @@ c
 	integer maxniter,niter,ncomp
 	logical more,dopos
 	real dmin,dmax,drms,cutoff,clip,gain,flux,thresh
+	logical diff_ok
+	real tlast, tdiff, epsilon
+	integer ncount, maxmiter
 c
 c  Externals.
 c
@@ -85,6 +102,9 @@ c
 	if(clip.le.0)call bug('f','Invalid clip value')
 	call BoxInput('region',MapNam,Boxes,MaxBoxes)
 	call GetOpt(dopos)
+	call keyr('eps',epsilon,0.0001)
+	call keyi('maxmiter',maxmiter,20)
+	call keya('log',logfile,'mossdi2_iteration.log')
 	call keyfin
 c
 c  Open the input map.
@@ -109,6 +129,11 @@ c
 	do i=4,naxis
 	  nout(i) = 1
 	enddo
+
+	call logopen(LogFile,' ')
+	line=
+     *'Plane  Iter   Tot flux       min       max       rms   # sigma'
+	call logwrite(line,more)
 c
 c  Allocate arrays to hold everything.
 c
@@ -190,6 +215,12 @@ c  Do the real work.
 c
 	    niter = 0
 	    more = .true.
+
+c       SNV INITIALIZE SOME VARIABLES
+	    diff_ok = .true.
+	    tlast=0.
+	    ncount=0
+
 	    dowhile(more)
 	      call Steer(memr(pEst),memr(pRes),memr(pStep),memr(pStepR),
      *	        memr(pWt),nPoint,Run,nRun,
@@ -197,15 +228,29 @@ c
 	      niter = niter + ncomp
 	      line = 'Steer Iterations: '//itoaf(niter)
 	      call output(line)
-      write(line,'(a,4f10.3)')' Residual min,max,rms,max sigma: ',
+      write(line,'(a,4f10.3)')' Resid min,max,rms,max sigma: ',
      *					dmin,dmax,drms,sqrt(thresh)
 	      call output(line)
 	      write(line,'(a,1pe12.3)') ' Total CLEANed flux: ',Flux
 	      call output(line)
+C       SNV CHECK TO SEE THAT PROGRESS IS STILL BEING MADE
+	      tdiff=sqrt(thresh)-tlast
+	      if(abs(tdiff) .lt. epsilon) then
+		 ncount = ncount + 1
+		 if(ncount .gt. maxmiter) diff_ok=.false.
+	      endif
+	      tlast=sqrt(thresh)
 	      more = niter.lt.maxniter.and.
-     *		   sqrt(thresh).gt.cutoff
+     *		   sqrt(thresh).gt.cutoff .and. diff_ok
 	    enddo
+
+C       SNV WRITE SUMMARY FOR PLANE TO LOG FILE
+	  write (line,'(i3,i8,f11.2,4f10.4)')
+     *        k,niter,flux,dmin,dmax,drms,sqrt(thresh)
+	  call logwrite(line,more)
+
 	  endif
+
 c
 c  Write out this plane.
 c
@@ -234,6 +279,7 @@ c
 	call xyclose(lBeam)
 	if(ModelNam.ne.' ')call xyclose(lModel)
 	call xyclose(lOut)
+	call logclose
 c
 c  Thats all folks.
 c
