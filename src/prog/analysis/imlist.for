@@ -67,20 +67,22 @@ c  mchw 23may96  Convert cordinates to double; use rangleh and hangleh
 c  mchw 29oct96  Try harder to get frequency from image header.
 c  pjt  22mar99  changed stat to imstat to avoid confusion (linux)
 c  pjt  27apr99  more space for char variables into hdprobe
+c  mchw 13jun01  Added moments.
+c  mchw 13mar02  relaxed conversion to angles for RA and DEC.
 c
 c  Bugs:
 c    Data format still needs work to prevent format overflow.
 c    Doesn't handle pixel blanking outside region of interest.
 c----------------------------------------------------------------------c
 	character version*(*)
-	parameter(version='version 27-apr-99')
+	parameter(version='version 12-MAR-2002')
 	include 'maxdim.h'
 	integer maxboxes,maxnax
 	parameter(maxboxes=2048,maxnax=3)
 	integer naxis,boxes(maxboxes),nsize(maxnax)
 	integer blc(maxnax),trc(maxnax)
 	integer lin,fldsize,length,lenin,npnt
-	character in*64,out*64,format*10,line*80
+	character in*64,out*64,format*10,line*120
 	logical more,dohead,dodata,dohist,dostat,domos,eof
 c
 c  Externals.
@@ -287,10 +289,12 @@ c
 	  if(n.ne.0) then
 	    axis = keyw(i)(6:6)
 	    if (keyw(i)(1:5).eq.'ctype'
-     *			.and.descr(1:8).eq.'RA---SIN') then
+c     *			.and.descr(1:8).eq.'RA---SIN') then
+     *			.and.descr(1:2).eq.'RA') then
 		 RA = axis
 	    else if(keyw(i)(1:5).eq.'ctype'
-     *			.and.descr(1:8).eq.'DEC--SIN') then
+c     *			.and.descr(1:8).eq.'DEC--SIN') then
+     *			.and.descr(1:3).eq.'DEC') then
 		 DEC = axis
 	    endif
 	    if (keyw(i)(1:5).eq.'crval'.and.axis.eq.RA) then
@@ -555,8 +559,8 @@ c-------------------------------------------------------------------c
 	double precision pi,value
 	parameter(pi=3.141592654)
 	integer axis,plane,length
-	character line*80,header*80,label*13,units*13,ctype*9
-	real sum,ave,rms,pmax,pmin,cbof
+	character line*120,header*120,label*13,units*13,ctype*9
+	real sum,ave,rms,pmax,pmin,cbof,xbar,ybar
 c
 c  Write title lines.
 c
@@ -582,10 +586,10 @@ c
 	  length=6+5+5+10
 	  call LogWrit(' ')
 	  call LogWrit(line(1:length))
-	  write(header,'(a,a,a,a,a,a,a)') ' plane ',label,
+	  write(header,'(a,a,a,a,a,a,a,a,a)') ' plane ',label,
      *    ' Total Flux ','  Maximum   ','  Minimum   ','  Average   ',
-     *	  '    rms     '
-	  call LogWrit(header(1:79))
+     *	  '    rms     ','    xbar    ','    ybar    '
+	  call LogWrit(header(1:108))
 c
 c  Accumulate statistics for each hyperplane.
 c
@@ -593,29 +597,32 @@ c
 	  do while(plane.le.trc(axis))
 	    call xysetpl(lIn,1,plane)
 	    call AxisType(lIn,axis,plane,ctype,label,value,units)
-	    call imstat(lin,naxis,blc,trc,sum,ave,rms,pmax,pmin)
-	    write(line,'(i5,x,a,1p5e12.4)')
-     *		plane,units,sum/cbof,pmax,pmin,ave,rms
-	    call LogWrit(line(1:79))
+	    call imstat(lin,naxis,blc,trc,sum,ave,rms,pmax,pmin,
+     *							xbar,ybar)
+	    write(line,'(i5,x,a,1p7e12.4)')
+     *		plane,units,sum/cbof,pmax,pmin,ave,rms,xbar,ybar
+	    call LogWrit(line(1:108))
 	    plane = plane + 1
 	  enddo
 	  axis = axis + 1
 	enddo
       else if(naxis.eq.2) then
-	write(header,'(a,a,a,a,a)') ' Total Flux  ','   Maximum   ',
-     *		    '   Minimum   ','   Average   ','     rms     '
-	call LogWrit(header(1:65))
-	call imstat(lin,naxis,blc,trc,sum,ave,rms,pmax,pmin)
-	write(line,'(5(g12.5,x))') sum/cbof,pmax,pmin,ave,rms
-	call LogWrit(line(1:60))
+	write(header,'(a,a,a,a,a,a,a)') ' Total Flux  ','   Maximum   ',
+     *		    '   Minimum   ','   Average   ','     rms     ',
+     *	            '     xbar    ','     ybar    '	
+	call LogWrit(header(1:91))
+	call imstat(lin,naxis,blc,trc,sum,ave,rms,pmax,pmin,xbar,ybar)
+	write(line,'(7(g12.5,x))') sum/cbof,pmax,pmin,ave,rms,xbar,ybar
+	call LogWrit(line(1:91))
       endif
       end
 c********1*********2*********3*********4*********5*********6*********7*c
-	subroutine imstat(lin,naxis,blc,trc,sum,ave,rms,pmax,pmin)
+	subroutine imstat(lin,naxis,blc,trc,sum,ave,rms,pmax,pmin,
+     *							xbar,ybar)
 c
 	implicit none
 	integer lIn,naxis,blc(naxis),trc(naxis)
-	real sum,ave,rms,pmax,pmin
+	real sum,ave,rms,pmax,pmin,xbar,ybar
 c
 c   List Image Statistics and write in standard format into LogFile.
 c
@@ -627,6 +634,7 @@ c  Output:
 c    sum	Sum of unflagged pixels within region.
 c    ave,rms	Average and rms of unflagged pixels within region.
 c    pmax,pmin	Maximum and minimum of unflagged pixels.
+c    xbar,ybar  center derived from 1st moments of each image plane.
 c-----------------------------------------------------------------
 	include 'maxdim.h'
 	real data(maxdim)
@@ -636,13 +644,15 @@ c-----------------------------------------------------------------
 c
 c  Initialize statistics for each plane.
 c
-	    sum = 0.
+	    sum   = 0.
 	    sumsq = 0.
-	    num = 0
-	    ave = 0.
-	    rms = 0.
-	    pmax = -1.e12
-	    pmin = 1.e12
+	    num   = 0
+	    ave   = 0.
+	    rms   = 0.
+	    xbar  = 0.
+	    ybar  = 0.
+	    pmax  = -1.e12
+	    pmin  = 1.e12
 c
 c  Accumulate statistics for unflagged data.
 c
@@ -656,15 +666,21 @@ c
 		  num = num + 1
 		  pmax=max(pmax,data(i))
 		  pmin=min(pmin,data(i))
+		  xbar=xbar + i*data(i)
+		  ybar=ybar + j*data(i)
 		endif
-	      end do
-	    end do
+	      enddo
+	    enddo
 c
-c  Calculate average and rms.
+c  Calculate average, rms, xbar and ybar.
 c
 	    if(num.ne.0)then
 	      ave = sum/num
 	      rms = sqrt(sumsq/num - ave*ave)
+	    endif
+	    if(sum.ne.0.)then
+	      xbar = xbar/sum
+	      ybar = ybar/sum
 	    endif
 	    end
 c********1*********2*********3*********4*********5*********6*********7*c
