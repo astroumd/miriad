@@ -75,9 +75,9 @@ c    rjs  06jan98 Change uvgetvrr to uvrdvrr when getting chi.
 c    rjs  06jan98 Change in uvlkcorr to sidestep a compiler bug on IRIX machines.
 c    rjs  26mar98 Comment change only.
 c    rjs   6sep99 Added "lflag" parameter to "line" keyword.
-c    pjt  18jan03 extra char for f2c interfaces
 c    rjs  18sep04 Support the variance being scaled by the noise level.
-c    pjt   4jan05 cvs merged.. sigh
+c    rjs  06jan05 I messed up on 18 Sep. Fix bug in uvpolini related to
+c		  correcting the variance of polarised measurements.
 c
 c  User-Callable Routines:
 c    uvDatInp(key,flags)
@@ -258,7 +258,7 @@ c  Output:
 c    nPol	The number of polarisations requested.
 c    Pols	The desired polarisations.
 c------------------------------------------------------------------------
-	character type*3
+	character type*2
 c
 c  Externals.
 c
@@ -1009,8 +1009,8 @@ c
 	      indices(j,i) = indx(type(j))
 	    enddo
 	  endif
+	  if(doaver(i)) SumWts(i) = SumWts(i) / (ncoeff(i)**2)
 	enddo
-	if(doaver(i)) SumWts(i) = SumWts(i) / (ncoeff(i)**2)
 c
 	uvPolIni = .true.
 c
