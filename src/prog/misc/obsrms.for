@@ -114,7 +114,7 @@ c********1*********2*********3*********4*********5*********6*********7*c
         write(line,'(a,a)') ' tsys  jyperk  freq  ',
      *    'lambda  deltav   bw  inttime  nants  theta  coreta rmsphase'
         call output(line)
-        write(line,'(f6.0,f6.1,f6.0,2f8.2,2f7.2,f7.0,2f5.1,f6.2,f6.0)') 
+        write(line,'(f6.0,f6.1,f7.1,2f8.2,2f7.2,f7.0,2f5.1,f6.2,f6.0)') 
      *	    tsys, jyperk, freq,
      *      lambda, deltav, bw, inttime, nants, theta, coreta, rmsphase
         call output(line)
