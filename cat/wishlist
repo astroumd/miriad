@@ -1,0 +1,152 @@
+Wishlist version 3 - 24 August 1990  --  Changes and additions that are wished
+                 4 -  1 March  1991  --  updated by PJT
+
+program    psn st  wishes
+AVMATHS    nebk OK
+AVSUB      bpw  R  See CONTSUB
+BEAM            W  Calculate the beam size from a dataset containing beampattern
+BLOTCH     hr   D  blot out part of an image interactively
+BOXSPEC    bpw  E  Generalize to any cube; what text format?
+                   Incorporate vxyspec/xvyspec; generalize to any direction
+CALAPPLY   lgm  OK
+CALC       bpw  E  Document needed --- does this still exist???
+CALCHECK   bpw  W  Automatically flag bad points in calibrators
+CALFIT     pjt  OK fix closure problems due to breakpoints, frequent delhd use
+CALFLAG    pjt  W  Delete/undelete whole regions like in CBEE
+CALFLUX    jm   OK
+CALIB      pjt  OK need box-type operations as in CBEE?
+CALLIST    pjt  OK
+CALMAKE    pjt  OK
+CGPLOT     nebk  E  Generalize to direct plotting of any axis permutation ->
+                   functionality goes into XDS (?)
+                W  Overlay contours on images
+CHECKER         W  Check Hat Creek command files
+CLEAN      mchw E  add MRC; allow multiple input planes
+CONTSUB    bpw  E  allow any cube orientation; AVSUB as special case
+CONVOL     mchw E  too un-general
+CONVOLVE   mjs  W  Mouse-controlled convolution; many kernels; multi-dim. 
+COORDS          W  return sky coordinates at user-specified pixel for any
+                   projection and coordinate system
+COPYHD     rjs OK
+CORREL          W  pixel-by-pixel correlation of two datasets
+CORSET     jm   W  (RALINT name) plot correlator coverage of spectral lines
+CPDATA     pjt  OK
+DELHD      rjs  OK
+DEMOS      mchw OK
+DETAB      bpw  OK document needed ???? DOES IT STILL EXIST
+DOC        bpw  OK
+ELLINT     mchw OK
+EXECTOOL   pjt  E  MIRDEF stuff, pipe buffer size? document needed
+FFT        mchw OK
+FITGAINS   mchw OK
+FITS       rjs  OK (get rid of kludge-as described/done by bpw)
+FLINT      rjs  OK document needed
+GAINERR    rjs  OK 
+HATFFT     mchw OK
+HATMAP     mchw OK
+HERMES     mcwh OK
+HCCONV     pjt  E  multiple files?
+HISTO      mchw OK
+IMCAT      mchw OK
+IMDIFF     rjs  OK 
+IMFRAME    bpw  W  change (reduce/enlarge) frame of any image
+IMGEN      mchw OK IMGEN is not an obvious name for what it can do
+IMHEAD     jm   OK
+IMLIST     mchw E  Add keyword region=; Add options=header,image,history in
+                   structure parallel to uvlist. Format header in user-friendly
+                   units.
+IMPLOT     mchw D  replacement of MPLOT
+IMPOLY     pjt  OK
+IMSPECT    mchw OK
+IMSUB      mchw OK Too restrictive: replace with IMFRAME
+IMWRITE    mchw OK
+INVERT     rjs  E  many more options can be thought of. 
+                   allow writing the FT(AP) = uv-coverage
+ITEMIZE    pjt  OK
+LINMOS     mchw OK
+LISTOBS    lgm  OK
+LOCATE     mjs  W  find peaks in image and fit gaussians (other name?)
+MATHS      pjt  OK
+MAXEN      rjs  OK
+MIRIAD     pjt  E  some proposed extension; documentation needed
+MKANTS     pjt  ?  get rid of this one inside miriad?
+MOMENT     mchw OK completely useless program if it can only integrate along
+                   the first axis, while the third is the one you normally need
+MOSAIC     bpw  W  uv-plane mosaicing
+MSSS       jm   OK
+MVDATA     pjt  OK
+ODEPTH     nebk OK
+ODNH3      pjt  OK
+PANEL      jm   OK
+PASSFIT    lgm  OK
+PASSMAKE   lgm  OK
+PBCORR          W  primary-beam correction on one dataset
+PROJECT    mjs  W  change coordinatesystem and/or projection and/or gridding
+PRTHIS     bpw  R  incorporate into ITEMIZE
+PUTHD      pjt    
+RATTY      bpw  OK documentation needed
+REGRID     mjs     Interpolate image to another grid
+REORDER    mchw OK
+RESTORE    mchw OK
+RMDATA     pjt  OK
+SELFCAL    mchw OK
+SHIFTY     rjs  OK
+SMOOTH     nebk OK
+SOLCONV    pjt  OK temporary, until SOLARM format better defined
+STAT       bpw  W  General multi-dim. statistics plus histogramming
+TPGAINS    mchw OK
+TRIM       bpw  OK Documentation needed
+TVALL      jm   Ok TVALL is not an obvious name for the functionality
+TVCLN      mchw OK might as well be part of CLEAN
+TVDISP     jm   OK
+TVFLAG     jm   OK
+TVINIT     jm   OK ===or is rjs really the owner===??
+UVAFLAG    bpw  OK Incorporate into uvflag
+UVCAT      rjs     Fix it to handle wideband data.
+UVCHECK    mchw W  Check visibility data
+UVCOVER    lgm  W  Add the keyword select=.
+UVDISPLAY  lgm  OK does the same as UVLIST, but more primitive
+UVFLAG     bpw  E  add flagging of shadowed data / history
+UVGEN      mchw OK
+UVHAT      mchw OK
+UVINDEX    mchw OK
+UVLIST     mchw OK Could make nicer output
+UVMODEL    mchw OK
+UVPLOT     mchw OK
+UVPLT      mchw OK
+UVPOINT    mchw OK
+UVPUTHD    lgm  OK
+UVTRACK    mchw OK
+UVSPECT    mchw E  should be part of more general uv plotting task
+VARLIST    lgm  OK put into UVLIST
+VARPLOT    lgm  OK document is ahrd to understand
+VELPLOT    mchw OK
+VIEWS      bpw  OK
+ZEEETA     nebk OK
+ZEEFAKE    nebk OK
+ZEEMAP     nebk OK
+ZEESIM     nebk OK
+ZEESTAT    nebk OK
+
+
+column codes:
+psn: person who is supposed to be responsible for the task
+     (if not listed the task is an orphan)
+    bpw:  Bart Wakker
+    jm:   Jim Morgan
+    lgm:  Lee Mundy
+    mchw: Mel Wright
+    mjs:  Mark Stupar
+    pjt:  Peter Teuben
+    wh:   Wilson Hofman
+
+st: status of the program on last update of this file
+    OK: currently working and OK
+    D: someone is busy developing it
+    E: needs extensions
+    R: needs repairs
+    W: wanted function
+
+
+
+
