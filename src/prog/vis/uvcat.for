@@ -48,6 +48,8 @@ c		    polarisations.
 c    rjs  12oct95   Copy xyphase variable.
 c    rjs  13jun96   Fix window selection.
 c    rjs  23sep99   Fix window selection again!!
+c    gmx  08apr04   Added xtsys and ytsys to the variables to be handled
+c                   when removing channels.
 c  Bugs:
 c
 c= uvcat - Catenate and copy uv datasets; Apply gains file, Select windows.
@@ -89,7 +91,7 @@ c--
 c------------------------------------------------------------------------
         include 'maxdim.h'
 	character version*(*)
-	parameter(version='UvCat: version 1.0 23-Sep-99')
+	parameter(version='UvCat: version 1.0 08-Apr-04')
 c
 	integer nchan,vhand,lIn,lOut,i,j,nspect,nPol,Pol,SnPol,SPol
 	integer nschan(MAXWIN),ischan(MAXWIN),ioff,nwdata,length
@@ -281,11 +283,11 @@ c------------------------------------------------------------------------
 	logical updated
 c
 	integer nwin
-	parameter(nwin=7)
+	parameter(nwin=9)
 	character windpar(nwin)*8
 c
 	data windpar/ 'ischan  ','nschan  ','nspect  ','restfreq',
-     *	   'sdf     ','sfreq   ','systemp '/
+     *	   'sdf     ','sfreq   ','systemp ' , 'xtsys' , 'ytsys'/
 c
 c  Check if "wcorr" and "corr" are present, and determine which ones we
 c  want to write out.
@@ -318,7 +320,7 @@ c
 	call uvprobvr(lIn,'npol',type,length,updated)
 	dopol = type.eq.'i'
 c
-c  Disable window-based selection, as thta is done manually.
+c  Disable window-based selection, as that is done manually.
 c
 	call uvset(lIn,'selection','window',0,0.,0.,0.)
 c
@@ -340,6 +342,8 @@ c    sdf
 c    sfreq
 c    restfreq
 c    systemp
+c    xtsys
+c    ytsys
 c
 c  It also returns a description used by a later routine to extract the
 c  useful channels.
@@ -358,10 +362,13 @@ c------------------------------------------------------------------------
 	include 'maxdim.h'
 	integer nschan(MAXWIN),ischan(MAXWIN),nants
 	integer length,nspect,offset,nout,i,j,nsystemp,nxyph
+	integer nxtsys,nytsys
 	double precision sdf(MAXWIN),sfreq(MAXWIN),restfreq(MAXWIN)
 	real systemp(MAXANT*MAXWIN),xyphase(MAXANT*MAXWIN)
+	real xtsys(MAXANT*MAXWIN),ytsys(MAXANT*MAXWIN)
 	character type*1
 	logical unspect,unschan,uischan,usdf,usfreq,urest,usyst
+	logical uxtsys,uytsys
 	logical uxyph
 c
 c  Get the dimensioning info.
@@ -386,10 +393,29 @@ c
 	call uvgetvrd(lIn,'sfreq',sfreq,nspect)
 	call uvprobvr(lIn,'restfreq',type,length,urest)
 	call uvgetvrd(lIn,'restfreq',restfreq,nspect)
+c
+c       System Temperature
+c
 	call uvprobvr(lIn,'systemp',type,nsystemp,usyst)
 	usyst = type.eq.'r'.and.nsystemp.le.MAXANT*MAXWIN.and.
      *				nsystemp.gt.0
 	if(usyst)call uvgetvrr(lIn,'systemp',systemp,nsystemp)
+c
+c       x-feed system temperature
+c
+	call uvprobvr(lIn,'xtsys',type,nxtsys,uxtsys)
+	uxtsys = type.eq.'r'.and.nxtsys.le.MAXANT*MAXWIN.and.
+     *				nxtsys.gt.0
+	if(uxtsys)call uvgetvrr(lIn,'xtsys',xtsys,nxtsys)
+
+c
+c       y-feed system temperature
+c
+	call uvprobvr(lIn,'ytsys',type,nytsys,uytsys)
+	uytsys = type.eq.'r'.and.nytsys.le.MAXANT*MAXWIN.and.
+     *				nytsys.gt.0
+	if(uytsys)call uvgetvrr(lIn,'ytsys',ytsys,nytsys)
+
 	call uvprobvr(lIn,'xyphase',type,nxyph,uxyph)
 	uxyph = type.eq.'r'.and.nxyph.le.MAXANT*MAXWIN.and.
      *				nxyph.gt.0
@@ -416,6 +442,18 @@ c
 	        systemp((nout-1)*nants+j) = systemp((i-1)*nants+j)
 	      enddo
 	    endif
+
+	    if(uxtsys.and.nxtsys.ge.nspect*nants)then
+	      do j=1,nants
+	        xtsys((nout-1)*nants+j) = xtsys((i-1)*nants+j)
+	      enddo
+	    endif
+
+	    if(uytsys.and.nytsys.ge.nspect*nants)then
+	      do j=1,nants
+	        ytsys((nout-1)*nants+j) = ytsys((i-1)*nants+j)
+	      enddo
+	    endif
 c
 	    if(uxyph.and.nxyph.ge.nspect*nants)then
 	      do j=1,nants
@@ -436,6 +474,10 @@ c
 	call uvputvrd(lOut,'restfreq',restfreq,nout)
 	if(nsystemp.ge.nspect*nants)nsystemp = nout*nants
 	if(usyst)call uvputvrr(lOut,'systemp',systemp,nsystemp)
+	if(nxtsys.ge.nspect*nants) nxtsys = nout*nants
+	if(uxtsys) call uvputvrr(lOut,'xtsys',xtsys,nxtsys)
+	if(nytsys.ge.nspect*nants) nytsys = nout*nants
+	if(uytsys) call uvputvrr(lOut,'ytsys',ytsys,nytsys)
 	if(uxyph)call uvputvrr(lOut,'xyphase',xyphase,nxyph)
 c
 c  Determine the output parameters.
