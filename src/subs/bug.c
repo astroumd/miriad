@@ -20,11 +20,12 @@ void bug_c();
 char *Name = NULL;
 int reentrant=0;
 
-typedef void (*proc)(void);
+typedef void (*proc)(void);  /* helper definition for function pointers */
 static proc bug_cleanup=NULL;
 
 /************************************************************************/
-void bugrecover_c(proc cl)
+void bugrecover_c(cl)
+void (*cl)(void);
 /** bugrecover_c -- bypass fatal bug calls for alien clients            */
 /*& pjt                                                                 */
 /*: error-handling                                                      */
