@@ -98,6 +98,12 @@ c                   value of the 'datamin' keyword in the image header.
 c   Default: none.
 c
 c--
+c todo:
+c  the www.inkscape.org website talks about the following modes:
+c    union             OR
+c    difference
+c    intersection      AND
+c    exclusion         XOR ?
 c-----------------------------------------------------------------------
 c  Internal parameters.
       INCLUDE 'maxdim.h'
