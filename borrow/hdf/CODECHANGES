@@ -1,0 +1,163 @@
+#*****************************************************************************
+# 
+#			  NCSA HDF version 3.10r2
+#				Sept 20, 1990
+#
+# NCSA HDF Version 3.10r2 source code and documentation are in the public
+# domain.  Specifically, we give to the public domain all rights for future
+# licensing of the source code, all resale rights, and all publishing rights.
+# 
+# We ask, but do not require, that the following message be included in all
+# derived works:
+# 
+# Portions developed at the National Center for Supercomputing Applications at
+# the University of Illinois at Urbana-Champaign.
+# 
+# THE UNIVERSITY OF ILLINOIS GIVES NO WARRANTY, EXPRESSED OR IMPLIED, FOR THE
+# SOFTWARE AND/OR DOCUMENTATION PROVIDED, INCLUDING, WITHOUT LIMITATION,
+# WARRANTY OF MERCHANTABILITY AND WARRANTY OF FITNESS FOR A PARTICULAR PURPOSE
+# 
+#*****************************************************************************
+
+These are changes made in Release3.10r2
+
+*	fixed bug in DFSDIgetslice
+
+*	reduced overhead of checking in DFSDIgetslice by adding DFIseek
+	and DFIread which does not do the redundant checking
+
+*	added MIPSEL machine type for DEC 3100 and DEC 5000
+
+*	fixed inconsistency in dfivms.h
+
+------------------------------
+
+These are changes made in Release3.10
+
+*	fixed bug concerning checking the status of opening a file
+	with unbuffered i/o
+
+*	Added function DF24readref and DFGRreadref for random access
+	of 24-bit rasters
+
+*	Added function DF24restart
+
+*	Added function DF24setil
+
+*	Speed up the DFSDgetdata, DFSDputdata, DFSDadddata,
+	DFSDgetslice and DFSDputslice functions, especially for UNICOS
+	machines
+
+*	Added functions DFANaddfid, DFABaddfds, DFANgetfidlen,
+	DFANgetfid, DFANgetdslen, DFANgetfds, DFANaddfann,
+	DFANgetfannlen, DFANgetfann and DFANlastref.
+
+*	Revised DFANlablist so that it returns all ref numbers for a
+	given tag
+
+*	Fixed bug with DFSDgetdata where it does not move to the next
+	SDG
+
+*	Added some macros to make passing character arrays from
+	fortran to C easier
+
+*	Fixed some more minor bugs
+
+*	Recoded some parts for cosmetic reasons
+
+--------------
+New features of HDF 3.0 include the following:
+
+Fortran support for Macintosh II, for Language System Fortran and MPW C
+3.0.
+
+An interface for basic i/o of 24-bit raster images, which includes the 
+following routines:
+
+  DF24addimage:appends a 24-bit raster image set to the file.
+
+  DF24getdims: retrieves the dimensions and interlace of the
+               image.
+
+  DF24getimage: retrieves the image and stores it in an array.
+
+  DF24reqil:   specifies an interlace to be used in place of the
+               interlace indicated in the file when the next raster
+               image is read.
+
+
+An interface for annotating HDF data objects and files, which includes 
+the following routines:
+
+  DFANgetlablen: gets length of label of a tag/ref
+  
+  DFANgetlabel:  gets label of tag/ref
+
+  DFANgetdesclen: gets length of description of tag/ref
+
+  DFANgetdesc:   gets description of tag/ref
+
+  DFANputlabel:  puts label of tag/ref
+
+  DFANputdesc:   puts description of tag/ref
+
+  DFANlastref:   returns ref of last annotation read or written
+
+  DFANlablist:   gets list of labels for a particular tag
+
+
+An interface for input and output of 8-bit palettes, including the 
+following routines:
+
+  DFPaddpal:    appends a palette to a file.
+
+  DFPgetpal:    reads in the next palette in the file.
+
+  DFPputpal:    writes a palette to a file.
+
+  DFPnpals:     indicates number of palettes in a file.
+
+  DFPwriteref:  sets the reference number of the next palette to be
+                written.
+
+  DFPreadref:   gets the reference number of the next palette to be
+                retrieved.
+
+  DFPrestart:   specifies that the next call to DFPgetpal reads the
+                first palette in the file, rather than the next.
+
+  DFPlastref:   returns the value of the reference number most recently
+                read or written.
+
+
+
+Scientific data set routines for storing and retreiving subsets (slices) 
+of scientific data, and for choosing optional storage formats and data 
+types:
+
+  DFSDstartslice: prepares system to write part of a dataset to a file.
+
+  DFSDputslice:   writes part of a dataset to a file.
+
+  DFSDendslice:   indicates write completion for part of a dataset.
+
+  DFSDgetslice:   reads part of a dataset.
+
+  DFSDsettype:    specifies data attributes: data type and 
+                  representation, system type, and array order.
+
+
+* new utilities, including the following:
+
+  hdfed:    lets you browse in an HDF file and manipulate some of the
+            data
+
+  fptohdf:  converts floating point data to HDF floating point data
+            and/or 8-bit raster images
+
+  r24tohdf: converts a raw RGB 24-bit image to an 8-bit RIS8 with a
+            palette
+
+  paltohdf: converts a raw palette to hdf format
+
+  hdftopal: converts palette in an hdf file to raw format
