@@ -215,7 +215,8 @@ end_loop1:
 	else if ($linux == 1) then
 #		echo man -C /dev/null $root 
 #		man -C /dev/null $root >& /dev/null
-		man -F -C /dev/null $root >& /dev/null
+#		man -F -C /dev/null $root >& /dev/null
+		man -F -C /dev/null $root >& /tmp/mir.genman.tmp
 		if(0)then
 		if (-e $cat/$root.$dext.gz) then
 		   # this will work on slackware  (man 1.5b)
