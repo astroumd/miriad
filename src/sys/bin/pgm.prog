@@ -32,7 +32,7 @@ set spec  = (`ls $srcdir/spec`)
 set theDirs = (tools        prog/analysis prog/calib \
 	       prog/convert prog/deconv   prog/disp  \
 	       prog/map     prog/misc     prog/vis \
-	       prog/atnf)
+	       prog/atnf    prog/wsrt)
 #
 if (! -e $bindir/doc   ) $prog_c $srcdir/tools/doc
 if (! -e $bindir/ratty ) $prog_c $srcdir/tools/ratty
