@@ -44,16 +44,17 @@ c    14may72 mchw  Original version.
 c    27dec95 mchw  Added keywords for nrow and ncol 
 c    15oct97 mchw  Added beauty. 
 c    15oct97 rjs   Added truth. 
+c    11sep02 mchw  Added logic. 
 c----------------------------------------------------------------------c
 	character version*(*),infile*132,outfile*132,line*132,dat*24
 	character device*80
 	integer nx,ny
-	parameter(version='(version 15-OCT-97)')
+	parameter(version='(version 11-Sep-02)')
 	integer MAXROW,MAXCOL
 	parameter(MAXROW=2048,MAXCOL=16)
-	real data(MAXROW,MAXCOL),maxref/0./
+	real data(MAXROW,MAXCOL),maxamp/0./
 	complex out(MAXROW,MAXCOL)
-	complex ref(MAXROW),temp(MAXROW)
+	complex temp(MAXROW)
 	integer i,j,nrow,ncol,refcol,k
 	real ave(MAXCOL),rms(MAXCOL),corr(MAXCOL,MAXCOL)
         real xx(MAXROW),yy(MAXROW)
@@ -98,6 +99,7 @@ c
 c  Else test with autocorrelation and with known offset
 c
 	else
+	  ncol = 2
 	  call output(
      *		'Test - a pill box 3 rows wide and shifted by 10 rows.')
 	  do i=1,nrow
@@ -123,16 +125,25 @@ c
             enddo
           enddo
 	  ave(j) = ave(j)/nrow
-	  rms(j) = sqrt(rms(j)/nrow-ave(j)*ave(j))
+	  rms(j) = rms(j)/nrow - ave(j)*ave(j)
+	  if(rms(j).ge.0.) then
+	    rms(j) = sqrt(rms(j))
+	  else
+	    rms(j) = 0.
+	  endif
         enddo
 c
 	write(line,'(a)') 'column  average  rms   correlation matrix'
 	call output(line)
 	do j=1,ncol
           do k=1,ncol
+	   if(rms(j)*rms(k).ne.0.)then
 	    corr(j,k) = (corr(j,k)/nrow-ave(j)*ave(k))/(rms(j)*rms(k))
+	   else
+            corr(j,k) = 0.
+	   endif
 	  enddo
-	  write(line,'(i4,x,16f8.3)') 
+	  write(line,'(i4,x,16f10.3)') 
      *				j,ave(j),rms(j),(corr(j,k),k=1,ncol)
 	  call output(line)
         enddo
@@ -149,25 +160,29 @@ c
             data(i,j) = data(i,j) - ave(j)/nrow
           enddo
 c
-c  FFT and normalize ref column
+c  FFT columns
 c
 	do j=1,ncol
 	  call fftrc(data(1,j),out(1,j),1,nrow)
 	enddo
-
-	do i=1,nrow/2+1
-	  ref(i) = out(i,refcol)
-	  maxref = max(maxref,cabs(ref(i)))
-	enddo
-	do i=1,nrow/2+1
-	  ref(i) = ref(i)/maxref
+c
+c  normalize each FFT
+c
+	do j=1,ncol
+	  maxamp = 0.
+	  do i=1,nrow/2+1
+	    maxamp = max(maxamp,cabs(out(i,j)))
+	  enddo
+	  do i=1,nrow/2+1
+	    out(i,j) = out(i,j)/maxamp
+	  enddo
 	enddo
 c
 c  product of FFT's and inverse FFT to get cross correlation
 c
 	do j=1,ncol
 	  do i=1,nrow/2+1
-	    temp(i) = out(i,j)*conjg(ref(i))/nrow
+	    temp(i) = out(i,j) * conjg(out(i,refcol))
 	  enddo
 	  call fftcr(temp(1),data(1,j),-1,nrow)
 	enddo
@@ -258,6 +273,8 @@ c
           call pgswin(xlo,xhi,ylo,yhi)
 	  call pgpt(nrow,xx,yy,1)
           call pgtbox('BCNST',0.,0,'BCNST',0.,0)
+          xaxis = 'lag'
+          yaxis = 'cross correlation'
           title = 'column '//itoaf(j)//'File='//infile
           length = len1(title)
           call pglab(xaxis,yaxis,title(1:length))
