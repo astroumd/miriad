@@ -1,3 +1,22 @@
 - integer*8 support; ratty flag to go back to the old situation if
   the fortran compiler does not support integer*8
   [this will support scratchfiles > 8GB]
+
+- write out proper long integers in itemize
+
+- a conversion routine from MIR4 to MIR3 format (int8 -> int) if possible
+  this program/script should check if all the int8 variables are short
+  enough that they can be cut into an int4:
+	nwcorr
+	ncorr
+	vislen	(points to visdata, which does not need to be changed)
+	
+	? flags		?? could this ever be > 2GB ???
+	? wflags
+
+- programs that read ascii files, tables and such should *as a rule*
+  skip lines that start with the (universal unix) comment symbol (#)
+
+- mir-config that can spit out the cflags, libs etc...
+  for example , in the current release uvio  is not linked with LFS,
+  unlike the rest. so uvio will hang....
