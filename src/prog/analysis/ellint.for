@@ -35,9 +35,10 @@ c	The offset of the center of the annuli in arcsec from the
 c	reference pixel, measured in the directions of RA and DEC.
 c@ pa
 c	Position angle of ellipse major axis in degrees. Default is 0 (north).
+c       PA is measured in the usual sense, N through E (counter clockwise).
 c@ incline
 c	The ellipse is assumed to be a circular structure that appears
-c	ellitpical because it is viewed at some inclination. The "incline"
+c	elliptical because it is viewed at some inclination. The "incline"
 c	parameter gives this inclination angle in degrees. Default=0. (face on)
 c@ radius
 c	Inner and outer radii and step size along major axis in arcsecs.
@@ -59,6 +60,10 @@ c	  median    Find the median of each annulus instead of the average.
 c	  mode      Find the mode of each annulus instead of the average.
 c	  natural   Assume keywords "center" and "radius" are in natural
 c	            units rather than arcsec.
+c         table     Output ring data in logfile. No fitting done. Logfile
+c                   now contains coordinates w.r.t. the reference pixel 
+c                   (in arcsec), the image value, and the radius in the disk
+c                   defined by PA and INCLINE.
 c@ log
 c	The output log file. The default is the terminal.
 c--
@@ -91,12 +96,14 @@ c    rjs   06mar97	Added options=natural, and some other changes.
 c    mchw  29apr97	Fix bug if neither median nor mode. Again.
 c    rjs   10jun97      Change pbtype to telescop
 c    dpr   02jan01      Allow radii with non-integral number steps
+c    pjt   02may01      Optional table output (options=table), rearranged
+c                       some code (memfree)
 c----------------------------------------------------------------------c
 	include 'mirconst.h'
 	include 'maxdim.h'
 	include 'mem.h'
         character*(*) label,version
-        parameter(version='version 1.0 01-Jan-2001')
+        parameter(version='version 1.0 02-may-2001')
         double precision rts,value
         parameter(label='Integrate a Miriad image in elliptical annuli')
         integer maxnax,maxboxes,maxruns,naxis,axis,plane,maxring
@@ -110,8 +117,8 @@ c
         real center(2),pa,incline,rmin,rmax,rstep
         real buf(maxdim),cospa,sinpa,cosi,x,y,r,ave,rms,fsum,cbof
         real pixe(maxdim),flux(maxdim),flsq(maxdim),pbfac
-        logical mask(maxdim),dopb,keep,domedian,domode,natural
-        character in*64,logf*64,line*132,cin*1,ctype*9,caxis*13,units*13
+        logical mask(maxdim),dopb,keep,domedian,domode,natural,dotab
+        character in*80,logf*80,line*132,cin*1,ctype*9,caxis*13,units*13
         character btype*25,pbtype*16
 c
 c  Externals.
@@ -135,7 +142,7 @@ c
         call keyr('radius',rmax,0.)
         call keyr('radius',rstep,0.)
         call keya('telescop',pbtype,' ')
-        call getopt(dopb,domedian,domode,natural)
+        call getopt(dopb,domedian,domode,natural,dotab)
         call keya('log',logf,' ')
         call keyfin
 c
@@ -145,6 +152,7 @@ c
         call rdhdi(lin,'naxis',naxis,0)
         naxis = min(naxis,maxnax)
         if(nsize(1).gt.maxdim)call bug('f','Input file too big for me')
+
 c
 c  Set up the region of interest.
 c
@@ -273,13 +281,18 @@ c
                 flsq(ir) = flsq(ir) + buf(i)*buf(i)
                 irmin = min(ir,irmin)
                 irmax = max(ir,irmax)
+                if (dotab) then
+                   write(line,'(4f11.3,1x,3(i3,1x))') x,y,buf(i),r,
+     *                                                ir,i,j
+                   call logwrit(line)
+                endif
               end if
             enddo
           enddo
 c
-c If we want the median, make a second pass through the plane.
+c If we want the median or mode, make a second pass through the plane.
 c We now know how big the arrays need to be for each annulus
-c so allocate memory first for median arrays
+c so allocate memory first for median/mode arrays
 c
           if (domedian.or.domode) then
             do ir = irmin, irmax
@@ -314,6 +327,7 @@ c
 c
 c  Write out the results (for mean and median only)
 c
+        if (.not.dotab) then
           call logwrit(' ')
           if (domedian) then
             write(line,'(a,a,a,a,a,a)') '   Radius(") ',
@@ -349,18 +363,15 @@ c
             end if
 c
             call logwrit(line(1:72))
-          enddo
-          if (domedian) then
-            do ir = irmin, irmax
-              call memfree (ipm(ir), nint(pixe(ir)), 'r')
-            end do
-          end if
+         enddo
+
 c
 c
 c   write out the results for mode
 c
 c
-        if(domode)then
+
+         if(domode)then
           call logwrit(' ')
           if (domode) then 
             write(line,'(a,a,a,a,a,a)') '   Radius(") ',
@@ -397,30 +408,35 @@ c
 c
             call logwrit(line(1:72))
           enddo
-          if (domode) then
+         end if
+
+         if (domedian.or.domode) then
             do ir = irmin, irmax
-              call memfree (ipm(ir), nint(pixe(ir)), 'r')
+               call memfree (ipm(ir), nint(pixe(ir)), 'r')
             end do
-          end if
-        endif
-c
+         endif
+
+c     
 c  End our mode addition.
+c
+         endif
 c
 c  Increment plane.
 c
           plane = plane + 1
-        enddo
+      
+      enddo
 c
 c  All done.
 c
-        call xyclose(lin)
-        call logclose
-        end
+      call xyclose(lin)
+      call logclose
+      end
 c********1*********2*********3*********4*********5*********6*********7*c
-      subroutine getopt (dopb,median,mode,natural)
+      subroutine getopt (dopb,median,mode,natural,dotab)
       implicit none
 c
-      logical dopb, median, mode, natural
+      logical dopb, median, mode, natural, dotab
 c
 c  Decode options array into named variables.
 c
@@ -429,13 +445,15 @@ c     dopb       DO primary beam corection
 c     median     Use medians not means
 c     mode	 Use modes not means.
 c     natural	 Use natural units rather than arcsec.
+c     table      Output ring values in a table,no fitting done
 c-----------------------------------------------------------------------
       integer maxopt
-      parameter (maxopt = 4)
+      parameter (maxopt = 5)
 c
       character opshuns(maxopt)*8
       logical present(maxopt)
-      data opshuns /'pbcorr  ', 'median  ', 'mode    ','natural '/
+      data opshuns /'pbcorr  ', 'median  ', 'mode    ','natural ',
+     *              'table   '/
 c-----------------------------------------------------------------------
       call options ('options', opshuns, present, maxopt)
 c
@@ -443,6 +461,7 @@ c
       median = present(2)
       mode = present(3)
       natural = present(4)
+      dotab = present(5)
 c
       end
 c************************************************************************
