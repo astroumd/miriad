@@ -82,6 +82,10 @@ History:
   rlp 10jun97 Print keywords out in lower case.
   pjt 12jun01 Increased N_PGMR, made a static in lognam()
       15jun01 and defensed agains future increments for N_PGMR
+
+TODO:
+  - spaces before slash-star commands are not understood 
+
 ********************************************************************/
 char *version = { "version 2.6 - 15-Jun-01" };
 /*******************************************************************/
