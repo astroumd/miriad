@@ -345,9 +345,10 @@ c    pjt  13-may-03  Use basant/antbas and report > 256 cases?
 c    pjt  17-oct-03  listen to badly returned basant ant's
 c    rjs  29-dec-03  Be more robust to poorly formed CTYPE labels in inputs
 c    pjt   4-jan-05  merged in the above line:
+c    pjt   6-jan-05  Allow importing ant1 > ant2 data using new basanta()
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version='Fits: version 4-jan-05')
+	parameter(version='Fits: version 6-jan-05')
 	integer MAXBOXES
 	parameter(MAXBOXES=2048)
 	character in*128,out*128,op*8,uvdatop*12
@@ -737,10 +738,8 @@ c
 	 endif
 	 time = visibs(uvT) + T0
 	 bl = int(visibs(uvBl) + 0.01)
-	 call basant(DBLE(visibs(uvBl)),ant1,ant2)
+	 call basanta(DBLE(visibs(uvBl)),ant1,ant2)
 	 if (ant1.gt.0 .and. ant2.gt.0) then
-c	  ant1 = bl/256
-c	  ant2 = mod(bl,256)
 	  config = nint(100*(visibs(uvBl)-bl))+1
 	  if(uvSrcid.gt.0) srcid  = nint(visibs(uvSrcId))
 	  if(uvFreqid.gt.0)freqid = nint(visibs(uvFreqId))
@@ -2552,8 +2551,8 @@ c  AIPS                      bl = 256*ant1 + ant2                        ant1 - 
 c
 c  In both cases ant1 is normally less than ant2.
 c  ant1=0 should never happen, since bad ant's were filtered before.
-c
-	    call Basant(preamble(5),ant1,ant2)
+c  Are we sure that ant1 < ant2 always here ??
+	    call Basanta(preamble(5),ant1,ant2)
 	    if (ant1.eq.0) call bug('f','bad antenna ant1=1')
 	    pols(P) = pols(P) + 1
 c
