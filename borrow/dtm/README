@@ -1,0 +1,86 @@
+		README file for DTM library
+		===========================
+			   Version 2.3
+
+The tar file should contain the following files.
+
+	dtm/README		this file	
+	dtm/libsrc/*		source for the DTM library proper	
+	dtm/examples/*		source for sample programs	
+	dtm/man/*		man pages for DTM functions
+	dtm/server/*		source for the sample name server
+	dtm/tutorial/*		tutorial document with example codes
+
+This version of DTM is incompatible with DTM 1.X versions as the
+format of the messages has changed.
+
+Supported Systems
+=================
+
+Cray, Convex, Sun, SGI, DEC (MIPS), RS6000, HP, Mac
+	and most unix boxes with DOS support coming soon.
+
+Installation
+============
+
+1. cd to /usr/local or your root for locally installed software packages
+
+2. uncompress dtm2.3r6.tar.Z
+
+3. tar xvf dtm2.3r6.tar
+
+4. cd dtm/libsrc
+
+5. make <MACHINE>
+
+	where <MACHINE> is one of
+		sun
+		sgi
+		cray
+		ibm
+		convex
+		dec
+		vax
+		hp
+
+	NOTE: if an error occurs about not being able to find 
+			make.depend.XXX simply 'touch make.depend.XXX'
+			(XXX either null or as in the error message)
+			'make depend' works on some platforms to provide
+			automatic dependancy generation for assitance in
+			develpment.
+
+		  There is support for building multiple platform versions
+		  out of the same source directory.  Setting the ARCH
+		  shell variable to .sun4, .sgi etc allows machine 
+		  spacific version to be built in the same directory with
+		  the command 'make spec'.
+
+6. make install DIR=/usr/local
+
+	The library will by copied into $DIR/lib
+	The headers will by copied into $DIR/include
+
+7. The examples, sample server can be built in their directories
+	with 'make all' (or 'make spec' for multiple platforms)
+
+
+New additions in 2.3
+====================
+
+Limitted X support
+Additional Utility functions
+More stable/more portable
+
+New additions in 2.0
+====================
+
+Input and Output multiplexing
+Support for routing/logical port names
+Type of service (ASYNC/SYNC)
+
+Future Additions
+================
+
+In the next version we expect better support for DOS machines
+as well as a more flexible interface to application frameworks.
