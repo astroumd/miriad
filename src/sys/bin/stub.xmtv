@@ -1,0 +1,86 @@
+#!/bin/csh -f
+# --------------------------------------------------- 
+set mir    = $MIR
+set host   = $MIRHOST
+set lsys   = $mir/bin/localsys
+set srcdir = $mir/src/spec/xmtv
+set bindir = $mir/bin/$host
+set libdir = $mir/lib/$host
+set docdir = $mir/doc/prog
+set resdir = $mir/doc/misc
+# --------------------------------------------------- 
+if (-e $lsys/stub.xmtv) then
+  echo $lsys/stub.xmtv exists =================
+  exec $lsys/stub.xmtv
+endif
+# --------------------------------------------------- 
+
+cd $srcdir
+set tmp = "xmtv.c `ls *.c | grep -v xmtv.c`"
+set src = ""
+set obj = ""
+foreach i ($tmp)
+   set src = "$src $srcdir/$i"
+   set obj = "$obj ${i:r}.o"
+end
+# --------------------------------------------------- 
+set inc = "-I$srcdir $Cinclude"
+#
+#  Find out which version of X11 is in place.
+#
+set release = 4
+if ($?MIRXINC == 0) then
+  set dlist = ( /usr/include/X11 /usr/openwin/include/X11 )
+else
+  set dlist = ( $MIRXINC )
+endif
+foreach d ( $dlist )
+  set i = ${d}/Intrinsic.h
+  if ((-e ${i}) && (`grep -c XtSpecificationRelease ${i}` > 0)) then
+    set release = `grep XtSpecificationRelease ${i} | awk '{print $NF}'`
+    break
+  endif
+end
+switch ($release)
+  case  6:
+    set libs = "$Clinkdir -lXaw -lXmu -lXt -lSM -lICE -lXext -lX11 -lm"
+    breaksw
+  case  5:
+    set libs = "$Clinkdir -lXaw -lXmu -lXt -lXext -lX11 -lm"
+    breaksw
+  case  4:
+  default:
+    echo "### Can not build this application with release $release."
+    exit 1
+    breaksw
+endsw
+if ($host == sun4sol) set libs = "$libs -lsocket -lnsl -lgen"
+# --------------------------------------------------- 
+cd $libdir
+rm -fr $obj >& /dev/null
+echo "$Ccompile $Coptions -o $bindir/xmtv.exe $inc $src $libs"
+      $Ccompile $Coptions -o $bindir/xmtv.exe $inc $src $libs
+rm -fr $obj >& /dev/null
+
+(cd $docdir; doc -p $srcdir/xmtv.c)
+# --------------------------------------------------- 
+# Create XAPPLRESDIR file and execution script.
+#
+cp $srcdir/XMtv.ad $resdir/XMtv
+
+cat <<END_OF_TEXT > $bindir/xmtv
+#!/bin/csh -f
+# This script will enable you to run the XMtv application without
+# having to move the XMtv resource file to your home or defaults directory.
+
+set noglob
+
+setenv XAPPLRESDIR $resdir
+
+exec $bindir/xmtv.exe \${*:q}
+
+END_OF_TEXT
+chmod 755 $bindir/xmtv
+#
+ls -l $bindir/xmtv.exe $bindir/xmtv $resdir/XMtv
+exit 0
