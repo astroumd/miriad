@@ -22,9 +22,10 @@
 /*  rjs 29apr99   Get hdprobe to check for string buffer overflow.	*/
 /*  dpr 11may01   Descriptive error for hisopen_c                       */
 /*  pjt 22jun02   MIR4 prototypes and using int8 for long integers      */
-/*  pjt/rjs 1dec04 replaced shortcut rdhdd code with their own readers  */
+/*  pjt/rjs 1jan05 replaced shortcut rdhdd code with their own readers  */
 /*                 this fixes a serious bug in rdhdl for large values   */
 /*                Also adding in some bugv_c() called to replace bug_c  */
+/*  pjt 12jan05   Fixed up type conversion for int8's in rhhdl          */
 /************************************************************************/
 
 #include <stdlib.h>
@@ -407,7 +408,7 @@ void rdhdl_c(int thandle,Const char *keyword,int8 *value,int8 defval)
 {
   int item;
   char s[ITEM_HDR_SIZE];
-  int iostat,length,itemp,offset;
+  int iostat,length,offset;
 
 /* Firstly assume the variable is missing. Try to get it. If successful
    read it. */
@@ -423,10 +424,8 @@ void rdhdl_c(int thandle,Const char *keyword,int8 *value,int8 defval)
     iostat = 0;
     if(      !memcmp(s,int8_item, ITEM_HDR_SIZE)){
       offset = mroundup(ITEM_HDR_SIZE, H_INT8_SIZE);
-      if(offset + H_INT8_SIZE == length){
-	hreadl_c(item,&itemp,offset,H_INT8_SIZE,&iostat);
-	*value = itemp;
-      } 
+      if(offset + H_INT8_SIZE == length)
+	hreadl_c(item,value,offset,H_INT8_SIZE,&iostat);
     } else
       bugv_c('f',"rdhdl_c: item %s not an int8",keyword);
       
