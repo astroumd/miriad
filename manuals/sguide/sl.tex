@@ -1,0 +1,250 @@
+%------------------------------------------------------------------------
+% MIRIAD Subroutine Library Manual
+%------------------------------------------------------------------------
+%  History:
+%            27jan91 mjs  Original version.
+%            06feb91 bpw  Capture info from in-code docs.
+%            15feb91 mjs  Mods.
+%            17mar91 mjs  Changed "Miriad" to "MIRIAD"
+%------------------------------------------------------------------------
+\input sl_format
+\pageno=1
+%------------------------------------------------------------------------
+% Chapter 1
+%------------------------------------------------------------------------
+\beginchapter{1}{HOW TO USE THIS MANUAL}
+
+The {\bf MIRIAD Subroutine Libraries Manual} is a collection of facts
+useful to MIRIAD programmers. It contains lists of subroutines
+called by MIRIAD programs and documentation on those subroutines.
+The sole purpose of this manual is to serve as a look-up reference book
+of subroutines that are callable by MIRIAD programs.
+
+\vskip 0.5in
+\par It does not explain how to use subroutines, nor gives any reasoning
+as to why they are used (see the {\bf MIRIAD Programmer's Guide} for that
+information).
+
+\vskip 0.5in
+\par Chapters 3 to 6 comprise an index of the different subroutine
+libraries used in MIRIAD: the MIRIAD subroutine library,
+special MIRIAD subroutines in development, the PGPLOT library and
+the LINPACK library. Chapters 7 and 8 give the full description of all
+MIRIAD subroutines. PGPLOT and LINPACK subroutines are described
+in their respective manuals.
+
+\vskip 0.5in
+\par There is no information in this manual that is intended to be useful
+to MIRIAD users (see the {\bf MIRIAD User's Guide} or the {\bf MIRIAD
+Cookbook} for that information).
+
+\endchapter
+%------------------------------------------------------------------------
+% Chapter 2
+%------------------------------------------------------------------------
+\beginchapter{2}{GENERAL INFORMATION}
+
+\beginsection MIRIAD Programmers
+\par The ``Pgmr'' field (the programmer's initials) is the means by which
+programmers identify themselves within MIRIAD source code. This
+is typically used in comment statements within the source code to
+identify subroutine ownership or responsibility, and to specify who
+made changes to the code.
+{\eightpoint\begintt
+Pgmr     Name                      INTERNET               phone
+----  --------------    ------------------------------ ------------
+bpw   Bart Wakker       wakker@sirius.astro.uiuc.edu   217-244-4207
+jm    Jim Morgan        morgan@astro.umd.edu           301-405-6853
+lgm   Lee Mundy         lgm@astro.umd.edu              301-405-1529
+mjs   Mark Stupar       mstupar@sirius.astro.uiuc.edu  217-244-4208
+mchw  Mel Wright        wright@bkyast.berkeley.edu     415-642-0420
+nebk  Neil Killeen      nkilleen@rpepping.oz.au
+pjt   Peter Teuben      teuben@astro.umd.edu           301-405-1540
+rjs   Robert Sault      rsault@rpepping.oz.au
+wh    Wilson Hoffman    hoffman@bkyast.berkeley.edu    415-642-7768
+hr    Harold Ravlin     hr@sirius.astro.uiuc.edu       217-244-4208
+rmc   Dick Crutcher     crutcher@sirius.astro.uiuc.edu 217-333-9581
+----  --------------    ------------------------------ ------------
+\endtt}
+
+\beginsection Subroutine Categories Description
+\par This section lists the functional categories of MIRIAD
+subroutines. All MIRIAD subroutines are placed into one of the
+categories below.  For descriptions, see the section on documentation
+formats in the {\bf MIRIAD Programmer's Guide}.
+{\eightpoint\begintt
+------------------  ------------------  ------------------  ------------------
+Baselines           Calibration         Convolution         Coordinates
+Display             Error-Handling      Files               Fits
+Fourier-Transform   Gridding            Header-I/O          History
+Image-Analysis      Image-I/O           Interpolation       Least-Squares
+Log-File            Low-Level-I/O       Mathematics         Model
+PGPLOT              Plotting            Polynomials         Region-of-Interest
+SCILIB              Sorting             Strings             Terminal-I/O
+Text-I/O            Transpose           TV                  User-Input
+User-Interaction    Utilities           uv-Data             uv-I/O
+Zeeman              Other
+------------------  ------------------  ------------------  ------------------
+\endtt}
+
+\beginsection List of MIRIAD Manuals
+\par Below is a list of all MIRIAD manuals. \par
+\medskip\par{\parindent=0.5cm
+MIRIAD Cookbook                    \par
+MIRIAD User's Guide                \par
+MIRIAD Programmer's Guide          \par
+MIRIAD Subroutine Libraries Manual \par
+MIRIAD Executable Modules Manual   \par
+MIRIAD PGPLOT Manual               \par
+MIRIAD LINPACK Manual              \par
+}
+
+\endchapter
+%------------------------------------------------------------------------
+% Chapter 3
+%------------------------------------------------------------------------
+\beginchapter{3}{LIST OF MIRIAD LIBRARY SUBROUTINES}
+
+This chapter lists MIRIAD subroutines compiled into MIRIAD's
+own library (libmir.a). All source code is in FORTRAN (in which case it
+has file extension ``.for'' and is processed by MIRIAD's RATTY
+preprocessor) or C. Refer to Chapter 7 of this manual for descriptions
+and specification of the calling sequence.
+
+\beginsection Sorted by Functional Category
+\par\input sl_ch3f
+
+\beginsection Sorted by Source Code of Origin
+\par\input sl_ch3s
+
+\beginsection Sorted Alphabetically
+\par\input sl_ch3a
+
+\beginsection Sorted by Responsible Programmer
+\par\input sl_ch3p
+
+\endchapter
+%------------------------------------------------------------------------
+% Chapter 4
+%------------------------------------------------------------------------
+\beginchapter{4}{LIST OF PGPLOT LIBRARY SUBROUTINES}
+
+This chapter lists PGPLOT subroutines compiled into MIRIAD's
+own PGPLOT library (libpgplot.a).  All source code is in FORTRAN,
+and is not processed by MIRIAD's RATTY preprocessor.  Refer to
+the PGPLOT manual for a fuller description of the subroutines, and
+for a specification of the calling sequence.
+
+\beginsection Modifications to PGPLOT
+
+Several modifications to PGPLOT have been made by MIRIAD
+programmers.  All are minor, and they are listed below.
+\vskip 0.25in
+
+Routines {\bf cgidefs.h} and {\bf cgiconstants.h} have been added, and
+references to system-owned CGI includes have been changed to references
+to local includes.  CGI can no longer be assumed to exist on a Sun system,
+and PGPLOT's CGI driver {\bf cfopenvws.c} requires these two include files
+for programs to be loaded.  As noted in the code, copying these two include
+files into PGPLOT does not violate Sun copyrights.
+\vskip 0.25in
+
+PGPLOT routine {\bf cfopenvws.c} now requires local CGI include files rather
+than system-owned CGI include files.
+\vskip 0.25in
+
+SunView driver {\bf svdriv.c} now accepts any delimiter when a user
+specifies window size, rather than only a comma (which was intercepted by
+MIRIAD and interpreted as a keyword's parameter delimiter).  This
+modification has been accepted by Cal Tech to be a part of future PGPLOT
+releases.
+\vskip 0.25in
+
+Driver controller {\bf noXgrexecSUN.f} has been added.  It is the same as
+PGPLOT routine {\bf grexecSUN.f}, except that there is no X-driver called
+(for use by installations without X).
+\vskip 0.25in
+
+The contents of the manual directory have been moved to MIRIAD's own
+manuals directory.
+\vskip 0.25in
+
+\beginsection Sorted by Functional Category
+\par\input sl_ch4f
+
+\beginsection Sorted Alphabetically
+\par\input sl_ch4a
+
+\par\endchapter
+%------------------------------------------------------------------------
+% Chapter 5
+%------------------------------------------------------------------------
+\beginchapter{5}{LIST OF LINPACK LIBRARY SUBROUTINES}
+
+\par\input sl_ch5
+
+\par\endchapter
+%------------------------------------------------------------------------
+% Chapter 6
+%------------------------------------------------------------------------
+\beginchapter{6}{LIST OF MIRIAD TEST SUBROUTINES}
+
+This chapter lists MIRIAD subroutines that are compiled and loaded
+into main programs only (and thus, are not generally available without
+copying the code directly from the source program). These subroutines
+are listed here and documented in Chapter 8 so that MIRIAD
+programmers are aware of their existence. If any are deemed to be of
+``general utility'', then it can be removed from its main program and
+compiled into the MIRIAD subroutine library (libmir.a).
+\par All source code is in FORTRAN (in which case it has file extension
+``.for'' and is processed by MIRIAD's RATTY preprocessor) or C.
+Refer to Chapter 8 of this manual for a fuller description of the
+subroutines, and for a specification of the calling sequence.
+
+\beginsection Sorted by Functional Category
+\par\input sl_ch6f
+
+\beginsection Sorted by Source Code of Origin
+\par\input sl_ch6s
+
+\beginsection Sorted Alphabetically
+\par\input sl_ch6a
+
+\beginsection Sorted by Responsible Programmer
+\par\input sl_ch6a
+
+\endchapter
+%------------------------------------------------------------------------
+% Chapter 7
+%------------------------------------------------------------------------
+\beginchapter{7}{MIRIAD SUBROUTINE DOCUMENTATION}
+
+\par\input sl_ch7subs
+
+\par\endchapter
+%------------------------------------------------------------------------
+% Chapter 8
+%------------------------------------------------------------------------
+\beginchapter{8}{MIRIAD TEST SUBROUTINE DOCUMENTATION}
+
+\par\input sl_ch8test
+
+\par\endchapter
+%------------------------------------------------------------------------
+% TOC
+%------------------------------------------------------------------------
+\closeout\toc
+
+\bgroup
+\pageno=-1
+\footline={\hss}
+\headline={\hss}
+\input sl_title
+
+\footline={\hss\tenrm\folio\hss}
+\centerline{\bit Contents}
+\vskip 0.5in
+\input toc
+\endchapter
+
+\end
