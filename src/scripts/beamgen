@@ -30,13 +30,14 @@
 #   mchw 11mar98   Use UVGEN's  default for baseunit.
 #   mchw 02jul98   updated corr keyword for uvgen.
 #   mchw 06aug98   Added select input. Added systemp to suppress warning from uvgen.
+#   mchw 12feb02   change beamgen.source to point.source
 #------------------------------------------------------
 
 # define the valid printername that cause spooling
   set valid_printers=(/ps /vps /vcps /cps)
 
 echo "**************************************************************"
-echo "   Plot uvtracks and synthesized beam. (06-AUG-98 version)"
+echo "   Plot uvtracks and synthesized beam. (12-FEB-02 version)"
 echo "**************************************************************"
 
 # check inputs
@@ -130,7 +131,7 @@ echo "**************************************************************"
   if ($lpr) echo Spooling pgplot.ps to printer
 
 # create tracks and plot them
-  uvgen ant=$ary baseunit=$baseunit radec=0,$2 ellim=$ellim out=$1.$2.uv harange=$harange source=$MIRCAT/beamgen.source systemp=1
+  uvgen ant=$ary baseunit=$baseunit radec=0,$2 ellim=$ellim out=$1.$2.uv harange=$harange source=$MIRCAT/point.source systemp=1
   uvplt  vis=$1.$2.uv axis=uc,vc options=nobase,equal device=$3 select=$select
   if($lpr) lpr pgplot.ps
 
