@@ -1,6 +1,6 @@
 %\documentclass{report}
 \documentstyle[11pt,aaspp4]{article}
-\slugcomment{BIMA memo xxx - 09jun2003}
+\slugcomment{CARMA memo xxx - 10feb2004}
 
 %\documentclass{article}
 
@@ -20,13 +20,15 @@
 \begin{abstract}
  
 We summarize the current status of MIRIAD, in particular efforts that
-have been going on since the introduction of CVS in early 2001.  Miriad
+have been going on since the introduction of CVS for code
+management in early 2001.  Miriad
 is routinely used for BIMA, OVRO, ATNF and WSRT data reduction.  In
 collaboration with WSRT and ATNF several modules for the analysis of
 data from these arrays have been added to MIRIAD.  MIRIAD is being used
 for ALMA, ATA, CARMA, and LOFAR simulations.  Support for more than 256
 antennas and for datasets larger than 2GB (8GB upcoming) has been added
-to enable ATA and LOFAR simulations.
+to enable ATA and LOFAR simulations. Other new directions include
+the WSRT parallelization efforts and a python interface to miriad.
 
 
 \end{abstract}
@@ -39,11 +41,10 @@ Sault) and B (BIMA,  first at Illinois, then at Maryland). An attempt was made
 to merge the two versions,
 as presented in a proposal by Teuben at a BIMA board meeting in 2000 (?), but
 the ATNF group preferred to continue their own development. This proposal
-was triggered by the departure of Doug Roberts, which
-left no formal support for Miriad 
-maintenance at NCSA. 
+in turn was triggered by the departure of the then miriad maintainer
+Doug Roberts, which left no formal support for Miriad maintenance at NCSA. 
 The flat tree and RCS-based checkin/checkout system was 
-inflexible, and adding new files became near impossible. 
+inflexible, and adding new files was very complicated.
 Early in 2001 the situation became critical (software rot etc.), and 
 Maryland decided to take the RCS
 system and import it into CVS for a more modern approach to shared
@@ -52,8 +53,9 @@ development. which was dubbed Version 3 of Miriad.
 This version had a 2 year development cycle, which nominally ended February 2003,
 when the Version 4 branch was merged into the mainline development. 
 In practice this meant that Version 3 would
-only obtain bug fixes for as long as we need it (read: until Miriad4 is found to be
-stable and transferring data between V3 and V4 works fine)
+only obtain bug fixes for as long as we need it. In January 2004 Version 3
+was closed, since data could now be reliably transferred between
+Miriad3 and Miriad4.
 
 We now consider Miriad4 the "C" release (C for CARMA), which also signals the 
 manual merging of as much ATNF specific code as can be managed, 
@@ -93,12 +95,16 @@ NCSA to UMD.
 \item[2003] Miriad V4 with files larger than 2GB and 8GB. 
 Also dubbed the CARMA release.
 
+\item[2004] Miriad V3.1.1 (Released as 04jan13) was the last official
+Miriad V3.
+
+
 \end{enumerate}
 
 \section{MIRIAD3}
 
-Here is a list of the accomplishments of MIRIAD V3. We are currently about
-to release Version 3.1.1, which is now off a branch since MIRIAD V4 is
+Here is a list of the accomplishments of MIRIAD V3. We have
+release Version 3.1.1, which is now off a branch (-r MIR3) since MIRIAD V4 is
 now at the head of development. Only bug fixes are applied to this version
 of MIRIAD.
 
@@ -113,7 +119,7 @@ and a few new program here and there (e.g. {\tt deproject, rotcurmask})
 
 \item
 (some of it done before?)
-antenna could be 1..256,since baselines were counted (256*A1+A2).  Already the
+antenna could be 1..256, since baselines were counted (256*A1+A2).  Already the
 ATA needed about 500, so the formulae was changed
 
 \item
@@ -157,7 +163,7 @@ maximum for an integer*4.
 
 \item
 are we sure LFS is working for fits files?? needs to be tested  (since AIPS++
-just ran into thats, i began to wonder too....)
+just ran into that, i began to wonder too....)
 
 \item
 MAXBUF  could be bigger? better optimized? configure (see below) will do this
@@ -169,7 +175,7 @@ The split MAXDIM/MAXDIM2, MAXANT/MAXANT2 is still not perfect... too many parame
 always will result into situations wehre it didn't work.
 
 Also note there is some code for old vectorizing compilers/machines that use
-compiler directives like \verb+c#maxloop 32+. For MAXANT > 32 obviously this
+compiler directives like \verb+c#maxloop 32+. For MAXANT $>$ 32 obviously this
 will not do much good.
 
 \item 
@@ -229,6 +235,9 @@ to the 256 maximum number of antennae problem.
 
 \item
 autoconf; see MIR/install for a start on this.
+
+\item
+a better mir.test to excersize and certify a release
 
 \end{enumerate}
 
@@ -723,7 +732,7 @@ Action Items:
 Astronomical Data Analysis Software and Systems IV, 
 ed. R. Shaw, H.E. Payne, J.J.E. Hayes, ASP Conf. Ser., 77, 433-436.
 \newline
-[3] Teuben - BIMA memo 81 on miriad benchmarks
+[3] Teuben - BIMA memo 81 on miriad benchmarks (a ``live'' document)
 \newline
 
 \end{document}
