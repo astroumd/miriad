@@ -3,13 +3,20 @@
 #  a module that defines various routines useful for miriad processing
 #
 #   15-mar-2003   Created                                   PJT
+#   16-apr-2003   added run,keyr,keyi,keya
 #
 
-import sys, os, time, string, math
+import sys, os, time, string, math, copy
 
-#   some global variables (should class this up and hide the data)
-logger = ""
-quit   = 0
+#   some global variables (private to Miriad.py)
+version = "1.1 (16-apr-2003)"
+logger  = ""
+quit    = 0
+mkeyval = []
+
+def run(command,log,fatal):
+    """an alias for miriad()"""
+    return miriad(command,log,fatal)
 
 def miriad(command,log=0,fatal=1):
     """
@@ -62,10 +69,10 @@ def setlogger(log,append=0):
         zap(log)
 
 def keyini(keyval,help=0,show=0):
-    global quit
+    global quit, mkeyval
     for arg in sys.argv[1:]:
         i=string.find(arg,"=")
-        if arg == "--help":
+        if arg == "--help" or arg == "-h":
             quit=1
         elif i > 0:
             key = arg[0:i]
@@ -73,19 +80,36 @@ def keyini(keyval,help=0,show=0):
             if keyval.has_key(key):
                 keyval[key] = val
             else:
-                print "### Error: keyword in %s not understood, try --help" % arg
+                print "### Error: keyword in %s not understood, try --help or -h" % arg
                 os._exit(0)            
         else:
-            print "### Error: argument %s not understood, try --help" % arg
+            print "### Error: argument %s not understood, try --help or -h" % arg
             os._exit(0)
+    # mkeyval = keyval[:]                # does not seem to work
+    # mkeyval = copy.copy(keyval)        # makes a (deep?) copy
+    mkeyval = keyval                     # keep a reference
     if quit:
         show_keyval(keyval,help,quit)
     elif show:
         show_keyval(keyval,help,quit)
-    
+
+def keya(key):
+    global mkeyval
+    return mkeyval[key]
+
+def keyi(key):
+    global mkeyval
+    return string.atoi(mkeyval[key])
+
+def keyr(key):
+    global mkeyval
+    return string.atof(mkeyval[key])
+
 def show_keyval(keyval,help=0,quit=0):
     if help != 0:
         print help
+    print "------------------------------------------------------------"
+    print "Miriad.py: version " + version 
     print "Current keywords and their defaults are:"
     print "------------------------------------------------------------"
     for k in keyval.keys():
