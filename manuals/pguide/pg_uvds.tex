@@ -1,0 +1,654 @@
+%------------------------------------------------------------------------
+% Chapter 8 - uv Datasets
+%------------------------------------------------------------------------
+% History:
+%   mjs  23mar91  Adapted from the old Programmer's Guide.
+%------------------------------------------------------------------------
+\beginsection{uv Datasets}
+
+\beginsub{General}
+
+At the very least, a uv dataset can be viewed as a sequence of 
+correlation
+records, with associated u and v coordinates, time and baseline number.
+Associated with each correlation is a flag, indicating whether the
+correlation is believed to be good or bad.
+
+The MIRIAD uv data structure required a more general structure. Unfortunately
+this is more complicated and somewhat cumbersome for simple cases.
+A uv dataset can be viewed as an ordered (generally time ordered) stream of
+named records or ``variables''. There are markers in this data stream, to
+indicate when
+several variables change ``simultaneously'' (i.e. they correspond to the
+same time). Each variable
+consists of an array of values, the type of which can be either integer, real
+or double precision, etc. Correlation data, u and v coordinates,
+time and baseline numbers are specific examples of variables.
+Because of the special nature of these variables, special routines are
+available to simplify accessing them. A list of the variables
+that may be present in a uv dataset is given in the appendices.
+
+In addition to this variable stream, a uv dataset will contain a file giving
+flagging information.
+
+It should be noted that ``variables'' and ``items''
+are quite distinct. For a particular dataset, variables vary, or at least may
+vary,
+whereas data items are fixed. The notion of variables is unique to uv datasets,
+whereas all MIRIAD datasets are composed of data items. The stream of
+uv variables is implemented as three data items, called {\tt visdata},
+{\tt vartable} and {\tt flags}.
+
+There are many uv routines.  The routines used to access and manipulate a
+uv dataset are given below.
+{\ninepoint\begintt
+
+      subroutine uvopen(tno,dataname,status)
+      subroutine uvread(tno,preamble,data,flags,n,nread)
+      subroutine uvflgwr(tno,flags)
+      subroutine uvwflgwr(tno,flags)
+      subroutine uvwrite(tno,preamble,data,flags,n)
+      subroutine uvclose(tno)
+      subroutine uvrewind(tno)
+
+      subroutine uvwread(tno,data,flags,n,nread)
+      subroutine uvwwrite(tno,data,flags,n)
+
+      subroutine uvgetvra(tno,varname,data)
+      subroutine uvgetvri(tno,varname,data,n)
+      subroutine uvgetvrr(tno,varname,data,n)
+      subroutine uvgetvrd(tno,varname,data,n)
+      subroutine uvgetvrc(tno,varname,data,n)
+
+      subroutine uvrdvra(tno,varname,data,default)
+      subroutine uvrdvri(tno,varname,data,default)
+      subroutine uvrdvrr(tno,varname,data,default)
+      subroutine uvrdvrd(tno,varname,data,default)
+      subroutine uvrdvrc(tno,varname,data,default)
+
+      subroutine uvprobvr(tno,varname,type,length,update)
+
+      subroutine uvputvra(tno,varname,data)
+      subroutine uvputvri(tno,varname,data,n)
+      subroutine uvputvrr(tno,varname,data,n)
+      subroutine uvputvrd(tno,varname,data,n)
+      subroutine uvputvrc(tno,varname,data,n)
+
+      subroutine uvtrack(tno,varname,switches)
+      integer function uvscan(tno,varname)
+      logical function uvupdate(tno)
+      subroutine uvmark(tno,onoff)
+      subroutine uvcopyvr(tin,tout)
+      subroutine uvnext(tno)
+
+      subroutine uvset(tno,object,type,n,p1,p2,p3)
+      subroutine uvselect(tno,object,p1,p2,flag)
+      subroutine uvinfo(tno,object,data)
+\endtt}
+
+\beginsub{OPEN, CLOSE and REWIND}
+
+The routine {\tt uvopen} opens a uv dataset and readies it for access.
+Here {\tt dataname} is a string giving the dataset's name. {\tt status} can
+be either {\tt 'old'} or {\tt 'new'}, depending on whether an old dataset is
+being read, or a new dataset is being created. {\tt Tno} is an integer
+handle passed back by the open routine (and is used for all future access
+to the dataset). The routine {\tt uvclose} closes the dataset.
+The routine {\tt uvrewind} positions a uv file at its beginning, and
+allows it to be read again.
+
+\beginsub{Reading and Writing Visibilities}
+
+The routines {\tt uvread} and {\tt uvwrite} are routines used to read and
+write the correlation data (and the associated flagging information).
+Here {\tt preamble} is an array of four double precision elements, {\tt data}
+is an array of {\tt n} 
+complex elements, whereas {\tt flags} is an array of {\tt n} logical values.
+{\tt preamble}, {\tt data} and {\tt flags} are output from {\tt uvread},
+whereas they are input to {\tt uvwrite}. The four elements of
+{\tt preamble} are the u coordinate, v coordinate, time (Julian date) and
+baseline number. The baseline number, $Bl$, is calculated  as:
+$$\eqalign{Bl &= 256 A_1 + A_2\cr}$$
+where $A_1$ and $A_2$ are the numbers of the first and second antennae
+respectively (antenna numbers vary from 1 to $N_{antenna}$). The array
+{\tt data} is used to store the complex correlation data, whereas the logical
+values of the array
+{\tt flags} indicate whether the corresponding correlation is
+deemed good or bad (true or false, respectively). For {\tt uvread}, {\tt n}
+limits the number of correlations that can be read; the actual number of
+correlations read is passed back as {\tt nread}. {\tt uvread} can perform
+a number of additional processing steps -- see the description of
+{\tt uvset} elsewhere in this manual.
+
+The flags of a data file can be modified using the {\tt uvflgwr} subroutine.
+When called, the flags associated with the previous call to
+{\tt uvread} and {\tt uvwrite} are changed to those values given in the
+{\tt flags} array. Using {\tt uvflgwr}, when reading a visibility file,
+is the method used to develop flagging tasks.  Currently {\tt uvflgwr}
+has the limitation that the linetype is either `channel' or `wide', and that
+the `start' and `width' linetype parameters are 1.  Also, {\tt uvflgwr}
+aborts if no flagging file exists.
+
+\beginsub{Reading and Writing Continuum Visibilities}
+
+MIRIAD uv datasets can contain both spectral and continuum visibility
+data simultaneously. When both are present, the user/programmer will
+normally select which of these data to read, using the {\tt uvset} routine.
+However, this allows only one ``linetype'' to be
+read and written at a time. The routines {\tt uvwread} and {\tt uvwwrite}
+allow the programmer to read and write the continuum data independently
+of the ``linetype''. These routines completely bypass linetype processing.
+They should be used only when both a particular linetype, and the continuum
+data are required. {\tt uvwread} should be called after the call to
+{\tt uvread}, whereas {\tt uvwwrite} should be called before the call to
+{\tt uvwrite}.
+
+The routine {\tt uvwflgwr} is the ``wide'' equivalent of {\tt uvflgwr}.
+That is, by calling {\tt uvwflgwr}, you can overwrite the flags associated
+with the previous call to {\tt uvwread} and {\tt uvwwrite}.  Note that
+{\tt uvwflgwr} aborts if no flagging file exists.
+
+\beginsub{Direct Access to uv Variables}
+
+The main routines to access the variables are the {\tt uvgetvr} and
+{\tt uvputvr} routines. These read or write (respectively) an array of
+variables of given name ({\tt varname}). The data read or written are
+in the array {\tt data} (which can be a character string or an integer, real
+or double precision
+array, depending on the routine called). Exactly {\tt n} values are
+read or written. Except for character strings, it is a fatal error,
+when reading, if {\tt n} does not
+agree with the actual number of values for the variable. For a character
+string, the string is blank padded on a read (no {\tt n} parameter is
+needed).
+
+When reading an old dataset, the {\tt uvgetvr} routines should not be called
+before the first call to {\tt uvread}.
+When creating a dataset, the initial values for all variables should be
+written, by calls to the {\tt uvputvr} routines, before the first call
+to the {\tt uvwrite} routine.
+
+Often it occurs that we are interested in a variable which has a single
+value, but we are not sure if the variable is present in the dataset.
+It would be possible to handle this with {\tt uvprobvr} and {\tt uvgetvr}.
+If the variable is not present, then we would want to use a default value.
+The {\tt uvrdvr} routines package these three steps. It returns the
+value of the variable, {\tt data}. If the variable is missing from the
+data stream, the default value, {\tt default}, is returned. One disadvantage
+is that the {\tt uvrdvr} routines only return a single value (the first
+value in a multi-element variable).
+
+The routine {\tt uvread} functions by scanning through the variable streams
+and returns with its results when the ``correlation data'' (``corr'' or
+``wcorr'') is encountered. If you are not interested in reading the
+correlation data (i.e. if you do not intend calling {\tt uvread}),
+then the {\tt uvscan} routine can be used to scan through the variable stream
+until another variable is encountered. Actually {\tt uvscan} may well read
+somewhat past the desired variable, until it has read
+all variables which changed simultaneously with the desired one.
+{\tt uvscan} returns 0 if the variable was successfully found, -1 if an end
+of file was encountered, or 1 if the variable was not found. Note that it
+may not make a great deal of sense to intermix calls to {\tt uvscan}
+and {\tt uvread}.
+
+\beginsub{Variable Override}
+
+Occassionally it is useful for the user to override the value of a uv variable.
+This is especially useful if the value of the variable is both wrong and
+important! When uvio opens an old file, for each variable name that is
+present in the uv file, it checks if there is a corresponding item with
+the same name. If there is, then the value of the item is used to override
+the value of the variable. Unfortunately the item must consist of a single
+number, and this single number will be copied into each value of the variable
+(if the variable consists of several elements).
+
+\beginsub{UVNEXT}
+
+The uv i/o routines need to know what variables change simultaneously.
+Routines {\tt uvread} and {\tt uvscan} scan until they have read
+all variables that have changes simultaneously. Conversely routine
+{\tt uvwrite} assumes that all variables that change simultaneously with
+the variables that it writes, have already been written with the routine
+{\tt uvputvr}. Hence, if the programmer is using {\tt uvscan}, {\tt uvread} or
+{\tt uvwrite}, then simultaneity is not a concern, as long as variables are
+read after {\tt uvscan/uvread}, and written before {\tt uvwrite}. The routine
+{\tt uvnext} provides better control, where this is needed. For an input
+file, a call to {\tt uvnext} causes the next set of variables (which
+change simultaneously) to be read. For an output file, {\tt uvnext} causes
+a marker to be written into the data, to indicate that variables written
+after the call did not change simultaneously with variables written before
+the call.
+
+\beginsub{Determining uv Variables and Their Characteristics}
+
+Routine {\tt uvprobvr} checks for the existence of a variable, and
+returns information about it. The string {\tt varname}, the variable name,
+is input. The single character {\tt type} is output, being either
+`a', `r', `d', `c', `i', `j', or ` ' (a blank), which indicates (respectively)
+that the variable is of type string (ascii), real, double precision, complex,
+integer, short integer or (in the case of the blank) that the variable is not
+present in the data-set.  The output integer {\tt length} gives the number of
+elements in the variable, and the output logical {\tt update} indicates
+whether the variable has been updated `recently'.  Both {\tt length} and
+{\tt update} have no meaning if the variable is not present in the dataset.
+Before a variable is first read, {\tt length} will be zero, and {\tt update}
+will be {\tt .FALSE.}.
+
+There is no special routine to return a complete list of the variables
+present in a uv dataset, however this information is present in the 
+item ``{\tt vartable}''. This is a text file with each line
+consisting of two fields separated by a blank. The first is the ``type''
+(either a, r, d, c, i, or j) of the variable, the second is the variables
+name.  The following section of FORTRAN lists the variables present in a
+uv dataset.
+{\ninepoint\begintt
+
+       character var*12,name*(?)
+       integer iostat,tno,item
+
+       call uvopen(tno,name,'old')
+       call haccess(tno,item,'vartable','read',iostat)
+       call hreada(item,var,iostat)
+       dowhile(iostat.eq.0)
+         call output(var(3:10))
+         call hreada(item,var,iostat)
+       enddo
+       call hdaccess(item,iostat)
+       call uvclose(tno)
+
+\endtt}
+
+\beginsub{Keeping Track of uv Variables}
+
+With many variables streaming past, there is a need to keep track of some
+particular variables. It would be rather inefficient and laborious to need
+to continually call {\tt uvprobvr}, to check on particular variables. The
+{\tt uvtrack} routine is used to instruct the uv routines to keep track
+of when a certain variable changes its value, and to perform special
+processing on these variables at a later stage. Typically {\tt uvtrack}
+would be called soon after {\tt uvopen}, marking all the variables of
+particular interest. The special processing that the uv routines perform
+is dictated by the {\tt switches} argument. This is a string,
+consisting of several characters, each character representing a particular
+processing step to be taken. Currently there are two switches --
+{\tt u} and {\tt c}. The {\tt u} switch is used by {\tt uvupdate}, whereas
+the {\tt c} switch is used by {\tt uvcopyvr}.
+
+The routine {\tt uvupdate} returns a {\tt .TRUE.} value if one of the
+variables, marked with the {\tt u} switch, has been updated ``recently''.
+
+The routine {\tt uvcopyvr} copies variables marked with the {\tt c}
+switch, from the input dataset (given by {\tt tin}) to the output
+dataset (given by {\tt tout}) if they have changed ``recently''.  You need
+only mark the variables in the input dataset.
+
+\beginsub{When Do UV Variables Change?}
+
+A uv variable can change its value in any part of the uv variable stream.
+So it can change its value after each call to {\tt uvread}, {\tt uvnext},
+ or {\tt uvscan}.  The uv routines which need to know if a uv variable has
+changed ({\tt uvprobvr}, {\tt uvcopyvr} and {\tt uvupdated}) normally (i.e.,
+ by default) work on whether the particular variable(s) of interest has
+changed since the last ``mark'' in the uv stream.  By default, any routine
+which causes more of the uv stream to be read ({\tt uvread}, {\tt uvscan} and
+{\tt uvnext}) move this marker to the current point in the uv stream, before
+reading more.  The {\tt uvmark} routine provides greater control at marking
+the position in the stream. Calling
+{\ninepoint\begintt
+      call uvmark(tno,.TRUE.)
+\endtt}
+sets the marker at the current position in the uv file, and disables
+{\tt uvread}, etc, from resetting the marker. Calling
+{\ninepoint\begintt
+      call uvmark(tno,.FALSE.)
+\endtt}
+also sets the marker at the current position, and enables {\tt uvread}, etc,
+to reset the marker on each call.
+
+\beginsub{Massaging Steps Performed by UVREAD -- UVSET}
+
+Below are the arguments to {\tt UVSET} for {\tt STATUS=OLD}.
+
+\vskip 0.2in
+{\raggedright
+\def\bbox#1{$\underline{\smash{\hbox{#1}}}$}
+\ninepoint
+\tabskip=0em
+\halign {#\tabskip=2em&#\tabskip=1em&#\tabskip=.25em&#\tabskip=.25em&#\tabskip=.25em&#\hfil\cr
+
+\bbox{\bf Object}&\bbox{\bf Type}&\bbox{\bf N}&\bbox{\bf P1}&\bbox{\bf P2}&\bbox{\bf P3}\cr
+\cr
+data      & channel	& nchan, & start, & width, & step\cr
+          & wide	& nchan, & start, & width, & step\cr
+          & velocity	& nchan, & start, & width, & step\cr
+reference & channel	&  ---,  & start, & width, & --- \cr
+          & wide	&  ---,  & start, & width, & --- \cr
+          & velocity	&  ---,  & start, & width, & --- \cr
+coord	  & wavelength	&  ---,  & ---,   & ---,   & --- \cr
+          & nanosec	&  ---,  & ---,   & ---,   & ---\cr
+planet	  & ---		&  ---,  & plmaj, & plmin, & plangle\cr
+selection & amplitude	&  n,    & ---,   & ---,   & --- \cr
+}
+}
+
+As mentioned above, the {\tt uvread} routine can perform, at the programmers
+request, extra processing steps on the visibility data. These steps
+consist of averaging and resampling frequency channels, uv coordinate
+conversion and some corrections for planet observations. The steps are
+requested by calls to {\tt uvset}. In the call to {\tt uvset}, the argument
+{\tt object} (a string) gives the general processing step that is being
+requested. The {\tt type} argument (another string) gives more specific
+details, and the arguments {\tt n} (integer) and {\tt p1}, {\tt p2} and
+{\tt p3} (reals) give any numerical values needed.
+
+Note that the set-up given by {\tt uvset} only becomes correctly
+activated during the next call to {\tt uvread}. Before this next call,
+the setup is in a somewhat nebulous state. So you should not expect
+various other routines associated with {\tt uvread} to work
+as expected until after the next call to {\tt uvread}. Associated
+routines include {\tt uvflgwr} and {\tt uvinfo}.
+
+The table summarizes the possible values of the arguments to {\tt uvset}.
+Here the column titled ``Object'' and ``Type'' are the possible string
+values that {\tt object} and {\tt type} can take on. The sixth column
+gives the meaning for the parameters {\tt n,p1,p2,p3}.
+Dashes in the sixth column indicate that the argument's value is ignored in
+this particular call. While several processing steps can be performed
+simultaneously (several calls to {\tt uvset} will be needed to specify them
+all), others are mutually inconsistent. When mutually inconsistent
+steps are requested, the last requested step is honored. Each processing
+step requires further explanation. 
+\item{$\bullet$} {\tt object='data'} This gives operations on the spectral
+data. Type {\tt 'channel'} selects the channels to be returned, and possible
+averaging together of the channel data. If the original channels are
+numbers from 1 to $N$, then by using {\tt type='channel'}, {\tt uvread} will
+return $nchan$ massaged channels, where channel $i$ of the massaged channels
+is formed by averaging $width$ channels of the original data, starting at
+channel $(i-1)\cdot step + start$.  If {\tt uvset} is called with $nchan$
+being zero, all channels are selected (note that this only makes sense if
+$start$, $step$ and $width$ are all 1).  {\tt type='wide'} is similar, but
+uses the continuum data rather than the spectral data.  {\tt type='velocity'}
+is also similar, returning a weighted sum of the spectral data. However, in
+this case $start$, $width$ and $step$ are given in units of km/s (rather
+than channels). This is particularly useful if the spectrometer setup is not
+constant throughout the data or there is no Doppler tracking, and so the
+velocity of a given channel changes.  Note that {\tt 'channel'},
+{\tt 'wide'} and {\tt 'velocity'} are mutually exclusive. The default is
+{\tt 'channel'} (or {\tt wide} if there is no spectral data in the file),
+with $start$, $step$, and $width$ set to 1.
+
+If there are fewer than $nchan$ channels in the dataset, then dummy channels,
+which are flagged as bad, are added. If $nchan$ is specified as 0, then
+{\tt uvread} will return as many channels as possible.
+
+\item{$\bullet$} {\tt object='reference'} The ``reference line'' is a
+spectral channel, or an average of spectral channels, which the main data
+is divided by. Typically, the reference line would be a strong point source
+(e.g. a maser). The resultant data is essentially normalized and shifted,
+but it also has atmospheric-based and instrument-based calibration problems
+removed. The extra parameters needed to describe the reference line are the
+same as for {\tt object='data'}, except that the number of channels, and the
+increment are ignored (there can be only one reference line). The default is
+not to have a reference line.  \item{$\bullet$} {\tt object='coord'} This
+sets the units of the $u$ and $v$ coordinates returned in the preamble. Using
+{\tt 'wavelength'} or {\tt 'nanosec'} sets the units of the returned $u$
+and $v$. For {\tt 'wavelength'}, the sky frequency used is that of the first
+channel returned. The default value is {\tt 'nanosec'}.
+\item{$\bullet$} {\tt object='planet'} This causes the $u$ and $v$
+coordinates to be scaled and rotated, and the correlation values to be scaled,
+to adjust for changes when observing planets.  The parameters {\tt plmaj}
+and {\tt plmin} give the reference size (arcseconds) and parameter
+{\tt plangle} gives and position angle (degrees) of the planet. If the
+reference size is 0, then the size of the first selected data record is used.
+\item{$\bullet$} {\tt object='selection'} This gives extra control over the
+uv selection process.  Currently there is only one possible type,
+{\tt 'amplitude'}, which enables or disables the amplitude selection process.
+If the argument {\tt n} is positive, then amplitude selection is applied
+(i.e., the normal action), otherwise amplitude selection is not applied.
+
+\beginsub{Setting Up UVWRITE -- UVSET}
+
+Below are the arguments to {\tt UVSET} for {\tt STATUS=NEW}.
+\vskip 0.2in
+{\raggedright
+\def\bbox#1{$\underline{\smash{\hbox{#1}}}$}
+\ninepoint
+\tabskip=0em
+\halign {#\tabskip=2em&#\tabskip=1em&#\tabskip=.25em&#\tabskip=.25em&#\tabskip=.25em&#\hfil\cr
+
+\bbox{\bf Object}&\bbox{\bf Type}&\bbox{\bf N}&\bbox{\bf P1}&\bbox{\bf P2}&\bbox{\bf P3}\cr
+\cr
+corr & c        & ---, & ---, & ---, & ---\cr
+     & j        & ---, & ---, & ---, & ---\cr
+data & channel  & ---, & ---, & ---, & ---\cr
+     & wide     & ---, & ---, & ---, & ---\cr
+}
+}
+
+\item{$\bullet$} {\tt object='corr'}
+The uv routines allow the correlation data to be stored on disk, either
+as floating point numbers, or as 16 bit integers with an associated scale
+factor. The 16 bit format roughly halves the disk space required, but slows
+the read and write operation, and can cause precision problems. On the
+first call to {\tt uvwrite}, the uv routines decide on the format to
+use, using a simple rule. The {\tt uvset} call
+can be used to override this rule. To be of use, it must be called before
+the first call to {\tt uvwrite}. The {\tt type} argument is a single
+character, being {\tt `r'} or {\tt `j'}, which instructs floating
+point or scaled integers, respectively, to be used.
+\item{$\bullet$} {\tt object='data'} This controls whether {\tt UVWRITE}
+writes the data to the {\tt corr} or {\tt wcorr} variable. The default is
+to write it to the {\tt corr} item (i.e. it assumes that the data is
+spectral, rather than continuum data).
+
+\beginsub{Selection Steps Performed by UVREAD -- UVSELECT}
+
+The arguments to {\tt UVSELECT} are given below:
+\vskip 0.2in
+{\raggedright
+\def\bbox#1{$\underline{\smash{\hbox{#1}}}$}
+\ninepoint
+\tabskip=0em
+\halign {#\tabskip=2em&#\tabskip=2em&#\tabskip=1em&#\hfil\cr
+
+\bbox{\bf Object}&\bbox{\bf Units}&\bbox{\bf P1}&\bbox{\bf P2}\cr
+\cr
+time         & Julian date & tmin,    & tmax \cr
+dra          & radians     & dramin,  & dramax \cr
+ddec         & radians     & ddecmin, & ddecmax \cr
+ra           & radians     & ramin,   & ramax \cr
+dec          & radians     & decmin,  & decmax \cr
+uvrange      & wavelengths & uvmin,   & uvmax \cr
+uvnrange     & nanoseconds & uvmin,   & uvmax \cr
+pointing     & arcseconds  & pntmin,  & pntmax \cr
+visibility   &             & vismin,  & vismax \cr
+increment    &             & incr,    & -- \cr
+on           &             & state,   & -- \cr
+polarization & FITS code   & polval,  & -- \cr
+amplitude    &             & ampmin,  & ampmax \cr
+window       &             & win,     & -- \cr
+antennae     &             & ant1,    & ant2 \cr
+or           &             & --,      & -- \cr
+and          &             & --,      & -- \cr
+clear        &             & --,      & -- \cr
+}
+}
+
+Another function performed by {\tt uvread} is to skip or to flag data that
+is not required. The routine {\tt uvselect} is used to instruct {\tt uvread}
+on which data are to be selected and rejected. Normally the programmer will
+not call {\tt uvselect} directly, but will use the {\tt SelInput} and
+{\tt SelApply} routines. The Users Manual gives a description
+about the way the user normally interacts with these routines.
+
+Generally, {\tt uvselect} will be called many times, each call giving
+different selection or discard criteria.  The routines {\tt SelInput}
+and {\tt SelApply} merely sequentially parse and pass the user-given
+criteria to {\tt uvselect}. Hence the `grammar' of the sequence of calls to
+{\tt uvselect} (i.e. use of ``or'', or multiple occurrences of
+criteria based on the same parameter) is the same as the `grammar' of the
+user-specified task parameter. The `grammar' will not be repeated here.
+
+The argument {\tt object} is a string giving the parameter on which a
+select/discard criteria is based. The
+arguments {\tt p1} and {\tt p2} (both double precision) give
+added numerical parameters. Generally {\tt p1,p2} give a range of
+parameter values to select or discard. Note that the units of the values are
+consistent with the units
+of the underlying uv variables. These are not
+necessarily the most convenient units for the user, and so the user
+interface (given by {\tt selinput} and {\tt selapply}) performs some
+conversion between user-units and program-units.
+
+There are a few additional objects, when compared with the {\tt SelInput}
+and {\tt SelApply}
+routines. These include the {\tt ra} and {\tt dec} objects, which give the
+pointing centre RA and DEC (after {\tt dra} and {\tt ddec} have been taken
+into account). Another is the {\tt and} operator. {\tt uvselect} treates
+{\tt and} and {\tt or} as having identical precedence, and handles these
+operators in the order in which they are given. Beware of this lack of
+precedence.
+
+The {\tt clear} object causes the selection criteria to be reset to its
+default of selecting everything.
+
+The argument {\tt flag} determines whether data which matches the
+associated criteria is to be selected (in which case {\tt flag=.TRUE.})
+or discarded (in which case {\tt flag=.FALSE.}).
+
+For example, to select data with Julian days 2444239.5 to 2444240.5 (i.e.
+data for 1 January, 1980), use:
+{\ninepoint\begintt
+     call uvselect(tno,'time',2444239.5d0,2444240.5d0,.TRUE.)
+\endtt}
+To select all data, except for 1 January, 1980, use:
+{\ninepoint\begintt
+     call uvselect(tno,'time',2444239.5d0,2444240.5d0,.FALSE.)
+\endtt}
+Note: In the {\tt 'antennae'} criterion, an antennae number of 0 is treated
+as a ``match-all'' number.
+
+\beginsub{Getting Information After UVREAD}
+
+Below are the arguments to {\tt uvinfo}.
+\vskip 0.2in
+{\raggedright
+\def\bbox#1{$\underline{\smash{\hbox{#1}}}$}
+\ninepoint
+\tabskip=0em
+\halign {#\tabskip=2em&#\tabskip=2em&#\hfil\cr
+
+\bbox{Object}&\bbox{Units}&\bbox{No. Values Returned}\cr
+\cr
+restfreq  & GHz          & nread \cr
+velocity  & km/s         & nread \cr
+bandwidth & GHz          & nread \cr
+frequency & GHz          & nread \cr
+sfreq     & GHz          & nread \cr
+visno     &              & 1\cr
+amprange  & (flux units) & 3\cr
+}
+}
+
+The routine {\tt uvinfo} returns information about the data returned by
+the last call to {\tt uvread}. The argument {\tt object} is a character
+string indicating the information that is desired. The argument {\tt data}
+is a double precision array, containing the returned information.
+Possible values for {\tt object} are:
+
+\item{$\bullet$} {\tt 'restfreq'}:  {\tt data} contains the rest frequency
+(GHz) for each channel returned by {\tt uvread}.
+\item{$\bullet$} {\tt 'velocity'}:  {\tt data} contains the velocity (km/s)
+for each channel returned by {\tt uvread}.
+\item{$\bullet$} {\tt 'frequency'}:  {\tt data} contains the frequency
+(GHz) of the channel returned by {\tt uvread}, after removing the
+doppler contribution.
+\item{$\bullet$} {\tt 'bandwidth'}:  {\tt data} contains the bandwidth
+(GHz) of each channel returned by {\tt uvread}.
+\item{$\bullet$} {\tt 'sfreq'}:  {\tt data} contains the sky frequency (GHz)
+of each channel returned by {\tt uvread}.
+\item{$\bullet$} {\tt 'visno'}:  {\tt data} contains a single number, which
+is the visibility number (running from 1 upwards) of the last channel read.
+\item{$\bullet$} {\tt 'amprange'}:  {\tt data} contains three values. The
+first value indicate the type of amplitude selection that was requested for
+this record, and the second and third values give a flux range.
+Possible value of data(1) are -1 (data outside the range [data(2),data(3)]
+were rejected), 0 (no amplitude selection was active) or +1 (data inside the
+range [data(2),data(3)] were rejected).
+
+For example, consider the following code fragment:
+{\ninepoint\begintt
+      integer maxchan
+      parameter(maxchan=512)
+      integer tno,nread
+      complex data(maxchan)
+      logical flags(maxchan)
+      double precision preamble(4),velocity(maxchan)
+           .
+           .
+           .
+      call uvread(tno,preamble,data,flags,maxchan,nread)
+      call uvinfo(tno,'velocity',velocity)
+\endtt}
+After the call to {\tt uvinfo}, the array velocity will contain the velocity
+of each channel read by {\tt uvread}.
+
+\beginsection{uv Selection -- SELINPUT and SELAPPLY}
+
+{\ninepoint\begintt
+     subroutine SelInput(key,sels,maxsels)
+     logical function SelProbe(sels,object,value)
+     subroutine SelApply(tno,sels,flag)
+\endtt}
+These routines are the usual programmer interface to the uv selection
+routines. They perform the parsing and checking of the user input, and
+the calling of the {\tt uvselect} routine to actually implement the
+selection process. For more information see uv selection in the User's
+Guide, and the {\tt uvselect} routine in this Programmer's Guide.
+
+{\tt selinput} calls the {\tt keya} routine to get the user-specified
+selection criteria. These criteria is then broken into an intermediate form.
+The argument {\tt key} is the keyword to be used. Generally it should be
+{\tt 'select'}. The real array {\tt sels} (of size {\tt maxsels} elements)
+is used to hold the intermediate form of the selection.
+
+{\tt selapply} takes selection criteria, in its intermediate form, and
+calls the {\tt uvselect} routine to apply it. The argument {\tt flag}
+determines whether criteria are actually to be used for selection
+({\tt flag=.TRUE.}), or rejection ({\tt flag=.FALSE.}).
+
+{\tt selprobe} returns information about whether uv data with a particular
+parameter value may have been selected.
+It does not guarantee that such data might exist
+in any particular data file. It also has the limitation that
+information is not present to convert ``uvrange'' and ``uvnrange''
+calls into each other. These should be treated with caution. The {\tt sels}
+array is the intermediate form returned by {\tt selinput}, and {\tt value}
+is a double precision value, giving the parameter value that is of interest.
+The {\tt object} argument determines the meaning (and the units) of this
+value. Possible values are as below:
+
+{\raggedright
+\def\bbox#1{$\underline{\smash{\hbox{#1}}}$}
+\ninepoint
+\tabskip=0em
+\halign {#\tabskip=2em&#\hfil\cr
+
+\bbox{Object}&\bbox{Units of Value}\cr
+\cr
+'time'       & Julian day.\cr
+'antennae'   & Baseline number = 256*ant1 + ant2.\cr
+             & One of ant1 or ant2 can be zero.\cr
+'uvrange'    & Wavelengths.\cr
+'uvnrange'   & Nanoseconds.\cr
+'visibility' & Visibility number (1 relative).\cr
+'dra'        & Radians.\cr
+'ddec'       & Radians.\cr
+'pointing'   & Arcseconds.\cr
+'amplitude'  & Same as correlation data.\cr
+'window'     & Window number.\cr
+}
+}
+
+Note that this does not support all objects to {\tt uvselect}.
+The name must be given in full (no abbreviations and case is significant).
