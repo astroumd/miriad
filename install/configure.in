@@ -1,7 +1,5 @@
-dnl Process this file with autoconf to produce a new configure script
-dnl if it has changed. See also the Makefile in $NEMO  how to automate
-dnl this.
-dnl ---------------------------------------------------------------------------------
+dnl Process this file with autoconf to produce a new configure script if it has changed.
+dnl ------------------------------------------------------------------------------------
 
 AC_MSG_CHECKING([MIRIAD4 config])
 
@@ -53,6 +51,54 @@ else
   echo "LFS not selected, be aware the largest filesize may be just 2GB"
 fi
 
+dnl -- pick your default telescope, in the case statement below some default size
+dnl -- parameters are changed for certain telescopes.
+AC_ARG_WITH(telescope,  [  --with-telescope=CARMA      Default telescope size parameters],
+		    with_telescope=$withval, with_telescope="carma")
+TELESCOPE=$with_telescope
+
+dnl - reminder: the '2' and '3' versions are to be used in 2-dim and 3-dim arrays with other size parameters
+def_maxdim=65536	##
+def_maxdim2=8192
+def_maxiant=256
+def_maxant=64		##
+def_maxant2=28
+def_maxbase=500		#
+def_maxbase2=500
+def_maxchan=4096	# 
+def_maxwin=16		# 
+def_maxwide=18		# 
+def_maxnax=7
+def_maxbuf=4194304	##
+
+case $TELESCOPE in
+     "ata")  echo "Selecting ATA-500 array"
+        def_maxiant=2048
+	continue;;
+     "atnf")  echo "Selecting ATNF array"
+	continue;;
+     "bima")  echo "Selecting old BIMA array"
+	continue;;
+     "carma")  echo "Selecting CARMA array"
+	continue;;
+     "lofar")  echo "Selecting LOFAR simulation array"
+        def_maxiant=2048
+	continue;;
+     "sma")  echo "Selecting SMA array"
+        def_maxdim=4096
+	def_maxant=30
+	def_maxbase=435
+	def_maxchan=7681   #  rao: 12288 ?
+	def_maxwin=48
+	def_maxwide=18     #  rao: 50 ?
+	continue;;
+     "wsrt")  echo "Selecting WSRT array"
+	continue;;
+     *) echo "Not a valid array"
+esac
+
+echo "DEBUG: def_maxdim=$def_maxdim"
+
 dnl ---------------------------------------------------------------------
 dnl All the MAXDIM related stuff
 
@@ -70,51 +116,51 @@ AC_SUBST(MAXNAX)
 AC_SUBST(MAXBUF)
 
 AC_ARG_WITH(maxdim,  [  --with-maxdim=MAXDIM       1D access to images],
-		    with_maxdim=$withval, with_maxdim="65536")
+		    with_maxdim=$withval, with_maxdim="$def_maxdim")
 MAXDIM=$with_maxdim
 
 AC_ARG_WITH(maxdim2, [  --with-maxdim2=MAXDIM2     2D access to images],
-		    with_maxdim2=$withval, with_maxdim2="8192")
+		    with_maxdim2=$withval, with_maxdim2="$def_maxdim2")
 MAXDIM2=$with_maxdim2
 
 AC_ARG_WITH(maxiant, [  --with-maxiant=MAXIANT     MAXIANT],
-		    with_maxiant=$withval, with_maxiant="2048")
+		    with_maxiant=$withval, with_maxiant="$def_maxiant")
 MAXIANT=$with_maxiant
 
 AC_ARG_WITH(maxant,  [  --with-maxant=MAXANT       1D access to antenna based arrays],
-		    with_maxant=$withval, with_maxant="64")
+		    with_maxant=$withval, with_maxant="$def_maxant")
 MAXANT=$with_maxant
 
 AC_ARG_WITH(maxant2, [  --with-maxant2=MAXANT2     2D access to antenna based arrays],
-		    with_maxant2=$withval, with_maxant2="28")
+		    with_maxant2=$withval, with_maxant2="$def_maxant2")
 MAXANT2=$with_maxant2
 
 AC_ARG_WITH(maxbase, [  --with-maxbase=MAXBASE     MAXBASE],
-		    with_maxbase=$withval, with_maxbase="500")
+		    with_maxbase=$withval, with_maxbase="$def_maxbase")
 MAXBASE=$with_maxbase
 
 AC_ARG_WITH(maxbase2,[  --with-maxbase2=MAXBASE2   MAXBASE2],
-		    with_maxbase2=$withval, with_maxbase2="500")
+		    with_maxbase2=$withval, with_maxbase2="$def_maxbase2")
 MAXBASE2=$with_maxbase2
 
 AC_ARG_WITH(maxchan, [  --with-maxchan=MAXCHAN     Maximum number of spectral channels],
-		    with_maxchan=$withval, with_maxchan="4096")
+		    with_maxchan=$withval, with_maxchan="$def_maxchan")
 MAXCHAN=$with_maxchan
 
 AC_ARG_WITH(maxwin,  [  --with-maxwin=MAXWIN       Maximum number of spectral windows (BIMA)],
-		    with_maxwin=$withval, with_maxwin="16")
+		    with_maxwin=$withval, with_maxwin="$def_maxwin")
 MAXWIN=$with_maxwin
 
 AC_ARG_WITH(maxwide, [  --with-maxwide=MAXWIDE     Maximum number of wideband channels],
-		    with_maxwide=$withval, with_maxwide="18")
+		    with_maxwide=$withval, with_maxwide="$def_maxwide")
 MAXWIDE=$with_maxwide
 
 AC_ARG_WITH(maxnax,  [  --with-maxnax=MAXNAX       Maximum number of axis in images],
-		    with_maxnax=$withval, with_maxnax="7")
+		    with_maxnax=$withval, with_maxnax="$def_maxnax")
 MAXNAX=$with_maxnax
 
 AC_ARG_WITH(maxbuf,  [  --with-maxbuf=MAXBUF       Maximum size, in words, of blank common buffer],
-		    with_maxbuf=$withval, with_maxbuf="4194304")
+		    with_maxbuf=$withval, with_maxbuf="$def_maxbuf")
 MAXBUF=$with_maxbuf
 
 
@@ -184,6 +230,8 @@ chmod +x mirdefs
 
 dnl 'maxdim' report:
 
+echo ""
+echo "TELESCOPE    : $TELESCOPE"
 echo ""
 echo "MAXDIM       : $MAXDIM"
 echo "MAXDIM2      : $MAXDIM2"
