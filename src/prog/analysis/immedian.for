@@ -3,6 +3,10 @@
 c-----------------------------------------------------------------------
 c  History:
 c     17jan03 pjt   cloned off IMSHARP, Q&D for Stuart Vogel
+c     23jan03 pjt   finalized
+c
+c  TODO:
+c     - implement looping over all planes in the cube
 c
 c-----------------------------------------------------------------------
 c
@@ -28,6 +32,7 @@ c     a size of 2*SIZE+1, and will thus always have an odd number of pixels
 c     centered on the pixel to be filtered. Edge pixels are left untouched.
 c
 c-----------------------------------------------------------------------
+c
       INCLUDE 'maxdim.h'
       INCLUDE 'maxnax.h'
 c
@@ -117,7 +122,6 @@ c
             dmin = buf(1,1)
             dmax = buf(1,1)
          ENDIF
-
 c                                                         1..size: just copy
          DO j=1,size
             CALL xywrite(lout,j,buf(1,j))
@@ -125,6 +129,7 @@ c                                                         1..size: just copy
             CALL xyminmax(nx,buf(1,j),flg(1,j),dmin,dmax)
          ENDDO
 c                                                 size+1 ...nx..size:  filter
+
          DO j=size+1,ny-size
             DO i=1,size
                obuf(i) = buf(i,j)
@@ -141,10 +146,12 @@ c                                                 size+1 ...nx..size:  filter
                   ENDDO
                ENDDO
                IF (k1.GT.0) THEN
+c                  write(*,*) 'median ',i,j,k1
                   CALL median(k1,dat,xdat)
                   obuf(i) = xdat
                   oflg(i) = .TRUE.
                ELSE
+c                  write(*,*) 'median ',i,j,'***'
                   obuf(i) = buf(i,j)
                   oflg(i) = .FALSE.
                ENDIF
@@ -209,7 +216,8 @@ c  straight from Zodiac (Stuart Vogel)
 c
       INTEGER n2
 c
-      CALL sortr(n,x)
+      CALL sortr(x,n)
+c      CALL sortr1(n,x)
       n2=n/2
       IF(2*n2.EQ.n)THEN
         xmed=0.5*(x(n2)+x(n2+1))
@@ -218,7 +226,7 @@ c
       ENDIF
       END
 c***********************************************************************
-      SUBROUTINE sortr(n,ra)
+      SUBROUTINE sortr1(n,ra)
       IMPLICIT NONE
       INTEGER n
       REAL ra(n)
