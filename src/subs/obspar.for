@@ -416,14 +416,30 @@ c
 c
 c  Submillimeter Array (SMA).
 c  Supplied by Ramprasad Rao
+c  Added from the old pre-4.0.4 sma_fsubs.f
 c
 	call obsad('sma/antdiam',	6.0d0)
+c Reference:  Todd Hunter  Log#7242
+        call obsad('sma/ellimit',      14.0*dpi/180.d0)
+        call obsad('sma/evector',      0.25*dpi)
+        call obsad('sma/ew',           1.d0)
+
 	call obsad('sma/height',	4080.0d0)
+c frequency dependent - but clearly one of these two is the better one
+        call obsad('sma/jyperk',        13.d0)
 	call obsad('sma/jyperk',	130.d0)
-	call obsad('sma/latitude',	obsdms( 1, 19,49,33.8))
-	call obsad('sma/longitude',	obsdms(-1,155,28,46.4))
-	call obsad('sma/mount',	NASMYTH)
-	call obsad('sma/nants',	8.0d0)
+c older value from Ram?
+c	call obsad('sma/latitude',	obsdms( 1, 19,49,33.8))
+c	call obsad('sma/longitude',	obsdms(-1,155,28,46.4))
+c reference: from Taco Young
+        call obsad('sma/latitude',      obsdms(1, 19, 49, 27.1389))
+        call obsad('sma/longitude',     obsdms( 1, 204, 31, 22.79606))
+c	call obsad('sma/mount',	        NASMYTH)
+        call obsad('sma/mount',         altaz)
+	call obsad('sma/nants',	        8.0d0)
+        call obsad('sma/subdiam',      2.8d0)
+        call obsad('sma/systemp',      200.d0)
+
 c
 c  SZA - Sunyaev-Zel'dovich Array of eight 3.5m antennas - part of CARMA.
 c

@@ -1,0 +1,95 @@
+/************************************************************************/
+/*   10-dec-2004   pjt    from sma.f2c for SMA integration              */
+/************************************************************************/
+#include <string.h>
+#include "miriad.h"
+/*#include "sysdep.h"*/
+#include "io.h"
+
+/************************************************************************/
+/* jhz 2004-5-25 */
+fortran subroutine mirread(character datapath, integer jstat)
+{
+  mirread_c(datapath.zterm, (char *)jstat.addr);
+}
+
+fortran subroutine rsmirread(character datapath, integer jstat)
+{
+  rsmirread_c(datapath.zterm, (char *)jstat.addr);
+}
+
+
+fortran subroutine miriadwrite(character datapath, integer jstat)
+{
+  miriadwrite_c(datapath.zterm, (char *)jstat.addr);
+}
+
+fortran subroutine rsmiriadwrite(character datapath, integer jstat)
+{
+  rsmiriadwrite_c(datapath.zterm, (char *)jstat.addr);
+}
+
+
+fortran subroutine smaflush(logical mflag, logical scinit, integer tcorr,
+    logical scbuf, logical xflag, logical yflag,
+    integer maxif, integer maxant, integer scanskip, 
+    integer scanproc, integer sb, integer rxif)
+{
+   smaflush_c(mflag.addr, scinit.addr, tcorr.val, 
+              scbuf.addr, xflag.addr, yflag.addr,
+              maxif.val, maxant.val, scanskip.val, 
+              scanproc.val, sb.val, rxif.val); 
+}
+
+fortran subroutine rssmaflush(logical mflag, logical scinit, integer tcorr,
+    logical scbuf, logical xflag, logical yflag,
+    integer maxif, integer maxant, integer scanskip,
+    integer scanproc, integer sb, integer rxif)
+{
+   rssmaflush_c(mflag.addr, scinit.addr, tcorr.val,
+              scbuf.addr, xflag.addr, yflag.addr,
+              maxif.val, maxant.val, scanskip.val,
+              scanproc.val, sb.val, rxif.val);
+}
+
+
+
+
+fortran subroutine pokeinisma(integer tbd, integer tno1,
+ logical dosam1, logical doxyp1, logical doop1,
+ logical dohann1, logical birdie1, logical dowt1,
+ logical dopmps1, logical dobary1, logical doif1, 
+ logical hires1, logical nopol1, logical oldpol1,
+ double lat1, double long1)
+        {
+      pokeinisma_c((char *)tbd.addr, tno1.val,
+          dosam1.addr, doxyp1.addr, doop1.addr, dohann1.addr,
+          birdie1.addr, dowt1.addr, dopmps1.addr, dobary1.addr,
+          doif1.addr, hires1.addr, nopol1.addr,
+          oldpol1.addr, lat1.val, long1.val);
+        }
+
+fortran subroutine rspokeinisma(integer tbd, integer tno1,
+ logical dosam1, logical doxyp1, logical doop1,
+ logical dohann1, logical birdie1, logical dowt1,
+ logical dopmps1, logical dobary1, logical doif1,
+ logical hires1, logical nopol1, logical oldpol1,
+ double lat1, double long1, integer rsnchan1)
+        {
+      rspokeinisma_c((char *)tbd.addr, tno1.val,
+          dosam1.addr, doxyp1.addr, doop1.addr, dohann1.addr,
+          birdie1.addr, dowt1.addr, dopmps1.addr, dobary1.addr,
+          doif1.addr, hires1.addr, nopol1.addr,
+          oldpol1.addr, lat1.val, long1.val, rsnchan1.val);
+        }
+
+fortran subroutine pokeflshsma(integer tbd)
+        {
+            pokeflshsma_c((char *)tbd.addr);
+        }
+
+fortran subroutine rspokeflshsma(integer tbd)
+        {
+            rspokeflshsma_c((char *)tbd.addr);
+        }
+
