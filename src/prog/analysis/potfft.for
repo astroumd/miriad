@@ -70,7 +70,7 @@ c
       INTEGER INVPARM
       PARAMETER(INVPARM=1)
       CHARACTER VERSION*(*)
-      PARAMETER (VERSION='Version 11-aug-02')
+      PARAMETER (VERSION='Version 13-aug-02')
 c
       CHARACTER in*128,out*128,outg*128
       INTEGER nin(MAXNAX),nout(MAXNAX),npadin(MAXNAX)
@@ -125,7 +125,7 @@ c     *   CALL bug('f','The image is too big')
          npadin(i) = 2*nin(i)
       ENDDO
       IF(outg.ne.' ') then
-         CALL bug('i','Also writing GREEN function')
+         CALL bug('i','Also computing the GREEN function')
          CALL xyopen(loutg,outg,'new',MAXNAX,nout)
          CALL rdhdr(lin,'crpix1',crpix1,1.0)
          CALL rdhdr(lin,'crpix2',crpix2,1.0)
@@ -145,6 +145,7 @@ c     *   CALL bug('f','The image is too big')
       ENDIF
 
       IF (out.ne.' ') then
+         CALL bug('i','Computing the potential with 1/2 pixel error')
          CALL xyopen(lout,out,'new',MAXNAX,nout)
 c
 c   Reading the input (the whole plane will be read in at once),
