@@ -17,6 +17,7 @@
  *		   on linux and HP-UX
  *    pjt   5aug99 increased MAXSTRING to 1024 (also do keyf.f !!!)
  *    pjt   6mar01 increased MAXSTRING to 2048
+ *    mchw  15mar02 increased MAXSTRING to 4096
  ***********************************************************************
  */
 
@@ -37,7 +38,7 @@ extern int dexpand_c();
 
 #define KEYTRUE        1
 #define KEYFALSE       0
-#define MAXSTRING   2048
+#define MAXSTRING   4096
 
 typedef struct ckeys {
     char *key;   /* Pointer to a malloc'd string holding the key name. */
