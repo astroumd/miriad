@@ -125,6 +125,7 @@ set test=1                  #  mir.test  baseline test (batch oriented)
 set testx=0		    #  mir.testx testing X routines (interactive)
 set bench=0,512,1           #  mir.bench nchan,mapsize,cell  (nchan=0 will skip bench)
 set intel=0                 #  use intel compiler (ifc/icc) for linux?
+set man=1		    #  do manual pages
 
 #		   	remember from where we were installing, since we have stuff here.....
 set install_dir=`pwd`
