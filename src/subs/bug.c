@@ -11,6 +11,7 @@
 /*    pjt      4dec01 bypass fatal errors (for alien clients) if req'd  */
 /*                    through the new bugrecover_c() routine            */
 /*    pjt     17jun02 prototypes for MIR4                               */
+/*    pjt/ram  5dec03 using strerror() for unix                         */
 /************************************************************************/
 
 #include <stdio.h>
@@ -154,10 +155,10 @@ static char *errmsg_c(int n)
   Return the error message associated with some error number.
 ------------------------------------------------------------------------*/
 {
-  static char string[128];
 #ifdef vms
 #include <descrip.h>
   $DESCRIPTOR(string_descriptor,string);
+  static char string[128];
   short int len0;
   int one;
 
@@ -166,16 +167,6 @@ static char *errmsg_c(int n)
   string[len0] = 0;
   return(string);
 #else
-# if !defined(linux) && !defined(darwin)
-  extern int sys_nerr;
-  extern char *sys_errlist[];
-# endif
-
-
-  if(n > 0 && n <= sys_nerr)return((char *)sys_errlist[n]);
-  else{
-    sprintf(string,"Unknown error with number %d detected.",n);
-    return(string);
-  }
+  return strerror(n);
 #endif
 }
