@@ -107,6 +107,8 @@ if ($#theList != 0) then
       echo "/usr/bin/ranlib $lib"
       /usr/bin/ranlib $lib
    endif
+   #  should do a shared lib rebuild here, e.g. for linux:
+   #	ld -shared -o libmir.so --whole-archive libmir.a
    rm -fr $theList >& /dev/null
 endif
 echo ""
