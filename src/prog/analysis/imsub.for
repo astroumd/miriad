@@ -42,14 +42,15 @@ c    rjs  23jul97  added pbtype.
 c    rjs  25nov98  added llrot.
 c    rjs  23jul99  Correct copying of pbtype keyword.
 c    rjs  12oct99  Correct copying of mostable.
+c    pjt   6sep01  Use new MAXDIM1 instead of MAXDIM
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version='Imsub: version 1.0 12-Oct-99' )
+	parameter(version='Imsub: version 1.0 6-sep-01' )
 c
-	integer maxboxes
-	parameter(maxboxes=2048)
 	include 'maxdim.h'
 	include 'maxnax.h'
+	integer maxboxes
+	parameter(maxboxes=2*MAXDIM1)
 	character in*80,out*80
 	integer Inplane(maxnax),Outplane(maxnax),one(maxnax)
 	integer blc(maxnax),trc(maxnax),Nin(maxnax),Nout(maxnax),i,j
@@ -58,7 +59,7 @@ c
 	integer lIn,lOut
 	logical done,rect
 	double precision crpix,cdelt
-	real Data(maxdim),Data2(maxdim)
+	real Data(MAXDIM1),Data2(MAXDIM1)
 c
 c  Externals.
 c
@@ -97,7 +98,7 @@ c
 c  Open the input.
 c
 	call xyopen(lIn,In,'old',maxnax,Nin)
-	if(Nin(1).gt.maxdim)
+	if(Nin(1).gt.MAXDIM1)
      *	  call bug('f','Image too big for me to handle')
 	call rdhdi(lIn,'naxis',naxis,0)
 	call BoxSet(boxes,maxnax,Nin,' ')
@@ -202,7 +203,7 @@ c
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	integer maxRuns
-	parameter(maxRuns=8*maxdim)
+	parameter(maxRuns=8*MAXDIM1)
 	integer xminv,xmaxv,yminv,ymaxv,nRuns,nRuns2,iRuns
 	integer x1,x2,y,xprev,yprev,t
 	integer Runs(3,maxRuns)

@@ -316,9 +316,10 @@ c    rjs  04-Oct-00  Make xyout work for arbitrarily large images.
 c    rjs  10-oct-00  Really do the above this time!
 c    dpr  01-nov-00  Change CROTAn to AIPS convention for xyout
 c    dpr  27-nov-00  fix stokes convention for xyin
+c    pjt   6-sep-01  using MAXDIM1 instead of MAXDIM
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version='Fits: version 1.1 27-nov-00')
+	parameter(version='Fits: version 1.1 6-sep-01')
 	character in*128,out*128,op*8,uvdatop*12
 	integer velsys
 	real altrpix,altrval
@@ -3259,8 +3260,8 @@ c    maxdim	Size of array.
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	include 'maxnax.h'
-	real array(MAXDIM)
-	logical allgood,doflag,flags(MAXDIM)
+	real array(MAXDIM1)
+	logical allgood,doflag,flags(MAXDIM1)
 	integer nsize(MAXNAX),axes(MAXNAX),naxis
 	integer lu,tno,i,j,iostat
 c
@@ -3272,7 +3273,7 @@ c  Open the input FITS and output MIRIAD files.
 c
 	call fxyopen(lu,in,'old',MAXNAX,nsize)
 	doflag = FitBlank(lu,.false.)
-	if(nsize(1).gt.maxdim)
+	if(nsize(1).gt.MAXDIM1)
      *	  call bug('f','Image too big to handle')
 	call fitrdhdi(lu,'NAXIS',naxis,0)
 	if(naxis.le.0)call bug('f','Weird bug')

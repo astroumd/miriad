@@ -140,10 +140,11 @@ c    mchw  19mar99  Add model isothermal 2D projection for cluster gas.
 c    lss   07jul99  Add 3D gaussian model for cubes.
 c    rjs   10jan00  Added "seed" parameter.
 c    mchw  16jan01  Jet model.
+c    pjt    6sep01  using MAXDIM1 instead of MAXDIM
 c  Bugs/Wishlist:
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version='Imgen: version 1.1 16-Jan-01')
+	parameter(version='Imgen: version 1.1 6-sep-01')
 	include 'mirconst.h'
 	include 'maxdim.h'
 	include 'maxnax.h'
@@ -153,7 +154,7 @@ c------------------------------------------------------------------------
 	real factor,bmaj,bmin,bpa,fac,fac3
 	character In*80,Out*80
 	logical totflux
-	real Buff(maxdim)
+	real Buff(MAXDIM1)
 c
 c  Source parameters.
 c
@@ -293,7 +294,7 @@ c
 	  bpa = 0
 	  if(n1.le.0.or.n2.le.0)call bug('f','Image size error')
 	endif
-	if(n1.gt.MAXDIM)call bug('f','Image dimension too big')
+	if(n1.gt.MAXDIM1)call bug('f','Image dimension too big')
 c
 c  If we have a single gaussian object, use this as the beam
 c  parameters.
@@ -517,7 +518,7 @@ c------------------------------------------------------------------------
 	include 'mirconst.h'
 	integer i,j,ymin,ymax,xmin,xmax,maxit,it
 	real xx,yy,xp,yp,scale,cospa,sinpa,t,a,log2,limit,p,theta,sum
-	real Buff(maxdim)
+	real Buff(MAXDIM1)
 c
 c  Externals.
 c

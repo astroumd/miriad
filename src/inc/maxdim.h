@@ -6,6 +6,9 @@ c-----------------------------------------------------------------------
 c - MAXDIM is an often used parameter, to indicate maximum size of maps
 	INTEGER   MAXDIM
 	PARAMETER(MAXDIM=2048)
+c - MAXDIM1 should be used rarely, for big maps that are never handled in 2D
+	INTEGER   MAXDIM1
+	PARAMETER(MAXDIM1=16384)
 c-----------------------------------------------------------------------
 c		maximum number of antennae (HC=12, WSRT=14, VLA=28)
 	INTEGER   MAXANT
