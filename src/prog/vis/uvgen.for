@@ -324,6 +324,7 @@ c    12feb02  pjt  Merged back the two previous UMD additions
 c    01mar02  mchw  changed epoch to 2000.
 c    08mar02  mchw  don't write pbfwhm if not set, so mosaicing uses telescop name.
 c    30jan03  mchw  format change for many records.
+c     3jun03  pjt/rjs Fixed bug in determining whether source is up or not. (non-CVS ATNF)
 c
 c  Bugs/Shortcomings:
 c    * Frequency and time smearing is not simulated.
@@ -352,7 +353,7 @@ c	pbfwhm=76,137,-0.2 simulates a primary beam pattern between
 c	10m and 6m antennas at 100 GHz. 
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version = 'Uvgen: version 1.0 30-Jan-03')
+	parameter(version = 'Uvgen: version 1.0 3-Jun-03')
 	integer ALTAZ,EQUATOR
 	parameter(ALTAZ=0,EQUATOR=1)
 	integer PolRR,PolLL,PolRL,PolLR,PolXX,PolYY,PolXY,PolYX
@@ -541,14 +542,14 @@ c  elevation angle.
 c
 	if(doellim)then
 	  sinel = sin(elev)
-	  temp = (sinel - sinl*sind ) / ( cosl*cosd )
-	  if(abs(temp).gt.1)then
-	    if(sdec*alat.lt.0)then
-	      call bug('f','Source never rises above elevation limit.')
+	  if(abs(sinel - sinl*sind ).gt.abs(cosl*cosd))then
+	    if(sinel - sinl*sind - cosl*cosd.gt.0)then
+	       call bug('f','Source never rises above elevation limit.')
 	    else
-	      call output('Source never sets below elevation limit.')
+	       call output('Source never sets below elevation limit.')
 	    endif
 	  else
+	    temp = (sinel - sinl*sind ) / ( cosl*cosd )
 	    temp = acos(temp)
 	    temp = 12/pi * temp
 	    write(line,'(a,f5.1,a,f5.1,a)') 'Hour angle limit is ',temp,
