@@ -21,6 +21,7 @@
 #  3-dec-02 rpfits is now source included
 # 23-jan-03 add (optional) install of LGM's rad/lvg package in borrow
 # 21-feb-03 more logfiles, so less to the screen
+# 17-apr-03 fix up MIRSRC from skel
 #
 #   Simple single-architecture installation of MIRIAD
 #   (linux)
@@ -202,13 +203,21 @@ rehash
 echo mir.mkdirs $MIRTEMP
 mir.mkdirs $MIRTEMP >& /tmp/mir.mkdirs.log
 
-#    	Linux really ... should work for SunOS to...
+#    	Linux really ... should work for SunOS too...
 cat $MIRTEMP/src/sys/files/MIRRC.skel |\
   sed s,/mir_rootdir,$MIRTEMP, |\
   sed s,mir_hosttype,$hosttype, |\
   sed s,/usr/openwin/include,$mirxinc, |\
   sed s,/usr/local/lib/X11,$mirxlib, |\
   grep -v PGPLOT_FONT >! $MIRTEMP/MIRRC.$hosttype
+
+cat $MIRTEMP/src/sys/files/MIRSRC.skel |\
+  sed s,/mir_rootdir,$MIRTEMP, |\
+  sed s,mir_hosttype,$hosttype, |\
+  sed s,/usr/openwin/include,$mirxinc, |\
+  sed s,/usr/local/lib/X11,$mirxlib, |\
+  grep -v PGPLOT_FONT >! $MIRTEMP/MIRSRC.$hosttype
+
 
 echo '# special additions'                >> $MIRTEMP/MIRRC.$hosttype
 echo 'if ($?LD_LIBRARY_PATH) then'	  >> $MIRTEMP/MIRRC.$hosttype
@@ -223,6 +232,21 @@ else
   echo 'setenv PGPLOT_DIR /usr/lib/pgplot' >> $MIRTEMP/MIRRC.$hosttype
 endif
 echo 'setenv WIPHELP $MIR/borrow/wip/wiphelp.dat' >> $MIRTEMP/MIRRC.$hosttype
+
+echo '# special additions'                >> $MIRTEMP/MIRSRC.$hosttype
+echo 'if test -z "$LD_LIBRARY_PATH"; then'	  >> $MIRTEMP/MIRSRC.$hosttype
+echo '  export LD_LIBRARY_PATH=${MIRLIB}:${LD_LIBRARY_PATH}'  >> $MIRTEMP/MIRSRC.$hosttype
+echo 'else'                               >> $MIRTEMP/MIRSRC.$hosttype
+echo '  export LD_LIBRARY_PATH=$MIRLIB'   >> $MIRTEMP/MIRSRC.$hosttype
+echo 'fi'                                 >> $MIRTEMP/MIRSRC.$hosttype
+echo "# pgplot=$pgplot"                   >> $MIRTEMP/MIRSRC.$hosttype
+if ($pgplot) then
+  echo 'export PGPLOT_DIR=$MIRLIB'         >> $MIRTEMP/MIRSRC.$hosttype
+else
+  echo 'export PGPLOT_DIR=/usr/lib/pgplot' >> $MIRTEMP/MIRSRC.$hosttype
+endif
+echo 'export WIPHELP=$MIR/borrow/wip/wiphelp.dat' >> $MIRTEMP/MIRSRC.$hosttype
+
 
 
 # astromake: only do this if you want to make THIS version miriad's 
