@@ -8,6 +8,7 @@ c    wh     jun 2 Fixed double precision bug in bselect. Deleted crakline.
 c    mchw 23Feb90 added default width for wideband correlator data only
 c    mchw 06Jul90 corrected bug in oneamp and changed to degrees.
 c		  - worked on documentation.
+c    pjt  12may03 removed a remaining maxant=256 dependancy
 c********1*********2*********3*********4*********5*********6*********7*c
 c* Width - Calculate wideband channel width
 c& mchw
@@ -121,7 +122,7 @@ c		-oct 88 wh
 c----------------------------------------------------------------------c
 	character*80 antsold
 	logical expanded(30,2)
-	integer i,il,iex,next,iant,ibase,i1,i2,l
+	integer i,il,iex,next,iant,i1,i2,l
 	character*10 token
 	character*30 tok
 	logical submode
@@ -179,9 +180,7 @@ c
 		end do
 	    end if
 	end if
-	ibase = int(base)
-	i1=ibase/256
-	i2=ibase-(ibase/256)*256
+	call basant(base,i1,i2)
 	bselect=.false.
 	if (i1.lt.1 .or. i1.gt.30) return
 	if (i2.lt.1 .or. i2.gt.30) return
