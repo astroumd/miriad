@@ -57,6 +57,7 @@ c   mousumi  6aug02 Added QGAUSS for a sech^2(z) disk
 c   peter           double prec
 c   mousumi  8aug02 Replace with QGAUSS with QROMB 
 c   peter           internal real*8, but miriad in real*4 as it should be
+c   peter    9aug02 forgot to scale sech() with h
 c Todo:
 c   scaleheight should be allowed to vary
 c
@@ -69,7 +70,7 @@ c
       INTEGER INVPARM
       PARAMETER(INVPARM=1)
       CHARACTER VERSION*(*)
-      PARAMETER (VERSION='Version 8-aug-02')
+      PARAMETER (VERSION='Version 9-aug-02')
 c
       CHARACTER in*128,out*128,outg*128
       INTEGER nin(MAXNAX),nout(MAXNAX),npadin(MAXNAX)
@@ -105,7 +106,7 @@ c
      *  CALL bug('f','At least one of out= or green= should be used')
       CALL keyfin
 
-      IF (softe.LE.0.0) CALL bug('f','Need positive value for softe=')
+      IF (softe.LE.0.0) CALL bug('f','Need positive value for eps=')
 c
 c   Opening the input image and defining the axes for the input and
 c   output images:
@@ -267,11 +268,12 @@ c***********************************************************************
       REAL g(maxx,ny),c1,c2,eps,h
 c-
       INTEGER i,j
-      DOUBLE PRECISION x,y,eps2,x1,y1,eps21,a,b,ss,ar2,func1
+      DOUBLE PRECISION x,y,eps2,x1,y1,eps21,a,b,ss,ar2,h1,func1
       EXTERNAL func1
-      COMMON /cpotfft/ar2
+      COMMON /cpotfft/ar2,h1
 c
       eps2 = eps*eps
+      h1 = h
       IF(h.LE.0.0)THEN
          CALL output('Computing G for an infinitesimally thin disk')
          DO j=1,ny
@@ -288,10 +290,10 @@ c
             DO i=1,nx
                x = i-c1
                ar2 = x*x + y*y + eps2
-               a = -25.d0
-               b =  25.d0
+               a = -25.d0*h1
+               b =  25.d0*h1
                CALL QROMB(func1,a,b,ss)
-c               CALL QGAUS(func1,a,b,ss)
+c              CALL QGAUS(func1,a,b,ss)    ! bad !
                g(i,j) = ss/(2*h)
             ENDDO
          ENDDO       
@@ -300,11 +302,11 @@ c               CALL QGAUS(func1,a,b,ss)
       END
 c-----------------------------------------------------------------------
 c     Function for Sech^2 integral 
-      DOUBLE PRECISION FUNCTION func1(z1)
+      DOUBLE PRECISION FUNCTION func1(z)
       IMPLICIT NONE
-      DOUBLE PRECISION z1,ar2
-      COMMON /cpotfft/ ar2
-      func1 = 1.d0/( cosh(z1)**2.d0 * sqrt(ar2 + (z1*z1)) )
+      DOUBLE PRECISION z,ar2,h1
+      COMMON /cpotfft/ ar2,h1
+      func1 = 1.d0/( cosh(z/h1)**2.d0 * sqrt(ar2 + z*z) )
       RETURN
       END
 c-----------------------------------------------------------------------
