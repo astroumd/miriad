@@ -1,0 +1,70 @@
+#! /bin/csh -fvx
+#
+#  MIRIAD shell script to emulate the ClassicAIPS DDT/Y2K tests
+#  (currently can only do DDT due to the nature of the Y2K visibilities)
+#
+#  
+
+#					all  Y2K and DDT files should live here
+#					see also ftp://ftp.cv.nrao.edu:/pub/aips/DDT/Y2K/
+#					and      ftp://ftp.cv.nrao.edu:/pub/aips/DDT/15JAN94/
+set y2kdir=/home/teuben/miriad/y2k
+#					working directory
+set rundir=tmpy2k_$$
+#					which test (DDT, Y2K)
+set test=DDT
+# 					index into arrays (1=S 2=M 3=L)
+set size=1
+#					override previous parameters via cmdline
+foreach a ($*)
+  set $a
+end
+
+#					DDT problem size dependant parameters
+
+set problem=(          S                  M                       L)
+set cell=(           1.3               1.15                     0.1)
+set imsize=(         256                512                    1024)
+set niters=(        2000               5000                   15000)
+set box=(102,108,194,155    138,178,353,352         340,390,630,630)
+set flux=(          14.7                5.5                    0.83)
+set noise=(          0.1               0.01                   0.001)
+set shift=(         -5.2               6,-6           -0.049,+0.026)
+set rotat=(           56                 -5                      30)
+
+# (See also /AIPS/31DEC01/RUN/DDTLOAD.001)
+#
+# Small:  ROTAT=56; SHIFT=-5.2; CELLSIZE=1.3
+#      IMSIZE=256; NITER=2000; FLUX=14.7; MAXPIXEL=6000
+#      CLBOX=102,108,194,155; SCALR1 = 13.0; NOISE=0.1,0
+
+# Medium: ROTAT=-5; SHIFT=6,-6; CELLSIZE=1.15
+#      IMSIZE=512; NITER=5000; FLUX=5.5; MAXPIXEL=10000
+#      CLBOX=138,178,353,352; SCALR1 = 8.4; NOISE=0.01,0
+
+# Large:  ROTAT=30; SHIFT=-0.049,+0.026
+#      CELLSIZE=0.1; IMSIZE=1024; NITER=15000; MAXPIXEL=20050
+#      CLBOX=340,390,630,630; SCALR1 = 13.1;FLUX=0.83
+#      ZEROSP=FLUX,0,0,0,15.0; NOISE=0.0001,0
+#
+# Huge:   ROTAT=0; SHIFT=0
+#      CELLSIZE=0.2; IMSIZE=4096; NITER=40000; MAXPIXEL=30000
+#      CLBOX=0; SCALR1=10; FLUX=250
+#      ZEROSP=FLUX,300,300,0,10; NOISE=0.005,0; SCALR2=-40
+
+
+if (1) then
+  mkdir $rundir
+  cd $rundir
+endif
+
+set p=$problem[$size]
+
+#  actually have to use DDT version, since Y2K is a BINTABLE
+#  miriad cannot handle those (yet). DDT still uses 
+
+fits in=$y2kdir/${test}${p}UVDATA out=vis op=uvin
+invert vis=vis map=mp beam=bm cell=$cell[$size] imsize=$imsize[$size]
+clean map=mp beam=bm out=cc niters=$niters[$size] region="box($box[$size])"
+restor model=cc map=mp beam=bm out=cm
+
