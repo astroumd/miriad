@@ -34,6 +34,20 @@ c       for a continuum observation. For example, if you have two IFs,
 c       the first of which is CO(3-2), and the second is continuum, use
 c       restfreq=345.795991,0
 c
+c@ refant
+c      The reference antenna. Default is 6. The reference antenna needs
+c      to be present while the antenna positions are being decoded 
+c      from baseline vectors stored in SMA MIR data. The geocentrical 
+c      coordinates for the antennas can be retrieved from SMA sybase. 
+c      For double checking the antenna positions, one can login to
+c      d2o.sma.hawaii.edu (IP:128.171.116.111) and use the following
+c      command:
+c      dBValue -d hal9000-newdds -v dsm_dds_hal_x_v11_d "2004-11-16 00:00:00"
+c      dBValue -d hal9000-newdds -v dsm_dds_hal_y_v11_d "2004-11-16 00:00:00"
+c      dBValue -d hal9000-newdds -v dsm_dds_hal_z_v11_d "2004-11-16 00:00:00"
+c      If the reference antenna is not the default value 6, one may need
+c      to give the reference antenna here.
+c
 c@ options
 c       'nopol'    Disable polarization. All the correlations will be
 c                  labelled as XX.
@@ -123,6 +137,11 @@ c    jhz  01-mar-05 added rx id label to the output file
 c    jhz  02-mar-05 added options doengrd to read engineer data file
 c    jhz  08-mar-05 added options circular to read polarization data
 c                   taken from single feed with waveplates.
+c    jhz  10-mar-05 decoded the antenna positions from mir baseline
+c                   coordinates; converted the geocentrical coordinates
+c                   to miriad coordinates.
+c    jhz  10-mar-05 removed uvputvra for file name which somehow
+c                   is rejected by miriad program uvlist.
 c------------------------------------------------------------------------
         integer maxfiles
         parameter(maxfiles=128)
@@ -139,7 +158,7 @@ c
      *          dospc,doengrd
         integer fileskip,fileproc,scanskip,scanproc,sb, dosporder
         integer doeng
-	integer rsNCHAN
+	integer rsNCHAN, refant
 c
 c  Externals.
 c
@@ -171,6 +190,7 @@ c
      *   call bug('f','Invalid Receiver ID.')
 
         call mkeyd('restfreq',rfreq,2,nfreq)
+        call keyi('refant',refant,6)
         call getopt(doauto,docross,docomp,dosam,doxyp,doop,relax,
      *    sing,unflag,dohann,birdie,dobary,doif,dowt,dopmps,polflag,
      *    hires,nopol,circular,oldpol,dospc,doengrd)
@@ -239,7 +259,8 @@ c
             if(iostat.ne.0)call bug('f','Error skipping SMAMIR file')
           else
             call pokeini(tno,dosam,doxyp,doop,dohann,birdie,dowt,
-     *      dopmps,dobary,doif,hires,nopol,circular,oldpol,rsnchan)
+     *      dopmps,dobary,doif,hires,nopol,circular,oldpol,
+     *      rsnchan, refant)
             if(nfiles.eq.1)then
               i = 1
             else
@@ -400,7 +421,10 @@ c------------------------------------------------------------------------
           call uvputvrd(tno,'latitud',latitude,1)
           call uvputvrd(tno,'longitu',longitud,1)
           call uvputvrr(tno,'evector',chioff,1)
-          call uvputvri(tno,'mount',mount,1)
+c
+c Alt-Az mount=0 SMA project book
+c
+          call uvputvri(tno,'mount',mount,0)
         endif
 c
         if(dobary)then
@@ -413,9 +437,10 @@ c************************************************************************
 c************************************************************************
         subroutine pokeini(tno1,dosam1,doxyp1,doop1,
      *          dohann1,birdie1,dowt1,dopmps1,dobary1,
-     *          doif1,hires1,nopol1,circular1,oldpol1,rsnchan1)
+     *          doif1,hires1,nopol1,circular1,oldpol1,
+     *	        rsnchan1, refant1)
 c
-        integer tno1, rsnchan1
+        integer tno1, rsnchan1, refant1
         logical dosam1,doxyp1,dohann1,doif1,dobary1,birdie1,dowt1
         logical dopmps1,hires1,doop1,nopol1,circular1,oldpol1
 c
@@ -522,7 +547,7 @@ c
 c
         call rspokeinisma(kstat,tno1,dosam1,doxyp1,doop1,
      *  dohann1,birdie1,dowt1,dopmps1,dobary1,doif1,hires1,
-     *  nopol1,circular1,oldpol1,lat1,long1,rsnchan1)
+     *  nopol1,circular1,oldpol1,lat1,long1,rsnchan1,refant1)
         end
 c************************************************************************
         subroutine liner(string)
@@ -638,7 +663,7 @@ c
           if(index('/[]:',c).ne.0)i1 = i + 1
         enddo
         if(i1.gt.i2)i1 = 1
-        call uvputvra(tno,'name',in(i1:i2)) 
+c        call uvputvra(tno,'name',in(i1:i2)) 
         end
 c************************************************************************
 c************************************************************************
