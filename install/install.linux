@@ -105,7 +105,8 @@ end
 
 if ($internal) then
    # override newdir and mirroot if we do an internal build....
-   set newdir=.
+   # newdir is now just a tagname, not a subdirectory
+   set newdir=CVS
    pushd .. 
    set mirroot=`pwd`
    popd
