@@ -1,0 +1,47 @@
+From: Tony Wong <Tony.Wong@atnf.csiro.au>
+Date: Wed, 6 Nov 2002 18:21:48 +1100 (EST)
+
+## here is a c-shell fragment to edit tabular in a visibility dataset
+## 
+## There is still some difficulty handling tables that begin/end near
+## the start/end time of the dataset.  I have edited the "itable" subroutine
+## to allow for some slop in this, but perhaps a better solution would be to
+## allow an "options=relax" for this type of extrapolation.
+## 
+
+
+# Determine new Tsys values for CA03 from 08:40 to 13:30
+# Assume that CA03 Tsys is linearly related to CA02
+alias uvputhd ~/bin/miriad/uvputhd
+foreach obj ($sources $gaincals $fluxcal)
+    foreach freq ($freq1 $freq2)
+        rm -rf $obj.$freq.1
+        uvcat vis=$obj.$freq select='time(09:00,13:30)' out=$obj.$freq.1
+        varplt vis=$obj.$freq.1 yaxis=xtsys log=xtsys.log options=dtime
+        varplt vis=$obj.$freq.1 yaxis=ytsys log=ytsys.log options=dtime
+        if ($freq == $freq1) then
+            grep -v '#' xtsys.log | \
+                awk '{print $1/24,$2,$3,$3*1.01+11,$5,$6,$6}' | \
+                grep -v ' 11 ' > xtsys.in
+            grep -v '#' ytsys.log | \
+                awk '{print $1/24,$2,$3,$3*0.93-10,$5,$6,$6}' | \
+                grep -v ' -10 ' > ytsys.in
+        else
+            grep -v '#' xtsys.log | \
+                awk '{print $1/24,$2,$3,$3*1.01+18,$5,$6,$6}' | \
+                grep -v ' 18 ' | sed 's/19711./335.40/g' > xtsys.in
+            grep -v '#' ytsys.log | \
+                awk '{print $1/24,$2,$3,$3*0.98+6,$5,$6,$6}' | \
+                grep -v ' 6 ' > ytsys.in
+        endif
+        rm -rf $obj.$freq.1.out1 $obj.$freq.1.out2
+        uvputhd vis=$obj.$freq.1 hdvar=xtsys table=xtsys.in \
+            time0=02OCT15:00:00:00.0 out=$obj.$freq.1.out1
+        uvputhd vis=$obj.$freq.1.out1 hdvar=ytsys table=ytsys.in \
+            time0=02OCT15:00:00:00.0 out=$obj.$freq.1.out2
+        varplt vis=$obj.$freq.1.out2 yaxis=xtsys device=/xw
+        varplt vis=$obj.$freq.1.out2 yaxis=ytsys device=/xw
+    end
+end
+
+
