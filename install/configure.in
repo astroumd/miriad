@@ -84,6 +84,9 @@ case $TELESCOPE in
      "lofar")  echo "Selecting LOFAR simulation array"
         def_maxiant=2048
 	continue;;
+     "fasr") echo "Selecting FASR simulation 128-array"
+	def_maxant=128
+	def_maxant2=128
      "sma")  echo "Selecting SMA array"
         def_maxdim=4096
 	def_maxant=30

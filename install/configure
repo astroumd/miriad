@@ -6555,13 +6555,16 @@ case $TELESCOPE in
      "lofar")  echo "Selecting LOFAR simulation array"
         def_maxiant=2048
 	continue;;
+     "fasr") echo "Selecting FASR simulation 128-array"
+	def_maxant=128
+	def_maxant2=128
      "sma")  echo "Selecting SMA array"
         def_maxdim=4096
 	def_maxant=30
 	def_maxbase=435
-	def_maxchan=7681   #  rao: 12288
+	def_maxchan=7681   #  rao: 12288 ?
 	def_maxwin=48
-	def_maxwide=18     #  rao: 50
+	def_maxwide=18     #  rao: 50 ?
 	continue;;
      "wsrt")  echo "Selecting WSRT array"
 	continue;;
