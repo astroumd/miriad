@@ -96,6 +96,7 @@ typedef int int2;
 #else
 #  define FORT_TRUE 1
 #endif
+
 #define FORT_FALSE 0
 #define FORT_LOGICAL(a) ((a) != FORT_FALSE)
 

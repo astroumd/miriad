@@ -31,6 +31,9 @@
 #include "sysdep.h"
 
 #if defined(WORDS_BIGENDIAN)
+
+static int words_bigendian = 1;
+
 void	pack16_c(from,to,n)
 	char		*to;
 	register int	*from;
@@ -58,6 +61,7 @@ void	unpack16_c(from,to,n)
 
 #ifndef WORDS_BIGENDIAN 
 #ifndef unicos
+static int words_littleendian = 1;
 /************************************************************************/
 /*									*/
 /*  The pack routines -- these convert between the host format and	*/
@@ -253,7 +257,7 @@ int n;
 
 
 #if defined(unicos)
-
+static int words_unicos = 1;
 #define TWO15  0x8000
 #define TWO16  0x10000
 #define TWO31  0x80000000
