@@ -7,10 +7,10 @@ set tmp=bench$$
 mkdir $tmp
 cd $tmp
 
-#			default parameters  (nchan=8, mapsize=512 for a test)
-set nchan=32
+#			default parameters  (gives 85MB)
+set nchan=32            # use nchan=1024 for 2GB test
+set dt=0.01		# use dt=0.007   for 2GB test
 set standalone=0
-set dt=0.01
 
 foreach a ($*)
   set $a
@@ -26,7 +26,7 @@ if ($standalone) then
    setenv  LD_LIBRARY_PATH ..
 endif	
 
-echo "MIRBIGBENCH: (2003-02-13) $tmp : nchan=$nchan dt=$dt"
+echo "MIRBIGBENCH: (2003-12-14) $tmp : nchan=$nchan dt=$dt"
 echo hostname=`hostname` 
 echo system=`uname -a`  
 echo date=`date`
