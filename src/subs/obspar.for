@@ -31,6 +31,7 @@ c    rjs  31mar00 Added SEST.
 c    dpr  22may01 Added HOBART26M, CEDUNA30M, XYEW
 c    mchw 24may01 Added RPA
 c    mchw 03jan02 Added SZA
+c    mchw 09jul02 Added ALMA
 c************************************************************************
 c* ObsPrint -- Print list of known observatories.
 c: utility
@@ -76,8 +77,8 @@ c  This returns some known characteristics of various observervatories.
 c
 c  Input:
 c    observ	Name of the observatory. Current list is :
-c                 'ATCA', 'CEDUNA30M', 'CSO', 'GMRT', 'HATCREEK', 
-c                 'HOBART26M', 'IRAM15M', 'JCMT',
+c                 'ALMA', 'ATCA', 'CARMA', CEDUNA30M', 'CSO', 'GMRT',
+c                 'HATCREEK', 'HOBART26M', 'IRAM15M', 'JCMT',
 c                 'KITTPEAK', 'NOBEYAMA', 'NOBEYAMA45', 'ONSALA', 'OVRO',
 c		  'PARKES', 'PENTICTON', 'QUABBIN', 'RPA', 'SZA', 'VLA', 
 c		  'WSRT'
@@ -156,6 +157,45 @@ c
 	if(.not.first)return
 	first = .false.
 	nparms = 0
+c
+c  ALMA - will need to be updated. From Simon Radford:
+c At the Grenoble meeting, Chajnantor South was chosen as the nominal 
+c array center. In 1999 November, we measured this with a differential GPS:
+c 
+c                             N            E          alt
+c Chajnantor South        7453228.830  627807.166  5016.792
+c 
+c where the coordinates are UTM [m] on the Prov. S. Am. 1956 datum, which 
+c we use for mapping and civil construction. This position is 544 m south 
+c and 35 m east of the NRAO container. By long integration with a 
+c navigation GPS, I measured the position of the NRAO container (Memos 
+c 261, 312):
+c 
+c NRAO  container         7453772      627772      5060
+c 
+c on the same datum. Again using this datum, the latitude and longitude of 
+c the NRAO container are:
+c 
+c    23deg 1'  9.42''  South    67deg 45' 11.44''  West
+c 
+c Note these coordinates are based on the PSAm56 datum and are not the 
+c "astronomical" latitude and longitude. The native datum for GPS, the 
+c WGS84 datum, is very close to the astronomical coordinate system 
+c determined from VLBI. In this datum, the NRAO container is at:
+c 
+c    23deg 1' 22.42''  South    67deg 45' 17.74''  West
+c
+	call obsad('alma/antdiam',	12.d0)
+	call obsad('alma/ellimit',	12.0*dpi/180.d0)
+	call obsad('alma/evector',	0.25*dpi)
+	call obsad('alma/height',	5017.d0)
+	call obsad('alma/jyperk',	40.7d0)
+	call obsad('alma/latitude',	obsdms(-1, 23,01,22.42))
+	call obsad('alma/longitude',	obsdms( 1,67,47, 17.74))
+	call obsad('alma/mount',	ALTAZ)
+	call obsad('alma/nants',	64.d0)
+	call obsad('alma/systemp',	40.d0)
+c
 c
 c  The Australia Telescope Compact Array (ATNF).
 c  Latitude, longitude and height refer to station 35. Info from
