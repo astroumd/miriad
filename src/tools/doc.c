@@ -80,9 +80,10 @@ History:
   mjs  1feb93 Treat *.f2c files the same as *.c files
   bpw 30jan95 Small bug fix with ovwdir, close outstream in change_outstream
   rlp 10jun97 Print keywords out in lower case.
+  pjt 12jun01 Increased N_PGMR, made a static in lognam()
 
 ********************************************************************/
-char *version = { "version 2.6 - 10-Jun-97" };
+char *version = { "version 2.6 - 12-Jun-01" };
 /*******************************************************************/
 /*= doc - MIRIAD documentation program                             */
 /*& bpw                                                            */
@@ -894,7 +895,7 @@ char    *pr_c_categories[N_CCATS] = {
          "Other\0",             "...\0"                                   };
 
 
-#define  N_PGMR 20
+#define  N_PGMR 60
 int      number_of_pgmrs;
 char     initials[N_PGMR][7], pgmrname[N_PGMR][19];
 
@@ -2644,7 +2645,7 @@ remove(filename);
 /************************************************************************/
 /* expand logical name for unix, don't for vms                          */
 char *lognam(envvar) char *envvar; {
-char log_nam[NAMELEN]; char *env;
+static char log_nam[NAMELEN]; char *env;
 strcpy( log_nam, "\0" );
 #ifdef vaxc
 if( *envvar != '\0' ) strconcat( log_nam, envvar, ":" );
