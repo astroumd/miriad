@@ -1,0 +1,9 @@
+if you don't see a directory 'wip' here, it probably means you
+did not get a proper BIMA version of miriad. Most likely you
+used cvs, and need to plant the wip tree here:
+	cd $MIR/borrow 		(which is here)
+	cvs checkout wip	plant the wip tree
+	mirboss			become miriad boss
+	mir.install wip		compile wip
+	
+
