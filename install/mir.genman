@@ -1,0 +1,504 @@
+#! /bin/csh -f
+#
+#* mir.genman - Generate manual pages tree from doc pages
+#& pjt
+#: system operation
+#+
+#       Create Miriad man pages from doc files
+#
+#	Usage: mir.genman [-h -v -c -d -o -n] [sdir sext ddir dext]
+#
+#       Switches:
+#        -v     turn verbose mode off
+#        -c     don't update formatted *cat* versions and whatis database
+#        -r     remove the old *cat* version, so a new one is forced
+#        -m     Create the intro.1 file for mir.man (at beginning)
+#        -d     Debug mode (does a diff on the old and new man page)
+#	 -o     Use "old method" of generating catman files (SunOS)
+#        -n     Use linux method "man -C /dev/null" to force new catman pages
+#	 -w     Only make whatis database (at the end)
+#        -h     This help
+#
+#	Optional 4 remaining arguments:
+#        sdir   source directory of *doc files
+#        sext   extension to use (doc, cdoc, kdoc)
+#        ddir   manual root (normally $MIRDOC/man)
+#        dext   section number (one of: 1,3,5,8)
+#
+#
+#       This script is only needed when your site has the xman X-windows 
+#       program installed. It must be run after new subroutines
+#       and programs have been installed in miriad (or if anything
+#       below $MIRPDOC or $MIRSDOC has been updated), e.g.
+#
+#		mir.loadall subs prog genman
+#
+#       and will then incrementally update the man pages from the new
+#       doc files by comparing them.
+# 	
+#	Note: this script must be able to call itself, you either call
+#	it with no arguments (in which case it does all the work in
+#	a few steps), or you call it with arguments in specific order,
+#	for the expert. 
+#
+#	This script also creates the required subdirectories if need be.
+#-
+
+# ToDo:
+#	catman stuff needs to be working right, linux is confusing now.
+#	different man versions work different...
+
+### local test (old UMD version)
+# set mirman=$MIR/local/man
+### production (from july 93 onwards)
+ set mirman=$MIRDOC/man
+
+### The optional command line switches (must be before the required ones)
+ set catman=1			# turn off with -c
+ set redo=0                     # turn on  with -r
+ set verb=1			# turn off with -v
+ set debug=0                    # turn on  with -d
+ set mkman=0			# turn on  with -m
+ set whatis=0			# turn on  with -w
+ set linux=0			# turn on  with -n
+
+### The 4 required command line arguments  (also in this order)
+### of which a sample is printed here
+ set sdir=$MIRPDOC		# source directory 
+ set sext=doc			# source extension
+ set ddir=$mirman		# destination man root directory
+ set dext=1			# destination extension
+
+ set old=0			# default to new catman arguments (Solaris)
+
+ set prog=$0
+ set tmp=/tmp/tmp$$
+ set all=1
+# Note that this name must correspond with the one in the viewer, mir.man
+ set help=$mirman/man1/intro.1
+# temporarely override MANPATH to help creating the cat files ??
+ setenv MANPATH $ddir
+#
+
+###  First process the optional switches
+###  keep a copy in the 'switch' list
+
+ set switch=()
+loop1:
+ if($#argv == 0) goto end_loop1
+ switch ($argv[1])
+   case -c*:
+	set catman=0
+	set switch=($switch -c)
+	breaksw
+   case -r*:
+	set redo=1
+	set switch=($switch -r)
+	breaksw
+   case -v*:
+	set verb=0
+	set switch=($switch -v)
+	breaksw
+   case -d*:
+        set debug=1
+        set switch=($switch -d)
+	breaksw
+   case -m*:
+	set mkman=1
+	breaksw
+   case -n*:
+	set linux=1
+        set switch=($switch -n)
+	breaksw
+   case -w*:
+        set whatis=1
+        breaksw
+   case -o*:
+        set old=1
+        set switch=($switch -o)
+        breaksw
+   case help:
+   case -h*:
+	goto help
+   default:
+	# first non-understood argument is assumed to trigger work
+	set all=0
+	goto end_loop1
+ endsw
+ shift argv
+ goto loop1
+end_loop1:
+
+ if ($mkman == 1) goto mkman
+ if ($whatis == 1) goto whatis
+
+ if ($all == 1) then
+  $prog $switch -m
+  $prog $switch $MIRPDOC doc  $ddir 1
+  $prog $switch $MIRPDOC kdoc $ddir 5
+  $prog $switch $MIRPDOC cdoc $ddir 8
+  $prog $switch $MIRSDOC sdoc $ddir 3
+  $prog $switch -w
+  exit 0
+ endif
+
+ if ($#argv > 0) then
+  if ($#argv == 4) then
+    set sdir=$argv[1]
+    set sext=$argv[2]
+    set ddir=$argv[3]
+    set dext=$argv[4]
+  else
+    echo "### Fatal Error: ($#argv):"
+    echo "   Need 4 real arguments: sdir sext ddir sext"
+    exit 0
+  endif
+ endif
+
+ if (! -d $sdir) then
+  echo "sdir=$sdir does not exist"
+  exit 0
+ endif
+
+ if (! -d $ddir/man$dext) then
+  echo "### Creating $ddir/man$dext"
+  mkdir -p $ddir/man$dext
+  if ($status) exit $status
+ endif
+ if (! -d $ddir/cat$dext && $catman == 1) then
+  echo "### Creating $ddir/cat$dext"
+  mkdir -p $ddir/cat$dext
+  if ($status) exit $status
+ endif
+
+ if ($verb == 1) then
+  echo "Installing all $sext from $sdir"
+  echo "            as $dext to   $ddir/man$dext"
+  if($catman == 1) then
+    echo "      also installing all formatted versions"
+  endif
+  echo "Each dot represents a file checked, if it's immediately followed"
+  echo "by a name, that doc file is converted to a man file becaused"
+  echo "it was deemed out of date"
+  echo "MANPATH = $MANPATH"
+ endif
+
+
+ foreach doc ($sdir/*.$sext)
+  set file=$doc:t
+  set root=$file:r
+  set man=$ddir/man$dext/$root.$dext
+  set cat=$ddir/cat$dext
+  set go=0
+
+  echo -n "."
+  docman -$dext $doc > $tmp
+  if(! -e  $man) then
+   set go=1
+  else
+   cmp $tmp $man >& /dev/null
+   set go=$status
+  endif
+  if ($go == 1) then
+   echo "$root"
+   if ($debug == 1) diff $tmp $man
+   mv $tmp $man
+  endif
+  if( $go == 1 || $redo == 1) then
+   if ($catman == 1) then
+#							-o
+	if( $old == 1 ) then
+#		echo man $root >& /dev/null
+		man $root >& /dev/null
+#							-n
+	else if ($linux == 1) then
+#		echo man -C /dev/null $root 
+#		man -C /dev/null $root >& /dev/null
+		man -F -C /dev/null $root >& /dev/null
+		if(0)then
+		if (-e $cat/$root.$dext.gz) then
+		   # this will work on slackware  (man 1.5b)
+		   gunzip $cat/$root.$dext.gz
+		else
+		   # this will have to do on redhat and derivatives  (man 1.5f)
+		   man -C /dev/null $root > $cat/$root.$dext
+		endif
+		endif
+	else
+#		echo catman -M $mirman $dext
+		catman -M $mirman $dext
+	endif
+   endif
+  endif
+  if ($redo) man $root >& /dev/null
+ end
+ echo ""
+ exit 0
+
+help:
+  echo "Usage: $prog [-h -v -c] [sdir sext ddir dext]"
+  echo "Switches: "
+  echo "  -v  turn verbose mode off"
+  echo "  -c  Also store formatted *cat* versions and whatis database"
+  echo "  -m  Store the intro.1 file"
+  echo "  -h  This help"
+  exit 0
+
+### Update the whatis database
+### the convex is sick: can't relocate it's man root
+
+whatis:
+  if ($verb == 1) echo Updating the whatis database:
+  if ($linux == 1 || -e /usr/sbin/makewhatis) then
+    if ($verb == 1) echo /usr/sbin/makewhatis -w
+    /usr/sbin/makewhatis -w
+    echo Note: some distributions have a bad permission on /usr/sbin/makewhatis:
+    ls -l /usr/sbin/makewhatis
+    echo so better check the above line if you saw errors.
+  else
+    if ($verb == 1) echo catman -w -M $mirman
+    catman -w -M $mirman
+  endif
+  exit 0
+
+### The rest of this script deals with creating the help file (intro.1)
+### and putting it in the right spot.
+
+mkman:
+ if ($verb == 1) echo "Creating $help"
+ cat << END_OF_MAN > $help
+.\" Do not edit this file - it has been created by mir.genman
+.\" You need to edit that script if you want to update this miriad help file
+.\" and run "mir.genman -m"
+.TH INTRO 1 "29 July 1993"
+.SH DESCRIPTION
+\fIMIRIAD\fP is an astronomical 
+data-reduction and analysis package suitable to manipulate
+raw radio-interferometric observations and images.
+A rich visibility data-format
+has been designed to allow a very flexible approach to calibrate and map
+the data, particularly for arrays with a small number of antennae.
+Specific calibration routines for the BIMA and ATNF arrays are available.
+Most common image processing techniques, including a wide variety of
+deconvolution programs, are available.
+.PP
+Interfaces exist to import and export data through the \fIFITS\fP
+format, visibility data as well as image data.
+.SH GETTING STARTED
+What you need to do to set yourself up for MIRIAD:
+.PP
+There are many ways to add
+MIRIAD to your environment. Essentially, the \fB\$MIR\fP environment
+variable is defined as the root directory of the software
+package on your local site, after which some startup file is executed.
+For example, you can add the following lines to your \fI.cshrc\fP 
+file, but AFTER your command search path (\fBPATH\fP environment
+variable or \fBpath\fP shell variable) has been set:
+.nf
+    ...
+    set path = ( ... )
+    ...
+    setenv MIR /usr/miriad                  # or where ever
+    if(-e \$MIR/MIRRC) source \$MIR/MIRRC
+    ...
+    set path = ( ... \$MIRBIN \$path )
+.fi
+.PP
+Important to note is that the second \fBpath\fP modification is not
+needed in cases where the \fBMIRRC\fB file does this for you. This
+is a site dependant feature, and you need to consult you local
+MIRIAD guru. 
+.SH HOW TO RUN MIRIAD PROGRAMS
+MIRIAD programs can be run just as any other command in Unix, in that sense
+MIRIAD is nothing more than an extension of Unix. There are also fancy
+shell programs, called \fImiriad\fP, \fImirtool\fP and \fPxmirtool\fP,
+(\fIunder development\fP)
+for people who prefer a more AIPS-like or point-and-click environment.
+.PP
+MIRIAD programs all work by using a series of \fIkeyword=value\fP pairs
+on the commandline. The command \fBmirhelp\fP should give you help
+on any particular program (or even subroutine) in MIRIAD, e.g.
+.nf
+    mirhelp itemize
+.fi
+although within \fIxman\fP (\fImirman\fP) the information is easier
+accessable.
+.SH FURTHER INFORMATION
+The \fIMIRIAD Users Guide\fP contains most of
+the information you need to run programs. The \fIMIRIAD Programmers Guide\fP
+explains how to write your own programs.
+
+.\" ======= The rest of the man page comes from selected portions of the
+.\" ======= 1991 version of xman.help (xman, v 3.1.5)
+
+.SH XMAN RESIZING WINDOWS
+
+You can resize any of the windows in xman with your window manager, 
+and xman will do the best it can to resize everything internally into
+a useful configuration.  The only control over the internal arrangement
+that you have is moving the border between the manual page and directory
+when both are displayed.  This is done by clicking and holding the any 
+pointer button when the cursor is over the small square (grip) on the 
+right side of the screen.  The grip is located on the horizontal line 
+which separates the panes.  The grip may be moved up and down to resize 
+the panes of the screen, and when the pointer button is released xman 
+will move the pane boundary to the newly specified location.
+
+
+.SH XMAN MENU COMMANDS
+
+There are two ways to activate the menus.  The first is to click any
+pointer button in the menu button corresponding to the menu you want
+to activate.  The second method is to hold down the "Control" key and 
+click the left pointer button for the Options menu or the middle
+pointer button for the Sections menu.  Reguardless of how the menu
+was activated, selecting items is the same.
+.PP
+Once a menu is activated, continue to hold down the pointer button and
+drag the pointer cursor over the item that you would like to activate.
+Once the item that you want to select is highlighted, select it by 
+releasing the pointer button.  To avoid making a menu selection, move
+the pointer cursor outside the menu and release the button.
+.PP
+Selecting one of the items in the Sections menu will display the
+named directory.
+
+The following commands are available through the Options menu:
+.nf
+Display Directory	Show the current section directory.
+
+Display Manual Page	Show the current manual page.
+
+Help			Create a help window with this text displayed.
+
+Search			Pop up a dialogue box that allows the entire tree
+			of manual pages to be searched for a specific name.
+			A keyword (apropos) search is also available through
+			this dialogue box.
+
+Show Both Screens	Split the manual page display window to display
+			both the current manual page and the directory. 
+Show One Screen		Return to a single screen display of either a 
+			manual page or directory listing.
+
+Remove This Man Page	Remove this manual page, do not quit.
+
+Open New Man Page	Pop up a new manual page browser window.
+
+Show Version		Print the current version of xman to the information
+			display window.  Please include the version number
+			when reporting bugs.
+ 
+Quit			Close all xman windows and quit xman.
+.fi
+
+.SH XMAN SUMMARY OF BASIC ACTIONS
+
+In a menu button:
+.nf
+	CLICK:		Pop up a menu
+
+In a directory, manual page, or scroll bar:
+
+	<CONTROL> CLICK LEFT:	    	Pop up the Options menu.
+	<CONTROL> CLICK MIDDLE:	Pop up the Sections menu.
+
+In a  directory:
+
+	CLICK LEFT:				Bring up named manual page
+	<SHIFT> CLICK MIDDLE:		Go to manual page previously chosen.
+
+In a manual page or apropos listing:
+
+	<SHIFT> CLICK MIDDLE:		Go to directory of manual pages.
+
+In scroll bars:
+
+	CLICK LEFT:		Move down - more if pointer is near bottom
+						    of window, less if at top.
+	CLICK MIDDLE:		Move top of page to current pointer position.
+	CLICK RIGHT:		Move up - more if pointer is near bottom
+					  of window, less if at top.
+.fi
+.SH XMAN SEARCHING
+
+Xman has a built-in searching utility that allows the user to search
+the entire manual page tree for a specific topic (manual page search)
+or a keyword (apropos search).  The search dialogue box can be activated
+from the Options menu, or by the key Control-s.  If the search is started
+from the small initial topbox xman will open a new manual page if the 
+search was successful, and fail silently if the search was unsuccessful.
+.PP
+Manual page searches are performed starting in the currently
+displayed section.  If no match is found then the remaining sections
+are searched in the order that the sections appear in the Sections
+menu, starting at the top.  The current version of xman immediately
+displays the first manual page that it finds.  If the manual page cannot 
+be found that fact is noted in the informational display.
+.PP
+An apropos search will search a list of short descriptions for all
+manual pages on the system and return a list of all descriptions
+which contain the keyword specified.
+
+
+.SH XMAN KEYBOARD ACCELERATORS
+
+Xman contains a set of preinstalled keyboard accelerators.  These are
+a set of key bindings that perform many of the same operations as the menu 
+items.  Since it is not necessary to pull down the menu,  these actions can 
+be performed more quickly, hence the name accelerators.  
+.PP
+The default key bindings for xman are:
+.nf
+Anywhere:
+
+	Control - c		Exit xman
+	Control - h		Create the help window
+	Control - n		Create a new man page
+	Control - q		Exit xman
+	Control - s             Create a search popup 
+
+In a manual page, directory, or help window:
+
+	Control - r		Remove this manual page or help display
+	Control - v		Show the current version of xman
+
+In a manual page or directory:
+
+	Control - d		Display Directory
+	Control - m		Display Man Page
+
+In a manual page only:
+
+	b			Page Back
+	f			Page forward
+	<Space>			Page forward
+	1			One line forward
+	2 			Two lines forward
+	3 			Three lines forward
+	4 			Four lines forward
+
+Note: Control-s does not have any effect in the help window.
+.fi
+
+.SH XMAN FURTHER INFORMATION
+
+Xman is highly customizable.  Through the X resource database a user
+can customize the look and feel of this application so that it meets a
+preferred style of interaction.  Almost any configuration that is available 
+dynamically can be specified through resources.  This includes changing the
+size, color, and fonts,	starting with no topbox, showing both screens,
+and rebinding the keyboard accelerators. 
+.SH SEE ALSO
+xman(1), aips(1), sde, iraf, midas
+.SH HISTORY
+.nf
+.ta +1i +4i
+23-mar-92	Created for UMD version of mir.man  PJT
+27-jul-93	Ported to other sites -- added some xman.help	PJT
+24-mar-99	Slight adaptations for linux	PJT
+.fi
+END_OF_MAN
+### Force creation of cat version ?
+ if ($catman == 1) man intro >& /dev/null
+

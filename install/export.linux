@@ -1,0 +1,18 @@
+#! /bin/csh -f
+#
+set tmp=./
+set date=01jan70
+
+foreach a ($*)
+ set $a
+end
+
+if (-e /usr/local/miriad/$date/MIRRC.linux) then
+  cd /usr/local/miriad
+  echo Creating $tmp/miriad-$date.tgz 
+  tar zcf $tmp/miriad-$date.tgz *.MIRIAD $date
+  scp $tmp/miriad-$date.tgz teuben@apus:/home/ftp/pub/astro
+else
+  echo No version date, check /usr/local/miriad/$date/MIRRC.linux
+  ls -l /usr/local/miriad/*/MIRRC.linux 
+endif

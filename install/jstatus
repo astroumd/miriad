@@ -1,0 +1,11 @@
+#!/bin/csh -f
+#echo "JStatus is down for maintanence. Please check back later."
+#exit 0
+#setenv THREADS_FLAG native # use native threads
+unsetenv JAVA_COMPILER
+#setenv JAVA_HOME /opt/jre1.2
+setenv JAVA_HOME /data/java/jre117_v3
+#$JAVA_HOME/bin/java -classpath /usr/local/java/observatory.jar EDU.umd.astro.jstatus.JStatus &
+#$JAVA_HOME/bin/java -classpath $JAVA_HOME/lib/classes.zip:/usr/local/java/observatory.jar EDU.umd.astro.jstatus.JStatus &
+
+$JAVA_HOME/bin/jre  -classpath $JAVA_HOME/lib/rt.jar:/usr/local/java/observatory.jar EDU.umd.astro.jstatus.JStatus &

@@ -1,0 +1,319 @@
+#! /bin/csh -f
+#
+# Version: 14-jun-01
+#
+#  2-aug-99 Updated for Sebok's Mandrake setup
+#  1-aug-00 Updated to allow to build private PGPLOT version
+# 11-aug-00 add kdoc files manually
+# 28-aug-00 added xmrecvlist, fixed HTTPC bug for libwww
+#  8-oct-00 added velplotc as special program, if libforms.so present
+# 17-oct-00 allow compilation with -g
+#  7-mar-01 optionally use CVS archive
+# 12-jun-01 pgplot522
+# 14-jun-01 atlod
+#
+#   Simple single-architecture installation of MIRIAD
+#   (linux)
+#   On our current single CPU Pii-400 this takes: (july 1999)
+#	465.280u 81.630s 12:32.65 72.6% 0+0k 0+0io 1970021pf+0w
+#   Piii-600 (laptop) w/ gcc-2.95.3 (june 2001) [more features]
+#       482.280u 54.400s 12:04.94 74.0%	0+0k 0+0io 2924051pf+0w
+#
+#-----------------------------------------------------------------------
+# assume we have a mir.tar.gz (UIUC version) in a clean directory
+# also we need to assume your linux has a
+# a fortran compiler:   g77 (or f2c's fort77 ???)
+# and pgplot installed.
+#
+# Bob Sault uses: 		f77 -ff90-intrinsics-hide -c -fPIC -O
+#
+# Examples:
+# PGPLOT: 
+#    pgplot-5.2.0-2.i386.rpm			uses /usr/lib/pgplot
+#
+# PGPLOT for rh51, works all the way through RH60  as long as you
+# have the compat-* packages for fortran, c, c++ installed.
+#	pgplot-5.2.0-3u.i386.rpm
+#	pgplot-demos-5.2.0-3u.i386.rpm
+#	pgplot-devel-5.2.0-3u.i386.rpm
+# 
+# FORTRAN: (example for RH4.2)
+#   f2c-19960205-8.i386.rpm
+#   f2c-libs-19960205-8.i386.rpm
+#   fort77-1.14a-1.i386.rpm
+#
+# For xcorf you need lesstiff, e.g.
+#   lesstif-0.85-1.i386.rpm
+#   lesstif-devel-0.85-1.i386.rpm
+# seem to work fine, but don't try the ones from Powertools w/ RH62, they
+# put header files in funny places (motif1.2 vs. motif2.0)
+# and broke directory permissions in bizarre ways
+
+# SuSe 6.0 uses: /usr/lib/libbsd-compat.a
+# whereas PGPLOT  likes /usr/lib/libbsd.a, a symlink will solve that
+
+
+# shared libs or not?? -- shared is ok, but mir.subs will not rebuild
+# the .so file, use
+#	(cd $MIRLIB; make slib)
+# With shared, linux rh61 gives 30MB in executables, without it is 70 MB!!
+
+#   
+
+#   'newdir' is something that tags the date this version was made (e.g. 98jun08)
+#   later on this will also be stored again in the file $MIR/DATE, where the CVS miriad
+#   version will be stored in $MIR/VERSION
+set newdir=`date +%y%b%d | tr A-Z a-z`
+set hosttype=linux
+set mirxinc="/usr/include/X11"
+set mirxlib="/usr/X11R6/lib"
+set libforms=/usr/lib/libforms.a
+#		care, wip still uses something else, it won't listen to $fortran
+#		and you probably need 'f77' in your path
+#set fortran=(fort77 g77)
+set fortran=g77
+set log=/tmp/miriad.install.$$.log
+
+# 		MIRIAD V3:  
+set tar=miriad.tar.gz
+set ftp=ftp://ftp.astro.umd.edu/progs/bima
+
+# 		astromake based will root miriad here
+set mirroot=/usr/local/miriad
+
+#		remember from where this was installed
+set install_root=`pwd`
+
+#               turn on(1)/off(0) certain install options
+set official=0              #  also modify the system (c)shrc.MIRIAD?
+set shared=1                #  also build shared library libmir.so?
+set pgplot=1                #  include PGPLOT in $MIRLIB ?
+set newcode=1               #  include 'newcode' not in CVS (yet) ; aim is to add in future
+set debug=0                 #  compile in debug (-g) mode ?
+set cvs=1                   #  use CVS archive to get miriad.tar.gz ?
+set local=0                 #  ??? not used ???
+set bench=0,512,1           #  mirbench nchan,mapsize,cell  (nchan=0 will skip the test)
+
+#		   	remember from where we were installing, since we have stuff here.....
+set install_dir=`pwd`
+
+#			but install from the install root
+cd $mirroot
+echo "Working in $mirroot"
+
+if ($cvs) then
+   echo "Extract current CVS snapshot into $newdir"
+   cvs export -D tomorrow -d $newdir miriad >>& $log
+   echo "Extracting current CVS snapshot of wip into $newdir/borrow/wip" >>& $log
+   (cd $newdir/borrow; cvs export -D tomorrow wip) >>& $log
+else
+   if (-e $tar) then
+      echo "### Warning: $tar already present, using it"
+   else
+      echo "Picking up  $ftp/$tar"
+      ncftpget $ftp/$tar
+   endif
+
+   if (-d $newdir) then
+      echo "### Warning: $newdir already exists, using it"
+      cd $newdir
+   else
+      echo "Untarring $tar"
+      mkdir $newdir
+      cd $newdir
+      tar zxf ../$tar
+   endif
+
+endif
+
+setenv MIRTEMP $mirroot/$newdir
+if ($debug == 1) setenv MIRDEBUG 1
+
+set path = ( $MIRTEMP/src/sys/bin $path )
+rehash
+echo mir.mkdirs $MIRTEMP
+mir.mkdirs $MIRTEMP >& /tmp/mir.mkdirs.log
+
+#    	Linux really ...
+cat $MIRTEMP/src/sys/files/MIRRC.skel |\
+  sed s,/appl/lai/miriad/mirdir,$MIRTEMP, |\
+  sed s,sun4sol,$hosttype, |\
+  sed s,/usr/openwin/include,$mirxinc, |\
+  sed s,/usr/local/lib/X11,$mirxlib, |\
+  grep -v PGPLOT_FONT >! $MIRTEMP/MIRRC.$hosttype
+
+echo '# special additions'                >> $MIRTEMP/MIRRC.$hosttype
+echo 'setenv LD_LIBRARY_PATH $MIRLIB'     >> $MIRTEMP/MIRRC.$hosttype
+echo "# pgplot=$pgplot"                   >> $MIRTEMP/MIRRC.$hosttype
+if ($pgplot) then
+  echo 'setenv PGPLOT_DIR $MIRLIB'         >> $MIRTEMP/MIRRC.$hosttype
+else
+  echo 'setenv PGPLOT_DIR /usr/lib/pgplot' >> $MIRTEMP/MIRRC.$hosttype
+endif
+
+
+# astromake: only do this if you want to make THIS version miriad's 
+# official one.
+# you still need to patch the /usr/local/miriad/cshrc.MIRIAD
+# for the system version !!
+if ($official) then
+  echo "source $MIRTEMP/MIRRC.$hosttype" > $mirroot/cshrc.MIRIAD
+  echo ".     $MIRTEMP/MIRSRC.$hosttype" > $mirroot/shrc.MIRIAD
+  source ~/cshrc.MIRIAD
+endif
+
+source $MIRTEMP/MIRRC.$hosttype
+
+#			not really used anymore 
+if ($newcode) then
+  pushd $install_dir
+  echo Adding newcode
+  if (-d newcode) then
+    echo Found newcode, adding it
+    (cd newcode; ./DOIT)
+  endif  
+  if (-e wip) then
+    echo Found a local WIP patch, relocating that
+    (cd $MIR/borrow; mv wip wip.orig)
+    cp -pr wip $MIR/borrow
+  endif
+  popd
+endif
+
+cd $MIR
+
+echo Making the MIR tree writable
+chmod -R +w $MIR
+
+######  This should not be needed, standard version should be g77 for linux
+#cp $MIR/src/sys/bin/compile.linux $MIR/bin/localsys
+#echo Edit compile.linux and make g77 the default compiler
+#vi $MIR/bin/localsys/compile.linux
+
+echo Installing scripts....
+mir.install scripts 
+
+echo Yuck, resetting xbit in MIRBIN
+chmod +x $MIRBIN/*
+
+#	linux
+if (-e /usr/lib/libbsd-compat.a) echo Warning: you have /usr/lib/libbsd-compat.a
+if (! -e /usr/lib/libbsd.a) echo Warning: you do not have /usr/lib/libbsd.a
+
+# special: linux generally has readline...   (this test failed on mdk71 ??)
+set dorl=0
+echo MIRIAD.C: trying to look for readline
+foreach ldir (/usr/lib /local/lib /usr/local/lib) 
+    if (-e $ldir/libreadline.a) then
+        echo Borrowing the system version of readline for linux from $ldir
+        ln -s $ldir/libreadline.a $MIRLIB/libreadline.a 
+        set dorl=1
+        break
+    endif
+end
+if ($dorl == 0) then
+   echo Your system does not have readline, and miriad.c will not use it
+endif
+
+echo LIB: linpack subs www
+mir.install linpack subs www
+if ($pgplot) then
+  mir.install pgplot
+endif
+
+#                   linux only
+if ($shared) then
+  echo SHARED - remove r8tyx and iscoords : conflicts
+  echo is also needs a special -fPIC compile option in compile.linux
+  cd $MIRLIB 
+  # Jun29: r8tyx is taken care of.
+  ar dv libmir.a iscoords.o
+  ld -shared -o libmir.so --whole-archive libmir.a
+  if (-e libpgplot.a) then
+    ld -shared -o libpgplot.so --whole-archive libpgplot.a
+  endif
+endif
+
+echo PGM: prog wip
+mir.install prog wip xmrecvlist
+
+
+# special things.... (for mir.test ???)
+
+echo Compiling UVIO:
+cc -O -DTESTBED -I$MIRINC $MIRSUBS/uvio.c -o $MIRBIN/uvio $MIRLIB/libmir.a -lm >& $MIR/tmp/uvio.$$.linux
+
+# xcorf: assumed lesstiff is installed
+
+echo Compiling XCORF for linux:
+cd $MIR/src/spec/xcorf
+make sol6 SOLARISLIBS= \
+          CFLAGS="-O -I/usr/X11R6/include" \
+	  RFLAGS6= \
+	  LFLAGS6=-L/usr/X11R6/lib >& $MIR/tmp/xcorf.$$.linux
+mv xcorf $MIRBIN
+make cleanup
+
+# add keyword documentation to MIRPDOC
+cd $MIRPDOC
+rehash
+doc -p $MIRCAT/keywords.kdoc
+
+
+#
+cd $MIR
+
+
+# above symlink will solve this, no need for handcompile
+# cc -O -o $MIRBIN/miriad $MIR/src/tools/miriad.c 
+
+if (-e $install_root/do_patch) then
+    pushd $install_root
+    echo LOCAL install patches for $newdir
+    echo $newdir > $MIR/DATE
+    ./do_patch
+    mkdir -p $MIR/local/install
+	#  oops, what about the directories.....
+    cp -pr * $MIR/local/install
+    ./mir.test
+    popd
+endif
+
+# velplotc: - make it depend on if Xforms is present
+if (-e $libforms) then
+   echo Compiling velplotc:
+   pushd $MIR/src/spec/velplotc
+   cp $libforms $MIRLIB
+   make clean velplotc LIBFORMS=$MIRLIB/$libforms:t >& $MIR//tmp/velplotc.$$.linux
+   mv velplotc $MIRBIN
+   make clean
+   popd
+else
+   echo Could not find $libforms to compile velplotc
+endif
+
+# ATNF stuff, linux only for now
+pushd $install_dir
+if (-d atnf) then
+   echo Compiling atnf code: atlod
+   cp -p atnf/linux/librpfits.a $MIRLIB
+   pushd $MIR/tmp
+   cp -p $MIR/src/prog/atnf/atlod.* .
+   make -f $MIRLIB/Makefile atlod EL=-lrpfits
+   mv atlod $MIRBIN
+   doc -p atlod.for
+   mv atlod.doc $MIRPDOC
+   rm -f atlod.*
+   popd
+endif
+
+set benchpars=(`echo $bench | awk -F, '{print $1,$2,$3}'`)
+if ($#benchpars == 3 && $benchpars[1] > 1) then
+   mir.bench nchan=$benchpars[1] mapsize=$benchpars[2] cell=$benchpars[3]
+endif
+
+
+#   Now tag it, so we can 'find -newer' things that have been updated since creation!
+echo MIRIAD Installation done on `hostname` by `whoami` on `date` with `uname -a` > $MIRLIB/Installed.tag
+exit 0
+

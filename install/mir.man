@@ -1,0 +1,109 @@
+#! /bin/csh -f
+#
+# Spawn an XMAN window with an optional argument meant to be
+# a list of manual directory (path). It defaults to the miriad
+# man tree (formally in $MIR/doc/man).
+# Of course this script assumes xman is in your path...
+#
+#   23-mar-92  created                 			pjt
+#    8-jul-93  made bit more generic 			pjt
+#   27-sep-93  no more overly cautious 'xterm' check	pjt
+#   13-nov-93  tkman support                   		pjt
+#    1-jan-94  expanded -help message a bit		pjt
+
+set tkman=0
+
+# extra args for xman:
+set xrms=(-xrm "*sectionMenu.Label:       miriad Sections" \
+          -xrm "*topBox.Title:            miriad Xman" \
+          -xrm "*topBox.IconName:         miriad Xman" \
+          -xrm "*manualBrowser.Title:     miriad Xman" \
+          -xrm "*manualBrowser.IconName:  miriad Xman" \
+         )
+
+
+# find a reasonable default for the man root directory
+# xman wants 1, tkman can handle all of them
+
+if ($?MIR == 1) then
+  foreach man ($MIR/doc/man $MIR/local/man)
+    if (-d $man) then
+      set default=$man
+      break
+    endif
+  end
+else
+  # in case miriad doesn't seem to exist, see if something can be done
+  if ($?MANPATH == 1) then
+    set default=$MANPATH
+  else
+    # this must be the pits, nothing seems set
+    set default=/usr/man
+    echo "### Warning: No MANPATH set, using $default"
+  endif
+endif
+
+if ($?default == 0) then
+  echo Cannot find reasonable default man directory tree, 
+  echo you have to give me one manually. Sorry.
+  echo Or try setting the MANPATH environment variable.
+  goto usage
+endif
+
+# see if the argument made sense
+if ($#argv == 0) then
+  setenv MANPATH $default
+else
+  switch ($1)
+    case help:
+    case -h*:
+      goto usage
+      breaksw
+    case -t*:
+      set tkman=1
+      breaksw
+    default:
+      # awkward, but allows something like 'mirman $NEMO/man'
+      setenv MANPATH $1
+      breaksw
+  endsw
+endif
+	
+# Go for it!
+
+ if ($tkman) then
+    echo "Running tkman ($default)"
+    if (! -e ~/.tkman) then
+	echo "...Be patient, your first tkman call needs some time"
+    endif
+    tkman -M+ $default &
+    exit 0
+ endif
+
+ set help=$MANPATH/cat1/intro.1
+ if ($status != 0 || ! -e $help) then
+   echo "Problems finding/making helpfile ($help) - using default"
+#   xman -title MIRMAN -bothshown -notopbox $xrms &
+   xman -title MIRMAN -bothshown -notopbox  &
+ else
+
+#   setenv XAPPLRESDIR /tmp
+   xman -title MIRMAN -bothshown -notopbox \
+	  -pagesize 650x700  \
+          -xrm "*topBox.IconName: miriad Xman" \
+	  -xrm "*topBox.Title: miriad Xman" \
+             -helpfile $help &
+ endif
+
+ 
+ exit 0
+
+usage:
+ echo "Usage: $0 [-options] [MANPATH]"
+ echo " options (all optional)"
+ echo " -tk	use tkman, instead of xman (the default is xman)"
+ echo ""
+ echo " MANPATH must be a colon-separated list of directories"
+ echo " that contain unix man (see man(1)) root directories."
+ echo " The current default is: $default"
+ exit 0

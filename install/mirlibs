@@ -1,0 +1,16 @@
+#! /bin/csh -f
+#  can be used in compile scripts  - 
+# typical use:  f77 -o implot implot.o `mirlibs`
+
+
+# first force all : to be spaces, to make it work both old (pre dec96) and new
+# MIRLIB = one directory where libmir.a should live
+# MIRXLIB = list of (after 5dec96 colon) space separated directories for Xlibs
+set libs=(`echo $MIRLIB $MIRXLIB | sed 's/:/ /g'`)
+
+
+set Llist = "-L`echo $libs | sed 's/ / -L/g'`"
+echo "$Llist -lmir -llinpack -lpgplot -lX11 -lm"
+
+# -L/usr/X11R6/lib -lmir -llinpack -lpgplot -lX11 -lm
+
