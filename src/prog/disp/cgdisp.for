@@ -200,7 +200,8 @@ c@ beamtyp
 c     Up to 6 values. Set if you want a small polygon to be drawn to
 c     represent the beam FWHM. Setting beamtyp to "b,l" is sufficient to
 c     draw a solid beam; "b,l,4" will result in a cross-hatched
-c     beam. The six parameters are:
+c     beam.  Use 'n' if you don't want a beam at all.
+c     The six parameters are:
 c
 c     - Beam vertical positioning: can be "t" (top), or "b" (bottom). No
 c       default.
@@ -665,7 +666,8 @@ c    dpr  14feb01  Add beamtyp keyword
 c    dpr  27feb01  Added scale-bar
 c    dpr  18jun01  Add option blacklabel
 c    nebk 14nov01  For box type, make sure abs max comes from entire image
-c    pjt  19jan01  retrofitted options=corner introduced in 14feb01/BIMA version
+c    pjt  19jan02  retrofitted options=corner introduced in 14feb01/BIMA version
+c    pjt  29jan02  documented beamtyp=n, worked around a miriadB bug 
 c-----------------------------------------------------------------------
       implicit none
 c
@@ -731,7 +733,7 @@ c
       data lwid /maxconp3*1/
       data getvsc /.true./
 c-----------------------------------------------------------------------
-      call output ('CgDisp: version 19-Jan-02')
+      call output ('CgDisp: version 29-Jan-02')
       call output (' ')
 c
 c Get user inputs
@@ -2598,7 +2600,7 @@ c
       integer nim, nimtype, i, j, nlab
       character images(nmaxim)*64, imtype(nmaxim)*9
       character*1 str, itoaf
-      character*1 newtb,newlr
+      character*2 newtb,newlr
       logical beambl, beambr, beamtl, beamtr, present, keyprsnt
 c
       integer ntype
