@@ -1,0 +1,236 @@
+%------------------------------------------------------------------------
+% Miriad Executable Modules Manual
+%	TeX formats
+%
+%  History:
+%            27jan91  mjs  Borrowed format file.
+%            06feb91  bpw  Added some definitions.
+%------------------------------------------------------------------------
+
+%--- PAGE DIMENSIONS
+
+\magnification=\magstep0
+\hsize=5.0 truein
+\vsize=8.0 truein
+\hoffset=0.75 truein
+\voffset=0.25 truein
+\parskip=3pt plus2pt
+\raggedbottom
+
+%--- FONT FAMILY DEFINITIONS
+
+% Definitions for 12, 11, 10, and 8 point families.
+%
+\font\twelverm=cmr12           \font\tenrm=cmr10   \font\sevenrm=cmr7
+\font\twelvei=cmmi12           \font\teni=cmmi10   \font\seveni=cmmi7
+\font\twelveit=cmti12          \font\tenit=cmti10  \font\sevenit=cmti7
+\font\twelvesy=cmsy10 at 12pt  \font\tensy=cmsy10  \font\sevensy=cmsy7
+\font\twelvett=cmtt12          \font\tentt=cmtt10  
+\font\twelvebf=cmbx12          \font\tenbf=cmbx10  \font\sevenbf=cmbx7
+%
+\font\elevenrm=cmr10 at 11pt
+\font\eleveni=cmmi10 at 11pt
+\font\elevenit=cmti10 at 11pt
+\font\elevensy=cmsy10 at 11pt
+\font\eleventt=cmtt10 at 11pt
+\font\elevenbf=cmbx10 at 11pt
+%
+\font\eightrm=cmr8    \font\sixrm=cmr6    \font\fiverm=cmr5
+\font\eighti=cmmi8    \font\sixi=cmmi6    \font\fivei=cmmi5
+\font\eightit=cmti8
+\font\eightsy=cmsy8   \font\sixsy=cmsy6   \font\fivesy=cmsy5
+\font\eighttt=cmtt8
+\font\eightbf=cmbx8   \font\sixbf=cmbx6   \font\fivebf=cmbx5
+%-----------------------------------------------------------------------
+\def\twelvepoint{\def\rm{\fam0\twelverm}
+    \textfont0=\twelverm \scriptfont0=\tenrm \scriptscriptfont0=\sevenrm
+    \textfont1=\twelvei  \scriptfont1=\teni  \scriptscriptfont1=\seveni
+    \textfont2=\twelvesy \scriptfont2=\tensy \scriptscriptfont2=\sevensy
+    \textfont\itfam=\twelveit  \def\it{\fam\itfam\twelveit}
+    \textfont\ttfam=\twelvett  \def\tt{\fam\ttfam\twelvett}
+    \textfont\bffam=\twelvebf  \scriptfont\bffam=\tenbf
+      \scriptscriptfont\bffam=\tenbf   \def\bf{\fam\bffam\twelvebf}
+    \normalbaselineskip=16pt
+    \setbox\strutbox=\hbox{\vrule height12pt depth4pt width0pt}
+    \normalbaselines\rm}
+%-----------------------------------------------------------------------
+\def\elevenpoint{\def\rm{\fam0\elevenrm}
+    \textfont0=\elevenrm \scriptfont0=\eightrm \scriptscriptfont0=\sixrm
+    \textfont1=\eleveni  \scriptfont1=\eighti  \scriptscriptfont1=\sixi
+    \textfont2=\elevensy \scriptfont2=\eightsy \scriptscriptfont2=\sixsy
+    \textfont\itfam=\elevenit  \def\it{\fam\itfam\elevenit}
+    \textfont\ttfam=\eleventt  \def\tt{\fam\ttfam\eleventt}
+    \textfont\bffam=\elevenbf  \scriptfont\bffam=\eightbf
+      \scriptscriptfont\bffam=\sixbf   \def\bf{\fam\bffam\elevenbf}
+    \normalbaselineskip=13pt
+    \setbox\strutbox=\hbox{\vrule height8.5pt depth3.5pt width0pt}
+    \normalbaselines\rm}
+%-----------------------------------------------------------------------
+\def\tenpoint{\def\rm{\fam0\tenrm}
+    \textfont0=\tenrm \scriptfont0=\sevenrm \scriptscriptfont0=\fiverm
+    \textfont1=\teni  \scriptfont1=\seveni  \scriptscriptfont1=\fivei
+    \textfont2=\tensy \scriptfont2=\sevensy \scriptscriptfont2=\fivesy
+    \textfont\itfam=\tenit  \def\it{\fam\itfam\tenit}
+    \textfont\ttfam=\tentt  \def\tt{\fam\ttfam\tentt}
+    \textfont\bffam=\tenbf  \scriptfont\bffam=\sevenbf
+      \scriptscriptfont\bffam=\fivebf   \def\bf{\fam\bffam\tenbf}
+    \normalbaselineskip=12pt
+    \setbox\strutbox=\hbox{\vrule height8.5pt depth3.5pt width0pt}
+    \normalbaselines\rm}
+%-----------------------------------------------------------------------
+\def\eightpoint{\def\rm{\fam0\eightrm}
+    \textfont0=\eightrm \scriptfont0=\sixrm \scriptscriptfont0=\fiverm
+    \textfont1=\eighti  \scriptfont1=\sixi  \scriptscriptfont1=\fivei
+    \textfont2=\eightsy \scriptfont2=\sixsy \scriptscriptfont2=\fivesy
+    \textfont\itfam=\eightit  \def\it{\fam\itfam\eightit}
+    \textfont\ttfam=\eighttt  \def\tt{\fam\ttfam\eighttt}
+    \textfont\bffam=\eightbf  \scriptfont\bffam=\sixbf
+      \scriptscriptfont\bffam=\fivebf  \def\bf{\fam\bffam\eightbf}
+    \normalbaselineskip=9pt
+    \setbox\strutbox=\hbox{\vrule height7pt depth2pt width0pt}
+    \normalbaselines\rm}
+%-----------------------------------------------------------------------
+
+
+%--- DEFINED FONTS
+
+\font\secfont=cmb10 scaled\magstep1
+\font\bit=cmbxsl10 scaled\magstep1
+\font\big=cmbx10 scaled\magstep2
+\font\bigger=cmbx10 scaled\magstep3
+\font\biggest=cmbx10 scaled\magstep4
+
+%------------------------%
+% PAGE HEADER AND FOOTER %
+%------------------------%
+\headline={\ifnum\pageno=-1{\hfil} \else \firstmark \fi}
+\footline={\hfil}
+%-----------%
+%  SYMBOLS  %
+%-----------%
+\def\deg{\ifmmode^\circ\else$^\circ$\fi}
+\def\solar{\ifmmode_{\mathord\odot}\else$_{\mathord\odot}$\fi}
+\def\esc{\hbox{$\langle$esc\/$\rangle$}}
+%------------------%
+% SECTION HEADINGS %
+%------------------%
+\newtoks\chapnum
+\newcount\sectnum
+\newwrite\toc
+\openout\toc=toc
+\def\beginChapter#1#2#3{\bgroup\chapnum={#1}\pageno=1\mark{\hfil}
+    \sectnum=0\centerline{\bit #3 #1}
+    \write\toc{\noexpand\itemchapter #1/#2/\the\chapnum-\the\count0.}
+    \vskip 0.3in\centerline{\big #2}
+    \mark{\noexpand\ifodd \noexpand\pageno  
+                        \noexpand\eightrm 
+                        \noexpand\hfil #2
+                        \noexpand\qquad#1-\noexpand\folio 
+        \noexpand\else  
+                        \noexpand\eightrm#1-\noexpand\folio 
+                        \noexpand\qquad #2
+                        \noexpand\hfil 
+        \noexpand\fi}
+    \vskip 0.5in\elevenpoint
+    }
+
+\outer\def\beginchapter#1#2{\beginChapter{#1}{#2}{Chapter}}
+\outer\def\beginappendix#1#2{\beginChapter{#1}{#2}{Appendix}}
+\outer\def\endchapter{\vfill\supereject\egroup}
+
+\newskip\beforesecamount
+\newskip\aftersecamount
+  \beforesecamount=0.45in plus4pt minus4pt
+  \aftersecamount=0.2in plus1pt minus1pt
+\outer\def\beginsection#1\par{
+  \advance\sectnum by 1
+  \goodbreak\vskip\beforesecamount
+  \leftline{\secfont\the\chapnum.\number\sectnum\quad#1}
+    \write\toc{\noexpand\itemsection #1/\the\chapnum-\the\count0.}
+  \nobreak\vskip\aftersecamount\vskip-\parskip\noindent}
+\outer\def\beginsub#1{\goodbreak\medskip\noindent{\bf#1}\quad}
+%
+%	--- mod per bpw 13feb91 ---
+%
+\outer\def\module#1{
+  \advance\sectnum by 1
+  \goodbreak\vskip\beforesecamount
+  \leftline{\secfont\the\chapnum.\number\sectnum\quad#1}
+%    \write\toc{\noexpand\itemsection #1/\the\chapnum-\the\count0.}
+    \write\toc{\noexpand\itemsection\noexpand #1/\the\chapnum-\the\count0.}
+  \nobreak\vskip\aftersecamount\vskip-\parskip\noindent}
+%---------------%
+% ABBREVIATIONS %
+%---------------%
+\def\eg{{\it e.g.}}
+\def\ie{{\it i.e.}}
+\def\etal{{\it et al.}}
+\def\etc{{etc.}}
+\def\mag{$^{\rm m}$}
+%----------------%
+% DISPLAYED TEXT %
+%----------------%
+\outer\def\proclaim #1:{\medbreak\vskip-\parskip
+  \noindent{\bf#1:}\enspace}
+
+\outer\def\begindisplay{\obeylines\startdisplay}
+{\obeylines\gdef\startdisplay#1
+  {catcode`\^^M=5$$#1\halign\bgroup\indent##\hfil&&\qquad##\hfil\cr}}
+\outer\def\enddisplay{\crcr\egroup$$}
+
+\chardef\other=12
+\def\ttverbatim{\begingroup \catcode`\\=\other \catcode`\{=\other
+  \catcode`\}=\other \catcode`\$=\other \catcode`\&=\other
+  \catcode`\#=\other \catcode`\%=\other \catcode`\~=\other
+  \catcode`\_=\other \catcode`\^=\other
+  \obeyspaces \obeylines \tt}
+{\obeyspaces\gdef {\ }} % \obeyspaces now gives \ , not \space
+
+\outer\def\begintt{$$\let\par=\endgraf \ttverbatim \parskip=0pt
+  \catcode`\|=0 \rightskip=-5pc \ttfinish}
+{\catcode`\|=0 \catcode`|\=\other % | is temporary escape character
+  |obeylines % end of line is active
+  |gdef|ttfinish#1^^M#2\endtt{#1|vbox{#2}|endgroup$$}}
+
+%\outer\def\begindoc{\let\par=\endgraf \ttverbatim \parskip=0pt
+%  \catcode`\|=0 \rightskip=-5pc \ttfinish}
+%{\catcode`\|=0 \catcode`|\=\other % | is temporary escape character
+%  |obeylines % end of line is active
+%  |gdef|ttfinish#1^^M#2\enddoc{#1|vbox{#2}|endgroup}}
+%
+\catcode`\|=\active
+\newskip\ttglue
+\ttglue=6pt plus 2pt
+{\obeylines\gdef|{\ttverbatim\spaceskip=\ttglue\let^^M=\ \let|=\endgroup}}
+
+% Table of Contents macros
+
+\def\leaderfill{\leaders\hbox to 1em{\hss.\hss}\hfill}
+\def\itemsection#1/#2.{\line{\quad#1\leaderfill#2}\smallskip}
+\def\itemchapter#1/#2/#3.{\bigskip\line{{\bf#1\quad#2}\leaderfill#3}\smallskip}
+%
+% ----- Additional definitions 06feb91 -----
+%
+\parindent=0pt
+\parskip=0pt
+
+\def\setupverbatim{\begingroup \catcode`\\=\other \catcode`\{=\other
+  \catcode`\}=\other \catcode`\$=\other \catcode`\&=\other
+  \catcode`\#=\other \catcode`\%=\other \catcode`\|=\other
+  \catcode`\_=\other \catcode`\^=\other
+  \def\par{\leavevmode\endgraf} \catcode`\`=\active
+  \obeyspaces \obeylines \tt \parskip=0pt}
+{\obeyspaces\gdef {\ }} % \obeyspaces now gives \ , not \space
+{\catcode`\`=\active \gdef`{\relax\lq}}
+
+\outer\def\beginverbatim{\par \setupverbatim \catcode`~=0 \doverbatim}
+{\catcode`\~=0 \catcode`~\=\other % ~ is temporary escape character
+  ~obeylines % end of line is active
+  ~gdef~doverbatim^^M#1\endverbatim{~medskip #1~endgroup~medskip}}
+
+\def\itemtext#1{\bigskip\par\noindent{\big #1}\smallskip\par}
+
+\def\newline{\par\noindent}
+\def\abox#1{\hbox to 2.2cm{#1\hfil}}
+\def\keyword#1{\newline\ \par{#1}\enspace}
+%
