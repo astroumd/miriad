@@ -519,6 +519,7 @@ struct smlodd {
         int newfreq;
         int hires;
         int nopol;
+        int cirpol;
         int oldpol;
         int doChunkOrder;
         int mflag;
