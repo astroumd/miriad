@@ -8,3 +8,6 @@ pguide		old BIMA programmers guide (kept for historics)
 eguide		old BIMA executables guide (kept for historics)
 sguide		old BIMA subroutine guide (kept for historics)
 uguide		old BIMA users guide (kept for historics)
+
+carma		miriad4 development notes
+gildas		interoperability notes gildas<->miriad
