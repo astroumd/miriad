@@ -1,0 +1,116 @@
+#!/bin/csh -f
+# --------------------------------------------------------------
+# lib.subs subscripts
+# --------------------------------------------------------------
+set mir     = $MIR
+set host    = $MIRHOST
+set lsys    = $mir/bin/localsys
+set bindir  = $mir/bin/$host
+set subdir  = $mir/src/subs
+set libdir  = $mir/lib/$host
+set tooldir = $mir/src/tools
+set docdir  = $mir/doc/subs
+set admdir  = $mir/src/sys/bin
+# --------------------------------------------------------------
+if (-e $lsys/mir.subs && ! $?local_compile) then
+  echo $lsys/mir.subs exists =======================
+  setenv local_compile
+  exec $lsys/mir.subs $argv
+endif
+# --------------------------------------------------------------
+if ($?Compile == 0) then
+   if (-e $admdir/compile.${host}) then
+      source $admdir/compile.${host}
+   else
+      echo "Cannot find $admdir/compile.${host} - exiting."
+      exit 1
+   endif
+endif
+# --------------------------------------------------------------
+set subs_for = $admdir/stub.subs_for
+set subs_c   = $admdir/stub.subs_c
+set prog_c   = $admdir/stub.prog_c
+#
+set lib  = $libdir/libmir.a
+#
+if (! -e $bindir/doc   ) $prog_c $tooldir/doc
+if (! -e $bindir/ratty ) $prog_c $tooldir/ratty
+if (! -e $bindir/intf2c) $prog_c $tooldir/intf2c
+#
+set tmp1 = ""
+set tmp2 = ""
+set tmp3 = ""
+set tmp4 = ""
+set theList = ""
+cd $subdir >& /dev/null
+if ($#argv == 0) then
+   set theList = (`ls *.for *.f2c *.c`)
+else
+   set theList = ($argv)
+endif
+set theOut = ""
+#
+cd $libdir
+foreach i ($theList)
+   set in = ${i:t}
+   if (-e $subdir/${i:r}.for) set in = ${i:r}.for
+   if (-e $subdir/${i:r}.c)   set in = ${i:r}.c
+   if (-e $subdir/${i:r}.f2c) set in = ${i:r}.f2c
+   if (-e ${in:r}.o) rm -fr ${in:r}.o >& /dev/null
+   echo ""
+   echo "Processing miriad subroutine $in"
+   switch ($in)
+    case args.for:
+    case dirs.c:
+    case ivfiddle.for:
+    case ivmenu.for:
+    case ivofm.for:
+    case argsHP.for:
+    case ivtext.for:
+    case txtioVMS.for:
+    case packALPHA.c:
+	 echo "Code is not for this machine: ignored."
+	 breaksw
+    case r8tyx.for:
+	 if ($host == sun3    || $host == sun4    || \
+             $host == linux   || \
+             $host == sun4sol || $host == mips       ) then
+	    echo "Code is not for this machine: ignored."
+	    breaksw
+	 endif
+    case *.for:
+	 $subs_for ${in:r}
+	 (cd $docdir; doc -p $subdir/$in)
+         echo "miriad subroutine $in processed"
+	 breaksw 
+    case *.f2c:
+    case *.c:
+	 (cd $docdir; doc -p $subdir/$in)
+	 $subs_c ${in:r}
+         echo "miriad subroutine $in processed"
+         breaksw
+    default:
+         echo "----- ----- $in Ignored."
+         breaksw
+    endsw
+
+    if (-e ${in:r}.o) set theOut = ($theOut ${in:r}.o)
+end
+
+set theList = (`echo $theOut|sort|uniq`)
+#
+if ($#theList != 0) then
+   if ($#argv == 0) rm $lib >& /dev/null
+   echo "ar ru $lib <dot.o files>"
+         ar ru $lib $theList
+   if (-e /usr/bin/ranlib) then
+      echo "/usr/bin/ranlib $lib"
+      /usr/bin/ranlib $lib
+   endif
+   rm -fr $theList >& /dev/null
+endif
+echo ""
+echo "`ls -l $lib`"
+# --------------------------------------------------------------
+unsetenv local_compile
+exit 0
