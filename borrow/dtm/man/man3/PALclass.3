@@ -1,0 +1,119 @@
+.TH PALclass 3DTM "2 April 1992" DTM "DTM Version 2.0"
+.LP
+.SH "NAME"
+\fBPALclass\fP - A message class for handling palettes.
+.LP
+.SH "SYNOPSIS"
+.nf
+\fB#include <ris.h>\fP
+.LP
+\fBPALheaderLength(char *\fIheader\fP)\fP
+.LP
+\fBPALHL(char *\fIheader\fP)\fP
+.LP
+\fBPALsetClass(char *\fIheader\fP)\fP
+.LP
+\fBPALcompareClass(char *\fIheader\fP)\fP
+.LP
+\fBPALsetSize(char *\fIheader\fP, int \fInum_elements\fP)\fP
+.LP
+\fBPALgetSize(char *\fIheader\fP, int *\fInum_elements\fP)\fP
+.LP
+\fBPALsetTitle(char *\fIheader\fP, char *\fItitle\fP)\fP
+.LP
+\fBPALgetTitle(char *\fIheader\fP, char *\fItitle\fP, int \fItitle_length\fP)\fP
+.fi
+.LP
+.SH "DESCRIPTION"
+This message class is to be used for sending pallette (color table) information
+via DTM.  Palettes in this message class are represented by three one-byte
+(unsigned character) triples where the first byte represents the intensity of
+the red color; the second, the intensity of the green; and the third, the
+intensity of the blue.  The entries in the palette are assumed to be in
+contiguous order, that is, the numbering of each triple is implicit: the
+first triple received is the first color table value (Fig. 1).
+
+           Implicit Order        Index  Color Table
+           --------------        ----- +---+---+---+
+           First palette value->     0 |  0|  0|  0|
+           Second value-------->     1 | 16|  0|  0|
+                                     2 | 32|  0|  0|
+                                            ...
+           Last value---------->     N |  0|  0|255|
+                                       +---+---+---+
+
+                       (Fig. 1)
+
+The macros and functions that are associated with this class include:
+.LP
+.nf
+\fBPALheaderLength\fP:
+.fi
+\fBPALHL\fP:
+These two macros are equivalent.  They both return the exact length of the 
+supplied character string \fIheader,\fP counting the null character at the end.
+.LP
+\fBPALsetClass\fP: inserts the message class constant \fBPALclass\fP into the 
+character string \fIheader\fP indicating that the data to follow should be 
+interpreted as a palette.  The \fBPALclass\fP constant is declared in the file 
+\fIris.h\fP, and though it is accessible at all times, it is recommended that
+the macro \fBPALsetClass\fP be used to correctly insert this message type tag
+into the header.
+.LP
+\fBPALcompareClass\fP: returns a non-zero value if the character string
+\fIheader\fP contains the \fBPALclass\fP constant.  Though the constant 
+\fBPALclass\fP is accessible at all times, users should use the macro 
+\fBPALcompareClass\fP to determine whether or not a header indicates palette 
+data.
+.LP
+\fBPALsetSize\fP inserts into the character string \fIheader\fP the tag 
+\fBPALentries\fP followed by the value \fInum_elements\fP that is supposed to
+indicate the number of color triples available in the palette.  It is up to 
+the user to ensure that the exact number of entries specified are actually
+contained within the data portion of the message.
+.LP
+\fBPALgetSize\fP examines the character string \fIheader\fP and sets the
+integer \fInum_elements\fP to be the size of the palette contained in the 
+dataset that is supposed to follow the receipt of the header.  If no size is 
+found within the header, and since palettes are typically comprised of 256
+elements, the value \fInum_elements\fP is assigned the value 256.  It is the 
+user's responsibility to ensure that the value returned by \fInum_elements\fP
+exactly matches the number of elements that are actually contained in the data.
+.LP
+\fBPALsetTitle\fP inserts the \fBDTM\fP title tag followed by the 
+null-terminated character string \fItitle\fP into the string \fIheader\fP.
+The title is delimited by single quotation marks so that it's contents will 
+not affect the interpretation of the header.
+.LP
+\fBPALgetTitle\fP examines the string \fIheader\fP and determines the title 
+string that it contains.  Memory for the character string \fItitle\fP
+must be allocated by the user before attempting to extract the title from the
+header.  If there is insufficient memory allocated to store the entire title 
+as contained in the header, the title string is truncated.
+.LP
+.SH "SEE ALSO"
+\fBDTM\fP
+.SH "DIAGNOSTICS"
+\fBPALgetSize\fP returns the error \fBDTMERROR\fP if the header does not 
+contain the tag \fBPALentries\fP or if no value follows the \fBPALentries\fP
+tag.  In either case, the value of \fInum_elements \fP still defaults to 256.
+.LP
+\fBPALgetTitle\fP returns the error \fBDTMERROR\fP if the \fBDTM\fP title tag
+is not contained within the header, or if following the tag there is no 
+delimited title string.  Otherwise, \fBPALgetTitle\fP returns the value
+\fBDTM_OK\fP (\fBDTMNOERROR\fP).
+.SH "BUGS"
+With this class, support for sending portions of palettes with their positions
+in the new color map explicitly defined does not exist.  This problem is due to
+the fact that the ordering of the colors is implicit in the data.
+.LP
+X likes to have it's color triples specified in the range 0-65535 per electron
+gun (color value) even though it is much more common to have a range of 
+0-255.  Therefore, it's the user's responsibility to massage the data into
+the correct format needed for whatever is required by the correct visual type.
+.LP
+\fBPALsetClass\fP, \fBPALsetSize\fP, \fBPALsetTitle\fP, each have no way of
+determining if the character string \fIheader\fP contains sufficient space to
+hold all of the necessary tags and other information.  The results of 
+attempting to store this information beyond the end of the allocated space
+are undefined.

@@ -1,0 +1,46 @@
+.TH DTMbeginRead 3DTM "31 March 1992" DTM "DTM Version 2.0"
+.ta .5i 2.0i
+.SH "NAME"
+\fBDTMbeginRead, DTMbeginWrite\fP - Read/write a header from/to the specified port.
+.SH "SYNOPSIS"
+\fB#include <dtm.h>\fP
+.LP
+\fBint DTMbeginRead(int \fIportid\fP, char *\fIheader\fP, int \fIsize\fP)\fP
+.LP
+\fBint DTMbeginWrite(int \fIportid\fP, char *\fIheader\fP, int \fIsize\fP)\fP
+.fi
+.SH "DESCRIPTION"
+\fBDTMbeginRead\fP receives a message from the input port specified by 
+\fIportid\fP, and places that message's contents into the buffer \fIheader\fP.
+\fISize\fP indicates the size of the buffer allocated to hold the incoming
+header.  Though the header may be allocated to any size, \fBDTM_MAX_HEADER\fP,
+as declared in \fIdtm.h\fP, is defined to be the largest legal header length.
+.LP
+If no message is currently available, \fBDTMbeginRead\fP will block until a 
+message is ready to be received.  A non-blocking check for a pending message 
+may be performed with \fBDTMavailRead\fP.
+.LP
+\fBDTMbeginWrite\fP writes the character string \fIheader\fP of size \fIsize\fP
+to the output port \fIportid\fP.  If the size of the header to be written is 
+unavailable, it may be calculated using \fBDTMheaderLength\fP.
+.LP
+If the message cannot be sent the moment \fBDTMbeginWrite\fP is called, the 
+call will block.  A non-blocking check to determine if writing is possible is 
+available with \fBDTMavailWrite\fP.
+.LP
+.SH "SEE ALSO"
+\fBDTM\fP, \fBDTMavailRead\fP, \fBDTMavailWrite\fP
+.LP
+.SH "DIAGNOSTICS"
+Both functions return the status of their operation.  If the error 
+\fBDTMERROR\fP is returned, the error flag \fBDTMerrno\fP may be set to any 
+one of the following values:
+.LP
+.nf
+	\fBDTMPORTINIT\fP	Invalid value for portid.
+	\fBDTMSOCK\fP		Problem creating connection.
+	\fBDTMREAD\fP		Problem reading from connection.
+	\fBDTMHEADER\fP	Incoming header exceeds buffer size.
+	\fBDTMWRITE\fP	Error writing header.
+	\fBDTMTIMEOUT\fP	Time-out waiting for receiver.
+.LP

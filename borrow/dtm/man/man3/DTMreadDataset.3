@@ -1,0 +1,44 @@
+.TH DTMreadDataset 3DTM "31 March 1992" DTM "DTM Version 2.0"
+.ta .5i 2.5i
+.SH "NAME"
+\fBDTMreadDataset, DTMwriteDataset\fP - Read/Write data from/via the specified port.
+.LP
+.SH "SYNOPSIS"
+.nf
+\fB#include <dtm.h>\fP
+.LP
+\fBint DTMreadDataset(int \fIportid\fP, char *\fIbuffer\fP, int \fInum_elements\fP, DTMTYPE \fItype\fP)\fP
+.LP
+\fBint DTMwriteDataset(int \fIportid\fP, void *\fIbuffer\fP, int \fInum_elements\fP, DTMTYPE \fItype\fP)\fP
+.LP
+.SH "DESCRIPTION"
+\fBDTMreadDataset\fP reads the data of a message from the input port 
+\fIportid\fP.  This call is optional, but if it is used it must be preceeded 
+by a call to \fBDTMbeginRead\fP.  \fBDTMreadDataset\fP will attempt to fill 
+the \fIbuffer\fP with \fInum_elements\fP elements of the specified \fItype\fP,
+with automatic type conversion performed when necessary.  \fIBuffer\fP is
+assumed to be large enough to hold the amount of data requested.
+.LP
+In the absence of errors, \fBDTMreadDataset\fP returns the number of elements 
+actually read.  \fBDTMreadDataset\fP may be called as often as required to 
+receive a message in its entirety.  When no further data can be read at
+the end of the message, the value returned by \fBDTMreadDataset\fP will equal 0.
+.LP
+\fBDTMwriteDataset\fP writes the data of a message to the output port 
+\fIportid\fP.  This call is optional, but if it is used it must be preceeded 
+by a call to \fBDTMbeginWrite\fP.  \fBDTMwriteDataset\fP will write
+\fInum_elements\fP elements of the specified type from the \fIbuffer\fP, and
+automatic type conversion to the specified \fItype\fP will be performed where 
+necessary.  \fBDTMwriteDataset\fP may be called any number of times between 
+the \fBDTMbeginWrite\fP/\fBDTMendWrite\fP pair - there is no limit to
+the amount of data that can be sent at any one time.
+.LP
+.SH "SEE ALSO"
+\fBDTM\fP
+.LP
+.SH "DIAGNOSTICS"
+Possible values of \fBDTMerrno\fP upon return of an error:
+.LP
+.nf
+	\fBDTMCALL\fP	\fBDTMbeginRead\fP (\fBDTMbeginWrite\fP) must preceed this call.
+	\fBDTMREAD\fP	Error reading message.

@@ -1,0 +1,52 @@
+.\"
+.TH SDSsetClass 3DTM "7 February 1992" DTM "DTM Version 2.0"
+.SH "NAME"
+.B SDSsetClass, SDScompareClass -
+Scientific data set class labeling and scanning macros.
+.SH "SYNOPSIS"
+.nf
+.B #include <sds.h>
+.LP
+.B SDSsetClass(char *\fIheader\fP)
+.LP
+.B SDScompareClass(char *\fIheader\fP)
+.fi
+.SH "DESCRIPTION"
+.LP
+.B SDSsetClass
+inserts the message class constant 
+.B SDSclass
+into the character string
+.I header 
+indicating that the data to follow should be 
+considered some form of a scientific data set.  The 
+.B SDSclass
+constant is declared in the file
+.I sds.h
+, and though it is accessible at all times, it is recommended that the 
+macro 
+.B SDSsetClass
+be used to correctly insert this message type tag into the header.
+.LP
+.B SDScompareClass
+returns a non-zero value if the character string
+.I header
+contains the 
+.B SDSclass
+constant.  Though the constant 
+.B SDSclass
+is accessible at all times, it is 
+recommended that the macro
+.B SDScompareClass
+be used to determine whether or not a header indicates a scientific data set.
+.LP
+.SH "SEE ALSO"
+DTM, SDSclass
+.LP
+.SH "BUGS"
+.B SDSsetClass
+has no way of determining if the header contains sufficient
+space to hold the tag 
+.B SDSclass.
+The results of attempting to store this
+information beyond the end of the allocated space are undefined.

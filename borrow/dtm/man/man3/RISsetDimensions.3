@@ -1,0 +1,61 @@
+.TH RISsetDimensions 3DTM "10 February 1992" DTM "DTM Version 2.0"
+.LP
+.SH "NAME"
+\fBRISsetDimensions, RISgetDimensions\fP - Functions dealing with raster image dimensions
+.LP
+.SH "SYNOPSIS"
+.nf
+.B #include <ris.h>
+.LP
+\fBvoid RISsetDimensions(char *\fIheader\fP, int \fIxdim\fP, int \fIydim\fP)\fP
+.LP
+\fBint RISgetDimensions(char *\fIheader\fP, int *\fIxdim\fP, int *\fIydim\fP)\fP
+.fi
+.LP
+.SH "DESCRIPTION"
+.B RISsetDimensions
+inserts into the string
+.I header 
+the 
+.B RISdims
+flag followed by the two dimensions
+.I xdim
+and
+.I ydim
+of the raster image.  It is the user's responsibility to ensure
+that the dimensions specified here match the actual dimensions of the data.
+.LP
+.B RISgetDimensions
+examines the string
+.I header
+and returns the specified dimensions,
+.I xdim
+and
+.I ydim,
+of the raster image.  There is no guarantee that the dimensions read from
+the header will match the dimensionality of the data received since 
+.B RISgetDimensions
+has no way of reviewing and interpreting the data.
+.LP
+.SH "SEE ALSO"
+DTM, RISclass
+.LP
+.SH "DIAGNOSTICS"
+.B RISgetDimensions
+returns a value of 0 upon successful parsing of the header.  If the tag 
+.B RISdims
+is not found within the header, the function returns the error 
+.B DTMERROR
+and no values are assigned to the dimensions.
+.LP
+.SH "BUGS"
+.B RISsetDimensions
+has no way of determining if the header contains sufficient space to hold the tag 
+.B RISdims 
+and the number of dimensions specified.  The results of this operation is 
+undefined.
+.LP
+.B RISgetDimensions 
+assumes that two dimensions follow the 
+.B RISdims
+flag.  If less than two follow the tag, the results are undefined.

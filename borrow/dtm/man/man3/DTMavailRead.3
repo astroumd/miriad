@@ -1,0 +1,33 @@
+.TH DTMavailRead 3DTM "31 March 1992" DTM "DTM Version 2.0"
+.ta .5i 2.5i
+.SH "NAME"
+\fBDTMavailRead, DTMavailWrite\fP - Determine if a port is available for receiving/writing messages.
+.SH "SYNOPSIS"
+\fB#include <dtm.h>\fP
+.LP
+\fBint DTMavailRead(int \fIportid\fP)\fP
+.LP
+\fBint DTMavailWrite(int \fIportid\fP)\fP
+.fi
+.SH "DESCRIPTION"
+\fBDTMavailRead\fP performs a non-blocking check for a message on the input 
+port specified by \fIportid\fP.  \fBDTMavailRead\fP returns a non-zero value
+if a message is available and zero otherwise.
+.LP
+\fBDTMavailWrite\fP sends a "ready to send" message to the port specified by
+\fIportid\fP.  \fBDTMavailWrite\fP will then check for the receipt of a "clear
+to send" message from every reader attached to that port.  If all readers
+return the "clear to send" message, \fBDTMavailWrite\fP returns a non-zero 
+value to the process that called it, guaranteeing that each reader is waiting
+to receive data.
+.LP
+.SH "SEE ALSO"
+\fBDTM, DTMbeginRead\fP
+.SH "DIAGNOSTICS"
+These functions will return \fBDTMERROR\fP if a problem is encountered.  Since 
+\fBDTMERROR\fP also represents a true value, an application can check for the 
+possibility of an error by examining \fBDTMerrno\fP for a non-zero state after
+the call.  \fBDTMerrno\fP can contain one of these possible values:
+.LP
+	\fBDTMPORTINIT\fP	invalid value for portid.
+	\fBDTMSOCK\fP	problem creating connection.

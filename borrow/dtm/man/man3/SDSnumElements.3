@@ -1,0 +1,27 @@
+.TH SDSnumElements 3DTM "10 July 1992" DTM "DTM Version 2.0"
+.ta 1.5i 2.0i
+.SH "NAME"
+\fBSDSnumElements\fP - Determine the number of elements in a scientific dataset.
+.SH "SYNOPSIS"
+.nf
+\fB#include <sds.h>
+int SDSnumElements(int \fIrank\fP, int \fIdimensions[]\fP)\fP
+.SH "DESCRIPTION"
+\fBSDSnumElements\fP calculates the size of the number of elements that are in
+a scientific dataset based on the values contained in the \fIdimensions\fP array
+of the given \fIrank\fP.  This is simply a convenience function that follows the
+following algorithm:
+.LP
+.nf
+\fI
+	size = 1;
+	for i = 1 to rank dimensions
+		size = size * dimension[i]
+\fP
+.LP
+.SH "SEE ALSO"
+\fBSDSgetRank\fP, \fBSDSgetDimensions\fP
+.LP
+.SH "DIAGNOSTICS"
+When the rank of the array is less than 1, \fBSDSnumElements\fP returns the
+value \fBDTMERROR\fP, otherwise it returns the product of the dimensions.

@@ -1,0 +1,45 @@
+.TH SDSgetRank 3DTM "10 February 1992" DTM "DTM Version 2.0"
+.LP
+.SH "NAME"
+\fBSDSgetRank\fP - Scientific data set function for retrieving the rank from the header.
+.LP
+.SH "SYNOPSIS"
+.nf
+.B #include <sds.h>
+.LP
+.B int SDSgetRank(char *\fIheader\fP, int *\fIrank\fP)
+.fi
+.LP
+.SH "DESCRIPTION"
+.B SDSgetDimensions
+examines the header for the 
+.B SDSdims
+flag and returns the 
+following value as the value
+.I rank.
+This function is useful for determining in
+advance how many dimension values need be allocated for the call to
+.B SDSgetDimensions.
+If memory conservation is unimportant, or if it is
+guaranteed that the rank will always be less than a given value, then use 
+.B SDSgetDimensions
+with a fixed size dims array since 
+.B SDSgetDimensions
+reads the rank value automatically.
+.LP
+.SH "SEE ALSO"
+DTM, SDSclass, SDSsetDimensions
+.LP
+.SH "DIAGNOSTICS"
+.B SDSgetRank
+returns a value of 0 upon successful parsing of the header.  If the tag 
+.B SDSdims 
+is not found within the header, the function returns the error 
+.B DTMERROR
+and no values are assigned to the dimensions.
+.LP
+.SH "BUGS"
+.B SDSgetRank
+assumes that the rank immediately follows the 
+.B SDSdims
+tag.  If the rank is not present, the results are undefined.

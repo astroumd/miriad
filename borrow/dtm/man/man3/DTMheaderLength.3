@@ -1,0 +1,23 @@
+.TH DTMheaderLength 3DTM "7 February 1992" DTM "DTM Version 2.0"
+.LP
+.SH "NAME"
+\fBDTMheaderLength, DTMHL\fP \- macros that determine the length of a given header.
+.LP
+.SH "SYNOPSIS"
+.nf
+.LP
+.B #include <dtm.h>
+.LP
+.B DTMheaderLength(char *\fIheader\fP)
+.LP
+.B DTMHL(char *\fIheader\fP)
+.fi
+.LP
+.SH "DESCRIPTION"
+These two macros are equivalent.  They both return the exact length of
+the supplied character string 
+.I header,
+counting the terminating null character.
+.LP
+.SH "SEE ALSO"
+DTM, DTMclass

@@ -1,0 +1,43 @@
+.TH dtm_set_address 3DTM "20 February 1992" DTM "DTM Version 2.0"
+.SH "NAME"
+\fBdtm_set_address, dtm_get_address\fP - Set and retrieve the supplied address in the header.
+.LP
+.SH "SYNOPSIS"
+\fB#include <dtm.h>\fP
+.LP
+\fBdtm_set_address(char *\fIheader\fP, char *\fIaddress\fP)\fP
+.LP
+\fBdtm_get_address(char *\fIheader\fP, char *\fIaddress\fP, int \fIsize\fP)\fP
+.LP
+.SH "DESCRIPTION"
+\fBdtm_set_address\fP inserts the DTM address tag \fBPORT\fP followed by the
+null-terminated character string \fIaddress\fP into the character string
+\fIheader\fP.  There is no restriction as what the address string may contain,
+but it is highly recommended that the form \fIheader:portnumber\fP as 
+returned by \fBDTMgetPortAddr\fP be used.
+.LP
+\fBdtm_get_address\fP examines the character string \fIheader\fP and upon
+locating the DTM address tag \fBPORT\fP, stores the succeeding delimited
+string in the variable \fIaddress\fP.  Memory for the address
+string must be allocated by the user before attempting to extract the address
+contained in the header.  \fISize\fP indicates the number of characters
+available for storing the address.  If there is an insufficient amount
+of space for the entire address as contained in the header, the address
+is truncated.
+.LP
+.SH "SEE ALSO"
+\fBDTM
+.LP
+.SH "DIAGNOSTICS"
+\fBdtm_get_address\fP returns the error \fBDTMERROR\fP if the DTM address tag
+\fBPORT\fP is not contained within the character string \fIheader\fP, or if
+following the tag there is no delimited address string.  Otherwise, 
+\fBdtm_get_address\fP returns a 0 value.
+.LP
+.SH "BUGS"
+\fBdtm_set_address\fP has no way of determining if the string \fIheader\fP
+contains sufficient space to hold the DTM address tag \fBPORT\fP and the
+\fIaddress\fP string itself.  The results 
+of attempting to store this information beyond the end of the allocated space
+are undefined.
+

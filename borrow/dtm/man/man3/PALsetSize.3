@@ -1,0 +1,71 @@
+.TH PALelements 3DTM "10 February 1992" DTM "DTM Version 2.0"
+.LP
+.SH "NAME"
+\fBPALsetSize, PALgetSize\P - Set and determine the number of colors in a palette.
+.LP
+.SH "SYNOPSIS"
+.nf
+.B #include <ris.h>
+.LP
+.B PALsetSize(char *\fIheader\fP, int \fInum_elements\fP)
+.LP
+.B PALgetSize(char *\fIheader\fP, int *\fInum_elements\fP)
+.fi
+.LP
+.SH "DESCRIPTION"
+.B PALsetSize
+and 
+.B PALgetSize
+are macros that operate on a given DTM header.
+.LP
+.B PALsetSize
+inserts into the string
+.I header 
+the tag 
+.B PALentries
+followed by the number 
+of elements as supplied by
+.I num_elements
+that are supposed to be available in the palette.  It is up to 
+the user to ensure that the exact number of entries specified are actually
+contained within the data portion of the message.
+.LP
+.B PALgetSize
+examines the header and returns the number declared to be the
+size of the palette contained in the dataset that is supposed to follow the
+header.  If no size was found within the header, and since palettes are 
+typically comprised of 256 elements, the value 
+.I num_elements
+is assigned defaults to the value 256.
+It is the user's responsibility to ensure that the value returned by 
+.I num_elements
+is exactly matches the 
+number of elements that are actually contained in the dataset since 
+.B PALgetSize 
+has no way of reviewing and interpreting the data.
+.LP
+.SH "SEE ALSO"
+DTM, PALclass
+.LP
+.SH "DIAGNOSTICS"
+.B PALgetSize
+returns the error 
+.B DTMERROR
+if the header does not contain the
+tag 
+.B PALentries
+or if no value follows the 
+.B PALentries
+tag.  In either case,
+the value of 
+.I num_elements 
+still defaults to 256.
+.LP
+.SH "BUGS"
+.B PALsetSize
+has no way of determining if the header contains sufficient
+space to hold the tag 
+.B PALentries
+and the number of elements specified.
+The results of attempting to store information beyond the end of the 
+allocated space are undefined.

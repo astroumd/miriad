@@ -1,0 +1,44 @@
+.TH dtm_set_type 3DTM "17 February 1992" DTM "DTM Version 2.0"
+.SH "NAME"
+\fBdtm_set_type, dtm_get_type\fP - Set and get the data type tag in the header.
+.LP
+.SH "SYNOPSIS"
+.nf
+\fB#include <dtm.h>\fP
+.LP
+\fBdtm_set_type(char *\fIheader\fP, DTMTYPE \fIdata_type\fP)\fP
+.LP
+\fBdtm_get_type(char *\fIheader\fP, DTMTYPE *\fIdata_type\fP)\fP
+.LP
+.fi
+.SH "DESCRIPTION"
+\fBdtm_set_type\fP inserts into the character string \fIheader\fP the DTM type
+tag \fBDT\fP immediately followed by another tag identifying the type of the
+data.  The tag type can be one of \fBDTM_CHAR\fP, \fBDTM_SHORT\fP, 
+\fBDTM_INT\fP, \fBDTM_FLOAT\fP, \fBDTM_DOUBLE\fP, \fBDTM_COMPLEX\fP, or 
+\fBDTM_TRIPLET\fP.  
+It is the user's responsibility to ensure
+that the data type specified matches the data sent.
+.LP
+\fBdtm_get_type\fP examines the character string \fIheader\fP, and if the DTM
+type tag \fBTTL\fP is found, sets the
+argument \fIdata_type\fP to be the suceeding type value.  The defined values 
+that can be
+returned are \fBDTM_CHAR\fP, \fBDTM_SHORT\fP, \fBDTM_INT\fP, \fBDTM_FLOAT\fP,
+\fBDTM_DOUBLE\fP, \fBDTM_COMPLEX\fP, and \fBDTM_TRIPLET\fP.  
+If the type tag is not found within the header, the \fIdata_type\fP argument 
+receives a default value of \fBDTM_FLOAT\fP.
+.LP
+.SH "SEE ALSO"
+\fBDTM\fP
+.LP
+.SH "DIAGNOSTICS"
+\fBdtm_get_type\fP returns the error \fBDTMERROR\fP if the string \fIheader\fP
+does not contain the type tag or if no value follows the tag.  In either case,
+the value of \fIdata_type\fP still defaults to \fBDTM_FLOAT\fP.
+.LP
+.SH "BUGS"
+\fBdtm_set_type\fP has no way of determining if the string \fIheader\fP
+contains sufficient space to hold the DTM type tag and the \fIdata_type\fP
+value.  The results of attempting to store this information beyond the end of
+the allocated space are undefined.

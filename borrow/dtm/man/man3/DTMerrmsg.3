@@ -1,0 +1,42 @@
+.TH DTMerrmsg 3DTM "7 July 1992" DTM "DTM Version 2.0"
+.ta .5i 2.5i
+.SH "NAME"
+\fBDTMerrmsg\fP - Print or return an error message.
+.SH "SYNOPSIS"
+.nf
+\fB#include <dtm.h>\fP
+.LP
+\fBchar *DTMerrmsg(int \fIquiet\fP)\fP
+.SH "DESCRIPTION"
+.nf
+\fBDTMerrmsg\fP returns a pointer to a error message string that corresponds
+to the current state of the \fBDTMerrno\fP variable.  If the argument
+\fIquiet\fP is false (ie., zero), then the error message is also printed
+to \fIstderr\fP.
+.LP
+The possible error values have the following corresponding error messages:
+.LP
+	\fBDTMNOERR\fP (0):		"No error",
+	\fBDTMMEM\fP (1):		"Out of memory - can not create port",
+	\fBDTMHUH\fP (2):		"Invalid port name - should be 'hostname:tcp port'",
+	\fBDTMNOPORT\fP (3):		"Out of DTM ports - 256 ports max",
+	\fBDTMPORTINIT\fP (4):		"Couldn't initialize port",
+	\fBDTMCALL\fP (5):		"DTM routines called in wrong order",
+	\fBDTMEOF\fP (6):		"Encounted EOF",
+	\fBDTMSOCK\fP (7):		"Error creating socket",
+	\fBDTMHOST\fP (8):		"Bad hostname",
+	\fBDTMTIMEOUT\fP (9):		"Timeout waiting for connection",
+	\fBDTMCCONN\fP (10):		"Couldn't connect",
+	\fBDTMREAD\fP (11):		"DTM read error",
+	\fBDTMWRITE\fP (12):		"DTM write error",
+	\fBDTMHEADER\fP (13):		"DTM header to long for buffer",
+	\fBDTMSDS\fP (14):		"SDS error",
+	\fBDTMSELECT\fP (15):		"Select call error",
+	\fBDTMENV\fP (16):		"Environment not setup",
+	\fBDTMBUFOVR\fP (17):		"User buffer overflow",
+	\fBDTMCORPT\fP (18):		"Port table corrupted",
+	\fBDTMBADPORT\fP (19):		"Bad port supplied to library",
+	\fBDTMBADACK\fP (20):		"Bad ack to internal flow control",
+	\fBDTMADDR\fP (21):		"Bad address",
+	\fBDTMSERVER\fP (22):		"Problem communicating with server"
+	All other values:	"unknown error: \fB<DTMerrno>\fP"

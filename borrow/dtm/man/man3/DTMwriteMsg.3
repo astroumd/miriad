@@ -1,0 +1,41 @@
+.TH DTMwriteMsg 3DTM "9 April 1992" DTM "DTM Version 2.0"
+.ta .5i 2.5i
+.SH "NAME"
+\fBDTMwriteMsg\fP - Write all header information and data to an output port.
+.SH "SYNOPSIS"
+.nf
+\fB#include <dtm.h>\fP
+.LP
+\fBint DTMwriteMsg(int \fIoutport\fP, char \fIheader\fP, int \fIheader_length\fP,
+                void *\fIdata\fP, int \fInum_elements\fP, DTMTYPE \fItype\fP)\fP
+.SH "DESCRIPTION"
+.nf
+\fBDTMwriteMsg\fP combines the command sequence:
+.LP
+	\fBDTMbeginWrite(\fIoutport\fP, \fIheader\fP, \fIheader_length\fP); \fP
+	\fBDTMwriteDataset(\fIoutport\fP, \fIdata\fP, \fInum_elements\fP, \fItype\fP); \fP
+	\fBDTMendWrite(\fIoutport\fP); \fP
+.LP
+.fi
+into one function.  This function is useful if and only if all of the data
+to be sent can be placed into a single buffer.  Using \fBDTMwriteMsg\fP avoids
+the overhead involved with making two additional function calls and allows all
+of the \fIheader\fP and the data \fIbuffer\fP to be sent at once instead of 
+separately.  If the data must be sent in small packets, then the three 
+functions listed above must be used with multiple calls to
+\fBDTMwriteDataset\fP.
+
+.SH "SEE ALSO"
+\fBDTM, DTMbeginWrite, DTMwriteDataset, DTMendWrite\fP
+
+.SH "DIAGNOSTICS"
+\fBDTMwriteDataset\fP returns the value \fBDTM_OK\fP upon sucessful completion 
+of transmitting the data.  \fBDTMERROR\fP is returned when \fBDTMwriteMsg\fP
+fails.  The variable \fBDTMerrno\fP can have any one of these possible values 
+after failure:
+.nf
+	\fBDTMBADPORT\fP	Port identifier is bad/corrupt/stale
+	\fBDTMTIMEOUT\fP	Timeout waiting for connection
+	\fBDTMPORTINIT\fP	DTM port not initialized
+	\fBDTMSOCK\fP	Socket error
+	\fBDTMEOF\fP	EOF error

@@ -1,0 +1,28 @@
+.TH DTMdestroyPort 3DTM "1 April 1992" DTM "DTM Version 2.0"
+.ta .5i 2.5i
+.SH "NAME"
+\fBDTMdestroyPort\fP - Close the specified port.
+.LP
+.SH "SYNOPSIS"
+.nf
+\fB#include <dtm.h>\fP
+.LP
+\fBint DTMdestroyPort(int \fIportid\fP)\fP
+.LP
+.fi
+.SH "DESCRIPTION"
+\fBDTMdestroyPort\fP closes all connections associated with the port
+\fIportid\fP and frees the entry in the port table.  Although optional, use of
+this call is recommended since it may assist connected processes in proceeding 
+correctly.  Ports should be closed as soon as they are no longer functional.
+.LP
+.SH "SEE ALSO"
+\fBDTMmakeInPort, DTMmakeOutPort\fP
+.LP
+.SH "DIAGNOSTICS"
+If an error occurs, \fBDTMdestroyPort\fP returns the value \fBDTMERROR\fP.
+If this condition occurs, then the variable \fBDTMerrno\fP could be set to
+one of the following possible values:
+.LP
+.nf
+	\fBDTMPORTINIT\fP	DTM port not initialized, invalid port.

@@ -1,0 +1,38 @@
+.ta 0.5 1
+.TH dtm_set_class 3DTM "17 February 1992" DTM "DTM Version 2.0"
+.SH "NAME"
+\fBdtm_set_class, dtm_compare_class\fP - Low level class insertion and comparison macros.
+.LP
+.SH "SYNOPSIS"
+.nf
+.B #include <dtm.h>
+.LP
+.B dtm_set_class(char *\fIheader\fP, char *\fIclasstag\fP)
+.LP
+.B dtm_compare_class(char *\fIheader\fP, char *\fIclasstag\fP)
+.LP
+.fi
+.SH "DESCRIPTION"
+\fBdtm_set_class\fP inserts the message class constant \fIclasstag\fP into the
+character string \fIheader\fP.
+The classtag value must be a null-terminated character string that uniquely
+identifies the class being described.  In general, this macro is reused by
+the various subclasses to ensure their uniqueness.
+The classtag value should be considered private data that is unique to 
+that particular class.
+.LP
+\fBdtm_compare_class\fP returns a non-zero value if the character string
+\fIheader\fP contains the character string \fIclasstag\fP.
+The classtag should uniquely identify the class being described.  This macro
+is reused
+by the various subclasses to help ensure the individuality of the classes.
+.LP
+For examples of how this macro is used in the creation of new subclasses,
+examine the header files of the classes supplied, e.g. \fIsds.h\fP.
+.LP
+.SH "SEE ALSO"
+DTM
+.SH "BUGS
+\fBdtm_set_class\fP has no way of determining if the header contains sufficient
+space to hold the entire classtag string.  The results of attempting to store 
+this information beyond the end of the allocated space are undefined.

@@ -1,0 +1,41 @@
+.TH VCTRLsetGTM 3DTM "10 February 1992" DTM "DTM Version 2.0"
+.LP
+.SH "NAME"
+\fBVCTRLsetGTM, VCTRLgetGTM\fP - View control matrix message class typing macros.
+.LP
+.SH "SYNOPSIS"
+.nf
+.B #include <sdl.h>
+.LP
+.B VCTRLsetType(char *\fIheader\fP)
+.LP
+.B VCTRLgetType(char *\fIheader\fP)
+.fi
+.LP
+.SH "DESCRIPTION"
+.B VCTRLsetGTM
+inserts into the character string
+.I header
+the tag 
+.B VCTRLgtm
+identifying this message as containing a global transformation matrix.
+.LP
+.B VCTRLgetGTM
+examines the character string
+.I header,
+and if the 
+.B VCTRLgtm
+tag if found, returns a non-zero value.  If the 
+.I VCTRLgtm
+tag is not found, then zero is returned.
+.LP
+.SH "SEE ALSO"
+DTM, VCTRLclass
+.LP
+.SH "BUGS"
+.B VCTRLsetGTM
+has no way of determining if the header contains sufficient
+space to hold the tag 
+.B VCTRLgtm.
+The results of attempting to store this
+information beyond the end of the allocated space are undefined.

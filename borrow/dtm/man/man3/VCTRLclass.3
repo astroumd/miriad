@@ -1,0 +1,87 @@
+.TH VCTRLclass 3DTM "10 February 1992" DTM-2.3 "DTM Version 2.3"
+.LP
+.SH "NAME"
+\fBVCTRLclass\fP - A view control message class.
+.LP
+.SH "SYNOPSIS"
+.nf
+.B #include <sdl.h>
+.LP
+.B VCTRLheaderLength(char *\fIheader\fP)
+.LP
+.B VCTRLHL(char *\fIheader\fP)
+.LP
+.B VCTRLsetClass(char *\fIheader\fP)
+.LP
+.B VCTRLcompareClass(char *\fIheader\fP)
+.LP
+.B VCTRLsetGTM(char *\fIheader\fP)
+.LP
+.B VCTRLgetGTM(char *\fIheader\fP)
+.LP
+.B VCTRLsetTitle(char *\fIheader\fP, char *\fItitle\fP)
+.LP
+.B VCTRLgetTitle(char *\fIheader\fP, char *\fItitle\fP, int \fItitle_length\fP)
+.fi
+.LP
+.SH "DESCRIPTION"
+This message class was designed to be used as a method of communicating
+view control matrices via DTM.  The view control matrices used are the
+4x4 floating point matrices interpretable by SGI's GL (graphics library).
+This class is fairly limited in scope and is provided without any guarantees
+of further development or support.
+.LP
+The macros and functions that are included with this class include:
+.LP
+.nf
+\fBVCTRLheaderLength:\fP
+.fi
+\fBVCTRLHL:\fP - Macros for determining a view control header length.
+These two macros are equivalent.  They both return the exact length of
+the supplied character string \fIheader\fP, counting the null character
+at the end.
+.LP
+\fBVCTRLsetClass:\fP inserts the message class constant \fBVCTRLclass\fP
+into the character string \fIheader\fP indicating that the data to follow
+should be considered some form of a view control matrix.  The \fBVCTRLclass\fP
+constant is declared in the file \fIsdl.h\fP, and though it is accessible 
+at all times, it is recommended that the macro \fBVCTRLsetClass\fP
+be used to correctly insert this message type tag into the header.
+.LP
+\fBVCTRLcompareClass:\fP returns a non-zero value if the character string
+\fIheader\fP contains the \fBVCTRLclass\fP constant.  Though the constant 
+\fBVCTRLclass\fP is accessible at all times, it is recommended that the macro 
+\fBVCTRLcompareClass\fP to determine whether or not a header indicates a 
+view control matrix.
+.LP
+\fBVCTRLsetGTM:\fP inserts into the character string \fIheader\fP the tag 
+\fBVCTRLgtm\fP identifying this message as containing a global transformation
+matrix.
+.LP
+\fBVCTRLgetGTM:\fP examines the character string \fIheader\fP, and if the 
+\fBVCTRLgtm\fP tag if found, returns a non-zero value.  If the \fBVCTRLgtm\fP
+tag is not found, then zero is returned.
+.LP
+\fBVCTRLsetTitle:\fP inserts the DTM title tag followed by the null-terminated
+character string \fItitle\fP into the character string \fIheader\fP.
+The title is surrounded by single quotation marks so that it's contents will
+not affect the interpretation of the header.
+.LP
+\fBVCTRLgetTitle:\fP examines the character string \fIheader\fP and determines
+the title string that is contained.  Memory for the \fItitle\fP string must
+be allocated by the user before attempting to extract the title from the
+header.  If there is insufficient memory allocated to store the entire title
+as contained in the header, the title string is truncated.
+.LP
+.SH "SEE ALSO"
+\fIThe DTM Programming Manual\fP
+.SH "DIAGNOSTICS"
+\fBVCTRLgetTitle\fP returns the error \fBDTMERROR\fP if the DTM title tag
+is not contained within the header, or if following the tag there is no 
+delimited title string.  Otherwise, \fBVCTRLgetTitle\fP returns a 0 value.
+.LP
+.SH "BUGS"
+None of the \fBVCTRLset*\fP functions and macros have any way of determining
+if the header contains sufficient space to hold the data-specific tag and
+the associated data.  The results of attempting to store this information
+beyond the end of the allocated space are undefined.

@@ -1,0 +1,203 @@
+.TH SDLclass 3DTM "26 November 1992" DTM-2.3 "DTM Version 2.3"
+.LP
+.SH "NAME"
+\fBSDLclass\fP - The Surface Description Language DTM message class.
+.LP
+.SH "SYNOPSIS"
+.nf
+\fB#include <sdl.h>\fP
+.LP
+\fBSDLheaderLength(char *\fIheader\fP)\fP
+.LP
+\fBSDLHL(char *\fIheader\fP)\fP
+.LP
+\fBSDLsetClass(char *\fIheader\fP)\fP
+.LP
+\fBSDLcompareClass(char *\fIheader\fP)\fP
+.LP
+\fBSDLsetPrimitive(char *\fIheader\fP, SDLprim_t \fIprimitive_type\fP)\fP
+.LP
+\fBSDLgetPrimitive(char *\fIheader\fP, SDLprim_t *\fIprimitive_type\fP)\fP
+.LP
+\fBSDLsetTitle(char *\fIheader\fP, char *\fItitle\fP)\fP
+.LP
+\fBSDLgetTitle(char *\fIheader\fP, char *\fItitle\fP, int \fItitle_length\fP)\fP
+.LP
+\fBvoid SDLsetBoundingBox(char *\fIheader\fP, float \fImin\fB[3], float\fP \fImax\fB[3])\fP
+.LP
+\fBint SDSgetBoundingBox(char *\fIheader\fP, float \fImin\fB[3], float\fP \fImax\fB[3])\fP
+.LP
+.fi
+.SH "DESCRIPTION"
+The SDL message class is a DTM class designed specifically for the transmission
+of geometric information.  Each of the macros and functions listed above places
+information into the message header that describes how to interpret the data
+section of the message.  Several constants have been defined to be used as
+tags that identify particular properties of this class.  These include:
+.LP
+\fBSDLclass\fP - The tag that identifies the message as belonging to the surface
+description language class of messages.
+.LP
+\fBSDLprimitive\fP - The tag used to identify the primitive type being sent:
+SDLpoint, SDLlineseg, SDLtriangle, SDLquad, or SDLsphere
+.LP
+\fBSDLbounds\fP - A tag for identifying bounding box information.
+.LP
+\fBSDLsize\fP - A constant for declaring SDL header sizes.  Though the size
+of the header can be arbitrary, it's doubtful that the header length will
+exceed this value.
+.LP
+While these constants are available for use at any time following the inclusion
+of \fIsdl.h\fP, it is highly recommended that programmers use the functions and
+macros described below to correctly manipulate the headers for this class.
+.LP
+There are currently five primitive types defined by the SDL message class.
+These five supply information about how the data possibly may be interpreted:
+.LP
+\fBSDLpoint\fP - each \fBDTM_TRIPLET\fP with the tag \fBSDLposition\fP is
+considered an individual vertex.
+.LP
+\fBSDLlineseg\fP - each pair of \fBDTM_TRIPLET\fPs with the tag 
+\fBSDLpositio\fPn are considered endpoints of a line segment.
+.LP
+\fBSDLtriangle\fP - each triplet of \fBDTM_TRIPLET\fPs with the tag 
+\fBSDLposition\fP are considered the three vertices of a triangle.
+.LP
+\fBSDLquad\fP - each group of four \fPDTM_TRIPLET\fBs with the tag 
+\fBSDLposition\fP are considered the four vertices of a quadrilateral.
+.LP
+\fBSDLsphere\fP - each \fBDTM_TRIPLET\fP is the center of a sphere.  The 
+radius of the sphere is currently left to the user's discretion, though this
+fact may change in future releases.
+.LP
+The data for a surface description language message consists entirely of
+\fBDTM_TRIPLET\fPs.  These triplets have the following structure:
+.LP
+      typedef struct DTM_TRIPLET {
+         SDLtriplet  tag;
+         float x, y, z;
+      } DTM_TRIPLET;
+.LP
+The \fBtag\fP value is used to interpret the three floating point values,
+\fBx\fP, \fBy\fP, and \fBz\fP.  This tag can take any one of the following
+supported values: \fBSDLposition\fP, \fBSDLcolor\fP, \fBSDLnormal\fP,
+\fBSDLtranslate\fP, \fBSDLrotate\fP, or \fBSDLscale\fP.  Tag values above
+the predefined constant SDLmaxTriplet are unreserved and can be used by 
+the applications programmer.
+.LP
+The interpretation of each coordinate triple is thus:
+.LP
+\fBSDLposition\fP - the triple forms a point in 3-space.
+\fBSDLcolor\fP - the triple denotes the percent (over the range 0.0 to
+1.0 inclusive) of the maximum intensity of each color value where x=red,
+y=green, z=blue.
+\fBSDLnormal\fP - the triple forms a surface normal.
+\fBSDLtranslate\fP - the triple specifies a translation vector.
+\fBSDLrotate\fP - the triple specifies the amount of rotation, in radians,
+about each of the three principle axes.
+\fBSDLscale\fP - the triple specifies the scaling factor in the direction of
+each principle axis.
+.LP
+The typical way of associating these different triplet tag types is to
+make the current value for the last five types hold for all SDLpositions
+until an updated value is encountered.  Ie. the order, omitting the x, y,
+and z values: \fBSDLnormal SDLposition SDLcolor SDLposition SDLposition\fP
+associates the first \fBSDLnormal\fP with all \fBSDLpositions\fP, and the
+\fBSDLcolor\fP with only the last two \fBSDLpositions\fP.  This interpretation
+is not required though, as applications are free to interpret this, and any
+data from any class, in any desired manner.
+.LP
+The following functions and macros are used to support the behavior of
+the SDL message class:
+.nf
+.LP
+\fBSDLheaderLength:\fP
+.fi
+\fBSDLHL:\fP - These two macros are equivalent.  They both return the exact
+length of the supplied character string \fIheader\fP, including the null
+character at the end.
+.LP
+\fBSDLsetClass\fP inserts the message class constant \fBSDLclass\fP into
+the character string \fIheader\fP indicating that the data to follow should
+be considered surface description language information.
+.LP
+\fBSDLcompareClass\fP returns a non-zero value if the character string
+\fIheader\fP contains the \fBSDLclass\fP constant.  Though the constant 
+\fBSDLclass\fP is accessible at all times, it is recommended that the macro 
+\fBSDLcompareClass\fP to determine whether or not a header indicates
+surface description data.
+.LP
+\fBSDLsetPrimitive\fP inserts into the header the tag \fBSDLprimitive\fP
+immediately followed by a tag identifying the primitive type of the data.
+The \fIprimitive_type\fP should be one of the following: \fBSDLpoint,\fP
+\fBSDLlineseg,\fP \fBSDLtriangle,\fP \fBSDLquad,\fP or \fBSDLsphere.\fP
+.LP
+\fBSDLgetPrimitive\fP examines the character string \fIheader,\fP and if the 
+\fBSDLprimitive\fP tag if found, sets the argument \fIprimitive_type\fP
+to be the succeeding value.  The defined values that can be returned are 
+\fBSDLpoint,\fP \fBSDLlineseg,\fP \fBSDLtriangle,\fP \fBSDLquad,\fP and 
+\fBSDLsphere.\fP  If the \fBSDLprimitive\fP tag was not found within the 
+\fIheader,\fP the default value returned is \fBSDLpoint.\fP
+.LP
+\fBSDLsetTitle\fP inserts the \fBDTM\fP title tag followed by the null-
+terminated character string \fItitle\fP into the character string
+\fIheader\fP.  The title is surrounded by single quotation marks so that
+it's contents will not affect the interpretation of the header.
+.LP
+\fBSDLgetTitle\fP examines the character string \fIheader\fP and determines
+the title string that is contained.  Memory for the \fItitle\fP string must
+be allocated by the user before attempting to extract the title from the
+header.  If there is insufficient memory allocated to store the entire title
+as contained in the header, the title string is truncated.
+.LP
+\fBSDLsetBoundingBox\fP is used to provide information about the minimum and
+maximum coordinate extents of the data. The vector \fImin\fP should contain
+the minimum x, y, and z values of every point in the data set.  The vector
+\fImax\fP should contain the maximum x, y, and z values of every point in
+the data set.  In this manner, the minimum and maximum vertices form 
+opposing corners of a cube that completely encloses all of the data.  In 
+otherwords, the minimum and maximum x values (the first value in the vectors)
+form the left and right sides of the cube enclosing the data set.  The 
+minimum and maximum y values (the second value in the vectors) form the 
+bottom and top sides of the cube.  And, the minimum and maximum z (third)
+values form the near and far sides of the bounding cube.  It is the caller's
+responsibility to ensure that the values set by \fBSDLsetBoundingBox\fP
+actually match the minimum and maximum values in the dataset.
+.LP
+\fBSDLgetBoundingBox\fP is used to retrieve information about the minimum 
+and maximum coordinate extents of the data from the header.  Upon successful
+completion of this funciton, the vector \fImin\fP will contain the values 
+that should represent the minimum x, y, and z values of every point in the
+data set, and the vector \fImax\fP will contain the values that should 
+represent the maximum x, y, and z values of every point in the data set.  
+Thus, the minimum and maximum vertices form opposing corners of a cube that
+should completely enclose all of the data.  It is impossible to ensure that
+the values returned by \fBSDLgetBoundingBox\fP match the actual minimum
+and maximum extents in the data; it is the user's responsibility to guarantee
+that the extents, when set, are correct, or to check the extents against
+the data received.
+.LP
+.SH "SEE ALSO"
+\fIThe DTM Programming Manual\fP
+.SH "DIAGNOSTICS"
+Upon successful completion of their operation, each SDL class function
+returns a zero value.
+.LP
+\fBSDLgetBoundingBox\fP returns a value of \fBDTMERROR\fP if the header
+lacks the \fBSDLbounds\fP flag or the six values that correspond to the
+two opposing corners of the bounding cube.
+.LP
+\fBSDLgetPrimitive\fP returns the error \fBDTMERROR\fP if the header does
+not contain the tag \fBSDLprimitive\fP or if no value follows the
+\fBSDLprimitive\fP tag.  In either case, the value of raster_type still
+defaults to \fBSDLpoint.\fP
+.LP
+\fBSDLgetTitle\fP returns the error \fBDTMERROR\fP if the DTM title
+tag is not contained within the header or if following the tag there is
+no delimited title string.
+.LP
+.SH "BUGS"
+None of the \fBSDLset*\fP functions and macros have any way of determining
+if the header contains sufficient space to hold the data-specific tag and
+the associated data.  The results of attempting to store this information
+beyond the end of the allocated space are undefined.

@@ -1,0 +1,78 @@
+.TH SDSsetType 3DTM "10 February 1992" DTM "DTM Version 2.0"
+.LP
+.SH "NAME"
+\fBSDSsetType, SDSgetType\fP - Scientific data set typing macros.
+.LP
+.SH "SYNOPSIS"
+.nf
+.B #include <sds.h>
+.LP
+.B SDSsetType(char *\fIheader\fP, DTMTYPE \fIdata_type\fP)
+.LP
+.B SDSgetType(char *\fIheader\fP, DTMTYPE *\fIdata_type\fP)
+.fi
+.LP
+.SH "DESCRIPTION"
+.B SDSsetType
+inserts into the character string
+.I header
+the 
+.B DTM
+type tag immediately followed by
+a tag identifying the 
+.I data_type
+of the image.  The tag type can be one of 
+.B DTM_CHAR, DTM_SHORT, DTM_INT, DTM_FLOAT, DTM_DOUBLE, DTM_COMPLEX,
+or
+.B DTM_TRIPLET.
+See 
+.B DTMclass
+for more information about these types.  It is up to the user to ensure that
+the data type specified matches the data sent.
+.LP
+.B SDSgetType
+examines the character string
+.I header,
+and if the 
+.B DTM 
+type tag if found, sets the
+argument 
+.I data_type
+to be the following value.  The defined values 
+that can be returned are 
+.B DTM_CHAR, DTM_SHORT, DTM_INT, DTM_FLOAT, DTM_DOUBLE,
+.B DTM_COMPLEX,
+and
+.B DTM_TRIPLET.
+See 
+.B DTMclass
+for more information about these 
+types.  If the 
+.B DTM
+type tag was not found within the header, the 
+.I data_type
+argument receives a default value of 
+.B DTM_FLOAT.
+.LP
+.SH "SEE ALSO"
+DTM, SDSclass
+.LP
+.SH "DIAGNOSTICS"
+.B SDSgetType
+returns the error 
+.B DTMERROR
+if the header does not contain the 
+.B DTM
+type tag or if no value follows the tag.  In either case, the value of 
+.I data_type 
+still defaults to 
+.B DTM_FLOAT.
+.LP
+.SH "BUGS"
+.B SDSsetType 
+has no way of determining if the header contains sufficient
+space to hold the 
+.B DTM
+type tag and the data_type value.  The results of
+attempting to store this information beyond the end of the allocated space
+are undefined.

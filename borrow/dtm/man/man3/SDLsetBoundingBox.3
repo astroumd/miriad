@@ -1,0 +1,55 @@
+.TH SDLsetBoundingBox 3DTM "30 March 1992" DTM "DTM Version 2.0"
+.LP
+.SH "NAME"
+\fBSDLgetBoundingBox, SDLsetBoundingBox\fP - functions for adding bounding box information to surface description files.
+.LP
+.SH "SYNOPSIS"
+.nf
+\fB#include <sdl.h>\fP
+.LP
+\fBvoid SDLsetBoundingBox(char *\fIheader\fP, float \fImin\fB[3], float\fP \fImax\fB[3])\fP
+.LP
+\fBint SDSgetBoundingBox(char *\fIheader\fP, float \fImin\fB[3], float\fP \fImax\fB[3])\fP
+.fi
+.LP
+.SH "DESCRIPTION"
+\fBSDLsetBoundingBox\fP is used to provide information about the minimum and maximum 
+coordinate extents of the data. The vector \fImin\fP should contain the minimum
+x, y, and z values of every point in the data set.  The vector \fImax\fP should 
+contain the maximum x, y, and z values of every point in the data set.  In
+this manner, the minimum and maximum vertices form opposing corners of a cube
+that completely encloses all of the data.  In otherwords, the minimum and
+maximum x values (the first value in the vectors) form the left and right
+sides of the cube enclosing the data set respectively.  The minimum and
+maximum y values (the second value in the vectors) form the bottom and top
+sides of the cube.  And, the minimum and maximum z (third) values form the 
+near and far sides of the bounding cube.  Remember, it is the caller's
+responsibility to ensure that the values set by \fBSDLsetBoundingBox\fP
+actually match the minimum and maximum values in the dataset.
+.LP
+\fBSDLgetBoundingBox\fP is used to retrieve information about the minimum and maximum 
+coordinate extents of the data from the header.  Upon successful completion
+of this funciton, the vector \fImin\fP will contain the values that should 
+represent the minimum x, y, and z values of every point in the data set, and
+the vector \fImax\fP will contain the values that should represent the maximum 
+x, y, and z values of every point in the data set.  Thus, the minimum and 
+maximum vertices form opposing corners of a cube that should completely enclose
+all of the data.  It is impossible to ensure that the values returned by
+\fBSDLgetBoundingBox\fP match the actual minimum and maximum extents in
+the data; it is the user's responsibility to guarantee that the extents, when
+set, are correct, or to check the extents against the data received.
+.LP
+.SH "SEE ALSO"
+DTM, SDSsetMinMax
+.SH "DIAGNOSTICS"
+SDLgetBoundingBox returns a value of zero if the header lacks the six values
+that correspond to the two opposing corners of the bounding cube or if
+the \fBSDLbounds\fP flag is not located within the header (indicating that no
+bounding box information was specified when the header was created).
+.LP
+.SH "BUGS"
+\fBSDLsetBoundingBox\fP has no way of determining if the header contains
+sufficient space to hold the tag \fB SDLbounds\fP and the six floating point
+values representing the minimum and maximum coordinate extents.  The results 
+of attempting to store this information beyond the end of the allocated space 
+are undefined.

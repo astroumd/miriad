@@ -1,0 +1,34 @@
+.TH DTMendRead 3DTM "31 March 1992" DTM "DTM Version 2.0"
+.ta .5i 1.5i
+.SH "NAME"
+\fBDTMendRead, DTMendWrite\fP - Signal completion of reading/writing from/via the port.
+.LP
+.SH "SYNOPSIS"
+\fB#include <dtm.h>\fP
+.LP
+\fBint DTMendRead(int \fIportid\fP)\fP
+.LP
+\fBint DTMendWrite(int \fIportid\fP)\fP
+.LP
+.SH "DESCRIPTION"
+\fBDTMendRead\fP marks the end of the current message and prepares for the next 
+message on the input port \fIportid\fP.  \fBDTMendRead\fP discards any data
+remaining in the current message in the process.  For every call to
+\fBDTMendRead\fP, there must be a matching call to \fBDTMbeginRead\fP, and 
+vice versa.
+.LP
+\fBDTMendWrite\fP marks the end of the current message, signaling that no more
+data is to be transmitted at this time across the output port \fIportid\fP.
+For every call to \fBDTMendWrite\fP there must be a matching call to 
+\fBDTMbeginWrite\fP and vice versa.
+.LP
+.SH "SEE ALSO"
+\fBDTM, DTMbeginRead, DTMbeginWrite\fP
+.LP
+.SH "DIAGNOSTICS"
+These functions return the value \fBDTMERROR\fP when an error condition is
+encountered.  The value of \fBDTMerrno\fP can be set to any one of the
+following values:
+.LP
+.nf
+	\fBDTMCALL\fP:	\fBDTMbeginRead\fP (\fBDTMbeginWrite\fP) must preceed call.
