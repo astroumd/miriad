@@ -7,9 +7,9 @@
 
 usage() {
   (
-  echo "Usage: $0 [help] [basic] [xyio] [uvio] [calib] [map] [rad] [device=$device]"
-  echo "Run a (selective) number of tests to test some basic"
-  echo "miriad capabilities"
+  echo "Usage: $0 ..."
+  echo "Run a test"
+  echo "wip capabilities"
   )
 }
 
@@ -71,27 +71,27 @@ basic() {
   echo $1
   mkdir $1
   cd $1
-  run imgen out=map1 object=gaussian spar=1,0,0,50,20,30 mapsize=$2 
+  run imgen out=map1 object=gaussian spar=1,0,0,50,20,30 imsize=$2 
   run fits in=map1 out=map1.fits op=xyout
-  echo 'image map1'    > test1.wip
-  echo 'header so so' >> test1.wip
-  echo 'box'          >> test1.wip
-  echo 'levels'       >> test1.wip
-  echo 'contour'      >> test1.wip
-  echo 'box'          >> test1.wip
-  #wip -g -d test1.ps/vps -x -e test1.wip
+  echo 'image map1'         > test1.wip
+  echo 'header so so'      >> test1.wip
+  echo 'box'               >> test1.wip
+  echo 'levels 0.1 0.9'    >> test1.wip
+  echo 'contour'           >> test1.wip
+  echo 'box'               >> test1.wip
+  wip -g -d test1.ps/vps -x -e test1.wip
   #wip -g -d /xs -x -e test1.wip
 
   echo 'def try'            > test2.wip
   echo 'image map1.fits'   >> test2.wip
   echo 'header so so'      >> test2.wip
   echo 'box'               >> test2.wip
-  echo 'levels'            >> test2.wip
+  echo 'levels 0.1 0.9'    >> test2.wip
   echo 'contour'           >> test2.wip
   echo 'box'               >> test2.wip
   echo 'end'               >> test2.wip
-#  wip -g -d test2.ps/vps -x test2.wip -e try
-  wip -g -d /xs -x test2.wip -e try
+  #wip -g -d test2.ps/vps -x test2.wip -e try
+  #wip -g -d /xs -x test2.wip -e try
   cd ..
   )
 }
@@ -99,9 +99,11 @@ basic() {
 
 check() {
   (
-  echo Checking $1, errors are reported by:
-  echo "# errors    Program Exit_status"
-  grep \^RUN $1 | awk '{if ($3!=0) print $2,$3}' | uniq -c
+  grep \^RUN $1 | awk '{if ($3!=0) print $2,$3}' | uniq -c > check.tmp
+  if [ -s check.tmp ] ; then
+    echo Checking $1, errors are reported by:
+    echo "# errors    Program Exit_status"
+  fi
   )
 }
 
@@ -112,11 +114,12 @@ check() {
   cd $data
 
 # Run tests
-  echo Running 
-  basic basic128 128 > basic128.log 2>&1
-  check basic128.log
-  basic basic256 256 > basic256.log 2>&1
-  check basic256.log
+  for size in 121 122 123 124 125 126 127 128 129 130 131 132 133 134 135 256 512 1024
+  do
+     echo -n "$size "
+     basic basic$size $size > basic$size.log 2>&1
+     check basic$size.log 
+  done
 
 exit 0
 	
