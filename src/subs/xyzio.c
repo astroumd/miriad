@@ -1,6 +1,6 @@
 /*******************************************************************************
 
- Routines to read and write an image dataset
+ Routines to read and write an image dataset in arbitrary XYZ mode
 
  History:
 
@@ -41,6 +41,8 @@
 		     "Correct comparision bug in bufferallocation routine." 
      pjt  20-jun-02  prototypes for MIR4, made most local stuff now static,
                      largely thanks to Amtrak for a long boring ride NYC-NCR
+     pjt  14-jan-03  cleared up some more prototypes, fixed bug in
+                     *s[ITEM_HDR_SIZE] declaration (no pointer, just char)
 
 
 *******************************************************************************/
@@ -51,6 +53,9 @@
 /*                                                                            */
 /******************************************************************************/
 
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 #include "maxdimc.h"
 #include "io.h"
 #include "miriad.h"
@@ -130,7 +135,7 @@ static int     axnumr[ARRSIZ],    inv_axnumr[ARRSIZ],   reverses[ARRSIZ];
 /* Some variables not used, but left in for the (hopefully never occuring)
    case that an error occurred and debugging is needed.
    Most if(.test) statements have been left active. Some, the ones in inner
-   loops, are disabled. They can be found by searching for /*$$ */
+   loops, are disabled. They can be found by searching for '/ * $ $' (without spaces) */
 
 static int     itest = 0; /* Information on buffers and datasets */
 static int     otest = 0; /* Information on subcubes */
@@ -144,12 +149,12 @@ static int     nio=0;
 /* static functions */
 static void get_test(int interactive);
 static int putnio(int x);
-static int ferr(char *string, int arg);
+static void ferr(char *string, int arg);
 static void get_put_data(int tno, int virpix_off, float *data, int *mask, int *ndata, int dim_sub);
 static void do_copy(float *bufptr, float *bufend, int DIR, float *data, int *mask);
 static void manage_buffer(int tno, int virpix_off);
 static void manage_the_buffer(int tno, int virpix_off);
-static int get_buflen(void);
+static void get_buflen(void);
 static int bufferallocation(int n);
 static void copy_to_one_d(int tno);
 static void set_bufs_limits(int tno, int virpix_off);
@@ -163,9 +168,9 @@ static void fill_buffer(int tno, int start, int last);
 static void empty_buffer(int tno, int start, int last);
 static void loop_buffer(int tno, int start, int last, int *newstart);
 static void zero(int bl_tr, int tno);
-static int testprint(int tno, int virpix_off, int virpix_lst);
-static int limprint(char *string, int lower[], int upper[]);
-static int testsearch(int callnr, int coords[], int filoff, int viroff);
+static void testprint(int tno, int virpix_off, int virpix_lst);
+static void limprint(char *string, int lower[], int upper[]);
+static void testsearch(int callnr, int coords[], int filoff, int viroff);
 
 
  static void get_test(int interactive)
@@ -215,8 +220,6 @@ static int testsearch(int callnr, int coords[], int filoff, int viroff);
 		    for 'new' datasets                                         */
  /*-- */
 
- static int first=TRUE;
-
  void xyzopen_c( int *handle, Const char *name, Const char *status, 
 		 int *naxis, int *axlen )
  {
@@ -229,12 +232,9 @@ static int testsearch(int callnr, int coords[], int filoff, int viroff);
  */
  #define OLD 1
  #define NEW 2
-     int  iostat;
-     int  tno;
-     int  access; char *mode;
-     int  cubesize; char axes[8];
-     char *s[ITEM_HDR_SIZE];
-     int  n_axis;
+     int  access, cubesize, n_axis, tno, iostat;
+     char s[ITEM_HDR_SIZE], axes[8], *mode;
+     static int first=TRUE;
 
      if(first) { for(tno=0;tno<MAXOPEN;tno++) imgs[tno].itno=0;  first=FALSE; }
 
@@ -246,7 +246,7 @@ static int testsearch(int callnr, int coords[], int filoff, int viroff);
 
      hopen_c(  &tno, name, status, &iostat );                   check(iostat);
      haccess_c( tno, &imgs[tno].itno, "image", mode, &iostat ); check(iostat);
-     imgs[tno].mask = (char *)mkopen_c( tno, "mask", status );
+     imgs[tno].mask = (char *)mkopen_c( tno, "mask", (char *) status );
 
      strcpy( axes, "naxis0" );
      if( access == OLD ) {
@@ -260,7 +260,8 @@ static int testsearch(int callnr, int coords[], int filoff, int viroff);
 	 }
 	 if( hsize_c( imgs[tno].itno ) < H_REAL_SIZE*cubesize+ITEM_HDR_SIZE )
 	     bug_c( 'f', "xyzopen: Image file appears too small" );
-	 hreadb_c( imgs[tno].itno, s,0,ITEM_HDR_SIZE, &iostat ); check(iostat);
+	 hreadb_c( imgs[tno].itno, s,0,ITEM_HDR_SIZE, &iostat ); 
+	 check(iostat);
 	 if( memcmp( s, real_item, ITEM_HDR_SIZE ) )
 	     bug_c( 'f', "xyzopen: Bad image file" );
      } else {
@@ -437,7 +438,9 @@ static int testsearch(int callnr, int coords[], int filoff, int viroff);
 
  /* Decode subcube argument into dimsub, and axnum and reverse arrays */
      dim=0;
-     for( d=1;d<=MAXNAX;d++ ) axisuse[d]=FALSE; reversal=FALSE; sub_cube=subcube;
+     for( d=1;d<=MAXNAX;d++ ) axisuse[d]=FALSE; 
+     reversal=FALSE; 
+     sub_cube=(char *)subcube;
      while( *subcube ) {
 	 if(        *subcube == ' ' ) { ;
 	 } else if( *subcube == '-' ) {
@@ -520,9 +523,7 @@ static int testsearch(int callnr, int coords[], int filoff, int viroff);
 
  }
 
- static int ferr( string, arg )
- char *string;
- char  arg;
+ static void ferr( char *string, int arg )
  {
      char message[80]; char *msg;
      msg = &message[0];
@@ -960,7 +961,8 @@ static int testsearch(int callnr, int coords[], int filoff, int viroff);
 	 virpix_off += bufs[tno].cubesize[dim-1] *
 	     ( coords[dim-dim_sub-1]-1 - imgs[tno].blc[ axnum[tno][dim] ] );
 	 dim++; }
-     MODE=PUT; get_put_data( tno, virpix_off, data, mask, ndata, dim_sub );
+     MODE=PUT; 
+     get_put_data( tno, virpix_off, (float *)data, (int *)mask, (int *)ndata, dim_sub );
  }
 
 
@@ -1045,7 +1047,8 @@ static int testsearch(int callnr, int coords[], int filoff, int viroff);
      if(otest) xyzs2c_c( tno, profilenr-1, tcoo );
 #endif
      virpix_off = (profilenr-1) * bufs[tno].cubesize[1];
-     MODE=PUT; get_put_data( tno, virpix_off, data, mask, ndata, 1 );
+     MODE=PUT; 
+     get_put_data( tno, virpix_off, (float *)data, (int *)mask, (int *)ndata, 1 );
      written[tno] = TRUE;
  }
 
@@ -1088,7 +1091,8 @@ static int testsearch(int callnr, int coords[], int filoff, int viroff);
      if(otest) xyzs2c_c( tno, planenr-1, tcoo );
 #endif
      virpix_off = (planenr-1) * bufs[tno].cubesize[2];
-     MODE=PUT; get_put_data( tno, virpix_off, data, mask, ndata, 2 );
+     MODE=PUT; 
+     get_put_data( tno, virpix_off, (float *)data, (int *)mask, (int *)ndata, 2 );
      written[tno] = TRUE;
  }
 
@@ -1102,13 +1106,7 @@ static int testsearch(int callnr, int coords[], int filoff, int viroff);
  /*                                                                            */
  /******************************************************************************/
 
- static void get_put_data( tno, virpix_off, data, mask, ndata, dim_sub )
- int    tno;
- int    virpix_off;
- float *data;
- int   *mask;
- int   *ndata;
- int    dim_sub;
+ static void get_put_data( int tno, int virpix_off, float *data, int *mask, int *ndata, int dim_sub )
  {
  /* This checks if the needed subcube is in the buffer. If so, a piece
     of the buffer is copied. If not, manage_buffer is called to fill or
@@ -1121,8 +1119,9 @@ static int testsearch(int callnr, int coords[], int filoff, int viroff);
 
      virpix_lst = virpix_off + bufs[tno].cubesize[dim_sub] - 1;
      if( MODE==GET ) *ndata = bufs[tno].cubesize[dim_sub];
-     if( MODE==PUT && *ndata < bufs[tno].cubesize[dim_sub] )
+     if( MODE==PUT && *ndata < bufs[tno].cubesize[dim_sub] ) {
 	 bug_c( 'f', "xyzio: Input array too small to hold subcube" );
+     }
      if( virpix_off < bufs[tno].filfir || virpix_lst > bufs[tno].fillas ) {
 	 if(itest)printf("\nNew buffer starts at %d MODE %d\n",virpix_off,MODE);
 	 if( virpix_off >= bufs[tno].cubesize[bufs[tno].naxis] )   bug_c( 'f',
@@ -1182,11 +1181,7 @@ static int testsearch(int callnr, int coords[], int filoff, int viroff);
  }
 
 
- static void do_copy( bufptr, bufend, DIR, data, mask )
- float *bufptr, *bufend;
- int    DIR;
- float *data;
- int   *mask;
+ static void do_copy( float *bufptr, float *bufend, int DIR, float *data, int *mask )
  {
      int *mbufpt;
 
@@ -1215,9 +1210,7 @@ static int testsearch(int callnr, int coords[], int filoff, int viroff);
  /*                                                                            */
  /******************************************************************************/
 
- static void manage_buffer( tno, virpix_off )
- int tno;
- int virpix_off;
+ static void manage_buffer( int tno, int virpix_off )
  {
  /* This controls the buffer. It tries to do the absolute minimum number
     of disk-i/o's, using the array buffer, whose total length is determined
@@ -1286,9 +1279,7 @@ static int testsearch(int callnr, int coords[], int filoff, int viroff);
      manage_the_buffer( tno, virpix_off );
  }
 
- static void manage_the_buffer( tno, virpix_off )
- int tno;
- int virpix_off;
+ static void manage_the_buffer( int tno, int virpix_off )
  {
      int  start, finis, last, newstart;
 
@@ -1346,7 +1337,7 @@ static int testsearch(int callnr, int coords[], int filoff, int viroff);
  /*                                                                            */
  /******************************************************************************/
 
- static int get_buflen(void)
+ static void get_buflen(void)
  {
      int  tno;
      int  try, maxsize, size;
@@ -1396,8 +1387,8 @@ static int testsearch(int callnr, int coords[], int filoff, int viroff);
      }
      if( n == 1 ) bug_c( 'f', "xyzsetup: Failed to allocate any memory" );
 
-     if(itest)printf("Allocated %d reals at %d\n",n,buffer);
-     if(itest)printf("Allocated %d ints  at %d\n",n,mbuffr);
+     if(itest)printf("Allocated %d reals @ %d\n",n,(int) buffer);
+     if(itest)printf("Allocated %d ints  @ %d\n",n,(int) mbuffr);
 
      currentallocation = n;
      return( n );
@@ -1426,9 +1417,7 @@ static int testsearch(int callnr, int coords[], int filoff, int viroff);
      for( d=1; d<=naxes; d++ ) inv_axnumr[ axnumr[d] ] = d;
  }
 
- static void set_bufs_limits( tno, virpix_off )
- int tno;
- int virpix_off;
+ static void set_bufs_limits( int tno, int virpix_off )
  {
  /* This gets some information about the virtual-cube buffer and the ranges
     of coordinates.
@@ -1472,8 +1461,7 @@ static int testsearch(int callnr, int coords[], int filoff, int viroff);
 		 limprint( "vircub", bufs[tno].lower, bufs[tno].upper ); }
  }
 
- static int get_last( start, finis )
- int  start, finis;
+ static int get_last( int start, int finis )
  {
  /* This routine figures out how many elements will fit into the buffer:
     the lower of the amount needed and the size of the buffer. It returns
@@ -1485,9 +1473,7 @@ static int testsearch(int callnr, int coords[], int filoff, int viroff);
      return( start + allocate - 1 );
  }
 
- static int check_do_io( tno, start, last )
- int  tno;
- int  start, last;
+ static int check_do_io( int tno, int start, int last )
  {
  /*
     This routine checks if it is really necessary to read or write data
@@ -1515,10 +1501,8 @@ static int testsearch(int callnr, int coords[], int filoff, int viroff);
      return do_io;
  }
 
- static void find_block( start, last, lower, upper, axlen, cubesize, blc, trc, naxis )
- int start, last;
- int lower[], upper[];
- int axlen[], cubesize[], blc[], trc[], naxis;
+ static void find_block( int start, int last, int *lower, int *upper, 
+			 int *axlen, int *cubesize, int *blc, int *trc, int naxis )
  {
  /* Figures out from the first and last pixeloffset what the lowest and
     highest coordinate value are that could possibly be encountered. To do
@@ -1543,8 +1527,7 @@ static int testsearch(int callnr, int coords[], int filoff, int viroff);
      }
  }
 
- static int transform_back( pix_off )
- int pix_off;
+ static int transform_back( int pix_off )
  {
  /* Transforms an virtual-cube pixeloffset into an input pixeloffset.
  */
@@ -1560,10 +1543,7 @@ static int testsearch(int callnr, int coords[], int filoff, int viroff);
      return ( result );
  }
 
- static int c2p( coords, cubesize, naxis )
- int coords[];
- int cubesize[];
- int naxis;
+ static int c2p( int *coords, int *cubesize, int naxis )
  {
  /* Converts a pixeloffset into a list of coordinates
  */
@@ -1571,11 +1551,7 @@ static int testsearch(int callnr, int coords[], int filoff, int viroff);
      for( d=1; d<=naxis; d++ ) pix_off += cubesize[d-1] * coords[d];
      return ( pix_off );
  }
- static void p2c( pix_off, axlen, cubesize, naxis, coords )
- int pix_off;
- int axlen[], cubesize[];
- int naxis;
- int coords[];
+ static void p2c( int pix_off, int *axlen, int *cubesize, int naxis, int *coords )
  {
  /* Converts a list of coordinates into a pixeloffset
  */
@@ -1588,10 +1564,8 @@ static int testsearch(int callnr, int coords[], int filoff, int viroff);
  /*                                                                            */
  /******************************************************************************/
 
- static void fill_buffer( tno, start, last )
- int tno;
- int start, last;
- {
+ static void fill_buffer( int tno, int start, int last )
+{
      int length, begin;
      int bufstart, *buf;
      int i,iostat;
@@ -1620,9 +1594,7 @@ static int testsearch(int callnr, int coords[], int filoff, int viroff);
 	 *(buffer+i) = (float)( tcoo[1] + 1000*tcoo[2] + 1000000*tcoo[3] ); }}
  }
 
- static void empty_buffer( tno, start, last )
- int tno;
- int start, last;
+ static void empty_buffer( int tno, int start, int last )
  {
      int length, begin;
      int bufstart;
@@ -1652,10 +1624,7 @@ static int testsearch(int callnr, int coords[], int filoff, int viroff);
  /*                                                                            */
  /******************************************************************************/
 
- static void loop_buffer( tno, start, last, newstart )
- int  tno;
- int  start, last;
- int *newstart;
+ static void loop_buffer( int tno, int start, int last, int *newstart )
  {
  /* This routine checks all pixels in the in/out buffer and puts them at
     the appropriate place in the virtual-cube buffer, or it takes them out
@@ -1779,9 +1748,7 @@ static int testsearch(int callnr, int coords[], int filoff, int viroff);
 
  /******************************************************************************/
 
- static void zero( bl_tr, tno )
- int bl_tr;
- int tno;
+ static void zero( int bl_tr, int tno )
  {
  /* This initializes parts of an output datacube that were not accessed
     because the new dataset has a blc and trc inside the full cube.
@@ -1815,9 +1782,9 @@ static int testsearch(int callnr, int coords[], int filoff, int viroff);
  /******************************************************************************/
  /******************************************************************************/
 
- static int testprint( tno, virpix_off, virpix_lst )
- int tno, virpix_off, virpix_lst;
- {   int vircoo[ARRSIZ];
+ static void testprint( int tno, int virpix_off, int virpix_lst )
+ {   
+     int vircoo[ARRSIZ];
      int inpix_off;
      int naxes;
      naxes=imgs[tno].naxis;
@@ -1840,8 +1807,7 @@ static int testsearch(int callnr, int coords[], int filoff, int viroff);
      }
  }
 
- static int limprint( string, lower, upper )
- char *string; int lower[], upper[];
+ static void limprint( char *string, int *lower, int *upper )
  {
      printf( "%s:", string );
      printf( "  lower" ); for( d=1; d<=naxes; d++ ) printf( " %d", lower[d] );
@@ -1849,10 +1815,7 @@ static int testsearch(int callnr, int coords[], int filoff, int viroff);
      printf( "\n");
  }
 
- static int testsearch( callnr, coords, filoff, viroff )
- int callnr; 
- int coords[];
- int filoff, viroff;
+ static void testsearch( int callnr, int *coords, int filoff, int viroff )
  {
      if( callnr == 2 ) printf( " -> " );
      for( d=1; d<=naxes; d++ ) printf("%d ", coords[d] );

@@ -32,6 +32,7 @@
        09-may-00  rjs   Get rid of spurious error message in hrm_c. Why didn't
 		        I see this ages ago?
        10-jun-02  pjt   MIR4 changes to handle 2GB+ files and new int8 types
+       15-jan-03  pjt   fix a few prototypes for Const's
 */
 
 
@@ -175,7 +176,7 @@ void hopen_c(int *tno,Const char *name,Const char *status,int *iostat)
 
 /* Find a spare slot, and set the name etc. */
 
-  dtrans_c(name,path,iostat);
+  dtrans_c((char *)name,path,iostat);
   if(*iostat)return;
   t = hcreate_tree_c(path);
 
@@ -501,7 +502,7 @@ void hdelete_c(int tno,Const char *keyword,int *iostat)
 
   if(first)hinit_c();
 
-  if(tno != 0) if( (*iostat = hname_check(keyword)) ) return;
+  if(tno != 0) if( (*iostat = hname_check((char *)keyword)) ) return;
 
 /* Check if the item is aleady here abouts. */
 
@@ -579,7 +580,7 @@ void haccess_c(int tno,int *ihandle,Const char *keyword,Const char *status,int *
      !strcmp("history",keyword)|| tno == 0 	       ||
      (mode & ITEM_SCRATCH)		)mode |= ITEM_NOCACHE;
 
-  if(tno != 0) if( (*iostat = hname_check(keyword)) )return;
+  if(tno != 0) if( (*iostat = hname_check((char *)keyword)) )return;
   t = hget_tree(tno);
 
 /* If we are writing, check whether we have write permission. */
@@ -600,7 +601,7 @@ void haccess_c(int tno,int *ihandle,Const char *keyword,Const char *status,int *
 /* If the item does not exist, create it. Otherwise the item must
    be cacheable, in which case we truncate its length to zero if needed. */
 
-  if(item == NULL)item = hcreate_item_c(t,keyword);
+  if(item == NULL)item = hcreate_item_c(t,(char *)keyword);
   else if((mode & (ITEM_WRITE|ITEM_SCRATCH)) && item->size != 0){
     item->size = 0;
     item->io[0].length = item->io[1].length = 0;
@@ -622,7 +623,7 @@ void haccess_c(int tno,int *ihandle,Const char *keyword,Const char *status,int *
     			    && !(item->flags & ITEM_CACHE)){
     Strcpy(path,t->name);
     Strcat(path,keyword);
-    dopen_c(&(item->fd),path,status,&(item->size),iostat);
+    dopen_c(&(item->fd),path,(char *)status,&(item->size),iostat);
 
     item->bsize = BUFSIZE;
     item->io[0].buf = Malloc(BUFSIZE);
@@ -721,7 +722,7 @@ int hexists_c(int tno,Const char *keyword)
 
 /* Check for an invalid name. */
 
-  if(tno != 0) if(hname_check(keyword)) return(FALSE);
+  if(tno != 0) if(hname_check((char *)keyword)) return(FALSE);
 
 /* Check if the item is aleady here abouts. */
 
@@ -1255,7 +1256,7 @@ void hwritea_c(int ihandle,Const char *line,off_t length,int *iostat)
   ITEM *item;
 
   item = hget_item(ihandle);
-  hio_c( ihandle ,TRUE, H_TXT, line, item->offset, length, iostat);
+  hio_c( ihandle ,TRUE, H_TXT, (char *)line, item->offset, length, iostat);
 }
 /************************************************************************/
 private void hcache_create_c(TREE *t,int *iostat)

@@ -151,6 +151,7 @@
 /*  pjt  11mar01 documented the 16jan01 changes for large ant numbers   */
 /*  dpr  17apr01 Increase MAXVHANDS                                     */
 /*  pjt  20jun02 MIR4 prototypes                                        */
+/*  pjt  14jan03 fix another forgotten int -> int8                      */
 /*----------------------------------------------------------------------*/
 /*									*/
 /*		Handle UV files.					*/
@@ -240,7 +241,7 @@
 /*		list to be formed for hashing.				*/
 /*									*/
 /*----------------------------------------------------------------------*/
-#define VERSION_ID "16-jan-01 rjs"
+#define VERSION_ID "15-jan-03 pjt"
 
 #define private static
 
@@ -761,8 +762,8 @@ void uvopen_c(int *tno,Const char *name,Const char *status)
     rdhda_c(*tno,"obstype",line,"",MAXLINE);
     if(!strcmp(line,"autocorrelation"))		uv->flags |= UVF_AUTO;
     else if(!strcmp(line,"crosscorrelation"))	uv->flags |= UVF_CROSS;
-    rdhdi_c(*tno,"ncorr",&(uv->corr_flags.offset),-1);
-    rdhdi_c(*tno,"nwcorr",&(uv->wcorr_flags.offset),-1);
+    rdhdl_c(*tno,"ncorr",&(uv->corr_flags.offset),-1);
+    rdhdl_c(*tno,"nwcorr",&(uv->wcorr_flags.offset),-1);
     if(uv->corr_flags.offset < 0 || uv->wcorr_flags.offset < 0)
       BUG('f',"Cannot append to uv file without 'ncorr' and/or 'nwcorr' items");
 
@@ -1375,7 +1376,7 @@ void uvvarset_c(int vhan,Const char *var)
   VARPNT *vp;
 
   vh = varhands[vhan-1];
-  v = uv_locvar(vh->tno,var);
+  v = uv_locvar(vh->tno,(char *)var);
   if(v != NULL){
     vp = (VARPNT *)Malloc(sizeof(VARPNT));
     vp->v = v;
@@ -1454,7 +1455,7 @@ void uvrdvr_c(int tno,int type,Const char *var,char *data,char *def,int n)
   VARIABLE *v;
   int deflt,oktype;
 
-  v = uv_locvar(tno,var);
+  v = uv_locvar(tno,(char *)var);
   oktype = TRUE;
   deflt = (v == NULL);
   if(!deflt) deflt = (v->buf == NULL) || (v->length == 0);
@@ -1550,7 +1551,7 @@ void uvgetvr_c(int tno,int type,Const char *var,char *data,int n)
   VARIABLE *v;
   int size;
 
-  v = uv_locvar(tno,var);
+  v = uv_locvar(tno,(char *)var);
   if(v == NULL)
     ERROR('f',(message,"Variable %s not found, in UVGETVR",var));
   size = external_size[type];
@@ -1604,7 +1605,7 @@ void uvprobvr_c(int tno,Const char *var,char *type,int *length,int *updated)
   VARIABLE *v;
 
   uv = uvs[tno];
-  v = uv_locvar(tno,var);
+  v = uv_locvar(tno,(char *)var);
   if(v == NULL) {
     *type = ' ';
     *length = 0;
@@ -1656,7 +1657,7 @@ void uvputvr_c(int tno,int type,Const char *var,Const char *data,int n)
     return;
   }
   uv = uvs[tno];
-  v = uv_mkvar(tno,var,type);
+  v = uv_mkvar(tno,(char *)var,type);
   if(v->type != type)
     ERROR('f',(message,"Variable %s has changed type, in UVPUTVR",var));
   size = external_size[type];
@@ -1682,7 +1683,7 @@ void uvputvr_c(int tno,int type,Const char *var,Const char *data,int n)
   if( !changed ) {
     length = internal_size[type] * n;
     in1 = v->buf;
-    in2 = data;
+    in2 = (char *)data;
     for( i = 0; i < length; i++ ) {
       if(*in1++ != *in2++){
 	changed = TRUE;
@@ -1745,7 +1746,7 @@ void uvtrack_c(int tno,Const char *name,Const char *switches)
   VARIABLE *v;
 
   uv = uvs[tno];
-  v = uv_locvar(tno,name);
+  v = uv_locvar(tno,(char *)name);
   if(v == NULL) return;
   while(*switches)switch(*switches++){
     case 'u': v->flags |= UVF_UPDATED;
@@ -1790,7 +1791,7 @@ int uvscan_c(int tno,Const char *var)
 
   uv = uvs[tno];
   if(*var){
-    v = uv_locvar(tno,var);
+    v = uv_locvar(tno,(char *)var);
     if(v == NULL) ERROR('f',(message,"Variable %s not found, in UVSCAN",var));
   } else v = NULL;
   uv->mark = uv->callno + 1;
@@ -2005,9 +2006,9 @@ void uvwrite_c(int tno,Const double *preamble,Const float *data,
 /* Write out the flagging info. */
 
   if(uv->flags & UVF_RUNS)
-    mkwrite_c(flags_info->handle,MK_RUNS,flags+1,flags_info->offset,n,*flags);
+    mkwrite_c(flags_info->handle,MK_RUNS,(int *)(flags+1),flags_info->offset,n,*flags);
   else
-    mkwrite_c(flags_info->handle,MK_FLAGS,flags,flags_info->offset,n,n);
+    mkwrite_c(flags_info->handle,MK_FLAGS,(int *)flags,flags_info->offset,n,n);
   flags_info->offset += n;
 
 /* Write out the correlation data. */
@@ -2020,7 +2021,7 @@ void uvwrite_c(int tno,Const double *preamble,Const float *data,
     if(v->length != 2*n*H_INT2_SIZE)
       v->buf = Realloc(v->buf,2*n*sizeof(int));
     maxval = 0;
-    p = data;
+    p = (float *)data;
     for(i=0; i < 2*n; i++){
       temp = *p++;
       if(temp < 0)temp = -temp;
@@ -2030,7 +2031,7 @@ void uvwrite_c(int tno,Const double *preamble,Const float *data,
     scale = maxval / 32767;
     uvputvrr_c(tno,"tscale",&scale,1);
     scale = 32767 / maxval;
-    p = data;
+    p = (float *)data;
     q = (int *)v->buf;
     for(i=0; i < 2*n; i++) *q++ = scale * *p++;
     q = (int *)v->buf;
@@ -2121,10 +2122,10 @@ void uvwwrite_c(int tno,Const float *data,Const int *flags,int n)
 /* Write out the flagging info. */
 
   if(uv->flags & UVF_RUNS)
-    mkwrite_c(uv->wcorr_flags.handle,MK_RUNS,flags+1,uv->wcorr_flags.offset,
+    mkwrite_c(uv->wcorr_flags.handle,MK_RUNS,(int *)(flags+1),uv->wcorr_flags.offset,
 						n,*flags);
   else 
-    mkwrite_c(uv->wcorr_flags.handle,MK_FLAGS,flags,uv->wcorr_flags.offset,
+    mkwrite_c(uv->wcorr_flags.handle,MK_FLAGS,(int *) flags,uv->wcorr_flags.offset,
 						n,n);
   uv->wcorr_flags.offset += n;
 
@@ -4229,10 +4230,10 @@ void uvflgwr_c(int tno, Const int *flags)
   offset = flags_info->offset - nchan + uv->actual_line.start;
   n = min(uv->actual_line.n,nchan);
   if(step == 1){
-    mkwrite_c(flags_info->handle,MK_FLAGS,flags,offset,n,n);
+    mkwrite_c(flags_info->handle,MK_FLAGS,(int *)flags,offset,n,n);
   } else {
     for(i = 0; i < n; i++){
-      mkwrite_c(flags_info->handle,MK_FLAGS,flags,offset,1,1);
+      mkwrite_c(flags_info->handle,MK_FLAGS,(int *)flags,offset,1,1);
       offset += step;
       flags++;
     }
@@ -4276,7 +4277,7 @@ void uvwflgwr_c(int tno,Const int *flags)
 
   nchan = NUMCHAN(v);
   offset = flags_info->offset - nchan;
-  mkwrite_c(flags_info->handle,MK_FLAGS,flags,offset,nchan,nchan);
+  mkwrite_c(flags_info->handle,MK_FLAGS,(int *)flags,offset,nchan,nchan);
 }
 /************************************************************************/
 void uvinfo_c(int tno,Const char *object,double *data)
