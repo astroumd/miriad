@@ -1,0 +1,19 @@
+
+
+
+As of version 3.1.0 the classic parameters MAXDIM, MAXANT and MAXBASE have been abused
+in two, or even 3-dimensional arrays.
+
+The problem is that with static memory allocation (which MIRIAD mostly uses), 
+large arrya
+
+Also, some DATA statements were used based on some large arrays (e.g. MAXBASE) and produced
+extremely large executable sizes,and hence large times to load the executables in e.g.
+an network disk (NFS) based environment.  These have all been replaced by
+initializers
+
+	call qarrset(n, qarr, qval)
+	call iarrset(n, qarr, qval)
+	call rarrset(n, qarr, qval)
+	call darrset(n, qarr, qval)
+
