@@ -15,3 +15,10 @@ if (-e $MIR/borrow/rad/README) then
   setenv RADCAT $RAD/cat
 endif
 
+if ($?PYTHONPATH) then
+  setenv PYTHONPATH $MIR/src/scripts/python:$PYTHONPATH
+else
+  setenv PYTHONPATH $MIR/src/scripts/python
+endif
+alias pyramid python -i $PYTHONPATH/Miriad.py
+
