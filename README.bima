@@ -12,13 +12,15 @@ or higher in CVS)
 
 To install the BIMA version of MIRIAD, there are a few options:
 	- binary releases (astromake/linux versions now available)
-	- follow 'install.MIR' (the classical method)
+	- follow 'install.MIR' (the classical method - not recommended)
 	- use the scripts in the $MIR/install directory 
 		(this is how our binary releases are built)
+ 	- follow http://www.astro.umd.edu/~teuben/miriad/cvs.html
+		(the recommended way if you want to keep up with changes)
 
 
 
 					Peter Teuben
 					teuben@astro.umd.edu
-					June 2001
+					December 2002
 
