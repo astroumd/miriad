@@ -1,0 +1,69 @@
+#!/bin/csh -f
+# ------------------------------------------------------------------- 
+# lib.www subscript
+# ------------------------------------------------------------------- 
+set mir    = $MIR
+set host   = $MIRHOST
+set lsys   = $mir/bin/localsys
+set srcdir = $mir/borrow/www/Library/Implementation
+set libdir = $mir/lib/$host
+set admdir = $mir/src/sys/bin
+set ops    = "-DDEBUG -D__BSD__"
+# ------------------------------------------------------------------- 
+if (-e $lsys/lib.www && ! $?local_compile) then
+  echo $lsys/lib.www exists =======================
+  setenv local_compile
+  exec $lsys/lib.www $argv
+endif
+# ------------------------------------------------------------------- 
+if ($?Ccompile == 0) then
+   if (-e $admdir/compile.${host}) then
+      source $admdir/compile.${host}
+   else
+      echo "Cannot find $admdir/compile.${host} - exiting."
+      exit 1
+   endif
+endif
+# ------------------------------------------------------------------- 
+if ($host == convex)  set ops = "-DCONVEX"
+if ($host == sun3) set ops = "-DDEBUG"
+if ($host == sun4) set ops = "-Wall -g"
+if ($host == sun4sol) set ops = "-g -D__svr4__ -DNO_GETWD -DHAS_GETCWD -DPOSIXWAIT"
+if ($host == linux) set ops = "-DDEBUG -DPOSIXWAIT"
+if ($host == mips) set ops = "-DDEBUG -signed -D_BSD_SIGNALS"
+
+set cin = (HTAABrow.c HTAAUtil.c HTAccess.c HTAlert.c HTAnchor.c    \
+           HTAssoc.c HTAtom.c HTBTree.c HTChunk.c HTDescript.c      \
+           HTDirBrw.c HTError.c HTErrorMsg.c HTFTP.c HTFWriter.c    \
+           HTFile.c HTFormat.c HTGopher.c HTGuess.c HTHistory.c     \
+           HTIcons.c HTInit.c HTList.c HTMIME.c HTML.c HTMLGen.c    \
+           HTMLPDTD.c HTMulti.c HTNews.c HTParse.c HTPlain.c        \
+           HTRules.c HTString.c HTStyle.c HTTCP.c HTTP.c HTTeXGen.c \
+           HTTee.c HTTelnet.c HTUU.c HTWSRC.c HTWriter.c SGML.c)
+#
+# Removed HTWAIS.c from cin list because of missing include file
+# dar 2aug95
+#
+cd $libdir
+set out = ""
+foreach i ($cin)
+   rm -fr ${i:r}.o >& /dev/null
+   echo ""
+   echo "$Ccompile $Coptions $ops -c -o ${i:r}.o -I$srcdir $srcdir/$i"
+         $Ccompile $Coptions $ops -c -o ${i:r}.o -I$srcdir $srcdir/$i
+   if ($status == 0) set out = "$out ${i:r}.o"
+end
+
+rm -fr libwww.a >& /dev/null
+echo "ar ru libwww.a <dot-o files>"
+      ar ru libwww.a `echo $out | sort | uniq`
+if (-e /usr/bin/ranlib) then
+   echo "/usr/bin/ranlib libwww.a"
+         /usr/bin/ranlib libwww.a
+endif
+rm -fr $out >& /dev/null
+echo ""
+echo "`ls -l $libdir/libwww.a`"
+unsetenv local_compile
+exit 0
+# --------------------------------------------------------------

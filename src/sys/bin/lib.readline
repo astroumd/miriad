@@ -1,0 +1,50 @@
+#!/bin/csh -f
+# ---------------------------------------------------------- 
+set mir    = $MIR
+set host   = $MIRHOST
+set lsys   = $mir/bin/lsys
+set srcdir = $mir/borrow/readline
+set libdir = $mir/lib/$host
+set admdir = $mir/src/sys/bin
+# ---------------------------------------------------------- 
+if (-e $lsys/lib.readline && ! $?local_compile) then
+  echo $lsys/lib.readline exists =======================
+  setenv local_compile
+  exec $lsys/lib.readline $argv
+endif
+# ---------------------------------------------------------- 
+if ($?Compile == 0) then
+   if (-e $admdir/compile.${host}) then
+      source $admdir/compile.${host}
+   else
+      echo "Cannot find $admdir/compile.${host} - exiting."
+      exit 1
+   endif
+endif
+# ---------------------------------------------------------- 
+set def = "-DVOID_SIGHANDLER -DVI_MODE -I$srcdir -I${srcdir:h}"
+if ($host == convex) set def = "-pcc $def"
+#
+set out = ""
+cd $libdir
+foreach i (readline history funmap keymaps)
+   rm -fr ${i}.o >& /dev/null
+   echo ""
+   echo "$Ccompile $Coptions -c $def -o ${i}.o $srcdir/${i}.c"
+         $Ccompile $Coptions -c $def -o ${i}.o $srcdir/${i}.c
+   if ($status == 0) set out = "$out ${i}.o"
+end
+#
+rm -fr libreadline.a >& /dev/null
+echo "ar ru libreadline.a $out"
+      ar ru libreadline.a $out
+if (-e /usr/bin/ranlib) then
+   echo "/usr/bin/ranlib libreadline.a"
+         /usr/bin/ranlib libreadline.a
+endif
+rm -fr $out >& /dev/null
+echo ""
+echo "`ls -l $libdir/libreadline.a`"
+#
+setenv local_compile
+exit 0

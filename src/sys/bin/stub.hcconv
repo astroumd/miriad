@@ -1,0 +1,42 @@
+#!/bin/csh -f
+# --------------------------------------------------------------- 
+set mir    = $MIR
+set host   = $MIRHOST
+set lsys   = $mir/bin/localsys
+set srcdir = $mir/src/spec/hcconv
+set libdir = $mir/lib/$host
+set bindir = $mir/bin/$host
+set docdir = $mir/doc/prog
+if ($host == "sun4sol") then
+  set ucbinc = "-I/usr/ucbinclude"
+else
+  set ucbinc = ""
+endif
+# --------------------------------------------------------------- 
+if (-e $lsys/stub.hcconv && ! $?local_compile) then
+  echo $lsys/stub.hcconv exists =======================
+  setenv local_compile
+  exec $lsys/stub.hcconv
+endif
+# --------------------------------------------------------------- 
+set src = ($srcdir/hcconv.c	\
+	   $srcdir/vmsget.c	\
+           $srcdir/put_hc.c	\
+	   $srcdir/gethcfiles.c )
+
+set obj = "hcconv.o vmsget.o put_hc.o gethcfiles.o"
+#
+cd $libdir
+rm -fr $obj >& /dev/null
+#
+echo "$Ccompile $Coptions -c $src -I$srcdir $ucbinc"
+      $Ccompile $Coptions -c $src -I$srcdir $ucbinc
+echo "$Fcompile $Foptions -o $bindir/hcconv $obj -L$libdir -lmir -lm"
+      $Fcompile $Foptions -o $bindir/hcconv $obj -L$libdir -lmir -lm
+(cd $docdir; doc -p $srcdir/hcconv.c)
+#
+rm -fr $obj >& /dev/null
+#
+echo "`ls -l $bindir/hcconv`"
+unsetenv local_compile
+exit 0

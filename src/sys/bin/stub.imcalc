@@ -1,0 +1,43 @@
+#!/bin/csh -f
+# --------------------------------------------------------- 
+set mir    = $MIR
+set host   = $MIRHOST
+set lsys   = $mir/bin/localsys
+set srcdir = $mir/src/spec/imcalc
+set bindir = $mir/bin/$host
+set libdir = $mir/lib/$host
+set docdir = $mir/doc/prog
+set subdir = $mir/src/subs
+if ($host == "sun4sol") then
+  set ucbinc = "-I/usr/ucbinclude"
+else
+  set ucbinc = ""
+endif
+# --------------------------------------------------------- 
+if (-e $lsys/stub.imcalc && ! $?local_compile) then
+  echo $lsys/stub.imcalc exists =======================
+  setenv local_compile
+  exec $lsys/stub.imcalc
+endif
+# --------------------------------------------------------- 
+
+set libs = "$Clinkdir -lmir -lm"
+
+set src = ($srcdir/imcalc.c	\
+           $srcdir/convl.c	\
+	   $srcdir/fft.c	\
+	   $srcdir/function.c	\
+	   $srcdir/miriadio.c   )
+set obj = "imcalc.o convl.o fft.o function.o miriadio.o"
+#
+cd $libdir
+rm -fr $obj >& /dev/null
+echo "$Ccompile $Coptions -o $bindir/imcalc -I$srcdir -I$subdir $ucbinc $src $libs"
+      $Ccompile $Coptions -o $bindir/imcalc -I$srcdir -I$subdir $ucbinc $src $libs
+rm -fr $obj >& /dev/null
+#
+(cd $docdir; $bindir/doc -p $srcdir/imcalc.c)
+ls -l $bindir/imcalc
+# --------------------------------------------------------- 
+unsetenv local_compile
+exit 0

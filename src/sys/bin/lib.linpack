@@ -1,0 +1,61 @@
+#!/bin/csh -f
+# --------------------------------------------------------------
+# lib.linpack subscript
+# --------------------------------------------------------------
+set mir    = $MIR
+set host   = $MIRHOST
+set lsys   = $mir/bin/localsys
+set srcdir = $mir/borrow/linpack
+set libdir = $mir/lib/$host
+set admdir = $mir/src/sys/bin
+# --------------------------------------------------------------
+if (-e $lsys/lib.linpack && ! $?local_compile) then
+  echo $lsys/lib.linpack exists =======================
+  setenv local_compile
+  exec $lsys/lib.linpack $argv
+endif
+# --------------------------------------------------------------
+switch ($host)
+   case convex:
+      echo "Internal LINPACK not used; system's -lveclib used instead."
+      exit 0
+      breaksw
+   default:
+      breaksw
+endsw
+# --------------------------------------------------------------
+if ($?Ccompile == 0) then
+   if (-e $admdir/compile.${host}) then
+      source $admdir/compile.${host}
+   else
+      echo "Cannot find $admdir/compile.${host} - exiting.
+      exit 1
+   endif
+endif
+# --------------------------------------------------------------
+cd $srcdir
+set in  = "`ls *.f`"
+
+cd $libdir
+set out = ""
+foreach i ($in)
+  rm -fr ${i:r}.o >& /dev/null
+  echo ""
+  echo "$Fcompile $Foptions -c -o ${i:r}.o $srcdir/$i"
+        $Fcompile $Foptions -c -o ${i:r}.o $srcdir/$i
+  if ($status == 0) set out = "$out ${i:r}.o"
+end
+
+rm -fr liblinpack.a >& /dev/null
+echo "ar ru liblinpack.a <dot-o files>"
+      ar ru liblinpack.a `echo $out | sort | uniq`
+if (-e /usr/bin/ranlib) then
+   echo "/usr/bin/ranlib liblinpack.a"
+         /usr/bin/ranlib liblinpack.a
+endif
+rm -fr $out >& /dev/null
+echo ""
+echo "`ls -l $libdir/liblinpack.a`"
+# --------------------------------------------------------------
+unsetenv local_compile
+exit 0

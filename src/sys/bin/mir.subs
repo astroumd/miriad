@@ -1,0 +1,76 @@
+#!/bin/csh -f
+# --------------------------------------------------------------
+#* mir.subs - Build and/or update miriad's libraries
+#& mjs
+#: system operation
+#+
+#    Build and/or update miriad's libraries
+#
+#    Usage:  mir.subs [$argv]
+#
+#            $argv = [readline] [hdf] [pgplot] [subs]
+#                    [miriad subroutine name(s)]
+#
+#    $argv = name of a miriad "borrowed" library and/or subs
+#	     (for libmir.a) and/or the name of source code
+#            file(s) within miriad's internal subroutine
+#            directory.  If there are no arguments, all
+#            libraries will be built.
+#
+#            Wildcards are not allowed when specifying source
+#            code filenames.  For miriad's internal subroutines,
+#            source files may be given with or without *.for and
+#            *.c and *.f2c filename extensions.
+#--
+# --------------------------------------------------------------
+set mir     = $MIR
+set host    = $MIRHOST
+set lsys    = $mir/bin/localsys
+set bindir  = $mir/bin/$host
+set subdir  = $mir/src/subs
+set libdir  = $mir/lib/$host
+set tooldir = $mir/src/tools
+set docdir  = $mir/doc/subs
+set admdir  = $mir/src/sys/bin
+# --------------------------------------------------------------
+if (-e $lsys/mir.subs && ! $?local_compile) then
+  echo $lsys/mir.subs exists =======================
+  setenv local_compile
+  exec $lsys/mir.subs $argv
+endif
+# --------------------------------------------------------------
+if (-e    $admdir/compile.${host}) then
+   source $admdir/compile.${host}
+else
+   echo "Cannot find $admdir/compile.${host} - exiting."
+   exit 1
+endif
+# --------------------------------------------------------------
+if ($#argv == 0) then
+   foreach i (`ls $admdir/lib.*`)
+      $admdir/$i
+   end
+   exit 0
+endif
+# --------------------------------------------------------------
+set notmir = ""
+set ismir  = ""
+
+foreach i ($argv)
+   if (-e $admdir/lib.${i}) then
+      set notmir = ($notmir lib.${i})
+   else
+      set  sw    = on
+      set  ismir = ($ismir $i)
+   endif
+end
+
+foreach i ($notmir)
+   $admdir/$i
+end
+if ($?sw) then
+   $admdir/lib.subs $ismir
+endif
+# --------------------------------------------------------------
+unsetenv local_compile
+exit 0
