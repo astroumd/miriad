@@ -37,24 +37,25 @@ c    31jan96 nebk  More grace when no valid pixels in region.
 c    08oct96 nebk  Make accumulation sums double precision
 c    28feb97 nebk  Add object to output
 c    14may99 rjs   Increase MAXRUNS.
-c    15feb01 pjt    look within range to find min/max/mean/dispersion
+c    15feb01 pjt   look within range to find min/max/mean/dispersion
+c    21oct03 pjt   check for JY/BEAM in the first 7 chars only
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	include 'maxnax.h'
-	integer nbindef,nbinmax,maxboxes,maxruns
+	integer NBINDEF,NBINMAX,MAXBOXES,MAXRUNS
 	character version*(*)
-	parameter(nbindef=16,nbinmax=40,maxboxes=2048)
-	parameter(maxruns=40*MAXDIM)
-	parameter(version = 'version 15-feb-01' )
+	parameter(NBINDEF=16,NBINMAX=40,MAXBOXES=2048)
+	parameter(MAXRUNS=40*MAXDIM)
+	parameter(VERSION = 'version 21-oct-03' )
 c
-	character file*64,asterisk*30,line*72,coord*64,bunit*32,
+	character file*128,asterisk*30,line*72,coord*64,bunit*32,
      +   object*32
 	integer nsize(MAXNAX),plane(MAXNAX),maxv(MAXNAX),minv(MAXNAX)
 	integer blc(MAXNAX),trc(MAXNAX)
-	integer i,j,k,under,over,bin(nbinmax),maxbin
+	integer i,j,k,under,over,bin(NBINMAX),maxbin
 	integer naxis,indx,lun,npoints,length,nbin
-	integer boxes(maxboxes),runs(3,maxruns),nruns
-	real dat(maxdim),rmax,rmin,blo,bhi,x,xinc,r
+	integer boxes(MAXBOXES),runs(3,MAXRUNS),nruns
+	real dat(MAXDIM),rmax,rmin,blo,bhi,x,xinc,r
 	real bscale,bmaj,bmin,barea,cdelt1,cdelt2
         double precision sum,sum2,av,rms
 	logical first, done, newmin, newmax, norange
@@ -71,19 +72,19 @@ c
 	call keyini
 	call keya('in',file,' ')
 	if(file.eq.' ')call bug('f','Input file must be given')
-	call BoxInput('region',file,boxes,maxboxes)
+	call BoxInput('region',file,boxes,MAXBOXES)
 	norange = .not.keyprsnt('range')
         call keyr('range',blo,0.0)
         call keyr('range',bhi,blo)
         call keyi('nbin',nbin,nbindef)
-        if(nbin.le.1 .or. nbin.gt.nbinmax)
+        if(nbin.le.1 .or. nbin.gt.NBINMAX)
      *	  call bug('f','Bad number of bins')
 	call keyfin
 c
 	call xyopen(lun,file,'old',MAXNAX,nsize)
 	call rdhdi(lun,'naxis',naxis,0)
 	naxis = min(naxis,MAXNAX)
-	if(nsize(1).gt.maxdim)call bug('f','Input file too big for me')
+	if(nsize(1).gt.MAXDIM)call bug('f','Input file too big for me')
         call rdhda(lun,'object',object,' ')
 
 c
@@ -101,7 +102,7 @@ c
 c
 c  Set up the region of interest.
 c
-	call BoxMask(lun,boxes,maxboxes)
+	call BoxMask(lun,boxes,MAXBOXES)
 	call BoxSet(boxes,MAXNAX,nsize,' ')
 	call BoxInfo(boxes,MAXNAX,blc,trc)
 c
@@ -207,7 +208,7 @@ c
           call output (line)
         end if
 
-        if (barea.gt.0.0 .and. bunit.eq.'JY/BEAM') then
+        if (barea.gt.0.0 .and. bunit(1:7).eq.'JY/BEAM') then
           write(line,100) av,rms,sum/barea
 	else if (bunit.eq.'JY/PIXEL') then
 	  write(line,100) av,rms,sum
