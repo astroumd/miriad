@@ -79,7 +79,7 @@ c     4mar02 pjt   documented FWHM/sigma, fixed units of mom=2 map
 c------------------------------------------------------------------------
 	include 'maxdim.h'
  	character version*(*)
-	parameter(version='version 1.0 4-mar-02')
+	parameter(version='version 1.0 4-nov-03')
 	integer maxnax,maxboxes,maxruns,naxis
 	parameter(maxnax=3,maxboxes=2048)
 	parameter(maxruns=3*maxdim)
@@ -523,7 +523,8 @@ c
      *	   trc(1)-blc(1)+1.ne.n1)call bug('f',
      *	  'Dimension inconsistency in MOMENT3')
 	if (mom.eq.-3) call bug('f',
-     *    'mom=-3 not yet available for axis=3')
+     *    'mom=-3 not yet available for axis=3; ' //
+     *    'try: reorder in= out= mode=312')
 c
 c  intialize the max temperature array
 c	(should really use some kind of POSIX-type MINFLOAT here)
