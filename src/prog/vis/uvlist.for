@@ -122,10 +122,11 @@ c   27oct00 mchw - Changes to accomodate more antennas.
 c   19jan02 pjt  - basant needs double precision argument
 c   27jun02 mchw - use latitude uv-variable if present.
 c   11dec02 pjt  - subroutine q/r/d/ZERO to bypass big DATA statement that makes big binaries
+c   14dec03 pjt  = fix init bug in options=average
 c-----------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='UVLIST: version  11-dec-02')
+	parameter(version='UVLIST: version  14-dec-03')
 	real rtoh,rtod,pi
 	integer maxsels
 	parameter(pi=3.141592653589793,rtoh=12/pi,rtod=180/pi)
@@ -515,10 +516,10 @@ c
 	   call rzero(MAXAVE,phiave)
 	   call rzero(MAXAVE,amprms)
 	   call rzero(MAXAVE,phirms)
-	   call dzero(MAXAVE,uave)
-	   call dzero(MAXAVE,vave)
-	   call dzero(MAXAVE,timeave)
-	   call dzero(MAXAVE,baseave)
+	   call dzero(MAXBASE,uave)
+	   call dzero(MAXBASE,vave)
+	   call dzero(MAXBASE,timeave)
+	   call dzero(MAXBASE,baseave)
 	   first = .FALSE.
 	endif
 	if(needhd)then
