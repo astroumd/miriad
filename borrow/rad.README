@@ -1,6 +1,6 @@
 if you don't see a directory 'rad' here, it probably means you did not
 get this added package for miriad. If you used CVS, and need to plant
-the wip tree here (in CVS terms: rad is a separate module under CVS)
+the rad tree here (in CVS terms: rad is a separate module under CVS)
 
 Note however, rad is not needed to run MIRIAD. It is an optional package.
 
