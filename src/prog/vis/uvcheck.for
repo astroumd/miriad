@@ -98,10 +98,11 @@ c    mchw 07aug98  Added uvdistance as a special variable.
 c    mchw 27aug98  Rename flagged "channels" if linetype.eq.'wide'
 c    mchw 21jan99  Change delayflag to delay line difference.
 c    mchw 05sep01  Added fringe frequency as a special variable.
+c    mchw 17dec02  Make Check for known problems a debug option so output format is constant.
 c----------------------------------------------------------------------c
 	include 'maxdim.h'
 	character*(*) version
-	parameter(version='UVCHECK: version 1.0 05-Sep-2001')
+	parameter(version='UVCHECK: version 1.0 17-Dec-2002')
 	integer maxsels, ochan, nbugs, nflag, nwflag
 	parameter(MAXSELS=512)
 	real sels(MAXSELS)
@@ -270,8 +271,10 @@ c
 c
 c  Check for known problems in the data.
 c
+	if(debug) then
 	  call uvprobvr(lIn,'time',vartype,varlen,updated)
 	  if(updated)call checkbug(lin,date,nbugs)
+	endif
 c
 c  Flag the data, if requested
 c
