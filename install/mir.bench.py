@@ -2,23 +2,26 @@
 #
 # mir.bench.py: see also http://bima.astro.umd.edu/memo/abstracts.html#81
 #
+# 10-mar-2003:  PJT    derived from the mir.bench and mir.bigbench scripts
+#
+#
 
 import sys, os, time, string
 version='2003-03-10'
 
-# command line arguments that can be changed... (but should not in the benchmark)
+# command line arguments that can be changed...
 keyval = {
-    "nchan"   : "32",         # number of channels
-    "mapsize" : "1024",       # size of the map (should be a power of 2)
-    "cell"    : "0.5",        # cell size in arcsec
-    "dt"      : "0.01",       # integration step (in hrs, assuming harange -6..6)
-    "small"   : "0",          # set this to 1 if you want to small quick test run 
-    "big"     : "0",          # set this to 1 if you want the 2GB+ test run
+    "nchan"   : "32",       # number of channels
+    "mapsize" : "1024",     # size of the map (should be a power of 2)
+    "cell"    : "0.5",      # cell size in arcsec
+    "dt"      : "0.01",     # integration step (in hrs, assuming harange -6..6)
+    "small"   : "0",        # set this to 1 if you want to small quick test run 
+    "big"     : "0",        # set this to 1 if you want the 2GB+ test run
     }
 
-# -------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 #
-#                                            parse command line (must be 'key=val')
+#                                       parse command line (must be 'key=val')
 for arg in sys.argv[1:]:
     i=string.find(arg,"=")
     if i > 0:
@@ -33,7 +36,7 @@ print "Current command line defaults are:"
 for k in keyval.keys():
     print k + '=' + keyval[k]
 
-# -------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 #
 # define all variables, now in their proper type, for this script
 #
@@ -50,11 +53,11 @@ if small:
     cell    = 2.0
     dt      = 0.1
 elif big:
-    print 'Running 2GB+ test....'
-    nchan   = 32
+    print 'Running a 2.5GB test....'
+    nchan   = 1024
     mapsize = 256
     cell    = 2.0
-    dt      = 0.01
+    dt      = 0.007
     ant     = ['vla_a.ant']
     vis     = ['vis1']
 else:
@@ -69,7 +72,7 @@ timec=[0,0,0,0,0,0,0,0]
 
 mir = os.environ['MIR']
 
-# ----------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # a few useful functions
 
 #   execute a miriad 'command' (a list of strings) and accumulate a log 
@@ -98,7 +101,7 @@ def cpulen(a,b):
     sc = '%.3f ' % (timec[b]-timec[a])
     return sc + st
        
-# ----------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # a few MIRIAD commands wrapped for this benchmark
 
 def uvgen(id):
@@ -159,22 +162,22 @@ def restor():
         ]
     return cmd
 
-# ----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # start of the benchmark
 
-print "MIRBENCH(py): %s : nchan=%d  mapsize=%d cell=%g" % (version, nchan, mapsize, cell)
-
+#                     remove temporary directory if it exists, and make new one
 if os.path.isdir(tmp):
     os.system('rm -rf ' + tmp)
-
 os.mkdir(tmp)
 os.chdir(tmp)
 
 if big:
+    print "MIRBIGBENCH(py): %s : nchan=%d dt=%g" % (version,nchan,dt)
     timer(0); miriad(uvgen(0));
     timer(1)
     print 'uvgen-big: ' + cpulen(0,1)
 else:
+    print "MIRBENCH(py): %s : nchan=%d mapsize=%d" % (version,nchan,mapsize)
     timer(0); miriad(uvgen(0))
     timer(1); miriad(uvgen(1))
     timer(2); miriad(uvgen(2))
