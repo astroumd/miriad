@@ -1,0 +1,39 @@
+This directory contains the source code examples that were used in the 
+tutorial.  The Makefile provided should build the examples correctly as
+long as the following line is changed:
+
+DTM = /usr/local/netdev
+
+replace the path with the path which locates your include files and library.
+If they are installed in standard locations (/usr/include and /usr/lib)
+then these macros are not needed.
+
+
+All of the examples in this directory were written using ANSI C.  This is
+a problem for the default Sun compilers which still only recognize K&R.
+gcc, the GNU C compiler, should compile this code correctly.  If gcc isn't
+available on your system, or any other ANSI compliant C compiler, then
+the function definitions can be changed by hand to the old style K&R
+declarations.  To do this, for example, change:
+
+                  static int readMSG(int inport)
+to
+                  static int readMSG(inport)
+                  int inport;
+
+This should clean up any of the problems.  If not, well, get an ANSI compliant
+compiler!  8-)
+
+
+These example codes have been compiled and tested on the following machines:
+     SGI - IRIX 4.0.5
+     Sun Sparcstation IPC & Sun4
+     Cray Y-MP
+     Convex 3880
+     IBM RS6000
+
+
+
+-daniel e. weber
+dweber@ncsa.uiuc.edu
+January 14, 1993
