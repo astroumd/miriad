@@ -48,6 +48,9 @@
 # Set version of rlist to be read by MIRA_RIST to make sure
 # they can talk to each other.  Echo version.
 #
+echo RLIST is an old miriad-RCS utility.
+exit 1
+
 set version   = "06jun96"
 set RSH = "ssh"
 set RCP = "scp"
