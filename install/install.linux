@@ -358,8 +358,8 @@ endif
 
 # ATNF stuff, linux only for now
 if ($hosttype == linux) then
-pushd $install_dir
-if (-d atnf) then
+ pushd $install_dir
+ if (-d atnf) then
    echo Compiling atnf code: atlod
    cp -p atnf/linux/librpfits.a $MIRLIB
    pushd $MIR/tmp
@@ -370,9 +370,10 @@ if (-d atnf) then
    mv atlod.doc $MIRPDOC
    rm -f atlod.*
    popd
-endif
+ endif
 endif
 
+pushd $install_root
 if ($test) then
     ./mir.test
 endif
