@@ -17,7 +17,7 @@ end
 
 loop:
 
-(time mir.bench nchan=1 >& $tmp.1) >& $tmp.2
+(time mir.bench >& $tmp.1) >& $tmp.2
 set benchdir=`grep ^benchdir= $tmp.1 | awk -F= '{print $2}'`
 set times=(`cat $tmp.2 | sed s/u// | sed s/s// | awk '{print $1,$2,$3}' | awk -F: '{print $1,$2}'`)
 if ($#times == 4) then
