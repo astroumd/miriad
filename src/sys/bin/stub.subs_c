@@ -1,0 +1,35 @@
+#!/bin/csh -f
+#-----------------------------------------------------------
+set mir    = $MIR
+set host   = $MIRHOST
+set lsys   = $mir/bin/localsys
+set subdir = $mir/src/subs
+set libdir = $mir/lib/$host
+set mirinc = $mir/src/inc
+#-----------------------------------------------------------
+if (-e $lsys/stub.subs_c && ! $?local_compile) then
+  echo $lsys/stub.subs_c exists =================
+  setenv local_compile
+  exec $lsys/stub.subs_c $argv
+endif
+#-----------------------------------------------------------
+
+set incdir = "-I$mirinc $Cinclude"
+
+set i = $1
+set j = $subdir/${i}.c
+if (! -e $j && ! -e ${j:r}.f2c) exit 0
+
+if (-e $subdir/${i}.f2c) then
+   set j = $libdir/${i}.c
+   echo "$Intf2c $subdir/${i:r}.f2c $j"
+         $Intf2c $subdir/${i:r}.f2c $j
+endif
+
+echo "$Ccompile -c -o $libdir/${i}.o $Coptions -I$subdir $incdir $j"
+      $Ccompile -c -o $libdir/${i}.o $Coptions -I$subdir $incdir $j
+
+if ($?MIRDEBUG == 0) rm -fr $libdir/${i}.c >& /dev/null
+setenv local_compile
+exit 0
+#-----------------------------------------------------------

@@ -1,0 +1,43 @@
+#!/bin/csh -f
+# ------------------------------------------------------ 
+set mir    = $MIR
+set host   = $MIRHOST
+set lsys   = $mir/bin/localsys
+set srcdir = $mir/src/spec/uvhat
+set libdir = $mir/lib/$host
+set bindir = $mir/bin/$host
+set docdir = $mir/doc/prog
+set incdir = $mir/src/inc
+# ------------------------------------------------------ 
+if (-e $lsys/stub.uvhat && ! $?local_compile) then
+  echo $lsys/stub.uvhat exists =================
+  setenv local_compile
+  exec $lsys/stub.uvhat
+endif
+# ------------------------------------------------------ 
+cd $libdir
+rm -fr vio.o uvhat.o uvhat.f >& /dev/null
+#
+echo "$Ccompile $Coptions -c $srcdir/vio.c"
+      $Ccompile $Coptions -c $srcdir/vio.c
+#
+echo "$Ratty -I $srcdir -I $incdir $srcdir/uvhat.for uvhat.f"
+      $Ratty -I $srcdir -I $incdir $srcdir/uvhat.for uvhat.f
+echo ""
+#
+set fops = "`echo $Foptions|sed 's&-u&&g'`"
+if ($host != mips) then
+echo "$Fcompile $fops -misalign -o $bindir/uvhat uvhat.f vio.o $libdir/libmir.a -lm"
+      $Fcompile $fops -misalign -o $bindir/uvhat uvhat.f vio.o $libdir/libmir.a -lm
+else
+echo "$Fcompile $fops -align16 -o $bindir/uvhat uvhat.f vio.o $libdir/libmir.a -lm"
+      $Fcompile $fops -align16 -o $bindir/uvhat uvhat.f vio.o $libdir/libmir.a -lm
+endif
+(cd $docdir; $bindir/doc -p $srcdir/uvhat.for)
+#
+rm -fr vio.o uvhat.o >& /dev/null
+if ($?MIRDEBUG == 0) rm -fr uvhat.f >& /dev/null
+#
+echo "`ls -l $bindir/uvhat`"
+unsetenv local_compile
+exit 0

@@ -1,0 +1,46 @@
+#!/bin/csh -f
+# -----------------------------------------------------------
+set mir    = $MIR
+set host   = $MIRHOST
+set lsys   = $mir/bin/localsys
+set libdir = $mir/lib/$host
+set bindir = $mir/bin/$host
+set incdir = $mir/src/inc
+
+set i   = $1
+set d   = ${i:h}
+set out = ${i:t}
+set out = ${out:r}
+set in  = ${d}/${out}.for
+# -----------------------------------------------------------
+if (-e $lsys/stub.prog_for && ! $?local_fcompile) then
+  echo $lsys/stub.prog_for exists =================
+  setenv local_fcompile
+  exec $lsys/stub.prog_for $argv
+endif
+#
+if (-e $lsys/stub.${out} && ! $?local_compile) then
+  echo $lsys/stub.${out} exists =================
+  setenv local_compile
+  exec $lsys/stub.${out}
+endif
+# -----------------------------------------------------------
+if (! -e $in) exit 0
+
+echo "$Ratty -I $d -I $incdir $in $libdir/${out}.f"
+      $Ratty -I $d -I $incdir $in $libdir/${out}.f
+echo ""
+
+set z = "$Foptions $Flinkdir $Flinklib"
+
+echo "$Fcompile -o $bindir/${out} $libdir/${out}.f $z"
+      $Fcompile -o $bindir/${out} $libdir/${out}.f $z
+rm -fr $d/${out}.o >& /dev/null
+
+if ($?MIRDEBUG == 0) rm -fr $libdir/${out}.f
+
+echo "`ls -l $bindir/$out`"
+unsetenv local_fcompile
+unsetenv local_compile
+exit 0
+# -----------------------------------------------------------
