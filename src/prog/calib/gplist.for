@@ -41,8 +41,9 @@ c	           Unless OPTIONS=FORCE is also set, only antennas with
 c                  non-zero values in the list are affected
 c	           so if jyperk is not set, nothing happens. Phases are
 c	           preserved unless options=zerophas is also specified
-c	  force    if set, then zero values in jyperk are enforced when
-c                  doing a replace
+c	  force    if set, then all values in jyperk are enforced when
+c                  doing a replace, even if they (or the initial gains)
+c                  are zero
 c	  limit    impose an upper limit on the amplitude gains using the
 c	           list specified in jyperk
 c	  multiply Multiply existing sqrt(Jy/K) values in a gains table by
@@ -100,6 +101,7 @@ c    smw     30aug99 Added "force" option
 c    pjt     27jul00 Fixed bug in options=phase for 10th ant
 c    pjt      4aug00 smw generously allowed me to fix the write-history
 c   		     'bug' when nothing was modified
+c    smw     21nov03 Modified "force" option to enforce any value
 c
 c  Bugs and Shortcomings:
 c    Like gpaver, gplist is hardwired for 12 antennas!
@@ -107,7 +109,7 @@ c    This will have to be changed when expansion occurs
 c-----------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='GpList: version 2.0a 4-aug-00')
+	parameter(version='GpList: version 2.0b 22-nov-03')
 	logical dovec,docomp,dophas,doall,dozero,domult,hexists,doamp
       logical dolimit,doclip,dosigclip,doforce,dohist
 	real jyperk(12) 
@@ -437,7 +439,7 @@ c
       if (dovec) then
          dohist = .TRUE.
          if (doforce) then
-         msg='Replacing amplitude gains with (zeroes enforced):'
+         msg='Replacing amplitude gains with (all values enforced):'
          call output(msg)
          else
          msg='Replacing amplitude gains with (0.0 means no change):'
@@ -449,10 +451,12 @@ c
          call output(msg)
          do i=1,nsols
             do j=1,nants
-        if (Gains((i-1)*nants+j).ne.cmplx(0.0,0.0).and.
-     *      ((jyperk(j).ne.0.0).or.(doforce)) )
-     *         Gains((i-1)*nants+j)=
-     *          jyperk(j)*Gains((i-1)*nants+j)/abs(Gains((i-1)*nants+j))
+        if (Gains((i-1)*nants+j).ne.cmplx(0.0,0.0)) then
+               Gains((i-1)*nants+j)=
+     *       jyperk(j)*Gains((i-1)*nants+j)/abs(Gains((i-1)*nants+j))
+          else if (doforce) then
+               Gains((i-1)*nants+j)=cmplx(jyperk(j),0.0)
+          end if
             enddo
          enddo
       endif
