@@ -35,7 +35,7 @@ c	Get the filename without the subdirectory
 	  blc(1)=1
 	  blc(2)=1
 	  blc(3)=1
-	endif	  
+	endif
 	nx = trc(1)-blc(1)+1
 	ny = trc(2)-blc(2)+1
 	nc = trc(3)-blc(3)+1
@@ -91,6 +91,7 @@ c	Note: Pass only the pointer memr(ary)
 
 	subroutine getdata(ary)
 	include "dim.h"
+	logical mask(MAXDIM)
 	integer nx,ny,nc
 	common/xyc/nx,ny,nc
 	real ary(1),vlsr(MAXCUBE)
@@ -101,7 +102,8 @@ c	Note: Pass only the pointer memr(ary)
 	double precision ckms
 	parameter(ckms=299793.)
 	integer i,j,k,ipt
-	real cdelt,crval,crpix1,crpix2,crpix,row(MAXDIM)
+	real cdelt,crval,crpix1,crpix2,crpix,row(MAXDIM),blank
+	data blank/0.0/
 	character*9 objecto
 	common/objecto/objecto
 
@@ -128,6 +130,7 @@ c	Note: Pass only the pointer memr(ary)
 	if(xy.eq.0)call bug('f','Pixel increment missing')
 	midx = nint(crpix1-blc(1)+1)
 	midy = nint(crpix2-blc(2)+1)
+c	write(*,*) "mid", midx,midy,crpix1,blc(1),crpix2,blc(2)
 	if(ctype(1)(1:2).eq.'RA'.and.ctype(2)(1:3).eq.'DEC')then
 	  xy = abs(xy) * 180./3.141592654 * 3600.
 	endif
@@ -149,7 +152,9 @@ c	  write(*,*) i,vlsr(i)
 	  call xysetpl(lIn,1,k)
 	  do j = blc(2),trc(2)
 	    call xyread(lIn,j,row)
+            CALL xyflgrd(lIn,j,mask)
 	    do i = blc(1),trc(1)
+	      if (.not.mask(i)) row(i)=blank
 	      ary(ipt) = row(i)
 c	      write(*,*) ary(i),i,j,k
 	      mapmax = max(mapmax,row(i))
