@@ -120,10 +120,11 @@ c   26dec97 pjt  - more ansi (x -> 1x in format 100; Stat -> ShowStat [g77]
 c   28oct99 mchw - Extend phase in averaging routine.
 c   27oct00 mchw - Changes to accomodate more antennas.
 c   19jan02 pjt  - basant needs double precision argument
+c   27jun02 mchw - use latitude uv-variable if present.
 c-----------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='UVLIST: version  19-Jan-02')
+	parameter(version='UVLIST: version  27-Jun-02')
 	real rtoh,rtod,pi
 	integer maxsels
 	parameter(pi=3.141592653589793,rtoh=12/pi,rtod=180/pi)
@@ -708,8 +709,15 @@ c
 	call uvrdvrd(unit,'obsdec',obsdec,0.d0)
 	call uvrdvrd(unit,'dra',dra,0.d0)
 	call uvrdvrd(unit,'ddec',ddec,0.d0)
-        call uvrdvra(unit,'telescop',telescop,'UNKNOWN')
-        call obspar(telescop,'latitude',latitude,ok)
+	call uvrdvrd(unit,'latitud',latitude,0.d0)
+	if(latitude.eq.0.d0)then
+          call uvrdvra(unit,'telescop',telescop,'UNKNOWN')
+          if(telescop.ne.'UNKNOWN') then
+	    call obspar(telescop,'latitude',latitude,ok)
+	  else 
+	    call bug('w','unable to determine latitude')
+	  endif
+	endif
 	ha = lst-obsra
 	sinha = sin(ha)
 	cosha = cos(ha)
