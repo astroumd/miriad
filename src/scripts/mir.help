@@ -1,0 +1,183 @@
+#! /bin/csh -f
+#       Purpose: Online MIRIAD help
+#
+#       Last update:  23-feb-90	new dir structure (pjt)
+#                     26-mar-90 using program doc (bpw)
+#                     10-apr-90 fixing some pitfalls (pjt)
+#                     06-jul-90 adapt for new directory structure (bpw)
+#                     06-jul-90 add 3rd parameter for mir.p/sindex (bpw)
+#                     25-jan-91 documentation improvements (mjs)
+#                     17-mar-91 reincorporated mir.find (bpw)
+#                     25-jul-91 removed references to other scripts
+#                               in the docs (mjs)
+#
+#* mir.help - Obtain programmer-useful help about MIRIAD source files.
+#& bpw
+#: programmer tool
+#+
+# Find information about all tasks/subroutines whose name matches all
+# or part of the input.
+#
+# This is a general purpose help-script.
+#
+# Usage:  mir.help [topic] [option] [names]
+#
+# topic may be:
+#        <any MIRIAD task or subroutine> ... generate the formatted
+#                          on-line doc for the task(s) or subroutine(s)
+#                          matching this input (wildcards implied).
+#        'find' .......... search for named routines below $MIRSRC.
+#        'tasks' ......... generate a list of tasks below $MIRPROG.
+#        'subroutines' ... generate a list of the subroutines.
+#
+# option may be:
+#        -s ... Subroutine sources have search precedence over
+#               existing pre-formatted files (only recognized if the
+#               topic was a routinename).
+#        -i ... create an index for the given topic.
+#        -t ... create an index by category for the given topic
+#               (options -i and -t are only recognized if the topic
+#               was 'tasks' or 'subroutines').
+#
+# names allows to select one or more routines
+#
+# Alias:  ``mirhelp'' is an alias for ``mir.help''.
+#--
+#* mirhelp - Obtain programmer-useful help about MIRIAD source files.
+#& bpw
+#: programmer tool
+#+
+# Find information about all tasks/subroutines whose name matches all
+# or part of the input.
+#
+# Usage:  mir.help [topic] [option] [names]
+#
+# topic may be:
+#        <any MIRIAD task or subroutine> ... generate the formatted
+#                          on-line doc for the task(s) or subroutine(s)
+#                          matching this input (wildcards implied).
+#        'find' .......... search for named routines below $MIRSRC.
+#        'tasks' ......... generate a list of tasks below $MIRPROG.
+#        'subroutines' ... generate a list of the subroutines.
+#
+# option may be:
+#        -s ... Subroutine sources have search precedence over
+#               existing pre-formatted files (only recognized if the
+#               topic was a routinename).
+#        -i ... create an index for the given topic.
+#        -t ... create an index by category for the given topic
+#               (options -i and -t are only recognized if the topic
+#               was 'tasks' or 'subroutines').
+#
+# names allows to select one or more routines
+#
+# Alias:  ``mirhelp'' is an alias for ``mir.help''.
+#--
+
+set version = "Version 3 --- 17-mar-91"
+set DOC = $MIRBIN/doc
+set tmp = /tmp/tmp$$
+if( ! $?PAGER ) set PAGER = more
+
+if ($#argv == 0) then
+   echo "On-line programmers help"
+   echo "Usage: mirhelp [topic] [option] [names]"
+   echo ""
+   echo "   Find all tasks/routines whose name matches all or part of the input"
+   echo ""
+   echo " - Topic should be 'tasks', 'subroutines', 'find' or any routine"
+   echo "   from MIRPDOC, MIRSDOC or MIRSUBS. In the latter case wildcards"
+   echo "   are assumed."
+   echo " - Options:"
+   echo "   -s forces a search for the routine in MIRSUBS instead of MIRSDOC"
+   echo "      (if topic was routinename)"
+   echo "   -i runs doc to create an alphabetic index for the given topic"
+   echo "   -t runs doc to create a systematic index for the given topic"
+   echo "      (-i and -t only if topic was 'tasks' or 'subroutines')"
+   exit 0
+endif
+
+if ( "$2" == "-s" )          goto subroutine_search
+if ( "$2" == "-i" )          goto indices
+if ( "$2" == "-t" )          goto indices
+if ( "$1" == "find" )        goto file_search
+if ( "$1" == "tasks" )       goto taskfind
+if ( "$1" == "subroutines" ) goto subroutinefind
+
+set dn = (`ls $MIRPDOC/*$1* $MIRSDOC/*$1*`)
+set ans=a
+loop:
+   if ( $#dn != 1 ) then
+      echo "Found the following files matching '$1'"
+      @ i=0
+      foreach d ($dn)
+         @ i++
+         if ( $i <  10 ) echo " $i ) $dn[$i]"
+         if ( $i >= 10 ) echo  "$i ) $dn[$i]"
+      end
+      echo -n "Select: [1..$#dn, a=all of the above, q=quit] >"
+      set ans=$<
+   else
+      $DOC $dn | $PAGER
+      goto quit
+   endif
+   if ( "$ans" == "q" || "$ans" == "") goto quit
+   if ( "$ans" == "a") then
+      $DOC $dn | $PAGER
+   else
+      $DOC $dn[$ans] | $PAGER
+   endif
+   echo -n "Enter <RETURN> to continue; q to quit:"
+   set ans=$<
+   if ( "$ans" == "q" ) goto quit
+   goto loop
+
+
+subroutine_search:
+   echo "Search for code of $1* in subroutine files. Wait ..."
+   $MIRBIN/doc -m $1\* $MIRSUBS/* | $PAGER
+   goto quit
+
+
+taskfind:
+   ls $MIRPROG/*/* | tr '/' '~' | sed s/`echo $MIRPROG | tr '/' '~'`// | \
+   sort +2 -3 -t~ | sed s/~/`echo $MIRPROG | tr '/' '~'`~/ | tr '~' '/' \
+   | $PAGER
+   goto quit
+
+
+subroutinefind:
+   find $MIRSUBS \( -name \*.for -o -name \*.c \) -print | sort | $PAGER
+   goto quit
+
+
+file_search:
+   shift
+   foreach name ( $* )
+     find $MIRSRC -name \*$name\* -print | $PAGER
+   end
+   goto quit
+
+
+indices:
+   onintr quit
+   if ("$1" == "tasks"             ) then
+     ls $MIRPROG/*/* | tr '/' '~' | sed s/`echo $MIRPROG | tr '/' '~'`// | \
+     sort +2 -3 -t~ | sed s/~/`echo $MIRPROG | tr '/' '~'`~/ | tr '~' '/' > $tmp
+   else if ( "$1" == "subroutines" ) then
+      find $MIRSUBS \( -name \*.for -o -name \*.c \) -print| sort > $tmp
+   else
+      echo "$1" > $tmp
+   endif
+   if ( "$3" == "" ) then
+      $DOC $2 -l $tmp | $PAGER
+   else 
+      $DOC $2 -l $tmp | grep -i -e $3 | $PAGER
+      cat $MIRCAT/miriad.pgmrs
+   endif
+   goto quit
+
+
+quit:
+   rm -f $tmp
+   exit 0

@@ -1,0 +1,112 @@
+#!/bin/csh -f
+# -----------------------------------------------------------------
+#* mirsubsd - Debugging script for miriad subroutines
+#& mjs
+#: programmer tool
+#+
+#  Debugging script for miriad subroutines.  Compile miriad
+#  subroutines and output a dot-o file.  -DMIRDEBUG is defined (so
+#  compilation is with the -g option and ratty/intf2c output is
+#  retained).  Users may define -DTESTBED prior to invocation.
+#
+#  $MIRSUBS is searched for include files, as is $MIRINC.
+#
+#  Users are expected to put source code in a private directory and
+#  work from that directory; input source code is expected to be in
+#  the current working directory, and all output will be placed
+#  there.
+#
+#    Usage:  mirsubsd  [-O] <subr-name>
+#
+#  If the -O flag is given, the compile is optimized (making the
+#  code generally unuseful for stepping through a program/subroutine
+#  with dbx); omitting this flag produces unoptimized code.
+#
+#  Filename extensions (.for, .f, .f2c, .c) are required.
+#
+#  Sample session:
+#
+#    mkdir mydir
+#    cd mydir
+#    cp $MIRSUBS/wrap.f2c $MIRSUBS/uvio.c $MIRSUBS/key.for .
+#    mirsubsd wrap.f2c
+#    mirsubsd uvio.c
+#    mirsubsd key.for
+#    cp $MIRSUBS/key.h .
+#    mirsubsd key.for
+#    mirsubsd key.f
+#    mirsubsd wrap.c
+#    cp $MIR/borrow/pgplot/src/pgbeg.f .
+#    cp $MIR/borrow/pgplot/src/pgplot.inc .
+#    mirsubsd pgbeg.f
+#
+#--
+# -----------------------------------------------------------------
+setenv MIRDEBUG
+source $MIR/src/sys/bin/compile.$MIRHOST
+set fops = "$FoptionsN"
+set cops = "$CoptionsN"
+if ($#argv != 1 && $#argv != 2) then
+  echo "### Usage: check documentation - exiting with return code 1."
+  exit 1
+endif
+set name = $1
+if ($#argv == 2) then
+   if ($name == "-O") then
+      set name = $2
+      set fops = "$Foptions"
+      set cops = "$Coptions"
+   else
+      echo "### Usage: check documentation - exiting with return code 1."
+      exit 1
+   endif
+endif
+# -----------------------------------------------------------------
+# Find the file
+#
+if (! -e $name) then
+   echo "Cannot find $name - exiting"
+   exit 1
+endif
+set tail = ${name:e}
+if ($tail != for && $tail != f && $tail != f2c && $tail != c) then
+   echo "File must have filename extension for, f, f2c, or c - exiting"
+   exit 1
+endif
+# -----------------------------------------------------------------
+# do it
+#
+echo "	==================================="
+switch ($tail)
+   case for:
+        echo "$Ratty -I $MIRSUBS -I $MIRINC $name ${name:r}.f"
+              $Ratty -I $MIRSUBS -I $MIRINC $name ${name:r}.f
+        echo ""
+        echo "`ls -l ${name:r}.f`"
+        echo "	==================================="
+   case   f:
+        echo "$Fcompile $fops $Finclude -c ${name:r}.f"
+              $Fcompile $fops $Finclude -c ${name:r}.f
+        echo ""
+        echo "`ls -l ${name:r}.o`"
+        echo "	==================================="
+	breaksw
+   case f2c:
+        echo "$Intf2c $name ${name:r}.c"
+              $Intf2c $name ${name:r}.c
+        echo ""
+        echo "`ls -l ${name:r}.c`"
+        echo "	==================================="
+   case   c:
+        echo "$Ccompile $cops -I$MIRSUBS $Cinclude -c ${name:r}.c"
+              $Ccompile $cops -I$MIRSUBS $Cinclude -c ${name:r}.c
+        echo ""
+        echo "`ls -l ${name:r}.o`"
+        echo "	==================================="
+	breaksw
+endsw
+#
+# -----------------------------------------------------------------
+# all done
+#
+exit 0

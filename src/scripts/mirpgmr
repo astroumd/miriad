@@ -1,0 +1,149 @@
+#! /bin/csh -f
+# -----------------------------------------------------------------
+#* mirpgmr - Type useful info for miriad programmers
+#& mjs
+#: programmer tool
+#+
+#  Type useful info for miriad programmers.
+#
+#    Usage:  mirpgmr  -parm
+#
+#  "parm" may be one of:
+#
+#    p - show names/addresses/phone for miriad pgmrs
+#    c - show options used to compile miriad code
+#    m - show in-code doc parameters
+#--
+# sgi has problems in expressions where parms contain a minus sign;
+# workaround by echo'ing parms and variables.
+# -----------------------------------------------------------------
+set pfile = "$MIR/cat/miriad.pgmrs"
+set sfile = "$MIR/src/sys/bin/compile.${MIRHOST}"
+set abin  = '$MIR/src/sys/bin'
+# -----------------------------------------------------------------
+if ($#argv != 1) then
+   echo "This script takes exactly one parameter - exiting."
+   exit 1
+endif
+
+if (`echo $1` == `echo -p` && \
+    `echo $1` == `echo -m` && \
+    `echo $1` == `echo -c`) then
+   echo "Unrecognized parameter - exiting."
+   exit 1
+endif
+# -----------------------------------------------------------------
+#
+#	Show names/addresses/phone for miriad pgmrs
+#
+if (`echo $1` == `echo -p`) then
+   if (! -e $pfile) then
+      echo 'Cannot find file $pfile - exiting.'
+      exit 1
+   else
+      cat -s $pfile | more -s
+      exit 0
+   endif
+endif
+# -----------------------------------------------------------------
+#
+#	Show in-code doc formats
+#
+if (`echo $1` == `echo -m`) then
+   echo "----------------------------------------------------------------------"
+   echo "miriad in-code doc parameters"
+   echo ""
+   echo "The example below is for fortran. There are subtleties not given here"
+   echo "that will affect how the output appears - this is just a quick ref."
+   echo ""
+   echo 'Text for keywords in the $MIR/cat/keywords.kdoc file will be inserted'
+   echo "on-line; any text you enter will be placed after the kdoc-text."
+   echo ""
+   echo "c= taskname - One line description"
+   echo "c* subrname - One line description"
+   echo "c& pgmr"
+   echo "c: category1, category2"
+   echo "c+"
+   echo "c  Start of the multiline description."
+   echo "c"
+   echo "   subroutine example(a,b)"
+   echo "   implicit none"
+   echo "c"
+   echo "   integer a,b"
+   echo "c"
+   echo "c  Input:"
+   echo "c    a      The number of apples."
+   echo "c  Output:"
+   echo "c    b      The number of oranges."
+   echo "c"
+   echo "c@ keyword"
+   echo "c  The description for this keyword."
+   echo "c"
+   echo "c< kdocword"
+   echo "c  More text appended to the generated kdoc description."
+   echo "c"
+   echo "c--"
+   echo "----------------------------------------------------------------------"
+   exit 0
+endif
+# -----------------------------------------------------------------
+#
+#	Show options used to compile miriad code
+#
+set borrow = (`ls $MIR/borrow`)
+set spec   = (`ls $MIR/src/spec`)
+cd $MIR/src/sys/bin
+set host = "$MIR/src/sys/bin/compile.$MIRHOST"
+
+set t = "       "
+echo ""
+echo "----------------------------------------------------------------------"
+echo "C-code main programs can be compiled/linked by compiling into a .o"
+echo "file with the C compiler, and feeding that to the fortran compiler."
+echo ""
+echo "$t {C,F}optionsN are compile options without optimization."
+echo ""
+echo "$t If environment variable MIRDEBUG is defined, then -g is"
+echo "$t appended to the {C,F}options{,N}."
+echo ""
+echo "$t If environment variable MIRTESTBED is defined, then -DTESTBED"
+echo "$t is appended to the {C,F}options{,N} and to Ratty, as well."
+echo ""
+echo "$t There are special scripts to compile/link several libs:"
+echo ""
+echo "$t $t `ls $MIR/borrow`"
+echo ""
+echo "$t See name-specific scripts in"
+echo "$t $t ${abin:q}"
+echo "$t for information on compiling/linking special-case libs."
+echo "----------------------------------------------------------------------"
+if (! -e $host) then
+   echo ""
+   echo " ****** $host ******"
+   echo " not found on this machine"
+else
+   source $host
+   echo "MIRHOST is ${host:e}"
+   echo ""
+   echo "Ccompile  : $Ccompile"
+   echo "Coptions  : $Coptions"
+   echo "CoptionsN : $CoptionsN"
+   echo "Clinkdir  : $Clinkdir"
+   echo "Clinklib  : $Clinklib"
+   echo "Cinclude  : $Cinclude"
+   echo ""
+   echo "Fcompile  : $Fcompile"
+   echo "Foptions  : $Foptions"
+   echo "FoptionsN : $FoptionsN"
+   echo "Flinkdir  : $Flinkdir"
+   echo "Flinklib  : $Flinklib"
+   echo "Finclude  : $Finclude"
+   echo ""
+   echo "Ratty     : $Ratty"
+   echo "Intf2c    : $Intf2c"
+   echo "-------------------------------------------------------------"
+endif
+echo ""
+#
+# -----------------------------------------------------------------
+exit 0

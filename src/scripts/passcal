@@ -1,0 +1,143 @@
+#! /bin/csh -f
+#
+#* passcal - Passband calibration using channel gains
+#& mchw
+#: user tool
+#+
+#  PASSCAL is a csh script to fit a passband to BIMA uv-data using
+#  the Miriad task UVGAINS with a polynomial fit to each window.
+#  The user specifies a passband uv-file and a reference line 
+#  used for the antenna gain calibration versus time.
+#  The antenna gains are derived from the time-averaged reference
+#  line using SELFCAL. The passband is derived from polynomial fits 
+#  to the vector average, relative to the time-averaged reference line.
+#  The user specifies the order of the polynomial fit.
+#  The script plots the passband uv-data and fits, and the corrected
+#  passband uv-data.
+#  	To apply the passband gains to other uv-data files,
+#  use COPYHD to copy the channel gains (items=cgains,ncgains,ncbase)
+#  from the output passband file into the other uv-data files.
+#  The channel gains can only be applied if the uv-data use the same
+#  correlator configuration.
+#  	The channel gains are applied automatically by Miriad tasks when
+#  plotting (uvplt, uvspec), copying (uvcat, uvcal, uvaver, uvgains),
+#  or imaging (invert), but the channel gains are not
+#  interpolated and can only be applied if all the channels are used,
+#  i.e. in plotting, or imaging all the channels. To plot or image
+#  other line types the channel gains must first be applied by copying
+#  the channel gains into the Miriad dataset to be corrected (copyhd),
+#  and writing all the channels into a new Miriad dataset (uvcat, uvcal).
+#  The passband corrected gain calibrator and source data can then be
+#  used to determine the antenna gains versus time and image the source
+#  data. (e.g. using AUTOCAL)
+#
+#	Examples:
+#	
+#	To derive the channel gains relative to the 1st wideband channel:
+#	    passcal mars.12apr pass /xw wide,1
+#
+#	To apply the channel gains to the gain calibrator and source data:
+#	    copyhd in=pass out=source items=ncgains,cgains,ncbase 
+#	    copyhd in=pass out=calibrator items=ncgains,cgains,ncbase 
+#	
+#	To plot the passband corrected spectra:
+#	    uvspec vis=source device=/xw
+#
+#	To plot the spectra without the passband correction:
+#	    uvspec vis=source device=/xw options=nopass
+#
+#	To plot or map other line types, first write a corrected dataset:
+#	    uvcal vis=source out=source.pass options=nowide
+#	    uvcal vis=calibrator out=source.pass options=nowide
+#	(items nwgains,nwbase,wgains are needed to correct the wideband)
+#
+#	To derive the antenna gains and image the source:
+#	    autocal calib source /xw wide,1 cal_line 'pol(YY)'
+#	The calibrator line in autocal should be the same as used to
+#	derive the channel gains.
+#
+#  Inputs:
+#    P1   vis		input uv-data file for passband.
+#    P2   out		output uv-data file for passband.
+#    P3   device	PGPLOT device. e.g. /xw
+#    P4   ref		reference line type for gains. e.g. wide,
+#    P5   npoly		order of polynomial fit for real & imaginary
+#    P6   select        uv-data selection. e.g. 'pol(YY)'
+#
+#  Output:
+#    uv-data file containing averaged passband and polynomial fit.
+#--
+#  History:
+#    mchw  25dec93  Initial version.
+#..................................................................
+
+echo "**************************************************************"
+echo "  Passband calibration using channel gains (25-Dec-93 version)"
+echo "**************************************************************"
+
+if($#argv<6) then
+  echo " "
+  echo "Usage:  passcal  vis  out  device  ref  npoly  select"
+  echo " "
+  echo "  vis		input uv-data file for passband."
+  echo "  out		output uv-data file containing passband fit."
+  echo "  device	PGPLOT device. e.g. /xw"
+  echo "  ref		reference line type for gains. e.g. wide,1"
+  echo "  npoly		order of polynomial fit for real & imaginary"
+  echo "  select        uv-data selection. e.g. 'pol(YY)'"
+  exit 1
+endif
+
+# get inputs
+set vis=$1
+set out=$2
+set device=$3
+set ref=$4
+set npoly=$5
+set sel=$6
+
+# set some parameters:
+set refant=4
+set minants=3
+set interval=5
+set line=channel
+set nxyfit=1,1
+set nxy=3,5
+
+goto start
+start:
+echo Check if uvdata files exist
+if (!(-e $vis)) then
+  echo "  Can't find uv-data file for passband."
+  goto end
+endif
+
+selfcal:
+echo ""
+echo RUN SELFCAL ON THE PASSBAND DATA 
+echo ""
+selfcal vis=$vis options=apriori,amplitude,noscale refant=$refant line=$ref \
+	interval=$interval select=$sel minants=$minants
+if ($status != 0) goto err
+
+echo ""
+echo FIT THE PASSBAND
+echo ""
+rm -r $out
+uvgains vis=$vis out=$out options=poly,window interval=1000 select=$sel \
+ device=$device npoly=$npoly nxy=$nxyfit line=$line
+if ($status != 0) goto err
+
+uvspec:
+echo ""
+echo PLOT THE CORRECTED AMPLITUDE AND PHASE FOR THE PASSBAND FILE
+echo The corrected  amplitude should be unity.
+echo The phase should be zero.
+echo ""
+uvspec vis=$out options=dots interval=$interval select=$sel device=$device nxy=$nxy line=$line
+uvspec vis=$out options=dots interval=$interval select=$sel device=$device nxy=$nxy axis=channel,phase line=$line
+goto end
+
+err:
+echo "Some error occured; premature termination"
+end:
