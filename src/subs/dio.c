@@ -30,6 +30,7 @@
 /*	 5-nov-04  jwr Changed a few size_t to ssize_t or off_t		*/
 /*       3-jan-05  pjt ssize casting to appease the compiler            */
 /*                     use SSIZE_MAX to protect from bad casting ?      */
+/*       2-mar-05  pjt template->templat for C++, just in case          */
 /************************************************************************/
 
 #include <stddef.h>
@@ -231,12 +232,12 @@ void dwait_c(int fd,int *iostat)
   *iostat = 0;
 }
 /************************************************************************/
-int dexpand_c(char *template,char *output,int length)
+int dexpand_c(char *templat,char *output,int length)
 /*
   This expands wildcards, matching them with files.
 
   Input:
-    template	The input character string, containing the wildcards.
+    templat	The input character string, containing the wildcards.
     length	The length of the output buffer.
   Output:
     output	All the files matching "template". Filenames are separated
@@ -248,7 +249,7 @@ int dexpand_c(char *template,char *output,int length)
   int l;
 
   Strcpy(line,"echo ");
-  Strcat(line,template);
+  Strcat(line,templat);
   fd = popen(line,"r");
   if(fd == NULL) return(-1);
   s = output;
