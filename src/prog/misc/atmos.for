@@ -83,10 +83,11 @@ c   08jan99 mchw  Plot PSF.
 c   27oct00 mchw  Changes to support more antennas.
 c   29aug01 mchw  changes for missing antpos in uv-data.
 c   30jan02 mchw  Format change for Tair < -10 K !
+c    7feb02 pjt   few more ANSI 'x' to '1x' in format stmt's
 c------------------------------------------------------------------------
 	include 'atmos.h'
 	character version*(*)
-	parameter(version='atmos: version 30-jan-02')
+	parameter(version='atmos: version 7-feb-02')
 	integer maxsels
 	parameter(maxsels=1024)
 	real sels(maxsels)
@@ -652,7 +653,8 @@ c
 	 write(line,100) count,timeave(bl),
      *		 ant1,ant2, k*avetime/num(bl)*24.*3600., uave(bl),
      *		       (amp(j),nint(arg(j)),cflag(j),j=1,nchan)
- 100	 format(f6.0,x,f9.4, i4,x,i4,x,f9.2,x,f9.2, 4(f9.3,x,i4,x,a))
+ 100	 format(f6.0,1x,f9.4, i4,1x,i4,1x,f9.2,1x,f9.2, 
+     *          4(f9.3,1x,i4,1x,a))
 	 length = len1(line)
 	 call LogWrite(line(1:length),more)
 	 k = k / 2
@@ -806,7 +808,8 @@ c
 	 write(line,100) i,timeave(bl),ant1,ant2,(i-1)*step_hz,uave(bl),
      * (((amps(i,j,bl)/57.)**2)*step_hz,((amps(i,j,bl)/57.)**2)*step_hz,
      *    cflag(j),j=1,nchan)
- 100	 format(i4,x,f6.4,x,i4,x,i4,x,f9.7,x,f9.2,x,4(2f9.4,x,a))
+ 100	 format(i4,1x,f6.4,1x,i4,1x,i4,1x,f9.7,1x,f9.2,1x,
+     *          4(2f9.4,1x,a))
 	 length = len1(line)
 	 call LogWrite(line(1:length),more)
 	enddo
