@@ -77,7 +77,7 @@
 #   later on this will also be stored again in the file $MIR/DATE, where the CVS miriad
 #   version will be stored in $MIR/VERSION
 if (0) then
-set newdir=date +%y%b%d | tr '[:upper:]' '[:lower:]'`
+set newdir=`date +%y%b%d | tr '[:upper:]' '[:lower:]'`
 set hosttype=`uname -s | tr '[:upper:]' '[:lower:]'`
 else
 set newdir=`date +%y%b%d | tr A-Z a-z`
