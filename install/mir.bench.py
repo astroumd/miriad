@@ -6,7 +6,7 @@
 #
 #
 
-import sys, os, time, string
+import sys, os, time, string, tempfile
 version='2003-03-10'
 
 # command line arguments that can be changed...
@@ -92,8 +92,8 @@ def cmd(cmdlist):
 #   save CPU info in predefined global slots
 def timer(slot):
     global timet, timec
-    timet[slot] = time.time()
     timec[slot] = time.clock()
+    timet[slot] = time.time()
 
 #   create a string to print human readable CPU info between slots 
 def cpulen(a,b):
@@ -165,11 +165,11 @@ def restor():
 # -----------------------------------------------------------------------------
 # start of the benchmark
 
-#                     remove temporary directory if it exists, and make new one
-if os.path.isdir(tmp):
-    os.system('rm -rf ' + tmp)
+#   work in a temporary directory
+tmp = 'bench' + tempfile.gettempprefix()
 os.mkdir(tmp)
 os.chdir(tmp)
+print "Working in directory " + tmp
 
 if big:
     print "MIRBIGBENCH(py): %s : nchan=%d dt=%g" % (version,nchan,dt)
@@ -196,8 +196,10 @@ else:
     print 'clean:  ' +  cpulen(5,6)
     print 'restor: ' +  cpulen(6,7)
     print 'TOTAL:  ' +  cpulen(0,7)
-    print 'MirStones %f  ' % (300/(timet[7]-timet[0])) + ' Wall clock  (CPU clock has bug)'
-    print 'MirStones %f  ' % (300/(timec[7]-timec[0])) + ' CPU clock'      # also has a bug
+    if timet[7] != timet[0]:
+        print 'MirStones %f  ' % (300/(timet[7]-timet[0])) + ' Wall clock  (CPU clock has bug?)'
+    if timec[7] != timec[0]:
+        print 'MirStones %f  ' % (300/(timec[7]-timec[0])) + ' CPU clock'   
 
 print 'All done.'
 
