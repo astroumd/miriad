@@ -96,6 +96,9 @@ c	or
 c	  yymmmdd:hh:mm:ss.s
 c	The default is 80JAN01.0. A function of this is also used
 c	as a seed for the random number generator.
+c	With the unix date command you can use 
+c                date +%y%b%d:%H:%M:%S | tr '[A-Z]' '[a-z]'
+c
 c@ freq
 c	Frequency and IF frequency in GHz.
 c	Defaults are 100,0.0 GHz. 
@@ -315,6 +318,9 @@ c     9may00 rjs   Write primary beam type out correctly.
 c    17may00 mchw  allow for saturated spectral absorption model.
 c    18may00 rjs   Merge rjs/mchw changes.
 c    27oct00 rjs/mchw changes to allow up to 2047 antennas.
+cc    29sep00 pjt   Put appending data back in  uvgen
+cc     4sep01 pjt   time= example for random number generations
+c    12feb02  pjt  Merged back the two previous UMD additions
 c
 c  Bugs/Shortcomings:
 c    * Frequency and time smearing is not simulated.
@@ -343,7 +349,7 @@ c	pbfwhm=76,137,-0.2 simulates a primary beam pattern between
 c	10m and 6m antennas at 100 GHz. 
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version = 'Uvgen: version 1.0 27-Oct-00')
+	parameter(version = 'Uvgen: version 1.0 12-feb-02')
 	integer ALTAZ,EQUATOR
 	parameter(ALTAZ=0,EQUATOR=1)
 	integer PolRR,PolLL,PolRL,PolLR,PolXX,PolYY,PolXY,PolYX
@@ -373,7 +379,7 @@ c
 	real systemp(MAXANT*maxspect),inttime
 	double precision restfreq(maxspect),lst
 	double precision antpos(3*MAXANT),ra,dec
-	integer item, unit
+	integer item, unit, newiost
 	character line*132, umsg*80
 	complex gatm
 	real baseline,patm,pslope,pelev,xx,xxamp
@@ -571,10 +577,18 @@ c
 	  endif
 	endif
 c
-c  Open the output dataset.
+c  Open the output dataset (append mode if it exists)
 c
-	call uvopen(unit,outfile,'new')
-	call hisopen(unit,'write')
+        call hopen(unit,outfile,'old',newiost)
+        if(newiost.eq.0) then
+	  call hclose(unit)
+	  call uvopen(unit,outfile,'append')
+	  call hisopen(unit,'append')
+        else
+	  call uvopen(unit,outfile,'new')
+	  call hisopen(unit,'write')
+        endif
+
 	call uvset(unit,'preamble','uvw/time/baseline',0,0.,0.,0.)
 c
         call hiswrite(unit,'UVGEN: Miriad '//version)
@@ -1085,8 +1099,13 @@ c
 c
 c  All done. Summarize, tidy up and exit.
 c
-	write(line,'(i7,a,a)')
+        if(newiost.eq.0) then
+	  write(line,'(i7,a,a)')
+     *	  Item,' records appended to file: ',outfile
+        else
+	   write(line,'(i7,a,a)')
      *	  Item,' records written to file: ',outfile
+	endif
 	call output(line)
 	umsg = 'UVGEN: '//line
 	call hiswrite(unit, umsg )
