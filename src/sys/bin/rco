@@ -1,0 +1,217 @@
+#!/bin/csh -f
+#
+# Script to execute mira_rco on mira to check out a program via rsh
+# and copy it here via rcp.  Multiple file names (no wildcard
+# expansion) can be given -- the options will apply to all input
+# files.  Username on command line (-U) supersedes the $mira_user
+# variable set in script, which supersedes the $USER variable.
+#
+# Usage: rco [co options] [-Uusername] filename(s)
+#   -Uusername flag gives the login name of the user on mira.
+#   -R flag forces remote operation.
+#
+# Example: rco -l -Udroberts regrid.for invert.for
+#   -l flag means to check out locked (read/write).  See man co for
+#     details.
+#   -Udroberts flag gives droberts as the login name on mira.
+#
+# Note that because of the difficulty of passing strings with double
+# quotes in csh, strings cannot have any spaces (suggest using
+# underscores).
+#
+# You can determine which file have been checked out locked
+# (read/write) by typing:
+# rsh mira.astro.uiuc.edu ls /export/bimaprog/VersionControl/modified
+#--
+#
+# History:
+#   17jul95 dar   Created file and tested it out.
+#   11Aug95 dar   Added command line argument of username (-U), which
+#                 supersedes $mira_user in script, which supersedes $USER.
+#   12sep95 dar   Added variables: mirsrc, verbin, vermod
+#   18sep95 dar   Added rmiruser and rverlist for use with rsh and rcp
+#                 variables
+#   04oct95 dar   Pass version ID of RCI/rco to MIRA_RCI/mira_rco to make
+#                 sure people are using the most recent version.
+#   16oct95 dar   Changed the way the script finds out if the
+#                 /bimaprog disk is mounted locally.  The disk *must*
+#                 be either /export/bimprog (mira) or /bima (at).
+#   16oct95 dar   Added -R flag to force remote operation.
+#   11mar96 dar   Fixed to handle local access that start in the same
+#                 directory that the files are retrieved from.
+#   28may96 dar   Added printing of version upon execution and help.
+#   06jun96 dar   Changed upper level directory to $MIR rather that $MIRSRC.
+#--
+#
+# Set version of rci/rco to be read by mira_rci/mira_rco to make sure
+# they can talk to each other.  Echo version.
+#
+set version   = "06jun96"
+set RSH = "ssh"
+set RCP = "scp"
+echo "rco (version $version)"
+echo ""
+#
+# Set mira_user to the login name on mira.  Put your remote login in
+# your .rhosts file on mira and visa versa.  This supersedes $USER
+# shell variable and is superseded by the command line argument (-U).
+#
+set mira_user = ""
+#
+# There must be at least one argument to rco, otherwise goto usage
+#
+if ( $#argv == 0 ) goto usage
+#
+# Set initial variables
+#
+set bin       = /usr/5bin
+set files     = ""
+set flags     = ""
+set i         = 1
+set inmirdir  = "false"
+set local     = "false"
+set mira      = "mira.astro.uiuc.edu"
+set remote    = "false"
+set rverbin   = "/export/bimaprog/VersionControl/bin"
+set rvermod   = "/export/bimaprog/VersionControl/modified"
+set vermod    = "/export/bimaprog/VersionControl/modified"
+#
+# Distinguish filenames from co flags and username.
+#
+while ( $i <= $#argv )
+  set temp     = `echo $argv[$i]`
+  if ( `echo $temp | egrep -e -U` != "" ) then
+    set mira_user = `echo $temp | sed -e 's/-U//'`
+    goto mark
+  endif
+  if ( `echo $temp | egrep -e -R` != "" ) then
+    set remote = "true"
+    goto mark
+  endif
+  set newflags = `echo $temp | grep "-"`
+  set newfile  = `echo $temp | grep -v "-"`
+  set flags    = "$flags $newflags"
+  set files    = "$files $newfile"
+  mark:
+  @ i=$i + 1
+end
+if ( $#files == 0 ) then
+  echo "No files given, aborting..."
+  exit 1
+endif
+if ( ! $?mira_user ) then
+  set mira_user = $USER
+else if ( $mira_user == "" ) then
+  set mira_user = $USER
+endif
+set rmiruser = "/export/bimaprog/$mira_user"
+#
+# Check to see if bimaprog disk is mounted locally
+#
+if ( -f /export/bimaprog/VersionControl/bin/rco ) then
+  set local   = "true"
+  set miruser = "/export/bimaprog/$mira_user"
+  set verbin  = "/export/bimaprog/VersionControl/bin"
+else if ( -f /bima/VersionControl/bin/rco ) then
+  set local   = "true"
+  set miruser = "/bima/$mira_user"
+  set verbin  = "/bima/VersionControl/bin"
+else
+  set miruser = "/dev/null"
+endif
+#
+# Check to see if remote flag is set
+#
+if ( $remote == "true" ) set local = "false"
+if ( $local == "true" ) then
+  echo ">>> Found RCS archive mounted locally, using binary directory"
+  echo ">>>   $verbin"
+endif
+#
+# Do remote copy and checkout
+#
+if ( $PWD == ${miruser} ) set inmirdir = "true"
+foreach file ( $files )
+  set file = `echo $file | sed -e 's/ //'`
+  $RSH ${mira} -l ${mira_user} ${rverbin}/mira_rco -V${version} $file $flags
+  if ( ${local} == "true" ) then
+    set olddir = ${PWD}
+    cd ${miruser}
+    ls > /dev/null
+    if ( ! -e ${file} ) exit 1
+    cd ${olddir}
+    unset ${olddir}
+  else
+    set rstatus = `$RSH ${mira} -l ${mira_user} 'ls '${rmiruser}/${file}' >& /dev/null ; echo $status'`
+    if ( $rstatus != 0 ) exit 1
+  endif
+  if ( -e $file && $inmirdir == "false" ) then
+    echo ">>> There is a version of $file in your current directory."
+    echo ">>>   Copying $file to $file.bak"
+    if ( -e $file.bak && ! -w $file.bak ) then
+      \rm -f $file.bak
+      \mv $file $file.bak
+    else
+      \mv $file $file.bak
+    endif
+    if ( ${local} == "true" ) then
+      if ( $inmirdir == "false" ) then
+        set olddir = ${PWD}
+        cd ${miruser}
+        echo ">>> Now copying ${file} to local disk"
+        cp -p ${file} ${olddir}
+        cd ${olddir}
+        unset ${olddir}
+      endif
+    else
+      echo ">>> Now remotely copying ${file} to local disk"
+      $RCP -p ${mira_user}@${mira}:${rmiruser}/${file} .
+    endif
+  else
+    if ( $local == "true" ) then
+      if ( $inmirdir == "false" ) then
+        set olddir = ${PWD}
+        cd ${miruser}
+        echo ">>> Now copying ${file} to local disk"
+        cp -p ${file} ${olddir}
+        cd ${olddir}
+        unset ${olddir}
+      endif
+    else
+      echo ">>> Now remotely copying ${file} to local disk"
+      $RCP -p ${mira_user}@${mira}:${rmiruser}/${file} .
+    endif
+  endif
+  if ( $status == 0 && $inmirdir == "false" ) then
+    $RSH ${mira} -l ${mira_user} ${bin}/rm -f ${rmiruser}/${file}
+  endif
+  echo ">>> Finished with check out of ${file}"
+end
+exit 0
+#
+# Usage
+#
+usage:
+echo "Script to execute mira_rco on mira to check out a program via rsh"
+echo "and copy it here via rcp.  Multiple file names (no wildcard"
+echo "expansion) can be given -- the options will apply to all input"
+echo "files.  Username on command line (-U) supersedes the" '$mira_user'
+echo "variable set in script, which supersedes the" '$USER' "variable."
+echo ""
+echo "Usage: rco [co options] [-Uusername] filename(s)"
+echo "  -Uusername flag gives the login name of the user on mira."
+echo "  -R flag forces remote operation."
+echo ""
+echo "Example: rco -l regrid.for invert.for"
+echo "  -l flag means to check out locked (read/write).  See man co for"
+echo "  details." 
+echo "  -Udroberts flag gives droberts as the login name on mira."
+echo ""
+echo "Note that because of the difficulty of passing strings with double"
+echo "quotes in csh, strings cannot have any spaces (suggest using"
+echo "underscores)."
+echo ""
+echo "You can determine which file have been checked out locked"
+echo "(read/write) by typing:"
+echo "rsh mira.astro.uiuc.edu ls /export/bimaprog/VersionControl/modified"
+exit 1
