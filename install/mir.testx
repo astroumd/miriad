@@ -1,0 +1,23 @@
+#! /bin/csh -f
+#
+echo TEST a few X related things:
+
+
+echo -n "XCORF: " ; set ans=$<
+xcorf
+
+echo -n "VELPLOTC: " ; set ans=$<
+imgen out=junkmap$$
+velplotc in=junkmap$$ device=/xs
+rm -rf junkmap$$
+
+echo -n "MIR.MAN: " ; set ans=$<
+mir.man
+
+echo -n "MIRHELP: " ; set ans=$<
+mir.help itemize
+
+echo -n "DOC: " ; set ans=$<
+doc
+
+ 
