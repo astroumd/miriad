@@ -316,19 +316,10 @@ if ($pgplot) then
   mir.install pgplot
 endif
 
-#                   linux only
+#
 if ($shared) then
-  if (1) then
-    echo SHARED - remove iscoords and r8tyx : conflicts
-    echo it also needs a special -fPIC compile option in compile.linux
-    cd $MIRLIB 
-    ar dv libmir.a iscoords.o r8tyx.o
-    if ($hosttype == darwin) then
-      echo Remove sma_Resample.o until smaio.c in place...
-      ar dv libmir.a sma_Resample.o
-    endif
-    if (-e /usr/bin/ranlib) ranlib libmir.a
-  endif
+  if (-e /usr/bin/ranlib) ranlib libmir.a
+
   if ($hosttype == linux) then
     ld -shared -o libmir.so --whole-archive libmir.a
       if (-e libpgplot.a && ! -e libpgplot.so) then
@@ -350,7 +341,6 @@ endif
 
 echo PGM: prog wip rad 
 mir.install prog wip rad 
-
 
 # special things....
 
