@@ -125,10 +125,11 @@ c    rjs  01dec98 More warning messages.
 c    rjs  22mar00 Relax implicit assumption that XX/YY much stronger than XY/YX.
 c    rjs   8jan01 Fix buggy error message
 c    pjt  11feb02 Fix double + sign some complilers don't grok
+c    gmx  19jan05 Fix call to model to include the calget argument
 c------------------------------------------------------------------------
 	include 'gpscal.h'
 	character version*(*)
-	parameter(version='GpsCal: version 1.0 12-feb-02')
+	parameter(version='GpsCal: version 1.0 19-jan-05')
 	integer MAXSELS,nhead
 	parameter(MAXSELS=256,nhead=5)
 c
@@ -145,7 +146,7 @@ c  Externals.
 c
 	logical keyprsnt,hdprsnt
 	character PolsC2P*2
-	external Header
+	external header,calget
 c
 c  Get the input parameters.
 c
@@ -239,7 +240,7 @@ c
 	      flx(2) = i
 	      nfiles = nfiles + 1
 	      call Model(flag2,tvis,0,offset,flx,tscr(nfiles),
-     *				nhead,Header,nchan,nvis)
+     *				nhead,Header,calget,nchan,nvis)
 	    endif
 	  enddo
 	else
@@ -249,7 +250,7 @@ c
 	    call ModelIni(tmod,tvis,sels,flag1)
 	    nfiles = nfiles + 1
 	    call Model(flag2,tvis,tmod,offset,clip,tscr(nfiles),
-     *				nhead,Header,nchan,nvis)
+     *				nhead,Header,calget,nchan,nvis)
 	    call GetPolTy(i.eq.1,tmod,nchan,nvis,Saved)
 	    call xyclose(tmod)
 	  enddo
