@@ -8,28 +8,29 @@
 
 /************************************************************************/
 /* jhz 2004-5-25 */
+#if 0
 fortran subroutine mirread(character datapath, integer jstat)
 {
   mirread_c(datapath.zterm, (char *)jstat.addr);
 }
-
+#endif
 fortran subroutine rsmirread(character datapath, integer jstat)
 {
   rsmirread_c(datapath.zterm, (char *)jstat.addr);
 }
 
-
+#if 0
 fortran subroutine miriadwrite(character datapath, integer jstat)
 {
   miriadwrite_c(datapath.zterm, (char *)jstat.addr);
 }
-
+#endif
 fortran subroutine rsmiriadwrite(character datapath, integer jstat)
 {
   rsmiriadwrite_c(datapath.zterm, (char *)jstat.addr);
 }
 
-
+#if 0
 fortran subroutine smaflush(logical mflag, logical scinit, integer tcorr,
     logical scbuf, logical xflag, logical yflag,
     integer maxif, integer maxant, integer scanskip, 
@@ -40,7 +41,7 @@ fortran subroutine smaflush(logical mflag, logical scinit, integer tcorr,
               maxif.val, maxant.val, scanskip.val, 
               scanproc.val, sb.val, rxif.val); 
 }
-
+#endif
 fortran subroutine rssmaflush(logical mflag, logical scinit, integer tcorr,
     logical scbuf, logical xflag, logical yflag,
     integer maxif, integer maxant, integer scanskip,
@@ -54,7 +55,7 @@ fortran subroutine rssmaflush(logical mflag, logical scinit, integer tcorr,
 
 
 
-
+#if 0
 fortran subroutine pokeinisma(integer tbd, integer tno1,
  logical dosam1, logical doxyp1, logical doop1,
  logical dohann1, logical birdie1, logical dowt1,
@@ -68,7 +69,7 @@ fortran subroutine pokeinisma(integer tbd, integer tno1,
           doif1.addr, hires1.addr, nopol1.addr,
           oldpol1.addr, lat1.val, long1.val);
         }
-
+#endif
 fortran subroutine rspokeinisma(integer tbd, integer tno1,
  logical dosam1, logical doxyp1, logical doop1,
  logical dohann1, logical birdie1, logical dowt1,
@@ -82,12 +83,12 @@ fortran subroutine rspokeinisma(integer tbd, integer tno1,
           doif1.addr, hires1.addr, nopol1.addr,
           oldpol1.addr, lat1.val, long1.val, rsnchan1.val);
         }
-
+#if 0
 fortran subroutine pokeflshsma(integer tbd)
         {
             pokeflshsma_c((char *)tbd.addr);
         }
-
+#endif
 fortran subroutine rspokeflshsma(integer tbd)
         {
             rspokeflshsma_c((char *)tbd.addr);
