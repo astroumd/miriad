@@ -119,10 +119,11 @@ c   10jun97 rjs/mchw - Use keyline to uniformly handle linetype.
 c   26dec97 pjt  - more ansi (x -> 1x in format 100; Stat -> ShowStat [g77]
 c   28oct99 mchw - Extend phase in averaging routine.
 c   27oct00 mchw - Changes to accomodate more antennas.
+c   19jan02 pjt  - basant needs double precision argument
 c-----------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='UVLIST: version  27-Oct-00')
+	parameter(version='UVLIST: version  19-Jan-02')
 	real rtoh,rtod,pi
 	integer maxsels
 	parameter(pi=3.141592653589793,rtoh=12/pi,rtod=180/pi)
@@ -1131,7 +1132,8 @@ c
 	        call writeit(
      *			varname(k)//': '//rangleh(dble(data(1))),23)
 	      else if (varname(k).eq.'baseline') then
-        	call basant(data(1),ant1,ant2)
+		ddata(1) = data(1)
+        	call basant(ddata(1),ant1,ant2)
 	        write(line,'(a8,'':'',i4,"-",i4)') varname(k),ant1,ant2
 	        call writeit(line,15)
 	      else
