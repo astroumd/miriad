@@ -114,9 +114,10 @@ c			Use HA max and min from input list.
 c    mchw 28oct98  Adapt for Phase monitor data.
 c (( pjt  20jun98  fixed local char*(*) declaration problem (g77) ))
 c    pjt  17mar01  Retrofitted the 20jun98 ONCE AGAIN
+c    pjt  12feb02  lstatfile -> lstatfil
 c------------------------------------------------------------------------
       character version*(*)
-      parameter(version='TAC version 17-mar-01')
+      parameter(version='TAC version 12-feb-02')
 c
 	integer MAXP
 	real pi
@@ -688,8 +689,8 @@ c
           call output(' ')
           call output('Read the project status')
           call txtopen(lin,statfile,'old',iostat)
-	  lstatfile = statfile
-          if(iostat.ne.0) call bug('f','problem opening '// lstatfile)
+	  lstatfil = statfile
+          if(iostat.ne.0) call bug('f','problem opening '// lstatfil)
           call txtread(lin,line,length,iostat)
           do while(iostat.eq.0.and.j.lt.maxp)
 c            call output(line)
@@ -713,8 +714,8 @@ c
 c          call output(' ')
 c          call output('Write the project status')
           call txtopen(lin,statfile,'new',iostat)
-	  lstatfile = statfile
-          if(iostat.ne.0) call bug('f','problem opening '// lstatfile)
+	  lstatfil = statfile
+          if(iostat.ne.0) call bug('f','problem opening '// lstatfil)
           write(line,'(a,10x,a,17x,a,20x,a)')
      *				 '#','project','inttime','lstdone'
           call txtwrite(lin,line,len1(line),iostat)

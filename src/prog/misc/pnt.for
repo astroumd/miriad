@@ -447,11 +447,11 @@ c********1*********2*********3*********4*********5*********6*********7*c
 c
 	if(equ.eq.4) then
 	  ansel = v(1) +v(4)*sin(el) + v(5)*cos(el) + v(2)*sin(az)
-     *	      + v(3)*cos(az) + v(6)*sin(2.*az) + 
+     *	      + v(3)*cos(az) + v(6)*sin(2.*az)  
      *	      + v(7)*cos(2.*az) + v(8)*tan(1.5708-el)
 	else if(equ.eq.5) then
 	  ansel = v(1) +v(2)*sin(el) + v(3)*cos(el) + v(4)*sin(az)
-     *	      + v(5)*cos(az) + v(6)*sin(2.*az) + 
+     *	      + v(5)*cos(az) + v(6)*sin(2.*az) 
      *	      + v(7)*cos(2.*az) + v(8)*tan(1.5708-el)
 	else
 	  ansel = v(1) +v(2)*sin(el) + v(3)*cos(el) + v(4)*sin(az)

@@ -112,9 +112,10 @@ c    mchw 31dec97  More debugging info for Dick.
 c    mchw 05jan00  Print run time statistics indep of debug option.
 c (( pjt  20jun98  fixed freakin' same problem as in tac.for ))
 c    pjt  17mar01  and retrofitted the SAME THING AGAIN...geez Mel
+c    pjt  12feb02  lstatfile -> lstatfil
 c------------------------------------------------------------------------
       character version*(*)
-      parameter(version='version 17-mar-01')
+      parameter(version='version 12-feb-02')
 c
 	integer MAXP
 	real pi
@@ -643,7 +644,7 @@ c    inttime	integration time aquired.
 c    lstdone	lst done. 
 c
 c-----------------------------------------------------------------------
-        character line*153,proj*33,lstatfile*80
+        character line*153,proj*33,lstatfil*80
         integer lin,i,j,length,iostat
 c
 c  Externals.
@@ -656,8 +657,8 @@ c
           call output(' ')
           call output('Read the project status')
           call txtopen(lin,statfile,'old',iostat)
-	  lstatfile = statfile
-          if(iostat.ne.0) call bug('f','problem opening '// lstatfile)
+	  lstatfil = statfile
+          if(iostat.ne.0) call bug('f','problem opening '// lstatfil)
           call txtread(lin,line,length,iostat)
           do while(iostat.eq.0.and.j.lt.maxp)
 c            call output(line)
@@ -682,7 +683,7 @@ c          call output(' ')
 c          call output('Write the project status')
           call txtopen(lin,statfile,'new',iostat)
 	  lstatfil = statfile
-          if(iostat.ne.0) call bug('f','problem opening '// lstatfile)
+          if(iostat.ne.0) call bug('f','problem opening '// lstatfil)
           write(line,'(a,10x,a,17x,a,20x,a)')
      *				 '#','project','inttime','lstdone'
           call txtwrite(lin,line,len1(line),iostat)

@@ -84,10 +84,11 @@ c   27oct00 mchw  Changes to support more antennas.
 c   29aug01 mchw  changes for missing antpos in uv-data.
 c   30jan02 mchw  Format change for Tair < -10 K !
 c    7feb02 pjt   few more ANSI 'x' to '1x' in format stmt's
+c   12feb02 pjt   intel compiler fix
 c------------------------------------------------------------------------
 	include 'atmos.h'
 	character version*(*)
-	parameter(version='atmos: version 7-feb-02')
+	parameter(version='atmos: version 12-feb-02')
 	integer maxsels
 	parameter(maxsels=1024)
 	real sels(maxsels)
@@ -449,7 +450,7 @@ c  Fit psf
 c
       call psf_fit(npts,xm,ym,zm,delz,an,rms)
 	write(line,'(a,a,a)')
-     *, '#PSF  day     rms   slope  d/elev  const',
+     *          '#PSF  day     rms   slope  d/elev  const',
      *		' rmsfit  aveamp  sigma elev',
      *		' npts freq mmH2O Tair humid wind source'
 	call output(line)
@@ -457,7 +458,7 @@ c
      *	.and.an(1).lt.2 .and. an(2).gt.-1.and.an(2).lt.3 )then
 	write(line,'
      *		(a,f8.3,5f7.2,2f8.3,i4,i4,f8.3,2f5.1,f6.1,f5.1,1x,a)')
-     *,   'psf', day, (an(i),i=1,4),rms,aveamp,sigma,nint(elev),
+     *    'psf', day, (an(i),i=1,4),rms,aveamp,sigma,nint(elev),
      *	  npts,freq,precipmm,airtemp,min(relhumid,99.9),windmph,source
 	  call output(line)
 	endif
