@@ -154,8 +154,8 @@ mir.mkdirs $MIRTEMP >& /tmp/mir.mkdirs.log
 
 #    	Linux really ...
 cat $MIRTEMP/src/sys/files/MIRRC.skel |\
-  sed s,/appl/lai/miriad/mirdir,$MIRTEMP, |\
-  sed s,sun4sol,$hosttype, |\
+  sed s,/mir_rootdir,$MIRTEMP, |\
+  sed s,mir_hosttype,$hosttype, |\
   sed s,/usr/openwin/include,$mirxinc, |\
   sed s,/usr/local/lib/X11,$mirxlib, |\
   grep -v PGPLOT_FONT >! $MIRTEMP/MIRRC.$hosttype
@@ -168,6 +168,7 @@ if ($pgplot) then
 else
   echo 'setenv PGPLOT_DIR /usr/lib/pgplot' >> $MIRTEMP/MIRRC.$hosttype
 endif
+echo 'setenv WIPHELP $MIR/borrow/wip/wiphelp.dat; >> >> $MIRTEMP/MIRRC.$hosttype
 
 
 # astromake: only do this if you want to make THIS version miriad's 
@@ -229,7 +230,7 @@ foreach ldir ($readlinelibs)
     endif
 end
 if ($dorl == 0) then
-   echo Your system does not seed to have readline, and miriad.c will not use it
+   echo Your system does not seem to have readline, and miriad.c will not use it
 endif
 
 echo LIB: linpack subs www
