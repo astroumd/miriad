@@ -271,6 +271,7 @@ c
 	call obsad('kittpeak/jyperk',	55.d0)
 	call obsad('kittpeak/latitude',	obsdms( 1, 31,57,12.10))
 	call obsad('kittpeak/longitude',obsdms(-1,111,36,51.12))
+        call obsad('kittpeak/mount',     ALTAZ)
 	call obsad('kittpeak/nants',	1.d0)
 	call obsad('kittpeak/systemp',	200.d0)
 c
