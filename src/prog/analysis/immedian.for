@@ -4,6 +4,7 @@ c-----------------------------------------------------------------------
 c  History:
 c     17jan03 pjt   cloned off IMSHARP, Q&D for Stuart Vogel
 c     23jan03 pjt   finalized
+c     21feb03 pjt   removed the local (duplicated/old wrong) copy of sortr
 c
 c  TODO:
 c     - implement looping over all planes in the cube
@@ -37,7 +38,7 @@ c
       INCLUDE 'maxnax.h'
 c
       CHARACTER  PVERSION*(*)
-      PARAMETER (PVERSION='Version 1.0 23-jan-03')
+      PARAMETER (PVERSION='Version 1.0 21-feb-03')
       INTEGER   MAXDIM3
       PARAMETER (MAXDIM3=1024)
       INTEGER   MAXBOX
@@ -217,53 +218,10 @@ c
       INTEGER n2
 c
       CALL sortr(x,n)
-c      CALL sortr1(n,x)
       n2=n/2
       IF(2*n2.EQ.n)THEN
         xmed=0.5*(x(n2)+x(n2+1))
       ELSE
         xmed=x(n2+1)
       ENDIF
-      END
-c***********************************************************************
-      SUBROUTINE sortr1(n,ra)
-      IMPLICIT NONE
-      INTEGER n
-      REAL ra(n)
-c
-      integer i,j,l,ir
-      real rra
-c
-      l=n/2+1
-      ir=n
-10    CONTINUE
-        IF(l.GT.1)THEN
-          l=l-1
-          rra=ra(l)
-        ELSE
-          rra=ra(ir)
-          ra(ir)=ra(1)
-          ir=ir-1
-          IF(ir.EQ.1)THEN
-            ra(1)=rra
-            RETURN
-          ENDIF
-        ENDIF
-        i=l
-        j=l+l
-20      IF(j.LE.ir)THEN
-          IF(j.LT.ir)THEN
-            IF(ra(j).LT.ra(j+1))j=j+1
-          ENDIF
-          IF(rra.LT.ra(j))THEN
-            ra(i)=ra(j)
-            i=j
-            j=j+j
-          ELSE
-            j=ir+1
-          ENDIF
-        GO TO 20
-        ENDIF
-        RA(I)=RRA
-      GO TO 10
       END
