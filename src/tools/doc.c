@@ -81,9 +81,9 @@ History:
   bpw 30jan95 Small bug fix with ovwdir, close outstream in change_outstream
   rlp 10jun97 Print keywords out in lower case.
   pjt 12jun01 Increased N_PGMR, made a static in lognam()
-
+      15jun01 and defensed agains future increments for N_PGMR
 ********************************************************************/
-char *version = { "version 2.6 - 12-Jun-01" };
+char *version = { "version 2.6 - 15-Jun-01" };
 /*******************************************************************/
 /*= doc - MIRIAD documentation program                             */
 /*& bpw                                                            */
@@ -962,6 +962,10 @@ void build_namelist()
             remove_trailing_spaces( initials[i] );
             remove_trailing_spaces( pgmrname[i] );
             i++;
+	    if (i==N_PGMR) {
+	      fprintf(stderr,"Warning: too many programmers (N_PGMR=%d)\n",i);
+	      break;
+	    }
         } 
     } else {
         for( i=0; i<N_PGMR; i++ ) { initials[i][0]='\0'; pgmrname[i][0]='\0'; }

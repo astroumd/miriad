@@ -52,13 +52,10 @@
 # SuSe 6.0 uses: /usr/lib/libbsd-compat.a
 # whereas PGPLOT  likes /usr/lib/libbsd.a, a symlink will solve that
 
-
 # shared libs or not?? -- shared is ok, but mir.subs will not rebuild
 # the .so file, use
 #	(cd $MIRLIB; make slib)
 # With shared, linux rh61 gives 30MB in executables, without it is 70 MB!!
-
-#   
 
 #   'newdir' is something that tags the date this version was made (e.g. 98jun08)
 #   later on this will also be stored again in the file $MIR/DATE, where the CVS miriad
@@ -67,6 +64,7 @@ set newdir=`date +%y%b%d | tr A-Z a-z`
 set hosttype=linux
 set mirxinc="/usr/include/X11"
 set mirxlib="/usr/X11R6/lib"
+set readlinelibs=(/usr/lib /local/lib /usr/local/lib)
 set libforms=/usr/lib/libforms.a
 #		care, wip still uses something else, it won't listen to $fortran
 #		and you probably need 'f77' in your path
@@ -202,8 +200,7 @@ if (! -e /usr/lib/libbsd.a) echo Warning: you do not have /usr/lib/libbsd.a
 
 # special: linux generally has readline...   (this test failed on mdk71 ??)
 set dorl=0
-echo MIRIAD.C: trying to look for readline
-foreach ldir (/usr/lib /local/lib /usr/local/lib) 
+foreach ldir ($readlinelibs)
     if (-e $ldir/libreadline.a) then
         echo Borrowing the system version of readline for linux from $ldir
         ln -s $ldir/libreadline.a $MIRLIB/libreadline.a 
@@ -212,7 +209,7 @@ foreach ldir (/usr/lib /local/lib /usr/local/lib)
     endif
 end
 if ($dorl == 0) then
-   echo Your system does not have readline, and miriad.c will not use it
+   echo Your system does not seed to have readline, and miriad.c will not use it
 endif
 
 echo LIB: linpack subs www
@@ -238,14 +235,14 @@ echo PGM: prog wip
 mir.install prog wip xmrecvlist
 
 
-# special things.... (for mir.test ???)
+# special things....
 
 echo Compiling UVIO:
 cc -O -DTESTBED -I$MIRINC $MIRSUBS/uvio.c -o $MIRBIN/uvio $MIRLIB/libmir.a -lm >& $MIR/tmp/uvio.$$.linux
 
 # xcorf: assumed lesstiff is installed
 
-echo Compiling XCORF for linux:
+echo Compiling XCORF:
 cd $MIR/src/spec/xcorf
 make sol6 SOLARISLIBS= \
           CFLAGS="-O -I/usr/X11R6/include" \
@@ -259,22 +256,16 @@ cd $MIRPDOC
 rehash
 doc -p $MIRCAT/keywords.kdoc
 
-
-#
 cd $MIR
-
-
-# above symlink will solve this, no need for handcompile
-# cc -O -o $MIRBIN/miriad $MIR/src/tools/miriad.c 
 
 if (-e $install_root/do_patch) then
     pushd $install_root
     echo LOCAL install patches for $newdir
     echo $newdir > $MIR/DATE
     ./do_patch
-    mkdir -p $MIR/local/install
+    # mkdir -p $MIR/local/install
 	#  oops, what about the directories.....
-    cp -pr * $MIR/local/install
+    # cp -pr * $MIR/local/install
     ./mir.test
     popd
 endif
