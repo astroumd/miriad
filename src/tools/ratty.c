@@ -10,6 +10,7 @@ for these machines.
 Usage:
 
  ratty [-s system] [-I incdir] [-D symbol] [-bglu [-n start inc] [in] [out]
+       [-h]
 
     system:  One of "f77" (generic unix compiler), "unicos" (Cray FORTRAN
              compiler), "vms" (VMS FORTRAN), "alliant" (alliant unix
@@ -44,6 +45,8 @@ Usage:
     -u:      Convert all variables, etc, to upper case.
              (some of the system generated if/then/else/endif/continue
               are not converted to upper case)
+
+    -h:      some help and exit
 
     in:      Input file name. If omitted, standard input is assumed
              and output must be the standard output.
@@ -99,6 +102,7 @@ vector processing capacities (compilers "unicos", "alliant" and "convex"):
 /*    rjs  20nov94 Added alpha.						*/
 /*    pjt   3jan95 Added f2c (used on linux)                            */
 /*    rjs  15aug95 Added sgi		                                */
+/*    pjt  16mar03 MIR4 prototypes, -h                                  */
 /*									*/
 /************************************************************************/
 /* ToDos/Shortcomings:                                                  */
@@ -108,7 +112,7 @@ vector processing capacities (compilers "unicos", "alliant" and "convex"):
 /*  to be changed to:                                                   */
 /*      (uflag?textout("continue\n"):textout("CONTINUE\n"));            */
 /************************************************************************/
-#define VERSION_ID   "15-Aug-95"
+#define VERSION_ID   "16-mar-03"
 
 #define max(a,b) ((a) > (b) ? (a) : (b) )
 #define min(a,b) ((a) < (b) ? (a) : (b) )
@@ -116,14 +120,32 @@ vector processing capacities (compilers "unicos", "alliant" and "convex"):
 #define private static
 #include <ctype.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
 
 #define TRUE 1
 #define FALSE 0
 
-/* A few things to stop lint complaining. */
+static void get_labelnos(char *slower, char *sinc);
+static void process(FILE *in, char *infile);
+static void message(char *text);
+static void textout(char *text);
+static void numout(int label);
+static void labelout(int label);
+static void blankout(int blanks);
+static void lowercase(char *string);
+static char *getparm(char *line, char *token);
+static void cppline(char *line);
+static char *progtok(char *line, char *token, int *indent, int *lineno, int *bracketting);
+static char *skipexp(char *s, int *bracketting);
+static int getline(FILE *in, char *line);
+static int reformat(char *s);
+static struct link_list *add_list(struct link_list *list, char *name);
+static FILE *incopen(char *name);
+static int isdefine(char *name);
+static void usage(void);
 
-char *malloc(),*strcpy(),*strcat();
-int fclose(),fputc();
 #define Strcpy (void)strcpy
 #define Strcat (void)strcat
 #define Fclose (void)fclose
@@ -177,18 +199,19 @@ static int comment,in_routine,gflag,lflag,uflag;
 static int loops[MAXDEPTH],dowhile[MAXDEPTH];
 struct link_list {char *name; struct link_list *fwd;} *defines,*incdir;
 
+#if 0
 private void process(),message(),textout(),labelout(),numout(),blankout(),lowercase(),
 	cppline(),get_labelnos(),usage();
 private struct link_list *add_list();
 private int getline(),reformat(),isdefine();
 private char *getparm(),*progtok(),*skipexp();
 private FILE *incopen();
+#endif
+
 private int continuation,quoted=FALSE;
 private int lower,increment;
 /************************************************************************/
-main(argc,argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 {
   char *s,*infile,*outfile,*sysname;
   int i;
@@ -223,6 +246,7 @@ char *argv[];
 	case 'g': gflag=TRUE; 					break;
         case 'l': lflag = TRUE;                                 break;
 	case 'u': uflag = TRUE;                                 break;
+        case 'h':
 	case '?': usage();		/* will also exit */
 	default:  fprintf(stderr,"### Ignored unrecognized flag %c\n",*(s-1));
 						break;
@@ -279,7 +303,7 @@ char *argv[];
 /* Give a final message. */
 
   printf("Number of lines = %d; number of routines = %d\n",lines,routines);
-  exit(0);
+  return 0;
 }
 /************************************************************************/
 private void get_labelnos(slower,sinc)
@@ -321,7 +345,7 @@ char *infile;
 
   if(gflag)strcpy(gfile,infile);            /* init -g filename */
 
-  while(type = getline(in,line)){
+  while( (type=getline(in,line)) ){
     lines++;
     if(gflag){
         glines++;
@@ -815,7 +839,7 @@ char *s;
   type = ' ';
   first = TRUE;
   t = line;
-  while(c = *t++){
+  while( (c = *t++) ){
     if(c == ' ') *s++ = ' ';
     else if(c == '\t'){
       pad = 8 * ( (s - s0)/8 + 1 ) - (s - s0);
@@ -928,7 +952,6 @@ private void usage()
    fprintf(stderr,"-g           include # references for dbx\n");
    fprintf(stderr,"-l           convert program text to lower case\n");
    fprintf(stderr,"-u           convert program text to upper case\n");
-   fprintf(stderr,"-?           help (this list)\n");
+   fprintf(stderr,"-?,h         help (this list)\n");
    exit(0);
 }
-
