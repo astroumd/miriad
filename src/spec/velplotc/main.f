@@ -13,7 +13,7 @@
 	call readmap(file,ary,v,nx,ny,nc,.TRUE.)
 	call readcommandcut()
 	call keyfin
-
+	if (nc.gt.0) call getconvbeam()
 c	write(*,*) "Org ary,v =",ary,v
 	if (task.eq."DOPOSVEL") then
 	   if (nc.gt.0) call save_posvel()
@@ -394,22 +394,26 @@ c
 	call keyi ('Contour', contour, 1)
 	call keyi ('Note', annotate, 1)
 	call keyi ('beamquad', Beam, 0)
+	call keyi ('Box', boxc, 1)
 	call keya ('units', Units_p, "s")
 	call keya ('conflag', conflag, "pn")
 	call mkeyr('Cbeam',value,3,nval)
 	if (nval.ne.3) then
+	  write(*,*) "##Warning: Error input of Cbeam, use defaults"
 	  cmaj=0.0
 	  cmin=0.0
 	  cpa=0.0
 	else
-	  cmaj=value(1)
-	  cmin=value(2)
-	  cpa=value(3)
+	  cmaj=max(0,value(1))
+	  cmin=max(0,value(2))
+	  cpa=max(0,value(3))
 	end if
+	write(*,*) "boxc",boxc
 c
 c	Original, convolution_information need cdelt1(xy) from the data
 c	however, we make it 0.0 and convolution size is always 3 pixels
-c	at start. However, do not do it now, since it not useful
+c	at start. However, do not do it now, since it is not useful before
+c	we read in the file.
 c
 c	call convolution_information(cmaj,cmin,cpa)
 
@@ -434,5 +438,11 @@ c	call convolution_information(cmaj,cmin,cpa)
 	else 
 	   call help
 	endif	
+	return
+	end
+
+	subroutine getconvbeam()
+	include "cut.h"
+	call convolution_information(cmaj,cmin,cpa)
 	return
 	end
