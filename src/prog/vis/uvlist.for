@@ -124,11 +124,13 @@ c   27jun02 mchw - use latitude uv-variable if present.
 c   11dec02 pjt  - subroutine q/r/d/ZERO to bypass big DATA statement that makes big binaries
 c   13mar03 pjt  - need to use MAXBASE2 mor multidim arrays...
 c   14aug03 mchw - replace varmint with parang in options=list.
+c   14dec03 pjt  - fix initialization bug for options=average
 c   06feb04 mchw - added AZ to options=list.
+c   21may04 pjt  = CVS merged the two previous modifications
 c-----------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='UVLIST: version  06-Feb-2004')
+	parameter(version='UVLIST: version  21-may-04')
 	real rtoh,rtod,pi
 	integer maxsels
 	parameter(pi=3.141592653589793,rtoh=12/pi,rtod=180/pi)
@@ -518,10 +520,10 @@ c
 	   call rzero(MAXAVE,phiave)
 	   call rzero(MAXAVE,amprms)
 	   call rzero(MAXAVE,phirms)
-	   call dzero(MAXAVE,uave)
-	   call dzero(MAXAVE,vave)
-	   call dzero(MAXAVE,timeave)
-	   call dzero(MAXAVE,baseave)
+	   call dzero(MAXBASE,uave)
+	   call dzero(MAXBASE,vave)
+	   call dzero(MAXBASE,timeave)
+	   call dzero(MAXBASE,baseave)
 	   first = .FALSE.
 	endif
 	if(needhd)then
