@@ -230,7 +230,8 @@
 % "radio" as the minor keyword.  The colon is used to introduce another
 % level into the index.
 
-\keywords{GILDAS, MIRIAD, astronomy: radio, interoperability, python}
+\keywords{software: GILDAS, software: MIRIAD, astronomy: radio,
+  interoperability, python}
 
 %-----------------------------------------------------------------------
 %                              Abstract
@@ -269,51 +270,52 @@
 
 \begin{figure}[t]
   \epsscale{0.85}
-  \plotone{P4-14_1.eps}
+  \plotone{P4-14_f1.eps}
   \caption{Results of the evaluation of the \GILDAS{} and \MIRIAD{}
     packages for compliance with the \ALMA{} off-line data processing
-    requirements. Those requirements have been prioritized: All takes into
-    account absolutely all the requirements while Critical only evaluate
-    the 49\% more important requirements. In the legend, A means Adequate,
-    A/E Enhancements are desired, I/N Inadequate of Not available and U
-    Unable to evaluate.  Low/Medium/High is the severity of the failure to
-    meet the requirement.  Many more details may be found in Pety et al.
-    (2003a).}
-  \label{fig:P4-14_1}
+    requirements. Those requirements have been prioritized: \texttt{All}
+    takes into account absolutely all the requirements while
+    \texttt{Critical} only evaluate the 49\% more important requirements.
+    In the legend, A means Adequate, A/E Enhancements are desired, I/N
+    Inadequate of Not available and U Unable to evaluate.  Low/Medium/High
+    is the severity of the failure to meet the requirement.  Many more
+    details may be found in Pety et al.  (2003a).}
+  \label{fig:P4-14_f1}
 \end{figure}
 
-\GILDAS{} and \MIRIAD{} (Sault et al. 1994)
-are two state-of-the-art data reduction packages
-for the current generation of millimeter instruments. \GILDAS{} is
-\emph{daily} used at the Plateau de Bure Interferometer as well as several
-single dish telescopes (\eg{} \IRAMthm{}, \CSO{}) while \MIRIAD{} is
-\emph{daily} used at BIMA, ATCA, OVRO and WSRT. Moreover, as revealed by
-publicly available evaluations for compliance with the \ALMA{} off-line
-data processing requirements (Gueth et al. 2003 and Wright et al. 2003),
-almost 2/3 of the core functionalities needed by mm interferometers are
-adequately covered by \GILDAS{} and \MIRIAD{}.  Going further,
-Fig.~\ref{fig:P4-14_1} shows that, between them, \GILDAS{} and \MIRIAD{}
-cover more that 75\% of the \ALMA{} requirements for off-line.  Indeed,
-although the core functionalities needed to reduce millimeter
+\GILDAS{} and \MIRIAD{} (Sault et al. 1994) are two state-of-the-art data
+reduction packages for the current generation of millimeter instruments.
+\GILDAS{} is \emph{daily} used at \IRAM{} instruments (\ie{} the Plateau de
+Bure Interferometer and the 30~m) as well as several other single dish
+telescopes (\eg{} \CSO{}, HHT, Effelsberg) while \MIRIAD{} is \emph{daily}
+used at BIMA, ATCA, OVRO and WSRT. Moreover, as revealed by publicly
+available evaluations for compliance with the \ALMA{} off-line data
+processing requirements (Gueth et al. 2003 and Wright et al. 2003), almost
+2/3 of the core functionalities needed by the \emph{next} generation of mm
+interferometers are adequately covered by \GILDAS{} and \MIRIAD{}.  Going
+further, Fig.~\ref{fig:P4-14_f1} shows that, between them, \GILDAS{} and
+\MIRIAD{} cover more that 75\% of the \ALMA{} requirements for off-line.
+Indeed, although the core functionalities needed to reduce millimeter
 interferometry data are well covered in both packages, the strength of both
-packages are complementary. \GILDAS{} has good data analysis and
+packages are complementary.  \GILDAS{} has good data analysis and
 visualization tools, while \MIRIAD{} has a complete set of calibration and
 imaging algorithms including polarization (for more details, see Pety et
 al. 2003a). It is thus interesting to study the possibility of
 interoperating both packages in a user-friendly way (Pety et al. 2003b).
 
 Both packages have rather different implementation philosophy. \GILDAS{} is
-made of large stand-alone programs like \CLIC{} for the data calibration
-and \MAPPING{} for data imaging, deconvolution and analysis. In addition,
-\GILDAS{} has the ability to launch fully separated tasks. \MIRIAD{} is
-build around a large collection of individual, well focused tasks, that run
-under the native operating system.  Both packages also have different user
-interfaces. \GILDAS{} is build around \SIC{}, an homemade command line
-interface enabling direct insight into the data, and \GREG{}, a very
-efficient, homemade plotting environment.  Since \MIRIAD{} programs are
-simple standalone tasks, every UNIX shell may serve as \MIRIAD{} user
-interface.  \MIRIAD{} developers have in the past experiment with graphical
-user interfaces, but in practice users write shell scripts to perform their
+made of large stand-alone programs like \CLASS{} and \CLIC{} for
+single-dish and interferometric data calibration and \MAPPING{} for data
+imaging, deconvolution and analysis. In addition, \GILDAS{} has the ability
+to launch fully separated tasks.  \MIRIAD{} is build around a large
+collection of individual, well focused tasks, that run under the native
+operating system.  Both packages also have different user interfaces.
+\GILDAS{} is build around \SIC{}, an homemade command line interface
+enabling direct insight into the data, and \GREG{}, a very efficient,
+homemade plotting environment.  Since \MIRIAD{} programs are simple
+standalone tasks, every UNIX shell may serve as \MIRIAD{} user interface.
+\MIRIAD{} developers have in the past experiment with graphical user
+interfaces, but in practice users write shell scripts to perform their
 analysis pipelines.  Finally, although the data models used in \GILDAS{}
 and \MIRIAD{} are very similar, their implementation is very different.
 
@@ -330,39 +332,41 @@ The main difficulty to port \GILDAS{} under \python{} is the different
 characteristics of \SIC{} vs.\ \python{}, \ie{} strongly vs.\ weakly typed
 languages and procedural vs.\ object oriented languages. As a first
 approach, we used \fpig{} (a \FORTRAN{} to \python{} interface generator)
-to produce \emph{i)} a generic interface to the \SIC{} command line
+to produce a generic interface to the \SIC{} command line
 interpretor and a direct interface to some of the most commonly used
 commands. All \GILDAS{} capabilities are thus directly available from the
 \python{} prompt. No one--to--one correspondence between \FORTRAN{} and
 \python{} variables is yet provided impairing the good interaction with
 data. Progress is currently being made in this direction. Another foreseen
 evolution is the possibility to swap on--the--fly from \python{} to \SIC{}
-and vice-versa, as this is an important property for the community of
+and vice-versa, as this is an important requirement for the community of
 current users.
 
-In \MIRIAD{} case, a generic \python{} interface was written to \emph{i)}
-pass informations to \MIRIAD{} tasks and recover their output.  No direct
-access to \MIRIAD{} internal data structure or automatic translation of
-template procedures from \texttt{csh} to \python{} is yet available. The
-next improvement will be to automate the building of task access in
-\python{}, decreasing the size of current \python{} script by about 50\%.
-Finally, the ATA group have recently implemented a \texttt{Jython}
-interface to \MIRIAD{} dubbed \texttt{J-MIRIAD} (Harp \& Wright 2003).
+In the \MIRIAD{} case, a generic \python{} interface was written to pass
+information to \MIRIAD{} tasks and recover their output.  No direct access
+to \MIRIAD{} internal data structure or automatic translation of template
+procedures from \texttt{csh} to \python{} is yet available. The next
+improvement will be to automate the building of task access in \python{},
+decreasing the size of current \python{} script by about 50\%.  Finally,
+the ATA group have recently implemented a \texttt{Jython} interface to
+\MIRIAD{} dubbed \texttt{J-MIRIAD} (Harp \& Wright 2003).
 
 \section{Interoperability Demonstration}
 
 \begin{figure}[t]
   \epsscale{0.85}
-  \plotone{P4-14_2.eps}
-  \caption{Top images: The 1mm continuum imaged in \GILDAS{} (right) and
-    \MIRIAD{} (left), both using the same map resolution and restoring beam.
-    Bottom left: $|$\GILDAS{}$-$\MIRIAD{}$|$. Bottom right:
+  \plotone{P4-14_f2.eps}
+  \caption{Top images: The 1~mm continuum imaged in \GILDAS{} (right) and
+    \MIRIAD{} (left), both using the same map resolution and restoring
+    beam.  Bottom left: $|$\GILDAS{}$-$\MIRIAD{}$|$. Bottom right:
     \GILDAS{}/$|$\GILDAS{}$-$\MIRIAD{}$|$. In all panels except the
     fidelity image, the same color scale and 3--$\sigma$ contours levels
-    have been used. Please, note the absence of contours on the difference
-    image and the high fidelities similar as the image dynamic, which imply
-    an excellent agreement between \GILDAS{} and \MIRIAD{}.}
-  \label{fig:P4-14_2}
+    have been used. The difference map sigma is $1.27\times10^{-3}$ compared to
+    $1.76\times10^{-3}$ for \GILDAS{} and \MIRIAD{} images. Please, note the
+    absence of contours on the difference image and the high fidelities
+    similar as the image dynamic, which imply an excellent agreement
+    between \GILDAS{} and \MIRIAD{}.}
+  \label{fig:P4-14_f2}
 \end{figure}
 
 An example of the current interoperability capabilities of \GILDAS{} and
@@ -382,7 +386,7 @@ difficulties were encountered. The main results are velocity channel maps
 of the \HCOp{} \Jone{} line (not shown here) and a 1mm continuum map.
 
 As a by-product, we also imaged and deconvolved the 1mm continuum map
-inside \GILDAS{}. Fig.~\ref{fig:P4-14_2} shows a detailed comparison of the
+inside \GILDAS{}. Fig.~\ref{fig:P4-14_f2} shows a detailed comparison of the
 \GILDAS{} and \MIRIAD{} images, which allows us to conclude that \GILDAS{}
 and \MIRIAD{} imaging and deconvolution performances are similar.
 
