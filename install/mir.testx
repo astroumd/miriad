@@ -21,7 +21,7 @@ echo -n "MIR.MAN: " ; set ans=$<
 mir.man
 
 echo -n "MIRHELP: " ; set ans=$<
-mir.help itemize
+mir.help imsub
 
 echo -n "DOC: " ; set ans=$<
 doc
