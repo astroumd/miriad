@@ -4,14 +4,16 @@
 #
 
 import sys, os, time, string
-version='2003-03-09'
+version='2003-03-10'
 
 # command line arguments that can be changed... (but should not in the benchmark)
 keyval = {
     "nchan"   : "32",         # number of channels
     "mapsize" : "1024",       # size of the map (should be a power of 2)
     "cell"    : "0.5",        # cell size in arcsec
-    "small"   : "0",          # set this to 0 if you want to small quick test run 
+    "dt"      : "0.01",       # integration step (in hrs, assuming harange -6..6)
+    "small"   : "0",          # set this to 1 if you want to small quick test run 
+    "big"     : "0",          # set this to 1 if you want the 2GB+ test run
     }
 
 # -------------------------------------------------------------------------------
@@ -40,21 +42,30 @@ vis=['vis1','vis2','vis3']
 ant=['bima9_a.ant', 'bima9_b.ant', 'bima9_c.ant.equ']
 
 small=string.atoi(keyval['small'])
+big=string.atoi(keyval['big'])
 if small:
     print 'Running a small test now....'
     nchan   = 2
     mapsize = 256
     cell    = 2.0
+    dt      = 0.1
+elif big:
+    print 'Running 2GB+ test....'
+    nchan   = 32
+    mapsize = 256
+    cell    = 2.0
+    dt      = 0.01
+    ant     = ['vla_a.ant']
+    vis     = ['vis1']
 else:
     print 'Running a normal size test....'
     nchan   = string.atoi(keyval['nchan'])
     mapsize = string.atoi(keyval['mapsize'])
     cell    = string.atof(keyval['cell'])
+    dt      = string.atof(keyval['dt'])
 
 timet=[0,0,0,0,0,0,0,0]           # arrays to store CPU usage
 timec=[0,0,0,0,0,0,0,0]
-
-print "MIRBENCH(py): %s : nchan=%d  mapsize=%d cell=%g" % (version, nchan, mapsize, cell)
 
 mir = os.environ['MIR']
 
@@ -97,6 +108,7 @@ def uvgen(id):
         'corr=%d,1,100.0,1000.0' % nchan,
         'ant=$MIRCAT/%s' % ant[id],
         'source=$MIRCAT/point.source',
+        'harange=-6,6,%g' % dt,
         'spectra=1.0,100.0,0.1',
         'gnoise=0.1',
         'pnoise=10,0,0,0',
@@ -150,32 +162,40 @@ def restor():
 # ----------------------------------------------------------------------------
 # start of the benchmark
 
+print "MIRBENCH(py): %s : nchan=%d  mapsize=%d cell=%g" % (version, nchan, mapsize, cell)
+
 if os.path.isdir(tmp):
     os.system('rm -rf ' + tmp)
 
 os.mkdir(tmp)
 os.chdir(tmp)
 
-timer(0); miriad(uvgen(0))
-timer(1); miriad(uvgen(1))
-timer(2); miriad(uvgen(2))
-timer(3); miriad(uvcat(vis))
-timer(4); miriad(invert(mapsize,cell))
-timer(5); miriad(clean())
-timer(6); miriad(restor())
-timer(7)
+if big:
+    timer(0); miriad(uvgen(0));
+    timer(1)
+    print 'uvgen-big: ' + cpulen(0,1)
+else:
+    timer(0); miriad(uvgen(0))
+    timer(1); miriad(uvgen(1))
+    timer(2); miriad(uvgen(2))
+    timer(3); miriad(uvcat(vis))
+    timer(4); miriad(invert(mapsize,cell))
+    timer(5); miriad(clean())
+    timer(6); miriad(restor())
+    timer(7)
+    
+    print 'Task:     CPU  WALL'
+    print 'uvgen1: ' +  cpulen(0,1)
+    print 'uvgen2: ' +  cpulen(1,2)
+    print 'uvgen3: ' +  cpulen(2,3)
+    print 'uvcat:  ' +  cpulen(3,4)
+    print 'invert: ' +  cpulen(4,5)
+    print 'clean:  ' +  cpulen(5,6)
+    print 'restor: ' +  cpulen(6,7)
+    print 'TOTAL:  ' +  cpulen(0,7)
+    print 'MirStones %f  ' % (300/(timet[7]-timet[0])) + ' Wall clock  (CPU clock has bug)'
+    print 'MirStones %f  ' % (300/(timec[7]-timec[0])) + ' CPU clock'      # also has a bug
 
-print 'Task:     CPU  WALL'
-print 'uvgen1: ' +  cpulen(0,1)
-print 'uvgen2: ' +  cpulen(1,2)
-print 'uvgen3: ' +  cpulen(2,3)
-print 'uvcat:  ' +  cpulen(3,4)
-print 'invert: ' +  cpulen(4,5)
-print 'clean:  ' +  cpulen(5,6)
-print 'restor: ' +  cpulen(6,7)
-print 'TOTAL:  ' +  cpulen(0,7)
-print 'MirStones %f  ' % (300/(timet[7]-timet[0])) + ' Wall clock  (CPU clock has bug)'
-print 'MirStones %f  ' % (300/(timec[7]-timec[0])) + ' CPU clock'      # also has a bug
-
+print 'All done.'
 
 
