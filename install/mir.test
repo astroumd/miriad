@@ -186,7 +186,7 @@ map() {
   mkdir $1
   cd $1
   require uvgen invert clean restor
-  init_uvgen
+  # init_uvgen
   runt uvgen out=vis1 harange=-6,6,0.01 source=$MIRCAT/point.source corr=0,1 ant=$MIRCAT/bima9_b.ant
   runt invert vis=vis1 map=map1 beam=beam1 imsize=512 cell=0.5 
   runt clean map=map1 beam=beam1 out=clean1
