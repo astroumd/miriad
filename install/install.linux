@@ -318,7 +318,8 @@ endif
 
 #
 if ($shared) then
-  if (-e /usr/bin/ranlib) ranlib $MIRLIB/libmir.a
+  pushd $MIRLIB
+  if (-e /usr/bin/ranlib) ranlib libmir.a
 
   if ($hosttype == linux) then
     ld -shared -o libmir.so --whole-archive libmir.a
@@ -337,6 +338,7 @@ if ($shared) then
   else
     echo No shared support for $hosttype yet
   endif
+  popd
 endif
 
 echo PGM: prog wip rad 
