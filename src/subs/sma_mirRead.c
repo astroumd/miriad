@@ -1584,14 +1584,16 @@ uvputvri_c(tno,"sourid", &sourceID, 1);
 // for the first three blocks (1,2,3), the chunk order is normal in each block.
 // for the rest three blocks (4,5,6), the chunk order is reversed in each block.
 // 1 2 3 4 5 6 7 8 9 10 12 16 15 14 13 20 19 18 17 24 23 22 21
-   smabuffer.sfreq[spcode[i]-1]    = spn[inhset]->fsky[i]
-                                   - spn[inhset]->fres[i]/1000.0*
-                                     (spn[inhset]->nch[i]/2-0.5);
 // reverse chunk order for the frequnecy only
-   if(smabuffer.doChunkOrder==1) 
+   if(smabuffer.doChunkOrder==1) {
    smabuffer.sfreq[frcode[i]-1]    = spn[inhset]->fsky[i]
                                    - spn[inhset]->fres[i]/1000.0*
                                      (spn[inhset]->nch[i]/2-0.5);
+            } else {
+   smabuffer.sfreq[spcode[i]-1]    = spn[inhset]->fsky[i]
+                                   - spn[inhset]->fres[i]/1000.0*
+                                     (spn[inhset]->nch[i]/2-0.5);
+           }
 //   printf("smabuffer.sfreq=%f\n", smabuffer.sfreq[spcode[i]-1]);
    smabuffer.restfreq[spcode[i]-1] = spn[inhset]->rfreq[i];
        if(smabuffer.rsnchan<0) {
