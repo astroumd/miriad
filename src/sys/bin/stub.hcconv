@@ -1,5 +1,7 @@
 #!/bin/csh -f
 # --------------------------------------------------------------- 
+#  note hcconv isn't used in MIRIAD4 anymore
+# --------------------------------------------------------------- 
 set mir    = $MIR
 set host   = $MIRHOST
 set lsys   = $mir/bin/localsys
