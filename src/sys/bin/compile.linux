@@ -14,17 +14,16 @@ set mlsys = $mmir/bin/localsys
 ###         #define _LARGEFILE_SOURCE
 ###         #define _FILE_OFFSET_BITS=64
 set lfs="-D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -Wall"
-#set lfs="-Wall"
 setenv Fcompile  "g77"
-setenv Foptions  "-g -fno-globals"
+setenv Foptions  "-O -fno-globals"
 setenv FoptionsN "-fno-globals"
 setenv Flinkdir  "-L`echo $mmir/lib/$mhost $MIRXLIB | sed 's/ / -L/g'`"
-setenv Flinklib  "-lmir -llinpack -lpgplot -lX11 -lm"
+setenv Flinklib  "$lfs -lmir -llinpack -lpgplot -lX11 -lm"
 setenv Finclude  "-I`echo $mmir/src/inc $MIRXINC | sed 's/ / -I/g'`"
 # the gnu compiler actually adds -Dlinux, so we don't need it here
 setenv Ccompile  "gcc"
-setenv Coptions  "-g $lfs"
-setenv CoptionsN "-g $lfs"
+setenv Coptions  "-O $lfs"
+setenv CoptionsN "$lfs"
 setenv Clinkdir  "-L`echo $mmir/lib/$mhost $MIRXLIB | sed 's/ / -L/g'`"
 setenv Clinklib  "-lmir -llinpack -lpgplot -lX11 -lf2c -lm"
 setenv Cinclude  "-I`echo $mmir/src/inc $mhost | sed 's/ / -I/g'`"
