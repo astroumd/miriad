@@ -27,6 +27,9 @@ c        2      dispersion = sqrt(sum(I*(v-M1)**2)/sum(I))
 c               The v(i) are the axis values (e.g. velocities).  M1 is the first
 c               moment. The moment is calculated independently for each pixel
 c               within the specified clip range. Default = 0.
+c               Note that mom=2 produces a map of sigma ('gaussian' dispersions), 
+c               with FWHM = 2*sqrt(2*ln(2)) = 2.355  * sigma if the profile was
+c               a true gaussian.
 c@ axis
 c	The axis for which the moment is calculated. Default = 3.
 c@ clip
@@ -72,10 +75,11 @@ c    12feb01 pjt   Mask pixels if their velocity is out of range
 c    15feb01 dpr   Truncate rangemask key to rngmsk - doh!
 c    16feb01 pjt   Added mom=-3 for velocity of peak fit to poly=2
 c    18jan02 pjt   Turned rngmask typo into rngmsk (duh)
+c     4mar02 pjt   documented FWHM/sigma, fixed units of mom=2 map
 c------------------------------------------------------------------------
 	include 'maxdim.h'
  	character version*(*)
-	parameter(version='version 1.0 18-jan-02')
+	parameter(version='version 1.0 4-mar-02')
 	integer maxnax,maxboxes,maxruns,naxis
 	parameter(maxnax=3,maxboxes=2048)
 	parameter(maxruns=3*maxdim)
@@ -265,7 +269,7 @@ c
           call wrhda(lout,'bunit','KM/S')
           call wrbtype(lout,'velocity')
 	else
-          call wrhda(lout,'bunit','KM/S**'//itoaf(mom))
+          call wrhda(lout,'bunit','KM/S')
           call wrbtype(lout,'velocity_dispersion')
 	endif
 c
