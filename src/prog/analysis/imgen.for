@@ -8,7 +8,8 @@ c& rjs
 c: utility, map manipulation
 c+
 c	IMGEN is a MIRIAD task which modifies an image, or creates a new
-c	image. 
+c	image.  See also maths to create images based on expressions involving
+c       X, Y and Z.
 c@ in
 c	The input image, which is to be modified. The default is a map
 c	with one plane which consists entirely of zeros. 
