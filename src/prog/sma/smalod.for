@@ -17,10 +17,9 @@ c@ out
 c       Name of the output Miriad uv data-set. No default.
 c
 c@ rxif
-c       selete from dual receivers/IFs; rxif=1 for receiver 1;
-c       rxif=2 for receiver 2; Default is no seperation in receivers.
-c       For old data files (2004-12-31 and older), please take
-c       the default.
+c       selete from dual receivers/IFs; rxif=0 for receiver 0;
+c       rxif=2 for receiver 2; Default is for receiver 0;
+c       rxif=-1 is  no seperation in receivers.
 c
 c@ restfreq
 c       The rest frequency, in GHz, for line observations.  By default,
@@ -39,6 +38,34 @@ c                  labelled as I.
 c       'oldpol'   Converts MIR polarization data observed before
 c                  2004-9-1.
 c                  Defaults assumes non-polarization state is assigned.
+c       'dospc'    reverses the order of the spectral chunks for
+c                  the last three blocks (4 5 6).
+c                  spectral window orders:
+c                   spcode iband 
+c		       	 1 1
+c			 2 2
+c			 3 3
+c			 4 4
+c			 5 5
+c			 6 6
+c			 7 7
+c		 	 8 8
+c			 9 9
+c			10 10
+c			11 11
+c			12 12
+c			16 13
+c			15 14
+c			14 15
+c			13 16
+c			20 17
+c			19 18
+c			18 19
+c 			17 20
+c	  		24 21
+c			23 22
+c			22 23
+c			21 24 
 c       No extra processing options have been given yet. The default
 c       works.
 c
@@ -83,11 +110,13 @@ c    jhz  16-dec-04 added  checking the length of infile
 c    jhz  11-jan-05 merged smauvrsample into smalod;
 c    jhz  11-jan-05 added Key word rsnchan controls the resmapling vis 
 c                   spectra output.  
+c    jhz  28-feb-05 added option dospc
+c    jhz  01-mar-05 added rx id label to the output file
 c------------------------------------------------------------------------
         integer maxfiles
         parameter(maxfiles=128)
         character version*(*)
-        parameter(version='SmaLod: version 1.1 11-Jan-05')
+        parameter(version='SmaLod: version 1.2 1-Mar-05')
 c
         character in(maxfiles)*64,out*64,line*64, rxc*4
         integer tno, length, len1
@@ -95,8 +124,8 @@ c
         double precision rfreq(2)
         logical doauto,docross,docomp,dosam,relax,unflag,dohann
         logical dobary,doif,birdie,dowt,dopmps,doxyp,doop
-        logical polflag,hires,nopol,sing, oldpol, dsb
-        integer fileskip,fileproc,scanskip,scanproc,sb
+        logical polflag,hires,nopol,sing, oldpol, dsb, dospc
+        integer fileskip,fileproc,scanskip,scanproc,sb, dosporder
 	integer rsNCHAN
 c
 c  Externals.
@@ -114,16 +143,19 @@ c
         call keya('out',out,' ')
         if(out.eq.' ')
      *    call bug('f','Output name must be given')
-         call keyi('rxif',rxif,0)
+         call keyi('rxif',rxif,1)
+            if(rxif==0) rxc='_rx0'
             if(rxif==1) rxc='_rx1'
             if(rxif==2) rxc='_rx2'
-         if(rxif.lt.0.or.rxif.gt.2) 
+         if(rxif.lt.-1.or.rxif.gt.2) 
      *   call bug('f','Invalid Receiver ID.')
 
         call mkeyd('restfreq',rfreq,2,nfreq)
         call getopt(doauto,docross,docomp,dosam,doxyp,doop,relax,
      *    sing,unflag,dohann,birdie,dobary,doif,dowt,dopmps,polflag,
-     *    hires,nopol,oldpol)
+     *    hires,nopol,oldpol,dospc)
+            dosporder=-1
+            if(dospc) dosporder=1
         call keyi('rsnchan',rsnchan,-1)
        if(rsnchan.gt.0) then 
          rsnchan=2**(int(log(real(rsnchan))/log(2.)+0.5))
@@ -152,7 +184,7 @@ c
               dsb=.true.
               sb = 0
               end if
-555           if(rxif.eq.0) then
+555           if(rxif.eq.-1) then
               if(sb.eq.0) out=out(1:length)//'.lsb'
               if(sb.eq.1) out=out(1:length)//'.usb'
               else
@@ -198,7 +230,7 @@ c
             endif
             call smadisp(in(i),scanskip,scanproc,doauto,docross,
      *          relax,sing,unflag,polflag,rxif,rfreq,nfreq,sb,
-     *          iostat)
+     *          iostat, dosporder)
           endif
         enddo
         if(iostat.ne.0)then
@@ -212,13 +244,13 @@ c
         call hisclose(tno)
         call uvclose(tno)
         if(.not.dsb) then
-        if((sb.eq.0).and.(rxif.ne.0)) write(*,*)
+        if((sb.eq.0).and.(rxif.ne.-1)) write(*,*)
      * 'output file =',out(1:length)//rxc(1:4)//'.lsb'
-        if((sb.eq.1).and.(rxif.ne.0)) write(*,*)
+        if((sb.eq.1).and.(rxif.ne.-1)) write(*,*)
      * 'output file =',out(1:length)//rxc(1:4)//'.usb'
-        if((sb.eq.0).and.(rxif.eq.0)) write(*,*)
+        if((sb.eq.0).and.(rxif.eq.-1)) write(*,*)
      * 'output file =',out(1:length)//'.lsb'
-        if((sb.eq.1).and.(rxif.eq.0)) write(*,*)
+        if((sb.eq.1).and.(rxif.eq.-1)) write(*,*)
      * 'output file =',out(1:length)//'.usb'
          goto 666
          end if
@@ -227,13 +259,13 @@ c
         goto 555
         end if
          if(dsb) then
-         if(rxif.ne.0) write(*,*)
+         if(rxif.ne.-1) write(*,*)
      * 'output file for lsb =', out(1:length)//rxc(1:4)//'.lsb'
-         if(rxif.eq.0) write(*,*)
+         if(rxif.eq.-1) write(*,*)
      * 'output file for lsb =', out(1:length)//'.lsb'
-         if(rxif.ne.0) write(*,*)
+         if(rxif.ne.-1) write(*,*)
      * 'output file for usb =', out(1:length)//rxc(1:4)//'.usb'
-         if(rxif.eq.0) write(*,*)
+         if(rxif.eq.-1) write(*,*)
      * 'output file for usb =', out(1:length)//'.usb'
          end if
 
@@ -242,11 +274,11 @@ c
 c************************************************************************
         subroutine getopt(doauto,docross,docomp,dosam,doxyp,doop,
      *    relax,sing,unflag,dohann,birdie,dobary,doif,dowt,dopmps,
-     *    polflag,hires,nopol,oldpol)
+     *    polflag,hires,nopol,oldpol,dospc)
 c
         logical doauto,docross,dosam,relax,unflag,dohann,dobary,doop
         logical docomp,doif,birdie,dowt,dopmps,doxyp,polflag,hires,sing
-        logical nopol,oldpol
+        logical nopol,oldpol,dospc
 c
 c  Get the user options.
 c
@@ -270,9 +302,11 @@ c    polflag	Flag all polarisations if any are bad.
 c    hires      Convert bin-mode to high time resolution data.
 c    sing	Single dish mode.
 c    nopol      Disable polarization.
+c    dospc      reverse the order of spectral windows for
+c               the last three blocks.
 c------------------------------------------------------------------------
         integer nopt
-        parameter(nopt=20)
+        parameter(nopt=21)
         character opts(nopt)*8
         logical present(nopt)
         data opts/'noauto  ','nocross ','compress','relax   ',
@@ -280,7 +314,7 @@ c------------------------------------------------------------------------
      *            'noif    ','birdie  ','reweight','xycorr  ',
      *            'opcorr  ',
      *            'nopflag ','hires   ','pmps    ','mmrelax ',
-     *            'single  ','nopol   ','oldpol'/
+     *            'single  ','nopol   ','oldpol','dospc'/
         call options('options',opts,present,nopt)
         doauto = .not.present(1)
         docross = .not.present(2)
@@ -305,6 +339,7 @@ c       mmrelax = present(17)
         sing    = present(18)
         nopol   = present(19)
         oldpol  = present(20)
+        dospc   = present(21)
 c
         if((dosam.or.doxyp.or.doop).and.relax)call bug('f',
      *    'You cannot use options samcorr, xycorr or opcorr with relax')
@@ -595,10 +630,10 @@ c------------------------------------------------------------------------
         end
 c************************************************************************
         subroutine smadisp(in,scanskip,scanproc,doauto,docross,relax,
-     *    sing,unflag,polflag,rxif,userfreq,nuser,sb,iostat)
+     *    sing,unflag,polflag,rxif,userfreq,nuser,sb,iostat, dosporder)
 c
         character in*(*)
-        integer scanskip,scanproc,rxif,nuser,sb,iostat
+        integer scanskip,scanproc,rxif,nuser,sb,iostat,dosporder
         double precision userfreq(*)
         logical doauto,docross,relax,unflag,polflag,sing
 c  jhz
@@ -791,7 +826,7 @@ c  Initialize.
 c
         call pokename(in)
         call rssmaflush(mflag,scinit,tcorr,scbuf,xflag,yflag,
-     *       max_if,ant_max,  scanskip, scanproc, sb, rxif)
+     *       max_if,ant_max,  scanskip, scanproc, sb, rxif, dosporder)
                   kstat= 666
         call rspokeflshsma(kstat);
 c
