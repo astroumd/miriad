@@ -49,7 +49,7 @@ c
       INTEGER fcolor
       INTEGER nslot, nsloto, ipage, nx, ny, sbmode
       INTEGER nbl
-      INTEGER base(MAXBASE)
+      INTEGER base(MAXBASE2)
       DOUBLE PRECISION sample
       LOGICAL flagmod, breakmod
       LOGICAL dolink, dowrap
@@ -57,10 +57,10 @@ c
       INTEGER nsrcs, srcidx(MAXTIME)
       CHARACTER*10 sources(MAXSRC)
 c
-      INTEGER nbreak(MAXBASE,2)
-      DOUBLE PRECISION break(MAXBREAK,MAXBASE,2)
+      INTEGER nbreak(MAXBASE2,2)
+      DOUBLE PRECISION break(MAXBREAK,MAXBASE2,2)
 c
-      LOGICAL fitdone(MAXBREAK+1,MAXBASE,4)
+      LOGICAL fitdone(MAXBREAK+1,MAXBASE2,4)
 c
 c+debug
       LOGICAL debug
@@ -71,7 +71,7 @@ c
 c
 c  Only used by gapply...
 c
-      COMPLEX jpkgain(MAXBASE)
+      COMPLEX jpkgain(MAXBASE2)
 c
 c  Logging of gfiddle actions for later replay
 c

@@ -144,9 +144,10 @@ c    mchw  16jan01  Jet model.
 c    pjt    6sep01  using MAXDIM1 instead of MAXDIM
 c    pjt    3nov01  changed radec default to reflect those in uvgen
 c    pjt   21jan02  using MAXDIM1
+c    pjt    3dec02  using MAXDIM again, MAXDIM1 retired; MAXDIM2 is new
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version='Imgen: version 1.1 3-nov-01')
+	parameter(version='Imgen: version 1.1 3-dec-02')
 	include 'mirconst.h'
 	include 'maxdim.h'
 	include 'maxnax.h'
@@ -156,7 +157,7 @@ c------------------------------------------------------------------------
 	real factor,bmaj,bmin,bpa,fac,fac3
 	character In*80,Out*80
 	logical totflux
-	real Buff(MAXDIM1)
+	real Buff(MAXDIM)
 c
 c  Source parameters.
 c
@@ -296,7 +297,7 @@ c
 	  bpa = 0
 	  if(n1.le.0.or.n2.le.0)call bug('f','Image size error')
 	endif
-	if(n1.gt.MAXDIM1)call bug('f','Image dimension too big')
+	if(n1.gt.MAXDIM) call bug('f','Image dimension too big')
 c
 c  If we have a single gaussian object, use this as the beam
 c  parameters.
@@ -520,7 +521,7 @@ c------------------------------------------------------------------------
 	include 'mirconst.h'
 	integer i,j,ymin,ymax,xmin,xmax,maxit,it
 	real xx,yy,xp,yp,scale,cospa,sinpa,t,a,log2,limit,p,theta,sum
-	real Buff(MAXDIM1)
+	real Buff(MAXDIM)
 c
 c  Externals.
 c

@@ -1,4 +1,4 @@
-c************************************************************************
+c***********************************************************************
 c
 c  Include file for uvgains.for
 c
@@ -17,9 +17,11 @@ c
 	parameter(MAXAVER=81920,MAXPOL=4)
 	complex buf(MAXAVER)
 	integer count(MAXAVER)
-	integer pnt(MAXPOL,MAXBASE),nchan(MAXPOL,MAXBASE),free,mbase
-	integer npols(MAXBASE),pols(MAXPOL,MAXBASE),cnt(MAXBASE)
-	integer cntp(MAXPOL,MAXBASE)
-	double precision preamble(4,MAXBASE)
+	integer pnt(MAXPOL,MAXBASE2),nchan(MAXPOL,MAXBASE2),free,mbase
+	integer npols(MAXBASE2),pols(MAXPOL,MAXBASE2),cnt(MAXBASE2)
+	integer cntp(MAXPOL,MAXBASE2)
+	double precision preamble(4,MAXBASE2)
 	common/uvavcom/preamble,buf,count,pnt,nchan,npols,pols,cnt,
      *	  cntp,free,mbase
+c-----------------------------------------------------------------------
+

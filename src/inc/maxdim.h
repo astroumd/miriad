@@ -11,6 +11,7 @@ c    rjs  02apr98  Set MAXBASE=MAXANT*(MAXANT+1)/2
 c    mchw 01feb02  decouple MAXBASE from MAXANT
 c    mchw 04feb02  change PARAMETER(MAXBUF=1048576) to PARAMETER(MAXBUF=4194304)
 c    mchw 14feb02  recouple MAXBASE to MAXANT as we need selfcal on MAXANT.
+c    pjt   3dec02  added MAXBASE2,MAXDIM2 for doubly dimensioned arrays
 c
 	INTEGER   MAXBUF
 #ifdef unicos
@@ -27,16 +28,22 @@ c
 #endif
 c-----------------------------------------------------------------------
 c - MAXDIM is an often used parameter, to indicate maximum size of maps
-	INTEGER   MAXDIM
-	PARAMETER(MAXDIM=8192)
+c   MAXDIM2 should be used in arrays with more than 1 dimension
+	INTEGER   MAXDIM, MAXDIM2
+	PARAMETER(MAXDIM=65536,MAXDIM2=8192)
 c-----------------------------------------------------------------------
 c		maximum number of antennas (HC=3/6/9/..., WSRT=14, VLA=27)
 	INTEGER   MAXANT
 	PARAMETER(MAXANT=500)
 
-c		maximum number of baselines
+c		maximum number of baselines (in single arrays)
 	INTEGER   MAXBASE
 	PARAMETER(MAXBASE=((MAXANT*(MAXANT+1))/2))
+
+c		maximum number of baselines (in double arrays)
+	INTEGER   MAXBASE2
+	PARAMETER(MAXBASE2=500)
+
 
 c		maximum number of channels in spectral data
 	INTEGER   MAXCHAN

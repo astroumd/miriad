@@ -23,6 +23,7 @@ c    pjt  28jul99    Bypass "Unexpected baseline numbers" and flag them
 c		     as bad
 c    pjt  27dec01    Option to enforce single channel (LSB) usage for all channels
 c                    which is useful for single sideband OVRO data
+c    pjt   3dec02    Using MAXBASE2 now
 c
 c= gapply - apply gains of one dataset to another
 c& pjt
@@ -70,7 +71,7 @@ c-----------------------------------------------------------------------
 c  Constants
       INTEGER MAXFILE, MAXSELS
       CHARACTER VERSION*(*)
-      PARAMETER(VERSION='GAPPLY: Version 27-dec-01 PJT')
+      PARAMETER(VERSION='GAPPLY: Version 3-dec-02 PJT')
       PARAMETER(MAXFILE=64, MAXSELS = 100)
 c  Local variables
       CHARACTER in(MAXFILE)*80, viso*80, gvis*80, line*100, linetype*20
@@ -295,7 +296,7 @@ c
             b = findbase(baseline,base,nbl)
             IF (b.EQ.0) THEN
                nbl = nbl + 1
-               CALL assertl(nbl.LE.MAXBASE,'Too many baselines')
+               CALL assertl(nbl.LE.MAXBASE2,'Too many baselines')
                base(nbl) = baseline
 c               some extra error checking needed (JyPerK GAIN)
                jpkgain(nbl) = data(nread)
@@ -606,7 +607,7 @@ c-----------------------------------------------------------------------
       DOUBLE PRECISION starfreq(MAXWIN), delfreq(MAXWIN),
      *                 oldfreq(MAXWIN), olddel(MAXWIN), sum
       LOGICAL ok, goodbl, somebad
-      COMPLEX factor(MAXBASE,MAXCHAN), gains(2)
+      COMPLEX factor(MAXBASE2,MAXCHAN), gains(2)
       SAVE    factor,oldfreq,olddel
 
       INTEGER pchan(MAXWIN),pwins,flagbad(2) 

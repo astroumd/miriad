@@ -33,21 +33,22 @@ c  History:
 c    pjt   9feb95 Original
 c    pjt  16feb95 messed around to get line/wide only data
 c    pjt/sw 22feb95 Extra warning if gains present
+c    pjt     3dec02 Changed to MAXBASE2
 c------------------------------------------------------------------------
       include 'maxdim.h'
       INTEGER MAXSELS
       PARAMETER(MAXSELS=256)
       CHARACTER version*(*)
-      PARAMETER(version='UVTSUB: version 1.0 24-feb-95')
+      PARAMETER(version='UVTSUB: version 3-dec-02')
 c
       CHARACTER vis*128,out*128,msg*72
       INTEGER tvis, tout, numchan, nchan, numbl, i, j, bl
       INTEGER numwide, nwcorr
       REAL sels(MAXSELS), tsels(MAXSELS)
       DOUBLE PRECISION preamble(4)
-      INTEGER wcount(MAXBASE,MAXWIDE), count(MAXBASE,MAXCHAN)
+      INTEGER wcount(MAXBASE2,MAXWIDE), count(MAXBASE2,MAXCHAN)
       COMPLEX wcorr(MAXWIDE), corr(MAXCHAN), 
-     *         waver(MAXBASE,MAXWIDE), aver(MAXBASE,MAXCHAN)
+     *         waver(MAXBASE2,MAXWIDE), aver(MAXBASE2,MAXCHAN)
       LOGICAL wflags(MAXWIDE), flags(MAXCHAN), first
       LOGICAL doline, dowide, doboth
 c
@@ -95,13 +96,13 @@ c
       ENDIF
 
       DO i=1,MAXCHAN
-         DO bl=1,MAXBASE
+         DO bl=1,MAXBASE2
             aver(bl,i) = CMPLX(0,0)
             count(bl,i) = 0
          ENDDO
       ENDDO
       DO i=1,MAXWIDE
-         DO bl=1,MAXBASE
+         DO bl=1,MAXBASE2
             waver(bl,i) = CMPLX(0,0)
             wcount(bl,i) = 0
          ENDDO
@@ -207,7 +208,7 @@ c***********************************************************************
       DOUBLE PRECISION baseline
 c
       INCLUDE 'maxdim.h'
-      INTEGER base(MAXBASE), nbl, i, findbase
+      INTEGER base(MAXBASE2), nbl, i, findbase
       SAVE base, nbl
       DATA nbl/0/
  
