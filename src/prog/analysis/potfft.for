@@ -12,11 +12,12 @@ c   a galaxy. See DEPROJECT and REGRID for tasks helping with this.
 c
 c   The method used is a a fast-Fourier algorithm (see Numerical Recipes, 
 c   chapters 12 and 17 and Hockney and Eastwood, p213 (1st ed.).
-c   The units are such that the Gravitation Constant is 1.0.
 c
 c@ in
 c   The input image. It must be a two-dimensional image with the number of
-c   pixels along each axis a power of two.
+c   pixels along each axis a power of two. Some maps may have a redundant
+c   3rd axis, one fix it to reset naxis to 2:
+c      puthd in=$in/naxis value=2
 c   No default.
 c@ out
 c   Optional output image. It has the same dimensions as the input, with the
@@ -36,6 +37,8 @@ c   The default is 0, meaning an infinitesimally thin disk.
 c@ radius
 c   Inner and outer radii and step size in radius in which G(r) is computed
 c   and output to a log file.
+c@ gravc
+c   Gravitational constant. Default: 1
 c@ log
 c   Output log file. Default is terminal.
 c
@@ -55,7 +58,8 @@ c   mousumi  8aug02 Replace with QGAUSS with QROMB
 c   peter           internal real*8, but miriad in real*4 as it should be
 c   peter    9aug02 forgot to scale sech() with h
 c   peter   23feb03 merged MIR4
-c   peter   28feb03 some more doc 
+c   peter   28feb03 clarifications in the doc, potential made negative now,
+c                   added gravc=
 c Todo:
 c   scaleheight should be allowed to vary
 c
@@ -64,7 +68,7 @@ c
       INTEGER MAXDIM
       PARAMETER(MAXDIM=1024)
       INTEGER MAXNAX
-      PARAMETER(MAXNAX=2)
+      PARAMETER(MAXNAX=7)
       INTEGER INVPARM
       PARAMETER(INVPARM=1)
       CHARACTER VERSION*(*)
@@ -73,7 +77,7 @@ c
       CHARACTER in*128,out*128,outg*128
       INTEGER nin(MAXNAX),nout(MAXNAX),npadin(MAXNAX)
       INTEGER naxis,lin,lout,nn,i,j,k,loutg
-      REAL softe,h,xsq,ysq,tmp,crpix1,crpix2
+      REAL softe,h,xsq,ysq,tmp,crpix1,crpix2,gravc
       REAL data(8*MAXDIM*MAXDIM),datacon(8*MAXDIM*MAXDIM)
       REAL rhopot(MAXDIM,MAXDIM)
 c
@@ -98,6 +102,7 @@ c
       CALL keya('green',OutG,' ')
       CALL keyr('eps',softe,1.0)
       CALL keyr('h',h,0.0)
+      CALL keyr('gravc',gravc,1.0)
       IF(in.EQ.' ')
      *  CALL bug('f','Input name (in=) required')
       IF(out.EQ.' '.AND.outg.EQ.' ')
@@ -116,15 +121,19 @@ c     *   CALL bug('f','The image is too big')
       IF (nin(1).GT.MAXDIM.OR.nin(2).GT.MAXDIM)
      *   CALL bug('f','The image is too big')
       CALL rdhdi(lin,'naxis',naxis,0)
-      IF (naxis.NE.2)
-     *   CALL bug('f','The image must be two-dimensional')
+      IF (naxis.EQ.3 .AND. nin(3).EQ.1) THEN
+         CALL bug('i','The image has a redundant 3rd axis')
+         naxis=2
+      ELSE IF (naxis.NE.2) THEN
+         CALL bug('f','The image must be two-dimensional')
+      ENDIF
       DO i = 1,naxis
          nout(i) = nin(i)
          npadin(i) = 2*nin(i)
       ENDDO
       IF(outg.ne.' ') then
          CALL bug('i','Also computing the GREEN function')
-         CALL xyopen(loutg,outg,'new',MAXNAX,nout)
+         CALL xyopen(loutg,outg,'new',naxis,nout)
          CALL rdhdr(lin,'crpix1',crpix1,1.0)
          CALL rdhdr(lin,'crpix2',crpix2,1.0)
          CALL green(MAXDIM,nout(1),nout(2),rhopot,crpix1,crpix2,softe,h)
@@ -144,7 +153,7 @@ c     *   CALL bug('f','The image is too big')
 
       IF (out.ne.' ') then
          CALL bug('i','Computing the potential with 1/2 pixel error')
-         CALL xyopen(lout,out,'new',MAXNAX,nout)
+         CALL xyopen(lout,out,'new',naxis,nout)
 c
 c   Reading the input (the whole plane will be read in at once),
 c   filling in zero buffers on each side so that the input occupies
@@ -179,7 +188,7 @@ c
 c   Calculating the FFT of the density distribution and multiplying 
 c   by the convolution coefficients:
 c
-         CALL fftnd(data,npadin,MAXNAX,INVPARM)
+         CALL fftnd(data,npadin,naxis,INVPARM)
 c
 c   From now on data is the FFT of the input map data, i.e. the
 c   subroutine fftnd overwrites the input.
@@ -204,7 +213,7 @@ c
             ENDDO
          ENDDO
 c     
-         CALL fftnd(datacon,npadin,MAXNAX,INVPARM)
+         CALL fftnd(datacon,npadin,naxis,INVPARM)
 c
 c Convolution:
 c
@@ -226,7 +235,7 @@ c
 c     
 c   Calculating the potential, which is the inverse FFT of data.
 c
-         CALL fftnd(data,npadin,MAXNAX,-INVPARM)
+         CALL fftnd(data,npadin,naxis,-INVPARM)
 c
 c   The first quarter of the two-dimensional array equivalent to data 
 c   contains the potential array (the rest is spurious and must be 
@@ -234,7 +243,7 @@ c   discarded):
 c
          DO j = 1,nin(2)
             DO i = 1,nin(1)
-               rhopot(i,j) = data(4*(j-1)*nin(1)+2*i-1)
+               rhopot(i,j) = -gravc*data(4*(j-1)*nin(1)+2*i-1)
             ENDDO
          ENDDO
 c     
