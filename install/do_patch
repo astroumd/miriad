@@ -18,7 +18,7 @@ cat MIRSRC.linux |\
 
 mkdir -p $MIR/local/install
 
-if (0) then
+if (1) then
   echo Keeping log in $MIR/tmp/mir.genman.log
   mir.genman -n >& $MIR/tmp/mir.genman.log
 else

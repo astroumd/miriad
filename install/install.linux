@@ -121,7 +121,8 @@ else if ($cvs) then
    echo "Working in $mirroot - extracting current CVS snapshot into $newdir"
    if ($?CVSROOT == 0) then
       setenv CVSROOT :pserver:guest@cvs.astro.umd.edu:/home/cvsroot
-      csv login
+      echo "Use the password 'guest' for read-only CVS access"
+      cvs login
    endif
    cvs export -D tomorrow -d $newdir miriad >>& $log
    echo "Extracting current CVS snapshot of wip into $newdir/borrow/wip" >>& $log
