@@ -591,7 +591,10 @@ c
 c  Check if we have to initialise the arrays containing info for the
 c  transformation.
 c
-	if(n.gt.maxdim)call bug('f','N too large in FFT routine')
+	if(n.gt.maxdim)then
+		write(*,*) 'Grunt grunt N,maxdim=',n,MAXDIM
+		call bug('f','N too large in FFT routine')
+	endif
 	if(n.ne.nsave)call fftini(n,m,ni,i1,i2,twiddle)
 	nsave = n
 C
