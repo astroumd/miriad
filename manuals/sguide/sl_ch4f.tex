@@ -1,0 +1,117 @@
+\par\centerline{\bf Control routines}
+{\eightpoint\begintt
+PGADVANCE .... see PGPAGE
+PGASK ........ control new page prompting
+PGBBUF ....... begin batch of output (buffer)
+PGBEGIN ...... begin PGPLOT, open output device
+PGEBUF ....... end batch of output (buffer)
+\endtt}
+{\eightpoint\begintt
+PGEND ........ terminate PGPLOT
+PGPAGE ....... advance to a new page or clear screen
+PGPAPER ...... change the size of the view surface
+PGUPDT ....... update display
+\endtt}
+
+\par\centerline{\bf Windows and viewports}
+{\eightpoint\begintt
+PGBOX ........ draw labeled frame around viewport
+PGENV ........ set window and viewport and draw labeled frame
+PGVPORT ...... set viewport (normalized device coordinates)
+PGVSIZE ...... set viewport (inches)
+PGVSTAND ..... set standard (default) viewport
+\endtt}
+{\eightpoint\begintt
+PGWINDOW ..... set window
+PGWNAD ....... set window and adjust viewport to same aspect ratio
+\endtt}
+
+\par\centerline{\bf Primitive drawing routines}
+{\eightpoint\begintt
+PGDRAW ....... draw a line from the current pen position to a point
+PGLINE ....... draw a polyline (curve defined by line-segments)
+PGMOVE ....... move pen (change current pen position)
+PGPOINT ...... draw one or more graph markers
+PGPOLY ....... fill a polygonal area with shading
+\endtt}
+{\eightpoint\begintt
+PGRECT ....... draw a rectangle, using fill-area attributes
+\endtt}
+
+\par\centerline{\bf Text}
+{\eightpoint\begintt
+PGLABEL ...... write labels for x-axis, y-axis, and top of plot
+PGMTEXT ...... write text at position relative to viewport
+PGPTEXT ...... write text at arbitrary position and angle
+PGTEXT ....... write text (horizontal, left-justified)
+\endtt}
+
+\par\centerline{\bf Attribute setting}
+{\eightpoint\begintt
+PGSCF ........ set character font
+PGSCH ........ set character height
+PGSCI ........ set color index
+PGSCR ........ set color representation
+PGSFS ........ set fill-area style
+\endtt}
+{\eightpoint\begintt
+PGSHLS ....... set color representation using HLS system
+PGSLS ........ set line style
+PGSLW ........ set line width
+\endtt}
+
+\par\centerline{\bf Higher-level drawing routines}
+{\eightpoint\begintt
+PGBIN ........ histogram of binned data
+PGCONS ....... contour map of a 2D data array (fast algorithm)
+PGCONT ....... contour map of a 2D data array (contour-following)
+PGCONX ....... contour map of a 2D data array (non-rectangular)
+PGERRX ....... horizontal error bar
+\endtt}
+{\eightpoint\begintt
+PGERRY ....... vertical error bar
+PGFUNT ....... function defined by X = F(T), Y = G(T)
+PGFUNX ....... function defined by Y = F(X)
+PGFUNY ....... function defined by X = F(Y)
+PGGRAY ....... gray-scale map of a 2D data array
+\endtt}
+{\eightpoint\begintt
+PGHI2D ....... cross-sections through a 2D data array
+PGHIST ....... histogram of unbinned data
+\endtt}
+
+\par\centerline{\bf Interactive graphics (cursor)}
+{\eightpoint\begintt
+PGCURSE ...... read cursor position
+PGLCUR ....... draw a line using the cursor
+PGNCURSE ..... mark a set of points using the cursor
+PGOLIN ....... mark a set of points using the cursor
+\endtt}
+
+\par\centerline{\bf Inquiry routines}
+{\eightpoint\begintt
+PGQCF ........ inquire character font
+PGQCH ........ inquire character height
+PGQCI ........ inquire color index
+PGQCR ........ inquire color representation
+PGQFS ........ inquire fill-area style
+\endtt}
+{\eightpoint\begintt
+PGQINF ....... inquire PGPLOT general information
+PGQLS ........ inquire line style
+PGQLW ........ inquire line width
+PGQVP ........ inquire viewport size and position
+PGQWIN ....... inquire window boundary coordinates
+\endtt}
+
+\par\centerline{\bf Utility routines}
+{\eightpoint\begintt
+PGETXT ....... erase text from graphics display
+PGIDEN ....... write username, date, and time at bottom of plot
+PGLDEV ....... list available device types
+PGNUMB ....... convert a number into a plottable character string
+PGRND ........ find the smallest ``round'' number greater than x
+\endtt}
+{\eightpoint\begintt
+PGRNGE ....... choose axis limits
+\endtt}
