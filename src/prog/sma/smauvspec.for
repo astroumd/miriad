@@ -52,6 +52,23 @@ c	   'dots'        Plot phases with dots instead of filled circles.
 c	   'flagged'     Plot flagged data instead of unflagged data. The
 c	                 default is to plot only unflagged data.
 c	   'all'         Plot both flagged and unflagged data.
+c          'jplcat'      Plot JPL catalog lines. The xaxis and yaxis are
+c                        then forced to be frequency and ampltiude.
+c@ catpath
+c       This gives the path of JPL catalog. No Default. In general, 
+c       the path of JPL catalog are: $MIRCAT/jpl/; otherwise, it can
+c       be specified by users.
+c
+c@ lsrvel  
+c       This gives the system velocity n km/s with respect to LSR to shift the 
+c       catalog lines. The default is 0.
+c
+c@ veldef  
+c       This is the velocity definition used in the shift of the catalog lines.
+c          radio         is the radio definition.
+c          optical       is the optical definion.
+c       The default is "radio".
+c          
 c@ axis
 c	This gives two strings, which determine the X and Y axes of each plot.
 c	The values can be abbreviated to uniqueness.
@@ -112,7 +129,8 @@ c    jhz  13Jul04 extended for SMA.
 c    jhz  14Jul04 add color index coded for spectral windows.
 c    jhz  10oct04 corect for the error in source labelling.
 c    jhz  13oct04 add bothA&P to axis.
-c    jhz  10dec04 fold smauvspec back to MIRIAD4.0.4  
+c    jhz  10dec04 fold smauvspec back to MIRIAD4.0.4 
+c    jhz  15dec04 added the jpl line catalog 
 c  Bugs:
 c------------------------------------------------------------------------
 c=======================================================================
@@ -159,20 +177,25 @@ c=======================================================================
         integer maxco
         parameter (maxco=15)
 c
+c catalog
+c 
+        parameter (maxmline=500)
+        character mname*8000, moln*16
+        integer mtag(maxmline), nmline, j, jp, js, je, iline
         character version*(*)
-        parameter(version='SmaUvSpec: version 1.1 1-DEC-04')
+        parameter(version='SmaUvSpec: version 1.1 15-DEC-04')
         character uvflags*8,device*64,xaxis*12,yaxis*12,logf*64
-        character xtitle*64,ytitle*64
+        character xtitle*64,ytitle*64, veldef*8
         logical ampsc,rms,nobase,avall,first,buffered,doflush,dodots
-        logical doshift,doflag,doall,dolag
+        logical doshift,doflag,doall,dolag,docat
         double precision interval,t0,t1,preamble(4),shift(2),shft(2)
         integer tin,vupd, bsp(24)
         integer nxy(2),nchan,nread,nplot
-        real yrange(2),inttime
+        real yrange(2),inttime, lsrvel
         double precision x(2*maxchan-2)
         complex data(maxchan)
         logical flags(maxchan)
-        integer hann
+        integer hann, pathlen
         real hc(maxco),hw(maxco)
         character in(1)*64
 	character source*32
@@ -182,6 +205,14 @@ c
         integer nextpow2
         logical uvdatopn,uvvarupd
 c
+c common jpl
+c
+        
+        integer nmol, moltag(maxmline)
+        character molname(maxmline)*16, jplpath*80 
+        common/jplcat/nmol,moltag,molname,docat,lsrvel,veldef
+
+c
 c  Get the input parameters.
 c
         call output(version)
@@ -189,7 +220,16 @@ c
         call mkeyf('vis',in,1,nin)
         call vishd(in)
         call keyini
-        call getopt(uvflags,ampsc,rms,nobase,avall,dodots,doflag,doall)
+        call getopt(uvflags,ampsc,rms,nobase,avall,dodots,doflag,doall,
+     &          docat)
+        call keya('catpath', jplpath, ' ')
+        call keyr('lsrvel', lsrvel, 0.0)
+        call keya('veldef', veldef, 'radio')
+         if((veldef(1:1).eq."O").or.(veldef(1:1).eq."o")) then
+                veldef = 'optical'
+                  else
+                veldef = 'radio'
+              end if
         call getaxis(xaxis,yaxis)
         dolag = xaxis.eq.'lag'
         call uvdatinp('vis',uvflags)
@@ -204,7 +244,49 @@ c
         call keyr('yrange',yrange(2),yrange(1)-1)
         call keya('log',logf,' ')
         call keyfin
+c
+c select molecular species
+c 
+         if(docat) then
+         if(jplpath(1:1).eq." ") 
+     &   call bug('f','Zero length of keyword catpath.')
+         pathlen=1
+         do while (jplpath(pathlen:pathlen).ne." ")
+         pathlen=pathlen+1
+         end do
+         pathlen=pathlen-1
+         if(jplpath(pathlen:pathlen).ne."/") then
+            jplpath=jplpath(1:pathlen)//'/'
+            pathlen=pathlen+1
+            end if
+         xaxis='frequency'
+         yaxis='amplitude'
 
+         call molselect(jplpath,pathlen,mtag,nmline,mname)
+                   jp=1
+                   iline=0 
+                   do while(iline.lt.nmline)
+                   js=jp
+                   j=1
+                   do while((mname(jp:jp).ne."\n").and.(j.lt.16))
+                       jp=jp+1
+                       j=j+1
+                   end do
+                   je=jp
+                   moln=mname(js:je)
+                   iline=iline+1
+                   jp=jp+1
+                   moltag(iline)=mtag(iline)
+                   molname(iline)=moln
+                   end do
+               nmol= nmline
+c
+c  check
+c
+c               do i=1, nmol
+c               write(*,*) "moltag", moltag(i)," molname   ", molname(i) 
+c               end do
+                    end if
 c
 c  Check the input parameters.
 c
@@ -500,9 +582,9 @@ c
         end
 c************************************************************************
         subroutine getopt(uvflags,ampsc,rms,nobase,avall,dodots,
-     *          doflag,doall)
+     *          doflag,doall,docat)
 c
-        logical ampsc,rms,nobase,avall,dodots,doflag,doall
+        logical ampsc,rms,nobase,avall,dodots,doflag,doall,docat
         character uvflags*(*)
 c
 c  Determine the flags to pass to the uvdat routines.
@@ -516,14 +598,15 @@ c    avall
 c    dodots
 c    doflag
 c    doall
+c    dojplcat
 c------------------------------------------------------------------------
         integer nopts
-        parameter(nopts=10)
+        parameter(nopts=11)
         character opts(nopts)*9
         logical present(nopts),docal,dopol,dopass
         data opts/'nocal    ','nopol    ','ampscalar','nopass   ',
      *            'nobase   ','avall    ','dots     ','rms      ',
-     *            'flagged  ','all      '/
+     *            'flagged  ','all      ','jplcat   '/
 c
         call options('options',opts,present,nopts)
         docal = .not.present(1)
@@ -538,6 +621,7 @@ c
         dodots =   present(7)
         doflag =   present(9)
         doall  =   present(10)
+        docat  =   present(11)
         if(doflag.and.doall)call bug('f',
      *    'The "flagged" and "all" options are mutually exclusive')
 c
@@ -1218,7 +1302,7 @@ c          call pgsci(mod(i-1,ncol)+1)
             if (hann.gt.1) call hannsm(hann,hc,plot(i+1)-plot(i),
      *         yp(plot(i)),hw)
         call pghline(plot(i+1)-plot(i),xp(plot(i)),yp(plot(i)),
-     *        ypp(plot(i)),2.0,doboth)
+     *        ypp(plot(i)),2.0,doboth, yranged(2))
           endif
           if (logf.ne.' ') then
             do j = 1, plot(i+1)-plot(i)
@@ -1319,7 +1403,16 @@ c PgHline -- Histogram line plot for pgplot.
 c mchw:
 c plotting,uv-data
 c
-        subroutine pghline(npts,x,y,yp,gapfac,doboth)
+        subroutine pghline(npts,x,y,yp,gapfac,doboth, maxstr)
+              parameter(maxsline=10000)
+              parameter(cmks = 299792458.0)
+        real fmx,fmn,strl
+        real freq(maxsline),intensity(maxsline)
+        integer uqst(6*maxsline),lqst(6*maxsline),mtag(6*maxsline)
+        integer mxnline, iubuff, ilbuff
+        real maxf, minf, maxstr, minstr, maxcatstr
+        real xlfrq(2), ylstr(2)
+
         integer npts
         real x(npts), y(npts), yp(npts), gapfac
         REAL XPTS(npts), YPTS(npts)
@@ -1332,6 +1425,7 @@ c  Inputs:
 c    npts	number of points
 c    x		x-array to be plotted
 c    y		y-array to be plotted
+c    yp         phas-array
 c    gapfac	factor to define a gap in x-array. E.g. 2= 2*(x(i+1)-x(i))
 c
 c--
@@ -1340,7 +1434,7 @@ c    02nov89	mchw	original version
 c    02apr94    nebk    add pgbbuf/pgebuf calls
 c    24may94    mjs     reinserted Mel's docs
 c-------------------------------------------------------------------------
-        integer start,end,i,j, k, ci, l
+        integer start,end,i,j, k, ci, l, lm
         character title*64
         real xlen,ylen,xloc
         integer maxwin,symbol
@@ -1348,7 +1442,23 @@ c-------------------------------------------------------------------------
         logical gap,reverse, doboth
         integer nchan, nspect, nschan(maxwin)
         common/spectrum/nchan,nspect,nschan
-
+c
+c common jpl
+c
+        parameter(maxmline=500)
+        integer nmol, moltag(maxmline)
+        character molname(maxmline)*16, veldef*8
+        real lsrvel
+        logical docat
+        common/jplcat/nmol,moltag,molname,docat,lsrvel,veldef
+        maxf=0.
+        minf=1000.
+        minstr=0.
+        ylstr(1)=0.
+c          write(*,*) 'nmol=', nmol
+c          do i=1, nmol
+c           write(*,*) 'mtag', moltag(i), 'mnam', molname(i)
+c          end do
 c
 c  Look for gaps or reversals in x-array
 c
@@ -1387,7 +1497,13 @@ c        symbol=17
                N=N+1
                XPTS(k) = x(k+(j-1)*nschan(j))
                YPTS(k) = yp(k+(j-1)*nschan(j))
-              
+          if(maxf.lt.(x(k+(j-1)*nschan(j)))) maxf=x(k+(j-1)*nschan(j))
+          if(minf.gt.(x(k+(j-1)*nschan(j)))) minf=x(k+(j-1)*nschan(j))
+          if(maxstr.lt.(y(k+(j-1)*nschan(j)))) 
+     *      then
+                maxstr=y(k+(j-1)*nschan(j))
+c           write(*,*) maxstr ,j, k
+            end if
             if(i<npts.and.k<nschan(j)) then
               call pgdraw (0.5*(x(i+1)+x(i)), y(i))
               call pgdraw (0.5*(x(i+1)+x(i)), y(i+1))
@@ -1421,7 +1537,78 @@ c          plot phase
            endif
            enddo        
 555        continue 
-c        call pgebuf
+
+
+          if(docat) then
+      fmn  = minf
+      fmx  = maxf
+      strl = -500
+          call  pgsci(2)
+       if(abs(lsrvel).lt.1000) then
+       write(title,'(a,f7.1,a)') 'Vlsr =',lsrvel,' km/s'
+         else
+       write(title,'(a,f7.3)') 'z =',lsrvel*1.0e3/cmks
+       end if
+       call pgmtxt('RV',-12.0, 0.925, 0., title)
+       if(veldef.eq."radio") then 
+                 fmn = fmn /(1.-lsrvel*1.e3/cmks)
+                 fmx = fmx /(1.-lsrvel*1.e3/cmks)
+               end if
+       if(veldef.eq."optical") then
+                 fmn = fmn*(1.+lsrvel*1.e3/cmks)
+                 fmx = fmx*(1.+lsrvel*1.e3/cmks)
+               end if
+c
+c fmx,fmn,strl,nmol,moltag are input parameters
+c       
+       call JPLlineRD(fmx,fmn,strl,nmol,moltag,mxnline,
+     &               freq,intensity,uqst,lqst,mtag)
+c      write(*,*) 'mxnline=', mxnline
+      iubuff=0
+      ilbuff=0
+      maxcatstr=strl
+      do i=1, mxnline
+      if(maxcatstr.lt.intensity(i)) maxcatstr=intensity(i)
+      end do
+
+c      write(*, *) 'maxcatstr maxstr', maxcatstr, maxstr
+      call  pgsci(1)
+      do i=1, mxnline
+       if(veldef.eq."radio") freq(i) = freq(i) *(1.-lsrvel*1.e3/cmks) 
+       if(veldef.eq."optical") freq(i) = freq(i)/(1.+lsrvel*1.e3/cmks)
+
+c      write(*,*) freq(i)/1000.,intensity(i)/maxcatstr*maxstr
+              intensity(i)=maxstr
+              ylstr(2) = intensity(i)*.75
+              ylstr(1) = intensity(i)*.65 
+              xlfrq(1) = freq(i)/1000.
+              xlfrq(2) = freq(i)/1000.
+              do j=1, nmol
+               mtag(i)=abs(mtag(i))
+              if(moltag(j).eq.mtag(i)) then
+c                 write(*,*) molname(j)
+                write(title,'(a)') molname(j)
+                endif
+              end do
+              lm=1
+              do while (title(lm:lm).ne."\n") 
+                  lm=lm+1
+              end do
+         call pgline (2, xlfrq, ylstr)
+         call pgebuf
+                xloc=xlfrq(1)+(maxf-minf)/npts
+                yloc=ylstr(2)*1.02
+                lm=lm-1
+c              write(*,*) 'lm=', lm
+c        call pgmtxt('LH',xloc,yloc,0.5,title(1:16))
+         call pgptext(xloc,yloc, 90.0, 0.0, title(1:lm))
+c          call pgebuf
+c     *    (uqst(iubuff+j), j=1,6), '->', 
+c     *    (lqst(ilbuff+j), j=1,6)
+c           iubuff=i*6
+c           ilbuff=i*6
+      end do
+          end if
         end
 
 
@@ -1467,6 +1654,13 @@ C 27-Nov-1986
 C 17-Dec-1990 - add polygons [PAH].
 C 14-Mar-1997 - optimization: use GRDOT1 [TJP].
 C-----------------------------------------------------------------------
+c  read JPL catalog
+      parameter(maxsline=1000)
+      real fmx,fmn,strl
+      real freq(maxsline),intensity(maxsline)
+      integer uqst(maxsline),lqst(maxsline),mtag(maxsline)
+      integer mxnline
+ccccccccccccccccccccccccccc
       LOGICAL PGNOTO
       integer j, k, ci, l
       character title*64
@@ -1523,7 +1717,14 @@ C
       CALL PGEBUF
           enddo
 555       continue
-      END
+      
+c      fmn  =  230.537
+c      fmx  =  230.549
+c      strl = -500
+c      call JPLlineRD(fmx,fmn,strl,mxnline,freq,intensity,uqst,lqst,mtag)
+c      write(*,*) 'mxnline=', mxnline
+ 
+        END
 
 
 
