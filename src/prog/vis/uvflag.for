@@ -137,6 +137,7 @@ c			    standardise some FORTRAN.
 c           rjs     09dec97 Make antennas used message more robust.
 c           rjs     11mar98 Some FORTRAN standardisation, to appease g77.
 c           rjs     30aug99 Increase outline to 256 chars.
+c           pjt     12feb02 lifted count and counts confusion for intel compiler
 c************************************************************************
 c uvflag works as follows:
 c It reads the name of the first visibility file.
@@ -148,7 +149,7 @@ c Then it asks for the next visibility file and does the whole process
 c again until the list is exhausted.
 
       character*(*) version
-      parameter ( version = 'uvflag: version 2.5 11-Mar-98')
+      parameter ( version = 'uvflag: version 2.5 12-feb-02')
 
       character*64     vis
 
@@ -864,6 +865,7 @@ c number of good, bad and changed flags.
       character*79     outline
       integer          count, counts(4), i
       data             wrhead / .TRUE. /
+      external         count
       
 c Get identification number of this record
       call uvinfo( unit, 'visno', visno )
