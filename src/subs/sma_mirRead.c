@@ -49,6 +49,8 @@
 //            decoding antenna position from baseline vectors.
 // 2005-03-23 fixed a bug in decoding antenna positions for
 //            the antenna id > reference antenna's id.
+// 2005-03-23 fixed a bug in baseline pntr (last bl of
+//            the 1st rx overlapping with that of 2nd).
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -261,7 +263,7 @@ void rspokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1,
 void rspokeflshsma_c(char *kst[])
 { /* rspokeflshsma_c== pokeflsh */
      int buffer, tno, ibuff, i;
-     int i1, i2, ifs, p, bl, sb, nchan, nspect;
+     int i1, i2, ifs, p, bl, sb, rx, nchan, nspect;
      int npol,ipnt,ischan[SMIF];
      int tbinhi,tbin,binhi,binlo,bin, nbin[SMIF];
      int nstoke[SMIF], nfreq[SMIF], sfreq[SMIF], sdf[SMIF], restfreq[SMIF];
@@ -280,6 +282,7 @@ void rspokeflshsma_c(char *kst[])
      char version[16];
      tno = smabuffer.tno;
      sb = smabuffer.sb; /* sb=0 for lsb; sb=1 for usb; sb=2 for both */
+     rx = smabuffer.rxif;
      if(smabuffer.nused==0) 
                return;
 /* put ants to uvdata */
@@ -353,7 +356,7 @@ void rspokeflshsma_c(char *kst[])
                   preamble[3] = tdash;
                   preamble[4] = 256*i1 + i2;
                   for(p=0; p<smabuffer.nstoke[ifs]; p++){
-                   ipnt = smabuffer.pnt[ifs][p][bl][0];
+                   ipnt = smabuffer.pnt[ifs][p][bl][0][0];
                    printf("ipnt=%d\n", ipnt);
                    if(ipnt>0) 
                uvputvrr_c(tno,"inttime",&smabuffer.inttime[bl],1);
@@ -396,12 +399,12 @@ void rspokeflshsma_c(char *kst[])
                   preamble[2] = smabuffer.w[bl];
                   preamble[3] = smabuffer.time; 
                   preamble[4] = (double)smabuffer.blcode[bl]; 
-       polcnt = rscntstokes(npol, bl, sb);
+       polcnt = rscntstokes(npol, bl, sb, rx);
        npol = polcnt->npol;
           if(npol>0) {
             uvputvri_c(tno,"npol",&npol,1);
             for(p=polcnt->polstart; p<polcnt->polend+1; p++){
-    nchan = rsgetdata(&vis,&flags,&nchan, p, bl, sb);
+    nchan = rsgetdata(&vis,&flags,&nchan, p, bl, sb, rx);
     if(nchan>0) {
            ibuff = smabuffer.polcode[0][p][bl];
          uvputvri_c(tno,"pol",&ibuff,1);
@@ -422,18 +425,20 @@ void rspokeflshsma_c(char *kst[])
     for (p=0; p<SMPOL; p++) {
     for (bl=0; bl<SMBAS; bl++) {
     for (sb=0; sb<SMSB; sb++) {
-    smabuffer.pnt[ifs][p][bl][sb]=0;
-      }}}}
+    for (rx=0; rx<SMRX; rx++) {
+    smabuffer.pnt[ifs][p][bl][sb][rx]=0;
+      }}}}}
 
 }
 
-int rsgetdata(smavis, smaflags, smanchan, p, bl, sb)
+int rsgetdata(smavis, smaflags, smanchan, p, bl, sb, rx)
 visdata smavis[MAXCHAN];
 int smaflags[MAXCHAN];
 int *smanchan;
 int p;
 int bl;
 int sb;
+int rx;
 { /* Construct a visibility record constructed from multiple IFs. */
 int nifs=smabuffer.nifs;
 int nvis;
@@ -444,7 +449,7 @@ int ifpnt, polpnt, blpnt, binpnt;
     nchan = 0;
         nchand = 0;
     for (n=0; n<nifs; n++) {
-       ipnt = smabuffer.pnt[n][p][bl][sb]; 
+       ipnt = smabuffer.pnt[n][p][bl][sb][rx]; 
       if(ipnt>0) {
         if(nchan<nchand) {
                for (i=nchan; i<nchand; i++) {
@@ -484,7 +489,7 @@ int ifpnt, polpnt, blpnt, binpnt;
                    return nchan;
  }
 
-struct pols *rscntstokes(int npol, int bl, int sb)
+struct pols *rscntstokes(int npol, int bl, int sb, int rx)
 { /*Determine the number of valid Stokes records in this record.*/
     int nifs = SMIF;
     int nstoke = SMPOL;
@@ -498,7 +503,7 @@ struct pols *rscntstokes(int npol, int bl, int sb)
           valid = -1;
            for ( ifs =0; ifs<nifs; ifs++) {
             valid = valid;
-           if(smabuffer.pnt[ifs][p][bl][sb] > 0) valid = 1;
+           if(smabuffer.pnt[ifs][p][bl][sb][rx] > 0) valid = 1;
 					}
            if(valid>0&&p1==-1) {p1=p; p2=p1;}
            if(valid>0) {npol++; if(p>p1) p2=p1+1;}
@@ -561,7 +566,7 @@ uvwPack **uvwbsln;
 visdataBlock  visSMAscan;
 int sphSizeBuffer=SMIF*MAXBAS*6;
 int ibuff, nnants, flush;
-int ifpnt, polpnt, blpnt, sbpnt, sblpnt, binpnt, rx_irec;
+int ifpnt, polpnt, blpnt, sbpnt, rxpnt, sblpnt, binpnt, rx_irec;
 int avenchan, intcycle;
 float avereal, aveimag;
 extern struct inh_def   **inh;
@@ -1464,8 +1469,9 @@ smabuffer.nifs = smaCorr.n_chunk;
    for (k=1; k<SMBAS+1; k++) {
    for (l=1; l<3; l++) { /* 2 sb */
         smabuffer.flag[i-1][j-1][k-1][l-1]=-1;
-        smabuffer.pnt[i-1][j-1][k-1][l-1]=0;
-                             }}}}
+   for (m=1; m<SMRX+1; m++) {
+        smabuffer.pnt[i-1][j-1][k-1][l-1][m-1]=0;
+                             }}}}}
 
 /* reverse the spectral chunk order for blocks
    1 2 3 4 */
@@ -1689,25 +1695,8 @@ visSMAscan.uvblnID = uvwbsln[inhset]->uvwID[j].blcode;
 visSMAscan.blockID.sbid = uvwbsln[inhset]->uvwID[j].isb; 
 visSMAscan.blockID.polid = uvwbsln[inhset]->uvwID[j].ipol;
 sbpnt = visSMAscan.blockID.sbid;
-
-// single rx
-//if(smabuffer.rxif!=0&&smabuffer.rxif!=2) {
-//switch(sbpnt) {
-//case 0: blpnt=uvwbsln[inhset]->uvwID[j].blsid;
-//        phaseSign=-1;
-//  smabuffer.u[blpnt] = uvwbsln[inhset]->uvwID[j].u/smabuffer.sfreq[1]*1000.;
-//  smabuffer.v[blpnt] = uvwbsln[inhset]->uvwID[j].v/smabuffer.sfreq[1]*1000.;
-//  smabuffer.w[blpnt] = uvwbsln[inhset]->uvwID[j].w/smabuffer.sfreq[1]*1000.;
-//        break;
-//case 1: blpnt=uvwbsln[inhset]->uvwID[j].blsid;
-//        phaseSign= 1;
-//  smabuffer.u[blpnt] = uvwbsln[inhset]->uvwID[j].u/smabuffer.sfreq[1]*1000.;
-//  smabuffer.v[blpnt] = uvwbsln[inhset]->uvwID[j].v/smabuffer.sfreq[1]*1000.;
-//  smabuffer.w[blpnt] = uvwbsln[inhset]->uvwID[j].w/smabuffer.sfreq[1]*1000.;
-//        break;
-//              }
-//                   }
-// dual rx for rxid=0
+blpnt=100;
+rxpnt = uvwbsln[inhset]->uvwID[j].irec;
 if(smabuffer.rxif==uvwbsln[inhset]->uvwID[j].irec||smabuffer.rxif==-1) {
 switch(sbpnt) {
 case 0: blpnt=uvwbsln[inhset]->uvwID[j].blsid;
@@ -1724,28 +1713,7 @@ case 1: blpnt=uvwbsln[inhset]->uvwID[j].blsid;
         break;
               }
                    }
-// dual rx for rxid=2
-//if(smabuffer.rxif==uvwbsln[inhset]->uvwID[j].irec&&numberRxif==2) {
-//switch(sbpnt) {
-//case 0: blpnt=uvwbsln[inhset]->uvwID[j].blsid;
-//        phaseSign=-1;
-//  smabuffer.u[blpnt] = uvwbsln[inhset]->uvwID[j].u/smabuffer.sfreq[1]*1000.;
-//  smabuffer.v[blpnt] = uvwbsln[inhset]->uvwID[j].v/smabuffer.sfreq[1]*1000.;
-//  smabuffer.w[blpnt] = uvwbsln[inhset]->uvwID[j].w/smabuffer.sfreq[1]*1000.;
-//        break;
-//case 1: blpnt=uvwbsln[inhset]->uvwID[j].blsid;
-//        phaseSign= 1;
-//  smabuffer.u[blpnt] = uvwbsln[inhset]->uvwID[j].u/smabuffer.sfreq[1]*1000.;
-//  smabuffer.v[blpnt] = uvwbsln[inhset]->uvwID[j].v/smabuffer.sfreq[1]*1000.;
-//  smabuffer.w[blpnt] = uvwbsln[inhset]->uvwID[j].w/smabuffer.sfreq[1]*1000.;
-//        break;
-//              }
-//                   }
 flush=1;
-//printf("smabuffer.rxif uvwID[j].irec %d %d %d\n", smabuffer.rxif,
-//          uvwbsln[inhset]->uvwID[j].irec, j);
-//if(smabuffer.rxif==uvwbsln[inhset]->uvwID[j].irec||smabuffer.rxif==-1) 
-//{flush = 1; } else { flush =-1; }
 if(smabuffer.nopol==1) visSMAscan.blockID.polid=-5;
 switch(visSMAscan.blockID.polid)  {
 case  0: polpnt=0; break;
@@ -1759,15 +1727,6 @@ case -7: polpnt=3; break;
 case -8: polpnt=4; break;         }
 /* loading smabuffer uvw*/
 smabuffer.blcode[blpnt] = (float) visSMAscan.uvblnID;
-//printf("blcode %d %f\n", blpnt, smabuffer.blcode[blpnt]);
-//, smabuffer.blcode[blpnt]);
-/* Miriad using nsec */
-//printf("blpnt j sblpnt sb rx fsky %d %d %d %d %d %f \n", blpnt, j, sblpnt, 
-//uvwbsln[inhset]->uvwID[j].irec, uvwbsln[inhset]->uvwID[j].isb,
-//smabuffer.sfreq[1]);
-//smabuffer.u[blpnt] = uvwbsln[inhset]->uvwID[j].u/smabuffer.sfreq[1]*1000.;
-//smabuffer.v[blpnt] = uvwbsln[inhset]->uvwID[j].v/smabuffer.sfreq[1]*1000.;
-//smabuffer.w[blpnt] = uvwbsln[inhset]->uvwID[j].w/smabuffer.sfreq[1]*1000.;
 /* read sph for a complete spectral records assuming that the correlator
 configuration is not changed during the observation */
 if(readSet<= 1&&j==0) { 
@@ -1843,7 +1802,7 @@ ifpnt=0;
 /* update polcode and pnt to smabuffer  */
 smabuffer.polcode[ifpnt][polpnt][blpnt]=visSMAscan.blockID.polid;
 /* smabuffer.pnt[ifpnt][polpnt][blpnt][0] = ipnt;*/
-smabuffer.pnt[ifpnt][polpnt][blpnt][sbpnt] = ipnt;
+smabuffer.pnt[ifpnt][polpnt][blpnt][sbpnt][rxpnt] = ipnt;
 /* Now the channel data.  */
 /* Make pseudo continuum */
 avenchan = 0;
@@ -1869,8 +1828,10 @@ aveimag  = (float)pow(2.,(double)scale)*shortdata[6+2*i];
                                                  }
                             } else {
 /* loading the original vis with no average */
+
 smabuffer.data[ipnt].real=(float)pow(2.,(double)scale)*shortdata[5+2*i];
 smabuffer.data[ipnt].imag=(float)pow(2.,(double)scale)*shortdata[6+2*i];
+
 ipnt++;    }
 
 }
