@@ -78,18 +78,26 @@ c
 c     21 Apr 1992 rag   added ability to deproject a cube
 c     17 feb 2002 pjt   miriadized
 c     24 jul 2002 pjt   flag value 0,instead of -1; process 3D cubes
+c     28 aug 2002 pjt   declare all vars, fix default crpix if possible
+c
+c ToDo's
+c     - track off-centering down:
+c         imgen out=junk1 imsize=200 object=gaussian spar=1,50,-50,20,40,45
+c         deproject in=junk1 out=junk2 pa=30 inc=60
+c       does not result in a round object with peak=1, but peaks at 1/2 pixel
+c       (crpix is correct)
 c
       include   'maxdim.h'
       include   'mirconst.h'
       integer   MAXNAX
       parameter (MAXNAX=3)
       character VERSION*(*)
-      parameter (VERSION='24-jul-2002')
+      parameter (VERSION='28-aug-2002')
 c
       character infile*128, oufile*128, rmode*10, ctype1*10,ctype2*10
       integer   iflux,iout,ivert,ix,ixpt,iy,iypt,iz,mode,nx,ny,nz,
      #          outnx,outny,tin,tout,naxis,insize(MAXNAX),ousize(MAXNAX)
-      real      indat(MAXDIM,MAXDIM),oudat(MAXDIM),xpt,ypt,sum
+      real      indat(MAXDIM,MAXDIM),oudat(MAXDIM),xpt,ypt,sum,x0,y0
       integer   imdef
       real      incl,majaxis,rget,dx,dy,ang,xmax,ymax,xmin,ymin,expand
       real      cenx,ceny,fnx,fny,x1,y1,x2,y2,x3,y3,x4,y4,coutx,couty
@@ -102,11 +110,11 @@ c
       call keya('in',infile,' ')
       call keya('out',oufile,' ')
       if (keyprsnt('center')) then
-         lcen = .FALSE.
+         lcen = .TRUE.
          call keyr('center',cenx,0.0)
          call keyr('center',ceny,0.0)
       else
-         lcen = .TRUE.
+         lcen = .FALSE.
       endif
          
       call keyr('pa',majaxis,0.0)
@@ -147,13 +155,13 @@ c
       nz = insize(3)
 
       if (lcen) then
+         write(*,*) 'Setting map center ',ceny,ceny
+      else
          call rdhdr(tin,'crpix1',cenx,0.0)
          call rdhdr(tin,'crpix2',ceny,0.0)
          write(*,*) 'Using map center ',cenx,ceny
-      else
-         write(*,*) 'Setting map center ',ceny,ceny
       endif
-c
+
 c
 c     Read in the first data plane.
 c
@@ -218,6 +226,9 @@ c
         outny=int(ymax-ymin+1.0)
         coutx=-xmin
         couty=-ymin
+
+        write(*,*) 'cout:',coutx,couty
+
       endif
 c
 c
@@ -301,8 +312,8 @@ c	  call xyflgwr(tout,iy,ouflg)
         enddo
       enddo
       call hdcopy(tin,tout,'history')
-      call hdcopy(tin,tout,'crpix1')
-      call hdcopy(tin,tout,'crpix2')
+      call wrhdr(tout,'crpix1',coutx)
+      call wrhdr(tout,'crpix2',couty)
       if (nz.gt.1) call hdcopy(tin,tout,'crpix3')
       call hdcopy(tin,tout,'cdelt1')
       call hdcopy(tin,tout,'cdelt2')
@@ -322,8 +333,12 @@ c	  call xyflgwr(tout,iy,ouflg)
 c
       end
 
-      subroutine trxexp(xin,yin,cenx,ceny,ang,expand,
-     #                  coutx,couty,xout,yout)
+      subroutine trxexp(xin,yin,cenx,ceny,ang,expand,coutx,couty,
+     *                  xout,yout)
+      implicit none
+      real              xin,yin,cenx,ceny,ang,expand,coutx,couty,
+     *                  xout,yout
+
 c
 c
 c     Perform a rotation/translation so that a specific direction
@@ -334,8 +349,7 @@ c     NOTE: that in the equations fact that cos(ang)=cos(-ang) and
 c           sin(ang)=-sin(-ang) are used.  Also now used for both.
 c
 c
-      real ang,cang,cenx,ceny,coutx,couty,expand,sang,x0,
-     #     xin,xout,y0,yin,yout
+      real cang,sang,x0,y0,c2,s2,cs
 c
       x0=xin-cenx
       y0=yin-ceny
