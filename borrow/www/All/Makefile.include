@@ -1,0 +1,14 @@
+#
+#	If you are using this, you have forgotten to include
+#	a definition of the machine you are working on
+#
+#
+anything :
+	-echo
+	-echo  You have forgotton to set environment variable WWW_MACH
+	-echo  to the architecute code for the machine you are working on
+	-echo
+	-echo  like setenv WWW_MACH sun4, or decstation, etc
+	-echo
+	exit -2
+

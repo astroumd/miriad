@@ -1,0 +1,33 @@
+# This is at default xmrecvlist file. It should be used as a sample
+# for your own. It shows the syntax for all supported values, and
+# their overriding environmental variables, and command line flags.
+# All values are overridden by their corresponding command line flags.
+
+# Note: Correct syntax MUST be followed.
+#	SYNTAX:	FIELD_IDENTIFIER=VALUE
+# no spaces are allowed anywhere.
+
+# This sets the PATH variable where files will be deposited. This is
+# overridden by the XMBIMAPATH environmental variable and the -path
+# command line flag. The default is the current working directory.
+PATH=./
+
+# This sets whether or not to allow background untarring to occur.
+# While this allows the untar operation to overlap with the transfer
+# operation, it may adversely effect other system performance. This
+# is overridden by the XMBIMABACKGROUND environmental variable and the
+# -bg command line flag. Valid values are ON and OFF.
+# The default is OFF.
+BACKGROUND=OFF
+
+# This sets the VERBOSE variable for more detailed error and progress
+# information. This is overridden by the XMBIMAVERBOSE environmental
+# variable and the -v command line flag. Valid values are ON and OFF.
+# The default is OFF.
+VERBOSE=OFF
+
+# This sets the NUMPROCS variable to allow for n simultaneous file retrieval
+# operations. This is overridden by the XMBIMAPROCS environmental variable
+# and the -procs command line flag. The default value is 1 non simaultaneous
+# file retrieval.
+NUMPROCS=1

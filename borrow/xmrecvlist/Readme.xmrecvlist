@@ -1,0 +1,49 @@
+This is the binary that allows the retrieval of multiple data sets at
+once using the "button method" after matches to a query are returned.
+Several bug fixes have been implemented in this distribution. Hopefully
+there should be no more problems. This file is being unbundled from
+the MIRIAD distribution and as such the most recent version of this
+binary will now be available via anonymous ftp from atlas.ncsa.uiuc.edu
+in /pub/xmrecvlist. Contact Randall Sharpe (rsharpe@ncsa.uiuc.edu) for
+bug reports, information or problems.
+This binary will still be available inthe MIRIAD distribution however,
+there may be a lag between when new binaries for xmrecvlist are released
+and when MIRIAD is updated.
+ 
+The only binaries availble to me (and hence to you) are for machines 
+running a mips OS (like IRIX), sun4 OS or Solaris OS. The files in this 
+directory are:
+
+	xmrecvlist-sun4		: for use on Sun machines using SunOS 4.x
+	xmrecvlist-solaris	: for use on Sun machined using SunOS Solaris
+	xmrecvlist-mips		: for use on systems using a mips
+	                          operating system (like IRIX)
+
+If you would like the source to try porting let me know and I will
+make it available to you. You will also need the libwww source from 
+CERN (http://www.w3.org/hypertext/WWW/Library). However, you are on
+your own.
+
+INSTALLATION:
+	Choose the correct binary for your operating system and install it 
+	somewhere as xmrecvlist. You will need to change the value of 
+	PATH_TO_XMRECVLIST in your mailcap file or the file mosaic.mc to the
+	directory where your installed xmrecvlist. 
+	See also the file Readme.mailcap.
+NEW:
+	With this version of xmrecvlist, there has been a major
+	departure from previous versions. We are now using the libwww
+	v 2.17 available from CERN
+	       (http://www.w3.org/hypertext/WWW/Library). 
+	Hence this now talks directly to
+	the http daemon on the server machine. As a result, this
+	version also supports retreival of datasets from the mass
+	storage tape system just a the "click here" single retrieval
+	does. See the FAQ 
+	       (http://bima-server.ncsa.uiuc.edu/bima/FAQ.html) 
+	for more information, especially caveats. This version now
+	supports several new features including a user customizeable
+	.xmbimarc file and the use of environmental variable to set
+	the behavior of xmrecvlist, as well as more parallel file
+	retrievel and file unpacking. See the accompanying file
+	default_xmbimarc for more detailed information.
