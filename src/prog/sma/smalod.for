@@ -42,9 +42,9 @@ c      coordinates for the antennas can be retrieved from SMA sybase.
 c      For double checking the antenna positions, one can login to
 c      d2o.sma.hawaii.edu (IP:128.171.116.111) and use the following
 c      command:
-c      dBValue -d hal9000-newdds -v dsm_dds_hal_x_v11_d "2004-11-16 00:00:00"
-c      dBValue -d hal9000-newdds -v dsm_dds_hal_y_v11_d "2004-11-16 00:00:00"
-c      dBValue -d hal9000-newdds -v dsm_dds_hal_z_v11_d "2004-11-16 00:00:00"
+c      dBValue -d hal9000-newdds -v dsm_dds_hal_x_v11_d -t "2004-11-16 00:00:00"
+c      dBValue -d hal9000-newdds -v dsm_dds_hal_y_v11_d -t "2004-11-16 00:00:00"
+c      dBValue -d hal9000-newdds -v dsm_dds_hal_z_v11_d -t "2004-11-16 00:00:00"
 c      If the reference antenna is not the default value 6, one may need
 c      to give the reference antenna here.
 c
@@ -61,7 +61,7 @@ c                  2004-9-1.
 c                  Defaults assumes non-polarization state is assigned.
 c       'dospc'    reverses the order of the spectral chunks in frequency
 c                  only for the first three blocks (1 2 3).
-c                  freuency code vs. spectral window orders:
+c                  frequency code vs. spectral window orders:
 c                   frcode iband 
 c		       	 4 1
 c			 3 2
@@ -147,7 +147,8 @@ c    jhz  18-mar-05 added linear in options for polarization;
 c                   made default for nopol
 c    jhz  18-mar-05 corrected size for mount in uvputvr
 c    jhz  23-mar-05 fixed a bug in decoding antenna position
-c                   for antennas with id > reference antenna's id.  
+c                   for antennas with id > reference antenna's id. 
+c    jhz  01-apr-05 cleaned some mess left from atlod. 
 c------------------------------------------------------------------------
         integer maxfiles
         parameter(maxfiles=128)
@@ -436,12 +437,6 @@ c
           mount =0
           call uvputvri(tno,'mount',mount,1)
         endif
-c
-c        if(dobary)then
-c          call uvputvra(tno,'veltype','VELO-HEL')
-c        else
-c          call uvputvra(tno,'veltype','VELO-LSR')
-c        endif
         end
 c************************************************************************
 c************************************************************************
@@ -464,96 +459,19 @@ cc jhz 2004-6-7: change at -> sm for the parameter
 cc smif = 48
 cc smant = 8
 
-        integer smif,smant,smpol,smdata,smbase,smbin,smcont
-        parameter(smif=24,smant=8,smpol=4,smbase=((smant+1)*smant)/2)
-        parameter(smbin=1024,smcont=33)
-        parameter(smdata=24*maxchan*smbase)
-        integer nifs,nfreq(smif),nstoke(smif),polcode(smif,smpol)
-        double precision sfreq(smif),sdf(smif),restfreq(smif)
-        double precision time
-        integer tcorr
-        real xtsys(smif,smant),ytsys(smif,smant),chi
-        real u(smbase),v(smbase),w(smbase)
-        real xyphase(smif,smant),xyamp(smif,smant)
-        real xsampler(3,smif,smant),ysampler(3,smif,smant)
-        complex data(smdata)
-        integer pnt(smif,smpol,smbase,smbin),nbin(smif),edge(smif)
-        integer bchan(smif)
-        real inttime(smbase),inttim
-        logical flag(smif,smpol,smbase,smbin),dosw(smbase)
-        integer nused,tno,nants
-        logical dosam,dohann,birdie,doif,dobary,newfreq,newsc,newpnt
-        logical dowt,dopmps,doxyp,opcorr,hires
-        real wts(2*smcont-2)
-        real axisrms(smant),axismax(smant),mdata(5)
-        logical mflag
-        double precision obsra,obsdec,lat,long,ra,dec
+        double precision lat,long
         double precision lat1, long1
         character sname*64
-c
-        common/atlodd/sname
-        common/atlodc/sfreq,sdf,restfreq,time,obsra,obsdec,lat,long,
-     *      ra,dec,
-     *    data,
-     *    xtsys,ytsys,chi,xyphase,xyamp,xsampler,ysampler,u,v,w,inttime,
-     *      inttim,wts,mdata,axisrms,axismax,
-     *    pnt,nbin,nused,tno,nants,nifs,nfreq,nstoke,polcode,edge,
-     *      bchan,tcorr,
-     *    flag,dosw,dosam,dohann,birdie,dowt,dopmps,doxyp,opcorr,
-     *      doif,dobary,newfreq,hires,mflag,
-     *    newsc,newpnt
         integer bl,p,if,bin
         logical ok
 cc jhz
         kstat=1;
-c
-        sname  = ' '
-        tno    = tno1
-        dosam  = dosam1
-        doxyp  = doxyp1
-        opcorr = doop1
-        dohann = dohann1
-        doif   = doif1
-        dobary = dobary1
-        birdie = birdie1
-        dowt   = dowt1
-        dopmps = dopmps1
-        hires  = hires1
-c
-        if(dowt)call lagwt(wts,2*smcont-2,0.04)
-c
-        newsc = .false.
-        newfreq = .false.
-        nants = 0
-        nifs = 0
-        nused = 0
-        do if=1,smif
-          nstoke(if) = 0
-          nfreq(if) = 0
-        enddo
-c
-c  Reset the counters, etc.
-c
-        do if=1,smif
-          nbin(if) = 0
-        enddo
-        inttim = 0
-        do bin=1,smbin
-          do bl=1,smbase
-            do p=1,smpol
-              do if=1,smif
-                pnt(if,p,bl,bin) = 0
-              enddo
-            enddo
-          enddo
-        enddo
-c
         call obspar('SMA','latitude', lat, ok)
           lat1=lat
         if(.not.ok)call bug('f','Could not get SMA latitude')
         call obspar('SMA','longitude',long,ok)
           long1=long
-        if(.not.ok)call bug('f','Could not get SMA longitude')
+c        if(.not.ok)call bug('f','Could not get SMA longitude')
 c
         call rspokeinisma(kstat,tno1,dosam1,doxyp1,doop1,
      *  dohann1,birdie1,dowt1,dopmps1,dobary1,doif1,hires1,
@@ -567,51 +485,11 @@ c
 c------------------------------------------------------------------------
         character line*72
 c
-c  The common block (yuk) used to buffer up an integration.
-c
-        include 'maxdim.h'
-c
-        integer smif,smant,smpol,smdata,smbase,smbin,smcont
-        parameter(smif=24,smant=8,smpol=4,smbase=((smant+1)*smant)/2)
-        parameter(smbin=1024,smcont=33)
-        parameter(smdata=24*maxchan*smbase)
-        integer nifs,nfreq(smif),nstoke(smif),polcode(smif,smpol)
-        double precision sfreq(smif),sdf(smif),restfreq(smif)
-        double precision time
-        integer tcorr
-        real xtsys(smif,smant),ytsys(smif,smant),chi
-        real u(smbase),v(smbase),w(smbase)
-        real xyphase(smif,smant),xyamp(smif,smant)
-        real xsampler(3,smif,smant),ysampler(3,smif,smant)
-        complex data(smdata)
-        integer pnt(smif,smpol,smbase,smbin),nbin(smif),edge(smif)
-        integer bchan(smif)
-        real inttime(smbase),inttim
-        logical flag(smif,smpol,smbase,smbin),dosw(smbase)
-        integer nused,tno,nants
-        logical dosam,dohann,birdie,doif,dobary,newfreq,newsc,newpnt
-        logical dowt,dopmps,doxyp,opcorr,hires
-        real wts(2*smcont-2)
-        real axisrms(smant),axismax(smant),mdata(5)
-        logical mflag
-        double precision obsra,obsdec,lat,long,ra,dec
-        character sname*64
-c
-        common/atlodd/sname
-        common/atlodc/sfreq,sdf,restfreq,time,obsra,obsdec,lat,long,
-     *      ra,dec,
-     *    data,
-     *    xtsys,ytsys,chi,xyphase,xyamp,xsampler,ysampler,u,v,w,inttime,
-     *      inttim,wts,mdata,axisrms,axismax,
-     *    pnt,nbin,nused,tno,nants,nifs,nfreq,nstoke,polcode,edge,
-     *      bchan,tcorr,
-     *    flag,dosw,dosam,dohann,birdie,dowt,dopmps,doxyp,opcorr,
-     *      doif,dobary,newfreq,hires,mflag,
-     *    newsc,newpnt
+        integer tno
 c
         call output(string)
         line = 'SMALOD:    '//string
-        call hiswrite(tno,line)
+c        call hiswrite(tno,line)
         end
 c************************************************************************
         subroutine pokename(in)
@@ -705,196 +583,42 @@ c
 c  Inputs:
 c    scanskip	Scans to skip.
 c    scanproc	Number of scans to process. If 0, process all scans.
-c    doauto	Save autocorrelation data.
-c    docross	Save crosscorrelation data.
-c    relax	Save data even if the SYSCAL record is bad.
+c    doauto     Save autocorrelation data.
+c    docross    Save crosscorrelation data.
+c    relax      Save data even if the SYSCAL record is bad.
 c    sing
-c    polflag	Flag all polarisations if any are bad.
-c    unflag	Save data even though it may appear flagged.
-c    ifsel	IF to select. 0 means select all IFs.
-c    userfreq	User-given rest frequency to override the value in
-c		the RPFITS file.
-c    nuser	Number of user-specificed rest frequencies.
+c    polflag    Flag all polarisations if any are bad.
+c    unflag     Save data even though it may appear flagged.
+c    ifsel      IF to select. 0 means select all IFs.
+c    userfreq   User-given rest frequency to override the value in
+c               the RPFITS file.
+c    nuser      Number of user-specificed rest frequencies.
+c    
 c------------------------------------------------------------------------
-         include 'maxdim.h'
-c=======================================================================
-c - mirconst.h  Include file for various fundamental physical constants.
 c
-c  History:
-c    jm  18dec90  Original code.  Constants taken from the paper
-c                 "The Fundamental Physical Constants" by E. Richard
-c                 Cohen and Barry N. Taylor (PHYICS TODAY, August 1989).
-c ----------------------------------------------------------------------
-c  Pi.
-      real pi, twopi
-      double precision dpi, dtwopi
-      parameter (pi = 3.14159265358979323846)
-      parameter (dpi = 3.14159265358979323846)
-      parameter (twopi = 2 * pi)
-      parameter (dtwopi = 2 * dpi)
-c ----------------------------------------------------------------------
-c  Speed of light (meters/second).
-      real cmks
-      double precision dcmks
-      parameter (cmks = 299792458.0)
-      parameter (dcmks = 299792458.0)
-c ----------------------------------------------------------------------
-c  Boltzmann constant (Joules/Kelvin).
-      real kmks
-      double precision dkmks
-      parameter (kmks = 1.380658e-23)
-      parameter (dkmks = 1.380658d-23)
-c ----------------------------------------------------------------------
-c  Planck constant (Joules-second).
-      real hmks
-      double precision dhmks
-      parameter (hmks = 6.6260755e-34)
-      parameter (dhmks = 6.6260755d-34)
-c ----------------------------------------------------------------------
-c  Planck constant divided by Boltzmann constant (Kelvin/GHz).
-      real hoverk
-      double precision dhoverk
-      parameter (hoverk = 0.04799216)
-      parameter (dhoverk = 0.04799216)
-c=======================================================================
-        integer maxpol,maxsim,maxxyp
-        parameter(maxpol=4,maxsim=4,maxxyp=5)
 c
-        integer ant_max, max_card, max_if, pol_max, max_su, max_fg,
-     *        max_nx, max_mt, max_sc, max_cu
-        parameter (ant_max=15, max_card=650, max_if=24, pol_max=8,
-     *        max_su=500, max_fg=32, max_nx=256, max_mt=256,
-     *        max_sc=16, max_cu=32)
-
-        integer nstok, nfreq, ncount, nscan, ivelref, nant, ncard,
-     *        intime, sma_defeat, n_if, if_num(max_if),
-     *        if_invert(max_if), if_nfreq(max_if),
-     *        if_nstok(max_if), if_sampl(max_if), if_simul(max_if),
-     *        if_chain(max_if), ant_num(ant_max), n_su, su_num(max_su),
-     *        n_fg, fg_ant(2,max_fg),fg_if(2, max_fg),
-     *        fg_chan(2, max_fg), fg_stok(2, max_fg), n_nx,
-     *        nx_rec(max_nx), ant_mount(ant_max),
-     *        sma_iostat, n_mt, mt_ant(max_mt),
-     *        sc_ant, sc_if, sc_q, n_cu, cu_ant(max_cu),
-     *        cu_if(max_cu), cu_ch1(max_cu), cu_ch2(max_cu),
-     *        sc_srcno, data_format
-
-      double precision ra, dec, freq, dfreq, rfreq, vel1, sma_utcmtai,
-     *        sma_c(12), sma_djmrefp, sma_djmreft, x(ant_max),
-     *        y(ant_max), z(ant_max), if_freq(max_if), x_array,
-     *        y_array, z_array, axis_offset(ant_max),
-     *        feed_pa(2,ant_max), feed_cal(ant_max, max_if, pol_max),
-     *        if_bw(max_if), fg_ut(2, max_fg), su_ra(max_su),
-     *        su_dec(max_su), su_rad(max_su), su_decd(max_su),
-     *        if_ref(max_if), nx_ut(max_nx), mt_press(max_mt),
-     *        mt_temp(max_mt), mt_humid(max_mt), mt_ut(max_mt),
-     *        cu_ut(max_cu), cu_cal1(max_cu), cu_cal2(max_cu),
-     *        su_pra(max_su), su_pdec(max_su), su_prad(max_su),
-     *        su_pdecd(max_su), pm_ra, pm_dec, pm_epoch
-
-      real sc_ut, sc_cal(max_sc,max_if, ant_max), intbase
-
-      character*2 feed_type(2,ant_max), if_cstok(4,max_if)
-      character*16 object,instrument,cal,rp_observer
-      character*8 sta(ant_max), coord, datsys
-      character*20 version, rpfitsversion
-      character*12 datobs, datwrit
-      character*80 file
-      character*80 card(max_card)
-      character su_name(max_su)*16, su_cal(max_su)*4,
-     *       fg_reason(max_fg)*24, nx_date(max_nx)*12,
-     *       nx_source(max_nx)*16
-      logical if_found, su_found, fg_found, nx_found, an_found,
-     *       mt_found, cu_found, write_wt
-
-      common /doubles/ axis_offset, dec, dfreq, cu_cal1, cu_cal2,
-     *      cu_ut, feed_cal, feed_pa, fg_ut, freq, if_bw, if_ref,
-     *      if_freq, mt_humid, mt_press, mt_temp, mt_ut, nx_ut,
-     *      ra, rfreq, sma_c, sma_djmrefp, sma_djmreft, sma_utcmtai,
-     *      su_dec, su_ra, su_rad, su_decd, su_pra, su_pdec,
-     *      su_prad, su_pdecd, vel1, x, x_array, y, y_array, z,
-     *      z_array
-      common /proper/ pm_ra, pm_dec, pm_epoch
-      common /param/ nstok, nfreq, ncount, intime, nscan, write_wt,
-     *       ncard, intbase, data_format
-      common /spect/ ivelref
-      common /anten/ nant, ant_num, ant_mount, an_found
-      common /ephem/ rp_defeat
-      common /if/ n_if, if_invert, if_nfreq, if_nstok,
-     *        if_sampl, if_found, if_num, if_simul, if_chain
-      common /su/ n_su, su_found, su_num
-      common /fg/ n_fg, fg_ant, fg_if, fg_chan, fg_stok, fg_found
-      common /nx/ n_nx, nx_rec, nx_found
-      common /mt/ n_mt, mt_ant, mt_found
-      common /index/ rp_iostat
-      common /sc/ sc_ut, sc_ant, sc_if, sc_q, sc_cal, sc_srcno
-      common /cu/ n_cu, cu_ant, cu_if, cu_ch1, cu_ch2, cu_found
-      common /names/ object, instrument, cal, sma_observer, datobs,
-     *       datwrit, file, datsys, version, coord, sta, feed_type,
-     *       card, if_cstok, su_name, su_cal, fg_reason, nx_source,
-     *       nx_date, rpfitsversion
-
-c     the following is for compatibility with early versions:
+        integer jstat
 c
-      double precision sma_pressure(ant_max), sma_temp(ant_max),
-     *    sma_humid(ant_max), ant_pressure(ant_max),
-     *    ant_temp(ant_max), ant_humid(ant_max)
-      equivalence ( sma_pressure(1), ant_pressure(1))
-      equivalence ( sma_temp(1), ant_temp(1))
-      equivalence ( sma_humid(1), ant_humid(1))
-      equivalence ( mt_press(1), ant_pressure(1))
-      equivalence ( mt_temp(1), ant_temp(1))
-      equivalence ( mt_humid(1), ant_humid(1))
-        integer scanno,i1,i2,baseln,i,id,j
-        logical newscan,newsrc,newfreq,newtime,accum,ok,badbit
-        logical flags(maxpol),corrfud,kband,wband
-        integer jstat,flag,bin,ifno,srcno,simno,ssrcno,ssimno
-        integer if2sim(max_if),nifs(max_if),sim2if(maxsim,max_if)
-        integer sif(max_if)
-        real ut,utprev,utprevsc,u,v,w,weight(maxchan*maxpol)
-        complex vis(maxchan*maxpol)
-        double precision reftime,ra0,dec0,pntra,pntdec
-        character calcode*16
-
 c  Information on flagging.
 c
-        integer nrec,nspec,fgbad,fgoffsrc,fginvant,fgsysc,fgsam
-c
-c  Variables to track the sysc records.
-c
-        logical scinit(max_if,ant_max),scbuf(max_if,ant_max)
-        logical xflag(max_if,ant_max),yflag(max_if,ant_max)
-        integer ptag(maxxyp,max_if,ant_max)
-        integer atag(maxxyp,max_if,ant_max)
-        integer nxyp(max_if,ant_max),tcorr
-        real xyp(maxxyp,max_if,ant_max),xya(maxxyp,max_if,ant_max)
-        real xyphase(max_if,ant_max),xyamp(max_if,ant_max)
-        real pntrms(ant_max),pntmax(ant_max)
-        real xsamp(3,max_if,ant_max),ysamp(3,max_if,ant_max)
-        real xtsys(max_if,ant_max),ytsys(max_if,ant_max)
-        real chi,tint,mdata(5)
-c
-        logical antvalid(ant_max),mflag
-        double precision jday0,time,tprev
         integer kstat 
 c
 c  Open the SMA_MIR file.
 c
          call smaopen(in,iostat)
-        if(iostat.ne.0)return
+         if(iostat.ne.0)return
 c
 c  Initialize.
 c
         call pokename(in)
-        call rssmaflush(mflag,scinit,tcorr,scbuf,xflag,yflag,
-     *       max_if,ant_max,  scanskip, scanproc, sb, rxif, 
+        call rssmaflush(scanskip, scanproc, sb, rxif, 
      *       dosporder, doeng)
-                  kstat= 666
+             kstat= 666
         call rspokeflshsma(kstat);
 c
          jstat =-1;
-         call rsmiriadwrite(in,jstat)
-         call smaclose(iostat)
+        call rsmiriadwrite(in,jstat)
+        call smaclose(iostat)
         end
 c************************************************************************
         subroutine smaeof(jstat)
@@ -963,106 +687,17 @@ c************************************************************************
         subroutine smaopen(in,jstat)
 c
         character in*(*)
+        character*80 file
         integer jstat, tno
-c
-        integer ant_max, max_card, max_if, pol_max, max_su, max_fg,
-     *        max_nx, max_mt, max_sc, max_cu
-        parameter (ant_max=15, max_card=650, max_if=24, pol_max=8,
-     *        max_su=500, max_fg=32, max_nx=256, max_mt=256,
-     *        max_sc=16, max_cu=32)
-c
-        integer nstok, nfreq, ncount, nscan, ivelref, nant, ncard,
-     *        intime, rp_defeat, n_if, if_num(max_if),
-     *        if_invert(max_if), if_nfreq(max_if),
-     *        if_nstok(max_if), if_sampl(max_if), if_simul(max_if),
-     *        if_chain(max_if), ant_num(ant_max), n_su, su_num(max_su),
-     *        n_fg, fg_ant(2,max_fg),fg_if(2, max_fg),
-     *        fg_chan(2, max_fg), fg_stok(2, max_fg), n_nx,
-     *        nx_rec(max_nx), ant_mount(ant_max),
-     *        rp_iostat, n_mt, mt_ant(max_mt),
-     *        sc_ant, sc_if, sc_q, n_cu, cu_ant(max_cu),
-     *        cu_if(max_cu), cu_ch1(max_cu), cu_ch2(max_cu),
-     *        sc_srcno, data_format
-c
-      double precision ra, dec, freq, dfreq, rfreq, vel1, rp_utcmtai,
-     *        rp_c(12), rp_djmrefp, rp_djmreft,x(ant_max),
-     *        y(ant_max), z(ant_max), if_freq(max_if), x_array,
-     *        y_array, z_array, axis_offset(ant_max),
-     *        feed_pa(2,ant_max), feed_cal(ant_max, max_if, pol_max),
-     *        if_bw(max_if), fg_ut(2, max_fg), su_ra(max_su),
-     *        su_dec(max_su), su_rad(max_su), su_decd(max_su),
-     *        if_ref(max_if), nx_ut(max_nx), mt_press(max_mt),
-     *        mt_temp(max_mt), mt_humid(max_mt), mt_ut(max_mt),
-     *        cu_ut(max_cu), cu_cal1(max_cu), cu_cal2(max_cu),
-     *        su_pra(max_su), su_pdec(max_su), su_prad(max_su),
-     *        su_pdecd(max_su), pm_ra, pm_dec, pm_epoch
-c
-      real sc_ut, sc_cal(max_sc,max_if, ant_max), intbase
-c
-      character*2 feed_type(2,ant_max), if_cstok(4,max_if)
-      character*16 object,instrument,cal,rp_observer
-      character*8 sta(ant_max), coord, datsys
-      character*20 version, rpfitsversion
-      character*12 datobs, datwrit
-      character*80 file
-      character*80 card(max_card)
-      character su_name(max_su)*16, su_cal(max_su)*4,
-     *       fg_reason(max_fg)*24, nx_date(max_nx)*12,
-     *       nx_source(max_nx)*16
-      logical if_found, su_found, fg_found, nx_found, an_found,
-     *       mt_found, cu_found, write_wt
-c
-      common /doubles/ axis_offset, dec, dfreq, cu_cal1, cu_cal2,
-     *      cu_ut, feed_cal, feed_pa, fg_ut, freq, if_bw, if_ref,
-     *      if_freq, mt_humid, mt_press, mt_temp, mt_ut, nx_ut,
-     *      ra, rfreq, rp_c, rp_djmrefp, rp_djmreft, rp_utcmtai,
-     *      su_dec, su_ra, su_rad, su_decd, su_pra, su_pdec,
-     *      su_prad, su_pdecd, vel1, x, x_array, y, y_array, z,
-     *      z_array
-      common /proper/ pm_ra, pm_dec, pm_epoch
-      common /param/ nstok, nfreq, ncount, intime, nscan, write_wt,
-     *       ncard, intbase, data_format
-      common /spect/ ivelref
-      common /anten/ nant, ant_num, ant_mount, an_found
-      common /ephem/ rp_defeat
-      common /if/ n_if, if_invert, if_nfreq, if_nstok,
-     *        if_sampl, if_found, if_num, if_simul, if_chain
-      common /su/ n_su, su_found, su_num
-      common /fg/ n_fg, fg_ant, fg_if, fg_chan, fg_stok, fg_found
-      common /nx/ n_nx, nx_rec, nx_found
-      common /mt/ n_mt, mt_ant, mt_found
-      common /index/ rp_iostat
-      common /sc/ sc_ut, sc_ant, sc_if, sc_q, sc_cal, sc_srcno
-      common /cu/ n_cu, cu_ant, cu_if, cu_ch1, cu_ch2, cu_found
-      common /names/ object, instrument, cal, sma_observer, datobs,
-     *       datwrit, file, datsys, version, coord, sta, feed_type,
-     *       card, if_cstok, su_name, su_cal, fg_reason, nx_source,
-     *       nx_date, rpfitsversion
-c
-c
-c     the following is for compatibility with early versions:
-      double precision rp_pressure(ant_max), rp_temp(ant_max),
-     *    rp_humid(ant_max), ant_pressure(ant_max),
-     *    ant_temp(ant_max), ant_humid(ant_max)
-      equivalence ( rp_pressure(1), ant_pressure(1))
-      equivalence ( rp_temp(1), ant_temp(1))
-      equivalence ( rp_humid(1), ant_humid(1))
-      equivalence ( mt_press(1), ant_pressure(1))
-      equivalence ( mt_temp(1), ant_temp(1))
-      equivalence ( mt_humid(1), ant_humid(1))
-c
-        integer flag,baseln,bin,ifno,srcno
-        real ut,u,v,w,weight
-        complex vis
 c
 c  External.
 c
         character smaerr*32
 c
+c
         file = in
 c   jstat=-3 -> open the input data file 
         jstat = -3
-        an_found = .false.
 c jhz test
         call rsmirread(in, jstat)
         if(jstat.ne.0) call bug('w',
