@@ -149,23 +149,30 @@ c	index=1 => touch with/out annotation, not for px*py=1
 c	index=0 => restore or untouch with no annotation
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c
-c           -----   -----   -----
-c          |     | |     | |     |
-c           -----   -----   -----
-c       <->
-c        xvp
-c          <----->
-c            xlen
-c          <------->
-c              xsz
+c                -----   -----   -----
+c               |     | |     | |     |
+c                -----   -----   -----
+c                                                        |  
+c                -----   -----   -----        |          |
+c               |     | |     | |     |       |   ylen   |   ysz
+c                -----   -----   -----        |          |
+c            <->		         |  yvp
+c            xvp
+c               <---->
+c                xlen
+c               <------>
+c                xsz
 c
-c       total lenght = (npx - 1) *xsz +xlen
+c            total xlength = (npx - 1) *xsz +xlen
+c
+c
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 	Subroutine PANEL_CONNECT(index,Units_p)
 	integer index
 	logical first
 	data first /.true./
 	include 'pgplot.inc'
+	real axch,aych,pxch,pych
 	real minlen
 	real CH,oldCH
 	real oldPGXLEN,oldPGYLEN,oldPGXSZ,oldPGYSZ,oldPGXVP,oldPGYVP
@@ -188,6 +195,8 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 	PGYVP(PGID)=oldPGYVP
 	CH=oldCH
 	CALL PGSCH(CH)
+c	write(*,*) "INDEX", index
+c	write(*,*) PGXVP(PGID),PGYVP(PGID),PGXSZ(PGID),PGYSZ(PGID)
 	if (index.eq.1.or.index.eq.2.or.index.eq.4) then
 c	  if (PGNXC(PGID).gt.1) THEN
             PGXLEN(PGID)=lenx
@@ -235,29 +244,49 @@ c	  try to make it a touched square box if asked to
 	    endif
 c	    write(*,*) "ashi",aschi-minlen,asdhi-minlen
 	  endif
-	  if (max(PGNXC(PGID),PGNYC(PGID)).eq.2)  CH=1.8
-	  if (max(PGNXC(PGID),PGNYC(PGID)).eq.3)  CH=2.1
-	  if (max(PGNXC(PGID),PGNYC(PGID)).eq.4)  CH=2.7
-	  if (max(PGNXC(PGID),PGNYC(PGID)).gt.4)
-     +  	  CH=2.0*(oldCH+0.1*max(PGNXC(PGID),PGNYC(PGID)))
-c	  write(*,*) "charsize=",oldCH,CH
+	  call  PGQCS(1, AXCH, AYCH)
+	  call  PGQCS(3, PXCH, PYCH)
+c	  if (min(PGNXC(PGID),PGNYC(PGID)).eq.2)  CH=1.8
+c	  if (min(PGNXC(PGID),PGNYC(PGID)).eq.3)  CH=2.1
+c	  if (min(PGNXC(PGID),PGNYC(PGID)).eq.4)  CH=2.7
+c	  if (min(PGNXC(PGID),PGNYC(PGID)).gt.4)
+c     +  	  CH=2.0*(oldCH+0.1*max(PGNXC(PGID),PGNYC(PGID)))
+	  
+	  CH=min(0.14/AXch,min(PGXLEN(PGID),PGYLEN(PGID))/6.0/PXCH)
+c	  write(*,*) "charsize=",oldCH,CH,AXCH,
+c     +         AYCH,PGXLEN(PGID),PGYLEN(PGID)
+c	  write(*,*) "charsize1=",oldCH,CH,PXCH,
+c     +         PYCH,PGXLEN(PGID),PGYLEN(PGID)
 	  if (PGNXC(PGID)*PGNYC(PGID).eq.1) CH=oldCH
 	  CALL PGSCH(CH)
 	  return
 	end if
-	if (index.eq.3) then ! save space for annotation
+	if (index.eq.3) then ! reserve space for annotation
 	  RATIO=((PGNXC(PGID)-1)*oldPGXSZ+oldPGXLEN)/
-     +       (aschi-PGXVP(PGID))
-	  PGXLEN(PGID)=oldPGXLEN/ratio
-	  PGYLEN(PGID)=oldPGYLEN
-	  PGXSZ(PGID)=oldPGXSZ/ratio
-	  PGYSZ(PGID)=oldPGYSZ
-	  PGXVP(PGID)=oldPGXVP
-	  PGYVP(PGID)=oldPGYVP
-	  CH=oldCH
+     +       (aschi-oldPGXVP)
+	  PGXVP(PGID)=max(oldPGXVP,25)
+	  PGYVP(PGID)=max(oldPGYVP,28)
+	  Txlen=((PGNXC(PGID)-1)*oldPGXSZ+oldPGXLEN)*ratio
+	  xratio=Txlen/(oldPGXVP-PGXVP(PGID)+Txlen)
+	  Tylen=((PGNYC(PGID)-1)*oldPGYSZ+oldPGYLEN)
+	  yratio=Tylen/(oldPGYVP-2*PGYVP(PGID)+TYlen)
+
+	  PGXLEN(PGID)=oldPGXLEN/ratio/xratio
+	  PGYLEN(PGID)=oldPGYLEN/yratio
+	  PGXSZ(PGID)=oldPGXSZ/ratio/xratio
+	  PGYSZ(PGID)=oldPGYSZ/yratio
+
+c	  write(*,*) PGXVP(PGID),PGYVP(PGID),PGXSZ(PGID),PGYSZ(PGID),
+c     +      ratio,xratio
+	  call  PGQCS(1, AXCH, AYCH)
+	  call  PGQCS(3, PXCH, PYCH)
+	  CH=min(0.08/AXch,min(PGXLEN(PGID),PGYLEN(PGID))/10.0/PXCH)
+	  if (PGNXC(PGID)*PGNYC(PGID).eq.1) CH=oldCH
 	  CALL PGSCH(CH)
 	  return
 	endif
+
+
 c	write(*,*) index,"LENGTH",PGXLEN(PGID),
 c     +      PGYLEN(PGID),PGNXC(PGID),PGNYC(PGID)
 c        write(*,*) PGXVP(PGID),PGYVP(PGID),PGXSZ(PGID),PGYSZ(PGID),CH

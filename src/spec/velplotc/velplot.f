@@ -24,6 +24,7 @@
 	integer ni,nf,l
 	real xstart,xend,vstart,vend,tr(6)
 	character file*20,ctypec(3)*25,telescop*50
+	character sRA*13,sDec*13
 	character line*70
 	integer lOut,nsize(3)
 
@@ -45,8 +46,15 @@ c 	  Convolve array into position-velocity maps, output in V.
 	  tr(5)=0.
 	  tr(6)=(xend-xstart)/real(np-1)
 	  tr(4)=xstart-tr(6)
-	  write(telescop,'("cut=",f7.2,",",f7.2,",",f7.2)')
-     &         xcut(l),ycut(l),pa(l)
+	  call HA2RA(xcut(l),ycut(l),sRA,sDec)
+c	  write(*,*) sRA,sDec
+c	  write(telescop,'("cut=",f7.2,",",f7.2,",",f7.2)')
+c     &         xcut(l),ycut(l),pa(l)
+	  write(telescop,'(A,",",A,",",f7.2)')
+     &         sRa,sDec,pa(l)
+	  call removespace(telescop)
+c	  write(*,*) telescop
+
 	  call stripspace(telescop)
 
 c	  cf ??
@@ -68,6 +76,9 @@ c	  line = 'VELPLOTC: FEILING '//version
 	  write(line,'(A,A)') 'VELPLOTC: FEILING ',
      &        telescop(1:len1(telescop))
 	  call hisWrite(lOut,line)
+	  write(line,'(A,f5.1,",",f5.1,",",f6.1)') 'VELPLOTC: Cbeam:',
+     &      cmaj,cmin,cpa
+	  call hisWrite(lOut,line)
 	  call hisClose(lOut)
 	  call xyclose(lOut)
 	end do
@@ -88,7 +99,7 @@ c	write(*,*) "Done with saving"
 	real vlsr(MAXCUBE)
 	common/vlsr/vlsr
 	real xstart,xend,vstart,vend,tr(6)
-	character lab1*8,lab2*8,lab3*8,xlabel*20,ylabel*20,label*40
+	character xlabel*20,ylabel*20,label*40
 	real axs,axe,ays,aye
 	integer px,py
 	common/panel/px,py
@@ -133,7 +144,7 @@ c	write(*,*) "plot_posvel",windx,windy,ni,nf
 	  call PANEL_CONNECT(boxc,Units_p)
 	endif
         xlabel='velocity (km/s)'
-        ylabel='position (arcsec)'
+        ylabel='position (")'
 	if (animate) then
 	  call veloline (arydata,nx,ny,nc,xcut(1),ycut(1),pa(1),
      &        ncon,con,vdata,np,xstart,xend)
@@ -191,11 +202,9 @@ c	  set manually for ambient velocity ..Need work
 c
 c  Set up parameters for labels plotting.
 c
-104	  format (f7.2)
+104	  format (f6.1)
+105	  format('(',f6.1,',',f6.1,',',f6.1,')')
 	  if (.not.animate) then
-	    write(lab1,104) xcut(l)
-	    write(lab2,104) ycut(l)
-	    write(lab3,104) pa(l)
 	    if (cpos(1).ne.-999.0.and.cpos(2).ne.-999.0) then
 	      dist=(xcut(l)-cpos(1))**2.0+(ycut(l)-cpos(2))**2.0
 	      dist=sqrt(dist)
@@ -211,11 +220,16 @@ c	      Create a clean rectangle for writing the distance
 	      write(ldist,104) dist
 	      call pgmtxt('T',-1.2,.96,1.,ldist)
 	    end if
-            label='(x,y)=('//lab1//','//lab2//') PA='//lab3
+	    write(label,105) xcut(l),ycut(l),pa(l)
 	    call pgbox("BCST",0.0,0,"BCST",0.0,0)
-            if (boxc.eq.0.or.boxc.eq.3) then
+c	    write(*,*) "boxc",boxc
+            if (boxc.eq.0) then
               call pgbox("BCNST",0.0,0,"BCNST",0.0,0)
               call pglab(xlabel,ylabel,label)
+	    endif
+            if (boxc.eq.3) then !Untouch box
+	      call pgmtxt('T',1.0,.5,0.5,label)
+c             call pglab("","",label)
 	    endif
 	    if (mod(l,px).eq.1.or.px.eq.1) then
               call pgbox("BCST",0.0,0,"BCNST",0.0,0)
