@@ -1,0 +1,18 @@
+#! /bin/csh -f
+#
+
+#		set clip size in "MB"
+set max=128
+
+
+foreach _a ($*)
+  set $_a
+end
+
+#
+
+(size $MIRBIN/* > bigsizes.log) >& /dev/null
+
+echo  List of executables larger than $max MB :
+
+awk '{s=$3/1000000; if (s>'$max') print $6,s}' bigsizes.log
