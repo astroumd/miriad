@@ -45,6 +45,8 @@
 //            nopol.
 // 2005-03-18 decoded velocity type from mir.
 // 2005-03-18 fixed problems of el and az in uvput
+// 2005-03-21 added integration skip in the process of
+//            decoding antenna position from baseline vectors.
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -840,38 +842,37 @@ case 4: uvwbsln[inhset]->uvwID[set-blhset].ipol=-5; break;
 // 4   -5      HH (XX)
                           }
      }
-//}
 
 // counting baseline for each integration set
      uvwbsln[set]->n_bls++;
-//     printf("blset set %d %d %d %d %d\n",blset, set,blset-blhid_hdr,
-//     uvwbsln[set]->uvwID[blset-blhid_hdr].blhid, blh[blset]->blhid);
      }
 //     printf("set numberBaselines %d %d\n", set, numberBaselines);     
      numberBaselines=uvwbsln[set]->n_bls;
      }
 }
 /* set antennas */
-      blarray[1][1].ee = blh[0]->ble ;
-      blarray[1][1].nn = blh[0]->bln ;
-      blarray[1][1].uu = blh[0]->blu ;
+{ int bset;
+      bset = smabuffer.scanskip*numberBaselines;
+      blarray[blh[bset]->itel1][blh[bset]->itel2].ee = blh[bset]->ble ;
+      blarray[blh[bset]->itel1][blh[bset]->itel2].nn = blh[bset]->bln ;
+      blarray[blh[bset]->itel1][blh[bset]->itel2].uu = blh[bset]->blu ;
       smabuffer.nants=1;
-for (set=1;set<nsets[1];set++) {
-      if(blarray[1][1].ee != blh[set]->ble) {
+       printf("bset=%d\n", bset);
+for (set=bset+1;set<nsets[1];set++) {
+      if(blarray[blh[bset]->itel1][blh[bset]->itel2].ee != blh[set]->ble) {
       blarray[blh[set]->itel1][blh[set]->itel2].ee = blh[set]->ble;
       blarray[blh[set]->itel1][blh[set]->itel2].nn = blh[set]->bln;
       blarray[blh[set]->itel1][blh[set]->itel2].uu = blh[set]->blu;
       blarray[blh[set]->itel1][blh[set]->itel2].itel1 = blh[set]->itel1;
       blarray[blh[set]->itel1][blh[set]->itel2].itel2 = blh[set]->itel2;
       blarray[blh[set]->itel1][blh[set]->itel2].blid  = blh[set]->blsid;
-//       printf("bsl soln id %d iblcd %d blsid %d\n", 
-//        blh[set]->soid, blh[set]->iblcd, blh[set]->blsid);
       smabuffer.nants++;       }
           else
       {smabuffer.nants = (int)((1+sqrt(1.+8.*smabuffer.nants))/2);
 /* printf("mirRead: number of antenna =%d\n", smabuffer.nants);*/
           goto blload_done;}
                                 }
+}
 blload_done:
 free(blh);
 
