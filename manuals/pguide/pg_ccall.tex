@@ -1,0 +1,166 @@
+MIRIAD subroutines are generally only callable by FORTRAN code,
+and this should be the language of choice for MIRIAD programmers.
+There are, however, C-callable entry points to most I/O routines. In certain
+applications (particularly ``special'' task HCCONV) these may be of some
+use (their use is, however, discouraged).
+
+The calling sequence is similar to the FORTRAN calling sequence.
+There are some differences:
+
+{\bf entry point name}:  The C entry point name is formed by adding
+{\bf \_c} to the FORTRAN name. The entry point names are always lower case.
+For example, the FORTRAN routine {\bf bug} becomes {\bf bug\_c}.
+
+{\bf data type}:  Most scalar arguments that are only passed into a
+subroutine (but not returned) are passed by value, rather than by address.
+Implementations of FORTRAN normally pass all arguments by address.
+
+{\bf char strings}:  FORTRAN character variables are usually passed as the
+address of a null-terminated array of type ``char''. Occasionally, when
+the subroutine expects only a single character, it is passed by value.
+
+{\bf complex data}:  Complex data is handled as an array of two ``float''
+arrays (real part followed by the imaginary part).
+
+{\bf boolean data}:  Logical data is treated as integers (0 representing
+false, and non-zero representing true).  WARNING:  ``true'', ``false'',
+and ``NULL'' have been redefined in some subroutines.  So far as has
+been noticed, they have been redefined to their expected values.
+
+{\bf returned char strings}:  When the routine passes back a character
+string, there will be an extra argument ({\bf length} or {\bf n} in the
+descriptions below) which give the size of the return buffer.
+
+Below is a summary of the C-callable entry points, in pseudo-C.  Take
+note:  the listing may have some small errors, perhaps typographical, so
+be aware when using them.
+
+{\ninepoint\begintt
+void bug_c(char sev,char message[])
+void bugno_c(char sev,int status)
+\endtt}
+{\ninepoint\begintt
+void haccess_c(int *tno,void **item,char name[],char status[],int *iostat)
+void hclose_c(int tno)
+\endtt}
+{\ninepoint\begintt
+void hdaccess_c(void *item,int *iostat)
+void hdcopy_c(int tin, int tout, char itemname[])
+void hdprobe_c(int tno,char keyword[],char descr[length],int length,
+     char type[],int *n)
+int hdprsnt_c_c(int tno, char itemname[])
+\endtt}
+{\ninepoint\begintt
+void hisclose_c(int tno)
+void hisopen_c(int tno,char status[])
+void hisread_c(int tno,char line[length],int length,int *eof)
+void hiswrite_c(int tno,char line[])
+\endtt}
+{\ninepoint\begintt
+void hopen_c(int *tno,char name[],char status[],int *iostat)
+  (Note: The hread routines are implemented as macros)
+void hreada_c(void *item,char line[length],int length,int *iostat)
+  (Note: In hreadb, buffer is not zero-terminated)
+void hreadb_c(void *item,char *buffer[],int offset,int length,int *iostat)
+void hreadd_c(void *item,double buffer[],int offset,int length,int *iostat)
+void hreadi_c(void *item,int buffer[],int offset,int length,int *iostat)
+void hreadj_c(void *item,int buffer[],int offset,int length,int *iostat)
+void hreadr_c(void *item,float buffer[],int offset,int length,int *iostat)
+int hsize_c(void *item)
+\endtt}
+{\ninepoint\begintt
+  (Note: The hwrite routines are implemented as macros)
+void hwritea_c(void *item,char line[length],int length,int *iostat)
+  (Note: In hwriteb, buffer need not be zero-terminated)
+void hwriteb_c(void *item,char *buffer[length],int offset,int length,
+     int *iostat)
+void hwrited_c(void *item,double buffer[],int offset,int length,int *iostat)
+void hwritei_c(void *item,int buffer[],int offset,int length,int *iostat)
+void hwritej_c(void *item,int buffer[],int offset,int length,int *iostat)
+void hwriter_c(void *item,float buffer[],int offset,int length,int *iostat)
+\endtt}
+{\ninepoint\begintt
+  (Note: There is no rdhdr_c or rdhdi_c. Implement them with rdhdd_c)
+void rdhda_c(int tno,char *keyword[],char value[length],char defval[],
+     int length)
+void rdhdc_c(int tno,char keyword[],float *value,float defval[2])
+void rdhdd_c(int tno,char keyword[],double *value,double defval)
+\endtt}
+{\ninepoint\begintt
+void scrclose_c(void *handle)
+void scropen_c(void **handle)
+void scrread_c(void *handle,float buffer[],int offset,int length)
+void scrwrite_c(void *handle,float buffer[length],int offset,int length)
+\endtt}
+{\ninepoint\begintt
+void uvclose_c(int tno)
+void uvcopyvr_c(int tin,int tout)
+void uvflgwr_c(int tno,int flags[])
+  (Note: The uvgetvr routines are implemented as macros)
+void uvgetvra_c(int tno,char var[],char data[n],int n)
+void uvgetvrc_c(int tno,char var[],float data[2*n],int n)
+void uvgetvrd_c(int tno,char var[],double data[n],int n)
+void uvgetvri_c(int tno,char var[],int data[n],int n)
+void uvgetvrj_c(int tno,char var[],int data[n],int n)
+void uvgetvrr_c(int tno,char var[],float data[n],int n)
+\endtt}
+{\ninepoint\begintt
+void uvinfo_c(int tno,char object[],double data[])
+void uvmark_c(int tno, int flag)
+void uvnext_c(int tno)
+void uvopen_c(int tno,char name[],char status[])
+\endtt}
+{\ninepoint\begintt
+  (Note: The uvputvr routines are implemented as macros)
+void uvprobvr_c(int tno,char var[],char *type,int *length,int *updated)
+  (Note: In uvputvra string does not need to be zero terminated).
+void uvputvra_c(int tno,char var[],char string[n],int n)
+void uvputvrc_c(int tno,char var[],float data[2*n],int n)
+void uvputvrd_c(int tno,char var[],double data[n],int n)
+void uvputvri_c(int tno,char var[],int data[n],int n)
+void uvputvrr_c(int tno,char var[],float data[n],int n)
+\endtt}
+{\ninepoint\begintt
+  (Note: The uvrdvr routines are implemented as macros)
+void uvrdvra_c(int tno,char var[],char data[length],char def[],int length)
+void uvrdvrc_c(int tno,char var[],float data[2],float def[2])
+void uvrdvrd_c(int tno,char var[],double *data,double def)
+void uvrdvri_c(int tno,char var[],int *data,int def)
+void uvrdvrr_c(int tno,char var[],float *data,float def)
+void uvread_c(int tno,double preamble[4],float data[2*n],int flags[n],
+     int n,int *nread)
+\endtt}
+{\ninepoint\begintt
+void uvrewind_c(int tno)
+int uvscan_c(int tno,char var[])
+void uvselect_c(int tno,char object[],double p1,double p2,int datasel)
+void uvset_c(int tno,char object[],char type[],int n,float p1,float p2,
+     float p3)
+void uvtrack_c(int tno,char name[],char switches[])
+\endtt}
+{\ninepoint\begintt
+int uvupdate_c(int tno)
+void uvwflgwr_c(int tno,int flags[])
+void uvwread_c(int tno,float data[2*n],int flags[n],int n, int *nread)
+void uvwrite_c(int tno,double preamble[4],float data[2*n],int flags[n],
+     int n)
+void uvwwrite_c(int tno, float data[2*n],int flags[n],int n)
+\endtt}
+{\ninepoint\begintt
+void wrhda_c(int tno,char keyword[],char value[])
+void wrhdc_c(int tno,char keyword[],float value[2])
+void wrhdd_c(int tno,char keyword[],double value)
+void wrhdi_c(int tno,char keyword[],int value)
+void wrhdr_c(int tno,char keyword[],float value)
+\endtt}
+{\ninepoint\begintt
+void xyclose_c(int tno)
+void xyflgrd_c(int tno,int index,int buffer[])
+void xyflgwr_c(int tno,int index,int buffer[])
+void xymkrd_c(int tno,int index,int buffer[],int n,int *nread)
+void xymkwr_c(int tno,int index,int buffer[],int n)
+void xyopen_c(int *tno,char name[],char status[],int naxis,int axes[])
+void xyread_c(int tno,int index,float buffer[])
+void xysetpl_c(int tno,int naxis,int axes[])
+void xywrite_c(int tno,int index,float buffer[])
+\endtt}
