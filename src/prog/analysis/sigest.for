@@ -1,5 +1,5 @@
 c************************************************************************
-	program histo
+	program sigest
 	implicit none
 c
 c= sigest - Estimate the rms level in an image.

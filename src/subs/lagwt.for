@@ -62,7 +62,7 @@ c------------------------------------------------------------------------
 	integer indx(MAXCOEFF+1),zero(MAXCOEFF+2)
 	integer pEval,pA,pGrid
 	logical convrg
-	character line*64
+c	character line*64
 	include 'maxdim.h'
 	include 'mem.h'
 c
@@ -97,10 +97,10 @@ c
 c
 c  Report on the spectral sidelobe level.
 c
-	write(line,10)'Maximum spectral sidelobe after reweighting is',
-     *		      real(abs(coeff(ncoeff+1)))
-  10	format(a,1pe8.1)
-	call output(line)
+c	write(line,10)'Maximum spectral sidelobe after reweighting is',
+c     *		      real(abs(coeff(ncoeff+1)))
+c  10	format(a,1pe8.1)
+c	call output(line)
 c
 c  Determine normalisation coefficient.
 c

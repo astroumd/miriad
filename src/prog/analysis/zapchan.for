@@ -1,5 +1,4 @@
-c= zapchan - replace user-specified list of channels with average of adjacent
-c 	     channels.  Channels may not be consecutive.
+c= zapchan - replace range of channels with average of adjacent channels. 
 c& thw
 c: image-analysis
 c+

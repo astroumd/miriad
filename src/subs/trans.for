@@ -12,7 +12,6 @@ c
 c  15dec92  nebk   Original version
 c
 c***********************************************************************
-c
 c*transd -- Transpose double precision matrix
 c:transpose,reorder
 c& nebk
@@ -168,9 +167,7 @@ c
       end if
 c
       end
-c
 c***********************************************************************
-c
 c*transr -- Transpose real matrix
 c:transpose,reorder
 c& nebk
@@ -326,8 +323,7 @@ c
       end if
 c
       end
-c
-c        
+c************************************************************************
 c*transi -- Transpose integer matrix
 c:transpose,reorder
 c& nebk
@@ -483,8 +479,7 @@ c
       end if
 c
       end
-c
-c        
+c************************************************************************
 c*transl -- Transpose logical matrix
 c:transpose,reorder
 c& nebk
@@ -640,6 +635,4 @@ c
       end if
 c
       end
-c
-c        
 

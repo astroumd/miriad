@@ -136,8 +136,7 @@ c	    rjs     16aug96 Eliminate MAXWIDE definition. Change NSELS,
 c			    standardise some FORTRAN.
 c           rjs     09dec97 Make antennas used message more robust.
 c           rjs     11mar98 Some FORTRAN standardisation, to appease g77.
-c	    pjt      1aug99 Adjusted a string array for large MAXANT in
-c   			    overview(); this is of course a sloppy fix :-)
+c           rjs     30aug99 Increase outline to 256 chars.
 c************************************************************************
 c uvflag works as follows:
 c It reads the name of the first visibility file.
