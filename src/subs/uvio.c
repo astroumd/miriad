@@ -242,7 +242,7 @@
 /*		list to be formed for hashing.				*/
 /*									*/
 /*----------------------------------------------------------------------*/
-#define VERSION_ID "15-jan-03 pjt"
+#define VERSION_ID "23-jan-04 pjt"
 
 #define private static
 
@@ -526,6 +526,12 @@ main(int ac,char *av[])
     if (ac!=2) {
         printf("Usage: %s [vis=]vis-dataset\n",av[0]);
         printf("Expert listing of a miriad UV dataset\n");
+#ifdef MIR4
+        printf("MIR4 mode\n");
+#else
+        printf("MIR3 mode **probably will not work in MIR4**\n");
+#endif
+	
         exit(0);
     }
 
