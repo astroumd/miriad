@@ -19,6 +19,7 @@
 # 11-feb-02 optional new intel compiler for linux
 # 04-oct-02 modified usage of tr - colby
 #  3-dec-02 rpfits is now source included
+# 23-jan-03 add (optional) install of LGM's rad/lvg package in borrow
 #
 #   Simple single-architecture installation of MIRIAD
 #   (linux)
@@ -322,8 +323,8 @@ if ($shared) then
   endif
 endif
 
-echo PGM: prog wip
-mir.install prog wip xmrecvlist
+echo PGM: prog wip rad xmrecvlist
+mir.install prog wip rad xmrecvlist
 
 
 # special things....
