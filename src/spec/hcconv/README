@@ -3,6 +3,9 @@ was still produced on the VAX, and had to be converted
 to miriad format. It is horribly non-portable, and is unlikely
 to still compile or even of any  interest. 
 
+This version ran on sunos (before it was even called solaris).
+There is also a VMS version, called uvhat, to which similar comments apply.
+
 For historic reasons we still keep the code in MIRIAD (history repeats)
 
 
