@@ -20,5 +20,5 @@ if ($?PYTHONPATH) then
 else
   setenv PYTHONPATH $MIR/src/scripts/python
 endif
-alias pyramid python -i $PYTHONPATH/Miriad.py
+alias pyramid python -i $MIR/src/scripts/python/Miriad.py
 
