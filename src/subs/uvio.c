@@ -242,7 +242,7 @@
 /*		list to be formed for hashing.				*/
 /*									*/
 /*----------------------------------------------------------------------*/
-#define VERSION_ID "23-jan-04 pjt"
+#define VERSION_ID "18-may-04 pjt"
 
 #define private static
 
@@ -3403,7 +3403,8 @@ private int uvread_shadowed(UV *uv,double diameter)
   uvbasant_c(bl,&i1,&i2);
   i1--;i2--;
   if(i1 < 0 || i2 >= nants){
-    BUG('f',"Bad antenna numbers when checking shadowing, in UVREAD(select)"); }
+    BUG('f',"Bad antenna numbers when checking shadowing, in UVREAD(select)");
+  }
 
   for(j=0; j < 2; j++){
     i0 = ( j == 0 ? i1 : i2);
