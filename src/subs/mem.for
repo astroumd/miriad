@@ -15,6 +15,7 @@ c    rjs  10sep92 Serious bug in memalloc, when calling mmAlloc.
 c    rjs  24dec92 Doc changes only, for jm.
 c    rjs  28jun93 Improvement to membuf routine, to bring it better in
 c		  line with the 27jul92 changes.
+c    pjt  25jun03 more verbose when running out of memory
 c************************************************************************
 c* MemBuf -- Return suggested memory buffer size.
 c& rjs
@@ -180,7 +181,10 @@ c  We do not have a chunk of memory big enough. Allocate it using mmalloc.
 c
 	if(q.eq.0)then
 	  pntd = mmAlloc(Data,sized)
-	  if(pntd.eq.0)call bug('f','Unable to allocate memory')
+	  if(pntd.eq.0) then
+	    write(*,*) 'sized=',sized
+	    call bug('f','Unable to allocate memory')
+	  endif
 c
 c  We have a big enough bit of memory.
 c
