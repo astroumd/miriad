@@ -1,0 +1,19 @@
+define plot
+data $1
+lines 12 102
+xcolumn 1
+ycolumn 6
+limits 
+#limits 0 0 -.1 1.1
+connect
+end
+
+plot log
+
+lstyle 1
+box
+xlabel radius (arcsec)
+ylabel integrated flux density (Jy)
+#mtext T 2 .5 .5 c-array at dec=45 for Gaussian FWHM=8, 16, 30, 40, 60"
+#mtext B -4 .25 0 uniform weighting solid lines
+#mtext B -2 .25 0 natural weighting dashed lines
