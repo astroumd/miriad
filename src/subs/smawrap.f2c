@@ -38,15 +38,11 @@ fortran subroutine rsmiriadwrite(character datapath, integer jstat)
   rsmiriadwrite_c(datapath.zterm, (char *)jstat.addr);
 }
 
-fortran subroutine rssmaflush(logical mflag, logical scinit, integer tcorr,
-    logical scbuf, logical xflag, logical yflag,
-    integer maxif, integer maxant, integer scanskip,
+fortran subroutine rssmaflush(integer scanskip,
     integer scanproc, integer sb, integer rxif, integer dosporder,
     integer doeng)
 {
-   rssmaflush_c(mflag.addr, scinit.addr, tcorr.val,
-              scbuf.addr, xflag.addr, yflag.addr,
-              maxif.val, maxant.val, scanskip.val,
+   rssmaflush_c(scanskip.val,
               scanproc.val, sb.val, rxif.val, dosporder.val,
               doeng.val);
 }
