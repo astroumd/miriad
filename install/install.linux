@@ -119,6 +119,10 @@ if ($internal) then
 else if ($cvs) then
    cd $mirroot
    echo "Working in $mirroot - extracting current CVS snapshot into $newdir"
+   if ($?CVSROOT == 0) then
+      setenv CVSROOT :pserver:guest@cvs.astro.umd.edu:/home/cvsroot
+      csv login
+   endif
    cvs export -D tomorrow -d $newdir miriad >>& $log
    echo "Extracting current CVS snapshot of wip into $newdir/borrow/wip" >>& $log
    (cd $newdir/borrow; cvs export -D tomorrow wip) >>& $log
