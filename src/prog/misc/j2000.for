@@ -12,6 +12,8 @@ c	transforming from the Epoch 1950.0 Radio Source
 c	Position Catalog to the new J2000 catalog. - RSF 10 May 1989
 c	    Tested against the vla calibrators list with accuracy
 c	    of .004 sec in RA and .02" in DEC - WH  20-oct-1991
+c       See also the task REGRID for converting data between 1950
+c       and 2000 coordinate frames.
 c@ ra
 c	1950 Right Ascension. This can be given as decimal hours
 c	or hh:mm:ss.ss format. Default=0.
