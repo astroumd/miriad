@@ -16,3 +16,7 @@ else
   echo No version date, check /usr/local/miriad/$date/MIRRC.linux
   ls -l /usr/local/miriad/*/MIRRC.linux 
 endif
+
+
+echo This file should be copied to  astro.umd.edu:/home/ftp/pub/astro
+echo 
