@@ -28,6 +28,8 @@
 /*	10-Jan-96  rjs Make sure scratch file names are unique.		*/
 /*      17-jun-02  pjt MIR4 changes, and proper prototypes              */
 /*	 5-nov-04  jwr Changed a few size_t to ssize_t or off_t		*/
+/*       3-jan-05  pjt ssize casting to appease the compiler            */
+/*                     use SSIZE_MAX to protect from bad casting ?      */
 /************************************************************************/
 
 #include <stddef.h>
@@ -35,6 +37,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <limits.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <dirent.h>
@@ -194,11 +197,13 @@ void dread_c(int fd, char *buffer,off_t offset,size_t length,int *iostat)
 ------------------------------------------------------------------------*/
 {
   ssize_t nread;
-
+#ifdef debug
+  if (length >= SSIZE_MAX) bugv_c('f',"dread_c: possible incomplete read");
+#endif
   if(Lseek(fd,offset,SEEK_SET) < 0) { *iostat = errno; return; }
   nread = read(fd,buffer,length);
   if(nread < 0) *iostat = errno; 
-  else if(nread != length) *iostat = EIO;
+  else if(nread != (ssize_t) length) *iostat = EIO;
 }
 /************************************************************************/
 void dwrite_c(int fd, char *buffer,off_t offset,size_t length,int *iostat)
@@ -207,11 +212,13 @@ void dwrite_c(int fd, char *buffer,off_t offset,size_t length,int *iostat)
 ------------------------------------------------------------------------*/
 {
   ssize_t nwrite;
-
+#ifdef debug
+  if (length >= SSIZE_MAX) bugv_c('f',"dwrite_c: possible incomplete write");
+#endif
   if(Lseek(fd,offset,SEEK_SET) < 0) { *iostat = errno; return; }
   nwrite = write(fd,buffer,length);
   if(nwrite < 0) *iostat = errno; 
-  else if(nwrite != length) *iostat = EIO;
+  else if(nwrite != (ssize_t) length) *iostat = EIO;
 }
 /************************************************************************/
 /*ARGSUSED*/
