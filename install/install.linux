@@ -22,6 +22,7 @@
 # 23-jan-03 add (optional) install of LGM's rad/lvg package in borrow
 # 21-feb-03 more logfiles, so less to the screen
 # 17-apr-03 fix up MIRSRC from skel
+# 23-oct-03 configure now controls maxdim.h and maxdimc.h
 #
 #   Simple single-architecture installation of MIRIAD
 #   (linux)
@@ -76,6 +77,7 @@
 #   'newdir' is something that tags the date this version was made (e.g. 98jun08)
 #   later on this will also be stored again in the file $MIR/DATE, where the CVS miriad
 #   version will be stored in $MIR/VERSION
+
 if (0) then
 set newdir=`date +%y%b%d | tr '[:upper:]' '[:lower:]'`
 set hosttype=`uname -s | tr '[:upper:]' '[:lower:]'`
@@ -93,8 +95,18 @@ if ($hosttype == SunOS) set hosttype=sun4sol
 
 #
 echo MIRIAD installation for $hosttype
+echo Running configure, logfile in configure.LOG:
+./configure >& configure.LOG
+if ($status) then
+  echo Problems running configure, check configure.LOG
+  exit 1
+else
+  echo OK.
+endif
 
-#	try and be intelligent about X
+exit 0
+
+#	try and be intelligent about X  (the mirdefs script may help here if you need to modify)
 if ($hosttype == linux) then
   set mirxinc="/usr/include/X11"
   set mirxlib="/usr/X11R6/lib"
@@ -120,7 +132,7 @@ set log=/tmp/miriad.install.$$.log
 set tar=miriad.tar.gz
 set ftp=ftp://ftp.astro.umd.edu/progs/bima
 
-# 		astromake based will root miriad here
+# 		find a reasonable root for miriad 
 if ($?ASTROMAKE) then
   set mirroot=$ASTROMAKE/opt/miriad
 else
