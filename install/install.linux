@@ -197,7 +197,11 @@ cat $MIRTEMP/src/sys/files/MIRRC.skel |\
   grep -v PGPLOT_FONT >! $MIRTEMP/MIRRC.$hosttype
 
 echo '# special additions'                >> $MIRTEMP/MIRRC.$hosttype
-echo 'setenv LD_LIBRARY_PATH $MIRLIB'     >> $MIRTEMP/MIRRC.$hosttype
+echo 'if ($?LD_LIBRARY_PATH) then'	  >> $MIRTEMP/MIRRC.$hosttype
+echo '  setenv LD_LIBRARY_PATH ${MIRLIB}:${LD_LIBRARY_PATH}'  >> $MIRTEMP/MIRRC.$hosttype
+echo 'else'                               >> $MIRTEMP/MIRRC.$hosttype
+echo '  setenv LD_LIBRARY_PATH $MIRLIB'   >> $MIRTEMP/MIRRC.$hosttype
+echo 'endif'                              >> $MIRTEMP/MIRRC.$hosttype
 echo "# pgplot=$pgplot"                   >> $MIRTEMP/MIRRC.$hosttype
 if ($pgplot) then
   echo 'setenv PGPLOT_DIR $MIRLIB'         >> $MIRTEMP/MIRRC.$hosttype
