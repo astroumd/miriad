@@ -1,0 +1,419 @@
+%N in
+>The name of the input dataset. No default.
+This is the standard name for an input dataset -- usually
+an image, though sometimes either an image or visibility dataset
+or some foreign dataset format. Some tasks support multiple
+input datasets at a time (with wildcard supported) whereas
+others can handle only a single one at a time. There is
+generally no default input name.
+
+
+%N out
+>The name of the output dataset. No default.
+The name of the output dataset, either image or visibility.
+There is generally no default (although some tasks simply
+do not produce an output if this is not set).
+
+
+%N vis
+>The name of the input visibility file(s). No default.
+This is the normal keyword for an input visibility dataset. There
+is generally no default input name. Some tasks allow multiple input
+datasets (with wildcards supported, such as an asterisk). Other tasks
+can handle only a single dataset at a time.
+
+
+%N line
+>Standard linetype keyword, see section "uv Linetypes" in the userguide.
+        The ``line'' parameter determines the channels that are to be processed
+        from a uv data-set. The parameter value consists of a string
+        followed by up to four numbers. Defaults are used for any missing
+        trailing portion of the parameter value.
+
+        A uv data-set can have correlations from either (or both) a spectral
+        or a wideband (continuum) correlator. Both the spectral and wideband
+        correlators produce multiple correlations (channels). The string
+        part of the line parameter is used to select the spectral or wideband
+        channels. It may be one of:
+          "channel"   Spectral channels.
+          "wide"      Wideband (continuum) channels.
+          "velocity"  Spectral channels, resampled at equal increments in
+                      velocity (using the radio definition). The resampling
+                      involves a weighted average of the spectral channels.
+                      This is useful if the source was not Doppler tracked
+                      correctly.
+          "felocity"  Similar to "velocity", except that the parameters are
+                      given using the optical velocity definition.
+        Generally the default is "channel" if the data-set has spectral
+        channel data, and "wide" otherwise.
+
+        The four numbers that accompany the string give:
+
+          nchan, start, width, step
+
+        These four numbers specify which channels to select from the input
+        dataset and how to combine them to produce the output channels that
+        the Miriad task will work on.
+        
+        nchan   is the number of output channels produced. Generally it
+                defaults to the number of input channels.
+
+        start   is the first channel from input dataset that is to be used.
+                It defaults to 1 (i.e. first channel).
+
+        width   gives the number of input channels to average together to
+                produce a single output channel. It defaults to 1.
+
+        step    gives the increment between selected input channels. It
+                defaults to the value of "width".
+
+        For "velocity" linetype, the start, width and step parameters are
+        given in km/s. The output channels are centered on velocities:
+        start, start+step, start+2*step, etc.
+
+        The `line' parameter interacts with the "select=window" selection
+        for "channel" and "velocity"/"felocity" linetypes. See the help on
+        select for more information.
+
+        For example:
+
+          line=channel,10
+
+        selects 10 output channels, being input spectral channels 1 to 10.
+        Similarly
+
+          line=channel,10,8,1,2
+
+        selects 10 output channels, starting at input channel 8, and skipping
+        every second input channel, whereas
+
+          line=channel,10,8,2,2
+
+        selects 10 output channels, again starting at input channel 8, but
+        each of the output channels consists of the average of two of the
+        input channels. Finally
+
+          line=velocity,10,-10,1,1
+
+        resamples the spectral data in velocity, to give 10 channels of width
+        1 km/s. The channels are centered at -10.0,-9.0,-8.0, etc, km/s.
+
+%N select
+>Standard select keyword. See section "uv selection" in the userguide.
+        This keyword selects the subset of the visibility data to be
+        processed. There are a number of subcommands, which may be
+        abbreviated. Each may be prefixed with a plus or minus sign to
+        indicate using or discarding the selected data. Many subcommands
+        can be given (separate them by commas). Subcommands include:
+
+          time(t1,t2)
+        Select data between times t1 and t2 (UT). Times are in the format:
+          yymmmdd.fff
+        or
+          yymmmdd:hh:mm:ss.s
+        Various abbreviations are possible. If no date part is given, then
+        the time matchs all data (regardless of its date) for the given
+        time of day.
+
+          antennae(a1,a2,...)(b1,b2...)
+        Select all baselines pairs formed between first and second list of
+        antennas. The second list is optional and defaults to all antennas.
+
+          uvrange(uvmin,uvmax)
+        Select visibilities with uv radius between uvmin and uvmax (in kilo
+        wavelenghts). If only one value is given, uvmin is taken as zero.
+
+          uvnrange(uvmin,uvmax)
+        Select visibilities with uv radius between uvmin and uvmax (in
+        nanoseconds). If only one value is given, uvmin is taken as zero. 
+
+          visibility(n1,n2)
+        Select visibilities numbered n1 to n2 inclusive.
+
+          increment(inc)
+        Select every inc'th visibility.
+
+          ra(r1,r2)
+        Select visibilities whose RA is in the range r1 to r2. RAs are given
+        in the format
+          hh:mm:ss
+        or
+          hh.hhh
+        Various abbreviations are possible.
+        
+          dec(d1,d2)
+        Select visibilites whose DEC is in the range d1 to d2. Declinations
+        are given in the format
+          dd:mm:ss
+        or
+          dd.ddd
+        Various abbreviations are possible.
+
+          dra(p1,p2)
+        Select visibilities for which the RA of the pointing center is offset
+        from the main pointing center by between p1 and p2 arcseconds.
+
+          ddec(p1,p2)
+        Select visibilities for which the DEC of the pointing center is offset
+        from the main pointing center by between p1 and p2 arcseconds.
+
+          pointing(p1,p2)
+        Select visibilities with the rms pointing error in the range p1 to p2
+        arcseconds. If only one number is given, p1 is taken as 0.
+
+          polarization(p1,p2,p3,...)
+        Select visibilities on the basis of their polarization/Stokes parameter.
+        p1,p2,p3,... can be selected from "i,q,u,v,xx,yy,xy,yx,rr,ll,rl,lr"
+        Conversion between polarizations Stokes parameters (e.g. convert
+        linears to Stokes)  is not performed by this mechanism (see keyword stokes).
+
+          source(SRCNAM1,SRCNAM2,...)
+        Select correlations from the particular source. Several sources
+        can be given. An asterisk in the source name is treated as a
+        wildcard. Note that the sourcename MUST BE IN CAPITAL CASE. 
+
+          frequency(f1,f2)
+        Select correlations, where the sky frequency of the first correlation
+        is in the range f1 to f2 (in GHz). If only a single frequency is
+        given, then correlations are selected if the first correlation
+        is within 1% of the given frequency.  Note this selects the whole
+        record.  This may include several spectral-windows whose frequency
+        is quite different from the first correlation in the first window.
+
+          amplitude(amplo,amphi)
+        Select any correlation, where the amplitude is between "amplo" and
+        "amphi". If only one value is given, then "amphi" is assumed to be
+        infinite.
+
+          shadow(d)
+        Selects data that would be shadowed by an antenna of diameter "d" meters. 
+        If "d" is zero, then the actual diameter of the antennas (if known) is used. 
+        If some data is shadowed, it is advisable to use an antenna diameter value 
+        greater than the physical antenna size (e.g. 20% larger).
+
+          bin(b1,b2)
+        Select visibilities which have pulsar bin numbers in the range
+        b1 to b2 inclusive. If b2 is omitted, just pulsar bin b1 is
+        selected.
+
+          on
+        This is used with single dish observations, anbd selects based
+        whether the "on" variable in the data is on!
+
+          auto
+        This is used with files that contain a mix of autocorrelations and
+        crosscorrelations. This selects just the autocorrelation data.
+
+          window(w1,w2,...)
+        Select by spectral window (IF band in AIPS terminology). See
+        the help on window for more information.
+
+          or
+        The list of subcommands before and after the 'or' are "ored"
+        together.
+
+
+%N window
+> Standard spectral window selection.
+       The use of "select=window" is used to select a subset of spectral
+        windows (or IF bands in AIPS terminology) in a uv data-set. For
+        example, to select the second and third spectral windows, use
+
+          select=window(2,3)
+
+        Some explanation is needed for the interaction between "select=window"
+        and the line keyword.
+
+        Window selection complements velocity linetypes (line=velocity or
+        line=felocity). In this case only data from the selected windows
+        is used in determining the velocity channels.
+
+        There are some limitations when using window selection with channel
+        linetype ("line=channel"). Firstly the selected windows must
+        be contiguous (i.e. you cannot give "select=window(1,4)") when combined
+        with "line=channel" selection. Secondly the channel specification
+        in the line keyword is relative to the first channel in the first
+        selected window. For example, if you use
+
+          line=channel,10,1,1 select=window(2,3)
+
+        you will be get 10 channels starting from the first channel in window
+        2. If windows 2 and 3 had 8 channels each, then you would get all
+        8 channels from window 2, and the first two channels from window 3.
+
+
+%N stokes
+>Standard stokes/polarization keyword
+        This keyword specifies the Stokes/polarisations parameters that
+        are to be processed. Tasks which use this keyword can usually convert
+        raw polarisations to Stokes parameters (but not the other way).
+        Generally several values can be given, separated by commas.
+        Possible values are:
+          For raw linear polarisations:             xx,yy,xy,yx
+          For raw circular polarisations:           rr,ll,rl,lr
+          For Stokes parameters:                    i,q,u,v
+          For Stokes I of an unpolarised source:    ii
+        The "ii" form gives Stokes I, using the assumption that the
+        source is unpolarised.
+
+        There is an alternate way to specifiy the desired
+        Stokes/polarisation data, using `select' (see the help on select).
+        The `select' mechanism is rather different, and may be more or
+        less appropriate to the job in hand.
+
+        Examples:
+
+        To process the 4 Stokes parameters:
+          stokes=i,q,u,v
+
+        To process just the linear parallel hand polarisations:
+          stokes=xx,yy
+
+        To process both the linear parallel hands, and Stokes I:
+          stokes=xx,yy,i
+
+        NOTE: Some tasks restrict or prohibit the concurrent use of stokes
+        and select=pol.
+
+
+%N region
+>Standard region keyword. See section "Image region of interest" in
+>the userguide.
+        This selects a subregion of an image. Multiple subregions can be
+        selected, which are "ored" together. The following subcommands are
+        recognized (each of which can be abbreviated to uniqueness).
+
+          images(z1,z2)
+        Select image planes z1 to z2 inclusive. z2 defaults to z1.
+
+          quarter(z1,z2)
+        Select the inner quarter of the image planes z1 to z2 inclusive.
+        If both z1 and z2 are missing, then all planes are selected. If
+        only z2 is omitted, z2 defaults to z1.
+
+          boxes(xmin,ymin,xmax,ymax)(z1,z2)
+        Select the pixels within a box with corners xmin,ymin,xmax,ymax.
+        z1 and z2 are the same as in the "image" subcommand. If z1 and z2
+        are omitted, all planes are selected.
+
+          polygon(x0,y0,x1,y1,x2,y2,...)(z1,z2)
+        Select the pixels within the polygon defined by the list of vertices.
+        z1 and z2 are the same as in the "image" subcommand. If z1 and z2 are
+        missing, all planes are selected. If only z2 is omitted, it defaults
+        to z1.
+
+          mask(file)
+        Select  pixels according to the mask given in the file.
+
+        The units of the numbers given in the above commands are, in
+        general, absolute pixels. But this can be changed (and rechanged)
+        by using one of the following subcommands.
+
+          abspixel
+        Coordinates are interpreted as absolute pixel values, the default.
+          relpixel
+        Coordinates are relative to the reference pixel of the map.
+          relcenter
+        Coordinates are relative to the central pixel of the map,
+        (defined as (naxis1/2+1,naxis2/2+1)).
+          arcsec
+        Coordinates are in arcseconds, relative to the reference pixel.
+          kms
+        Coordinates in the third dimension are in km/s.
+
+%N server
+>Standard server keyword. See section "TV Devices" in the userguide.
+
+        This is used to specify the TV display device. It is giving in the
+        form:
+
+          type@server
+
+        or
+
+          type@device
+
+        The first form causes a connection to be made with a network
+        display server, whereas the second form uses local hardware
+        directly. For the network servers, the server process may have
+        to be started before invoking the Miriad task -- see below.
+
+        Currently supported types are:
+
+          xmtv          Miriad X server. `server' is the servers hostname.
+                        Normally the xmtv server will be the same host as
+                        the X server. The user will normally invoke the xmtv
+                        server before running any Miriad TV tasks, with
+
+                          % xmtv  
+
+                        If the X server and xmtv server are on different
+                        hosts, you may need to set the DISPLAY environment
+                        variable on the xmtv server, and use xhost on the
+                        X server.
+
+          ivas          IVAS (VMS only). `device' is the VMS device name.
+                        You will require an IIS IVAS for this.
+
+          ivserver      IVAS server. `server' is the servers hostname.
+                        Servers are currently installed on
+                        castor.astro.uiuc.edu and bkyast.berkeley.edu.
+
+          msss          Miriad Sun Screen server. `server' is the serving
+                        Sun, which can be any Sun with a console. The user
+                        will normally invoke the server before running
+                        any Miriad TV tasks, with
+
+                          % msss  
+
+          mxas          Miriad X server. `server' is the servers hostname.
+                        This is an inferior server to xmtv.
+%N device
+>Standard device keyword. See section "TV Devices" in the userguide.
+        This keyword is used to specify the plotting device. It uses
+        the normal PGPLOT format of
+
+          file/type
+
+         or
+
+          device/type
+
+        Usually there exists a default file name or device name.
+        The part after the slash gives the plotter type. Examples of the
+        type are:
+
+          xs    X-windows output. This window is resizeable and
+                persistent. 
+          xd    X-windows output. A transient window that disappears
+                when your task exists.
+          ps    Postscript (landscape mode).
+          vps   Postscript (portrait mode).
+          cps   Colour postscript (landscape mode).
+          vcps  Colour postscript (portrait mode).
+          tek   Tektronix 4010 or equivalent.
+          xterm Xterm window (better for simple plots over
+                slow X links).
+
+        A `?' as device name generates a complete list of the recognized
+        types (which will most likely vary from system to system).
+
+        Files created for hardcopy devices must be spooled to the printer
+        separately. The command needed for this is site and device specific.
+
+%N options
+> Standard method of supplying task dependant extra processing options.
+        This keyword is often used to specify extra processing options
+        to a task. Where several options are to be given, they are
+        separated by commas. Minimum match is used.
+
+        Some common options are:
+          nocal    This option is used by uv programs which apply
+                   antenna gain corrections to the data (assuming the
+                   appropriate tables are present). This option disables
+                   this correction step.
+          nopol    This option is used by uv programs which apply
+                   instrumental polarisation corrections to the data (assuming
+                   the appropriate tables are present). This option disables
+                   this step.
+
