@@ -17,11 +17,11 @@ cat MIRSRC.linux |\
   sed s,yymmmdd,$version, >! $MIR/MIRSRC.linux
 
 
-#    works on mandrake8, but fails on redhat 7.1
+#    works on mandrake8, but fails on redhat 7.1 - seems ok on redhat 7.3
 if (1) then
   echo Keeping log in $MIR/tmp/mir.genman.log
   echo Sometimes this program can hang on linux man page updates.....
-  mir.genman -n >& $MIR/tmp/mir.genman.log
+  mir.genman -n >& $MIR/tmp/mir.genman.log &
 else
   echo Skipping mir.genman for now
 endif
