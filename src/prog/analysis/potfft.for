@@ -71,9 +71,9 @@ c
       CHARACTER in*128,out*128,outg*128
       INTEGER nin(MAXNAX),nout(MAXNAX),npadin(MAXNAX)
       INTEGER naxis,lin,lout,nn,i,j,k,loutg
-      REAL softe,h,xsq,ysq,tmp,crpix1,crpix2
-      REAL data(8*MAXDIM*MAXDIM),datacon(8*MAXDIM*MAXDIM)
-      REAL rhopot(MAXDIM,MAXDIM)
+      REAL*8 softe,h,xsq,ysq,tmp,crpix1,crpix2
+      REAL*8 data(8*MAXDIM*MAXDIM),datacon(8*MAXDIM*MAXDIM)
+      REAL*8 rhopot(MAXDIM,MAXDIM)
 c
 c   Header keywords:
 c
@@ -263,13 +263,12 @@ c
 c**************************************************************************
       SUBROUTINE green(maxx,nx,ny,g,c1,c2,eps,h)
       INTEGER nx,ny
-      REAL g(maxx,ny),eps,h,c1,c2
+      REAL*8 g(maxx,ny),eps,h,c1,c2
 c
       INTEGER i,j
-      REAL x,y,eps2,x1,y1,eps21
-      DOUBLE PRECISION func1,ar2,a,b,ss
-      EXTERNAL func1
-      COMMON /cpotfft/ar2
+      REAL*8 x,y,eps2,x1,y1,eps21,a,b,ss
+      external func1
+      common ar2
 c
       eps2 = eps*eps
       IF(h.LE.0.0)THEN
@@ -287,48 +286,24 @@ c
             y = j-c2
             DO i=1,nx
                x = i-c1
-               ar2=x*x + y*y + eps2
-               b=25.d0
-               a=-25.d0
-               CALL QGAUS(func1,a,b,ss)
-               g(i,j) = ss/(2*h)
+               x1=x/h
+               y1=y/h
+               eps21=eps2/(h*h) 
+               ar2=(x1**2.d0) + (y1**2.d0) + eps21
+             b=25.d0
+             a=-25.d0
+              CALL QROMB(func1,a,b,ss)
+              g(i,j) = (1.d0/(2.d0*h))*ss
             ENDDO
          ENDDO       
       ENDIF
-      RETURN
-      END
-c-----------------------------------------------------------------------
-c     Function for Sech^2 integral 
-      DOUBLE PRECISION FUNCTION func1(z1)
-      DOUBLE PRECISION ar2,z1
-      COMMON /cpotfft/ar2
-      func1 = 1.d0/( cosh(z1)**2.d0 * sqrt(ar2 + (z1*z1)) )
-      RETURN
-      END
-c-----------------------------------------------------------------------
-      SUBROUTINE QGAUS(FUNC,A,B,SS)
-      REAL*8 X(5),W(5),XM,XR,SS,DX,FUNC,A,B
-
-      DATA X/0.1488743389d0,0.4333953941d0,0.6794095682d0,
-     *       0.8650633666d0,0.9739065285d0/
-      DATA W/0.2955242247d0,0.2692667193d0,0.2190863625d0,
-     *       0.1494513491d0,0.0666713443d0/
-
-      XM=0.5d0*(B+A)
-      XR=0.5d0*(B-A)
-      SS=0.d0
-      DO 11 J=1,5
-        DX=XR*X(J)
-        SS=SS+W(J)*(FUNC(XM+DX)+FUNC(XM-DX))
-11    CONTINUE
-      SS=XR*SS
       RETURN
       END
 c**************************************************************************
 c   Numerical Recipes FOURN routine:
 c
       SUBROUTINE FFTND(DATA,NN,NDIM,ISIGN)
-      REAL*8 WR,WI,WPR,WPI,WTEMP,THETA
+      REAL*8 WR,WI,WPR,WPI,WTEMP,THETA,DATA
       DIMENSION NN(NDIM),DATA(*)
       NTOT=1
       DO 11 IDIM=1,NDIM
@@ -396,4 +371,102 @@ c
 18    CONTINUE
       RETURN
       END
+c
+c     Function for Sech^2 integral 
+      Function func1(z1)
+      common ar2
+      func1 = ((1.d0/(cosh(z1)))**2.d0)*(1.d0/(sqrt(ar2
+     *         + (z1*z1))))
+      return
+      end
+c
+c
+      SUBROUTINE qromb(func,a,b,ss)
+      INTEGER JMAX,JMAXP,K,KM
+      REAL*8 a,b,func,ss,EPS
+      EXTERNAL func
+      PARAMETER (EPS=1.D-06, JMAX=20, JMAXP=JMAX+1, K=5, KM=K-1)
+CU    USES polint,trapzd
+      INTEGER j
+      REAL*8 dss,h(JMAXP),s(JMAXP)
+      h(1)=1.D0
+      do 11 j=1,JMAX
+        call trapzd(func,a,b,s(j),j)
+        if (j.ge.K) then
+          call polint(h(j-KM),s(j-KM),K,0.D0,ss,dss)
+          if (abs(dss).le.EPS*abs(ss)) return
+        endif
+        s(j+1)=s(j)
+        h(j+1)=0.25D0*h(j)
+11    continue
+      pause 'too many steps in qromb'
+      END
+c
+c
+      SUBROUTINE polint(xa,ya,n,x,y,dy)
+      INTEGER n,NMAX
+      REAL*8 dy,x,y,xa(n),ya(n)
+      PARAMETER (NMAX=10)
+      INTEGER i,m,ns
+      REAL*8 den,dif,dift,ho,hp,w,c(NMAX),d(NMAX)
+      ns=1
+      dif=abs(x-xa(1))
+      do 11 i=1,n
+        dift=abs(x-xa(i))
+        if (dift.lt.dif) then
+          ns=i
+          dif=dift
+        endif
+        c(i)=ya(i)
+        d(i)=ya(i)
+11    continue
+      y=ya(ns)
+      ns=ns-1
+      do 13 m=1,n-1
+        do 12 i=1,n-m
+          ho=xa(i)-x
+          hp=xa(i+m)-x
+          w=c(i+1)-d(i)
+          den=ho-hp
+          if(den.eq.0.D0)pause 'failure in polint'
+          den=w/den
+          d(i)=hp*den
+          c(i)=ho*den
+12      continue
+        if (2.D0*ns.lt.n-m)then
+          dy=c(ns+1)
+        else
+          dy=d(ns)
+          ns=ns-1
+        endif
+        y=y+dy
+13    continue
+      return
+      END
+c
+c
+      SUBROUTINE trapzd(func,a,b,s,n)
+      INTEGER n
+      REAL*8 a,b,s,func
+      EXTERNAL func
+      INTEGER it,j
+      REAL*8 del,sum,tnm,x
+      if (n.eq.1) then
+        s=0.5D0*(b-a)*(func(a)+func(b))
+      else
+        it=2.D0**(n-2)
+        tnm=it
+        del=(b-a)/tnm
+        x=a+0.5D0*del
+        sum=0.D0
+        do 11 j=1,it
+          sum=sum+func(x)
+          x=x+del
+11      continue
+        s=0.5D0*(s+(b-a)*sum/tnm)
+      endif
+      return
+      END
 c***************************************************************************
+    
+
