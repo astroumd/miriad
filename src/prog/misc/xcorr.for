@@ -18,7 +18,7 @@ c	Default none.
 c@nrow
 c	Number of rows, same as number of points in FFT	.
 c	Must be power of 2 only if correlation functions are written.
-c	Maximum 2048. Default 32.
+c	Maximum 4096. Default 32.
 c@ ncol
 c	Number of columns to cross correlate.
 c	Maximum 16. Default 2.
@@ -37,6 +37,11 @@ c       is to autoscale.
 c@ yrange
 c       The min and max range along the y axis of the plots. The default
 c       is to autoscale.
+c@ options
+c       This gives extra processing options. Several options can be given,
+c       each separated by commas. They may be abbreivated to the minimum
+c       needed to avoid ambiguity. Possible options are:
+c          'linfit'   Fit and remove slope and offset from data.
 c-- 
 c
 c  History:
@@ -45,20 +50,26 @@ c    27dec95 mchw  Added keywords for nrow and ncol
 c    15oct97 mchw  Added beauty. 
 c    15oct97 rjs   Added truth. 
 c    11sep02 mchw  Added logic. 
+c    12sep02 mchw  Added options. 
 c----------------------------------------------------------------------c
 	character version*(*),infile*132,outfile*132,line*132,dat*24
 	character device*80
 	integer nx,ny
-	parameter(version='(version 11-Sep-02)')
+	parameter(version='(version 12-Sep-02)')
 	integer MAXROW,MAXCOL
-	parameter(MAXROW=2048,MAXCOL=16)
+	parameter(MAXROW=4096,MAXCOL=16)
 	real data(MAXROW,MAXCOL),maxamp/0./
 	complex out(MAXROW,MAXCOL)
 	complex temp(MAXROW)
-	integer i,j,nrow,ncol,refcol,k
+	integer i,j,nrow,ncol,refcol,k,maxcorr
 	real ave(MAXCOL),rms(MAXCOL),corr(MAXCOL,MAXCOL)
-        real xx(MAXROW),yy(MAXROW)
+        real xx(MAXROW), yy(MAXROW), wt(MAXROW), slope, offset
         real xrange(2),yrange(2)
+	logical dofit
+c
+c  External functions
+c
+	integer ismax
 c
 c  Get user input parameters.
 c
@@ -76,6 +87,7 @@ c
         call keyr('xrange',xrange(2),xrange(1))
         call keyr('yrange',yrange(1),0.)
         call keyr('yrange',yrange(2),yrange(1))
+        call GetOpt(dofit)
 	call keyfin
 c
 	call fdate(dat)
@@ -112,6 +124,30 @@ c
 	  enddo
 	endif
 c
+c  options=linfit:  Fit and remove slope and offset from data.
+c
+	if(dofit)then
+	call output(' ')
+	write(line,'(a)') 'Fit and remove slope and offset from data.'
+	call output(line)
+	write(line,'(a)') 'column    slope    offset'
+	call output(line)
+	  do j=1,ncol
+            do i=1,nrow
+	      xx(i) = i
+	      yy(i) = data(i,j)
+	      wt(i) = 1.
+	    enddo
+	    call linfit(xx,yy,wt,nrow,slope,offset)
+            write(line,'(i4,1x,2f10.3)') j, slope, offset
+	    call output(line)
+c
+            do i=1,nrow
+	      data(i,j) = yy(i) - slope*xx(i) - offset
+	    enddo
+	  enddo
+	endif
+c
 c  Compute statistics
 c
 	do j=1,ncol
@@ -143,6 +179,7 @@ c
 c
 c  Print correlation matrix
 c
+	call output(' ')
 	write(line,'(a)')
      *		 'column  average      rms      correlation matrix'
 	call output(line)
@@ -154,7 +191,7 @@ c
             corr(j,k) = 0.
 	   endif
 	  enddo
-	  write(line,'(i4,x,16f10.3)') 
+	  write(line,'(i4,1x,16f10.3)') 
      *				j,ave(j),rms(j),(corr(j,k),k=1,ncol)
 	  call output(line)
         enddo
@@ -198,12 +235,26 @@ c
 	  call fftcr(temp(1),data(1,j),-1,nrow)
 	enddo
 c
+c  Print maximum correlation for each column
+c
+        call output(' ')
+	write(line,'(a)')  'Correlation functions.'
+        call output(line)
+        write(line,'(a)') 'column   maximum   correlation '
+        call output(line)
+        do j=1,ncol
+	  maxcorr = ismax(nrow,data(1,j),1)
+          write(line,'(i4,1x,i10,1x,f10.3)')
+     *                          j, maxcorr, data(maxcorr,j)
+          call output(line)
+	enddo
+c
 c  Output correlation functions.
 c
 	if(outfile.ne.' ')then
 	  open (unit=2, file=outfile, form='formatted', status='new')
 	  do i=1,nrow
-	    write(2,'(i,x,12f10.2)') i,(data(i,j),j=1,ncol)
+	    write(2,'(i,1x,12f10.2)') i,(data(i,j),j=1,ncol)
 	  enddo
 	endif
 c
@@ -296,4 +347,68 @@ c  Close up plot.
 c
 	call pgend
 	end
+c********1*********2*********3*********4*********5*********6*********7*c
+        subroutine GetOpt(dofit)
+c
+        implicit none
+        logical dofit
+c
+c  Determine extra processing options.
+c
+c  Output:
+c    dofit	If true, fit and remove slope and offset.
+c-----------------------------------------------------------------------
+        integer nopt
+        parameter(nopt=1)
+        character opts(nopt)*9
+        logical present(nopt)
+        data opts/'linfit   '/
+
+        call options('options',opts,present,nopt)
+	dofit  = present(1)
+c
+	end
+c********1*********2*********3*********4*********5*********6*********7*c
+	subroutine linfit(x,y,w,n,a1,b1)
+	implicit none
+	integer n
+	real x(n),y(n),w(n),a1,b1
+c
+c  Least squares fit to y = a1*x + b1
+c
+c  Input:
+c    x		The x values
+c    y		The y values
+c    w		The weight array.
+c    n		The number of points in the arrays.
+c  Output:
+c    a1, b1     coefficients of the relation y=a1*x+b1
+c------------------------------------------------------------------------
+      double precision sumx, sumy, sumw, sumsqx, sumsqy, sumxy
+      integer i
+c
+      sumx   = 0.
+      sumy   = 0.
+      sumw   = 0.
+      sumsqx = 0.
+      sumsqy = 0.
+      sumxy  = 0.
+      do i = 1,n
+	sumx   = sumx   + w(i) * x(i)
+        sumy   = sumy   + w(i) * y(i)
+        sumw   = sumw   + w(i)
+        sumsqx = sumsqx + w(i) * x(i) * x(i)
+        sumsqy = sumsqy + w(i) * y(i) * y(i)
+        sumxy  = sumxy  + w(i) * x(i) * y(i)
+      enddo
+c
+      if(sumw.eq.0..or.(sumx.eq.0. .and. sumsqx.eq.0.)) then
+        a1   = 0.
+        b1   = 0.
+      else
+        a1   = ( sumw*sumxy - sumx*sumy ) / ( sumw*sumsqx - sumx**2 )
+        b1   = ( sumy - a1*sumx ) / sumw
+      endif
+c
+      end
 c********1*********2*********3*********4*********5*********6*********7*c
