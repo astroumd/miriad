@@ -11,8 +11,10 @@ if ($#argv == 0) then
     echo "                  start animating selected frames (pretty crude)"
     echo "      -wcs"
     echo "                  do not load WCS, even if it has one"
+    echo "      -title <TITLE>"
+    echo "                  use a matching ds9 as server (ds9 -title <TITLE>)"
     echo ""
-    echo "  Version 3.0 - 19-jun-03 PJT"
+    echo "  Version 3.1 - 29-jul-03 PJT"
     echo ""
     echo "  Be sure 'ds9' and the XPA routines are in your environment."
     echo "  You do need to start ds9 manually yourself."
@@ -26,6 +28,7 @@ set scalelims=0
 set movie=0
 set wcs=0
 set dowcs=1
+set title=ds9
 
 foreach dummy ($*)
   if ("$1" == "-minmax") then
@@ -33,6 +36,9 @@ foreach dummy ($*)
     set datamax=$3
     set scalelims=1
     shift argv; shift argv; shift argv;
+  else if ("$1" == "-title") then
+    set title=$2
+    shift argv; shift argv
   else if ("$1" == "-movie") then
     set movie=1
     shift argv
@@ -68,8 +74,6 @@ if (`echo $name | cut -c1` != '/') then
 endif
 
 shift argv
-
-set title=ds9
 
 # saotng >& /dev/null  &
 
