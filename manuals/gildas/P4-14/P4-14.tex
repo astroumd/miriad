@@ -267,7 +267,8 @@
 
 \section{Introduction to \GILDAS{} and \MIRIAD{} packages}
 
-\GILDAS{} and \MIRIAD{} are two state-of-the-art data reduction packages
+\GILDAS{} and \MIRIAD{} (Sault et al. 1994)
+are two state-of-the-art data reduction packages
 for the current generation of millimeter instruments. \GILDAS{} is
 \emph{daily} used at the Plateau de Bure Interferometer as well as several
 single dish telescopes (\eg{} \IRAMthm{}, \CSO{}) while \MIRIAD{} is
@@ -290,12 +291,17 @@ Both packages have rather different implementation philosophy. \GILDAS{} is
 made of large stand-alone programs like \CLIC{} for the data calibration
 and \MAPPING{} for data imaging, deconvolution and analysis. In addition,
 \GILDAS{} has the ability to launch fully separated tasks. \MIRIAD{} is
-build around a large collection of individual, well focused tasks.  Both
+build around a large collection of individual, well focused tasks, that
+run under the native operatating system.  Both
 packages also have different user interfaces. \GILDAS{} is build around
 \SIC{}, an homemade command line interface enabling direct insight into the
-data, and \GREG{}, a very efficient, homemade plotting environment. Every
-unix shell may serve as \MIRIAD{} user interface. Finally, used data models
-are different in their implementation.
+data, and \GREG{}, a very efficient, homemade plotting environment. 
+Since \MIRIAD{} programs are simple standalone tasks, every
+unix shell may serve as \MIRIAD{} user interface.  We have in the past
+experiment with graphical user interfaces, but in practice users
+write shell scripts to perform their analysis pipelines.
+Finally, although the data models used are very similar, their
+implementation is very different.
 
 In a first step toward interoperability, we thus decided to run both
 packages under \python{} and to exchange data using FITS.  The porting of both
@@ -330,15 +336,15 @@ interpretor and a direct interface to some of the most commonly used
 commands. All \GILDAS{} capabilities are thus directly available from the
 \python{} prompt. No one--to--one correspondance between \FORTRAN{} and
 \python{} variables is yet provided impairing the good interaction with
-data. Progresses are currently made in this direction. Another foreseen
+data. Progres is currently being made in this direction. Another foreseen
 evolution is the possibility to swap on--the--fly from \python{} to \SIC{}
 and vice-versa, as this is an important property for the community of
 current users.
 
 In \MIRIAD{} case, a generic \python{} interface was written to \emph{i)}
-pass informations to \MIRIAD{} tasks and recover their output.  Nor direct
-access to \MIRIAD{} internal datastructure neither automatic translation of
-template procedures from \texttt{csh} to \python{} are yet available. The
+pass informations to \MIRIAD{} tasks and recover their output.  No direct
+access to \MIRIAD{} internal datastructure or automatic translation of
+template procedures from \texttt{csh} to \python{} is yet available. The
 next improvement will be to automate the building of task access in
 \python{}, decreasing the size of current \python{} script by about 50\%.
 Finally, the ATA group have recently implemented a \texttt{Jython}
@@ -425,15 +431,16 @@ and \MIRIAD{} imaging and deconvolution performances are similar.
 \begin{references}
 \reference Gueth, F., Guilloteau, S., Lucas, R., Pety, J., \&
     Wright, M.~C.~H., 2003, BIMA Memo 96 \& IRAM Memo 2003-2.
-\reference Wright, M.~C.~H., Teuben, P.~J., \& Pety, J., 2003,
-     BIMA Memo 95 \& IRAM Memo 2003-1.
+\reference Guilloteau, S., Dutrey, A. \& Simon, M., 1999, \aap, 348, 570.
+\reference Harp, G.~R. \& Wright, M.~C.~H., 2003, BIMA Memo 98 \& 
+    ATA Memo 58.
 \reference Pety, J., Gueth, F., Guilloteau, S., Teuben, P.~J. \&
     Wright, M.~C.~H., 2003, \ALMA{} Memo 464.
 \reference Pety, J., Gueth, F., Guilloteau, S., Teuben, P.~J. \&
     Wright, M.~C.~H., 2003, \ALMA{} Memo 465.
-\reference Harp, G.~R. \& Wright, M.~C.~H., 2003, BIMA Memo 98 \& 
-    ATA Memo 58.
-\reference Guilloteau, S., Dutrey, A. \& Simon, M., 1999, \aap, 348, 570.
+\reference Sault, R.~J., Teuben, P.~J. \& Wright, M.~C.~H., 1994, \adassiv, 433
+\reference Wright, M.~C.~H., Teuben, P.~J., \& Pety, J., 2003,
+     BIMA Memo 95 \& IRAM Memo 2003-1.
 \end{references}
 
 % Do not place any material after the references section
