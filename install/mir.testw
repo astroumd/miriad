@@ -1,0 +1,122 @@
+#!/bin/sh 
+#
+# Procedures to test some basic behavior of MIRIAD/WIP
+#
+# 13-jan-2005   Created 			peter teuben
+#-----------------------------------------------------------------------
+
+usage() {
+  (
+  echo "Usage: $0 [help] [basic] [xyio] [uvio] [calib] [map] [rad] [device=$device]"
+  echo "Run a (selective) number of tests to test some basic"
+  echo "miriad capabilities"
+  )
+}
+
+#
+# Make sure a miriad executable ($MIRBIN for now) is present by compiling it
+#
+# BUG: It does not allow for programs to be in the search path alone, but will
+# use them if they are before the $MIRBIN version
+#
+# $*    Name of the program(s) required
+#
+#
+require() {
+  (
+  for file in $* ; do
+    if test -f $MIRBIN/$file; then
+      echo $file exist
+    else
+      mir.prog $file
+    fi
+  done
+  )
+}
+#
+# make a blank MIRIAD dataset
+#
+#  $1 = name of dataset
+
+mkdata() {
+  if test -d $1; then
+    echo Dataset $1 already exists, cannot continue
+    exit 1
+  else
+    echo Creating blank dataset $1
+    mkdir $1
+    touch $1/header
+  fi
+}
+
+run() {
+  pgm=$1
+  $*
+  echo RUN $pgm $?
+}
+
+runt() {
+  pgm=$1
+  time $*
+  echo RUN $pgm $?
+}
+
+#
+# Basic miriad (mostly non-astronomical programs from $MIRPROG/misc)
+#
+
+basic() {
+  (
+  require imgen fits
+  echo $1
+  mkdir $1
+  cd $1
+  run imgen out=map1 object=gaussian spar=1,0,0,50,20,30 mapsize=$2 
+  run fits in=map1 out=map1.fits op=xyout
+  echo 'image map1'    > test1.wip
+  echo 'header so so' >> test1.wip
+  echo 'box'          >> test1.wip
+  echo 'levels'       >> test1.wip
+  echo 'contour'      >> test1.wip
+  echo 'box'          >> test1.wip
+  #wip -g -d test1.ps/vps -x -e test1.wip
+  #wip -g -d /xs -x -e test1.wip
+
+  echo 'def try'            > test2.wip
+  echo 'image map1.fits'   >> test2.wip
+  echo 'header so so'      >> test2.wip
+  echo 'box'               >> test2.wip
+  echo 'levels'            >> test2.wip
+  echo 'contour'           >> test2.wip
+  echo 'box'               >> test2.wip
+  echo 'end'               >> test2.wip
+#  wip -g -d test2.ps/vps -x test2.wip -e try
+  wip -g -d /xs -x test2.wip -e try
+  cd ..
+  )
+}
+
+
+check() {
+  (
+  echo Checking $1, errors are reported by:
+  echo "# errors    Program Exit_status"
+  grep \^RUN $1 | awk '{if ($3!=0) print $2,$3}' | uniq -c
+  )
+}
+
+
+# Set up a new test directory for wip
+  data=tmpw$$
+  mkdir $data
+  cd $data
+
+# Run tests
+  echo Running 
+  basic basic128 128 > basic128.log 2>&1
+  check basic128.log
+  basic basic256 256 > basic256.log 2>&1
+  check basic256.log
+
+exit 0
+	
