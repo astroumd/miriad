@@ -7,6 +7,7 @@
 #   19-jun-98   Cleaned up for linux            PJT
 #   26-jul-99   Fixed new interface for uvgen   PJT
 #   27-jul-99   Copy summary.log to /tmp	PJT
+#   26-jun-01   endianism check using 'od'      PJT
 #
 #-----------------------------------------------------------------------
 
@@ -101,7 +102,23 @@ xyio() {
   runt imlist in=map1 options=stat
   run imlist in=map1 options=data "region=relpix,box(-2,-2,2,2)"
   run imgen out=map2 imsize=128 object=level spar=1
-  run od -x map2/image | head -1
+  echo 0000000 0000 0400 803f 0000 803f 0000 803f 0000 > endian.lit
+  echo 0000000 0000 0004 3f80 0000 3f80 0000 3f80 0000 > endian.big
+  od -x map2/image | head -1 > endian.this
+  cmp -s endian.lit endian.this
+  if [ $? = 0 ] ; then	    
+    echo this machine is LITTLE_ENDIAN
+  else
+    cmp -s endian.big endian.this
+    if [ $? = 0 ] ; then    
+      echo this machine is BIG_ENDIAN
+    else
+      echo this machine has UNKNOWN_ENDIAN and might not run miriad properly:
+      echo `cat endian.big` BIG_ENDIAN
+      echo `cat endian.lit` LITTLE_ENDIAN
+      echo `cat endian.this` MACHINE_ENDIAN
+    fi
+  fi
   cd ..
   )
 }
@@ -213,7 +230,8 @@ check() {
   sum=summary.log
   itemize in=basic/test1 | tail +2 > $sum
   histo in=xyio/map1 | tail +2 >> $sum
-  od -x xyio/map2/image | head -1  >> $sum
+  grep _ENDIAN xyio.log >> $sum
+  # od -x xyio/map2/image | head -1  >> $sum
   uvlist vis=uvio/vis2 recnum=100 | tail +2 >> $sum
   histo in=map/cmap1 | tail +2 >> $sum
   # copy back to /tmp so we can retrieve it for baseline comparision
