@@ -1,0 +1,150 @@
+#!/bin/csh -f
+#
+#* beamgen - Plot uvtracks and synthesized beam patterns.
+#& mchw
+#: user tool
+#+
+#  Plot uvtracks and synthesized beam patterns.
+#  This script uses uvgen to generate uv-data for a point source.
+#  baseunit specifies the baseline units. The antenna file is
+#  assumed to be nanosec units in geocentric coordinates (baseunit=1).
+#  ANTPOS files in geocentric coordinates obtained from fitted baselines 
+#  using the task BEE can also be used (baseunit=1).
+#--
+#------------------------------------------------------
+#		 beam
+#
+# script to plot uvtracks and synthesized beam patterns.
+# History:
+#   mchw 27jul93  documented.
+#   pjt   4aug93  allow all pgplot /*ps devices, fixed /xw
+#   mchw 06aug93  updated documentation..
+#   mchw 10aug93  change keyword in uvtrack.
+#   mchw 17aug94  Added harange.
+#   mchw 22dec94   change to cell=1 imsize=128.
+#   mchw 22dec95   change to cell=.2 imsize=128.
+#   mchw 17jan96   Added cell size and defaults.
+#   mchw 27jan96   Uses uvgen and uvplt instead of uvtrack.
+#   mchw 05apr96   Added baseunit keyword.
+#   mchw 11aug97   Use INVERT's default for cell size.
+#   mchw 11mar98   Use UVGEN's  default for baseunit.
+#   mchw 02jul98   updated corr keyword for uvgen.
+#   mchw 06aug98   Added select input. Added systemp to suppress warning from uvgen.
+#------------------------------------------------------
+
+# define the valid printername that cause spooling
+  set valid_printers=(/ps /vps /vcps /cps)
+
+echo "**************************************************************"
+echo "   Plot uvtracks and synthesized beam. (06-AUG-98 version)"
+echo "**************************************************************"
+
+# check inputs
+  if($#argv<3) then
+	echo " Usage:  beamgen array declination device [ellim] [harange] [cell] [baseunit] [select]"
+	echo "	 e.g. beamgen bima9_a.ant 30 /xw"
+        echo " Inputs :"
+	echo "   array"
+	echo "          Antenna array used by uvgen task."
+	echo "            e.g. $MIRCAT/*.ant" . No default.
+	echo "   declination"
+	echo "          Source declination in degrees. No default."
+	echo "   device"
+	echo "          PGPLOT device. No default."
+	echo "          For devices $valid_printers the plot is sent to"
+	echo "          the printer."
+	echo "   [ellim]"
+	echo " 	        Elevation limit. Default is 15 degrees."
+	echo "   [harange]"
+	echo " 	        harange (start,stop,step) in hours."
+	echo "		Default is to use the elevation limit, with step=0.2"
+	echo "   [cell]"
+	echo " 	        cell size in arcsec."
+	echo " 	        The default is about one third of the resolution"
+	echo "   [baseunit]"
+	echo " 	        coordinate conversion factor to nanosec baseline units."
+	echo "		e.g. baseunit=3.33564 for geocentric coordinates in meters."
+	echo "		Default=1 geocentric coordinates in nanosecs."
+	echo "   [select]"
+	echo " 	        Standard uvdata selection. Default is '-shadow(5)'."
+        echo " "
+	exit 1
+  endif
+
+  if($#argv<4) then
+        set ellim=15
+  else
+        set ellim=$4
+  endif
+
+  if($#argv<5) then
+        set harange=-6,6,.2
+  else
+        set harange=$5
+  endif
+
+  if($#argv<6) then
+        set cell=0
+  else
+        set cell=$6
+  endif
+
+  if($#argv<7) then
+        set baseunit=1
+  else
+        set baseunit=$7
+  endif
+
+  if($#argv<8) then
+        set select='-shadow(5)'
+  else
+        set select=$8
+  endif
+
+  echo -n "Check if array file exists: "
+  if (! -e $1) then
+    set ary=$MIRCAT/$1
+    if (! -e $ary) then
+      echo ""
+      echo "  Can neither find array file $1 nor $ary"
+      echo "	copy $MIRCAT/*.ant to user area"
+      echo "   	or run uvgen interactively to generate an antenna array"
+      goto end
+    endif
+  else
+    set ary=$1
+  endif
+  echo "found $ary"
+
+# clean up datasets that are created by this script
+  rm -rf $1.$2* >& /dev/null
+
+# figure out if to spool or not
+  set lpr=0
+  foreach v ($valid_printers)
+    if ($3 == $v) then
+      set lpr=1
+      break
+    endif
+  end
+  if ($lpr) echo Spooling pgplot.ps to printer
+
+# create tracks and plot them
+  uvgen ant=$ary baseunit=$baseunit radec=0,$2 ellim=$ellim out=$1.$2.uv harange=$harange source=$MIRCAT/beamgen.source systemp=1
+  uvplt  vis=$1.$2.uv axis=uc,vc options=nobase device=$3 select=$select
+  if($lpr) lpr pgplot.ps
+
+# uv -> map
+  invert vis=$1.$2.uv map=$1.$2.map beam=$1.$2.beam cell=$cell imsize=128 select=$select
+  implot in=$1.$2.beam device=$3 units=s
+  if($lpr) lpr pgplot.ps
+  clean map=$1.$2.map beam=$1.$2.beam niters=1 out=$1.$2.cl
+  restor map=$1.$2.map beam=$1.$2.beam  model=$1.$2.cl out=$1.$2.cm
+
+  echo "-------- script finished -------"
+  echo "VIS        in $1.$2.uv"
+  echo "DIRTY MAP  in $1.$2.map"
+  echo "DIRTY BEAM in $1.$2.beam"
+  echo "CLEAN MAP  in $1.$2.cm"
+
+end:
