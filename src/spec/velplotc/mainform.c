@@ -3,7 +3,7 @@
 #define plot_setting_(a,ia,b,ib,flag) plot_setting__(a,ia,b,ib,flag) 
 #define read_write_(a,ia,b,ib,flag) read_write__(a,ia,b,ib,flag)
 #define save_posvel_() save_posvel__()
-#define posvel_cuts_(a,la,b,lb,n,flag) posvel_cuts__(a,la,b,lb,n,flag) 
+#define posvel_cuts_(a,la,b,lb,n,flag,ni) posvel_cuts__(a,la,b,lb,n,flag,ni) 
 #define get_cuts_() get_cuts__()
 #define overplo_tc_(cmap,clear) overplo_tc__(cmap,clear)
 #define animate_w_(func,currentmap) animate_w__(func,currentmap)
@@ -12,7 +12,7 @@
 /* called by fortran */
 #define check_overplot_(lm) check_overplot__(lm) 
 #define entry_cuts_(ai,cuts_e,iflag) entry_cuts__(ai,cuts_e,iflag)
-#define show_tool_(s) show_tool__(s)
+#define show_tool_(s,f) show_tool__(s,f)
 #define main_vel_() main_vel__()
 #define wrong_input_(s,index) wrong_input__(s,index)
 #define save_posvel_() save_posvel__()
@@ -43,7 +43,7 @@ char conflag_posvel[10], conflag_implot[10], *conflag_s;
 int okay;
 int quit=0;
 const char *headdesc = "Velplot and Implot";
-const char *version  = "Velplotc July 02 1999";
+const char *version  = "Velplotc Menu";
 
 static void cb_input(FL_OBJECT *ob, long data)  ;
 static void cb_choice(FL_OBJECT *ob, long data);
@@ -691,7 +691,7 @@ void create_overplot_form(void)
 }
 
 /* ****** cuts_form *************************************************/
-FL_OBJECT *browser_cuts, *input_cuts, *close_cuts;
+FL_OBJECT *browser_cuts, *input_cuts, *input_cutsa, *close_cuts;
 int n_b=0;
 
 static void cb_cut_map(FL_OBJECT *ob, long data)
@@ -704,13 +704,13 @@ static void cb_inputcut(FL_OBJECT *ob, long data)
   return;
 }
 
-void sendcutstofortran(char *a, int n, char *b)
+void sendcutstofortran(char *a, int n, char *b, int ni)
 { int la,lb, flag;
   la=strlen(a);
   lb=strlen(b);
   /*printf("[%d][%s][%d][%s]\n",la,a,lb,b); */
   okay=1;
-  posvel_cuts_(a,&la,b,&lb,&n,&flag);
+  posvel_cuts_(a,&la,b,&lb,&n,&flag,&ni);
  if (flag == 0 ) okay=0;
  return;
 }  
@@ -729,15 +729,23 @@ void entry_cuts_(char *ai, char *cuts_e, char *iflag)
 
 void cb_input_cuts(FL_OBJECT *obj, long arg)
 {  char r[30];
-   char iflag[2]="A";
+   char iflag[2];
+   int k;
    int n_br=fl_get_browser_maxline(browser_cuts)+1;
   /* append and show the last line. Don't use this if you just want
    * to add some lines. use fl_add_browser_line
    */
-  if (strcmp(fl_get_input(input_cuts)," ") <= 0) return;
-  strcpy(r,fl_get_input(input_cuts));
-  sendcutstofortran(r,n_br,iflag);
-  if (okay == 1 ) fl_set_input(input_cuts,"");
+  if (arg == 0) strcpy(iflag, "A");
+  if (arg == 1) strcpy(iflag, "a");
+  fl_set_focus_object(cuts_form, obj);
+  if (strcmp(fl_get_input(obj)," ") <= 0) return;
+  strcpy(r,fl_get_input(obj));
+  if (arg == 1) { /* replace : with , */
+    for (k=0;k<strlen(r);k++) if (r[k] == ':') r[k]=',';
+  }
+  sendcutstofortran(r,n_br,iflag,arg);
+  if (okay == 1 ) fl_set_input(obj,"");
+  else fl_show_messages("Wrong Input, try again.");    
 }
 
 void cb_replace_cuts(FL_OBJECT *obj, long arg)
@@ -747,15 +755,25 @@ void cb_replace_cuts(FL_OBJECT *obj, long arg)
   if (n_br == 0 ) return;
   strcpy(r,fl_get_input(input_cuts));
   if (strcmp(fl_get_input(input_cuts)," ") <= 0) return;
-  sendcutstofortran(r,n_br,iflag);
+  sendcutstofortran(r,n_br,iflag,0);
   if (okay == 1 ) fl_set_input(input_cuts,"");
 }
 
 void cb_get_cuts(FL_OBJECT *obj, long arg)
 { int n_br = fl_get_browser(browser_cuts);
   const char *oup=fl_get_browser_line(browser_cuts,n_br);
+  char cutRA[50];
   if (n_br == 0 || *oup == (char)NULL)  return;
-  fl_set_input(input_cuts,oup);
+  if (arg == 0) {
+     fl_set_input(input_cuts,oup);
+     fl_set_focus_object(cuts_form, input_cuts);
+  } else if (arg == 1) {
+     getcutn_(&n_br,cutRA);
+     stripwhite(cutRA);
+     /* printf("[%s]\n",cutRA);*/
+     fl_set_input(input_cutsa,cutRA);
+     fl_set_focus_object(cuts_form, input_cutsa);
+  }  
 }
 
 void cb_delete_cuts(FL_OBJECT *obj, long arg)
@@ -764,7 +782,7 @@ void cb_delete_cuts(FL_OBJECT *obj, long arg)
   int n_br = fl_get_browser(browser_cuts);
   if (n_br == 0 ) return;
   strcpy(r,"0,0,0");
-  sendcutstofortran(r,-n_br,iflag);
+  sendcutstofortran(r,-n_br,iflag,0);
 }
 
 void cb_clear_cuts(FL_OBJECT *obj, long arg)
@@ -774,7 +792,7 @@ void cb_clear_cuts(FL_OBJECT *obj, long arg)
   int n=-99;
   if (n_max == 0 ) return;
   strcpy(r,"0,0,0");
-  sendcutstofortran(r,n,iflag);
+  sendcutstofortran(r,n,iflag,0);
 }
 
 void cb_close_cuts(FL_OBJECT *obj, long arg)
@@ -796,20 +814,28 @@ void cb_rotate_cuts(FL_OBJECT *obj, long arg)
 
 void create_cuts_form(void)
 { FL_OBJECT *obj;
-  cuts_form = fl_bgn_form(FL_UP_BOX,320,420);
-  obj = fl_add_text(FL_NORMAL_TEXT,20,15,270,35,"Add cuts from "
-   "File, Input, or Maps. Note: HR = - RA");
+  cuts_form = fl_bgn_form(FL_UP_BOX,320,450);
+  obj = fl_add_text(FL_NORMAL_TEXT,20,15,270,55,"Add cuts from "
+   "File, Input, or Maps. Note: HR = - RA\n"
+   "HR and DDEC are in arcsec, and measured with respect\n"
+   "to the Reference Center, PA (0..180 degree)\n");
   fl_set_object_color(obj,FL_INDIANRED,FL_PALEGREEN);
   fl_set_object_lcol(obj, FL_YELLOW);
   fl_set_object_boxtype(obj,FL_FRAME_BOX);
   fl_set_object_lalign(obj,FL_ALIGN_CENTER);
-  browser_cuts = fl_add_browser(FL_HOLD_BROWSER,20,75,220,270,"List of cuts");
+  browser_cuts = fl_add_browser(FL_HOLD_BROWSER,20,95,220,250,
+    "List of cuts: HR(\"), DDEC(\"), PA (degree)");
     fl_set_object_lalign(browser_cuts,FL_ALIGN_TOP_LEFT);
     fl_set_browser_fontstyle(browser_cuts, FL_FIXED_STYLE);
   input_cuts = obj = fl_add_input(FL_NORMAL_INPUT,20,370,200,25,"Input cut:"
-   " HR(\"), DEC(\"), PA in degree (0..180)");
+   " HR(\"), DDEC(\"), PA (degree)");
     fl_set_object_lalign(obj,FL_ALIGN_TOP_LEFT);
     fl_set_object_callback(obj,cb_input_cuts,0);
+    fl_set_object_bw(obj, -1);
+  input_cutsa = obj = fl_add_input(FL_NORMAL_INPUT,20,415,200,25,"Input cut:"
+   " RA(hms), DEC(dms), PA (degree)");
+    fl_set_object_lalign(obj,FL_ALIGN_TOP_LEFT);
+    fl_set_object_callback(obj,cb_input_cuts,1);
     fl_set_object_bw(obj, -1);
   obj = fl_add_button(FL_NORMAL_BUTTON,250,75,50,25,"File");
     fl_set_object_boxtype(obj,FL_FRAME_BOX);
@@ -820,25 +846,28 @@ void create_cuts_form(void)
   obj = fl_add_button(FL_NORMAL_BUTTON,250,135,50,25,"Replace");
     fl_set_object_callback(obj,cb_replace_cuts,0);
     fl_set_object_boxtype(obj,FL_FRAME_BOX);
-  obj = fl_add_button(FL_NORMAL_BUTTON,250,165,50,25,"Getcut");
+  obj = fl_add_button(FL_NORMAL_BUTTON,250,165,50,25,"GetcHD");
     fl_set_object_callback(obj,cb_get_cuts,0);
     fl_set_object_boxtype(obj,FL_FRAME_BOX);
-  obj = fl_add_button(FL_NORMAL_BUTTON,250,195,50,25,"Delete");
+  obj = fl_add_button(FL_NORMAL_BUTTON,250,195,50,25,"GetcRD");
+    fl_set_object_callback(obj,cb_get_cuts,1);
+    fl_set_object_boxtype(obj,FL_FRAME_BOX);
+  obj = fl_add_button(FL_NORMAL_BUTTON,250,225,50,25,"Delete");
     fl_set_object_callback(obj,cb_delete_cuts,0);
     fl_set_object_boxtype(obj,FL_FRAME_BOX);
-  obj = fl_add_button(FL_NORMAL_BUTTON,250,225,50,25,"Clear");
+  obj = fl_add_button(FL_NORMAL_BUTTON,250,255,50,25,"Clear");
     fl_set_object_callback(obj,cb_clear_cuts,0);
     fl_set_object_boxtype(obj,FL_FRAME_BOX);
-  obj = fl_add_button(FL_NORMAL_BUTTON,250,255,50,25,"Stepcut");
+  obj = fl_add_button(FL_NORMAL_BUTTON,250,285,50,25,"Stepcut");
     fl_set_object_callback(obj,cb_step_cuts,0);
     fl_set_object_boxtype(obj,FL_FRAME_BOX);
-  obj = fl_add_button(FL_NORMAL_BUTTON,250,285,50,25,"Rotatecut");
+  obj = fl_add_button(FL_NORMAL_BUTTON,250,315,50,25,"Rotatecut");
     fl_set_object_callback(obj,cb_rotate_cuts,0);
     fl_set_object_boxtype(obj,FL_FRAME_BOX);
-  obj = fl_add_button(FL_NORMAL_BUTTON,250,315,50,25,"Moment");
+  obj = fl_add_button(FL_NORMAL_BUTTON,250,345,50,25,"Moment");
     fl_set_object_callback(obj,cb_moment,0);
     fl_set_object_boxtype(obj,FL_FRAME_BOX);
-  obj = fl_add_button(FL_NORMAL_BUTTON,250,345,50,25,"Close");
+  obj = fl_add_button(FL_NORMAL_BUTTON,250,375,50,25,"Close");
     fl_set_object_callback(obj,cb_close_cuts,0);
     fl_set_object_boxtype(obj,FL_FRAME_BOX);
   fl_end_form();
@@ -889,17 +918,34 @@ void cb_subtask(FL_OBJECT *obj, long arg)
 void cb_s_posvel(FL_OBJECT *obj, long arg)
 { save_posvel_(); }
 
+char file_re[120] = ""; 
+
 /* Note Here: We need a directory instead of a file */
 void cb_loadmap(FL_OBJECT *obj, long arg)
 { const char *fname, *load();
+  char  filename[120];
   int lenfile;
+  /* printf("arg=[%d]\n",arg);*/
+  if (arg == 1) { /* reload */
+    lenfile=strlen(file_re);
+    /* printf("lenfile=[%d]\n",lenfile);*/
+    if (lenfile < 1) {
+      printf("Sorry, can not reload\n");
+    } else {
+        strcpy(filename,file_re);
+        /* printf("file=[%s]\n",filename);*/
+        readnewmap_(filename,&lenfile);
+    }
+    return;
+  }
   fname=load();
   if (fname != NULL) {
     /* printf("Load map %s\n",fname); */
     fname=fl_get_directory();
-    /*printf("Load map %s\n",fname);*/
+    /* printf("Load map [%s]\n",fname);*/
     lenfile=strlen(fname);
     readnewmap_(fname,&lenfile);
+    strcpy(file_re,fname);
   }
 }
 
@@ -928,10 +974,13 @@ void create_main_form(void)
   task = fl_add_choice(FL_NORMAL_CHOICE,32,27,45,20,"Task");
    fl_set_object_callback(task,cb_task,0);
    fl_addto_choice(task,"PosVel|Implot");
-  loadmap = obj = fl_add_button(FL_NORMAL_BUTTON,90,27,40,20,"Load");
+  obj = fl_add_button(FL_NORMAL_BUTTON,80,27,35,20,"Reload");
+   fl_set_object_boxtype(obj,FL_FRAME_BOX);
+   fl_set_object_callback(obj,cb_loadmap,1);
+  loadmap = obj = fl_add_button(FL_NORMAL_BUTTON,115,27,35,20,"Load");
    fl_set_object_boxtype(loadmap,FL_FRAME_BOX);
    fl_set_object_callback(loadmap,cb_loadmap,0);
-  inputcut = obj = fl_add_button(FL_NORMAL_BUTTON,135,27,40,20,"Cuts");
+  inputcut = obj = fl_add_button(FL_NORMAL_BUTTON,150,27,30,20,"Cuts");
    fl_set_object_boxtype(inputcut,FL_FRAME_BOX);
    fl_set_object_callback(inputcut,cb_inputcut,0);
   PosVel = fl_bgn_group();
@@ -1199,11 +1248,12 @@ void main_vel_()
   return;
 }
 
-void show_tool_(char *s)
+void show_tool_(char *s, char *file)
 { FL_OBJECT *obj;
   int numpage=0,tnumpage;
   
-  /*printf("show_tool[%s]\n",s);*/
+  /* printf("show_tool[%s]\n",file);*/
+  strcpy(file_re,file);
   /*s="Implot"; */
   if (!strcmp("PosVel",s)) current_group=PosVel;
   if (!strcmp("Implot",s)) current_group=Implot;
