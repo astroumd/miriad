@@ -55,6 +55,8 @@
 //            in the case missing antenna in a random place.
 // 2005-03-31 trim the junk tail in source name.
 //            the source name truncates to 8 char.
+// 2005-04-05 fixed the polarization label conversion for circular case
+//            fixed the uv coordinates scaling (by the base frequency fsky[0]);
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -671,6 +673,8 @@ startTime = time(NULL);
  	 *inh[set] = *(inh_read(fpin[0])); 
      if (SWAP_ENDIAN) {
           inh[set] =  swap_inh(inh[set]);
+// reverse mapping the inhid wrt integration set number
+//          inid[inh[set]->inhid]=set;
                       }
                                     }
 if (SWAP_ENDIAN) {
@@ -682,6 +686,8 @@ printf("FINISHED READING  IN HEADERS\n");
 	 *blh[set] = *(blh_read(fpin[1]));
      if (SWAP_ENDIAN) {
           blh[set] =  swap_blh(blh[set]);
+// reverse mapping the blhid wrt bl set number
+//          blid[blh[set]->blhid]=set;
                       }
                                     }
 // count sidebands
@@ -776,7 +782,7 @@ printf("to load data for all receivers.\n");
      bln[set]->inhid = blh[blset]->inhid;
      bln[set]->blhid = blh[blset]->blhid;
      bln[set]->isb   = blh[blset]->isb;
-     bln[set]->irec  = blh[blset]->irec;                                      
+     bln[set]->irec  = blh[blset]->irec; 
      inhid_hdr       = blh[blset]->inhid;
                  }
 // for the successive integration set, take the 1st baseline
@@ -805,15 +811,16 @@ printf("to load data for all receivers.\n");
      blh[blset]->itel1*256+blh[blset]->itel2;
      uvwbsln[set]->uvwID[blset-blhid_hdr].isb = blh[blset]->isb;
      uvwbsln[set]->uvwID[blset-blhid_hdr].irec = blh[blset]->irec;
+     uvwbsln[set]->uvwID[blset-blhid_hdr].ipol = blh[blset]->ipol;
 // polarization
 
 if(smabuffer.oldpol==1) {
-           switch(blh[set]->ipol) {
-case 0: uvwbsln[inhset]->uvwID[set-blhset].ipol= 1; break;
-case 1: uvwbsln[inhset]->uvwID[set-blhset].ipol=-5; break;
-case 2: uvwbsln[inhset]->uvwID[set-blhset].ipol=-7; break;
-case 3: uvwbsln[inhset]->uvwID[set-blhset].ipol=-8; break;
-case 4: uvwbsln[inhset]->uvwID[set-blhset].ipol=-6; break;
+           switch(uvwbsln[set]->uvwID[blset-blhid_hdr].ipol) {
+case 0: uvwbsln[set]->uvwID[blset-blhid_hdr].ipol= 1; break;
+case 1: uvwbsln[set]->uvwID[blset-blhid_hdr].ipol=-5; break;
+case 2: uvwbsln[set]->uvwID[blset-blhid_hdr].ipol=-7; break;
+case 3: uvwbsln[set]->uvwID[blset-blhid_hdr].ipol=-8; break;
+case 4: uvwbsln[set]->uvwID[blset-blhid_hdr].ipol=-6; break;
 //
 // convert MIR polarization label used befor sep1,2004 to Miriad
 // used   MIR  actual          Miriad
@@ -824,19 +831,24 @@ case 4: uvwbsln[inhset]->uvwID[set-blhset].ipol=-6; break;
 //LL       4   VV               -6
               }} else {
  if(smabuffer.circular==1) {
-switch(blh[set]->ipol) {
+switch(uvwbsln[set]->uvwID[blset-blhid_hdr].ipol) {
 case 1: uvwbsln[set]->uvwID[blset-blhid_hdr].ipol=-1; break;
 case 2: uvwbsln[set]->uvwID[blset-blhid_hdr].ipol=-3; break;
 case 3: uvwbsln[set]->uvwID[blset-blhid_hdr].ipol=-4; break;
 case 4: uvwbsln[set]->uvwID[blset-blhid_hdr].ipol=-2; break;
+//MIR     MIRIAD     STATE
+//1       -1         RR
+//2       -3         RL
+//3       -4         LR
+//4       -2         LL
       }
         }
     if(smabuffer.linear==1) 
-   switch(blh[set]->ipol) {
-case 1: uvwbsln[inhset]->uvwID[set-blhset].ipol=-6; break;
-case 2: uvwbsln[inhset]->uvwID[set-blhset].ipol=-7; break;
-case 3: uvwbsln[inhset]->uvwID[set-blhset].ipol=-8; break;
-case 4: uvwbsln[inhset]->uvwID[set-blhset].ipol=-5; break;
+   switch(uvwbsln[set]->uvwID[blset-blhid_hdr].ipol) {
+case 1: uvwbsln[set]->uvwID[blset-blhid_hdr].ipol=-6; break;
+case 2: uvwbsln[set]->uvwID[blset-blhid_hdr].ipol=-7; break;
+case 3: uvwbsln[set]->uvwID[blset-blhid_hdr].ipol=-8; break;
+case 4: uvwbsln[set]->uvwID[blset-blhid_hdr].ipol=-5; break;
 // from ram mar7,2005
 // In the case where options=linear then
 // MIR MIRIAD  POL
@@ -1046,12 +1058,6 @@ printf("Geocentrical coordinates of antennas (m), reference antenna=%d\n",
             geocxyz[i].x,
             geocxyz[i].y,
             geocxyz[i].z);
-//     printf("ANT x y z %s  %11.5f %11.5f %11.5f\n\n",
-//            antenna[i].name,
-//            antxyz[i].x,
-//            antxyz[i].y,
-//            antxyz[i].z);
-
  } 
 //
 // convert geocentrical coordinates to equatorial coordinates
@@ -1205,8 +1211,10 @@ sours[i]='\0';
   int sphid_hdr;
   int blset;
   int inset;
+  int intset;
   int is;
   int nspectra;
+  double bfreq;
        nspectra=0;
        blset     =  0;
        sphid_hdr =  0;
@@ -1253,10 +1261,12 @@ rewind(fpin[2]);
 // check up inhid and blhid to work on the same integration set
 //       and the baseline set with the sidebband and rx as
 //       is desired.
+    
     if(sph1->inhid==inh[inset]->inhid&&sph1->blhid==bln[inset]->blhid){
          spn[inset]->sphid                = sph1->sphid;
          spn[inset]->inhid                = sph1->inhid;
          spn[inset]->iband[sph1->iband]   = sph1->iband;
+                 
 // lsr velocity with respect to the rest frequency
          spn[inset]->vel[sph1->iband]     = sph1->vel;
          spn[inset]->vres[sph1->iband]    = sph1->vres;
@@ -1269,9 +1279,9 @@ rewind(fpin[2]);
          spn[inset]->rfreq[sph1->iband]   = sph1->rfreq;
          spn[inset]->isb                  = bln[inset]->isb;
          spn[inset]->irec                 = bln[inset]->irec;
-         spn[inset]->souid                = inh[inset]->souid;                
+         spn[inset]->souid                = inh[inset]->souid;
+         if(sph1->iband==0) spn[inset]->basefreq = sph1->fsky;                
                              }
-// terminate the loading
        if(inset==smabuffer.scanskip+smabuffer.scanproc) { 
        goto sphend; 
                              }
@@ -1280,6 +1290,8 @@ rewind(fpin[2]);
 sphend:
 //       printf("skipping %d in the beginning.\n",smabuffer.scanskip); 
        printf("number of Spectra = %d\n", numberSpectra);
+
+
 if (SWAP_ENDIAN) {
 printf("FINISHED READING SP HEADERS (endian-swapped)\n");
 } else {
@@ -1679,6 +1691,7 @@ uvputvri_c(tno,"sourid", &sourceID, 1);
                                      smabuffer.rsnchan;
    smabuffer.nfreq[spcode[i]-1]    = smabuffer.rsnchan;
                                }
+   smabuffer.basefreq = spn[inhset]->basefreq;
    smabuffer.bchan[spcode[i]-1]=1;
    smabuffer.nstoke[spcode[i]-1]=4;
    smabuffer.edge[spcode[i]-1]=0;
@@ -1702,16 +1715,20 @@ if(smabuffer.rxif==uvwbsln[inhset]->uvwID[j].irec||smabuffer.rxif==-1) {
 switch(sbpnt) {
 case 0: blpnt=uvwbsln[inhset]->uvwID[j].blsid;
         phaseSign=-1;
-  smabuffer.u[blpnt] = uvwbsln[inhset]->uvwID[j].u/smabuffer.sfreq[1]*1000.;
-  smabuffer.v[blpnt] = uvwbsln[inhset]->uvwID[j].v/smabuffer.sfreq[1]*1000.;
-  smabuffer.w[blpnt] = uvwbsln[inhset]->uvwID[j].w/smabuffer.sfreq[1]*1000.;
-        break;
+if(smabuffer.sb==0) {
+  smabuffer.u[blpnt] = uvwbsln[inhset]->uvwID[j].u/smabuffer.basefreq*1000.;
+  smabuffer.v[blpnt] = uvwbsln[inhset]->uvwID[j].v/smabuffer.basefreq*1000.;
+  smabuffer.w[blpnt] = uvwbsln[inhset]->uvwID[j].w/smabuffer.basefreq*1000.;
+                    }
+           break;
 case 1: blpnt=uvwbsln[inhset]->uvwID[j].blsid;
         phaseSign= 1;
-  smabuffer.u[blpnt] = uvwbsln[inhset]->uvwID[j].u/smabuffer.sfreq[1]*1000.;
-  smabuffer.v[blpnt] = uvwbsln[inhset]->uvwID[j].v/smabuffer.sfreq[1]*1000.;
-  smabuffer.w[blpnt] = uvwbsln[inhset]->uvwID[j].w/smabuffer.sfreq[1]*1000.;
-        break;
+if(smabuffer.sb==1) {
+  smabuffer.u[blpnt] = uvwbsln[inhset]->uvwID[j].u/smabuffer.basefreq*1000.;
+  smabuffer.v[blpnt] = uvwbsln[inhset]->uvwID[j].v/smabuffer.basefreq*1000.;
+  smabuffer.w[blpnt] = uvwbsln[inhset]->uvwID[j].w/smabuffer.basefreq*1000.;
+                    }
+   break;
               }
                    }
 flush=1;
@@ -1777,7 +1794,8 @@ for (set=0; set< sphSizeBuffer; set++) {
     scale = shortdata[4];
 /* Now the data There is only one channel for the continuum*/
    visSMAscan.bsline.continuum.real = pow(2.,(double)scale)*shortdata[5];
-   visSMAscan.bsline.continuum.imag = pow(2.,(double)scale)*(-shortdata[6]);
+   visSMAscan.bsline.continuum.imag = 
+                      pow(2.,(double)scale)*(-shortdata[6]*phaseSign);
     free(shortdata);
     sphset++;  
 /* The file is positioned at the record header for the next spectrum. */
@@ -1815,7 +1833,7 @@ if (smabuffer.rsnchan> 0) {
      if(avenchan< (sph[kk]->nch/smabuffer.rsnchan) ) {
 avereal = avereal + (float)pow(2.,(double)scale)*shortdata[5+2*i];
 // convert ovro sign convention to miriad
-aveimag = aveimag + (float)pow(2.,(double)scale)*(-shortdata[6+2*i]);
+aveimag = aveimag + (float)pow(2.,(double)scale)*(-shortdata[6+2*i]*phaseSign);
 avenchan++;
                                              } else {
 avereal = avereal/avenchan;
@@ -1826,13 +1844,14 @@ ipnt++;
 avenchan = 1;
 // convert ovro sign convention to miriad
 avereal  = (float)pow(2.,(double)scale)*shortdata[5+2*i];
-aveimag  = (float)pow(2.,(double)scale)*(-shortdata[6+2*i]);
+aveimag  = (float)pow(2.,(double)scale)*(-shortdata[6+2*i]*phaseSign);
                                                  }
                             } else {
 /* loading the original vis with no average */
 // convert ovro sign convention to miriad
 smabuffer.data[ipnt].real=(float)pow(2.,(double)scale)*shortdata[5+2*i];
-smabuffer.data[ipnt].imag=(float)pow(2.,(double)scale)*(-shortdata[6+2*i]);
+smabuffer.data[ipnt].imag=
+     (float)pow(2.,(double)scale)*(-shortdata[6+2*i]*phaseSign);
 
 ipnt++;    }
 
@@ -1844,13 +1863,6 @@ ipnt++;    }
 firstsp = sphset;
         }
   }
-//if (fmod((readSet-1), 100.)<0.5)
-//printf("set=%4d ints=%4d inhid=%4d time(JulianDay)=%9.5f int=% 4.1f \n",
-//readSet,
-//visSMAscan.blockID.ints,
-//visSMAscan.blockID.inhid,
-//visSMAscan.time.UTCtime,
-//visSMAscan.time.intTime);
        readSet++;
        smabuffer.nused=ipnt;
 /* re-initialize vis point for next integration */
