@@ -830,9 +830,14 @@ case 4: uvwbsln[inhset]->uvwID[set-blhset].ipol=-6; break;
 //LR       3   VH               -8
 //LL       4   VV               -6
               }} else {
-     if(smabuffer.circular==1) {
-     uvwbsln[set]->uvwID[blset-blhid_hdr].ipol= -blh[set]->ipol;
+ if(smabuffer.circular==1) {
+switch(blh[set]->ipol) {
+case 1: uvwbsln[set]->uvwID[blset-blhid_hdr].ipol=-1; break;
+case 2: uvwbsln[set]->uvwID[blset-blhid_hdr].ipol=-3; break;
+case 3: uvwbsln[set]->uvwID[blset-blhid_hdr].ipol=-4; break;
+case 4: uvwbsln[set]->uvwID[blset-blhid_hdr].ipol=-2; break;
       }
+        }
     if(smabuffer.linear==1) 
    switch(blh[set]->ipol) {
 case 1: uvwbsln[inhset]->uvwID[set-blhset].ipol=-6; break;
