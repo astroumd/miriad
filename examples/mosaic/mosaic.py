@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# History:
+#  History:
 #  june 02 mchw. ALMA script.
 #  15aug02 mchw. CARMA version edited from ALMA script.
 #  23aug02 mchw. calculate region from source size.
