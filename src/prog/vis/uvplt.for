@@ -427,7 +427,7 @@ c
 c      data npts, plpts, basmsk /ifac1*0, ifac1*0, ifac2*0/ -- see izero
       data polmsk /13*0/
 c-----------------------------------------------------------------------
-      call output ('UvPlt: version 10-dec-02')
+      call output ('UvPlt: version 11-dec-02')
       call output ('New frequency behaviour '//
      *	'(see parameters line and options=nofqav)')
       call output (' ')

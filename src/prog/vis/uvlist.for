@@ -121,10 +121,11 @@ c   28oct99 mchw - Extend phase in averaging routine.
 c   27oct00 mchw - Changes to accomodate more antennas.
 c   19jan02 pjt  - basant needs double precision argument
 c   27jun02 mchw - use latitude uv-variable if present.
+c   11dec02 pjt  - subroutine q/r/d/ZERO to bypass big DATA statement that makes big binaries
 c-----------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='UVLIST: version  27-Jun-02')
+	parameter(version='UVLIST: version  11-dec-02')
 	real rtoh,rtod,pi
 	integer maxsels
 	parameter(pi=3.141592653589793,rtoh=12/pi,rtod=180/pi)
