@@ -51,6 +51,10 @@
 //            the antenna id > reference antenna's id.
 // 2005-03-23 fixed a bug in baseline pntr (last bl of
 //            the 1st rx overlapping with that of 2nd).
+// 2005-03-29 fixed problem in decoding antenna coordinates
+//            in the case missing antenna in a random place.
+// 2005-03-31 trim the junk tail in source name;
+//            limited the length of source name to 8.
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -877,10 +881,13 @@ for (set=bset+1;set<nsets[1];set++) {
       blarray[blh[set]->itel1][blh[set]->itel2].itel1 = blh[set]->itel1;
       blarray[blh[set]->itel1][blh[set]->itel2].itel2 = blh[set]->itel2;
       blarray[blh[set]->itel1][blh[set]->itel2].blid  = blh[set]->blsid;
+   printf("e n u ant1 ant2 %f %f %f %d %d\n",
+            blh[set]->ble,blh[set]->bln,blh[set]->blu,
+            blh[set]->itel1,blh[set]->itel2);
       smabuffer.nants++;       }
           else
       {smabuffer.nants = (int)((1+sqrt(1.+8.*smabuffer.nants))/2);
-/* printf("mirRead: number of antenna =%d\n", smabuffer.nants);*/
+ printf("mirRead: number of antenna =%d\n", smabuffer.nants);
           goto blload_done;}
                                 }
 }
@@ -957,6 +964,7 @@ engskip:
 //free(smaEngdata);
 free(enh);
 // initialize the antenna positions
+       smabuffer.nants=8;
        for (i=1; i < smabuffer.nants+1; i++) {
           antenna[i].x = 0.;
           antenna[i].y = 0.;
@@ -995,7 +1003,14 @@ free(enh);
           antenna[i].z = (double)blarray[smabuffer.refant][i].uu
                          - antenna[smabuffer.refant].z;
           antenna[i].z = - antenna[i].z;
-             }     }
+             }
+      printf("x y z %f %f %f lat=%f\n", 
+               antenna[i].x,
+               antenna[i].y,
+               antenna[i].z,
+               smabuffer.lat);
+
+        }
 
 
 // calculate the geocentric coordinates from local 
@@ -1147,10 +1162,18 @@ if((cdh[set]->v_name[0]=='b'&&cdh[set]->v_name[1]=='a')&&
 
            uvputvra_c(tno,"veltype", multisour[sourceID].veltyp);
 // decode the source information 
+char sours[9];
 for (set=0;set<nsets[3];set++){
          if(cdh[set]->v_name[0]=='s'&&cdh[set]->v_name[1]=='o') {
          sourceID++;
-         sprintf(multisour[sourceID].name, "%s", cdh[set]->code);
+// parsing the source name and trim the junk tail
+for(i=0; i<9; i++) {
+sours[i]=cdh[set]->code[i];
+// ' ' == 32 '\0' == 0
+if(cdh[set]->code[i]==32||cdh[set]->code[i]==0||i==8)
+sours[i]='\0';
+}
+        sprintf(multisour[sourceID].name, "%s", sours);
          multisour[sourceID].sour_id = cdh[set]->icode;
 //         printf("cdh[set]->code=%s\n", cdh[set]->code);
          inhset=0;
@@ -1624,7 +1647,11 @@ if (smabuffer.doeng!=1) {
 /* write source to uvfile */
 if((strncmp(multisour[sourceID].name,target,6)!=0)&&
    (strncmp(multisour[sourceID].name,unknown,7)!=0)) {
-uvputvra_c(tno,"source",multisour[sourceID].name);
+char sour[9];
+    strncpy(sour, multisour[sourceID].name, 9);
+//     printf(" %s %8s\n", sour, sour);
+//uvputvra_c(tno,"source",multisour[sourceID].name);
+uvputvra_c(tno,"source", sour);
 uvputvrd_c(tno,"ra",&(smabuffer.ra),1);
 uvputvrd_c(tno,"dec",&(smabuffer.dec),1);
 /* store the true pointing position */
