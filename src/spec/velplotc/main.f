@@ -5,6 +5,8 @@
  	integer ID1,pgopen
 	common/ID1/ID1
 
+c		announce (ChinFei will fix this)
+	call output('velplotc: version 13-mar-01 pjt')
 c
 c	Original, convolution_information need cdelt1(xy) from the data
 c	however, we make it 0.0 and convolution size is always 3 pixels
