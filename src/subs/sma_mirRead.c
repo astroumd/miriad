@@ -31,6 +31,8 @@
 // 2005-03-07 changed the chunk order in frequnecy for the first
 //            three blocks in the data observed during the
 //            690 campaign spring 2005
+// 2005-03-07 added the polarization options cirpol for waveplates
+//            and default for linear
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -196,7 +198,8 @@ extern smlodd smabuffer;
     
 void rspokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1,
   int *doop1, int *dohann1, int *birdie1, int *dowt1, int *dopmps1,
-  int *dobary1, int *doif1, int *hires1, int *nopol1, int *oldpol1, 
+  int *dobary1, int *doif1, int *hires1, int *nopol1, int *cirpol1,
+  int *oldpol1, 
   double lat1, double long1, int rsnchan1)
 { /* rspokeflshsma_c == pokeflsh */
     int buffer;
@@ -218,6 +221,7 @@ void rspokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1,
         smabuffer.dopmps = *dopmps1;
         smabuffer.hires  = *hires1;
         smabuffer.nopol  = *nopol1;
+        smabuffer.cirpol = *cirpol1;
         smabuffer.oldpol = *oldpol1;
         smabuffer.lat    = lat1;
         smabuffer.longi  = long1;
@@ -832,7 +836,42 @@ printf("to load data for all receivers.\n");
 //           blh[blset]->isb, blh[blset]->irec, 
 //           blh[blset]->blhid, blh[blset]->inhid, blh[blset]->blsid);
 // polarization
-     uvwbsln[set]->uvwID[blset-blhid_hdr].ipol= -5 -blh[set]->ipol;
+
+if(smabuffer.oldpol==1) {
+           switch(blh[set]->ipol) {
+case 0: uvwbsln[inhset]->uvwID[set-blhset].ipol= 1; break;
+case 1: uvwbsln[inhset]->uvwID[set-blhset].ipol=-5; break;
+case 2: uvwbsln[inhset]->uvwID[set-blhset].ipol=-7; break;
+case 3: uvwbsln[inhset]->uvwID[set-blhset].ipol=-8; break;
+case 4: uvwbsln[inhset]->uvwID[set-blhset].ipol=-6; break;
+//
+// convert MIR polarization label used befor sep1,2004 to Miriad
+// used   MIR  actual          Miriad
+//non      0   I                 1
+//RR       1   HH               -5
+//RL       2   HV               -7
+//LR       3   VH               -8
+//LL       4   VV               -6
+              }} else {
+     if(smabuffer.cirpol==1) {
+     uvwbsln[set]->uvwID[blset-blhid_hdr].ipol= -blh[set]->ipol;
+      } else {
+   switch(blh[set]->ipol) {
+case 1: uvwbsln[inhset]->uvwID[set-blhset].ipol=-6; break;
+case 2: uvwbsln[inhset]->uvwID[set-blhset].ipol=-7; break;
+case 3: uvwbsln[inhset]->uvwID[set-blhset].ipol=-8; break;
+case 4: uvwbsln[inhset]->uvwID[set-blhset].ipol=-5; break;
+// from ram mar7,2005
+// In the case where options=linear then
+// MIR MIRIAD  POL
+// 1   -6      VV (YY)
+// 2   -7      HV (XY)
+// 3   -8      VH (YX)
+// 4   -5      HH (XX)
+                          }
+     }
+}
+
 // counting baseline for each integration set
      uvwbsln[set]->n_bls++;
 //     printf("blset set %d %d %d %d %d\n",blset, set,blset-blhid_hdr,
@@ -841,30 +880,6 @@ printf("to load data for all receivers.\n");
 //     printf("set numberBaselines %d %d\n", set, numberBaselines);     
      numberBaselines=uvwbsln[set]->n_bls;
      }
-//
-// convert MIR polarization label used befor sep1,2004 to Miriad 
-// used   MIR  actual          Miriad
-//non      0   I                 1
-//RR       1   HH               -5
-//RL       2   HV               -7
-//LR       3   VH               -8
-//LL       4   VV               -6
-//      if(smabuffer.oldpol==1) {
-//            switch(blh[set]->ipol) {
-//case 0: uvwbsln[inhset]->uvwID[set-blhset].ipol= 1; break;
-//case 1: uvwbsln[inhset]->uvwID[set-blhset].ipol=-5; break;
-//case 2: uvwbsln[inhset]->uvwID[set-blhset].ipol=-7; break;
-//case 3: uvwbsln[inhset]->uvwID[set-blhset].ipol=-8; break;
-//case 4: uvwbsln[inhset]->uvwID[set-blhset].ipol=-6; break;
-//               }
-//               } else {
-//  if(blh[set]->ipol!=0&&smabuffer.nopol!=1) {
-//  fprintf(stderr,"###program exiting because 
-//  the file may contain polarization data.\n");
-//  fprintf(stderr,"###Please try options=oldpol to load polarization data.\n");
-//       exit(0);
-//         }
-//          }
 }
 /* set antennas */
       blarray[1][1].ee = blh[0]->ble ;
