@@ -134,7 +134,7 @@ c
 
 	subroutine stripspace(str)
 	character str*(*)
-	integer itlength,len,i,j
+	integer len,i,j
 	len= len1(str)
 	j=0
 	do i=1,len
@@ -248,7 +248,6 @@ c	remove spaces at the beginning of the character
 
 	subroutine error(n)
 	integer n
-	character trans*20
 	if (n.eq.1) write(*,*) "Error converting string to real number"
 	if (n.eq.2) write(*,*) "Error: call keyini first"
 c	call exit(1)
