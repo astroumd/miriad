@@ -5,6 +5,7 @@ BIMA History:
 
 RPFITS History:
   4-jun-2001:  Version 2.4 released
+ 15-jun-2004:  imported 2.6 release
 
 The script $MIR/install/install.linux will attempt to install the
 library and one program 'atlod' (see $MIR/src/prog/atnf/atlod.for)

@@ -82,7 +82,7 @@ C     Modified 14/Dec/91 HM  Added if_simul and if_chain. Old data
 C     without them is given if_simul=if_chain=1 in the IF table.
 C     Modified 14/May/92 HM  Allow for i3 if_num or if_simul.
 C-----------------------------------------------------------------------
-      integer   lun, i, j, k, l, status, AT_READ, ichr(640)
+      integer   lun, i, j, k, l, status, AT_READ, ichr(640), ios
       character m(32)*80, temp*5
  
       include 'rpfits.inc'
@@ -102,19 +102,21 @@ C-----------------------------------------------------------------------
             else if (m(j)(1:8).eq.'COMMENT') then
             else
                k = n_if + 1
-               read(m(j),'(BN,i3,f16.3,1x,i2, 1x, f16.3, 1x, i4,
-     +            1x, i2, 1x, 4a2, 1x,i1, 1x,f6.1, 1x, a5)')
+               read(m(j),'(BN, i3, f16.3, 1x, i2, 1x, f16.3, i5, 1x,
+     +            i2, 1x, 4a2, 1x, i1, 1x, f6.1, 1x, a5)',iostat=ios)      
      +            if_num(k), if_freq(k), if_invert(k),
      +            if_bw(k), if_nfreq(k), if_nstok(k), 
      +            (if_cstok(l,k),l = 1,4), if_sampl(k), 
      +            if_ref(k), temp
+	       if(ios.ne.0) stop ' ERROR READING IF TABLE'
                if (temp .eq. ' ') then
                   if_simul(k) = 1
                   if_chain(k) = 1
                else
-                  read (temp,*) if_simul(k), if_chain(k)
+                  read (temp,*,iostat=ios) if_simul(k), if_chain(k)
                   if (if_simul(k) .eq. 0) if_simul(k) = 1
                   if (if_chain(k) .eq. 0) if_chain(k) = 1
+	          if(ios.ne.0) stop ' ERROR 2 READING IF TABLE'
                end if
                n_if = n_if + 1
             end if
@@ -157,8 +159,8 @@ C-----------------------------------------------------------------------
  
       do k = 1, n_if
          i = i+1
-         write (m(i),'(i3,f16.3,1x,i2, 1x, f16.3, 1x, i4, 1x, 
-     +      i2 , 1x, 4a2,1x,i1, 1x, f6.1, 1x, i2, 1x, i2)')
+         write (m(i),'(i3, f16.3, 1x, i2, 1x, f16.3, i5, 
+     +      1x, i2, 1x, 4a2, 1x, i1, 1x, f6.1, 1x, i2, 1x, i2)')
      +      if_num(k), if_freq(k), if_invert(k),
      +      if_bw(k), if_nfreq(k), if_nstok(k),
      +      (if_cstok(l,k),l=1,4), if_sampl(k), 
@@ -181,8 +183,9 @@ C     routine to read a SOURCE table from an RPFITS file
 C
 C     RPN 8/11/88
 C     HM  15/5/92 Read old (i2) or new (i3) source number.
+C     MHW 3/1/2003 Fill pointing position
 C-----------------------------------------------------------------------
-      integer   lun, i, j, k, status, AT_READ, ichr(640)
+      integer   lun, i, j, k, status, AT_READ, ichr(640), ios
       character m(32)*80
       include 'rpfits.inc'
 
@@ -202,10 +205,13 @@ C-----------------------------------------------------------------------
             else
                k = n_su+1
                read(m(j),'(BN,i3,a16,1x,f12.9, 1x, f12.9, 1x, a4, 
-     +            1x, f11.9, 1x, f11.9)')
+     +            1x, f11.9, 1x, f11.9)',iostat=ios)
      +            su_num(k), su_name(k), su_ra(k), su_dec(k), 
      +            su_cal(k), su_rad(k), su_decd(k)
+               su_pra(k) = su_ra(k)
+               su_pdec(k) = su_dec(k)
                n_su = n_su+1
+	       if(ios.ne.0) stop ' ERROR READING SU TABLE'
             end if
          end do
  
@@ -267,7 +273,7 @@ C
 C     RPN 8/11/88
 C     Modified 15/5/92 HM Read old (i2) and new (i3) j and fg_if 
 C-----------------------------------------------------------------------
-      integer lun, i, j, k, status, AT_READ, ichr(640)
+      integer lun, i, j, k, status, AT_READ, ichr(640), ios
       character m(32)*80
       include 'rpfits.inc'
  
@@ -285,11 +291,12 @@ C-----------------------------------------------------------------------
             else if ( m(k)(1:8).eq.'COMMENT') then
             else
                read(m(k),'(BN, i3, i2, 1x, i2, 2(1x,f8.1), 1x, 2(i3),
-     +            i4, 1x, i4, 2(1x,i1), a24)') j,
+     +            i4, 1x, i4, 2(1x,i1), a24)',iostat=ios) j,
      +            fg_ant(1,j), fg_ant(2,j), fg_ut(1,j), fg_ut(2,j),
      +            fg_if(1,j), fg_if(2,j), fg_chan(1,j), fg_chan(2,j),
      +            fg_stok(1,j), fg_stok(2,j), fg_reason
                n_fg = n_fg+1
+	       if(ios.ne.0) stop ' ERROR READING FG TABLE'
             end if
          end do
  
@@ -350,8 +357,8 @@ C     RPN 27/7/89
 C     mod rpn 11/10/89 remove met info
 C     H.May 26/8/92  Change read to match write in write_an_table
 C-----------------------------------------------------------------------
-      integer lun, i, j, status, AT_READ, iaxis_offset,
-     +   ichr(640)
+      integer lun, i, j, status, AT_READ, iaxis_offset, ios
+      integer ichr(640)
       character m(32)*80
       include 'rpfits.inc'
       nant = 0
@@ -369,9 +376,10 @@ C-----------------------------------------------------------------------
             else if (m(j)(1:8).eq.'COMMENT') then
             else
                nant = nant + 1
-               read(m(j),100) ant_num(nant), sta(nant), 
+               read(m(j),100,iostat=ios) ant_num(nant), sta(nant), 
      +            ant_mount(nant), x(nant), y(nant), z(nant), 
      +            Iaxis_offset
+                  if(ios.ne.0) stop 'ERROR READING AN TABLE'
                axis_offset(nant) = iaxis_offset/1000.0
             end if
          end do
@@ -432,7 +440,7 @@ C     routine to read a MT table from an RPFITS file
 C
 C     RPN 11/10/89
 C-----------------------------------------------------------------------
-      integer   lun, i, j, status, AT_READ, ichr(640)
+      integer   lun, i, j, status, AT_READ, ichr(640), ios
       character m(32)*80
       include 'rpfits.inc'
  
@@ -451,8 +459,9 @@ C-----------------------------------------------------------------------
             else if (m(j)(1:8).eq.'COMMENT') then
             else
                n_mt = n_mt + 1
-               read(m(j),100) mt_ant(n_mt), mt_ut(n_mt),
+               read(m(j),100,iostat=ios) mt_ant(n_mt), mt_ut(n_mt),
      +            mt_press(n_mt), mt_temp(n_mt), mt_humid(n_mt)
+               if(ios.ne.0) stop ' ERROR READING MT TABLE'
             end if
          end do
  
@@ -511,7 +520,7 @@ C
 C     RPN 22/03/90
 C     Modified: HM  15/05/92  Read old (i2) or new (i3) cu_if.
 C-----------------------------------------------------------------------
-      integer lun, i, j, status, AT_READ, ichr(640)
+      integer lun, i, j, status, AT_READ, ichr(640), ios
       character m(32)*80
       include 'rpfits.inc'
  
@@ -530,9 +539,11 @@ C-----------------------------------------------------------------------
             else if (m(j)(1:8).eq.'COMMENT') then
             else
                n_cu = n_cu + 1
-               read(m(j),100) cu_ut(n_cu), cu_ant(n_cu), cu_if(n_cu),
+               read(m(j),100,iostat=ios) 
+     +            cu_ut(n_cu), cu_ant(n_cu), cu_if(n_cu),
      +            cu_cal1(n_cu), cu_cal2(n_cu), cu_ch1(n_cu), 
      +            cu_ch2(n_cu)
+               if(ios.ne.0) stop ' ERROR READING CU TABLE'
             end if
          end do
  

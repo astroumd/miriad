@@ -1,28 +1,23 @@
 C-----------------------------------------------------------------------
-C
-C                   SUBROUTINE RPFITSIN
-C
+C     SUBROUTINE RPFITSIN
 C-----------------------------------------------------------------------
 C
 C     For information on the use of this software, and on the RPFITS
 C     format, see the file RPFITS.DEFN.
 C
+C     Programmer: Ray Norris
+C     Date: 25 April 1985
+C
+C     $Id$
 C-----------------------------------------------------------------------
 
       subroutine RPFITSIN (jstat, vis, weight, baseline, ut, u, v, w,
      +   flag, bin, if_no, sourceno)
-C
-C          Programmer: Ray Norris
-C
-C     Date: 25 April 1985
-C
-C-----------------DUMMY ARGUMENTS---------------------------------------
 
       integer baseline, flag, bin, if_no, sourceno
       real    weight(*), ut, u, v, w
       complex vis(*)
 
-C--------------------OTHER BITS & PIECES--------------------------------
 
       include 'rpfits.inc'
 
@@ -32,8 +27,8 @@ C--------------------OTHER BITS & PIECES--------------------------------
      +          bufleft, bufleft3, bufptr, datstat, grplength, grpptr,
      +          i, i1, i2, i3, i_buff(640), i_grphdr(11), icard, ichar,
      +          illegal, j, jstat, k, lun, nchar, pcount, SIMPLE
-      real      buffer(640), crpix4, grphdr(11), last_good_ut, r1, r2,
-     +          revis, sc_buf(max_sc*max_if*ant_max), velref
+      real      buffer(640), crpix4, grphdr(11), r1, r2, revis,
+     +          sc_buf(max_sc*max_if*ant_max), velref, pra, pdec
       character m(32)*80, olddat*8
 
       equivalence (i_buff(1), buffer(1))
@@ -43,43 +38,54 @@ C--------------------OTHER BITS & PIECES--------------------------------
       data illegal /32768/
       data open /.false./
       data async /.false./, new_antenna /.false./
-      data last_good_ut/0/
 
       save
-C------------------------DECIDE ON ACTION-------------------------------
-      open_only = .false.
 
-      if (jstat.eq.-3) go to 950
+C-------------------------- DECIDE ON ACTION ---------------------------
+
+      open_only = jstat.eq.-3
+
+      if (jstat.eq.-3) go to 1000
       if (jstat.eq.-2) go to 1000
       if (jstat.eq.-1) go to 2000
       if (jstat.eq.0) go to 3000
       if (jstat.eq.1) go to 5000
       if (jstat.eq.2) go to 6000
+
       write (6, *) ' Error in READFITS: illegal value of jstat=',jstat
       jstat = -1
       RETURN
 
-C------------------------OPEN FITS FILE --------------------------------
+C--------------------------- OPEN FITS FILE ----------------------------
 
-  950 open_only = .true.
  1000 if (open) then
          write (6, *) ' File is already open'
-      jstat = -1
-      RETURN
+         jstat = -1
+         RETURN
       end if
-      jstat = 0
+
       rp_iostat =  AT_OPEN_READ (file, async, lun)
       if (rp_iostat.ne.0) then
-         jstat = -1
          write (6, *) ' Cannot open file'
+         jstat = -1
          RETURN
       end if
       open = .true.
-      if (open_only) RETURN
 
-C----------------READ IN HEADER-----------------------------------------
+      if (open_only) then
+         jstat = 0
+         RETURN
+      end if
 
- 2000 endhdr = .false.
+C----------------------------- READ HEADER -----------------------------
+
+ 2000 if (.not.open) then
+         write (6, *) ' File is not open'
+         jstat = -1
+         RETURN
+      end if
+
+      endhdr = .false.
       starthdr = .false.
       bufptr = 0
       n_if = 0
@@ -92,14 +98,15 @@ C----------------READ IN HEADER-----------------------------------------
       nx_found = .false.
       mt_found = .false.
       cu_found = .false.
-      last_good_ut = 0.
+      pra = 0.0
+      pdec = 0.0
 
 C     Look for start of next header.
       do while (.not.starthdr)
          rp_iostat = AT_READ (lun, buffer)
          write (m,'(32(20a4,:,/))') (buffer(j), j=1,640)
 
-         if(rp_iostat.ne.0) then
+         if (rp_iostat.ne.0) then
             if (rp_iostat.eq.-1) then
                jstat = 3
                RETURN
@@ -132,6 +139,7 @@ C     Scan through header, getting the interesting bits.
                RETURN
             end if
          end if
+
          starthdr = .false.
          version = ' '
          do 2200 i = 1, 32
@@ -139,7 +147,7 @@ C     Scan through header, getting the interesting bits.
                read (m(i)(12:31),'(a20)') version
             else if (m(i)(1:8).EQ.'RPFITS  ') then
                read (m(i)(12:31),'(a20)') rpfitsversion
-            else if(m(i)(1:8).EQ.'NAXIS2') then
+            else if (m(i)(1:8).EQ.'NAXIS2') then
                read (m(i)(11:30),'(i20)') data_format
                write_wt = data_format.eq.3
             else if (m(i)(1:8).EQ.'NAXIS3') then
@@ -221,6 +229,8 @@ C              Version 2.0 has UT dates in the form yyyy-mm-dd.
                read (m(i)(11:30),'(g20.12)') pm_dec
             else if (m(i)(1:8).EQ.'PMEPOCH ') then
                read (m(i)(11:30),'(g20.12)') pm_epoch
+            else if (m(i)(1:8).EQ.'PNTCENTR') then
+               read (m(i)(11:35),'(g12.9,1x,g12.9)') pra,pdec
             else if (m(i)(1:6).eq.'TABLE ') then
 C              Sort out tables.
                call RPFITS_READ_TABLE (lun, m, i, endhdr)
@@ -232,44 +242,40 @@ C              END card.
 C           Write into "cards" array if necessary.
             if (ncard.gt.0) then
                do j = 1, ncard
-               nchar = 0
-               do ichar = 1, 12
-                  if (card(j)(ichar:ichar).ne.' ') nchar = ichar
+                  nchar = 0
+                  do ichar = 1, 12
+                     if (card(j)(ichar:ichar).ne.' ') nchar = ichar
+                  end do
+                  if (m(i)(1:nchar).eq.card(j)(1:nchar)) card(j)=m(i)
                end do
-               if (m(i)(1:nchar).eq.card(j)(1:nchar)) card(j)=m(i)
-            end do
-         else if (ncard.lt.0) then
-            if (icard.le.max_card .and. .not.endhdr) then
-               card(-ncard) = m(i)
-               icard = icard + 1
-               ncard = ncard - 1
+            else if (ncard.lt.0) then
+               if (icard.le.max_card .and. .not.endhdr) then
+                  card(-ncard) = m(i)
+                  icard = icard + 1
+                  ncard = ncard - 1
+               end if
             end if
-         end if
 
+C           Antenna parameters.
+            if (m(i)(1:7).eq.'ANTENNA') then
+               if (.not.new_antenna) then
+                  nant = 0
+                  new_antenna = .true.
+               end if
 
-C        Read antenna parameters (a) OLD FORMAT.
-         if(m(i)(1:8).eq.'ANTENNA:') then
-            if (.not.new_antenna) then
-               nant = 0
-               new_antenna = .true.
+               if (m(i)(1:8).eq.'ANTENNA ') then
+                  read (m(i)(11:80), 900) k, sta(k), x(k), y(k), z(k)
+ 900              format (i1,1x,a3,3x,g17.10,3x,g17.10,3x,g17.10)
+               else
+C                 Old format ('ANTENNA:').
+                  read (m(i)(12:71), 910) k, x(k), y(k), z(k), sta(k)
+ 910              format (i1,4x,g13.6,3x,g13.6,3x,g13.6,5x,a3)
+               end if
+
+               nant = nant + 1
             end if
-            read (m(i)(12:71),900) k,x(k),y(k),z(k),sta(k)
- 900        format(I1,4x,g13.6,' Y=',g13.6,' Z=',g13.6,' STA=',a3)
-            nant = nant+1
-         end if
 
-C        Read antenna parameters (b) NEW FORMAT.
-         if (m(i)(1:8).eq.'ANTENNA ') then
-            if (.not.new_antenna) then
-               nant = 0
-               new_antenna = .true.
-            end if
-            read (m(i)(11:80),910) k,sta(k),x(k),y(k),z(k)
- 910        format(I1,1x,a3,3x, g17.10,3x,g17.10,3x,g17.10)
-            nant = nant+1
-         end if
-
-         if (ENDHDR) go to 2400
+            if (ENDHDR) go to 2400
 2200     continue
 2400  continue
       ncard = ABS(ncard)
@@ -278,7 +284,7 @@ C     Set up for reading data.
       if (data_format.lt.1 .or. data_format.gt.3) then
          write (6,*) 'RPFITSIN: NAXIS2 in file must be 1,2,3'
          jstat = -1
-         return
+         RETURN
       end if
 
 C     Insert default values into table commons if tables weren't found.
@@ -315,6 +321,11 @@ C                                            hm 18may90 added -1 below
          object = su_name(1)
          ra = su_ra(1)
          dec = su_dec(1)
+C        For single source, record possible pointing centre offset
+         if (n_su.eq.1 .and. (pra.ne.0.0 .or. pdec.ne.0.0)) then
+           su_pra(1) = pra
+           su_pdec(1) = pdec
+         end if
       end if
 
 C     Tidy up.
@@ -322,20 +333,25 @@ C     Tidy up.
       ivelref = velref + 0.5
       new_antenna = .false.
       bufptr = 0
+
       jstat = 0
       RETURN
 
-C----------------------READ DATA GROUP HEADER --------------------------
-3000  continue
+C----------------------- READ DATA GROUP HEADER ------------------------
+3000  if (.not.open) then
+         write (6, *) ' File is not open'
+         jstat = -1
+         RETURN
+      end if
 
 C     THE FOLLOWING POINTERS AND COUNTERS ARE USED HERE:
 C     GRPLENGTH      No. of visibilities in group
 C     GRPPTR         Pointer to next visibility in group to be read
 C     BUFPTR         Pointer to next word to be read in current buffer
 C     BUFLEFT        No. of words still to be read from current buffer
-
-
-C     Note that data are read in blocks of 5 records = 640 (4byte) words.
+C
+C     Note that data are read in blocks of 5 records = 640 (4byte)
+C     words.
 
       grpptr = 1
       if_no = 1
@@ -348,8 +364,8 @@ C     Note that data are read in blocks of 5 records = 640 (4byte) words.
                RETURN
             end if
 
-            jstat = -1
             write (6, *) ' Cannot read data'
+            jstat = -1
             RETURN
          end if
 
@@ -397,7 +413,7 @@ C        incomplete at end of buffer, next buffer will be all zeros.
 
       if (endscan) then
          rp_iostat = AT_READ (lun, buffer)
-         if(rp_iostat.ne.0) then
+         if (rp_iostat.ne.0) then
             if (rp_iostat.eq.-1) then
                jstat = 3
                RETURN
@@ -427,7 +443,7 @@ C        If it will all fit in current buffer, then things are easy.
      +      pcount, u, v, w, baseline, lun,
      +      ut, flag, bin, if_no, sourceno)
          if (jstat.eq.-2) goto 3100
-         if (jstat.ne.0) return
+         if (jstat.ne.0) RETURN
          bufptr = bufptr+pcount
 
       else
@@ -444,8 +460,9 @@ C        (pcount blocks).
                jstat = 3
                RETURN
             end if
-            jstat = -1
+
             write (6, *) ' Cannot read data'
+            jstat = -1
             RETURN
          end if
 
@@ -466,7 +483,7 @@ C        Extract bufptr items from the next buffer.
      +      pcount, u, v, w, baseline, lun,
      +      ut, flag, bin, if_no, sourceno)
          if (jstat.eq.-2) goto 3100
-         if (jstat.ne.0) return
+         if (jstat.ne.0) RETURN
 
 C        Set bufptr to the first visibility in the new buffer.
          bufptr = bufptr + 1
@@ -485,188 +502,194 @@ C     Determine GRPLENGTH.
 
       if (baseline.eq.-1) go to 4000
 
-C----------------------READ VIS DATA GROUP -----------------------------
+C--------------------- READ VISIBILITY DATA GROUP ----------------------
 
+C     The RPFITS data format is determined by the value of NAXIS2:
+C
+C        NAXIS2      word 1    word 2    word 3
+C        ------     --------  --------  --------
+C           1       Real(vis)     -         -
+C           2       Real(vis) Imag(vis)     -
+C           3       Real(vis) Imag(vis)  Weight
 
-C     READ DATA FROM FITS FILE, FORMAT FROM RPFITS IS:
-C        NAXIS2        3        2        1
-C        word 1 =   Re(vis)   Re(vis)   Re(vis)
-C        word 2 =   Imag(vis) Imag(vis) -
-C        word 3 =   weight    -         -
-
-3500  continue
-
-C     Set up for reading data.
       if (data_format.lt.1 .or. data_format.gt.3) then
-         write (6,*) 'RPFITSIN: NAXIS2 in file must be 1,2,3'
+         write (6,*) 'RPFITSIN: NAXIS2 in file must be 1, 2, or 3'
          jstat = -1
-         return
+         RETURN
       end if
 
-      last_good_ut = ut
+3500  bufleft = 641 - bufptr
+         if (bufleft.ge.(data_format*(grplength-grpptr+1))) then
+C           Entire group can be filled from existing buffer.
+            do i = grpptr, grplength
+               if (data_format.eq.1) then
+                  call VAXR4 (buffer(bufptr), vis(i))
+               else
+                  call VAXR4 (buffer(bufptr),   r1)
+                  call VAXR4 (buffer(bufptr+1), r2)
+                  vis(i) = CMPLX(r1, r2)
 
-      bufleft = 641 - bufptr
-      if (bufleft.ge.(data_format*(grplength-grpptr+1))) then
-
-C        If entire group can be filled from existing buffer then do so.
-         do i = grpptr, grplength
-            if (data_format.eq.1) then
-               call VAXR4 (buffer(bufptr), vis(i))
-            else
-               call VAXR4 (buffer(bufptr),   r1)
-               call VAXR4 (buffer(bufptr+1), r2)
-               vis(i) = CMPLX(r1, r2)
-
-               if (data_format.eq.3) then
-                  call VAXR4 (buffer(bufptr+2), weight(i))
+                  if (data_format.eq.3) then
+                     call VAXR4 (buffer(bufptr+2), weight(i))
+                  end if
                end if
-            end if
-            bufptr = bufptr + data_format
-         end do
-         jstat = 0
-         RETURN
-      else
-C        Otherwise things are a bit more complicated, first read
-C        complete visibilities in old buffer.
-         bufleft3 = bufleft/data_format
-         do i = 1, bufleft3
-            if (data_format.eq.1) then
-               call VAXR4 (buffer(bufptr), vis(grpptr+i-1))
-            else
-               call VAXR4 (buffer(bufptr), r1)
-               call VAXR4 (buffer(bufptr+1), r2)
-               vis(grpptr+i-1) = CMPLX(r1, r2)
+               bufptr = bufptr + data_format
+            end do
 
-               if (data_format.eq.3) then
-                  call VAXR4 (buffer(bufptr+2), weight(grpptr+i-1))
+            jstat = 0
+            RETURN
+
+         else
+C           Otherwise things are a bit more complicated, first read
+C           complete visibilities in old buffer.
+            bufleft3 = bufleft/data_format
+            do i = 1, bufleft3
+               if (data_format.eq.1) then
+                  call VAXR4 (buffer(bufptr), vis(grpptr+i-1))
+               else
+                  call VAXR4 (buffer(bufptr), r1)
+                  call VAXR4 (buffer(bufptr+1), r2)
+                  vis(grpptr+i-1) = CMPLX(r1, r2)
+
+                  if (data_format.eq.3) then
+                     call VAXR4 (buffer(bufptr+2), weight(grpptr+i-1))
+                  end if
                end if
+               bufptr = bufptr + data_format
+            end do
+            grpptr = grpptr + bufleft3
+
+C           Read the fraction of a visibility left in old buffer.
+C           Should not happen for data_format = 1.
+            bufleft = bufleft - data_format*bufleft3
+            if (bufleft.eq.1) then
+               call VAXR4 (buffer(640), revis)
+            else if (bufleft.eq.2 .and. data_format.eq.3) then
+               call VAXR4 (buffer(639), r1)
+               call VAXR4 (buffer(640), r2)
+               vis(grpptr) = CMPLX(r1, r2)
             end if
-            bufptr = bufptr + data_format
-         end do
-         grpptr = grpptr + bufleft3
 
-C        Read the fraction of a visibility left in old buffer.
-C        Should not happen for data_format = 1.
-         bufleft = bufleft - data_format*bufleft3
-         if (bufleft.eq.1) then
-            call VAXR4 (buffer(640), revis)
-         else if (bufleft.eq.2 .and. data_format.eq.3) then
-            call VAXR4 (buffer(639), r1)
-            call VAXR4 (buffer(640), r2)
-            vis(grpptr) = CMPLX(r1, r2)
-         end if
+C           Now read in a new buffer.
+            rp_iostat = AT_READ (lun, buffer)
+            if (rp_iostat.ne.0) then
+               if (rp_iostat.eq.-1) then
+                  jstat = 3
+                  RETURN
+               end if
 
-C        Now read in a new buffer.
-         rp_iostat = AT_READ (lun, buffer)
-         if (rp_iostat.ne.0) then
-            if (rp_iostat.eq.-1) then
-               jstat = 3
+               write (6, *) ' Cannot read data'
+               jstat = -1
                RETURN
             end if
-            jstat = -1
-            write (6, *) ' Cannot read data'
-            RETURN
+
+            jstat = SIMPLE (buffer, lun)
+            if (jstat.ne.0) then
+               rp_iostat = AT_UNREAD (lun, buffer)
+               RETURN
+            end if
+
+C           Fill any incomplete visibility (data_format = 2 or 3 only).
+            if (bufleft.eq.0) then
+               bufptr = 1
+
+            else if (bufleft.eq.1) then
+               call VAXR4 (buffer(1), r1)
+               vis(grpptr) = CMPLX(revis, r1)
+               if (data_format.eq.3) then
+                  call VAXR4 (buffer(2), weight(grpptr))
+               end if
+               grpptr = grpptr + 1
+               bufptr = data_format
+
+            else if (bufleft.eq.2 .and. data_format.eq.3) then
+               call VAXR4 (buffer(1), weight(grpptr))
+               grpptr = grpptr + 1
+               bufptr = 2
+            end if
          end if
 
-         jstat = SIMPLE (buffer, lun)
-         if (jstat.ne.0) then
-            rp_iostat = AT_UNREAD (lun, buffer)
-            RETURN
-         end if
-
-C        Fill any incomplete visibility (data_format = 2 or 3 only).
-         if (bufleft.eq.0) then
-            bufptr = 1
-
-         else if (bufleft.eq.1) then
-            call VAXR4 (buffer(1), r1)
-            vis(grpptr) = CMPLX(revis, r1)
-            if (data_format.eq.3) then
-               call VAXR4 (buffer(2), weight(grpptr))
-            endif
-            grpptr = grpptr + 1
-            bufptr = data_format
-
-         else if (bufleft.eq.2 .and. data_format.eq.3) then
-            call VAXR4 (buffer(1), weight(grpptr))
-            grpptr = grpptr + 1
-            bufptr = 2
-         end if
-
-C     Return to pick up the rest of the group.
-      end if
+C        Return to pick up the rest of the group.
       go to 3500
 
-C----------------------READ SYSCAL DATA GROUP --------------------------
+C----------------------- READ SYSCAL DATA GROUP ------------------------
 
+C     Note that in this context GRPLENGTH is in units of words, not
+C     visibilities.
 
-C     READ DATA FROM FITS FILE.  Note that in this conmtext GRPLENGTH is
-C     in units of words, not visibilities.
- 4000 continue
+ 4000 bufleft = 641 - bufptr
+         if (bufleft.ge.(grplength-grpptr+1)) then
 
-      bufleft = 641 - bufptr
-      if (bufleft.ge.(grplength-grpptr+1)) then
+C           Entire group can be filled from existing buffer.
+            do i = grpptr, grplength
+               call VAXR4 (buffer(bufptr), sc_buf(i))
+               bufptr = bufptr + 1
+            end do
 
-C        If entire group can be filled from existing buffer then do so.
-         do i = grpptr, grplength
-            call VAXR4 (buffer(bufptr), sc_buf(i))
-            bufptr = bufptr + 1
-         end do
-         jstat = 0
-         RETURN
+            jstat = 0
+            RETURN
 
-      else
-C        Otherwise read complete visibilities in old buffer.
-         do i = 1, bufleft
-            call VAXR4 (buffer(bufptr), sc_buf(grpptr+i-1))
-            bufptr = bufptr + 1
-         end do
-         grpptr = grpptr + bufleft
+         else
+C           Otherwise read complete visibilities in old buffer.
+            do i = 1, bufleft
+               call VAXR4 (buffer(bufptr), sc_buf(grpptr+i-1))
+               bufptr = bufptr + 1
+            end do
+            grpptr = grpptr + bufleft
 
-C        Then read in a new buffer.
-         rp_iostat = AT_READ (lun, buffer)
-         if (rp_iostat.ne.0) then
-            if (rp_iostat.eq.-1) then
-               jstat = 3
+C           Then read in a new buffer.
+            rp_iostat = AT_READ (lun, buffer)
+            if (rp_iostat.ne.0) then
+               if (rp_iostat.eq.-1) then
+                  jstat = 3
+                  RETURN
+               end if
+
+               write (6, *) ' Cannot read data'
+               jstat = -1
                RETURN
             end if
-            jstat = -1
-            write (6, *) ' Cannot read data'
-            RETURN
-         end if
 
-         jstat = SIMPLE (buffer, lun)
-         if (jstat.ne.0) then
-            rp_iostat = AT_UNREAD (lun, buffer)
-            RETURN
+            jstat = SIMPLE (buffer, lun)
+            if (jstat.ne.0) then
+               rp_iostat = AT_UNREAD (lun, buffer)
+               RETURN
+            end if
+            bufptr = 1
          end if
-         bufptr = 1
 
 C        Go back to pick up the rest of the group.
-      end if
       go to 4000
 
-C----------------------CLOSE FITS FILE----------------------------------
+C--------------------------- CLOSE FITS FILE ---------------------------
 
 5000  continue
-      rp_iostat = AT_CLOSE (lun)
-      if (rp_iostat.ne.0) then
-         jstat = -1
-         write (6, *) ' Cannot close file'
-         RETURN
+      if (open) then
+         rp_iostat = AT_CLOSE (lun)
+         if (rp_iostat.ne.0) then
+            write (6, *) ' Cannot close file'
+            jstat = -1
+            RETURN
+         end if
+         open = .false.
       end if
+
       jstat = 0
-      open = .false.
       RETURN
 
-C---------------- SKIP TO END OF FILE-----------------------------------
+C------------------------- SKIP TO END OF FILE -------------------------
 
- 6000 rp_iostat = AT_SKIP_EOF (lun)
+ 6000 if (.not.open) then
+         write (6, *) ' File is not open'
+         jstat = -1
+         RETURN
+      end if
+
+      rp_iostat = AT_SKIP_EOF (lun)
       if (rp_iostat.eq.-1) then
          jstat = 3
       else
-         write (6, *)
-     +      ' unable to skip-to-EOF'
+         write (6, *) ' Unable to skip-to-EOF'
          jstat = -1
          RETURN
       end if
@@ -727,18 +750,37 @@ C-----------------------------------------------------------------------
       include 'rpfits.inc'
 
       logical   ILLPARM
-      integer   jstat, i_grphdr(640), bufptr, baseline, grpptr,
-     +          pcount,flag, bin, if_no, sourceno, lun
-      real      grphdr(640), buffer(640), u, v, w, ut, rbase
+      integer   baseline, bin, bufptr, flag, grpptr, i_grphdr(640),
+     +          iant, if_no, iif, iq, jstat, lun, pcount, sourceno
+      real      grphdr(640), buffer(640), rbase, u, v, w, ut
 
 C     First 5 parameters are always there - you hope!
-      call VAXR4 (grphdr(grpptr), u)
+      call VAXR4 (grphdr(grpptr),   u)
       call VAXR4 (grphdr(grpptr+1), v)
       call VAXR4 (grphdr(grpptr+2), w)
       call VAXR4 (grphdr(grpptr+3), rbase)
-      baseline = NINT(rbase)
       call VAXR4 (grphdr(grpptr+4), ut)
 
+      if (rbase.lt.0.0) then
+C        Syscal parameters?
+         call VAXI4 (i_grphdr(grpptr+5), iant)
+         call VAXI4 (i_grphdr(grpptr+6), iif)
+         call VAXI4 (i_grphdr(grpptr+7), iq)
+      else
+C        IF number.
+         call VAXI4 (i_grphdr(grpptr+7), iif)
+      end if
+
+C     Check for illegal parameters.
+      if (ILLPARM(u, v, w, rbase, ut, iant, iif, iq)) then
+C        This can be caused by a bad block, so look for more data.
+         write (6, *) 'Corrupted data encountered, skipping...'
+         call SKIPTHRU (jstat, bufptr, buffer, lun)
+         RETURN
+      end if
+
+
+      baseline = NINT(rbase)
       if (baseline.eq.-1) then
 C        Have syscal parameters.
          sc_ut = ut
@@ -766,18 +808,9 @@ C        Pick up remaining parameters.
          end if
 
          if (pcount.gt.10) then
-            call VAXI4 (i_grphdr(grpptr+10), data_format)
 C           If pcount is 10 or less, data_format comes from scan header.
+            call VAXI4 (i_grphdr(grpptr+10), data_format)
          end if
-
-      end if
-
-C     Check for illegal parameters.
-      if (ILLPARM(rbase, if_no, ut, u, v, w))then
-C        This can be caused by a bad block, so look for more data.
-         write (6, *) ' illegal data (or end of scan on older data)'
-         call SKIPTHRU(jstat, bufptr, buffer, lun)
-         return
       end if
 
       jstat = 0
@@ -789,18 +822,19 @@ C-----------------------------------------------------------------------
       subroutine SKIPTHRU (jstat, bufptr, buffer, lun)
 
 C-----------------------------------------------------------------------
-C     routine to skip through data looking for recognisable data or
-C     header.
+C     Skip through data looking for recognisable data or header.
+C
+C     Returns jstat = -2 if successful.
+C
 C     rpn 17/11/90
-C     jstat = -2 if successful
 C-----------------------------------------------------------------------
 
       include 'rpfits.inc'
 
       logical   ILLPARM
-      integer   jstat, bufptr, baseline, i, j, lun, at_read, at_unread,
-     +          SIMPLE, R_TO_I, if_no
-      real      buffer(640), u,v,w, ut, rbase
+      integer   AT_READ, AT_UNREAD, bufptr, i, iant, iif, iq, j, jstat,
+     +          lun, SIMPLE
+      real      buffer(640), rbase, u, ut, v, w
 
       do 999 j = 1, 1000
 C        Read a new block; the remainder of the old one is unlikely to
@@ -809,11 +843,12 @@ C        contain anything useful (and at most one integration).
          if (rp_iostat.ne.0) then
             if (rp_iostat.eq.-1) then
                jstat=3
-               return
+               RETURN
             end if
+
             write (6,*) ' Unable to read next block'
             jstat=-1
-            return
+            RETURN
          end if
 
 C        Check to see if it's a header block.
@@ -831,10 +866,18 @@ C        Scan through the block looking for something legal.
             call VAXR4 (buffer(bufptr+2), w)
             call VAXR4 (buffer(bufptr+3), rbase)
             call VAXR4 (buffer(bufptr+4), ut)
-            call VAXI4 (R_TO_I(buffer(bufptr+7)), if_no)
 
-            if (.not.ILLPARM(rbase, if_no, ut, u, v, w)) then
-               baseline = NINT(rbase)
+            if (rbase.lt.0.0) then
+C              Syscal parameters?
+               call VAXI4 (buffer(bufptr+5), iant)
+               call VAXI4 (buffer(bufptr+6), iif)
+               call VAXI4 (buffer(bufptr+7), iq)
+            else
+C              IF number.
+               call VAXI4 (buffer(bufptr+7), iif)
+            end if
+
+            if (.not.ILLPARM(u, v, w, rbase, ut, iant, iif, iq)) then
                goto 200
             end if
 
@@ -850,26 +893,7 @@ C     Success!
 
 *-----------------------------------------------------------------------
 
-      integer function R_TO_I (x)
-
-*-----------------------------------------------------------------------
-*     Function to interpret a real as an integer
-*     rpn 17/11/90
-*-----------------------------------------------------------------------
-
-      integer i
-      real x, y
-      equivalence (i, y)
-
-      y = x
-      R_TO_I = i
-
-      return
-      end
-
-*-----------------------------------------------------------------------
-
-      logical function ILLPARM (baseline, if_no, ut, u, v, w)
+      logical function ILLPARM (u, v, w, rbase, ut, iant, iif, iq)
 
 *-----------------------------------------------------------------------
 *     Check for any illegal parameters; return true if so.
@@ -877,39 +901,39 @@ C     Success!
 
       include 'rpfits.inc'
 
-      integer  iant1, iant2, ibase, if_no
-      real     ut, u, v, w, baseline
+      integer  baseline, iant, iant1, iant2, iif, iq
+      real     u, ut, v, w, rbase
 
       if (ut.lt.0.0 .or. ut.gt.172800.0) then
 *        Invalid time.
          ILLPARM = .true.
 
-      else if (baseline.lt.-1.1 .or. baseline.gt.(257*nant+0.1)) then
+      else if (rbase.lt.-1.1 .or. rbase.gt.(257*nant+0.1)) then
 *        Corrupted baseline number.
          ILLPARM = .true.
 
       else
 *        Baseline can now safely be converted to integer.
-         ibase = NINT(baseline)
+         baseline = NINT(rbase)
 
-         if (ABS(baseline - ibase).gt.0.001) then
+         if (ABS(rbase - baseline).gt.0.001) then
 *           This value is not close enough to an integer to be valid.
             ILLPARM = .true.
 
          else
-            if (ibase.eq.-1) then
+            if (baseline.eq.-1) then
 *              Syscal record.
-               ILLPARM = sc_ant.lt.1 .or. sc_ant.gt.ant_max .or.
-     :                   sc_if.lt.1  .or. sc_if.gt.max_if   .or.
-     :                   sc_q.lt.1   .or. sc_q.gt.100
+               ILLPARM = iant.lt.1 .or. iant.gt.ant_max .or.
+     :                    iif.lt.1 .or.  iif.gt.max_if  .or.
+     :                     iq.lt.1 .or.   iq.gt.100
 
             else
 *              Data record.
-               iant1 = ibase/256
-               iant2 = MOD(ibase,256)
+               iant1 = baseline/256
+               iant2 = MOD(baseline,256)
                ILLPARM = iant1.lt.1 .or. iant1.gt.nant .or.
      :                   iant2.lt.1 .or. iant2.gt.nant .or.
-     :                   if_no.lt.0 .or. if_no.gt.max_if
+     :                   iif.lt.0   .or. iif.gt.max_if
             end if
          end if
       end if

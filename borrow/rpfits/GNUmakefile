@@ -11,7 +11,6 @@
 #    RANLIB     ...Command used to "ranlib" object libraries (set to ":" if
 #                  ranlib is not needed.
 #    LDFLAGS    ...Linker flags.
-#    LDSHLIB    ...Command sequence used to construct sharable libraries.
 #
 # $Id$
 #-----------------------------------------------------------------------------
@@ -45,7 +44,6 @@ CSUBS  := $(filter-out *.c, \
 COBJS  := $(CSUBS:.c=.o)
 
 RPFITSLIB  := librpfits.a
-RPFITSHLIB := librpfits.so
 MEMBERS := $(patsubst %,$(RPFITSLIB)(%),$(FOBJS) $(COBJS))
 
 
@@ -61,18 +59,18 @@ lib : $(RPFITSLIB) ;
 $(RPFITSLIB) : $(MEMBERS)
 	$(RANLIB) $(RPFITSLIB)
 	chmod 664 $@
-	$(LDSHLIB)
 
 install : lib
-	cp $(RPFITSLIB)  /usr/local/lib
-	cp $(RPFITSHLIB) /usr/local/lib
-	cp $(RPFITSCOMM)/rpfits.inc /usr/local/include
+	-@ $(RM) /usr/local/lib/librpfits.*
+	   cp $(RPFITSLIB) /usr/local/lib
+	-@ $(RM) /usr/local/include/rpfits.inc
+	   cp $(COMMSRC)/rpfits.inc /usr/local/include
 
 clean :
 	-$(RM) *.o core test.tmp
 
 realclean : clean
-	-$(RM) $(RPFITSLIB) $(RPFITSHLIB) tfits
+	-$(RM) $(RPFITSLIB) tfits
 
 # Compile and execute the test program.
 test : tfits
@@ -96,7 +94,6 @@ show :
 	-@echo "ARCH    =$(ARCH)"
 	-@echo ""
 	-@echo "RPFITSLIB=$(RPFITSLIB)"
-	-@echo "RPFITSHLIB=$(RPFITSHLIB)"
 	-@echo ""
 	-@echo "COMMSRC =$(COMMSRC)"
 	-@echo "ARCHSRC =$(ARCHSRC)"
