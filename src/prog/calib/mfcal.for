@@ -95,6 +95,7 @@ c    rjs  31jul97 Make it work for wide-only files.
 c    rjs  20jan99 The frequency assigned to a channel was not being
 c		  correctly computed when line width was not equal to
 c		  line step.
+c    jwr  03may04 Increased MAXHASH by a factor 8.
 c
 c  Problems:
 c    * Should do simple spectral index fit.
@@ -105,7 +106,7 @@ c------------------------------------------------------------------------
 	parameter(MAXPOL=2)
 c
 	character version*(*)
-	parameter(version='MfCal: version 1.0 20-Jan-99')
+	parameter(version='MfCal: version 1.0 03-May-04')
 c
 	integer tno
 	integer pWGains,pFreq,pSource,pPass,pGains,pTau
@@ -1130,7 +1131,7 @@ c------------------------------------------------------------------------
 	parameter(PolMin=-6,PolMax=1)
 	include 'maxdim.h'
 	integer MAXHASH,MAXPOL
-	parameter(MAXHASH=2*MAXANT*MAXCHAN,MAXPOL=2)
+	parameter(MAXHASH=16*MAXANT*MAXCHAN,MAXPOL=2)
 c
 	integer nchan,nbad,nauto,nreg,ngood,ninter,i1,i2,p,i,VisId
 	double precision preamble(4),tfirst,tlast
