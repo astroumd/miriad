@@ -102,7 +102,7 @@ c	gives the instrumental polarization for each baseline.
 c@ polcode
 c	Change the polarization code. Default polcode=0 makes no change.
 c	Polarizations are  YX,XY,YY,XX,LR,RL,LL,RR,-,I,Q,U,V
-c	Polarization codes -8,-7,-6,-5,-4,-3,-2,-2,0,1,2,3,4
+c	Polarization codes -8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4
 c	E.g.  polcode=4  changes YX,XY,YY,XX to LR,RL,LL,RR
 c	E.g.  polcode=-4 changes LR,RL,LL,RR to YX,XY,YY,XX
 c@ parot
@@ -157,11 +157,12 @@ c    mchw 18jun97  Subtract power law model from the uv-data.
 c    mchw 25jun97  remake wideband average for each spectral window.
 c    pjt  25jun98  better fortran standards for linux/g77 
 c    mchw 25jul03  Added uvrotation.
+c    mchw 25aug03  Correct doc, call uvrdvrr (lIn, 'chi', chi, 0.)
 c------------------------------------------------------------------------
         include 'maxdim.h'
 	integer maxbad
 	character version*(*)
-	parameter(version='UVCAL: version 1.0 25-jul-03')
+	parameter(version='UVCAL: version 3.0 25-Aug-03')
 	parameter(maxbad=20)
 	real PI
 	parameter(PI=3.1415926)
@@ -1067,12 +1068,12 @@ c
 	complex expi
 c
 	if(Pol.eq.PolRL)then
-          call varmintr (lIn, 'chi', chi)
+          call uvrdvrr (lIn, 'chi', chi, 0.)
 	  do i=1,nchan
 	    data(i) = data(i)*expi(-2*chi)
 	  enddo
 	else if(Pol.eq.PolLR)then
-          call varmintr (lIn, 'chi', chi)
+          call uvrdvrr (lIn, 'chi', chi, 0.)
 	  do i=1,nchan
 	    data(i) = data(i)*expi(2*chi)
 	  enddo
@@ -1137,13 +1138,13 @@ c
 c  Get polarization correction.
 c
 	if(Pol.eq.PolLR)then
-          call varmintr (lIn, 'chi', chi)
+          call uvrdvrr (lIn, 'chi', chi, 0.)
 	  polcor = polcal(1) * expi(polcal(2)) * expi(-2*chi)
 	  do i=1,nchan
 	    data(i) = data(i) - polcor
 	  enddo
 	else if(Pol.eq.PolRL)then
-          call varmintr (lIn, 'chi', chi)
+          call uvrdvrr (lIn, 'chi', chi, 0.)
 	  polcor = polcal(1) * expi(-polcal(2)) * expi(2*chi)
 	  do i=1,nchan
 	    data(i) = data(i) - polcor
