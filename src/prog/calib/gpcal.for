@@ -200,6 +200,7 @@ c		     source.
 c    rjs     19aug98 Changes in ampsolxy and ampsol to avoid an SGI compiler bug.
 c    rjs     12oct99 Attempts to perform absolute flux calibration.
 c    pjt      7jul03 MAXANT,MAXBASE -> MAXANT2,MAXBASE2
+c    pjt     10dec04 cleanup of old conflict
 c
 c  Bugs:
 c    * Polarisation solutions when using noamp are wrong! The equations it
@@ -211,7 +212,7 @@ c------------------------------------------------------------------------
 	integer MAXITER
 	character version*(*)
 	parameter(MAXITER=30)
-	parameter(version='Gpcal: version 1.0 7-jul-03')
+	parameter(version='Gpcal: version 1.0 10-dec-04')
 c
 	integer tIn
 	double precision interval(2), freq
