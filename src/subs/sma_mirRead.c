@@ -35,6 +35,11 @@
 //            and default for linear
 // 2005-03-08 changed the options name cirpol to circular
 //            to match the same options in miriad program elsewhere.
+// 2005-03-08 decoded antenna positions from mir baseline coordinates
+//            converted the geocentrical coordinates to Miriad
+//            coordinates system. 
+// 2005-03-10 made the consistent array lengths for the variables 
+//            required by miriad programs such as bee, uvlist etc.
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -181,11 +186,11 @@ extern smlodd smabuffer;
      }
      } 
       kstat = jstat = -1;  
-/*read header  */
+/*  read header  */
       rspokeflshsma_c((char *)&(kstat)); 
 /*  write ante numbers */
       if(smabuffer.nants!=0) {
-         uvputvri_c(tno,"nants",&(smabuffer.nants),1);
+//         uvputvri_c(tno,"nants",&(smabuffer.nants),1);
 /*  write telescope name and other description parameters */
        sprintf(telescope,"SMA\0");
        sprintf(instrument,"SMA\0");
@@ -201,8 +206,7 @@ extern smlodd smabuffer;
 void rspokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1,
   int *doop1, int *dohann1, int *birdie1, int *dowt1, int *dopmps1,
   int *dobary1, int *doif1, int *hires1, int *nopol1, int *circular1,
-  int *oldpol1, 
-  double lat1, double long1, int rsnchan1)
+  int *oldpol1, double lat1, double long1, int rsnchan1, int refant1)
 { /* rspokeflshsma_c == pokeflsh */
     int buffer;
     extern char sname[];
@@ -227,6 +231,7 @@ void rspokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1,
         smabuffer.oldpol = *oldpol1;
         smabuffer.lat    = lat1;
         smabuffer.longi  = long1;
+        smabuffer.refant = refant1;
     if(smabuffer.dowt>0) {
            /* call lagwt(wts,2*smcont-2,0.04) */
            /* process weights here. */ 
@@ -302,43 +307,12 @@ void rspokeflshsma_c(char *kst[])
                                                   }
             } 
                   
-/* setup time */
-//       if(smabuffer.hires > 0) {
-//          tdash  = smabuffer.time - 
-//          0.5*smabuffer.inttim*(smabuffer.nbin[0]-1)/86400.0;
-//          tbinhi = smabuffer.nbin[0]; 
-//                               }
-//          else  {
             tdash  = smabuffer.time;
             tbinhi = 1;
-//                }
 /* store apparent LST */
            uvputvrd_c(tno,"lst",&(smabuffer.lst),1);
 /* store elaz data */
            elaz(tno);
-//           for (tbin=1; tbin<tbinhi+1; tbin++) {
-
-//           if(smabuffer.opcorr>0) {
-//           if(smabuffer.mflag==0)
-//           bug_c("f","No met data to compute opacity correction\n");
-//           for (ifs=0; ifs < smabuffer.nifs; ifs++) {
-//           freq0[ifs]= (smabuffer.sfreq[ifs] +
-//              0.5*(smabuffer.nfreq[ifs]-1)*smabuffer.sdf[ifs]
-//                       )*1e9;
-//                     }
-
-//          tfac = 1;
-//              for (ifs=0; ifs < smabuffer.nifs; ifs++) {
-//                fac[ifs] = 1/fac[ifs];
-//               tfac = tfac * fac[ifs];
-//                                                       }
-//                                                }
-//          else {
-//            for (ifs=0; ifs < smabuffer.nifs; ifs++) {
-//           fac[ifs] = 1;
-//                                                     }
-//                }
-
 /* Compute radial velocity of the observatory */
 /*call velrad(.not.dobary,tdash,obsra,obsdec,ra,dec,lst,lat,vel)*/
 // store radial velocity of the observatory w.r.t. source
@@ -568,6 +542,7 @@ float trueTime;
 blvector blarray[MAXANT][MAXANT];
 station  antenna[MAXANT];
 source   multisour[MAXSOURCE];
+struct xyz   antxyz[MAXANT];
 int sourceID, phaseSign;
 correlator smaCorr;
 frequency  smaFreq[2];
@@ -796,7 +771,6 @@ printf("to load data for all receivers.\n");
      bln[set]->blhid = blh[blset]->blhid;
      bln[set]->isb   = blh[blset]->isb;
      bln[set]->irec  = blh[blset]->irec;                                      
-//     blhid_hdr       = blset;
      inhid_hdr       = blh[blset]->inhid;
                  }
 // for the successive integration set, take the 1st baseline
@@ -823,20 +797,6 @@ printf("to load data for all receivers.\n");
      blh[blset]->itel1*256+blh[blset]->itel2;
      uvwbsln[set]->uvwID[blset-blhid_hdr].isb = blh[blset]->isb;
      uvwbsln[set]->uvwID[blset-blhid_hdr].irec = blh[blset]->irec;
-//     if((blh[blset]->itel1==1&&blh[blset]->itel2==2)||
-//         (blh[blset]->itel1==2&&blh[blset]->itel2==1))
-//     printf("isb irec blhid inhid blsid u v %d %d %d %d %d %d %f %f %d %d\n",
-//     uvwbsln[set]->uvwID[blset-blhid_hdr].isb,
-//     uvwbsln[set]->uvwID[blset-blhid_hdr].irec,
-//     uvwbsln[set]->uvwID[blset-blhid_hdr].blhid,
-//     uvwbsln[set]->inhid,
-//     uvwbsln[set]->uvwID[blset-blhid_hdr].blsid,blset-blhid_hdr,
-//     uvwbsln[set]->uvwID[blset-blhid_hdr].u,
-//     uvwbsln[set]->uvwID[blset-blhid_hdr].v,
-//     blh[blset]->itel1, blh[blset]->itel2);
-//     printf("isb irec blhid inhid blsid %d %d %d %d %d\n",
-//           blh[blset]->isb, blh[blset]->irec, 
-//           blh[blset]->blhid, blh[blset]->inhid, blh[blset]->blsid);
 // polarization
 
 if(smabuffer.oldpol==1) {
@@ -896,6 +856,8 @@ for (set=1;set<nsets[1];set++) {
       blarray[blh[set]->itel1][blh[set]->itel2].itel1 = blh[set]->itel1;
       blarray[blh[set]->itel1][blh[set]->itel2].itel2 = blh[set]->itel2;
       blarray[blh[set]->itel1][blh[set]->itel2].blid  = blh[set]->blsid;
+//       printf("bsl soln id %d iblcd %d blsid %d\n", 
+//        blh[set]->soid, blh[set]->iblcd, blh[set]->blsid);
       smabuffer.nants++;       }
           else
       {smabuffer.nants = (int)((1+sqrt(1.+8.*smabuffer.nants))/2);
@@ -904,6 +866,7 @@ for (set=1;set<nsets[1];set++) {
                                 }
 blload_done:
 free(blh);
+
 if (SWAP_ENDIAN) {
 printf("FINISHED READING  BL HEADERS (endian-swapped)\n");
 } else {
@@ -973,7 +936,7 @@ printf("FINISHED READING EN HEADERS\n");
 engskip:
 //free(smaEngdata);
 free(enh);
-// loading antenna coordinates (to be tested)
+// initialize the antenna positions
        for (i=1; i < smabuffer.nants+1; i++) {
           antenna[i].x = 0.;
           antenna[i].y = 0.;
@@ -985,44 +948,121 @@ free(enh);
           antenna[i].axisoff_y = 0.;
           antenna[i].axisoff_z = 0.;
                         }
-          sprintf(antenna[1].name, "AN%d", 1);
+
+// set up the reference antenna
+          antenna[smabuffer.refant].x = 0.;
+          antenna[smabuffer.refant].y = 0.;
+          antenna[smabuffer.refant].z = 0.;
+
+// derive antenna position in local coordinate system
+// mir stores the position in float
        for (i=1; i < smabuffer.nants+1; i++) {
-       for (j=i+1; j < smabuffer.nants+1; j++) {
-          antenna[j].x = blarray[i][j].ee - antenna[i].x;
-          antenna[j].y = blarray[i][j].nn - antenna[i].y;
-          antenna[j].z = blarray[i][j].uu - antenna[i].z;
-          sprintf(antenna[j].name, "AN%d", j);
+          antenna[i].x = (double)blarray[i][smabuffer.refant].ee 
+                         - antenna[smabuffer.refant].x;
+          antenna[i].y = (double)blarray[i][smabuffer.refant].nn 
+                         - antenna[smabuffer.refant].y;
+          antenna[i].z = (double)blarray[i][smabuffer.refant].uu 
+                         - antenna[smabuffer.refant].z;
+//          sprintf(antenna[i].name, "AN%d", i);
           }
-          }
+// calculate the geocentric coordinates from local 
+// coordinates
+{struct xyz geocxyz[MAXANT];
+       for (i=1; i < smabuffer.nants+1; i++) {
+        geocxyz[i].x = (antenna[i].z)*cos(smabuffer.lat)
+                     - (antenna[i].y)*sin(smabuffer.lat);
+        geocxyz[i].y = (antenna[i].x);
+        geocxyz[i].z = (antenna[i].z)*sin(smabuffer.lat)
+                     + (antenna[i].y)*cos(smabuffer.lat);
+              }
 
      printf("NUMBER OF ANTENNAS =%d\n", smabuffer.nants);
 //
 // maximum antenna number for the array is 8 
 //
-     smabuffer.nants = 8;        
-// the positions of antennas need to check   
-//   for (i=1; i < smabuffer.nants+1; i++) {
-//     printf("ANT x y z %s  %11.5f %11.5f %11.5f\n",
-//            antenna[i].name,
-//            antenna[i].x,
-//            antenna[i].y,
-//            antenna[i].z); } 
-// finished loading antennas 
-// write antenna dat to uv file 
+     smabuffer.nants = 8;   
       for (i=1; i < smabuffer.nants+1; i++) {
-      r    = sqrt(pow(antenna[i].x,2) + pow(antenna[i].y,2));
-      cost = antenna[i].x / r;
-      sint = antenna[i].y / r;
-      z0   = antenna[i].z;
-      tmp  = (antenna[i].x)*cost + (antenna[i].y)*sint - r;
-      antpos[i] 
+       sprintf(antenna[i].name, "AN%d", i);
+                }     
+// the positions of antennas need to check  
+// antpos on 2005 feb 16
+   antxyz[1].x = 4.4394950000000000e+00;
+   antxyz[2].x = -5.7018977000000000e+00;
+   antxyz[3].x = -5.0781509999999996e-01;
+   antxyz[4].x = 5.2273398999999996e+00;
+   antxyz[5].x = -1.7918341999999999e+01;
+   antxyz[6].x = 0.0000000000000000e+00;
+   antxyz[7].x = -1.6564844999999998e+01;
+   antxyz[8].x = -6.4019909999999998e+00;
+
+   antxyz[1].y = -6.3875615000000003e+01; 
+   antxyz[2].y = -1.8985175000000002e+01;
+   antxyz[3].y = -2.5154143000000001e+01;
+   antxyz[4].y = -2.0077679000000000e+01;
+   antxyz[5].y = -5.9557980000000001e+01;
+   antxyz[6].y =  0.0000000000000000e+00;
+   antxyz[7].y = -2.7025637000000000e+01;
+   antxyz[8].y = -6.8001356999999999e+01;
+
+   antxyz[1].z = -2.1837547000000001e+01; 
+   antxyz[2].z = 1.5609299999999999e+01;
+   antxyz[3].z =  1.2797959999999999e+00; 
+   antxyz[4].z = -1.4844139000000000e+01;
+   antxyz[5].z = 3.0068384999999999e+01;
+   antxyz[6].z = 0.0000000000000000e+00;
+   antxyz[7].z = 3.0769280999999999e+01;
+   antxyz[8].z = 3.6370589999999998e+00;
+printf("Geocentrical coordinates of antennas (m), reference antenna=%d\n",
+        smabuffer.refant); 
+   for (i=1; i < smabuffer.nants+1; i++) {
+     printf("ANT x y z %s %11.4f %11.4f %11.4f\n",
+            antenna[i].name,
+            geocxyz[i].x,
+            geocxyz[i].y,
+            geocxyz[i].z);
+//     printf("ANT x y z %s  %11.5f %11.5f %11.5f\n\n",
+//            antenna[i].name,
+//            antxyz[i].x,
+//            antxyz[i].y,
+//            antxyz[i].z);
+
+ } 
+//
+// convert geocentrical coordinates to equatorial coordinates
+// of miriad system y is local East, z is parallel to pole
+// Units are nanosecs. 
+// write antenna dat to uv file 
+//
+printf("Miriad coordinates of antennas (nanosecs), reference antenna=%d\n",
+        smabuffer.refant);
+      for (i=1; i < smabuffer.nants+1; i++) {
+      r = sqrt(pow(geocxyz[i].x,2) + pow(geocxyz[i].y,2));
+      if(r>0) {
+      cost = geocxyz[i].x / r;
+      sint = geocxyz[i].y / r;
+      z0   = geocxyz[i].z; } else {
+      cost = 1;
+      sint = 0;
+        z0 = 0; 
+               }
+                                            }
+
+      for (i=1; i < smabuffer.nants+1; i++) {      
+      tmp  = ( geocxyz[i].x) * cost + (geocxyz[i].y)*sint - r;
+      antpos[i-1] 
            = (1e9/DCMKS) * tmp;
-      tmp  = (-antenna[i].x)*sint + (antenna[i].y)*cost;
-      antpos[i+smabuffer.nants] 
+      printf("ANT x y x %s %11.4f ", antenna[i].name, antpos[i-1]);
+      tmp  = (-geocxyz[i].x) * sint + (geocxyz[i].y) * cost;
+      antpos[i-1+smabuffer.nants] 
            = (1e9/DCMKS) * tmp;
-      antpos[i+2*smabuffer.nants] 
-           = (1e9/DCMKS)*(antenna[i].z-z0);
+      printf("%11.4f ", antpos[i-1 + smabuffer.nants]);
+      antpos[i-1+2*smabuffer.nants] 
+           = (1e9/DCMKS) * (geocxyz[i].z-z0);
+      printf("%11.4f\n", antpos[i-1+2*smabuffer.nants]);
           }
+
+}
+
       tno  = smabuffer.tno;
       nnants = 3*smabuffer.nants;
       uvputvrd_c(tno,"antpos", antpos, nnants);
@@ -1094,6 +1134,7 @@ for (set=0;set<nsets[3];set++){
          multisour[sourceID].parallax = 0.;
          strcpy(multisour[sourceID].veltyp, "lsr");
          strcpy(multisour[sourceID].veldef, "radio");
+         strcpy(multisour[sourceID].calcode, "c");
 }}}
 // setup correlator  
 // sph1 is a single set of spectra, assign memory to it.    
@@ -1587,7 +1628,7 @@ if (decr!=smabuffer.dec)
 uvputvrd_c(tno,"pntdec",&decr,1);
 uvputvrd_c(tno,"obsra",&(smabuffer.obsra),1);
 uvputvrd_c(tno,"obsdec",&(smabuffer.obsdec),1);
-uvputvri_c(tno,"calcode",&(multisour[sourceID].calcode),1);
+uvputvra_c(tno,"calcode",&(multisour[sourceID].calcode));
 uvputvri_c(tno,"sourid", &sourceID, 1);
 }
 // configure the frequency for each of the integration set
@@ -2775,8 +2816,12 @@ extern smlodd smabuffer;
          mel=mel/smabuffer.nants;
          maz=maz/smabuffer.nants;
           /* both az and el in degree */
-         uvputvrd_c(tno,"antaz",&maz,1);
-         uvputvrd_c(tno,"antel",&mel,1);
+//         uvputvrd_c(tno,"antaz",&maz,1);
+//         uvputvrd_c(tno,"antel",&mel,1);
+// bee.for require store antaz and antel for each antenna
+          uvputvrd_c(tno,"antaz",&smabuffer.az[i],smabuffer.nants);
+          uvputvrd_c(tno,"antel",&smabuffer.el[i],smabuffer.nants);
+
          }
 }
 void tsysStore(int tno) {
