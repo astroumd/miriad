@@ -149,6 +149,7 @@
 /*  rjs  16jun00 Handle bad baseline numbers more gracefully.	        */
 /*  rjs  16jan01 introduced large antennae numbers                      */
 /*  pjt  11mar01 documented the 16jan01 changes for large ant numbers   */
+/*  dpr  17apr01 Increase MAXVHANDS                                     */
 /*----------------------------------------------------------------------*/
 /*									*/
 /*		Handle UV files.					*/
@@ -469,7 +470,7 @@ typedef struct {
 	WINDOW *win;
 		} UV;
 
-#define MAXVHANDS 64
+#define MAXVHANDS 128
 
 static UV *uvs[MAXOPEN];
 static VARHAND *varhands[MAXVHANDS];

@@ -37,6 +37,8 @@
                      Also forced initialized of mask due, there were some
                      side-effects here too if no mask was present
                      (note xyzio writes a mask, even if full mask ok)
+     pjt  11-jun-01  added rjs' 10-jan-96 code changes that seemed lost
+		     "Correct comparision bug in bufferallocation routine." 
 
 
 *******************************************************************************/
@@ -1413,6 +1415,8 @@ int n;
     n  = ( (n < MAXBUF) ? n : MAXBUF );
     n *= 2;
     while( ( (buffer == NULL) || (mbuffr == NULL) ) && (n>1) ) {
+	if( buffer != NULL ) { free( buffer ); buffer = NULL; }
+        if( mbuffr != NULL ) { free( mbuffr ); mbuffr = NULL; }
         n /= 2;
         if(itest)printf("try %d\n",n);
         buffer = (float *)malloc((unsigned)(n*sizeof(float)));
