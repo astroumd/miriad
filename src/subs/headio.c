@@ -714,12 +714,12 @@ int *n,length;
       if(size % H_INT8_SIZE) unknown = TRUE;
       else if(size == H_INT8_SIZE){
 	hreadi_c(item,&itemp,offset,H_INT_SIZE,&iostat);	check(iostat);
-	printf("DEBUG1/2: %d\n",itemp);
+	printf("INT8::DEBUG1/2: %d\n",itemp);
 	if (itemp)
 	  bug_c('f',"cannot convert INTEGER*8 > 2GB in hdprobe");
 	offset += H_INT_SIZE;       /* assume INT8 = 2*INT */
 	hreadi_c(item,&itemp,offset,H_INT_SIZE,&iostat);	check(iostat);
-	printf("DEBUG2/2: %d\n",itemp);
+	printf("INT8::DEBUG2/2: %d\n",itemp);
 	if (itemp < 0)
 	  bug_c('f',"cannot convert INTEGER*8 > 2GB in hdprobe");
 	Sprintf(buf,"%d",itemp);
