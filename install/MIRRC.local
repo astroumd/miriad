@@ -1,7 +1,7 @@
 # new changes/additions for the linux version
 
 alias mirmake 'make -f $MIRLIB/Makefile'
-alias mirboss 'echo Bossing miriad; set path=($MIR/src/sys/bin $path); rehash'
+alias mirboss 'echo Bossing miriad $MIR; set path=($MIR/src/sys/bin $path); rehash'
 
 if ($?TERM && ! $?MIRHELLO) then
       setenv MIRHELLO x
