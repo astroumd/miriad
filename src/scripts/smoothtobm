@@ -1,0 +1,229 @@
+#!/bin/csh -f
+
+set prog = smoothtobm
+if ( "$1" == "" ) then
+doc $0; exit
+endif
+
+#= smoothtobm - Smooth the input file to have the given beamsize
+#& bpw
+#: analysis
+#+
+#  Smoothes the input file to have the given beamsize (keyword wanted=),
+#  as opposed to smooth or convol, where you specify the smoothing beam
+#  instead of the final beam.
+#
+#  A smoothing beam is calculated from the original gaussian beam B with
+#  FWHM in x and y Bx and By and the wanted beam W with FWHM Wx and Wy
+#  as Sx=sqrt(Wx^2-Bx^2). The map is then smoothed with the gaussian
+#  with FWWM Sx and Sy.
+#  The output is scaled so that the definition of brightness temperature
+#  is preserved: TB=flux/beamarea. Nominally 'convol options=scale' takes
+#  care of this. However, this works only if the header is OK, which is
+#  not the case if one smoothes a map not yet treated by restor.
+#
+#  smoothtobm can be used to restore a map by using beam=0 for the original
+#  beam.
+#
+#@ in
+#  Input map [no default]
+#@ out
+#  Output map [no default]
+#@ region
+#  The region of the input map to smooth. See the 'doc region' or the
+#  users manual for instruction on how to specify this. Default is the
+#  entire input image.
+#@ beam
+#  Original major and minor axis and pa of beam of input map. Default is to
+#  try to find bmaj/bmin/bpa in the header of the input map. If bmin size
+#  is not given it is assumed equal to bmax. Default for bpa is 0.
+#  If beam=0, smoothtobm works like restor.
+#@ wanted
+#  Wanted beam for output map. No default. Values are bmaj,bmin,bpa.
+#  Default for bmin is bmaj, default for bpa is 0.
+#@ options
+#  if options=flux, then flux is preserved instead of the surface
+#  brightness (i.e. smoothing function has integral 1).
+# Default is to preserve surface brightness (i.e. brightness
+#  temperature)
+#--
+
+# History 23-Feb-93  bpw  original version
+#         10-Jan-94  bpw  adapted for change in convol
+#         27-Jan-94  bpw  adapted for change in imgen (spar keyword)
+#         27-Mar-96  bpw  adapted for change in imgen (spar recognizes bpa)
+#          4-Apr-96  bpw  included options keyword
+#          5-Nov-97  bpw  reframe output to input size
+#         10-Dec-97  bpw  Standardized
+#          7-Mar-99  bpw  fixed options=flux after 11dec97 change to imgen
+
+#-------------------------------------------------------------------------------
+
+onintr finish; set exstat=1
+echo "$prog - version 2.1 7-mar-99"
+set fatal = "$prog - ### Fatal: "
+
+unset noglob
+#   rtoa = 180/pi*3600
+set rtoa =  2.0626480625E+05
+set fatal = "### Fatal Error:"
+set warn  = "### Warning:"
+set info  = "### Information:"
+
+#----------------------------------------------------------------------
+# decode keywords
+
+set region  =
+set options = tb
+set verb    = f
+foreach arg ( $* )
+   set key = `echo $arg | awk -F= '{print $1}'`
+   set val = `echo $arg | awk -F= '{print $2}'`; if ("$val" == "") goto key_err
+   if ( $key == in      ) set in      = $val
+   if ( $key == out     ) set out     = $val
+   if ( $key == region  ) set region  = "region=$val"
+   if ( $key == beam    ) set beam    = $val
+   if ( $key == wanted  ) set wanted  = $val
+   if ( $key == options ) set options = $val
+   if ( $key == verbose ) set verb    = $val
+end
+
+set tmp   = /tmp/smoothtobeam
+set tlog = $tmp.log
+rm -rf $tmp.* >& /dev/null
+alias exec 'if($verb == t)echo \!*; \!* >&! $tlog; if($status == 1)goto failure'
+
+set plane = $tmp.plane
+set gauss = $tmp.gauss
+set orgbm = $tmp.orgbm
+set smobm = $tmp.smobm
+set tlog  = $tmp.tlog
+set noglob
+
+#----------------------------------------------------------------------
+# check keyword inputs
+
+if (   ! $?in   ) goto error_in1
+if (   ! $?out  ) goto error_out1
+if ( ! -d $in   ) goto error_in2
+if (   -d $out  ) goto error_out2
+if ( ! $?wanted ) goto error_wanted
+
+if ( $?beam ) then
+  set bm = ( `echo $beam | tr ',' ' '` 0 0 0 )
+  set bmaj = $bm[1]
+  set bmin = $bm[2];  if ( "$bmin" == "" ) set bmin = $bmaj
+  set bpa  = $bm[3];  if ( "$bpa"  == "" ) set bpa  = 0
+else
+  set bmaj = `imhead in=$in key=bmaj`;  if ( "$bmaj" == "" ) goto error_beam
+  set bmin = `imhead in=$in key=bmin`;  if ( "$bmin" == "" ) goto error_beam
+  set bpa  = `imhead in=$in key=bpa`
+  if ( "$bpa"  == "" ) echo "$warn no position angle in header, assuming 0"
+  if ( "$bpa"  == "" ) set bpa = 0
+  set bmaj = `calc $bmaj*$rtoa`
+  set bmin = `calc $bmin*$rtoa`
+  echo "$warn Original beam from header; FWHM ra x dec = $bmaj x $bmin, pa $bpa"
+endif
+
+set bm = ( `echo $wanted | tr ',' ' '` 0 0 0 )
+set wantedmaj = $bm[1]
+set wantedmin = $bm[2];  if ( $wantedmin == 0 ) set wantedmin=$wantedmaj
+set wantedpa  = $bm[3]
+
+set x = `echo $bmaj      | awk -F. '{print$1}'`
+set y = `echo $wantedmaj | awk -F. '{print$1}'`
+if ( $y < $x ) goto error_size
+set x = `echo $bmin      | awk -F. '{print$1}'`
+set y = `echo $wantedmin | awk -F. '{print$1}'`
+if ( $y < $x ) goto error_size
+if ( $bmaj == 0 && $bmin != 0 ) goto error_fwhm
+if ( $bmaj != 0 && $bmin == 0 ) goto error_fwhm
+
+#----------------------------------------------------------------------
+# find beam information
+
+exec set smbmaj = `calc sqrt'('${wantedmaj}**2-${bmaj}**2')'`
+exec set smbmin = `calc sqrt'('${wantedmin}**2-${bmin}**2')'`
+
+echo "$info Smooth with beam FWHM $smbmaj x $smbmin"
+echo "$info Resulting   beam FWHM $wantedmaj x $wantedmin"
+
+if ($options == tb  ) set gaupar="factor=0 object=gaussian spar"
+if ($options == flux) set gaupar="factor=0 options=totflux object=gaussian spar"
+
+# make smoothing beam
+exec imframe in=$in    out=$plane region=image'(1)'
+exec imgen   in=$plane out=$gauss $gaupar=1,0,0,$smbmaj,$smbmin,$bpa
+
+if ( $options == tb ) then
+   # create original beam
+   if ( $bmaj != 0 ) then
+   exec imgen in=$plane out=$orgbm $gaupar=1,0,0,$bmaj,$bmin,$bpa
+   else
+   exec imgen in=$plane out=$orgbm object=point spar=1
+   endif
+
+   # find normalization
+   exec convol map=$orgbm beam=$gauss out=$smobm scale=1
+   exec minmax in=$smobm
+   set max  = `imhead in=$smobm key=datamax`
+   set norm = `calc 1/$max`
+   \rm -rf $orgbm $smobm
+else
+# options=totflux does not make integral 1, but uses header beam of
+# input image to define scale factor. Weird, bad RJS idea. Changed 11dec97
+# upshot: to preserve flux need to rescale output
+   set norm = ( `imstat in=$gauss | tail -1` )
+   set norm = `calc 1/$norm[1]`
+endif
+\rm -r $plane
+
+#----------------------------------------------------------------------
+# do the convolution
+exec convol map=$in $region beam=$gauss out=$tmp.cnv scale=1
+exec maths  exp=$norm'*<'$tmp.cnv'>' out=$tmp.out
+
+#----------------------------------------------------------------------
+# reframe output to proper (=input) size
+
+set n = ( `imhead in=$in key=naxis1` `imhead in=$in key=naxis2` )
+set p = ( `imhead in=$in key=crpix1` `imhead in=$in key=crpix2` )
+set x = ( `calc -\($p[1]\)+1` `calc $n[1]-$p[1]` )
+set y = ( `calc -\($p[2]\)+1` `calc $n[2]-$p[2]` )
+exec imframe in=$tmp.out out=$out frame=$x[1],$x[2],$y[1],$y[2]
+
+# update header
+set bmaj=`calc $wantedmaj/$rtoa`; set bmin=`calc $wantedmin/$rtoa` 
+exec puthd in=$out/bmaj value=$bmaj type=real
+exec puthd in=$out/bmin value=$bmin type=real
+exec puthd in=$out/bpa  value=$bpa  type=real
+
+#-------------------------------------------------------------------------------
+
+set exstat=0; goto finish
+
+error_in1:
+   echo "$fatal an input dataset must be specified"; goto finish
+error_in2:
+   echo "$fatal input dataset $in does not exist; goto finish
+error_out1:
+   echo "$fatal an output dataset must be specified"; goto finish
+error_out2:
+   echo "$fatal output file $out already exists"; goto finish
+error_beam:
+   echo "$fatal original beam not given and not in header"; goto finish
+error_wanted:
+   echo "$fatal no wanted beam size given"; goto finish
+error_size:
+   echo "$fatal wanted beam must be larger than original beam"; goto finish
+error_fwhm:
+   echo "$fatal both or neither of the FWHMs must be zero"; goto finish
+key_err:
+   echo "$fatal no value given for keyword $key"; goto finish
+failure:
+   echo "$fatal An error occurred; output from failed program follows"
+   cat $tlog; goto finish
+
+finish:
+rm -rf $tmp.* >& /dev/null; exit $exstat
+
