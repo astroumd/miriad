@@ -220,6 +220,7 @@ c
 	call obsad('atca/systemp',	50.d0)
 c
 c  CARMA (Combined California Array  - geometric mean of 10.4 and 6.1m)
+c  this is the final Cedar Flats location (double check with Petitpas)
 c
 	call obsad('carma/antdiam',	8.0d0)
 	call obsad('carma/ellimit',	5.0*dpi/180.d0)
