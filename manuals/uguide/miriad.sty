@@ -1,0 +1,21 @@
+% MIRIAD.STY -- a proposed uniform document style option for Miriad Manuals
+% Use with:
+% \documentstyle[miriad]{article}
+
+% History:
+%    7-mar-91	Created	- Peter Teuben
+%   21-mar-91   played with marginpar`s - sigh		PJT
+
+
+%
+%  I coulnd't get this too work either - PJT 
+%\newenvironment{example}{\footnotesize \begin{verbatim}}
+%	{\end{verbatim} \ normalsize}
+
+
+%
+% I really seem to have a hard time with latex these days, this
+% command below also failed in some instances. It seems if some
+% of these \marginpar's are too close, Latex will find irecoverable
+% errors.  - PJT
+\def\mymargin#1{\marginpar{\small \tt #1}}	% place arg in \tt in margin
