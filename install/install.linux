@@ -73,11 +73,18 @@
 #   'newdir' is something that tags the date this version was made (e.g. 98jun08)
 #   later on this will also be stored again in the file $MIR/DATE, where the CVS miriad
 #   version will be stored in $MIR/VERSION
-set newdir=`date +%y%b%d | tr '[:upper:]' '[:lower:]'`
+if (0) then
+set newdir=date +%y%b%d | tr '[:upper:]' '[:lower:]'`
 set hosttype=`uname -s | tr '[:upper:]' '[:lower:]'`
+else
+set newdir=`date +%y%b%d | tr A-Z a-z`
+set hosttype=`uname -s | tr A-Z a-z`
+endif
 
 #	patch to use Stupar's original names
 if ($hosttype == sunos) set hosttype=sun4sol
+#       patch for the new sun blade ?
+if ($hosttype == SlnOS) set hosttype=sun4sol
 
 #
 echo MIRIAD installation for $hosttype
