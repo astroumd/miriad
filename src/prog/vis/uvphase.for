@@ -84,10 +84,11 @@ c   27oct00 mchw  Changes to support more antennas.
 c   17mar01 pjt   retrofitten fortran standard format fix (x->1x)
 c                 that was made earlier on 25jun98 in RCS
 c   28mar01 pjt   changed name from atmos -> uvphase 
+c   12feb02 pjt   column 73 was used, intel compiler choked
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='uvphase: version 28-mar-01')
+	parameter(version='uvphase: version 12-feb-02')
 	integer maxsels
 	parameter(maxsels=1024)
 	real sels(maxsels)
@@ -449,14 +450,14 @@ c  Fit psf
 c
       call psf_fit(npts,xm,ym,zm,delz,an,rms)
 	write(line,'(a,a,a)')
-     *, '#PSF  day     rms   slope  d/elev  const',
+     *          '#PSF  day     rms   slope  d/elev  const',
      *		' rmsfit  aveamp  sigma elev',
      *		' npts freq mmH2O Tair humid wind source'
 	call output(line)
 	if(aveamp.gt.5*sigma .and. rms.gt.0.001 .and. an(1).gt.-1
      *	.and.an(1).lt.2 .and. an(2).gt.-1.and.an(2).lt.3 )then
 	  write(line,'(a,f8.3,5f7.2,2f8.3,i4,i4,f8.3,4f5.1,1x,a)')
-     *,   'psf', day, (an(i),i=1,4),rms,aveamp,sigma,nint(elev),
+     *    'psf', day, (an(i),i=1,4),rms,aveamp,sigma,nint(elev),
      *	  npts,freq,precipmm,airtemp,min(relhumid,99.9),windmph,source
 	  call output(line)
 	endif
@@ -804,7 +805,8 @@ c  Write out the results. Omit zero and negative frequencies.
 c
 	step_hz = 1. / (size/num(bl) * avetime * 24. * 3600.)
 	do i=3,size/2
-	 write(line,100) i,timeave(bl),ant1,ant2,(i-1)*step_hz, uave(bl),
+c-----------------------------------------------------------------------
+	 write(line,100) i,timeave(bl),ant1,ant2,(i-1)*step_hz,uave(bl),
      * (((amps(i,j,bl)/57.)**2)*step_hz,((amps(i,j,bl)/57.)**2)*step_hz,
      *    cflag(j),j=1,nchan)
  100	 format(i4,1x,f6.4,1x,i4,1x,i4,1x,f9.7,1x,f9.2,1x,
