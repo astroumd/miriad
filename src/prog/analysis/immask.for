@@ -13,6 +13,7 @@ c    pjt  8jun94    region= clarification
 c    pjt  4apr96    complain if logic= is not valid, and work in lower case
 c    vjm  5sep96    attempt to unmangle documentation
 c    dpr  8dec00    include vjm's doc suggestions
+c    pjt  9aug02    add note about un-masking
 c***********************************************************************
 c= immask - mask an image dataset
 c& pjt
@@ -44,7 +45,10 @@ c   To change the masking, you must specify a value for the LOGIC keyword.
 c   Otherwise IMMASK merely reports the current numbers of masked and
 c   unmasked pixels.
 c
-c   See also MATHS for other ways to set the image mask.
+c   See also MATHS for other ways to set the image mask, but note
+c   that un-masking a pixel may then expose a value that is incorrect
+c   or unexpected, e.g. maths will have written 0s for pixels that were 
+c   masked in the process.
 c
 c@ in
 c   The name of the input image dataset. No default.
