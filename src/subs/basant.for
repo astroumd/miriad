@@ -1,5 +1,10 @@
 c***********************************************************************
-c  Returns the antenna numbers corresponding to a given baseline.
+c  Routines to deal with the  baseline <-> antennae pair   translations
+c  
+c  basants     baseline -> antennae pair, with or without checking
+c  basant      strict check, will warn if ant1 > ant2 is used etc.
+c  basanta     liberal, user must decide what to do with bad ant#'s
+c  antbas      antenna pair -> baseline
 c
 c  History:
 c    jm    05dec90    Initial version.
@@ -9,15 +14,32 @@ c    rjs   27oct00    New baseline numbering convention.
 c    pjt   12may03    documented some thoughts on allowing MAXANT 32768
 c                     and included maxdim.h
 c    pjt   17oct03    return 0's if record has invalid baseline
+c    pjt    6jan05    provide a less strict version that allows ant1 > ant2
 c***********************************************************************
-c* BasAnt - determine antennas from baseline number.
-c& pjt
-c: calibration, uv-i/o, uv-data, utilities
-c+
+
       subroutine basant(baseline, ant1, ant2)
       implicit none
       integer ant1, ant2
       double precision baseline
+      call basants(baseline,ant1,ant2,.TRUE.)
+      end
+
+      subroutine basanta(baseline, ant1, ant2)
+      implicit none
+      integer ant1, ant2
+      double precision baseline
+      call basants(baseline,ant1,ant2,.FALSE.)
+      end
+
+c* BasAnt - determine antennas from baseline number
+c& pjt
+c: calibration, uv-i/o, uv-data, utilities
+c+
+      subroutine basants(baseline, ant1, ant2, check)
+      implicit none
+      integer ant1, ant2
+      double precision baseline
+      logical check
 c
 c  BasAnt is a Miriad routine that returns the antenna numbers that are
 c  required to produce the input baseline number.  According to the
@@ -74,23 +96,16 @@ c
       ant2 = ant2 - (ant1 * mant)
       if (max(ant1,ant2).ge. mant) call bug('f', 
      *  'BASANT: possibly a bad baseline number!')
-      if (ant1 .gt. ant2) then
-         write(*,*) baseline,ant1,ant2
-         call bug('w','BASANT: a1>a2: badly formatted baseline number!')
-         ant1 = 0
-         ant2 = 0
-      endif
-      if (ant1 .lt. 1) then
-         write(*,*) baseline,ant1,ant2
-         call bug('w','BASANT: ant1<1: possibly a bad baseline number!')
-         ant1 = 0
-         ant2 = 0
-      endif
-      if (ant2 .lt. 1) then
-         write(*,*) baseline,ant1,ant2
-         call bug('w','BASANT: ant2<1: possibly a bad baseline number!')
-         ant1 = 0
-         ant2 = 0
+      if (check) then
+         if (ant1 .gt. ant2) then
+            call bug('f','BASANT: a1>a2: bad baseline #!')
+         endif
+         if (ant1 .lt. 1) then
+            call bug('f','BASANT: ant1<1: bad baseline #!')
+         endif
+         if (ant2 .lt. 1) then
+            call bug('f','BASANT: ant2<1: bad baseline #!')
+         endif
       endif
       end
 c************************************************************************
@@ -111,7 +126,6 @@ c
 c------------------------------------------------------------------------
         include 'maxdim.h'
 	if(i1.gt.i2) then
-           write(*,*) 'i1,i2=',i1,i2
            call bug('f','Illegal baseline number in antbas')
         endif
 	if(i2.gt.255)then
