@@ -1,6 +1,6 @@
 #! /bin/csh -f
 #
-# Version: 18-jun-01
+# Version: 18-aug-01
 #
 #  2-aug-99 Updated for Sebok's Mandrake setup
 #  1-aug-00 Updated to allow to build private PGPLOT version
@@ -12,6 +12,7 @@
 # 12-jun-01 pgplot522
 # 14-jun-01 atlod
 # 18-jun-01 allow option to install from with CVS source code tree
+# 18-aug-01 protect if newdir exists? comments on lesstif/openmotif
 #
 #   Simple single-architecture installation of MIRIAD
 #   (linux)
@@ -66,31 +67,34 @@ set hosttype=linux
 set mirxinc="/usr/include/X11"
 set mirxlib="/usr/X11R6/lib"
 set readlinelibs=(/usr/lib /local/lib /usr/local/lib)
-set libforms=/usr/lib/libforms.a
+set libforms=(/usr/lib/libforms.a)
 #		care, wip still uses something else, it won't listen to $fortran
 #		and you probably need 'f77' in your path
-#set fortran=(fort77 g77)
 set fortran=g77
 set log=/tmp/miriad.install.$$.log
 
-# 		MIRIAD V3:  
+# 		MIRIAD V3:  (can be overriden with cvs=1, see below)
 set tar=miriad.tar.gz
 set ftp=ftp://ftp.astro.umd.edu/progs/bima
 
 # 		astromake based will root miriad here
-set mirroot=/usr/local/miriad
+if ($?ASTROMAKE) then
+  set mirroot=$ASTROMAKE/opt/miriad
+else
+  set mirroot=/usr/local/miriad
+endif
 
 #		remember from where this was installed
 set install_root=`pwd`
 
-#               turn on(1)/off(0) certain install options
+#               turn on(1)/off(0) certain install options (command line)
 set official=0              #  also modify the system (c)shrc.MIRIAD?
 set shared=1                #  also build shared library libmir.so?
 set pgplot=1                #  include PGPLOT in $MIRLIB ?
 set newcode=1               #  include 'newcode' not in CVS (yet) ; aim is to add in future
 set debug=0                 #  compile in debug (-g) mode ?
 set cvs=1                   #  use CVS archive to get miriad.tar.gz ?
-set internal=0              #  internal build; overrides cvs, mirroot and newdir
+set internal=0              #  internal sourcecode build; overrides cvs, mirroot and newdir
 set test=1                  #  mir.test  baseline test (batch oriented)
 set testx=0		    #  mir.testx testing X routines (interactive)
 set bench=0,512,1           #  mir.bench nchan,mapsize,cell  (nchan=0 will skip bench)
@@ -168,13 +172,15 @@ if ($pgplot) then
 else
   echo 'setenv PGPLOT_DIR /usr/lib/pgplot' >> $MIRTEMP/MIRRC.$hosttype
 endif
-echo 'setenv WIPHELP $MIR/borrow/wip/wiphelp.dat; >> >> $MIRTEMP/MIRRC.$hosttype
+echo 'setenv WIPHELP $MIR/borrow/wip/wiphelp.dat' >> $MIRTEMP/MIRRC.$hosttype
 
 
 # astromake: only do this if you want to make THIS version miriad's 
 # official one.
 # you still need to patch the /usr/local/miriad/cshrc.MIRIAD
 # for the system version !!
+# also remove any old MIR from the environment, as it may confuse new MIRRC
+unsetenv MIR
 if ($official) then
   echo "source $MIRTEMP/MIRRC.$hosttype" > $mirroot/cshrc.MIRIAD
   echo ".     $MIRTEMP/MIRSRC.$hosttype" > $mirroot/shrc.MIRIAD
@@ -191,11 +197,6 @@ if ($newcode) then
     echo Found newcode, adding it
     (cd newcode; ./DOIT)
   endif  
-  if (-e wip) then
-    echo Found a local WIP patch, relocating that
-    (cd $MIR/borrow; mv wip wip.orig)
-    cp -pr wip $MIR/borrow
-  endif
   popd
 endif
 
@@ -224,7 +225,7 @@ set dorl=0
 foreach ldir ($readlinelibs)
     if (-e $ldir/libreadline.a) then
         echo Borrowing the system version of readline for linux from $ldir
-        ln -s $ldir/libreadline.a $MIRLIB/libreadline.a 
+        cp -p $ldir/libreadline.a $MIRLIB
         set dorl=1
         break
     endif
@@ -247,7 +248,7 @@ if ($shared) then
   # Jun29: r8tyx is taken care of.
   ar dv libmir.a iscoords.o
   ld -shared -o libmir.so --whole-archive libmir.a
-  if (-e libpgplot.a) then
+  if (-e libpgplot.a && ! -e libpgplot.so) then
     ld -shared -o libpgplot.so --whole-archive libpgplot.a
   endif
 endif
@@ -261,14 +262,21 @@ mir.install prog wip xmrecvlist
 echo Compiling UVIO:
 cc -O -DTESTBED -I$MIRINC $MIRSUBS/uvio.c -o $MIRBIN/uvio $MIRLIB/libmir.a -lm >& $MIR/tmp/uvio.$$.linux
 
-# xcorf: assumed lesstiff is installed
+# xcorf: (open)motif or lesstiff needs to have been installed for this
+# aug 2001: newer versions of lesstiff use /usr/X11R6/LessTif/Motif1.2/include
+#           instead of /usr/X11R6/include (which is now used by openmotif !!!)
+#
+set inc_motif=(/usr/X11R6/include /usr/X11R6/LessTif/Motif1.2/include /usr/X11R6/LessTif/Motif2.0/include)
+set lib_motif=(/usr/X11R6/lib     /usr/X11R6/LessTif/Motif1.2/lib     /usr/X11R6/LessTif/Motif2.0/lib)
+#   index into above array (1,2,..)
+set imotif=1
 
 echo Compiling XCORF:
 cd $MIR/src/spec/xcorf
 make sol6 SOLARISLIBS= \
-          CFLAGS="-O -I/usr/X11R6/include" \
+          CFLAGS="-O -I$inc_motif[$imotif]" \
 	  RFLAGS6= \
-	  LFLAGS6=-L/usr/X11R6/lib >& $MIR/tmp/xcorf.$$.linux
+	  LFLAGS6=-L$lib_motif[$imotif] >& $MIR/tmp/xcorf.$$.linux
 mv xcorf $MIRBIN
 make cleanup
 
@@ -335,4 +343,6 @@ endif
 #   Now tag it, so we can 'find -newer' things that have been updated since creation!
 echo MIRIAD Installation done on `hostname` by `whoami` on `date` with `uname -a` > $MIRLIB/Installed.tag
 exit 0
+
+
 
