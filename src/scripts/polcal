@@ -1,0 +1,288 @@
+#!/bin/csh -f
+
+# History:
+#   aug96 original version
+#   nov96 added more doc.
+#   04dec96 fixed typo.
+#
+echo Example script to calibrate and image mosaiced, polarization switched data
+echo See bima memo 48   Melvyn Wright - Aug 1996.
+echo Move the start: and goto end, to control the script
+
+goto start
+start:
+echo the steps are as follows:
+echo Calibrate the data using the quasar with constant gain amplitudes.
+echo Make calibrated data for lsb and usb
+echo Look for bad data, or bad gains
+echo Parallactic angle correction.
+echo Image real part of LR and RL
+echo Image imaginary part of LR and RL
+echo Compare the I images from RR and LL data
+echo Compare the I, Q and U images from RL and LR data
+echo Make average I Q and U images
+echo Combine I, Q and U images into Ip and pa
+echo Plot Ip and PA images obtained from LR data
+echo Plot vectors and amplitudes.
+echo Deconvolve images. With natural weight we can add LR and RL images and beams.
+echo Combine I, Q and U images into Ip and pa
+echo plot Ip and PA images obtained from LR data
+echo Plot vectors and amplitudes.
+echo Save lsb images.
+echo Plot vectors and amplitudes.
+echo Save usb images.
+echo Make model for each pointing
+echo Make model for each pointing
+echo Make model for each pointing
+echo Check out the model
+echo Now subtract the leakage using the model
+echo Parallactic angle correction.
+echo Image real part of LR and RL
+echo Image imaginary part of LR and RL
+echo Iterate polarization correction and imaging as needed.
+goto end
+
+echo Calibrate the data using the quasar with constant gain amplitudes.
+#./autocal 2007 cygnus /xs wide,1,1 wide,1,1 'dra(-5,5)'
+#./autocal 2007 cygnus /xs wide,1,2 wide,1,2 'dra(-5,5)'
+
+echo Make calibrated data for lsb and usb
+selfcal vis=2007 refant=5 line=wide,1,2 interval=40
+gpcopy vis=2007 out=cygnus
+rm -r cygnus.usbcal
+uvcal vis=cygnus out=cygnus.usbcal
+selfcal vis=2007 refant=5 line=wide,1,1 interval=40
+gpcopy vis=2007 out=cygnus
+rm -r cygnus.lsbcal
+uvcal vis=cygnus out=cygnus.lsbcal
+
+echo Look for bad data, or bad gains
+gpplt vis=cygnus device=/xs
+gpplt vis=cygnus device=/xs yaxis=phase
+uvlist vis=cygnus line=wide recnum=1000000 options=stat 'select=-amp(0,10)'
+uvlist vis=cygnus line=wide recnum=1000000 options=stat 'select=-amp(0,8),pol(LR)'
+uvlist vis=cygnus line=wide recnum=1000000 options=stat 'select=-amp(0,8),pol(RL)'
+
+parang:
+echo Parallactic angle correction.
+rm -r cygnus.parang
+uvcal vis=cygnus.usbcal out=cygnus.parang options=parang
+
+rm -r RR.mp RR.bm
+invert vis=cygnus.parang map=RR.mp beam=RR.bm 'select=pol(RR)' line=wide,1,2 cell=2 imsize=128 options=mosaic,double sup=0
+implot in=RR.mp device=/xs
+rm -r LL.mp LL.bm
+invert vis=cygnus.parang map=LL.mp beam=LL.bm 'select=pol(LL)' line=wide,1,2 cell=2 imsize=128 options=mosaic,double sup=0
+implot in=LL.mp device=/xs
+
+echo Image real part of LR and RL
+rm -r LR.mp LR.bm
+invert vis=cygnus.parang map=LR.mp beam=LR.bm 'select=pol(LR)' line=wide,1,2 cell=2 imsize=128 options=mosaic,double sup=0 stokes=LR
+implot in=LR.mp device=/xs
+rm -r RL.mp RL.bm
+invert vis=cygnus.parang map=RL.mp beam=RL.bm 'select=pol(RL)' line=wide,1,2 cell=2 imsize=128 options=mosaic,double sup=0 stokes=RL
+implot in=RL.mp device=/xs
+
+echo Image imaginary part of LR and RL
+rm -r LR.jmp 
+invert vis=cygnus.parang map=LR.jmp 'select=pol(LR)' line=wide,1,2 cell=2 imsize=128 options=mosaic,double,imaginary sup=0 stokes=LR 
+implot in=LR.jmp device=/xs
+rm -r RL.jmp 
+invert vis=cygnus.parang map=RL.jmp 'select=pol(RL)' line=wide,1,2 cell=2 imsize=128 options=mosaic,double,imaginary sup=0 stokes=RL
+implot in=RL.jmp device=/xs
+echo Compare the I images from RR and LL data
+goto end
+
+echo Compare the I, Q and U images from RL and LR data
+maths exp=RR.mp-LL.mp out=RR-LL.mp
+implot in=RR-LL.mp device=/xs
+rm -r RL-LR.mp RL+LR.mp RL-LR.jmp RL+LR.jmp
+maths exp=RL.mp-LR.mp out=RL-LR.mp
+implot in=RL-LR.mp device=/xs
+maths exp=RL.mp+LR.mp out=RL+LR.mp
+implot in=RL+LR.mp device=/xs
+maths exp=RL.jmp-LR.jmp out=RL-LR.jmp
+implot in=RL-LR.jmp device=/xs
+maths exp=RL.jmp+LR.jmp out=RL+LR.jmp
+implot in=RL+LR.jmp device=/xs
+goto end
+
+combine:
+echo Make average I Q and U images
+rm -r Q.mp U.mp I.mp
+maths exp='0.5*(RR.mp+LL.mp)' out=I.mp
+maths exp='0.5*(RL.mp+LR.mp)' out=Q.mp
+maths exp='0.5*(RL.jmp-LR.jmp)' out=U.mp
+implot in=I.mp device=/xs
+implot in=Q.mp device=/xs
+implot in=U.mp device=/xs
+
+echo Combine I, Q and U images into Ip and pa
+rm -r Ip.mp pa.mp per.mp
+impol in=Q.mp,U.mp,I.mp poli=Ip.mp polm=per.mp pa=pa.mp sigma=0.02 options=relax
+echo Plot Ip and PA images obtained from LR data
+implot in=Ip.mp device=/xs units=s
+implot in=pa.mp device=/xs conargs=10,20,30,40,50,60,70,80 conflag=in
+implot in=per.mp device=/xs  conargs=1,2,5,10,20 conflag=ip
+ 
+echo Plot vectors and amplitudes.
+cgdisp type=contour,amplitude,angle in=I.mp,Ip.mp,pa.mp device=/xw labtyp=arcsec 'region=box(50,50,130,90)' options=relax,full
+goto end
+
+echo Deconvolve images. With natural weight we can add LR and RL images and beams.
+rm -r RR+LL.bm RL+LR.bm
+maths exp='0.5*(RR.bm+LL.bm)' out=RR+LL.bm
+maths exp='0.5*(RL.bm+LR.bm)' out=RL+LR.bm
+implot in=RR+LL.bm device=/xs
+implot in=RL+LR.bm device=/xs
+rm -r I.mem Q.mem U.mem
+mossdi map=I.mp beam=RR+LL.bm out=I.mem
+mossdi map=Q.mp beam=RL+LR.bm out=Q.mem
+mossdi map=U.mp beam=RL+LR.bm out=U.mem
+goto restor
+mosmem map=I.mp beam=RR+LL.bm out=I.mem options=doflux
+mosmem map=Q.mp beam=RL+LR.bm out=Q.mem options=doflux
+mosmem map=U.mp beam=RL+LR.bm out=U.mem options=doflux
+restor:
+rm -r I.cm Q.cm U.cm
+restor map=I.mp beam=RR+LL.bm model=I.mem out=I.cm
+restor map=Q.mp beam=RL+LR.bm model=Q.mem out=Q.cm
+restor map=U.mp beam=RL+LR.bm model=U.mem out=U.cm
+implot in=I.cm device=/xs
+implot in=Q.cm device=/xs
+implot in=U.cm device=/xs
+
+echo Combine I, Q and U images into Ip and pa
+rm -r Ip.cm pa.cm per.cm
+impol in=Q.cm,U.cm,I.cm poli=Ip.cm polm=per.cm pa=pa.cm sigma=0.01 options=relax
+echo plot Ip and PA images obtained from LR data
+implot in=Ip.cm device=/xs units=s
+implot in=pa.cm device=/xs conargs=10,20,30,40,50,60,70,80 conflag=in
+implot in=per.cm device=/xs  conargs=1,2,5,10,20 conflag=ip
+ 
+echo Plot vectors and amplitudes.
+cgdisp type=contour,amplitude,angle in=I.cm,Ip.cm,pa.cm device=/xw labtyp=arcsec 'region=box(50,50,130,90)' options=relax,full
+goto end
+
+
+echo Save lsb images.
+mv Ip.cm Ip.cm1.polcal
+mv I.cm I.cm1.polcal
+mv pa.cm pa.cm1.polcal
+mv per.cm per.cm1.polcal
+mv Q.cm Q.cm1.polcal
+mv U.cm U.cm1.polcal
+echo Plot vectors and amplitudes.
+cgdisp type=contour,amplitude,angle in=I.cm1.polcal,Ip.cm1.polcal,pa.cm1.polcal device=/xs labtyp=arcsec 'region=box(50,50,130,90)' options=relax,full
+goto end
+
+echo Save usb images.
+mv Ip.cm Ip.cm2.polcal
+mv I.cm I.cm2.polcal
+mv pa.cm pa.cm2.polcal
+mv per.cm per.cm2.polcal
+mv Q.cm Q.cm2.polcal
+mv U.cm U.cm2.polcal
+cgdisp type=contour,amplitude,angle in=I.cm2.polcal,Ip.cm2.polcal,pa.cm2.polcal device=/xs labtyp=arcsec 'region=box(50,50,130,90)' options=relax,full
+goto end
+
+echo Make model for each pointing
+rm -r RR1.mp RR1.bm
+invert map=RR1.mp beam=RR1.bm cell=2 imsize=128 vis=cygnus.usbcal line=wide,1,2 select='pol(rr),dra(-4)'
+implot device=/xs in=RR1.mp
+rm -r RR1.cl
+clean map=RR1.mp beam=RR1.bm out=RR1.cl niters=1000
+implot device=/xs in=RR1.cl
+rm -r RR1.cm
+restor out=RR1.cm map=RR1.mp beam=RR1.bm model=RR1.cl
+implot device=/xs in=RR1.cm
+echo Make model for each pointing
+rm -r RR2.mp RR2.bm
+invert map=RR2.mp beam=RR2.bm cell=2 imsize=128 vis=cygnus.usbcal line=wide,1,2 select='pol(rr),dra(-58.2)'
+implot device=/xs in=RR2.mp
+rm -r RR2.cl
+clean map=RR2.mp beam=RR2.bm out=RR2.cl niters=1000
+implot device=/xs in=RR2.cl
+rm -r RR2.cm
+restor out=RR2.cm map=RR2.mp beam=RR2.bm model=RR2.cl
+implot device=/xs in=RR2.cm
+echo Make model for each pointing
+rm -r RR3.mp RR3.bm
+invert map=RR3.mp beam=RR3.bm cell=2 imsize=128 vis=cygnus.usbcal line=wide,1,2 select='pol(rr),dra(56.83)'
+implot device=/xs in=RR3.mp
+rm -r RR3.cl
+clean map=RR3.mp beam=RR3.bm out=RR3.cl niters=1000
+implot device=/xs in=RR3.cl
+rm -r RR3.cm
+restor out=RR3.cm map=RR3.mp beam=RR3.bm model=RR3.cl
+implot device=/xs in=RR3.cm
+goto end
+
+echo Check out the model
+rm -r uv1
+uvmodel vis=cygnus.usbcal line=wide,1,2 select='pol(rr),dra(-4)' model=RR1.cl out=uv1 options=replace
+uvindex vis=uv1
+# uv? have only one channel.
+rm -r rr1.mp rr1.bm
+invert map=rr1.mp beam=rr1.bm cell=2 imsize=128 vis=uv1 line=wide,1
+implot device=/xs in=rr1.mp
+rm -r uv2
+uvmodel vis=cygnus.usbcal line=wide,1,2 select='pol(rr),dra(-58.2)' model=RR2.cl out=uv2 options=replace
+uvindex vis=uv2
+rm -r rr2.mp rr2.bm
+invert map=rr2.mp beam=rr2.bm cell=2 imsize=128 vis=uv2 line=wide,1
+implot device=/xs in=rr2.mp
+rm -r uv3
+uvmodel vis=cygnus.usbcal line=wide,1,2 select='pol(rr),dra(56.83)' model=RR3.cl out=uv3 options=replace
+uvindex vis=uv3
+rm -r rr3.mp rr3.bm
+invert map=rr3.mp beam=rr3.bm cell=3 imsize=138 vis=uv3 line=wide,1
+implot device=/xs in=rr3.mp
+goto end
+
+echo Now subtract the leakage using the model
+cp ../m87/3c273.leak.wide,1,2 leak.usb
+rm -r uv? rr?.mp rr?.bm 
+uvmodel vis=cygnus.usbcal line=wide,1,2 select='dra(-4)' model=RR1.cl out=uv1 options=polcal polcor=@leak.usb
+uvmodel vis=cygnus.usbcal line=wide,1,2 select='dra(-58.2)' model=RR2.cl out=uv2 options=polcal polcor=@leak.usb
+uvmodel vis=cygnus.usbcal line=wide,1,2 select='dra(56.83)' model=RR3.cl out=uv3 options=polcal polcor=@leak.usb
+uvindex vis=uv3
+invert map=rr1.mp beam=rr1.bm cell=2 imsize=128 vis=uv1 line=wide,1 select='pol(rr)'
+implot device=/xs in=rr1.mp
+invert map=rr2.mp beam=rr2.bm cell=2 imsize=128 vis=uv2 line=wide,1 select='pol(rr)'
+implot device=/xs in=rr2.mp
+invert map=rr3.mp beam=rr3.bm cell=2 imsize=128 vis=uv3 line=wide,1 select='pol(rr)'
+implot device=/xs in=rr3.mp
+goto end
+
+echo Parallactic angle correction.
+rm -r uv.parang
+uvcal vis=uv1,uv2,uv3 out=uv.parang options=parang
+
+rm -r RR.mp RR.bm
+invert vis=uv.parang map=RR.mp beam=RR.bm 'select=pol(RR)' line=wide,1 cell=2 imsize=128 options=mosaic,double sup=0
+implot in=RR.mp device=/xs
+rm -r LL.mp LL.bm
+invert vis=uv.parang map=LL.mp beam=LL.bm 'select=pol(LL)' line=wide,1 cell=2 imsize=128 options=mosaic,double sup=0
+implot in=LL.mp device=/xs
+
+echo Image real part of LR and RL
+rm -r LR.mp LR.bm
+invert vis=uv.parang map=LR.mp beam=LR.bm 'select=pol(LR)' line=wide,1 cell=2 imsize=128 options=mosaic,double sup=0 stokes=LR
+implot in=LR.mp device=/xs
+rm -r RL.mp RL.bm
+invert vis=uv.parang map=RL.mp beam=RL.bm 'select=pol(RL)' line=wide,1 cell=2 imsize=128 options=mosaic,double sup=0 stokes=RL
+implot in=RL.mp device=/xs
+
+echo Image imaginary part of LR and RL
+rm -r LR.jmp 
+invert vis=uv.parang map=LR.jmp 'select=pol(LR)' line=wide,1 cell=2 imsize=128 options=mosaic,double,imaginary sup=0 stokes=LR 
+implot in=LR.jmp device=/xs
+rm -r RL.jmp 
+invert vis=uv.parang map=RL.jmp 'select=pol(RL)' line=wide,1 cell=2 imsize=128 options=mosaic,double,imaginary sup=0 stokes=RL
+implot in=RL.jmp device=/xs
+
+echo Iterate polarization correction and imaging as needed.
+#goto combine
+
+end:
