@@ -5,7 +5,6 @@
 
 	MAXDIM .... maximum number of elements in any one plane
 		    (ie, maximum dimensionality of a map)
-	MAXDIM1	... maximum 1D array for 2D maps (should be used sparingly)
 	MAXANT .... maximum number of antennae
 	MAXBASE ... maximum number of baselines
 	MAXCHAN ... maximum number of channels in spectral data
@@ -17,18 +16,28 @@
         bpw  20jul91  Created as xyzio.h
         mjs  08apr92  Minor mod to compile on VAX
         rjs  23feb93  Merged maxdimc.h and xyzio.h. Include MAXNAX.
-	rjs   9sep94  Add MAXWIN
-        pjt  30apr01  re-aligned maxdimc and maxdim
-        pjt   6sep01  added MAXDIM1
+        mchw 01feb02  decouple MAXBASE from MAXANT.
+	mchw 04feb02  change define MAXBUF 1048576 to 4194304.
+        mchw 14feb02  recouple MAXBASE to MAXANT for selfcal on MAXANT antennas.
 	-------------------------------------------------------------
 */
-
-#define		MAXBUF		4194304
-#define		MAXDIM		2048
-#define		MAXDIM1		16384
-#define		MAXANT		30
+#define		MAXDIM		8192
+#define		MAXANT		500
 #define		MAXBASE		((MAXANT * (MAXANT + 1)) / 2)
-#define		MAXCHAN		2048
+#define		MAXCHAN		4096
 #define		MAXNAX		7
 #define		MAXWIN		16
-#define		MAXWIDE		18
+
+#ifdef unicos
+#  define	MAXBUF		2097152
+#endif
+#ifdef convex
+#  define	MAXBUF		4194304
+#endif
+#ifdef alliant
+#  define	MAXBUF		4194304
+#endif
+#ifndef MAXBUF
+#  define	MAXBUF		4194304
+#endif
+
