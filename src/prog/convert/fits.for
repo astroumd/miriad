@@ -781,7 +781,7 @@ c	  bl = 256*ant1 + ant2
 	  bl = antbas(ant1,ant2)
 	  nconfig = max(config,nconfig)
 c
-c  Determine some times at whcih data are observed. Use these later to
+c  Determine some times at which data are observed. Use these later to
 c  guestimate the integration time.
 c
 	  if(i.eq.1) refbase = bl
