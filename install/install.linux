@@ -17,6 +17,7 @@
 #           is now to use internal=1
 # 23-sep-01 various fixes for darwin (Mac-OS X)
 # 11-feb-02 optional new intel compiler for linux
+# 04-oct-02 modified usage of tr - colby
 #
 #   Simple single-architecture installation of MIRIAD
 #   (linux)
@@ -71,8 +72,8 @@
 #   'newdir' is something that tags the date this version was made (e.g. 98jun08)
 #   later on this will also be stored again in the file $MIR/DATE, where the CVS miriad
 #   version will be stored in $MIR/VERSION
-set newdir=`date +%y%b%d | tr A-Z a-z`
-set hosttype=`uname -s | tr A-Z a-z`
+set newdir=`date +%y%b%d | tr '[:upper:]' '[:lower:]'`
+set hosttype=`uname -s | tr '[:upper:]' '[:lower:]'`
 
 #	patch to use Stupar's original names
 if ($hosttype == sunos) set hosttype=sun4sol
