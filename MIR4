@@ -1,3 +1,22 @@
 Notes on what was done to miriad for the MIR4 transition:
 
+MIR41 notes:
 
+intf2c.c	longinteger in .f2c files
+		int8 is used, and become 'int' or 'long long int'
+		depending on -DMIR4 (via miriad.h)
+
+scrio.c		scrread/scrwrite are now using int8, which again
+		via -DMIR4 will become int vs. long long int
+
+
+mapper.for	use integer*8  offset8, length8
+model.for	use integer*8  offset8, length8
+
+		It is quite possible, since other integer variables are used to compute
+		the offset8 and length8, that UV files cannot be arbitrary large.
+
+		Probably important to note that we decided to keep ncorr and nwcorr 
+		as integer*4
+
+		this will be quite hairy to figure out
