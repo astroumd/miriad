@@ -1,0 +1,49 @@
+#!/bin/csh -f
+# ----------------------------------------------------------
+if ($?MIR != 0) then
+   set mir  = $MIR
+   set lsys = $mir/bin/localsys
+#
+   if (-e $lsys/stub.mkdirs1 && ! $?local_compile) then
+     echo $lsys/stub.mkdirs1 exists =================
+     setenv local_compile
+     exec $lsys/stub.mkdirs1 $argv
+   endif
+endif
+# ----------------------------------------------------------
+foreach j ($argv)
+
+set i = "`echo $j | sed 's?//?/?g'`"
+
+set tst = "ok"
+if (-f $i)      set tst = "no"
+if (-d $i) then
+   if (! -r $i || ! -w $i || ! -x $i) set tst = "no"
+endif
+if ($tst != "ok") then
+   echo ""
+   echo "=====      Directory $i     ====="
+   echo "Cannot create directory or write into existing directory - exiting"
+   echo ""
+   exit 1
+endif
+
+if (! -d $i) then
+   mkdir $i
+   if ($status != 0) then
+      echo ""
+      echo "Cannot create directory $i - exiting"
+      echo ""
+      exit 1
+   endif
+endif
+
+chmod 755 $i
+chmod g+s $i
+echo "Directory created and/or set up:  $i"
+
+end
+#
+unsetenv local_compile
+exit 0
+# ----------------------------------------------------------

@@ -1,0 +1,82 @@
+#! /bin/csh -f
+# ------------------------------------------------------------
+#* mir.tar2m - Update system from a miriad tarfile
+#& mjs
+#: system operation
+#+
+#    Update source code from a miriad tarfile.  Filename
+#    references are relative to miriad's home directory, and
+#    the tarfile will be untarred relative to miriad's home
+#    directory.
+#
+#      Usage:  mir.tar2m $1
+#
+#      $1 ... the name of the miriad tarfile.
+#--
+# ------------------------------------------------------------
+set mir  = $MIR
+set lsys = $mir/bin/localsys
+# ------------------------------------------------------------
+if (-e $lsys/mir.tar2m && ! $?local_compile) then
+  echo $lsys/mir.tar2m exists =======================
+  setenv local_compile
+  exec $lsys/mir.tar2m $argv
+endif
+# ------------------------------------------------------------
+if ($#argv != 1) then
+   echo ""
+   echo "Usage:  a single tarfile name must be given as input."
+   echo ""
+   exit 0
+endif
+
+if (! -f $1) then
+   echo "$1 does not exist ... exiting"
+   exit 1
+endif
+
+tar -tf $1 > /dev/null
+if ($status != 0) then
+   echo "Cannot use tar command on $1 ... exiting"
+   exit 1
+endif
+
+set fn = ${cwd}/${1}
+if (`echo $1 | awk '{print substr($0,1,1)}'` == '/') set fn = $1
+
+set d      = (`date`)
+set yy     = `echo ${d[6]} | awk '{print substr($0,3,2)}'`
+set mmm    = `echo ${d[2]} | tr '[A-Z]' '[a-z]'`
+set day = "${d[3]}${mmm}${yy}"
+switch ($d[3])
+   case [0-9]:
+              set day = "0${d[3]}${mmm}${yy}"
+              breaksw
+   default:
+              set day = "${d[3]}${mmm}${yy}"
+              breaksw
+endsw
+#
+cd $mir
+
+foreach i (`tar -tf $fn`)
+   if (-f $i) then
+      if (-f $mir/oldsrc/${i:t}.$day) then
+	 mv $mir/oldsrc/${i:t}.$day $mir/oldsrc/$$.${i:t}.$day
+	 echo "In oldsrc:  ${i:t}.$day becomes $$.${i:t}.$day"
+      endif
+      cp -p $i $mir/oldsrc/${i:t}.$day
+      echo "Superceded $i becomes oldsrc/${i:t}.$day"
+   endif
+end
+#
+tar -xvf $fn
+if ($status != 0) then
+   echo ""
+   echo "Problem untarring $fn ... nonzero return code from tar."
+   echo ""
+   exit 1
+endif
+# ------------------------------------------------------------
+unsetenv local_compile
+exit 0

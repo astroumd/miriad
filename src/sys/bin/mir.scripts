@@ -1,0 +1,51 @@
+#! /bin/csh -f
+# ----------------------------------------------------------
+#* mir.scripts - Install scripts from source code
+#& mjs
+#: system operation
+#+
+#  Copy user scripts to binary directory.  Create on-line
+#  docs for scripts, both user and admin.
+#
+#    Usage:  mir.scripts [args]
+#
+#            args = names of scripts.  If there are no 
+#                   arguments, all scripts in the two
+#                   directories will be processed.
+#
+#--
+# ----------------------------------------------------------
+set mir    = $MIR
+set host   = $MIRHOST
+set lsys   = $mir/bin/localsys
+set bindir = $mir/bin/$host
+set srcdir = $mir/src/scripts
+set admdir = $mir/src/sys/bin
+set docdir = $mir/doc/prog
+# ----------------------------------------------------------
+if (-e $lsys/mir.scripts && ! $?local_compile) then
+  echo $lsys/mir.scripts exists =======================
+  setenv local_compile
+  exec $lsys/mir.scripts $argv
+endif
+# ----------------------------------------------------------
+if (! -e $bindir/doc) mir.prog doc
+
+if ($#argv == 0) then
+   cd $srcdir
+   set fn = (`ls`)
+   cd $admdir
+   set fn = ($fn `ls`)
+else
+   set fn = ($argv)
+endif
+
+cd $docdir
+foreach i ($fn)
+   if (-e $srcdir/$i ) cp -p $srcdir/$i $bindir
+   if (-e $srcdir/$i ) $bindir/doc -e -p $srcdir/$i
+   if (-e $admdir/$i ) $bindir/doc -e -p $admdir/$i
+end
+# ----------------------------------------------------------
+unsetenv local_compile
+exit 0
