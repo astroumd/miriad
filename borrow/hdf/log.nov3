@@ -1,0 +1,105 @@
+cc -O   -target sun4 -c  df.c
+cc -O   -target sun4 -c  dfr8.c
+cc -O   -target sun4 -c  dfsd.c
+cc -O   -target sun4 -c  dfgroup.c
+cc -O   -target sun4 -c  dfcomp.c
+cc -O   -target sun4 -c  dfimcomp.c
+cc -O   -target sun4 -c  dfkit.c
+cc -O   -target sun4 -c  dfp.c
+cc -O   -target sun4 -c  dfan.c
+cc -O   -target sun4 -c  dfgr.c
+cc -O   -target sun4 -c  df24.c
+cc -O   -target sun4 -c  dfufptoim.c
+cc -O   -target sun4 -c  dfutil.c
+cc -O   -target sun4 -c  dfF.c
+cc -O   -target sun4 -c  dfr8F.c
+cc -O   -target sun4 -c  dfsdF.c
+cc -O   -target sun4 -c  dfanF.c
+f77 -O -sun4 -c  dfFf.f
+dfFf.f:
+	dfopen:
+f77 -O -sun4 -c  dfr8Ff.f
+dfr8Ff.f:
+	d8gdims:
+	d8gimg:
+	d8pimg:
+	d8aimg:
+	d8rref:
+	dfr8getdims:
+	dfr8getimage:
+	dfr8putimage:
+	dfr8addimage:
+	dfr8readref:
+f77 -O -sun4 -c  dfsdFf.f
+dfsdFf.f:
+	dsgdims:
+	dsgdata:
+	dssdast:
+	dssdist:
+	dspdata:
+	dsadata:
+	dsgslc:
+	dssslc:
+	dsrref:
+	dfsdgetdims:
+	dfsdgetdata:
+	dfsdsetdatastrs:
+	dfsdsetdimstrs:
+	dfsdputdata:
+	dfsdadddata:
+	dfsdgetslice:
+	dfsdstartslice:
+	dfsdreadref:
+f77 -O -sun4 -c  dfanFf.f
+dfanFf.f:
+	dagllen:
+	daglab:
+	dagdlen:
+	dagdesc:
+	daplab:
+	dapdesc:
+	dallist:
+	daafid:
+	dfangetlablen:
+	dfangetlabel:
+	dfangetdesclen:
+	dfangetdesc:
+	dfanputlabel:
+	dfanputdesc:
+	dfanlablist:
+	dfanaddfid:
+cc -O   -target sun4 -c  df24F.c
+f77 -O -sun4 -c  df24Ff.f
+df24Ff.f:
+	d2gdims:
+	d2gimg:
+	d2aimg:
+	d2rref:
+	df24getdims:
+	df24getimage:
+	df24addimage:
+	df24readref:
+f77 -O -sun4 -c  dfpFf.f
+dfpFf.f:
+	dpgpal:
+	dpapal:
+	dpppal:
+	dpnpals:
+	dpwref:
+	dprref:
+	dfpgetpal:
+	dfpaddpal:
+	dfpputpal:
+	dfpnpals:
+	dfpwriteref:
+	dfpreadref:
+cc -O   -target sun4 -c  dfpF.c
+f77 -O -sun4 -c  dfufptoimFf.f
+dfufptoimFf.f:
+	duf2im:
+	dfufptoimage:
+cc -O   -target sun4 -c  dfutilF.c
+/bin/rm -f libdf.a libnostub
+ar r libdf.a df.o dfr8.o dfsd.o dfgroup.o dfcomp.o dfimcomp.o   dfkit.o dfp.o dfan.o  dfgr.o df24.o dfufptoim.o dfutil.o dfF.o dfr8F.o dfsdF.o dfanF.o dfFf.o dfr8Ff.o dfsdFf.o dfanFf.o  df24F.o df24Ff.o dfpFf.o dfpF.o dfufptoimFf.o dfutilF.o
+ar: creating libdf.a
+ranlib libdf.a
