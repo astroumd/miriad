@@ -56,13 +56,15 @@ fortran subroutine rspokeinisma(integer tbd, integer tno1,
  logical dohann1, logical birdie1, logical dowt1,
  logical dopmps1, logical dobary1, logical doif1,
  logical hires1, logical nopol1, logical circular1, 
- logical oldpol1, double lat1, double long1, integer rsnchan1)
+ logical oldpol1, double lat1, double long1, 
+ integer rsnchan1, integer refant1)
         {
       rspokeinisma_c((char *)tbd.addr, tno1.val,
           dosam1.addr, doxyp1.addr, doop1.addr, dohann1.addr,
           birdie1.addr, dowt1.addr, dopmps1.addr, dobary1.addr,
           doif1.addr, hires1.addr, nopol1.addr, circular1.addr,
-          oldpol1.addr, lat1.val, long1.val, rsnchan1.val);
+          oldpol1.addr, lat1.val, long1.val, rsnchan1.val,
+          refant1.val );
         }
 fortran subroutine rspokeflshsma(integer tbd)
 {
