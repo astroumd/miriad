@@ -35,7 +35,7 @@ c    rjs  22jan93  Bug when there is no (0,0) offset pointing.
 c		   Various standardisation.
 c    mchw 09feb93  Changed ra,dec to double precision.
 c    mchw 19feb93  Format change for 2048 channels.
-c    pjt  10mar93  fixed problems with length in logwrite() - no need
+c    pjt  10mar93  fixed problems with length in logwrit() - no need
 c    pjt  15apr93  maxpnt -> 512 for SUN etc. fixing wrong ddec table
 c    pjt  23apr93  need special case if data contain unknown polarization
 c    rjs  16jul93  Significant rewrite. More efficient scanning and treatment
@@ -57,19 +57,23 @@ c    rjs  18oct96  Don't output a line when just dra/ddec changes.
 c    rjs  08jan97  options=mosaic
 c    rjs  08jun97  Fix bug in error message
 c    rjs  15jun00  Simple handling of blank source name.
+c    pjt  11feb05  Adapt to use maxdim.h, MAXSPECT=MAXWIDE, not 18.
 c----------------------------------------------------------------------c
 	include 'mirconst.h'
 	include 'maxdim.h'
 	character*(*) version
 	integer MAXSRC,MAXFREQ,MAXSPECT
 	integer PolMin,PolMax,PolI
-	parameter(MAXSRC=2048,MAXFREQ=32,MAXSPECT=18)
+c           MAXSRC   = max number of source (changes) we can handle
+c           MAXFREQ  = max number of freq setups we can handle
+c           MAXSPECT = max number of "channels" in the widebands to check for
+	parameter(MAXSRC=2048,MAXFREQ=32,MAXSPECT=MAXWIDE)
 	parameter(PolMin=-8,PolMax=4,PolI=1)
-	parameter(version='UVINDEX: version 1.0 15-Jun-00')
+	parameter(version='UVINDEX: version 11-feb-05')
 c
 	integer pols(PolMin:PolMax),pol
 	integer lIn,i,j,j1,nvis,nants,l
-	character vis*64,logf*64,date*18,line*80,ras*14,decs*14
+	character vis*80,logf*80,date*18,line*80,ras*14,decs*14
 	double precision time,tprev,total
 	real dra,ddec,interval,inttime
 c
