@@ -295,6 +295,7 @@ c    nebk 22may96  Add options=mrms
 c    rjs  06jun96  Change frequency behaviour to default to all channels.
 c    mchw 26jun96  Call varmint to get parang in case not in uvdata.
 c    pjt  12oct97  Push MAXBASE2 upto 45 for Hat Creek.  Does not affect ATCA
+c    mchw 14feb02  Changes to accomodate more antennas.
 c
 c To do:
 c
@@ -425,7 +426,7 @@ c
       data npts, plpts, basmsk /ifac1*0, ifac1*0, ifac2*0/
       data polmsk /13*0/
 c-----------------------------------------------------------------------
-      call output ('UvPlt: version 12-oct-97')
+      call output ('UvPlt: version 14-Feb-02')
       call output ('New frequency behaviour '//
      *	'(see parameters line and options=nofqav)')
       call output (' ')
@@ -1102,7 +1103,7 @@ c
             call output (' ')
             write (msg, 200) pl2dim
 200         format ('Max. no. of baselines can plot singly (', 
-     +              i2, ') has been reached')
+     +              i3, ') has been reached')
             call bug ('w', msg)
             call output (' ')
             bwarn(1) = .true.
@@ -2811,7 +2812,7 @@ c
       character polsc2p*2
 c
       save cols
-      data fmt /'i1', 'i2'/
+      data fmt /'i1', 'i3'/
       data cols1 /1, 7, 2, 5, 3, 4, 6, 8, 9,  10, 11, 12/
       data cols2 /1, 2, 5, 3, 4, 6, 8, 9, 10, 11, 12, 13/
 c----------------------------------------------------------------------
@@ -3619,7 +3620,7 @@ c
           if (nsum.gt.0) then
             nunloc = .false.
             write (aline, 100) a1a2(i,1), a1a2(i,2), nsum
-100         format ('Baseline ', i2, '-', i2, 
+100         format ('Baseline ', i3, '-', i3, 
      +              '  plot ', i6, ' points')
             call logwrite (aline(1:len1(aline)), more)
           end if
@@ -3881,8 +3882,8 @@ c
             if (ia1.gt.maxant .or. ia2.gt.maxant) then
               call output (' ')
               write (line, 150) ia1, ia2, maxant
-150           format ('Antenna number too large for baseline ', i2,
-     +                '-', i2, ' Need antenna # < ', i2)
+150           format ('Antenna number too large for baseline ', i3,
+     +                '-', i3, ' Need antenna # < ', i3)
               call bug ('f', line)
             end if
 c
