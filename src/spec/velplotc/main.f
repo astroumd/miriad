@@ -1,6 +1,6 @@
 	program velplot
 	character version*(*)
-        parameter(version='version 17-April-01')
+        parameter(version='version 29-June-01')
 	character task*20,device*20,file*120,logfile*120
 	character trans*20
 	include "data.h"
@@ -394,7 +394,7 @@ c
 	call keyi ('Contour', contour, 1)
 	call keyi ('Note', annotate, 1)
 	call keyi ('beamquad', Beam, 0)
-	call keyi ('Box', boxc, 1)
+	call keya ('Box', boxa, "")
 	call keya ('units', Units_p, "s")
 	call keya ('conflag', conflag, "pn")
 	call mkeyr('Cbeam',value,3,nval)
