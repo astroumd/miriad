@@ -1,6 +1,6 @@
 #! /bin/csh -f
 #
-# Version: 18-aug-01
+# Version: 21-feb-03
 #
 #  2-aug-99 Updated for Sebok's Mandrake setup
 #  1-aug-00 Updated to allow to build private PGPLOT version
@@ -20,6 +20,7 @@
 # 04-oct-02 modified usage of tr - colby
 #  3-dec-02 rpfits is now source included
 # 23-jan-03 add (optional) install of LGM's rad/lvg package in borrow
+# 21-feb-03 more logfiles, so less to the screen
 #
 #   Simple single-architecture installation of MIRIAD
 #   (linux)
@@ -30,8 +31,8 @@
 #       397.400u 30.110s 8:09.19 87.3%	0+0k 0+0io 1532623pf+0w
 #   Piii-800 (gaia) w/ gcc-2.96
 #       715.810u 94.320s 14:06.76 95.6% 0+0k 0+0io 3582351pf+0w
-
-
+#   Piv-1600 (nemo) w/ gcc-2.96
+#	208.110u 28.510s 4:14.09 93.1%	0+0k 0+0io 1659485pf+0w
 #
 #-----------------------------------------------------------------------
 # assume we have a mir.tar.gz (UIUC version) in a clean directory
