@@ -51,6 +51,7 @@ c--
 c  History:
 c    30sep92  mchw  New task for Miriad.
 c    29aug02  pjt   Added frang= to prevent large divisions for models
+c    31aug02  pjt   Ieck, rms calculation wrong, arrays not reset to 0
 c----------------------------------------------------------------------c
 	include 'maxdim.h'
 	character*(*) label,version
