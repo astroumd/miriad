@@ -31,6 +31,7 @@ c   rjs   22feb91  Changed GetLun to LunGet to avoid a naming conflict.
 c   bpw   24feb91  changed references of atoi,etc to atoif,etc.
 c   pjt    5jan95  statement order for f2c (linux)
 c   rjs   10jan96  Refix statement order for linux!!
+c   pjt   17jan05  Disabled the lunget call since we don't have it
 c-----------------------------------------------------------------------
 
 
@@ -55,8 +56,9 @@ c- and then convert data to those coordinates
       if( mode(1:2).eq.'lb' ) nnum = 2
 
       if( lun_kld.eq.0 ) then
-        call lunget( lun_kld )
-        open ( unit=lun_kld, status='scratch' )
+	call bug('f','iscoords: this miriad does not have lunget')
+c        call lunget( lun_kld )
+c        open ( unit=lun_kld, status='scratch' )
       endif
 
       do i = 1, 13
