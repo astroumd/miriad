@@ -62,5 +62,4 @@ time uvcat vis=vis1,vis2,vis3 out=vis > uvcat.log
 time invert vis=vis map=map1 beam=beam1 imsize=$mapsize cell=$cell > invert.log
 time clean map=map1 beam=beam1 out=clean1 > clean.log
 time restor model=clean1 beam=beam1 map=map1 out=cmap1 > restor.log
-
-
+echo The mirstones can now be obtained to divide 5 minutes by the total elapsed time:
