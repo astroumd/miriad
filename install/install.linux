@@ -94,7 +94,7 @@ else
 endif
 
 # /sw/lib is for Fink (on MacOSX)
-set searchlibs=(/usr/lib /usr/X11R6/lib /local/lib /usr/local/lib /sw/lib)
+set searchlibs=(/lib /usr/lib /usr/X11R6/lib /local/lib /usr/local/lib /sw/lib)
 
 set log=/tmp/miriad.install.$$.log
 
@@ -318,7 +318,7 @@ endif
 
 #
 if ($shared) then
-  if (-e /usr/bin/ranlib) ranlib libmir.a
+  if (-e /usr/bin/ranlib) ranlib $MIRLIB/libmir.a
 
   if ($hosttype == linux) then
     ld -shared -o libmir.so --whole-archive libmir.a
