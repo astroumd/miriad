@@ -229,8 +229,8 @@ c
 c
 c  Get next valid project.
 c
-        if(debug)
-     *    call output('# ha, halimit, minint, obsint, inttime, lstdone')
+        if(debug) call output(
+     *      'proj#  ha, halimit, minint, obsint, inttime, lstdone')
 20	ha = mod(lst-ra(j)*12./pi+36.,24.) - 12.
 	halimit = halim(elevlim,dec(j),latitude)
 	minint = min(mintime,1.6*halimit)
