@@ -55,13 +55,17 @@ c	            values are checked for sampler statistics being within
 c	            3% of 17.3%, or 0.5% of 50.0%, that the XY phase
 c	            is within 10 degrees of its running median, and that
 c	            the XY amplitudes are within 1 Jy or 10% of its running
-c	            median.
-c         'mmrelax' This is a subset of options=relax. It flags based on
-c	            sampler statistics, but skips tests based on the XY phase
-c	            and XY amplitude. This is appropriate for the interim
-c	            3mm system, which does not have a noise diode system.
+c	            median. The tests for xy phase and amplitude are
+c	            skipped for 3mm data (as there is no noise calibration
+c	            signal).
+c         'mmrelax' This option is ignored, and is present for historical
+c	            reasons.
 c	  'unflag'  Save any data that is flagged. By default ATLOD
 c	            discards most data that is flagged.
+c	  'opcorr'  Correct for atmospheric opacity. This option is possible
+c	            for data measured after October 2003. It should not be
+c	            used for 3mm data. Generally it is only relevant for
+c	            12mm observations.
 c	  'samcorr' Correct the pre-Dec93 data for incorrect sampler
 c	            statistics. Since December 1993, sampler corrections
 c	            are performed online -- Miriad ignores the samcorr
@@ -87,6 +91,9 @@ c	  'pmps'    Undo `poor man's phase switching'. This is an obscure option
 c	            that you should not generally use.
 c	  'single'  Assume input is a single dish RPFITS file (from Mopra or
 c	            Parkes). This is usually used together with option 'relax'.
+c	  'caldata' Save visibilities associated with certain system
+c	            calibrations. Currently this consists of reference pointing
+c	            calibration and "paddle" measurements.
 c@ nfiles
 c	This gives one or two numbers, being the number of files to skip,
 c	followed by the number of files to process. This is only
@@ -195,6 +202,15 @@ c    dpr  11apr01 ATANT=8 in atlog.h
 c    rjs  22may02 Added options=mmrelax
 c    rjs  25may02 Generate "tcorr" variable to keep track of whether
 c		  Tsys scaling has been performed or not.
+c    rjs  16jul03 Do not flip sign of XY and YX correlations for 12mm
+c                 package.
+c    rjs  19jul03 Removed option=mmrelax, and made this automatic!
+c    rjs  06dec03 Write out met data, axisrms, axismax data. options=opcorr
+c    rjs  30dec03 Doc change only.
+c    rjs  15feb04 Save input RPFITS name and calcode.
+c    rjs  10jun04 Handle change in xy correlation at 12mm.
+c    rjs  11sep04 Add rain guage and seeing monitor data to output.
+c    rjs  23oct04 Fix pntra and pntdec bug - always write them out.
 c
 c  Program Structure:
 c    Miriad atlod can be divided into three rough levels. The high level
@@ -220,14 +236,15 @@ c------------------------------------------------------------------------
 	integer MAXFILES
 	parameter(MAXFILES=128)
 	character version*(*)
-	parameter(version='AtLod: version 1.0 25-May-02')
+	parameter(version='AtLod: version 1.0 23-Oct-04')
 c
 	character in(MAXFILES)*64,out*64,line*64
 	integer tno
 	integer ifile,ifsel,nfreq,iostat,nfiles,i
 	double precision rfreq(2)
-	logical doauto,docross,docomp,dosam,relax,mmrelax,unflag,dohann
-	logical dobary,doif,birdie,dowt,dopmps,doxyp,polflag,hires,sing
+	logical doauto,docross,docomp,dosam,relax,unflag,dohann
+	logical dobary,doif,birdie,dowt,dopmps,doxyp,doop
+	logical polflag,hires,sing,docaldat
 	integer fileskip,fileproc,scanskip,scanproc
 c
 c  Externals.
@@ -246,7 +263,8 @@ c
      *	  call bug('f','Output name must be given')
         call keyi('ifsel',ifsel,0)
         call mkeyd('restfreq',rfreq,2,nfreq)
-	call getopt(doauto,docross,docomp,dosam,doxyp,relax,mmrelax,
+	call getopt(doauto,docross,docaldat,docomp,dosam,doxyp,doop,
+     *	  relax,
      *	  sing,unflag,dohann,birdie,dobary,doif,dowt,dopmps,polflag,
      *	  hires)
 	call keyi('nfiles',fileskip,0)
@@ -291,8 +309,8 @@ c
 	    endif
 	    if(iostat.ne.0)call bug('f','Error skipping RPFITS file')
 	  else
-	    call PokeIni(tno,dosam,doxyp,dohann,birdie,dowt,dopmps,
-     *		dobary,doif,hires)
+	    call PokeIni(tno,dosam,doxyp,doop,dohann,birdie,dowt,
+     *		dopmps,dobary,doif,hires)
 	    if(nfiles.eq.1)then
 	      i = 1
 	    else
@@ -304,7 +322,7 @@ c
 	      call liner('Processing file '//in(ifile))
 	    endif
 	    call RPDisp(in(i),scanskip,scanproc,doauto,docross,
-     *		relax,mmrelax,sing,unflag,polflag,ifsel,rfreq,nfreq,
+     *		docaldat,relax,sing,unflag,polflag,ifsel,rfreq,nfreq,
      *		iostat)
 	  endif
 	enddo
@@ -324,22 +342,25 @@ c
 c
 	end
 c************************************************************************
-	subroutine GetOpt(doauto,docross,docomp,dosam,doxyp,relax,
-     *	  mmrelax,sing,
+	subroutine GetOpt(doauto,docross,docaldat,docomp,dosam,doxyp,
+     *	  doop,relax,sing,
      *	  unflag,dohann,birdie,dobary,doif,dowt,dopmps,polflag,hires)
 c
 	implicit none
-	logical doauto,docross,dosam,relax,mmrelax,unflag,dohann,dobary
+	logical doauto,docross,dosam,relax,unflag,dohann,dobary,doop
 	logical docomp,doif,birdie,dowt,dopmps,doxyp,polflag,hires,sing
+	logical docaldat
 c
 c  Get the user options.
 c
 c  Output:
 c    doauto	Set if the user want autocorrelation data.
 c    docross	Set if the user wants cross-correlationdata.
+c    docaldat	Do not flag calibration data.
 c    docomp	Write compressed data.
 c    dosam	Correct for sampler statistics.
 c    doxyp	Correct the data with the measured xy phase.
+c    doop	Correct for opacity.
 c    dohann     Hanning smooth spectra
 c    birdie	Discard bad channels in continuum mode.
 c    doif	Map the simultaneous frequencies to the IF axis.
@@ -351,18 +372,18 @@ c    dowt	Reweight the lag spectrum.
 c    dopmps	Undo "poor man's phase switching"
 c    polflag	Flag all polarisations if any are bad.
 c    hires      Convert bin-mode to high time resolution data.
-c    mmrelax    
 c    sing	Single dish mode.
 c------------------------------------------------------------------------
 	integer nopt
-	parameter(nopt=17)
+	parameter(nopt=19)
 	character opts(nopt)*8
 	logical present(nopt)
 	data opts/'noauto  ','nocross ','compress','relax   ',
      *		  'unflag  ','samcorr ','hanning ','bary    ',
      *		  'noif    ','birdie  ','reweight','xycorr  ',
+     *		  'opcorr  ',
      *		  'nopflag ','hires   ','pmps    ','mmrelax ',
-     *		  'single  '/
+     *		  'single  ','caldata '/
 	call options('options',opts,present,nopt)
 	doauto = .not.present(1)
 	docross = .not.present(2)
@@ -376,18 +397,18 @@ c------------------------------------------------------------------------
 	birdie  = present(10)
 	dowt    = present(11)
 	doxyp   = present(12)
-	polflag = .not.present(13)
-	hires   = present(14)
-	dopmps  = present(15)
-	mmrelax = present(16)
-	sing    = present(17)
+	doop    = present(13)
+	polflag = .not.present(14)
+	hires   = present(15)
+	dopmps  = present(16)
 c
-	if((dosam.or.doxyp).and.relax)call bug('f',
-     *	  'You cannot use options samcorr or xycorr with relax')
-	if(doxyp.and.mmrelax)call bug('f',
-     *	  'You cannot use options xycorr with mmrelax')
-	if(relax.and.mmrelax)call bug('f',
-     *	  'You cannot use options=relax and mmrelax together')
+c  Option mmrelax is now ignored (set automatically!).
+c	mmrelax = present(16)
+	sing    = present(18)
+	docaldat= present(19)
+c
+	if((dosam.or.doxyp.or.doop).and.relax)call bug('f',
+     *	  'You cannot use options samcorr, xycorr or opcorr with relax')
 	end
 c************************************************************************
 	subroutine Fixed(tno,dobary)
@@ -409,7 +430,6 @@ c------------------------------------------------------------------------
 c
 	call uvputvrr(tno,'epoch',2000.,1)
 	call uvputvrr(tno,'vsource',0.,1)
-	call uvputvrr(tno,'jyperk',13.0,1)
 	call obspar('ATCA','latitude',latitude,ok)
 	if(ok)call obspar('ATCA','longitude',longitud,ok)
 	if(ok)call obspar('ATCA','evector',dtemp,ok)
@@ -433,13 +453,13 @@ c
 	end
 c************************************************************************
 c************************************************************************
-	subroutine PokeIni(tno1,dosam1,doxyp1,dohann1,birdie1,dowt1,
-     *					dopmps1,dobary1,doif1,hires1)
+	subroutine PokeIni(tno1,dosam1,doxyp1,doop1,
+     *		dohann1,birdie1,dowt1,dopmps1,dobary1,doif1,hires1)
 c
 	implicit none
 	integer tno1
 	logical dosam1,doxyp1,dohann1,doif1,dobary1,birdie1,dowt1
-	logical dopmps1,hires1
+	logical dopmps1,hires1,doop1
 c
 c  Initialise the Poke routines.
 c------------------------------------------------------------------------
@@ -451,6 +471,7 @@ c
 	tno    = tno1
 	dosam  = dosam1
 	doxyp  = doxyp1
+	opcorr = doop1
 	dohann = dohann1
 	doif   = doif1
 	dobary = dobary1
@@ -518,10 +539,11 @@ c
 	call output(line)
 	end
 c************************************************************************
-	subroutine PokeStat(nrec,fgbad,fgoffsrc,fginvant,fgsysc,fgsam)
+	subroutine PokeStat(nrec,fgbad,fgoffsrc,fginvant,fgsysc,fgsam,
+     *								fgcal)
 c
 	implicit none
-	integer nrec,fgbad,fgoffsrc,fginvant,fgsysc,fgsam
+	integer nrec,fgbad,fgoffsrc,fginvant,fgsysc,fgsam,fgcal
 c
 c  Report statistics on this file.
 c------------------------------------------------------------------------
@@ -547,7 +569,9 @@ c
      *		'Missing SYSCAL record       '//pcent(fgsysc,nrec))
 	if(fgsam.gt.0)call liner(
      *		'Bad SYSCAL values           '//pcent(fgsam,nrec))
-	call output('---------------------------------------')
+	if(fgcal.gt.0)call liner(
+     *		'Discarded cal data          '//pcent(fgcal,nrec))
+	call liner('---------------------------------------')
 c
 	end
 c************************************************************************
@@ -563,6 +587,67 @@ c
 	call output(string)
 	line = 'ATLOD:    '//string
 	call hiswrite(tno,line)
+	end
+c************************************************************************
+	subroutine liners(string)
+c
+	implicit none
+	character string*(*)
+c
+c------------------------------------------------------------------------
+	character line*72
+	include 'atlod.h'
+c
+	line = 'ATLOD:     '//string
+	call hiswrite(tno,line)
+	end
+c************************************************************************
+	subroutine sortcds(ncard,card,sctype)
+c
+	implicit none
+	integer ncard
+	character card(ncard)*(*),sctype*(*)
+c
+c  Write out selected cards to the history file.
+c
+c------------------------------------------------------------------------
+	integer i
+c
+	do i=1,ncard
+c	  if(card(i)(1:8).eq.'OBSLOG' .or.card(i)(1:8).eq.'ATTEN'   .or.
+c     *	    card(i)(1:8).eq.'SUBREFL' .or.card(i)(1:8).eq.'CORR_CFG'.or.
+c     *	    card(i)(1:8).eq.'SCANTYPE'.or.card(i)(1:8).eq.'CACALCNT'.or.
+c     *	    card(i)(1:8).eq.'POINTCOR'.or.card(i)(1:8).eq.'POINTINF'
+c     *								)then
+	  if(card(i)(1:8).eq.'OBSLOG')then
+	    call liners(card(i)(20:))
+	  else if(card(i)(1:8).eq.'SCANTYPE')then
+	    sctype = card(i)(11:)
+	    call lcase(sctype)
+	  endif
+	enddo
+c
+	end
+c************************************************************************
+	subroutine PokeName(in)
+c
+	character in*(*)
+c
+c------------------------------------------------------------------------
+	include 'atlod.h'
+	character c*1
+	integer i1,i2,i
+c
+	integer len1
+c
+	i1 = 1
+	i2 = len1(in)	
+	do i=1,i2
+	  c = in(i:i)
+	  if(index('/[]:',c).ne.0)i1 = i + 1
+	enddo
+	if(i1.gt.i2)i1 = 1
+	call uvputvra(tno,'name',in(i1:i2))
 	end
 c************************************************************************
 	subroutine Poke1st(time1,nifs1,nants1)
@@ -672,13 +757,31 @@ c
 	if(chan.le.0) chan = chan + nint(0.128d0/abs(sdf))
 	end
 c************************************************************************
+	subroutine pokemet(mdata1,mcount1)
+c
+	implicit none
+	integer mcount1
+	real mdata1(mcount1)
+	
+c
+c------------------------------------------------------------------------
+	include 'atlod.h'
+	integer i
+c
+	do i=1,mcount1
+	  mdata(i) = mdata1(i)
+	enddo
+	mcount = mcount1
+c
+	end
+c************************************************************************
 	subroutine PokeSC(ant,if,chi1,tcorr1,
-     *		xtsys1,ytsys1,xyphase1,xyamp1,xsamp,ysamp)
+     *		xtsys1,ytsys1,xyphase1,xyamp1,xsamp,ysamp,pntrms,pntmax)
 c
 	implicit none
 	integer ant,if,tcorr1
 	real chi1,xtsys1,ytsys1,xyphase1,xyamp1
-	real xsamp(3),ysamp(3)
+	real xsamp(3),ysamp(3),pntrms,pntmax
 c
 c  Save the SYSCAL group info.
 c------------------------------------------------------------------------
@@ -688,6 +791,8 @@ c------------------------------------------------------------------------
 c
 	tcorr = tcorr1
 	chi = chi1
+	axisrms(ant)=pntrms
+	axismax(ant)=pntmax
 	xtsys(if,ant) = xtsys1
 	ytsys(if,ant) = ytsys1
 	xyphase(if,ant) = xyphase1
@@ -706,17 +811,18 @@ c
 	end
 c************************************************************************
 	subroutine PokeSrc(srcnam,ra1,dec1,obsra1,obsdec1,
-     *						pntra1,pntdec1)
+     *					pntra1,pntdec1,calcode1)
 c
 	implicit none
 	character srcnam*(*)
 	double precision ra1,dec1,obsra1,obsdec1,pntra1,pntdec1
+	character calcode1*(*)
 c
 c  Flush out source information.
 c------------------------------------------------------------------------
 	include 'atlod.h'
 	double precision r1,d1,pntra,pntdec
-	character line*80,sdash*80
+	character line*80,sdash*80,calcode*16
 	integer length,l
 c
 c  Externals.
@@ -772,10 +878,18 @@ c
 	if(length.gt.0)call uvputvra(tno,'source',sdash(1:length))
 	call uvputvrd(tno,'ra',ra,1)
 	call uvputvrd(tno,'dec',dec,1)
-	if(pntra.ne.ra)call uvputvrd(tno,'pntra',pntra,1)
-	if(pntdec.ne.dec)call uvputvrd(tno,'pntdec',pntdec,1)
+	call uvputvrd(tno,'pntra',pntra,1)
+	call uvputvrd(tno,'pntdec',pntdec,1)
 	call uvputvrd(tno,'obsra',obsra,1)
 	call uvputvrd(tno,'obsdec',obsdec,1)
+c
+	calcode = calcode1
+	length = len1(calcode)
+	if(length.eq.0)then
+	  calcode = 'none'
+	  length = len1(calcode)
+	endif
+	call uvputvra(tno,'calcode',calcode(1:length))
 c
 	newpnt = .true.
 	end
@@ -836,12 +950,12 @@ c
 	end
 c************************************************************************
 	subroutine PokeData(u1,v1,w1,baseln,if,bin,vis,nfreq1,nstoke1,
-     *		flag1,inttime1,docon)
+     *		flag1,inttime1,docon,doxyflip,doxy)
 c
 	implicit none
 	integer nfreq1,nstoke1,if,baseln,bin
 	real u1,v1,w1,inttime1
-	logical flag1(nstoke1),docon
+	logical flag1(nstoke1),docon,doxyflip,doxy
 	complex vis(nfreq1*nstoke1)
 c
 c  Buffer up the data. Perform sampler correction and hanning smoothing
@@ -909,7 +1023,8 @@ c
 	  nbin(if) = max(nbin(if),bin)
 	  nused = nused + nfreq(if)
 	  if(nused.gt.ATDATA)call bug('f','Buffer overflow in PokeData')
-	  doneg = polcode(if,p).eq.PolXY.or.polcode(if,p).eq.PolYX
+	  doneg = (polcode(if,p).eq.PolXY.or.
+     *		   polcode(if,p).eq.PolYX).and.doxyflip
 	  call DatCpy(nstoke(if),nfreq(if),nfreq1,
      *		dohann.and.nfreq1.gt.33,birdie.and.nfreq1.eq.33,
      *		edge(if),doconj,doneg,vis(p),data(ipnt))
@@ -918,7 +1033,7 @@ c
 c
 c  Do XY phase correction if needed.
 c
-	  if(doxyp)then
+	  if(doxyp.and.doxy)then
 	    if(dosw(bl))then
 	      pol = polcode(if,p)
 	      if(pol.eq.PolXY)then
@@ -1036,10 +1151,10 @@ c
 c
 	end
 c************************************************************************
-	subroutine PokeMisc(telescop,observer,version)
+	subroutine PokeMisc(telescop,observer,version,sctype)
 c
 	implicit none
-	character telescop*(*),observer*(*),version*(*)
+	character telescop*(*),observer*(*),version*(*),sctype*(*)
 c
 c  Set various miscellaneous parameters.
 c------------------------------------------------------------------------
@@ -1059,6 +1174,9 @@ c
 	call AsciiCpy(version,atemp,length)
 	if(length.gt.0)call uvputvra(tno,'version',atemp(1:length))
 c
+	call AsciiCpy(sctype,atemp,length)
+	if(length.gt.0)call uvputvra(tno,'sctype',atemp(1:length))
+c
 	end
 c************************************************************************
 	subroutine PokeFlsh
@@ -1068,16 +1186,19 @@ c
 c  Flush out a saved integration.
 c------------------------------------------------------------------------
 	include 'atlod.h'
+	include 'mirconst.h'
 	integer i1,i2,if,p,bl,nchan,npol,ipnt,ischan(ATIF)
 	integer tbinhi,tbin,binhi,binlo,bin
 	complex vis(MAXCHAN)
 	logical flags(MAXCHAN)
-	double precision preamble(5),vel,lst,tdash
-	real buf(3*ATANT*ATIF)
+	double precision preamble(5),vel,lst,tdash,az,el
+	real buf(3*ATANT*ATIF),fac(ATIF),freq0(ATIF),Tb(ATIF),tfac
+	real jyperk
 c
 c  Externals.
 c
 	double precision eqeq
+	real getjpk
 c
 	if(nused.eq.0)return
 c
@@ -1117,15 +1238,65 @@ c
 	  tbinhi = 1
 	endif
 c
+c  Write out the met data.
+c
+	if(mcount.ge.5)then
+	  call uvputvrr(tno,'airtemp',mdata(1),1)
+	  call uvputvrr(tno,'pressmb',0.975*mdata(2),1)
+	  call uvputvrr(tno,'relhumid',mdata(3),1)
+	  call uvputvrr(tno,'wind',mdata(4),1)
+	  call uvputvrr(tno,'winddir',mdata(5),1)
+	endif
+	if(mcount.ge.7)then
+c	  call uvputvrr(tno,'metflag',mdata(6),1)
+	  call uvputvrr(tno,'rain',mdata(7),1)
+	endif
+	if(mcount.ge.9)then
+c	  call uvputvrr(tno,'smonphas',mdata(8),1)
+	  call uvputvrr(tno,'smonrms', mdata(9),1)
+	endif
+c
 	do tbin=1,tbinhi
 	  call jullst(tdash,long,lst)
 	  lst = lst + eqeq(tdash)
 	  call uvputvrd(tno,'lst',lst,1)
 c
+c  Compute the az and el of the telescopes.c
+c
+	  call azel(obsra,obsdec,lst,lat,az,el)
+	  call uvputvrd(tno,'antaz',az*180.d0/DPI,1)
+	  call uvputvrd(tno,'antel',el*180.d0/DPI,1)
+c
+c  Get ready to apply opacity correction.
+c
+	  jyperk = getjpk(real(sfreq(1)))
+
+	  if(opcorr)then
+	    if(mcount.lt.3)
+     *	      call bug('f','No met data to compute opacity correction')
+	    do if=1,nifs
+	      freq0(if) = (sfreq(if) + 0.5*(nfreq(if)-1)*sdf(if))*1e9
+	    enddo
+	    call opacGet(nifs,freq0,real(el),mdata(1)+273.15,
+     *					     97.5*mdata(2),
+     *					     0.01*mdata(3),fac,Tb)
+	    tfac = 1
+	    do if=1,nifs
+	      fac(if) = 1/fac(if)
+	      tfac = tfac * fac(if)
+	    enddo
+	    jyperk = jyperk * tfac**(1.0/real(nifs))
+	  else
+	    do if=1,nifs
+	      fac(if) = 1
+	    enddo
+	  endif
+c
 c  Compute radial velocity of the observatory.
 c
 	  call VelRad(.not.dobary,tdash,obsra,obsdec,ra,dec,lst,lat,vel)
 	  call uvputvrr(tno,'veldop',real(vel),1)
+	  call uvputvrr(tno,'jyperk',jyperk,1)
 c
 c  Handle the case that we are writing the multiple IFs out as multiple
 c  records.
@@ -1141,7 +1312,8 @@ c
 	    call uvputvrd(tno,'restfreq',restfreq(if),1)
 	    if(newsc)call ScOut(tno,chi,tcorr,
      *		xtsys,ytsys,xyphase,xyamp,
-     *		xsampler,ysampler,ATIF,ATANT,nants,if,if,buf)
+     *		xsampler,ysampler,axisrms,axismax,
+     *		ATIF,ATANT,nants,if,if,buf)
 	    if(hires)then
 	      binlo = tbin
 	      binhi = tbin
@@ -1168,6 +1340,8 @@ c
      *						  bchan(if),flags)
 		      if(.not.hires)call uvputvri(tno,'bin',bin,1)
 		      call uvputvrr(tno,'inttime',inttime(bl),1)
+		      if(opcorr)
+     *			call opapply(data(ipnt),nfreq(if),fac(if))
 		      call uvwrite(tno,preamble,data(ipnt),flags,
      *							nfreq(if))
 
@@ -1196,7 +1370,8 @@ c
 	  endif
 	  if(newsc.and.tbin.eq.1)call ScOut(tno,chi,tcorr,
      *		xtsys,ytsys,xyphase,xyamp,
-     *		xsampler,ysampler,ATIF,ATANT,nants,1,nifs,buf)
+     *		xsampler,ysampler,axisrms,axismax,
+     *		ATIF,ATANT,nants,1,nifs,buf)
 	  if(hires)then
 	    binlo = tbin
 	    binhi = tbin
@@ -1219,7 +1394,7 @@ c
 		  call uvputvri(tno,'npol',npol,1)
 	          do p=1,nstoke(1)
 		    call GetDat(data,nused,pnt(1,p,bl,bin),
-     *			flag(1,p,bl,bin),nfreq,bchan,nifs,
+     *			flag(1,p,bl,bin),nfreq,fac,bchan,nifs,
      *			vis,flags,nchan)
 		    if(nchan.gt.0)then
 		      if(.not.hires)call uvputvri(tno,'bin',bin,1)
@@ -1258,6 +1433,21 @@ c
 	newsc   = .false.
 	newfreq = .false.
 	newpnt  = .false.
+	end
+c************************************************************************
+	subroutine opapply(data,nchan,fac)
+c
+	implicit none
+	integer nchan
+	real fac
+	complex data(nchan)
+c------------------------------------------------------------------------
+	integer i
+c
+	do i=1,nchan
+	  data(i) = fac*data(i)
+	enddo
+c
 	end
 c************************************************************************
 	subroutine PolPut(tno,pol,dosw)
@@ -1413,14 +1603,15 @@ c
 	end
 c************************************************************************
 	subroutine ScOut(tno,chi,tcorr,xtsys,ytsys,xyphase,xyamp,
-     *		xsampler,ysampler,ATIF,ATANT,nants,if1,if2,buf)
+     *		xsampler,ysampler,axisrms,axismax,
+     *		ATIF,ATANT,nants,if1,if2,buf)
 c
 	implicit none
 	integer tno,ATIF,ATANT,nants,if1,if2,tcorr
 	real chi,xtsys(ATIF,ATANT),ytsys(ATIF,ATANT)
 	real xyphase(ATIF,ATANT),xyamp(ATIF,ATANT)
 	real xsampler(3,ATIF,ATANT),ysampler(3,ATIF,ATANT)
-	real buf(3*ATIF*ATANT)
+	real buf(3*ATIF*ATANT),axisrms(ATANT),axismax(ATANT)
 c
 c  Write out a syscal record into the appropriate Miriad variables.
 c
@@ -1432,6 +1623,8 @@ c    buf	Used to buffer the data before writing.
 c------------------------------------------------------------------------
 	call uvputvrr(tno,'chi',chi,1)
 	call uvputvri(tno,'tcorr',tcorr,1)
+	call Sca(tno,'axisrms', axisrms, nants,buf)
+	call Sca(tno,'axismax', axismax, nants,buf)
 	call Sco(tno,'xtsys',   xtsys,   1,ATIF,ATANT,if1,if2,nants,buf)
 	call Sco(tno,'ytsys',   ytsys,   1,ATIF,ATANT,if1,if2,nants,buf)
 	call Sct(tno,'systemp',xtsys,ytsys,ATIF,ATANT,if1,if2,nants,buf)
@@ -1439,6 +1632,27 @@ c------------------------------------------------------------------------
 	call Sco(tno,'xyamp',   xyamp,   1,ATIF,ATANT,if1,if2,nants,buf)
 	call Sco(tno,'xsampler',xsampler,3,ATIF,ATANT,if1,if2,nants,buf)
 	call Sco(tno,'ysampler',ysampler,3,ATIF,ATANT,if1,if2,nants,buf)
+	end
+c************************************************************************
+	subroutine Sca(tno,var,axis,nants,buf)
+c
+	implicit none
+	integer tno,nants
+	character var*(*)
+	real axis(nants),buf(2*nants)
+c
+c------------------------------------------------------------------------
+	integer i,j
+c
+	j = 1
+	do i=1,nants
+	  buf(j) = axis(i)
+	  buf(j+1) = axis(i)
+	  j = j + 2
+	enddo
+c
+	call uvputvrr(tno,var,buf,2*nants)
+c
 	end
 c************************************************************************
 	subroutine Sct(tno,var,xtsys,ytsys,ATIF,ATANT,if1,if2,nants,buf)
@@ -1511,13 +1725,14 @@ c
 c
 	end
 c************************************************************************
-	subroutine GetDat(data,nvis,pnt,flag,nfreq,bchan,nifs,
+	subroutine GetDat(data,nvis,pnt,flag,nfreq,fac,bchan,nifs,
      *						vis,flags,nchan)
 c
 	implicit none
 	integer nvis,nifs,pnt(nifs),nfreq(nifs),bchan(nifs),nchan
 	logical flag(nifs),flags(*)
 	complex vis(*),data(nvis)
+	real fac(nifs)
 c
 c  Construct a visibility record constructed from multiple IFs.
 c------------------------------------------------------------------------
@@ -1537,7 +1752,7 @@ c
 	    endif
 c
 	    do i=nchan+1,nchan+nfreq(n)
-	      vis(i) = data(ipnt)
+	      vis(i) = fac(n)*data(ipnt)
 	      flags(i) = flag(n)
 	      ipnt = ipnt + 1
 	    enddo
@@ -1664,14 +1879,14 @@ c------------------------------------------------------------------------
 	if(iostat.eq.0)call RPClose(iostat)
 	end
 c************************************************************************
-	subroutine RPDisp(in,scanskip,scanproc,doauto,docross,relax,
-     *	  mmrelax,sing,unflag,polflag,ifsel,userfreq,nuser,iostat)
+	subroutine RPDisp(in,scanskip,scanproc,doauto,docross,docaldat,
+     *	  relax,sing,unflag,polflag,ifsel,userfreq,nuser,iostat)
 c
 	implicit none
 	character in*(*)
 	integer scanskip,scanproc,ifsel,nuser,iostat
 	double precision userfreq(*)
-	logical doauto,docross,relax,mmrelax,unflag,polflag,sing
+	logical doauto,docross,relax,unflag,polflag,sing,docaldat
 c
 c  Process an RPFITS file. Dispatch information to the
 c  relevant Poke routine. Then eventually flush it out with PokeFlsh.
@@ -1681,8 +1896,8 @@ c    scanskip	Scans to skip.
 c    scanproc	Number of scans to process. If 0, process all scans.
 c    doauto	Save autocorrelation data.
 c    docross	Save crosscorrelation data.
+c    docaldat	Do not flag calibration data.
 c    relax	Save data even if the SYSCAL record is bad.
-c    mmrelax	Save data even if the XY phase/XY amp are bad.
 c    sing
 c    polflag	Flag all polarisations if any are bad.
 c    unflag	Save data even though it may appear flagged.
@@ -1695,20 +1910,23 @@ c------------------------------------------------------------------------
 	include 'mirconst.h'
 	integer MAXPOL,MAXSIM,MAXXYP
 	parameter(MAXPOL=4,MAXSIM=4,MAXXYP=5)
+	double precision J01Jul04
+	parameter(J01Jul04=2453187.5d0)
 	include 'rpfits.inc'
 	integer scanno,i1,i2,baseln,i,id,j
 	logical NewScan,NewSrc,NewFreq,NewTime,Accum,ok,badbit
-	logical flags(MAXPOL),corr_fudge
+	logical flags(MAXPOL),corrfud,kband,wband,flipper
 	integer jstat,flag,bin,ifno,srcno,simno,Ssrcno,Ssimno
 	integer If2Sim(MAX_IF),nifs(MAX_IF),Sim2If(MAXSIM,MAX_IF)
 	integer Sif(MAX_IF)
 	real ut,utprev,utprevsc,u,v,w,weight(MAXCHAN*MAXPOL)
 	complex vis(MAXCHAN*MAXPOL)
 	double precision reftime,ra0,dec0,pntra,pntdec
+	character calcode*16,sctype*16
 c
 c  Information on flagging.
 c
-	integer nrec,nspec,fgbad,fgoffsrc,fginvant,fgsysc,fgsam
+	integer nrec,nspec,fgbad,fgoffsrc,fginvant,fgsysc,fgsam,fgcal
 c
 c  Variables to track the sysc records.
 c
@@ -1719,11 +1937,13 @@ c
 	integer nxyp(MAX_IF,ANT_MAX),tcorr
 	real xyp(MAXXYP,MAX_IF,ANT_MAX),xya(MAXXYP,MAX_IF,ANT_MAX)
 	real xyphase(MAX_IF,ANT_MAX),xyamp(MAX_IF,ANT_MAX)
+	real pntrms(ANT_MAX),pntmax(ANT_MAX)
 	real xsamp(3,MAX_IF,ANT_MAX),ysamp(3,MAX_IF,ANT_MAX)
 	real xtsys(MAX_IF,ANT_MAX),ytsys(MAX_IF,ANT_MAX)
-	real chi,tint
+	real chi,tint,mdata(9)
 c
 	logical antvalid(ANT_MAX)
+	integer mcount
 	double precision jday0,time,tprev
 c
 c  Open the RPFITS file.
@@ -1733,13 +1953,33 @@ c
 c
 c  Initialise.
 c
-	call AtFlush(scinit,tcorr,scbuf,xflag,yflag,MAX_IF,ANT_MAX)
+	call PokeName(in)
+	call AtFlush(mcount,scinit,tcorr,scbuf,xflag,yflag,
+     *						MAX_IF,ANT_MAX)
+c
+c  Read the header.
+c
+	ncard = -1
+	jstat = -1
+	call rpfitsin(jstat,vis,weight,baseln,ut,u,v,w,flag,
+     *						bin,ifno,srcno)
+	if(jstat.ne.0)call bug('w','Error reading 1st RPFITS header')
+	if(jstat.ne.0)return
+c	if(card(1)(25:30).ne.'RPFITS')
+c     *		      call bug('f','Input file is not in RPFITS format')
+	sctype = 'unknown'
+	if(ncard.gt.0)call sortcds(ncard,card,sctype)
+c
+c  Initialise.
 c
 	do j=1,ANT_MAX
 	  do i=1,MAX_IF
 	    nxyp(i,j) = 0
 	  enddo
 	enddo
+c
+	kband = .false.
+	wband = .false.
 c
 c  Initialise flagging information.
 c
@@ -1749,12 +1989,13 @@ c
 	fginvant = 0
 	fgsysc   = 0
 	fgsam    = 0
+	fgcal    = 0
 c
 	utprev   = -1
 	utprevsc = -1
 	Accum = .false.
 	NewScan = .true.
-	corr_fudge=.false.
+	corrfud=.false.
 	Ssrcno = 0
 	Ssimno = 0
 	scanno = 1
@@ -1774,9 +2015,11 @@ c  read will be the same one we just encountered, not the
 c  next one
 c
 	  if(jstat.eq.1)then
+	    ncard = -1
 	    jstat = -1
 	    call rpfitsin(jstat,vis,weight,baseln,ut,u,v,w,flag,
      *						bin,ifno,srcno)
+	    if(ncard.gt.0)call sortcds(ncard,card,sctype)
 	    NewScan = .true.
 	    scanno = scanno + 1
 c
@@ -1834,7 +2077,7 @@ c
 	  else if(baseln.eq.-1)then
 	    NewTime = abs(sc_ut-utprevsc).gt.0.04
 	    if(NewScan.or.an_found.or.NewTime)then
-	      call AtFlush(scinit,tcorr,
+	      call AtFlush(mcount,scinit,tcorr,
      *			scbuf,xflag,yflag,MAX_IF,ANT_MAX)
 	      Accum = .false.
 	      utprevsc = sc_ut
@@ -1842,8 +2085,9 @@ c
 	    call SetSC(scinit,scbuf,MAX_IF,ANT_MAX,sc_q,sc_if,sc_ant,
      *		sc_cal,if_invert,polflag,
      *		xyphase,xyamp,xtsys,ytsys,xsamp,ysamp,
-     *		chi,tcorr,
-     *		nxyp,xyp,ptag,xya,atag,MAXXYP,xflag,yflag,mmrelax)
+     *		chi,tcorr,pntrms,pntmax,
+     *		nxyp,xyp,ptag,xya,atag,MAXXYP,xflag,yflag,wband,
+     *		mdata,mcount)
 c
 c  Data record. Check whether we want to accept it.
 c  If OK, and we have a new scan, calculate the new scan info.
@@ -1867,7 +2111,7 @@ c
 	      if ((ut .lt. 30) .and. (86400*(time-tprev).lt.-1)) then
 		jday0=jday0+1
 		time = ut / (3600.d0*24.d0) + jday0
-		corr_fudge=.true.
+		corrfud=.true.
 		call bug('w',
      *          'Assuming first scan of integration')
 		call bug('w',
@@ -1886,7 +2130,7 @@ c
 	    NewSrc = srcno.ne.Ssrcno
 	    if(Accum.and.(NewScan.or.an_found.or.NewSrc.or.NewFreq.or.
      *							NewTime))then
-	      call AtFlush(scinit,tcorr,
+	      call AtFlush(mcount,scinit,tcorr,
      *		scbuf,xflag,yflag,MAX_IF,ANT_MAX)
 	      Accum = .false.
 	    endif
@@ -1899,6 +2143,11 @@ c
      *	    	   min(i1,i2).ge.1.and.max(i1,i2).le.nant.and.
      *		   bin.ge.0
 	      if(.not.ok)fgbad = fgbad + 1
+	    endif
+	    if(ok)then
+	      ok = (sctype.ne.'point'.and.sctype.ne.'paddle')
+     *			.or.docaldat
+	      if(.not.ok)fgcal = fgcal + 1
 	    endif
             if(ok)ok = If2Sim(ifno).gt.0
 	    if(ok) then
@@ -1927,18 +2176,24 @@ c
 	        time = ut / (3600.d0*24.d0) + jday0
 		call Poke1st(time,nifs(simno),nant)
 		if(NewScan)call PokeMisc(instrument,rp_observer,
-     *							version)
+     *						version,sctype)
 	        if(an_found)call PokeAnt(nant,x,y,z,sing)
 	        if(NewScan.or.NewFreq)then
+		  kband = .false.
+		  wband = .false.
 		  do i=1,nifs(simno)
 		    id = Sim2If(i,simno)
 		    if(nuser.ge.i)rfreq = 1e9*userfreq(i)
+		    kband = kband.or.
+     *			   (if_freq(id).gt.13e9.and.if_freq(id).lt.28e9)
+		    wband = wband.or.if_freq(id).gt.75e9
 		    call PokeIF(i,if_nfreq(id),if_invert(id)*if_bw(id),
      *			if_freq(id),if_ref(id),rfreq,
      *			if_nstok(id),if_cstok(1,id))
 		  enddo
 		endif
 		if(NewScan)call PokeInfo(scanno,time)
+		calcode = su_cal(srcno)
 	 	pntra = su_pra(srcno)
 		pntdec = su_pdec(srcno)
 		if(pntra.eq.0.or.pntdec.eq.0)then
@@ -1952,13 +2207,20 @@ c
 		  dec0 = 2*DPI/(360.d0*3600d0*365.25d0) * pm_dec
 		  dec0 = su_dec(srcno) + dec0*(time-reftime)
 		  call PokeSrc(su_name(srcno),ra0,dec0,0.d0,0.d0,
-     *			pntra,pntdec)
+     *			pntra,pntdec,calcode)
 		else if(NewScan.or.NewSrc)then
 c		if(NewScan.or.NewSrc)then
 		  call PokeSrc(su_name(srcno),
      *		  su_ra(srcno),su_dec(srcno),
-     *		  su_rad(srcno),su_decd(srcno),pntra,pntdec)
+     *		  su_rad(srcno),su_decd(srcno),pntra,pntdec,calcode)
 		endif
+	      endif
+c
+c  Flush out the met data if needed.
+c
+	      if(mcount.gt.0)then
+		call PokeMet(mdata,mcount)
+		mcount = 0
 	      endif
 c
 c  Flush out any buffered SYSCAL records.
@@ -1966,11 +2228,13 @@ c
 	      if(scbuf(ifno,i1))call PokeSC(i1,Sif(ifno),chi,tcorr,
      *		xtsys(ifno,i1),ytsys(ifno,i1),
      *		xyphase(ifno,i1),xyamp(ifno,i1),
-     *		xsamp(1,ifno,i1),ysamp(1,ifno,i1))
+     *		xsamp(1,ifno,i1),ysamp(1,ifno,i1),
+     *		pntrms(i1),pntmax(i1))
 	      if(scbuf(ifno,i2))call PokeSC(i2,Sif(ifno),chi,tcorr,
      *		xtsys(ifno,i2),ytsys(ifno,i2),
      *		xyphase(ifno,i2),xyamp(ifno,i2),
-     *		xsamp(1,ifno,i2),ysamp(1,ifno,i2))
+     *		xsamp(1,ifno,i2),ysamp(1,ifno,i2),
+     *		pntrms(i2),pntmax(i2))
 c
 	      scbuf(ifno,i1) = .false.
 	      scbuf(ifno,i2) = .false.
@@ -1990,18 +2254,19 @@ c	      tint = 0
 	      tint = intbase
 	      if(tint.eq.0)tint = intime
 	      if(tint.eq.0)tint = 15.0
+	      flipper = .not.kband.or.time.gt.J01Jul04
 	      call PokeData(u,v,w,baseln,Sif(ifno),bin,
      *		vis,if_nfreq(ifno),if_nstok(ifno),flags,
-     *		tint,if_invert(ifno).lt.0)
+     *		tint,if_invert(ifno).lt.0,flipper,.not.wband)
 c
 c  Reinitialise things.
 c
 	      if (86400*(time-tprev).lt.-1) then
-		if (.not. corr_fudge) then
+		if (.not. corrfud) then
                   call bug('w',
      *		   'Data are out of time order')
 		else
-		  corr_fudge=.false.
+		  corrfud = .false.
 		endif
 	      endif
 	      tprev = time
@@ -2023,7 +2288,7 @@ c  Give summary about flagging.
 c
 	if(version.le.' ')version='unknown'
 	call liner('RPFITS file version is '//version)
-	call PokeStat(nrec,fgbad,fgoffsrc,fginvant,fgsysc,fgsam)
+	call PokeStat(nrec,fgbad,fgoffsrc,fginvant,fgsysc,fgsam,fgcal)
 c
 c  We are done. Close up, and return the error code.
 c
@@ -2128,18 +2393,6 @@ c
 	if(jstat.ne.0) call bug('w',
      *	    'Error opening RPFITS file: '//rperr(jstat))
 	if(jstat.ne.0)return
-c
-c  Read the header.
-c
-	ncard = 20
-	card(1) = 'FORMAT'
-	jstat = -1
-	call rpfitsin(jstat,vis,weight,baseln,ut,u,v,w,flag,
-     *						bin,ifno,srcno)
-	if(jstat.ne.0)call bug('w','Error reading 1st RPFITS header')
-	if(jstat.ne.0)return
-	if(card(1)(25:30).ne.'RPFITS')
-     *		      call bug('f','Input file is not in RPFITS format')
 	end
 c************************************************************************
 c************************************************************************
@@ -2343,21 +2596,37 @@ c
 c
 	end
 c************************************************************************
+	real function getjpk(freq)
+c
+	implicit none
+	real freq
+c------------------------------------------------------------------------
+	if(freq.lt.15)then
+	  getjpk = 13
+	else if(freq.lt.30)then
+	  getjpk = 15
+	else
+	  getjpk = 25
+	endif
+c
+	end
+c************************************************************************
 	subroutine SetSC(scinit,scbuf,MAXIF,MAXANT,nq,nif,nant,
      *		syscal,invert,polflag,
      *		xyphase,xyamp,xtsys,ytsys,xsamp,ysamp,
-     *		chi,tcorr,nxyp,xyp,ptag,xya,atag,MAXXYP,xflag,yflag,
-     *		mmrelax)
+     *		chi,tcorr,pntrms,pntmax,nxyp,xyp,ptag,xya,atag,MAXXYP,
+     *		xflag,yflag,mmrelax,mdata,mcount)
 c
 	implicit none
 	integer MAXIF,MAXANT,MAXXYP,nq,nif,nant,invert(MAXIF)
-	integer tcorr
-	real syscal(nq,nif,nant)
+	integer tcorr,mcount
+	real syscal(nq,nif,nant),mdata(9)
 	logical polflag
 	logical scinit(MAXIF,MAXANT),scbuf(MAXIF,MAXANT)
 	real xyphase(MAXIF,MAXANT),xyamp(MAXIF,MAXANT)
 	real xtsys(MAXIF,MAXANT),ytsys(MAXIF,MAXANT)
 	real xsamp(3,MAXIF,MAXANT),ysamp(3,MAXIF,MAXANT)
+	real pntrms(MAXANT),pntmax(MAXANT)
 	real chi
 	real xyp(MAXXYP,MAXIF,MAXANT),xya(MAXXYP,MAXIF,MAXANT)
 	integer ptag(MAXXYP,MAXIF,MAXANT)
@@ -2384,6 +2653,10 @@ c
 	      xyphase(ij,ik) = invert(ij)*syscal(3,j,k)
 	      xyamp(ij,ik) = 0
 	      if(nq.ge.14)xyamp(ij,ik) = syscal(14,j,k)
+	      pntrms(ik) = 0
+	      if(nq.ge.16)pntrms(ik) = syscal(16,j,k)
+	      pntmax(ik) = 0
+	      if(nq.ge.15)pntmax(ik) = syscal(15,j,k)
 	      if(syscal(4,j,k).gt.0)tcorr = tcorr + 1
 	      if(syscal(5,j,k).gt.0)tcorr = tcorr + 1
 	      xtsys(ij,ik) = 0.1* syscal(4,j,k) * syscal(4,j,k)
@@ -2402,23 +2675,44 @@ c
 		chi = pi/180 * syscal(12,j,k) + pi/4
 		done = .true.
 	      endif
+c
+c  Save met data. The array consists of
+c    1 Temperature
+c    2 Pressure
+c    3 Humidity
+c    4 Wind speed
+c    5 Wind direction
+	    else if(ik.eq.0)then
+	      mcount = 6
+	      mdata(1) = syscal(2,j,k)
+	      mdata(2) = syscal(3,j,k)
+	      mdata(3) = syscal(4,j,k)
+	      mdata(4) = syscal(5,j,k)
+	      mdata(5) = syscal(6,j,k)
+	      mdata(6) = syscal(7,j,k)
+	      mdata(7) = syscal(8,j,k)
+	      mdata(8) = syscal(9,j,k)
+	      mdata(9) = syscal(10,j,k)
+	      if(syscal(11,j,k).eq.0)mcount=9
 	    endif
 	  enddo
 	enddo
 c
 	end
 c************************************************************************
-	subroutine AtFlush(scinit,tcorr,scbuf,xflag,yflag,MAXIF,MAXANT)
+	subroutine AtFlush(mcount,scinit,tcorr,scbuf,xflag,yflag,
+     *							MAXIF,MAXANT)
 c
 	implicit none
 	integer MAXIF,MAXANT
-	integer tcorr
+	integer tcorr,mcount
 	logical scinit(MAXIF,MAXANT),scbuf(MAXIF,MAXANT)
 	logical xflag(MAXIF,MAXANT),yflag(MAXIF,MAXANT)
 c
 c------------------------------------------------------------------------
 	integer i,j
 c
+	mcount = 0
 	do j=1,MAXANT
 	  do i=1,MAXIF
 	    scinit(i,j) = .false.

@@ -48,30 +48,8 @@ c	the north spur, you should generally give the list of station
 c	names, as the standard array configuration names assume the
 c	standard antenna order (not the shuffled order).
 c
-c	If in doubt, see the help on "confighist" for a history of 
-c	array configurations.
-c
-c@ mdata
-c	Setting this parameter invokes an amplitude correction to the data
-c	to account for the opacity of the atmosphere.
-c
-c	The input parameter is a data file giving the meteorological conditions
-c	at the ATCA during the course of the observation. Given a model of
-c	the atmosphere (determined from the meteorological data), and knowing
-c	the elevation of the observation, a model correction for the atmosphere
-c	can be deduced and applied. Note that this is just that - a model
-c	correction - which will have limitations.
-c
-c	NOTE: This correction should NOT be used with 3-mm data when the 3mm
-c	system temperature corrections are used. The 3-mm system temperatures
-c	are, by their nature, so-called "above atmosphere" system temperature
-c	value, which corrects for atmospheric opacity.
-c
-c	This parameter can be used with the 12-mm system, where the system
-c	temperatures are those measured at the ground.
-c
-c	For more help on getting the meteorological data appropriate to your
-c	observation, see the help on "weatherdata".
+c	If in doubt, see the on-line history of configurations:
+c	  http://www.narrabri.atnf.csiro.au/operations/array_configurations/config_hist.html
 c
 c@ dantpos
 c	For poorly understood reasons, the effective locations of the antennas
@@ -105,6 +83,11 @@ c@ options
 c	Extra processing options. Several options can be given,
 c	separated by commas. Minimum match is supported. Possible values
 c	are:
+c	  opcorr    Apply a correction to account for the opacity of the
+c	            atmosphere. This option should generally be used
+c	            at 12mm only. For observations taken before October 2003,
+c	            you will need to set the ``mdata'' parameter (see below)
+c	            when using this option.
 c	  tsys      Ensure the system temperature correction is applied to
 c	            the data. It is not uncommon when observing at 3mm to
 c	            not apply the system temperature correction to the data
@@ -112,23 +95,55 @@ c	            on-line.
 c	  gainel    This applies a instrumental gain/elevation correction
 c	            to the data. Currently the gains of the antennas are
 c	            a function of elevation.
+c@ mdata
+c	To apply an opacity correction, this task needs to estimate the
+c	atmospheric opacity based on meteorological conditions. Prior to
+c	October 2003, meteorological data were not saved in the datasets, and
+c	so the meterological data needs to be provided separately.
+c
+c	This input parameter gives a data file containing the meteorological
+c	conditions at the observatory. It is only required if the dataset
+c	does not already contain this information. 
+c
+c	Given a model of the atmosphere, and knowing
+c	the elevation of the observation, a model correction for the atmosphere
+c	can be deduced and applied. Note that this is just that - a model
+c	correction - which will have limitations.
+c
+c	NOTE: This correction should NOT be used with 3-mm data when the 3mm
+c	system temperature corrections are used. The 3-mm system temperatures
+c	are, by their nature, so-called "above atmosphere" system temperature
+c	value, which corrects for atmospheric opacity.
+c
+c	This parameter can be used with the 12-mm system, where the system
+c	temperatures are those measured at the ground.
+c
+c	For more help on getting the meteorological data appropriate to your
+c	observation, see the help on "weatherdata".
 c--
 c  History:
 c    04may03 rjs  Original version.
 c    15may03 rjs  Better jyperk.
+c    14aug03 rjs  Fix bug causing seg violation.
+c    17sep03 rjs  New gain/elevation curve at 3mm.
+c    19oct03 rjs  Update array tables.
+c    14nov03 rjs  Fix bug in getjpk
+c    06dec03 rjs  Fish out met parameters from the dataset directly.
+c    19sep04 rjs  Changes to the way Tsys scaling is handled.
+c    11oct04 rjs  Use jyperk=10 rather than 13 in Tsys correction.
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	include 'mirconst.h'
 	character version*(*)
 	integer MAXSELS,ATANT
-	parameter(version='AtFix: version 1.0 15-May-03')
+	parameter(version='AtFix: version 1.0 11-Oct-04')
 	parameter(MAXSELS=256,ATANT=6)
 c
 	real sels(MAXSELS),xyz(3*MAXANT)
 	character array(MAXANT)*8,aname*8,mdata*80
-	integer lVis,lOut,vtsys,vant,vgmet,vnif
+	integer lVis,lOut,vtsys,vant,vgmet,vnif,vmdata
 	integer pol,npol,i1,i2,nant,i,j,k
-	logical updated,dogel,dotsys,domet,newel,dobl
+	logical updated,dogel,dotsys,domet,newel,dobl,doopcorr
 	character vis*64,out*64,type*1
 	integer nschan(MAXWIN),nif,nchan,nants,length,tcorr,na
 	real xtsys(MAXANT*MAXWIN),ytsys(MAXANT*MAXWIN)
@@ -146,7 +161,7 @@ c
 c  Externals.
 c
 	logical uvvarUpd,selProbe,hdPrsnt,keyprsnt
-	real elescale,getjpk
+	real elescale
 c
 	call output(version)
 	call keyini
@@ -155,6 +170,9 @@ c
 	call keya('out',out,' ')
 	call keya('mdata',mdata,' ')
 	call mkeya('array',array,MAXANT,nant)
+	do i=1,nant
+	  call ucase(array(i))
+	enddo
 c
 	do i=1,ATANT
 	  delta(1,i) = 0
@@ -173,7 +191,7 @@ c
      *					  abs(delta(3,i)).gt.0)
 	enddo
 c
-	call GetOpt(dogel,dotsys)
+	call GetOpt(dogel,dotsys,doopcorr)
 	call keyfin
 c
 c  Check the inputs.
@@ -233,21 +251,26 @@ c
 c  Get ready to handle atmospheric opacity correction and gain/elevation
 c  correction.
 c
-	if(domet.or.dogel.or.dobl)then
-	  call uvvarIni(lVis,vgmet)
-	  call uvvarSet(vgmet,'nschan')
-	  call uvvarSet(vgmet,'sfreq')
-	  call uvvarSet(vgmet,'sdf')
-	  call uvvarSet(vgmet,'ra')
-	  call uvvarSet(vgmet,'obsra')
-	  call uvvarSet(vgmet,'dec')
-	  call uvvarSet(vgmet,'obsdec')
-	  call uvvarSet(vgmet,'telescop')
-	  call uvvarSet(vgmet,'latitud')
-	endif
+	call uvvarIni(lVis,vgmet)
+	call uvvarSet(vgmet,'nschan')
+	call uvvarSet(vgmet,'sfreq')
+	call uvvarSet(vgmet,'sdf')
+	call uvvarSet(vgmet,'ra')
+	call uvvarSet(vgmet,'obsra')
+	call uvvarSet(vgmet,'dec')
+	call uvvarSet(vgmet,'obsdec')
+	call uvvarSet(vgmet,'telescop')
+	call uvvarSet(vgmet,'latitud')
 	newel = .true.
-	if(domet)then
-	  call metInit(mdata)
+	if(doopcorr)then
+	  if(domet)then
+	    call metInit(mdata)
+	  else
+	    call uvvarIni(lVis,vmdata)
+	    call uvvarSet(vmdata,'airtemp')
+	    call uvvarSet(vmdata,'pressmb')
+	    call uvvarSet(vmdata,'relhumid')
+	  endif
 	endif
 c
 c  Get ready to handle Tsys correction.
@@ -284,11 +307,20 @@ c
 	  if(length.ne.1)call bug('f',
      *		'Required info for options=auto is missing')
 	endif
+c
+c  If opacity correction is requested and the met file was not
+c  given, check that the dataset has the met data.
+c
+	if(doopcorr.and..not.domet)then
+	  call uvprobvr(lVis,'airtemp',type,length,updated)
+	  if(type.ne.'r'.and.length.ne.1)call bug('f',
+     *		'Met data missing from input')
+	endif
 	call uvrdvri(lVis,'nants',na,0)
 	ptime = preamble(4) - 1
 c
 	dowhile(nchan.gt.0)
-c	  call uvrdvrr(lVis,'jyperk',jyperk,0.0)
+	  call uvrdvrr(lVis,'jyperk',jyperk,0.0)
 	  call varCopy(lVis,lOut)
 	  call uvrdvri(lVis,'pol',pol,0)
 	  call uvrdvri(lVis,'npol',npol,0)
@@ -304,8 +336,31 @@ c
 	  endif
 	  call felget(lVis,vgmet,nif,nschan,freq0,freq,nchan,
      *                                                  ra,dec,lat)
-	  jyperk = getjpk(freq0(1))
 	  dojpk = .false.
+c
+c  Apply the Tsys correction, if needed.
+c
+	  tcorr = 1
+	  if(dotsys)call uvrdvri(lVis,'tcorr',tcorr,0)
+	  if(tcorr.eq.0)then
+	    if(uvvarUpd(vtsys))then
+	      call uvprobvr(lVis,'xtsys',type,length,updated)
+	      nants = length/nif
+	      if(nants*nif.ne.length.or.nants.le.0.or.nants.gt.MAXANT
+     *	        .or.type.ne.'r')call bug('f','Invalid tsys parameter')
+	      if(na.ne.nants)
+     *		call bug('f','Inconsistency in number of IFs')
+	      call uvgetvrr(lVis,'xtsys',xtsys,nants*nif)
+	      call uvprobvr(lVis,'ytsys',type,length,updated)
+	      if(nants*nif.ne.length.or.type.ne.'r')
+     *			      call bug('f','Invalid ytsys parameter')
+	      call uvgetvrr(lVis,'ytsys',ytsys,nants*nif)
+	    endif
+c
+	    call basant(preamble(5),i1,i2)
+	    call tsysap(data,nchan,nschan,xtsys,ytsys,
+     *	      nants,nif,i1,i2,pol,jyperk)
+	  endif
 c
 c  Do antenna table correction, if needed.
 c
@@ -316,7 +371,7 @@ c
 c  For elevation-related changes, check if the time has changed, and so 
 c  we need to update all the associated information.
 c
-	  if((domet.or.dogel.or.dobl))then
+	  if((doopcorr.or.dogel.or.dobl))then
 	    if(abs(ptime-preamble(4)).gt.5.d0/86400.d0)then
 	      ptime = preamble(4)
 	      call getlst(lVis,lst)
@@ -343,8 +398,17 @@ c
 c  Apply atmospheric opacity correction, if needed. Apply this both
 c  to the data, and to the jyperk system efficiency factor.
 c
-	  if(domet.and.newel)then
-	    call metGet(ptime,t0,p0,h0)
+	  if(doopcorr.and.newel)then
+	    if(domet)then
+	      call metGet(ptime,t0,p0,h0)
+	    else if(uvvarUpd(vmdata))then
+	      call uvgetvrr(lVis,'airtemp',t0,1)
+	      call uvgetvrr(lVis,'pressmb',p0,1)
+	      call uvgetvrr(lVis,'relhumid',h0,1)
+	      t0 = t0 + 273.15
+	      h0 = 0.01*h0
+	      p0 = 100*p0
+	    endif
 	    call opacGet(nif,freq0,real(el),t0,p0,h0,fac,Tb)
 	    scale = 1
 	    do i=1,nif
@@ -353,14 +417,11 @@ c
 	    scale = scale**(-1.0/real(nif))
 	    call uvputvrr(lOut,'tsky',Tb,nif)
 	    call uvputvrr(lOut,'trans',fac,nif)
-	    call uvputvrr(lOut,'airtemp',t0-273.15,1)
-	    call uvputvrr(lOut,'pressmb',p0/100.0,1)
-	    call uvputvrr(lOut,'relhumid',100.0*h0,1)
 	    call uvputvrd(lOut,'antel',180.0d0/DPI*el,1)
 	    call uvputvrr(lOut,'airmass',1./sin(real(el)),1)
 	  endif
 c
-	  if(domet)then
+	  if(doopcorr)then
 	    k = 0
 	    do i=1,nif
 	      do j=1,nschan(i)
@@ -374,32 +435,8 @@ c
 c
 c  Apply baseline correction, if needed.
 c
-	if(dobl)call blcorr(data,freq,nchan,ra,dec,lst,
+	  if(dobl)call blcorr(data,freq,nchan,ra,dec,lst,
      *				preamble(5),delta,ATANT)
-c
-c  Apply the Tsys correction, if needed.
-c
-	  tcorr = 1
-	  if(dotsys)call uvrdvri(lVis,'tcorr',tcorr,0)
-	  if(tcorr.eq.0)then
-	    if(uvvarUpd(vtsys))then
-	      call uvprobvr(lVis,'xtsys',type,length,updated)
-	      nants = length/nif
-	      if(nants*nif.ne.length.or.nants.le.0.or.nants.gt.MAXANT
-     *	        .or.type.ne.'r')call bug('f','Invalid tsys parameter')
-	      if(na.ne.nants)
-     *		call bug('f','Inconsistency in number of IFs')
-	      call uvgetvrr(lVis,'xtsys',xtsys,nants*nif)
-	      call uvprobvr(lVis,'ytsys',type,length,updated)
-	      if(nants*nif.ne.length.or.type.ne.'r')
-     *			      call bug('f','Invalid ytsys parameter')
-	      call uvgetvrr(lVis,'ytsys',ytsys,nants*nif)
-	    endif
-c
-	    call basant(preamble(5),i1,i2)
-	    call tsysap(data,nchan,nschan,xtsys,ytsys,
-     *	      nants,nif,i1,i2,pol)
-	  endif
 c
 	  if(npol.gt.0)then
 	    call uvputvri(lOut,'npol',npol,1)
@@ -419,11 +456,11 @@ c
 	end
 c************************************************************************
 	subroutine tsysap(data,nchan,nschan,xtsys,ytsys,nants,nif,
-     *							    i1,i2,pol)
+     *						    i1,i2,pol,jyperk)
 c
 	implicit none
 	integer nchan,nants,nif,nschan(nif),i1,i2,pol
-	real xtsys(nants,nif),ytsys(nants,nif)
+	real xtsys(nants,nif),ytsys(nants,nif),jyperk
 	complex data(nchan)
 c
 c------------------------------------------------------------------------
@@ -435,41 +472,43 @@ c
 	i = 0
 	do k=1,nif
 	  if(i+nschan(k).gt.nchan)call bug('f','Invalid description')
+	  if(pol.eq.XX)then
+	    T1T2 = xtsys(i1,k)*xtsys(i2,k)
+	  else if(pol.eq.YY)then
+	    T1T2 = ytsys(i1,k)*ytsys(i2,k)
+	  else if(pol.eq.XY)then
+	    T1T2 = xtsys(i1,k)*ytsys(i2,k)
+	  else if(pol.eq.YX)then
+	    T1T2 = ytsys(i1,k)*xtsys(i2,k)
+	  else
+	    call bug('f','Invalid polarization code')
+	  endif
+	  T1T2 = sqrt(T1T2)*jyperk/500.0
+c
 	  do j=1,nschan(k)
 	    i = i + 1
-	    if(pol.eq.XX)then
-	      T1T2 = xtsys(i1,k)*xtsys(i2,k)
-	    else if(pol.eq.YY)then
-	      T1T2 = ytsys(i1,k)*ytsys(i2,k)
-	    else if(pol.eq.XY)then
-	      T1T2 = xtsys(i1,k)*ytsys(i2,k)
-	    else if(pol.eq.YX)then
-	      T1T2 = ytsys(i1,k)*xtsys(i2,k)
-	    else
-	      call bug('f','Invalid polarization code')
-	    endif
-c
-	    data(i) = data(i)*sqrt(T1T2)/50.0
+	    data(i) = data(i)*T1T2
 	  enddo
 	enddo
 c
 	end
 c************************************************************************
-	subroutine getopt(dogel,dotsys)
+	subroutine getopt(dogel,dotsys,doopcorr)
 c
 	implicit none
-	logical dogel,dotsys
+	logical dogel,dotsys,doopcorr
 c------------------------------------------------------------------------
 	integer NOPTS
-	parameter(NOPTS=2)
+	parameter(NOPTS=3)
 	character opts(NOPTS)*8
 	logical present(NOPTS)
 c
-	data opts/'gainel  ','tsys     '/
+	data opts/'gainel  ','tsys     ','opcorr  '/
 c
 	call options('options',opts,present,NOPTS)
-	dogel  = present(1)
-	dotsys = present(2)
+	dogel    = present(1)
+	dotsys   = present(2)
+	doopcorr = present(3)
 c
 	end
 c************************************************************************
@@ -554,7 +593,7 @@ c    array  Name of the stations used in that array.
 c
 c------------------------------------------------------------------------
 	integer ATANT,NARRAYS
-	parameter(ATANT=6,NARRAYS=30)
+	parameter(ATANT=6,NARRAYS=33)
 c
 	integer i,j
 	character anames(NARRAYS)*6,arrays(ATANT,NARRAYS)*4
@@ -619,7 +658,12 @@ c
      *	'H75B  ','W104','N5  ','N2  ','W106','W109','W392'/
 	data anames(30),(arrays(i,30),i=1,ATANT)/
      *	'NS214 ','W106','N2  ','N7  ','N11 ','N14 ','W392'/
-
+	data anames(31),(arrays(i,31),i=1,ATANT)/
+     *	'H214B ','W98 ','W104','N14 ','N5  ','W113','W392'/
+	data anames(32),(arrays(i,32),i=1,ATANT)/
+     *	'WBCOR ','W112','W102','W104','W106','W125','W392'/
+	data anames(33),(arrays(i,33),i=1,ATANT)/
+     *	'EW352B','W112','W102','W104','W109','W125','W392'/
 c
 	if(nant.ne.ATANT)call bug('f','Incompatible number of antennas')
 c
@@ -1006,11 +1050,20 @@ c	data (wpc(6,j),j=1,3)/1.0000, 0.0000,     0.0000/
 c
 c  Gain curve deduced by Tony Wong on 04-Jun-02.
 c
-	data (wpc(1,j),j=1,3)/1.0000, 0.0000,     0.0000/
-	data (wpc(2,j),j=1,3)/0.4927, 1.6729e-2, -1.3791e-4/
-	data (wpc(3,j),j=1,3)/0.2367, 2.0487e-2, -1.3748e-4/
-	data (wpc(4,j),j=1,3)/0.5405, 1.7040e-2, -1.5798e-4/
-	data (wpc(5,j),j=1,3)/1.0000, 0.0000,     0.0000/
+c	data (wpc(1,j),j=1,3)/1.0000, 0.0000,     0.0000/
+c	data (wpc(2,j),j=1,3)/0.4927, 1.6729e-2, -1.3791e-4/
+c	data (wpc(3,j),j=1,3)/0.2367, 2.0487e-2, -1.3748e-4/
+c	data (wpc(4,j),j=1,3)/0.5405, 1.7040e-2, -1.5798e-4/
+c	data (wpc(5,j),j=1,3)/1.0000, 0.0000,     0.0000/
+c	data (wpc(6,j),j=1,3)/1.0000, 0.0000,     0.0000/
+c
+c  Gain curve deduced from Ravi's data of 04-Sep-03.
+c
+	data (wpc(1,j),j=1,3)/0.4877, 1.7936e-2, -1.5699e-4/
+	data (wpc(2,j),j=1,3)/0.4877, 1.7936e-2, -1.5699e-4/
+	data (wpc(3,j),j=1,3)/0.7881, 0.8458e-2, -0.8442e-4/
+	data (wpc(4,j),j=1,3)/0.7549, 1.2585e-2, -1.6153e-4/
+	data (wpc(5,j),j=1,3)/0.4877, 1.7936e-2, -1.5699e-4/
 	data (wpc(6,j),j=1,3)/1.0000, 0.0000,     0.0000/
 c
 	call basant(baseline, ant1, ant2)
