@@ -41,11 +41,15 @@
 %   4-jun-96  rjs  Added bin and nbin.
 %  05-dec-96  rjs  Added delra,deldec,pntra,pntdec
 %  20-mar-97  pjt  Added some recently added HatCreek variables, and "project"
+%   8-may-02  pjt  Added some more variables that had been added to HatCreek
+%                  (jyperka,obsline,rmspath,tau230,srv2k)
+
+\newcommand{\uvversion}{May 8, 2002}
 
 A \miriad\ uv dataset is composed of a collection of items and `\MM{u-v} variables'.
 The variables are parameters that are known at the time of the observation,
 and include measured data, and the description of the observation
-set up ({\it e.g.} correlator set up and observing centres).
+set up ({\it e.g.} correlator set up and observing centers).
 
 Table~\ref{t:vis-items} gives a list of the items that are used to build up a
 \miriad\ uv dataset.
@@ -93,7 +97,8 @@ exist in the {\tt visdata} item.
 A list of all items in a visibility dataset
 is summarised in Table~\ref{t:vis-items} below.
 A list of all the uv variables can be obtained with the \miriad\ program
-\task{uvlist}\index{uvlist}.
+\task{uvlist}\index{uvlist} or 
+\task{uvio}\index{uvio} for the brave of heart.
 
 The storage {\bf types} (2nd column) in the table below are:
 
@@ -114,6 +119,7 @@ Variables with two
 dimensions have the first dimension varying fastest, the usual FORTRAN
 notation.
 
+NB: The formal version of this document is recorded as ``{\it \uvversion}''.
 \newpage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \small\begin{tabbing}
@@ -224,9 +230,9 @@ ddec		\>R	\>radians
 \>\>\>  The actual observed DEC is calculated as dec + ddec.\\
 
 dec		\>R or	\>radians
-\> Declination of the phase center/tangent point. See {\tt epoch} for coordinate\\
+\> Declination of the phase center/tangent point. See {\tt epoch} for \\
 		\>D	\>
-\> definition.\\
+\> coordinate definition. See also {\tt obsdec}\\
 
 delay(nants)	\>D	\>nanosec
 \> delay setting at beginning of integration (Hat Ck)\\
@@ -288,7 +294,11 @@ ivalued(nants)	\>I	\>?
 
 jyperk		\>R	\>Jy/K
 \> The efficiency Jy/K, \\
-\>\>\> calculated during calibration\\
+\>\>\> calculated during online calibration\\
+
+jyperka(nants)	\>R	\>sqrt(Jy/K)
+\> Antenna based Jy/K, \\
+\>\>\> calculated during online calibration (Hat Ck)\\
 
 latitud		\>D	\>radians
 \> Geodetic latitude of the observatory.\\
@@ -375,14 +385,17 @@ nwide			\>I	\>-
 
 obsdec		\>D	\>radians
 \> Apparent declination of the phase centre/tangent point \\
-\>\>\>at time of observation.\\
+\>\>\>at time of observation. See also {\tt dec} \\
 
 observer(*)	\>A	\>-
 \>The name of the observer\\
 
+obsline(*)	\>A	\>-
+\>The name of the primary spectral line of interest to the observer\\
+
 obsra		\>D	\>radians
 \> Apparent right ascension of the phase centre/tangent point\\
-\>\>\> at time of observation.\\
+\>\>\> at time of observation. See also {\tt ra} \\
 
 on		\>I	\>-
 \>Either 0 or 1, for on and off pointing,\\
@@ -455,7 +468,7 @@ project(*)	\>A	\>-
 ra		\>R or	\>radians
 \>Right ascension of the phase center/tangent point. See {\tt epoch} for\\
 		\>D	\>
-\>the definition of the coordinate system.\\
+\>the definition of the coordinate system. See also {\tt obsra} \\
 
 relhumid	\>R     \>\%
 \>Relative Humidity at observatory\\
@@ -463,6 +476,9 @@ relhumid	\>R     \>\%
 restfreq(nspect) \>D	\>GHz
 \>  Rest frequency for each spectral window.\\
 \>\>\>  This may be zero for continuum observations.\\
+
+rmspath		\>R     \>\%
+\>RMS path variation (Hat Ck)\\
 
 sdf(nspect)	\>D	\>GHz	
 \> Change in frequency per channel\\
@@ -473,10 +489,16 @@ sfreq(nspect)	\>D	\>GHz
 source(*)	\>A	\>-	
 \>The name of the source \\
 
+srv2k(nants)	\>R	\>?
+\>??? (Hat Ck)  \\
+
 systemp		\>R	\>Kelvin
 \> Antenna system temperatures \\
 \ \ or systemp(nants) \\
 \ \ or systemp(nants,nspect)\\
+
+tau230		\>R	\>-
+\> Optical depth at 230 GHz, as measured with the ... system (Hat Ck) \\
 
 telescop(*)	\>A	\>-
 \>The telescope name. Some standard values are:\\
