@@ -82,7 +82,7 @@ c@ radec
 c	If no input image is given, this gives the RA and DEC of the
 c	image, in hours and degrees, respectively. They can be given in
 c	hh:mm:ss,dd:mm:ss, or as decimal hours and degrees. The default is
-c	RA=0, DEC=45.
+c	RA=0, DEC=30.
 c@ options
 c	Extra processing options. Several can be given, separated by
 c	commas. Minimum match is used. Possible values are:
@@ -140,10 +140,11 @@ c    mchw  19mar99  Add model isothermal 2D projection for cluster gas.
 c    lss   07jul99  Add 3D gaussian model for cubes.
 c    rjs   10jan00  Added "seed" parameter.
 c    mchw  16jan01  Jet model.
-c  Bugs/Wishlist:
+c    pjt    6sep01  using MAXDIM1 instead of MAXDIM
+c    pjt    3nov01  changed radec default to reflect those in uvgen
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version='Imgen: version 1.1 16-Jan-01')
+	parameter(version='Imgen: version 1.1 3-nov-01')
 	include 'mirconst.h'
 	include 'maxdim.h'
 	include 'maxnax.h'
@@ -250,7 +251,7 @@ c
 	call keyi('imsize',n2,n1)
 	n3 = 1
 	call keyt('radec',crval1,'hms',0.d0)
-	call keyt('radec',crval2,'dms',0.25*dpi)
+	call keyt('radec',crval2,'dms',dpi/6.0d0)
 	crpix1 = n1/2 + 1
 	crpix2 = n2/2 + 1
 c
