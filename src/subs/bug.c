@@ -8,6 +8,7 @@
 /*    rjs     14jul98 Add a caste operation in errmsg_c, to attempt	*/
 /*		      to appease some compilers.			*/
 /*    pjt     23sep01 darwin						*/
+/*    pjt      3dec01 bypass fatal errors (for alien clients) if req'd  */
 /************************************************************************/
 
 #include <stdio.h>
@@ -18,6 +19,36 @@ void bug_c();
 
 char *Name = NULL;
 int reentrant=0;
+
+typedef void (*proc)(void);
+static proc bug_cleanup=NULL;
+
+/************************************************************************/
+void bugrecover_c(proc cl)
+/** bugrecover_c -- bypass fatal bug calls for alien clients            */
+/*& pjt                                                                 */
+/*: error-handling                                                      */
+/*+                                                                    
+    This routine does not have a FORTRAN counterpart, as it is normally 
+    only called by C clients who need to set their own error handler if
+    for some reason they don't like the MIRIAD one (e.g. C++ or java
+    exceptions, or NEMO's error handler 
+    Example of usage:
+
+    void my_handler(void) {
+        ....
+    }
+
+
+    ..
+    bugrecover_c(my_handler);
+    ..
+/*--                                                                    */
+/*----------------------------------------------------------------------*/
+{
+    bug_cleanup = cl;
+}
+
 /************************************************************************/
 void buglabel_c(name)
 char *name;
@@ -107,6 +138,7 @@ char s,*m;
     lib$stop(SS$_ABORT);
 #else
 /*    fprintf(stderr,"### Program exiting with return code = 1 ###\n"); */
+    if (bug_cleanup) return;
     exit (1);
 #endif
   }
