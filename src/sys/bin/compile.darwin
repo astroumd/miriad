@@ -16,7 +16,7 @@ setenv Flinkdir  "-L`echo $mmir/lib/$mhost $MIRXLIB | sed 's/ / -L/g'`"
 setenv Flinklib  "-lmir -llinpack -lpgplot -lX11 -lm"
 setenv Finclude  "-I`echo $mmir/src/inc $MIRXINC | sed 's/ / -I/g'`"
 # the gnu compiler actually adds -Dlinux, so we don't need it here
-setenv Ccompile  "gcc"
+setenv Ccompile  "cc"
 setenv Coptions  "-O -fno-common -DWORDS_BIGENDIAN -Ddarwin"
 setenv CoptionsN "-DWORDS_BIGENDIAN -Ddarwin"
 setenv Clinkdir  "-L`echo $mmir/lib/$mhost $MIRXLIB | sed 's/ / -L/g'`"
