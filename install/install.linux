@@ -398,7 +398,8 @@ if ($hosttype == linux) then
 
  echo Compiling rpfits
  pushd $MIR/borrow/rpfits
- make ARCH=linux RANLIB=ranlib FC=g77 FFLAGS=-g CFLAGS=-g
+ make ARCH=linux RANLIB=ranlib FC=g77 FFLAGS=-g CFLAGS=-g >& $MIR/tmp/rpfits.$$.$hosttype 
+ if ($status) echo Problems compiling RPFITS library
  mv librpfits.a $MIRLIB
  make clean
  popd
@@ -406,7 +407,8 @@ if ($hosttype == linux) then
  echo Compiling atnf code: atlod
  pushd $MIR/tmp
  cp -p $MIR/src/prog/atnf/atlod.* .
- make -f $MIRLIB/Makefile atlod EL=-lrpfits
+ make -f $MIRLIB/Makefile atlod EL=-lrpfits >& $MIR/tmp/atlod.$$.$hosttype 
+ if ($status) echo Problems compiling ATLOD
  mv atlod $MIRBIN
  doc -p atlod.for
  mv atlod.doc $MIRPDOC
