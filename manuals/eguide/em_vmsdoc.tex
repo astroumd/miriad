@@ -1,0 +1,208 @@
+\module{exportbck.com}%
+\noindent Delete junk from miriad directories
+\newline \ 
+\newline \abox{File:} \$MIR/src/scripts/vms/exportbck.com
+\newline \abox{Keywords:} system operation
+\newline{\tenpoint\newline
+Delete junk from miriad directories
+\par}
+\module{mirbug.com}%
+\noindent Send mail about bugs to appropriate person
+\newline \ 
+\newline \abox{File:} \$MIR/src/scripts/vms/mirbug.com
+\newline \abox{Responsible:} Bart Wakker
+\newline \abox{Keywords:} user utility
+\newline{\tenpoint\newline
+Usage: @mir\_bug [selection] [taskname] [file]
+
+Mirbug allows the user to send mail to the appropriate persons.
+
+[selection] should be one of ``bug'' or ``feedback''. This influences
+the information prepended to a report file. ``mirbug'' is an alias
+for ``mir.bug.csh bug''; `` mirfeedback'' is an alias for ``mir.bugcsh.
+feedback''
+
+[taskname] should be one of the miriad tasks/tools/scripts/subs.
+It is used to find out who is responsible for the code and then the
+report is mailed to that person. If it is not given mirbug complains,
+but continues.
+
+[file] is the name of an optional, previously created, file
+containing the report. Some extra information is prepended and an
+editor is started. The default editor is vi on unix and edt on VMS.
+However, by including 'setenv EDITOR mem' in the .cshrc file (unix)
+or 'editor:==mem' in the login.com file (VMS) it is possible to
+specify to use, for instance, mem (or any other editor).
+
+[file] must be the third argument.
+
+If mirbug.com is aborted and a template was already generated, it is
+saved to allow extra editing, otherwise it is deleted.
+The generated mail message is sent to the responsible person and to
+a central address at the site of the programmer. If no responsible
+person can be found it is sent to all the central addresses. A copy
+is also sent to the user. 
+\par}
+\module{mirbug}%
+\noindent Send mail about bugs to appropriate person
+\newline \ 
+\newline \abox{File:} \$MIR/src/scripts/vms/mirbug.com
+\newline \abox{Responsible:} Bart Wakker
+\newline \abox{Keywords:} user utility
+\newline{\tenpoint\newline
+Usage: mirbug [taskname] [file]
+
+Mirbug allows the user to send mail to the appropriate persons.
+
+[taskname] should be one of the miriad tasks/tools/scripts/subs.
+It is used to find out who is responsible for the code and then the
+report is mailed to that person. If it is not given mirbug complains,
+but continues.
+
+[file] is the name of an optional, previously created, file
+containing the report. Some extra information is prepended and an
+editor is started. The default editor is vi on unix and edt on VMS.
+However, by including 'setenv EDITOR mem' in the .cshrc file (unix)
+or 'editor:==mem' in the login.com file (VMS) it is possible to
+specify to use, for instance, mem (or any other editor).
+
+[file] must be the third argument.
+
+If mir.bug.csh is aborted and a template was already generated, it is
+saved to allow extra editing, otherwise it is deleted.
+The generated mail message is sent to the responsible person and to
+a central address at the site of the programmer. If no responsible
+person can be found it is sent to all the central addresses. A copy
+is also sent to the user. 
+\par}
+\module{mirfeedback}%
+\noindent Send feedback to the appropriate person
+\newline \ 
+\newline \abox{File:} \$MIR/src/scripts/vms/mirbug.com
+\newline \abox{Responsible:} Bart Wakker
+\newline \abox{Keywords:} user utility
+\newline{\tenpoint\newline
+Usage: mirfeedback [taskname] [file]
+
+This is a way to send feedback to a programmer. For a description
+of how it works, see ``mirbug''. The difference between these two is
+in the prepended information.
+\par}
+\module{mirhelp.com}%
+\noindent Online help utility; prints tasks or routine documentation
+\newline \ 
+\newline \abox{File:} \$MIR/src/scripts/vms/mirhelp.com
+\newline \abox{Responsible:} Bart Wakker
+\newline \abox{Keywords:} programmer tool
+\newline{\tenpoint\newline
+online help utility; prints tasks or routine documentation
+
+Usage: mirhelp topic [-s][-n]
+where topic is a task or routine name occuring in
+MIR:[.doc.prog], MIR:[.doc.subs] or MIR:[.src.subs].
+All tasks/routines are found whose name matches all or part of the
+input topic.
+The use of existing preformatted files is given precedence over
+searching through the subroutine files.
+Using the -s flag forces mirhelp to search through subroutine files
+instead of using preformatted documentation files.
+Option -n makes mirhelp for the full name of the specified file.
+\par}
+\module{MIRRC.com}%
+\noindent MIRRC file for VAX
+\newline \ 
+\newline \abox{File:} \$MIR/src/scripts/vms/MIRRC.com
+\newline \abox{Keywords:} system operation
+\newline{\tenpoint\newline
+Miriad's MIRRC file.
+\par}
+\module{mkmanuals.com}%
+\noindent Construct file to make miriad manual
+\newline \ 
+\newline \abox{File:} \$MIR/src/scripts/vms/mkmanuals.com
+\newline \abox{Keywords:} system operation
+\newline{\tenpoint\newline
+This is a command procedure to construct various files which form
+part of the Miriad manual. The output from each of these steps is a
+.latex, .toc or .idx file, which is later included within the user
+or programmer manual. It takes one optional parameter, which can be:
+{\eightpoint\begintt
+  CONTENTS   Makes the table-of-contents of the user manual.
+  TASKS      Makes the chapter of the user manual, describing tasks.
+   SUBS      Makes the appendix of the programmers manual, describing
+             subroutines.
+   INDEX     Makes the index of the programmers manual.
+\endtt}
+If the parameter is missing, all parts are constructed.
+\par}
+\module{note.com}%
+\noindent Adds a note to the updates.dat file.
+\newline \ 
+\newline \abox{File:} \$MIR/src/scripts/vms/note.com
+\newline \abox{Keywords:} system operation
+\newline{\tenpoint\newline
+This adds a note to the updates.dat file.
+Inputs:
+{\eightpoint\begintt
+  p1   Your comments.
+\endtt}
+\par}
+\module{oneoff.com}%
+\noindent Perform selective updates
+\newline \ 
+\newline \abox{File:} \$MIR/src/scripts/vms/oneoff.com
+\newline{\tenpoint\newline
+This is a command procedure to perform selective updates of particular
+files. No check is made that they are in the correct hierarchy, nor
+of their modification times. 
+Inputs:
+{\eightpoint\begintt
+ p1          Name of machine to update.
+ p2          List of files to update.
+\endtt}
+\par}
+\module{rmdir.com}%
+\noindent Command procedure to remove a directory tree.
+\newline \ 
+\newline \abox{File:} \$MIR/src/scripts/vms/rmdir.com
+\newline \abox{Keywords:} system operation
+\newline{\tenpoint\newline
+Command procedure to remove a directory tree.
+\par}
+\module{update.com}%
+\noindent Updates on vax
+\newline \ 
+\newline \abox{File:} \$MIR/src/scripts/vms/update.com
+\newline \abox{Keywords:} system operation
+\newline{\tenpoint\newline
+This determines which files are newer in Werongs microVAX directories
+than on some other machine.
+Inputs:
+{\eightpoint\begintt
+ p1    Machine name.
+\endtt}
+\par}
+\module{vsubmit.com}%
+\noindent Submit vsubproc.com
+\newline \ 
+\newline \abox{File:} \$MIR/src/scripts/vms/vsubmit.com
+\newline \abox{Keywords:} system operation
+\newline{\tenpoint\newline
+This file is spawned by vmenu to submit the vsubproc.com file
+IN: P1 = the batchque name   P2 = the miriad command
+OUT: para1 = current directory  para2 = miriad command
+The batch log file will be named sys\$login:vsubproc.log
+\par}
+\module{vsubproc.com}%
+\noindent Generic subprocess command file for vmenu
+\newline \ 
+\newline \abox{File:} \$MIR/src/scripts/vms/vsubproc.com
+\newline \abox{Keywords:} system operation
+\newline{\tenpoint\newline
+generic subprocess command file for vmenu (this is submitted by
+vsubmit.com)
+
+{\eightpoint\begintt
+ P1 = current directory      P2 = the miriad command to be run
+\endtt}
+\par}
