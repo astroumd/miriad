@@ -37,7 +37,8 @@ c
 c@ options
 c       'nopol'    Disable polarization. All the correlations will be
 c                  labelled as XX.
-c       'cirpol'   when circular polarization data taken with waveplates.
+c       'circular' when circular polarization data taken with single
+c                  with waveplates.
 c                  Default is for linear polarization data taken with
 c                  dual linear feeds.   
 c       'oldpol'   Converts MIR polarization data observed before
@@ -119,7 +120,9 @@ c    jhz  11-jan-05 added Key word rsnchan controls the resmapling vis
 c                   spectra output.  
 c    jhz  28-feb-05 added option dospc
 c    jhz  01-mar-05 added rx id label to the output file
-c    jhz  02-mar-05 added option doengrd to read engineer data file
+c    jhz  02-mar-05 added options doengrd to read engineer data file
+c    jhz  08-mar-05 added options circular to read polarization data
+c                   taken from single feed with waveplates.
 c------------------------------------------------------------------------
         integer maxfiles
         parameter(maxfiles=128)
@@ -132,7 +135,7 @@ c
         double precision rfreq(2)
         logical doauto,docross,docomp,dosam,relax,unflag,dohann
         logical dobary,doif,birdie,dowt,dopmps,doxyp,doop
-        logical polflag,hires,nopol,sing,cirpol,oldpol,dsb,dospc,doengrd
+        logical polflag,hires,nopol,sing,circular,oldpol,dsb,dospc,doengrd
         integer fileskip,fileproc,scanskip,scanproc,sb, dosporder
         integer doeng
 	integer rsNCHAN
@@ -169,7 +172,7 @@ c
         call mkeyd('restfreq',rfreq,2,nfreq)
         call getopt(doauto,docross,docomp,dosam,doxyp,doop,relax,
      *    sing,unflag,dohann,birdie,dobary,doif,dowt,dopmps,polflag,
-     *    hires,nopol,cirpol,oldpol,dospc,doengrd)
+     *    hires,nopol,circular,oldpol,dospc,doengrd)
             dosporder=-1
             if(dospc) dosporder=1
             doeng =-1
@@ -235,7 +238,7 @@ c
             if(iostat.ne.0)call bug('f','Error skipping SMAMIR file')
           else
             call pokeini(tno,dosam,doxyp,doop,dohann,birdie,dowt,
-     *      dopmps,dobary,doif,hires,nopol,cirpol,oldpol,rsnchan)
+     *      dopmps,dobary,doif,hires,nopol,circular,oldpol,rsnchan)
             if(nfiles.eq.1)then
               i = 1
             else
@@ -292,11 +295,11 @@ c
 c************************************************************************
         subroutine getopt(doauto,docross,docomp,dosam,doxyp,doop,
      *    relax,sing,unflag,dohann,birdie,dobary,doif,dowt,dopmps,
-     *    polflag,hires,nopol,cirpol,oldpol,dospc,doengrd)
+     *    polflag,hires,nopol,circular,oldpol,dospc,doengrd)
 c
         logical doauto,docross,dosam,relax,unflag,dohann,dobary,doop
         logical docomp,doif,birdie,dowt,dopmps,doxyp,polflag,hires,sing
-        logical nopol,cirpol,oldpol,dospc,doengrd
+        logical nopol,circular,oldpol,dospc,doengrd
 c
 c  Get the user options.
 c
@@ -332,7 +335,7 @@ c------------------------------------------------------------------------
      *            'unflag  ','samcorr ','hanning ','bary    ',
      *            'noif    ','birdie  ','reweight','xycorr  ',
      *            'opcorr  ','nopflag ','hires   ','pmps    ',
-     *            'mmrelax ','single  ','nopol   ','cirpol  ',
+     *            'mmrelax ','single  ','nopol   ','circular  ',
      *            'oldpol','dospc', 'doengrd'/
         call options('options',opts,present,nopt)
         doauto = .not.present(1)
@@ -357,7 +360,7 @@ c
 c       mmrelax = present(17)
         sing    = present(18)
         nopol   = present(19)
-        cirpol  = present(20)
+        circular  = present(20)
         oldpol  = present(21)
         dospc   = present(22)
         doengrd = present(23)
@@ -409,11 +412,11 @@ c************************************************************************
 c************************************************************************
         subroutine pokeini(tno1,dosam1,doxyp1,doop1,
      *          dohann1,birdie1,dowt1,dopmps1,dobary1,
-     *          doif1,hires1,nopol1,cirpol1,oldpol1,rsnchan1)
+     *          doif1,hires1,nopol1,circular1,oldpol1,rsnchan1)
 c
         integer tno1, rsnchan1
         logical dosam1,doxyp1,dohann1,doif1,dobary1,birdie1,dowt1
-        logical dopmps1,hires1,doop1,nopol1,cirpol1,oldpol1
+        logical dopmps1,hires1,doop1,nopol1,circular1,oldpol1
 c
 c  Initialise the Poke routines.
 c------------------------------------------------------------------------
@@ -518,7 +521,7 @@ c
 c
         call rspokeinisma(kstat,tno1,dosam1,doxyp1,doop1,
      *  dohann1,birdie1,dowt1,dopmps1,dobary1,doif1,hires1,
-     *  nopol1,cirpol1,oldpol1,lat1,long1,rsnchan1)
+     *  nopol1,circular1,oldpol1,lat1,long1,rsnchan1)
         end
 c************************************************************************
         subroutine liner(string)
