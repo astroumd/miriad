@@ -1,0 +1,137 @@
+/***********************************************************************/
+/*
+ *  The key routines provide keyword-oriented access to the command line.
+ *
+ *  History:
+ *    rjs   Dark-ages Original version.
+ *    bs    ???88     Converted it to use iargc and getarg. Added -f flag.
+ *    rjs   8sep89    Improved documentation.
+ *    nebk  10sep89   Added mkeyr.  I think rjs will not like it (Too right!).
+ *    rjs   19oct89   Major rewrite to handle @ files.
+ *    rjs   15nov89   Added keyf routine, and did the rework needed to support
+ *		      this. Added mkeyf. Modified mkeyr.
+ *    pjt   26mar90   Added mkeya. like mkeyr (again, bobs will not like this)
+ *    pjt   10apr90   some more verbose bug calls.
+ *    rjs   23apr90   Made pjt's last changes into standard FORTRAN (so the
+ *		      Cray will accept it).
+ *    pjt   10may90   Make it remember the programname in keyini (se key.h)
+ *                    for bug calls - introduced progname
+ *    rjs   22oct90   Check for buffer overflow in keyini.
+ *    pjt   21jan91   Added mkeyi, variable index is now idx, exp is expd
+ *    pjt    5mar91   atod -> atodf
+ *    pjt   18mar91   increased arg buffer-length in keyini 80->256
+ *                    (working on -h flag; bug verbosities)
+ *    pjt   25jun91   allow .TRUE. and .FALSE. as logicals too (keyl)
+ *    nebk  14oct91   Provide more space in PBUF for contents of @files
+ *                    in KEYREAD
+ *    pjt    1feb92   Added -k flag to display keywords
+ *    pjt   13jul92   Provide more space in keyini: 256 char / argument
+ *    rjs    2sep92   Correctly handle blanks at the end of line in @ files.
+ *		      Add -? flag.
+ *    nebk  23nov92   Add mkeyd.  rjs spits dummy.
+ *    rjs   04dec92   Rewrite keyi, so that mchw's new hex/octal conversion
+ *		      routine is used.
+ *    rjs   04jan93   Eliminate progname, and call buglabel instead. General
+ *		      tidying.
+ *     jm   11jan93   Modified keyini to strip off the leading path
+ *		      information of the application name so the command
+ *		      line arguments work correctly.  Modified keyput to
+ *		      pass in the task name and to handle local variable
+ *		      names.  Added local integer function keyindex to
+ *		      find the index of the entry associated with the
+ *		      input key word.  Modified keyput, keyget, and
+ *		      keyprsnt to use the function keyindex.
+ *     jm   02nov94   Stripped away almost every routine from the
+ *                    Fortran file to create this one.  This collection
+ *                    of wrappers permit Fortran calls to the C
+ *                    routines (key.c).  The KeyIni and MKey[AF]
+ *                    routines still remain in Fortran since they can
+ *                    not be easily switched to C.  Note also that the
+ *                    calling syntax of keyini differs from keyini_c.
+ *     jm   17nov94   Added forward declartion prototypes for each key
+ *                    function called.
+ *     jm   27dec94   Added new function keyinit().
+ */
+
+#include "sysdep.h" /* Include necessary for definition of ARGS macro. */
+
+/***********************************************************************/
+fortran subroutine keyinit(character task)
+{
+  extern void keyinit_c ARGS((Const char *));
+  keyinit_c(task.zterm);
+}
+/***********************************************************************/
+fortran subroutine keyput(character task, character arg)
+{
+  extern void keyput_c ARGS((Const char *, char *));
+  keyput_c(task.zterm, arg.zterm);
+}
+/***********************************************************************/
+fortran subroutine keyfin()
+{
+  extern void keyfin_c ARGS((void));
+  keyfin_c();
+}
+/***********************************************************************/
+fortran logical function keyprsnt(character key)
+{
+  extern int keyprsnt_c ARGS((Const char *));
+  return(keyprsnt_c(key.zterm));
+}
+/***********************************************************************/
+fortran subroutine keya(character key, character value, character defval)
+{
+  extern void keya_c ARGS((Const char *, char *, Const char *));
+  keya_c(key.zterm, value.addr, defval.zterm);
+  value.pad;
+}
+/***********************************************************************/
+fortran subroutine keyf(character key, character value, character defval)
+{
+  extern void keyf_c ARGS((Const char *, char *, Const char *));
+  keyf_c(key.zterm, value.addr, defval.zterm);
+  value.pad;
+}
+/***********************************************************************/
+fortran subroutine keyd(character key, double value, double defval)
+{
+  extern void keyd_c ARGS((Const char *, double *, double));
+  keyd_c(key.zterm, value.addr, defval.val);
+}
+/***********************************************************************/
+fortran subroutine keyr(character key, real value, real defval)
+{
+  extern void keyr_c ARGS((Const char *, float *, float));
+  keyr_c(key.zterm, value.addr, defval.val);
+}
+/***********************************************************************/
+fortran subroutine keyi(character key, integer value, integer defval)
+{
+  extern void keyi_c ARGS((Const char *, int *, int));
+  keyi_c(key.zterm, value.addr, defval.val);
+}
+/***********************************************************************/
+fortran subroutine keyl(character key, logical value, logical defval)
+{
+  extern void keyl_c ARGS((Const char *, int *, int));
+  keyl_c(key.zterm, value.addr, defval.val);
+}
+/***********************************************************************/
+fortran subroutine mkeyd(character key, double value, integer nmax, integer n)
+{
+  extern void mkeyd_c ARGS((Const char *, double [], int, int *));
+  mkeyd_c(key.zterm, value.addr, nmax.val, n.addr);
+}
+/***********************************************************************/
+fortran subroutine mkeyr(character key, real value, integer nmax, integer n)
+{
+  extern void mkeyr_c ARGS((Const char *, float [], int, int *));
+  mkeyr_c(key.zterm, value.addr, nmax.val, n.addr);
+}
+/***********************************************************************/
+fortran subroutine mkeyi(character key, integer value, integer nmax, integer n)
+{
+  extern void mkeyi_c ARGS((Const char *, int [], int, int *));
+  mkeyi_c(key.zterm, value.addr, nmax.val, n.addr);
+}
