@@ -321,6 +321,8 @@ c    27oct00 rjs/mchw changes to allow up to 2047 antennas.
 cc    29sep00 pjt   Put appending data back in  uvgen
 cc     4sep01 pjt   time= example for random number generations
 c    12feb02  pjt  Merged back the two previous UMD additions
+c    01mar02  mchw  changed epoch to 2000.
+c    08mar02  mchw  don't write pbfwhm if not set, so mosaicing uses telescop name.
 c
 c  Bugs/Shortcomings:
 c    * Frequency and time smearing is not simulated.
@@ -349,7 +351,7 @@ c	pbfwhm=76,137,-0.2 simulates a primary beam pattern between
 c	10m and 6m antennas at 100 GHz. 
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version = 'Uvgen: version 1.0 12-feb-02')
+	parameter(version = 'Uvgen: version 1.0 08-mar-02')
 	integer ALTAZ,EQUATOR
 	parameter(ALTAZ=0,EQUATOR=1)
 	integer PolRR,PolLL,PolRL,PolLR,PolXX,PolYY,PolXY,PolYX
@@ -744,7 +746,7 @@ c
 	call uvputvrd(unit,'obsra',sra,1)
 	call uvputvrd(unit,'dec',sdec,1)
 	call uvputvrd(unit,'obsdec',sdec,1)
-	if(pbfwhm(1).ge.0)
+	if(pbfwhm(1).gt.0)
      *		call uvputvrr(unit,'pbfwhm',3600*180/pi*pbfwhm(1),1)
 c
 	call uvputvrd(unit,'lo1',lo1,1)
@@ -773,7 +775,7 @@ c
 	call uvputvrr(unit,'inttime',inttime,1)
 	call uvputvrr(unit,'vsource',0.,1)
 	call uvputvrr(unit,'veldop',0.,1)
-	call uvputvrr(unit,'epoch',1950.,1)
+	call uvputvrr(unit,'epoch',2000.,1)
 	call uvputvri(unit,'nants',nant,1)
 	call uvputvri(unit,'ntemp',0,1)
 	call uvputvri(unit,'npol',npol,1)
