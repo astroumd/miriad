@@ -10,6 +10,7 @@ if ($?MIR == 0) then
   exit 1
 endif
 
+set tar=0
 set src=mirlib
 set lib=/dev/null
 set inc=/dev/null
@@ -19,6 +20,11 @@ set bin=/dev/null
 foreach _a ($*)
   set $_a
 end
+
+if ($tar) then
+  set version=`cat $MIR/VERSION`
+  set src=mirlib-$version
+endif
 
 if (! -e $src) mkdir $src
 
@@ -44,18 +50,24 @@ end
 
 cp $MIR/install/Makefile .
 
-# compile
+# only compile if a tar file is not made
 
-foreach f ($subs)
-  $cc $cflags -c $f
-end
-ar ruv libmir.a *.o
-$cc $cflags -DTESTBED -o uvio uvio.c libmir.a -lm
+if ($tar) then
+  echo Creating export tar $src.tar.gz 
+  cd ..
+  tar zcf $src.tar.gz $src
+  rm -rf $src
+else
+  echo Compiling in $src
+  foreach f ($subs)
+    $cc $cflags -c $f
+  end
+  ar ruv libmir.a *.o
+  $cc $cflags -DTESTBED -o uvio uvio.c libmir.a -lm
 
-
-#  install
-
-set null=/dev/null
-if ($bin != $null) cp uvio     $bin
-if ($lib != $null) cp libmir.a $lib
-if ($inc != $null) cp miriad.h $inc
+  #  install
+  set null=/dev/null
+  if ($bin != $null) cp uvio     $bin
+  if ($lib != $null) cp libmir.a $lib
+  if ($inc != $null) cp miriad.h sysdep.h $inc
+endif
