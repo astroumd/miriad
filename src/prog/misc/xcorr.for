@@ -133,7 +133,18 @@ c
 	  endif
         enddo
 c
-	write(line,'(a)') 'column  average  rms   correlation matrix'
+c  Subtract average
+c
+	do j=1,ncol
+	  do i=1,nrow
+	    data(i,j) = data(i,j) - ave(j)
+          enddo
+        enddo
+c
+c  Print correlation matrix
+c
+	write(line,'(a)')
+     *		 'column  average      rms      correlation matrix'
 	call output(line)
 	do j=1,ncol
           do k=1,ncol
