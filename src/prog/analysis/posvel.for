@@ -44,10 +44,11 @@ c  History:
 c    28feb95 mchw Extracted from VELPLOT subroutines.
 c     7sep00 pjt  Standard fortran so linux (g77) will compile it too
 c     5nov01 mchw aligned code with current velplot.h
+c    12nov01 pjt  ansi fortran for linux (string concat)
 c----------------------------------------------------------------------c
 	include 'velplot.h'
 	character*(*) version
-	parameter(version='(version 3.0 5-Nov-2001)')
+	parameter(version='(version 3.0 12-Nov-2001)')
 	integer maxnax,maxboxes
 	parameter(maxnax=3,maxboxes=128)
 	integer boxes(maxboxes),nsize(maxnax),blc(maxnax),trc(maxnax)
@@ -265,8 +266,9 @@ c    cdelt1,2
 c    common/head/ contains map header
 c------------------------------------------------------------------c
 	include 'velplot.h'
-	character*80 text
+	character*80 text,fname
 	integer lOut,nsize(3),j,k,ipt
+	integer len1
 c
 c  Open output file and write header from values in common.
 c
@@ -297,7 +299,8 @@ c
 c
 c write out 1 row at a time
 c
-	call output('writing output Image to file: '//filename)
+	fname = filename(1:len1(filename))
+	call output('writing output Image to file: '//fname)
 	ipt = 1
 	do k=1,nc
 	  call xysetpl(lOut,1,k)
