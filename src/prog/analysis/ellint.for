@@ -115,9 +115,6 @@ c    pjt   24nov03      maxring was defined too short, didn't write out
 c                       rows before blc(2) and above trc(2)
 c    pjt   25nov03      fix problems in headcopy if blc/trc are sub-imaged
 c
-c  TODO: figure out how not to corrupt crpix when a (edge) mask is present
-c        headcopy appears to do this. 
-c
 c----------------------------------------------------------------------c
         include 'mirconst.h'
 	include 'maxdim.h'
