@@ -1,0 +1,41 @@
+#! /bin/csh -f
+#
+#  Generate files for subsystems like:  $AIPS++/code/aips/mirlib
+#  (though note as of this writing, summer 2004) this is still the old MIR3
+#  We assume here the new MIR4 version.
+
+
+if ($?MIR == 0) then
+  echo MIR is not defined, you need to have a running MIRIAD to clone the mirlib library
+  exit 1
+endif
+
+set tmp=mirlib
+
+if (! -e $tmp) mkdir $tmp
+
+cd $tmp
+set inch=(maxdimc.h maxdim.h)
+#set subs=(bug.c dirs.c hio.c key.c pack.c uvio.c xyzio.c dio.c headio.c interface.c maskio.c scrio.c xyio.c)
+set subs=(bug.c hio.c key.c pack.c uvio.c xyzio.c dio.c headio.c interface.c maskio.c scrio.c xyio.c)
+set subh=(miriad.h io.h hio.h sysdep.h)
+
+
+
+foreach f ($inch)
+  cp $MIRINC/$f .
+end
+
+foreach f ($subh $subs)
+  cp $MIRSUBS/$f .
+end
+
+foreach f ($subs)
+  gcc -Wall -c $f
+end
+ar ruv libmir.a *.o
+
+# libmir.a and miriad.h are the exported material
+
+
+
