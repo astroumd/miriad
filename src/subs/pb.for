@@ -58,8 +58,13 @@ c   26mar97   rjs    Less precision in pbencode.
 c   07jul97   rjs    Change call to coaxdesc to coaxget.
 c   05sep97   mchw   Change lower freq for HATCREEK to 24 GHz.
 c   09may00   rjs    Add extra check.
+c   23jun03   pjt    add LOFAR
+c   30jun04   gmx    Updated WSRT beam
+c**
 c   10may02   rjs    Add model for OVRO.
-c   13oct03   rjs    Added Ravi's 12mm model.
+c   13oct03   rjs    Added Ravi's 12mm model.  
+c**
+c    4jan05   pjt    merged in the two RJS changes, wonderful this CVS....
 c************************************************************************
 c* pbList -- List known primary beam types.
 c& rjs
@@ -718,21 +723,26 @@ c  according to numbers from Shardha Jogee.
 c
 	call pbAdd('OVRO',24.0,350.0,   107.3, 0.05, GAUS,0,0.,
      *				   'Truncated Gaussian')
+
 c
 c  The Hat Ck primary beam is a gaussian of size is 191.67 arcmin.GHz
 c  according to "John L"
 c
-	call pbAdd('HATCREEK',24.0,350.0,   191.67, 0.05, GAUS,0,0.,
+	call pbAdd('HATCREEK',24.0,270.0,   191.67, 0.05, GAUS,0,0.,
      *				   'Truncated Gaussian')
 c
 c  The following values for the WSRT are derived from the NEWSTAR
 c  manual, which gives pb = cos**6(beta*freq(MHz)*angle(degrees))
 c  where beta = 0.0629 for f < 500 MHz, and 0.065 for f > 500 MHz.
 c  These numbers look a bit large (WSRT under-illuminated?).
+c  GMX (30Jun2004): added a factor 1.07 to the second line. This
+c  number came out of new measurements of the primary beam characteristics, 
+c  but is (as yet) not written in stone. Check with Rob Braun or 
+c  Tom Oosterloo for more info.
 c
 	call pbAdd('WSRT',    0.0,0.5,	     51.54, 0.02,  COS6,0,0.,
      *				   'Cos**6 function')
-	call pbAdd('WSRT',    0.5,8.0,	     49.87, 0.02,  COS6,0,0.,
+	call pbAdd('WSRT',    0.5,8.0,	49.87*1.07, 0.02,  COS6,0,0.,
      *				   'Cos**6 function')
 c
 c  Miscellaneous.
@@ -743,6 +753,12 @@ c
      *				   'Truncated Gaussian')
 	call pbAdd('SINGLE',  0.0,999.,	      0.00, 0.5,  SINGLE,0,0.,
      *				   'Single dish')
+c
+c  LOFAR - for simulations
+c
+	call pbAdd('LOFAR',    0.071,24.510, 44.3, 0.023,IPOLY,
+     *			NCOEFF,vla,'Reciprocal 4th order poly')
+
 c
 	end
 c************************************************************************
