@@ -152,9 +152,9 @@ if ($internal) then
    # override newdir and mirroot if we do an internal build....
    # newdir is now just a tagname, not a subdirectory
    set newdir=CVS
-   pushd .. 
+   pushd .. >& /dev/null
    set mirroot=`pwd`
-   popd
+   popd >& /dev/null
    set cvs=0
    echo "Using internal build with mirroot=$mirroot"
 else if ($cvs) then
@@ -241,13 +241,13 @@ source $MIRTEMP/MIRRC.$hosttype
 
 #			not really used anymore 
 if ($newcode) then
-  pushd $install_dir
+  pushd $install_dir >& /dev/null
   echo Adding newcode
   if (-d newcode) then
     echo Found newcode, adding it
     (cd newcode; ./DOIT)
   endif  
-  popd
+  popd >& /dev/null
 endif
 
 if ($intel) then
@@ -361,7 +361,7 @@ doc -p $MIRCAT/keywords.kdoc
 cd $MIR
 
 if (-e $install_root/do_patch) then
-    pushd $install_root
+    pushd $install_root >& /dev/null
     echo LOCAL install patches for $newdir
     echo $newdir > $MIR/DATE
     ./do_patch
@@ -369,7 +369,7 @@ if (-e $install_root/do_patch) then
     # mkdir -p $MIR/local/install
 	#  oops, what about the directories.....
     # cp -pr * $MIR/local/install
-    popd
+    popd >& /dev/null
 endif
 
 # velplotc: - make it depend on if Xforms is present
@@ -385,12 +385,12 @@ foreach ldir ($searchlibs)
 end
 if ($dofl) then
    echo Compiling velplotc:
-   pushd $MIR/src/spec/velplotc
+   pushd $MIR/src/spec/velplotc >& /dev/null
    make clean velplotc LIBFORMS=$MIRLIB/libforms.a >& $MIR//tmp/velplotc.$$.$hosttype
    if ($status) echo Warning: problems compiling velplotc
    mv velplotc $MIRBIN
    make clean >>& $MIR//tmp/velplotc.$$.$hosttype
-   popd
+   popd >& /dev/null
 else
    echo Could not find libforms.a to compile velplotc
 endif
@@ -399,15 +399,15 @@ endif
 if ($hosttype == linux) then
 
  echo Compiling rpfits
- pushd $MIR/borrow/rpfits
+ pushd $MIR/borrow/rpfits >& /dev/null
  make ARCH=linux RANLIB=ranlib FC=g77 FFLAGS=-g CFLAGS=-g >& $MIR/tmp/rpfits.$$.$hosttype 
  if ($status) echo Problems compiling RPFITS library
  mv librpfits.a $MIRLIB
  make clean
- popd
+ popd >& /dev/null
 
  echo Compiling atnf code: atlod
- pushd $MIR/tmp
+ pushd $MIR/tmp >& /dev/null
  cp -p $MIR/src/prog/atnf/atlod.* .
  make -f $MIRLIB/Makefile atlod EL=-lrpfits >& $MIR/tmp/atlod.$$.$hosttype 
  if ($status) echo Problems compiling ATLOD
@@ -415,12 +415,12 @@ if ($hosttype == linux) then
  doc -p atlod.for
  mv atlod.doc $MIRPDOC
  rm -f atlod.*
- popd
+ popd >& /dev/null
 
 endif
 
 
-pushd $install_root
+pushd $install_root >& /dev/null
 
 if (-e checklist) then
   echo Checking binaries:
