@@ -71,10 +71,11 @@ c    13jul00 rjs   Copy across llrot keyword.
 c    12feb01 pjt   Mask pixels if their velocity is out of range
 c    15feb01 dpr   Truncate rangemask key to rngmsk - doh!
 c    16feb01 pjt   Added mom=-3 for velocity of peak fit to poly=2
+c    18jan02 pjt   Turned rngmask typo into rngmsk (duh)
 c------------------------------------------------------------------------
 	include 'maxdim.h'
  	character version*(*)
-	parameter(version='version 1.0 16-feb-00')
+	parameter(version='version 1.0 18-jan-02')
 	integer maxnax,maxboxes,maxruns,naxis
 	parameter(maxnax=3,maxboxes=2048)
 	parameter(maxruns=3*maxdim)
@@ -110,7 +111,7 @@ c
 	  clip(1) = -clip(2)
 	endif
 cpjt
-	call keyl('rngmask',Qmask,.FALSE.)
+	call keyl('rngmsk',Qmask,.FALSE.)
 	call keyfin
 c
 c Check inputs.
