@@ -14,14 +14,14 @@ c     IMMEDIAN is a MIRIAD task which performs a median filter over an image.
 c     No subregion can be selected, the whole image is processed. 
 c     See also ELLINT for a median filter in elliptical rings. 
 c     Masking information is properly processed: if any of the associated pixels has 
-c     been masked out, so will be the corresponding pixel in the output 
-c     image.
+c     been masked out, they will not be used in the median filter.
+c     Edge pixels are not filtered and passed onto the output image unchanged.
 c
 c@ in
 c     The input image. No default.
 c@ out
 c     The output image. No default.
-c     Note: Nasty things happen to 4D+ datasets.
+c     Note: Nasty things can happen to 4D+ datasets.
 c@ size
 c     Half the box size. The filtering box will be square and have
 c     a size of 2*SIZE+1, and will thus always have an odd number of pixels
