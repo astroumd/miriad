@@ -6,7 +6,7 @@ The tools available are:
 
 \begin{itemize}
 
-\item {\tt kview}: This tool allows you to inspect one or two 2- or
+\item {\tt kvis}: This tool allows you to inspect one or two 2- or
 3-dimensional datasets in several ways.  This tool is partially
 described in Chapter~\ref{c:display}.
 
