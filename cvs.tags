@@ -1,0 +1,8 @@
+MIR31	release 3.1 (really: 3.0.4 - the last one before the MIR4 branch)
+	Tue Jun 25 19:48:16 EDT 2002
+
+
+MIR4	'cvs tag -b MIR4'    for the LFS branching
+	Tue Jun 25 19:49:01 EDT 2002
+	Also starting this as Version 4.0.1
+	(may have screwed up WIP, since that's a module hidden in here)
