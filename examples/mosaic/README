@@ -1,0 +1,3 @@
+This directory contains some python scripts to simulation mosaiced observations.
+It needs to have PYTHONPATH set to $MIR/src/scripts/python, in case your MIRIAD
+hasn't done that for you.
