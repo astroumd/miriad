@@ -1,0 +1,470 @@
+%------------------------------------------------------------------------
+% Chapter 11 - Routine system maintenance
+%------------------------------------------------------------------------
+
+This chapter explains how to port MIRIAD from an existing site to another
+site, how to set up the new site, and how to maintain MIRIAD at the site.
+
+MIRIAD is currently installed and supported on {\tt Sun3}, {\tt Sun4}, and
+{\tt Convex} systems.  In the past, it has been (and may still be, albeit
+not formally supported) installed on {\tt Cray}, {\tt Alliant}, {\tt VAX},
+and {\tt Multiflow} systems.  The machines chosen reflect current patterns
+of usage, rather than a particular orientation or disaffection for any
+particular machine.  MIRIAD is set up to be (and to look like) MIRIAD, no
+matter which machine is under discussion:  a user familiar with MIRIAD on
+one system can port MIRIAD datasets as-is to another platform and 
+immediately use those datasets on the new platform's MIRIAD system.
+Moreover, MIRIAD will look the same (identically the same) to the user on
+both systems:  the same interface, the same programs, the same everything.
+MIRIAD may be ported from any machine to any other machine ({\it e.g.},
+port MIRIAD from a {\tt Sun} to a {\tt Convex}) without incident.
+
+MIRIAD's likely future course will be to aim towards support on {\tt UNIX}
+platforms having {\tt IEEE 754} data format.  Existing support for other
+platforms ({\it e.g.}, for {\tt VMS}' data format) is intended to remain,
+though it will likely become out of date at some point of time in the
+future.
+
+\beginsection{Setting up a MIRIAD Site}
+
+This section discusses the porting of MIRIAD from an existing site, and
+setting MIRIAD up at a new site.
+
+\beginsub{Porting MIRIAD from an Existing Site}
+
+Make a tarfile of the essential parts of the system.  You'll need about
+16 MB for the tarfile (you can compress it down to about 8 MB, if
+necessary).
+{\ninepoint\begintt
+    cd $MIR
+    tar -cf /home/mydir/miriad.tar borrow cat manuals src
+\endtt}
+Port this tarfile to the new site.
+{\ninepoint\begintt
+    cd /home/mydir
+    ftp new.site
+        [enter logonid]
+        [enter password]
+        [enter "bin" for binary mode transmission]
+        [enter "put miriad.tar"]
+        [enter "quit"]
+\endtt}
+
+\beginsub{Setting up MIRIAD at a Site}
+
+Preconditions:
+\item{$\bullet$} You must have the ``usual'' system binary directories in
+your searchpath (to use such things as awk).  All MIRIAD users must also
+have these directories in their directory searchpaths, as well.
+\item{$\bullet$} You must not have MIRIAD environment variables set.
+\item{$\bullet$} This procedure assumes the use of {\tt csh}, and that user
+directory searchpaths are set in the {\tt .cshrc} file, not in the
+{\tt .login} file.
+\item{$\bullet$} It is important to use fully qualified directory names,
+not relative ones; and to list them relative to the automounter, if this
+is how the system is set up.
+\item{$\bullet$} For purposes of this example:  assume that the logon of
+the MIRIAD owner is {\tt miriad}; and that that logon's home directory
+is {\tt /home/babbage/miriad}; and that installation is to be done on a
+{\tt Sun4}.
+
+Create the directory that will be MIRIAD's home directory.  Untar the
+transmitted tarfile and create MIRIAD's directory structure.  Environment
+variable {\tt \$MIRTEMP} is used just to help you set things up.  The
+{\tt mir.mkdirs} script creates all the necessary directories within
+the MIRIAD tree.
+{\ninepoint\begintt
+    setenv MIRTEMP /home/babbage/miriad/miriad.home
+    mkdir $MIRTEMP
+    cd $MIRTEMP
+    tar -xf ~/miriad.tar
+    set path = ($MIRTEMP/src/scripts $path)
+    rehash
+    mir.mkdirs $MIRTEMP
+\endtt}
+Set up the {\tt MIRRC} file.  This file will be ``sourced'' to set user
+environment variables.  You should read the comments in the file before
+proceding.  {\tt \$MIR} is the home directory of the MIRIAD tree; 
+{\tt \$MIRHOST} is the platform on which you are installing MIRIAD (either
+{\tt sun3} or {\tt sun4} or {\tt convex}.  {\tt \$MIRXLIB} and
+{\tt \$MIRXINC} are intended to allow you to specify library and include
+directories (respectively) that are to be searched, if these are not in the
+``standard'' places.
+{\ninepoint\begintt
+    cp $MIRTEMP/src/scripts/MIRRC.skel $MIRTEMP/MIRRC
+    cd $MIRTEMP
+
+    [edit MIRRC: the changes for this example are]
+
+          setenv MIR     /home/babbage/miriad/miriad.home
+          setenv MIRHOST "sun4"
+          setenv MIRXLIB ""
+          setenv MIRXINC ""
+\endtt}
+Set up the controlling file for users.  You should read the comments in the
+file before proceding.
+{\ninepoint\begintt
+    cp $MIRTEMP/src/scripts/thisfile.skel ~/cshrc.MIRIAD
+    cd ~
+    [edit cshrc.MIRIAD] ... for this example, the executable lines of
+                            the file should be
+
+    if (`arch` == 'sun4' && -e /home/babbage/miriad/miriad.home/MIRRC) then
+       source /home/babbage/miriad/miriad.home/MIRRC
+       endif
+\endtt}
+Set up astronomy-related files.  These files control the maximum sizes of
+images (eg, 512x512 pixels) that can be handled by MIRIAD.
+\item{$\bullet$} {\tt MAXDIM} is the maximum dimension allowed for an
+image (if set to 512, then 512 by 512 by DIM3 images can be dealt with; if
+set to 2048, then 2048 by 2048 by DIM3 images can be dealt with; etc.).
+Static allocation of a plane of data (of size {\tt MAXDIM} ** 2) is done in
+certain programs, so swap space considerations on your machines do apply.
+\item{$\bullet$} {\tt MAXBUF} is an ``internal buffer size'', governing
+the maximum number of datapoints that can be read at once.  It should be
+set no lower than 4 * {\tt MAXDIM} ** 2.
+\item{$\bullet$} {\tt MAXANT} is the maximum number of antennas that a
+MIRIAD dataset can have.
+\item{$\bullet$} {\tt MAXCHAN} is the maximum number of channels that a
+MIRIAD dataset can have.
+\item{$\bullet$} {\tt MAXNAX} is the maximum number of axes allowed for a
+MIRIAD dataset.
+{\ninepoint\begintt
+    [edit $MIRTEMP/src/inc/maxdim.h] ... set MAXBUF, MAXDIM, MAXANT, and
+                                            MAXCHAN
+
+    [edit $MIRTEMP/src/inc/maxdimc.h] ... set MAXBUF, MAXDIM, MAXANT, and
+                                              MAXCHAN to be the same as
+                                              above
+
+    [edit $MIRTEMP/src/inc/xyzio.h] ... set XYZIOMAXBUFLEN to be the same
+                                            as MAXBUF above.
+
+    [edit $MIRTEMP/src/inc/maxnax.h] ... set MAXNAX
+\endtt}
+
+\beginsub{Installing MIRIAD}
+
+Set up the MIRIAD account owner's {\tt .cshrc} file:  anywhere AFTER the
+path has been set, insert the lines
+{\ninepoint\begintt
+    if (`arch` == "sun4" && -e ~miriad/cshrc.MIRIAD)   then
+       source ~miriad/cshrc.MIRIAD
+    endif
+\endtt}
+Then ``source'' the {\tt .cshrc} file:
+{\ninepoint\begintt
+    source ~miriad/.cshrc
+\endtt}
+Put the scripts into the binary directory and start the installation.  The
+command {\tt mir.loadall \&} loads the entire system from source code
+(running the job in background), and leaving log files in directory
+{\tt \$MIR/tmp}.  These log files are discussed later in this chapter.
+{\ninepoint\begintt
+    cp -p $MIR/src/scripts/mir\.* $MIRBIN
+    rehash
+    mir.loadall &
+\endtt}
+
+\beginsub{Setting Up The User Community}
+
+Each user should place the following lines in the {\tt .cshrc} file
+anywhere AFTER the directory searchpath has been set:
+{\ninepoint\begintt
+    if (`arch` == "sun4" && -e ~miriad/cshrc.MIRIAD)   then
+       source ~miriad/cshrc.MIRIAD
+    endif
+\endtt}
+Then ``source'' the {\tt .cshrc} file:
+{\ninepoint\begintt
+    source ~miriad/.cshrc
+\endtt}
+After doing this, they are set up automatically at logon.
+
+\beginsection {Printing the Manuals}
+
+MIRIAD manuals are provided in {\TeX } and {\LaTeX } format, and a device
+independent output file is generated (a {\tt .dvi}) file.  These are
+converted to {\tt PostScript} files in the usual manner ({\it e.g.}, via
+{\tt dvitps myfile.dvi > myfile.ps}).  Covers (front and back) for all the
+manuals are in directory {\bf \$MIR/manuals/covers} in {\tt PostScript}
+form.
+
+If you don't have write access to MIRIAD's source tree, you'll need to copy
+the contents of these directories to a directory of your own before you can
+run either {\TeX } or {\LaTeX } on them.  The table below lists directory
+locations relative to directory {\tt \$MIR/manuals}.  The two manuals that
+you most need are the User's Guide (for using MIRIAD) and the Programmer's
+Guide (for writing MIRIAD programs and incorporating them into your local
+version of MIRIAD).  The rest may be of parenthetical interest to
+programming, but have limited utility (on line documentation is far handier).
+{\ninepoint\begintt
+    MANUAL ................ DIRECTORY ... TO GENERATE PAPER
+    User's Guide .......... uguide ...... make
+    Programmer's Guide .... pguide ...... tex pg
+    Executable Modules .... eguide ...... tex em
+    Subroutine Library .... sguide ...... tex sl
+    LINPACK Subroutines ... linpack ..... latex linpack.latex
+\endtt}
+In addition to the above manuals, two ``borrowed'' software packages have
+been incorporated as-is into MIRIAD, and both come with manuals of their
+own.  Browse through directory {\tt \$MIR/borrow/pgplot} for the PGPLOT
+manual, and through directory {\tt \$MIR/borrow/wip} for the WIP manual.
+Follow the instructions provided for generating these manuals (in particular,
+the WIP manual is a genuine User's Guide for WIP).
+
+\beginsection {Routine Maintenance}
+
+MIRIAD is still in a late development phase (quite beyond a beta-release,
+but still undergoing routine source code updates).  To facilitate these
+updates, and since all existing MIRIAD sites have personnel with more than
+passing familiarity with MIRIAD's internal structure, we are using an
+explicit ``do this'' via scripts in order to recompile and relink programs.
+
+We are scheduled to go to a ``formal release version'' in 1992, and to
+thereafter put out regularly scheduled upgrades (a measure of stability in
+the releases), but until that time comes, the only way to effectively
+maintain MIRIAD with newly received code is to follow the same procedures
+as do those who work with the system on a regular basis (even though that
+may not be the case for you at this time).
+
+\beginsub {Loading from Source Code}
+
+MIRIAD consists of four subroutine libraries (LINPACK, PGPLOT, HDF, and
+MIRIAD's own internal subroutines), as well as the executable tasks and
+a few scripts used for maintenance purposes.  The entire system can be
+loaded from source code with the command
+
+\centerline{\tt mir.loadall \&}
+
+This command runs the following scripts in order, leaving a logfile of
+each in directory {\tt \$MIR/tmp} with the process id and the \$MIRHOST
+name appended to it:
+{\ninepoint\begintt
+SCRIPT ........ LOGFILE ............. WHAT IT DOES
+mir.scripts ... scripts.2846.sun4 ... Copy scripts from src to bin directory
+mir.linpack ... linpack.2846.sun4 ... Compile LINPACK subs into library
+mir.pgplot .... pgplot.2846.sun4 .... Compile PGPLOT subs into library
+mir.subs ...... subs.2846.sun4 ...... Compile MIRIAD subs into library
+mir.hdf ....... hdf.2846.sun4 ....... Compile HDF subs into library
+mir.prog ...... prog.2846.sun4 ...... Compile/link tasks into bin directory
+mir.wip ....... wip.2846.sun4 ....... Compile/link WIP into bin directory
+mir.mxv ....... mxv.2846.sun4 ....... Compile/link MXV into bin directory
+mir.gendoc .... gendoc.2846.sun4 .... Generate online docs for tasks/subs
+\endtt}
+You can run these scripts at any time to recompile and relink subroutines
+and programs (the output will be sent to the screen unless you reroute it;
+only the {\tt mir.loadall} script automatically routes output to log files).
+
+For a fuller explanation of what can be done with these scripts, see the
+MIRIAD manual for Executables.
+
+\beginsub {Likely Problem Areas}
+
+The sole likely area where you may have problems is in getting {\tt mir.mxv}
+to compile and link; the reason is that it requires a large number of X
+libraries beyond what is usually installed on a normal system.  In this case,
+there is nothing you can do about it:  the libraries are currently required
+(though we are in the process of reducing our reliance on them).
+
+Once you have run {\tt mir.loadall}, you can quickly and easily check whether
+everything went ok.
+{\ninepoint\begintt
+COMMAND .............................. WHAT IT DOES
+cd $MIR/tmp .......................... cd to look at the logfiles
+ls -ltr .............................. show logfiles in the order created
+grep -i error * | more ............... show any errors
+grep -i fail  * | more ............... show any failed compilations
+grep -i ld  prog* wip* mxv* | more ... show any programs that didn't link
+\endtt}
+You'll need to deal with any problems that have arisen.  Scroll through the
+logfiles ({\tt emacs}, {\tt vi}, or however) where you may suspect problems.
+
+Next, enter {\tt ls -lt \$MIRBIN} and pipe the output to {\tt more}.  Check
+whether all the binaries are executable (an {\tt awk} script is the only
+file in the directory that is not executable).  This is more of a
+confirmation of the previous step than anything else.
+
+\beginsub {MIRIAD Scripts}
+
+The list below shows all MIRIAD scripts and their aliases.  They are more
+fully discussed in the Executables manual (more conveniently, see the on
+line documentation).  If you are getting regular updates of MIRIAD source
+code, then the only scripts you should need to use on a regular basis are
+{\tt mir.subs} and {\tt mir.prog}.
+{\ninepoint\begintt
+mir.autocal ..... A-priori calibration using selfcal
+Autocal ......... A-priori calibration using selfcal
+mir.bug.csh ..... Send mail about bugs to appropriate person
+mirbug .......... Send mail about bugs to appropriate person
+mirfeedback ..... Send feedback to the appropriate person
+\endtt}
+{\ninepoint\begintt
+mir.find ........ Search for files/dirs in MIRIAD source code
+mirfind ......... Search for files/dirs in MIRIAD source code
+mir.gendoc ...... Generate on-line MIRIAD documentation
+mir.hcconv ...... Load MIRIAD program HCCONV from source to $MIRBIN
+mir.hdf ......... Compile HDF source code (SUN only)
+\endtt}
+{\ninepoint\begintt
+mir.help ........ Obtain programmer-useful help about MIRIAD source files.
+mirhelp ......... Obtain programmer-useful help about MIRIAD source files.
+mir.imcalc ...... Load MIRIAD program IMCALC from source to $MIRBIN
+mir.index ....... List MIRIAD tasks and 1-line descriptions
+mirindex ........ List MIRIAD tasks and 1-line descriptions
+\endtt}
+{\ninepoint\begintt
+mir.linpack ..... Compile linpack source  (SUN only)
+mir.loadall ..... Load MIRIAD subsystems from source code
+mir.mkdirs ...... Make the directories for a MIRIAD system
+mir.mkdirs1 ..... Internal subscript for script mir.mkdirs
+mir.mkpdoc ...... Generate a *.doc file under certain conditions
+\endtt}
+{\ninepoint\begintt
+mir.mpath.awk ... awk script to insert $MIRBIN in searchpath
+mir.msss ........ Load MIRIAD's version of the AIPS' SSS (SUN only)
+mir.mxas ........ Load MIRIAD's version of the AIPS' XAS (SUN only)
+mir.mxv ......... Load MIRIAD's X-Visualizer (SUN only)
+mir.pgdoc ....... Generate a *.sdoc file for a PGPLOT subroutine
+\endtt}
+{\ninepoint\begintt
+mir.pgplot ...... Load the PGPLOT library from source code
+mir.prog ........ Load MIRIAD tasks from source code to $MIRBIN
+mir.prog1 ....... Internal subscript for script mir.prog
+mir.scripts ..... Copy scripts from source to $MIRBIN
+mir.sndex ....... List MIRIAD subroutines and 1-line descriptions
+\endtt}
+{\ninepoint\begintt
+mir.subs ........ Compile MIRIAD subroutines into $MIRLIB/libmir.a
+mir.tar2m ....... Update system from a MIRIAD tarfile
+mir.tools ....... Load MIRIAD's tools from source code into $MIRBIN
+mir.uvdisplay ... Load UVDISPLAY from source code to $MIRBIN
+mir.uvhat ....... Load UNIX UVHAT from source code to $MIRBIN
+\endtt}
+{\ninepoint\begintt
+mir.wip ......... Load the WIP task from source code into $MIRBIN
+\endtt}
+
+\beginsub {A Trivial Partial Tutorial}
+
+You should not need to use most of the scripts that accompany MIRIAD,
+aside from the ones discussed in installing the system, though you may
+certainly do so (they are generally invoked automatically, or not directly
+related to supporting the system).  In particular, you should not need to
+consider LINPACK, PGPLOT, or HDF again; the most common source code updates
+are within MIRIAD's own subroutine library, and minor mods to executable
+tasks.  Following is a simple update of source code.
+
+Suppose you receive an ``update tarfile'' of source code, containing
+a new version of subroutine {\tt fitsio.for}, an update of task {\tt fits.for},
+and a new task (call it {\tt newtask.for}).  A {\tt tar -tf tarfile} shows
+{\ninepoint\begintt
+src/subs/fitsio.for
+src/prog/convert/fits.for
+src/prog/analysis/newtask.for
+\endtt}
+To update the source (backing off old source code to the {\tt \$MIR/oldsrc}
+directory for safekeeping) and update the binaries, do the following:
+{\ninepoint\begintt
+cd $MIR
+mir.tar2m <tarfilename>
+mir.subs fitsio.for
+mir.prog fits newtask
+\endtt}
+Updating is done from the {\tt \$MIR} directory.  {\tt mir.tar2m} installs
+the source code.  {\tt mir.subs} installs the updated {\.o} file in the
+appropriate library, and {\tt mir.prog} relinks the two named tasks (there
+is no need to include the {\tt .for} extension, though you may do so).
+On-line documentation is updated by the scripts.  You're done.
+
+Since you ``know'' that no MIRIAD task other than {\tt fits} uses subroutine
+{\tt fitsio.for}, there is no need to relink all the MIRIAD tasks, and here
+is the fly in the ointment:  when a subroutine is updated, all executables
+that rely on that subroutine (however indirectly) must also be relinked.
+If you do not know which subroutines are used by any given task, then the
+only safe course left to you is to relink all the tasks:  run 
+{\tt mir.loadall prog \&} and wait until the job is done.
+
+The reasoning for this seeming overkill is simple and sound:  a {\tt makefile}
+system requires all dependencies to be listed to be effective (and we are
+still tweaking the system, meaning that this method is presently inconvenient
+and error prone); a {\tt makefile} system requires the {\tt .o} files to be
+present or created (this is avoidable with some effort); we are occassionally
+altering subroutines that use other subroutines (meaning that the
+{\tt makefile}s are in a constant state of flux; and lastly, those of us
+working on MIRIAD in its final stages of development are generally familiar
+enough with the system that we can live with things that ``naive'' users
+would not want to tolerate ({\it e.g.}, I just ``know'' that {\tt fitsio.for}
+is used by only one task).
+
+We intend to go to a ``version number'' updating system in 1992 (the
+assumption being that we have achieved a good level of stability), at which
+time source code updates will include a specific sequence of steps for you
+to use to more easily bring your binaries up to date after installing source
+code updates.
+
+\beginsection {Local Variations in the Setup}
+
+There are no hard rules in how you want to set up your local MIRIAD system
+(though, for the sake of passing around source code updates, the fewer
+variations in structure, the better).  If variations are done, try to keep
+them within the scope of files under your own control ({\it i.e.}, insulate
+the users).  Below is an alteration of the aforementioned {\tt cshrc.MIRIAD}
+file to allow a ``motd'' specific to MIRIAD to be printed on the user's
+console at logon time, but not otherwise.
+{\ninepoint\begintt
+if (-e /home/babbage/miriad/home.miriad/MIRRC) then
+                source /home/babbage/miriad/home.miriad/MIRRC
+endif
+if ($?TERM && ! $?MIRHELLO) then
+        setenv MIRHELLO x
+        echo ""
+        echo 'MIRIAD [29 Apr 92] environment variables set.'
+        echo ""
+endif
+\endtt}
+The date of the most recent update to the local MIRIAD is printed out at
+logon.  Note that the {\tt TERM} environment variable is checked so as not
+to interfere with standard {\tt UNIX} commands like {\tt rsh}, which do not
+work correctly when this ``motd'' is passed back instead of the correct
+information.
+
+A possibly more useful variation would be to set an environment variable
+to point all MIRIAD users to a directory containing local test data that
+you've developed ({\tt e.g.}, after sourcing the {\tt MIRRC} file, include
+the line {\tt setenv MYMIRDAT /home/somedata/datadir}).  Users need do 
+nothing themselves to be set up, and you can simply tell that that there is
+testdata available in directory {\tt \$MYMIRDAT}.
+
+\beginsection {Common Occurance}
+
+It happens from time to time that system changes will be made that force the
+recompilation of source code (for example, perhaps your {\tt FORTRAN}
+compiler is going from version 1.3 to 1.4).  This upgrade forces you to
+reload MIRIAD from source code, since binaries are not compatible across
+the upgrade.
+
+One way to do it would be to wait for the formal upgrade, shut down MIRIAD,
+and reload the system (following the procedure outlined at the beginning of
+the chapter:  you don't have to port it again, but you do have to run the
+command {\tt mir.loadall \&} and wait for results).
+
+A better way (if you have the diskspace available), is to ``port'' MIRIAD
+to another directory on your own system, set yourself up to use the newer
+{\tt FORTRAN} compiler, and install MIRIAD from source code.  When done,
+you simply change MIRIAD's {\tt cshrc.MIRIAD} file to point to the new
+MIRIAD system.  You can then pitch the old system (after convincing
+yourself that users have logged off and logged back on).  This better 
+insulates the users from disruptions (they never see the change; MIRIAD
+keeps on working as before).
+
+It also gives you the chance to see if there are any problems with the
+upgrade, with sufficient time to deal with them while the ``old'' MIRIAD
+is still installed.  If you wait for the upgrade before beginning, then
+you'll be dealing with any problems on a ``fire'' basis, with users 
+waiting for your re-installation so that they can resume work.
+
+Finally, system managers are generally keen to have someone act as guinea
+pig for upgrades prior to foisting the upgrade onto the community at
+large.  Historically, MIRIAD has a record of well-exercising upgrades in
+compilers, and in OS upgrades as well.
