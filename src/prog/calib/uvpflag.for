@@ -42,6 +42,7 @@ c     rjs   8mar93 Write out history comments.
 c     rjs  18mar93 Fix horrid bug in adding history comments.
 c     nebk 12jan94 More information for user
 c     nebk 30mar94 Give user correct information
+c     nebk 03oct03 Rename function count to countFlags to avoid compiler warning
 c---------------------------------------------------------------------------
       implicit none
 c
@@ -275,8 +276,8 @@ c
           if (polidx.lt.-8 .or. polidx.gt.4) call bug ('f',
      +      'Illegal polarization in file')
 c
-          call count (maxchan, nread, gflags, ntot(polidx), 
-     +                nftot(polidx))
+          call countFlags (maxchan, nread, gflags, ntot(polidx), 
+     +                     nftot(polidx))
         end do
 c
 c Now read/flag the NPOL polarizations
@@ -301,8 +302,8 @@ c
             end if
             call flagit (lin, nread, scratch(4), gflags, nflag(polidx))
           end if
-          call count (maxchan, nread, gflags, ntot(polidx), 
-     +                nftot(polidx))
+          call countFlags (maxchan, nread, gflags, ntot(polidx), 
+     +                     nftot(polidx))
         end do
       end do
 c
@@ -315,8 +316,8 @@ c
             call uvrdvri (lin, 'pol', polidx, -10)
             if (polidx.lt.-8 .or. polidx.gt.4) call bug ('f',
      +          'Illegal polarization in file')
-            call count (maxchan, nread, gflags, ntot(polidx), 
-     +                  nftot(polidx))
+            call countFlags (maxchan, nread, gflags, ntot(polidx), 
+     +                       nftot(polidx))
           end if
         end do
       end if
@@ -435,7 +436,7 @@ c
       end
 c
 c
-      subroutine count (maxn, n, flag, ntot, nftot)
+      subroutine countFlags (maxn, n, flag, ntot, nftot)
       implicit none
       integer n, ntot, nftot, maxn
       logical flag(maxn)
