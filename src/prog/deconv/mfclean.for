@@ -134,6 +134,8 @@ c   rjs  24jun97 - Correct check for good alignment.
 c   rjs  02jul97 - Added cellscal.
 c   rjs  23jul97 - Added pbtype.
 c   rjs  14aug00 - Added log file output.
+c   gmx  07apr04 - Removed positivity tests and abs() for ResMax
+c                  since it is defined as abs(R0) in GetPk.
 c
 c  Bugs and Shortcomings:
 c     * The way it does convolutions is rather inefficent, partially
@@ -461,6 +463,50 @@ c  Thats all folks.
 c
 	end
 c************************************************************************
+	subroutine Stats(Data,n,Dmin,Dmax,DAmax,Drms)
+c
+	implicit none
+	integer n
+	real Data(n)
+	real Dmin,Dmax,DAmax,Drms
+c
+c  Calculate every conceivably wanted statistic.
+c
+c  Input:
+c    n		Number of points.
+c    Data	Input data array.
+c
+c  Output:
+c    Dmin	Data minima.
+c    Dmax	Data maxima.
+c    DAmax	Data absolute maxima.
+c    Drms	Rms value of the data.
+c
+c------------------------------------------------------------------------
+	integer i
+c
+c  Externals.
+c
+	integer ismax,ismin
+c
+c  Calculate the minima and maxima.
+c
+	i = ismax(n,Data,1)
+	Dmax = Data(i)
+	i = ismin(n,Data,1)
+	Dmin = Data(i)
+	DAmax = max(abs(Dmax),abs(Dmin))
+c
+c  Calculate the sums.
+c
+	Drms = 0
+	do i=1,n
+	  Drms = Drms + Data(i)*Data(i)
+	enddo
+	Drms = sqrt(Drms/n)
+c
+	end
+c************************************************************************
 	subroutine GetBeam(FFT,lBeam,Data,n1,n2,n1d,n2d,ic,jc)
 c
 	implicit none
@@ -663,50 +709,6 @@ c
 	do i=1,nRun
 	  MaxMap = MaxMap + Run(3,i) - Run(2,i) + 1
 	enddo
-c
-	end
-c************************************************************************
-	subroutine Stats(Data,n,Dmin,Dmax,DAmax,Drms)
-c
-	implicit none
-	integer n
-	real Data(n)
-	real Dmin,Dmax,DAmax,Drms
-c
-c  Calculate every conceivably wanted statistic.
-c
-c  Input:
-c    n		Number of points.
-c    Data	Input data array.
-c
-c  Output:
-c    Dmin	Data minima.
-c    Dmax	Data maxima.
-c    DAmax	Data absolute maxima.
-c    Drms	Rms value of the data.
-c
-c------------------------------------------------------------------------
-	integer i
-c
-c  Externals.
-c
-	integer ismax,ismin
-c
-c  Calculate the minima and maxima.
-c
-	i = ismax(n,Data,1)
-	Dmax = Data(i)
-	i = ismin(n,Data,1)
-	Dmin = Data(i)
-	DAmax = max(abs(Dmax),abs(Dmin))
-c
-c  Calculate the sums.
-c
-	Drms = 0
-	do i=1,n
-	  Drms = Drms + Data(i)*Data(i)
-	enddo
-	Drms = sqrt(Drms/n)
 c
 	end
 c************************************************************************
@@ -1144,13 +1146,13 @@ c
 	P11 = Patch11(c,c)
 	P01 = Patch01(c,c)
 	call GetPk(Ncmp,Rcmp0,Rcmp1,P00,P11,P01,Tmp,Pk,Wt0,Wt1,ResMax)
-	negFound = negFound .or. ResMax.lt.0 .or. Wt0+Ccmp0(Pk).lt.0
+	negFound = negFound .or. Wt0+Ccmp0(Pk).lt.0
 	TermRes = Limit
 	beta = g * Limit**(Speed+1)
 c
 c  Loop until no more. Start with some house keeping.
 c
-	more = abs(ResMax).gt.TermRes .and. Niter.lt.MaxNiter .and.
+	more = ResMax.gt.TermRes .and. Niter.lt.MaxNiter .and.
      *		.not.(negStop.and.negFound)
 	dowhile(more)
 	  ipk = Icmp(Pk)
@@ -1225,10 +1227,10 @@ c
 c  Ready for the next loop.
 c
 	  TermRes = TermRes + 
-     *	   beta * abs(Wt0) / ( EstASum * abs(ResMax)**Speed )
+     *	   beta * abs(Wt0) / ( EstASum * ResMax**Speed )
 	  call GetPk(Ncmp,Rcmp0,Rcmp1,P00,P11,P01,Tmp,Pk,Wt0,Wt1,ResMax)
-	  negFound = negFound.or.ResMax.lt.0  .or. Wt0+Ccmp0(Pk).lt.0
-	  more = abs(ResMax).gt.TermRes .and. Niter.lt.MaxNiter .and.
+	  negFound = negFound .or. Wt0+Ccmp0(Pk).lt.0
+	  more = ResMax.gt.TermRes .and. Niter.lt.MaxNiter .and.
      *		.not.(negStop.and.negFound)
 	enddo
 	end
