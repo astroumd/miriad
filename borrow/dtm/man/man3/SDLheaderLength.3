@@ -1,0 +1,22 @@
+.TH SDLheaderLength 3DTM "10 February 1992" DTM "DTM Version 2.0"
+.LP
+.SH "NAME"
+\fBSDLheaderLength, SDLHL\fP - Macros for determining a surface description language header length.
+.LP
+.SH "SYNOPSIS"
+.nf
+.B #include <sdl.h>
+.LP
+.B SDLheaderLength(char *\fIheader\fP)
+.LP
+.B SDLHL(char *\fIheader\fP)
+.LP
+.fi
+.SH "DESCRIPTION"
+These two macros are equivalent.  They both return the exact length of
+the supplied character string
+.I header,
+including the null character at the end.
+.LP
+.SH "SEE ALSO"
+DTM, SDLclass

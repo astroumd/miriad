@@ -1,0 +1,22 @@
+.TH VCTRLheaderLength 3DTM "10 February 1992" DTM "DTM Version 2.0"
+.LP
+.SH "NAME"
+\fBVCTRLheaderLength, VCTRLHL\fP - Macros for determining a view control header length.
+.LP
+.SH "SYNOPSIS"
+.nf
+.B #include <sdl.h>
+.LP
+.B VCTRLheaderLength(char *\fIheader\fP)
+.LP
+.B VCTRLHL(char *\fIheader\fP)
+.fi
+.LP
+.SH "DESCRIPTION"
+These two macros are equivalent.  They both return the exact length of
+the supplied character string
+.I header,
+counting the null character at the end.
+.LP
+.SH "SEE ALSO"
+DTM, VCTRLclass

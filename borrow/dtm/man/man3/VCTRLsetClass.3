@@ -1,0 +1,51 @@
+.TH VCTRLsetClass 3DTM "7 February 1992" DTM "DTM Version 2.0"
+.LP
+.SH "NAME"
+.B VCTRLsetClass, VCTRLcompareClass - 
+View control class labeling and scanning macros.
+.LP
+.SH "SYNOPSIS"
+.nf
+.B #include <sdl.h>
+.LP
+.B VCTRLsetClass(char *\fIheader\fP)
+.LP
+.B VCTRLcompareClass(char *\fIheader\fP)
+.fi
+.LP
+.SH "DESCRIPTION"
+.B VCTRLsetClass
+inserts the message class constant 
+.B VCTRLclass
+into the character string
+.I header
+indicating that the data to follow should be considered some form 
+of a view control matrix.  The 
+.B VCTRLclass
+constant is declared in the file
+.I sdl.h,
+and though it is accessible at all times, it is recommended that the macro 
+.B VCTRLsetClass
+be used to correctly insert this message type tag into the header.
+.LP
+.B VCTRLcompareClass
+returns a non-zero value if the character string
+.I header
+contains the 
+.B VCTRLclass
+constant.  Though the constant 
+.B VCTRLclass
+is accessible at all times, it is recommended that the macro 
+.B VCTRLcompareClass
+to determine whether or not a header indicates a view control matrix.
+.LP
+.SH "SEE ALSO"
+DTM, VCTRLclass
+.LP
+.SH "BUGS"
+.B VCTRLsetClass
+has no way of determining if the header contains sufficient
+space to hold the tag 
+.B VCTRLclass.
+The results of attempting to store this
+information beyond the end of the allocated space are undefined.

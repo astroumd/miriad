@@ -1,0 +1,62 @@
+.TH SDSsetMinMax 3DTM "10 February 1992" DTM "DTM Version 2.0"
+.LP
+.SH "NAME"
+\fBSDSsetMinMax, SDSgetMinMax\fP - Scientific data set functions for setting ranges of values.
+.LP
+.SH "SYNOPSIS"
+.nf
+.B #include <sds.h>
+.LP
+\fBvoid SDSsetMinMax(char *\fIheader\fP, float \fImin\fP, float \fImax\fP)\fP
+.LP
+\fBint SDSgetMinMax(char *\fIheader\fP, float *\fImin\fP, float *\fImax\fP)\fP
+.fi
+.LP
+.SH "DESCRIPTION"
+.B SDSsetMinMax
+inserts into the character string
+header the 
+.B SDSminmax
+flag followed by the 
+\fImin\fPimum and \fImax\fPimum values of the dataset as specified by the 
+user.  It is the user's responsibility to ensure that these values do indeed 
+match the minimum and maximum values in the data set.
+.LP
+.B SDSgetMinMax
+examines the character string
+.I header
+and returns the \fImin\fPimum and \fImax\fPimum values 
+of the data set.  There is no guarantee that these values read from the header
+will match either the minimum or the maximum of the data received since 
+.B SDSgetMinMax
+has no way of reviewing and interpreting the data.
+.LP
+.SH "SEE ALSO"
+DTM, SDSclass
+.LP
+.SH "DIAGNOSTICS"
+.B SDSgetMinMax
+returns a value of 0 upon successful parsing of the header.
+If the tag 
+.B SDSminmax
+is not found within the header, the function returns
+the error 
+.B DTMERROR
+and no minimum or maximum values are assigned.
+.LP
+.SH "BUGS"
+.B SDSsetMinMax
+has no way of determining if the header contains sufficient
+space to hold the tag 
+.B SDSminmax
+and both specified values.  The results of 
+attempting to store this information beyond the end of the allocated space 
+are undefined.
+.LP
+.B SDSgetMinMax
+assumes that two values follow the 
+.B SDSminmax
+flag.  If less than
+two follow the tag, the results are undefined, thus it is important to use
+.B SDSsetMinMax
+to ensure that both values are inserted when creating the header.

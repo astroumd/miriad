@@ -1,0 +1,22 @@
+.TH SDSheaderLength 3DTM "10 February 1992" DTM "DTM Version 2.0"
+.LP
+.SH "NAME"
+\fBSDSheaderLength, SDSHL\fP - Macros for determining scientific data set header lengths.
+.LP
+.SH "SYNOPSIS"
+.nf
+.B #include <sds.h>
+.LP
+.B SDSheaderLength(char *\fIheader\fP)
+.LP
+.B SDSHL(char *\fIheader\fP)
+.fi
+.LP
+.SH "DESCRIPTION"
+These two macros are equivalent.  They both return the exact length of
+the supplied character string
+.I header,
+counting the null character at the end.
+.LP
+.SH "SEE ALSO"
+DTM, SDSclass

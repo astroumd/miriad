@@ -1,0 +1,52 @@
+.TH DTMsetClass 3DTM "7 February 1992" DTM "DTM Version 2.0"
+.SH "NAME"
+.B DTMsetClass, DTMcompareClass -
+DTM generic class labeling and scanning macros.
+.LP
+.SH "SYNOPSIS"
+.nf
+.B #include <dtm.h>
+.LP
+.B DTMsetClass(char *\fIheader\fP)
+.LP
+.B DTMcompareClass(char *\fIheader\fP)
+.LP
+.fi
+.SH "DESCRIPTION"
+.B DTMsetClass 
+inserts the message class constant 
+.B DTMclass 
+into the character string
+.I header,
+indicating that the data to follow should be considered a generic
+DTM message.  The 
+.B DTMclass 
+constant is declared in the file 
+.I dtm.h,
+and though
+it is accessible at all times, it is recommended that the macro 
+.B DTMsetClass 
+be used to correctly insert this message type tag into the header.
+.LP
+.B DTMcompareClass 
+returns a non-zero value if the character string
+.I header
+contains the 
+.B DTMclass
+constant.  Though the constant 
+.B DTMclass 
+is accessible at all times, users 
+should use the macro 
+.B DTMcompareClass 
+to determine whether or not a header indicates this generic class.
+.LP
+.SH "SEE ALSO"
+DTM, DTMclass
+.LP
+.SH "BUGS"
+.B DTMsetClass 
+has no way of determining if the header contains sufficient
+space to hold the tag 
+.B DTMclass.  
+The results of attempting to store this
+information beyond the end of the allocated space are undefined.

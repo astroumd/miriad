@@ -1,0 +1,17 @@
+.TH dtm_header_length 3DTM "17 February 1992" DTM "DTM Version 2.0"
+.SH "NAME"
+\fBdtm_header_length\fP - Macro for determining header lengths.
+.SH "SYNOPSIS"
+.nf
+\fB#include <dtm.h>\fP
+.LP
+\fBdtm_header_length(char *\fIheader\fP)\fP
+.fi
+.SH "DESCRIPTION"
+This macro returns the exact length of the character string argument
+\fIheader\fP, counting the terminating null character at the end.
+For examples of how this macro is used in building new classes, examine
+the header files of some of the classes provided with the DTM library
+such as \fIsds.h\fP.
+.SH "SEE ALSO"
+.B DTM

@@ -1,0 +1,59 @@
+.TH DTMmakeInPort 3DTM "31 March 1992" DTM "DTM Version 2.0"
+.ta .5i 2.5i
+.SH "NAME"
+\fBDTMmakeInPort, DTMmakeOutPort\fP - Reserve a port for reception/transmission of data.
+.LP
+.SH "SYNOPSIS"
+\fB#include <dtm.h>\fP
+.LP
+\fBint DTMmakeInPort(char *\fIportname\fP , int \fIqservice\fP)\fP
+.LP
+\fBint DTMmakeOutPort(char *\fIportname\fP, int \fIqservice\fP)\fP
+.LP
+.SH "DESCRIPTION"
+\fBDTMmakeInPort\fP creates an input port.  \fIPortname\fP is a pointer to a 
+string with the format 'hostname:port'.  'Hostname' is optional and will 
+always be understood to be the local host's name in it's abscence.  
+\fIPortname\fP represent the address where the system will listen for incoming
+messages.  If \fIportname\fP is ':0' then the system will assign the TCP port 
+number.  The value can be retrieved with \fBDTMgetPortAddr\fP.
+.LP
+If \fBDTMmakeInPort\fP suceeds, it returns a portid.  The portid is an integer
+useful for referring to the port in all subsequent DTM calls.  If there is any
+errors \fBDTMmakeInPort\fP will return \fBDTMERROR\fP.
+.LP
+\fBDTMmakeOutPort\fP creates an output port.  \fIPortname\fP is pointer to a 
+string with the format 'hostname:port' representing the address to which 
+outgoing messages will be sent.  Therefore, 'hostname' is any legal host name 
+or IP address, though in it's abscence it will always be understood to be the 
+local host.  'Port' is the TCP port number to which data must be sent.
+.LP
+If \fBDTMmakeOutPort\fP suceeds, it returns a portid.  The portid is an integer
+used to refer to the port in all subsequent DTM calls.  If there are any errors
+\fBDTMmakeOutPort\fP will return \fBDTMERROR\fP.
+.LP
+In both cases, the argument \fIqservice\fP describes the quality of service to
+used.  The types of service available are: \fBDTM_SYNC\fP, \fBDTM_ASYNC\fP,
+\fBDTM_DEFAULT\fP.  They each have the following behavior:
+.LP
+.nf
+	\fBDTM_SYNC\fP:	Causes all communications to rely on a simple 
+		handshake in order to reduce the possibility of deadlock.
+	\fBDTM_ASYNC\fP:	Causes all communications to ignore any 
+		requests for handshaking.  This has the possible effect of 
+		speeding communications, though the danger of deadlocking 
+		processes needing that port is increased.
+	\fBDTM_DEFAULT\fP:	Sets the value to \fBDTM_SYNC\fP until this is
+		further defined.
+
+.SH "SEE ALSO"
+\fBDTM\fP
+.LP
+.SH "DIAGNOSTICS"
+When the value \fBDTMERROR\fP is returned, \fBDTMerrno\fP may be set to these 
+possible errors:
+.LP
+	\fBDTMNOPORT\fP	No more open DTM ports.
+	\fBDTMMEM\fP	Insufficient memory for port.
+	\fBDTMHUH\fP	Illegal port name.
+

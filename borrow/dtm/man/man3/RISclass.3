@@ -1,0 +1,151 @@
+.TH RISclass 3DTM "26 November 1992" DTM-2.3 "DTM Version 2.3"
+.LP
+.SH "NAME"
+\fBRISclass\fP - Raster Image Set DTM message class.
+.LP
+.SH "SYNOPSIS"
+.nf
+\fB#include <ris.h>\fP
+.LP
+\fBRISheaderLength(char *\fIheader\fP)\fP
+.LP
+\fBRISHL(char *\fIheader\fP)\fP
+.LP
+\fBRISsetClass(char *\fIheader\fP)\fP
+.LP
+\fBRIScompareClass(char *\fIheader\fP)\fP
+.LP
+\fBvoid RISsetDimensions(char *\fIheader\fP, int \fIxdim\fP, int \fIydim\fP)\fP
+.LP
+\fBint RISgetDimensions(char *\fIheader\fP, int *\fIxdim\fP, int *\fIydim\fP)\fP
+.LP
+\fBRISsetTitle(char *\fIheader\fP, char *\fItitle\fP)\fP
+.LP
+\fBRISgetTitle(char *\fIheader\fP, char *\fItitle\fP, int \fItitle_length\fP)\fP
+.LP
+\fBRISsetType(char *\fIheader\fP, RISTYPE \fIraster_type\fP)\fP
+.LP
+\fBRISgetType(char *\fIheader\fP, RISTYPE *\fIraster_type\fP)\fP
+.fi
+.LP
+.SH "DESCRIPTION"
+The RIS message class is a DTM class designed specifically for the transmission
+of raster images.  Each of the macros and functions listed above places
+information that describes the qualities of the raster image into the header.
+Several constants have been defined to be used as tags that identify particular
+properties of this class.  While these constants are available for use at any
+time following the inclusion of \fIris.h\fP, it is highly recommended that
+programmers use the functions and macros listed above to correctly manipulate
+the headers for this class.  The tags include:
+.LP
+\fBRISclass\fP - The tag that identifies the message as belonging to the
+raster image class of messages.
+.LP
+\fBRISsize\fP - A constant for declaring raster image header sizes.  Though
+the size of the header can be arbitrary, it's doubtful that the header length
+will exceed this value.
+.LP
+\fBRISdims\fP - The pair of integers in the header following this flag
+indicates the expected dimensions of the image in pixels.
+.LP
+\fBPALtype\fP - The tag that identifies the subsequent value as being the type
+of image being sent: either RIS8BIT or RIS24BIT.  RIS24BIT assumes that each
+pixel is composed of three, closely packed, eight-bit number representing
+the red, green, and blue color components of the color.  I.e. RGBRGBRGB...
+where each or R, G, and B is a value between 0 and 255.  Twenty-four bit
+images are considered "direct color" images because there is no need for a
+palette.  On the other hand, the type RIS8BIT assumes that each byte of data
+is one of 256 possible entries into some non- specified colormap.  RIS
+functions make no assumptions about the existance of colormaps so it is up
+to the user to supply a colormap if one is needed.  See PALclass for more
+information on palettes.
+.LP
+Certain graphics libraries, require raster image data to be in a format
+different from what is described above.  If a different format is required,
+then it is the user's responsibility to pack/unpack the data into the format
+desired.
+.LP
+It is also important to be aware that the RISclass is theoretically a
+sub-class of the scientific data set class of messages (SDS).  The RISclass
+of messages has been provided to distinguish raster images from other form of
+scientific data, though that distinction is not necessary.
+.LP
+The RISclass contains the following supported functions and macros:
+.PP
+.nf
+\fBRISheaderLength:\fP
+.fi
+\fBRISHL:\fP
+Macros for determining a view control header length.  These two macros are
+equivalent.  They both return the exact length of the supplied character
+string \fIheader\fP, counting the null character at the end.
+.LP
+\fBRISsetClass:\fP inserts the message class constant \fBRISclass\fP
+into the character string \fIheader\fP indicating that the data to follow
+should be considered some form of a raster image.  The \fBRISclass\fP
+constant is declared in the file \fIris.h\fP, and though it is accessible
+at all times, it is recommended that the macro \fBRISsetClass\fP be used
+to correctly insert this message type tag into the header.
+.LP
+\fBRIScompareClass:\fP returns a non-zero value if the character string
+\fIheader\fP contains the \fBRISclass\fP constant.  Though the constant 
+\fBRISclass\fP is accessible at all times, it is recommended that the macro 
+\fBRIScompareClass\fP to determine whether or not a header indicates raster
+image data.
+.LP
+\fBRISsetDimensions:\fP inserts into the string \fIheader\fP the \fBRISdims\fP
+flag followed by the two dimensions \fIxdim\fP and \fIydim\fP of the raster
+image.  It is the user's responsibility to ensure that the dimensions
+specified here match the actual dimensions of the data.
+.LP
+\fBRISgetDimensions:\fP examines the string \fIheader\fP and returns the
+specified dimensions, \fIxdim\fP and \fIydim\fP, of the raster image.  There
+is no guarantee that the dimensions read from the header will match the
+dimensionality of the data received since \fBRISgetDimensions\fP has no
+way of reviewing and interpreting the data.
+.LP
+\fBRISsetTitle\fP inserts the DTM title tag followed by the null-
+terminated character string \fItitle\fP into the header.  The title is
+surrounded by single quotation marks so that it's contents will not affect
+the interpretation of the header.
+.LP
+\fBRISgetTitle\fP examines the string \fIheader\fP and determines the title
+string that it contains.  Memory for the \fItitle\fP string must be allocated
+by the user before attempting to extract the title from the header.  If there
+is insufficient memory allocated to store the entire title as contained in the 
+header, the title string is truncated.
+.LP
+\fBRISsetType:\fP inserts into the string \fIheader\fP the tag \fBRIStype\fP
+immediately followed by a tag identifying the \fIraster_type\fP of the image.
+The tag type should be either \fBRIS8BIT\fP or \fBRIS24BIT\fP.  It the user's
+responsibility to ensure that the data type specified matches the data sent.  
+\fBRISsetType\fP also inserts the DTM type tag followed by the tag for the
+type \fBDTM_CHAR\fP.  This is set to ensure that each RISclass message can
+still be considered a full-blown \fBSDSclass\fP with the data type
+\fBDTM_CHAR\fP.
+.LP
+\fBRISgetType\fP examines the string \fIheader\fP, and if the \fBRIStype\fP
+tag is found, sets the argument \fIraster_type\fP to be the next value.
+The two defined values that can be returned are \fBRIS8BIT\fP and
+\fBRIS24BIT\fP.  If the \fBRIStype\fP tag was not found within the header, the 
+\fIraster_type\fP argument receives a default value of \fBRIS24BIT\fP.
+.LP
+.SH "SEE ALSO"
+\fIThe DTM Programming Manual\fP
+.SH "DIAGNOSTICS"
+\fBRISgetDimensions, RISgetTitle, and RISgetType\fP all return a value of
+0 upon successful parsing of the header.  If the tag that each is searching
+for is not present in the header, the functions return the error value
+\fBDTMERROR\fP.  In general, no values are assigned to any of the
+arguments with the exception of the \fBRISgetType\fP's argument
+\fIraster_type\fP: in this case the default value of \fBRIS24BIT\fP is
+returned.
+.LP
+.SH "BUGS"
+None of the \fBRISset*\fP functions and macros have any way of determining
+if the header contains sufficient space to hold the data-specific tag and
+the associated data.  The results of attempting to store this information
+beyond the end of the allocated space are undefined.
+.LP
+\fBRISgetDimensions\fP assumes that two dimensions follow the \fBRISdims\fP
+flag.  If less than two integers follow the tag, the results are undefined.

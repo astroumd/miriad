@@ -1,0 +1,22 @@
+.TH PALheaderLength 3DTM "10 February 1992" DTM "DTM Version 2.0"
+.LP
+.SH "NAME"
+\fBPALheaderLength, PALHL\fP - Macros for determining a palette header length.
+.LP
+.SH "SYNOPSIS"
+.nf
+.B #include <ris.h>
+.LP
+.B PALheaderLength(char *\fIheader\fP)
+.LP
+.B PALHL(char *\fIheader\fP)
+.fi
+.LP
+.SH "DESCRIPTION"
+These two macros are equivalent.  They both return the exact length of
+the supplied character string 
+.I header,
+including the null character at the end.
+.LP
+.SH "SEE ALSO"
+DTM, PALclass

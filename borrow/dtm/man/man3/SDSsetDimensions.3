@@ -1,0 +1,75 @@
+.TH SDSsetDimensions 3DTM "10 February 1992" DTM "DTM Versions 2.0"
+.LP
+.SH "NAME"
+\fBSDSsetDimensions, SDSgetDimensions\fP - Scientific data set functions for dealing with data set dimensions.
+.LP
+.SH "SYNOPSIS"
+.nf
+.B #include <sds.h>
+.LP
+\fBvoid SDSsetDimensions(char *\fIheader\fP, int \fIrank\fP, int *\fIdims\fP)\fP
+.LP
+\fBint SDSgetDimensions(char *\fIheader\fP, int *\fIrank\fP, int *\fIdims\fP, int \fIlen\fP)\fP
+.fi
+.LP
+.SH "DESCRIPTION"
+.B SDSsetDimensions
+inserts into the character string
+.I header
+the 
+.B SDSdims
+flag followed by the 
+.I rank
+and all of the dimensions 
+.I dims
+of the data set.  It is the user's responsibility to ensure that the 
+dimensions specified here match the actual dimensions of the data.
+.LP
+.B SDSgetDimensions
+examines the character string
+.I header
+and returns the specified 
+.I rank
+and dimensions
+.I dims
+of the data set.  There is no guarantee that the dimensions read from
+the header will match the dimensionality of the data received since 
+.B SDSgetDimensions
+has no way of reviewing and interpreting the data.
+.B SDSgetDimensions
+will save a maximum of 
+.I len
+dimensions, and it is the user's responsibility to ensure that the dims array 
+can hold 
+.I len
+values.
+.LP
+.SH "SEE ALSO"
+DTM, SDSclass, SDSgetRank
+.LP
+.Sh "DIAGNOSTICS"
+.B SDSgetDimensions
+returns a value of 0 upon successful parsing of the header.
+If the tag 
+.B SDSdims
+is not found within the header, the function returns
+the error 
+.B DTMERROR 
+and no values are assigned to the dimensions.
+.LP
+.SH "BUGS"
+.B SDSsetDimensions
+has no way of determining if the header contains sufficient space to hold 
+the tag 
+.B SDSdims,
+the rank, and all of the dimensions specified.
+The results of attempting to store this information beyond the end of the 
+allocated space are undefined.
+.LP
+.B SDSgetDimensions
+assumes that the rank follows the 
+.B SDSdims
+tag.  If the rank
+is not present, the results are undefined, thus the importance of using
+.B SDSsetDimensions
+when creating the header.

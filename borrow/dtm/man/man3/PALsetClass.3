@@ -1,0 +1,49 @@
+.TH PALcompareClass 3DTM "7 February 1992" DTM "DTM Version 2.0"
+.LP
+.SH "NAME"
+.B PALsetClass, PALcompareClass - 
+Palette class labeling and scanning macros.
+.LP
+.SH "SYNOPSIS"
+.nf
+.B #include <ris.h>
+.LP
+.B PALsetClass(char *\fIheader\fP)
+.LP
+.B PALcompareClass(char *\fIheader\fP)
+.fi
+.SH "DESCRIPTION"
+.B PALsetClass
+inserts the message class constant  
+.B PALclass
+into the character string
+.I header
+indicating that the data to follow should be considered a palette.  The 
+.B PALclass
+constant is declared in the file 
+.I ris.h,
+and though it is accessible at all times, it is recommended that the macro 
+.B PALsetClass 
+be used to correctly insert this message type tag into the header.
+.LP
+.B PALcompareClass
+returns a non-zero value if the character string
+.I header
+contains the 
+.B PALclass
+constant.  Though the constant 
+.B PALclass
+is accessible at all times, users should use the macro 
+.B PALcompareClass
+to determine whether or not a header indicates palette data.
+.LP
+.SH "SEE ALSO"
+DTM, PALclass
+.LP
+.SH "BUGS"
+.B PALsetClass
+has no way of determining if the header contains sufficient
+space to hold the tag 
+.B PALclass.
+The results of attempting to store this
+information beyond the end of the allocated space are undefined.

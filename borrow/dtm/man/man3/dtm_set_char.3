@@ -1,0 +1,83 @@
+.ta 0.5 1
+.TH dtm_set_char 3DTM "30 August 1992" DTM "DTM Version 2.0"
+.SH "NAME"
+\fBdtm_set_char, dtm_get_char\fP - Low level string insertion and retrieval functions.
+.LP
+\fBdtm_set_float, dtm_get_float\fP - Low level floating point insertion and retrieval functions.
+.LP
+\fBdtm_set_int, dtm_get_int\fP - Low level integer insertion and retrieval functions.
+.LP
+.SH "SYNOPSIS"
+.nf
+.B #include <dtm.h>
+.LP
+\fBvoid dtm_set_char(char *\fIheader\fP, char *\fItag\fP, char *\fIstring\fP)\fP
+.LP
+\fBint dtm_get_char(char *\fIheader\fP, char *\fItag\fP, char *\fIstring\fP)\fP
+.LP
+\fBvoid dtm_set_float(char *\fIheader\fP, char *\fItag\fP, float \fIfval\fP)\fP
+.LP
+\fBint dtm_get_float(char *\fIheader\fP, char *\fItag\fP, float *\fIfval\fP)\fP
+.LP
+\fBvoid dtm_set_int(char *\fIheader\fP, char *\fItag\fP, int \fIival\fP)\fP
+.LP
+\fBint dtm_get_int(char *\fIheader\fP, char *\fItag\fP, int *\fIival\fP)\fP
+.LP
+.fi
+.SH "DESCRIPTION"
+These functions all append a \fItag\fP value and a particular type of data 
+to the end of the character string \fIheader\fP.  The \fItag\fP 
+value must be a null-terminated character string.  In general, this function 
+is reused by subclasses to ensure a particular subclass's uniqueness.
+Therefore, the \fItag\fP value should be considered private data that is 
+unique to that particular class.
+.LP
+\fBdtm_set_char \fP appends the string \fIstring\fP onto the end of the
+character string \fIheader\fP imediately following the \fItag\fP.  The 
+\fIstring\fP value must be a null-terminated character string.  The value
+of \fIstring\fP is surrounded by the delimiter "'" to ensure that the
+string does not cause conflicts with other information already present
+in the header.
+.LP
+\fBdtm_set_float \fP appends the string representation of the floating 
+point value \fIfval\fP onto the end of the character string \fIheader\fP
+imediately following the \fItag\fP.  
+.LP
+\fBdtm_set_int \fP appends the string representation of the integer value
+\fIival\fP onto the end of the character string \fIheader\fP, imediately
+following the \fItag\fP.
+.LP
+\fBdtm_get_char\fP examines the character string \fIheader\fP for the
+string \fItag\fP.  If the \fItag\fP is present, the string following
+the tag is placed in the previously allocated character string \fIstring\fP.
+If the \fItag\fP value is absent from the header or if no strings exist
+following the \fItag\fP, \fBdtm_get_char\fP returns the value \fBDTMERROR\fP.
+.LP
+\fBdtm_get_int\fP examines the character string \fIheader\fP for the
+string \fItag\fP.  If the \fItag\fP is present, the string following
+the tag is converted to an integer and is returned in \fIival\fP.  If the 
+\fItag\fP value is absent from the \fIheader\fP or if no integers exist
+following the \fItag\fP, \fBdtm_get_int\fP returns the value \fBDTMERROR\fP.
+.LP
+\fBdtm_get_float\fP examines the character string \fIheader\fP for the
+string \fItag\fP.  If the \fItag\fP is present, the string following
+the tag is converted to a floating point value and is returned in the
+argument \fIfval\fP.  If the \fItag\fP value is absent from the \fIheader\fP
+or if no strings exist following the \fItag\fP, \fBdtm_get_char\fP returns
+the value \fBDTMERROR\fP.
+.LP
+For examples of how these macros are used in the creation of new subclasses,
+examine the header files of the classes supplied, e.g. \fIsds.h\fP.
+.LP
+.SH "SEE ALSO"
+DTM
+.SH "DIAGNOSTICS"
+.LP
+The functions that get values from the header return the value \fBDTMERROR\fP
+is the specified tag to find is non-existant, or if there are no values
+of the desired type following the tag.
+.SH "BUGS"
+The functions that set values in the header have no way of determining if
+the header contains sufficient space to hold the tag and the supplied value.
+The results of attempting to store this information beyond the end of the 
+allocated space are undefined.

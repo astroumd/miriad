@@ -1,0 +1,81 @@
+.TH DTMgetPortAddr 3DTM "2 April 1992" DTM "DTM Version 2.0"
+.ta .5i 2.5i
+.SH "NAME"
+\fBDTMgetPortAddr, DTMgetRemotePortAddr\fP - Return the IP address of DTM port(s).
+.LP
+.SH "SYNOPSIS"
+.nf
+\fB#include <dtm.h>\fP
+.LP
+\fBint DTMgetPortAddr(int \fIportid\fP, char *\fIaddress\fP, int \fIsize\fP)\fP
+.LP
+\fBint DTMgetRemotePortAddr(int \fIportid\fP, char ***\fIaddresses\fP, int *\fInum_addresses\fP)\fP
+.LP
+.SH "DESCRIPTION"
+\fBDTMgetPortAddr\fP returns the IP address of DTM port specified by the
+integer \fIportid\fP.  \fIAddress\fP is a user-allocated buffer of size 
+\fIsize\fP in which the IP address will be stored in the form 
+\'000.000.000.000:port', where the "000"'s are the IP numbers of the current 
+host.  This is typically used in conjunction with \fBDTMmakeInPort\fP to 
+retrieve the input TCP port number and report it to connecting programs.  
+This is a cause for some confusion.  If you do a \fBDTMgetPortAddr\fP on a 
+\fIportid\fP that is an output port, (one created by a call to 
+\fBDTMmakeOutPort\fP), you do not get the IP address of the remote port you 
+are connected to!  Rather, you get the IP address of the machine in which the 
+process is executing, followed by the output port number.  This is because 
+with version 2.0 of the DTM library, it is possible to be connected to 
+multiple ports at once.  For example, if this is the setup where port 8000 
+(\fIportid\fP 1) is sending to three other DTM ports:
+.LP
+.nf
+                                      +---> 1.1.1.1:8001
+                                      |
+     1.1.1.1:8000 (portid: 1)---------+---> 1.1.1.1:8002
+                                      |
+                                      +---> 1.1.1.1:8003
+.LP
+.fi
+Then the call to \fBDTMgetPortAddr\fP with the \fIportid\fP of "1" would 
+place the value "1.1.1.1:8000" in the \fIaddress\fP field.  To get the list of
+ports an output port is sending to, use \fBDTMgetRemotePortAddr\fP.
+.LP
+\fBDTMgetRemotePortAddr\fP creates a list of all ports that are listening on the
+output port specified by \fIportid\fP.  \fINum_addresses\fP reports the number 
+of ports 
+contained in the list of \fIaddresses\fP.  The memory for this address list is allocated
+by DTM and must be freed by the user when no longer needed.  For example,
+if this is the setup where port 8000 (\fIportid\fP 1) is sending to three other 
+DTM ports:
+.LP
+.nf
+                                      +---> 1.1.1.1:8001
+                                      |
+     1.1.1.1:8000 (portid: 1)---------+---> 1.1.1.1:8002
+                                      |
+                                      +---> 1.1.1.1:8003
+.LP
+.fi
+Then the call to \fBDTMgetRemotePortAddr\fP with the \fIportid\fP of "1" would 
+create a list of \fIaddresses\fP containing "1.1.1.1:8001", "1.1.1.1:8002", and
+"1.1.1.1:8003", with \fInum_addresses\fP would be set to 3.
+.LP
+.SH "SEE ALSO"
+\fBDTM, DTMmakeInPort, DTMmakeOutPort\fP
+.SH "DIAGNOSTICS"
+If \fBDTMgetPortAddr\fP encounters an error, it returns the value \fBDTMERROR\fP
+and sets the \fBDTMerrno\fP variable to be one of the following values:
+.nf
+	\fBDTMHOST\fP	That hostname is not found/bad.
+	\fBDTMBUFOVR\fP	User buffer overflow.
+.LP
+\fBDTMgetRemotePortAddr\fP also returns the value \fBDTMERROR\fP should an
+error condition arise, and the values that \fBDTMerrno\fP are set to are:
+.nf
+	\fBDTMMEM\fP	Out of memory.
+
+If successful, both of these commands return the value \fBDTM_OK\fP
+(\fBDTMNOERROR\fP).
+.LP
+.SH "BUGS"
+\fBDTMgetRemotePortAddr\fP currently only works for port ids that have been 
+created using \fBDTMmakeOutPort\fP.  This may change in a future release.

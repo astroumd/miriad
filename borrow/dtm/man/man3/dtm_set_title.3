@@ -1,0 +1,45 @@
+.TH dtm_set_title 3DTM "17 February 1992" DTM "DTM Version 2.0"
+.SH "NAME"
+\fBdtm_set_title, dtm_get_title\fP - Set and retrieve a message title.
+.LP
+.SH "SYNOPSIS"
+.nf
+\fB#include <dtm.h>\fP
+.LP
+\fBdtm_set_title(char *\fIheader\fP, char *\fItitle\fP)\fP
+.LP
+\fBdtm_get_title(char *\fIheader\fP, char *\fItitle\fP, int \fItitle_length\fP)\fP
+.LP
+.fi
+.SH "DESCRIPTION"
+\fBdtm_set_title\fP inserts the DTM title tag \fBTTL\fP followed by the
+null-terminated
+character string \fItitle\fP into the character string 
+\fIheader\fP.  The title is surrounded by single
+quotation marks so that it's contents will not affect the interpretation of 
+the rest of the header.
+.LP
+\fBdtm_get_title\fP examines the character string \fIheader\fP and extracts
+up to \fItitle_length\fP characters of the delimited title contained within.  
+Memory for the character string \fItitle\fP must be allocated 
+by the user before attempting to extract the title from the header.
+If 
+the value of \fItitle_length\fP is less than the number of characters actually
+delimited as the title in the header, the title string is truncated.  Nothing,
+save the null character '\\0', is stored in \fItitle\fP if no delimited title
+string exists in the header.
+.LP
+.SH "DIAGNOSTICS"
+\fBdtm_get_title\fP returns the error \fBDTMERROR\fP if the DTM title tag 
+\fBTTL\fP is not contained
+within the header, or if following the tag there is no delimited title string.
+Otherwise, \fIdtm_get_title\fP returns a 0 value.
+.LP
+.SH "BUGS"
+\fBdtm_set_title\fP has no way of determining if the header contains sufficient
+space to hold the DTM title tag and the title string itself.  The results of
+attempting to store this information beyond the end of the allocated space
+are undefined.
+.LP
+.SH "SEE ALSO"
+\fBDTM\fP

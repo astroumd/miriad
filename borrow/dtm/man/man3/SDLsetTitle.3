@@ -1,0 +1,58 @@
+.TH SDLsetTitle 3DTM "10 February 1992" DTM "DTM Version 2.0"
+.LP
+.SH "NAME"
+\fBSDLsetTitle, SDLgetTitle\fP - Surface description language title manipulation macros.
+.LP
+.SH "SYNOPSIS"
+.nf
+.B #include <sdl.h>
+.LP
+.B SDLsetTitle(char *\fIheader\fP, char *\fItitle\fP)
+.LP
+.B SDLgetTitle(char *\fIheader\fP, char *\fItitle\fP, int \fItitle_length\fP)
+.fi
+.LP
+.SH "DESCRIPTION"
+.B SDLsetTitle
+inserts the 
+.B DTM
+title tag followed by the null-terminated character
+string 
+.I title
+into the character string
+.I header.
+The title is surrounded by single quotation
+marks so that it's contents will not affect the interpretation of the header.
+.LP
+.B SDLgetTitle
+examines the character string
+.I header
+and determines the title string that is contained.  Memory for the 
+.I title
+string must be allocated by the user before
+attempting to extract the title from the header.  If there is insufficient
+memory allocated to store the entire title as contained in the header, the
+title string is truncated.
+.LP
+.SH "SEE ALSO"
+DTM, SDLclass
+.LP
+.SH "DIAGNOSTICS"
+.B SDLgetTitle
+returns the error 
+.B DTMERROR
+if the 
+.B DTM
+title tag is not contained
+within the header, or if following the tag there is no delimited title string.
+Otherwise, 
+.B SDLgetTitle
+returns a 0 value.
+.LP
+.SH "BUGS"
+.B SDLsetTitle
+has no way of determining if the header contains sufficient
+space to hold the 
+.B DTM
+title tag and the title string itself.  The results of attempting to store 
+this information beyond the end of the allocated space are undefined.

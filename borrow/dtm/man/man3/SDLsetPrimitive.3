@@ -1,0 +1,80 @@
+.TH SDLsetPrimitive 3DTM "10 February 1992" DTM "DTM Version 2.0"
+.LP
+.SH "NAME"
+\fBSDLsetPrimitive, SDLgetPrimitive\fP - Surface description language primitive typing macros.
+.LP
+.SH "SYNOPSIS"
+.nf
+.B #include <sdl.h>
+.LP
+.B SDLsetPrimitive(char *\fIheader\fP, SDLprim_t \fIprimitive_type\fP)
+.LP
+.B SDLgetPrimitive(char *\fIheader\fP, SDLprim_t *\fIprimitive_type\fP)
+.fi
+.LP
+.SH "DESCRIPTION"
+.B SDLsetPrimitive 
+inserts into the header the tag 
+.B SDLprimitive
+immediately
+followed by a tag identifying the primitive type of the data.  The 
+.I primitive_type
+should be one of the following: 
+.B SDLpoint, 
+.B SDLlineseg, 
+.B SDLtriangle, 
+.B SDLquad,
+or 
+.B SDLsphere.
+See 
+.B SDLclass
+for more information about these types.
+.LP
+.B SDLgetPrimitive
+examines the character string
+.I header,
+and if the 
+.B SDLprimitive 
+tag if found,
+sets the argument 
+.I primitive_type
+to be the succeeding value.  The defined values that can be returned are 
+.B SDLpoint,
+.B SDLlineseg,
+.B SDLtriangle,
+.B SDLquad,
+and 
+.B SDLsphere.
+See 
+.B SDLclass
+for more information about these types.  If the
+.B SDLprimitive
+tag was not found within the 
+.I header,
+the 
+.I primitive_type 
+argument receives a default value of 
+.B SDLpoint.
+.LP
+.SH "SEE ALSO"
+DTM, SDLclass
+.LP
+.SH "DIAGNOSTICS"
+.B SDLgetPrimitive
+returns the error 
+.B DTMERROR
+if the header does not contain the tag
+.B SDLprimitive
+or if no value follows the 
+.B SDLprimitive
+tag.  In either case, the value of raster_type still defaults to 
+.B SDLpoint.
+.LP
+.SH "BUGS"
+.B SDLsetPrimitive
+has no way of determining if the header contains sufficient
+space to hold the 
+.B SDLprimitive 
+tag and the primitive_type value.  The results
+of attempting to store this information beyond the end of the allocated space
+are undefined.

@@ -1,0 +1,68 @@
+.TH DTMgetAddress 3DTM "7 February 1992" DTM "DTM Version 2.0"
+.LP
+.SH "NAME"
+.B DTMgetAddress, DTMsetAddress
+- Retrieve and set the supplied address in the header.
+.LP
+.SH "SYNOPSIS"
+.nf
+.LP
+.B #include <dtm.h>
+.LP
+.B DTMsetAddress(char *\fIheader\fP, char *\fIaddress\fP)
+.LP
+.B DTMgetAddress(char *\fIheader\fP, char *\fIaddress\fP, int \fIsize\fP)
+.fi
+.LP
+.SH "DESCRIPTION"
+.B DTMsetAddress
+inserts the 
+.B DTM
+address tag followed by the null-terminated 
+character string 
+.I address
+into the header
+.I header.
+Use 
+.B DTMgetPortAddr()
+to retrieve the actual port address character string for insertion. 
+.LP
+.B DTMgetAddress
+examines the header
+.I header
+and determines the address string 
+.I address
+that is
+contained.  Memory for the address string must be allocated by the user before
+attempting to extract the address from the header.
+If there is insufficient
+memory allocated to store the entire address as contained in the header,
+the address string is truncated.
+.LP
+.SH "SEE ALSO"
+DTM, DTMgetPortAddr
+.LP
+.SH "DIAGNOSTICS"
+.B DTMgetAddress
+returns the error 
+.B DTMERROR
+if the
+.B DTM
+address tag is not contained
+within the header, or if no address string follows the tag.
+Otherwise, 
+.B DTMgetAddress
+returns a 0 value.
+.LP
+.SH "BUGS"
+.B DTMsetAddress
+has no way of determining if the header contains sufficient
+space to hold the
+.B DTM
+address tag and the address string.  The results 
+of attempting to store this information beyond the end of the allocated space
+are undefined.
+.LP
+The address string may contain any characters.  It is the caller's
+responsibility to ensure that the address string contains useful information
+instead of garbage.
