@@ -1,0 +1,217 @@
+#*****************************************************************************
+# 
+#			  NCSA HDF version 3.10r2
+#				Sept 20, 1990
+#
+# NCSA HDF Version 3.10r2 source code and documentation are in the public
+# domain.  Specifically, we give to the public domain all rights for future
+# licensing of the source code, all resale rights, and all publishing rights.
+# 
+# We ask, but do not require, that the following message be included in all
+# derived works:
+# 
+# Portions developed at the National Center for Supercomputing Applications at
+# the University of Illinois at Urbana-Champaign.
+# 
+# THE UNIVERSITY OF ILLINOIS GIVES NO WARRANTY, EXPRESSED OR IMPLIED, FOR THE
+# SOFTWARE AND/OR DOCUMENTATION PROVIDED, INCLUDING, WITHOUT LIMITATION,
+# WARRANTY OF MERCHANTABILITY AND WARRANTY OF FITNESS FOR A PARTICULAR PURPOSE
+# 
+#*****************************************************************************
+
+** a common mistake is not defining the MACHINE type when compiling a file
+that includes "df.h", e.g.
+	cc -c file.c			(wrong)
+as opposed to
+	cc -c -DSUN file.c		(right)
+for an installed "dfi.h", "df.h", you might want to add
+	#define SUN
+(or whatever machine type) in dfi.h
+
+
+** Fortran compiler only accepts maximum 7 character
+function names --
+The Bourne shell script short.sh truncates the fortran files
+so that all functions names are 7 or less characters longs.
+Alternately or if you are not running UNIX, you could use an
+editor to remove everything after the "CEND7MAX" line in the
+Fortran  source files.
+
+** #pragma
+Some compilers are not very tolerant of #pragma.  Since we inserted 
+some of these directives in dfsd.c to increase the speed on Crays,
+you need to edit the file (dfsd.c) to fix the problem.  Specifically:.
+
+MIPS C compiler version 2.1 can handle it, but earlier compilers may 
+not.  If comment out the line with #pragma on it, to problem should
+go away.
+
+UNICOS will not compile the #pragma if it is indented.  If the #pragma
+is indented, delete the leading spaces to make it work. 
+
+
+** UNICOS --
+See above about short Fortran function names.
+See above about #pragma.
+
+
+** SGI, IRIS4D --
+The standard MIPS C compiler available to the SGI machine is
+not very tolerant of "#pragma"s.  See above about #pragma.
+
+** DEC 3100 with Ultrix --
+Do not specify a machine type if you are compiling on a DEC3100.
+The compiler automatically defines a machine type as MIPSEL, and
+the dfi.h contains a section of code to set the appropriate
+parameters accortingly.
+
+See above about #pragma.
+
+
+** STELLAR
+To port to Stellar:
+
+Change Makefile, as follows:
+
+	#define SUN 
+	comment out references to pixrect
+	get rid of references to ranlib
+
+
+** APOLLO
+Do not use ftn to compile the fortran stubs.
+
+
+** CONVEX
+There's an attempt at porting HDF to the Convex that's fairly suceessful.
+However, we could not support the machine as we have no machine to test or
+develop it on.  If you're interested, please contact us.
+
+
+** nonSUN
+If you have selected SUN as your machine type, but your machine is
+not really a Sun, you should deleted the following line in hdfrseq.c:
+	#include <pixrect/pixrect_hs.h>
+and remove all lines in hdfrseq.c that are between
+	#ifdef SUN
+and
+	#endif /* SUN */
+
+Also comment out the
+	GLIBS = -lpixrect
+line in the Makefile.
+
+
+** PC
+
+Hello,
+	I have just finished the port of HDF to the IBM PC.  I have tested
+only the standard HDF routines, the palette routines, and the RIG routines.
+The scientific data set routines, the annotation routines and the 24 bit
+image routines may still be slightly buggy.
+
+Things to watch out for:
+1)	If you need large amounts of memory space for your image, use
+	halloc((long)x,(int)y) to allocate x*y amount of bytes
+	for your use.  A typical call I use is:  
+		p=halloc((long)size, (int)1);	
+	This allocates 'size' number of bytes where size can be a very
+	large number.  Use hfree((char *)p) to free the memory you allocate
+	with halloc().  Don't free halloc'ed things with free(), or
+	malloc'ed things with hfree(), you will probably hang your machine.
+
+2)	When you open an image file, remember to open it in binary mode.
+	i.e.:
+		fp=fopen("filename.img","wb");
+	or
+		fp=fopen("filename.img","rb");
+	If you don't do this, every time you write or read a carriage 
+	return character, a line feed will be appended or attempted to
+	be stripped off the file, depending whether you are writing or
+	reading the file.
+3)	Most of the time, the HDF routines I haven't tested assume that an
+	integer is 32-bits long.  This is not true on the PC, they are
+	only 16-bits long.  This can cause potential problems when trying
+	to index a byte in an image array with an integer, because most
+	images are significantly larger than 32k (the point at which
+	integers turn negative on the PC).  Most of the
+	time this can be fixed by changing the variable used to index the
+	array to a long.  DFIMCOMP.c has extensive examples of this kind
+	of fix-up if you need to perform them.
+4)	The various routines in HDF of the form DFputxxxx() and DFaddxxxx() 
+	(DFPputpal(), DFPaddpal(), DFR8putimage(), DFR8addimage(), etc.)
+	are meant to be used in the following way:  Only use DFputxxxx() 
+	for the first xxxx to be put into a new HDF file, use DFaddxxxx()
+	for further additions to the file.  For already existing files,
+	it is alright to do a DFopen() on the file and then call 
+	DFaddxxxx() to add the xxxx to the HDF file.
+
+	I would suggest using the utility routines we provide as examples of 
+the way to use HDF calls.  As always we appreciate your feedback and
+suggestions for further versions of HDF.  Please keep me up to date on any
+bugs you find in the routines so I can fix them and post the bug-fixes.
+
+			Thanks for your patience,
+					Quincey Koziol
+					NCSA
+koziol@ncsa.uiuc.edu
+
+
+** 3B15
+From garnett@d.cs.okstate.edu Mon Feb 19 19:37:13 1990
+From: John Garnett Computing and Informatio <garnett@d.cs.okstate.edu>
+To: mfolk@NCSA.NCSA.UIUC.EDU
+
+Dr. Folk,
+
+I finally received access to a computer account that has enough
+disk space to ftp HDF and compile it.  This note is to let you
+know what I have discovered so far about trying to compile
+HDF on an AT&T 3B15 running AT&T's UNIX System V.3.2
+
+First of all, the 3B15 won't compile any module that includes the
+#include file <sys/file.h> unless the #include file <sys/types.h>
+is included prior to <sys/file.h>.  This was easy enough to fix by
+adding the appropriate line to the dfi.h file.  Replace
+
+#include <sys/file.h>
+
+with
+
+#include <sys/types.h>
+#include <sys/file.h>
+
+Secondly, since the HDF Makefile does not have a MACHINE= type of
+3B15 available, I used the SUN definition.  This appears to work well,
+although I haven't yet tested the library.  By the way, the 3B15 doesn't
+have bcopy().
+
+Thirdly, it appears that all of the UTILS were setup to link against
+libpixrect which I am guessing is a SUN graphics library.  As it turned
+out, only the first .c file in the UTILS list required this library so
+I was able to compile the remaining UTILS by commenting out the first one
+and editing LIBS= not to include libpixrect. (as you can probably tell
+by now, I don't have immediate access to a SUN).
+
+I plan to try compiling on my PC next.  This should be an experience
+since I have Turbo C instead of Lattice (which MAKE.BAT requires).
+
+I'll keep you informed.  BTW, I ftp'd those files that you put in
+pub/garnett on zaphod if you want to deleted them - Thanks.
+
+John Garnett
+
+
+** IBM 6000
+From likkai@yoyodyne Sat Jun 30 13:46:45 1990
+
+dfi.h's declaration of malloc as "char* malloc() "
+conflicts with the ibm6000's declaration of 
+"extern void     *malloc();" and
+"extern void     *malloc(size_t size);" in stdlib.h on nl-ibm2;
+
+Also, in dfi.h, what MACHINE type should it be? Currently, it is being
+faked as an IRIS4.
+
+
+

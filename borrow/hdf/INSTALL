@@ -1,0 +1,154 @@
+***********************************************************************
+
+			NCSA HDF version 3.10r2
+			    Sept 20, 1990
+***********************************************************************
+
+The file HINTS contains some hints for errors and unusual cases.
+
+*Compiling and installing
+** UNIX
+For UNICOS, SGI or fortran compilers that uses only short
+names (< 8 characters), see HINTS.
+
+We now provide makefiles for each configuration we support.
+These Makefile's are named Mfile.<SystemName>.  In addition,
+Mfile.GEN is the generic makefile which you could modify and
+use if your configuration is not supported.
+
+Find the Makefile for your system.  If your system is a sun3
+or sun4, you could now do
+	cp Mfile.SUN Makefile
+	make
+or just
+	make -f Mfile.SUN
+to make the libraries.
+
+Make targets available are :
+make / make all -- compile and install library and utilities
+make allnostub -- compile and install library without
+	Fortran stub routines, and utilities
+make build -- compile library and utilites
+make buildnostub -- compile library (without Fortran stubs)
+	and utilities
+make libdf.a -- compile library
+make libnostub -- compile library with Fortran stub routines
+make utils -- compile utilities
+make install -- install library and utilities
+make clean -- rm intermediate files
+make cleanup -- rm all make products
+
+** VMS
+Several DCL script files are provided for compilation.
+MAKE.COM -- runs MAKELIB.COM and MAKEUTILS.COM
+MAKELIB.COM -- makes the full library, DF.OLB
+MAKENOF.COM -- makes the library *without* the fortran
+		stubs, also DF.OLB
+MAKEUTILS.COM -- compiles the utilities
+
+To run MAKE.COM, for example, type @MAKE at the DCL prompt.
+
+Also provided is SETUPUTILS.COM to setup the commands for
+the utils to make them easier to use.  Edit this file before
+running to customize the directory path.
+
+** MAC
+The MacIntosh version of HDF is only supported under MPW
+3.0, MPW C 3.0, and (if you are using fortran with it) LS
+Fortran v2 onwards.
+
+If you have just the generic distribution, the Makefile for
+the MAC is in MAKE.HQX, a binhexed version of the MPW
+makefile.  In the MacIntosh distribution, the Makefile is
+named Makefile.
+
+To generate commands for compiling type
+	make
+in MPW shell.
+
+Make targets available are :
+make / make all -- compile and install library and utilities
+make allnostub -- compile and install library without
+	Fortran stub routines, and utilities
+make build -- compile library and utilites
+make buildnostub -- compile library (without Fortran stubs)
+	and utilities
+make libdf.a -- compile library
+make libnostub -- compile library with Fortran stub routines
+make utils -- compile utilities
+make install -- install library and utilities
+make clean -- rm intermediate files
+make cleanup -- rm all make products
+
+** PC compatibles
+The batch file MAKE.BAT is included to compile the library
+and utilities.  Type
+	MAKE
+in the MS-DOS prompt.
+
+*****
+
+(Note to Macintosh and PC users:  These routines have been compiled and 
+run successfully on Macs using MPW C Version 2.0.2, and on PCs using 
+Lattice C  Version 3.0.  We cannot guarantee that they will compile 
+correctly with other compilers.  We would appreciate any feedback you 
+can give on experiences you have compiling them on other compilers.
+
+For a non-Unix system, the Makefile may be used as a guide for compiling 
+the files.  An approximate summary of the procedure is:
+
+  cc -c df.c dfr8.c dfgroup.c dfcomp.c dfimcomp.c dfsd.c dfkit.c
+  ar libdf.a df.o dfr8.o dfgroup.o dfcomp.o dfimcomp.o dfsd.o 
+  ranlib libdf.a
+
+This creates the library file "libdf.a".
+
+To create the utilities "hdfls", "hdfrseq", "r8tohdf", "hdftor8", 
+"tektohdf", "hdftotek", and "hdfcomp", the procedure is:
+
+     cc hdfls.c libdf.a -o hdfls
+     cc hdfrseq.c libdf.a -o hdfrseq
+     cc r8tohdf.c libdf.a -o r8tohdf
+     cc hdftor8.c libdf.a -o hdftor8
+     cc tektohdf.c libdf.a -o tektohdf
+     cc hdftotek.c libdf.a -o hdftotek
+     cc hdfcomp.c libdf.a -o hdfcomp
+
+To use the program "hdfseq", create "hdfseq" as a symbolic link to the
+executable "hdfrseq".  "hdfseq" displays images on the console of a
+Sun or Iris workstation.
+
+--------------- Compiling Subsets of HDF ---------------
+
+If you wish to use only some of the HDF Sets, it is possible to create 
+versions of the library which only contain the desired interfaces.  For 
+instance, a user who works only with images, but not with raw floating 
+point data may wish to have only the Raster Image Set (RIS) but not the 
+Scientific Data Set. The following is the list of source files necessary 
+for each of the Sets included in the current version of HDF.
+
+Basic Low level HDF:   df.c dfkit.c df.h dfi.h
+Basic Low level Fortran: df.c dfF.c dfFf.f dfkit.c df.h dfi.h
+
+8-bit Raster Image Set (RIS-8): dfr8.c df.c dfkit.c dfcomp.c dfimcomp.c 
+    dfgroup.c df.h dfi.h dfrig.h
+8-bit Raster Image Set Fortran: dfr8.c dfr8F.c dfr8Ff.f df.c dfkit.c
+    dfcomp.c dfimcomp.c dfgroup.c df.h dfi.h dfrig.h
+
+Scientific Data Set (SDS): dfsd.c df.c dfkit.c dfgroup.c df.h dfi.h dfsd.h
+Scientific Data Set Fortran: dfsd.c dfsdF.c dfsdFf.f df.c dfkit.c
+    dfgroup.c df.h dfi.h dfsd.h
+
+------------ Compiling C programs with HDF ----------------
+
+To use HDF routines in your program, use "#include dfrig.h", "#include dfsd.h"
+etc. at the top of your program, depending on the Sets you are using.
+Call the appropriate HDF routines as described in the 
+documentation. Compile your C program "myprog.c" as follows:
+
+    cc myprog.c libdf.a -o myprog
+
+If the include file "dfrig.h" is in the directory "incdir", and the 
+library file "libdf.a" is in "libdir", use
+
+    cc -Iincdir myprog.c libdir/libdf.a -o myprog
