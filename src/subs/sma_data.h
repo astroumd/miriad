@@ -526,6 +526,7 @@ struct smlodd {
         int hires;
         int nopol;
         int circular;
+        int linear;
         int oldpol;
         int doChunkOrder;
         int mflag;
