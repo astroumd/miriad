@@ -35,6 +35,9 @@ c	written out and read in as ascii files.
 c
 c	An options menu provides a choice of display style, contour levels,
 c	and units. Further interactive help is available within the task.
+c
+c       For an interactive X windows interface, see VELPLOTC 
+c       (limited distribution)
 c@ in
 c	Input image name. No default.
 c@ device
