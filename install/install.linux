@@ -387,8 +387,9 @@ if ($dofl) then
    echo Compiling velplotc:
    pushd $MIR/src/spec/velplotc
    make clean velplotc LIBFORMS=$MIRLIB/libforms.a >& $MIR//tmp/velplotc.$$.$hosttype
+   if ($status) echo Warning: problems compiling velplotc
    mv velplotc $MIRBIN
-   make clean
+   make clean >>& $MIR//tmp/velplotc.$$.$hosttype
    popd
 else
    echo Could not find libforms.a to compile velplotc
