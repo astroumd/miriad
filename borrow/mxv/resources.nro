@@ -1,0 +1,675 @@
+.\" A more or less current list of mxv resources.
+.\" Use: tbl resources.nro | {p}troff -me
+.he '\n(mo/\n(dy/\n(yr'MXV Resources'%'
+.po 1.0i
+.ll 6.5i
+.nh
+.ce
+A Description of Resources Available to MXV
+.ft I
+.ps -1
+.ce
+Preliminary
+.ps +1
+.ft R
+.pp
+Mxv supports several new X11 resources and command line switches. More
+will be added in the future.
+.br
+\fBNOTE:\fR The resource names and most particularly the class names listed
+below are preliminary and are subject to change.
+.br
+.pp
+In the following lists, \fIWindow\fR refers to the shell window name which
+uses the resource. Spaces in the name are replaced by '_' (underscore).
+When looking in the resource database, resource names are of the form:
+.sp
+.ce
+	<program name>.<hostname>.Window.resource
+.sp
+As an example, to enable showing the palette bar wherever the palette
+button appears one could add this to the .Xdefaults file.
+.sp
+.ce
+Mxv*showPaletteBar: TRUE
+.sp
+Then, to turn off showing the palette bar for the frame window in \fImxv\fR:
+.sp
+.ce
+mxv*MXV_Frame.showPaletteBar: FALSE
+.sp
+.pp
+Since \fImxv\fR is written using Athena widget toolkit, it is possible to
+specify many more resources than are listed here.  For example, if an
+image is more than \fIapproximately\fR 500 elements wide (unscaled),
+the spreadsheet will be too wide for X11 to display it correctly. To
+remedy this, change the fonts used to display the spreedsheet. For
+instance:
+.ce
+mxv -xrm '*Spreadsheet*font:5x7'
+.pp
+As an alternative to adding the resources to your \fI.Xdefaults\fR
+file, you could put the \fImxv\fR resources in their own file. First create
+a directory, say, \fI.xdefaults\fR. Then, place all your \fImxv\fR resources in
+the file \fIMxv\fR in the directory.
+Finally, edit your \cI.cshrc\fR file adding
+the following line:
+.ce
+setenv  XAPPLRESDIR $HOME/.xdefaults
+(Don't forget to source the \fI.cshrc\fR file). You may create a similar
+file for any program that uses X11 resources. The name of the file should
+be the same as the class name of the program, usually the program name with
+the first letter capitalized.
+If you use a separate file
+instead of \fI.Xdefaults\fR, you may notice that \fImxv\fR takes longer to start.
+.pp
+If you'd like a different version of \fImxv\fR with different resources, to
+have one version that defaulted to FITS files, for instance,
+create an alias that runs mxv with the -name switch, ie:
+.ce
+alias	mymxv "mxv -name mymxv"
+Then add resource entries substituting the name of your version for
+the leading Mxv. Any resources specified with a specific file name
+will override the Mxv class resources.
+As an example, if you almost always used MIRIAD format, you could set
+the default file format to be MIRIAD:
+.ce
+Mxv*MXV_File_Window.fileFormat:		MIRIAD
+Then, for those special occasions:
+.ce
+mymxv*MXV_File_Window.fileFormat:		FITS
+.bp
+.ft B
+.ce
+Resource Description
+.ft R
+.\" NOTE!! The table gets broken in two since tbl seems to mess up if it
+.\" isn't. Therefore, any changes to the table header need to be also
+.\" made later.
+.TS
+expand;
+c	s
+cIP-1	s
+lBw(1.0i)	lw(5.5i).
+List of currently available resources
+Subject to change
+Resource	rows
+Class	Rows
+Values	integer
+Windows	MXV_Control, MXV_File_Window
+Switch	none
+Description	Number of rows of text in a window (approximately).
+
+Resource	cols
+Class	Columns
+Values	integer
+Windows	MXV_Control, MXV_File_Window
+Switch	none
+Description	Number of columns of text in a window (approximately).
+
+Resource	fileFormat
+Class	FileFormat
+Values	HDF, FITS or MIRIAD
+Windows	MXV_File_Window
+Switch	-fileformat
+Description	Specifies which file format to start with.
+
+Resource	maxDirEntries
+Class	MaxDirEntries
+Values	Integer >= 1
+Windows	MXV_File_Window
+Switch	None
+Description	T{
+Maximum number of files MXV can expect in a directory. The Default is 300.
+T}
+
+Resource	ignoreFileType
+Class	IgnoreFileType
+Values	TRUE or FALSE
+Windows	MXV_File_Window
+Switch	None
+Description	T{
+If FALSE, a filetype indicator will be prepended to filenames in the directory
+list window. When TRUE, nothing will be prepended. The default, FALSE,
+will greatly increase the time required to move into a new directory.
+T}
+
+Resource	dataDir
+Class	Directory
+Values	A valid directory path
+Windows	MXV_File_Window
+Switch	-datadir
+Description	Specifies the initial directory.
+
+Resource	plotMethod
+Class	PlotMethod
+Values	INTERNALPLOT, WIPPLOT, or GNUPLOT
+Windows	MXV_Control
+Switch	none
+Description	Sets default plot method
+
+Resource	wipCommand
+Class	Command
+Values	name plus path of wip command
+Windows	MXV_Control
+Switch	none
+Description	Tells mxv where to find wip
+
+.ne 6
+Resource	gnuCommand
+Class	Command
+Values	name plus path of gnuplot command
+Windows	MXV_Control
+Switch	none
+Description	Tells mxv where to find gnuplot
+
+Resource	wipEnvironment
+Class	Environment
+Values	Environment string for wip
+Windows	MXV_Control
+Switch	none
+Description	T{
+PGPLOT_FONT\ environment\ string.\ (ie
+Mxv*wipEnvironment:PGPLOT_FONT=<path>/grfont.dat).
+T}
+
+Resource	gnuEnvironment
+Class	Environment
+Values	Environment string for gnu
+Windows	MXV_Control
+Switch	none
+Description	T{
+Similar to wipEnvironment, but for gnuplot. (Not needed).
+T}
+
+Resource	tmpDir
+Class	Directory
+Values	valid directory name.
+Windows	MXV_Control
+Switch	none
+Description	T{
+Used to store command and data files for preview plots.
+T}
+
+Resource	contourImage
+Class	Plot.ContourImage
+Values	TRUE or FALSE
+Windows	MXV_Control
+Switch	none
+Description	T{
+If true, data image is displayed with contour plots.
+T}
+
+Resource	paletteDir
+Class	Directory
+Values	A valid directory
+Windows	MXV_File_Window
+Switch	-palettedir
+Description	Specifies the directory for paletteName.
+
+.ne 10
+Resource	paletteName
+Class	Filename
+Values	A valid palette name
+Windows	MXV_File_Window
+Switch	-palettename
+Description	Specifies the name of the initial palette.
+NOTES	T{
+The palette is looked for in the palette directory.
+"DEFAULT" means use built in default.
+T}
+
+.ne 25
+Resource	colorProtection
+Class	ColorProtection
+Values	NONE, BLACK-WHITE, ALLOCATED
+Windows	MXV_Control
+Switch	none
+Description	Which color entries should be protected.
+NOTES	T{
+At startup time, mxv determines which colors have been reserved by the X
+server and will not change them if the resource is ALLOCATED (the default).
+If it is BLACK-WHITE, mxv will allow all the colors but black & white to
+be changed. NONE means the entire palette can be modified. The setting can
+be changed from the palette control window. Note that displayed images
+are scaled to use only the colors that are changeable \fBat that time\fR.
+If the number of changeable colors is changed after an image is displayed,
+the image may not look correct. Also, grid markings displayed under palette
+bar will be incorrect.
+.pp
+Any colors allocated by the X server after mxv starts will not be
+protected. In particular, if the user chooses to set a button or some other
+widget to a color not already allocated by the server, that color will likely
+be allocated after mxv initializes its color data and will not be protected.
+Also, it is entirely possible for a user to preallocate so many colors that
+mxv will not be able to display an image correctly.
+T}
+
+.ne 8
+Resource	restrictFiddleCursor
+Class	RestrictCursor
+Values	TRUE, FALSE
+Windows	MXV_Control
+Switch	none
+Description	T{
+Whether to restrict fiddle cursor to palette control window.
+Default is TRUE.
+T}
+
+Resource	planeID
+Class	PlaneID
+Values	integer
+Windows	MXV_Cartesian_Display_Mode
+Switch	none
+Description	Initial value of Plane ID dialog box.
+
+Resource	scale
+Class	Scale
+Values	integer
+Windows	MXV_Cartesian_Display_Mode
+Switch	none
+Description	Initial value of Scale dialog box.
+
+Resource	width
+Class	Width
+Values	integer
+Windows	MXV_Cartesian_Display_Mode
+Switch	none
+Description	Initial value of Width dialog box.
+
+Resource	frameIncr
+Class	FrameIncr
+Values	integer
+Windows	MXV_Cartesian_Display_Mode
+Switch	none
+Description	Initial value of Frame Incr dialog box.
+
+Resource	numFrames
+Class	NumFrames
+Values	integer
+Windows	MXV_Cartesian_Display_Mode, MXV_Iso-surface
+Switch	none
+Description	Initial value of Num Frames dialog box.
+
+Resource	interpolated
+Class	Interpolated
+Values	TRUE or FALSE
+Windows	MXV_Cartesian_Display_Mode
+Switch	none
+Description	Initial value of Interpolated toggle.
+
+Resource	grid
+Class	Annotate
+Values	TRUE or FALSE
+Windows	MXV_Cartesian_Display_Mode
+Switch	none
+Description	Initial value of Grid toggle.
+
+Resource	usePixmap
+Class	UsePixmap
+Values	TRUE or FALSE
+Windows	MXV_Cartesian_Display_Mode
+Switch	none
+Description	Initial value of Use Pixmap toggle.
+
+Resource	useDisk
+Class	UseDisk
+Values	TRUE or FALSE
+Windows	MXV_Cartesian_Display_Mode
+Switch	none
+Description	Initial value of Use Disk toggle
+
+Resource	view2D
+Class	View2D
+Values	TRUE or FALSE
+Windows	MXV_Cartesian_Display_Mode
+Switch	none
+Description	Chooses whether to start in View2D or View3D
+.TE
+.TS
+expand;
+lBw(1.0i)	lw(5.5i).
+
+Resource	showPaletteBar
+Class	ShowPaletteBar
+Values	TRUE or FALSE
+Windows	T{
+MXV_Cartesian_Spread_Sheet, MXV_Palette, MXV_Frame, MXVanimate,
+MXVsubstanceWind, MXV_Dicer, MXV_Iso-surface
+T}
+Switch	none
+Description	Whether palette bar is displayed with Palette button.
+
+Resource	annotatePalette
+Class	AnnotatePalette
+Values	TRUE or FALSE
+Windows	T{
+MXV_Cartesian_Spread_Sheet, MXV_Palette, MXV_Frame, MXVanimate,
+MXVsubstanceWind
+T}
+Switch	none
+Description	Whether min/max grid is displayed with Palette bar.
+
+Resource	showSpreadsheet
+Class	ShowSpreadsheet
+Values	ALWAYS, NEVER, SOMETIMES
+Windows	MXV_Cartesian_Display_Mode
+Switch	none
+Description	T{
+Whether to display the spreadsheet. SOMETIMES means \fImxv\fR won't display the
+spreadsheet if it is bigger than \fIspreadsheetMaxSize\fR. (Default is ALWAYS).
+T}
+
+.ne 10
+Resource	spreadsheetMaxSize
+Class	SpreadsheetMaxSize
+Values	integers
+Windows	MXV_Cartesian_Spread_Sheet
+Switch	none
+Description	T{
+The maximum number of entries that can be displayed in the spreadsheet.
+Default is 65536 (256x256).
+T}
+
+Resource	paletteBarHeight
+Class	paletteBarHeight
+Values	integer
+Windows	T{
+MXV_Cartesian_Spread_Sheet, MXV_Palette, MXV_Frame, MXVanimate,
+MXVsubstanceWind, MXV_Dicer, MXV_Iso-surface
+T}
+Switch	none
+Description	height in pixels of palette bar.
+
+Resource	rotate
+Class	Rotate
+Values	TRUE or FALSE
+Windows	MXV_Iso-surface
+Switch	none
+Description	Initial value of Rotate toggle
+
+Resource	perspective
+Class	Perspective
+Values	TRUE or FALSE
+Windows	MXV_Iso-surface
+Switch	none
+Description	Initial value of Perspective toggle
+
+Resource	wireFrame
+Class	WireFrame
+Values	TRUE or FALSE
+Windows	MXV_Iso-surface
+Switch	none
+Description	Initial value of WireFrame toggle
+
+Resource	doUpdate
+Class	DoUpdate
+Values	TRUE or FALSE
+Windows	MXV_Iso-surface
+Switch	none
+Description	Initial value of DoUpdate toggle
+
+Resource	doAttenuate
+Class	DoAttenuate
+Values	TRUE or FALSE
+Windows	MXV_Iso-surface
+Switch	none
+Description	Initial value of DoAttenuate toggle
+
+Resource	surfaces
+Class	Surfaces
+Values	integer
+Windows	MXV_Iso-surface
+Switch	none
+Description	Number of Surfaces
+
+Resource	debug
+Class	Debug
+Values	TRUE or FALSE
+Windows	
+Switch	-debug/-nodebug
+Description	Enable/disable printing of debugging information.
+	This is currently does not do much.
+
+Resource	verbose
+Class	Verbose
+Values	TRUE or FALSE
+Windows	
+Switch	-verbose/-noverbose
+Description	Enable/disable printing of general information.
+	This is currently does not do much.
+
+Resource	listResources
+Class	ListResources
+Values	TRUE or FALSE
+Windows	
+Switch	-listresources
+Description	T{
+If TRUE, mxv will print resources and their values as they
+are read.
+T}
+.TE
+.bp
+.ft B
+.ce
+Windows and Their Resources
+.ft R
+.sp
+Below is a list of windows and the resources they request.
+A similar list may be obtained by using the \fI-debug\fR switch and selecting
+different windows. Some resources may not be shown.
+.sp
+.TS
+c	c	c
+l	l	l.
+Window	Resource	Class
+
+MXVanimate	annotatePalette	AnnotatePalette
+MXVanimate	paletteBarHeight	PaletteBarHeight
+MXVanimate	showPaletteBar	ShowPaletteBar
+
+MXVsubstanceWind	annotatePalette	AnnotatePalette
+MXVsubstanceWind	paletteBarHeight	PaletteBarHeight
+MXVsubstanceWind	showPaletteBar	ShowPaletteBar
+
+MXV_Cartesian_Display_Mode	frameIncr	FrameIncr
+MXV_Cartesian_Display_Mode	grid	Annotate
+MXV_Cartesian_Display_Mode	interpolated	Interpolated
+MXV_Cartesian_Display_Mode	numFrames	NumFrames
+MXV_Cartesian_Display_Mode	planeID	PlaneID
+MXV_Cartesian_Display_Mode	scale	Scale
+MXV_Cartesian_Display_Mode	showSpreadsheet	ShowSpreadsheet
+MXV_Cartesian_Display_Mode	useDisk	UseDisk
+MXV_Cartesian_Display_Mode	usePixmap	UsePixmap
+MXV_Cartesian_Display_Mode	view2d	View2D
+MXV_Cartesian_Display_Mode	width	Width
+
+MXV_Cartesian_Spread_Sheet	annotatePalette	AnnotatePalette
+MXV_Cartesian_Spread_Sheet	paletteBarHeight	PaletteBarHeight
+MXV_Cartesian_Spread_Sheet	showPaletteBar	ShowPaletteBar
+MXV_Cartesian_Spread_Sheet	spreadsheetMaxSize	SpreadsheetMaxSize
+
+MXV_Control	colorProtection	ColorProtection
+MXV_Control	columns	Columns
+MXV_Control	plot.contourImage	Plot.ContourImage
+MXV_Control	plot.gnuCommand	Plot.Command
+MXV_Control	plot.gnuEnvironment	Plot.Environment
+MXV_Control	plot.plotMethod	Plot.PlotMethod
+MXV_Control	plot.tmpDir	Plot.TmpDir
+MXV_Control	plot.wipCommand	Plot.Command
+MXV_Control	plot.wipEnvironment	Plot.Environment
+MXV_Control	rows	Rows
+
+MXV_Dicer	paletteBarHeight	PaletteBarHeight
+MXV_Dicer	showPaletteBar	ShowPaletteBar
+
+MXV_File_Window	columns	Columns
+MXV_File_Window	dataDir	Directory
+MXV_File_Window	fileFormat	FileFormat
+MXV_File_Window	paletteDir	Directory
+MXV_File_Window	paletteName	PaletteName
+MXV_File_Window	ignoreFileType	IgnoreFileType
+MXV_File_Window	maxDirEntries	MaxDirEntries
+MXV_File_Window	rows	Rows
+
+MXV_Frame	annotatePalette	AnnotatePalette
+MXV_Frame	paletteBarHeight	PaletteBarHeight
+MXV_Frame	showPaletteBar	ShowPaletteBar
+
+MXV_Iso-surface	doAttenuate	DoAttenuate
+MXV_Iso-surface	doTrueColor	DoTrueColor
+MXV_Iso-surface	doUpdate	DoUpdate
+MXV_Iso-surface	numFrames	NumFrames
+MXV_Iso-surface	paletteBarHeight	PaletteBarHeight
+MXV_Iso-surface	perspective	Perspective
+MXV_Iso-surface	rotate	Rotate
+MXV_Iso-surface	showPaletteBar	ShowPaletteBar
+MXV_Iso-surface	surfaces	Surfaces
+MXV_Iso-surface	wireframe	Wireframe
+
+MXV_Palette	annotatePalette	AnnotatePalette
+MXV_Palette	paletteBarHeight	PaletteBarHeight
+MXV_Palette	showPaletteBar	ShowPaletteBar
+
+MXV_View	annotatePalette	AnnotatePalette
+MXV_View	paletteBarHeight	PaletteBarHeight
+MXV_View	showPaletteBar	ShowPaletteBar
+
+XTDwindow	annotatePalette	AnnotatePalette
+XTDwindow	paletteBarHeight	PaletteBarHeight
+XTDwindow	showPaletteBar	ShowPaletteBar
+.TE
+.bp
+.ce
+A list of \'typical\' resource settings.
+.nf
+! An annotated list of resources and some 'typical' values. This could
+! be used to develop your own resource file. You do NOT need to set every
+! resource, only the ones you want to change!
+! It is possible to have different resources for different computers. To
+! make a resource computer specific, add the system name after MXV. See the
+! example under wipCommand.
+!
+! If you'd like a different version of mxv with different resources,
+! create an alias that runs mxv with the -name switch, ie:
+!	alias	mymxv "mxv -name mymxv"
+
+! Then add resource entries substituting the name of your version for
+! the leading Mxv. Any resources specified with a specific file name
+! will override the Mxv class resources.  See the fileFormat example
+! below.
+!
+!
+! MXV also takes the Athena Widget resources which aren't listed here.
+!
+! How big to make the log window?
+!Mxv*MXV_Control.Rows:	16
+!Mxv*MXV_Control.Columns:	80
+! Where to look for the initial palette.
+!Mxv*MXV_File_Window.paletteDir:	/home/sirius/me/Data/Palettes
+! What is the name of the initial palette file?
+!Mxv*MXV_File_Window.paletteName:	color.pal
+! Allow all but black & white to be changed.
+!Mxv*MXV_Control.Plot.ColorProtection:	BLACK-WHITE
+! When displaying a contour, should the image also be shown? (For gnuplot,
+! a surface of the image and the contour are drawn).
+!Mxv*MXV_Control.Plot.ContourImage:	FALSE
+! Where to look for gnuplot
+!Mxv*MXV_Control.Plot.Command:	gnuplot
+! This resource isn't used, so you shouldn't set it.
+!Mxv*MXV_Control.Plot.Environment:	(null)
+! When 'save' is first pushed in profile, trace, etc what format should
+! be used? Options are INTERNALPLOT, GNUPLOT, WIPPLOT. Previewing will set the
+! default mode to what was used for previewing
+!Mxv*MXV_Control.Plot.PlotMethod:	INTERNALPLOT
+! When preview command/data files are written, where should they go?
+!Mxv*MXV_Control.Plot.TmpDir:	/tmp
+! Where is the WIP program? Not needed if it is in your search path.
+!Mxv*MXV_Control.Plot.wipCommand:	/data/miriad/nov.miriad/bin/sun4/wip
+! Specifying it for another machine.
+!Mxv.c3*wipCommand:	/usr/local/apps/astro/miriad/bin/convex/wip
+! Environment variable to set for WIP. Not needed if the environment
+! variable is set in your .cshrc file.
+!Mxv*MXV_Control.Plot.Environment:	PGPLOT_FONT=/data/miriad/nov.miriad/lib/sun4/grfont.dat
+! Specifying it for another machine
+!Mxv.c3.*wipEnvironment: PGPLOT_FONT=/usr/local/apps/astro/miriad/lib/convex/grfont.dat
+!
+!Mxv*MXVanimate.AnnotatePalette:	FALSE
+!Mxv*MXVanimate.PaletteBarHeight:	30
+!Mxv*MXVanimate.ShowPaletteBar:	FALSE
+!Mxv*MXVsubstanceWind.AnnotatePalette:	FALSE
+!Mxv*MXVsubstanceWind.PaletteBarHeight:	30
+!Mxv*MXVsubstanceWind.ShowPaletteBar:	FALSE
+! When the MXV Cartesian Display Mode window opens, how should all those
+! buttons be set?
+!Mxv*MXV_Cartesian_Display_Mode.FrameIncr:	1
+!Mxv*MXV_Cartesian_Display_Mode.Annotate:	FALSE
+!Mxv*MXV_Cartesian_Display_Mode.Interpolated:	FALSE
+!Mxv*MXV_Cartesian_Display_Mode.NumFrames:	2
+!Mxv*MXV_Cartesian_Display_Mode.PlaneID:	1
+!Mxv*MXV_Cartesian_Display_Mode.Scale:	5
+! Should MXV display the spreadsheet ALWAYS, NEVER or SOMETIMES?
+!Mxv*MXV_Cartesian_Display_Mode.ShowSpreadsheet:	SOMETIMES
+!Mxv*MXV_Cartesian_Display_Mode.UseDisk:	FALSE
+!Mxv*MXV_Cartesian_Display_Mode.UsePixmap:	TRUE
+!Mxv*MXV_Cartesian_Display_Mode.View2D:	TRUE
+!Mxv*MXV_Cartesian_Display_Mode.Width:	4
+!Mxv*MXV_Cartesian_Spread_Sheet.AnnotatePalette:	TRUE
+!Mxv*MXV_Cartesian_Spread_Sheet.PaletteBarHeight:	30
+!Mxv*MXV_Cartesian_Spread_Sheet.ShowPaletteBar:	TRUE
+! Maximum number of elements in data plane before MXV decides not to display
+! a spreedsheet when showSpreadsheet is SOMTIMES.
+!Mxv*MXV_Cartesian_Spread_Sheet.SpreadsheetMaxSize:	65536
+!
+!Mxv*MXV_Dicer.AnnotatePalette:	FALSE
+!Mxv*MXV_Dicer.PaletteBarHeight:	30
+!Mxv*MXV_Dicer.ShowPaletteBar:	FALSE
+!
+!			File requester
+! Where to start looking for files
+!Mxv*MXV_File_Window.Directory:	/home/sirius/me/Data/Miriad
+! Default file format. Options are HDF, FITS and MIRIAD
+!Mxv*MXV_File_Window.FileFormat:	MIRIAD
+! An alternative
+!mymxv*MXV_File_Window.fileFormat:		FITS
+! How the list of files are sorted.
+!Mxv*MXV_File_Window.IgnoreFileType:	FALSE
+! Mxv will only look at this many files in any one directory.
+!Mxv*MXV_File_Window.MaxDirEntries:	300
+! Size of file list window. (Approximately).
+!Mxv*MXV_File_Window.Rows:	16
+!Mxv*MXV_File_Window.Columns:	55
+!
+!Mxv*MXV_Frame.AnnotatePalette:	FALSE
+!Mxv*MXV_Frame.PaletteBarHeight:	30
+!Mxv*MXV_Frame.ShowPaletteBar:	FALSE
+!Mxv*MXV_Iso-surface.AnnotatePalette:	FALSE
+!Mxv*MXV_Iso-surface.DoAttenuate:	TRUE
+!Mxv*MXV_Iso-surface.DoTrueColor:	FALSE
+!Mxv*MXV_Iso-surface.DoUpdate:	TRUE
+!Mxv*MXV_Iso-surface.NumFrames:	2
+!Mxv*MXV_Iso-surface.PaletteBarHeight:	30
+!Mxv*MXV_Iso-surface.Perspective:	TRUE
+!Mxv*MXV_Iso-surface.Rotate:	TRUE
+!Mxv*MXV_Iso-surface.ShowPaletteBar:	FALSE
+!Mxv*MXV_Iso-surface.Surfaces:	1
+!Mxv*MXV_Iso-surface.Wireframe:	FALSE
+! Labels will never be drawn in the Palette window itself. Even if this is
+! TRUE
+!Mxv*MXV_Palette.AnnotatePalette:	FALSE
+!Mxv*MXV_Palette.PaletteBarHeight:	30
+! To set all Palette resources the same try something like this:
+!Mxv*ShowPaletteBar:	TRUE
+!
+!Mxv*MXV_View.AnnotatePalette:	FALSE
+!Mxv*MXV_View.PaletteBarHeight:	30
+!Mxv*MXV_View.ShowPaletteBar:	FALSE
+!Mxv*XTDwindow.AnnotatePalette:	FALSE
+!Mxv*XTDwindow.PaletteBarHeight:	30
+!Mxv*XTDwindow.ShowPaletteBar:	FALSE
+! These two are Athena widget resources, not mxv.
+! Padding added to height of menu entries in percentage of font height.
+! Used to make the menus bigger.
+!Mxv*SmeBSB.vertSpace:50
+! If it is necessary to reduce the size of the spreadsheet font, try this:
+!Mxv*Spreadsheet*font:5x7
