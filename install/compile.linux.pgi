@@ -3,6 +3,9 @@
 # Note: this is the little-endian LINUX for intel cpu's 
 # and the Portland Group (PGI) compiler
 #
+#   copy this file to $MIR/bin/localsys/compile.linux 
+#   to activate this compiler. Editing can be done afterwards
+#
 #-----------------------------------------------------------
 set mmir  = $MIR
 set mhost = $MIRHOST

@@ -1,5 +1,7 @@
 #! /bin/csh -f
 #
+#   old export script for the old V0.x astromake release of miriad
+#
 set tmp=./
 set date=01jan70
 

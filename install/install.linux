@@ -13,6 +13,8 @@
 # 14-jun-01 atlod
 # 18-jun-01 allow option to install from with CVS source code tree
 # 18-aug-01 protect if newdir exists? comments on lesstif/openmotif
+# 12-sep-01 unified script so it also works for solaris, and the default
+#           is now to use internal=1
 #
 #   Simple single-architecture installation of MIRIAD
 #   (linux)
@@ -116,7 +118,7 @@ set pgplot=1                #  include PGPLOT in $MIRLIB ?
 set newcode=1               #  include 'newcode' not in CVS (yet) ; aim is to add in future
 set debug=0                 #  compile in debug (-g) mode ?
 set cvs=1                   #  use CVS archive to get miriad.tar.gz ?
-set internal=0              #  internal sourcecode build; overrides cvs, mirroot and newdir
+set internal=1              #  internal sourcecode build; overrides cvs, mirroot and newdir
 set test=1                  #  mir.test  baseline test (batch oriented)
 set testx=0		    #  mir.testx testing X routines (interactive)
 set bench=0,512,1           #  mir.bench nchan,mapsize,cell  (nchan=0 will skip bench)
