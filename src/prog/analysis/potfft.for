@@ -7,6 +7,9 @@ c   algorithm (see Numerical Recipes, chapters 12 and 17),
 c   and also e.g. Hockney and Eastwood, p213 (1st ed.).
 c   The units are such that the Gravitation Constant is 1.0.
 c
+c   Currently this routine assumes the scaleheight of the mass distribution
+c   is constant as function of radius.
+c
 c= potfft - Calculates the potential corresponding to 2D mass distribution
 c: map manipulation
 c& pjt
@@ -30,22 +33,23 @@ c History:
 c   bikram, 23sep91 Original version; started from scratch.
 c   peter    9oct94 Fixed small bug in convolution. Documented a few
 c                   caveats.
+c   peter   10jul02 image header, why wasn't this done before.....
 c
 c Todo:
-c   image header
+c   scaleheight should be allowed to vary
 c
 c-----------------------------------------------------------------------     
 c
       INTEGER MAXDIM
-      PARAMETER (MAXDIM=256)
+      PARAMETER(MAXDIM=1024)
       INTEGER MAXNAX
       PARAMETER(MAXNAX=2)
       INTEGER INVPARM
       PARAMETER(INVPARM=1)
       CHARACTER VERSION*(*)
-      PARAMETER (VERSION='Version 10-aug-95')
+      PARAMETER (VERSION='Version 19-jul-02')
 c
-      CHARACTER in*50,out*50
+      CHARACTER in*100,out*100
       INTEGER nin(MAXNAX),nout(MAXNAX),npadin(MAXNAX)
       INTEGER naxis,lin,lout,nn,i,j,k
       REAL softe,xsq,ysq,tmp
@@ -55,18 +59,13 @@ c
 c   Header keywords:
 c
       INTEGER NKEYS
-      PARAMETER(NKEYS=40)
+      PARAMETER(NKEYS=8)
       CHARACTER keyw(NKEYS)*8
-      DATA keyw/   'bmaj    ','bmin   ','bpa     ','bunit   ',
-     *    'crota1  ','crota2  ','crpix1  ','crpix2  ',
-     *    'crval1  ','crval2  ','cdelt1  ','cdelt2  ',
-     *    'ctype1  ','ctype2  ',
-     *    'date-obs','epoch   ','history','instrume','niters  ',
-     *    'object  ','observer','obsra   ','obsdec  ','pbfwhm  ',
-     *    'restfreq','telescop','vobs    ','xshift  ','yshift  ',
-     *    'ltype   ','lstart  ','lwidth  ','lstep   ',
-     *    'ltype   ','lstart  ','lwidth  ','lstep   ',
-     *    'crota3  ','cdelt3  ','ctype3  ' /
+      DATA keyw/  
+     *    'crpix1  ','crpix2  ',
+     *    'crval1  ','crval2  ',
+     *    'cdelt1  ','cdelt2  ',
+     *    'ctype1  ','ctype2  '/
 c
       CALL output('POTFFT: '//version )
 c
@@ -209,6 +208,9 @@ c
       CALL hiswrite(lout,'Gravitational Potential')
       CALL hisinput(lout,'potfft')
       CALL hisclose(lout)
+      DO i=1,NKEYS
+         CALL hdcopy(lin,lout,keyw(i))
+      ENDDO
 c
       CALL xyclose(lin)
       CALL xyclose(lout)
