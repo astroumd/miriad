@@ -9,12 +9,13 @@
 #   27-jul-99   Copy summary.log to /tmp	PJT
 #   26-jun-01   endianism check using 'od'      PJT
 #   22-sep-01   summary.log file now contains $USER	PJT
+#   26-jan-03   add rad testing, if present		PJT
 #
 #-----------------------------------------------------------------------
 
 usage() {
   (
-  echo "Usage: $0 [help] [basic] [xyio] [uvio] [calib] [map] [device=$device]"
+  echo "Usage: $0 [help] [basic] [xyio] [uvio] [calib] [map] [rad] [device=$device]"
   echo "Run a (selective) number of tests to test some basic"
   echo "miriad capabilities"
   )
@@ -194,6 +195,22 @@ map() {
   )
 }
 
+rad() {
+  (
+  mkdir $1
+  cd $1
+  require lvg micsph
+  cp -a $MIR/borrow/rad/test .
+  cd test
+  runt lvg -f lvg.def
+  runt micsph -f leung1.def
+  diff lvg.test1.log lvg.test1-arch.log
+  diff leung1.log leung1-arch.log
+  cd ../..
+  )
+}
+
+
 check() {
   (
   echo Checking $1, errors are reported by:
@@ -226,6 +243,12 @@ check() {
   echo Running map
   map map > map.log 2>&1
   check map.log
+
+  if test -e $MIR/borrow/rad/README; then
+    echo Running rad
+    rad rad > rad.log 2>&1
+    exit 1
+  fi
 
   echo Creating logfile for baseline check:
   sum=summary_$USER.log
