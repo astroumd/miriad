@@ -37,6 +37,12 @@ c   (0.0 cannot be used).
 c@ h
 c   The vertical scaleheight in pixel units when a sech^2 disk is used.
 c   The default is 0, meaning an infinitesimally thin disk.
+c@ radius
+c   Inner and outer radii and step size in radius in which G(r) is computed
+c   and output to a log file.
+c@ log
+c   Output log file. Default is terminal.
+c
 
 c-------------------------------------------------------------------
 c
@@ -47,8 +53,8 @@ c                   caveats.
 c   peter   10jul02 image header, why wasn't this done before.....
 c   peter   31jul02 added green=, noticing that original POTFFT broken
 c                   with a 1/2 pixel offset. Renamed softe= to eps=
+c   mousumi  6aug02 Added QGAUSS for a sech^2(z) disk
 c Todo:
-c   implement sech^2
 c   scaleheight should be allowed to vary
 c
 c-----------------------------------------------------------------------     
@@ -60,7 +66,7 @@ c
       INTEGER INVPARM
       PARAMETER(INVPARM=1)
       CHARACTER VERSION*(*)
-      PARAMETER (VERSION='Version 31-jul-02')
+      PARAMETER (VERSION='Version 6-aug-02')
 c
       CHARACTER in*128,out*128,outg*128
       INTEGER nin(MAXNAX),nout(MAXNAX),npadin(MAXNAX)
@@ -260,11 +266,13 @@ c**************************************************************************
       REAL g(maxx,ny),eps,h,c1,c2
 c
       INTEGER i,j
-      REAL x,y,eps2
-
-
+      REAL x,y,eps2,x1,y1,eps21,a,b,ss
+      external func1
+      common ar2
+c
       eps2 = eps*eps
       IF(h.LE.0.0)THEN
+         CALL output('Computing G infitesimally thin disk')
          DO j=1,ny
             y = j-c2
             DO i=1,nx
@@ -273,7 +281,21 @@ c
             ENDDO
          ENDDO
       ELSE
-         CALL bug('f','Cannot do sech^2 disks yet, ask Mousumi')
+         CALL output('Computing G for a sech^2 disk')
+         DO j=1,ny
+            y = j-c2
+            DO i=1,nx
+               x = i-c1
+               x1=x/h
+               y1=y/h
+               eps21=eps2/(h*h) 
+               ar2=(x1**2.d0) + (y1**2.d0) + eps21
+             b=25.d0
+             a=-25.d0
+              CALL QGAUS(func1,a,b,ss)
+              g(i,j) = (1.d0/(2.d0*h))*ss
+            ENDDO
+         ENDDO       
       ENDIF
       RETURN
       END
@@ -347,6 +369,34 @@ c
         ENDIF
         NPREV=N*NPREV
 18    CONTINUE
+      RETURN
+      END
+c
+c     Function for Sech^2 integral 
+      Function func1(z1)
+      common ar2
+      func1 = ((1.d0/(cosh(z1)))**2.d0)*(1.d0/(sqrt(ar2
+     *         + (z1*z1))))
+      return
+      end
+c
+c
+      SUBROUTINE QGAUS(FUNC,A,B,SS)
+      REAL X,W,XM,XR,SS,DX
+      DIMENSION X(5),W(5)
+      DATA X/.1488743389d0,.4333953941d0,.6794095682d0,
+     *     .8650633666d0,.9739065285d0/
+      DATA W/.2955242247d0,.2692667193d0,.2190863625d0,
+     *     .1494513491d0,.0666713443d0/
+
+      XM=0.5d0*(B+A)
+      XR=0.5d0*(B-A)
+      SS=0.d0
+      DO 11 J=1,5
+        DX=XR*X(J)
+        SS=SS+W(J)*(FUNC(XM+DX)+FUNC(XM-DX))
+11    CONTINUE
+      SS=XR*SS
       RETURN
       END
 c***************************************************************************
