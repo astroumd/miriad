@@ -167,7 +167,7 @@ void ddelete_c   (char *path, int *iostat);
 void dtrans_c    (char *inpath, char *outpath, int *iostat);
 void dmkdir_c    (char *path, int *iostat);
 void drmdir_c    (char *path, int *iostat);
-void dopen_c     (int *fd, char *name, char *status, off *size, int *iostat);
+void dopen_c     (int *fd, char *name, char *status, off_t *size, int *iostat);
 void dclose_c    (int fd, int *iostat);
 void dread_c     (int fd, char *buffer, off_t offset, size_t length, int *iostat);
 void dwrite_c    (int fd, char *buffer, off_t offset, size_t length, int *iostat);
