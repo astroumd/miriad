@@ -32,6 +32,7 @@ c    dpr  22may01 Added HOBART26M, CEDUNA30M, XYEW
 c    mchw 24may01 Added RPA
 c    mchw 03jan02 Added SZA
 c    mchw 09jul02 Added ALMA
+c    mchw 26aug03 Added SMA
 c************************************************************************
 c* ObsPrint -- Print list of known observatories.
 c: utility
@@ -94,6 +95,7 @@ c				vertical.
 c		 'mount'	Telescope mount: 0 = alt-az
 c						 1   equitorial
 c                                                3   xy-ew
+c                                                4   nasmyth
 c		 'antdiam'	Antenna diameter, in meters.
 c		 'subdiam'	Subreflector diameter.
 c		 'height'	Height above sea level, in meters
@@ -143,8 +145,8 @@ c------------------------------------------------------------------------
 	include 'mirconst.h'
 	include 'obspar.h'
 c
-	double precision ALTAZ,EQUATOR,XYEW
-	parameter(ALTAZ=0.d0,EQUATOR=1.d0,XYEW=3.d0)
+	double precision ALTAZ,EQUATOR,NASMYTH,XYEW
+	parameter(ALTAZ=0.d0,EQUATOR=1.d0,NASMYTH=4.d0,XYEW=3.d0)
 c
 c  Externals.
 c
@@ -409,6 +411,17 @@ c
 	call obsad('sest/latitude',	obsdms(-1,29,15,34.0))
 	call obsad('sest/longitude',	obsdms( 1,70,44,04.0))
 c
+c  Submillimeter Array (SMA).
+c  Supplied by Ramprasad Rao
+c
+	call obsad('sma/antdiam',	6.0d0)
+	call obsad('sma/height',	4080.0d0)
+	call obsad('sma/jyperk',	130.d0)
+	call obsad('sma/latitude',	obsdms( 1, 19,49,33.8))
+	call obsad('sma/longitude',	obsdms(-1,155,28,46.4))
+	call obsad('sma/mount',	NASMYTH)
+	call obsad('sma/nants',	8.0d0)
+c
 c  SZA - Sunyaev-Zel'dovich Array of 8 3.5m antennas - part of CARMA.
 c
         call obsad('sza/antdiam',     3.5d0)
@@ -448,6 +461,7 @@ c
 	call obsad('wsrt/longitude',	obsdms( 1,  6,36,15.01))
 	call obsad('wsrt/mount',	EQUATOR)
 	call obsad('wsrt/nants',	14.d0)
+c
 c
 	end
 c************************************************************************
