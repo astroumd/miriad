@@ -18,6 +18,7 @@ c    rjs  16jan93 A third try at the above.
 c    rjs   4aug95 Check that the beam is non-zero. Bug out if not.
 c    rjs  13dec95 Set minimum transform size to be 16 (FFT limitation).
 c    rjs  07jan97 Fiddle memory conservation alogirthm yet again.
+c    pjt  15may02 Morph error message to uniqueness
 c************************************************************************
 	subroutine MapFin
 c
@@ -116,7 +117,7 @@ c
 	  pMap = pBuff + 2*nu*nv*npnt*(ichan-chan1) + nextra
 	  do i=1,npnt
 	    call MapVSum(memr(pMap+(i-1)*2*nu*nv),nu*nv,Sum)
-	    if(Sum.eq.0)call bug('f','No data found for pointing')
+	    if(Sum.eq.0)call bug('f','No data found for fft pointing')
 	    Scale(i) = 0.5/Sum
 	  enddo
 	else
