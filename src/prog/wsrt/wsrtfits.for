@@ -1,10 +1,15 @@
 ************************************************************************
-	program fits
+	program wsrtfits
 	implicit none
-c= ivcFits - Conversion between MIRIAD and FITS image and uv formats
-c& rjs
+c
+c= wsrtfits - Conversion between MIRIAD and UVFITS format from WSRT
+c& tao
 c: data transfer
 c+
+c       WSRTFITS is a task for reading in WSRT UVFITS files into Miriad.
+c       It is a modified version of the task FITS. Earlier versions
+c       were also known as IVCFITS.
+c
 c	FITS is a MIRIAD task, which converts image and uv files both from
 c	FITS to Miriad format, and from Miriad to FITS format. Note that
 c	because there is not a perfect correspondence between all information
@@ -47,9 +52,9 @@ c	  compress Store the data in compressed uv format.
 c	  nochi    Assume that the parallactic angle of the telescope is
 c	           a constant 0 (or that the data are from circularly polarised
 c	           feeds and have already been corrected for parallactic angle).
-c	  lefty    Assume that the FITS antenna table uses a left-handed
-c	           coordinate system (rather than the more normal right-handed
-c	           system).
+c	  nolefty  Assume that the FITS antenna table uses a right-handed
+c	           coordinate system (rather than the WSRT left-handed
+c	           system). 
 c
 c	These options for op=uvout only.
 c	  nocal    Do not apply the gains table to the data.
@@ -297,12 +302,19 @@ c    rjs  25-nov-98  More work on better handling of image projection and rotati
 c    rjs  07-jan-99  Write dates in new FITS format.
 c    rjs  26-feb-99  Used new subroutine "fitdate" to be more robust to
 c		     corrupted dates.
+c    tao  some time  Adapted this program for use with WSRT UV files.
 c    gmx  20-feb-04  Changed the inline documentation to match the task
-c                    name (ivcFits). Before it ended up in the documentation
+c                    name (ivcfits). Before it ended up in the documentation
 c                    as `fits', which made it invisible.
+c    gmx  29-apr-04  Changed the use of the lefty option. WSRT UVFits files
+c                    need lefty to be true. In order to keep the name logical
+c                    the option was changed to 'nolefty'. If lefty is true
+c                    the y-positions of the antennas are flipped.  A UV 
+c                    variable 'lefty' was added to record this flip.
+c                    Renamed the task to wsrtfits (v1.3).
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version='ivcFits: version 1.2 07-Jul-00')
+	parameter(version='wsrtfits: version 1.3 29-Apr-04')
 	character in*128,out*128,op*8,uvdatop*12
 	integer velsys
 	real altrpix,altrval
@@ -448,7 +460,7 @@ c------------------------------------------------------------------------
       character opts(nopt)*8
       logical present(nopt)
       data opts /'nocal   ','nopol   ','nopass  ','dss     ',
-     *		 'nod2    ','nochi   ','compress','lefty   '/
+     *		 'nod2    ','nochi   ','compress','nolefty   '/
 c
       call options ('options', opts, present, nopt)
       docal    = .not.present(1)
@@ -458,7 +470,7 @@ c
       nod2     =      present(5)
       dochi    = .not.present(6)
       compress =      present(7)
-      lefty    =      present(8)
+      lefty    = .not.present(8)
 c
       end
 c************************************************************************
@@ -539,6 +551,7 @@ c
 	integer ntimes,refbase,litime
 	integer uvU,uvV,uvW,uvBl,uvT,uvSrcId,uvFreqId,uvData
 	character telescop*32,itime*8
+
 c
 c  Externals.
 c
@@ -629,6 +642,15 @@ c
 	call uvputvri(tno,'nants',0,1)
 	call uvputvri(tno,'npol',npol,1)
 	call wrhdi(tno,'npol',npol)
+c       write the value of lefty to the uv data set:
+c       do not assume that logicals are identical to
+c       integers (gmx, 29-apr-2004)
+	if (lefty) then
+	    call uvputvri(tno,'lefty',1,1)
+	else
+	    call uvputvri(tno,'lefty',0,1)
+	endif
+c	call wrhdi(tno,'yflip',yflip)
 
 c  Initialise things to work out the integration time.
 c
@@ -697,7 +719,7 @@ c
 	  nants = max(nants,ant1,ant2)
 	  nconfig = max(config,nconfig)
 c
-c  Determine some times at whcih data are observed. Use these later to
+c  Determine some times at which data are observed. Use these later to
 c  guestimate the integration time.
 c
 	  if(i.eq.1) refbase = bl
@@ -1189,7 +1211,7 @@ c    Pol0	Code for first polarisation.
 c    PolInc	Increment between polarisations.
 c------------------------------------------------------------------------
 	include 'mirconst.h'
-	include 'ivcFits.h'
+	include 'wsrtfits.h'
 c
 	logical badapp,badepo,more,found,badmnt
 	double precision Coord(3,4),rfreq,chanstep
@@ -1638,7 +1660,7 @@ c
 c
 c  Return the reference time.
 c------------------------------------------------------------------------
-	include 'ivcFits.h'
+	include 'wsrtfits.h'
 	t = timeref
 	if(nconfig.ge.1)t = t + timeoff(1)
 	end
@@ -1721,7 +1743,7 @@ c
 	logical altr
 	real altrpix,altrval
 c------------------------------------------------------------------------
-	include 'ivcFits.h'
+	include 'wsrtfits.h'
 	integer i,i0
 	integer OBSRADIO,OBSOPTIC
 	parameter(OBSRADIO=3,OBSOPTIC=259)
@@ -1978,7 +2000,7 @@ c
 	implicit none
 	integer tno
 c------------------------------------------------------------------------
-	include 'ivcFits.h'
+	include 'wsrtfits.h'
 	integer i,nschan(MAXIF),ischan(MAXIF)
 	character veltype(3)*8
 	data veltype/'VELO-LSR','VELO-HEL','VELO-OBS'/
@@ -2037,7 +2059,7 @@ c		value corrected for clock differences.
 c------------------------------------------------------------------------
 	integer LSRRADIO
 	parameter(LSRRADIO=257)
-	include 'ivcFits.h'
+	include 'wsrtfits.h'
 	integer i,j,k,nTemps
 	logical newsrc,newfreq,newconfg,newlst,newchi,newvel,neweq
 	real chi,dT
@@ -2046,6 +2068,7 @@ c------------------------------------------------------------------------
 
 	double precision lst,vel
 	double precision sfreq0(MAXIF),sdf0(MAXIF),rfreq0(MAXIF)
+	save nTemps
 c
 c  Externals.
 c
