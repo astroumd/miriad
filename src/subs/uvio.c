@@ -152,6 +152,7 @@
 /*  dpr  17apr01 Increase MAXVHANDS                                     */
 /*  pjt  20jun02 MIR4 prototypes                                        */
 /*  pjt  14jan03 fix another forgotten int -> int8                      */
+/*  pjt  13may03 MAXIANT usage to limit MAXANT                          */
 /*----------------------------------------------------------------------*/
 /*									*/
 /*		Handle UV files.					*/
@@ -379,6 +380,7 @@ typedef struct varhand{
 #define LINE_FELOCITY	4
 
 #include "maxdimc.h"
+
 #define SEL_VIS   1
 #define SEL_TIME  2
 #define SEL_UVN   3
@@ -513,16 +515,12 @@ static char *M[] = {
  *  it with the library ($MIRLIB/libmir.a in Unix)
  *
  *  Note:  This program does not have the normal miriad user interface
- *	   and should hence not live in $MIRBIN
- *
- *
  *
  */
 main(int ac,char *av[])
 {
     int tno;
     char *fn;
-    void uvopen_c(), uvclose_c();
 
     printf("%s Version %s\n",av[0],VERSION_ID);
     if (ac!=2) {
@@ -3056,7 +3054,7 @@ private int uvread_select(UV *uv)
       bl = *((float *)(uv->bl->buf)) + 0.5;
       uvbasant_c(bl,&i1,&i2);
       if(i1 < 1 || i2 > MAXANT){
-	ERROR('w',(message,"Discarded data with bad antenna numbers when selecting: baseline number is %d\n",bl));
+	ERROR('w',(message,"Discarded data with bad antenna numbers when selecting: (%d,%d) baseline number is %d\n",i1,i2,bl));
 	discard = TRUE;
       }else{
         discard = sel->ants[(i2*(i2-1))/2+i1-1];
@@ -4654,17 +4652,25 @@ private void uvinfo_chan(UV *uv,double *data,int mode)
   }
 }
 /************************************************************************/
+/* if one EVER decides to change this decoding horror, also make sure
+ * the following routines are looked after:
+ *
+ *  basant.for:  subroutine basant() , function antbas()
+ *
+ *  see also maxdim.h and maxdimc.h
+ */
+
 private void uvbasant_c(int baseline,int *i1,int *i2)
 {
-    int mant;
-    *i2 = baseline;
-    if(*i2 > 65536){
-     *i2 -= 65536;
-      mant = 2048;
-    }else{
-      mant = 256;
-    }
-    *i1= *i2 / mant;
-    *i2 %= mant;
+  int mant;
+  *i2 = baseline;
+  if(*i2 > 65536){
+    *i2 -= 65536;
+    mant = MAXIANT;
+  }else{
+    mant = 256;    
+  }
+  *i1= *i2 / mant;
+  *i2 %= mant;
 }
 

@@ -122,10 +122,11 @@ c   27oct00 mchw - Changes to accomodate more antennas.
 c   19jan02 pjt  - basant needs double precision argument
 c   27jun02 mchw - use latitude uv-variable if present.
 c   11dec02 pjt  - subroutine q/r/d/ZERO to bypass big DATA statement that makes big binaries
+c   13mar03 pjt  - need to use MAXBASE2 mor multidim arrays...
 c-----------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='UVLIST: version  11-dec-02')
+	parameter(version='UVLIST: version  13-may-03')
 	real rtoh,rtod,pi
 	integer maxsels
 	parameter(pi=3.141592653589793,rtoh=12/pi,rtod=180/pi)
@@ -323,12 +324,12 @@ c------------------------------------------------------------------------
 	character line*128,ctime*10,pol*2
 	real amp(mchan),arg(mchan),count
 	character cflag(mchan)*1
-	logical doave(MAXBASE),first
+	logical doave(MAXBASE2),first
 	double precision preambl(4)
-	real num(MAXBASE)
-	real amps(maxpts,mchan,MAXBASE),args(maxpts,mchan,MAXBASE)
-	double precision uave(MAXBASE),vave(MAXBASE),timeave(MAXBASE)
-	double precision baseave(MAXBASE)
+	real num(MAXBASE2)
+	real amps(maxpts,mchan,MAXBASE2),args(maxpts,mchan,MAXBASE2)
+	double precision uave(MAXBASE2),vave(MAXBASE2),timeave(MAXBASE2)
+	double precision baseave(MAXBASE2)
 c
 c  Externals.
 c
@@ -342,12 +343,12 @@ cpjt	data uave,vave,timeave/MAXBASE*0.d0,MAXBASE*0.d0,MAXBASE*0.d0/
 cpjt	data baseave/MAXBASE*0.d0/
 c
 	if(first)then
-	   call qzero(MAXBASE,doave)
-	   call rzero(MAXBASE,num)
-	   call dzero(MAXBASE,uave)
-	   call dzero(MAXBASE,vave)
-	   call dzero(MAXBASE,timeave)
-	   call dzero(MAXBASE,baseave)
+	   call qzero(MAXBASE2,doave)
+	   call rzero(MAXBASE2,num)
+	   call dzero(MAXBASE2,uave)
+	   call dzero(MAXBASE2,vave)
+	   call dzero(MAXBASE2,timeave)
+	   call dzero(MAXBASE2,baseave)
 	   first = .FALSE.
 	endif
 	if(needhd)then
@@ -401,7 +402,7 @@ c
 c
 c  Compute Allan standard deviation and average u,v,time, baseline.
 c
-      do bl=1,MAXBASE
+      do bl=1,MAXBASE2
        if(doave(bl))then
 	uave(bl) = uave(bl) / num(bl)
 	vave(bl) = vave(bl)  / num(bl)
@@ -479,20 +480,20 @@ c    p		Polarisation code. A value of zero indicates unknown.
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	integer mchan,maxpol,maxave
-	parameter(mchan=5,maxpol=12,MAXAVE=mchan*MAXBASE)
+	parameter(mchan=5,maxpol=12,MAXAVE=mchan*MAXBASE2)
 	integer nchan,j,length,ant1,ant2,bl
 	logical more
 	character line*128,ctime*10,pol*2
 	real amp(mchan),arg(mchan)
 	character cflag(mchan)*1
-	logical doave(MAXBASE),first
+	logical doave(MAXBASE2),first
 	double precision preambl(4)
-	real numave(mchan,MAXBASE),recave(MAXBASE)
-	real ampave(mchan,MAXBASE),phiave(mchan,MAXBASE)
-	real amprms(mchan,MAXBASE),phirms(mchan,MAXBASE)
-	real theta(mchan,MAXBASE)
-	double precision uave(MAXBASE),vave(MAXBASE),timeave(MAXBASE)
-	double precision baseave(MAXBASE)
+	real numave(mchan,MAXBASE2),recave(MAXBASE2)
+	real ampave(mchan,MAXBASE2),phiave(mchan,MAXBASE2)
+	real amprms(mchan,MAXBASE2),phirms(mchan,MAXBASE2)
+	real theta(mchan,MAXBASE2)
+	double precision uave(MAXBASE2),vave(MAXBASE2),timeave(MAXBASE2)
+	double precision baseave(MAXBASE2)
 c
 c  Externals.
 c
@@ -508,7 +509,7 @@ cpjt	data uave,vave,timeave/MAXBASE*0.d0,MAXBASE*0.d0,MAXBASE*0.d0/
 cpjt	data baseave/MAXBASE*0.d0/
 c
 	if(first)then
-	   call qzero(MAXBASE,doave)
+	   call qzero(MAXBASE2,doave)
 	   call rzero(MAXAVE,numave)
 	   call rzero(MAXAVE,recave)
 	   call rzero(MAXAVE,ampave)
@@ -577,7 +578,7 @@ c extend phase
 c
 c  Average the data and Write out the results.
 c
-      do bl=1,MAXBASE
+      do bl=1,MAXBASE2
        if(doave(bl))then
 	uave(bl) = uave(bl) / recave(bl)
 	vave(bl) = vave(bl)  / recave(bl)

@@ -12,6 +12,7 @@ c    mchw 01feb02  decouple MAXBASE from MAXANT
 c    mchw 04feb02  change PARAMETER(MAXBUF=1048576) to PARAMETER(MAXBUF=4194304)
 c    mchw 14feb02  recouple MAXBASE to MAXANT as we need selfcal on MAXANT.
 c    pjt   3dec02  added MAXBASE2,MAXDIM2 for doubly dimensioned arrays
+c    pjt  13may03  added MAXIANT for the true limit to MAXANT (choice: 256,2048,32768)
 c
 	INTEGER   MAXBUF
 #ifdef unicos
@@ -33,8 +34,9 @@ c   MAXDIM2 should be used in arrays with more than 1 dimension
 	PARAMETER(MAXDIM=65536,MAXDIM2=8192)
 c-----------------------------------------------------------------------
 c		maximum number of antennas (HC=3/6/9/..., WSRT=14, VLA=28)
-	INTEGER   MAXANT,MAXANT2
-	PARAMETER(MAXANT=500,MAXANT2=28)
+c               MAXIANT must be a power of 2 (256, 2048 up to 32768)
+	INTEGER   MAXIANT,MAXANT,MAXANT2
+	PARAMETER(MAXIANT=2048,MAXANT=2048,MAXANT2=28)
 
 c		maximum number of baselines (in single arrays)
 	INTEGER   MAXBASE

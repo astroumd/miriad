@@ -336,9 +336,10 @@ c    dpr  26-jun-01  Relax antenna table format restrictions
 c    dpr  02-jul-01  Relax AN restrictions properly (I hope!!)
 c    rjs  04-oct-01  Get GLS history comment right.
 c    nebk 08-jan-02  In AntWrite, set POLAA and POLAB to 45/135 for ATCA
+c    pjt  13-may-03  Use basant/antbas and report > 256 cases?
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version='Fits: version 1.1 04-Oct-01')
+	parameter(version='Fits: version 13-may-03')
 	integer maxboxes
 	parameter(maxboxes=2048)
 	character in*128,out*128,op*8,uvdatop*12
@@ -587,7 +588,7 @@ c
 	real fac,swt
 	integer nwt
 	real visibs(7+12*maxchan)
-	double precision preamble(5),T0,uu,vv,ww,time
+	double precision preamble(5),T0,uu,vv,ww,time,antbas
 	real times(MAXTIME),inttime
 	integer ntimes,refbase,litime
 	integer uvU,uvV,uvW,uvBl,uvT,uvSrcId,uvFreqId,uvData
@@ -728,8 +729,9 @@ c
 	  endif
 	  time = visibs(uvT) + T0
 	  bl = int(visibs(uvBl) + 0.01)
-	  ant1 = bl/256
-	  ant2 = mod(bl,256)
+	  call basant(DBLE(visibs(uvBl)),ant1,ant2)
+c	  ant1 = bl/256
+c	  ant2 = mod(bl,256)
 	  config = nint(100*(visibs(uvBl)-bl))+1
 	  if(uvSrcid.gt.0) srcid  = nint(visibs(uvSrcId))
 	  if(uvFreqid.gt.0)freqid = nint(visibs(uvFreqId))
@@ -766,7 +768,8 @@ c  do not start at 1 it keeps the nants from the table
           else 
 	    nants = max(nants,ant1,ant2)
 	  end if
-	  bl = 256*ant1 + ant2
+c	  bl = 256*ant1 + ant2
+	  bl = antbas(ant1,ant2)
 	  nconfig = max(config,nconfig)
 c
 c  Determine some times at whcih data are observed. Use these later to
@@ -2403,7 +2406,7 @@ c
 c
 	integer MAXSRC
 	parameter(MAXSRC=512)
-	double precision ras(MAXSRC),decs(MAXSRC)
+	double precision ras(MAXSRC),decs(MAXSRC),antbas
 	double precision aras(MAXSRC),adecs(MAXSRC)
 	character sources(MAXSRC)*16
 c
@@ -2544,7 +2547,8 @@ c
 	    OutData(uvV+1) = -1e-9 * preamble(2)
 	    OutData(uvW+1) = -1e-9 * preamble(3)
 	    OutData(uvT+1) = preamble(4) - T0
-	    OutData(uvBl+1) = 256*ant1 + ant2
+c	    OutData(uvBl+1) = 256*ant1 + ant2
+	    OutData(uvBl+1) = REAL(antbas(ant1,ant2))
 	    OutData(uvSrc+1) = iSrc
 	    OutData(1) = P
 	    i0 = uvData

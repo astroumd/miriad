@@ -5,6 +5,7 @@
 
 	MAXDIM .... maximum number of elements in any one plane
 		    (ie, maximum dimensionality of a map)
+        MAXIANT ... absolute maximum number of antennae, but check UVFITS portability
 	MAXANT .... maximum number of antennae
 	MAXBASE ... maximum number of baselines
 	MAXCHAN ... maximum number of channels in spectral data
@@ -20,11 +21,13 @@
 	mchw 04feb02  change define MAXBUF 1048576 to 4194304.
         mchw 14feb02  recouple MAXBASE to MAXANT for selfcal on MAXANT antennas.
 	pjt   3dec02  added MAXBASE2,MAXDIM2
+        pjt  13may03  added MAXIANT for the true limit to MAXANT (choice: 256,2048,32768)
 	-------------------------------------------------------------
 */
 #define		MAXDIM		8192
 #define		MAXDIM2		65536
-#define		MAXANT		500
+#define         MAXIANT         2048
+#define		MAXANT		2048
 #define		MAXANT2		28
 #define		MAXBASE		((MAXANT * (MAXANT + 1)) / 2)
 #define		MAXBASE2	500
