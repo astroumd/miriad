@@ -77,13 +77,14 @@ c**********************************************************************
 c
 c     21 Apr 1992 rag   added ability to deproject a cube
 c     17 feb 2002 pjt   miriadized
+c     24 jul 2002 pjt   flag value 0,instead of -1; process 3D cubes
 c
       include   'maxdim.h'
       include   'mirconst.h'
       integer   MAXNAX
       parameter (MAXNAX=3)
       character VERSION*(*)
-      parameter (VERSION='17-feb-2002')
+      parameter (VERSION='24-jul-2002')
 c
       character infile*128, oufile*128, rmode*10, ctype1*10,ctype2*10
       integer   iflux,iout,ivert,ix,ixpt,iy,iypt,iz,mode,nx,ny,nz,
@@ -224,14 +225,16 @@ c     Open the output file
 c
       ousize(1) = outnx
       ousize(2) = outny
-      call xyopen(tout,oufile,'new',2,ousize)
+      ousize(3) = nz
+      call xyopen(tout,oufile,'new',naxis,ousize)
 
 c     Read in the data plane.
 c
 c
       if (nz .eq. 0) nz=1
       do iz=1,nz
-         if (iz.gt.1) call bug('f','Cannot do 3D yet')
+	 call xysetpl(tin,1,iz)
+	 call xysetpl(tout,1,iz)
          do iy=1,ny
             call xyread(tin,iy,indat(1,iy))
          enddo
@@ -283,27 +286,33 @@ c
                 endif
                 if (iflux .eq. 1) sum=sum/expand
               else
-                sum=-1.0 
+                sum=0.0 
                 ouflg(ix)=.false.
               endif
             else
-              sum=-1.0
+              sum=0.0
               ouflg(ix)=.false.
             endif
             oudat(ix) = sum
           enddo
+c				should also write the flags here !!!
+c	  call xyflgwr(tout,iy,ouflg)	  
           call xywrite(tout,iy,oudat)
         enddo
       enddo
       call hdcopy(tin,tout,'history')
       call hdcopy(tin,tout,'crpix1')
       call hdcopy(tin,tout,'crpix2')
+      if (nz.gt.1) call hdcopy(tin,tout,'crpix3')
       call hdcopy(tin,tout,'cdelt1')
       call hdcopy(tin,tout,'cdelt2')
+      if (nz.gt.1) call hdcopy(tin,tout,'cdelt3')
       call hdcopy(tin,tout,'crval1')
       call hdcopy(tin,tout,'crval2')
+      if (nz.gt.1) call hdcopy(tin,tout,'crval3')
       call hdcopy(tin,tout,'ctype1')
       call hdcopy(tin,tout,'ctype2')
+      if (nz.gt.1) call hdcopy(tin,tout,'ctype3')
       call hisopen(tout,'append')
       call hiswrite(tout,'DEPROJECT: '//version)
       call hisinput(tout,'DEPROJECT')

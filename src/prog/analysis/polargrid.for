@@ -49,6 +49,7 @@ c History:
 c     dark ages Gruendl/Vogel - developed under zodiac
 c     13-feb-02 pjt  Miriadized this routine
 c     16-feb-02 pjt  first public version
+c     24-jul-02 pjt  0 maskvalue, not -1
 c***********************************************************************
 c
       include   'maxdim.h'
@@ -56,7 +57,7 @@ c
       integer   MAXNAX
       parameter (MAXNAX=3)
       character VERSION*(*)
-      parameter (VERSION='17-feb-2002')
+      parameter (VERSION='24-jul-2002')
 c
       character infile*128, oufile*128, rmode*10, ctype1*10,ctype2*10
       integer   irow(MAXDIM),ioutrw(MAXDIM)
