@@ -5,11 +5,11 @@
 #   11mar02 mchw - added declination  
 #   12mar02 mchw - removed declination  
 #   15mar03 pjt  - pythonized
-#
+#   17apr03 pjt  - using newer Miriad.py version
 
 
 import os,sys,string
-from Miriad import *
+import Miriad
 
 # -----------------------------------------------------------------------------
 
@@ -30,7 +30,7 @@ keyval = {
 
 # -----------------------------------------------------------------------------
 
-keyini(keyval,help,0)
+Miriad.keyini(keyval,help,0)
 
 # -----------------------------------------------------------------------------
         
@@ -45,7 +45,9 @@ def hex(nring,grid):
             x = 0.5*grid*k
             print "%.2f,%.2f" % (x,y)
 # -----------------------------------------------------------------------------
-nring = string.atoi(keyval['nring'])
-grid  = string.atof(keyval['grid'])
+#nring = string.atoi(keyval['nring'])
+#grid  = string.atof(keyval['grid'])
+nring = Miriad.keyi('nring')
+grid  = Miriad.keyr('grid')
 hex(nring,grid)
 

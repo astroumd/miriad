@@ -37,6 +37,7 @@ print "   This script assumes that the first 4 antennas are ALMA 12m and the nex
 keyval = {
   "config"  : "config1",           # antenna config file (without the .ant extension)
   "dec"     : "-30",               # declination (can be a real number)
+  "dt"      : "0.01",              # integration time step in hours (range is fixed -4 .. 4)
   "plot"    : "1",                 # 1=make plots   0=no plots
   "VERSION" : "1.0 mchw"           # VERSION id for the user interface
   }
@@ -51,11 +52,11 @@ setlogger('hetero.log')
 
 # set parameters
 
-config  = keyval['config']
-dec     = string.atof(keyval['dec'])
-plot    = string.atoi(keyval['plot'])
-#harange = '-4,4,0.01'
-harange = '-4,4,0.1'
+config  = keya('config')
+dec     = keyr('dec')
+plot    = keyi('plot')
+dt      = keyr('dt')
+harange = '-4,4,%g' % dt
 ellim   = 10
 select  = '-shadow\(7\)'
 freq    = 230

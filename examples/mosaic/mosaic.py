@@ -48,16 +48,16 @@ setlogger('mosaic.log')
 # define all variables, now in their proper type, for this script
 #
 
-config  = keyval['config']
-dec     = string.atof(keyval['dec'])
-cell    = string.atof(keyval['cell'])
-nchan   = string.atoi(keyval['nchan'])
-method  = keyval['method']
-center  = keyval['center']
-flux    = string.atof(keyval['flux'])
-image   = keyval['image']
-nring   = string.atoi(keyval['nring'])
-grid    = string.atof(keyval['grid'])
+config  = keya('config')
+dec     = keyr('dec')
+cell    = keyr('cell')
+nchan   = keyi('nchan')
+method  = keya('method')
+center  = keya('center')
+flux    = keyr('flux')
+image   = keya('image')
+nring   = keyi('nring')
+grid    = keyr('grid')
 
 harange = '-1,1,0.013'
 select  = '-shadow\(12\)'
@@ -478,5 +478,5 @@ print " %s %g %s %.3f %g %g %g %.3f %.3f %.3f %.3f %.3f %.3f %.3f %.3f" % (confi
 #cat casa.results
 #enscript -r casa.results
 
-print "DEBUGGING"
-string.atof(itemize(mp,'rms'))
+#print "DEBUGGING"
+#string.atof(itemize(mp,'rms'))
