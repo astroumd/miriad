@@ -1,0 +1,9 @@
+This code was in use in the early days of BIMA, when data 
+was still produced on the VAX, and had to be converted
+to miriad format. It is horribly non-portable, and is unlikely
+to still compile or even of any  interest. 
+
+For historic reasons we still keep the code in MIRIAD (history repeats)
+
+
+
