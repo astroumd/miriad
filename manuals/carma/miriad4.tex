@@ -1,6 +1,6 @@
 %\documentclass{report}
 \documentstyle[11pt,aaspp4]{article}
-\slugcomment{CARMA memo xxx - 10feb2004}
+\slugcomment{CARMA memo xxx - 17feb2004}
 
 %\documentclass{article}
 
@@ -720,6 +720,96 @@ Action Items:
           collect corrections/additions
   Peter:  file minutes into rough draft in some form
             to start transformation to white paper.
+
+\end{verbatim}
+
+\subsection{Minutes: 17-feb-2004}
+
+\begin{verbatim}
+
+Some notes on the WSRT/UMD telecon on Feb 17, 2004:
+
+Present: UMD: Peter Teuben, WSRT: Tom Oosterloo, Garrelt Mellema, John Romein
+
+Since WSRT also still has a MIRIAD/ATNF version, and V4 is now the active CVS
+version, they are looking into the last differences and making sure all the important
+things have found their way into the new V4.
+
+There appears to be a shadowing issue with WSRT data: (to quote Garrelt)
+
+The final test for shadowing (in uvio) is identical in ATNF and V4, and so
+was not changed since the branching off.
+In the ATNF version this test flags the wrong antenna for WSRT, and a local fix was
+introduced at WSRT (we call the ATNF version with all the local fixes the wsrtMiriad
+version).
+We still have to make 100% sure that the tests have identical (wrong) results in ATNF
+and V4 (I would suspect so), in which case a fix for WSRT has to be introduced.
+
+From my diff between wsrtMiriad (>) and V4 (<):
+16) TAO changed this in WSRT version, but the bug(?) is still present in V4..
+3410c3451,3459
+<         if(u*u + v*v <= limit && w >= 0) return(1);
+
+---
+ > /*
+ >    changed w>=0 into w<=0.
+ >    with w<=0 the wrong antenna of the shadowed pair got flagged. E.g. if RTA
+ >    was shadowing RT9, RTA got trown out!!  (TAO  25-Jul-02)
+ > */
+ >         if(u*u + v*v <= limit && w <= 0) {
+ >            return(1);
+ >         }
+ >
+
+
+Peter remarked that ``some tinkering wrt shadowing'' was done between Tam Helfer
+and Peter, and he hoped this was not the cause of the WSRT findings. Peter and
+Tam worked on MIRPROG/csflag.for for carma simulations, since they found it was
+too hard to do it in uvio.c No changes to uvio were made for the Helfer/Teuben 
+work on CARMA simulations.
+
+WSRT wanted to know if the MAXDIM tinkering was done. Peter commented that yes,
+most, if not all, problems were solved (uvplt the last remaining one), but
+WSRT remarked that they had a dataset that just didn't fit in the default buffers
+for the task uvspec (selecting only one stokes parameter made the task run).
+So perhaps some more careful checking with ``standard datasets'' (see below) is 
+needed, for both WSRT and BIMA.
+
+WSRT is equally interested in advanced python use, along the lines of the memo
+that Ray Plante sent around.  WSRT commented that Omegacam is also using python
+for parallization, in particular built around ESO's eclipse image processing
+library.
+
+Peter commented that a simple parall. could be achieved (if only by demonstration)
+with a shell script splitting the  dataset in N pieces, sending it via ssh
+to machines that have NFS access and putting it back together. Tom commented
+that they found the TSYS information in a dataset doesn't get split correctly
+and perhaps more, thus making this seemingly simple demo more tricky than
+thought at first glance.
+
+WSRT was curious to the FFTW efforts. Peter said nothing much more than his
+initial efforts were done. Like ATLAS, it has to be shown via profiling and
+benchmarks where the bottlenecks are. Peter claimed that ATLAS will not be
+interesting for miriad, but FFTW will.
+
+WSRT commented that JIVE has also shown an interest in miriad, but that we (and they)
+are all aware of basic and important missing functionality (fringe fitting). 
+
+The dutch LOFAR group has indicated they may want to use miriad for
+developing prototypes for parallelization of the selfcal process for
+LOFAR.
+
+Action items:
+
+- profiling (WSRT will work on this)
+- standard datasets for BIMA and WSRT observing modes, and an easy way to
+  grab them via a curl or wget into e.g. $MIRDATA (see $MIR/data, which was
+  recently created)
+- manuals. We (BIMA and WSRT at least) should work on a chapter in the
+  ``australian manual'' (MIR/manuals/atnf-user). Note they use a scheme
+  where each chapter has its own page numbering, so not to disturb the
+  rest of the manual.
+
 
 \end{verbatim}
 
