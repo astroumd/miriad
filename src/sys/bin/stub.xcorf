@@ -16,7 +16,7 @@ endif
 # --------------------------------------------------- 
 # See if /usr/dt/include needs to be added to includes.
 #
-set inc = "-I$srcdir $Cinclude"
+set inc = "-I$srcdir $Cinclude -I$MIRXINC"
 set adddt = 0
 if (($host == sun4sol) && (`echo $inc | grep -c openwin` > 0)) then
   if (`echo $inc | grep -c '/usr/dt'` == 0) then
@@ -37,6 +37,7 @@ foreach idir (`echo $inc | sed 's/-I//g'`)
 end
 #
 if ($xmexists == 0) then
+  echo "inc=$inc"
   echo 'Could not find the Motif libraries in $MIRXINC or in the standard locations.'
   echo 'Exiting...'
   exit 1
