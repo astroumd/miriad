@@ -39,10 +39,11 @@ c  History:
 c	17jun97 mwp   original version. adapted from personal C version.
 c	08oct98 mwp   read(,*) for flexibility in array position formats
 c	12apr99 mwp   added options=verbose to print out the baselines
+c	02may02 mwp   fixed factor of 2 bug! (previous dwell time too long)
 c
 c-----------------------------------------------------------------------
 	character version*(*)
-	parameter(version='version 1.1  12-Apr-99')
+	parameter(version='version 1.2  02-May-02')
 	include 'maxdim.h'
 	real antdiam,base,longbase,tau,nfields
 	real x(MAXANT),y(MAXANT),z(MAXANT)
@@ -148,8 +149,8 @@ c */
 	enddo 
 	longbase = (longbase**0.5)/3.33
 
-	tau = 86400.0*antdiam/(3.14159265*longbase)
-351	format('Ant(',i3,','i3,')  ',f7.1,' meters')
+	tau = 43200.0*antdiam/(3.14159265*longbase)
+351	format('Ant(',i3,',',i3,')  ',f7.1,' meters')
 	write(line,400) longbase
 400	format('Longest baseline is ',f7.1,' meters')
 	call output(line)
