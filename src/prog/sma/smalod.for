@@ -1,5 +1,5 @@
 c************************************************************************
-        program smalod
+        program smalod 
         implicit none
 c
 c= smalod - Convert an Sma archive data (Caltech MIR) into Miriad uv format
@@ -16,29 +16,44 @@ c
 c@ out
 c       Name of the output Miriad uv data-set. No default.
 c
-c@ rxif 
+c@ rxif
 c       selete from dual receivers/IFs; rxif=1 for receiver 1;
 c       rxif=2 for receiver 2; Default is no seperation in receivers.
+c       For old data files (2004-12-31 and older), please take
+c       the default.
 c
 c@ restfreq
 c       The rest frequency, in GHz, for line observations.  By default,
-c       the value in the MIR file is used.  
-c       we are cosidering to support the following functions: Giving a 
-c       value for the "restfreq" parameter overrides the MIR file value. 
-c       If you do set this parameter, you MUST give the same number of 
-c       values as the number of IFs written out. A value of 0 is used 
-c       for a continuum observation. For example, if you have two IFs, 
+c       the value in the MIR file is used.
+c       we are cosidering to support the following functions: Giving a
+c       value for the "restfreq" parameter overrides the MIR file value.
+c       If you do set this parameter, you MUST give the same number of
+c       values as the number of IFs written out. A value of 0 is used
+c       for a continuum observation. For example, if you have two IFs,
 c       the first of which is CO(3-2), and the second is continuum, use
 c       restfreq=345.795991,0
 c
 c@ options
-c       'nopol'    Disable polarization. All the correlations will be 
+c       'nopol'    Disable polarization. All the correlations will be
 c                  labelled as I.
-c       'oldpol'   Converts MIR polarization data observed before 
+c       'oldpol'   Converts MIR polarization data observed before
 c                  2004-9-1.
 c                  Defaults assumes non-polarization state is assigned.
 c       No extra processing options have been given yet. The default
 c       works.
+c
+c@ rsnchan
+c	This is an option for resampling SMA uvdata from higher
+c	spectral resolution to lower spectral resolution or from
+c	hybrid spectral resolutions across the 24 spectral windows
+c       (chunks or IFs) to a uniform spectral resolution. 
+c       The default or a negative is no resampling to be applied. 
+c       Note that this number must be power of 2 and equal to/less 
+c       than the smallest channel number in the 24 spectral windows.
+c       If rsnchan is not equal to the nth power of 2, the program 
+c       will take the a number of 2**n which is close to the input
+c       value. If rsnchan is greater than the smallest channel  number,
+c       the program will take the smallest channel number. 
 c
 c@ sideband
 c       This is an option for separating sidebands. A value of 0 is for
@@ -57,20 +72,24 @@ c       followed by the number of scans to process. NOTE: This applies to
 c       all files read. The default is to skip none and process all scans.
 c--
 c  History:
-c    jhz 15-jul-04 made the original version. 
+c    jhz 15-jul-04 made the original version.
 c    jhz 30-aug-04 add options "nopol" to disable the polarization
 c    jhz 03-sep-04 add options "oldpol" to convert non-convetion
 c                  SMA polariztion state labelling to the convetion
 c                  that both NRAO and BIMA follow.
 c    jhz 30-nov-04 implemented handling both sideband together
 c    jhz  1-dec-04 implemented dual receivers
+c    jhz  16-dec-04 added  checking the length of infile
+c    jhz  11-jan-05 merged smauvrsample into smalod;
+c    jhz  11-jan-05 added Key word rsnchan controls the resmapling vis 
+c                   spectra output.  
 c------------------------------------------------------------------------
         integer maxfiles
         parameter(maxfiles=128)
         character version*(*)
-        parameter(version='SmaLod: version 1.1 30-NOV-04')
+        parameter(version='SmaLod: version 1.1 11-Jan-05')
 c
-        character in(maxfiles)*64,out*64,line*64,rxc*4
+        character in(maxfiles)*64,out*64,line*64, rxc*4
         integer tno, length, len1
         integer ifile,rxif,nfreq,iostat,nfiles,i
         double precision rfreq(2)
@@ -78,11 +97,12 @@ c
         logical dobary,doif,birdie,dowt,dopmps,doxyp,doop
         logical polflag,hires,nopol,sing, oldpol, dsb
         integer fileskip,fileproc,scanskip,scanproc,sb
+	integer rsNCHAN
 c
 c  Externals.
 c
         character smaerr*32,itoaf*8
-        dsb = .false.    
+        dsb = .false.
 c
 c  Get the input parameters.
 c
@@ -94,16 +114,22 @@ c
         call keya('out',out,' ')
         if(out.eq.' ')
      *    call bug('f','Output name must be given')
-        call keyi('rxif',rxif,0)
+         call keyi('rxif',rxif,0)
             if(rxif==1) rxc='_rx1'
             if(rxif==2) rxc='_rx2'
-         if(rxif.lt.0.or.rxif.gt.2)
-     *  call bug('f','Invalid Receiver ID.')
+         if(rxif.lt.0.or.rxif.gt.2) 
+     *   call bug('f','Invalid Receiver ID.')
 
         call mkeyd('restfreq',rfreq,2,nfreq)
         call getopt(doauto,docross,docomp,dosam,doxyp,doop,relax,
      *    sing,unflag,dohann,birdie,dobary,doif,dowt,dopmps,polflag,
      *    hires,nopol,oldpol)
+        call keyi('rsnchan',rsnchan,-1)
+       if(rsnchan.gt.0) then 
+         rsnchan=2**(int(log(real(rsnchan))/log(2.)+0.5))
+                        else
+                        rsnchan=-1
+                        end if
         call keyi('sideband',sb,0)
         if(sb.lt.0.or.sb.gt.2)
      *  call bug('f','Invalid SIDEBAND parameter')
@@ -118,8 +144,9 @@ c
         if(scanskip.lt.0.or.scanproc.lt.0)
      *  call bug('f','Invalid NSCANS parameter')
         call keyfin
+c
 c    do both side bands
-
+c
            length=len1(out)
            if(sb.eq.2) then
               dsb=.true.
@@ -132,6 +159,7 @@ c    do both side bands
               if(sb.eq.0) out=out(1:length)//rxc(1:4)//'.lsb'
               if(sb.eq.1) out=out(1:length)//rxc(1:4)//'.usb'
               end if
+
 c
 c  Open the output and initialise it.
 c   
@@ -149,7 +177,7 @@ c
           if(ifile.le.fileskip)then
             if(nfiles.eq.1)then
               call output('Skipping file '//itoaf(ifile))
-              call smaskip(in(1),iostat)
+              call rpskip(in(1),iostat)
             else
               call output('Ignoring file '//in(ifile))
               iostat = 0
@@ -157,16 +185,16 @@ c
             if(iostat.ne.0)call bug('f','Error skipping SMAMIR file')
           else
             call pokeini(tno,dosam,doxyp,doop,dohann,birdie,dowt,
-     *          dopmps,dobary,doif,hires,nopol,oldpol)
+     *          dopmps,dobary,doif,hires,nopol,oldpol,rsnchan)
             if(nfiles.eq.1)then
               i = 1
             else
               i = ifile
             endif
             if(i.ne.ifile)then
-              call liner('Processing file '//itoaf(ifile))
+            call liner('Processing file '//itoaf(ifile))
             else
-              call liner('Processing file '//in(ifile))
+            call liner('Processing file '//in(ifile))
             endif
             call smadisp(in(i),scanskip,scanproc,doauto,docross,
      *          relax,sing,unflag,polflag,rxif,rfreq,nfreq,sb,
@@ -179,14 +207,14 @@ c
           call bug('w','Prematurely finishing because of errors')
           call hiswrite(tno,'SMALOD: '//line)
           call hiswrite(tno,
-     *           'SMALOD: Prematurely finishing because of errors')
+     *      'SMALOD: Prematurely finishing because of errors')
         endif
         call hisclose(tno)
         call uvclose(tno)
         if(.not.dsb) then
-        if((sb.eq.0).and.(rxif.ne.0)) write(*,*) 
+        if((sb.eq.0).and.(rxif.ne.0)) write(*,*)
      * 'output file =',out(1:length)//rxc(1:4)//'.lsb'
-        if((sb.eq.1).and.(rxif.ne.0)) write(*,*) 
+        if((sb.eq.1).and.(rxif.ne.0)) write(*,*)
      * 'output file =',out(1:length)//rxc(1:4)//'.usb'
         if((sb.eq.0).and.(rxif.eq.0)) write(*,*)
      * 'output file =',out(1:length)//'.lsb'
@@ -194,21 +222,22 @@ c
      * 'output file =',out(1:length)//'.usb'
          goto 666
          end if
-        if(sb.eq.0) then 
+        if(sb.eq.0) then
         sb=1
         goto 555
         end if
          if(dsb) then
-         if(rxif.ne.0) write(*,*) 
+         if(rxif.ne.0) write(*,*)
      * 'output file for lsb =', out(1:length)//rxc(1:4)//'.lsb'
          if(rxif.eq.0) write(*,*)
-     * 'output file for lsb =', out(1:length)//'.lsb'        
-         if(rxif.ne.0) write(*,*) 
+     * 'output file for lsb =', out(1:length)//'.lsb'
+         if(rxif.ne.0) write(*,*)
      * 'output file for usb =', out(1:length)//rxc(1:4)//'.usb'
          if(rxif.eq.0) write(*,*)
      * 'output file for usb =', out(1:length)//'.usb'
          end if
-666      stop
+
+666     stop
         end
 c************************************************************************
         subroutine getopt(doauto,docross,docomp,dosam,doxyp,doop,
@@ -324,9 +353,9 @@ c************************************************************************
 c************************************************************************
         subroutine pokeini(tno1,dosam1,doxyp1,doop1,
      *          dohann1,birdie1,dowt1,dopmps1,dobary1,
-     *          doif1,hires1,nopol1,oldpol1)
+     *          doif1,hires1,nopol1,oldpol1,rsnchan1)
 c
-        integer tno1
+        integer tno1, rsnchan1
         logical dosam1,doxyp1,dohann1,doif1,dobary1,birdie1,dowt1
         logical dopmps1,hires1,doop1,nopol1,oldpol1
 c
@@ -336,7 +365,6 @@ c
 c  The common block (yuk) used to buffer up an integration.
 c
         include 'maxdim.h'
-
 cc jhz 2004-6-7: change at -> sm for the parameter
 cc smif = 48
 cc smant = 8
@@ -432,9 +460,9 @@ c
           long1=long
         if(.not.ok)call bug('f','Could not get SMA longitude')
 c
-        call pokeinisma(kstat,tno1,dosam1,doxyp1,doop1,
+        call rspokeinisma(kstat,tno1,dosam1,doxyp1,doop1,
      *  dohann1,birdie1,dowt1,dopmps1,dobary1,doif1,hires1,
-     *  nopol1,oldpol1,lat1,long1)
+     *  nopol1,oldpol1,lat1,long1,rsnchan1)
         end
 c************************************************************************
         subroutine liner(string)
@@ -499,10 +527,9 @@ c------------------------------------------------------------------------
 c
 c  The common block (yuk) used to buffer up an integration.
 c
-c
         include 'maxdim.h'
 c
-	integer smif,smant,smpol,smdata,smbase,smbin,smcont
+        integer smif,smant,smpol,smdata,smbase,smbin,smcont
         parameter(smif=24,smant=8,smpol=4,smbase=((smant+1)*smant)/2)
         parameter(smbin=1024,smcont=33)
         parameter(smdata=24*maxchan*smbase)
@@ -554,12 +581,13 @@ c
         call uvputvra(tno,'name',in(i1:i2)) 
         end
 c************************************************************************
-        subroutine smaskip(in,iostat)
+c************************************************************************
+        subroutine rpskip(in,iostat)
 c
         character in*(*)
         integer iostat
 c
-c  Skip an sma file.
+c  Skip an RPFITS file.
 c------------------------------------------------------------------------
         call smaopen(in,iostat)
         if(iostat.eq.0)call smaeof(iostat)
@@ -570,7 +598,7 @@ c************************************************************************
      *    sing,unflag,polflag,rxif,userfreq,nuser,sb,iostat)
 c
         character in*(*)
-        integer scanskip, scanproc, rxif, nuser,sb,iostat
+        integer scanskip,scanproc,rxif,nuser,sb,iostat
         double precision userfreq(*)
         logical doauto,docross,relax,unflag,polflag,sing
 c  jhz
@@ -592,7 +620,7 @@ c    userfreq	User-given rest frequency to override the value in
 c		the RPFITS file.
 c    nuser	Number of user-specificed rest frequencies.
 c------------------------------------------------------------------------
-       include 'maxdim.h'
+         include 'maxdim.h'
 c=======================================================================
 c - mirconst.h  Include file for various fundamental physical constants.
 c
@@ -762,13 +790,13 @@ c
 c  Initialize.
 c
         call pokename(in)
-        call smaflush(mflag,scinit,tcorr,scbuf,xflag,yflag,
+        call rssmaflush(mflag,scinit,tcorr,scbuf,xflag,yflag,
      *       max_if,ant_max,  scanskip, scanproc, sb, rxif)
                   kstat= 666
-        call pokeflshsma(kstat);
+        call rspokeflshsma(kstat);
 c
          jstat =-1;
-         call miriadwrite(in,jstat)
+         call rsmiriadwrite(in,jstat)
          call smaclose(iostat)
         end
 c************************************************************************
@@ -788,8 +816,6 @@ c
 c       thsi function is not used.
 c
         jstat = 2
-c        call rpfitsin(jstat,vis,weight,baseln,ut,u,v,w,flag,
-c     *                                          bin,ifno,srcno)
         if(jstat.eq.3)jstat = 0
         if(jstat.ne.0)call bug('w',
      *          'Error while skipping: '//smaerr(jstat))
@@ -941,7 +967,7 @@ c   jstat=-3 -> open the input data file
         jstat = -3
         an_found = .false.
 c jhz test
-        call mirread(in, jstat)
+        call rsmirread(in, jstat)
         if(jstat.ne.0) call bug('w',
      *      'Error opening SMA MIR file: '//smaerr(jstat))
         if(jstat.ne.0)return
@@ -961,4 +987,18 @@ c------------------------------------------------------------------------
           write(val,'(f5.2,a)')x
         endif
         pcent = val//'%'
+        end
+c************************************************************************
+        real function getjpk(freq)
+c
+        real freq
+c------------------------------------------------------------------------
+        if(freq.lt.15)then
+          getjpk = 13
+        else if(freq.lt.30)then
+          getjpk = 15
+        else
+          getjpk = 25
+        endif
+c
         end
