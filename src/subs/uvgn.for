@@ -24,7 +24,7 @@ c    26jun97 rjs  Correct channel numbering when there are multiple
 c		  windows and bandpass averaging taking place.
 c    10dec97 rjs  Check gain table size is correct.
 c    24feb97 rjs  Make "bandpass calibration" work for wide-only files.
-c    21feb02 mchw Fix uvGnFac for > 256 antennas.
+c    ??      rjs  Add weights to UvGnFac
 c************************************************************************
 	subroutine uvGnIni(tno1,dogains1,dopass1)
 	implicit none
@@ -69,7 +69,7 @@ c
 	  if(nants*(ntau + nfeeds).ne.ngains) call bug('f',
      *	    'Bad number of gains or feeds')
 	  if(nants.gt.MAXANT) call bug('f',
-     *	    'Too many antennas for me to handle, in uvGnIni')
+     *	    'Too many antennae for me to handle, in uvGnIni')
 	else
 	  nants = MAXANT
 	  ngains = MAXANT
@@ -222,14 +222,15 @@ c
 c
 	end
 c************************************************************************
-	subroutine uvGnFac(time,baseline,pol,dowide,data,flags,nread)
+	subroutine uvGnFac(time,baseline,pol,dowide,data,flags,nread,
+     *	  grms)
 c
 	implicit none
 	integer nread
 	complex data(nread)
 	logical flags(nread),dowide
-	double precision time, dbaseline
-	real baseline
+	double precision time
+	real baseline,grms
 	integer pol
 c
 c  Determine the gain factor for a particular visibility.
@@ -246,6 +247,8 @@ c    data	The correlation data. On input this is uncalibrated. On
 c		output, it is gain/bandpass calibrated.
 c    flags	Data flags. If the antenna gains were bad for some reason,
 c		the data are flagged as bad.
+c  Output:
+c    grms       The rms gain.
 c------------------------------------------------------------------------
 	include 'uvgn.h'
 	logical t1valid,t2valid,t1good,t2good,flag
@@ -261,6 +264,7 @@ c------------------------------------------------------------------------
 c
 c  Assume that we fail!
 c
+	grms = 1
 	flag = .false.
 c
 c  Determine the polarisation type index.
@@ -280,8 +284,9 @@ c
 c
 c  Determine the gain indices based on antenna numbers.
 c
-	dbaseline = baseline
-	call basant(dbaseline,ant1,ant2)
+	ant2 = nint(baseline)
+	ant1 = ant2 / 256
+	ant2 = ant2 - 256 * ant1
 	if(ant1.lt.1.or.ant1.gt.nants.or.ant2.lt.1.or.ant2.gt.nants)
      *	  goto 100
 c
@@ -468,6 +473,7 @@ c
 	    do i=1,nread
 	      data(i) = gain * data(i)
 	    enddo
+	    grms = abs(gain)
 	  endif
 	  if(dopass.or.dotau)
      *	    call uvGnPsAp(dowide,ant1,ant2,p,tau,data,flags,nread)
