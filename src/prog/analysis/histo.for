@@ -18,7 +18,8 @@ c	See the Users Manual for instructions on how to specify this.
 c	Pixel blanking is not supported; all pixels in the selected region
 c	are used.
 c@ range
-c	The range in pixel values over which the histogram is calculated.
+c	The range in pixel values over which the histogram is calculated.\
+c       The minmax, mean and dispersion are now also computed in this range. 
 c	The default is the image minima and maxima.
 c@ nbin
 c	The number of bins used in the histogram. Default is 16.
@@ -36,6 +37,7 @@ c    31jan96 nebk  More grace when no valid pixels in region.
 c    08oct96 nebk  Make accumulation sums double precision
 c    28feb97 nebk  Add object to output
 c    14may99 rjs   Increase MAXRUNS.
+c    15feb01 pjt    look within range to find min/max/mean/dispersion
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	include 'maxnax.h'
@@ -43,7 +45,7 @@ c------------------------------------------------------------------------
 	character version*(*)
 	parameter(nbindef=16,nbinmax=40,maxboxes=2048)
 	parameter(maxruns=40*MAXDIM)
-	parameter(version = 'version 14-May-99' )
+	parameter(version = 'version 15-feb-01' )
 c
 	character file*64,asterisk*30,line*72,coord*64,bunit*32,
      +   object*32
@@ -160,19 +162,21 @@ c
 	        indx = max(min(nbin,indx),1)
 	        bin(indx) = bin(indx) + 1
 	      endif
-	      if(x.gt.rmax)then
-	        rmax = x
-	        maxv(1) = i
-		maxv(2) = j
-		newmax = .true.
-	      else if(x.lt.rmin)then
-	        rmin = x
-	        minv(1) = i
-	  	minv(2) = j
-		newmin = .true.
+	      if(x.ge.blo .and. x.le.bhi) then
+		if(x.gt.rmax) then
+		  rmax = x
+		  maxv(1) = i
+		  maxv(2) = j
+		  newmax = .true.
+	        else if(x.lt.rmin) then
+		  rmin = x
+		  minv(1) = i
+		  minv(2) = j
+		  newmin = .true.
+	        endif
+	        sum = sum + x
+	        sum2 = sum2 + x*x
 	      endif
-	      sum = sum + x
-	      sum2 = sum2 + x*x
 	    enddo
 	  enddo
 	  if(newmax)call copyindx(MAXNAX-2,plane(3),maxv(3))

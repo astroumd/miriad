@@ -61,10 +61,11 @@ c--
 c  History:
 c       26aug00  tw  added rmpmax keyword.
 c       18sep00  tw  added cormax keyword.
+c	21oct00  tw  initiliaze rmpold.
 c------------------------------------------------------------------------
         include 'maxdim.h'
 	character version*(*)
-	parameter(version='UvDecor: version 1.6 14-oct-00')
+	parameter(version='UvDecor: version 1.7 21-oct-00')
 c
 	integer nchan,vhand,lIn,lOut,i,j,nspect,nPol,Pol,SnPol,SPol
 	integer nschan(MAXWIN),ischan(MAXWIN),ioff,nwdata,length
@@ -145,6 +146,7 @@ c
 	badrmp = 0
 	baduvd = 0
 	badfac = 0
+        rmpold = 0.
 	minbadrmp = 10000.
 c
 c  Loop the loop. Open a file, process it, copy it, etc.
