@@ -15,15 +15,15 @@ def miriad(command,log=0):
     miriad        execute a miriad 'command' (as a list of strings) and accumulate a log
                   either from the default logfile (see setlogger) or by overriding using
                   log=
-                  Example:    miriad(['itemize','in=ngc1365.cm'],log='ngc1365.log)
+                  Example:    miriad(['itemize','in=ngc1365.cm'],log='ngc1365.log')
 
     Other commands available in PYRAMID are:
     
     doc           show specific help for a MIRIAD task , e.g. doc('invert')
     keys          show all keywords for a MIRIAD task , e.g. keys('invert')
-    setlogger     change the default logger for the miriad() command, e.g. setlogger('rubbish.log')
+    setlogger     change the default logger for subsequent miriad() commands, e.g. setlogger('rubbish.log')
 
-    zap           delete a miriad dataset (checked with existence), e.g. zap('ngc1365.cm')
+    zap           delete a miriad dataset (with existence check), e.g. zap('ngc1365.cm')
     zap_all       delate a set of data (unchecked), e.g. zap_all('ncg1365*')
     grepcmd       Return the Nth word on the first occurence of a string match from a command
                   e.g.:    grepcmd('histo in=ngc1365.cm','Maximum',2)
@@ -34,6 +34,10 @@ def miriad(command,log=0):
     Some useful classes defined via PYRAMID:
 
     Timer         mark and compute CPU times between sections of the code
+
+    A number of useful and less useful user contribued PYRAMID scripts
+    can be found in and below $MIR/examples/
+    
     """
     
     
@@ -161,7 +165,11 @@ class Timer:
 #   If executed... probably they are in an interactive python shell
 if __name__ == '__main__':
     print ""
-    print "Welcome to pyramid, a python enabled interface to MIRIAD."
+    print "Welcome to PYRAMID, a python enabled interface to MIRIAD."
+    print "Please make sure $MIR/src/scripts/python is part of your"
+    print "PYTHONPATH environment variable to make use of all the"
+    print "available modules."
+    print ""
     print "Type help(miriad) to get more help on this interface, or"
     print 'doc("invert") or keys("invert") to get specific help on a miriad task'
     print "You are now dropped to the PYTHON prompt, enter ^D to exit"
