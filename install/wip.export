@@ -1,0 +1,58 @@
+#! /bin/csh -f
+#
+#  Generate a standalone WIP version from a compiled MIRIAD
+#  somewhat linux specific
+
+if ($?MIR == 0) then
+  echo MIR is not defined, you need to have a running MIRIAD to clone wip
+  exit 1
+endif
+
+set tar=0
+set src=wip
+
+# poor mans command line parser
+foreach _a ($*)
+  set $_a
+end
+
+if ($tar) then
+  set version=`cat $MIR/VERSION`
+  set src=mirlib-$version
+endif
+
+set bins=(wip pgxwin_server)
+set libs=(drivers.list grfont.dat libpgplot.so rgb.txt)
+set help=$MIR/borrow/wip/wiphelp.dat
+set wiprc=$src/wiprc
+
+if (! -e $src) mkdir $src
+
+foreach f ($bins)
+  cp -p $MIRBIN/$f $src
+end
+foreach f ($libs)
+  cp -p $MIRLIB/$f $src
+end
+cp $help $src
+
+echo `cat $MIR/VERSION`_standalone_wip > $src/VERSION
+echo "Created by the wip.export script on `date`" > $src/README.wip
+
+echo '# source this file in the wip directory to setup'    > $wiprc
+echo 'set wip=`pwd`'                                      >> $wiprc
+echo 'setenv WIPHELP $wip/wiphelp.dat'                    >> $wiprc
+echo 'alias wip $wip/wip'                                 >> $wiprc
+echo 'setenv PGPLOT_DIR $wip'                             >> $wiprc
+# linux
+echo 'setenv LD_LIBRARY_PATH $wip'                        >> $wiprc
+
+# only compile if a tar file is not made
+
+if ($tar) then
+  echo Creating export tar $src.tar.gz 
+  cd ..
+  tar zcf $src.tar.gz $src
+  rm -rf $src
+endif
+
