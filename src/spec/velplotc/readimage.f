@@ -14,7 +14,7 @@
 	  nc=0
 	  ary=1
 	  v=1
-	  write(*,*) "Error:No such a direcory"
+	  write(*,*) "##Error: No such a directory"
 	  return
 	end if
 
@@ -68,16 +68,22 @@ c	Note: Pass only the pointer memr(ary)
 
 	subroutine help
 	write(*,*) "Usage:velplotc in=? [region=?] [device=?] [task=?]"
+	write(*,*) "      [Cbeam=?] [nxy=?] [Palette=?]"
 	write(*,*) "\t    [cutfile | cut | cutr=?]"
 	write(*,*) "\tin: input file"
 	write(*,*) "\tregion: conform to miriad format"
 	write(*,*) "\tdevice: conform to miriad format"
+	write(*,*) "\tCbeam: 3 values: bmin, bmaj, pa"
+	write(*,*) "\tnxy: conform to miriad format"
+	write(*,*) "\tPalette: any value from 0 to 12"
 	write(*,*) "\ttask: implot or velplot or doposvel"
 	write(*,*) "\tcutfile | cut | cutr: ",
      &      "at most one can be specied"
+	write(*,*) "\tfor cutfile, will read cut from a file"
+	write(*,*) "\t\te.g. cutfile=a.cut"
 	write(*,*) "\tfor cut, use cut=-dra,ddec,PA, eg cut=30,40,10"
 	write(*,*) "\tfor cutr, use cutr=rah,ram,ras,decd,decm,decs,PA"
-     	write(*,*) "\t\teg cutr=5,10,20.0,2,20,30,90"
+     	write(*,*) "\t\te.g. cutr=5,10,20.0,2,20,30,90"
 	write(*,*) "\tNote: dHA = -dRA"
 	call exit(1)
 	return
