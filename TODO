@@ -1,7 +1,12 @@
+- MIR4 vs. MIR5: consider Sault's proposal to handle long integers.
+
 - no more maxdim.h and maxdimc.h in $MIRINC, since they are 
   generated via configure (planned for 4.0.4)
 
-- SMA code integration
+- check if character*N variables (N some number) work ok with the 
+  miriad f2c interface. Sault reverted the bug i found in uvdat.for.
+
+- SMA code integration (sma_Resample.o has been integrated and removed)
 
 - integer*8 support; ratty flag to go back to the old situation if
   the fortran compiler does not support integer*8
