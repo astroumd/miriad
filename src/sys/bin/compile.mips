@@ -17,7 +17,7 @@ setenv Coptions  "-cckr -O"
 setenv CoptionsN "-cckr   "
 setenv Clinkdir "-L`echo $mmir/lib/$mhost $MIRXLIB | sed 's/ / -L/g'`"
 setenv Clinklib "-lmir -llinpack -lpgplot -lX11"
-setenv Cinclude "-I`echo $mmir/src/inc $MIRXINC | sed 's/ / -I/g'`"
+setenv Cinclude "-I`echo $mmir/src/inc $mmir/src/subs $MIRXINC | sed 's/ / -I/g'`"
 #
 setenv Ratty 	"$mmir/bin/$mhost/ratty -D mips -s f77"
 setenv Intf2c 	"$mmir/bin/$mhost/intf2c -s bsd"

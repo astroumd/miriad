@@ -21,7 +21,7 @@ setenv Coptions  "-fi -O1 -or none -Dconvex"
 setenv CoptionsN "-fi     -or none -Dconvex"
 setenv Clinkdir "-L`echo $mmir/lib/$mhost $MIRXLIB | sed 's/ / -L/g'`"
 setenv Clinklib "-lmir -lveclib -lpgplot -lX11"
-setenv Cinclude "-I`echo $mmir/src/inc $MIRXINC | sed 's/ / -I/g'`"
+setenv Cinclude "-I`echo $mmir/src/inc $mmir/src/subs $MIRXINC | sed 's/ / -I/g'`"
 #
 setenv Ratty 	"$mmir/bin/$mhost/ratty -s convex"
 setenv Intf2c 	"$mmir/bin/$mhost/intf2c -s convex"
