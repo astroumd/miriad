@@ -3,7 +3,7 @@ c*************************:***********************************************
         implicit none
 c
 c= smafix -- Plot and fit Tsys and do Tsys corrections.
-c& jhz
+c& Jun-Hui Zhao 
 c: plotting, analysis and uvdata correction
 c+
 c	SmaFix plots and does least square fits with an order
@@ -99,8 +99,13 @@ c  jhz: 2005-2-8  changed systemp with systmp which has been
 c                 named for the original SMA systemp temperature
 c                 variable in smalod.
 c                 added systmp in the data matrix.
-c  jhz: 2005-2-10 added options tsysswap. 
-c    ?? Perfect?:
+c  jhz: 2005-2-10 added options tsysswap.
+c  jhz: 2005-3-23 assured that the antenna id (antid)
+c                 in common/cpolfit/ block corresponds
+c                 to the antenna of the Tsys that used for
+c                 polynomial fitting in the case of xaxis 
+c                 variable of antel having independent entry
+c                 for different antennas.    
 c------------------------------------------------------------------------
         character version*(*)
         integer maxpnts
@@ -872,14 +877,12 @@ c
           mode=0;
 c          nterms =3 parabolic
            nterms= dofit+1
-c           call polfit(XFIT,YFIT,yerr,NPL,nterms,mode,a,chisq)
              do i=1, NPL
               XD(i)=XFIT(i)
               YD(i)=YFIT(i)
               DDELTAY(i)=1.0D0
              end do
             CALL REGPOL(XD,YD,DDELTAY,NPL,MAXNR,XA,BP,AP,CHI2)
-c            call regpolfitg(nterms,xa,bp,N,XFIT,YFIT)
 
                sourid=1
                 do i=1,MAXNR
@@ -888,8 +891,7 @@ c            call regpolfitg(nterms,xa,bp,N,XFIT,YFIT)
                 bppl(antid,sourid,i,j) = bp(i,j)
                 end do
                 end do    
-             call regpolfitg(nterms,xa,bp,NPL,XFIT,pl)
-c           call curvefit(nterms,a,NPL, XFIT, pl)
+           call regpolfitg(nterms,xa,bp,NPL,XFIT,pl)
            call pgsci(1)
            call pgline (NPL, XFIT, pl)
                 end if
@@ -1198,7 +1200,7 @@ c
             xlabel = xaxis(1:laxis)
           else
             call mitoaf(nsize,n,ints,lints)
-                 antid= nsize(1)
+            if(xaxis(1:7).eq.'systemp') antid= nsize(1)
             xlabel = xaxis(1:laxis)//'('//ints(1:lints)//')'
           endif
         else
@@ -1206,11 +1208,12 @@ c
             xlabel = xaxis(1:laxis)//' ('//xunit(1:lunits)//')'
           else
             call mitoaf(nsize,n,ints,lints)
-                 antid= nsize(1)
+            if(xaxis(1:7).eq.'systemp') antid= nsize(1)
             xlabel = xaxis(1:laxis)//'('//ints(1:lints)//') ('//
      *        xunit(1:lunits)//')'
           endif
         endif
+c                  write(*,*) 'antid=', antid, xaxis
         end
 c************************************************************************
         subroutine doscale(range,oneplot,vals,npnts,dor,loval,hival)
