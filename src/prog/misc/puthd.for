@@ -32,6 +32,10 @@ c   PUTHD is a MIRIAD task to add or modify an item in the ``header''
 c   of an image or uv dataset. The item CANNOT be an array or any other
 c   complex data structure, it must be a single entity. To modify
 c   such complex data structures, specialized programs are available.
+c
+c   Be careful when changing certain keywords which have an implied
+c   unit. E.g. the crvalN keywords is an angular unit, and those are
+c   assumed to be in radians in MIRIAD, not degrees as they are in FITS.
 c@ in
 c   The name of an item within a data set. This is given in the
 c   form as in the example:
