@@ -3,39 +3,63 @@
 # mir.bench.py: see also http://bima.astro.umd.edu/memo/abstracts.html#81
 #
 
-
-import sys, os, time
+import sys, os, time, string
 version='2003-03-09'
 
-
 # command line arguments that can be changed... (but should not in the benchmark)
-nchan=32
-mapsize=1024
-cell=0.5
+keyval = {
+    "nchan"   : "32",         # number of channels
+    "mapsize" : "1024",       # size of the map (should be a power of 2)
+    "cell"    : "0.5",        # cell size in arcsec
+    "small"   : "0",          # set this to 0 if you want to small quick test run 
+    }
 
 # -------------------------------------------------------------------------------
+#
+#                                            parse command line (must be 'key=val')
+for arg in sys.argv[1:]:
+    i=string.find(arg,"=")
+    if i > 0:
+        key = arg[0:i]
+        val = arg[i+1:]
+        print arg,i,key
+        if keyval.has_key(key):
+            keyval[key] = val
 
+#                                            report current defaults
+print "Current command line defaults are:"
+for k in keyval.keys():
+    print k + '=' + keyval[k]
 
+# -------------------------------------------------------------------------------
+#
+# define all variables, now in their proper type, for this script
+#
 tmp='benchXXXXX'
-small=0
 vis=['vis1','vis2','vis3']
 ant=['bima9_a.ant', 'bima9_b.ant', 'bima9_c.ant.equ']
 
+small=string.atoi(keyval['small'])
 if small:
     print 'Running a small test now....'
-    nchan=2
-    mapsize=256
-    cell=2
+    nchan   = 2
+    mapsize = 256
+    cell    = 2.0
+else:
+    print 'Running a normal size test....'
+    nchan   = string.atoi(keyval['nchan'])
+    mapsize = string.atoi(keyval['mapsize'])
+    cell    = string.atof(keyval['cell'])
 
-timet=[0,0,0,0,0,0,0,0]
+timet=[0,0,0,0,0,0,0,0]           # arrays to store CPU usage
 timec=[0,0,0,0,0,0,0,0]
 
-#print "MIRBENCH: %(version)s: nchan=%(nchan)d  mapsize=%(mapsize)d"
-print "MIRBENCH: %s (py): nchan=%d  mapsize=%d" % (version, nchan, mapsize)
+print "MIRBENCH(py): %s : nchan=%d  mapsize=%d cell=%g" % (version, nchan, mapsize, cell)
 
 mir = os.environ['MIR']
 
 # ----------------------------------------------------------------------
+# a few useful functions
 
 #   execute a miriad 'command' (a list of strings) and accumulate a log 
 def miriad(command):
@@ -64,6 +88,7 @@ def cpulen(a,b):
     return sc + st
        
 # ----------------------------------------------------------------------
+# a few MIRIAD commands wrapped for this benchmark
 
 def uvgen(id):
     cmd = [
@@ -123,14 +148,10 @@ def restor():
     return cmd
 
 # ----------------------------------------------------------------------------
-
-print mir
-
+# start of the benchmark
 
 if os.path.isdir(tmp):
-    cmd = ' rm -rf %s ' % tmp
-    print cmd
-    #    os.system('rm -rf benchXXXXX')                 # somehow this does not work
+    os.system('rm -rf ' + tmp)
 
 os.mkdir(tmp)
 os.chdir(tmp)
