@@ -143,9 +143,10 @@ c    rjs  22jan99  Fudge to get the rms noise information to propogate
 c		   through correctly for single pointing work.
 c    rjs  10feb98  Get measure=cornwell to work by setting initial estimate
 c		   to zero.
+c    mchw 02aug02  output format change.
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version='MosMem: version 1.0 10-Feb-99')
+	parameter(version='MosMem: version 1.0 02-Aug-2002')
 	include 'maxdim.h'
 	include 'maxnax.h'
 	include 'mem.h'
@@ -157,7 +158,7 @@ c
 c
 	character MapNam*64,BeamNam*64,ModelNam*64,OutNam*64,DefNam*64
 	character MapSin*64,BeamSin*64
-	character entropy*8,line*80
+	character entropy*8,line*120
 	integer lBeama,lMapa,lBeamb,lMapb,lModel,lOut,lDef
 	integer nMap(3),nMapb(3),nModel(3),nOut(MAXNAX),nBeam(3),nDef(3)
 	integer xmin,ymin,xmax,ymax,n1,n2,i
@@ -638,8 +639,8 @@ c
      *		' StLen2  =',1pe12.3)
   24	  format(' Iter =',i3,' RmsFac =',1pe10.3,' Flux =',1pe10.3,
      *		' NormGrd =',0pf6.3)
-  25	  format(' Iter=',i3,' RmsFac=',f6.2,1x,f6.2,' Factor=',1pe9.3,
-     *		' Flux=',1pe9.3,' NormGrd=',0pf5.3)
+  25	  format(' Iter=',i3,' RmsFac=',1pe10.2,1x,1pe10.2,
+     *    ' Factor=',1pe9.3, ' Flux=',1pe9.3,' NormGrd=',0pf5.3)
 c
 c  Check for convergence.
 c
