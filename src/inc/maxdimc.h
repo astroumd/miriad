@@ -25,6 +25,7 @@
 #define		MAXDIM		8192
 #define		MAXDIM2		65536
 #define		MAXANT		500
+#define		MAXANT2		28
 #define		MAXBASE		((MAXANT * (MAXANT + 1)) / 2)
 #define		MAXBASE2	500
 #define		MAXCHAN		4096

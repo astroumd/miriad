@@ -11,8 +11,8 @@ c       based on a adaptive window around a velocities from a model
 c       velocity field.  The output mask cube can then be used in MOMENT 
 c       to create a more realistic velocity field.
 c
-c       Warning: ROTCURMASK allocates two full MAXDIM*MAXDIM maps for
-c       faster computations.
+c       Warning: ROTCURMASK allocates two full MAXDIM3*MAXDIM3 maps for
+c       faster computations. (defaulted to 2048**2 maps)
 c
 c@ in
 c	The input data cube. The fist two axes should be
@@ -55,16 +55,16 @@ c------------------------------------------------------------------------
 	include 'maxdim.h'
  	character version*(*)
 	parameter(version='version 1.0 3-dec-02')
-	integer MAXNAX,naxis,naxis2
-	parameter(MAXNAX=3)
+	integer MAXNAX,MAXDIM3,naxis,naxis2
+	parameter(MAXNAX=3,MAXDIM3=2048)
 	integer i,j,k,lin,lout,nsize(MAXNAX),blc(MAXNAX),trc(MAXNAX)
 	integer size(MAXNAX),axis,nsize2(MAXNAX),lrotmod,lmom2
 	real blo,bhi,clip(2),minsigma,window
-	real velmap(MAXDIM2,MAXDIM2),mommap(MAXDIM2,MAXDIM2)
-	real data(MAXDIM2),kvel,vel,crval3,cdelt3,crpix3,v1,v2
+	real velmap(MAXDIM3,MAXDIM3),mommap(MAXDIM3,MAXDIM3)
+	real data(MAXDIM3),kvel,vel,crval3,cdelt3,crpix3,v1,v2
 	character in*80, out*80, rotmod*80, mom2*80
 	character line*72
-	logical Qmom2,mask(MAXDIM2)
+	logical Qmom2,mask(MAXDIM3)
 	integer mom,ok
 c
 c Get inputs.
@@ -91,7 +91,7 @@ c
 	call rdhdi(lin,'naxis',naxis,0)
 	naxis = min(naxis,MAXNAX)
 
-	if(nsize(1).gt.MAXDIM)call bug('f','Input file too big for me')
+	if(nsize(1).gt.MAXDIM3)call bug('f','Input file too big for me')
 	if(nsize(3).le.1)call bug('f','Input file not 3D')
 	call rdhdr(lin,'crpix3',crpix3,1.0)
 	call rdhdr(lin,'cdelt3',cdelt3,1.0)

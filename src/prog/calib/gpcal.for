@@ -679,14 +679,16 @@ c    Gains	The current estimates of the antenna gains. It is assumed
 c		that the Y phases are equal to the X phases plus the XY phases.
 c  Output:
 c    epsi	Fractional change in the solutions.
+c 
+c NOTE: dec 2002: this routine was changed from MAXabc to MAXabc2
 c------------------------------------------------------------------------
 	include 'gpcal.h'
-	complex Gx(MAXANT),Gy(MAXANT),SVM(4,MAXBASE),TempX,TempY
-	complex a(4,MAXBASE),b(4,MAXBASE),c(4,MAXBASE),xyphase
-	real amag(4,MAXBASE),bmag(4,MAXBASE),cmag(4,MAXBASE)
-	real ab(4,MAXBASE),ac(4,MAXBASE),bc(4,MAXBASE)
-	real    Axy(MAXANT),SMM(4,MAXBASE)
-	integer b1(MAXBASE),b2(MAXBASE),Indx(MAXANT)
+	complex Gx(MAXANT2),Gy(MAXANT2),SVM(4,MAXBASE2),TempX,TempY
+	complex a(4,MAXBASE2),b(4,MAXBASE2),c(4,MAXBASE2),xyphase
+	real amag(4,MAXBASE2),bmag(4,MAXBASE2),cmag(4,MAXBASE2)
+	real ab(4,MAXBASE2),ac(4,MAXBASE2),bc(4,MAXBASE2)
+	real    Axy(MAXANT2),SMM(4,MAXBASE2)
+	integer b1(MAXBASE2),b2(MAXBASE2),Indx(MAXANT2)
 	integer nantsd,nbld,i,j,k,l,soln
 	logical convrg
 c

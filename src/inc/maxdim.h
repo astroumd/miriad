@@ -32,9 +32,9 @@ c   MAXDIM2 should be used in arrays with more than 1 dimension
 	INTEGER   MAXDIM, MAXDIM2
 	PARAMETER(MAXDIM=65536,MAXDIM2=8192)
 c-----------------------------------------------------------------------
-c		maximum number of antennas (HC=3/6/9/..., WSRT=14, VLA=27)
-	INTEGER   MAXANT
-	PARAMETER(MAXANT=500)
+c		maximum number of antennas (HC=3/6/9/..., WSRT=14, VLA=28)
+	INTEGER   MAXANT,MAXANT2
+	PARAMETER(MAXANT=500,MAXANT2=28)
 
 c		maximum number of baselines (in single arrays)
 	INTEGER   MAXBASE

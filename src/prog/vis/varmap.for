@@ -51,12 +51,13 @@ c  History:
 c    mchw  23feb96  Initial version.
 c     mwp  26feb96  Bug fix in averaging loop. Datamin/datamax calculated.
 c    mchw  26feb97  Add xaxis, yaxis and zaxis. Discard flagged data.
+c     pjt   3dec02  MAX....
 c----------------------------------------------------------------------c
         include 'maxdim.h'
         include 'mirconst.h'
         character*(*) version
-        parameter(version='VARMAP: version 1.1 26-FEB-97')
-        integer maxsels
+        parameter(version='VARMAP: version 3-dec-02')
+        integer MAXSELS
         parameter(MAXSELS=512)
         real sels(MAXSELS)
         complex data(MAXCHAN)
@@ -64,7 +65,7 @@ c----------------------------------------------------------------------c
         double precision preamble(4)
         integer lIn,nchan,nread,nvis,ngrid
         real start,width,step
-	character*80 vis,out,linetype,line
+	character*128 vis,out,linetype,line
 	character*10 xaxis,yaxis,zaxis
 	integer lout,nsize(3),i,j,k
 	real cell(2)
@@ -358,7 +359,7 @@ c    nsize	The output image size.
 c    array	image values.
 c-------------------------------------------------------------------------
 	include 'maxdim.h'
-	real row(maxdim)
+	real row(MAXDIM)
 	integer i,j,imin,imax,jmin,jmax,ioff,joff,k
 c
 	imin = 1

@@ -75,15 +75,15 @@ c    pjt 11feb97 Fixed formatting bug
 c    dar 17oct97 Changed calls to imax0 and imin0 to generic max0 and min0
 c                   for compatability with SGI 64-bit compiler.
 c    pjt 20jun98 fixed 0 -> .FALSE. for flags(i) assignment
-c    pjt  3dec02 using MAXBASE2 
+c    pjt  3dec02 using MAXBASE3
 c  Bugs:
 c   Polarization mode not tested.
 c------------------------------------------------------------------------
       include 'maxdim.h'
       include 'mirconst.h'
-      integer MAXPOL,MAXSRC,PolMin,PolMax
+      integer MAXPOL,MAXSRC,MAXBASE3,PolMin,PolMax
       character version*(*),defdir*(*)
-      parameter(MAXPOL=4,MAXSRC=256,PolMin=-9,PolMax=4)
+      parameter(MAXPOL=4,MAXSRC=256,MAXBASE3=45,PolMin=-9,PolMax=4)
       parameter(version='BootFlux: version 3-dec-02')
       parameter(defdir=
 c     *         '/home/bima2/data/flux/measured_fluxes/')
@@ -93,14 +93,14 @@ c
       character uvflags*16,polcode*2,line*132
       logical docal,dopol,dopass,found,valid(MAXSRC)
       character sources(MAXSRC)*16,source*16
-      complex flux(MAXPOL,MAXBASE2,MAXSRC)
-      real amp(MAXPOL,MAXBASE2,MAXSRC),amp2(MAXPOL,MAXBASE2,MAXSRC)
-      complex vecaver,newvec(MAXBASE2)
-      real vecscat(MAXPOL,MAXBASE2,MAXSRC),scalscat(MAXBASE2),temp
-      real vecamp(MAXBASE2)
-      real vecpha(MAXBASE2),scalamp,scalsig,vamp,vsig
+      complex flux(MAXPOL,MAXBASE3,MAXSRC)
+      real amp(MAXPOL,MAXBASE3,MAXSRC),amp2(MAXPOL,MAXBASE3,MAXSRC)
+      complex vecaver,newvec(MAXBASE3)
+      real vecscat(MAXPOL,MAXBASE3,MAXSRC),scalscat(MAXBASE3),temp
+      real vecamp(MAXBASE3)
+      real vecpha(MAXBASE3),scalamp,scalsig,vamp,vsig
       integer i,j,ii,jj,t
-      integer ncnt(MAXPOL,MAXBASE2,MAXSRC)
+      integer ncnt(MAXPOL,MAXBASE3,MAXSRC)
       integer PolIndx(PolMin:PolMax),p(MAXPOL),pp(MAXPOL)
       integer nsrc,npol,isrc,ipol,vsource,tno
 c
@@ -110,16 +110,16 @@ c
       complex data(MAXCHAN)
       logical flags(MAXCHAN)
 c
-      integer base,bases(MAXBASE2),ibl,nbase,ant1,ant2,bigant
+      integer base,bases(MAXBASE3),ibl,nbase,ant1,ant2,bigant
       integer blmatrx(MAXANT,MAXANT),ncal,calscan(MAXSRC),iclose
       integer nsamp,fno,iostat,nants,nspec,nsys
       real dtime,temp1,temp2,temp3,scalamp2,pltb,factor,sumw,weight
-      real tave,sigr,sigi,newflux(MAXBASE),sigflux(MAXBASE)
-      real rflux2(MAXPOL,MAXBASE,MAXSRC)
-      real iflux2(MAXPOL,MAXBASE,MAXSRC)
+      real tave,sigr,sigi,newflux(MAXBASE3),sigflux(MAXBASE3)
+      real rflux2(MAXPOL,MAXBASE3,MAXSRC)
+      real iflux2(MAXPOL,MAXBASE3,MAXSRC)
       real systemps(MAXANT*16),antsys(MAXSRC,MAXANT),sum
       real obsfreq(MAXSRC),tsys(MAXSRC),reslim
-      real tint,inttime(MAXBASE,MAXSRC),wallclk,visib,plflux,freq
+      real tint,inttime(MAXBASE3,MAXSRC),wallclk,visib,plflux,freq
       real sumdy2,sformal,finscal(MAXSRC),finssig(MAXSRC)
       real finvec(MAXSRC),finvsig(MAXSRC),decobs,haobs
       double precision starttm(MAXSRC),startut(MAXSRC),thisbas

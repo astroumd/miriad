@@ -88,15 +88,16 @@ c    mchw 20may98 Larger MAXPLOTS for 10-antennas (90 -> 120)
 c    rjs  20oct00 Print out number of points when giving stats.
 c    rjs  31jan01 Support other stokes types.
 c    rjs  08apr02 Allow negative values when taking cube roots.
+c    pjt  03dec02 use MAXANT2, since MAXANT is now big for ATA
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	include 'mem.h'
 	integer MAXPNTS,MAXPLOTS,MAXTRIP
 	integer PolMin,PolMax,MAXPOL
 	character version*(*)
-	parameter(version='version 08-Apr-02')
+	parameter(version='version 3-dec-02')
 	parameter(MAXPNTS=5000,MAXPLOTS=120)
-	parameter(MAXTRIP=(MAXANT*(MAXANT-1)*(MAXANT-2))/6)
+	parameter(MAXTRIP=(MAXANT2*(MAXANT2-1)*(MAXANT2-2))/6)
 	parameter(PolMin=-8,PolMax=4,MAXPOL=2)
 c
 	logical avall,notrip,doamp,doerr,quad
@@ -207,7 +208,7 @@ c
 	    call basant(preamble(4),ant1,ant2)
 	    bl = (ant2-1)*(ant2-2)/2 + ant1
 	    p = 0
-	    if(min(ant1,ant2).ge.1.and.max(ant1,ant2).le.MAXANT.and.
+	    if(min(ant1,ant2).ge.1.and.max(ant1,ant2).le.MAXANT2.and.
      *	        ant1.ne.ant2)
      *		call PolIdx(p,npol,polcvt,PolMin,PolMax,MAXPOL,doii)
 c
