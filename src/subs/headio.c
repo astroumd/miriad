@@ -22,6 +22,9 @@
 /*  rjs 29apr99   Get hdprobe to check for string buffer overflow.	*/
 /*  dpr 11may01   Descriptive error for hisopen_c                       */
 /*  pjt 22jun02   MIR4 prototypes and using int8 for long integers      */
+/*  pjt/rjs 1dec04 replaced shortcut rdhdd code with their own readers  */
+/*                 this fixes a serious bug in rdhdl for large values   */
+/*                Also adding in some bugv_c() called to replace bug_c  */
 /************************************************************************/
 
 #include <stdlib.h>
@@ -402,10 +405,35 @@ void rdhdl_c(int thandle,Const char *keyword,int8 *value,int8 defval)
 /*--									*/
 /*----------------------------------------------------------------------*/
 {
-  double dvalue,ddefval;
-  ddefval = defval;
-  rdhdd_c(thandle,keyword,&dvalue,ddefval);
-  *value = dvalue;
+  int item;
+  char s[ITEM_HDR_SIZE];
+  int iostat,length,itemp,offset;
+
+/* Firstly assume the variable is missing. Try to get it. If successful
+   read it. */
+
+  *value = defval;
+  haccess_c(thandle,&item,keyword,"read",&iostat);	if(iostat)return;
+  length = hsize_c(item);
+  if(length >= 0){
+
+/* Determine the type of the value, and convert it to double precision. */
+
+    hreadb_c(item,s,0,ITEM_HDR_SIZE,&iostat);		check(iostat);
+    iostat = 0;
+    if(      !memcmp(s,int8_item, ITEM_HDR_SIZE)){
+      offset = mroundup(ITEM_HDR_SIZE, H_INT8_SIZE);
+      if(offset + H_INT8_SIZE == length){
+	hreadl_c(item,&itemp,offset,H_INT8_SIZE,&iostat);
+	*value = itemp;
+      } 
+    } else
+      bugv_c('f',"rdhdl_c: item %s not an int8",keyword);
+      
+    check(iostat);
+  }
+  hdaccess_c(item,&iostat);				check(iostat);
+
 }
 /************************************************************************/
 void rdhdd_c(int thandle,Const char *keyword,double *value,double defval)
@@ -466,7 +494,9 @@ void rdhdd_c(int thandle,Const char *keyword,double *value,double defval)
       if(offset + H_DBLE_SIZE == length){
 	hreadd_c(item,value, offset,H_DBLE_SIZE,&iostat);
       }
-    }
+    } else
+      bugv_c('f',"rdhdd_c: keyword %s not covered here",keyword);
+      
     check(iostat);
   }
   hdaccess_c(item,&iostat);				check(iostat);
@@ -775,7 +805,8 @@ void hdprobe_c(int tno,Const char *keyword,char *descr,size_t length,char *type,
     Strcpy(type,"unknown");
     *n = size + ITEM_HDR_SIZE;
   } else if(bufit){
-    if(strlen(buf) > length - 1)bug_c('f',"Descr buffer overflow in hdprobe");
+    if(strlen(buf) > length - 1)
+      bugv_c('f',"Descr buffer overflow in hdprobe for %s",keyword);
     strcpy(descr,buf);
   }
 }
