@@ -19,17 +19,17 @@ c	This controls what is listed, and the verbosity. Several can be
 c	given, separated by commas. Minimum match is used. Possible values
 c	are:
 c	  "brief"     Short listing (default).
-c	  "data"      List correlation data.
-c	  "average"   List average and rms.
-c	  "allan"     List Allan standard deviation.
-c	  "history"   List the history file.
-c	  "flux"      List flux visibility, uvdistance and Jy/AveAmp.
+c	  "data"      correlation data.
+c	  "average"   average and rms.
+c	  "allan"     Allan standard deviation.
+c	  "history"   the history file.
+c	  "flux"      flux visibility, uvdistance and Jy/AveAmp.
 c	  "full"      The opposite of "brief".
-c	  "list"      List ut,lst,ant,u,v,elev, paralactic angle, dra, ddec.
-c	  "variables" List uv variables.
-c	  "stat"      List max, ave, rms and high channels for each record.
-c	  "birds      List frequencies for high channels in each record.
-c	  "spectra"   List information about the spectral windows.
+c	  "list"      ut,lst,ant,u,v, AZ, EL, paralactic angle, dra, ddec.
+c	  "variables" uv variables.
+c	  "stat"      max, ave, rms and high channels for each record.
+c	  "birds      frequencies for high channels in each record.
+c	  "spectra"   information about the spectral windows.
 c	If no options are given, uvlist uses options=brief,data.
 c@ select
 c	This selects the data to be processed, using the standard uvselect
@@ -124,10 +124,11 @@ c   27jun02 mchw - use latitude uv-variable if present.
 c   11dec02 pjt  - subroutine q/r/d/ZERO to bypass big DATA statement that makes big binaries
 c   13mar03 pjt  - need to use MAXBASE2 mor multidim arrays...
 c   14aug03 mchw - replace varmint with parang in options=list.
+c   06feb04 mchw - added AZ to options=list.
 c-----------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='UVLIST: version  14-Aug-03')
+	parameter(version='UVLIST: version  06-Feb-2004')
 	real rtoh,rtod,pi
 	integer maxsels
 	parameter(pi=3.141592653589793,rtoh=12/pi,rtod=180/pi)
@@ -713,8 +714,8 @@ c------------------------------------------------------------------------
 	integer mchan
 	parameter(pi=3.141592653589793,rtoh=12/pi,rtod=180/pi)
 	parameter(mchan=5,rts=3600.*180./pi)
-	character line*90,cflag(mchan)*1, telescop*20, pol*2
-	real amp(mchan),phas(mchan),ha,elev
+	character line*100,cflag(mchan)*1, telescop*20, pol*2
+	real amp(mchan),phas(mchan),ha,elev,sinaz,cosaz,azim
 	real sinha,cosha,sind,cosd,sinl,cosl,chi
 	double precision obsra,obsdec,latitude,dra,ddec
 	logical more,ok
@@ -726,8 +727,9 @@ c
 c
 	if(needhd)then
 	  call LogWrite(' ',more)
-	  line =' Vis #   UT(hrs)  LST(hrs)   Ant    Pol'
-     *	  //'  u(kLam)  v(kLam)   Elev(deg)  Chi  dra(")  ddec(")'
+	  line =' Vis #   UT(hrs)  LST(hrs)   Ant    Pol  u(kLam)'
+     *	  //'  v(kLam)  Azim  Elev(deg)  Chi  dra(")  ddec(")'
+c********1*********2*********3*********4*********5*********6*********7**
 	  call LogWrite(line,more)
 	endif
 c
@@ -754,6 +756,9 @@ c
 	sinl = sin(latitude)
 	cosl = cos(latitude)
 	elev = asin(sinl*sind+cosl*cosd*cosha)
+	sinaz = -sinha*cosd/cos(elev)
+	cosaz = (sin(elev)*sinl-sind)/cos(elev)/cosl
+	azim  = atan2(sinaz,cosaz)
 	call parang(obsra,obsdec,lst,latitude,chi)
 c
 c  Give the preamble.
@@ -763,9 +768,11 @@ c
 	if(p.ne.0) pol = PolsC2P(p)
 c
 	write(line,
-     *    '(i6,2f10.4,1x,i4,''-'',i4,1x,a,2f9.2,f8.2,2x,3f6.0)')
+     *    '(i6,2f10.4,1x,i4,''-'',i4,1x,a,2f9.2,3f8.2,2x,2f6.0)')
      *	  mod(Visno,1000000),ut*rtoh,lst*rtoh,ant1,ant2,pol,
-     *	  0.001*uin,0.001*vin,elev*rtod,chi*rtod,dra*rts,ddec*rts
+     *	  0.001*uin,0.001*vin,azim*rtod,elev*rtod,
+     *    chi*rtod,dra*rts,ddec*rts
+c********1*********2*********3*********4*********5*********6*********7**
 	call LogWrite(line,more)
 c
 c  List the channel data.
