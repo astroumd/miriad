@@ -312,9 +312,13 @@ c                    the option was changed to 'nolefty'. If lefty is true
 c                    the y-positions of the antennas are flipped.  A UV 
 c                    variable 'lefty' was added to record this flip.
 c                    Renamed the task to wsrtfits (v1.3).
+c   gmx   21-jul-04  Fixed a bug in which the sign of the longitude was
+c                    changed for a lefthanded coordinate system. This
+c                    should NOT be done for WSRT data. The longitude in
+c                    the UVFits file is correct.
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version='wsrtfits: version 1.3 29-Apr-04')
+	parameter(version='wsrtfits: version 1.3.1 21-Jul-04')
 	character in*128,out*128,op*8,uvdatop*12
 	integer velsys
 	real altrpix,altrval
@@ -1423,9 +1427,11 @@ c
 c
 c  If the antenna table uses a left-handed system, convert it to a 
 c  right-handed system.
+c  The original FITS programme also flipped the longitude, but for
+c  WSRT this should NOT be done (gmx, 21-jul2004).
 c
 	  if(lefty)then
-	    long(nconfig) = -long(nconfig)
+c	    long(nconfig) = -long(nconfig)
 	    do i=1,n
 	      antpos(i+n,nconfig) = -antpos(i+n,nconfig)
 	    enddo
