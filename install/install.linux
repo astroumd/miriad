@@ -15,6 +15,7 @@
 # 18-aug-01 protect if newdir exists? comments on lesstif/openmotif
 # 12-sep-01 unified script so it also works for solaris, and the default
 #           is now to use internal=1
+# 22-sep-01 fixes for darwin (Mac-OS X)
 #
 #   Simple single-architecture installation of MIRIAD
 #   (linux)
@@ -69,8 +70,8 @@
 #   'newdir' is something that tags the date this version was made (e.g. 98jun08)
 #   later on this will also be stored again in the file $MIR/DATE, where the CVS miriad
 #   version will be stored in $MIR/VERSION
-set newdir=`date +%y%b%d | tr '[A-Z]' '[a-z]'`
-set hosttype=`uname -s | tr '[A-Z]' '[a-z]'`
+set newdir=`date +%y%b%d | tr A-Z a-z`
+set hosttype=`uname -s | tr A-Z a-z`
 
 #	patch to use Stupar's original names
 if ($hosttype == sunos) set hosttype=sun4sol
@@ -253,7 +254,7 @@ if (! -e /usr/lib/libbsd.a) echo Warning: you do not have /usr/lib/libbsd.a
 set dorl=0
 foreach ldir ($searchlibs)
     if (-e $ldir/libreadline.a) then
-        echo Borrowing the system version of readline for linux from $ldir
+        echo Borrowing the system version of readline for $hosttype from $ldir
         cp -p $ldir/libreadline.a $MIRLIB
         set dorl=1
         break

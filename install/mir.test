@@ -8,6 +8,7 @@
 #   26-jul-99   Fixed new interface for uvgen   PJT
 #   27-jul-99   Copy summary.log to /tmp	PJT
 #   26-jun-01   endianism check using 'od'      PJT
+#   22-sep-01   summary.log file now contains $USER	PJT
 #
 #-----------------------------------------------------------------------
 
@@ -227,7 +228,7 @@ check() {
   check map.log
 
   echo Creating logfile for baseline check:
-  sum=summary.log
+  sum=summary_$USER.log
   itemize in=basic/test1 | tail +2 > $sum
   histo in=xyio/map1 | tail +2 >> $sum
   grep _ENDIAN xyio.log >> $sum
