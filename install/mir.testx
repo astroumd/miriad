@@ -2,6 +2,12 @@
 #
 echo TEST a few X related things:
 
+echo -n "WIP: "; set ans=$<
+echo box > junk$$.wip
+echo xlab Hello WIP >> junk$$.wip
+wip -x -d /xs junk$$.wip
+rm -f junk$$.wip
+
 echo -n "XCORF: " ; set ans=$<
 xcorf
 
@@ -9,6 +15,7 @@ echo -n "VELPLOTC: " ; set ans=$<
 imgen out=junkmap$$
 velplotc in=junkmap$$ device=/xs
 rm -rf junkmap$$
+
 
 echo -n "MIR.MAN: " ; set ans=$<
 mir.man
