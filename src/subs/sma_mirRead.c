@@ -40,6 +40,11 @@
 //            coordinates system. 
 // 2005-03-10 made the consistent array lengths for the variables 
 //            required by miriad programs such as bee, uvlist etc.
+// 2005-03-17 added linear in options for linear polarization;
+//            made the default in options for polarization to be
+//            nopol.
+// 2005-03-18 decoded velocity type from mir.
+// 2005-03-18 fixed problems of el and az in uvput
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -206,7 +211,8 @@ extern smlodd smabuffer;
 void rspokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1,
   int *doop1, int *dohann1, int *birdie1, int *dowt1, int *dopmps1,
   int *dobary1, int *doif1, int *hires1, int *nopol1, int *circular1,
-  int *oldpol1, double lat1, double long1, int rsnchan1, int refant1)
+  int *linear1, int *oldpol1, double lat1, double long1, int rsnchan1, 
+  int refant1)
 { /* rspokeflshsma_c == pokeflsh */
     int buffer;
     extern char sname[];
@@ -228,6 +234,7 @@ void rspokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1,
         smabuffer.hires  = *hires1;
         smabuffer.nopol  = *nopol1;
         smabuffer.circular = *circular1;
+        smabuffer.linear = *linear1;
         smabuffer.oldpol = *oldpol1;
         smabuffer.lat    = lat1;
         smabuffer.longi  = long1;
@@ -817,7 +824,8 @@ case 4: uvwbsln[inhset]->uvwID[set-blhset].ipol=-6; break;
               }} else {
      if(smabuffer.circular==1) {
      uvwbsln[set]->uvwID[blset-blhid_hdr].ipol= -blh[set]->ipol;
-      } else {
+      }
+    if(smabuffer.linear==1) 
    switch(blh[set]->ipol) {
 case 1: uvwbsln[inhset]->uvwID[set-blhset].ipol=-6; break;
 case 2: uvwbsln[inhset]->uvwID[set-blhset].ipol=-7; break;
@@ -832,7 +840,7 @@ case 4: uvwbsln[inhset]->uvwID[set-blhset].ipol=-5; break;
 // 4   -5      HH (XX)
                           }
      }
-}
+//}
 
 // counting baseline for each integration set
      uvwbsln[set]->n_bls++;
@@ -1092,13 +1100,29 @@ for (set=0;set<nsets[3];set++){
 // decode the ids 
 if((cdh[set]->v_name[0]=='b'&&cdh[set]->v_name[1]=='a')&&
                   cdh[set]->v_name[2]=='n'){
-           spcode[cdh[set]->icode]=spdecode(&cdh[set]);
-        }
+                  spcode[cdh[set]->icode]=spdecode(&cdh[set]);
+           }
 // decode the julian date for from the observing date 
      if((cdh[set]->v_name[0]=='r'&&cdh[set]->v_name[1]=='e')&&
                   cdh[set]->v_name[2]=='f'){
             jday = juliandate(&cdh[set]);      }
                               }
+// decode velocity type 
+// 2 CODE NAME vctype  STRING vlsr  icode 0 ncode 1
+// 3 CODE NAME vctype  STRING cz    icode 1 ncode 1
+// 4 CODE NAME vctype  STRING vhel  icode 2 ncode 1
+// 5 CODE NAME vctype  STRING pla   icode 3 ncode 1
+
+           if(inh[1]->ivctype==0)
+           strcpy(multisour[sourceID].veltyp, "VELO-LSR");
+           if(inh[1]->ivctype==2)
+           strcpy(multisour[sourceID].veltyp, "VELO-HEL");
+           if(inh[1]->ivctype!=0 && inh[1]->ivctype!=2) {
+           printf("ERROR: veltype ivctype=%d is not supported.\n",
+                          inh[1]->ivctype);
+           exit(-1); }
+
+           uvputvra_c(tno,"veltype", multisour[sourceID].veltyp);
 // decode the source information 
 for (set=0;set<nsets[3];set++){
          if(cdh[set]->v_name[0]=='s'&&cdh[set]->v_name[1]=='o') {
@@ -1132,7 +1156,7 @@ for (set=0;set<nsets[3];set++){
          multisour[sourceID].pmra     = 0.;
          multisour[sourceID].pmdec    = 0.;
          multisour[sourceID].parallax = 0.;
-         strcpy(multisour[sourceID].veltyp, "lsr");
+//         strcpy(multisour[sourceID].veltyp, "lsr");
          strcpy(multisour[sourceID].veldef, "radio");
          strcpy(multisour[sourceID].calcode, "c");
 }}}
@@ -1308,7 +1332,6 @@ nextnext:
       atsys[set]->tssb[atsys[set]->refant]/tsys[blset]->tssb[0];
                       }
        }}}
-
 nextnextnext:
      set=0;
  for(blset=0; blset<nsets[1]; blset++) {
@@ -1410,7 +1433,7 @@ for (i=1; i<smabuffer.nants+1; i++){
   for(j=1;j<smaCorr.n_chunk+1;j++) {
   for(i=1; i<smabuffer.nstoke[j-1]; i++) {
   for (k=1; k<SMBAS+1; k++) {
-     smabuffer.polcode[j-1][i-1][k-1] = 0;
+     smabuffer.polcode[j-1][i-1][k-1] = -5;
                             }
                                          }
                                     }
@@ -1628,7 +1651,7 @@ if (decr!=smabuffer.dec)
 uvputvrd_c(tno,"pntdec",&decr,1);
 uvputvrd_c(tno,"obsra",&(smabuffer.obsra),1);
 uvputvrd_c(tno,"obsdec",&(smabuffer.obsdec),1);
-uvputvra_c(tno,"calcode",&(multisour[sourceID].calcode));
+uvputvra_c(tno,"calcode",multisour[sourceID].calcode);
 uvputvri_c(tno,"sourid", &sourceID, 1);
 }
 // configure the frequency for each of the integration set
@@ -1740,7 +1763,6 @@ flush=1;
 //          uvwbsln[inhset]->uvwID[j].irec, j);
 //if(smabuffer.rxif==uvwbsln[inhset]->uvwID[j].irec||smabuffer.rxif==-1) 
 //{flush = 1; } else { flush =-1; }
-
 if(smabuffer.nopol==1) visSMAscan.blockID.polid=-5;
 switch(visSMAscan.blockID.polid)  {
 case  0: polpnt=0; break;
@@ -2819,8 +2841,8 @@ extern smlodd smabuffer;
 //         uvputvrd_c(tno,"antaz",&maz,1);
 //         uvputvrd_c(tno,"antel",&mel,1);
 // bee.for require store antaz and antel for each antenna
-          uvputvrd_c(tno,"antaz",&smabuffer.az[i],smabuffer.nants);
-          uvputvrd_c(tno,"antel",&smabuffer.el[i],smabuffer.nants);
+          uvputvrd_c(tno,"antaz",&smabuffer.az,smabuffer.nants);
+          uvputvrd_c(tno,"antel",&smabuffer.el,smabuffer.nants);
 
          }
 }
