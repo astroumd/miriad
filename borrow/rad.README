@@ -1,0 +1,15 @@
+if you don't see a directory 'rad' here, it probably means you
+did not get a full BIMA version of miriad. Most likely you
+used CVS, and need to plant the rad tree here (in CVS terms:
+rad is a separate module under CVS).
+
+Note however, rad is not need to run MIRIAD. It is an optional package.
+
+The following commands should install rad:
+
+	cd $MIR/borrow 		You need to have miriad loaded
+	cvs checkout rad	plant the rad tree
+        mirboss                 become miriad boss
+        mir.install rad         compile rad
+	
+
