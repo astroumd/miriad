@@ -6558,6 +6558,7 @@ case $TELESCOPE in
      "fasr") echo "Selecting FASR simulation 128-array"
 	def_maxant=128
 	def_maxant2=128
+	continue;;
      "sma")  echo "Selecting SMA array"
         def_maxdim=4096
 	def_maxant=30
