@@ -1,5 +1,7 @@
 /*
  * @WARNING@
+ *
+ * TELESCOPE=@TELESCOPE@
  */
 #define		MAXDIM		@MAXDIM@
 #define		MAXDIM2		@MAXDIM2@

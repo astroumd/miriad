@@ -1,4 +1,5 @@
 c @WARNING@
+c TELESCOPE=@TELESCOPE@
 c=======================================================================
 	INTEGER   MAXBUF
 	PARAMETER(MAXBUF=@MAXBUF@)

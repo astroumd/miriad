@@ -109,6 +109,7 @@ echo "DEBUG: def_maxdim=$def_maxdim"
 dnl ---------------------------------------------------------------------
 dnl All the MAXDIM related stuff
 
+AC_SUBST(TELESCOPE)
 AC_SUBST(MAXDIM)
 AC_SUBST(MAXDIM2)
 AC_SUBST(MAXIANT)
