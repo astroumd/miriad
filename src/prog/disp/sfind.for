@@ -1,5 +1,4 @@
       program sfind
-      implicit none
 c-----------------------------------------------------------------------
 c= SFIND - Automatically or interactively find sources in images
 c& nebk
@@ -35,7 +34,7 @@ c       different in 'FDR' mode compared to the original SFIND
 c       implementation (see below). In 'FDR' mode, the following steps
 c       are performed:
 c        1. The image is first normalised by estimating the background
-c        (mean) and standard deviation (sigma) for the whole image in
+c         (mean) and standard deviation (sigma) for the whole image in
 c         uniformly distributed regions of size 'rmsbox' (a user input).
 c         This is done by fitting a gaussian to the pixel histogram,
 c         (as is done in the task 'imsad') - if the fit is poor, an
@@ -44,7 +43,9 @@ c         the image has the mean subtracted and is divided by sigma to
 c         create a normalised image. This is the same as saying the
 c         normalised image has a gaussian mean of 0 and sigma of 1.
 c         The normalised image is output as a miriad image called
-c         sfind.norm if 'options=normimg' is set.
+c         sfind.norm if 'options=normimg' is set. The rms noise measured
+c         over the image can also be output as sfind.rms if
+c         'options=rmsimg' is set.
 c        2. From the normalised image a sigma-clipped image (called
 c         sfind.sig) may be output (if 'options=sigmaimg'). This is
 c         simply an image with pixel values set to 100 if the pixel
@@ -317,12 +318,17 @@ c         with pixel values of 100, if their p-values are below the FDR
 c         threshold, or 0 otherwise.
 c         Ignored if 'oldsfind' is present.
 c
-c       "sigmaimage" An output image called sfind.sig will be created
+c       "sigmaimg" An output image called sfind.sig will be created
 c         with pixel values of 100, if their sigma-values are above
 c         the user specified threshold from 'xrms,' or 0 otherwise.
 c         Ignored if 'oldsfind' is present.
 c
-c       "normimage" An output image called sfind.norm will be created
+c       "rmsimg" An output image called sfind.rms will be created
+c         where the pixel values correspond to the rms noise level
+c         calculated when normalising the image.
+c         Ignored if 'oldsfind' is present.
+c
+c       "normimg" An output image called sfind.norm will be created
 c         by subtracting a background mean from the input image and
 c         dividing by the standard deviation. The mean and sigma are
 c         calculated in regions of size 'rmsbox' tiled over the image.
@@ -345,6 +351,18 @@ c         threshold. Selecting 'fdrpeak' allows this. If 'fdrpeak'
 c         is selected, source pixels are still required to be contiguous
 c         and monotonically decreasing from the peak pixel, but not
 c         necessarily to be above the FDR threshold.
+c
+c       "allpix" Rather than selecting pixels for the gaussian fitting
+c         by requiring they be monotonically decreasing away from the
+c         peak pixel, this option allows all FDR-selected pixels
+c         contiguous with the peak pixel to be fit for a source.
+c         If this option is selected, the fdrpeak option is ignored.
+c
+c       "psfsize" Restricts the minimum fitted size of a detected
+c         source to the size of the sythesised beam, i.e., the PSF.
+c         Any source fitted to have a smaller size than this has its
+c         FWHMa and PA set to those of the synthesised beam, and is refit
+c         for the position and amplitude only.
 c
 c       Some common combinations of options I have used (for examples):
 c       options=kva,fdri,norm,sig
@@ -495,7 +513,21 @@ c                  unused ones.
 c    amh  28oct01  Added printout of sigma corresponding to the p-value
 c                  selected by FDR.
 c   nebk  14nov01  Track change to readimcg interface
-c    pjt  20feb03  defined alpha (implicit undefined)
+c    amh  08mar02  Fix bug with array sizes (boxsize-> boxsize+1) in
+c                  subroutines fitting and LoadDat.
+c    amh  18mar02  Added 'allpix' option to allow fitting of all FDR pixels,
+c                  not just monotonically decreasing ones.
+c    amh  20mar02  Added 'psfsize' option to restrict source minimum size
+c                  to the size of the synthesised beam (PSF).
+c    amh  08aug02  Added 'rmsimg' option for outputting rms image. Also
+c                  fixed minor bug in the way the box sizes were calculated
+c                  in subroutines fdr and basecal.
+c    amh  29aug02  Fixed minor bug which could cause 'psfsize' point source
+c                  fits to return peak and integrated fluxes too low for
+c                  bright sources.
+c    amh  10jun04  Fixed bug which caused erroneously low rms's in rmsboxes
+c                  with blanked pixels at the bottom left, leading to many
+c                  spurious sources at the edges of non-square images.
 c
 c
 c To do:
@@ -528,7 +560,7 @@ c
       real levs(maxlev), pixr(2), tr(6), cs(2), pixr2(2), scale(2), 
      +  tfvp(4), wdgvp(4), cumhis(nbins), dmm(3)
       real slev, vxmin, vymin, vymax, vx, vy, vxsize, vysize, vxgap, 
-     +  vygap, ydispb, xdispl, groff, blank, cut, xrms, alpha
+     +  vygap, ydispb, xdispl, groff, blank, cut, xrms
 c
       integer blc(3), trc(3), size(maxnax), win(maxnax),
      +  grpbeg(maxchan), ngrp(maxchan), srtlev(maxlev), his(nbins)
@@ -541,18 +573,17 @@ c
       character in*64, pdev*64, xlabel*40, ylabel*40, trfun*3, levtyp*1
 c
       logical do3val, do3pix, eqscale, doblnk, dotr, donxlab(2),
-     +  donylab(2), dopixel, gaps, doabut, 
-     +  doaxlab, doaylab,
-     +  mark, doerase, dowedge, dofid,
-     +  grid, nofit, asciiart, auto, negative, pbcor,
-     +  oldsfind, fdrimg, sigmaimg, normimg, kvannot, fdrpeak
+     +  donylab(2), dopixel, gaps, doabut, doaxlab, doaylab,
+     +  mark, doerase, dowedge, dofid, grid, nofit, asciiart,
+     +  auto, negative, pbcor, oldsfind, fdrimg, sigmaimg, normimg,
+     +  kvannot, fdrpeak, allpix, psfsize, rmsimg
 c
       data ipage, scale /0, 0.0, 0.0/
       data dmm /1.0e30, -1.0e30, -1.0/
       data gaps, doabut, dotr /.false., .false., .false./
 c-----------------------------------------------------------------------
       call output (' ')
-      call output ('Sfind: version 20-feb-2003')
+      call output ('Sfind: Version 10-Jun-2004')
       call output (' ')
 c
 c Get user inputs
@@ -561,7 +592,8 @@ c
      +   nlevs, pixr, trfun, pdev, labtyp, do3val, do3pix, eqscale, 
      +   nx, ny, cs, dopixel, mark, doerase, dowedge, dofid, grid,
      +   cut, rmsbox, alpha, xrms, nofit, asciiart, auto, negative,
-     +   pbcor, oldsfind, sigmaimg, fdrimg, normimg, kvannot, fdrpeak)
+     +   pbcor, oldsfind, sigmaimg, rmsimg, fdrimg, normimg, kvannot,
+     +   fdrpeak, allpix, psfsize)
       if (oldsfind) then
        call output ('Running as Sfind: version 1.4, 09-Nov-98')
        call output (' ')
@@ -768,7 +800,7 @@ c Interactive graphical source finding routine
 c
          call search_old (lin, win(1), win(2), memr(ipim), memi(ipnim),
      +     blc, ibin, jbin, krng, llog, mark, cut, rmsbox, xrms, 
-     +     nofit, asciiart, auto, negative, pbcor, in)
+     +     nofit, asciiart, auto, negative, pbcor, in, psfsize)
 c
 c Increment sub-plot viewport locations and row counter
 c
@@ -811,12 +843,12 @@ c
         if (oldsfind) then
          call search_old (lin, win(1), win(2), memr(ipim), memi(ipnim),
      +     blc, ibin, jbin, krng, llog, mark, cut, rmsbox, xrms, 
-     +     nofit, asciiart, auto, negative, pbcor, in)
+     +     nofit, asciiart, auto, negative, pbcor, in, psfsize)
         else
          call search(lin, win(1), win(2), memr(ipim), memi(ipnim),
-     +     blc, ibin, jbin, krng, llog, rmsbox,
-     +     alpha, xrms, auto, negative, pbcor,
-     +     in, fdrimg, sigmaimg, normimg, kvannot, fdrpeak, size)
+     +     blc, ibin, jbin, krng, llog, rmsbox, alpha, xrms, auto,
+     +     negative, pbcor, in, fdrimg, sigmaimg, rmsimg,
+     +     normimg, kvannot, fdrpeak, allpix, psfsize, size)
         end if
        end do
 c
@@ -846,7 +878,7 @@ c
 c
       subroutine search_old (lin, nx, ny, image, nimage, blc, ibin,
      +   jbin, krng, llog, mark, cut, rmsbox, xrms, nofit, asciiart,
-     +   auto, negative, pbcor, in)
+     +   auto, negative, pbcor, in, psfsize)
 c-----------------------------------------------------------------------
 c  This is the master subroutine for the detecting of sources and the
 c interactive decision bit. It detects bright pixels, determines whether they
@@ -889,7 +921,7 @@ c
       integer nx, ny, blc(2), llog, ibin, jbin, lin, nimage(nx,ny),
      +  krng(2)
       real image(nx,ny)
-      logical mark, nofit, asciiart, auto, negative, pbcor
+      logical mark, nofit, asciiart, auto, negative, pbcor, psfsize
       character in*(*)
 cc
       double precision wa(2), posns(2)
@@ -897,7 +929,7 @@ cc
       real xpos, ypos, pval, sigma, rms, mult
       real pkfl, intfl, amaj, amin, posa
       real xposerr, yposerr, pkflerr
-      real bvol, bmaj, bmin, bpa, bvolp, bmajp, bminp
+      real bvol, bmaj, bmin, bpa, bvolp, bmajp, bminp, bpap
       real gain, mvlrms
       integer iostat, len1, iloc, bin(2), l, m, radeclen(2), rmsbox
       integer sources, ysources, k, i, j
@@ -993,7 +1025,7 @@ c Determine beam parameters, including determining if the beam doesn't
 c exist.
 c
       call BeamPar (lIn, k, bvol, bvolp, bmaj, bmin, bpa,
-     +              bmajp, bminp, nobeam)
+     +              bmajp, bminp, bpap, nobeam)
 c
 c Loop over all pixels, searching for bright pixels and moving the cursor
 c to that position.
@@ -1040,9 +1072,10 @@ c
         if (.not.nofit) then
           fitok = .true.
           call fitting_old(lIn, krng, sigma, nx, ny, image, rms, xpos,
-     +     xposerr, ypos, yposerr, pkfl, pkflerr, intfl, amaj,
-     +     amin, posa, posns, blc, bin, l, m, asciiart, bvol, bvolp,
-     +     bmajp, nobeam, nimage, fitok, auto, xrms)
+     +     xposerr, ypos, yposerr, pkfl, pkflerr, intfl, amaj, amin,
+     +     posa, posns, blc, bin, l, m, asciiart, bvol, bvolp, bmajp,
+     +     bminp, bpap, nobeam, nimage, fitok, auto, xrms, psfsize,
+     +     base0)
           if (.not.fitok) goto 60
 c
           typei(1) = 'hms'
@@ -1068,6 +1101,7 @@ c
          call mosVal(lin,'aw/aw',posns,gain,mvlrms)
          pkfl = pkfl/gain
          intfl = intfl/gain
+c         sigma = sigma/gain
         end if
 c
 c Write output line to screen, but only if "auto" option not selected
@@ -1338,9 +1372,10 @@ c
 c
 c
       subroutine fitting_old (lIn, krng, sigma, nx, ny, image, rms,
-     +    xpos, xposerr, ypos, yposerr, pkfl, pkflerr, intfl, amaj,
-     +    amin, posa, posns, blc, bin, lx, my, asciiart, bvol, bvolp,
-     +    bmajp, nobeam, nimage, fitok, auto, xrms)
+     +   xpos, xposerr, ypos, yposerr, pkfl, pkflerr, intfl, amaj,
+     +   amin, posa, posns, blc, bin, lx, my, asciiart, bvol, bvolp,
+     +   bmajp, bminp, bpap, nobeam, nimage, fitok, auto, xrms, psfsize,
+     +   base0)
 c-----------------------------------------------------------------------
 c  Do elliptical Gaussian fit to source. First the pixels to be used in
 c  the fitting are selected on the basis that they are monotonically
@@ -1393,14 +1428,14 @@ c-----------------------------------------------------------------------
       integer MAXVAR
       parameter(MAXVAR=20)
 c
-      logical dofit, asciiart, nobeam, fitok, ok, auto
+      logical dofit, asciiart, nobeam, fitok, ok, auto, psfsize
       integer ifail1,ifail2,lIn, i, blc(2), bin(2), maxline, boxsz4
       integer k,m,nvar,lx,my, nx,ny, krng(2), nimage(nx,ny), fiterr
       real image(nx,ny), dumm, xrms
       real clip,xvar(MAXVAR),covar(MAXVAR*MAXVAR),rms
       real bvol,bvolp, xpos, ypos, pkfl, intfl
-      real sigma, amaj, amin, posa, bmajp, boxsize
-      real xposerr, yposerr, pkflerr
+      real sigma, amaj, amin, posa, bmajp, bminp, bpap, boxsize
+      real xposerr, yposerr, pkflerr, base0
       double precision posns(2)
       character ascpic(1000)*80
 c
@@ -1448,7 +1483,7 @@ c  be used in the fitting procedure, and encode them in a format ready
 c  to do so.
 c
 1200  call LoadDat_old (clip,m,nx,ny,xpos,ypos,blc,bin,image,xrms,
-     +  boxsize,lx,my,nimage,asciiart,ascpic,maxline,fitok)
+     +  boxsize,lx,my,nimage,asciiart,ascpic,maxline,fitok,base0)
       if (.not.fitok) return
       if (m.eq.0) then
        fitok = .false.
@@ -1481,6 +1516,43 @@ c
       if(ifail2.eq.0)call UpackCov(covar,nvar)
       if(ifail1.ne.0) fiterr = 1
       if(ifail2.ne.ifail1) fiterr = 2
+c
+c If 'psfsize' selected, check object size and if smaller than
+c psf, set to psf size and fit again for peak and position.
+c
+      if ((psfsize).and.((fwhm1(1).lt.bmajp).or.(fwhm2(1).lt.bminp)))
+     +       then
+       do i = 1,nsrc
+         vflux(i) = .true.
+         vl0(i) = .true.
+         vm0(i) = .true.
+         vfwhm1(i) = .false.
+         vfwhm2(i) = .false.
+         vpa(i) = .false.
+         fwhm1(i) = bmajp
+         fwhm2(i) = bminp
+         pa(i) = bpap
+       end do
+       fitok = .true.
+c  Pack the variables into an array.
+       call PackVar(xvar,nvar,MAXVAR)
+       dofit = nvar.gt.0
+       if(.not.dofit) then
+         fitok = .false.
+         return
+       end if
+       if(nvar.ge.m) then
+         fitok = .false.
+         return
+       end if
+c  Do the fitting process.
+       fiterr = 0
+       call lsqfit(FUNCTION,m,nvar,xvar,covar,rms,ifail1,ifail2)
+       call UPackVar(xvar,nvar)
+       if(ifail2.eq.0)call UpackCov(covar,nvar)
+       if(ifail1.ne.0) fiterr = 1
+       if(ifail2.ne.ifail1) fiterr = 2
+      end if
 c
 c  Check to see whether the fitted size of the image is comparable to the
 c  initial box size used in selecting pixels, and if so iterate the
@@ -1552,7 +1624,7 @@ c
 c
 c
       subroutine LoadDat_old(clip,m,nx,ny,xpos,ypos,blc,bin,image,xrms,
-     +            boxsize,lx,my,nimage,asciiart,ascpic,maxline,fitok)
+     +     boxsize,lx,my,nimage,asciiart,ascpic,maxline,fitok,base0)
 c-----------------------------------------------------------------------
 c  Load the relevant data for this plane. The relevant data are those pixels
 c  to which to fit the elliptical gaussians, and they are selected by ...
@@ -1566,7 +1638,7 @@ c------------------------------------------------------------------------
       include 'sfind.h'
       integer m,nx,ny,lmn,lmx,mmn,mmx,nimage(nx,ny)
       integer i,xt,yt,ll,mm, blc(2),bin(2), lx,my, maxline
-      real clip,xpos,ypos,image(nx,ny),boxsize,xrms
+      real clip,xpos,ypos,image(nx,ny),boxsize,xrms,base0
       double precision wa(2)
       logical incirc,fainter,asciiart,fitok
       character ascpic(1000)*80
@@ -1616,7 +1688,7 @@ c        if ((image(ll,mm).gt.xrms*clip).and.incirc.and.fainter.and.
           ascpic(mm-mmn+2) = '*'//ascpic(mm-mmn+2)
          end if
          i = i + 1
-         data(i) = image(ll,mm)
+         data(i) = image(ll,mm) - base0
 c
 c convert ll,mm from binned subimage pixels to full image pixels
 c
@@ -1643,7 +1715,8 @@ c
 c
       subroutine search (lin, nx, ny, image, nimage, blc, ibin, jbin,
      +   krng, llog, rmsbox, alpha, xrms, auto, negative, pbcor, in,
-     +   fdrimg, sigmaimg, normimg, kvannot, fdrpeak, size)
+     +   fdrimg, sigmaimg, rmsimg, normimg, kvannot, fdrpeak, allpix,
+     +   psfsize, size)
 c-----------------------------------------------------------------------
 c  This is the *new* master subroutine for the detecting of sources.
 c It runs subroutine fdr, which makes the normalised image, sigma image
@@ -1672,11 +1745,15 @@ c     pbcor     true to correct fluxes by primary beam attenuation
 c     in        image name
 c     fdrimg    true to output FDR-image
 c     sigmaimg  true to output sigma-image
+c     rmsimg    true to output rms-image
 c     normimg   true to output normalised image
 c     kvannot   true if want to output a kview annotation file for the
 c               detected objects
 c     fdrpeak   true if want to allow fitting of all source pixels, not just
 c               those above the fdr threshold
+c     allpix    true if want to use all FDR pixels, not just monotonically
+c               decreasing ones
+c     psfsize   true to restrict minimum source size to that of psf
 c
 c-----------------------------------------------------------------------
       implicit none
@@ -1689,11 +1766,11 @@ c
      +  krng(2), size(maxnax)
       integer ipim,ip2im,ip3im,ip4im
       real image(nx,ny), alpha, xrms
-      logical negative, pbcor, fdrimg, sigmaimg, normimg, auto,
-     +        kvannot, fdrpeak
+      logical negative, pbcor, fdrimg, sigmaimg, rmsimg, normimg,
+     +        auto, kvannot, fdrpeak, allpix, psfsize
       character in*(*)
 cc
-      real bvol, bmaj, bmin, bpa, bvolp, bmajp, bminp
+      real bvol, bmaj, bmin, bpa, bvolp, bmajp, bminp, bpap
       real pcut
       integer iostat, len1, rmsbox, nfdrpix
       integer k, l, m, bin(2)
@@ -1706,7 +1783,7 @@ c Start by checking beam parameters, since will die if the beam doesn't
 c exist.
 c
       call BeamPar (lIn, k, bvol, bvolp, bmaj, bmin, bpa, 
-     +              bmajp, bminp, nobeam)
+     +              bmajp, bminp, bpap, nobeam)
       if (nobeam) then
        call bug('f','No beam information found - FDR analysis'
      +      //' needs this to work')
@@ -1776,15 +1853,16 @@ c and for meanimg and sgimg
 c
       call fdr(nx,ny,l,m,rmsbox,image,nimage,alpha,xrms,bmajp,bminp,
      +         pcut,lin,memr(ipim),memr(ip2im),memr(ip3im),
-     +         memr(ip4im),fdrimg,sigmaimg,normimg,auto,blc,bin,size(1),
-     +         size(2),nfdrpix)
+     +         memr(ip4im),fdrimg,sigmaimg,rmsimg,normimg,auto,
+     +         blc,bin,size(1),size(2),nfdrpix)
 c
 c Now do the source fitting, in the original image, using the pixels
 c selected by FDR to be above the background.
 c
-      call fdrfit(nx,ny,image,nimage,bvol,bvolp,bmajp,bminp,pcut,
-     +      memr(ip2im),lin,krng,blc,bin,negative,pbcor,llog,
-     +      kvannot,fdrpeak,alpha,nfdrpix,memr(ip3im),memr(ip4im))
+      call fdrfit(nx,ny,image,nimage,bvol,bpap,bvolp,bmajp,
+     +      bminp,pcut,memr(ip2im),lin,krng,blc,bin,negative,pbcor,
+     +      llog,kvannot,fdrpeak,allpix,psfsize,alpha,nfdrpix,
+     +      memr(ip3im),memr(ip4im))
 c free meanimg and sgimg memory
       call memfree(ip3im,nx*ny,'r')
       call memfree(ip4im,nx*ny,'r')
@@ -1813,6 +1891,7 @@ c    image   Image matrix with pixel values
 c    nimage  blanking image
 c    rmsbox  Side length of box within which the background rms is
 c            calculated
+c    boxsize 1.5*bmajp
 c  Output:
 c    base0   The base-level (the mean of the gaussian background)
 c    sigma   The background rms
@@ -1832,10 +1911,10 @@ c-----------------------------------------------------------------------
       logical ok,histok, mask((rmsbox+1)*(rmsbox+1)), auto
 c-----------------------------------------------------------------------
       half= rmsbox/2
-      lmn = max(1,l-half)
-      lmx = min(nx+1,l+half) - 1
-      mmn = max(1,m-half)
-      mmx = min(ny+1,m+half) - 1
+      lmn = max(0,l-half) + 1
+      lmx = min(nx,(lmn+rmsbox-1))
+      mmn = max(0,m-half) + 1
+      mmx = min(ny,(mmn+rmsbox-1))
       ok = .true.
 c
 c calling subroutine hist (from imsad.for) to get histogram fitted sigma value
@@ -1849,8 +1928,8 @@ c for comparison with rms value calculated below.
       ptr = 0
       do jj = mmn, mmx
        do ii = lmn, lmx
+        ptr = ptr + 1
         if (nimage(ii,jj).gt.0) then
-         ptr = ptr + 1
          image2(ptr) = image(ii,jj)
          mask(ptr) = .true.
          rng(1) = min(rng(1),image(ii,jj))
@@ -2125,10 +2204,11 @@ c
       end
 c
 c
-      subroutine decopt  (do3val, do3pix, eqscale, mark, doerase, 
-     +                    dowedge, dofid, grid, nofit, asciiart, auto,
-     +                    negative, pbcor, oldsfind, fdrimg, sigmaimg,
-     +                    normimg, kvannot, fdrpeak)
+      subroutine decopt(do3val, do3pix, eqscale, mark, doerase, 
+     +                  dowedge, dofid, grid, nofit, asciiart, auto,
+     +                  negative, pbcor, oldsfind, fdrimg, sigmaimg,
+     +                  rmsimg, normimg, kvannot, fdrpeak, allpix,
+     +                  psfsize)
 c----------------------------------------------------------------------
 c     Decode options array into named variables.
 c
@@ -2151,20 +2231,25 @@ c     pbcor     true to correct fluxes by primary beam attenuation
 c     oldsfind  true if want to use sfind in original mode (no fdr)
 c     fdrimg    true if want to create fdr-selected output pixel image
 c     sigmaimg  true if want to create sigma-clipped output pixel image
+c     rmsimg    true if want to create rms-image
 c     normimg   true if want to create 'normalised' output image
 c     kvannot   true if want to output a kview annotation file for the
 c               detected objects
 c     fdrpeak   true if want to allow fitting of all source pixels, not just
 c               those above the fdr threshold
+c     allpix    true if want to use all pixels, not just monotonically
+c               decreasing ones
+c     psfsize   true to restrict minimum source size to that of the psf
 c-----------------------------------------------------------------------
       implicit none
 c
-      logical do3val, do3pix, eqscale, mark, doerase,
-     + dofid, dowedge, grid, nofit, asciiart, auto, negative, pbcor,
-     + oldsfind, fdrimg, sigmaimg, normimg, kvannot, fdrpeak
+      logical do3val, do3pix, eqscale, mark, doerase, dofid,
+     + dowedge, grid, nofit, asciiart, auto, negative, pbcor,
+     + oldsfind, fdrimg, sigmaimg, rmsimg, normimg, kvannot,
+     + fdrpeak, allpix, psfsize
 cc
       integer maxopt
-      parameter (maxopt = 19)
+      parameter (maxopt = 22)
 c
       character opshuns(maxopt)*8
       logical present(maxopt)
@@ -2174,7 +2259,8 @@ c
      +              'asciiart', 'auto    ', 'negative',
      +              'pbcorr  ', 'oldsfind', 'fdrimg  ',
      +              'sigmaimg', 'normimg ', 'kvannot ',
-     +              'fdrpeak '/
+     +              'fdrpeak ', 'allpix  ', 'psfsize ',
+     +              'rmsimg'/
 c-----------------------------------------------------------------------
       call optcg ('options', opshuns, present, maxopt)
 c
@@ -2197,6 +2283,9 @@ c
       normimg  =      present(17)
       kvannot  =      present(18)
       fdrpeak  =      present(19)
+      allpix   =      present(20)
+      psfsize  =      present(21)
+      rmsimg   =      present(22)
 c make auto true for fdr-type analysis regardless of user input
       if (.not.oldsfind) auto = .true.
 c
@@ -2215,8 +2304,8 @@ c
      +   levs, nlevs, pixr, trfun, pdev, labtyp, do3val, do3pix, 
      +   eqscale, nx, ny, cs, dopixel, mark, doerase, dowedge, dofid,
      +   grid, cut, rmsbox, alpha, xrms, nofit, asciiart, auto,
-     +   negative, pbcor, oldsfind, sigmaimg, fdrimg, normimg,
-     +   kvannot, fdrpeak)
+     +   negative, pbcor, oldsfind, sigmaimg, rmsimg, fdrimg, normimg,
+     +   kvannot, fdrpeak, allpix, psfsize)
 c-----------------------------------------------------------------------
 c     Get the unfortunate user's long list of inputs
 c
@@ -2263,20 +2352,25 @@ c   pbcor      true to correct fluxes by primary beam attenuation
 c   oldsfind   true if want to use sfind in original mode (no fdr)
 c   fdrimg     true if want to create fdr-selected output pixel image
 c   sigmaimg   true if want to create sigma-clipped output pixel image
+c   rmsimg     true if want to create rms output pixel image
 c   normimg    true if want to create 'normalised' output image
 c   kvannot    true if want to output a kview annotation file for the
 c              detected objects
 c   fdrpeak    true if want to allow fitting of all source pixels, not just
 c              those above the fdr threshold
+c   allpix     true if want to use all pixels, not just monotonically
+c              decreasing ones
+c   psfsize    true to restrict minimum source size to that of the psf
 c-----------------------------------------------------------------------
       implicit none
 c
       integer maxlev, nx, ny, nlevs, ibin(2), jbin(2), kbin(2), rmsbox
       real levs(maxlev), pixr(2), cs(2), slev, cut, xrms, alpha
       character*(*) labtyp(2), in, pdev, trfun, levtyp
-      logical do3val, do3pix, eqscale, dopixel, mark,
-     + doerase, dowedge, dofid, grid, nofit, asciiart, auto, negative,
-     + pbcor, oldsfind, fdrimg, sigmaimg, normimg, kvannot, fdrpeak
+      logical do3val, do3pix, eqscale, dopixel, mark, doerase,
+     + dowedge, dofid, grid, nofit, asciiart, auto, negative, pbcor,
+     + oldsfind, fdrimg, sigmaimg, rmsimg, normimg, kvannot, fdrpeak,
+     + allpix, psfsize
 cc
       integer ntype, nlab, ntype2, nimtype
       parameter (ntype = 14, ntype2 = 3)
@@ -2336,8 +2430,8 @@ c
 c
       call decopt (do3val, do3pix, eqscale, mark, doerase, dowedge,
      +             dofid, grid, nofit, asciiart, auto, negative,
-     +             pbcor, oldsfind, fdrimg, sigmaimg, normimg,
-     +             kvannot, fdrpeak)
+     +             pbcor, oldsfind, fdrimg, sigmaimg, rmsimg, normimg,
+     +             kvannot, fdrpeak, allpix, psfsize)
       if (.not.dopixel) then
         dofid = .false.
         dowedge = .false.
@@ -2499,9 +2593,10 @@ c
 c
       subroutine fitting (lIn, krng, nx, ny, image, rms, xpos, 
      +    xposerr, ypos, yposerr, pkfl, pkflerr, intfl, amaj,
-     +    amin, posa, posns, blc, bin, lx, my, bvol, bvolp,
-     +    bmajp, bminp, nimage, boxsize, image2, pcut, fitok,
-     +    usedpixels, meanimg, fdrpeak)
+     +    amin, posa, posns, blc, bin, lx, my, bvol, bpap,
+     +    bvolp, bmajp, bminp, nimage, boxsize, image2, pcut, fitok,
+     +    usedpixels, meanimg, sgimg, fdrpeak, allpix, psfsize,
+     +    dumcount)
 c-----------------------------------------------------------------------
 c  Do elliptical Gaussian fit to source. First the pixels to be used in
 c  the fitting are selected on the basis that they are monotonically
@@ -2522,6 +2617,7 @@ c    nimage    Normalised Image (for masking info)
 c    bmajp,bminp pixel size of major/minor axis of beam. Used for defining
 c              'area' covered by beam, to set minimum number of FDR pixels
 c              needed before fitting a source.
+c    bpap      orientation of beam (in pixel coords).
 c    blc, bin  image params used for switching between full image and binned
 c              subimage pixels.
 c    lx, my    integer pixel coord of brightest pixel in object. Used in
@@ -2531,6 +2627,9 @@ c    bvolp
 c    image2    Image of p-values for each pixel
 c    pcut      cutoff p-value below which pixels are likely to be in source
 c    fdrpeak   true to use all source pixels in fit, not just those <pcut
+c    allpix    true to use all pixels, not just monotonically decreasing
+c              ones
+c    psfsize   true to limit minimum source size to that of the psf.
 c
 c  Output
 c    posns            The object position in world coords.
@@ -2553,15 +2652,15 @@ c-----------------------------------------------------------------------
       integer MAXVAR,n
       parameter(MAXVAR=20, n=1000)
 c
-      logical dofit, fitok, fdrpeak
+      logical dofit, fitok, fdrpeak, fdrpeakdum, allpix, psfsize
       integer ifail1,ifail2,lIn, i, blc(2), bin(2), maxline
       integer k,m,nvar,lx,my, nx,ny, krng(2), nimage(nx,ny), fiterr
       integer boxsize,ipim,ip2im,xpixused(n),ypixused(n), usedpixels
-      integer nfdrused
-      real image(nx,ny), meanimg(nx,ny), dumm
+      integer nfdrused, dumcount
+      real image(nx,ny), meanimg(nx,ny), sgimg(nx,ny), dumm
       real xvar(MAXVAR),covar(MAXVAR*MAXVAR),rms
       real bvol,bvolp, xpos, ypos, pkfl, intfl
-      real amaj, amin, posa, bmajp, bminp
+      real amaj, amin, posa, bmajp, bminp, bpap
       real xposerr, yposerr, pkflerr, image2(nx,ny), pcut
       double precision posns(2)
 c
@@ -2594,8 +2693,8 @@ c integer nearest the average plane
 c
       k = nint(real(krng(1) + krng(1) + krng(2) - 1)/2.0)
 c allocate memory for slopearry and connct
-1200  call memalloc(ipim,boxsize*boxsize,'l')
-      call memalloc(ip2im,boxsize*boxsize,'l')
+1200  call memalloc(ipim,(boxsize+1)*(boxsize+1),'l')
+      call memalloc(ip2im,(boxsize+1)*(boxsize+1),'l')
 c initialise x,ypixused
       do i = 1,n
        xpixused(i) = 0
@@ -2608,13 +2707,14 @@ c  to do so.
 c
       call LoadDat (m,nx,ny,xpos,ypos,blc,bin,image,boxsize,lx,my,
      +  nimage,maxline,image2,pcut,fitok,meml(ipim),meml(ip2im),
-     +  xpixused,ypixused,meanimg,nfdrused,fdrpeak)
-      call memfree(ipim,boxsize*boxsize,'l')
-      call memfree(ip2im,boxsize*boxsize,'l')
+     +  xpixused,ypixused,meanimg,sgimg,nfdrused,fdrpeak,allpix)
+      call memfree(ipim,(boxsize+1)*(boxsize+1),'l')
+      call memfree(ip2im,(boxsize+1)*(boxsize+1),'l')
       if (.not.fitok) return
 c reject source if number of FDR pixels used is less than 1/4 the
 c area covered by beam, or no pixels at all were used.
-      if (((float(nfdrused)).lt.(bmajp*bminp*pi/16.)).or.(m.eq.0)) then
+      if (((float(nfdrused)).lt.(sqrt(bmajp*bminp*pi)/4.)).or.
+     +       (m.eq.0)) then
 c      if (m.eq.0) then
        fitok = .false.
        return
@@ -2624,7 +2724,7 @@ c  Convert the coordinates to pixels, and fill in defaults if necessary.
 c
       call CoordFid(lIn,k,.true.)
       call GetEst
-c make sure its a 2-D gaussian
+c make sure it's a 2-D gaussian
       gdim = 2
 c
 c  Pack the variables into an array.
@@ -2648,6 +2748,106 @@ c
       if(ifail2.eq.0)call UpackCov(covar,nvar)
       if(ifail1.ne.0) fiterr = 1
       if(ifail2.ne.ifail1) fiterr = 2
+c
+c If fit is much larger than number of pixels used, trying fitting again
+c with more pixels to refine the fit. m is the number of used pixels.
+c
+      if ((m).lt.(pi*fwhm1(1)*fwhm2(1)/4)) then
+         dumcount = dumcount+1
+c allocate memory for slopearry and connct again
+       call memalloc(ipim,(boxsize+1)*(boxsize+1),'l')
+       call memalloc(ip2im,(boxsize+1)*(boxsize+1),'l')
+c initialise x,ypixused
+       do i = 1,n
+        xpixused(i) = 0
+        ypixused(i) = 0
+       end do
+c
+c  Load the data again, using more pixels than last time, by
+c temporarily setting the fdrpeak variable to true.
+c
+       fdrpeakdum = .true.
+       call LoadDat (m,nx,ny,xpos,ypos,blc,bin,image,boxsize,lx,my,
+     +  nimage,maxline,image2,pcut,fitok,meml(ipim),meml(ip2im),
+     +  xpixused,ypixused,meanimg,sgimg,nfdrused,fdrpeakdum,allpix)
+       call memfree(ipim,(boxsize+1)*(boxsize+1),'l')
+       call memfree(ip2im,(boxsize+1)*(boxsize+1),'l')
+       if (.not.fitok) return
+c reject source if number of FDR pixels used is less than 1/4 the
+c area covered by beam, or no pixels at all were used.
+       if (((float(nfdrused)).lt.(sqrt(bmajp*bminp*pi)/4.)).or.
+     +       (m.eq.0)) then
+        fitok = .false.
+        return
+       end if
+c
+c  Convert the coordinates to pixels, and fill in defaults if necessary.
+c
+       call CoordFid(lIn,k,.true.)
+       call GetEst
+c make sure it's a 2-D gaussian
+       gdim = 2
+c
+c  Pack the variables into an array.
+c
+       call PackVar(xvar,nvar,MAXVAR)
+       dofit = nvar.gt.0
+       if(.not.dofit) then
+         fitok = .false.
+         return
+       end if
+       if(nvar.ge.m) then
+         fitok = .false.
+         return
+       end if
+c
+c  Do the fitting process.
+c
+       fiterr = 0
+       call lsqfit(FUNCTION,m,nvar,xvar,covar,rms,ifail1,ifail2)
+       call UPackVar(xvar,nvar)
+       if(ifail2.eq.0)call UpackCov(covar,nvar)
+       if(ifail1.ne.0) fiterr = 1
+       if(ifail2.ne.ifail1) fiterr = 2
+      end if
+
+c
+c If 'psfsize' selected, check object size and if smaller than
+c psf, set to psf size and fit again for peak and position.
+c
+      if ((psfsize).and.((fwhm1(1).lt.bmajp).or.(fwhm2(1).lt.bminp)))
+     +       then
+       do i = 1,nsrc
+         vflux(i) = .true.
+         vl0(i) = .true.
+         vm0(i) = .true.
+         vfwhm1(i) = .false.
+         vfwhm2(i) = .false.
+         vpa(i) = .false.
+         fwhm1(i) = bmajp
+         fwhm2(i) = bminp
+         pa(i) = bpap
+       end do
+       fitok = .true.
+c  Pack the variables into an array.
+       call PackVar(xvar,nvar,MAXVAR)
+       dofit = nvar.gt.0
+       if(.not.dofit) then
+         fitok = .false.
+         return
+       end if
+       if(nvar.ge.m) then
+         fitok = .false.
+         return
+       end if
+c  Do the fitting process.
+       fiterr = 0
+       call lsqfit(FUNCTION,m,nvar,xvar,covar,rms,ifail1,ifail2)
+       call UPackVar(xvar,nvar)
+       if(ifail2.eq.0)call UpackCov(covar,nvar)
+       if(ifail1.ne.0) fiterr = 1
+       if(ifail2.ne.ifail1) fiterr = 2
+      end if
 c
 c  Check to see whether the fitted size of the image is comparable to the
 c  initial box size used in selecting pixels, and if so iterate the
@@ -2813,10 +3013,9 @@ c
 c
       end
 c
-c
       subroutine LoadDat(m,nx,ny,xpos,ypos,blc,bin,image,boxsize,
      +    lx,my,nimage,maxline,image2,pcut,fitok,slopearry,connct,
-     +    xpixused,ypixused,meanimg,nfdrused,fdrpeak)
+     +    xpixused,ypixused,meanimg,sgimg,nfdrused,fdrpeak,allpix)
 c-----------------------------------------------------------------------
 c  Load the relevant data for this plane. The relevant data are those pixels
 c  to which to fit the elliptical gaussians. They are selected by
@@ -2839,6 +3038,7 @@ c    maxline   no lines longer than this
 c    image2    image of p-values from fdr
 c    pcut      p-values cutoff value from fdr
 c    fdrpeak   true to use all source pixels in fit, not just those <pcut
+c    allpix    true to use all pixels, not just monotonically decreasing ones
 c  Output:
 c    m         Number of points loaded
 c    fitok     false if had problems
@@ -2851,13 +3051,15 @@ c------------------------------------------------------------------------
       integer m,nx,ny,lmn,lmx,mmn,mmx,nimage(nx,ny)
       integer i,j,xt,yt,ll,mm, blc(2),bin(2), lx,my, maxline
       integer boxsize,sideln,cenx,ceny
-      integer xpixused(boxsize),ypixused(boxsize)
+      integer xpixused(boxsize+1),ypixused(boxsize+1)
       integer nfdrused,tstx,tsty
-      real xpos,ypos,image(nx,ny),image2(nx,ny),meanimg(nx,ny),pcut
+      real xpos,ypos,image(nx,ny),image2(nx,ny)
+      real sgimg(nx,ny),meanimg(nx,ny),pcut
       real half
       double precision wa(2)
-      logical incirc,fainter,fitok,fdrpeak
-      logical slopearry(boxsize,boxsize), connct(boxsize,boxsize)
+      logical incirc,fainter,fitok,fdrpeak,allpix
+      logical slopearry(boxsize+1,boxsize+1)
+      logical connct(boxsize+1,boxsize+1)
 c-----------------------------------------------------------------------
 c
 c calculate extremes of box around object, with size boxsize
@@ -2884,19 +3086,27 @@ c (and maybe whether the pixel is FDR-selected)
        do ll = lmn,lmx
         i = ll-lmn+1
         j = mm-mmn+1
-        call slopey(ll,mm,lx,my,nx,ny,image,slopearry(i,j))
+        if (allpix) then
+         slopearry(i,j) = image2(ll,mm).le.pcut
+        else
+         call slopey(ll,mm,lx,my,nx,ny,image,slopearry(i,j))
+c ensures that only pixels >= 1-sigma are used in fit
+         if (slopearry(i,j)) then
+          slopearry(i,j) = image(ll,mm).ge.sgimg(ll,mm)
+         end if
 c use this if *all* the pixels in the source are to be above the FDR
 c threshold, not just the peak pixel.
-        if (.not.fdrpeak) then
-         if (slopearry(i,j)) slopearry(i,j) = image2(ll,mm).le.pcut
+         if (.not.fdrpeak) then
+          if (slopearry(i,j)) slopearry(i,j) = image2(ll,mm).le.pcut
+         end if
         end if
        end do
       end do
 c make connct by testing annuli consecutively outward from peak pixel
 c to check whether each pixel is connected to the peak pixel.
 c start by initialising array, then defining peak pixel to be connected.
-      do i = 1,boxsize
-       do j = 1,boxsize
+      do i = 1,boxsize+1
+       do j = 1,boxsize+1
         connct(i,j) = .false.
        end do
       end do
@@ -2904,7 +3114,7 @@ c start by initialising array, then defining peak pixel to be connected.
       ceny = my-mmn+1
       connct(cenx,ceny) = .true.
 c i is the 'annulus' index.
-      do i = 1,boxsize/2+1
+      do i = 1,boxsize/2
        sideln = 2*i+1
        do j = 1,sideln
 c check top
@@ -3044,7 +3254,7 @@ c
       yoff = yt / real(ndata)
 c
       end
-c
+ 
 c
       subroutine slopey(xx,yy,xc,yc,nx,ny,image,slpdwn)
 c-----------------------------------------------------------------------------
@@ -3482,7 +3692,7 @@ c----------------------------------------------------------------------------
 c
 c
       subroutine BeamPar(lIn,k,bvol,bvolp,bmaj,bmin,bpa,bmajp,bminp,
-     +                   nobeam)
+     +                   bpap,nobeam)
 c-----------------------------------------------------------------------
 c  Get things dealing with units.
 c
@@ -3494,6 +3704,7 @@ c    bvol      Beam volume, in radians**2. Set to zero if this cannot
 c            be determined.
 c    bvolp      Beam volume in pixels.
 c    bmaj,bmin,bpa Beam major, minor axes and position angle.
+c    bmajp,bminp,bpap Beam major, minor axes and position angle in pix. coords.
 c------------------------------------------------------------------------
       implicit none
       integer lIn,k
@@ -3558,8 +3769,8 @@ c
 
       subroutine fdr(nx,ny,l,m,boxsize,image,nimage,alpha,xrms,
      +           bmajp,bminp,pcut,lin,plist,image2,meanimg,sgimg,
-     +           fdrimg,sigmaimg,normimg,auto,blc,bin,maxx,maxy,
-     +           nfdrpix)
+     +           fdrimg,sigmaimg,rmsimg,normimg,auto,blc,bin,
+     +           maxx,maxy,nfdrpix)
 c-----------------------------------------------------------------------
 c Performs FDR statistical analysis of pixels in region of source.
 c 1. Assigns a P-value to each pixel, based on its intensity
@@ -3589,6 +3800,7 @@ c    meanimg    image of background mean values
 c    sgimg      image of background sigma values
 c    fdrimg     true to output FDR-image
 c    sigmaimg   true to output sigma-image
+c    rmsimg     true to output rms-image
 c    normimg    true to output normalised image
 c    auto       true if not being run interactively
 c    blc,bin    subimage blc and binning information
@@ -3611,14 +3823,14 @@ c-----------------------------------------------------------------------
       integer boxsize, blc(2),bin(2)
       integer nimage(nx,ny)
 c
-      integer lOut,lOut2,lOut3,lo,axes(2),nfdrpix,nblanks
+      integer lOut,lOut2,lOut3,lOut4,lo,axes(2),nfdrpix,nblanks
       integer iii,jjj,ipim,ip2im
       real rrow(maxdim),image2(nx,ny),meanimg(nx,ny),sgimg(nx,ny)
       double precision wa(2)
       real fluxctoff,sigctoff
 c
       logical ok,gotit,mskexst,hdprsnt,msk(maxdim)
-      logical fdrimg, sigmaimg, normimg, auto
+      logical fdrimg, sigmaimg, rmsimg, normimg, auto
       character line*160
 c-----------------------------------------------------------------------
       call output(' ')
@@ -3635,14 +3847,17 @@ c
       if (fdrimg) call xyopen (lOut,'sfind.fdr','new',2,axes)
       if (sigmaimg) call xyopen (lOut2,'sfind.sig','new',2,axes)
       if (normimg) call xyopen (lOut3,'sfind.norm','new',2,axes)
+      if (rmsimg) call xyopen (lOut4,'sfind.rms','new',2,axes)
 c copy headers to output datasets if necessary
-      do ii = 1,3
+      do ii = 1,4
        if ((ii.eq.1).and.(fdrimg)) then
         lo = lOut
        else if ((ii.eq.2).and.(sigmaimg)) then
         lo = lOut2
        else if ((ii.eq.3).and.(normimg)) then
         lo = lOut3
+       else if ((ii.eq.4).and.(rmsimg)) then
+        lo = lOut4
        else
         lo = -1
        end if
@@ -3701,10 +3916,10 @@ c
          call basecal(nx, ny, l, m, base0, sigma, boxsize, image,
      +           nimage, 1.5*bmajp, ok, meml(ipim),memr(ip2im), auto)
          if (ok) then
-          lmn = max(1,(l-boxsize/2))
-          lmx = min(nx+1,(l+boxsize/2)) - 1
-          mmn = max(1,m-boxsize/2)
-          mmx = min(ny+1,(m+boxsize/2)) - 1
+          lmn = max(0,(l-boxsize/2)) + 1
+          lmx = min(nx,(lmn+boxsize-1))
+          mmn = max(0,(m-boxsize/2)) + 1
+          mmx = min(ny,(mmn+boxsize-1))
           do iii = lmn,lmx
            do jjj = mmn,mmx
             if (sigma.ne.0) then
@@ -3740,6 +3955,33 @@ c cvt jjj from binned subimage pixels to full image pixels
        end do
        call xyclose (lOut3)
       end if
+c
+c make rms image, for calculation of weighting corrections
+c
+      if (rmsimg) then
+       nfdrpix = 0
+       nblanks = 0
+       do m = 1,ny
+        do l = 1,nx
+c cvt l from binned subimage pixels to full image pixels
+         wa(1) = dble(l)
+         call ppconcg(2, blc(1), bin(1), wa(1))
+         if (nimage(l,m).gt.0) then
+          rrow(nint(wa(1))) = sgimg(l,m)
+         else
+          rrow(nint(wa(1))) = 0.
+         end if
+        end do
+c ok, have written the m'th row, now put it in the segmentation image
+c cvt m from binned subimage pixels to full image pixels
+        wa(2) = dble(m)
+        call ppconcg(2, blc(2), bin(2), wa(2))
+        call xywrite(lOut4,nint(wa(2)),rrow)
+       end do
+c done writing to lOut4 - so close it.
+       call xyclose (lOut4)
+      end if
+
 c
 c make sigma-cut image, for comparison with the upcoming fdr-based
 c segmentation image - note, after above normalisation, sigma = 1
@@ -3779,6 +4021,7 @@ c done writing to lOut2 - so close it.
      +               xrms,nfdrpix
        call output(line)
       end if
+
 c
 c Now (finally) to the actual FDR bit...
 c
@@ -3864,16 +4107,22 @@ c bareap=1 (uncorrelated) to N (fully correlated)
 c find crossing point
       gotit = .false.
       pcut = 0.
+c This is not approved miriad procedure - used by AMH for quick testing only
+c      open(1,file='tt',status='unknown')
       do ii = npix,1,-1
        pline = (alpha/(100.*fdrdenom))
 c       pline = (alpha/(100.*log(float(npix))))
 c       pline = (alpha/100.)
      +              *(float(ii)/float(npix))
+c This is not approved miriad procedure - used by AMH for quick testing only
+c       write(1,*) float(ii)/float(npix),pline,plist(ii)
        if ((pline.ge.plist(ii)).and.(.not.gotit)) then
         pcut = pline
         gotit = .true.
        end if
       end do
+c This is not approved miriad procedure - used by AMH for quick testing only
+c      close(1)
 c
 c Loop over all pixels to test whether image2(l,m)<P_cut.
 c If image2(l,m) > pcut, then pixel is most likely background,
@@ -3938,9 +4187,10 @@ c
       end
 
 
-      subroutine fdrfit(nx,ny,image,nimage,bvol,bvolp,bmajp,bminp,
-     +            pcut,image2,lin,krng,blc,bin,negative,pbcor,
-     +            llog,kvannot,fdrpeak,alpha,nfdrpix,meanimg,sgimg)
+      subroutine fdrfit(nx,ny,image,nimage,bvol,bpap,bvolp,
+     +            bmajp,bminp,pcut,image2,lin,krng,blc,bin,negative,
+     +            pbcor,llog,kvannot,fdrpeak,allpix,psfsize,alpha,
+     +            nfdrpix,meanimg,sgimg)
 c-----------------------------------------------------------------------
 c
 c  Input:
@@ -3959,6 +4209,8 @@ c    pbcor      true to make correction for primary beam shape
 c    llog       handle for log file
 c    kvannot    true to make annotation file output
 c    fdrpeak    true to use all pixels in source fits
+c    allpix     true to use all pixels, not just monotonically decreasing ones
+c    psfsize    true to restrict minimum source size to that of the psf
 c    alpha      FDR percentage of false pixel detections
 c    nfdrpix    number of pixels detected by FDR
 c    meanimg    image of background mean values
@@ -3975,10 +4227,10 @@ c
       integer ii,jj,kk,nx,ny,l,m
       integer lin,llog,lann,krng(2),len1
       real image(nx,ny),pcut,alpha
-      real bvol,bvolp,bmajp,bminp
-      integer boxsize, nfdrpix
+      real bvol,bpap,bvolp,bmajp,bminp
+      integer boxsize, nfdrpix, dumcount
       integer nimage(nx,ny),bin(2),blc(2),imin,jmin,imax,jmax
-      logical fitok,negative,pbcor,kvannot,fdrpeak
+      logical fitok,negative,pbcor,kvannot,fdrpeak,allpix,psfsize
 c
       integer iii,jjj,pp,off,sources,radeclen(2),iostat, usedpixels
       real image2(nx,ny),meanimg(nx,ny),sgimg(nx,ny)
@@ -3994,6 +4246,7 @@ c----------------------------------------------------------------------
       call output('Beginning source measurements...')
       call output('********************************')
       sources = 0
+      dumcount = 0
       if (kvannot) then
        call txtopen (lann, 'sfind.ann', 'append', iostat)
        if (iostat.ne.0) 
@@ -4081,8 +4334,10 @@ c Ok, have found the location and size of region to fit, now fit it
 c
           call fitting (lIn, krng, nx, ny, image, rms, xpos, xposerr,
      +     ypos, yposerr, pkfl, pkflerr, intfl, amaj, amin, posa,
-     +     posns, blc, bin, ii, jj, bvol, bvolp, bmajp, bminp, nimage,
-     +     boxsize, image2, pcut, fitok, usedpixels, meanimg, fdrpeak)
+     +     posns, blc, bin, ii, jj, bvol, bpap, bvolp,
+     +     bmajp, bminp, nimage, boxsize, image2, pcut, fitok,
+     +     usedpixels, meanimg, sgimg, fdrpeak, allpix, psfsize,
+     +     dumcount)
           if (.not.fitok) goto 60
 c write out annotation file line if necessary
           if (kvannot) then
@@ -4108,6 +4363,8 @@ c
            call mosVal(lin,'aw/aw',posns,gain,mvlrms)
            pkfl = pkfl/gain
            intfl = intfl/gain
+cc should we correct the sigma as well?
+c           sgimg(ii,jj) = sgimg(ii,jj)/gain
           end if
 c
 c Define output lines
@@ -4130,6 +4387,12 @@ c are defined to be real).
 c
           line(len1(line)+1:len1(line)+6) = '     Y'
           call txtwrite (llog, line, len1(line), iostat)
+
+cc undo change to sgimg just in case it affects something elsewhere
+c          if (pbcor) then
+c           sgimg(ii,jj) = sgimg(ii,jj)*gain
+c          end if
+
 c
 c increment number of sources detected
 c
