@@ -113,6 +113,7 @@ c          19sep02      fixed bug when no output given
 c    pjt   23oct02      add spline option 
 c    pjt   24nov03      maxring was defined too short, didn't write out
 c                       rows before blc(2) and above trc(2)
+c    pjt   25nov03      fix problems in headcopy if blc/trc are sub-imaged
 c
 c  TODO: figure out how not to corrupt crpix when a (edge) mask is present
 c        headcopy appears to do this. 
@@ -122,7 +123,7 @@ c----------------------------------------------------------------------c
 	include 'maxdim.h'
 	include 'mem.h'
         character*(*) label,version
-        parameter(version='version 24-nov-2003')
+        parameter(version='version 25-nov-2003')
         double precision rts,value
         parameter(label='Integrate a Miriad image in elliptical annuli')
         integer maxnax,maxboxes,maxruns,naxis,axis,plane,maxring
@@ -187,11 +188,13 @@ c
         call boxinfo(boxes,maxnax,blc,trc)
 
 c
-c  Output
+c  Output (notice the cheat with blc,trc to avoid a wrong crpix in headcopy)
 c
         if (dout) then
            call xyopen(lout,out,'new',naxis,nsize)
            do i=1,naxis
+              blc(i) = 1
+              trc(i) = nsize(i)
               if (i.le.3) then
                  axnum(i) = i
               else
@@ -199,6 +202,7 @@ c
               endif
            enddo
            call headcopy(lin,lout,axnum,naxis,blc,trc)
+           call boxinfo(boxes,maxnax,blc,trc)
         endif
 
 c
