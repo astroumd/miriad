@@ -19,6 +19,10 @@
  *    pjt   6mar01 increased MAXSTRING to 2048
  *    mchw 15mar02 increased MAXSTRING to 4096
  *    pjt  22jun02 MIR4 prototypes, also added a few more Const 
+ *    jwr  22jul04 changed a few vars from size_t to ssize_t, since signed
+ *                 arithmetic is required.  Also made failure of wildcard
+ *		   expansion fatal (it would crash later if only a warning
+ *		   is given)
  ***********************************************************************
  */
 
@@ -97,7 +101,7 @@ static char *getKeyValue(Const char *key, int doexpand)
     char quoted;
     char string[MAXSTRING];
     int more;
-    size_t size, depth;
+    ssize_t size, depth;
     KEYS *t;
     FILE *fp;
 
@@ -202,7 +206,7 @@ static char *getKeyValue(Const char *key, int doexpand)
       size = dexpand_c(r, string, MAXSTRING);
       if (size < 1) {
         (void)sprintf(string, "Error doing wildcard expansion of [%s].", r);
-        (void)bug_c('w', string);
+        (void)bug_c('f', string);
       } else {
         if (*(t->value) != Null)
           size += strlen(t->value) + 2;
