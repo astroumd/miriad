@@ -1,0 +1,297 @@
+\module{annotate}%
+\newline \abox{File:} \$MIR/src/prog/analysis/implot.for
+\newline \abox{Keywords:} plotting
+\newline{\tenpoint
+{\eightpoint\begintt
+        subroutine annotate(tno,in,map,tmax,tmin,conlevs,numlevs,
+     *                  sclo,schi,sdlo,sdhi)
+        implicit none
+        integer tno
+        character*(*) in
+        integer map
+        real tmax, tmin
+        real conlevs(50)
+        integer numlevs
+        real sclo,schi,sdlo,sdhi
+
+  Annotate the map information to the right side of
+  the page for ImPlot.
+
+  Inputs:
+    tno        The input image.
+    in         The pgplot device.
+    map        The map number in the image.
+    tmax,tmin  Maximum and minimum of region of interest.
+    conlevs    The array of contour levels.
+    numlevs    Number of conlevs.
+    sclo,schi,sdlo,sdhi  PGPLOT view port limits.
+\endtt}
+\par}
+\module{beampat}%
+\newline \abox{File:} \$MIR/src/prog/analysis/implot.for
+\newline \abox{Keywords:} plotting
+\newline{\tenpoint
+{\eightpoint\begintt
+        subroutine beampat(tno,corner,blc,trc,funits)
+
+        implicit none
+        integer tno,corner
+        real blc(3), trc(3)
+        character*(*) funits
+
+  Add a picture of the beam to the specified corner of the plot.
+
+  Inputs:
+    tno        The handle ofthe input image.
+    corner     is 0 for none or 1-4 to specify corner
+    blc,trc    The corners of the region of interest.
+    funits     Units of plot.
+\endtt}
+\par}
+\module{beamsize}%
+\noindent Find beam size and location.
+\newline \ 
+\newline \abox{File:} \$MIR/src/prog/deconv/tvcln.for
+\newline \abox{Keywords:} image analysis
+\newline{\tenpoint
+{\eightpoint\begintt
+        subroutine BeamSize(lBeam,n1,n2,xbeam,ybeam,bmaj,bmin,bpa)
+
+        implicit none
+        integer lBeam,n1,n2,xbeam,ybeam
+        real bmaj,bmin,bpa
+
+  Find beam size and location.
+  Put bmaj, bmin, bpa into the map header if not present.
+
+  Inputs:
+    lBeam      Handle of the beam.
+    n1,n2      Dimensions of the beam
+  Outputs:
+    xBeam,yBeam Location of beam peak.
+    bmaj,bmin  fwhm beam size in radians
+    bpa        position angle of beam in degrees.
+\endtt}
+\par}
+\module{getconts}%
+\newline \abox{File:} \$MIR/src/prog/analysis/implot.for
+\newline \abox{Keywords:} plotting
+\newline{\tenpoint
+{\eightpoint\begintt
+        subroutine Getconts
+        implicit none
+
+  Read the input items conflag and conargs and fills in 
+               the common block contour -conflag and conargs(nconarg)
+               (this must be put between keyini and keyend)
+\endtt}
+\par}
+\module{getvaxis}%
+\newline \abox{File:} \$MIR/src/prog/analysis/imspect.for
+\newline \abox{Keywords:} image analysis
+\newline{\tenpoint
+{\eightpoint\begintt
+        subroutine GetVaxis(lIn,vaxis)
+
+        implicit none
+        integer lIn,vaxis
+
+  Find the v-axis.
+
+  Inputs:
+    lIn        The handle of the image.
+  Output:
+    vaxis      The velocity or frequency axis.
+\endtt}
+\par}
+\module{imheader}%
+\noindent Get image items: object, restfreq and date-obs.
+\newline \ 
+\newline \abox{File:} \$MIR/src/prog/analysis/imspect.for
+\newline \abox{Keywords:} image analysis
+\newline{\tenpoint
+{\eightpoint\begintt
+                Subroutine ImHeader(lIn,object,restfreq,date)
+
+        implicit none
+        integer lIn
+        character*9 object,date
+        double precision restfreq
+
+  Get image header items 'object' 'restfreq' and 'date-obs' from image.
+
+  Input:
+    lIn        The handle of the Image.
+  Output:
+    object     The object or source name.
+    restfreq   The restfreq of the observations, in GHz.
+    date       The date of the observations.
+\endtt}
+\par}
+\module{labels}%
+\newline \abox{File:} \$MIR/src/prog/analysis/implot.for
+\newline \abox{Keywords:} plotting
+\newline{\tenpoint
+{\eightpoint\begintt
+        subroutine labels(tno,blc,trc,flag,ablc,atrc,trout,label)
+
+        implicit none
+        integer tno,blc(3),trc(3)
+        character*(*) flag,label(2)
+        real ablc(3),atrc(3),trout(6)
+
+  Make the coordinate labels for plotting a Miriad image.
+
+  The types of units are permitted are:
+       p  pixels with respect to center
+       s  arcseconds with respect to center, km/s, or Ghz
+       a  absolute coordinates RA(hrs), DEC(degs), km/s, or Ghz
+
+  Inputs:
+    tno        The handle of the input Image.
+    blc        The input bottom left corner.
+    trc        The input top right corner.
+    flag       The flag for coordinate labels.
+  Outputs:
+    ablc       User units bottom left corner
+    atrc       User units top right corner
+    trout      The translation array for pgplot
+    label      The axis labels for the plot
+\endtt}
+\par}
+\module{listdata}%
+\noindent List Image in specifed format.
+\newline \ 
+\newline \abox{File:} \$MIR/src/prog/analysis/imlist.for
+\newline \abox{Keywords:} image analysis
+\newline{\tenpoint
+{\eightpoint\begintt
+        Subroutine ListData(lIn,naxis,blc,trc,fldsize,format)
+
+        implicit none
+        integer lIn,naxis,blc(naxis),trc(naxis),fldsize
+        character format*(*)
+
+   List Image in specified format into LogFile.
+
+  Inputs:
+    lIn        The handle of the Image.
+    naxis      Number of axes of the Image.
+    blc,trc    Corners of region of interest.
+    format     Format specification.
+    fldsize    Field size.
+\endtt}
+\par}
+\module{listhead}%
+\noindent List Image Header variables in a standard format.
+\newline \ 
+\newline \abox{File:} \$MIR/src/prog/analysis/imlist.for
+\newline \abox{Keywords:} image analysis
+\newline{\tenpoint
+{\eightpoint\begintt
+                Subroutine ListHead(tno)
+
+        implicit none
+        integer tno
+
+  Read Image header variables.
+  convert units and write in standard format into LogFile.
+
+  Input:
+    tno        The handle of the Image.
+\endtt}
+\par}
+\module{liststat}%
+\noindent List Image Statistics in a standard format.
+\newline \ 
+\newline \abox{File:} \$MIR/src/prog/analysis/imlist.for
+\newline \abox{Keywords:} image, statistics
+\newline{\tenpoint
+{\eightpoint\begintt
+        Subroutine ListStat(lIn,naxis,blc,trc)
+
+        implicit none
+        integer lIn,naxis,blc(naxis),trc(naxis)
+
+   List Image Statistics and write in standard format into LogFile.
+
+  Inputs:
+    lIn        The handle of the Image.
+    naxis      Number of axes of the Image.
+    blc,trc    Corners of region of interest.
+\endtt}
+\par}
+\module{maplabel}%
+\newline \abox{File:} \$MIR/src/prog/analysis/implot.for
+\newline \abox{Keywords:} plotting
+\newline{\tenpoint
+{\eightpoint\begintt
+        subroutine MapLabel(tno,map)
+
+        implicit none
+        integer tno,map
+
+  Label the map with the velocity for Implot
+
+  Inputs:
+    tno        The handle of the image.
+    map        The map number.
+\endtt}
+\par}
+\module{setconts}%
+\newline \abox{File:} \$MIR/src/prog/analysis/implot.for
+\newline \abox{Keywords:} plotting
+\newline{\tenpoint
+{\eightpoint\begintt
+        subroutine setconts(isneg,fmax,fmin,conlevel,numcon)
+
+        implicit none
+        logical isneg
+        real fmax,fmin
+        integer numcon
+        real conlevel(50)
+
+  Setconts uses the common block contour -conflag and 
+               conargs(nconarg) and its arguments to create a list of
+               contours.
+               conflag is made up of one letter codes which mean:
+               p means the contour values are percentages of the maximum.
+               i means the contour values are a list of contour values.
+               a means the contour values are absolute numbers.
+               if i is not present, the first contour value is used as a
+               step to compute the other values between the min and max of
+               the map.
+  Inputs:
+    isneg      true means  get negative contours
+    fmax,fmin  Maximum and minimum values in image.
+  Outputs:
+    conlevel   Array of contour values.
+    numcon     The number of conlevel.
+\endtt}
+\par}
+\module{uvheader}%
+\noindent Get uv variables: source, restfreq and date.
+\newline \ 
+\newline \abox{File:} \$MIR/src/prog/vis/uvplt.for
+\newline \abox{Keywords:} uvdata analysis
+\newline{\tenpoint
+{\eightpoint\begintt
+                Subroutine UvHeader(lIn,source,restfreq,date)
+
+        implicit none
+        integer lIn
+        character source*9,date*18
+        double precision restfreq
+
+  Get uv variables source, restfreq and time from uvdata.
+  Convert time to calendar date and time.
+  This routine must be called after a call to uvread.
+
+  Input:
+    lIn        The handle of the uvdata.
+  Output:
+    source     The object or source name.
+    restfreq   The restfreq of the observations, in GHz.
+    date       The date and time of the observations.
+\endtt}
+\par}
