@@ -1,0 +1,4289 @@
+\module{avmaths}%
+\noindent Operate on cube with averaged plane from cube
+\newline \ 
+\newline \abox{Responsible:} Neil Killeen
+\newline \abox{Keywords:} analysis
+\newline{\tenpoint\newline
+AVMATHS averages designated planes from a cube, and then 
+performs some mathematical operation on the cube with the 
+averaged plane. Currently subtraction and optical depth 
+calculations only have been coded.  Undefined output pixels 
+are blanked.
+\keyword{\bf IN}
+The input image. No default.
+\keyword{\bf OUT}
+The output image. No default.
+\keyword{\bf REGION}
+Specify the channels to average with a command of the region
+of interest format, eg.
+{\eightpoint\begintt
+  region=image(1,5),image(120,128)
+\endtt}
+This would average channels 1:5 and 120:128 from the
+cube.  
+\keyword{\bf OPTIONS}
+Should be one of
+'sub' for subtraction:  OUT(i,j,k) = IN(i,j,k) - AV(i,j)
+'od'  for optical depth:  OUT(i,j,k) = LN (AV(i,j) / IN(i,j,jk))
+Pixels are blanked if the inout pixel is blanked, the averaged
+channel pixel is blanked, or the output is undefined ('od')
+\par}
+\module{boxspec}%
+\noindent Write spectra (from vxy cube) as text file
+\newline \ 
+\newline \abox{Responsible:} Bart Wakker
+\newline \abox{Keywords:} utility, plotting
+\newline{\tenpoint\newline
+BOXSPEC is a MIRIAD task to save spectra from a vxy image in
+text files.
+\keyword{\bf IN}
+The name of the input image. No default.
+\keyword{\bf CHAN}
+The channel range to plot, default is all channels.
+\keyword{\bf AVEOP}
+If 'a' then the pixels enclosed in the x-y area specified
+are averaged.  If 's' they are just summed.  Default is 'a'
+\keyword{\bf SMLEN}
+Hanning smoothing length (an odd integer {\tt <} 15) Default is
+no smoothing (smlen = 1).
+\keyword{\bf INFILE}
+List of locations and sizes for boxes in format
+{\eightpoint\begintt
+        NPOS
+        IPOS  X  Y  XOFF  YOFF
+\endtt}
+where 
+{\eightpoint\begintt
+        NPOS   is the number of boxes to read
+        IPOS   is a number identifying each box, used in
+               creating each output file name
+        X,Y    is the pixel location of each box
+        X,YOFF are the half sizes of the box in pixels so that
+               each box is of size 2XOFF+1 in x and 2YOFF+1 in y.  
+        X,YOFF are optional and default to 2
+\endtt}
+\keyword{\bf LOG}
+Save each spectrum in a file with root name LOG.  The
+rest of the file name is formed from ``IPOS'' so that
+for example, for LOG=SPEC and IPOS=32 the output file name
+is SPEC32   
+Each file contains  :   channel, velocity or freq, intensity
+\par}
+\module{calapply}%
+\noindent Apply gain and passband corrections producing calibrated data
+\newline \ 
+\newline \abox{Responsible:} Lee Mundy
+\newline \abox{Keywords:} calibration
+\newline{\tenpoint\newline
+CALAPPLY applies gain and passband corrections producing an output
+calibrated data file. The input data file is untouched. Gains and
+passband solutions can be applied jointly or independently. Data
+outside the valid time range of gains fits may by flagged bad.
+\keyword{\bf VIS}
+Input UV data file for calibration. Works on only one file
+at a time. No default.
+\keyword{\bf GCAL}
+Name of file with gain calibration fits. This must be a data file
+produced by calmake. Default is blank and results in no gain
+calibration.
+\keyword{\bf PCAL}
+Name of file with passband calibration fits. This must be a data
+file produced by passmake. Default is blank and results in no passband 
+calibration.
+\keyword{\bf FLAGBAD}
+Two element true/false parameter for controlling flagging of data
+beyond range of validity of amplitude and phase gains fits. If 
+flagbad=true,true, data outside valid time range of gains
+fits will be flagged bad (although the data are still calibrated
+using extrapolation). If flagbad=false,false, no data are flagged
+bad. Default is flagbad=true,true.
+\keyword{\bf SELECT}
+Standard select keyword. See section ``uv selection''.
+\keyword{\bf LINE}
+Standard linetype keyword, see section ``uv Linetypes''.
+\keyword{\bf OUT}
+Output file name for calibrated data. No default. File must not
+already exist.
+\par}
+\module{calfit}%
+\noindent Fit polynomial to amp/phase data
+\newline \ 
+\newline \abox{Keywords:} calibration
+\newline \abox{Responsible:} Peter Teuben
+\newline{\tenpoint\newline
+CALFIT is a MIRIAD task which fits polynomials to the wideband data.  
+By default, Calfit uses 2nd order for phases and 0th order for 
+amplitudes, without phase closure.  The resulting fit is stored in a
+calibration dataset, and can be over-written.
+\keyword{\bf GCAL}
+The calibration data set.  
+Default: none.
+\keyword{\bf SOURCE}
+Names of the sources to which the fit is applied. 
+Default is to select all sources from calibration set.
+\keyword{\bf ORDER}
+The polynomial order to be fit to the amplitude and phase.  The
+default is $\{$0,2$\}$, while the maximum is $\{$10,10$\}$.
+Default: 0,2.
+\keyword{\bf CLOSE}
+If set to true, a baseline based phase closure will be used in the
+gain fits.
+For 'true', breakpoints are forced to be equal across baselines, 
+taken from the first baseline found in the database.
+Default: false
+\keyword{\bf TAVER}
+Taver consists of two numbers, ``tgap'' and ``ttot'', both in minutes,
+which are used for vector averaging. If the time interval between
+any two successive data points is greater than ``tgap``, or if the 
+total time between the first data point in a vector average and any
+succeeding data point exceeds ``ttot'', then a new vector average is
+started.
+Default: 0.0,1000.0 (no vector averaging)
+\keyword{\bf MODE}
+Work on 'phase' or 'amplitude'. If nothing specified, both
+will be worked on. 
+Default: both.
+\keyword{\bf UNITS}
+Units to work in. Options are: K, K/Jy, Jy/K.
+See comments in ``calflag''
+Default: Jy/K.
+\par}
+\module{calflag}%
+\noindent Display raw calibration data with user interaction
+\newline \ 
+\newline \abox{Keywords:} calibration
+\newline \abox{Responsible:} Peter Teuben
+\newline{\tenpoint\newline
+CALFLAG is a MIRIAD task which displays the raw calibration data and 
+optionally a fit. CalFlag reads the data and fit from a cal file and 
+displays the result visually.  The phases and amplitudes for both
+sidebands and all baselines are simultaneously shown, but individual
+plots or groups of plots can be zoomed.  The fit is displayed as a
+line over the points, and all the axes are labeled, with ticks.  The
+user may interactively pick different plots to zoom on, and can mark
+individual points as good or bad. Breakpoints in time can be added
+and deleted as well. To make new polynomial fits, the program CalFit
+has to be rerun.
+
+Commands in cursor mode are:
+
+{\eightpoint\begintt
+  d/D -- flag the nearest point as bad (uppercase only one band)
+  a/A -- flag the nearest point as good (uppercase only one band)
+  x   -- zoom/unzoom on the current column
+  y   -- zoom/unzoom on the current row
+  z   -- zoom/unzoom on the current plot
+  b/B -- break polynomial here (uppercase only one band)
+  c/C -- (re)connect polynomials here (uppercase only one band)
+  q   -- quit (no save)
+  e   -- exit (save flags and breakpoints if modifications done)
+  ?   -- help and dedraw screen
+\endtt}
+\keyword{\bf GCAL}
+The calibration data set.  
+No default.
+\keyword{\bf SOURCE}
+Source names to be selected. 
+Default is all sources selected.
+\keyword{\bf FLAGS}
+Pay attention to the flags? Default is true.
+If set to false, all points are selected for viewing, including
+the ones flagged bad.
+\keyword{\bf CLOSE}
+If set to true, will be true for phase closure, but false for 
+baseline fit.  When set to true (an antenna based phase closure 
+solution). When set to true, breakpoints are also forced to be at
+the same time accross baselines.
+Default: false.
+\keyword{\bf TAVER}
+Taver consists of two numbers, tgap and ttot, both in minutes,
+which are used for vector averaging. If the time interval between
+any two successive data points is greater than tgap,, or if the total
+time between the first data point in a vector average and any
+succeeding data point exceeds ttot, then a new vector average is
+started.
+Default: 0.0,1000.0 (no vector averaging)
+\keyword{\bf DEVICE}
+The PGPLOT graphics device.  
+Default is ``?''
+\keyword{\bf RESET}
+Export mode: a logical, or can be left alone.
+If set to 't' or 'f' all flags in the file are set to such.
+The default is blank, meaning flags are not reset. If flags
+are reset, there is not user interaction possible, and no display 
+is started. This is a quick and dirty way to reset all flags
+in the calibration dataset to some value. In this mode no graphics
+interaction is used.
+Default: not used.
+\keyword{\bf UNITS}
+Units to work in. Options are: K, K/Jy, Jy/K.
+Note: since CALAPPLY assumes Jy/K any other units are nice to
+look at, but produce badly calibrated files.
+Default: Jy/K.
+\keyword{\bf AMPMAX}
+If supplied, the amplitude scale is fixed from 0 to ampmax,
+otherwise autoscaling is done. Default is autoscaling.
+\par}
+\module{calflux}%
+\noindent Print flux data for a calibrator source.
+\newline \ 
+\newline \abox{Responsible:} Jim Morgan
+\newline \abox{Keywords:} calibration, flux
+\newline{\tenpoint\newline
+CALFLUX returns the flux (in Jy) of a calibrator source at a
+given frequency (in GHz).  The source resides in a calibration
+file that is formatted such that each record is composed of
+white space separated fields ordered Source, Day (yymmmdd.d),
+Freq (GHz), Flux (Jy), and rms (Jy).  Lines beginning with
+a ``!'' are excluded.  Warnings are returned if there is no match
+of the source in the calibrator file, if there is no matching
+entry at the desired frequency, or the observation date is
+greater than 4 years.  The Day field, presently, is formatted
+as yymmmdd.d where yy is the year field 19yy, mmm is the three
+character string of the month, and dd.d is the decimal value
+of days.  None of the inputs are required, but they provide a
+means of bracketing the desired source(s).
+\keyword{\bf IN}
+Name of the calibration data file (Default is the file
+cals.fluxes in the directory MIRCAT).
+\keyword{\bf SOURCE}
+Name of the calibration source to list (default is all sources).
+The source name is minimum match format.
+\keyword{\bf FREQ}
+Frequency that the source was observed at in GHz (default is
+0.0, which implies all frequencies are valid matches).
+\keyword{\bf DELFREQ}
+A full width in GHz (default is 0.0) in which to accept
+deviations from the value of ``freq'' as a match.  If ``freq''
+is not given or is set to the default value, this input
+is ignored.
+\keyword{\bf DATE}
+The cutoff date before or after which no observations are
+listed (default is date=1.0, which implies all dates are valid
+matches).  If ``date=0'', then only the most recent data is
+listed.  If ``date{\tt >}0,'' then all data more recent than ``date''
+are listed; ``date{\tt <}0,'' then all data prior to ``abs(date)''
+are presented.  The format for ``date'' is the same as the DATE
+field in the flux calibration file:  either ``yymmmdd.d'' or
+``yymmmdd:hh:mm:ss.s'' with no internal spaces (the first 7
+characters are required).
+\keyword{\bf DELDATE}
+A full width in Julian days (default is 0.0) in which to accept
+deviations from the value of ``date'' as a match.  If ``date''
+is not given or it is set to the default value, then this input
+is ignored.
+\keyword{\bf FLUX}
+The lower limit flux value to consider as a match (default is
+all matching fluxes).
+\par}
+\module{calib}%
+\noindent Display raw calibration data with user interaction
+\newline \ 
+\newline \abox{Responsible:} Peter Teuben
+\newline \abox{Keywords:} calibration
+\newline{\tenpoint\newline
+CALIB is a MIRIAD task which displays the raw calibration data and 
+optionally a fit. Calib reads the data and fit from a cal file and 
+displays the result visually.  The user has the option to view the
+amplitudes, the phases, or the sums and difference of the phases in
+the two sidebands.   The fit is displayed as a
+line over the points, and all the axes are labeled, with ticks.  The
+user may interactively pick different plots to zoom on, and can mark
+individual points as good or bad. Breakpoints in time can be added
+and deleted as well. A new polynomial fits can also be added 
+interactively.
+
+Commands in cursor mode are:
+
+{\eightpoint\begintt
+  d/D -- flag the nearest point as bad (uppercase only one band)
+  a/A -- flag the nearest point as good (uppercase only one band)
+  x   -- zoom/unzoom on the current column
+  y   -- zoom/unzoom on the current row
+  z   -- zoom/unzoom on the current plot
+  b/B -- break polynomial here (uppercase only one band)
+  c/C -- (re)connect polynomials here (uppercase only one band)
+  0-9 -- order of new fit on current row
+  ma  -- change mode to amplitudes
+  mp  -- change mode to regular phases (U and L)
+  md  -- change mode to phase difference and average
+  q   -- quit (no save)
+  e   -- exit (save flags, breakpoints and fits if modifications done)
+  ?   -- help and dedraw screen
+\endtt}
+\keyword{\bf GCAL}
+The calibration data set.  
+No default.
+\keyword{\bf SOURCE}
+Source names to be selected. 
+Default is all sources selected.
+\keyword{\bf FLAGS}
+Pay attention to the flags? Default is true.
+If set to false, all points are selected for viewing, including
+the ones flagged bad.
+\keyword{\bf MODE}
+Work on 'amplitude', 'phase', or 'difs'.
+Default: amplitude
+\keyword{\bf CLOSE}
+If set to true, will be true for phase closure, but false for 
+baseline fit.  When set to true (an antenna based phase closure 
+solution). When set to true, breakpoints are also forced to be at
+the same time accross baselines.
+Default: false.
+\keyword{\bf TAVER}
+Taver consists of two numbers, tgap and ttot, both in minutes,
+which are used for vector averaging. If the time interval between
+any two successive data points is greater than tgap,, or if the total
+time between the first data point in a vector average and any
+succeeding data point exceeds ttot, then a new vector average is
+started.
+Default: 0.0,1000.0 (no vector averaging)
+\keyword{\bf DEVICE}
+The PGPLOT graphics device.  
+Default is ``?''
+\keyword{\bf RESET}
+Export mode: a logical, or can be left alone.
+If set to 't' or 'f' all flags in the file are set to such.
+The default is blank, meaning flags are not reset. If flags
+are reset, there is not user interaction possible, and no display 
+is started. This is a quick and dirty way to reset all flags
+in the calibration dataset to some value. In this mode no graphics
+interaction is used.
+Default: not used.
+\keyword{\bf UNITS}
+DANGEROUS: Units to work in. Options are: K, K/Jy, Jy/K.
+Default: Jy/K.
+\keyword{\bf AMPMAX}
+If supplied, the amplitude scale is fixed from 0 to ampmax,
+otherwise autoscaling is done. Default is autoscaling.
+\par}
+\module{callist}%
+\noindent List items from calibration data set
+\newline \ 
+\newline \abox{Responsible:} Peter Teuben
+\newline \abox{Keywords:} calibration
+\newline{\tenpoint\newline
+CALLIST is a MIRIAD task that lists some items in a calibration set.
+\keyword{\bf GCAL}
+Name of the calibration set
+\keyword{\bf VERBOSE}
+When set to 'true' is displays information per integration
+time. The default is 'false', which only displays when source
+name changes.
+\keyword{\bf POLY}
+When set to 'true' is displays information of all polynomials
+\keyword{\bf BREAK}
+When set to 'true' is displays information of all breakpoints
+\keyword{\bf CODE}
+Slot code for band/phase/amp to print. Must be 3 or 4
+characters. If empty, correllations are not printed.
+First character is A(mp) or P(phase).
+Second character is U(pper) or L(ower) sideband.
+Third character is W(ide) band or any of 1..8 for passband.
+Default: Empty.
+\keyword{\bf BASE}
+Baseline, combined with slot code specified before, to print.
+Valid entries must be 256*A1+A2, where A1 is antennae 1 and
+A2 antennae 2. Note: A1 {\tt <} A2.
+Default: 0
+\keyword{\bf LOG}
+Output device. (default is standard user output)
+\par}
+\module{calmake}%
+\noindent Create cal file from observation of calibrator
+\newline \ 
+\newline \abox{Responsible:} Peter Teuben
+\newline \abox{Keywords:} calibration
+\newline{\tenpoint\newline
+CALMAKE is a MIRIAD task which creates a calibration dataset.
+Calmake reads in data set(s) of phase calibration source(s),
+and creates a calibration data set, called a ``gcal'' file. 
+The data within the gcal file is taken from either the wide 
+band correlation channels or some averaged value from the narrow 
+band channels.
+At this time the data is converted to phase-amplitude, and
+phase discontinuities are resolved.  If the user wishes, points
+which cannot be phase-resolved adequately are marked as bad. 
+\keyword{\bf VIS}
+A list of input UV data sets to be used for calibration.  
+No default.
+\keyword{\bf GCAL}
+The output gain calibration set.  
+No default.
+\keyword{\bf LINE}
+Selection of the input data type used for output.
+Line type of the data is in the format (see User's manual)
+{\eightpoint\begintt
+   type, nchan, start, width, step
+\endtt}
+Here ``type'' must be ``channel'', ``wide'', or ``velocity''.
+The maximum number of channels must be 2 for this program.
+The default is to select type ``wide'' with ``nchan'' set to 2,
+``start'' set to 1, and ``width'' and ``step'' both set to 1.
+\keyword{\bf FLAGBAD}
+If ``flagbad'' is true and if any baseline does not close to
+better than PI radians, then all baselines from that sideband
+and integration time are flagged as bad data.
+Default: false
+NOTE: This option has been disabled since July 1990 when the 
+new phase flipper was installed.
+\keyword{\bf SELECT}
+Selects which visibilities are to be used.  The default is to use
+all visibilities.  See the Users Manual for information on how
+to specify uv data selection.
+\keyword{\bf AUTO}
+Use auto breakpoints when the source name changes?
+Default: True.
+\keyword{\bf FLUXES}
+List of sources and associated fluxes in Jy to be used for
+calibration. The format is name of the source, followed by
+its flux, and optionally more sources, e.g.
+fluxes=3c273,10.3,3c84,12.3,bllac,2.2
+Currently no frequency dependency can be specified.
+\keyword{\bf FLUXTAB}
+Name of the calibrators flux table file. If no name provided, the
+system default (MIRCAT/calibrator.fluxes) is taken. The user
+can also supply fluxes by hand (see keyword fluxes above) in
+which case the flux table derived values are ignored.
+\par}
+\module{cgplot}%
+\noindent Makes contour and grey scale plots
+\newline \ 
+\newline \abox{Responsible:} Neil Killeen
+\newline \abox{Keywords:} plotting
+\newline{\tenpoint\newline
+CGPLOT makes contour and grey scale overlay plots of Miriad
+images. Up to 2 contour plots and one grey scale plot may be
+overlaid in multipanel plots of multichannel images. In addition
+overlay locations (plotted as boxes or stars) may be specified
+from an ascii file.   Substantial control of the plot parameters
+allows publishable quality plots.  
+\keyword{\bf CIN}
+The input images (up to 2) to contour (optional).  If two
+images are specified, they must have identical dimensions.
+Default is no contour plot.
+\keyword{\bf GIN}
+The input file to make a grey scale of (optional). Can be the
+same as either contour image.  Note that when CIN and GIN are
+specified, the images must be the same size in all dimensions,
+except the special case of one image with only two dimensions,
+and the other with more than two (e.g. overlay multi-channel
+images on a continuum image).
+Default is no grey scale.
+\keyword{\bf REGION}
+Region of interest.  Use only hyper-rectangles please with
+the BOX and IMAGE commands.  
+Default is full image.
+\keyword{\bf CHAN}
+Two values. The first is the channel increment, the second is 
+the number of planes to average, for each sub-plot.  Thus
+CHAN=5,3  would average groups of 3 channels together, starting
+5 channels apart such as: 1:3, 6:8, 11:13 ... 
+In the case that CIN and GIN are both specified, and one of 
+those images has two dimensions and the other three, then 
+CHAN refers to that image with three dimensions. 
+Defaults are 1,1
+\keyword{\bf SLEV}
+Two values for first contour image. First value is the type of 
+contour level scale factor.  'p' for percentage and 'a' for 
+absolute.   Second value is the level to scale LEVS by.  Thus   
+SLEV=p,1  would contour levels at LEVS * 1\% of the image peak 
+intensity.  Similarly, SLEV=a,1.4e-2   would contour levels at 
+LEVS * 1.4E-2. 
+Default is no additional scaling of LEVS
+\keyword{\bf LEVS}
+Levels to contour for first image, are LEVS times SLEV 
+(either percentage of the image peak or absolute). 
+Defaults try to choose something sensible.
+\keyword{\bf SLEV2}
+SLEV for second contour image.
+\keyword{\bf LEVS2}
+LEVS for second contour image.
+\keyword{\bf RANGE}
+Three values. The grey scale range (background to foreground),
+and transfer function type ('lin' or 'log').
+Default is linear between the image minimum and maximum.
+\keyword{\bf DEVICE}
+The PGPLOT plot device, such as plot.plt/ps 
+Default is ? (prompt)
+\keyword{\bf NXY}
+Number of sub-plots in the x and y directions on the page. 
+Defaults choose something sensible.
+\keyword{\bf LABTYP}
+Two values.  One for the spatial label type of each axis 
+(x then y) as follows:
+'rd'  the labels are RA and DEC, 
+'p '  the labels are pixels
+'po'  the labels are pixel offsets
+'ao'  the labels are arcsecond offsets
+'l '  the labels are linear coordinates as defined by the header
+'lo'  the labels are offset linear coordinates
+
+All offsets are from the reference pixel.  If you give only one 
+value, the second (y) axis defaults to that type.
+Defaults are 'p', 'p'
+\keyword{\bf OPTIONS}
+A list of plot annotation and format options. Minimum match 
+of all keywords is active.
+\newline\newline 'full' means do full plot annotation with contour levels, gray
+  scale range, file names, reference values, etc.  Otherwise 
+  more room for the plot is available. 
+\newline\newline 'velocity' means label each sub-plot with the appropriate value 
+  of the third axis (e.g. velocity or frequency).   
+\newline\newline 'channel' means label each sub-plot with the channel number. 
+  Both 'vel' and 'chan' can appear, and both will be written 
+  on the plot
+\newline\newline 'equal' means draw plots with equal scales in x and y. 
+  Otherwise they will be unequal.
+\newline\newline 'gaps' means leave gaps between sub-plots and label each 
+  sub-plot, otherwise they will abut each other.
+\newline\newline 'solneg1' means make negative contours solid and positive 
+  contours dashed for the first contour image. The default, 
+  and usual convention is solid positive and dashed 
+  negative contours. 
+\newline\newline 'solneg2' SOLNEG1 for the second contour image.
+\keyword{\bf LINES}
+Two values.  The first is the integer line width.  This line
+width is used for the plot labels and annotation.
+The second is the intensity level for the break between solid 
+and dashed contours (see also SOLNEG in OPTIONS above). 
+Defaults are +1, 0.0
+\keyword{\bf LINES2}
+LINES for the for second contour image.  This line width
+is used ONLY for the contours, not any labelling.
+\keyword{\bf CSIZE}
+Three values.  Character sizes in units of the PGPLOT default
+(which is \~ 1/40 of the view surface height) for the plot axis
+labels, the velocity/channel label, and the overlay ID string
+(if option `w' in OLAY used) label.
+Defaults choose something sensible.  Use 0.0 to default the 
+first or second, but not the second or third, e.g., 0.0, 1.5
+\keyword{\bf SCALE}
+Two values.  Scales in linear axis units/mm with which to plot
+in the  x and y directions.  For example, if the increments 
+per pixel are in radians, then this number would be radians/mm.
+Although this choice of unit may be cumbersome, it makes no 
+assumptions about the axis type, so is more flexible.   If you 
+also chose OPTIONS=EQUAL then one of your scales, if you set 
+both and differently will be over-ruled.  When plotting on hard
+devices, the scales are printed on the terminal, so that you may
+fine adjust them with ease.
+If you give only one value, the second defaults to that. 
+Defaults choose scales to fill the page optimally. To default 
+the first but the second, use 0.0
+\keyword{\bf OLAY}
+Three values.   
+\newline\newline The first value is the name of a file containing a list of
+overlay (star or box) locations (NO TABS PLEASE!!). 
+Details of the file format follow below.
+Default is no overlays.
+\newline\newline The second value is the type overlay (boxes or crosses)
+\par 's'   for star overlays (i.e. crosses are plotted)
+\par 'b'   for box overlays 
+\par  If in addition, a 'w' follows the type (e.g., 'sw') then the
+   overlay identification string (the first column in the overlay
+   file, see below) is written in the corner of the overlay. 
+   Default is 'b'
+\newline\newline The third value (call it OTYPE) gives the units of the overlay 
+   location in the file.   For 'p ', 'po', 'ao', 'l ', 'lo', the
+   units of the overlay locations (and half-sizes) are pixels 
+   (pixels), pixel offsets (pixels), arcsecond offsets
+   (arcseconds), linear coordinates as defined by the header 
+   (linear coords), and linear coordinate offsets (linear 
+   coordinates).  All offsets are from the reference pixel. 
+   Default is 'p '.
+\newline\newline The format of the overlay file depends upon OTYPE.
+First line must be the number of overlays.  
+Successive lines as follows.
+
+For OTYPE = 'rd'
+{\eightpoint\begintt
+  ID   HH MM SS.S   DD MM SS.S   XOFF   YOFF  CHAN
+\endtt}
+where ID is an identifying overlay string which can be 
+optionally written in the overlay corner (see OTYPE above)
+HH MM SS.S DD MM SS.S is the RA and DEC of the overlay center
+XOFF is the RA half size of the overlay in pixels
+YOFF is the DEC half size of the overlay in pixels
+CHAN is the channel on which to overlay (0 means all channels)
+
+For OTYPE = 'p ', 'po', 'ao', 'l ', 'lo'
+{\eightpoint\begintt
+  ID  X  Y  XOFF   YOFF  CHAN
+\endtt}
+where X,Y defines the center of the overlay in pixels ('p'),
+offset pixels from the reference pixel ('po'),
+offset arcseconds from the reference pixel ('ao'),
+linear coordinates as defined by the header ('l')
+or offset linear coordinates as defined by the header ('lo').
+XOFF and YOFF are the overlay half-sizes in pixels ('p', 'po'),
+arcseconds ('ao'), and linear coordinates ('l', 'lo').
+
+In all cases, XOFF, YOFF and CHAN are optional.  The defaults
+are 2, 2, and 0, respectively.  Obviously, you can't default YOFF
+and specify CHAN.  The half-size defaults are probably only useful
+for locations in pixels.
+\par}
+\module{clean}%
+\noindent Apply Hogbom, Clark or Steer CLEAN algorithm to a map
+\newline \ 
+\newline \abox{Responsible:} Mel Wright
+\newline \abox{Keywords:} deconvolution
+\newline{\tenpoint\newline
+CLEAN is a MIRIAD task, which performs a hybrid Hogbom/Clark/Steer Clean
+algorithm, which takes a dirty map and beam, and produces an output
+map which consists of the Clean components. This output can be
+input to SELFCAL to self-calibrate visibilities, or input to RESTORE
+to produce a ``clean'' image. Optionally CLEAN can take as one of
+its inputs a model of the deconvolved image. This model could be
+from a previous CLEAN run, or from other deconvolution tasks
+(e.g. MAXEN). 
+\keyword{\bf MAP}
+The input dirty map, which should have units of Jy/beam. No
+default. 
+\keyword{\bf BEAM}
+The input dirty beam. No default
+\keyword{\bf MODEL}
+An initial model of the deconvolved image. This could be the
+output from a previous run of CLEAN, or the output of any of the
+deconvolution tasks (e.g. MAXEN). It must have flux units of
+Jy/pixel. The default is no model (i.e. a zero map). 
+\keyword{\bf OUT}
+The name of the output map. The units of the output will be
+Jy/pixel. This file will contain the contribution of the input model.
+It also should have a different name to the input model (if any).
+It can be input to RESTORE, CLEAN (as a model, to do more cleaning),
+or SELFCAL (for self-calibrating visibility data).
+\keyword{\bf GAIN}
+The minor iteration loop gain. Default is 0.1.
+\keyword{\bf CUTOFF}
+CLEAN finishes when the absolute maximum residual falls below
+CUTOFF. Default is 0. 
+\keyword{\bf NITERS}
+The maximum number of minor iterations. Clean is finished when the
+absolute value of (NITERS minor iterations) have been performed.
+Clean may finish before this point, however, if NITERS is negative
+and the absolute maximum residual becomes negative valued, or if
+the cutoff level (as described above) is reached. 
+\keyword{\bf REGION}
+This specifies the region to be Cleaned. See the Users Manual for
+instructions on how to specify this. The default is the inner
+quarter of all planes.
+\keyword{\bf PHAT}
+The Cornwell's prussian hat parameter. When cleaning extended sources,
+CLEAN may produce a badly corrugated image. This can be suppressed
+to some extent by cleaning with a dirty beam which has had a spike
+added at its center (i.e. a beam that looks like a prussian hat).
+PHAT gives the value of this spike, with 0 to 0.5 being good
+values. Default is 0 (but use a non-zero value for extended
+sources). 
+\keyword{\bf MINPATCH}
+The minimum patch size when performing minor iterations. Default
+is 51, but make this larger if you are having problems with
+corrugations. You can make it smaller when cleaning images which
+consist of a pretty good dirty beam. 
+\keyword{\bf SPEED}
+This is the same as the speed-up factor in the AIPS APCLN.
+Negative values makes the rule used to end a major iteration more
+conservative. This causes less components to be found during a
+major iteration, and so should improve the quality of the Clean
+algorithm Usually this will not be needed unless you are having
+problems with corrugations. A positive value can be useful when
+cleaning simple point-like sources. Default is 0. 
+\keyword{\bf MODE}
+This can be either ``hogbom'', ``clark'', ``steer'' or ``any'', and
+determines the Clean algorithm used. If the mode is ``any'', then
+CLEAN determines which is the best algorithm to use. The default
+is ``any''. 
+\keyword{\bf CLIP}
+This sets the relative clip level in a Steer clean, values
+typically being 0.75 to 0.9. The default is image dependent. 
+\par}
+\module{contsub}%
+\noindent Subtract continuum map from vxy cube by spectral fitting
+\newline \ 
+\newline \abox{Responsible:} Bart Wakker
+\newline \abox{Keywords:} map combination
+\newline{\tenpoint\newline
+CONTSUB will subtract off a continuum map from a VXY cube by
+averaging two regions in the spectrum, passing a baseline through
+the line defined by those two points, and subtracting that baseline
+from the spectrum. This is done at each pixel. 
+\keyword{\bf IN}
+The name of the input image. No default.
+\keyword{\bf OUT}
+The name of the output image. No default.
+\keyword{\bf LR}
+Range of channels to be averaged at low end of spectrum. No default.
+\keyword{\bf HR}
+Range of channels to be averaged at high end of spectrum. No default.
+\par}
+\module{convol}%
+\noindent Convolve a cube with a "beam function"
+\newline \ 
+\newline \abox{Responsible:} Mel Wright
+\newline \abox{Keywords:} map manipulation, map analysis
+\keyword{\bf MAP}
+The input map. This can be two or three dimensional. It should have
+units of Jy/beam. No default.
+\keyword{\bf BEAM}
+The input beam. This cannot be three dimensional. This must
+be symmetrical about its reference pixel. No default.
+\keyword{\bf REGION}
+The region of the input map to convolve. See the Users Manual for
+instructions on how to specify this. The default is the entire
+input map.
+\keyword{\bf OUT}
+The output image. No default.
+\module{copyhd}%
+\noindent Copy items from one data-set to another.
+\newline \ 
+\newline \abox{Responsible:} Robert Sault
+\newline \abox{Keywords:} utility
+\newline{\tenpoint\newline
+COPYHD is a Miriad task which copies items from one Miriad data-set
+to another. There is no interpretation of the items at all.
+\keyword{\bf IN}
+Name of the input data set. No default.
+\keyword{\bf OUT}
+Name of the output data set. This must already exist. No default.
+\keyword{\bf ITEMS}
+A list of items to be copied across. At least one value must be
+given.
+\par}
+\module{corset}%
+\noindent Program that models correlator setups.
+\newline \ 
+\newline \abox{Responsible:} Jim Morgan
+\newline \abox{Keywords:} utility
+\newline{\tenpoint\newline
+Program to model correlator setups.  It takes an observing frequency
+and IF, then searches a line file for all spectral lines that would
+be observable in the given setup.  The positions of the lines in the
+correlator for various correlator parameters can be plotted. 
+\keyword{\bf IN}
+The name of the line file.
+Default is ``MIRCAT:lovas3mm.dat.''
+\keyword{\bf FREQ}
+The rest frequency of the line in GHz.
+Default is 110 GHz.
+\keyword{\bf IF}
+The intermediate frequency in MHz.
+Default is 290 MHz.
+\keyword{\bf OVERRIDE}
+The override harmonic number.
+Default is 0.
+\keyword{\bf REFOSC}
+The reference oscillator code (0-new, 1-VLBI, 2-old).
+Default is new.
+\keyword{\bf VLSR}
+Vlsr of the source in km/s.
+Default is 0 km/s.
+\keyword{\bf DEVICE}
+The device used for plotting.  See the User's Manual for
+details on how to specify the device.
+Default is a prompt asking for the device.
+\keyword{\bf LOG}
+The output log file.
+The default is the terminal.
+\keyword{\bf MODE}
+Correlator mode (1-4).  See the User's Manual for an
+explanation of the modes.
+Default is 2.
+\keyword{\bf CORFS}
+Correlator frequency, in MHz, for the four mode settings.
+Corfs are mode dependent; defaults are shown below:
+
+{\eightpoint\begintt
+     mode               corfs
+      1                corf(1)=340
+      2                corf(1)=340, corf(2)=460
+     3,4               corf(1)=340, corf(2)=460
+                       corf(3)=100, corf(4)=100
+\endtt}
+\keyword{\bf BW}
+Correlator bandwidth, in MHz.
+Bw(1) and bw(2) should take on values that are multiples of
+2 starting at 1.25 MHz up to 40 MHz.
+\keyword{\bf OPTIONS}
+Type ``cross'' for cross-correlation or ``auto'' for
+auto-correlation.       
+Default is cross-correlation.
+\par}
+\module{delhd}%
+\noindent Delete a data-set item.
+\newline \ 
+\newline \abox{Responsible:} Robert Sault
+\newline \abox{Keywords:} utility
+\newline{\tenpoint\newline
+DELHD is a MIRIAD task to delete an item from a Miriad image or uv
+data set.
+\keyword{\bf IN}
+The name of an item within a data set. This is given in the
+form:
+{\eightpoint\begintt
+  % delhd in=dataset/item
+\endtt}
+\par}
+\module{demos}%
+\noindent Inverse mosaicing operation
+\newline \ 
+\newline \abox{Responsible:} Mel Wright
+\newline \abox{Keywords:} map manipulation
+\newline{\tenpoint\newline
+DEMOS (de-mosaic) is a MIRIAD task which takes a primary beam
+corrected cube, and forms output cubes. The output cubes are formed
+by applying a primary beam at various pointing centres. Thus this task
+performs the inverse operation of mosaicing. The input pointing
+centres and the primary beam size are specified either directly, or
+by giving a uv containing multiple pointings.
+
+Because the output of DEMOS are not primary beam corrected, they can
+be used for comparison with other uncorrected images and data. In
+particular SELFCAL cannot handle a model which is primary beam
+corrected, though it can handle a visibility data file containing
+multiple pointings. Thus you could use DEMOS to break the model into
+several models which are not primary beam corrected.
+\keyword{\bf MAP}
+This is the name of image, that is to be de-mosaiced. No default.
+\keyword{\bf VIS}
+This is an input uv file, whose pointing centres can act as
+defaults (templates) for the ``center'' parameter. As this is only
+used to determine defaults, it makes no sense to specify both ``vis''
+and ``center''.
+\keyword{\bf CENTER}
+This gives a list of pairs of offset pointing positions, relative
+to the reference pixel of ``map''. The offsets are measured in
+arcseconds in the plane of the sky, in the directions of (ra,dec).
+A pair of values must be given for each pointing, giving the offset
+in x and y. If this is not given, the pointing centers are determined
+from the ``vis'' file. Either ``vis'' or ``center'' must be present.
+\keyword{\bf PBFWHM}
+The Primary beam is modeled by circular gaussian. PBFWHM gives the
+full width at half maximum of the primary beam, in arcseconds. One
+value is given. If no value is given, DEMOS uses the default as
+the primary beam size of the telescope used to observe the ``map''
+file (if DEMOS knows the primary beam of the telescope).
+\keyword{\bf OUT}
+This gives a template name for the output images. The actual output
+image names are formed by appending a number (starting at one) to
+this output name. For example, if out=cygnus, then the output images
+will be called cygnus1, cygnus2, etc.
+\keyword{\bf IMSIZE}
+This gives two values, being the output image size, in x and y.
+If no value is given, then the outputs will be one primary beam
+width in size. If one value is given, then this is used for both
+x and y. Each output size might be smaller than this, to prevent
+each output from extending beyond the edges of the input image.
+\par}
+\module{doc}%
+\noindent MIRIAD documentation program
+\newline \
+\newline \abox{Responsible:} Bart Wakker
+\newline \abox{Keywords:} tools
+\newline{\tenpoint\newline
+DOC extracts on-line documentation and presents the output in a
+variety of formats. Non-programmers need only use DOC to display
+formatted on-line documentation of MIRIAD tasks (eg, ``doc fits''). The
+remainder of this documentation is intended only for MIRIAD
+programmers.
+
+Usage:
+{\eightpoint\begintt
+ doc [-f] [-ditruUpP] [-m module] [-x texformat] [-s type] [-o dir]
+     [-a] [-w#] [-e] [-l listfile] [files]
+
+\endtt}
+Options:
+{\eightpoint\begintt
+    (none) show list of options
+    -f     show the format for input files
+    -d     type formatted document(s) (default option)
+    -i     make an alphabetized list of routines in input file
+    -t     make a list of routines by functional category
+    -r     extract codename of programmer responsible for routines
+    -U     make a single TeX/LaTeX output of all input files
+    -u     make TeX/LaTeX files, one for each routine in inputs
+    -P     make a single on-line-format output of routines in inputs
+    -p     make on-line-format files, one for each routine in inputs
+    -m     search for documentation of 'module' in list of input files
+    -x     select TeX or LaTeX (default); choice case insensitive
+    -s     select to make a LaTeX section/subsection for each task
+    -o     put 'dir' as directory of source code in the output
+    -a     ask user what to do if an output file already exists
+    -w     stop printing after # lines and ask if user wants to go on
+    -e     do not check for filename extensions of input files
+    -l     process all files listed on file 'listfile'
+    files input file(s) to be processed
+
+\endtt}
+Without the -e option, doc will work only on input files with
+extensions .for, .f, and .c (source code) and with extensions .doc,
+.sdoc, .tdoc, and .cdoc (on-line documentation).
+
+Input files can be read from a file (option -l) or listed. These
+options can be combined. If no filename extensions are given for
+[files], they are searched for in \$MIRPDOC and \$MIRSDOC.
+
+Option -u writes output in the user's current working directory, with
+filename extension .tex. Option -p writes output in the user's current
+working directory with the appropriate .doc, .cdoc, .sdoc, or .tdoc
+filename  extension.
+
+Options -i and -t are used to construct alphabetic and systematic
+indices.
+
+Below a short description of in-code format, where output files have
+extensions .doc, .sdoc, .tdoc, and .cdoc:
+
+{\eightpoint\begintt
+ c=  [routine name] [one-line description] (for main programs/scripts)
+ c*  [routine name] [one-line description] (for subroutines)
+ c&  programmer responsible for the routine
+ c:  comma-separated list of categories pertaining to the routine
+ c+
+ c   multi-line program description block
+     [subroutine call and variable declarations]
+ c@  keyword
+ c   multi-line keyword description
+ c<  standard-keyword
+ c   multi-line description of non-standard features
+ c-- end of multi-line documentation block
+
+\endtt}
+The flag character 'c' may also be 'C' or '/*' (the latter for .c
+files). In the case where option -e was used, directives should start
+with \# or \$! (for unix scripts and VMS command files, respectively).
+
+The c{\tt <} directive may be used for some keywords which have a standard
+description (in, out, vis, select, line, region, server, device).
+
+The keyword directives c@ and c{\tt <} may be used more than once, unlike
+the other directives. For tasks and scripts (i.e. not for subroutines)
+the first character on the first non-empty line of the documentation
+blocks determines an ``alignment column''. When converting to (La)TeX
+format, lines that have a space in this column are typeset
+``verbatim''. No line should start before the alignment column. The
+documentation block between c+ and c-- may contain any character,
+except that the tilde (\~) cannot be used inside a verbatim block.
+Backslashes should be doubled.
+
+Recognized task categories (: directive):
+{\eightpoint\begintt
+ General           Utility          Data Transfer   Visual Display
+ Calibration       uv Analysis      Map Making      Deconvolution
+ Plotting          Map Manipulation Map Combination Map Analysis
+ Profile Analysis  Model Fitting    Tools           Other
+
+\endtt}
+Recognized subroutine categories (: directive):
+{\eightpoint\begintt
+ Baselines         Calibration      Convolution     Coordinates
+ Display           Error-Handling   Files           Fits
+ Fourier-Transform Gridding         Header-I/O      History
+ Image-Analysis    Image-I/O        Interpolation   Least-Squares
+ Log-File          Low-Level-I/O    Mathematics     Model
+ PGPLOT            Plotting         Polynomials     Region-of-Interest
+ SCILIB            Sorting          Strings         Terminal-I/O
+ Text-I/O          Transpose        TV              User-Input
+ User-Interaction  Utilities        uv-Data         uv-I/O
+ Zeeman            Other
+
+\endtt}
+Recognized script/command file categories (: directive):
+{\eightpoint\begintt
+ System Operation  Programmer Tool  User Utility     Other
+
+\endtt}
+Examples of use:
+doc fits                    - Print on-line doc on the screen
+doc -p \$MIRPROG/* /fits.for  - Generate on-line doc
+doc -u \$MIRPROG/* /fits.for  - Generate tex file
+doc -e mir.bug.csh          - Print on-line doc of a script
+doc -m xysetpl \$MIRSUBS/*   - Search for doc of xysetpl in MIRSUBS
+doc -m xysetpl \$MIRSDOC/*   - Search for doc of xysetpl in MIRSDOC
+
+\par}
+\module{ellint}%
+\noindent Integrate a Miriad image in elliptical annuli.
+\newline \ 
+\newline \abox{Responsible:} Mel Wright
+\newline \abox{Keywords:} image analysis
+\newline{\tenpoint\newline
+ELLINT integrates a Miriad image in elliptical annuli in the first
+two image planes, e.g. to find the radial brightness distribution,
+or flux density as a function of distance in a galaxy. The
+integration is done separately for each image plane in the region
+included.
+\keyword{\bf IN}
+Input image name. xyz images only. No default.
+\keyword{\bf REGION}
+Region of image to be integrated. E.g.
+{\eightpoint\begintt
+  % ellint region=relpix,box(-4,-4,5,5)(1,2)
+\endtt}
+integrates the center 10 x 10 pixels for image planes 1 and 2.
+The default region is the entire image.
+\keyword{\bf CENTER}
+The center of the annuli in arcsec from the center pixel, measured
+in the directions of RA and DEC.
+\keyword{\bf PA}
+Position angle of ellipse in degrees. Default is 0 (north).
+\keyword{\bf AR}
+Axial ratio of ellipse. (0 to 1) default 1.
+\keyword{\bf RADIUS}
+Inner and outer radii and step size along major axis in arcsecs.
+The default is the whole image in steps equal to the pixel size.
+\keyword{\bf PBFWHM}
+Primary beam fwhm in arcsecs (RA,DEC). If one value is given it is
+used for both RA and DEC. pbfwhm=-1 uses the value from the image
+header if present. The default is no correction.
+\keyword{\bf LOG}
+The output log file. The default is the terminal.
+\par}
+\module{fft}%
+\noindent Fourier transform on image(s)
+\newline \ 
+\newline \abox{Responsible:} Mel Wright
+\newline \abox{Keywords:} uv analysis, map making
+\newline{\tenpoint\newline
+FFT is a MIRIAD task which performs a fast Fourier transform on
+an image. If the input is a cube, then each plane is FFT'ed
+individually (i.e. this does not perform a 3D FFT).
+\keyword{\bf RIN}
+This gives the input real part image. No default.
+\keyword{\bf IIN}
+This gives the input imaginary part image. The default is a zero image.
+\keyword{\bf SIGN}
+This gives the sign of the exponent in the transform. -1 gives a
+forward transform, +1 an inverse transform. An inverse transform
+applies 1/N scaling. The default is a forward transform.
+\keyword{\bf CENTER}
+This gives the phase center of the transform. If two values are
+given, then they are used as the phase center in the x and y axis
+respectively. If one value is given, then this is used for the
+transform center for both the x and y dimensions. The default is the
+header value for CRPIX1 and CRPIX2 (if they are in the header) or
+N/2+1 (if CRPIX is missing from the header).
+\keyword{\bf ROUT}
+The output real part image. The default is not to write this image out.
+\keyword{\bf IOUT}
+The output imaginary part image. The default is not to write this
+image out.
+\keyword{\bf MAG}
+The output magnitude image. the default is not to write this image out.
+\keyword{\bf PHASE}
+The output phase image. The default is not to write this image out.
+\par}
+\module{fitgains}%
+\noindent List gains for a uv dataset
+\newline \ 
+\newline \abox{Responsible:} Mel Wright
+\newline \abox{Keywords:} uv analysis
+\newline{\tenpoint\newline
+FITGAINS lists the gains derived from a self-calibration 
+for a MIRIAD UV data file. The mean and rms of the gains
+are calculated.
+\keyword{\bf VIS}
+The input UV dataset name. Only the gains item needs to be
+present in the uv dataset. No default.
+\keyword{\bf LOG}
+The list output file name.  The default is the terminal. The
+gains are listed versus time, and can be plotted using Mongo.
+\keyword{\bf REFANT}
+The gain of this antenna is set to cmplx(1.,0.). The
+other antenna gains are relative to the reference antenna.
+The default is to use the original gains.
+\par}
+\module{fits}%
+\noindent Conversion between MIRIAD and FITS image and uv formats
+\newline \ 
+\newline \abox{Responsible:} Robert Sault
+\newline \abox{Keywords:} data transfer
+\newline{\tenpoint\newline
+FITS is a MIRIAD task, which converts image and uv files both from
+FITS to Miriad format, and from Miriad to FITS format. Note that
+because there is not a perfect correspondence between all information
+in a FITS and Miriad file, some information may be lost in the
+conversion step. This is particularly true for uv files.
+\keyword{\bf IN}
+Name of the input file (either a FITS or MIRIAD file name, depending
+on OP). No default.
+\keyword{\bf OP}
+This can take the values ``uvin'', ``uvout'', ``xyin'', ``xyout'' or
+``print''. These perform:
+{\eightpoint\begintt
+  uvin   Convert FITS uv file to Miriad uv file.
+  uvout  Convert Miriad uv file to FITS uv file.
+  xyin   Convert FITS image file to Miriad image file.
+  xyout  Convert Miriad image file to FITS image file.
+  print  Print out a FITS header.
+\endtt}
+\keyword{\bf OUT}
+Name of the output file (either a MIRIAD or FITS file name, depending
+on OP). If op=print, then this parameter is not required. Otherwise
+there is no default.
+\keyword{\bf LINE}
+Line type of the output, when op=uvout. This is of the form:
+
+{\eightpoint\begintt
+  linetype,nchan,start,width,step
+
+\endtt}
+``Linetype'' is either ``channel'', ``wide'' or ``velocity''. ``Nchan'' is
+the number of channels in the output.
+\keyword{\bf ALTR}
+Velocity information, used when op=uvin. If this is given, it
+overrides any information that may be present in the FITS header.
+It can be two values, namely the reference channel, and the
+velocity at the reference channel (in km/sec).
+\keyword{\bf STOKES}
+MIRIAD cannot currently create a uv file with multiple Stokes
+parameters. When reading in a uv file (op=uvin), FITS will convert
+or extract a single polarization from the uv file. This parameter
+can be ``i'', ``q'', ``u'', ``v'' or ``0''. Here ``0'' is like ``i'',
+except that it assumes that the source is unpolarized.
+\par}
+\module{flint}%
+\noindent Fortran source code verifier
+\newline \ 
+\newline \abox{Responsible:} Robert Sault
+\newline \abox{Keywords:} tools
+\newline{\tenpoint\newline
+Flint is NOT intended to replace compiler checks.  Flint is blind
+to much bad code that any compiler will pick up. Flint is intended 
+to be used after a compiler accepts the source, but before you start 
+debugging.
+
+Checks it performs include:
+{\eightpoint\begintt
+  * undeclared variables.
+  * variable declared but never used.
+  * variables used before being assigned.
+  * variables assigned to but not otherwise used.
+  * names longer than 8 characters, or containing $ or _ characters.
+  * lines longer than 72 characters, or containing an odd number of
+    quote characters.
+  * subroutine argument consistency: number, type and intent.
+
+\endtt}
+Areas for Improvement:
+{\eightpoint\begintt
+  * Improved error checking and handling.
+  * Improve "initialisation checking" algorithm.
+  * Consistency in common block definition. Checks could include 
+    common block size, variable type matching, and even variable 
+    name matching.
+  * Better checks for illegal mixed expressions (i.e. mixing integers 
+    and logicals).
+  * Passing character expressions containing char*(*) variables.
+  * Parsing of DATA statements is very crude.
+  * SAVE statement usage
+
+\endtt}
+Things Flint does not understand:
+{\eightpoint\begintt
+  * ASSIGN
+  * Assigned GOTO
+  * PAUSE
+  * ENTRY
+  * alternate returns
+  * many archaic i/o statements
+  * much non-standard FORTRAN
+
+\endtt}
+Flint ignores:
+{\eightpoint\begintt
+  * IMPLICIT
+  * EQUIVALENCE
+  * FORMAT
+
+\endtt}
+Recognised FORTRAN extensions:
+{\eightpoint\begintt
+  * INTENT statement
+  * DO/ENDDO, DOWHILE/ENDDO
+  * # to start comments
+  * tabs and full ascii character set.
+
+\endtt}
+There are some places where better use could have been made of stdio.
+However Flint is intended to work on a number of systems, and so
+it has been written to avoid some bugs in some non-UNIX stdio packages.
+Systems on which Flint is believed to work are Berkeley UNIX (Sun, 
+Alliant, Convex), UNICOS, VMS, Turbo-C (MS-DOS) and CTSS (hcc 
+compiler).
+
+\newline\newline ================
+\newline Summary of Flags
+\newline ================
+\newline Flint takes a large number of flags, to attempt to keep the error 
+messages that it generates down to manageable proportions. The 
+command format is:
+
+{\eightpoint\begintt
+ flint [-acdfhjrsux2?] [-I dir] [-o file] [-l] file ...
+
+  a    make crude list of all variables used
+  c    Allow comments and continuation lines to be interwoven. 
+       Normally flint flags this as an error.
+  d    Do not insist that variables are always explicitly declared.
+  f    Disable "line checks".
+  h    Crude treatment of hollerith.
+  j    Do not check if a variable has been initialised.
+  r    Do not warn about seemingly redundant variables.
+  s    Load the definitions of specific functions and FORTRAN-IV
+       standard function.
+  u    Do not worry about unused variables.
+  x    Allow names longer than 8 characters.
+  2    Flint performs two passes.
+  ?    Print a message describing the flags.
+
+  o    Generate output file giving subroutine definitions only. The 
+       next command line argument gives the output file name.
+  l    The following file is to be processed in "library mode". This
+       means that the file is not echoed to flint.log, and that errors
+       detected are to be ignored.
+  I    add a directory to search for include files 
+
+\endtt}
+\newline\newline ================
+\newline Basic Workings
+\newline ==============
+\newline Flint maintains two (hash) tables which contain all Flint info about
+variables and subroutines. Almost always, these hash tables are 
+accessed through the set\_variable and set\_routine subroutines. The 
+caller passes in whatever it knows about the variable or routine, 
+and the set\_? routine passes back the accumulated knowledge about 
+the variable or routine. set\_variable and set\_routine are responsible 
+for generating many warnings. 
+
+\newline\newline ================
+\newline Determining Intent
+\newline\newline ==================
+\newline Flint attempts to uncover the intent of subroutine arguments. It 
+gleans information from both calls to the routine and the source of 
+the routine itself (if available).
+
+The following rules are used when analysing a call to a routine:
+\newline\newline * Arguments which are passed in as constants, expressions or parameters
+  are input! Arguments which are input dummy arguments to the current
+  routine are also deemed to be inputs. These rules are reliable.
+\newline\newline * Arguments which are variables which have not been initialised are
+  assumed to be output. Also arguments which are output dummy arguments
+  to the current routine, and have not yet been initialised, are also
+  deemed to be outputs. These rules depend on the accuracy of the
+  initialisation checking algorithm, which can be inaccurate. These
+  rules are disabled if initialisation checking is disabled.
+\newline\newline The following rules are used when analysing the source of the routine.
+\newline\newline * Dummy arguments which are used as input only are clearly input. This rule is reliable.
+\newline\newline * Dummy arguments which are assigned to before they are used, are 
+  deemed as output. This rule depends on the initialisation checking 
+  algorithm, and is turned off, if initialisation checking is turned 
+  off.
+\newline\newline * Dummy arguments which are used and then assigned to are deemed to
+  be input/output. 
+
+\newline\newline What goes on when dummy arguments are passed to subroutines produces 
+much recursive thought. There are some instances where Flint has to 
+discard some hard won information, because there are too few flags 
+to describe all the contortions that can occur.
+
+\newline\newline ================
+\newline Flags and Hash Tables
+\newline =====================
+\newline EACH entry in the ``vhash'' hash table consists of a name and set of 
+flags. These are mostly just variables, but they also contain entries 
+for each EXTERNAL and each function or subroutine called (except the
+FORTRAN intrinsics?).
+
+Each entry in the ``rhash'' hash table is a subroutine or function 
+definition. Each definition consists of the name, flags for the 
+routine, the number of subroutine arguments, and an array of flags, 
+one for each argument. Entries for FORTRAN intrinsics appear in this 
+table.
+
+The meaning of most flags (I hope) is fairly clear, but
+F\_IN,F\_OUT,F\_PIN,F\_POUT require more attention. For a variable,
+F\_IN and F\_OUT is set if the variable has been used as source or
+destination of an operation, respectively. F\_PIN is set for subroutine
+arguments, indicating that this variable may have been passed in by the
+caller. If Flint determines that this is not so, then this flag is
+turned off. F\_POUT indicates that this variable may have been passed
+out by a subroutine. 
+
+For a subroutine or function, these flags are used only in the
+vhash table. F\_IN and F\_OUT indicate that the routine
+has been called. F\_PIN is always set if it was a dummy argument.
+F\_POUT is set if it was passed to a subroutine.
+
+For a routine argument (in the ``rhash'' table), F\_IN and F\_OUT means
+passed in and passed out. An absence of these indicates that Flint 
+does not know.                                                       
+\par}
+\module{gainerr}%
+\noindent Add dummy gains to a visibility file.
+\newline \ 
+\newline \abox{Responsible:} Robert Sault
+\newline \abox{Keywords:} uv analysis
+\keyword{\bf VIS}
+The input visibility file. This is used to determine the number
+of antennas and the time range. No default.
+\keyword{\bf INTERVAL}
+Averaging time interval, in minutes. Default is 5.
+\keyword{\bf ANTPNOIS}
+Rms phase noise, in degrees. Default is 0.
+\module{hatfft}%
+\noindent Timing and test of fft algorithms.
+\newline \ 
+\newline \abox{Responsible:} Mel Wright
+\newline \abox{Keywords:} fft, timing
+\newline{\tenpoint\newline
+HATFFT is a Miriad task to get timing and test fft algorithms.
+\keyword{\bf DATA}
+Input data for the fft is generated internally. Possible values
+are data=0 for random noise, and data='value'. The real and
+imaginary parts are both set to random noise, or 'value'.
+Default is 0.
+\keyword{\bf MODE}
+Mode can be 'mels' 'bobs' or 'diff'. Default is 'mels'
+\keyword{\bf SIZE}
+This is the size of the transform. Three numbers can be given
+for the minimum, maximum, and step size. All numbers must be
+powers of 2. Default is 128,2048,4 which does the transform for
+sizes of 128, 512 and 2048.
+\keyword{\bf NBASE}
+Each transform is repeated nbase times. Maximum is 36. Default is 1.
+\keyword{\bf SIGN}
+The sign of the transform. Must be 1 or -1. Default is 1.
+\par}
+\module{hatmap}%
+\noindent Convert old Hat Creek 2D images to MIRIAD cube
+\newline \ 
+\newline \abox{Responsible:} Mel Wright
+\newline \abox{Keywords:} data transfer
+\newline{\tenpoint\newline
+HATMAP is a MIRIAD task which converts old Hat Creek 2D maps
+into a MIRIAD cube
+\keyword{\bf IN}
+Filename of the first Hat Creek 2D map. Filenames must be of the
+form nameNNN.ext where NNN is a 1 to 3 digit integer. No default.
+\keyword{\bf OUT}
+The output MIRIAD image. No default.
+\keyword{\bf CHANINC}
+The channel increment between Hat Creek maps. Increments the integer
+NNN in the map filename. Default=1.
+\keyword{\bf NCHAN}
+The number of 2D Hat Creek maps to read. Default=1.
+\keyword{\bf SCALE}
+Scaling factor to normalize the maps to Jy/beam, and the beam to unit
+amplitude. Enter the beam maximum. Default=1.
+\par}
+\module{hcconv}%
+\noindent Convert Hat Creek uv format into MIRIAD uv format
+\newline \ 
+\newline \abox{Responsible:} Peter Teuben
+\newline \abox{Keywords:} data transfer
+\newline{\tenpoint\newline
+Converts Hat Creek data on a Unix system to MIRIAD format.
+The Hat Creek data are usually obtained by exploding a 
+backup saveset. Giving no arguments at all will turn program
+in auto scanning mode...                                  
+As said, HCCONV only runs on SUN Unix (not CRAY); on VMS
+use the program UVHAT.                                    
+\keyword{\bf IN}
+The Hat Creek data file(s). In no input given, autoscanning
+for files of the form '*.ddmmm'. Formally in Unix wildcard
+notation: *.[0-9][0-9][a-z][a-z][a-z] Default: empty.     
+\keyword{\bf OUT}
+Name of the MIRIAD data set to be created. If no name provided
+hcconv chooses a name. See the ``mode'' keyword for how this 
+can be done. If multiple input files, and one output file,
+the input files are merged into one output file. Make sure the
+type of the input files (auto/cross correlation) are all the 
+same.
+Default: empty, meaning auto-filename generation.         
+\keyword{\bf MODE}
+Option denoting how the output filename is formed from the
+input filename. Options are: ``underscore'' (replaces the dot
+by an underscore), ``strip'' (strips name from the dot onwards).
+Default: ``underscore''                                   
+\par}
+\module{hermes}%
+\noindent Make model images for Mercury.
+\newline \ 
+\newline \abox{Responsible:} Mel Wright
+\newline \abox{Keywords:} image analysis, planets.
+\newline{\tenpoint\newline
+First calculates a Hermographic brightness temperature map,
+then uses interpolation and coordinate rotations to find
+the corresponding map in geocentric RA and DEC offsets from
+the sub-earth point.  Next, the Fresnel reflection coef-
+ficients are applied to obtain the model map.
+\keyword{\bf IN}
+Parameter file. Default is ``hermes.in''.
+\keyword{\bf IMSIZE}
+Image size. Default is 64.
+\keyword{\bf LOG}
+Output log file. Default is ``hermes.log''.
+\keyword{\bf OUT}
+Output image. Units JY/PIXEL. No default.
+\par}
+\module{histo}%
+\noindent Find statistics of image and plot simple histogram
+\newline \ 
+\newline \abox{Responsible:} Mel Wright
+\newline \abox{Keywords:} map analysis
+\newline{\tenpoint\newline
+HISTO is a Miriad task which finds the minimum, maximum, mean and
+rms deviation from the mean for the selected region of the image.
+It also displays a simple histogram which is useful for determining
+the clip levels for clean and selfcal.
+\keyword{\bf IN}
+The input file name. No default.
+\keyword{\bf REGION}
+The region of interest of the input. Default is the entire input.
+See the Users Manual for instructions on how to specify this.
+\keyword{\bf RANGE}
+The range in pixel values over which the histogram is calculated.
+The default is the image minima and maxima.
+\keyword{\bf NBIN}
+The number of bins used in the histogram. Default is 16.
+\par}
+\module{imcat}%
+\noindent Concatenate several images to one cube
+\newline \ 
+\newline \abox{Responsible:} Mel Wright
+\newline \abox{Keywords:} map combination
+\newline{\tenpoint\newline
+IMCAT is a MIRIAD task to concatenate several images together,
+along the third dimension (generally the frequency or velocity
+dimension).
+\keyword{\bf IN}
+The input images. Several file names can be entered, separated
+by commas. No default.
+\keyword{\bf OUT}
+The output image. No default.
+\par}
+\module{imdiff}%
+\noindent Shift and expand an image to make it match another.
+\newline \ 
+\newline \abox{Responsible:} Robert Sault
+\newline \abox{Keywords:} image-analysis
+\keyword{\bf IN1}
+The first input image. This is considered to be the ``reference''
+image. No default.
+\keyword{\bf IN2}
+The second input image. This is considered to be the image that must be
+adjusted to make it like IN1. No default.
+\keyword{\bf RESID}
+An output image consisting of the difference between IN1 and the
+adjusted form of IN2. It is generally best to look at the residuals,
+to check that they are noise-like. The residuals are defined as:
+{\eightpoint\begintt
+  
+Resid(x,y) = In1(x,y) - Amp*In2(Expand*x+Xshift,Expand*y+YShift) - Offset
+  
+\endtt}
+(Here X and Y are relative to IN2's reference pixel). The default is
+not to create the residuals.
+\keyword{\bf REGION}
+The region of interest. Currently this must be a rectangular
+region. The default is the entire image.
+\keyword{\bf VARY}
+Flags which indicate which parameters are to be optimised. VARY can
+consist of the characters ``A'' (amplitude), ``O'' (offset), ``X''
+(x-shift), ``Y'' (y-shift) or ``E'' (expansion). The order is not
+important. For example VARY=AOXY tells IMDIFF to find optimum
+amplitude, offset and shifts (x and y), but not vary the expansion.
+The default is AOXYE, that is to allow everything to vary. 
+\keyword{\bf GUARD}
+The task cannot work right to the edge of the image, because the
+shifts and expansions might mean that there is no corresponding point
+between images near the image edges. Consequently a guard band is
+needed. GUARD gives the width of this band, in pixels. In the output
+residuals, this band will be set to zero. Default is 10. 
+
+The following five parameters give the initial estimates for the
+various parameters that IMDIFF is trying to find. If the parameters
+are fixed, then IMDIFF will not change them from their initial
+settings. 
+\keyword{\bf XSHIFT}
+This gives the initial value, in pixels, of the x-shift.
+This should be only +/- a few pixels. Default is 0.
+\keyword{\bf YSHIFT}
+This gives the initial value, in pixels, of the y-shift. Default is 0.
+\keyword{\bf EXPAND}
+This gives the initial expansion. Only small expansions can be
+handled (e.g. approximately in the range 0.95 to 1.05). This should
+be adequate for proper motion studies. Default is 1.
+\keyword{\bf AMP}
+This gives the initial amplitude scale factor. Default is 1.
+\keyword{\bf OFFSET}
+This gives the initial dc offset to apply to IN2. The default
+is 0.
+\module{imgen}%
+\noindent All-purpose image manipulator/creator
+\newline \ 
+\newline \abox{Responsible:} Mel Wright
+\newline \abox{Keywords:} utility, map manipulation
+\newline{\tenpoint\newline
+IMGEN is a MIRIAD task which modifies an image, or creates a new
+image. 
+\keyword{\bf IN}
+The input image, which is to be modified. The default is a map
+with consists entirely of zeros. 
+\keyword{\bf OUT}
+The output image. No default. 
+\keyword{\bf FACTOR}
+Factor to multiply the input image by. This is meaningless if no
+input image is given. The default is 1. 
+\keyword{\bf IMSIZE}
+If not input image is given, then this determines the size, in
+pixels, of the output image. Either one or two numbers can be
+given. If only one number is given, then the output is square.
+The default is 256 pixels square. 
+\keyword{\bf OBJECT}
+This determines the type of object added to the input image.
+Valid objects are ``gaussian'' (elliptical gaussians), ``disk''
+(elliptical disks), ``j1x'', (a J1(x)/x function), ``point''
+(a point source), ``noise'' (gaussian noise) and ``level'' (a dc
+level). ``Gaussian'' is the default. 
+\keyword{\bf SPAR}
+Parameters which give the characteristics of the object. For
+gaussian, j1x and disk, this consists of up to three numbers, being
+the amplitude (default 1), the object full-width at half-max in
+RA (default 1), and full-width half-max in DEC (default is width
+in RA). Widths are given in arcseconds. For points and levels,
+only one number, the amplitude, is needed, which has a default of
+1. 
+\keyword{\bf XY}
+This is two numbers giving the relative offset of the center of
+the object, in arcseconds. This is relative to the reference
+point of the input, or the image center if there is no input.
+This is ignored if the object is a level. The default is 0.
+\keyword{\bf CELL}
+The increment between pixels, in arcseconds. This is only used if
+there is no input map. The default is 1 arcsec.
+\par}
+\module{imhead}%
+\noindent List items and pixel values from an image.
+\newline \ 
+\newline \abox{Responsible:} Jim Morgan
+\newline \abox{Keywords:} utility
+\newline{\tenpoint\newline
+Imhead lists a Miriad image header in detail.
+Conversions of headers to astronomical coordinates are made.
+\keyword{\bf IN}
+Input image name.  There is no default file name.
+\keyword{\bf LOG}
+The output log file.  The default is to output to the terminal.
+\par}
+\module{imlist}%
+\noindent List items and pixel values from an image
+\newline \ 
+\newline \abox{Responsible:} Mel Wright
+\newline \abox{Keywords:} image analysis
+\newline{\tenpoint\newline
+IMLIST lists a Miriad image. It will list the header, statistics,
+selected regions of the data, and the history. RA and DEC are converted
+to astronomical coordinates. The default output to the terminal can be
+terminated.
+\keyword{\bf IN}
+Input image name. No default.
+\keyword{\bf OPTIONS}
+The options are 'head' 'data' 'history' and 'stat'. Several options
+can be given, separated by commas. For example, the default is:
+{\eightpoint\begintt
+  % imlist options=head
+\endtt}
+which lists the image header.
+{\eightpoint\begintt
+  % imlist options=head,data,history,stat
+\endtt}
+lists the image header, the data, history, and image statistics.
+options=data lists the image with the specified format for each plane.
+options=stat lists the total flux, max, min, and rms for each plane.
+\keyword{\bf REGION}
+Region of image to be listed. E.g.
+{\eightpoint\begintt
+  % imlist  options=data region=relpix,box(-4,-4,5,5)(1,2)
+\endtt}
+lists the center 10 x 10 pixels of image planes 1 and 2.
+\keyword{\bf FORMAT}
+Format for output, e.g., 1pe11.4, f5.2, 1pg12.5, default is 1pe10.3
+The size of region possible to list depends on the format. 10 columns
+of f5.1 fills an 80 character line.
+\keyword{\bf LOG}
+The output log file. The default is the terminal.
+\par}
+\module{implot}%
+\noindent Multi-panel contour or grey scale plot of a Miriad Image.
+\newline \ 
+\newline \abox{Responsible:} Mel Wright
+\newline \abox{Keywords:} image analysis, plotting
+\newline{\tenpoint\newline
+IMPLOT makes multi-panel plots of a Miriad Image. It works with
+either contours or grey-scale plotting of individual maps. The plots
+are annotated with various map-header variables on the right side
+of the page.
+\keyword{\bf IN}
+Input image name. No default.
+\keyword{\bf DEVICE}
+Plot device/type (e.g. /retro, plot.plt/im for hardcopy on a Vax,
+or  /sunview, plot/ps for harcopy on a Sun).  No default.
+See the users guide for more details.
+\keyword{\bf REGION}
+Region of image to be plotted. E.g.
+{\eightpoint\begintt
+  % implot region=relpix,box(-4,-4,5,5)(1,2)
+\endtt}
+plots the center 10 x 10 pixels of image planes 1 and 2.
+The default is the whole Image.
+\keyword{\bf UNITS}
+The units for the plot axes, labels and contour levels.
+{\eightpoint\begintt
+ p means pixels with respect to the center pixel (default)
+ s means arcseconds with respect to the center pixel
+ a means absolute coordinates (RA in hours, DEC in degrees)
+\endtt}
+note: RA increases to the left of the map; pixels to the right.
+\keyword{\bf CONFLAG}
+The contour flag is made up of letters denoting contour options:
+{\eightpoint\begintt
+ p means percent of max
+ a means absolute steps
+ i means conargs is list of absolute contours
+ ip means conargs is list of percentage contours
+ n means include negative contours
+ g means gray scale (may be added to contours)
+\endtt}
+The default is conflag=p.
+\keyword{\bf CONARGS}
+Arguments for conflag; usually one number but may be multiple for
+i option.  No default.
+\keyword{\bf NBYN}
+Sets the size of the square grid of panels.  Values are 1 to 4.
+The default is 1.
+\keyword{\bf BEAMQUAD}
+Quadrant placement (1-4) for the Clean beam picture in the first
+plot; 0 means no beam.  The default is 0.
+\keyword{\bf LWIDTH}
+Plotting line width, the default is 1.
+\keyword{\bf LOG}
+The output log file. The default is the terminal.
+\keyword{\bf MODE}
+Mode can be 'inter' or 'batch'. Default is batch. In mode=inter,
+the user is prompted for options after each plot. The options are
+apply to the current plot. Type the first character ( and {\tt <}cr{\tt >} )
+to select an option. The cursor handling is device dependent, and
+the character and {\tt <}cr{\tt >} may need to given several times.
+Options:
+{\eightpoint\begintt
+  Help - decriptions of options.
+  Box - draw a box to define a region of interest in the logfile.
+  Comment - enter a comment into the logfile.
+  Position - display cursor position. (if device supports a cursor)
+  Quit - stop processing and exit from task.
+  End - end of options, goto next plot.
+\endtt}
+\par}
+\module{imspect}%
+\noindent Make spectrum from a Miriad image.
+\newline \ 
+\newline \abox{Responsible:} Mel Wright
+\newline \abox{Keywords:} image analysis and display.
+\newline{\tenpoint\newline
+IMSPECT makes an spectrum of the velocity or frequency axis of a
+Miriad image. The spectrum is integrated, or averaged over the
+region specified for the other image axes. The output spectrum
+can be plotted and/or written out as an ascii file for further
+analysis.
+\keyword{\bf IN}
+The input image. vxy and xyv images are acceptable inputs. 
+No default.
+\keyword{\bf REGION}
+Region of image to be averaged. E.g.
+{\eightpoint\begintt
+  % imspect  region=relpix,box(-4,-4,5,5)(10,50) for an xyv
+\endtt}
+image, makes a spectrum of image planes 10 to 50 integrated
+over the center 10 x 10 pixels in the x-y plane. For a vxy
+image where the x and y size is 128x128, the corresponding
+region=box(10,61,50,70)(61,70). Box refers image axes 1 and 2
+for either vxy or xyv images. The default is the entire image.
+\keyword{\bf XAXIS}
+The x-axis can be plotted as 'channel' or the units in the image.
+The default which is whatever units are in the header.
+\keyword{\bf YAXIS}
+If 'average' then the pixels enclosed in the x-y area specified
+are averaged. If 'sum' they are just summed. Default is 'average'
+\keyword{\bf SMLEN}
+Hanning smoothing length (an odd integer {\tt <} 15) Default is
+no smoothing (smlen = 1).
+\keyword{\bf DEVICE}
+Plot device/type (e.g. /retro, filename/im for hardcopy on a Vax,
+/sunview, filename/ps for harcopy on a Sun). The default is no plot.
+To print the hardcopy on the Vax use:
+{\eightpoint\begintt
+  $PGPLOT filename
+\endtt}
+To print the postscript file on the Sun:
+{\eightpoint\begintt
+  %lpr filename
+\endtt}
+\keyword{\bf LOG}
+Write spectrum to this ascii file. Default is no output file.
+\keyword{\bf COMMENT}
+A one-line comment which is written into the logfile.
+\par}
+\module{imsub}%
+\noindent Extract subportion of an image
+\newline \ 
+\newline \abox{Responsible:} Mel Wright
+\newline \abox{Keywords:} map manipulation
+\newline{\tenpoint\newline
+IMSUB is a MIRIAD task which extracts a subportion of an image.
+\keyword{\bf IN}
+The input image. No default.
+\keyword{\bf OUT}
+The output image. No default.
+\keyword{\bf REGION}
+The region of interest. The default is the entire input image.
+See the Users Manual for instructions on how to specify this.
+\keyword{\bf INCR}
+Increment to be used along each axis. Default is 1.
+\par}
+\module{imwrite}%
+\noindent Make a Miriad Image from a foreign dataset.
+\newline \
+\newline \abox{Responsible:} Mel Wright
+\newline \abox{Keywords:} image conversion, analysis.
+\newline{\tenpoint\newline
+Imwrite makes a Miriad image from data provided by the user.
+This task provides a template with subroutines to read an image,
+header, history and pixel values from ascii files. These items
+can also be made up as subroutines provided by the user.
+The task can readily be adapted to write the image using user
+provided subroutines.
+\keyword{\bf HEADER}
+Parameter file containing image header items. The routine provided
+here reads the header items from an ascii file. The default file is
+no header file.
+\keyword{\bf HISTORY}
+File containing the image history. Default is no history file.
+\keyword{\bf IMAGE}
+File containing the image pixel values. Default is no image file.
+\keyword{\bf IMSIZE}
+Image size. 1 to 3 values nx,ny,nz. Default ny=nx, and nz=1.
+\keyword{\bf LOG}
+log file. Default is the terminal.
+\keyword{\bf OUT}
+Output image. No default.
+\par}
+\module{invert}%
+\noindent Transform visibility data into a map
+\newline \ 
+\newline \abox{Responsible:} Robert Sault
+\newline \abox{Keywords:} map making
+\newline{\tenpoint\newline
+INVERT is a MIRIAD task which forms a map from visibility data
+via a convolutional gridding and FFT approach. Only one Stokes
+map can be made at a time, though multiple frequency channels can
+be made in one go.
+
+By default the weight used for each visibility is proportional to
+the integration time divided by the density of visibility points.
+See the SUP parameter to adjust how the density function is calculated.
+See the OPTIONS parameter to weight according to the nominal system
+temperature.
+\keyword{\bf VIS}
+Input visibility data file. No default.
+\keyword{\bf MAP}
+Output map file name. Default is not to make the map. 
+\keyword{\bf BEAM}
+Output beam file name. Default is not to make the beam.
+\keyword{\bf IMSIZE}
+The size of the output image in pixels. Two values can be given,
+giving the image size in RA and DEC. If only one value
+is given, the output is a square image. At least one value must
+be given. INVERT increases the sizes in RA and DEC to the next
+power of two (if they were not initially a power of 2). 
+\keyword{\bf SHIFT}
+The shift (arcsec) to move the  map center from the phase center.
+Positive values result in the map center being shifted to the
+North and East of the phase center.  If one value is given, both
+RA and DEC are shifted by this amount.  If two values are given,
+then they are the RA and DEC shifts. 
+\keyword{\bf CELL}
+Image cell size, in arcsec. If two values are given, they give
+the RA and DEC cell sizes. If only one value is given, the cells
+are made square. 
+\keyword{\bf FWHM}
+Full width at half maximum, in arcsec, of a gaussian which
+represents the typical resolution of interest in the source. If
+two values are given, they are used as the fwhm in RA and DEC
+respectively. If one value is given, it is used for both RA and
+DEC. This parameter is used to determine the uv-taper to apply to
+the data to optimize the signal to noise for sources of that
+particular angular size. Set FWHM to zero if you want the full
+resolution of the data. Default is 0. 
+\keyword{\bf SUP}
+Sidelobe suppression region, given in arcseconds. This parameter
+determines the weighting scheme used. As uniform weighting
+attempts to suppress sidelobes in the entire field, uniform
+weighting corresponds to SUP=x, where x is the field size.
+Natural weighting gives the best signal to noise ratio, at the
+expense of no sidelobe suppression. Natural weighting corresponds
+to SUP=0. Values between these extremes give a tradeoff between
+signal to noise and sidelobe suppression. The default is to use
+``uniform'' weighting. 
+\keyword{\bf LINE}
+Line type of the data. This is a string, followed by up to four
+numbers, viz: 
+{\eightpoint\begintt
+  linetype,nchan,start,width,step
+\endtt}
+where ``linetype'' is one of ``channel'', ``wide'' and ``velocity''.
+\keyword{\bf REF}
+Line type of the reference channel, specified in a similar to the
+``line'' parameter. Specifically, it is in the form:
+{\eightpoint\begintt
+  linetype,start,width
+\endtt}
+Default is no reference channel.
+\keyword{\bf SELECT}
+This allows a subset of the uv data to be used in the mapping
+process. See the Users Manual for information on how to specify
+this parameter. The default is to use all data.
+\keyword{\bf OPTIONS}
+This gives extra processing options. Currently there are two
+possible values:
+{\eightpoint\begintt
+  systemp  Weight each visibility proportionally to 1/systemp**2.
+  nocal    Do not apply gains table calibration to the data.
+\endtt}
+\par}
+\module{itemize}%
+\noindent List information about image dataset
+\newline \ 
+\newline \abox{Responsible:} Peter Teuben
+\newline \abox{Keywords:} utility
+\newline{\tenpoint\newline
+ITEMIZE is a MIRIAD task which dumps a dataset or an item within a
+dataset. If the input name is an item, then the contents of the
+item (element for element) are written to the screen. If the input
+name represents a dataset, then a summary of the items within the
+dataset are given. If multiple input files are given, it acts as
+a filescanner, and minimal information is given.
+\keyword{\bf IN}
+The name of either a dataset, or an item within a data set or a 
+wildcard. For example:
+{\eightpoint\begintt
+  % itemize in=dataset
+\endtt}
+or
+{\eightpoint\begintt
+  % itemize in=dataset/item
+\endtt}
+or
+{\eightpoint\begintt
+  % itemize in='*'
+\endtt}
+For example, to print the history information of file ``cm'', use
+{\eightpoint\begintt
+  % itemize in=cm/history
+\endtt}
+When a dataset name is given, itemize summarizes the contents
+of the entire dataset. When an item name is also given, then
+itemize dumps the entire contents of the item (in accordance
+to the index and format keywords).
+When a wildcard expands in more than one file, itemize only 
+checks to see if the specified file is a miriad dataset, and
+attempts to say a few intelligent things about it.
+\keyword{\bf LOG}
+The name of the output listing file. The default is the users
+terminal.
+\keyword{\bf INDEX}
+When dumping an entire item, ``index'' specifies the range of elements
+to dump. The default is the entire item. For example, to print out
+lines 10 through 20 of the history item, use:
+{\eightpoint\begintt
+  % itemize in=cm/history index=10,20
+\endtt}
+\keyword{\bf FORMAT}
+When dumping an entire item, this gives the FORTRAN format specifier
+to be used. For example, when dumping a real item, you may set:
+{\eightpoint\begintt
+  format=8e15.7
+\endtt}
+The default varies according to the data type.
+\keyword{\bf SCAN}
+Scan mode. If itemize is running in file scan mode, the default 
+will scan for all files. If ``scan=miriad'' it will only report
+on what it thinks are miriad data files. In regular item/dataset
+reporting mode, scan has no meaning.
+\par}
+\module{linmos}%
+\noindent Linear mosaicing of datacubes
+\newline \ 
+\newline \abox{Responsible:} Mel Wright
+\newline \abox{Keywords:} map combination
+\newline{\tenpoint\newline
+LINMOS is a MIRIAD task which performs a simple linear mosaicing of
+input cubes, to produce a single output cube. If only a single
+input cube is given, LINMOS essentially does primary beam correction
+on this input. When several, overlapping, inputs are given, then
+LINMOS combines the overlapping regions in such a way as to minimize
+the expected mean error in the output.
+\keyword{\bf IN}
+This gives the names of the input cubes. Many cubes can be given.
+There is no default. Inputs do not need to be on the same grid system
+on the x (RA) and y (DEC) dimensions. However, if they are not,
+linear interpolation is performed to regrid some of the inputs. The
+intensity units of all the inputs are assumed to be the same.
+\keyword{\bf OUT}
+The name of the output cube. No default. The grid system of the first
+input is used as the grid system of the output.
+\keyword{\bf PBFWHM}
+Primary beams are modeled by circular gaussians. PBFWHM gives the
+full width at half maximum of the primary beam, in arcseconds. There
+should be as many values of this as there are input cubes. If a
+value is not positive or not given, then LINMOS uses the pbfwhm from
+the map header or calculates pbfwhm from the telescop name and
+sky frequency for Hat Creek or VLA antennae (if the file header
+indicates that this data was observed with one of these arrays), or
+assumes a single dish telescope, with no primary beam correction.
+\keyword{\bf RMS}
+The rms noise levels in the input cubes. Only the relative sizes are
+of importance. There should be as many values as there are input
+cubes. The default is that all inputs have the same noise level.
+\keyword{\bf SIGNAL}
+An rms signal level. Only one value is required. Only the relative
+size of this to the ``noise'' parameters is of importance. The
+default value is infinity, which can allow the correction factor
+to become excessively large. By setting a finite value, the
+correction factor tends to taper off, and thus prevents the output
+being swamped by noise amplification. 
+\par}
+\module{listobs}%
+\noindent Makes a summary of a set of observations.
+\newline \ 
+\newline \abox{Responsible:} Lee Mundy
+\newline \abox{Keywords:} utility
+\newline{\tenpoint\newline
+LISTOBS makes a summary of a set of observations.  Parameters of
+interest to the observer are pulled from one or many files, and
+printed to a log file.  A time ordered summary of the sources
+observed is compiled.  The primary use of this program is to
+create a summary of the instrument setup and all observations
+made during a track.  Use wild cards or an include file to specify
+all files relevent for your observations.
+\keyword{\bf IN}
+The name of the input image. No default.
+\keyword{\bf LOG}
+Output device. (default is standard user output)
+\par}
+\module{maths}%
+\noindent Mathematical operations on images and image data
+\newline \ 
+\newline \abox{Responsible:} Peter Teuben
+\newline \abox{Keywords:} utility, map combination, map manipulation
+\newline{\tenpoint\newline
+MATHS is a MIRIAD task which performs arithmetic expressions on a
+number of images. The expression to be performed is given in a
+FORTRAN-like syntax, and can consist of operators, real constants
+and FORTRAN functions. Normal FORTRAN precedence applies.
+Operators can be +, -, * and /, and all logical and relational
+operators (e.g. .and. .or. .not. .gt. .ge. etc). In MATHS convention,
+a positive value is considered TRUE, and a negative or zero value
+is considered FALSE. Functions
+appear only in the generic, rather than specific forms. For example
+use ``log10'' rather than ``alog10'', and ``max'' rather than
+``amax1''. Integers and double precision constants are converted to
+reals. File names take the place of variables, and the expression
+is evaluated on each pixel of the image. When there is more than
+one file name in the input expression, the expression is evaluated
+at corresponding pixels of the input images. For example to average
+image ``fred'' with image ``bill'', use:
+
+{\eightpoint\begintt
+  exp=(fred+bill)/2
+
+\endtt}
+When a file name starts with a numeric character, or contains a
+character which might be confused with an operator the file name
+should be bracketed by angular ( {\tt <} and {\tt >} ). For example:
+
+{\eightpoint\begintt
+  exp=(<2ndtry>+bill.dat)/2
+
+\endtt}
+Files cannot take the name ``x,'' ``y'' or ``z''. MATHS interprets
+these as being the 3 independent variables of an image, which
+vary linearly between the limits set by the XRANGE, YRANGE and
+ZRANGE parameters. The user chooses the meaning of these units.
+For example, to create one cycle of a two dimensional sine wave
+along the x and y coordinate axes use:
+
+{\eightpoint\begintt
+  exp=sin(x)*sin(y) xrange=-3.14,3.14 yrange=-3.14,3.14
+
+\endtt}
+In addition to the expression, MATHS also allows the user to specify
+a ``mask expression''. MATHS main expression is only evaluated at
+pixels where the ``mask expression'' is TRUE or positive valued. MATHS
+does not check for divide by zero, logs of a negative number
+or any similar problem. It will probably crash if this is attempted.
+Consequently, when performing potentially dangerous operations, it
+is best to guard the main expression by masking out dangerous
+situations.  The mask expression can also be used to prevent the
+calculation where doing so would be undesirable for other reasons
+(e.g. where the signal is too weak to get meaningful results).
+
+For example:
+
+{\eightpoint\begintt
+   exp=sqrt(fred) mask=fred.gt.0
+\endtt}
+\keyword{\bf EXP}
+The expression to be evaluated.
+\keyword{\bf MASK}
+The mask expression. The expression given by ``exp'' is evaluated
+only at those pixels where the mask expression is TRUE or
+positive valued. Pixels, which fail this test, are marked as blank
+in the output image.
+\keyword{\bf REGION}
+The region of interest in the input images.
+\keyword{\bf OUT}
+The name of the output image.
+\keyword{\bf IMSIZE}
+The output image size. This is used only if there is no input
+images (i.e. the expression consists of a function of ``x'' and
+``y'' only). No default.
+\keyword{\bf XRANGE}
+When ``x'' is present in the input expression, then the x variable
+is varied linearly between the two limits set by XRANGE.
+\keyword{\bf YRANGE}
+When ``y'' is present in the input expression, then the y variable
+is varied linearly between the two limits set by YRANGE.
+\keyword{\bf ZRANGE}
+When ``z'' is present in the input expression, then the z variable
+is varied linearly between the two limits set br ZRANGE.
+\par}
+\module{maxen}%
+\noindent Maximum Entropy deconvolution
+\newline \ 
+\newline \abox{Responsible:} Robert Sault
+\newline \abox{Keywords:} deconvolution
+\newline{\tenpoint\newline
+MAXEN is a MIRIAD task which performs a maximum entropy deconvolution
+algorithm on a cube.
+\keyword{\bf MAP}
+The input dirty map, which should have units of Jy/beam. No default.
+\keyword{\bf BEAM}
+The input dirty beam. No default
+\keyword{\bf MODEL}
+An initial model of the deconvolved image. This could be the output
+from a previous run of MAXEN or any other deconvolution
+task. It must have flux units of Jy/pixel. The default is a flat
+estimate, with the correct flux.
+\keyword{\bf DEFAULT}
+The default image. This could be the output
+from a previous run of MAXEN or any other deconvolution
+task. It must have flux units of Jy/pixel. The default is a flat
+estimate, with the correct flux.
+\keyword{\bf OUT}
+The name of the output map. The units of the output will be Jy/pixel.
+It can be input to RESTORE, MAXEN (as a model, to continue the
+deconvolution process), or to SELFCAL (for self-calibrating
+visibility data).
+\keyword{\bf NITERS}
+The maximum number of iterations. The default is 20.
+\keyword{\bf REGION}
+This specifies the region to be deconvolved. See the Users Manual
+for instructions on how to specify this. The default is the inner
+quarter of all planes.
+\keyword{\bf MEASURE}
+The entropy measure to be used, either ``gull'' (-p*log(p/e)) or
+``cornwell'' (-log(cosh(p))).
+\keyword{\bf ALPHA}
+An estimate of the alpha Lagrangian multiplier. Default is 0.
+You would probably never set this except when restarting a MAXEN run.
+In this case, set it to the value of ALPHA and BETA that the previous
+run finished with.
+\keyword{\bf BETA}
+An estimate of the ``Beta'' Lagrangian multiplier. See ALPHA.
+\keyword{\bf TOL}
+Tolerance of solution. There is no need to change this from the
+default of 0.01.
+\keyword{\bf Q}
+An estimate of the number of points per beam. MAXEN can usually
+come up with a pretty good, image dependent estimate.
+\keyword{\bf RMS}
+The rms noise, in Jy/beam, in the dirty map. No default. The
+convergence and behavior of MAXEN depends strongly on the value
+of this parameter.
+\keyword{\bf FLUX}
+The flux of the source. If FLUX is given as a positive
+number, then the resultant image is constrained to have this
+flux. If FLUX is negative, then abs(FLUX) is used as an estimate
+of the source flux only and the actual flux is allowed to vary.
+If FLUX=0, then MAXEN makes a guess at the source flux. Default is
+FLUX=0, though you should give MAXEN more information if at all
+possible. On the other hand, a bad value here can cause MAXEN to
+blow up.
+\keyword{\bf MESSAGE}
+Message level during execution. Message=0 turns off all output
+during the iterations. Message=1 gives the Rms, Flux, and Gradient.
+Message=2 also gives the Lagrange multipliers and the step size.
+The default is message=1.
+\par}
+\module{miriad}%
+\noindent General program to run miriad programs
+\newline \ 
+\newline \abox{Responsible:} Peter Teuben
+\newline \abox{Keywords:} tools
+\newline{\tenpoint\newline
+Miriad is a command-line interface to run Miriad tasks.
+
+Some important Miriad commands are:
+
+{\eightpoint\begintt
+    inp taskname ..... preview input parms to task taskname
+    set parm=value ... set task parameter parm to value
+    unset parm ....... unset task parameter parm
+    help taskname .... show on-line docs for task taskname
+    go taskname ...... run task taskname
+    view taskname .... use editor to set parms for task taskname
+    quit ............. exit immediately
+    exit ............. exit, but save all parm settings
+    ? ................ overview of all miriad commands
+
+\endtt}
+Any unrecognized commands are passed on to the system for execution.
+Thus, the command ``ls -l \$HOME'' will return a listing of the files
+in the user's home directory on Unix.  Unix aliases are not understood
+though.
+\par}
+\module{mirtool}%
+\noindent MIRIAD SunView interface (SUN only)
+\newline \ 
+\newline \abox{Responsible:} Peter Teuben
+\newline \abox{Keywords:} tools
+\newline{\tenpoint\newline
+MIRTOOL (SUN only) is MIRIAD's SunView interface to
+run MIRIAD tasks.  It is available only when running
+SunView.
+
+To invoke MIRTOOL, enter ``mirtool \&'' in any SunView
+window that is on the machine's console (ie, a window
+that is not being used to remotely log onto another
+machine via ``rlogin'' or ``telnet'').
+\par}
+\module{moment}%
+\noindent Calculate moments of a Miriad image.
+\newline \ 
+\newline \abox{Responsible:} Mel Wright
+\newline \abox{Keywords:} image analysis
+\newline{\tenpoint\newline
+MOMENT calculates the nth moment of a Miriad image. Currently only
+the moment of axis 1 or axis 3 is calculated for 3 dimensional images.
+To obtain the moments for other axes use the task REORDER to reorder
+the axes.
+\keyword{\bf IN}
+The input image. No default.
+\keyword{\bf REGION}
+The region of the input image to be used.
+\keyword{\bf OUT}
+The output image. No default.
+\keyword{\bf MOM} \newline \ 
+{\eightpoint\begintt
+1      Average intensity. (units are same as individual channels)
+0      Integrated intensity. (e.g. units Jy x km/s)
+1      1st moment = sum(I*v)/sum(I)
+2      dispersion = sqrt(sum(I*(v-M1)**2)/sum(I))
+\endtt}
+The v(i) are the axis values (e.g. velocities).  M1 is the first
+moment.  The moment is calculated independently for each pixel
+with absolute value greater than clip. Default = 0.
+\keyword{\bf AXIS}
+The axis for which the moment is calculated. Default = 3.
+\keyword{\bf CLIP}
+Pixels with absolute value .lt. clip are not included
+in calculating the average. Default = 0.
+\par}
+\module{msss}%
+\noindent MIRIAD version of the AIPS Sun Screen Server (SUN only)
+\newline \ 
+\newline \abox{Responsible:} Jim Morgan
+\newline \abox{Keywords:} visual display
+\newline{\tenpoint\newline
+MSSS (SUN only) is MIRIAD's version of the AIPS Sun Screen
+Server.  It is available only when running SunView, and
+must be invoked separately before being used.  To invoke
+MSSS, enter ``msss \&'' in any SunView window that is not
+being used to remotely log onto another machine (ie, a
+window not using either ``telnet'' or ``rlogin'').
+
+To use MSSS with MIRIAD's TV routines, (1) invoke MSSS in
+the manner described above, and (2) specify the server
+correctly in the TV routine.  For example, if you are using
+SunView on machine ``saturn'', you might do the following:
+(1) enter ``msss \&'' to invoke MSSS; (2) remotely log onto
+another machine (eg, the Cray) and run MIRIAD task TVDISP,
+specifying ``server=msss@saturn''.
+{\eightpoint\begintt
+                                                          
+\endtt}
+\par}
+\module{odnh3}%
+\noindent Ammonia analysis program
+\newline \ 
+\newline \abox{Responsible:} Peter Teuben
+\newline \abox{Keywords:} map combination, map manipulation
+\newline{\tenpoint\newline
+ODNH3 is a MIRIAD task which creates optical depth and rotational
+temperatures maps from ammonia maps.  Ammonia J,K=(1,1) emission
+has five hyperfine components, one main hyperfine component, two
+inner hyperfine components, and two outer hyperfine components.
+
+Odnh3 takes a main hyperfine component map and either an inner
+or outer hyperfine component map and combines the two maps to
+make a single main hyperfine component optical depth map. 
+
+Odnh3 can also combine a J,K=(1,1) main hyperfine component
+map, a J,K=(2,2) main hyperfine component map, and a J,K=(1,1)
+main hyperfine component optical depth map to create a rotational
+temperature map.
+
+Any of the input maps can be masked to allow a signal-to-noise cutoff.
+\keyword{\bf MAP1}
+Main hyperfine component map of the J,K=(1,1) level.  No default.
+\keyword{\bf MAP2}
+For op=taui, map2 is the inner hyperfine component map of 
+the J,K=(1,1) level. 
+For op=tauo, map2 is the outer hyperfine component map of 
+the J,K=(1,1) level.
+For op=temp, map2 is the main  hyperfine component map of 
+the J,K=(2,2) level.
+No default.
+\keyword{\bf MAPT}
+For op=temp, mapt is the J,K=(1,1) main hyperfine component 
+optical depth map. 
+No default.
+\keyword{\bf MASK}
+A mask expression using FORTRAN syntax.  The optical depth or 
+rotational temperature is only calculated at pixels where the 
+mask is TRUE.  Thus, this keyword can be used to enforce a 
+signal-to-noise cutoff on the input maps.  No default.
+\keyword{\bf REGION}
+The region of interest in the input images.  No default.
+\keyword{\bf OP}
+Which Odnh3 option is being used.  See map2 for details.  
+No default.
+\keyword{\bf OUT}
+The name of the output image.  No default.
+\par}
+\module{panel}%
+\noindent Control panel program
+\newline \ 
+\newline \abox{Responsible:} Jim Morgan
+\newline \abox{Keywords:} tools
+\newline{\tenpoint\newline
+Panel is a TCP/IP server based on SunView, which listens for        
+connections from the Miriad "ctrl" routines, constructs a           
+control panel according to commands from the Ctrl routines,         
+and allows the user and programmer to communicate through the       
+control panel.                                                      
+                                                                      
+\newline See the Miriad Programmers manual, for documentation of the         
+Ctrl routines.                                                      
+\par}
+\module{passfit}%
+\noindent Fit polynomials to a passband calibration set
+\newline \ 
+\newline \abox{Responsible:} Lee Mundy
+\newline \abox{Keywords:} calibration
+\newline{\tenpoint\newline
+PASSFIT is a MIRIAD task that fits polynomials to the passband 
+calibration data.
+The data and fits are displayed as amplitudes and phases with
+all spectral windows for a baseline displayed at one time.
+The amplitudes appear as red dots (open dots for flagged data);
+the phases appear as blue pluses (open triangles for falgged data).
+The amplitudes are autoscaled; the phases range from -180 to 180 
+degrees from bottom-to-top of screen. The fits are shown as solid
+colored lines.
+
+Commands in cursor mode are:
+
+{\eightpoint\begintt
+   ?   This help (also redraws screen)
+   q   quit (immediate quit without save)
+   e   exit (go to next baseline or exit with save)
+   d   delete point nearest cursor
+   a   add back point nearest cursor
+   1   numbers 1,2,3... zooms to that window
+   x   Toggle zoom around in x
+   y   Toggle zoom around in y
+   z   Toggle zoom around in x and y
+   u   unzooms in both x and y
+\endtt}
+\keyword{\bf PCAL}
+The passband calibrator visibility data set.  No default.
+\keyword{\bf DROP}
+Number of channels to drop at the start and end of each window
+before fitting. Fits will be extrapolated to cover these channels.
+Default is 1/8th of window dropped from each side. For mode 4,
+and additional 1/8th is dropped from the center.
+\keyword{\bf ORDER}
+The polynomial order for the amp and phase fit to each passband window.  
+The default is order=1 for amplitude and 1 for phase. 
+\keyword{\bf CHAVE}
+Number of channels to average together before fitting polynomials
+to amp and phase. Data for individual channels are still displayed
+in plot; consequently, there may be an offset between the fits and
+the points in the amplitude plots (amplitude bias). Default = 1.
+\keyword{\bf DEVICE}
+Standard device keyword. See section ``TV Devices''
+\par}
+\module{passmake}%
+\noindent Create passband calibration set
+\newline \ 
+\newline \abox{Responsible:} Lee Mundy
+\newline \abox{Keywords:} calibration
+\newline{\tenpoint\newline
+PASSMAKE is a MIRIAD task that makes a passband calibration data set
+\keyword{\bf VIS}
+The passband calibrator visibility data set.  No default.
+\keyword{\bf GCAL}
+The phase and amplitude gains solution to apply to data.
+Default is to apply NO gains solution.
+\keyword{\bf AVER}
+Type of averaging to apply to passband data. Choices are vector,
+scalar or self calibration.  Default is vector.
+\keyword{\bf MODE}
+Method for normalizing data. Choices are ``cross'' and ``self''. 
+Cross mode use the broadband data obtained at the begining and 
+ending of the passband observation for normalization. Self uses 
+the average of the broadband data obtained by averaging all channels
+in the passband data. 
+Default is ``cross'' if a gcal file is specified. If no gcal 
+file is specified, the default is ``self''.
+\keyword{\bf PCAL}
+Name for output passband calibration data file.
+\par}
+\module{prthis}%
+\noindent List history item of a dataset
+\newline \ 
+\newline \abox{Responsible:} Bart Wakker
+\newline \abox{Keywords:} utility
+\newline{\tenpoint\newline
+PRTHIS is a MIRIAD task to list the history item of a miriad
+dataset.
+\keyword{\bf IN}
+The name of the input image. No default.
+\keyword{\bf BCOUNT}
+The first line to list. Default is 1.
+\keyword{\bf LOG}
+The name of the output listing file. The default is the terminal
+\keyword{\bf TASK}
+List history only of this list of tasks (max=5). Default is all tasks.
+\par}
+\module{puthd}%
+\noindent Change the value of or add a header item
+\newline \ 
+\newline \abox{Responsible:} Peter Teuben
+\newline \abox{Keywords:} utility
+\newline{\tenpoint\newline
+PUTHD is a MIRIAD task to add or modify an item in the ``header''
+of an image or uv data set.
+\keyword{\bf IN}
+The name of an item within a data set. This is given in the
+form:
+{\eightpoint\begintt
+  % puthd in=dataset/item
+\endtt}
+\keyword{\bf VALUE}
+The value to be placed in the item.
+\keyword{\bf TYPE}
+The data type of the argument. Values can be 'logical', 'integer',
+'real', 'double' and 'ascii'. The default is determined from the
+form of the value parameter. Normally you can allow this parameter
+to default.
+\par}
+\module{ratty}%
+\noindent FORTRAN preprocessor, so that same code works on more machines
+\newline \ 
+\newline \abox{Responsible:} Bart Wakker
+\newline \abox{Keywords:} tools
+\newline{\tenpoint\newline
+Ratty is a FORTRAN preprocessor for MIRIAD source code, intended to
+make the same FORTRAN code compatible on VMS, SUN, Cray, Alliant,
+and Convex. The output is suitable for use with the specified compilers
+for these machines.
+
+Usage:
+
+{\eightpoint\begintt
+    ratty [-s system] [-I incdir] [-D symbol] [-b] [infile] [outfile]
+
+    system:  One of "f77" (generic unix compiler), "cft" (Cray FORTRAN
+             compiler), "vms" (VMS FORTRAN), "fx" (alliant unix
+             compiler), "convex" (convex unix compiler).
+
+    incdir:  Directory to search for include files.  The -I option may
+             be used repeatedly, but must list only one directory for
+             each -I parameter (eg, list two directories as
+             "-I dir1 -I dir2").
+
+    symbol:  Define this symbol to the preprocessor. Multiple
+             definitions are allowed, defining one symbol per -D entry
+             (eg, define two symbols as "-D sym1 -D sym2").
+
+    -b:      If specified, backslashes inside quoted textstrings are
+             doubled. This allows for compilers which treat the
+             backslash as an escape character.
+
+    infile:  Input file name. If omitted, standard input is assumed
+             and output must be the standard output.
+
+    outfile: Output file name. If omitted, standard output is assumed.
+
+\endtt}
+Ratty recognizes the standard C preprocessor directives \#ifdef,
+\#ifndef, \#else and \#endif.
+
+The VAX do/dowhile/enddo extension for do loops is converted to
+ANSI FORTRAN if the host machine does not support this extension.
+
+'IMPLICIT NONE' and 'IMPLICIT UNDEFINED(A-Z)' are converted to
+whatever the specified compiler supports.
+
+Certain directives are recognized if the target machine has
+vector processing capacities (compilers ``cft'', ``fx'' and ``convex''):
+
+{\eightpoint\begintt
+#maxloop, followed by a number, is converted to "cdir$ shortloop"
+on "cft" and to "cvd$  shortloop" on "fx".
+ 
+#ivdep is converted to "cdir$ ivdep" on "cft", to "cvd$  nodepchk"
+on "fx", and to "c$dir no_recurrence" on"convex".
+ 
+#nooptimize is converted to "cdir$ nextscalar" on "cft" and to
+"cvd$ noconcur" followed by "cvd$ novector" on "fx".
+\endtt}
+
+\par}
+\module{reorder}%
+\noindent Interchange the axes of a cube
+\newline \ 
+\newline \abox{Responsible:} Mel Wright
+\newline \abox{Keywords:} map manipulation
+\newline{\tenpoint\newline
+REORDER is a MIRIAD task to reorder and reverse axes within an image.
+\keyword{\bf IN}
+The input image. No default.
+\keyword{\bf OUT}
+The output image. No default.
+\keyword{\bf MODE}
+The new axis ordering in terms of the old axis ordering: i.e.
+'312' make input axis 3 the first output axis, input axis 1
+the second output axis, etc. Use a - to reverse the pixel
+order on an axis.
+\par}
+\module{restore}%
+\noindent Restore clean components to make the CLEAN map
+\newline \ 
+\newline \abox{Responsible:} Mel Wright
+\newline \abox{Keywords:} deconvolution
+\newline{\tenpoint\newline
+RESTORE is a MIRIAD task which performs a number of functions
+typically performed after the deconvolution step. The are
+generating a ``CLEAN'' map, calculating residuals and reducing the
+resolution of an image estimate to that of the dirty map.
+\keyword{\bf MODEL}
+The model of the deconvolved image. Usually this will be produced
+by CLEAN or MAXEN. The units of this image should be Jy/pixel. No
+default.
+\keyword{\bf MAP}
+The input dirty cube, which should have units of Jy/beam. The
+default is a zero cube.
+\keyword{\bf BEAM}
+The input dirty beam. In some instances, this can be omitted.
+\keyword{\bf MODE}
+This can be one of the values ``convolve'', ``residual'', ``clean''. For
+mode=``convolve'', the output is the model convolved with a gaussian
+(the map parameter is ignored, and the beam is needed only if the
+user does not give values for fwhm and pa). For mode=``residual'',
+the output is the difference between the map and the model
+convolved with the beam (the fwhm and pa parameters are ignored).
+For mode=``clean'', the output is the map, less the model convolved
+with the beam, plus the model convolved with a gaussian (i.e. the
+normal restoration step in CLEAN). Mode=``add'' adds a sub-image into
+the map. The default mode is ``clean''.
+\keyword{\bf FWHM}
+The size, in arcsec, of the gaussian beam to use in the
+restoration. This will normally be two numbers, giving the
+full-width at half-maxima of the major and minor axes of the
+gaussian. If only one number is given, the gaussian will have
+equal major and minor axes. If no values are given, they are
+computed by fitting a gaussian to the given dirty beam.
+\keyword{\bf PA}
+The position angle, in degrees, of the gaussian restoring beam,
+measured east from north. The default is determined from the dirty
+beam fit (The value for PA is ignored, if not value is given for
+FWHM).
+\keyword{\bf OUT}
+The output restored image. No default.
+\par}
+\module{selfcal}%
+\noindent Determine self-calibration of calibration gains.
+\newline \ 
+\newline \abox{Responsible:} Mel Wright
+\newline \abox{Keywords:} calibration, map making
+\newline{\tenpoint\newline
+SELFCAL is a MIRIAD task to perform self-calibration of visibility data.
+Either phase only or amplitude and phase calibration can be performed.
+The input to SELCAL are a visibility data file, and model images.
+This program then calculates the visibilities corresponding to the
+model, accumulates the statistics needed to determine the antennae
+solutions, and then calculates the self-cal solutions.
+
+The output is a calibration file, ready to be applied to the
+visibility data.
+\keyword{\bf VIS}
+Name of input visibility data file. No default.
+\keyword{\bf SELECT}
+Standard uv data selection criteria. Generally this should not include
+a ``dra'' and ``ddec'' selection, as SELFCAL automatically matches data
+with the appropriate pointing center.
+\keyword{\bf MODEL}
+Name of the input models. Several models can be given, which can
+cover different channel ranges of the input visibility data. Generally
+the model should be derived (by mapping and deconvolution) from the
+input visibility file, so that the channels in the model correspond
+to channels in the visibility file. Though the maps can be made using
+any linetype, generally ``channel'' linetype will give best results (??).
+The units of the model MUST be Jy/pixel, rather than Jy/beam. If
+no models are given, a point source model is assumed.
+\keyword{\bf CLIP}
+Clip level. Anything, in the input model, below the clip level is set
+to zero. Default is 0.
+\keyword{\bf OUT}
+Name of output calibration file. The default is to write the gain
+corrections into the input visibility file.
+\keyword{\bf INTERVAL}
+The length of time, in minutes, of a gain solution. Default is 5,
+but use a larger value in cases of poor signal to noise, or
+if the atmosphere and instrument is fairly stable.
+\keyword{\bf OPTIONS}
+This gives several processing options. Possible values are:
+{\eightpoint\begintt
+   amplitude     Perform amplitude and phase self-cal.
+   phase                Perform phase only self-cal.
+   smooth        Determine the solutions in such a way that they are
+                 smooth with time.
+   apriori       This is used if there is no input model, and the
+                 source in the visibility data is either a planet,
+                 or a standard calibrator. This causes the model data to
+                 be scaled by the known flux of the source. For a planet,
+                 this flux will be a function of baseline. If the
+                 source is a point source, the ``apriori'' option is only
+                 useful if the ``amplitude'' and ``noscale'' option are
+                 being used. For a planet, this option should also be
+                 used for a phase selfcal, to get the correct weighting
+                 of the different baselines in the solution.
+   noscale       Do not scale the model. Normally the model is scaled
+                 so that the flux in the model visibilities and the
+                 observed visibilities are the same. Generally this
+                 option should be used with at least the apriori option.
+                 It must be used if selfcal is being used to determine
+                 Jy/K, and should also be used if the model is believed
+                 to have the correct scale.
+\endtt}
+Note that ``amplitude'' and ``phase'' are mutually exclusive.
+The default is options=phase.
+\keyword{\bf MINANTS}
+Data at a given solution interval is deleted  if there are fewer than
+MinAnts antennae operative during the solution interval. The default
+is 3 for options=phase and 4 for options=amplitude.
+\keyword{\bf REFANT}
+This sets the reference antenna, which is given a phase angle of zero.
+The default, for a given solution interval, is the antennae with the
+greatest weight.
+\keyword{\bf OFFSET}
+This gives the offset in arcseconds of a point source model (the
+offset is positive to the north and to the east). This parameter is
+used if the MODEL parameter is blank. The default is 0,0. The
+amplitude of the point source is chosen so that flux in the model
+is the same as the visibility flux.
+\keyword{\bf LINE}
+The visibility linetype to use, in the standard form, viz:
+{\eightpoint\begintt
+  type,nchan,start,width,step
+\endtt}
+Generally if there is an input model, this parameter defaults to the
+linetype parameters used to construct the map. If you wish to override
+this, or if the info is not in the header, or if you are using
+a point source model, this parameter can be useful.
+\par}
+\module{shifty}%
+\noindent Align two images.
+\newline \ 
+\newline \abox{Responsible:} Robert Sault
+\newline \abox{Keywords:} image analysis
+\newline{\tenpoint\newline
+SHIFTY is a MIRIAD task which shifts one image, to that it best aligns
+with another image. Only integral pixel shifts are performed.
+\keyword{\bf IN1}
+The first input image. This is considered the master image. No default
+\keyword{\bf IN2}
+The second input image. This is the image that is shifted to make it
+align better with the master image. No default.
+\keyword{\bf OUT}
+The output image. No default.
+\par}
+\module{smooth}%
+\noindent Convolve an image (in the image domain) with a gaussian.
+\newline \ 
+\newline \abox{Responsible:} Neil Killeen
+\newline \abox{Keywords:} analysis
+\newline{\tenpoint\newline
+SMOOTH is a MIRIAD task which convolves an image by an elliptical
+gaussian the hard way. 
+\keyword{\bf IN}
+The input image.
+\keyword{\bf OUT}
+The output image.
+\keyword{\bf FWHM}
+The Gaussian FWHM in arcseconds.
+\keyword{\bf PA}
+The Gaussian position angle in degrees CCW from North.
+\keyword{\bf NORM}
+If 0.0 the convolution integral is normalized by the volume of
+the gaussian.  Else, it is normalized by norm.  Default is 1.0
+\keyword{\bf BLANK}
+If 'yes' then blanked input pixels do not contribute to the
+convolution sum.
+If 'no' then blanking is not checked for (but the output image
+is blanked around the unconvoled edge, and wherever the
+input image is blanked).
+Default is 'yes'
+\par}
+\module{tpgains}%
+\noindent Estimate antenna gains from total power measurements.
+\newline \ 
+\newline \abox{Responsible:} Mel Wright
+\newline \abox{Keywords:} tpower, antenna gains
+\keyword{\bf VIS}
+Name of input visibility data file. No default.
+\keyword{\bf TGAIN}
+The total power is modeled to be correlated with the atmospheric
+phase noise. tgain gives the total power in units of Kelvin/radian.
+Default value for millimeter wavelengths is tgain=0.5 K/radian.
+\keyword{\bf REFANT}
+The gain of this antenna is set to cmplx(1.,0.).  Default is antenna 1.
+\keyword{\bf OUT}
+Name of output calibration file. The default is to write the gain
+corrections into the input visibility file.
+\module{tvall}%
+\noindent Interact with a previously displayed image
+\newline \ 
+\newline \abox{Responsible:} Jim Morgan
+\newline \abox{Keywords:} visual display
+\newline{\tenpoint\newline
+TVALL is a WERONG/MIRIAD task which allows interactive
+modification of the TV lookup tables, etc. Usually this would be
+used to manipulate an image previously loaded with TVDISP.
+A menu for operations
+to be performed will appear on the TV screen. The following are
+possible: 
+
+Choose the channel being displayed (Select the channel number
+from the menu). 
+
+Blink between two channels (The mouse y-coordinate determines
+the blink rate. It blinks between the current and succeeding
+image, mod 3. Hit any button to stop blinking). 
+
+Fiddle the lookup tables (The transfer function is governed by
+the mouse position. Hit any button to finish the command). 
+
+Change the lookup tables between black and white, or colour. 
+
+Zoom and pan (the left button zooms in, the middle button zooms
+out, and the mouse position controls pan. The cursor drawn on
+the IVAS gives the position, on the unzoomed screen, of the
+central pixel currently being displayed. To finish, hit the
+right button.). 
+
+Switch the menu off (by `selecting' the asterisk). This is
+useful if you want to take a photograph of the screen. 
+
+Return cursor position. The coordinates given are coordinates
+(not image coordinates). 
+\keyword{\bf SERVER}
+The TV device. No default. See the Users Manual for information
+on how to specify this.
+\par}
+\module{tvcln}%
+\noindent Clark/Steer CLEAN with display of intermediates
+\newline \ 
+\newline \abox{Responsible:} Mel Wright
+\newline \abox{Keywords:} deconvolution
+\newline{\tenpoint\newline
+TVCLN is a MIRIAD task, which performs a hybrid Clark/Steer Clean
+algorithm, which takes a dirty map and beam, and produces an output
+map which consists of the Clean components. This output can be
+input to ASCAL to self-calibrate visibilities, or input to RESTORE
+to produce a ``clean'' image. Optionally CLEAN can take as one of
+its inputs a model of the deconvolved image. This model could be
+from a previous CLEAN run, or from any of the other deconvolution
+tasks (e.g. MAXEN). 
+\keyword{\bf MAP}
+The input dirty map, which should have units of Jy/beam. No
+default. 
+\keyword{\bf BEAM}
+The input dirty beam. No default
+\keyword{\bf MODEL}
+An initial model of the deconvolved image. This could be the
+output from a previous run of CLEAN, or the output of any of the
+deconvolution tasks (e.g. MAXEN). It must have flux units of
+Jy/pixel. The default is no model (i.e. a zero map). 
+\keyword{\bf OUT}
+The name of the output map. The units of the output will be
+Jy/pixel. It can be input to RESTORE, CLEAN (as a model, to do
+more cleaning), or tor ASCAL(??) (for self-calibrating visibility
+data). 
+\keyword{\bf GAIN}
+The minor iteration loop gain. Default is 0.1.
+\keyword{\bf CUTOFF}
+CLEAN finishes when the absolute maximum residual falls below
+CUTOFF. Default is 0. 
+\keyword{\bf NITERS}
+The maximum number of minor iterations. Clean is finished when the
+absolute value of NITERS minor iterations have been performed. Clean
+may finish before this point, however, if NITERS is negative and the
+absolute maximum residual becomes negative valued, or if the cutoff
+level (as described above) is reached. 
+\keyword{\bf REGION}
+This specifies the region to be Cleaned.
+\keyword{\bf PHAT}
+The Cornwells prussian hat parameter. When cleaning extended sources,
+CLEAN may produce a badly corrugated image. This can be suppressed
+to some extent by cleaning with a dirty beam which has had a spike
+added at its center (i.e. a beam that looks like a prussian hat).
+PHAT gives the value of this spike, with 0 to 0.5 being good
+values. Default is 0 (but use a non-zero value for extended
+sources). 
+\keyword{\bf MINPATCH}
+The minimum patch size when performing minor iterations. Default
+is 51, but make this larger if you are having problems with
+corrugations. You can make it smaller when cleaning images which
+consist of a pretty good dirty beam. 
+\keyword{\bf SPEED}
+This is the same as the speed-up factor in the AIPS APCLN.
+Negative values makes the rule used to end a major iteration more
+conservative. This causes less components to be found during a
+major iteration, and so should improve the quality of the Clean
+algorithm Usually this will not be needed unless you are having
+problems with corrugations. A positive value can be useful when
+cleaning simple point-like sources. Default is 0. 
+\keyword{\bf MODE}
+This can be either ``hogbom'', ``clark'', ``steer'' or ``any'', and
+determines the Clean algorithm used. If the mode is ``any'', then
+CLEAN determines which is the best algorithm to use. The default
+is ``any''. 
+\keyword{\bf CLIP}
+This sets the relative clip level in a Steer clean, values
+typically being 0.75 to 0.9. The default is image dependent. 
+\keyword{\bf SERVER}
+If this is set to the name of a TV device, then at the end of
+each major cycle, the restored image is displayed on the TV.
+\par}
+\module{tvdisp}%
+\noindent Display an image on a TV device
+\newline \ 
+\newline \abox{Responsible:} Jim Morgan
+\newline \abox{Keywords:} visual display
+\newline{\tenpoint\newline
+TVDISP is a MIRIAD task to display an image on a TV device. TVDISP
+does not clear the screen before it initializes the TV. See TVINIT
+for this function.
+\keyword{\bf IN}
+Input file name. No default.
+\keyword{\bf REGION}
+The region of the image to be displayed. Default is the entire
+image. See the Users Manual for information on how to specify
+this.
+\keyword{\bf RANGE}
+The minimum and maximum range used in scaling. Default is the
+image minimum and maximum. 
+\keyword{\bf TVCHAN}
+The TV channel to display the image on. This can be 1 to 3 on the
+IVAS, or 1 or 2 on a Sun. The default is 1. 
+\keyword{\bf INCR}
+Only every INCR'th pixel is displayed. This can take 1 to 3
+values, giving the increment in x, y and z respectively. The
+default such than the images will fit on the screen. 
+\keyword{\bf TVCORN}
+This gives the coordinate where the lower left corner of the image
+is displayed. The coordinate system runs from 1 to 1024 in x and
+y, the origin being in the lower left corner. The default centers
+the image on the screen. 
+\keyword{\bf SERVER}
+The TV device where the image is to be displayed. No default. 
+See the Users Manual for information on how to specify this.
+\keyword{\bf OPTIONS}
+These indicate extra operations to be performed. One or more can
+be given. Possible values are: 
+
+{\eightpoint\begintt
+  fiddle  Allow interactive modification of colour tables, etc.
+  movie   Run the sequence as a movie.
+\endtt}
+\par}
+\module{tvflag}%
+\noindent Interactive editing of a UV data set on a TV device.
+\newline \ 
+\newline \abox{Responsible:} Jim Morgan
+\newline \abox{Keywords:} calibration, uv-data, tv, plotting, display
+\newline{\tenpoint\newline
+TVFLAG is a MIRIAD task which allows interactive baseline
+editing of a UV data set.  The user should make sure,
+if the display device is capable of creating menus that
+the menu program should be loaded ``before'' running this
+routine (eg. panel for the SSS) - see the User's Guide or
+Cookbook under TV Devices for details.
+
+NOTE:  This application will not work if it is run from
+MIRTOOL on the SUN without PANEL running.
+
+When this program is run, each baseline is displayed,
+one at a time, with the x-axis representing channel
+number (increasing to the right), the y-axis representing
+the change in time (increasing upward), and the color
+intensity representing the amplitude of the visibility.
+The current antenna that constitute the baseline are
+labeled at the bottom of the plot (if room permits).
+In addition, if room permits, a color wedge is displayed
+to the right side of the visibility data and is the sum
+of the data over all displayed channels.  Also, a wedge
+of the sum of the data over all displayed times will
+appear above (or below) the data as room permits.
+
+The user may edit the data in one of two ways: 1) By
+entering commands at the keyboard; or 2) by selecting
+commands from the listed menu items.  Which method is
+determined by the presence of a menu program (such as
+``panel'' for the Sun systems).
+
+If no menu program is currently active, then a warning
+is issued to the user and all commands are prompted from
+the keyboard.  Commands are entered followed by a carriage
+return ({\tt <}CR{\tt >}).  Single letter abbreviations are used for
+all commands.  The current command list, each corresponding
+abbreviation, and a brief description of each command is
+available by entering a question mark (``?'') as a command.
+Commands requiring further interaction (eg. ``select'' and
+``value'') will prompt the user when they are invoked.
+
+If a menu program is active, then TVFLAG will attempt
+to construct an assortment of menu buttons and other
+items that will perform the equivalent of entering commands
+at the keyboard.  Certain commands (eg. ``select'' and
+``value'') require further cursor input and will prompt
+the user for a particular action (for example: ``select''
+will request the user to select the region to box for
+further flagging commands).
+
+The current technique of editing is to load the baseline
+to be edited, zoom and pan to the desired location, and
+then, select the region to be edited followed by an
+editing command.  To identify a region to edit, chose
+the ``select'' command and then use the cursor to box
+the desired points.  This is done by moving to a corner
+of the region to select, identifying the program of the
+corner (usually by pushing and holding the left mouse
+button), moving the pointer to the other corner (by
+dragging the mouse), and then identifying the program of
+the other corner (releasing the left mouse button).  After
+identifying the region to edit, the selected region may be
+flagged as good or bad using the appropriate command (or
+button).  If data is flagged improperly, the ``undo''
+command will reverse the last editing command.
+
+To save the editing done to a particular baseline, enter
+the ``exit'' command (or select the ``exit'' button).
+The flagging changes will be immediately applied to the
+data.  To NOT save the changes made to a particular
+baseline, use the ``quit'' command (or button).  After
+a ``quit'' or ``exit'' operation, the data for the next
+baseline is loaded onto the display the user may continue
+editing.  Selecting the ``abort'' command (button) will
+perform the same operation as ``quit'', but will also
+terminate the program.
+\keyword{\bf VIS}
+The name of the input UV data set.  A visibility file name
+must be supplied.  Only one file may be edited at a time.
+\keyword{\bf SOURCE}
+The name of the source to apply corrections to if more than
+one source is present in a UV data set.  All UV data that
+does not correspond to the input source name is ignored
+(ie. not edited).  If this keyword is not set (the default),
+then every display will contain all sources at that
+baseline.  Only one source name may be input.
+\keyword{\bf SERVER}
+The TV device where the data is to be displayed.  There
+is no default for this keyword.  See the section on TV
+Devices in the Miriad Users Guide for further information
+on how to specify this keyword.
+\keyword{\bf TVCHAN}
+An integer specifying which TV channel the data is
+displayed.  The default is channel 1.
+\keyword{\bf RANGE}
+The minimum and maximum range used in scaling the data
+on the TV.  Default is to autoscale to the first image.
+If this keyword is used, TWO parameters must be input.
+\keyword{\bf TVCORN}
+The integer device coordinate of the lower left corner
+of the image.  The default is to center the image on the
+display.  If this keyword is used and only the x coordinate
+value is input, the y coordinate value is set to the x value.
+\keyword{\bf LINE}
+Line type of the data in the format
+{\eightpoint\begintt
+    type,nchan,start,width,step
+\endtt}
+Here ``type'' must be `channel' and the maximum of
+both ``width'' and ``step'' must be 1.  The default is
+to display all channels.
+\keyword{\bf SELECT}
+Selects which visibilities are to be used.  The default is
+to use all visibilities.  See the section on UV Data
+Selection in the Miriad Users Guide for information on how
+to specify this keyword.
+\par}
+\module{tvinit}%
+\noindent Initialize a TV device
+\newline \ 
+\newline \abox{Responsible:} Robert Sault
+\newline \abox{Keywords:} visual display
+\newline{\tenpoint\newline
+TVINIT is a MIRIAD/Werong task which initializes a TV device. These
+initializations clear the screen, set pan, zoom and colour lookup
+table to there defaults.
+\keyword{\bf SERVER}
+The TV device. No default. See the Users Manual for information
+on how to specify this.
+\par}
+\module{uvaflag}%
+\noindent Use flags in one uv database to set flags in another
+\newline \ 
+\newline \abox{Responsible:} Bart Wakker
+\newline \abox{Keywords:} calibration
+\newline{\tenpoint\newline
+UVAFLAG is a MIRIAD task which flags correlations in one 
+database when they are flagged in a template data base.
+Data bases must be identical except for the values of the
+correlations and the initial flag mask. 
+\keyword{\bf TVIS}
+The template input visibility file. No default.
+\keyword{\bf VIS}
+The name of the input visibility file. No default.
+\par}
+\module{uvcat}%
+\noindent Concatenate and copy uv datasets into one; apply gains file, select windows.
+\newline \ 
+\newline \abox{Responsible:} Robert Sault
+\newline \abox{Keywords:} uv analysis
+\newline{\tenpoint\newline
+UVCAT is a MIRIAD task which copies and catenates multiple MIRIAD
+uv data sets. By default, UVCAT applies the gains file in copying the
+data. The spectral windows copied to the output file can be selected.
+\keyword{\bf VIS}
+The names of the input uv data sets. Multiple names can be given,
+separated by commas. At least one name must be given.
+\keyword{\bf SELECT}
+The normal uv selection commands. One unusual aspect of this is that
+the ``window'' subcommand can be used to select which windows are
+copied to the output file (normally the ``window'' only has an
+effect for velocity line type). The default is to copy everything.
+\keyword{\bf OPTIONS}
+This gives extra processing options. Several options can be given,
+each separated by commas. They may be abbreivated to the minimum
+needed to avoid ambiguity. Possible options are:
+{\eightpoint\begintt
+   'nocal'       Do not apply the gains file. By default, UVCAT
+                 applies the gains file in copying the data.
+   'nowide'      Do not copy across wide-band channels.
+   'nochannel'   Do not copy across spectral channels.
+   'unflagged'   Copy only those records where there are some
+                 unflagged visibilites.
+\endtt}
+\keyword{\bf OUT}
+The name of the output uv data set. No default.
+\par}
+\module{uvcheck}%
+\noindent Check uvdata selection and uv-variable values.
+\newline \ 
+\newline \abox{Responsible:} Mel Wright
+\newline \abox{Keywords:} uv analysis, checking
+\newline{\tenpoint\newline
+UVCHECK is a Miriad program to check the uvdata.
+The default is to read through the selected uvdata and report the
+times when the source, freq, or number of channels change. The range
+of values in other variables can also be checked. The number of
+records read and the uv and date range are also reported.
+\keyword{\bf VIS}
+The input visibility file. No default.
+\keyword{\bf SELECT}
+This selects which visibilities to be used. Default is
+all visibilities. See the Users Guide for information about
+how to specify uv data selection.
+\keyword{\bf LINE}
+Linetype of the data in the format line,nchan,start,width,step
+``line'' can be `channel', `wide' or `velocity'.
+Default is channel,0,1,1,1, which returns actual number of spectral
+channels. Use line=wide to check number of wideband correlations.
+If the linetype requested is not present it will NOT be listed.
+\keyword{\bf VAR}
+Name of uv-variable to check the range of values. Default is none.
+\keyword{\bf RANGE}
+The range of values for var. Times and values when var is outside
+this range are listed in the output. Default range=0,0 (min,max)
+\keyword{\bf LOG}
+The output log file. Default is the terminal.
+\par}
+\module{uvcover}%
+\noindent Display uv coverage
+\newline \ 
+\newline \abox{Responsible:} Lee Mundy
+\newline \abox{Keywords:} uv analysis
+\newline{\tenpoint\newline
+UVCOVER displays UV coverage.
+\keyword{\bf VIS}
+The name of the input visibility file. No default.
+\keyword{\bf DEVICE}
+Standard device keyword. See section ``TV Devices''
+\par}
+\module{uvdisplay}%
+\noindent Suntools display header information about uv dataset
+\newline \ 
+\newline \abox{Responsible:} Lee Mundy
+\newline \abox{Keywords:} uv analysis
+\newline{\tenpoint\newline
+UVDISPLAY displays values of all uv header variables.
+``coord'', ``wcorr'', ``bl'', and ``corr'', are not displayed,
+since they are baseline based variables, not header variables. 
+\keyword{\bf VIS}
+The uv dataset.                                                
+\par}
+\module{uvedit}%
+\noindent Editing of the baseline of a UV data set.
+\newline \ 
+\newline \abox{Responsible:} Jim Morgan
+\newline \abox{Keywords:} calibration, uv-data
+\newline{\tenpoint\newline
+UVEDIT is a MIRIAD task which allows baseline editing of a UV
+data set.  As a result of the editing, certain header variables
+of the data set are changed.  The headers ``corr'' and ``wcorr''
+are always changed since they are the data themselves.  The
+headers ``coord(2)'' are the baseline coordinates and, as a
+result, are also always changed.  The headers ``lst'', ``ut'',
+and ``time'' are updated whenever a time offset is entered.
+The headers ``ra'', ``dec'', ``obsra'', and ``obsdec'' are
+changed whenever a positional correction is entered.  Finally,
+antenna coordinate corrections will cause the header ``antpos''
+to be corrected.
+
+NOTE: There can be NO select keyword for this routine!  If
+one includes the select option, then data that is not selected
+will not be copied!
+\keyword{\bf VIS}
+The name of the input UV data set.  At least one file name must
+be supplied.  Up to 10 visibility files are currently allowed.
+\keyword{\bf SOURCE}
+The name of the source to apply corrections to if more than
+one source is present in a UV data set.  All UV data that does
+not correspond to the input source name is copied without being
+edited.  If this keyword is not set (the default), then all
+sources are edited.  Only one source name may be input.
+\keyword{\bf ANTPOS}
+Inputs are the absolute equatorial coordinates entered in the
+following order (NO checking is done for consistency):
+{\eightpoint\begintt
+     value = A1,X1,Y1,Z1,A2,X2,Y2,Z2,A3,X3,Y3,Z3,....
+\endtt}
+The input values are the antenna number and the three equatorial
+coordinates (entered in units of nanoseconds).  Note that A1 does
+not necesarily have to correspond to Antenna 1; it is used to 
+represent the variable containing the antenna number.  Antenna
+(and the corresponding coordinates) not included in the input
+listing do not have their coordinates changed.  You may specify
+either ``antpos'' or ``dantpos'', but not both.
+\keyword{\bf DANTPOS}
+Inputs are the equatorial coordinate offsets entered in the
+following order (NO checking is done for consistency):
+{\eightpoint\begintt
+     value = A1,X1,Y1,Z1,A2,X2,Y2,Z2,A3,X3,Y3,Z3,....
+\endtt}
+The input values are the antenna number and the three equatorial
+coordinate offsets (entered in units of nanoseconds).  These input
+values are added to the absolute coordinates read from the data.
+Note that A1 does not necesarily have to correspond to Antenna 1;
+it is used to represent the variable containing the antenna
+number.  Antenna present in the data but not included in the
+input value list are treated as having a zero coordinate offset.
+You may specify either ``antpos'' or ``dantpos'', but not both.
+\keyword{\bf RA}
+Input is either an absolute or delta right ascension of the
+phase tracking center.  If one value is present, it is considered
+as a offset position and is to be entered as time seconds.
+Otherwise, three values are expected and are to be entered in
+the following order:
+{\eightpoint\begintt
+     value = HH,MM,SS.S
+\endtt}
+The right ascension (offset) is relative to the epoch coordinates.
+The default value is 0 seconds offset (no change).
+\keyword{\bf DEC}
+Input is either an absolute or delta declination of the phase
+tracking center.  If only one value is present, it is considered
+as a offset position and is to be entered in arcseconds.
+Otherwise, three values are expected and are to be entered in
+the following order:
+{\eightpoint\begintt
+     value = DD,MM,SS.S
+\endtt}
+The declination (offset) is relative to the epoch coordinates.
+The default value is 0 arcseconds offset (no change).
+\keyword{\bf TIME}
+Input is a time offset (in seconds) to be added to the clock time.
+The default value is 0 seconds offset (no change).
+\keyword{\bf OUT}
+The name of the output visibility file.  This parameter is
+ignored when more than one visibility file is given.  If no value
+for ``out'' is given or more than one visibility file is input,
+then the output file name(s) will be the same as the input file
+name(s) but with an ``\_c'' appended to the file name
+(ie. ``Vis = saturn,jupiter'' will result in output files ``saturn\_c''
+and ``jupiter\_c'').
+\par}
+\module{uvflag}%
+\noindent Flags or unflags uv data
+\newline \ 
+\newline \abox{Responsible:} Bart Wakker
+\newline \abox{Keywords:} calibration, uv analysis
+\newline{\tenpoint\newline
+UVFLAG is used to change flags corresponding to visibility data.
+Using the keywords select, shadow, line and edge one selects a
+portion of a uv-data file. For all selected correlations the flags
+are then set to the value specified with the keyword flagval. If
+flagval equals 'flag', the uv data are flagged as bad; for flagval
+equal to 'unflag', the uv data are flagged as good.
+The user can control the amount of output produced using the options
+keyword. Only records that fulfill all selection criteria as
+specified by select, shadow, line and edge are shown and counted,
+not the complete datafile.
+Because the physical writing of the flags is done using a buffering
+approach, the flags are only actually changed in the datafile if
+one lets uvflag finish normally. Especially for options 'indicative'
+and 'full' it is necessary to know this. I.e., if the 'q' option is
+used to stop printing, the flags have not yet been changed.
+UVFLAG can also be used to inspect the uv-data. If option 'noapply'
+is used, everything works as it would do normally, except that the
+flags are not actually changed in the datafile. This is particularly
+useful in combination with option 'full'.
+\keyword{\bf VIS}
+The name of the input visibility file. No default.
+\keyword{\bf SELECT}
+Standard select keyword. See section ``uv selection''.
+\keyword{\bf SHADOW}
+Extra selection on top of 'select', to select shadowed data
+only. There are two values; the first gives whether or not
+shadowed data should be selected ('y', 't' or 1 to select,
+'n', 'f' or 0 to ignore this selection, which is the
+default); the second, optional, value gives the minimum
+projected baseline (in meter), below which data is
+considered shadowed. The default overlap is 3m.
+[n]
+\keyword{\bf LINE}
+Standard linetype keyword, see section ``uv Linetypes''.
+Uvflag supports only types 'channel and wide'. Also, since
+averaging of data is an undefined operation when setting
+flags, width is forced to be equal to 1. If you want to flag
+averaged data you first have to make a new dataset.
+['channel',0,1,1,1]
+\keyword{\bf EDGE}
+This keyword allows uvflag to work on only a subset of
+the channels selected by 'line'. Flags will be changed
+only for the first n and last m channels that were selected
+using 'line'.
+If 'edge' is zero, this extra selection is ignored.
+If one value is given, the number of selected channels at
+the start and end of the band is assumed to be equal.
+If two values are given the first gives the number of
+selected channels at the start, the second the number at
+the end. In this case either one may also be 0.
+The most common use of 'edge' is with a 'line' keyword that
+selects all correlator channels (the default).
+[0,0]
+\keyword{\bf FLAGVAL}
+Either 'flag' or 'unflag', which tells whether the flags for
+the correlations selected by 'select', 'shadow', 'line' and
+'edge' have to be set or unset. May be abbreviated to 'f' or
+'u'. Exactly one of the options 'flag' or 'unflag' must be
+present.
+\keyword{\bf OPTIONS}
+One or more of
+1) 'noapply',
+2) 'none', 'brief', 'indicative', 'full', 'noquery',
+3) 'hms', 'decimal'.
+These options can be abbreviated to uniqueness.
+
+\newline 1) 'noapply' will go through the whole process without
+actually changing the flags. Useful for checking what will
+happen or for inspecting the flags.
+No history comments are written.
+
+\newline 2) 'none', 'brief', 'indicative' and 'full' control the
+amount of information returned to the user. The default is
+'none', i.e. no output; except when a logfile is given (see
+keyword log), then it becomes 'indicative'.
+{\eightpoint\begintt
+- 'brief' gives an overview when UVFLAG finishes.
+- 'indicative' lists the number of good, bad and changed
+   flags for each selected uv-record.
+- 'full' lists the data, the old flag and the new flag for
+  each channel separately and also an overview of each record.
+- If more than 1 verbosity level is given, the lowest is taken.
+- Option 'noquery' will turn off the feature that printing
+  is halted every 22 lines.
+\endtt}
+\newline 3) for verbosity levels 'indicative' and 'full' the format
+of the time that is written is determined by 'hms' (hours,
+minutes and seconds) or 'decimal' (decimal parts of a day).
+['none,hms' or 'indicative,hms']
+\keyword{\bf LOG}
+Name of a file where reported information is written.
+If empty this implies the terminal screen, else the
+named file. Giving a filename also sets option 'indicative'.
+[terminal]
+\par}
+\module{uvgen}%
+\noindent Compute visibilities for a model source.
+\newline \ 
+\newline \abox{Responsible:} Mel Wright
+\newline \abox{Keywords:} uv analysis, map making
+\keyword{\bf SOURCE}
+The name of a text file containing the source components. The
+default is ``uvgen.source''. If the specified model components file
+does not exist, UVGEN interactively prompts the user for information,
+and then generates the file. The source components are elliptical
+Gaussian components described by a peak flux density (Jy) and
+position offsets (arcsecs) from the phase center in the directions
+of ra and dec. The sources are specified by the full width to half
+maximum of the major and minor axes; the position angle of the
+major axis measured from north to the east. The default half width
+for a ``point'' source is 0.``0001 .
+\keyword{\bf ANT}
+The name of a text file containing the position of the antennae.
+The default is ''uvgen.ant``. If the specified antenna file does
+not exist, UVGEN interactively prompts the user for the coordinates
+of the antennas, and then generates the antenna file.
+The antenna positions can be given in either a right handed
+equatorial system or as a local ground based coordinates measured to the
+north, east and in elevation. See the ''baseunit`` parameter to
+specify the coordinate system.
+\keyword{\bf BASEUNIT}
+This specifies the coordinate system used in the antenna file.
+A positive value for ''baseunit`` indicates an equatorial system,
+whereas a negative value indicates a local system. The magnitude of
+''baseunit`` gives the conversion factor between the baseline units
+used in the antenna file, and nanoseconds. The default value is +1,
+which means that the antenna file gives the antenna position in an
+equatorial system measured in nanoseconds. Remember 1 ns is equivalent
+to 0.3 meters.
+\keyword{\bf SITE}
+This can take on the value of ''hatcreek`` or ''other``. This determines
+the interpretation of the correlator setup parameters (see below).
+The default is ''hatcreek``.
+\keyword{\bf CORR}
+This gives the name of a text file specifying the correlator
+setup, and a spectral line model. The default name is ''uvgen.corr``.
+If it does not exist, UVGEN prompts interactively, and then creates
+the file.
+The values are:
+{\eightpoint\begintt
+Correlator mode:    an integer between 1 and 4. For Hat Creek, this gives the
+                    correlator setup. Otherwise it is ignored.
+Number of spectra:  For Hat Ck, this can be from 0 to 8. 0 would be for wide
+                    band only. Otherwise it should be 0 or 1.
+Number of channels: This is ignored for Hat Ck (it is determined from the
+                    number of spectra and correlator mode).
+Four correlator LO frequencies and two correlator bandwidths: 
+                    These are specified in MHz. For other than Hat Ck, only
+                    the first correlator bandwidth is used. For Hat Ck, the
+                    LOs would normally be in the range 80 -- 520, and the
+                    bandwidths 5 -- 40.
+\endtt}
+Three parameters, famp, fcen and fwid, giving line to continuum
+ratio, freq and width (GHz). This gives a simple spectral line.
+In particular, the visibility value for a channel is scaled by
+a factor:
+{\eightpoint\begintt
+    1 + famp*( 1-min(1,abs((f-fcen)/fwid)) )
+\endtt}
+\keyword{\bf TIME}
+The start time of the observation. This is in the form
+{\eightpoint\begintt
+  yymmmdd.ddd or yymmmdd:hh:mm:ss.s
+\endtt}
+The default is 80JAN01.0. A function of this is also used
+as a seed to start the random number generator off.
+\keyword{\bf FREQ}
+Frequency for the model in GHz. For Hat Ck, this is assumed to
+be in the upper sideband. Default is 100 GHz.
+\keyword{\bf DECL}
+Declination for the model in degrees. Default is 0 deg.
+\keyword{\bf STOKES}
+Polarization selection. This can be one of 'ii' (default), 'lr',
+'rl', 'rr' or 'll'.
+\keyword{\bf LAT}
+Latitude of observatory, in degrees. Default is 40 degrees.
+\keyword{\bf HARANGE}
+Hour Angle range (start,stop,step) in hours. Default is
+harange=-6,6,0.1 (6 minute integration)
+\keyword{\bf GNOISE}
+Antenna based gain noise, given as a percentage. This gives the
+multiplicative gain variations, specified by the rms amplitude to be
+added to the gain of each antenna at each sample interval. The gain
+noise can also be used to mimic random pointing errors on the same
+time scale as the sample interval for the data.
+The default is 0 (i.e. no gain noise).
+\keyword{\bf PNOISE}
+Antenna based phase noise, in degrees. This gives the phase
+noise, specified by the rms phase noise to be added to each
+antenna at each sample interval. The default is 0 (i.e. no
+phase noise).
+\keyword{\bf SYSTEMP}
+System temperature for additive noise, in Kelvin. This is used
+to generate random Gaussian noise to add to each data point. The
+default is 0 K (i.e. no noise).
+\keyword{\bf TPOWER}
+Three numbers can be given to represent the total power variations
+due to receiver instability, telescope elevation dependence, and
+atmospheric noise. The total power is computed as:
+{\eightpoint\begintt
+  tpower = systemp + trms + telev * cos(el) + tatm * antpnoise
+\endtt}
+The receiver instablity is modeled as additive Gaussian noise.
+The atmospheric noise is modeled to be correlated with the antenna
+phase noise. Units of trms, telev in Kelvin and tatm in Kelvin/radian.
+The systemp is not changed. Typical values for millimeter wavelengths
+are trms=1 K (10-4 * systemp) telev=100 K and tatm=0.5 K/radian.
+Default is tpower=0,0,0
+\keyword{\bf JYPERK}
+The system sensitivity, in Jy/K. Its value is given by
+{\eightpoint\begintt
+  2500 / (eta * D**2)
+\endtt}
+where eta is the combined aperture and correlator efficiency
+(typical correlator efficiency is 0.9, and aperture is 0.6),
+and D is the dish diameter in meters. The default is 200, which
+is typical for Hat Ck. For the Australia Telescope, a value of
+9 is expected.
+\keyword{\bf OUT}
+This gives the name of the output Miriad data file. The default
+it ''uvgen``.
+\module{uvhat}%
+\noindent Convert Hat Creek uv format into MIRIAD uv format
+\newline \ 
+\newline \abox{Responsible:} Wilson Hoffman
+\newline \abox{Keywords:} data transfer
+\newline{\tenpoint\newline
+UVHAT is a MIRIAD task which converts a file from RALINT UV format 
+into MIRIAD UV format.
+On VMS it automatically detects so called ``oldhat'' and ``newhat''
+formatted RALINT files.
+On SUN Unix the ``oldhat'' data can only be converted with UVHAT.
+On SUN Unix the ``newhat'' data can only be converted with HCCONV.
+\keyword{\bf IN}
+The input file name. No default.
+Visibility data may be accessed either directly by giving
+the filename, or indirectly via an index file which is
+identified by name.INC. The index file can also select data
+by time range and antennas, and the data can be scaled by
+parameters in the index file. The index file can be used to
+directly convert RALINT uvdata sets into a MIRIAD uv file.
+The structure of the index file is as follows: 
+
+filename.ext    (name of the data file to include)
+first, last     (selects day.ut range)
+first, last     (selects day.ut range; up to 20 time ranges)
+ANT=num         (select antennas, e.g. 123 for all three)
+SCA=s1,s2,s3    (scales the data for baselines 12, 23, 31)
+WEI=w1,w2,w3    (weights - not used in UVHAT)
+DPH=p1,p2,p3    (phase correction added to data for baselines 12,23,31)
+{\eightpoint\begintt
+                [units: radians]
+\endtt}
+next {\tt <}filename.ext{\tt >}
+etc.
+
+The scale factors can be used to convert the visibility data to Jy
+for mapping. This is normally done by the calibration. The data for
+the preceeding filename is multipled by sca(i)*expi(dph(i)) for
+baselines i=1,2,3.
+
+Bad channels can be flagged using the following two parameters:
+\newline \ 
+CHN= number of ranges followed by list up to 10 pairs of numbers
+to specify ranges of GOOD channels.
+\newline \
+BAD= number of ranges of bad channels followed by list of up to
+      10 pairs of numbers to specify ranges of BAD channels.
+e.g.
+{\eightpoint\begintt
+        CHN=2,1,64,129,256
+        BAD=3,32,33,135,137,19,191
+\endtt}
+uses channels 1 tho 64 and 129 thro 256, and flags channels (32,33)
+(135,137), and (191,193). Channels .gt.256 are flagged BAD.
+
+The initial default is CHN=1,1,512  i.e. no bad channels.
+The channel selection is not reset for each file and need only be
+reset if channel selection changes.
+
+Comment lines must start with ``!''.
+\keyword{\bf OUT}
+The output dataset name (looks like 1-30 alphas, ends up as a
+subdirectory of the current default directory.
+\keyword{\bf LOGRANGE}
+The beginning and end Hat Creek Log number, to be included in
+the output. Default is all data.
+\par}
+\module{uvindex}%
+\noindent Scan a uvdata file, and note when uvvariables change.
+\newline \ 
+\newline \abox{Responsible:} Mel Wright
+\newline \abox{Keywords:} uv analysis, checking
+\newline{\tenpoint\newline
+UVINDEX is a Miriad program which scans a uvdata file.
+Changes in source name, pointing center, number of wideband
+and spectral line channels, and the observing frequency are
+listed in the output.
+\keyword{\bf VIS}
+The input visibility file. No default.
+\keyword{\bf LOG}
+The output log file. Default is the terminal.
+\par}
+\module{uvlist}%
+\noindent Print data values from uv dataset
+\newline \ 
+\newline \abox{Responsible:} Mel Wright
+\newline \abox{Keywords:} uv analysis
+\newline{\tenpoint\newline
+UVLIST lists a MIRIAD UV data file. It can list either the
+variables or the correlation data.
+
+Generally the data are presented in their raw units, but some
+variables and data can undergo some massaging. In particular, the
+time is given as a standard calendar date, except for
+options=brief,data (see below), where the time is given as days
+(and fractions of a day) since 1980.0. 
+\keyword{\bf VIS}
+The input UV dataset name. No default.
+\keyword{\bf OPTIONS}
+This is composed of ``brief'' (default), ``full'' (the opposite of
+brief), ``data'' (default -- this lists correlation data),
+``variables'', ``spectra'' and ``history''. Several of these can
+be given, separated by commas. For example, the default is:
+{\eightpoint\begintt
+  % uvlist options=brief,data
+\endtt}
+The most comprehensive listing is:
+{\eightpoint\begintt
+  % uvlist options=full,data,variables,history,spectra
+\endtt}
+These suboptions can be abbreviated to uniqueness.
+\keyword{\bf SELECT}
+This selects the data to be processed, using the standard uvselect
+format. Default is all data.
+\keyword{\bf LINE}
+For options=data, this gives the linetype that is printed, in the
+form:
+{\eightpoint\begintt
+  type,nchan,start,width,step
+\endtt}
+where type can be `channel' (default), `wide' or `velocity'.
+The default is to print all the raw channel data (no averaging,
+etc). If options=brief, a maximum of only 6 channels will be printed.
+\keyword{\bf RECNUM}
+The number of output records. This is used to cut off long outputs.
+The default is 1.
+\keyword{\bf LOG}
+The list output file name. The default is the terminal.
+\par}
+\module{uvmodel}%
+\noindent Add, subtract, etc, a model from a uv data set.
+\newline \ 
+\newline \abox{Responsible:} Mel Wright
+\newline \abox{Keywords:} uv analysis
+\newline{\tenpoint\newline
+UVMODEL is a MIRIAD task which modifies a visibility dataset by a model.
+Allowed operations are adding, subtracting, multiplying, dividing and
+replacing. The model is specified in the image domain, so that its
+Fourier transform is first computed before application to the
+visibilities. The model may be either an image (e.g., a CLEAN
+component image) or a point source.
+
+An example is as follows. UVMODEL could be used to remove CLEAN
+components from  a visibility data file.  The residual data base could
+then be examined for anomalous points, which could in turn be clipped.
+UVMODEL could then be reapplied to add the CLEAN components back into
+the visibility data base for re-imaging. 
+\keyword{\bf VIS}
+Input visibility data file. No default
+\keyword{\bf MODEL}
+Input model cube. If left blank, then a point source model is used.
+This will generally be a deconvolved map, formed from the visibility
+data being modified. It should be made with ``channel'' linetype.
+\keyword{\bf SELECT}
+The standard uv selection subcommands.
+\keyword{\bf OPTIONS}
+This gives extra processing options. Several values can be given
+(though many values are mutually exclusive), separated by commas.
+Option values can be abbreviated to uniqueness.
+Possible options are:
+{\eightpoint\begintt
+  add       Form: out = vis + model (default).
+  subtract  Form: out = vis - model
+  multiply  Form: out = vis * model
+  divide    Form: out = vis / model
+  replace   Form: out = model
+  flag      Form: out = vis, but flag data where the difference
+            between vis and model is greater than "sigma" sigmas.
+  unflag    Unflag any flagged data in the output.
+  autoscale Adjust the scale of the model to minimise the difference
+            between the model and the visibility.
+  apriori   Use flux from flux table or data file planet info.
+  imhead    Copy image header items to uvvariables.
+\endtt}
+The operations add, subtract, multiply, divide, replace and flag are
+mutually exclusive. The operations flag and unflag are also mutually
+exclusive.
+
+The unflag option should be used with caution. Data in the output
+may still be flagged, if it was not possible to calculate the
+model.
+\keyword{\bf CLIP}
+Clip level. Pixels in the model below this level are set to zero.
+The default is 0.
+\keyword{\bf FLUX}
+If MODEL is blank, then the flux (Jy) of a point source model should
+be specified here. The default is 1 (assuming the model parameter
+is not given).
+\keyword{\bf OFFSET}
+The RA and DEC offsets (arcseconds) of the point source from the phase
+centre. A point source to the north and east has positive offsets.  
+Defaults are zero.
+\keyword{\bf SIGMA}
+For options=flag, UVMODEL flags those points in the output that
+differ by more than ``sigma'' sigmas. The default is 100.
+\keyword{\bf OUT}
+Output visibility data file name. No default. The output file will
+contain only as many channels as there are planes in the model
+cube. The various uv variables which describe the windows are
+adjusted accordingly.
+\par}
+\module{uvplot}%
+\noindent Plot selected uvdata variables and linetypes versus time.
+\newline \
+\newline \abox{Responsible:} Mel Wright
+\newline \abox{Keywords:} uv analysis and display.
+\newline{\tenpoint\newline
+UVPLOT makes a table of uvdata variables and linetypes versus time.
+The table can be plotted or written into a logfile for further
+analysis or for input to MONGO for plotting.
+Column one is always the Julian day. Only 10 columns can be written
+into the logfile and extra inputs are discarded. However, up to 30
+items can be plotted with amplitude and phase for each linetype being
+plotted in the same plot.
+\keyword{\bf VIS}
+The input uv dataset name. No default.
+\keyword{\bf DEVICE}
+Plot device/type (e.g. /retro, filename/im for hardcopy on a Vax,
+/sunview, filename/ps for harcopy on a Sun). The default is no plot.
+To print the hardcopy on the Vax use:
+{\eightpoint\begintt
+  $PGPLOT filename
+\endtt}
+To print the postscript file on the Sun:
+{\eightpoint\begintt
+  %lpr filename
+\endtt}
+\keyword{\bf LOG}
+The output logfile name. The default is no output logfile.
+\keyword{\bf TITLE}
+A title which is put on the plot and written into the logfile.
+\keyword{\bf AVERAGE}
+The averaging time interval in seconds. The default is 1s. For the
+rms to work the averaging time must be more than the integration time.
+A new average is started if the source name changes.
+\keyword{\bf VAR}
+List of variables to be plotted. The default is no variables. \newline
+E.g.    var=systemp(1),systemp(2),windmph,axisrms(1) \newline
+The default subscript is 1. For a list of variables, use UVLIST.
+\keyword{\bf ANTENNAS}
+Antenna select of vla form for use with linetypes:
+antennas  WITH  antennas  (if WITH is missing, both sides equal)
+where antennas is an antenna list of the form: ant1\_ant2\_antn
+and means all baselines that can be made from the named antennas
+antennas can also be  *   which means all possible antennas
+or antennas can be  *-antn\_antm  which means all ants - antn and antm.
+\keyword{\bf LINE}
+Line type of the data in the format
+{\eightpoint\begintt
+  linetype,nchan,start,width,step
+\endtt}
+Here ``linetype'' can be `channel', `wide' or `velocity'.
+The default is channel,1,1,1,1.
+The linetype is qualified by the keywords, 'antennas', and 'type'
+and should not include the modifiers -amp, -phase etc. since these
+are described by the keyword 'type' below.
+\keyword{\bf TYPE}
+Select 'amp' 'phase' or 'rms' to be plotted. These can be combined.
+Select 'amp' 'phase' or 'rms' to be plotted. These can be combined.
+{\eightpoint\begintt
+  E.g. 'amphaserms' will produce 4 columns for each line and baseline
+\endtt}
+selected. The default is 'amp'.
+\keyword{\bf REF}
+Line type of the reference channel, specified in a similar to the
+``line'' parameter. Specifically, it is in the form:
+{\eightpoint\begintt
+  linetype,start,width
+\endtt}
+The default is no reference channel.
+\par}
+\module{uvplt}%
+\noindent Plot visibility amplitude or phase versus time or uv-distance.
+\newline \ 
+\newline \abox{Responsible:} Mel Wright
+\newline \abox{Keywords:} uv analysis, plotting
+\newline{\tenpoint\newline
+UVPLT is a Miriad task which plots amplitude or phase
+versus time or uv-distance.
+\keyword{\bf VIS}
+The input visibility file. No default.
+\keyword{\bf LINE}
+Line type of the data in the format
+{\eightpoint\begintt
+  type,nchan,start,width,step
+\endtt}
+Here ``type'' can be `channel', `wide' or `velocity'.
+Default is channel,1,1,1,1
+\keyword{\bf SELECT}
+This selects which visibilities to be used. Default is
+all visibilities. See the Users Guide for information about
+how to specify uv data selection.
+\keyword{\bf FMODE}
+Flagging type to plot.  'a' to plot flagged and unflagged
+'u'  to plot unflagged data, 'f' to plot flagged data.
+Default is to plot unflagged data
+\keyword{\bf XAXIS}
+Type of x-axis, either 'uvdist' or 'time', Default is 'uvdist'
+\keyword{\bf YAXIS}
+Type of y-axis, either 'amp' or 'phase'. Default is 'amp'
+\keyword{\bf XRANGE}
+Plot range in the x-direction (in wavelengths or days). Default 
+is to self-scale.
+\keyword{\bf YRANGE}
+Plot range in the y-direction (in intrinsic units).  Default is
+to self-scale.
+\keyword{\bf DEVICE}
+Plot device/type (e.g. /retro, plot.plt/im for hardcopy on a Vax,
+or  /sunview, plot/ps for harcopy on a Sun).  No default.
+If device is unset, the user is prompted interactively for the
+plot device, with the option to redefine the plotting window.
+In this case points outside of x,y-range are included in the
+plot buffer.  After each plot is drawn, the user should hit
+{\tt <}cr{\tt >} when ready, and the program will then prompt for window
+redefinition.   
+\keyword{\bf LOG}
+The output logfile name. The default is the terminal.
+\keyword{\bf COMMENT}
+A one line comment which is written into the logfile.
+\par}
+\module{uvpoint}%
+\noindent Generate artifial mosaiced observation
+\newline \ 
+\newline \abox{Responsible:} Mel Wright
+\newline \abox{Keywords:} uv analysis, map making
+\newline{\tenpoint\newline
+UVPOINT generates a uv data file of a mosaiced observation of point
+sources. A random uv coverage is generated, with a distribution
+function roughly that of the VLA. The observation is for a three
+element array, with 60 sec integration time, starting on New Years
+1980. Source velocity is 0, no doppler velocity, RA and DEC of 45 deg. 
+\keyword{\bf OFFSET}
+Offset of the point sources, in arcsec, from the observation center.
+Two values are given per source. Several pairs of values can be given,
+corresponding to different sources. Default is 0,0.
+\keyword{\bf FLUX}
+Source flux value. A value can be given for each source. Default is 1.
+\keyword{\bf RMS}
+RMS of the noise to add to the data. Default is 0.
+\keyword{\bf PBFWHM}
+The primary beam fwhm, in arcseconds. Default is to use the Hat
+Creek primary beam size.
+\keyword{\bf CENTER}
+Offset pointing centers for the mosaiked observation, in arcseconds.
+Two values (x and y offset) are required per pointing center. Several
+values can be given. Default is 0,0.
+\keyword{\bf UVRANGE}
+UV range of the observation, in kilowavelengths. Default is 0.25,10.
+\keyword{\bf FREQ}
+Observing frequency, in GHz. Default is 100.
+\keyword{\bf NVIS}
+Number of visibilities to generate. Default is 10000.
+\keyword{\bf OUT}
+Name of the output visibility file. No default.
+\par}
+\module{uvputhd}%
+\noindent Allows user to alter values of header variables in uv dataset
+\newline \ 
+\newline \abox{Responsible:} Lee Mundy
+\newline \abox{Keywords:} vis, uv, header
+\newline{\tenpoint\newline
+UVPUTHD allows the user to change the values of variables in a
+uv dataset. All occurances of the variable are changed to the
+new value. If the variable is an array, all new values must be
+entered in sequential order. If the user desires to set all members 
+of an array to a single value, only one value need be entered.
+\keyword{\bf VIS}
+Name of the input MIRIAD data file. Only one file at a time!!
+\keyword{\bf HDVAR}
+Name of header variable to be changed. Refer to user manual or
+run VARLIST to see the selection of allowed variable names.
+\keyword{\bf TYPE}
+Type of variable, either integer (i),real (r),double precision (d), 
+or ascii (a). Unused if variable already exists in the data file.
+\keyword{\bf LENGTH}
+Length of array of variable values. Unused if variable already 
+exists in data file.
+\keyword{\bf NVALS}
+Number of new values for varibles that are being entered in varval.
+\keyword{\bf VARVAL}
+New values of header variable - if the variable is an array
+all values must be specified or will assume one value for all.
+\keyword{\bf OUT}
+Name of the output data set.
+\par}
+\module{uvspect}%
+\noindent Plot visibility amplitude/phase vs velocity
+\newline \ 
+\newline \abox{Responsible:} Mel Wright
+\newline \abox{Keywords:} uv analysis, plotting
+\newline{\tenpoint\newline
+UVSPECT is a Miriad task which plots visibility spectra for
+uvdata as Amplitude and Phase versus channels or velocity.
+\keyword{\bf VIS}
+The input visibility file. No default.
+\keyword{\bf DEVICE}
+Plot device/type (e.g. /retro, plot.plt/im for hardcopy on a Vax,
+or  /sunview, plot/ps for harcopy on a Sun).  No default.
+\keyword{\bf AVER}
+Averaging time in hours. Default is 1 hour.
+\keyword{\bf SELECT}
+This selects which visibilities to be used. Default is
+all visibilities. See the Users Guide for information about
+how to specify uv data selection.
+\keyword{\bf LINE}
+Line type of the data in the format
+{\eightpoint\begintt
+  type,nchan,start,width,step
+\endtt}
+Here ``type'' can be `channel', `wide' or `velocity'.
+Default is all channels.
+\keyword{\bf FMODE}
+Flagging type to plot. Set fmode=a to plot flagged and unflagged
+data. fmode=u to plot unflagged data, fmode=f to plot flagged data.
+Default is to plot all data.
+\keyword{\bf XRANGE}
+Plot range in the x-direction (in channels or km/s according to
+the linetype selected). Default is to self-scale.
+\keyword{\bf AMPRANGE}
+Plot range for amplitude in the y-direction (in intrinsic units).
+Default is to self-scale.
+\keyword{\bf PHIRANGE}
+Plot range for phase in the y-direction (in degrees).
+Default is (-180,180) degrees.
+\keyword{\bf MODE}
+Mode can be 'inter' or 'batch'. Default is batch. In either mode,
+the user is prompted for options after each plot on a non-hardcopy
+device. The options are applied to the current spectrum, which can
+then be replotted. mode=inter displays the cursor. Type the first
+character and {\tt <}cr{\tt >} to select option. The cursor handling is device
+dependent, and the character and {\tt <}cr{\tt >} may need to given several times.
+Options:
+{\eightpoint\begintt
+  Device - enter new plot device.
+  Limits - change plot limits.
+  Velocity - change x-axis to velocity.
+  Replot - replot current spectrum.
+  Position - display cursor position. (if device supports a cursor)
+  Write - write out current spectrum to an ascii file.
+  Quit - stop processing and exit from task.
+  End - end of options, get next average.
+  <cr> - go to next time average.
+\endtt}
+The original inputs are restored for the next time average.
+\par}
+\module{uvtrack}%
+\noindent Plot u-v tracks for n configurations of m antennas
+\newline \ 
+\newline \abox{Responsible:} Mel Wright
+\newline \abox{Keywords:} uv analysis
+\newline{\tenpoint\newline
+Plot theoretical u-v tracks for n configurations of m antennas 
+and create model uvdata to make a beam.
+\keyword{\bf MODE}
+Mode can be 'inter' or 'batch'. Batch mode generates uvdata
+and the u-v tracks are plotted if a plot device is given.
+In interactive mode the user can read and write antenna arrays,
+add and delete antenna configurations, generate model uvdata,
+and plot u-v tracks for existing or model uvdata. Interactive
+mode also supports MONGO plot options on the Vax.
+Default mode is interactive and no inputs need be given.
+\keyword{\bf SOURCE}
+Source name. Default=DECxxxx
+\keyword{\bf DEC}
+Source declination in degrees. Default=30 degrees.
+\keyword{\bf HARANGE}
+Hour Angle range (start,stop,step) in hours. Default is
+to use the elevation limit, with a step=0.2 (12 minute)
+\keyword{\bf ELEV}
+Elevation limit in degrees. Default=10 degrees.
+\keyword{\bf FREQ}
+observing frequency in GHz. Default=100 Ghz.
+\keyword{\bf LAT}
+Latitude of observatory, in degrees. Default=40 degrees.
+\keyword{\bf ANT}
+The name of a text file containing the antenna positions.
+No default. For mode=inter, the task prompts the user for
+the antenna positions, and then generates the antenna file.
+\keyword{\bf DEVICE}
+PGPLOT device: plot showing uv tracks. No default.
+\keyword{\bf PLIM}
+Plot limit in nanosecs. Default is to autoscale.
+\keyword{\bf OUT}
+The name of the output uv data set. No default.
+\par}
+\module{varlist}%
+\noindent List all variables in dataset
+\newline \ 
+\newline \abox{Responsible:} Lee Mundy
+\newline \abox{Keywords:} utility, plotting
+\newline{\tenpoint\newline
+VARLIST lists all variable names or names, types and length
+in a data set.
+\keyword{\bf VIS}
+The name of the input visibility file. No default.
+\keyword{\bf LOG}
+Name of output file
+\keyword{\bf OPTION}
+Option for printout (names or all).  Default is ``all.''
+\par}
+\module{varplot}%
+\noindent Plot uv variables
+\newline \ 
+\newline \abox{Responsible:} Lee Mundy
+\newline \abox{Keywords:} uv analysis, plotting
+\newline{\tenpoint\newline
+VARPLOT makes X,Y plots selected variables from a uv data set.
+Only integer, real, and double precision variables maybe plotted.
+When curser is in the plot window, the following keys are active:
+{\eightpoint\begintt
+   X - expand window in X to give one column of plots
+   Y - expand window in Y to give one row of plots
+   Z - expand window in both X and Y to show only one plot
+   N - step to "next" plot in x or y or both depending on expansion
+\endtt}
+\keyword{\bf VIS}
+The name of the input visibility file. No default.
+\keyword{\bf DEVICE}
+Standard device keyword. See section ``TV Devices''
+\keyword{\bf XAXIS}
+Name of variable to be plotted along x-axis (default = ut time).
+\keyword{\bf YAXIS}
+Name of variable to be plotted along y-axis (no default)
+\keyword{\bf MULTI}
+Make multiple plots or a single plot? Yes yields multiple plots
+No yields a single plot with multiple lines as needed
+(default = yes)
+\keyword{\bf COMPR}
+Compress number of x or y variables to be plotted by averaging
+over spectral windows. Currently only SYSTEMP can be averaged.
+\par}
+\module{velplot}%
+\noindent Interactive task to Average, Graph, and Extract Miriad Images.
+\newline \ 
+\newline \abox{Responsible:} Mel Wright
+\newline \abox{Keywords:} analysis, plotting
+\newline{\tenpoint\newline
+VELPLOT is an interactive task to Average, Graph, and Extract
+regions from Miriad Images. There are three basic options:
+
+{\eightpoint\begintt
+ - Velocity-averaged x-y images over selected velocity intervals.
+   Can also make mean velocity and velocity dispersion images.
+ 
+ - Spectra at selected x-y positions. Can be convolved by a beam
+   in the x-y plane, and smoothed in velocity.
+ 
+ - Position-velocity maps along user selected position angles
+   in the x-y plane. Can be convolved in the x-y plane.
+
+\endtt}
+The output from each option can be plotted or listed, or written
+out as Miriad images of velocity-averaged maps, position-velocity maps,
+or ascii spectra respectively. \newline \ 
+
+The task saves user-defined lists of velocity-averaged maps, position
+-velocity maps, and spectra positions. These lists can be created and 
+edited within the task, and can be passed between the three options. 
+For example, a list of spectra or position-velocity cuts can be created 
+with the cursor whilst displaying velocity-averaged maps. These lists
+can then be used to display the spectra and position-velocity cuts.
+
+Each option provides choice of contour levels, map units, and
+interactive help if requested.
+\keyword{\bf IN}
+Input image name. No default.
+\keyword{\bf DEVICE}
+The MONGO plotting device. Default is 0 for Tectronics terminal.
+\keyword{\bf REGION}
+Region of image to be plotted. E.g.
+{\eightpoint\begintt
+  % image region=relpix,box(-30,-30,20,90)(16,57)
+\endtt}
+reads in 50 x 120 pixels of image planes 16 to 57.
+The default is the whole Image. The task issues a warning to exit,
+or will run much more slowly, if too large a region is requested.
+\keyword{\bf LOG}
+The output log file. The default is standard output.
+\par}
+\module{views}%
+\noindent Generate a projection of the datacube
+\newline \ 
+\newline \abox{Responsible:} Bart Wakker
+\newline \abox{Keywords:} visual display
+\newline{\tenpoint\newline
+VIEWS is a MIRIAD task which generates projections of a cube, viewed
+as if the cube was rotating around its y axis. The view is also
+from an angle ``phi'' to the x-z plane. The output is intended to be
+fed into a tvmovie program, to view a rotating cube. The projection is
+a thresholding operation -- pixels values less than the threshold are
+transparent, a pixel greater than the threshold is opaque, with a
+brightness given by the pixel value.
+\keyword{\bf IN}
+The name of the input image. No default.
+\keyword{\bf REGION}
+Standard region keyword. See section ``Image region of interest''.
+\keyword{\bf OUT}
+The name of the output image. No default.
+\keyword{\bf PHI}
+The elevation angle, with respect to the x-z plane, of the observer
+(degrees). This must be in the range [0,90]. Default is 30.
+\keyword{\bf ASPECT}
+Aspect ratio of the different axes. Two values can be given, giving
+the y/x aspect ratio, and the z/x aspect ratio. Default should be
+fine.
+\keyword{\bf THRESH}
+Threshold used in determining which details appear in the output.
+Default is the average of the image minima and maxima.
+\keyword{\bf IMSIZE}
+Size of the output cube. Default is 128x128x64 (should be adequate).
+\par}
+\module{zeeeta}%
+\noindent Compute Zeeman parameter eta
+\newline \ 
+\newline \abox{Responsible:} Neil Killeen
+\newline \abox{Keywords:} profile analysis
+\newline{\tenpoint\newline
+ZEEETA is a MIRIAD task to compute the Zeeman S/N parameter 
+{\eightpoint\begintt
+eta = (dI/dnu)\_rms / sigma
+\endtt}
+\keyword{\bf IN}
+The input Stokes I image in vxy order. No default.
+\keyword{\bf OUT}
+The output eta image, if blc,trc is not specified
+\keyword{\bf SIGMA}
+r.m.s. noise of signal free I spectrum
+\keyword{\bf CHAN}
+The channel range. Default is all channels.
+\keyword{\bf BLC}
+Specify the blc of the spatial window in pixels.  If unset,
+the whole image is done, with no spatial summing, and
+an output eta image made.  If blc and trc are set, then
+eta is computed for this window, and the results output to
+the terminal.
+\keyword{\bf TRC}
+Specify the trc of the spatial window in pixels
+\keyword{\bf DER}
+1 or 2 for one or two sided derivative.  If you would
+like to see a plot of the last derivative spectrum, include
+a `p' as well.  E.g., 2p or 1p
+\keyword{\bf AVEOP}
+a' to average spectra before computing eta. Only if blc,trc set
+\par}
+\module{zeefake}%
+\noindent Generate fake Zeeman data.
+\newline \ 
+\newline \abox{Responsible:} Neil Killeen
+\newline \abox{Keywords:} profile analysis
+\keyword{\bf IOUT}
+The output Stokes I cube. No default.
+\keyword{\bf IUOUT}
+The output Stokes I cube in the case of no splitting.  Default
+is not to write this cube out.
+\keyword{\bf VOUT}
+The output Stokes V cube. No default.
+\keyword{\bf IMSIZE}
+The output cube sizes, all three dimensions required (VXY)
+\keyword{\bf VINC}
+The velocity increment along the cubes in Km/s. No default.
+\keyword{\bf DELV}
+The Zeeman splitting (separation of split lines) in Km/s. No default.
+\keyword{\bf FWHM}
+The FWHM of the Gaussian line profile in Km/s. No default.
+\keyword{\bf GRVC}
+The velocity increment of the line centre in the x-direction 
+per pixel (km/s).  Makes a linear ramp across the source.
+\keyword{\bf GRINT}
+Intensity increment in the x direction per pixel. Makes
+a triangular weighting function.  Peak response is 1.0
+\keyword{\bf GRFWHM}
+FWHM increment in the x direction per pixel.  Makes
+a linear ramp across the source.
+\keyword{\bf GRSPLIT}
+Splitting increment in the x direction.  Makes a linear ramp
+across the source.
+\keyword{\bf THETA}
+The angle of the magnetic field to the l-o-s in degrees. No default.
+\keyword{\bf NOISE}
+The r.m.s. noise to be added to the RR and LL responses. Note
+that the peak RR or LL response in this program is 1.0 for theta=0
+\keyword{\bf RESTFREQ}
+The rest frequency of your line in GHz.
+\keyword{\bf TYPE}
+The line type; ``e'' for emission (default) ``a'' for absorption
+\module{zeemap}%
+\noindent Map the magnetic field from I and V cubes
+\newline \ 
+\newline \abox{Responsible:} Neil Killeen
+\newline \abox{Keywords:} profile analysis
+\newline{\tenpoint\newline
+ZEEMAP tries to find the line-of-sight magnetic field splitting 
+a transition by measuring the shift in the line owing to the Zeeman 
+effect.
+\keyword{\bf IIN}
+Stokes I spectral cube, with axes in order Channel, X, Y.
+\keyword{\bf VIN}
+Stokes V spectral cube, with axes in order Channel, X, Y.
+\keyword{\bf B}
+Output file name for Line-of-sight magnetic field.
+\keyword{\bf G}
+Output file name for amount of residual I found in V (FIT only)
+\keyword{\bf D}
+Output file name for the derivative of I/2 spectrum (DIV only)
+\keyword{\bf BE}
+Output file name for the error in B (DIV only)
+\keyword{\bf BLC}
+Bottom left corner of box to be fit
+\keyword{\bf TRC}
+Top right corner of box to be fit
+\keyword{\bf FREQ}
+Frequency of line in GHz. This is used to determine amount of
+splitting per Gauss.
+\keyword{\bf OP}
+Operation code. Possible values are ``div'' and ``fit''. For
+``div'', the line shift is determined by dividing V by the
+derivative of I/2. For ``fit'', the line shift is determined
+by fitting of the derivative of I and I to V.
+\keyword{\bf CUTOFF}
+For ``div'', the division will not be performed unless the
+derivative of I/2 is greater than cutoff.
+For ``fit'', the fit will not be performed unless one or more
+channels in the I spectrum is larger in absolute
+value than cutoff.
+\keyword{\bf VRMS}
+RMS deviation in V spectrum in a signal free area.  This can easily
+be gotten using histo.  Used for calculating error in B for op=div.
+\keyword{\bf MODE}
+This determines the algorithms used, if operation=``fit''. It
+can consist of several flags:
+{\eightpoint\begintt
+ l  Include leakage term.
+ 2  Use 2 sided derivative approximation.
+ m  Use maximum likelihood technique.
+ x  Perform extra checks for better solutions, when
+    using the maximum likelihood technique.
+\endtt}
+Default mode=2m
+\keyword{\bf Y CORLEN}
+Correlation length.  Selected window must be divisible by this
+number, which is the number of pixels over which you think the
+magnetic field might be constant.  Default is 1, try maybe 2 or 4.
+\par}
+\module{zeesim}%
+\noindent Test reliability of Zeeman splitting errors
+\newline \ 
+\newline \abox{Responsible:} Neil Killeen
+\newline \abox{Keywords:} profile analysis
+\newline{\tenpoint\newline
+Estimate the reliability of Zeeman error estimates for spatial 
+summing or averaging.    This is generally essential for spatial
+summing, and possibly needed for spatial averaging when eta is 
+of the order of unity.
+
+Program in four logical sections
+1)  Read in data
+2)  Fit data
+3)  Find the FFT of the beam
+4)  Simulate 
+\keyword{\bf IIN}
+Input I cube. No default.
+\keyword{\bf VIN}
+Input V cube. No default.
+\keyword{\bf BEAM}
+The beam of the observation.  Not needed for AVEOP=`a'
+\keyword{\bf MODE}
+This is a character string that determines the algorithm used 
+in the fitting process. It consists of several flags, which 
+can be:
+{\eightpoint\begintt
+  m Use maximum likelihood technique.
+  l Include a leakage term in the fitting.
+  2 Use a two sided derivative estimate.
+  x Perform extra checks for better solutions when using the 
+    maximum likelihood technique.
+  d Debiased least squares estimate.
+\endtt}
+The default is ' ' i.e., least squares and 1.
+\keyword{\bf AVEOP}
+a' for averaged spectrum in window, `s' for summed spectra
+ummed computational load is orders of magnitude greater than for 
+veraged spectra.  'h' for hybrid of averaging and summing.
+efault is `a'.  The hybrid is the same as `s', except when 
+he simulated spectra, whereupon the spectra are first
+veraged for each window.
+\keyword{\bf CHAN}
+Channel range. Default is all channels.
+\keyword{\bf FREQ}
+Frequency (GHz) for conversion of channel splitting to B field.
+\keyword{\bf BLC}
+Bottom left corner of spatial region to examine. Default is (1,1).
+\keyword{\bf TRC}
+Top right corner of spatial region to examine. Default is all
+of image.
+\keyword{\bf BIN}
+Binning widths for all thre (v,x,y) dimensions. Default = 1. 
+\keyword{\bf SPLIT}
+Splitting (split to unsplit in channels) to use for calculation
+of hatV and all simulation (i.e., don't use actual splitting
+as predicted by fitting algorithm when generating V spectra.
+\keyword{\bf NRUNS}
+The number of simulation runs to undertake.   If 0, then just
+the initial fits are done.  Default is 0.
+\keyword{\bf INFILE}
+File containing a list of windows.  If this file specified,
+blc and trc are ignored.  Should be in format:
+{\eightpoint\begintt
+  NWIN
+  I XCEN YCEN XOFF YOFF
+\endtt}
+And there are nwin of these lines.  XOFF and YOFF define the
+box half-sizes from their specified centres, XCEN and YCEN.
+You can leave off XOFF and YOFF and they will default to 2
+All units are pixels.
+\keyword{\bf LOG} \newline \ 
+If NRUNS = 0
+{\eightpoint\begintt
+  One value which is a root file name, appended to which is
+  the box number as specified in the INFILE (or = 1 for
+  a box specified with BLC and TRC).   These files contain
+  the fitted results for each window.   The files are opened
+  in APPEND mode.
+\endtt}
+If NRUNS {\tt >} 0
+{\eightpoint\begintt
+  Two values.  The first is a root file name, appended to which 
+  is the box number as specified in the INFILE (or = 1 for
+  a box specified with BLC and TRC).   These files contain the
+  results for each simulation with a cumulative fiddle factor
+  worked out.  The first line is the initially fit results
+  before simulation.
+  The second value is a file containing a statistical summary
+  of the final results of the simulations from all windows, 
+  including the initially fit results before simulation began.
+\endtt}
+\keyword{\bf NRAN}
+Throw away NRAN random numbers before starting.  Use this to 
+continue a set of simulations with different random numbers.
+\par}
+\module{zeestat}%
+\noindent Fits Zeeman parameters to I and V cubes
+\newline \ 
+\newline \abox{Responsible:} Neil Killeen
+\newline \abox{Keywords:} model fitting
+\newline{\tenpoint\newline
+ZEESTAT is a Miriad task that fits Zeeman parameters to a region of
+input I and V cubes. Zeestat also analyses the noise correlations
+to determine a factor used in correcting the sigma estimates.
+\keyword{\bf IIN}
+Input I cube. No default.
+\keyword{\bf VIN}
+Input V cube. No default.
+\keyword{\bf BEAM}
+The beam of the observation. This is used in determining the sigma
+correction factor. The default is a delta function. You should
+give the beam if you want an accurate estimate of sigma.
+\keyword{\bf RHO}
+The channel-to-channel correlation coefficient. This is used in
+determining the sigma correction factor. The default is 0.
+\keyword{\bf FREQ}
+Frequency (GHz) of splitting. No default.
+\keyword{\bf MODE}
+This is a character string that determines the algorithm used in the
+fitting process. It consists of several flags, which can be:
+{\eightpoint\begintt
+  m Use maximum likelihood technique.
+  l Include a leakage term in the fitting.
+  2 Use a two sided derivative estimate.
+  x Perform extra checks for better solutions when using the maximum
+    likelihood technique.
+\endtt}
+The default is ' ' i.e., least squares and 1.
+\keyword{\bf AVEOP}
+If 'a' then the spectra specified by the spatial window are
+averaged before being passed to the fitting routine.  Otherwise,
+and by default, all spectra are passed to the fitting routine
+and ``spatial summing'' (as defined by SKLZ) is performed.
+\keyword{\bf CHAN}
+Channel range. Default is all channels.
+\keyword{\bf BLC}
+Bottom left corner of spatial region to examine. Default is (1,1).
+\keyword{\bf TRC}
+Top right corner of spatial region to examine. Default is all
+of image.
+\keyword{\bf LOG}
+This is the name of an output logfile, which shows how the error
+estimate varies with the alpha parameter.
+\par}
