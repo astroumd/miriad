@@ -16,5 +16,6 @@
  *      28feb97 jm  Added a check to see that a filename was actually
  *                  selected from the file browser.
  *      07oct97 jm  Added command line option to pick 1mm/3mm.
+ *      15jul98 PJT added the above option in help
  */
-#define VERSION "Version 1.8 (07-oct-97)"
+#define VERSION "Version 1.8 (15-jul-98)"

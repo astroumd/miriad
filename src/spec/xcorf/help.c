@@ -141,8 +141,9 @@ line.  The resources that may be set and their syntax are presented in\n\
 the following table.\n\n\
                          Command Line Arguments\n\
 ------------------------------------------------------------------------\n\
-  Argument        Resource Set   Example\n\
+  Argument        Resource(s) Set   Example\n\
 ------------------------------------------------------------------------\n\
+  -1mm            fmin,fmax,freq -1mm; (Sets resources for 1mm lines)\n\
   -icongeometry   iconGeometry   -icongeometry -128+0\n\
   -iconGeometry   iconGeometry   -iconGeometry +128-0\n\
   -ig             iconGeometry   -ig -0-0\n\
