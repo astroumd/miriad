@@ -1,10 +1,13 @@
 #! /bin/csh -f
-
+#
+#  mir.bench: see also http://bima.astro.umd.edu/memo/abstracts.html#81
+#
+#
 set tmp=bench$$
 mkdir $tmp
 cd $tmp
 
-
+#			default parameters  (nchan=8, mapsize=512 for a test)
 set nchan=32
 set mapsize=1024
 set cell=0.5
@@ -24,12 +27,14 @@ if ($standalone) then
    setenv  LD_LIBRARY_PATH ..
 endif	
 
-echo "MIRBENCH: (1999-11-16) $tmp : nchan=$nchan mapsize=$mapsize"
+echo "MIRBENCH: (2002-04-04) $tmp : nchan=$nchan mapsize=$mapsize"
 echo `hostname` 
 echo `uname -a`  
 echo `date`
 echo 'Needs:  uvgen uvcat invert clean restor'
 echo 'Also from $MIRCAT it needs: bima9_a.ant bima9_b.ant bima9_c.ant.equ'
+echo 'cd $MIR;tar cf /tmp/mirbench.tar $MIRBIN/{uvgen,uvcat,invert,clean,restor} $MIRCAT/{bima9_a.ant,bima9_b.ant,bima9_c.ant.equ}'
+
 
 echo "1,0,0,0,0,0,0,0,0" > point.source
 #set corr=0,1,100.0,1000.0 
@@ -43,6 +48,9 @@ set tpower=0,0
 set jyperk=150
 set ant=($MIRCAT/bima9_a.ant $MIRCAT/bima9_b.ant $MIRCAT/bima9_c.ant.equ)
 
+# be careful, MIRIAD uses $TMPDIR, and better make sure this is a local disk
+# alternatively, you can set:
+# setenv TMPDIR /tmp
 
 time uvgen out=vis1 harange=$harange source=$MIRCAT/point.source \
  corr=$corr spectra=$spectra ant=$ant[1] \
