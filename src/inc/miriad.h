@@ -1,6 +1,6 @@
 /*
 // Header that gives C++ code access to the MIRIAD IO routines
-// May need careful monitoring how MIRIAD code develops
+// Is now also used a global prototype header file for all C routines
 //
 // History:
 //
@@ -17,7 +17,26 @@
 // 07-feb-97 rjs Added "Const" to definitions, and eliminate some rubbish, as
 //		 suggested by Scott Gordon.
 // 19-Mar-97 rjs Check for definition of various thingos before doing them.
+// 15-jun-01 pjt Added key.c for BIMA version (ATNF uses keyc.c) as well as
+//               the uvget* uvrd* macros from uvio.c
+// 28-may-02 pjt LFS patches: make it for for > 2GB file using off_t/size_t (prep for MIR4)
+// 17-jun-02 pjt added interface.c routines; now used as global prototype file
+// 23-jun-02 pjt define MIR4 here if you want to enable the LSF and MIR4
 */
+
+#if !defined(MIR_MIRIAD_H)
+#define MIR_MIRIAD_H
+
+
+/*  comment this out if you only handle data < 2GB and need to be compatible with old MIRIAD */
+/*  or simply define MIR3 through compile options                                            */
+#if !defined(MIR3)
+#define MIR4  
+#endif
+
+#include <sys/types.h>     /* provides off_t */
+#include <unistd.h>
+#include "sysdep.h"        /* since it now contains the "pack.c" prototypes */
 
 /* Define const and void if needed. */
 
@@ -75,12 +94,12 @@ void haccess_c ARGS((int tno, int *ihandle, Const char *keyword, Const char *sta
 void hmode_c ARGS((int tno, char *mode));
 int  hexists_c ARGS((int tno, Const char *keyword));
 void hdaccess_c ARGS((int ihandle, int *iostat));
-int  hsize_c ARGS((int ihandle));
-void hio_c ARGS((int ihandle, int dowrite, int type, char *buf, int offset, int length, int *iostat));
-void hseek_c ARGS((int ihandle, int offset));
-int  htell_c ARGS((int ihandle));
-void hreada_c ARGS((int ihandle, char *line, int length, int *iostat));
-void hwritea_c ARGS((int ihandle, Const char *line, int length, int *iostat));
+size_t hsize_c ARGS((int ihandle));
+void hio_c ARGS((int ihandle, int dowrite, int type, char *buf, off_t offset, size_t length, int *iostat));
+void hseek_c ARGS((int ihandle, off_t offset));
+off_t htell_c ARGS((int ihandle));
+void hreada_c ARGS((int ihandle, char *line, off_t length, int *iostat));
+void hwritea_c ARGS((int ihandle, Const char *line, off_t length, int *iostat));
 
 /* Macros defined in hio.c */
 
@@ -96,6 +115,10 @@ void hwritea_c ARGS((int ihandle, Const char *line, int length, int *iostat));
         hio_c(item,FALSE,H_INT2,(char *)(buf),offset,length,iostat)
 #define hwritej_c(item,buf,offset,length,iostat) \
         hio_c(item,TRUE,H_INT2,(char *)(buf),offset,length,iostat)
+#define hreadl_c(item,buf,offset,length,iostat) \
+        hio_c(item,FALSE,H_INT8,(char *)(buf),offset,length,iostat)
+#define hwritel_c(item,buf,offset,length,iostat) \
+        hio_c(item,TRUE,H_INT8,(char *)(buf),offset,length,iostat)
 #define hreadr_c(item,buf,offset,length,iostat) \
         hio_c(item,FALSE,H_REAL,(char *)(buf),offset,length,iostat)
 #define hwriter_c(item,buf,offset,length,iostat) \
@@ -117,21 +140,39 @@ void hwritea_c ARGS((int ihandle, Const char *line, int length, int *iostat));
 
 void hisopen_c ARGS((int tno, Const char *status));
 void hiswrite_c ARGS((int tno, Const char *text));
-void hisread_c ARGS((int tno, char *text, int length, int *eof));
+void hisread_c ARGS((int tno, char *text, size_t length, int *eof));
 void hisclose_c ARGS((int tno));
 void wrhdr_c ARGS((int tno, Const char *keyword, double value));
 void wrhdd_c ARGS((int tno, Const char *keyword, double value));
 void wrhdi_c ARGS((int tno, Const char *keyword, int value));
+void wrhdl_c ARGS((int tno, Const char *keyword, int8 value));
 void wrhdc_c ARGS((int tno, Const char *keyword, Const float *value));
 void wrhda_c ARGS((int tno, Const char *keyword, Const char *value));
 void rdhdr_c ARGS((int tno, Const char *keyword, float *value, double defval));
 void rdhdi_c ARGS((int tno, Const char *keyword, int *value, int defval));
+void rdhdl_c ARGS((int tno, Const char *keyword, int8 *value, int8 defval));
 void rdhdd_c ARGS((int tno, Const char *keyword, double *value, double defval));
 void rdhdc_c ARGS((int tno, Const char *keyword, float *value, Const float *defval));
 void rdhda_c ARGS((int tno, Const char *keyword, char *value, Const char *defval, int len));
 void hdcopy_c ARGS((int tin, int tout, Const char *keyword));
 int  hdprsnt_c ARGS((int tno, Const char *keyword));
-void hdprobe_c ARGS((int tno, Const char *keyword, char *descr, int length, char *type, int *n));
+void hdprobe_c ARGS((int tno, Const char *keyword, char *descr, size_t length, char *type, int *n));
+
+/* dio.c */
+
+void ddelete_c(char *path, int *iostat);
+void dtrans_c(char *inpath, char *outpath, int *iostat);
+void dmkdir_c(char *path, int *iostat);
+void drmdir_c(char *path, int *iostat);
+void dopen_c(int *fd, char *name, char *status, size_t *size, int *iostat);
+void dclose_c(int fd, int *iostat);
+void dread_c(int fd, char *buffer, off_t offset, size_t length, int *iostat);
+void dwrite_c(int fd, char *buffer, off_t offset, size_t length, int *iostat);
+void dwait_c(int fd, int *iostat);
+int dexpand_c(char *tmplte, char *output, int length);
+void dopendir_c(char **contxt, char *path);
+void dclosedir_c(char *contxt);
+void dreaddir_c(char *contxt, char *path, int length);
 
 /* uvio.c */
 
@@ -178,6 +219,30 @@ void uvinfo_c ARGS((int tno, Const char *object, double *data));
 #define uvputvrc_c(tno,name,value,n) \
         uvputvr_c(tno,H_CMPLX,name,(char *)(value),n)
 
+#define uvgetvra_c(tno,name,value,n)   \
+        uvgetvr_c(tno,H_BYTE,name,value,n)
+#define uvgetvrj_c(tno,name,value,n) \
+        uvgetvr_c(tno,H_INT2,name,(char *)(value),n)
+#define uvgetvri_c(tno,name,value,n) \
+        uvgetvr_c(tno,H_INT,name,(char *)(value),n)
+#define uvgetvrr_c(tno,name,value,n) \
+        uvgetvr_c(tno,H_REAL,name,(char *)(value),n)
+#define uvgetvrd_c(tno,name,value,n) \
+        uvgetvr_c(tno,H_DBLE,name,(char *)(value),n)
+#define uvgetvrc_c(tno,name,value,n) \
+        uvgetvr_c(tno,H_CMPLX,name,(char *)(value),n)
+
+#define uvrdvra_c(tno,name,data,def,len) \
+	uvrdvr_c(tno,H_BYTE,name,data,def,len)
+#define uvrdvri_c(tno,name,data,def) \
+	uvrdvr_c(tno,H_INT,name,(char *)(data),(char *)(def),1)
+#define uvrdvrr_c(tno,name,data,def) \
+	uvrdvr_c(tno,H_REAL,name,(char *)(data),(char *)(def),1)
+#define uvrdvrd_c(tno,name,data,def) \
+	uvrdvr_c(tno,H_DBLE,name,(char *)(data),(char *)(def),1)
+#define uvrdvrc_c(tno,name,data,def) \
+	uvrdvr_c(tno,H_CMPLX,name,(char *)(data),(char *)(def),1)
+
 /* xyio.c */
 
 void xyopen_c ARGS((int *tno, Const char *name, Const char *status, int naxis, int axes[]));
@@ -191,15 +256,23 @@ void xyflgwr_c ARGS((int tno, int index, Const int *flags));
 void xyflgrd_c ARGS((int tno, int index, int *flags));
 void xysetpl_c ARGS((int tno, int naxis, Const int *axes));
 
+/* maskio.c */
+char *mkopen_c(int tno, char *name, char *status);
+void mkclose_c(char *handle);
+int  mkread_c(char *handle, int mode, int *flags, int offset, int n, int nsize);
+void mkwrite_c(char *handle, int mode, int *flags, int offset, int n, int nsize);
+void mkflush_c(char *handle);
+
+
 /* xyzio.c */
 
-void xyzopen_c ARGS((int *tno, Const char *name, Const char *status, int *naxis, int axlen[]));
+void xyzopen_c  ARGS((int *tno, Const char *name, Const char *status, int *naxis, int axlen[]));
 void xyzclose_c ARGS((int tno));
 void xyzflush_c ARGS((int tno));
 void xyzsetup_c ARGS((int tno, Const char *subcube, Const int blc[], Const int trc[], int viraxlen[], int vircubesize[]));
-void xyzs2c_c ARGS((int tno, int subcubenr, int coords[]));
-void xyzc2s_c ARGS((int tno, Const int coords[], int *subcubenr));
-void xyzread_c ARGS((int tno, Const int coords[], float *data, int *mask, int *ndata));
+void xyzs2c_c   ARGS((int tno, int subcubenr, int coords[]));
+void xyzc2s_c   ARGS((int tno, Const int coords[], int *subcubenr));
+void xyzread_c  ARGS((int tno, Const int coords[], float *data, int *mask, int *ndata));
 void xyzpixrd_c ARGS((int tno, int pixelnr, float *data, int *mask));
 void xyzprfrd_c ARGS((int tno, int profilenr, float *data, int *mask, int *ndata));
 void xyzplnrd_c ARGS((int tno, int planenr, float *data, int *mask, int *ndata));
@@ -210,7 +283,6 @@ void xyzplnwr_c ARGS((int tno, int planenr, Const float *data, Const int *mask, 
 
 /* bug.c */
 
-void bugrecover_c ARGS((void (*recover)(void)));
 void buglabel_c ARGS((Const char *name));
 void bugno_c ARGS((char s, int n));
 void bug_c ARGS((char s, Const char *m));
@@ -222,7 +294,29 @@ void scrclose_c ARGS((int handle));
 void scrread_c ARGS((int handle, float *buffer, int offset, int length));
 void scrwrite_c ARGS((int handle, Const float *buffer, int offset, int length));
 
+/* key.c */
+
+void keyinit_c(Const char *task);
+void keyput_c(Const char *task, char *string);
+void keyini_c(int argc, char *argv[]);
+void keyfin_c(void);
+int keyprsnt_c(Const char *keyword);
+void keya_c(Const char *keyword, char *value, Const char *keydef);
+void keyf_c(Const char *keyword, char *value, Const char *keydef);
+void keyd_c(Const char *keyword, double *value, Const double keydef);
+void keyr_c(Const char *keyword, float *value, Const float keydef);
+void keyi_c(Const char *keyword, int *value, Const int keydef);
+void keyl_c(Const char *keyword, int *value, Const int keydef);
+void mkeyd_c(Const char *keyword, double value[], Const int nmax, int *n);
+void mkeyr_c(Const char *keyword, float value[], Const int nmax, int *n);
+void mkeyi_c(Const char *keyword, int value[], Const int nmax, int *n);
+
+/* interface.c */
+void pad(char *string, int length);
+char *zterm(char *string, int length);
+
 #if defined(__cplusplus)
 }
 #endif
 
+#endif   /*  MIR_MIRIAD_H */

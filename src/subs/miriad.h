@@ -169,7 +169,7 @@ void dclose_c(int fd, int *iostat);
 void dread_c(int fd, char *buffer, off_t offset, size_t length, int *iostat);
 void dwrite_c(int fd, char *buffer, off_t offset, size_t length, int *iostat);
 void dwait_c(int fd, int *iostat);
-int dexpand_c(char *template, char *output, int length);
+int dexpand_c(char *tmplte, char *output, int length);
 void dopendir_c(char **contxt, char *path);
 void dclosedir_c(char *contxt);
 void dreaddir_c(char *contxt, char *path, int length);
