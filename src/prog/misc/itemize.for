@@ -33,7 +33,10 @@ c	dataset are given. If multiple input files are given, it acts as
 c       a file scanner, and some minimal information is given about the 
 c	the kind of dataset.
 c       Large datasets with more than 2147483648 are reported with the wrong
-c       count.
+c       count (MIR4 to be fixed in version 4.1)
+c       Here is a recipe to create a miriad dataset from scratch. You can then
+c       use puthd to add items:
+c               mkdir data ; touch data/header
 c@ in
 c	The name of either a dataset, or an item within a data set or a 
 c	wildcard. For example:
