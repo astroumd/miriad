@@ -15,6 +15,7 @@ c       pjt  6-aug-92  fixed read(,*,) to read(,'(a)',) for avarnew (READVAL)
 c pjt/sally 31-mar-97  defined MAXVAL and increased from 8 to 16
 c       pjt 17-aug-99  added tabular time dependant input, substantial rewrite
 c       tw   4-nov-02  table can now give non-ascii array values
+c       pjt 16-jan-03  fix array input from varval= keyword
 c          
 c  unfinished:
 c       - array values for tables
@@ -76,7 +77,7 @@ c    Name of the output dataset. No default.
 c-----------------------------------------------------------------------
 	include 'uvputhd.h'
 	character VERSION*(*)
-	parameter(VERSION='(Version 04-nov-02 tw)')
+	parameter(VERSION='(Version 16-jan-03 pjt)')
 	character varval(MAXVAL)*30,hdvar*10,time0*32
         character outfile*80,infile*80,tabfile*80
         character except(20)*10,newtype*1,line*256
@@ -84,7 +85,7 @@ c-----------------------------------------------------------------------
 	double precision preamble(4), jd0, jd1
 	complex data(MAXCHAN),wdata(MAXCHAN)
 	logical flags(MAXCHAN),wflags(MAXCHAN),there,first
-	integer len1,ncols
+	integer len1,ncols,i
 	logical keyprsnt
 c
 	call output('UVPUTHD: '//version)
@@ -122,6 +123,8 @@ c  read in ascii table
 c
 	if (tabfile .ne. ' ') then
 	   call rtable(tabfile,jd0,ncols)
+	else
+	   ncols = nval
 	endif
 c
 c  open input visfile
@@ -142,8 +145,19 @@ c
 	   write(line,'('' Expecting array of '',i2,'' values'')')
      *		length(yourvar)
 	   call output(line)	
-	   if (length(yourvar).ne.ncols)
-     *	      call bug('f',' Incorrect number of columns in table')
+	   if (length(yourvar).ne.ncols) then
+	      if (nval.eq.1 .and. ncols.eq.1) then
+		 do i=2,length(yourvar)
+		    varval(i) = varval(1)
+		 enddo
+		 write(line,'('' Replicating '',i2,'' value'')') ncols
+		 call output(line)	
+	      else
+		 write(line,'('' Found '',i2,'' values'')') ncols
+		 call output(line)	
+		 call bug('f',' Incorrect number of columns in table')
+	      endif
+	   endif
 	else
 	   if(newtype(1:1) .eq. ' ') 
      *	      call bug('f',' Type must be specified for a new variable')
