@@ -1,0 +1,17 @@
+This directory will be mostly empty when you receive miriad, but
+is meant to contain the MIRIAD standard datasets from a variety
+of telescopes that work with MIRIAD. These datasets are needed
+for certain benchmarks, and confirm the correct workings of MIRIAD
+for those telescope data.
+
+It will be the responsibility of these sites to provide URL's 
+where these datasets can be downloaded from. Ideally a tar file
+or fits file, e.g.
+
+	wget http://bima.astro.umd.edu/miriad/data/bima1.tar
+	tar zf bima1.tar
+
+or
+	wget http://bima.astro.umd.edu/miriad/data/bima2.fits
+	fits in=bima2.fits out=bima2.uv op=uvin
+
