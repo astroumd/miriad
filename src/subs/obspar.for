@@ -427,7 +427,7 @@ c Reference:  Todd Hunter  Log#7242
 	call obsad('sma/height',	4080.0d0)
 c frequency dependent - but clearly one of these two is the better one
         call obsad('sma/jyperk',        13.d0)
-	call obsad('sma/jyperk',	130.d0)
+c	call obsad('sma/jyperk',	130.d0)
 c older value from Ram?
 c	call obsad('sma/latitude',	obsdms( 1, 19,49,33.8))
 c	call obsad('sma/longitude',	obsdms(-1,155,28,46.4))
