@@ -26,9 +26,9 @@ except:
     _do_pgplot = 0
 
 if _do_pgplot:
-    print "PGPLOT avaiable"
+    print "PGPLOT available"
 if _do_grace:
-    print "Grace avaiable"
+    print "Grace available"
 
 # --------------------------------------------------------------------------------
 
