@@ -1,19 +1,26 @@
-/* jhz - may2004 */
-/* 2004-5    propose the development of SMA code unde miriad */
-/* 2004-5    start to write the SMAmir2Miriad code (SMALOD) */
-/* 2004-7-15 read/write out all vis data */
-/* 2004-7-16 write lst */
-/* 2004-7-17 correct for spectral order based on s sequence */
-/* 2004-7-19 source information */
-/* 2004-7-20 sideband separation */
-/* 2004-7-22 fix coordinates for j2000 and apparent (observing) */
-/* 2004-7-23 fix skip beginning and ending scans */
-/* 2004-7-24 check and correct the flagging */
-/* 2004-7-25 add a variable sourceid */
-/* 2004-7-26 Tsys EL AZ information */
-/* 2004-8-2  Instrument, telescope, observer version */
-/* 2004-8-4  flip the phase for lsb */
-/* 2004-12-10 rename header file for miriad 4.0.4 - pjt */
+// jhz - may2004 */
+// 2004-5    propose the development of SMA code unde miriad */
+// 2004-5    start to write the SMAmir2Miriad code (SMALOD) */
+// 2004-7-15 read/write out all vis data */
+// 2004-7-16 write lst */
+// 2004-7-17 correct for spectral order based on s sequence */
+// 2004-7-19 source information */
+// 2004-7-20 sideband separation */
+// 2004-7-22 fix coordinates for j2000 and apparent (observing) */
+// 2004-7-23 fix skip beginning and ending scans */
+// 2004-7-24 check and correct the flagging */
+// 2004-7-25 add a variable sourceid */
+// 2004-7-26 Tsys EL AZ information */
+// 2004-8-2  Instrument, telescope, observer version */
+// 2004-8-4  flip the phase for lsb */
+// 2004-11-30 added a function of retrieving daul rx/if.
+// 2004-12-10 rename header file for miriad 4.0.4 - pjt 
+// 2004-12-16 increased length of pathname from 36 to 64
+//            increased length of location from 64 to 81
+// 2005-01-11 merge sma_Resample.c to sma_mirRead.c
+//            sma_mirRead.c handle both original correlator
+//            configuration and resample the spectra to
+//            lower and uniform resolution.
 #include <math.h>
 #include <rpc/rpc.h>
 #include <signal.h>
@@ -33,8 +40,6 @@
 #define H_DBLE          5
 #define H_TXT           6
 #define H_CMPLX         7
-
-
 #define OK 0
 /* Speed of light (meters/second). */
 #define DCMKS           299792458.0
@@ -75,14 +80,14 @@ smlodd smabuffer;
 struct vis { float real;
          float imag;
 };
-int mir_Read();
+int rsmir_Read();
 
 unsigned long mfsize(FILE *);
 struct inh_int_def {
 	int  a[512];
 };
-void pokeinisma_c();
-void pokeflshsma_c();
+void rspokeinisma_c();
+void rspokeflshsma_c();
 char *rar2c();
 char *decr2c();
 int spdecode();
@@ -94,7 +99,7 @@ void aberrate();
 void elaz();
 void tsysStore();
 /* interface between fortran and c */
-void mirread_c(char *datapath, char *jst[])
+void rsmirread_c(char *datapath, char *jst[])
 { extern char pathname[];
   int jstat;
   int tno;
@@ -106,12 +111,12 @@ void mirread_c(char *datapath, char *jst[])
   int flag, bin, if_no, sourceno;
        strcpy(pathname,datapath);
         jstat=(int)*jst;
-        jstat = mir_Read(pathname,jstat);
+        jstat = rsmir_Read(pathname,jstat);
         *jst = (char *)jstat; 
    return;
 }
 
-void miriadwrite_c(char *datapath, char *jst[])
+void rsmiriadwrite_c(char *datapath, char *jst[])
 { extern char pathname[];
   int jstat,kstat;
   int tno;
@@ -119,11 +124,11 @@ void miriadwrite_c(char *datapath, char *jst[])
       tno = smabuffer.tno;
      jstat=-1;
 /* open mir files */
-     jstat = mir_Read(pathname,jstat);
+     jstat = rsmir_Read(pathname,jstat);
         *jst = (char *)jstat;
 /* then start to read and write data if the files are ok. */
      if (jstat==0) {jstat=0;
-         jstat = mir_Read(pathname,jstat);}
+         jstat = rsmir_Read(pathname,jstat);}
          else {
          printf("file problem\n");
             }
@@ -131,7 +136,7 @@ void miriadwrite_c(char *datapath, char *jst[])
      return;
 }
 
-void smaflush_c(mflag,scinit,tcorr,scbuf,xflag,yflag,maxif,maxant,scanskip,scanproc, sb, rxif)
+void rssmaflush_c(mflag,scinit,tcorr,scbuf,xflag,yflag,maxif,maxant,scanskip,scanproc, sb, rxif)
 int *mflag, *scinit, tcorr, *scbuf, *xflag, *yflag, maxif, maxant,scanskip,scanproc, sb, rxif;
 { /* flush mirdata*/
 int i, j;
@@ -148,7 +153,7 @@ extern smlodd smabuffer;
           smabuffer.scanskip=scanskip;
           smabuffer.scanproc=scanproc;
           smabuffer.sb = sb;
-          smabuffer.rxif= rxif;
+           smabuffer.rxif= rxif;
      *mflag = FALSE;
      for (j=1; j<maxant+1; j++) {
      for (i=1; i<maxant+1; i++) {
@@ -160,7 +165,7 @@ extern smlodd smabuffer;
      } 
       kstat = jstat = -1;  
 /*read header  */
-      pokeflshsma_c((char *)&(kstat)); 
+      rspokeflshsma_c((char *)&(kstat)); 
 /*  write ante numbers */
       if(smabuffer.nants!=0) {
          uvputvri_c(tno,"nants",&(smabuffer.nants),1);
@@ -176,11 +181,11 @@ extern smlodd smabuffer;
          }
 };
     
-void pokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1,
+void rspokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1,
   int *doop1, int *dohann1, int *birdie1, int *dowt1, int *dopmps1,
   int *dobary1, int *doif1, int *hires1, int *nopol1, int *oldpol1, 
-  double lat1, double long1)
-{ /* pokeflshsma_c == pokeflsh */
+  double lat1, double long1, int rsnchan1)
+{ /* rspokeflshsma_c == pokeflsh */
     int buffer;
     extern char sname[];
     extern smlodd smabuffer;
@@ -188,6 +193,7 @@ void pokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1,
   /* initialize the external buffers */   
    strcpy(sname, " ");
         smabuffer.tno    = tno1;
+        smabuffer.rsnchan= rsnchan1;
         smabuffer.dosam  = *dosam1;
         smabuffer.doxyp  = *doxyp1;
         smabuffer.opcorr = *doop1;
@@ -217,8 +223,8 @@ void pokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1,
 
 }
 
-void pokeflshsma_c(char *kst[])
-{ /* pokeflshsma_c== pokeflsh */
+void rspokeflshsma_c(char *kst[])
+{ /* rspokeflshsma_c== pokeflsh */
      int buffer, tno, ibuff, i;
      int i1, i2, ifs, p, bl, sb, nchan, nspect;
      int npol,ipnt,ischan[SMIF];
@@ -232,7 +238,7 @@ void pokeflshsma_c(char *kst[])
      extern char sname[];
      extern smlodd smabuffer;
      struct pols *polcnt;
-     struct pols *cntstokes();
+     struct pols *rscntstokes();
       char telescope[4];
       char instrument[4];
       char observer[16];
@@ -394,12 +400,12 @@ void pokeflshsma_c(char *kst[])
                   preamble[2] = smabuffer.w[bl];
                   preamble[3] = smabuffer.time; 
                   preamble[4] = smabuffer.blcode[bl]; 
-       polcnt = cntstokes(npol, bl, sb);
+       polcnt = rscntstokes(npol, bl, sb);
        npol = polcnt->npol;
           if(npol>0) {
             uvputvri_c(tno,"npol",&npol,1);
             for(p=polcnt->polstart; p<polcnt->polend+1; p++){
-    nchan = getdata(&vis,&flags,&nchan, p, bl, sb);
+    nchan = rsgetdata(&vis,&flags,&nchan, p, bl, sb);
     if(nchan>0) {
            ibuff = smabuffer.polcode[0][p][bl];
          uvputvri_c(tno,"pol",&ibuff,1);
@@ -425,7 +431,7 @@ void pokeflshsma_c(char *kst[])
 
 }
 
-int getdata(smavis, smaflags, smanchan, p, bl, sb)
+int rsgetdata(smavis, smaflags, smanchan, p, bl, sb)
 visdata smavis[MAXCHAN];
 int smaflags[MAXCHAN];
 int *smanchan;
@@ -482,7 +488,7 @@ int ifpnt, polpnt, blpnt, binpnt;
                    return nchan;
  }
 
-struct pols *cntstokes(int npol, int bl, int sb)
+struct pols *rscntstokes(int npol, int bl, int sb)
 { /*Determine the number of valid Stokes records in this record.*/
     int nifs = SMIF;
     int nstoke = SMPOL;
@@ -507,11 +513,12 @@ struct pols *cntstokes(int npol, int bl, int sb)
          return (&polcnts);
 }          
               
-int mir_Read(char *datapath,
+
+int rsmir_Read(char *datapath,
              int jstat)
 {
-char location[6][64];
-char pathname[36];
+char location[6][81];
+char pathname[64];
 char filename[6][36];
 int set, readSet;
 int file,nfiles = 6;
@@ -542,7 +549,7 @@ int tno, ipnt, usbstart, usbend;
 int kstat;
 char *kst[4];
 char target[6];
-char unknown[7];
+char unknown[6];
 int ntarget;
 int p, bl, bin;
 time_t timer, startTime, endTime;
@@ -558,6 +565,8 @@ visdataBlock  visSMAscan;
 int sphSizeBuffer=SMIF*MAXBAS*6;
 int ibuff, nnants;
 int ifpnt, polpnt, blpnt, sbpnt, sblpnt, binpnt, rx_irec;
+int avenchan;
+float avereal, aveimag;
 extern struct inh_def   **inh;
 extern struct blh_def   **blh;
 static struct sph_def   **sph;
@@ -660,7 +669,7 @@ nsets[0]*sizeof(struct uvwPack));
  }
 if (SWAP_ENDIAN) {
 printf("FINISHED READING  IN HEADERS (endian-swapped)\n");
-} else { 
+} else {
 printf("FINISHED READING  IN HEADERS\n");
 }
   for (set=0;set<nsets[1];set++) {
@@ -745,7 +754,7 @@ for (set=1;set<nsets[1];set++) {
                                 }
 blload_done:
       free(blh);
- if (SWAP_ENDIAN) {
+if (SWAP_ENDIAN) {
 printf("FINISHED READING  BL HEADERS (endian-swapped)\n");
 } else {
 printf("FINISHED READING  BL HEADERS\n");
@@ -801,11 +810,10 @@ for (set=0;set<nsets[4];set++) {
 }
 if (SWAP_ENDIAN) {
 printf("FINISHED READING  EN HEADERS (endian-swapped)\n");
- } else {
+} else {
 printf("FINISHED READING  EN HEADERS\n");
-}
-
-    free(enh);
+  }
+     free(enh);
        for (i=1; i < smabuffer.nants+1; i++) {
           antenna[i].x = 0.;
           antenna[i].y = 0.;
@@ -891,7 +899,7 @@ printf("FINISHED READING SP HEADERS\n");
       smaCorr.no_sideband =2;
       numberSidebands=smaCorr.no_sideband;
 
-   smaCorr.no_rxif =1;
+ smaCorr.no_rxif =1;
    for(i=1; i< numberBaselines;i++)
 /*   printf("irec i= %d %d \n", uvwbsln[inhset]->uvwID[i].irec, i);
  */
@@ -902,7 +910,7 @@ printf("FINISHED READING SP HEADERS\n");
 /* pick the 2th baseline to count number of spectra */
 /*  blhset = 1; */
   blhset=1;
- /* purse the receiver id */
+/* purse the receiver id */
  /* no receiver seperation */
   if(smabuffer.rxif==0) goto nextrx;
  /* find the specific receiver to load */
@@ -915,12 +923,7 @@ printf("FINISHED READING SP HEADERS\n");
    printf("ERROR: there is no receiver %d in this data set.\n", smabuffer.rxif);
    exit(-1);
    nextrx:
-   blhid = uvwbsln[inhset]->uvwID[blhset].blhid;
-
-/*   printf("blhset=%d\n", blhset);
-   printf("blhid =%d\n", blhid);
-   printf("RXIF=%d\n", smabuffer.rxif);
-*/
+  blhid = uvwbsln[inhset]->uvwID[blhset].blhid;
   firstsp = -1;
   lastsp  = -1;
   for (set=0;set<nsets[2];set++) { 
@@ -989,11 +992,11 @@ cdh[set] = (struct codeh_def *)malloc(sizeof(struct codeh_def ));
               cdh[set]=swap_cdh(cdh[set]);
                 }
   }
- if (SWAP_ENDIAN) {
+if (SWAP_ENDIAN) {
 printf("FINISHED READING  CD HEADERS (endian-swapped)\n");
-} else {
-   printf("FINISHED READING  CD HEADERS\n");
-        }
+}else {
+printf("FINISHED READING  CD HEADERS\n");
+}
 sourceID = 0;
 for (set=0;set<nsets[3];set++){
 /* decode the sp id */
@@ -1065,9 +1068,15 @@ for (i=1; i<smabuffer.nants+1; i++){
    smabuffer.newfreq =1;
    for(i=1;i<smaCorr.n_chunk+1; i++) {
    smabuffer.sfreq[spcode[i]-1] = smaFreq[0].chunkfreq[i];
-   smabuffer.sdf[spcode[i]-1] = smaFreq[0].chanWidth[i];
    smabuffer.restfreq[spcode[i]-1] = multisour[sourceID].restfreq[i];
+       if(smabuffer.rsnchan<0) {
+   smabuffer.sdf[spcode[i]-1] = smaFreq[0].chanWidth[i];
    smabuffer.nfreq[spcode[i]-1] = smaFreq[0].n_chunk_ch[i];
+              } else {
+     smabuffer.sdf[spcode[i]-1] = smaFreq[0].chanWidth[i]
+         *smaFreq[0].n_chunk_ch[i]/smabuffer.rsnchan;
+     smabuffer.nfreq[spcode[i]-1] = smabuffer.rsnchan;
+                               }
    smabuffer.bchan[spcode[i]-1]=1;
    smabuffer.nstoke[spcode[i]-1]=4;
    smabuffer.edge[spcode[i]-1]=0;
@@ -1148,7 +1157,8 @@ readSet=1;
 numberBaselines = uvwbsln[0]->n_bls;
 /* numberBaselines = 2;*/
 printf("#Baselines=%d #Spectra=%d  #Sidebands=%d #Receivers=%d\n",
-      numberBaselines/2, numberSpectra-1, numberSidebands, numberRxif);
+          numberBaselines/2, numberSpectra-1, numberSidebands, 
+          numberRxif);
 sphSizeBuffer= numberSpectra; /* numberBaselines for usb and lsb */
 firstsp=sphset;
 firstbsl=blhset;
@@ -1191,7 +1201,7 @@ smabuffer.dec = multisour[sourceID].dec;
 
 /* write source to uvfile */
 if((strncmp(multisour[sourceID].name,target,6)!=0)&&
-   (strncmp(multisour[sourceID].name,unknown,7)!=0) ){
+   (strncmp(multisour[sourceID].name,unknown,7)!=0)) {
 uvputvra_c(tno,"source",multisour[sourceID].name);
 uvputvrd_c(tno,"ra",&(smabuffer.ra),1);
 uvputvrd_c(tno,"dec",&(smabuffer.dec),1);
@@ -1210,10 +1220,8 @@ uvputvri_c(tno,"sourid", &sourceID, 1);
 
 sblpnt=0;
 for(j=0; j < numberBaselines; j++){
-/*printf("smabuffer.rxif=%d uvwbsln[inhset]->uvwID[j].irec= %d inhset=%d j=%d\n",
-       smabuffer.rxif, uvwbsln[inhset]->uvwID[j].irec, inhset, j);
-*/
 if(smabuffer.rxif==uvwbsln[inhset]->uvwID[j].irec||smabuffer.rxif==0) {
+
 sblpnt=j;
 blhset++;
 visSMAscan.uvblnID = uvwbsln[inhset]->uvwID[j].blcode; 
@@ -1323,15 +1331,45 @@ smabuffer.polcode[ifpnt][polpnt][blpnt]=visSMAscan.blockID.polid;
 /* smabuffer.pnt[ifpnt][polpnt][blpnt][0] = ipnt;*/
 smabuffer.pnt[ifpnt][polpnt][blpnt][sbpnt] = ipnt;
 /* Now the channel data.  */
+/* Make pseudo continuum */
+avenchan = 0;
+avereal  = 0.;
+aveimag  = 0.;
+
 for(i=0;i<sph[kk]->nch;i++){
+if (smabuffer.rsnchan> 0) {
+/* average the channel to the desired resolution */
+     if(avenchan< (sph[kk]->nch/smabuffer.rsnchan) ) {
+avereal = avereal + (float)pow(2.,(double)scale)*shortdata[5+2*i];
+aveimag = aveimag + (float)pow(2.,(double)scale)*shortdata[6+2*i];
+avenchan++;
+/*printf("avenchan=%d\n", avenchan);*/
+                                             } else {
+avereal = avereal/avenchan;
+aveimag = aveimag/avenchan;
+smabuffer.data[ipnt].real=avereal;
+smabuffer.data[ipnt].imag=aveimag;
+ipnt++;
+avenchan = 1;
+avereal  = (float)pow(2.,(double)scale)*shortdata[5+2*i];
+aveimag  = (float)pow(2.,(double)scale)*shortdata[6+2*i];
+                                                 }
+                            } else {
+/* loading the original vis with no average */
 smabuffer.data[ipnt].real=(float)pow(2.,(double)scale)*shortdata[5+2*i];
 smabuffer.data[ipnt].imag=(float)pow(2.,(double)scale)*shortdata[6+2*i];
 ipnt++;    }
+
+}
+
+/*smabuffer.data[ipnt].real=(float)pow(2.,(double)scale)*shortdata[5+2*i];
+smabuffer.data[ipnt].imag=(float)pow(2.,(double)scale)*shortdata[6+2*i];
+ipnt++;    }*/
     free(shortdata);
     sphset++;  /* count for each spectral chunk */
            }
 firstsp = sphset;
-           }
+        }
   }
 if (fmod((readSet-1), 100.)<0.5)
 printf("set=%4d ints=%4d inhid=%4d time(JulianDay)=%9.5f int=% 4.1f \n",
@@ -1344,12 +1382,12 @@ visSMAscan.time.intTime);
        smabuffer.nused=ipnt;
 /* re-initialize vis point for next integration */
        ipnt=1;
-/* call pokeflshsma_c to store databuffer to uvfile */
+/* call rspokeflshsma_c to store databuffer to uvfile */
        kstat = -1;
        *kst = (char *)&kstat;
         if((strncmp(multisour[sourceID].name,target,6)!=0)&&
            (strncmp(multisour[sourceID].name,unknown,7)!=0)) {
-       pokeflshsma_c(kst);
+       rspokeflshsma_c(kst);
          }else {
           ntarget++;}
 }
@@ -1360,15 +1398,30 @@ visSMAscan.blockID.inhid,
 visSMAscan.time.UTCtime,
 visSMAscan.time.intTime);
 printf("skipped %d integration scans on `target&unknown'\n",ntarget);
+avenchan=smabuffer.rsnchan;
+if (smabuffer.rsnchan>0) {
+printf("converted vis spectra from the original correlator configuration\n");
+printf("to low and uniform resolution spectra:\n");
+printf("         input     output\n");
+for (kk=1; kk<numberSpectra; kk++) {
+
+printf("  s%02d     %3d  =>  %2d\n",kk, sph[kk]->nch, avenchan);
+               }
+                         } else {
+printf("vis spectra from the original correlator configuration: \n");
+printf("         input     output\n");
+for (kk=1; kk<numberSpectra; kk++) {
+        printf("  s%02d     %3d  =>  %2d\n",kk, sph[kk]->nch, sph[kk]->nch);
+        }
+                  }
 printf("done with data conversion from mir to miriad!\n");
 }
 /* ---------------------------------------------------------------------- */
 endTime = time(NULL);
 trueTime = difftime(endTime, startTime);
-/*if(jstat==0) fprintf(stderr,
+if(jstat==0) fprintf(stderr,
   "Real time used =%f sec.\n",
         trueTime);
-*/
 jstat=0;
 return(jstat);
 } /* end of main */
