@@ -1,6 +1,6 @@
 #! /bin/csh -f
 #
-# Version: 21-feb-03
+# Version: 19-apr-03
 #
 #  2-aug-99 Updated for Sebok's Mandrake setup
 #  1-aug-00 Updated to allow to build private PGPLOT version
@@ -140,6 +140,8 @@ set testx=0		    #  mir.testx testing X routines (interactive)
 set bench=0,512,1           #  mir.bench nchan,mapsize,cell  (nchan=0 will skip bench)
 set intel=0                 #  use intel compiler (ifc/icc) for linux?
 set man=1		    #  do manual pages
+set lfs=(-D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE) # LFS flags for uvio
+
 
 #		   	remember from where we were installing, since we have stuff here.....
 set install_dir=`pwd`
@@ -361,7 +363,7 @@ mir.install prog wip rad xmrecvlist
 # special things....
 
 echo Compiling UVIO:
-cc -O -DTESTBED -I$MIRINC $MIRSUBS/uvio.c -o $MIRBIN/uvio $MIRLIB/libmir.a -lm >& $MIR/tmp/uvio.$$.$hosttype
+cc -O $lfs -DTESTBED -I$MIRINC $MIRSUBS/uvio.c -o $MIRBIN/uvio $MIRLIB/libmir.a -lm >& $MIR/tmp/uvio.$$.$hosttype
 
 # xcorf: (open)motif or lesstiff needs to have been installed for this
 # aug 2001: newer versions of lesstiff use /usr/X11R6/LessTif/Motif1.2/include
