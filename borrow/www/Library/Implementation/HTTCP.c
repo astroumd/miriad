@@ -10,6 +10,7 @@
 **	31 May 94  HF	Added cache on host id's; now use inet_ntoa() to
 **			HTInetString and some other fixes. Added HTDoConnect
 **			and HTDoAccept
+**      28 Aug 00  PJT  added #if linux to protect for linux
 */
 
 #ifndef VMS
@@ -117,8 +118,10 @@ extern int errno;
 #ifndef VMS
 #ifndef NeXT
 #ifndef THINK_C
+#ifndef linux
 extern char *sys_errlist[];		/* see man perror on cernvax */
 extern int sys_nerr;
+#endif  /* linux */
 #endif  /* think c */
 #endif	/* NeXT */
 #endif  /* VMS */

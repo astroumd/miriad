@@ -28,12 +28,12 @@ c     jm  02nov95   Added history file entries to let the user know
 c                   when something has changed in the file.  Batch mode
 c                   now exits rather than quits at the end.
 c     jm  10nov95   Fixed source identification routine so that repeated
-c                   sources don't generate a new id.  Also corrected
+c                   sources do not generate a new id.  Also corrected
 c                   info section so it returns the x/y value of the
 c                   nearest point rather than the cursor position.
 c     jm  28nov95   Fixed Info so proper (good) item is returned if
 c                   some data are flagged bad.
-c     jm  04apr96   Modified so empty windows aren't displayed.  This
+c     jm  04apr96   Modified so empty windows are not displayed.  This
 c                   only happens on the last page and when there are not
 c                   an integer number of baselines (relative to nxy).
 c                   Also modified loadxy so negative requests still
@@ -48,6 +48,11 @@ c                   permitting npts=0 as a return.
 c   pjt   21may97   option to disable setting breakpoints upon reading
 c   pjt    1apr99   (not a joke) split off gsubs for g77, fixed EQ -> EQV
 c		    all for a picky g77 compiler
+c   pjt   19jun99   logging events for optional batch replay
+c   pjt   28jul99   add fit residuals etc. to output history
+c   pjt   31jul98   fix bug in non-interactive devices
+c		    WORKING ON: more history logging
+c
 c
 c= gfiddle - Fiddle with a (gain) visibility dataset
 c& pjt
@@ -125,10 +130,18 @@ c     PGPLOT graphics device name. If none is supplied or the device
 c     selected does not have an interactive cursor, then the program
 c     will run in batch mode (i.e. no cursor interaction).  The default
 c     device is /null (batch mode).
+c@batch
+c     Name of a batch file in which interactive (if the PGPLOT device
+c     supports it) commands can be stored. By default commands are appended
+c     to the file, but with 'options=new' this behavior can be changed.
+c     Be careful when you re-apply batch files with commands that have a 
+c     cumulative action (flags, breaks etc.)
 c@ nxy
 c     The maximum number of plots per page in the x direction.  The
 c     number of plots in the y direction is controlled by the program.
-c     The default is 3 plots in the x direction.
+c     Be careful if you use this keyword with batch= since they must
+c     be consistent accross calls.
+c     The default is 3 plots in the x direction. 
 c@ fit
 c     This keyword provides a way for the user to apply an initial fit
 c     to the data.  The arguments to this keyword determines what kind
@@ -147,7 +160,9 @@ c     connects the dots; there are no additional parameters to this fit.
 c     By default, no initial fit is applied.  However, the fit values
 c     are initialized to 1 for amplitudes and 0 for phases.
 c@ sample
-c     Output sample time in minutes.  The default is 1 minute.
+c     Output sample time in minutes.  It is adviced to set the sampling 
+c     time finer than the typical intervals in the input file.
+c     The default is 1 minute.
 c@ clip
 c     Automatically clips all amplitudes larger than this value.
 c     The default is to perform no clipping.
@@ -160,13 +175,13 @@ c               Similarly, with breakpoints.  Note that unflagging and
 c               clearing of breakpoints cannot be done in this mode.
 c               The interactive counterpart (key l) allows the user to
 c               switch this mode interactively.
-c     nowrap    Don't attempt to unwrap phases.
+c     nowrap    Do not attempt to unwrap phases.
 c     sources   If no break point information is present in the input
 c               uv dataset, the program will automatically set break
 c               points.  Focus changes always create a break point.
 c               Source name changes will also create a break point
 c               but only if this option is used.
-c     nobreak   Don't set breakpoint on reading the data. By default
+c     nobreak   Do not set breakpoint on reading the data. By default
 c               it will.
 c     dsb       By default, the single sideband data are displayed.
 c               If this option is present, then the plots and fits will
@@ -175,8 +190,14 @@ c               and amplitude ratios).  Note that this option controls
 c               which of the windows permits editing.  The interactive
 c               counterpart (key m) permits viewing of the other window,
 c               but no editing.
+c     new       In batch mode an existing batch file will normally be
+c               processed in a special append mode: first the existing
+c               commands are read and applied, then new commands will
+c               be added to the batch file. options=new will overwrite
+c               the batch file and start from scratch.
 c     debug     Debugging mode.  A lot of output to aid in providing
-c               the programmer with relevant info.
+c               the programmer with relevant info. The '.' command
+c               can be used as a debug toggle in interactive mode.
 c@ ampmax
 c     If supplied, the amplitude scale is fixed from 0 to ampmax;
 c     otherwise auto-scaling is done.
@@ -196,6 +217,9 @@ c     experiment with unwrapping phases.  Phases are given in degrees;
 c     Antenna is an integer; and U/L is given as 1/2 (for upper or
 c     lower sideband).
 c     Default: not used.
+c@ batch
+c     Name of batch file to be used for input or output.
+c     Default: not used.
 c@ out
 c     The name of the output UV dataset. The default is to NOT write
 c     out (and, hence, not save) the derived fits.
@@ -213,19 +237,34 @@ c       YELLOW:
 c         Yellow fits identify windows in which the fit is old
 c         for some reason.  A new fit should be generated.
 c--
+c  ******  MORE OPTIONS TO COME  ??? ******
+c
+c     append    In batch mode this means an existing logfile will
+c               be appended to. By default an existing logfile will be
+c               overwritten. It also means it will first apply the 
+c               commands found in the batch file
+c             (DEPRECATED, SINCE OPTIONS=NEW DOES THE REVERSE OF THIS)
+c     accum     In batch mode this means all recording information is
+c               applied again. Normally this is not a good idea since
+c               commands like flagging and breakpoints will use the
+c               nearest point and thus depend on the order of events.
+c     history   extra history in out= file, stores the fit residuals/sigma
+c     
+c TODO: 
+c  fix when device= is forgotten, it goes into infinite loop
 c-----------------------------------------------------------------------
       INCLUDE 'gfiddle.h'
       INTEGER MAXWINS,MAXBAD,MAXX,MAXY,MAXSELS
       CHARACTER VERSION*(*)
-      PARAMETER(VERSION='GFIDDLE: Version 1-apr-99 PJT')
+      PARAMETER(VERSION='GFIDDLE: Version 1-aug-99 PJT')
       PARAMETER(MAXWINS=16,MAXBAD=20,MAXX=15,MAXY=4,MAXSELS=256)
 
       CHARACTER visi*80, viso*80, device*80, chr*1, ltype*20, fmethod*10
-      CHARACTER mesg*80
+      CHARACTER batch*80, mesg*80
       CHARACTER glabel*128
       CHARACTER xlabel(MAXX*MAXY)*20, ylabel(MAXX*MAXY)*20
       INTEGER i, ix, iy, mx, xlo, xhi, ylo, yhi, aorder, porder
-      INTEGER npage, order, npts, nchan, tno, maxwides
+      INTEGER npage, order, npts, nchan, tno, tnohis, maxwides
       INTEGER fitmode
       INTEGER idx(MAXTIME)
       REAL phzmin, phzmax
@@ -234,8 +273,8 @@ c-----------------------------------------------------------------------
       REAL lstart, lwidth, lstep
       REAL x(MAXTIME),y(MAXTIME)
       REAL sels(MAXSELS)
-      LOGICAL dobreak, dobreaks, dosrcbrk, canedit
-      LOGICAL dobatch, dodsb, fexist, doinit
+      LOGICAL dobreak, dobreaks, dosrcbrk, canedit, bexist
+      LOGICAL dobatch, dodsb, fexist, doinit, doappend, donew
       LOGICAL more1, more2, more3, xzoom, yzoom, first, fmode
       LOGICAL fixamp, fixphaz
 c
@@ -249,10 +288,7 @@ c-----------------------------------------------------------------------
 c  Announce the program
 c
       CALL output(VERSION)
-      CALL bug('I',
-     *  'Note: many keystrokes have changed their functionality.')
-      CALL bug('I',
-     *  'Use the "?" keystroke for a listing; or run mirhelp.')
+      CALL bug('i','Note: new version with batch= capabilities')
 c
 c  Get user inputs
 c
@@ -265,10 +301,12 @@ c
       CALL keyr('line',lwidth,1.)
       CALL keyr('line',lstep,lwidth)
       CALL keya('device',device,'/null')
+      CALL keyf('batch',batch,' ')
       CALL keyf('out',viso,' ')
       CALL keyi('nxy',nx,3)
       CALL keyd('sample',sample,1.0d0)
-      CALL getopt(debug,dolink,dowrap,dosrcbrk,dodsb,dobreak)
+      CALL getopt(debug,dolink,dowrap,dosrcbrk,dodsb,dobreak,
+     *            doappend,donew)
       CALL getphase('phase')
       CALL keyr('clip',clip,-1.0)
       fixamp = keyprsnt('ampmax')
@@ -295,6 +333,7 @@ c
       IF(viso.EQ.' ') THEN
          CALL bug('i', 'No output dataset given; (out=)')
          fcolor = CNoSaveF
+         tnohis = -1
       ELSE
          INQUIRE(FILE=viso(1:len1(viso)),EXIST=fexist)
          IF (fexist) THEN
@@ -304,6 +343,9 @@ c
          ELSE
             fcolor = CSaveF
          ENDIF
+         CALL uvopen(tnohis,viso(1:len1(viso))//'.his','new')
+         CALL hisopen(tnohis, 'write')
+         CALL hiswrite(tnohis,'Hello world - testing history logging')
       ENDIF 
 c
 c  Check the line items.  Permit non-standard items but warn the user.
@@ -387,17 +429,18 @@ c
       CALL uvset(tno,'data',ltype,nchan,lstart,lwidth,lstep)
       CALL SelApply(tno,sels,.TRUE.)
       dobreaks = .not. hexists(tno, 'nbreaks')
-      if (.NOT.dobreak) dobreaks = .FALSE.
+      IF (.NOT.dobreak) dobreaks = .FALSE.
 c
 c  Read the visibility dataset in memory.  If no (previous)
 c  breakpoints are available, then source changes and focus changes
 c  will set them.
 c
-      call visread(tno, visi, clip, dobreaks, dosrcbrk)
+      CALL visread(tno, visi, clip, dobreaks, dosrcbrk)
+
 c
 c  Read the (previous) breakpoints, if present.
 c
-      if (.not. dobreaks) call brread(tno, visi, nbl, day0)
+      IF (.NOT. dobreaks) CALL brread(tno, visi, nbl, day0)
 
 c
 c  Graphics interaction loop (in batch mode this is simply executed once)
@@ -408,18 +451,39 @@ c
       ENDIF
 c
       defsize = 1.0
-      call pgsch(defsize)
-      call pgqinf('CURSOR', chr, i)
+      CALL pgsch(defsize)
+      CALL pgqinf('CURSOR', chr, i)
       dobatch = ((chr .eq. 'n') .or. (chr .eq. 'N'))
-      if (dobatch)
-     *   call bug('i', 'This graphics device only works in batch mode.')
+      IF (dobatch)
+     *   CALL bug('i', 'This graphics device only works in batch mode.')
+
+c
+c  Open logging;
+c     note that the miriad append mode means you really can only write,
+c     and not read.... is that a braindead implementation??????
+c     so, old='r'
+c         new='w'
+c         append='a'
+c
+      INQUIRE(FILE=batch(1:len1(batch)),EXIST=bexist)
+      IF(donew) THEN
+         write(*,*) 'Overriding : this is going to be a NEW file'
+         bexist = .FALSE.
+      ENDIF
+      IF(bexist)THEN
+         write(*,*) 'Opening in old mode'
+         CALL logcuro(batch,'old')
+      ELSE
+         write(*,*) 'Opening in new mode'
+         CALL logcuro(batch,'new')
+      ENDIF
 c
       npage = (nbl-1)/nx + 1
       if ((npage .eq. 1) .and. (nx .gt. nbl)) nx = nbl
       IF(npage.GT.1 .AND. .NOT.dobatch) THEN
-         write(mesg, *) '*** NOTE: There are ', npage, ' pages'
-         call output(mesg)
-         call output('*** Use + and - to advance/backup a page')
+         WRITE(mesg, *) '*** NOTE: There are ', npage, ' pages'
+         CALL output(mesg)
+         CALL output('*** Use + and - to advance/backup a page')
       ENDIF
 c
 c  Initialize the fits for each window, if necessary.
@@ -435,7 +499,7 @@ c
       CALL winset(nx,ny)
 c
 c Three nested 'infinite loops', controlled by 3 logicals (more1..3):
-c This contraption came out of trying to avoid the use of GOTO's
+c This contraption came out of trying to avoid the use of GOTOs
 c     1) total recompute, using current value of ipage (1..npage)
 c     2) redraw current (zoomed) image (also autoscales the axes)
 c     3) get new cursor input, no redraw done.
@@ -511,9 +575,37 @@ c
             more3 = .TRUE.
             DOWHILE(more3)
                IF(debug)CALL output('MORE3>')
-               IF(.NOT. dobatch) CALL wincurs(ix,iy,xpos,ypos,chr)
-               IF(dobatch .OR. chr.EQ.CHAR(0))
-     *            CALL batcurs(ix,iy,xpos,ypos,chr,(ipage.lt.npage))
+               IF(bexist) THEN
+                  CALL logcurr(ix,iy,xpos,ypos,chr)
+c                  WRITE(*,*) 'BATCURS: ',ix,iy,xpos,ypos,' : ',chr
+c                        skip over end/quit commands
+                  IF(chr.EQ.'e' .OR. chr.EQ.'q') chr = ' '
+c                        at end of reading, in append mode, switch to writing
+                  IF(chr.EQ.char(0) .AND. .NOT.donew) THEN
+                     bexist = .FALSE.
+                     chr = '?'
+                     chr = 'r'
+                     write(*,*) 'Re-Opening in append mode'
+                     CALL logcurc
+                     IF(dobatch) THEN
+                        chr = 'e'
+                     ELSE
+                        CALL logcuro(batch,'append')
+                     ENDIF
+                  ENDIF
+               ELSE
+                  IF(dobatch)THEN
+                     IF(ipage.lt.npage)THEN
+                        chr = '+'
+                     ELSE
+                        chr = 'e'
+                     ENDIF
+                  ELSE
+                     CALL wincurs(ix,iy,xpos,ypos,chr)
+                     CALL logcurw(ix,iy,xpos,ypos,chr)
+c                    WRITE(*,*) 'WINCURS: ',ix,iy,xpos,ypos,' : ',chr
+                  ENDIF
+               ENDIF
 c                                                           Switch to action
                IF (((ix .lt. 1) .or. (iy .lt. 1)) .and.
      *              (index('.?hrqelmt', chr) .eq. 0)) THEN
@@ -544,8 +636,8 @@ c                                                           Switch to action
                   ENDIF
                ENDIF
 c								Null cmd
-               if (chr .eq. char(0)) then
-                  continue
+               IF (chr .EQ. char(0)) THEN
+                  CONTINUE
 c								Help
                ELSE IF(chr.EQ.'?' .OR. chr.EQ.'h') THEN
                   CALL help(debug,canedit,dolink,(fitmode.eq.1),sbmode)
@@ -838,6 +930,9 @@ c                                                               two-point fit
                    call bug('w',
      *               'Fitting not permitted in this sideband mode.')
                  endif
+c                                                               skip
+               ELSE IF(chr.EQ.' ') THEN
+                  chr = ' '
 c                                                               polynomial fit
                ELSE
                   order = INDEX('0123456789',chr) - 1
@@ -877,10 +972,17 @@ c
 c
 c  Write out new sampled fitted vis data
 c
-      if ((chr .ne. 'q') .and. (viso .ne. ' ')) then
-         CALL VisWrite(tno, viso, VERSION)
-      endif
+      IF ((chr .ne. 'q') .and. (viso .ne. ' ')) THEN
+         CALL hisclose(tnohis)
+         CALL uvclose(tnohis)
+         CALL uvopen(tnohis,viso(1:len1(viso))//'.his','old')
+         CALL VisWrite(tno, tnohis, viso, VERSION)
+         CALL uvclose(tnohis)              
+c         CALL deldat(viso(1:len1(viso))//'.his')
+         CALL system('/bin/rm -rf '// viso(1:len1(viso)) // '.his')
+      ENDIF
       CALL uvclose(tno)
+      CALL logcurc
 c
       CALL pgend
       END
@@ -891,7 +993,7 @@ c***********************************************************************
       integer tvis, nbl
       double precision day0
 c
-c  Read breakpoints in JD's, but convert them to local time offsets
+c  Read breakpoints in JDs, but convert them to local time offsets
 c  from day0 (as determined from the read visibility data routine).
 c  This routine will overwrite all previous entries of the breaks.
 c-----------------------------------------------------------------------
@@ -1657,9 +1759,9 @@ c
       return
       END
 c***********************************************************************
-      SUBROUTINE VisWrite(tin, viso, version)
+      SUBROUTINE VisWrite(tin, tinhis, viso, version)
       IMPLICIT NONE
-      INTEGER tin
+      INTEGER tin,tinhis
       CHARACTER viso*(*), version*(*)
 c-----------------------------------------------------------------------
       INCLUDE 'gfiddle.h'
@@ -1671,7 +1773,7 @@ c-----------------------------------------------------------------------
       DOUBLE PRECISION ltime
       DOUBLE PRECISION preamble(4)
       COMPLEX zdata, data(2)
-      LOGICAL flag(2)
+      LOGICAL done,flag(2)
 c
       CHARACTER itoaf*5
       INTEGER nants
@@ -1689,10 +1791,11 @@ c ToDo: these must be properly inherited from the input vis
       CALL uvputvri(tno,'nants',nants,1)
       CALL uvputvrr(tno,'wfreq',wfreq,2)
 c
-      if (hdprsnt(tin, 'history')) call hdcopy(tin, tno, 'history')
-      call hisopen(tno, 'append')
-      call hiswrite(tno, version)
-      call hisinput(tno, 'GFIDDLE')
+      IF (hdprsnt(tin,'history')) CALL hdcopy(tin, tno, 'history')
+      CALL hisopen(tno,'append')
+      CALL hiswrite(tno,version)
+      CALL hisinput(tno,'GFIDDLE')
+
 c
       IF(debug)THEN
          write(mesg, *) 'Writing ', nbl, ' Baselines'
@@ -1779,9 +1882,17 @@ c
             CALL uvwrite(tno,preamble,data,flag,2)
          ENDDO
       ENDDO
-      call hisclose(tno)
+      IF (hdprsnt(tinhis,'history')) THEN
+        CALL hisopen(tinhis,'read')
+        done = .FALSE.
+        DOWHILE(.NOT.done)
+            CALL hisread(tinhis,mesg,done)
+            IF(.NOT.done) CALL hiswrite(tno,'GFIDDLE: ' // mesg)
+        ENDDO
+        CALL hisclose(tinhis)
+      ENDIF
+      CALL hisclose(tno)
       CALL uvclose(tno)
-      return
       END
 c***********************************************************************
       SUBROUTINE FlgWrite(tno,visi)
@@ -2469,15 +2580,17 @@ c
       return
       END
 c***********************************************************************
-      SUBROUTINE getopt(debug,dolink,dowrap,dosrcbrk,dodsb,dobreak)
+      SUBROUTINE getopt(debug,dolink,dowrap,dosrcbrk,dodsb,dobreak,
+     *                  doappend,donew)
       IMPLICIT NONE
-      LOGICAL debug,dolink,dowrap,dosrcbrk,dodsb,dobreak
+      LOGICAL debug,dolink,dowrap,dosrcbrk,dodsb,dobreak,doappend,donew
 c-----------------------------------------------------------------------
       INTEGER NOPT
-      PARAMETER (NOPT=6)
+      PARAMETER (NOPT=8)
       CHARACTER opts(NOPT)*10
       LOGICAL present(NOPT)
-      DATA opts /'debug','link','nowrap','sources','dsb','nobreak'/
+      DATA opts /'debug','link','nowrap','sources','dsb','nobreak',
+     *           'append', 'new'/
 c
       CALL options('options',opts, present, NOPT)
       debug = present(1)
@@ -2486,6 +2599,8 @@ c
       dosrcbrk = present(4)
       dodsb = present(5)
       dobreak = .NOT.present(6)
+      doappend = present(7)
+      donew = present(8)
 c
       IF(debug)THEN
          write(*,*) 'Debug is  ',debug
@@ -2494,6 +2609,8 @@ c
          write(*,*) 'DoSourceBreaks is ',dosrcbrk
          write(*,*) 'DoDSB is ',dodsb
          write(*,*) 'DoBreak is',dobreak
+         write(*,*) 'DoAppend is',doappend
+         write(*,*) 'DoNew is',donew
       ENDIF
       RETURN
       END
@@ -2731,26 +2848,20 @@ c
 c***********************************************************************
       SUBROUTINE BatCurs(nx, ny, px, py, c, morepgs)
       IMPLICIT NONE
-      REAL      px, py
       INTEGER   nx, ny
+      REAL      px, py
       CHARACTER c*1
       LOGICAL morepgs
 c
 c  Fake cursor in batch mode
 c-----------------------------------------------------------------------
-c ----> for now just exit; no batching possible
-c
-      px = 0.5
-      py = 0.5
-      nx = 1
-      ny = 1
-      if (morepgs) then
+      IF (morepgs) THEN
         c = '+'
-      else
+      ELSE
         c = 'e'
-      endif
-      return
-      end
+      ENDIF
+      CALL logcurr(nx,ny,px,py,c)
+      END
 c***********************************************************************
       SUBROUTINE loadxy(maxpts,npts,x,y,ix,iy,idx,fmode,request)
       IMPLICIT NONE
@@ -2923,6 +3034,7 @@ c
       character blname*10
 c
 c                     '12345678901234567890'
+c                      ====================
       data deflabel / 'Gains sqrt(Jy/K)',
      *                'Phase (degrees)',
      *                'LSB Gain sqt(Jy/K)',
@@ -2933,6 +3045,7 @@ c                     '12345678901234567890'
      *                'Ph(USB)-Ph(LSB)',
      *                'sqt(Gn(USB)*Gn(LSB))',
      *                '(Ph(USB)+Ph(LSB))/2' /
+c                      ====================
 c
       do ix = 1, nx
         do iy = 1, ny
@@ -3176,3 +3289,126 @@ c
       enddo
       return
       end
+c
+c Here are a few support routines to manage the batch file, the file
+c that logs the commands that were given interactively, and can be played
+c back at will. Only tested on device=/xs
+c
+
+c-----------------------------------------------------------------------
+c Open the cursor file
+c
+      SUBROUTINE logcuro(fname,status)
+      CHARACTER fname*(*), status*(*)
+c                               open cursor log file      
+      INCLUDE 'gfiddle.h'
+      INTEGER iostat, len1
+      CHARACTER*80 line
+
+c      write(*,*) 'logcuro: ',fname,status
+
+      if (fname .eq. ' ') then
+         logu = -1
+         return
+      endif
+c
+      CALL txtopen(logu,fname,status,iostat)
+      IF (iostat.NE.0) CALL bug('f','logcuro: Opening logfile')
+      IF(status.EQ.'new')THEN
+         line = '# GFIDDLE log file'
+         CALL txtwrite(logu,line,len1(line),iostat)
+         IF (iostat.NE.0) CALL bug('f','logcuro: Writing new line')
+      ENDIF
+      END
+
+c-----------------------------------------------------------------------
+c Close the cursor file
+c
+      SUBROUTINE logcurc()
+c                               close cursor log file      
+      INCLUDE 'gfiddle.h'
+c
+      if (logu.lt.0) return
+      CALL txtclose(logu)
+      logu = -1
+      END
+
+c-----------------------------------------------------------------------
+c Write to the cursor file
+c
+      SUBROUTINE logcurw(ix,iy,xpos,ypos,chr)
+      INTEGER ix,iy
+      REAL xpos,ypos
+      CHARACTER chr*1
+c
+      INCLUDE 'gfiddle.h'
+c
+      CHARACTER line*80, itoaf*20, rtoaf*20
+      INTEGER len1,iostat,length
+
+      if (logu.lt.0) return
+
+c      write(*,*) 'More logcurs: ',ix,iy,xpos,ypos," CHR: ",chr
+      line = chr // ' ' // itoaf(ix) 
+      length = len1(line)
+      line(length+1:) = ' ' // itoaf(iy)
+      length = len1(line)
+      line(length+1:) = ' ' // rtoaf(xpos,1,6)
+      length = len1(line)
+      line(length+1:) = ' ' // rtoaf(ypos,1,6)
+      CALL txtwrite(logu,line,len1(line),iostat)
+      IF(iostat.NE.0) CALL bug('f','Writing...')
+
+      END
+c
+c-----------------------------------------------------------------------
+c Read from cursor file
+c
+      SUBROUTINE logcurr(ix,iy,xpos,ypos,chr)
+      INTEGER ix,iy
+      REAL xpos,ypos
+      CHARACTER chr*1
+c
+      INCLUDE 'gfiddle.h'
+c
+      CHARACTER line*80, token*20
+      INTEGER len1,iostat,length,k1,k2
+      LOGICAL ok
+
+      if (logu.lt.0) return
+
+      ok = .TRUE.
+      DO WHILE(ok)
+         CALL txtread(logu,line,length,iostat)
+         IF(iostat.EQ.-1) THEN
+            write(*,*) 'EOF....'
+            chr = char(0)
+            return
+         ENDIF
+         ok = line(1:1).EQ.'#'
+      ENDDO
+
+c     write (*,*) 'LOGCURR:',length,line
+
+
+      chr = line(1:1)
+      k1 = 3
+      k2 = len1(line)
+      CALL gettok(line,k1,k2,token,length)
+      CALL atoif(token,ix,ok)
+c      write(*,*) 'IX',ix,ok,k1,k2
+      CALL gettok(line,k1,k2,token,length)
+      CALL atoif(token,iy,ok)
+c      write(*,*) 'IY',iy,ok,k1,k2
+c      CALL gettok(line,k1,k2,token,length)
+      CALL getfield(line,k1,k2,token,length)
+      CALL atorf(token,xpos,ok)
+c      write(*,*) 'XPOS',xpos,ok,k1,k2
+c      CALL gettok(line,k1,k2,token,length)
+      CALL getfield(line,k1,k2,token,length)
+      CALL atorf(token,ypos,ok)
+c      write(*,*) 'YPOS',ypos,ok,k1,k2
+c      write(*,*) 'READ logcurs: ',ix,iy,xpos,ypos," CHR: ",chr
+
+      END
+c-----------------------------------------------------------------------

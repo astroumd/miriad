@@ -17,9 +17,10 @@ c    pjt  21jun94    optionally outputt of baseline based jyperk variable
 c     jm  16aug96    Delayed writing of jyperk variable until all
 c                    headers were copied.  Also enabled jyperk for
 c                    baseline based data.
-c     jm  26jun97    Modified jyperk calculation to scale previous
-c                    site vis values by results from gfiddle.  Also
-c                    added olddata option.
+c    pjt  12oct98    Apply jyperka() array values if present (BIMA)
+c    pjt  11jan99    Check for jyperka() and use 1 [needed for old data]
+c    pjt  28jul99    Bypass "Unexpected baseline numbers" and flag them
+c		     as bad
 c
 c= gapply - apply gains of one dataset to another
 c& pjt
@@ -51,13 +52,10 @@ c     Enable various processing options, can be combined:
 c       debug       lot of extraneous output
 c       phase       only apply phase, use unity amplitude
 c       amp         only apply amplitude, use zero phase
-c       extra       interpolation allowed to extrapolate
+c       extra       also use extrapolation for matching gain values
 c	jyperk	    add baseline based jyperk (useful for INVERT)
-c	olddata     Used with jyperk to identify old HC data
 c     By default interpolation of phase and amplitude is
-c     done, and no output of jyperk.  Old HC data is identified
-c     as data taken before about 7/96 (after this time, data was
-c     converted internally to Jy).
+c     done, and no output of jyperk.
 c@ out
 c     The name of the output uv dataset. All data from the
 c     input files will be calibrated, and appended to this
@@ -69,16 +67,18 @@ c-----------------------------------------------------------------------
 c  Constants
       INTEGER MAXFILE, MAXSELS
       CHARACTER VERSION*(*)
-      PARAMETER(VERSION='GAPPLY: Version 26-jun-97')
+      PARAMETER(VERSION='GAPPLY: Version 28-jul-99 PJT')
       PARAMETER(MAXFILE=64, MAXSELS = 100)
 c  Local variables
       CHARACTER in(MAXFILE)*80, viso*80, gvis*80, line*100, linetype*20
-      INTEGER i, numchan
-      INTEGER nfile, tin, tout, ncorr, nwcorr, calcntg, calcntb
+      CHARACTER Tjpka*1
+      INTEGER i, j, numchan, nants, Njpka
+      INTEGER nfile, tin, tout, ncorr, nwcorr, nwide, calcntg, calcntb
       REAL start, width, step, sels(MAXSELS), jyperk, jymin, jymax
+      REAL jyperka(MAXANT)
       COMPLEX corr(MAXCHAN), wcorr(MAXCHAN)
       LOGICAL flags(MAXCHAN), wflags(MAXCHAN), doamp, dophase, doext,
-     *        dojyperk,oldgvis
+     *        dojyperk, Qjpka
       DOUBLE PRECISION preamble(4)
 c-----------------------------------------------------------------------
 c  Announce
@@ -91,7 +91,7 @@ c
       CALL mkeyf('vis',in,MAXFILE,nfile)
       CALL keyf('gvis',gvis,' ')
       CALL keyf('out',viso,' ')
-      CALL getopt(debug,doamp,dophase,doext,dojyperk,oldgvis)
+      CALL getopt(debug,doamp,dophase,doext,dojyperk)
       CALL selinput('select',sels,MAXSELS)
       CALL keya('line',linetype,'unknown')
       CALL keyi('line',numchan,0)
@@ -141,6 +141,8 @@ c           First time around: do some extra processing
          CALL output(line)
 c           Set UV Tracking on all variables so uvcopy will work
          CALL trackall(tin)
+c           get the number of antennae
+         CALL uvgetvri(tin,'nants',nants,1)
 c
 c   Main loop which calls subroutines to read data records, apply
 c   calibration,  and write data record to new file
@@ -151,12 +153,30 @@ c
 	 DOWHILE(ncorr.GT.0)
             CALL uvread(tin,preamble,corr,flags,MAXCHAN,ncorr)
             IF (ncorr.GT.0) THEN
+
+c -- old	       call uvgetvri(tin,'nwide',nwide,1)
+c               IF(nwide .GT. 0) THEN
+c                  CALL uvwread(tin,wcorr,wflags,MAXCHAN,nwcorr)
+c	       ELSE
+c	          nwcorr = 0
+c	       ENDIF
+c -- new
                CALL uvwread(tin,wcorr,wflags,MAXCHAN,nwcorr)
+               CALL uvprobvr(tin,'jyperka',Tjpka,Njpka,Qjpka)
+               IF (Tjpka.EQ.' ') then
+                  DO j=1,nants
+                    jyperka(j) = 1.0
+                  ENDDO
+               ELSE IF (Tjpka.EQ.'r') THEN
+                  CALL uvgetvrr(tin,'jyperka',jyperka,nants)
+               ELSE
+                  CALL bug('f','Variable type for jyperka is not REAL')
+               ENDIF
 
 	       CALL apply(tin,MAXCHAN,preamble,
      *			  ncorr,corr,flags,nwcorr,wcorr,wflags,
      *                    calcntg, calcntb, doamp, dophase, doext,
-     *                    dojyperk,jyperk,oldgvis)
+     *                    dojyperk,jyperk,jyperka, nants)
                CALL uvcopyvr(tin, tout)
                IF (dojyperk) THEN
                   CALL uvputvrr(tout,'jyperk',jyperk,1)
@@ -321,8 +341,8 @@ c  (amp,phase)
 c
       pVis1 = 1
       pFlg1 = pVis1 + 2*nslot*2*nbl
-      islot = pFlg1 +   nslot*2*nbl
-      CALL assertl(islot.LE.MAXBUF,'VisRead: Not enough memory....')
+      pFree = pFlg1 +   nslot*2*nbl
+      CALL assertl(pFree.LE.MAXBUF,'VisRead: Not enough memory....')
 c
 c  inititialize the buffer data to unused unit gains etc.
 c
@@ -508,26 +528,24 @@ c-debug
 
       END
 c***********************************************************************
-      SUBROUTINE getopt(debug,doamp,dophase,doext,dojyperk,oldgvis)
+      SUBROUTINE getopt(debug,doamp,dophase,doext,dojyperk)
 c
       IMPLICIT NONE
-      LOGICAL debug, doamp, dophase, doext, dojyperk, oldgvis
+      LOGICAL debug, doamp, dophase, doext, dojyperk
 c-----------------------------------------------------------------------
       INTEGER NOPT
-      PARAMETER (NOPT=6)
+      PARAMETER (NOPT=5)
       CHARACTER opts(NOPT)*10
       LOGICAL present(NOPT)
-      DATA opts /'debug', 'phase', 'amplitude', 'extrapol',
-     *           'jyperk', 'olddata'/
+      DATA opts /'debug','phase','amplitude','extrapol','jyperk'/
 c
-      CALL options('options', opts, present, NOPT)
+      CALL options('options',opts, present, NOPT)
       debug = present(1)
       doamp = present(2)
       dophase = present(3)
       doext = present(4)
       dojyperk = present(5)
-      oldgvis = present(6)
-      IF (.NOT.doamp .AND. .NOT.dophase) THEN
+      IF(.NOT.doamp .AND. .NOT.dophase) THEN
         doamp = .TRUE.
         dophase = .TRUE.
       ENDIF
@@ -538,7 +556,6 @@ c
          write(*,*) 'PHASE: ', dophase
          write(*,*) 'Extrapolation: ', doext
          write(*,*) 'JyperK: ',dojyperk
-         write(*,*) 'Old gvis: ',oldgvis
       ENDIF
  
       END
@@ -546,14 +563,14 @@ c***********************************************************************
       SUBROUTINE apply(tin, numchan, preamble,
      *                 ncorr,corr,flags,nwcorr,wcorr,wflags,
      *                 calcntg, calcntb, doamp, dophase, doext, 
-     *                 dojyperk,jyperk,oldgvis)
+     *                 dojyperk,jyperk,jyperka,nants)
       IMPLICIT NONE
-      INTEGER tin, numchan, ncorr, nwcorr, calcntg, calcntb
-      REAL jyperk
+      INTEGER tin, numchan, ncorr, nwcorr, calcntg, calcntb, nants
+      REAL jyperk, jyperka(nants)
       DOUBLE PRECISION preamble(4)
       COMPLEX corr(numchan), wcorr(numchan)
       LOGICAL flags(numchan), wflags(numchan), doamp, dophase, doext,
-     *        dojyperk, oldgvis
+     *        dojyperk
 c
 c  Apply one particular correllation slot in (baseline,time) space
 c
@@ -571,23 +588,18 @@ c     doamp       reset phase scaling to 0 ?
 c     dophase     reset amp scaling to 1 ?
 c     doext       allow extrapolation on amp's ?
 c     dojperk     allow baseline based jyperk ?
-c     oldgvis     .TRUE. if gains are real jyperk values instead of
-c                 scale factors.
 c-----------------------------------------------------------------------
       INCLUDE 'gfiddle.h'
 
       REAL RADPDEG 
       PARAMETER (RADPDEG=0.017453292519943295)
       CHARACTER mesg*80
-      CHARACTER vartype*1
-      INTEGER varlen
       INTEGER bl, nwins, starwin(MAXWIN),bb, a1, a2, b1, b2
       INTEGER chanwin(MAXWIN),lochan,hichan,ic,iwin,i
       REAL    amp, phs
-      REAL    jyperka(MAXANT)
       DOUBLE PRECISION starfreq(MAXWIN), delfreq(MAXWIN),
      *                 oldfreq(MAXWIN), olddel(MAXWIN), sum
-      LOGICAL ok, updated
+      LOGICAL ok, goodbl, somebad
       COMPLEX factor(MAXBASE,MAXCHAN), gains(2)
       SAVE    factor,oldfreq,olddel
 
@@ -647,67 +659,52 @@ c
          ENDIF
       ENDIF
 c
-c  Get the current value of jyperk.  For most datasets, this will
-c  be stored in the variable jyperk.  However, some store an array
-c  of antenna based values.  In this case, jyperk is found by the
-c  product of the two antenna values.  This value will be modified
-c  below based on the gain values.
-c
-      IF (dojyperk) THEN
-         CALL uvrdvrr(tin, 'jyperk', jyperk, 0)
-         CALL uvprobvr(tin, 'jyperka', vartype, varlen, updated)
-         IF ((vartype .EQ. 'r') .AND. (varlen .GT. 0) .AND.
-     *       (varlen .LT. MAXANT)) THEN
-            CALL uvgetvrr(tin, 'jyperka', jyperka, varlen)
-            a1 = bl / 256
-            a2 = MOD(bl, 256)
-            jyperk = jyperka(a1) * jyperka(a2)
-         ENDIF
-      ENDIF
-c
 c Look up the current baseline in the calibration database
 c Make distinction between antenna and baseline based. In both
 c a lookup index b1 and b2 for the base(nbl) is computed,
 c in the baseline case b2=0 and not used.
 c
+      somebad = .FALSE.
       IF(abmode(1:1).EQ.'b') THEN
          b1  = findbase(bl,base,nbl)
-         IF(b1 .EQ. 0) THEN
-            WRITE(mesg,'(A,I5)') 'Unexpected (b) baseline ',bl
-	    CALL bug( 'f', mesg)
-         ENDIF
-         b2 = 0
-         IF (dojyperk) THEN
-            IF (oldgvis) THEN
-               jyperk = jpkgain(b1)
-            ELSE
-               jyperk = jyperk * jpkgain(b1)
-            ENDIF
+         goodbl = b1.NE.0
+         IF(goodbl) THEN
+            b2 = 0
+            IF (dojyperk) jyperk = jpkgain(b1)
+         ELSE
+c           WRITE(mesg,'(A,I5)') 'Unexpected (b) baseline ',bl
+c 	    CALL bug( 'f', mesg)
+            somebad = .TRUE.
          ENDIF
       ELSE IF(abmode(1:1).EQ.'a') THEN
          a1 = bl/256
          a2 = MOD(bl,256)
          b1 = findbase(a1+256*a1,base,nbl)
          b2 = findbase(a2+256*a2,base,nbl)
-         IF(b1.EQ.0 .OR. b2.EQ.0) THEN
-            WRITE(mesg,'(A,I5)') 'Unexpected (a) baseline ',bl
-            CALL bug('f',mesg)
+         goodbl = b1.NE.0 .AND. b2.NE.0
+         IF(goodbl) THEN
+            IF (dojyperk) jyperk = ABS(jpkgain(b1)*CONJG(jpkgain(b2)))
+         ELSE
+c           WRITE(mesg,'(A,I5)') 'Unexpected (a) baseline ',bl
+c           CALL bug('f',mesg)
+            somebad = .TRUE.
          ENDIF
-         IF (dojyperk) THEN
-            IF (oldgvis) THEN
-               jyperk = ABS(jpkgain(b1)*CONJG(jpkgain(b2)))
-            ELSE
-               jyperk = jyperk * ABS(jpkgain(b1)*CONJG(jpkgain(b2)))
-            ENDIF
-         ENDIF
+
       ELSE
          CALL bug('f','Illegal abmode = '//abmode)
+      ENDIF
+
+c
+c   now apply the new antenna based jyperka() array values
+c
+      IF(goodbl) THEN
+        IF(dojyperk) jyperk = jyperk * jyperka(b1)*jyperka(b2)
       ENDIF
 c
 c Find gain factors to correct the data. The gain tables in memory
 c are assumed to be Double Sideband (Lower and Upper)
 c
-      IF(.TRUE.) THEN
+      IF(goodbl) THEN
          ok = doext
          CALL ipolvis(preamble(3), b1, b2, 2, gains, ok)
 c.......................................................................
@@ -723,7 +720,8 @@ c         ENDIF
       ELSE
          gains(1) = CMPLX(1.0,0.0)
          gains(2) = CMPLX(1.0,0.0)
-         ok = .TRUE.
+         ok = .FALSE.
+c         ok = .TRUE.
 c         jyperk = -1.0
       ENDIF
 
@@ -758,7 +756,6 @@ c
             wflags(i) = .FALSE.
          ENDDO
       ENDIF
-
 c
 c Apply the wide band data: assume DSB (LSB and USB)
 c
@@ -811,12 +808,15 @@ c
       CALL haccess(inset,item,'vartable','read',iostat)
       IF(iostat.NE.0) CALL mybug(iostat,'Error opening vartable')
 
-      CALL hreada(item,varname,eof)
+      eof = .FALSE.
       DOWHILE(.NOT.eof)
-         IF(varname(3:6).NE.'corr' .AND. varname(3:7).NE.'wcorr') THEN
-            CALL uvtrack(inset,varname(3:10),'c')
-         ENDIF
          CALL hreada(item,varname,eof)
+         IF(.NOT.eof) THEN
+            IF(varname(3:6).NE.'corr' .AND. 
+     *         varname(3:7).NE.'wcorr') THEN
+               CALL uvtrack(inset,varname(3:10),'c')
+            ENDIF
+         ENDIF
       ENDDO
       CALL hdaccess(item,iostat)
       IF(iostat.NE.0) CALL mybug(iostat,'Error closing vartable')

@@ -13,7 +13,7 @@ c--
       PARAMETER (BUFSIZE=MAXBUF/4, MAXTIME=3000)
 c
 c  MAXSRC -- maximum number of sources in multi-source databases
-c  Because these are keyed to letters, don't let this become
+c  Because these are keyed to letters, do not let this become
 c  larger than 26.
 c
       INTEGER MAXSRC
@@ -73,6 +73,10 @@ c  Only used by gapply...
 c
       COMPLEX jpkgain(MAXBASE)
 c
+c  Logging of gfiddle actions for later replay
+c
+      INTEGER logu
+c
       COMMON /fidcom1/pVis1, pFlg1, pFree, nslot, nbl, base, buf
       COMMON /fidcom2/times, time0, tmin, tmax, day0
       COMMON /fidcom3/abmode
@@ -90,4 +94,5 @@ c-debug
       COMMON /fidcom11/jpkgain
       COMMON /fidcom12/nsrcs, srcidx
       COMMON /fidcom13/sources
+      COMMON /fidcom14/logu
 c=======================================================================
