@@ -24,6 +24,8 @@
  *    rjs 20nov94 Added "alpha" ifdef.
  *    rjs 19mar97 Add FORTRAN_LOGICAL define and check that miriad.h declarations
  *		  have not been done before doing them again.
+ *    pjt 14jun01 use WORDS_BIGENDIAN to figure out the pack routines
+ *                removed 'trace' clutter from the old multiflow
  */
 
 #ifndef Null
@@ -115,26 +117,27 @@ typedef int int2;
 
 #define BUFDBUFF 0
 
-#if defined(trace)
-#  define BUFALIGN 8
-#else
-#  define BUFALIGN 2
-#endif
-
 #define BUFSIZE 16384
 
-/* The Multiflow machine does not have the memcpy routine. Use bcopy
-   instead.								*/
+/*  Short cut routines when no conversion is necessary. These are
+    used for any IEEE floating point machine with FITS ordered bytes.	
 
-#if defined(trace)
-#  define memcpy(a,b,c) bcopy((b),(a),(c))
-#  define memcmp(a,b,c) bcmp((a),(b),(c))
+    WORDS_BIGENDIAN is also defined though the 'autoconf' package
+    and should appear in config.h if it's used (sun's, linuxppc, etc.)
+    two routines, pack16_c() and unpack16_c() are actually defined
+    in pack.c
+ */
+
+
+#if defined (sun) || defined (convex) || defined (mips) || defined(sgi) || defined(hpux)
+#define WORDS_BIGENDIAN
 #endif
 
-/*  Short cut routines when no conversion is necessary. These are
-    used for any IEEE floating point machine with FITS ordered bytes.	*/
+#if defined (linuxppc)
+#define WORDS_BIGENDIAN
+#endif
 
-#if defined(sun) || defined(alliant) || defined(trace) || defined(convex) || defined(hpux) || defined(sgi)
+#ifdef WORDS_BIGENDIAN 
 #  define packr_c(a,b,c)    memcpy((b),(char *)(a),sizeof(float)*(c))
 #  define unpackr_c(a,b,c)  memcpy((char *)(b),(a),sizeof(float)*(c))
 #  define packd_c(a,b,c)    memcpy((b),(char *)(a),sizeof(double)*(c))
