@@ -284,6 +284,16 @@ if ($shared) then
       if (-e libpgplot.a && ! -e libpgplot.so) then
         ld -shared -o libpgplot.so --whole-archive libpgplot.a
     endif
+  else if ($hosttype == darwin) then
+    echo "Making shared lib for darwin , but does not work yet?"
+    if (-e libmir.a) then
+      mkdir tmp
+      cd tmp
+      ar xv ../libmir.a >& /dev/null
+      gcc  -bundle -flat_namespace -undefined suppress -o ../libmir.so *.o
+      cd ..
+      rm -rf tmp
+    endif
   else
     echo No shared support for $hosttype yet
   endif
@@ -373,7 +383,25 @@ if ($hosttype == linux) then
  endif
 endif
 
+
 pushd $install_root
+
+if (-e checklist) then
+  echo Checking binaries:
+  set bad=0
+  set badlist=$MIR/tmp/checklist.$$.bad
+  set all=`wc -l checklist | awk '{print $1}'`
+  foreach b (`cat checklist`)
+    if (! -e $MIRBIN/$b) then
+      @ bad++
+      echo $b >> $badlist
+    endif
+  end
+  if ($bad > 0) then
+    echo Found $bad / $all binaries missing, check $badlist
+  endif
+endif
+
 if ($test) then
     ./mir.test
 endif
