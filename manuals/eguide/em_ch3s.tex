@@ -1,0 +1,157 @@
+\par{\bf \$MIR/spec/hcconv}
+{\eightpoint\begintt
+hcconv ..... pjt  ... Convert Hat Creek uv format into MIRIAD uv format 
+\endtt}
+\par{\bf \$MIR/spec/msss}
+{\eightpoint\begintt
+msss ....... jm   ... MIRIAD version of the AIPS Sun Screen Server (SUN only) 
+\endtt}
+\par{\bf \$MIR/spec/uvdisplay}
+{\eightpoint\begintt
+uvdisplay .. lgm  ... Suntools display header information about uv dataset 
+\endtt}
+\par{\bf \$MIR/src/prog/analysis}
+{\eightpoint\begintt
+avmaths .... nebk ... Operate on cube with averaged plane from cube 
+boxspec .... bpw  ... Write spectra (from vxy cube) as text file 
+cgplot ..... nebk ... Makes contour and grey scale plots 
+contsub .... bpw  ... Subtract continuum map from vxy cube by spectral fitting 
+convol ..... mchw ... Convolve a cube with a "beam function" 
+\endtt}
+{\eightpoint\begintt
+demos ...... mchw ... Inverse mosaicing operation 
+ellint ..... mchw ... Integrate a Miriad image in elliptical annuli. 
+fft ........ mchw ... Fourier transform on image(s) 
+hatfft ..... mchw ... Timing and test of fft algorithms. 
+hermes ..... mchw ... Make model images for Mercury. 
+\endtt}
+{\eightpoint\begintt
+histo ...... mchw ... Find statistics of image and plot simple histogram 
+imcat ...... mchw ... Concatenate several images to one cube 
+imdiff ..... rjs  ... Shift and expand an image to make it match another. 
+imgen ...... mchw ... All-purpose image manipulator/creator 
+imhead ..... jm   ... List items and pixel values from an image. 
+\endtt}
+{\eightpoint\begintt
+imlist ..... mchw ... List items and pixel values from an image 
+implot ..... mchw ... Multi-panel contour or grey scale plot of a Miriad Image. 
+imspect .... mchw ... Make spectrum from a Miriad image.
+imsub ...... mchw ... Extract subportion of an image 
+imwrite .... mchw ... Make a Miriad Image from a foreign dataset.
+\endtt}
+{\eightpoint\begintt
+linmos ..... mchw ... Linear mosaicing of datacubes 
+maths ...... pjt  ... Mathematical operations on images and image data 
+moment ..... mchw ... Calculate moments of a Miriad image. 
+odnh3 ...... pjt  ... Ammonia analysis program 
+reorder .... mchw ... Interchange the axes of a cube 
+\endtt}
+{\eightpoint\begintt
+shifty ..... rjs  ... Align two images. 
+smooth ..... nebk ... Convolve an image (in the image domain) with a gaussian. 
+zeeeta ..... nebk ... Compute Zeeman parameter eta 
+zeefake .... nebk ... Generate fake Zeeman data. 
+zeemap ..... nebk ... Map the magnetic field from I and V cubes 
+\endtt}
+{\eightpoint\begintt
+zeesim ..... nebk ... Test reliability of Zeeman splitting errors 
+zeestat .... nebk ... Fits Zeeman parameters to I and V cubes 
+\endtt}
+\par{\bf \$MIR/src/prog/calib}
+{\eightpoint\begintt
+calapply ... lgm  ... Apply gain and passband corrections producing calibrated data 
+calfit ..... pjt  ... Fit polynomial to amp/phase data 
+calflag .... pjt  ... Display raw calibration data with user interaction 
+calflux .... jm   ... Print flux data for a calibrator source. 
+calib ...... pjt  ... Display raw calibration data with user interaction 
+\endtt}
+{\eightpoint\begintt
+callist .... pjt  ... List items from calibration data set 
+calmake .... pjt  ... Create cal file from observation of calibrator 
+gainerr .... rjs  ... Add dummy gains to a visibility file. 
+passfit .... lgm  ... Fit polynomials to a passband calibration set 
+passmake ... lgm  ... Create passband calibration set 
+\endtt}
+{\eightpoint\begintt
+selfcal .... mchw ... Determine self-calibration of calibration gains. 
+\endtt}
+\par{\bf \$MIR/src/prog/convert}
+{\eightpoint\begintt
+fits ....... rjs  ... Conversion between MIRIAD and FITS image and uv formats 
+hatmap ..... mchw ... Convert old Hat Creek 2D images to MIRIAD cube 
+uvhat ...... wh   ... Convert Hat Creek uv format into MIRIAD uv format 
+\endtt}
+\par{\bf \$MIR/src/prog/deconv}
+{\eightpoint\begintt
+clean ...... mchw ... Apply Hogbom, Clark or Steer CLEAN algorithm to a map 
+maxen ...... rjs  ... Maximum Entropy deconvolution 
+restore .... mchw ... Restore clean components to make the CLEAN map 
+tvcln ...... mchw ... Clark/Steer CLEAN with display of intermediates 
+\endtt}
+\par{\bf \$MIR/src/prog/disp}
+{\eightpoint\begintt
+tvall ...... jm   ... Interact with a previously displayed image 
+tvdisp ..... jm   ... Display an image on a TV device 
+tvflag ..... jm   ... Interactive editing of a UV data set on a TV device. 
+tvinit ..... rjs  ... Initialize a TV device 
+views ...... bpw  ... Generate a projection of the datacube 
+\endtt}
+\par{\bf \$MIR/src/prog/map}
+{\eightpoint\begintt
+invert ..... rjs  ... Transform visibility data into a map 
+\endtt}
+\par{\bf \$MIR/src/prog/misc}
+{\eightpoint\begintt
+copyhd ..... rjs  ... Copy items from one data-set to another. 
+corset ..... jm   ... Program that models correlator setups. 
+delhd ...... rjs  ... Delete a data-set item. 
+itemize .... pjt  ... List information about image dataset 
+listobs .... lgm  ... Makes a summary of a set of observations. 
+\endtt}
+{\eightpoint\begintt
+prthis ..... bpw  ... List history item of a dataset 
+puthd ...... pjt  ... Change the value of or add a header item 
+\endtt}
+\par{\bf \$MIR/src/prog/vis}
+{\eightpoint\begintt
+fitgains ... mchw ... List gains for a uv dataset 
+tpgains .... mchw ... Estimate antenna gains from total power measurements. 
+uvaflag .... bpw  ... Use flags in one uv database to set flags in another 
+uvcat ...... rjs  ... Concatenate and copy uv datasets into one; apply gains file, selec
+uvcheck .... mchw ... Check uvdata selection and uv-variable values. 
+\endtt}
+{\eightpoint\begintt
+uvcover .... lgm  ... Display uv coverage 
+uvedit ..... jm   ... Editing of the baseline of a UV data set. 
+uvflag ..... bpw  ... Flags or unflags uv data 
+uvgen ...... mchw ... Compute visibilities for a model source. 
+uvindex .... mchw ... Scan a uvdata file, and note when uvvariables change. 
+\endtt}
+{\eightpoint\begintt
+uvlist ..... mchw ... Print data values from uv dataset 
+uvmodel .... mchw ... Add, subtract, etc, a model from a uv data set. 
+uvplot ..... mchw ... Plot selected uvdata variables and linetypes versus time.
+uvplt ...... mchw ... Plot visibility amplitude or phase versus time or uv-distance. 
+uvpoint .... mchw ... Generate artifial mosaiced observation 
+\endtt}
+{\eightpoint\begintt
+uvputhd .... lgm  ... Allows user to alter values of header variables in uv dataset
+uvspect .... mchw ... Plot visibility amplitude/phase vs velocity 
+uvtrack .... mchw ... Plot u-v tracks for n configurations of m antennas 
+varlist .... lgm  ... List all variables in dataset 
+varplot .... lgm  ... Plot uv variables 
+\endtt}
+{\eightpoint\begintt
+velplot .... mchw ... Interactive task to Average, Graph, and Extract Miriad Images. 
+\endtt}
+\par{\bf \$MIR/src/tools}
+{\eightpoint\begintt
+doc ........ bpw  ... MIRIAD documentation program 
+flint ...... rjs  ... Fortran source code verifier 
+miriad ..... pjt  ... General program to run miriad programs 
+mirtool .... pjt  ... MIRIAD SunView interface (SUN only) 
+panel ...... jm   ... Control panel program 
+\endtt}
+{\eightpoint\begintt
+ratty ...... bpw  ... FORTRAN preprocessor, so that same code works on more machines 
+\endtt}
