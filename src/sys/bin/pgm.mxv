@@ -1,0 +1,113 @@
+#!/bin/csh -f
+# ----------------------------------------------------------- 
+set mir    = $MIR
+set host   = $MIRHOST
+set lsys   = $mir/bin/localsys
+set srcdir = $mir/borrow/mxv
+set hdfdir = $mir/borrow/hdf
+set libdir = $mir/lib/$host
+set bindir = $mir/bin/$host
+set docdir = $mir/doc/prog
+set resdir = $mir/doc/misc
+set admdir = $mir/src/sys/bin
+# ----------------------------------------------------------- 
+if (-e $lsys/pgm.mxv && ! $?local_compile) then
+  echo $lsys/pgm.mxv exists =======================
+  setenv local_compile
+  exec $lsys/pgm.mxv $argv
+endif
+# ----------------------------------------------------------- 
+if ($?Compile == 0) then
+   if (-e $admdir/compile.${host}) then
+      source $admdir/compile.${host}
+   else
+      echo "Cannot find $admdir/compile.${host} - exiting."
+      exit 1
+   endif
+endif
+# ----------------------------------------------------------- 
+if ($?PGPLOT_FONT) then
+   set pgfont = "$PGPLOT_FONT"
+else
+   echo "PGPLOT_FONT environment variable not set; exiting."
+   exit 1
+endif
+# ----------------------------------------------------------- 
+set inc    = "-I$srcdir -I$hdfdir $Cinclude"
+#
+set libs   = "$Clinkdir -lXaw -lXt -lXmu -lXext -lX11 -ldf -lm"
+switch ($host)
+   case sun4   :
+		 set options = "-DSUN4"
+		 breaksw
+   case sun4sol:
+		 set options = "-DSUN4"
+		 set libs = "$libs -lsocket -lnsl"
+		 breaksw
+   case sun3   :
+		 set options = "-DSUN3"
+		 breaksw
+   case convex :
+		 set options = "-DCONVEX"
+		 breaksw
+   case mips :
+		 set options = "-DSYSV"
+		 breaksw
+   default     :
+		 set options = "-DSUN4"
+		 breaksw
+endsw
+# ----------------------------------------------------------- 
+cd $srcdir
+set src = (`ls *.c | grep -v td_main.c`)
+#
+cd $libdir
+set out = ""
+foreach i ($src)
+   rm -fr ${i:r}.o >& /dev/null
+   echo ""
+   echo "$Ccompile $Coptions $options -c $inc $srcdir/$i"
+         $Ccompile $Coptions $options -c $inc $srcdir/$i
+   if ($status == 0) set out = "$out ${i:r}.o"
+end
+#
+set theList = (`echo $out|sort|uniq`)
+echo ""
+echo "$Ccompile $Coptions $options -o $bindir/mxv.exe $inc $srcdir/td_main.c <dot-o files> $libs"
+      $Ccompile $Coptions $options -o $bindir/mxv.exe $inc $srcdir/td_main.c $theList $libs
+
+rm -fr td_main.o $theList >& /dev/null
+
+(cd $docdir; $bindir/doc -p $srcdir/mxv.for)
+# ----------------------------------------------------------- 
+cat << END_OF_TEXT >! $bindir/mxv
+#!/bin/csh -f
+# This script will enable you to run the MXV application without
+# having to move the MXV resource file to your home or defaults
+# directory.  You may override these in your defaults file.
+
+set noglob
+
+setenv XAPPLRESDIR \$MIRDOC/misc
+
+exec \$MIRBIN/mxv.exe \${*:q}
+
+END_OF_TEXT
+chmod 755 $bindir/mxv
+# ----------------------------------------------------------- 
+#
+if (-e $srcdir/Mxv.ad) then
+   set m1 = '$bindir'
+   set m1 = "s&$m1&`echo $bindir`&g"
+   set m2 = '$mir'
+   set m2 = "s&$m2&`echo $mir`&g"
+   set m3 = '$pgfont'
+   set m3 = "s&$m3&`echo $pgfont`&g"
+   sed ${m1:q} $srcdir/Mxv.ad | sed ${m2:q} | sed ${m3:q} >! $resdir/Mxv
+endif
+#
+echo ""
+echo "`ls -l $bindir/mxv`"
+echo "`ls -l $bindir/mxv.exe`"
+unsetenv local_compile
+exit 0
