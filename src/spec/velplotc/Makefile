@@ -21,7 +21,7 @@ $(EXE): $(OBJS) $(HEADERS)
 	f77  -O3 -s -o $(EXE) $(OBJS) `mirlibs` $(LIBFORMS)
 
 mainform.o:mainform.c
-	cc -I$(FORMINC) -c mainform.c
+	cc -I$(INCFORMS) -c mainform.c
 
 .SUFFIXES: .f
 
