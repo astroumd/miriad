@@ -31,7 +31,8 @@ set prog_for = $admdir/stub.prog_for
 set spec  = (`ls $srcdir/spec`)
 set theDirs = (tools        prog/analysis prog/calib \
 	       prog/convert prog/deconv   prog/disp  \
-	       prog/map     prog/misc     prog/vis)
+	       prog/map     prog/misc     prog/vis \
+	       prog/atnf)
 #
 if (! -e $bindir/doc   ) $prog_c $srcdir/tools/doc
 if (! -e $bindir/ratty ) $prog_c $srcdir/tools/ratty

@@ -69,7 +69,7 @@ stub.mkdirs1 $1/src
 foreach i (inc prog subs spec tools scripts sys)
    stub.mkdirs1 $1/src/$i
 end
-foreach i (analysis disp calib convert deconv map vis misc)
+foreach i (analysis atnf disp calib convert deconv map vis misc)
    stub.mkdirs1 $1/src/prog/$i
 end
 stub.mkdirs1 $1/src/spec/mosaic
