@@ -1,0 +1,235 @@
+%------------------------------------------------------------------------
+% Miriad Programmer's Guide
+%------------------------------------------------------------------------
+%  History:
+%  rjs  Dark-ages Original version.
+%  rjs   9feb90   Improved documentation of ratty.
+%  rjs  13feb90   Corrected a few typos. Described hisinput routine.
+%                 Updated description of uvinfo.
+%  rjs  18feb90   Corrected gross errors in "Image coordinate system"
+%  rjs   7mar90   Corrected comments about hisopen. Make antenna number
+%                 business clearer.
+%  rjs  30apr90   Many changes.
+%  rjs  28nov90   Some cosmetic updates. This is starting to get out-of-date!
+%  mjs  16feb91   Many revisions, plus now using TeX.
+%-----------------------------------------------------------------------
+\input pg_format
+\pageno=1
+
+%------------------------------------------------------------------------
+% Chapter 1
+%------------------------------------------------------------------------
+\beginchapter{1}{HOW TO USE THIS MANUAL}
+
+{\parskip=0.2in
+\par\input pg_howto
+
+}
+
+\endchapter
+%------------------------------------------------------------------------
+% Chapter 2
+%------------------------------------------------------------------------
+\beginchapter{2}{GENERAL CONVENTIONS}
+
+{\parskip=0.2in
+\par\input pg_genconv
+
+}
+
+\endchapter
+%------------------------------------------------------------------------
+% Chapter 3
+%------------------------------------------------------------------------
+\beginchapter{3}{INTERACTING WITH THE USER}
+
+{\parskip=0.2in
+\par\input pg_interact
+
+}
+
+\endchapter
+%------------------------------------------------------------------------
+% Chapter 4
+%------------------------------------------------------------------------
+\beginchapter{4}{CODE DOCUMENTATION}
+
+{\parskip=0.2in
+\par\input pg_codedocs
+
+}
+
+\endchapter
+%------------------------------------------------------------------------
+% Chapter 5
+%------------------------------------------------------------------------
+\beginchapter{5}{UTILITY PROGRAMS}
+
+{\parskip=0.2in
+\par\input pg_utilpgms
+
+}
+
+\endchapter
+%------------------------------------------------------------------------
+% Chapter 6
+%------------------------------------------------------------------------
+\beginchapter{6}{MIRIAD DATASET FORMATS}
+
+{\parskip=0.2in
+\par\input pg_dsform
+
+}
+
+\endchapter
+%------------------------------------------------------------------------
+% Chapter 7
+%------------------------------------------------------------------------
+\beginchapter{7}{MIRIAD IO SYSTEM}
+
+{\parskip=0.2in
+\par\input pg_iosys
+
+}
+
+\endchapter
+%------------------------------------------------------------------------
+% Chapter 8
+%------------------------------------------------------------------------
+\beginchapter{8}{UV DATASETS}
+
+{\parskip=0.2in
+\par\input pg_uvds
+
+}
+
+\endchapter
+%------------------------------------------------------------------------
+% Chapter 9
+%------------------------------------------------------------------------
+\beginchapter{9}{IMAGE DATASETS}
+
+{\parskip=0.2in
+\par\input pg_imds
+
+}
+
+\endchapter
+%------------------------------------------------------------------------
+% Chapter 10
+%------------------------------------------------------------------------
+\beginchapter{10}{GENERAL DISCUSSION}
+
+{\parskip=0.2in
+\par\input pg_general
+
+}
+
+\endchapter
+%------------------------------------------------------------------------
+% Chapter 11
+%------------------------------------------------------------------------
+\beginchapter{11}{ROUTINE SYSTEM MAINTENANCE}
+
+{\parskip=0.2in
+\par\input pg_maint
+
+}
+
+\endchapter
+%------------------------------------------------------------------------
+% Appendix A
+%------------------------------------------------------------------------
+\beginappendix{A}{IMAGE ITEMS}
+
+{\parskip=0.2in
+\par\input pg_imitems
+
+\raggedbottom
+\vfill\eject
+}
+
+\endchapter
+%------------------------------------------------------------------------
+% Appendix B
+%------------------------------------------------------------------------
+\beginappendix{B}{UV VARIABLES}
+
+{\parskip=0.2in
+\par\input pg_uvvars
+
+\raggedbottom
+\vfill\eject
+}
+
+\endchapter
+%------------------------------------------------------------------------
+% Appendix C
+%------------------------------------------------------------------------
+\beginappendix{C}{CALLING IO ROUTINES FROM C}
+
+{\parskip=0.2in
+\par\input pg_ccall
+
+\raggedbottom
+\vfill\eject
+}
+
+\endchapter
+%------------------------------------------------------------------------
+% Appendix D
+%------------------------------------------------------------------------
+\beginappendix{D}{MIRIAD DIRECTORIES}
+
+{\parskip=0.2in
+\par\input pg_mirdirs
+
+\raggedbottom
+\vfill\eject
+}
+
+\endchapter
+%------------------------------------------------------------------------
+% Appendix E
+%------------------------------------------------------------------------
+\beginappendix{E}{MIRIAD ENVIRONMENT VARIABLES}
+
+{\parskip=0.2in
+\par\input pg_mirenviron
+
+\raggedbottom
+\vfill\eject
+}
+
+\endchapter
+%------------------------------------------------------------------------
+% Appendix F
+%------------------------------------------------------------------------
+\beginappendix{F}{SETTING UP YOUR ACCOUNT}
+
+{\parskip=0.2in
+\par\input pg_setup
+
+\raggedbottom
+\vfill\eject
+}
+
+\endchapter
+%------------------------------------------------------------------------
+% Table of Contents
+%------------------------------------------------------------------------
+\closeout\toc
+
+\bgroup
+\pageno=-1
+\footline={\hss}
+\headline={\hss}
+\input pg_title
+
+\footline={\hss\tenrm\folio\hss}
+\centerline{\bit Contents}
+\vskip 0.5in
+\input toc
+\endchapter
+
+\end
