@@ -1,0 +1,7 @@
+This software is a modified version of velplot, written by Chin Fei Lee.
+
+It works with the XForms library (http://world.std.com/~xforms/), which
+you need to install before you can install this package.
+
+Binaries for most architectures are available through that web page or from
+http://world.std.com/~xforms/ftp/ftp.html

@@ -1,0 +1,5 @@
+/n/phoenix2/chinfei/new_velplot/a.jet
+File for spectra & position-velocity cuts.
+   0  spectra positions (HA,DEC) arcsec w.r.t. crpix
+   1  position-velocity cuts HA,DEC (") & pa (degrees)
+              0.0000              0.0000              0.0000
