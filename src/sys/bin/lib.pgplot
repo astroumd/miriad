@@ -95,7 +95,7 @@ if (! -e $driverfile) then
 #  Do some sed magic to turn on (select) the ps/tt/xw/gi/pp drivers...
    if ($pgsys == linux) then
      sed -e '/^\! PSDRIV/s/^\!/ /' $srcdir/drivers.list  | \
-     sed -e '/^\! GIDRIV/s/^\!/ | \
+     sed -e '/^\! GIDRIV/s/^\!/ /' | \
      sed -e '/^\! XWDRIV/s/^\!/ /' > $driverfile
    else
      sed -e '/^\! PSDRIV/s/^\!/ /' $srcdir/drivers.list  | \
