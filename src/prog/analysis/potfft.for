@@ -22,11 +22,21 @@ c   The input image. It must be a two-dimensional image with the number of
 c   pixels along each axis a power of two and no larger than 256 x 256.
 c   No default.
 c@ out
-c   The output image. It has the same dimensions as the input, with the
-c   density replaced by the corresponding gravitional potential. No default.
-c@ softe
+c   Optional output image. It has the same dimensions as the input, with the
+c   density replaced by the corresponding gravitional potential. No default
+c   if no green output is used.
+c@ green
+c   Optional output map containing the Green's function G. Convolving
+c   G with a surface density image (using miriads routine CONVOL) will
+c   result in a proper potential image as produced by out= in this program.
+c   By default Green's image is not output.
+c@ eps
 c   The softening parameter in pixel units. The default is 1.0.
 c   (0.0 cannot be used).
+c@ h
+c   The vertical scaleheight in pixel units when a sech^2 disk is used.
+c   The default is 0, meaning an infinitesimally thin disk.
+
 c-------------------------------------------------------------------
 c
 c History:
@@ -34,7 +44,8 @@ c   bikram, 23sep91 Original version; started from scratch.
 c   peter    9oct94 Fixed small bug in convolution. Documented a few
 c                   caveats.
 c   peter   10jul02 image header, why wasn't this done before.....
-c
+c   peter   31jul02 added green=, noticing that original POTFFT broken
+c                   with a 1/2 pixel offset. Renamed softe= to eps=
 c Todo:
 c   scaleheight should be allowed to vary
 c
@@ -47,9 +58,9 @@ c
       INTEGER INVPARM
       PARAMETER(INVPARM=1)
       CHARACTER VERSION*(*)
-      PARAMETER (VERSION='Version 19-jul-02')
+      PARAMETER (VERSION='Version 31-jul-02')
 c
-      CHARACTER in*100,out*100
+      CHARACTER in*100,out*100,outg*100
       INTEGER nin(MAXNAX),nout(MAXNAX),npadin(MAXNAX)
       INTEGER naxis,lin,lout,nn,i,j,k
       REAL softe,xsq,ysq,tmp
@@ -74,7 +85,8 @@ c
       CALL keyini
       CALL keyf('in',In,' ')
       CALL keya('out',Out,' ')
-      CALL keyr('softe',softe,1.0)
+      CALL keya('green',OutG,' ')
+      CALL keyr('eps',softe,1.0)
       IF(in.EQ.' '.OR.out.EQ.' ')
      *    CALL bug('f','Input and output names for images required')
       CALL keyfin
