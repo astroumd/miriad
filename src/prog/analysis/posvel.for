@@ -1,5 +1,5 @@
 c********1*********2*********3*********4*********5*********6*********7**
-	program POSVEL
+	program PPOSVEL
 	implicit none
 c
 c= POSVEL - Make position-velocity plot from xyz image.
@@ -42,11 +42,12 @@ c
 c--
 c  History:
 c    28feb95 mchw Extracted from VELPLOT subroutines.
+c     7sep00 pjt  Standard fortran so linux (g77) will compile it too
 c----------------------------------------------------------------------c
-	include 'tmpdim.h'
+c	include 'tmpdim.h'
 	include 'velplot.h'
 	character*(*) version
-	parameter(version='(version 3.0 28-FEB-95)')
+	parameter(version='(version 3.0 7-sep-00)')
 	integer maxnax,maxboxes
 	parameter(maxnax=3,maxboxes=128)
 	integer boxes(maxboxes),nsize(maxnax),blc(maxnax),trc(maxnax)
@@ -155,6 +156,7 @@ c----------------------------------------------------------------------c
  	character msg*80
 c	character ans*1
 c	integer i,ipr
+	integer mid
 c
 	call output('List Header and velocity information')
 	call output('File : '//file)
@@ -188,11 +190,12 @@ c  	common/head/ contains map header
 c 	common/box/ contains data on the map array
 c
 c-------------------------------------------------------------------c
-	include 'tmpdim.h'
+c	include 'tmpdim.h'
 	include 'velplot.h'
 	double precision ckms
 	parameter(ckms=299793.)
 	integer i,j,k,ipt
+	integer mid
 	real cdelt,crval,crpix1,crpix2,crpix,row(maxdim)
 	character*20 ctype3
 c
@@ -338,34 +341,34 @@ c
 	call output('Default plotting parameters:')
 	call output(' ')
 c units 
-        write(line,'(''Units for display [J/K].....'',x,A)') units 
+        write(line,'(''Units for display [J/K].....'',1x,A)') units 
         call output(line)
 c negative contours 
-        write(line,'(''Negative contours [Y/N].....'',x,A)') cneg 
+        write(line,'(''Negative contours [Y/N].....'',1x,A)') cneg 
         call output(line)
 c header
-        write(line,'(''Plot header [Y/N]...........'',x,A)') alabel 
+        write(line,'(''Plot header [Y/N]...........'',1x,A)') alabel 
         call output(line)
 c Write map to file 
-        write(line,'(''Write map to file [Y/N].....'',x,A)') write 
+        write(line,'(''Write map to file [Y/N].....'',1x,A)') write 
         call output(line)
 c Absolute coords
-        write(line,'(''Absolute coordinates [Y/N]..'',x,A)') abscoord 
+        write(line,'(''Absolute coordinates [Y/N]..'',1x,A)') abscoord 
         call output(line)
 c Integer plot
-        write(line,'(''Integer plot [Y/N]..........'',x,A)') apint 
+        write(line,'(''Integer plot [Y/N]..........'',1x,A)') apint 
         call output(line)
 c Spectra Positions
-        write(line,'(''Spectra positions [Y/N].....'',x,A)') pspec 
+        write(line,'(''Spectra positions [Y/N].....'',1x,A)') pspec 
         call output(line)
 c Gaussian Fits
-        write(line,'(''Fit Gaussians [Y/N].........'',x,A)') lgaufit 
+        write(line,'(''Fit Gaussians [Y/N].........'',1x,A)') lgaufit 
         call output(line)
 c Plot Gaussian Fits
-        write(line,'(''Overlay Gauss Fits [Y/N]....'',x,A)') lgauplot 
+        write(line,'(''Overlay Gauss Fits [Y/N]....'',1x,A)') lgauplot 
         call output(line)
 c Gray Scale
-        write(line,'(''Gray Scale [Y/N]............'',x,A)') gray
+        write(line,'(''Gray Scale [Y/N]............'',1x,A)') gray
         call output(line)
 c Exit
         call output('Exit default menu')
@@ -375,7 +378,7 @@ c Contour levels
         else
           tline='absolute'
         endif
-        write(line,'(''Current contours: '',x,A)') tline
+        write(line,'(''Current contours: '',1x,A)') tline
         call output(line)
         do i=1,nlevels
           write(line, 109) i,levels(i)
@@ -548,7 +551,7 @@ c
 	  call LogWrit(line(1:len1(line)))
 	endif
 
-100	format(a,x,2(f5.0,f3.0,f6.3),' xy:',f8.3,' vel:',f8.2,
+100	format(a,1x,2(f5.0,f3.0,f6.3),' xy:',f8.3,' vel:',f8.2,
      *	' delv:',f8.2)
 101  	format(a,a,a,3f6.2,' freq:',f9.5,' unit:',a)
 102  	format('beam:',3f6.1,' niters:',i7,' K/Jy:',f9.2,' cbof:',f7.2)
@@ -639,7 +642,7 @@ c
 c  object
         call pgtext(0.,0.95,object)
 c  ra and dec
-	write(line,'(2i3,f6.2,x,2i3,f5.1)') int(rae(1)),
+	write(line,'(2i3,f6.2,1x,2i3,f5.1)') int(rae(1)),
      *    int(rae(2)),rae(3),int(dece(1)),int(dece(2)),dece(3)
         call pgtext(0.,0.9,line)
 c  epoch
@@ -658,7 +661,7 @@ c  delv
 	write(line,'(''Width:    '',F10.3,'' km/s'')') abs(delv)
         call pgtext(0.0,0.58,line)
 c  file
-        write(line,'(''filename:'',x,A)') file
+        write(line,'(''filename:'',1x,A)') file
         call pgtext(0.0,0.54,line)
 c  beam
 	if(bmaj.gt.0.) then
@@ -673,7 +676,7 @@ c  convolving beam
           call pgtext(0.0,0.46,line)
         endif
 c  bunit
-        write(line,'(''Map Unit:'',x,A)') bunit
+        write(line,'(''Map Unit:'',1x,A)') bunit
         call pgtext(0.0,0.40,line)
 c  dperjy
 	write(line,'(''K/Jy ='',1pg10.3)') dperjy
@@ -685,13 +688,13 @@ c
          goto 202
         endif
 c  max
-	write(line,'(''Maximum:'',1pg10.3,X,A)') amax*cf,units
+	write(line,'(''Maximum:'',1pg10.3,1x,A)') amax*cf,units
         call pgtext(0.0,0.30,line)
 c  min
-	write(line,'(''Minimum:'',1pg10.3,x,a)') amin*cf,units
+	write(line,'(''Minimum:'',1pg10.3,1x,a)') amin*cf,units
         call pgtext(0.0,0.26,line)
 c  rms
-	write(line,'(''Rms:    '',1pg10.3,x,a)') arms*cf,units
+	write(line,'(''Rms:    '',1pg10.3,1x,a)') arms*cf,units
         call pgtext(0.0,0.22,line)
 c  contours
 	scale=1.
@@ -700,7 +703,7 @@ c  contours
 	  if(cneg.eq.'Y') absmax=(max(abs(amax),abs(amin)))
 	  scale=absmax*cf/100.
 	endif
-        write(line,'(''Contour Levels:'',x,A)') units
+        write(line,'(''Contour Levels:'',1x,A)') units
         call pgtext(0.0,0.18,line)
 c  levels
 	j=0
@@ -940,7 +943,7 @@ c
 	enddo
 	write(text, 103) -midy,(i-mid,i=1,iend)
 	call output(text)
-103	format(x,i4,x,24i3)
+103	format(1x,i4,1x,24i3)
 	end
 c********1*********2*********3*********4*********5*********6*********7**
 	subroutine convsize(cmaj,cmin,cpa,xy,ncon)
