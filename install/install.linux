@@ -1,6 +1,6 @@
 #! /bin/csh -f
 #
-# Version: 19-apr-03
+# Version: 25-nov-04
 #
 #  2-aug-99 Updated for Sebok's Mandrake setup
 #  1-aug-00 Updated to allow to build private PGPLOT version
@@ -22,7 +22,8 @@
 # 23-jan-03 add (optional) install of LGM's rad/lvg package in borrow
 # 21-feb-03 more logfiles, so less to the screen
 # 17-apr-03 fix up MIRSRC from skel
-# 23-oct-03 configure now controls maxdim.h and maxdimc.h
+# 23-oct-04 configure now controls maxdim.h and maxdimc.h
+# 25-nov-04 fortran compiler choice
 #
 #   Simple single-architecture installation of MIRIAD
 #   (linux)
@@ -82,11 +83,11 @@ set telescope=carma
 #   version will be stored in $MIR/VERSION
 
 if (0) then
-set newdir=`date +%y%b%d | tr '[:upper:]' '[:lower:]'`
-set hosttype=`uname -s | tr '[:upper:]' '[:lower:]'`
+ set newdir=`date +%y%b%d | tr '[:upper:]' '[:lower:]'`
+ set hosttype=`uname -s | tr '[:upper:]' '[:lower:]'`
 else
-set newdir=`date +%y%b%d | tr A-Z a-z`
-set hosttype=`uname -s | tr A-Z a-z`
+ set newdir=`date +%y%b%d | tr A-Z a-z`
+ set hosttype=`uname -s | tr A-Z a-z`
 endif
 
 #	patch to use Stupar's original names
@@ -125,9 +126,7 @@ else
 endif
 
 set searchlibs=(/usr/lib /usr/X11R6/lib /local/lib /usr/local/lib)
-#		care, wip still uses something else, it won't listen to $fortran
-#		and you probably need 'f77' in your path
-set fortran=g77		# not used right now (WIP might need it)
+
 set log=/tmp/miriad.install.$$.log
 
 # 		MIRIAD V3:  (can be overriden with cvs=1, see below)
@@ -167,6 +166,15 @@ set install_dir=`pwd`
 foreach a ($*)
   set $a
 end
+
+#		care, wip still uses something else, it won't listen to $fortran
+#		and you probably need 'f77' in your path
+#               : rpfits already needs this
+if ($intel) then
+  set fortran=ifort
+else
+  set fortran=g77
+endif
 
 if ($internal) then
    # override newdir and mirroot if we do an internal build....
@@ -458,7 +466,7 @@ if ($hosttype == linux) then
 
  echo Compiling rpfits
  pushd $MIR/borrow/rpfits >& /dev/null
- make ARCH=linux RANLIB=ranlib FC=g77 FFLAGS=-g CFLAGS=-g >& $MIR/tmp/rpfits.$$.$hosttype 
+ make ARCH=linux RANLIB=ranlib FC=$fortran FFLAGS=-g CFLAGS=-g >& $MIR/tmp/rpfits.$$.$hosttype 
  if ($status) echo Problems compiling RPFITS library
  mv librpfits.a $MIRLIB
  make clean
