@@ -1,13 +1,14 @@
-if you don't see a directory 'wip' here, it probably means you
-did not get a proper BIMA version of miriad. Most likely you
-used CVS, and need to plant the wip tree here (in CVS terms:
-wip is a separate module under CVS)
+if you don't see a directory 'wip' here, it probably means you did not
+get this added package for miriad. If you used CVS, and need to plant
+the wip tree here (in CVS terms: wip is a separate module under CVS)
 
-The following commands should install wip:
+If miriad has been installed, the following commands should install wip:
 
 	cd $MIR/borrow 		You need to have miriad loaded
 	cvs checkout wip	plant the wip tree
 	mirboss			become miriad boss
 	mir.install wip		compile wip
+
+check out the logfile in $MIR/tmp for any errors.
 	
 
