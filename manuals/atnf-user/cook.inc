@@ -159,39 +159,6 @@ to destruction on Monday morning. Note, however, when your booking has
 expired, your data can be deleted from a bookable disk without
 warning. Disks can be booked by e-mailing `bookings'.
 
-The disks available are in a fairly constant state of flux.
-The currently available public data disks are:
-\begin{center}
-\begin{tabular}{|l|} 
-\hline 
-Disk\\
-\hline
-\verb+APUS_1+\\
-\verb+ATTILA_1+\\
-\verb+ATTILA_2+\\
-\verb+CARINA_1+\\
-\verb+MENSA_1+\\
-\verb+OCTANS_1+\\
-\verb+PUPPIS_1+\\
-\verb+TUCANA_1+\\
-\verb+VIRGO_1+\\
-\hline 
-\end{tabular}
-\end{center}
-
-To find out what the status of the available disks, enter the
-command
-\begin{verbatim}
-      % datadisks
-\end{verbatim}
-To see the current disk bookings, use
-\begin{verbatim}
-      % bookings
-\end{verbatim}
-To see current and future disk bookings, use
-\begin{verbatim}
-      % bookings -a
-\end{verbatim}
 
 \newchapter
 \chapter{Visibility Data Concepts}\label{c:visconcepts}
@@ -582,6 +549,14 @@ If only one value is given, then {\it uvmin} is
 taken as zero. The units of {\it uvmin} and {\it uvmax} are kilowavelengths.
 \item[{\tt uvnrange({\it uvmin,uvmax})}] This is the same as the {\tt uvrange} subcommand, 
 except that the units are nanoseconds.
+\item[{\tt ha(\it h1,h2})}] This selected data based on the hour angle of 
+the data. {\it h1} and {\it h2} are the hour angle (in decimal hours).
+\item[{\tt elevation({\it e1,e2})}] This selects data based on the elevation
+at which the data were observed. {\it e1} and {\it e2} give the elevation
+range in degrees.
+\item[{\tt lst({\it l1,l2})}] This selects data based on the LST of the
+observation. l1 and l2 are the start and end LST values, and can be given
+in the form hh:mm:ss  or as decimal hours.
 \item[{\tt visibility({\it n1,n2})}] This selects visibilities numbered {\it n1}
 \index{uvnrange, uv select}
 to {\it n2} inclusive.
@@ -1249,7 +1224,7 @@ back the residuals. This is covered in Chapter~\ref{c:decon}.
 \newchapter
 \chapter{Getting Data In and Out of \miriad}\label{c:inout}
 
-\section{Reading RPFITS Files}\index{atlod}\index{RPFITS files}
+\section{{\tt ATLOD:} Reading RPFITS Files}\index{atlod}\index{RPFITS files}
 \label{s:atlod}
 
 ATCA data will be initially in RPFITS format.  This needs to be converted to
@@ -1260,30 +1235,17 @@ We will discuss the various input parameters to \miriad\ \task{atlod}.
 \begin{itemize}
 
 \item The {\tt in} parameter gives the name of the input UNIX file, or files,
-to load. Wildcards are supported.
+to load. Many files can be given, and wildcards are supported.
 
-Unlike other \miriad\ tasks, \task{atlod} can read exabytes
-directly. In this case you should use the physical device name as the
-input name. This is usually
-displayed on the exabyte drive. On the Epping Solaris systems, the device
-name is usually \verb+/dev/nrst4+ (or something similar). Note this
-represents the so-called ``non-rewinding, raw interface'' to
-exabytes. On some other Solaris systems,
-you will use a name such as \verb+/dev/rmt/0lbn+
-(this is the non-rewinding, raw, BSD compatibility interface).
-
-An alternative to directly reading from exabyte is to load the data to
-disk with the Unix commands \unix{ansiread} or \unix{ansitape}, which are
-available on a number of the ATNF systems.  See the
-UNIX \unix{man} pages for more information. 
-
-RPFITS files are also commonly archived on CDROMs. To use a CDROM drive,
+RPFITS files are commonly archived on CDROMs: a CDROM appears much like
+a disk to the operating system, and \task{atlod} can load RPFITS files
+directly off these. To use a CDROM drive,
 first check that the drive is not in use (an orange light flashing). On Solaris
 to load a CDROM, press the Open/Close on the front of the drive, place 
 the CDROM in
 and again press the Open/Close button. After about 10 seconds, the operating
-system will mount the CDROM, and it can be accessed much like a normal UNIX
-file system. CDROMs written at the ATCA will have the RPFITS data in the
+system will mount the CDROM, and it can be accessed.
+CDROMs written at the ATCA will have the RPFITS data in the
 directory
 \begin{verse}
 {\tt /cdrom/cdrom{\it x}/DATA}
@@ -1302,6 +1264,24 @@ When you are done with a CDROM drive you eject it with the Solaris UNIX command
    eject cdrom
 \end{verbatim}
 (the Open/Close button will not work).
+
+RPFITS files are (or at least were once) commonly written to exabyte
+tapes. Unlike other \miriad\ tasks, \task{atlod} can read exabytes
+directly. In this case you should use the physical device name as the
+input name. This is usually
+displayed on the exabyte drive. On the Epping Solaris systems, the device
+name is usually \verb+/dev/rmt/0lbn+ or similar
+(this is the so-called non-rewinding, raw, BSD compatibility interface).
+On older Solaris systems, it may be \verb+/dev/nrst4+ or something similar
+(non-rewinding, raw interface).
+
+
+An alternative to directly reading from exabyte is to load the data to
+disk with the Unix commands \unix{ansiread} or \unix{ansitape}, which are
+available on a number of the ATNF systems.  See the
+UNIX \unix{man} pages for more information. 
+
+
 \item The {\tt out} parameter gives the name of the output \miriad\ visibility
 dataset. There is no default.
 
@@ -1315,7 +1295,9 @@ about the correct options to use.
 A few sets of permutations of the options will be appropriate with most
 observations. These include:
 \begin{itemize}
-\item For continuum: \verb+options=birdie,reweight,xycorr+.
+\item For continuum: \verb+options=birdie,xycorr+ or 
+\verb+options=birdie,reweight,xycorr+. See below for a discussion on
+whether to use \verb+reweight+ or not.
 \item For non-polarimetric line: \verb+options=birdie+ or
 \verb+options=birdie,compress+ or \verb+options=birdie,hanning+
 or \verb+options=birdie,compress,hanning+. See Section~\ref{s:specrpfits}
@@ -1349,12 +1331,16 @@ For data prior to November 1992 -- seek expert advise.
 phenomena (see Albert Bos in the {\it Indirect Imaging} proceedings)
 affects the
 ATCA. This introduces a non-closing error into the data.
-The effect is moderately subtle, and is probably not significant for
+The effect is moderately subtle, and is not significant for
 dynamic ranges of less than about 500. The `reweight' option reweights
 the visibility spectrum in the lag domain to eliminate this problem.
-This option is strongly suggested for high dynamic range work.
-Reweighting, however, can reduce the ability of the `\verb+birdie+' option to
-reject self-interference in continuum mode.
+
+This option is recommended for high dynamic range work (more than
+about 500). However, the option also reduces the effectiveness of the birdie
+option to reject self-interference. This can be a significant effect for
+20cm continuum observations, where the usual observing band straddles
+the 1408 MHz birdie. Particularly at 20cm, the reweight option is {\em not
+recommended} where dynamic ranges of less than 500 are expected.
 
 \item[{\tt compress}:] Normally the correlation data are stored as
 32-bit floating point numbers.
@@ -1363,7 +1349,8 @@ Alternatively, the {\tt compress} switch can be used to instruct
 with a scale factor associated with each spectrum. This approximately
 halves the disk space occupied by a dataset, and so may be very
 advantageous for large spectral-line observations.
-\item[{\tt hanning}:] Hanning smooth the data, and discard every second
+\item[{\tt hanning}:] Hanning\index{hanning} smooth the data, and
+discard every second
 channel. This can be useful for spectral line experiments. Task \task{atlod}
 will refuse to Hanning smooth data with 33 channels or less.
 \item[{\tt bary}:] Use the barycentre (often called heliocentre
@@ -1375,6 +1362,12 @@ relative to the LSR frame (which is usually used for Galactic work).
 using the ATCA's high time resolution bin mode. See Chapter~\ref{c:pulsar}
 for more information.
 
+\item[{\tt opcorr}:] This option corrects the visibility data for
+atmospheric opacity. It is since October 2003 that there is sufficient
+information in the visibility dataset to allow this.
+This options {\em should not} be used for 3mm data. Generally it is relevant
+for 12mm observations only. See Sections~\ref{s:atlod12mm} and \ref{s:atfix}
+for more information.
 \item[{\tt samcorr}:] Correct the measured visibilities for bad
 sampler statistics. Normally the samplers adjust their various threshold
 levels to ensure optimal operation. However various transients can cause
@@ -1490,6 +1483,12 @@ to store the geometric mean of the \MM{X} and \MM{Y} system temperatures in the
 variable {\tt systemp}.
 It is this variable that \miriad\ tasks use when they need to use the
 system temperature value.
+
+\item[{\tt axisrms, axismax}:] These give the antenna rms and maximum tracking
+errors in a particular cycle. The units are arcseconds.
+
+\item[{\tt airtemp,pressmb,relhumid,wind,winddir}:] These give various
+meterological measurements at the observatory as a function of time.
 
 \end{description}
 
@@ -1989,8 +1988,13 @@ File			&Description\\				\hline
 \hline 
 \multicolumn{2}{|c|}{{\bf Antenna Description File}} \\		\hline
 File			&Description\\				\hline
-\verb+0.122a.ant+	& ATCA configuration 0.122A\\
-\verb+0.122b.ant+	& ATCA configuration 0.122B\\
+\verb+h75.ant+		& ATCA configuration H75\\
+\verb+h168.ant+		& ATCA configuration H168\\
+\verb+h214.ant+		& ATCA configuration H214\\
+\verb+0.122.ant+	& ATCA configuration 0.122A\\
+\verb+ew214.ant+	& ATCA configuration EW214\\
+\verb+ew352.ant+	& ATCA configuration EW352\\
+\verb+ew367.ant+	& ATCA configuration EW367\\
 \verb+0.375.ant+	& ATCA configuration 0.375\\
 \verb+0.75a.ant+	& ATCA configuration 0.75A\\
 \verb+0.75b.ant+	& ATCA configuration 0.75B\\
@@ -2004,11 +2008,6 @@ File			&Description\\				\hline
 \verb+3.0b.ant+		& ATCA configuration 3.0B or 6.0B \\
 \verb+3.0c.ant+		& ATCA configuration 3.0C or 6.0C \\
 \verb+3.0d.ant+		& ATCA configuration 3.0D or 6.0D \\
-\verb+ewuc.ant+		& Proposed ATCA configuration E-W ultracompact\\
-\verb+ewvc1.ant+	& Proposed ATCA configuration E-W very compact No. 1\\
-\verb+ewvc2.ant+	& Proposed ATCA configuration E-W very compact No. 2\\
-\verb+h168.ant+		& Proposed ATCA configuration Hybrid 168m\\
-\verb+h75.ant+		& Proposed ATCA configuration Hybrid 75m\\
 \verb+vla_a.ant+	& VLA configuration A\\
 \verb+vla_b.ant+	& VLA configuration B\\
 \verb+vla_c.ant+	& VLA configuration C\\
@@ -3121,7 +3120,7 @@ information.
 
 
 \newchapter
-\chapter{Calibration, the ATCA, and \miriad}
+\chapter{Calibration, the ATCA, and \miriad}\label{c:cal}
 
 
 \section{Some Theory}\index{calibration, polarimetric}\index{linear feeds}
@@ -3129,14 +3128,14 @@ information.
 
 Much of the theory here has been borrowed from the memo
 \htmladdnormallink{`AT Polarisation Calibration'}
-{ftp://ftp.atnf.csiro.au/pub/people/rsault/memos/polcal.ps.gz}
-(Bob Sault, Neil Killeen and Mike Kesteven). See that memo for more details.
+{http://www.atnf.csiro.au/observers/memos/d97b7f\~{}1.pdf} (AT Memo 39.3/015).
+See that memo for more details.
 A more detailed description of polarimetric interferometry can be found in
 \htmladdnormallink{Hamaker, Bregman \& Sault (1996)}
-{ftp://ftp.atnf.csiro.au/pub/people/rsault/papers/polar1.ps.gz}
+{http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1996A\%26AS..117..137H}
 and \htmladdnormallink{Sault, Hamaker \& Bregman (1996)}
-{ftp://ftp.atnf.csiro.au/pub/people/rsault/papers/polar2.ps.gz}
-(A\&ASS).
+{http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1996A\%26AS..117..149S}
+(A\&AS 117, 137 and A\&AS 117, 149).
 
 Recall from Chapter~\ref{c:visconcepts} that \miriad\ models a feed
 as having a composite gain of
@@ -3165,8 +3164,8 @@ respectively.  Perfect circular feeds respond according to
 \begin{eqnarray*}
 RR &=& I + V \\
 LL &=& I - V \\
-RL &=& U - iQ \\
-LR &=& U + iQ \\
+RL &=& Q + iU \\
+LR &=& Q - iU \\
 \end{eqnarray*}
 
 These equations show immediately why it is harder to calibrate an
@@ -3203,11 +3202,11 @@ thinking of them is the combination of the ellipticity and error in the
 position angle of the polarisation ellipses of each feed. 
 
 Incorporating these leakage terms results in fairly gory equations -- see 
-\htmladdnormallink{Hamaker, Bregman \& Sault}
-{ftp://ftp.atnf.csiro.au/pub/people/rsault/papers/polar1.ps.gz}
-and \htmladdnormallink{Sault, Hamaker \& Bregman}
-{ftp://ftp.atnf.csiro.au/pub/people/rsault/papers/polar2.ps.gz}
-for details.
+\htmladdnormallink{Hamaker, Bregman \& Sault (1996)}
+{http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1996A\%26AS..117..137H}
+and \htmladdnormallink{Sault, Hamaker \& Bregman (1996)}
+{http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1996A\%26AS..117..149S}
+(A\&AS 117, 137 and A\&AS 117, 149) for more details.
 
 \section{Calibration Methods}
 There are two distinct calibration situations with the ATCA, depending
@@ -3656,7 +3655,9 @@ splitting.
 ATCA data will be initially in RPFITS format. \miriad's task to read
 RPFITS files is described in Chapter~\ref{c:inout}. Alternatively, the
 data may be in FITS format (e.g. VLA data). Again see Chapter~\ref{c:inout}
-for information on loading data in this format.
+for information on loading data in this format. Generally you will want
+to load all of an observation into a single \miriad\ file (i.e. use
+\task{atlod} to read multiple RPFITS files into a single output if necessary).
 
 \item You should now flag your data, and possibly convert to channel-0
 (using \task{uvaver}).
@@ -4445,7 +4446,8 @@ calibrator, 1934-638, was revised to give better agreement between
 the ATCA's flux density scale and the flux scales used in the northern
 hemisphere (the VLA in particular). For more discussion, see John
 Reynolds' memo \htmladdnormallink{``A revised flux scale for the AT
-Compact Array''}{ftp://ftp.atnf.csiro.au/pubs/rsault/docs/fluxscale.pdf}.
+Compact Array''}{http://www.atnf.csiro.au/observers/memos/d96783\~{}1.pdf}
+(AT Memo 39.3/040).
 
 This introduces a problem when mixing data (either combining or
 just comparing) calibrated before and after this change. By default
@@ -4951,6 +4953,7 @@ whether CLEAN or MEM was used) or the restoring beam.
 
 The CLEAN algorithm \htmladdnormallink{(H\"ogbom 1974)}
 {http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1974A\%26AS...15..417H}
+(A\&AS 15, 417)
 represents the image as a number of point
 sources in an otherwise empty field of view.  A simple iterative procedure is
 used to find the locations and strengths of these point sources.
@@ -4979,6 +4982,7 @@ because the equivalent area of the CLEAN beam can be calculated.
 \subsection*{The Clark CLEAN}\index{deconvolution, Clark CLEAN}
 The Clark CLEAN algorithm \htmladdnormallink{(Clark 1980)}
 {http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1980A\%26A....89..377C}
+(A\&A 26, 89)
 is a variant of the H\"ogbom CLEAN,
 and aims at improved speed for large images. The original H\"ogbom algorithm
 spends a lot of time searching residuals which are negligible, and 
@@ -5024,7 +5028,8 @@ well to prevent it putting in badly wrong values.
 
 Another variant of the CLEAN algorithm which helps suppress CLEAN stripes,
 is the SDI CLEAN \htmladdnormallink{(Steer, Dewdney, and Ito 1984)}
-{http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1984A\%26A...137..159S}.
+{http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1984A\%26A...137..159S}
+(A\&A 137, 159).
 In this variant
 any point in the residual image greater than some factor times the
 maximum residual point is taken as a CLEAN component.  The factor is less than
@@ -5090,6 +5095,7 @@ minor cycles per major cycle).
 
 \htmladdnormallink{Cornwell (1983)}
 {http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1983A\%26A...121..281C}
+(A\&A 121, 281)
 suggested that the CLEAN stripe
 instability can be suppressed by the addition of a delta function to the
 dirty beam.  For obvious reasons, this is popularly termed the `Prussian
@@ -5514,8 +5520,9 @@ I_D = I \ast B_0 + (I\alpha) \ast B_1
 The problem of multi-frequency deconvolution is to estimate 
 \MM{I} and $I\alpha$ images simultaneously. A more detailed discussion of the
 algorithm \task{mfclean} uses is
-given in Bob Sault's paper \htmladdnormallink{`Multi-frequency
-synthesis techniques in radio interferometry'}{ftp://ftp.atnf.csiro.au/pub/people/rsault/papers/mfs.ps.gz}.
+given in \htmladdnormallink{Sault \& Wieringa (1994)}
+{http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1994A\%26AS..108..585S}
+(A\&AS 108, 585).
 
 But how important are the effects that spectral variation causes?
 Generally you will want to ignore them if you can, because then
@@ -5577,7 +5584,36 @@ estimate of $\alpha(\ell,m)I(\ell,m)$.
 Both \task{restor} (Section~\ref{s:restor}) and a number of other tasks
 use this second plane.
 
-\section{Restoring an Image}\label{s:restor}\index{deconvolution, restoring}
+\section{Other deconvolution tasks}
+The following two tasks are primarily written for multiple-pointing (mosaiced)
+observations (see Chapter \ref{c:mosaicing}). However they also work equally well for a conventional single
+pointing dataset (in \miriad, a single pointing observation is treated as
+a degenerate mosaic). They both provide functionality not available
+with the other single-pointing deconvolution tasks.
+\begin{itemize}
+\item \task{mosmem}: This is a maximum entropy deconvolution
+task which can handle a joint
+deconvolution with an interferometric and single dish observation. A joint
+deconvolution of a single dish and single pointing interferometric observation
+is not common: usually if the source is large enough to warrant a single
+dish observation, then it is likely that the interferometric observation
+would be a mosaic.
+\item \task{pmosmem}: This is another maximum entropy deconvolution task.
+It differs in that it can perform a joint deconvolution of the four
+Stokes parameters simultaneously. With polarised emission being potentially
+positive and negative valued, the entropy measure for this is different
+from a simple total intensity deconvolution. See
+\htmladdnormallink{Sault et al. (1999)}
+{http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1999A\%26AS..139..387S}
+(A\&A, 139, 387) for more background on joint polarimetric deconvolution.
+
+Often joint polarimetric deconvolution does not do a better job than
+doing the different polarisations individually (e.g.  by using
+\task{clean}, or by using \task{maxen} and the maximum emptiness entropy
+measure).
+\end{itemize}
+
+\section{Restoring an image}\label{s:restor}\index{deconvolution, restoring}
 Having produced a model of the sky with either \task{clean}, \task{maxen}
 or \task{mfclean}, you will probably want to use \task{restor} to
 convolve this with a Gaussian CLEAN beam (restoring
@@ -5695,7 +5731,9 @@ is exacerbated when one antenna is absent from the data for a period
 of time, or you have flagged it out because of poor data quality.
 
 There are other problems to do with the east-west nature of the ATCA  -- see
-Bob Sault's technical memo \htmladdnormallink{`Some simulations of self-calibration for the AT'}{ftp://ftp.atnf.csiro.au/pub/people/rsault/memos/selfcal.ps.gz}.
+Bob Sault's technical memo \htmladdnormallink{`Some simulations of 
+self-calibration for the AT'}
+{http://www.atnf.csiro.au/observers/memos/d96f87~{}1.pdf} (AT Memo 39.3/058).
 One important point to keep in mind is that
 self-calibration with the ATCA  depends  crucially on the initial
 model that you start with -- much more so than with the VLA where you can
@@ -6062,9 +6100,10 @@ the reference antenna.
 be used together with the {\tt noxy} option.
 To use this option, the source should be strongly polarised
 (at least 5\%), and Stokes Q and/or Stokes U models should be given.
-\item[{\tt xyvary\rm:}] Solve for a variable \MM{XY} phase. {\em It is strongly
-recommended that you use this option.} If {\tt xyref} is
-given, then \task{gpscal} additionally solves for a variable \MM{XY} phase on
+\item[{\tt xyvary\rm:}] Solve for a variable \MM{XY} phase. It is 
+recommended that you use this option, although this option does not
+work for phase-only self-calibration. If used with{\tt options=xyref}
+then \task{gpscal} additionally solves for a variable \MM{XY} phase on
 the reference antenna.
 \end{description}
 \end{itemize}
@@ -6103,9 +6142,9 @@ vis=vela.uv.cal		& Visibility data-set to be corrected,\\
 model=vela.icmp,vela.qcmp,vela.ucmp	& CLEAN component images\\
 select			& Data to select.\\
 interval=5		& Self-cal solution interval.\\
-options=phase,xyvary	& Phase self-calibration, or\\
+options=phase		& Phase self-calibration, or\\
 options=amp,xyvary	& Amplitude self-calibration, or\\
-options=phase,mfs,xyvary& Phase-selfcal, MFS model, or\\
+options=phase,mfs	& Phase-selfcal, MFS model, or\\
 options=amp,mfs,xyvary	& Amplitude self-cal, MFS model\\
 line			& You need to specify this for MFS selfcal,\\
 			& can generally default otherwise.\\
@@ -6154,7 +6193,10 @@ dynamical centre of the solar system) and the local standard of rest (LSR)
 collection of local stars). The local standard of rest is generally
 used as the rest frame for Galactic astronomy, whereas the barycentric
 frame (often misnamed heliocentric frame -- which is slightly different)
-is generally used for extragalactic work.
+is generally used for extragalactic work. \miriad\ uses the ``definition''
+of the LSR that the solar system barycentre is moving at 20 \kms\  in the
+direction of (RA,DEC) = 18 hours,+30 degrees (B1900) (this is a so-called
+``kinematic'' definition of the LSR).
 
 Because of the Earth's motion, the frequency that corresponds to a 
 particular velocity of an astronomical source will change with time. When
@@ -6191,8 +6233,17 @@ to account for the Earth's motion when determining source velocities.
 This is stored in the visibility
 variable \verb+veldop+.
 
-\section{Spectral Line Processing and RPFITS files}\label{s:specrpfits}
-There are a few parameters that are of interest for spectral line observers:
+\section{ATCA Spectral Line Correlator Configurations}
+Many of the ATCA correlator configurations are specifically intended
+for the spectral line observer. One aspect of the ATCA correlator
+that you should note is that the spectral resolution is often
+moderately different to the channel increment. For a full
+description of this, see the \htmladdnormallink{memo by Neil Killeen}
+{http://www.atnf.csiro.au/observers/memos/d98b8b\~{}1.pdf} (AT Memo 39.3/057).
+
+\section{Spectral Line Processing and RPFITS files}\label{s:specrpfits}\index{atlod}
+When using \task{atlod} to read in spectral line data, there are a few 
+extra parameters that should be considered
 \begin{description}
 \item[{\tt ifsel}:] The ATCA allows you to observe two frequency setups
 simultaneously\verb+ifsel+ allows you to load just one of them by
@@ -6211,12 +6262,17 @@ interest to spectral line observers:
 \item[{\tt bary:}] By default, task \task{atlod} uses the LSR as the rest
 frame when computing velocity information.
 However you can change
-this to the barycentre by using {\tt options=bary}.
+this to the barycentre by using {\tt options=bary}. Note that LSR
+velocities are the standard for Galactic astronomy, whereas barycentric
+are more commonly used by extragalactic astronomers. If you load with
+the wrong velocity reference frame, you can change this later with
+\task{uvredo} (for visibility datasets) or \task{velsw} (for images).
 \item[{\tt birdie:}] The ATCA suffers self-interference at frequencies
 which are multiples of 128 MHz (e.g. 1408 MHz). For spectral line
 modes, the \verb+birdie+ option flags any channels that are affected
 by the self-interference. This is strongly recommended.
-\item[{\tt hanning}:] This option performs Hanning smoothing of the
+\item[{\tt hanning}:] This option performs Hanning\index{hanning}
+smoothing of the
 spectra, and discards every second channel.
 \item[{\tt compress}:] This causes the data to be written in a scaled 16-bit format,
 thus reducing disk usage by a factor of two.
@@ -6436,16 +6492,16 @@ artifacts from the continuum).  Consequently it is usually best to
 subtract the continuum from the data.  A good description of the
 algorithms to do this is given by
 \htmladdnormallink{Cornwell, Uson and Haddad (1992)}
-{http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1992A\%26A...258..583C}. 
+{http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1992A\%26A...258..583C}.
+(A\&A 258, 583).
 Neil Killeen's
 \htmladdnormallink{``Analysis of Australia Telescope Compact Array Data''}
 {http://www.atnf.csiro.au/computing/software/atca_aips/atcal_html.html}
 also gives a good summary as well as describing the \aips\
-possibilities.  Bob Sault's paper \htmladdnormallink{``An analysis of
-visibility-based
-continuum subtraction''}
-{ftp://ftp.atnf.csiro.au/pub/people/rsault/papers/contsub.ps.gz}
-(1993) describes one of the algorithms in detail.
+possibilities.  The paper \htmladdnormallink{Sault (1994)}
+{http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1994A\%26AS..107...55S}
+(A\&AS 107, 55)
+describes one of the algorithms in detail.
 Yet another summary is given below. 
 
 Although three approaches to continuum subtraction are possible in \miriad,
@@ -6632,8 +6688,9 @@ and a shift appropriate for the Sun is determined instead. Thus,
 if your continuum is dominated by the Sun, this will help eliminate it.
 You will normally want to use the ``\verb+twofit+'' option with this (see
 below).
-Also see \htmladdnormallink{Bob Sault's paper}{ftp://ftp.atnf.csiro.au/pub/people/rsault/papers/sun.ps.gz} for
-information and an example.
+Also see \htmladdnormallink{Sault \& Noordam (1995)}
+{http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1995A\%26AS..109..593S}
+(A\&AS 109, 593) for information and an example.
 \item {\tt twofit}: If an ``\verb+offset+'' is given, or if the ``\verb+sun+''
 option is used, \task{uvlin} normally fits for continuum just at the
 offset or solar position. By using the ``\verb+twofit+'' option, \task{uvlin}
@@ -6781,8 +6838,10 @@ axis=frequency		& or label as frequency.\\
 \input{mosaic.inc}
 
 \newchapter
-\input{pulsar.inc}
+\input{mm.inc}
 
+\newchapter
+\input{pulsar.inc}
 
 \newchapter
 %\chapter{Multi-Frequency Synthesis Observing Strategies}\label{c:mfs}\index{multi-frequency synthesis}

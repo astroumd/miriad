@@ -18,22 +18,22 @@ The ATNF Visualisation software is a suite of tools (outside \miriad) designed
 to display images and data cubes (including \miriad\ images and cubes). See
 Chapter~\ref{c:pltvcon} for more information.
 
-The main visualisation tool of interest in image display is {\tt kview}
+The main visualisation tool of interest in image display is {\tt kvis}
 This tool allows you to inspect one or two 2- or
 3-dimensional datasets in several ways.  The simplest thing to use it
-for displaying a dataset.  {\tt kview}
+for displaying a dataset.  {\tt kvis}
 gives flexible zooming, special colour
 maps for velocity fields etc.  For 3-dimensional datasets one can play
 the channels, as well as the RA-VEL and DEC-VEL slices, of the data
 cube as a movie, in order to get an idea of the 3D structure of the
 emission in the data cube.
 
-Another application of {\tt kview} is that one can load two datasets
+Another application of {\tt kvis} is that one can load two datasets
 -- one can then look at these two datasets simultaneously in several
 ways, like blinking or contour one data set on top of the other.  The
-advantage of {\tt kview} is that one has interactive control over
+advantage of {\tt kvis} is that one has interactive control over
 zooming, contour levels etc., so it gives more flexibility than
-e.g. \task{cgdisp}.  This mode of {\tt kview} can be used for
+e.g. \task{cgdisp}.  This mode of {\tt kvis} can be used for
 overlaying a radio-continuum map on an optical image, or the channels
 of an HI data cube on the continuum or an optical image and inspecting
 this interactively.  Note that for the contouring, the two datasets do
@@ -43,7 +43,7 @@ data in {\tt FITS} format so one can load images from e.g.
 \htmladdnormallink{{\tt skyview}}{http://skview.gsfc.nasa.gov/skyview.html}
 directly and overlay \miriad\ datasets.
 
-{\tt kview} can also produce full colour postscript output of whatever
+{\tt kvis} can also produce full colour postscript output of whatever
 you display.
 
 
