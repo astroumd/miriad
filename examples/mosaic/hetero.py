@@ -22,6 +22,14 @@ from Miriad import *
 #   It should be possible to use gauss(pbfwhm) as pbtype,
 # in uvcat: selectant(3)
 
+# output should look as follows in default (config1,-30) run:
+# Config  DEC  HA[hrs]  Rms[\muJy]  Beam[arcsec]  Tb_rms[\muK]  Sidelobe[%]:Rms,Max,Min  Nvis[%] uvrange[m]
+
+# CSH config1   -30   -4,4,.1   14  1.88 x 1.57  110  0.6  4.4  -2.4  100 129114 9 159
+# PY  config1   -30   -4,4,0.1  14  1.88 x 1.57  108  1    4.4  -2.4  100 129114 9 159
+
+
+
 print "   ---  ACA Heterogenous Array Beams  ---   "
 print "   This script assumes that the first 4 antennas are ALMA 12m and the next 12 are ACA 7m antennas"
 
