@@ -9,6 +9,24 @@
 /************************************************************************/
 /* jhz 2004-5-25 */
 #if 0
+fortran subroutine jpllinerd(real fmx, real fmn, real strl,
+ integer nmol,
+ integer moltag,
+ integer mxnline,
+ real freq, real intensity,
+ integer uqst, integer lqst, integer mtag)
+{
+    jpllinerd_c(fmx.val, fmn.val, strl.val, nmol.val,moltag.addr,
+    (char *)mxnline.addr,
+    freq.addr, intensity.addr,
+    uqst.addr, lqst.addr, mtag.addr);
+}
+fortran subroutine molselect(character jplpath, integer pathlen,
+        integer mtag, integer nmline, character mname)
+{     molselect_c(jplpath.addr, pathlen.val, mtag.addr,
+           (char *)nmline.addr, mname.addr, mname.len);
+}
+
 fortran subroutine mirread(character datapath, integer jstat)
 {
   mirread_c(datapath.zterm, (char *)jstat.addr);
