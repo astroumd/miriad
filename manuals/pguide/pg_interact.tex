@@ -1,0 +1,251 @@
+\beginsection Task Parameters - key routines
+
+A MIRIAD task is invoked by entering
+{\ninepoint\begintt
+taskname keyword1=value1 keyword2=value2 keyword3=value3 ...
+\endtt}
+The {\tt key} routines are used to pass parameters to MIRIAD programs.
+They parse the command-line parameters, translating the values to their
+appropriate internal representation.  Typically, the {\tt key} routines will
+be called in the first few lines of the task, and all checking for the
+validity of parameters should be carried out at that time.
+
+{\ninepoint\begintt
+keyini ..... Initialize the key routines |newline
+   |newline 
+keya ....... Keyword value is a character string.
+keyd ....... Keyword value is a double-precision number.
+keyf ....... Keyword value is a character string (see below).
+keyi ....... Keyword value is an integer.
+keyl ....... Keyword value is a boolean (logical).
+keyr ....... Keyword value is a real number. |newline
+ |newline
+mkeya ...... Retrieve multiple character values.
+mkeyf ...... Retrieve multiple character values (see below).
+mkeyi ...... Retrieve multiple integer values.
+mkeyr ...... Retrieve multiple real values. |newline 
+   |newline
+keyfin ..... Indicates that key routine processing is done |newline 
+   |newline 
+keyprsnt ... Determines if a given keyword was actually set by the user
+\endtt}
+\beginsub{key Calling Sequence}
+
+Calls to the {\tt key} routines are sandwiched between calls to {\tt keyini}
+and {\tt keyfin}.  Their calling sequence is:
+
+{\ninepoint\begintt
+subroutine keyini |newline
+   |newline
+subroutine keya(keyword,value,default)
+subroutine keyd(keyword,value,default)
+subroutine keyf(keyword,value,default)
+subroutine keyi(keyword,value,default)
+subroutine keyl(keyword,value,default)
+subroutine keyr(keyword,value,default) |newline
+   |newline
+subroutine mkeya(keyword,value,nmax,n)
+subroutine mkeyf(keyword,value,nmax,n)
+subroutine mkeyi(keyword,value,nmax,n)
+subroutine mkeyr(keyword,value,nmax,n) |newline
+   |newline
+subroutine keyfin |newline
+   |newline
+logical function keyprsnt(keyword)
+\endtt}
+{\tt keyword} is a character string of appropriate length, {\tt value} is
+the internal variable to be assigned, and {\tt default} is the default
+value to return if the user did not set a particular keyword (if, for
+example, a ``log'' filename is an option, the default might be to write
+the ``log'' information to the terminal).
+
+Routine {\tt keyf} differs from {\tt keya} in that values given for
+{\tt keyf} are treated as MIRIAD datasets, with wildcard expansion
+performed.  Routine {\tt mkeyf} differs from {\tt mkeya} in a similar
+manner.
+
+The routines beginning with {\tt m} (for multiple) offer a means of
+obtaining {\tt value} in a slightly different way, with {\tt nmax} being
+the maximum number of values to return ({\tt value} is declared as
+{\tt value(nmax)}), with {\tt n} being the actual number of values returned
+(if no value is entered, a zero value is returned).
+
+\beginsub{Capabilities and Limitations}
+
+\item{$\bullet$} The keyword MUST be in lower case.
+\item{$\bullet$} A default value must be given by the programmer, even
+it is not later used.
+\item{$\bullet$} The {\tt key} routines may be called in any order, except
+that {\tt keyini} must be called first and {\tt keyfin} must be called
+last.
+\item{$\bullet$} Keyword values are ``exhausted'' (that is, erased) once
+they have been passed to the {\tt key} routines.
+\item{$\bullet$} The entry of a range of keyword values is supported
+when the entries are a comma-separated list.  For example, a keyword
+(call it TRC) can specify the range of values from 45 through 50 as
+follows (only 45 and 50 are inputs, but the programmer can use these values
+as endpoints, with increments being programmer-set):
+{\ninepoint\begintt
+taskname TRC=45,50
+\endtt}
+The internal code of the program might be:
+{\ninepoint\begintt
+.
+.
+.
+integer n1,n2
+.
+.
+.
+call keyi('trc',n1,-1)
+call keyi('trc',n2,-1)
+.
+.
+.
+\endtt}
+After these calls, the value of {\tt n1} is 45 and the value of {\tt n2}
+is 50.  Had the user entered only one value for TRC (for example, TRC=45),
+the programmer could have discovered this by calling {\tt keyprsnt} prior
+to the second call to {\tt keyi}:  if only one value had been given, 
+{\tt keyprsnt} would have returned {\tt .FALSE.} after the first call to
+{\tt keyi} because the keyword had been ``exhausted''.  An alternate way to
+test whether a keyword has been exhausted is to pass a default value which
+is clearly illegal (such as a blank string for a file name).
+
+\beginsection Error Handling
+
+Many MIRIAD routines perform error checking internally, and bomb out
+if an error is detected. Other MIRIAD routines pass back a status
+value (generally the last subroutine argument). A status value of zero
+indicates success, -1 indicates end-of-file, and a positive value indicates
+some other error (what the positive values indicate is system dependent).
+Two routines can be called to indicate an error:
+{\ninepoint\begintt
+subroutine bug(severity,text)
+subroutine bugno(severity,number)
+\endtt}
+Here {\tt severity} is a single character, being either {\tt 'w', 'i','e'}
+or {\tt 'f'}, meaning warning, informational, error and fatal, respectively.
+When {\tt bug} or {\tt bugno} is called with a fatal error, it will not
+return. Rather, it will cause the task to exit. For routine {\tt bug},
+{\tt text} is a character string describing the error. For routine
+{\tt bugno}, {\tt number} is a status value, returned by a MIRIAD
+ routine.
+
+\beginsection Text I\/O
+
+Though standard Fortran-77 routines would appear to be adequate for text i/o,
+there are invariably minor differences between systems, mainly related to
+carriage control. Additionally, placing them in a module of routines forces
+the programmer to follow the `handle' (logical unit number) convention.
+Following is a list of text IO routines used in MIRIAD.
+{\ninepoint\begintt
+output ..... Print a character string on the terminal. |newline
+   |newline 
+txtopen .... Open a text file by name, returning a logical unit number.
+txtopena ... Open an old text file in append mode.
+txtread .... Read a character string from an open file.
+txtwrite ... Write a character string to an open file.
+txtclose ... Close the text file. |newline
+   |newline 
+logopen .... Open a log text file.
+logwrit .... Write to an open log file, or the terminal.
+logwrite ... Write to an open log file, or the terminal.
+logclose ... Close the log file.
+\endtt}
+The calling sequence for the text-handling routines are:
+{\ninepoint\begintt
+subroutine output  (text) |newline
+   |newline 
+subroutine txtopen (handle,name,status,iostat)
+subroutine txtread (handle,text,length,iostat)
+subroutine txtwrite(handle,text,length,iostat)
+subroutine txtclose(handle) |newline
+   |newline 
+subroutine logopen (name,flags)
+subroutine logwrit (text)
+subroutine logwrite(text,more)
+subroutine logclose
+\endtt}
+{\tt txtopen} opens a text file with name {\tt name}.  {\tt status} can be
+either {\tt 'old'} or {\tt 'new'}. When opening a new file, any old files
+which exist with the same name may be deleted.  {\tt txtread} and
+{\tt txtwrite} read and write a character string, {\tt text}, of
+{\tt length} characters. {\tt length} is passed back from {\tt txtread},
+whereas it is passed into {\tt txtwrite}. It may be zero in either case.
+All these routines return an i/o status variable, {\tt iostat}, indicating
+whether a problem occurred (see the previous section for an explanation of
+the {\tt iostat} parameter.
+
+{\tt logopen} opens a log file with name {\tt name}, passing options
+{\tt flags}.  {\tt logwrit} and {\tt logwrite} write to the log file, and
+{\tt logclose} closes the log file.
+
+\beginsection A Simple Example
+
+The code below serves to illustrate some of the subroutines discussed in
+this chapter.
+{\ninepoint\begintt
+        program copyhdx
+        implicit none
+c
+c= COPYHDx - Copy items from one data-set to another.
+c& rjs
+c: utility
+c+
+c       COPYHDx is a Miriad task which copies items from one Miriad data-set
+c       to another. There is no interpretation of the items at all.
+c
+c       This code is altered to serve as an illustration in the manuals.
+c@ in
+c       Name of the input data set. No default.
+c@ out
+c       Name of the output data set. This must already exist. No default.
+c@ items
+c       A list of items to be copied across. At least one value must be
+c       given.
+c--
+\endtt}
+{\ninepoint\begintt
+        character version*(*)
+        integer maxitems
+        parameter(version='version 1.0 29-Jan-91')
+        parameter(maxitems=32)
+c
+        character items(maxitems)*16,in*64,out*64
+        integer tIn,tOut,nitems,iostat,i
+        logical hdprsnt
+\endtt}
+{\ninepoint\begintt
+        call output('Copyhdx: '//version)
+        call keyini
+        call keya('in',in,' ')
+        call keya('out',out,' ')
+        call mkeya('items',items,maxitems,nitems)
+        call keyfin
+\endtt}
+{\ninepoint\begintt
+        if(in.eq.' ')call bug('f','Input must be given')
+        if(out.eq.' ') call bug('f','Output must be given')
+        if(nitems.eq.0)
+     *    call bug('f','A list of items to copy must be given')
+.
+.
+etc.
+\endtt}
+The in-code documentation specifies the keywords that the user will enter
+({\tt in}, {\tt out}, and {\tt items}; in-code documentation is discussed
+in more detail in a different chapter of this manual).  Program variables
+are declared, then {\tt output} confirms to the user which program is
+being run (as well as stating the version number and date).  Next, the
+{\tt key} routines obtain the task parameters, followed immediately by
+a check to determine the validity of the keyword values (calling {\tt bug}
+with the {\tt 'f'} (for fatal) option to exit the program if the values
+are not acceptable).
+
+A user could run this program either through the {\tt miriad} command
+line interface, or by entering
+
+{\ninepoint\begintt
+copyhdx in=myinfile out=myoutfile items=string1,text2,chars3
+\endtt}
