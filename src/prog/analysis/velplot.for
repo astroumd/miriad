@@ -128,11 +128,12 @@ c    29aug00 mchw  Label RA, DEC on spectra and position-velocity plots.
 c    19sep00 pjt   increased filenames
 c    27jan01 pjt   fixed bug due to above
 c    22mar02 mchw  better logarithmic contour levels.
+c    26jun02 mchw  fixed bug due to longer filenames. (cf. 19sep00)
 c----------------------------------------------------------------------c
 	include 'velplot.h'
 	include 'mem.h'
 	character*(*) version
-	parameter(version='(version 3.0 22-mar-2002)')
+	parameter(version='(version 3.0 26-jun-2002)')
 	integer maxnax,maxboxes
 	parameter(maxnax=3,maxboxes=128)
 	integer boxes(maxboxes),nsize(maxnax),blc(maxnax),trc(maxnax)
@@ -1176,7 +1177,7 @@ c
 	if(l.eq.0)return
 	call ucase(percent)
 	if(percent.eq.'L')then
-	  write(line,'(a,)') '>Enter lowest level:'
+	  write(line,'(a)') '>Enter lowest level:'
           call output(line)
           read(5,*) levels(1)
 	  nlevels=10
@@ -4218,7 +4219,7 @@ c    nc*np	Dimensions of array.
 c----------------------------------------------------------------------c
 	include 'velplot.h'
 	real xcoord,xval(MAXDIM)
-	character text*80,line*80
+	character text*120,line*80
 	character*80 outfile
 c
 c  Write out channel values to ASCII file.
