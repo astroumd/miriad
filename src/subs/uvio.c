@@ -154,6 +154,11 @@
 /*  pjt  14jan03 fix another forgotten int -> int8                      */
 /*  pjt  13may03 (04?) MAXIANT usage to limit MAXANT                    */
 /*  pjt  03jan05 fix last few int -> size_t/off_t as per RJS's email    */
+/*  pjt  03jan05 MERGED IN THE ATNF CODE FOR:                           */
+/*    rjs  27jul04 Handle uvinfo_variance Tsys table in a more elegant  */
+/*                 fashion to deal with many antennas. (MAXANT)         */
+/*    rjs  16aug04 Add selection based on LST, elevation and HA - but	*/
+/*		   only when the relevant uv variables are in the dataset*/
 /*----------------------------------------------------------------------*/
 /*									*/
 /*		Handle UV files.					*/
@@ -398,6 +403,9 @@ typedef struct varhand{
 #define SEL_FREQ 14
 #define SEL_SHADOW 15
 #define SEL_BIN  16
+#define SEL_HA   17
+#define SEL_LST  18
+#define SEL_ELEV 19
 
 typedef struct {
 	int type,discard;
@@ -455,13 +463,13 @@ typedef struct {
 	VARIABLE *coord,*corr,*time,*bl,*tscale,*nschan,*axisrms;
 	VARIABLE *sfreq,*sdf,*restfreq,*wcorr,*wfreq,*veldop,*vsource;
 	VARIABLE *plmaj,*plmin,*plangle,*dra,*ddec,*ra,*dec,*pol,*on;
-	VARIABLE *obsra,*obsdec,*lst,*antpos,*antdiam,*source,*bin;
+	VARIABLE *obsra,*obsdec,*lst,*elev,*antpos,*antdiam,*source,*bin;
 	VARIABLE *vhash[HASHSIZE],*prevar[MAXPRE];
 	VARIABLE variable[MAXVAR];
         LINE_INFO data_line,ref_line,actual_line;
 	int need_skyfreq,need_point,need_planet,need_dra,need_ddec,
-	    need_ra,need_dec,need_pol,need_on,need_uvw,need_src,
-	    need_win,need_bin;
+	    need_ra,need_dec,need_pol,need_on,need_obsra,need_uvw,need_src,
+	    need_win,need_bin,need_lst,need_elev;
 	float ref_plmaj,ref_plmin,ref_plangle,plscale,pluu,pluv,plvu,plvv;
 	double skyfreq;
         int skyfreq_start;
@@ -1009,7 +1017,9 @@ private UV *uv_getuv(int tno)
   uv->need_skyfreq = uv->need_point = uv->need_planet = FALSE;
   uv->need_pol	   = uv->need_on    = uv->need_uvw    = FALSE;
   uv->need_src	   = uv->need_win   = uv->need_bin    = FALSE;
-  uv->need_dra	   = uv->need_ddec  = uv->need_ra     = uv->need_dec = FALSE;
+  uv->need_dra	   = uv->need_ddec  = uv->need_ra     = FALSE;
+  uv->need_dec	   = uv->need_lst   = uv->need_elev   = FALSE;
+  uv->need_obsra   = FALSE;
   uv->uvw = NULL;
   uv->ref_plmaj = uv->ref_plmin = uv->ref_plangle = 0;
   uv->plscale = 1;
@@ -1036,6 +1046,7 @@ private UV *uv_getuv(int tno)
   uv->ref_line.linetype  = LINE_NONE;
 
   uv->sigma2.table = NULL;
+  uv->sigma2.nants = 0;
   uv->sigma2.missing = FALSE;
 
   uv->corr = NULL;
@@ -2317,6 +2328,21 @@ void uvselect_c(int tno,Const char *object,double p1,double p2,int datasel)
     uv_addopers(sel,SEL_DEC,discard,p1,p2,(char *)NULL);
     uv->need_dec = TRUE;
 
+/* Hour angle, LST and elevation. */
+
+  } else if(!strcmp(object,"ha")){
+    if(p1 >= p2) BUG('f',"Min HA is greater than or equal to max HA, in UVSELECT.");
+    uv_addopers(sel,SEL_HA,discard,p1,p2,(char *)NULL);
+    uv->need_obsra  = TRUE;
+    uv->need_lst = TRUE;
+  } else if(!strcmp(object,"lst")){
+    uv_addopers(sel,SEL_LST,discard,p1,p2,(char *)NULL);
+    uv->need_lst = TRUE;
+  } else if(!strcmp(object,"elevation")){
+    if(p1 >= p2) BUG('f',"Min elevation is greater than or equal to max elevation, in UVSELECT.");
+    uv_addopers(sel,SEL_ELEV,discard,p1,p2,(char *)NULL);
+    uv->need_elev = TRUE;
+
 /* Selection by uv baseline. */
 
   } else if(!strcmp(object,"uvrange")){
@@ -3043,6 +3069,8 @@ private int uvread_select(UV *uv)
   int i1,i2,bl,pol,n,nants,inc,selectit,selprev,discard,binlo,binhi,on;
   float *point,pointerr,dra,ddec;
   double time,t0,uu,vv,uv2,uv2f,ra,dec,skyfreq,diameter;
+  double lst,ha;
+  float elev;
   SELECT *sel;
   OPERS *op;
   WINDOW *win;
@@ -3315,6 +3343,49 @@ private int uvread_select(UV *uv)
       if(discard || n >= sel->noper) goto endloop;
     }
 
+/* Apply HA selection. */
+
+    if(op->type == SEL_HA){
+      discard = !op->discard;
+      ha = *(double *)uv->lst->buf - *(double *)uv->obsra->buf;
+      while(n < sel->noper && op->type == SEL_HA){
+        if(op->loval <= ha && ha <= op->hival)
+	  discard = op->discard;
+        op++; n++;
+      }
+      if(discard || n >= sel->noper) goto endloop;
+    }
+
+/* Apply LST selection. */
+
+    if(op->type == SEL_LST){
+      discard = !op->discard;
+      lst = *(double *)uv->lst->buf;
+      while(n < sel->noper && op->type == SEL_LST){
+	if(op->loval < op->hival){
+          if(op->loval <= lst && lst <= op->hival)
+	    discard = op->discard;
+        }else{
+          if(op->loval <= lst || lst <= op->hival)
+	    discard = op->discard;
+	}  
+        op++; n++;
+      }
+      if(discard || n >= sel->noper) goto endloop;
+    }
+
+/* Apply elevation selection. */
+
+    if(op->type == SEL_ELEV){
+      discard = !op->discard;
+      elev = *(double *)uv->elev->buf;
+      while(n < sel->noper && op->type == SEL_ELEV){
+        if(op->loval <= elev && elev <= op->hival)
+	  discard = op->discard;
+        op++; n++;
+      }
+      if(discard || n >= sel->noper) goto endloop;
+    }
 
 /* We have processed this selection clause. Now determine whether the
    overall selection criteria is to select or discard. Note that we cannot
@@ -3588,6 +3659,10 @@ private void uvread_init(int tno)
   if(uv->need_on)    uv->on      = uv_checkvar(tno,"on",H_INT);
   if(uv->need_src)   uv->source  = uv_checkvar(tno,"source",H_BYTE);
   if(uv->need_bin)   uv->bin	 = uv_checkvar(tno,"bin",H_INT);
+  if(uv->need_lst)   uv->lst     = uv_checkvar(tno,"lst",H_DBLE);
+  if(uv->need_obsra) uv->obsra   = uv_checkvar(tno,"obsra",H_DBLE);
+  if(uv->need_elev)  uv->elev    = uv_checkvar(tno,"antel",H_DBLE);
+
   if(uv->need_uvw){
     uv->obsra = uv_checkvar(tno,"obsra",H_DBLE);
     uv->obsdec = uv_checkvar(tno,"obsdec",H_DBLE);
@@ -3719,6 +3794,7 @@ private void uvread_init(int tno)
   if(uv->sigma2.table != NULL){
     free((char *)(uv->sigma2.table));
     uv->sigma2.table = NULL;
+    uv->sigma2.nants = 0;
   }
     
 /* Determine the max visibility that the user is interested in. */
@@ -4462,8 +4538,6 @@ private void uvinfo_variance(UV *uv,double *data)
       uv->sigma2.missing |= (uv_locvar(uv->tno,"wsystemp") == NULL) |
 			    (uv_locvar(uv->tno,"wwidth")   == NULL);
     }
-    if(!uv->sigma2.missing)
-      uv->sigma2.table = (double *)Malloc(sizeof(double)*(MAXANT*(MAXANT+1))/2);
   }
 
 /* Return if we do not have enough info to determine the variance. */
@@ -4503,6 +4577,11 @@ private void uvinfo_variance(UV *uv,double *data)
 
 /* We have everything we ever wanted: jyperk,inttime,bw and Tsys. Compute
    variance. */
+    
+    if(nants > uv->sigma2.nants){
+      if(uv->sigma2.table != NULL)free((char *)(uv->sigma2.table));
+      uv->sigma2.table = (double *)Malloc(sizeof(double)*(nants*(nants+1))/2);
+    }
 
     uv->sigma2.nants = nants;
     nsyst = VARLEN(tsys);
