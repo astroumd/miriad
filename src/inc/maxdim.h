@@ -1,13 +1,13 @@
 c=======================================================================
 c - MAXBUF tells us how many words of memory we can use for data
 	INTEGER   MAXBUF
-        PARAMETER(MAXBUF=1000000)
+        PARAMETER(MAXBUF=4194304)
 c-----------------------------------------------------------------------
 c - MAXDIM is an often used parameter, to indicate maximum size of maps
 	INTEGER   MAXDIM
-	PARAMETER(MAXDIM=4096)
+	PARAMETER(MAXDIM=2048)
 c-----------------------------------------------------------------------
-c		maximum number of antennae (HC=3/6/9/..., WSRT=14, VLA=27)
+c		maximum number of antennae (HC=12, WSRT=14, VLA=28)
 	INTEGER   MAXANT
 	PARAMETER(MAXANT=30)
 
@@ -17,7 +17,7 @@ c		maximum number of baselines
 
 c		maximum number of channels in spectral data
 	INTEGER   MAXCHAN
-	PARAMETER(MAXCHAN=4097)
+	PARAMETER(MAXCHAN=2048)
 
 c		maximum number of windows in visibility data
 	INTEGER   MAXWIN

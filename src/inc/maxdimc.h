@@ -17,13 +17,15 @@
         mjs  08apr92  Minor mod to compile on VAX
         rjs  23feb93  Merged maxdimc.h and xyzio.h. Include MAXNAX.
 	rjs   9sep94  Add MAXWIN
+        pjt  30apr01  re-aligned maxdimc and maxdim
 	-------------------------------------------------------------
 */
-#define		MAXDIM		512
+
+#define		MAXBUF		4194304
+#define		MAXDIM		2048
 #define		MAXANT		30
 #define		MAXBASE		((MAXANT * (MAXANT + 1)) / 2)
-#define		MAXCHAN		512
+#define		MAXCHAN		2048
 #define		MAXNAX		7
 #define		MAXWIN		16
 #define		MAXWIDE		18
-#define		MAXBUF		4194304
