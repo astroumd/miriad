@@ -1,6 +1,6 @@
 #!/bin/csh -f
 # --------------------------------------------------------------
-# pgm.prog subscript
+# pgm.rprog subscript (for RAD)
 # --------------------------------------------------------------
 set mir    = $MIR
 set host   = $MIRHOST
