@@ -52,6 +52,7 @@ c     13-feb-02 pjt  Miriadized this routine
 c     16-feb-02 pjt  first public version
 c     24-jul-02 pjt  0 maskvalue, not -1
 c      6-aug-02 pjt  doc
+c     16-dec-03 pjt  long forgotten MAXDIM2 conversion
 c***********************************************************************
 c
       include   'maxdim.h'
@@ -59,19 +60,19 @@ c
       integer   MAXNAX
       parameter (MAXNAX=3)
       character VERSION*(*)
-      parameter (VERSION='6-aug-2002')
+      parameter (VERSION='16-dec-2003')
 c
       character infile*128, oufile*128, rmode*10, ctype1*10,ctype2*10
-      integer   irow(MAXDIM),ioutrw(MAXDIM)
+      integer   irow(MAXDIM2),ioutrw(MAXDIM2)
       integer   iget,iout,ix,ixpt,iy,iypt,mode,nx,ny,nz,
      #          outnx,outny,iztemp,naxis,insize(MAXNAX),ousize(MAXNAX),
      #          tin,tout
-      real      indat(MAXDIM,MAXDIM),oudat(MAXDIM)
+      real      indat(MAXDIM2,MAXDIM2),oudat(MAXDIM2)
       real      agrid0,agrid1,astep,apt,phase,rget,rgrid0,rgrid1,
      #          rpt,rstep,xcen,xpt,ycen,ypt,dx,dy,sum
       real      crval1,crpix1,cdelt1,crval2,crpix2,cdelt2
-      logical   lin, lcen, lrad, logflag, flags(MAXDIM,MAXDIM),
-     #          ouflg(MAXDIM)
+      logical   lin, lcen, lrad, logflag, flags(MAXDIM2,MAXDIM2),
+     #          ouflg(MAXDIM2)
 c
       logical   keyprsnt
 c
@@ -117,7 +118,7 @@ c
       call xyopen(tin,infile,'old',MAXNAX,insize)
       call rdhdi(tin,'naxis',naxis,0)
       naxis = min(naxis,MAXNAX)
-      if(insize(1).gt.MAXDIM)call bug('f','Input file too big for me')
+      if(insize(1).gt.MAXDIM2)call bug('f','Input file too big for me')
       nx = insize(1)
       ny = insize(2)
       nz = insize(3)
@@ -164,8 +165,8 @@ c
       astep=astep*PI/180.0
       outnx=nint(ABS((agrid1-agrid0)/astep))+1
       outny=nint(ABS((rgrid1-rgrid0)/rstep))+1
-       if ((outnx .gt. MAXDIM).or.(outny .gt. MAXDIM)) then
-         write(*,*) 'Output array exceeds maximum size of ',MAXDIM
+       if ((outnx .gt. MAXDIM2).or.(outny .gt. MAXDIM2)) then
+         write(*,*) 'Output array exceeds maximum size of ',MAXDIM2
          call bug('f','abort')
       endif
       if (agrid1 .lt. agrid0) then
