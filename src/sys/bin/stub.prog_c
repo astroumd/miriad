@@ -1,0 +1,46 @@
+#!/bin/csh -f
+# -----------------------------------------------------------
+set host     = $MIRHOST
+set mir      = $MIR
+set lsys     = $mir/bin/localsys
+set libdir   = $mir/lib/$host
+set bindir   = $mir/bin/$host
+set admdir   = $mir/src/sys/bin
+set tools    = $mir/src/tools
+
+set i        = $1
+set srcdir   = ${i:h}
+set out      = ${i:t}
+set out      = ${out:r}
+set in       = $srcdir/${out}.c
+# -----------------------------------------------------------
+if (-e $lsys/stub.prog_c && ! $?local_ccompile) then
+  echo $lsys/stub.prog_c exists =================
+  setenv local_ccompile
+  exec $lsys/stub.prog_c $argv
+endif
+#
+if (-e $lsys/stub.${out} && ! $?local_compile) then
+  echo $lsys/stub.${out} exists =================
+  setenv local_compile
+  exec $lsys/stub.${out}
+endif
+if (! -e $in) exit 0
+#
+if (-e $tools/${out}.c) then
+   exec $admdir/stub.tools $in
+   exit 0
+endif
+# -----------------------------------------------------------
+echo "$Ccompile $Coptions -c -o $libdir/${out}.o $in -I$srcdir $Cinclude"
+      $Ccompile $Coptions -c -o $libdir/${out}.o $in -I$srcdir $Cinclude
+echo ""
+echo "$Fcompile -o $bindir/$out $libdir/${out}.o $Foptions $Flinkdir $Flinklib"
+      $Fcompile -o $bindir/$out $libdir/${out}.o $Foptions $Flinkdir $Flinklib
+rm -fr $libdir/${out}.o >& /dev/null
+
+echo "`ls -l $bindir/$out`"
+unsetenv local_ccompile
+unsetenv local_compile
+exit 0
+# -----------------------------------------------------------
