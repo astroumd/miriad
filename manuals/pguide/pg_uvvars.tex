@@ -1,0 +1,930 @@
+%------------------------------------------------------------------------
+% Appendix - uv Variables
+%------------------------------------------------------------------------
+% History:
+%   Feb 27, 1989 -- Brian Sutin
+%   Mar 26, 1989 -- Bob Sault -- Corrected comment on vsource.
+%   May 2,  1989 -- Bob Sault -- Corrected descriptions of
+%				 TIME, VSOURCE and VELDOP.
+%   Oct 6,  1989 -- WH	      -- Added axisrms.
+%   Oct 10, 1989 -- Bob Sault -- Added more comments about axisrms.
+%				 Corrected comment about Julian date.
+%   Oct 18, 1989 -- Bob Sault -- What is ATTEN??
+%   Jan 31, 1990 -- Bob Sault -- Recorrected TIME description!
+%   Feb  8, 1990 -- Bob Sault -- More comments for TELESCOP and WCORR.
+%   Mar  8, 1990 -- Bob Sault -- Improved comments on "baseline".
+%   Apr 25, 1990 -- Bob Sault -- Improved comments on "dra" and "ddec".
+%
+%   27-jun-90 pjt  started conversion to latex table; from UVVARS.TXT
+%		   (a noble job - rjs).
+%   7-aug-90  pjt  finished it off appropriately while at Hat Creek
+%   6-nov-90  rjs  Added the history comments, and variables "wsystemp"
+%		   and "on".
+%  27-nov-90  rjs  Many minor corrections to Tex instructions. Got rid
+%		   of the "table" environment setting (will pjt like this??).
+%  27-nov-90  pjt  How about missing `evector' and `pbfwhm'
+%		   Is it `npol' or `npols'????
+%  20-jan-91  pjt  fixed a few non-alphabetic errors, included proposed
+%                  polarization stuff from Mel's nov-30 mail message
+%   5-feb-91  pjt  added item list for UV files, cleared up obstype item
+%                  formally calling things RALINT variables, and not 
+%                  'Hat Creek variables'
+%   7-feb-91  pjt  Clarified a few more variables...
+%  21-feb-91  pjt  added comments from Mel, fixed some margins stuff
+%  22-feb-91  mjs  LaTeX to TeX for the Programmer's Guide.
+
+This appendix describes all the MIRIAD and RALINT (``newhat'' format
+only) uv data variables.  Variables in {\bf lower case} are the new
+definitions used in MIRIAD.  Variables in {\bf UPPER CASE} are the
+variables currently from RALINT.
+
+The {\bf MIRIAD Programmers Guide} contains detailed information how a
+visibility dataset is contructed.  This document only reports which
+variables can be found in the item {\tt visdata}. The text item
+{\tt vartable} contains an ordered (for quick indexing) list of the
+variables which live inside the {\tt visdata} item.
+
+A list of all the uv variables can be obtained with the MIRIAD program
+{\tt uvlist} or, if available, the {\tt uvio} TESTBED program in expert
+mode.
+
+A list of all items in a visibility dataset is summarized below:
+\vskip 0.2in
+{\raggedright
+\def\bbox#1{$\underline{\smash{\hbox{#1}}}$}
+\ninepoint
+\tabskip=0em
+\halign {#\tabskip=2em&#\tabskip=2em&#\hfil\cr
+
+\bbox{Item name}&\bbox{Type}&\bbox{Description}\cr
+\cr
+obstype     & ascii   & value: ``crosscorrelation'' or ``autocorrelation'' \cr
+history     & text    & history text file (in principle editable) \cr
+vartable    & text    & lookup table for all uv variables (do not edit!) \cr
+visdata     & binary  & mixed mode data stream of uv variables \cr
+flags       & integer & flags for narrow band data (if present) \cr
+wflags      & integer & flags for wide band data \cr
+}
+}
+
+The storage {\bf types} (2nd column) in the table below are:
+{\ninepoint\begintt 
+    A -- ascii   (null-terminated)
+    R -- real    (32 bit IEEE)
+    D -- double  (64 bit IEEE)
+    C -- complex (2 * 32 bit IEEE)
+    I -- integer (32 bit)
+    J -- short   (16 bit)
+\endtt}
+They are the same as the data type in the first column of the
+{\tt vartable} item in a MIRIAD uv dataset.
+\vfill
+\eject
+Variables have several use types.  The {\bf from} (4th) 
+column has three parts:
+
+Part 1:
+{\ninepoint\begintt
+    U --> of interest to the U-ser (ie, observer, MIRIAD)
+    S --> of interest only to the S-ystem gurus
+\endtt}
+Part 2:
+{\ninepoint\begintt
+    I --> an I-nput from the user which the telescope actually uses
+    H --> describes the current non-settable H-ardware configuration
+    C --> quantity C-alculated from I and H variables
+    T --> quantity calculated from I, H, and C variables and the T-ime
+    D --> only for user D-ocumentation, and not used by the telescope
+    O --> an actual O-utput variable
+\endtt}
+Part 3:
+{\ninepoint\begintt
+    0 --> only changes due to configuration change or breakage, etc.
+    1 --> changes occasionally or slowly in the file (ie. winddir)
+    2 --> changes often in the file, but not every time stamp
+    3 --> changes every time stamp
+    4 --> has a value for every baseline
+\endtt}
+A RALINT variable ending in a question mark implies that the variable
+does not exist or may have a different name or something strange may be
+going on.  They are included only as placeholders.  Variables with two
+dimensions have the first dimension varying fastest, the usual FORTRAN
+notation.  Variables called {\tt DATA.SOMETHING} are RALINT variables
+living inside the data segment of the dataset. 
+
+Some RALINT variables use the ``Unix square bracket'' notation (for
+example, {\tt B[1-3]}, means {\tt B1}, {\tt B2}, and {\tt B3}.
+\vskip .4in
+{\raggedright
+\def\bbox#1{$\underline{\smash{\hbox{#1}}}$}
+\ninepoint
+\tabskip=0em
+\halign {#\tabskip=1.2em&\tabskip=1.2em&#\tabskip=1.2em&#\hfil\cr
+\bbox{Name}&\bbox{Ty}&\bbox{Units}&\bbox{From}&\bbox{Comments}\cr
+
+\cr
+
+airtemp         &R     &centigr.    &SO1   
+& Air temperature at HCRO weather station\cr
+AIRTEMP         &R     &centigr.    &SO1   
+& Air temperature at HCRO weather station\cr
+
+\cr
+
+antpos(nants, 3) &D    &nanosecs      &UH4   
+&Antenna equatorial coordinates\cr
+
+B[1-3](NANTS)   &D     &nanosecs&UH4 
+& Antenna equatorial coordinates\cr
+&&&& Positions are w.r.t. the ``center'' of the array.\cr
+
+\cr
+
+atten   &R     &dbs   &SH1  & 
+Attenuator setting\cr
+
+ATTEN   &R?     &???   &????  & 
+Attenuator setting\cr
+
+\cr
+
+axisrms(2,nants) &R    &arcsec        &UH3   
+& RMS tracking error. \cr
+&&&& axisrms(1,?) is azimuth error, \cr
+&&&& axisrms(2,?) is the elevation error.\cr
+
+AXISNUM         &I     &-     &
+&      Size of AXISAVE,AXISRMS.\cr
+AXISAVE &R    &arcsec        &UH3   
+&  Average tracking error\cr
+\ \ (AXISNUM)\cr
+AXISRMS &R    &arcsec        &UH3   
+& RMS tracking error.\cr
+\ \ (AXISNUM)\cr
+
+baseline        &R     &-     &UH4   
+&The current antenna baseline\cr
+&&&& Baseline is stored as $256*Ant1 + Ant2$. The \cr
+&&&& visibility corresponding to this is formed \cr
+&&&& by averaging the antenna voltages E1 * conjg(E2). \cr
+&&&& Generally $Ant_1 < Ant_2$, \cr
+&&&& {\it but code should not rely on this}. \cr
+&&&& {\tt baseline} is also known as {\it preamble(4)}\cr
+
+DATA.ANTENNAS   &I     &-     &UH4   
+& The current antenna baseline\cr
+&&&& The baseline is stored as 12, 13, 23, \cr
+&&&&  depending on antennas.\cr
+&&&& The baseline is stored as 1, 2, 3 for autocorrelation\cr
+
+\cr
+
+comment(*)	&A	&-	&UD0
+&Comments inserted by the operator\cr
+
+COMMENT(*)?	&A	&-	&UD0	
+&Comments inserted by the operator\cr
+
+\cr
+
+coord(2)        &D     &nanosec.   &UT4   
+& uv baseline coordinates\cr
+&&&& {\tt coord} is also known as {\it preamble(1:2)}\cr
+
+DATA.U\_NS       &D     &nanosec.   &UT4   
+&  U baseline projection\cr
+DATA.V\_NS       &D     &nanosec.   &UT4   
+& V baseline projection\cr
+
+corbit	&R	&-	&UI0	
+&  Number of correlator bits\cr
+
+CORBIT	&R	&-	&UI0
+&	Number of correlator bits\cr
+&&&&CORBIT is currently either 1 or 1.6 bits\cr
+
+\cr
+
+corbw(2)  &R	&GHz	&UI0
+&	Correlator bandwidth setting\cr
+
+CORBW(2) &R	&MHz	&UI0	
+&    Correlator bandwidth setting\cr
+&&&& Must take the values \cr
+&&&& 1.25, 2.5, 5.0, 10.0, 20.0, 40.0 or 80.0 MHz.\cr
+
+\cr
+
+corfin(4)  &R	&GHz	&UI0
+& Correlator LO setting before doppler tracking\cr
+
+CORFIN(4)  &R	&MHz	&UI0	
+& Correlator LO setting before doppler tracking\cr
+&&&& This is the LO frequency at zero telescope velocity\cr
+&&&& Must be in the range 0.080 to 0.550 GHz.\cr
+
+\cr
+
+cormode	&I	&-	&UI0	
+&  Correlator mode \cr
+
+ICMODE	&I	&-	&UI0   
+&  Correlator mode \cr
+&&&& Values are: \cr
+&&&&    1 : 1 window /sideband by 256 channels \cr
+&&&&    2 : 2 windows/sideband by 128 channels \cr
+&&&&    3 : 4 windows/sideband by  64 channels, single sideband \cr
+&&&&    4 : 4 windows/sideband by  64 channels, double sideband \cr
+
+coropt	&I	&-	&UI0
+&	Correlator option\cr
+&&&&   0 means cross correlation\cr
+&&&&   1 means auto correlation\cr
+&&&&   Same as the {\tt obstype} item?\cr
+
+ICOPTION	&I	&-	&UI0
+&	Correlator option\cr
+&&&&    0 means cross correlation \cr
+&&&&    1 means auto correlation \cr
+
+\cr
+
+corr(nchan) &J     &-     &UO4
+& Correlation data\cr
+&R&&& {\tt corr} is really a complex quantity, but the \cr
+&&&&  data stream variable can be stored differently \cr
+&&&&  for efficiency.\cr
+
+DATA.ITCHANIN &J      &-     &UO4   
+&Correlation data\cr
+\ \ (2,NCHAN)&&&& Currently there is only one polarization\cr
+
+DATA.TCHAN &R   &-     &UO4   
+& Autocorrelation data\cr
+\ \ (NCHAN)
+&&&& Currently there is only one polarization\cr
+&&&& Autocorrelation is stored in {\tt corr} \cr
+&&&& See {\tt obstype} item or {\tt coropt} variable\cr
+
+\cr
+
+cortaper  &R	&-	&UI0
+&   On-line Correlation taper\cr
+&&&&  This is the value at the edge of the window \cr
+&&&&  The value is from 0-1.\cr
+
+CORTAPER &R	&-	&UI0
+&	On-line Correlation taper\cr
+&&&& This is the value at the edge of the window\cr
+
+\cr
+
+ddec	&R	&radians	&UI0	
+&        Offset in declination from {\tt dec} in {\tt epoch} coordinates.\cr
+&&&&  The actual pointing RA is calculated as dec + ddec.\cr
+
+DELTADEC	&R	&arcsec &UI0	
+    &Offset in declination from DEC1950 \cr
+
+\cr
+
+dec	&R	&radians	&UI0	
+    &Declination of the source in {\tt epoch} coordinates \cr
+
+DEC1950	&R	&radians	&UI0
+    &1950 declination of the source\cr
+
+\cr
+
+dewpoint        &R     &centigr.    &SO1   
+& Dew point at HCRO weather station\cr
+
+DEWPOINT        &R     &centigr.    &SO1   
+& Dew point at HCRO weather station\cr
+
+dra	&R	&radians	&UI0	
+    &Offset in right ascension from {\tt ra} in {\tt epoch} coords.\cr
+&&&&	The actual pointing RA is calculated as  \cr
+&&&&        ra + dra/cos(dec).\cr
+
+DELTARA	&R	&arcsec	&UI0	
+    &Offset in right ascension from RA1950\cr
+
+\cr
+
+epoch	&R	&years		&UI0	
+&The epoch of the source position\cr
+&&&&OLD name: EPHFLAG(4)\cr
+&&&&{\tt epoch} has the values of either 1950.0 or 2000.0\cr
+&&&& This variable affects RA and DEC\cr
+
+\cr
+
+evector &R &Degrees  &UH0
+&Position Angle of Lin.Pol.\cr
+&&&&***{\it polarization proposal}***\cr
+
+\cr
+
+focus(nants)	&R	&volts	&SO1	
+&  Focus setting \cr
+
+VSUBIO	&R	&volts	&SO1	
+&  Subreflector in/out setting (focus)\cr
+\ \ (NANTS)\cr
+
+\cr
+
+freq	&D	&GHz	&UI0	
+& Rest frequency of the primary line\cr
+
+FREQ	&D	&GHz	&UI0	
+& Rest frequency of the primary line\cr
+
+freqif	&D	&GHz	&UI0	
+&  IF frequency of the primary line\cr
+
+FREQIF	&R	&GHz	&UI0	
+&  IF frequency of the primary line\cr
+&&&& FREQIF is 0.080 - 0.550 GHz.
+
+\cr
+
+institut(*)	&A	&-	&UD0	
+&The name of the observer's institute\cr
+
+INSTITUT(*)?	&A	&-	&UD0	
+&The name of the observer's institute\cr
+
+\cr
+instrume(*)     &A     &-     &UD0
+&Instrument used?\cr
+&&&&  Currently this variable is not written\cr
+&&&&  See also the {\tt telescop} variable\cr
+\cr
+
+inttime	&R	&seconds	&UI0	
+&Integration time \cr
+
+INTTIME	   &R  &seconds	&UI0	
+&Integration time \cr
+
+\cr
+ischan(nspect)	&I	&-	&UC0	
+& Starting channel of spectral window\cr
+
+ISCHAN	&I	&-	&UC0	
+& Starting channel of spectral window\cr
+\ \ (NSPECT)\cr
+
+\cr
+jyperk  &???   &Jy/K  &???
+& System written during calibration\cr
+\cr
+
+lo1		&D	&GHz	&UC0	
+& First local oscillator\cr
+&&&& {\tt lo1} is in the range 70 GHz - 115 GHz.\cr
+
+LO		&D	&GHz	&UC0	
+& First local oscillator\cr
+&&&& LO is in the range 70 GHz - 115 GHz.\cr
+
+lo2	&D	&GHz	&UH0	
+& Second local oscillator\cr
+
+LO2	&R &GHz	&UH0
+& Second local oscillator\cr
+&&&& LO2 is currently fixed at 1.23 GHz.\cr
+
+\cr
+
+lst     &D     &radians       &UT3   
+& Local standard time\cr
+
+DATA.LST&D     &radians       &UT4   
+& Local standard time\cr
+
+\cr
+
+nants		&I	&-	&UH0	
+& The number of antennas \cr
+&&&& Following variables use a dimension of {\tt nants}:\cr 
+&&&&    antpos(nants, 3)  \cr 
+&&&&    focus(nants)  \cr 
+&&&&    phaselo[1-2](nants) \cr 
+&&&&    phasem1(nants) \cr 
+&&&&    systemp(nants, nspect) \cr 
+&&&&    wsystemp(nants, nwide) \cr
+&&&&    temp(nants, ntemp) \cr 
+&&&&    tpower(nants, ntpower) \cr 
+&&&&    axisrms(2,nants) \cr 
+&&&& The antennas are always numbered starting at 1. \cr 
+
+NANTS?      &I	&-		&UH0	
+&The number of antennas \cr
+&&&& Following variables use a dimension of NANTS:\cr
+&&&& B[1-3](NANTS) \cr
+&&&& DELAY0(NANTS) \cr
+&&&& PHASELO[1-2](NANTS) \cr
+&&&& PHASEM1(NANTS) \cr
+&&&& SYSTEMP[1-8](NANTS) \cr
+&&&& TEMPS[1-8](NANTS) \cr
+&&&& TPWR(NANTS) \cr
+&&&& VSUBIO(NANTS) \cr
+&&&& AXISRMS(2*NANTS) \cr
+&&&& AXISAVE(2*NANTS) \cr
+&&&& The current value of NANTS is 3.\cr
+
+nchan	&I	&-	&UC0	
+&The total number of individual frequency channels\cr
+&&&& The following variables have the dimension of nchan:\cr
+&&&&   corr(nchan)\cr
+
+NUMCHAN		&I	&-	&UC0	
+&The total number of individual frequency channels\cr
+&&&&Following variables use a dimension of NUMCHAN:\cr
+&&&&   DATA.CORR(2, NUMCHAN)\cr
+&&&&   NUMCHAN has the values of either 0 or 512.\cr
+
+\cr
+
+
+npoint	&I	&-	&UI0
+&Number of pointing centers for mosaicing\cr
+
+NPOINT?	&I	&-	&UI0
+&Number of pointing centers for mosaicing\cr
+
+\cr
+
+npol	&I	&-	&UI0
+& The number of polarizations\cr
+&&&&***{\it polarization proposal}***\cr
+&&&& Following variables use a dimension of {\tt npol}:\cr
+&&&&    pol(npol)\cr
+
+NPOL(S)?	&I	&-	&UI0	
+&   Number of polarizations\cr
+&&&&  Currently NPOL(S) is 1.\cr
+
+\cr
+
+nschan(nspect)	&I	&-	&UC0	
+& Number of channels in spectral window\cr
+
+NSCHAN	&I	&-	&UC0	
+& Number of channels in spectral window\cr
+\ \ (NSPECT)\cr
+
+nspect	&I	&-	&UI0
+&Number of spectral windows\cr
+&&&& Following variables use a dimension of {\tt nspect}:\cr
+&&&&    ischan(nspect)\cr
+&&&&    nschan(nspect)\cr
+&&&&    restfreq(nspect)\cr
+&&&&    sdf(nspect)\cr
+&&&&    sfreq(nspect)\cr
+&&&&    systemp(nants, nspect)\cr
+
+NSPECT		&I	&-	&UI0	
+& Number of spectral windows\cr
+&&&&  Following variables use a dimension of NSPECT:\cr
+&&&&    ISCHAN(NSPECT)\cr
+&&&&    NSCHAN(NSPECT)\cr
+&&&&    RESTFREQ(NSPECT)\cr
+&&&&    SDF(NSPECT)\cr
+&&&&    SFREQ(NSPECT)\cr
+&&&&	The maximum of NSPECT is 8.\cr
+
+\cr
+
+ntemp	&I	&-	&SH0	
+&Number of antenna thermisters \cr
+&&&& Following variables use a dimension of {\tt ntemp}: \cr
+&&&&   temp(nants, ntemp) \cr
+
+NTEMP?	&I	&-	&SH0	
+&The number of antenna thermisters \cr
+&&&& Following variables use a dimension of NTEMP:\cr
+&&&&     TEMPS[1-8](NANTS)	([1-8] is each thermister)\cr
+&&&&     NTEMP is currently 8.\cr
+
+\cr
+
+ntpower &I  &-  &SH0
+&Number of total power measurements \cr
+&&&& The following variable depends on {\tt ntpower}: \cr
+&&&&    tpower(nants,ntpower) \cr
+&&&& {\tt ntpower} is currently 1, could be more later.\cr
+NTPWR? &I	&-	&SH0	
+&Number of total power measurements \cr
+&&&& NTPWR is currently 1. \cr
+
+nwide	&I	&-	&UH0	
+&Number of wide band channels \cr
+&&&& Variables which depend on {\tt nwide} are: \cr
+&&&&     wfreq(nwide) \cr
+&&&&     wwidth(nwide) \cr
+&&&&     wcorr(nwide) \cr
+&&&&     wsystemp(nants,nwide) \cr
+
+NWIDE?	&I	&-	&UH0	
+& Number of wide band channels \cr
+&&&& The wide band channels consist of 2 values \cr
+&&&& for TWIDE and 2 values for AWIDE.  The number of \cr
+&&&& channels for AWIDE may increase later. The current \cr
+&&&& value is 4. \cr
+&&&& The variable which depends on NWIDE is: \cr
+&&&&    DATA.AWIDE(2,NWIDE-2) \cr
+
+\cr
+
+obsdec	&D	&radians	&UT3	
+& Apparent declination at time of observation\cr
+&&&& This is what we also call the phase center.\cr
+
+DEC  &D     &radians       &UT2
+& Apparent declination at time of observation\cr
+
+\cr
+ 
+observer(*)	&A	&-	&UD0	
+&The name of the observer\cr
+
+OBSERVER(*)?	&A	&-	&UD0	
+&The name of the observer\cr
+
+\cr
+
+obsline(*)	&A	&-	&UD0	
+&The name of the line -- ie, ``12CO2-1''\cr
+
+OBSLINE(*)   &A	&-	&UD0	
+&The name of the line -- ie, ``12CO2-1''\cr
+
+\cr
+
+obsra	&D	&radians	&UT3	
+& Apparent right ascension at time of observation\cr
+&&&& This is what we also call the phase center.\cr
+
+RA   &D     &radians       &UT2
+& Apparent right ascension at time of observation\cr
+
+on		&I	&-	&UO2
+&Either 0 or 1, for on and off pointing,\cr
+&&&&for autocorrelation data.\cr
+&&&&***{\it polarization proposal}***\cr
+
+\cr
+operator(*)	&A	&-	&UD0	
+&The name of the current operator\cr
+
+OPERATOR(*)?	&A	&-	&UD0	
+&The name of the current operator\cr
+
+\cr
+pbfwhm          &R     &arcsec   &UT0?
+&Primary Beam at Full Width Half Maximum\cr
+&&&& Is calculated from {\tt lo1} as 11040.0/{\tt lo1}(Ghz)\cr
+\cr
+
+phaselo1(nants)	&R	&radians	&SO1	
+& Antenna phase offset \cr
+
+PHASELO1  &R	&radians	&SO1	
+& Antenna phase offset\cr
+\ \ (NANTS)\cr
+
+\cr
+
+phaselo2(nants)	&R	&radians	&SO1	
+& Second LO phase offset\cr
+
+PHASELO2	&R	&radians	&SO1	
+& Second LO phase offset\cr
+\ \ (NANTS)\cr
+
+phasem1(nants)	&R	&radians	&SO1	
+& IF cable phase\cr
+
+PHASEM1	&R	&turns	&SO1	
+& IF cable phase\cr
+\ \ (NANTS) &&&& One ``turn'' is $2\pi$. \cr
+
+\cr
+
+plangle &R     &degrees	&UO2-3	
+&Planet angle\cr
+
+PLANGLE &R	&degrees	&UO2-3	
+&Planet angle\cr
+
+\cr
+
+plmaj   &R	&arcsec &UO2-3
+&Planet major axis (note units)\cr
+
+PLMAJ	&R	&radians &UO2-3
+&Planet major axis \cr
+
+\cr
+
+plmin &R   &arcsec	&UO2-3	
+&Planet minor axis \cr
+
+PLMIN &R 	&radians &UO2-3
+& Planet minor axis (note units)\cr
+
+\cr
+
+pltb &R	&Kelvin  &UO2-3
+&Planet brightness\cr
+
+PLTB &R  &Kelvin	&UO2-3
+&Planet brightness\cr
+
+pol(npol)	&I	&-	&UI0	
+&  Polarization type\cr
+&&&&Definition will depend on time multiplex used.\cr
+&&&&When {\tt npol} is 1, pol(1) has the default of 1.  \cr
+&&&&***{\it polarization proposal}***\cr
+
+POL?    &I     &-     &UI0
+&  Polarization type \cr
+\ \ (NPOL)
+&&&&There is currently only one polarization.\cr
+
+\cr
+
+precipmm        &R     &millim.  &SO1   
+& Mm of precipitable water vapor in the atmosphere\cr
+
+PRECIPMM        &R     &millim.  &SO1   
+& Mm of precipitable water vapor in the atmosphere\cr
+
+\cr
+
+ra	&R	&radians	&UI0
+    &Right ascension of the source in ``epoch'' coordinates.\cr
+RA1950	&R	&radians	&UI0
+    &1950 right ascension of the source \cr
+
+\cr
+
+relhumid        &R     &-     &SO1   
+&Relative Humidity at HCRO weather station\cr
+
+RELHUMID        &R     &-     &SO1   
+&Relative Humidity at HCRO weather station\cr
+
+\cr
+
+restfreq(nspect) &D	&GHz	&UI0	
+&  Rest frequency for the window\cr
+&&&&  This is the frequency to be tracked.\cr
+
+RESTFREQ &D	&GHz	&UI0	
+&Rest frequency for the window \cr
+\ \ (NSPECT)\cr
+&&&& This is the frequency to be tracked.\cr
+
+sdf(nspect)	&D	&GHz	&UC0	
+& Change in frequency per channel\cr
+
+SDF     &R	&GHz	&UC0	
+& Change in frequency per channel\cr
+\ \ (NSPECT)\cr
+
+\cr
+
+sfreq(nspect)	&D	&GHz	&UT3	
+& Doppler tracked frequency of first channel in window\cr
+
+SFREQ	&R	&GHz	&UT2	
+& Doppler tracked frequency of first channel in window\cr
+\ \ (NSPECT)\cr
+
+\cr
+
+source(*)	&A	&-	&UD0	
+&The name of the source \cr
+&&&& (Can we really use $>$ 8 characters now?) \cr
+
+SOURCE(8)	&A	&-	&UD0	
+&The name of the source\cr
+&&&& RALINT source names are upper case and \cr
+&&&& limited to 8 characters.\cr
+
+\cr
+
+spol(npol)	&I	&-	&???
+&Polarization of each spectral window\cr
+&&&&***{\it polarization proposal}***\cr
+&&&&Can be RR RL LR LL XX XY YX YY I Q U V\cr
+&&&&code:  -1 -2 -3 -4 11 12 21 22 1 2 3 4\cr
+\cr
+
+systemp &R	&Kelvin	&UO1
+& Antenna system temperatures \cr
+\ \ (nants, nspect) \cr
+SYSTEMP[1-8] &R	&Kelvin	&UO1	
+& Antenna system temperatures\cr
+\ \ (NANTS)
+&&&& The 1-8 do not correspond directly to the \cr
+&&&& windows, but have to be twiddled to get systemp.\cr
+
+telescop(*)	&A	&-	&UD0	
+&The telescope name. Some standard values are:\cr
+&&&& 'HATCREEK' \cr
+&&&&  'VLA' \cr
+
+TELESCOP(*)?	&A	&-	&UD0	
+&The telescope name\cr
+
+\cr
+
+temp &R	&centigr.	&SO1	
+& Antenna thermister temperatures\cr
+\ \ (nants, ntemp) \cr
+
+TEMPS[1-8] &R	&centigr.	&SO1	
+& Antenna thermister temperatures \cr
+\ \ (NANTS)
+&&&& The thermisters are not documented, and are \cr
+&&&& not the same for different antennas.\cr
+
+\cr
+
+time        &D     &days              &UT3   
+& The absolute (Julian) date\cr
+&&&& {\tt time} is stored as the Julian date, \cr
+&&&& where noon on Jan 1, 1980 is 2,444,240.0 \cr
+&&&& time is also known as {\it preamble(3)}\cr
+
+DATA.DAY80      &D     &[days]        &UT4   
+& The absolute time \cr
+&&&& DATA.DAY80 is stored as: \cr
+&&&&   1000*int([year] - 1980) + \cr
+&&&&   int([days since Jan 1]) + [ut in days]. \cr
+
+\cr
+
+tpower  &R	&volts	&SO1	
+& Total power measurements\cr
+\ \ (nants, ntpower) \cr
+&&&&   UVHAT ok? == something wrong with dimensions \cr
+&&&& tpower(nants)???\cr
+
+TPWR	&R	&volts		&SO1	
+& Total power in each IF\cr
+\ \ (NANTS)\cr
+
+tscale          &R     &-     &UO4
+& Optional correlation scale factor \cr
+&&&& Used only when corr is stored as J (16 bits).\cr
+
+DATA.TMULT      &R     &-     &UO4   
+& Correlation scale factor\cr
+
+\cr
+
+ut      &D     &radians       &UT3   
+& Universal time\cr
+
+DATA.UT &D     &radians       &UT4   
+& Universal time\cr
+
+\cr
+
+veldop	&R	&km/sec	&UT3	
+& Velocity of telescope w.r.t. source.\cr
+&&&& Positive velocity is away from observer.\cr
+
+VELDOP	&R	&km/sec	&UT3	
+& Velocity of telescope w.r.t. source.\cr
+&&&& Positive velocity is away from observer.\cr
+
+\cr
+
+veltype(*)	&A	&-	&UD0	
+&Velocity type\cr
+&&&&OLD name: EPHFLAG(4)\cr
+&&&& The is one of the values:\cr
+&&&&   VELO-LSR: velocity in km/s, w.r.t. LSR \cr
+&&&&    VELO-HEL: velocity in km/s, w.r.t. SUN \cr
+&&&&    FELO-LSR: velocity in km/s, w.r.t. LSR \cr
+&&&&    FELO-HEL: velocity in km/s, w.r.t. SUN \cr
+
+EPHFLAG(4)	&A	&-	&UD0	
+&Source position and velocity flags\cr
+&&&&  EPHFLAG has two of the following letters: \cr
+&&&&    {\bf R} means 1950 coordinates \cr
+&&&&    {\bf L} means LSR velocities \cr
+&&&& The current value is always ``{\bf RL}'', or VELO-LSR.\cr
+
+version(*)	&A	&-	&UD0	
+&The current hardware/software version\cr
+&&&& Current options: oldhat, newhat\cr
+
+VERSION(*)?	&A	&-	&UD0	
+&The current hardware/software version\cr
+
+\cr
+
+vsource	&R	&km/sec	&UI0	
+& Velocity of source w.r.t. LSR.\cr
+&&&& Positive velocity is away from observer.\cr
+
+VELOC	&R	&km/sec	&UI0	
+&  Velocity of source w.r.t. LSR\cr
+&&&& Positive velocity is away from observer.\cr
+
+\cr
+
+wcorr(nwide)    &C     &-     &UO4   
+& Wideband correlations. The current ordering is:\cr
+&&&&  wcorr(1) and wcorr(2) - \cr
+&&&& Digital LSB and USB, respectively.\cr
+&&&&  wcorr(3) and wcorr(4) - \cr
+&&&&  Analog LSB and USB, respectively.\cr
+
+DATA.TWIDE(2)   &C     &-     &UO4   
+&  Total digital wideband correlation\cr
+&&&& Values are lower sideband and upper sideband\cr
+
+DATA.AWIDE(2)   &C     &-     &UO4   
+& Analog wideband correlation\cr
+&&&& Values are lower sideband and upper sideband\cr
+
+\cr
+
+wfreq(nwide)	&R	&GHz	&UT3	
+& Wideband correlation average frequencies\cr
+
+WFREQ(2)	&R	&GHz	&UT2	
+& Wideband correlation average frequencies\cr
+&&&& This is recorded for TWIDE, but can be \cr
+&&&& used for AWIDE for now.\cr
+
+winddir(4)      &A     &-     &SO1   
+&Wind direction\cr
+&&&& Encoded as ``NW'', ``SE'', ``W'', etc.\cr
+&&&& Should be a number if we really want to use it\cr
+
+WINDDIR(4)      &A     &-     &SO1   
+&Wind direction\cr
+&&&& Encoded as ``NW'', ``SE'', ``W'', etc.\cr
+
+\cr
+
+windmph         &R     &mph   &SO1   
+& Wind speed\cr
+&&&& Still in Mph -- very metric.!! \cr
+
+WINDMPH         &R     &mph   &SO1   
+& Wind speed\cr
+
+\cr
+
+wpol(npol)	&I	&-	&???
+&Polarization of each wideband window\cr
+&&&&***{\it polarization proposal}***\cr
+&&&&Can be RR RL LR LL XX XY YX YY I Q U V\cr
+&&&&code:  -1 -2 -3 -4 11 12 21 22 1 2 3 4\cr
+
+\cr
+wsystemp	&R	&K	&UO1
+& System temperature for wide channels. \cr
+\ \ (nants,nwide) \cr
+\cr
+wwidth(nwide)	&R	&GHz	&UC0	
+& Wideband correlation bandwidths\cr
+
+WWIDTH?	    &R	&GHz	&UC0	
+& Wideband correlation bandwidths\cr
+&&&& WWIDTH for AWIDE is currently 0.28 GHz.\cr
+
+\cr
+
+
+DATA.CORRECT &C     &-     &UO4   
+&  Correction factor\cr
+\ \ (2)&&&& This variable is not used.\cr
+&&&& The RALINT value seems to be (1.0,0.0) (1.0,0.0) \cr
+
+\cr
+
+DELAY0	&R	&-	&SO1	
+&  Antenna delay offset\cr
+\ \ (NANTS)
+&&&& This variables is no longer used and is ignored.\cr
+
+
+OBSTYPE(*)	&A	&-	&UD0	
+& Is now an item in a MIRIAD dataset\cr
+&&&& Has value ``crosscorrelation'' \cr
+&&&& or ``autocorrelation''.\cr
+}
+}

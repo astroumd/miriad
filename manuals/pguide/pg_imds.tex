@@ -1,0 +1,310 @@
+%------------------------------------------------------------------------
+% Chapter 9 - IMAGE DATASETS
+%------------------------------------------------------------------------
+%
+%  History:
+%
+%   rjs  28mar90  First version for System Guide
+%   mjs  22mar91  Adapted into Programmer's Guide
+%------------------------------------------------------------------------
+\beginsection{Image Datasets}
+
+These routines access image data sets.
+{\ninepoint\begintt
+      subroutine xyopen(tno,dataname,status,naxis,nsize)
+      subroutine xyclose(tno)
+      subroutine xyread(tno,index,array)
+      subroutine xywrite(tno,index,array)
+      subroutine xysetpl(tno,naxis,nsize)
+\endtt}
+Here {\tt xyopen} opens the image data set, and readies it for reading or
+writing. {\tt dataname} is the name of the data set, {\tt status} is either
+{\tt `old'} or {\tt `new'}, depending on whether an old data set is being opened
+to be read, or a new data set is being created. {\tt naxis} gives the dimension
+of the {\tt nsize} array. {\tt naxis} is always an input parameter.
+{\tt nsize} gives the size, along each axis of the
+image. When opening an old data set, {\tt nsize} is filled in by {\tt xyopen},
+and passed back to the caller. For a new data set, {\tt nsize} must be set
+to the
+size of the desired image before the open routine is called. The argument
+{\tt tno} is the handle passed back by the open routine, and is used
+in all subsequent calls to identify the data set.
+
+{\tt xyclose} closes the data set.
+
+{\tt xyread} and {\tt xywrite} read or write a single row of the image. 
+The row number is given by {\tt index}, and the pixel data is stored in
+{\tt array} (a real array). By default, {\tt xyread} and {\tt xywrite} access
+a row in the first image of a multi-image data set. The routine {\tt xysetpl}
+is used to change this default to another image. In this, {\tt naxis} gives the
+dimension of the {\tt nsize} array, and {\tt nsize} is an integer array
+giving the indices along the third, fourth, etc, dimension of access. For
+example, to access the n'th image in a cube, use:
+{\ninepoint\begintt
+      call xysetpl(tno,1,n)
+\endtt}
+
+\beginsection{Image Coordinate System}
+
+MIRIAD defines and stores image coordinate system information in a similar
+fashion to AIPS and FITS. Most cubes will have coordinates along its three
+axis of RA, DEC and velocity. The item {\tt ctype} gives the
+type of coordinate along a particular axis, whereas {\tt crval, crpix} and
+{\tt cdelt} give the value of the coordinate at the reference pixel, the
+value of the reference pixel, and the increment between pixels, respectively.
+Unlike AIPS and FITS, RA and DEC are given in radians, and velocity is given
+in km/sec. RA and DEC will generally need to be converted to
+hours-minutes-seconds, or degrees-minutes-seconds, before being presented
+to the user.  Subroutine {\tt deghms} can be used to perform this function.
+
+The following table gives quite approximate formulae for converting from
+pixel number to an astronomical coordinate. For more accurate formulae, see
+AIPS Memo No. 27, ``Non-linear Coordinate Systems in AIPS'' (Eric Greisen).
+
+\vskip .2in
+{\raggedright
+\def\bbox#1{$\underline{\smash{\hbox{#1}}}$}
+\ninepoint
+\tabskip=0em
+\halign {#\tabskip=1em&#\tabskip=1em&#\tabskip=1em&#\tabskip=1em&#\hfil\cr
+
+\bbox{\it Ctype}&
+\bbox{\it Crval}&
+\bbox{\it Crpix}&
+\bbox{\it Cdelt}&
+\bbox{Equation}\cr
+\cr
+{\tt RA---xxx}&
+$\alpha_0$&
+$i_0$&
+$\Delta\alpha$&
+$\alpha = \alpha_0 + \Delta\alpha (i-i_0) / \cos(\delta_0)$\cr
+
+{\tt DEC--xxx}&
+$\delta_0$&
+$i_0$&
+$\Delta\delta$&
+$\delta = \delta_0 + \Delta\delta (i-i_0)$\cr
+
+{\tt VELO-xxx}&
+$v_0$&
+$i_0$&
+$\Delta v$&
+$v = v_0 + \Delta v (i-i_0)$\cr
+
+Others&
+$x_0$&
+$i_0$&
+$\Delta x$&
+$x = x_0 + \Delta x (i-i_0)$\cr
+}
+}
+
+For example, the following code fragment calculates RA, DEC and velocity.
+{\ninepoint\begintt
+      character ctype1*8,ctype2*8,ctype3*8
+      double precision crval1,crpix1,cdelt1,crval2,crpix2,cdelt2
+      double precision crval3,crpix3,cdelt3
+      double precision alpha,delta,v
+      integer i,j,k
+          .
+          .
+      (assume i,j,k contains the grid coordinate of interest)
+          .
+      call rdhda(tno,'ctype1',ctype1,' ')
+      if(ctype1(1:5).ne.'RA---')
+     *    call bug('f','First axis is not RA')
+      call rdhda(tno,'ctype2',ctype2,' ')
+      if(ctype2(1:5).ne.'DEC--')
+     *    call bug('f','Second axis is not DEC')
+      call rdhda(tno,'ctype3',ctype3,' ')
+      if(ctype1(1:5).ne.'VELO-')
+     *    call bug('f','Third axis is not velocity')
+      call rdhdd('crval1',crval1,0.d0)
+      call rdhdd('crval2',crval2,0.d0)
+      call rdhdd('crval3',crval3,0.d0)
+      call rdhdd('crpix1',crpix1,1.d0)
+      call rdhdd('crpix2',crpix2,1.d0)
+      call rdhdd('crpix3',crpix3,1.d0)
+      call rdhdd('cdelt1',cdelt1,1.d0)
+      call rdhdd('cdelt2',cdelt3,1.d0)
+      call rdhdd('cdelt3',cdelt3,1.d0)
+      alpha = crval1 + cdelt1/cos(crval2)*(i-crpix1)
+      delta = crval2 + cdelt2            *(j-crpix2)
+      v     = crval3 + cdelt3            *(k-crpix3)
+\endtt}
+
+This code fragment checks that the  axis are in the order RA, DEC then velocity
+(i.e. the normal ordering)
+and aborts if they are not. Smarter code would allow them in any order, and
+would probably treat any unrecognized {\tt ctype} as a linear coordinate system.
+It uses default values (if values of {\tt crval}, {\tt crpix} and {\tt cdelt}
+are missing) of 0, 1 and 1. Probably better default values could be chosen,
+although if {\tt ctype} is an item, then we can be fairly certain that the
+other parameters will also be present.
+
+\beginsection{Region of Interest and Pixel Blanking}
+
+It is a common situation for the user to want to process a limited subset
+of an image. It is also common for an image to contain pixels which are
+``blanked'' or have an ``undefined value''. MIRIAD routines are available to
+treat these two pixel selection operations together. The input to these
+routines are the task parameters which describe the subregion the user
+is interested in, and a masking item that may be associated with an image.
+The output is a description of the pixels selected.
+
+Each image dataset may have a masking item. This
+is a bitmap containing a flag for each pixel, indicating
+whether the pixel is good or bad. For bad pixels, the pixel value actually
+stored
+in the image is not defined, though it will be a legal or typical value.
+Zero, or the value of the pixel before blanking, is a good choice.
+
+\beginsub{Regular Regions of Interest}
+
+Generally a minimum of three routines are needed to process even ``regular''
+regions of interest. By ``regular'' we mean that the region of interest is
+describable by a bottom left corner and top right corner (i.e., a rectangular
+region). The routines of interest are:
+{\ninepoint\begintt
+        subroutine boxinput(key,dataset,boxes,maxboxes)
+        subroutine boxset(boxes,naxis,nsize,flags)
+        subroutine boxinfo(boxes,naxis,blc,trc)
+\endtt}
+All routines require an integer array, {\tt boxes}, which is used to
+accumulate a description of the region of interest. Its size is given
+by argument {\tt maxboxes}. The required size is a function of the
+complexity of the region of interest, etc. Typically 1024 elements
+should be adequate.
+
+{\tt boxinput} reads the task parameters that the user gives to
+specify the region of interest. The way this is specified is moderately
+general and (consequently) complex. See the description in the users guide.
+Included is the ability to give the region specification in a variety of
+units. To convert between some units and absolute pixels, {\tt boxinput}
+needs information about the coordinate system being used (e.g.
+parameters {\tt crval}, {\tt crpix} and {\tt cdelt}). {\tt boxinput} determines
+these from the MIRIAD data-set given by {\tt dataset}. Normally this is the name
+of the image dataset which we are interested in. If {\tt dataset} is
+blank, {\tt boxinput} still functions correctly, but cannot perform unit
+conversion.
+
+{\tt boxinput} breaks up the specification into an intermediate form, and
+stores it in the {\tt boxes} array.
+The keyword associated with the task parameter is {\tt key},
+which would normally be {\tt 'region'}. If the {\tt key} argument is blank,
+{\tt boxinput} does not attempt to get a region-of-interest specification,
+but instead just initializes the {\tt boxes} array with the default
+region-of-interest.
+
+The programmer passes to {\tt boxset} information about the size of the image
+of interest. This is given in the integer array {\tt nsize}, which consists
+of {\tt naxis} elements (as with the corresponding arguments to {\tt xyopen}).
+The {\tt flags} argument is an input character string, giving information
+about the default region of interest. It can consist of:
+\item{$\bullet$} {\tt q} The default region of interest is the inner
+quarter of the image.
+\item{$\bullet$} {\tt 1} The default region of interest consists of
+the first plane only.
+\item{$\bullet$} {\tt s} The region of interest must be ``regular''. If
+it is not, {\tt boxset} generates a warning message, and will use the
+bounding box of the selected region.
+
+{\tt boxinfo} returns integer arrays {\tt blc} and {\tt trc}, which give the
+bottom
+left corner and top right corner of the region which encloses the overall
+region of interest. Both these arrays are of size {\tt naxis} integers.
+
+\beginsub{Arbitrary ROI and Blanking Information}
+
+In addition to the above routines, there are three routines to allow treatment
+of more complex regions of interest. These are:
+{\ninepoint\begintt
+        subroutine boxmask(tno,boxes,maxboxes)
+        logical function boxrect(boxes)
+        subroutine boxruns(naxis,nsize,flags,boxes,
+    *        runs,maxruns,nruns,xblx,xtrc,yblc,ytrc)
+\endtt}
+
+{\tt boxmask} requests that an image mask be ANDed with the region
+requested by the user. The input to the routine is the image dataset handle,
+{\tt tno}, whereas the {\tt boxes} array is an input/output integer array
+used to accumulate region of interest information. {\tt boxmask} can be
+called multiple times, each time ANDing in a new image mask. This is an optional
+routine. Typically it would be called for each of the input images, so that
+``blanked'' pixels in the input images would be excluded from the region of
+interest.
+
+{\tt boxrect} returns {\tt .TRUE.} if the region
+of interest is rectangular (i.e. whether the region of interest is entirely
+described by {\tt blc} and {\tt trc}.
+
+{\tt boxruns} returns the region selected for a particular plane.
+The input arguments {\tt naxis} and {\tt nsize} are analogous to the same
+arguments in the {\tt xysetpl} routine. {\tt runs} is
+an integer array of size $3\times maxruns$. On output it indicates which
+pixels in the plane are to be processed.  {\tt runs} consists of {\tt nruns}
+entries of the form:
+{\ninepoint\begintt
+     j,imin,imax
+\endtt}
+This indicates that pixels (imin,j) to (imax,j) are to be processed.
+All entries are non-overlapping.
+There may be zero or many  entries for a particular value of j. The
+table is in increasing order of j and imin. On output, the integers
+{\tt xblc, xtrc, yblc}, and {\tt ytrc} give the bottom left and top right
+corners, in x and y, of the smallest subimage which contains the selected
+pixels.  The {\tt flags} argument, an input character string, indicates
+some extra options. These are:
+\item{$\bullet$} {\tt r} Make the coordinates, returned in the {\tt runs}
+table, relative to {\tt (xblc,yblc)}.
+
+\beginsub{Reading and Writing Blanking Information}
+
+Though the {\tt box} routines are the preferred way to read blanking
+information, it is possible to read the blanking information associated with
+an image directly. Also a routine is needed to write blanking information.
+Blanking information can be read and written by two sets of routines.
+These routines are:
+{\ninepoint\begintt
+      subroutine xyflgrd(tno,index,mask)
+      subroutine xyflgwr(tno,index,mask)
+      subroutine xymkrd(tno,index,runs,n,nread)
+      subroutine xymkwr(tno,index,runs,n)
+\endtt}
+Here, {\tt tno} is the image handle returned by {\tt xyopen}, {\tt index}
+gives the row number (analogous to {\tt xyread} and {\tt xywrite}).
+Analogous to the working of {\tt xyread} and {\tt xywrite}, the plane of the
+masking file that the routines access is set with the {\tt xysetpl} routine.
+
+The {\tt xyflgrd} and {\tt xyflgwr} routines read and write the logical
+array {\tt mask}. The {\tt mask} array has a {\tt .TRUE.} value if the
+corresponding pixel is good, or {\tt .FALSE.} if it is bad (or blanked).
+
+The {\tt xymkrd} and {\tt xymkwr} routines read and write a ``{\tt runs}''
+array. The {\tt runs} array is a table of the form:
+{\ninepoint\begintt
+    imin,imax
+\endtt}
+where pixels {\tt imin} to {\tt imax} are good (not blanked). Note that
+the size of {\tt runs} is {\tt n} integers of {\tt n/2} pairs of
+ordinates. {\tt runs} is input to {\tt xywrite} and output from
+{\tt xyread}. For {\tt xyread}, {\tt nread} returns the number of
+elements of {\tt runs} that have been filled in.
+
+Because many images are completely good (i.e. no blanked pixels),
+it would be superfluous to always carry around blanking information.
+Hence the
+mask containing the blanking information need not exist. If it does not
+exist, the read routines described above will return indicating that all
+pixels are good.
+A programmer can check if the mask exists, using the logical function
+{\tt hdprsnt}:
+{\ninepoint\begintt
+     logical exists
+     logical hdprsnt
+          .
+          .
+          .
+     exists = hdprsnt(tno,'mask')
+\endtt}
