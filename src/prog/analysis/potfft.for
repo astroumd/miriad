@@ -1,15 +1,6 @@
       PROGRAM potfft
       IMPLICIT NONE
 c
-c   Program to calculate the the gravitational potential corresponding to
-c   a two-dimensional distribution of matter using a fast-Fourier
-c   algorithm (see Numerical Recipes, chapters 12 and 17),
-c   and also e.g. Hockney and Eastwood, p213 (1st ed.).
-c   The units are such that the Gravitation Constant is 1.0.
-c
-c   Currently this routine assumes the scaleheight of the mass distribution
-c   is constant as function of radius, which can also be choosen as 0.0
-c
 c= potfft - Calculates the potential and Green's function for a 2D mass distribution
 c: map manipulation
 c& pjt
@@ -18,6 +9,11 @@ c   POTFFT is a MIRIAD task that calculates the gravitational potential
 c   corresponding to a two-dimensional mass distribution, which is given
 c   to it in the form of an image. The image should be a face on view of
 c   a galaxy. See DEPROJECT and REGRID for tasks helping with this.
+c
+c   The method used is a a fast-Fourier algorithm (see Numerical Recipes, 
+c   chapters 12 and 17 and Hockney and Eastwood, p213 (1st ed.).
+c   The units are such that the Gravitation Constant is 1.0.
+c
 c@ in
 c   The input image. It must be a two-dimensional image with the number of
 c   pixels along each axis a power of two.
@@ -59,6 +55,7 @@ c   mousumi  8aug02 Replace with QGAUSS with QROMB
 c   peter           internal real*8, but miriad in real*4 as it should be
 c   peter    9aug02 forgot to scale sech() with h
 c   peter   23feb03 merged MIR4
+c   peter   28feb03 some more doc 
 c Todo:
 c   scaleheight should be allowed to vary
 c
@@ -71,7 +68,7 @@ c
       INTEGER INVPARM
       PARAMETER(INVPARM=1)
       CHARACTER VERSION*(*)
-      PARAMETER (VERSION='Version 23-feb-03')
+      PARAMETER (VERSION='Version 28-feb-03')
 c
       CHARACTER in*128,out*128,outg*128
       INTEGER nin(MAXNAX),nout(MAXNAX),npadin(MAXNAX)
