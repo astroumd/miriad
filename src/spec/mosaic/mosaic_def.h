@@ -55,7 +55,7 @@
 #define Global extern
 #endif
 
-#if defined(sun) || defined(mips)
+#if defined(sun) || defined(mips) || defined(linux)
 #define private static
 #else
 #define private
