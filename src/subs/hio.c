@@ -38,8 +38,8 @@
        22-jul-04  jwr	changed type of "size" in hexists_c() from int to size_t
        05-nov-04  jwr	changed file sizes from size_t to off_t
        01-jan-05  pjt   a few bug_c() -> bugv_c()
+       03-jan-05  pjt/rjs   hreada/hwritea off_t -> size_t for length 
 */
-
 
 #include <stdlib.h>
 #include <string.h>
@@ -815,7 +815,7 @@ void hdaccess_c(int ihandle,int *iostat)
   }
 }
 /************************************************************************/
-size_t hsize_c(int ihandle)
+off_t hsize_c(int ihandle)
 /**hsize -- Determine the size (in bytes) of an item. 			*/
 /*&pjt									*/
 /*:low-level-i/o							*/
@@ -835,7 +835,7 @@ size_t hsize_c(int ihandle)
 {
   ITEM *item;
   item = hget_item(ihandle);
-  return(item->size);
+  return item->size;
 }
 /************************************************************************/
 void hio_c(int ihandle,int dowrite,int type,char *buf,
@@ -1246,7 +1246,7 @@ off_t htell_c(int ihandle)
   return(item->offset);
 }
 /************************************************************************/
-void hreada_c(int ihandle,char *line,off_t length,int *iostat)
+void hreada_c(int ihandle,char *line,size_t length,int *iostat)
 /*----------------------------------------------------------------------*/
 {
   ITEM *item;
@@ -1255,7 +1255,7 @@ void hreada_c(int ihandle,char *line,off_t length,int *iostat)
   hio_c( ihandle, FALSE, H_TXT, line, item->offset, length, iostat);
 }
 /************************************************************************/
-void hwritea_c(int ihandle,Const char *line,off_t length,int *iostat)
+void hwritea_c(int ihandle,Const char *line,size_t length,int *iostat)
 /*----------------------------------------------------------------------*/
 {
   ITEM *item;
@@ -1330,7 +1330,7 @@ private int hname_check(char *name)
     if((c < 'a' || c > 'z') && (c < '0' || c > '9') && (c != '-') && (c != '_'))
       return(-1);
   }
-  return(0);
+  return 0 ;
 }
 /************************************************************************/
 private void hdir_c(ITEM *item)

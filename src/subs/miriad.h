@@ -99,12 +99,12 @@ void haccess_c(int tno, int *ihandle, Const char *keyword, Const char *status, i
 void hmode_c(int tno, char *mode);
 int  hexists_c(int tno, Const char *keyword);
 void hdaccess_c(int ihandle, int *iostat);
-size_t hsize_c(int ihandle);
+off_t hsize_c(int ihandle);
 void hio_c(int ihandle, int dowrite, int type, char *buf, off_t offset, size_t length, int *iostat);
 void hseek_c(int ihandle, off_t offset);
 off_t htell_c(int ihandle);
-void hreada_c(int ihandle, char *line, off_t length, int *iostat);
-void hwritea_c(int ihandle, Const char *line, off_t length, int *iostat);
+void hreada_c(int ihandle, char *line, size_t length, int *iostat);
+void hwritea_c(int ihandle, Const char *line, size_t length, int *iostat);
 
 /* Macros defined in hio.c */
 
