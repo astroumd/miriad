@@ -341,11 +341,11 @@ c    pjt  17-oct-03  listen to badly returned basant ant's
 c------------------------------------------------------------------------
 	character version*(*)
 	parameter(version='Fits: version 17-oct-03')
-	integer maxboxes
-	parameter(maxboxes=2048)
+	integer MAXBOXES
+	parameter(MAXBOXES=2048)
 	character in*128,out*128,op*8,uvdatop*12
 	integer velsys
-	integer boxes(maxboxes)
+	integer boxes(MAXBOXES)
 	real altrpix,altrval
 	logical altr,docal,dopol,dopass,dss,dochi,nod2,compress
 	logical lefty,varwt
@@ -361,7 +361,7 @@ c
 	if(op.ne.'print') call keya('out',out,' ')
 c
         if(op.eq.'uvin')call GetVel(velsys,altr,altrval,altrpix)
-	if(op.eq.'xyout') call BoxInput('region',in,boxes,maxboxes)
+	if(op.eq.'xyout') call BoxInput('region',in,boxes,MAXBOXES)
 c
 c  Get options.
 c
@@ -2544,8 +2544,10 @@ c  Miriad convention is that bl = 256*ant1 + ant2, where the baseline is ant2 - 
 c  AIPS                      bl = 256*ant1 + ant2                        ant1 - ant2 !!
 c
 c  In both cases ant1 is normally less than ant2.
+c  ant1=0 should never happen, since bad ant's were filtered before.
 c
 	    call Basant(preamble(5),ant1,ant2)
+	    if (ant1.eq.0) call bug('f','bad antenna ant1=1')
 	    pols(P) = pols(P) + 1
 c
 	    OutData(uvU+1) = -1e-9 * preamble(1)
