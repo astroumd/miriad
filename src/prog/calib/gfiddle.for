@@ -52,6 +52,7 @@ c   pjt   19jun99   logging events for optional batch replay
 c   pjt   28jul99   add fit residuals etc. to output history
 c   pjt   31jul98   fix bug in non-interactive devices
 c		    WORKING ON: more history logging
+c   pjt   27feb03   MAXBASE2 fix
 c
 c
 c= gfiddle - Fiddle with a (gain) visibility dataset
@@ -256,7 +257,7 @@ c-----------------------------------------------------------------------
       INCLUDE 'gfiddle.h'
       INTEGER MAXWINS,MAXBAD,MAXX,MAXY,MAXSELS
       CHARACTER VERSION*(*)
-      PARAMETER(VERSION='GFIDDLE: Version 1-aug-99 PJT')
+      PARAMETER(VERSION='GFIDDLE: Version 27-feb-03')
       PARAMETER(MAXWINS=16,MAXBAD=20,MAXX=15,MAXY=4,MAXSELS=256)
 
       CHARACTER visi*80, viso*80, device*80, chr*1, ltype*20, fmethod*10
