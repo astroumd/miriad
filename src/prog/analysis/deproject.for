@@ -93,7 +93,7 @@ c
       integer   MAXNAX
       parameter (MAXNAX=3)
       character VERSION*(*)
-      parameter (VERSION='22-sep-2003')
+      parameter (VERSION='16-dec-2003')
 c
       character infile*128, oufile*128, rmode*10, ctype1*10,ctype2*10
       integer   iflux,iout,ivert,ix,ixpt,iy,iypt,iz,mode,nx,ny,nz,
@@ -150,7 +150,7 @@ c
       call xyopen(tin,infile,'old',MAXNAX,insize)
       call rdhdi(tin,'naxis',naxis,0)
       naxis = min(naxis,MAXNAX)
-      if(insize(1).gt.MAXDIM)call bug('f','Input file too big for me')
+      if(insize(1).gt.MAXDIM2)call bug('f','Input file too big for me')
       nx = insize(1)
       ny = insize(2)
       nz = insize(3)
