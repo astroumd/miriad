@@ -1,8 +1,11 @@
 See http://www.atnf.csiro.au/computing/software/rpfits.html for info.
 
-History:
+BIMA History:
   3-dec-2002:  In miriad V3.1.0 rpfits V2.4 was imported into CVS.
 
+RPFITS History:
+  4-jun-2001:  Version 2.4 released
+
 The script $MIR/install/install.linux will attempt to install the
-library and one program 'atlod'
+library and one program 'atlod' (see $MIR/src/prog/atnf/atlod.for)
 
