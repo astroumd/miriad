@@ -1,0 +1,23 @@
+# bima_a1mm.ant
+# antenna positions in nanosecs
+# alternative a-arrays using b-array stations 320N 400E  with fiber
+# both compact and extended a-arrays have lower sidelobes using 400E instead of 500E
+# 580N is slightly better than 500N
+#
+# compact a-array uses 320N instead of 4320N.
+# omit antenna 3 at 3270N for 1mm observations.
+#
+     -0.4470   -754.2521      0.0213     740W 
+     -0.0733   -482.5953     -0.0070     475W 
+#      0.0873    506.3666     -0.0080     500E 
+      0.0873    400.         -0.0080     400E fiber 
+    -86.9580   1521.0534      0.5587     1500E 
+   -268.6165   2258.9462      0.5081     2220E 
+#    260.1456      0.0223     -0.0093     260N 
+    320.1456      0.0223     -0.0093     320N fiber 
+#    500.          0.0223     -0.0093     500N  fiber
+    589.1456      0.0223     -0.0093     580N 
+   1765.7279    314.6568     -4.6985     1740N 
+   2746.7513   -235.2325     -7.4594     2700N 
+#   3280         -80           0          3270N   Ant 3 omit for 1mm
+#   3300        -2812          0          4320N
