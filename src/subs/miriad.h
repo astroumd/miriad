@@ -23,6 +23,7 @@
 // 17-jun-02 pjt added interface.c routines; now used as global prototype file
 // 23-jun-02 pjt define MIR4 here if you want to enable the LSF and MIR4
 // 30-aug-04 pjt removed deprecated ARGS() macro
+//  1-dec-05 pjt added bugv_c
 */
 
 #if !defined(MIR_MIRIAD_H)
@@ -37,6 +38,7 @@
 
 #include <sys/types.h>     /* provides off_t */
 #include <unistd.h>
+#include <stdarg.h>
 #include "sysdep.h"        /* since it now contains the "pack.c" prototypes */
 
 /* Define const and void if needed. */
@@ -290,6 +292,7 @@ void bugrecover_c(void (*cl)(void));
 void buglabel_c  (Const char *name);
 void bugno_c     (char s, int n);
 void bug_c       (char s, Const char *m);
+void bugv_c      (char s, Const char *m, ...);
 
 /* scrio.c */
 

@@ -12,11 +12,14 @@
 /*                    through the new bugrecover_c() routine            */
 /*    pjt     17jun02 prototypes for MIR4                               */
 /*    pjt/ram  5dec03 using strerror() for unix                         */
+/*    pjt      1jan05 bugv_c: finally, a real stdargs version!!!        */
+/*                    though cannot be exported to Fortran              */
 /************************************************************************/
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 #include "miriad.h"
 
 static char *errmsg_c(int n);
@@ -125,6 +128,55 @@ void bug_c(char s,Const char *m)
 #endif
   }
 }
+/************************************************************************/
+void bugv_c(char s,Const char *m, ...)
+/** bugv_c -- Issue a dynamic error message, given by the caller.	*/
+/*& pjt									*/
+/*: error-handling							*/
+/*+ C call sequence:
+	bugv_c(severity,message,....)
+
+  Output the error message given by the caller, and abort if needed.
+
+  Input:
+    severity	Error severity character. 
+                Can be one of 'i', 'w', 'e' or 'f'
+		for "informational", "warning", "error", or "fatal"
+    message	The error message string, can contain %-printf style 
+                directives, as used by the following arguments.
+     ...         Optional argument, in the printf() style               */
+/*--									*/
+/*----------------------------------------------------------------------*/
+{
+  va_list ap;
+  char *p;
+  int doabort;
+
+  doabort = 0;
+  if      (s == 'i' || s == 'I') p = "Informational";
+  else if (s == 'w' || s == 'W') p = "Warning";
+  else if (s == 'e' || s == 'E') p = "Error";
+  else {doabort = 1;		 p = "Fatal Error"; }
+
+  va_start(ap,m);
+  fprintf(stderr,"### %s: ",p);
+  vfprintf(stderr,m,ap);
+  fprintf(stderr,"\n");     /* should *we* really supply the newline ? */
+  fflush(stderr);
+  va_end(ap);
+
+  if(doabort){
+    reentrant = !reentrant;
+    if(reentrant)habort_c();
+    if (bug_cleanup) {
+        (*bug_cleanup)();       /* call it */
+        fprintf(stderr,"### bug_cleanup: code should not come here, goodbye\n");
+        /* and not it will fall through and exit the bug way */
+    }
+    exit (1);
+  }
+}
+
 /************************************************************************/
 void bugno_c(char s,int n)
 /** bugno -- Issue an error message, given a system error number.	*/
