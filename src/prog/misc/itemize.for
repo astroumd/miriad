@@ -18,6 +18,8 @@ c  pjt  7-mar-92  deleted seemingly redundant code in info, doc repair
 c  mchw 29oct92	  If "scan=image" makes an index of image parameters.
 c  pjt  15-mar-95 fix of statement order for LINUX
 c  mchw 31jul97	  Updated ListHead to use rangle instead of angles.
+c  pjt  22jun02   allow for integer*8 data coming back for MIR4, but 
+c                 interpretation is still incorrect for > 2G elements
 c
 c= itemize - List information about MIRIAD dataset(s)
 c& pjt
@@ -30,6 +32,8 @@ c	name represents a dataset, then a summary of the items within the
 c	dataset are given. If multiple input files are given, it acts as
 c       a file scanner, and some minimal information is given about the 
 c	the kind of dataset.
+c       Large datasets with more than 2147483648 are reported with the wrong
+c       count.
 c@ in
 c	The name of either a dataset, or an item within a data set or a 
 c	wildcard. For example:
@@ -76,7 +80,7 @@ c
       LOGICAL   rmode
       INTEGER   len1
 
-      CALL output( 'Itemize: Version 31-JUL-97' )
+      CALL output( 'Itemize: Version 22-jun-02' )
 c
 c  Get the input parameters.
 c
@@ -354,7 +358,7 @@ c------------------------------------------------------------------------
 	parameter(OFFI=4, OFFJ=4, OFFR=4, OFFD=8, OFFC=8)
 	parameter(SIZEI=4,SIZEJ=2,SIZER=4,SIZED=8,SIZEC=8)
 	integer ntypes,maxNelm
-	parameter(ntypes=6,maxNelm=64)
+	parameter(ntypes=7,maxNelm=64)
 c
 	logical more
 	character descr*32,type*16,line*132,previous*132
@@ -368,7 +372,8 @@ c
 	data (types(i),defNelm(i),defFmt(i),i=1,ntypes)/
      *	  'integer  ', 6,'i12       ','integer*2',10,'i8        ',
      *	  'real     ', 6,'(1pg12.4) ','double   ', 6,'(1pd12.4) ',
-     *	  'complex  ', 3,'(1p2g12.4)','text     ', 1,'a         '/
+     *	  'complex  ', 3,'(1p2g12.4)','text     ', 1,'a         ',
+     *    'integer*8',10,'i20'/
 c
 c  Determine information about the item, determine its type.
 c
