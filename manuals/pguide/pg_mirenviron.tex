@@ -1,0 +1,95 @@
+%------------------------------------------------------------------------
+% Appendix - MIRIAD Environment Variables
+%------------------------------------------------------------------------
+%  History
+%
+%  --mar91 mjs  Original version.
+%  23jun91 mjs  Added WIPHELP for WIP program; alphabetized list.
+%
+%------------------------------------------------------------------------
+
+The following list gives a brief description of each of the standard
+MIRIAD environment variables.
+\vskip .2in  
+
+{\raggedright
+\tabskip=0em
+\halign{#\tabskip=2em&#\hfil\cr
+
+MIR&The home directory of the MIRIAD system.\cr
+&\cr
+MIRBIN&The binary directory containing MIRIAD executables.\cr
+      &\$MIR/bin/sun4 on a sun4, \$MIR/bin/sun3 on a sun3, etc.\cr
+&\cr
+MIRCAT&A directory for files needed by MIRIAD programs.\cr
+      &\$MIR/cat\cr
+&\cr
+MIRDEF&Default directory to place ``lastexit'' file.\cr
+      &Generally the current working directory.\cr
+&\cr
+MIRDOC&The directory containing MIRIAD on-line docs.\cr
+      &\$MIR/doc\cr
+&\cr
+MIRHELLO&Set at logon as a ``motd'' switch.\cr
+&\cr
+MIRHOST&The host hardware (sun3, sun4, u2, vms, convex).\cr
+&\cr
+MIRINC&The directory containing general MIRIAD include files.\cr
+      &\$MIR/src/inc\cr
+&\cr
+MIRLIB&The binary directory containing MIRIAD libraries.\cr
+      &\$MIR/lib/sun4 on a sun4, \$MIR/lib/sun3 on a sun3, etc.\cr
+&\cr
+MIRLOG&Log file for MIRIAD programs.\cr
+      &/tmp/\$USER.mirlog\cr
+&\cr
+MIRLPGP&PGPLOT library to use in loading programs.\cr
+       &\$MIRLIB/libpgplot.a, or installation-set.\cr
+&\cr
+MIRLXDS&Installation's directory for X-libraries (or null string).\cr
+       &/usr/local/lib (at Illinois).\cr
+       &/usr/lib (at Maryland).\cr
+&\cr
+MIRNEWS&Placeholder for future MIRIAD ``news'' feature.\cr
+       &\$MIR/news\cr
+&\cr
+MIRPAGER&Used in presenting formatted on-line docs.\cr
+        &doc\cr
+&\cr
+MIRPDOC&The directory containing on-line docs for executables.\cr
+      &\$MIR/doc/prog\cr
+&\cr
+MIRPROG&Source code for programs resides here.\cr
+       &\$MIR/src/prog\cr
+&\cr
+MIRSAVE&Allow ``test'' systems to remember the ``production'' system.\cr
+       &The production \$MIR.\cr
+&\cr
+MIRSDOC&The directory containing on-line docs for subroutines.\cr
+      &\$MIR/doc/subs\cr
+&\cr
+MIRSRC&All MIRIAD source code resides here.\cr
+      &\$MIR/src\cr
+&\cr
+MIRSUBS&Source code for subroutines resides here.\cr
+       &\$MIR/subs\cr
+&\cr
+MIRSW&``p'' to compile with optimization, or ``t'' for debugging.\cr
+&\cr
+MIRXLIB&Installation's ``libX11.a'' file (or null string).\cr
+       &/usr/openwin/lib/libX11.a (at Berkeley Sun4).\cr
+       &/usr/local/lib/libX11.a (at Illinois Sun4).\cr
+       &-lX11 (at Maryland Sun3 and Sun4).\cr
+       &/usr/lib/libX11.a (at NCSA's Cray 2).\cr
+       &/usr/lib/libX11.a (at NCSA's Convex).\cr
+&\cr
+&\cr
+&\cr
+&\cr
+WIPHELP&Help file for MIRIAD's WIP program.\cr
+       &\$MIR/src/spec/wip/wiphelp.dat\cr
+&\cr
+PGPLOT\_FONT&PGPLOT's grfont.dat file (see \$MIRLPGP definition).\cr
+           &\$MIRLIB/grfont.dat\cr
+}
+}
