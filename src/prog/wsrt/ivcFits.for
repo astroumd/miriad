@@ -1,7 +1,7 @@
 ************************************************************************
 	program fits
 	implicit none
-c= fits - Conversion between MIRIAD and FITS image and uv formats
+c= ivcFits - Conversion between MIRIAD and FITS image and uv formats
 c& rjs
 c: data transfer
 c+
@@ -297,9 +297,12 @@ c    rjs  25-nov-98  More work on better handling of image projection and rotati
 c    rjs  07-jan-99  Write dates in new FITS format.
 c    rjs  26-feb-99  Used new subroutine "fitdate" to be more robust to
 c		     corrupted dates.
+c    gmx  20-feb-04  Changed the inline documentation to match the task
+c                    name (ivcFits). Before it ended up in the documentation
+c                    as `fits', which made it invisible.
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version='Fits: version 1.2 07-Jul-00')
+	parameter(version='ivcFits: version 1.2 07-Jul-00')
 	character in*128,out*128,op*8,uvdatop*12
 	integer velsys
 	real altrpix,altrval
