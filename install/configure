@@ -6568,7 +6568,7 @@ case $TELESCOPE in
 	def_maxbase=435
 	def_maxchan=7681   #  rao: 12288 ?
 	def_maxwin=48
-	def_maxwide=18     #  rao: 50 ?
+	def_maxwide=50     #  rao: 50 ?
 	continue;;
      "wsrt")  echo "Selecting WSRT array"
 	continue;;
