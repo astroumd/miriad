@@ -3,7 +3,8 @@
 #  Generate files for subsystems like:  $AIPS++/code/aips/mirlib
 #  (though note as of this writing, summer 2004) this is still the old MIR3
 #  We assume here the new MIR4 version.
-
+#
+#  TODO:     Some linux dependant commands/options in here
 
 if ($?MIR == 0) then
   echo MIR is not defined, you need to have a running MIRIAD to clone the mirlib library
@@ -36,19 +37,23 @@ set mkfl=(Makefile)
 
 set cc=gcc
 #set cflags=(-g -Wall)
-set cflags=(-g -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE) 
+set cflags=(-g -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -fPIC)
 
 # clone files from the $MIR tree
 
 foreach f ($inch)
-  cp $MIRINC/$f .
+  cp -p $MIRINC/$f .
 end
 
 foreach f ($subh $subs)
-  cp $MIRSUBS/$f .
+  cp -p $MIRSUBS/$f .
 end
 
-cp $MIR/install/Makefile .
+cp -p $MIR/install/Makefile .
+
+echo `cat $MIR/VERSION`_mirlib > VERSION
+
+echo "Created by the mirlib.export script on `date`" > README.mirlib
 
 # only compile if a tar file is not made
 
@@ -63,6 +68,7 @@ else
     $cc $cflags -c $f
   end
   ar ruv libmir.a *.o
+  ld -shared -o libmir.so --whole-archive libmir.a
   $cc $cflags -DTESTBED -o uvio uvio.c libmir.a -lm
 
   #  install
@@ -71,3 +77,4 @@ else
   if ($lib != $null) cp libmir.a $lib
   if ($inc != $null) cp miriad.h sysdep.h $inc
 endif
+
