@@ -11,6 +11,9 @@ c       based on a adaptive window around a velocities from a model
 c       velocity field.  The output mask cube can then be used in MOMENT 
 c       to create a more realistic velocity field.
 c
+c       Warning: ROTCURMASK allocates two full MAXDIM*MAXDIM maps for
+c       faster computations.
+c
 c@ in
 c	The input data cube. The fist two axes should be
 c       spatial, the third axis should have units km/s (or something
@@ -43,7 +46,10 @@ c--
 c
 c  History:
 c    14aug01 pjt/snv  Created to try some fancier masking in bimasong data
-
+c
+c  Todo:
+c       see if this can be written with only single MAXDIM arrays
+c       or does that force a VEL-RA-DEC cube or so?
 c------------------------------------------------------------------------
 	include 'maxdim.h'
  	character version*(*)
@@ -92,12 +98,12 @@ c
 
 	call xyopen(lrotmod,rotmod,'old',MAXNAX,nsize2)
 	call rdhdi(lrotmod,'naxis',naxis2,0)
-c	--- check if lrotmod is 2D confirm to lin
+c	--- check if lrotmod is 2D conform to lin
 
 	if (Qmom2) then
 	   call xyopen(lmom2,mom2,'old',MAXNAX,nsize2)
 	   call rdhdi(lmom2,'naxis',naxis2,0)
-c	   --- check if lmom2 is 2D confirm to lin
+c	   --- check if lmom2 is 2D conform to lin
 	   do j=1,nsize(2)
 	      call xyread(lmom2,j,mommap(1,j))
 	      call xyflgrd(lmom2,j,mask)

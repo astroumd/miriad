@@ -5,6 +5,9 @@ c     03aug91 pjt   created out of haste, no region= processing done
 c     04aug91 pjt   using HEADCOPY now, readied for submission
 c     06mar92 pjt   appeased mjs: got rid of unused line
 c     11mar93 pjt   maxnax.h
+c
+c  Todo:
+c	look into weird RSS size behavior w.r.t. MAXDIM
 c-----------------------------------------------------------------------
 c
 c= imsharp - Sharpen an image
@@ -20,6 +23,7 @@ c     Other methods to sharpen images: use SMOOTH with norm=0.0 and
 c     divide the smoothed map by the original map using MATHS (unsharp
 c     masking). Also: Shift or rotate an image, and subtract it from
 c     the original. Good for (non)axysymmetric features resp.
+c
 c@ in
 c     The input image. No default.
 c@ out

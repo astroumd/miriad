@@ -115,6 +115,10 @@ c    rjs  29aug99  Some FORTRAN standardization.
 c    rjs   3sep99  Change pgpt1 to pgpt calls.
 c    lss   3sep99  pgpt bug when order negative; added rms output line
 c    pjt  20sep99  fixed obvious syntax error - does anybody use flint anymore
+c
+c  Notes:
+c	this program scales oddly in RSS when maxdim is increased
+c	
 c----------------------------------------------------------------------c
 	include 'maxdim.h'
 	integer maxco,maxnax,naxis,maxch
