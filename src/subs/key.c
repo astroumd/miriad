@@ -16,6 +16,7 @@
  *    pjt  03sep98 fixed malloc(size+1) bug with interesting side-effects
  *		   on linux and HP-UX
  *    pjt   5aug99 increased MAXSTRING to 1024 (also do keyf.f !!!)
+ *    pjt   6mar01 increased MAXSTRING to 2048
  ***********************************************************************
  */
 
@@ -36,7 +37,7 @@ extern int dexpand_c();
 
 #define KEYTRUE        1
 #define KEYFALSE       0
-#define MAXSTRING   1024
+#define MAXSTRING   2048
 
 typedef struct ckeys {
     char *key;   /* Pointer to a malloc'd string holding the key name. */

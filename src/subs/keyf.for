@@ -50,6 +50,7 @@ c     jm   16nov94    Removed obsolete reference to key.h.
 c     jm   27dec94    Changed call of buglabel() to keyinit() to add
 c                     additional checking.
 c    pjt    5aug99    Increased cmdline arg to 1024 from 512 (also key.c !!!)
+c    pjt    6mar01    Increased cmdline arg to 2048
 c************************************************************************
 c* KeyIni -- Initialise the `key' routines.
 c& pjt
@@ -74,7 +75,7 @@ c	arg		The argument buffer
 c
 c------------------------------------------------------------------------
 	integer status,lun,arglen,argnum,narg
-	character arg*1024,argv0*32,task*32
+	character arg*2048,argv0*32,task*32
 c
 c  Externals.
 c
