@@ -30,8 +30,10 @@
 #  Modification for a convex or sun3 installation is
 #  straightforward.
 #  -------------------------------------------------------------
-setenv MIR      "/appl/lai/miriad/mirdir"
-setenv MIRHOST  "sun4sol"
+if ($?MIR == 0) then
+  setenv MIR      "/mir_rootdir"
+endif
+setenv MIRHOST  "mir_hosttype"
 setenv MIRXINC  "/usr/openwin/include"
 setenv MIRXLIB  "/usr/local/lib/X11"
 setenv AIPSTV   "XASIN"
