@@ -73,6 +73,10 @@ c                   (in arcsec), the image value, and the radius in the disk
 c                   defined by PA and INCLINE.
 c         spline    use a spline fit unstead of a step function to estimate
 c                   the intensity at any radius for residual images
+c@ medsmooth
+c        Smoothing option of radial profile when option=median is used in
+c        residual map computation. Default: 0
+c     
 c@ log
 c	The output log file. The default is the terminal.
 c--
@@ -114,13 +118,16 @@ c    pjt   23oct02      add spline option
 c    pjt   24nov03      maxring was defined too short, didn't write out
 c                       rows before blc(2) and above trc(2)
 c    pjt   25nov03      fix problems in headcopy if blc/trc are sub-imaged
+c    snv   25nov03      Added radial profile smooth option
+c    pjt   13dec03      Documented the previous, add output history,
+c                       fixed residual map computation
 c
 c----------------------------------------------------------------------c
         include 'mirconst.h'
 	include 'maxdim.h'
 	include 'mem.h'
         character*(*) label,version
-        parameter(version='version 25-nov-2003')
+        parameter(version='version 14-dec-2003')
         double precision rts,value
         parameter(label='Integrate a Miriad image in elliptical annuli')
         integer maxnax,maxboxes,maxruns,naxis,axis,plane,maxring
@@ -147,7 +154,11 @@ c
         character*1 itoaf
         real pbget
         double precision seval
-c
+
+
+        integer jj, kk, jcount
+        real totalj,medsmooth,fmed(maxdim),fmed1(maxdim)
+
 c Get inputs.
 c
         call output( 'ELLINT: '//version )
@@ -166,6 +177,7 @@ c
         call keyr('radius',rstep,0.)
         call keyr('scale',scale,1.)
         call keya('telescop',pbtype,' ')
+        call keyr('medsmooth',medsmooth,0.)    
         call getopt(dopb,domedian,domode,natural,dotab,dospline)
         call keya('log',logf,' ')
         call keyfin
@@ -334,202 +346,237 @@ c
               endif
             enddo
           enddo
+
+c     
+c     If we want the median or mode, make a second pass through the plane.
+c     We now know how big the arrays need to be for each annulus
+c     so allocate memory first for median/mode arrays
+c     
+          if (domedian.or.domode) then
+             do ir = irmin, irmax
+                call memalloc (ipm(ir), nint(pixe(ir)), 'r')
+                pixe(ir) = 0.0
+             enddo
+c     
+             do j = blc(2),trc(2)
+                call xyread(lin,j,buf)
+                call xyflgrd(lin,j,mask)
+                y = (j-crpix(2))*cdelt(2) - center(2)
+                do i = blc(1),trc(1)
+                   x = (i-crpix(1))*cdelt(1) - center(1)
+                   keep  = mask(i)
+                   if (keep.and.dopb) then
+                      pbfac = pbget(pbobj,real(i),real(j))
+                      keep = pbfac.gt.0
+                      if(keep) buf(i)=buf(i)/pbfac
+                   endif
+c     
+                   r =
+     *    sqrt((y*cospa-x*sinpa)**2+((y*sinpa+x*cospa)/cosi)**2)
+                   if(r.ge.rmin .and. r.lt.rmax .and. keep)then
+                      ir = (r-rmin)/rstep + 1
+c     
+                      pixe(ir) = pixe(ir) + 1.
+                      memr(ipm(ir)+nint(pixe(ir))-1) = buf(i)
+                   end if
+                enddo
+             enddo
+          endif
+
+
+c     Write out the results (for mean and median only)
+c     
+          if (.not.dotab) then
+             call logwrit(' ')
+             if (domedian) then
+                write(line,'(a,a,a,a,a,a)') '   Radius(") ',
+     *               '   Pixels   ', '  Median  ', '      rms  ',
+     *               ' Ann. Sum  ',' Cum. Sum '
+             else
+                write(line,'(a,a,a,a,a,a)') '   Radius(") ',
+     *               '   Pixels   ', ' Average  ', '      rms  ',
+     *               ' Ann. Sum  ',' Cum. Sum '
+             endif
+             call logwrit(line(1:72))
+c     
+             do ir = irmin,irmax
+                r = ir*rstep+rmin
+                if(pixe(ir).ne.0.) then
+                   ave = flux(ir)/pixe(ir)
+                   var = flsq(ir)/pixe(ir)-ave*ave
+                   rms = 0.0
+                   if (var.gt.0.0) rms = sqrt(var)
+                else
+                   ave = 0.0
+                   rms = 0.0
+                endif
+                fsum = fsum + flux(ir)
+c     
+c     scale intensity values.
+c     
+                if (scale.ne.1.) then
+                   ave = ave * scale
+                   rms = rms * scale
+                   flux(ir) = flux(ir) * scale
+                   fsum = fsum * scale
+                endif
+c     
+                if (domedian) then
+                   call median (memr(ipm(ir)), nint(pixe(ir)), med)
+                   if(scale.ne.1.) med = med * scale
+                   fmed(ir)=med
+                   write(line,'(6f11.3,1x)') r,pixe(ir),med,rms,
+     *                  flux(ir)/cbof,fsum/cbof
+                else
+                   write(line,'(6f11.3,1x)') r,pixe(ir),ave,rms,
+     *                  flux(ir)/cbof,fsum/cbof
+                endif
+c     
+                call logwrit(line(1:72))
+             enddo
+c     
+c     write out the results for mode
+c     
+             if(domode)then
+                call logwrit(' ')
+                if (domode) then 
+                   write(line,'(a,a,a,a,a,a)') '   Radius(") ',
+     *                  '   Pixels   ', '  Mode    ', '      rms  ',
+     *                  ' Ann. Sum  ',' Cum. Sum '
+                else
+                   write(line,'(a,a,a,a,a,a)') '   Radius(") ',
+     *                  '   Pixels   ', ' Average  ', '      rms  ',
+     *                  ' Ann. Sum  ',' Cum. Sum '
+                endif
+                call logwrit(line(1:72))
+c     
+                do ir = irmin,irmax
+                   r = ir*rstep+rmin
+                   if(pixe(ir).ne.0.) then
+                      ave = flux(ir)/pixe(ir)
+                      var = flsq(ir)/pixe(ir)-ave*ave
+                      rms = 0.0
+                      if (var.gt.0.0) rms = sqrt(var)
+                   else
+                      ave = 0.0
+                      rms = 0.0
+                   endif
+                   fsum = fsum + flux(ir)
+c     
+                   if (domode) then
+                      call mode (memr(ipm(ir)), nint(pixe(ir)), xmode)
+                      write(line,'(6f11.3,1x)') r,pixe(ir),xmode,rms,
+     *                     flux(ir)/cbof,fsum/cbof
+                   else
+                      write(line,'(6f11.3,1x)') r,pixe(ir),ave,rms,
+     *                     flux(ir)/cbof,fsum/cbof
+                   endif
+c     
+                   call logwrit(line(1:72))
+                enddo
+             endif
+
 c
 c     if output residual map requested
 c
           if (dout) then
-          if (dospline) then
-             write(*,*) 'New option=spline used: irmin,max=',irmin,irmax
-             do i=irmin,irmax
-                rad(i) = rmin + (i-irmin+0.5)*rstep
-                fluxfit(i) = flux(i)/pixe(i)
+             write(*,*) 'OUTPUT MODE'
+             if (domedian) then
+                write(*,*) 'New option=medsmooth:0 medsmooth=',medsmooth
+                write(*,*) 'irmin,max=',irmin,irmax
+                do i=irmin,irmax
+                   fmed1(i) = fmed(i)
+                enddo
+                do i=irmin,irmax
+                   totalj = 0.
+                   jcount = 0
+                   do jj = i-medsmooth,i+medsmooth
+                      kk=jj
+                      if (jj .lt. irmin) kk = irmin
+                      if (jj .gt. irmax) kk = irmax
+                      totalj = totalj + fmed(kk)
+                      jcount = jcount + 1
+                   enddo
+                   fmed(i) = totalj/jcount
+                enddo
+             else
+                do i=irmin,irmax
+                   fmed(i) = flux(i)/pixe(i)
+                enddo
+             endif
+
+             if (dospline) then
+                write(*,*) 'option=spline: irmin/max=',irmin,irmax
+                do i=irmin,irmax
+                   rad(i) = rmin + (i-irmin+0.5)*rstep
+                   if (domedian) then
+                      fluxfit(i) = fmed(i)
+                   else
+                      fluxfit(i) = flux(i)/pixe(i)
+                   endif
+                enddo
+                nspl = irmax-irmin+1
+                call spline(nspl,rad(irmin),fluxfit(irmin),
+     *                      bspl,cspl,dspl)
+                write(*,*) 'new spline mode:',nspl
+                write(*,*) 'ring center min,max=',rad(irmin),rad(irmax)
+                write(*,*) 'intensity @ edges',
+     *               fluxfit(irmin),fluxfit(irmax)
+
+             endif
+             do j = blc(2),trc(2)
+                call xyread(lin,j,buf)
+                call xyflgrd(lin,j,mask)
+                y = (j-crpix(2))*cdelt(2) - center(2)
+                do i = blc(1),trc(1)
+                   x = (i-crpix(1))*cdelt(1) - center(1)
+                   keep  = mask(i)
+                   if (keep.and.dopb) then
+                      pbfac = pbget(pbobj,real(i),real(j))
+                      keep = pbfac.gt.0
+                      if(keep) buf(i)=buf(i)/pbfac
+                   endif
+                   r = sqrt((y*cospa-x*sinpa)**2
+     *                +    ((y*sinpa+x*cospa)/cosi)**2)
+                   if(r.ge.rmin .and. r.lt.rmax .and. keep)then
+                      ir = (r-rmin)/rstep + 1
+                      if (dospline) then
+                         rd = r
+                         buf(i) = buf(i) - seval(nspl,rd,
+     *                        rad(irmin),fluxfit(irmin),bspl,cspl,dspl)
+                      else
+                         buf(i) = buf(i) - fmed(ir)
+                      endif
+                   endif
+                enddo
+                call xywrite(lout,j,buf)
+                call xyflgwr(lout,j,mask)
              enddo
-             nspl = irmax-irmin+1
-             call spline(nspl,rad(irmin),fluxfit(irmin),bspl,cspl,dspl)
-             write(*,*) 'new spline mode:',nspl
-             write(*,*) 'ring center min,max=',rad(irmin),rad(irmax)
-             write(*,*) 'intensity @ edges',
-     *            fluxfit(irmin),fluxfit(irmax)
+             do i=1,nsize(1)
+                buf(i)  = 0.0
+                mask(i) = .FALSE.
+             enddo
+             do j=1,blc(2)-1
+                call xywrite(lout,j,buf)
+                call xyflgwr(lout,j,mask)             
+             enddo
+             do j=trc(2)+1,nsize(2)
+                call xywrite(lout,j,buf)
+                call xyflgwr(lout,j,mask)             
+             enddo
 
           endif
-          do j = blc(2),trc(2)
-            call xyread(lin,j,buf)
-            call xyflgrd(lin,j,mask)
-            y = (j-crpix(2))*cdelt(2) - center(2)
-            do i = blc(1),trc(1)
-              x = (i-crpix(1))*cdelt(1) - center(1)
-              keep  = mask(i)
-              if (keep.and.dopb) then
-                pbfac = pbget(pbobj,real(i),real(j))
-                keep = pbfac.gt.0
-                if(keep) buf(i)=buf(i)/pbfac
-              endif
-              r = sqrt((y*cospa-x*sinpa)**2+((y*sinpa+x*cospa)/cosi)**2)
-              if(r.ge.rmin .and. r.lt.rmax .and. keep)then
-                ir = (r-rmin)/rstep + 1
-                if (dospline) then
-                   rd = r
-                   buf(i) = buf(i) - seval(nspl,rd,
-     *                         rad(irmin),fluxfit(irmin),bspl,cspl,dspl)
-                else
-                   buf(i) = buf(i) - flux(ir)/pixe(ir)
-                endif
-              endif
-            enddo
-            call xywrite(lout,j,buf)
-            call xyflgwr(lout,j,mask)
-          enddo
-          do i=1,nsize(1)
-             buf(i)  = 0.0
-             mask(i) = .FALSE.
-          enddo
-          do j=1,blc(2)-1
-            call xywrite(lout,j,buf)
-            call xyflgwr(lout,j,mask)             
-          enddo
-          do j=trc(2)+1,nsize(2)
-            call xywrite(lout,j,buf)
-            call xyflgwr(lout,j,mask)             
-          enddo
-
-          endif
-
-c
-c If we want the median or mode, make a second pass through the plane.
-c We now know how big the arrays need to be for each annulus
-c so allocate memory first for median/mode arrays
-c
-          if (domedian.or.domode) then
-            do ir = irmin, irmax
-              call memalloc (ipm(ir), nint(pixe(ir)), 'r')
-              pixe(ir) = 0.0
-            enddo
-c
-            do j = blc(2),trc(2)
-              call xyread(lin,j,buf)
-              call xyflgrd(lin,j,mask)
-              y = (j-crpix(2))*cdelt(2) - center(2)
-              do i = blc(1),trc(1)
-                x = (i-crpix(1))*cdelt(1) - center(1)
-                keep  = mask(i)
-                if (keep.and.dopb) then
-                  pbfac = pbget(pbobj,real(i),real(j))
-                  keep = pbfac.gt.0
-                  if(keep) buf(i)=buf(i)/pbfac
-                endif
-c
-                r =
-     *            sqrt((y*cospa-x*sinpa)**2+((y*sinpa+x*cospa)/cosi)**2)
-                if(r.ge.rmin .and. r.lt.rmax .and. keep)then
-                  ir = (r-rmin)/rstep + 1
-c
-                  pixe(ir) = pixe(ir) + 1.
-                  memr(ipm(ir)+nint(pixe(ir))-1) = buf(i)
-                end if
-              enddo
-            enddo
-          endif
-c
-c  Write out the results (for mean and median only)
-c
-        if (.not.dotab) then
-          call logwrit(' ')
-          if (domedian) then
-            write(line,'(a,a,a,a,a,a)') '   Radius(") ',
-     *       '   Pixels   ', '  Median  ', '      rms  ',
-     *       ' Ann. Sum  ',' Cum. Sum '
-          else
-            write(line,'(a,a,a,a,a,a)') '   Radius(") ',
-     *       '   Pixels   ', ' Average  ', '      rms  ',
-     *       ' Ann. Sum  ',' Cum. Sum '
-          endif
-          call logwrit(line(1:72))
-c
-          do ir = irmin,irmax
-            r = ir*rstep+rmin
-            if(pixe(ir).ne.0.) then
-              ave = flux(ir)/pixe(ir)
-              var = flsq(ir)/pixe(ir)-ave*ave
-              rms = 0.0
-              if (var.gt.0.0) rms = sqrt(var)
-            else
-              ave = 0.0
-              rms = 0.0
-            endif
-            fsum = fsum + flux(ir)
-c
-c  scale intensity values.
-c
-	    if (scale.ne.1.) then
-	      ave = ave * scale
-	      rms = rms * scale
-	      flux(ir) = flux(ir) * scale
-	      fsum = fsum * scale
-	    endif
-c
-            if (domedian) then
-              call median (memr(ipm(ir)), nint(pixe(ir)), med)
-	      if(scale.ne.1.) med = med * scale
-              write(line,'(6f11.3,1x)') r,pixe(ir),med,rms,
-     *                             flux(ir)/cbof,fsum/cbof
-            else
-              write(line,'(6f11.3,1x)') r,pixe(ir),ave,rms,
-     *                             flux(ir)/cbof,fsum/cbof
-            endif
-c
-            call logwrit(line(1:72))
-         enddo
-c
-c   write out the results for mode
-c
-         if(domode)then
-          call logwrit(' ')
-          if (domode) then 
-            write(line,'(a,a,a,a,a,a)') '   Radius(") ',
-     *       '   Pixels   ', '  Mode    ', '      rms  ',
-     *       ' Ann. Sum  ',' Cum. Sum '
-          else
-            write(line,'(a,a,a,a,a,a)') '   Radius(") ',
-     *       '   Pixels   ', ' Average  ', '      rms  ',
-     *       ' Ann. Sum  ',' Cum. Sum '
-          endif
-          call logwrit(line(1:72))
-c
-          do ir = irmin,irmax
-            r = ir*rstep+rmin
-            if(pixe(ir).ne.0.) then
-              ave = flux(ir)/pixe(ir)
-              var = flsq(ir)/pixe(ir)-ave*ave
-              rms = 0.0
-              if (var.gt.0.0) rms = sqrt(var)
-            else
-              ave = 0.0
-              rms = 0.0
-            endif
-            fsum = fsum + flux(ir)
-c
-            if (domode) then
-              call mode (memr(ipm(ir)), nint(pixe(ir)), xmode)
-              write(line,'(6f11.3,1x)') r,pixe(ir),xmode,rms,
-     *                             flux(ir)/cbof,fsum/cbof
-            else
-              write(line,'(6f11.3,1x)') r,pixe(ir),ave,rms,
-     *                             flux(ir)/cbof,fsum/cbof
-            endif
-c
-            call logwrit(line(1:72))
-          enddo
-         endif
-
-         if (domedian.or.domode) then
-            do ir = irmin, irmax
-               call memfree (ipm(ir), nint(pixe(ir)), 'r')
-            enddo
-         endif
 c     
-c  End our mode addition.
-c
-         endif
+
+             if (domedian.or.domode) then
+                do ir = irmin, irmax
+                   call memfree (ipm(ir), nint(pixe(ir)), 'r')
+                enddo
+             endif
+c     
+c     End our mode addition.
+c     
+          endif
 c
 c  Increment plane.
 c
@@ -540,7 +587,13 @@ c
 c  All done.
 c
       call xyclose(lin)
-      if (dout) call xyclose(lout)
+      if (dout) then
+         call hisopen(lout,'append')
+         call hiswrite(lout,'ELLINT: '//version)
+         call hisinput(lout,'ELLINT')
+         call hisclose(lout)
+         call xyclose(lout)
+      endif
       call logclose
       end
 c********1*********2*********3*********4*********5*********6*********7*c
