@@ -54,6 +54,7 @@
    rjs   25nov95 Fix EQUIVALENCE handling, better treatment of exclamations,
 		 do-loop variables. Flag VMS record structures.
    pjt   16jun04 add - to options list to trigger --help habituals
+   pjt    7nov04 better headers for gcc 3.4.2 (e.g. linux/FC3)
 
 
 TODO:
@@ -62,7 +63,7 @@ TODO:
 
 ******************************************************************************/
 
-#define VERSION_ID "16-jun-2004"
+#define VERSION_ID "7-nov-2004"
 
 /*= flint - fortran source code verifier */
 /*& rjs pjt */
@@ -241,6 +242,7 @@ TODO:
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 /* Define all the flags. */
 
@@ -361,6 +363,7 @@ typedef struct symbol {	char *name;
 		struct symbol *fwd;} SYMBOL;
 
 /* Declare all the routines that I use. */
+/* TODO: these should be properly prototypes, e.g. via cproto */
 
 private void bug(),error(),clear_hash_table(),the_end();
 private void define_intrinsics(),define_specifics(),define_statements();
@@ -394,7 +397,7 @@ private int set_variable(),inquire_variable(),set_label();
 private SYMBOL *set_routine(),*inquire_routine();
 private int isfunction(),issubstring(),get_arg_intent();
 private void banish_hollerith(),set_block(),end_label(),end_block();
-char *malloc();
+/*char *malloc();*/
 
 #define issymbol(s) (isalnum(s) || (s) == '_' || (s) == '$' || (s) == '%')
 
@@ -417,9 +420,7 @@ INC_DIR *dirhead;
 
 #define ERROR(a) sprintf a;error(errmsg)
 /************************************************************************/
-int main(argc,argv)
-int argc;
-char *argv[];
+int main(int argc,char *argv[])
 {
   char *output_file,*s,*library_flag;
   int i,i0;
