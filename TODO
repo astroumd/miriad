@@ -1,0 +1,3 @@
+- integer*8 support; ratty flag to go back to the old situation if
+  the fortran compiler does not support integer*8
+  [this will support scratchfiles > 8GB]
