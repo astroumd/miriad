@@ -1,0 +1,79 @@
+#! /bin/csh -f
+# ---------------------------------------------------------------
+#* mir.install - Install miriad subsystems from source code
+#& mjs
+#: system operation
+#+
+#  Load the miriad system (or specified parts of it) from source
+#  code and write log files to miriad's tmp directory.
+#
+#    Usage:  mir.install [$argv]
+#
+#            $argv  = [scripts] [libs] [tasks] [gendoc]
+#            libs   = [dtm] [www] [hdf] [linpack] [pgplot]
+#                     [readline] [subs]
+#            tasks  = [wip] [mxv] [prog] [xmrecvlist]
+#
+#    $argv = subsystems to load.  None means to load the entire
+#            system from source code (first scripts, then libs,
+#	     then tasks, then gendoc to generate on-line docs).
+#
+#    Specifying one or more of these will load only the specified
+#    section in the order given by the user.  Logfiles are placed
+#    in miriad's tmp directory.
+#--
+# ---------------------------------------------------------------
+set mir    = $MIR
+set host   = $MIRHOST
+set lsys   = $mir/bin/localsys
+set tdir   = $mir/tmp
+set admdir = $mir/src/sys/bin
+
+set fn     = $$.$host
+# ---------------------------------------------------------------
+if (-e $lsys/mir.install && ! $?local_compile) then
+  echo $lsys/mir.install exists =======================
+  setenv local_compile
+  exec $lsys/mir.install $argv
+endif
+# ---------------------------------------------------------------
+cd $admdir >& /dev/null
+set subslist = (`echo lib.* |sed 's&lib\.&&g'`)
+set proglist = (`echo pgm.* |sed 's&pgm\.&&g'`)
+# ---------------------------------------------------------------
+if ($#argv == 0) then
+   $admdir/mir.scripts >& $tdir/scripts.${fn}
+   foreach i ($subslist)
+      $admdir/lib.${i} >& $tdir/${i}.${fn}
+   end
+   foreach i ($proglist)
+      $admdir/pgm.${i} >& $tdir/${i}.${fn}
+   end
+   $admdir/mir.gendoc  >& $tdir/gendoc.${fn}
+   exit 0
+endif
+# ---------------------------------------------------------------
+foreach i ($argv)
+   if      ($i == scripts) then
+           $admdir/mir.scripts >& $tdir/scripts.${fn}
+   else if ($i == gendoc ) then
+           $admdir/mir.gendoc  >& $tdir/gendoc.${fn}
+   else if ($i == libs) then
+           foreach j ($subslist)
+	      $admdir/lib.${j} >& $tdir/${j}.${fn}
+           end
+   else if ($i == tasks) then
+           foreach j ($proglist)
+	      $admdir/pgm.${j} >& $tdir/${j}.${fn}
+           end
+   else if (`echo $subslist | grep -c $i` > 0) then
+	      $admdir/lib.${i} >& $tdir/${i}.${fn}
+   else if (`echo $proglist | grep -c $i` > 0) then
+	      $admdir/pgm.${i} >& $tdir/${i}.${fn}
+   else
+      echo "$i unrecognized." >& $tdir/$i.$fn
+   endif
+end
+# ---------------------------------------------------------------
+unsetenv local_compile
+exit 0

@@ -1,0 +1,61 @@
+#!/bin/csh -f
+# --------------------------------------------------------------
+#* mir.prog - Load tasks into the binary directory
+#& mjs
+#: system operation
+#+
+#  Load tasks into the binary directory.
+#
+#    Usage:  mir.prog [$argv]
+#
+#            argv = [mxv] [wip] [prog] [miriad tasks]
+#
+#    $argv = name of source code file(s).  If none are given,
+#            all tasks will be loaded.  Input files may be
+#            given with or without *.for and *.c filename
+#            extensions.
+#--
+# --------------------------------------------------------------
+set mir    = $MIR
+set host   = $MIRHOST
+set lsys   = $mir/bin/localsys
+set bindir = $mir/bin/$host
+set srcdir = $mir/src
+set docdir = $mir/doc/prog
+set admdir = $mir/src/sys/bin
+# --------------------------------------------------------------
+if (-e $lsys/mir.prog && ! $?local_compile) then
+  echo $lsys/mir.prog exists =======================
+  setenv local_compile
+  exec $lsys/mir.prog $argv
+endif
+# --------------------------------------------------------------
+if ($#argv == 0) then
+   cd $admdir >& /dev/null
+   foreach i (`ls pgm.*`)
+      $admdir/$i
+   end
+   exit 0
+endif
+# --------------------------------------------------------------
+set notmir = ""
+set ismir  = ""
+
+foreach i ($argv)
+   if (-e $admdir/pgm.${i}) then
+      set notmir = ($notmir pgm.${i})
+   else
+      set  sw    = on
+      set  ismir = ($ismir $i)
+   endif
+end
+
+foreach i ($notmir)
+   $admdir/$i
+end
+if ($?sw) then
+   $admdir/pgm.prog $ismir
+endif
+# --------------------------------------------------------------
+unsetenv local_compile
+exit 0
