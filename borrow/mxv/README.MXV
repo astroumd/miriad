@@ -1,0 +1,79 @@
+		MXV - Miriad X Visualizer
+
+MXV is supported on both Sun4s and the UI's Convex C3. To build MXV, first
+do 'make Makefile'. This will generate a Makefile for the current system.
+If it is necessary to define a new system type or change directories,
+edit the file 'Makefile.proto', NOT Makefile.
+
+MXV requires NCSA's hdf library and X11 R5. It also contains some of its
+own widgets.
+
+The file resources.nro describes the MXV specific resources. Use:
+	'tbl resources.nro | {p}troff -me'
+to generate an output file.
+
+	Files as of 7/92
+Makefile
+SRaster.c SRaster.h SRasterP.h
+Slider.c Slider.h SliderP.h
+WorkSpace.c WorkSpace.h WorkSpaceP.h
+bitmaps.h
+dtm.h dtmint.h
+fits.h gr_ani.c
+gr_anilev.c gr_arb.c
+gr_arblev.c gr_axes.c
+gr_boslev.c gr_boss.c
+gr_box1.c gr_box2.c
+gr_com.h
+gr_cube.c gr_cublev.c
+gr_def.h
+gr_dice1.c gr_dice2.c gr_dicelev.c
+gr_dspl.c gr_dsplev.c
+gr_ext.h
+gr_extplot.c
+gr_file.c gr_fillev.c
+gr_hislev.c gr_hist.c
+gr_image.c
+gr_inc.h
+gr_iso.h gr_iso1.c gr_iso2.c gr_isolev.c
+gr_main.c
+gr_misc.c
+gr_mos.c gr_moslev.c
+gr_pal.c gr_palette2.c
+gr_plot.h
+gr_proc.c
+gr_resources.h
+gr_subs.c gr_subslev.c
+gr_text.c
+gr_tile.c gr_tillev.c gr_toplev.c
+gr_var.h
+gr_vbuff.c
+gr_view.c gr_viewlev.c
+gr_xwi.c gr_xwi.h gr_xwi1a.c
+grcps.c grcut.c
+grdtm.c grdtm1.c
+grkon.c grkonlev.c
+grnew.c grps.c
+grtask.c grtry.c
+menus.c
+mxv.h
+mxv_icon.h
+ris.h
+sds.h
+td_axes.c
+td_com.h
+td_file.c
+td_fits.c td_fitsreader.c
+td_hdf.c
+td_inc.h
+td_main.c
+td_mem.c
+td_miriad.c
+td_misc.c
+td_pixel.c
+td_port.c
+td_var.h
+version.h
+xi_mainsub.c
+xi_palette.c
+ximage.h
