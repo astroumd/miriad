@@ -1,0 +1,91 @@
+#!/bin/csh -f
+
+set prog = antpat
+if ( "$1" == "" ) then
+doc $0; exit
+endif
+
+#= antpat - fit beamsize to dataset and add to header
+#& bpw
+#: Utility
+#+
+#  Fit the beamsize of an antennapattern and add it to the header.
+#  The plane= keyword can be used if a dataset contains multiple beams.
+#
+#@ beam
+#  input beam dataset [no default]
+#@ plane
+#  plane to fit to [1]
+#@ verbose
+#  if t, show individual commands [f]
+#--
+
+# History:
+#     -oct-97  bpw  Original version
+#   10-dec-97  bpw  Standardized
+
+#-------------------------------------------------------------------------------
+
+onintr finish; set exstat=1
+echo "$prog - version 1.1 10-dec-97"
+set fatal = "$prog - ### Fatal: "
+
+set img=1
+set verb=f
+foreach arg ( $* )
+   set key = `echo $arg | awk -F= '{print $1}'`
+   set val = `echo $arg | awk -F= '{print $2}'`; if ("$val" == "") goto key_err
+   if ( $key == beam    ) set beam = $val
+   if ( $key == plane   ) set img  = $val
+   if ( $key == verbose ) set verb = $val
+end
+
+set tmp  = /tmp/antpat
+set tlog = $tmp.log
+rm -rf $tmp.* >& /dev/null
+alias exec 'if($verb == t)echo \!*; \!* >&! $tlog; if($status == 1)goto failure'
+
+#-------------------------------------------------------------------------------
+
+if (   ! $?beam ) goto error_beam1
+if ( ! -d $beam ) goto error_beam2
+
+#-------------------------------------------------------------------------------
+
+exec imframe in=$beam region=image'('$img')' out=$tmp.A
+delhd in=$tmp.A/bmaj >& /dev/null
+delhd in=$tmp.A/bmin >& /dev/null
+
+restor beam=$tmp.A model=$tmp.A mode=convolve out=$tmp.A >& $tmp.R
+
+set bmaja = `cat $tmp.R | grep gaussian | awk '{print substr($0,28,6)}'`
+set bmina = `cat $tmp.R | grep gaussian | awk '{print substr($0,37,6)}'`
+set bpa   = `cat $tmp.R | grep angle    | awk '{print $3}'`
+
+set ator  = `calc acos\(-1.\)/3600/180`
+set bmajr = `calc $bmaja\*$ator`
+set bminr = `calc $bmina\*$ator`
+
+exec puthd in=$beam/bmaj value=$bmajr
+exec puthd in=$beam/bmin value=$bminr
+exec puthd in=$beam/bpa  value=$bpa
+
+echo "Beam = $bmajr x $bminr radian, pa = $bpa"
+echo "Beam = $bmaja x $bmina arcsec, pa = $bpa"
+
+#-------------------------------------------------------------------------------
+
+set exstat=0; goto finish
+
+error_beam1:
+   echo "$fatal a beam dataset must be specified"; goto finish
+error_beam2:
+   echo "$fatal beam dataset $beam does not exist"; goto finish
+key_err:
+   echo "$fatal no value given for keyword $key"; goto finish
+failure:
+   echo "$fatal Fatal: An error occurred; output from failed program follows"
+   cat $tmp.tlog; goto finish
+
+finish:
+rm -rf $tmp.* >& /dev/null; exit $exstat

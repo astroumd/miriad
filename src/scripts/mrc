@@ -1,0 +1,1011 @@
+#!/bin/csh -f
+
+#= MRC - Multi-Resolution CLEAN
+#& bpw
+#: deconvolution
+#+
+# MRC applies the Multi-Resolution CLEAN algorithm. This algorithm is an
+# adaptation of CLEAN particularly useful for extended sources and low
+# signal-to-noise maps. Maps which contain only point sources can better
+# be deconvolved with the standard CLEAN. Maps with sources larger than
+# about 4 beams and/or signal-to-noise ratios less than about 6 will be
+# deconvolved better with MRC.
+# MRC takes the input map and beam and makes a smooth and difference map
+# and beam. Both are separately cleaned and restored, then added
+# properly (see below for more details). The output is the cleaned map.
+# The cleaning of the smooth map concentrates on the extended structure
+# and low signal-to-noise areas, the separate cleaning of the difference
+# map allows one to keep the original resolution.
+# MRC allows you to save the beams and intermediate dirty maps, saving
+# some time when trying to rerun it. On the first run of MRC, use the in=
+# and beam= keywords. If you also use save=name,y,y, the beams and dirty
+# maps are saved. Rerunning MRC with the same keywords will then cause it
+# to use the saved datasets.
+# 
+# WARNING: MRC needs many intermediate files, which are stored on your
+# local directory. MRC tries to keep the running amount to a minimum,
+# but you might hit the limit anyway. Then the only solution is to clean
+# your dataset a few channels at a time, or get more diskspace.
+#
+# The algorithm works in detail as follows:
+# a) A gaussian with integral 1 is constructed.
+# b) The dirty beam is smoothed with the gaussian. The smoothed beam is
+#    subtracted from the original beam to yield a difference dirty beam.
+#    The smoothed beam is scaled back to have a peak value of 1. This
+#    scale factor is called 's'. The difference beam is also scaled back.
+# c) A clean beam dataset is constructed, and treated in the same way as
+#    dirty beam to form a smoothed and difference clean beam. The scale
+#    factor is called 'r'.
+# d) The input map is smoothed with the gaussian (and not scaled) to get
+#    a smoothed map. This is subtracted from the original to get a
+#    difference map.
+# e) The smoothed map is cleaned (using the standard miriad clean) with
+#    the smoothed dirty beam to get 'smooth components' and a 'smooth
+#    residual'.The components are then restored with the smoothed clean
+#    beam and scaled with 's/r'. Before cleaning, the smoothed map is
+#    smoothed with an extra factor 1.5 to create a signal mask, i.e. the
+#    region in the map where the S/N is larger than about 1. This step
+#    improves the quality of the clean.
+# f) The difference map is cleaned with the difference dirty beam to get
+#    'difference components' and a 'difference residual'. The components
+#    are then restored with the difference clean beam and scaled with
+#    's/(s-1) * (r-1)/r'.
+# g) The restored and scaled smoothed and difference map and the
+#    residuals of both cleans are added together to get the final
+#    result.  
+#
+#@ in
+#  The input dirty map. No default, unless 'save=' says to used saved maps.
+#@ beam
+#  The input dirty beam. No default, unless 'save=' says to use saved beams.
+#@ region
+#  Specifies the region in which to find clean components. See Users
+#  Manual or 'doc region' for instructions on how to specify this. The
+#  default is the inner quarter of all planes.
+#  Unless the beam dataset has size 2n-1, in which case it is the whole plane.
+#@ out
+#  The output dataset, i.e. the cleaned input map.
+#@ factor
+#  The factor with which to multiply the beamsize to get the fwhm of the
+#  smoothing gaussian. Default 1.7, 1.5
+#@ cutoff
+#  Up to three values: cutoff levels for cleaning smooth/difference map
+#  and for creating mask, in units of rms. Defaults: cutoff=1*rms of
+#  smoothed map for smooth map clean, 2*rms of original map for difference
+#  map clean, 2*rms of doubly-smoothed map for mask creation.
+#  If third cutoff < 0, use the absolute value, but remake the mask even
+#  if a file that could be the mask exists.
+#@ noise
+#  The noise level in the dirty map. Combined with cutoff= to tell CLEAN
+#  when to stop. No default.
+#  A second value can be given if 'clalg=2mrc' is used, giving the noise
+#  in the smoothed map. By default this is calculated.
+#@ clalg
+#  algorithm to use
+#  - clean - use standard clean, rather than multi-resolution clean
+#  - std   - clean smoothed map again, using standard clean
+#  - 2mrc  - clean smoothed map again, using mrc
+#  - reg2  - first clean smoothed map using standard clean with mask up to
+#            5 sigma, clean the rest using a box
+#  - test  - follow a 2mrc point-source clean; use in=, beam=, out= to specify
+#            maps, set region= to a small box around the point source
+#@ save
+#  The default is not to save any intermediate results. With save they can
+#  be saved. Save takes four arguments. The first gives a prefix for the
+#  saved datasets. The others indicate which saves are to be done and take
+#  the values 't', or 'f' (default is 't').
+#  (Also allowed are 1, T, y, or Y and 0, F, N or n).
+#  The 2nd argument refers to saving intermediate beams
+#  The 3rd argument refers to saving intermediate dirty maps and masks
+#  The 4th argument refers to saving intermediate results (components,
+#      restored components and residuals)
+#  If the 2nd argument is 't', the dirty beams, smoothing beams and clean
+#  beams are saved in a dataset with suffix '.beams'.
+#  If the 3rd argument is 't', the smooth and difference dirty maps and the
+#  signal mask are saved in datasets with suffixes '.smmap', '.dfmap' and
+#  '.mask'.
+#  If the 4th argument is 't', the intermediate results are saved in datasets
+#  with suffixes '.smcmp', '.smrst', '.smres', '.dfcmp', '.dfrst' and '.dfres'.
+#  For clalg=2mrc, the intermediate smooth clean map is saved with suffix
+#  '.smcln', and filename for saving intermediate results of the second stage
+#  have a ".2." added.
+#  Using save=name,t,t allows to skip remaking the beams and dirty maps for
+#  each run. If name.beams is present that is used preferentially over the
+#  value given by the 'beam=' keyword. If name.smmap and name.dfmap are
+#  present, these are used preferentially over the value given by the 'in='
+#  keyword.
+#--
+#
+# History:
+#   bpw  25-feb-93  Original version
+#   bpw  14-jul-93  Maximum can now be '1' too, instead of only '1.0000'
+#                   Fixed problem with framed mask for restoring maps where
+#                   some planes were fully masked out
+#   bpw  27-sep-93  Do real, not integer, calculation of xmin...
+#   bpw  29-oct-93  Final? fix of framing component map (necessary because of
+#                   built-in bug in clean/maths)
+#   bpw  19-jan-94  Add scale=1 to 'exec convol' to cope with bug with scale=
+#                   in convol; also safer after convol is fixed
+#   bpw  18-mar-94  Remove 'region=' from set clbox
+#                   add '<' to maths calls
+#   bpw  17-oct-95  Adapted for old change in imgen (amp,bm -> amp,x,y,bm)
+#   bpw  22-mar-96  Allow position angles for beams
+#   bpw  30-jun-97  Changed save=y method, added savedirt, savebeam and
+#                   saveintm keywords
+#   bpw   9-jul-97  Allow mask to differ between channels, add clalg option,
+#                   minimize disk space usage for saving
+#   bpw  15-jul-97  Again changed save= method
+#   bpw  29-oct-97  Add clalg=clean: makes using clean easier, gets proper
+#                   beams automatically, allows a mask
+#   bpw  30-oct-97  Add clalg=test
+#   bpw   6-mar-99  Fix informational message on beamsizes
+
+echo "MRC: version 1.7 6-mar-99"
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# Decode inputs
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+set clalg=std; set savep = ( MRC 0 0 0 )
+
+foreach arg ( $* )
+   set keyword = `echo $arg | awk -F= '{print $1}'`
+   set value   = `echo $arg | awk -F= '{print $2}'`
+   switch ( $keyword )
+   case in:
+      set map     = $value; breaksw
+   case beam:
+      set antp    = $value; breaksw
+   case region:
+      set region  = "$value"; breaksw
+   case region2:
+      set region2 = "$value"; breaksw
+   case out:
+      set out     = $value; breaksw
+   case noise:
+      set noise   = $value; breaksw
+   case factor:
+      set factor  = $value; breaksw
+   case cutoff:
+      set cutoff  = $value; breaksw
+   case clalg:
+      set clalg   = $value; breaksw
+   case log:
+      set log     = $value; breaksw
+   case save:
+      set savep   = $value; breaksw
+   default:
+      echo "## Warning: Unrecognized keyword: $keyword"
+   endsw
+end
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# Check inputs
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+set savep  = ( `echo $savep | tr ',' ' '` 0 0 0 ); 
+set svbeam = $savep[1]
+set svmap  = $savep[1]
+set svint  = $savep[1]
+set save   = ( 0 0 0 )
+if ( "`echo 1tyTY | grep $savep[2]`" != "" ) set save[1] = 1
+if ( "`echo 1tyTY | grep $savep[3]`" != "" ) set save[2] = 1
+if ( "`echo 1tyTY | grep $savep[4]`" != "" ) set save[3] = 1
+if ( $clalg == clean ) set save = ( 0 0 $save[3] )
+
+
+if ( -d $out ) goto out_exist
+if ( ! ${?map}  && ! ${?svmap}         ) goto nokey_map
+if ( ! ${?antp} && ! ${?svbeam}        ) goto nokey_beam
+if ( ! ${?out}                         ) goto nokey_out
+if ( ! ${?region}                      ) set region=
+if ( ! ${?region2}                     ) set region2=
+if ( $clalg == test ) goto test2mrc
+if ( ! ${?noise}                       ) goto nokey_noise
+if ( "$map"   == "" && "$svmap"  == "" ) goto nokey_map
+if ( "$antp"  == "" && "$svbeam" == "" ) goto nokey_beam
+if ( "$out"   == "" ) goto nokey_out
+if ( "$noise" == "" ) goto nokey_noise
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# Set aliases to catch output in log file and to detect errors
+# Set scratch variables
+# Prepare variable names for intermediate datasets
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+set noglob
+# calc is $MIRBIN/calc
+set pi    = `calc acos\(-1.\)`
+set rtoa  = `calc 3600*180/$pi`
+set ator  = `calc $pi/3600/180`
+set info  = "### Informational:"
+set fatal = "### Fatal Error:"
+alias failtest 'if ( $status != 0 ) goto exec_error'
+alias exec 'echo \!* >> $log; \!* >& $tlog; failtest'
+alias exel 'echo \!* >> $log; \!* >& $scr;  failtest; cat $scr;cat $scr >> $log'
+alias mesn 'echo -------------------- >> $log; echo \!* >> $log; echo -n \!*'
+alias mess 'echo -------------------- >> $log; echo \!* >> $log; echo    \!*'
+alias save1 'if(! $save[1])\rm -rf $\!*'
+alias save2 'if(! $save[2])\rm -rf $\!*'
+alias save3 'if(! $save[3])\rm -rf $\!*;if($save[3])\rm -rf $svint.\!*;if($save[3])mv $\!* $svint.\!*'
+
+#  clean -> crebeams = y -> save = n -> create, keep them around
+# !clean;   crebeams = y; save = n   -> create, keep them around
+# !clean;   crebeams = y; save = y   -> create, make save, extract
+# !clean;   crebeams = n; save = n   ->         extract
+# !clean;   crebeams = n; save = y   ->         extract
+# -> after create: save=y -> extract, save=n -> use kept
+alias extr 'if($save[1] == 1)echo \!* >> $log; if($save[1] == 1) \!* >& $tlog; failtest'
+alias dlbm 'delhd in=\!*/bmaj >& /dev/null; \\
+            delhd in=\!*/bmin >& /dev/null; \\
+            delhd in=\!*/bpa  >& /dev/null'
+alias exgauss   'extr imframe in=$beams out=$gauss   region=image\(1\); dlbm'
+alias exsmgauss 'extr imframe in=$beams out=$smgauss region=image\(2\); dlbm'
+alias exsmantp  'extr imframe in=$beams out=$smantp  region=image\(4\); dlbm'
+alias exdfantp  'extr imframe in=$beams out=$dfantp  region=image\(5\); dlbm'
+alias exclbm    'extr imframe in=$beams out=$clbm    region=image\(6\); dlbm'
+alias exsmclbm  'extr imframe in=$beams out=$smclbm  region=image\(7\); dlbm'
+alias exdfclbm  'extr imframe in=$beams out=$dfclbm  region=image\(8\); dlbm'
+alias rmgauss   'if($save[1] == 1) \rm -rf $gauss'
+alias rmsmgauss 'if($save[1] == 1) \rm -rf $smgauss'
+alias rmsmantp  'if($save[1] == 1) \rm -rf $smantp'
+alias rmdfantp  'if($save[1] == 1) \rm -rf $dfantp'
+alias rmclbm    'if($save[1] == 1) \rm -rf $clbm'
+alias rmsmclbm  'if($save[1] == 1) \rm -rf $smclbm'
+alias rmdfclbm  'if($save[1] == 1) \rm -rf $dfclbm'
+
+set MRC     = MRC.
+set tmp     = MRC$$
+set log     = ${tmp}.log
+set tlog    = ${tmp}.tlog
+set scr     = ${tmp}.scr
+set scratch = ${tmp}.scratch
+alias clear "\rm -rf $scr $scratch"
+
+foreach dataset ( gauss smgauss smantp smclbm dfantp dfclbm clbm beams \
+                  smmap dfmap mask \
+                  smcmp smrst smres smcln \
+                  dfcmp dfrst dfres dfcln )
+   eval set $dataset = $tmp.$dataset
+end
+
+onintr cleanup
+set exitstatus=1
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# decode input keywords to internal variables
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+if ( -d $svbeam.beams ) then
+   if ( ${?antp} ) echo "$svbeam.beams exists, using it instead of beam=$antp"
+   if ( "`imhead in=$svbeam.beams key=btype`" != "MRCBEAMS" )goto no_beamdataset
+   set fact = ( `imhead in=$svbeam.beams key=xshift` \
+                `imhead in=$svbeam.beams key=yshift` )
+   set cut  = ( `imhead in=$svbeam.beams key=crota1` \
+                `imhead in=$svbeam.beams key=crota2` \
+                `imhead in=$svbeam.beams key=crota3` )
+   set crebeams = n
+   set save[1]  = 1
+else
+   set crebeams = y
+   exec minmax in=$antp region=relpix,box'(-10,-10,10,10)'
+   set max = `imhead in=$antp key=datamax | awk '{print substr($0,1,6)}'`
+   if ( $max != 1 && $max != 1.0000 && $max != 0.9999 ) goto no_beamdataset
+   clear
+endif
+
+set cremaps = y
+if ( -d $svmap.smmap && -d $svmap.dfmap ) then
+   if ( ${?map} ) echo "$svmap.smmap/dfmap exist, using these instead of map=$map"
+   set cremaps = n
+endif
+
+set cremask = y; if ( -d $svmap.mask ) set cremask = n
+if ( ${?cutoff} ) then
+   set keycutf = `echo $cutoff | awk -F, '{print $2}'`
+   set cutoff  = ( `echo $cutoff | tr ',' ' '` )
+   if ( $#cutoff == 1 ) set cutoff = ( $cutoff 2 2 )
+   if ( $#cutoff == 2 ) set cutoff = ( $cutoff   2 )
+
+   # keyword cutoff given -> check if second cutoff != saved cutoff
+   set keycutf = `calc $keycutf`; set cutoff[2] = `calc $cutoff[3]`
+   if ( "$keycutf" != "" && "$keycutf" != $cutoff[3] ) then
+      set cremask = y; set cutoff[3] = $keycutf
+   endif
+   set cutoff[3] = `calc abs'('$cutoff[3]')'`
+else
+   # $cut read from $svbeams.beams dataset
+   if ( ! ${?cut} ) then
+      if ( $clalg != clean ) set cutoff = ( 1 2 2 )
+      if ( $clalg == clean ) set cutoff = ( 3 2 2 )
+   else
+      set cutoff = ( $cut    )
+   endif
+endif
+if ( $cremask == n ) echo "$svmap.mask exists, using it"
+
+
+if ( ${?factor} ) then
+   set factor = ( `echo $factor | tr ',' ' '` )
+   if ( $#factor == 1 ) set factor = ( $factor 1.5 )
+else
+   if ( ! ${?fact} ) then
+      set factor = ( 1.7 1.5 )
+   else
+      set factor = ( $fact   )
+   endif
+endif
+if ( $clalg == clean ) set factor = ( 1 $factor[2] )
+
+if ( $clalg != clean ) \
+echo "$info smoothing with beam factor $factor[1] to get smooth map"
+echo "$info smoothing with beam factor $factor[2] to prepare mask"
+
+# noise estimate for smoothed map depends on telescope
+# sqrt(factor) for E-W telescopes, such as WSRT, ATCA
+#      factor  for BIMA
+set tel = `imhead in=$map key=telescop`
+set f1  = `calc sqrt'('$factor[1]')'`
+set f2  = `calc sqrt'('$factor[2]')'`
+if ( $tel == BIMA ) set fac = ( $factor )
+if ( $tel == WSRT ) set fac = ( $f1 $f2 )
+if ( $tel == ATCA ) set fac = ( $f1 $f2 )
+set noise = ( `echo $noise | tr ',' ' '` )
+
+set axlen  = ( `imhead in=$map  key=naxis1` `imhead in=$map  key=naxis2` )
+set axlenb = ( `imhead in=$antp key=naxis1` `imhead in=$antp key=naxis2` )
+if ( $axlen[1] > $axlenb[1] || $axlen[2] > $axlenb[2] ) goto compat_err
+@ nbx =$axlen[1] * 2 - 1; @ nby =$axlen[2] * 2 - 1
+if ( $nbx == $axlenb[1] && $nby == $axlenb[2] ) set clbox =
+if ( $nbx != $axlenb[1] || $nby != $axlenb[2] ) set clbox = "region=quart"
+
+set immin = 1
+set immax = `imhead in=$map key=naxis3`
+set maskchannels=f
+if ( $immin <  $immax ) set planes = "region=image($immin,$immax)"
+if ( $immin == $immax ) set planes = "region=image($immin)"
+
+set x = `echo $region | egrep 'im'`
+if ( "$x" != "" ) set planes = "region=$region"
+
+set x = `echo $region | egrep 'mask'`
+if ( "$x" != "" ) set clbox  = "region=$region"
+
+set x = `echo $region | egrep 'bo|po'`
+if ( "$x" != "" ) then
+   set immin = 100000; set immax = -1
+   set boxes = ( `echo $region | sed 's/),/) /'g` )
+   foreach box ( $boxes )
+      set image = `echo $box | awk -F')' '{print substr($2,2,length)}'`
+      if ( "$image" != "" ) then
+         set im1 = `echo $image | awk -F, '{print $1}'`
+         set im2 = `echo $image | awk -F, '{print $2}'`
+         if ( $im1 < $immin ) set immin = $im1
+         if ( "$im2" != "" ) then
+         if ( $im2 > $immax ) set immax = $im2
+         endif
+      endif
+   end
+   if ( $immin == 100000 ) then
+      set immin = 1
+      set immax = `imhead in=$map key=naxis3`
+      set clbox = "$region"
+   else
+     @ im0 =$immin - 1; set i=1; set clbox =; set maskchannels=t
+     foreach box ( $boxes )
+        set bx    = `echo $box   | awk -F')' '{print $1}'`
+        set image = `echo $box   | awk -F')' '{print substr($2,2,length)}'`
+        set im1   = `echo $image | awk -F,   '{print $1}'`; @ im1 =$im1 - $im0
+        set im2   = `echo $image | awk -F,   '{print $2}'`
+        if ( "$im2" != "" )                                 @ im2 =$im2 - $im0
+        if ( "$im2" != "" ) set im2 = ",$im2"
+        set clbox = ( $clbox "$bx)($im1$im2)" )
+     end
+   endif
+   set planes = "region=image($immin,$immax)"
+else
+   set boxes  =
+endif
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# Generate beams
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+delhd  in=$antp/bmaj >& /dev/null
+delhd  in=$antp/bmin >& /dev/null
+delhd  in=$antp/bpa  >& /dev/null
+restor beam=$antp model=$antp mode=convolve out=$antp >& $tmp.bm
+set dbmaja = `cat $tmp.bm | grep gaussian | awk '{print substr($0,28,6)}'`
+set dbmina = `cat $tmp.bm | grep gaussian | awk '{print substr($0,37,6)}'`
+set dbpa   = `cat $tmp.bm | grep angle    | awk '{print $3}'`; rm -f $tmp.bm
+set dbmajr = `calc $dbmaja*$ator`
+set dbminr = `calc $dbmina*$ator`
+
+set smbmaja   = `calc ${factor[1]}*$dbmaja`
+set smbmina   = `calc ${factor[1]}*$dbmina`
+set smsmbmaja = `calc ${factor[2]}*${smbmaja}`
+set smsmbmina = `calc ${factor[2]}*${smbmina}`
+set gaupar    = "factor=0 object=gaussian spar"
+
+if ( $crebeams == y ) then
+
+   # create gaussians
+   set gsscale   = `calc 4.0*log\(2.0\)/$pi`
+   set cdelt     = ( `imhead in=$antp key=cdelt1` `imhead in=$antp key=cdelt2` )
+   set peakf     = `calc $gsscale*abs'('$cdelt[1]')'*$cdelt[2]*$rtoa*$rtoa`
+   set peak      = `calc $peakf/${smbmaja}/${smbmina}`
+   set smpeak    = `calc $peakf/${smsmbmaja}/${smsmbmina}`
+
+   mess "Generate the masking gaussian (integral=1; FWHM=$smsmbmaja x $smsmbmina)"
+   exec imgen in=$antp out=$smgauss $gaupar=$smpeak,0,0,$smsmbmaja,$smsmbmina,0
+
+   if ( $clalg != clean ) then
+   mess "Generate the smoothing gaussian (integral=1; FWHM=$smbmaja x $smbmina)"
+   exec imgen in=$antp out=$gauss   $gaupar=$peak,0,0,$smbmaja,$smbmina,0
+   endif
+
+   # Find dirty beams
+   if ( $clalg == clean ) then
+      mess "Create dirty beam"
+      cp -r $antp $smantp
+      cp -r $antp $dfantp
+      set  s  = 1
+      set  s1 = 0
+   else
+      mesn "Create smooth and difference dirty beam"
+      exec convol map=$antp beam=$gauss out=$scratch scale=1
+      exec minmax in=$scratch region=relpix,box'(-10,-10,10,10)'
+      set  max = `imhead in=$scratch key=datamax`
+      set  s  = `calc 1/$max`
+      set  s1 = `calc $s/\($s-1\)`
+      exec maths exp=$scratch*$s                    out=$smantp
+      exec maths exp=\(\<${antp}\>-${scratch}\)*$s1 out=$dfantp
+      mess "; scale factors: s=$s, s1=$s1"; clear
+   endif
+
+   # Find clean beams
+   mess "Create clean beam"
+   set cbmaja = `calc $dbmaja*1.0`
+   set cbmina = `calc $dbmina*1.0`
+   if ( $clalg == clean ) then
+      exec imgen  in=$antp out=$clbm $gaupar=1,0,0,$cbmaja,$cbmina,0
+      cp -r $clbm $smclbm
+      cp -r $clbm $dfclbm
+      set  r  = 1
+      set  r1 = 0
+   else
+      mesn "Create smooth and difference clean beam"
+      exec imgen  in=$gauss out=$clbm $gaupar=1,0,0,$cbmaja,$cbmina,0
+      exec convol map=$clbm beam=$gauss out=$scratch scale=1
+      exec minmax in=$scratch region=relpix,box'(-10,-10,10,10)'
+      set  max = `imhead in=$scratch key=datamax`
+      set  r  = `calc 1/$max`
+      set  r1 = `calc $r/\($r-1\)`
+      exec maths  exp=$scratch*$r                  out=$smclbm
+      exec maths  exp=\(\<$clbm\>-${scratch}\)*$r1 out=$dfclbm
+      mess "; scale factors: r=$r, r1=$r1"; clear
+   endif
+
+   # save beams
+   if ( $save[1] ) then
+      exec imcat in=$gauss,$smgauss,$antp,$smantp,$dfantp,$clbm,$smclbm,$dfclbm\
+             out=$beams options=relax
+      rmgauss; rmsmgauss; rmsmantp; rmdfantp; rmclbm; rmsmclbm; rmdfclbm
+      exec puthd in=$beams/btype  value=MRCBEAMS
+      exec puthd in=$beams/bmaj   value=$dbmajr
+      exec puthd in=$beams/bmin   value=$dbminr
+      exec puthd in=$beams/bpa    value=$dbpa
+      exec puthd in=$beams/vobs   value=$s
+      exec puthd in=$beams/niters value=$r
+      exec puthd in=$beams/xshift value=$factor[1]
+      exec puthd in=$beams/yshift value=$factor[2]
+      exec puthd in=$beams/crota1 value=$cutoff[1]
+      exec puthd in=$beams/crota2 value=$cutoff[2]
+      exec puthd in=$beams/crota3 value=$cutoff[3]
+      mess "Saving smooth and difference dirty and clean beams in $svbeam.beams"
+      mv $beams $svbeam.beams
+      set beams = $svbeam.beams
+   endif
+
+else
+
+   set beams = $svbeam.beams
+   # make sure current value of cutoff[3] is saved
+   exec puthd in=$beams/crota3 value=$cutoff[3]
+
+   set s = `imhead in=$beams key=vobs`;    set s1 = `calc $s/\($s-1\)`
+   set r = `imhead in=$beams key=niters`;  set r1 = `calc $r/\($r-1\)`
+
+endif
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# Calculate some more parameters
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+if ( $#noise == 1 ) \
+set noise = ( $noise `calc $noise[1]*$fac[1]/$s` )
+set noise = ( $noise `calc $noise[2]*$fac[2]/'('$factor[2]**2+1')'` )
+
+set smcut   = `calc $cutoff[1]*$noise[2]`
+set dfcut   = `calc $cutoff[2]*$noise[1]`
+set smsmcut = `calc $cutoff[3]*$noise[3]`
+echo "$info Original noise level given as $noise[1]"
+if ( $clalg != clean ) \
+echo "$info Noise level of smoothed map is $noise[2]"
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# Measure beams
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+   exclbm
+   restor beam=$clbm   model=$clbm   mode=convolve out=$clbm    >& $tmp.bm
+   rmclbm
+   set cbmaja   = `cat $tmp.bm | grep gaussian | awk '{print substr($0,28,6)}'`
+   set cbmina   = `cat $tmp.bm | grep gaussian | awk '{print substr($0,37,6)}'`
+   set cbmajr   = `calc $cbmaja*$ator`
+   set cbminr   = `calc $cbmina*$ator`
+
+
+if ( $clalg == clean ) then
+   set dsmbmaja = $dbmaja
+   set dsmbmina = $dbmina
+   set dsmbpa   = $dbpa
+else
+   exsmantp
+   delhd in=$smantp/bmaj >& /dev/null
+   delhd in=$smantp/bmin >& /dev/null
+   delhd in=$smantp/bpa  >& /dev/null
+   restor beam=$smantp model=$smantp mode=convolve out=$smantp >& $tmp.bm
+   rmsmantp
+   set dsmbmaja = `cat $tmp.bm | grep gaussian | awk '{print substr($0,28,6)}'`
+   set dsmbmina = `cat $tmp.bm | grep gaussian | awk '{print substr($0,37,6)}'`
+   set dsmbpa   = `cat $tmp.bm | grep angle    | awk '{print $3}'`
+endif
+   set dsmbmajr = `calc $dsmbmaja*$ator`
+   set dsmbminr = `calc $dsmbmina*$ator`
+
+
+if ( $clalg == clean ) then
+   set csmbmaja = $cbmaja
+   set csmbmina = $cbmina
+else
+   exsmclbm
+   delhd in=$smclbm/bmaj >& /dev/null
+   delhd in=$smclbm/bmin >& /dev/null
+   delhd in=$smclbm/bpa  >& /dev/null
+   restor beam=$smclbm model=$smclbm mode=convolve out=$smclbm >& $tmp.bm
+   rmsmclbm
+   set csmbmaja = `cat $tmp.bm | grep gaussian | awk '{print substr($0,28,6)}'`
+   set csmbmina = `cat $tmp.bm | grep gaussian | awk '{print substr($0,37,6)}'`
+endif
+   set csmbmajr = `calc $csmbmaja*$ator`
+   set csmbminr = `calc $csmbmina*$ator`
+
+rm -f $tmp.bm
+
+
+echo "$info FWHM of dirty beam        = $dbmaja x $dbmina, pa $dbpa deg"
+echo "$info FWHM of clean beam        = $cbmaja x $cbmina"
+if ( $clalg != clean ) then
+echo "$info FWHM of smoothing beam    = $smbmaja x $smbmina"
+echo "$info FWHM of smooth dirty beam = $dsmbmaja x $dsmbmina, pa $dsmbpa deg"
+echo "$info FWHM of smooth clean beam = $csmbmaja x $csmbmina"
+endif
+echo "$info FWHM of mask smoothing bm = $smsmbmaja x $smsmbmina"
+endif
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# Create smooth and difference dirty map
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+if ( $cremaps == y ) then
+
+   if ( $clalg == clean ) then
+      mess "Create dirty map"
+      exec imframe in=$map $planes out=$smmap
+   else
+      mess "Create smooth and difference dirty map"
+      exec imframe in=$map $planes out=$scratch
+      exgauss
+      exec convol  map=$scratch beam=$gauss scale=1 out=$smmap
+      exec maths   exp=$scratch-$smmap              out=$dfmap
+   endif
+   rmgauss
+
+   exec puthd in=$smmap/bmaj value=$dsmbmajr
+   exec puthd in=$smmap/bmin value=$dsmbminr
+   exec puthd in=$smmap/bpa  value=$dsmbpa
+   if ( $clalg != clean ) then
+   exec puthd in=$dfmap/bmaj value=$dbmajr
+   exec puthd in=$dfmap/bmin value=$dbminr
+   exec puthd in=$dfmap/bpa  value=$dbpa
+   endif
+
+   if ( $save[2] ) then
+      mess "Saving smooth and difference dirty maps in $svmap.smmap/.dfmap"
+      mv $smmap $svmap.smmap
+      mv $dfmap $svmap.dfmap
+   endif
+endif
+if ( $cremaps == n || $save[2] ) then
+   set smmap = $svmap.smmap
+   set dfmap = $svmap.dfmap
+endif
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# Create signal mask
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+set crpix = ( `imhead in=$smmap key=crpix1` \
+              `imhead in=$smmap key=crpix2` \
+              `imhead in=$smmap key=crpix3` )
+set axlen = ( $axlen[1] $axlen[2] `imhead in=$smmap key=naxis3` )
+set xmin = `calc 1-'('$crpix[1]')'`
+set ymin = `calc 1-'('$crpix[2]')'`
+set zmin = `calc 1-'('$crpix[3]')'`
+set xmax = `calc $axlen[1]-'('$crpix[1]')'`
+set ymax = `calc $axlen[2]-'('$crpix[2]')'`
+set zmax = `calc $zmin+$axlen[3]-1`
+set frame  = "$xmin,$xmax,$ymin,$ymax,$zmin,$zmax"
+set framem = "$xmin,$xmax,$ymin,$ymax"
+
+if ( $cremask == y ) then
+   mess "Create signal mask"
+   mess "(smooth again with FWHM=$smsmbmaja x $smsmbmina, apply cut $smsmcut)"
+   \rm -rf $svmap.mask
+   alias switch "\rm -rf $scratch; \mv $mask $scratch"
+   exsmgauss; exec convol map=$smmap beam=$smgauss scale=1 out=$mask; rmsmgauss
+
+   if ( $maskchannels == f ) then
+      # no image selection in region command
+      switch; exec maths exp=$scratch mask=$scratch.gt.$smsmcut $clbox out=$mask
+      switch; exec imframe in=$scratch frame=$frame                    out=$mask
+   else
+      # mask with an image selection in the region command
+      switch; set i=1; set lst=
+      foreach box ( $boxes )
+         exec maths exp=$scratch mask=$scratch.gt.$smsmcut region=$clbox[$i] \
+                    out=$mask.f
+         exec imframe in=$mask.f frame=$framem out=$mask.$i
+         set lst = "$lst,$mask.$i"; \rm -rf $mask.f
+         @ i =$i + 1
+      end
+      \rm -rf $scratch
+      set lst = `echo "$lst" | awk '{print substr($0,2,length)}'`
+      if ( $i == 2 ) then
+         mv $lst $mask
+      else
+         exec imcat in=$lst out=$mask
+      endif
+      \rm -rf `echo $lst | tr ',' ' '`
+   endif
+
+   # blank all extension pixels that imframe set to 0
+   switch; exec maths exp=$scratch mask=$scratch.gt.0 out=$mask; clear
+   exec puthd in=$mask/bmaj value=$dsmbmajr
+   exec puthd in=$mask/bmin value=$dsmbminr
+   exec puthd in=$mask/bpa  value=$dsmbpa
+   if ( $save[2] ) then
+      mess "Saving mask in $svmap.mask"
+      mv $mask $svmap.mask
+   endif
+
+endif
+if ( $cremaps == n || $save[2] ) then
+   set mask = $svmap.mask
+endif
+rmsmgauss
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# Clean smooth map
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+set clpars = "gain=0.1 niters=10000 mode=hogbom"
+set input  = "map=$smmap beam=$smantp"
+alias clea 'clean \!* | egrep "Plane|Iterations"'
+exsmantp
+
+if ( $clalg == clean ) then
+echo "Clean the map (cutoff=$smcut, region=$mask)"
+clea $input out=$smcmp cutoff=$smcut $clpars "region=mask($mask)"; failtest
+endif
+
+
+if ( $clalg == std ) then
+echo "Clean the smooth map (cutoff=$smcut, region=$mask)"
+clea $input out=$smcmp cutoff=$smcut $clpars "region=mask($mask)"; failtest
+endif
+
+
+if ( $clalg == reg2 ) then
+set smcut1 = `calc 5*$noise[2]`
+echo "Clean the smooth map (cutoff=$smcut1, region=$mask)"
+clea  $input out=$smcmp.1 cutoff=$smcut1 $clpars "region=mask($mask)"; failtest
+echo "Clean the smooth map further (cutoff=$smcut)"
+clean $input out=$smcmp   cutoff=$smcut  $clpars "region=$region2" \
+      model=$smcmp.1 options=positive;                                 failtest
+endif
+
+
+if ( $clalg == 2mrc ) then
+mess "--------------------------------------------------------------"
+echo "Clean the smooth map using MRC (noise=$noise[2])"
+                      set sv2 =
+if ( "$svmap" != "" ) set sv2 = "save=$svmap.2,$save[1],$save[2],$save[3]"
+set i=1
+while ( $i <= $#boxes )
+  if ( $i == 1 ) set mrcregion = "$clbox[$i]"
+  if ( $i != 1 ) set mrcregion = "$mrcregion,$clbox[$i]"
+  @ i=$i + 1
+end
+if ( "$mrcregion" != "" ) set mrcregion = "region=$mrcregion"
+if ( "$region2" == "" ) set alg = "clalg=std"
+if ( "$region2" != "" ) set alg = "clalg=reg2 region2=$region2"
+if ( "$region2" != "" ) set alg = "clalg=std"
+mrc   in=$smmap beam=$smantp out=$smcln $sv2 noise=$noise[2] $alg "$mrcregion"
+failtest
+
+mess "Continue first MRC stage"
+mess "--------------------------------------------------------------"
+endif
+rmsmantp
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# Clean difference map
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+if ( $clalg != clean ) then
+exdfantp
+mess "Clean the difference map (cutoff=$dfcut)"
+clea  map=$dfmap beam=$dfantp out=$dfcmp cutoff=$dfcut $clpars \
+      "region=mask($mask)"; failtest
+rmdfantp
+endif
+
+save2 mask
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# Restore
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+if ( $clalg != 2mrc ) then
+
+if ( $clalg == clean ) set maps =
+if ( $clalg != clean ) set maps = smooth
+mess "Restore the $maps map"
+
+mess "  Convolve components with clean beam ($csmbmaja x $csmbmina)"
+exec imframe in=$smcmp frame=$frame out=$scratch
+\rm -r $smcmp; \mv $scratch $smcmp; \rm -f $smcmp/mask
+exsmclbm
+exec convol map=$smcmp beam=$smclbm scale=1 out=$smrst
+rmsmclbm
+
+mess "  Create residual"
+exsmantp
+exec restor map=$smmap beam=$smantp model=$smcmp mode=residual out=$smres
+rmsmantp
+
+save2 smmap
+save3 smcmp
+exec puthd in=$smrst/bmaj value=$csmbmajr
+exec puthd in=$smrst/bmin value=$csmbminr
+exec puthd in=$smrst/bpa  value=0
+exec puthd in=$smres/bmaj value=$dsmbmajr
+exec puthd in=$smres/bmin value=$dsmbminr
+exec puthd in=$smres/bpa  value=$dsmbpa
+endif
+
+
+if ( $clalg != clean ) then
+mess "Restore the difference map"
+
+mess "  Convolve components with difference clean beam"
+exec imframe in=$dfcmp frame=$frame out=$scratch
+\rm -r $dfcmp; \mv $scratch $dfcmp; \rm -f $dfcmp/mask
+exdfclbm
+exec convol map=$dfcmp beam=$dfclbm scale=1 out=$dfrst
+rmdfclbm
+
+mess "  Create residuals"
+exdfantp
+exec restor map=$dfmap beam=$dfantp model=$dfcmp mode=residual out=$dfres
+rmdfantp
+
+save1 beams
+save2 dfmap
+save3 dfcmp
+set unit = `imhead in=$map key=bunit`
+exec puthd in=$dfrst/bunit value=$unit
+exec puthd in=$dfrst/bmaj  value=$cbmajr
+exec puthd in=$dfrst/bmin  value=$cbminr
+exec puthd in=$dfrst/bpa   value=0
+exec puthd in=$dfres/bmaj  value=$dbmajr
+exec puthd in=$dfres/bmin  value=$dbminr
+exec puthd in=$dfres/bpa   value=$dbpa
+
+endif
+
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# Combine residuals and restored components
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+if ( $clalg == clean ) then
+   exec maths exp=$smrst+$smres out=$out
+   save3 smrst
+   save3 smres
+else
+   set  smscale = `calc $s/$r`
+   set  dfscale = `calc $s1/$r1`
+   mess "Combine the clean maps, add the residual"
+   # (dfrst first to get beam correctly in header )
+   if ( $clalg == 2mrc ) then
+      exec maths exp=$dfscale\*$dfrst+$dfres+$smcln                  out=$out
+      save3 smcln
+   else
+      exec maths exp=$dfscale\*$dfrst+$dfres+$smscale\*$smrst+$smres out=$out
+      save3 smrst
+      save3 smres
+   endif
+   save3 dfrst
+   save3 dfres
+endif
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\rm -f $log
+set exitstatus=0
+goto finish
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# Error messages
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+nokey_map:
+   echo "$fatal no map dataset given";                              goto cleanup
+nokey_beam:
+   echo "$fatal no beam dataset given";                             goto cleanup
+nokey_out:
+   echo "$fatal no output dataset given";                           goto cleanup
+nokey_noise:
+   echo "$fatal no noise level given";                              goto cleanup
+no_map:
+   echo "$fatal input dataset $map does not exist";                 goto cleanup
+no_antp:
+   echo "$fatal beam dataset $antp does not exist";                 goto cleanup
+mapkeyerr:
+   echo "$fatal the in and savedirt keywords are exlusive";         goto cleanup
+beamkeyerr:
+   echo "$fatal the beam and savebeam keywords are exlusive";       goto cleanup
+no_beamdataset:
+   echo "$fatal maximum of beam not 1";                             goto cleanup
+info_err:
+  echo "$fatal header of savebeam incorrect, can't use keyword now";goto cleanup
+out_exist:
+   echo "$fatal output dataset $out already exists";                goto cleanup
+compat_err:
+#  echo "$fatal axis lengths of map and beam differ";               goto cleanup
+   echo "$fatal axis lengths of beam smaller than that of map";     goto cleanup
+
+exec_error:
+   echo "$fatal An error occurred; output from failed program follows:"
+   cat $tlog
+   goto cleanup
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# Finish off
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+cleanup:
+   echo cleanup
+finish:
+   unset noglob
+   if( $exitstatus == 0 ) then
+      \rm -rf ${tmp}.* >& /dev/null
+   endif
+   exit $exitstatus
+
+
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# test point source clean
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+test2mrc:
+alias TH 'echo \!:1'
+alias TH 'calc 10000\*\!* | '"awk '{print substr("'$0'",1,7)}'"
+alias getflux 'grep "  202.0  " | awk {print substr($0,53,9)}'
+
+mrc in=$map beam=$antp out=$out noise=0.0010 clalg=2mrc \
+    region="$region" save=CN,y,y,y
+ 
+set DY  = `imstat $reg in=$map       | getflux`
+echo "Original flux = `TH $DY`"
+
+set SMm = `imstat $reg in=CN.smmap   | getflux`
+set DFm = `imstat $reg in=CN.dfmap   | getflux`
+set sum = `calc $SMm+$DFm`
+echo "Smoothed   map; Flux = `TH $SMm`"
+echo "Difference map; Flux = `TH $DFm`"
+echo "    (sum is `TH $sum`, should be `TH $DY`)"
+
+set smm = `imstat $reg in=CN.2.smmap | getflux`
+set dfm = `imstat $reg in=CN.2.dfmap | getflux`
+set sum = `calc $smm+$dfm`
+echo "   2nd smoothed   map; Flux = `TH $smm`"
+echo "   2nd difference map; Flux = `TH $dfm`"
+echo "    (sum is `TH $sum`, should be `TH $SMm`)"
+
+set smm = `imstat $reg in=CN.2.smmap | getflux`
+set smc = `imstat $reg in=CN.2.smcmp | getflux`
+set smR = `imstat $reg in=CN.2.smrst | getflux`
+set smr = `imstat $reg in=CN.2.smres | getflux`
+set sb  = `imhead in=CN.2.beams key=vobs`
+set rb  = `imhead in=CN.2.beams key=niters`
+set scl = `calc $sb/$rb\*$smR+$smr`
+echo "   2nd smoothed map"
+echo "      In dirty map:     `TH $smm`"
+echo "      Component found:  `TH $smc` (should be `TH $smm`)"
+echo "      Restored:         `TH $smR` (should be `TH $smm`)"
+echo "      Left in residual: `TH $smr` (should be 0)"
+echo "      Scale factor:      $sb/$rb"
+echo "      Cleaned flux:     `TH $scl`"
+
+set dfm = `imstat $reg in=CN.2.dfmap | getflux`
+set dfc = `imstat $reg in=CN.2.dfcmp | getflux`
+set dfR = `imstat $reg in=CN.2.dfrst | getflux`
+set dfr = `imstat $reg in=CN.2.dfres | getflux`
+set s1b = `calc $sb/'('$sb-1')'`
+set r1b = `calc $rb/'('$rb-1')'`
+set dcl = `calc $s1b/$r1b\*$dfR+$dfr`
+echo "   2nd difference map"
+echo "      In dirty map:     `TH $dfm`"
+echo "      Component found:  `TH $dfc` (should be `TH $dfm`)"
+echo "      Restored:         `TH $dfR` (should be `TH $dfm`)"
+echo "      Left in residual: `TH $dfr` (should be 0)"
+echo "      Scale factor:      $s1b/$r1b"
+echo "      Cleaned flux:     `TH $dcl`"
+
+set sum = `calc $smm+$dfm`
+set SMc = `imstat $reg in=CN.smcln   | getflux`
+echo "   Cleaned smooth map (s/r*smrst+smres+s1/r1*dfrst+dfres)"
+echo "      Sum of dirty maps: `TH $smm`+`TH $dfm` = `TH $sum`, should be `TH $SMm`"
+echo "      Cleaned flux:      `TH $scl`+`TH $dcl` = `TH $SMc`"
+
+set DFm = `imstat $reg in=CN.dfmap   | getflux`
+set DFc = `imstat $reg in=CN.dfcmp   | getflux`
+set DFR = `imstat $reg in=CN.dfrst   | getflux`
+set DFr = `imstat $reg in=CN.dfres   | getflux`
+set sa  = `imhead in=CN.2.beams key=vobs`
+set ra  = `imhead in=CN.2.beams key=niters`
+set s1a = `calc $sa/'('$sa-1')'`
+set r1a = `calc $ra/'('$ra-1')'`
+set Dcl = `calc $s1a/$r1a\*$DFR+$DFr`
+echo "Difference map"
+echo "   In dirty map:     `TH $DFm`"
+echo "   Component found:  `TH $DFc` (should be `TH $DFm`)"
+echo "   Restored:         `TH $DFR` (should be `TH $DFm`)"
+echo "   Left in residual: `TH $DFr` (should be 0)"
+echo "   Scale factor:      $s1a/$r1a"
+echo "   Cleaned flux:     `TH $Dcl`"
+
+set sum = `calc $SMm+$DFm`
+set CL  = `imstat $reg in=ngc3783.cncln | getflux`
+echo "Cleaned map (smcln+s1/r1*dfrst+dfres)"
+echo "   Sum of dirty maps: `TH $SMm`+`TH $DFm` = `TH $sum`, should be `TH $DY`"
+echo "   Cleaned flux:      `TH $SMc`+`TH $Dcl` = `TH $CL`"
+exit

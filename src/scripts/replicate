@@ -1,0 +1,157 @@
+#!/bin/csh -f
+
+set prog = replicate
+if ( "$1" == "" ) then
+doc $0; exit
+endif
+
+#= replicate - Replicate a single channel
+#& bpw
+#: Utility
+#+
+#  This little script replicates a single channel to have as many planes
+#  as the template, or as the value of the ncopy keyword. Either ncopy=
+#  or template= must be given.
+#
+#@ in
+#  Input dataset [no default]
+#@ template
+#  Template dataset. Output will have as many channels as this dataset.
+#@ ncopy
+#  Alternative way of specifying number of copies you want.
+#@ out
+#  Output dataset [no default]
+#@ verbose
+#  if t, show individual commands [f]
+#--
+#
+# History:
+#   14-jul-93  bpw  Original version
+#   19-jan-94  bpw  Added missing 'set warning'
+#   10-dec-97  bpw  Standardized
+#
+#----------------------------------------------------------------------
+
+onintr finish; set exstat=1
+echo "$prog - version 1.1 10-dec-97"
+set fatal = "$prog - ### Fatal: "
+
+#----------------------------------------------------------------------
+
+set verb=f
+foreach arg ( $* )
+   set key = `echo $arg | awk -F= '{print $1}'`
+   set val = `echo $arg | awk -F= '{print $2}'`; if ("$val" == "") goto key_err
+   if ( "$val" == "" ) goto key_err
+   if ( $key == in       ) set in       = $val
+   if ( $key == out      ) set out      = $val
+   if ( $key == template ) set template = $val
+   if ( $key == ncopy    ) set ncopy    = $val
+   if ( $key == verbose  ) set verb     = $val
+end
+
+set tmp  = /tmp/replicate
+set tlog = $tmp.log
+rm -rf $tmp.* >& /dev/null
+alias exec 'if($verb == t)echo \!*; \!* >&! $tlog; if($status == 1)goto failure'
+
+#-------------------------------------------------------------------------------
+
+if (   ! $?in   ) goto error_in1
+if (   ! $?out  ) goto error_out1
+if ( ! -d $in   ) goto error_in2
+if (   -d $out  ) goto error_out2
+if ( ! $?template && ! $?ncopy ) goto error_nocopy
+if (   $?template &&   $?ncopy ) goto error_twocopy
+
+if ( $?template ) then
+   if ( ! -d $template ) goto error_template
+   set naxis = `imhead in=$template key=naxis`
+   if ( $naxis < 3 ) goto error_axis
+   set ncopy = `imhead in=$template key=naxis3`
+endif
+
+set prev = $tmp.previous
+set tout = $tmp.output
+
+#----------------------------------------------------------------------
+# find out which binary set is needed
+@ i = 1
+@ j = 1
+while ( $i <= $ncopy )
+  @ i =$i * 2
+  @ j =$j + 1
+end
+set jmax = $j
+set bin  = ( 0 0 0 0 0 0 0 0 0 0 0 0 )
+@ n =$ncopy
+while ( $i != 0 )
+   if ( $i <= $n ) set bin[$j] = 1
+   if ( $i <= $n ) @ n =$n - $i
+   @ i =$i / 2
+   @ j =$j - 1
+end
+
+#----------------------------------------------------------------------
+# create binary set of copies
+
+set lst=
+set mes=
+set j=1
+set k=1
+while ( $j < $jmax )
+   @ i =$j - 1
+   echo "Create file with 2^$i=$k channels"
+   if ( $i == 0 ) then
+      cp -r $in $tmp.1
+   else
+      exec imcat in=$tmp.$i,$tmp.$i out=$tmp.$j options=relax
+   endif
+   if ( $bin[$j] == 1 ) then
+      set lst = $lst,$tmp.$j
+      set mes = $mes+$k
+   endif
+   @ j =$j + 1
+   @ k =$k * 2
+end
+
+#----------------------------------------------------------------------
+echo "Combine copies into a single output ($mes)"
+
+set lst = `echo $lst | awk '{print substr($0,2,length)}'`
+set nf  = ( `echo $lst | tr ',' ' '` )
+if ( $#nf == 1 ) then
+mv $lst $out
+else
+exec imcat options=relax in=$lst out=$out
+endif
+
+#----------------------------------------------------------------------
+
+set exstat=0; goto finish
+
+error_in1:
+   echo "$fatal an input dataset must be specified"; goto finish
+error_in2:
+   echo "$fatal input dataset $in does not exist"; goto finish
+error_out1:
+   echo "$fatal an output dataset must be specified"; goto finish
+error_out2:
+   echo "$fatal output file $out already exists"; goto finish
+error_nocopy:
+   echo "$fatal must specify either template= or ncopy="; goto finish
+error_twocopy:
+   echo "$fatal must specify either template= or ncopy=, not both"; goto finish
+error_template:
+   echo "$fatal template dataset $template does not exist; goto finish
+error_axis:
+   echo "$fatal template dataset has less than 3 axes"; goto finish
+key_err:
+   echo "$fatal no value given for keyword $key"; goto finish
+failure:
+   echo "$fatal An error occurred; output from failed program follows:"
+   cat $tlog
+
+finish:
+rm -rf $tmp.* >& /dev/null; exit $exstat
+

@@ -1,0 +1,157 @@
+#!/bin/csh -f
+
+set prog = pbcorr
+if ( "$1" == "" ) then
+doc $0; exit
+endif
+
+#= pbcorr - apply primary beam correction
+#& bpw
+#: Utility
+#+
+#  Apply primary beam correction to a dataset.
+#  Can also apply inverse correction, or create a primary-beam map.
+#
+#@ in
+#  input dataset [no default]
+#@ out
+#  output dataset [no default] 
+#@ pbfwhm
+#  fwhm of primary beam [read from header]
+#@ inv
+#  if t, divide by primary beam [f]
+#@ maxcorr
+#  maximum allowed correction [6]
+#@ sd
+#  three values: fwhm and center of a gaussian to multiply result with;
+#  simulating single-dish
+#@ xy
+#  relative pixel center of primary beam [0,0]
+#@ options
+#  if 'multiply', multiply input with primary beam or inverse
+#  if 'pattern',  output is the primary beam patter
+#  if 'print',    print correction at position xy
+#  [multiply]
+#@ verbose
+#  if t, show individual commands [f]
+#--
+
+# History:
+#     -oct-97  bpw  Original version
+#   10-dec-97  bpw  Standardized
+
+#-------------------------------------------------------------------------------
+
+onintr finish; set exstat=1
+echo "$prog - version 1.1 10-dec-97"
+set fatal = "$prog - ### Fatal: "
+set gaupar = "factor=0 object=gaussian spar"
+
+set pbfwhm  = 0
+set inv     = f
+set maxcorr = 6
+set xy      = 0,0
+set options = multiply
+set verb    = f
+foreach arg ( $* )
+   set key = `echo $arg | awk -F= '{print $1}'`
+   set val = `echo $arg | awk -F= '{print $2}'`; if ("$val" == "") goto key_err
+   if ( $key == in      ) set in      = $val
+   if ( $key == out     ) set out     = $val
+   if ( $key == pbfwhm  ) set pbfwhm  = $val
+   if ( $key == inv     ) set inv     = $val
+   if ( $key == maxcorr ) set maxcorr = $val
+   if ( $key == xy      ) set xy      = $val
+   if ( $key == sd      ) set sd      = $val
+   if ( $key == options ) set options = $val
+   if ( $key == verbose ) set verb    = $val
+end
+
+set tmp  = /tmp/pbcorr
+set tlog = $tmp.log
+rm -rf $tmp.* >& /dev/null
+alias exec 'if($verb == t)echo \!*; \!* >&! $tlog; if($status == 1)goto failure'
+
+#-------------------------------------------------------------------------------
+
+if (   ! $?in   ) goto error_in1
+if ( ! -d $in   ) goto error_in2
+if ( $options != print ) then
+if (   ! $?out  ) goto error_out1
+if (   -d $out  ) goto error_out2
+endif
+
+set noglob
+if ( $inv == f ) set op = '*'
+if ( $inv == t ) set op = '/'
+set maxcorri = `calc 1./$maxcorr`
+
+#-------------------------------------------------------------------------------
+
+set tel = `imhead in=$in key=telescop`
+if ( $options == print ) then
+pbcheck in=$in pos=$xy
+goto finish
+endif
+
+if ( $tel == ATCA     || \
+     $tel == VLA      || \
+     $tel == HATCREEK || \
+     $tel == WSRT     || \
+     $tel == FST         ) then
+   if ( -f $in/mask ) mv $in/mask $in/savemask
+   exec linmos in=$in out=$tmp.pbpat options=sensitivity maxcorr=$maxcorr
+   if ( -f $in/savemask ) mv $in/savemask $in/mask
+else
+   if ( pbfwhm == 0 ) then
+   set pbfwhm = `pbcheck in=$in`; set pbfwhm = `calc $pbfwhm\*180/pi\*60`
+   endif
+   set pbfwhm = `calc 60\*$pbfwhm`
+   exec imframe in=$in region=image'(1)' out=$tmp.im1
+   exec imgen   in=$tmp.im1 out=$tmp.gss $gaupar=1,$xy,$pbfwhm,$pbfwhm,0
+   exec maths   exp=1/'<'$tmp.gss'>' mask='<'$tmp.gss'>'.gt.$maxcorri \
+                out=$tmp.pbpat
+endif
+
+if ( $?sd ) then
+set cp = ( `imhead in=$tmp.pbpat key=crpix1` `imhead in=$tmp.pbpat key=crpix2` )
+set xy = ( `echo $sd | awk -F, '{print $1 " " $2}'` )
+set xy = ( `calc $xy[1]-$cp[1]` `calc $xy[2]-$cp[2]` )
+set fw =   `echo $sd | awk -F, '{print $3}'`
+set fw = `calc 60\*$fw`
+exec imgen in=$tmp.pbpat out=$tmp.sd $gaupar=1,$xy[1],$xy[2],$fw,$fw,0
+exec maths exp='<'$tmp.pbpat'>*<'$tmp.sd'>' out=$tmp.pbpatsd
+rm -rf $tmp.pbpat; mv $tmp.pbpatsd $tmp.pbpat
+endif
+exec replicate in=$tmp.pbpat template=$in out=$tmp.pb
+
+if ( $options == pattern ) then
+   mv $tmp.pb $out
+else
+   # normal: multiply map with primary beam
+   # reversed: divide map by primary beam
+   exec maths exp='<'$in'>'$op'<'$tmp.pb'>' mask='<'$tmp.pb'>'.ne.0. out=$out
+endif
+
+#-------------------------------------------------------------------------------
+
+set exstat=0; goto finish
+
+error_in1:
+   echo "$fatal an input dataset must be specified"; goto finish
+error_in2:
+   echo "$fatal input dataset $in does not exist"; goto finish
+error_out1:
+   echo "$fatal an output dataset must be specified"; goto finish
+error_out2:
+   echo "$fatal output dataset $out already exists"; goto finish
+key_err:
+   echo "$fatal no value given for keyword $key"; goto finish
+failure:
+   echo "$fatal An error occurred; output from failed program follows"
+   cat $tlog; goto finish
+
+finish:
+unset noglob; rm -rf $tmp.* >& /dev/null; exit $exstat
+exit
+
