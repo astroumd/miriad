@@ -203,49 +203,53 @@ rehash
 echo mir.mkdirs $MIRTEMP
 mir.mkdirs $MIRTEMP >& /tmp/mir.mkdirs.log
 
+set startcsh=$MIRTEMP/MIRRC.$hosttype
+set startsh=$MIRTEMP/MIRSRC.$hosttype
+
 #    	Linux really ... should work for SunOS too...
 cat $MIRTEMP/src/sys/files/MIRRC.skel |\
   sed s,/mir_rootdir,$MIRTEMP, |\
   sed s,mir_hosttype,$hosttype, |\
   sed s,/usr/openwin/include,$mirxinc, |\
   sed s,/usr/local/lib/X11,$mirxlib, |\
-  grep -v PGPLOT_FONT >! $MIRTEMP/MIRRC.$hosttype
+  grep -v PGPLOT_FONT                                         >! $startcsh
 
 cat $MIRTEMP/src/sys/files/MIRSRC.skel |\
   sed s,/mir_rootdir,$MIRTEMP, |\
   sed s,mir_hosttype,$hosttype, |\
   sed s,/usr/openwin/include,$mirxinc, |\
   sed s,/usr/local/lib/X11,$mirxlib, |\
-  grep -v PGPLOT_FONT >! $MIRTEMP/MIRSRC.$hosttype
+  grep -v PGPLOT_FONT                                         >! $startsh
 
 
-echo '# special additions'                >> $MIRTEMP/MIRRC.$hosttype
-echo 'if ($?LD_LIBRARY_PATH) then'	  >> $MIRTEMP/MIRRC.$hosttype
-echo '  setenv LD_LIBRARY_PATH ${MIRLIB}:${LD_LIBRARY_PATH}'  >> $MIRTEMP/MIRRC.$hosttype
-echo 'else'                               >> $MIRTEMP/MIRRC.$hosttype
-echo '  setenv LD_LIBRARY_PATH $MIRLIB'   >> $MIRTEMP/MIRRC.$hosttype
-echo 'endif'                              >> $MIRTEMP/MIRRC.$hosttype
-echo "# pgplot=$pgplot"                   >> $MIRTEMP/MIRRC.$hosttype
+echo '# special additions'                                    >> $startcsh
+echo 'if ($?LD_LIBRARY_PATH) then'	                      >> $startcsh
+echo '  setenv LD_LIBRARY_PATH ${MIRLIB}:${LD_LIBRARY_PATH}'  >> $startcsh
+echo 'else'                                                   >> $startcsh
+echo '  setenv LD_LIBRARY_PATH $MIRLIB'                       >> $startcsh
+echo 'endif'                                                  >> $startcsh
+echo "# pgplot=$pgplot"                                       >> $startcsh
 if ($pgplot) then
-  echo 'setenv PGPLOT_DIR $MIRLIB'         >> $MIRTEMP/MIRRC.$hosttype
+  echo 'setenv PGPLOT_DIR $MIRLIB'                            >> $startcsh
 else
-  echo 'setenv PGPLOT_DIR /usr/lib/pgplot' >> $MIRTEMP/MIRRC.$hosttype
+  echo 'setenv PGPLOT_DIR /usr/lib/pgplot'                    >> $startcsh
 endif
-echo 'setenv WIPHELP $MIR/borrow/wip/wiphelp.dat' >> $MIRTEMP/MIRRC.$hosttype
+echo 'setenv WIPHELP $MIR/borrow/wip/wiphelp.dat'             >> $startcsh
 
-echo '# special additions'                >> $MIRTEMP/MIRSRC.$hosttype
-echo 'if test -z "$LD_LIBRARY_PATH"; then'	  >> $MIRTEMP/MIRSRC.$hosttype
-echo '  export LD_LIBRARY_PATH=${MIRLIB}:${LD_LIBRARY_PATH}'  >> $MIRTEMP/MIRSRC.$hosttype
-echo 'else'                               >> $MIRTEMP/MIRSRC.$hosttype
-echo '  export LD_LIBRARY_PATH=$MIRLIB'   >> $MIRTEMP/MIRSRC.$hosttype
-echo 'fi'                                 >> $MIRTEMP/MIRSRC.$hosttype
-echo "# pgplot=$pgplot"                   >> $MIRTEMP/MIRSRC.$hosttype
+
+echo '# special additions'                                    >> $startsh
+echo 'if test -z "$LD_LIBRARY_PATH"; then'	              >> $startsh
+echo '  export LD_LIBRARY_PATH=${MIRLIB}:${LD_LIBRARY_PATH}'  >> $startsh
+echo 'else'                                                   >> $startsh
+echo '  export LD_LIBRARY_PATH=$MIRLIB'                       >> $startsh
+echo 'fi'                                                     >> $startsh
+echo "# pgplot=$pgplot"                                       >> $startsh
 if ($pgplot) then
-  echo 'export PGPLOT_DIR=$MIRLIB'         >> $MIRTEMP/MIRSRC.$hosttype
+  echo 'export PGPLOT_DIR=$MIRLIB'                            >> $startsh
 else
-  echo 'export PGPLOT_DIR=/usr/lib/pgplot' >> $MIRTEMP/MIRSRC.$hosttype
+  echo 'export PGPLOT_DIR=/usr/lib/pgplot'                    >> $startsh
 endif
-echo 'export WIPHELP=$MIR/borrow/wip/wiphelp.dat' >> $MIRTEMP/MIRSRC.$hosttype
+echo 'export WIPHELP=$MIR/borrow/wip/wiphelp.dat'             >> $startsh
 
 
 
