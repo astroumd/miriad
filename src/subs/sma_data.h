@@ -230,7 +230,8 @@ struct sph_config {
         short   nch[25]       ; /*  # channels in spectrum    */
         int     dataoff       ; /*  byte offset for data      */
         double  rfreq[25]     ; /*  rest frequency (GHz)      */
-        float  veldop        ; /*  velocity of observatory in the 
+        double  basefreq      ; /*  determine the basefreq    */
+        float   veldop        ; /*  velocity of observatory in the 
                                     direction of the source tracked 
                                     with doppler correction   */
         short   isb           ; /*  sideband int code         */
@@ -466,6 +467,7 @@ struct smlodd {
         double sfreq[SMIF+1];
         double sdf[SMIF+1];
         double restfreq[SMIF+1];
+        double basefreq;
         double time; /* in Julian day */
         double lst;  /* in units of radian */
         double obsra;
