@@ -50,6 +50,8 @@ c    rjs  13jun96   Fix window selection.
 c    rjs  23sep99   Fix window selection again!!
 c    gmx  08apr04   Added xtsys and ytsys to the variables to be handled
 c                   when removing channels.
+c    jwr  16jun04   Fixed bug in calling uvVarUpd that relied on McCarthy
+c                   evaluation of logical expressions (ifort does not!)
 c  Bugs:
 c
 c= uvcat - Catenate and copy uv datasets; Apply gains file, Select windows.
@@ -204,8 +206,10 @@ c
 c
 c  Update the window parameters if needed.
 c
-	    if(dochan.and.uvVarUpd(vhand)) call WindUpd(lIn,lOut,
+	    if(dochan) then
+	      if (uvVarUpd(vhand)) call WindUpd(lIn,lOut,
      *			  MAXWIN,wins,nspect,nschan,ischan,window)
+	    endif
 c
 c  Move the data around, if we are eliminating spectra.
 c
