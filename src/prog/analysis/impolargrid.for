@@ -25,11 +25,11 @@ c@ phase
 c     Polar coordinate phase angle (degrees).
 c     Default: 0.0
 c@ radius
-c     The radial grid is given by a starting, ending and step value
-c     in radius. Optionally these three numbers can be followed 
-c     by the coordinate type. Currently supported are 'linear' and
+c     Starting, ending and step value in radial grid. 
+c     Optionally these three numbers can be followed by the 
+c     coordinate type (a string). Currently supported are 'linear' and
 c     'logarithmic'. The units of the radii are in the units of that
-c     coordinate system. 
+c     coordinate system.
 c     By default the all pixels will fit in the output map, with a
 c     linear grid and stepsize of 1 pixel.
 c@ angle
@@ -38,6 +38,7 @@ c     the phase angle given earlier.  If the starting angle is larger
 c     than the ending angle, the coordinate system will be defined
 c     with angle  increasing in the clockwise sense rather than
 c     in a counterclockwise sense.  Angles are given in degrees.
+c     ** i believe the program does the reverse **
 c     Default: -180,180,1
 c--
 c Old zodiac call:
@@ -158,13 +159,16 @@ c
       agrid0=agrid0*PI/180.0
       agrid1=agrid1*PI/180.0
       astep=astep*PI/180.0
-      outnx=nint(ABS(agrid1-agrid0)/astep)+1
-      outny=nint(ABS(rgrid1-rgrid0)/rstep)+1
+      outnx=nint(ABS((agrid1-agrid0)/astep))+1
+      outny=nint(ABS((rgrid1-rgrid0)/rstep))+1
        if ((outnx .gt. MAXDIM).or.(outny .gt. MAXDIM)) then
          write(*,*) 'Output array exceeds maximum size of ',MAXDIM
          call bug('f','abort')
       endif
-      if (agrid1 .gt. agrid0) astep=-astep
+      if (agrid1 .lt. agrid0) then
+         astep=-astep
+         cdelt1=-cdelt1
+      endif
 
       crpix2 = outny
 c
