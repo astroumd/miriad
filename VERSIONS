@@ -1,5 +1,7 @@
 3.0.0  01mar13  First (only linux tested) release of CVS based MIRIAD/BIMA 
 3.0.1  01may16  not a real release (doc also broken)
 3.0.2  01jun15  Added ATNF code (and ATLOD for linux), $MIR/install
-3.1.0           dual MAXDIM/MAXDIM2, MAXCHAN/MAXCHAN2 , ....
+3.1.0  03feb23  dual MAXDIM/MAXDIM2, MAXCHAN/MAXCHAN2 , ....
+		  this was the last CVS mainbranch release of the 3.x series
+		  from now on this will be a MIR3 branch for 3.1.x patches
 4.x    n/a      MIR4 branch in CVS (LFS able to write 2GB+ files)
