@@ -423,6 +423,7 @@ if ($dofl) then
    popd >& /dev/null
 else
    echo Could not find libforms.a to compile velplotc
+   echo You will also need to find forms.h
 endif
 
 # ATNF stuff, linux only for now; always in debugging mode
