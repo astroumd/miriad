@@ -10,4 +10,5 @@
 
 4.x    n/a      MIR4 branch in CVS (LFS able to write 2GB+ files)
 4.0.1  03feb23	end of MIR4 as a branch
-4.0.2  W.I.P.   merged MIR4 into the HEAD
+4.0.2  03may14  merged MIR4 into the HEAD
+4.0.3  W.I.P.   adding MAXIANT, improving scaleability
