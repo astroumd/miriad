@@ -79,6 +79,7 @@ c     21 Apr 1992 rag   added ability to deproject a cube
 c     17 feb 2002 pjt   miriadized
 c     24 jul 2002 pjt   flag value 0,instead of -1; process 3D cubes
 c     28 aug 2002 pjt   declare all vars, fix default crpix if possible
+c     22 sep 2003 pjt   fix reporting cenx,ceny
 c
 c ToDo's
 c     - track off-centering down:
@@ -92,16 +93,16 @@ c
       integer   MAXNAX
       parameter (MAXNAX=3)
       character VERSION*(*)
-      parameter (VERSION='28-aug-2002')
+      parameter (VERSION='22-sep-2003')
 c
       character infile*128, oufile*128, rmode*10, ctype1*10,ctype2*10
       integer   iflux,iout,ivert,ix,ixpt,iy,iypt,iz,mode,nx,ny,nz,
      #          outnx,outny,tin,tout,naxis,insize(MAXNAX),ousize(MAXNAX)
-      real      indat(MAXDIM,MAXDIM),oudat(MAXDIM),xpt,ypt,sum,x0,y0
+      real      indat(MAXDIM2,MAXDIM2),oudat(MAXDIM2),xpt,ypt,sum,x0,y0
       integer   imdef
       real      incl,majaxis,rget,dx,dy,ang,xmax,ymax,xmin,ymin,expand
       real      cenx,ceny,fnx,fny,x1,y1,x2,y2,x3,y3,x4,y4,coutx,couty
-      logical   lin,lcen,flags(MAXDIM,MAXDIM),ouflg(MAXDIM)
+      logical   lin,lcen,flags(MAXDIM2,MAXDIM2),ouflg(MAXDIM2)
 
       logical   keyprsnt
 
@@ -155,7 +156,7 @@ c
       nz = insize(3)
 
       if (lcen) then
-         write(*,*) 'Setting map center ',ceny,ceny
+         write(*,*) 'Setting map center ',cenx,ceny
       else
          call rdhdr(tin,'crpix1',cenx,0.0)
          call rdhdr(tin,'crpix2',ceny,0.0)
@@ -314,16 +315,16 @@ c	  call xyflgwr(tout,iy,ouflg)
       call hdcopy(tin,tout,'history')
       call wrhdr(tout,'crpix1',coutx)
       call wrhdr(tout,'crpix2',couty)
-      if (nz.gt.1) call hdcopy(tin,tout,'crpix3')
+      if (naxis.gt.2) call hdcopy(tin,tout,'crpix3')
       call hdcopy(tin,tout,'cdelt1')
       call hdcopy(tin,tout,'cdelt2')
-      if (nz.gt.1) call hdcopy(tin,tout,'cdelt3')
+      if (naxis.gt.2) call hdcopy(tin,tout,'cdelt3')
       call hdcopy(tin,tout,'crval1')
       call hdcopy(tin,tout,'crval2')
-      if (nz.gt.1) call hdcopy(tin,tout,'crval3')
+      if (naxis.gt.2) call hdcopy(tin,tout,'crval3')
       call hdcopy(tin,tout,'ctype1')
       call hdcopy(tin,tout,'ctype2')
-      if (nz.gt.1) call hdcopy(tin,tout,'ctype3')
+      if (naxis.gt.2) call hdcopy(tin,tout,'ctype3')
       call hisopen(tout,'append')
       call hiswrite(tout,'DEPROJECT: '//version)
       call hisinput(tout,'DEPROJECT')
