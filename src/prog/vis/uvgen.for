@@ -835,7 +835,7 @@ c
 	  call hiswrite(unit, umsg )
 c
 	  write(line,172) (wrms(i,1),i=1,nwide)
-172	  format('Wide noise   (Jy): ',8f8.3)
+172	  format('Wide noise   (Jy): ',8g8.3)
 	  call output(line)
 	  umsg = 'UVGEN: '//line
 	  call hiswrite(unit, umsg )
@@ -849,7 +849,7 @@ c
 	  call hiswrite(unit, umsg )
 c
 	  write(line,174)  (rrms(ischan(i),1),i=1,nspect)
-174	  format('Channel noise   (Jy): ',8f8.3)
+174	  format('Channel noise   (Jy): ',8g8.3)
 	  call output(line)
 	  call hiswrite(unit, 'UVGEN: '//line)
 	endif
