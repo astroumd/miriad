@@ -1,0 +1,424 @@
+%------------------------------------------------------------------------
+% Utility Programs Chapter
+%------------------------------------------------------------------------
+
+A few programs have been developed to simplify the development of good
+portable code.  Additional information on these programs can be found in
+the specific sections of the {\bf MIRIAD Executable Modules Manual},
+which documents all MIRIAD programs.
+
+\beginsection{flint}
+
+{\bf flint} is a FORTRAN program checker. It aims at uncovering programming
+bugs and bad programming practises. Given FORTRAN source as input, {\bf flint}
+produces warnings on the terminal and in a listing file ({\tt flint.log}).
+{\bf flint} checks for variables which are unused, uninitialized or
+undeclared. It also checks that the number, type and intent of arguments
+passed to a subroutine remains consistent amongst all calls (an argument's
+intent is whether its value is input to, or output from a routine).
+{\ninepoint\begintt
+     flint [-acdfhjrsx2?] [-I incdir] [-o file] [-l] file ...
+\endtt}
+There are many command line switches (though the defaults are usually
+adequate).  Invoking {\bf flint} with the {\tt ?} switch causes it to
+print out brief information about {\bf flint}, and all the command line
+switches. For example:
+{\ninepoint\begintt
+     flint -?
+\endtt}
+will give some help information.
+
+\beginsub{Making flint Quieter}
+
+{\bf flint} assumes that the programmer follows a fairly strict programming
+convention. If the programmer does not, then {\bf flint} can produce a
+voluminous number of warning messages. There are a number of switches which
+help quiet {\bf flint} to manageable proportions:
+
+\item{-c} Allow interwoven continuation and comment lines. Normally,
+{\bf flint} generates warnings about this (even though it is standard
+FORTRAN).  An unpleasant side effect of allowing interwoven comment and
+continuation lines is that comments are not copied to the listing file.
+
+\item{-d} Do not warn when variables are not explicitly declared. Normally
+{\bf flint} insists that all variables must be explicitly declared with a
+`REAL', `INTEGER', etc, statement.
+
+\item{-f} Do not generate warnings about lines longer than 72 characters,
+or lines with an odd number of single quotes. When checking if a line is
+longer than 72 characters, {\bf flint} interprets tabs as if the equivalent
+number of spaces had been typed (the VMS compiler treats a tab as a single
+character, rather than as multiple spaces).
+
+\item{-h} By default, {\bf flint} does not understand hollerith data. The
+{\tt -h} flag instructs {\bf flint} to recognize hollerith data as integers.
+
+\item{-j} Do not check if a variable has been initialized before being used.
+If a variable is not in a DATA, COMMON, PARAMETER or SAVE statement,
+and if it is not a dummy subroutine argument, then {\bf flint} normally
+attempts to check that the variable is initialized before it is used. It
+does this by checking that it is assigned to at a earlier line in the
+routine than where it is first used. This is not necessarily correct in
+routines with EQUIVALENCE statements, a maze of gotos, or which have
+conditional blocks within loops.  Applying this same rule to subroutine
+arguments provides {\bf flint} with a technique for determining subroutine
+argument intent.  Disabling initialization checking will also disable these
+intent-determining rules, and so should eliminate spurious warnings about
+inconsistent subroutine argument intent.
+
+\item{-r} Do not warn about seemingly redundant variables. Redundant variables
+are those that are assigned to but never otherwise used. A common
+source of most messages is when a value returned by a subroutine
+is never used.  For example, {\bf flint} will complain if you ignore values
+returned in an array used by a subroutine for scratch storage, or if values
+returned by a general subroutine are ignored in specific cases.
+
+\item{-s} Load definitions of FORTRAN-IV and specific intrinsic functions.
+By default, {\bf flint} only knows about the standard FORTRAN-77 generic
+intrinsic functions (e.g. COS, REAL, MAX). It does not know specific
+function names or obsolete FORTRAN-IV functions (e.g. DCOS, FLOAT, AMAX0).
+The `s' flag causes {\bf flint} to load the definitions of these as well.
+
+\item{-u} Do not generate a warning about variables which do not seem to be
+used. By default, {\bf flint} produces such a warning for local variables
+(but not COMMON or PARAMETER variables).
+
+\item{-x} Allow extended subroutine and variable names. By default {\bf flint}
+warns if subroutine or variable names are longer than 8 characters, or if
+they contain underline or dollar characters. Using this flag allows names
+of arbitrary length, with dollar and underline characters.
+
+\beginsub{Other Flags and Arguments}
+
+\item{a} This causes flint to include a crude cross-reference map in its
+log file.
+\item{I} This flag is used to give the name of a directory to search for
+include files. When it encounters an `include' statement, flint first checks
+the local directory for the include file, and then checks other
+directories given by the {\tt -I} switch, in the order they were present
+on the command line.
+\item{?} This causes some help information to be printed.
+
+\beginsub{Bugs and Shortcomings}
+
+{\bf flint} has a number of bugs and
+shortcomings, in addition to those described above. {\bf flint} is intended
+to be run on a FORTRAN that a compiler would accept.  During the early
+stages of program development, a good FORTRAN compiler is a far better
+tool to find programming problems. {\bf flint} bugs and shortcomings include:
+
+\item{$\bullet$} EQUIVALENCE and IMPLICIT statements are ignored.
+
+\item{$\bullet$} A number of archaic, poor or non-standard FORTRAN features
+are not recognized. These include the ASSIGN statement and assigned GOTO,
+alternate return statements, PAUSE, ENTRY, DECODE, ENCODE, many
+archaic forms of i/o statements, NAMELIST and many VMS extensions.
+
+\item{$\bullet$} While BYTE, INTEGER*2, INTEGER*4, REAL*4, REAL*8, etc.,
+ statements are recognized, a warning message is generated, {\bf flint}
+otherwise treats these variables as either standard INTEGERs or REALs.
+
+\item{$\bullet$} Columns 72 to 80 of an input line (if they are present)
+are assumed to be part of the FORTRAN statement, rather than a comment
+field. {\bf flint} generates a warning if a line contains more than 72
+characters.
+
+{\bf flint} recognizes the following extensions, and digests them without
+complaint:
+\smallskip
+\item{$\bullet$} DO/ENDDO and DOWHILE/ENDDO constructs.
+
+\item{$\bullet$} INCLUDE statements.
+
+\item{$\bullet$} Lower case characters are considered equivalent to upper
+case. Tabs are treated as if they were the equivalent number of spaces.
+The full printable ascii character set can appear in character strings.
+
+\item{$\bullet$} A comment line starting with the hash character (\#).
+
+\item{$\bullet$} The INTENT statement (see the section on Interface
+Definition Libraries).
+
+\beginsub{Intent of Subroutine Arguments}
+
+Whenever {\bf flint} finds a call to a subroutine, or the source of a
+subroutine, it attempts to determine whether a subroutine argument is
+either input or output (this is called an arguments intent). Usually,
+{\bf flint} will build up its knowledge of a particular routines
+arguments by analyzing many uses of the subroutine, and generate a
+warning whenever inconsistent use is noted.
+
+Note that {\bf flint} expects an argument's intent to be either input or
+output or input/output. Some routines use an argument as input in some
+situations and output in others. Such routines may confuse {\bf flint},
+and it may well generate spurious messages about the variable in the
+subroutine call being uninitialized or redundant, or that the argument's
+intent is inconsistent.
+
+Normally {\bf flint} performs a single pass, analyzing files in the order
+that they are given on the command line. When analyzing the early part of
+the input source, {\bf flint} knowledge of argument intent is very poor.
+Thus some problems (uninitialized and redundant variables) may be missed.
+There are two recipes to partially avoid this. Firstly files on the
+command line should be ordered with the files containing low level
+subroutines first, and high level programs and application code last
+(generally interface definition libraries should go first). Additionally
+inside files, the lower level routines should be first, and higher level
+routines last. Secondly, the user can ask {\bf flint} to perform two
+passes of the input files, by using the {\tt -2} flag.  Two passes will
+not necessarily correctly determine the intent of all arguments (in
+general, {\tt N} passes will always be enough for programs with subroutine
+calls to a depth of {\tt N}).
+
+The following contrived example shows the worst case sort of behavior,
+where {\bf flint} builds up its knowledge of argument intent quite slowly.
+{\ninepoint\begintt
+     subroutine a(x)
+     real x
+     call b(x)
+     end
+     subroutine b(x)
+     real x
+     call c(x)
+     end
+     subroutine c(x)
+     real x
+     write(*,*)x
+     end
+\endtt}
+It would require three passes for {\bf flint} to determine that the
+intent of argument {\tt x} in subroutine {\tt a} was input (the first
+pass would determine the intent of {\tt x} in {\tt c}, the second would
+determine the intent of {\tt x} in {\tt b}). Usually {\bf flint} determines
+argument intents by other means than just allowing information to bubble
+up from the lowest level to the higher level routines. But in the above
+example, none of these could be applied. One of the techniques is
+derived from initialization checking (described under the {\tt -i} flag).
+When determining intent accurately is important, and if the initialization
+checking algorithm is failing (i.e. producing spurious messages), then
+initialization checking should be disabled.
+
+Small changes can significantly change the number of passes needed to
+uncover all intent information. For instance, in the example above,
+if the ordering of the routines was reversed (i.e. {\tt c} first and {\tt a}
+last), or if a piece of code such as
+{\ninepoint\begintt
+      call a(1.0)
+\endtt}
+appeared before subroutine {\tt a}, then {\bf flint} would require only
+one pass.
+
+\beginsub{Interface Definitions Libraries}
+
+It is a common (normal) situation
+in program development to have a library of standard functions and
+routines. Though {\bf flint} knows the interface definitions (i.e.,
+number, type and intent of each argument) of standard FORTRAN
+functions, it is desirable for users to build and use a file (or
+files) describing the interfaces to their own library.  This section
+describes the features in {\bf flint} to achieve this.
+
+{\bf flint} can output a text file, in pseudo-FORTRAN, which contains
+interface descriptions of all the routines that it has encountered in
+this run. The format is:
+{\ninepoint\begintt
+     flint -o file ....
+\endtt}
+Each routine in the output file will probably contain many `{\tt INTENT}'
+statements (part of the FORTRAN-8X standard). INTENT is used to indicate
+whether a subroutine argument is input to or output from a routine (or both),
+or whether this is unknown. Typically a routine description would look
+like:
+{\ninepoint\begintt
+      subroutine example(arg1,arg2,arg3,arg4)
+      real arg1,arg2
+      integer arg3,arg4
+      intent(in) arg1,arg3
+      intent(out) arg3,arg4
+      intent(unknown) arg2
+      end
+\endtt}
+Here, {\bf flint} believes {\tt arg1} is input, {\tt arg4} is output,
+and {\tt arg3} is both input and output.  {\bf flint} could not
+determine whether {\tt arg2} was input or output.
+
+The user can edit an interface file created by {\bf flint}, or create an
+entire interface description by hand.
+
+Such an interface description file appears as normal FORTRAN to {\bf flint},
+so it can be input to {\bf flint} (to teach {\bf flint} about a user's
+standard routine interfaces) on subsequent uses of {\bf flint}. While
+these interface definitions could be input along with normal source files,
+preceding the interface file with the {\tt -l} (library) switch has the
+advantage that the source of this file does not appear in the listing
+file. Warning messages generated by analyzing this file are also suppressed.
+
+The following example generates an interface description file,
+{\tt library.dat}, from source files {\tt routine1.for}, {\tt routine2.for},
+and {\tt routine3.for}.  The interface definition is then used in a
+subsequent {\bf flint} run on {\tt program.for}.
+{\ninepoint\begintt
+     flint -o library.dat routine1.for routine2.for routine3.for
+     flint -l library.dat program.for
+\endtt}
+
+\beginsection ratty
+
+{\bf ratty} is a FORTRAN preprocessor, intended to simplify the
+job of developing code that is to run on several machines.  {\bf ratty}
+checks for some non-ANSI or dubious programming practises; secondly, it
+converts some FORTRAN extensions into standard FORTRAN; and thirdly, it
+handles some compiler directives associated with conditional compilation
+or code optimization.
+
+Apart from the extra trouble of running the preprocessor before
+compilation,  preprocessors are generally a nuisance, in that they make
+the code that is developed and the code that is debugged different
+(both compile and run time debugging).  This tends to complicate the
+debugging process. To this end, {\bf ratty} attempts to make the minimum
+changes necessary to code to get it to compile.  Comments and indentation
+are retained in the output, so that the output should be nearly as
+readable as the input.  Additionally, when conditional compilation
+directives are avoided, it will be found that much code does not need
+to be preprocessed on a number of compilers.
+
+\beginsub{The Command}
+
+The command is:
+{\ninepoint\begintt
+     % ratty [-s system] [-I incdir] [-D symbol] [-b] [-?] input output
+\endtt}
+``Input'' is a text file containing a mildly extended FORTRAN, whereas
+``output'' is the resultant standard (?) code. The default input and
+output are the standard input and standard output. A few command line
+flags are also recognized:
+
+\item{-s} The string following this flag indicates the target compiler.
+{\bf ratty} performs some special processing for the following
+compilers: \newline
+{\parskip=0pt
+\def\bbox#1{\hbox to 2.0cm{#1\hfil}}
+\bbox{\tt vms} VAX/VMS FORTRAN compiler. \newline
+\bbox{\tt cft} Cray FORTRAN compiler (cft77). \newline
+\bbox{\tt f77} Generic UNIX FORTRAN-77 compiler. \newline
+\bbox{\tt convex} Convex C-1 compiler. \newline
+\bbox{\tt fx} Alliants compiler. \newline
+\bbox{\tt trace} Multiflow Trace computers. \newline
+}
+
+{\bf ratty} assumes that target compilers other than these are strict
+FORTRAN-77 compilers.
+
+\item{-I} The string following this flag indicates an alternate directory to
+search for include files. The -I flag can occur several times, giving several
+directories. When opening include files, first the current directory is
+checked, and then each directory given by the -I flag is check in the order
+in which they appeared on the command line.
+
+\item{-D} The name following this flag is treated as if it appeared in a
+\#define statement. Note that, unlike the cc compiler, a space is required
+between the -D and the name.
+
+\item{-b} If this flag is given, every backslash in the input is converted to
+two backslashes in the output. This is useful when the target compiler
+treats backslash as an ``escape character'' (i.e. several UNIX FORTRAN
+compilers).
+
+\item{?} This causes some help (on using {\bf ratty}) to be printed.
+
+\beginsub{Language Extensions}
+
+{\bf ratty} converts the following language extensions into
+standard FORTRAN, where necessary.
+
+\item{$\bullet$} Tab characters are replaced with the corresponding
+number of blanks.
+
+\item{$\bullet$} Both DO/ENDDO and DOWHILE/ENDDO are replaced with the
+standard FORTRAN-77 loops.
+
+\item{$\bullet$} The IMPLICIT NONE and IMPLICIT UNDEFINED statements
+may be converted to the form required by the local compiler, or
+eliminated altogether.
+
+\item{$\bullet$} INCLUDE files are expanded.
+
+\beginsub{Optimization Directive}
+
+Vector computers occasionally need
+directives to help optimize some loops. The needed directives, however,
+vary between manufacturers. {\bf ratty} takes optimization directives
+in a standard form and converts them to the form recognized by the
+target compiler. A directive is introduced by either a {\tt c\#} or a
+{\tt \#} starting a line (i.e. starting in column 1), for example:
+{\ninepoint\begintt
+  c#directive
+\endtt}
+or
+{\ninepoint\begintt
+  #directive
+\endtt}
+Either form can be used, but the {\tt c\#} form is preferable, as the
+directive will be seen as a comment to a standard compiler. The
+directives are:
+
+\item{$\bullet$} {\bf ivdep} instructs the compiler to ignore any apparent
+vector dependencies in the immediately following loop.  This is a commonly
+used directive.
+
+\item{$\bullet$} {\bf maxloop nn} indicates that the loop count of
+the immediately following loop will not exceed `nn'. This enables the
+compiler to optimize some short loops. For example
+{\ninepoint\begintt
+  c#maxloop 32
+      do i=1,n
+         .
+         .
+      enddo
+\endtt}
+indicates that the do loop will not execute more than 32 times.
+
+\item{$\bullet$} The {nooptimize} directive appears just before a
+do-loop that should not be optimized.
+
+\beginsub{Conditional Compilation Directives}
+
+When coding a task for
+several machines, it is sometimes desirable that different code is
+executed for different machines. For example, to achieve good
+efficiency, the inner loops may need to be different on a scalar
+and vector machine.
+
+The basic syntax is the same as the optimization directives (i.e.
+{\tt c\#} or {\tt \#} starting a line, followed by the directive). However,
+as code using conditional compilation will have to be passed through
+{\bf ratty} to produce the correct code, the {\tt \#} form is preferred.
+This will be seen as an error by a standard compiler, thus preventing
+code from accidently not being passed through the preprocessor.
+
+There are four directives of interest, namely {\tt ifdef, ifndef,
+else} and {\tt endif}. Like the cpp preprocessor, {\tt ifdef} and
+{\tt ifndef} pass the following section of code to the compiler if
+a particular ``symbol'' is defined or not.  Currently there are only
+one or two symbols that are defined. Firstly, a symbol with the
+compiler target name is defined (the target compiler name is gained
+from the command line {\bf -s} flag). Secondly, a symbol `vector' is
+defined if the target computer is a vector machine. For example,
+ the command line:
+{\ninepoint\begintt
+   % ratty -s cft input output
+\endtt}
+causes the symbols `cft' and `vector' to become defined.  Then, given
+the following code fragment from ``input'', the first section is
+copied to ``output'', whereas the second is discarded.
+{\ninepoint\begintt
+     #ifdef cft
+        .
+        .  Use this code on the Cray.
+        .
+     #else
+        .
+        .  This code on all other machines.
+        .
+     #endif
+\endtt}
