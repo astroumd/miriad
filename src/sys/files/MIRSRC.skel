@@ -83,5 +83,18 @@ fi
 
 #  -------------------------------------------------------------
 # special additions
-export LD_LIBRARY_PATH=$MIRLIB
-export PGPLOT_DIR=/usr/lib/pgplot
+if test -n "$LD_LIBRARY_PATH"; then
+   export LD_LIBRARY_PATH=${MIRLIB}:${LD_LIBRARY_PATH}
+else
+  export LD_LIBRARY_PATH=$MIRLIB
+fi
+#
+if test -n "$PYTHONPATH"; then
+   export PYTHONPATH=${MIR}/src/scripts/python:${PYTHONPATH}
+else
+   export PYTHONPATH=${MIR}/src/scripts/python
+fi
+# pgplot=1
+export PGPLOT_DIR=$MIRLIB
+export WIPHELP=$MIR/borrow/wip/wiphelp.dat
+
