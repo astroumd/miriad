@@ -10,17 +10,29 @@ if ($?MIR == 0) then
   exit 1
 endif
 
-set tmp=mirlib
+set src=mirlib
+set lib=/dev/null
+set inc=/dev/null
+set bin=/dev/null
 
-if (! -e $tmp) mkdir $tmp
+# poor mans command line parser
+foreach _a ($*)
+  set $_a
+end
 
-cd $tmp
+if (! -e $src) mkdir $src
+
+cd $src
 set inch=(maxdimc.h maxdim.h)
-#set subs=(bug.c dirs.c hio.c key.c pack.c uvio.c xyzio.c dio.c headio.c interface.c maskio.c scrio.c xyio.c)
 set subs=(bug.c hio.c key.c pack.c uvio.c xyzio.c dio.c headio.c interface.c maskio.c scrio.c xyio.c)
 set subh=(miriad.h io.h hio.h sysdep.h)
+set mkfl=(Makefile)
 
+set cc=gcc
+#set cflags=(-g -Wall)
+set cflags=(-g -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE) 
 
+# clone files from the $MIR tree
 
 foreach f ($inch)
   cp $MIRINC/$f .
@@ -30,12 +42,20 @@ foreach f ($subh $subs)
   cp $MIRSUBS/$f .
 end
 
+cp $MIR/install/Makefile .
+
+# compile
+
 foreach f ($subs)
-  gcc -Wall -c $f
+  $cc $cflags -c $f
 end
 ar ruv libmir.a *.o
-
-# libmir.a and miriad.h are the exported material
-
+$cc $cflags -DTESTBED -o uvio uvio.c libmir.a -lm
 
 
+#  install
+
+set null=/dev/null
+if ($bin != $null) cp uvio     $bin
+if ($lib != $null) cp libmir.a $lib
+if ($inc != $null) cp miriad.h $inc
