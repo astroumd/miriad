@@ -9,6 +9,7 @@ c    mchw 23Feb90 added default width for wideband correlator data only
 c    mchw 06Jul90 corrected bug in oneamp and changed to degrees.
 c		  - worked on documentation.
 c    pjt  12may03 removed a remaining maxant=256 dependancy
+c    pjt  17oct03 another longforgotten 30 -> MAXANT
 c********1*********2*********3*********4*********5*********6*********7*c
 c* Width - Calculate wideband channel width
 c& mchw
@@ -120,8 +121,9 @@ c    ants 	antenna description string.
 c--
 c		-oct 88 wh
 c----------------------------------------------------------------------c
+	include 'maxdim.h'
 	character*80 antsold
-	logical expanded(30,2)
+	logical expanded(MAXANT,2)
 	integer i,il,iex,next,iant,i1,i2,l
 	character*10 token
 	character*30 tok
@@ -133,7 +135,7 @@ c
 	if(ants.ne.antsold) then
 	  antsold=ants
 	  call lcase(ants)
-	  do i=1,30
+	  do i=1,MAXANT
 	   expanded(i,1) = .false.
 	   expanded(i,2) = .false.
 	  end do
@@ -154,7 +156,7 @@ c  with means switch to right
 	    else if (tok(1:1).eq.'*') then
 c
 c  * means all antennas
-		do i=1,30
+		do i=1,MAXANT
 		 expanded(i,iex) = .true.
 		end do
 	    else if (tok(1:1).eq.'-') then
@@ -166,7 +168,7 @@ c  - means remove next antennas
 c
 c  add/sub one antenna
 c
-		if (iant.gt.0 .and. iant.le.30) then
+		if (iant.gt.0 .and. iant.le.MAXANT) then
 		  expanded(iant,iex) = submode
 		end if
 	    end if
@@ -175,15 +177,15 @@ c
 c  if no 'with' then both sets are the same
 c
 	    if (iex.eq.1) then
-		do i=1,30
+		do i=1,MAXANT
 		  expanded(i,2) = expanded(i,1)
 		end do
 	    end if
 	end if
 	call basant(base,i1,i2)
 	bselect=.false.
-	if (i1.lt.1 .or. i1.gt.30) return
-	if (i2.lt.1 .or. i2.gt.30) return
+	if (i1.lt.1 .or. i1.gt.MAXANT) return
+	if (i2.lt.1 .or. i2.gt.MAXANT) return
 	if (expanded(i1,1) .and. expanded(i2,2)  .or.
      .		expanded(i1,2) .and. expanded(i2,1)) then
 	    bselect=.true.
