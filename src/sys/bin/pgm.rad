@@ -12,6 +12,10 @@ if (! -d $mir/borrow/rad || ! -e $mir/borrow/rad/README) then
   echo RAD does not seem to exist within your miriad distribution.
   echo Installation skipped  
   exit 0
+else
+  echo RAD does exist, but the actual installation is still manual
+  echo Soon this will work for you Jonathan
+  exit 0
 endif
 # -------------------------------------------------------------------
 if (-e $lsys/pgm.rad && ! $?local_compile) then
