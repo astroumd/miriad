@@ -1,0 +1,173 @@
+%------------------------------------------------------------------------
+% Appendix - Image Items
+%------------------------------------------------------------------------
+%  History
+%
+%  --mar91 mjs  Original version.
+%  23jun91 mjs  cdelt/crpix/crval are type "double", not "real"
+%
+%------------------------------------------------------------------------
+
+\beginsection Discussion of MIRIAD Image Items
+
+This list describes items that may be present in MIRIAD image data
+sets.  A number of MIRIAD image items have their origins in FITS,
+and consulting that standard will provide additional discussion on the
+items.  These include (where {\bf N} is the axis number):
+{\ninepoint\begintt
+-------- -------- -------- -------- -------- -------- -------- --------
+crpixN   crvalN   ctypeN   datamin  datamax  date-obs epoch    history
+instrume naxis    naxisN   object   observer telescop
+-------- -------- -------- -------- -------- -------- -------- --------
+\endtt}
+Data storage types have the following meanings:
+\vskip 0.2in
+{\ninepoint\parskip=0.0in
+{\tt char ......} A null-terminated character string, 8 characters or
+less. \newline
+{\tt double ....} IEEE 64-bit floating point. \newline
+{\tt integer ...} A 32-bit signed integer. \newline
+{\tt real ......} IEEE 32-bit floating point. \newline
+{\tt text ......} A string of characters, not null-terminated. \newline
+}
+\vskip 0.4in
+{\ninepoint\raggedright
+\tabskip=0em
+\halign {#\tabskip=2em&\tabskip=2em&#\tabskip=2em&#\hfil\cr
+
+{\underbar{Item}}&{\underbar{Type}}&{\underbar{Units}}&{\underbar{Description}}\cr
+\cr
+{\bf bmaj}      &real   &radians    &Beam major axis, full width at\cr
+                &       &           &half maximum.\cr
+\cr
+{\bf bmin}      &real   &radians    &Beam minor axis, full width at\cr
+                &       &           &half maximum.\cr
+\cr
+{\bf bpa}       &real   &degrees    &Beam position angle.\cr
+\cr
+{\bf bunit}     &char   &-          &The units of the pixels, either\cr
+                &       &           &{\tt JY/BEAM} or {\tt JY/PIXEL}\cr
+                &       &           &(same as FITS BUNIT keyword).\cr
+\cr
+{\bf cdelt1},   &double &(see Desc.)&The increment between pixels of the\cr
+{\bf cdelt2},   &       &           &axes.  Units are radians for RA or\cr
+...             &       &           &DEC, GHz for frequency, and \cr
+                &       &           &km/s for velocity.\cr
+\cr
+{\bf crpix1},   &double &-          &The pixel coordinate of the reference\cr
+{\bf crpix2},   &       &           &pixel of the axes.\cr
+...             &       &           &\cr
+\cr
+{\bf crval1},   &double &(see Desc.)&The coordinate value at the reference\cr
+{\bf crval2},   &       &           &pixel for the axes.  Units are radians\cr
+...             &       &           &for RA and DEC, GHz for frequency, and\cr
+                &       &           &km/s for velocity.\cr
+\cr
+{\bf ctype1},   &char   &-          &The type of the axes.  Values are the\cr
+{\bf ctype2},   &       &           &same as FITS CTYPE keywords:\cr
+...             &       &           &{\tt RA---SIN} for RA,\cr
+                &       &           &{\tt DEC--SIN} for DEC;\cr
+                &       &           &coordinate as velocity ({\tt VELO-LSR})\cr
+                &       &           &or frequency ({\tt FREQ}).\cr
+\cr
+{\bf datamax}   &real   &-          &The maximum pixel value.\cr
+\cr
+{\bf datamin}   &real   &-          &The minimum pixel value.\cr
+\cr
+{\bf date-obs}  &char   &-          &Format is 'dd/mm/yy'.\cr
+\cr
+{\bf epoch}     &real   &years      &The epoch of the coordinate system.\cr
+                &       &           &(FITS EQUINOX)\cr
+\cr
+{\bf history}   &text   &-          &The history of processing performed on\cr
+                &       &           &the data set.\cr
+\cr
+{\bf image}     &real   &-          &The pixel data.\cr
+\cr
+{\bf instrume}  &char   &-          &The data acquisition instrument.\cr
+\cr
+{\bf lstart}    &real   &-          &Linetype start channel or velocity used\cr
+                &       &           &in making image.\cr
+\cr
+{\bf lstep}     &real   &-          &Linetype step size used in making image.\cr
+\cr
+{\bf ltype}     &char   &-          &Linetype used in making image.\cr
+\cr
+{\bf lwidth}    &real   &-          &Linetype width used in making image.\cr
+\cr
+{\bf mask}      &-      &-          &A bitmap used to determine which pixels\cr
+                &       &           &in the image have been blanked.\cr
+\cr
+{\bf naxis}     &integer&-          &The number of dimensions.\cr
+\cr
+{\bf naxis1},   &integer&-          &The number of pixels along the dimension.\cr
+{\bf naxis2},   &       &           &\cr
+...             &       &           &\cr
+\cr
+{\bf niters}    &integer&-          &The total number of deconvolution\cr
+                &       &           &iterations performed on the image.\cr
+\cr
+{\bf object}    &char   &-          &Source name (e.g., {\tt CHICYG}).\cr
+\cr
+{\bf observer}  &char   &-          &Observer name, identification.\cr
+\cr
+{\bf obsdec}    &double &radians    &The apparent DEC of the phase center of\cr
+                &       &           &the observation.\cr
+\cr
+{\bf obsra}     &double &radians    &The apparent RA of the phase center of\cr
+                &       &           &the observation.\cr
+\cr
+{\bf pbfwhm}    &integer&-          &The primary beam, full width at half\cr
+                &       &           &maximum.  Its value is {\tt 1} if the\cr
+                &       &           &primary beam is unknown.  Its value is\cr
+                &       &           &{\tt 0} if there is no primary beam\cr
+                &       &           &apodization (e.g., primary beam\cr
+                &       &           &correction has been applied, or single\cr
+                &       &           &dish antenna).\cr
+\cr
+{\bf restfreq}  &double &GHz        &The rest frequency of the observed data.\cr
+\cr
+{\bf telescop}  &char   &-          &Data acquisition telescope (e.g.,\cr
+                &       &           &{\tt HATCREEK}).\cr
+\cr
+{\bf vobs}      &real   &km/s       &Velocity of the observatory, with\cr
+                &       &           &respect to the rest frame, during the\cr
+                &       &           &observation.\cr
+\cr
+{\bf xshift}    &real   &radians    &Shift in RA of the map center from the\cr
+                &       &           &phase center, when mapping.\cr
+\cr
+{\bf yshift}    &real   &radians    &Shift in DEC of the map center from the\cr
+                &       &           &phase center, when mapping.\cr
+}
+}
+
+\beginsection RALINT header and Corresponding MIRIAD Image Items
+
+{\parskip=0.0cm
+\def\bbox#1{\hbox to 2.2cm{#1\hfil}}
+\bbox{xy}pixel size (") \newline
+\bbox{ras decs}coordinate at the reference pixel (radians) \newline
+\bbox{dras ddecs}pointing center offset from (ras,decs) (radians) \newline
+\bbox{vel,delv}lsr velocity and width of this map (km/s) \newline
+\bbox{rfrq}restfreq (GHz) \newline
+\bbox{freqs}sky frequency at time of first observation (GHz) \newline
+\bbox{ }freqs = restfreq(1-(vobs-vsource)/ckms) \newline
+\bbox{cbmaj,} \newline
+\bbox{cbmin,} \newline
+\bbox{cbpa}beam size (") and position angle (degrees) \newline
+\bbox{PLMAJS,} \newline
+\bbox{PLMINS,} \newline
+\bbox{PLANGS}reference planet axes (arcsecs, arcsecs, degrees) \newline
+\bbox{ } \newline
+}
+linetype, svel, sk are the line type, 1st and last channel, velocity and
+width used by subroutine ALINE when gridding the data, see aline.hlp;
+position velocity plots change linetype(1) to 'LV' \newline
+maptype is a coded combination of bunit and ctype1, ctype2, and ctype3
+
+\$MIR/src/prog/vis/hatmap.h defines the Ralint 2-d map header.  There is also
+a 3-d Ralint format, with Image of size (nx,ny,nz) with velocities given by
+the array vlsr. \newline
+The coordinates and reference pixel are give w.r.t. the original Ralint
+2d map.
