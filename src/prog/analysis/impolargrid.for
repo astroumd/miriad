@@ -48,7 +48,6 @@ c History:
 c     dark ages Gruendl/Vogel - developed under zodiac
 c     13-feb-02 pjt  Miriadized this routine
 c     16-feb-02 pjt  first public version
-
 c***********************************************************************
 c
       include   'maxdim.h'
@@ -56,7 +55,7 @@ c
       integer   MAXNAX
       parameter (MAXNAX=3)
       character VERSION*(*)
-      parameter (VERSION='16-feb-2002')
+      parameter (VERSION='17-feb-2002')
 c
       character infile*128, oufile*128, rmode*10, ctype1*10,ctype2*10
       integer   irow(MAXDIM),ioutrw(MAXDIM)
@@ -67,7 +66,8 @@ c
       real      agrid0,agrid1,astep,apt,phase,rget,rgrid0,rgrid1,
      #          rpt,rstep,xcen,xpt,ycen,ypt,dx,dy,sum
       real      crval1,crpix1,cdelt1,crval2,crpix2,cdelt2
-      logical   lin, lcen, lrad, logflag, flags(MAXDIM,MAXDIM)
+      logical   lin, lcen, lrad, logflag, flags(MAXDIM,MAXDIM),
+     #          ouflg(MAXDIM)
 c
       logical   keyprsnt
 c
@@ -98,9 +98,7 @@ c
       call keyr('angle',agrid0,-180.0)
       call keyr('angle',agrid1, 180.0)
       call keyr('angle',astep,    1.0)
-
       call keyfin
-
 c
 c check inputs
 c
@@ -169,7 +167,6 @@ c
       if (agrid1 .gt. agrid0) astep=-astep
 
       crpix2 = outny
-
 c
 c
 c     Read in the first data plane.
@@ -178,7 +175,6 @@ c
          call xyread(tin,iy,indat(1,iy))
          call xyflgrd(tin,iy,flags(1,iy))
       enddo
-
 c
 c     Open output file
 c
@@ -215,23 +211,20 @@ c
           xpt=xcen+rpt*cos(apt+phase)
           ypt=ycen+rpt*sin(apt+phase)
 c
-c
 c         See if point exists within confines of the input plane
 c
-c
           lin=.true.
+          ouflg(ix)=.true.
           ixpt=int(xpt)
           iypt=int(ypt)
           if ((ixpt+1 .gt. nx).or.(ixpt .lt. 1)) lin=.false.
           if ((iypt+1 .gt. ny).or.(iypt .lt. 1)) lin=.false.
           if (lin) then
-c           DO NOT USE MAGIC VALUE POINTS
              if (.NOT.flags(ixpt,iypt) .or. 
      #            .NOT.flags(ixpt+1,iypt) .or.
      #            .NOT.flags(ixpt,iypt+1) .or.
      #            .NOT.flags(ixpt+1,iypt+1))
      #            lin=.false.
-
              if (lin) then
                 ixpt=int(xpt)
                 iypt=int(ypt)
@@ -250,14 +243,17 @@ c           DO NOT USE MAGIC VALUE POINTS
      #                  (1.0-dx)*indat(ixpt+1,iypt+1))
                 endif
              else
+                ouflg(ix)=.false.
                 sum=-0.0
              endif
           else
+             ouflg(ix)=.false.
              sum=-0.0
           endif
           oudat(ix)=sum
        enddo
        call xywrite(tout,iy,oudat)
+       call xyflgwr(tout,iy,ouflg)
       enddo
       call hdcopy(tin,tout,'history')
       call hisopen(tout,'append')
