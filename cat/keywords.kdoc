@@ -341,6 +341,7 @@ can handle only a single dataset at a time.
         Currently supported types are:
 
           xmtv          Miriad X server. `server' is the servers hostname.
+                        (use "localhost" if you are not networked)
                         Normally the xmtv server will be the same host as
                         the X server. The user will normally invoke the xmtv
                         server before running any Miriad TV tasks, with
