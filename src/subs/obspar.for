@@ -34,6 +34,7 @@ c    mchw 03jan02 Added SZA
 c    mchw 09jul02 Added ALMA
 c    mchw 26aug03 Added SMA
 c    gxm  27jan04 Added generic systemp for WSRT (to please wsrtfits).
+c    mchw 07jul04 Added SMA10 and SZA6 cross correlations for CARMA.
 c************************************************************************
 c* ObsPrint -- Print list of known observatories.
 c: utility
@@ -82,7 +83,7 @@ c    observ	Name of the observatory. Current list is :
 c                 'ALMA', 'ATCA', 'CARMA', CEDUNA30M', 'CSO', 'GMRT',
 c                 'HATCREEK', 'HOBART26M', 'IRAM15M', 'JCMT',
 c                 'KITTPEAK', 'NOBEYAMA', 'NOBEYAMA45', 'ONSALA', 'OVRO',
-c		  'PARKES', 'PENTICTON', 'QUABBIN', 'RPA', 'SZA', 'VLA', 
+c		  'PARKES', 'PENTICTON', 'QUABBIN', 'RPA', 'SZA', 'SZA10', 'SZA6', 'VLA', 
 c		  'WSRT'
 c                 
 c    object	The parameter of the observatory of interest. Possible
@@ -423,18 +424,44 @@ c
 	call obsad('sma/mount',	NASMYTH)
 	call obsad('sma/nants',	8.0d0)
 c
-c  SZA - Sunyaev-Zel'dovich Array of 8 3.5m antennas - part of CARMA.
+c  SZA - Sunyaev-Zel'dovich Array of eight 3.5m antennas - part of CARMA.
 c
         call obsad('sza/antdiam',     3.5d0)
         call obsad('sza/ellimit',     5.0*dpi/180.d0)
         call obsad('sza/evector',     0.5*dpi)
         call obsad('sza/height',      2400.0d0)
-        call obsad('sza/jyperk',      418.d0)
+        call obsad('sza/jyperk',      383.d0)
         call obsad('sza/latitude',     obsdms( 1, 37,14, 0.00))
         call obsad('sza/longitude',    obsdms(-1,118,17, 0.00))
         call obsad('sza/mount',       ALTAZ)
         call obsad('sza/nants',       8.d0)
         call obsad('sza/systemp',     200.d0)
+c
+c  SZA10 - SZA cross correlalations of 3.5m and 10.4m antennas - part of CARMA.
+c
+        call obsad('sza10/antdiam',     6.0d0)
+        call obsad('sza10/ellimit',     5.0*dpi/180.d0)
+        call obsad('sza10/evector',     0.5*dpi)
+        call obsad('sza10/height',      2400.0d0)
+        call obsad('sza10/jyperk',      128.d0)
+        call obsad('sza10/latitude',     obsdms( 1, 37,14, 0.00))
+        call obsad('sza10/longitude',    obsdms(-1,118,17, 0.00))
+        call obsad('sza10/mount',       ALTAZ)
+        call obsad('sza10/nants',       8.d0)
+        call obsad('sza10/systemp',     200.d0)
+c
+c  SZA6 - SZA cross correlalations of 3.5m and 6.1m antennas - part of CARMA.
+c
+        call obsad('sza6/antdiam',     4.6d0)
+        call obsad('sza6/ellimit',     5.0*dpi/180.d0)
+        call obsad('sza6/evector',     0.5*dpi)
+        call obsad('sza6/height',      2400.0d0)
+        call obsad('sza6/jyperk',      220.d0)
+        call obsad('sza6/latitude',     obsdms( 1, 37,14, 0.00))
+        call obsad('sza6/longitude',    obsdms(-1,118,17, 0.00))
+        call obsad('sza6/mount',       ALTAZ)
+        call obsad('sza6/nants',       8.d0)
+        call obsad('sza6/systemp',     200.d0)
 c
 c  The Very Large Array (NRAO).
 c  Values taken from the Green Book (pages 1-10, 1-16, 6-17).
