@@ -138,7 +138,7 @@ echo ' '
 # -------------------------------------------------------------------
 #  Clean up intermediate files and remove files that clean missed.
 make -f ./makefile clean
-rm -fr pgplot.inc grpckg1.inc grexec.f makefile pgbind
+rm -fr grexec.f makefile pgbind
 rm -fr cpgdemo pg*demo*
 # -------------------------------------------------------------------
 #  Now, if any servers exist, move them to the bin directory.
