@@ -50,11 +50,12 @@ c      to give the reference antenna here.
 c
 c@ options
 c       'nopol'    Disable polarization. All the correlations will be
-c                  labelled as XX.
+c                  labelled as XX. Default in options for polarization 
+c                  is nopol.
 c       'circular' when circular polarization data taken with single
 c                  with waveplates.
-c                  Default is for linear polarization data taken with
-c                  dual linear feeds.   
+c       'linear'   when linear polarization data taken with dual linear feeds.
+c   
 c       'oldpol'   Converts MIR polarization data observed before
 c                  2004-9-1.
 c                  Defaults assumes non-polarization state is assigned.
@@ -142,6 +143,9 @@ c                   coordinates; converted the geocentrical coordinates
 c                   to miriad coordinates.
 c    jhz  10-mar-05 removed uvputvra for file name which somehow
 c                   is rejected by miriad program uvlist.
+c    jhz  18-mar-05 added linear in options for polarization;
+c                   made default for nopol
+c    jhz  18-mar-05 correct size for mount in uvputvr 
 c------------------------------------------------------------------------
         integer maxfiles
         parameter(maxfiles=128)
@@ -154,7 +158,7 @@ c
         double precision rfreq(2)
         logical doauto,docross,docomp,dosam,relax,unflag,dohann
         logical dobary,doif,birdie,dowt,dopmps,doxyp,doop
-        logical polflag,hires,nopol,sing,circular,oldpol,dsb,
+        logical polflag,hires,nopol,sing,circular,linear,oldpol,dsb,
      *          dospc,doengrd
         integer fileskip,fileproc,scanskip,scanproc,sb, dosporder
         integer doeng
@@ -193,7 +197,7 @@ c
         call keyi('refant',refant,6)
         call getopt(doauto,docross,docomp,dosam,doxyp,doop,relax,
      *    sing,unflag,dohann,birdie,dobary,doif,dowt,dopmps,polflag,
-     *    hires,nopol,circular,oldpol,dospc,doengrd)
+     *    hires,nopol,circular,linear,oldpol,dospc,doengrd)
             dosporder=-1
             if(dospc) dosporder=1
             doeng =-1
@@ -259,7 +263,7 @@ c
             if(iostat.ne.0)call bug('f','Error skipping SMAMIR file')
           else
             call pokeini(tno,dosam,doxyp,doop,dohann,birdie,dowt,
-     *      dopmps,dobary,doif,hires,nopol,circular,oldpol,
+     *      dopmps,dobary,doif,hires,nopol,circular,linear,oldpol,
      *      rsnchan, refant)
             if(nfiles.eq.1)then
               i = 1
@@ -317,11 +321,11 @@ c
 c************************************************************************
         subroutine getopt(doauto,docross,docomp,dosam,doxyp,doop,
      *    relax,sing,unflag,dohann,birdie,dobary,doif,dowt,dopmps,
-     *    polflag,hires,nopol,circular,oldpol,dospc,doengrd)
+     *    polflag,hires,nopol,circular,linear,oldpol,dospc,doengrd)
 c
         logical doauto,docross,dosam,relax,unflag,dohann,dobary,doop
         logical docomp,doif,birdie,dowt,dopmps,doxyp,polflag,hires,sing
-        logical nopol,circular,oldpol,dospc,doengrd
+        logical nopol,circular,linear,oldpol,dospc,doengrd
 c
 c  Get the user options.
 c
@@ -338,19 +342,20 @@ c    doif	Map the simultaneous frequencies to the IF axis.
 c    relax
 c    unflag
 c    dobary	Compute barycentric radial velocities.
-c    birdie
 c    dowt	Reweight the lag spectrum.
 c    dopmps	Undo "poor man's phase switching"
 c    polflag	Flag all polarisations if any are bad.
 c    hires      Convert bin-mode to high time resolution data.
 c    sing	Single dish mode.
 c    nopol      Disable polarization.
+c    circular   circular polarization.
+c    linear     linear polarization.
 c    dospc      reverse the order of spectral windows for
 c               the last three blocks.
 c    doengrd read engineer file.
 c------------------------------------------------------------------------
         integer nopt
-        parameter(nopt=23)
+        parameter(nopt=24)
         character opts(nopt)*8
         logical present(nopt)
         data opts/'noauto  ','nocross ','compress','relax   ',
@@ -358,7 +363,7 @@ c------------------------------------------------------------------------
      *            'noif    ','birdie  ','reweight','xycorr  ',
      *            'opcorr  ','nopflag ','hires   ','pmps    ',
      *            'mmrelax ','single  ','nopol   ','circular  ',
-     *            'oldpol','dospc', 'doengrd'/
+     *            'linear', 'oldpol','dospc', 'doengrd'/
         call options('options',opts,present,nopt)
         doauto = .not.present(1)
         docross = .not.present(2)
@@ -383,9 +388,11 @@ c       mmrelax = present(17)
         sing    = present(18)
         nopol   = present(19)
         circular  = present(20)
-        oldpol  = present(21)
-        dospc   = present(22)
-        doengrd = present(23)
+        linear  = present(21)
+        oldpol  = present(22)
+        dospc   = present(23)
+        doengrd = present(24)
+        if((.not.circular.and..not.linear).and..not.oldpol) nopol=.true.
 c
         if((dosam.or.doxyp.or.doop).and.relax)call bug('f',
      *    'You cannot use options samcorr, xycorr or opcorr with relax')
@@ -424,25 +431,26 @@ c------------------------------------------------------------------------
 c
 c Alt-Az mount=0 SMA project book
 c
-          call uvputvri(tno,'mount',mount,0)
+          mount =0
+          call uvputvri(tno,'mount',mount,1)
         endif
 c
-        if(dobary)then
-          call uvputvra(tno,'veltype','VELO-HEL')
-        else
-          call uvputvra(tno,'veltype','VELO-LSR')
-        endif
+c        if(dobary)then
+c          call uvputvra(tno,'veltype','VELO-HEL')
+c        else
+c          call uvputvra(tno,'veltype','VELO-LSR')
+c        endif
         end
 c************************************************************************
 c************************************************************************
         subroutine pokeini(tno1,dosam1,doxyp1,doop1,
      *          dohann1,birdie1,dowt1,dopmps1,dobary1,
-     *          doif1,hires1,nopol1,circular1,oldpol1,
+     *          doif1,hires1,nopol1,circular1,linear1,oldpol1,
      *	        rsnchan1, refant1)
 c
         integer tno1, rsnchan1, refant1
         logical dosam1,doxyp1,dohann1,doif1,dobary1,birdie1,dowt1
-        logical dopmps1,hires1,doop1,nopol1,circular1,oldpol1
+        logical dopmps1,hires1,doop1,nopol1,circular1,linear1,oldpol1
 c
 c  Initialise the Poke routines.
 c------------------------------------------------------------------------
@@ -547,7 +555,7 @@ c
 c
         call rspokeinisma(kstat,tno1,dosam1,doxyp1,doop1,
      *  dohann1,birdie1,dowt1,dopmps1,dobary1,doif1,hires1,
-     *  nopol1,circular1,oldpol1,lat1,long1,rsnchan1,refant1)
+     *  nopol1,circular1,linear1,oldpol1,lat1,long1,rsnchan1,refant1)
         end
 c************************************************************************
         subroutine liner(string)
