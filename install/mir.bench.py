@@ -1,18 +1,23 @@
 #!/usr/bin/env python
 #
+# mir.bench.py: see also http://bima.astro.umd.edu/memo/abstracts.html#81
 #
 
+
 import sys, os, time
+version='2003-03-09'
 
-version='2003-03-07'
 
-# -------------------------------------------------------------------------------
-
-tmp='benchXXXXX'
+# command line arguments that can be changed... (but should not in the benchmark)
 nchan=32
 mapsize=1024
 cell=0.5
-small=1
+
+# -------------------------------------------------------------------------------
+
+
+tmp='benchXXXXX'
+small=0
 vis=['vis1','vis2','vis3']
 ant=['bima9_a.ant', 'bima9_b.ant', 'bima9_c.ant.equ']
 
@@ -22,12 +27,11 @@ if small:
     mapsize=256
     cell=2
 
-
 timet=[0,0,0,0,0,0,0,0]
 timec=[0,0,0,0,0,0,0,0]
 
 #print "MIRBENCH: %(version)s: nchan=%(nchan)d  mapsize=%(mapsize)d"
-print "MIRBENCH: %s: nchan=%d  mapsize=%d" % (version, nchan, mapsize)
+print "MIRBENCH: %s (py): nchan=%d  mapsize=%d" % (version, nchan, mapsize)
 
 mir = os.environ['MIR']
 
@@ -77,10 +81,13 @@ def uvgen(id):
         ]
     return cmd
 
-def uvcat():
+def uvcat(infiles):
+    vis=infiles[0]
+    for v in infiles[1:]:
+        vis = vis + ',' + v
     cmd = [
         'uvcat',
-        'vis=vis1,vis2,vis3',
+        'vis=%s' % vis,
         'out=vis'
         ]
     return cmd
@@ -119,10 +126,11 @@ def restor():
 
 print mir
 
+
 if os.path.isdir(tmp):
     cmd = ' rm -rf %s ' % tmp
     print cmd
-    #    os.system('rm -rf benchXXXXX')
+    #    os.system('rm -rf benchXXXXX')                 # somehow this does not work
 
 os.mkdir(tmp)
 os.chdir(tmp)
@@ -130,7 +138,7 @@ os.chdir(tmp)
 timer(0); miriad(uvgen(0))
 timer(1); miriad(uvgen(1))
 timer(2); miriad(uvgen(2))
-timer(3); miriad(uvcat())
+timer(3); miriad(uvcat(vis))
 timer(4); miriad(invert(mapsize,cell))
 timer(5); miriad(clean())
 timer(6); miriad(restor())
@@ -145,8 +153,8 @@ print 'invert: ' +  cpulen(4,5)
 print 'clean:  ' +  cpulen(5,6)
 print 'restor: ' +  cpulen(6,7)
 print 'TOTAL:  ' +  cpulen(0,7)
-print 'MirStones %f  ' % (300/(timet[7]-timet[0])) + ' Wall clock '
-print 'MirStones %f  ' % (300/(timec[7]-timec[0])) + ' CPU clock'
+print 'MirStones %f  ' % (300/(timet[7]-timet[0])) + ' Wall clock  (CPU clock has bug)'
+print 'MirStones %f  ' % (300/(timec[7]-timec[0])) + ' CPU clock'      # also has a bug
 
 
 
