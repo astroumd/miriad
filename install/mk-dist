@@ -1,0 +1,40 @@
+#! /bin/csh -f
+# 
+#  make a new distribution
+#
+set rev=(-r MIR3)
+set root=/astromake/opt/miriad
+set mir=`date +%y%h%d | tr A-Z a-z`
+
+foreach a ($*)
+ set $a
+end
+
+
+echo "Install miriad $rev in $root/$mir"
+
+cd $root
+cvs -Q co $rev -d $mir miriad
+(cd $mir/borrow; cvs -Q co wip; cvs -Q co rad)
+
+rm -f $mir/src/tools/ercmd.c
+
+cd $mir/install
+./install.linux
+
+
+exit 0
+
+if (-e /usr/local/miriad/$date/MIRRC.linux) then
+  cd /usr/local/miriad
+  echo Creating $tmp/miriad-$date.tgz 
+  tar zcf $tmp/miriad-$date.tgz *.MIRIAD $date
+  scp $tmp/miriad-$date.tgz teuben@apus:/home/ftp/pub/astro
+else
+  echo No version date, check /usr/local/miriad/$date/MIRRC.linux
+  ls -l /usr/local/miriad/*/MIRRC.linux 
+endif
+
+
+echo This file should be copied to  astro.umd.edu:/home/ftp/pub/astro
+echo 
