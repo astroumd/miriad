@@ -323,6 +323,7 @@ cc     4sep01 pjt   time= example for random number generations
 c    12feb02  pjt  Merged back the two previous UMD additions
 c    01mar02  mchw  changed epoch to 2000.
 c    08mar02  mchw  don't write pbfwhm if not set, so mosaicing uses telescop name.
+c    30jan03  mchw  format change for many records.
 c
 c  Bugs/Shortcomings:
 c    * Frequency and time smearing is not simulated.
@@ -351,7 +352,7 @@ c	pbfwhm=76,137,-0.2 simulates a primary beam pattern between
 c	10m and 6m antennas at 100 GHz. 
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version = 'Uvgen: version 1.0 08-mar-02')
+	parameter(version = 'Uvgen: version 1.0 30-Jan-03')
 	integer ALTAZ,EQUATOR
 	parameter(ALTAZ=0,EQUATOR=1)
 	integer PolRR,PolLL,PolRL,PolLR,PolXX,PolYY,PolXY,PolYX
@@ -1102,10 +1103,10 @@ c
 c  All done. Summarize, tidy up and exit.
 c
         if(newiost.eq.0) then
-	  write(line,'(i7,a,a)')
+	  write(line,'(i10,a,a)')
      *	  Item,' records appended to file: ',outfile
         else
-	   write(line,'(i7,a,a)')
+	   write(line,'(i10,a,a)')
      *	  Item,' records written to file: ',outfile
 	endif
 	call output(line)
