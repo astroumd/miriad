@@ -1,0 +1,48 @@
+#  -------------------------------------------------------------
+#	Tell users to "source" this file in their .cshrc files
+#	anywhere AFTER their directory searchpath has been set.
+#	Once done, they are set up to use MIRIAD.
+#
+#	For example, tell them to insert the code:
+#
+#	if (-e ~myacct/thisfile) source ~myacct/thisfile
+#
+#	Thus, users are well insulated from MIRIAD's actual
+#	location on the system, and MIRIAD's home directory can
+#	be arbitrarily placed (or removed) without the need for
+#	users to alter their .cshrc files.
+#  -------------------------------------------------------------
+#       Skeleton source file ... to be put in the local MIRIAD
+#	owner's account (home directory).  It is essential that
+#	"standard" system directories be in the user's search
+#	path (eg, to find the architecture).
+#
+#	Note that checking the architecture ensures that MIRIAD
+#	is not usable on anything but the intended architectures
+#	(eg, there may be cross-mounted disks on a sun3/sun4
+#	system, but MIRIAD may only be installed on the sun4's).
+#
+#	The code below assumes that MIRIAD is installed on each
+#	of 3 machines (sun3, sun4, sun4-solaris) where the disks
+#	are cross-mounted ... there is a separate "MIRRC" file
+#	for each (using the same source tree).  Remove any
+#	references that do not apply to the local installation.
+#  -------------------------------------------------------------
+if (`uname -m | cut -c1-4` == 'sun4') then
+   if (`uname -r|cut -f1 -d.` == '4') then
+      if (-e /appl/lai/miriad/mirdir/MIRRC.sun4) then
+         source /appl/lai/miriad/mirdir/MIRRC.sun4
+      endif
+   else if (`uname -r|cut -f1 -d.` == '5') then
+      if (-e /appl/lai/miriad/mirdir/MIRRC.sun4sol) then
+         source /appl/lai/miriad/mirdir/MIRRC.sun4sol
+      endif
+   endif
+else if (`uname -m | cut -c1-4` == 'sun3') then
+   if (`uname -r|cut -f1 -d.` == '4') then
+      if (-e /appl/lai/miriad/mirdir/MIRRC.sun3) then
+         source /appl/lai/miriad/mirdir/MIRRC.sun3
+      endif
+   endif
+endif
+#  -------------------------------------------------------------
