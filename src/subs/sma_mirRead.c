@@ -47,6 +47,8 @@
 // 2005-03-18 fixed problems of el and az in uvput
 // 2005-03-21 added integration skip in the process of
 //            decoding antenna position from baseline vectors.
+// 2005-03-23 fixed a bug in decoding antenna positions for
+//            the antenna id > reference antenna's id.
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -966,14 +968,27 @@ free(enh);
 // derive antenna position in local coordinate system
 // mir stores the position in float
        for (i=1; i < smabuffer.nants+1; i++) {
+     if(i<=smabuffer.refant) {
           antenna[i].x = (double)blarray[i][smabuffer.refant].ee 
                          - antenna[smabuffer.refant].x;
           antenna[i].y = (double)blarray[i][smabuffer.refant].nn 
                          - antenna[smabuffer.refant].y;
           antenna[i].z = (double)blarray[i][smabuffer.refant].uu 
                          - antenna[smabuffer.refant].z;
-//          sprintf(antenna[i].name, "AN%d", i);
-          }
+          } else {
+
+          antenna[i].x = (double)blarray[smabuffer.refant][i].ee
+                         - antenna[smabuffer.refant].x;
+          antenna[i].x = - antenna[i].x;
+          antenna[i].y = (double)blarray[smabuffer.refant][i].nn
+                         - antenna[smabuffer.refant].y;
+          antenna[i].y = - antenna[i].y;
+          antenna[i].z = (double)blarray[smabuffer.refant][i].uu
+                         - antenna[smabuffer.refant].z;
+          antenna[i].z = - antenna[i].z;
+             }     }
+
+
 // calculate the geocentric coordinates from local 
 // coordinates
 {struct xyz geocxyz[MAXANT];
@@ -984,8 +999,7 @@ free(enh);
         geocxyz[i].z = (antenna[i].z)*sin(smabuffer.lat)
                      + (antenna[i].y)*cos(smabuffer.lat);
               }
-
-     printf("NUMBER OF ANTENNAS =%d\n", smabuffer.nants);
+   printf("NUMBER OF ANTENNAS =%d\n", smabuffer.nants);
 //
 // maximum antenna number for the array is 8 
 //
@@ -1044,17 +1058,16 @@ printf("Geocentrical coordinates of antennas (m), reference antenna=%d\n",
 //
 printf("Miriad coordinates of antennas (nanosecs), reference antenna=%d\n",
         smabuffer.refant);
-      for (i=1; i < smabuffer.nants+1; i++) {
-      r = sqrt(pow(geocxyz[i].x,2) + pow(geocxyz[i].y,2));
+      r = sqrt(pow(geocxyz[smabuffer.refant].x,2) + 
+               pow(geocxyz[smabuffer.refant].y,2));
       if(r>0) {
-      cost = geocxyz[i].x / r;
-      sint = geocxyz[i].y / r;
-      z0   = geocxyz[i].z; } else {
+      cost = geocxyz[smabuffer.refant].x / r;
+      sint = geocxyz[smabuffer.refant].y / r;
+      z0   = geocxyz[smabuffer.refant].z; } else {
       cost = 1;
       sint = 0;
         z0 = 0; 
                }
-                                            }
 
       for (i=1; i < smabuffer.nants+1; i++) {      
       tmp  = ( geocxyz[i].x) * cost + (geocxyz[i].y)*sint - r;
@@ -1246,18 +1259,6 @@ rewind(fpin[2]);
          spn[inset]->isb                  = bln[inset]->isb;
          spn[inset]->irec                 = bln[inset]->irec;
          spn[inset]->souid                = inh[inset]->souid;                
-//         if(sph1->iband ==1||sph1->iband ==15) {
-//       printf("souid %d", spn[inset]->souid);
-//         printf("set %d", inset);                            
-//        printf("spid %d", spn[inset]->sphid);
-//       printf("iband %d", spn[inset]->iband[sph1->iband]);
-//        printf("fsky %f", spn[inset]->fres[sph1->iband]);
-//         printf("vel %f", spn[inset]->vres[sph1->iband]);
-//        printf("frst %f", spn[inset]->rfreq);
-//       printf("sb rx inset blhid freq %d %d %d %d %f\n", 
-//       spn[inset]->isb, spn[inset]->irec,
-//       inset, sph1->blhid, sph1->fsky);
-//                            }
                              }
 // terminate the loading
        if(inset==smabuffer.scanskip+smabuffer.scanproc) { 
@@ -1345,9 +1346,6 @@ nextnextnext:
   atsys[set]->tssb[tsys[blset]->itel2] =
   tsys[blset]->tssb[0]*tsys[blset]->tssb[0]
   / atsys[set]->tssb[atsys[set]->refant];
-//  printf("%d %d %f %f \n", set, tsys[blset]->itel2,
-//    atsys[set]->tssb[atsys[set]->refant],
-//        tsys[blset]->tssb[0]);
                       }
   if(tsys[blset]->itel2==atsys[set]->refant)
   {
@@ -1472,21 +1470,6 @@ smabuffer.nifs = smaCorr.n_chunk;
 /* reverse the spectral chunk order for blocks
    1 2 3 4 */
 if(smabuffer.doChunkOrder==1) {
-//   spcode[1]=4;
-//   spcode[2]=3;
-//   spcode[3]=2;
-//   spcode[4]=1;
-
-//   spcode[5]=8;
-//   spcode[6]=7;
-//   spcode[7]=6;
-//   spcode[8]=5;
-
-//   spcode[9]=12;
-//   spcode[10]=11;
-//   spcode[11]=10;
-//   spcode[12]=9;
-
    frcode[1]=4;
    frcode[2]=3;
    frcode[3]=2;
@@ -1602,7 +1585,6 @@ smabuffer.dec = multisour[sourceID].dec;
  double ra_apparent;
  double delLST;
 // HA = LST - ra_apparent
- 
 //if(inh[inhset]->inhid==smaEngdata[inhset]->inhid) 
 //{ smabuffer.lst = smaEngdata[inhset]->lst*DPI/12.0;
 // LST= (double) inh[inhset]->ha*DPI/12.0 + smabuffer.obsra;
