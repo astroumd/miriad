@@ -11,6 +11,8 @@
 # example usage:
 #     hex.py nring=3 grid=5.0 > hex3_5
 #     uvgen ... center=hex3_5
+# however, also note the existence of a more sophistacted
+# embedded approach inside mosaic.py
 
 import os,sys,string
 

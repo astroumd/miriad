@@ -21,10 +21,10 @@ print "   ---  ALMA Mosaicing (Cas A model)   ---   "
 keyval = {
     "config"  : "config1",           # antenna config file (without the .ant extension)
     "dec"     : "-30",               # declination (can be a real number)
-    "cell"    : "0.04",              # scale size.
+    "image"   : "casc.vla",          # image to test (nice Cas-A VLA image as default)
+    "cell"    : "0.04",              # scale size (should be calculated from image)
     "nchan"   : "1",                 # number of channels
     "method"  : "mosmem",            # mosmem, joint, or default
-    "image"   : "casc.vla",          # image to test (nice Cas-A VLA image as default)
     "flux"    : "732.063",           # expected flux in the image (for mosmem)
     "nring"   : "3",                 # number of rings in the mosaic
     "grid"    : "12.0",              # gridsize (in arcsec) for the mosaic
@@ -33,8 +33,9 @@ keyval = {
     }
 
 help = """
-This script does a lot of interesting mosaic things
-but it won't tell you about that unless you ask for it
+The minimum amount of information you need to run this task is:
+   a miriad image (image=) for the model. 
+   an antenna configuration file (<config>.ant) for uvgen
 """
 
 # -----------------------------------------------------------------------------
@@ -94,7 +95,7 @@ grid    = string.atof(keyval['grid'])
 harange = '-1,1,0.013'
 select  = '-shadow\(12\)'
 freq    = 230.0
-imsize  = 257                    # avoid 2**N, image size 2**N + 1 is good.
+imsize  = 257                    # avoid 2**N, image size 2**N + 1 is good.  [or calculate from image]
 
 mir = os.environ['MIR']
 
