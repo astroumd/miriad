@@ -1,13 +1,13 @@
+c= zeefake - Generate fake Zeeman data.
+c& nebk
+c: profile analysis
       program zeefake
-c-----------------------------------------------------------------------
+c
 c     ZEEFAKE is a MIRIAD program to generate fake I and V cubes
 c     with Zeeman splitting.   Zero velocity is put at the centre
 c     of the band and image. The cubes are output in VXY order
 c     ready for the ZEESTAT program.
 c
-c= zeefake - Generate fake Zeeman data.
-c& nebk
-c: profile analysis
 c@ iout
 c	The output Stokes I cube. No default.
 c@ iuout
@@ -76,6 +76,7 @@ c     nebk  Dec 11 1990   Fix possible divide by zero.
 c     nebk  Aug 07 1992   Add Stokes axis to output images
 c     nebk  Nov 26 1992   Add btype to output
 c     nebk  Nov 7  1995   Allow signed splitting
+c     pjt   Oct 17 2004   move doc tags up for better helpfile
 c----------------------------------------------------------------------------
       implicit none
 c
