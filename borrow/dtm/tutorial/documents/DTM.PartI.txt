@@ -1,0 +1,325 @@
+1	Part I:  The Basic Concepts
+
+
+NCSA DTM	1
+
+
+
+National Center for Supercomputing Applications
+
+
+
+October 1992
+
+
+October 1992
+
+
+
+                                                                
+
+NCSA DTM	Part I:  The Basic Concepts
+
+
+This section includes an overview of the basic concepts behind DTM:  messages 
+and message passing, ports and types of communication, the DTM protocol, and 
+guidelines for developing applications using DTM.  This section presents general 
+concepts only.  For examples on how to apply these concepts, and how to use the 
+DTM library, see Part II.
+DTM Messages		3
+Message Headers
+Data Section
+DTM Ports		4
+Port Direction
+Addresses
+          Absolute Addresses
+          Logical Port Names
+Quality of Service
+          Synchronous Communication
+          Asynchronous Communication
+DTM Applications		7
+Message Level vs. Port Level Multiplexing
+Specifying DTM Ports
+
+
+
+
+DTM Messages
+A DTM message  is simply a delimited string of bytes.  Logically, the 
+DTM message consists of two parts, a header and a data section.  The 
+header is used to describe the attributes of the information contained 
+in the data section.  The fundamental attribute of a message is the 
+class of the message, representing the type of information contained 
+within the message.  Although message classes are user-definable, 
+support for several common classes are available within the DTM 
+library. 
+
+Two features distinguish the message header from the data section.  
+First, the header is sent or received in its entirety while the data 
+section may be sent or received using as many calls as is appropriate.  
+Second, no data conversion is provided for the header whereas DTM 
+provides automatic type conversion for the data section when 
+necessary and when requested.
+
+The most important aspect of DTM messages is that DTM does not 
+provide any buffering of data.  The programmer is responsible for 
+allocating sufficient storage for both the header and the data section.  
+The data is copied directly from the system buffers into the 
+application's data space, minimizing the number of copies necessary 
+and giving the programmer full control over application memory.
+
+Both the message header and data section are optional.  Many control 
+messages consist only of a message header.  It is also possible to have 
+applications that communicate using only a data section, although it 
+is not supported by NCSA applications.
+
+Message Headers
+DTM messages should be self-describing.  The header is designed to 
+contain information about the attributes of data stored in the data 
+section.  This information should always include the class of the 
+message.  Optional information may include the type of the data 
+(char, int, float, etc.), a title, dimensions, or any other information 
+relevant for interpreting the data section.
+
+Although technically indistinguishable from the rest of the DTM 
+message, the header is treated differently: the header can be written 
+and received separately.  If the programmer fails to allocate 
+sufficient memory to store the entire header, the buffer will be filled 
+and the remaining header discarded.
+
+On first examination this appears to place an undue burden on the 
+programmer, but in practice it is rarely a problem.  The header is built 
+at run-time from a limited set of functions, creating a practical limit 
+on the size of the header.  Any information making the prediction of 
+the header size difficult probably would be better placed in the data 
+section of the message.
+
+Since data conversion is not provided for the header, the programmer 
+must be prepared to make the header machine-independent if the 
+message will transfer between architectures.  The easiest method is to 
+create the header as an ASCII string or as an XDR buffer.  The DTM 
+library contains a set of utility functions that aid in building and 
+parsing ASCII headers.  These functions, along with a complete 
+description of message classes, are described in more detail in Part II:  
+Message Classes.
+
+Data Section
+The data section is best thought of as a stream of elements.  Each 
+element is generally a primitive data type such as a character or 
+integer although more complex types are possible.  For instance, a 
+DTM_TRIPLET is a data type consisting of one integer and three floats.  
+The DTM library contains functions that perform all necessary type 
+conversions when the data is sent.  Automatic type conversion is done 
+at the sending end of a connection.
+
+Since messages are delimited, the application may receive up to the 
+end of a message, but may not continue without receiving the end of 
+message mark.  Since the end of message mark prevents an application 
+from receiving the beginning of the next message, the application need 
+not know the number of elements contained in the message a priori.  An 
+application that is writing a message may send as many elements in a 
+block as is convenient and can send as many of these blocks as needed.  
+A receiving application may receive as many blocks with as many 
+elements as necessary to receive the entire message.
+
+The block size Ñ the number of elements sent or received at one time Ñ 
+may differ between applications.  Each application may choose a size 
+that is appropriate for its task.  No correspondence exists between the 
+number of blocks sent and the number of blocks received or between the 
+block size sent and the block size received.  The only equivalence is 
+between the number of elements sent and the number received.  If the 
+receiver elects not to receive all the elements, the remaining elements 
+are discarded.
+DTM Ports
+All messages are exchanged through DTM ports.  A DTM port is an 
+endpoint for a unidirectional communication channel through which 
+DTM messages may be sent or received.  The endpoints of DTM ports 
+are dynamic, and the destination for messages can be modified at any 
+time.  A name service and separate connection control messages are 
+used to manage the port endpoints.
+
+DTM ports support multiple fan-in and fan-out.  An output port is 
+capable of sending messages to multiple listening applications while 
+the input port is capable of accepting messages from multiple sending 
+applications.  DTM handles the replication of outgoing messages and 
+the queuing of incoming messages.
+
+DTM ports are based on a reliable communications service such as 
+TCP/IP and have been implemented on UNIX machines using the 
+Berkeley sockets library.  While sockets is considered an API, it is 
+really a generalization of the transport layer interfaces.  The sockets 
+library presents a very complex programming model.  An important 
+function of DTM is to hide the complexity of using sockets directly.
+
+Port Direction
+Because DTM ports are unidirectional, the port must be specified as 
+either an input or an output port when it is created.  This is 
+accomplished by using the appropriate call to either 
+DTMmakeInPort() or  DTMmakeOutPort().  Both of these calls 
+return an integer descriptor that is used to reference the port in 
+subsequent DTM calls.
+
+Because  socket connections are bi-directional, DTM ports should be bi-
+directional as well.  Two factors influenced the decision to provide 
+only unidirectional ports.  First, the synchronization provided by 
+DTM requires a handshaking signal be sent in the opposite direction.  
+If data was allowed to flow in this direction as well, it would be 
+difficult to distinguish the data from the handshaking.  It would 
+probably require that DTM provide buffering for data so that the 
+handshaking signal could be received correctly.
+
+The second reason was more philosophical.  Requiring that the input 
+and output ports of an application be separate maximizes the 
+flexibility of the application.  If the application was built with a 
+single bi-directional port it would not be able to receive messages from 
+one application and send them to a second.  This is often desirable, 
+especially for debugging.  The uni-directional port forces the 
+programmer to use two ports.
+
+Addresses
+Absolute Addresses
+Absolute ports have the Internet address of the port declared 
+explicitly when created.  The Internet port address is of the form 
+"hostname:port" where the host name is either the actual host name 
+or an IP number in dot decimal notation.  The host name is optional; if 
+missing, the local host name is assumed.  The port number represents 
+the TCP/IP port number, in the range of 1024..65535.
+
+For input ports, the address represents where the port will listen for 
+incoming connections.  A host name specified for an input port is 
+ignored; only the port number is meaningful.  For output ports, the 
+address represents the location where the port should attempt to 
+connect (i.e., the address of an input port).
+
+To avoid the use of an absolute port number on an input port, it is 
+possible to specify the address as ":0".  This requests that the system 
+assign a free TCP port number for the DTM port.  To determine which 
+TCP port is being used call DTMgetPortAddr().
+
+The use of absolute port numbers is cumbersome and unreliable, and is 
+best suited to starting a small number of applications by hand for 
+debugging or for use in shell scripts.  To avoid the need to recompile 
+applications to change the TCP port number, it is best to get the port 
+information from the command line.
+
+Logical Port Names
+Because of the problems associated with the use of absolute port 
+addresses, DTM supports the use of logical port names.  The logical 
+port address is simply an ASCII string, where by convention the string 
+denotes the purpose of the port.
+
+When a port is created with a logical port name, the absolute address 
+of the port is determined and is registered with a DTM connection 
+server.  It is the responsibility of the DTM connection server to connect 
+the ports.  To do this, the server is able to send commands to DTM 
+output ports that can cause the output port to connect to one or more 
+DTM input ports, disconnect from one or more input ports, or discard 
+messages without actually sending them.
+
+Connection commands can be sent anytime during the execution of the 
+application.  The next time a message is sent on the output port, the 
+command will take effect.  The ability to dynamically alter the 
+destination of output ports is one of most powerful capabilities of 
+DTM.
+
+The DTM distribution contains a sample DTM connection server.  The 
+server reads a configuration file, starts requested applications and 
+connects the DTM ports.  The functionality of the connection server 
+may be incorporated into other applications.
+
+Quality of Service
+The quality of service  option is misnamed.  A more appropriate name 
+may be mode of operation.  Currently, quality of service allows the 
+programmer to choose between synchronous and asynchronous 
+operation of output ports.  Future version of DTM will allow other 
+options.
+
+Synchronous Communication
+DTM provides for synchronous message passing.  Each message sent is 
+preceded by a RequestToSend flag and acknowledged by the receiver 
+with a ClearToSend flag.  This handshaking prevents the receiver 
+from being overrun by messages.  Handshaking is especially important 
+with interactive applications, to minimize latency.
+
+Because this handshaking takes place at the beginning of messages, it 
+has a minimal impact on the throughput of messages.  However, this 
+impact is noticeable when sending many small messages or when the 
+round trip time between the sender and receiver is large.  To help in 
+these situations, DTM is optimized to send as much data with the 
+RequestToSend as possible.  In the case of DTMwriteMsg(), the entire 
+message, including the RequestToSend, is written with one system send 
+call.  The result of this piggybacking is that the ClearToSend may 
+actually be sent after the actual message has been received.  This 
+prevents performance degradation for small messages while providing 
+the benefits described above.
+
+
+Asynchronous Communication
+The preceding section described the synchronous operations of DTM.  
+However, an output port may be defined as asynchronous.  In 
+asynchronous mode the output port will still generate RequestToSend 
+flags, but the ClearToSend flag will be ignored.  This allows the 
+application to send messages as fast as possible.
+
+As each message is sent, it is copied into the local system transmit 
+buffer and eventually delivered to the remote system.  If the system 
+transmit buffer fills up, further attempts to write messages will block.  
+Since it is difficult to detect when a buffer is full, it is best to use this 
+mode of operation with caution.
+
+DTM Applications
+DTM is a flexible communications library and may be used in several 
+different manners.  This section attempts to explore some of the 
+possible options when developing DTM applications.
+
+Message Level vs. Port 
+Level Multiplexing
+An application may define a DTM port for each type of message it 
+will send or receive.  This is known as port level multiplexing.  Port 
+level multiplexing is most effective for output ports.  For example, if 
+an application is going to produce three types of data sets, providing a 
+port for each type will allow each data set to be sent to separate 
+applications.  The data sets can then be operated on in parallel.
+
+This is more efficient than serializing the messages down a single port 
+to multiple destinations.  When sending to multiple destinations, a 
+copy of the message is made for each destination and the copy is sent 
+independently over the TCP connection.  In addition, each message 
+may not be intended for all the destination applications.  This adds to 
+the complexity of the destination application since it must determine 
+if the message is intended for it.
+
+In contrast, input ports seem to be most effective when they are not 
+typed according to the message they expect to receive.  Rather, input 
+ports should be treated identically and each message should be 
+examined and handled correctly based on the message class.  This is 
+known as message level multiplexing.
+
+Message level multiplexing works well with DTM messages since only 
+the header is returned on the call to DTMbeginRead().  The header 
+may be examined to determine the message class and other relevant 
+information.  After the header has been decoded the appropriate 
+routine may be called to receive and process the data section of the 
+message.  If the message is inappropriate for the application the call 
+to DTMendRead() will discard the data in the data section.
+
+Specifying DTM Ports
+Many DTM applications receive connectivity information from the 
+command line.  With many applications developed at NCSA, the 
+DTM port address is preceded on the command line by the flag "-
+DTMIN" for a single input port or "-DTMOUT" for a single output 
+port.  Applications should attempt follow this convention since it will 
+make invocation easier for users and for usage within scripts.
+
+It should be noted that this method works with either absolute 
+address or logical port names.  It is often convenient to use the absolute 
+address when debugging an application and switch to logical port 
+names after the application is running.
+
+As stated above, the DTM port address should be specified at run-time 
+and not hard-coded into the application.  There is one exception to 
+this rule: servers can be designed to listen at well-known addresses.  
+Typically, a server of this type will register itself in the system 
+services table.
+
+

@@ -1,0 +1,132 @@
+1	Preface
+
+
+NCSA DTM	1
+
+
+
+National Center for Supercomputing Applications
+
+
+
+October 1992
+
+
+October 1992
+
+
+
+1	Preface
+
+
+NCSA DTM	1
+
+
+
+National Center for Supercomputing Applications
+
+
+
+October 1992
+
+
+NCSA DTM	1
+
+
+October 1992
+
+
+
+1	Part I:  The Basic Concepts
+
+
+NCSA DTM	1
+
+
+
+National Center for Supercomputing Applications
+
+
+
+October 1992
+
+
+                                                              
+
+
+February 1992
+
+
+                                                                
+
+NCSA DTM	Preface
+
+
+
+Introduction		1
+Outline		1
+Version		1
+Font Conventions		1
+
+
+
+
+Introduction
+The Data Transfer Mechanism (DTM) is a message passing facility.  It 
+is designed to simplify the task of interprocess communication and to 
+facilitate the creation of sophisticated distributed applications in a 
+heterogeneous environment.  To accomplish this, DTM provides a 
+method of interconnecting applications at run-time and provides 
+reliable message passing complete with synchronization and 
+transparent data conversion.  DTM has been optimized for large 
+messages (100 KBytes and up), but is efficient for smaller messages as 
+well.
+
+The purpose of this manual is to provide the applications programmer 
+and research scientist with a basic understanding of how to write or 
+modify code to support the use of DTM.  No prior knowledge of DTM is 
+required, nor knowledge of the underlying concepts behind distributed 
+computing.  However, knowledge of the programming language "C" is 
+necessary if the reader desires to use the many sample programs found 
+within.  All sample code is written in ANSI C.
+
+Outline
+This tutorial has two parts: a description of the DTM protocol and a 
+tutorial on how to use the DTM and message class library.  The first 
+section presents the major ideas behind DTM and how it works, with 
+suggestions on how DTM can be used to enhance applications.  The 
+tutorial presents a step by step look at how to add DTM to an 
+application, from creating a port to sending/receiving a message to 
+checking ports for communication capability.
+
+Hopefully plenty of source code examples are provided in this 
+document.  Each example comes from a working program which is 
+provided with the electronic distribution of the DTM source and 
+documentation.  For a copy of these examples, or to find out where 
+these examples exist on NCSA machines, send mail to 
+"softdev@ncsa.uiuc.edu".  To report bugs in either the example code or 
+in the DTM library itself, send mail to "bugs@ncsa.uiuc.edu".
+
+Version
+This tutorial was written for DTM version 2.3.  To determine which  
+version of DTM you are currently using, check the README file 
+included in the DTM tar file or make and run the "version" program 
+supplied with the examples.
+
+Font Conventions
+Italics are used for:
+¥	file names, program names and options for user commands
+¥	new terms when they are defined
+
+Courier Font is used for:
+¥	source code, constants, or anything that needs to be typed verbatim
+¥	structure types, structure members, functions and macros
+
+Italic Courier Font  is used for:
+¥	arguments to functions, since they are arbitrary
+
+Boldface is used for:
+¥	chapter and section headings
+¥	titles of examples 
+
+

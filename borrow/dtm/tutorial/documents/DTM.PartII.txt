@@ -1,0 +1,1027 @@
+1	Part II:  The DTM Tutorial
+
+
+NCSA DTM	1
+
+
+
+National Center for Supercomputing Applications
+
+
+
+October 1992
+
+
+October 1992
+
+
+
+                                                                
+
+NCSA DTM	Part II:  The DTM Tutorial
+
+
+The remainder of this document is organized into a step-by-step tutorial on the use 
+of DTM.  The first two sections deal with sending and receiving messages 
+respectively.  The next section deals with error detection and error handling.  The 
+final section explains the use of the various messages classes.
+Sending Messages		 10
+Creating Output Ports
+Writing Message Headers
+Writing Single Data Types
+Writing Multiple Data Sets and Types 
+Determining Writing Capabilities
+Receiving Messages		14
+Creating Input Ports
+Reading Message Headers
+Reading Data 
+Reading Multiple Data Sets and Types 
+Determining Reading Capabilities
+Error Detection		20
+Message Classes		21
+A Simple Message Class:  MSG
+Scientific Data Sets:  SDS
+Raster Image Sets and Palettes:  RIS & PAL
+Surface Description Language:  SDL
+
+
+
+Sending Messages
+The follow sections deal with the sending of a DTM message from one 
+application to another.  The basic procedure is to create an output port, 
+create a message header, and send the message.   Since, messages may 
+contain zero or more data sets another section deals with the use of 
+multiple data sets.  The final section deals with determining if the 
+application will block if it attempts to send a message.
+
+
+Creating Output Ports
+The function DTMmakeOutPort() creates an output port Ñ a port for 
+writing data.  The two arguments are the port address and the quality 
+of service, respectively.  The port address follows the port naming 
+conventions presented in Part I:  DTM Ports, Addresses.  The quality of 
+service argument is an integer that describes the quality of service 
+desired.  It can take one of three different values: DTM_SYNC, 
+DTM_ASYNC, and DTM_DEFAULT for synchronous, asynchronous and 
+default communications.  DTM_DEFAULT is currently defined to operate 
+in the same manner as DTM_SYNC and should be used by most 
+applications.
+
+Upon successful creation, DTMmakeOutPort() returns a positive port 
+identification number, the number used by other DTM functions to 
+reference that port.  Unlike the first releases of DTM, the port ids 
+will not necessarily be allocated in sequence when more than one 
+output port is created.  Example 1 demonstrates how an output port is 
+created.
+
+
+#include <dtm.h>
+...
+int   outport = DTMERROR;           /* Output port id             */
+...
+outport = DTMmakeOutPort("gallant.ncsa.uiuc.edu:8899", DTM_DEFAULT);
+
+Example 1.	Hard coded host names and port numbers like "gallant.ncsa.uiuc.edu:8899" are generally not recommended.  It is 
+better to determine the port address from the command line.
+
+The creation of ports can fail for a variety of reasons, and while error 
+detection will be discussed more fully later, it is important to mention 
+some of it now.  Should the creation of a port fail, the value returned 
+is DTMERROR, a constant value defined in the header file dtm.h.  It is 
+important that this error be caught before any attempts to write data 
+are made.  In Example 2, the output port is read from the command line 
+and if the port id value created is negative, the program is exited.
+
+
+
+#include <dtm.h>
+...
+int   outport = DTMERROR;       /* Output port                 */
+...
+for (i = 1; i < argc; i++) {
+   if (!strcmp(argv[i], "-DTMOUT"))
+      outport = DTMmakeOutPort(argv[++i], DTM_DEFAULT);
+}
+...
+if (outport == DTMERROR) {
+   printf("The outport was not specified or the argument ");
+   printf("was in error.\n");
+   printf("The output port was assigned an error value.   ");
+   printf("(out = %d)\n\n", outport);
+   printf("Usage: %s -DTMOUT <port>\n\n", argv[0]);
+   exit(0);
+}
+Example 2.	Check the command line for the option "-DTMOUT" indicating the port address, then check the results of creating 
+the output port for errors, exiting upon failure.  This method also catches the error of forgetting to specify a port on 
+the command line as well.
+
+Writing Message 
+Headers
+The first call to DTMbeginWrite() attempts to establish all 
+necessary connections on the port specified by the given port id.  Once 
+the connections are made, it attempts to send the required number of 
+bytes from the character array header.  DTMbeginWrite() will 
+block until the connections are made and the header has been sent.  If 
+DTMbeginWrite() fails for some reason, the value DTMERROR is 
+returned.
+
+Except in the case of an error, every DTMbeginWrite() must have a 
+corresponding DTMendWrite(), as this marks the end of a DTM 
+message.  Together, DTMbeginWrite() and DTMendWrite() send a 
+message to the remote process.
+
+Example 3 shows the simplest possible complete program using these 
+two functions to create an output port and send a simple message.
+
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <dtm.h>
+
+main(int argc, char *argv[])
+{
+   char    *header = "This is a header";   /* DTM header.             */
+   int     outport = DTMERROR;             /* Output port             */
+
+   outport = DTMmakeOutPort(":7788", DTM_DEFAULT);
+   DTMbeginWrite(outport, header, DTMHL(header));
+   DTMendWrite(outport);
+   return(0);
+}
+Example 3.	Create an output port and write the header on that port.  The macro DTMHL is used to determine the exact length 
+of the given header including the terminating null character.
+
+
+Writing Single Data 
+Types
+DTMwriteDataset() writes the data portion of a message via the 
+port specified by the port id.  DTMwriteDataset() can be called only 
+after a successful call to DTMbeginWrite() and any number of calls 
+can be made before calling DTMendWrite().
+
+In addition to the port id, DTMwriteDataset() takes the base 
+address of the data, the number of data elements to send, and a DTM 
+constant indicating the type of the data.  Example 4 demonstrates how 
+to write a data set using DTMwriteDataset().  The data types 
+available and their corresponding constants are shown in Example 5. 
+
+
+#include <dtm.h>
+...
+   int         outport = DTMERROR;              /* DTM output port   */
+   char        *header = "This is the header";  /* DTM header        */
+   float       dataset[BUFSIZE];                /* The data buffer   */
+...
+   /* Create the ports & initialize the data here. */
+...
+   DTMbeginWrite(outport, header, DTMHL(header));
+   DTMwriteDataset(outport, dataset, BUFSIZE, DTM_FLOAT);
+   DTMendWrite(outport);
+
+Example 4.	Write a simple header and a small data set consisting of five floating point numbers to a previously created output 
+port.
+
+When necessary, DTM will automatically convert data types when 
+sending data from one architecture to another  Because DTM does not 
+buffer its data, type conversion takes place in the user's buffer making 
+DTMwriteDataset() a destructive process.  The programmer must be 
+sure to make a copy of the buffer if the data must be re-used after a 
+call to DTMwriteDataset().
+
+DTM currently provides type conversion for types listed in Example 5. 
+If type conversion is undesirable, the data can be sent as raw character 
+data (DTM_CHAR).  DTM_CHAR should also be used when the data has 
+been converted using outside type conversion routines (i.e., XDR).
+
+
+C DATA TYPE 	DTM TYPE CONSTANT
+char	DTM_CHAR
+short	DTM_SHORT
+int	DTM_INT
+float	DTM_FLOAT
+double	DTM_DOUBLE
+complex	DTM_COMPLEX
+struct DTM_TRIPLET	DTM_TRIPLET
+
+Example 5.	A table of the different types that DTM can pass in a message requiring type conversion.  The DTM_TRIPLET type 
+is a composite type consisting of an int tag and three floats and one use of it will be discussed in the section dealing 
+with the SDL message class.
+
+
+In general, most applications will have sequences of calls like the one 
+in Example 4  -- one call to each of the three DTM write functions and 
+no intervening code.  In cases like this, the function call overhead for 
+two of these functions and the extra send required to transmit the 
+header and data separately can be eliminated by using the function 
+DTMwriteMsg().  DTMwriteMsg() compacts the functionality of 
+these three calls into one and performs only a single system write call. 
+Example 6 has the same functionality as the code in Example 4, yet 
+uses only the single call to DTMwriteMsg().
+
+
+#include <dtm.h>
+...
+   int         outport = DTMERROR;              /* DTM output port   */
+   char        *header = "This is the header";  /* DTM header        */
+   float       dataset[BUFSIZE];                /* The data buffer   */
+...
+   /* Insert port creation and data initialization code here */
+...
+   DTMwriteMsg(outport,header,DTMHL(header),dataset,BUFSIZE,DTM_FLOAT);
+}
+Example 6.	Write the same dataset as in Example 4 using one call to DTMwriteMsg().
+
+Writing Multiple Data 
+Sets and Types
+Though it is more efficient to send large data sets with one call, it is 
+possible to send data in multiple small buffers, as there is no 
+restriction on the number of times DTMwriteDataset() can be called 
+between DTMbeginWrite() and DTMendWrite().  Example 7 shows 
+how a large array of data can be sent in smaller chunks.  While the 
+example is of limited use in the real world, it does demonstrate how it 
+is possible to maintain a small buffer, fill it several times and send 
+each chunk individually.
+
+
+#include <dtm.h>
+...
+   int      incr = 10,                       /* Data block size  */
+            outport = DTMERROR;              /* DTM output port  */
+   char     *header = "This is the header";  /* DTM header       */
+   float    dataset[BUFSIZE],                /* Data buffer      */
+            *dptr = dataset;                 /* Data pointer     */
+...
+   /* Create the port and initialize the data here */
+...
+   DTMbeginWrite(outport, header, DTMHL(header));
+   for (dptr = dataset; dptr < dataset+BUFSIZE; dptr += incr)
+      DTMwriteDataset(outport, dptr, incr, DTM_FLOAT);
+   DTMendWrite(outport);
+
+Example 7.	Split a large data set into several small pieces by sending portions of that data through the previously created 
+output port.  As has been mentioned and will be seen in  the next section (Receiving Messages), the data can be 
+received in block sizes different from the size being used to send this data.  This example assumes that BUFSIZE is 
+a multiple of 10.
+
+When more than one data type must be sent, it is usually desirable to 
+send separate messages.  However, occasions do arise when it is more 
+convenient or sensible to send multiple data sets of differing types 
+between single DTMbeginWrite() and DTMendWrite() calls.  
+Example 8 demonstrates that the programmer is not restricted to 
+sending one data type per message.
+
+
+DTMbeginWrite(outport, header, DTMHL(header));
+DTMwriteDataset(outport, floatdata, FDIM, DTM_FLOAT);
+DTMwriteDataset(outport, intdata, IDIM, DTM_INT);
+DTMendWrite(outport);
+
+Example 8.	Write two arrays of data Ñ one floating point of size FDIM and one integer of size IDIM Ñ to the previously 
+created output port.  All other code appears the same as in Example  7.
+
+Determining Writing 
+Capability
+It is possible to avoid blocked writing calls by checking a particular 
+port ahead of time for the ability to write a message.  This is helpful 
+when a program must continue processing while waiting to send a 
+message.
+
+DTMavailWrite() will return a true (greater than 0) value if the 
+specified port is currently available for writing.  Example 9 shows 
+some code that checks an output port for the ability to write before 
+calling DTMwriteMsg().
+
+
+#include <dtm.h>
+...
+   int     iteration = 1,                    /* Main loop counter  */
+           outport = DTMERROR;               /* The output port    */
+   char    *header = "This is the header";   /* The message header */
+...
+   /* Create the port and initialize the data here */
+...
+   while (!DTMavailWrite(outport))
+      printf("Do something useful for iteration #%d.\n", iteration++);
+   DTMwriteMsg(outport, header, DTMHL(header), NULL, 0, DTM_CHAR);
+
+Example 9.	Until the port is ready for writing, keep doing some sort of processing, in this case a simple loop counter.  If blocking 
+is undesirable, use DTMavailWrite() to "poll" the port.
+Receiving Messages
+The basic procedure for receiving messages parallels that of sending 
+messages.  The application must create an input port, receive the 
+message header and receive the end of message.  Each of these tasks 
+are described below.  There is also a discussion of receiving multiple 
+data sets and determining when a message is ready to be read on a 
+port. 
+
+Creating Input Ports
+Ports that receive message are created in a similar manner as ports 
+created for writing messages.  DTMmakeInPort() uses the same port 
+naming conventions and quality of service options as described for 
+DTMmakeOutPort() with two exceptions: it makes little sense to 
+specify a host name for an input port, and the quality of service should 
+always be DTM_DEFAULT.  All host name specifications and the 
+quality of service options DTM_SYNC and DTM_ASYNC have no effect on 
+input ports and are ignored.  As with its writing counterpart, the value 
+returned by DTMmakeInPort() is a positive integer port id when the 
+port is successfully created, and DTMERROR otherwise.
+
+Example 10 shows how to create an input port with some limited error 
+checking.
+
+
+#include <dtm.h>
+...
+   int         i = 0,                    /* Argument counter      */
+               inport = DTMERROR;        /* DTM input port        */
+...
+   for (i = 1; i < argc; i++)
+      if (!strcmp(argv[i], "-DTMIN"))
+         inport = DTMmakeInPort(argv[++i], DTM_DEFAULT);
+
+   if (inport == DTMERROR) {
+      fprintf(stderr, "\nUsage: %s -DTMIN <port>\n\n", argv[0]);
+      exit(0);
+   }
+
+Example 10.	Create the input port by parsing the command line looking for the argument "-DTMIN".  Abort the program if no 
+input port was specified or created.
+
+Reading Message 
+Headers
+The receipt of messages begins with a call to DTMbeginRead().  Like 
+its counterpart DTMbeginWrite(), this call is a blocking call.  If no 
+message is ready to be received from the given port, DTMbeginRead() 
+will wait until a message is available or until it times out (returning 
+DTMERROR).
+
+DTMbeginRead(), when successful, fills the header character string 
+buffer with the header from the sending process.  If the buffer is larger 
+than the incoming header, only the number of bytes in the message 
+header are saved.  DTMbeginRead() returns the number of bytes 
+stored in the header.  If the header buffer provided is smaller than 
+the message header, the buffer is filled and the remaining bytes 
+discarded.  The header itself can be of any length, but because it is 
+impossible to determine the header's length beforehand, it is 
+recommended that headers never exceed DTM_MAX_HEADER characters 
+in length.
+
+DTMendRead() signals that no more data is to be read from the 
+current message.  Any data that remains in the message is discarded.  
+Every call to DTMbeginRead() must have a corresponding call to 
+DTMendRead(), except in the case of an error.
+
+Example 11 shows how a header is read from a  port and prints the 
+header received.
+
+
+#include <dtm.h>
+...
+   char     header[DTM_MAX_HEADER]; /* DTM header of unknown size */
+   int      inport = DTMERROR;      /* Input port                 */
+...
+   DTMbeginRead(inport, header, sizeof header);
+   DTMendRead(inport);
+
+Example 11.	Begin reading from the previously created input port.  If no writer is sending data then the program will block at 
+the DTMbeginRead() call.  Make the assumption that the header being sent will not exceed 
+DTM_MAX_HEADER characters in length.
+
+Reading Data
+DTMreadDataset() reads the data portion of a message from a 
+specified port.  There is no limit to the number times 
+DTMreadDataset() can be called and no limit on the number of 
+differing data types that can be received between calls to 
+DTMbeginRead() and DTMendRead().
+
+Upon receipt of data from the specified port, DTMreadDataset() 
+returns the number of elements of the specified type received.  If no 
+data was read (a signal that no more data can be received from the 
+given message), the value returned is 0 (zero).  Should the buffer be too 
+small to contain all of the data waiting, DTMreadDataset() will 
+leave the remainder on the input stream.  Subsequent calls to 
+DTMreadDataset() can be made to retrieve the remaining data.  In 
+Example 12, data is read into an arbitrarily large buffer.
+
+
+#include <dtm.h>
+...
+   int       nelem = 0,                /* Number of elements read */
+             inport = DTMERROR;        /* DTM input port          */
+   char      header[DTM_MAX_HEADER];   /* DTM header              */
+   float     dataset[MAXBUFSIZE];      /* Data buffer             */
+...
+   DTMbeginRead(inport, header, sizeof header);
+   nelem = DTMreadDataset(inport, dataset, MAXBUFSIZE, DTM_FLOAT);
+   DTMendRead(inport);
+
+Example 12.	Read the data  from the previously created port using a single call to DTMreadDataset() using an arbitrarily 
+large buffer.  Also assume that the data being received is of floating point type [DTM_FLOAT].  Note: This code 
+does not check for errors and allows DTMbeginRead() to block until a writer is ready to send the message.
+
+DTMreadMsg() is a call analogous to DTMwriteMsg().  In situations 
+where there is no more than one DTMreadDataset() per 
+DTMbeginRead()ÐDTMendRead() pair, DTMreadMsg() combines 
+the functionality of the trio of functions into one call.  However, 
+DTMreadMsg() is not as useful as DTMwriteMsg().  Neither the 
+exact number of elements to be read nor the data type is usually known 
+in advance, and DTMreadMsg() provides no way of basing memory 
+allocation on information contained in the header.  Additionally, the 
+function call overhead saved by using DTMreadMsg() is nonexistent: 
+internally the code consists of calls to those three functions.
+
+Reading Multiple Data 
+Set and Types
+Often it is not possible to determine ahead of time the exact amount of 
+data to be read.  (This is especially true for messages of the SDL class 
+to be discussed later.)  A flexible way to handle reading when 
+dimensions are unknown is to make multiple calls to 
+DTMreadDataset(), filling a buffer with contiguous pieces of the 
+data set, processing the buffer and requesting more.  Example 13 shows 
+how this can be accomplished.
+
+
+#include <dtm.h>
+...
+   int    nelem = 0,                   /* Number of elements read */
+          datanum = 0,                 /* Data block size         */
+          chunk = 1;                   /* Block # of data read    */
+   char   header[DTM_MAX_HEADER];      /* DTM header              */
+   float  dataset[MAXBUFSIZE];         /* Data set buffer         */
+...
+   DTMbeginRead(inport, header, sizeof header);
+   while ((nelem=DTMreadDataset(inport,dataset,MAXBUFSIZE,DTM_FLOAT))
+                > 0) {
+      printf("\nRead chunk #%d of size %d\n", chunk++, MAXBUFSIZE);
+      for (i = 0; i < nelem; i++, datanum++)
+         printf("Data value %d = %f\n", datanum, dataset[i]);
+   }
+   DTMendRead(inport);
+
+Example 13.	Read the data using multiple DTMreadDataset() calls.  The loop that reads the data is designed to read the 
+data in MAXBUFSIZE sized chunks, independent of the block size used to write the data, and will print out the 
+values received to demonstrate that the data was properly received.
+
+Reading multiple data types can be handled in a similar fashion, 
+however it is important to ensure that the types are being read in the 
+proper order.  Reading data as one type when it was sent as another 
+produces undefined results.  Example 14 shows how to read multiple 
+data types using multiple calls to DTMreadDataset().
+
+
+
+#include <dtm.h>
+...
+   int        dataval = 1,               /* The current data value*/
+              nelem = 0,                 /* # of elements read    */
+              fdim = 0,                  /* Floating point dim    */
+              idim = 0,                  /* Integer buffer dim    */
+              intdata[MAXBUFSIZE];       /* Integer buffer        */
+   char       header[DTM_MAX_HEADER];    /* DTM header            */
+   float      floatdata[MAXBUFSIZE];     /* Floating point buffer */
+...
+   DTMbeginRead(inport, header, sizeof header);
+   sscanf(header, "This is the header.  Fdim: %d Idim: %d",
+                                        &fdim, &idim);
+   DTMreadDataset(inport, floatdata, fdim, DTM_FLOAT);
+   DTMreadDataset(inport, intdata, idim, DTM_INT);
+   DTMendRead(inport);
+
+Example 14.	Read the two datasets using two DTMreadDataset() calls.  Remember that since each call to 
+DTMreadDataset() has no way of determining the type of data ahead of time,  the dimensions of the data 
+must be parsed ahead of time from the header, and exactly that many elements of each type must be read.  In 
+this example, it is assumed that the header contains this information.
+
+
+Determining Reading 
+Capability
+Two functions return the status of an input port.  They vary in 
+complexity and their use should be dependent upon the type of 
+behavior desired.
+
+The simplest function, DTMavailRead(), polls the input port for 
+availability and returns a boolean value depending on its status.  The 
+return of a true value indicates that a message is waiting to be 
+received on the given port.  Example 15 demonstrates how to use 
+DTMavailRead() to continue processing information while waiting 
+for input.
+
+
+#include <dtm.h>
+...
+   int       iteration = 1,                /* Main loop counter   */
+             inport = DTMERROR;            /* The input port      */
+   char      header[DTM_MAX_HEADER];       /* The message header  */
+...
+   while(!DTMavailRead(inport))
+      printf("Do something useful for iteration #%d.\n", iteration++);
+
+   DTMbeginRead(inport, header, sizeof header);
+   DTMendRead(inport);
+
+Example 15.	Poll a port for waiting messages.  The loop will continuously execute until the message has been successfully read 
+from the input port.
+
+
+A second function, DTMselectRead()1, performs a system select call 
+on a list of DTM ports and a list of file or socket descriptors.  
+DTMselectRead() allows the application to poll multiple ports and 
+file descriptors simultaneously.  This function will return when one of 
+two conditions has been met: a DTM port or file descriptor has become 
+ready for reading or the time-out value supplied to 
+DTMselectRead() has expired.
+
+The time-out value given to DTMselectRead() is set in milliseconds.  
+A value of -1 indicates that DTMselectRead() should block 
+indefinitely waiting for a port or file descriptor to become ready.
+
+Two data structures exist for determining whether a port or a 
+descriptor is ready for reading: Sock_set and Dtm_set.  The 
+structure of Dtm_set is shown in Example 16.  When 
+DTMselectRead() returns, all of the ports that have messages 
+pending will have the status flag element set to the value 
+DTM_PORT_READY; all others have the value 
+DTM_PORT_NOT_READY.  DTMselectRead() resets the status flag of 
+each structure on each invocation.  Therefore an application need only 
+check the flag - it does not need to reset the flag between calls to 
+DTMselectRead().
+
+
+typedef struct Dtm_set {
+   int   port;                  /* An input port id          */
+   int   status;                /* The status of the port    */
+} Dtm_set ;
+
+Example 16.	The data structure, Dtm_set, used by DTMselectRead() for determining the  input availability of a list of 
+ports.  The first element of the structure is the port id created by a call to DTMmakeInPort().  The second 
+element is the flag indicating the status of the port.  If the port has a message waiting to be received, status is set 
+to DTM_PORT_READY, otherwise DTM_PORT_NOT_READY.
+
+
+Example 17 shows how DTMselectRead() can be used to determine 
+which input ports in a list are available for reading.  More complex 
+examples of how DTMselectRead() can be used to identify a file 
+descriptor's status are provided with the sample programs in the 
+distribution package and are outside of the scope of this tutorial.
+
+
+#include <dtm.h>
+...
+   int       i = 0,               /* Argument counter              */
+             error = DTM_OK;      /* DTMselectRead error code      */
+   Dtm_set   portset[2];          /* Port connection information   */
+...
+   /* Initialize the Dtm_set structure to default values here. */
+...
+   for (i = 1; i < argc; i++) {
+      if (!strcmp(argv[i], "-port1"))
+         portset[0].port = DTMmakeInPort(argv[++i], DTM_DEFAULT);
+      if (!strcmp(argv[i], "-port2"))
+         portset[1].port = DTMmakeInPort(argv[++i], DTM_DEFAULT);
+   }
+...
+   /* Check for errors in creating the ports */
+...
+   while (1) {
+      if (error = DTMselectRead(portset, 2, NULL, 0, -1)) {
+         if (portset[0].status == DTM_PORT_READY)
+            readMSG(portset[0].port);
+         else if (portset[1].status == DTM_PORT_READY)
+            readMSG(portset[1].port);
+      }
+...
+   }
+
+Example 17.	Determine which port is ready for reading data by calling  DTMselectRead() with the given port list.  Read 
+the message from the ports whose status flags indicate that they are ready. 
+
+Error Detection
+Success or failure of any DTM function can be determined by comparing 
+the function's returned value against the predefined constant 
+DTMERROR.  Code fragments presented so far have ignored this value 
+making the unsafe assumption that their operations have always 
+succeeded.  Unfortunately, there are a variety of causes of 
+communications failure, most of which are beyond the programmer's 
+control.
+
+In the event of an error, the global variable DTMerrno is set to 
+indicate the type of error that occurred.  Each error number has a 
+specific definition which can be determined via the function 
+DTMerrmsg().  Example 18 shows how Example 4 would look when 
+designed to handle all possible DTM failures.
+
+
+
+#include <dtm.h>
+...
+   int	outport = DTMERROR;	/* DTM output port	*/
+   char	*header = "This is the header";	/* DTM header	*/
+   float	dataset[BUFSIZE];	/* The data buffer	*/
+...
+   /* Create the ports & initialize the data here.	*/
+...
+   if (DTMbeginWrite(outport, header, DTMHL(header)) == DTMERROR) {
+      printf("An error was encountered by DTMbeginWrite()\n");
+      printf("\t%s\n", DTMerrmsg(1));
+      exit(0);
+   }
+   if (DTMwriteDataset(outport,dataset,BUFSIZE,DTM_FLOAT) == DTMERROR) {
+      printf("An error was encountered by DTMwriteDataset()\n");
+      printf("\t%s\n", DTMerrmsg(1));
+      exit(0);
+   }
+   if (DTMendWrite(outport) == DTMERROR) {
+      printf("An error was encountered by DTMendWrite()\n");
+      printf("\t%s\n", DTMerrmsg(1));
+      exit(0);
+   }
+
+Example 18.	In this example, each of the DTM writing functions are checked for the return of an error.  If an error has occurred 
+(the function has returned a value of DTMERROR), print a warning message tailored for that particular function.  
+Also print out the standard DTM error message using DTMerrmsg(), and then exit the program.  None of these 
+errors are fatal, so the use of exit() is not required.
+
+Flexible modules are designed to handle error conditions gracefully 
+but the level of flexibility depends on the severity of the error and 
+upon the developer's needs.  The programmer must decide how to 
+handle error conditions.  A complete list of possible DTMerrno values 
+and the corresponding definitions appears in Appendix A.
+
+Message Classes
+Each DTM message used in NCSA applications is considered an 
+instance of a given message class and the DTM library contains a set of 
+methods for building and parsing the message header.  The class 
+information contained in the message header provides information on 
+the type of the data contained in each message.
+
+While DTM message classes are useful, they are not part of DTM 
+proper.  Rather, they represent the protocol NCSA applications use to 
+exchange messages.  To allow for interoperation between NCSA 
+applications and other applications, users are encouraged to use the 
+message classes provided.  If the message classes provided are 
+insufficient, the user has two other options: develop a new message 
+class or a new message system.  Define a new message class allows 
+some interoperability, although NCSA applications will not be able 
+to make use of these messages.  If the message class system is 
+inappropriate, the user can develop a new message system, 
+remembering that both the header and data section of a message are 
+optional.
+
+In the preceding sections, the code presented was designed for 
+simplicity Ð both the data dimensions and the data type were 
+assumed and the header contained no useful information.  Essentially 
+each message was classless.  This is usually not the case.  Normally, 
+predefined class methods are inherited from a parent class to create 
+the header for transmission and complementary methods are used to 
+parse the header during reception.
+
+DTM comes with several of these predefined message classes.  These 
+classes are designed to cover the needs of the majority of the work 
+done at NCSA:  scientific visualization.  Classes exist for passing 
+scientific data sets, raster images and palettes, and surface 
+descriptions.
+
+New user-defined classes should be subclassed from another class or 
+the root DTM class.  Any new data values or tags added to a header 
+must have macros and functions for constructing and parsing the 
+header.  Since character string headers should not exceed 
+DTM_MAX_HEADER characters in length (including the null character), 
+large amounts of data should be sent in the data section of the 
+message.
+
+DTM root class functions and macros that may be inherited all start 
+with the letters "dtm_" and perform operations solely on the header.  
+Their definitions are provided in an appendix.  Example 19 shows 
+how the SDS class has implemented two of its macros, SDSsetClass 
+and SDScompareClass.
+
+
+#define SDSclass                  "SDS"
+#define SDSsetClass(header)       dtm_set_class(header, SDSclass)
+#define SDScompareClass(header)   dtm_compare_class(header, SDSclass)
+
+Example 19.	An SDS class macro's behavior is actually defined by using DTM primitive functions.
+
+
+A Simple Message 
+Class:  MSG
+The minimum amount of information a header should contain is a class 
+identifier, usually an acronym or mnemonic that describes how to 
+interpret the data.  This constant should be unique and should not 
+conflict with any previous existing classes.  Example 20 shows a 
+header created by the simplest message class MSG and how it is 
+dissected.  To use the MSG class macros and functions, include the file 
+dtm.h.
+
+
+MSG STR 'This is a MSGclass message.'
+Message class:  "MSG"
+String tag:     "STR"
+String data:    "This is a MSGclass message."
+
+Example 20.	A simple MSG class message.  Note that the tag "STR" is used to indicate that the delimited string is the subject 
+of this message.
+
+MSG class messages contain only three pieces of information: the class 
+identifier "MSG" and a tag "STR" where the characters following 
+"STR" (delimited by single quotes) form the text string that is the 
+subject of this message.
+
+This header was created using macros provided in the header file 
+dtm.h.  Macros to parse the header Ñ macros that produced the 
+dissection found in Example 20 Ñ are also present in dtm.h.  Example 
+21 shows how these macros are used to create and parse the header.
+
+
+#include <stdio.h>
+#include <dtm.h>
+...
+   char   *header[DTM_MAX_HEADER];       /* The MSG class header */
+...
+   /* Constructing the header */
+   MSGsetClass(header);
+   MSGsetString(header, "This is a MSGclass message.");
+...
+   /* Parsing the header */
+   if (MSGcompareClass(header)) {
+      MSGgetString(header, string);
+      printf("The string is: '%s'\n", string);
+   }
+
+Example 21.	MSG class construction and parsing are presented together in this example.  The size of the header is limited to 
+be DTM_MAX_HEADER bytes in length - a value defined in the header file dtm.h.  The macro 
+MSGcompareClass() causes all non-MSG class messages to be ignored.
+
+Scientific Data Sets:  
+SDS
+The scientific data set class (SDS) is a message class designed 
+specifically for passing multidimensional arrays of data.  The 
+message header contains information about the array being sent such 
+as the dimensions and data type of the array while the data portion 
+of the message consists of the actual elements of the array.  To use the 
+SDS class macros and functions, include the file sds.h.
+
+An SDS header can contain information about the following items: the 
+rank and dimensions of the data set, the minimum and maximum 
+values contained in the data, the type of the data, and a character 
+string title.  The rank and dimension information is required, the other 
+attributes are optional.  If no data type is specified, the type is 
+assumed to be floating point.
+
+Example 22 shows a  sample piece of code for creating an SDS class 
+message and writing it to a given port.
+
+
+
+#include <dtm.h>
+#include <sds.h>
+...
+   int      rank,              /* Rank of the dataset (# of dims) */
+            size,              /* Size of the floating pt. buffer */
+            dims[3];           /* Dimensions for this example     */
+   char     header[SDSsize];   /* SDS header                      */
+   float    *array = NULL;     /* Data array                      */
+...
+   /* Port creation and data creation code here */
+...
+   SDSsetClass(header);
+   SDSsetDimensions(header, rank, dims);
+   SDSsetTitle(header, "This is an SDS array");
+   SDSsetType(header, DTM_FLOAT);
+
+   DTMwriteMsg(outport,header,SDSHL(header),array,size,DTM_FLOAT);
+
+Example 22.	Create an SDS header using the SDS class header creation functions.  Attempt to write it and a floating point 
+array of size size out the output port using DTMwriteMsg().
+
+Reading scientific data sets can be tricky if maximum flexibility is 
+desired.  The dimensions of the array can be determined from the 
+header and memory for the data allocated automatically.  The data 
+type can also be retrieved should the type differ from the default 
+floating point.  Example 23 gives a moderately flexible piece of code 
+for reading a multidimensional array from a given DTM port.
+
+
+
+#include <dtm.h>
+#include <sds.h>
+...
+   int      rank = 0,           /* Rank of the dataset (# of dims) */
+            size = 0,           /* Size of the array in floats     */
+            dims[10];           /* Max # of dims for this example  */
+   float    minimum = 0.0,      /* Minimum value                   */
+            maximum = 0.0,      /* Maximum value                   */
+            *array = NULL;      /* The array of data               */
+   char     header[SDSsize],    /* SDS header                      */
+            title[80];          /* Title of this message           */
+   DTMTYPE  type = DTM_FLOAT;   /* Default type is DTM_FLOAT       */
+...
+   DTMbeginRead(inport, header, sizeof header);
+   if (SDScompareClass(header)) {
+      SDSgetMinMax(header, &minimum, &maximum);
+      SDSgetType(header, &type);
+      SDSgetTitle(header, title, sizeof title);
+      SDSgetDimensions(header, &rank, dims, 10);
+      size = SDSnumElements(rank, dims);
+      array = (float *)malloc(size * sizeof(float));
+
+      DTMreadDataset(inport, array, size, DTM_FLOAT);
+   }
+   DTMendRead(inport);
+
+Example 23.	Receive and parse an SDS message.  Assume that there are no errors in any of the DTM functions but check to be 
+certain that the message class received is indeed an SDS class message.  If the message is an SDS class message, 
+parse the various pieces of information, but don't do anything with them.  Allocate space based on the 
+dimensions, read the data and then end reading from that port.
+
+
+Raster Image Sets and 
+Palettes: RIS & PAL
+Raster images and palettes are commonly used in scientific 
+visualization.  The raster image set (RIS) class of messages allows for 
+two types of images to be sent, eight bit and twenty-four bit.  In the 
+case of eight bit images, a separate message class has been created for 
+handling the palette.  The palette (PAL) message class makes no 
+restrictions on the size of the palettes, though the default is set to be 
+256 individual colors.  To use the RIS class and PAL class macros and 
+functions, include the header file ris.h.
+
+Example 24 shows how a previously created eight bit image is sent 
+along with a palette.  Code to receive this information is given in 
+Example 25.
+
+
+   /*****************************************************************/
+   /* Create an RIS message.  Assume that the image already exists. */
+   /*****************************************************************/
+   int      xdim = 256,             /* X dimension of the image      */
+            ydim = 256,             /* Y dimension of the image      */
+            size = xdim * ydim;     /* Size of the array             */
+   char     header[RISsize],        /* SDS header                    */
+            *image = NULL;          /* Raster image                  */
+...
+   RISsetClass(header);
+   RISsetDimensions(header, xdim, ydim);
+   RISsetTitle(header, "This is an RIS image");
+   RISsetType(header, RIS8BIT);
+
+   DTMwriteMsg(outport, header, RISHL(header), image, size, DTM_CHAR);
+...
+   /******************************************************************/
+   /* Create an PAL message.  Assume that the palette exists.        */
+   /******************************************************************/
+   int      elements = 768;         /* Number of elements in palette */
+   char     header[PALsize],        /* SDS header                    */
+            *palette = NULL;        /* The palette                   */
+...
+   PALsetClass(header);
+   PALsetSize(header, elements/3);
+   PALsetTitle(header, "This is a grayscale palette");
+
+   DTMwriteMsg(outport,header,PALHL(header),palette,elements,DTM_CHAR);
+
+Example 24.	This example shows how to create RIS class and PAL class messages using the header constructors provided with 
+each class.  Even though the default type of image is RIS8BIT, and the default number of elements in a palette 
+is 256, it is best to set them explicitly.
+
+
+
+
+   int      size = 0,              /* Size of the array in floats   */
+            xdim = 0,              /* X dimension of the image      */
+            ydim = 0;              /* Y dimension of the image      */
+   char     title[80],             /* Title of this message         */
+            *image = NULL,         /* Image received                */
+            *palette = NULL;       /* The color palette             */
+   RISTYPE  type = RIS8BIT;        /* Default type is RIS8BIT       */
+
+   /*****************************************************************/
+   /* Check to see if the message class is RIS                      */
+   /*****************************************************************/
+   if (RIScompareClass(header)) {
+...
+      RISgetDimensions(header, &xdim, &ydim);
+      RISgetTitle(header, title, sizeof title);
+      RISgetType(header, &type);
+      size = xdim * ydim * ((type == RIS24BIT) ? 3 : 1);
+      image = (char *)malloc(size * sizeof(char));
+
+      DTMreadDataset(inport, image, size, DTM_CHAR);
+   }
+...
+   /*****************************************************************/
+   /* Check to see if the message class is PAL                      */
+   /*****************************************************************/
+   else if (PALcompareClass(header)) {
+...
+      PALgetTitle(header, title, sizeof title);
+      PALgetSize(header, &elements);
+      palette = (char *)malloc(3 * elements * sizeof(char));
+
+      DTMreadDataset(inport, palette, 3*elements, DTM_CHAR))
+   }
+
+Example 25.	Compare the message class of an already received header to see if it is an RIS class message.  If it isn't an image, 
+check to see if the message is a PAL class message, creating the appropriate data structures based on the message 
+class and the image type.  No error checking is performed to ensure that the number of pixels read equals the 
+number indicated by the dimensions, nor if the DTM functions return error flags.
+
+Surface Description 
+Language:  SDL
+The surface description language (SDL) is a simple way of 
+representing three dimensional information.  The header supplies 
+information about how the DTM_TRIPLET values are to be organized 
+when finally displayed.  The data gives the coordinate information 
+as well as information on surface color and surface normals.  To use the 
+SDL class macros and functions, include the header file sdl.h.
+
+DTM_TRIPLETS contain three floating point values and an integer tag 
+describing how those values are to be interpreted.  When triplets are 
+used in conjunction with the SDL message class, those tags are 
+predefined with particular meanings as shown in Example 26. 
+
+
+
+TAG VALUE	INTERPRETATION
+SDLposition	The <x,y,z> coordinates in three-space
+SDLcolor	The color in <r,g,b> space with a where 0 ² r,g,b ² 1.0
+SDLnormal	A normal vector in three-space
+SDLtranslate	A translation vector
+SDLrotate	Rotation about the x, y, and z axes.
+SDLscale	A scaling transform along the x, y and z axes.
+SDLmaxTriplet	The upper limit on reserved values (= 1024).
+
+Example 26.	The tag value of a DTM_TRIPLET as it is used in conjunction with the SDL message class.  DTM has reserved the 
+values from SDLmaxTriplet down for further development with all other values available for independent 
+use.
+
+
+In general, SDLcolor and SDLnormal triplets apply to all 
+SDLposition values that follow until superseded by another 
+SDLcolor or SDLnormal respectively.  SDLtranslate, SDLrotate 
+and SDLscale all apply the viewing transform to the current 
+transform matrix (or however the transforms are being represented).
+
+How these data representations are to be organized depends on the 
+value of the "primitive" type specified.  Again there are predefined 
+SDL constants with particular meanings, as shown in Example 27.
+
+
+PRIMITIVE TYPE	INTERPRETATION
+SDLpoint	Each SDLposition is a separate point.
+SDLlineseg	Pairs of SDLposition values form a line segment.
+SDLtriangle	Trios of SDLposition values form a triangle.
+SDLquad	Groups of four SDLposition values form a quadrilateral.
+SDLsphere	Each value is the center of a sphere of unspecified radius.
+SDLmaxPrim_t	Maximum number of reserved primitive types (= 1024).
+
+Example 27.	The different primitive types defined for the SDL message class.  DTM has reserved the values from 
+SDLmaxPrim_t down for further development with all other values available for independent use.
+
+Example 28 contains a code fragments for creating and parsing an SDL 
+class message.
+
+
+
+#include <dtm.h>
+#include <sdl.h>
+...
+   /*******************************************************************/
+   /* Read an SDL class message, parsing the header.                  */
+   /*******************************************************************/
+
+   char                header[DTM_MAX_HEADER]; /* Input header        */
+   struct DTM_TRIPLET  triplets[TBUF];         /* Triplet data buffer */
+...
+   DTMbeginRead(inport, header, sizeof header);
+   if (SDLcompareClass(header)) {
+      SDLgetTitle(header, title, sizeof title);
+      SDLgetPrimitive(header, &primitive);
+      while ((nelem = DTMreadDataset(inport,triplets,TBUF,DTM_TRIPLET))
+                    > 0)
+         printTriplets(triplets, nelem);
+   }
+   DTMendRead(inport);
+
+...
+   /*******************************************************************/
+   /* Write an SDL class message.                                     */
+   /*******************************************************************/
+
+   char                header[SDLsize];     /* The output header      */
+   struct DTM_TRIPLET  triangle[NUMTRIS];   /* Triangle data          */
+...
+   SDLsetClass(header);
+   SDLsetTitle(header, "Example 7.7: A Triangle");
+   SDLsetPrimitive(header, SDLtriangle);
+   DTMwriteMsg(outport,header,SDLHL(header),triangle,NTRIS,DTM_TRIPLET)
+
+Example 28.	This example demonstrates how to parse and how to construct an SDL class message.  When reading, if the 
+message class is SDL, get the title and primitive type then read and interpret the data.  When writing, create a 
+header with all of the pertinent information.  In both cases, the SDL class constructor functions are used to build 
+the header.  In both cases, errors are ignored.
+1DTMselectRead() is being replace by a new routine, DTMselect().  This routine provides a more 
+consistent interface and allows applications to check a port for writing as well as reading.  The routine 
+will be available in DTM2.4.  Although DTMselectRead() will be available for backward 
+compatibility, users should be prepared to use DTMselect().
+
