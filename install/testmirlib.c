@@ -11,6 +11,7 @@
 
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -27,7 +28,8 @@ void test_hio(char *name1)
   double pi = 3.141592;
   float g = 9.8;
   int d = 28;
-  
+
+  fprintf(stderr,"test_hio: %s\n",name1);
 
   hopen_c(&t1, name1, "old", &iostat);
   if (iostat==0) {
@@ -52,12 +54,41 @@ void test_hio(char *name1)
 
 }
 
+void test_xyio(char *fname, int nx, int ny, int nz)
+{
+  int t1, i,j,k,iostat;
+  float data[MAXDIM];
+  int axes[3];
+
+  fprintf(stderr,"test_xyio: %s %d %d %d\n",fname,nx,ny,nz);
+
+  /* delete old one , if exists */
+  hopen_c(&t1, fname, "old", &iostat);
+  if (iostat==0) hrm_c(t1);
+
+  axes[0] = nx;
+  axes[1] = ny;
+  axes[2] = nz;
+
+  xyopen_c(&t1,fname,"new",3,axes);
+  for (k=1; k<=nz; k++) {
+    xysetpl_c(t1,1,&k);
+    for (j=1; j<=ny; j++)
+      xywrite_c(t1,j,data);
+  }
+  xyclose_c(t1);
+
+
+}
+
 void test_uvio(char *fname, int nc, int nw, int nr)
 {
   int t1, i,iostat;
   double preamble[5];
   float data[2*MAXCHAN];
   int  flags[MAXCHAN];
+
+  fprintf(stderr,"test_uvio: %s %d %d %d\n",fname,nc,nw,nr);
 
   /* delete old one , if exists */
   hopen_c(&t1, fname, "old", &iostat);
@@ -82,12 +113,40 @@ void test_uvio(char *fname, int nc, int nw, int nr)
 
 int main(int argc, char *argv[])
 {
-  fprintf(stderr,"Testing MIRLIB\n");
+  int n1, n2, n3;
+  char *buf;
+  fprintf(stderr,"Testing MIRLIB: choose a mode and bunch of integers\n");
+  if (argc==1) return 1;
 
-  test_hio("test1.mir");
-
-  test_uvio("test1.uv", 1024, 16, 4);
- 
+  switch (*argv[1]) {
+  case 'h': 
+    test_hio("test1.mir");
+    break;
+  case 'x':
+    if (argc>2) {
+      n1 = atoi(argv[2]);
+      n2 = atoi(argv[3]);
+      n3 = atoi(argv[4]);
+    }
+    test_xyio("test1.xy", n1,n2,n3);
+    break;
+  case 'u':
+    if (argc>2) {
+      n1 = atoi(argv[2]);
+      n2 = atoi(argv[3]);
+      n3 = atoi(argv[4]);
+    }
+    test_uvio("test1.uv", 1024, 16, 40000);
+    break;
+  case 'm':
+    fprintf(stderr,"Malloc loop until memory full\n");  
+    do {
+      buf = malloc(BUFSIZE);
+    } while (buf);
+    break;
+  default:
+    break;
+  }
   return 0;
 }
 
