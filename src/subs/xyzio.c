@@ -43,6 +43,7 @@
                      largely thanks to Amtrak for a long boring ride NYC-NCR
      pjt  14-jan-03  cleared up some more prototypes, fixed bug in
                      *s[ITEM_HDR_SIZE] declaration (no pointer, just char)
+     jwr  18-may-05  print address using %p instead of %d
 
 
 *******************************************************************************/
@@ -1386,8 +1387,8 @@ static int bufferallocation( int n )
     }
     if( n == 1 ) bug_c( 'f', "xyzsetup: Failed to allocate any memory" );
 
-    if(itest)printf("Allocated %d reals @ %d\n",n,(int) buffer);
-    if(itest)printf("Allocated %d ints  @ %d\n",n,(int) mbuffr);
+    if(itest)printf("Allocated %d reals @ %p\n",n,buffer);
+    if(itest)printf("Allocated %d ints  @ %p\n",n,mbuffr);
 
     currentallocation = n;
     return( n );
