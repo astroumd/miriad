@@ -58,6 +58,7 @@ c   26mar97   rjs    Less precision in pbencode.
 c   07jul97   rjs    Change call to coaxdesc to coaxget.
 c   05sep97   mchw   Change lower freq for HATCREEK to 24 GHz.
 c   09may00   rjs    Add extra check.
+c   23jun03   pjt    add LOFAR
 c************************************************************************
 c* pbList -- List known primary beam types.
 c& rjs
@@ -699,6 +700,7 @@ c  VLA primary beam is taken from AIPS code.
 c
 	call pbAdd('VLA',     0.071,24.510, 44.3, 0.023,IPOLY,
      *			NCOEFF,vla,'Reciprocal 4th order poly')
+
 c
 c  The Hat Ck primary beam is a gaussian of size is 191.67 arcmin.GHz
 c  according to "John L"
@@ -724,6 +726,12 @@ c
      *				   'Truncated Gaussian')
 	call pbAdd('SINGLE',  0.0,999.,	      0.00, 0.5,  SINGLE,0,0.,
      *				   'Single dish')
+c
+c  LOFAR - for simulations
+c
+	call pbAdd('LOFAR',    0.071,24.510, 44.3, 0.023,IPOLY,
+     *			NCOEFF,vla,'Reciprocal 4th order poly')
+
 c
 	end
 c************************************************************************
