@@ -31,6 +31,7 @@
 			a newline char.
        09-may-00  rjs   Get rid of spurious error message in hrm_c. Why didn't
 		        I see this ages ago?
+       30-jan-03  pjt   allow itemnames to contain _ (e.g. for cd1_1)
 */
 
 
@@ -1343,7 +1344,8 @@ char *name;
   if(!header_ok && length == 6 && !strcmp("header",name))return(-1);
   for(i=0; i < length; i++){
     c = *name++;
-    if((c < 'a' || c > 'z') && (c < '0' || c > '9') && (c != '-'))return(-1);
+    if((c < 'a' || c > 'z') && (c < '0' || c > '9') && (c != '-') && (c != '_'))
+      return(-1);
   }
   return(0);
 }
