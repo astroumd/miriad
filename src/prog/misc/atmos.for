@@ -426,7 +426,8 @@ c
 	write(line,100) recave(bl),timeave(bl),
      *   	       ant1,ant2,uave(bl),avel(bl),
      *		 (arg(j),phirms(j,bl),cflag(j),j=1,nchan)
- 100	format(f6.0,x,f9.4, i4,x,i4,x,f8.2,f6.2, 4(x,f6.2,x,f6.2,x,a))
+ 100	format(f6.0,1x,f9.4,i4,1x,i4,1x,f8.2,f6.2,
+     *		4(1x,f6.2,1x,f6.2,1x,a))
 	length = len1(line)
 	call LogWrite(line(1:length),more)
 c
@@ -454,7 +455,7 @@ c
 	if(aveamp.gt.5*sigma .and. rms.gt.0.001 .and. an(1).gt.-1
      *	.and.an(1).lt.2 .and. an(2).gt.-1.and.an(2).lt.3 )then
 	write(line,'
-     *		(a,f8.3,5f7.2,2f8.3,i4,i4,f8.3,2f5.1,f6.1,f5.1,x,a)')
+     *		(a,f8.3,5f7.2,2f8.3,i4,i4,f8.3,2f5.1,f6.1,f5.1,1x,a)')
      *,   'psf', day, (an(i),i=1,4),rms,aveamp,sigma,nint(elev),
      *	  npts,freq,precipmm,airtemp,min(relhumid,99.9),windmph,source
 	  call output(line)
