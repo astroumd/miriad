@@ -1,0 +1,64 @@
+#!/bin/csh -f
+# -----------------------------------------------------------------
+# debugging script for miriad progs
+# -----------------------------------------------------------------
+# -----------------------------------------------------------------
+# unset first, just in case they are previously set
+#
+unsetenv MIRDEBUG
+unsetenv MIRTESTBED
+# -----------------------------------------------------------------
+if ($#argv != 1) then
+  echo ""
+  echo "	Debugging script for programs - filename extensions optional"
+  echo "usage: $0 progname{.f,.for}"
+  echo ""
+  exit 0
+endif
+# -----------------------------------------------------------------
+# Find the file
+#
+set name = $1
+if ($name == ${name:r}) then
+   if      (-e ${name}.for) then
+      set name = ${name}.for
+      set tail = "for"
+   else if (-e ${name}.f  ) then
+      set name = ${name}.f
+      set tail = "f"
+   else
+      echo "Cannot find anything relating to $1 - exiting"
+      exit 1
+   endif
+else
+   if (! -e $name) then
+      echo "Cannot find anything relating to $1 - exiting"
+      exit 1
+   endif
+   set tail = ${name:e}
+endif
+# -----------------------------------------------------------------
+# do it
+#
+echo "	==================================="
+echo "	Input was -- $0 $1"
+echo "	==================================="
+setenv MIRDEBUG
+source $MIR/src/sys/bin/compile.$MIRHOST
+
+if ($tail == "for") then
+   echo ""
+   echo "$Ratty -I $MIRINC $name ${name:r}.f"
+         $Ratty -I $MIRINC $name ${name:r}.f
+endif
+
+set ff = "`echo $Foptions|sed 's/-O3//'|sed 's/-O2//'|sed 's/-O1//'|sed 's/-O//'`"
+echo ""
+echo "$Fcompile $ff $Finclude -o ${name:r} ${name:r}.f $Flinkdir $Flinklib"
+      $Fcompile $ff $Finclude -o ${name:r} ${name:r}.f $Flinkdir $Flinklib
+ls -l ${name:r}
+echo ""
+# -----------------------------------------------------------------
+# all done
+#
+exit 0
