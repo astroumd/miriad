@@ -276,6 +276,8 @@ c	"noerase" means don't erase a rectangle into which the "3-axis"
 c	  values and the overlay ID strings are written.
 c	"nofirst" means don't write the first x-axis label on any subplots
 c	  except for the left-most one. This may avoid label overwrite.
+c       "corner" means only write labels in the lower left corner of any
+c         subplot  **PJT experiment**
 c	"relax" means issue warnings when image axis descriptors are
 c	  inconsistent (e.g. different pixel increments) instead
 c	  of a fatal error.  Use at your peril.
@@ -659,6 +661,7 @@ c    rjs  13jul00  Correct angle of beam plotting when there is a rotation
 c		   between sky and pixel grid.
 c    dpr  14feb01  Add beamtyp keyword
 c    dpr  27feb01  Added scale-bar
+c    pjt  14jan02  Added options=corner
 c-----------------------------------------------------------------------
       implicit none
 c
@@ -706,6 +709,7 @@ c
      -     dobeam, candobeam, beaml, beamb, relax, rot90, signs, mirror,
      -     dowedge, doerase, doepoch, bdone, doblb, doblm, dofid, dosing
      -     , nofirst, grid, dotr, dodist, conlab, doabut, getvsc, noflab
+     -     , docorner, donum
 c
       data blankc, blankv, blankb /-99999999.0, -99999999.0, 
      +                             -99999999.0/
@@ -722,7 +726,7 @@ c
       data lwid /maxconp3*1/
       data getvsc /.true./
 c-----------------------------------------------------------------------
-      call output ('CgDisp: version 27-Feb-01')
+      call output ('CgDisp: version 14-Jan-02')
       call output (' ')
 c
 c Get user inputs
@@ -734,8 +738,8 @@ c
      -     , eqscale, gaps, solneg, nx, ny, lwid, break, cs, scale,
      -     ofile, dobeam, beaml, beamb, relax, rot90, signs, mirror,
      -     dowedge, doerase, doepoch, dofid, dosing, nofirst, grid, dotr
-     -     , dodist, conlab, doabut, val3form, ncols1, cols1, fs, hs,
-     -     firstimage)
+     -     , dodist, conlab, doabut, docorner, val3form, ncols1, cols1, 
+     -     fs, hs, firstimage)
 c
 c Open images as required
 c
@@ -959,7 +963,8 @@ c
 c
 c Write on ascii axis labels
 c
-         call aaxlabcg (doaxlab, doaylab, xdispl, ydispb, 
+         if (.not.docorner  .or.  jj.eq.(nx*ny-nx+1))
+     +    call aaxlabcg (doaxlab, doaylab, xdispl, ydispb, 
      +                  xlabel, ylabel)
 c
 c Draw frame, write numeric labels, ticks and optional grid
@@ -968,7 +973,8 @@ c
          krng(2) = ngrp(j)
          jplot = mod(j,nx*ny)
          noflab = nofirst .and. mod(jplot,nx).ne.1
-         call naxlabcg (lhead, .true., blc, trc, krng, labtyp, 
+         donum = .not.docorner  .or.  jj.eq.(nx*ny-nx+1)
+         call naxlabcg (lhead, donum, blc, trc, krng, labtyp, 
      +                  donxlab, donylab, noflab, grid)
 c
 c Draw wedge now so that it overwrites axis label ticks when wedge
@@ -1746,12 +1752,12 @@ c
       subroutine decopt  (dofull, do3val, do3pix, eqscale, gaps, solneg,
      +   beambl, beambr, beamtl, beamtr, relax, rot90, signs, 
      +   mirror, dowedge, doerase, doepoch, dofid, dosing, nofirst,
-     +   grid, dotr, dodist, conlab, doabut)
+     +   grid, dotr, dodist, conlab, doabut, docorner)
 c----------------------------------------------------------------------
 c     Decode options array into named variables.
 c
 c   Output:
-c     dofull    True means do full annotaiton of plot
+c     dofull    True means do full annotation of plot
 c     do3val    True means label sub-plots with value of third axis
 c     do3pix    True means label sub-plots with pixel of third axis
 c     doerase   True means erase rectangle into which 3-axis label written
@@ -1779,17 +1785,18 @@ c     dotr      Label top and right as well as left and bottom axes
 c     dodist    Distort overlays with grid
 c     conlab    Label contours
 c     doabut    No white space between subplots
+c     docorner  Only lower left corner gets labels
 c-----------------------------------------------------------------------
       implicit none
 c
       logical dofull, do3val, do3pix, eqscale, gaps, solneg(*),
      +  beambl, beambr, beamtl, beamtr, relax, rot90, signs,
      +  mirror, dowedge, doerase, doepoch, dofid, dosing, nofirst,
-     +  grid, dotr, dodist, conlab, doabut
+     +  grid, dotr, dodist, conlab, doabut, docorner
 
 cc
       integer maxopt
-      parameter (maxopt = 27)
+      parameter (maxopt = 28)
 c
       character opshuns(maxopt)*9
       logical present(maxopt)
@@ -1799,7 +1806,7 @@ c
      +              'relax   ', 'rot90   ', 'signs   ', 'mirror',
      +              'wedge   ', 'noerase ', 'noepoch ', 'fiddle',
      +              'single  ', 'nofirst',  'grid    ', 'trlab',
-     +              'nodistort', 'conlabel','abut    '/
+     +              'nodistort', 'conlabel','abut    ', 'corner'/
 c-----------------------------------------------------------------------
       call optcg ('options', opshuns, present, maxopt)
 c
@@ -1830,6 +1837,7 @@ c
       dodist    = .not.present(25)
       conlab    =      present(26)
       doabut    =      present(27)
+      docorner  =      present(28)
 c
       end
 c
@@ -2451,8 +2459,8 @@ c
      -     do3pix, eqscale, gaps, solneg, nx, ny, lwid, break, cs, scale
      -     , ofile, dobeam, beaml, beamb, relax, rot90, signs, mirror,
      -     dowedge, doerase, doepoch, dofid, dosing, nofirst, grid, dotr
-     -     , dodist, conlab, doabut, val3form, ncols1, cols1, fs, hs,
-     -     firstimage)
+     -     , dodist, conlab, doabut, docorner, val3form, ncols1, cols1, 
+     -     fs, hs, firstimage)
 c-----------------------------------------------------------------------
 c     Get the unfortunate user's long list of inputs
 c
@@ -2528,6 +2536,7 @@ c   dotr       Label top and right axes as well as bototm and left
 c   dodist     Distort overlays with grid
 c   conlab     Label contours
 c   doabut     No white space bewteen subplots
+c   docorner   Only labels with lower left subplot **pjt**
 c   val3form   Format for options=3val labelling
 c   cols1      Colours for LEVS1 contours
 c   ncols1
@@ -2550,7 +2559,7 @@ c
       logical do3val, do3pix, dofull, gaps, eqscale, solneg(maxcon),
      +  dobeam, beaml, beamb, relax, rot90, signs, mirror, dowedge,
      +  doerase, doepoch, dofid, dosing, nofirst, grid, dotr, 
-     +  dodist, dunw, conlab, doabut
+     +  dodist, dunw, conlab, doabut, docorner
 cc
       integer nmaxim
       parameter (nmaxim = 8)
@@ -2771,7 +2780,7 @@ c
       call decopt (dofull, do3val, do3pix, eqscale, gaps, solneg,
      +   beambl, beambr, beamtl, beamtr, relax, rot90, signs, 
      +   mirror, dowedge, doerase, doepoch, dofid, dosing, nofirst,
-     +   grid, dotr, dodist, conlab, doabut)
+     +   grid, dotr, dodist, conlab, doabut, docorner)
 c
       call keya ('3format', val3form, ' ')
 c
