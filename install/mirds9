@@ -12,7 +12,7 @@ if ($#argv == 0) then
     echo "      -wcs"
     echo "                  do not load WCS, even if it has one"
     echo ""
-    echo "  Version 2.3 - 14-feb-01 PJT"
+    echo "  Version 2.4 - 27-dec-01 PJT"
     echo ""
     echo "  Be sure 'ds9' and the XPA routines are in your environment."
     echo "  You do need to start ds9 manually yourself."
@@ -92,10 +92,10 @@ if (-d $name) then
         # work around an earlier bug by adding NAXIS=2
         # note this method isn't robust, it doesn't really check the header
         echo "NAXIS  2" > $wcs
-        echo CDELT1 `imhead in=$name key=cdelt1 | awk '{print $1*57.2957795131}'` >> $wcs
-        echo CDELT2 `imhead in=$name key=cdelt2 | awk '{print $1*57.2957795131}'` >> $wcs
-        echo CRVAL1 `imhead in=$name key=crval1 | awk '{print $1*57.2957795131}'` >> $wcs
-        echo CRVAL2 `imhead in=$name key=crval2 | awk '{print $1*57.2957795131}'` >> $wcs
+        echo CDELT1 `imhead in=$name key=cdelt1 | awk '{printf("%.10f\n",$1*57.2957795131)}'` >> $wcs
+        echo CDELT2 `imhead in=$name key=cdelt2 | awk '{printf("%.10f\n",$1*57.2957795131)}'` >> $wcs
+        echo CRVAL1 `imhead in=$name key=crval1 | awk '{printf("%.10f\n",$1*57.2957795131)}'` >> $wcs
+        echo CRVAL2 `imhead in=$name key=crval2 | awk '{printf("%.10f\n",$1*57.2957795131)}'` >> $wcs
         echo CRPIX1 `imhead in=$name key=crpix1 | awk '{print $1}'` >> $wcs
         echo CRPIX2 `imhead in=$name key=crpix2 | awk '{print $1}'` >> $wcs
         echo CTYPE1 \'`imhead in=$name key=ctype1`\' >> $wcs
