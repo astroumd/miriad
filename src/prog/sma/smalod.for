@@ -40,10 +40,10 @@ c                  labelled as I.
 c       'oldpol'   Converts MIR polarization data observed before
 c                  2004-9-1.
 c                  Defaults assumes non-polarization state is assigned.
-c       'dospc'    reverses the order of the spectral chunks for
-c                  the first three blocks (1 2 3).
-c                  spectral window orders:
-c                   spcode iband 
+c       'dospc'    reverses the order of the spectral chunks in frequency
+c                  only for the first three blocks (1 2 3).
+c                  freuency code vs. spectral window orders:
+c                   frcode iband 
 c		       	 4 1
 c			 3 2
 c			 2 3
