@@ -69,22 +69,6 @@ typedef int int2;
 
 /************************************************************************/
 /*									*/
-/*			VMS definitions.				*/
-/*									*/
-/************************************************************************/
-
-#ifdef vms
-#define FORT_TRUE -1
-#define FORT_FALSE 0
-#define FORT_LOGICAL(a) (0x01 & (a))
-#define BUFDBUFF 1
-#define BUFALIGN 512
-#define BUFSIZE 16384
-#define defined_params
-#endif
-
-/************************************************************************/
-/*									*/
 /*			UNICOS definitions				*/
 /*									*/
 /************************************************************************/
@@ -116,7 +100,7 @@ typedef int int2;
 #define FORT_LOGICAL(a) ((a) != FORT_FALSE)
 
 #define BUFDBUFF 0
-
+#define BUFALIGN 2
 #define BUFSIZE 16384
 
 /*  Short cut routines when no conversion is necessary. These are
