@@ -20,8 +20,11 @@
 #	465.280u 81.630s 12:32.65 72.6% 0+0k 0+0io 1970021pf+0w
 #   Piii-600 (laptop) w/ gcc-2.95.3 (june 2001) [more features]
 #       482.280u 54.400s 12:04.94 74.0%	0+0k 0+0io 2924051pf+0w
+#       397.400u 30.110s 8:09.19 87.3%	0+0k 0+0io 1532623pf+0w
 #   Piii-800 (gaia) w/ gcc-2.96
-#
+#       715.810u 94.320s 14:06.76 95.6% 0+0k 0+0io 3582351pf+0w
+
+
 #
 #-----------------------------------------------------------------------
 # assume we have a mir.tar.gz (UIUC version) in a clean directory
@@ -68,8 +71,7 @@ set newdir=`date +%y%b%d | tr A-Z a-z`
 set hosttype=linux
 set mirxinc="/usr/include/X11"
 set mirxlib="/usr/X11R6/lib"
-set readlinelibs=(/usr/lib /local/lib /usr/local/lib)
-set libforms=(/usr/lib/libforms.a)
+set searchlibs=(/usr/lib /local/lib /usr/local/lib)
 #		care, wip still uses something else, it won't listen to $fortran
 #		and you probably need 'f77' in your path
 set fortran=g77
@@ -229,7 +231,7 @@ if (! -e /usr/lib/libbsd.a) echo Warning: you do not have /usr/lib/libbsd.a
 
 # special: linux generally has readline...   (this test failed on mdk71 ??)
 set dorl=0
-foreach ldir ($readlinelibs)
+foreach ldir ($searchlibs)
     if (-e $ldir/libreadline.a) then
         echo Borrowing the system version of readline for linux from $ldir
         cp -p $ldir/libreadline.a $MIRLIB
@@ -305,16 +307,25 @@ if (-e $install_root/do_patch) then
 endif
 
 # velplotc: - make it depend on if Xforms is present
-if (-e $libforms) then
+set dofl=0
+foreach ldir ($searchlibs)
+    if (-e $ldir/libforms.a) then
+        echo Borrowing the system version of libforms linux from $ldir
+        cp -p $ldir/libforms.a $MIRLIB
+	# this doesn't solve the forms.h file problem for recompilation
+        set dofl=1
+        break
+    endif
+end
+if ($dofl) then
    echo Compiling velplotc:
    pushd $MIR/src/spec/velplotc
-   cp $libforms $MIRLIB
-   make clean velplotc LIBFORMS=$MIRLIB/$libforms:t >& $MIR//tmp/velplotc.$$.linux
+   make clean velplotc LIBFORMS=$MIRLIB/libforms.a >& $MIR//tmp/velplotc.$$.linux
    mv velplotc $MIRBIN
    make clean
    popd
 else
-   echo Could not find $libforms to compile velplotc
+   echo Could not find libforms.a to compile velplotc
 endif
 
 # ATNF stuff, linux only for now
