@@ -1,0 +1,87 @@
+#!/bin/csh -fe
+# -------------------------------------------------------
+#* mir.mkdirs - Make the directories for a miriad system
+#& mjs
+#: system operation
+#+
+#  Make the directories for a miriad system.
+#
+#    Usage:  mir.mkdirs $1
+#
+#    $1 ... top-level directory (effectively, the miriad
+#           home directory for this structure)
+#--
+# -------------------------------------------------------
+if ($?MIR != 0) then
+   set mir  = $MIR
+   set lsys = $mir/bin/localsys
+#
+   if (-e $lsys/mir.mkdirs && ! $?local_compile) then
+     echo $lsys/mir.mkdirs exists =======================
+     setenv local_compile
+     exec $lsys/mir.mkdirs $argv
+   endif
+endif
+# -------------------------------------------------------
+if ($#argv != 1) then
+   echo "This script takes exactly one argument - exiting"
+   exit 1 
+endif
+stub.mkdirs1 $1
+#
+stub.mkdirs1 $1/adm
+foreach i (import export submit)
+   stub.mkdirs1 $1/adm/$i
+   chmod g+w   $1/adm/$i
+end
+#
+stub.mkdirs1 $1/bin
+stub.mkdirs1 $1/lib
+foreach i (sun3 sun4 sun4sol hpux mips convex linux)
+   stub.mkdirs1 $1/bin/$i
+   stub.mkdirs1 $1/lib/$i
+end
+stub.mkdirs1 $1/bin/localsys
+#
+stub.mkdirs1 $1/borrow
+foreach i (dtm hdf linpack mxv pgplot readline wip www xmrecvlist)
+   stub.mkdirs1 $1/borrow/$i
+end
+#
+stub.mkdirs1 $1/cat
+stub.mkdirs1 $1/cat/palettes
+#
+stub.mkdirs1 $1/doc
+foreach i (prog subs misc)
+   stub.mkdirs1 $1/doc/$i
+end
+#
+stub.mkdirs1 $1/manuals
+foreach i (covers uguide pguide sguide eguide linpack mxv hdf)
+   stub.mkdirs1 $1/manuals/$i
+end
+#
+stub.mkdirs1 $1/news
+#
+stub.mkdirs1 $1/oldsrc
+#
+stub.mkdirs1 $1/src
+foreach i (inc prog subs spec tools scripts sys)
+   stub.mkdirs1 $1/src/$i
+end
+foreach i (analysis disp calib convert deconv map vis misc)
+   stub.mkdirs1 $1/src/prog/$i
+end
+stub.mkdirs1 $1/src/spec/mosaic
+stub.mkdirs1 $1/src/spec/hcconv
+stub.mkdirs1 $1/src/spec/uvhat
+stub.mkdirs1 $1/src/spec/imcalc
+stub.mkdirs1 $1/src/spec/xcorf
+stub.mkdirs1 $1/src/spec/xmtv
+stub.mkdirs1 $1/src/sys/bin
+stub.mkdirs1 $1/src/sys/files
+#
+stub.mkdirs1 $1/tmp
+#
+unsetenv local_compile
+exit 0
