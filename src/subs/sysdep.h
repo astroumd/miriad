@@ -28,6 +28,7 @@
  *                removed 'trace' clutter from the old multiflow
  *    pjt 24jun01 PPC/powerpc is a BIGENDIAN (linux) machine
  *    pjt 21jun02 MIR4
+ *    pjt  4jan05 merged in the new ATNF HAS_STRERROR
  */
 
 #if !defined(MIR_SYSDEP_H)
@@ -113,6 +114,14 @@ typedef long long int int8;
 #define BUFDBUFF 0
 #define BUFALIGN 2
 #define BUFSIZE 16384
+
+/* Some machines have the "strerror" routine. Linux whinges significantly
+   if you use the "old" way of doing effectively what strerror does. */
+
+#if defined(linux)
+#  define HAS_STRERROR
+#endif
+
 
 /*  Short cut routines when no conversion is necessary. These are
     used for any IEEE floating point machine with FITS ordered bytes.	
