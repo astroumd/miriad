@@ -6,16 +6,17 @@
 /*   rjs Dark-ages Original version.					*/
 /*   rjs   6nov94  Change item handle to an integer.			*/
 /*   rjs  26oct95  Better messages on errors.				*/
+/*   pjt  19jun02  MIR4 prototypes                                      */
 /************************************************************************/
 
+#include <stdio.h>
 #include "io.h"
+#include "miriad.h"
 
-char *sprintf();
 
 static int number=0;
 /************************************************************************/
-void scropen_c(handle)
-int *handle;
+void scropen_c(int *handle)
 /**scropen -- Open a scratch file.					*/
 /*:scratch-i/o								*/
 /*+  FORTRAN call sequence:
@@ -40,8 +41,7 @@ int *handle;
   }
 }
 /************************************************************************/
-void scrclose_c(handle)
-int handle;
+void scrclose_c(int handle)
 /**scrclose -- Close and delete a scratch file.				*/
 /*:scratch-i/o								*/
 /*+  FORTRAN call sequence:
@@ -65,9 +65,7 @@ int handle;
   }
 }
 /************************************************************************/
-void scrread_c(handle,buffer,offset,length)
-int handle,offset,length;
-float *buffer;
+void scrread_c(int handle,float *buffer,int offset,int length)
 /**scrread -- Read real data from a scratch file.			*/
 /*:scratch-i/o								*/
 /*+  FORTRAN call sequence:
@@ -97,9 +95,7 @@ float *buffer;
   }
 }
 /************************************************************************/
-void scrwrite_c(handle,buffer,offset,length)
-int handle,offset,length;
-float *buffer;
+void scrwrite_c(int handle,Const float *buffer,int offset,int length)
 /**scrwrite -- Write real data to the scratch file.			*/
 /*:scratch-i/o								*/
 /*+  FORTRAN call sequence:

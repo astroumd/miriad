@@ -1,3 +1,5 @@
+#include "sysdep.h"      /* provide prototype for *pack16*  */
+
 fortran subroutine packi2(integer in,integer out,integer n)
 {
   pack16_c(in.addr,(char *)(out.addr),n.val);

@@ -25,10 +25,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "miriad.h"
 
-
-private void mkfill();
-void mkflush_c();
 
 static char message[128];
 
@@ -60,15 +58,17 @@ static int masks[BITS_PER_INT+1]={
 #define MK_RUNS 2
 #define BUFFERSIZE 128
 #define OFFSET (((ITEM_HDR_SIZE-1)/H_INT_SIZE + 1)*BITS_PER_INT)
-typedef struct {int item;
-		int buf[BUFFERSIZE],offset,length,size,modified,rdonly,tno;
-		char name[32];
-		} MASK_INFO;
+typedef struct {
+  int item;
+  int buf[BUFFERSIZE],offset,length,size,modified,rdonly,tno;
+  char name[32];
+} MASK_INFO;
+
+
+private void mkfill(MASK_INFO *mask,int offset);
 
 /************************************************************************/
-char *mkopen_c(tno,name,status)
-char *name,*status;
-int tno;
+char *mkopen_c(int tno,char *name,char *status)
 /*
   This opens a mask item, and readies it for access.
 
@@ -125,8 +125,7 @@ int tno;
   return((char *)mask);
 }
 /************************************************************************/
-void mkclose_c(handle)
-char *handle;
+void mkclose_c(char *handle)
 /*
   This writes out any stuff that we have buffered up, and then closes
   the mask file.
@@ -144,9 +143,7 @@ char *handle;
   free((char *)mask);
 }
 /************************************************************************/
-int mkread_c(handle,mode,flags,offset,n,nsize)
-char *handle;
-int offset,n,*flags,nsize,mode;
+int mkread_c(char *handle,int mode,int *flags,int offset,int n,int nsize)
 /*
 ------------------------------------------------------------------------*/
 {
@@ -233,9 +230,7 @@ int offset,n,*flags,nsize,mode;
   return(flags - flags0);
 }
 /************************************************************************/
-void mkwrite_c(handle,mode,flags,offset,n,nsize)
-char *handle;
-int offset,n,*flags,nsize;
+void mkwrite_c(char *handle,int mode,int *flags,int offset,int n,int nsize)
 /*
 ------------------------------------------------------------------------*/
 {
@@ -334,8 +329,7 @@ int offset,n,*flags,nsize;
   }
 }
 /************************************************************************/
-void mkflush_c(handle)
-char *handle;
+void mkflush_c(char *handle)
 /*
   Flush out the data in the buffer. A complication is that the last
   integer in the buffer may not be completely filled. In this case we
@@ -379,9 +373,7 @@ char *handle;
   mask->modified = FALSE;
 }
 /************************************************************************/
-private void mkfill(mask,offset)
-MASK_INFO *mask;
-int offset;
+private void mkfill(MASK_INFO *mask,int offset)
 /*
   We have to fill in some bits in the current buffer.
 

@@ -6,4 +6,8 @@
 3.1.0  03feb23  dual MAXDIM/MAXDIM2, MAXCHAN/MAXCHAN2 , ....
 		  this was the last CVS mainbranch release of the 3.x series
 		  from now on this will be a MIR3 branch for 3.1.x patches
+3.1.1  W.I.P.   
+
 4.x    n/a      MIR4 branch in CVS (LFS able to write 2GB+ files)
+4.0.1  03feb23	end of MIR4 as a branch
+4.0.2  W.I.P.   merged MIR4 into the HEAD

@@ -31,8 +31,11 @@
 /*    rjs  19mar97   Handle logical translation better. Tidying.	*/
 /************************************************************************/
 #include <string.h>
+#include <sys/types.h>
+#include <unistd.h>
 #include "miriad.h"
 #include "sysdep.h"
+
 
 /************************************************************************/
 fortran integer function dexpand(character template,character output)

@@ -1,14 +1,21 @@
 Miriad is a radio-astronomy data reduction package, developed by Bob
 Sault for BIMA, starting in 1987. Although it was originally developed
-to meet the needs of  the BIMA consortium, an ATNF version - derived
+to meet the needs of  the BIMA consortium; an ATNF version - derived
 from the same code base - is also available independantly. Apart from
 BIMA and ATNF, MIRIAD is also known to handle e.g. VLA and WSRT data.
 
 This BIMA release of MIRIAD is under CVS control, and daily snapshots
 are available.  If you see a file 'VERSION.cvs' in the root directory,
-this is not an officially blessed MIRIAD release, but the daily
+this is not an officially blessed MIRIAD release, but the "CVS"
 snapshot. The VERSION file contains the official release number (3.0.0
 or higher in CVS)
+
+Major new features in MIRIAD since the CVS based releases:
+	- simplified automatic install on linux and solaris  (V3.0.x)
+	- better scalability for larger arrays 		     (V3.1.x)
+	  (MAXDIM/MAXDIM2, MAXANT/MAXANT2, ...)
+	- maximum filesize is now > 2GB			     (V4.0.0)
+	  (scratch files still limited to 8GB)		     (t.b.a)
 
 To install the BIMA version of MIRIAD, there are a few options:
 	- binary releases (astromake/linux versions now available)
@@ -18,9 +25,6 @@ To install the BIMA version of MIRIAD, there are a few options:
  	- follow http://www.astro.umd.edu/~teuben/miriad/cvs.html
 		(the recommended way if you want to keep up with changes)
 
-
-
 					Peter Teuben
 					teuben@astro.umd.edu
-					December 2002
-
+					February 2003

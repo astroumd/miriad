@@ -58,6 +58,7 @@ c   peter           double prec
 c   mousumi  8aug02 Replace with QGAUSS with QROMB 
 c   peter           internal real*8, but miriad in real*4 as it should be
 c   peter    9aug02 forgot to scale sech() with h
+c   peter   23feb03 merged MIR4
 c Todo:
 c   scaleheight should be allowed to vary
 c
@@ -70,7 +71,7 @@ c
       INTEGER INVPARM
       PARAMETER(INVPARM=1)
       CHARACTER VERSION*(*)
-      PARAMETER (VERSION='Version 13-aug-02')
+      PARAMETER (VERSION='Version 23-feb-03')
 c
       CHARACTER in*128,out*128,outg*128
       INTEGER nin(MAXNAX),nout(MAXNAX),npadin(MAXNAX)
@@ -256,7 +257,6 @@ c
          DO i=1,NKEYS
             CALL hdcopy(lin,lout,keyw(i))
          ENDDO
-c
          CALL xyclose(lout)
       ENDIF
       CALL xyclose(lin)

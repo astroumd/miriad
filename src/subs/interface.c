@@ -7,10 +7,12 @@
 /*    rjs  23dec92 Broke out into separate file.			*/
 /*    rjs  05dec95 Comment out a dirty trick in zterm that was screwing */
 /*		   up with some compilers!! 				*/
+/*    pjt  17jun02 MIR4 prototypes                                      */
 /************************************************************************/
-void pad(string,length)
-char *string;
-int length;
+
+#include <string.h>
+
+void pad(char *string,int length)
 /*
   This takes a zero-terminated string, and pads it with blanks up a certain
   length.
@@ -29,9 +31,7 @@ int length;
   for(i=len0; i < length; i++) *s++ = ' ';
 }
 /************************************************************************/
-char *zterm(string,length)
-char *string;
-int length;
+char *zterm(char *string,int length)
 /*
     This returns a pointer to a nul terminated string. This is usually
     called to convert strings from a FORTRAN to C manner. Its algorithm

@@ -11,11 +11,13 @@
 /*		   types.						*/
 /*    23dec92 rjs  Use intf2c, to make it more system independent.	*/
 /*     5nov94 rjs  Try to be a bit more pedantic.			*/
+/*    20jun02 pjt  even more pedantic yet                               */
 /*                                                                      */
 /************************************************************************/
 
 #include <stddef.h>
 #include <stdlib.h>
+#include "miriad.h"
 
 /************************************************************************/
 fortran integer function mmsize(integer type)
@@ -45,7 +47,7 @@ c
 /*--                                                                    */
 /*----------------------------------------------------------------------*/
 {
-  int size;
+  int size = 0;
   switch(type.val){
     case 'i':	size = 1;					break;
     case 'r':	size = (sizeof(float)-1)/sizeof(int) + 1;	break;
