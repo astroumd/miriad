@@ -18,6 +18,7 @@
 # 23-sep-01 various fixes for darwin (Mac-OS X)
 # 11-feb-02 optional new intel compiler for linux
 # 04-oct-02 modified usage of tr - colby
+#  3-dec-02 rpfits is now source included
 #
 #   Simple single-architecture installation of MIRIAD
 #   (linux)
@@ -381,21 +382,26 @@ else
    echo Could not find libforms.a to compile velplotc
 endif
 
-# ATNF stuff, linux only for now
+# ATNF stuff, linux only for now; always in debugging mode
 if ($hosttype == linux) then
- pushd $install_dir
- if (-d atnf) then
-   echo Compiling atnf code: atlod
-   cp -p atnf/linux/librpfits.a $MIRLIB
-   pushd $MIR/tmp
-   cp -p $MIR/src/prog/atnf/atlod.* .
-   make -f $MIRLIB/Makefile atlod EL=-lrpfits
-   mv atlod $MIRBIN
-   doc -p atlod.for
-   mv atlod.doc $MIRPDOC
-   rm -f atlod.*
-   popd
- endif
+
+ echo Compiling rpfits
+ pushd $MIR/borrow/rpfits
+ make ARCH=linux RANLIB=ranlib FC=g77 FFLAGS=-g CFLAGS=-g
+ mv librpfits.a $MIRLIB
+ make clean
+ popd
+
+ echo Compiling atnf code: atlod
+ pushd $MIR/tmp
+ cp -p $MIR/src/prog/atnf/atlod.* .
+ make -f $MIRLIB/Makefile atlod EL=-lrpfits
+ mv atlod $MIRBIN
+ doc -p atlod.for
+ mv atlod.doc $MIRPDOC
+ rm -f atlod.*
+ popd
+
 endif
 
 
