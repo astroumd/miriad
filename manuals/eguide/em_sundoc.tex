@@ -1,0 +1,917 @@
+\module{mir.bug.csh}%
+\noindent Send mail about bugs to appropriate person
+\newline \ 
+\newline \abox{File:} \$MIR/src/scripts/sun/mir.bug.csh
+\newline \abox{Responsible:} Bart Wakker
+\newline \abox{Keywords:} user utility
+\newline{\tenpoint\newline
+Usage: mir.bug.csh [selection] [taskname] [file]
+
+Mirbug allows the user to send mail to the appropriate persons.
+
+[selection] should be one of ``bug'' or ``feedback''. This influences
+the information prepended to a report file. ``mirbug'' is an alias
+for ``mir.bug.csh bug''; `` mirfeedback'' is an alias for ``mir.bugcsh.
+feedback''
+
+[taskname] should be one of the miriad tasks/tools/scripts/subs.
+It is used to find out who is responsible for the code and then the
+report is mailed to that person. If it is not given mirbug complains,
+but continues.
+
+[file] is the name of an optional, previously created, file
+containing the report. Some extra information is prepended and an
+editor is started. The default editor is vi on unix and edt on VMS.
+However, by including 'setenv EDITOR mem' in the .cshrc file (unix)
+or 'editor:==mem' in the login.com file (VMS) it is possible to
+specify to use, for instance, mem (or any other editor).
+
+[file] must be the third argument.
+
+If mir.bug.csh is aborted and a template was already generated, it is
+saved to allow extra editing, otherwise it is deleted.
+
+The generated mail message is sent to the responsible person and to
+a central address at the site of the programmer. If no responsible
+person can be found it is sent to all the central addresses. A copy
+is also sentto the user. 
+
+Alias:  ``mirbug'' is an alias for ``mir.bug.csh bug''
+Alias:  ``mirfeedback'' is an alias for ``mir.bug.csh feedback''
+\par}
+\module{mir.filetar}%
+\noindent Make a tarfile of selected MIRIAD files
+\newline \ 
+\newline \abox{File:} \$MIR/src/scripts/sun/mir.filetar
+\newline \abox{Responsible:} Mark Stupar
+\newline \abox{Keywords:} system operation
+\newline{\tenpoint\newline
+Make a tarfile of selected MIRIAD files.  The tarfile
+will have the name ``ddmmmyy.hostname'', and is intended
+for transmission to other sites for source code
+updating.  The script MUST be run from the \$MIR
+directory.
+
+{\eightpoint\begintt
+  Usage:  mir.filetar $1 $2
+
+  $1 ... directory in which to put the tarfile
+         (typically, this is $MIR/adm/export)
+  $2 ... name of the file containing MIRIAD filenames
+
+\endtt}
+All files in \$2 must reference MIRIAD files with respect
+to \$MIR.  Example:  to make a tarfile of MIRIAD sourcecode
+avsub.for and fits.for, \$2 should have the entries
+
+{\eightpoint\begintt
+  ./src/prog/analysis/avsub.for
+  ./src/prog/convert/fits.for
+
+\endtt}
+Caution:  due to the mandatory name structure, like-named
+files already existing in the output directory will be
+overwritten if the script is run more than once in a day.
+\par}
+\module{mir.find}%
+\noindent Search for a file in MIRIAD source code
+\newline \ 
+\newline \abox{File:} \$MIR/src/scripts/sun/mir.find
+\newline \abox{Responsible:} Bart Wakker
+\newline \abox{Keywords:} programmer tool
+\newline{\tenpoint\newline
+Within \$MIRSRC directory, find any file or directory 
+containing characters \$1.
+
+{\eightpoint\begintt
+  Usage:  mir.find  $1
+
+    $1 ... <character string>
+
+\endtt}
+Alias:  ``mirfind'' is an alias for ``mir.find''.
+\par}
+\module{mir.gendoc}%
+\noindent Generate on-line MIRIAD documentation
+\newline \ 
+\newline \abox{File:} \$MIR/src/scripts/sun/mir.gendoc
+\newline \abox{Responsible:} Mark Stupar
+\newline \abox{Keywords:} system operation
+\newline{\tenpoint\newline
+Load MIRIAD on-line documentation files.
+
+Remove all files in \$MIRPDOC and \$MIRSDOC; install fresh
+copies of *.doc files (tasks) and *.cdoc files (scripts) into
+\$MIRPDOC; install fresh copies of *.sdoc files (subroutines)
+*.tdoc (subs internal to programs) into \$MIRSDOC; remove
+indices and category listings from \$MIR/doc/misc and replace
+them with fresh copies.
+
+{\eightpoint\begintt
+  Usage:  mir.gendoc
+\endtt}
+The script is intended for routine maintenance, to be done
+after source code updates.
+\par}
+\module{mir.hcconv}%
+\noindent Load MIRIAD program HCCONV from source to \$MIRBIN
+\newline \ 
+\newline \abox{File:} \$MIR/src/scripts/sun/mir.hcconv
+\newline \abox{Responsible:} Mark Stupar
+\newline \abox{Keywords:} system operation
+\newline{\tenpoint\newline
+Load MIRIAD program HCCONV from source code to \$MIRBIN.
+
+{\eightpoint\begintt
+  Usage:  mir.hcconv
+\endtt}
+\par}
+\module{mir.hdf}%
+\noindent Compile HDF source code into \$MIRLIB/libdf.a
+\newline \ 
+\newline \abox{File:} \$MIR/src/scripts/sun/mir.hdf
+\newline \abox{Responsible:} Mark Stupar
+\newline \abox{Keywords:} system operation
+\newline{\tenpoint\newline
+Compile HDF source code into \$MIRLIB/libdf.a for use with
+MIRIAD program MXDS.
+
+{\eightpoint\begintt
+  Usage:  mir.hdf $argv
+
+  $argv = name of HDF source code files within $MIR/borrow/hdf
+          to be compiled into the library; if there are no
+          arguments, all source code will be compiled into
+          $MIRLIB/libdf.a.  Wildcards are not allowed when
+          specifying HDF source code filenames.
+\endtt}
+\par}
+\module{mir.help}%
+\noindent Obtain programmer-useful help about MIRIAD source files.
+\newline \ 
+\newline \abox{File:} \$MIR/src/scripts/sun/mir.help
+\newline \abox{Responsible:} Bart Wakker
+\newline \abox{Keywords:} programmer tool
+\newline{\tenpoint\newline
+Find information about all tasks/subroutines whose name matches all
+or part of the input.
+
+This is a general purpose help-script. Some other scripts actually
+just call this one in a particular way:
+{\eightpoint\begintt
+   mir.pindex is equivalent to 'mir.help tasks -i'
+   mir.sindex is equivalent to 'mir.help subroutines -i'
+   mir.find   is equivalent to 'mir.help "!*" -n'
+
+\endtt}
+Usage:  mir.help [topic or routine] [option] [name]
+
+topic may be:
+{\eightpoint\begintt
+       'tasks' ......... generate a list of tasks below $MIRPROG.
+       'subroutines' ... generate a list of the subroutines.
+\endtt}
+routine may be:
+{\eightpoint\begintt
+       <any MIRIAD task or subroutine> ... generate the formatted
+                                           on-line doc for the task
+                                           or subroutine.
+
+\endtt}
+option may be:
+{\eightpoint\begintt
+       -s ... Subroutine sources have search precedence over
+              existing pre-formatted files.
+       -n ... Search for the full name of the specified file.
+       -i ... run DOC to create an index for the given topic.
+       -t ... run DOC to create an index by category for the given
+              topic.
+
+\endtt}
+[name] allows to select one routine if option was -i or -t.
+Alias:  ``mirhelp'' is an alias for ``mir.help''.
+\par}
+\module{mir.linpack}%
+\noindent Compile linpack source into \$MIRLIB/liblinpack.a
+\newline \ 
+\newline \abox{File:} \$MIR/src/scripts/sun/mir.linpack
+\newline \abox{Responsible:} Mark Stupar
+\newline \abox{Keywords:} system operation
+\newline{\tenpoint\newline
+Compile linpack source code into \$MIRLIB/liblinpack.a for use
+with any MIRIAD task or subroutine.
+
+{\eightpoint\begintt
+  Usage:  mir.linpack $argv
+
+  $argv = name of linpack source code files within 
+          $MIR/borrow/linpack to be compiled into the library;
+          if there are no arguments, all source code will be
+          compiled into $MIRLIB/liblinpack.a.  Wildcards are
+          not allowed when specifying source code filenames.
+\endtt}
+\par}
+\module{mir.loadall}%
+\noindent Load MIRIAD subsystems from source code
+\newline \ 
+\newline \abox{File:} \$MIR/src/scripts/sun/mir.loadall
+\newline \abox{Responsible:} Mark Stupar
+\newline \abox{Keywords:} system operation
+\newline{\tenpoint\newline
+Load the MIRIAD system (or specified parts of it) from source
+code and write log files to \$MIR/tmp.  The script is intended
+to be run in background.
+
+{\eightpoint\begintt
+  Usage:  mir.loadall $argv
+
+  $argv = none means to load the entire system from source code;
+          the order is scripts, linpack, pgfont, pgplot, subs,
+          hdf, tools, uvdisplay, hcconv, uvhat, msss, prog, mxds,
+          gendoc.
+
+          Specifying one or more of these will load only the
+          specified section in the order given by the user (only
+          those parts given above are recognized).  Example:
+          ``mir.loadall subs prog &'' will compile all of the subs
+          into $MIRLIB/libmir.a and then load all of the tasks
+          within $MIRSRC/prog into $MIRBIN, leaving a log of the
+          work in directory $MIR/tmp.
+\endtt}
+\par}
+\module{mir.mkdirs}%
+\noindent Make the directories for a MIRIAD system
+\newline \ 
+\newline \abox{File:} \$MIR/src/scripts/sun/mir.mkdirs
+\newline \abox{Responsible:} Mark Stupar
+\newline \abox{Keywords:} system operation
+\newline{\tenpoint\newline
+Make the directories for a MIRIAD system.  If some/any
+directories already exist, they will not be erased,
+and needed directories that don't already exist will
+be created.  However, all directories will be set with
+permissions 755, except the adm directory and its
+subdiretories, which have permissions 775.
+
+{\eightpoint\begintt
+  Usage:  mir.mkdirs $1
+
+  $1 ... top-level directory (effectively, the $MIR
+         directory for this structure)
+\endtt}
+\par}
+\module{mir.mkdirs1}%
+\noindent Internal subscript for script mir.mkdirs
+\newline \ 
+\newline \abox{File:} \$MIR/src/scripts/sun/mir.mkdirs1
+\newline \abox{Responsible:} Mark Stupar
+\newline \abox{Keywords:} system operation
+\newline{\tenpoint\newline
+Internal subscript for script mir.mkdirs.
+
+{\eightpoint\begintt
+  Usage:  none ... the subscript is used only by script
+                   mir.mkdirs1
+\endtt}
+\par}
+\module{mir.msss}%
+\noindent Load MIRIAD's version of the AIPS' SSS
+\newline \ 
+\newline \abox{File:} \$MIR/src/scripts/sun/mir.msss
+\newline \abox{Responsible:} Mark Stupar
+\newline \abox{Keywords:} system operation
+\newline{\tenpoint\newline
+Load MIRIAD program MXDS from source code to \$MIRBIN.
+
+{\eightpoint\begintt
+  Usage:  mir.msss
+\endtt}
+\par}
+\module{mir.mxds}%
+\noindent Load MIRIAD's version of NCSA's XDS
+\newline \ 
+\newline \abox{File:} \$MIR/src/scripts/sun/mir.mxds
+\newline \abox{Responsible:} Mark Stupar
+\newline \abox{Keywords:} system operation
+\newline{\tenpoint\newline
+Load MIRIAD program MXDS from source code to \$MIRBIN.
+
+{\eightpoint\begintt
+  Usage:  mir.mxds
+\endtt}
+\par}
+\module{mir.pgfont}%
+\noindent Load PGPLOT fonts from source code
+\newline \ 
+\newline \abox{File:} \$MIR/src/scripts/sun/mir.pgfont
+\newline \abox{Responsible:} Mark Stupar
+\newline \abox{Keywords:} system operation
+\newline{\tenpoint\newline
+
+Load \$MIRLIB/grfont.dat (the PGPLOT fonts) from source
+code.
+
+{\eightpoint\begintt
+  Usage:  mir.pgfont
+
+\endtt}
+
+\par}
+\module{mir.pgplot}%
+\noindent Load the PGPLOT library from source code
+\newline \ 
+\newline \abox{File:} \$MIR/src/scripts/sun/mir.pgplot
+\newline \abox{Responsible:} Mark Stupar
+\newline \abox{Keywords:} system operation
+\newline{\tenpoint\newline
+Load \$MIRLIB/libpgplot.a from pgplot source code.
+
+{\eightpoint\begintt
+  Usage:  mir.pgplot $argv
+
+  $argv = name of PGPLOT source code files within directory
+          $MIR/borrow/pgplot to be compiled into the library;
+          if there are no arguments, all source code will
+          be compiled into $MIRLIB/libpgplot.a.  Wildcards
+          are not allowed when specifying PGPLOT source code
+          filenames.
+\endtt}
+\par}
+\module{mir.pindex}%
+\noindent Make alphabetic index of MIRIAD tasks
+\newline \ 
+\newline \abox{File:} \$MIR/src/scripts/sun/mir.pindex
+\newline \abox{Responsible:} Bart Wakker
+\newline \abox{Keywords:} programmer tool
+\newline{\tenpoint\newline
+Make an alphabetic index of all MIRIAD tasks within
+directory \$MIRSRC/prog whose name or one-line description
+contains the string 'string'.  ``mir.pindex \$1'' is
+equivalent to ``mir.help tasks -i \$1''.
+
+{\eightpoint\begintt
+  Usage:  mir.pindex [string]
+
+  string ... the full/partial filename to be found
+
+\endtt}
+Alias:  ``mirindex'' is an alias for ``mir.pindex''.
+\par}
+\module{mir.prog}%
+\noindent Load MIRIAD tasks from source code to \$MIRBIN
+\newline \ 
+\newline \abox{File:} \$MIR/src/scripts/sun/mir.prog
+\newline \abox{Responsible:} Mark Stupar
+\newline \abox{Keywords:} system operation
+\newline{\tenpoint\newline
+Load MIRIAD tasks in directory \$MIRSRC/prog from source
+code into \$MIRBIN, using the MIRIAD libraries in \$MIRLIB
+to resolve external references.  All FORTRAN source code
+has extension *.for and is processed by the RATTY (MIRIAD's
+FORTRAN preprocessor) program.
+
+{\eightpoint\begintt
+  Usage:  mir.prog $argv
+
+  $argv = name of source code file(s) within the home
+          directory of the source code (for example,
+          the source code for task ZEEFAKE is zeefake.for,
+          and resides in $MIR/src/prog/analysis; entering
+          ``mir.prog zeefake.for'' compiles and loads the
+          program).  If there are no arguments, all source
+          code within directory $MIR/src/prog will be
+          compiled and loaded into $MIRBIN.  Wildcards are
+          not allowed when specifying source code filenames.
+\endtt}
+\par}
+\module{mir.prog1}%
+\noindent Internal subscript for script mir.prog
+\newline \ 
+\newline \abox{File:} \$MIR/src/scripts/sun/mir.prog1
+\newline \abox{Responsible:} Mark Stupar
+\newline \abox{Keywords:} system operation
+\newline{\tenpoint\newline
+The subscript loads MIRIAD tasks in directory
+\$MIR/src/prog into \$MIRBIN.
+
+{\eightpoint\begintt
+  Usage:  none ... the subscript is used only by script
+          mir.prog.
+\endtt}
+\par}
+\module{mir.scripts}%
+\noindent Copy scripts from source to \$MIRBIN
+\newline \ 
+\newline \abox{File:} \$MIR/src/scripts/sun/mir.scripts
+\newline \abox{Responsible:} Mark Stupar
+\newline \abox{Keywords:} system operation
+\newline{\tenpoint\newline
+All files in \$MIR/src/scripts/sun beginning with the characters
+``mir.'' are copied to \$MIRBIN (if there are no arguments; else
+the specified files are copied), after first backing off those
+already in \$MIRBIN to \$MIR/oldsrc.
+
+{\eightpoint\begintt
+  Usage:  mir.scripts $argv
+
+  $argv = name of source code file(s) within directory
+          $MIR/src/scripts/sun.  If there are no arguments,
+          all source code within the directory will be copied
+          into $MIRBIN.  Wildcards are not allowed when
+          specifying source code filenames.
+\endtt}
+\par}
+\module{mir.setpath.awk}%
+\noindent Awk script to insert \$MIRBIN in searchpath
+\newline \ 
+\newline \abox{File:} \$MIR/src/scripts/sun/mir.setpath.awk
+\newline \abox{Responsible:} Mark Stupar
+\newline \abox{Keywords:} system operation
+\newline{\tenpoint\newline
+The script places \$MIRBIN in the user's directory searchpath
+immediately after the ``.'' directory (if that is in the path),
+and first otherwise.
+
+{\eightpoint\begintt
+  Usage:  none ... the script is sourced by $MIR/MIRRC.
+
+\endtt}
+Beware:  the script assumes that the path is passed in the
+form generated by the \$MIR/MIRRC file (ie, first) and then
+parses the path to determine whether directory ``.'' is
+present.
+\par}
+\module{mir.sindex}%
+\noindent Make alphabetic index of MIRIAD subroutines
+\newline \ 
+\newline \abox{File:} \$MIR/src/scripts/sun/mir.sindex
+\newline \abox{Keywords:} programmer tool
+\newline \abox{Responsible:} Bart Wakker
+\newline{\tenpoint\newline
+Make an alphabetic index of all MIRIAD subroutines in
+directory \$MIRBIN whose name or one-line description
+contains the string 'string'.  ``mir.sindex string'' is
+equivalent to ``mir.help subroutines -i string''.
+
+{\eightpoint\begintt
+  Usage:  mir.pindex [string]
+
+  string ... the string
+\endtt}
+\par}
+\module{mir.submit}%
+\noindent Programmer submission of code to MIRIAD
+\newline \ 
+\newline \abox{File:} \$MIR/src/scripts/sun/mir.submit
+\newline \abox{Responsible:} Peter Teuben
+\newline \abox{Keywords:} system operation
+\newline{\tenpoint\newline
+Submit source code from programmers to the MIRIAD system.
+Using a lockfile, source code permissions are changed after
+code checkout by programmers to prevent overwriting by
+another programmer.
+
+{\eightpoint\begintt
+  Usage:  mir.submit [-m] [-i] [-p] source destdir
+
+  -m ........ move files rather than copying
+  -i ........ run non-interactively
+  -p ........ preserved timestamp when copying
+  source .... source code files(s)
+  destdir ... destination directory
+
+\endtt}
+The script requires minor system modifications and is used
+only by the Maryland MIRIAD programmers.
+
+Alias:  ``mirsubmit'' is an alias for ``mir.submit''.
+\par}
+\module{mir.subs}%
+\noindent Compile MIRIAD subroutines into \$MIRLIB/libmir.a
+\newline \ 
+\newline \abox{File:} \$MIR/src/scripts/sun/mir.subs
+\newline \abox{Responsible:} Mark Stupar
+\newline \abox{Keywords:} system operation
+\newline{\tenpoint\newline
+Compile MIRIAD subroutines in directory \$MIRSUBS from source
+code into \$MIRLIB/libmir.a.  All FORTRAN source code has
+extension *.for and is processed by the RATTY (MIRIAD's
+FORTRAN preprocessor) program.
+
+{\eightpoint\begintt
+  Usage:  mir.subs $argv
+
+  $argv = name of source code file(s) within directory 
+          $MIRSUBS.  If there are no arguments, all source
+          code within directory $MIRSUBS will be compiled
+          into $MIRLIB/libmir.a.  Wildcards are not allowed
+          when specifying source code filenames.
+\endtt}
+\par}
+\module{mir.systar}%
+\noindent Make a tarfile of MIRIAD source files.
+\newline \ 
+\newline \abox{File:} \$MIR/src/scripts/sun/mir.systar
+\newline \abox{Responsible:} Mark Stupar
+\newline \abox{Keywords:} system operation
+\newline{\tenpoint\newline
+Make a tarfile of the transmittable MIRIAD system
+(everything in directories \$MIR/borrow, \$MIR/cat, 
+\$MIR/manuals, and \$MIR/src).
+
+{\eightpoint\begintt
+  Usage:  mir.systar $1
+
+  $1 ... the name of the output tarfile
+\endtt}
+\par}
+\module{mir.tar2sys}%
+\noindent Update system from a MIRIAD tarfile
+\newline \ 
+\newline \abox{File:} \$MIR/src/scripts/sun/mir.tar2sys
+\newline \abox{Responsible:} Mark Stupar
+\newline \abox{Keywords:} system operation
+\newline{\tenpoint\newline
+Update the system from a MIRIAD tarfile, saving whatever
+is to be overwritten to \$MIR/oldsrc and appending '.ddmmyy' to
+each file saved.  Timestamps are preserved in the saved
+files.  Tarfile names must be given with respect to \$MIR,
+and the contents of the tarfile must be give with respect
+to \$MIR, since MIRIAD tarfiles are always created from
+directory \$MIR.
+
+Sample tarfile contents:
+
+{\eightpoint\begintt
+
+  ./src/prog/analysis/boxspec.for
+  ./src/subs/shadowed.for
+  ./cat/keywords
+
+  Usage:  mir.tar2sys $1
+
+  $1 ... the name of the MIRIAD tarfile (typically, a
+         file in $MIR/adm/import)
+\endtt}
+\par}
+\module{mir.tools}%
+\noindent Load MIRIAD's tools from source code into \$MIRBIN
+\newline \ 
+\newline \abox{File:} \$MIR/src/scripts/sun/mir.tools
+\newline \abox{Responsible:} Mark Stupar
+\newline \abox{Keywords:} system operation
+\newline{\tenpoint\newline
+Load MIRIAD's utility programs in directory \$MIRSRC/tools
+from source code into \$MIRBIN.  These include programs
+DOC, FLINT, MIRIAD, MIRTOOL, PANEL, and RATTY.
+
+{\eightpoint\begintt
+  Usage:  mir.tools $argv
+
+  $argv = name of source code file(s) within directory
+          $MIRSRC/tools.  If there are no arguments, all
+          source code within directory $MIRSRC/tools will be
+          compiled and loaded into $MIRBIN.  Wildcards are
+          not allowed when specifying source code filenames.
+\endtt}
+\par}
+\module{mir.uvdisplay}%
+\noindent Load UVDISPLAY from source code to \$MIRBIN
+\newline \ 
+\newline \abox{File:} \$MIR/src/scripts/sun/mir.uvdisplay
+\newline \abox{Responsible:} Mark Stupar
+\newline \abox{Keywords:} system operation
+\newline{\tenpoint\newline
+Load MIRIAD program UVDISPLAY from source code to \$MIRBIN.
+
+{\eightpoint\begintt
+  Usage:  mir.uvdisplay
+\endtt}
+\par}
+\module{mir.uvhat}%
+\noindent Load UNIX UVHAT from source code to \$MIRBIN
+\newline \ 
+\newline \abox{File:} \$MIR/src/scripts/sun/mir.uvhat
+\newline \abox{Responsible:} Mark Stupar
+\newline \abox{Keywords:} system operation
+\newline{\tenpoint\newline
+Load MIRIAD's (UNIX) UVHAT from source code to \$MIRBIN.
+
+{\eightpoint\begintt
+  Usage:  mir.uvhat
+\endtt}
+\par}
+\module{mirbug}%
+\noindent Send mail about bugs to appropriate person
+\newline \ 
+\newline \abox{File:} \$MIR/src/scripts/sun/mir.bug.csh
+\newline \abox{Responsible:} Bart Wakker
+\newline \abox{Keywords:} user utility
+\newline{\tenpoint\newline
+Usage: mirbug [taskname] [file]
+
+Mirbug allows the user to send mail to the appropriate persons.
+
+[taskname] should be one of the miriad tasks/tools/scripts/subs.
+It is used to find out who is responsible for the code and then the
+report is mailed to that person. If it is not given mirbug complains,
+but continues.
+
+[file] is the name of an optional, previously created, file
+containing the report. Some extra information is prepended and an
+editor is started. The default editor is vi on unix and edt on VMS.
+However, by including 'setenv EDITOR mem' in the .cshrc file (unix)
+or 'editor:==mem' in the login.com file (VMS) it is possible to
+specify to use, for instance, mem (or any other editor).
+
+[file] must be the third argument.
+
+If mir.bug.csh is aborted and a template was already generated, it is
+saved to allow extra editing, otherwise it is deleted.
+
+The generated mail message is sent to the responsible person and to
+a central address at the site of the programmer. If no responsible
+person can be found it is sent to all the central addresses. A copy
+is also sentto the user. 
+
+Alias:  ``mirbug'' is an alias for ``mir.bug.csh bug''.
+\par}
+\module{mirfeedback}%
+\noindent Send feedback to the appropriate person
+\newline \ 
+\newline \abox{File:} \$MIR/src/scripts/sun/mir.bug.csh
+\newline \abox{Responsible:} Bart Wakker
+\newline \abox{Keywords:} user utility
+\newline{\tenpoint\newline
+Usage: mirfeedback [taskname] [file]
+
+This is a way to send feedback to a programmer. For a description
+of how it works, see ``mirbug''. The difference between these two is
+in the prepended information.
+
+Alias:  ``mirfeedback'' is an alias for ``mir.bug.csh feedback''.
+\par}
+\module{mirfind}%
+\noindent Search for a file in MIRIAD source code
+\newline \ 
+\newline \abox{File:} \$MIR/src/scripts/sun/mir.find
+\newline \abox{Responsible:} Bart Wakker
+\newline \abox{Keywords:} programmer tool
+\newline{\tenpoint\newline
+Within \$MIRSRC directory, find any file or directory 
+containing characters \$1.
+
+{\eightpoint\begintt
+  Usage:  mirfind  $1
+
+    $1 ... <character string>
+
+\endtt}
+Alias:  ``mirfind'' is an alias for ``mir.find''.
+\par}
+\module{mirhelp}%
+\noindent Obtain programmer-useful help about MIRIAD source files.
+\newline \ 
+\newline \abox{File:} \$MIR/src/scripts/sun/mir.help
+\newline \abox{Responsible:} Bart Wakker
+\newline \abox{Keywords:} programmer tool
+\newline{\tenpoint\newline
+Find information about all tasks/subroutines whose name matches all
+or part of the input.
+
+Usage:  mirhelp [topic or routine] [option] [name]
+
+topic may be:
+{\eightpoint\begintt
+       'tasks' ......... generate a list of tasks below $MIRPROG.
+       'subroutines' ... generate a list of the subroutines.
+\endtt}
+routine may be:
+{\eightpoint\begintt
+       <any MIRIAD task or subroutine> ... generate the formatted
+                                           on-line doc for the task
+                                           or subroutine.
+
+\endtt}
+option may be:
+{\eightpoint\begintt
+       -s ... Subroutine sources have search precedence over
+              existing pre-formatted files.
+       -n ... Search for the full name of the specified file.
+       -i ... run DOC to create an index for the given topic.
+       -t ... run DOC to create an index by category for the given
+              topic.
+
+\endtt}
+name allows to select one routine if option was -i or -t.
+
+Alias:  ``mirhelp'' is an alias for ``mir.help''.
+\par}
+\module{mirindex}%
+\noindent Give one-line description of MIRIAD programs
+\newline \ 
+\newline \abox{File:} \$MIR/src/scripts/sun/mir.pindex
+\newline \abox{Responsible:} Bart Wakker
+\newline \abox{Keywords:} user utility
+\newline{\tenpoint\newline
+Make an alphabetic index of all MIRIAD tasks within
+directory \$MIRSRC/prog whose name or one-line description
+contains the string 'string'.  ``mirindex \$1'' is
+equivalent to ``mir.help tasks -i \$1''.
+
+{\eightpoint\begintt
+  Usage:  mirindex [string]
+
+  Alias:  ``mirindex'' is an alias for ``mir.pindex''.
+\endtt}
+\par}
+\module{MIRRCsun3}%
+\noindent MIRRC skeleton for MIRIAD sun3 installation
+\newline \ 
+\newline \abox{File:} \$MIR/src/scripts/sun/MIRRCsun3
+\newline \abox{Responsible:} Mark Stupar
+\newline \abox{Keywords:} system operation
+\newline{\tenpoint\newline
+MIRRC skeleton for MIRIAD sun3 installation.  The script
+sets MIRIAD environment variables and aliases.
+
+Installation:  copy the MIRRCsun3 file in the scripts source
+directory (sun subdirectory) file to \$MIR/MIRRC; then
+manually edit that file to specify the locations of
+environment variables specified below.
+
+{\eightpoint\begintt
+  Usage:  source $MIR/MIRRC
+
+\endtt}
+Environment variables to be locally specified:
+
+{\eightpoint\begintt
+  $MIR ....... location of MIRIAD's home directory
+  $MIRXLIB ... location of local libX11.a (set to null
+               if libX11.a is not installed)
+  $MIRLXDS ... location of local X-libraries needed by
+               MXDS (set to null if these are not
+               installed)
+  $MIRLPGP ... location of local PGPLOT library to be
+               used for program loading (may be set to
+               the site's separately-installed version)
+\endtt}
+\par}
+\module{MIRRCsun3sun4}%
+\noindent MIRRC skeleton for MIRIAD sun3/4 installation
+\newline \ 
+\newline \abox{File:} \$MIR/src/scripts/sun/MIRRCsun3sun4
+\newline \abox{Responsible:} Mark Stupar
+\newline \abox{Keywords:} system operation
+\newline{\tenpoint\newline
+MIRRC skeleton for MIRIAD installation on a systems where
+MIRIAD will be installed on both sun3's and sun4's.  The
+script sets MIRIAD environment variables and aliases.
+
+Installation:  copy the MIRRCsun3sun4 file in the scripts source
+directory (sun subdirectory) file to \$MIR/MIRRC; then
+manually edit that file to specify the locations of
+environment variables specified below.
+
+{\eightpoint\begintt
+  Usage:  source $MIR/MIRRC
+
+\endtt}
+Environment variables to be locally specified:
+
+{\eightpoint\begintt
+  $MIR ....... location of MIRIAD's home directory
+  $MIRXLIB ... location of local libX11.a (set to null
+               if libX11.a is not installed)
+  $MIRLXDS ... location of local X-libraries needed by
+               MXDS (set to null if these are not
+               installed)
+  $MIRLPGP ... location of local PGPLOT library to be
+               used for program loading (may be set to
+               the site's separately-installed version)
+
+\endtt}
+Be sure to specify the variables as appropriate for both
+systems. The home MIRIAD directory \$MIR is the same for
+both systems (ie, the same source code is used).
+\par}
+\module{MIRRCsun4}%
+\noindent MIRRC skeleton for MIRIAD sun4 installation
+\newline \ 
+\newline \abox{File:} \$MIR/src/scripts/sun/MIRRCsun4
+\newline \abox{Responsible:} Mark Stupar
+\newline \abox{Keywords:} system operation
+\newline{\tenpoint\newline
+MIRRC skeleton for MIRIAD sun4 installation.  The script
+sets MIRIAD environment variables and aliases.
+
+Installation:  copy the MIRRCsun4 file in the scripts source
+directory (sun subdirectory) file to \$MIR/MIRRC; then
+manually edit that file to specify the locations of
+environment variables specified below.
+
+{\eightpoint\begintt
+  Usage:  source $MIR/MIRRC
+
+\endtt}
+Environment variables to be locally specified:
+
+{\eightpoint\begintt
+  $MIR ....... location of MIRIAD's home directory
+  $MIRXLIB ... location of local libX11.a (set to null
+               if libX11.a is not installed)
+  $MIRLXDS ... location of local X-libraries needed by
+               MXDS (set to null if these are not
+               installed)
+  $MIRLPGP ... location of local PGPLOT library to be
+               used for program loading (may be set to
+               the site's separately-installed version)
+\endtt}
+\par}
+\module{MIRRCumd}%
+\noindent MIRRC csh skeleton for MIRIAD unix installation
+\newline \ 
+\newline \abox{File:} \$MIR/src/scripts/sun/MIRRCumd
+\newline \abox{Responsible:} Peter Teuben
+\newline \abox{Keywords:} system operation
+\newline{\tenpoint\newline
+MIRRC skeleton for MIRIAD unix installation.  The script
+sets MIRIAD environment variables and aliases, assuming
+the root directory of MIRIAD has been defined.
+
+Installation:  copy the MIRRCumd file in the scripts source
+directory (sun subdirectory) file to \$MIR/MIRRC; then
+manually edit that file to specify the locations of
+environment variables specified below.
+
+{\eightpoint\begintt
+  Usage:  source $MIR/MIRRC
+
+\endtt}
+Environment variables assumed to be present:
+{\eightpoint\begintt
+  $HOSTTYPE... signature of the hosttype (see also tcsh)
+  $MIR ....... location of MIRIAD's home directory
+
+\endtt}
+Environment variables to be locally specified if different:
+{\eightpoint\begintt
+  $MIRXLIB ... location of local libX11.a (set to null
+               if libX11.a is not installed)
+  $MIRLXDS ... location of local X-libraries needed by
+               MXDS (set to null if these are not
+               installed)
+  $MIRLPGP ... location of local PGPLOT library to be
+               used for program loading (may be set to
+               the site's separately-installed version)
+\endtt}
+\par}
+\module{mirsubmit}%
+\noindent Programmer submission of code to MIRIAD
+\newline \ 
+\newline \abox{File:} \$MIR/src/scripts/sun/mir.submit
+\newline \abox{Responsible:} Peter Teuben
+\newline \abox{Keywords:} system operation
+\newline{\tenpoint\newline
+Submit source code from programmers to the MIRIAD system.
+Using a lockfile, source code permissions are changed after
+code checkout by programmers to prevent overwriting by
+another programmer.
+
+{\eightpoint\begintt
+  Usage:  mir.submit [-m] [-i] [-p] source destdir
+
+  -m ........ move files rather than copying
+  -i ........ run non-interactively
+  -p ........ preserved timestamp when copying
+  source .... source code files(s)
+  destdir ... destination directory
+
+\endtt}
+The script requires minor system modifications and is used
+only by the Maryland MIRIAD programmers.
+
+Alias:  ``mirsubmit'' is an alias for ``mir.submit''.
+\par}
+\module{unMIRRC}%
+\noindent Unset MIRIAD environment variables
+\newline \ 
+\newline \abox{File:} \$MIR/src/scripts/sun/unMIRRC
+\newline \abox{Responsible:} Mark Stupar
+\newline \abox{Keywords:} system operation
+\newline{\tenpoint\newline
+Unset MIRIAD environment variables and unalias MIRIAD
+aliases (sometimes useful for internal MIRIAD support,
+but not for general use).
+
+The script performs an ``unsetenv'' on all MIRIAD
+environment variables and an ``unalias'' on all MIRIAD
+aliases.  Caution:  the user's search path is not
+altered and any subsequent execution of the .cshrc file
+will reset everything.
+
+{\eightpoint\begintt
+  Usage:  source $MIR/src/scripts/sun/unMIRRC
+\endtt}
+\par}
