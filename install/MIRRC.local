@@ -10,3 +10,8 @@ if ($?TERM && ! $?MIRHELLO) then
       echo ""
 endif
 
+if (-e $MIR/borrow/rad/README) then
+  setenv RAD    $MIR/borrow/rad
+  setenv RADCAT $RAD/cat
+endif
+
