@@ -297,7 +297,8 @@ c    rjs   29feb96  Call xyflush after each plane.
 c    rjs   12jul96  Be fore forgiving if beam too big -- just make it smaller.
 c    rjs   20jun97  Correct handling of multiple stokes in slopintp.
 c    rjs   07jul97  Change coaxdesc to coaxget.
-c    rjs   01jul99  CHanges in call sequence to hdfiddle.
+c    rjs   01jul99  Changes in call sequence to hdfiddle.
+c    pjt   25apr03  verbose error when images too big
 c  Bugs:
 c
 c------------------------------------------------------------------------
@@ -306,7 +307,7 @@ c------------------------------------------------------------------------
 	include 'mem.h'
 c
 	character version*(*)
-	parameter(version='Invert: version 1.0 1-Jul-99')
+	parameter(version='Invert: version 1.0 25-apr-03')
 	integer MAXPOL,MAXRUNS
 	parameter(MAXPOL=4,MAXRUNS=4*MAXDIM)
 c
@@ -376,7 +377,10 @@ c
 c
 	call keyi('imsize',nx,0)
 	call keyi('imsize',ny,nx)
-	if(max(nx,ny).gt.MAXDIM)call bug('f','Output image too big')
+	if(max(nx,ny).gt.MAXDIM) then
+	   write(*,*) 'nx,ny,MAXDIM=',nx,ny,MAXDIM
+	   call bug('f','Output image too big (MAXDIM)')
+        endif
 c
 	defWt = .not.keyprsnt('sup')
 	call keyr('sup',supx,0.)
@@ -502,8 +506,10 @@ c
 	  lmn(1) = 0
 	  lmn(2) = 0
 	  lmn(3) = 1
-	  if(max(mnx,mny).gt.MAXDIM)
-     *	    call bug('f','Mosaiced image is too big for me')
+	  if(max(mnx,mny).gt.MAXDIM) then
+	    write(*,*) 'mnx,mny,MAXDIM=',mnx,mny,MAXDIM
+     	    call bug('f','Mosaiced image is too big for me')
+	  endif
 	else
 	  mnx = nx
 	  mny = ny
