@@ -488,6 +488,7 @@ after inputs for interferometer
                  - checked with lint on different platforms
                  - wrote testscript, tested on mira/sirius/convex/monet
                  - fixed all small bugs that lint and script showed
+    7-may-01 pjt - integrated some old solaris/linux changes
 
 */
 
@@ -527,7 +528,7 @@ after inputs for interferometer
 */
 /******************************************************************************/
 
-private char *version = "3.0 2-dec-94";
+private char *version = "3.0 2-dec-94 PJT";
 
 int main( argc, argv )
 int   argc;

@@ -75,7 +75,7 @@ char *argv[];
    private void    keyput();
    char   *key;
    FILE   *fd;
-   register int i;
+   int i;
 
    hiskeylist_c( version );
 
@@ -235,7 +235,7 @@ logical Wild_Expand;
    private void  Expand_WildCards();
            char *c;
    register int   k;
-   register char *KeyVal;
+   private  char *KeyVal;
 
    DBGVAL( ".. Search for keyword %10s --", KeyWord );
    k = FindKey(KeyWord);
@@ -268,7 +268,7 @@ logical  *Wild_Expanded;
 {
    private  logical dexpand();
    register int     alloc=0;
-   register char   *List;
+   private  char   *List;
    if( *Wild_Expanded ) return;
 
    /* %->* to satisfy xdbx */
@@ -307,7 +307,7 @@ char *string;
    register int     depth=0;
    register logical sQuoted=FALSE;
    register logical dQuoted=FALSE;
-   register char    *c; c=string;
+   private char    *c; c=string;
    while( *c ) {
       if( *c == '('  ) depth++;
       if( *c == ')'  ) depth--;
