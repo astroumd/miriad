@@ -18,6 +18,7 @@ c                     spectral windows were used
 c   pjt    10aug00    submitted, set default of blankf to be 0.033
 c   pjt    11mar01    retrofitted the ATNF's insistence of keyf->keya
 c                     they made on 08may00
+c   pjt    30jan02    attempt to create widebands on the fly
 c***********************************************************************
 c= uvwide - recompute wide band from narrow band
 c& pjt
@@ -64,6 +65,13 @@ c     If given, discard this fraction of each edge from a spectral window.
 c     This is the method currently employed at HatCreek, where the fraction
 c     is 0.033.
 c     Default: 0.033 
+c@ nwide
+c     If used, and allowed, this will be the number of wide band channels
+c     created when none are present in the input file. The channels used to
+c     compute the wideband data are derived from the first 'nwide' spectral
+c     windows (i.e. NWIDE.le. NSPECT). For fancy preprocessing, use UVAVER
+c     before running UVWIDE with the NWIDE= option.
+c     ** PJT/LGM experimental code **
 c--
 c
 c NOTE: 
@@ -81,20 +89,21 @@ c
       CHARACTER PROG*(*)
       PARAMETER (PROG = 'UVWIDE')
       CHARACTER VERSION*(*)
-      PARAMETER (VERSION = '11-mar-01')
+      PARAMETER (VERSION = '30-jan-02')
 
 c
 c  Internal variables.
 c
       CHARACTER Infile*132, Outfile*132, type*1
       CHARACTER*11 except(15)
-      INTEGER k, k1, m, lin, lout
+      INTEGER i, k, k1, m, lin, lout
       INTEGER nread, nwread, lastchn, nexcept, skip
       INTEGER nschan(MAXCHAN), ischan(MAXCHAN), nspect, nwide, edge
-      REAL wfreq(MAXCHAN), wt, wtup, wtdn, blankf
+      REAL wfreq(MAXCHAN), wwidth(MAXCHAN), wt, wtup, wtdn, blankf
       DOUBLE PRECISION sdf(MAXCHAN), sfreq(MAXCHAN), preamble(4), lo1
       COMPLEX data(MAXCHAN), wdata(MAXCHAN)
       LOGICAL dowide, docorr, updated, reset, donarrow, doflag
+      LOGICAL newide, first, hasnone
       LOGICAL flags(MAXCHAN), wflags(MAXCHAN)
 c
 c  End declarations.
@@ -114,6 +123,7 @@ c
       CALL keyl('narrow',donarrow,.FALSE.)
       CALL keyi('edge',edge,0)
       CALL keyr('blankf',blankf,0.033)
+      CALL keyi('nwide',nwide,0)
       CALL keyfin
 
       CALL assertl(infile.NE.' ',
@@ -179,9 +189,17 @@ c
       CALL lcase(type)
       dowide = (type .eq. 'c')
       IF (.NOT. dowide) THEN
-         CALL bug('f', 
+         newide = .TRUE.
+         first = .TRUE.
+         CALL bug('w', 
      *      'No wide band data present in ' // infile)
+         CALL uvprobvr(lin, 'lo1', type, k, updated)
+         IF(.NOT.updated) lo1 = -1.0
+      ELSE
+         newide = .FALSE.
       ENDIF
+      hasnone = .FALSE.
+
 c
 c  Open the output visibility file.
 c
@@ -212,13 +230,24 @@ c
 c  Copy unchanged variables to the output data set.
 c
          IF (.NOT.doflag) CALL uvcopyvr(lin, lout)
-
 c
 c  Get particular headers necessary to do editing (these items have
 c  already been copied, so there is no need to write them again).
 c
-         CALL getwide(lin, MAXCHAN, nwide, wfreq)
-         CALL getcoor(lin, MAXCHAN, nspect, nschan, ischan, sdf, sfreq)
+         IF (newide) THEN
+            CALL getcoor(lin, MAXCHAN, nspect, nschan, ischan, 
+     *           sdf, sfreq)
+            DO i=1,nwide
+               wfreq(i)  = sfreq(i)
+               wwidth(i) = sdf(i) * nschan(i)
+            ENDDO
+            CALL uvputvrr(lout,'wfreq',wfreq,nwide)
+            CALL uvputvrr(lout,'wwidth',wwidth,nwide)
+         ELSE
+            CALL getwide(lin, MAXCHAN, nwide, wfreq)
+            CALL getcoor(lin, MAXCHAN, nspect, nschan, ischan, 
+     *           sdf, sfreq)
+         ENDIF
 c
 c  Get lo1 to figure out which spectral windows are USB and LSB
 c
@@ -227,8 +256,15 @@ c
 c
 c
 c
-         CALL uvwread(lin, wdata, wflags, MAXCHAN, nwread)
-         IF (nwread .LE. 0) CALL bug('f',PROG // 'No wide band data?')
+         if (newide) THEN
+            nwread = nwide
+            DO i=1,nwide
+               wflags(i) = .TRUE.
+            ENDDO
+         ELSE
+            CALL uvwread(lin, wdata, wflags, MAXCHAN, nwread)
+         ENDIF
+         IF (nwread .LE. 0) CALL bug('f',PROG // ' No wide band data?')
                   
 c
 c  Reconstruct the digital wide band data.  
@@ -259,7 +295,7 @@ c
             ENDIF
          ELSE
             DO k = 1, nspect
-               IF (sfreq(k) .LT. lo1) THEN
+               IF (sfreq(k) .LT. lo1 .OR. lo1.LT.0.0) THEN
                   k1=1
                ELSE
                   k1=2
