@@ -1,0 +1,70 @@
+			DTM DEMONSTRATION PROGRAMS
+
+The following programs are all a part of a set of programs that illustrate the
+use of the DTM library.  They have been written to give you an opportunity to 
+examine the general use of DTM library as well as provide some typical
+applications of the Scientific Data Set (SDS), the Surface Description
+Language (SDL), and the View Control (VCTRL) message classes.  These programs
+are provided for demo purposes only and are intended to demonstrate DTM.  They
+are not meant to be particularly useful applications, nor are they going to be
+extensively supported.
+
+The programs are:
+
+SIMPLE_READER and SIMPLE_WRITER:
+		These VERY simple programs show the basics of sending and
+		receiving messages.  Some useful hints on using DTM can be
+		found in the source code.
+
+GRAVITY:	A simple program that calculates a gravitational field of
+		a point mass centered in a volume of space.  The field is
+		written as an SDS via the supplied output port.
+
+CIRCLE:		A program that will generate an SDL output that describes
+		a circle made up of the specified number of line segments.
+
+TRANSFORMS:	A program that generates view control matrix for an
+		translation of (3,4,5) from the origin and a rotation of
+		45 degrees about the x-axis.  The resulting matrix is thus:
+				M = Rx(45) * T(3,4,5)
+
+DEMOS:		A demonstration program that allows for reading and writing
+		of data via DTM ports.  Use this program in conjuction with
+		those just described and with other programs and utilities
+		like READIT.
+
+Typing the name of the program alone will display a usage message that
+describes what command line arguments are necessary to successfully run
+the program.  In general, these programs will not work unless all of the
+ports required have been connected.
+
+
+MAKING THE EXECUTABLE DEMOS:
+To create the executable versions of these programs from their source code
+originals, a makefile has been included.  To make the specific demo program,
+simply type "make programname" or "make all".  Note: you must have the
+environment variable DTM set to the directory that contains the include files 
+and library archive for the files to make.
+
+
+SAMPLE RUNS OF THESE PROGRAMS:
+Here are some script uses of these programs:
+
+
+# Simplest example available - this sends a text string from one processes
+# to another.  The port number 7777 is arbitrary and since the host
+# component of the address is missing the local host is assumed.  These
+# processes can be started in any order.
+simple_reader -DTMIN :7777 &
+simple_writer -DTMOUT :7777 -msg "this is a test string" &
+
+# This one will generate a circle made from 20 line segments and send the
+# points and colors to the demo program running on the same machine via
+# port 7777.
+circle -DTMOUT :7777 -segments 20 &
+demos -DTMIN :7777 &
+
+# Transforms will send the view control matrix to the demo program where
+# the values will be displayed on stderr.
+transforms -DTMOUT :9876 &
+demos -DTMIN :9876 &
