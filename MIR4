@@ -20,3 +20,15 @@ model.for	use integer*8  offset8, length8
 		as integer*4
 
 		this will be quite hairy to figure out
+
+
+problem cases:
+
+
+gpcal.for	arrays are not addressed in main / compareg, complicating
+		figuring out sizing w.r.t. MAXANT
+		16	26870912
+		32	27141248
+		64	28801152
+		128	34598528
+		256	57661568
