@@ -39,14 +39,14 @@ c
       PARAMETER (MAXBOX=64)
 
 c
-      CHARACTER file*132, outfile*132, method*20
+      CHARACTER file*132, outfile*132
       INTEGER   nsize(MAXNAX), axnum(MAXNAX), blc(MAXNAX), trc(MAXNAX)
 
       INTEGER   i,j,k, i1,j1,k1,nx, ny, nz, voldim
       INTEGER   naxis,lun,lout,size,size2
       REAL      buf(MAXDIM3,MAXDIM3), obuf(MAXDIM3), dmin, dmax
       REAL      dat(MAXBOX*MAXBOX), xdat
-      LOGICAL   flg(MAXDIM3,MAXDIM3), oflg(MAXDIM3), first
+      LOGICAL   flg(MAXDIM3,MAXDIM3), oflg(MAXDIM3)
 c-----------------------------------------------------------------------
 c  Announce
       CALL output( 'IMMEDIAN: '//PVERSION)
@@ -108,7 +108,6 @@ c     // Now copy the header using spiffy HEADCOPY
 c
 c  Loop over the image/cube (NOTE: can only handle up to 3D)
 c
-      first = .TRUE.
       DO k=1,nz
          DO j=1,ny
             CALL xyread(lun,j,buf(1,j))
@@ -187,7 +186,8 @@ c
       END
 c***********************************************************************
       SUBROUTINE xyminmax(n,buf,flg,dmin,dmax)
-      INTEGER nx
+      IMPLICIT NONE
+      INTEGER n
       REAL buf(n),dmin,dmax
       LOGICAL flg(n)
 c
