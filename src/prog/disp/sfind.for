@@ -1,4 +1,5 @@
       program sfind
+      implicit none
 c-----------------------------------------------------------------------
 c= SFIND - Automatically or interactively find sources in images
 c& nebk
@@ -494,6 +495,7 @@ c                  unused ones.
 c    amh  28oct01  Added printout of sigma corresponding to the p-value
 c                  selected by FDR.
 c   nebk  14nov01  Track change to readimcg interface
+c    pjt  20feb03  defined alpha (implicit undefined)
 c
 c
 c To do:
@@ -526,7 +528,7 @@ c
       real levs(maxlev), pixr(2), tr(6), cs(2), pixr2(2), scale(2), 
      +  tfvp(4), wdgvp(4), cumhis(nbins), dmm(3)
       real slev, vxmin, vymin, vymax, vx, vy, vxsize, vysize, vxgap, 
-     +  vygap, ydispb, xdispl, groff, blank, cut, xrms
+     +  vygap, ydispb, xdispl, groff, blank, cut, xrms, alpha
 c
       integer blc(3), trc(3), size(maxnax), win(maxnax),
      +  grpbeg(maxchan), ngrp(maxchan), srtlev(maxlev), his(nbins)
@@ -550,7 +552,7 @@ c
       data gaps, doabut, dotr /.false., .false., .false./
 c-----------------------------------------------------------------------
       call output (' ')
-      call output ('Sfind: version 14-Nov-2001')
+      call output ('Sfind: version 20-feb-2003')
       call output (' ')
 c
 c Get user inputs
