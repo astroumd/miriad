@@ -37,6 +37,10 @@ c                 (they are currently all BIMA specific)
 c    rjs  16oct98 Reduce the number of continuation lines in above
 c		  change to bring it in line with FORTRAN standard.
 c    pjt  25oct98 Added tau230,rmspath (BIMA specific)
+c    gmx  08apr04 Changed handling of xtsys and ytsys to be identical
+c                 to that of systemp
+c    gmx  14may04 Added variable lefty (to indicate that y coordinate was 
+c                 flipped from the original WSRT UVfits file)
 c
 c************************************************************************
 c*VarInit -- Initialise the copy routines.
@@ -76,7 +80,8 @@ c    preamble variables:	time, baseline, coord
 c    polarisation variables:	npol, pol
 c    data variables:		corr, wcorr, nchan, nwide
 c  Variables produced by the VarCopy routine:
-c   line=channel or velocity: nspect,nschan,ischan,sdf,sfreq,restfreq,systemp
+c   line=channel or velocity: nspect,nschan,ischan,sdf,sfreq,restfreq,systemp,
+c       xtsys,ytsys
 c   line=wide		    : wfreq,wwidth,wsystemp.
 c  Variables setup for copying, and copied by VarWInit:
 c   wfreq,wwidth,wsystemp
@@ -93,13 +98,14 @@ c
 	integer i
 c
 	integer nvar,nline,nwide,nvelo
-	parameter(nvar=86,nline=8,nwide=3,nvelo=4)
+	parameter(nvar=85,nline=10,nwide=3,nvelo=6)
         character var(nvar)*8,line(nline)*8,wide(nwide)*8,velo(nvelo)*8
 c
 c  Variables to check for a change, for line=channel.
 c
 	data line/    'nspect  ','restfreq','ischan  ','nschan  ',
-     *	   'sfreq   ','sdf     ','systemp ','xyphase '/
+     *	   'sfreq   ','sdf     ','systemp ','xtsys','ytsys',
+     *     'xyphase '/
 c
 c  Variables to check for a change, for line=wide.
 c
@@ -107,7 +113,8 @@ c
 c
 c  Variables to check for a change, for line=velocity.
 c
-	data velo/    'restfreq','systemp ','veldop  ','vsource '/
+	data velo/    'restfreq','systemp ','xtsys','ytsys',
+    *      'veldop  ','vsource '/
 c
 c  Variables to copy whenever they change.
 c
@@ -126,9 +133,9 @@ c
      *	   'project ','ra      ','relhumid','source  ','telescop',
      *	   'temp    ','themt   ','tif2    ','tpower  ','tsis    ',
      *	   'ut      ','veldop  ','veltype ','version ','vsource ',
-     *	   'winddir ','windmph ','delay   ','delay0  ','xtsys   ',
-     *	   'ytsys   ','xsampler','ysampler','xyamp   ','pbtype  ',
-     *     'tau230  ','rmspath '/
+     *	   'winddir ','windmph ','delay   ','delay0  ',
+     *	   'xsampler','ysampler','xyamp   ','pbtype  ',
+     *     'tau230  ','rmspath ','lefty'/
 c------------------------------------------------------------------------
 	avall = .false.
 c
@@ -244,7 +251,8 @@ c    tIn	Handle of the input uv file.
 c    tOut	Handle of the output uv file.
 c
 c  UV variables produced are:
-c   line=channel or velocity: nspect,nschan,ischan,sdf,sfreq,restfreq,systemp
+c   line=channel or velocity: nspect,nschan,ischan,sdf,sfreq,restfreq,systemp,
+c       xtsys,ytsys
 c   line=wide		    : wfreq,wwidth,wsystemp.
 c
 c
@@ -408,7 +416,9 @@ c    ischan
 c    sdf					  
 c    sfreq					
 c    restfreq		
-c    systemp		
+c    systemp	
+c    xtsys
+c    ytsys
 c
 c  Inputs:
 c    tvis	Handle of the input uv data file.
@@ -423,13 +433,15 @@ c------------------------------------------------------------------------
 c
 	real xyphase(MAXANT*MAXWIN),xyphase0(MAXANT*MAXWIN)
 	real systemp(MAXANT*MAXWIN),systemp0(MAXANT*MAXWIN)
+	real xtsys(MAXANT*MAXWIN),xtsys0(MAXANT*MAXWIN)
+	real ytsys(MAXANT*MAXWIN),ytsys0(MAXANT*MAXWIN)
 	double precision rfreq(MAXWIN),sdf(MAXWIN)
 	double precision rfreq0(MAXWIN),sdf0(MAXWIN)
 	double precision sfreq0(MAXWIN),sfreq(MAXWIN)
 	integer ischan0(MAXWIN),nschan0(MAXWIN)
 	integer nschan(MAXWIN),trn(MAXWIN)
 	integer ispect,ospect,nspect,n,i,j,k,l,nants,start
-	integer nsystemp,nxyphase
+	integer nsystemp,nxtsys,nytsys,nxyphase
 	character type*1
 	logical upd
 c
@@ -502,6 +514,64 @@ c
 	  nsystemp = 0
 	endif
 c
+c  Handle the x-feed system temperature.
+c
+	call uvprobvr(tVis,'xtsys',type,nxtsys,upd)
+	upd = type.eq.'r'.and.
+     *	  nxtsys.le.MAXANT*MAXWIN.and.nxtsys.ge.1
+	if(upd)then
+	  call uvgetvrr(tVis,'xtsys',xtsys,nxtsys)
+	  if(nants.eq.0)then
+	    nxtsys = 1
+	  else if(nxtsys.lt.nants*nspect)then
+	    nxtsys = min(nxtsys,nants)
+	    do i=1,nxtsys
+	      xtsys0(i) = xtsys(i)
+	    enddo
+	  else
+	    nxtsys = nants*ospect
+	    k = 0
+	    do j=1,ospect
+	      l = nants*(trn(j)-1)
+	      do i=1,nants
+		k = k + 1
+		xtsys0(k) = xtsys(i+l)
+	      enddo
+	    enddo
+	  endif
+	else
+	  nxtsys = 0
+	endif
+c
+c  Handle the y-feed system temperature.
+c
+	call uvprobvr(tVis,'ytsys',type,nytsys,upd)
+	upd = type.eq.'r'.and.
+     *	  nytsys.le.MAXANT*MAXWIN.and.nytsys.ge.1
+	if(upd)then
+	  call uvgetvrr(tVis,'ytsys',ytsys,nytsys)
+	  if(nants.eq.0)then
+	    nytsys = 1
+	  else if(nytsys.lt.nants*nspect)then
+	    nytsys = min(nytsys,nants)
+	    do i=1,nytsys
+	      ytsys0(i) = ytsys(i)
+	    enddo
+	  else
+	    nytsys = nants*ospect
+	    k = 0
+	    do j=1,ospect
+	      l = nants*(trn(j)-1)
+	      do i=1,nants
+		k = k + 1
+		ytsys0(k) = ytsys(i+l)
+	      enddo
+	    enddo
+	  endif
+	else
+	  nytsys = 0
+	endif
+c
 c  Handle the xyphase.
 c
 	call uvprobvr(tVis,'xyphase',type,nxyphase,upd)
@@ -543,6 +613,8 @@ c
 	  ospect = 1
 	  nschan0(1) = 1
 	  nsystemp = min(nsystemp,nants)
+	  nxtsys = min(nxtsys,nants)
+	  nytsys = min(nytsys,nants)
 	  nxyphase = min(nxyphase,nants)
 	endif
 c
@@ -564,6 +636,10 @@ c
 c
 	if(nsystemp.gt.0)
      *	  call uvputvrr(tOut,'systemp',systemp0,nsystemp)
+	if(nxtsys.gt.0)
+     *	  call uvputvrr(tOut,'xtsys',xtsys0,nxtsys)
+	if(nytsys.gt.0)
+     *	  call uvputvrr(tOut,'ytsys',ytsys0,nytsys)
 	if(nxyphase.gt.0)
      *	  call uvputvrr(tOut,'xyphase',xyphase0,nxyphase)
 c
@@ -596,9 +672,10 @@ c
 c
 	integer i
 	real systemp(MAXANT*MAXWIN)
+	real xtsys(MAXANT*MAXWIN),ytsys(MAXANT*MAXWIN)
 	character type*1
 	logical usyst
-	integer nsystemp,nants,nspect
+	integer nsystemp,nxtsys,nytsys,nants,nspect
 c
 c  Get info from the input file, and compute sfreq and sdf.
 c
@@ -647,6 +724,46 @@ c
 	endif
 c
 	if(usyst)call uvputvrr(tOut,'systemp',systemp(i),nsystemp)
+c
+c  Handle the x-feed system temperature (same approach as the system
+c       temperature)
+c
+	i = win
+	call uvprobvr(tVis,'xtsys',type,nxtsys,usyst)
+	usyst = type.eq.'r'.and.nxtsys.lt.MAXANT*MAXWIN
+	if(usyst)then
+	  call uvgetvrr(tVis,'xtsys',xtsys,nxtsys)
+	  call uvrdvri(tVis,'nspect',nspect,0)
+	  call uvrdvri(tVis,'nants',nants,0)
+	  if(nxtsys.eq.nants*nspect)then
+	    i = (i-1)*nants + 1
+	    nxtsys = nants
+	  else
+	    i = 1
+	    usyst = nxtsys.eq.1.or.nxtsys.eq.nants
+	  endif
+	endif
+c
+c  Handle the y-feed system temperature (same approach as the system
+c       temperature)
+c
+	i = win
+	call uvprobvr(tVis,'ytsys',type,nytsys,usyst)
+	usyst = type.eq.'r'.and.nytsys.lt.MAXANT*MAXWIN
+	if(usyst)then
+	  call uvgetvrr(tVis,'ytsys',ytsys,nytsys)
+	  call uvrdvri(tVis,'nspect',nspect,0)
+	  call uvrdvri(tVis,'nants',nants,0)
+	  if(nytsys.eq.nants*nspect)then
+	    i = (i-1)*nants + 1
+	    nytsys = nants
+	  else
+	    i = 1
+	    usyst = nytsys.eq.1.or.nytsys.eq.nants
+	  endif
+	endif
+c
+	if(usyst)call uvputvrr(tOut,'ytsys',ytsys(i),nytsys)
 c
 	end
 c************************************************************************
