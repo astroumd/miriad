@@ -1,6 +1,6 @@
 #! /bin/csh -f
 #
-# Version: 4-jan-05
+# Version: 11-jan-05
 #
 #  2-aug-99 Updated for Sebok's Mandrake setup
 #  1-aug-00 Updated to allow to build private PGPLOT version
@@ -25,6 +25,7 @@
 # 23-oct-04 configure now controls maxdim.h and maxdimc.h
 # 25-nov-04 fortran compiler choice
 #  4-jan-05 MacOSX (10.3=panther)
+# 11-jan-05 some temporary MacOSX related fixes, and cleanup
 #
 #   Simple single-architecture installation of MIRIAD
 #   (linux)
@@ -39,15 +40,6 @@
 #	208.110u 28.510s 4:14.09 93.1%	0+0k 0+0io 1659485pf+0w
 #
 #-----------------------------------------------------------------------
-# For xcorf you may need lesstiff, open OpenMotif 
-
-# SuSe 6.0 uses: /usr/lib/libbsd-compat.a
-# whereas PGPLOT  likes /usr/lib/libbsd.a, a symlink will solve that
-
-# shared libs or not?? -- shared is ok, but mir.subs will not rebuild
-# the .so file, use
-#	(cd $MIRLIB; make slib)
-# With shared, linux rh61 gives 30MB in executables, without it is 70 MB!!
 
 #  carma, wsrt, atnf, sma, bima, ....
 set telescope=carma
@@ -331,6 +323,10 @@ if ($shared) then
     echo it also needs a special -fPIC compile option in compile.linux
     cd $MIRLIB 
     ar dv libmir.a iscoords.o r8tyx.o
+    if ($hosttype == darwin) then
+      echo Remove sma_Resample.o until smaio.c in place...
+      ar dv libmir.a sma_Resample.o
+    endif
     if (-e /usr/bin/ranlib) ranlib libmir.a
   endif
   if ($hosttype == linux) then
@@ -339,7 +335,6 @@ if ($shared) then
         ld -shared -o libpgplot.so --whole-archive libpgplot.a
     endif
   else if ($hosttype == darwin) then
-    echo "Making shared lib for darwin , but does not work yet?"
     if (-e libmir.a) then
       mkdir tmp
       cd tmp
