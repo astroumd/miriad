@@ -262,6 +262,7 @@ c     rjs 28jan00 Some FORTRAN standardization to get it through a
 c                 compiler.
 c     bpw 28feb01 Make it work under linux
 c     bpw 21may01 Add smooth keyword
+c     pjt 25nov04 another fortran standard..... this for intel 8.1
 c
 c************************************************************************
 
@@ -310,7 +311,7 @@ c              el 4=max # gaussians, used when sorting a range
       program gaufit
 
       character*50 version
-      parameter    ( version = 'gaufit: version 2.1 28-Feb-01' )
+      parameter    ( version = 'gaufit: version 2.1 25-nov-04' )
       integer      units(   6)
       integer      prfinfo(10)
       integer      MAXRUNS
@@ -1535,8 +1536,8 @@ c insert found gaussian in estimates array
          cnt = 0
          write(unit,'(''define testdata'')')
       else if( mode.eq.1 .or. mode.eq.2 ) then
-         if(mode.eq.1) write(*,'Original profile')
-         if(mode.eq.2) write(*,'Residual')
+         if(mode.eq.1) write(*,*) 'Original profile'
+         if(mode.eq.2) write(*,*) 'Residual'
          do i = test(2), test(3)
             write(*,*)i,data(i)
             if(test(1).eq.4)
