@@ -376,7 +376,6 @@ int *value,defval;
   ddefval = defval;
   rdhdd_c(thandle,keyword,&dvalue,ddefval);
   *value = dvalue;
-  printf("WARNING: reading %s = %d\n",keyword,*value);
 }
 /************************************************************************/
 void rdhdd_c(thandle,keyword,value,defval)
