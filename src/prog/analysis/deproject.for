@@ -80,6 +80,7 @@ c     17 feb 2002 pjt   miriadized
 c     24 jul 2002 pjt   flag value 0,instead of -1; process 3D cubes
 c     28 aug 2002 pjt   declare all vars, fix default crpix if possible
 c     22 sep 2003 pjt   fix reporting cenx,ceny
+c     10 dec 2004 pjt   resolved conflict
 c
 c ToDo's
 c     - track off-centering down:
@@ -93,7 +94,7 @@ c
       integer   MAXNAX
       parameter (MAXNAX=3)
       character VERSION*(*)
-      parameter (VERSION='16-dec-2003')
+      parameter (VERSION='10-dec-2004')
 c
       character infile*128, oufile*128, rmode*10, ctype1*10,ctype2*10
       integer   iflux,iout,ivert,ix,ixpt,iy,iypt,iz,mode,nx,ny,nz,
@@ -225,10 +226,12 @@ c
 c
         outnx=int(xmax-xmin+1.0)
         outny=int(ymax-ymin+1.0)
+cc        coutx=-xmin
+cc        couty=-ymin
         coutx=-xmin
         couty=-ymin
 
-        write(*,*) 'cout:',coutx,couty
+cc        write(*,*) 'SNV   cout:',coutx,couty
 
       endif
 c
