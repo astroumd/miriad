@@ -47,7 +47,7 @@ c    14aug01 pjt/snv  Created to try some fancier masking in bimasong data
 c------------------------------------------------------------------------
 	include 'maxdim.h'
  	character version*(*)
-	parameter(version='version 1.0 14-aug-01')
+	parameter(version='version 1.0 15-aug-01')
 	integer MAXNAX,naxis,naxis2
 	parameter(MAXNAX=3)
 	integer i,j,k,lin,lout,nsize(MAXNAX),blc(MAXNAX),trc(MAXNAX)
@@ -146,8 +146,8 @@ c
 	do k=1,nsize(3)
 	   kvel = (k-crpix3)*cdelt3 + crval3
 	   call xysetpl(lout,1,k)
-	   if (k.eq.1) write(*,*) 'VELMIN: ',kvel
-	   if (k.eq.size(3)) write(*,*) 'VELMAX: ',kvel
+c	   if (k.eq.1) write(*,*) 'VELMIN: ',kvel
+c	   if (k.eq.size(3)) write(*,*) 'VELMAX: ',kvel
 	   do j=1,nsize(2)
 	      do i=1,nsize(1)
 		 data(i) = 0.0
@@ -162,7 +162,7 @@ c                              is this safe?
 		 mask(i) = .TRUE.
 		 endif
 		 if (mask(i)) then
-		    write(*,*) i,j,k,v1,v2,kvel
+c		    write(*,*) i,j,k,v1,v2,kvel
 		    ok = ok + 1
 		 endif
 	      enddo
