@@ -1,0 +1,328 @@
+%------------------------------------------------------------------------
+% Code Documentation Chapter
+%------------------------------------------------------------------------
+
+\beginsection On-line and Paper Manuals
+
+This documentation is unambiguously mandatory.  It is used to generate
+on-line information, and to generate MIRIAD manuals. Programs and
+subroutines that do not contain this documentation will get lost in the
+shuffle (users will not be able to determine required input parameters;
+other programmers will not be aware of the routine's existence, or how
+to use it; the routine will not appear in MIRIAD manuals).  This
+documentation should be at the head of the source code.  In FORTRAN
+notation (C, UNIX csh, and VMS command notation is analogous), the
+documentation ``directives'' are:
+{\ninepoint\begintt
+c=  [routine name] [one-line description]   (for programs/scripts)
+c*  [routine name] [one-line description]   (for subroutines)
+c&  programmer ID
+c:  comma-separated list of categories
+c+
+c   start of multi-line description block
+c@  keyword                                       (for tasks)
+c   multi-line keyword description                (for tasks)
+c<  standard keyword                              (for tasks)
+c-- 
+\endtt}
+For FORTRAN, comment lines can begin with either an uppercase or a 
+lowercase {\tt c}, C comment lines begin with a {\tt /*}, UNIX csh
+script comment lines begin with a {\tt \#}, and VMS command file
+comments begin with a {\tt \$!}.  C programmers take note:  once a
+{\tt /*} is entered, everything until the next {\tt */} is considered
+a comment; it is the programmer's responsibility to determine where to
+place the {\tt */}.
+
+On-line documentation is placed in \$MIR/doc/prog for executables
+(program docs have a *.doc filename extension, while UNIX script docs
+and VMS command docs have a *.cdoc filename extension), and in
+\$MIR/doc/subs for subroutines (routines from \$MIR/src/subs have a
+*.sdoc filename extension, while ``test'' subroutines coded within a
+main program have a *.tdoc filename extension).
+
+\beginsection The doc Program
+
+In-code documentation is extracted from the source code by the {\bf doc}
+program.  {\bf doc} recognizes everything between the {\tt c=} ({\tt c*}
+for subroutines) and the {\tt c--} lines as program documentation (whether
+the text is code or comments), and it creates a file with extension
+{\tt .cdoc} to be placed in MIRIAD's on-line doc directory
+(\$MIR/doc), with subdirectory ``prog'' used to store program docs, and
+subdirectory ``subs'' used to store subroutine docs.
+
+Assumptions about the in-code documentation made by {\bf doc} include:
+
+\item{$\bullet$} The one-line description is less than 66 characters.
+
+\item{$\bullet$} The programmer ID will be found in the file containing
+the list of MIRIAD programmers, \$MIR/cat/miriad.pgmrs.
+
+\item{$\bullet$} {\parskip=0.0in The entries in the comma-separated list of
+categories will be: \newline
+\vskip 0.1in
+(for executable programs)
+{\ninepoint\begintt
+ General             Utility             Data Transfer       Visual Display
+ Calibration         uv Analysis         Map Making          Deconvolution
+ Plotting            Map Manipulation    Map Combination     Map Analysis
+ Profile Analysis    Model Fitting       Tools               Other
+\endtt}
+(for subroutines)
+{\ninepoint\begintt
+ Baselines           Calibration         Convolution         Coordinates
+ Display             Error-Handling      Files               Fits
+ Fourier-Transform   Gridding            Header-I/O          History
+ Image-Analysis      Image-I/O           Interpolation       Least-Squares
+ Log-File            Low-Level-I/O       Mathematics         Model
+ PGPLOT              Plotting            Polynomials         Region-of-Interest
+ SCILIB              Sorting             Strings             Terminal-I/O
+ Text-I/O            Transpose           TV                  User-Input
+ User-Interaction    Utilities           uv-Data             uv-I/O
+ Zeeman              Other
+\endtt}
+(for UNIX scripts and VMS commands)
+{\ninepoint\begintt
+ System Operation    Programmer Tool     User Utility        Other
+\endtt}
+Only the above categrories are recognized, and if any other category is
+given, {\bf doc} will place the routine in category ``Other''.
+}
+\item{$\bullet$} For programs and scripts (but not for subroutines),
+{\bf doc} interprets the first character on the first non-empty line of the
+multi-line documentation block as an ``alignment column''.  When {\bf doc}
+generates \LaTeX\ files used in printing the manuals, lines that have a
+space in this column are typeset ``verbatim''.  No subsequent line should
+start before the ``alignment column''.
+
+\item{$\bullet$} For conversion of in-code docs to \LaTeX\ files, the
+documentation block between the {\tt c+} and the {\tt c--} lines may
+contain any characters, except that lines to be typeset as ``verbatim''
+may not contain the tilde character (one character must be reserved for
+internal use as an  ``escape'' character, and the tilde has been
+selected).
+
+\item{$\bullet$} For conversion of in-code docs to \LaTeX\ files, double
+backslashes in description blocks are converted to single backslashes,
+while single backslashes are discarded (single backslashes are interpreted
+as ``escape'' characters, not intended to be printed:  a double
+backslash in in-code docs will produce a single backslash in the \LaTeX\ 
+output).
+
+{\bf doc} is used to:
+\item{$\bullet$} Generate on-line documentation files from in-code docs.
+
+\item{$\bullet$} Format on-line docs for readability by MIRIAD users.
+
+\item{$\bullet$} Generate either \LaTeX\ or \TeX\ files from either in-code
+docs or on-line docs.
+
+\beginsection MIRIAD Programs
+
+By way of illustration, below is the in-code documentation for
+MIRIAD task VARPLOT (\$MIR/src/prog/vis/varplot.for), which
+uses the ``directives'' noted previously.  A discussion of the
+documentation follows.
+{\ninepoint\begintt
+c= varplot - Plot uv variables
+c& lgm
+c: uv analysis, plotting
+c+
+c       VARPLOT makes X,Y plots selected variables from a uv data set.
+c       Only integer, real, and double precision variables maybe plotted.
+c       When curser is in the plot window, the following keys are active:
+c          X - expand window in X to give one column of plots
+c          Y - expand window in Y to give one row of plots
+c          Z - expand window in both X and Y to show only one plot
+c          N - step to "next" plot in x or y or both depending on expansion
+c< vis
+c< device
+c@ xaxis
+c       Name of variable to be plotted along x-axis (default = ut time).
+c@ yaxis
+c       Name of variable to be plotted along y-axis (no default)
+c@ multi
+c       Make multiple plots or a single plot? Yes yields multiple plots
+c       No yields a single plot with multiple lines as needed
+c       (default = yes)
+c@ compr
+c       Compress number of x or y variables to be plotted by averaging
+c       over spectral windows. Currently only SYSTEMP can be averaged.
+c--
+\endtt}
+The task's name is ``varplot'', it's one-line description is ``Plot uv
+variables'', the responsible programmer is ``lgm'', and the program is
+categorized as both a ``uv analysis'' program and a ``plotting'' program.
+It has a general description (the text following the {\tt c+} line), and
+it has 6 keywords that the user may input:  ``xaxis'', ``yaxis'', ``multi'',
+and ``compr'' are described in the documentation, while ``vis'' and
+``device'' descriptions are taken from the \$MIR/cat/keywords file (which
+is discussed below).  The on-line documentation file for this task is
+\$MIR/doc/prog/varplot.doc.
+
+For keywords where the {\tt c<} ``directive'' is used, if there are
+non-standard aspects to the program, or if the programmer wants additional
+explanation to be given, then those lines of additional explanation may
+be given immediately after the line with the {\tt c<}.
+
+\beginsection The Keywords File
+
+Several keywords are used by many different programs for the same purpose,
+and so have standardized descriptions.  These standard descriptions are
+contained in the file \$MIR/cat/keywords.  The intent of this file is to
+avoid repeating the same lengthy explanation throughout the manuals, and to
+ensure consistent descriptions for the keywords across the various tasks
+that use them.  At present, standard descriptions are available for the
+following keywords:
+{\ninepoint\begintt
+----------- ----------- ----------- ----------- -----------
+in          device      line        out         region
+select      server      vis
+----------- ----------- ----------- ----------- -----------
+\endtt}
+The effect of using this standard keywords file is (1) on-line docs will
+contain the full description of the item, and (2) manuals will be printed
+with an abbreviated description plus a note to ``refer to'' the
+appropriate section for a fuller description (e.g., both the ``server''
+keyword and the ``device'' keyword descriptions in the manuals refer the
+reader to the section describing TV devices).  
+
+{\bf Format of the Keywords File}:  For each keyword in the file, the
+first line begins with {\tt @ keyword}.  The next few lines begin with
+{\tt >}, and provide the short description seen in the manuals.  The
+remaining verbose lines are the full description seen in the on-line
+documentation (where a reference to a section of a manual is deemed
+inappropriate).
+
+When writing the in-code documentation for a MIRIAD task, read the
+descriptions in the keywords file (more keywords can be expected to be
+included as time passes) to determine whether it is appropriate to use them
+in the task being written:  if so, use it; if not, write up your own
+description in the in-code documentation.
+
+\beginsection MIRIAD Subroutines
+
+By way of illustration, below is the in-code documentation for
+MIRIAD subroutine axistype (\$MIR/src/subs/axistype.for),
+which uses the ``directives'' noted previously.
+{\ninepoint\begintt
+c* Axistype - Find the axis label and plane value in user friendly units
+c& mchw
+c: plotting
+c+
+        subroutine AxisType(lIn,axis,plane,ctype,label,value,units)
+c
+        implicit none
+        integer lIn,axis,plane
+        character ctype*9,label*13,units*13
+        double precision value
+c
+c Find the axis label and plane value in user friendly units.
+c
+c  Inputs:
+c    lIn        The handle of the image.
+c    axis       The image axis.
+c    plane      The image plane along this axis.
+c  Output:
+c    ctype      The official ctype for the input axis.
+c    label      A nice label for this axis.
+c    value      The value at the plane along this axis.
+c    units      User friendly units for this axis.
+c--
+\endtt}
+Note that the programmer has woven executable code into the documentation
+(the lines that are not commented out):  anything between the {\tt c+} and
+the {\tt c--} is considered to be part of the documentation, even though
+the lines are actually part of the subroutine code itself (this only
+affects the way that {\bf doc} interprets in-code documentation, not the
+way that the code is interpreted by the compiler).
+
+A subroutine source code file (or a program source code file) may contain
+multiple subroutines, each documented as above.
+
+\beginsection Code History
+
+All source code files should contain comments (near the start of the file)
+describing the creation and modification history.  This is quite important
+in the MIRIAD development environment, where programs are spread
+across many computers and programmers are separated by many miles.
+
+Below are typical history comments (taken from the ``key'' routines,
+subroutine key.for):
+{\ninepoint\begintt
+c************************************************************************
+c  The key routines provide keyword-oriented access to the command line.
+c
+c  History:
+c    rjs    6jun87    Original version.
+c    bs     7oct88    Converted it to use iargc and getarg. Added -f flag.
+c    rjs    8sep89    Improved documentation.
+c    nebk  10sep89    Added mkeyr.  I think rjs will not like it (Too right!).
+c    rjs   19oct89    Major rewrite to handle @ files.
+c    rjs   15nov89    Added keyf routine, and did the rework needed to support
+c                     this. Added mkeyf. Modified mkeyr.
+c    pjt   26mar90    Added mkeya. like mkeyr (again, bobs will not like this)
+c    pjt   10apr90    some more verbose bug calls.
+c    rjs   23apr90    Made pjt's last changes into standard FORTRAN (so the
+c                     Cray will accept it).
+c    pjt   10may90    Make it remember the programname in keyini (se key.h)
+c                     for bug calls - introduced progname
+c    rjs   22oct90    Check for buffer overflow in keyini.
+c    pjt   21jan90    Added mkeyi, variable index is now idx, exp is expd
+c************************************************************************
+\endtt}
+
+History comments are not optional.  While the format is not ironclad, it has
+become a convention to have the word ``History:'', followed on subsequent
+lines with (a) the programmer's initials, (b) the date of the modification,
+and (c) one or two lines describing what was done.
+
+\beginsection Other Internal Comments
+
+These are comments that the programmer inserts as an aid in reading the
+code.  For example:
+{\ninepoint\begintt
+c
+c begin loop to find the optimal distance
+c
+    (actual code)
+c
+c finished loop to find the optimal distance.  variable x contains answer.
+c
+\endtt}
+While these kinds of comments are optional, one is well-advised to include
+them, both for those times when code has to be revised, and as an aid for
+those who inherit responsibility for the code after the author has departed.
+
+\beginsection Free Advice
+
+{\bf No Editorials} - don't insert comments like ``what a hassle'', or
+``this is copyrighted by me''.  Prior to distribution of the code out-of-BIMA,
+someone has to go through and manually remove these things, then distribute
+the modified code to the other MIRIAD sites.  In particular, don't
+insert obscenities.
+
+{\bf Brevity} - short is better.  Don't write a treatise.  A
+short, weak explanation is far more likely to be read than a long-winded
+technical dissertation, in which case the short, weak explanation is of more
+value than the technically precise ``discussion''.  Users read MIRIAD
+on-line docs only to figure something out, and then want to immediately get
+back to their astronomy.  After writing a program, and having been close to
+it for a month, one tends to lose perspective, making all facts about the
+program seem of equal value, with each fact worthy of an explanation that
+says ``here's a lot of information on the topic'', rather than a short
+``how-to''.
+
+{\bf Clarity} - for programs, make keyword explanations
+clear, where ``clear'' means ``clear to the naive user'', not ``clear to the
+programmer who wrote the code''.  Test it out on someone who's unfamiliar
+with the system.  For subroutines, give enough information that other
+MIRIAD programmers can use them without poring over the code to see
+what you are doing, but not so much that reading the docs is an exercise in
+its own right.
+
+{\bf Referrals} - If at all possible, avoid referring the user
+to a manual (e.g., the User's Guide).  In particular, avoid referring the
+user to a manual that the user might not have.  If you feel that the item
+requires a full explanation, give a short one anyway, and note that a fuller
+explanation exists in the User's Guide under the appropriate section (if
+that is indeed true).
