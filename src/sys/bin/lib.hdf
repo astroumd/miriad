@@ -1,0 +1,68 @@
+#!/bin/csh -f
+# ------------------------------------------------------------------- 
+# lib.hdf subscript
+# ------------------------------------------------------------------- 
+set mir    = $MIR
+set host   = $MIRHOST
+set lsys   = $mir/bin/localsys
+set srcdir = $mir/borrow/hdf
+set libdir = $mir/lib/$host
+set admdir = $mir/src/sys/bin
+set ops    = ""
+# ------------------------------------------------------------------- 
+if (-e $lsys/lib.hdf && ! $?local_compile) then
+  echo $lsys/lib.hdf exists =======================
+  setenv local_compile
+  exec $lsys/lib.hdf $argv
+endif
+# ------------------------------------------------------------------- 
+if ($?Ccompile == 0) then
+   if (-e $admdir/compile.${host}) then
+      source $admdir/compile.${host}
+   else
+      echo "Cannot find $admdir/compile.${host} - exiting."
+      exit 1
+   endif
+endif
+# ------------------------------------------------------------------- 
+if ($host == convex) set ops = "-pcc"
+
+if ($host == mips) set ops = "-DSYSV"
+
+set cin = (df.c        dfr8.c   dfsd.c  dfgroup.c dfcomp.c \
+	   dfimcomp.c  dfkit.c  dfp.c   dfan.c    dfgr.c   \
+	   dfufptoim.c dfutil.c dfF.c   dfr8F.c   dfsdF.c  \
+	   dfanF.c     df24.c   df24F.c dfpF.c    dfutilF.c)
+
+set fin = (dfFf.f dfr8Ff.f dfsdFf.f dfanFf.f df24Ff.f dfpFf.f dfufptoimFf.f)
+
+cd $libdir
+set out = ""
+foreach i ($cin)
+   rm -fr ${i:r}.o >& /dev/null
+   echo ""
+   echo "$Ccompile $Coptions $ops -c -o ${i:r}.o -I$srcdir $srcdir/$i"
+         $Ccompile $Coptions $ops -c -o ${i:r}.o -I$srcdir $srcdir/$i
+   if ($status == 0) set out = "$out ${i:r}.o"
+end
+foreach i ($fin)
+   rm -fr ${i:r}.o >& /dev/null
+   echo ""
+   echo "$Fcompile $Foptions $ops -c -o ${i:r}.o -I$srcdir $srcdir/$i"
+         $Fcompile $Foptions $ops -c -o ${i:r}.o -I$srcdir $srcdir/$i
+   if ($status == 0) set out = "$out ${i:r}.o"
+end
+
+rm -fr libdf.a >& /dev/null
+echo "ar ru libdf.a <dot-o files>"
+      ar ru libdf.a `echo $out | sort | uniq`
+if (-e /usr/bin/ranlib) then
+   echo "/usr/bin/ranlib libdf.a"
+         /usr/bin/ranlib libdf.a
+endif
+rm -fr $out >& /dev/null
+echo ""
+echo "`ls -l $libdir/libdf.a`"
+unsetenv local_compile
+exit 0
+# --------------------------------------------------------------
