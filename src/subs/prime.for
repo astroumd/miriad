@@ -1,3 +1,19 @@
+#ifdef debug
+c************************************************************************
+        program test
+        implicit none
+c------------------------------------------------------------------------
+        integer i
+c
+c  Externals.
+c
+        integer prime
+  10    read(*,*)i
+        i = prime(i)
+        write(*,*)i
+        goto 10
+        end
+#endif
 c************************************************************************
 c* Prime -- Returns a prime less than or equal to N.
 c& jm
@@ -24,6 +40,9 @@ c
 c  History:
 c    rjs   5mar90 Adapted from the Werong routine in ASCAL.
 c    jwr   3may04 Increased nprimes
+c    rjs  14aug04 Increased table size to 1000 primes.
+c    pjt   4jan05 "merged" the above two, but both did the same :-)
+c                 a #debug section of code was added by rjs to test this code
 c------------------------------------------------------------------------
 	integer nprimes
 	parameter(nprimes=1000)
