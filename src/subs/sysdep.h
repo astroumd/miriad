@@ -26,6 +26,7 @@
  *		  have not been done before doing them again.
  *    pjt 14jun01 use WORDS_BIGENDIAN to figure out the pack routines
  *                removed 'trace' clutter from the old multiflow
+ *    pjt 24jun01 PPC/powerpc is a BIGENDIAN (linux) machine
  */
 
 #ifndef Null
@@ -111,6 +112,7 @@ typedef int int2;
     and should appear in config.h if it's used (sun's, linuxppc, etc.)
     two routines, pack16_c() and unpack16_c() are actually defined
     in pack.c
+
  */
 
 
@@ -118,7 +120,7 @@ typedef int int2;
 #define WORDS_BIGENDIAN
 #endif
 
-#if defined (linuxppc)
+#if defined(PPC) || defined(powerpc)
 #define WORDS_BIGENDIAN
 #endif
 
