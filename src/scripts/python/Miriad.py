@@ -2,14 +2,15 @@
 #
 #  a module that defines various routines useful for miriad processing
 #
-#   15-mar-2003   Created                                   PJT
-#   16-apr-2003   added run,keyr,keyi,keya
+#   15-mar-2003   1.0 Created                                   PJT
+#   16-apr-2003   1.2 added run,keyr,keyi,keya
+#   10-nov-2003   1.2a ??? checker                               NC
 #
 
 import sys, os, time, string, math, copy
 
 #   some global variables (private to Miriad.py)
-_version = "1.2 (17-apr-2003)"
+_version = "1.2a (10-nov-2003)"
 _logger  = ""
 _quit    = 0
 _mkeyval = []
@@ -126,6 +127,24 @@ def keyl(key):
 	return 0
     else:
 	return -1
+
+def check_required():
+    """Checks to see that required arguments (default values of ???) have
+    been given new values"""
+    global _mkeyval
+    usage="Usage: %s " %sys.argv[0]
+    _missing=0
+   
+    if '???' in _mkeyval.values():
+        print "### Error: Insufficient parameters.  Try --help or -h."   
+        for i in _mkeyval.keys():
+            if _mkeyval[i]=='???':
+                usage=usage+"%s=??? " %i
+                _missing=_missing+1
+        if len(_mkeyval.keys())>_missing:
+            usage=usage+"..."
+        print usage
+        os._exit(0)
 
 def show_keyval(keyval,help=0,quit=0):
     if help != 0:
