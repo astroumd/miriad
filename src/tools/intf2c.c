@@ -18,7 +18,7 @@ Usage:
   intf2c -s system [in] [out]
 
     system: One of "vms","hpux","sun","bsd","trace","alliant","convex",
-            "unicos","alpha", "sgi", "linux". No default.
+            "unicos","alpha", "sgi", "linux", "darwin". No default.
 
     in:     Input file. Default is standard input.
     out:    Output file. Default is standard output.
@@ -98,9 +98,10 @@ fortran subroutine fstrcpy(character out,character in)
 /*    rjs   9aug93 Exit (rather than return) with 0 to appease VMS.     */
 /*    rjs  20nov94 Added Alphas.					*/
 /*    rjs  26jan95 Added f2c.						*/
+/*    pjt   5dec03 added darwin                                         */
 /************************************************************************/
 
-#define VERSION_ID "version 1.0 26-Jan-95"
+#define VERSION_ID "version 1.1 17-dec-03"
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -121,9 +122,16 @@ typedef void (*ROUTINE)();
     init	Initialisation routine -- called at the start
 		of code generation.					*/
 
-typedef struct { char *name,*fortran_true,*fortran_false;
-		 ROUTINE fname,arg,len,addr,init;
-					} SYSTEM;
+typedef struct { 
+  char *name;
+  char *fortran_true;
+  char *fortran_false;
+  ROUTINE fname;
+  ROUTINE arg;
+  ROUTINE len;
+  ROUTINE addr;
+  ROUTINE init;
+} SYSTEM;
 
 void name_lower(),name_upper(),name_lower_();
 void arg_vms(),arg_extra(),arg_norm(),arg_uni(),arg_gen();
@@ -138,6 +146,8 @@ SYSTEM systems[] = {
 	  name_lower,  arg_extra,len_extra,  addr_norm,init_norm},
 	{ "linux",  "1","0",
 	  name_lower_,  arg_extra,len_extra,  addr_norm,init_norm},
+	{ "darwin",  "1","0",
+	  name_lower,  arg_extra,len_extra,  addr_norm,init_norm},
 	{ "sun",    "1","0",
 	   name_lower_,arg_extra,len_extra,  addr_norm,init_norm},
 	{ "sgi",    "1","0",
