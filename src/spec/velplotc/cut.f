@@ -16,7 +16,8 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 	character cutfile*30
 	integer ncut,ncutr,ichosecut
 	real cut(3),cutr(10)
-	
+	real rfactor
+
 	call keya('cutfile',cutfile,' ')
 	call mkeyr('cut',cut,3,ncut)
 	call mkeyr('cutr',cutr,10,ncutr)
@@ -47,24 +48,121 @@ c
 	if (ncutr.eq.7) then
 c	  convert to radian
 	  cut(1)=abs(cutr(1))+cutr(2)/60.0+cutr(3)/3600.0
-	  cut(1)=cut(1)/12.0*acos(-1.0)*cutr(1)/abs(cutr(1))
+	  cut(1)=cut(1)/12.0*acos(-1.0)
 	  cut(2)=abs(cutr(4))+cutr(5)/60.0+cutr(6)/3600.0
 	  cut(2)=cut(2)/180.0*acos(-1.0)*cutr(4)/abs(cutr(4))
+c	  rfactor=cos(cut(2))
+	  rfactor=cos(crval2)
+c	  write(*,*) "rad",cut(2),rfactor
 
 c	  calculate the difference
 	  cut(1)=cut(1)-crval1
 	  cut(2)=cut(2)-crval2
 
 c	  convert to arcsec
-	  cut(1)=-cut(1)*206265.0
+	  cut(1)=-cut(1)*206265.0*rfactor
 	  cut(2)=cut(2)*206265.0
 	  cut(3)=cutr(7)
 	  call one_posvel_cut(cut)
-c	  write(*,*) cut
+c	  write(*,*) "cut", cut
 	end if
 
 	return
 	end
+
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c	Convert the HA center into RA
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+	subroutine HA2RA(AHA,ADDEC,sRA,sDEC)
+	include 'header.h'
+	character SRA*(*),SDEC*(*)
+	real AHA,ADDEC
+	real RA,DRA,DDEC,DEC
+	integer HH,MM,DD
+	real HA,sign,SS
+	real rfactor
+
+	HA=AHA
+	DDEC=ADDEC
+	rfactor=cos(crval2)
+
+c	convert to radian
+	DRA=-HA/206265.0/rfactor
+	DDEC=DDEC/206265.0
+
+	RA=DRA+crval1
+	DEC=DDEC+crval2
+
+c	convert to Hours
+	RA=RA*12.0/acos(-1.0)
+
+	HH=int(RA)
+	MM=int((RA-HH)*60.0)
+	SS=(RA-HH-MM/60.0)*3600.0
+	write(SRA,'(I2,":",I2,":",f5.2)') HH,MM,SS
+
+c	convert to Degree
+	sign=DEC/abs(DEC)	
+	DEC=DEC*180.0/acos(-1.0)*sign
+
+	DD=int(DEC)
+	MM=int((DEC-DD)*60.0)
+	SS=(DEC-DD-MM/60.0)*3600.0
+	if (sign.gt.0) then
+	  write(SDEC,'(I2,":",I2,":",f5.2)') DD,MM,SS
+	else
+  	  write(SDEC,'("-",I2,":",I2,":",f5.2)') DD,MM,SS
+	end if
+	
+
+c	Remove space
+	call removespace(sra)
+c	Remove space
+	call removespace(sdec)
+
+	return
+	end
+
+	subroutine removespace(si)
+	character si*(*),dum*100
+
+c	Remove space
+	niter=len1(si)
+	if (niter.gt.99) stop "character is too long"
+	do i=1,niter
+	  dum(i:i)=si(i:i)
+	end do
+	si="\0"
+	ns=0
+	do i=1,niter
+	  if (dum(i:i).ne." ") then
+	   ns=ns+1
+	   si(ns:ns)=dum(I:I)
+	  end if
+	end do
+
+	return
+	end
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c	Get the cut with given cut number and get the RADEC format of that
+c	cut.
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+	subroutine Getcutn(l,cutRA)
+	integer l
+	integer ncut
+	real xcut(128),ycut(128),pa(128)
+	common/cuts/ xcut,ycut,pa,ncut 
+	character sRA*13,sDec*13,cutRA*50
+c	write(*,*) l,xcut(l),ycut(l),pa(l)
+	call HA2RA(xcut(l),ycut(l),sRA,sDEC)
+	write(cutRA,'(A,",",A,",",f7.2)')
+     &         sRa,sDec,pa(l)
+	call removespace(cutRA)
+
+c	write(*,*) cutRA
+	return
+	end
+
 
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c	Read cuts from file or save the cuts into files  
@@ -325,8 +423,8 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c	Settig cut from xform
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-	subroutine posvel_cuts(a,la,b,lb,i,flag)
-	integer la,lb,flag
+	subroutine posvel_cuts(a,la,b,lb,i,flag,ni)
+	integer la,lb,flag,i,ni
 	character a*30,b*30
 	integer ncut
 	real xcut(128),ycut(128),pa(128)
@@ -334,9 +432,10 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c	integer length
 	integer nvalue
 	real value(20)
+	include 'header.h'
 c	character line*80
 	flag=1
-c	write(*,*) "getcut=[",a(1:la),"][",i,"]"
+c	write(*,*) "getcut=[",a(1:la),"][",i,"]","[",ni,"]"
 10	continue 
 
 c	if(length.eq.0) then
@@ -347,16 +446,47 @@ c	endif
 	  flag=0
 	  return
 	endif
-	call separation(",",a(1:la),la,nvalue,value)
-c	write(*,*) i,nvalue,value(1),value(2),value(3)
-	if (nvalue.ne.3.or.value(3).gt.180.0.or.value(3).lt.0.0) then
-c	  call wrong_input("Input\0","0\0")
+	if (ni.eq.0) then
+          call separation(",",a(1:la),la,nvalue,value)
+	else if (ni.eq.1) then
+	  call separation(",",a(1:la),la,nvalue,value)
+	else 
 	  flag=0
 	  return
-	endif
-	xcut(i)=value(1)
-	ycut(i)=value(2)
-	pa(i)=value(3)
+	end if
+c	write(*,*) i,nvalue,value(1),value(2),value(3)
+	if (ni.eq.0) then
+	  if (nvalue.ne.3.or.value(3).gt.180.0.or.value(3).lt.0.0) then
+c	   call wrong_input("Input\0","0\0")
+	   flag=0
+	   return
+	  endif
+	  xcut(i)=value(1)
+	  ycut(i)=value(2)
+	  pa(i)=value(3)
+	else if (ni.eq.1) then
+	  if (nvalue.ne.7.or.value(7).gt.180.0.or.value(7).lt.0.0) then
+c	   call wrong_input("Input\0","0\0")
+	   flag=0
+	   return
+	  end if
+c	  convert to radian
+	  xcut(i)=abs(value(1))+value(2)/60.0+value(3)/3600.0
+	  xcut(i)=xcut(i)/12.0*acos(-1.0)
+	  ycut(i)=abs(value(4))+value(5)/60.0+value(6)/3600.0
+	  ycut(i)=ycut(i)/180.0*acos(-1.0)*value(4)/abs(value(4))
+	  rfactor=cos(crval2)
+c	  write(*,*) "rfactor",rfactor,crval2
+c	  calculate the difference
+	  xcut(i)=xcut(i)-crval1
+	  ycut(i)=ycut(i)-crval2
+
+c	  convert to arcsec
+	  xcut(i)=-xcut(i)*206265.0*rfactor
+	  ycut(i)=ycut(i)*206265.0
+	  pa(i)=value(7)
+	end if
+
 	if (i.ge.1 .and. i.le.min(ncut+1,50) ) then
 	    ncut = max(i,ncut)
 	    call sendcuts(i,xcut(i),ycut(i),pa(i),b(1:lb))
@@ -406,6 +536,7 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 	real xcut(128),ycut(128),pa(128)
 	common/cuts/ xcut,ycut,pa,ncut
 	character key*1,msg*80
+	character sRA*13,sDec*13
         real xx,yy,xx1,yy1,xx2,yy2
 	real pi, rts
         parameter (pi = 3.141592654, rts = 3600.*180./pi)
@@ -465,6 +596,8 @@ c	   write(*,*) i,xcut(i),ycut(i),pa(i)
         write(msg, 114) ncut,xcut(ncut),ycut(ncut),pa(ncut)
 114     format(' cut(',i2,') x=',f8.3,' y=',f8.3,' pa=',f8.3)
 	call output(msg)
+	call HA2RA(xcut(ncut),ycut(ncut),sRA,sDec)
+	write(*,*) " ==> RA= ",sRA,"Dec= ",sDec
 	call drawline(ncut,-xcut(ncut),ycut(ncut),pa(ncut))
 	call sendcuts(ncut,xcut(ncut),
      +      ycut(ncut),pa(ncut),"A")
