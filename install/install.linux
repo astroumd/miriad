@@ -15,7 +15,8 @@
 # 18-aug-01 protect if newdir exists? comments on lesstif/openmotif
 # 12-sep-01 unified script so it also works for solaris, and the default
 #           is now to use internal=1
-# 23-sep-01 varaious fixes for darwin (Mac-OS X)
+# 23-sep-01 various fixes for darwin (Mac-OS X)
+# 11-feb-02 optional new intel compiler for linux
 #
 #   Simple single-architecture installation of MIRIAD
 #   (linux)
@@ -123,6 +124,7 @@ set internal=1              #  internal sourcecode build; overrides cvs, mirroot
 set test=1                  #  mir.test  baseline test (batch oriented)
 set testx=0		    #  mir.testx testing X routines (interactive)
 set bench=0,512,1           #  mir.bench nchan,mapsize,cell  (nchan=0 will skip bench)
+set intel=0                 #  use intel compiler (ifc/icc) for linux?
 
 #		   	remember from where we were installing, since we have stuff here.....
 set install_dir=`pwd`
@@ -229,6 +231,12 @@ if ($newcode) then
   endif  
   popd
 endif
+
+if ($intel) then
+  cp $MIR/src/sys/bin/compile.linux_intel $MIR/bin/localsys/compile.linux
+endif
+
+
 
 cd $MIR
 
