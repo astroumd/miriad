@@ -70,11 +70,17 @@ c         "dosour"   If dofit is positive, then the polynomial fit is source
 c                    dependent.
 c--
 c  History:
-c  jhz: 2004-7-26 made the original by modifying miriad tasks varplot and atfix.
-c  jhz: 2004-9-9  add Tsys replacement for the corrupted antenna by using
-c                 the Tsys values derived from the good antennas.
-c  jhz: 2004-12-2 using orthogonal Polynomial fit instead of
-c                 simple polynomial fit
+c  jhz: 2004-7-26  made the original by modifying miriad tasks varplot 
+c                  and atfix.
+c  jhz: 2004-9-9   add Tsys replacement for the corrupted antenna by using
+c                  the Tsys values derived from the good antennas.
+c  jhz: 2004-12-2  using orthogonal Polynomial fit instead of
+c                  simple polynomial fit
+c  jhz: 2004-12-16 extended maximum data lenghth in regpol from
+c                  1000 to 15000
+c  jhz: 2004-12-16 initialized input parameters of the fitting routines
+c  jhz: 2005-1-12 attached subroutine regpol.for to end of this program
+c                 so that compiling no longer use libdatsrc.a
 c    ?? Perfect?:
 c------------------------------------------------------------------------
         character version*(*)
@@ -92,7 +98,7 @@ c------------------------------------------------------------------------
         logical xaver,yaver,compress,dtime,overlay,more,equal
         real rmsflag
         integer dofit, antid, xaxisparm, nterms
-        integer i,bant(8),gant(8),rant(8)
+        integer i,j,k,l,bant(10),gant(10),rant(10)
         logical dotsys, tsysplt, dosour
 c       apl(ant,sour,aplfit),xapl(ant,sour,MAXNR),bppl(ant,sour,MAXNR,MAXNR)    
         real apl(10,32,10)
@@ -103,6 +109,18 @@ c
 c  Externals.
 c
         integer pgbeg
+c initialize
+             do i=1, 10
+             do j=1, 32
+             do k=1, 10
+              apl(i,j,k) =0.
+              xapl(i,j,k) =0.
+             do l=1, 10
+              bppl(i,j,k,l)=0.
+             end do
+             end do
+             end do
+             end do
 c
 c  Get the user parameters.
 c
@@ -129,6 +147,8 @@ c
         call keyi('bant',bant(6), -1)
         call keyi('bant',bant(7), -1)
         call keyi('bant',bant(8), -1)
+        call keyi('bant',bant(9), -1)
+        call keyi('bant',bant(10), -1)
 
         call keyi('gant',gant(1), -1)
         call keyi('gant',gant(2), -1)
@@ -138,7 +158,9 @@ c
         call keyi('gant',gant(6), -1)
         call keyi('gant',gant(7), -1)
         call keyi('gant',gant(8), -1)
-        
+        call keyi('gant',gant(9), -1)
+        call keyi('gant',gant(10), -1)
+
         call keyi('rant',rant(1), -1)
         call keyi('rant',rant(2), -1)
         call keyi('rant',rant(3), -1)
@@ -147,6 +169,8 @@ c
         call keyi('rant',rant(6), -1)
         call keyi('rant',rant(7), -1)
         call keyi('rant',rant(8), -1)
+        call keyi('rant',rant(9), -1)
+        call keyi('rant',rant(10), -1)
 c           do i=1, 8
 c        write(*,*) 'i bant gant rant', i,bant(i),gant(i),rant(i)
 c           end do
@@ -290,7 +314,7 @@ c
 c 
 c do uvdata correction
 c
-          call uvdatafix(vis,out,dotime,bant,gant,rant)
+         if(dotsys) call uvdatafix(vis,out,dotime,bant,gant,rant)
 c
 c  Bye bye.
 c
@@ -735,10 +759,6 @@ c            call curvefit(nterms,a,N,XFIT,YFIT)
             call pgsci(2)
 c           call rmsflags(nterms,a,N,XPTS,YPTS,FPTS);
             call regrmsflags(nterms,xa,bp,N,XPTS,YPTS,FPTS)
-              write(*,*) 'nterms=', nterms
-              do i=1, 10
-             write(*,*) XPTS(i),YPTS(i)
-              end do
               end if
            
            if((rmsflag>0.).and.dosour) then
@@ -777,15 +797,15 @@ c       call pgsci(soupnt(i))
             call pgsci(indx)
                xx(1) = XPTS(i)
                yy(1) = YPTS(i)
-c                  if(FPTS(i).ne.-1) then
+                  if(FPTS(i).ne.-1) then
                              IF (SYMBOL.GE.0 .OR. SYMBOL.LE.-3) THEN
                              CALL GRMKER(SYMBOL,.FALSE.,NPNTS,xx,yy)
                              ELSE
                              CALL GRDOT1(NPNTS,xx,yy)
                              END IF
-c                  end if
-           if(.not.dosour) then
-c               if((FPTS(i).eq.1).and.(yy(1).gt.0))  then
+                  end if
+c           if(.not.dosour) then
+               if((FPTS(i).eq.1).and.(yy(1).gt.0))  then
                 if(yy(1).gt.0) then
                NPL=NPL+1
                XFIT(NPL)=xx(1)
@@ -1855,7 +1875,7 @@ c           write(*,*) 'determ=', determ, norder
 c************************************************************************
         subroutine uvdatafix (vis, out, dotime,bant,gant,rant)
 c - MAXBUF tells us how many words of memory we can use for data
-        integer bant(8), gant(8), rant(8)
+        integer bant(10), gant(10), rant(10)
       include 'maxdim.h'
 c  Pi.
       real pi, twopi
@@ -1939,29 +1959,43 @@ c
 c  
 c   process replacement of Tsys from ant1 to ant2
 c    apl(ant,sour,term)
-c      
-           do j=1, 32
-           do k=1, 10
+c     
+        do j=1,32
+        do k=1,10 
+        aveXA(j,k)=0.0
+        do l=1,10
+        aveBP(j,k,l)=0.0
+        end do
+        end do
+        end do
+         write(*,*) 'apply tsys correction to visibility data.'
+         write(*,*) 'it may take a little while.'
+            do j=1, 32
+            do k=1, 10
                nave=0
                do i=1, 8
                if (gant(i).gt.0) then
-               nave=nave+1
+                nave=nave+1
 c               aveapl(j,k) = aveapl(j,k)+apl(gant(i),j,k)
                 aveXA(j,k) = aveXA(j,k) + xapl(gant(i),j,k)
+c                write(*,*) 'xapl=', xapl(gant(i),j,k)
                end if
                end do
 c               aveapl(j,k) = aveapl(j,k)/nave
                 aveXA(j,k) = aveXA(j,k)/nave
+c                write(*,*) 'aveXA=', aveXA(j,k)
 
                do l=1, 10
                navel=0
                do i=1, 8
-               if (gant(i).gt.0) then
-               navel=navel+1
-               aveBP(j,k,l) = aveBP(j,k,l) + bppl(gant(i),j,k,l)
-               end if
+             if (gant(i).gt.0) then
+          navel=navel+1
+          aveBP(j,k,l)=aveBP(j,k,l)+bppl(gant(i),j,k,l)
+c   write(*,*) 'bppl=', bppl(gant(i),j,k,l)
+         end if
                end do
-               aveBP(j,k,l) = aveBP(j,k,l)/navel
+                aveBP(j,k,l) = aveBP(j,k,l)/navel
+c               write(*,*) 'aveBP=', aveBP(j,k,l)
                end do
            end do
            end do
@@ -1971,22 +2005,22 @@ c               aveapl(j,k) = aveapl(j,k)/nave
               do i=1,8
               if((bant(i).gt.0).and.(rant(i).le.8)) then
 c               apl(bant(i),j,k) = apl(rant(i),j,k)
-                xapl(bant(i),j,k) = xapl(rant(i),j,k)
+              xapl(bant(i),j,k) = xapl(rant(i),j,k)
                end if
               if((bant(i).gt.0).and.(rant(i).gt.8)) then
 c               apl(bant(i),j,k) = aveapl(j,k)
-                xapl(bant(i),j,k) = aveXA(j,k)
+              xapl(bant(i),j,k) = aveXA(j,k)
                end if
               end do
            do l=1, 10
                do i=1,8
                if((bant(i).gt.0).and.(rant(i).le.8)) then
-                bppl(bant(i),j,k,l) = bppl(rant(i),j,k,l)
+              bppl(bant(i),j,k,l) = bppl(rant(i),j,k,l)
                end if
                if((bant(i).gt.0).and.(rant(i).gt.8)) then
-                bppl(bant(i),j,k,l) = aveBP(j,k,l)
+              bppl(bant(i),j,k,l) = aveBP(j,k,l)
                end if
-              end do
+               end do
            end do
          end do
          end do
@@ -2057,23 +2091,6 @@ c
         call uvrdvrr(lvis, 'antel', antel, 1)
         call uvread(lvis,preamble,data,flags,maxchan,nchan)
         if(nchan.eq.0)call bug('f','No data found')
-c
-c  If dotsys mode has been requested, check that the "tcorr" variable
-c  is present.
-
-c
-c        if(dotsys)then
-c          call uvprobvr(lvis,'tcorr',type,length,updated)
-c          if(length.ne.1)call bug('f',
-c     *          'Required info for options=auto is missing')
-c        endif
-
-c
-c  If opacity correction is requested and the met file was not
-c  given, check that the dataset has the met data.
-c
-c no met data is stored in mir; so not in the coverted miriad data
-c
 
            call uvrdvri(lvis,'nants',na,0)
 
@@ -2083,8 +2100,6 @@ c   in the plot-fitting routine.
          tscale = 24
          if(dotime) tscale = 24*3600
            call julcal(preamble(4), year, month, day) 
-c           write(*,*) 'preamble(4) year month day ', preamble(4),
-c     *    year, month, day, day*24
          sday=day
          ptime=0
          dowhile(nchan.gt.0)
@@ -2140,7 +2155,6 @@ c  Apply the Tsys correction, if needed.
 c
          tcorr = 1
          if(dotsys)call uvrdvri(lvis,'tcorr',tcorr,0)
-cc            if(tcorr.eq.0)then
                if(uvvarupd(vtsys))then
 c 
 c     Check if the size of Tsys is changed. If so, reset the parameters.
@@ -2154,6 +2168,8 @@ c
      *   call bug('f','Inconsistency in number of IFs')
          call uvgetvrr(lvis,'systemp',tsys,nants)
                                   endif
+
+
          call basant(preamble(5),i1,i2)
 c    check if the polynomial fitting parameters have been calculated.
               if((dofit.gt.0).and.(tsysplt)) then
@@ -2191,7 +2207,6 @@ c         call curvefit(nterms,a,1,antel,tsysv)
                             BP(j,k) = bppl(i,sourid,j,k)
                             end do
                             end do
-              
           call regpolfitg(nterms,xa,bp,1,antel,tsysv)
                             tsys(i) = tsysv
                          end do
@@ -2385,3 +2400,85 @@ c------------------------------------------------------------------------
         endif
 c
         end
+      SUBROUTINE REGPOL(T,Y,DELTAY,N,NR,X,B,A,CHI2)
+      IMPLICIT DOUBLE PRECISION (A-H,O-Z)
+      DIMENSION T(N),Y(N),DELTAY(N),X(NR),CHI2(NR)
+      DIMENSION B(NR,NR),A(N,NR)
+      PARAMETER(MAXN=15000)
+      DIMENSION G(MAXN)
+      COMMON /DASV04/ G
+      PARAMETER (ZERO=0.D0,ONE=1.D0)
+C compute weights G and weighted mean TBAR
+      SG=ZERO
+      TBAR=ZERO
+      DO 10 I=1,N
+        G(I)=ONE/DELTAY(I)**2
+        SG=SG+G(I)
+        TBAR=TBAR+G(I)*T(I)
+   10 CONTINUE
+      TBAR=TBAR/SG
+C compute B and A for NR=1
+      B(1,1)=ONE/SQRT(SG)
+      DO 20 I=1,N
+        A(I,1)=B(1,1)
+   20 CONTINUE
+C compute B and A for NR=2
+      IF(NR.GE.2) THEN
+        S=ZERO
+        DO 30 I=1,N
+          S=S+G(I)*(T(I)-TBAR)**2
+   30   CONTINUE
+        B(2,2)=ONE/SQRT(S)
+        B(2,1)=-B(2,2)*TBAR
+        DO 40 I=1,N
+          A(I,2)=B(2,1)+B(2,2)*T(I)
+   40   CONTINUE
+      END IF
+C compute B and A for NR greater than 2
+      IF(NR.GT.2) THEN
+        DO 100 J=3,NR
+          ALPHA=ZERO
+          BETA=ZERO
+          GAMMA2=ZERO
+          DO 50 I=1,N
+            ALPHA=ALPHA+G(I)*T(I)*A(I,J-1)**2
+            BETA=BETA+G(I)*T(I)*A(I,J-1)*A(I,J-2)
+   50     CONTINUE
+          DO 60 I=1,N
+            GAMMA2=GAMMA2+G(I)*((T(I)-ALPHA)*A(I,J-1)-
+     +             BETA*A(I,J-2))**2
+   60     CONTINUE
+          GAMMA1=ONE/SQRT(GAMMA2)
+          B(J,1)=GAMMA1*(-ALPHA*B(J-1,1)-BETA*B(J-2,1))
+          IF(J.GE.4) THEN
+            DO 70 K=2,J-2
+              B(J,K)=GAMMA1*(B(J-1,K-1)-ALPHA*B(J-1,K)-
+     +               BETA*B(J-2,K))
+   70       CONTINUE
+          END IF
+          B(J,J-1)=GAMMA1*(B(J-1,J-2)-ALPHA*B(J-1,J-1))
+          B(J,J)=GAMMA1*B(J-1,J-1)
+          DO 90 I=1,N
+            A(I,J)=B(J,1)
+            DO 80 K=2,J
+              A(I,J)=A(I,J)+B(J,K)*T(I)**(K-1)
+   80       CONTINUE
+   90     CONTINUE
+  100   CONTINUE
+      END IF
+C compute X and CHI2
+      DO 140 J=1,NR
+        X(J)=ZERO
+        CHI2(J)=ZERO
+        DO 110 I=1,N
+          X(J)=X(J)+G(I)*A(I,J)*Y(I)
+  110   CONTINUE
+        DO 130 I=1,N
+          S=ZERO
+          DO 120 K=1,J
+            S=S+A(I,K)*X(K)
+  120     CONTINUE
+          CHI2(J)=CHI2(J)+G(I)*(Y(I)-S)**2
+  130   CONTINUE
+  140 CONTINUE
+      END
