@@ -1,0 +1,556 @@
+{\eightpoint\begintt
+addhist ..... pjt .... Add history to a dataset 
+addpoly ..... pjt .... Add a polynomial to the database of polynomials 
+amphase ..... pjt .... Compute amplitude and phase. 
+ampscal ..... pjt .... Scale amplitudes of a calibrator 
+angles ...... mchw ... Convert angle in degrees/hours to a string 
+\endtt}
+{\eightpoint\begintt
+arctan ...... bpw .... Arctangent function 
+aricomp ..... pjt .... Parse a Fortran-like expression. 
+ariexec ..... pjt .... Evalute an expression, previously parsed by AriComp. 
+assert ...... pjt .... Assert a condition, otherwise bug out 
+assertf ..... pjt .... Assert a file existence condition, otherwise bug out 
+\endtt}
+{\eightpoint\begintt
+asserti2 .... pjt .... Assert a condition, otherwise bug out 
+atod ........ bpw .... Convert a string into a double precision. 
+atoi ........ bpw .... Convert a string into an integer. 
+axistype .... mchw ... Find the axis label and plane value in user friendly units 
+basant ...... jm ..... Routine to determine antennas from baseline number. 
+\endtt}
+{\eightpoint\begintt
+binfid ...... nebk ... Adjust window size and fiddle bin sizes for spacial avg'ing 
+binrd2 ...... nebk ... For vxy images, apply specified binning criterion 
+binup ....... nebk ... Bin up data in array 
+blname ...... pjt .... Returns baseline name 
+boxes ....... mjs .... Summary of region of interest routines. 
+\endtt}
+{\eightpoint\begintt
+boxinfo ..... mjs .... Determine bounding box of the region of interest. 
+boxinput .... mjs .... Read command line box specification. 
+boxmask ..... mjs .... AND in a mask to the region of interest. 
+boxnr ....... bpw .... Find in which box the input value lies. 
+boxrect ..... mjs .... Determine in a region-of-interest is rectangular. 
+\endtt}
+{\eightpoint\begintt
+boxruns ..... mjs .... Return region of interest in "runs" form. 
+boxset ...... mjs .... Set default region of interest. 
+bselect ..... mchw ... Find if given antenna is in given baseline code 
+bsrcha ...... mchw ... Search a list of strings for a particular string. 
+bsrchi ...... mchw ... Search a list of integers for a particular integer. 
+\endtt}
+{\eightpoint\begintt
+bug ......... mjs .... Give an error message, and abort if needed. 
+bugno ....... mjs .... Give a error message associated with a particular error number. 
+caclose ..... pjt .... Close a calibration set 
+cadread ..... pjt .... Read data from a calibration set 
+cadwrite .... pjt .... Write data into a calibration set 
+\endtt}
+{\eightpoint\begintt
+caerror ..... pjt .... Write a calibration I/O error 
+caflag ...... pjt .... Flag data in a calibration set 
+calget ...... jm ..... Routine to retrieve an interpolated calibrator flux. 
+caopen ...... pjt .... Open a calibration set 
+casread ..... pjt .... Read source index data 
+\endtt}
+{\eightpoint\begintt
+caswrite .... pjt .... Write source index data 
+chkpoly ..... pjt .... Check if the current polynomial is set 
+code2s ...... pjt .... Convert ascii code to integer slot code 
+convl ....... mjs .... Performs the convolution of the image with the beam. 
+convlini .... mjs .... Initialize the convolution routines. 
+\endtt}
+{\eightpoint\begintt
+corrfun ..... mchw ... Generate the gridding convolution correction function. 
+ctrl ........ jm ..... Manipulating a control panel. 
+ctrlchck .... jm ..... Check if a particular buttons has been pushed. 
+ctrlclr ..... jm ..... Clear any memory in the control panel of buttons being pressed. 
+ctrldef ..... jm ..... Define a control panel button, etc. 
+\endtt}
+{\eightpoint\begintt
+ctrlfin ..... jm ..... Close down the control panel. 
+ctrlinit .... jm ..... Initialise the panel panel. 
+ctrlopen .... jm ..... Open the panel panel. 
+ctrlset ..... jm ..... Set the value of a control panel button, etc. 
+ctrlview .... jm ..... Pop up the control panel on the workstation screen. 
+\endtt}
+{\eightpoint\begintt
+ctrlwait .... jm ..... Wait for a button to be pressed. 
+dangle ...... jm ..... Convert degrees/hours value into a formatted string. 
+dayjul ...... jm ..... Format a conventional calendar day into a Julian day. 
+deghms ...... bpw .... Write out ra and dec in hms/dms from input in degrees 
+delay ....... mjs .... Delay a specified length of time. 
+\endtt}
+{\eightpoint\begintt
+delim ....... bpw .... Make sure value is between limits 
+display ..... jm ..... Load a map onto a TV device with user specified ranges. 
+dtoa ........ bpw .... Convert a double precision value into a string. 
+enuff ....... bpw .... Page output. 
+equals ...... bpw .... Check if input equals of a number of possible strings 
+\endtt}
+{\eightpoint\begintt
+evalpoly .... pjt .... Evaluate a polynomial 
+expi ........ mchw ... Extract complex exponent of input in radians 
+fatpoint .... pjt .... Draw fat, visible points 
+fftcc ....... rjs .... Complex to complex 1D FFT routine. 
+fftcr ....... rjs .... Complex to real 1D FFT routine. 
+\endtt}
+{\eightpoint\begintt
+fftrc ....... rjs .... Real to complex 1D FFT 
+filedel ..... pjt .... Delete a file 
+findbase .... pjt .... Returns the baseline number 
+findname .... jm ..... Return the expanded name of a file. 
+findsrc ..... pjt .... Find index of word in a list of words 
+\endtt}
+{\eightpoint\begintt
+fitcdio ..... rjs .... Sequential read or write of a FITS header. 
+fitpoly ..... pjt .... Fit a polynomial 
+fitrdhda .... rjs .... Read a character value from a FITS file header. 
+fitrdhdd .... rjs .... Read a double precision value from a FITS file header. 
+fitrdhdi .... rjs .... Read an integer value from a FITS file header. 
+\endtt}
+{\eightpoint\begintt
+fitrdhdl .... rjs .... Read a logical value from a FITS file header. 
+fitrdhdr .... rjs .... Read a real value from a FITS file header. 
+fitsrch ..... rjs .... Search for a keyword in the header of an old FITS file. 
+fitwrhda .... rjs .... Write a string to a FITS file header. 
+fitwrhdd .... rjs .... Write a double precision keyword to a FITS file header. 
+\endtt}
+{\eightpoint\begintt
+fitwrhdh .... rjs .... Write a string to a FITS file header. 
+fitwrhdi .... rjs .... Write an integer value to a FITS file header. 
+fitwrhdl .... rjs .... Write a logical value to a FITS file header. 
+fitwrhdr .... rjs .... Write a real value to a FITS file header. 
+flipper ..... lgm .... Flip phases into a continuous string 
+\endtt}
+{\eightpoint\begintt
+freelun ..... mjs .... Release a logical unit, previously allocated with GetLun.
+fullname .... bpw .... Expand an environment variable in front of a filename 
+fuvclose .... rjs .... Close a UV FITS file. 
+fuvopen ..... rjs .... Open a FITS uv file. 
+fuvrdhd ..... rjs .... Get coordinate information about a UV FITS file. 
+\endtt}
+{\eightpoint\begintt
+fuvread ..... rjs .... Read visibility data from UV FITS file. 
+fuvsetlm .... rjs .... Set the ranges of parameters for a FITS UV file. 
+fuvtoff ..... rjs .... Get time offset for a UV FITS file. 
+fuvwrhd ..... rjs .... Save UV FITS file coordinate information. 
+fuvwrite .... rjs .... Write data to a UV FITS file. 
+\endtt}
+{\eightpoint\begintt
+fxyclose .... rjs .... Close a FITS image file. 
+fxyopen ..... rjs .... Open a FITS image file. 
+fxyread ..... rjs .... Read a row of data from a FITS image. 
+fxysetlm .... rjs .... Set the pixel range for scaling a FITS image. 
+fxysetpl .... rjs .... Select the plane of interest in a FITS image. 
+\endtt}
+{\eightpoint\begintt
+fxywrite .... rjs .... Write a row of a FITS image. 
+gainfact .... mchw ... Determine the self-cal gain at a given time and baseline.
+gainfin ..... mchw ... Close up the selfcal gains routines. 
+gaininit .... mchw ... Initialise the "gains" routines. 
+gaus ........ rjs .... Generate gaussianly distributed random variables. 
+\endtt}
+{\eightpoint\begintt
+gcffun ...... mchw ... Generate the gridding convolution function. 
+getants ..... pjt .... Returns the number of antennas and antenna pair 
+getbeam ..... mchw ... Get beam from image header. 
+getclo3 ..... lgm .... Return sign for closure calculation for 3 baselines 
+getfield .... bpw .... Extract a field from a string. 
+\endtt}
+{\eightpoint\begintt
+getlun ...... mjs .... Get a logical unit number. 
+getparm ..... bpw .... Extract a parameter from a string. 
+getpb ....... mchw ... Determine the primary beam associated with a image. 
+getplane .... mjs .... Read portion of a plane, specified by runs format. 
+getpoly ..... pjt .... Read in the phase-amplitude calibration fit 
+\endtt}
+{\eightpoint\begintt
+getslot ..... pjt .... Get all slots that match wildcard slotcode 
+gettok ...... bpw .... Extract a token from a string. 
+haccess ..... mjs .... Open an item of a data set for access. 
+hangle ...... jm ..... Convert hours value (in radians) into a formatted string.
+hannsm ...... jm ..... Hanning smooth a data array.. 
+\endtt}
+{\eightpoint\begintt
+hclose ...... mjs .... Close a Miriad data set. 
+hcoeffs ..... jm ..... Calculated coefficients for Hanning smoothing. 
+hdaccess .... mjs .... Finish up access to an item. 
+hdcopy ...... mjs .... Copy a headfer variable from one data set to another. 
+hdelete ..... mjs .... Delete an item from a data-set. 
+\endtt}
+{\eightpoint\begintt
+hdprobe ..... mjs .... Determine characteristics of a header variable. 
+hdprsnt ..... mjs .... Determine if a header variable is present. 
+hisappn ..... pjt .... Append history from a file to an open dataset 
+hisclose .... mjs .... This closes the history file. 
+hisinput .... jm ..... Copy task input parameters to a history file. 
+\endtt}
+{\eightpoint\begintt
+hisopen ..... mjs .... Open the history file. 
+hisread ..... mjs .... Read a line of text from the history file. 
+hiswrite .... mjs .... Write a line of text to the history file. 
+hopen ....... mjs .... Open a data set. 
+hread ....... mjs .... Hwrite -- Read and write items. 
+\endtt}
+{\eightpoint\begintt
+hsize ....... mjs .... Determine the size (in bytes) of an item. 
+hsorta ...... jm ..... Perform an index heapsort on a character string array. 
+hsortad ..... jm ..... Perform a dual index heapsort on a character string array.
+hsortar ..... jm ..... Perform a dual index heapsort on a character string array.
+hsortd ...... jm ..... Perform an indexed heapsort on a double precision array. 
+\endtt}
+{\eightpoint\begintt
+hsorti ...... jm ..... Perform an indexed heapsort on a integer array. 
+hsortr ...... jm ..... Perform an indexed heapsort on a real array. 
+hsortrr ..... jm ..... Perform a dual index heapsort on a real array. 
+imminmax .... jm ..... Return Miriad image minimum and maximum value. 
+imscale ..... jm ..... Autoscale a map. 
+\endtt}
+{\eightpoint\begintt
+indek ....... bpw .... Get position of substring in a string, returning length if not fo 
+inipoly ..... pjt .... Forced initialize polynomials 
+intpini ..... mjs .... Initialize the interpolation i/o routines. 
+intprd ...... mjs .... Read a row of interpolated data 
+intprini .... mjs .... Reinitialize the interpolation i/o routines. 
+\endtt}
+{\eightpoint\begintt
+isalnum ..... bpw .... Return true if char is an alphanumeric character 
+isalpha ..... bpw .... Return true if char is a letter (a-z, A-Z) 
+iscoords .... bpw .... Test if input string can represent coordinates and convert it 
+isdigit ..... bpw .... Return true if char is 0, 1, 2, 3, 4, 5, 6, 7, 8 or 9 
+islower ..... bpw .... Return true if char is a lowercase letter (a-z) 
+\endtt}
+{\eightpoint\begintt
+ismax ....... pjt .... Return index of maximum value of a real array. 
+ismin ....... pjt .... Return index of minimum value of a real array. 
+isrchfge .... pjt .... Search real vector for target. 
+isrchfgt .... pjt .... Search real vector for target. 
+isrchfle .... pjt .... Search real vector for target. 
+\endtt}
+{\eightpoint\begintt
+isrchflt .... pjt .... Search real vector for target. 
+isrchieq .... pjt .... Search integer vector for target. 
+isrchige .... pjt .... Search integer vector for target. 
+isrchigt .... pjt .... Search integer vector for target. 
+isrchile .... pjt .... Search integer vector for target. 
+\endtt}
+{\eightpoint\begintt
+isrchilt .... pjt .... Search integer vector for target. 
+isrchine .... pjt .... Search integer vector for target. 
+isupper ..... bpw .... Return true if char is an uppercase letter (A-Z) 
+itime ....... rjs .... Returns the present date. 
+itoa ........ bpw .... Convert an integer into a string. 
+\endtt}
+{\eightpoint\begintt
+j1xbyx ...... mchw ... Calculate j1(x)/x 
+julday ...... jm ..... Format a Julian day into a conventional calendar day. 
+keya ........ pjt .... Retrieve a character string from the command line. 
+keyd ........ pjt .... Retrieve a double precision from the command line. 
+keyf ........ pjt .... Retrieve a filename string (with wildcards) from the command line 
+\endtt}
+{\eightpoint\begintt
+keyfin ...... pjt .... Finish access to the 'key' routines. 
+keyi ........ pjt .... Retrieve an integer from the command line. 
+keyini ...... pjt .... Initialise the `key' routines. 
+keyl ........ pjt .... Retrieve a logical value from the command line 
+keyprsnt .... pjt .... Determine if a keyword is present on the command line. 
+\endtt}
+{\eightpoint\begintt
+keyr ........ pjt .... Retrieve a real value from the command line. 
+lcase ....... bpw .... Convert a string to lower case. 
+len1 ........ bpw .... Determine the unpadded length of a character string. 
+linetype .... bpw .... Read standard linetype keyword and transfer information to uvio 
+linlsq ...... bpw .... Return parameters of a straight line fit 
+\endtt}
+{\eightpoint\begintt
+llsqu ....... bpw .... Linear least squares fitting 
+logclose .... bpw .... Finish up with the log file. 
+logopen ..... bpw .... Initialise the log file routines. 
+logwrit ..... bpw .... Write a line to the log file. 
+logwrite .... bpw .... Write a line to the log file. 
+\endtt}
+{\eightpoint\begintt
+lsqfill ..... pjt .... Add sums-of-squares to least squares matrix 
+match ....... bpw .... Check if a string occurs in a list of valid strings 
+matchdcd .... bpw .... Check if a string occurs in a list of valid strings, with extras 
+miniflip .... lgm .... Flip phases into a continuous string 
+mitoa ....... bpw .... Convert many integers into a string. 
+\endtt}
+{\eightpoint\begintt
+mkeya ....... pjt .... Retrieve multiple character values from the command line.
+mkeyf ....... pjt .... Retrieve multiple filenames. 
+mkeyi ....... pjt .... Retrieve multiple integer values from the command line. 
+mkeyr ....... pjt .... Retrieve multiple real values from the command line. 
+model ....... mchw ... Calculate model visibilities, given a model image. 
+\endtt}
+{\eightpoint\begintt
+modelini .... mchw ... Ready the uv data file for processing by the Model routine. 
+nel ......... bpw .... Return the number used values in an array 
+nelc ........ bpw .... Return the length of the string 
+nextpow2 .... mchw ... Find the next power of two. 
+nfig ........ bpw .... Find number of digits in a number 
+\endtt}
+{\eightpoint\begintt
+nllsqu ...... bpw .... Nonlinear least squares fitting 
+oneamp ...... mchw ... Convert visibility to amp/phase or real/imag 
+options ..... bpw .... Get command line options. 
+output ...... bpw .... Output a line of text to the user. 
+packi2 ...... mjs .... Pack normal integers into 16 bit integers 
+\endtt}
+{\eightpoint\begintt
+padleft ..... bpw .... Right justify a string to length characters. 
+pgerase ..... pjt .... Erase the screen - and nothing more 
+pghline ..... mchw ... Histogram line plot for pgplot. 
+phase ....... mchw ... Extract phase in radians from complex number 
+phaseamp .... pjt .... Convert to phase/amplitude 
+\endtt}
+{\eightpoint\begintt
+phasedis .... pjt .... Find consistent antenna phases 
+phiwrap ..... pjt .... Returns the number of 2pi wraps 
+plotone ..... lgm .... Plot one or more set of x,y points on a single graph 
+powell ...... bpw .... Minimization of a function, without derivative information. 
+prime ....... jm ..... Returns a prime less than or equal to N. 
+\endtt}
+{\eightpoint\begintt
+progname .... pjt .... Return name of the program currently running 
+prompt ...... bpw .... Read input from the user 
+putplane .... mjs .... Writes a portion of a plane, specified by runs format. 
+putpoly ..... pjt .... Write out the phase-amplitude calibration fit 
+putruns ..... mjs .... Writes the blanking file of an image. 
+\endtt}
+{\eightpoint\begintt
+putsrc ...... pjt .... Write out source stuff 
+pxtotv ...... jm ..... Convert image pixels to TV device positions. 
+r8tyx ....... mchw ... Radix, 8 iterations 
+radhms ...... bpw .... Write out ra and dec in hms/dms from input in radians 
+randset ..... rjs .... Set random number generator seed. 
+\endtt}
+{\eightpoint\begintt
+rangle ...... jm ..... Convert degrees value (in radians) into a formatted string. 
+rdhda ....... mjs .... Read a string-valued header variable. 
+rdhdc ....... mjs .... Read a complex-valued header variable. 
+rdhdd ....... mjs .... Read a double precision-valued header variable. 
+rdhdi ....... mjs .... Read an integer-valued header variable. 
+\endtt}
+{\eightpoint\begintt
+rdhdia ...... pjt .... Read an integer array header variable 
+rdhdr ....... mjs .... Read a real-valued header variable. 
+readbrk ..... pjt .... Read breakpoint data 
+readset ..... pjt .... Read in data from a calibration set 
+remext ...... bpw .... Remove the extension part of a filename 
+\endtt}
+{\eightpoint\begintt
+rfac ........ jm ..... Calculate n factorial. 
+rpolyzr ..... bpw .... Roots of a real polynomial. 
+rtfmt ....... bpw .... Construct a format during run time 
+rtoa ........ bpw .... Convert a real value into a string. 
+s2code ...... pjt .... Convert integer slot code to 4 character slot code 
+\endtt}
+{\eightpoint\begintt
+scalunit .... pjt .... Set calibration unit conversion mode 
+scanchar .... bpw .... Scan a string for a character. 
+scrclose .... mjs .... Close and delete a scratch file. 
+scropen ..... mjs .... Open a scratch file. 
+scrread ..... mjs .... Read real data from a scratch file. 
+\endtt}
+{\eightpoint\begintt
+scrwrite .... mjs .... Write real data to the scratch file. 
+selapply .... bpw .... Call the appropraite uv routine to set the uv selection. 
+selinput .... bpw .... Get the users uv selection specification. 
+selprobe .... bpw .... Check if a particular uv data has been selected. 
+setsflag .... pjt .... Set flags along time axis according to selected sources 
+\endtt}
+{\eightpoint\begintt
+sfetra ...... bpw .... Transformation between equatorial and other coordinate systems 
+shadowed .... bpw .... ... 
+solve ....... pjt .... Solve a matrix 
+sortidxa .... pjt .... Index sort of a an array of character values 
+sortidxd .... pjt .... Index sort of a an array of double precision values 
+\endtt}
+{\eightpoint\begintt
+sortidxi .... pjt .... Index sort of a an array of integer values 
+sortidxr .... pjt .... Index sort of a an array of real values 
+spanchar .... bpw .... Skip over a particular character. 
+squares ..... pjt .... Compute sums-of-squares 
+substr ...... bpw .... Returns the n-th substring from the input string 
+\endtt}
+{\eightpoint\begintt
+tabflux ..... jm ..... Return the flux of a calibrator source at an input freq. 
+taver ....... pjt .... Scalar averaging an array 
+teken ....... bpw .... Returns the sign of a real value 
+title ....... mchw ... Write title in standard format into LogFile. 
+todayjul .... jm ..... Format the current day into a Julian day. 
+\endtt}
+{\eightpoint\begintt
+token ....... mchw ... Obtain token delimited by _ ()[] 
+trnfin ...... mchw ... Close up the transpose routines. 
+trnini ...... mchw ... Initialise the transpose routines. 
+trnread ..... mchw ... Read back a plane of the reordered cube. 
+trnwrite .... mchw ... Write a plane of the cube in its initial order. 
+\endtt}
+{\eightpoint\begintt
+tvchan ...... jm ..... Display a given image channel. 
+tvchar ...... jm ..... Get characteristics of the display device. 
+tvclose ..... jm ..... Close the display device. 
+tvcursor .... jm ..... Read the location of the image display device's cursor. 
+tveras ...... jm ..... Erase a channel on the image display device. 
+\endtt}
+{\eightpoint\begintt
+tvflush ..... jm ..... Flush data to the display device. 
+tvline ...... jm ..... Write a raster line to the image display device. 
+tvlocal ..... jm ..... Put the display device into an interactive loop with the user. 
+tvlut ....... jm ..... Load a image display device's lookup table. 
+tvopen ...... jm ..... Open an image display device. 
+\endtt}
+{\eightpoint\begintt
+tvreset ..... jm ..... Reset the image display device. 
+tvscrl ...... jm ..... Scroll a display on a TV device. 
+tvselpt ..... jm ..... Interactive point/range selection on a display device. 
+tvtext ...... jm ..... Write a character string to the image display device. 
+tvtopx ...... jm ..... Convert TV device position to image pixels. 
+\endtt}
+{\eightpoint\begintt
+tvview ...... jm ..... Change the viewing window to a subportion of image memory.
+tvwind ...... jm ..... Set/read current window (viewport) of a display device. 
+tvzoom ...... jm ..... Zoom a region of an image on a TV device. 
+txtclose .... bpw .... Close a text file 
+txtopen ..... bpw .... Open a text file 
+\endtt}
+{\eightpoint\begintt
+txtopena .... nebk ... Open a text file for appendation. 
+txtread ..... bpw .... Read a line from a text file 
+txtwrite .... bpw .... Write a line to a text file 
+ucase ....... bpw .... Convert string to upper case. 
+ucursor ..... mjs .... Check Ultra cursor pos and 'exit' button state. 
+\endtt}
+{\eightpoint\begintt
+udef ........ mjs .... Set up and display Ultra control panel. 
+ufin ........ mjs .... Finish Ultra frame buffer and control panel. 
+uinit ....... mjs .... Indicate to ultra where control panel host is. 
+ulocal ...... mjs .... Allow user to fiddle the ultra frame buffer. 
+uniform ..... rjs .... Return uniformly distributed random variables. 
+\endtt}
+{\eightpoint\begintt
+unpacki2 .... mjs .... Unpack 16 bit integers into normal integers 
+uvclose ..... rjs .... Close a uv file 
+uvcopyvr .... rjs .... Copy variables from one uv file to another. 
+uvdatget .... mchw ... Get information about the UVDat routines. 
+uvdatinp .... mchw ... Get command line uv data parameters. 
+\endtt}
+{\eightpoint\begintt
+uvdatprb .... mchw ... Determine what data have been selected in the uvdat routines. 
+uvdatrd ..... mchw ... Read uv data from a multi-file set. 
+uvfit1 ...... mchw ... Fit a constant to an "object" returned by uvinfo. 
+uvfit2 ...... mchw ... Fit a line to an "object" returned by uvinfo. 
+uvflgwr ..... rjs .... Write uv flags after a read. 
+\endtt}
+{\eightpoint\begintt
+uvgetvr ..... rjs .... Get the values of a uv variable. 
+uvinfo ...... rjs .... Get information about the last data read with uvread. 
+uvnext ...... rjs .... Skip to the next uv record. 
+uvopen ...... rjs .... Open a uv data file. 
+uvprobvr .... rjs .... Return information about a variable. 
+\endtt}
+{\eightpoint\begintt
+uvputvr ..... rjs .... Write the value of a uv variable. 
+uvrdvr ...... rjs .... Return the value of a UV variable. 
+uvread ...... rjs .... Read in some uv correlation data. 
+uvrewind .... rjs .... Reset the uv data file to the start of the file. 
+uvscan ...... rjs .... Scan a uv file until a variable changes. 
+\endtt}
+{\eightpoint\begintt
+uvselect .... rjs .... Select or reject uv data. 
+uvset ....... rjs .... Set up the uv linetype, and other massaging steps. 
+uvtrack ..... rjs .... Set flags and switches associated with a uv variable. 
+uvupdate .... rjs .... Check whether any "important" variables have changed. 
+uvwdatrd .... mchw ... Read wideband correlator data. 
+\endtt}
+{\eightpoint\begintt
+uvwread ..... rjs .... Read in the wideband uv correlation data. 
+uvwrite ..... rjs .... Write correlation data to a uv file. 
+uvwwrite .... rjs .... Write wide-band correlation data to a uv file. 
+vectav ...... pjt .... Vector averaging with lookup index table 
+wedge ....... jm ..... Load a wedge onto a TV device with user specified ranges.
+\endtt}
+{\eightpoint\begintt
+whenfeq ..... pjt .... Return locations equal to target. 
+whenfge ..... pjt .... Return locations greater than or equal to the target. 
+whenfgt ..... pjt .... Return locations greater than the target. 
+whenfle ..... pjt .... Return locations less than or equal to the target. 
+whenflt ..... pjt .... Return locations less than the target. 
+\endtt}
+{\eightpoint\begintt
+whenfne ..... pjt .... Return locations not equal to target. 
+whenige ..... pjt .... Return locations greater than or equal to the integer target. 
+whenigt ..... pjt .... Return locations greater than the integer target. 
+whenile ..... pjt .... Return locations less than or equal to the integer target.
+whenilt ..... pjt .... Return locations less than the target. 
+\endtt}
+{\eightpoint\begintt
+width ....... mchw ... Calculate wideband channel width 
+win ......... pjt .... Subroutine package for interactive plots, using PGPLOT. 
+wincoord .... pjt .... Change PGPLOT coordinates to a window 
+wincurs ..... pjt .... Get a character from a window 
+winloc ...... pjt .... Set window screen locations 
+\endtt}
+{\eightpoint\begintt
+winnear ..... pjt .... Return the nearest point 
+winnorm ..... pjt .... Normalize plots and add a margin 
+winnormy .... pjt .... Normalize plots and add a margin 
+winpick ..... pjt .... Set the active windows 
+winpick1 .... pjt .... Set an active window 
+\endtt}
+{\eightpoint\begintt
+winpoint .... pjt .... Draw points 
+winqscal .... pjt .... Queries set window user scales for selected window 
+winscale .... pjt .... Set window user scales 
+winscalx .... pjt .... Set window user X-scales 
+winscaly .... pjt .... Set window user Y-scales 
+\endtt}
+{\eightpoint\begintt
+winset ...... pjt .... Set max unzoomed window matrix 
+winshow ..... pjt .... Put the plots onto the screen 
+winsize ..... pjt .... Size windows to the data 
+winsymb ..... pjt .... Return win2pgplot symbol marker 
+wintoscr .... pjt .... Convert a point to screen coordinates 
+\endtt}
+{\eightpoint\begintt
+wintousr .... pjt .... Convert a point to screen coordinates 
+wrhda ....... mjs .... Write a string-valued header variable. 
+wrhdc ....... mjs .... Write a complex-valued header variable. 
+wrhdd ....... mjs .... Write a double precision valued header variable. 
+wrhdi ....... mjs .... Write an integer valued header variable. 
+\endtt}
+{\eightpoint\begintt
+wrhdia ...... pjt .... Write an integer array header variable 
+wrhdr ....... mjs .... Write a real valued header variable. 
+writbrk ..... pjt .... Write break point data 
+writeset .... pjt .... Write out data to a calibration set (timesorted) 
+writflag .... pjt .... Write out flags to a calibration data set 
+\endtt}
+{\eightpoint\begintt
+xyclose ..... mjs .... Close up an image file. 
+xyflgrd ..... mjs .... Read image masking information (flags format). 
+xyflgwr ..... mjs .... Write image masking information (flags format). 
+xymkrd ...... mjs .... Read the masking information for an image (runs format). 
+xymkwr ...... mjs .... Write image masking information (runs format). 
+\endtt}
+{\eightpoint\begintt
+xyopen ...... mjs .... Open an image file. 
+xyread ...... mjs .... Read a row from an image. 
+xysetpl ..... mjs .... Set which plane of a cube is to be accessed. 
+xywrite ..... mjs .... Write a row to an image. 
+zed ......... nebk ... Zeeman fit of I spectrum to V spectrum. 
+\endtt}
+{\eightpoint\begintt
+zedfudge .... nebk ... Calculate sigma fudge factor, for Zeeman experiments. 
+zedfunc ..... nebk ... Return Zeeman maximum likelihood chi**2 value. 
+zedihat ..... nebk ... Calculate Zeeman estimate of a true I spectrum 
+zedrho ...... nebk ... Estimate Zeeman splitting, for spectrally correlated noise. 
+zedscale .... nebk ... Determine conversion factor from channels to magnetic field. 
+\endtt}
+{\eightpoint\begintt
+zedvhat ..... nebk ... Calculate Zeeman estimate of a true V spectrum 
+\endtt}
