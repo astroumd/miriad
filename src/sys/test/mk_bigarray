@@ -1,0 +1,36 @@
+#! /bin/csh -f
+#
+#  make some big array, with lots of antennae, test invert
+#  with it, and uvio
+#  
+
+set tmp=vis$$
+set nant=20
+set imsize=2048
+set cell=0.2
+set fits=1
+set pnoise=10
+set gnoise=10
+
+foreach _a ($*)
+   set $_a
+end
+
+nemoinp 1:$nant |\
+  tabmath - - 'ranu(-1000,1000),ranu(-1000,1000),ranu(-1000,1000)' all > $tmp.ant
+
+time uvgen out=$tmp source=$MIRCAT/point.source ant=$tmp.ant \
+  corr=1,1,100.0,1000.0   harange=-1,1,3 pnoise=$pnoise gnoise=$gnoise
+mv $tmp.ant $tmp
+
+if ($fits) then
+  time fits in=$tmp out=$tmp/uv.fits op=uvout
+  time fits in=$tmp/uv.fits out=$tmp/uv.new op=uvin
+  uvlist vis=$tmp        recnum=10
+  uvlist vis=$tmp        recnum=100000000 | tail
+  uvlist vis=$tmp/uv.new recnum=10
+  uvlist vis=$tmp/uv.new recnum=100000000 | tail
+endif
+
+time invert vis=$tmp map=$tmp/try.mp beam=$tmp/try.bm cell=$cell imsize=$imsize
+
