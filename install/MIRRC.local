@@ -22,3 +22,5 @@ else
 endif
 alias pyramid python -i $MIR/src/scripts/python/Miriad.py
 
+
+alias mircvsupd '(cd $MIR; cvs update -d)'
