@@ -75,6 +75,7 @@ c    rjs  06jan98 Change uvgetvrr to uvrdvrr when getting chi.
 c    rjs  06jan98 Change in uvlkcorr to sidestep a compiler bug on IRIX machines.
 c    rjs  26mar98 Comment change only.
 c    rjs   6sep99 Added "lflag" parameter to "line" keyword.
+c    pjt  18jan03 extra char for f2c interfaces
 c
 c  User-Callable Routines:
 c    uvDatInp(key,flags)
@@ -255,7 +256,7 @@ c  Output:
 c    nPol	The number of polarisations requested.
 c    Pols	The desired polarisations.
 c------------------------------------------------------------------------
-	character type*2
+	character type*3
 c
 c  Externals.
 c
