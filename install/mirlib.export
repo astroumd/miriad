@@ -2,9 +2,10 @@
 #
 #  Generate files for subsystems like:  $AIPS++/code/aips/mirlib
 #  (though note as of this writing, summer 2004) this is still the old MIR3
-#  We assume here the new MIR4 version.
+#  We assume here the new MIR4 version, this script produces unpredictable
+#  things for MIR3
 #
-#  TODO:     Some linux dependant commands/options in here
+#  TODO:     Some linux dependant commands/options in here in the build/compile
 
 if ($?MIR == 0) then
   echo MIR is not defined, you need to have a running MIRIAD to clone the mirlib library
@@ -37,7 +38,7 @@ set mkfl=(Makefile)
 
 set cc=gcc
 #set cflags=(-g -Wall)
-set cflags=(-g -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -fPIC)
+set cflags=(-g -Wall -W -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -fPIC)
 
 # clone files from the $MIR tree
 
