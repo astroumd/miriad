@@ -268,7 +268,7 @@ c***********************************************************************
       REAL g(maxx,ny),c1,c2,eps,h
 c-
       INTEGER i,j
-      DOUBLE PRECISION x,y,eps2,x1,y1,eps21,a,b,ss,ar2,h1,func1
+      DOUBLE PRECISION x,y,eps2,a,b,ss,ar2,h1,func1
       EXTERNAL func1
       COMMON /cpotfft/ar2,h1
 c
