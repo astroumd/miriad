@@ -24,9 +24,10 @@ c--
 c History
 c  mchw 28may96  Original version.
 c  mchw 12jul02  Added documentation and key routine input.
+c  mchw 01nov02  Changed format for ATA.
 c----------------------------------------------------------------------c
         character version*(*)
-        parameter(version='version 12jul02')
+        parameter(version='version 01nov02')
 	real x, y, cell
 	integer n,k,row
 c
@@ -40,9 +41,7 @@ c
 	  y =row*cell*0.8660254
 	  do k = -(2*n-abs(row)-2),(2*n-abs(row)-2),2
 	    x =k*cell*0.5
-	    print('(f7.2,a,f7.2)'), x, ',', y
+	    print('(f9.2,a,f9.2)'), x, ',', y
 	  enddo
 	enddo
 	end
-
-
