@@ -362,6 +362,7 @@ if (-e $install_root/do_patch) then
     echo LOCAL install patches for $newdir
     echo $newdir > $MIR/DATE
     ./do_patch
+    source $MIR/MIRRC.local
     # mkdir -p $MIR/local/install
 	#  oops, what about the directories.....
     # cp -pr * $MIR/local/install
