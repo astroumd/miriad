@@ -155,10 +155,10 @@ c
             if(rxif==2) rxc='_rx2'
 c
         if(rxif==-2) then 
+             write(*,*) 'rxif = 0 -> 230 band'
+             write(*,*) 'rxif = 1 -> 340 band'
+             write(*,*) 'rxif = 2 -> 690 band'
              call bug('f','No defualt for rxif!')
-             write(*,*) 'rxif=0 -> 230 band'
-             write(*,*) 'rxif=1 -> 340 band'
-             write(*,*) 'rxif=2 -> 690 band' 
              end if
          if(rxif.lt.-1.or.rxif.gt.2) 
      *   call bug('f','Invalid Receiver ID.')
