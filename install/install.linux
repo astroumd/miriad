@@ -86,6 +86,8 @@ endif
 if ($hosttype == sunos) set hosttype=sun4sol
 #       patch for the new sun blade ?
 if ($hosttype == SlnOS) set hosttype=sun4sol
+#	and for those who have failed it all....
+if ($hosttype == SunOS) set hosttype=sun4sol
 
 #
 echo MIRIAD installation for $hosttype
