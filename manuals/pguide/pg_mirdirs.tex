@@ -1,0 +1,121 @@
+%------------------------------------------------------------------------
+% Appendix - MIRIAD Directories
+%------------------------------------------------------------------------
+%  History
+%
+%  --mar91 mjs  Original version.
+%  23jun91 mjs  Added directories for WIP program.
+%
+%------------------------------------------------------------------------
+
+The following gives a brief description of each of the standard MIRIAD
+directories.  It is given in a UNIX notation, but the equivalent VMS
+directory names are the obvious translations.
+
+Much disagreement, some of it good natured, has taken place over what
+MIRIAD's directory structure should look like.  The structure given
+below might be considered a ``standard'', but there are local variations
+(mostly small) at the various MIRIAD sites.  The general rule is
+``what works for you is legal, but the fewer differences, the better'':
+the critical directories are {\bf \$MIR/src} and {\bf \$MIR/cat}, which
+must be maintained in a manner so as to ensure the smooth transmission
+of source code when tarfiles are transmitted to the various sites (the
+tarfiles update specific code in specific directories, all done by
+name).  Non-volatile directories (manuals and borrowed code) change too
+infrequently to merit strict controls, and the contents of most other
+directories are loaded on-site and never transmitted.
+
+The entire structure is intended to be usable on all supported machines.
+Empty directories (e.g., the \$MIR/bin/u2 directory at a Sun site) require
+little space, and installations supporting different hardware (e.g., both
+Sun3 and Sun4) need this subdirectory structure for executables and 
+libraries.
+
+The {\bf \$MIR/cat} directory originated with the need to store catalogues of
+calibrators, plus other related information.  Unfortunately, it has become
+a repository for needed files that don't really fit anywhere else.
+
+MIRIAD's home directory is {\bf \$MIR}.  It is commonly the home
+directory of the local MIRIAD account, though this is not required.
+Subdirectories under {\bf \$MIR} are:
+\vskip .2in  
+\tabskip=.5em plus2em minus.5em
+\halign{#&#&#&#\hfil\cr
+
+adm/&\ldrfill&\ldrfill&For administrative use.\cr
+\ldrfill&import/&\ldrfill&A place for imported tarfiles.\cr
+\ldrfill&export/&\ldrfill&A place for exported tarfiles.\cr
+\ldrfill&submit/&\ldrfill&A place for submitted code.\cr
+bin/&\ldrfill&\ldrfill&Binaries (executables).\cr
+\ldrfill&sun3/&\ldrfill&The binary directory for Sun3s.\cr
+\ldrfill&sun4/&\ldrfill&The binary directory for Sun4s.\cr
+\ldrfill&u2/&\ldrfill&The binary directory for Cray2.\cr
+\ldrfill&vms/&\ldrfill&The binary directory for VMS.\cr
+\ldrfill&convex/&\ldrfill&The binary directory for Convex.\cr
+borrow/&\ldrfill&\ldrfill&Borrowed code.\cr
+\ldrfill&hdf/&\ldrfill&HDF subroutines.\cr
+\ldrfill&linpack/&\ldrfill&LINPACK subroutines.\cr
+\ldrfill&pgplot/&\ldrfill&PGPLOT subroutines.\cr
+cat/&\ldrfill&\ldrfill&Catalogues of calibrators, et. al.\cr
+doc/&\ldrfill&\ldrfill&Volatile documentation.\cr
+\ldrfill&prog/&\ldrfill&Programs, scripts, and commands.\cr
+\ldrfill&subs/&\ldrfill&Subroutines.\cr
+\ldrfill&misc/&\ldrfill&Anything else.\cr
+lib/&\ldrfill&\ldrfill&Internal libraries (*.a files).\cr
+\ldrfill&sun3/&\ldrfill&Sun3 libraries.\cr
+\ldrfill&sun4/&\ldrfill&Sun4 libraries.\cr
+\ldrfill&u2/&\ldrfill&Cray2 libraries.\cr
+\ldrfill&vms/&\ldrfill&vms libraries.\cr
+\ldrfill&convex/&\ldrfill&Convex libraries.\cr
+manuals/&\ldrfill&\ldrfill&Paper documentation.\cr
+\ldrfill&covers/&\ldrfill&PostScript files for MIRIAD manual covers.\cr
+\ldrfill&eguide/&\ldrfill&MIRIAD Executable Modules.\cr
+\ldrfill&hdf/&\ldrfill&HDF manual.\cr
+\ldrfill&linpack/&\ldrfill&LINPACK documentation.\cr
+\ldrfill&mxds/&\ldrfill&MIRIAD XDS manual.\cr
+\ldrfill&pgplot/&\ldrfill&PGPLOT manual.\cr
+\ldrfill&pguide/&\ldrfill&MIRIAD Programmer's Guide.\cr
+\ldrfill&sguide/&\ldrfill&MIRIAD Subroutine Library.\cr
+\ldrfill&uguide/&\ldrfill&MIRIAD User's Guide and Cookbook.\cr
+news/&\ldrfill&\ldrfill&Future ``news'' facility.\cr
+oldsrc/&\ldrfill&\ldrfill&A place to back off old source.\cr
+src/&\ldrfill&\ldrfill&Main source code directory.\cr
+\ldrfill&inc/&\ldrfill&Universally available include files.\cr
+\ldrfill&prog/&\ldrfill&Tasks.\cr
+\ldrfill&\ldrfill&analysis/&Analysis.\cr
+\ldrfill&\ldrfill&calib/&Calibration.\cr
+\ldrfill&\ldrfill&convert/&Data conversion.\cr
+\ldrfill&\ldrfill&deconv/&Deconvolution.\cr
+\ldrfill&\ldrfill&disp/&TV and plotting programs.\cr
+\ldrfill&\ldrfill&map/&Mapping, mosaicing.\cr
+\ldrfill&\ldrfill&misc/&Miscellaneous.\cr
+\ldrfill&\ldrfill&vis/&General visibility handling.\cr
+\ldrfill&subs/&\ldrfill&Universally available subroutines.\cr
+\ldrfill&spec/&\ldrfill&Tasks requiring ``special'' handling to load.\cr
+\ldrfill&\ldrfill&mxds/&MIRIAD version of NCSA's XDS.\cr
+\ldrfill&\ldrfill&msss/&MIRIAD version of AIPS' SSS.\cr
+\ldrfill&\ldrfill&hcconv/&Convert ``newhat'' RALINT data (Sun).\cr
+\ldrfill&\ldrfill&uvdisplay/&Display uv Data under SunView.\cr
+\ldrfill&\ldrfill&uvhat/&Convert RALINT data (VMS).\cr
+   &   &      &Convert ``oldhat'' RALINT data (UNIX).\cr
+\ldrfill&\ldrfill&wip/&Interactive graphics program (using PGPLOT).\cr
+   &   &      &Subdirectory structure is below.\cr
+\ldrfill&\ldrfill&\ldrfill&wipdoc/\cr
+\ldrfill&\ldrfill&\ldrfill&wipsrc/\cr
+\ldrfill&\ldrfill&\ldrfill&wipsrc/branch/\cr
+\ldrfill&\ldrfill&\ldrfill&wipsrc/cpgsrc/\cr
+\ldrfill&\ldrfill&\ldrfill&wipsrc/drivers/\cr
+\ldrfill&\ldrfill&\ldrfill&wipsrc/images/\cr
+\ldrfill&\ldrfill&\ldrfill&wipsrc/include/\cr
+\ldrfill&\ldrfill&\ldrfill&wipsrc/interact/\cr
+\ldrfill&\ldrfill&\ldrfill&wipsrc/plot/\cr
+\ldrfill&\ldrfill&\ldrfill&wipsrc/sysdepunix/\cr
+\ldrfill&scripts/&\ldrfill&Scripts and Commands.\cr
+\ldrfill&\ldrfill&sun/&Sun scripts.\cr
+\ldrfill&\ldrfill&u2/&Cray2 scripts.\cr
+\ldrfill&\ldrfill&vms/&vms commands.\cr
+\ldrfill&\ldrfill&convex/&Convex commands.\cr
+\ldrfill&tools/&\ldrfill&Tools.\cr
+testdata/&\ldrfill&\ldrfill&A place for test data.\cr
+tmp/&\ldrfill&\ldrfill&Internal ``tmp'' directory.\cr
+}
