@@ -10,23 +10,33 @@ import sys, os, time, string, math
 #   some global variables (should class this up and hide the data)
 logger = ""
 
-#   set the logfile for the miriad() function
-def setlogger(log):
-    global logger
-    logger = '>> %s 2>&1' % log
-    zap(log)
-
-#   remove a possibly existing miriad dataset (no wildcards)
-def zap(file):
-    if os.path.isdir(file):
-        os.system('rm -rf ' + file)
-
-#   remove all datasets (wildcards now allowed via the shell)
-def zap_all(files):
-    os.system('rm -rf ' + files)
-
-#   execute a miriad 'command' (a list of strings) and accumulate a log 
 def miriad(command,log=0):
+    """
+    miriad        execute a miriad 'command' (as a list of strings) and accumulate a log
+                  either from the default logfile (see setlogger) or by overriding using
+                  log=
+                  Example:    miriad(['itemize','in=ngc1365.cm'],log='ngc1365.log)
+
+    Other commands available in PYRAMID are:
+    
+    doc           show specific help for a MIRIAD task , e.g. doc('invert')
+    keys          show all keywords for a MIRIAD task , e.g. keys('invert')
+    setlogger     change the default logger for the miriad() command, e.g. setlogger('rubbish.log')
+
+    zap           delete a miriad dataset (checked with existence), e.g. zap('ngc1365.cm')
+    zap_all       delate a set of data (unchecked), e.g. zap_all('ncg1365*')
+    grepcmd       Return the Nth word on the first occurence of a string match from a command
+                  e.g.:    grepcmd('histo in=ngc1365.cm','Maximum',2)
+    greplog       Return the Nth word on the first occurence of a string match from a logfile
+                  e.g.:    grepcmd('ngc1365.log','naxis1',2)
+                  Notice that the index N starts at 0!!
+
+    Some useful classes defined via PYRAMID:
+
+    Timer         mark and compute CPU times between sections of the code
+    """
+    
+    
     global logger
     if (log != 0):
         mycmd = cmd(command) + '> %s 2>&1' % log
@@ -34,37 +44,54 @@ def miriad(command,log=0):
         mycmd = cmd(command) + logger;
     return os.system(mycmd)
 
-#   convert a list of strings to a command string
+
+
+def setlogger(log):
+    """ set the logfile for the miriad() function"""
+    global logger
+    logger = '>> %s 2>&1' % log
+    zap(log)
+
+def zap(file):
+    """ remove a possibly existing miriad dataset (no wildcards)"""
+    if os.path.isdir(file):
+        os.system('rm -rf ' + file)
+
+def zap_all(files):
+    """ remove all datasets (wildcards now allowed via the shell)"""
+    os.system('rm -rf ' + files)
+
 def cmd(cmdlist):
+    """convert a list of strings to a command string"""
     str = cmdlist[0] 
     for arg in cmdlist[1:]:
         str = str + ' ' +  arg
     print str
     return str
 
-#   show a little help....
 def doc(task):
+    """show a little help on a miriad task...."""
     os.system('doc %s | less' % task)
 
-#   show just the keywords for a program
 def keys(task):
+    """show just the keywords for a miriad task"""
     os.system('doc %s | grep ^Keyword' % task)
 
-#   save CPU info in predefined global slots
 def timer(slot):
+    """ save CPU info in predefined global slots"""
     global timet, timec
     timec[slot] = time.clock()
     timet[slot] = time.time()
 
-#   create a string to print human readable CPU info between slots 
 def cpulen(a,b):
+    """create a string to print human readable CPU info between slots """
     st = '%.3f ' % (timet[b]-timet[a])
     sc = '%.3f ' % (timec[b]-timec[a])
     return sc + st
 
-#   run a command, grep through the output for a word and return a 0-indexed word
 #   should use popen()
 def grepcmd(cmd,word,index=0):
+    """run a command, grep through the output for a word and return a 0-indexed word"""
     log = 'tmp.log'
     os.system(cmd + ' > %s' % log)
     f = open(log,"r")
@@ -79,8 +106,8 @@ def grepcmd(cmd,word,index=0):
     print 'No match on' + word
     return "no-match"
 
-#   grep through a logfile for a word and return a 0-indexed word
 def greplog(log,word,index=0):
+    """ grep through a logfile for a word and return a 0-indexed word"""
     f = open(log,"r")
     v = f.read()
     va=string.split(v,"\n")
@@ -94,6 +121,15 @@ def greplog(log,word,index=0):
     return "no-match"
 
 class Timer:
+    """a class to help you compute CPU times the script takes
+    between certain tagged locations, e.g.
+              t=Timer()
+              t.tag()
+              .....
+              t.tag()
+              print "Time passed %g seconds" % t.dt(0,1)
+    """
+    
     def __init__(self):
         self.n = 0
         self.timec = []
@@ -126,7 +162,7 @@ class Timer:
 if __name__ == '__main__':
     print ""
     print "Welcome to pyramid, a python enabled interface to MIRIAD."
-    print 'To get help on miriad tasks,  try e.g.  doc("invert")'
-    print 'or keys("invert")'
+    print "Type help(miriad) to get more help on this interface, or"
+    print 'doc("invert") or keys("invert") to get specific help on a miriad task'
     print "You are now dropped to the PYTHON prompt, enter ^D to exit"
     print ""
