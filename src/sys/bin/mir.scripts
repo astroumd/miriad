@@ -1,7 +1,7 @@
 #! /bin/csh -f
 # ----------------------------------------------------------
 #* mir.scripts - Install scripts from source code
-#& mjs
+#& pjt
 #: system operation
 #+
 #  Copy user scripts to binary directory.  Create on-line

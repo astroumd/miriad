@@ -1,7 +1,7 @@
 #! /bin/csh -f
 # ------------------------------------------------------------
 #* mir.gendoc - Generate on-line miriad documentation
-#& mjs
+#& pjt
 #: system operation
 #+
 #  Usage:  mir.gendoc

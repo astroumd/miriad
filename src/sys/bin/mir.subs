@@ -1,7 +1,7 @@
 #!/bin/csh -f
 # --------------------------------------------------------------
 #* mir.subs - Build and/or update miriad's libraries
-#& mjs
+#& pjt
 #: system operation
 #+
 #    Build and/or update miriad's libraries

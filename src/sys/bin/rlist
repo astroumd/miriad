@@ -43,12 +43,13 @@
 #                 directory that the files are retrieved from.
 #   28may96 dar   Added printing of version upon execution and help.
 #   06jun96 dar   Changed upper level directory to $MIR rather that $MIRSRC.
+#   26jan03 pjt   Documented that this script is deprecated/no-work
 #--
 #
 # Set version of rlist to be read by MIRA_RIST to make sure
 # they can talk to each other.  Echo version.
 #
-echo RLIST is an old miriad-RCS utility.
+echo RLIST is an old miriad-RCS utility. We now use CVS.
 exit 1
 
 set version   = "06jun96"

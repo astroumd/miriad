@@ -1,7 +1,7 @@
 #!/bin/csh -f
 # --------------------------------------------------------------
 #* mir.prog - Load tasks into the binary directory
-#& mjs
+#& pjt
 #: system operation
 #+
 #  Load tasks into the binary directory.

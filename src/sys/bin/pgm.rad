@@ -12,10 +12,6 @@ if (! -d $mir/borrow/rad || ! -e $mir/borrow/rad/README) then
   echo RAD does not seem to exist within your miriad distribution.
   echo Installation skipped  
   exit 0
-else
-  echo RAD does exist, but the actual installation is still manual
-  echo Soon this will work for you Jonathan
-  exit 0
 endif
 # -------------------------------------------------------------------
 if (-e $lsys/pgm.rad && ! $?local_compile) then
@@ -33,22 +29,12 @@ if ($?Compile == 0) then
    endif
 endif
 # -------------------------------------------------------------------
-#if (-e $libdir/libwip.a) then
-#  rm -f $libdir/libwip.a
-#endif
+if (-e $libdir/librad.a) then
+  rm -f $libdir/librad.a
+endif
 #
-set copts = ""
-set linkopts = ""
-set options = ( )
-if (`echo $Coptions | grep -c "cg92"` > 0) then
-  set copts = "$copts -xcg92"
-  set linkopts = "$linkopts -cg92"
-endif
-if (`echo $Coptions | grep -c "ansi"` > 0) then
-  set copts = "$copts -ansi"
-endif
-if (-e $libdir/libreadline.a) set options = ( $options -readline "$libdir" )
-if ($?MIRDEBUG != 0) set options = ( $options -debug )
+lib.rsubs
+pgm.rprog
 #
 # -------------------------------------------------------------------
 unsetenv local_compile

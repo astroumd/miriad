@@ -1,0 +1,83 @@
+#!/bin/csh -f
+# --------------------------------------------------------------
+# lib.radsubs subscripts
+# --------------------------------------------------------------
+set mir     = $MIR
+set host    = $MIRHOST
+set lsys    = $mir/bin/localsys
+set bindir  = $mir/bin/$host
+set subdir  = $mir/borrow/rad/src/subs
+set libdir  = $mir/lib/$host
+set docdir  = $mir/doc/subs
+set admdir  = $mir/src/sys/bin
+# --------------------------------------------------------------
+if (! -d $subdir) exit 0
+# ---
+# todo: localsys
+# --------------------------------------------------------------
+if ($?Compile == 0) then
+   if (-e $admdir/compile.${host}) then
+      source $admdir/compile.${host}
+   else
+      echo "Cannot find $admdir/compile.${host} - exiting."
+      exit 1
+   endif
+endif
+# --------------------------------------------------------------
+set subs_for = $admdir/stub.radsubs_for
+#
+set lib  = $libdir/librad.a
+#
+set tmp1 = ""
+set tmp2 = ""
+set tmp3 = ""
+set tmp4 = ""
+set theList = ""
+cd $subdir >& /dev/null
+if ($#argv == 0) then
+   set theList = (`ls *.for`)
+else
+   set theList = ($argv)
+endif
+set theOut = ""
+#
+cd $libdir
+foreach i ($theList)
+   set in = ${i:t}
+   if (-e $subdir/${i:r}.for) set in = ${i:r}.for
+   if (-e ${in:r}.o) rm -fr ${in:r}.o >& /dev/null
+   echo ""
+   echo "Processing miriad rad subroutine $in"
+   switch ($in)
+    case *.for:
+	 $subs_for ${in:r}
+	 (cd $docdir; doc -p $subdir/$in)
+         echo "miriad rad subroutine $in processed"
+	 breaksw 
+    default:
+         echo "----- ----- $in Ignored."
+         breaksw
+    endsw
+
+    if (-e ${in:r}.o) set theOut = ($theOut ${in:r}.o)
+end
+
+set theList = (`echo $theOut|sort|uniq`)
+#
+if ($#theList != 0) then
+   if ($#argv == 0) rm $lib >& /dev/null
+   echo "ar ru $lib <dot.o files>"
+         ar ru $lib $theList
+   if (-e /usr/bin/ranlib) then
+      echo "/usr/bin/ranlib $lib"
+      /usr/bin/ranlib $lib
+   endif
+   #  should do a shared lib rebuild here, e.g. for linux:
+   #	ld -shared -o libmir.so --whole-archive libmir.a
+   rm -fr $theList >& /dev/null
+endif
+echo ""
+echo "`ls -l $lib`"
+# --------------------------------------------------------------
+unsetenv local_compile
+exit 0

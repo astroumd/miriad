@@ -1,7 +1,7 @@
 #! /bin/csh -f
 # ---------------------------------------------------------------
 #* mir.install - Install miriad subsystems from source code
-#& mjs
+#& pjt
 #: system operation
 #+
 #  Load the miriad system (or specified parts of it) from source
@@ -12,7 +12,7 @@
 #            $argv  = [scripts] [libs] [tasks] [gendoc]
 #            libs   = [dtm] [www] [hdf] [linpack] [pgplot]
 #                     [readline] [subs]
-#            tasks  = [wip] [mxv] [prog] [xmrecvlist]
+#            tasks  = [wip] [rad] [mxv] [prog] [xmrecvlist]
 #
 #    $argv = subsystems to load.  None means to load the entire
 #            system from source code (first scripts, then libs,
@@ -58,6 +58,8 @@ foreach i ($argv)
            $admdir/mir.scripts >& $tdir/scripts.${fn}
    else if ($i == gendoc ) then
            $admdir/mir.gendoc  >& $tdir/gendoc.${fn}
+   else if ($i == rad ) then
+           $admdir/pgm.rad  >& $tdir/rad.${fn}
    else if ($i == libs) then
            foreach j ($subslist)
 	      $admdir/lib.${j} >& $tdir/${j}.${fn}

@@ -1,0 +1,80 @@
+#!/bin/csh -f
+# --------------------------------------------------------------
+# pgm.prog subscript
+# --------------------------------------------------------------
+set mir    = $MIR
+set host   = $MIRHOST
+set lsys   = $mir/bin/localsys
+set bindir = $mir/bin/$host
+set srcdir = $mir/borrow/rad/src
+set docdir = $mir/doc/prog
+set admdir = $mir/src/sys/bin
+# --------------------------------------------------------------
+if (! -d $srcdir) exit 0
+# ---
+# todo: localsys
+# --------------------------------------------------------------
+if ($?Compile == 0) then
+   if (-e $admdir/compile.${host}) then
+      source $admdir/compile.${host}
+   else
+      echo "Cannot find $admdir/compile.${host} - exiting."
+      exit 1
+   endif
+endif
+# --------------------------------------------------------------
+set prog_for = $admdir/stub.radprog_for
+#
+set theDirs = (prog)
+#
+# --------------------------------------------------------------
+set manflag = "$docdir/manflag.$$"
+touch $manflag
+# --------------------------------------------------------------
+if ($#argv == 0) then
+   foreach i ($theDirs)
+      pushd $srcdir/$i >& /dev/null
+      foreach j (`ls *.c *.for`)
+         echo ""
+         echo "Processing miriad/rad task ${j}"
+	 switch ($j)
+	    case *.for:
+	       $prog_for $srcdir/$i/$j
+	       (cd $docdir; doc -p $srcdir/$i/$j)
+	       breaksw
+	    default:
+	       breaksw
+	 endsw
+         echo "Finished processing miriad/rad task ${j}"
+      end
+      popd >& /dev/null
+   end
+
+   exit 0
+endif
+# --------------------------------------------------------------
+foreach i ($argv)
+   set in = ${i:t}
+   set in = ${in:r}
+   echo ""
+   echo "Processing miriad task ${i:t}"
+   foreach j ($theDirs)
+      pushd $srcdir/$j >& /dev/null
+      if (-e ${in}.for && ($in == hatmap || $in == hatfft)) then
+	 echo "$srcdir/$j/${in}.for is VMS-only:  ignored."
+      else if (-e $srcdir/$j/${in}.c  ) then
+	 $prog_c   $srcdir/$j/${in}.c
+	 (cd $docdir; doc -p $srcdir/$j/${in}.c)
+      else if (-e $srcdir/$j/${in}.for) then
+	 $prog_for $srcdir/$j/${in}.for
+	 (cd $docdir; doc -p $srcdir/$j/${in}.for)
+      endif
+      popd >& /dev/null
+   end
+   echo "Finished processing miriad task ${i:t}"
+end
+# --------------------------------------------------------------
+rm -fr $manflag
+# --------------------------------------------------------------
+unsetenv local_compile
+exit 0

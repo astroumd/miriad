@@ -1,0 +1,25 @@
+#!/bin/csh -f
+# -----------------------------------------------------------
+set mir    = $MIR
+set host   = $MIRHOST
+set lsys   = $mir/bin/localsys
+set subdir = $mir/borrow/rad/src/subs
+set incdir = $mir/borrow/rad/inc
+set libdir = $mir/lib/$host
+# -----------------------------------------------------------
+# todo: localsys
+# -----------------------------------------------------------
+
+set i = $1
+if (! -e $subdir/${i}.for) exit 0
+
+echo "$Ratty -I $subdir -I $incdir $subdir/${i}.for $libdir/${i}.f"
+      $Ratty -I $subdir -I $incdir $subdir/${i}.for $libdir/${i}.f
+echo ""
+echo "$Fcompile -o $libdir/${i}.o -c $Foptions $libdir/${i}.f"
+      $Fcompile -o $libdir/${i}.o -c $Foptions $libdir/${i}.f
+
+if ($?MIRDEBUG == 0) rm -fr $libdir/${i}.f
+unsetenv local_compile
+exit 0
+# -----------------------------------------------------------

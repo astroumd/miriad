@@ -1,7 +1,7 @@
 #! /bin/csh -f
 # ------------------------------------------------------------
 #* mir.tar2m - Update system from a miriad tarfile
-#& mjs
+#& pjt
 #: system operation
 #+
 #    Update source code from a miriad tarfile.  Filename
@@ -12,6 +12,9 @@
 #      Usage:  mir.tar2m $1
 #
 #      $1 ... the name of the miriad tarfile.
+#
+#    This script is deprecated. See $MIR/install for CVS based
+#    installation notes.
 #--
 # ------------------------------------------------------------
 set mir  = $MIR
