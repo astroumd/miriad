@@ -239,6 +239,7 @@ c                 parameters.
 c     bpw 16mar98 Some simplifications and bug fixes
 c     bpw  4jun98 Added rmsest='dataset' and make full use of region keyword
 c     rjs 20oct98 Changes to avoid floating point underflow in exp() function
+c       <-- somewhere here the bug in optindex() was introduced -->
 c     bpw 26feb99 Make compiler more silent by avoiding warnings
 c     bpw  4mar99 Fixed fitting selected channel range, add cutval=
 c     rjs 23jan00 Change some subroutine args to real-valued to avoid
@@ -247,6 +248,8 @@ c     rjs 28jan00 Some FORTRAN standardization to get it through a
 c		  compiler.
 c     rjs 08may00 Change incorrect call to keyf to keya.
 c     dpr 15nov00 Change incorrect call to keyf to keya.
+c     pjt 14jan03 Fixed bug in optindex()  -- why did nobody notice this before?
+c                 also added some SAVE statements where needed
 c************************************************************************
 
 c The main program first gets all inputs and then calls the workhorse.
@@ -293,7 +296,7 @@ c              el 4=max # gaussians, used when sorting a range
       program gaufit
 
       character*50 version
-      parameter    ( version = 'gaufit: version 2.1 23-Jan-00' )
+      parameter    ( version = 'gaufit: Version 14-Jan-03' )
       integer      units(   6)
       integer      prfinfo(10)
       integer      MAXRUNS
@@ -546,19 +549,21 @@ c parameters for the user.
       subroutine inpopts(opt)
       character*(*) opt
       logical       optval
-
+c
       integer      optindex
       integer      NOPTS
       parameter    ( NOPTS = 19 )
       character*10 optns(NOPTS)
       logical      optvals(NOPTS)
       logical      opttab(27*26)
-      data       optns /
-     *           'nofit', 'findestim', 'logf', 'wrprof',
-     *           'noprint', 'supbad', 'estimout', 'intermout',
-     *           'abspix', 'abscoo',
-     *           'average', 'summed', 'negative', 'fixvelo', 'fixwidth',
-     *           'inmask', 'integral', 'dispersion', 'pixels' /
+c-----------------------------------------------------------------------
+      data   optns /
+     *     'nofit',   'findestim', 'logf',       'wrprof',
+     *     'noprint', 'supbad',    'estimout',   'intermout',
+     *     'abspix',  'abscoo',
+     *     'average', 'summed',    'negative',   'fixvelo', 'fixwidth',
+     *     'inmask',  'integral',  'dispersion', 'pixel' /
+      save optns,optvals,opttab
 c abscoo         abspix       average
 c dispersion
 c estimout
@@ -595,17 +600,20 @@ c Ask for the value of an option
       return
       end
 
-c Convert characters to an array index
+c Convert characters to an array index, for the purpose of hashing
       integer function optindex(s)
       character*(*) s
       integer       i, j
       character*26  letters
       data          letters / 'abcdefghijklmnopqrstuvwxyz' /
+      save letters
       call lcase(s)
       i = index(letters,s(1:1))
       j = index(letters,s(4:4))
       if( s(1:1).eq.'i' ) j = index(letters,s(5:5))
-      optindex = 26*(i-96) + (j-96)
+c      optindex = 26*(i-96) + (j-96)
+      optindex = 26*i + j
+c      write(*,*) 'optindex=',optindex,' s=',s,' i,j=',i,j
       return
       end
 
