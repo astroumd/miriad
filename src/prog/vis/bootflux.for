@@ -76,15 +76,18 @@ c    dar 17oct97 Changed calls to imax0 and imin0 to generic max0 and min0
 c                   for compatability with SGI 64-bit compiler.
 c    pjt 20jun98 fixed 0 -> .FALSE. for flags(i) assignment
 c    pjt  3dec02 using MAXBASE3
+c    pjt 26feb03 also using MAXANT3, since this is only for BIMA
 c  Bugs:
+
 c   Polarization mode not tested.
 c------------------------------------------------------------------------
       include 'maxdim.h'
       include 'mirconst.h'
-      integer MAXPOL,MAXSRC,MAXBASE3,PolMin,PolMax
+      integer MAXPOL,MAXSRC,MAXANT3,MAXBASE3,PolMin,PolMax
       character version*(*),defdir*(*)
-      parameter(MAXPOL=4,MAXSRC=256,MAXBASE3=45,PolMin=-9,PolMax=4)
-      parameter(version='BootFlux: version 3-dec-02')
+      parameter(MAXPOL=4,MAXSRC=512,MAXANT3=10,MAXBASE3=45,
+     *          PolMin=-9,PolMax=4)
+      parameter(version='BootFlux: version 26-feb-03')
       parameter(defdir=
 c     *         '/home/bima2/data/flux/measured_fluxes/')
 c     *          '/lma/mirth/programmers/lgm/measured_fluxes/')
@@ -111,13 +114,13 @@ c
       logical flags(MAXCHAN)
 c
       integer base,bases(MAXBASE3),ibl,nbase,ant1,ant2,bigant
-      integer blmatrx(MAXANT,MAXANT),ncal,calscan(MAXSRC),iclose
+      integer blmatrx(MAXANT3,MAXANT3),ncal,calscan(MAXSRC),iclose
       integer nsamp,fno,iostat,nants,nspec,nsys
       real dtime,temp1,temp2,temp3,scalamp2,pltb,factor,sumw,weight
       real tave,sigr,sigi,newflux(MAXBASE3),sigflux(MAXBASE3)
       real rflux2(MAXPOL,MAXBASE3,MAXSRC)
       real iflux2(MAXPOL,MAXBASE3,MAXSRC)
-      real systemps(MAXANT*16),antsys(MAXSRC,MAXANT),sum
+      real systemps(MAXANT3*16),antsys(MAXSRC,MAXANT3),sum
       real obsfreq(MAXSRC),tsys(MAXSRC),reslim
       real tint,inttime(MAXBASE3,MAXSRC),wallclk,visib,plflux,freq
       real sumdy2,sformal,finscal(MAXSRC),finssig(MAXSRC)
@@ -173,12 +176,12 @@ c
       bigant     = 0
       sources(1) = '      '
       starttm(1) = -100.0
-      do i=1,MAXANT
-      do j=1,MAXANT
+      do i=1,MAXANT3
+      do j=1,MAXANT3
         blmatrx(i,j) = 0
       enddo
       enddo
-      do ibl=1,MAXBASE
+      do ibl=1,MAXBASE3
         inttime(ibl,1)= 0.
       enddo
       do i=PolMin,PolMax
@@ -249,7 +252,7 @@ c
      *                  call bug('f','Too many sources')
      	    sources(nsrc) = source
      	    do i=1,MAXPOL
-            do ibl=1,MAXBASE
+            do ibl=1,MAXBASE3
               flux(i,ibl,nsrc)   = 0
               rflux2(i,ibl,nsrc) = 0
               iflux2(i,ibl,nsrc) = 0
@@ -258,7 +261,7 @@ c
               ncnt(i,ibl,nsrc)   = 0
             enddo
             enddo
-            do ibl=1,MAXBASE
+            do ibl=1,MAXBASE3
               inttime(ibl,nsrc) = 0
             enddo
             call uvgetvrd(tno,'ut',startut(nsrc),1)
