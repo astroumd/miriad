@@ -1,0 +1,98 @@
+%------------------------------------------------------------------------
+% Appendix F - SETTING UP YOUR ACCOUNT
+%------------------------------------------------------------------------
+%  History
+%
+%  --mar91 mjs  Original version.
+%  23jun91 mjs  Removed qualification of support on Convex.
+%
+%------------------------------------------------------------------------
+MIRIAD programmers have to set up their accounts on the machines they will
+be using, just like regular MIRIAD users.
+
+\beginsection{Berkeley Sun4}
+
+To get the definitions needed to run MIRIAD, include the following at the
+end of your {\tt \~\//.cshrc} file:
+{\ninepoint\begintt
+    setenv MIR ~mirth
+    source $MIR/MIRRC
+    set path = ($MIRBIN $path)
+\endtt}
+Once you have done this, enter ``{\tt source \~\//.cshrc}'', and you will be
+set up for the current working session.  You will be set up automatically
+at login thereafter.
+
+\beginsection{RALINT Users on Berkeley VAX (VMS)}
+
+There are name conflicts between some RALINT and MIRIAD tasks.  By default,
+RALINT users initially have the RALINT set-up (this is handled by the normal
+RALINT login command procedure).  To get MIRIAD definitions, give the command
+{\ninepoint\begintt
+    $ miriad
+\endtt}
+To switch back to RALINT definitions, use
+{\ninepoint\begintt
+    $ ralint
+\endtt}
+
+\beginsection{Illinois Sun4}
+
+To get the definitions needed to run MIRIAD, include the following in your
+{\tt \~\//.cshrc} file, anywhere after your {\tt path} has been set (note the
+backquotes around {\tt arch}):
+{\ninepoint\begintt
+    if (`arch` == "sun4" && -e ~miriad/cshrc.nMIRIAD) then
+       source ~miriad/cshrc.nMIRIAD
+    end
+\endtt}
+Once you have done this, enter ``{\tt source \~\//.cshrc}'', and you will be
+set up for the current working session.  You will be set up automatically
+at login thereafter.  This procedure sets MIRIAD's environment variables
+and includes MIRIAD's binary directory \$MIRBIN in your searchpath, placing
+it after your ``.'' directory if you have one, and first otherwise.
+
+\beginsection{Maryland Sun3 and Sun4}
+
+To get the definitions needed to run MIRIAD, include the following at the
+end of your {\tt \~\//.cshrc} file:
+{\ninepoint\begintt
+    setenv MIR ~mirth
+    source $MIR/MIRRC
+    set path = ($MIRBIN $path)
+\endtt}
+Once you have done this, enter {\tt source \~\//.cshrc}, and you will be
+set up for the current working session.  You will be set up automatically
+at login thereafter.
+
+\beginsection{NCSA Cray2}
+
+Ensure that directory {\tt /usr/bin/X11} is in your searchpath.
+
+To get the definitions needed to run MIRIAD, include the following in your
+{\tt \~\//.cshrc} file, anywhere after your {\tt path} has been set:
+{\ninepoint\begintt
+    if (-e ~u11329/cshrc.nMIRIAD) then
+       source ~u11329/cshrc.nMIRIAD
+    end
+\endtt}
+Once you have done this, enter ``{\tt source \~\//.cshrc}'', and you will be
+set up for the current working session.  You will be set up automatically
+at login thereafter.  This procedure sets MIRIAD's environment variables
+and includes MIRIAD's binary directory \$MIRBIN in your searchpath, placing
+it after your ``.'' directory if you have one, and first otherwise.
+
+\beginsection{NCSA Convex}
+
+To get the definitions needed to run MIRIAD, include the following in your
+{\tt \~\//.cshrc} file, anywhere after your {\tt path} has been set:
+{\ninepoint\begintt
+    if (-e ~u11329/cshrc.nMIRIAD) then
+       source ~u11329/cshrc.nMIRIAD
+    end
+\endtt}
+Once you have done this, enter ``{\tt source \~\//.cshrc}'', and you will be
+set up for the current working session.  You will be set up automatically
+at login thereafter.  This procedure sets MIRIAD's environment variables
+and includes MIRIAD's binary directory \$MIRBIN in your searchpath, placing
+it after your ``.'' directory if you have one, and first otherwise.
