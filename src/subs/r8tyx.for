@@ -1,9 +1,9 @@
 C************************************************************************
-c* r8tyx -- Radix, 8 iterations
+c* r8tyxc -- Radix, 8 iterations, complex version
 c& mchw
 c: mathematics
 c+
-      subroutine r8tyx(nxtlt, nthpo, lengt, cs,
+      subroutine r8tyxc(nxtlt, nthpo, lengt, cs,
      *			c0, c1, c2, c3, c4, c5, c6, c7)
 c--
 C
@@ -13,6 +13,8 @@ C
       complex cs(*)
 c
 c  radix - 8 iterations.
+c  there is a real version in fftsubs, this complex one is kept
+c  for historic reasons, it is not currently used in MIRIAD
 c
 c------------------------------------------------------------------------
       real p7
