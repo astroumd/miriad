@@ -187,7 +187,8 @@ XMTVinput *in;
     while (bytes_togo > 0) {
       bytes_trans = read(link, abuf, (unsigned int)bytes_togo);
       if (bytes_trans <= 0) {
-        (void)fprintf(stderr, "ReadLink read header error - shutdown\n");
+        fprintf(stderr, "ReadLink read header error - shutdown (%d)\n",bytes_trans);
+	perror("ReadLink");
         return(-1);
       }
       bytes_togo -= bytes_trans;
@@ -208,7 +209,8 @@ XMTVinput *in;
     while (bytes_togo > 0) {
       bytes_trans = read(link, abuf, (unsigned int)bytes_togo);
       if (bytes_trans <= 0) {
-        (void)fprintf(stderr, "ReadLink read data error - shutdown\n");
+        (void)fprintf(stderr, "ReadLink read data error - shutdown (%d)\n",bytes_trans);
+	perror("ReadLink");
         return (-1);
       }
       bytes_togo -= bytes_trans;
