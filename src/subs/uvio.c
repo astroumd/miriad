@@ -152,7 +152,8 @@
 /*  dpr  17apr01 Increase MAXVHANDS                                     */
 /*  pjt  20jun02 MIR4 prototypes                                        */
 /*  pjt  14jan03 fix another forgotten int -> int8                      */
-/*  pjt  13may03 MAXIANT usage to limit MAXANT                          */
+/*  pjt  13may03 (04?) MAXIANT usage to limit MAXANT                    */
+/*  pjt  03jan05 fix last few int -> size_t/off_t as per RJS's email    */
 /*----------------------------------------------------------------------*/
 /*									*/
 /*		Handle UV files.					*/
@@ -981,7 +982,7 @@ private void uv_free_select(SELECT *sel)
   }
 }
 /************************************************************************/
-private UV *uv_getuv(tno)
+private UV *uv_getuv(int tno)
 /*
   Allocate a structure describing a uv file.
 ------------------------------------------------------------------------*/
@@ -1811,7 +1812,8 @@ private int uv_scan(UV *uv, VARIABLE *vt)
     vt		Structure describing variable to terminate scan when found.
 ------------------------------------------------------------------------*/
 {
-  int offset,iostat,intsize,extsize,terminate,found,changed,i;
+  int iostat,intsize,extsize,terminate,found,changed,i;
+  off_t offset;
   VARIABLE *v;
   char s[UV_HDR_SIZE],*b;
 
@@ -1820,7 +1822,7 @@ private int uv_scan(UV *uv, VARIABLE *vt)
   found = (vt == NULL);
   terminate = FALSE;
   while(!terminate){
-    if(offset >= uv->max_offset) return(-1);
+    if(offset >= uv->max_offset) return -1;
     hreadb_c(uv->item,s,offset,UV_HDR_SIZE,&iostat);
     if(iostat == -1)return(-1);
     else CHECK(iostat,(message,"Error reading a record header, while UV scanning"));
@@ -1830,7 +1832,7 @@ private int uv_scan(UV *uv, VARIABLE *vt)
 
     changed = FALSE;
     if(*(s+2) != VAR_EOR){
-      v = &uv->variable[*s];
+      v = &uv->variable[*s];       /*  warning: array subscript has type `char' */
       intsize = internal_size[v->type];
       extsize = external_size[v->type];
     }
@@ -1890,7 +1892,7 @@ private int uv_scan(UV *uv, VARIABLE *vt)
     }
   }
   uv->offset = offset;
-  return(0);
+  return 0;
 }
 /************************************************************************/
 void uvwrite_c(int tno,Const double *preamble,Const float *data,
@@ -4210,7 +4212,8 @@ void uvflgwr_c(int tno, Const int *flags)
 /*--									*/
 /*----------------------------------------------------------------------*/
 {
-  int nchan,width,step,offset,n,i;
+  int nchan,width,step,n,i;
+  off_t offset;
   UV *uv;
   VARIABLE *v;
   FLAGS *flags_info;
@@ -4266,7 +4269,8 @@ void uvwflgwr_c(int tno,Const int *flags)
 /*--									*/
 /*----------------------------------------------------------------------*/
 {
-  int nchan,offset;
+  int nchan;
+  off_t offset;
   UV *uv;
   VARIABLE *v;
   FLAGS *flags_info;
@@ -4418,7 +4422,8 @@ private void uvinfo_variance(UV *uv,double *data)
 {
   double *restfreq,*tab;
   float bw,inttime,jyperk,*syst,*t1,*t2,factor;
-  int i,j,bl,i1,i2,nants,offset,nsyst,*nschan,start;
+  int i,j,bl,i1,i2,nants,nsyst,*nschan,start;
+  off_t offset;
   LINE_INFO *line;
   VARIABLE *tsys;
 
@@ -4538,7 +4543,8 @@ private void uvinfo_chan(UV *uv,double *data,int mode)
 ------------------------------------------------------------------------*/
 {
   LINE_INFO *line;
-  int n,i,j,offset,step;
+  int n,i,j,step;
+  off_t offset;
   double temp,fdash;
   float *wfreq,*wwide,vobs;
   int *nschan;
