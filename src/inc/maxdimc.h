@@ -20,11 +20,12 @@
 	mchw 04feb02  change define MAXBUF 1048576 to 4194304.
         mchw 14feb02  recouple MAXBASE to MAXANT for selfcal on MAXANT antennas.
 	pjt   3dec02  added MAXBASE2,MAXDIM2
+        pjt   5mar04  MAXANT not too big for mfcal
 	-------------------------------------------------------------
 */
 #define		MAXDIM		8192
 #define		MAXDIM2		65536
-#define		MAXANT		500
+#define		MAXANT		64
 #define		MAXANT2		28
 #define		MAXBASE		((MAXANT * (MAXANT + 1)) / 2)
 #define		MAXBASE2	500
