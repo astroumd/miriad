@@ -52,6 +52,9 @@ c	type can either be a telescope name whose primary beam is known
 c	(e.g. hatcreek, vla, atca, etc) or you can select a Gaussian form
 c	with "gaus(xxx)". Here xxx is the primary beam FWHM in arcseconds.
 c	For example gaus(120) is a telescope with a 120 arcsec primary beam.
+c@ scale
+c       Scale factor applied to the amplitudes before printing them.
+c       Default=1.
 c@ options
 c	Task enrichment options.  Minimum match is active.
 c	  pbcorr    This causes the images to be corrected for primary beam
@@ -98,12 +101,13 @@ c    rjs   10jun97      Change pbtype to telescop
 c    dpr   02jan01      Allow radii with non-integral number steps
 c    pjt   02may01      Optional table output (options=table), rearranged
 c                       some code (memfree)
+c    mchw  09nov01	Added intensity scale factor of convenience.
 c----------------------------------------------------------------------c
 	include 'mirconst.h'
 	include 'maxdim.h'
 	include 'mem.h'
         character*(*) label,version
-        parameter(version='version 1.0 02-may-2001')
+        parameter(version='version 1.0 09-nov-2001')
         double precision rts,value
         parameter(label='Integrate a Miriad image in elliptical annuli')
         integer maxnax,maxboxes,maxruns,naxis,axis,plane,maxring
@@ -114,7 +118,7 @@ c
         integer i,j,ir,lin,nsize(maxnax),blc(maxnax),trc(maxnax)
         integer irmin,irmax,pbobj,ipm(maxring)
         real crpix(maxnax),cdelt(maxnax),var,med, xmode
-        real center(2),pa,incline,rmin,rmax,rstep
+        real center(2),pa,incline,rmin,rmax,rstep,scale
         real buf(maxdim),cospa,sinpa,cosi,x,y,r,ave,rms,fsum,cbof
         real pixe(maxdim),flux(maxdim),flsq(maxdim),pbfac
         logical mask(maxdim),dopb,keep,domedian,domode,natural,dotab
@@ -141,6 +145,7 @@ c
         call keyr('radius',rmin,0.)
         call keyr('radius',rmax,0.)
         call keyr('radius',rstep,0.)
+        call keyr('scale',scale,1.)
         call keya('telescop',pbtype,' ')
         call getopt(dopb,domedian,domode,natural,dotab)
         call keya('log',logf,' ')
@@ -286,7 +291,7 @@ c
      *                                                ir,i,j
                    call logwrit(line)
                 endif
-              end if
+              endif
             enddo
           enddo
 c
@@ -298,7 +303,7 @@ c
             do ir = irmin, irmax
               call memalloc (ipm(ir), nint(pixe(ir)), 'r')
               pixe(ir) = 0.0
-            end do
+            enddo
 c
             do j = blc(2),trc(2)
               call xyread(lin,j,buf)
@@ -323,7 +328,7 @@ c
                 end if
               enddo
             enddo
-          end if
+          endif
 c
 c  Write out the results (for mean and median only)
 c
@@ -337,7 +342,7 @@ c
             write(line,'(a,a,a,a,a,a)') '   Radius(") ',
      *       '   Pixels   ', ' Average  ', '      rms  ',
      *       ' Ann. Sum  ',' Cum. Sum '
-          end if
+          endif
           call logwrit(line(1:72))
 c
           do ir = irmin,irmax
@@ -353,24 +358,30 @@ c
             endif
             fsum = fsum + flux(ir)
 c
+c  scale intensity values.
+c
+	    if (scale.ne.1.) then
+	      ave = ave * scale
+	      rms = rms * scale
+	      flux(ir) = flux(ir) * scale
+	      fsum = fsum * scale
+	    endif
+c
             if (domedian) then
               call median (memr(ipm(ir)), nint(pixe(ir)), med)
+	      if(scale.ne.1.) med = med * scale
               write(line,'(6f11.3,1x)') r,pixe(ir),med,rms,
      *                             flux(ir)/cbof,fsum/cbof
             else
               write(line,'(6f11.3,1x)') r,pixe(ir),ave,rms,
      *                             flux(ir)/cbof,fsum/cbof
-            end if
+            endif
 c
             call logwrit(line(1:72))
          enddo
-
-c
 c
 c   write out the results for mode
 c
-c
-
          if(domode)then
           call logwrit(' ')
           if (domode) then 
@@ -381,7 +392,7 @@ c
             write(line,'(a,a,a,a,a,a)') '   Radius(") ',
      *       '   Pixels   ', ' Average  ', '      rms  ',
      *       ' Ann. Sum  ',' Cum. Sum '
-          end if
+          endif
           call logwrit(line(1:72))
 c
           do ir = irmin,irmax
@@ -404,18 +415,17 @@ c
             else
               write(line,'(6f11.3,1x)') r,pixe(ir),ave,rms,
      *                             flux(ir)/cbof,fsum/cbof
-            end if
+            endif
 c
             call logwrit(line(1:72))
           enddo
-         end if
+         endif
 
          if (domedian.or.domode) then
             do ir = irmin, irmax
                call memfree (ipm(ir), nint(pixe(ir)), 'r')
-            end do
+            enddo
          endif
-
 c     
 c  End our mode addition.
 c
