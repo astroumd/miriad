@@ -1,18 +1,13 @@
 	program velplot
+	character version*(*)
+        parameter(version='version 13-Mar-01')
 	character task*20,device*20,file*120,logfile*120
 	character trans*20
 	include "data.h"
  	integer ID1,pgopen
 	common/ID1/ID1
 
-c		announce (ChinFei will fix this)
-	call output('velplotc: version 13-mar-01 pjt')
-c
-c	Original, convolution_information need cdelt1(xy) from the data
-c	however, we make it 0.0 and convolution size is always 3 pixels
-c	at start.
-c
-	call convolution_information(0.0,0.0,0.0)
+	call output('Velplotc: '//version)
 	call keyini
 	call readcommandline(task,device,file,logfile)
 	call readmap(file,ary,v,nx,ny,nc,.TRUE.)
@@ -29,8 +24,8 @@ c	write(*,*) "Org ary,v =",ary,v
 	IF (ID1.LE.0) STOP 'Window can not be opened'
 	call pgask(.FALSE.)
 
-	if (task.eq."POSVEL") call show_tool(trans("PosVel"))
-	if (task.eq."IMPLOT") call show_tool(trans("Implot"))
+	if (task.eq."POSVEL") call show_tool(trans("PosVel"),trans(file))
+	if (task.eq."IMPLOT") call show_tool(trans("Implot"),trans(file))
 
 20	continue
 	call cleanup()
@@ -362,11 +357,14 @@ c	write(*,*) "map",currentmap
 	end
 
 	subroutine readcommandline(task,device,file,logfile)
+	implicit none
 	character task*(*),device*(*),file*(*),logfile*(*)
 	integer xform_on
 	common/xform_on/xform_on
 	include "plot.h"
-	integer nval
+	include "cut.h"
+	integer nval,i
+	real value(5)
 	
 
 	call keya('in',file,' ')
@@ -387,7 +385,7 @@ c
 	  if (xyval(i).ne.-1e30)  then
 	    setxy(i)=.true.
 	  else
-	    setxy(i)=.true.
+	    setxy(i)=.false.
 	  end if
 	end do
 	call keyi ('nxy', windx, 1)
@@ -398,9 +396,23 @@ c
 	call keyi ('beamquad', Beam, 0)
 	call keya ('units', Units_p, "s")
 	call keya ('conflag', conflag, "pn")
-	call keyr('Cbeam',cmaj,0.0)
-	call keyr('Cbeam',cmin,0.0)
-	call keyr('Cbeam',cpa,0.0)
+	call mkeyr('Cbeam',value,3,nval)
+	if (nval.ne.3) then
+	  cmaj=0.0
+	  cmin=0.0
+	  cpa=0.0
+	else
+	  cmaj=value(1)
+	  cmin=value(2)
+	  cpa=value(3)
+	end if
+c
+c	Original, convolution_information need cdelt1(xy) from the data
+c	however, we make it 0.0 and convolution size is always 3 pixels
+c	at start. However, do not do it now, since it not useful
+c
+c	call convolution_information(cmaj,cmin,cpa)
+
 	call keyr('Vrest',Vrest,0.0)
 	call mkeyr('range',range,2,nval)
 	if (nval.ne.2) then
