@@ -11,7 +11,7 @@ c  output cube. This works on any cube whose longest axis is less than
 c  262144 pixels long.
 c  Note that IMFRAME does not resample images, only whole-pixel 
 c  transformations are possible. See REGRID to resample/rotate in a more
-c  arbitrary way.
+c  arbitrary way, or IMSUB for another resampling approach.
 c@ in
 c  The input image. No default.
 c< region
