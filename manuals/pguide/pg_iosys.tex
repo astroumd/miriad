@@ -1,0 +1,777 @@
+%------------------------------------------------------------------------
+% Chapter 7 - MIRIAD IO SYSTEM
+%------------------------------------------------------------------------
+%
+%  History:
+%
+%   rjs  28mar90  First version for System Guide
+%   mjs  22mar91  Adapted into Programmer's Guide
+%------------------------------------------------------------------------
+MIRIAD's i/o system consists of three layers -- the basic disk I/O
+level {\tt (DIO)}, the dataset/item level {\tt (HIO)},
+and the applications level {\tt (XYIO, UVIO, ...)}. Applications
+programmers should never need to access files at the basic disk I/O level,
+and should rarely need to access them at the dataset/item level. The
+applications level routines should meet almost all the needs of the
+applications programmer.
+
+\beginsection{Scratch Files}
+
+{\ninepoint\begintt
+      subroutine scropen(tno)
+      subroutine scrread(tno,buffer,offset,length)
+      subroutine scrwrite(tno,buffer,offset,length)
+      subroutine scrclose(tno)
+\endtt}
+The scratch i/o routines are used to create and read and write from a
+scratch file containing real-valued data. Here {\tt tno} is a handle passed
+back by the open routine,
+and must be used in all subsequent calls to the scratch i/o routines.
+{\tt scrread} and {\tt scrwrite} read and write scratch data to/from the
+real array {\tt buffer}. {\tt length} values are accessed, starting
+at the offset given by {\tt offset} (for a scratch file of $N$ real
+values, {\tt offset} can vary from 0 to $N-1$).
+
+\beginsection{General Item Routines}
+
+These routines read and write ``small'' items (items consisting of a single
+value), or perform some operation on an entire item.
+
+In many processing systems these routines would be called ``header handling''
+routines. This has led to the rather misleading use of the
+letters ``hd'' as a component of each of the following routine names.
+{\ninepoint\begintt
+      subroutine rdhda(tno,itemname,value,default)
+      subroutine rdhri(tno,itemname,value,default)
+      subroutine rdhdr(tno,itemname,value,default)
+      subroutine rdhdd(tno,itemname,value,default)
+      subroutine rdhdc(tno,itemname,value,default)
+      subroutine wrhda(tno,itemname,value)
+      subroutine wrhdi(tno,itemname,value)
+      subroutine wrhdr(tno,itemname,value)
+      subroutine wrhdd(tno,itemname,value)
+      subroutine wrhdc(tno,itemname,value)
+      logical function hdprsnt(tno,itemname)
+      subroutine hdcopy(tin,tout,itemname)
+      subroutine hdprobe(tno,itemname,descr,type,n)
+\endtt}
+Before these routines can be accessed, a dataset must be opened with
+either {\tt xyopen}, {\tt uvopen}, or {\tt hopen}. {\tt tno} is the
+handle returned by these open routines.
+The name of the item to access is given by {\tt itemname} (a string).
+These names should be up to 8 lowercase alphanumeric characters, and
+(where possible) they should conform to the FITS standard.
+The {\tt rdhd} routines read an item, returning its value in {\tt value}.
+The routines {\tt rdhda}, {\tt rdhdi}, {\tt rdhdr}, {\tt rdhdd} and
+{\tt rdhdc} return a string,
+integer, real, double precision, or complex value, respectively. If the item
+is not found, the {\tt rdhd} routines return the default value given
+by {\tt default} (note that {\tt value} and {\tt default} should be a string,
+integer, real, double precision, or complex values, depending on the routine
+called). Similarly
+the {\tt wrhd} routines save the value of an item.
+
+The logical function {\tt hdprsnt} can be called to determine if a
+particular item exists.
+
+The routine {\tt hdcopy} copies an item from one dataset to another.
+The item can be
+arbitrarily large. {\tt hdcopy} copies from the dataset, whose handle
+is given by {\tt tin}, to the dataset whose handle is {\tt tout}.
+
+The routine {\tt hdprobe} is used to probe the characteristics of an
+item.  The string {\tt descr} returns a brief description of the item
+(intended for people, not programs, to read). If the item consists of a
+single value (or string), the description gives the value. Otherwise
+the description gives the type and size of the item (in human readable
+form). The string {\tt type} is one of {\tt 'nonexistent'},
+{\tt 'integer*2'}, {\tt 'integer'}, {\tt 'real'}, {\tt 'double'},
+{\tt 'complex'}, {\tt 'character'}, {\tt 'text'} or {\tt 'binary'}
+(unknown type). The integer {\tt n} gives the number of elements in the
+item. If the item does not exist, {\tt type} returns {\tt 'nonexistent'}
+and {\tt n} returns zero.
+
+\beginsection{History Item}
+
+Most datasets will have an associated history item. This is a text file
+containing a description of the dataset, and the processing that has been
+performed on it. The routines to access the history item are as follows:
+{\ninepoint\begintt
+      subroutine hisopen(tno,status)
+      subroutine hisread(tno,line,eof)
+      subroutine hiswrite(tno,line)
+      subroutine hisinput(tno,taskname)
+      subroutine hisclose(tno)
+\endtt}
+{\tt hisopen} must be called before the history item can be accessed. Here
+{\tt tno} is the handle passed back by a previous call to {\tt xyopen}
+or {\tt uvopen}, and {\tt status} is a string which can be either
+{\tt 'read'}, {\tt 'write'} or {\tt 'append'}. {\tt hisread} and {\tt hiswrite}
+can be
+called to read from, or append to the history item a line at a time
+({\tt line} is a character string). When reading, the
+logical value {\tt eof} turns true when the end of the history item is
+encountered. {\tt hisinput} writes a number of history comments, giving
+the command line input parameters. This is a particularly useful routine
+to summarize user inputs. For {\tt hisinput}, {\tt taskname} is the name
+of the task. {\tt hisclose} closes the history item.
+
+Note that there is no routine to copy a history file from one dataset to
+another. This is easily performed using the {\tt hdcopy} routine described
+in the previous section.
+
+For uniformities sake, history comments follow a standard format. The
+following is an example of the history comments written by the task
+DEMOS:
+{\ninepoint\begintt
+DEMOS: Miriad DeMos (version 30-apr-90 rjs)'
+DEMOS: Input parameters are
+DEMOS:   vis=uvn
+DEMOS:   map=mosclean
+DEMOS: Pointing offset used (arcsec):   24.0 -30.0
+\endtt}
+Note that all comments start with the task name. The first comment gives a
+version date of the program. The next
+three lines were generated by {\tt HisInput}, and the last line was an
+extra comment.
+
+\beginsection {Basic Disk IO:  DIO}
+
+The lowest level i/o routines in the MIRIAD file system are the {\tt dio}
+routines. These perform name translation, directory operations,
+file open and close, and asynchronous (if possible) read and write. They
+perform no buffering, and only one i/o request can be outstanding at a time.
+Currently, asynchronous routines only exist for VMS. {\it Work to be done:
+implement asynchronous routines for UNICOS.}
+
+\beginsection {Data Sets and Items:  HIO}
+
+\beginsub{Programmer Model}
+
+MIRIAD's data files are stored in a moderately machine independent format.
+A data file (or dataset) logically consists of a number of named items,
+each item being
+some mix of binary or text data. Though the name of a data file is
+entirely up to the user, the names of items within a data file follow some
+convention (an agreement between the programmers who write the MIRIAD code).
+An item may be quite small (for example, only a single number)
+or it might be quite large (several megabytes of floating point numbers).
+
+An image or cube is a typical dataset. Items in an image dataset include
+`naxis' (the number of dimensions in the image/cube), `naxis1', `naxis2', etc
+(the number of elements along the first, second, etc axis), `image' (an
+item containing the pixel data), `history' (a text item, containing comments
+on the processing performed), and possibly `mask' (a pixel blanking mask, to
+indicate which pixels are good). The `naxis', `naxis1' and `naxis2' items
+would consist of a single integer. The `image' item would consist of many
+floating point numbers. The `history' item would consist of a text file.
+Though there are some similarities to the
+FITS concept, MIRIAD's datasets differ in that no distinction is made
+between ``header'' and ``data''.
+
+\beginsub{Implementation}
+
+Data is stored on disk in a format which is independent of the local
+machine. In particular, floating point numbers are stored in IEEE format
+(32 or 64 bit -- denormalized numbers are not currently supported on many
+machines), 16 and 32 bit 2's complement integers
+(with the most significant bit in the first bytes -- i.e. Sun, but not VMS,
+ordering), and the ASCII character set. Conversion to or from the hosts
+machine format occurs during the i/o operation.
+
+A MIRIAD dataset is implemented as a directory. The name of a Miriad data
+set is dictated by the naming rules of the host operating system. On
+VMS, datasets must have the file-type {\tt .dir}, case is unimportant
+and only one version is permitted. As the file-type is always
+{\tt .dir}, there is never any need to explicitly specify this.
+On UNIX, there is no file-type restriction, case is significant, but no
+version numbers.
+
+``Large'' items (the definition of ``large'' is a {\tt \#define} statement
+in {\tt hio.h}) are implemented as separate files within the dataset
+directory.  Small items (e.g. a single number) are implemented as an entry
+in the special file {\tt header}. To the higher level software, this
+distinction, and the actual existence of the {\tt header} file, is not
+visible. Programmers should not attempt to access the {\tt header} file.
+The {\tt header} file must always exist. MIRIAD uses its existence as a
+check that this is a MIRIAD dataset.
+
+All items are implemented as direct access, binary files. Under VMS, they
+are ``Stream\_LF'' files. Note that VMS supports several text file formats.
+However the only text file format supported by the MIRIAD i/o system
+is ``Stream\_LF''. This is not the default text format created by
+most VMS editors or FORTRAN programs. Although this may be considered a ``flaw''
+in the VMS implementation, the other text formats are not as
+machine independent.
+
+The {\tt HIO} routines are the method for accessing a dataset. This module
+provides routines to ``open'' and ``close'' a dataset, and to ``access''
+and ``deaccess'' a data item (essentially opening and closing an item).
+Lastly there are read and write routines to perform the actual i/o. Thus,
+there are three things to be done to read some piece of data: opening the
+dataset, accessing the item, and finally calling the read routine.
+
+\beginsub{Double Buffering}
+
+The {\tt HIO} routines perform double buffered i/o, performing read ahead
+and write behind, in an asynchronous fashion (where possible).
+The algorithm used by {\tt HIO} is fairly simple, and in some instances
+this might cause unnecessary disk i/o.
+
+\beginsub{Type Conversion}
+
+The read and write routines come in several flavours -- one for each
+number format. During the read or write operation, the number is converted
+between the hosts number format and the MIRIAD disk number format.
+Note that the {\tt HIO} routines have no knowledge of the number format
+of an item -- it is up to the calling routine to instruct the {\tt HIO}
+routines on the data type.
+
+To simplify code on machines with alignment restrictions, MIRIAD requires that
+numbers within a item must be aligned on a byte boundary which is a multiple
+of their size. For example, 2-byte numbers must start on an even-numbered
+byte offset, 4-byte numbers must start on a byte offset which is a multiple
+of 4, etc. 
+
+The conversion between the host and disk number format is performed by
+the {\tt pack} routines. Where the host format is identical
+to the disk format, the {\tt pack} routines are nothing but macros to
+perform a copy operation.
+
+Though the disk format supports both 16 and 32 bit integers, MIRIAD's
+higher level code only supports one integer size ({\tt INTEGER} in FORTRAN
+or {\tt int} in C). These are 4-byte integers on most implementations, though
+they are 8 bytes on Crays. In a different vain, Cray computers have poor
+support for double precision floating point numbers (in particular the
+C compiler does not support double precision numbers, and implements the
+{\tt double} data type as being identical to the {\tt float} type).
+Because of this, the Cray versions of the number format conversion routines
+convert IEEE 32 and 64 bit floating point numbers to the Cray single
+precision floating point number. To make code function correctly on the
+Cray, it must be compiled with the ``{\tt -d p}'' switches, which instructs
+the Cray compiler to implement FORTRAN {\tt DOUBLE PRECISION} as 64-bit
+floating point numbers (the same as FORTRAN {\tt REAL}).
+
+Currently, {\tt HIO} assumes that the host machine's character set is ASCII.
+{\tt HIO} could be modified to relax this assumption, but there may be
+other portability problems to non-ASCII machines lurking in some programs
+(e.g. task FITS).
+
+\beginsub{Other Machine Dependencies}
+
+There are three parameters, defined in {\tt sysdep.h}, which need to
+be correctly set for the {\tt HIO} module to correctly function. These
+are
+
+\item{$\bullet$} [BUFDBUFF] If set to 1, this allows double buffered,
+read ahead/write behind i/o is to be performed. Set to 0, some code
+(and much checking), needed to implement double buffering, is skipped in
+the compilation.
+\item{$\bullet$} [BUFALIGN] This gives an alignment requirement of the
+host machine.  The number is the larger of the alignment of an i/o
+operation (imposed by {\tt dio}), and the alignment requirement of the
+{\tt pack} routines. Under VMS it is 512 (the i/o systems alignment),
+under Sun OS it is 2 (alignment of a ``short int''), and on a Cray
+under UNICOS, it is 8 (alignment of a double).
+\item{$\bullet$} [BUFSIZE] {\tt HIO} usually reads or writes as much as
+it can in one i/o operation. {\tt BUFSIZE} gives the maximum number of
+bytes (and the size of {\tt HIO}'s buffers) that {\tt HIO} attempts to
+read and write at a given time.
+
+\beginsection {Applications Level Data Type Convention}
+
+Although the {\tt HIO} routines have no knowledge of the data type of a
+particular item (or byte in an item), it is desirable to be able to write
+tasks which (somehow) determines the type of an item, and performs some
+sort of operation on the item, if possible. The applications level i/o
+routines generally follow the convention that the first 4 bytes of an
+item give a ``magic'' number used to identify the data-type of an item
+(the values of these magic numbers are given in {\tt headio.h}).
+This convention only works for items composed of a single data type
+(e.g. all reals). For items which contain more than one data type, then
+the convention is that the first 4 bytes are 0, indicating some arbitrary
+binary format.
+
+Text files are an exception. They do not contain this 4-byte preamble,
+because this would interfere with printing and typing the item with the
+hosts standard utilities. Instead the convention is that text files
+contain just the ascii text. The standard routine which examines the
+magic numbers ({\tt hdprobe} in {\tt headio.c}) guesses something is a
+text file if the first four bytes do not match a magic number, but instead
+that they are members of the printable ascii set.
+
+There are some items which do not conform to this convention: {\tt visdata}
+in a uv dataset and most of the Maryland calibration datasets.
+
+Current tasks which inspect and use the data type information include
+{\tt fits} and {\tt itemize}.
+
+\beginsection {Various Routines:  HEADIO}
+
+Though some items in a MIRIAD dataset are rather involved beasts, many
+items simply give a single number. Most of the routines in {\tt HEADIO}
+read or write a single number, as well as checking the 4-byte preamble
+on each item is of the correct sort. The {\tt HEADIO} read routines also
+provide format conversion in some cases (e.g. between real and double
+precision).
+
+{\tt HEADIO} also contains routines to manipulate a history file ({\tt hisopen},
+{\tt hisclose}, {\tt hisread} and {\tt hiswrite}), copy an item between two
+datasets ({\tt hdcopy}), and to determine characteristics of an item
+({\tt hdprobe}).
+
+The {\tt XYIO} and {\tt UVIO} routines call {\tt HEADIO}.
+
+\beginsection {Image Datasets:  XYIO}
+
+An image dataset is quite reminiscent of the FITS format. The pixel data
+is stored as a single item of floating point numbers. Because of the
+random-access ability of i/o with items, an image can be accessed at
+any location in a random fashion.
+
+The ancillary information
+used to describe the image (image size and coordinate system) is stored as
+a number of other items consisting of a single item. The names of these items
+generally follow FITS convention (e.g. {\tt naxis}, {\tt naxis1}, etc). The
+units of the data may vary from FITS (angles are in radians, frequencies in
+GHz, velocities in km/s). The image also contains a history item (a text file).
+
+Each image can have an optional ``{\tt mask}'' item. This is a bit-map
+used to indicate which pixels are good, and which are bad (blanked or masked).
+If a bit mask is present, each pixel in the image has a corresponding bit.
+The actual value stored for a bad pixel is not explicitly defined. It should
+be some typical or natural value (possibly zero). MIRIAD is different
+from most other similar systems in that ``magic value'' blanking is not used.
+
+\beginsection {Image Datasets:  XYZIO}
+
+Warning:  the {\tt XYZ} routines do not handle masking or images already
+having a mask.
+
+To read or write a MIRIAD dataset the following set of routines can be used.
+These routines allow the applications programmer to easily read a profile in
+any direction, or a plane oriented in any way.
+{\ninepoint\begintt
+      xyzopen(  tno, name, status, naxis, axlen )
+      xyzclose( tno )
+      xyzsetup( tno, subcube, blc, trc, viraxlen, vircubesize )
+      xyzs2c(   tno, subcubnr, coords )
+      xyzc2s(   tno, coords, subcubenr )
+      xyzread(  tno, coords,  data, mask, dimdata )
+      xyzpixrd( tno, pixelnr, data, mask )
+      xyzprfrd( tno, profinr, data, mask, dimdata )
+      xyzplnrd( tno, planenr, data, mask, dimdata )
+      xyzwrite( tno, coords,  data, mask, dimdata )
+      xyzpixwr( tno, pixelnr, data, mask )
+      xyzprfwr( tno, profinr, data, mask, dimdata )
+      xyzplnwr( tno, planenr, data, mask, dimdata )
+\endtt}
+{\tt xyzopen} opens the dataset and readies it for reading/writing. 'name'
+is the name of the dataset. 'status' can be either ``old'' or ``new'',
+depending on whether an existing dataset is opened or a new one must be
+created. For old datasets, naxis gives the dimension of array axlen on
+input and the dimension of the dataset on output. On output, axlen contains
+the length of the axes.  For new datasets naxis and axlen specify the number
+of axes and their length.
+
+{\tt xyzclose} closes the dataset.
+
+The rest of the {\tt XYZ} routines can be used to read or write an arbitrary
+subcube in the dataset in a manner that minimizes disk-i/o. To do this,
+the datacube axes are named 'x', 'y', 'z', 'a', 'b', etc. 'x' may be RA
+or DEC or velocity or anything else, but it is the first axis.
+
+The {\tt xyzsetup} subroutine is used to define a subcube in the dataset.
+There are many subcubes in a dataset. They have axes with ``varying
+coordinates'' and axes with ``fixed coordinates''. With n ``varying
+coordinates'', the subcube is n-dimensional, and its position in the
+original cube is given by the ``fixed coordinates''. The subcubes are also
+ordered, along the ``fixed coordinates''.  E.g., for profiles in the 'z'
+direction, the first subcube has (x=1,y=1), the second has (x=2,y=1), on
+to (x=axlen(1),y=1) and then (x=1,y=2) etc, etc.
+
+For datasets that must be read, the 'subcube' variable of {\tt xyzsetup}
+specifies which axes from the original cube have ``varying coordinates'';
+e.g., 'z' for profiles of the z-direction, or 'xy' for image planes. It is
+also allowed to transpose axes:  e.g., 'zx' (which would usually correspond
+to making a vel-RA plane). To understand the meaning of 'subcube' for
+datasets that must be written, a little explanation is in order: the
+{\tt XYZ} routines produce a ``virtual cube'', one that never actually is
+written on disk or resides in memory, but which is conceptually useful.
+In this virtual cube, the axes are ordered such that the ones with
+``varying coordinates'' become the 'x', 'y' etc axes, and the ones with
+``fixed coordinates'' form the rest. So, if 'subcube' was 'z', a profile
+along the 'x'-axis of the virtual cube contains the datavalues on a profile
+along the 'z'-axis of the input cube. The 'y' and 'z' axes of the virtual cube
+were the 'x' and 'y' axes of the original cube, respectively. For writing a
+dataset, the 'subcube' variable gives the correspondence between the axes
+of the virtual cube and the output cube.  E.g., if 'subcube' is 'z', this
+means that the first ('x') axis of the virtual cube is the 'z'-axis of
+the output cube, and the 'y' and 'z' axes of the virtual cube correspond
+to the 'x' and 'y' axes of the output cube, respectively.
+
+Preceding an axisname with a '-' results in mirror-imaging the input or
+output data for that axis.
+
+The blc and trc variables of {\tt xyzsetup} give the bottom left and top right
+corner (respectively) of the part of the image cube to be worked on. The
+first naxis elements of blc and trc are used.  For reading, this is the
+region to be read; for writing it is the region to be written. In the
+latter case, if the output dataset did not yet exist and the region is
+smaller than the total cubesize given in {\tt xyzopen}, the outside-region
+is automatically set to zero.
+
+The viraxlen and vircubesize variables of {\tt xyzsetup} give some information
+about the virtual cube:  the axis lengths and the 'cubesizes'. 'cubesize(1)'
+is the number of pixels in a profile, 'cubesize(2)' is the number of pixels
+in a plane, 'cubesize(3)' is the number of pixels in a cube, etc. So, for
+a 3-d input cube, 'cubesize(3)' gives the total number of pixels to work on.
+
+The subroutine {\tt xyzs2c} can be used to obtain the values of the ``fixed
+coordinates'' for a given subcube number.  The first element of the array
+coords then corresponds to the first ``fixed coordinate'' value, etc.
+E.g., for profiles in the 'z'-direction, coords(1) is the 'x'-position,
+coords(2) the 'y'-position. Subroutine {\tt xyzc2s} does the inverse operation.
+
+{\tt xyzread}, {\tt xyzpixrd}, {\tt xyzprfrd} and {\tt xyzplnrd} do the
+actual reading of data.  {\tt xyzread} takes as input the ``fixed coordinate''
+values and returns the subcube in the 1-dimensional array data. The other
+3 routines read a single pixel, a single profile and a single plane,
+respectively.  In each case the array data (whose dimension is transferred
+to the subroutines in the variable dimdata) should be large enough to hold
+the entire requested subcube. The logical array mask is used to indicate if
+datapixels were undefined (this is not yet implemented).  mask=TRUE means
+the pixel is OK; FALSE means it is undefined.  The write routine works in
+the same manner.
+
+If the program wants to loop over pixels or profiles, use of {\tt xyzs2c}
+and {\tt xyzread} becomes less efficient than use of {\tt xyzpixrd} or
+{\tt xyzprfrd}. In fact, for looping over pixels, the {\tt xyzs2c-xyzread}
+combination is about 10 times less efficient than {\tt xyzpixrd}. This is
+because with {\tt xyzs2c} and {\tt xyzread}, the pixelnumber is first
+converted to a coordinate with {\tt xyzs2c} and then converted back to a
+pixelnr in {\tt xyzread}, while {\tt xyzpixrd} avoids this overhead.
+
+A typical call sequence using the {\tt XYZ} routines to work on profiles
+in the velocity direction would be:
+{\ninepoint\begintt
+      call xyzopen(  tno1, name1, 'old', naxis, axlen )
+      call xyzopen(  tno2, name2, 'new', naxis, axlen )
+      call headcopy( tno1, tno2, axnum, naxis )          ! with axnum(i)=i
+      call boxinput( 'region', name, boxes, maxboxes )
+      call boxinfo(  boxes, naxis, blc, trc )
+      call fndaxnum( tno1, 'freq', velaxnam, velaxnr )
+      call xyzsetup( tno1, velaxnam, blc, trc, viraxlen, vircubesize )
+      call xyzsetup( tno2, velaxnam, blc, trc, viraxlen, vircubesize )
+      nprofiles = = vircubesize(naxis) / viraxlen(1)
+      do profile = 1, nprofiles
+          call xyzprfrd( tno1, profile, data, mask, dimdata )
+          call work_on_profile( data, mask, dimdata )
+          call xyzprfwr( tno2, profile, data, mask, dimdata )
+      enddo
+\endtt}
+
+A warning is in order:  each call to {\tt xyzsetup} causes all internal
+buffers to be lost completely, so {\tt xyzsetup} should be called for
+all datasets before starting to work on them.  Output buffers are flushed
+before the buffers are lost, however.
+
+\beginsection {UV DATASETS:  UVIO}
+
+The uv data structure, and the i/o routines needed to support this, are
+undoubtedly one of the more complex, and bug-ridden, portions of MIRIAD.
+In describing this module, reference will be made to some routines which are
+internal to {\tt UVIO}, that is private routines, which cannot or should not
+be called by code external to {\tt UVIO}. These routines are labelled (in
+this description only) with an asterisk. 
+
+A uv dataset can be viewed as a sequential stream of named variables,
+which progressively change their value as an observation progresses.
+These variables may be fairly fundamental observations (e.g. correlations,
+system temperatures), or derived data (e.g. u and v coordinates, deduced from
+array geometry and time).  Variables can be of different data formats (stored
+on disk as, for example, 16-bit integers, double precision, etc), and contain
+an arbitrary number of elements.  There is no support in {\tt UVIO} for
+multi-dimensional arrays -- such a structure has to be imposed on a one
+dimensional array by the higher level software.
+
+\beginsub {The Variable Table -- Vartable}
+
+This model of variables is implemented using two items, {\tt vartable} (a text
+file) and {\tt visdata} (a binary file). {\tt Vartable} gives an ordered list
+of the names and types of the variables present in a particular uv dataset.
+A simple {\tt vartable} file might look like:
+{\ninepoint\begintt
+    j corr
+    d coord
+    t time
+    i nchan
+    r baseline
+\endtt}
+Here the first character gives the data type that the variable is stored in on
+disk. This will be one of `a', `j',
+`i', `r', `d' or `c', indicating ascii, 16-bit integer, 32-bit integer, 32-bit
+floating point, 64-bit floating point, or 64-bit complex data respectively.
+Then follows the name of the variable. The list is ``ordered'' in the sense
+that the first line of {\tt vartable} describes variable number 0, the second
+line describes variable number 1, etc. The {\tt vartable} item is the only
+place where a variables name and type are given -- elsewhere the variable
+number is used. Note that {\tt vartable} does not give the number of elements
+in a variable -- this is allowed to change within a dataset, and so is
+encoded elsewhere.
+
+For an old dataset, reading {\tt vartable} is the first operation performed
+by the {\tt uvopen} routine. For a new dataset, writing {\tt vartable}
+is one of the last operations before completing the close of the dataset.
+
+\beginsub{The Actual Data -- Visdata}
+
+The {\tt visdata} item contains the actual values of the variables. It is
+an item of mixed data types. A {\tt visdata} item can be viewed as consisting
+of records and subrecords. A record contains all the changes to variables,
+etc, which change simultaneously. It will typically consist of many subrecords.
+
+A subrecord consists of a four byte subrecord header,
+possibly followed by a value. The four bytes consist of a byte giving the
+subrecord type, a byte giving the number of the variable affected (if
+any), and two bytes which are spare. These spare bytes must be zero. They
+are there to help keep subrecord headers on
+four byte boundaries. They may also be used in the future if more than 256
+variables are needed (i.e. more than 1 byte is needed to give the
+variable number). There are three types of subrecords:
+
+\item{$\bullet$} A subrecord giving the size of a variable. The
+value of this subrecord is a 32-bit integer, giving the variables
+size in bytes, as they exist on the disk.
+\item{$\bullet$} A subrecord giving the value of a variable. The size of the
+value field of this subrecord is given by a preceding ``size'' subrecord.
+The value may also contain extra padding to ensure that {\tt HIO}'s
+alignment requirements are met, and that a subrecord starts on a four byte
+boundary. The size given in a ``size'' subrecord does not include such padding.
+\item{$\bullet$} An end-of-record subrecord. This is a marker indicating the
+end of this record. When reading from {\tt visdata} (performed by
+{\tt uv\_scan}), the {\tt UVIO} routines always read to the end of a record
+before they return.
+
+Because of the size of subrecords, and the number of subrecords in a 
+record, are not fixed, the {\tt visdata} item must be processed in a sequential
+manner.
+
+\beginsub{IO on Variables}
+
+The lowest level of user-callable routines in {\tt UVIO} access the uv dataset
+by variables. The caller steps or scans through the uv dataset, reading the
+value of variables it is interested in. {\tt UVIO} does no ancillary
+processing. Largely because of the inherently sequential nature of the
+processing of {\tt visdata}, {\tt UVIO} does not allow programmers to
+modify a {\tt visdata} item, after it is initially written.
+
+\beginsub{Higher Level Processing -- UVWRITE and UVREAD}
+
+The correlation data is stored in {\tt visdata} as a normal variable. However
+given the frequency with which it is wanted, and given that it is desirable
+to perform extra processing on it, there are a number of special routines
+to access this data. Additionally a flag should be associated with each
+correlation, to indicate whether it is believed to be good or not.
+
+MIRIAD supports two general classes of correlation data -- narrowband data
+(also called spectral or channel data), and wideband data (also called
+continuum data). These are stored
+in the {\tt corr} and {\tt wcorr} variables, respectively. The narrowband
+data is determined from a small bandwidth channel, where the frequency
+range is accurately known and generally Doppler tracked. It is described by
+the variables {\tt nchan}, {\tt nspect}, {\tt ischan},
+{\tt nschan}, {\tt sdf}, {\tt sfreq}, and {\tt restfreq}. The wideband data
+is generally from a large bandwidth correlator, where the frequency
+tolerance and Doppler tracking is not as significant. It is described by
+variables {\tt nwide}, {\tt wfreq}, and {\tt wwidth}. Either one, or the other,
+or both of the narrow correlations  and wide correlations may be in a given
+uv dataset, or in a given {\tt visdata} record. Narrow correlations can be
+stored as either 16-bit integers (with an associated scale factor --
+{\tt tscale}), or as 32-bit floating point numbers. Wide correlations are
+always stored as 32-bit floating point numbers.
+
+At its simplest, {\tt uvread} packages together scanning through the
+{\tt visdata} item until either {\tt corr} or {\tt wcorr} changes (whichever
+one we are interested in at the time), and then returning with this (after
+having scaled the 16-bit correlation data by the scale factor, if needed),
+and the flags for the data (see the subsection on mask i/o), u and v
+coordinate, time and baseline. Similarly {\tt uvwrite} performs the
+converse operation. Whether we are processing narrow or wide data is
+determined by a call to {\tt uvset(...,'data',...)}.
+
+\beginsub{UV Data Selection}
+
+It is common to want to select only a subsect of the uv data for processing.
+MIRIAD has a very flexible system for this.
+
+In {\tt UVIO}, selection is set up by the {\tt uvselect} routine,
+and actually performed (within {\tt uvread}) by {\tt uvread\_select*}. See
+the User's Guide for general information on uv selection. Both
+{\tt uvselect} and {\tt uvread\_select} work with a linked list of
+{\tt SELECT} data structures -- {\tt uvselect} creates and initializes them
+whereas {\tt uvread\_select} interprets them, and selects data accordingly.
+
+Each {\tt SELECT} structure contains all the selection criteria in a ``clause''.
+A ``clause'' is basically the selection commands between ``and'' and ``or''
+operations (see the User's Guide for a more detailed description).
+
+\beginsub{Planet Processing}
+
+Observations of planets need to be corrected for changes in the distance
+from their orientation relative to the Earth.  This involves a scaling of
+the fluxes, and a rotation and scaling of the u-v coordinate. The necessary
+ephemeris information is present in Hat Creek generated files
+(variables {\tt plmaj}, {\tt plmin} and {\tt plangle}). {\tt uvread} can
+optionally perform the necessary corrections. Initially {\tt uvread} sets
+the planet scale factor at 1, and the rotation matrix as the identity matrix.
+This essentially sets the reference planet parameters to the first parameters
+present in {\tt visdata}. Alternately the caller can override this
+default by calling {\tt uvset(...,'planet',...)} to set the reference
+planet parameters.
+Whenever {\tt uvread} notes that the planet variables have changed, it
+updates the scale factor and rotation matrix (routine {\tt uvread\_update*}).
+
+\beginsub{Overriding Variables}
+
+One of the shortcomings of the {\tt visdata} format is that (short of
+writing a completely new dataset) it is not possible to change or
+add a uv variable. One way to lessen this problem is the override
+mechanism, implemented by routine {\tt uv\_override*}. After {\tt uvopen}
+reads the {\tt vartable} item, it checks whether the names of any items
+in the dataset coincide with the names of uv variables. If there is a
+match, and if the variable and item agree in the data type, and if the
+item consists of a single value, then the value of the item overrides the
+values of the variable present in {\tt visdata}. However, the number of elements
+in the variable does track the number given in {\tt visdata}. The items value
+is simply replicated.
+
+\beginsub{Self-Calibration Gains File}
+
+The {\tt selfcal} task is used to create a table giving antennae gain as a
+function of time. Currently the tasks {\tt uvcat} and {\tt invert} (indirectly)
+read the table (using routine {\tt uvdatrd}) and apply the self-calibration
+gains. {\tt UVIO} does not currently perform any operations on the items that
+{\tt selfcal} uses to form this table. The items are {\tt nsols}, {\tt ngains},
+{\tt interval} and {\tt gains}. The number of antennae is given by
+{\tt ngains}. {\tt gains} is the actual gains table, consisting
+of {\tt nsols} records. A record consists of the time (double precision
+value, giving the Julian date), and {\tt ngains} complex numbers (giving the
+gain for antennae 1 to {\tt ngains}. A gain of $(0.,0.)$
+indicates that no gain was available for this antenna. The {\tt interval}
+item gives the time interval over which antennae gains were assumed to
+be constant.
+
+\beginsection {Mask Files:  MASKIO}
+
+Both image and uv datasets may contain information identifying
+particular pixels or correlations as good or bad. This information is
+stored in a bit-map item, which is manipulated by the {\tt MASKIO} routines.
+The bit-map is implemented as a 32 bit integer item, with 31 bits stored per
+integer (the sign bit is always clear, to avoid possible spurious integer
+overflow problems). Routines are provided to open, close, read, and write the
+bit-map. The i/o routines pass in a start bit offset and bit
+count giving the portion of the mask to read or write. The read/write routines
+impose no alignment restrictions, and the caller need not be aware how the
+bits are stored. These problems are handled inside the mask read and write
+routines (adding a bit of complexity to them).  The read routine can provide
+the bit-map either as an array of FORTRAN logical values, or in a run-length
+encoded form.  Similarly, the write routine will accept either logical values
+or a run-length encoding.
+
+\beginsection {Low Level IO Routines}
+
+All i/o routines described above are built on top of a set of
+low level routines. In Miriad, a ``dataset'' is a collection of
+named items. Each item is an unstructured, byte addressable collection of data.
+It is up
+to the higher level software to impose some structure to the data items, and
+to provide a better interface for the high level programmer.
+The higher level routines should be adequate for most
+programmers. Though direct use of the following low level routines is
+discouraged, there are some instances where they may be needed.
+{\ninepoint\begintt
+      subroutine hopen(tno,dataname,status,iostat)
+      subroutine hclose(tno,iostat)
+      subroutine haccess(tno,item,itemname,status,iostat)
+      subroutine hdaccess(item,iostat)
+      subroutine hdelete(tno,itemname,iostat)
+      integer function hsize(item)
+
+      subroutine hreada(item,buffer,iostat)
+      subroutine hreadb(item,buffer,offset,length,iostat)
+      subroutine hreadj(item,buffer,offset,length,iostat)
+      subroutine hreadi(item,buffer,offset,length,iostat)
+      subroutine hreadr(item,buffer,offset,length,iostat)
+      subroutine hreadd(item,buffer,offset,length,iostat)
+
+      subroutine hwritea(item,buffer,iostat)
+      subroutine hwriteb(item,buffer,offset,length,iostat)
+      subroutine hwritej(item,buffer,offset,length,iostat)
+      subroutine hwritei(item,buffer,offset,length,iostat)
+      subroutine hwriter(item,buffer,offset,length,iostat)
+      subroutine hwrited(item,buffer,offset,length,iostat)
+
+\endtt}
+Only two operations can be performed on a dataset as a whole, namely to
+open and to close it. The routines to perform these are
+{\tt hopen} and {\tt hclose}. Here {\tt tno} is a handle passed back
+by {\tt hopen}, {\tt dataname} is a string giving the name of the dataset,
+and {\tt status} is either {\tt 'old'} (when accessing an old dataset)
+or {\tt 'new'} (when creating a dataset). {\tt iostat} is an error
+indicator, being zero if the operation was successful. Because of
+buffering performed by the i/o routines, it is very
+important to close a dataset when it is no longer needed.
+
+Before any item can be read or written, it must be ``opened'' with the
+{\tt haccess} routine. The inputs to this are: {\tt tno}, the handle passed
+back by {\tt hopen}; {\tt itemname}, a string giving the item name;
+{\tt status}, a string which can be {\tt 'read'}, {\tt 'write'} {\tt 'append'}
+or {\tt 'scratch'} (if an item is opened with {\tt status='scratch'}, an item
+is created, but then destroyed when the item is closed). The outputs from
+{\tt haccess} are firstly a handle, {\tt item}, which is used to perform i/o on
+the item, and secondly a status return, {\tt iostat}. All items should be
+closed down, with {\tt hdaccess}, before the dataset as a whole is closed.
+
+The {\tt hdelete} subroutine deletes an item.
+The integer function {\tt hsize} returns the size of an item in bytes.
+
+There are a group of i/o routines provided to read and write items. Because
+items are stored in a machine independent format, there are separate i/o
+routines for each data type.  Each i/o routine performs the conversion between
+the external (disk) format and the hosts internal format. For example, the
+{\tt hreadr} routine reads real numbers. On disk, Mirth reals are stored
+as IEEE floating point numbers. Internally, however, reals are stored in the
+hosts machines ``real number format''. The {\tt hreadr} routine performs the
+conversion. The read/write
+routines know nothing about the type of the data it is accessing. The
+caller must know this, and call the appropriate read/write routine.
+
+All read/write routines take the handle {\tt item} (passed back by
+{\tt haccess}) as their first argument, and pass back an i/o status as the last
+argument. The second argument is a buffer, which can be either a character
+string ({\tt hreada}, {\tt hwritea}, {\tt hreadb}, {\tt hwriteb}), an integer
+array ({\tt hreadj}, {\tt hwritej}, {\tt hreadi}, {\tt hwritei}),
+real ({\tt hreadr}, {\tt hwriter}) or double precision
+({\tt hreadd}, {\tt hwrited)}. {\tt hreada} and {\tt hwritea} read/write
+a text file,
+performing i/o on a line at a time. Text files are stored using a line-feed
+character to delimit the end of a line (i.e. the normal UNIX convention, or the
+VMS Stream\_LF convention). The routines {\tt hreadb} and {\tt hwriteb} perform
+i/o on bytes, no conversion being performed (these routines should rarely be
+needed). The routines {\tt hreadj} and {\tt hwritej} assume the integers are
+externally stored as 16 bit quantities, whereas {\tt hreadi} and {\tt hwritei}
+assume the integers are externally stored as 32 bit quantities. Internally,
+integers are always stored in the hosts standard integer format ({\tt int}
+in C, and an {\tt INTEGER}) in FORTRAN. Real and double
+precision values are externally stored in IEEE 32 bit and 64 bit floating point
+format. All read/write routines (except {\tt hreada} and {\tt hwritea}) take
+(as inputs) a byte {\tt offset} and byte {\tt length} as their third and fourth
+arguments. Both {\tt offset} and {\tt length} must be a multiple of the size
+of the data type being accessed (e.g. they must be a multiple of 4 for
+reals, or 8 for double precision numbers). Apart from this alignment
+restriction, data items can be read in a random fashion.
+
+All I/O routines pass back an i/o status indicator. A value of zero
+indicates success, -1 indicates end-of-file, and any other values indicate
+some other error (that is system dependent).
