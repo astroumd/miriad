@@ -85,10 +85,11 @@ c   17mar01 pjt   retrofitten fortran standard format fix (x->1x)
 c                 that was made earlier on 25jun98 in RCS
 c   28mar01 pjt   changed name from atmos -> uvphase 
 c   12feb02 pjt   column 73 was used, intel compiler choked
+c   18oct03 pjt   MAXBASE -> MAXBASE2
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='uvphase: version 12-feb-02')
+	parameter(version='uvphase: version 18-oct-03')
 	integer maxsels
 	parameter(maxsels=1024)
 	real sels(maxsels)
@@ -296,24 +297,24 @@ c    unit	Handle of uv-data file.
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	integer MCHAN,MAXAVE
-	parameter(MCHAN=4,MAXAVE=MCHAN*MAXBASE)
+	parameter(MCHAN=4,MAXAVE=MCHAN*MAXBASE2)
 	integer nchan,j,length,ant1,ant2,bl
 	logical more
 	character line*128,source*10
 	real amp(MCHAN),arg(MCHAN)
 	character cflag(MCHAN)*1
-	logical doave(MAXBASE)
+	logical doave(MAXBASE2)
 	double precision preambl(4)
-	real numave(MCHAN,MAXBASE),recave(MAXBASE)
-	real ampave(MCHAN,MAXBASE),phiave(MCHAN,MAXBASE)
-	real amprms(MCHAN,MAXBASE),phirms(MCHAN,MAXBASE)
-	double precision uave(MAXBASE),timeave(MAXBASE)
-	double precision baseave(MAXBASE),avel(MAXBASE)
-	real theta(MCHAN,MAXBASE)
-	logical first(MCHAN,MAXBASE),newave
+	real numave(MCHAN,MAXBASE2),recave(MAXBASE2)
+	real ampave(MCHAN,MAXBASE2),phiave(MCHAN,MAXBASE2)
+	real amprms(MCHAN,MAXBASE2),phirms(MCHAN,MAXBASE2)
+	double precision uave(MAXBASE2),timeave(MAXBASE2)
+	double precision baseave(MAXBASE2),avel(MAXBASE2)
+	real theta(MCHAN,MAXBASE2)
+	logical first(MCHAN,MAXBASE2),newave
 	integer npts,i
-	double precision xm(MAXBASE),ym(MAXBASE),zm(MAXBASE)
-	double precision delz(MAXBASE),an(6),rms,day,freq
+	double precision xm(MAXBASE2),ym(MAXBASE2),zm(MAXBASE2)
+	double precision delz(MAXBASE2),an(6),rms,day,freq
 	double precision sfreq(MAXCHAN),variance(MAXCHAN)
 	real airtemp,precipmm,relhumid,windmph,sigma,aveamp,elev
 	real pi
@@ -324,12 +325,12 @@ c  Externals.
 c
 	integer len1
 c
-	data doave/MAXBASE*.false./
-	data numave/MAXAVE*0./,recave/MAXBASE*0./
+	data doave/MAXBASE2*.false./
+	data numave/MAXAVE*0./,recave/MAXBASE2*0./
 	data ampave,phiave/MAXAVE*0.,MAXAVE*0./
 	data amprms,phirms/MAXAVE*0.,MAXAVE*0./
-	data uave,timeave/MAXBASE*0.d0,MAXBASE*0.d0/
-	data baseave/MAXBASE*0.d0/,avel/MAXBASE*0.d0/
+	data uave,timeave/MAXBASE2*0.d0,MAXBASE2*0.d0/
+	data baseave/MAXBASE2*0.d0/,avel/MAXBASE2*0.d0/
 	data first/MAXAVE*.TRUE./,newave/.TRUE./
 c
 c  Accumulate the average and rms.
@@ -403,7 +404,7 @@ c  Average the data.
 c
       npts = 0
       aveamp = 0.
-      do bl=1,MAXBASE
+      do bl=1,MAXBASE2
        if(doave(bl))then
 	uave(bl) = uave(bl) / recave(bl)
 	timeave(bl) = timeave(bl) / recave(bl)
@@ -467,7 +468,7 @@ c
 c  initialize the accumulators
 c
 	newave = .TRUE.
-      do bl=1,MAXBASE
+      do bl=1,MAXBASE2
 	doave(bl) = .false.
 	uave(bl) = 0.
 	timeave(bl) = 0.
@@ -544,20 +545,20 @@ c    dowrap	Attempt to extend phase beyond -180 to 180 degrees.
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	integer MCHAN,MAXSIZE,MAXAVE
-	parameter(MCHAN=4,MAXSIZE=1000,MAXAVE=MCHAN*MAXBASE)
+	parameter(MCHAN=4,MAXSIZE=1000,MAXAVE=MCHAN*MAXBASE2)
 	integer nchan,i,j,k, k0,length,ant1,ant2,bl
 	logical more
 	character line*128
 	real amp(MCHAN),arg(MCHAN),count
 	character cflag(MCHAN)*1
-	logical doave(MAXBASE)
+	logical doave(MAXBASE2)
 	double precision preambl(4)
-	real num(MAXBASE)
-	real amps(MAXSIZE,MCHAN,MAXBASE),args(MAXSIZE,MCHAN,MAXBASE)
-	double precision uave(MAXBASE),timeave(MAXBASE)
-	double precision baseave(MAXBASE)
-	real theta(MCHAN,MAXBASE)
-	logical first(MCHAN,MAXBASE)
+	real num(MAXBASE2)
+	real amps(MAXSIZE,MCHAN,MAXBASE2),args(MAXSIZE,MCHAN,MAXBASE2)
+	double precision uave(MAXBASE2),timeave(MAXBASE2)
+	double precision baseave(MAXBASE2)
+	real theta(MCHAN,MAXBASE2)
+	logical first(MCHAN,MAXBASE2)
 	real pi
 	parameter (pi=3.1415926)
 	save nchan
@@ -566,10 +567,10 @@ c  Externals.
 c
 	integer len1
 c
-	data doave/MAXBASE*.false./
-	data num/MAXBASE*0./
-        data uave,timeave/MAXBASE*0.d0,MAXBASE*0.d0/
-	data baseave/MAXBASE*0.d0/
+	data doave/MAXBASE2*.false./
+	data num/MAXBASE2*0./
+        data uave,timeave/MAXBASE2*0.d0,MAXBASE2*0.d0/
+	data baseave/MAXBASE2*0.d0/
 	data first/MAXAVE*.TRUE./
 c
 c  Store the amp and phase and accumulate the average u,v,time.
@@ -618,7 +619,7 @@ c
 c
 c  Compute Allan standard deviation and average u,v,time, baseline.
 c
-      do bl=1,MAXBASE
+      do bl=1,MAXBASE2
        if(doave(bl))then
 	uave(bl) = uave(bl) / num(bl)
 	timeave(bl) = timeave(bl) / num(bl)
@@ -664,7 +665,7 @@ c
 c
 c  initialize the accumulators
 c
-      do bl=1,MAXBASE
+      do bl=1,MAXBASE2
 	doave(bl) = .false.
 	num(bl) = 0
 	uave(bl) = 0.
@@ -698,21 +699,21 @@ c    dowrap	Attempt to extend phase beyond -180 to 180 degrees.
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	integer MCHAN,MAXSIZE,MAXAVE
-	parameter(MCHAN=4,MAXSIZE=1024,MAXAVE=MCHAN*MAXBASE)
+	parameter(MCHAN=4,MAXSIZE=1024,MAXAVE=MCHAN*MAXBASE2)
 	integer nchan,i,j,length,ant1,ant2,bl,size,n
 	logical more
 	character line*128
 	real amp(MCHAN),arg(MCHAN)
 	character cflag(MCHAN)*1
-	logical doave(MAXBASE)
+	logical doave(MAXBASE2)
 	double precision preambl(4)
-	real num(MAXBASE),step_hz
-	real amps(MAXSIZE,MCHAN,MAXBASE),args(MAXSIZE,MCHAN,MAXBASE)
+	real num(MAXBASE2),step_hz
+	real amps(MAXSIZE,MCHAN,MAXBASE2),args(MAXSIZE,MCHAN,MAXBASE2)
 	complex in(MAXSIZE),out(MAXSIZE)
-	double precision uave(MAXBASE),timeave(MAXBASE)
-	double precision baseave(MAXBASE)
-	real theta(MCHAN,MAXBASE)
-	logical first(MCHAN,MAXBASE)
+	double precision uave(MAXBASE2),timeave(MAXBASE2)
+	double precision baseave(MAXBASE2)
+	real theta(MCHAN,MAXBASE2)
+	logical first(MCHAN,MAXBASE2)
 	real pi
 	parameter (pi=3.1415926)
 	save nchan
@@ -721,10 +722,10 @@ c  Externals.
 c
 	integer len1
 c
-	data doave/MAXBASE*.false./
-	data num/MAXBASE*0./
-	data uave,timeave/MAXBASE*0.d0,MAXBASE*0.d0/
-	data baseave/MAXBASE*0.d0/
+	data doave/MAXBASE2*.false./
+	data num/MAXBASE2*0./
+	data uave,timeave/MAXBASE2*0.d0,MAXBASE2*0.d0/
+	data baseave/MAXBASE2*0.d0/
 	data first/MAXAVE*.TRUE./
 c
 c  Store the amp and phase and accumulate the average u,v,time.
@@ -774,7 +775,7 @@ c
 c
 c  Compute spectra of phase for each baseline.
 c
-      do bl=1,MAXBASE
+      do bl=1,MAXBASE2
        if(doave(bl))then
 	uave(bl) = uave(bl) / num(bl)
 	timeave(bl) = timeave(bl) / num(bl)
@@ -819,7 +820,7 @@ c-----------------------------------------------------------------------
 c
 c  initialize the accumulators
 c
-      do bl=1,MAXBASE
+      do bl=1,MAXBASE2
 	doave(bl) = .false.
 	num(bl) = 0
 	uave(bl) = 0.
