@@ -212,6 +212,55 @@ struct ant_def{
         double ambient_load_temperature ;
 
 };
+
+struct sph_config {
+        int     sphid         ; /*  spectrum id #             */
+        int     inhid         ; /*  integration id #          */
+        short   iband[25]     ; /*  spectral band int code    */
+        double  vel[25]       ; /*  velocity (vctype) (km/s)  */
+        float   vres[25]      ; /*  velocity res.             */
+        short   ivtype        ; /*  velocity type int code    */        
+        double  fsky[25]      ; /*  center sky freq.          */
+        float   fres[25]      ; /*  frequency res. (MHz)      */
+        short   nch[25]       ; /*  # channels in spectrum    */
+        int     dataoff       ; /*  byte offset for data      */
+        double  rfreq[25]     ; /*  rest frequency (GHz)      */
+        double  veldop        ; /*  velocity of observatory in the 
+                                    direction of the source tracked 
+                                    with doppler correction   */
+        short   isb           ; /*  sideband int code         */
+        short   irec          ; /*  receiver int code         */
+        int     souid         ; /* source id #               */
+                  };     
+
+struct blh_config {
+        int     blhid     ; /*  proj. baseline id #       */
+        int     inhid     ; /*  integration id #          */
+        short   isb       ; /*  sideband int code         */
+        short   ipol      ; /*  polarization int code     */
+        short   irec      ; /*  receiver int code         */
+                  };
+
+
+struct bltsys  {
+        int     blhid     ; /*  proj. baseline id #       */
+        int     inhid     ; /*  integration id #          */
+        short   isb       ; /*  sideband int code         */
+        short   irec      ; /*  receiver int code         */
+        short   itel1     ; /*  tel 1 int code            */
+        short   itel2     ; /*  tel 2 int code            */
+        float   tssb[25]  ; /*  tsys (ssb) 25 spectra     */
+                };
+struct anttsys {
+        int    inhid      ; /*  integration id #          */
+        short   refant    ; /*  reference ante            */
+        short   refpair1  ; /*  reference pair 1          */
+        short   refpair2  ; /*  reference pair 2          */
+        short   isb       ; /*  sideband int code         */
+        short   irec      ; /*  receiver int code         */
+        float   tssb[30]  ; /*  upto 30 ant               */
+               };
+
 /* the following definition and struct for smalod */
 #define DPI 3.14159265358979323846    /*pi*/
 #define CMKS 299792458.0              /* Speed of light (meters/second).*/
@@ -329,6 +378,7 @@ struct source {
        char veldef[8];
        double restfreq[SMIF+1];
        int sour_id;
+       int inhid_1st;
 };
 typedef struct source source;
 
@@ -400,6 +450,12 @@ struct pols {
         int polend;
             };
 
+struct lmn {
+        double lmn1;
+        double lmn2;
+        double lmn3;
+           };
+
 struct smlodd {
         double sfreq[SMIF+1];
         double sdf[SMIF+1];
@@ -415,6 +471,7 @@ struct smlodd {
         double el[SMANT+1];
         double az[SMANT+1];
         visdata data[SMADATA+1];
+        float veldop;
         float xtsys[SMIF+1][SMANT+1];
         float ytsys[SMIF+1][SMANT+1];
         float tsys[SMANT+1];        
@@ -463,11 +520,13 @@ struct smlodd {
         int hires;
         int nopol;
         int oldpol;
+        int doChunkOrder;
         int mflag;
         int newsc;
         int newpnt;
         int sb;  /* side band sb=0 for lsb, 1 for usb, sb for both */
         int rxif; /* corresponding to irec in blh */
+        int doeng; /* 1 to read the engine file for Tsys and LST */
         int scanskip;
         int scanproc;
         int currentscan;
@@ -518,4 +577,5 @@ struct ant_def *swap_enh(struct ant_def *enh_pnr);
 struct sch_def *swap_sch(struct sch_def *sch_pnr);
 short int *swap_sch_data(short int *sch_data_pnr, int datalength);
 int *swap_int_data(int *in_data_pnr, int datalength);
+
 
