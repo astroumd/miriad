@@ -86,8 +86,8 @@ c
         enddo
 
 	call hisopen(lVis,'append')
-	call hiswrite(lVis,'UVAFLAG: Miriad '//version)
-	call hisinput(lVis,'UVAFLAG')
+	call hiswrite(lVis,'CSFLAG: Miriad '//version)
+	call hisinput(lVis,'CSFLAG')
         call hisclose (lVis)
 	call uvclose(lVis)
         ntot = ntot + 1
