@@ -1,0 +1,130 @@
+#!/bin/csh
+# 
+#* mir.mxv - Load MIRIAD's X-windows Visualizer.
+#& mjs
+#: system operation
+#+
+#  Load MIRIAD program MXV from source code to $MIRBIN/mxv.
+#
+#    Usage:  mir.mxv
+#--
+#
+set miscdir = $MIR/doc/misc
+set bindir  = $MIRBIN
+set bin  = ${bindir}/mxv
+set slib = "-lXaw -lXt -lXmu -lXext -lX11 -ldf -lm"
+#
+set theI = "-I$MIR/borrow/hdf"
+if ($?MIRXINC != 0) then
+    foreach i ($MIRXINC)
+      set theI = ($theI "-I${i}")
+    end
+endif
+#
+set theX = "-L$MIRLIB"
+if ($?MIRXLIB != 0) then
+    foreach i ($MIRXLIB)
+      set theX = ($theX "-L${i}")
+    end
+endif
+#
+if      ('sun3' == $MIRHOST && $MIRSW == 'p') then
+        set theC = "cc $theI -c	 -f68881 -O -DSUN3"
+        set theM = "cc $theI	 -f68881 -O -DSUN3"
+else if ('sun3' == $MIRHOST) then
+        set theC = "cc $theI -c	 -f68881 -g -DSUN3"
+        set theM = "cc $theI	 -f68881 -g -DSUN3"
+else if ('sun4' == $MIRHOST && $MIRSW == 'p') then
+        set theC = "cc $theI -c	 -O -DSUN4"
+        set theM = "cc $theI	 -O -DSUN4"
+else if ('sun4' == $MIRHOST) then
+        set theC = "cc $theI -c	 -g -DSUN4"
+        set theM = "cc $theI	 -g -DSUN4"
+else if ('convex' == $MIRHOST && $MIRSW == 'p') then
+        set theC = "cc $theI -c -fi -O1 -DCONVEX"
+        set theM = "cc $theI    -fi -O1 -DCONVEX"
+else if ('convex' == $MIRHOST) then
+        set theC = "cc $theI -c -fi -g -DCONVEX"
+        set theM = "cc $theI    -fi -g -DCONVEX"
+else
+        echo "Unrecognized arch - exit 1"
+	echo "arch = $MIRHOST"
+	exit 1
+endif
+#
+pushd $MIR/src/spec/mxv >& /dev/null
+#
+echo "----- ----- ----- ----- ----- ----- ----- -----"
+echo "Begin loading MIRIAD MXV on $MIRHOST."
+echo "`date`"
+echo "----- ----- ----- ----- ----- ----- ----- -----"
+echo ""
+#
+set theList = (`ls *.c`)
+if ($#argv != 0) then
+	echo "--- Parameters ignored:  mxv to be rebuilt from source ---"
+endif
+#
+rm -fr *.o >& /dev/null
+#
+foreach i ($theList)
+    set out = $i:t
+    set out = $out:r
+    switch ($i)
+    case td_main.c:
+        breaksw
+    case *.c:
+        echo "$theC $i"
+        $theC $i
+        breaksw
+    default:
+        echo "$i Ignored."
+        breaksw
+    endsw
+end
+#
+echo "$theM -o ${bin}.exe td_main.c `ls *.o` $theX $slib"
+$theM -o ${bin}.exe td_main.c `ls *.o` $theX $slib
+(${bindir}/mir.mkpdoc mxv.for) >& /dev/null
+rm -fr *.o >& /dev/null
+(pushd $MIR;doc -p src/spec/mxv/mxv.for;mv *.doc $MIRPDOC;popd) >& /dev/null
+#
+echo "Creating execution script..."
+#
+#----- ----- ----- ----- ----- ----- ----- -----
+cat <<END_OF_TEXT >! $bin
+#!/bin/csh
+# This script will enable you to run the MXV application without
+# having to move the MXV resource file to your home or defaults directory.
+
+set noglob
+
+setenv XAPPLRESDIR ${miscdir}
+
+exec ${bin}.exe \${*:q}
+
+END_OF_TEXT
+chmod 755 $bin
+#----- ----- ----- ----- ----- ----- ----- -----
+#
+echo "...done."
+#
+if (-e Mxv.ad) then
+   set m1 = '$MIRBIN'
+   set m1 = "s&$m1&`echo $MIRBIN`&g"
+   set m2 = '$MIR'
+   set m2 = "s&$m2&`echo $MIR`&g"
+   set m3 = '$PGPLOT_FONT'
+   set m3 = "s&$m3&`echo $PGPLOT_FONT`&g"
+   sed ${m1:q} Mxv.ad | sed ${m2:q} | sed ${m3:q} >! ${miscdir}/Mxv
+endif
+#
+echo ""
+echo "----- ----- ----- ----- ----- ----- ----- -----"
+echo "`date`"
+echo "Finished loading MIRIAD MXV on $MIRHOST."
+echo "`ls -l $bin`"
+echo "`ls -l ${bin}.exe`"
+echo "----- ----- ----- ----- ----- ----- ----- -----"
+popd >& /dev/null
+exit 0
