@@ -53,12 +53,13 @@ c--
 c  History:
 c    10nov93 rjs   Original version.
 c     9sep94 rjs   Support for felocity linetype.
+c    11feb05 pjt   MAXSPECT -> MAXWIN
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	integer MAXSPECT
 	character version*(*)
-	parameter(version='Early: version 1.0 9-Sep-94')
-	parameter(MAXSPECT=16)
+	parameter(version='Early: 11-feb-05')
+	parameter(MAXSPECT=MAXWIN)
 c
 	real sigma,Sum,SumS,SumS2,s
 	integer nrec,nflag,nchan,tno,n,vupd,nspect,nschan(MAXSPECT)
