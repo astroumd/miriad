@@ -277,7 +277,7 @@ c	  values and the overlay ID strings are written.
 c	"nofirst" means don't write the first x-axis label on any subplots
 c	  except for the left-most one. This may avoid label overwrite.
 c       "corner" means only write labels in the lower left corner of any
-c         subplot  **PJT experiment**
+c         subplot
 c	"relax" means issue warnings when image axis descriptors are
 c	  inconsistent (e.g. different pixel increments) instead
 c	  of a fatal error.  Use at your peril.
@@ -661,7 +661,7 @@ c    rjs  13jul00  Correct angle of beam plotting when there is a rotation
 c		   between sky and pixel grid.
 c    dpr  14feb01  Add beamtyp keyword
 c    dpr  27feb01  Added scale-bar
-c    pjt  14jan02  Added options=corner
+c    pjt  15jan02  Added options=corner
 c-----------------------------------------------------------------------
       implicit none
 c
@@ -726,7 +726,7 @@ c
       data lwid /maxconp3*1/
       data getvsc /.true./
 c-----------------------------------------------------------------------
-      call output ('CgDisp: version 14-Jan-02')
+      call output ('CgDisp: version 15-Jan-02')
       call output (' ')
 c
 c Get user inputs
@@ -2536,7 +2536,7 @@ c   dotr       Label top and right axes as well as bototm and left
 c   dodist     Distort overlays with grid
 c   conlab     Label contours
 c   doabut     No white space bewteen subplots
-c   docorner   Only labels with lower left subplot **pjt**
+c   docorner   Only draw labels with lower left subplot
 c   val3form   Format for options=3val labelling
 c   cols1      Colours for LEVS1 contours
 c   ncols1
