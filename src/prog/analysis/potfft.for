@@ -266,9 +266,10 @@ c**************************************************************************
       REAL g(maxx,ny),eps,h,c1,c2
 c
       INTEGER i,j
-      REAL x,y,eps2,x1,y1,eps21,a,b,ss
-      external func1
-      common ar2
+      REAL x,y,eps2,x1,y1,eps21
+      DOUBLE PRECISION func1,ar2,a,b,ss
+      EXTERNAL func1
+      COMMON /cpotfft/ar2
 c
       eps2 = eps*eps
       IF(h.LE.0.0)THEN
@@ -286,17 +287,41 @@ c
             y = j-c2
             DO i=1,nx
                x = i-c1
-               x1=x/h
-               y1=y/h
-               eps21=eps2/(h*h) 
-               ar2=(x1**2.d0) + (y1**2.d0) + eps21
-             b=25.d0
-             a=-25.d0
-              CALL QGAUS(func1,a,b,ss)
-              g(i,j) = (1.d0/(2.d0*h))*ss
+               ar2=x*x + y*y + eps2
+               b=25.d0
+               a=-25.d0
+               CALL QGAUS(func1,a,b,ss)
+               g(i,j) = ss/(2*h)
             ENDDO
          ENDDO       
       ENDIF
+      RETURN
+      END
+c-----------------------------------------------------------------------
+c     Function for Sech^2 integral 
+      DOUBLE PRECISION FUNCTION func1(z1)
+      DOUBLE PRECISION ar2,z1
+      COMMON /cpotfft/ar2
+      func1 = 1.d0/( cosh(z1)**2.d0 * sqrt(ar2 + (z1*z1)) )
+      RETURN
+      END
+c-----------------------------------------------------------------------
+      SUBROUTINE QGAUS(FUNC,A,B,SS)
+      REAL*8 X(5),W(5),XM,XR,SS,DX,FUNC,A,B
+
+      DATA X/0.1488743389d0,0.4333953941d0,0.6794095682d0,
+     *       0.8650633666d0,0.9739065285d0/
+      DATA W/0.2955242247d0,0.2692667193d0,0.2190863625d0,
+     *       0.1494513491d0,0.0666713443d0/
+
+      XM=0.5d0*(B+A)
+      XR=0.5d0*(B-A)
+      SS=0.d0
+      DO 11 J=1,5
+        DX=XR*X(J)
+        SS=SS+W(J)*(FUNC(XM+DX)+FUNC(XM-DX))
+11    CONTINUE
+      SS=XR*SS
       RETURN
       END
 c**************************************************************************
@@ -371,34 +396,4 @@ c
 18    CONTINUE
       RETURN
       END
-c
-c     Function for Sech^2 integral 
-      Function func1(z1)
-      common ar2
-      func1 = ((1.d0/(cosh(z1)))**2.d0)*(1.d0/(sqrt(ar2
-     *         + (z1*z1))))
-      return
-      end
-c
-c
-      SUBROUTINE QGAUS(FUNC,A,B,SS)
-      REAL X,W,XM,XR,SS,DX
-      DIMENSION X(5),W(5)
-      DATA X/.1488743389d0,.4333953941d0,.6794095682d0,
-     *     .8650633666d0,.9739065285d0/
-      DATA W/.2955242247d0,.2692667193d0,.2190863625d0,
-     *     .1494513491d0,.0666713443d0/
-
-      XM=0.5d0*(B+A)
-      XR=0.5d0*(B-A)
-      SS=0.d0
-      DO 11 J=1,5
-        DX=XR*X(J)
-        SS=SS+W(J)*(FUNC(XM+DX)+FUNC(XM-DX))
-11    CONTINUE
-      SS=XR*SS
-      RETURN
-      END
 c***************************************************************************
-    
-
