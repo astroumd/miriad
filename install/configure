@@ -312,7 +312,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP CXX CXXFLAGS ac_ct_CXX AWK INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA LN_S SET_MAKE RANLIB ac_ct_RANLIB X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS XLIBS XINCS build build_cpu build_vendor build_os host host_cpu host_vendor host_os LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP CXX CXXFLAGS ac_ct_CXX AWK INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA LN_S SET_MAKE RANLIB ac_ct_RANLIB MAXDIM MAXDIM2 MAXIANT MAXANT MAXANT2 MAXBASE MAXBASE2 MAXCHAN MAXWIN MAXWIDE MAXNAX MAXBUF WARNING X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS XLIBS XINCS build build_cpu build_vendor build_os host host_cpu host_vendor host_os LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -870,6 +870,18 @@ Optional Features:
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
+  --with-maxdim=MAXDIM       1D access to images
+  --with-maxdim2=MAXDIM2     2D access to images
+  --with-maxiant=MAXIANT     MAXIANT
+  --with-maxant=MAXANT       1D access to antenna based arrays
+  --with-maxant2=MAXANT2     2D access to antenna based arrays
+  --with-maxbase=MAXBASE     MAXBASE
+  --with-maxbase2=MAXBASE2   MAXBASE2
+  --with-maxchan=MAXCHAN     Maximum number of spectral channels
+  --with-maxwin=MAXWIN       Maximum number of spectral windows (BIMA)
+  --with-maxwide=MAXWIDE     Maximum number of wideband channels
+  --with-maxnax=MAXNAX       Maximum number of axis in images
+  --with-maxbuf=MAXBUF       Maximum size, in words, of blank common buffer
   --with-x                use the X Window System
 
 Some influential environment variables:
@@ -5571,6 +5583,144 @@ else
 fi
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Check whether --with-maxdim or --without-maxdim was given.
+if test "${with_maxdim+set}" = set; then
+  withval="$with_maxdim"
+  with_maxdim=$withval
+else
+  with_maxdim="65536"
+fi;
+MAXDIM=$with_maxdim
+
+
+# Check whether --with-maxdim2 or --without-maxdim2 was given.
+if test "${with_maxdim2+set}" = set; then
+  withval="$with_maxdim2"
+  with_maxdim2=$withval
+else
+  with_maxdim2="8192"
+fi;
+MAXDIM2=$with_maxdim2
+
+
+# Check whether --with-maxiant or --without-maxiant was given.
+if test "${with_maxiant+set}" = set; then
+  withval="$with_maxiant"
+  with_maxiant=$withval
+else
+  with_maxiant="2048"
+fi;
+MAXIANT=$with_maxiant
+
+
+# Check whether --with-maxant or --without-maxant was given.
+if test "${with_maxant+set}" = set; then
+  withval="$with_maxant"
+  with_maxant=$withval
+else
+  with_maxant="64"
+fi;
+MAXANT=$with_maxant
+
+
+# Check whether --with-maxant2 or --without-maxant2 was given.
+if test "${with_maxant2+set}" = set; then
+  withval="$with_maxant2"
+  with_maxant2=$withval
+else
+  with_maxant2="28"
+fi;
+MAXANT2=$with_maxant2
+
+
+# Check whether --with-maxbase or --without-maxbase was given.
+if test "${with_maxbase+set}" = set; then
+  withval="$with_maxbase"
+  with_maxbase=$withval
+else
+  with_maxbase="500"
+fi;
+MAXBASE=$with_maxbase
+
+
+# Check whether --with-maxbase2 or --without-maxbase2 was given.
+if test "${with_maxbase2+set}" = set; then
+  withval="$with_maxbase2"
+  with_maxbase2=$withval
+else
+  with_maxbase2="500"
+fi;
+MAXBASE2=$with_maxbase2
+
+
+# Check whether --with-maxchan or --without-maxchan was given.
+if test "${with_maxchan+set}" = set; then
+  withval="$with_maxchan"
+  with_maxchan=$withval
+else
+  with_maxchan="4096"
+fi;
+MAXCHAN=$with_maxchan
+
+
+# Check whether --with-maxwin or --without-maxwin was given.
+if test "${with_maxwin+set}" = set; then
+  withval="$with_maxwin"
+  with_maxwin=$withval
+else
+  with_maxwin="16"
+fi;
+MAXWIN=$with_maxwin
+
+
+# Check whether --with-maxwide or --without-maxwide was given.
+if test "${with_maxwide+set}" = set; then
+  withval="$with_maxwide"
+  with_maxwide=$withval
+else
+  with_maxwide="18"
+fi;
+MAXWIDE=$with_maxwide
+
+
+# Check whether --with-maxnax or --without-maxnax was given.
+if test "${with_maxnax+set}" = set; then
+  withval="$with_maxnax"
+  with_maxnax=$withval
+else
+  with_maxnax="7"
+fi;
+MAXNAX=$with_maxnax
+
+
+# Check whether --with-maxbuf or --without-maxbuf was given.
+if test "${with_maxbuf+set}" = set; then
+  withval="$with_maxbuf"
+  with_maxbuf=$withval
+else
+  with_maxbuf="4194304"
+fi;
+MAXBUF=$with_maxbuf
+
+
+
+
+WARNING="Warning: do not edit this file, it has possibly been generated by configure"
+
 echo "$as_me:$LINENO: checking for X" >&5
 echo $ECHO_N "checking for X... $ECHO_C" >&6
 
@@ -9806,7 +9956,7 @@ presetting ac_cv_c_bigendian=no (or yes) will help" >&2;}
 esac
 
 
-          ac_config_files="$ac_config_files mirdefs"
+                              ac_config_files="$ac_config_files mirdefs ../src/inc/maxdim.h ../src/inc/maxdimc.h"
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
@@ -10338,6 +10488,8 @@ do
   case "$ac_config_target" in
   # Handling of arguments.
   "mirdefs" ) CONFIG_FILES="$CONFIG_FILES mirdefs" ;;
+  "../src/inc/maxdim.h" ) CONFIG_FILES="$CONFIG_FILES ../src/inc/maxdim.h" ;;
+  "../src/inc/maxdimc.h" ) CONFIG_FILES="$CONFIG_FILES ../src/inc/maxdimc.h" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
    { (exit 1); exit 1; }; };;
@@ -10438,6 +10590,19 @@ s,@LN_S@,$LN_S,;t t
 s,@SET_MAKE@,$SET_MAKE,;t t
 s,@RANLIB@,$RANLIB,;t t
 s,@ac_ct_RANLIB@,$ac_ct_RANLIB,;t t
+s,@MAXDIM@,$MAXDIM,;t t
+s,@MAXDIM2@,$MAXDIM2,;t t
+s,@MAXIANT@,$MAXIANT,;t t
+s,@MAXANT@,$MAXANT,;t t
+s,@MAXANT2@,$MAXANT2,;t t
+s,@MAXBASE@,$MAXBASE,;t t
+s,@MAXBASE2@,$MAXBASE2,;t t
+s,@MAXCHAN@,$MAXCHAN,;t t
+s,@MAXWIN@,$MAXWIN,;t t
+s,@MAXWIDE@,$MAXWIDE,;t t
+s,@MAXNAX@,$MAXNAX,;t t
+s,@MAXBUF@,$MAXBUF,;t t
+s,@WARNING@,$WARNING,;t t
 s,@X_CFLAGS@,$X_CFLAGS,;t t
 s,@X_PRE_LIBS@,$X_PRE_LIBS,;t t
 s,@X_LIBS@,$X_LIBS,;t t
@@ -10690,3 +10855,20 @@ fi
 
 
 chmod +x mirdefs
+
+
+
+echo ""
+echo "MAXDIM       : $MAXDIM"
+echo "MAXDIM2      : $MAXDIM2"
+echo "MAXIANT      : $MAXIANT"
+echo "MAXANT       : $MAXANT"
+echo "MAXANT2      : $MAXANT2"
+echo "MAXBASE      : $MAXBASE"
+echo "MAXBASE2     : $MAXBASE2"
+echo "MAXCHAN      : $MAXCHAN"
+echo "MAXWIN       : $MAXWIN"
+echo "MAXWIDE      : $MAXWIDE"
+echo "MAXNAX       : $MAXNAX"
+echo "MAXBUF       : $MAXBUF"
+
