@@ -26,6 +26,7 @@
 /*                 this fixes a serious bug in rdhdl for large values   */
 /*                Also adding in some bugv_c() called to replace bug_c  */
 /*  pjt 12jan05   Fixed up type conversion for int8's in rhhdl          */
+/*  pjt  6feb05   rdhdd_c() : no more type check (see comment in code)  */
 /************************************************************************/
 
 #include <stdlib.h>
@@ -255,6 +256,8 @@ void wrhdl_c(int thandle,Const char *keyword,int8 value)
 {
   int item;
   int iostat,offset;
+
+  /* Sault proposes to write an INT if below 2^31, else INT8 */
 
   haccess_c(thandle,&item,keyword,"write",&iostat);		check(iostat);
   hwriteb_c(item,int8_item,0,ITEM_HDR_SIZE,&iostat);		check(iostat);
@@ -493,8 +496,14 @@ void rdhdd_c(int thandle,Const char *keyword,double *value,double defval)
       if(offset + H_DBLE_SIZE == length){
 	hreadd_c(item,value, offset,H_DBLE_SIZE,&iostat);
       }
-    } else
+    } 
+#if 0
+    /* can't do this: some routines, e.g. imhead, actually depend
+     *  on it falling through. Sick, but true 
+     */
+    else
       bugv_c('f',"rdhdd_c: keyword %s not covered here",keyword);
+#endif
       
     check(iostat);
   }
