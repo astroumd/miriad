@@ -39,34 +39,7 @@
 #	208.110u 28.510s 4:14.09 93.1%	0+0k 0+0io 1659485pf+0w
 #
 #-----------------------------------------------------------------------
-# assume we have a mir.tar.gz (UIUC version) in a clean directory
-# also we need to assume your linux has a
-# a fortran compiler:   g77 (or f2c's fort77 ???)
-# and pgplot installed.
-#
-# Bob Sault uses: 		f77 -ff90-intrinsics-hide -c -fPIC -O
-#
-# Examples:
-# PGPLOT: 
-#    pgplot-5.2.0-2.i386.rpm			uses /usr/lib/pgplot
-#
-# PGPLOT for rh51, works all the way through RH60  as long as you
-# have the compat-* packages for fortran, c, c++ installed.
-#	pgplot-5.2.0-3u.i386.rpm
-#	pgplot-demos-5.2.0-3u.i386.rpm
-#	pgplot-devel-5.2.0-3u.i386.rpm
-# 
-# FORTRAN: (example for RH4.2)
-#   f2c-19960205-8.i386.rpm
-#   f2c-libs-19960205-8.i386.rpm
-#   fort77-1.14a-1.i386.rpm
-#
-# For xcorf you need lesstiff, e.g.
-#   lesstif-0.85-1.i386.rpm
-#   lesstif-devel-0.85-1.i386.rpm
-# seem to work fine, but don't try the ones from Powertools w/ RH62, they
-# put header files in funny places (motif1.2 vs. motif2.0)
-# and broke directory permissions in bizarre ways
+# For xcorf you may need lesstiff, open OpenMotif 
 
 # SuSe 6.0 uses: /usr/lib/libbsd-compat.a
 # whereas PGPLOT  likes /usr/lib/libbsd.a, a symlink will solve that
@@ -151,7 +124,6 @@ set install_root=`pwd`
 set official=0              #  also modify the system (c)shrc.MIRIAD?
 set shared=1                #  also build shared library libmir.so?
 set pgplot=1                #  include PGPLOT in $MIRLIB ? (you almost ALWAYS want this to be 1)
-set newcode=1               #  include 'newcode' not in CVS (yet) ; aim is to add in future
 set debug=0                 #  compile in debug (-g) mode ?
 set cvs=1                   #  use CVS archive to get miriad.tar.gz ?
 set internal=1              #  internal sourcecode build; overrides cvs, mirroot and newdir
@@ -298,23 +270,10 @@ endif
 
 source $MIRTEMP/MIRRC.$hosttype
 
-#			not really used anymore 
-if ($newcode) then
-  pushd $install_dir >& /dev/null
-  echo Adding newcode
-  if (-d newcode) then
-    echo Found newcode, adding it
-    (cd newcode; ./DOIT)
-  endif  
-  popd >& /dev/null
-endif
-
 if ($intel) then
   echo "Using intel compiler for linux"
   cp $MIR/src/sys/bin/compile.linux_intel $MIR/bin/localsys/compile.linux
 endif
-
-
 
 cd $MIR
 
@@ -327,7 +286,7 @@ chmod -R +w $MIR
 #echo Edit compile.linux and make g77 the default compiler
 #vi $MIR/bin/localsys/compile.linux
  
-echo Installing scripts.... (failed on darwin, did we not have $MIR/tmp  ????
+echo Installing scripts....
 mir.install scripts 
 
 #  another bug in the cvs setup, should also be fixed -- is now fixed
