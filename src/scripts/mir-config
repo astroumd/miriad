@@ -43,9 +43,9 @@ while test $# -gt 0; do
       echo $includes
       ;;
     --libs|--static-libs)
-      #libdirs="-L${MIRLIB -Wl,-rpath,${MIRLIB}"
-      libdirs="-L${MIRLIB"
-      echo $libdirs -L/usr/X11R6/lib -lmir -llinpack -lpgplot -lX11 -lm
+      #libdirs="-L${MIRLIB} -Wl,-rpath,${MIRLIB}"
+      libdirs="-L${MIRLIB}"
+      echo "$libdirs -L/usr/X11R6/lib -lmir -llinpack -lpgplot -lX11 -lm"
       ;;
     *)
       echo "${usage}" 1>&2
