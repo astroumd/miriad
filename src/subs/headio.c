@@ -27,6 +27,7 @@
 /*                Also adding in some bugv_c() called to replace bug_c  */
 /*  pjt 12jan05   Fixed up type conversion for int8's in rhhdl          */
 /*  pjt  6feb05   rdhdd_c() : no more type check (see comment in code)  */
+/*  pjt 17feb05   fixed bug in reading int8's from old MIR3 files       */
 /************************************************************************/
 
 #include <stdlib.h>
@@ -411,7 +412,7 @@ void rdhdl_c(int thandle,Const char *keyword,int8 *value,int8 defval)
 {
   int item;
   char s[ITEM_HDR_SIZE];
-  int iostat,length,offset;
+  int iostat,length,offset,itemp;
 
 /* Firstly assume the variable is missing. Try to get it. If successful
    read it. */
@@ -429,8 +430,15 @@ void rdhdl_c(int thandle,Const char *keyword,int8 *value,int8 defval)
       offset = mroundup(ITEM_HDR_SIZE, H_INT8_SIZE);
       if(offset + H_INT8_SIZE == length)
 	hreadl_c(item,value,offset,H_INT8_SIZE,&iostat);
+    } else if ( !memcmp(s,int_item, ITEM_HDR_SIZE)){
+      /* this is to cover old style MIR3 files that were using int4's */
+      offset = mroundup(ITEM_HDR_SIZE, H_INT_SIZE);
+      if(offset + H_INT_SIZE == length) {
+	hreadi_c(item,&itemp,offset,H_INT_SIZE,&iostat);
+        *value = itemp;
+      }
     } else
-      bugv_c('f',"rdhdl_c: item %s not an int8",keyword);
+      bugv_c('f',"rdhdl_c: item %s not an int8 or small enough int4",keyword);
       
     check(iostat);
   }
