@@ -1,3 +1,12 @@
+Warning: these instructions are quite old - but mostly still valid -
+instructions on how to obtain and install MIRIAD. 
+
+You probably want to execute the $MIR/install/install.linux script to
+install miriad, it has a number of checks to deal with system dependant
+things. We expect a different, and easier to use, installation method
+for Miriad V4 (should be available end 2002, beginning 2003) using the
+GNU 'autoconf' toolkit.
+
 ===========================================================================
 ===========================================================================
 
