@@ -3,11 +3,13 @@
 # mir.bench.py: see also http://bima.astro.umd.edu/memo/abstracts.html#81
 #
 # 10-mar-2003:  PJT    derived from the mir.bench and mir.bigbench scripts
-#
+# 15-mar-2003:  PJT    now using Miriad.py 
 #
 
 import sys, os, time, string, tempfile
-version='2003-03-10'
+from Miriad import *
+
+version='2003-03-15'
 
 # command line arguments that can be changed...
 keyval = {
@@ -35,12 +37,11 @@ for arg in sys.argv[1:]:
 print "Current command line defaults are:"
 for k in keyval.keys():
     print k + '=' + keyval[k]
-
+setlogger('pjt.log')
 # -----------------------------------------------------------------------------
 #
 # define all variables, now in their proper type, for this script
 #
-tmp='benchXXXXX'
 vis=['vis1','vis2','vis3']
 ant=['bima9_a.ant', 'bima9_b.ant', 'bima9_c.ant.equ']
 
@@ -67,40 +68,8 @@ else:
     cell    = string.atof(keyval['cell'])
     dt      = string.atof(keyval['dt'])
 
-timet=[0,0,0,0,0,0,0,0]           # arrays to store CPU usage
-timec=[0,0,0,0,0,0,0,0]
+t=Timer()
 
-mir = os.environ['MIR']
-
-# -----------------------------------------------------------------------------
-# a few useful functions
-
-#   execute a miriad 'command' (a list of strings) and accumulate a log 
-def miriad(command):
-    mycmd = cmd(command) + '>> bench.log 2>&1'
-    return os.system(mycmd)
-
-
-#   convert a list of strings to a command string
-def cmd(cmdlist):
-    str = cmdlist[0] 
-    for arg in cmdlist[1:]:
-        str = str + ' ' + arg
-    print str
-    return str
-
-#   save CPU info in predefined global slots
-def timer(slot):
-    global timet, timec
-    timec[slot] = time.clock()
-    timet[slot] = time.time()
-
-#   create a string to print human readable CPU info between slots 
-def cpulen(a,b):
-    st = '%.3f ' % (timet[b]-timet[a])
-    sc = '%.3f ' % (timec[b]-timec[a])
-    return sc + st
-       
 # -----------------------------------------------------------------------------
 # a few MIRIAD commands wrapped for this benchmark
 
@@ -173,33 +142,21 @@ print "Working in directory " + tmp
 
 if big:
     print "MIRBIGBENCH(py): %s : nchan=%d dt=%g" % (version,nchan,dt)
-    timer(0); miriad(uvgen(0));
-    timer(1)
-    print 'uvgen-big: ' + cpulen(0,1)
+    miriad(uvgen(0));
 else:
     print "MIRBENCH(py): %s : nchan=%d mapsize=%d" % (version,nchan,mapsize)
-    timer(0); miriad(uvgen(0))
-    timer(1); miriad(uvgen(1))
-    timer(2); miriad(uvgen(2))
-    timer(3); miriad(uvcat(vis))
-    timer(4); miriad(invert(mapsize,cell))
-    timer(5); miriad(clean())
-    timer(6); miriad(restor())
-    timer(7)
     
-    print 'Task:     CPU  WALL'
-    print 'uvgen1: ' +  cpulen(0,1)
-    print 'uvgen2: ' +  cpulen(1,2)
-    print 'uvgen3: ' +  cpulen(2,3)
-    print 'uvcat:  ' +  cpulen(3,4)
-    print 'invert: ' +  cpulen(4,5)
-    print 'clean:  ' +  cpulen(5,6)
-    print 'restor: ' +  cpulen(6,7)
-    print 'TOTAL:  ' +  cpulen(0,7)
-    if timet[7] != timet[0]:
-        print 'MirStones %f  ' % (300/(timet[7]-timet[0])) + ' Wall clock  (CPU clock has bug?)'
-    if timec[7] != timec[0]:
-        print 'MirStones %f  ' % (300/(timec[7]-timec[0])) + ' CPU clock'   
+    t.tag()
+    miriad(uvgen(0))
+    miriad(uvgen(1))
+    miriad(uvgen(2))
+    miriad(uvcat(vis))
+    miriad(invert(mapsize,cell))
+    miriad(clean())
+    miriad(restor())
+    t.tag(); 
+
+    print 'MirStones %f  ' % (300/(t.dt(0,1))) + ' Wall clock'
 
 print 'All done.'
 

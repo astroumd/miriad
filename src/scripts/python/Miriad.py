@@ -1,12 +1,18 @@
 #! /usr/bin/env python
 #
 #  a module that defines various routines useful for miriad processing
+#
+#   15-mar-2003   Created                                   PJT
+#
 
 import sys, os, time, string, math
 
+#   some global variables (should class this up and hide the data)
 logger = ""
 
+#   set the logfile for the miriad() function
 def setlogger(log):
+    global logger
     logger = '>> %s 2>&1' % log
     zap(log)
 
@@ -21,8 +27,9 @@ def zap_all(files):
 
 #   execute a miriad 'command' (a list of strings) and accumulate a log 
 def miriad(command,log=0):
+    global logger
     if (log != 0):
-        mycmd = cmd(command) + '> %s.log 2>&1' % command[0]
+        mycmd = cmd(command) + '> %s 2>&1' % log
     else:
         mycmd = cmd(command) + logger;
     return os.system(mycmd)
@@ -34,6 +41,14 @@ def cmd(cmdlist):
         str = str + ' ' +  arg
     print str
     return str
+
+#   show a little help....
+def doc(task):
+    os.system('doc %s | less' % task)
+
+#   show just the keywords for a program
+def keys(task):
+    os.system('doc %s | grep ^Keyword' % task)
 
 #   save CPU info in predefined global slots
 def timer(slot):
@@ -78,7 +93,40 @@ def greplog(log,word,index=0):
     print 'No match on' + word
     return "no-match"
 
+class Timer:
+    def __init__(self):
+        self.n = 0
+        self.timec = []
+        self.timet = []
+    def count(self):
+        return self.n
+    def tag(self):
+        self.n = self.n + 1
+        self.timec.append(time.clock())
+        self.timet.append(time.time())
+    def show(self):
+        print "Currently have %d entries" % self.n
+        print time.clock()
+        print time.time()
+    def showall(self):
+        print self.timec
+        print self.timet
+    def clock(self,i):
+        return self.timec[i]
+    def time(self,i):
+        return self.timet[i]
+    def dt(self,i,j):
+        return self.timet[j]-self.timet[i]
+    def dc(self,i,j):
+        return self.timec[j]-self.timec[i]
+    
+    
 
-
+#   If executed... probably they are in an interactive python shell
 if __name__ == '__main__':
-    print "This is the main, it does nothing"
+    print ""
+    print "Welcome to pyramid, a python enabled interface to MIRIAD."
+    print 'To get help on miriad tasks,  try e.g.  doc("invert")'
+    print 'or keys("invert")'
+    print "You are now dropped to the PYTHON prompt, enter ^D to exit"
+    print ""
