@@ -46,6 +46,9 @@ switch ($host)
    case linux:
                 set pgsys = linux
                 breaksw
+   case darwin:
+                set pgsys = darwin
+                breaksw
    default:
                 echo "Miriad's PGPLOT not installed on $host - exiting."
                 exit 1
