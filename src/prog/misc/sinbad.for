@@ -28,8 +28,6 @@ c
 c  History:
 c    mchw 29jan97  New task for Marc.
 c    mchw 05feb97  write same type of correlation data as input file.
-c    mwp  13may99  removed call to LogClose(); a fatal error with no
-c                  preceding LogOpen().
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
@@ -173,7 +171,6 @@ c
 c
 c  Close up shop.
 c
-c	call LogClose
 	call uvclose(lIn)
 c
 c  Finish up the history, and close up shop.

@@ -117,12 +117,12 @@ c    16dec93 mchw   Added option to switch x-axis to channel number.
 c    10apr94 mchw   Put MAXWIN into maxdim.h
 c    20oct94 mchw - Added colour. Changed default mode=inter.
 c    25dec94 pjt    Added pgask for interactive mode - nice with /xs !! 
-c    17mar01 pjt    documented some doc changes Mel made 24-may-99
+c    03oct01 mchw - Don't plot phase for autocorrelation.
 c-----------------------------------------------------------------------
 	include 'maxdim.h'
 	integer maxsels
 	parameter(maxsels=512)
-	character vis*80,line*128,date*18,device*30
+	character vis*128,line*128,date*18, device*128
 	character fmode*1,mode*10,fft*10
 	integer lvis,nchan,npts,j,nread
 	complex data(MAXCHAN),average(MAXCHAN),out(MAXCHAN)
@@ -136,7 +136,7 @@ c-----------------------------------------------------------------------
 c
 c  Get the parameters given by the user.
 c
-        call output('UVSPECT: version 1.0 17-mar-01')
+        call output('UVSPECT: version 03 Oct 2001')
 	call keyini
 	call keyf('vis',vis,' ')
 	call keya('line',line,'channel')
@@ -349,7 +349,7 @@ c----------------------------------------------------------------------
  	real xmin,xmax,ymin,ymax,xlo,xhi,ylo,yhi,plo,phi
 	integer ierr,il
 	character xlabel*100,ylabel*100,title*100,hard*1,pdev*30
-	character source*32
+	character source*32, obstype*32 
 	logical replot
 	integer len1,pgbeg,ismin,ismax
 c
@@ -397,8 +397,11 @@ c
             call pglab (xlabel, ylabel, title)
             call pgHline (npts, xaxis, amp, 2.)
             call pgswin (xlo, xhi, plo, phi)
-            call pgsci(7)
-            call pgpt (npts, xaxis, arg, 1)
+	    call rdhda(lvis,'obstype',obstype,' ')
+	    if(obstype.ne.'autocorrelation')then
+              call pgsci(2)
+              call pgpt (npts, xaxis, arg, 1)
+	    endif
             call pgsci(1)
             call output (' ')
 	  else
