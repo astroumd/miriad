@@ -9,10 +9,10 @@
 import sys, os, time, string, math, copy
 
 #   some global variables (private to Miriad.py)
-version = "1.1 (16-apr-2003)"
-logger  = ""
-quit    = 0
-mkeyval = []
+_version = "1.2 (17-apr-2003)"
+_logger  = ""
+_quit    = 0
+_mkeyval = []
 
 def run(command,log,fatal):
     """an alias for miriad()"""
@@ -49,11 +49,11 @@ def miriad(command,log=0,fatal=1):
     can be found in and below $MIR/examples/
     
     """
-    global logger
+    global _logger
     if (log != 0):
         mycmd = cmd(command) + '> %s 2>&1' % log
     else:
-        mycmd = cmd(command) + logger;
+        mycmd = cmd(command) + _logger;
     retval = os.system(mycmd)
     if retval:
         print "###: Error %d from %s" % (retval,command[0])
@@ -62,18 +62,18 @@ def miriad(command,log=0,fatal=1):
 
 def setlogger(log,append=0):
     """ set the logfile for the miriad() function. By default any old logfile is removed"""
-    global logger
+    global _logger
     print "setlogger: default logfile now " + log
-    logger = '>> %s 2>&1' % log
+    _logger = '>> %s 2>&1' % log
     if append==0:
         zap(log)
 
 def keyini(keyval,help=0,show=0):
-    global quit, mkeyval
+    global _quit, _mkeyval
     for arg in sys.argv[1:]:
         i=string.find(arg,"=")
         if arg == "--help" or arg == "-h":
-            quit=1
+            _quit=1
         elif i > 0:
             key = arg[0:i]
             val = arg[i+1:]
@@ -85,31 +85,53 @@ def keyini(keyval,help=0,show=0):
         else:
             print "### Error: argument %s not understood, try --help or -h" % arg
             os._exit(0)
-    # mkeyval = keyval[:]                # does not seem to work
-    # mkeyval = copy.copy(keyval)        # makes a (deep?) copy
-    mkeyval = keyval                     # keep a reference
-    if quit:
-        show_keyval(keyval,help,quit)
+    # _mkeyval = keyval[:]                # does not seem to work
+    # _mkeyval = copy.copy(keyval)        # makes a (deep?) copy
+    _mkeyval = keyval                     # keep a reference
+    if _quit:
+        show_keyval(keyval,help,_quit)
     elif show:
-        show_keyval(keyval,help,quit)
+        show_keyval(keyval,help,_quit)
 
+def keyprsnt(key):
+    """does keyword have a value"""
+    global _mkeyval
+    if _mkeyval[key] == " " or _mkeyval[key] == "":
+        return 0
+    else:
+        return 1
+    
 def keya(key):
-    global mkeyval
-    return mkeyval[key]
+    """return keyword value"""
+    global _mkeyval
+    return _mkeyval[key]
 
 def keyi(key):
-    global mkeyval
-    return string.atoi(mkeyval[key])
+    """return keyword value as integer"""
+    global _mkeyval
+    return string.atoi(_mkeyval[key])
 
 def keyr(key):
-    global mkeyval
-    return string.atof(mkeyval[key])
+    """return keyword value as real"""
+    global _mkeyval
+    return string.atof(_mkeyval[key])
+
+def keyl(key):
+    """return keyword value as boolean (0,1)"""
+    global _mkeyval
+    b=_mkeyval[key]
+    if b[0]=='1' or b[0]=='t':
+	return 1
+    elif b[0]=='0' or b[0]=='f':
+	return 0
+    else:
+	return -1
 
 def show_keyval(keyval,help=0,quit=0):
     if help != 0:
         print help
     print "------------------------------------------------------------"
-    print "Miriad.py: version " + version 
+    print "Miriad.py: version " + _version 
     print "Current keywords and their defaults are:"
     print "------------------------------------------------------------"
     for k in keyval.keys():
@@ -130,12 +152,12 @@ def zap_all(files):
     """ remove all datasets (wildcards now allowed via the shell)"""
     os.system('rm -rf ' + files)
 
-def cmd(cmdlist):
+def cmd(cmdlist,debug=0):
     """convert a list of strings to a command string"""
     str = cmdlist[0] 
     for arg in cmdlist[1:]:
         str = str + ' ' +  arg
-    print str
+    if debug: print str
     return str
 
 def doc(task):
