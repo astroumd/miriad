@@ -26,9 +26,11 @@ c    mchw 09jun97 Added evector to hatcreek
 c    rjs  24jun97 Correct height of ATCA.
 c    rjs/jm 11jul97 Correct longitude sign for IRAM15M, JCMT and CSO.
 c    mchw 05aug98 Added mount and nants to ovro.
-c    mchw 05feb99 Added carma for combined hatcreek and ovro arrays.
+c    mchw 05feb99 Added CARMA for combined hatcreek and ovro arrays.
 c    rjs  31mar00 Added SEST.
 c    dpr  22may01 Added HOBART26M, CEDUNA30M, XYEW
+c    mchw 24may01 Added RPA
+c    mchw 03jan02 Added SZA
 c************************************************************************
 c* ObsPrint -- Print list of known observatories.
 c: utility
@@ -77,7 +79,8 @@ c    observ	Name of the observatory. Current list is :
 c                 'ATCA', 'CEDUNA30M', 'CSO', 'GMRT', 'HATCREEK', 
 c                 'HOBART26M', 'IRAM15M', 'JCMT',
 c                 'KITTPEAK', 'NOBEYAMA', 'NOBEYAMA45', 'ONSALA', 'OVRO',
-c		  'PARKES', 'PENTICTON', 'QUABBIN', 'VLA', 'WSRT',
+c		  'PARKES', 'PENTICTON', 'QUABBIN', 'RPA', 'SZA', 'VLA', 
+c		  'WSRT'
 c                 
 c    object	The parameter of the observatory of interest. Possible
 c		values are:
@@ -176,7 +179,7 @@ c
 	call obsad('carma/antdiam',	8.0d0)
 	call obsad('carma/ellimit',	5.0*dpi/180.d0)
 	call obsad('carma/evector',	0.5*dpi)
-	call obsad('carma/height',	3000.0d0)
+	call obsad('carma/height',	2400.0d0)
 	call obsad('carma/jyperk',	80.d0)
         call obsad('carma/latitude',     obsdms( 1, 37,14, 0.00))
         call obsad('carma/longitude',    obsdms(-1,118,17, 0.00))
@@ -346,12 +349,37 @@ c
 	call obsad('quabbin/jyperk',	45.d0)
 	call obsad('quabbin/systemp',	240.d0)
 c
+c  RPA - seti array near Leuchner
+c
+        call obsad('rpa/antdiam',       3.6d0)
+        call obsad('rpa/ellimit',       8.0d0*dpi/180.d0)
+        call obsad('rpa/height',        238.d0)
+        call obsad('rpa/jyperk',        418.d0)
+        call obsad('rpa/latitude',      obsdms( 1, 37,55, 3.6))
+        call obsad('rpa/longitude',     obsdms(-1,122, 9,21.0))
+        call obsad('rpa/mount',         ALTAZ)
+        call obsad('rpa/nants',         6.d0)
+        call obsad('rpa/systemp',       60.d0)
+c
 c  SEST.
 c
 	call obsad('sest/antdiam',	15.d0)
 	call obsad('sest/height',	2400.d0)
 	call obsad('sest/latitude',	obsdms(-1,29,15,34.0))
 	call obsad('sest/longitude',	obsdms( 1,70,44,04.0))
+c
+c  SZA - Sunyaev-Zel'dovich Array of 8 3.5m antennas - part of CARMA.
+c
+        call obsad('sza/antdiam',     3.5d0)
+        call obsad('sza/ellimit',     5.0*dpi/180.d0)
+        call obsad('sza/evector',     0.5*dpi)
+        call obsad('sza/height',      2400.0d0)
+        call obsad('sza/jyperk',      418.d0)
+        call obsad('sza/latitude',     obsdms( 1, 37,14, 0.00))
+        call obsad('sza/longitude',    obsdms(-1,118,17, 0.00))
+        call obsad('sza/mount',       ALTAZ)
+        call obsad('sza/nants',       8.d0)
+        call obsad('sza/systemp',     200.d0)
 c
 c  The Very Large Array (NRAO).
 c  Values taken from the Green Book (pages 1-10, 1-16, 6-17).
