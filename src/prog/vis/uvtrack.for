@@ -69,10 +69,11 @@ c    03dec93 mchw  Use elevation limit when ha range is specified.
 c    07dec93 mchw  Check if source ever rises above elevation limit.
 c			as suggested by T.Helfer.
 c    07sep94 rjs   W-axis change.
+c    17nov94 mchw  Write restfreq rather than freq into uv-data.
 c-----------------------------------------------------------------------
 	include 'uvtrack.h'
 	character version*(*)
-	parameter(version='version 1.0  07-Sep-94')
+	parameter(version='version 1.0  17-Nov-94')
 	character ans*13,line*80
 	real dec,sinh,cosh,hain1,hain2
 	integer n,length
@@ -488,7 +489,7 @@ c
 	call uvputvri(unit,'nwide',1,1)
 	call uvputvri(unit,'npol',1,1)
 	call uvputvri(unit,'pol',1,1)
-	call uvputvrd(unit,'freq',dble(freq),1)
+	call uvputvrd(unit,'restfreq',dble(freq),1)
 	call uvputvrr(unit,'wfreq',freq,1)
 	call uvputvrr(unit,'wwidth',1.,1)
 c

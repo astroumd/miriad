@@ -8,6 +8,7 @@
  *  14-oct-91   Another minimod for Convex (mjs)  
  *              We presume mjs added__convexc__ 
  *  12-mar-92   include convex #define back again
+ *  21-sep-93   solaris mods (no <sys/dir.h>
  */
 
 #include <stdio.h>
@@ -16,10 +17,15 @@
 
 #include <sys/types.h>
 
+#if defined (sun) && defined (SYSV)
+#include <sys/fs/ufs_fsdir.h>
+#include <dirent.h>
+#else
 #if defined(__convexc__) || defined(convex)
 #include <dirent.h>
 #else
 #include <sys/dir.h>
+#endif
 #endif
 
 
@@ -44,7 +50,7 @@ char *flist[] ;
 int   nmax;
 {
     DIR *dir ;
-#if defined(__convexc__)	
+#if defined(__convexc__)
     struct dirent *fentry ;
 #else
     struct direct *fentry ;

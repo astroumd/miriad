@@ -131,7 +131,7 @@ echo "**************************************************************"
 
 # create tracks and plot them
   uvgen ant=$ary baseunit=$baseunit radec=0,$2 ellim=$ellim out=$1.$2.uv harange=$harange source=$MIRCAT/beamgen.source systemp=1
-  uvplt  vis=$1.$2.uv axis=uc,vc options=nobase device=$3 select=$select
+  uvplt  vis=$1.$2.uv axis=uc,vc options=nobase,equal device=$3 select=$select
   if($lpr) lpr pgplot.ps
 
 # uv -> map

@@ -102,6 +102,7 @@
  *       3-mar-92    d  pjt  some old day80 -> jd conversion was wrong (leapyear)
  *			     and day80 is 1 based, not 0 based.
  *       6-mar-92  4.5  pjt  formal version with correct JD
+ *      21-sep-93  4.5  mjs  elim ANSI warning about uncasted cmp (int, char).
  *
  * Known Bugs and deficiencies:
  *
@@ -396,7 +397,7 @@ header()
 	    VMSget( 1, (char *) &count ) ;
 	    spot = count - 1 ;
 	    length++ ;
-	    if( count > length ) {
+	    if( (int)count > length ) {
                 if (hcconv_debug>=0) {
 		    fprintf( stderr,
 	          "Warning: missing values in header variable: %s ", name ) ;

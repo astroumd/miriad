@@ -14,11 +14,11 @@ c@ vis
 c	Name of input visibility data file. No default.
 c@ again
 c	`again' gives an antenna amplitude factor as a function
-c		 again * total_power / systemp
+c		 again * sqrt(total_power/systemp)
 c	Default value 0. gives no amplitude  change.
 c@ rgain
 c	`rgain' gives an antenna amplitude factor as a function
-c		 rgain * systemp / total_power
+c		 rgain * sqrt(systemp/total_power)
 c	Default value 0. gives no amplitude  change.
 c@ pgain
 c	`pgain' gives the antenna phase change with total power in 
@@ -47,9 +47,11 @@ c    18mar96 mchw Scale total power to tsys = a + b*tpower + c*tpower**2
 c    20dec96 mchw Scale total power to tpower(n) = (tpower(n)-a)/b
 c    06aug97 mchw Added amplitude correction.
 c    12aug97 mchw divide amplitude correction by nwide. Add 'rgain'.
+c    13aug97 mchw change rgain to  sqrt(systemp/total_power)
+c    14aug97 mchw change again to  sqrt(total_power/systemp)
 c------------------------------------------------------------------------
 	character version*(*),vis*80,out*80
-	parameter(version='(version 1.0 12-AUG-97)')
+	parameter(version='(version 1.0 14-AUG-97)')
 	include	'maxdim.h'
 	integer length,item,nscale,i,j,nwide
 	complex gains(MAXANT)
@@ -201,13 +203,14 @@ c
 	  if(again.ne.0.)then
 	    do i=1,nants
 	      if(tsys(i).ne.0.)
-     *	        gains(i) = again*tpower(i)/tsys(i)*nwide*gains(i)
+     *	        gains(i) = again*sqrt(tpower(i)/tsys(i)*nwide)*gains(i)
 	    enddo
 	  endif
 	  if(rgain.ne.0.)then
 	    do i=1,nants
 	      if(tpower(i).ne.0.)
-     *	        gains(i) = rgain/tpower(i)*tsys(i)/nwide*gains(i)
+     *	        gains(i) = rgain*sqrt(tsys(i)/nwide/tpower(i))*gains(i)
+c********1*********2*********3*********4*********5*********6*********7**
 	    enddo
 	  endif
 	  if(pgain.ne.0.)then

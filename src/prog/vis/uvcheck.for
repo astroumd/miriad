@@ -23,7 +23,7 @@ c	how to specify uv data selection.
 c@ line
 c	Linetype of the data in the format line,nchan,start,width,step
 c	"line" must be either `channel' or `wide'  for flagging data.
-c	The default is all the channel data.
+c	The default is all the channel data, and the wideband data.
 c	Use line=wide to check only the wideband data.
 c@ ref
 c	Reference line for flagging data.
@@ -36,6 +36,7 @@ c       Minimum and maximum values for the reference line amplitude.
 c	Flag the uv-data when the reference amplitude
 c	is outside the selected range.
 c	The flags are set to the value given by flagval.
+c	Calibration files (gains and passband) are NOT applied. 
 c       Default: 0,1e20    i.e. don't flag any uv-data.
 c@ flagval
 c       set to either 'flag' or 'unflag' to flag the data.
@@ -43,20 +44,18 @@ c       Default: don't change the flags.
 c@ var
 c	Name of uv-variable to check. Default is none.
 c	Print mean and rms values of variable within the selected range.
+c	A histogram plot can be printed (options=histo).
+c	The statistics and distribution of uv-points can be checked using
+c	var=uvdist, where "uvdist" is computed from the u,v coordinates 
+c	in nanosec units.
 c@ range
 c	Minimum and maximum values for uv-variable.
 c	Flag the uv-data when the uv-variable is outside this range.
 c	Default range=0,1e20.
 c@ delayflag
-c	Minimum and maximum values for the geometric delay in nanosecs.
 c	Flag the uv-data for each baseline if the absolute value of the
-c	geometric delay	is outside the specified range.
-c	Default delayflag=0,1d20   i.e. don't flag any uv-data.
-c@ delayoff
-c	Delay offset to be added to the geometric delay when flagging data.
-c	This allows data to to flagged if the delay difference from
-c	the antennas to an offset position is outside the range
-c	specified by delayflag. Default=0.0d0 nanosecs.
+c	difference in the delay lines is less than the specified value.
+c	Default delayflag=0.d0  does not flag any uv-data.
 c@ log
 c	The output log file. Default is the terminal.
 c@ options
@@ -93,15 +92,18 @@ c    mchw 20mar98  Added options=histo,debug
 c    mchw 30jun98  Get uvw in preamble to flag correlator interference.
 c    mchw 24jul98  Added delayflag and delayoff code. 
 c		   Fixed problems flagging the wideband, and elsewhere.
+c    mchw 07aug98  Added uvdistance as a dummy uv variable.
+c    mchw 27aug98  Rename flagged "channels" if linetype.eq.'wide'
+c    mchw 21jan99  Change delayflag to delay line difference.
 c----------------------------------------------------------------------c
 	include 'maxdim.h'
 	character*(*) version
-	parameter(version='UVCHECK: version 1.0 24-Jul-98')
+	parameter(version='UVCHECK: version 1.0 21-Jan-99')
 	integer maxsels, ochan, nbugs, nflag, nwflag
 	parameter(MAXSELS=512)
 	real sels(MAXSELS)
 	complex data(MAXCHAN)
-	double precision preamble(5),freq,ofreq,delayflag(2),delayoff
+	double precision preamble(5),freq,ofreq,delayflag,ddelay
 	integer lIn,nchan,nread,nvis,nspect,onspect,varlen,nwide,onwide
 	real start,width,step,varmin,varmax,uvdist,uvmin,uvmax
 	real refstart, refwidth, reflo, refhi
@@ -109,9 +111,9 @@ c----------------------------------------------------------------------c
 	character source*9,osource*9,linetype*20,refline*20,flagval*10
 	logical flags(MAXCHAN),varcheck,updated,doflag,varflag,newflag
 	logical dowide
-	integer nvar
+	integer nvar,ant1,ant2
 	real ave,rms
-	double precision vmin,vmax,delay,datline(6)
+	double precision vmin,vmax,delay(MAXANT),datline(6)
         integer CHANNEL,WIDE,VELOCITY,type
         parameter(CHANNEL=1,WIDE=2,VELOCITY=3)
         logical histo,debug
@@ -143,9 +145,7 @@ c
 	call keyr ('range',varmin,0.)
 	call keyr ('range',varmax,1.e20)
 	call keya ('log',log,' ')
-	call keyd ('delayflag',delayflag(1),0.d0)
-	call keyd ('delayflag',delayflag(2),1.d20)
-	call keyd ('delayoff',delayoff,0.d0)
+	call keyd ('delayflag',delayflag,0.d0)
 	call GetOpt(histo,debug)
 	call keyfin
 c
@@ -167,10 +167,12 @@ c
 	call uvopen (lIn,vis,'old')
 c
 	varcheck=var.ne.' '
-	if(varcheck)call uvprobvr(lIn,var,vartype,varlen,updated)
-	if(vartype.eq.' ')then
-	  write(line,'(a)') '"'//var//'" is not in uv-data'
-	  call bug('f',line(1:len1(line)))
+	if(var.ne.'uvdist')then
+	  if(varcheck)call uvprobvr(lIn,var,vartype,varlen,updated)
+	  if(vartype.eq.' ')then
+	    write(line,'(a)') '"'//var//'" is not in uv-data'
+	    call bug('f',line(1:len1(line)))
+	  endif
 	endif
 c
 	if(linetype.ne.' ')
@@ -259,7 +261,7 @@ c
           varflag = .FALSE.
 	  if(varcheck) call checkvar(histo,debug,
      *      lIn,date,var,varmin,varmax,varflag,nvar,vmin,vmax,ave,rms,
-     *          blo,binc,bin,nbin,under,over)
+     *          blo,binc,bin,nbin,under,over,uvdist)
 c
 c  Check for known problems in the data.
 c
@@ -274,16 +276,26 @@ c
      *              varflag, nflag, nwflag)
 	  endif
 c
-c  check if delay is outside the range specified.
+c  check if cable delay difference is outside the range specified.
 c
-	delay = abs(preamble(3)+delayoff)
-	if(delay.lt.delayflag(1) .or. delay.gt.delayflag(2)) then
-	  if(debug)then
-	    write(line,'(i6,a,f12.3)') nvis, '  delay=', delay
-	    call Logwrit(line)
-	  endif
-	  if(doflag) call flagdelay(lin,data,flags,nread,
-     *  	 dowide,newflag,nflag,nwflag)
+	  if(delayflag.ne.0.d0)then
+	    call uvprobvr(lIn,'delay',vartype,varlen,updated)
+	    if(vartype.eq.'d') then
+              call uvgetvrd(lIn,'delay',delay,varlen)
+	    else
+	      call bug('f', 'delay variable not in uv-data')
+	    endif
+	    call basant(preamble(5),ant1,ant2)
+	    ddelay = delay(ant1) - delay(ant2)
+c	    print *, date, preamble(4), ddelay, cabs(data(1))
+	  if(abs(ddelay).lt.delayflag) then
+	    if(debug)then
+	      write(line,'(i6,a,f12.3)') nvis, '  delay=', ddelay
+	      call Logwrit(line)
+	    endif
+	    if(doflag) call flagdelay(lin,data,flags,nread,
+     *    	 dowide,newflag,nflag,nwflag)
+  	  endif
 	endif
 c
 c  Loop the loop (get next record)
@@ -292,11 +304,17 @@ c
 	  nvis = nvis + 1
 	enddo
 c
+c  Rename flagged "channels" if linetype.eq.'wide'
+c
+	if(linetype.eq.'wide')then
+	  nwflag = nflag
+	  nflag  = 0
+	endif
+c
 c  Write summary.
 c
-      write(line,'(a,a,i6)') date,' number of records= ',nvis
-      call LogWrit(line)
-      write(line,'(a,2f10.0,a)') ' uvrange=(',uvmin,uvmax,') nanosecs'
+      write(line,'(a,a,i6,a,2f8.0,a)') date, ' # records= ', nvis,
+     *				' uvrange=(',uvmin,uvmax,') nanosecs'
       call LogWrit(line)
       write(line,'(i6,a)') nbugs, ' known problems in this data'
       call LogWrit(line)
@@ -324,11 +342,11 @@ c
 c********1*********2*********3*********4*********5*********6*********7**
 	subroutine checkvar(histo,debug,
      *      lIn,date,var,varmin,varmax,varflag,nvar,vmin,vmax,ave,rms,
-     *		blo,binc,bin,nbin,under,over)
+     *          blo,binc,bin,nbin,under,over,uvdist)
 	implicit none
 	character*(*) date,var
 	integer lIn,nvar
-	real varmin,varmax,ave,rms
+	real varmin,varmax,ave,rms,uvdist
 	double precision vmin,vmax
         logical varflag
         integer nbin,bin(nbin),under,over
@@ -343,6 +361,7 @@ c    date	Date and time of current record.
 c    var	Name of uv-variable.
 c    varmin	Minimum acceptable value.
 c    varmax	Maximum acceptable value.
+c    uvdist	uvdistance
 c  Output
 c    varflag    variable out of range?
 c    nvar	number of variable in range.
@@ -370,6 +389,7 @@ c
 c
 c  Get the type and length of the variable to be checked.
 c
+	if(var.ne.'uvdist')then
       call uvprobvr(lIn,var,vartype,varlen,updated)
       if(updated.and.varlen.gt.MAXANT*MAXWIDE)then
          write(line,'(a,i3,a,i3,a)')
@@ -379,10 +399,14 @@ c
       else if(.not.updated)then
          return
       endif
+	endif
 c
 c  Get the data to be checked.
 c
-      if(vartype.eq.'d') then
+	if(var.eq.'uvdist')then
+	  varlen=1
+	  ddata(1)=uvdist
+      else if(vartype.eq.'d') then
 	  call uvgetvrd(lIn,var,ddata,varlen)
       else if(vartype.eq.'r') then
 	  call uvgetvrr(lIn,var,data,varlen)
@@ -708,6 +732,6 @@ c
           call uvwflgwr(lin,wflags)
 	  nwflag = nwflag + nwread
         endif
-      write(*,*) 'flagdelay: nflag=',nflag,'  nwflag=',nwflag
+c      write(*,*) 'flagdelay: nflag=',nflag,'  nwflag=',nwflag
       end
 c********1*********2*********3*********4*********5*********6*********7*c

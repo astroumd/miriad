@@ -16,6 +16,8 @@ c   pjt     9aug00    adding the edge= and blankf= keyword and fixed a bug
 c                     where wides were computing wrong if different size
 c                     spectral windows were used
 c   pjt    10aug00    submitted, set default of blankf to be 0.033
+c   pjt    11mar01    retrofitted the ATNF's insistence of keyf->keya
+c                     they made on 08may00
 c***********************************************************************
 c= uvwide - recompute wide band from narrow band
 c& pjt
@@ -79,7 +81,7 @@ c
       CHARACTER PROG*(*)
       PARAMETER (PROG = 'UVWIDE')
       CHARACTER VERSION*(*)
-      PARAMETER (VERSION = '10-aug-00')
+      PARAMETER (VERSION = '11-mar-01')
 
 c
 c  Internal variables.
@@ -107,7 +109,7 @@ c
       CALL keyini
 c
       CALL keyf('vis', infile, ' ')
-      CALL keyf('out', outfile, ' ')
+      CALL keya('out', outfile, ' ')
       CALL keyl('reset',reset,.TRUE.)
       CALL keyl('narrow',donarrow,.FALSE.)
       CALL keyi('edge',edge,0)

@@ -8,10 +8,10 @@
 #  The user specifies the calibrator uv-data and line type to be used
 #  for the antenna gain calibration versus time, and the source uv-data
 #  and line type to be imaged. The antenna gains are derived from the
-#  calibration data with a 40 min time interval and applied to the
+#  calibration data with a 30 min time interval and applied to the
 #  source data. The script plots the calibrator amplitude and phase
 #  versus time, the antenna gains, and maps of the calibrator and
-#  source. The script uses some fixed paramters, and some options
+#  source. The script uses some fixed parameters, and some options
 #  are omitted. To customize your data reduction, copy $MIRBIN/autocal
 #  to your directory.
 #
@@ -35,17 +35,16 @@
 #    mchw  28oct94  change to cgdisp. Default natural weighting.
 #    mchw  21nov96  Use on-line amplitude calibration to Jy units.
 #    mchw  19feb97  Let invert choose cell size.
+#    mchw  10oct97  Let plots chose nxy
 #..................................................................
 # set some parameters:
 set refant=5
 set imsize=128
-set nxy=3,5
-set ngp=3,3
 set minants=3
-set interval=40
+set interval=30
 
 echo "**************************************************************"
-echo "    A-priori calibration using selfcal  (19-FEB-97 version)"
+echo "    A-priori calibration using selfcal  (10-OCT-97 version)"
 echo "**************************************************************"
 
 if($#argv<6) then
@@ -84,14 +83,12 @@ echo Edit the data to remove amplitudes which are too high or too low.
 echo Phase jumps may corrupt adjacent data.
 echo ""
 
-uvplt vis=$1 device=$3 line=$4 axis=time,amp select=$6\
- options=nocal nxy=$nxy size=2
+uvplt vis=$1 device=$3 line=$4 axis=time,amp select=$6 options=nocal size=2 select=$6
 if ( $3 == /ps ) then
   lpr pgplot.ps
 endif
 
-uvplt vis=$1 device=$3 line=$4 axis=time,phase yrange=-180,180\
- options=nocal,dots nxy=$nxy size=2 select=$6
+uvplt vis=$1 device=$3 line=$4 axis=time,phase yrange=-180,180 options=nocal,dots size=2 select=$6
 if ( $3 == /ps ) then
   lpr pgplot.ps
 endif
@@ -102,6 +99,7 @@ echo RUN SELFCAL ON THE CALIBRATOR
 echo ""
 echo Use on-line amplitude calibration to Jy units:
 selfcal vis=$1 refant=$refant line=$4 interval=$interval select=$6 minants=$minants
+
 #echo Calibrate the amplitude scale using cals.fluxes table.
 #selfcal vis=$1 options=apriori,amplitude,noscale refant=$refant line=$4 \
 #	interval=$interval select=$6 minants=$minants
@@ -112,12 +110,12 @@ echo PLOT THE ANTENNA GAINS
 echo Edit the calibrator data to remove gains which are too high or too low.
 echo ""
 
-gpplt vis=$1 device=$3 yaxis=amp nxy=$ngp 
+gpplt vis=$1 device=$3 yaxis=amp 
 if ( $3 == /ps ) then
   lpr pgplot.ps
 endif
 
-gpplt vis=$1 device=$3 yaxis=phase yrange=-360,360 nxy=$ngp options=dots
+gpplt vis=$1 device=$3 yaxis=phase yrange=-360,360 options=dots
 if ( $3 == /ps ) then
   lpr pgplot.ps
 endif
@@ -130,12 +128,12 @@ echo The phase should be zero. Estimate the rms phase scatter.
 echo Edit both calibrator and source data to remove bad time intervals.
 echo ""
 
-uvplt vis=$1 device=$3 line=$4 axis=time,amp nxy=$nxy select=$6
+uvplt vis=$1 device=$3 line=$4 axis=time,amp select=$6
 if ( $3 == /ps ) then
   lpr pgplot.ps
 endif
 
-uvplt vis=$1 device=$3 line=$4 axis=time,phase yrange=-180,180 nxy=$nxy options=dots select=$6
+uvplt vis=$1 device=$3 line=$4 axis=time,phase yrange=-180,180 options=dots select=$6
 if ( $3 == /ps ) then
   lpr pgplot.ps
 endif
@@ -183,12 +181,12 @@ echo ""
 echo PLOT THE CORRECTED AMPLITUDE AND PHASE FOR SOURCE
 echo Edit the source data to remove bad time intervals.
 echo ""
-uvplt vis=$2 device=$3 line=$5 axis=time,amp nxy=$nxy select=$6
+uvplt vis=$2 device=$3 line=$5 axis=time,amp select=$6
 if ( $3 == /ps ) then
   lpr pgplot.ps
 endif
 
-uvplt vis=$2 device=$3 line=$5 axis=time,phase yrange=-180,180 nxy=$nxy options=dots select=$6
+uvplt vis=$2 device=$3 line=$5 axis=time,phase yrange=-180,180 options=dots select=$6
 if ( $3 == /ps ) then
   lpr pgplot.ps
 endif

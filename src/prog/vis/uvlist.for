@@ -118,10 +118,11 @@ c   24oct96 mchw - List frequencies for high channels in each record.
 c   10jun97 rjs/mchw - Use keyline to uniformly handle linetype.
 c   26dec97 pjt  - more ansi (x -> 1x in format 100; Stat -> ShowStat [g77]
 c   28oct99 mchw - Extend phase in averaging routine.
+c   27oct00 mchw - Changes to accomodate more antennas.
 c-----------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='UVLIST: version  28-Oct-99')
+	parameter(version='UVLIST: version  27-Oct-00')
 	real rtoh,rtod,pi
 	integer maxsels
 	parameter(pi=3.141592653589793,rtoh=12/pi,rtod=180/pi)
@@ -314,7 +315,7 @@ c------------------------------------------------------------------------
 	include 'maxdim.h'
 	integer mchan,maxpol,MAXPTS
 	parameter(mchan=5,maxpol=12,MAXPTS=10)
-	integer nchan,i,j,k, k0,length,b1,b2,bl
+	integer nchan,i,j,k, k0,length,ant1,ant2,bl
 	logical more
 	character line*128,ctime*10,pol*2
 	real amp(mchan),arg(mchan),count
@@ -345,7 +346,7 @@ c
      *	 'averaged over #pts, where k is the sample interval')
 	  length = 0
 	  call cat(line,length,
-     *	   '  #pts  k     Time      Ant Pol U(kLam)  V(kLam)')
+     *	   '  #pts  k     Time      Ant    Pol U(kLam)  V(kLam)')
 	  do j=1,nchan
 	    call cat(line,length,'   Amp  Phase')
 	  enddo
@@ -393,9 +394,7 @@ c
 	vave(bl) = vave(bl)  / num(bl)
 	timeave(bl) = timeave(bl) / num(bl)
 	baseave(bl) = baseave(bl) / num(bl)
-	b2 = nint(baseave(bl))
-	b1 = b2 / 256
-	b2 = b2 - 256 * b1
+        call basant(baseave(bl),ant1,ant2)
 	k = (num(bl)-1) / 2
 	k0 = k
 	do while(k.gt.0)
@@ -426,9 +425,9 @@ c
 c
 	 if(k.eq.k0)then
 	 write(line,100) count,k,ctime,
-     *   	       b1,b2,pol,0.001*uave(bl),0.001*vave(bl),
+     *   	       ant1,ant2,pol,0.001*uave(bl),0.001*vave(bl),
      *		       (amp(j),nint(arg(j)),cflag(j),j=1,nchan)
- 100	 format(f6.0,1x,i3,1x,a,i3,'-',i2,1x,a,2f9.2,10(f8.3,i4,a))
+ 100	 format(f6.0,1x,i3,1x,a,i4,'-',i4,1x,a,2f9.2,10(f8.3,i4,a))
 	 length = len1(line)
 	 call LogWrite(line(1:length),more)
 	 else
@@ -468,7 +467,7 @@ c------------------------------------------------------------------------
 	include 'maxdim.h'
 	integer mchan,maxpol,maxave
 	parameter(mchan=5,maxpol=12,MAXAVE=mchan*MAXBASE)
-	integer nchan,j,length,b1,b2,bl
+	integer nchan,j,length,ant1,ant2,bl
 	logical more
 	character line*128,ctime*10,pol*2
 	real amp(mchan),arg(mchan)
@@ -499,7 +498,7 @@ c
 	  call LogWrite(' ',more)
 	  length = 0
 	  call cat(line,length,
-     *	   ' # Vis    Time      Ant Pol U(kLam)  V(kLam)')
+     *	   ' # Vis    Time      Ant    Pol U(kLam)  V(kLam)')
 	  do j=1,nchan
 	    call cat(line,length,'   Amp  Phase')
 	  enddo
@@ -556,9 +555,7 @@ c
 	vave(bl) = vave(bl)  / recave(bl)
 	timeave(bl) = timeave(bl) / recave(bl)
 	baseave(bl) = baseave(bl) / recave(bl)
-	b2 = nint(baseave(bl))
-	b1 = b2 / 256
-	b2 = b2 - 256 * b1
+        call basant(baseave(bl),ant1,ant2)
 	do j=1,nchan
 	 if(numave(j,bl).gt.0.)then
 	  amp(j) = ampave(j,bl) / numave(j,bl)
@@ -575,9 +572,9 @@ c
 	ctime = line(9:18)
 c
 	write(line,100) recave(bl),ctime,
-     *   	       b1,b2,pol,0.001*uave(bl),0.001*vave(bl),
+     *   	       ant1,ant2,pol,0.001*uave(bl),0.001*vave(bl),
      *		       (amp(j),nint(arg(j)),cflag(j),j=1,nchan)
- 100	format(f6.0,1x,a,i3,'-',i2,1x,a,2f9.2,10(f8.3,i4,a))
+ 100	format(f6.0,1x,a,i4,'-',i4,1x,a,2f9.2,10(f8.3,i4,a))
 	length = len1(line)
 	call LogWrite(line(1:length),more)
 	write(line,'(44x,10(f8.3,i4,a))')
@@ -612,7 +609,7 @@ c    p		Polarisation code. A zero value indicates it is unknown.
 c------------------------------------------------------------------------
 	integer mchan
 	parameter(mchan=5)
-	integer nchan,j,length,b1,b2
+	integer nchan,j,length,ant1,ant2
 	logical more
 	character line*128,ctime*10,pol*2
 	real amp(mchan),arg(mchan)
@@ -628,16 +625,14 @@ c
 	  call LogWrite(' ',more)
 	  length = 0
 	  call cat(line,length,
-     *	   ' Vis #    Time      Ant Pol U(kLam)  V(kLam)')
+     *	   ' Vis #    Time      Ant    Pol U(kLam)  V(kLam)')
 	  do j=1,nchan
 	    call cat(line,length,'   Amp  Phase')
 	  enddo
 	  call LogWrite(line(1:length),more)
 	endif
 c
-	b2 = nint(basein)
-	b1 = b2 / 256
-	b2 = b2 - 256 * b1
+        call basant(basein,ant1,ant2)
 c
 	pol = ' '
 	if(p.ne.0) pol = PolsC2P(p)
@@ -654,9 +649,9 @@ c
 	ctime = line(9:18)
 c
 	write(line,100)mod(VisNo,1000000),ctime,
-     *   	       b1,b2,pol,0.001*uin,0.001*vin,
+     *   	       ant1,ant2,pol,0.001*uin,0.001*vin,
      *		       (amp(j),nint(arg(j)),cflag(j),j=1,nchan)
- 100	format(i6,1x,a,i3,'-',i2,1x,a,2f9.2,10(f8.3,i4,a))
+ 100	format(i6,1x,a,i4,'-',i4,1x,a,2f9.2,10(f8.3,i4,a))
 	length = len1(line)
 	call LogWrite(line(1:length),more)
 	end
@@ -693,7 +688,7 @@ c------------------------------------------------------------------------
 	real sinha,cosha,sind,cosd,sinl,cosl,chi
 	double precision obsra,obsdec,latitude,dra,ddec
 	logical more,ok
-	integer i,j,i1,i2,nchan
+	integer i,j,ant1,ant2,nchan
 c
 c  Externals.
 c
@@ -701,8 +696,8 @@ c
 c
 	if(needhd)then
 	  call LogWrite(' ',more)
-	  line =' Vis #   UT(hrs)  LST(hrs)  Ant  Pol  u(kLam)  v(kLam)'
-     *	  //'  Elev(deg)  Chi  dra(")  ddec(")'
+	  line =' Vis #   UT(hrs)  LST(hrs)   Ant    Pol'
+     *	  //'  u(kLam)  v(kLam)   Elev(deg)  Chi  dra(")  ddec(")'
 	  call LogWrite(line,more)
 	endif
 c
@@ -726,16 +721,13 @@ c
 c
 c  Give the preamble.
 c
-	i2 = nint(basein)
-	i1=i2/256
-	i2=i2-i1*256
-c
+        call basant(basein,ant1,ant2)
 	pol = ' '
 	if(p.ne.0) pol = PolsC2P(p)
 c
 	write(line,
-     *    '(i6,2f10.4,1x,i3,''-'',i2,1x,a,2f9.2,f8.2,2x,3f6.0)')
-     *	  mod(Visno,1000000),ut*rtoh,lst*rtoh,i1,i2,pol,
+     *    '(i6,2f10.4,1x,i4,''-'',i4,1x,a,2f9.2,f8.2,2x,3f6.0)')
+     *	  mod(Visno,1000000),ut*rtoh,lst*rtoh,ant1,ant2,pol,
      *	  0.001*uin,0.001*vin,elev*rtod,chi*rtod,dra*rts,ddec*rts
 	call LogWrite(line,more)
 c
@@ -790,7 +782,7 @@ c------------------------------------------------------------------------
 	character line*80,date*18,cflag(mchan)*1,pol*2
 	real amp(mchan),phas(mchan)
 	logical more
-	integer i,j,i1,i2,nchan
+	integer i,j,ant1,ant2,nchan
 c
 c  Externals.
 c
@@ -798,23 +790,21 @@ c
 c
 	if(needhd)then
 	  call LogWrite(' ',more)
-	  line = ' Vis #   Ant     Date         Pol  U(klam)  V(klam) '
-     *		 //'  UT(hrs)  LST(hrs)'
+	  line = ' Vis #    Ant       Date         Pol'
+     *		 //'  U(klam)  V(klam)   UT(hrs)  LST(hrs)'
 	  call LogWrite(line,more)
 	endif
 c
 c  Give the preamble.
 c
-	i2 = nint(basein)
-	i1=i2/256
-	i2=i2-i1*256
+        call basant(basein,ant1,ant2)
 	pol = ' '
 	if(p.ne.0) pol = PolsC2P(p)
 	call JulDay(timein,'H',date)
 c
-	write(line,'(''|'',i6,i3,''-'',i2,x,a,1x,a,2f9.2,2f10.4)')
-     *	  mod(Visno,1000000),i1,i2,date(1:16),pol,0.001*uin,0.001*vin,
-     *	  ut*rtoh,lst*rtoh
+	write(line,'("|",i6,i4,"-",i4,x,a,1x,a,2f9.2,2f10.4)')
+     *	mod(Visno,1000000),ant1,ant2,date(1:16),pol,0.001*uin,0.001*vin,
+     *	ut*rtoh,lst*rtoh
 	call LogWrite(line,more)
 c
 c  List the channel data.
@@ -1141,9 +1131,8 @@ c
 	        call writeit(
      *			varname(k)//': '//rangleh(dble(data(1))),23)
 	      else if (varname(k).eq.'baseline') then
-	        ant1 = data(1)/256
-	        ant2 = data(1) - ant1*256
-	        write(line,'(a8,'':'',i2,i2.2)') varname(k),ant1,ant2
+        	call basant(data(1),ant1,ant2)
+	        write(line,'(a8,'':'',i4,"-",i4)') varname(k),ant1,ant2
 	        call writeit(line,15)
 	      else
 	        do j=1,vsubs,5
@@ -1348,7 +1337,7 @@ c		not known.
 c------------------------------------------------------------------------
 	integer MAXHIGH,ngood,nhigh
 	parameter(MAXHIGH=12)
-	integer i,j,k,length,b1,b2,highchan(MAXHIGH)
+	integer i,j,k,length,ant1,ant2,highchan(MAXHIGH)
 	logical more
 	character line*128,ctime*10,pol*2
 	real amp,phi,maxamp,maxphi,minamp,minphi
@@ -1362,15 +1351,13 @@ c
 	if(needhd)then
 	  call LogWrite(' ',more)
 	  length = 0
-	  call cat(line,length,' Vis #    Time      Ant Pol')
+	  call cat(line,length,' Vis #    Time      Ant    Pol')
 	  call cat(line,length,'  MaxAmp   AveAmp  RmsAmp RmsPhase')
 	  call cat(line,length,'   # high channels (>4*rms)')
 	  call LogWrite(line,more)
 	endif
 c
-	b2 = nint(basein)
-	b1 = b2 / 256
-	b2 = b2 - 256 * b1
+        call basant(basein,ant1,ant2)
 c
 	pol = ' '
 	if(p.ne.0) pol = PolsC2P(p)
@@ -1441,9 +1428,8 @@ c
 	  ctime = line(9:18)
 c
 	  write(line,100)mod(VisNo,1000000),ctime,
-     *   	       b1,b2,pol,maxamp,aveamp,rmsamp,rmsphi,
-     *		       nhigh
- 100	  format(i6,1x,a,i3,'-',i2,1x,a,1x,3(g8.2,1x),f6.0,1x,i5)
+     *   	   ant1,ant2,pol,maxamp,aveamp,rmsamp,rmsphi,nhigh
+ 100	  format(i6,1x,a,i4,'-',i4,1x,a,1x,3(g8.2,1x),f6.0,1x,i5)
 	  length = len1(line)
 	  call LogWrite(line(1:length),more)
 	  write(line,'(a,12i7)') 'CHAN', (highchan(j),j=1,nhigh)
@@ -1478,7 +1464,7 @@ c    p		Polarisation code. A value of zero indicates unknown.
 c------------------------------------------------------------------------
 	integer MAXHIGH,ngood,nhigh
 	parameter(MAXHIGH=12)
-	integer i,j,k,length,b1,b2,highchan(MAXHIGH)
+	integer i,j,k,length,ant1,ant2,highchan(MAXHIGH)
 	logical more
 	character line*128,ctime*10,pol*2
 	real amp,phi,maxamp,flux,uvdist,jyamp
@@ -1492,15 +1478,13 @@ c
 	if(needhd)then
 	  call LogWrite(' ',more)
 	  length = 0
-	  call cat(line,length,' Vis #    Time      Ant Pol')
+	  call cat(line,length,' Vis #    Time      Ant    Pol')
 	  call cat(line,length,' MaxAmp AveAmp  RmsAmp  RmsPhase')
 	  call cat(line,length,'   uvdist   Flux   Jy/AveAmp')
 	  call LogWrite(line,more)
 	endif
 c
-	b2 = nint(basein)
-	b1 = b2 / 256
-	b2 = b2 - 256 * b1
+        call basant(basein,ant1,ant2)
 c
 	pol = ' '
 	if(p.ne.0) pol = PolsC2P(p)
@@ -1570,9 +1554,9 @@ c
 	    jyamp = 0.
 	  endif
 	  write(line,100)mod(VisNo,1000000),ctime,
-     *   	       b1,b2,pol,maxamp,aveamp,rmsamp,rmsphi,
+     *   	       ant1,ant2,pol,maxamp,aveamp,rmsamp,rmsphi,
      *		       uvdist,flux,jyamp
- 100	  format(i6,1x,a,i3,'-',i2,1x,a,1x,3(g8.2,1x),f6.0,1x,3f8.2)
+ 100	  format(i6,1x,a,i4,'-',i4,1x,a,1x,3(g8.2,1x),f6.0,1x,3f14.6)
 	  length = len1(line)
 	  call LogWrite(line(1:length),more)
 	endif
@@ -1735,7 +1719,7 @@ c------------------------------------------------------------------------
 	include 'maxdim.h'
 	integer MAXHIGH,ngood,nhigh
 	parameter(MAXHIGH=12)
-	integer i,j,k,length,b1,b2,highchan(MAXHIGH)
+	integer i,j,k,length,ant1,ant2,highchan(MAXHIGH)
 	logical more
 	character line*128,ctime*10,pol*2
 	real amp,phi,maxamp,maxphi,minamp,minphi
@@ -1750,15 +1734,13 @@ c
 	if(needhd)then
 	  call LogWrite(' ',more)
 	  length = 0
-	  call cat(line,length,' Vis #    Time      Ant Pol')
+	  call cat(line,length,' Vis #    Time      Ant    Pol')
 	  call cat(line,length,'  MaxAmp   AveAmp  RmsAmp RmsPhase')
 	  call cat(line,length,'   # high channels (>4*rms)')
 	  call LogWrite(line,more)
 	endif
 c
-	b2 = nint(basein)
-	b1 = b2 / 256
-	b2 = b2 - 256 * b1
+        call basant(basein,ant1,ant2)
 c
 	pol = ' '
 	if(p.ne.0) pol = PolsC2P(p)
@@ -1829,9 +1811,9 @@ c
 	  ctime = line(9:18)
 c
 	  write(line,100)mod(VisNo,1000000),ctime,
-     *   	       b1,b2,pol,maxamp,aveamp,rmsamp,rmsphi,
+     *   	       ant1,ant2,pol,maxamp,aveamp,rmsamp,rmsphi,
      *		       nhigh
- 100	  format(i6,1x,a,i3,'-',i2,1x,a,1x,3(g8.2,1x),f6.0,1x,i5)
+ 100	  format(i6,1x,a,i4,'-',i4,1x,a,1x,3(g8.2,1x),f6.0,1x,i5)
 	  length = len1(line)
 	  call LogWrite(line(1:length),more)
 	  write(line,'(a,12i7)') 'CHAN', (highchan(j),j=1,nhigh)
