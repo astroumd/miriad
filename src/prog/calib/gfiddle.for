@@ -218,9 +218,6 @@ c     experiment with unwrapping phases.  Phases are given in degrees;
 c     Antenna is an integer; and U/L is given as 1/2 (for upper or
 c     lower sideband).
 c     Default: not used.
-c@ batch
-c     Name of batch file to be used for input or output.
-c     Default: not used.
 c@ out
 c     The name of the output UV dataset. The default is to NOT write
 c     out (and, hence, not save) the derived fits.
@@ -257,7 +254,7 @@ c-----------------------------------------------------------------------
       INCLUDE 'gfiddle.h'
       INTEGER MAXWINS,MAXBAD,MAXX,MAXY,MAXSELS
       CHARACTER VERSION*(*)
-      PARAMETER(VERSION='GFIDDLE: Version 27-feb-03')
+      PARAMETER(VERSION='GFIDDLE: Version 19-may-03')
       PARAMETER(MAXWINS=16,MAXBAD=20,MAXX=15,MAXY=4,MAXSELS=256)
 
       CHARACTER visi*80, viso*80, device*80, chr*1, ltype*20, fmethod*10
