@@ -53,8 +53,8 @@
 //            the 1st rx overlapping with that of 2nd).
 // 2005-03-29 fixed problem in decoding antenna coordinates
 //            in the case missing antenna in a random place.
-// 2005-03-31 trim the junk tail in source name;
-//            limited the length of source name to 8.
+// 2005-03-31 trim the junk tail in source name.
+//            the source name truncates to 8 char.
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -171,8 +171,8 @@ void rsmiriadwrite_c(char *datapath, char *jst[])
      return;
 }
 
-void rssmaflush_c(mflag,scinit,tcorr,scbuf,xflag,yflag,maxif,maxant,scanskip,scanproc, sb, rxif, dosporder,doeng)
-int *mflag, *scinit, tcorr, *scbuf, *xflag, *yflag, maxif, maxant,scanskip,scanproc, sb, rxif, dosporder, doeng;
+void rssmaflush_c(scanskip,scanproc, sb, rxif, dosporder,doeng)
+int scanskip,scanproc, sb, rxif, dosporder, doeng;
 { /* flush mirdata*/
 int i, j;
 int jstat;
@@ -191,15 +191,6 @@ extern smlodd smabuffer;
           smabuffer.rxif= rxif;
           smabuffer.doChunkOrder = dosporder;
           smabuffer.doeng = doeng;
-     *mflag = FALSE;
-     for (j=1; j<maxant+1; j++) {
-     for (i=1; i<maxant+1; i++) {
-            scinit[i,j] = FALSE;
-            scbuf[i,j]  = FALSE;
-            xflag[i,j]  = FALSE;
-            yflag[i,j]  = FALSE;
-     }
-     } 
       kstat = jstat = -1;  
 /*  read header  */
       rspokeflshsma_c((char *)&(kstat)); 
@@ -262,7 +253,6 @@ void rspokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1,
         smabuffer.tcorr = 0;
         buffer=(int)*kst;
         *kst= OK;
-
 }
 
 void rspokeflshsma_c(char *kst[])
@@ -516,7 +506,6 @@ struct pols *rscntstokes(int npol, int bl, int sb, int rx)
          return (&polcnts);
 }          
               
-
 int rsmir_Read(char *datapath,
              int jstat)
 {
@@ -872,7 +861,6 @@ case 4: uvwbsln[inhset]->uvwID[set-blhset].ipol=-5; break;
       blarray[blh[bset]->itel1][blh[bset]->itel2].nn = blh[bset]->bln ;
       blarray[blh[bset]->itel1][blh[bset]->itel2].uu = blh[bset]->blu ;
       smabuffer.nants=1;
-       printf("bset=%d\n", bset);
 for (set=bset+1;set<nsets[1];set++) {
       if(blarray[blh[bset]->itel1][blh[bset]->itel2].ee != blh[set]->ble) {
       blarray[blh[set]->itel1][blh[set]->itel2].ee = blh[set]->ble;
@@ -881,13 +869,10 @@ for (set=bset+1;set<nsets[1];set++) {
       blarray[blh[set]->itel1][blh[set]->itel2].itel1 = blh[set]->itel1;
       blarray[blh[set]->itel1][blh[set]->itel2].itel2 = blh[set]->itel2;
       blarray[blh[set]->itel1][blh[set]->itel2].blid  = blh[set]->blsid;
-   printf("e n u ant1 ant2 %f %f %f %d %d\n",
-            blh[set]->ble,blh[set]->bln,blh[set]->blu,
-            blh[set]->itel1,blh[set]->itel2);
       smabuffer.nants++;       }
           else
       {smabuffer.nants = (int)((1+sqrt(1.+8.*smabuffer.nants))/2);
- printf("mirRead: number of antenna =%d\n", smabuffer.nants);
+ printf("mirRead: number of antenna =%d are found.\n", smabuffer.nants);
           goto blload_done;}
                                 }
 }
@@ -921,7 +906,7 @@ printf("FINISHED READING  BL HEADERS\n");
     }
 // skip engineer data reading because the engineer
 // file was problem for the two receivers case. 05-2-25
-printf("doeng = %d\n", smabuffer.doeng);
+//printf("doeng = %d\n", smabuffer.doeng);
 if (smabuffer.doeng!=1) {goto engskip;}
       else {
 // read engineer data
@@ -1004,12 +989,6 @@ free(enh);
                          - antenna[smabuffer.refant].z;
           antenna[i].z = - antenna[i].z;
              }
-      printf("x y z %f %f %f lat=%f\n", 
-               antenna[i].x,
-               antenna[i].y,
-               antenna[i].z,
-               smabuffer.lat);
-
         }
 
 
