@@ -113,14 +113,15 @@ c   rjs   16aug94 Zeroth order fits were failing again!
 c   rjs   17aug94 Slightly better handling of offset value.
 c   rjs    9sep94 Handle felocity linetype.
 c   rjs   19sep04 Handle varying jyperk.
+c   pjt   11feb05 change MAXCH to be more reflective of MAXCHAN (tried MAXCHAN/4)
 c  Bugs:
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	include 'mirconst.h'
 	integer MAXCH,MAXORDER
 	character version*(*)
-	parameter(MAXCH=32,MAXORDER=11)
-	parameter(version='UvLin: version 1.0 19-Sep-04')
+	parameter(MAXORDER=11,MAXCH=MAXCHAN/4)
+	parameter(version='UvLin: version 11-feb-05')
 c
 	logical sun,twofit,relax,lpropc,cflags(MAXCHAN)
 	character uvflags*16,out*64,ltype*32,mode*12
