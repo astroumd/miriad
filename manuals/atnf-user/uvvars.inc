@@ -43,8 +43,9 @@
 %  20-mar-97  pjt  Added some recently added HatCreek variables, and "project"
 %   8-may-02  pjt  Added some more variables that had been added to HatCreek
 %                  (jyperka,obsline,rmspath,tau230,srv2k)
+%  22-may-02  pjt  added example of uvio output
 
-\newcommand{\uvversion}{May 8, 2002}
+\newcommand{\uvversion}{May 22, 2002}
 
 A \miriad\ uv dataset is composed of a collection of items and `\MM{u-v} variables'.
 The variables are parameters that are known at the time of the observation,
@@ -603,3 +604,106 @@ ytsys(nants,nspect)		\>R	\>Kelvin
 
 \end{tabbing}\normalsize
 \end{latexonly}
+
+
+\footnotesize\begin{verbatim}
+
+% ls -l 3c273/
+total 1808
+-rw-r--r--    1 teuben   teuben      49952 Oct 12  1998 flags
+-rw-r--r--    1 teuben   teuben        136 Jul 24  1998 header
+-rw-r--r--    1 teuben   teuben      48700 Oct 12  1998 history
+-rw-r--r--    1 teuben   teuben        671 Jul 24  1998 vartable
+-rw-r--r--    1 teuben   teuben    1725300 Jul 24  1998 visdata
+-rw-r--r--    1 teuben   teuben       1760 Jul 30  1998 wflags
+
+% itemize in=3c273
+Itemize: Version 31-JUL-97
+  nwcorr   = 13608
+  ncorr    = 387072
+  vislen   = 1725304
+  obstype  = crosscorrelation
+  history    (text data, 48704 elements)
+  visdata    (binary data, 1725300 elements)
+  vartable   (text data, 675 elements)
+  flags      (integer data, 12487 elements)
+  wflags     (integer data, 439 elements)
+
+% uvio 3c273 
+uvio Version 16-jan-01 rjs
+0x       0 FILE: 3c273
+0x       0 SIZE: project   Count=12,Type=a
+0x       8 DATA: project   n196d028.cal
+0x      18 SIZE: source    Count=5,Type=a
+0x      20 DATA: source    3C273   
+0x      30 SIZE: ra        Count=1,Type=d
+0x      38 DATA: ra                  3.26861624
+0x      48 SIZE: dec       Count=1,Type=d
+0x      50 DATA: dec              0.03582093395
+0x      60 SIZE: vsource   Count=1,Type=r
+0x      68 DATA: vsource                      0
+0x      70 SIZE: plmaj     Count=1,Type=r
+0x      78 DATA: plmaj                        0
+0x      80 SIZE: plmin     Count=1,Type=r
+.....
+0x    12b0 DATA: tif2               34.60030746
+0x    12e8 SIZE: pol       Count=1,Type=i
+0x    12f0 DATA: pol       -6
+0x    12f8 SIZE: wcorr     Count=18,Type=c
+0x    1300 DATA: wcorr             0.1456700563        -0.1822117269
+0x    1398 SIZE: tscale    Count=1,Type=r
+0x    13a0 DATA: tscale         0.0009044817416
+0x    13a8 SIZE: corr      Count=1024,Type=j
+0x    13b0 DATA: corr      0
+0x    1bb8 SIZE: coord     Count=2,Type=d
+0x    1bc0 DATA: coord             -96.06886361
+0x    1bd8 SIZE: time      Count=1,Type=d
+0x    1be0 DATA: time               2450671.342   97AUG10:20:12:01.1
+0x    1bf0 SIZE: baseline  Count=1,Type=r
+0x    1bf8 DATA: baseline                   260
+0x    1c00 ========== EOR (1) ========
+0x    1c08 DATA: wcorr             0.1115201488         0.1867246479
+0x    1ca0 DATA: tscale          0.001088747638
+0x    1ca8 DATA: corr      0
+0x    24b0 DATA: coord              19.81238265
+0x    24c8 DATA: baseline                   516
+0x    24d0 ========== EOR (2) ========
+0x    24d8 DATA: wcorr              0.106826134        -0.0437762402
+0x    2570 DATA: tscale         0.0009396394016
+0x    2578 DATA: corr      0
+0x    2d80 DATA: coord             -8.372860208
+0x    2d98 DATA: baseline                   261
+0x    2da0 ========== EOR (3) ========
+...
+0x   15068 DATA: baseline                  2314
+0x   15070 ========== EOR (36) ========
+0x   15078 DATA: obsra              3.268015211
+0x   15088 DATA: obsdec           0.03609215511
+0x   15098 DATA: chi              -0.7118714452
+0x   150a0 DATA: tpower             19.17340851
+0x   150d8 DATA: ut                 5.289289984
+0x   150e8 DATA: lst                2.459578844
+0x   150f8 DATA: axisrms           0.2067008913
+0x   15160 DATA: focus              7.899638176
+0x   15198 DATA: delay              289.0346413
+0x   15200 DATA: antaz              1.040362579
+0x   15268 DATA: antel             0.5775128425
+0x   152d0 DATA: themt                      475
+0x   15308 DATA: tif2               34.53898239
+0x   15340 DATA: wcorr            0.02284911089        -0.1492281109
+0x   153d8 DATA: tscale         0.0009604850202
+0x   153e0 DATA: corr      0
+0x   15be8 DATA: coord             -95.98970399
+0x   15c00 DATA: time               2450671.342   97AUG10:20:12:13.0
+0x   15c10 DATA: baseline                   260
+0x   15c18 ========== EOR (37) ========
+0x   15c20 DATA: wcorr             0.2651385069        0.05663052946
+0x   15cb8 DATA: tscale         0.0009315458592
+0x   15cc0 DATA: corr      0
+0x   164c8 DATA: coord              19.82889086
+0x   164e0 DATA: baseline                   516
+0x   164e8 ========== EOR (38) ========
+0x   164f0 DATA: wcorr             0.2428172529         0.1108904481
+.....
+
+\end{verbatim}\normalsize
