@@ -14,6 +14,7 @@ c    pjt  4apr96    complain if logic= is not valid, and work in lower case
 c    vjm  5sep96    attempt to unmangle documentation
 c    dpr  8dec00    include vjm's doc suggestions
 c    pjt  9aug02    add note about un-masking
+c    pjt  5may03    added EQV/XOR (with caveats)
 c***********************************************************************
 c= immask - mask an image dataset
 c& pjt
@@ -64,11 +65,16 @@ c@ logic
 c   The logic of the masking operation. It can have a value of ``AND'',
 c   `OR'' or ``NOT'' which determines how the selected region(s) from the 
 c   region= keyword are masked with the existing mask item in the image:
-c       OR:     region .OR. mask
-c       AND:    region .AND. mask
+c       OR:     region .OR.   mask
+c       AND:    region .AND.  mask
+c       EQV:    region .EQV.  mask
+c       XOR:    region .XOR.  mask
 c       NOT:    if (region) .NOT.mask
 c   If no value provided, the program will simply report on the 
 c   total number of pixels already flagged good and bad.
+c   Caution: although XOR is not a valid fortran expression, the
+c   EQV and NEQV boolean operators come close. OR and XOR belong
+c   together: OR=inclusive OR, XOR=exclusive OR.
 c   No default.
 c
 c@ flag
@@ -99,7 +105,7 @@ c  Internal parameters.
       CHARACTER  PVERSION*(*)
       INTEGER MAXBOXES, MAXRUNS, MAXNAX
 
-      PARAMETER (PVERSION = 'Version 1.0 8-dec-00')
+      PARAMETER (PVERSION = 'Version 1.0 5-may-03')
       PARAMETER (MAXBOXES=4096, MAXRUNS=3*MAXDIM, MAXNAX=3)
 c
 c  Internal variables.
@@ -156,13 +162,16 @@ c
       ELSEIF (logic(1:1).EQ.'n') THEN
          lmode=3
          CALL bug('i','logic: if (region) .NOT.mask')
+      ELSEIF (logic(1:1).EQ.'x') THEN
+         lmode=4
+         CALL bug('i','logic: if (region) .XOR. mask  [EQV/NEQV]')
       ELSE
 	 lmode = 0
          dohist = .FALSE.
          CALL bug('i','Reporting mode')
       ENDIF
 
-      IF (dodatmin) lmode=4
+      IF (dodatmin) lmode=5
 
 c  Open corresponding image file
          CALL xyopen(lun1,imfile,'old',MAXNAX,naxis1)
@@ -208,7 +217,16 @@ c              * patch the sections inside the region to 'flag' value
                   DO i=1,naxis1(1)
                      IF(mask2(i)) mask1(i) = .NOT.mask1(i)
                   ENDDO
-               ELSE IF (lmode.EQ.4) THEN
+               ELSE IF (lmode.eq.4) THEN
+                  DO i=1,naxis1(1)
+                     IF (mask1(i) .AND. .NOT.mask2(i)  .OR.
+     *                   mask2(i) .AND. .NOT.mask1(i)) THEN
+                         mask1(i) = .TRUE.
+                     ELSE
+                         mask1(i) = .FALSE.
+                     ENDIF
+                  ENDDO
+               ELSE IF (lmode.EQ.5) THEN
                   CALL xyread(lun1,j,data)
                   DO i=1,naxis1(1)
                      IF(data(i).EQ.datamin) mask1(i) = flag
