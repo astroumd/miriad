@@ -1,7 +1,5 @@
 #-----------------------------------------------------------
-# source'd file compile.linux 
-# Note: this is the little-endian LINUX for intel cpu's
-#	and won't work on the expected Linux for PowerPC or 68xxx
+# source'd file compile.darwin, for mac os X
 #-----------------------------------------------------------
 set mmir  = $MIR
 set mhost = $MIRHOST
