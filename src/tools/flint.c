@@ -53,9 +53,16 @@
    rjs   30sep94 Check ends of ENDDO, ENDIF, ELSE statements.
    rjs   25nov95 Fix EQUIVALENCE handling, better treatment of exclamations,
 		 do-loop variables. Flag VMS record structures.
+   pjt   16jun04 add - to options list to trigger --help habituals
+
+
+TODO:
+
+   ansi-fy this code, it has lots of K&R style things
+
 ******************************************************************************/
 
-#define VERSION_ID "25-Nov-95"
+#define VERSION_ID "16-jun-2004"
 
 /*= flint - fortran source code verifier */
 /*& rjs pjt */
@@ -233,6 +240,7 @@
 #define private static
 #include <ctype.h>
 #include <stdio.h>
+#include <string.h>
 
 /* Define all the flags. */
 
@@ -487,6 +495,7 @@ char *argv[];
         case 'u': unused = FALSE;		break;
         case 'x': extended  = TRUE;		break;
 	case '2': twopass = TRUE;		break;
+	case '-':
 	case '?':
 	  printf("%s Version: %s\n",argv[0],VERSION_ID);
           printf("Usage: flint [-flags] files ... [-I incdir] [-l files] [-o outfile]\n");
