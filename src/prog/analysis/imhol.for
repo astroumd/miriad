@@ -9,10 +9,13 @@ c	imaginary holographic images. The amplitude image can be debiased,
 c       and the phase image is computed as atan2(imaginary/real).
 c@ in
 c	Two values; the real and imaginary images, respectively. The
-c	imaginary image is made using the INVERT task with options=imaginary
+c	imaginary image can be made using the INVERT task with options=imaginary
 c	If the (u,v) coordinates for the holography data are in arcsec units
 c	then the images have units of nanosec (The inverse of the usual
 c	situation for astronomical imaging).
+c     Alternatively, the real and imaginary images can be obtained from
+c     images of the beam pattern using the MIRIAD task FFT.
+c	The default units for the axes are in wavelengths.
 c	Wild card expansion is supported. 
 c@ mag
 c	Up to two values; the output intensity image and
@@ -80,12 +83,13 @@ c    mchw 09nov93 Fixed a bug in bmproc for planet holography.
 c    rjs  11oct95 Rework.
 c    rjs  02jul97 cellscal change.
 c    mchw 15apr98 Re-use and fix both doc and code in a few places.
+c    mchw 05aug04 Change default image axes to wavelengths, and default antenna size 6.1m.
 c------------------------------------------------------------------------
       implicit none
       include 'maxdim.h'
       include 'maxnax.h'
       character version*40
-      parameter (version = 'ImHol : version 15-Apr-98')
+      parameter (version = 'ImHol : version 05-Aug-2004')
 c
       real qepoch, uepoch, qcrpix(maxnax),ucrpix(maxnax), sigma,
      *		snclip, paclip
@@ -610,8 +614,9 @@ c
       if(ok)then
         antdiam = antdiam / 2. / 0.3
       else
-        antdiam = 10000.
-        call output('Unknown antenna diameter; setting to 10000.')
+        antdiam = 6.1
+        call output('Unknown antenna diameter; setting to 6.1 m.')
+        antdiam = antdiam / 2. / 0.3
       endif
       call obspar(telescop,'subdiam',subdiam,ok)
       if(ok)then
@@ -648,10 +653,16 @@ c
 	  fac = 1.
 	  ustr = 'radians'
 	endif
-	if(microns.and.frqax.eq.3)then
-          freq = (k-crpix(3))*cdelt(3) + crval(3)
+c
+c Convert antdiam to wavelengths, and output phase image to microns
+c
+	if(frqax.eq.3)then
+		freq = (k-crpix(3))*cdelt(3) + crval(3)
+		antdiam = antdiam * freq
+		if(microns)then
           fac = 0.5 / (2*pi) * cmks/freq * 1e-3
           ustr = 'microns'
+		endif
 	endif
 	sigsq = sigma * sigma
 	snclipsq = snclip * snclip
@@ -751,8 +762,8 @@ c  Fit focus and pointing offsets to aperture E-field maps.
 c  Fit linear and quadratic terms to phase across aperture
 c  phase(x,y)=a+bx+cy+d(x*x+y*y)
 c
-	    x  = (i-crpix(1))*cdelt(1)*2.062648062d05
-	    y  = (j-crpix(2))*cdelt(2)*2.062648062d05
+	    x  = (i-crpix(1))*cdelt(1)
+	    y  = (j-crpix(2))*cdelt(2)
 	    r2 = (x*x+y*y)
 c
 c  Mask amplitude and phase outside of illuminated aperture surface.
@@ -869,7 +880,7 @@ c
 	endif
 c
 c  Convert the fits to sensible units.
-c  A and B have units of 1/fac radians per meter. Convert to arcsecs.
+c  B and C have units of 1/fac radians per wavelength. Convert to arcsecs.
 c
         if(frqax.eq.3)then
           freq = (real(k)-crpix(3))*cdelt(3) + crval(3)
