@@ -42,7 +42,6 @@ for arg in sys.argv[1:]:
     elif i > 0:
         key = arg[0:i]
         val = arg[i+1:]
-        print arg,i,key
         if keyval.has_key(key):
             keyval[key] = val
         else:
