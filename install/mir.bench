@@ -27,8 +27,9 @@ if ($standalone) then
    setenv  LD_LIBRARY_PATH ..
 endif	
 
-echo "MIRBENCH: (2002-10-21) $tmp : nchan=$nchan mapsize=$mapsize"
+echo "MIRBENCH: (2003-12-05) $tmp : nchan=$nchan mapsize=$mapsize"
 echo hostname=`hostname` 
+echo benchdir=$tmp
 echo system=`uname -a`  
 echo date=`date`
 echo MIR=$MIR
