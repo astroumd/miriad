@@ -1,0 +1,258 @@
+#!/bin/csh -f
+#
+# Script to execute mira_rlist on mira return a list of files modified
+# since the date given.  If the -l flag is omitted, the modified
+# files themselves are copied as well.
+#
+# Usage: rlist [-l] [-r] [-t] [-Eauthor1,author2] [-Uusername] date(ddmmmyy)
+#   -l flag means to only return a list of files modified
+#     (modified_files) since that date.  The default it to retrieve
+#     the files themselves.
+#   -r flag means to retrieve files using the modified_files listing
+#     in the current directory -- do not make a new listing.  Useful
+#     if you want to make a list of files and edit it to your specific
+#     needs. 
+#   -t flag means to retrieve a compressed tar file rather than separate
+#     files.
+#   -E flag means to exclude certain authors.  If no argument to -E is
+#     given, then the login name on mira is excluded.
+#   -Uusername flag gives the login name of the user on mira.
+#
+# Example: rlist -t -Unkilleen -Enkilleen,bobs 21aug95
+#   -t flag means to return a compressed tar file containing modified
+#     source code.
+#   -Unkilleen flag gives nkilleen as the login name on mira.
+#   -Enkilleen,bobs flag means to exclude source code most recently
+#     edited by nkilleen or bobs from the list.
+#--
+#
+# History:
+#   21aug95 dar   Created file and tested it out.
+#   22aug95 dar   Added -s flag.
+#   25aug95 dar   Changed -s to -E and added argument.
+#   30aug95 dar   Fixed problem with exclude_users not being defined
+#   18sep95 dar   Added rmiruser and rverlist for use with rsh and rcp
+#                 variables
+#   15oct95 dar   Pass version ID of rlist to mira_rlist to make
+#                 sure people are using the most recent version.
+#   16oct95 dar   Changed the way the script finds out if the
+#                 /bimaprog disk is mounted locally.  The disk *must*
+#                 be either /export/bimprog (mira) or /bima (at).
+#   16oct95 dar   Added -R flag to force remote operation.
+#   11mar96 dar   Fixed to handle local access that start in the same
+#                 directory that the files are retrieved from.
+#   28may96 dar   Added printing of version upon execution and help.
+#   06jun96 dar   Changed upper level directory to $MIR rather that $MIRSRC.
+#--
+#
+# Set version of rlist to be read by MIRA_RIST to make sure
+# they can talk to each other.  Echo version.
+#
+set version   = "06jun96"
+set RSH = "ssh"
+set RCP = "scp"
+echo "rlist (version $version)"
+echo ""
+#
+# Set mira_user to the login name on mira.  Put your remote login in
+# your .rhosts file on mira and visa versa.  This supersedes $USER
+# shell variable and is superseded by the command line argument (-U)
+#
+set mira_user = ""
+#
+# There must be at least one argument to rlist, otherwise goto usage
+#
+if ( $#argv == 0 ) goto usage
+#
+# Set initial variables
+#
+set bin           = "/usr/5bin"
+set dotar         = "false"
+set exclude_flag  = ""
+set exclude_users = ""
+set i             = 1
+set inmirdir      = "false"
+set local         = "false"
+set mira          = "mira.astro.uiuc.edu"
+set onlylist      = "false"
+set onlyretr      = "false"
+set remote        = "false"
+set rflag         = ""
+set rverbin       = "/export/bimaprog/VersionControl/bin"
+set verbin        = "/export/bimaprog/VersionControl/bin"
+#
+# Distinguish date from -l, -E, and -U flags.
+#
+while ( $i <= $#argv )
+  set temp         = `echo $argv[$i]`
+  if ( `echo $temp | egrep -e -U` != "" ) then
+    set mira_user     = `echo $temp | sed -e 's/-U//'`
+  else if ( `echo $temp | egrep -e -l` != "" ) then
+    set onlylist      = "true"
+  else if ( `echo $temp | egrep -e -r` != "" ) then
+    set onlyretr      = "true"
+  else if ( `echo $temp | egrep -e -R` != "" ) then
+    set remote = "true"
+  else if ( `echo $temp | egrep -e -E` != "" ) then
+    set exclude_flag  = $temp
+    set exclude_users = `echo $temp | sed -e 's/-E//'`
+  else if ( `echo $temp | egrep -e -t` != "" ) then
+    set dotar         = "true"
+  else
+    set date          = $temp
+  endif
+  @ i=$i + 1
+end
+if ( ! $?date && $onlyretr == "false" ) then
+  echo "No date given, aborting..."
+  exit 1
+endif
+if ( ! $?mira_user ) then
+  set mira_user = $USER
+else if ( $mira_user == "" ) then
+  set mira_user = $USER
+endif
+if ( $exclude_users == "" && $exclude_flag == "-E" ) then
+  set exclude_users = $mira_user
+  set exclude_flag  = "-E$exclude_users"
+endif
+set rmiruser = "/export/bimaprog/$mira_user"
+#
+# Check to see if bimaprog disk is mounted locally
+#
+if ( -f /export/bimaprog/VersionControl/bin/rlist ) then
+  set local   = "true"
+  set miruser = "/export/bimaprog/$mira_user"
+  set verbin  = "/export/bimaprog/VersionControl/bin"
+else if ( -f /bima/VersionControl/bin/rlist ) then
+  set local   = "true"
+  set miruser = "/bima/$mira_user"
+  set verbin  = "/bima/VersionControl/bin"
+else
+  set miruser = "/dev/null"
+endif
+if ( $remote == "true" ) then
+  set local = "false"
+  set rflag = " -R "
+endif
+if ( $local == "true" ) then
+  echo ">>> Found RCS archive mounted locally, using binary directory"
+  echo ">>>   $verbin"
+endif
+#
+# Do rsh to get list of files
+#
+if ( $onlyretr == "true" && $onlylist == "true" ) then
+  echo ">>> -l and -r are mutually exclusive, aborting..."
+  exit 1
+else if ( $onlyretr == "true" ) then
+  echo ">>> Retrieving files based on modified_files in this directory"
+  if ( $PWD == ${miruser} ) set inmirdir = "true"
+  goto retr
+endif
+#rsh -l $mira_user $mira $rverbin/mira_rlist $exclude_flag $date
+${RSH} -l $mira_user $mira $rverbin/mira_rlist.pl -V${version} -o $rmiruser/modified_files $exclude_flag $date
+if ( $local == "true" ) then
+  if ( ! -e ${miruser}/modified_files ) exit 1
+  set olddir = ${PWD}
+  cd ${miruser}
+  ls > /dev/null
+  if ( ! -e modified_files ) exit 1
+  cd ${olddir}
+  unset ${olddir}
+else
+  set rstatus = `${RSH} ${mira} -l ${mira_user} 'ls '${rmiruser}/modified_files' >& /dev/null ; echo $status'`
+  if ( $rstatus != 0 ) exit 1
+endif
+if ( $PWD == ${miruser} ) set inmirdir = "true"
+if ( -e modified_files && $inmirdir == "false" ) then
+  \rm -f modified_files >& /dev/null
+endif
+if ( $local == "true" ) then
+  if ( $inmirdir == "false" ) then
+    set olddir = ${PWD}
+    cd ${miruser}
+    cp modified_files ${olddir}
+    cd ${olddir}
+    unset ${olddir}
+  endif
+else
+  ${RCP} ${mira_user}@${mira}:${rmiruser}/modified_files .
+endif
+if ( $status == 0 && $inmirdir == "false" ) then
+  ${RSH} -l $mira_user $mira $bin/rm -f $rmiruser/modified_files >& /dev/null
+endif
+if ( $onlylist == "true" ) then
+  echo ">>> A list of miriad files modified since $date is in modified_files"
+  if ( $exclude_flag != "" ) then
+    echo ">>>   (excluding files most recently modified by $exclude_users)"
+  endif
+  exit 0
+else
+  echo ">>> A list of miriad files modified since $date is in modified_files"
+  if ( $exclude_flag != "" ) then
+    echo ">>>   (excluding files most recently modified by $exclude_users)"
+  endif
+retr:
+  echo ">>> Now copying modfied files"
+  if ( `wc modified_files | awk '{print $1}'` != 0 ) then
+    if ( $dotar == "true" ) then
+      ${RCP} modified_files ${mira_user}@${mira}:${rmiruser}
+      ${RSH} -l $mira_user ${mira} $rverbin/mira_rtar
+      if ( $local == "true" ) then
+        if ( $inmirdir == "false" ) then
+          set olddir = ${PWD}
+          cd ${miruser}
+          cp modified_files.tar.Z ${olddir}
+ echo $inmirdir $olddir
+          cd ${olddir}
+          unset ${olddir}
+        endif
+      else
+        ${RCP} ${mira_user}@${mira}:${rmiruser}/modified_files.tar.Z .
+      endif
+      if ( $inmirdir == "false" ) then
+        ${RSH} -l $mira_user ${mira} $bin/rm -f ${rmiruser}/modified_files.tar.Z >& /dev/null
+      endif
+      echo ">>> Finished retrieving modified files to compressed tar file"
+      echo ">>>   modified_files.tar.Z"
+    else
+      foreach i ( `cat modified_files` )
+        rco $rflag -U$mira_user $i:t
+      end
+      echo ">>> Finished retrieving modified files to separate files"
+    endif
+  else
+    echo ">>> No files found -- nothing to retreive."
+  endif
+endif
+exit 0
+#
+# Usage
+#
+usage:
+echo "Script to execute mira_rlist on mira return a list of files modified"
+echo "since the date given.  If the -l flag is omitted, the modified"
+echo "files themselves are copied as well."
+echo ""
+echo "Usage: rlist [-l] [-r] [-t] [-Eauthor1,author2] [-Uusername] date(ddmmmyy)"
+echo "  -l flag means to only return a list of files modified"
+echo "    (modified_files) since that date.  The default it to retrieve"
+echo "    the files themselves."
+echo "  -r flag means to retrieve files using the modified_files listing"
+echo "    in the current directory -- do not make a new listing.  Useful"
+echo "    if you want to make a list of files and edit it to your specific"
+echo "    needs."
+echo "  -t flag means to retrieve a compressed tar file rather than separate"
+echo "    files."
+echo "  -E flag means to exclude certain authors.  If no argument to -E is"
+echo "    given, then the login name on mira is excluded."
+echo "  -Uusername flag gives the login name of the user on mira."
+echo ""
+echo "Example: rlist -t -Unkilleen -Enkilleen,bobs 21aug95"
+echo "  -t flag means to return a compressed tar file containing modified"
+echo "    source code."
+echo "  -Unkilleen flag gives nkilleen as the login name on mira."
+echo "  -Enkilleen,bobs flag means to exclude source code most recently"
+echo "    edited by nkilleen or bobs from the list."
+exit 1
