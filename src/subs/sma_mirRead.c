@@ -1695,7 +1695,6 @@ visSMAscan.uvblnID = uvwbsln[inhset]->uvwID[j].blcode;
 visSMAscan.blockID.sbid = uvwbsln[inhset]->uvwID[j].isb; 
 visSMAscan.blockID.polid = uvwbsln[inhset]->uvwID[j].ipol;
 sbpnt = visSMAscan.blockID.sbid;
-blpnt=100;
 rxpnt = uvwbsln[inhset]->uvwID[j].irec;
 if(smabuffer.rxif==uvwbsln[inhset]->uvwID[j].irec||smabuffer.rxif==-1) {
 switch(sbpnt) {
