@@ -35,6 +35,7 @@
        15-jan-03  pjt   fix a few prototypes for Const's
        30-jan-03  pjt   allow itemnames to contain _ (e.g. for cd1_1)
        23-feb-03  pjt   merged MIR4
+       22-jul-04  jwr	changed type of "size" in hexists_c() from int to size_t
 */
 
 
@@ -718,7 +719,8 @@ int hexists_c(int tno,Const char *keyword)
 /*----------------------------------------------------------------------*/
 {
   char path[MAXPATH];
-  int iostat,fd,size;
+  int iostat,fd;
+  size_t size;
   ITEM *item;
   TREE *t;
 
