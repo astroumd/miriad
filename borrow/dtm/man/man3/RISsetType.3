@@ -1,0 +1,89 @@
+.TH RISsetType 3DTM "29 November 1993" DTM "DTM Version 2.0"
+.LP
+.SH "NAME"
+\fBRISsetType, RISgetType\fP - Raster image typing macros.
+.LP
+.SH "SYNOPSIS"
+.nf
+.B #include <ris.h>
+.LP
+.B RISsetType(char *\fIheader\fP, RISTYPE \fIraster_type\fP)
+.LP
+.B RISgetType(char *\fIheader\fP, RISTYPE *\fIraster_type\fP)
+.fi
+.LP
+.SH "DESCRIPTION"
+.B RISsetType
+inserts into the string
+.I header
+the tag 
+.B RIStype
+immediately followed by
+a tag identifying the 
+.I raster_type
+of the image.  The tag type should be either
+.B RIS8BIT
+or 
+.B RIS24BIT.
+See 
+.B RISclass
+for more information about these two types.
+It is up to the user to ensure that the data type specified matches the
+data sent.  
+.B RISsetType
+also inserts the DTM type tag followed by the tag
+for the type 
+.B DTM_CHAR.
+This is set to ensure that each RISclass message can still be considered a 
+full-blown 
+.B SDSclass
+with the data type 
+.B DTM_CHAR.
+.LP
+.B RISgetType
+examines the string
+.I header,
+and if the 
+.B RIStype
+tag if found, sets the argument 
+.I raster_type 
+to be the following value.  The two defined values that can be returned are 
+.B RIS8BIT
+and 
+.B RIS24BIT.
+See 
+.B RISclass
+for more 
+information about these two types.  If the
+.B RIStype
+tag was not found within
+the header, the 
+.I raster_type 
+argument receives a default value of 
+.B RIS8BIT.
+.LP
+.SH "SEE ALSO"
+DTM, RISclass
+.LP
+.SH "DIAGNOSTICS"
+.B RISgetType
+returns the error 
+.B DTMERROR
+if the header does not contain the tag
+.B RIStype
+or if no value follows the 
+.B RIStype
+tag.  In either case, the value of 
+.I raster_type 
+still defaults to 
+.B RIS8BIT.
+.LP
+.SH "BUGS"
+.B RISsetType
+has no way of determining if the header contains sufficient
+space to hold the tag 
+.B RIStype,
+the raster_type value, the DTM type tag, and the 
+.B DTM_CHAR 
+tag.  The results of attempting to store this information beyond
+the end of the allocated space are undefined.
