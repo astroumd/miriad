@@ -105,6 +105,10 @@ c	Polarizations are  YX,XY,YY,XX,LR,RL,LL,RR,-,I,Q,U,V
 c	Polarization codes -8,-7,-6,-5,-4,-3,-2,-2,0,1,2,3,4
 c	E.g.  polcode=4  changes YX,XY,YY,XX to LR,RL,LL,RR
 c	E.g.  polcode=-4 changes LR,RL,LL,RR to YX,XY,YY,XX
+c@ parot
+c	Rotate uv coordinates and hence image by parot degrees.
+c	Rotation is +ve to the E from N. i.e. increasing PA.
+c	Default is no rotation.
 c@ out
 c	The name of the output uv data set. No default.
 c--
@@ -152,11 +156,12 @@ c		   Removed options=phasem and tpower.
 c    mchw 18jun97  Subtract power law model from the uv-data.
 c    mchw 25jun97  remake wideband average for each spectral window.
 c    pjt  25jun98  better fortran standards for linux/g77 
+c    mchw 25jul03  Added uvrotation.
 c------------------------------------------------------------------------
         include 'maxdim.h'
 	integer maxbad
 	character version*(*)
-	parameter(version='UVCAL: version 1.0 20-jun-98')
+	parameter(version='UVCAL: version 1.0 25-jul-03')
 	parameter(maxbad=20)
 	real PI
 	parameter(PI=3.1415926)
@@ -174,7 +179,7 @@ c
 	character out*64,type*1,uvflags*8
 	real mask(MAXCHAN),sigma
 	integer polcode
-	real dra,ddec
+	real dra,ddec,parot,sinpa,cospa
 	real scale(2),polcal(2),model(3)
 	double precision ra,dec,uu,vv,epoch,jepoch,theta,costh,sinth
 c
@@ -222,6 +227,7 @@ c
 	call keyr('polcal',polcal(1),0.)
 	call keyr('polcal',polcal(2),0.)
 	call keyi('polcode',polcode,0)
+	call keyr('parot',parot,0.)
 	call keyfin
 c
 c  Check user inputs.
@@ -234,6 +240,10 @@ c
 	domodel = model(1).ne.0.
 	dopolcal = polcal(1).ne.0.
 	if(dopolcal) polcal(2) = polcal(2)*PI/180.
+	if(parot.ne.0.)then
+	  sinpa = sin(parot*PI/180.)
+	  cospa = cos(parot*PI/180.)
+	endif
 c
 c  Open the output.
 c
@@ -339,6 +349,15 @@ c
                 vv = preamble(2)
                 preamble(1) = (uu * costh) + (vv * sinth)
                 preamble(2) = (vv * costh) - (uu * sinth)
+              endif
+c
+c  Rotate uv coordinates if parot.ne.0.
+c
+			 if(parot.ne.0. )then
+                uu = preamble(1)
+                vv = preamble(2)
+                preamble(1) = (uu * cospa) + (vv * sinpa)
+                preamble(2) = (vv * cospa) - (uu * sinpa)
               endif
 c
 	      if(holo)then
