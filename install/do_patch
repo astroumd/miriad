@@ -1,6 +1,6 @@
 #! /bin/csh -f
 #
-
+# bla bla
 
 set version=$MIR:t
 
