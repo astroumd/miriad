@@ -27,6 +27,7 @@
 /*	26-Oct-95  rjs Honour TMPDIR environment variable, if set.	*/
 /*	10-Jan-96  rjs Make sure scratch file names are unique.		*/
 /*      17-jun-02  pjt MIR4 changes, and proper prototypes              */
+/*	 5-nov-04  jwr Changed a few size_t to ssize_t or off_t		*/
 /************************************************************************/
 
 #include <stddef.h>
@@ -135,7 +136,7 @@ void drmdir_c(char *path,int *iostat)
   if(rmdir(Path) < 0) *iostat = errno;
 }
 /************************************************************************/
-void dopen_c(int *fd,char *name,char *status,size_t *size,int *iostat)
+void dopen_c(int *fd,char *name,char *status,off_t *size,int *iostat)
 /*
   Open a file.
   Input:
@@ -192,7 +193,7 @@ void dread_c(int fd, char *buffer,off_t offset,size_t length,int *iostat)
   Read from a file.
 ------------------------------------------------------------------------*/
 {
-  size_t nread;
+  ssize_t nread;
 
   if(Lseek(fd,offset,SEEK_SET) < 0) { *iostat = errno; return; }
   nread = read(fd,buffer,length);
@@ -205,7 +206,7 @@ void dwrite_c(int fd, char *buffer,off_t offset,size_t length,int *iostat)
   Write to a file.
 ------------------------------------------------------------------------*/
 {
-  size_t nwrite;
+  ssize_t nwrite;
 
   if(Lseek(fd,offset,SEEK_SET) < 0) { *iostat = errno; return; }
   nwrite = write(fd,buffer,length);

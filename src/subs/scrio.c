@@ -7,6 +7,7 @@
 /*   rjs   6nov94  Change item handle to an integer.			*/
 /*   rjs  26oct95  Better messages on errors.				*/
 /*   pjt  19jun02  MIR4 prototypes                                      */
+/*   jwr  05nov04  Change file offsets to type off_t			*/
 /************************************************************************/
 
 #include <stdio.h>
@@ -88,7 +89,7 @@ void scrread_c(int handle,float *buffer,int offset,int length)
   int iostat;
 
   hreadb_c(handle,(char *)buffer,
-    sizeof(float)*offset,sizeof(float)*length,&iostat);
+    (off_t)sizeof(float)*offset,sizeof(float)*length,&iostat);
   if(iostat){
     bug_c(  'w',"Error reading from scratch file");
     bugno_c('f',iostat);
@@ -117,7 +118,7 @@ void scrwrite_c(int handle,Const float *buffer,int offset,int length)
   int iostat;
 
   hwriteb_c(handle,(char *)buffer,
-    sizeof(float)*offset,sizeof(float)*length,&iostat);
+    (off_t)sizeof(float)*offset,sizeof(float)*length,&iostat);
   if(iostat){
     bug_c(  'w',"Error writing to scratch file");
     bugno_c('f',iostat);

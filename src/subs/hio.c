@@ -36,6 +36,7 @@
        30-jan-03  pjt   allow itemnames to contain _ (e.g. for cd1_1)
        23-feb-03  pjt   merged MIR4
        22-jul-04  jwr	changed type of "size" in hexists_c() from int to size_t
+       05-nov-04  jwr	changed file sizes from size_t to off_t
 */
 
 
@@ -82,7 +83,8 @@ typedef struct {          /* buffer for I/O operations */
 typedef struct item {	
   char *name;
   int handle,flags,fd,last;
-  size_t size, bsize;       /* bsize can technicall be an int, since it's an internal buffer size */
+  off_t size;
+  size_t bsize;       /* bsize can technicall be an int, since it's an internal buffer size */
   off_t offset;
   struct tree *tree;
   IOB io[2];
@@ -720,7 +722,7 @@ int hexists_c(int tno,Const char *keyword)
 {
   char path[MAXPATH];
   int iostat,fd;
-  size_t size;
+  off_t size;
   ITEM *item;
   TREE *t;
 
