@@ -124,7 +124,7 @@ endif
 set searchlibs=(/usr/lib /usr/X11R6/lib /local/lib /usr/local/lib)
 #		care, wip still uses something else, it won't listen to $fortran
 #		and you probably need 'f77' in your path
-# set fortran=g77		# not used right now (WIP might need it)
+set fortran=g77		# not used right now (WIP might need it)
 set log=/tmp/miriad.install.$$.log
 
 # 		MIRIAD V3:  (can be overriden with cvs=1, see below)
@@ -322,14 +322,18 @@ if (-e /usr/lib/libbsd-compat.a) echo Warning: you have /usr/lib/libbsd-compat.a
 if (! -e /usr/lib/libbsd.a) echo Warning: you do not have /usr/lib/libbsd.a
 
 # special: linux generally has readline...   (this test failed on mdk71 ??)
+#          it may also work on other systems
 set dorl=0
 foreach ldir ($searchlibs)
-    if (-e $ldir/libreadline.a) then
-        echo Borrowing the system version of readline for $hosttype from $ldir
-        cp -p $ldir/libreadline.a $MIRLIB
+  foreach ext (a so)    
+    if (-e $ldir/libreadline.$ext) then
+        echo Borrowing the system version of libreadline.$ext for $hosttype from $ldir
+        cp -p $ldir/libreadline.$ext $MIRLIB
         set dorl=1
         break
     endif
+  end
+  if ($dorl) break
 end
 if ($dorl == 0) then
    echo Your system does not seem to have readline, and miriad.c will not use it
@@ -432,7 +436,9 @@ end
 if ($dofl) then
    echo Compiling velplotc:
    pushd $MIR/src/spec/velplotc >& /dev/null
-   make clean velplotc LIBFORMS=$MIRLIB/libforms.a >& $MIR//tmp/velplotc.$$.$hosttype
+   # TODO: makefile's should know about miriad's universe and inherit
+   #       compile flags, names of compilers etc.
+   make clean velplotc LIBFORMS=$MIRLIB/libforms.a FC=$fortran >& $MIR//tmp/velplotc.$$.$hosttype
    if ($status) echo Warning: problems compiling velplotc
    mv velplotc $MIRBIN
    make clean >>& $MIR//tmp/velplotc.$$.$hosttype
