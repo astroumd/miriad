@@ -1,0 +1,136 @@
+i	NCSA DTM
+
+Table of Contents	i
+
+National Center for Supercomputing Applications
+
+October 1992
+
+                                                                
+
+
+October 1992
+
+
+
+
+
+
+
+	Table of Contents
+
+
+
+
+List of Examples		vi
+Preface	
+Introduction	1
+Outline	1
+Version	1
+Font Conventions	1
+
+Part I	The Basic Concepts
+DTM Messages	3
+Message Headers
+Data Section
+DTM Ports	4
+Port Direction
+Addresses
+          Absolute Addresses
+          Logical Port Names
+Quality of Service
+          Synchronous Communication
+          Asynchronous Communication
+DTM Applications	7
+Message Level vs. Port Level Multiplexing
+Specifying DTM Ports
+Part II	The DTM Tutorial
+Sending Messages	10
+Creating  Output Ports
+Writing Message Headers
+Writing Single Data Types
+Writing Multiple Data Sets and Types
+Determining Writing Capabilities
+Receiving Messages	14
+Creating  Input Ports
+Reading Message Headers
+Reading Data 
+Reading Multiple Data Sets and Types
+Determining Reading Capabilities
+Error Detection	20
+Message Classes	21
+A Simple Message Class:  MSG
+Scientific Data Sets:  SDS
+Raster Image Sets and Palettes:  RIS & PAL
+Surface Description Language:  SDL
+
+Appendix A	Error Codes and Their Meanings	A.2
+Appendix B	Function Prototypes	A.3
+Appendix C	Structure Definitions	A.10
+Appendix D	Fortran Specifications	A.12
+
+List of Examples
+	Each of the examples provided in Part II of this document has a 
+corresponding program available with the electronic distribution of 
+DTM.  Each of these source code files can be found in the 
+“/tutorial/examples” directory.  Below is a summary of each of the 
+examples, and the tutorial page where they can be found.  If the 
+example contains source code, the source file is listed in italics.  
+
+Sending Messages 
+Example 1	Basic output port creation ports.c 	  9
+Example 2	Output port creation and basic error 
+	checking ports2.c	10
+Example 3	Begin and end writing to a port 
+	writeHeader.c 	10
+Example 4	Writing a single dataset using 
+	DTMwriteDataset() writeDataset.c	11
+Example 5	List of data types having automatic
+	type conversion 	11
+Example 6	Writing an entire message with
+	DTMwriteMsg() writeMsg.c 	12
+Example 7	Writing multiple buffers of data 
+	writeMultiple.c	12
+Example 8	Writing multiple types of data
+	writeVarious.c 	13
+Example 9	Availability for writing checking
+	availWrite.c 	13
+
+Receiving Messages 
+Example 10	Basic input port creation ports2.c	14
+Example 11	Begin and end reading to a port 
+	readHeader.c 	15
+Example 12	Read a single data set readDataset.c	15
+Example 13	Read multiple data sets using a fixed
+	sized buffer readMultiple.c 	16
+Example 14	Read multiple data types
+	readVarious.c 	17
+Example 15	Poll an input port for available messages
+	availRead.c 	18
+Example 16	Select ports with pending messages
+	select.c	19
+
+Error Detection 
+Example 18	Full error checking for writing data
+	writeError.c 	20
+
+
+Message Classes 
+Example 19	A message class macro definition	22
+Example 20	A simple message	22
+Example 21	Constructing and parsing a simple 
+	message MSGexample.c 	22
+Example 22	Creating an SDS message header 
+	SDSexample.c 	23
+Example 23	Parsing an SDS message header and
+	receiving data SDSexample.c 	24
+Example 24	Creating RIS and PAL class  messages
+	RISexample.c 	25
+Example 25	Receiving and parsing RIS and PAL class 
+	messages RISexample.c 	26
+Example 26	DTM_TRIPLET tag value definitions 	27
+Example 27	DTM_TRIPLET primitive type 
+	definitions 	27
+Example 28	Constructing and parsing SDL class 
+	messages SDLexample.c 	28
+

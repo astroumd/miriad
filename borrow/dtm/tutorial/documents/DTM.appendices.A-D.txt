@@ -1,0 +1,599 @@
+A.1	Appendices
+
+
+
+NCSA DTM	A.1
+
+
+National Center for Supercomputing Applications
+
+
+October 1992
+
+October 1992
+
+
+                                                                
+
+NCSA DTM	Appendices
+
+
+
+The appendices present a collection of information that couldn't be presented in 
+the regular text: the possible error codes and their meanings, prototypes for the 
+DTM functions (both C and Fortran), and a listing of the commonly used DTM data 
+structures.  For more information about the functions listed, consult each 
+function's UNIX manpage.
+
+A.  Error Codes and Their Meanings	A.2
+B.  Function Prototypes			A.3
+C.  Structure Definitions			A.10
+D.  Fortran Specifications			A.12
+
+
+
+
+Appendix  A	Error Codes and Their Meaning
+
+
+Overview
+This appendix lists all of the possible values that the variable 
+DTMerrno can take and the meaning of each of those values as would 
+be printed by a call to DTMerrmsg(0).  The definitions in parenthesis 
+are provided for when further clarification is necessary.
+
+Values 	         Meanings
+DTM_OK:
+DTMNOERR:	No error.
+DTMMEM	Out of memory - can not create port.  (Out of memory.)
+DTMHUH	Invalid port name - should be 'hostname:tcp port'.
+DTMNOPORT	Out of DTM ports - 256 ports max. (No DTM ports available.)
+DTMPORTINIT	Couldn't initialize port. (DTM port not initialized.)
+DTMCALL	DTM routines called in wrong order.
+DTMEOF	Encountered EOF.  (EOF error.)
+DTMSOCK	Error creating socket.  (Socket error.)
+DTMHOST	Bad hostname.  (That hostname is not found/bad.)
+DTMTIMEOUT	Timeout waiting for connection.
+DTMCCONN	Couldn't connect.  (DTM cannot connect (network down?).)
+DTMREAD	DTM read error.  (Error returned from system read.)
+DTMWRITE	DTM write error.  (Error returned from system write(v).)
+DTMHEADER	DTM header to long for buffer.
+DTMSDS	SDS error.
+DTMSELECT	Select call error.
+DTMENV	Environment not setup.
+DTMBUFOVR	User buffer overflow.
+DTMCORPT	Port table corrupted.
+DTMBADPORT	Bad port supplied to library.  (Port identifier is bad/corrupt/stale.)
+DTMBADACK	Bad ack to internal flow control.
+DTMADDR	Bad address.
+DTMSERVER	Problem communicating with server.
+
+
+
+
+Appendix  B	ASCII File Format
+
+
+
+Overview
+This appendix lists the available DTM functions and macros.  These 
+routines are presented in alphabetical order starting with the 
+functions beginning with "DTM" and ending with those beginning with 
+"dtm_".  Those functions beginning with "DTM" are the functions that 
+deal with creating ports, altering their behavior, and delivering 
+messages, whereas the "dtm_" set of primitive functions usually deal 
+with the construction of messages.
+
+This appendix is limited to the functions that make up the DTM 
+message passing system and the primitive functions for header 
+manipulation.  For information on individual message class functions 
+and macros, consult the UNIX man page for the particular class 
+desired.
+
+Each function below is presented using the non-ANSI, Kernighan & 
+Ritchie method of declaring functions.  Each of these functions has a 
+prototype that is included only if the compiler is ANSI compliant.  
+The K&R method of function declaration is used here to make 
+argument comments easier to comment.  For more information about the 
+behavior of these functions, consult the individual UNIX man pages.
+
+Functions
+
+DTMaddInPortSocket
+Takes a file descriptor and adds it as a connection to a DTM port.  Used 
+by applications that are started by inetd to remap stdin into a DTM 
+port.
+
+int DTMaddInPortSocket(port, socket)
+	int	port;	/* Add the connection to this port.	*/
+	int	socket;	/* The file descriptor to add.	*/
+
+
+DTMaddInput
+Add a callback procedure to the given port based on the given input 
+condition.  The port must be an input port.  Note: if X is not included, it 
+is not likely that this function will be used.  However, support for it is 
+given in the case when the typedef for XtInputCallbackProc does 
+not exist.  In this case, the argument proc should be of type 
+DTMfuncPtr.
+
+
+int DTMaddInput(port, condition, proc, client_data)
+	int	port; 	/* The input port.	*/
+	long 	condition; 	/* The condition mask.	*/
+	caddr_t 	client_data; 	/* Optional client data	*/
+	XtInputCallbackProc 	proc;	/* The callback procedure	*/
+	(DTMfuncPtr	proc;)
+
+
+DTMavailRead
+Poll a port to determine if it has a message pending.
+
+int DTMavailRead(port)
+	int	port;	/* The input port id to poll	*/
+
+
+DTMavailWrite
+Poll a port to determine if it is capable of sending a message.
+
+int DTMavailWrite(port)
+	int	port;	/* The output port id to poll	*/
+
+
+DTMbeginRead
+Begin to read a message from the given port, blocking until a message 
+is ready to be received.  Store the maximum number of bytes of the 
+message header in the given header buffer, discarding the remainder.  
+Return the number of bytes read into the header or DTMERROR upon an 
+error.
+
+int DTMbeginRead(port, header, num_bytes)
+	int	port;	/* The input port	*/
+	void	*header;	/* The buffer to store the header	*/
+	int	num_bytes;	/* The length of the header buffer	*/
+
+
+DTMbeginWrite
+Begin to write a message header from the given port, blocking until an 
+input port is ready to receive the message.  Send the given number of 
+bytes of the header buffer.  Return the value DTM_OK upon having 
+written the header, DTMERROR otherwise.
+
+int DTMbeginWrite(port, header, num_bytes)
+	int	port;	/* The output port	*/
+	void	*header;	/* The message header buffer	*/
+	int	num_bytes;	/* The length of the header	*/
+
+
+DTMcheckRoute
+Checks for new routing information.  Applies only to output ports (as 
+routing information concerns only output ports).
+
+int DTMcheckRoute(port)
+	int	port;	/* The output port to check.	*/
+
+
+
+DTMdestroyPort
+Close all connections associated with the given port and remove the 
+port id from the port table.
+
+int DTMdestroyPort(port)
+	int	port;	/* The port id to destroy	*/
+
+
+DTMendRead
+Mark the end of the current message, discarding any data that 
+remains, and prepare to receive the next message.
+
+int DTMendRead(port)
+	int	port;	/* The input port	*/
+
+
+DTMendWrite
+Mark the end of the current message, signaling that no more data 
+currently is to be transmitted across the given port.
+
+int DTMendWrite(port)
+	int	port;	/* The output port	*/
+
+
+DTMerrmsg
+Print or return an error message corresponding to the current status of 
+the DTMerrno value.
+
+char *DTMerrmsg(quiet)
+	int	quiet;	/* Print/return the error string?	*/
+
+
+DTMgetConnectionCount
+Returns the number of ports connected to a given port id.  The port id 
+can represent either an input or an output port.  The second argument is 
+currently unused.
+
+int DTMgetConnectionCount(port, num)
+	int	port;	/* The port id to check	*/
+	int	*num;	/* Unused at this time	*/
+
+
+DTMgetPortAddr
+Get the character string address of the supplied port id, and store the 
+first length characters of that address into the buffer address.  The 
+address is returned in form "000.000.000.000:0000."
+
+int DTMgetPortAddr(port, address, length)
+	int	port;	/* The port id	*/
+	char	*address;	/* The IP address returned	*/
+	int	length;	/* The length of the address buffer	*/
+
+
+DTMgetRemotePortAddr
+Returns the list of remote addresses that an output port is connected to.
+
+int DTMgetRemotePortAddr(port, addresses, num_addrs)
+	int	port;	/* The output port id.	*/
+	char	***addresses; 	/* The returned list of addrs.	*/
+	int	*num_addrs; 	/* The number of returned addrs	*/
+
+
+DTMmakeInPort
+Create an input port id from the given port name using the specified 
+quality of service.  Only a quality of service value of DTM_DEFAULT 
+has any meaning.  The value returned is either the new port id or the 
+error flag DTMERROR.
+
+int DTMmakeInPort(portname, qservice)
+	char	*portname;	/* The port number and address	*/
+	int	qservice;	/* The quality of service	*/
+
+
+DTMmakeOutPort
+Create an output port id from the given port name using the specified 
+quality of service.  The value returned is either the new port id or the 
+error flag DTMERROR.
+
+int DTMmakeOutPort(portname, qservice)
+	char	*portname;	/* The port number and address	*/
+	int	qservice;	/* The quality of service	*/
+
+
+DTMreadDataset
+Read the number of elements of data of the specified data type from 
+the specified port and store them in the dataset buffer.  The value 
+returned is the number of elements read or DTMERROR if an error during 
+reading was encountered.
+
+int DTMreadDataset(port, dataset, elements, datatype)
+	int	port;	/* The input port to read from	*/
+	void	*dataset;	/* The data set buffer	*/
+	int	elements;	/* Available # of  buffer elements	*/
+	DTMTYPE	datatype;	/* The data type to read	*/
+
+
+DTMreadMsg
+Read from the supplied input port the maximum number bytes of the 
+header and the given number of elements of the specified data type 
+into separate buffers.  Return the number of data elements read or the 
+value DTMERROR if an error was encountered during the read.
+
+int DTMreadMsg(port, header, num_bytes, dataset, elements, datatype)
+	int	port;	/* The input port to read from	*/
+	char	*header;	/* The header buffer	*/
+	int	num_bytes;	/* The # of bytes in the header	*/
+	void	*dataset;	/* The data set buffer	*/
+	int	elements;	/* Available # of  buffer elements	*/
+	DTMTYPE	datatype;	/* The data type to read	*/
+
+
+
+DTMselectRead
+Perform a system select on the given port list and the list of socket or 
+file descriptors.  Time-out after the given number of milliseconds or do 
+not block if the number specified is less than 0.  Set the status flags for 
+each of the ports according to their readiness for reading.
+
+int DTMselectRead(dtmset, num_ports, sockset, num_desc, period)
+	Dtm_set	*dtmset;	/* The list of ports & status flags	*/
+	int	num_ports;	/* The number of ports in the list	*/
+	Sock_set	*sockset;	/* The list of descriptors	*/
+	int	num_desc;	/* The number of descriptors	*/
+	int	period;	/* The time-out in milliseconds	*/
+
+
+DTMsendRoute
+Send a message to an output port instructing it to add or delete 
+connections.
+
+int DTMsendRoute(fd, sendto, addcount, addlist, rmcount, rmlist)
+	int	fd;	/* The output socket.	*/
+	char	*sendto;	/* The destination address:port #.	*/
+	int	addcount;	/* The number of addresses to add.	*/
+	char	**addlist;	/* The list of addresses to add.	*/
+	int	rmcount;	/* Remove this many addresses.	*/
+	char	**rmlist;	/* The list of addresses to remove.	*/
+
+
+DTMwriteDataset
+Write the given number of data elements of the specified data type to 
+the specified port and store them in the dataset buffer.  The data type 
+is converted automatically if needed.  The value returned is DTM_OK 
+upon successful writing of the data or DTMERROR if an error was 
+encountered.
+
+int DTMwriteDataset(port, dataset, elements, datatype)
+	int	port;	/* The output port	*/
+	void	*dataset;	/* The data buffer	*/
+	int	elements;	/* Number of data elements to send	*/
+	DTMTYPE	type;	/* The data type	*/
+
+
+DTMwriteMsg
+Write the specified number of bytes of the header and the number of 
+elements of a particular type of the dataset to the given output port.  
+All of the header and data buffer are written using one system send.  
+The data type is converted automatically if needed.  The value 
+returned is DTM_OK upon successful writing of the data or DTMERROR if 
+an error was encountered.
+
+int DTMwriteMsg(port, header, num_bytes, dataset, elements, datatype)
+	int	port;	/* The output port	*/
+	void	*header;	/* The message header buffer	*/
+	int	num_bytes;	/* The length of the header	*/
+	void	*dataset;	/* The data buffer	*/
+	int	elements;	/* Number of data elements to send	*/
+	DTMTYPE	type;	/* The data type	*/
+
+
+dtm_find_tag
+Return the position of the given tag within the given header.  If the 
+tag is not found within the tag, a NULL value is returned.
+
+char *dtm_find_tag(header, tag)
+	char	*header;	/* The header	*/
+	char	*tag;	/* The tag to search for	*/
+
+
+dtm_header_length
+Determine the number of bytes in the given header up to (and counting) 
+the terminating null character ('\0').
+
+dtm_header_length(header)
+	char	*header;	/* Determine this header's length	*/
+
+
+dtm_get_char
+Get up to the given length characters of the delimited string following 
+the specified tag and store the result in the destination string.  Return 
+0 with success.  If no delimited text string exists in the header, or if 
+the tag value is not found, return the value DTMERROR.
+
+int dtm_get_char(header, tag, dest, length)
+	char	*header;	/* The header	*/
+	char	*tag;	/* The tag to search for	*/
+	char	*dest;	/* The string destination buffer	*/
+	int	length;	/* Number of destination bytes	*/
+
+
+dtm_get_float
+Search the character string header for the given tag value and assign 
+the floating point value that follows that tag to the floating point 
+argument.  Conversion of the string real value is accomplished 
+through the standard C function sscanf.  If the tag value is not found 
+within the header, or if no value follows the tag, return a value of 
+DTMERROR, otherwise return 0.
+
+int dtm_get_float(header, tag, realval)
+	char	*header;	/* The header	*/
+	char	*tag;	/* The tag to search for	*/
+	float	*realval;	/* The value found	*/
+
+
+dtm_get_int
+Search the character string header for the given tag value and assign 
+the integer value that follows that tag to the integer argument.  
+Conversion of the string integer value is accomplished through the 
+standard C function sscanf.  If the tag value is not found within the 
+header, or if no value follows the tag, return a value of DTMERROR, 
+otherwise return 0.
+
+int dtm_get_int(header, tag, integer)
+	char	*header;	/* The header	*/
+	char	*tag;	/* The tag to search for	*/
+	int	*integer;	/* The value found	*/
+
+
+dtm_set_char
+Add the character string tag to the header immediately followed by 
+the source string.  The character string source is delimited by single 
+quote marks so that the contents of the source do not adversely affect 
+interpretation of the header.
+
+void  dtm_set_char(header, tag, source)
+	char	*header;	/* The header	*/
+	char	*tag;	/* The tag to insert	*/
+	char	*source;	/* The string to insert	*/
+
+
+dtm_set_float
+Add the character string tag to the header immediately followed by 
+the given floating point value written as a string.  The floating point 
+argument is converted to a string using the standard C function sprintf.
+
+void  dtm_set_float(header, tag, realval)
+	char	*header;	/* The header	*/
+	char	*tag;	/* The tag to insert	*/
+	float	realval;	/* The value to insert	*/
+
+
+dtm_set_int
+Add the character string tag to the header immediately followed by 
+the given integer written as a string.  The integer is converted to a 
+string using the standard C function sprintf.
+
+void dtm_set_int(header, tag, integer)
+	char	*header;	/* The header	*/
+	char	*tag;	/* The tag to insert	*/
+	int	integer;	/* The value to insert	*/
+
+
+dtm_version
+Print the current version of the DTM library to stderr.
+
+void dtm_version()
+
+
+
+
+
+Appendix  C	Structure Definitions
+
+
+
+Overview
+This list is a compilation of the individual data structure definitions 
+created by DTM and used by the functions presented in Appendix B.  It 
+is provided for reference only.
+
+Functions
+
+DTMqserv
+The quality of service options for ports.
+
+#include <dtm.h>
+
+#define DTM_DEFAULT  DTM_SYNC
+typedef  enum  {
+   DTM_SYNC = 0,                                      /* Synchronous communication	*/
+   DTM_ASYNC                                           /* Asynchronous communication	*/
+} DTMqserv ;
+
+
+Dtm_set
+DTMselectRead port and status information.
+
+#include <dtm.h>
+
+typedef struct Dtm_set {
+   int	port;	/* DTMmakeInPort port id	*/
+   int	status;	/* DTM_PORT_{NOT_}READY	*/
+} Dtm_set;
+
+
+DTM_TRIPLET
+Three dimensional data structure type used primarily by the SDL 
+class.
+
+#include <dtm.h>
+
+struct DTM_TRIPLET {
+   int	tag;	/* Triplet interpretation tag	*/
+   float	x, y, z;	/* Three-space coordinate 	*/
+};
+
+
+
+DTMTYPE
+Standard data types for which type converters exist and are 
+supported by DTM.  This list of types is subject to future revisions.
+
+#include <dtm.h>
+
+typedef enum  {
+   DTM_CHAR = 0,		/* Character data types	*/
+   DTM_SHORT,		/* Short ints (2 bytes)	*/
+   DTM_INT,		/* Integers (4 bytes)	*/
+   DTM_FLOAT,		/* IEEE floating point format	*/
+   DTM_DOUBLE,		/* IEEE double precision	*/
+   DTM_COMPLEX,	/* FORTRAN complex (two floats)	*/
+   DTM_TRIPLET		/* DTM triplets: one int, two f.p.	*/
+} DTMTYPE;
+
+
+Sock_set
+Socket and file descriptor status information.
+
+#include <dtm.h>
+
+typedef struct Sock_set {
+   int	sockfd;	/* Socket or file descriptor	*/
+   int	status;	/* Status of the descriptor	*/
+} Sock_set;
+
+
+
+
+
+
+Appendix  D	Fortran Specifications
+
+
+
+Overview
+Currently, only a limited number of the DTM functions are supplied 
+with Fortran equivalents.  These functions provide only the basic 
+functionality of DTM Ñ port creation, and reading and writing data.  
+Below is a listing of the available Fortran functions with their 
+corresponding C equivalent.  Unless otherwise commented, each 
+Fortran function behaves exactly as its C counterpart.
+DTMAR (DTMavailRead)
+integer function DTMAR(port)
+integer	port
+DTMAW (DTMavailWrite)
+integer function DTMAW(port)
+integer	port
+DTMBR (DTMbeginRead)
+integer function DTMBR(port, header, hdrlen)
+integer	port
+character	header*(*)
+integer	hdrlen
+DTMBW (DTMbeginWrite)
+integer function DTMBW(port, header, hdrlen)
+integer	port
+character	header*(*)
+integer	hdrlen
+DTMER (DTMendRead)
+integer function DTMER(port)
+integer	port
+DTMEW (DTMendWrite)
+integer function DTMEW(port)
+integer	port
+DTMGPA (DTMgetPortAddr)
+integer function DTMGPA(port, portnm, pnmlen)
+integer	port
+character	portnm*(*)
+integer	pnmlen
+DTMMIP (DTMmakeInPort)
+Equivalent to DTMmakeInPort() with the quality of service set to always be DTM_DEFAULT.
+integer function DTMMIP(portnm)
+character	portnm*(*)
+DTMMOP (DTMmakeOutPort)
+Equivalent to DTMmakeOutPort() with the quality of service predefined to always be 
+DTM_DEFAULT.
+integer function DTMMOP(portnm)
+character	portnm*(*)
+DTMRD (DTMreadDataset)
+Even though the second argument "datset" is declared here to be of type real, any type of data can 
+be passed to this function.
+integer function DTMRD(port, datset, size, type)
+integer	port
+real	datset
+integer	size
+integer	type
+DTMWD (DTMwriteDataset)
+Even though the second argument "datset" is declared here to be of type real, any type of data can 
+be passed to this function.
+integer function DTMWD(port, datset, size, type)
+integer	port
+real	datset
+integer	size
+integer	type
+DTMWM (DTMwriteMsg)
+Even though the second argument "datset" is declared here to be of type real, any type of data can 
+be passed to this function.
+integer function DTMWM (port, header, hdrlen, datset, dsize, type)
+integer	port
+character	header*(*)
+integer	hdrlen
+real	datset
+integer	dsize
+integer	type

@@ -1,0 +1,60 @@
+
+
+
+
+National Center for Supercomputing Applications
+
+February 1992
+
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NCSA Data Transfer Mechanism 
+Programming Manual
+
+
+Version 2.3
+
+
+October 1992
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+University of Illinois at Urbana-Champaign
