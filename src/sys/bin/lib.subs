@@ -109,6 +109,9 @@ if ($#theList != 0) then
    endif
    #  should do a shared lib rebuild here, e.g. for linux:
    #	ld -shared -o libmir.so --whole-archive libmir.a
+   if (-e $MIRLIB/Makefile) then
+      (cd $MIRLIB; make slib)
+   endif
    rm -fr $theList >& /dev/null
 endif
 echo ""
