@@ -1,4 +1,4 @@
-# new changes/additions for the linux version
+# put your local changes/additions for MIRIAD in this file
 
 alias mirmake 'make -f $MIRLIB/Makefile'
 alias mirboss 'echo Bossing miriad $MIR; set path=($MIR/src/sys/bin $path); rehash'

@@ -1,3 +1,4 @@
 # changes for the linux version
 
 alias mirmake='make -f $MIRLIB/Makefile'
+alias mirboss='echo Bossing miriad $MIR; export PATH=$MIR/src/sys/bin:$PATH'
