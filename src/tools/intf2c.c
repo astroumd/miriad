@@ -98,13 +98,18 @@ fortran subroutine fstrcpy(character out,character in)
 /*    rjs   9aug93 Exit (rather than return) with 0 to appease VMS.     */
 /*    rjs  20nov94 Added Alphas.					*/
 /*    rjs  26jan95 Added f2c.						*/
+/*    pjt  16mar03 started support for int8                             */
 /*    pjt   5dec03 added darwin                                         */
+/*    pjt  18may04 merged int8 into darwin additions                    */
 /************************************************************************/
 
-#define VERSION_ID "version 1.1 17-dec-03"
+#define VERSION_ID "version 2.1 18-may-04"
+
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include "miriad.h"
 
 #define MAXLEN 512
 #define TRUE 1
@@ -133,11 +138,52 @@ typedef struct {
   ROUTINE init;
 } SYSTEM;
 
-void name_lower(),name_upper(),name_lower_();
-void arg_vms(),arg_extra(),arg_norm(),arg_uni(),arg_gen();
-void len_vms(),len_extra(),len_alliant(),len_uni();
-void addr_vms(),addr_norm(),addr_uni();
-void init_vms(),init_norm(),init_uni();
+#define TYPE_REAL	0x01
+#define TYPE_INTEGER	0x02
+#define TYPE_CHAR	0x04
+#define TYPE_LOGICAL	0x08
+#define TYPE_DOUBLE	0x10
+#define TYPE_CMPLX	0x20
+#define TYPE_VOID	0x40
+#define TYPE_INT8       0x80
+
+#define MAXHASH 257
+typedef struct arg { char *name;
+		     int type;
+		     struct arg *next;	} ARG;
+typedef struct { ARG routine,*args,*ahash[MAXHASH];
+		 int nargs,init;	} INTERFACE;
+
+void usage(void);
+void process(SYSTEM *sys_type);
+int Handle_Fortran(INTERFACE *rout);
+void Handle_Arg(INTERFACE *rout, SYSTEM *sys_type, char *argname);
+ARG *arg_get(INTERFACE *rout, char *argname);
+int arg_type(INTERFACE *rout, char *argname);
+char *type_label(int type);
+SYSTEM *set_system_type(char *systype);
+void Interface_Release(INTERFACE *rout);
+char *Lower_case(char *buf);
+char *Get_Token(char *buf);
+char *Get_Word(char *buf);
+void name_lower(char *name);
+void name_lower_(char *name);
+void name_upper(char *name);
+void init_norm(void);
+void init_vms(void);
+void init_uni(void);
+void arg_vms(INTERFACE *rout);
+void arg_uni(INTERFACE *rout);
+void arg_norm(INTERFACE *rout);
+void arg_gen(INTERFACE *rout, char *char_descriptor);
+void arg_extra(INTERFACE *rout);
+void len_vms(INTERFACE *rout, char *argname);
+void len_uni(INTERFACE *rout, char *argname);
+void len_extra(INTERFACE *rout, char *argname);
+void len_alliant(INTERFACE *rout, char *argname);
+void addr_vms(INTERFACE *rout, char *argname);
+void addr_uni(INTERFACE *rout, char *argname);
+void addr_norm(INTERFACE *rout, char *argname);
 
 SYSTEM systems[] = {
 	{ "vms",  "-1","0",
@@ -169,33 +215,11 @@ SYSTEM systems[] = {
 		    };
 #define NSYSTEMS (sizeof(systems)/sizeof(SYSTEM))
 
-#define TYPE_REAL	0x01
-#define TYPE_INTEGER	0x02
-#define TYPE_CHAR	0x04
-#define TYPE_LOGICAL	0x08
-#define TYPE_DOUBLE	0x10
-#define TYPE_CMPLX	0x20
-#define TYPE_VOID	0x40
-
-#define MAXHASH 257
-typedef struct arg { char *name;
-		     int type;
-		     struct arg *next;	} ARG;
-typedef struct { ARG routine,*args,*ahash[MAXHASH];
-		 int nargs,init;	} INTERFACE;
-int arg_type();
-ARG *arg_get();
-char *type_label();
-SYSTEM *set_system_type();
-char *Get_Word(),*Get_Token(),*Lower_case();
-void process(),Handle_Arg(),Interface_Release(),usage();
 
 int lineno,nesting;
 char last_char;
 /************************************************************************/
-main(argc,argv)
-int argc;
-char *argv[];
+int main(int argc,char *argv[])
 {
   char *s,c;
   int i;
@@ -210,7 +234,7 @@ char *argv[];
     s = argv[i];
     if(*s == '-'){
       s++;
-      while(c = *s++)switch(c){
+      while((c = *s++))switch(c){
 	case 's':
 	  if(++i < argc)
 	    sys_type = set_system_type(argv[i]);
@@ -262,7 +286,7 @@ char *argv[];
 
   fclose(stdin);
   fclose(stdout);
-  exit(0);
+  return 0;
 }
 /************************************************************************/
 void usage()
@@ -273,10 +297,12 @@ void usage()
   printf("where system can be one of:");
   for(i=0; i < NSYSTEMS; i++)printf(" %s",systems[i].name);
   printf("\n");
+#ifdef MIR4
+  printf("This version is enabled to handle longintegers\n");
+#endif
 }
 /************************************************************************/
-void process(sys_type)
-SYSTEM *sys_type;
+void process(SYSTEM *sys_type)
 /*
   Process the input file. Read through, find a #fortran, expand this line,
   and look for occurrences of the subroutine arguments in the next block
@@ -320,8 +346,7 @@ SYSTEM *sys_type;
   }
 }
 /************************************************************************/
-int Handle_Fortran(rout)
-INTERFACE *rout;
+int Handle_Fortran(INTERFACE *rout)
 /*
   Parse and handle an apparent FORTRAN subroutine definition.
 ------------------------------------------------------------------------*/
@@ -342,6 +367,7 @@ INTERFACE *rout;
 
   s = Lower_case(Get_Token(buf));
   if(!strcmp(s,"integer"))         rout->routine.type = TYPE_INTEGER;
+  else if(!strcmp(s,"longinteger"))rout->routine.type = TYPE_INT8;  /* MIR4: for now */
   else if(!strcmp(s,"real"))       rout->routine.type = TYPE_REAL;
   else if(!strcmp(s,"logical"))    rout->routine.type = TYPE_LOGICAL;
   else if(!strcmp(s,"double"))	   rout->routine.type = TYPE_DOUBLE;
@@ -383,12 +409,13 @@ INTERFACE *rout;
   more = TRUE;
   while(more){
     s = Lower_case(Get_Token(buf));
-    if(!strcmp("integer",s))	   type = TYPE_INTEGER;
-    else if(!strcmp("logical",s))  type = TYPE_LOGICAL;
-    else if(!strcmp("real",s))     type = TYPE_REAL;
-    else if(!strcmp("double",s))   type = TYPE_DOUBLE;
-    else if(!strcmp("complex",s))  type = TYPE_CMPLX;
-    else if(!strcmp("character",s))type = TYPE_CHAR;
+    if(!strcmp("integer",s))	       type = TYPE_INTEGER;
+    else if(!strcmp("longinteger",s))  type = TYPE_INT8;
+    else if(!strcmp("logical",s))      type = TYPE_LOGICAL;
+    else if(!strcmp("real",s))         type = TYPE_REAL;
+    else if(!strcmp("double",s))       type = TYPE_DOUBLE;
+    else if(!strcmp("complex",s))      type = TYPE_CMPLX;
+    else if(!strcmp("character",s))    type = TYPE_CHAR;
     else break;
 
     s = Get_Token(buf);
@@ -430,10 +457,10 @@ INTERFACE *rout;
   return(TRUE);
 }
 /************************************************************************/
-void Handle_Arg(rout,sys_type,argname)
-INTERFACE *rout;
-SYSTEM *sys_type;
-char *argname;
+void Handle_Arg(
+		INTERFACE *rout,
+		SYSTEM *sys_type,
+		char *argname)
 /*
   Handle a subroutine argument "macro".
 ------------------------------------------------------------------------*/
@@ -469,9 +496,9 @@ char *argname;
   }
 }
 /************************************************************************/
-ARG *arg_get(rout,argname)
-INTERFACE *rout;
-char *argname;
+ARG *arg_get(
+	     INTERFACE *rout,
+	     char *argname)
 /*
   Check if a name is an argument name.
 ------------------------------------------------------------------------*/
@@ -498,9 +525,9 @@ char *argname;
   return(NULL);
 }
 /************************************************************************/
-int arg_type(rout,argname)
-INTERFACE *rout;
-char *argname;
+int arg_type(
+	     INTERFACE *rout,
+	     char *argname)
 {
   ARG *arg;
   arg = arg_get(rout,argname);
@@ -518,6 +545,11 @@ int type;
   switch(type){
     case TYPE_REAL:	s = "float";		break;
     case TYPE_INTEGER:	s = "int";		break;
+#ifdef MIR4
+    case TYPE_INT8:	s = "int8";		break;
+#else
+    case TYPE_INT8:	s = "int";		break;
+#endif
     case TYPE_CHAR:	s = "char";		break;
     case TYPE_DOUBLE:	s = "double";		break;
     case TYPE_LOGICAL:	s = "int";		break;
@@ -530,8 +562,7 @@ int type;
   return(s);
 }
 /************************************************************************/
-SYSTEM *set_system_type(systype)
-char *systype;
+SYSTEM *set_system_type(char *systype)
 {
   SYSTEM *s;
   int i;
@@ -545,8 +576,7 @@ char *systype;
   return(NULL);
 }
 /************************************************************************/
-void Interface_Release(rout)
-INTERFACE *rout;
+void Interface_Release(INTERFACE *rout)
 /*
   Delete all the memory associated with this interface description.
 ------------------------------------------------------------------------*/
@@ -563,8 +593,7 @@ INTERFACE *rout;
   }
 }
 /************************************************************************/
-char *Lower_case(buf)
-char *buf;
+char *Lower_case(char *buf)
 /*
   Convert a string to lower case.
 ------------------------------------------------------------------------*/
@@ -575,8 +604,7 @@ char *buf;
   return(buf);
 }
 /************************************************************************/
-char *Get_Token(buf)
-char *buf;
+char *Get_Token(char *buf)
 /*
   Retrieve the next token (a word or a special char, but not white
   chars) from stdin. NOTHING is echoed to stdout. NEVER digest
@@ -612,8 +640,7 @@ char *buf;
   return(buf);
 }    
 /************************************************************************/
-char *Get_Word(buf)
-char *buf;
+char *Get_Word(char *buf)
 /*
   Retrieve the next word from stdin. This skips over comments, quoted
   strings, and CPP directives, and returns an alpha-numeric word (starting
@@ -709,20 +736,17 @@ char *buf;
 /*	The system-dependent routines.					*/
 /*									*/
 /************************************************************************/
-void name_lower(name)
-char *name;
+void name_lower(char *name)
 {
   printf("%s",name);
 }
 /************************************************************************/
-void name_lower_(name)
-char *name;
+void name_lower_(char *name)
 {
   printf("%s_",name);
 }
 /************************************************************************/
-void name_upper(name)
-char *name;
+void name_upper(char *name)
 {
   char c;
 
@@ -743,25 +767,22 @@ void init_uni()
   printf("#include <fortran.h>\n");
 }
 /************************************************************************/
-void arg_vms(rout)
-INTERFACE *rout;
+void arg_vms(INTERFACE *rout)
 {
   arg_gen(rout,"struct dsc$descriptor *");
 }
-void arg_uni(rout)
-INTERFACE *rout;
+void arg_uni(INTERFACE *rout)
 {
   arg_gen(rout,"_fcd ");
 }
-void arg_norm(rout)
-INTERFACE *rout;
+void arg_norm(INTERFACE *rout)
 {
   arg_gen(rout,"char *");
 }
 /************************************************************************/
-void arg_gen(rout,char_descriptor)
-INTERFACE *rout;
-char *char_descriptor;
+void arg_gen(
+	     INTERFACE *rout,
+	     char *char_descriptor)
 {
   ARG *arg;
 
@@ -777,8 +798,7 @@ char *char_descriptor;
   }
 }
 /************************************************************************/
-void arg_extra(rout)
-INTERFACE *rout;
+void arg_extra(INTERFACE *rout)
 {
   ARG *arg;
 
@@ -799,36 +819,36 @@ INTERFACE *rout;
   }
 }
 /************************************************************************/
-void len_vms(rout,argname)
-INTERFACE *rout;
-char *argname;
+void len_vms(
+	     INTERFACE *rout,
+	     char *argname)
 {
   printf("((int)(%s->dsc$w_length))",argname);
 }
-void len_uni(rout,argname)
-INTERFACE *rout;
-char *argname;
+void len_uni(
+	     INTERFACE *rout,
+	     char *argname)
 {
   printf("(_fcdlen(%s))",argname);
 }
-void len_extra(rout,argname)
-INTERFACE *rout;
-char *argname;
+void len_extra(
+	       INTERFACE *rout,
+	       char *argname)
 {
   printf("%s_len",argname);
 }
-void len_alliant(rout,argname)
-INTERFACE *rout;
-char *argname;
+void len_alliant(
+		 INTERFACE *rout,
+		 char *argname)
 {
   int offset;
   offset = rout->nargs + 1;
   printf("(**((int **)&%s-%d))",argname,offset);
 }
 /************************************************************************/
-void addr_vms(rout,argname)
-INTERFACE *rout;
-char *argname;
+void addr_vms(
+	      INTERFACE *rout,
+	      char *argname)
 {
   if(arg_type(rout,argname) == TYPE_CHAR){
     printf("(%s->dsc$a_pointer)",argname);
@@ -836,9 +856,9 @@ char *argname;
     printf("%s",argname);
   }
 }
-void addr_uni(rout,argname)
-INTERFACE *rout;
-char *argname;
+void addr_uni(
+	      INTERFACE *rout,
+	      char *argname)
 {
   if(arg_type(rout,argname) == TYPE_CHAR){
     printf("((char *)_fcdtocp(%s))",argname);
@@ -846,9 +866,9 @@ char *argname;
     printf("%s",argname);
   }
 }
-void addr_norm(rout,argname)
-INTERFACE *rout;
-char *argname;
+void addr_norm(
+	       INTERFACE *rout,
+	       char *argname)
 {
   printf("%s",argname);
 }
