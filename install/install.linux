@@ -104,8 +104,6 @@ else
   echo OK.
 endif
 
-exit 0
-
 #	try and be intelligent about X  (the mirdefs script may help here if you need to modify)
 if ($hosttype == linux) then
   set mirxinc="/usr/include/X11"
