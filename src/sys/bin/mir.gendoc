@@ -1,0 +1,111 @@
+#! /bin/csh -f
+# ------------------------------------------------------------
+#* mir.gendoc - Generate on-line miriad documentation
+#& mjs
+#: system operation
+#+
+#  Usage:  mir.gendoc
+#
+#  Install fresh copies of *.doc files (tasks) and *.cdoc files 
+#  (scripts) and *.kdoc (keywords) into miriad's program doc
+#  directory; install fresh copies of *.sdoc files
+#  (subroutines) *.tdoc (subs internal to programs) into
+#  miriad's subroutine doc directory. Then remove all
+#  docs older than 1 day.
+#--
+#
+# ------------------------------------------------------------
+set mir     = $MIR
+set host    = $MIRHOST
+set lsys    = $mir/bin/localsys
+set bindir  = $mir/bin/$host
+set pdocdir = $mir/doc/prog
+set sdocdir = $mir/doc/subs
+set subdir  = $mir/src/subs
+set bordir  = $mir/borrow
+set catdir  = $mir/cat
+set progdir = $mir/src/prog
+set specdir = $mir/src/spec
+set tooldir = $mir/src/tools
+set scrdir  = $mir/src/scripts
+set admdir  = $mir/src/sys/bin
+# ------------------------------------------------------------
+if (-e $lsys/mir.gendoc && ! $?local_compile) then
+  echo $lsys/mir.gendoc exists =======================
+  setenv local_compile
+  exec $lsys/mir.gendoc $argv
+endif
+if ($#argv != 0) then
+   echo "This script takes no arguments - exiting"
+   exit 1
+endif
+# ------------------------------------------------------------
+
+switch ($host)
+   case convex:
+		set sysdir = convex
+		breaksw
+   case mips  :
+		set sysdir = mips
+		breaksw
+   default    :
+		set sysdir = sun
+		breaksw
+endsw
+# ------------------------------------------------------------
+if (! -e $bindir/doc) mir.prog doc
+
+cd $pdocdir
+#
+# foreach's because doc/OS choke with mega-input */*, and subs
+#
+$bindir/doc -p $catdir/keywords.kdoc
+foreach i (`ls $progdir`)
+   foreach j (`ls $progdir/$i`)
+      $bindir/doc -p $progdir/$i/$j
+   end
+end
+foreach i (`ls $tooldir`)
+   $bindir/doc -p $tooldir/$i
+end
+$bindir/doc -p $specdir/mosaic/mosaic_main.c
+$bindir/doc -p $specdir/hcconv/hcconv.c
+$bindir/doc -p $specdir/imcalc/imcalc.c
+$bindir/doc -p $specdir/uvhat/uvhat.for
+$bindir/doc -p $specdir/xmtv/xmtv.c
+$bindir/doc -p $bordir/mxv/mxv.for
+mv *.tdoc $sdocdir >& /dev/null
+#
+foreach i (`ls $scrdir`)
+   $bindir/doc -p $scrdir/$i
+end
+foreach i (`ls $admdir`)
+   $bindir/doc -p $admdir/$i
+end
+
+echo "==== Removing outdated files from $pdocdir ====="
+rm -fr `find . -type f -mtime +1 -print` >& /dev/null
+# ------------------------------------------------------------
+cd $sdocdir
+
+foreach i (`ls $bordir/pgplot/src`)
+   $bindir/doc -p $bordir/pgplot/src/$i
+end
+foreach i (`ls $bordir/pgplot/drivers`)
+   $bindir/doc -p $bordir/pgplot/drivers/$i
+end
+foreach i (`ls $bordir/pgplot/sys_${sysdir}`)
+   $bindir/doc -p $bordir/pgplot/sys_${sysdir}/$i
+end
+
+foreach i (a b c d e f g h i j k l m n o p q r s t u v w x y z)
+   foreach j (`ls $subdir/${i}*`)
+      $bindir/doc -p $j
+   end
+end
+
+echo "==== Removing outdated files from $sdocdir ====="
+rm -fr `find . -type f -mtime +1 -print` >& /dev/null
+# ------------------------------------------------------------
+unsetenv local_compile
+exit 0
