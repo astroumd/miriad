@@ -107,3 +107,6 @@ AC_C_BIGENDIAN
 AC_OUTPUT(mirdefs)
 
 
+dnl It is beyond me why 'mirdefs' is not kept executable.... like mirdefs.in
+
+chmod +x mirdefs
