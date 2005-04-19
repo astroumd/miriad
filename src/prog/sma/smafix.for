@@ -106,6 +106,8 @@ c                 to the antenna of the Tsys that used for
 c                 polynomial fitting in the case of xaxis 
 c                 variable of antel having independent entry
 c                 for different antennas.    
+c  jhz: 2005-4-19 added polarization type for circular case rr ll rl lr
+c                 in Tsys corrections.
 c------------------------------------------------------------------------
         character version*(*)
         integer maxpnts
@@ -2329,7 +2331,7 @@ c       only tsys dependence provided
 c
 c------------------------------------------------------------------------
         integer xx,yy,xy,yx
-        parameter(xx=-5,yy=-6,xy=-7,yx=-8)
+        parameter(xx=-5,yy=-6,xy=-7,yx=-8,rr=-1,ll=-2,rl=-3,lr=-4,uk=0)
         integer i,j,k
         real t1t2
         character xaxis*16, yaxis*16
@@ -2367,7 +2369,18 @@ c            endif
               t1t2 = tsys(i1)*tsys(i2)
             else if(pol.eq.yx)then
               t1t2 = tsys(i1)*tsys(i2)
+            else if(pol.eq.rr)then
+              t1t2 = tsys(i1)*tsys(i2)
+            else if(pol.eq.ll)then
+              t1t2 = tsys(i1)*tsys(i2)
+            else if(pol.eq.rl)then
+              t1t2 = tsys(i1)*tsys(i2)
+            else if(pol.eq.lr)then
+              t1t2 = tsys(i1)*tsys(i2)
+            else if(pol.eq.uk)then
+              t1t2 = tsys(i1)*tsys(i2)
             else
+        
               call bug('f','Invalid polarization code')
             endif
           
