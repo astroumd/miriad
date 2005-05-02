@@ -88,6 +88,11 @@ c			22 22
 c			23 23
 c			24 24 
 c       'doengrd'  to read the engineer file for Tsys and LST.
+c       'conjugat' to phase conjugate for lsb data.
+c                   Default: 
+c                   conjugate the phase of the lsb data observed before 
+c                   2005-04-28;
+c                   no phase flip for the data observed after 2005-04-28.
 c
 c       No extra processing options have been given yet. The default
 c       works.
@@ -149,6 +154,10 @@ c    jhz  18-mar-05 corrected size for mount in uvputvr
 c    jhz  23-mar-05 fixed a bug in decoding antenna position
 c                   for antennas with id > reference antenna's id. 
 c    jhz  01-apr-05 cleaned some mess left from atlod. 
+c    jhz  02-may-05 add a function to add '/' in the end of the input
+c                   file name in case the slash is missing.
+c    jhz  02-may-05 add an option to do phase conjugate for the lower side
+c                   band data in respose to Taco's log 9288.
 c------------------------------------------------------------------------
         integer maxfiles
         parameter(maxfiles=128)
@@ -162,14 +171,14 @@ c
         logical doauto,docross,docomp,dosam,relax,unflag,dohann
         logical dobary,doif,birdie,dowt,dopmps,doxyp,doop
         logical polflag,hires,nopol,sing,circular,linear,oldpol,dsb,
-     *          dospc,doengrd
+     *          dospc,doengrd, doconjug
         integer fileskip,fileproc,scanskip,scanproc,sb, dosporder
         integer doeng
 	integer rsNCHAN, refant
 c
 c  Externals.
 c
-        character smaerr*32,itoaf*8
+        character smaerr*32,itoaf*8, filebuf*64, charbuf*1
         dsb = .false.
 c
 c  Get the input parameters.
@@ -177,6 +186,12 @@ c
         call output(version)
         call keyini
         call mkeyf('in',in,maxfiles,nfiles)
+        filebuf=in(1)(1:len1(in(1)))
+        charbuf=in(1)(len1(in(1)):len1(in(1)))
+           if(charbuf.ne."/")  
+     *      in(1)=filebuf(1:len1(filebuf))//'/'
+        if(nfiles.gt.1)
+     *    call bug('f','Only handle one input file at once')
         if(nfiles.eq.0)
      *    call bug('f','Input name must be given')
         call keya('out',out,' ')
@@ -200,7 +215,7 @@ c
         call keyi('refant',refant,6)
         call getopt(doauto,docross,docomp,dosam,doxyp,doop,relax,
      *    sing,unflag,dohann,birdie,dobary,doif,dowt,dopmps,polflag,
-     *    hires,nopol,circular,linear,oldpol,dospc,doengrd)
+     *    hires,nopol,circular,linear,oldpol,dospc,doengrd,doconjug)
             dosporder=-1
             if(dospc) dosporder=1
             doeng =-1
@@ -280,7 +295,7 @@ c
             endif
             call smadisp(in(i),scanskip,scanproc,doauto,docross,
      *          relax,sing,unflag,polflag,rxif,rfreq,nfreq,sb,
-     *          iostat, dosporder,doeng)
+     *          iostat, dosporder,doeng,doconjug)
           endif
         enddo
         if(iostat.ne.0)then
@@ -324,11 +339,12 @@ c
 c************************************************************************
         subroutine getopt(doauto,docross,docomp,dosam,doxyp,doop,
      *    relax,sing,unflag,dohann,birdie,dobary,doif,dowt,dopmps,
-     *    polflag,hires,nopol,circular,linear,oldpol,dospc,doengrd)
+     *    polflag,hires,nopol,circular,linear,oldpol,dospc,doengrd,
+     *    doconjug)
 c
         logical doauto,docross,dosam,relax,unflag,dohann,dobary,doop
         logical docomp,doif,birdie,dowt,dopmps,doxyp,polflag,hires,sing
-        logical nopol,circular,linear,oldpol,dospc,doengrd
+        logical nopol,circular,linear,oldpol,dospc,doengrd,doconjug
 c
 c  Get the user options.
 c
@@ -355,10 +371,11 @@ c    circular   circular polarization.
 c    linear     linear polarization.
 c    dospc      reverse the order of spectral windows for
 c               the last three blocks.
-c    doengrd read engineer file.
+c    doengrd    read engineer file.
+c    doconjug   phase conjugate for lsb data (data before 2004 April 28)
 c------------------------------------------------------------------------
         integer nopt
-        parameter(nopt=24)
+        parameter(nopt=25)
         character opts(nopt)*8
         logical present(nopt)
         data opts/'noauto  ','nocross ','compress','relax   ',
@@ -366,9 +383,10 @@ c------------------------------------------------------------------------
      *            'noif    ','birdie  ','reweight','xycorr  ',
      *            'opcorr  ','nopflag ','hires   ','pmps    ',
      *            'mmrelax ','single  ','nopol   ','circular  ',
-     *            'linear', 'oldpol','dospc', 'doengrd'/
+     *            'linear', 'oldpol','dospc', 'doengrd',
+     *            'conjugat'/
         call options('options',opts,present,nopt)
-        doauto = .not.present(1)
+        doauto  = .not.present(1)
         docross = .not.present(2)
         docomp  = present(3)
         relax   = present(4)
@@ -390,11 +408,12 @@ c
 c       mmrelax = present(17)
         sing    = present(18)
         nopol   = present(19)
-        circular  = present(20)
+        circular= present(20)
         linear  = present(21)
         oldpol  = present(22)
         dospc   = present(23)
         doengrd = present(24)
+        doconjug= present(25)
         if((.not.circular.and..not.linear).and..not.oldpol) nopol=.true.
 c
         if((dosam.or.doxyp.or.doop).and.relax)call bug('f',
@@ -569,12 +588,13 @@ c------------------------------------------------------------------------
 c************************************************************************
         subroutine smadisp(in,scanskip,scanproc,doauto,docross,relax,
      *    sing,unflag,polflag,rxif,userfreq,nuser,sb,iostat, 
-     *    dosporder,doeng)
+     *    dosporder,doeng,doconjug)
 c
         character in*(*)
         integer scanskip,scanproc,rxif,nuser,sb,iostat,dosporder,doeng
         double precision userfreq(*)
-        logical doauto,docross,relax,unflag,polflag,sing
+        logical doauto,docross,relax,unflag,polflag,sing,doconjug
+        integer doflppha
 c  jhz
 c
 c  Process a sma_mir file. Dispatch information to the
@@ -611,8 +631,14 @@ c
 c  Initialize.
 c
         call pokename(in)
+
+        if(doconjug) then
+           doflppha = -1
+           else
+           doflppha = 1
+           end if
         call rssmaflush(scanskip, scanproc, sb, rxif, 
-     *       dosporder, doeng)
+     *       dosporder, doeng, doflppha)
              kstat= 666
         call rspokeflshsma(kstat);
 c
