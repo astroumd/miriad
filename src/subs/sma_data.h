@@ -532,6 +532,7 @@ struct smlodd {
         int linear;
         int oldpol;
         int doChunkOrder;
+        int doConjugate;
         int mflag;
         int newsc;
         int newpnt;
