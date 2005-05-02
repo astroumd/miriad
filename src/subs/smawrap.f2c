@@ -40,11 +40,11 @@ fortran subroutine rsmiriadwrite(character datapath, integer jstat)
 
 fortran subroutine rssmaflush(integer scanskip,
     integer scanproc, integer sb, integer rxif, integer dosporder,
-    integer doeng)
+    integer doeng, integer doflppha)
 {
    rssmaflush_c(scanskip.val,
               scanproc.val, sb.val, rxif.val, dosporder.val,
-              doeng.val);
+              doeng.val,doflppha.val);
 }
 
 fortran subroutine rspokeinisma(integer tbd, integer tno1,
