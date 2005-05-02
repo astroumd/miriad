@@ -173,8 +173,8 @@ void rsmiriadwrite_c(char *datapath, char *jst[])
      return;
 }
 
-void rssmaflush_c(scanskip,scanproc, sb, rxif, dosporder,doeng)
-int scanskip,scanproc, sb, rxif, dosporder, doeng;
+void rssmaflush_c(scanskip,scanproc,sb,rxif,dosporder,doeng,doflppha)
+int scanskip,scanproc,sb,rxif,dosporder,doeng,doflppha;
 { /* flush mirdata*/
 int i, j;
 int jstat;
@@ -193,6 +193,7 @@ extern smlodd smabuffer;
           smabuffer.rxif= rxif;
           smabuffer.doChunkOrder = dosporder;
           smabuffer.doeng = doeng;
+          smabuffer.doConjugate = doflppha;
       kstat = jstat = -1;  
 /*  read header  */
       rspokeflshsma_c((char *)&(kstat)); 
@@ -1714,7 +1715,10 @@ rxpnt = uvwbsln[inhset]->uvwID[j].irec;
 if(smabuffer.rxif==uvwbsln[inhset]->uvwID[j].irec||smabuffer.rxif==-1) {
 switch(sbpnt) {
 case 0: blpnt=uvwbsln[inhset]->uvwID[j].blsid;
-        phaseSign=-1;
+        phaseSign=1;
+// if required by users
+// if data observed earlier than JD 2453488.5 (2005 4 28)
+        if(smabuffer.doConjugate==-1||jday<2453488.5) phaseSign=-1;
 if(smabuffer.sb==0) {
   smabuffer.u[blpnt] = uvwbsln[inhset]->uvwID[j].u/smabuffer.basefreq*1000.;
   smabuffer.v[blpnt] = uvwbsln[inhset]->uvwID[j].v/smabuffer.basefreq*1000.;
