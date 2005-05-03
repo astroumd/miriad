@@ -3,15 +3,21 @@ c********1*********2*********3*********4*********5*********6*********7*c
 	implicit none
 c
 c= VARFIT - Analyse correlations of antenna gains and uv-variables.
-c& mchw
+c& mchw/jhz
 c: uv analysis
 c+	VARFIT is a Miriad task to analyse the correlations of 
 c	antenna gains and uv-variables. VARFIT fits the following:
 c		 yaxis = slope *  xaxis +  intercept
 c		D(yaxis) = slope * D(xaxis) + intercept
-c	where D() is the difference between succesive samples.
+c	where D() is the difference between succesive samples,
+c       xaxis, yaxis are the uv variables from single uvfiles.
+c       In addition, VARFIT provides an option of regression for
+c       the phases derived from the gains of two uvfiles.
 c	If either axis is an antenna gain, then SELFCAL must be run first
 c	and the axes are sampled at the interval used in SELFCAL.
+c       For linear regression between the two phase solutions, the setup
+c       in the SELFCAL for the two simultaneously sampled data files needs
+c       identical.
 c	The rms and correlation coefficient are listed for each antenna. 
 c@ vis
 c	The input UV dataset name. The antenna gains must first be
@@ -69,6 +75,9 @@ c			The fit is written into the log file. E.g.
 c			yaxis=tpower xaxis=tpower refant2=4 options=quad
 c			results can be used in the task tpgains to correct
 c			tpower to a common Tsys scale.
+c         phareg       do linear regression between phase1 and phase2 derived
+c                      from the gain tables in uvfile1 and uvfile2, respectively:
+c                      phase2 = slope * phase1 + offset
 c--
 c  History:
 c    18may95 mchw  Initial version developed from BEE.
@@ -87,19 +96,29 @@ c    19mar96 mchw  added options=quad.
 c    20mar96 mchw  Log plot for structure and allan and fit slopes.
 c    07jun96 mchw  rescale xaxis and/or yaxis using lsq fit to refant.
 c    20dec96 mchw  better doc and output format.
+c    29Apr05 jhz   add option to do linear regression for phases in two
+c                  uv datasets.
+c    02May05 jhz   add a procedure to check the time stamp in case
+c                  of two files involved for linear regression of phases.
 c-----------------------------------------------------------------------
 	character version*(*)
-	parameter(version='(version 1.0 20-DEC-96)')
+	parameter(version='(version 1.0 29-ARP-05)')
 	character device*80, log*80, vis*80, xaxis*40, yaxis*40
 	integer tvis, refant, refant2, nx, ny
 	logical dowrap, xsc,ysc, dostruct, doallan, doquad
+        logical dophareg
         real xrange(2),yrange(2)
+        integer lin, nfiles,i
+        logical uvdatopn
+        character ops*9
 c
 c  Get input parameters.
 c
 	call output('VARFIT '//version)
 	call keyini
-	call keyf('vis',vis,' ')
+c	call keyf('vis',vis,' ')
+           ops = 'sdlp'
+          call uvdatinp ('vis', ops)
 	call keya('xaxis',xaxis,'time')
 	call keya('yaxis',yaxis,'phase')
 	call keya('log',log,' ')
@@ -112,11 +131,35 @@ c
           call keyr('yrange',yrange(2),yrange(1))
 	call keyi('refant',refant,0)
 	call keyi('refant2',refant2,0)
-	call GetOpt(dowrap,xsc,ysc,dostruct,doallan,doquad)
+	call GetOpt(dowrap,xsc,ysc,dostruct,doallan,doquad,
+     *   dophareg)
+            if(dophareg) then
+              xaxis = 'time'
+              yaxis = 'phase'
+            end if 
 	call keyfin
+c
+c  looping the uvdata files.
+c
+        call uvdatgti ('nfiles', nfiles)
+        if(dophareg.and.nfiles.gt.2)
+     *   call bug('f','Too many uv files.')
+        if(nfiles.gt.2)
+     *   call bug('f','Too many uv files to be handled.')
+        if(dophareg.and.nfiles.ne.2) 
+     *   call bug('f','Missing the second uv file.')
+         if (nfiles.eq.2.and.yaxis.ne.'phase')
+     *   call bug('f',
+     * 'yaxis must be phase for linear regression of two uvfiles')
+         if (nfiles.eq.2.and.yaxis.eq.'phase') xaxis='time'
+        do i = 1, nfiles
+        if(.not.uvdatopn(lin))call bug('f','Error opening inputs')
+          call uvdatgta ('name', vis)
+          call uvdatcls
 c
 c  Open the uvdata file.
 c
+
 	if(vis.eq.' ') call bug('f','Input visibility file is missing')
 	call uvopen(tvis,vis,'old')
 c
@@ -129,20 +172,25 @@ c
 c  Read in data
 c
 	call varmint(tvis,vis,xaxis,yaxis,refant,refant2,device,
-     *	  nx,ny,xrange,yrange,dowrap,xsc,ysc,dostruct,doallan,doquad)
+     *	nx,ny,xrange,yrange,dowrap,xsc,ysc,dostruct,doallan,doquad,
+     * dophareg,i)
 c
 c  Close up.
 c
-	call LogClose
-	call uvclose(tvis)
+           call LogClose
+           call uvclose(tvis)
+           end do
+
 	end
 c********1*********2*********3*********4*********5*********6*********7*c
 	subroutine varmint(tvis,vis,xaxis,yaxis,refant,refant2,device,
-     *	  nx,ny,xrange,yrange,dowrap,xsc,ysc,dostruct,doallan,doquad)
+     *	nx,ny,xrange,yrange,dowrap,xsc,ysc,dostruct,doallan,doquad,
+     *  dophareg,fileid)
 	implicit none
-	integer tvis, refant, refant2, nx, ny
-        character*(*) xaxis, yaxis, device, vis
-	logical dowrap, xsc,ysc, dostruct, doallan, doquad
+	integer tvis, refant, refant2, nx, ny, fileid
+        character*(*) xaxis, yaxis, device,vis
+	logical dowrap, xsc,ysc, dostruct, doallan, doquad,
+     *  dophareg
         real xrange(2),yrange(2)
 c
 c  Read Miriad gains, and the uv-variables needed for fitting.
@@ -164,7 +212,7 @@ c----------------------------------------------------------------------c
 	double precision var(MAXLEN)
 	integer MAXANTS,MAXSOLS
 	parameter(MAXANTS=28,MAXSOLS=2048)
-	integer nants,nsols
+	integer nants,nsols, npol
 	double precision interval,dtime(MAXSOLS)
 	complex gains(MAXANTS,MAXSOLS)
 	real pi,tupi
@@ -174,6 +222,8 @@ c----------------------------------------------------------------------c
 	integer i,j,k,nvar,ant,varlen
 	parameter(nvar=8)
 	real Ampl(MAXANTS,MAXSOLS),Phi(MAXANTS,MAXSOLS)
+        real AAmpl(MAXANTS,MAXSOLS,2),PPhi(MAXANTS,MAXSOLS,2)
+        real TTime(MAXANTS,MAXSOLS,2)
 	real xvar(MAXANTS,MAXSOLS), yvar(MAXANTS,MAXSOLS)
 	real xx(MAXSOLS),yy(MAXSOLS),sf(MAXSOLS)
 	complex ref
@@ -181,13 +231,19 @@ c----------------------------------------------------------------------c
 	logical ok,xref,yref
 	real xmax(MAXANTS),ymax(MAXANTS)
 	real xmin(MAXANTS),ymin(MAXANTS)
-	real a1,b1,c1,yyave,sigy,corr,sigy1,theta
+	real a1,b1,c1,yyave,sigy,corr,sigy1,theta,xbuf
+        real mpha
+         complex mgains(10,2,6145)
+         integer len1, length1, length2
+         character uvfile1*30, uvfile2*30
 c
 c  Externals.
 c
 	character itoaf*8
-	character rangle*18
-	integer uvscan,ismax,ismin
+	character rangle*18, dotrans*1
+	integer uvscan,ismax,ismin,pee(2)
+         real aa1(MAXANTS), bb1(MAXANTS)
+         common AAmpl,PPhi,TTime,aa1,bb1
 c
 c  Read some header information for the gains file.
 c
@@ -220,8 +276,17 @@ c
 	      gains(j,k) = gains(j,k)/ref
 	    endif
 	    call amphase(gains(j,k),ampl(j,k),phi(j,k))
+            
+            aampl(j,k,fileid)=ampl(j,k)
+            pphi(j,k,fileid) = phi(j,k)
+c            write(*,*) ampl(j,k), phi(j,k)
+c            write(*,*) aampl(j,k,fileid),pphi(j,k,fileid)
 	  enddo
 	  enddo
+           if(fileid.eq.1) length1 = len1(vis)
+           if(fileid.eq.1) uvfile1=vis(1:length1)
+           if(fileid.eq.2) length2 = len1(vis)
+           if(fileid.eq.2) uvfile2=vis(1:length2)
 c
 c Extend phase beyond -180. to 180. range.
 c
@@ -231,6 +296,7 @@ c
 	  do i=1,nSols
 	    phi(ant,i) = phi(ant,i) - 360.*nint((phi(ant,i)-theta)/360.)
 	    theta = 0.5 * (phi(ant,i) + theta)
+            pphi(ant,i,fileid) = phi(ant,i)
 	  enddo
 	enddo
 	endif
@@ -275,6 +341,7 @@ c
 		do j=1,nants
 		  if(xaxis.eq.'time')then
 		    xvar(j,k)=var(j)-dtime(1)
+                    TTime(j,k,fileid)=xvar(j,k)
 		  else
 		    xvar(j,k)=var(j)
 		  endif
@@ -304,6 +371,46 @@ c
 	    endif
 	  endif
 	enddo
+
+666         if(fileid.eq.3) then
+c
+c check the time stamp of  both gain tables in both file1 and file2
+c issue a warning if the time stamp differs at a sloution of an antenna.
+c
+              do j=1,nants
+              do i=1,nSols
+        if(TTime(j,i,1).ne.TTime(j,i,2)) then
+        print*, 'WARNING: the time stamp in File1:'//
+     * uvfile1(1:length1), TTime(j,i,1)
+        print*, '      differs from that in File2:'//
+     * uvfile2(1:length2), TTime(j,i,2)
+        print*, '      at solution ', i, ' of antenna', j
+        pause
+              endif
+              enddo
+              enddo
+              do j=1,nants
+              do i=1,nSols
+               if(yaxis.eq.'amplitude') then
+               xvar(j,i) = AAmpl(j,i,1)
+               yvar(j,i) = AAmpl(j,i,2)
+               end if
+               if(yaxis.eq.'phase') then
+               xvar(j,i) = PPhi(j,i,1)
+               yvar(j,i) = PPhi(j,i,2)
+               end if
+c        if(xvar(j,i).eq.0.and.xvar(j,i-1).ne.0
+c     *    .and.xvar(j,i+1).ne.0.and.i.gt.1.and.i.lt.nSols) then
+c               xvar(j,i) = (xvar(j,i+1)-xvar(j,i-1))/2.
+c               end if
+c        if(yvar(j,i).eq.0.and.yvar(j,i-1).ne.0
+c     *    .and.yvar(j,i+1).ne.0.and.i.gt.1.and.i.lt.nSols) then
+c               yvar(j,i) = (yvar(j,i+1)-yvar(j,i-1))/2.
+c               end if
+
+              end do
+              end do
+             end if
 c
 c  Find max/min
 c
@@ -316,12 +423,14 @@ c
 c
 c  Fit slopes and plot results.
 c
+        if(.not.dophareg.or.fileid.eq.3) then
 	print *,'Number of points=',nSols
 	line ='Telescope: '//telescop//' Longitude: '//rangle(longitude)
      *		//' Latitude: '//rangle(latitude)
 	write(line,'(a,a,a,f12.8,a,f12.8)') 'Telescope: ',telescop,
      *  ' Longitude: ',longitude,' Latitude: ',latitude
 	call LogWrit(line)
+        end if
 c
 c  ReScale uv-variables.
 c
@@ -501,7 +610,15 @@ c
 c
 c  yaxis versus xaxis.
 c
+          if(.not.dophareg.or.fileid.eq.3) then
 	  print *,' '
+          if(dophareg) then
+          print *, 'yaxis = phase2 derived from gains of FILE1: '//
+     *    uvfile2
+          print *, 'xaxis = phase1 derived from gains of FILE2: '//
+     *    uvfile1
+          print *,' '
+          end if
 	  print *, 'yaxis = slope * xaxis + intercept'
 	  print *, 'ant   yaxis_ave   yaxis_rms   slope   intercept',
      *  '   rms-fit   correlation'
@@ -513,6 +630,19 @@ c
 	    enddo
 	    call linlsq1(xx,yy,nSols, yyave,sigy,a1,b1,sigy1,corr)
 	    print *,ant, yyave, sigy, a1,b1, sigy1, corr
+            if(fileid.eq.3) then
+              aa1(ant) = a1
+              bb1(ant) = b1
+            end if
+            if(fileid.eq.3.and.a1.ne.0) then
+                           if (a1.lt.0) then
+            xmin(ant) = (ymax(ant) - b1)/a1
+            xmax(ant) = (ymin(ant) - b1)/a1
+                       else
+            xmin(ant) = (ymin(ant) - b1)/a1
+            xmax(ant) = (ymax(ant) - b1)/a1
+                                        end if
+            end if
 	   endif
 	  enddo
 c
@@ -536,10 +666,201 @@ c
 c
 c  Plot results.
 c
+        if(fileid.eq.3) then
+        xaxis = 'Phase1'
+        yaxis = 'Phase2'
+              end if
+           end if
+                  pause
 	if(device.ne.' ') 
      *	      call varplot(device,vis,xaxis,yaxis,nx,ny,xx,yy,
-     *	  xrange,yrange,xvar,yvar,nsols,nants,maxants,maxsols)
+     *	  xrange,yrange,xvar,yvar,nsols,nants,maxants,maxsols,
+     *     fileid,aa1,bb1)
+            if(fileid.eq.2) then
+            fileid=3
+            if(.not.dophareg) stop
+            goto 666
+            end if
+          
+c
+c write out the gain table
+c
+         if(fileid.eq.3) then
+         stop
+         write(*,*) 
+     *   'do you want to transfer Phase correction from FILE1: '//
+     *     uvfile1(1:length1)
+         write(*,*)
+     *   '                                           to FILE2: '//
+     *     uvfile2(1:length2)
+         write(*,*) 
+     * 'and overwrite the gain table in FILE2: '//uvfile2(1:length2)//
+     * '? (No/Yes)'
+         read(*,*) dotrans
+         if(dotrans.ne.'y'.and.dotrans.ne.'Y') then
+         print*, '**************************************'//
+     *   '******************************************'
+         print*, 'the gains are not transferred. Program terminated.'
+         print*, '**************************************'//
+     *   '******************************************'
+         stop
+         else
+         print*, '**************************************'//
+     *   '******************************************'
+         print*, '* the new gains transferred from File1: '//
+     *   uvfile1(1:length1)
+         print*, '* to File2: '//uvfile2(1:length2)
+         print*, '**************************************'//
+     *   '******************************************'
+         end if 
+         do j=1, nants
+         do k=1, nsols
+         mpha = aa1(j)*pphi(j,k,1)+bb1(j)
+         mpha = mpha*pi/180.
+         mgains(j,1,k) = cmplx(aampl(j,k,2)*cos(mpha),
+     *                         aampl(j,k,2)*sin(mpha))
+         print*,j,k,mgains(j,1,k),aampl(j,k,2),pphi(j,k,2)
+         end do
+         end do  
+        npol=1
+        pee(1)=1
+        call gaintab(tvis,dtime,mgains,npol,nants,nsols,pee)
+        stop
+        end if
 	end
+
+        subroutine gaintab(tno,time,gains,npol,nants,nsoln,pee)
+c
+        integer tno,nants,nsoln,npol,pee(2)
+        double precision time(nsoln),freq0
+        real tau(nants,nsoln)
+        complex gains(10,2,6145)
+        logical dodelay
+c
+c  Write out the antenna gains and the delays.
+c
+c  Input:
+c    tno
+c    time
+c    Gains
+c    Tau
+c    npol       Number of polarisations. Either 1 or 2.
+c    nants
+c    nsoln
+c    dodelay    True if the delays are to be written out.
+c    pee        Mapping from internal polarisation number to the order
+c               that we write the gains out in.
+c------------------------------------------------------------------------
+c=======================================================================
+            include 'maxdim.h'
+c=======================================================================
+c=======================================================================
+c - mirconst.h  Include file for various fundamental physical constants.
+c
+c  History:
+c    jm  18dec90  Original code.  Constants taken from the paper
+c                 "The Fundamental Physical Constants" by E. Richard
+c                 Cohen and Barry N. Taylor (PHYICS TODAY, August 1989).
+c ----------------------------------------------------------------------
+c  Pi.
+      real pi, twopi
+      double precision dpi, dtwopi
+      parameter (pi = 3.14159265358979323846)
+      parameter (dpi = 3.14159265358979323846)
+      parameter (twopi = 2 * pi)
+      parameter (dtwopi = 2 * dpi)
+c ----------------------------------------------------------------------
+c  Speed of light (meters/second).
+      real cmks
+      double precision dcmks
+      parameter (cmks = 299792458.0)
+      parameter (dcmks = 299792458.0)
+c ----------------------------------------------------------------------
+c  Boltzmann constant (Joules/Kelvin).
+       real kmks
+      double precision dkmks
+      parameter (kmks = 1.380658e-23)
+      parameter (dkmks = 1.380658d-23)
+c ----------------------------------------------------------------------
+c  Planck constant (Joules-second).
+      real hmks
+      double precision dhmks
+      parameter (hmks = 6.6260755e-34)
+      parameter (dhmks = 6.6260755d-34)
+c ----------------------------------------------------------------------
+c  Planck constant divided by Boltzmann constant (Kelvin/GHz).
+      real hoverk
+      double precision dhoverk
+      parameter (hoverk = 0.04799216)
+      parameter (dhoverk = 0.04799216)
+c=======================================================================
+        integer iostat,off,item,i,j,p,pd,j1,ngains
+        complex g(3*maxant)
+c
+c  no delay correction
+c
+            dodelay=.false.
+            freq0=100.
+        call haccess(tno,item,'gains','write',iostat)
+        if(iostat.ne.0)then
+          call bug('w','Error opening output amp/phase table.')
+          call bugno('f',iostat)
+       endif
+        call hwritei(item,0,0,4,iostat)
+        if(iostat.ne.0)then
+         call bug('w','Error writing header of amp/phase table')
+          call bugno('f',iostat)
+        endif
+        write(*,*)
+     * 'create new gain table with smoothed or interpolated values.'
+c           write(*,*) 'nsoln nantsi npol', nsoln, nants, npol
+c
+c  Write out all the gains.
+c
+         ngains = npol*nants
+        if(dodelay) ngains = (npol+1)*nants
+c
+
+        off = 8
+        do i=1,nsoln
+c           write(*,*) 'time=' ,  time(i)
+          call hwrited(item,time(i),off,8,iostat)
+          off = off + 8
+          if(iostat.ne.0)then
+            call bug('w','Error writing time to amp/phase table')
+            call bugno('f',iostat)
+          endif
+          j1 = 1
+          do j=1,nants
+            do p=1,npol
+              pd = pee(p)
+c          write(*,*) 'i j p gains', i, j, p, gains(j,pd,i)
+c              if(abs(real( gains(j,pd,i)))+
+c     *           abs(aimag(gains(j,pd,i))).ne.0)then
+c                g(j1) = 1/gains(j,pd,i)
+c              else
+c                g(j1) = (0.,0.)
+c              endif
+               g(j1) =gains(j,pd,i)
+             j1 = j1 + 1
+            enddo
+          enddo
+          call hwriter(item,g,off,8*ngains,iostat)
+          off = off + 8*ngains
+          if(iostat.ne.0)then
+            call bug('w','Error writing gains to amp/phase table')
+            call bugno('f',iostat)
+          endif
+        enddo
+c
+c  Finished writing the gain table.
+c
+          call hdaccess(item,iostat)
+        if(iostat.ne.0)call bugno('f',iostat)
+         end
+
+
+
 c********1*********2*********3*********4*********5*********6*********7*c
 	subroutine linlsq1(xarr,yarr,npnt, yave,sigy,a1,b1,sigy1,corr)
 
@@ -679,9 +1000,11 @@ c	call LogWrit(line)
 	call LogWrit(line2)
       end
 c********1*********2*********3*********4*********5*********6*********7*c
-	subroutine GetOpt(dowrap,xsc,ysc,dostruct,doallan,doquad)
+	subroutine GetOpt(dowrap,xsc,ysc,dostruct,doallan,doquad,
+     * dophareg)
         implicit none
-	logical dowrap, xsc,ysc, dostruct, doallan, doquad
+	logical dowrap, xsc,ysc, dostruct, doallan, doquad,
+     *  dophareg
 c
 c  Get extra processing options.
 c
@@ -693,12 +1016,12 @@ c    doallan    Compute Allan variance.
 c    doquad     Fit yaxis = a + b*xaxis + c*xaxis**2
 c-----------------------------------------------------------------------
 	integer nopt
-        parameter(nopt=6)
+        parameter(nopt=7)
         logical present(nopt)
         character opts(nopt)*9
 c
         data opts/'wrap     ','xscale   ','yscale   ','allan    ',
-     *            'structure','quad     '/
+     *            'structure','quad     ','phareg   '/
 c	
 	call options('options',opts,present,nopt)
         dowrap = present(1)
@@ -707,10 +1030,12 @@ c
         doallan = present(4)
         dostruct = present(5)
         doquad = present(6)
+        dophareg = present(7)
 	end
 c********1*********2*********3*********4*********5*********6*********7*c
 	subroutine varplot(device,vis,xaxis,yaxis,nx,ny,xx,yy,
-     *	  xrange,yrange,xvar,yvar,nsols,nants,maxants,maxsols)
+     *	  xrange,yrange,xvar,yvar,nsols,nants,maxants,maxsols,
+     *    fileid,aa,bb)
 c  plot yaxis versus xaxis.
         implicit none
         character*(*) xaxis, yaxis, device, vis
@@ -722,7 +1047,9 @@ c-----------------------------------------------------------------------
         real xlo,xhi,ylo,yhi
         integer pgbeg, ierr, ismin, ismax, i, j, length
         character Title*48
-	real delta
+	real delta, aa(MAXANTS),bb(MAXANTS)
+        real xlin(2), ylin(2)
+        integer fileid
 c
 c  Externals.
 c
@@ -752,6 +1079,14 @@ c
 	    xlo = xrange(1)
 	    xhi = xrange(2)
 	  endif
+
+            if(fileid.eq.3) then
+            ylin(1) = aa(j)*xlo+bb(j)
+            ylin(2) = aa(j)*xhi+bb(j)
+            xlin(1) = xlo
+            xlin(2) = xhi
+            endif
+             
 	    ylo = yy(ismin(nSols,yy,1))
 	    yhi = yy(ismax(nSols,yy,1))
 	 if(ylo.ne.yhi)then
@@ -773,7 +1108,16 @@ c
 	  call pgpage
           call pgvstd
           call pgswin(xlo,xhi,ylo,yhi)
-	  call pgpt(nsols,xx,yy,1)
+	  if(fileid.eq.3) then
+           call pgpt(nsols,xx,yy,17)
+           else
+           call pgpt(nsols,xx,yy,1)
+           endif
+          if(fileid.eq.3) then
+            call  pgsci(2)
+          call pgline(2,xlin,ylin)
+            call  pgsci(1)
+          end if
           call pgtbox('BCNST',0.,0,'BCNST',0.,0)
           Title = 'Antenna '//itoaf(j)//'File='//vis
           length = len1(title)
