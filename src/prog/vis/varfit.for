@@ -17,7 +17,7 @@ c	If either axis is an antenna gain, then SELFCAL must be run first
 c	and the axes are sampled at the interval used in SELFCAL.
 c       For linear regression between the two phase solutions, the setup
 c       in the SELFCAL for the two simultaneously sampled data files needs
-c       identical.
+c       to be identical.
 c	The rms and correlation coefficient are listed for each antenna. 
 c@ vis
 c	The input UV dataset name. The antenna gains must first be
