@@ -57,6 +57,9 @@
 //            the source name truncates to 8 char.
 // 2005-04-05 fixed the polarization label conversion for circular case
 //            fixed the uv coordinates scaling (by the base frequency fsky[0]);
+// 2005-04-28 change the phase conjugate scheme according Taco's log.
+// 2005-05-05 add options of computeing radial velocity wrt either barycenter
+//            or lsr.
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -216,7 +219,7 @@ void rspokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1,
   int *doop1, int *dohann1, int *birdie1, int *dowt1, int *dopmps1,
   int *dobary1, int *doif1, int *hires1, int *nopol1, int *circular1,
   int *linear1, int *oldpol1, double lat1, double long1, int rsnchan1, 
-  int refant1)
+  int refant1, int *dolsr1)
 { 
 /* rspokeflshsma_c == pokeflsh */
     int buffer;
@@ -244,6 +247,7 @@ void rspokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1,
         smabuffer.lat    = lat1;
         smabuffer.longi  = long1;
         smabuffer.refant = refant1;
+        smabuffer.dolsr  = *dolsr1;
     if(smabuffer.dowt>0) {
            /* call lagwt(wts,2*smcont-2,0.04) */
            /* process weights here. */ 
@@ -1414,19 +1418,6 @@ nnextnextnext:
 /* take out 1 for eliminating the continuum channel */
   smaCorr.n_chunk = numberSpectra -1;
 // end of spectral configuring.
-/* setup source */
-//{ double velrad();
-//  short dolsr   = 1;
-//  double time   = 2.0;
-//  double raapp  = 3.0;
-//  double decapp = 4.0;
-//  double raepo  = 5.0;
-//  double decepo = 6.0;
-//  double lst    = 7.0;
-//  double lat    = 8.0;
-//       printf("vel = %f\n", velrad(dolsr,time,
-//       raapp,decapp,raepo,decepo,lst,lat));
-//    }
  
 // initialize system velocity
        for (j=1; j<sourceID+1; j++) {
@@ -1570,6 +1561,9 @@ numberBaselines = uvwbsln[smabuffer.scanskip]->n_bls;
 printf("#Baselines=%d #Spectra=%d  #Sidebands=%d #Receivers=%d\n",
         numberBaselines/2, numberSpectra-1, numberSidebands, 
         numberRxif);
+
+if(smabuffer.dobary==1) printf("Compute radial velocity wrt barycenter\n");
+if(smabuffer.dolsr==1) printf("Compute radial velocity wrt LSR\n");
 sphSizeBuffer = numberSpectra; /* numberBaselines for usb and lsb */
       firstsp = sphset;
       firstbsl= blhset;
@@ -1661,6 +1655,33 @@ uvputvri_c(tno,"sourid", &sourceID, 1);
 // configure the frequency for each of the integration set
    smabuffer.newfreq =1;
    smabuffer.veldop = (float) spn[inhset]->veldop;
+// calculate radial velocity to replace the on-line value
+{ double velrad();
+  short dolsr;
+  double time   = smabuffer.time;
+  double raapp  = smabuffer.obsra;
+  double decapp = smabuffer.obsdec;
+  double raepo  = smabuffer.ra;
+  double decepo = smabuffer.dec;
+  double lst    = smabuffer.lst;
+  double lat    = smabuffer.lat;
+//
+// recalculate the radial velocity
+//
+   if(smabuffer.dolsr==1) {
+       dolsr   = 1;
+       smabuffer.veldop = (float)velrad(dolsr,time, raapp,decapp,raepo,decepo,lst,lat);
+                          }
+   if(smabuffer.dobary==1) {
+       dolsr   = -1;
+       smabuffer.veldop = (float)velrad(dolsr,time, raapp,decapp,raepo,decepo,lst,lat);
+                          }
+//  printf("Main: %s: velrad = %f veldop=%f\n",multisour[sourceID].name, velrad(dolsr,time,
+//  raapp,decapp,raepo,decepo,lst,lat),
+//  smabuffer.veldop);
+}
+
+
    for(i=1;i<smaCorr.n_chunk+1; i++) {
 // the reference channel is the first channel in each chunk in miriad
 // the reference channel is the center (nch/2+0.5) in each chunk in MIR
@@ -2639,21 +2660,21 @@ c-- */
 
 void aberrate(jday,ra,dec,rappptr,dappptr)
 double jday,ra,dec,*rappptr,*dappptr;
-{/* jhz 2004-7-23: based on miriad code in f and translate into c.
-cc  Account for the effect of annual aberration, to convert
-c  from a true (RA,DEC) to a geocentric apparent (RA,DEC).
-c
-c  Input:
-c    jday       Julian date.
-c    ra,dec     True (RA,DEC).
-c  Output:
-c    rapp,dapp  Geocentric apparent (RA,DEC).
-c--
-*/
+{
+// jhz 2004-7-23: based on miriad code in f and translate into c.
+//  Account for the effect of annual aberration, to convert
+//  from a true (RA,DEC) to a geocentric apparent (RA,DEC).
+//
+//  Input:
+//    jday       Julian date.
+//    ra,dec     True (RA,DEC).
+//  Output:
+//    rapp,dapp  Geocentric apparent (RA,DEC).
+//
 double  pos[3],vel[3],sinra,sindec,cosra,cosdec, rapp, dapp;
 void vearth();
 
-         vearth(jday,&pos, &vel);
+        vearth(jday,&pos, &vel);
         sinra = sin(ra);
         cosra = cos(ra);
         sindec = sin(dec);
@@ -2829,6 +2850,7 @@ double velrad( short dolsr,
                double decepo,
                double lst,
                double lat) {
+//  Based on Miriad subroutine velrad in atlod.for
 //  Compute the radial velocity of the observatory, 
 //  in the direction of a source, with respect to either 
 //  LSR or the barycentre. The subroutine is based on
@@ -2846,24 +2868,54 @@ double velrad( short dolsr,
    struct lmn *sph2lmn();
    struct lmn *inlmn;
    double lmn2000[3], lmnapp[3];
-   double velsite[3], posearth[3], velearth[3], velsun[3];
+   struct vel *vsite();
+   void vsun();
+   struct vel *velosite;
+   double  posearth[3], velsite[3], velearth[3], velsun[3];
    int i;
    double  vel;
+   void vearth();
 // computer barycentric velocity
-      printf("dolsri %d \n", dolsr);
-      printf("time %f \n", time);
-      printf("raapp %f \n", raapp);
-      printf("decapp %f \n", decapp);
-      printf("raapp %f \n", raepo);
-      printf("decapp %f \n", decepo);
-      printf("lst %f \n", lst);
-      printf("lat %f \n", lat);
+//      printf("velrad:\n");
+//      printf("dolsri %d \n", dolsr);
+//      printf("time %f \n", time);
+//      printf("raapp %f \n", raapp);
+//      printf("decapp %f \n", decapp);
+//      printf("raapp %f \n", raepo);
+//      printf("decapp %f \n", decepo);
+//      printf("lst %f \n", lst);
+//      printf("lat %f \n", lat);
 
       inlmn = sph2lmn(raapp,decapp);
-      printf("inlim %f %f %f\n", inlmn->lmn1,
-                                 inlmn->lmn2,
-                                 inlmn->lmn3);
-     vel=10000.;
+      lmnapp[0] = inlmn->lmn1;
+      lmnapp[1] = inlmn->lmn2;
+      lmnapp[2] = inlmn->lmn3;
+
+      velosite = vsite(lat,lst);
+ 
+     velsite[0] = velosite->vx;
+      velsite[1] = velosite->vy;
+      velsite[2] = velosite->vx;
+      vearth(time, posearth, velearth);
+      vel =0.;
+      for (i=0; i<3; i++) {
+          vel = vel - (velsite[i] + velearth[i])*lmnapp[i];
+                          }
+
+// To compute LSR velocity, we need the source position in J2000 coordinates.
+// Vsun returns the Suns LSR velocity in the J2000 frame. Add this
+// contribution to the velocity we already have.
+
+        if(dolsr==1) {
+          inlmn= sph2lmn(raepo,decepo);
+          lmn2000[0]=inlmn->lmn1;
+          lmn2000[1]=inlmn->lmn2;
+          lmn2000[2]=inlmn->lmn3;
+          vsun(&velsun);
+          for (i=0; i<3; i++ ) {
+            vel = vel + lmn2000[i]*velsun[i];
+                               }
+            }
       return (vel);
 }
 
@@ -2877,21 +2929,15 @@ struct lmn *sph2lmn(double ra, double dec) {
 //    lmn        Direction cosines.
      struct lmn *outlmn;
       outlmn = (struct lmn *)malloc(sizeof(struct lmn ));
-        printf("ra %f \n", ra);
-        printf("dec %f \n", dec);
-         printf("cos(DPI/2) %f\n", cos(DPI/2));
-         printf("cos(DPI) %f\n", cos(DPI));
         outlmn->lmn1 = cos(ra)*cos(dec);
         outlmn->lmn2 = sin(ra)*cos(dec);
         outlmn->lmn3 = sin(dec);
-           outlmn->lmn1 =1;
-           outlmn->lmn2 =2;
-           outlmn->lmn3 =3;
         return(outlmn);
 }
 
-//struct vel *vsite(double phi, double st) {
-//*  Velocity due to Earth rotation
+struct vel *vsite(double phi, double st) {
+// based on miriad fortran subroutine vsite in velocity.for
+//*  Velocity due to Earth rotation 
 //*
 //*  Input:
 //*     PHI       latitude of observing station (geodetic)
@@ -2906,4 +2952,41 @@ struct lmn *sph2lmn(double ra, double dec) {
 //*     sites, the error is unlikely to be greater than 0.0005 km/s.
 //*  Sidereal speed of Earth equator, adjusted to compensate for
 //*  the simple algorithm used.  (The true value is 0.4651.)
+//*  in units of km/s
+float espeed=0.4655;
+struct vel *sitevel;
+            sitevel = (struct vel *)malloc(sizeof(struct vel ));
+         sitevel->vx = -espeed*cos(phi)*sin(st);
+         sitevel->vy =  espeed*cos(phi)*cos(st);
+         sitevel->vz =  0.0;
+       return(sitevel);
+}
 
+
+void vsun(double VEL[3]) {
+// based on Miriad subroutine vsub in velocity.for
+//  Velocity of the Sun with respect to the Local Standard of Rest
+//
+//  Output:
+//     VEL       Velocity of the Sun.
+//------------------------------------------------------------------------
+//  Speed = 20 km/s
+//
+//  Apex = RA 270 deg, Dec +30deg, 1900.0
+//  = 18 07 50.3, +30 00 52, J2000.0
+//
+//  This is expressed in the form of a J2000.0 x,y,z vector:
+//
+//      VA(1) = X = -SPEED*COS(RA)*COS(DEC)
+//     VA(2) = Y = -SPEED*SIN(RA)*COS(DEC)
+//      VA(3) = Z = -SPEED*SIN(DEC)
+//      DATA VA / -0.29000, +17.31726, -10.00141 /
+      float VA[3];
+      VA[0] = -0.29000;
+      VA[1] = +17.31726;
+      VA[2] = -10.00141;
+      VEL[0] = VA[0];
+      VEL[1] = VA[1];
+      VEL[2] = VA[2];
+      }
+ 
