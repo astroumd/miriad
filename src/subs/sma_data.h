@@ -463,6 +463,12 @@ struct lmn {
         double lmn3;
            };
 
+struct vel {
+        double vx;
+        double vy;
+        double vz;
+           };
+
 struct smlodd {
         double sfreq[SMIF+1];
         double sdf[SMIF+1];
@@ -525,6 +531,7 @@ struct smlodd {
         int opcorr;
         int doif;
         int dobary; 
+        int dolsr;
         int newfreq;
         int hires;
         int nopol;
