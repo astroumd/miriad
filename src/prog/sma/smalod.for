@@ -49,6 +49,12 @@ c      If the reference antenna is not the default value 6, one may need
 c      to give the reference antenna here.
 c
 c@ options
+c       'bary'     Compute the radial velocities of in the direction of
+c                  a source, w.r.t the barycenter. Default uses the on-line
+c                  values.
+c       'lsr'      Compute the radial velocities of in the direction of
+c                  a source, w.r.t the LSR. Default uses the on-line
+c                  values.
 c       'nopol'    Disable polarization. All the correlations will be
 c                  labelled as XX. Default in options for polarization 
 c                  is nopol.
@@ -90,8 +96,7 @@ c			24 24
 c       'doengrd'  to read the engineer file for Tsys and LST.
 c       'conjugat' to phase conjugate for lsb data.
 c                   Default: 
-c                   conjugate the phase of the lsb data observed before 
-c                   2005-04-28;
+c                   conjugate the phase of the lsb data observed before 2005-04-28;
 c                   no phase flip for the data observed after 2005-04-28.
 c
 c       No extra processing options have been given yet. The default
@@ -158,6 +163,9 @@ c    jhz  02-may-05 add a function to add '/' in the end of the input
 c                   file name in case the slash is missing.
 c    jhz  02-may-05 add an option to do phase conjugate for the lower side
 c                   band data in respose to Taco's log 9288.
+c    jhz  05-may-05 enable the function to calculate radial velocity
+c                   on either barycentric of lsr frame.
+c
 c------------------------------------------------------------------------
         integer maxfiles
         parameter(maxfiles=128)
@@ -171,7 +179,7 @@ c
         logical doauto,docross,docomp,dosam,relax,unflag,dohann
         logical dobary,doif,birdie,dowt,dopmps,doxyp,doop
         logical polflag,hires,nopol,sing,circular,linear,oldpol,dsb,
-     *          dospc,doengrd, doconjug
+     *          dospc,doengrd, doconjug, dolsr
         integer fileskip,fileproc,scanskip,scanproc,sb, dosporder
         integer doeng
 	integer rsNCHAN, refant
@@ -215,7 +223,8 @@ c
         call keyi('refant',refant,6)
         call getopt(doauto,docross,docomp,dosam,doxyp,doop,relax,
      *    sing,unflag,dohann,birdie,dobary,doif,dowt,dopmps,polflag,
-     *    hires,nopol,circular,linear,oldpol,dospc,doengrd,doconjug)
+     *    hires,nopol,circular,linear,oldpol,dospc,doengrd,doconjug,
+     *    dolsr)
             dosporder=-1
             if(dospc) dosporder=1
             doeng =-1
@@ -282,7 +291,7 @@ c
           else
             call pokeini(tno,dosam,doxyp,doop,dohann,birdie,dowt,
      *      dopmps,dobary,doif,hires,nopol,circular,linear,oldpol,
-     *      rsnchan, refant)
+     *      rsnchan,refant,dolsr)
             if(nfiles.eq.1)then
               i = 1
             else
@@ -340,11 +349,12 @@ c************************************************************************
         subroutine getopt(doauto,docross,docomp,dosam,doxyp,doop,
      *    relax,sing,unflag,dohann,birdie,dobary,doif,dowt,dopmps,
      *    polflag,hires,nopol,circular,linear,oldpol,dospc,doengrd,
-     *    doconjug)
+     *    doconjug,dolsr)
 c
         logical doauto,docross,dosam,relax,unflag,dohann,dobary,doop
         logical docomp,doif,birdie,dowt,dopmps,doxyp,polflag,hires,sing
         logical nopol,circular,linear,oldpol,dospc,doengrd,doconjug
+        logical dolsr
 c
 c  Get the user options.
 c
@@ -373,9 +383,10 @@ c    dospc      reverse the order of spectral windows for
 c               the last three blocks.
 c    doengrd    read engineer file.
 c    doconjug   phase conjugate for lsb data (data before 2004 April 28)
+c    dolsr      Compute LSR radial velocities.
 c------------------------------------------------------------------------
         integer nopt
-        parameter(nopt=25)
+        parameter(nopt=26)
         character opts(nopt)*8
         logical present(nopt)
         data opts/'noauto  ','nocross ','compress','relax   ',
@@ -384,7 +395,7 @@ c------------------------------------------------------------------------
      *            'opcorr  ','nopflag ','hires   ','pmps    ',
      *            'mmrelax ','single  ','nopol   ','circular  ',
      *            'linear', 'oldpol','dospc', 'doengrd',
-     *            'conjugat'/
+     *            'conjugat', 'lsr'/
         call options('options',opts,present,nopt)
         doauto  = .not.present(1)
         docross = .not.present(2)
@@ -414,6 +425,9 @@ c       mmrelax = present(17)
         dospc   = present(23)
         doengrd = present(24)
         doconjug= present(25)
+        dolsr   = present(26)
+        if(dobary.and.dolsr) 
+     *  call bug('f','choose options of either bary or lsr')
         if((.not.circular.and..not.linear).and..not.oldpol) nopol=.true.
 c
         if((dosam.or.doxyp.or.doop).and.relax)call bug('f',
@@ -436,6 +450,7 @@ c------------------------------------------------------------------------
         real chioff
         integer mount
         logical ok
+        double precision smalat, smalong
         call uvputvrr(tno,'epoch',2000.,1)
         call uvputvrr(tno,'vsource',0.,1)
         call obspar('SMA','latitude',latitude,ok)
@@ -462,11 +477,12 @@ c************************************************************************
         subroutine pokeini(tno1,dosam1,doxyp1,doop1,
      *          dohann1,birdie1,dowt1,dopmps1,dobary1,
      *          doif1,hires1,nopol1,circular1,linear1,oldpol1,
-     *	        rsnchan1, refant1)
+     *	        rsnchan1,refant1,dolsr1)
 c
         integer tno1, rsnchan1, refant1
         logical dosam1,doxyp1,dohann1,doif1,dobary1,birdie1,dowt1
         logical dopmps1,hires1,doop1,nopol1,circular1,linear1,oldpol1
+        logical dolsr1
 c
 c  Initialise the Poke routines.
 c------------------------------------------------------------------------
@@ -494,7 +510,8 @@ c        if(.not.ok)call bug('f','Could not get SMA longitude')
 c
         call rspokeinisma(kstat,tno1,dosam1,doxyp1,doop1,
      *  dohann1,birdie1,dowt1,dopmps1,dobary1,doif1,hires1,
-     *  nopol1,circular1,linear1,oldpol1,lat1,long1,rsnchan1,refant1)
+     *  nopol1,circular1,linear1,oldpol1,lat1,long1,rsnchan1,
+     *  refant1,dolsr1)
         end
 c************************************************************************
         subroutine liner(string)
