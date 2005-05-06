@@ -49,12 +49,12 @@ c      If the reference antenna is not the default value 6, one may need
 c      to give the reference antenna here.
 c
 c@ options
-c       'bary'     Compute the radial velocities of in the direction of
-c                  a source, w.r.t the barycenter. Default uses the on-line
-c                  values.
-c       'lsr'      Compute the radial velocities of in the direction of
-c                  a source, w.r.t the LSR. Default uses the on-line
-c                  values.
+c       'bary'     Compute the radial velocities of the observatory, in the 
+c                  direction of a source, w.r.t. the barycenter. 
+c		   Default uses the on-line values.
+c       'lsr'      Compute the radial velocities of the observatory, in the 
+c                  direction of a source, w.r.t. the LSR. 
+c                  Default uses the on-line values.
 c       'nopol'    Disable polarization. All the correlations will be
 c                  labelled as XX. Default in options for polarization 
 c                  is nopol.
@@ -595,8 +595,6 @@ c************************************************************************
 c
         character in*(*)
         integer iostat
-c
-c  Skip an RPFITS file.
 c------------------------------------------------------------------------
         call smaopen(in,iostat)
         if(iostat.eq.0)call smaeof(iostat)
