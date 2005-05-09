@@ -17,7 +17,7 @@ c	If either axis is an antenna gain, then SELFCAL must be run first
 c	and the axes are sampled at the interval used in SELFCAL.
 c       For linear regression between the two phase solutions, the setup
 c       in the SELFCAL for the two simultaneously sampled data files needs
-c       to be identical.
+c       identical.
 c	The rms and correlation coefficient are listed for each antenna. 
 c@ vis
 c	The input UV dataset name. The antenna gains must first be
@@ -235,7 +235,7 @@ c----------------------------------------------------------------------c
         real mpha
          complex mgains(10,2,6145)
          integer len1, length1, length2
-         character uvfile1*30, uvfile2*30
+         character uvfile1*30, uvfile2*30, visfile*70
 c
 c  Externals.
 c
@@ -669,11 +669,15 @@ c
         if(fileid.eq.3) then
         xaxis = 'Phase1'
         yaxis = 'Phase2'
+        visfile='1:'//uvfile1(1:length1)//'/2:'//
+     *  uvfile2(1:length2)
+        else
+        visfile=vis
               end if
            end if
                   pause
 	if(device.ne.' ') 
-     *	      call varplot(device,vis,xaxis,yaxis,nx,ny,xx,yy,
+     *	      call varplot(device,visfile,xaxis,yaxis,nx,ny,xx,yy,
      *	  xrange,yrange,xvar,yvar,nsols,nants,maxants,maxsols,
      *     fileid,aa1,bb1)
             if(fileid.eq.2) then
@@ -1046,7 +1050,7 @@ c  plot yaxis versus xaxis.
 c-----------------------------------------------------------------------
         real xlo,xhi,ylo,yhi
         integer pgbeg, ierr, ismin, ismax, i, j, length
-        character Title*48
+        character Title*78
 	real delta, aa(MAXANTS),bb(MAXANTS)
         real xlin(2), ylin(2)
         integer fileid
