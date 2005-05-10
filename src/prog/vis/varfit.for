@@ -100,6 +100,7 @@ c    29Apr05 jhz   add option to do linear regression for phases in two
 c                  uv datasets.
 c    02May05 jhz   add a procedure to check the time stamp in case
 c                  of two files involved for linear regression of phases.
+c    10May05 jhz   add phase residual plot
 c-----------------------------------------------------------------------
 	character version*(*)
 	parameter(version='(version 1.0 29-ARP-05)')
@@ -225,6 +226,7 @@ c----------------------------------------------------------------------c
         real AAmpl(MAXANTS,MAXSOLS,2),PPhi(MAXANTS,MAXSOLS,2)
         real TTime(MAXANTS,MAXSOLS,2)
 	real xvar(MAXANTS,MAXSOLS), yvar(MAXANTS,MAXSOLS)
+        real yrsd(MAXANTS,MAXSOLS)
 	real xx(MAXSOLS),yy(MAXSOLS),sf(MAXSOLS)
 	complex ref
 	double precision longitude,latitude
@@ -633,6 +635,9 @@ c
             if(fileid.eq.3) then
               aa1(ant) = a1
               bb1(ant) = b1
+             do i=1,nSols
+          yrsd(ant,i) = yvar(ant,i)-a1*xvar(ant,i)-b1+yyave
+             enddo
             end if
             if(fileid.eq.3.and.a1.ne.0) then
                            if (a1.lt.0) then
@@ -658,7 +663,7 @@ c
 	      xx(i) = xvar(ant,i+1) - xvar(ant,i)
 	      yy(i) = yvar(ant,i+1) - yvar(ant,i)
 	    enddo
-	    call linlsq1(xx,yy,nSols, yyave,sigy,a1,b1,sigy1,corr)
+	    call linlsq1(xx,yy,nSols,yyave,sigy,a1,b1,sigy1,corr)
 	    print *,ant, yyave, sigy, a1,b1, sigy1, corr
 	   endif
 	  enddo
@@ -677,9 +682,31 @@ c
            end if
                   pause
 	if(device.ne.' ') 
-     *	      call varplot(device,visfile,xaxis,yaxis,nx,ny,xx,yy,
-     *	  xrange,yrange,xvar,yvar,nsols,nants,maxants,maxsols,
-     *     fileid,aa1,bb1)
+     *	  call varplot(device,visfile,xaxis,yaxis,nx,ny,xx,yy,
+     *	  xrange,yrange,xvar,yvar,yrsd,nsols,nants,maxants,maxsols,
+     *    fileid,aa1,bb1)
+            if(fileid.eq.3) then
+             do ant=1,nants
+             do   i=1,nSols
+              xvar(ant,i) = TTime(ant,i,1)
+            enddo
+            enddo
+            xaxis = 'Time'
+            yaxis = 'y-slope*x+intercept'
+            do j=1,nants
+            xmin(j) = xvar(j,ismin(nSols,xvar(j,1),MAXANTS))
+            xmax(j) = xvar(j,ismax(nSols,xvar(j,1),MAXANTS))
+            ymin(j) = yvar(j,ismin(nSols,yvar(j,1),MAXANTS))
+            ymax(j) = yvar(j,ismax(nSols,yvar(j,1),MAXANTS))
+           enddo
+
+c plot yresidual vs time
+              pause
+            if(device.ne.' ')
+     *    call varplot(device,visfile,xaxis,yaxis,nx,ny,xx,yy,
+     *    xrange,yrange,xvar,yrsd,yrsd,nsols,nants,maxants,maxsols,
+     *    fileid,aa1,bb1)
+              end if
             if(fileid.eq.2) then
             fileid=3
             if(.not.dophareg) stop
@@ -1038,14 +1065,15 @@ c
 	end
 c********1*********2*********3*********4*********5*********6*********7*c
 	subroutine varplot(device,vis,xaxis,yaxis,nx,ny,xx,yy,
-     *	  xrange,yrange,xvar,yvar,nsols,nants,maxants,maxsols,
+     *	  xrange,yrange,xvar,yvar,yrsd,nsols,nants,maxants,maxsols,
      *    fileid,aa,bb)
 c  plot yaxis versus xaxis.
         implicit none
         character*(*) xaxis, yaxis, device, vis
 	integer nsols,nants,maxants,maxsols,nx,ny
 	real xvar(MAXANTS,MAXSOLS), yvar(MAXANTS,MAXSOLS)
-        real xx(MAXSOLS),yy(MAXSOLS)
+        real yrsd(MAXANTS,MAXSOLS)
+        real xx(MAXSOLS),yy(MAXSOLS),yr(MAXSOLS)
         real xrange(2),yrange(2)
 c-----------------------------------------------------------------------
         real xlo,xhi,ylo,yhi
@@ -1054,11 +1082,14 @@ c-----------------------------------------------------------------------
 	real delta, aa(MAXANTS),bb(MAXANTS)
         real xlin(2), ylin(2)
         integer fileid
+        logical dofit
 c
 c  Externals.
 c
         character itoaf*3
         integer len1
+          dofit=.false.
+
 c
 c  Open the plot device.
 c
@@ -1075,6 +1106,8 @@ c
 	  do i=1,nSols
 	    xx(i) = xvar(j,i)
 	    yy(i) = yvar(j,i)
+            yr(i) = yrsd(j,i)
+            if(yvar(j,i).ne.yrsd(j,i)) dofit=.true.
 	  enddo
 	  if(xrange(1).eq.xrange(2))then
 	    xlo = xx(ismin(nSols,xx,1))
@@ -1113,13 +1146,14 @@ c
           call pgvstd
           call pgswin(xlo,xhi,ylo,yhi)
 	  if(fileid.eq.3) then
+          if(.not.dofit) call  pgsci(2)
            call pgpt(nsols,xx,yy,17)
            else
            call pgpt(nsols,xx,yy,1)
            endif
           if(fileid.eq.3) then
             call  pgsci(2)
-          call pgline(2,xlin,ylin)
+          if(dofit) call pgline(2,xlin,ylin)
             call  pgsci(1)
           end if
           call pgtbox('BCNST',0.,0,'BCNST',0.,0)
