@@ -12,7 +12,7 @@ c		D(yaxis) = slope * D(xaxis) + intercept
 c	where D() is the difference between succesive samples,
 c       xaxis, yaxis are the uv variables from single uvfiles.
 c       In addition, VARFIT provides an option of regression for
-c       the phases derived from the gains of two uvfiles.
+c       the phases derived from the gains of two uvfiles. 
 c	If either axis is an antenna gain, then SELFCAL must be run first
 c	and the axes are sampled at the interval used in SELFCAL.
 c       For linear regression between the two phase solutions, the setup
@@ -76,8 +76,14 @@ c			yaxis=tpower xaxis=tpower refant2=4 options=quad
 c			results can be used in the task tpgains to correct
 c			tpower to a common Tsys scale.
 c         phareg       do linear regression between phase1 and phase2 derived
-c                      from the gain tables in uvfile1 and uvfile2, respectively:
+c                      from the gain tables in uvfile1 and uvfile2, respectively.
+c                      plot a solid line: phase2 = slope * phase1 + offset
+c                      with the raw phase corrections in the phase/phase diagram.
+c         phatran      transfer phase2 from phase1 using the linear correlation
+c                      derived:
 c                      phase2 = slope * phase1 + offset
+c                      and using the transferred phase2 replaces the
+c                      phases in the gain table of file2.  
 c--
 c  History:
 c    18may95 mchw  Initial version developed from BEE.
@@ -107,7 +113,7 @@ c-----------------------------------------------------------------------
 	character device*80, log*80, vis*80, xaxis*40, yaxis*40
 	integer tvis, refant, refant2, nx, ny
 	logical dowrap, xsc,ysc, dostruct, doallan, doquad
-        logical dophareg
+        logical dophareg,dophatran
         real xrange(2),yrange(2)
         integer lin, nfiles,i
         logical uvdatopn
@@ -133,7 +139,7 @@ c	call keyf('vis',vis,' ')
 	call keyi('refant',refant,0)
 	call keyi('refant2',refant2,0)
 	call GetOpt(dowrap,xsc,ysc,dostruct,doallan,doquad,
-     *   dophareg)
+     *   dophareg,dophatran)
             if(dophareg) then
               xaxis = 'time'
               yaxis = 'phase'
@@ -174,7 +180,7 @@ c  Read in data
 c
 	call varmint(tvis,vis,xaxis,yaxis,refant,refant2,device,
      *	nx,ny,xrange,yrange,dowrap,xsc,ysc,dostruct,doallan,doquad,
-     * dophareg,i)
+     * dophareg,dophatran,i)
 c
 c  Close up.
 c
@@ -186,12 +192,12 @@ c
 c********1*********2*********3*********4*********5*********6*********7*c
 	subroutine varmint(tvis,vis,xaxis,yaxis,refant,refant2,device,
      *	nx,ny,xrange,yrange,dowrap,xsc,ysc,dostruct,doallan,doquad,
-     *  dophareg,fileid)
+     *  dophareg,dophatran,fileid)
 	implicit none
 	integer tvis, refant, refant2, nx, ny, fileid
         character*(*) xaxis, yaxis, device,vis
 	logical dowrap, xsc,ysc, dostruct, doallan, doquad,
-     *  dophareg
+     *  dophareg,dophatran
         real xrange(2),yrange(2)
 c
 c  Read Miriad gains, and the uv-variables needed for fitting.
@@ -680,6 +686,12 @@ c
         visfile=vis
               end if
            end if
+              if(fileid.eq.1.and.dophareg) 
+     *  print*, 'Plot: Phase1(file1) vs time'
+              if(fileid.eq.2.and.dophareg)
+     *  print*, 'Plot: Phase2(file2) vs time'
+              if(fileid.eq.3.and.dophareg)
+     *  print*, 'Plot: Phase2(file2) vs Phase1(file1)'
                   pause
 	if(device.ne.' ') 
      *	  call varplot(device,visfile,xaxis,yaxis,nx,ny,xx,yy,
@@ -701,6 +713,8 @@ c
            enddo
 
 c plot yresidual vs time
+             if(fileid.eq.3.and.dophareg)
+     *  print*, 'Plot: Phase2-(slope*Phase1+intercept) vs time'
               pause
             if(device.ne.' ')
      *    call varplot(device,visfile,xaxis,yaxis,nx,ny,xx,yy,
@@ -717,47 +731,28 @@ c
 c write out the gain table
 c
          if(fileid.eq.3) then
-         stop
-         write(*,*) 
-     *   'do you want to transfer Phase correction from FILE1: '//
-     *     uvfile1(1:length1)
-         write(*,*)
-     *   '                                           to FILE2: '//
-     *     uvfile2(1:length2)
-         write(*,*) 
-     * 'and overwrite the gain table in FILE2: '//uvfile2(1:length2)//
-     * '? (No/Yes)'
-         read(*,*) dotrans
-         if(dotrans.ne.'y'.and.dotrans.ne.'Y') then
+         if(.not.dophatran) stop
          print*, '**************************************'//
-     *   '******************************************'
-         print*, 'the gains are not transferred. Program terminated.'
-         print*, '**************************************'//
-     *   '******************************************'
-         stop
-         else
-         print*, '**************************************'//
-     *   '******************************************'
+     *   '***********************************'
          print*, '* the new gains transferred from File1: '//
      *   uvfile1(1:length1)
          print*, '* to File2: '//uvfile2(1:length2)
          print*, '**************************************'//
-     *   '******************************************'
-         end if 
+     *   '***********************************'
          do j=1, nants
          do k=1, nsols
          mpha = aa1(j)*pphi(j,k,1)+bb1(j)
          mpha = mpha*pi/180.
          mgains(j,1,k) = cmplx(aampl(j,k,2)*cos(mpha),
      *                         aampl(j,k,2)*sin(mpha))
-         print*,j,k,mgains(j,1,k),aampl(j,k,2),pphi(j,k,2)
-         end do
-         end do  
+c         print*,j,k,mgains(j,1,k),aampl(j,k,2),pphi(j,k,2)
+         enddo
+         enddo  
         npol=1
         pee(1)=1
         call gaintab(tvis,dtime,mgains,npol,nants,nsols,pee)
         stop
-        end if
+        endif
 	end
 
         subroutine gaintab(tno,time,gains,npol,nants,nsoln,pee)
@@ -1032,10 +1027,10 @@ c	call LogWrit(line)
       end
 c********1*********2*********3*********4*********5*********6*********7*c
 	subroutine GetOpt(dowrap,xsc,ysc,dostruct,doallan,doquad,
-     * dophareg)
+     * dophareg, dophatran)
         implicit none
 	logical dowrap, xsc,ysc, dostruct, doallan, doquad,
-     *  dophareg
+     *  dophareg, dophatran
 c
 c  Get extra processing options.
 c
@@ -1047,21 +1042,23 @@ c    doallan    Compute Allan variance.
 c    doquad     Fit yaxis = a + b*xaxis + c*xaxis**2
 c-----------------------------------------------------------------------
 	integer nopt
-        parameter(nopt=7)
+        parameter(nopt=8)
         logical present(nopt)
         character opts(nopt)*9
 c
         data opts/'wrap     ','xscale   ','yscale   ','allan    ',
-     *            'structure','quad     ','phareg   '/
+     *            'structure','quad     ','phareg   ','phatran  '/
 c	
 	call options('options',opts,present,nopt)
-        dowrap = present(1)
-        xsc = present(2)
-        ysc = present(3)
-        doallan = present(4)
-        dostruct = present(5)
-        doquad = present(6)
-        dophareg = present(7)
+        dowrap    = present(1)
+        xsc       = present(2)
+        ysc       = present(3)
+        doallan   = present(4)
+        dostruct  = present(5)
+        doquad    = present(6)
+        dophareg  = present(7)
+        dophatran = present(8)
+        if(dophatran) dophareg = present(8)
 	end
 c********1*********2*********3*********4*********5*********6*********7*c
 	subroutine varplot(device,vis,xaxis,yaxis,nx,ny,xx,yy,
