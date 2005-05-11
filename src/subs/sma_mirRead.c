@@ -60,6 +60,8 @@
 // 2005-04-28 change the phase conjugate scheme according Taco's log.
 // 2005-05-05 add options of computeing radial velocity wrt either barycenter
 //            or lsr.
+// 2005-05-11 read spectral configuration from the integration
+//            that users want to start (nscans).
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -1789,6 +1791,11 @@ for (set=0; set< sphSizeBuffer; set++) {
         sph[set] =  swap_sph(sph[set]);
                           }
                                        }
+
+      for (i=0;i<25;i++) {
+           sph[i]->nch = spn[smabuffer.scanskip]->nch[i];
+              }
+           sph[0]->dataoff = 0;
 
                           }
 /* The data for this spectrum consists of a 5 short int record header 
