@@ -678,8 +678,8 @@ c
 c  Plot results.
 c
         if(fileid.eq.3) then
-        xaxis = 'Phase1'
-        yaxis = 'Phase2'
+        xaxis = 'Phase1 (degree)'
+        yaxis = 'Phase2 (degree)'
         visfile='1:'//uvfile1(1:length1)//'/2:'//
      *  uvfile2(1:length2)
         else
@@ -700,11 +700,11 @@ c
             if(fileid.eq.3) then
              do ant=1,nants
              do   i=1,nSols
-              xvar(ant,i) = TTime(ant,i,1)
+              xvar(ant,i) = TTime(ant,i,1)*24.0
             enddo
             enddo
-            xaxis = 'Time'
-            yaxis = 'y-(slope*x+intercept)'
+            xaxis = 'Time (hr) '
+            yaxis = 'y-(slope*x+intercept)  (degree)'
             do j=1,nants
             xmin(j) = xvar(j,ismin(nSols,xvar(j,1),MAXANTS))
             xmax(j) = xvar(j,ismax(nSols,xvar(j,1),MAXANTS))
