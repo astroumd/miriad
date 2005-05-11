@@ -704,7 +704,7 @@ c
             enddo
             enddo
             xaxis = 'Time'
-            yaxis = 'y-slope*x+intercept'
+            yaxis = 'y-(slope*x+intercept)'
             do j=1,nants
             xmin(j) = xvar(j,ismin(nSols,xvar(j,1),MAXANTS))
             xmax(j) = xvar(j,ismax(nSols,xvar(j,1),MAXANTS))
