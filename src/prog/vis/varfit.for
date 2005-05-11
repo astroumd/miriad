@@ -12,7 +12,8 @@ c		D(yaxis) = slope * D(xaxis) + intercept
 c	where D() is the difference between succesive samples,
 c       xaxis, yaxis are the uv variables from single uvfiles.
 c       In addition, VARFIT provides an option of regression for
-c       the phases derived from the gains of two uvfiles. 
+c       the phases derived from the gains of two uvfiles and
+c       plots both phase-phase diagram and phase residual vs UT time. 
 c	If either axis is an antenna gain, then SELFCAL must be run first
 c	and the axes are sampled at the interval used in SELFCAL.
 c       For linear regression between the two phase solutions, the setup
@@ -213,6 +214,7 @@ c    xsc,ysc	Rescale uv-variable.
 c    dostuct    Compute structure function.
 c    doallan    Compute Allan variance.
 c    doquad     Fit yaxis = a + b*xaxis + c*xaxis**2
+c    TTime      UT hr.
 c----------------------------------------------------------------------c
 	integer MAXLEN
         parameter(MAXLEN=144)
@@ -348,8 +350,8 @@ c
 		xref=varlen.gt.1.and.refant.ne.0
 		do j=1,nants
 		  if(xaxis.eq.'time')then
-		    xvar(j,k)=var(j)-dtime(1)
-                    TTime(j,k,fileid)=xvar(j,k)
+	       xvar(j,k)=var(j)-dtime(1)
+               TTime(j,k,fileid)=(dtime(k)-int(dtime(1))+0.5)*24.0
 		  else
 		    xvar(j,k)=var(j)
 		  endif
@@ -700,10 +702,10 @@ c
             if(fileid.eq.3) then
              do ant=1,nants
              do   i=1,nSols
-              xvar(ant,i) = TTime(ant,i,1)*24.0
+              xvar(ant,i) = TTime(ant,i,1)
             enddo
             enddo
-            xaxis = 'Time (hr) '
+            xaxis = 'UT Time (hr) '
             yaxis = 'y-(slope*x+intercept)  (degree)'
             do j=1,nants
             xmin(j) = xvar(j,ismin(nSols,xvar(j,1),MAXANTS))
