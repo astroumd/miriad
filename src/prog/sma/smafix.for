@@ -28,18 +28,17 @@ c	Variable to plot on the Y axis. No default.
 c@ nxy
 c	Number of plots in the x and y directions. The default varies.
 c@ bant
-c       A matrix of antenna ids of which the antennas
-c       are corrupted in Tsys measurements.
+c       The ids of the antennas that are corrupted 
+c       in Tsys measurements.
+c       example: bant=4, 8  indicates that  the Tsys values of both
+c       the antennas 4 and 8 are corrupted.
 c@ gant
-c       A matrix of antenna ids of which the antennas
-c       appear to be good in Tsys measurements. 
-c@ rant
-c       An integer matrix of codes specify the ids (if<=8) of the 
-c       antenna with good Tsys measurements to replace the Tsys values
-c       of the antennas that are specified in the corresponding elements
-c       in the matrix bant.  If an id > 8, then an average of Tsys 
-c       derived from all the "good antennas" that are specified
-c       in the matrix gant. Defaults are no replacements.
+c       The id of an antenna with good Tsys measurements which will
+c       be used to replace the Tsys of the antennas assigend
+c       with bant.
+c       example: gant=1 assigns antenna 1 with good Tsys
+c       to replace the Tsys values of antennas 4 and 8.
+c       Defaults are no replacements.
 c@ xrange
 c	The min and max range along the x axis of the plots. The default
 c	is to autoscale. Note that for "time" should be given in normal Miriad
@@ -108,6 +107,10 @@ c                 variable of antel having independent entry
 c                 for different antennas.    
 c  jhz: 2005-4-19 added polarization type for circular case rr ll rl lr
 c                 in Tsys corrections.
+c  jhz: 2005-5-17 updated the scheme of replacements of bad antennas
+c                 with good antenna; rewrote syntax for the input
+c                 parameters bant and gant; 
+c                 and eliminate rant.
 c------------------------------------------------------------------------
         character version*(*)
         integer maxpnts
@@ -124,7 +127,7 @@ c------------------------------------------------------------------------
         logical xaver,yaver,compress,dtime,overlay,more,equal
         real rmsflag
         integer dofit, antid, xaxisparm, nterms
-        integer i,j,k,l,bant(10),gant(10),rant(10)
+        integer i,j,k,l,bant(10),gant(10),rant(10),ggant
         logical dotsys, tsysplt, dosour, dotswap
 c       apl(ant,sour,aplfit),xapl(ant,sour,MAXNR),bppl(ant,sour,MAXNR,MAXNR)    
         real apl(10,32,10)
@@ -176,28 +179,15 @@ c
         call keyi('bant',bant(8), -1)
         call keyi('bant',bant(9), -1)
         call keyi('bant',bant(10), -1)
-
-        call keyi('gant',gant(1), -1)
-        call keyi('gant',gant(2), -1)
-        call keyi('gant',gant(3), -1)
-        call keyi('gant',gant(4), -1)
-        call keyi('gant',gant(5), -1)
-        call keyi('gant',gant(6), -1)
-        call keyi('gant',gant(7), -1)
-        call keyi('gant',gant(8), -1)
-        call keyi('gant',gant(9), -1)
-        call keyi('gant',gant(10), -1)
-
-        call keyi('rant',rant(1), -1)
-        call keyi('rant',rant(2), -1)
-        call keyi('rant',rant(3), -1)
-        call keyi('rant',rant(4), -1)
-        call keyi('rant',rant(5), -1)
-        call keyi('rant',rant(6), -1)
-        call keyi('rant',rant(7), -1)
-        call keyi('rant',rant(8), -1)
-        call keyi('rant',rant(9), -1)
-        call keyi('rant',rant(10), -1)
+        call keyi('gant',ggant, -1)      
+           do i=1, 10
+             gant(i) =-1
+             rant(i) =-1
+             if(bant(i).ne.-1) then
+             gant(i) = ggant
+             rant(i) = ggant
+             end if
+           enddo
         call keya('xaxis',xaxis,'time')
           if(xaxis.eq.' ')
      *    call bug('f','Bad Xaxis value')
@@ -269,14 +259,9 @@ c
 c
 c  Read in the data.
 c
-        call datread(tin,maxpnt,npnts,
+        call datread(tin,maxpnt,npnts,bant,ggant,
      *          xaxis,xvals,xdim1*xdim2,xscale,xoff,xtype,
      *          yaxis,yvals,ydim1*ydim2,yscale,yoff,ytype)
-c         write(*,*) 'xaxis yaxis', xaxis, yaxis
-c          do i=1, maxpnt
-c       write(*,*) 'xvals  yvals', 
-c     *          xvals(i),yvals(i)
-c          end do
         call uvclose(tin)
 c
 c
@@ -295,9 +280,6 @@ c
           ydim2 = 1
         endif
          
-c         do i=1, 8*npnts
-c         write(*,*) 'npnts i xvals yvals', npnts, i, xvals(i), yvals(i)
-c         end do
 c  
 c  Plot the data, if needed.
 c
@@ -1261,11 +1243,11 @@ c
         hival = hival + delta
         end
 c************************************************************************
-        subroutine datread(tin,maxpnt,npnts,
+        subroutine datread(tin,maxpnt,npnts,bant,ggant,
      *          xaxis,xvals,xdim,xscale,xoff,xtype,
      *          yaxis,yvals,ydim,yscale,yoff,ytype)
 c
-        integer tin,maxpnt,npnts,xdim,ydim
+        integer tin,maxpnt,npnts,xdim,ydim,bant(10),ggant
         character xtype*1,ytype*1,xaxis*(*),yaxis*(*)
         real xvals(xdim*maxpnt),yvals(ydim*maxpnt)
         double precision xscale,xoff,yscale,yoff
@@ -1352,6 +1334,12 @@ c
             else if(ytype.eq.'d')then
               call uvgetvrd(tin,yaxis,ydrun(ypnt+1),ydim)
             endif
+             do i=1, ydim
+             if(bant(i).ne.-1) then
+                  yrrun(ypnt+bant(i)) = yrrun(ypnt+ggant)
+                  if (ggant.eq.-1) yrrun(ypnt+bant(i)) =0.0 
+                 end if
+             end do
 c
            
             xpnt = xpnt + xdim
