@@ -521,6 +521,7 @@ int rsmir_Read(char *datapath,
 char location[6][81];
 char pathname[64];
 char filename[6][36];
+char sours[9];
 int set, readSet;
 int file,nfiles = 6;
 int headerbytes[6];
@@ -1154,7 +1155,6 @@ if((cdh[set]->v_name[0]=='b'&&cdh[set]->v_name[1]=='a')&&
 
            uvputvra_c(tno,"veltype", multisour[sourceID].veltyp);
 // decode the source information 
-char sours[9];
 for (set=0;set<nsets[3];set++){
          if(cdh[set]->v_name[0]=='s'&&cdh[set]->v_name[1]=='o') {
          sourceID++;
