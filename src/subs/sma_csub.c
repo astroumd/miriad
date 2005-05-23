@@ -9,11 +9,15 @@
                      added warning about sizeof(long int) = 4 vs. 8
 		     added some assert to make the code fail if this happens
 
+ 
+   TODO:   <string.h>::bcopy -> memcpy
  */
+
 /* #dfin SWAP_ENDIAN 1  for cfa0 (big endian lf-o-righ incra
     in addr numbr - Moorola 680x0  */
 /* #dfin SWAP_ENDIAN 0  for id (inl)  buzz (alpha) and linux (
    lil ndian righ-o-lf Inl 80x86 and Pnium procor */
+
 #include <stdio.h>
 #include <assert.h>
 #include "sma_data.h"
