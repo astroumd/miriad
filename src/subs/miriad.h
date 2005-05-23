@@ -77,8 +77,22 @@ extern  "C" {
 
 /* hio.h */
 
-#define TRUE		1
-#define FALSE		0
+#if !defined(TRUE)
+# define TRUE		1
+#else
+# if TRUE != 1
+#  error "TRUE should be 1"
+# endif
+#endif
+
+#if !defined(FALSE)
+# define FALSE		0
+#else
+# if FALSE != 0
+#  error "FALSE should be 0"
+# endif
+#endif
+
 #define H_BYTE          1
 #define H_INT           2
 #define H_INT2          3
