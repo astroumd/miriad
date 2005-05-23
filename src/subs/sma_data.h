@@ -1,3 +1,6 @@
+#include "miriad.h"
+
+
 struct inh_def {
 
 	int 	conid     ; /* config id #               */
@@ -120,14 +123,14 @@ struct codeh_def {
 	short  icode	; /* index for a code word	*/
 	char code[26]	; /* the code word		*/
 	short ncode	; /* # chars in code word	*/
-
 };
 
 struct xyz {
         double x;
         double y;
         double z;
-           };
+};
+
 /* the size of codeh is 42 bytes char=1 short=2 */
 
 
@@ -177,8 +180,8 @@ and this is called the number of spectra in the idl programs.
 */
 
 struct rh_def {
-	int   noiseEst   ;  /* noise estimate for record in (mJy)                        */
-	short integTime  ;  /* The integration time of the record in 0.1 secs            */
+	int   noiseEst   ;  /* noise estimate for record in (mJy)                  */
+	short integTime  ;  /* The integration time of the record in 0.1 secs      */
 	short timeAfter  ;  /* Time offset from INH UT time in secs                */                   
 };
 
@@ -237,7 +240,7 @@ struct sph_config {
         short   isb           ; /*  sideband int code         */
         short   irec          ; /*  receiver int code         */
         int     souid         ; /* source id #               */
-                  };     
+};     
 
 struct blh_config {
         int     blhid     ; /*  proj. baseline id #       */
@@ -245,8 +248,7 @@ struct blh_config {
         short   isb       ; /*  sideband int code         */
         short   ipol      ; /*  polarization int code     */
         short   irec      ; /*  receiver int code         */
-                  };
-
+};
 
 struct bltsys  {
         int     blhid     ; /*  proj. baseline id #       */
@@ -256,7 +258,8 @@ struct bltsys  {
         short   itel1     ; /*  tel 1 int code            */
         short   itel2     ; /*  tel 2 int code            */
         float   tssb[25]  ; /*  tsys (ssb) 25 spectra     */
-                };
+};
+
 struct anttsys {
         int    inhid      ; /*  integration id #          */
         short   refant    ; /*  reference ante            */
@@ -265,19 +268,23 @@ struct anttsys {
         short   isb       ; /*  sideband int code         */
         short   irec      ; /*  receiver int code         */
         float   tssb[30]  ; /*  upto 30 ant               */
-               };
+};
 
 /* the following definition and struct for smalod */
-#define DPI 3.14159265358979323846    /*pi*/
-#define CMKS 299792458.0              /* Speed of light (meters/second).*/
-#define MAXBUF 1000000
-#define MAXDIM 7680   /*4096*/
-#define MAXANT 10 
+
+#define DPI 3.14159265358979323846   /* pi */
+#define DCMKS          299792458.0   /* Speed of light (meters/second). */
+
+/* although we could use maxdimc.h, it turns out some variables 
+ * are tied to the SMA. it's safer to define them here .
+ * Of course your real maxdimc.h better have at least as large as
+ * these or else i will not be able to process the subsequent data
+ */
+#define MAXANT 10
+#define MAXCHAN 7681
+
 #define MAXBAS 90    /* maxant*(maxant-1)/2*2sb */
-#define MAXCHAN 7681  /* 4097  miriad limit? */
-#define MAXSMCHAN 7681 /* sma limit per chunk */
-#define MAXWIN 16
-#define MAXWIDE 18
+
 #define MAXSOURCE 50
 #define SMIF 48
 #define SMRX  5 
@@ -289,8 +296,15 @@ struct anttsys {
 #define SMCONT 33
 #define CONTCH 16 /* number of continuum chan per chaunk */
 #define SMADATA 8294400 /* 24*maxchan*smbase */
-#define SWAP_ENDIAN     1 /* for little endian computers */
-                          /* 0 for big endian computers */
+
+/* WORDS_BIGENDIAN comes from miriad's sysdep.h */
+/* SWAP_ENDIAN is what SMA code originally used  */
+#if defined(WORDS_BIGENDIAN)
+# define SWAP_ENDIAN     0 /* for big endian computers  (e/g. sparc, ppc) */
+#else
+# define SWAP_ENDIAN     1 /* for little endian computers (e.g. intel) */
+#endif
+
 struct uvw {
         double u;
         double v;
@@ -301,14 +315,14 @@ struct uvw {
         int isb;     /* sideband id */
         int ipol;    /* pol code */
         int irec;    /* rx id    */
-            };
+};
 typedef struct uvw uvw;
 
 struct uvwPack {
         uvw uvwID[MAXBAS];
         int inhid;
         int n_bls; /* number of baselines in each integration */
-         };
+};
 typedef struct uvwPack uvwPack;
 
 struct SMAdataHdr {
@@ -366,7 +380,6 @@ struct visdataBlock {
 };
 typedef struct visdataBlock visdataBlock;
 
-
 struct source {
        char name[24];
        double ra;
@@ -403,7 +416,6 @@ struct tsys {
 };
 typedef struct tsys tsys;
 
-
 struct correlator {
         char corr_name[8];
         int no_stkd;
@@ -436,6 +448,7 @@ struct  blvector {
         int blid;
         };
 typedef struct blvector blvector;
+
 struct  station {
         char name[8];  /* station name */
         double x;
@@ -549,7 +562,7 @@ struct smlodd {
         int scanskip;
         int scanproc;
         int currentscan;
-     };
+};
 typedef struct smlodd smlodd;
 
 struct smEng {
@@ -579,7 +592,7 @@ struct smEng {
         float tilt_y_dc[MAXANT];*/
         double tsys[MAXANT];
         double tamb[MAXANT];
-        };
+};
 typedef struct smEng smEng;
 
 /* function declarations */

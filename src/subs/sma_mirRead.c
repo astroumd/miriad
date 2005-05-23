@@ -62,6 +62,8 @@
 //            or lsr.
 // 2005-05-11 read spectral configuration from the integration
 //            that users want to start (nscans).
+// 2005-05-23 (PJT) added prototypes from miriad.h (via sma_data.h) 
+//             and cleaned up some code because of this, sans indent
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -75,28 +77,9 @@
 #include <string.h>
 #include <errno.h>
 #include "sma_data.h"
-#define H_BYTE          1
-#define H_INT           2
-#define H_INT2          3
-#define H_REAL          4
-#define H_DBLE          5
-#define H_TXT           6
-#define H_CMPLX         7
-#define OK 0
-/* Speed of light (meters/second). */
-#define DCMKS           299792458.0
-#define uvputvra_c(tno,name,value)   \
-        uvputvr_c(tno,H_BYTE,name,value,strlen(value))
-#define uvputvrj_c(tno,name,value,n) \
-        uvputvr_c(tno,H_INT2,name,(char *)(value),n)
-#define uvputvri_c(tno,name,value,n) \
-        uvputvr_c(tno,H_INT,name,(char *)(value),n)
-#define uvputvrr_c(tno,name,value,n) \
-        uvputvr_c(tno,H_REAL,name,(char *)(value),n)
-#define uvputvrd_c(tno,name,value,n) \
-        uvputvr_c(tno,H_DBLE,name,(char *)(value),n)
-#define uvputvrc_c(tno,name,value,n) \
-        uvputvr_c(tno,H_CMPLX,name,(char *)(value),n)
+
+/* ?? */
+#define OK         0
 
 /* extern variable while read mir data */
 char pathname[36];
@@ -128,18 +111,49 @@ unsigned long mfsize(FILE *);
 struct inh_int_def {
 	int  a[512];
 };
-void rspokeinisma_c();
-void rspokeflshsma_c();
-char *rar2c();
-char *decr2c();
-int spdecode();
-float juliandate();
-double slaCldj();
-void precess();
-void nutate();
-void aberrate();
-void elaz();
-void tsysStore();
+
+
+/* prototypes of everything used here */
+
+void rsmirread_c(char *datapath, char *jst[]);
+void rsmiriadwrite_c(char *datapath, char *jst[]);
+void rssmaflush_c(int scanskip, int scanproc, int sb, int rxif, int dosporder, int doeng, int doflppha);
+void rspokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1, int *doop1, int *dohann1, int *birdie1, 
+		    int *dowt1, int *dopmps1, int *dobary1, int *doif1, int *hires1, int *nopol1, int *circular1, 
+		    int *linear1, int *oldpol1, double lat1, double long1, int rsnchan1, int refant1, int *dolsr1);
+void rspokeflshsma_c(char *kst[]);
+
+
+int rsgetdata(visdata smavis[7681], int smaflags[7681], int *smanchan, int p, int bl, int sb, int rx);
+struct pols *rscntstokes(int npol, int bl, int sb, int rx);
+int rsmir_Read(char *datapath, int jstat);
+struct inh_def *inh_read(FILE *fpinh);
+struct blh_def *blh_read(FILE *fpblh);
+unsigned long mfsize(FILE *fp);
+struct sph_def *sph_read(FILE *fpsph);
+struct codeh_def *cdh_read(FILE *fpcodeh);
+struct ant_def *enh_read(FILE *fpeng);
+struct sch_def *sch_head_read(FILE *fpsch);
+int sch_data_read(FILE *fpsch, long int datalength, short int *data);
+char *rar2c(double ra);
+char *decr2c(double dec);
+int spdecode(struct codeh_def *specCode[]);
+float juliandate(struct codeh_def *refdate[]);
+double slaCldj(int iy, int im, int id, int sj);
+void precess(double jday1, double ra1, double dec1, double jday2, double *ra2pt, double *dec2pt);
+void nutate(double jday, double rmean, double dmean, double *rtrueptr, double *dtrueptr);
+void nuts(double jday, double *dpsiptr, double *depsptr);
+double mobliq(double jday);
+void aberrate(double jday, double ra, double dec, double *rappptr, double *dappptr);
+void vearth(double jday, double pos[3], double vel[3]);
+double epo2jul(double epoch, char *code[]);
+void elaz(int tno);
+void tsysStore(int tno);
+double velrad(short dolsr, double time, double raapp, double decapp, double raepo, double decepo, double lst, double lat);
+struct lmn *sph2lmn(double ra, double dec);
+struct vel *vsite(double phi, double st);
+void vsun(double VEL[3]);
+
 /* interface between fortran and c */
 void rsmirread_c(char *datapath, char *jst[])
 { extern char pathname[];
@@ -206,10 +220,10 @@ extern smlodd smabuffer;
       if(smabuffer.nants!=0) {
 //         uvputvri_c(tno,"nants",&(smabuffer.nants),1);
 /*  write telescope name and other description parameters */
-       sprintf(telescope,"SMA\0");
-       sprintf(instrument,"SMA\0");
-       sprintf(observer,"SmaUser\0");
-       sprintf(version, "test\0");
+       sprintf(telescope,"SMA");
+       sprintf(instrument,"SMA");
+       sprintf(observer,"SmaUser");
+       sprintf(version, "test");
        uvputvra_c(tno, "telescop", telescope);
        uvputvra_c(tno, "instrume", instrument);
        uvputvra_c(tno, "observer", observer);
@@ -224,44 +238,44 @@ void rspokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1,
   int refant1, int *dolsr1)
 { 
 /* rspokeflshsma_c == pokeflsh */
-    int buffer;
-    extern char sname[];
-    extern smlodd smabuffer;
-    
+  int buffer;
+  extern char sname[];
+  extern smlodd smabuffer;
+  
 /* initialize the external buffers */   
-   strcpy(sname, " ");
-   smabuffer.tno    = tno1;
-   smabuffer.rsnchan= rsnchan1;
-   smabuffer.dosam  = *dosam1;
-   smabuffer.doxyp  = *doxyp1;
-   smabuffer.opcorr = *doop1;
-   smabuffer.dohann = *dohann1;
-   smabuffer.doif   = *doif1;
-   smabuffer.dobary = *dobary1;
-   smabuffer.birdie = *birdie1;
-   smabuffer.dowt   = *dowt1;
-        smabuffer.dopmps = *dopmps1;
-        smabuffer.hires  = *hires1;
-        smabuffer.nopol  = *nopol1;
-        smabuffer.circular = *circular1;
-        smabuffer.linear = *linear1;
-        smabuffer.oldpol = *oldpol1;
-        smabuffer.lat    = lat1;
-        smabuffer.longi  = long1;
-        smabuffer.refant = refant1;
-        smabuffer.dolsr  = *dolsr1;
-    if(smabuffer.dowt>0) {
-           /* call lagwt(wts,2*smcont-2,0.04) */
-           /* process weights here. */ 
-                   }
-        smabuffer.newsc = FALSE;
-        smabuffer.newfreq = FALSE;
-        smabuffer.nants = 0;
-        smabuffer.nifs = 0;
-        smabuffer.nused = 0;
-        smabuffer.tcorr = 0;
-        buffer=(int)*kst;
-        *kst= OK;
+  strcpy(sname, " ");
+  smabuffer.tno    = tno1;
+  smabuffer.rsnchan= rsnchan1;
+  smabuffer.dosam  = *dosam1;
+  smabuffer.doxyp  = *doxyp1;
+  smabuffer.opcorr = *doop1;
+  smabuffer.dohann = *dohann1;
+  smabuffer.doif   = *doif1;
+  smabuffer.dobary = *dobary1;
+  smabuffer.birdie = *birdie1;
+  smabuffer.dowt   = *dowt1;
+  smabuffer.dopmps = *dopmps1;
+  smabuffer.hires  = *hires1;
+  smabuffer.nopol  = *nopol1;
+  smabuffer.circular = *circular1;
+  smabuffer.linear = *linear1;
+  smabuffer.oldpol = *oldpol1;
+  smabuffer.lat    = lat1;
+  smabuffer.longi  = long1;
+  smabuffer.refant = refant1;
+  smabuffer.dolsr  = *dolsr1;
+  if(smabuffer.dowt>0) {
+    /* call lagwt(wts,2*smcont-2,0.04) */
+    /* process weights here. */ 
+  }
+  smabuffer.newsc = FALSE;
+  smabuffer.newfreq = FALSE;
+  smabuffer.nants = 0;
+  smabuffer.nifs = 0;
+  smabuffer.nused = 0;
+  smabuffer.tcorr = 0;
+  buffer=(int)*kst;
+  *kst= OK;
 }
 
 void rspokeflshsma_c(char *kst[])
@@ -293,10 +307,10 @@ void rspokeflshsma_c(char *kst[])
       if(smabuffer.nants!=0) {
        uvputvri_c(tno,"nants",&(smabuffer.nants),1);
 /*  write telescope name and other description parameters */
-       sprintf(telescope,"SMA\0");
-       sprintf(instrument,"SMA\0");
-       sprintf(observer,"SmaUser\0");
-       sprintf(version, "test\0");
+       sprintf(telescope,"SMA");
+       sprintf(instrument,"SMA");
+       sprintf(observer,"SmaUser");
+       sprintf(version, "test");
        uvputvra_c(tno, "telescop", telescope);
        uvputvra_c(tno, "instrume", instrument);
        uvputvra_c(tno, "observer", observer);
@@ -307,10 +321,10 @@ void rspokeflshsma_c(char *kst[])
        if(smabuffer.doif>0) {
        for (ifs=1; ifs < smabuffer.nifs; ifs++) {
        if(smabuffer.nstoke[ifs-1]!=smabuffer.nstoke[0]) 
- bug_c( "f", "Number of polarisations differ between IFs. Use options=noif.\n"); 
+	 bug_c( 'f', "Number of polarisations differ between IFs. Use options=noif.\n"); 
        for (p=1; p< smabuffer.nstoke[ifs-1]; p++) {
        if(smabuffer.polcode[ifs-1][p-1][0]!=smabuffer.polcode[0][p-1][0]) 
- bug_c( "f", "Polarisation types differ between IFs. Use options=noif.\n");
+	 bug_c( 'f', "Polarisation types differ between IFs. Use options=noif.\n");
                               }
                               }
                               }
@@ -320,8 +334,8 @@ void rspokeflshsma_c(char *kst[])
              if(smabuffer.hires > 0) 
              for (ifs=1; ifs<smabuffer.nifs; ifs++){
               if (smabuffer.nbin[ifs]!=smabuffer.nbin[0]) 
-    bug_c( "f", 
-      "Number of bins in different IFs must agree for options=hires\n");
+		bug_c( 'f', 
+		       "Number of bins in different IFs must agree for options=hires\n");
                                                   }
             } 
             tdash  = smabuffer.time;
@@ -365,7 +379,9 @@ void rspokeflshsma_c(char *kst[])
                uvputvrr_c(tno,"inttime",&smabuffer.inttime[bl],1);
           if(smabuffer.opcorr==0) 
                   {  /* call opapply(data(ipnt),nfreq(if),fac(if)) */
-    uvwrite_c(tno,preamble,smabuffer.data[ipnt],flags,smabuffer.nfreq[ifs]);
+		    /* bug_c('f',"This code section had a bug"); */
+		    /* next line had serious bug before may 23 */
+		    uvwrite_c(tno,preamble,&smabuffer.data[ipnt],flags,smabuffer.nfreq[ifs]);
            
                   }
                                                           }
@@ -411,7 +427,7 @@ void rspokeflshsma_c(char *kst[])
            ibuff = smabuffer.polcode[0][p][bl];
          uvputvri_c(tno,"pol",&ibuff,1);
          uvputvrr_c(tno,"inttime",&smabuffer.inttime[bl],1);
-         uvwrite_c(tno,&preamble,&vis,&flags,nchan);
+         uvwrite_c(tno,&preamble,&vis,&flags,nchan);             /*PJT 2,3,4 */
                 }
                                                         }
                                      }
@@ -1405,7 +1421,7 @@ nnextnextnext:
 // the rest chunk give the same value.
          fratio = (spn[set]->fsky[1]/spn[set]->rfreq[1]);
          vabsolute = (1. - fratio*fratio ) / (1. + fratio*fratio );
-         vabsolute = vabsolute*CMKS/1000.;
+         vabsolute = vabsolute*DCMKS/1000.;
          spn[set]->veldop = vabsolute - spn[set]->vel[1];
 //         printf("%d veldop=%f\n", set, spn[set]->veldop);
            }
@@ -1429,12 +1445,12 @@ nnextnextnext:
                                     }
 // print out sources observed
     for (i=1; i< sourceID+1; i++) {
-    printf("source: %-21s id=%2d RA=%13s ", 
-    multisour[i].name,
-    multisour[i].sour_id, 
-    (char *)rar2c(multisour[i].ra));
-    printf("DEC=% 13s\n", (char *)decr2c(multisour[i].dec));
-           }
+      printf("source: %-21s id=%2d RA=%13s ", 
+	     multisour[i].name,
+	     multisour[i].sour_id, 
+	     (char *)rar2c(multisour[i].ra));
+      printf("DEC=%13s\n", (char *)decr2c(multisour[i].dec));
+    }
 
 /* now loading the smabuffer */
 
@@ -2687,9 +2703,9 @@ void vearth();
         sindec = sin(dec);
         cosdec = cos(dec);
         rapp = ra +  (-vel[0]*sinra + vel[1]*cosra)/
-                                    (0.001*CMKS*cosdec);
+                                    (0.001*DCMKS*cosdec);
         dapp = dec + (-vel[0]*cosra*sindec - vel[1]*sinra*sindec
-                   + vel[2]*cosdec)/(0.001*CMKS);
+                   + vel[2]*cosdec)/(0.001*DCMKS);
         *rappptr= rapp;
         *dappptr= dapp;
 
