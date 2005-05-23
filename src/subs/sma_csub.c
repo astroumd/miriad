@@ -7,6 +7,7 @@
    pjt  2004-dec-10: renamed data_write.h to sma_data.h for MIR 4.0.4
    pjt  2005-may-23: slight re-indendation to align with updated sma code
                      added warning about sizeof(long int) = 4 vs. 8
+		     added some assert to make the code fail if this happens
 
  */
 /* #dfin SWAP_ENDIAN 1  for cfa0 (big endian lf-o-righ incra
@@ -14,7 +15,12 @@
 /* #dfin SWAP_ENDIAN 0  for id (inl)  buzz (alpha) and linux (
    lil ndian righ-o-lf Inl 80x86 and Pnium procor */
 #include <stdio.h>
+#include <assert.h>
 #include "sma_data.h"
+
+int check_s2 = sizeof(short);
+int check_s4 = sizeof(int);
+int check_s8 = sizeof(long);
 
 void
 reverse4(char *bytes)
@@ -250,6 +256,7 @@ struct sch_def *swap_sch(struct sch_def *sch_pnr)
 short int *swap_sch_data(short int *sch_data_pnr, int datalength)
 {    short int sch_data_buff;
      int i;
+     assert(check_s2==2);
      for (i=0; i<datalength; i++) {
        sch_data_buff=sch_data_pnr[i];
        reverse2((char *)(&sch_data_buff));
@@ -262,6 +269,7 @@ int *swap_int_data(int *int_data_pnr, int datalength)
 {    /* datalength: number of array elements */
      int int_data_buff;
      int i;
+     assert(check_s4==4);
      printf("before swap:  i pnr buff :--: before swap: pnr buff\n");
      for (i=0; i<datalength; i++) {
        int_data_buff=int_data_pnr[i];     
@@ -282,6 +290,7 @@ long int *swap_long_data(long int *long_data_pnr, int datalength)
 {    /* datalength: number of array elements */
      long int long_data_buff;
      int i;
+     assert(check_s8==8);
      printf("long before swap:  i pnr buff :--: before swap: pnr buff %d\n",
             datalength);
      for (i=0; i<datalength; i++) {
