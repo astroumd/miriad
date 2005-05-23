@@ -5,6 +5,9 @@
    mir data to miriad format in linux boxes
  
    pjt  2004-dec-10: renamed data_write.h to sma_data.h for MIR 4.0.4
+   pjt  2005-may-23: slight re-indendation to align with updated sma code
+                     added warning about sizeof(long int) = 4 vs. 8
+
  */
 /* #dfin SWAP_ENDIAN 1  for cfa0 (big endian lf-o-righ incra
     in addr numbr - Moorola 680x0  */
@@ -12,6 +15,7 @@
    lil ndian righ-o-lf Inl 80x86 and Pnium procor */
 #include <stdio.h>
 #include "sma_data.h"
+
 void
 reverse4(char *bytes)
 {
@@ -59,9 +63,10 @@ reverse1(char *bytes)
    t = *bytes;
    *bytes = bytes[0];
 }
+
 struct inh_def *swap_inh(struct inh_def *inh_pnr)
-{    struct inh_def inh_buff;
-       bcopy(inh_pnr, &inh_buff, sizeof(struct inh_def));
+{     struct inh_def inh_buff;
+      bcopy(inh_pnr, &inh_buff, sizeof(struct inh_def));
       reverse4((char *)(&inh_buff.conid));
       reverse2((char *)(&inh_buff.icocd));
       reverse4((char *)(&inh_buff.traid));
@@ -97,8 +102,9 @@ struct inh_def *swap_inh(struct inh_def *inh_pnr)
       bcopy(&inh_buff,inh_pnr, sizeof(struct inh_def));
       return(inh_pnr);
 }
+
 struct blh_def *swap_blh(struct blh_def *blh_pnr)
-{   struct blh_def blh_buff;
+{     struct blh_def blh_buff;
       bcopy(blh_pnr, &blh_buff, sizeof(struct blh_def));
       reverse4((char *)(&blh_buff.blhid));
       reverse4((char *)(&blh_buff.inhid));
@@ -137,6 +143,7 @@ struct blh_def *swap_blh(struct blh_def *blh_pnr)
       bcopy(&blh_buff,blh_pnr, sizeof(struct blh_def));
 return(blh_pnr);
 }
+
 struct sph_def *swap_sph(struct sph_def *sph_pnr)
 {    struct sph_def sph_buff;
      bcopy(sph_pnr, &sph_buff, sizeof(struct sph_def));
@@ -178,18 +185,18 @@ struct codeh_def *swap_cdh(struct codeh_def *cdh_pnr)
      int i;
      bcopy(cdh_pnr, &cdh_buff, sizeof(struct codeh_def));
      for (i=0; i< 12; i++) {
-     reverse1((char *)(&cdh_buff.v_name[i]));
-               }
+       reverse1((char *)(&cdh_buff.v_name[i]));
+     }
      
-      reverse2((char *)(&cdh_buff.icode));
+     reverse2((char *)(&cdh_buff.icode));
       
      for (i=0; i< 26; i++)     {
-     reverse1((char *)(&cdh_buff.code[i]));
-               }
-       reverse2((char *)(&cdh_buff.ncode));
+       reverse1((char *)(&cdh_buff.code[i]));
+     }
+     reverse2((char *)(&cdh_buff.ncode));
 
      bcopy(&cdh_buff,cdh_pnr, sizeof(struct codeh_def));
-          return(cdh_pnr);
+     return(cdh_pnr);
 }
  
 struct ant_def *swap_enh(struct ant_def *enh_pnr)
@@ -223,7 +230,7 @@ struct ant_def *swap_enh(struct ant_def *enh_pnr)
      reverse8((char *)(&enh_buff.tsys));
      reverse8((char *)(&enh_buff.ambient_load_temperature));
      bcopy(&enh_buff, enh_pnr, sizeof(struct ant_def));
-    return(enh_pnr);
+     return(enh_pnr);
 }
 
 struct sch_def *swap_sch(struct sch_def *sch_pnr)
@@ -237,18 +244,18 @@ struct sch_def *swap_sch(struct sch_def *sch_pnr)
     reverse4((char *)(&sch_buff.nbyt));
     reverse4((char *)(&sch_buff.nbyt_pack));
     bcopy(&sch_buff,sch_pnr, sizeof(struct sch_def));
-return(sch_pnr);
+    return(sch_pnr);
 }
 
 short int *swap_sch_data(short int *sch_data_pnr, int datalength)
 {    short int sch_data_buff;
      int i;
      for (i=0; i<datalength; i++) {
-         sch_data_buff=sch_data_pnr[i];
-         reverse2((char *)(&sch_data_buff));
-                sch_data_pnr[i]=sch_data_buff;
-         }
-return(sch_data_pnr);
+       sch_data_buff=sch_data_pnr[i];
+       reverse2((char *)(&sch_data_buff));
+       sch_data_pnr[i]=sch_data_buff;
+     }
+     return(sch_data_pnr);
 }
 
 int *swap_int_data(int *int_data_pnr, int datalength)
@@ -256,34 +263,37 @@ int *swap_int_data(int *int_data_pnr, int datalength)
      int int_data_buff;
      int i;
      printf("before swap:  i pnr buff :--: before swap: pnr buff\n");
-      for (i=0; i<datalength; i++) {
-int_data_buff=int_data_pnr[i];     
-  printf("%d %d %d :--:  ", i,
-                int_data_pnr[i], int_data_buff);
-           reverse4((char *)(&int_data_buff));
-         int_data_pnr[i]=int_data_buff;
-      printf("%d %d\n",
-                int_data_pnr[i], int_data_buff);
+     for (i=0; i<datalength; i++) {
+       int_data_buff=int_data_pnr[i];     
+       printf("%d %d %d :--:  ", i,
+	      int_data_pnr[i], int_data_buff);
+       reverse4((char *)(&int_data_buff));
+       int_data_pnr[i]=int_data_buff;
+       printf("%d %d\n",
+	      int_data_pnr[i], int_data_buff);
 
-         }
-return(int_data_pnr);
+     }
+     return(int_data_pnr);
 }
+
+/* WARNING: long int is 4 bytes on IA-32 and 8 bytes on IA-64 */
+
 long int *swap_long_data(long int *long_data_pnr, int datalength)
 {    /* datalength: number of array elements */
      long int long_data_buff;
      int i;
      printf("long before swap:  i pnr buff :--: before swap: pnr buff %d\n",
             datalength);
-      for (i=0; i<datalength; i++) {
-              long_data_buff = long_data_pnr[i];
-                 printf("%d %d %d :--:  ", i,
-                long_data_pnr[i], long_data_buff);
-           reverse8((char *)(&long_data_buff));
-         long_data_pnr[i] = long_data_buff;
-      printf("%d %d\n",
-                long_data_pnr[i], long_data_buff);
-
-         }
-return(long_data_pnr);
+     for (i=0; i<datalength; i++) {
+       long_data_buff = long_data_pnr[i];
+       printf("%d %d %d :--:  ", i,
+	      long_data_pnr[i], long_data_buff);
+       reverse8((char *)(&long_data_buff));
+       long_data_pnr[i] = long_data_buff;
+       printf("%d %d\n",
+	      long_data_pnr[i], long_data_buff);
+       
+     }
+     return(long_data_pnr);
 }
 
