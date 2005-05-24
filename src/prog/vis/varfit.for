@@ -85,6 +85,27 @@ c                      derived:
 c                      phase2 = slope * phase1 + offset
 c                      and using the transferred phase2 replaces the
 c                      phases in the gain table of file2.  
+c         tambient     do linear regression between the residual phase 
+c                      (phase2-(slope * phase1 + offset)) and the ambient
+c                      temperature. The data of ambient temperature must be
+c                      stored in a ASCII file (tambient.dat) under the miriad
+c                      working area in the following format:
+c                      1440 tambient.dat
+c                      2005 02 18
+c                      4 -1.000000e+00
+c                      5 -1.000000e+00
+c                      6 -6.000000e-01
+c                      7 -3.000000e-01
+c                      8  1.000000e+00
+c                      9  1.200000e+00
+c                      ...
+c                      1st row is the number of total data points and filename;
+c                      2nd row is year, month, and day.
+c                      3rd and large rows contains the body of the data:
+c                      1st column is ut time in minute;
+c                      2nd column is ambient temperature in Celcius.
+c                      for the SMA user, a C-shell script is provided
+c                      to extract the data from SMA sybase on d2o.sma.hawaii.edu. 
 c--
 c  History:
 c    18may95 mchw  Initial version developed from BEE.
@@ -108,13 +129,16 @@ c                  uv datasets.
 c    02May05 jhz   add a procedure to check the time stamp in case
 c                  of two files involved for linear regression of phases.
 c    10May05 jhz   add phase residual plot
+c    24May05 jhz   add a feature to do linear correlation between
+c                  residual phase and ambient temperature and plot
+c                  the ambient temperature as a function of time.
 c-----------------------------------------------------------------------
 	character version*(*)
 	parameter(version='(version 1.0 29-ARP-05)')
 	character device*80, log*80, vis*80, xaxis*40, yaxis*40
 	integer tvis, refant, refant2, nx, ny
 	logical dowrap, xsc,ysc, dostruct, doallan, doquad
-        logical dophareg,dophatran
+        logical dophareg,dophatran,dotamb
         real xrange(2),yrange(2)
         integer lin, nfiles,i
         logical uvdatopn
@@ -140,7 +164,7 @@ c	call keyf('vis',vis,' ')
 	call keyi('refant',refant,0)
 	call keyi('refant2',refant2,0)
 	call GetOpt(dowrap,xsc,ysc,dostruct,doallan,doquad,
-     *   dophareg,dophatran)
+     *   dophareg,dophatran,dotamb)
             if(dophareg) then
               xaxis = 'time'
               yaxis = 'phase'
@@ -181,7 +205,7 @@ c  Read in data
 c
 	call varmint(tvis,vis,xaxis,yaxis,refant,refant2,device,
      *	nx,ny,xrange,yrange,dowrap,xsc,ysc,dostruct,doallan,doquad,
-     * dophareg,dophatran,i)
+     * dophareg,dophatran,dotamb,i)
 c
 c  Close up.
 c
@@ -193,12 +217,12 @@ c
 c********1*********2*********3*********4*********5*********6*********7*c
 	subroutine varmint(tvis,vis,xaxis,yaxis,refant,refant2,device,
      *	nx,ny,xrange,yrange,dowrap,xsc,ysc,dostruct,doallan,doquad,
-     *  dophareg,dophatran,fileid)
+     *  dophareg,dophatran,dotamb,fileid)
 	implicit none
 	integer tvis, refant, refant2, nx, ny, fileid
         character*(*) xaxis, yaxis, device,vis
 	logical dowrap, xsc,ysc, dostruct, doallan, doquad,
-     *  dophareg,dophatran
+     *  dophareg,dophatran,dotamb
         real xrange(2),yrange(2)
 c
 c  Read Miriad gains, and the uv-variables needed for fitting.
@@ -234,7 +258,7 @@ c----------------------------------------------------------------------c
         real AAmpl(MAXANTS,MAXSOLS,2),PPhi(MAXANTS,MAXSOLS,2)
         real TTime(MAXANTS,MAXSOLS,2)
 	real xvar(MAXANTS,MAXSOLS), yvar(MAXANTS,MAXSOLS)
-        real yrsd(MAXANTS,MAXSOLS)
+        real yrsd(MAXANTS,MAXSOLS), xtamb(MAXANTS,MAXSOLS)
 	real xx(MAXSOLS),yy(MAXSOLS),sf(MAXSOLS)
 	complex ref
 	double precision longitude,latitude
@@ -247,12 +271,19 @@ c----------------------------------------------------------------------c
          integer len1, length1, length2
          character uvfile1*30, uvfile2*30, visfile*70
 c
+c tambient
+c
+        integer yr,mm,dd,antid,ii,ndata,ndummy,istart
+        character cdummy
+        real ut(1440), tamb(1440), uthr
+c
 c  Externals.
 c
 	character itoaf*8
 	character rangle*18, dotrans*1
 	integer uvscan,ismax,ismin,pee(2)
          real aa1(MAXANTS), bb1(MAXANTS)
+         real aa2(MAXANTS), bb2(MAXANTS)
          common AAmpl,PPhi,TTime,aa1,bb1
 c
 c  Read some header information for the gains file.
@@ -383,6 +414,31 @@ c
 	enddo
 
 666         if(fileid.eq.3) then
+c
+c loading data Tamb to xtamb
+c
+           if(dotamb) then
+                istart=1
+               do i=1, nSols
+                do ii=istart, ndata
+                  uthr= ut(ii)/60.
+               if(uthr.ge.TTime(1,i,1)) then
+                  do j=1, nants
+                  if(yvar(j,i).ne.0) then
+                  xtamb(j,i) =tamb(ii)
+                      else
+                   xtamb(j,i) =0
+                  end if
+                  end do
+                  istart=ii+1
+                  goto 555
+                 end if
+                end do
+555             continue
+                write(*,*) TTime(1,i,1),uthr, uthr*60.,xtamb(1,i)
+                end do 
+           endif
+           
 c
 c check the time stamp of  both gain tables in both file1 and file2
 c issue a warning if the time stamp differs at a sloution of an antenna.
@@ -675,6 +731,36 @@ c
 	    print *,ant, yyave, sigy, a1,b1, sigy1, corr
 	   endif
 	  enddo
+
+c
+c  Phrsd(yaxis) versus Tamb(xaxis).
+c
+           do j=1,nants
+            xmin(j) = xtamb(j,ismin(nSols,xtamb(j,1),MAXANTS))
+            xmax(j) = xtamb(j,ismax(nSols,xtamb(j,1),MAXANTS))
+           enddo
+        if(dotamb) then
+          print *,' '
+          print *, 'Ph_rsd(yaxis) = slope * T_amb(xaxis) + intercept'
+          print *, 'ant   yaxis_ave   yaxis_rms   slope   intercept',
+     *  '   rms-fit   correlation'
+          do ant=1,nants
+             if(xmin(ant).ne.xmax(ant))then
+            do i=1,nSols
+              xx(i) = xtamb(ant,i)
+              yy(i) = yrsd(ant,i)
+            enddo
+           call linlsq1(xx,yy,nSols,yyave,sigy,a1,b1,sigy1,corr)
+           print *,ant, yyave, sigy, a1,b1, sigy1, corr
+              
+            if(fileid.eq.3) then
+              aa2(ant) = a1
+              bb2(ant) = b1
+             end if
+              end if
+          enddo
+           end if
+
 	endif
 c
 c  Plot results.
@@ -688,12 +774,18 @@ c
         visfile=vis
               end if
            end if
-              if(fileid.eq.1.and.dophareg) 
-     *  print*, 'Plot: Phase1(file1) vs time'
-              if(fileid.eq.2.and.dophareg)
-     *  print*, 'Plot: Phase2(file2) vs time'
-              if(fileid.eq.3.and.dophareg)
-     *  print*, 'Plot: Phase2(file2) vs Phase1(file1)'
+              if(fileid.eq.1.and.dophareg) then
+       print*, ' ' 
+       print*, 'Plot: Phase1(file1) vs time?'
+              endif
+              if(fileid.eq.2.and.dophareg) then
+       print*, ' '
+       print*, 'Plot: Phase2(file2) vs time?'
+              endif
+              if(fileid.eq.3.and.dophareg) then
+       print*, ' '
+       print*, 'Plot: Phase2(file2) vs Phase1(file1)?'
+              endif
                   pause
 	if(device.ne.' ') 
      *	  call varplot(device,visfile,xaxis,yaxis,nx,ny,xx,yy,
@@ -715,20 +807,54 @@ c
            enddo
 
 c plot yresidual vs time
-             if(fileid.eq.3.and.dophareg)
-     *  print*, 'Plot: Phase2-(slope*Phase1+intercept) vs time'
+             if(fileid.eq.3.and.dophareg) then
+        print*, ' '
+        print*, 'Plot: Phase2-(slope*Phase1+intercept) vs time?'
+            xaxis = 'UT Time (hr) '
+            yaxis = 'y-(slope*x+intercept)  (degree)'
+             endif
               pause
             if(device.ne.' ')
      *    call varplot(device,visfile,xaxis,yaxis,nx,ny,xx,yy,
      *    xrange,yrange,xvar,yrsd,yrsd,nsols,nants,maxants,maxsols,
      *    fileid,aa1,bb1)
+c  write slope table
+            call slopetab(tvis,aa1,bb1,nants)
+            call getslope(tvis,aa1,bb1,nants)
+c plot yresidual vs Tamb
+            if(dotamb) then
+            xaxis = 'UT Time (hr) '
+            yaxis = 'Tamb  (Celcius)'
+          print*, ' '
+          print*, 'Plot: Ambient temperature vs time?'
+              pause
+           if(device.ne.' ')
+     *  call varplot(device,visfile,xaxis,yaxis,nx,ny,xx,yy,
+     *  xrange,yrange,xvar,xtamb,yrsd,nsols,nants,maxants,maxsols,
+     *    fileid,aa2,bb2)
+
               end if
+            end if
+ 
             if(fileid.eq.2) then
             fileid=3
             if(.not.dophareg) stop
             goto 666
             end if
-          
+            
+c
+c read ambient temperature data from tambient.dat
+c
+            if(fileid.lt.2.and.dotamb) then
+            open(5,file='tambient.dat',status='old')
+            read(5,*) ndata,cdummy
+            read(5,*) yr,mm,dd,antid
+            ndata=ndata
+            do ii=1, ndata
+             read(5,*) ut(ii), tamb(ii)
+            end do
+            end if
+111      close(5)
 c
 c write out the gain table
 c
@@ -756,6 +882,49 @@ c         print*,j,k,mgains(j,1,k),aampl(j,k,2),pphi(j,k,2)
         stop
         endif
 	end
+
+        subroutine slopetab(tno,slope,yoffset,nants)
+c        include 'maxdim.h'
+        integer MAXANTS
+        parameter(MAXANTS=28)
+        integer tno,nants
+        real slope(MAXANTS), yoffset(MAXANTS)
+        integer iostat,off,item,i
+        call haccess(tno,item,'slope','write',iostat)
+        if(iostat.ne.0)then
+          call bug('w','Error opening output slope/yoffset table.')
+          call bugno('f',iostat)
+        endif
+          call hwritei(item,0,0,4,iostat)
+          if(iostat.ne.0)then
+         call bug('w','Error writing header of slope/yoffset table')
+          call bugno('f',iostat)
+        endif
+c        write(*,*)
+c     * 'create slope table'
+           off=4
+           do i=1,nants
+         call hwriter(item,slope(i),off,4,iostat)
+            off = off + 4
+             if(iostat.ne.0)then
+         call bug('w','Error writing slope to slope/yoffset table')
+         call bugno('f',iostat)
+             endif
+            call hwriter(item,yoffset(i),off,4,iostat)
+            off = off + 4
+             if(iostat.ne.0)then
+         call bug('w','Error writing yoffset to slope/yoffset table')
+         call bugno('f',iostat)
+             endif
+            enddo
+c
+c  Finished writing the gain table.
+c
+          call hdaccess(item,iostat)
+        if(iostat.ne.0)call bugno('f',iostat)
+        end 
+
+ 
 
         subroutine gaintab(tno,time,gains,npol,nants,nsoln,pee)
 c
@@ -885,6 +1054,7 @@ c  Finished writing the gain table.
 c
           call hdaccess(item,iostat)
         if(iostat.ne.0)call bugno('f',iostat)
+          
          end
 
 
@@ -1029,10 +1199,10 @@ c	call LogWrit(line)
       end
 c********1*********2*********3*********4*********5*********6*********7*c
 	subroutine GetOpt(dowrap,xsc,ysc,dostruct,doallan,doquad,
-     * dophareg, dophatran)
+     * dophareg,dophatran,dotamb)
         implicit none
 	logical dowrap, xsc,ysc, dostruct, doallan, doquad,
-     *  dophareg, dophatran
+     *  dophareg, dophatran,dotamb
 c
 c  Get extra processing options.
 c
@@ -1044,12 +1214,13 @@ c    doallan    Compute Allan variance.
 c    doquad     Fit yaxis = a + b*xaxis + c*xaxis**2
 c-----------------------------------------------------------------------
 	integer nopt
-        parameter(nopt=8)
+        parameter(nopt=9)
         logical present(nopt)
         character opts(nopt)*9
 c
         data opts/'wrap     ','xscale   ','yscale   ','allan    ',
-     *            'structure','quad     ','phareg   ','phatran  '/
+     *            'structure','quad     ','phareg   ','phatran  ',
+     *            'tambient '/
 c	
 	call options('options',opts,present,nopt)
         dowrap    = present(1)
@@ -1060,7 +1231,9 @@ c
         doquad    = present(6)
         dophareg  = present(7)
         dophatran = present(8)
-        if(dophatran) dophareg = present(8)
+        dotamb     = present(9)
+        if(dotamb) dophareg = .true.
+        if(dophatran) dophareg = .true.
 	end
 c********1*********2*********3*********4*********5*********6*********7*c
 	subroutine varplot(device,vis,xaxis,yaxis,nx,ny,xx,yy,
@@ -1146,6 +1319,7 @@ c
           call pgswin(xlo,xhi,ylo,yhi)
 	  if(fileid.eq.3) then
           if(.not.dofit) call  pgsci(2)
+          if(yaxis(1:4).eq.'Tamb') call  pgsci(2)
            call pgpt(nsols,xx,yy,17)
            else
            call pgpt(nsols,xx,yy,1)
@@ -1264,3 +1438,60 @@ c
 	endif
 c
 	end
+
+         subroutine GetSlope(
+     *          tvis,slope,yoffset,nants)
+        implicit none
+        integer tvis,nants,maxants,maxsols
+        parameter(MAXANTS=28)
+        real slope(MAXANTS), yoffset(MAXANTS)
+       
+c
+c  Read the slope.
+c
+c-----------------------------------------------------------------------
+        integer header(2),item,offset
+        integer iostat,k
+c
+        call haccess(tvis,item,'slope','read',iostat)
+        if(iostat.ne.0)then
+          call bug('w','Error opening gains item')
+          call bugno('f',iostat)
+        endif
+        offset = 0
+        call hreadi(item,header,offset,4,iostat)
+        if(iostat.ne.0)then
+          call bug('w','Error reading slope item')
+          call bugno('f',iostat)
+        endif
+        offset = 4
+c
+c  Read the gains.
+c
+        do k=1,nants
+          call hreadr(item,slope(k),offset,4,iostat)
+          if(iostat.ne.0)then
+            call bug('w','I/O error while reading slope')
+            call bugno('f',iostat)
+          endif
+           offset = offset + 4
+          call hreadr(item,yoffset(k),offset,4,iostat)
+          if(iostat.ne.0)then
+            call bug('w','I/O error while reading slope')
+            call bugno('f',iostat)
+          endif
+          offset = offset + 4 
+c           write(*,*) 'slope=', k, slope(k), yoffset(k)
+        enddo
+c
+c
+c  Close gains item
+c
+        call hdaccess(item,iostat)
+        if(iostat.ne.0)then
+          call bug('w','Error closing output slope item')
+          call bugno('f',iostat)
+        endif
+c
+        end
+      
