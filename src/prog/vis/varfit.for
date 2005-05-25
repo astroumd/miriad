@@ -86,26 +86,37 @@ c                      phase2 = slope * phase1 + offset
 c                      and using the transferred phase2 replaces the
 c                      phases in the gain table of file2.  
 c         tambient     do linear regression between the residual phase 
-c                      (phase2-(slope * phase1 + offset)) and the ambient
-c                      temperature. The data of ambient temperature must be
+c                      (phase2-(slope * phase1 + offset)) and a variable
+c                      tambient which is antenna-based variable and stored
+c                      elsewehere (for example, SMA Sybase).
+c                      The data of tambient must be
 c                      stored in a ASCII file (tambient.dat) under the miriad
 c                      working area in the following format:
-c                      1440 tambient.dat
-c                      2005 02 18
-c                      4 -1.000000e+00
-c                      5 -1.000000e+00
-c                      6 -6.000000e-01
-c                      7 -3.000000e-01
-c                      8  1.000000e+00
-c                      9  1.200000e+00
+c                      2005 2 18 8 RM_AMBIENTLOAD_TEMPERATURE_F
+c                      1 
+c                      1439 tmp1.dat
+c                      0 1.437269e+01
+c                      1 1.437269e+01
+c                      2 1.437269e+01
 c                      ...
-c                      1st row is the number of total data points and filename;
-c                      2nd row is year, month, and day.
-c                      3rd and large rows contains the body of the data:
+c                      2 
+c                      1439 tmp2.dat
+c                      0 1.519706e+01
+c                      1 1.519706e+01
+c                      2 1.547185e+01                      
+c                      ...
+c                      1st row is year,month,day,number of antenna,RM variable
+c                      followed by concatenated individual antenna files.
+c                      in each antenna section,
+c                      1st row is the antenna ID;
+c                      2nd row is  number of total data points and filename;
+c                      3rd and larger number rows contains the body of the data:
 c                      1st column is ut time in minute;
-c                      2nd column is ambient temperature in Celcius.
-c                      for the SMA user, a C-shell script is provided
-c                      to extract the data from SMA sybase on d2o.sma.hawaii.edu. 
+c                      2nd column is the RM Variable.
+c                      For the SMA users, a C-shell script (TambSybase.csh)
+c                      is provided under $MIR/examples, which can be used
+c                      to extract the data from SMA sybase on the computer
+c                      d2o.sma.hawaii.edu at the SMA site in Hawaii. 
 c--
 c  History:
 c    18may95 mchw  Initial version developed from BEE.
@@ -132,6 +143,8 @@ c    10May05 jhz   add phase residual plot
 c    24May05 jhz   add a feature to do linear correlation between
 c                  residual phase and ambient temperature and plot
 c                  the ambient temperature as a function of time.
+c    25May05 jhz   change tambient to a general external variable
+c                  such as a RM variable for SMA. 
 c-----------------------------------------------------------------------
 	character version*(*)
 	parameter(version='(version 1.0 29-ARP-05)')
@@ -270,12 +283,13 @@ c----------------------------------------------------------------------c
          complex mgains(10,2,6145)
          integer len1, length1, length2
          character uvfile1*30, uvfile2*30, visfile*70
+         character rm_var*32
 c
 c tambient
 c
-        integer yr,mm,dd,antid,ii,ndata,ndummy,istart
+        integer yr,mm,dd,nantid,antid,ii,ndata,ndummy,istart
         character cdummy
-        real ut(1440), tamb(1440), uthr
+        real ut(1440,MAXANTS), tamb(1440,MAXANTS), uthr
 c
 c  Externals.
 c
@@ -301,7 +315,7 @@ c
 c  Look for the gains item.
 c
 	call GetGains(
-     *		tvis,nants,nsols,interval,dtime,gains,maxants,maxsols)
+     *	tvis,nants,nsols,interval,dtime,gains,maxants,maxsols)
 c
 c  Store the phase relative to reference antenna.
 c
@@ -418,24 +432,31 @@ c
 c loading data Tamb to xtamb
 c
            if(dotamb) then
+c
+c pick up an antenna with solution solved
+c         
+               do j=1, nants
+                   if(TTime(j,nSols,1).ne.0) antid=j
+               end do
                 istart=1
                do i=1, nSols
                 do ii=istart, ndata
-                  uthr= ut(ii)/60.
-               if(uthr.ge.TTime(1,i,1)) then
+                  uthr= ut(ii,antid)/60.
+                  if(uthr.ge.TTime(antid,i,1)) then
                   do j=1, nants
-                  if(yvar(j,i).ne.0) then
-                  xtamb(j,i) =tamb(ii)
-                      else
-                   xtamb(j,i) =0
-                  end if
+                       if(yvar(j,i).ne.0) then
+                       xtamb(j,i) =tamb(ii,j)
+                       else
+                        xtamb(j,i) =0
+                       end if
                   end do
                   istart=ii+1
                   goto 555
-                 end if
+                  endif
                 end do
 555             continue
-                write(*,*) TTime(1,i,1),uthr, uthr*60.,xtamb(1,i)
+c          write(*,*) TTime(1,i,1), uthr*60.,xtamb(1,i),xtamb(2,i),
+c     *    xtamb(3,i),xtamb(4,i),xtamb(5,i),xtamb(6,i)
                 end do 
            endif
            
@@ -824,7 +845,7 @@ c  write slope table
 c plot yresidual vs Tamb
             if(dotamb) then
             xaxis = 'UT Time (hr) '
-            yaxis = 'Tamb  (Celcius)'
+            yaxis = 'T_'//rm_var(4:10)
           print*, ' '
           print*, 'Plot: Ambient temperature vs time?'
               pause
@@ -847,11 +868,14 @@ c read ambient temperature data from tambient.dat
 c
             if(fileid.lt.2.and.dotamb) then
             open(5,file='tambient.dat',status='old')
+            read(5,*) yr,mm,dd,nantid,rm_var
+            do j=1, nantid
+            read(5,*) antid
             read(5,*) ndata,cdummy
-            read(5,*) yr,mm,dd,antid
-            ndata=ndata
             do ii=1, ndata
-             read(5,*) ut(ii), tamb(ii)
+            read(5,*) ut(ii,antid), tamb(ii,antid)
+c            write(*,*) j, antid, ut(ii,antid), tamb(ii,antid)
+            end do
             end do
             end if
 111      close(5)
