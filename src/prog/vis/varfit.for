@@ -1343,7 +1343,7 @@ c
           call pgswin(xlo,xhi,ylo,yhi)
 	  if(fileid.eq.3) then
           if(.not.dofit) call  pgsci(2)
-          if(yaxis(1:4).eq.'Tamb') call  pgsci(2)
+          if(yaxis(1:2).eq.'T_') call  pgsci(2)
            call pgpt(nsols,xx,yy,17)
            else
            call pgpt(nsols,xx,yy,1)
