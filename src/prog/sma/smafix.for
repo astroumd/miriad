@@ -119,11 +119,12 @@ c  jhz: 2005-5-19 restrict the xaxis variable: time and antel
 c                 restrict the yaxis variable: systemp
 c  jhz: 2005-5-20 add options to accept variables associated
 c                 with unflagged uv data.
+c  jhz: 2005-5-25 a bug is fixed in flagging
 c------------------------------------------------------------------------
         character version*(*)
         integer maxpnts
         parameter(maxpnts=100000)
-        parameter(version='SmaFix: version 1.1 02-DEC-04')
+        parameter(version='SmaFix: version 1.5 25-MAY-05')
         logical doplot,dolog,dotime,dounwrap
         character vis*64,device*64,logfile*64,xaxis*16,yaxis*16
         character out*64
@@ -138,7 +139,7 @@ c------------------------------------------------------------------------
         integer i,j,k,l,bant(10),gant(10),rant(10),ggant
         real flagvar(maxpnts)
         double precision foff
-        logical dotsys, tsysplt, dosour, dotswap,doflag
+        logical dotsys,tsysplt,dosour,dotswap,doflag
 c       apl(ant,sour,aplfit),xapl(ant,sour,MAXNR),bppl(ant,sour,MAXNR,MAXNR)    
         real apl(10,32,10)
         double precision xapl(10,32,10),bppl(10,32,10,10)
@@ -189,10 +190,14 @@ c
         call keyi('bant',bant(8), -1)
         call keyi('bant',bant(9), -1)
         call keyi('bant',bant(10), -1)
-        call keyi('gant',ggant, -1)      
+        call keyi('gant',ggant, -1)  
+              
            do i=1, 10
              gant(i) =-1
              rant(i) =-1
+        if(bant(i).ne.-1.and.ggant.eq.-1) 
+     *  call bug('f',
+     * 'assign good antenna to gant for the replacement of bant')
              if(bant(i).ne.-1) then
              gant(i) = ggant
              rant(i) = ggant
@@ -236,9 +241,13 @@ c
 c  Open up all the inputs.
 c
         call uvopen(tin,vis,'old')
+        
+        call uvset(tin,'preamble','uvw/time/baseline',0,0.,0.,0.)
+
         call varchar(tin,xaxis,xtype,xdim1,xdim2,xunit,xscale,xoff)
         call varchar(tin,yaxis,ytype,ydim1,ydim2,yunit,yscale,yoff)
         call uvrewind(tin)
+        call uvclose(tin)
 c
 c  Time along the x axis is treated as a special case.
 c
@@ -273,11 +282,11 @@ c
 c
 c  Read in the data.
 c
-        call datread(tin,maxpnt,npnts,bant,ggant,
+        call datread(vis,maxpnt,npnts,bant,ggant,
      *          flagvar,doflag,
      *          xaxis,xvals,xdim1*xdim2,xscale,xoff,xtype,
      *          yaxis,yvals,ydim1*ydim2,yscale,yoff,ytype)
-        call uvclose(tin)
+c        call uvclose(tin)
 c
 c
 c  Unwrap the phases
@@ -1273,13 +1282,13 @@ c
         hival = hival + delta
         end
 c************************************************************************
-        subroutine datread(tin,maxpnt,npnts,bant,ggant,
+        subroutine datread(vis,maxpnt,npnts,bant,ggant,
      *          flagvar,doflag,
      *          xaxis,xvals,xdim,xscale,xoff,xtype,
      *          yaxis,yvals,ydim,yscale,yoff,ytype)
 c
         integer tin,maxpnt,npnts,xdim,ydim,bant(10),ggant
-        character xtype*1,ytype*1,xaxis*(*),yaxis*(*)
+        character xtype*1,ytype*1,xaxis*(*),yaxis*(*),vis*32
         real xvals(xdim*maxpnt),yvals(ydim*maxpnt)
         real flagvar(ydim*maxpnt)
         double precision xscale,xoff,yscale,yoff,foff
@@ -1293,18 +1302,18 @@ c------------------------------------------------------------------------
         integer xirun(maxruns),yirun(maxruns)
         real xrrun(maxruns),yrrun(maxruns)
         integer flgrun(maxruns)
-        integer xpnt,ypnt,xdims,ydims,iostat,k
-        integer nsource, sourid,nflag
-        logical xupd,yupd,doflag
+        integer xpnt,ypnt,xdims,ydims,tdims,iostat,k
+        integer nsource, sourid,nflag,nbls, fbls
+        logical xupd,yupd,doflag,tupd
         double precision preamble(4), time, ctime
         double precision mytime(maxinte)
         include 'maxdim.h'
         complex data(maxchan)
         logical flags(maxchan),updated,tsysflag(maxant,maxinte)
-        integer nchan,vupd,nspect,i1,i2, nrecord
+        integer nchan,vupd,nspect,i1,i2, nrecord,nants,nflagbl(maxant)
         double precision sfreq(maxspect), sdf(maxspect)
         integer nschan(maxspect),varlen
-        character xt*1,yt*1, souread*32, vartype
+        character xt*1,yt*1, tt*1, souread*32, vartype
         common/sour/soupnt,source,nsource
 c
 c  Externals.
@@ -1316,41 +1325,78 @@ c
         npnts = 0
         xpnt = 0
         ypnt = 0
+        do i=1,maxants
+               nflagbl(i1)=0
+               nflagbl(i2)=0
+        end do
+           nbls=1
 c
 c  Read the data.
 c
           xsoupnt=0
-          call uvrewind(tin)
-          iostat = uvscan(tin, ' ')
+          call uvopen(tin,vis,'old')
+c          call uvset(tin,'preamble','uvw/time/baseline',0,0.,0.,0.)
+c          call uvrewind(tin)
+c          iostat = uvscan(tin, ' ')
             nrecord=1
              call uvread(tin,preamble,data,flags,maxchan,nchan)
         if(nchan.le.0) call bug('f','No data found in the input.')
-
-             if(.not.flags(1).or..not.flags(12)) then
+                
+c        if(.not.flags(1).and..not.flags(nchan).and..not.flags(nchan/2)) 
+c     *       then
              call basant(preamble(4),i1,i2)
-             tsysflag(i1,1) = .true.
-             tsysflag(i2,1) = .true.
+c           write(*,*) i1,i2,flags(2),preamble(5),nflagbl(i1),nflagbl(i2)
+c          write(*,*) 'outside loop'
+             if(.not.flags(1)) then
+               nflagbl(i1)= nflagbl(i1)+1
+               nflagbl(i2)= nflagbl(i2)+1
              end if
+c             tsysflag(i1,1) = .true.
+c             tsysflag(i2,1) = .true.
+c             end if
              ctime=preamble(3)
              inhid=1
              mytime(1)= ctime
           dowhile(nchan.gt.0)
              call uvread(tin,preamble,data,flags,maxchan,nchan)
-c             write(*,*) preamble     
-             call uvgetvrd(tin, 'time', time, 1)
+            call uvgetvrd(tin, 'time', time, 1)
+             call uvprobvr(tin,'time',tt,tdims,tupd)
+
+             if(.not.tupd) nbls=nbls+1
+             call basant(preamble(4),i1,i2)
+             if(.not.flags(1).and..not.tupd) then
+             nflagbl(i1)= nflagbl(i1)+1
+             nflagbl(i2)= nflagbl(i2)+1
+c            write(*,*) 
+c     *       nbls,i1,i2,flags(2),preamble(5),nflagbl(i1),nflagbl(i2)
+             end if
+             if(tupd) call uvgetvri(tin, 'nants',nants, 1)
+c             if(tupd) write(*,*) 'nant=', nants, nbls
+             if(tupd) then
+                 do i=1, nants
+                  fbls=nflagbl(i)*(nflagbl(i)+1)/2
+c                  write(*,*) i, fbls
+                  if(fbls.eq.nbls) then
+                  if(doflag) tsysflag(i,inhid)=.true.
+c                  write(*,*) 'ant=', i
+                  end if
+                  nflagbl(i)=0
+                end do
+               nbls=1
+              if(.not.flags(1)) then
+             nflagbl(i1)= nflagbl(i1)+1
+             nflagbl(i2)= nflagbl(i2)+1
+c            write(*,*)
+c     *       nbls,i1,i2,flags(2),preamble(5),nflagbl(i1),nflagbl(i2)
+             end if
+
+             endif
+                
              if(preamble(3).gt.ctime) then
              ctime= preamble(3)
              inhid=inhid+1   
              mytime(inhid) = ctime         
              endif
-             if(doflag) then
-             if(.not.flags(1).or..not.flags(200)) then
-             nflag=nflag+1
-             call basant(preamble(4),i1,i2)
-             tsysflag(i1,inhid) = .true.
-             tsysflag(i2,inhid) = .true.
-                                                end if
-                        end if
           nrecord=nrecord+1
           end do
               call uvrewind(tin)
@@ -1425,14 +1471,15 @@ c good antennas.
 c
              do i=1, ydim
              if(bant(i).ne.-1) then
-                  yrrun(ypnt+bant(i)) = yrrun(ypnt+ggant)
-                  if (ggant.eq.-1) yrrun(ypnt+bant(i)) =0.0 
-                 end if
-             if(tsysflag(i,inhid)) then 
-              yrrun(ypnt+i) = -1.0
-              flgrun(ypnt+i) =-1
+               yrrun(ypnt+bant(i)) = yrrun(ypnt+ggant)
+               if (ggant.eq.-1) yrrun(ypnt+bant(i)) =0.0 
+               end if
+              if(tsysflag(i,inhid)) then 
+               yrrun(ypnt+i) = 0.0
+               flgrun(ypnt+i) = -1
+c               write(*,*) i, flgrun(ypnt+i)
                      else
-              flgrun(ypnt+i) =1
+               flgrun(ypnt+i) =1
                     end if
              end do
 c
@@ -1475,7 +1522,7 @@ c
 c------------------------------------------------------------------------
         integer xpnt,ypnt
         xpnt = npnts*xdim+1
-        ypnt = npnts*ydim+a1
+        ypnt = npnts*ydim+1
         if(xtype.eq.'i')then
           call cvtir(xirun,xvals(xpnt),k*xdim,xscale,xoff)
         else if(xtype.eq.'r')then
@@ -2261,23 +2308,44 @@ c    axis = time for xaxisparm.eq.1
                        if(xaxisparm.eq.1)  then
                          do i=1, nants
                             do j=1, 10
+         if(xapl(i,sourid,j).le.1e32.and.xapl(i,sourid,j).ge.-1e32) 
+     * then
                             XA(j) = xapl(i,sourid,j)
+                            else
+                            XA(j) = 0.
+                            endif
                             do k=1, 10
+        if(bppl(i,sourid,j,k).le.1e32.and.bppl(i,sourid,j,k).ge.-1e32) 
+     * then
                             BP(j,k) = bppl(i,sourid,j,k)
+                            else
+                            BP(j,k) = 0.
+                            endif
                             end do
                             end do
          call regpolfitg(nterms,xa,bp,1,timev,tsysv)
                             otsys(i) = tsys(i)
                              tsys(i) = tsysv
+                     
                          end do
                                            end if
 c    axis = antel for xaxisparm.eq.2
                 if(xaxisparm.eq.2)  then
                          do i=1, nants
                             do j=1, 10
+       if(xapl(i,sourid,j).le.1e32.and.xapl(i,sourid,j).ge.-1e32)
+     * then
                             XA(j) = xapl(i,sourid,j)
+       else
+                            XA(j) = 0.0
+       endif                
                             do k=1, 10
+       if(bppl(i,sourid,j,k).le.1e32.and.bppl(i,sourid,j,k).ge.-1e32)
+     * then
                             BP(j,k) = bppl(i,sourid,j,k)
+       else
+                            XA(j) = 0.0
+       endif
                             end do
                             end do
           call regpolfitg(nterms,xa,bp,1,antel,tsysv)
