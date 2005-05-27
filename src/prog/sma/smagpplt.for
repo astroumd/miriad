@@ -101,19 +101,20 @@ c    jhz  30jul04 add moving smooth
 c    jhz  23sep04 add polynomial fit
 c    jhz  20nov04 replace polynomial fit by orthogonal polynomial.
 c    jhz  04jan05 add weight to polynomial fit.
+c    jhz  27may05 fix the edge flagging problem.
 c  Bugs:
 c------------------------------------------------------------------------
         integer maxsels
         character version*(*)
-        parameter(maxsels=256)
+        parameter(maxsels=256, maxspect=49)
         parameter (PI = 3.14159265358979323846)
         parameter (DPI = 3.14159265358979323846)
         parameter (TWOPI = 2 * PI)
         parameter (DTWOPI = 2 * DPI)        
-        parameter(version='SmaGpPlt: version 23-Sep-04')
+        parameter(version='SmaGpPlt: version 27-May-05')
         include 'gpplt.h'
         integer iostat,tin,nx,ny,nfeeds,nants,nsols,ierr,symbol,nchan
-        integer ntau,length, i, j, k
+        integer ntau,length, i, j, k,nschann(maxspect)
         character vis*64,device*64,logfile*64,basetime*20
         double precision t0
         logical doamp,dophase,doreal,doimag,dogains,dopol,dodtime,doxy
@@ -383,11 +384,12 @@ c  Do the bandpass plots.
 c
         if(dopass)then
           call bload(tin,times,g1,nfeeds,nants,nchan,sels,
-     *          maxgains,maxtimes)
+     *          maxgains,maxtimes,nschann)
           call bpplt(times,g1,nfeeds,nants,nchan,range,
      *          feeds(nfeeds),doamp,dophase,dowrap,doreal,doimag,
-     *          doplot,dolog,symbol,nx*ny)
+     *          doplot,dolog,symbol,nx*ny,nschann)
         endif
+            
 c
 c Apply the polynomial fit or smooth
 c
@@ -563,7 +565,7 @@ c
         end
 c************************************************************************
         subroutine bload(tin,freq,gains,nfeeds,nants,nchan,sels,
-     *    maxpass,maxfreq)
+     *    maxpass,maxfreq,nschann)
 c
         integer tin,nants,nchan,maxpass,maxfreq,nfeeds
         real freq(maxfreq),sels(*)
@@ -584,7 +586,8 @@ c    Gains
 c------------------------------------------------------------------------
         include 'gpplt.h'
         integer ngains,nspect,item,iostat,n,off,nschan,i,j,k,offi,offo
-        integer ntau
+        parameter(maxspect=49)
+        integer ntau,nschann(maxspect)
         double precision freqs(2)
         logical doselect,select(maxtimes)
 c
@@ -623,6 +626,7 @@ c
         off = 8
         do i=1,nspect
           call hreadi(item,nschan,off,4,iostat)
+              nschann(i)=nschan
           off = off + 8
           if(iostat.eq.0)call hreadd(item,freqs,off,2*8,iostat)
           off = off + 2*8
@@ -954,9 +958,10 @@ c
 c************************************************************************
         subroutine bpplt(freq,g,nfeeds,nants,nchan,range,
      *    feeds,doamp,dophase,dowrap,doreal,doimag,doplot,dolog,
-     *    symbol,ppp)
+     *    symbol,ppp,nschann)
 c
-        integer nfeeds,nants,nchan,ppp,symbol
+        parameter(maspect=49)
+        integer nfeeds,nants,nchan,ppp,symbol,nschann(49)
         complex g(nchan*nfeeds*nants)
         real freq(nchan),range(2)
         logical doamp,dophase,dowrap,doreal,doimag,doplot,dolog
@@ -986,20 +991,20 @@ c
         external getamp,getphasw,getphase,getreal,getimag
 c
         if(doamp)  call bpplt2(freq,g,nfeeds,nants,nchan,range,
-     *    'Amp',feeds,doplot,dolog,symbol,getamp,ppp)
+     *    'Amp',feeds,doplot,dolog,symbol,getamp,ppp,nschann)
         if(dophase)then
           if(dowrap)then
             call bpplt2(freq,g,nfeeds,nants,nchan,range,
-     *        'Phase',feeds,doplot,dolog,symbol,getphasw,ppp)
+     *        'Phase',feeds,doplot,dolog,symbol,getphasw,ppp,nschann)
           else
             call bpplt2(freq,g,nfeeds,nants,nchan,range,
-     *        'Phase',feeds,doplot,dolog,symbol,getphase,ppp)
+     *        'Phase',feeds,doplot,dolog,symbol,getphase,ppp,nschann)
           endif
         endif
         if(doreal) call bpplt2(freq,g,nfeeds,nants,nchan,range,
-     *    'Real',feeds,doplot,dolog,symbol,getreal,ppp)
+     *    'Real',feeds,doplot,dolog,symbol,getreal,ppp,nschann)
         if(doimag) call bpplt2(freq,g,nfeeds,nants,nchan,range,
-     *    'Imag',feeds,doplot,dolog,symbol,getimag,ppp)
+     *    'Imag',feeds,doplot,dolog,symbol,getimag,ppp,nschann)
         end
 c************************************************************************
         subroutine polplt2(leaks,nfeeds,nants,range,type,feeds,
@@ -1164,9 +1169,10 @@ c
         end
 c************************************************************************
         subroutine bpplt2(freq,g,nfeeds,nants,nchan,range,
-     *    type,feeds,doplot,dolog,symbol,getval,ppp)
+     *    type,feeds,doplot,dolog,symbol,getval,ppp,nschann)
 c
-        integer nfeeds,nants,nchan,ppp,symbol
+        parameter(maxspect=49)
+        integer nfeeds,nants,nchan,ppp,symbol,nschann(maxspect)
         real freq(nchan),range(2)
         complex g(nchan*nfeeds*nants)
         logical doplot,dolog
@@ -1222,10 +1228,10 @@ c
               if(ng.gt.0)then
                 call setpg(freqmin,freqmax,y,ng,range,.true.)
 c        write(*,*) 'ifeed iant type nfeed',ifeed,iant,type,nfeeds
-          call pgptbpass(ng,x,y,symbol,ifeed,iant,type)
-            label = feeds(ifeed)//'-BandPass-'//type
-              title = 'Antenna '//itoaf(iant)
-                call pglab('Frequency (GHz)',label,title)
+          call pgptbpass(ng,x,y,symbol,ifeed,iant,type,nschann)
+           label = feeds(ifeed)//'-BandPass-'//type
+           title = 'Antenna '//itoaf(iant)
+           call pglab('Frequency (GHz)',label,title)
                 nres = nres + 1
               endif
             enddo
@@ -1583,14 +1589,15 @@ c
         end
 
 c************************************************************************
-      SUBROUTINE PGPTBPASS (N,XPTS,YPTS,SYMBOL,IFEED,IANT, type)
+      SUBROUTINE PGPTBPASS (N,XPTS,YPTS,SYMBOL,IFEED,IANT,type,nschann)
       INTEGER N, IFEED, IANT
       REAL XPTS(*), YPTS(*)
       INTEGER SYMBOL,NR
       LOGICAL PGNOTO,OK
       character type*(*)
 c     for movinf smooth
-       PARAMETER(MAXNR=20,MAXN=7681)
+       PARAMETER(MAXNR=20,MAXN=7681,maxspect=49)
+      integer nschann(maxspect)
       double precision T(N),Y(N),DELTAY(N)
       double precision ETA(6200),CONETA(6200),A(21,6)
       double precision XA(MAXNR),BP(MAXNR,MAXNR),AP(N,MAXNR)
@@ -1623,10 +1630,7 @@ C
         do i=1, N
          
 
-c          if(type.eq.'Real') rpass(IANT,i,IFEED) = YPTS(i)
-c          if(type.eq.'Imag') ipass(IANT,i,IFEED) = YPTS(i)
-
-        if ((fsign*(XPTS(i)-XPTS(i+1)).gt.0).and.(i.ne.N)) then
+        if((schan+1).lt.nschann(nspects+1)) then
         schan  = schan+1
         x(schan)  = XPTS(i)
         T(schan)  = schan
@@ -1634,9 +1638,7 @@ c          if(type.eq.'Imag') ipass(IANT,i,IFEED) = YPTS(i)
         ys(schan) = YPTS(i)
         y(schan) = YPTS(i)
          DELTAY(schan) = 1.D0
-c          DELTAY(schan) = 1./(1.+abs(1.-y(schan)/ymean))
-        end if
-        if ((fsign*(XPTS(i)-XPTS(i+1)).lt.0).or.(i.eq.N)) then
+          else
            schan  = schan+1
            x(schan)  = XPTS(i)
            T(schan)  = schan
@@ -1644,7 +1646,7 @@ c          DELTAY(schan) = 1./(1.+abs(1.-y(schan)/ymean))
            ys(schan) = YPTS(i)
            y(schan) = YPTS(i)
            DELTAY(schan) = 1.D0
-         nspects  = nspects+1
+           nspects  = nspects+1
          if(nspects.le.12) call pgsci(nspects)
 c         if(nspects.gt.12) call pgsci(nspects-12)
          if(nspects.eq.13) call pgscr(nspects, 1.0, 1.0, 0.5)
@@ -1781,15 +1783,12 @@ c  Loop over antenna, polarisation, strip, and channel within a strip.
 c
         off = 8
         do i=1,nants
-c           write(*,*) 'ant', i
           do p=1,npol
             pd = pee(p)
              pd=1
-c            write(*,*) 'pd', pd
             do j=1,nchan,maxchan
               n = min(maxchan,nchan-j+1)
               do k=1,n
-c                write(*,*) temp
                 temp = pass(i,j+k-1,pd)
                 if(abs(real(temp))+abs(aimag(temp)).ne.0)then
                   g(k) = 1/temp
@@ -1799,10 +1798,6 @@ c                write(*,*) temp
               enddo
             enddo
 
-c            do j=1,nchan
-c             temp = pass(i,j,pd)
-c              write(*,*) temp
-c            enddo
 
 c
 c  Write a strip, and check for errors.
