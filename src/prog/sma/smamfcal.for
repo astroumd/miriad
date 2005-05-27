@@ -130,16 +130,17 @@ c                 solutions.
 c    jhz  20Dec04 added weight=1/sigma**2
 c    jhz  31Dec04 added weight=1/sigma**2, divided by channel zero
 c    jhz  05May05 enable to handle dual polarization data
+c    jhz  27May05 fixed edge problem
 c  Problems:
 c    * Should do simple spectral index fit.
 c------------------------------------------------------------------------
         include 'maxdim.h'
         integer maxspect,maxvis,maxsoln,maxiter,maxpol
-        parameter(maxspect=33,maxvis=7000000,maxiter=30,maxsoln=1024)
+        parameter(maxspect=49,maxvis=7000000,maxiter=30,maxsoln=1024)
         parameter(maxpol=2)
 c
         character version*(*)
-        parameter(version='SmaMfCal: version 1.1 05-May-05')
+        parameter(version='SmaMfCal: version 1.2 27-May-05')
 c
         integer tno
         integer pwgains,pfreq,psource,ppass,pgains,ptau
@@ -368,7 +369,6 @@ c
 c
         if(epsi.gt.tol)call bug('w','Failed to converge')
         call output('Saving solution ...')
-        write(*,*) 'pgains=', pgains, ' =ppass', ppass
         call gaintab(tno,time,cref(pgains),ref(ptau),npol,nants,nsoln,
      *    freq0,dodelay,pee)
         if (dopass.and.interp) call intext(npol,nants,nchan,nspect,
@@ -698,12 +698,14 @@ c  copy the output channels in a strip-mining approach.
 c
 c  Loop over antenna, polarisation, strip, and channel within a strip.
 c
+         
            if(donply) then 
           nterm=bnply(1)+1
           do i=1,nants
           do p=1,npol
           pd = pee(p)
           do j=1,nchan,maxchan
+c               write(*,*) pass(i,j,p)
               n = min(maxchan,nchan-j+1)
           nsp=0
              pphase=0
@@ -757,7 +759,14 @@ c          call regpolfitg(nterm,xa,bp,nschan(l),rxchan,rIsp)
           enddo
           enddo
                 end if
-
+          do i=1,6
+          do p=1,npol
+            pd = pee(p)
+            do j=1,8
+c              write(*,*) 'ant=',i,pass(i,j,p) 
+           end do
+           end do
+           end do
         off = 8
         do i=1,nants
           do p=1,npol
@@ -811,16 +820,16 @@ c
           call hwritei(item,nschan(i),off,4,iostat)
           off = off + 8
           if(iostat.ne.0)then
-            call bug('w','Error writing nschan to freq table')
-            call bugno('f',iostat)
+          call bug('w','Error writing nschan to freq table')
+          call bugno('f',iostat)
           endif
           freqs(1) = sfreq(i)
           freqs(2) = sdf(i)
           call hwrited(item,freqs,off,2*8,iostat)
           off = off + 2*8
           if(iostat.ne.0)then
-            call bug('w','Error writing freqs to freq table')
-            call bugno('f',iostat)
+          call bug('w','Error writing freqs to freq table')
+          call bugno('f',iostat)
           endif
         enddo
 c
@@ -1302,9 +1311,9 @@ c
         end
 
         subroutine rmsweight(tno,chnwt,nchan,nspect,nschan,maxspect,
-     *    maxchan,weight)
+     *    maxchan,weight,edge)
          integer tno,maxspect,nspect,nchan,maxchan,weight
-         integer nschan(maxspect),i,j
+         integer nschan(maxspect),i,j,edge(2)
          real chnwt(maxchan), wwt,dt
 c
 c calculate rms weight if the weight parameter is in the range of
@@ -1344,10 +1353,11 @@ c   channel number per window nschan
 c
             ichan=0
             do j=1, nspect
-            do i=1, nschan(j)
+            do i=1, edge(1)+nschan(j)+edge(2)
             ichan=ichan+1
             if(nschan(j).gt.0) then
-            chnwt(ichan) =wwt*512.0/nschan(j)
+            chnwt(ichan) 
+     *      = wwt*512.0/(edge(1)+nschan(j)+edge(2))
             else
             chnwt(ichan) =0
             endif
@@ -1488,15 +1498,17 @@ c
 c  Loop over everything.
 c
         call uvdatrd(preamble,data,flags,maxchan,nchan)
-        call uvrdvri(tno,'nspect',bpnspect,0)
-        call uvgetvri(tno,'nschan',bpnschan,bpnspect)
+c       call uvrdvri(tno,'nspect',bpnspect,0)
+c        call uvgetvri(tno,'nschan',bpnschan,bpnspect)
+        updated =.true.
+       call despect(updated,tno,nchan,edge,chan,spect,
+     *          maxspect,nspect,sfreq,sdf,nschan,state)
 c
 c jhz: derive wt the current Tsys measurement and BW and integration time
 c
-       call rmsweight(tno,chnwt,nchan,bpnspect,bpnschan,maxspect,
-     *    maxchan,weight)
+        call rmsweight(tno,chnwt,nchan,nspect,nschan,maxspect,
+     *    maxchan,weight,edge)
              call basant(preamble(4),i1,i2)
-
          if(dopass) then
 c
 c  calculate pseudo continuum channels
@@ -1505,19 +1517,26 @@ c
           bchan  = 0
           echan  = 0
           call avgchn(numpol,bchan,echan,data,flags,nchan,
-     *    bpnspect,bpnschan,maxchan,chnwt,chz,chzwt,weight)
+     *    nspect,nschan,maxchan,chnwt,chz,chzwt,weight)
 c
 c  divide the spectral channel by the pseudo continuum
 c
           call divchz(numpol,data,ndata,nchan,
-     *    bpnspect,bpnschan,maxchan,chnwt,chz,chzwt,weight)
+     *    nspect,nschan,maxchan,chnwt,chz,chzwt,weight,edge)
 c
 c  smooth the data
-c          
+c
           if(dosmooth) call smoothply(preamble,ndata,
-     *    flags,nchan,bpnspect,
-     *    bpnschan,maxchan,dosmooth,donply,dowrap,wwt)
+     *    flags,nchan,nspect,
+     *    nschan,maxchan,dosmooth,donply,dowrap,wwt)
+          
          endif
+
+          
+c          if(dosmooth) call smoothply(preamble,ndata,
+c     *    flags,nchan,bpnspect,
+c     *    bpnschan,maxchan,dosmooth,donply,dowrap,wwt)
+c         endif
          
         call uvrdvra(tno,'source',source,' ')
         call uvrdvri(tno,'nants',nants,0)
@@ -1581,21 +1600,33 @@ c
             tlast = max(tlast,preamble(3))
             call despect(updated,tno,nchan,edge,chan,spect,
      *          maxspect,nspect,sfreq,sdf,nschan,state)
+
+c edge: number of channels in each edge to be flagged
+c nchan: total number spectral channels
+c nschan: number of channel in each of the spectral chunk
+c nspect: number of spectral windows
+c chan(i): new channel id corresponds to the original channel
+c          id after edge flagged 
+c spect(i): chunk id 
+                 
+                
            do i=1,nchan
               if(flags(i).and.chan(i).gt.0)then
                 present(i1,p) = .true.
                 present(i2,p) = .true.
                 call pack(i1,i2,p,spect(i),chan(i),visid)
+
+c
+c assign visid based on i1,i2,p, spect chan
+c
                 ninter = ninter + 1
-c             write(*,*) 'i spect chan data chnwt', 
-c     *        i,spect(i),chan(i),data(i),chnwt(i)
-          if(dopass) call accum(hash,ndata(i),visid,
-     *         nsoln,nvis,vis,wt,vid,count,chnwt(i))
+          if(dopass) call accum(hash,data(i),visid,
+     *       nsoln,nvis,vis,wt,vid,count,chnwt(i))
           if(.not.dopass) call accum(hash,data(i),visid,
-     *         nsoln,nvis,vis,wt,vid,count,chnwt(i))
-              else
-                nbad = nbad + 1
-              endif
+     *       nsoln,nvis,vis,wt,vid,count,chnwt(i))
+          else
+             nbad = nbad + 1
+             endif
             enddo
 c
           else
@@ -1607,7 +1638,7 @@ c
 c jhz: derive wt the current Tsys measurement and BW and integration time
 c
        call rmsweight(tno,chnwt,nchan,nspect,nschan,maxspect,
-     *    maxchan,weight)
+     *    maxchan,weight,edge)
 
           if(dopass) then
 c
@@ -1619,11 +1650,13 @@ c    for single
           echan  = 0
           call avgchn(numpol,bchan,echan,data,flags,nchan,
      *    nspect,nschan,maxchan,chnwt,chz,chzwt,weight)
+c     *    edge)
 c
 c  divide the spectral channel by the pseudo continuum
 c
-          call divchz(numpol,data,ndata, nchan,
-     *    nspect,nschan,maxchan,chnwt,chz,chzwt,weight)
+          call divchz(numpol,data,ndata,nchan,
+     *    nspect,nschan,maxchan,chnwt,chz,chzwt,weight,
+     *    edge)
 c
 c  smooth the data
 c
@@ -1834,7 +1867,7 @@ c************************************************************************
         PARAMETER(maxwin=33, maxschan=1024, maxpol=2)
         integer nchan,bpnspect,maxchan,bpnschan(maxwin)
         integer i,j,numpol,bchan,echan, ipol
-        integer bschan, eschan
+        integer bschan, eschan 
         complex data(maxchan)
         logical flags(maxchan), nsflag(maxschan)
         real ysr(maxschan), ysi(maxschan)
@@ -1916,12 +1949,13 @@ c initialize
 
 c************************************************************************
         subroutine divchz(numpol,data,ndata,nchan,
-     *  bpnspect,bpnschan,maxchan,chnwt,chz,chzwt,weight)
+     *  bpnspect,bpnschan,maxchan,chnwt,chz,chzwt,weight,
+     *  edge)
         PARAMETER(maxwin=33, maxschan=1024, maxpol=2)
         PARAMETER(pi=3.14159265358979323846)
         integer nchan,bpnspect,maxchan,bpnschan(maxwin)
         integer i,j,numpol,bchan,echan, ipol
-        integer bschan, eschan
+        integer bschan, eschan, edge(2)
         complex data(maxchan),ndata(maxchan)
         real chnwt(maxchan), ph, chwt
         real vr,vi,chzr,chzi
@@ -1947,13 +1981,13 @@ c
 c reject data around nulls in planets
 c
        if(DENOM.le.1.0e-20.or.chzwt(j,ipol).le.1.0e-20) then
-              do i=1, bpnschan(j)
+              do i=1, edge(1)+bpnschan(j)+edge(2)
               ntcount=ntcount+1
               data(ntcount) = cmplx(0.0,0.0)
               chnwt(ntcount) = 0.0
               end do
             else
-              do i=1, bpnschan(j)
+              do i=1, edge(1)+bpnschan(j)+edge(2)
               ntcount=ntcount+1
                vr = real(data(ntcount))
                vi = aimag(data(ntcount))
