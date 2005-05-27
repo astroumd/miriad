@@ -15,7 +15,8 @@ c		 pha_freq2 = slope * pha_freq1 +  intercept
 c	where slope and intercept can be read from a slope
 c       table determined using varfit based on observations of a strong
 c       point source at the two frequencies, simultaneously.
-c       There is an options to use slope = freq2/freq1 and intercept=0. 
+c       There are options to use slope = freq2/freq1 and intercept=0, or
+c                         to use users input for the slope and intercept. 
 c@ vis
 c	The name of the three input UV datasets. 
 c       1. vis data at the lower frequency. The antenna gains must first be
@@ -28,17 +29,26 @@ c       Reference antenna for gains and uv-variables. If refant.ne.0 then
 c       the gain of this antenna is set to cmplx(1.,0.). The
 c       other antenna gains are then relative to the reference antenna.
 c       The default is to use the original gains and uv-variable values.
+c@ phratio
+c       Phase ratio for slope when options=uratio;
+c       The default is to use the frequency ratio.
+c@ phoffset
+c       Phase offset (in degree) for intercept when options=uratio
+c       or when options=fratio;
+c       The default is 0.
 c@ options
 c         wrap         Do not unwrap phase.
 c         fratio       Use the frequency ratio of freq2/freq1 for slope and
 c                      intercept=0.
-c                      Default uses slope table in the input file 2
+c         uratio       Use the phase ratio from user's input (phratio).
+c                      Default uses slope table in the input file 2.
 c--
 c  History:
 c      jhz 2005-5-24 create initial version
+c      jhz 2005-5-26 add the uratio, phraio, phoffset
 c-----------------------------------------------------------------------
 	character version*(*)
-	parameter(version='(version 1.0 24-May-05)')
+	parameter(version='(version 1.0 26-May-05)')
 c        include 'maxdim.h'
         integer MAXANTS,MAXSOLS,maxspect,maxchan
         parameter(MAXANTS=28,MAXSOLS=2048)
@@ -49,19 +59,19 @@ c        include 'maxdim.h'
 	character vis*80 
 	integer tvis,nspect,nread 
         integer lin, nfiles,i,j,k,fi,ant,refant
-        logical uvdatopn,dowrap,dofratio
+        logical uvdatopn,dowrap,dofratio,douratio
         character ops*9
         integer nants,nsols,npol,pee(2),vupd
         double precision interval,dtime(MAXSOLS)
         real theta, slope(MAXANTS), yoffset(MAXANTS)
         real Ampl(MAXANTS,MAXSOLS),Phi(MAXANTS,MAXSOLS)
         real AAmpl(MAXANTS,MAXSOLS,2),PPhi(MAXANTS,MAXSOLS,2)
-        real mpha
+        real mpha, phratio,phoffset
         complex mgains(10,2,6145)
         double precision sfreq(maxspect), freq2,freq1
-         complex data(maxchan)
-         double precision preamble(5)
-         logical gflags(maxchan)
+        complex data(maxchan)
+        double precision preamble(5)
+        logical gflags(maxchan)
 c
 c  Get input parameters.
 c
@@ -71,7 +81,9 @@ c	call keyf('vis',vis,' ')
            ops = 'sdlp'
         call uvdatinp ('vis', ops)
         call keyi('refant',refant,0)
-	call GetOpt(dowrap,dofratio)
+        call keyr('phratio',phratio,0)
+        call keyr('phoffset',phoffset,0)
+	call GetOpt(dowrap,dofratio,douratio)
 	call keyfin
 c
 c  looping the uvdata files.
@@ -185,12 +197,18 @@ c
 
              do j=1, nants
              do k=1, nsols
-           mpha = slope(j)*pphi(j,k,1)+yoffset(j)
-        if(.not.dofratio)  mpha = slope(j)*pphi(j,k,1)+yoffset(j)
-        if(dofratio) mpha = freq2/freq1*pphi(j,k,1)
-             mpha = mpha*pi/180.
-             mgains(j,1,k) = cmplx(aampl(j,k,1)*cos(mpha),
-     *                         aampl(j,k,1)*sin(mpha))
+              mpha = slope(j)*pphi(j,k,1)+yoffset(j)
+        if(.not.dofratio.and..not.douratio)  
+     *        mpha = slope(j)*pphi(j,k,1)+yoffset(j)
+        if(dofratio) 
+     *        mpha = freq2/freq1*pphi(j,k,1)+phoffset
+        if(douratio.and.phratio.ne.0.0) 
+     *        mpha = phratio*pphi(j,k,1)+phoffset
+        if(douratio.and.phratio.eq.0.0) 
+     *        mpha = freq2/freq1*pphi(j,k,1)+phoffset
+              mpha = mpha*pi/180.
+        mgains(j,1,k) = cmplx(aampl(j,k,1)*cos(mpha),
+     *                        aampl(j,k,1)*sin(mpha))
          enddo
          enddo
            npol=1
@@ -198,8 +216,12 @@ c
           call gaintab(tvis,dtime,mgains,npol,nants,nsols,pee)
        write(*,*) 'create new gains by transferring phase with:'
            if(dofratio) 
-     *  write(*,55) freq2/freq1,freq2,freq1
-           if(.not.dofratio) then
+     *  write(*,55) freq2/freq1,phoffset,freq2,freq1
+           if(douratio.and.phratio.eq.0.0)
+     *  write(*,55) freq2/freq1,phoffset,freq2,freq1
+           if(douratio.and.phratio.ne.0.0)
+     *  write(*,55) phratio,phoffset,freq2,freq1
+           if(.not.dofratio.and..not.douratio) then
                do j=1, nants
                if(slope(j).ne.0.0) 
      * write(*,54) slope(j),yoffset(j),freq2,freq1,j
@@ -209,7 +231,7 @@ c
 54     format(1x,'slope=',f5.3,1x,'intercept=',f7.1,1x,
      *     'freq2=',f7.2,1x,'freq1=',f7.2,1x,
      *     'ant=',i1)
-55     format(1x,'slope=',f5.3,1x,'intercept=0',1x,
+55     format(1x,'slope=',f5.3,1x,'intercept=',f7.1,1x,
      *     'freq2=',f7.2,1x,'freq1=',f7.2,1x,
      *     'ant=all')
 c
@@ -340,7 +362,7 @@ c           write(*,*) 'time=' ,  time(i)
           j1 = 1
           do j=1,nants
             do p=1,npol
-              pd = pee(p)
+               pd = pee(p)
                g(j1) =gains(j,pd,i)
              j1 = j1 + 1
             enddo
@@ -361,26 +383,28 @@ c
          end
 
 c********1*********2*********3*********4*********5*********6*********7*c
-	subroutine GetOpt(dowrap,dofratio)
+	subroutine GetOpt(dowrap,dofratio,douratio)
         implicit none
-	logical dowrap,dofratio
+	logical dowrap,dofratio,douratio
 c
 c  Get extra processing options.
 c
 c  Output:
 c    dowrap     Do not unwrap the phases.
 c    dofratio   Take the frequency ratio for the slope
+c    douratio   Take the user's input ratio for the slope
 c-----------------------------------------------------------------------
 	integer nopt
-        parameter(nopt=2)
+        parameter(nopt=3)
         logical present(nopt)
         character opts(nopt)*9
 c
-        data opts/'wrap     ','fratio   '/
+        data opts/'wrap     ','fratio   ','uratio   '/
 c	
 	call options('options',opts,present,nopt)
         dowrap    = present(1)
         dofratio  = present(2)
+        douratio  = present(3)
 	end
 c********1*********2*********3*********4*********5*********6*********7*c
 	subroutine GetVar(tvis,axis,var,nants,varlen)
