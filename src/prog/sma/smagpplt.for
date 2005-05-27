@@ -111,7 +111,7 @@ c------------------------------------------------------------------------
         parameter (DPI = 3.14159265358979323846)
         parameter (TWOPI = 2 * PI)
         parameter (DTWOPI = 2 * DPI)        
-        parameter(version='SmaGpPlt: version 27-May-05')
+        parameter(version='SmaGpPlt: version 1.1 27-May-05')
         include 'gpplt.h'
         integer iostat,tin,nx,ny,nfeeds,nants,nsols,ierr,symbol,nchan
         integer ntau,length, i, j, k,nschann(maxspect)
