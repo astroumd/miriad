@@ -1,5 +1,5 @@
 c************************************************************************
-        program smapplt
+        program smagpplt
 c
 c= SmaGpPlt -- Plot,smooth and fit to gain and bandpass.
 c& jhz for SMA
@@ -102,6 +102,7 @@ c    jhz  23sep04 add polynomial fit
 c    jhz  20nov04 replace polynomial fit by orthogonal polynomial.
 c    jhz  04jan05 add weight to polynomial fit.
 c    jhz  27may05 fix the edge flagging problem.
+c    jhz  31may05 fix the program name smapplt
 c  Bugs:
 c------------------------------------------------------------------------
         integer maxsels
