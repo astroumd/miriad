@@ -35,10 +35,11 @@ c--
 c  History:
 c  jhz    2005-05-16 created the 1st version based mel wright's 
 c                    uvcheck
+c  jhz    2005-06-01 added inttime into the var for flagging
 c----------------------------------------------------------------------c
 	include 'maxdim.h'
 	character*(*) version
-	parameter(version='SmaCheck: version 1.0 21-May-2005')
+	parameter(version='SmaCheck: version 1.0 01-June-2005')
 	integer maxsels, ochan, nbugs, nflag, nwflag
 	parameter(MAXSELS=512)
 	real sels(MAXSELS)
@@ -329,7 +330,6 @@ c
 	    endif
 	  endif
       else
-         
 	 do i=1,varlen
 	  if(ddata(i).ne.0.d0 .and.
 	  ((ddata(i).le.dble(varmin).or.ddata(i).ge.dble(varmax)))then
@@ -340,8 +340,8 @@ c
             if(var(1:len1(var)).eq.'systemp'.or.
      *         var(1:len1(var)).eq.'antaz'.or.
      *         var(1:len1(var)).eq.'antel')
-     *        bant(i)=.true.
-             if(debug) write(*,*) 'ant=',i, ' flag=',bant(i)
+     *         bant(i)=.true.
+            if(debug) write(*,*) 'ant=',i, ' flag=',bant(i)
 	    if(debug)then
               
 	      write(line,'(a,x,a,a,i3,a,g13.5)')
@@ -374,6 +374,22 @@ c
             endif
           endif
 	 enddo
+
+c
+c  inttime only has length =1
+c  assign all the baseline to the flag status
+           if(var(1:len1(var)).eq.'inttime') then
+           do i =1, maxant
+              bant(i)=.true.
+           if(debug) write(*,*) 'ant=',i, ' flag=',bant(i)
+           end do
+           if(debug)then
+           write(line,'(a,x,a,a,i3,a,g13.5)')
+     *      date,var(1:len1(var)),'(',i,') = ',ddata(1)
+              call LogWrit(line)
+              endif
+            endif
+
       endif
       end
 c********1*********2*********3*********4*********5*********6*********7*c
