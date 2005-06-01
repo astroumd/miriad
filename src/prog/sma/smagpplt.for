@@ -103,6 +103,7 @@ c    jhz  20nov04 replace polynomial fit by orthogonal polynomial.
 c    jhz  04jan05 add weight to polynomial fit.
 c    jhz  27may05 fix the edge flagging problem.
 c    jhz  31may05 fix the program name smapplt
+c    jhz  01jun05 eliminate gpplt.h
 c  Bugs:
 c------------------------------------------------------------------------
         integer maxsels
@@ -112,8 +113,11 @@ c------------------------------------------------------------------------
         parameter (DPI = 3.14159265358979323846)
         parameter (TWOPI = 2 * PI)
         parameter (DTWOPI = 2 * DPI)        
-        parameter(version='SmaGpPlt: version 1.1 27-May-05')
-        include 'gpplt.h'
+        parameter(version='SmaGpPlt: version 1.1 01-June-05')
+        include 'maxdim.h'
+        integer maxTimes,maxGains
+        parameter(maxTimes=2*MAXCHAN*MAXANT)
+        parameter(maxGains=2*MAXCHAN*MAXANT)
         integer iostat,tin,nx,ny,nfeeds,nants,nsols,ierr,symbol,nchan
         integer ntau,length, i, j, k,nschann(maxspect)
         character vis*64,device*64,logfile*64,basetime*20
@@ -585,7 +589,10 @@ c    nchan
 c    freq
 c    Gains
 c------------------------------------------------------------------------
-        include 'gpplt.h'
+        include 'maxdim.h'
+        integer maxTimes,maxGains
+        parameter(maxTimes=2*MAXCHAN*MAXANT)
+        parameter(maxGains=2*MAXCHAN*MAXANT)
         integer ngains,nspect,item,iostat,n,off,nschan,i,j,k,offi,offo
         parameter(maxspect=49)
         integer ntau,nschann(maxspect)
@@ -802,7 +809,10 @@ c  Do the plot or the listing.
 c
 c  Inputs:
 c------------------------------------------------------------------------
-        include 'gpplt.h'
+        include 'maxdim.h'
+        integer maxTimes,maxGains
+        parameter(maxTimes=2*MAXCHAN*MAXANT)
+        parameter(maxGains=2*MAXCHAN*MAXANT)
         character line*80,title*48
         logical more
         real y(maxtimes)
@@ -1020,7 +1030,10 @@ c
         external getval
 c
 c------------------------------------------------------------------------
-        include 'gpplt.h'
+        include 'maxdim.h'
+        integer maxTimes,maxGains
+        parameter(maxTimes=2*MAXCHAN*MAXANT)
+        parameter(maxGains=2*MAXCHAN*MAXANT)
         real x(2*maxant),y(2*maxant),value
         integer ifeed,iant,j,j1,j2
         logical more
@@ -1080,7 +1093,10 @@ c  Inputs:
 c	Similar to GainPlt, except ...
 c	GetVal	Routine used to convert to the desired quantity.
 c------------------------------------------------------------------------
-        include 'gpplt.h'
+        include 'maxdim.h'
+        integer maxTimes,maxGains
+        parameter(maxTimes=2*MAXCHAN*MAXANT)
+        parameter(maxGains=2*MAXCHAN*MAXANT)
         character line*80,title*48,label*20
         logical more
         real x(maxtimes),y(maxtimes),value(2*maxant)
@@ -1187,7 +1203,10 @@ c  Inputs:
 c	Similar to BpPlt, except ...
 c	GetVal	Routine used to convert to the desired quantity.
 c------------------------------------------------------------------------
-        include 'gpplt.h'
+        include 'maxdim.h'
+        integer maxTimes,maxGains
+        parameter(maxTimes=2*MAXCHAN*MAXANT)
+        parameter(maxGains=2*MAXCHAN*MAXANT)
         character line*80,label*20,title*12
         logical more
         real x(maxtimes),y(maxtimes),freqmin,freqmax
