@@ -64,6 +64,10 @@
 //            that users want to start (nscans).
 // 2005-05-23 (PJT) added prototypes from miriad.h (via sma_data.h) 
 //             and cleaned up some code because of this, sans indent
+// 2005-06-01 (JHZ) fixed a few bugs in incompatibility of pointer type
+//             after PJT updating miriad.h.
+//             stat in slaCldj is initialized and added  
+//             stat parse after return.
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -122,7 +126,7 @@ void rspokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1, int *doop1,
 void rspokeflshsma_c(char *kst[]);
 
 
-int rsgetdata(visdata smavis[7681], int smaflags[7681], int *smanchan, int p, int bl, int sb, int rx);
+int rsgetdata(float smavis[2*7681], int smaflags[7681], int *smanchan, int p, int bl, int sb, int rx);
 struct pols *rscntstokes(int npol, int bl, int sb, int rx);
 int rsmir_Read(char *datapath, int jstat);
 struct inh_def *inh_read(FILE *fpinh);
@@ -193,7 +197,8 @@ void rssmaflush_c(int scanskip,int scanproc,int sb,int rxif,int dosporder,int do
 { /* flush mirdata*/
   int i, j;
   int jstat;
-  int kstat;
+//  int kstat;
+  char *kstat;
   int tno;
   char telescope[4];
   char instrument[4];
@@ -208,9 +213,9 @@ void rssmaflush_c(int scanskip,int scanproc,int sb,int rxif,int dosporder,int do
   smabuffer.doChunkOrder = dosporder;
   smabuffer.doeng = doeng;
   smabuffer.doConjugate = doflppha;
-  kstat = jstat = -1;  
+    sprintf(kstat, "-1");
   /*  read header  */
-  rspokeflshsma_c((char *)&(kstat));     /* PJT:  passing arg 1 from incompatible pointer type */ 
+  rspokeflshsma_c(&kstat);  
   /*  write ante numbers */
   if(smabuffer.nants!=0) {
     //         uvputvri_c(tno,"nants",&(smabuffer.nants),1);
@@ -281,7 +286,7 @@ void rspokeflshsma_c(char *kst[])
   double preamble[5], tdash;
   float freq0[SMIF],fac[SMIF], tfac;
   float jyperk, vel;
-  visdata vis[MAXCHAN];
+  float vis[2*MAXCHAN];
   int flags[MAXCHAN]; 
   struct pols *polcnt;
   char telescope[4];
@@ -370,7 +375,7 @@ void rspokeflshsma_c(char *kst[])
 	      /* call opapply(data(ipnt),nfreq(if),fac(if)) */
 	      /* bug_c('f',"This code section had a bug"); */
 	      /* next line had serious bug before may 23 */
-	      uvwrite_c(tno,preamble,&smabuffer.data[ipnt],flags,smabuffer.nfreq[ifs]);  /* PJT: arg 3 */
+//	  uvwrite_c(tno,preamble,&smabuffer.data[ipnt],flags,smabuffer.nfreq[ifs]); 
 	    }
 	  }
 	  bl++;
@@ -409,12 +414,12 @@ void rspokeflshsma_c(char *kst[])
 	if(npol>0) {
 	  uvputvri_c(tno,"npol",&npol,1);
 	  for(p=polcnt->polstart; p<polcnt->polend+1; p++){
-	    nchan = rsgetdata(&vis,&flags,&nchan, p, bl, sb, rx);     /* PJT: 1,2 */
+	    nchan = rsgetdata(vis,flags,&nchan, p, bl, sb, rx);     
 	    if(nchan>0) {
 	      ibuff = smabuffer.polcode[0][p][bl];
-	      uvputvri_c(tno,"pol",&ibuff,1);
-	      uvputvrr_c(tno,"inttime",&smabuffer.inttime[bl],1);
-	      uvwrite_c(tno,&preamble,&vis,&flags,nchan);             /*PJT 2,3,4 */
+	    uvputvri_c(tno,"pol",&ibuff,1);
+	    uvputvrr_c(tno,"inttime",&smabuffer.inttime[bl],1);
+	    uvwrite_c(tno,preamble, vis,flags,nchan);         
 	    }
 	  }
 	}
@@ -437,7 +442,7 @@ void rspokeflshsma_c(char *kst[])
   }
 }
 
-int rsgetdata(visdata smavis[MAXCHAN], int smaflags[MAXCHAN], int *smanchan, int p, int bl, int sb, int rx)
+int rsgetdata(float smavis[2*MAXCHAN], int smaflags[MAXCHAN], int *smanchan, int p, int bl, int sb, int rx)
 { /* Construct a visibility record constructed from multiple IFs. */
   int nifs=smabuffer.nifs;
   int nvis;
@@ -453,8 +458,8 @@ int rsgetdata(visdata smavis[MAXCHAN], int smaflags[MAXCHAN], int *smanchan, int
       if(nchan<nchand) {
 	for (i=nchan; i<nchand; i++) {
 	  smaflags[i] = -1;
-	  smavis[i].real = 0;
-	  smavis[i].imag = 0;
+	  smavis[2*i] = 0;
+	  smavis[2*i+1] = 0;
 	}    
 	nchan = nchand;
       }
@@ -462,8 +467,8 @@ int rsgetdata(visdata smavis[MAXCHAN], int smaflags[MAXCHAN], int *smanchan, int
 	fac[n]=1000000.;
 	/*          printf("sb=%d %f\n", sb, pow((double)(-1),(double)(sb+1))); 
 	 */
-	smavis[i].real =  fac[n]*smabuffer.data[ipnt].real;
-	smavis[i].imag =  fac[n]*smabuffer.data[ipnt].imag*
+	smavis[2*i] =  fac[n]*smabuffer.data[ipnt].real;
+	smavis[2*i+1] =  fac[n]*smabuffer.data[ipnt].imag*
 	  (float)pow((double)(-1),(double)(sb+1)); 
 	smaflags[i] =  smabuffer.flag[n][p][bl][sb];       
 	ipnt++;    
@@ -478,8 +483,8 @@ int rsgetdata(visdata smavis[MAXCHAN], int smaflags[MAXCHAN], int *smanchan, int
   if(nchan<nchand&&nchan>0) {
     for(i=nchan+1; i< nchand+1; i++) {
       smaflags[i] = -1;
-      smavis[i].real = 0;
-      smavis[i].imag = 0;
+      smavis[2*i] = 0;
+      smavis[2*i+1] = 0;
     }
     nchan = nchand;
   }
@@ -2454,7 +2459,7 @@ int spdecode (struct codeh_def *specCode[])
 
 float juliandate (struct codeh_def *refdate[])
 { 
-  int i, stat;    /* PJT: stat is never initialized ??? -- but never appears to be used in slaCldj */
+  int i, stat;   
   double jdate;
   char  ccaldate[13];
   static char *months[] = {"ill", "Jan","Feb","Mar","Apr","May","Jun","Jul", 
@@ -2472,6 +2477,18 @@ float juliandate (struct codeh_def *refdate[])
     if (memcmp(mc,months[i], 3)==0) mi=i;
   }
   jdate = slaCldj (yi, mi, di, stat)+2400000.5;
+  if(stat==1) {
+     printf("bad year   (MJD not computed).");
+     exit(-1);
+              }
+  if(stat==2) {
+     printf("bad month   (MJD not computed).");
+     exit(-1);
+              }
+  if(stat==3) {
+     printf("bad day   (MJD not computed).");
+     exit(-1);
+              }
   return jdate;
 }
 
@@ -2488,8 +2505,8 @@ double slaCldj ( int iy, int im, int id,  int sj)
      **     iy,im,id     int    year, month, day in Gregorian calendar
      **
      **  Returned:
-     **     *djm         double Modified Julian Date (JD-2400000.5) for 0 hrs
-     **     *j           int    status:
+     **     mjd_rtn      double Modified Julian Date (JD-2400000.5) for 0 hrs
+     **     sj           int    status:
      **                           0 = OK
      **                           1 = bad year   (MJD not computed)
      **                           2 = bad month  (MJD not computed)
@@ -2505,16 +2522,15 @@ double slaCldj ( int iy, int im, int id,  int sj)
      */
 {
   long iyL, imL, mjd;
-  int jj, *j;
   double mjd_rtn;
   /* Month lengths in days */
   static int mtab[12] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
   
   /* Validate year */
-  if ( iy < -4699 ) { *j = 1; return 0.0; }
+  if ( iy < -4699 ) { sj = 1; return 0.0; }
   
   /* Validate month */
-  if ( ( im < 1 ) || ( im > 12 ) ) { *j = 2; return 0.0; }
+  if ( ( im < 1 ) || ( im > 12 ) ) { sj = 2; return 0.0; }
   
   /* Allow for leap year */
   mtab[1] = ( ( ( iy % 4 ) == 0 ) &&
@@ -2522,7 +2538,7 @@ double slaCldj ( int iy, int im, int id,  int sj)
     29 : 28;
   
   /* Validate day */
-  jj =  (( id < 1 || id > mtab[im-1] ) ? 3 : 0);
+  sj =  (( id < 1 || id > mtab[im-1] ) ? 3 : 0);
   
   /* Lengthen year and month numbers to avoid overflow */
   iyL = (long) iy;
@@ -2679,7 +2695,7 @@ void aberrate(double jday,double ra,double dec,double *rappptr,double *dappptr)
   double  pos[3],vel[3],sinra,sindec,cosra,cosdec, rapp, dapp;
   void vearth();
 
-  vearth(jday,&pos, &vel);
+  vearth(jday,pos,vel);
   sinra = sin(ra);
   cosra = cos(ra);
   sindec = sin(dec);
