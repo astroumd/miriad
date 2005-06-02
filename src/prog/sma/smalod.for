@@ -34,6 +34,11 @@ c       for a continuum observation. For example, if you have two IFs,
 c       the first of which is CO(3-2), and the second is continuum, use
 c       restfreq=345.795991,0
 c
+c@ vsource
+c       The velocity of source in km/s w.r.t. the LSR.
+c       Positive velocity is away from observer.
+c       Default is zero.
+c
 c@ refant
 c      The reference antenna. Default is 6. The reference antenna needs
 c      to be present while the antenna positions are being decoded 
@@ -165,17 +170,19 @@ c    jhz  02-may-05 add an option to do phase conjugate for the lower side
 c                   band data in respose to Taco's log 9288.
 c    jhz  05-may-05 enable the function to calculate radial velocity
 c                   on either barycentric of lsr frame.
+c    jhz  02-jun-05 add input parameter vsource; and enable input
+c                   parameter restfreq.
 c
 c------------------------------------------------------------------------
         integer maxfiles
         parameter(maxfiles=128)
         character version*(*)
-        parameter(version='SmaLod: version 1.2 1-Mar-05')
+        parameter(version='SmaLod: version 1.3 2-June-05')
 c
         character in(maxfiles)*64,out*64,line*64, rxc*4
         integer tno, length, len1
         integer ifile,rxif,nfreq,iostat,nfiles,i
-        double precision rfreq(2)
+        double precision rfreq
         logical doauto,docross,docomp,dosam,relax,unflag,dohann
         logical dobary,doif,birdie,dowt,dopmps,doxyp,doop
         logical polflag,hires,nopol,sing,circular,linear,oldpol,dsb,
@@ -183,6 +190,7 @@ c
         integer fileskip,fileproc,scanskip,scanproc,sb, dosporder
         integer doeng
 	integer rsNCHAN, refant
+        real vsour
 c
 c  Externals.
 c
@@ -218,8 +226,11 @@ c
              end if
          if(rxif.lt.-1.or.rxif.gt.2) 
      *   call bug('f','Invalid Receiver ID.')
-
-        call mkeyd('restfreq',rfreq,2,nfreq)
+c        call mkeyd('restfreq',rfreq,2,nfreq)
+        call keyd('restfreq',rfreq,0)
+        call keyr('vsource', vsour,0)
+              if(vsour.ne.0)
+     *  print*,'input vsource =',vsour, 'km/s'
         call keyi('refant',refant,6)
         call getopt(doauto,docross,docomp,dosam,doxyp,doop,relax,
      *    sing,unflag,dohann,birdie,dobary,doif,dowt,dopmps,polflag,
@@ -291,7 +302,7 @@ c
           else
             call pokeini(tno,dosam,doxyp,doop,dohann,birdie,dowt,
      *      dopmps,dobary,doif,hires,nopol,circular,linear,oldpol,
-     *      rsnchan,refant,dolsr)
+     *      rsnchan,refant,dolsr,rfreq,vsour)
             if(nfiles.eq.1)then
               i = 1
             else
@@ -312,6 +323,7 @@ c
           call bug('w',line)
           call bug('w','Prematurely finishing because of errors')
           call hiswrite(tno,'SMALOD: '//line)
+          
           call hiswrite(tno,
      *      'SMALOD: Prematurely finishing because of errors')
         endif
@@ -452,7 +464,7 @@ c------------------------------------------------------------------------
         logical ok
         double precision smalat, smalong
         call uvputvrr(tno,'epoch',2000.,1)
-        call uvputvrr(tno,'vsource',0.,1)
+c        call uvputvrr(tno,'vsource',0.,1)
         call obspar('SMA','latitude',latitude,ok)
         if(ok)call obspar('SMA','longitude',longitud,ok)
         if(ok)call obspar('SMA','evector',dtemp,ok)
@@ -477,12 +489,14 @@ c************************************************************************
         subroutine pokeini(tno1,dosam1,doxyp1,doop1,
      *          dohann1,birdie1,dowt1,dopmps1,dobary1,
      *          doif1,hires1,nopol1,circular1,linear1,oldpol1,
-     *	        rsnchan1,refant1,dolsr1)
+     *	        rsnchan1,refant1,dolsr1,rfreq1,vsour1)
 c
         integer tno1, rsnchan1, refant1
         logical dosam1,doxyp1,dohann1,doif1,dobary1,birdie1,dowt1
         logical dopmps1,hires1,doop1,nopol1,circular1,linear1,oldpol1
         logical dolsr1
+        double precision rfreq1
+        real vsour1
 c
 c  Initialise the Poke routines.
 c------------------------------------------------------------------------
@@ -511,7 +525,7 @@ c
         call rspokeinisma(kstat,tno1,dosam1,doxyp1,doop1,
      *  dohann1,birdie1,dowt1,dopmps1,dobary1,doif1,hires1,
      *  nopol1,circular1,linear1,oldpol1,lat1,long1,rsnchan1,
-     *  refant1,dolsr1)
+     *  refant1,dolsr1,rfreq1,vsour1)
         end
 c************************************************************************
         subroutine liner(string)
