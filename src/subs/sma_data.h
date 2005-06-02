@@ -345,8 +345,8 @@ struct timeStamp {
 typedef struct timeStamp timeStamp;
 
 struct visdata {
-        float real;
-        float imag;
+         float real;
+         float imag;
 };
 typedef struct visdata visdata;
 
@@ -499,6 +499,7 @@ struct smlodd {
         double az[SMANT+1];
         visdata data[SMADATA+1];
         float veldop;
+        float vsource;
         float xtsys[SMIF+1][SMANT+1];
         float ytsys[SMIF+1][SMANT+1];
         float tsys[SMANT+1];        
