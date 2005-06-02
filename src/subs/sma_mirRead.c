@@ -64,10 +64,11 @@
 //            that users want to start (nscans).
 // 2005-05-23 (PJT) added prototypes from miriad.h (via sma_data.h) 
 //             and cleaned up some code because of this, sans indent
-// 2005-06-01 (JHZ) fixed a few bugs in incompatibility of pointer type
-//             after PJT updating miriad.h.
-//             stat in slaCldj is initialized and added  
-//             stat parse after return.
+// 2005-06-01 (JHZ) fixed a few bugs in incompatible pointer type.
+//                  stat in slaCldj is initialized and added  
+//                  stat parse after return.
+// 2005-06-02 (JHZ) implemented vsource and restfreq from users
+//                  inputs.
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -120,9 +121,10 @@ struct inh_int_def {
 void rsmirread_c(char *datapath, char *jst[]);
 void rsmiriadwrite_c(char *datapath, char *jst[]);
 void rssmaflush_c(int scanskip, int scanproc, int sb, int rxif, int dosporder, int doeng, int doflppha);
-void rspokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1, int *doop1, int *dohann1, int *birdie1, 
-		    int *dowt1, int *dopmps1, int *dobary1, int *doif1, int *hires1, int *nopol1, int *circular1, 
-		    int *linear1, int *oldpol1, double lat1, double long1, int rsnchan1, int refant1, int *dolsr1);
+void rspokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1, int *doop1, int *dohann1, 
+int *birdie1, int *dowt1, int *dopmps1, int *dobary1, int *doif1, int *hires1, int *nopol1, 
+int *circular1, int *linear1, int *oldpol1, double lat1, double long1, int rsnchan1, 
+int refant1, int *dolsr1, double rfreq1, float *vsour1);
 void rspokeflshsma_c(char *kst[]);
 
 
@@ -235,10 +237,10 @@ void rspokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1,
 		    int *doop1, int *dohann1, int *birdie1, int *dowt1, int *dopmps1,
 		    int *dobary1, int *doif1, int *hires1, int *nopol1, int *circular1,
 		    int *linear1, int *oldpol1, double lat1, double long1, int rsnchan1, 
-		    int refant1, int *dolsr1)
+		    int refant1, int *dolsr1, double rfreq1, float *vsour1)
 { 
   /* rspokeflshsma_c == pokeflsh */
-  int buffer;
+  int buffer, i;
   
   /* initialize the external buffers */   
   strcpy(sname, " ");
@@ -262,6 +264,12 @@ void rspokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1,
   smabuffer.longi  = long1;
   smabuffer.refant = refant1;
   smabuffer.dolsr  = *dolsr1;
+  smabuffer.vsource= *vsour1;
+      if(rfreq1 > 0) {
+             for (i=0; i<SMIF+1; i++) {
+             smabuffer.restfreq[i] = rfreq1;
+                                      }
+                    } 
   if(smabuffer.dowt>0) {
     /* call lagwt(wts,2*smcont-2,0.04) */
     /* process weights here. */ 
@@ -342,6 +350,8 @@ void rspokeflshsma_c(char *kst[])
   /*call velrad(.not.dobary,tdash,obsra,obsdec,ra,dec,lst,lat,vel)*/
   // store radial velocity of the observatory w.r.t. source
   uvputvrr_c(tno,"veldop",&(smabuffer.veldop),1);
+  // store the source velocity w.r.t. lsr
+  uvputvrr_c(tno,"vsource",&(smabuffer.vsource),1);
   jyperk=139.;    /* assuming eta=0.7 d=6m */
   uvputvrr_c(tno,"jyperk",&jyperk,1);
   /* Handle the case that we are writing the multiple IFs out as multiple
@@ -1407,10 +1417,16 @@ int rsmir_Read(char *datapath, int jstat)
 	  set < smabuffer.scanskip+smabuffer.scanproc+1; set++){
 	// calculate doppler velocity from chunk 1; 
 	// the rest chunk give the same value.
-	fratio = (spn[set]->fsky[1]/spn[set]->rfreq[1]);
+        // absolute velocity is based on form (2-229)
+        // Astrophysical Formulae by K. R. Lang (Springer-Verlag 1974)
+        // p194 
+	fratio = (spn[set]->fsky[12]/spn[set]->rfreq[12]);
 	vabsolute = (1. - fratio*fratio ) / (1. + fratio*fratio );
 	vabsolute = vabsolute*DCMKS/1000.;
-	spn[set]->veldop = vabsolute - spn[set]->vel[1];
+        // Derive the Doppler velocity from observer to the LSR
+        // by taking out the Radial velocity (at chunk 1) of the source 
+        // w.r.t. the LSR. 
+	spn[set]->veldop = vabsolute - spn[set]->vel[12];
 	//         printf("%d veldop=%f\n", set, spn[set]->veldop);
       }
     }                   
@@ -1692,8 +1708,16 @@ int rsmir_Read(char *datapath, int jstat)
 	//  printf("Main: %s: velrad = %f veldop=%f\n",multisour[sourceID].name, velrad(dolsr,time,
 	//  raapp,decapp,raepo,decepo,lst,lat),
 	//  smabuffer.veldop);
-      }
-      
+        }
+// get vsource which is source radial velocity w.r.t the LSR
+// it is difficult to decode vsource from the MIR data
+// unless given enough information in the Doppler tracking
+// (sideband, chunk, and channel) from the users.  
+//         smabuffer.vsource = spn[inhset]->vel[12];
+//      printf("vel %f %f %f %f %f %f %f %f\n",spn[inhset]->vel[11],spn[inhset]->vres[11], 
+//      smabuffer.vsource, spn[inhset]->vres[12],
+//      spn[inhset]->vel[13],spn[inhset]->vres[13],
+//      spn[inhset]->vel[14],spn[inhset]->vres[14]);
       
       for(i=1;i<smaCorr.n_chunk+1; i++) {
 	// the reference channel is the first channel in each chunk in miriad
@@ -1714,7 +1738,8 @@ int rsmir_Read(char *datapath, int jstat)
 	    (spn[inhset]->nch[i]/2-0.5);
 	}
 	//   printf("smabuffer.sfreq=%f\n", smabuffer.sfreq[spcode[i]-1]);
-	smabuffer.restfreq[spcode[i]-1] = spn[inhset]->rfreq[i];
+	if(smabuffer.restfreq[0]==0.000) 
+        smabuffer.restfreq[spcode[i]-1] = spn[inhset]->rfreq[i];
 	if(smabuffer.rsnchan<0) {
 	  smabuffer.sdf[spcode[i]-1]      = spn[inhset]->fres[i]/1000.0;
 	  
