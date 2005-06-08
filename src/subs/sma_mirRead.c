@@ -69,6 +69,10 @@
 //                  stat parse after return.
 // 2005-06-02 (JHZ) implemented vsource and restfreq from users
 //                  inputs.
+// 2005-06-08 (JHZ) implemented a feature of handling
+//                  arbitary frequency configuration 
+//                  for each of the receivers in the case
+//                  of dual recievers.
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -576,6 +580,10 @@ int rsmir_Read(char *datapath, int jstat)
   int ibuff, nnants, flush;
   int ifpnt, polpnt, blpnt, sbpnt, rxpnt, sblpnt, binpnt, rx_irec;
   int avenchan, intcycle;
+  int blid_intchng[MAXINT];  
+                      /* the baseline id right after integration change */
+  int rxlod;               /* the rx to load rxlod=0 -> smabuffer.rx1        
+                                             rxlod=1 -> smabuffer.rx2        */
   float avereal, aveimag;
   extern struct inh_def   **inh;
   extern struct blh_def   **blh;
@@ -710,13 +718,30 @@ int rsmir_Read(char *datapath, int jstat)
     // count receivers
     smaCorr.no_rxif = 1;
     for (set=0; set<nsets[1]; set++) {
+      smabuffer.rx1=smabuffer.rx2=blh[set]->irec;
       if( blh[set]->inhid == inh[smabuffer.scanskip]->inhid
 	  &&  blh[set]->irec != blh[set+1]->irec) {
+        smabuffer.rx2=blh[set+1]->irec;
 	smaCorr.no_rxif = 2;
 	break;
       }
     }
-    printf("NUMBER OF RECEIVERS =%d\n",smaCorr.no_rxif); 
+    printf("NUMBER OF RECEIVERS =%d \n",smaCorr.no_rxif);
+
+   switch(smabuffer.rx1) {
+   case 0: printf("rx1->230\n"); break;
+   case 1: printf("rx1->340\n"); break;
+   case 2: printf("rx1->690\n"); break;
+                         }
+       
+   if(smaCorr.no_rxif == 2)
+   switch(smabuffer.rx2) {
+   case 0: printf("rx2->230\n"); break;
+   case 1: printf("rx2->340\n"); break;
+   case 2: printf("rx2->690\n"); break;
+                         }    
+
+ 
     numberRxif = smaCorr.no_rxif;
     // check if the receiver  smabuffer.rxif==0 for all receivers
     if(smabuffer.rxif==-1) goto foundTheRx;
@@ -728,6 +753,12 @@ int rsmir_Read(char *datapath, int jstat)
 	   smabuffer.rxif);
     exit(-1);
   foundTheRx:
+// assign the rx id to load in the case of dual rx
+      if(smabuffer.rxif==-1||smaCorr.no_rxif==1) {rxlod=0;
+      } else {
+      if(smabuffer.rxif==smabuffer.rx1) rxlod=0;
+      if(smabuffer.rxif==smabuffer.rx2) rxlod=1;
+            }
 
     tsys = (struct bltsys **) malloc(nsets[1]*sizeof( struct bltsys *));
     for (set=0;set<nsets[1];set++) {
@@ -758,7 +789,13 @@ int rsmir_Read(char *datapath, int jstat)
       inhid_hdr = inh[0]->inhid;
       blnset = 0;
       if (smabuffer.rxif!=-1) {
-	printf("receiver ID to load =%d\n", smabuffer.rxif);
+
+
+   switch(smabuffer.rxif) {
+   case 0: printf("to load rx->230 visdata\n"); break;
+   case 1: printf("to load rx->340 visdata\n"); break;
+   case 2: printf("to load rx->690 visdata\n"); break;
+                         }
       } else {
 	printf("to load data for all receivers.\n");
       }
@@ -783,15 +820,35 @@ int rsmir_Read(char *datapath, int jstat)
 	}
 	// select side band 
 	if(blh[blset]->inhid==inh[set]->inhid) {
-	  // choose rx
+// get the baseline id for the first bl in the new integration
+        if(blh[blset]->inhid>blh[0]->inhid){
+        if(smaCorr.no_rxif==2&&blh[blset-1]->irec==smabuffer.rx1
+       &&blh[blset]->irec==smabuffer.rx2) {
+        blid_intchng[set] = blh[blset]->blhid;
+/*        printf("blid_intchng blh rx sb blh->inhid %d %d %d %d %d\n", 
+        blid_intchng[set],
+        blh[blset]->blhid, blh[blset]->irec, blh[blset]->isb,
+        blh[blset]->inhid);
+        printf("blid_intchng blh rx sb blh->inhid %d %d %d %d %d\n",
+        blid_intchng[set],
+        blh[blset-1]->blhid, blh[blset-1]->irec, blh[blset-1]->isb,
+        blh[blset-1]->inhid);
+*/
+        }}
+// choose rx
 	  if(blh[blset]->irec==smabuffer.rxif||smabuffer.rxif==-1) {
-	    // for the first set of integration, take the 1st baseline
+// for the first set of integration, take the 1st baseline
 	    if(set==0&&blh[blset]->isb==smabuffer.sb) {
 	      bln[set]->inhid = blh[blset]->inhid;
 	      bln[set]->blhid = blh[blset]->blhid;
 	      bln[set]->isb   = blh[blset]->isb;
 	      bln[set]->irec  = blh[blset]->irec; 
 	      inhid_hdr       = blh[blset]->inhid;
+/* printf("bln[set]->blhid  bln[set]->irec bln[set]->isb %d %d %d \n",
+ bln[set]->blhid,
+                 bln[set]->irec, bln[set]->isb); 
+*/
+
 	    }
 	    // for the successive integration set, take the 1st baseline
 	    // right after change of integration.
@@ -801,11 +858,18 @@ int rsmir_Read(char *datapath, int jstat)
 	      bln[set]->isb   = blh[blset]->isb;
 	      // printf("blh[blset]->isb %d\n", blh[blset]->isb);
 	      bln[set]->irec  = blh[blset]->irec;
+/* printf("set bln[set]->blhid  bln[set]->irec bln[set]->isb %d %d %d %d \n",
+ set,
+ bln[set]->blhid,
+                 bln[set]->irec, bln[set]->isb);
+*/
 	      // reset the beginning of searching handle of base line id.
 	      //     blhid_hdr       = blset;
 	      inhid_hdr       = blh[blset]->inhid;
 	    }
 	  }
+
+
 	  // loading data to baseline coordinate structure
 	  // convert ovro sign convention to miriad convention
 	  // by multiplying a negative sign to uvw coordinates
@@ -1245,7 +1309,7 @@ int rsmir_Read(char *datapath, int jstat)
       // integration set = smabuffer.scanskip
       // blhset=1 , the second baseline of the integration
       blhset=1;
-      //       printf("smabuffer.scanskip=%d\n", smabuffer.scanskip);
+      //      printf("smabuffer.scanskip=%d\n", smabuffer.scanskip);
       blhid = uvwbsln[smabuffer.scanskip]->uvwID[blhset].blhid;
       rewind(fpin[2]);
       // spn starts from 0
@@ -1263,7 +1327,6 @@ int rsmir_Read(char *datapath, int jstat)
 	  smabuffer.scanskip++;
 	  inset = smabuffer.scanskip;
 	}
-	
 	// load baseline based tsys structure
 	if(sph1->blhid==tsys[0]->blhid) nspectra++;
 	if(sph1->blhid==tsys[blset]->blhid&&sph1->inhid==tsys[blset]->inhid) {
@@ -1290,7 +1353,7 @@ int rsmir_Read(char *datapath, int jstat)
 	  // sky frequency
 	  spn[inset]->fsky[sph1->iband]    = sph1->fsky;
 	  spn[inset]->fres[sph1->iband]    = sph1->fres;
-	  spn[inset]->nch[sph1->iband]     = sph1->nch;
+   if(smaCorr.no_rxif!=2) spn[inset]->nch[sph1->iband][0]  = sph1->nch;
 	  spn[inset]->dataoff              = sph1->dataoff;
 	  spn[inset]->rfreq[sph1->iband]   = sph1->rfreq;
 	  spn[inset]->isb                  = bln[inset]->isb;
@@ -1298,6 +1361,23 @@ int rsmir_Read(char *datapath, int jstat)
 	  spn[inset]->souid                = inh[inset]->souid;
 	  if(sph1->iband==0) spn[inset]->basefreq = sph1->fsky;                
 	}
+      if(smaCorr.no_rxif==2&&sph1->inhid==inh[inset]->inhid) {
+//          printf("inset blhid  %d %d %d \n",inset,
+//       sph1->blhid,blid_intchng[inset]);
+      if(sph1->blhid==blid_intchng[inset])
+        spn[inset]->nch[sph1->iband][1] = sph1->nch;    
+        
+      if(sph1->blhid==(blid_intchng[inset]-1))
+        spn[inset]->nch[sph1->iband][0] = sph1->nch; 
+/*       if(sph1->blhid==blid_intchng[inset])     
+       printf("inset blhid nch[%d][0] nch[i][1]  %d %d %d %d \n",
+        sph1->iband,
+        inset,
+        sph1->blhid,
+        spn[inset]->nch[sph1->iband][0],  
+        spn[inset]->nch[sph1->iband][1]); 
+*/                             }
+
 	if(inset==smabuffer.scanskip+smabuffer.scanproc) { 
 	  goto sphend; 
 	}
@@ -1648,7 +1728,7 @@ int rsmir_Read(char *datapath, int jstat)
       }
       //loading el az and tsys to smabuffer
       for (i=0; i<smabuffer.nants; i++) {
-	// mir inh file gives the mean el and mane az
+      // mir inh file gives the mean el and mane az
 	smabuffer.el[i] = inh[inhset]->el;
 	smabuffer.az[i] = inh[inhset]->az;
 	if (smabuffer.doeng!=1) {
@@ -1731,11 +1811,11 @@ int rsmir_Read(char *datapath, int jstat)
 	if(smabuffer.doChunkOrder==1) {
 	  smabuffer.sfreq[frcode[i]-1]    = spn[inhset]->fsky[i]
 	    - spn[inhset]->fres[i]/1000.0*
-	    (spn[inhset]->nch[i]/2-0.5);
+	    (spn[inhset]->nch[i][rxlod]/2-0.5);
 	} else {
 	  smabuffer.sfreq[spcode[i]-1]    = spn[inhset]->fsky[i]
 	    - spn[inhset]->fres[i]/1000.0*
-	    (spn[inhset]->nch[i]/2-0.5);
+	    (spn[inhset]->nch[i][rxlod]/2-0.5);
 	}
 	//   printf("smabuffer.sfreq=%f\n", smabuffer.sfreq[spcode[i]-1]);
 	if(smabuffer.restfreq[0]==0.000) 
@@ -1743,11 +1823,11 @@ int rsmir_Read(char *datapath, int jstat)
 	if(smabuffer.rsnchan<0) {
 	  smabuffer.sdf[spcode[i]-1]      = spn[inhset]->fres[i]/1000.0;
 	  
-	  smabuffer.nfreq[spcode[i]-1]    = spn[inhset]->nch[i];
+	  smabuffer.nfreq[spcode[i]-1]    = spn[inhset]->nch[i][rxlod];
 	} else {
 	  // re-sample the channel
 	  smabuffer.sdf[spcode[i]-1]      = spn[inhset]->fres[i]/1000.0*
-	    spn[inhset]->nch[i]/
+	    spn[inhset]->nch[i][rxlod]/
 	    smabuffer.rsnchan;
 	  smabuffer.nfreq[spcode[i]-1]    = smabuffer.rsnchan;
 	}
@@ -1771,6 +1851,7 @@ int rsmir_Read(char *datapath, int jstat)
 	  visSMAscan.blockID.polid = uvwbsln[inhset]->uvwID[j].ipol;
 	  sbpnt = visSMAscan.blockID.sbid;
 	  rxpnt = uvwbsln[inhset]->uvwID[j].irec;
+//          printf("rxpnt=%d\n", rxpnt);
 	  if(smabuffer.rxif==uvwbsln[inhset]->uvwID[j].irec||smabuffer.rxif==-1) {
 	    switch(sbpnt) {
 	    case 0: blpnt=uvwbsln[inhset]->uvwID[j].blsid;
@@ -1829,11 +1910,25 @@ int rsmir_Read(char *datapath, int jstat)
 	    }
 	    
 	    for (i=0;i<25;i++) {
-	      sph[i]->nch = spn[smabuffer.scanskip]->nch[i];
+           sph[i]->nch = spn[smabuffer.scanskip]->nch[i][0];
 	    }
 	    sph[0]->dataoff = 0;
-	    
-                          }
+               }
+// separate frequency configuration for rx1 and rx2 in dual rx case
+          if(smaCorr.no_rxif==2)
+          for (i=0;i<25;i++) {
+           if(rxpnt==smabuffer.rx1) 
+              sph[i]->nch = spn[smabuffer.scanskip]->nch[i][0];
+           if(rxpnt==smabuffer.rx2)
+              sph[i]->nch = spn[smabuffer.scanskip]->nch[i][1];
+
+/* printf("i sph rxpnt rx1 rx2 %d %d %d %d %d \n", 
+                 i,sph[i]->nch,rxpnt,smabuffer.rx1,
+                                           smabuffer.rx2);
+*/
+                }
+
+
 	  /* The data for this spectrum consists of a 5 short int record header 
 	     and the data  which is a short for each real and a short for 
 	     each imag vis */
@@ -1846,7 +1941,8 @@ int rsmir_Read(char *datapath, int jstat)
 	     with sch_head_read  */
 	  bytepos = 16 + data_start_pos[inhset] + sph[0]->dataoff ; 
 	  bytepos = bytepos * (sblpnt+1);
-	  /* Move to this position in the file and read the data */
+	  /* Move to this position in the file and read the data by
+           skipping the first a few integration */
 	  if(j<1) fseek(fpin[5],bytepos,SEEK_SET);
 	  nbytes = sch_data_read(fpin[5],datalength,shortdata);
 	  if (SWAP_ENDIAN) {
@@ -1861,7 +1957,8 @@ int rsmir_Read(char *datapath, int jstat)
 	  /* There is a different scale factor for each record (spectrum) */
 	  scale = shortdata[4];
 	  /* Now the data There is only one channel for the continuum*/
-	  visSMAscan.bsline.continuum.real = pow(2.,(double)scale)*shortdata[5];
+	  visSMAscan.bsline.continuum.real = 
+            pow(2.,(double)scale)*shortdata[5];
 	  visSMAscan.bsline.continuum.imag = 
 	    pow(2.,(double)scale)*(-shortdata[6]*phaseSign);
 	  free(shortdata);
@@ -1895,13 +1992,14 @@ int rsmir_Read(char *datapath, int jstat)
 	    avenchan = 0;
 	    avereal  = 0.;
 	    aveimag  = 0.;
+        
 	    for(i=0;i<sph[kk]->nch;i++){
 	      if (smabuffer.rsnchan> 0) {
 		/* average the channel to the desired resolution */
-		if(avenchan< (sph[kk]->nch/smabuffer.rsnchan) ) {
-		  avereal = avereal + (float)pow(2.,(double)scale)*shortdata[5+2*i];
+             if(avenchan< (sph[kk]->nch/smabuffer.rsnchan) ) {
+	  avereal = avereal + (float)pow(2.,(double)scale)*shortdata[5+2*i];
 		  // convert ovro sign convention to miriad
-		  aveimag = aveimag + (float)pow(2.,(double)scale)*(-shortdata[6+2*i]*phaseSign);
+	  aveimag = aveimag + (float)pow(2.,(double)scale)*(-shortdata[6+2*i]*phaseSign);
 		  avenchan++;
 		} else {
 		  avereal = avereal/avenchan;
@@ -1936,9 +2034,9 @@ int rsmir_Read(char *datapath, int jstat)
       /* re-initialize vis point for next integration */
       ipnt=1;
       if(flush==1) {
-	if (fmod((readSet-1), 100.)<0.5)
+	if (fmod((readSet-1), 100.)<0.5||(readSet-1)==1)
 	  printf("set=%4d ints=%4d inhid=%4d time(JulianDay)=%9.5f int=% 4.1f \n",
-		 readSet,
+		 readSet-1,
 		 visSMAscan.blockID.ints,
 		 visSMAscan.blockID.inhid,
 		 visSMAscan.time.UTCtime,
@@ -1967,13 +2065,16 @@ int rsmir_Read(char *datapath, int jstat)
       printf("to low and uniform resolution spectra:\n");
       printf("         input     output\n");
       for (kk=1; kk<numberSpectra; kk++) {
-	printf("  s%02d     %3d  =>  %2d\n",kk, sph[kk]->nch, avenchan);
+	printf("  s%02d     %3d  =>  %2d\n",kk, 
+        spn[smabuffer.scanskip]->nch[kk][rxlod], avenchan);
       }
     } else {
       printf("vis spectra from the original correlator configuration: \n");
       printf("         input     output\n");
       for (kk=1; kk<numberSpectra; kk++) {
-        printf("  s%02d     %3d  =>  %2d\n",kk, sph[kk]->nch, sph[kk]->nch);
+        printf("  s%02d     %3d  =>  %2d\n",kk, 
+        spn[smabuffer.scanskip]->nch[kk][rxlod], 
+        spn[smabuffer.scanskip]->nch[kk][rxlod]);
       }
     }
     printf("done with data conversion from mir to miriad!\n");
