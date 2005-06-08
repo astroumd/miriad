@@ -397,7 +397,6 @@ c
 		do j=1,nants
 		  if(xaxis.eq.'time')then
 	       xvar(j,k)=var(j)-dtime(1)
-               write(*,*) 't dtime(1)', dtime(k),dtime(1)
                TTime(j,k,fileid)=(dtime(k)-int(dtime(1))+0.5)*24.0
          if (TTime(j,k,fileid).eq.24.) 
      * TTime(j,k,fileid)=TTime(j,k,fileid)-24.
