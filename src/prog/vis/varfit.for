@@ -145,9 +145,10 @@ c                  residual phase and ambient temperature and plot
 c                  the ambient temperature as a function of time.
 c    25May05 jhz   change tambient to a general external variable
 c                  such as a RM variable for SMA. 
+c    08Jun05 jhz   fix UT hr in phase residual plot when UT hr exceeds 24hr
 c-----------------------------------------------------------------------
 	character version*(*)
-	parameter(version='(version 1.0 29-ARP-05)')
+	parameter(version='(version 1.1 08-JUN-05)')
 	character device*80, log*80, vis*80, xaxis*40, yaxis*40
 	integer tvis, refant, refant2, nx, ny
 	logical dowrap, xsc,ysc, dostruct, doallan, doquad
@@ -396,7 +397,10 @@ c
 		do j=1,nants
 		  if(xaxis.eq.'time')then
 	       xvar(j,k)=var(j)-dtime(1)
+               write(*,*) 't dtime(1)', dtime(k),dtime(1)
                TTime(j,k,fileid)=(dtime(k)-int(dtime(1))+0.5)*24.0
+         if (TTime(j,k,fileid).eq.24.) 
+     * TTime(j,k,fileid)=TTime(j,k,fileid)-24.
 		  else
 		    xvar(j,k)=var(j)
 		  endif
@@ -464,18 +468,18 @@ c
 c check the time stamp of  both gain tables in both file1 and file2
 c issue a warning if the time stamp differs at a sloution of an antenna.
 c
-              do j=1,nants
-              do i=1,nSols
-        if(TTime(j,i,1).ne.TTime(j,i,2)) then
-        print*, 'WARNING: the time stamp in File1:'//
-     * uvfile1(1:length1), TTime(j,i,1)
-        print*, '      differs from that in File2:'//
-     * uvfile2(1:length2), TTime(j,i,2)
-        print*, '      at solution ', i, ' of antenna', j
-        pause
-              endif
-              enddo
-              enddo
+c              do j=1,nants
+c              do i=1,nSols
+c        if(TTime(j,i,1).ne.TTime(j,i,2)) then
+c        print*, 'WARNING: the time stamp in File1:'//
+c     * uvfile1(1:length1), TTime(j,i,1)
+c        print*, '      differs from that in File2:'//
+c     * uvfile2(1:length2), TTime(j,i,2)
+c        print*, '      at solution ', i, ' of antenna', j
+c        pause
+c              endif
+c              enddo
+c              enddo
               do j=1,nants
               do i=1,nSols
                if(yaxis.eq.'amplitude') then
@@ -485,6 +489,7 @@ c
                if(yaxis.eq.'phase') then
                xvar(j,i) = PPhi(j,i,1)
                yvar(j,i) = PPhi(j,i,2)
+         write(*,*) TTime(j,i,1),xvar(j,i),TTime(j,i,2),yvar(j,i)
                end if
 c        if(xvar(j,i).eq.0.and.xvar(j,i-1).ne.0
 c     *    .and.xvar(j,i+1).ne.0.and.i.gt.1.and.i.lt.nSols) then
