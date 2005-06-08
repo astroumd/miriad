@@ -488,7 +488,6 @@ c              enddo
                if(yaxis.eq.'phase') then
                xvar(j,i) = PPhi(j,i,1)
                yvar(j,i) = PPhi(j,i,2)
-         write(*,*) TTime(j,i,1),xvar(j,i),TTime(j,i,2),yvar(j,i)
                end if
 c        if(xvar(j,i).eq.0.and.xvar(j,i-1).ne.0
 c     *    .and.xvar(j,i+1).ne.0.and.i.gt.1.and.i.lt.nSols) then
