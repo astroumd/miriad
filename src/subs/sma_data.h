@@ -230,7 +230,7 @@ struct sph_config {
         short   ivtype        ; /*  velocity type int code    */        
         double  fsky[25]      ; /*  center sky freq.          */
         float   fres[25]      ; /*  frequency res. (MHz)      */
-        short   nch[25]       ; /*  # channels in spectrum    */
+        short   nch[25][2]       ; /*  # channels in spectrum    */
         int     dataoff       ; /*  byte offset for data      */
         double  rfreq[25]     ; /*  rest frequency (GHz)      */
         double  basefreq      ; /*  determine the basefreq    */
@@ -280,6 +280,7 @@ struct anttsys {
  * Of course your real maxdimc.h better have at least as large as
  * these or else i will not be able to process the subsequent data
  */
+#define MAXINT 5000  /* maximum number of integration */
 #define MAXANT 10
 #define MAXCHAN 7681
 
@@ -559,6 +560,8 @@ struct smlodd {
         int newpnt;
         int sb;  /* side band sb=0 for lsb, 1 for usb, sb for both */
         int rxif; /* corresponding to irec in blh */
+        int rx1;  /* the first rx in the data structure in the dual rx case */
+        int rx2;  /* the second rx in the data structure in the dual rx case */
         int doeng; /* 1 to read the engine file for Tsys and LST */
         int scanskip;
         int scanproc;
