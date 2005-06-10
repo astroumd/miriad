@@ -56,6 +56,11 @@ c	Compare the gains or uv-variables between antennas by fitting
 c		yaxis = slope * xaxis(refant2) + intercept
 c	       D(yaxis) = slope * D(xaxis(refant2)) + intercept
 c	where D() is the difference between succesive samples.
+c@ phratio
+c       Phase ratio (phase2/phase1) for slope input from users, which is 
+c       used for adding a line with an expected-phase-slope in phase-phase 
+c       linear regression plot when options=uniscale.
+c       Default is 0.
 c@ options
 c         wrap         Do not unwrap phase.
 c	  xscale       Re-scale xaxis = slope * xaxis + offset, where slope
@@ -76,6 +81,8 @@ c			The fit is written into the log file. E.g.
 c			yaxis=tpower xaxis=tpower refant2=4 options=quad
 c			results can be used in the task tpgains to correct
 c			tpower to a common Tsys scale.
+c         uniscale     use the maximum ranges in x and y axies 
+c                      to make uniformly-scaled plots for each of the antennas.
 c         phareg       do linear regression between phase1 and phase2 derived
 c                      from the gain tables in uvfile1 and uvfile2, respectively.
 c                      plot a solid line: phase2 = slope * phase1 + offset
@@ -85,6 +92,7 @@ c                      derived:
 c                      phase2 = slope * phase1 + offset
 c                      and using the transferred phase2 replaces the
 c                      phases in the gain table of file2.  
+c         gflag        excluding the failed gains in the phase regression. 
 c         tambient     do linear regression between the residual phase 
 c                      (phase2-(slope * phase1 + offset)) and a variable
 c                      tambient which is antenna-based variable and stored
@@ -117,6 +125,7 @@ c                      For the SMA users, a C-shell script (TambSybase.csh)
 c                      is provided under $MIR/examples, which can be used
 c                      to extract the data from SMA sybase on the computer
 c                      d2o.sma.hawaii.edu at the SMA site in Hawaii. 
+c
 c--
 c  History:
 c    18may95 mchw  Initial version developed from BEE.
@@ -146,14 +155,20 @@ c                  the ambient temperature as a function of time.
 c    25May05 jhz   change tambient to a general external variable
 c                  such as a RM variable for SMA. 
 c    08Jun05 jhz   fix UT hr in phase residual plot when UT hr exceeds 24hr
+c    10Jun05 jhz   add a few features: phase ratio input from users;
+c                                      gflag options to flag no-solution
+c                                      interval while do ph-ph regression;
+c                                      uniformly scaling the ph-ph plot
+c                                      for each antenna.
+c                                            
 c-----------------------------------------------------------------------
 	character version*(*)
-	parameter(version='(version 1.1 08-JUN-05)')
+	parameter(version='(version 1.2 10-JUN-05)')
 	character device*80, log*80, vis*80, xaxis*40, yaxis*40
 	integer tvis, refant, refant2, nx, ny
 	logical dowrap, xsc,ysc, dostruct, doallan, doquad
-        logical dophareg,dophatran,dotamb
-        real xrange(2),yrange(2)
+        logical dophareg,dophatran,dotamb,dogflag, douniscale
+        real xrange(2),yrange(2),phratio
         integer lin, nfiles,i
         logical uvdatopn
         character ops*9
@@ -177,8 +192,9 @@ c	call keyf('vis',vis,' ')
           call keyr('yrange',yrange(2),yrange(1))
 	call keyi('refant',refant,0)
 	call keyi('refant2',refant2,0)
+        call keyr('phratio',phratio,0.)
 	call GetOpt(dowrap,xsc,ysc,dostruct,doallan,doquad,
-     *   dophareg,dophatran,dotamb)
+     *   dophareg,dophatran,dotamb,dogflag,douniscale)
             if(dophareg) then
               xaxis = 'time'
               yaxis = 'phase'
@@ -219,7 +235,7 @@ c  Read in data
 c
 	call varmint(tvis,vis,xaxis,yaxis,refant,refant2,device,
      *	nx,ny,xrange,yrange,dowrap,xsc,ysc,dostruct,doallan,doquad,
-     * dophareg,dophatran,dotamb,i)
+     * dophareg,dophatran,dotamb,dogflag,douniscale,phratio,i)
 c
 c  Close up.
 c
@@ -231,13 +247,13 @@ c
 c********1*********2*********3*********4*********5*********6*********7*c
 	subroutine varmint(tvis,vis,xaxis,yaxis,refant,refant2,device,
      *	nx,ny,xrange,yrange,dowrap,xsc,ysc,dostruct,doallan,doquad,
-     *  dophareg,dophatran,dotamb,fileid)
+     *  dophareg,dophatran,dotamb,dogflag,douniscale,phratio,fileid)
 	implicit none
 	integer tvis, refant, refant2, nx, ny, fileid
         character*(*) xaxis, yaxis, device,vis
 	logical dowrap, xsc,ysc, dostruct, doallan, doquad,
-     *  dophareg,dophatran,dotamb
-        real xrange(2),yrange(2)
+     *  dophareg,dophatran,dotamb,dogflag,douniscale
+        real xrange(2),yrange(2),phratio
 c
 c  Read Miriad gains, and the uv-variables needed for fitting.
 c
@@ -266,12 +282,15 @@ c----------------------------------------------------------------------c
 	parameter(pi=3.141592654,tupi=6.283185307)
 	character line*80,telescop*9,line2*40
 	double precision time
-	integer i,j,k,nvar,ant,varlen
+	integer i,j,k,nvar,ant,varlen,nnSols
 	parameter(nvar=8)
 	real Ampl(MAXANTS,MAXSOLS),Phi(MAXANTS,MAXSOLS)
         real AAmpl(MAXANTS,MAXSOLS,2),PPhi(MAXANTS,MAXSOLS,2)
         real TTime(MAXANTS,MAXSOLS,2)
+        logical gflag(MAXANTS,MAXSOLS)
+        logical gf(MAXSOLS)
 	real xvar(MAXANTS,MAXSOLS), yvar(MAXANTS,MAXSOLS)
+        real xvarf(MAXANTS,MAXSOLS), yvarf(MAXANTS,MAXSOLS)
         real yrsd(MAXANTS,MAXSOLS), xtamb(MAXANTS,MAXSOLS)
 	real xx(MAXSOLS),yy(MAXSOLS),sf(MAXSOLS)
 	complex ref
@@ -279,10 +298,11 @@ c----------------------------------------------------------------------c
 	logical ok,xref,yref
 	real xmax(MAXANTS),ymax(MAXANTS)
 	real xmin(MAXANTS),ymin(MAXANTS)
+        real xmaxrange, ymaxrange
 	real a1,b1,c1,yyave,sigy,corr,sigy1,theta,xbuf
         real mpha
          complex mgains(10,2,6145)
-         integer len1, length1, length2
+         integer len1, length1, length2, kfirst
          character uvfile1*30, uvfile2*30, visfile*70
          character rm_var*32
 c
@@ -312,6 +332,17 @@ c
 	if(nSols.gt.MAXSOLS) call bug('f','Too many gains')
 	if(nants*nSols.eq.0) call bug('f','No gains to fit')
 	if(interval.eq.0.) call bug('f','Calibration interval is zero!')
+
+c
+c  initialize the gflag
+c
+        if(fileid.eq.1) then
+              do k=1,nsols
+                do j=1,nants
+                    gflag(j,k) = .false.
+              enddo
+              enddo
+              endif
 c
 c  Look for the gains item.
 c
@@ -328,13 +359,16 @@ c
 c  Store the amplitude and phase.
 c
 	  do j=1,nants
+             if(abs(imag(gains(j,k))).le.1.e-34) gflag(j,k)=.true.
 	    if(refant.ne.0.and.cabs(gains(refant,k)).ne.0.) then
 	      gains(j,k) = gains(j,k)/ref
 	    endif
+           
 	    call amphase(gains(j,k),ampl(j,k),phi(j,k))
             
             aampl(j,k,fileid)=ampl(j,k)
             pphi(j,k,fileid) = phi(j,k)
+             if(abs(phi(j,k)).le.1.e-34) gflag(j,k)=.true.
 c            write(*,*) ampl(j,k), phi(j,k)
 c            write(*,*) aampl(j,k,fileid),pphi(j,k,fileid)
 	  enddo
@@ -350,7 +384,7 @@ c
 	do ant=1,nants
 	  theta = phi(ant,1)
 	  do i=1,nSols
-	    phi(ant,i) = phi(ant,i) - 360.*nint((phi(ant,i)-theta)/360.)
+	    phi(ant,i) = phi(ant,i) - 360*nint((phi(ant,i)-theta)/360.)
 	    theta = 0.5 * (phi(ant,i) + theta)
             pphi(ant,i,fileid) = phi(ant,i)
 	  enddo
@@ -504,11 +538,31 @@ c               end if
 c
 c  Find max/min
 c
+        xmaxrange=0.
+        ymaxrange=0.
 	do j=1,nants
+              if(dogflag) then
+              nnSols=0
+              do k=1, nSols
+              if(.not.gflag(j,k)) then
+              nnSols=nnSols+1
+              xvarf(j,nnSols)=xvar(j,k)
+              yvarf(j,nnSols)=yvar(j,k)
+              endif  
+              if(nnSols.eq.1) kfirst=k
+              enddo
+            xmin(j) = xvarf(j,ismin(nnSols,xvarf(j,1),MAXANTS))
+            xmax(j) = xvarf(j,ismax(nnSols,xvarf(j,1),MAXANTS))
+            ymin(j) = yvarf(j,ismin(nnSols,yvarf(j,1),MAXANTS))
+            ymax(j) = yvarf(j,ismax(nnSols,yvarf(j,1),MAXANTS))
+              else
 	    xmin(j) = xvar(j,ismin(nSols,xvar(j,1),MAXANTS))
 	    xmax(j) = xvar(j,ismax(nSols,xvar(j,1),MAXANTS))
 	    ymin(j) = yvar(j,ismin(nSols,yvar(j,1),MAXANTS))
 	    ymax(j) = yvar(j,ismax(nSols,yvar(j,1),MAXANTS))
+              endif
+         if(xmaxrange.lt.(xmax(j)-xmin(j))) xmaxrange = xmax(j)-xmin(j)
+         if(ymaxrange.lt.(ymax(j)-ymin(j))) ymaxrange = ymax(j)-ymin(j)
 	enddo
 c
 c  Fit slopes and plot results.
@@ -717,8 +771,12 @@ c
 	    do i=1,nSols
 	      xx(i) = xvar(ant,i)
 	      yy(i) = yvar(ant,i)
+              gf(i) = gflag(ant,i)
 	    enddo
-	    call linlsq1(xx,yy,nSols, yyave,sigy,a1,b1,sigy1,corr)
+            if(.not.dogflag) 
+     *      call linlsq1(xx,yy,nSols, yyave,sigy,a1,b1,sigy1,corr)
+            if(dogflag) 
+     *      call linlsq1f(xx,yy,nSols, yyave,sigy,a1,b1,sigy1,corr,gf)
 	    print *,ant, yyave, sigy, a1,b1, sigy1, corr
             if(fileid.eq.3) then
               aa1(ant) = a1
@@ -814,7 +872,8 @@ c
 	if(device.ne.' ') 
      *	  call varplot(device,visfile,xaxis,yaxis,nx,ny,xx,yy,
      *	  xrange,yrange,xvar,yvar,yrsd,nsols,nants,maxants,maxsols,
-     *    fileid,aa1,bb1)
+     *    fileid,aa1,bb1,gflag,dogflag,xmaxrange,ymaxrange,
+     *    douniscale,phratio)
             if(fileid.eq.3) then
              do ant=1,nants
              do   i=1,nSols
@@ -838,10 +897,12 @@ c plot yresidual vs time
             yaxis = 'y-(slope*x+intercept)  (degree)'
              endif
               pause
+            fileid=fileid+1
             if(device.ne.' ')
      *    call varplot(device,visfile,xaxis,yaxis,nx,ny,xx,yy,
      *    xrange,yrange,xvar,yrsd,yrsd,nsols,nants,maxants,maxsols,
-     *    fileid,aa1,bb1)
+     *    fileid,aa1,bb1,gflag,dogflag,xmaxrange,ymaxrange,
+     *    douniscale,phratio)
 c  write slope table
             call slopetab(tvis,aa1,bb1,nants)
             call getslope(tvis,aa1,bb1,nants)
@@ -855,7 +916,8 @@ c plot yresidual vs Tamb
            if(device.ne.' ')
      *  call varplot(device,visfile,xaxis,yaxis,nx,ny,xx,yy,
      *  xrange,yrange,xvar,xtamb,yrsd,nsols,nants,maxants,maxsols,
-     *    fileid,aa2,bb2)
+     *  fileid,aa2,bb2,gflag,dogflag,xmaxrange,ymaxrange,
+     *  douniscale,phratio)
 
               end if
             end if
@@ -1164,6 +1226,94 @@ c
 c      
       end
 c********1*********2*********3*********4*********5*********6*********7*c
+        subroutine linlsq1f(xarr,yarr,npnt,yave,sigy,a1,b1,sigy1,corr,
+     *     gf)
+
+      real           xarr(*)
+      real           yarr(*)
+      logical        gf(*)
+      integer        npnt
+      real           yave, a1, b1
+      real           sigx, sigy, corr
+      real           sigy1
+
+c This routine returns the parameters of a linear least squares fit to the
+c relation defined by xarr and yarr. Add rms after fit. mchw 1995.
+c
+c
+c Input:
+c   xarr:         the x values
+c   yarr:         the y values
+c   npnt:         number of elements of xarr and yarr 
+c                 including the flagged ones
+c   npntf:        number of elements of xarr and yarr
+c                 excluding the flagged ones 
+c
+c Output:
+c   a1, b1:       coefficients of the relation y=a1*x+b1
+c   yave, sigy:   average and rms values y
+c   sigy1:        rms fits of y to above relation
+c   corr:         correlation coefficient
+c--
+      real           sumx, sumy, sumsqx, sumsqy, sumxy
+      real           x, y
+
+      integer        i
+
+      sumx   = 0.
+      sumy   = 0.
+      sumsqx = 0.
+      sumsqy = 0.
+      sumxy  = 0.
+      npntf  = 0
+      do i = 1, npnt
+        if(.not.gf(i)) then
+        x      = xarr( i )
+        y      = yarr( i )
+        sumx   = sumx   + x
+        sumy   = sumy   + y
+        sumsqx = sumsqx + x**2
+        sumsqy = sumsqy + y**2
+        sumxy  = sumxy  + x*y
+        npntf  = npntf  + 1
+        end if
+      enddo
+
+      if( sumy.eq.0. .and. sumsqy.eq.0. ) then
+        a1   = 0.
+        b1   = 0.
+        yave = 0.
+        sigx = 0.
+        sigy = 0.
+        corr = 0.
+      else
+        a1   = ( npntf*sumxy - sumx*sumy ) / ( npntf*sumsqx - sumx**2 )
+        yave = sumy / npntf
+        b1   = ( sumy - a1*sumx ) / npntf
+        sigx = sqrt(  sumsqx/npntf - sumx*sumx/npntf/npntf )
+        sigy = sqrt(  sumsqy/npntf - sumy*sumy/npntf/npntf )
+        corr = ( sumxy/npntf  - sumx*sumy/npntf/npntf ) / (sigx*sigy)
+      endif
+c
+c  rms after fit.
+c
+      if(npntf.gt.0)then
+        sumsqy = 0.
+        do i = 1, npnt
+          if(.not.gf(i)) then
+          x      = xarr( i )
+          y      = yarr( i )
+          sumsqy = sumsqy + (y-a1*x-b1)**2
+          end if
+        enddo
+        sigy1 = sqrt(sumsqy/npntf)
+      else
+        sigy1 = 0.
+      endif
+c
+      end
+
+c********1*********2*********3*********4*********5*********6*********7*c
 	subroutine quadfit(xarr,yarr,npnt,a1,b1)
 	implicit none
 	real xarr(*),yarr(*),a1,b1
@@ -1226,10 +1376,10 @@ c	call LogWrit(line)
       end
 c********1*********2*********3*********4*********5*********6*********7*c
 	subroutine GetOpt(dowrap,xsc,ysc,dostruct,doallan,doquad,
-     * dophareg,dophatran,dotamb)
+     * dophareg,dophatran,dotamb,dogflag,douniscale)
         implicit none
 	logical dowrap, xsc,ysc, dostruct, doallan, doquad,
-     *  dophareg, dophatran,dotamb
+     *  dophareg, dophatran,dotamb,dogflag,douniscale
 c
 c  Get extra processing options.
 c
@@ -1241,13 +1391,13 @@ c    doallan    Compute Allan variance.
 c    doquad     Fit yaxis = a + b*xaxis + c*xaxis**2
 c-----------------------------------------------------------------------
 	integer nopt
-        parameter(nopt=9)
+        parameter(nopt=11)
         logical present(nopt)
         character opts(nopt)*9
 c
         data opts/'wrap     ','xscale   ','yscale   ','allan    ',
      *            'structure','quad     ','phareg   ','phatran  ',
-     *            'tambient '/
+     *            'tambient ','gflag    ','uniscale '/
 c	
 	call options('options',opts,present,nopt)
         dowrap    = present(1)
@@ -1258,28 +1408,36 @@ c
         doquad    = present(6)
         dophareg  = present(7)
         dophatran = present(8)
-        dotamb     = present(9)
+        dotamb    = present(9)
+        dogflag   = present(10)
+        douniscale= present(11)
         if(dotamb) dophareg = .true.
         if(dophatran) dophareg = .true.
 	end
 c********1*********2*********3*********4*********5*********6*********7*c
 	subroutine varplot(device,vis,xaxis,yaxis,nx,ny,xx,yy,
      *	  xrange,yrange,xvar,yvar,yrsd,nsols,nants,maxants,maxsols,
-     *    fileid,aa,bb)
+     *    fileid,aa,bb,gflag,dogflag,xmaxrange,ymaxrange,
+     *    douniscale,phratio)
 c  plot yaxis versus xaxis.
         implicit none
         character*(*) xaxis, yaxis, device, vis
 	integer nsols,nants,maxants,maxsols,nx,ny
 	real xvar(MAXANTS,MAXSOLS), yvar(MAXANTS,MAXSOLS)
-        real yrsd(MAXANTS,MAXSOLS)
+        real yrsd(MAXANTS,MAXSOLS), phratio
+        logical gflag(MAXANTS,MAXSOLS),dogflag,douniscale
+        integer nbad,nnSols
         real xx(MAXSOLS),yy(MAXSOLS),yr(MAXSOLS)
+        real xbad(MAXSOLS),ybad(MAXSOLS)
+        real xf(MAXSOLS),yf(MAXSOLS)
         real xrange(2),yrange(2)
+        real xmaxrange,ymaxrange
 c-----------------------------------------------------------------------
         real xlo,xhi,ylo,yhi
         integer pgbeg, ierr, ismin, ismax, i, j, length
         character Title*78
 	real delta, aa(MAXANTS),bb(MAXANTS)
-        real xlin(2), ylin(2)
+        real xlin(2), ylin(2),uylin(2)
         integer fileid
         logical dofit
 c
@@ -1302,34 +1460,67 @@ c
 c  Find plot limits.
 c
         do j=1,nants
+             nbad=0
+             nnSols=0
 	  do i=1,nSols
 	    xx(i) = xvar(j,i)
 	    yy(i) = yvar(j,i)
             yr(i) = yrsd(j,i)
+c
+c do gain flag
+c
+            if(dogflag) then
+            if(gflag(j,i)) then
+           nbad=nbad+1
+           xbad(nbad) = xvar(j,i)
+           ybad(nbad) = yvar(j,i)
+            else
+           nnSols=nnSols+1
+           xf(nnSols) = xvar(j,i)
+           yf(nnSols) = yvar(j,i)
+             endif
+             endif
             if(yvar(j,i).ne.yrsd(j,i)) dofit=.true.
 	  enddo
+          
 	  if(xrange(1).eq.xrange(2))then
+            if(dogflag) then
+            xlo = xf(ismin(nnSols,xf,1))
+            xhi = xf(ismax(nnSols,xf,1))            
+               else
 	    xlo = xx(ismin(nSols,xx,1))
 	    xhi = xx(ismax(nSols,xx,1))
+              endif
+            if(douniscale.and.fileid.eq.3) xhi=xlo+xmaxrange
 	  else
 	    xlo = xrange(1)
 	    xhi = xrange(2)
 	  endif
+
 
             if(fileid.eq.3) then
             ylin(1) = aa(j)*xlo+bb(j)
             ylin(2) = aa(j)*xhi+bb(j)
             xlin(1) = xlo
             xlin(2) = xhi
+            if(phratio.ne.0.) then
+            uylin(1) = ylin(1) 
+            uylin(2) = phratio*(xhi-xlo)+ylin(1)
+                              endif  
             endif
-             
+            if(dogflag) then 
+            ylo = yf(ismin(nnSols,yf,1))
+            yhi = yf(ismax(nnSols,yf,1))
+                 else
 	    ylo = yy(ismin(nSols,yy,1))
 	    yhi = yy(ismax(nSols,yy,1))
-	 if(ylo.ne.yhi)then
+            endif
+	  if(ylo.ne.yhi)then
 	  if(yrange(1).ne.yrange(2))then
 	    ylo = yrange(1)
 	    yhi = yrange(2)
 	  endif
+          if(douniscale.and.fileid.eq.3) yhi=ylo+ymaxrange
 	  delta = 0.05*(xhi-xlo)
 	  if(delta.le.0)delta = 1
 	  xlo = xlo - delta
@@ -1348,13 +1539,22 @@ c
           if(.not.dofit) call  pgsci(2)
           if(yaxis(1:2).eq.'T_') call  pgsci(2)
            call pgpt(nsols,xx,yy,17)
+            if(dogflag) then
+               call  pgsci(2)
+            call pgpt(nbad,xbad,ybad,8)
+                call  pgsci(1) 
+            end if  
            else
            call pgpt(nsols,xx,yy,1)
            endif
           if(fileid.eq.3) then
             call  pgsci(2)
           if(dofit) call pgline(2,xlin,ylin)
+            call  pgsci(3)
+            call  pgsls(2)
+          if(douniscale) call pgline(2,xlin,uylin)
             call  pgsci(1)
+            call  pgsls(1)
           end if
           call pgtbox('BCNST',0.,0,'BCNST',0.,0)
           Title = 'Antenna '//itoaf(j)//'File='//vis
