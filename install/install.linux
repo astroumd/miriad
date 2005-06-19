@@ -26,6 +26,7 @@ set version=12-jan-05
 # 25-nov-04 fortran compiler choice
 #  4-jan-05 MacOSX (10.3=panther)
 # 11-jan-05 some temporary MacOSX related fixes, and cleanup
+# 19-jun-05 g95 an option
 #
 #   Simple single-architecture installation of MIRIAD
 #   (linux)
@@ -115,6 +116,7 @@ set test=1                  #  mir.test  baseline test (batch oriented)
 set testx=0		    #  mir.testx testing X routines (interactive)
 set bench=0,512,1           #  mir.bench nchan,mapsize,cell  (nchan=0 will skip bench)
 set intel=0                 #  use intel compiler (ifc/icc) for linux?
+set g95=0                   #  use g95 as default gnu compiler, instead of g77
 set man=1		    #  do manual pages
 set lfs=(-D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE) # LFS flags for uvio
 
@@ -141,6 +143,8 @@ endif
 #               : rpfits already needs this
 if ($intel) then
   set fortran=ifort
+else if ($g95) then
+  set fortran=g95
 else
   set fortran=g77
 endif
@@ -263,9 +267,14 @@ endif
 
 source $MIRTEMP/MIRRC.$hosttype
 
+
+# kludge the fortran compiler, this is where configure would shine brighter
 if ($intel) then
   echo "Using intel compiler for linux"
   cp $MIR/src/sys/bin/compile.linux_intel $MIR/bin/localsys/compile.linux
+else if ($g95) then
+  echo "Using g95 compiler for linux"
+  cp $MIR/src/sys/bin/compile.linux_g95   $MIR/bin/localsys/compile.linux
 endif
 
 cd $MIR
