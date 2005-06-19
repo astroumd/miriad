@@ -150,12 +150,13 @@ c    pjt   25jun02  allow imsize to be 3 dimensional [for MIR4]
 c    pjt    3dec02  using MAXDIM again, MAXDIM1 retired; MAXDIM2 is new
 c    pjt   30jan03  merged MIR4 into current release
 c    pjt   23feb03  officially merged MIR4
+c    pjt   19jun05  fix for g95 **(-0.5)
 c---
 c ToDo: 
 c    write good headers if 3D cubes written
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version='Imgen: version 23-feb-03')
+	parameter(version='Imgen: version 19-jun-05')
 	include 'mirconst.h'
 	include 'maxdim.h'
 	include 'maxnax.h'
@@ -634,7 +635,7 @@ c
 	  do i=1,n1
 	    xx = (i-x)
 	    p = (xx*xx+yy*yy)/(fwhm1*fwhm1)
-	    a = amp * (1. + p)**-0.5
+	    a = amp * (1. + p)**(-0.5)
 c	    a = amp * (1. + p)**(0.5-1.5*beta)
 	    data(i) = data(i) + a
 	  enddo

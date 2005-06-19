@@ -69,13 +69,14 @@ c  pjt  22mar99  changed stat to imstat to avoid confusion (linux)
 c  pjt  27apr99  more space for char variables into hdprobe
 c  mchw 13jun01  Added moments.
 c  mchw 13mar02  relaxed conversion to angles for RA and DEC.
+c  pjt  19jun05  g95 strictness: format(x) must contain numeric factor
 c
 c  Bugs:
 c    Data format still needs work to prevent format overflow.
 c    Doesn't handle pixel blanking outside region of interest.
 c----------------------------------------------------------------------c
 	character version*(*)
-	parameter(version='version 12-MAR-2002')
+	parameter(version='version 19-jun-2005')
 	include 'maxdim.h'
 	integer maxboxes,maxnax
 	parameter(maxboxes=2048,maxnax=3)
@@ -599,7 +600,7 @@ c
 	    call AxisType(lIn,axis,plane,ctype,label,value,units)
 	    call imstat(lin,naxis,blc,trc,sum,ave,rms,pmax,pmin,
      *							xbar,ybar)
-	    write(line,'(i5,x,a,1p7e12.4)')
+	    write(line,'(i5,1x,a,1p7e12.4)')
      *		plane,units,sum/cbof,pmax,pmin,ave,rms,xbar,ybar
 	    call LogWrit(line(1:108))
 	    plane = plane + 1
@@ -612,7 +613,7 @@ c
      *	            '     xbar    ','     ybar    '	
 	call LogWrit(header(1:91))
 	call imstat(lin,naxis,blc,trc,sum,ave,rms,pmax,pmin,xbar,ybar)
-	write(line,'(7(g12.5,x))') sum/cbof,pmax,pmin,ave,rms,xbar,ybar
+	write(line,'(7(g12.5,1x))') sum/cbof,pmax,pmin,ave,rms,xbar,ybar
 	call LogWrit(line(1:91))
       endif
       end

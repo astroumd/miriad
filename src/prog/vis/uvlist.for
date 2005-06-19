@@ -127,10 +127,11 @@ c   14aug03 mchw - replace varmint with parang in options=list.
 c   14dec03 pjt  - fix initialization bug for options=average
 c   06feb04 mchw - added AZ to options=list.
 c   21may04 pjt  = CVS merged the two previous modifications
+c   19jun05 pjt  - fixes for g95: num() is now integer array
 c-----------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='UVLIST: version  21-may-04')
+	parameter(version='UVLIST: version  19-jun-05')
 	real rtoh,rtod,pi
 	integer maxsels
 	parameter(pi=3.141592653589793,rtoh=12/pi,rtod=180/pi)
@@ -330,7 +331,7 @@ c------------------------------------------------------------------------
 	character cflag(mchan)*1
 	logical doave(MAXBASE2),first
 	double precision preambl(4)
-	real num(MAXBASE2)
+	integer num(MAXBASE2)
 	real amps(maxpts,mchan,MAXBASE2),args(maxpts,mchan,MAXBASE2)
 	double precision uave(MAXBASE2),vave(MAXBASE2),timeave(MAXBASE2)
 	double precision baseave(MAXBASE2)
@@ -348,7 +349,7 @@ cpjt	data baseave/MAXBASE*0.d0/
 c
 	if(first)then
 	   call qzero(MAXBASE2,doave)
-	   call rzero(MAXBASE2,num)
+	   call izero(MAXBASE2,num)
 	   call dzero(MAXBASE2,uave)
 	   call dzero(MAXBASE2,vave)
 	   call dzero(MAXBASE2,timeave)
@@ -392,7 +393,7 @@ c
 	vave(bl) = vave(bl) + vin
 	timeave(bl) = timeave(bl) + timein
 	baseave(bl) = baseave(bl) + basein
-	num(bl) = num(bl) + 1.
+	num(bl) = num(bl) + 1
 	i = num(bl)
 	do j=1,nchan
 	  call amphase (data(j), amp(j), arg(j))
@@ -413,11 +414,12 @@ c
 	timeave(bl) = timeave(bl) / num(bl)
 	baseave(bl) = baseave(bl) / num(bl)
         call basant(baseave(bl),ant1,ant2)
+c       pjt: does it matter now we changed num() from real to integer ?
 	k = (num(bl)-1) / 2
 	k0 = k
 	do while(k.gt.0)
 	 do j=1,nchan
-	  if(num(bl).gt.0.)then
+	  if(num(bl).gt.0)then
 	   amp(j) = 0.
 	   arg(j) = 0.
 	   count = 0.
@@ -1910,6 +1912,15 @@ c-----------------------------------------------------------------------
       integer i
       do i=1,n
          darr(i) = 0.0d0
+      enddo
+      end
+c-----------------------------------------------------------------------
+      subroutine izero(n, iarr)
+      integer n
+      integer iarr(n)
+      integer i
+      do i=1,n
+         iarr(i) = 0.0d0
       enddo
       end
 c-----------------------------------------------------------------------
