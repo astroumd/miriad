@@ -1,0 +1,55 @@
+#-----------------------------------------------------------
+# source'd file compile.linux 
+# Note: this is the little-endian LINUX for intel cpu's
+#	and won't work on the expected Linux for PowerPC or 68xxx
+#-----------------------------------------------------------
+set mmir  = $MIR
+set mhost = $MIRHOST
+set mlsys = $mmir/bin/localsys
+#
+###         #define _LARGEFILE_SOURCE
+###         #define _FILE_OFFSET_BITS=64
+set lfs="-D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -Wall"
+setenv Fcompile  "g95"
+setenv Foptions  "-O"
+setenv FoptionsN ""
+setenv Flinkdir  "-L`echo $mmir/lib/$mhost $MIRXLIB | sed 's/ / -L/g'`"
+setenv Flinklib  "$lfs -lmir -llinpack -lpgplot -lX11 -lm"
+setenv Finclude  "-I`echo $mmir/src/inc $MIRXINC | sed 's/ / -I/g'`"
+# the gnu compiler actually adds -Dlinux, so we don't need it here
+setenv Ccompile  "gcc"
+setenv Coptions  "-O $lfs"
+setenv CoptionsN "$lfs"
+setenv Clinkdir  "-L`echo $mmir/lib/$mhost $MIRXLIB | sed 's/ / -L/g'`"
+setenv Clinklib  "-lmir -llinpack -lpgplot -lX11 -lf2c -lm"
+setenv Cinclude  "-I`echo $mmir/src/inc $mmir/src/subs | sed 's/ / -I/g'`"
+#
+setenv Ratty 	 "$mmir/bin/$mhost/ratty -s f2c -b -D linux"
+setenv Intf2c 	 "$mmir/bin/$mhost/intf2c -s f2c"
+#
+#-----------------------------------------------------------
+if ($?MIRDEBUG)   then
+   setenv Coptions  "$Coptions  -g"
+   setenv CoptionsN "$CoptionsN -g"
+   setenv Foptions  "$Foptions  -g"
+   setenv FoptionsN "$FoptionsN -g"
+endif
+if ($?MIRTESTBED) then
+   setenv Coptions  "$Coptions  -DTESTBED"
+   setenv CoptionsN "$CoptionsN -DTESTBED"
+   setenv Foptions  "$Foptions  -DTESTBED"
+   setenv FoptionsN "$FoptionsN -DTESTBED"
+   setenv Ratty     "$Ratty -D TESTBED"
+endif
+#-----------------------------------------------------------
+if  (-e $mlsys/compile.linux && ! $?local_compile ) then
+  echo $mlsys/compile.linux exists =======================
+  setenv local_compile
+  source $mlsys/compile.linux
+endif
+#-----------------------------------------------------------
+unset mmir
+unset mhost
+unset mlsys
+unsetenv local_compile
+#-----------------------------------------------------------
