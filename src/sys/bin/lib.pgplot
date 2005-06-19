@@ -97,15 +97,23 @@ if (! -e $driverfile) then
    endif
 #  Do some sed magic to turn on (select) the ps/tt/xw/gi/pp drivers...
    if ($pgsys == linux) then
-     sed -e '/^\! PSDRIV/s/^\!/ /' $srcdir/drivers.list  | \
-     sed -e '/^\! GIDRIV/s/^\!/ /' | \
-     sed -e '/^\! TTDRIV/s/^\!/ /' | \
-     sed -e '/^\! XWDRIV/s/^\!/ /' > $driverfile
+     if ($f77name == g95) then
+	sed -e '/^\! PSDRIV/s/^\!/ /' $srcdir/drivers.list  | \
+	sed -e '/^\! TTDRIV/s/^\!/ /' | \
+	sed -e '/^\! XWDRIV/s/^\!/ /' > $driverfile
+     else
+	sed -e '/^\! PSDRIV/s/^\!/ /' $srcdir/drivers.list  | \
+	sed -e '/^\! GIDRIV/s/^\!/ /' | \
+	sed -e '/^\! TTDRIV/s/^\!/ /' | \
+	sed -e '/^\! XWDRIV/s/^\!/ /' > $driverfile
+     endif
    else
      sed -e '/^\! PSDRIV/s/^\!/ /' $srcdir/drivers.list  | \
      sed -e '/^\! TTDRIV/s/^\!/ /' -e '/^\! XWDRIV/s/^\!/ /' | \
      sed -e '/^\! GIDRIV/s/^\!/ /' -e '/^\! PPDRIV/s/^\!/ /' > $driverfile
    endif
+else
+   echo WARNING: pgplot re-using your old $driverfile 
 endif
 # -------------------------------------------------------------------
 cd $libdir
