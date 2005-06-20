@@ -73,6 +73,8 @@
 //                  arbitary frequency configuration 
 //                  for each of the receivers in the case
 //                  of dual recievers.
+// 2005-06-20 (JHZ) fixed a bug (pointing to a wrong component) in calculate 
+//                  site velocity.
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -3039,7 +3041,7 @@ double velrad( short dolsr,
   
   velsite[0] = velosite->vx;
   velsite[1] = velosite->vy;
-  velsite[2] = velosite->vx;
+  velsite[2] = velosite->vz;
   vearth(time, posearth, velearth);
   vel =0.;
   for (i=0; i<3; i++) {
