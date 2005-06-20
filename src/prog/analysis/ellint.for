@@ -75,7 +75,9 @@ c         spline    use a spline fit unstead of a step function to estimate
 c                   the intensity at any radius for residual images
 c@ medsmooth
 c        Smoothing option of radial profile when option=median is used in
-c        residual map computation. Default: 0
+c        residual map computation. These are the number of pixels added
+c        before and after the ring.
+c        Default: 0
 c     
 c@ log
 c	The output log file. The default is the terminal.
@@ -122,13 +124,14 @@ c    snv   25nov03      Added radial profile smooth option
 c    pjt   13dec03      Documented the previous, add output history,
 c                       fixed residual map computation
 c    pjt   15dec03      make sure median .or. mode is selected, not both
+c    pjt   20jun05      g95 wants medsmooth to be an integer
 c
 c----------------------------------------------------------------------c
         include 'mirconst.h'
 	include 'maxdim.h'
 	include 'mem.h'
         character*(*) label,version
-        parameter(version='version 14-dec-2003')
+        parameter(version='version 20-jun-2005')
         double precision rts,value
         parameter(label='Integrate a Miriad image in elliptical annuli')
         integer maxnax,maxboxes,maxruns,naxis,axis,plane,maxring
@@ -157,8 +160,9 @@ c
         double precision seval
 
 
-        integer jj, kk, jcount
-        real totalj,medsmooth,fmed(maxdim),fmed1(maxdim)
+        integer jj, kk, jcount,medsmooth
+        real totalj,fmed(maxdim),fmed1(maxdim)
+        
 
 c Get inputs.
 c
@@ -178,7 +182,7 @@ c
         call keyr('radius',rstep,0.)
         call keyr('scale',scale,1.)
         call keya('telescop',pbtype,' ')
-        call keyr('medsmooth',medsmooth,0.)    
+        call keyi('medsmooth',medsmooth,0)    
         call getopt(dopb,domedian,domode,natural,dotab,dospline)
         call keya('log',logf,' ')
         call keyfin
