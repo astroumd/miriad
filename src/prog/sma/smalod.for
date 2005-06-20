@@ -172,12 +172,15 @@ c    jhz  05-may-05 enable the function to calculate radial velocity
 c                   on either barycentric of lsr frame.
 c    jhz  02-jun-05 add input parameter vsource; and enable input
 c                   parameter restfreq.
+c    jhz  20-jun-05 fix a bug (pointing to a wrong v component) in calculation\
+c                   of the site velocity due to the earth rotation.
+c                   The error was in the sma_mirRead.c
 c
 c------------------------------------------------------------------------
         integer maxfiles
         parameter(maxfiles=128)
         character version*(*)
-        parameter(version='SmaLod: version 1.3 2-June-05')
+        parameter(version='SmaLod: version 1.4 20-June-05')
 c
         character in(maxfiles)*64,out*64,line*64, rxc*4
         integer tno, length, len1
