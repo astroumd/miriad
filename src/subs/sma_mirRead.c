@@ -75,6 +75,7 @@
 //                  of dual recievers.
 // 2005-06-20 (JHZ) fixed a bug (pointing to a wrong component) in calculate 
 //                  site velocity.
+// 2005-06-21 (JHZ) fixed a bug  in the status handle of rspokeflshsma_c
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
