@@ -204,9 +204,7 @@ void rsmiriadwrite_c(char *datapath, char *jst[])
 void rssmaflush_c(int scanskip,int scanproc,int sb,int rxif,int dosporder,int doeng,int doflppha)
 { /* flush mirdata*/
   int i, j;
-  int jstat;
-//  int kstat;
-  char *kstat;
+  char kstat[2];
   int tno;
   char telescope[4];
   char instrument[4];
@@ -223,7 +221,7 @@ void rssmaflush_c(int scanskip,int scanproc,int sb,int rxif,int dosporder,int do
   smabuffer.doConjugate = doflppha;
     sprintf(kstat, "-1");
   /*  read header  */
-  rspokeflshsma_c(&kstat);  
+  rspokeflshsma_c(kstat);  
   /*  write ante numbers */
   if(smabuffer.nants!=0) {
     //         uvputvri_c(tno,"nants",&(smabuffer.nants),1);
