@@ -175,12 +175,13 @@ c                   parameter restfreq.
 c    jhz  20-jun-05 fix a bug (pointing to a wrong v component) in calculation\
 c                   of the site velocity due to the earth rotation.
 c                   The error was in the sma_mirRead.c
+c    jhz  21-jun-05 eliminate unused variables and subroutines
 c
 c------------------------------------------------------------------------
         integer maxfiles
         parameter(maxfiles=128)
         character version*(*)
-        parameter(version='SmaLod: version 1.4 20-June-05')
+        parameter(version='SmaLod: version 1.5 21-June-05')
 c
         character in(maxfiles)*64,out*64,line*64, rxc*4
         integer tno, length, len1
@@ -465,7 +466,6 @@ c------------------------------------------------------------------------
         real chioff
         integer mount
         logical ok
-        double precision smalat, smalong
         call uvputvrr(tno,'epoch',2000.,1)
 c        call uvputvrr(tno,'vsource',0.,1)
         call obspar('SMA','latitude',latitude,ok)
@@ -513,8 +513,6 @@ cc smant = 8
 
         double precision lat,long
         double precision lat1, long1
-        character sname*64
-        integer bl,p,if,bin
         logical ok
 cc jhz
         kstat=1;
@@ -538,11 +536,8 @@ c
 c------------------------------------------------------------------------
         character line*72
 c
-        integer tno
-c
         call output(string)
         line = 'SMALOD:    '//string
-c        call hiswrite(tno,line)
         end
 c************************************************************************
         subroutine pokename(in)
@@ -615,7 +610,6 @@ c
 c------------------------------------------------------------------------
         call smaopen(in,iostat)
         if(iostat.eq.0)call smaeof(iostat)
-        if(iostat.eq.0)call smaclose(iostat)
         end
 c************************************************************************
         subroutine smadisp(in,scanskip,scanproc,doauto,docross,relax,
@@ -672,11 +666,11 @@ c
         call rssmaflush(scanskip, scanproc, sb, rxif, 
      *       dosporder, doeng, doflppha)
              kstat= 666
+         
         call rspokeflshsma(kstat);
 c
          jstat =-1;
         call rsmiriadwrite(in,jstat)
-        call smaclose(iostat)
         end
 c************************************************************************
         subroutine smaeof(jstat)
@@ -686,9 +680,6 @@ c
 c  Skip to the EOF.
 c
 c------------------------------------------------------------------------
-        integer flag,baseln,bin,ifno,srcno
-        real ut,u,v,w,weight
-        complex vis
 c
         character smaerr*32
 c
@@ -728,25 +719,11 @@ c
 c
         end
 c************************************************************************
-        subroutine smaclose(jstat)
-c
-        integer jstat
-c------------------------------------------------------------------------
-        integer flag,baseln,bin,ifno,srcno
-        real ut,u,v,w,weight
-        complex vis
-c
-        character smaerr*32
-c
-c       smadata files are closed in the c codes.
-c
-        end
-c************************************************************************
         subroutine smaopen(in,jstat)
 c
         character in*(*)
         character*80 file
-        integer jstat, tno
+        integer jstat
 c
 c  External.
 c
