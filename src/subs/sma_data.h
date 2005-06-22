@@ -548,6 +548,7 @@ struct smlodd {
         int dobary; 
         int dolsr;
         int newfreq;
+        int dorfreq;
         int hires;
         int nopol;
         int circular;
