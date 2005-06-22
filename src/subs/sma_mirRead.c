@@ -77,6 +77,7 @@
 //                  site velocity.
 // 2005-06-21 (JHZ) fixed a bug  in the status handle of rspokeflshsma_c
 // 2005-06-22 (JHZ) fixed all the loose ends (warnings from compilers)
+// 2005-06-22 (JHZ) add a feature allowing user' input of restfrequency
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -235,6 +236,7 @@ void rspokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1,
 { 
   /* rspokeflshsma_c == pokeflsh */
   int buffer, i;
+  double Restf;
   
   /* initialize the external buffers */   
   strcpy(sname, " ");
@@ -259,11 +261,18 @@ void rspokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1,
   smabuffer.refant = refant1;
   smabuffer.dolsr  = *dolsr1;
   smabuffer.vsource= *vsour1;
-      if(rfreq1 > 0) {
+         
+      printf("User's input vSource = %f km/s\n", smabuffer.vsource);
+      if(rfreq1 > 0.00001 || rfreq1 < -0.00001) {
              for (i=0; i<SMIF+1; i++) {
              smabuffer.restfreq[i] = rfreq1;
                                       }
-                    } 
+            smabuffer.dorfreq = -1;
+      printf("User's input RestFrequency = %f GHz\n", rfreq1);
+                    } else {
+             smabuffer.dorfreq =  1;
+                                      }
+ 
   if(smabuffer.dowt>0) {
     /* call lagwt(wts,2*smcont-2,0.04) */
     /* process weights here. */ 
@@ -1799,8 +1808,7 @@ int rsmir_Read(char *datapath, int jstat)
 	    - spn[inhset]->fres[i]/1000.0*
 	    (spn[inhset]->nch[i][rxlod]/2-0.5);
 	}
-	//   printf("smabuffer.sfreq=%f\n", smabuffer.sfreq[spcode[i]-1]);
-	if(smabuffer.restfreq[0]==0.000) 
+	if(smabuffer.dorfreq==1) 
         smabuffer.restfreq[spcode[i]-1] = spn[inhset]->rfreq[i];
 	if(smabuffer.rsnchan<0) {
 	  smabuffer.sdf[spcode[i]-1]      = spn[inhset]->fres[i]/1000.0;
