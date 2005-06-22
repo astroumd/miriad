@@ -2,7 +2,7 @@ c************************************************************************
         program smauvspec
 c
 c= smauvspec - Plot averaged spectra of a visibility dataset.
-c& jhz for SMA based on uvspec of rjs
+c& jhz for SMA 
 c: uv analysis
 c+
 c	SmaUVSPEC plots averaged spectra of a visibility dataset. Averaging can
@@ -131,16 +131,11 @@ c    jhz  10oct04 corect for the error in source labelling.
 c    jhz  13oct04 add bothA&P to axis.
 c    jhz  10dec04 fold smauvspec back to MIRIAD4.0.4 
 c    jhz  15dec04 added the jpl line catalog 
+c    jhz  22jun05 fixed problem of chunk boundary allowing
+c                 edge flag.
 c  Bugs:
 c------------------------------------------------------------------------
 c=======================================================================
-c - mirconst.h  Include file for various fundamental physical constants.
-c
-c  History:
-c    jm  18dec90  Original code.  Constants taken from the paper
-c                 "The Fundamental Physical Constants" by E. Richard
-c                 Cohen and Barry N. Taylor (PHYICS TODAY, August 1989).
-c ----------------------------------------------------------------------
 c  Pi.
       real pi, twopi
       double precision dpi, dtwopi
@@ -183,15 +178,15 @@ c
         character mname*8000, moln*16
         integer mtag(maxmline), nmline, j, jp, js, je, iline
         character version*(*)
-        parameter(version='SmaUvSpec: version 1.1 15-DEC-04')
+        parameter(version='SmaUvSpec: version 1.2 22-Jun-05')
         character uvflags*8,device*64,xaxis*12,yaxis*12,logf*64
         character xtitle*64,ytitle*64, veldef*8
         logical ampsc,rms,nobase,avall,first,buffered,doflush,dodots
         logical doshift,doflag,doall,dolag,docat
         double precision interval,t0,t1,preamble(4),shift(2),shft(2)
-        integer tin,vupd, bsp(24)
+        integer tin,vupd
         integer nxy(2),nchan,nread,nplot
-        real yrange(2),inttime, lsrvel
+        real yrange(2),inttime, lsrvel, veldop
         double precision x(2*maxchan-2)
         complex data(maxchan)
         logical flags(maxchan)
@@ -210,7 +205,7 @@ c
         
         integer nmol, moltag(maxmline)
         character molname(maxmline)*16, jplpath*80 
-        common/jplcat/nmol,moltag,molname,docat,lsrvel,veldef
+        common/jplcat/nmol,moltag,molname,docat,lsrvel,veldef,veldop
 
 c
 c  Get the input parameters.
@@ -231,6 +226,10 @@ c
                 veldef = 'radio'
               end if
         call getaxis(xaxis,yaxis)
+        if(yaxis(1:1).eq.'p'.or.yaxis(1:1).eq.'b')
+     & call bug('f','has not fully implemented yet for the y variable.')
+        if(docat) 
+     & call bug('f','has not fully implemented yet for jpl catalog.')
         dolag = xaxis.eq.'lag'
         call uvdatinp('vis',uvflags)
         call keyd('interval',interval,0.d0)
@@ -379,6 +378,7 @@ c
 c  Keep on going. Read in another record.
 c
             call uvgetvra(tin,'source',source)
+            call uvgetvrr(tin,'veldop',veldop,1)
             call uvdatrd(preamble,data,flags,maxchan,nread)
           enddo
 c
@@ -663,13 +663,13 @@ c
 c       parameter(maxaver=276525,maxpol=4)
         complex buf(maxaver)
         real    bufr(maxaver),buf2(maxaver)
-        integer count(maxaver)
+        integer count(maxaver),chnkpntr(maxaver)
         integer pnt(maxpol,maxbase),nchan(maxpol,maxbase),free,mbase
         integer npols(maxbase),pols(maxpol,maxbase),cnt(maxbase)
         integer cntp(maxpol,maxbase)
         double precision preamble(5,maxbase)
         common/uvavcom/preamble,buf,bufr,buf2,count,pnt,nchan,npols,
-     *    pols,cnt,cntp,free,mbase
+     *    pols,cnt,cntp,free,mbase,chnkpntr
         free = 1
         mbase = 0
         end
@@ -705,26 +705,26 @@ c  npols		Number of polarisations.
 c  pols		The polarisation codes.
 c  preamble	The accumulated preambles.
 c  cnt		The number of things accumulated into the preambles.
-c
+c  chnkpntr     The spectral chunk pntr.
          include 'maxdim.h'
         integer maxaver,maxpol
         parameter(maxaver=276525,maxpol=4)
         complex buf(maxaver)
         real    bufr(maxaver),buf2(maxaver)
-        integer count(maxaver)
+        integer count(maxaver),chnkpntr(maxaver)
         integer pnt(maxpol,maxbase),nchan(maxpol,maxbase),free,mbase
         integer npols(maxbase),pols(maxpol,maxbase),cnt(maxbase)
         integer cntp(maxpol,maxbase)
         double precision preamble(5,maxbase)
         common/uvavcom/preamble,buf,bufr,buf2,count,pnt,nchan,npols,
-     *    pols,cnt,cntp,free,mbase
+     *    pols,cnt,cntp,free,mbase,chnkpntr
         integer polmin,polmax
         parameter(polmin=-8,polmax=4)
         integer maxplt,maxpnt
         parameter(maxpnt=32168,maxplt=1024)
         real xp(maxpnt),yp(maxpnt),xrange(2),inttime
         real ypp(maxpnt)
-        integer plot(maxplt+1)
+        integer plot(maxplt+1), sppntr(maxpnt)
         double precision time
         integer i,j,ngood,ng,ntime,npnts,nplts,nprev,p
         logical doamp,doampsc,dorms,dophase,doreal,doimag,dopoint,dolag
@@ -800,9 +800,9 @@ c
      *              xp,yp,maxpnt,npnts)
                 else
                   call visext(x,buf(p),buf2(p),bufr(p),count(p),
-     *              nchan(i,j),
+     *              nchan(i,j),chnkpntr(p),
      *              doamp,doampsc,dorms,dophase,doreal,doimag,
-     *              doboth,xp,yp,ypp,maxpnt,npnts)
+     *              doboth,xp,yp,ypp,maxpnt,npnts,sppntr)
                 endif
               endif
 c
@@ -820,7 +820,7 @@ c
         call plotit(source,npnts,xp,yp,ypp,xrange,yrange,dodots,plot,
      *          nplts,
      *          xtitle,ytitle,j,time/ntime,inttime/nplts,pol,npol,
-     *          dopoint,hann,hc,hw,logf,doboth)
+     *          dopoint,hann,hc,hw,logf,doboth,sppntr)
 c
               npol = 0
               do i=polmin,polmax
@@ -840,7 +840,7 @@ c
         if(npnts.gt.0)call plotit(source,npnts,xp,yp,ypp,
      *    xrange,yrange,dodots,
      *    plot,nplts,xtitle,ytitle,0,time/ntime,inttime/nplts,
-     *    pol,npol,dopoint,hann,hc,hw,logf,doboth)
+     *    pol,npol,dopoint,hann,hc,hw,logf,doboth,sppntr)
 c
 c  Reset the counters.
 c
@@ -849,15 +849,16 @@ c
 c
         end
 c************************************************************************
-        subroutine visext(x,buf,buf2,bufr,count,nchan,
+        subroutine visext(x,buf,buf2,bufr,count,nchan,chnkpntr,
      *              doamp,doampsc,dorms,dophase,doreal,doimag,
-     *              doboth,xp,yp,ypp,maxpnt,npnts)
+     *              doboth,xp,yp,ypp,maxpnt,npnts,sppntr)
 c
         integer nchan,npnts,maxpnt,count(nchan)
         logical doamp,doampsc,dorms,dophase,doreal,doimag
         logical doboth
         real buf2(nchan),bufr(nchan),xp(maxpnt),yp(maxpnt)
         real ypp(maxpnt)
+        integer sppntr(maxpnt),chnkpntr(nchan)
         double precision x(nchan)
         complex buf(nchan)
 c------------------------------------------------------------------------
@@ -904,6 +905,12 @@ c=======================================================================
         integer k
         real temp, temp2
         complex ctemp
+        integer maxwin
+        parameter(maxwin=48)
+        integer nspect,nschan(maxwin)        
+        common/spectrum/nspect,nschan
+        temp=0.
+        temp2=0.
 c
         do k=1,nchan
           if(count(k).gt.0)then
@@ -941,6 +948,7 @@ c    phas
              xp(npnts) = x(k)
              yp(npnts) = temp
             ypp(npnts) = temp2
+         sppntr(npnts) = chnkpntr(k)
           endif
         enddo
 c
@@ -1029,16 +1037,20 @@ c
         parameter(maxaver=276525,maxpol=4)
         complex buf(maxaver)
         real    bufr(maxaver),buf2(maxaver)
-        integer count(maxaver)
+        integer count(maxaver), chnkpntr(maxaver)
         integer pnt(maxpol,maxbase),nchan(maxpol,maxbase),free,mbase
         integer npols(maxbase),pols(maxpol,maxbase),cnt(maxbase)
         integer cntp(maxpol,maxbase)
         double precision preamble(5,maxbase)
         common/uvavcom/preamble,buf,bufr,buf2,count,pnt,nchan,npols,
-     *    pols,cnt,cntp,free,mbase
+     *    pols,cnt,cntp,free,mbase,chnkpntr
         integer i,i1,i2,p,bl,pol
         real t
         logical ok
+c        integer maxwin
+c        parameter(maxwin=48)
+        integer nspect, nschan(maxwin)
+        common/spectrum/nspect,nschan
 c
 c  Does this spectrum contain some good data.
 c
@@ -1107,9 +1119,20 @@ c
 c  Copy across the new data.
 c
           p = pnt(p,bl) - 1
+c
+c make spectral window pntr
+c
+          i=0
+          do j=1,nspect
+          do k=1,nschan(j)
+          i=i+1
+          chnkpntr(i+p) =j
+          end do
+          end do
+ 
           do i=1,nread
             if(doall.or.(doflag.neqv.flags(i)))then
-              buf(i+p) = data(i)
+              buf(i+p) = data(i) 
               t = abs(data(i))
               bufr(i+p) = t
               buf2(i+p) = t*t
@@ -1239,7 +1262,7 @@ c
 c************************************************************************
         subroutine plotit(source,npnts,xp,yp,ypp,xrange,yrange,dodots,
      *            plot,nplts,xtitle,ytitle,bl,time,inttime,
-     *            pol,npol,dopoint,hann,hc,hw,logf,doboth)
+     *            pol,npol,dopoint,hann,hc,hw,logf,doboth,sppntr)
 c
         integer npnts,bl,nplts,plot(nplts+1),npol,pol(npol),hann
         double precision time
@@ -1247,6 +1270,7 @@ c
         real ypp(npnts)
         logical dopoint,dodots, doboth
         character xtitle*(*),ytitle*(*),logf*(*)
+        integer sppntr(npnts)
 c
 c  Draw a plot
 c------------------------------------------------------------------------
@@ -1302,7 +1326,7 @@ c          call pgsci(mod(i-1,ncol)+1)
             if (hann.gt.1) call hannsm(hann,hc,plot(i+1)-plot(i),
      *         yp(plot(i)),hw)
         call pghline(plot(i+1)-plot(i),xp(plot(i)),yp(plot(i)),
-     *        ypp(plot(i)),2.0,doboth, yranged(2))
+     *        ypp(plot(i)),2.0,doboth, yranged(2), sppntr)
           endif
           if (logf.ne.' ') then
             do j = 1, plot(i+1)-plot(i)
@@ -1344,7 +1368,7 @@ c
 c
         if(bl.eq.0)then
           write(title,'(a,i2.2,a,i2.2,a,i2.2)')
-     *      pollab(1:lp)//' \\gt='//tau(lt:)//' min, T=',
+     *      pollab(1:lp)//' \gt='//tau(lt:)//' min, T=',
      *      hr,':',mins,':',sec
         else
 c
@@ -1364,7 +1388,7 @@ c
           l = len1(baseline)
 c
           write(title,'(a,i2.2,a,i2.2,a,i2.2)')
-     *      pollab(1:lp)//' \\gt='//tau(lt:)//' min, Bl='//
+     *      pollab(1:lp)//' \gt='//tau(lt:)//' min, Bl='//
      *      baseline(1:l)//', T=',hr,':',mins,':',sec
         endif
         l = len1(title)
@@ -1403,17 +1427,16 @@ c PgHline -- Histogram line plot for pgplot.
 c mchw:
 c plotting,uv-data
 c
-        subroutine pghline(npts,x,y,yp,gapfac,doboth, maxstr)
+        subroutine pghline(npts,x,y,yp,gapfac,doboth,maxstr,sppntr)
               parameter(maxsline=10000)
               parameter(cmks = 299792458.0)
         real fmx,fmn,strl
         real freq(maxsline),intensity(maxsline)
         integer uqst(6*maxsline),lqst(6*maxsline),mtag(6*maxsline)
-        integer mxnline, iubuff, ilbuff
+        integer mxnline,iubuff, ilbuff
         real maxf, minf, maxstr, minstr, maxcatstr
         real xlfrq(2), ylstr(2)
-
-        integer npts
+        integer npts,sppntr(npts)
         real x(npts), y(npts), yp(npts), gapfac
         REAL XPTS(npts), YPTS(npts)
         INTEGER N
@@ -1433,45 +1456,58 @@ c History
 c    02nov89	mchw	original version
 c    02apr94    nebk    add pgbbuf/pgebuf calls
 c    24may94    mjs     reinserted Mel's docs
+c    22jun05    jhz     add features for color coded multiple chunk plot
 c-------------------------------------------------------------------------
         integer start,end,i,j, k, ci, l, lm
         character title*64
         real xlen,ylen,xloc
         integer maxwin,symbol
         parameter(maxwin=48)
-        logical gap,reverse, doboth
-        integer nchan, nspect, nschan(maxwin)
-        common/spectrum/nchan,nspect,nschan
+        logical doboth
+        integer nspect, nschan(maxwin),fnschan(maxwin)
+        common/spectrum/nspect,nschan
 c
 c common jpl
 c
         parameter(maxmline=500)
         integer nmol, moltag(maxmline)
         character molname(maxmline)*16, veldef*8
-        real lsrvel
+        real lsrvel,veldop
         logical docat
-        common/jplcat/nmol,moltag,molname,docat,lsrvel,veldef
+        common/jplcat/nmol,moltag,molname,docat,lsrvel,veldef,veldop
+
+c
+c  sort the spectral window pointr after flagging
+c
+        do j=1, nspect
+        fnschan(j)=0
+        enddo
+        j=sppntr(1)
+        do i=1, npts
+        if(sppntr(i).eq.j) then
+         fnschan(j)=fnschan(j)+1
+         else
+          j=sppntr(i)
+          fnschan(j)=1
+         endif
+        enddo
         maxf=0.
         minf=1000.
         minstr=0.
         ylstr(1)=0.
-c          write(*,*) 'nmol=', nmol
-c          do i=1, nmol
-c           write(*,*) 'mtag', moltag(i), 'mnam', molname(i)
-c          end do
 c
 c  Look for gaps or reversals in x-array
 c
 c        symbol=17
-         symbol=2
+        symbol=2
         yloc=0.95
         call pgbbuf
         start = 1
         end = 2
-         i=0
+           i=0
            ci=25
            call pgscr(ci, .3, 0.5, 0.7)
-          do j=1, nspect 
+           do j=1, nspect 
             ci=j
         if(j.gt.12) then
             if(ci.eq.13) call pgscr(ci, 1.0, 1.0, 0.5)
@@ -1492,9 +1528,23 @@ c        symbol=17
               if(j.eq.7) call  pgsci(25)
              call pgmove(x(start),y(start))
              N=0
-          do k=1, nschan(j)
+          do k=1, fnschan(j)
                i=i+1
                N=N+1
+            if(j.gt.12) then
+            if(ci.eq.13) call pgscr(ci, 1.0, 1.0, 0.5)
+            if(ci.eq.14) call pgscr(ci, 1.0, 1.0, 0.0)
+            if(ci.eq.15) call pgscr(ci, 1.0, 0.5, 0.5)
+            if(ci.eq.16) call pgscr(ci, 1.0, 0.5, 0.2)
+            if(ci.eq.17) call pgscr(ci, 1.0, 0.0, 0.5)
+            if(ci.eq.18) call pgscr(ci, 1.0, 0.2, 0.2)
+            if(ci.eq.19) call pgscr(ci, 0.5, 1.0, 0.5)
+            if(ci.eq.20) call pgscr(ci, 0.7, 0.70, 0.70)
+            if(ci.eq.21) call pgscr(ci, 0.7, 0.5, 0.5)
+            if(ci.eq.22) call pgscr(ci, 0.7, 0.5, 0.9)
+            if(ci.eq.23) call pgscr(ci, 0.5, 0.0, 0.5)
+            if(ci.eq.24) call pgscr(ci, 0.75, 0.2, 0.3)
+            end if
                XPTS(k) = x(k+(j-1)*nschan(j))
                YPTS(k) = yp(k+(j-1)*nschan(j))
           if(maxf.lt.(x(k+(j-1)*nschan(j)))) maxf=x(k+(j-1)*nschan(j))
@@ -1502,13 +1552,12 @@ c        symbol=17
           if(maxstr.lt.(y(k+(j-1)*nschan(j)))) 
      *      then
                 maxstr=y(k+(j-1)*nschan(j))
-c           write(*,*) maxstr ,j, k
             end if
-            if(i<npts.and.k<nschan(j)) then
+            if(i<npts.and.k<fnschan(j)) then
               call pgdraw (0.5*(x(i+1)+x(i)), y(i))
               call pgdraw (0.5*(x(i+1)+x(i)), y(i+1))
             end if
-             if(i<npts.and.i.eq.(j*nschan(j))) then
+             if(i<npts.and.k.eq.fnschan(j)) then
               call pgdraw (0.5*(x(i)+x(i)), y(i))
               call pgdraw (0.5*(x(i)+x(i)), y(i))
              endif
@@ -1574,9 +1623,10 @@ c      write(*,*) 'mxnline=', mxnline
 c      write(*, *) 'maxcatstr maxstr', maxcatstr, maxstr
       call  pgsci(1)
       do i=1, mxnline
-       if(veldef.eq."radio") freq(i) = freq(i) *(1.-lsrvel*1.e3/cmks) 
-       if(veldef.eq."optical") freq(i) = freq(i)/(1.+lsrvel*1.e3/cmks)
-
+       if(veldef.eq."radio") 
+     &  freq(i) = freq(i)*(1.-(lsrvel+veldop)*1.e3/cmks) 
+       if(veldef.eq."optical") 
+     &  freq(i) = freq(i)/(1.+(lsrvel+veldop)*1.e3/cmks)
 c      write(*,*) freq(i)/1000.,intensity(i)/maxcatstr*maxstr
               intensity(i)=maxstr
               ylstr(2) = intensity(i)*.75
@@ -1599,15 +1649,8 @@ c                 write(*,*) molname(j)
                 xloc=xlfrq(1)+(maxf-minf)/npts
                 yloc=ylstr(2)*1.02
                 lm=lm-1
-c              write(*,*) 'lm=', lm
-c        call pgmtxt('LH',xloc,yloc,0.5,title(1:16))
          call pgptext(xloc,yloc, 90.0, 0.0, title(1:lm))
-c          call pgebuf
-c     *    (uqst(iubuff+j), j=1,6), '->', 
-c     *    (lqst(ilbuff+j), j=1,6)
-c           iubuff=i*6
-c           ilbuff=i*6
-      end do
+          end do
           end if
         end
 
@@ -1656,10 +1699,6 @@ C 14-Mar-1997 - optimization: use GRDOT1 [TJP].
 C-----------------------------------------------------------------------
 c  read JPL catalog
       parameter(maxsline=1000)
-      real fmx,fmn,strl
-      real freq(maxsline),intensity(maxsline)
-      integer uqst(maxsline),lqst(maxsline),mtag(maxsline)
-      integer mxnline
 ccccccccccccccccccccccccccc
       LOGICAL PGNOTO
       integer j, k, ci, l
@@ -1667,8 +1706,8 @@ ccccccccccccccccccccccccccc
       real xlen,ylen,xloc
       integer   i,maxwin
       parameter(maxwin=48)
-      integer nchan, nspect, nschan(maxwin)
-      common/spectrum/nchan,nspect,nschan
+      integer  nspect, nschan(maxwin)
+      common/spectrum/nspect,nschan
         yloc=0.95
 C
          i=0
@@ -1735,22 +1774,14 @@ c
 c  Give a summary about a uv data-set.
 c------------------------------------------------------------------------
       include 'maxdim.h' 
-      character line*80,aval1*64,aval2*64,type*1,obstype*32
-      integer il1,il2,length,nschan(maxwin),nchan,nspect,npol,pol,i
-      integer nants,ival,ncorr,tno,n
-      real epoch
+      character aval1*64,aval2*64,type*1,obstype*32
+      integer length,nschan(maxwin),nchan,nspect,npol,pol,i
+      integer nants,tno
       double precision sdf(maxwin),sfreq(maxwin),restfreq(maxwin)
       double precision time
-      double precision obsra,obsdec,ra,dec,delra,deldec,pntra,pntdec
-      real wwidth(maxwide),wfreq(maxwide)
-      logical updated,present,more
-      common/spectrum/nchan, nspect, nschan
-c
-c  Externals.
-c
-      integer len1
-      character itoaf*8,polsc2p*2,hangleh*12,rangleh*12
-      logical hdprsnt
+      real veldop
+      logical updated
+      common/spectrum/nspect, nschan
 c
 c  Close and reopen the file as a visibility file.
 c
@@ -1781,6 +1812,8 @@ c
         call uvgetvrd(tno,'sfreq',sfreq,nspect)
         call uvgetvrd(tno,'sdf',sdf,nspect)
         call uvgetvrd(tno,'restfreq',restfreq,nspect)
+        call uvgetvrr(tno,'veldop', veldop, 1)
+c        write(*,*) 'veldop=', veldop
         endif
       call uvclose(tno)
 c
