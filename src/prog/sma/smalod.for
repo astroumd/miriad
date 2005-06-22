@@ -176,6 +176,7 @@ c    jhz  20-jun-05 fix a bug (pointing to a wrong v component) in calculation\
 c                   of the site velocity due to the earth rotation.
 c                   The error was in the sma_mirRead.c
 c    jhz  21-jun-05 eliminate unused variables and subroutines
+c    jhz  22-jun-05 make restfreq working
 c
 c------------------------------------------------------------------------
         integer maxfiles
@@ -231,10 +232,8 @@ c
          if(rxif.lt.-1.or.rxif.gt.2) 
      *   call bug('f','Invalid Receiver ID.')
 c        call mkeyd('restfreq',rfreq,2,nfreq)
-        call keyd('restfreq',rfreq,0)
-        call keyr('vsource', vsour,0)
-              if(vsour.ne.0)
-     *  print*,'input vsource =',vsour, 'km/s'
+        call keyd('restfreq',rfreq,0.0)
+        call keyr('vsource', vsour,0.0)
         call keyi('refant',refant,6)
         call getopt(doauto,docross,docomp,dosam,doxyp,doop,relax,
      *    sing,unflag,dohann,birdie,dobary,doif,dowt,dopmps,polflag,
@@ -330,6 +329,9 @@ c
           
           call hiswrite(tno,
      *      'SMALOD: Prematurely finishing because of errors')
+          else
+          call hiswrite(tno,
+     *      'SMALOD: Ended Gracefully')
         endif
         call hisclose(tno)
         call uvclose(tno)
