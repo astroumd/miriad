@@ -76,6 +76,7 @@
 // 2005-06-20 (JHZ) fixed a bug (pointing to a wrong component) in calculate 
 //                  site velocity.
 // 2005-06-21 (JHZ) fixed a bug  in the status handle of rspokeflshsma_c
+// 2005-06-22 (JHZ) fixed all the loose ends (warnings from compilers)
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -157,7 +158,6 @@ void nuts(double jday, double *dpsiptr, double *depsptr);
 double mobliq(double jday);
 void aberrate(double jday, double ra, double dec, double *rappptr, double *dappptr);
 void vearth(double jday, double pos[3], double vel[3]);
-double epo2jul(double epoch, char *code[]);
 void elaz(int tno);
 void tsysStore(int tno);
 double velrad(short dolsr, double time, double raapp, double decapp, double raepo, double decepo, double lst, double lat);
@@ -169,14 +169,6 @@ void vsun(double *VEL);
 void rsmirread_c(char *datapath, char *jst[])
 { 
   int jstat;
-  int tno;
-  struct vis *vis_in;
-  float *weight;
-  int  baseline, inteID;
-  double ut;
-  float u, v, w;
-  int flag, bin, if_no, sourceno;
-
   strcpy(pathname,datapath);
   jstat=(int)*jst;
   jstat = rsmir_Read(pathname,jstat);
@@ -185,10 +177,7 @@ void rsmirread_c(char *datapath, char *jst[])
 
 void rsmiriadwrite_c(char *datapath, char *jst[])
 { 
-  int jstat,kstat;
-  int tno;
-
-  tno = smabuffer.tno;
+  int jstat;
   jstat=-1;
   /* open mir files */
   jstat = rsmir_Read(pathname,jstat);
@@ -204,8 +193,8 @@ void rsmiriadwrite_c(char *datapath, char *jst[])
 
 void rssmaflush_c(int scanskip,int scanproc,int sb,int rxif,int dosporder,int doeng,int doflppha)
 { /* flush mirdata*/
-  int i, j;
-  char kstat[2];
+  char *kst[4];
+  int kstat=-1;  
   int tno;
   char telescope[4];
   char instrument[4];
@@ -220,9 +209,9 @@ void rssmaflush_c(int scanskip,int scanproc,int sb,int rxif,int dosporder,int do
   smabuffer.doChunkOrder = dosporder;
   smabuffer.doeng = doeng;
   smabuffer.doConjugate = doflppha;
-    sprintf(kstat, "-1");
+  *kst = (char *)&kstat;
   /*  read header  */
-  rspokeflshsma_c(kstat);  
+    rspokeflshsma_c(kst);  
   /*  write ante numbers */
   if(smabuffer.nants!=0) {
     //         uvputvri_c(tno,"nants",&(smabuffer.nants),1);
@@ -291,14 +280,12 @@ void rspokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1,
 
 void rspokeflshsma_c(char *kst[])
 { /* rspokeflshsma_c== pokeflsh */
-  int buffer, tno, ibuff, i;
+  int tno;
   int i1, i2, ifs, p, bl, sb, rx, nchan, nspect;
   int npol,ipnt,ischan[SMIF];
-  int tbinhi,tbin,binhi,binlo,bin, nbin[SMIF];
-  int nstoke[SMIF], nfreq[SMIF], sfreq[SMIF], sdf[SMIF], restfreq[SMIF];
+  int tbinhi,ibuff;
   double preamble[5], tdash;
-  float freq0[SMIF],fac[SMIF], tfac;
-  float jyperk, vel;
+  float jyperk;
   float vis[2*MAXCHAN];
   int flags[MAXCHAN]; 
   struct pols *polcnt;
@@ -460,11 +447,8 @@ void rspokeflshsma_c(char *kst[])
 int rsgetdata(float smavis[2*MAXCHAN], int smaflags[MAXCHAN], int *smanchan, int p, int bl, int sb, int rx)
 { /* Construct a visibility record constructed from multiple IFs. */
   int nifs=smabuffer.nifs;
-  int nvis;
-  int pnt[nifs],nfreq[nifs],bchan[nifs];
   float fac[nifs];
   int n,ipnt,i,nchand, nchan; 
-  int ifpnt, polpnt, blpnt, binpnt;
   nchan = 0;
   nchand = 0;
   for (n=0; n<nifs; n++) {
@@ -543,30 +527,27 @@ int rsmir_Read(char *datapath, int jstat)
   int file,nfiles = 6;
   int headerbytes[6];
   smEng **smaEngdata;
-  int i,j,k,l,m,n;
-  int kk,ll;
-  int difference;
+  int i,j,k,l,m;
+  int kk;
   long imax,bytepos,nbytes,datalength;
   long *data_start_pos;
-  long *sph_start_pos;
-  int firstbsl,lastbsl,inhid;
-  int numberBaselines,numberSpectra,numberSidebands,numberRxif;
+  int firstbsl;
+  int numberBaselines=0;
+  int numberSpectra,numberSidebands,numberRxif;
   int blhid,firstsp,lastsp;
   int inhset,blhset,sphset;
   int spcode[25], frcode[25];
-  short int realvisS,imagvisS,scale;
-  float realvisF[128],imagvisF[128];
+  short int scale;
   short int *shortdata;
   double r,cost,sint,z0,tmp, rar, decr;
   double antpos[3*MAXANT+1];
-  int tno, ipnt, usbstart, usbend;
+  int tno, ipnt;
   int kstat;
   char *kst[4];
   char target[6];
   char unknown[6];
   int ntarget;
-  int p, bl, bin;
-  time_t timer, startTime, endTime;
+  time_t  startTime, endTime;
   float trueTime;
   blvector blarray[MAXANT][MAXANT];
   station  antenna[MAXANT];
@@ -578,9 +559,9 @@ int rsmir_Read(char *datapath, int jstat)
   uvwPack **uvwbsln;
   visdataBlock  visSMAscan;
   int sphSizeBuffer=SMIF*MAXBAS*6;
-  int ibuff, nnants, flush;
-  int ifpnt, polpnt, blpnt, sbpnt, rxpnt, sblpnt, binpnt, rx_irec;
-  int avenchan, intcycle;
+  int  nnants, flush;
+  int ifpnt, polpnt, blpnt, sbpnt, rxpnt, sblpnt;
+  int avenchan;
   int blid_intchng[MAXINT];  
                       /* the baseline id right after integration change */
   int rxlod;               /* the rx to load rxlod=0 -> smabuffer.rx1        
@@ -597,7 +578,14 @@ int rsmir_Read(char *datapath, int jstat)
   extern struct sch_def   **sch;
   struct bltsys    **tsys;
   struct anttsys   **atsys;
-
+// initialize
+  startTime = time(NULL);
+  phaseSign = 1;
+  flush     = 1;
+  polpnt    = 1;
+  blpnt     = 1;
+  rxlod     = 0;
+//  
   strcpy(pathname,datapath);
   strcpy(filename[0],"in_read");
   strcpy(filename[1],"bl_read");
@@ -1246,15 +1234,13 @@ int rsmir_Read(char *datapath, int jstat)
 	//         (char *)rar2c(inh[inhset]->rar),inh[inhset]->inhid);
 	multisour[sourceID].ra = inh[inhset]->rar;
 	multisour[sourceID].dec = inh[inhset]->decr;
-	sprintf(multisour[sourceID].equinox, "%s", inh[inhset]->epoch);
+	sprintf(multisour[sourceID].equinox, "%f", inh[inhset]->epoch);
 	multisour[sourceID].freqid =-1;
 	multisour[sourceID].inhid_1st=inh[inhset]->inhid;
 	// calculate the apparent position coordinates from j2000 coordinates 
 	{ 
 	  double obsra,obsdec,r1,d1;
-	  char jcode = 'J';
 	  double julian2000=2451544.5;
-	  // precess(epo2jul(2000.0, &jcode)
 	  precess(julian2000,
 		  multisour[sourceID].ra,
 		  multisour[sourceID].dec, jday, &obsra, &obsdec);
@@ -1293,10 +1279,7 @@ int rsmir_Read(char *datapath, int jstat)
       int sphid_hdr;
       int blset;
       int inset;
-      int intset;
-      int is;
       int nspectra;
-      double bfreq;
       nspectra=0;
       blset     =  0;
       sphid_hdr =  0;
@@ -1396,14 +1379,11 @@ int rsmir_Read(char *datapath, int jstat)
     }
     // solve for tsys
     {
-      int inhset;
       int refant;
       int done;
       int pair1;
       int pair2;
       int blset;
-      int blset_hd;
-      float tmp;
       // solve for tsys of a reference ante
       set=0;
       refant=0;
@@ -1701,10 +1681,11 @@ int rsmir_Read(char *datapath, int jstat)
       smabuffer.obsdec = multisour[sourceID].dec_app;
       smabuffer.ra = multisour[sourceID].ra;
       smabuffer.dec = multisour[sourceID].dec;
-      {double HA;
-      double LST;
-      double ra_apparent;
-      double delLST;
+      {
+      //double HA;
+      //double LST;
+      //double ra_apparent;
+      //double delLST;
       // HA = LST - ra_apparent
       //if(inh[inhset]->inhid==smaEngdata[inhset]->inhid) 
       //{ smabuffer.lst = smaEngdata[inhset]->lst*DPI/12.0;
@@ -2586,20 +2567,21 @@ int spdecode (struct codeh_def *specCode[])
 
 float juliandate (struct codeh_def *refdate[])
 { 
-  int i, stat;   
+  int i;
+  int stat=0;   
   double jdate;
   char  ccaldate[13];
   static char *months[] = {"ill", "Jan","Feb","Mar","Apr","May","Jun","Jul", 
           "Aug","Sep","Oct","Nov","Dec"};
   char yc[4];
   char mc[3];
-  char dc[2];
   int yi,mi,di;
 
   ccaldate[13]='\0';
   memcpy(ccaldate,refdate[0]->code, 12);
   sscanf(ccaldate, "%s%d%s%d", mc, &di,yc,&yi);
   printf("Observing Date: %d %s %d\n", yi, mc, di);
+  mi=0;
   for (i=1; i<13; i++){
     if (memcmp(mc,months[i], 3)==0) mi=i;
   }
@@ -2917,40 +2899,6 @@ void vearth (double jday, double pos[3], double vel[3])
   vel[2] = aukm * W2*SINEPS;
 }
 
-double epo2jul(double epoch, char *code[])
-{
-  /* jhz 2004-7-24: based on miriad code in f, translate into c.
-     c
-     c  Convert an epoch (in years) to a Julian day.
-     c
-     c  Input:
-     c    epoch      The epoch.
-     c    code       Either 'B' (Besselian epoch) or 'J' (Julian) or ' '
-     c               If its blank, Julian epoch is assumed for values
-     c               greater than 1984.
-     c  Output:
-     c    epo2jul    The Julian day.
-  */
-  int julian;
-  double julianday;
-  char jcode[1];
-  code[2]='\0';
-  printf("code %s\n", &code[0]);
-  sprintf(&jcode[0], "%s", &code[0]);
-  if( jcode[0]==' '&&epoch>1984.0)julian = 1;
-  if (jcode[0]=='J'||jcode[0]=='j')julian = 1;
-  if (jcode[0]!='J'&&jcode[0]!='j'&&jcode[0]!='B'&&jcode[0]!='b')
-    bug_c('f',"Unrecognized epoch type, in epo2jul");
-  if(julian==1)
-    julianday = 365.25*(epoch-2000) + 2451545;
-  /* why not 245544.5 ? */
-  else 
-    julianday = 365.242198781*(epoch-1900) + 2415020.31352;
-  /* why this value for epoch-1900 ? */
-  printf("jcode %s\n", &jcode[0]);
-  return julianday;
-}
-
 void elaz(int tno) {
   /* calculate and store mean az and el into uv data */
   int i;
@@ -2976,7 +2924,7 @@ void elaz(int tno) {
 
 void tsysStore(int tno) {
   /* store Tsys to uvdata */
-  int cnt, i, j;
+  int cnt, j;
   float tsysbuf[SMANT*SMIF];
 
   cnt =0;
