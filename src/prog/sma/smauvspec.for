@@ -133,6 +133,7 @@ c    jhz  10dec04 fold smauvspec back to MIRIAD4.0.4
 c    jhz  15dec04 added the jpl line catalog 
 c    jhz  22jun05 fixed problem of chunk boundary allowing
 c                 edge flag.
+c    jhz  23jun05 enable phase plot
 c  Bugs:
 c------------------------------------------------------------------------
 c=======================================================================
@@ -178,7 +179,7 @@ c
         character mname*8000, moln*16
         integer mtag(maxmline), nmline, j, jp, js, je, iline
         character version*(*)
-        parameter(version='SmaUvSpec: version 1.2 22-Jun-05')
+        parameter(version='SmaUvSpec: version 1.3 23-Jun-05')
         character uvflags*8,device*64,xaxis*12,yaxis*12,logf*64
         character xtitle*64,ytitle*64, veldef*8
         logical ampsc,rms,nobase,avall,first,buffered,doflush,dodots
@@ -226,7 +227,7 @@ c
                 veldef = 'radio'
               end if
         call getaxis(xaxis,yaxis)
-        if(yaxis(1:1).eq.'p'.or.yaxis(1:1).eq.'b')
+        if(yaxis(1:1).eq.'b')
      & call bug('f','has not fully implemented yet for the y variable.')
         if(docat) 
      & call bug('f','has not fully implemented yet for jpl catalog.')
@@ -1298,8 +1299,8 @@ c
         if(yrange(2).le.yrange(1))then
           call setaxisr(yp,npnts,yranged)
           call pgswin(xrange(1),xrange(2),yranged(1),yranged(2))
-c          yrange(2)=yranged(2)
-c          yrange(1)=yranged(1)
+cc          yrange(2)=yranged(2)
+cc          yrange(1)=yranged(1)
         else
           call pgswin(xrange(1),xrange(2),yrange(1),yrange(2))
         endif
@@ -1321,7 +1322,8 @@ c   rescale the phase for plotting both
           call  pgsci(i)
 c          call pgsci(mod(i-1,ncol)+1)
           if(dopoint)then
-          call pgpts(plot(i+1)-plot(i),xp(plot(i)),yp(plot(i)),symbol)
+          call pgpts(plot(i+1)-plot(i),xp(plot(i)),yp(plot(i)),symbol,
+     *               sppntr)
           else
             if (hann.gt.1) call hannsm(hann,hc,plot(i+1)-plot(i),
      *         yp(plot(i)),hw)
@@ -1422,6 +1424,7 @@ c          call uvgetvra(lvis,'source',source)
           call pgsci(1)
 c
         end
+
 c************************************************************************
 c PgHline -- Histogram line plot for pgplot.
 c mchw:
@@ -1450,6 +1453,7 @@ c    x		x-array to be plotted
 c    y		y-array to be plotted
 c    yp         phas-array
 c    gapfac	factor to define a gap in x-array. E.g. 2= 2*(x(i+1)-x(i))
+c    sppntr     spectral window pntr
 c
 c--
 c History
@@ -1475,7 +1479,6 @@ c
         real lsrvel,veldop
         logical docat
         common/jplcat/nmol,moltag,molname,docat,lsrvel,veldef,veldop
-
 c
 c  sort the spectral window pointr after flagging
 c
@@ -1491,6 +1494,7 @@ c
           fnschan(j)=1
          endif
         enddo
+c
         maxf=0.
         minf=1000.
         minstr=0.
@@ -1498,7 +1502,6 @@ c
 c
 c  Look for gaps or reversals in x-array
 c
-c        symbol=17
         symbol=2
         yloc=0.95
         call pgbbuf
@@ -1524,8 +1527,8 @@ c        symbol=17
             if(ci.eq.24) call pgscr(ci, 0.75, 0.2, 0.3)
             end if
              call  pgsci(ci)
-              if(j.eq.1) call  pgsci(7)
-              if(j.eq.7) call  pgsci(25)
+             if(j.eq.1) call  pgsci(7)
+             if(j.eq.7) call  pgsci(25)
              call pgmove(x(start),y(start))
              N=0
           do k=1, fnschan(j)
@@ -1545,13 +1548,13 @@ c        symbol=17
             if(ci.eq.23) call pgscr(ci, 0.5, 0.0, 0.5)
             if(ci.eq.24) call pgscr(ci, 0.75, 0.2, 0.3)
             end if
-               XPTS(k) = x(k+(j-1)*nschan(j))
-               YPTS(k) = yp(k+(j-1)*nschan(j))
-          if(maxf.lt.(x(k+(j-1)*nschan(j)))) maxf=x(k+(j-1)*nschan(j))
-          if(minf.gt.(x(k+(j-1)*nschan(j)))) minf=x(k+(j-1)*nschan(j))
-          if(maxstr.lt.(y(k+(j-1)*nschan(j)))) 
+               XPTS(k) = x(k+(j-1)*fnschan(j))
+               YPTS(k) = yp(k+(j-1)*fnschan(j))
+          if(maxf.lt.(x(k+(j-1)*fnschan(j)))) maxf=x(k+(j-1)*fnschan(j))
+          if(minf.gt.(x(k+(j-1)*fnschan(j)))) minf=x(k+(j-1)*fnschan(j))
+          if(maxstr.lt.(y(k+(j-1)*fnschan(j)))) 
      *      then
-                maxstr=y(k+(j-1)*nschan(j))
+                maxstr=y(k+(j-1)*fnschan(j))
             end if
             if(i<npts.and.k<fnschan(j)) then
               call pgdraw (0.5*(x(i+1)+x(i)), y(i))
@@ -1658,10 +1661,10 @@ c                 write(*,*) molname(j)
 CPGPT -- draw several graph markers
 Cvoid cpgpt(int n, const float *xpts, const float *ypts, int symbol);
 C
-      SUBROUTINE PGPTS (N, XPTS, YPTS, SYMBOL)
+      SUBROUTINE PGPTS (N, XPTS, YPTS, SYMBOL,sppntr)
       INTEGER N
       REAL XPTS(*), YPTS(*)
-      INTEGER SYMBOL
+      INTEGER SYMBOL, sppntr(N)
 c jhz modified to PGPT with color codes for spectra.
 C
 C Primitive routine to draw Graph Markers (polymarker). The markers
@@ -1696,9 +1699,8 @@ C--
 C 27-Nov-1986
 C 17-Dec-1990 - add polygons [PAH].
 C 14-Mar-1997 - optimization: use GRDOT1 [TJP].
+C 23-Jub-2005 - jhz - implemented spectral window pntr and color index
 C-----------------------------------------------------------------------
-c  read JPL catalog
-      parameter(maxsline=1000)
 ccccccccccccccccccccccccccc
       LOGICAL PGNOTO
       integer j, k, ci, l
@@ -1706,8 +1708,25 @@ ccccccccccccccccccccccccccc
       real xlen,ylen,xloc
       integer   i,maxwin
       parameter(maxwin=48)
-      integer  nspect, nschan(maxwin)
+      integer  nspect, nschan(maxwin),fnschan(maxwin)
       common/spectrum/nspect,nschan
+c
+c  sort the spectral window pointr after flagging
+c
+        do j=1, nspect
+        fnschan(j)=0
+        enddo
+        j=sppntr(1)
+        do i=1, N 
+        if(sppntr(i).eq.j) then
+         fnschan(j)=fnschan(j)+1
+         else
+          j=sppntr(i)
+          fnschan(j)=1
+         endif
+        enddo
+
+
         yloc=0.95
 C
          i=0
@@ -1734,11 +1753,11 @@ C
             call  pgsci(ci)
             
           N=0
-          do k=1, nschan(j)
-            i=i+1
+          do k=1, fnschan(j)
+          i=i+1
           N=N+1
-          XPTS(k) = XPTS(k+(j-1)*nschan(j))
-          YPTS(k) = YPTS(k+(j-1)*nschan(j))
+          XPTS(k) = XPTS(k+(j-1)*fnschan(j))
+          YPTS(k) = YPTS(k+(j-1)*fnschan(j))
           enddo
        write(title,'(a,i2)') 's' ,j
                l = len1(title)
@@ -1757,12 +1776,6 @@ C
           enddo
 555       continue
       
-c      fmn  =  230.537
-c      fmx  =  230.549
-c      strl = -500
-c      call JPLlineRD(fmx,fmn,strl,mxnline,freq,intensity,uqst,lqst,mtag)
-c      write(*,*) 'mxnline=', mxnline
- 
         END
 
 
