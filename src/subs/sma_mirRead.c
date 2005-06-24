@@ -78,6 +78,7 @@
 // 2005-06-21 (JHZ) fixed a bug  in the status handle of rspokeflshsma_c
 // 2005-06-22 (JHZ) fixed all the loose ends (warnings from compilers)
 // 2005-06-22 (JHZ) add a feature allowing user' input of restfrequency
+// 2005-06-23 (JHZ) add ut var
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -236,8 +237,6 @@ void rspokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1,
 { 
   /* rspokeflshsma_c == pokeflsh */
   int buffer, i;
-  double Restf;
-  
   /* initialize the external buffers */   
   strcpy(sname, " ");
   smabuffer.tno    = tno1;
@@ -261,6 +260,7 @@ void rspokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1,
   smabuffer.refant = refant1;
   smabuffer.dolsr  = *dolsr1;
   smabuffer.vsource= *vsour1;
+  smabuffer.juldate= -10.00;
          
       printf("User's input vSource = %f km/s\n", smabuffer.vsource);
       if(rfreq1 > 0.00001 || rfreq1 < -0.00001) {
@@ -294,6 +294,7 @@ void rspokeflshsma_c(char *kst[])
   int npol,ipnt,ischan[SMIF];
   int tbinhi,ibuff;
   double preamble[5], tdash;
+  long int dummy;
   float jyperk;
   float vis[2*MAXCHAN];
   int flags[MAXCHAN]; 
@@ -302,7 +303,6 @@ void rspokeflshsma_c(char *kst[])
   char instrument[4];
   char observer[16];
   char version[16];
-
   tno = smabuffer.tno;
   sb = smabuffer.sb; /* sb=0 for lsb; sb=1 for usb; sb=2 for both */
   rx = smabuffer.rxif;
@@ -311,7 +311,7 @@ void rspokeflshsma_c(char *kst[])
   /* put ants to uvdata */
   if(smabuffer.nants!=0) {
     uvputvri_c(tno,"nants",&(smabuffer.nants),1);
-    /*  write telescope name and other description parameters */
+  /*  write telescope name and other description parameters */
     sprintf(telescope,"SMA");
     sprintf(instrument,"SMA");
     sprintf(observer,"SmaUser");
@@ -343,8 +343,22 @@ void rspokeflshsma_c(char *kst[])
   } 
   tdash  = smabuffer.time;
   tbinhi = 1;
+  /* convert julian date to ut and store ut */
+  /* ut and julian date on 2000 julian2000=2451544.5 */
+  /* julain date = 2451544.5 + day of the yr + fraction of day from 0h UT */
+
+// determine julian date
+     if(smabuffer.juldate < -1.) { 
+     dummy =  (long int) (smabuffer.time);
+     smabuffer.juldate = (double) dummy + 0.5;
+        }
+// convert juldate to ut in radians
+     smabuffer.ut = smabuffer.time - smabuffer.juldate;
+     smabuffer.ut = smabuffer.ut*DPI*2.0;
+// store ut
+     uvputvrd_c(tno,"ut",&(smabuffer.ut),1);
   /* store apparent LST */
-  uvputvrd_c(tno,"lst",&(smabuffer.lst),1);
+     uvputvrd_c(tno,"lst",&(smabuffer.lst),1);
   /* store elaz data */
   elaz(tno);
   /* Compute radial velocity of the observatory */
