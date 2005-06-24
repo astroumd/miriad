@@ -489,6 +489,8 @@ struct smlodd {
         double restfreq[SMIF+1];
         double basefreq;
         double time; /* in Julian day */
+        double juldate; /* julilan date */
+        double ut;   /* in radians    */
         double lst;  /* in units of radian */
         double obsra;
         double obsdec;
