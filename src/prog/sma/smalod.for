@@ -178,12 +178,12 @@ c                   The error was in the sma_mirRead.c
 c    jhz  21-jun-05 eliminate unused variables and subroutines
 c    jhz  22-jun-05 make restfreq working
 c    jhz  24-jun-05 add variable ut
-c
+c    jhz  27-jun-05 add initializing blarray in sma_mirRead.c
 c------------------------------------------------------------------------
         integer maxfiles
         parameter(maxfiles=128)
         character version*(*)
-        parameter(version='SmaLod: version 1.7 21-June-05')
+        parameter(version='SmaLod: version 1.8 27-June-05')
 c
         character in(maxfiles)*64,out*64,line*64, rxc*4
         integer tno, length, len1
