@@ -79,6 +79,7 @@
 // 2005-06-22 (JHZ) fixed all the loose ends (warnings from compilers)
 // 2005-06-22 (JHZ) add a feature allowing user' input of restfrequency
 // 2005-06-23 (JHZ) add ut var
+// 2005-06-27 (JHZ) add initializing blarray
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -954,6 +955,17 @@ int rsmir_Read(char *datapath, int jstat)
     /* set antennas */
     {
       int bset;
+// initialize blarray
+
+            for (i=0; i< MAXANT; i++) {
+             for (j=0; j< MAXANT; j++) {
+          blarray[i][j].ee = 0.0;
+           blarray[i][j].nn = 0.0;
+            blarray[i][j].uu = 0.0;
+             blarray[i][j].itel1 = 0;
+              blarray[i][j].itel2 = 0;
+               blarray[i][j].blid  = 0;
+              } }
       bset = smabuffer.scanskip*numberBaselines;
       blarray[blh[bset]->itel1][blh[bset]->itel2].ee = blh[bset]->ble ;
       blarray[blh[bset]->itel1][blh[bset]->itel2].nn = blh[bset]->bln ;
@@ -967,6 +979,8 @@ int rsmir_Read(char *datapath, int jstat)
 	  blarray[blh[set]->itel1][blh[set]->itel2].itel1 = blh[set]->itel1;
 	  blarray[blh[set]->itel1][blh[set]->itel2].itel2 = blh[set]->itel2;
 	  blarray[blh[set]->itel1][blh[set]->itel2].blid  = blh[set]->blsid;
+//          printf(" ant1 ant2 e n u %d %d %f %f %f\n", blh[set]->itel1,
+//          blh[set]->itel2,blh[set]->ble, blh[set]->bln, blh[set]->blu);
 	  smabuffer.nants++;       }
 	else
 	  {smabuffer.nants = (int)((1+sqrt(1.+8.*smabuffer.nants))/2);
@@ -1069,14 +1083,29 @@ int rsmir_Read(char *datapath, int jstat)
     // derive antenna position in local coordinate system
     // mir stores the position in float
     for (i=1; i < smabuffer.nants+1; i++) {
-      if(i<=smabuffer.refant) {
+      if(i<smabuffer.refant) {
 	antenna[i].x = (double)blarray[i][smabuffer.refant].ee 
 	  - antenna[smabuffer.refant].x;
 	antenna[i].y = (double)blarray[i][smabuffer.refant].nn 
 	  - antenna[smabuffer.refant].y;
 	antenna[i].z = (double)blarray[i][smabuffer.refant].uu 
 	  - antenna[smabuffer.refant].z;
+//        printf(" ant ee nn uu %d %f %f %f\n",i,
+//            blarray[i][smabuffer.refant].ee,
+//            blarray[i][smabuffer.refant].nn,
+//            blarray[i][smabuffer.refant].uu);
+                         
       } else {
+         if(i==smabuffer.refant) {
+         antenna[smabuffer.refant].x = 0.;
+         antenna[smabuffer.refant].y = 0.;
+         antenna[smabuffer.refant].z = 0.;
+//            printf(" ant ee nn uu %d %f %f %f\n",i,
+//            blarray[smabuffer.refant][i].ee,
+//            blarray[smabuffer.refant][i].nn,
+//           blarray[smabuffer.refant][i].uu);
+                                 } else {
+
 	
 	antenna[i].x = (double)blarray[smabuffer.refant][i].ee
 	  - antenna[smabuffer.refant].x;
@@ -1087,6 +1116,11 @@ int rsmir_Read(char *datapath, int jstat)
 	antenna[i].z = (double)blarray[smabuffer.refant][i].uu
 	  - antenna[smabuffer.refant].z;
 	antenna[i].z = - antenna[i].z;
+//            printf(" ant ee nn uu %d %f %f %f\n",i,
+//            blarray[smabuffer.refant][i].ee,
+//            blarray[smabuffer.refant][i].nn,
+//            blarray[smabuffer.refant][i].uu);
+                           }
       }
     }
     
@@ -1101,6 +1135,7 @@ int rsmir_Read(char *datapath, int jstat)
 	geocxyz[i].y = (antenna[i].x);
 	geocxyz[i].z = (antenna[i].z)*sin(smabuffer.lat)
 	  + (antenna[i].y)*cos(smabuffer.lat);
+//       printf("ant x y z %d %f %f %f\n", i, antenna[i].x,antenna[i].y,antenna[i].z);
       }
       printf("NUMBER OF ANTENNAS =%d\n", smabuffer.nants);
       //
@@ -1146,7 +1181,7 @@ int rsmir_Read(char *datapath, int jstat)
 	       geocxyz[i].x,
 	       geocxyz[i].y,
 	       geocxyz[i].z);
-      } 
+      }
       //
       // convert geocentrical coordinates to equatorial coordinates
       // of miriad system y is local East, z is parallel to pole
