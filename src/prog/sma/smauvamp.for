@@ -123,6 +123,8 @@ c                 need for plotting a beating function of two
 c                 point sources from his 690GHz OrionKL data. 
 c   
 c   jhz 29 Jun 05 add keyword "nbin" 
+c   jhz 29 Jun 05 add keywork "average"
+c   jhz 29 Jun 05 correct log file err
 c
 c   Notes
 c   -----
@@ -207,7 +209,7 @@ c
 c      data npts, plpts, basmsk /ifac1*0, ifac1*0, ifac2*0/ -- see izero
       data polmsk /13*0/
 c-----------------------------------------------------------------------
-      call output ('SmaUvAmp: version 1.1 29-jun-05')
+      call output ('SmaUvAmp: version 1.2 29-jun-05')
       call output (' ')
 
       call izero(ifac1,npts)
@@ -3042,7 +3044,7 @@ c
      +                              '(1pe12.5)', str(ipt:), il)
                         ipt = ipt + il + 1
 c
-                        call strfr (abs(xermean(ii)),
+                        call strfr (abs(yermean(ii)),
      +                                  '(1pe12.5)', str(ipt:), il)
                             ipt = ipt + il + 1
                         call logwrite (str, more)
