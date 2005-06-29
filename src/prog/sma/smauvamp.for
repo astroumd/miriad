@@ -39,6 +39,19 @@ c	Default is to self-scale (see also OPTIONS=XIND).
 c@ yrange
 c	Plot range in the y-direction as for the x axis.  The 
 c	default is to self-scale (see also OPTIONS=YIND).
+c@ average
+c       The averaging time in minutes.
+c       Averaging is reset at frequency, source, or pointing centre
+c       changes. Individual baselines and polarizations are averaged
+c       separately. If you have selected multiple
+c       channels and you also ask for time averaging, then all the
+c       selected channels are averaged together in the time interval.
+c       The vector averaging for the visibility in a time interval
+c       is done before data is binned if nbin > 0 is selected.
+c       Default is no averaging.
+c@ nbin 
+c       Number of bins in xrange for xaxis.
+c       Default is no bin.
 c@ options
 c	Task enrichment options. Minimum match is effective. 
 c	 nocal   Do not apply the gain corrections
@@ -105,10 +118,12 @@ c	A one line comment which is written into the logfile.
 c--
 c
 c  History:
-c To do:
+c   jhz 28 Jun 05 start the program based on Henrik Beuther's
+c                 need for plotting a beating function of two
+c                 point sources from his 690GHz OrionKL data. 
+c   
+c   jhz 29 Jun 05 add keyword "nbin" 
 c
-c   Vector averaging rms not yet implemented
-c   add keyword "bin" 
 c   Notes
 c   -----
 c
@@ -169,6 +184,7 @@ c
      +  dolog, dozero, doequal, donano, dosrc, doavall, bwarn(2), 
      +  skip, xgood, ygood, doxind, doyind, dowrap, none, dosymb, 
      +  dodots, false(2), allfull, docol, twopass, keep, dofqav
+      integer nbin
       real dra,ddec,phaz
       real secrad, PA, Utr,Vtr
          parameter(secrad=PI/180./3600.)
@@ -191,7 +207,7 @@ c
 c      data npts, plpts, basmsk /ifac1*0, ifac1*0, ifac2*0/ -- see izero
       data polmsk /13*0/
 c-----------------------------------------------------------------------
-      call output ('SmaUvAmp: version 28-jun-05')
+      call output ('SmaUvAmp: version 1.1 29-jun-05')
       call output (' ')
 
       call izero(ifac1,npts)
@@ -204,7 +220,7 @@ c
      +   tunit, dorms, dovec, doflag, doall, dobase, dointer, doperr,
      +   dolog, dozero, doequal, donano, dosrc, doavall, doxind, 
      +   doyind, dowrap, dosymb, dodots, docol, inc, nx, ny, pdev, 
-     +   logf, comment, size, hann, ops, twopass, dofqav,PA)
+     +   logf, comment, size, hann, ops, twopass, dofqav,PA,nbin)
       call chkinp (xaxis, yaxis, xmin, xmax, ymin, ymax, dayav,
      +   dodoub, dowave, doave, dovec, dorms, dointer, doperr,
      +   dowrap, hann, xrtest, yrtest)
@@ -349,7 +365,10 @@ c
           do while (j.lt.nread)
             j = j + 1
             if ( goodf(j)) then
-              if(.not.donano) then
+c
+c for shifting the phase center
+c
+          if(.not.donano) then
           phaz = -((preamble(1) * dra*secrad) 
      +     + (preamble(2) * ddec*secrad)) *
      +                2.0*PI 
@@ -357,10 +376,12 @@ c
           phaz = -((preamble(1) * dra*secrad)
      +     + (preamble(2) * ddec*secrad)) *
      +                2.0*PI*freq(j)
-           end if      
+          end if      
 c          shift phase does not change amplitude
 c          data(j) = data(j)*cmplx(cos(phaz),sin(phaz))
+c
 c rotate the coordinates
+c
            Utr = u*cos(PA*PI/180.)-v*sin(PA*PI/180.)
            Vtr = u*sin(PA*PI/180.)+v*cos(PA*PI/180.)
            u=Utr
@@ -451,7 +472,8 @@ c separate locations in plot buffer
 c
         if (pl4dim.gt.1) then
           call telluse (ivis, plfidx, dobase, maxbase, maxpol,
-     +      pl2dim, pl3dim, pl4dim, npts(1,1,plfidx), a1a2, none)
+     +      pl2dim, pl3dim, pl4dim, npts(1,1,plfidx), a1a2, none,
+     +      nbin)
           allfull = .false.
         end if
 c
@@ -469,7 +491,8 @@ c
         end if
       else
         call telluse (ivis, ifile, dobase, maxbase, maxpol, pl2dim,
-     +                pl3dim, pl4dim, npts(1,1,1), a1a2, none)
+     +                pl3dim, pl4dim, npts(1,1,1), a1a2, none,
+     +  nbin)
       end if
 c
 c  Optionally Hanning smooth data
@@ -488,7 +511,7 @@ c
      +     xxmax, yymin, yymax, pdev, pl1dim, pl2dim, pl3dim, pl4dim,
      +     maxbase, maxpol, maxfile, nbases, npols, npts, buffer(ip), 
      +     xo, yo, elo, eho, nx, ny, a1a2, order, size, polmsk, 
-     +     doavall, docol)
+     +     doavall, docol,nbin)
 c
       call logclose
       call memfree (ip, maxbuf2, 'r')
@@ -2150,7 +2173,7 @@ c
      +    doperr, dolog, dozero, doequal, donano, dosrc, doavall, 
      +    doxind, doyind, dowrap, dosymb, dodots, docol, inc, nx, ny, 
      +    pdev, logf, comment, size, hann, ops, twopass, dofqav,
-     +    PA)
+     +    PA,nbin)
 c-----------------------------------------------------------------------
 c     Get the user's inputs 
 c
@@ -2194,6 +2217,8 @@ c    size         PGPLOT character sizes for the labels and symbols
 c    hann         Hanning smoothing length
 c    twopass      Make two passes through the data
 c    dofqav       Average frequency channels before plotting.
+c    PosA         Position Angle for rotating the uv frame
+c    nbin         number of bins for X-axis
 c-----------------------------------------------------------------------
       implicit none
 c
@@ -2201,6 +2226,8 @@ c
       double precision dayav
       real PA
       real xmin, xmax, ymin, ymax, size(2) 
+      integer nbin
+c
       logical dorms(3), dovec(2), doflag, doall, dobase, dointer, 
      +  doperr, dolog, dozero, doequal, donano, docal, dopol, dosrc,
      +  doavall, doxind, doyind, dowrap, dosymb, dodots, dopass, 
@@ -2273,6 +2300,8 @@ c
       if (xmin.ne.0.0 .or. xmax.ne.0.0) doxind = .false.
       if (ymin.ne.0.0 .or. ymax.ne.0.0) doyind = .false.
 c
+c     get average
+c
       call keyd ('average', dayav, -1.0d0)
 c
       if (dayav.gt.0.0) then
@@ -2310,8 +2339,12 @@ c
 c
       if (doall) doflag = .false.
 c
-       call keyr('PosA',PA,0.0)
-
+c     work out bins
+      call keyi ('nbin',nbin,0)      
+c
+c  get the position angle for rotating the uv frame
+c
+      call keyr('PosA',PA,0.0)
       call keyi ('nxy', nx, 0)
       call keyi ('nxy', ny, nx)
 c
@@ -2531,7 +2564,7 @@ c
      +   xxmax, yymin, yymax, pdev, pl1dim, pl2dim, pl3dim, pl4dim, 
      +   maxbase, maxpol, maxfile, nbases, npols, npts, buffer, xo, 
      +   yo, elo, eho, nx, ny, a1a2, order, size, polmsk, 
-     +   doavall, docol)
+     +   doavall, docol,nbin)
 c-----------------------------------------------------------------------
 c     Draw the plot
 c
@@ -2577,6 +2610,17 @@ c   xx,yymin,max   Work array (automatically determined plot extrema)
 c   order          Work array
 c-----------------------------------------------------------------------
       implicit none
+c for bin
+      integer maxbins
+      parameter (maxbins = 1000)
+      integer nbin, ibin, numdat(maxbins)
+      real xbin(maxbins),xdbin(maxbins),xerbin(maxbins)
+      real ydbin(maxbins),yerbin(maxbins)
+      real xermean(maxbins),yermean(maxbins)
+      real xbhi(maxbins),xblo(maxbins)
+      real ybhi(maxbins),yblo(maxbins)
+      real xbsize
+      character aline*80
 c
       integer pl1dim, pl2dim, pl3dim, pl4dim, maxbase, maxpol, maxfile,
      +  xo, yo, elo(2), eho(2), a1a2(maxbase,2), order(maxbase),
@@ -2889,6 +2933,7 @@ c
                   if (npts(kp,lp,jf).ne.0) then
                     call pgsch(size(2))
                      sym=17
+                  if(nbin.eq.0) then
                     call pgpt (npts(kp,lp,jf),buffer(xo+1,kp,lp,jf), 
      +                            buffer(yo+1,kp,lp,jf), sym)
                     if (dorms(1))
@@ -2901,10 +2946,109 @@ c
      +                             buffer(xo+1,kp,lp,jf), 
      +                             buffer(elo(2)+1,kp,lp,jf), 
      +                             buffer(eho(2)+1,kp,lp,jf), 1.0)
+                    else
+c
+c  work out bin statistics 
+c
+c initialize
+c
+                 xbsize = (xhi-xlo)/nbin
+                 do i=1, nbin
+                 xbin(i)   = xlo + (i-0.5)*xbsize
+                 xdbin(i)   = 0.
+                 xerbin(maxbins) = 0.
+                 xermean(maxbins) = 0.
+                 ydbin(i)   = 0.
+                 yerbin(maxbins) = 0.
+                 yermean(maxbins) = 0.
+                 numdat(i) = 0
+                 end do
+c
+c accumulate the data for each bin
+c
+                 ibin=1
+                 do i=1, npts(kp,lp,jf)     
+c       write(*,*) buffer(xo+i,kp,lp,jf),buffer(yo+i,kp,lp,jf) 
+                 do ibin=1,nbin           
+         if(buffer(xo+i,kp,lp,jf).lt.(xbin(ibin)+0.5*xbsize).and.
+     *    buffer(xo+i,kp,lp,jf).ge.(xbin(ibin)-0.5*xbsize)) then
+        xdbin(ibin)  = xdbin(ibin)  + buffer(xo+i,kp,lp,jf)
+        xerbin(ibin) = xerbin(ibin) + buffer(xo+i,kp,lp,jf)**2
+        ydbin(ibin)  = ydbin(ibin)  + buffer(yo+i,kp,lp,jf)
+        yerbin(ibin) = yerbin(ibin) + buffer(yo+i,kp,lp,jf)**2
+        numdat(ibin) = numdat(ibin) + 1
+                 endif
+                 enddo
+                 enddo
+c
+c derive mean value for each bin
+c squeaze out the empty bins
+c
+                 ibin=1
+                 do i=1, nbin
+                 if(numdat(i).ge.1) then
+                 xdbin(ibin)=xdbin(i)/numdat(i)
+                 ydbin(ibin)=ydbin(i)/numdat(i)
+                 if(numdat(i).ne.1) then
+           xermean(ibin) = 
+     *     (xerbin(i)-numdat(i)*xdbin(ibin)**2)/
+     *     (numdat(i)-1)/numdat(i)
+           xermean(ibin) = (abs(xermean(ibin)))**0.5
+           yermean(ibin) =
+     *     (yerbin(i)-numdat(i)*ydbin(ibin)**2)/
+     *     (numdat(i)-1)/numdat(i)
+           yermean(ibin) = (abs(yermean(ibin)))**0.5
+                 else
+                 xermean(ibin) =0.0
+                 yermean(ibin) =0.0       
+                 endif
+                 ibin=ibin+1
+                 endif
+                 end do
+             nbin=ibin-1
+         do ibin=1, nbin
+          enddo
+                 
+c work out error bar for the mean errors in both axes
+                do i=1, nbin
+                 xbhi(i) = xdbin(i) + xermean(i)
+                 xblo(i) = xdbin(i) - xermean(i)
+                 ybhi(i) = ydbin(i) + yermean(i)
+                 yblo(i) = ydbin(i) - yermean(i)
+                end do
+               call pgpt (nbin,xdbin,ydbin,sym)
+               call pgerrx (nbin, xblo, xbhi, ydbin,1.0)
+               call pgerry (nbin, xdbin, yblo, ybhi,1.0)
+
+
+
+                 endif
 c
 c  Write log file; save x, y, xer, yerr
 c
-                    if (dolog) then
+             if (dolog) then
+
+            write (aline, 200)  nbin
+200       format ('Plot ', i6, ' bins')
+          call logwrite (aline(1:len1(aline)), more)
+             if(nbin.ne.0) then
+               do  ii = 1, nbin
+                        str = ' '
+                        ipt = 1
+                        call strfr (xdbin(ii),
+     +                              '(1pe12.5)', str(ipt:), il)
+                        ipt = ipt + il + 1
+                        call strfr (ydbin(ii),
+     +                              '(1pe12.5)', str(ipt:), il)
+                        ipt = ipt + il + 1
+c
+                        call strfr (abs(xermean(ii)),
+     +                                  '(1pe12.5)', str(ipt:), il)
+                            ipt = ipt + il + 1
+                        call logwrite (str, more)
+                        if (.not.more) goto 999
+                      end do
+                else
                       do ii = 1, npts(kp,lp,jf)
                         str = ' '
                         ipt = 1
@@ -2936,6 +3080,7 @@ c
                         call logwrite (str, more)
                         if (.not.more) goto 999
                       end do
+                     endif
                     end if
                   end if
                 end do
@@ -3375,7 +3520,8 @@ c
 c
 c
       subroutine telluse (ivis, ifile, dobase, maxbase, maxpol, 
-     +                    pl2dim, pl3dim, pl4dim, npts, a1a2, none)
+     +                    pl2dim, pl3dim, pl4dim, npts, a1a2, 
+     +                    none,nbin)
 c-----------------------------------------------------------------------
 c     Tell the user what happened so far
 c
@@ -3392,7 +3538,7 @@ c
       logical dobase, none
 cc
       character aline*80
-      integer len1, i, nsum, j
+      integer len1, i, nsum, j, nbin
       logical more, nunloc
 c-----------------------------------------------------------------------
       if (pl4dim.gt.1) then
@@ -3429,7 +3575,7 @@ c
           nunloc = .false.
           write (aline, 200)  nsum
 200       format ('Plot ', i6, ' points')
-          call logwrite (aline(1:len1(aline)), more)
+          if(nbin.eq.0) call logwrite (aline(1:len1(aline)), more)
         end if
       end if
       call output (' ')
