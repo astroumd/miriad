@@ -25,9 +25,12 @@ c	Default is all polarizations or Stokes parameters present
 c@ axis
 c	Two values (minimum match active), one for each of the x 
 c	and y axes chosen from:
+c         time                     [time in DD HH MM SS.S format]
+c         dtime                    [time in decimal days format]
 c	  amplitude, real, imag    [natural units; Jy]
 c	  phase                    [degrees]
 c	  uc, vc                   [u,& v, -u & -v in klambda]
+c         uvdistance               [sqrt(u**2+v**2)]
 c	Defaults are axis=vc,amp  (x and y axes).
 c@ xrange
 c	Plot range in the x-direction 
@@ -35,6 +38,8 @@ c	  If axis = uc, vc,               [kilo-lambda;   2 values]
 c	          unless OPTIONS=NANOSEC;     then   nanoseconds]
 c	  If axis = amplitude, real, imag [natural units; 2 values]
 c	  If axis = phase                 [degrees;       2 values]
+c         If axis = time                  [dd,hh,mm,ss.s; 8 values]
+c         If axis = dtime                 [decimal days;  2 values]
 c	Default is to self-scale (see also OPTIONS=XIND).
 c@ yrange
 c	Plot range in the y-direction as for the x axis.  The 
@@ -99,13 +104,9 @@ c		 plotted into the log file.
 c@ PosA   
 c       The Position Angle (degree) for rotating the u-v plane. 
 c       If PA is not zero, the uv frame will rotates amount of 
-c       PA around the w axis.
+c       PA around the w axis in the case of xaxis=uc or vc.
 c@ device
 c	PGPLOT plot device/type. No default.
-c@ nxy
-c	Number of plots in the x and y directions for when plotting
-c	each baseline separately. Defaults try to choose something
-c	sensible.
 c@ size
 c	PGPLOT character sizes, in units of the default size (i.e., 1)
 c	First value is for the labels, the second is for the symbol size
@@ -125,7 +126,10 @@ c
 c   jhz 29 Jun 05 add keyword "nbin" 
 c   jhz 29 Jun 05 add keywork "average"
 c   jhz 29 Jun 05 correct log file err
-c
+c   jhz 30 Jun 05 work out multiple files
+c   jhz 30 Jun 05 add time for axis
+c   jhz 30 Jun 05 take out nxy and make one plot
+c                 per trial.
 c   Notes
 c   -----
 c
@@ -189,7 +193,7 @@ c
       integer nbin
       real dra,ddec,phaz
       real secrad, PA, Utr,Vtr
-         parameter(secrad=PI/180./3600.)
+      parameter(secrad=PI/180./3600.)
 c
 c Externals
 c
@@ -209,7 +213,7 @@ c
 c      data npts, plpts, basmsk /ifac1*0, ifac1*0, ifac2*0/ -- see izero
       data polmsk /13*0/
 c-----------------------------------------------------------------------
-      call output ('SmaUvAmp: version 1.2 29-jun-05')
+      call output ('SmaUvAmp: version 1.30 30-jun-05')
       call output (' ')
 
       call izero(ifac1,npts)
@@ -2284,10 +2288,12 @@ c
 c
       call keymatch ('axis', naxmax, axtyp, 2, axis, nax)
       xaxis = axis(1)
-      if(xaxis.ne.'vc'.and.xaxis.ne.'uc') 
+      if (xaxis.eq.' ') xaxis = 'vc'
+      if(xaxis.ne.'vc'.and.xaxis.ne.'uc'.and.
+     * xaxis.ne.'time'.and.xaxis.ne.'dtime'.and.
+     * xaxis.ne.'uvdistance') 
      *  call bug ('f', 'xaxis has not been supported')
       yaxis = axis(2)
-      if (xaxis.eq.' ') xaxis = 'time'
       if (yaxis.eq.' ') yaxis = 'amplitude'
       if (xaxis.eq.yaxis) call bug ('f', 'x and y axes identical')
 c
@@ -2347,8 +2353,13 @@ c
 c  get the position angle for rotating the uv frame
 c
       call keyr('PosA',PA,0.0)
+      if(PA.ne.0.and.xaxis.ne.'uc'.and.xaxis.ne.'vc') 
+     *  call bug ('f', 
+     * 'xaxis must be uc or vc for rotating the uv plane')
       call keyi ('nxy', nx, 0)
       call keyi ('nxy', ny, nx)
+      nx=1
+      ny=1
 c
 c No interactive mode for single baseline plots, and all
 c baselines together always get one plot per page only
@@ -2612,22 +2623,26 @@ c   xx,yymin,max   Work array (automatically determined plot extrema)
 c   order          Work array
 c-----------------------------------------------------------------------
       implicit none
-c for bin
-      integer maxbins
-      parameter (maxbins = 1000)
-      integer nbin, ibin, numdat(maxbins)
-      real xbin(maxbins),xdbin(maxbins),xerbin(maxbins)
-      real ydbin(maxbins),yerbin(maxbins)
-      real xermean(maxbins),yermean(maxbins)
-      real xbhi(maxbins),xblo(maxbins)
-      real ybhi(maxbins),yblo(maxbins)
-      real xbsize
-      character aline*80
 c
       integer pl1dim, pl2dim, pl3dim, pl4dim, maxbase, maxpol, maxfile,
      +  xo, yo, elo(2), eho(2), a1a2(maxbase,2), order(maxbase),
      +  npts(maxbase,maxpol,maxfile), nx, ny, polmsk(-8:4),
      +  nbases, npols
+
+
+c for bin
+      integer maxbins
+      parameter (maxbins = 1000)
+      integer nbin, ibin, numdat(maxbins,pl4dim), nnbin
+      real xbin(maxbins,pl4dim),xdbin(maxbins,pl4dim)
+      real xerbin(maxbins,pl4dim)
+      real ydbin(maxbins,pl4dim),yerbin(maxbins,pl4dim)
+      real xermean(maxbins,pl4dim),yermean(maxbins,pl4dim)
+      real xbhi(maxbins,pl4dim),xblo(maxbins,pl4dim)
+      real ybhi(maxbins,pl4dim),yblo(maxbins,pl4dim)
+      real xbsize
+      character aline*80
+
       real xmin, xmax, ymin, ymax, size(2), xxmin(maxbase), 
      +  xxmax(maxbase), yymin(maxbase), yymax(maxbase),
      +  buffer(pl1dim,pl2dim,pl3dim,pl4dim)
@@ -2956,14 +2971,14 @@ c initialize
 c
                  xbsize = (xhi-xlo)/nbin
                  do i=1, nbin
-                 xbin(i)   = xlo + (i-0.5)*xbsize
-                 xdbin(i)   = 0.
-                 xerbin(maxbins) = 0.
-                 xermean(maxbins) = 0.
-                 ydbin(i)   = 0.
-                 yerbin(maxbins) = 0.
-                 yermean(maxbins) = 0.
-                 numdat(i) = 0
+                 xbin(i,jf)   = xlo + (i-0.5)*xbsize
+                 xdbin(i,jf)   = 0.
+                 xerbin(i,jf) = 0.
+                 xermean(i,jf) = 0.
+                 ydbin(i,jf)   = 0.
+                 yerbin(i,jf) = 0.
+                 yermean(i,jf) = 0.
+                 numdat(i,jf) = 0
                  end do
 c
 c accumulate the data for each bin
@@ -2972,13 +2987,13 @@ c
                  do i=1, npts(kp,lp,jf)     
 c       write(*,*) buffer(xo+i,kp,lp,jf),buffer(yo+i,kp,lp,jf) 
                  do ibin=1,nbin           
-         if(buffer(xo+i,kp,lp,jf).lt.(xbin(ibin)+0.5*xbsize).and.
-     *    buffer(xo+i,kp,lp,jf).ge.(xbin(ibin)-0.5*xbsize)) then
-        xdbin(ibin)  = xdbin(ibin)  + buffer(xo+i,kp,lp,jf)
-        xerbin(ibin) = xerbin(ibin) + buffer(xo+i,kp,lp,jf)**2
-        ydbin(ibin)  = ydbin(ibin)  + buffer(yo+i,kp,lp,jf)
-        yerbin(ibin) = yerbin(ibin) + buffer(yo+i,kp,lp,jf)**2
-        numdat(ibin) = numdat(ibin) + 1
+         if(buffer(xo+i,kp,lp,jf).lt.(xbin(ibin,jf)+0.5*xbsize).and.
+     *    buffer(xo+i,kp,lp,jf).ge.(xbin(ibin,jf)-0.5*xbsize)) then
+        xdbin(ibin,jf)  = xdbin(ibin,jf)  + buffer(xo+i,kp,lp,jf)
+        xerbin(ibin,jf) = xerbin(ibin,jf) + buffer(xo+i,kp,lp,jf)**2
+        ydbin(ibin,jf)  = ydbin(ibin,jf)  + buffer(yo+i,kp,lp,jf)
+        yerbin(ibin,jf) = yerbin(ibin,jf) + buffer(yo+i,kp,lp,jf)**2
+        numdat(ibin,jf) = numdat(ibin,jf) + 1
                  endif
                  enddo
                  enddo
@@ -2988,39 +3003,37 @@ c squeaze out the empty bins
 c
                  ibin=1
                  do i=1, nbin
-                 if(numdat(i).ge.1) then
-                 xdbin(ibin)=xdbin(i)/numdat(i)
-                 ydbin(ibin)=ydbin(i)/numdat(i)
-                 if(numdat(i).ne.1) then
-           xermean(ibin) = 
-     *     (xerbin(i)-numdat(i)*xdbin(ibin)**2)/
-     *     (numdat(i)-1)/numdat(i)
-           xermean(ibin) = (abs(xermean(ibin)))**0.5
-           yermean(ibin) =
-     *     (yerbin(i)-numdat(i)*ydbin(ibin)**2)/
-     *     (numdat(i)-1)/numdat(i)
-           yermean(ibin) = (abs(yermean(ibin)))**0.5
+                 if(numdat(i,jf).ge.1) then
+                 xdbin(ibin,jf)=xdbin(i,jf)/numdat(i,jf)
+                 ydbin(ibin,jf)=ydbin(i,jf)/numdat(i,jf)
+                 if(numdat(i,jf).ne.1) then
+           xermean(ibin,jf) = 
+     *     (xerbin(i,jf)-numdat(i,jf)*xdbin(ibin,jf)**2)/
+     *     (numdat(i,jf)-1)/numdat(i,jf)
+           xermean(ibin,jf) = (abs(xermean(ibin,jf)))**0.5
+           yermean(ibin,jf) =
+     *     (yerbin(i,jf)-numdat(i,jf)*ydbin(ibin,jf)**2)/
+     *     (numdat(i,jf)-1)/numdat(i,jf)
+           yermean(ibin,jf) = (abs(yermean(ibin,jf)))**0.5
                  else
-                 xermean(ibin) =0.0
-                 yermean(ibin) =0.0       
+                 xermean(ibin,jf) =0.0
+                 yermean(ibin,jf) =0.0       
                  endif
                  ibin=ibin+1
                  endif
                  end do
-             nbin=ibin-1
-         do ibin=1, nbin
-          enddo
+             nnbin=ibin-1
                  
 c work out error bar for the mean errors in both axes
-                do i=1, nbin
-                 xbhi(i) = xdbin(i) + xermean(i)
-                 xblo(i) = xdbin(i) - xermean(i)
-                 ybhi(i) = ydbin(i) + yermean(i)
-                 yblo(i) = ydbin(i) - yermean(i)
+                do i=1, nnbin
+                 xbhi(i,jf) = xdbin(i,jf) + xermean(i,jf)
+                 xblo(i,jf) = xdbin(i,jf) - xermean(i,jf)
+                 ybhi(i,jf) = ydbin(i,jf) + yermean(i,jf)
+                 yblo(i,jf) = ydbin(i,jf) - yermean(i,jf)
                 end do
-               call pgpt (nbin,xdbin,ydbin,sym)
-               call pgerrx (nbin, xblo, xbhi, ydbin,1.0)
-               call pgerry (nbin, xdbin, yblo, ybhi,1.0)
+          call pgpt (nnbin,xdbin(1,jf),ydbin(1,jf),sym)
+          call pgerrx (nnbin,xblo(1,jf),xbhi(1,jf),ydbin(1,jf),1.0)
+          call pgerry (nnbin,xdbin(1,jf),yblo(1,jf),ybhi(1,jf),1.0)
 
 
 
@@ -3030,21 +3043,21 @@ c  Write log file; save x, y, xer, yerr
 c
              if (dolog) then
 
-            write (aline, 200)  nbin
-200       format ('Plot ', i6, ' bins')
+            write (aline, 200)  nnbin,jf
+200       format ('Plot ', i6, ' bins', ' for file:', i6)
           call logwrite (aline(1:len1(aline)), more)
              if(nbin.ne.0) then
-               do  ii = 1, nbin
+               do  ii = 1, nnbin
                         str = ' '
                         ipt = 1
-                        call strfr (xdbin(ii),
+                        call strfr (xdbin(ii,jf),
      +                              '(1pe12.5)', str(ipt:), il)
                         ipt = ipt + il + 1
-                        call strfr (ydbin(ii),
+                        call strfr (ydbin(ii,jf),
      +                              '(1pe12.5)', str(ipt:), il)
                         ipt = ipt + il + 1
 c
-                        call strfr (abs(yermean(ii)),
+                        call strfr (abs(yermean(ii,jf)),
      +                                  '(1pe12.5)', str(ipt:), il)
                             ipt = ipt + il + 1
                         call logwrite (str, more)
