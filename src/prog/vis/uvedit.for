@@ -52,6 +52,9 @@ c		      selected was not the first source in the file.
 c    rjs   08may00    Change incorrect call of keyf to keya.
 c    rjs   05sep00    Use double precision to avoid rounding of coords.
 c    rjs   19sep04    Copy across sensitivity model, if appropriate.
+c    jhz   05jul05    add options = sma for SMA, which takes
+c                     sma geocentric coordinates and antenna position
+c                     offsets given in SMA logs
 c***********************************************************************
 c= Uvedit - Editing of the baseline of a UV data set.
 c& jm
@@ -105,6 +108,31 @@ c     antenna number must be present in the file.
 c     NOTE: You may only specify at most one of the ``apfile'',
 c           ``antpos'', or ``dantpos'' keywords.
 c
+c     In the case of options=sma, the apfile is the original
+c     antenna file which can be copied over from the original
+c     MIR-formated data, e.g. 050604_03:44:03/antennas which
+c     contains four entries corresponding to the antenna number, 
+c     the X, Y, Z geocentric cooridnates in unit of meter.
+c     the reference antenna's X,Y,Z coordinates are specified 
+c     to be zeros. Any corrections for the antenna positions 
+c     must be given in the keyword smaoffset below. If no entries
+c     are input from the keyword smaoffset, positions in the ``apfile''
+c     are considered as the updated values and will be used to 
+c     correct for the vis data. 
+c
+c@ smaoffset
+c     Inputs are the antenna coordinate offsets for SMA entered in
+c     the following order (NO checking is done for consistency):
+c          smaoffset = A1,X1,Y1,Z1,A2,X2,Y2,Z2,A3,X3,Y3,Z3,....
+c     The input values are the antenna number and the three geocentric
+c     coordinate offsets (entered in units of millimeter). These input
+c     values are added to the original absolute coordinates read from 
+c     the antenna file given in keywork apfile.
+c
+c     Note that A1 does not necesarily have to correspond to Antenna 1;
+c     it is used to represent the variable containing the antenna
+c     number.  Antennas present in the data but not included in the
+c     input value list are treated as having a zero coordinate offset.
 c@ antpos
 c     Inputs are the absolute equatorial coordinates entered in the
 c     following order (NO checking is done for consistency):
@@ -206,6 +234,9 @@ c                dra*cos(obsdec) arcseconds).
 c                NOTE:  The obsdec used is the "old" obsdec.  If there
 c                is a correction in declination, this is NOT applied
 c                in computing the cos(obsdec).
+c       sma
+c                Allows to use the SMA corrdinates system, i.e.
+c                The geocentric coodinates in unit of meter
 c
 c--
 c-----------------------------------------------------------------------
@@ -217,7 +248,7 @@ c
       character PROG*(*)
       parameter (PROG = 'UVEDIT: ')
       character VERSION*(*)
-      parameter (VERSION = 'version 1.8 19-Sep-04')
+      parameter (VERSION = 'version 1.9 05-July-05')
 c
       double precision SECRAD, ASECRAD
 c  -------------(SECRAD = DPI / (12.d0 * 3600.d0))
@@ -280,6 +311,10 @@ c
       logical dowide, docorr
       logical more, updated
       logical flags(MAXCHAN), wflags(MAXCHAN)
+c for sma
+      logical dosma
+      double precision smaoffxyz(MAXANT,3),r,sint,cost,tmp,z0
+      integer refant, nants
 c
 c  Externals.
 c
@@ -291,6 +326,7 @@ c  End declarations.
 c-----------------------------------------------------------------------
 c  Announce program.
 c
+      refant=0
       call Output(PROG // VERSION)
 c-----------------------------------------------------------------------
 c  Use the key routines to get the user input parameters and check the
@@ -400,6 +436,12 @@ c Dec.
       raoff = raoff * SECRAD
       decoff = decoff * ASECRAD
 c
+c Options.
+c
+
+       call GetOpt(douv, dodra, dosma)
+
+c
 c Antenna.
 c
       j = 0
@@ -411,6 +453,13 @@ c
      *    'ANTPOS, DANTPOS, and APFILE are mutually exclusive options.'
         call Bug('f', errmsg)
       endif
+c for sma
+       if ((.not.KeyPrsnt('apfile')).and.dosma) then
+      errmsg = PROG // 'keyword APFILE must be specified for SMA data.'
+           call Bug('f', errmsg)
+       endif
+
+
       doants = .FALSE.
       if (KeyPrsnt('apfile')) then
         call Keyf('apfile', apFile, ' ')
@@ -418,7 +467,69 @@ c
           errmsg = PROG // 'keyword APFILE incorrectly specified.'
           call Bug('f', errmsg)
         endif
-        call readapf(PROG, apFile, XYZ, MAXANT)
+        call readapf(PROG, apFile, XYZ, MAXANT, dosma, nants)
+c
+c parse for refant of SMA
+c
+           refant=0
+           if(dosma) then
+           do j=1, nants
+           if((XYZ(j,1).eq.0).and.(XYZ(j,1).eq.0).
+     *     and.(XYZ(j,1).eq.0)) refant=j
+           end do
+           if((refant.gt.nants).or.(refant.lt.1)) then
+       errmsg=PROG//'no reference antenna can be found from the file: ' 
+     *            //  apFile
+           call Bug('f', errmsg)
+           end if
+           end if
+c
+c read keyword smaoffset
+c
+          if(dosma) then
+          Nantpos = 0
+          call Keyi('smaoffset', j, 0)
+        do while (j .gt. 0)
+          if (j .gt. nants) then
+            errmsg = PROG // 'Antenna number larger than expected.'
+            call Bug('f', errmsg)
+          endif
+          Nantpos = Nantpos + 1
+          call Keyd('smaoffset', smaoffxyz(j, 1), 0.0)
+          call Keyd('smaoffset', smaoffxyz(j, 2), 0.0)
+          call Keyd('smaoffset', smaoffxyz(j, 3), 0.0)
+          call Keyi('smaoffset', j, 0)
+        enddo
+          
+        if (j .lt. 0) then
+          errmsg = PROG // 'Incorrect antenna number entered.'
+          call Bug('f', errmsg)
+        endif
+        if (Nantpos .eq. 0) then
+          errmsg = PROG // 'No antenna offsets entered from smaoffsets.'
+           call Bug('w', errmsg)
+          errmsg = PROG // 'The file "' // apFile(1:8) // 
+     + '" is assumed to have been updated.' 
+          call Bug('w', errmsg)
+        endif
+        if (Nantpos .gt. nants) then
+          errmsg = PROG // 'More antennas entered than expected.'
+          call Bug('f', errmsg)
+        endif
+c
+c add the smaoffset to the original absolute pos
+c reinitialize smaoffxyz
+c
+            do j = 1, nants
+            XYZ(j,1) = XYZ(j,1)  + smaoffxyz(j, 1)/1000.
+            XYZ(j,2) = XYZ(j,2)  + smaoffxyz(j, 2)/1000.
+            XYZ(j,3) = XYZ(j,3)  + smaoffxyz(j, 3)/1000.
+            smaoffxyz(j, 1) = 0.
+            smaoffxyz(j, 2) = 0.
+            smaoffxyz(j, 3) = 0.
+            end do
+        endif
+
         antabs = .TRUE.
         doants = .TRUE.
         Nflags = Nflags + 1
@@ -493,13 +604,43 @@ c  Initialize the delay array.
 c
 c Options.
 c
-      call GetOpt(douv, dodra)
+c      call GetOpt(douv, dodra, dosma)
       if ((.not. douv) .and. (dorad .or. dotime .or. doants))
      *  call Bug('w',
      *  'OPTIONS=NOUV possibly unsafe for these editing options.')
       if (dodra) Nflags = Nflags + 1
 c
       call KeyFin
+c
+c  geocentric coordinates (in meter) to
+c  equatorial coordinates (in nonasec).
+c
+       if(dosma) then
+       mesg = PROG //
+     * 'Convert the input geocentric coordinates to equatorial coordinat
+     *es'
+            call Output(mesg)
+        r = sqrt(XYZ(refant,1)**2+ XYZ(refant,2)**2)
+            if(r>0) then
+            cost = XYZ(refant,1) / r
+            sint = XYZ(refant,2) / r
+            z0   = XYZ(refant,3)
+                else
+            cost = 1.
+            sint = 0.
+            z0 = 0.
+            end if
+       do j =1,nants 
+        tmp  = XYZ(j,1)*cost + XYZ(j,2)*sint - r
+        smaoffxyz(j,1) = (1e9/DCMKS) * tmp
+        tmp  = -XYZ(j,1)*sint + XYZ(j,2)*cost - r
+        smaoffxyz(j,2) = (1e9/DCMKS) * tmp   
+        smaoffxyz(j,3) = (1e9/DCMKS) * (XYZ(j,3)-z0);
+        XYZ(j,1) = smaoffxyz(j,1)
+        XYZ(j,2) = smaoffxyz(j,2)
+        XYZ(j,3) = smaoffxyz(j,3)
+       end do
+       end if
 c
 c Should never get in this if-conditional!
 c
@@ -1127,9 +1268,9 @@ cc= GetOpt - Internal routine to get command line options.
 cc& jm
 cc: internal utility
 cc+
-      subroutine GetOpt(douv, dodra)
+      subroutine GetOpt(douv, dodra, dosma)
       implicit none
-      logical douv, dodra
+      logical douv, dodra, dosma
 c
 c  Get user options from the command line.
 c
@@ -1139,22 +1280,24 @@ c
 c  Output:
 c    douv     If true, then recompute u and v.
 c    dodra    If true, then multiply dra by 1/cos(obsdec).
-c
+c    dosma    if true, then convert geocentric coordinates (meter)
+c                      to equatorial coordinates (nonasec).
 c--
 c-----------------------------------------------------------------------
 c
 c  Internal variables.
 c
       integer NOPTS
-      parameter (NOPTS = 2)
+      parameter (NOPTS = 3)
 c
       character opts(NOPTS)*9
       logical present(NOPTS)
-      data opts/'nouv', 'dra'/
+      data opts/'nouv', 'dra', 'sma'/
 c
       call Options('options', opts, present, NOPTS)
       douv = .not. present(1)
       dodra = present(2)
+      dosma = present(3)
 c
       end
 c************************************************************************
@@ -1521,11 +1664,13 @@ cc= readAPF - Internal routine to read an antenna position file keyword.
 cc& jm
 cc: calibration, utilities
 cc+
-      subroutine readapf(progname, apFile, ants, maxants)
+      subroutine readapf(progname, apFile, ants, maxants, dosma,
+     * nants)
       implicit none
       character progname*(*), apFile*(*)
-      integer maxants
+      integer maxants, nants
       double precision ants(maxants, 3)
+      logical dosma
 c
 c  This routine reads from the specified antenna position file a
 c  header line followed by the absolute positions for each antenna
@@ -1553,7 +1698,7 @@ c
       character token*40
       character line*132, errmsg*132
       integer Lu
-      integer j, nants
+      integer j
       integer L, k1, k2
       integer tlen, length, iostat
       double precision dpval
@@ -1582,12 +1727,14 @@ c  Read the first (comment) line and then read until either an
 c  EOF or error is identified (iostat=-1).  Skip any line that
 c  begins with the '#' character.
 c
+      if(.not.dosma) then
       call TxtRead(Lu, line, length, iostat)
       if (iostat .ne. 0) then
         errmsg = progname // 'Error reading file [' //
      *    apFile(1:L) // '].'
         call Bug('w', errmsg)
         call Bugno('f', iostat)
+      endif
       endif
 c
       do j = 1, maxants
@@ -1607,6 +1754,20 @@ c
             errmsg = progname // 'More antennas entered than expected.'
             call Bug('f', errmsg)
           endif
+c
+cc for sma, the antenna file contains four entries:
+cc antenna number, X,Y,and Z geocentric coordinates in meter.
+c
+           if(dosma) then
+           do j = 1, 4
+            call getfield(line, k1, k2, token, tlen)
+            if (tlen .gt. 0) then
+              call atodf(token(1:tlen), dpval, okay)
+              if (okay.and.j.gt.1) ants(nants, j-1) = dpval
+            endif
+          enddo
+
+          else
           do j = 1, 3
             call getfield(line, k1, k2, token, tlen)
             if (tlen .gt. 0) then
@@ -1614,6 +1775,8 @@ c
               if (okay) ants(nants, j) = dpval
             endif
           enddo
+          end if
+cc
         endif
         call TxtRead(Lu, line, length, iostat)
       enddo
