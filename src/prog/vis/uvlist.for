@@ -128,7 +128,8 @@ c   14dec03 pjt  - fix initialization bug for options=average
 c   06feb04 mchw - added AZ to options=list.
 c   21may04 pjt  = CVS merged the two previous modifications
 c   19jun05 pjt  - fixes for g95: num() is now integer array
-c   01jul05 jhz  - add a space between Amp and Phase list
+c   01jul05 jhz  - add a space (1x) before Amp and Phase in the formats
+c                  for the vis list in AveDat,BriefDat,Allan
 c-----------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
@@ -448,7 +449,7 @@ c
 	 write(line,100) count,k,ctime,
      *   	       ant1,ant2,pol,0.001*uave(bl),0.001*vave(bl),
      *		       (amp(j),nint(arg(j)),cflag(j),j=1,nchan)
- 100	 format(f6.0,1x,i3,1x,a,i4,'-',i4,1x,a,2f9.2,10(f8.3,i4,a))
+100    format(f6.0,1x,i3,1x,a,i4,'-',i4,1x,a,2f9.2,10(1x,f8.3,1x,i4,a))
 	 length = len1(line)
 	 call LogWrite(line(1:length),more)
 	 else
@@ -610,7 +611,7 @@ c
 	write(line,100) recave(bl),ctime,
      *   	       ant1,ant2,pol,0.001*uave(bl),0.001*vave(bl),
      *		       (amp(j),nint(arg(j)),cflag(j),j=1,nchan)
- 100	format(f6.0,1x,a,i4,'-',i4,1x,a,2f9.2,10(f8.3,i4,a))
+ 100	format(f6.0,1x,a,i4,'-',i4,1x,a,2f9.2,10(1x,f8.3,1x,i4,a))
 	length = len1(line)
 	call LogWrite(line(1:length),more)
 	write(line,'(44x,10(f8.3,i4,a))')
@@ -687,7 +688,7 @@ c
 	write(line,100)mod(VisNo,1000000),ctime,
      *   	       ant1,ant2,pol,0.001*uin,0.001*vin,
      *		       (amp(j),nint(arg(j)),cflag(j),j=1,nchan)
- 100	format(i6,1x,a,i4,'-',i4,1x,a,2f9.2,10(f8.3,1x,i4,a))
+ 100	format(i6,1x,a,i4,'-',i4,1x,a,2f9.2,10(1x,f8.3,1x,i4,a))
 	length = len1(line)
 	call LogWrite(line(1:length),more)
 	end
