@@ -14,6 +14,8 @@ c	    Tested against the vla calibrators list with accuracy
 c	    of .004 sec in RA and .02" in DEC - WH  20-oct-1991
 c       See also the task REGRID for converting data between 1950
 c       and 2000 coordinate frames.
+c       See also the task "skycoor" in wcstools for this (and the
+c       inverse) conversion.
 c@ ra
 c	1950 Right Ascension. This can be given as decimal hours
 c	or hh:mm:ss.ss format. Default=0.
@@ -30,10 +32,20 @@ c   mchw 23oct91  Added in code doc.
 c   mjs  22nov91  Removed list-oriented-write-to-string (for the Cray)
 c   mchw 23feb95  Add extra decimal place; Fix bug with dec=-0,xx,xx
 c   mchw 23jul97  Use keyt routines.
+c   pjt           comments
 c-----------------------------------------------------------------------
 c   sample data:        1950				2000
 c		2 24 41.165  67 07 39.70    2 28 50.05  67 21 03.03
 c		12 53 35.833 -5 31 08.01   12 56 11.167 -5 47 21.53
+c
+c j2000 ra=2:24:41.165 dec=67:07:39.70
+c J2000: version 23JUL97
+c Ra2000: 2:28:50.045      Dec2000: 67:21:02.992
+c
+c j2000 ra=12:53:35.833 dec=-5:31:08.01
+c J2000: version 23JUL97
+c Ra2000: 12:56:11.171     Dec2000: -5:47:21.495
+c
 c
         character version*(*)
         parameter(version = 'J2000: version 23JUL97')
