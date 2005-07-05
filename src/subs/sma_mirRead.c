@@ -80,6 +80,7 @@
 // 2005-06-22 (JHZ) add a feature allowing user' input of restfrequency
 // 2005-06-23 (JHZ) add ut var
 // 2005-06-27 (JHZ) add initializing blarray
+// 2005-06-05 (JHZ) remove a hidden phase flip for the lsb data
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -491,8 +492,8 @@ int rsgetdata(float smavis[2*MAXCHAN], int smaflags[MAXCHAN], int *smanchan, int
 	/*          printf("sb=%d %f\n", sb, pow((double)(-1),(double)(sb+1))); 
 	 */
 	smavis[2*i] =  fac[n]*smabuffer.data[ipnt].real;
-	smavis[2*i+1] =  fac[n]*smabuffer.data[ipnt].imag*
-	  (float)pow((double)(-1),(double)(sb+1)); 
+	smavis[2*i+1] =  fac[n]*smabuffer.data[ipnt].imag;
+//	  (float)pow((double)(-1),(double)(sb+1)); 
 	smaflags[i] =  smabuffer.flag[n][p][bl][sb];       
 	ipnt++;    
       }
@@ -2057,7 +2058,6 @@ int rsmir_Read(char *datapath, int jstat)
 		smabuffer.data[ipnt].real=(float)pow(2.,(double)scale)*shortdata[5+2*i];
 		smabuffer.data[ipnt].imag=
 		  (float)pow(2.,(double)scale)*(-shortdata[6+2*i]*phaseSign);
-		
 		ipnt++;    }
 	      
 	    }
