@@ -133,7 +133,7 @@ c                  for the vis list in AveDat,BriefDat,Allan
 c-----------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='UVLIST: version  19-jun-05')
+	parameter(version='UVLIST: version  05-jul-05')
 	real rtoh,rtod,pi
 	integer maxsels
 	parameter(pi=3.141592653589793,rtoh=12/pi,rtod=180/pi)
