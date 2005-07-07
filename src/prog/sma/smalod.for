@@ -133,8 +133,9 @@ c       The default is 0,1 (i.e. skip none, process 1 file).
 c
 c@ nscans
 c       This gives one or two numbers, being the number of scans to skip,
-c       followed by the number of scans to process. NOTE: This applies to
-c       all files read. The default is to skip none and process all scans.
+c       followed by the number of scans to process. 
+c       The default is to skip the 1st and the last 2 scans
+c       and process the rest of scans in the file.
 c--
 c  History:
 c    jhz 15-jul-04 made the original version.
@@ -181,11 +182,18 @@ c    jhz  24-jun-05 add variable ut
 c    jhz  27-jun-05 add initializing blarray in sma_mirRead.c
 c    jhz  05-jul-05 update the version corresponding to
 c                   remove a hidden phase flip in sma_mirRead.c
+c    jhz  07-jul-05 update jyperk in sma_mirRead.c
+c                   change the default of the first argument in 
+c                   nscans to 1
+c    jhz 07-jul-05 pasring the source name in sma_mirRead.c
+c                  changing the source name if the first 8
+c                  characters are identical for any of the two source
+c                  name entries from mir data.
 c------------------------------------------------------------------------
         integer maxfiles
         parameter(maxfiles=128)
         character version*(*)
-        parameter(version='SmaLod: version 1.9 05-July-05')
+        parameter(version='SmaLod: version 1.10 07-July-05')
 c
         character in(maxfiles)*64,out*64,line*64, rxc*4
         integer tno, length, len1
@@ -261,7 +269,7 @@ c        call mkeyd('restfreq',rfreq,2,nfreq)
      *    fileproc = nfiles - fileskip
         if(fileskip.lt.0.or.fileproc.lt.1)
      *  call bug('f','Invalid NFILES parameter')
-        call keyi('nscans',scanskip,0)
+        call keyi('nscans',scanskip,1)
         call keyi('nscans',scanproc,0)
         if(scanskip.lt.0.or.scanproc.lt.0)
      *  call bug('f','Invalid NSCANS parameter')
