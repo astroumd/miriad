@@ -80,7 +80,11 @@
 // 2005-06-22 (JHZ) add a feature allowing user' input of restfrequency
 // 2005-06-23 (JHZ) add ut var
 // 2005-06-27 (JHZ) add initializing blarray
-// 2005-06-05 (JHZ) remove a hidden phase flip for the lsb data
+// 2005-07-05 (JHZ) remove a hidden phase flip for the lsb data
+// 2005-07-07 (JHZ) updated aperture efficiency and jyperk
+// 2005-07-07 (JHZ) add  parsing source name and changing the source
+//                  name if the first 8 chars are identical in
+//                  any two source name entries from mir data.
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -297,7 +301,7 @@ void rspokeflshsma_c(char *kst[])
   int tbinhi,ibuff;
   double preamble[5], tdash;
   long int dummy;
-  float jyperk;
+  float jyperk, eta, eta_c, eta_a, r_ant=3, pi;
   float vis[2*MAXCHAN];
   int flags[MAXCHAN]; 
   struct pols *polcnt;
@@ -369,8 +373,26 @@ void rspokeflshsma_c(char *kst[])
   uvputvrr_c(tno,"veldop",&(smabuffer.veldop),1);
   // store the source velocity w.r.t. lsr
   uvputvrr_c(tno,"vsource",&(smabuffer.vsource),1);
-  jyperk=139.;    /* assuming eta=0.7 d=6m */
-  uvputvrr_c(tno,"jyperk",&jyperk,1);
+//
+// antenna aperture efficiency from TK
+// nearly no elevation dependence at EL > 20 deg
+// at 690 GHz there have been no proper measurements yet
+// 0.4 would be number assumed.  07-jul-05
+//
+  switch(smabuffer.rxif) {  
+  case 0: eta_a=0.75;     /* jyperk=139. assuming eta_a=0.7 d=6m */
+          break;
+  case 1: eta_a=0.65;     /* jyperk=194. assuming eta_a=0.5 d=6m */   
+          break;
+  case 2: eta_a=0.4;     /* jyperk=242. assuming eta_a=0.4 d=6m */  
+          break;
+             }
+   eta_c = 0.88;
+   eta   = eta_a*eta_c;
+   pi    = (float) DPI;
+   jyperk=2.* 1.38e3/pi/(eta*r_ant*r_ant);
+   uvputvrr_c(tno,"jyperk",&jyperk,1);
+//   printf("jyperk=%f\n", jyperk);
   /* Handle the case that we are writing the multiple IFs out as multiple
      records. */
   if(smabuffer.doif!=1&&smabuffer.nifs>1) {
@@ -547,7 +569,7 @@ int rsmir_Read(char *datapath, int jstat)
   char location[6][81];
   char pathname[64];
   char filename[6][36];
-  char sours[9];
+  char sours[9], smasours[33];
   int set, readSet;
   int file,nfiles = 6;
   int headerbytes[6];
@@ -579,6 +601,7 @@ int rsmir_Read(char *datapath, int jstat)
   source   multisour[MAXSOURCE];
   struct xyz   antxyz[MAXANT];
   int sourceID, phaseSign;
+  short oka,okb,okc,okd;
   correlator smaCorr;
   frequency  smaFreq[2];
   uvwPack **uvwbsln;
@@ -1279,11 +1302,45 @@ int rsmir_Read(char *datapath, int jstat)
 	// parsing the source name and trim the junk tail
 	for(i=0; i<9; i++) {
 	  sours[i]=cdh[set]->code[i];
-	  // ' ' == 32 '\0' == 0
 	  if(cdh[set]->code[i]==32||cdh[set]->code[i]==0||i==8)
 	    sours[i]='\0';
 	}
-        sprintf(multisour[sourceID].name, "%s", sours);
+           sprintf(multisour[sourceID].name, "%s", sours);
+          for(i=2; i< sourceID; i++) {
+          if(strcmp(multisour[i].name, sours)==0) {
+// copy the original source name to smasours
+          for(i=0; i<33; i++) {
+          smasours[i]=cdh[set]->code[i];
+          if(cdh[set]->code[i]==32||cdh[set]->code[i]==0||i==32)
+            smasours[i]='\0';
+                               }
+          oka=okb=okc=okd=0;
+          for(i=2; i< sourceID; i++) {
+          if(multisour[sourceID].name[7]=='a') oka=-1;
+          if(multisour[sourceID].name[7]=='b') okb=-1;
+          if(multisour[sourceID].name[7]=='c') okc=-1;
+          if(multisour[sourceID].name[7]=='d') okd=-1; 
+                      }
+          if(oka==0) {sours[7]='a';
+          sprintf(multisour[sourceID].name, "%s", sours);
+                    } else {           
+          if(okb==0){sours[7]='b';
+          sprintf(multisour[sourceID].name, "%s", sours);
+                     } else {
+          if(okc==0) {sours[7]='c';
+          sprintf(multisour[sourceID].name, "%s", sours);
+                      } else {
+          if(okd==0) {sours[7]='d';
+          sprintf(multisour[sourceID].name, "%s", sours); }
+                              
+                             }
+                            }
+                           }
+
+          printf("Warning: The original name: '%s' is renamed to '%s'\n", 
+          smasours, multisour[sourceID].name);
+                                                       }
+                                                 }
 	multisour[sourceID].sour_id = cdh[set]->icode;
 	//         printf("cdh[set]->code=%s\n", cdh[set]->code);
 	inhset=0;
