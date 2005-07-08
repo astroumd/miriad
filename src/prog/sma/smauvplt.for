@@ -3460,7 +3460,6 @@ c      integer dofit
 c      common/flag/rmsflag, dofit
 
 C
-        write(*,*) 'pgpt fileid=', fileid
       IF (N.LT.1) RETURN
       IF (PGNOTO('PGPT')) RETURN
 
