@@ -111,6 +111,18 @@ void test_uvio(char *fname, int nc, int nw, int nr)
   uvclose_c(t1);
 }
 
+
+void test_sizes(void)
+{
+  printf("sizeof(short)     = %d\n",sizeof(short));
+  printf("sizeof(int)       = %d\n",sizeof(int));
+  printf("sizeof(long)      = %d\n",sizeof(long));
+  printf("sizeof(long long) = %d\n",sizeof(long long));
+  printf("sizeof(size_t)    = %d\n",sizeof(size_t));
+  printf("sizeof(off_t)     = %d\n",sizeof(off_t));
+  printf("sizeof(void *)    = %d\n",sizeof(void *));
+}
+
 int main(int argc, char *argv[])
 {
   int n1, n2, n3;
@@ -143,6 +155,9 @@ int main(int argc, char *argv[])
     do {
       buf = malloc(BUFSIZE);
     } while (buf);
+    break;
+  case 's':
+    test_sizes();
     break;
   default:
     break;
