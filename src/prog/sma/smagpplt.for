@@ -113,6 +113,7 @@ c    jhz  01jun05 eliminate gpplt.h
 c    pjt  01jun05 but re-introduced a clone as smagpplt.h
 c    jhz  11jul05 but change the vis to allow accept two separate vis files;
 c                 add options ratio to compare two bandpass solutions
+c    jhz  12jul05 fix a bug in logwrite
 c  Bugs:
 c------------------------------------------------------------------------
         integer maxsels
@@ -122,7 +123,7 @@ c------------------------------------------------------------------------
         parameter (DPI = 3.14159265358979323846)
         parameter (TWOPI = 2 * PI)
         parameter (DTWOPI = 2 * DPI)        
-        parameter(version='SmaGpPlt: version 1.2 11-July-05')
+        parameter(version='SmaGpPlt: version 1.3 13-July-05')
         include 'smagpplt.h'
         integer iostat,tin,nx,ny,nfeeds,nants,nsols,ierr,symbol,nchan
         integer ntau,length, i, j, k,nschann(maxspect)
@@ -169,6 +170,7 @@ c        call keya('vis',vis,' ')
         doplot = device.ne.' '
         call keya('log',logfile,' ')
         dolog = logfile.ne.' '
+             write(*,*) dolog, logfile
         if(.not.(dolog.or.doplot))
      *    call bug('f','One of the device and log must be given')
         call getaxis(doamp,dophase,doreal,doimag)
@@ -277,6 +279,7 @@ c
           call bug('w','Error opening input '//vis)
           call bugno('f',iostat)
         endif
+            write(*,*) 'here'
           if(dopass)then
             dopass = hdprsnt(tin,'bandpass')
             if(.not.dopass)call bug('w','Bandpass function not present')
@@ -291,11 +294,11 @@ c
           call pgsch(real(max(nx,ny))**0.4)
         endif
        if(dolog.and.(lin.eq.1)) call logopen(logfile,' ')
-       call logwrite('# file:'//vis,more)
+       if(dolog) call logwrite('# file:'//vis,more)
        if(dolog.and.(lin.eq.2).and.doratio) 
-     *call logwrite('# bandpass ratio for above two files',more)
+     * call logwrite('# bandpass ratio for above two files',more)
        if(dolog.and.(lin.eq.2).and.(.not.doratio))
-     *call logwrite('# bandpass difference for above two files',more) 
+     * call logwrite('# bandpass difference for above two files',more) 
 
 
             if(dopass)then
