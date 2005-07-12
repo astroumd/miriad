@@ -10,10 +10,12 @@ c	bandbass. The plot for gains is against time. The
 c	plot for bandpass is against the frequency. SmaGpPlt provides
 c       options to moving smooth or orthogal polynomial fit to the
 c       gain/bandpass solutions and to over write the old gain/bandpass
-c       tables with the smoothed or polynomial fit results.
+c       tables with the smoothed or polynomial fit results. In addition,
+c       SmaGpPlt allows to compare bandpass slutions in two vis files. 
 c@ vis
 c	The name of the input data-set. This will normally be a visibility
-c	data-set. No default.
+c	data-set. No default. If two files are given, options must be
+c       bandpass.
 c@ device
 c	The PGPLOT plotting device to use. The default is no plot.
 c@ log
@@ -58,6 +60,9 @@ c                      with an orthogonal polynomial of degree n and replace
 c                      old one. Only one of the options is allowed in 
 c                      the replacement of the gain/bandpass. Please choose
 c                      either msmooth or opolyfit.
+c         ratio        do ratio (bp1/bp2) in comparison of two bandpasse
+c                      solutions if Keyword vis is given two input vis files. 
+c                      The default is to compare the difference (bp2-bp1).
 c
 c@ smooth
 c       This gives three parameters of moving smooth calculation of the 
@@ -106,6 +111,8 @@ c    jhz  27may05 fix the edge flagging problem.
 c    jhz  31may05 fix the program name smapplt
 c    jhz  01jun05 eliminate gpplt.h
 c    pjt  01jun05 but re-introduced a clone as smagpplt.h
+c    jhz  11jul05 but change the vis to allow accept two separate vis files;
+c                 add options ratio to compare two bandpass solutions
 c  Bugs:
 c------------------------------------------------------------------------
         integer maxsels
@@ -115,7 +122,7 @@ c------------------------------------------------------------------------
         parameter (DPI = 3.14159265358979323846)
         parameter (TWOPI = 2 * PI)
         parameter (DTWOPI = 2 * DPI)        
-        parameter(version='SmaGpPlt: version 1.1 01-June-05')
+        parameter(version='SmaGpPlt: version 1.2 11-July-05')
         include 'smagpplt.h'
         integer iostat,tin,nx,ny,nfeeds,nants,nsols,ierr,symbol,nchan
         integer ntau,length, i, j, k,nschann(maxspect)
@@ -123,10 +130,11 @@ c------------------------------------------------------------------------
         double precision t0
         logical doamp,dophase,doreal,doimag,dogains,dopol,dodtime,doxy
         logical doxbyy,doplot,dolog,more,ltemp,dodots,dodelay,dopass
-        logical dospec,dowrap, dosmooth, donply
+        logical dospec,dowrap, dosmooth, donply, doratio
         complex g1(maxgains),g2(maxgains)
         real alpha(maxgains)
         real times(maxtimes),range(2)
+        real freqs(maxtimes)
         double precision jtime(6154)
         character feeds(3)*1
         real sels(maxsels)
@@ -137,7 +145,9 @@ c
         integer pgbeg,len1
 c
         data feeds/'I','X','Y'/
-        integer pee(2)
+        integer pee(2),nfiles,lin,offset
+        character ops*9
+        logical uvdatopn
         complex pass(10,6145,2), gains(10,2,6145)
         real smooth(3), rpass(10,6145,2), ipass(10,6145,2)
         real apass(10,6145,2), ppass(10,6145,2)
@@ -148,9 +158,12 @@ c
 c
 c  Get the user parameters.
 c
+            nfile=0
         call output(version)
         call keyini
-        call keya('vis',vis,' ')
+c        call keya('vis',vis,' ')
+         ops = 'sdlp'
+          call uvdatinp ('vis', ops)
         if(vis.eq.' ')call bug('f','Input data-set must be given')
         call keya('device',device,' ')
         doplot = device.ne.' '
@@ -161,7 +174,7 @@ c
         call getaxis(doamp,dophase,doreal,doimag)
 c       write(*,*) 'axis-amp pha re im', doamp,dophase,doreal,doimag
         call getopt(dogains,doxy,doxbyy,dopol,dodtime,dodots,
-     *    dodelay,dospec,dopass,dowrap,dosmooth,donply)
+     *    dodelay,dospec,dopass,dowrap,dosmooth,donply,doratio)
          if(dosmooth.and.dopass) then
               if(doamp) dophase=.true.
               if(dophase) doamp=.true.
@@ -233,6 +246,11 @@ c          write(*,*) 'nply bnply=', nply, bnply
         call keyr('yrange',range(1),0.)
         call keyr('yrange',range(2),range(1)-1.)
         call keyfin
+            call uvdatgti ('nfiles', nfiles)
+            if(dopass.and.nfiles.gt.2)
+     *   call bug('f','Too many uv files.')
+            if(.not.dopass.and.nfiles.gt.1)
+     *   call bug('f','Too many uv files.')
 c
 c  Determine the plotting symbol.
 c
@@ -247,11 +265,82 @@ c
 c
 c  Open up all the inputs.
 c
+        if(nfiles.ge.2) then
+         do lin= 1, nfiles
+             
+            if(.not.uvdatopn(tin))call bug('f','Error opening inputs')
+            call uvdatgta ('name', vis)
+            write(*,*) lin,':file', vis
+            call uvdatcls         
         call hopen(tin,vis,'old',iostat)
         if(iostat.ne.0)then
           call bug('w','Error opening input '//vis)
           call bugno('f',iostat)
         endif
+          if(dopass)then
+            dopass = hdprsnt(tin,'bandpass')
+            if(.not.dopass)call bug('w','Bandpass function not present')
+            endif
+           if(doplot)then
+          length = len1(device)
+          ierr = pgbeg(0,device(1:length),nx,ny)
+          if (ierr.ne.1)then
+            call pgldev
+            call bug ('f', 'Error in PGPLOT device')
+          endif
+          call pgsch(real(max(nx,ny))**0.4)
+        endif
+       if(dolog.and.(lin.eq.1)) call logopen(logfile,' ')
+       call logwrite('# file:'//vis,more)
+       if(dolog.and.(lin.eq.2).and.doratio) 
+     *call logwrite('# bandpass ratio for above two files',more)
+       if(dolog.and.(lin.eq.2).and.(.not.doratio))
+     *call logwrite('# bandpass difference for above two files',more) 
+
+
+            if(dopass)then
+          call bload(tin,times,g1,nfeeds,nants,nchan,sels,
+     *          maxgains,maxtimes,nschann)
+          do i=1, nants
+            do j=1, nfeeds
+            peeds =j
+            offset = (j-1) + (i-1)*nfeeds
+           do k=1, nchan
+          if(lin.eq.1) then 
+                  pass(i,k,j) = g1(k+offset*nchan)
+                  freqs(k)=times(k)
+                  endif
+          if(lin.eq.2) then
+       if(.not.doratio) g1(k+offset*nchan)= 
+     *     g1(k+offset*nchan)-pass(i,k,j)
+        if(doratio)
+     *     g1(k+offset*nchan)= pass(i,k,j)/g1(k+offset*nchan)             
+c           call bug('f','inconsistent frequency between the two files')
+               endif
+           end do
+           end do
+        end do
+          if(lin.eq.2) 
+     *     call bpplt(times,g1,nfeeds,nants,nchan,range,
+     *          feeds(nfeeds),doamp,dophase,dowrap,doreal,doimag,
+     *          doplot,dolog,symbol,nx*ny,nschann)
+           endif
+          call hclose(tin)
+          end do
+          if(dolog) call logclose
+          stop
+          endif
+
+        if(.not.uvdatopn(tin))call bug('f','Error opening inputs')
+            call uvdatgta ('name', vis)
+            call uvdatcls
+        call hopen(tin,vis,'old',iostat)
+        if(iostat.ne.0)then
+          call bug('w','Error opening input '//vis)
+          call bugno('f',iostat)
+        end if
+
+
 c
 c  Check for the needed tables.
 c
@@ -1346,7 +1435,7 @@ c
 c timer is to do moving smooth, the code/algorithm is from
 c "Data Analysis" by Siegmund Brandt
 c
-        if((K.gt.0).and.(gnply.eq.0)) then 
+        if((K.gt.0).and.(bnply.eq.0)) then 
         CALL TIMSER(Y,N,K,L,P,ETA,CONETA,A,ATA1,ATA1AT,SCRAT)
          do i=1, N
            ys(i) = ETA(i+K)
@@ -1373,9 +1462,8 @@ c     for moving smooth
       double precision ETA(6200),CONETA(6200),A(21,6)
       double precision ATA1(6,6),ATA1AT(6,21),SCRAT(6,6)
       double precision XA(MAXNR),BP(MAXNR,MAXNR),AP(N,MAXNR)
-      double precision CHI2(MAXNR), R, P
+      double precision CHI2(MAXNR), P
       real x(MAXN), ys(MAXN)
-      character title*64
       integer K, L, i, gnply, greport, nterm
       real smoothg(3), rgain(10,2,6145),igain(10,2,6145)
       common/gsmooth/smoothg,rgain,igain,gnply,greport
@@ -1451,7 +1539,6 @@ c     *                                          freq0,dodelay,pee)
 c
         integer tno,nants,nsoln,npol,pee(2)
         double precision time(nsoln),freq0
-        real tau(nants,nsoln)
         complex gains(10,2,6145)
         logical dodelay
 c
@@ -1596,8 +1683,8 @@ c************************************************************************
       SUBROUTINE PGPTBPASS (N,XPTS,YPTS,SYMBOL,IFEED,IANT,type,nschann)
       INTEGER N, IFEED, IANT
       REAL XPTS(*), YPTS(*)
-      INTEGER SYMBOL,NR
-      LOGICAL PGNOTO,OK
+      INTEGER SYMBOL
+      LOGICAL PGNOTO
       character type*(*)
 c     for movinf smooth
        PARAMETER(MAXNR=20,MAXN=7681,maxspect=49)
@@ -1605,14 +1692,13 @@ c     for movinf smooth
       double precision T(N),Y(N),DELTAY(N)
       double precision ETA(6200),CONETA(6200),A(21,6)
       double precision XA(MAXNR),BP(MAXNR,MAXNR),AP(N,MAXNR)
-      double precision CHI2(MAXNR), R, P
+      double precision CHI2(MAXNR), P
       double precision ATA1(6,6),ATA1AT(6,21),SCRAT(6,6)
-      real x(N), xchan(N), ys(N), ypfit(N)
+      real x(N), xchan(N), ys(N)
       real xlen,ylen,xloc
       character title*64
       integer K,L,i,nspects,schan,fsign,ll,bnply,nterm,breport 
-      real smooth(3), aply(20), ymean
-      double precision chisq
+      real smooth(3), ymean
       real rpass(10,6145,2), ipass(10,6145,2)
       real apass(10,6145,2), ppass(10,6145,2)
       common/bsmooth/smooth,rpass,ipass,apass,ppass,bnply,breport
@@ -1761,12 +1847,12 @@ c------------------------------------------------------------------------
         include 'maxdim.h'
 	integer iostat,off,item,i,j,k,n,p,pd
         complex g(maxchan),temp
-        double precision freqs(2)
 c
 c  Fudge to create a "complex" table, then open it again.
 c
 c        call hdelete(tno,'bandpass',iostat)
         write(*,*) 'create the new bandpass table'
+        n=0
         call wrhdc(tno,'bandpass',(0.,0.))
         call haccess(tno,item,'bandpass','append',iostat)
         if(iostat.ne.0)then
@@ -1786,6 +1872,7 @@ c
 c  Loop over antenna, polarisation, strip, and channel within a strip.
 c
         off = 8
+      
         do i=1,nants
           do p=1,npol
             pd = pee(p)
@@ -2114,10 +2201,10 @@ c
         end
 c************************************************************************
         subroutine getopt(dogains,doxy,doxbyy,dopol,dodtime,dodots,
-     *         dodelay,dospec,dopass,dowrap,dosmooth,donply)
+     *     dodelay,dospec,dopass,dowrap,dosmooth,donply,doratio)
 c
         logical dogains,dopol,dodtime,doxy,doxbyy,dodots,dodelay
-        logical dospec,dopass,dowrap,dosmooth,donply
+        logical dospec,dopass,dowrap,dosmooth,donply,doratio
 c
 c  Get extra processing options.
 c
@@ -2135,14 +2222,15 @@ c    dosmooth   If true, replace old gain curve with the smooth
 c    donply     If true, replace old gain curve with the polynomial fit
 c------------------------------------------------------------------------
         integer nopt
-        parameter(nopt=12)
+        parameter(nopt=13)
         logical present(nopt)
         character opts(nopt)*12
 c
         data opts/'gains       ','polarization','dtime       ',
      *            'xygains     ','xbyygains   ','dots        ',
      *            'delays      ','bandpass    ','speccor     ',
-     *            'wrap        ','msmooth     ','opolyfit    '/
+     *            'wrap        ','msmooth     ','opolyfit    ',
+     *            'ratio       '/
 c
         call options('options',opts,present,nopt)
         dogains = present(1)
@@ -2157,6 +2245,7 @@ c
         dowrap  = present(10)
         dosmooth= present(11)
         donply  = present(12)
+        doratio = present(13)
         if(dosmooth.and.donply) then
            call  bug('f','choose either msmooth or opolyfit')
         end if
@@ -2431,6 +2520,7 @@ C moving averages and confidence limits for end sections
       IMPLICIT DOUBLE PRECISION(A-H,O-Z)
       PARAMETER(BIG=1D10,EPSILN=1D-6,ONE=1.D0,ZERO=0.D0,HALF=.5D0)
       EXTERNAL SZSTUD
+         SqSTUD=ZERO
 C boundary of range
       IF(P.GE.ONE) SQSTUD=BIG
       IF(P.LE.ZERO) SQSTUD=-BIG
