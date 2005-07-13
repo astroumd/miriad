@@ -1,6 +1,6 @@
 #! /bin/csh -f
 #
-set version=12-jan-05
+set version=13-jul-05
 #
 #  2-aug-99 Updated for Sebok's Mandrake setup
 #  1-aug-00 Updated to allow to build private PGPLOT version
@@ -41,6 +41,13 @@ set version=12-jan-05
 #	208.110u 28.510s 4:14.09 93.1%	0+0k 0+0io 1659485pf+0w
 #
 #-----------------------------------------------------------------------
+
+# sanity check
+ 
+if (! -e ../VERSION) then
+  echo You currently need to execute this script from the miriad/install dir
+  exit 1
+endif
 
 #  carma, wsrt, atnf, sma, bima, ....
 set telescope=carma
