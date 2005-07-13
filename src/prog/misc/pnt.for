@@ -15,6 +15,20 @@ c	used to change the pointing constants used at Hat Creek.
 c
 c	COMMANDS
 c
+c  ATA POINTING DATA FORMAT oct 2004
+c
+c # 1         2       3       4         5        6      7   8       9        10          11
+c #az_avg, el_avg, az_meas, el_meas, rad_err, day_of_yr ! az_err, el_err, alidade_temp, source
+c 306.694, 71.150, 304.699, 71.661, 7.713E-1, 55.781 ! -2.105, 0.364, 91.400, Mirfak_S038787,
+c 306.498, 70.969, 304.517, 71.482, 7.723E-1, 55.782 ! -2.086, 0.366, 91.400, Mirfak_S038787,
+c
+c  Original pointing residuals are:    az_ave - az_meas, el_avg - el_meas
+c  Pointing residuals after on-line fit are:  az_err,    el_err
+c make into format read by ptfile subroutine. e.g.
+c awk '{printf("%7.3f %7.3f %7.3f %7.3f %7.3f %7.3f % s\n", $1,$2,$1-$3,$2-$4,$6,$12,$13)}' 07-08mar.data 
+c    > 07-08mar.ave-meas+source
+c
+c
 c	  IN	Read multiple files of  pointing data  written by the
 c		programs SPOINT or CROSS. The program starts by asking
 c		for the data files to be used.  Subsequent use of this
@@ -85,6 +99,16 @@ c	del = v(1) + v(2)*sin(az)) + v(3)*cos(az) + v(4)*sin(el)
 c           + v(5)*cos(el) + v(6)*sin(2*az) + v(7)*cos(2az)
 c	    + v(8)*tan(1.5708-el)
 c
+c	Equation 5 fits Gerry's daz = v(5) * sin(El) * cos(El) for ATA - 09mar2005
+c
+c	daz = v(1)*cosel + sinel*(v(2)*sin(az) + v(3)*cos(az))
+c	    + v(4) + v(5)*sinel*cosel + cosel*(v(6)*sin(az) + v(7)*cos(az))
+c	                    + cosel*(v(8)*sin(2*az) + v(9)*cos(2*az))
+c
+c	del = v(1) + v(2)*sin(az)) + v(3)*cos(az) + v(4)*sin(el) 
+c           + v(5)*cos(el) + v(6)*sin(2*az) + v(7)*cos(2az)
+c	    + v(8)*tan(1.5708-el)
+c
 c	Although the functions in these equations are not orthogonal,
 c	additional corrections may be added to the pointing constants
 c	already in use provided that sufficient pointing data are taken
@@ -121,7 +145,7 @@ c@ device
 c	PGPLOT display device. Default is to prompt the user.
 c@ pdevice
 c	Hardcopy plot device in the format plot#/pgplot device.
-c	# increments for sucessive plots. Default is 'plot1/print'
+c	# increments for sucessive plots. Default is 'plot1/ps'
 c@log
 c	Output log file. Default is 'pnt.log'
 c@options
@@ -172,10 +196,14 @@ c    17feb99 mchw  Edit data for elevation collimation error.
 c    ((20jun98 pjt   various format (x->1x, missing comma's), ))
 c    ((              fixed b(7) -> b(9) array size decl. bug  ))
 c    17mar01 pjt   re-fixed that previous #@# fix 
+c    14oct04 mchw  New data format for ATA.
+c    09mar05 mchw  Equation 5 fits daz = v(5) * sin(El) * cos(El) for ATA
+c    14mar05 mchw  change UT to day of year on plots and listings.
+c    07jul05 mchw  added OVRO data format.
 c----------------------------------------------------------------------c
 	include 'pnt.h'
 	character version*(*)
-	parameter(version='(version 3.0  17-mar-01)')
+	parameter(version='(version 3.1  8-jul-2005)')
 c
 	integer i,iant,kans
 	character ans*20,options*1,log*80,buffer*80
@@ -192,7 +220,7 @@ c
 	call keyfin
 c
 	open (unit=8, file=log, form='formatted', status='unknown')
-	call fdate(dat)
+	call mfdate(dat)
 	write(buffer,100) dat
 100	format('HAT CREEK INTERFEROMETER POINTING FITTING - ', A)      
 	call outlog(buffer)
@@ -434,10 +462,20 @@ c
 c
 c  All the above in a different order
 c
-	else if(equ.eq.4.or.equ.eq.5.) then
+	else if(equ.eq.4) then
 	  ansaz = v(1)*cosel + v(4) + v(5)*sinel +sinel*(v(2)*sin(az)
      *	   + v(3)*cos(az)) + cosel*(v(6)*sin(az) + v(7)*cos(az))
      *	   + cosel*(v(8)*sin(2*az) + v(9)*cos(2*az))
+c********1*********2*********3*********4*********5*********6*********7*c
+c
+c  Using Gerry Harp's equation for v(5) - 09mar2005
+c
+	else if(equ.eq.5) then
+	  ansaz = v(1)*cosel+v(4)+v(5)*sinel*cosel+sinel*(v(2)*sin(az)
+     *	   + v(3)*cos(az)) + cosel*(v(6)*sin(az) + v(7)*cos(az))
+     *	   + cosel*(v(8)*sin(2*az) + v(9)*cos(2*az))
+	else
+	   ansaz = 0.0
 	endif
 	end
 c********1*********2*********3*********4*********5*********6*********7*c
@@ -445,13 +483,9 @@ c********1*********2*********3*********4*********5*********6*********7*c
 	implicit none
 	real equ,az,el,v(9)
 c
-	if(equ.eq.4) then
+	if(equ.eq.4 .or. equ.eq.5) then
 	  ansel = v(1) +v(4)*sin(el) + v(5)*cos(el) + v(2)*sin(az)
      *	      + v(3)*cos(az) + v(6)*sin(2.*az)  
-     *	      + v(7)*cos(2.*az) + v(8)*tan(1.5708-el)
-	else if(equ.eq.5) then
-	  ansel = v(1) +v(2)*sin(el) + v(3)*cos(el) + v(4)*sin(az)
-     *	      + v(5)*cos(az) + v(6)*sin(2.*az) 
      *	      + v(7)*cos(2.*az) + v(8)*tan(1.5708-el)
 	else
 	  ansel = v(1) +v(2)*sin(el) + v(3)*cos(el) + v(4)*sin(az)
@@ -515,6 +549,16 @@ c
 	  b(7) = cosel*cos(az)
 	  b(8) = cosel*sin(2.*az)
 	  b(9) = cosel*cos(2.*az)
+	else if(equ.eq.5) then
+	  b(1) = cosel
+	  b(2) = sinel*sin(az)
+	  b(3) = sinel*cos(az)
+	  b(4) = 1.
+	  b(5) = sinel * cosel
+	  b(6) = cosel*sin(az)
+	  b(7) = cosel*cos(az)
+	  b(8) = cosel*sin(2.*az)
+	  b(9) = cosel*cos(2.*az)
 	endif
 	end
 c********1*********2*********3*********4*********5*********6*********7*c
@@ -522,7 +566,7 @@ c********1*********2*********3*********4*********5*********6*********7*c
 	implicit none
 	real equ,az,el,b(9)
 c
-	if (equ.eq.4)then
+	if (equ.eq.4 .or. equ.eq.5)then
 	  b(1) = 1.
 	  b(2) = sin(az)
 	  b(3) = cos(az)
@@ -702,7 +746,7 @@ c
 	character*60 buffer,input
 	integer kinput, len1
 c
-	call pgmtxt('T',3.,.1,0.,
+	call pgmtxt('T',3.,.5,.5,
 	1	' OPTIONS: Left,Right,Top,Bottom,Vanish,Appear,'
 	2 //'End,See,Newlim,Print,More,Identify,Write,0-8')
 
@@ -798,7 +842,7 @@ c
 	if (.not.stf(is(i))) goto 69
 	if (xaxis .eq. 'AZ')   x=az(i)*RTOD
 	if (xaxis .eq. 'EL')   x=el(i)*RTOD
-	if (xaxis .eq. 'UT')   x=ut(i)*12./PI
+	if (xaxis .eq. 'UT')   x=ut(i)
 	if (xaxis .eq. 'TILT') x=tilt(i)
 	if (xaxis .eq. 'T1')   x=t1(i)
 	if (xaxis .eq. 'T2')   x=t2(i)
@@ -858,10 +902,10 @@ c rmsfit
 	    rmsfit = rmsfit * 60.
 	  endif
 	  call pgsci(0)				! background
-	  call pgmtxt('T',-2.,0.5,.5,buffer)
+	  call pgmtxt('T',-2.,.5,.5,buffer)
 	  write(buffer,'(a,f10.1)') 'rms fit=',rmsfit
 	  call pgsci(3)				! green
-	  call pgmtxt('T',-2.,0.5,.5,buffer)
+	  call pgmtxt('T',-2.,.5,.5,buffer)
 	  call pgsci(1)
 	endif
 	goto 6
@@ -982,12 +1026,13 @@ c
 	real PI,RTOD,RTOM
 	parameter(PI=3.141592654,RTOD=57.29577951,RTOM=3437.746771)
 	include 'pnt.h'
-	character infile*40,source*8,line*80,input*40
+	character infile*40,source*8,line*80,input*40,telescope*20
 	character*1 options,noedit,diag,rawdata,flipdaz,flipdel,rawazel
 	logical firstime
 	integer i,k,n,kf,isrc
-	real day,st,ra,dec,an,az0,el0,az1,el1
+	real az0,el0,az1,el1,an
 	real dazcor,delcor,daznew,delnew,oldequ
+
 c
 c  External
 c
@@ -1056,10 +1101,11 @@ c
 	  call output(' 2 - sin/cos(az) and 2*az ')
 	  call output(' 3 - Tilt and sin/cos(az) ')
 	  call output(' 4 - Tilt and sin and cos of az and 2az ')
+	  call output(' 5 - Fit daz = v(5)*sin(El)*cos(El) for ATA')
 	  call output(' ')
-	  call prompt(input,k,'Fit pointing equation 1 - 4 [4] :')
+	  call prompt(input,k,'Fit pointing equation 1 - 5 [4] :')
 	  read(input(1:k),106,err=5) equ
-5	  if(k.eq.0.or.(equ.lt.1..or.equ.gt.4.)) equ = 4.
+5	  if(k.eq.0.or.(equ.lt.1..or.equ.gt.5.)) equ = 4.
 	  call prompt(input,k,
      *		'Observation used equation 1 2 3 4 or 5 [4] :')
 	  read(input(1:k),106,err=6) oldequ
@@ -1074,9 +1120,12 @@ c
 c
 c  If fitting different pointing equation, then remove old parameters.
 c
-	if(equ.ne.oldequ) then
-	  rawdata = 'Y'
-	endif
+
+c - comment out for ATA data format since we are using the raw pointing residuals.
+c	if(equ.ne.oldequ) then
+c	  rawdata = 'Y'
+c	endif
+
 c	
 c  Enter inputs.
 c
@@ -1101,24 +1150,81 @@ c
 	write(line,'(1x,i3,a)') n-1,' Total points entered'
 	call outlog(line)
 	close(1)
+
 11	call infil(1,infile,kf)
 	if(kf.eq.0) goto 90
 	file = infile		! save last file containing data
 	write(8,'(a,a)') ' Input file: ', file
+
 c
-c  read data file.
+c  Read data in appropriate format
 c
-20	read(1,990,end=10) source, day, ut(n), st, ra, dec,
-     *	  an,(apc(i),i=1,9),(epc(i),i=1,8),
-     *	  az(n),el(n),daz(n),del(n),tilt(n),t1(n),t2(n)
-990      format(a8,1x,f12.2,4f10.5,f4.0,17f8.3,2f9.3,5f8.3) 
-  	if(an.ne.ant.and.ant.ne.0.) goto 20
-c21	if(an.ne.ant.and.ant.ne.0.) goto 20
+
+20     continue
+
+       telescope = 'OVRO'
+       if (telescope.eq.'OVRO')then
 c
-c  Convert az/el degrees to radians for rest of program
+c  read OVRO pointing data file.
+c
+c ant OPT source date mjd az el  dAz dAz_err (always 0) dEl dEl_err (always 0)
+c ant  m1 m2 (always 0) m3 m4 m5 o1 o2 o3 
+c grep 1st line, edit MM# to #, then
+c awk '{printf("%3.0f %7s %11.5f %7.3f %7.3f %7.3f %7.3f\n", $1,$3,$5-53000,$6,$7,$8,$10)}'
+
+
+23     read(1,231,end=10) an, source, ut(n),
+      *      az(n), el(n), daz(n), del(n)
+       print 232,         an, source, ut(n),
+      *      az(n), el(n), daz(n), del(n)
+231    format(f3.0,a8,f12.5,4f8.3)
+232    format(1x,f3.0,a8,1x,f12.5,4f8.3)
+       if(an.ne.ant.and.ant.ne.0.) goto 20
+
+	else if (telescope.eq.'BIMA')then
+c
+c  BIMA pointing data format.
+c
+c22      read(1,221,end=10) source, day, ut(n), st, ra, dec,
+c     *	  an,(apc(i),i=1,9),(epc(i),i=1,8),
+c     *	  az(n),el(n),daz(n),del(n),tilt(n),t1(n),t2(n)
+c221     format(a8,1x,f12.2,4f10.5,f4.0,17f8.3,2f9.3,5f8.3) 
+c        if(an.ne.ant.and.ant.ne.0.) goto 20
+
+	else if (telescope.eq.'ATA')then
+c
+c  read ATA pointing data file.
+c
+c read az_avg, el_avg, az_meas, el_meas, radial_err, day_of_yr ! az_err, el_err, alidade_temp
+c awk '{printf("%7.3f %7.3f %7.3f %7.3f %7.3f %7.3f % s\n", $1,$2,$1-$3,$2-$4,$6,$12,$13)}'
+c
+
+c********1*********2*********3*********4*********5*********6*********7*c
+21	read(1,211,end=10) 
+      *      az(n), el(n), daz(n), del(n), ut(n), t1(n), source
+	print 212, az(n), el(n), daz(n), del(n), ut(n), t1(n), source
+211	format(6f8.3, a8)
+212	format(1x,6f8.3, 1x, a8)
+
+c	source = "ata1"
+
+c
+c  Convert daz and del to arcmin in the sky
+c
+	daz(n) = 60. * daz(n) * cos(el(n))
+	del(n) = 60. * del(n)
+
+	endif
+c
+c  End of telescope specific data formats.
+c
+
+c
+c  Convert az/el degrees to radians.
 c
 	az(n) = az(n) /RTOD
 	el(n) = el(n) /RTOD
+
 c
 c  Get source number.
 c
@@ -1196,7 +1302,7 @@ c
      *	    ('   Data are edited to the initial pointing constants')
 	  if(diag.eq.'Y') then
 	    write(line,115)
-115	    format(/,6X,'Source    Day   Ut(hrs)   Az  El(degs)'
+115	    format(/,6X,'Source    Day   Az  El(degs)',
      *	    '   Daz & Del (observed) (edited)',/)
 	    call output(line)
 	  endif
@@ -1211,9 +1317,9 @@ c
 	daznew = daz(n) - ansaz(oldequ,az(n),el(n),apc)
 	delnew = del(n) - ansel(oldequ,az(n),el(n),epc)
 	if(diag.eq.'Y') then
-	  write(line,120) n, source, day, ut(n)*3.81972, RTOD*az(n),
+	  write(line,120) n, source, ut(n), RTOD*az(n),
      *			 RTOD*el(n), daz(n), del(n), daznew, delnew
-120	  format(' ',i3,2x,a8,f8.0,f6.2,2f6.0,4f8.2)
+120	  format(' ',i3,2x,a8,f8.3,2f6.0,4f8.2)
 	  call output(line)
 	endif
 	daz(n) = daznew
@@ -1419,6 +1525,9 @@ c
 	  else if(type.eq.'TILT') then
 	    calc = anstilt(az(i),el(i),vector)
 	    error = tilt(i)
+          else
+	     calc = 0.0
+	     error = 0.0
 	  endif
 	  diff(i) = error - calc
 	  av = av + error
@@ -1576,6 +1685,8 @@ c
 	ave = 0.
 	rms = 0.
 	num = 0.
+	ixmin = 0
+	ixmax = 0
 	do i= -100, 100
 	  hist(i) = 0.
 	end do
@@ -1678,15 +1789,15 @@ c
 	call prompt(buffer,kb,'Enter title for file:'//pdevice//':')
 	pdevice(5:5) = char(ichar(pdevice(5:5))+1)
 	call pgmtxt('T',6.,.02,.0,buffer)
-	call fdate(dat)
+	call mfdate(dat)
 	write(buffer,100) ant, dat(5:16), file
 100	format('Antenna ',f3.0,3x,a,3x,a)
 	call pgmtxt('T',4.5,.15,0.,buffer)
 	write(buffer,110) apcs,equ
-110	format('APC ',2f7.2,5f6.2' Eq:',f3.0)
+110	format('APC ',2f7.2, 7f6.2,' Eq:',f3.0)
 	call pgmtxt('T',3.,.15,0.,buffer)
 	write(buffer,120) epcs
-120	format('EPC ',2f7.2,5f6.2,' arcmin')
+120	format('EPC ',2f7.2, 7f6.2,' arcmin')
 	call pgmtxt('T',1.5,.15,0.,buffer)
 c  plot current page and initialize next
 	call pgend
@@ -1794,16 +1905,16 @@ c10	call prompt(ans,kans,'LIST SOURCES ? [Y/N] :')
 	call ucase(ans)
 	if(ans.ne.'Y') return
 c
-	call outlog('      SOURCE      UT      AZ      EL    '
+	call outlog('      SOURCE      DAY     AZ      EL    '
 	1	//'  DAZ     DEL    TILT      T1     T2')
 
 	do i = 1,np
 	  write(buffer,110) isign(i,is(i)), sname(iabs(is(i)))
-	1,  ut(i)*3.8192, az(i)*57.2958, el(i)*57.2958, daz(i), del(i)
+	1,  ut(i), az(i)*57.2958, el(i)*57.2958, daz(i), del(i)
 	2,	tilt(i), t1(i), t2(i)
 	  call outlog(buffer)
 	enddo
-110	format(1x,i4,1x,a,8f8.2)
+110	format(1x,i4,1x,a,f8.3,7f8.2)
 90	return
 	end
 c********1*********2*********3*********4*********5*********6*********7*c
@@ -1871,8 +1982,8 @@ c
 	  xmax = xmax*RTOD
 	else if(xaxis.eq.'UT')then
 	  call minmax(ut,0,xmin,xmax)
-	  xmin = 12./PI * xmin
-	  xmax = 12./PI * xmax
+	  xmin =  xmin
+	  xmax =  xmax
 	else if(xaxis .eq. 'T1')then
 	  call minmax(t1,0,xmin,xmax)
 	else if(xaxis .eq. 'T2')then
@@ -1928,7 +2039,7 @@ c
 	  if(.not.stf(is(i))) goto 30
 	  if(xaxis(1:2) .eq. 'AZ') x = az(i) * RTOD
 	  if(xaxis(1:2) .eq. 'EL') x = el(i) * RTOD
-	  if(xaxis(1:2) .eq. 'UT') x = ut(i) * 12./PI
+	  if(xaxis(1:2) .eq. 'UT') x = ut(i)
 	  if(xaxis .eq. 'TILT' ) x = tilt(i)
 	  if(xaxis .eq. 'T1' ) x = T1(i)
 	  if(xaxis .eq. 'T2' ) x = T2(i)
@@ -2087,7 +2198,7 @@ c
 	end
 c********1*********2*********3*********4*********5*********6*********7*c
 #ifdef vms
-	subroutine fdate(dat)
+	subroutine mfdate(dat)
 	character*(*) dat
 c
 	call date(dat)
@@ -2097,7 +2208,7 @@ c
 #endif
 #ifdef linux
 c		this routine appears more than once and needs to be in SUBS
-	subroutine fdate(dat)
+	subroutine mfdate(dat)
 	character*(*) dat
 	dat = '  xx-xx-xx'
 	end
