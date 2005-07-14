@@ -208,7 +208,7 @@ if ($debug == 1) setenv MIRDEBUG 1
 set path = ( $MIRTEMP/src/sys/bin $path )
 rehash
 echo mir.mkdirs $MIRTEMP
-mir.mkdirs $MIRTEMP >& /tmp/mir.mkdirs.log
+mir.mkdirs $MIRTEMP >& /tmp/mir.mkdirs.$$.log
 
 set startcsh=$MIRTEMP/MIRRC.$hosttype
 set startsh=$MIRTEMP/MIRSRC.$hosttype
