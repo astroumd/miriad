@@ -114,6 +114,9 @@ c    pjt  01jun05 but re-introduced a clone as smagpplt.h
 c    jhz  11jul05 but change the vis to allow accept two separate vis files;
 c                 add options ratio to compare two bandpass solutions
 c    jhz  12jul05 fix a bug in logwrite
+c    jhz  14jul05 force the absolute values of the max and min in y
+c                 range greater than 1e-18. In the case of auto range,
+c                 smaller values may collapse the plot frame.
 c  Bugs:
 c------------------------------------------------------------------------
         integer maxsels
@@ -170,7 +173,6 @@ c        call keya('vis',vis,' ')
         doplot = device.ne.' '
         call keya('log',logfile,' ')
         dolog = logfile.ne.' '
-             write(*,*) dolog, logfile
         if(.not.(dolog.or.doplot))
      *    call bug('f','One of the device and log must be given')
         call getaxis(doamp,dophase,doreal,doimag)
@@ -228,8 +230,6 @@ c
            bnply=nply(1)
            breport=nply(2)
            end if
-c          write(*,*) 'dopass=', dopass
-c          write(*,*) 'nply bnply=', nply, bnply
         if(dogains) then 
            gnply=nply(1)
            greport=nply(2) 
@@ -279,7 +279,6 @@ c
           call bug('w','Error opening input '//vis)
           call bugno('f',iostat)
         endif
-            write(*,*) 'here'
           if(dopass)then
             dopass = hdprsnt(tin,'bandpass')
             if(.not.dopass)call bug('w','Bandpass function not present')
@@ -2055,6 +2054,12 @@ c
             yhi = max(yhi,y(i))
             ylo = min(ylo,y(i))
           enddo
+c
+c get rid of a bug when lo and li is small at e-42,
+c which collapes the plot frame
+c 
+             if(abs(yhi).le.1.e-18)  yhi=yhi/abs(yhi)*1.e-18
+             if(abs(ylo).le.1.e-18)  ylo=ylo/abs(ylo)*1.e-18
 c
           delta = 0.05*(yhi-ylo)
           maxv = max(abs(ylo),abs(yhi))
