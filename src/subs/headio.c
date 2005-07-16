@@ -235,18 +235,20 @@ void wrhdi_c(int thandle,Const char *keyword,int value)
 }
 /************************************************************************/
 void wrhdl_c(int thandle,Const char *keyword,int8 value)
-/** wrhdi -- Write an integer*8 valued header variable.			*/
+/** wrhdl -- Write an integer*8 valued header variable.			*/
 /*& pjt									*/
 /*: header-i/o								*/
 /*+ FORTRAN call sequence:
 
-	subroutine wrhdi(tno,keyword,value)
+	subroutine wrhdl(tno,keyword,value)
 	integer tno
 	character keyword*(*)
 	integer*8 value
 
   Write an integer*8 valued header variable. This is only supported
-  on compilers that know how to handle integer*8
+  on compilers that know how to handle integer*8 (e.g. gnu, intel).
+  Without this support, some files in miriad will be limited to
+  8 GB.
 
   Input:
     tno		The handle of the data set.
@@ -387,17 +389,18 @@ void rdhdi_c(int thandle,Const char *keyword,int *value,int defval)
 }
 /************************************************************************/
 void rdhdl_c(int thandle,Const char *keyword,int8 *value,int8 defval)
-/** rdhdl -- Read an integer-valued header variable.			*/
+/** rdhdl -- Read an integer*8-valued header variable.			*/
 /*& mjs									*/
 /*: header-i/o								*/
 /*+ FORTRAN call sequence:
 
-	subroutine rdhdi(tno,keyword,value,default)
+	subroutine rdhdl(tno,keyword,value,default)
 	integer tno
 	character keyword*(*)
-	integer value,default
+	integer*8 value,default
 
-  Read an integer valued header variable.
+  Read an integer*8 valued header variable. Only supported on some
+  compilers. See comments in wrhdl
 
   Input:
     tno		The file handle of the data set.
