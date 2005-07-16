@@ -7,6 +7,9 @@
  *  [except it seems to need pgplot now, and it should not !!! ]
  *  gcc -g -I$MIRINC -I$MIRSUBS -o testmirlib testmirlib.c $MIRLIB/libmir.a -lm
  *  [prevents the  pgplot problem]
+ *
+ *  Note: for LFS you also need to add extra compile flags:
+ *        -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE
  */
 
 
