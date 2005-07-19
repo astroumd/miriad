@@ -317,6 +317,7 @@ c                    changed for a lefthanded coordinate system. This
 c                    should NOT be done for WSRT data. The longitude in
 c                    the UVFits file is correct.
 c------------------------------------------------------------------------
+
 	character version*(*)
 	parameter(version='wsrtfits: version 1.3.1 21-Jul-04')
 	character in*128,out*128,op*8,uvdatop*12
@@ -1133,6 +1134,7 @@ c
 c************************************************************************
 	subroutine FgGeti(lIn,pnt,name,nx,ny)
 c
+	implicit none
 	integer pnt,nx,ny,lIn
 	character name*(*)
 c
@@ -1160,6 +1162,7 @@ c
 c************************************************************************
 	subroutine FgGetr(lIn,pnt,name,nx,ny)
 c
+	implicit none
 	integer pnt,nx,ny,lIn
 	character name*(*)
 c
@@ -2808,6 +2811,7 @@ c************************************************************************
 	subroutine uvoutWr(tScr,tOut,nvis,nVisRef,npol,nchan,Pol0,
      *								PolInc)
 c
+	implicit none
 	integer tScr,tOut,nvis,nVisRef,npol,nchan,Pol0,PolInc
 c
 c  This reads visibilities back from the scratch file, and forms a
@@ -4029,6 +4033,7 @@ c
 c************************************************************************
 	subroutine CopyHist(tIn,tOut)
 c
+	implicit none
 	integer tin,tout
 c
 c  Copy out the history comments.
