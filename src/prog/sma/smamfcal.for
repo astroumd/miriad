@@ -131,6 +131,7 @@ c    jhz  20Dec04 added weight=1/sigma**2
 c    jhz  31Dec04 added weight=1/sigma**2, divided by channel zero
 c    jhz  05May05 enable to handle dual polarization data
 c    jhz  27May05 fixed edge problem
+c    jhz  20Jul05 fixed things caused the warning messages.
 c  Problems:
 c    * Should do simple spectral index fit.
 c------------------------------------------------------------------------
@@ -140,7 +141,7 @@ c------------------------------------------------------------------------
         parameter(maxpol=2)
 c
         character version*(*)
-        parameter(version='SmaMfCal: version 1.2 27-May-05')
+        parameter(version='SmaMfCal: version 1.3 20-Jul-05')
 c
         integer tno
         integer pwgains,pfreq,psource,ppass,pgains,ptau
@@ -677,6 +678,7 @@ c------------------------------------------------------------------------
         real smooth(3)
         integer bnply(3)
         common/bsmooth/smooth,bnply
+        n=0
 c
 c  Fudge to create a "complex" table, then open it again.
 c
@@ -1384,7 +1386,6 @@ c
         double precision sfreq(maxspect),sdf(maxspect)
         integer nschan(maxspect),count(maxsoln),edge(2)
         complex vis(maxvis)
-        integer bpnschan(maxspect),bpnspect
         real wt(maxvis)
         integer vid(maxvis),polmap(*)
         character source*(*)
@@ -1429,14 +1430,12 @@ c
         integer nchan,nbad,nauto,nreg,ngood,ninter,i1,i2,p,i,visid
         double precision preamble(4),tfirst,tlast
         complex data(maxchan), ndata(maxchan)
-        real ampl(maxchan),ampmed(maxwin),ave(maxwin),var(maxwin)
         logical flags(maxchan),present(maxant,maxpol),updated,ok
         logical dopass,dosmooth,donply,dowrap
         integer chan(maxchan),spect(maxchan),state(maxchan)
-        integer hash(2,maxhash),vupd, nchanst
+        integer hash(2,maxhash),vupd
         integer pols(polmin:polmax)
-        integer ichan
-        integer weight, op 
+        integer weight 
 c
 c  Externals.
 c
@@ -1480,6 +1479,7 @@ c
         nsoln = 0
         nspect = 0
         nvis = 0
+        ninter=0
 c
         updated = .false.
         tfirst = 0
@@ -1879,7 +1879,6 @@ c  chzwt: weight of channel zero
 c  chz:   vis data of channel zero
         real chnwt(maxchan),chzwt(maxwin,maxpol)
         complex chz(maxwin,maxpol)
-        real cntumreal, cntumimag, cntumwt, cntumnorm
         real SUMWT, SUMRE, SUMIM, XNORM
         integer  weight
             SUMWT = 0.0
@@ -1954,10 +1953,10 @@ c************************************************************************
         PARAMETER(maxwin=33, maxschan=1024, maxpol=2)
         PARAMETER(pi=3.14159265358979323846)
         integer nchan,bpnspect,maxchan,bpnschan(maxwin)
-        integer i,j,numpol,bchan,echan, ipol
-        integer bschan, eschan, edge(2)
+        integer i,j,numpol, ipol
+        integer edge(2)
         complex data(maxchan),ndata(maxchan)
-        real chnwt(maxchan), ph, chwt
+        real chnwt(maxchan), chwt
         real vr,vi,chzr,chzi
 c
 c  normalize the channel data by dividing the pseudo continuum vector
@@ -1973,6 +1972,7 @@ c  chz:   vis data of channel zero
          ntcount=0
 c assuming numpol =1
          ipol=1
+         DENOM=0.0
          do j=1, bpnspect
           chzr=real(chz(j,ipol))
           chzi=aimag(chz(j,ipol))
@@ -2010,24 +2010,23 @@ c************************************************************************
 c
         PARAMETER(maxwin=48, maxschan=1024)
         integer nchan,bpnspect,maxchan,bpnschan(maxwin)
-        integer i,j,nscount,ntcount
+        integer i,j,ntcount
         PARAMETER(MAXNR=20, pi=3.14159265358979323846)
-        complex data(maxchan),smoothdat(maxchan),ab
-        logical flags(maxchan), nsflag(maxschan)
+        complex data(maxchan),smoothdat(maxchan)
+        logical flags(maxchan)
         logical dosmooth,donply,dowrap,dev
         double precision ETA(6200),CONETA(6200),A(21,MAXNR)
         double precision ATA1(MAXNR,MAXNR),ATA1AT(MAXNR,21)
         double precision SCRAT(MAXNR,MAXNR)
         double precision YR(maxschan), YI(maxschan)
         real ysr(maxschan), ysi(maxschan)
-        double precision xchan(maxschan), DELTAY(maxschan)
-        double precision XA(MAXNR),BP(MAXNR,MAXNR),AP(maxschan,MAXNR)
-        double precision CHI2(MAXNR), minCHI2, preamble(4)
-        integer K, L, nterm, nply
-        real yrply(maxschan),yiply(maxschan), xply(maxschan)
-        double precision P, amp, phase
-        real smooth(3), pphase, spphase, dphase, dpphase, damp
-        real wwt, chnwt(maxchan)
+        double precision xchan(maxschan)
+        double precision preamble(4)
+        integer K, L,  nply
+        real xply(maxschan)
+        double precision P
+        real smooth(3), pphase
+        real wwt
         integer bnply(3)
         common/bsmooth/smooth,bnply
 c
@@ -4014,6 +4013,7 @@ C moving averages and confidence limits for end sections
       IMPLICIT DOUBLE PRECISION(A-H,O-Z)
       PARAMETER(BIG=1D10,EPSILN=1D-6,ONE=1.D0,ZERO=0.D0,HALF=.5D0)
       EXTERNAL SZSTUD
+         SQSTUD=0.0d0
 C boundary of range
       IF(P.GE.ONE) SQSTUD=BIG
       IF(P.LE.ZERO) SQSTUD=-BIG
