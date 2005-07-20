@@ -118,157 +118,160 @@ c
 c
 c Get variables of interest
 c
-        call uvgetvri (tvis, 'nants', nants, 1)
-        call uvgetvra (tvis, 'source', source)
-        call uvgetvri (tvis, 'nspect', nspect, 1)
-        call uvgetvrd (tvis, 'sfreq', sfreq, nspect)
-        call uvgetvrd (tvis, 'sdf', sdf, nspect)
-        call uvgetvri (tvis, 'nschan', nschan, nspect)
-        call uvgetvrr (tvis, 'xtsys', vtsys, nants*nspect)
-        call uvgetvrr (tvis, 'ytsys', vtsys(nants*nspect+1), 
-     +                 nants*nspect)
-        if (jdold.le.0.0d0) jd0 = int(preamble(3) + 0.5d0)
-        jd = preamble(3) + 0.5d0 - jd0
-c
-c If the time has changed, its a new integration, so see if this
-c is one of the desired mosaic fields 
-c
-c        if (jd.gt.jdold .and. index(source,roots(1:ir)).ne.0) then
-        if (jd.gt.jdold) then
-c
-c Loop over spectral windows and get pointers into Tsys time arrays
-c and out of Tsys variable array
-c
-          ip = 1
-          do k = 1, nspect
-            call point1 (nschan(k), sdf(k), sfreq(k), source, nf, 
-     +         freqs, ifield1, ifield2, roots(1:ir), ifreq, 
-     +         ifield, keep)
-            if (keep) then
-              do j = 1, 2
-                do i = 1, nants
-                  it = (j-1)*nants*nspect + (k-1)*nants + i
-                  ii = ntsys(ifield,i,j,ifreq)
-                  if (ii.eq.timemax) 
-     +              call bug ('f', 'Too many integrations for '//
-     +                 'internal buffers, max='//itoaf(timemax))
-c
-                  ii = ii + 1
-                  ntsys(ifield,i,j,ifreq) =ii
-                  time(ii,ifield,i,j,ifreq) = jd*86400.0
-                  tsys(ii,ifield,i,j,ifreq) = vtsys(it)
-                end do
+          call uvgetvri (tvis, 'nants', nants, 1)
+          call uvgetvra (tvis, 'source', source)
+          call uvgetvri (tvis, 'nspect', nspect, 1)
+          call uvgetvrd (tvis, 'sfreq', sfreq, nspect)
+          call uvgetvrd (tvis, 'sdf', sdf, nspect)
+          call uvgetvri (tvis, 'nschan', nschan, nspect)
+          call uvgetvrr (tvis, 'xtsys', vtsys, nants*nspect)
+          call uvgetvrr (tvis, 'ytsys', vtsys(nants*nspect+1), 
+     +        nants*nspect)
+          if (jdold.le.0.0d0) jd0 = int(preamble(3) + 0.5d0)
+          jd = preamble(3) + 0.5d0 - jd0
+c     
+c     If the time has changed, its a new integration, so see if this
+c     is one of the desired mosaic fields 
+c     
+c     if (jd.gt.jdold .and. index(source,roots(1:ir)).ne.0) then
+          if (jd.gt.jdold) then
+c     
+c     Loop over spectral windows and get pointers into Tsys time arrays
+c     and out of Tsys variable array
+c     
+              ip = 1
+              do k = 1, nspect
+                  call point1 (nschan(k), sdf(k), sfreq(k), source, nf, 
+     +                freqs, ifield1, ifield2, roots(1:ir), ifreq, 
+     +                ifield, keep)
+                  if (keep) then
+                      do j = 1, 2
+                          do i = 1, nants
+                              it = (j-1)*nants*nspect + (k-1)*nants + i
+                              ii = ntsys(ifield,i,j,ifreq)
+                              if (ii.eq.timemax) 
+     +                            call bug
+     $                            ('f', 'Too many integrations for '//
+     +                            'internal buffers, max='//
+     $                            itoaf(timemax))
+c     
+                              ii = ii + 1
+                              ntsys(ifield,i,j,ifreq) =ii
+                              time(ii,ifield,i,j,ifreq) = jd*86400.0
+                              tsys(ii,ifield,i,j,ifreq) = vtsys(it)
+                          end do
+                      end do
+                  end if
               end do
-            end if
-          end do
-        end if
-        jdold  = jd
-c
-c Get next vis
-c
-        call uvread (tvis, preamble, data, flags, maxchan, nread)
+          end if
+          jdold  = jd
+c     
+c     Get next vis
+c     
+          call uvread (tvis, preamble, data, flags, maxchan, nread)
       end do
       call uvclose (tvis)
-c
-c Now prepare median smoothed arrays
-c
+c     
+c     Now prepare median smoothed arrays
+c     
       call output ('Prepare median smoothed arrays')
       ierr = pgbeg (0, device, 1, 1)
       call pgask (.false.)
       do l = 1, nf
-        do k = 1, 2
-          do i = ifield1, ifield2
-            do j = 1, nants
-              call medsm (first, freqs(l), k, j, i, ntsys(i,j,k,l),
-     +          time(1,i,j,k,l), tsys(1,i,j,k,l), w1, w2, w3)
-            end do
+          do k = 1, 2
+              do i = ifield1, ifield2
+                  do j = 1, nants
+                      call medsm (first, freqs(l), k, j, i,
+     $                    ntsys(i,j,k,l),time(1,i,j,k,l),
+     $                    tsys(1,i,j,k,l), w1, w2, w3)
+                  end do
+              end do
           end do
-        end do
       end do
       call pgend
-c
-c Now correct the data with the median smoothed Tsys arrays
-c
-c      call output ('Begin correcting visibilities')
+c     
+c     Now correct the data with the median smoothed Tsys arrays
+c     
+c     call output ('Begin correcting visibilities')
       call uvopen (tvis, vis, 'old')
       call uvopen (tout, out, 'new')
       call varinit (tvis, 'channel')
       call varonit (tvis, tout, 'channel')
-c
-c Read data
-c
+c     
+c     Read data
+c     
       jdold = 0.0d0
       call uvread (tvis, preamble, data, flags, maxchan, nread)
       call uvprobvr (tvis,'xtsysm', type, length, updated)
       readmv = .false.
       if (type.eq.'r') readmv = .true.
-c
+c     
       do while (nread.gt.0) 
-c
-c Get variables of interest
-c
-        call uvgetvri (tvis, 'nants', nants, 1)
-        call uvgetvri (tvis, 'npol', npols, 1)
-        call uvgetvri (tvis, 'pol', pol, 1)
-        call uvgetvra (tvis, 'source', source)
-        call uvgetvri (tvis, 'nspect', nspect, 1)
-        call uvgetvrd (tvis, 'sfreq', sfreq, nspect)
-        call uvgetvrd (tvis, 'sdf', sdf, nspect)
-        call uvgetvri (tvis, 'nschan', nschan, nspect)
-        call uvprobvr (tvis,'xtsys', type, length, updated)
-        call uvgetvrr (tvis, 'xtsys', vtsys, nants*nspect)
-        call uvgetvrr (tvis, 'ytsys', vtsys(nants*nspect+1), 
-     +                 nants*nspect)
-c
-c Read median Tsys variables if there
-c
-        do i = 1, nants*nspect*2
-          mtsys(i) = 0.0
-        end do
-c 
-        if (readmv) then
-          call uvgetvrr (tvis, 'xtsysm', mtsys, nants*nspect)
-          call uvgetvrr (tvis, 'ytsysm', mtsys(nants*nspect+1),
-     +                    nants*nspect)
-        end if
-c
-c Set time
-c
-        if (jdold.le.0.0d0) jd0 = int(preamble(3) + 0.5d0)
-        jd = preamble(3) + 0.5d0 - jd0
-c
-c Get pointers to median smoothed Tsys arrays not depending 
-c on spectral window
-c
-        call point2 (preamble(4), pol, source, ifield1, ifield2,
-     +    roots, ia1, ia2, ifield, ipol1, ipol2, corr)
-c
-c Loop over spectral windows and correct data
-c
-        ip = 1
-        do i = 1, nspect
-c
-c Get frequency pointer to median smoothed Tsys arrays
-c
-          call point3 (nschan(i), sdf(i), sfreq(i), nf, 
-     +                 freqs, ifreq, corr)
-c
-c Correct data if required
+c     
+c     Get variables of interest
+c     
+          call uvgetvri (tvis, 'nants', nants, 1)
+          call uvgetvri (tvis, 'npol', npols, 1)
+          call uvgetvri (tvis, 'pol', pol, 1)
+          call uvgetvra (tvis, 'source', source)
+          call uvgetvri (tvis, 'nspect', nspect, 1)
+          call uvgetvrd (tvis, 'sfreq', sfreq, nspect)
+          call uvgetvrd (tvis, 'sdf', sdf, nspect)
+          call uvgetvri (tvis, 'nschan', nschan, nspect)
+          call uvprobvr (tvis,'xtsys', type, length, updated)
+          call uvgetvrr (tvis, 'xtsys', vtsys, nants*nspect)
+          call uvgetvrr (tvis, 'ytsys', vtsys(nants*nspect+1), 
+     +        nants*nspect)
+c     
+c     Read median Tsys variables if there
+c     
+          do i = 1, nants*nspect*2
+              mtsys(i) = 0.0
+          end do
+c     
+          if (readmv) then
+              call uvgetvrr (tvis, 'xtsysm', mtsys, nants*nspect)
+              call uvgetvrr (tvis, 'ytsysm', mtsys(nants*nspect+1),
+     +            nants*nspect)
+          end if
+c     
+c     Set time
+c     
+          if (jdold.le.0.0d0) jd0 = int(preamble(3) + 0.5d0)
+          jd = preamble(3) + 0.5d0 - jd0
+c     
+c     Get pointers to median smoothed Tsys arrays not depending 
+c     on spectral window
+c     
+          call point2 (preamble(4), pol, source, ifield1, ifield2,
+     +        roots, ia1, ia2, ifield, ipol1, ipol2, corr)
+c     
+c     Loop over spectral windows and correct data
+c     
+          ip = 1
+          do i = 1, nspect
+c     
+c     Get frequency pointer to median smoothed Tsys arrays
+c     
+              call point3 (nschan(i), sdf(i), sfreq(i), nf, 
+     +            freqs, ifreq, corr)
+c     
+c     Correct data if required
 c     gmx: this is mostly dead code, commented it out
-c
-c  tao  do not correct and force ifreq
-          ifreq = i
-c          corr = .false.
-c          if (corr) then
-c            it1 = (ipol1-1)*nants*nspect + (i-1)*nants + ia1
-c            it2 = (ipol2-1)*nants*nspect + (i-1)*nants + ia2
-c
-c            if (dom) then
-c
-c This program already applied, undo assuming Tsys that has been
-c applied is that stored in the median variables
-c
-c              call tcor (ntsys(ifield,ia1,ipol1,ifreq),
+c     
+c     tao  do not correct and force ifreq
+              ifreq = i
+c     corr = .false.
+c     if (corr) then
+c     it1 = (ipol1-1)*nants*nspect + (i-1)*nants + ia1
+c     it2 = (ipol2-1)*nants*nspect + (i-1)*nants + ia2
+c     
+c     if (dom) then
+c     
+c     This program already applied, undo assuming Tsys that has been
+c     applied is that stored in the median variables
+c     
+c     call tcor (ntsys(ifield,ia1,ipol1,ifreq),
 c     +                   ntsys(ifield,ia2,ipol2,ifreq),
 c     +                   time(1,ifield,ia1,ipol1,ifreq), 
 c     +                   time(1,ifield,ia2,ipol2,ifreq), 
@@ -276,104 +279,106 @@ c     +                   tsys(1,ifield,ia1,ipol1,ifreq),
 c     +                   tsys(1,ifield,ia2,ipol2,ifreq),
 c     +                   jd*86400.0d0, nschan(i), data(ip), 
 c     +                   mtsys(it1), mtsys(it2), ok1, ok2)
-c            else
-c
-c This program not applied, undo assuming Tsys that has been
-c applied is that stored in the normal tsys variables
-
-          call tcor (ntsys(ifield,ia1,ipol1,ifreq),
-     +        ntsys(ifield,ia2,ipol2,ifreq),
-     +        time(1,ifield,ia1,ipol1,ifreq), 
-     +        time(1,ifield,ia2,ipol2,ifreq), 
-     +        tsys(1,ifield,ia1,ipol1,ifreq), 
-     +        tsys(1,ifield,ia2,ipol2,ifreq),
-     +        jd*86400.0d0, nschan(i), data(ip), 
-     +        vtsys(it1), vtsys(it2), ok1, ok2)
-c      end if
-c
-            if (.not.ok1) then
-              write (*,*) 'Interpolation failure'
-              write (*,*) 'time,ispec,ipol,iant=',jd,i,ipol1,ia1
-            end if
-            if (.not.ok2) then
-              write (*,*) 'Interpolation failure'
-              write (*,*) 'time,ispec,ipol,iant=',jd,i,ipol1,ia1
-            end if
-          end if
-c
-c Generate array of median smoothed Tsys for writing out
-c to new variables "xtsysm" and "ytsysm". Only do this
-c when a new cycle begins
-c
-          if ((jd-jdold)*86400.0d0.gt.1.0d0) then
-            if (ifreq.ne.0 .and. ifield.ne.0) then
-c
-c Generate interpolated values 
-c
-              do j = 1, 2
-                do k = 1, nants
-                  ip2 = (j-1)*nants*nspect + (i-1)*nants + k
-                  call linint (real(jd*86400.0d0), 
-     +                       ntsys(ifield,k,j,ifreq),
-     +                       time(1,ifield,k,j,ifreq),
-     +                       tsys(1,ifield,k,j,ifreq), 
-     +                       mtsys(ip2), ok1)
-                  if (.not.ok1) then
-                    write (*,*) 
-     +                'Interpolation failure for "tsysm" variable'
-                    write (*,*) 'time,ispec,ipol,iant=',jd,i,j,k
+c     else
+c     
+c     This program not applied, undo assuming Tsys that has been
+c     applied is that stored in the normal tsys variables
+              
+              call tcor (ntsys(ifield,ia1,ipol1,ifreq),
+     +            ntsys(ifield,ia2,ipol2,ifreq),
+     +            time(1,ifield,ia1,ipol1,ifreq), 
+     +            time(1,ifield,ia2,ipol2,ifreq), 
+     +            tsys(1,ifield,ia1,ipol1,ifreq), 
+     +            tsys(1,ifield,ia2,ipol2,ifreq),
+     +            jd*86400.0d0, nschan(i), data(ip), 
+     +            vtsys(it1), vtsys(it2), ok1, ok2)
+c     end if
+c     
+              if (.not.ok1) then
+                  write (*,*) 'Interpolation failure'
+                  write (*,*) 'time,ispec,ipol,iant=',jd,i,ipol1,ia1
+              end if
+              if (.not.ok2) then
+                  write (*,*) 'Interpolation failure'
+                  write (*,*) 'time,ispec,ipol,iant=',jd,i,ipol1,ia1
+              end if
+c          end if
+c     
+c     Generate array of median smoothed Tsys for writing out
+c     to new variables "xtsysm" and "ytsysm". Only do this
+c     when a new cycle begins
+c     
+              if ((jd-jdold)*86400.0d0.gt.1.0d0) then
+                  if (ifreq.ne.0 .and. ifield.ne.0) then
+c     
+c     Generate interpolated values 
+c     
+                      do j = 1, 2
+                          do k = 1, nants
+                              ip2 = (j-1)*nants*nspect + (i-1)*nants + k
+                              call linint (real(jd*86400.0d0), 
+     +                            ntsys(ifield,k,j,ifreq),
+     +                            time(1,ifield,k,j,ifreq),
+     +                            tsys(1,ifield,k,j,ifreq), 
+     +                            mtsys(ip2), ok1)
+                              if (.not.ok1) then
+                                  write (*,*) 
+     +                                'Interpolation failure',
+     $                                'for "tsysm" variable'
+                                  write (*,*) 'time,ispec,ipol,iant=',
+     $                                jd,i,j,k
+                              end if
+                          end do
+                      end do
                   end if
-                end do
-              end do
-            end if
-          end if
-c
-          ip = ip + nschan(i)
-        end do
-c
-c Write out new data
-c
-        call varcopy (tvis, tout)
-        call uvputvri (tout, 'npol', npols, 1)
-        call uvputvri (tout, 'pol', pol, 1)
-        if ((jd-jdold)*86400.0d0.gt.1.0d0) then
+              end if
+c     
+              ip = ip + nschan(i)
+          end do
+c     
+c     Write out new data
+c     
+          call varcopy (tvis, tout)
+          call uvputvri (tout, 'npol', npols, 1)
+          call uvputvri (tout, 'pol', pol, 1)
+          if ((jd-jdold)*86400.0d0.gt.1.0d0) then
 c     gmx: The original had vtsys here instead of mtsys (twice)
-          call uvputvrr (tout, 'xtsys', mtsys, nants*nspect)
-          call uvputvrr (tout, 'ytsys', mtsys(nants*nspect+1), 
-     +                   nants*nspect)
-c
-c If these variables already existed, we either write out the
-c new values, or whatever was already there (maybe zero).
-c
-c          call uvputvrr (tout, 'xtsysm', mtsys, nants*nspect)
-c          call uvputvrr (tout, 'ytsysm', mtsys(nants*nspect+1), 
+              call uvputvrr (tout, 'xtsys', mtsys, nants*nspect)
+              call uvputvrr (tout, 'ytsys', mtsys(nants*nspect+1), 
+     +            nants*nspect)
+c     
+c     If these variables already existed, we either write out the
+c     new values, or whatever was already there (maybe zero).
+c     
+c     call uvputvrr (tout, 'xtsysm', mtsys, nants*nspect)
+c     call uvputvrr (tout, 'ytsysm', mtsys(nants*nspect+1), 
 c     +                   nants*nspect)
-        end if
-        call uvwrite (tout, preamble, data, flags, nread)
-c
-        jdold = jd
-c
-c Get next vis
-c
-        call uvread (tvis, preamble, data, flags, maxchan, nread)
+          end if
+          call uvwrite (tout, preamble, data, flags, nread)
+c     
+          jdold = jd
+c     
+c     Get next vis
+c     
+          call uvread (tvis, preamble, data, flags, maxchan, nread)
       end do
-c
-c  Make the history of the output and close up shop.
-c
+c     
+c     Make the history of the output and close up shop.
+c     
       call hdcopy (tvis, tout, 'history')
       call hisopen (tout, 'append')
       call hiswrite (tout, 'TSYSMED: Miriad tsysMed '//version)
       call hisinput (tout, 'TSYSMED')
       call hisclose (tout)
-c
+c     
       call uvclose (tvis)
       call uvclose (tout)
-c
+c     
       end
-c
-c
+c     
+c     
       subroutine point1 (nchan, sdf, sfreq, source, nf, freqs, ifield1, 
-     +                   ifield2, sroot, ifreq, ifield, keep)
+     +    ifield2, sroot, ifreq, ifield, keep)
 c-----------------------------------------------------------------------
 c  From this visibility, work out some pointers into the appropriate
 c  Tsys text file
