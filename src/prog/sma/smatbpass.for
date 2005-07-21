@@ -1,7 +1,7 @@
 c************************************************************************
         program smatbpass
 c
-c= SmaTbpass -- Plot,smooth and fit to gain and bandpass.
+c= SmaTbpass -- removes time-dependent bandpass ripples (antenna-based).
 c& jhz for SMA
 c: calibration
 c+
@@ -50,13 +50,15 @@ c       each separated by commas. They may be abbreivated to the minimum
 c       needed to avoid ambiguity. Possible options are:
 c          nocal       Do not apply the gains file. By default, UVAVER
 c                      applies the gains file in copying the data.
-c          opolyfit    Do least-square fit to the time variaition in
-c                      bandpass given in bpfile_i with an orthogonal 
-c                      polynomial of degree n input from Keyword: polyfit.
+c          opolyfit    Do least-square fit to the time variations in
+c                      bandpasses given in all the bpfile_i files with an 
+c                      orthogonal polynomial of degree n input from 
+c                      Keyword: polyfit; n upto 10 is supported.
 c                      Default: linear fit from two nearby time points.
 c@ polyfit
 c       polyfit gives a degree of orthogonal polynomial in least-sqaure
 c       fit to the time variaton of the bandpass. Default: 3 or cubic.
+c       polyfit upto 10 is supported.
 c
 c@ out
 c       The name of the output uv data set. No default.
@@ -66,7 +68,9 @@ c   JHZ ---> miriad software to remove time-dependent bandpass ripples
 c   jhz 19jul05 creates the first version
 c  Bugs:
 c     not for dual pol case, must select one of pol in the case
-c     of multiple polarizations.
+c     of multiple polarizations. For dual polarization present,
+c     the mean bandpass solutions of the dual polarization data is used to
+c     correct for the bandpass shape.
 c------------------------------------------------------------------------
         integer maxsels
         character version*(*)
