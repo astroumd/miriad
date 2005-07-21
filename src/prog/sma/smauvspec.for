@@ -134,7 +134,9 @@ c    jhz  15dec04 added the jpl line catalog
 c    jhz  22jun05 fixed problem of chunk boundary allowing
 c                 edge flag.
 c    jhz  23jun05 enable phase plot
-c  Bugs:
+c    jhz  21jul05 fixed a bug in pghline which cause draw a
+c                 random lin at end of the line drawing. 
+c>  Bugs:
 c------------------------------------------------------------------------
 c=======================================================================
 c  Pi.
@@ -179,7 +181,7 @@ c
         character mname*8000, moln*16
         integer mtag(maxmline), nmline, j, jp, js, je, iline
         character version*(*)
-        parameter(version='SmaUvSpec: version 1.3 23-Jun-05')
+        parameter(version='SmaUvSpec: version 1.4 21-Jul-05')
         character uvflags*8,device*64,xaxis*12,yaxis*12,logf*64
         character xtitle*64,ytitle*64, veldef*8
         logical ampsc,rms,nobase,avall,first,buffered,doflush,dodots
@@ -1565,7 +1567,7 @@ c
               call pgdraw (0.5*(x(i)+x(i)), y(i))
              endif
             call pgebuf
-             if(i>npts) goto 555
+             if(i.ge.npts) goto 555
           enddo
              end=i
              call pgdraw(x(end),y(end))
@@ -1655,6 +1657,7 @@ c                 write(*,*) molname(j)
          call pgptext(xloc,yloc, 90.0, 0.0, title(1:lm))
           end do
           end if
+          write(*,*) 'here'
         end
 
 
