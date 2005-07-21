@@ -16,6 +16,11 @@ c@ select
 c	The normal uv selection commands. See the Users manual for details.
 c	The default is to process all data. Note that window selection can
 c	not be used with options=hanning, passband, contsub, or wide.
+c@ radec
+c   Source right ascension and declination. These can be given in
+c   hh:mm:ss,dd:mm:ss format, or as decimal hours and decimal
+c   degrees. Setting RA and DEC will change the phase center to
+c   the RA and DEC specified. The default leaves the data unchanged.
 c@ options
 c	This gives extra processing options. Several options can be given,
 c	each separated by commas. They may be abbreivated to the minimum
@@ -28,36 +33,39 @@ c	   'nochannel'  Do not copy across spectral channels.
 c	   'unflagged'  Copy only those records where there are some
 c	                unflagged visibilites.
 c	   'contsub'    Continuum subtraction using a linear fit to the real
-c			and imaginary parts of each spectral window.
+c                   and imaginary parts of each spectral window.
 c 	                Exclude badchan and endchan specified below.
 c	   'conjugate'  Conjugate visibilities
+c      'fxcal'      Calibrate FX correlator data
+c                   by dividing the cross correlations by the 
+c                   geometric mean of the autocorrelations.
 c	   'hanning'    Hanning smooth each spectral window.
-c	   'holo'	Replace u,v with dra,ddec for holography.
+c	   'holo'       Replace u,v with dra,ddec for holography.
 c	   'linecal'	Remove phase slope across passband due to line length
-c			changes. This option also corrects the phase difference
-c			between the wide channels due to line length.
-c			options=linecal,wide will re-make the wideband from
-c			the channel data after the phase slope is removed.	
-c			option can gain in SNR for the wide channels might be
-c	   'parang'	Multiply LR by expi(2*chi) and RL by expi(-2*chi)
-c			where chi is the parallactic angle for Alt-Az antennas.
+c                   changes. This option also corrects the phase difference
+c                   between the wide channels due to line length.
+c                   options=linecal,wide will re-make the wideband from
+c                   the channel data after the phase slope is removed.	
+c                   option can gain in SNR for the wide channels might be
+c      'parang'	    Multiply LR by expi(2*chi) and RL by expi(-2*chi)
+c                   where chi is the parallactic angle for Alt-Az antennas.
 c	   'passband'   Fit passband to lsb and correct the uv-data.
-c		        Can be used when the source is strong. e.g. for
+c                   Can be used when the source is strong. e.g. for
 c	                planets. The passband is estimated from the lsb,
 c	                smoothed within each spectral window, and applied
 c	                to the lsb data. The complex conjugate is applied
-c		 	to the usb. This corrects for time variable IF
-c			passband errors. The uv-data must contain the same
-c			spectral windows in both sidebands of LO1.
+c                   to the usb. This corrects for time variable IF
+c                   passband errors. The uv-data must contain the same
+c                   spectral windows in both sidebands of LO1.
 c	   'uvrotate'	Rotate uv-coordinates from current to standard epoch.
-c			The standard epoch, ra, dec can be changed using PUTHD.
+c                   The standard epoch, ra, dec can be changed using PUTHD.
 c	   'avechan'	Average unflagged spectral channels into wide,2,1 for
-c			lsb and usb of LO1 respectively. The data are weighted by
-c			bandwidth and exclude badchan and endchan specified below.
-c			Also remake wideband average for each spectral window.
+c                   lsb and usb of LO1 respectively. The data are weighted by
+c                   bandwidth and exclude badchan and endchan specified below.
+c                   Also remake wideband average for each spectral window.
 c	   'avewide'	Average unflagged wideband channels into wide,2,1 for
-c			lsb and usb of LO1 respectively. The data are weighted by
-c			bandwidth and exclude badchan specified below and wide,2,1
+c                   lsb and usb of LO1 respectively. The data are weighted by
+c                   bandwidth and exclude badchan specified below and wide,2,1
 c
 c	NOTE: 	Options=nochannel cannot be used with "hanning", "passband"
 c	and "contsub". For these 3 options no processing is performed on the
@@ -82,6 +90,10 @@ c@ scale
 c	Multiply the data and wideband by cmplx(scale1,scale2). Two values.
 c	Default is no scaling. If only one value is given it is assumed to
 c	be a real value. E.g. scale=0,1 multiplies the data by sqrt(-1)
+c@ offset
+c	Subtract a complex valued offset from the uv-data. Two values give
+c   amplitude (after calibrations have been applied by uvcal) 
+c   and phase in degrees.  Default is none.
 c@ model
 c	Subtract a source model from the uv-data. Three values
 c	give the flux density [Jy], scale [nanosecs], and index 
@@ -158,45 +170,53 @@ c    mchw 25jun97  remake wideband average for each spectral window.
 c    pjt  25jun98  better fortran standards for linux/g77 
 c    mchw 25jul03  Added uvrotation.
 c    mchw 25aug03  Correct doc, call uvrdvrr (lIn, 'chi', chi, 0.)
+c    mchw 27nov04  Add fxcal.  uvset(tOut,'preamble','uvw/time/baseline')
+c    mchw 22dec04  Subtract offset from uvdata.
+c    mchw 22apr05  add code to change phase center.
+c    mchw 05may05  change sign of phase correction in pcenter.
 c------------------------------------------------------------------------
-        include 'maxdim.h'
+	include 'maxdim.h'
 	integer maxbad
 	character version*(*)
-	parameter(version='UVCAL: version 3.0 25-Aug-03')
+	parameter(version='UVCAL: version 3.0 05-May-2005')
 	parameter(maxbad=20)
 	real PI
 	parameter(PI=3.1415926)
 c
 	integer nchan,lIn,lOut,i,nPol,Pol,SnPol,SPol,endchan
 	integer nwide,length,nave,lflags,nbad,badchan(maxbad)
-	double precision preamble(4)
+	double precision preamble(5)
 	complex data(MAXCHAN),wdata(MAXCHAN)
 	logical flags(MAXCHAN),wflags(MAXCHAN)
 	logical first,init,new,more,dopol,PolVary
 	logical dochan,dowide,docopy,updated,doscale,dopolcal,domodel
 	logical nocal,nopol,nopass,nowide,nochan,doall,dopass,
      *       dohann,docont,doconj,dophase,holo,dopower,avechan,avewide,
-     *       linecal,uvrot,doparang
+     *       linecal,uvrot,doparang,dooffset,dofxcal
 	character out*64,type*1,uvflags*8
 	real mask(MAXCHAN),sigma
 	integer polcode
 	real dra,ddec,parot,sinpa,cospa
-	real scale(2),polcal(2),model(3)
-	double precision ra,dec,uu,vv,epoch,jepoch,theta,costh,sinth
+	real scale(2),polcal(2),model(3),offset(2)
+	complex coffset
+	double precision obsra,obsdec
+	double precision ra,dec,uu,vv,epoch,jepoch,theta,costh,sinth,jd
 c
 c  Externals.
 c
-        logical uvDatOpn, uvDatPrb
+	logical uvDatOpn, uvDatPrb
 	double precision epo2jul
+	complex expi
 c
 	call output(version)
-	call bug('i','New wideband average and polarization options')
+	call bug('i','        New FXCAL option  27nov04')
+	call bug('i','Change sign of phase center 05may05')
 	call keyini
 	call GetOpt(nocal,nopol,nopass,nowide,nochan,doall,dopass,
      *       dohann,docont,doconj,dophase,holo,dopower,avechan,avewide,
-     *       linecal,uvrot,doparang)
-	lflags = 2
-	uvflags(1:3) = 'ds'
+     *       linecal,uvrot,doparang,dofxcal)
+	lflags = 3
+	uvflags(1:3) = 'ds3'
 	if(.not.nocal)then
 	  lflags = lflags + 1
 	  uvflags(lflags:lflags) = 'c'
@@ -212,6 +232,8 @@ c
 c
 	call uvDatInp('vis',uvflags(1:lflags))
 	call keya('out',out,' ')
+      call keyt('radec',ra,'hms',0.d0)
+      call keyt('radec',dec,'dms',0.d0)
 	call keyi('nave',nave,1)
 	call keyi('endchan',endchan,0)
 	call keyi('badchan',nbad,0)
@@ -220,6 +242,8 @@ c
 	    call keyi('badchan',badchan(i),0)
 	  enddo
 	endif
+	call keyr('offset',offset(1),0.)
+	call keyr('offset',offset(2),0.)
 	call keyr('scale',scale(1),0.)
 	call keyr('scale',scale(2),0.)
 	call keyr('model',model(1),0.)
@@ -237,18 +261,17 @@ c
 	if(uvDatPrb('window?',0.d0) .and.
      *	  (dohann.or.dopass.or.docont)) call bug('f',
      *		'Window selection cannot be used with these options')
-	doscale = scale(1).ne.0..or.scale(2).ne.0.
+	dooffset = offset(1).ne.0.
+	if(dooffset) coffset=offset(1)*expi(offset(2)*PI/180.)
 	domodel = model(1).ne.0.
+	doscale = scale(1).ne.0..or.scale(2).ne.0.
 	dopolcal = polcal(1).ne.0.
 	if(dopolcal) polcal(2) = polcal(2)*PI/180.
-	if(parot.ne.0.)then
-	  sinpa = sin(parot*PI/180.)
-	  cospa = cos(parot*PI/180.)
-	endif
 c
 c  Open the output.
 c
 	call uvopen(lOut,out,'new')
+	call uvset(lOut,'preamble','uvw/time/baseline',0,0.,0.,0.)
 c
 c  Other initialisation.
 c
@@ -315,7 +338,7 @@ c
               endif
               call uvDatGti('pol',Pol)
               if(Pol.ne.SPol)then
-		Pol = Pol + polcode
+                Pol = Pol + polcode
                 call uvputvri(lOut,'pol',Pol,1)
                 SPol = Pol
               endif
@@ -338,12 +361,38 @@ c
 c
 c  Special processing options.
 c
+
+c   Calibrate FX correlator data
+c   by dividing the cross correlations by the geometric mean
+c   of the autocorrelations.
+
+       if(dofxcal) call fxcal(lIn,preamble(5),data,flags,nchan)
+
+c   Setting RA and DEC will change the phase center to
+c   the RA and DEC specified. The default leaves the data unchanged.
+
+       if(ra.ne.0.d0 .or. dec.ne.0.d0)then
+
+c  Get apparent RA and DEC of phase center at time of observation.
+         call uvrdvrd(lIn,'epoch',epoch,2000.0d0)
+         jd = epo2jul(epoch, ' ')
+         call precess(jd,ra,dec,preamble(4),obsra,obsdec)
+         call pcenter(lIn,preamble,data,nchan,obsra,obsdec,'chan')
+         call uvputvrd(lout,'ra',ra,1)
+         call uvputvrd(lout,'dec',dec,1)
+         call uvputvrd(lout,'obsra',obsra,1)
+         call uvputvrd(lout,'obsdec',obsdec,1)
+       endif
+
+c      'uvrotate'   Rotate uv-coordinates from current to standard epoch.
+c           The standard epoch, ra, dec can be changed using PUTHD.
+
               if(uvrot)then
                 call uvrdvrd(Lin, 'epoch', epoch, 2000.0d0)
                 call uvrdvrd(Lin, 'ra', ra, 0.0d0)
                 call uvrdvrd(Lin, 'dec', dec, 0.0d0)
                 jepoch = epo2jul(epoch, ' ')
-                call prerotat(jepoch, RA, dec, preamble(3), theta)
+                call prerotat(jepoch, RA, dec, preamble(4), theta)
                 costh = cos(theta)
                 sinth = sin(theta)
                 uu = preamble(1)
@@ -351,14 +400,18 @@ c
                 preamble(1) = (uu * costh) + (vv * sinth)
                 preamble(2) = (vv * costh) - (uu * sinth)
               endif
-c
-c  Rotate uv coordinates if parot.ne.0.
-c
-			 if(parot.ne.0. )then
-                uu = preamble(1)
-                vv = preamble(2)
-                preamble(1) = (uu * cospa) + (vv * sinpa)
-                preamble(2) = (vv * cospa) - (uu * sinpa)
+
+c   Rotate uv coordinates and hence image by parot degrees.
+c   Rotation is +ve to the E from N. i.e. increasing PA.
+c   Default is no rotation.
+
+             if(parot.ne.0. )then
+               sinpa = sin(parot*PI/180.)
+               cospa = cos(parot*PI/180.)
+               uu = preamble(1)
+               vv = preamble(2)
+               preamble(1) = (uu * cospa) + (vv * sinpa)
+               preamble(2) = (vv * cospa) - (uu * sinpa)
               endif
 c
 	      if(holo)then
@@ -388,6 +441,11 @@ c
 	      if(dowide.and.dochan)then
                 if(.not.(avewide.or.avechan.or.linecal))
      *                    call uvDatWRd(wdata,wflags,maxchan,nwide)
+		if(dooffset)then
+		  do i=1,nwide
+		    wdata(i) = wdata(i) - coffset
+		  enddo
+		endif
 		if(doscale)then
 		  do i=1,nwide
 		    wdata(i) = cmplx(scale(1),scale(2)) * wdata(i)
@@ -412,6 +470,11 @@ c
 c
 c  Now process the line data, or the wideband data in the case of no channel data.
 c
+		if(dooffset)then
+		  do i=1,nchan
+		    data(i) = data(i) - coffset
+		  enddo
+		endif
 		if(doscale)then
 		  do i=1,nchan
 		    data(i) = cmplx(scale(1),scale(2)) * data(i)
@@ -438,16 +501,16 @@ c
 c
 c  Write out the "npol" parameter, if it did not vary.
 c
-	if(.not.PolVary) call wrhdi(lOut,'npol',npol)
+        if(.not.PolVary) call wrhdi(lOut,'npol',npol)
 c
 c  Finish up the history, and close up shop.
 c
         call hisopen(lOut,'append')
         call hiswrite(lOut,'UVCAL: Miriad '//version)
-	call hisinput(lOut,'UVCAL')
+        call hisinput(lOut,'UVCAL')
         call hisclose (lOut)
-	call uvclose(lOut)
-	end
+        call uvclose(lOut)
+        end
 c********1*********2*********3*********4*********5*********6*********7*c
 	subroutine SetUp(lIn,dopol,nochan,nowide,dochan,dowide)
 c
@@ -494,12 +557,12 @@ c
 c********1*********2*********3*********4*********5*********6*********7*c
 	subroutine GetOpt(nocal,nopol,nopass,nowide,nochan,doall,dopass,
      *       dohann,docont,doconj,dophase,holo,dopower,avechan,avewide,
-     *       linecal,uvrot,doparang)
+     *       linecal,uvrot,doparang,dofxcal)
 c
 	implicit none
 	logical nocal,nopol,nopass,nowide,nochan,doall,dopass,
      *       dohann,docont,doconj,dophase,holo,dopower,avechan,avewide,
-     *       linecal,uvrot,doparang
+     *       linecal,uvrot,doparang,dofxcal
 c
 c  Determine extra processing options.
 c
@@ -513,25 +576,26 @@ c    doall	True if all data (not just unflagged) is to be copied.
 c    dopass	True if passband option is selected.
 c    dohann	True if hanning option is selected.
 c    docont	True if contsub option is selected.
-c    doconj     Conjugate visibilities
-c    dophase    Predict line length phase.
-c    dopower    Predict phase from tpower differences.
-c    holo	Replace u,v with dra,ddec for holography.
-c    avechan	Average unflagged spectral channels into wide,2,1
-c    avewide	Average unflagged wideband channels into wide,2,1
-c    linecal    Correct phase slope due to line length change.
-c    uvrot	Rotate uv-coordinates from current to standard epoch.
-c    doparang	Multiply LR by expi(2*chi) and RL by expi(-2*chi)
+c    doconj    Conjugate visibilities
+c    dophase   Predict line length phase.
+c    dopower   Predict phase from tpower differences.
+c    dofxcal   Calibrate cross correlations using sqrt(autcorrelations)
+c    holo      Replace u,v with dra,ddec for holography.
+c    avechan   Average unflagged spectral channels into wide,2,1
+c    avewide   Average unflagged wideband channels into wide,2,1
+c    linecal   Correct phase slope due to line length change.
+c    uvrot     Rotate uv-coordinates from current to standard epoch.
+c    doparang  Multiply LR by expi(2*chi) and RL by expi(-2*chi)
 c------------------------------------------------------------------------
 	integer nopt
-	parameter(nopt=16)
+	parameter(nopt=17)
 	character opts(nopt)*9
 	logical present(nopt)
 	data opts/'nocal    ','nowide   ','nochannel','unflagged',
      *		  'passband ','hanning  ','nopol    ','contsub  ',
      *            'conjugate','nopass   ','holo     ',
      *            'avechan  ','avewide  ','linecal  ',
-     *            'uvrotate ','parang   '/
+     *            'uvrotate ','parang   ','fxcal    '/
 
 	call options('options',opts,present,nopt)
 	nocal   = present(1)
@@ -550,6 +614,7 @@ c------------------------------------------------------------------------
 	linecal = present(14)
 	uvrot   = present(15)
 	doparang= present(16)
+	dofxcal = present(17)
 c
 c  Check for imcompatible options
 c
@@ -702,7 +767,7 @@ c********1*********2*********3*********4*********5*********6*********7*c
 	integer lIn,nchan,nwide
 	complex data(nchan),wdata(nchan)
 	logical flags(nchan),wflags(nchan),dowide,dochan
-	double precision preamble(4)
+	double precision preamble(5)
 c
 c  Remove phase slope across passband due to line length changes.
 c  This option also corrects the phase difference
@@ -738,7 +803,7 @@ c
      *	  call bug('f','LO1 zero or missing in uv-data')
 	call uvgetvri(lIn,'nants',nants,1)
 	call uvgetvrr(lIn,'phasem1',phasem,nants)
-	call basant(preamble(4),ant1,ant2)
+	call basant(preamble(5),ant1,ant2)
 	phaselo1 = phasem(ant1)-phasem(ant2)
 c
 c  Handle the wideband if channel data also present.
@@ -878,6 +943,105 @@ c
 	call uvrdvri(lIn,'nwide',nwide,0)
 	nwide = max(2,nwide)
 	end
+c********1*********2*********3*********4*********5*********6*********7*c
+       subroutine pcenter(lIn,preamble,data,nchan,obsra,obsdec,line)
+c********1*********2*********3*********4*********5*********6*********7*c
+       implicit none
+       integer lIn,nchan
+       complex data(nchan)
+       double precision preamble(5),obsra,obsdec
+       character*4 line
+c
+c  Move to new phase center.
+c
+c  In:
+c    lIn	Handle of input uv-data.
+c    data	data
+c    nchan	Number of input channel or wideband data.
+c    line	'wide' or 'chan' data
+c    preamble(5),obsra,obsdec
+c  Out:
+c    data,wdata
+c    preamble(5),obsra,obsdec
+c------------------------------------------------------------------------
+       include 'maxdim.h'
+       include 'mirconst.h'
+       integer i,j,k,ant1,ant2,nants,nwide
+       double precision sfreq(MAXWIN),sdf(MAXWIN),freq,u,v,w,lst
+       double precision bxx,byy,bzz,antpos(3*MAXANT)
+       integer nspect,ischan(MAXWIN),nschan(MAXWIN)
+       real wfreq(MAXCHAN),phase,HA,sinha,cosha,sind,cosd
+c
+c  Externals.
+c
+       complex expi
+c
+c  Get the dimensioning info.
+c
+       if(line.eq.'chan')then
+         call uvgetvri(lIn,'nspect',nspect,1)
+	     if(nspect.le.0)
+     *	    call bug('f','Bad value for uv-variable nspect')
+         call uvgetvri(lIn,'ischan',ischan,nspect)
+         call uvgetvri(lIn,'nschan',nschan,nspect)
+         call uvgetvrd(lIn,'sdf',sdf,nspect)
+         call uvgetvrd(lIn,'sfreq',sfreq,nspect)
+       else if(line.eq.'wide')then
+          call uvgetvri(lIn,'nwide',nwide,1)
+          if(nwide.le.0)
+     *      call bug('f','Bad value for uv-variable nwide')
+          call uvgetvrr(lIn,'wfreq',wfreq,nwide)
+       else
+         call bug('f','Invalid line in subroutine radec1')
+       endif
+c
+c calculate new u,v,w
+c
+      call uvgetvri(lIn,'nants',nants,1)
+      call uvgetvrd(lIn,'antpos',antpos,3*nants)
+      call uvgetvrd(lIn,'lst',lst,1)
+      HA = lst - obsra
+      sinha = sin(HA)
+      cosha = cos(HA)
+      sind = sin(obsdec)
+      cosd = cos(obsdec)
+      call basant( preamble(5), ant1, ant2)
+      bxx = antpos(ant2)         - antpos(ant1)
+      byy = antpos(ant2+nants)   - antpos(ant1+nants)
+      bzz = antpos(ant2+2*nants) - antpos(ant1+2*nants)
+        u =   bxx * sinha + byy * cosha
+        v = -(bxx * cosha - byy * sinha)*sind + bzz*cosd
+        w =  (bxx * cosha - byy * sinha)*cosd + bzz*sind
+c
+c  correct the phase to the new phase center.
+c
+	if(line.eq.'chan')then
+	  k = 0
+	  do i=1,nspect
+	    do j=ischan(i),ischan(i)+nschan(i)-1
+	      freq = sfreq(i) + sdf(i) * (j-ischan(i))
+		  phase = - twopi * freq * (w-preamble(3))
+		  phase = mod(phase,twopi)
+	      k = k + 1
+		  data(k) = data(k) * expi(phase)
+	    enddo
+	  enddo
+
+	else if(line.eq.'wide')then
+	  do i=1,nwide
+	      freq = wfreq(i)
+		  phase = - twopi * freq * (w-preamble(3))
+		  phase = mod(phase,twopi)
+		  data(i) = data(i) * expi(phase)
+	  enddo
+	endif
+c
+c update preamble
+c
+      preamble(1) = u
+      preamble(2) = v
+      preamble(3) = w
+      end
 c********1*********2*********3*********4*********5*********6*********7*c
 	subroutine Contsub(lIn,data,flags,nchan,
      *						endchan,mask,sigma)
@@ -1086,7 +1250,7 @@ c********1*********2*********3*********4*********5*********6*********7*c
 	integer lIn,nchan
 	complex data(nchan)
 	real model(3)
-        double precision preamble(4)
+        double precision preamble(5)
 c
 c Subtract the source model from the uv-data.
 c
@@ -1109,6 +1273,51 @@ c
 	  data(i) = data(i) - modvis 
 	enddo
 c
+	end
+c********1*********2*********3*********4*********5*********6*********7*c
+	subroutine fxcal(lIn,baseline,data,flags,nchan)
+	implicit none
+	integer lIn,nchan
+	complex data(nchan)
+	double precision baseline
+	logical flags(nchan)
+c
+c   Calibrate the FX correlator data
+c   by dividing the cross correlations by the geometric mean
+c   of the autocorrelations.
+c
+c  In:
+c    lIn	Handle of input uv-data.
+c    nchan	Number of channels.
+c    baseline
+c  In/out:
+c    data	Channel or wideband data
+c------------------------------------------------------------------------
+	include 'maxdim.h'
+	real auto(4,1024),sq
+c	real auto(MAXANT2,MAXCHAN),sq
+	save auto
+
+	integer ant1,ant2,k
+
+	call basant(baseline,ant1,ant2)
+
+	if(ant1.eq.ant2) then
+	  do k=1,nchan
+	    auto(ant1,k) = data(k)
+	  enddo
+	else
+	  sq =  auto(ant1,3)*auto(ant2,3)
+	  do k=1,nchan
+	    sq =  auto(ant1,k)*auto(ant2,k)
+	    if(sq.gt.0. and.flags(k)) then
+			 data(k) = data(k)/sqrt(sq)
+	    else
+			 data(k) = cmplx(0.,0.)
+		endif
+	  enddo
+	endif
+
 	end
 c********1*********2*********3*********4*********5*********6*********7*c
 	subroutine polcal1(lIn,Pol,data,nchan,polcal)
