@@ -109,10 +109,12 @@ c    12mar96 mchw  Rescale to same range as refant.
 c    13mar96 mchw  Added 3-parameter fit to tpower and tair.
 c    10jun96 mchw  Added # to antpos title so uvgen can read antpos file.
 c    29jun98 pjt   fixed linux/g77 fortran standards (x->1x, removed fdate)
+c    26dec01 mchw  Format change in befit to handle a-array.
+c    22mar05 mchw  Get longitude from uvvariable instead of obspar.
 c-----------------------------------------------------------------------
 	include 'bee.h'
 	character version*(*),device*80,log*80,ans*20
-	parameter(version='(version 3.0 29-JUN-98)')
+	parameter(version='(version 3.0 22-MAR-2005)')
 	integer length,tvis,tgains,iostat
 	logical doscale
 c
@@ -381,17 +383,13 @@ c
 	      call uvrdvrd(tvis,'freq',freq(k),100.d0)
 	      call uvprobvr(tvis,'lst',type,length,updated)
 	      if(type.eq.'d')then
-c	        call uvrdvrd(tvis,'lst',lst(k),dtime(k)-2444239.5d0)
 	        call uvrdvrd(tvis,'lst',lst(k),dtime(k)-dtime(1))
 	      else
-		call obspar(telescop,'longitude',longitude,ok)
-		if(ok)then
-		  call JulLst(dtime(k),longitude,lst(k))
-		else
-c	          lst(k) = dtime(k)-2444239.5d0
-	          lst(k) = dtime(k)-dtime(1)
-		endif
-	      endif
+c Get observatory longitude in radians
+            call uvrdvrd (tvis, 'longitu', longitude, 0.0d0)
+c Get lst in radians
+            call jullst (dtime(k), longitude, lst(k))
+          endif
 	      call uvrdvrd(tvis,'obsra',obsra(k),0.d0)
 	      call uvrdvrd(tvis,'obsdec',obsdec(k),0.d0)
 	      call uvrdvrd(tvis,'ra',ra(k),0.d0)
@@ -521,7 +519,6 @@ c
 	    ha(np) = lst(i)-obsra(i)+3.*pi
 	    ha(np) = mod(ha(np),tupi)-pi
 	    dec(np) = obsdec(i)
-c	    tim(np) = dtime(i)-2444239.5d0
 	    tim(np) = dtime(i)-dtime(1)
 	    frq(np) = freq(i)
 	    tair(np) = airtemp(i)
@@ -1331,6 +1328,9 @@ c
 	    call output(line)
 	    call LogWrit(line(1:len1(line)))
 	  endif
+	else
+	  drar = 0.
+	  ddecr = 0.
 	endif
 c
 c  Refraction correction or elevation correction.
@@ -1357,9 +1357,9 @@ c
 	  dphi = 0.
 	  if(phed) dphi = phint(i)
 c
-c  Position change to all sources !!
+c  Same position change for all sources !!
 c
-	  if(dra.ne.0. .or. ddec.ne.0.) then
+	  if(drar.ne.0. .or. ddecr.ne.0.) then
 	    u =   b(1)*sinh + b(2)*cosh
 	    v = (-b(1)*cosh + b(2)*sinh)*sind + b(3)*cosd
 	    dphi = dphi + tupi*frq(i)* (u*drar*cosd + v*ddecr)
@@ -2119,7 +2119,7 @@ c	jan 85	mchw
 c	aug 93	zhou
 c----------------------------------------------------------------------
 	include 'bee.h'
-	character*1 line*80
+	character*1 line*90
 	real sinh,cosh
 	real sind,cosd,dbx,dby,dbz,dphi,base
 	real step,step1,chimin,chiorg,chisq,cmin(5),corg(5),rnstep
@@ -2206,7 +2206,7 @@ c  Calculate running chi-squared
 	    cmin(i) = c(i)
 	  enddo
           write(line,100) c(1),c(2),c(3),c(5),chisq
- 100      format('bx =',f10.4,2x,'by =',f10.4,2x,'bz =',f8.4,
+ 100      format('bx =',f10.4,2x,'by =',f10.4,2x,'bz =',f10.4,
      *          2x,'antmiss =',f7.4,2x,'chisq =',f8.2)
 	  call output(line)
 	  call LogWrit(line(1:len1(line)))
