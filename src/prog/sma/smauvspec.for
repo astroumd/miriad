@@ -1657,7 +1657,6 @@ c                 write(*,*) molname(j)
          call pgptext(xloc,yloc, 90.0, 0.0, title(1:lm))
           end do
           end if
-          write(*,*) 'here'
         end
 
 
