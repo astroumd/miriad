@@ -114,6 +114,7 @@ c   rjs   17aug94 Slightly better handling of offset value.
 c   rjs    9sep94 Handle felocity linetype.
 c   rjs   19sep04 Handle varying jyperk.
 c   pjt   11feb05 change MAXCH to be more reflective of MAXCHAN (tried MAXCHAN/4)
+c   jhz   22jul05 change MAXSPECT and MSPECT to 48.
 c  Bugs:
 c------------------------------------------------------------------------
 	include 'maxdim.h'
@@ -121,7 +122,7 @@ c------------------------------------------------------------------------
 	integer MAXCH,MAXORDER
 	character version*(*)
 	parameter(MAXORDER=11,MAXCH=MAXCHAN/4)
-	parameter(version='UvLin: version 11-feb-05')
+	parameter(version='UvLin: version 22-jul-05')
 c
 	logical sun,twofit,relax,lpropc,cflags(MAXCHAN)
 	character uvflags*16,out*64,ltype*32,mode*12
@@ -295,7 +296,7 @@ c
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	integer MAXPOL,MAXSPECT
-	parameter(MAXPOL=4,MAXSPECT=16)
+	parameter(MAXPOL=4,MAXSPECT=48)
 	integer npol,poltype(MAXPOL),nvis,nchan,nspect,nschan(MAXSPECT)
 	integer lScr
 	complex line(MAXCHAN*MAXPOL)
@@ -734,7 +735,7 @@ c
 c------------------------------------------------------------------------
 	integer MAXSPECT
 	include 'maxdim.h'
-	parameter(MAXSPECT=16)
+	parameter(MAXSPECT=48)
 	integer vupd,nchan,nspect,nschan(MAXSPECT),i,nout
 	double precision preamble(4),shft(2)
 	complex data(MAXCHAN),line(MAXCHAN)
@@ -1015,7 +1016,7 @@ c    nspect
 c    nschan
 c------------------------------------------------------------------------
 	integer MSPECT
-	parameter(MSPECT=16)
+	parameter(MSPECT=48)
 	double precision line(6)
 	integer start,step,n,nschand(MSPECT),ispect
 c
