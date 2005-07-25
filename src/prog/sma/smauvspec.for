@@ -84,11 +84,15 @@ c	   amplitude     Plot amplitude.
 c	   phase         Plot phase.
 c	   real          Plot real part of the data.
 c	   imaginary     Plot imaginary part of the data.
-c          bothA&P       Plot both amplitude and phase.
+c          both          Plot both amplitude and phase.
 c	The default is axis=channel,amplitude.
 c@ yrange
 c	The min and max range along the y axis of the plots. The default
 c	is to autoscale.
+c       Note: in the case of yaxis=both, the range is specified by the 
+c             yrange to the variable amplitude. The y labelling is 
+c             for amplitude. The phase is plotted below the amplitude
+c             in the same panel with the range from -180 to 180 degree. 
 c@ device
 c	PGPLOT plot device/type. No default.
 c@ nxy
@@ -136,6 +140,7 @@ c                 edge flag.
 c    jhz  23jun05 enable phase plot
 c    jhz  21jul05 fixed a bug in pghline which cause draw a
 c                 random lin at end of the line drawing. 
+c    jhz  24jul05 add back the do both amplitude and phase
 c>  Bugs:
 c------------------------------------------------------------------------
 c=======================================================================
@@ -181,7 +186,7 @@ c
         character mname*8000, moln*16
         integer mtag(maxmline), nmline, j, jp, js, je, iline
         character version*(*)
-        parameter(version='SmaUvSpec: version 1.4 21-Jul-05')
+        parameter(version='SmaUvSpec: version 1.5 24-Jul-05')
         character uvflags*8,device*64,xaxis*12,yaxis*12,logf*64
         character xtitle*64,ytitle*64, veldef*8
         logical ampsc,rms,nobase,avall,first,buffered,doflush,dodots
@@ -209,11 +214,17 @@ c
         integer nmol, moltag(maxmline)
         character molname(maxmline)*16, jplpath*80 
         common/jplcat/nmol,moltag,molname,docat,lsrvel,veldef,veldop
+        logical docolor
+        integer nspect, nschan(maxwin),nchan0
+        common/spectrum/nspect,nschan,nchan0,docolor
+
+
 
 c
 c  Get the input parameters.
 c
         call output(version)
+        docolor=.true.
         call keyini
         call mkeyf('vis',in,1,nin)
         call vishd(in)
@@ -229,8 +240,6 @@ c
                 veldef = 'radio'
               end if
         call getaxis(xaxis,yaxis)
-        if(yaxis(1:1).eq.'b')
-     & call bug('f','has not fully implemented yet for the y variable.')
         if(docat) 
      & call bug('f','has not fully implemented yet for jpl catalog.')
         dolag = xaxis.eq.'lag'
@@ -310,6 +319,7 @@ c
 c  Various initialisation.
 c
         ytitle = yaxis
+        if(ytitle.eq.'both') ytitle='BothA&P'
         call ucase(ytitle(1:1))
         interval = interval/(24.*60.)
         doflush = .false.
@@ -329,11 +339,15 @@ c
           call uvvarset(vupd,'dra')
           call uvvarset(vupd,'ddec')
           call uvvarset(vupd,'source')
+          call uvvarset(vupd,'nchan')
            
 c
 c  Loop over the data.
 c
+          
           call uvdatrd(preamble,data,flags,maxchan,nread)
+           
+          if((nread.lt.nchan0).and.docolor) docolor = .false.
           nplot = nread
           if(dolag)nplot = nextpow2(2*(nread-1))
           if(doshift)then
@@ -576,7 +590,7 @@ c
         data xaxes/'channel   ','frequency ','velocity  ','felocity  ',
      *             'lag       ','dfrequency'/
         data yaxes/'amplitude','phase    ','real     ','imaginary',
-     *             'bothA&P'/
+     *             'both'/
 c
         call keymatch('axis',nx,xaxes,1,xaxis,n)
         if(n.eq.0)xaxis = xaxes(1)
@@ -910,8 +924,9 @@ c=======================================================================
         complex ctemp
         integer maxwin
         parameter(maxwin=48)
-        integer nspect,nschan(maxwin)        
-        common/spectrum/nspect,nschan
+        logical docolor
+        integer nspect,nschan(maxwin), nchan0        
+        common/spectrum/nspect,nschan,nchan0,docolor
         temp=0.
         temp2=0.
 c
@@ -1049,11 +1064,11 @@ c
      *    pols,cnt,cntp,free,mbase,chnkpntr
         integer i,i1,i2,p,bl,pol
         real t
-        logical ok
+        logical ok,docolor
 c        integer maxwin
 c        parameter(maxwin=48)
-        integer nspect, nschan(maxwin)
-        common/spectrum/nspect,nschan
+        integer nspect, nschan(maxwin),nchan0
+        common/spectrum/nspect,nschan,nchan0,docolor
 c
 c  Does this spectrum contain some good data.
 c
@@ -1284,7 +1299,7 @@ c------------------------------------------------------------------------
         character pollab*32, source*32
         double precision t0
         real yranged(2), ypranged(2)
-        real xlen,ylen,xloc
+        real xlen,ylen,xloc, pscale, pline
         integer k1,k2, k
 c
 c  Externals.
@@ -1300,11 +1315,20 @@ c
         call pgvstd
         if(yrange(2).le.yrange(1))then
           call setaxisr(yp,npnts,yranged)
+           pscale= (yranged(2)-yranged(1))
+           pline = yranged(1)
+          if(doboth) yranged(1) = yranged(1)-0.4*pscale
           call pgswin(xrange(1),xrange(2),yranged(1),yranged(2))
+           if(doboth) yranged(1) = yranged(1)+0.4*pscale
 cc          yrange(2)=yranged(2)
 cc          yrange(1)=yranged(1)
+          
         else
+           pscale= (yrange(2)-yrange(1))
+           pline = yrange(1)
+            if(doboth) yrange(1) = yrange(1)-0.5*pscale
           call pgswin(xrange(1),xrange(2),yrange(1),yrange(2))
+           if(doboth) yrange(1) = yrange(1)+0.5*pscale
         endif
          call setaxisr(ypp,npnts,ypranged)
 c
@@ -1313,14 +1337,21 @@ c
 
 c   rescale the phase for plotting both
            do k=plot(i),plot(i+1)
-          if(ypranged(2).gt.ypranged(1)) then
-         ypp(k) = 0.85*(ypp(k)-ypranged(1))*(yranged(2)-yranged(1))/
-     *         (ypranged(2)-ypranged(1))
-            else
+         if(ypranged(2).gt.ypranged(1)) then
+             if(yrange(2).le.yrange(1))then
+         ypp(k) = 0.5*(ypp(k)-ypranged(2))*(yranged(2)-yranged(1))/
+     *    (ypranged(2)-ypranged(1)) + yranged(1)
+          
+                  else
+        ypp(k) = 0.5*(ypp(k)-ypranged(2))*(yrange(2)-yrange(1))/
+     *    (ypranged(2)-ypranged(1))+yrange(1)
+         
+                  endif
+          else
           call bug('f','the plotting range in phase is 0 degree!!')
           end if
           end do
-
+          
           call  pgsci(i)
 c          call pgsci(mod(i-1,ncol)+1)
           if(dopoint)then
@@ -1329,8 +1360,11 @@ c          call pgsci(mod(i-1,ncol)+1)
           else
             if (hann.gt.1) call hannsm(hann,hc,plot(i+1)-plot(i),
      *         yp(plot(i)),hw)
+             if (hann.gt.1) call hannsm(hann,hc,plot(i+1)-plot(i),
+     *         ypp(plot(i)),hw)
         call pghline(plot(i+1)-plot(i),xp(plot(i)),yp(plot(i)),
-     *        ypp(plot(i)),2.0,doboth, yranged(2), sppntr)
+     *      ypp(plot(i)),2.0,doboth, yranged(2), sppntr, 
+     *      pline,xrange)
           endif
           if (logf.ne.' ') then
             do j = 1, plot(i+1)-plot(i)
@@ -1432,7 +1466,8 @@ c PgHline -- Histogram line plot for pgplot.
 c mchw:
 c plotting,uv-data
 c
-        subroutine pghline(npts,x,y,yp,gapfac,doboth,maxstr,sppntr)
+        subroutine pghline(npts,x,y,yp,gapfac,doboth,maxstr,sppntr,
+     *   pline,xrange)
               parameter(maxsline=10000)
               parameter(cmks = 299792458.0)
         real fmx,fmn,strl
@@ -1443,7 +1478,7 @@ c
         real xlfrq(2), ylstr(2)
         integer npts,sppntr(npts)
         real x(npts), y(npts), yp(npts), gapfac
-        REAL XPTS(npts), YPTS(npts)
+        REAL XPTS(npts),YPTS(npts), pline,apline(2),xrange(2)
         INTEGER N
 c
 c  Histogram style line plot of y-array versus x-array. Points are not
@@ -1469,9 +1504,9 @@ c-------------------------------------------------------------------------
         real xlen,ylen,xloc
         integer maxwin,symbol
         parameter(maxwin=48)
-        logical doboth
-        integer nspect, nschan(maxwin),fnschan(maxwin)
-        common/spectrum/nspect,nschan
+        logical doboth,docolor
+        integer nspect, nschan(maxwin),fnschan(maxwin),nchan0
+        common/spectrum/nspect,nschan,nchan0,docolor
 c
 c common jpl
 c
@@ -1481,9 +1516,12 @@ c
         real lsrvel,veldop
         logical docat
         common/jplcat/nmol,moltag,molname,docat,lsrvel,veldef,veldop
+           apline(1)=pline
+           apline(2)=pline
 c
 c  sort the spectral window pointr after flagging
 c
+                 
         do j=1, nspect
         fnschan(j)=0
         enddo
@@ -1550,6 +1588,7 @@ c
             if(ci.eq.23) call pgscr(ci, 0.5, 0.0, 0.5)
             if(ci.eq.24) call pgscr(ci, 0.75, 0.2, 0.3)
             end if
+             if(.not.docolor)  call  pgsci(7)
                XPTS(k) = x(k+(j-1)*fnschan(j))
                YPTS(k) = yp(k+(j-1)*fnschan(j))
           if(maxf.lt.(x(k+(j-1)*fnschan(j)))) maxf=x(k+(j-1)*fnschan(j))
@@ -1567,21 +1606,24 @@ c
               call pgdraw (0.5*(x(i)+x(i)), y(i))
              endif
             call pgebuf
-             if(i.ge.npts) goto 555
           enddo
              end=i
              call pgdraw(x(end),y(end))
-             start=end+1
+              start=end+1
+             if(docolor) then
              write(title,'(a,i2)') 's',j
                l = len1(title)
                call pglen(5,title(1:l),xlen,ylen)
                xloc = 0.8
                yloc = yloc-1/30.
               call pgmtxt('RV',1.0,yloc,0.,title(1:l))
-          call pgebuf        
+          call pgebuf
+             endif        
 c          plot phase
            if(doboth) then
            call  pgsci(1)
+           call pgline(2,xrange,apline)
+           call  pgsci(2)
            IF (SYMBOL.GE.0 .OR. SYMBOL.LE.-3) THEN
            CALL GRMKER(SYMBOL,.FALSE.,N,XPTS,YPTS)
            ELSE
@@ -1589,8 +1631,9 @@ c          plot phase
            END IF
            CALL PGEBUF
            endif
+           if(end.eq.npts) goto 556
            enddo        
-555        continue 
+556        continue 
 
 
           if(docat) then
@@ -1704,14 +1747,14 @@ C 14-Mar-1997 - optimization: use GRDOT1 [TJP].
 C 23-Jub-2005 - jhz - implemented spectral window pntr and color index
 C-----------------------------------------------------------------------
 ccccccccccccccccccccccccccc
-      LOGICAL PGNOTO
+      LOGICAL PGNOTO, docolor
       integer j, k, ci, l
       character title*64
       real xlen,ylen,xloc
       integer   i,maxwin
       parameter(maxwin=48)
-      integer  nspect, nschan(maxwin),fnschan(maxwin)
-      common/spectrum/nspect,nschan
+      integer  nspect, nschan(maxwin),fnschan(maxwin),nchan0
+      common/spectrum/nspect,nschan,nchan0,docolor
 c
 c  sort the spectral window pointr after flagging
 c
@@ -1790,13 +1833,13 @@ c  Give a summary about a uv data-set.
 c------------------------------------------------------------------------
       include 'maxdim.h' 
       character aval1*64,aval2*64,type*1,obstype*32
-      integer length,nschan(maxwin),nchan,nspect,npol,pol,i
+      integer length,nschan(maxwin),nchan0,nspect,npol,pol,i
       integer nants,tno
       double precision sdf(maxwin),sfreq(maxwin),restfreq(maxwin)
       double precision time
       real veldop
-      logical updated
-      common/spectrum/nspect, nschan
+      logical updated, docolor
+      common/spectrum/nspect,nschan,nchan0,docolor
 c
 c  Close and reopen the file as a visibility file.
 c
@@ -1820,7 +1863,7 @@ c
       enddo
       call rdhda(tno,'obstype',obstype,' ')
       call uvprobvr(tno,'corr',type,length,updated)
-        call uvrdvri(tno,'nchan',nchan,1)
+        call uvrdvri(tno,'nchan',nchan0,1)
         call uvrdvri(tno,'nspect',nspect,1)
         if(nspect.le.maxwin)then
         call uvgetvri(tno,'nschan',nschan,nspect)
@@ -1830,6 +1873,7 @@ c
         call uvgetvrr(tno,'veldop', veldop, 1)
 c        write(*,*) 'veldop=', veldop
         endif
+	if(nspect.eq.1) docolor=.false.
       call uvclose(tno)
 c
       end
