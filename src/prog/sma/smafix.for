@@ -119,12 +119,14 @@ c  jhz: 2005-5-19 restrict the xaxis variable: time and antel
 c                 restrict the yaxis variable: systemp
 c  jhz: 2005-5-20 add options to accept variables associated
 c                 with unflagged uv data.
-c  jhz: 2005-5-25 a bug is fixed in flagging
+c  jhz: 2005-5-25 a bug is fixed in flagging 
+c  jhz: 2005-7-26 fix a bug in polynomial fit to the Tsys
+c                 when flag options is taken.
 c------------------------------------------------------------------------
         character version*(*)
         integer maxpnts
         parameter(maxpnts=100000)
-        parameter(version='SmaFix: version 1.5 25-MAY-05')
+        parameter(version='SmaFix: version 1.6 26-Jul-05')
         logical doplot,dolog,dotime,dounwrap
         character vis*64,device*64,logfile*64,xaxis*16,yaxis*16
         character out*64
@@ -138,9 +140,7 @@ c------------------------------------------------------------------------
         integer dofit, antid, xaxisparm, nterms
         integer i,j,k,l,bant(10),gant(10),rant(10),ggant
         real flagvar(maxpnts)
-        double precision foff
         logical dotsys,tsysplt,dosour,dotswap,doflag
-c       apl(ant,sour,aplfit),xapl(ant,sour,MAXNR),bppl(ant,sour,MAXNR,MAXNR)    
         real apl(10,32,10)
         double precision xapl(10,32,10),bppl(10,32,10,10)
         common/smfix/rmsflag,dofit,dotsys,dotswap,
@@ -286,8 +286,8 @@ c
      *          flagvar,doflag,
      *          xaxis,xvals,xdim1*xdim2,xscale,xoff,xtype,
      *          yaxis,yvals,ydim1*ydim2,yscale,yoff,ytype)
-c        call uvclose(tin)
-c
+
+
 c
 c  Unwrap the phases
 c
@@ -599,7 +599,7 @@ c
         real xrange(2),yrange(2)
         character xaxis*(*),yaxis*(*),xunit*(*),yunit*(*),vis*(*)
         logical dotime,overlay,equal,doflag
-        real xvals(*),yvals(*), flagvar(*)
+        real xvals(*),yvals(*), flagvar(npnts)
 c------------------------------------------------------------------------
         integer x1,x2,y1,y2,xoff,yoff,kx,ky
         logical xext,yext,xr,yr
@@ -661,9 +661,10 @@ c
                 if(.not.overlay)call pgset(dotime,equal,vis,
      *            xaxis,xunit,xlo,xhi,x1,xdim1,x2,xdim2,
      *            yaxis,yunit,ylo,yhi,y1,ydim1,y2,ydim2)
+
         if(tsysplt) 
      * call tsyspgpts (npnts,xvals(xoff),yvals(yoff),
-     * flagvar(off),doflag,1)
+     * flagvar(1),doflag,1)
               enddo
             enddo
           enddo
@@ -715,18 +716,16 @@ C-----------------------------------------------------------------------
         double precision CHI2(MAXNR)
         character source(32)*32, title*64
         integer soupnt(10000*10), indx, mindx
-        real xx(100), yy(100), xloc, yloc, ave, var
-        real  a(10),xfit(N),yfit(N), yerr(N)
+        real xx(100), yy(100), xloc, yloc
+        real xfit(N),yfit(N), yerr(N)
         integer Fsfit(N,32)
-        real  as(10,32), xsfit(N,32),ysfit(N,32), yserr(N,32)
+        real xsfit(N,32),ysfit(N,32)
         double precision dxsfit(N,32),dysfit(N,32), dyserr(N,32)
         integer Ns(32), Nss
-        double precision chisq
-        integer nterms, mode, Npl, ind(N),i,j,k, ibuf
+        integer nterms, mode, Npl, i,j,k
         real pl(N)
         integer nsource
         common/sour/soupnt,source,nsource
-        character xaxis*16, yaxis*16
         real rmsflag
         integer dofit, antid, xaxisparm
         logical dotsys, tsysplt, dosour, dotswap
@@ -743,12 +742,13 @@ c sort the data
 c          
             do i=1, N
                FPTS(i)=1
-                if(DOFLAG.and.YPTS(i).le.0) FPTS(i)=-1
+               if(DOFLAG.and.(YFLAG(i).lt.0)) FPTS(i)=-1
                xfit(i) =XPTS(i)
                yfit(i) =YPTS(i)
                XD(i) = XFIT(i)
                YD(i) = YFIT(i)
-               DDELTAY(i) =1.D0
+               if(YFLAG(i).gt.0) DDELTAY(i) =1.D0
+               if(YFLAG(i).lt.0) DDELTAY(i) =1.D10
                if(DOFLAG.and.FPTS(i).eq.-1) DDELTAY(i) =1.D10
             end do
             call xysort(N, xfit, yfit)
@@ -766,8 +766,7 @@ c
                dxsfit(Ns(k),k) =XPTS(i)
                dysfit(Ns(k),k) =YPTS(i)
                dyserr(Ns(k),k) =1.0D0
-        if(DOFLAG.and.FPTS(i).eq.-1) dyserr(Ns(k),k) =1.0D10
-c               FsFIT(Ns(k),k)=1
+        if(YFLAG(i).le.0) dyserr(Ns(k),k) =1.0D10
                  FsFIT(Ns(k),k)= FPTS(i)
                end if
                end do
@@ -786,8 +785,7 @@ c               FsFIT(Ns(k),k)=1
                dxsfit(Ns(k),k) =XFIT(i)
                dysfit(Ns(k),k) =YFIT(i)
                dyserr(Ns(k),k) =1.0D0
-       if(DOFLAG.and.FPTS(i).eq.-1) dyserr(Ns(k),k) =1.0D10
-c               FsFIT(Ns(k),k)=1
+       if(YFLAG(i).lt.0) dyserr(Ns(k),k) =1.0D10
                 FsFIT(Ns(k),k)=FPTS(i)
                 end do
                 end do
@@ -802,12 +800,8 @@ c call polynomial fit
 c
                mode=0;
                nterms =dofit+1
-c           call polfit(XFIT,YFIT,yerr,N,nterms,mode,a,chisq)
             CALL REGPOL(XD,YD,DDELTAY,N,MAXNR,XA,BP,AP,CHI2)
-c            call regpolfitg(nterms,xa,bp,N,XFIT,YFIT)
-c            call curvefit(nterms,a,N,XFIT,YFIT)
             call pgsci(2)
-c           call rmsflags(nterms,a,N,XPTS,YPTS,FPTS);
             call regrmsflags(nterms,xa,bp,N,XPTS,YPTS,FPTS)
               end if
            
@@ -833,7 +827,6 @@ c
        NPNTS=1
        mindx =0
        NPL=0
-c       call pgsci(soupnt(i))
       CALL PGBBUF
        do i=1, N
         indx=soupnt(i) 
@@ -902,7 +895,7 @@ c          nterms =3 parabolic
               XD(i)=XFIT(i)
               YD(i)=YFIT(i)
               DDELTAY(i)=1.0D0
-              if(FPTS(i).eq.-1) DDELTAY(i)=1.0D10
+              if(YFLAG(i).lt.0) DDELTAY(i)=1.0D10
              end do
             CALL REGPOL(XD,YD,DDELTAY,NPL,MAXNR,XA,BP,AP,CHI2)
 
@@ -929,7 +922,6 @@ c
               NPL =0
               if(Ns(k)>1) then
               do i=1, ns(k)
-c                write(*,*) 'FsFIT ', FsFIT(i,k)
               if(FsFIT(i,k)>0) then
                   NPL=NPL+1
                   XFIT(NPL)=XsFIT(i,k) 
@@ -939,7 +931,7 @@ c                write(*,*) 'FsFIT ', FsFIT(i,k)
                   dXsFIT(NPL,k)=XsFIT(NPL,k)
                   dYsFIT(NPL,k)=YsFIT(NPL,k)
                   dyserr(NPL,k)=1.0D0
-                 if(FPTS(NPL).eq.-1)  dyserr(NPL,k)=1.0D10
+                 if(YFLAG(NPL).lt.0.)  dyserr(NPL,k)=1.0D10
               end if
               end do
                  ns(k)= NPL
@@ -947,10 +939,7 @@ c
 c call polynomial fit
 c
            mode=0;
-c          nterms =3 parabolic
            nterms= dofit+1
-c           call polfit(XsFIT(1,k),YsFIT(1,k),yserr(1,k),
-c     *                 Ns(k),nterms,mode,a,chisq)
            CALL REGPOL(dxsfit(1,k),dysfit(1,k),dyserr(1,k),Ns(k),
      *          MAXNR,XA,BP,AP,CHI2)
              do i=1,MAXNR
@@ -961,7 +950,6 @@ c     *                 Ns(k),nterms,mode,a,chisq)
                 end do
 
            call regpolfitg(nterms,xa,bp,Ns(k),XsFIT(1,k),YsFIT(1,k))
-c          call curvefit(nterms,a,Ns(k), XsFIT(1,k), YsFIT(1,k))
            call pgsci(k)
            call pgline (Ns(k), XsFIT(1,k), YsFIT(1,k))
                             end if
@@ -1007,7 +995,7 @@ c************************************************************************
         subroutine xysort(N, x,y)
 c sort the data in x sequence
         integer N, i, ind(N)
-        real x(N), y(N), xbuf, ybuf, xmax, ymax
+        real x(N), y(N)
         real xsrt(N), ysrt(N)
           call hsortr(N, x, ind)
         do i=1, N
@@ -1236,7 +1224,6 @@ c
      *        xunit(1:lunits)//')'
           endif
         endif
-c                  write(*,*) 'antid=', antid, xaxis
         end
 c************************************************************************
         subroutine doscale(range,oneplot,vals,npnts,dor,loval,hival)
@@ -1291,7 +1278,7 @@ c
         character xtype*1,ytype*1,xaxis*(*),yaxis*(*),vis*32
         real xvals(xdim*maxpnt),yvals(ydim*maxpnt)
         real flagvar(ydim*maxpnt)
-        double precision xscale,xoff,yscale,yoff,foff
+        double precision xscale,xoff,yscale,yoff
         integer soupnt(10000*10)
         character source(32)*32
 c
@@ -1301,31 +1288,33 @@ c------------------------------------------------------------------------
         double precision xdrun(maxruns),ydrun(maxruns)
         integer xirun(maxruns),yirun(maxruns)
         real xrrun(maxruns),yrrun(maxruns)
-        integer flgrun(maxruns)
+        real flgrun(maxruns)
         integer xpnt,ypnt,xdims,ydims,tdims,iostat,k
-        integer nsource, sourid,nflag,nbls, fbls
+        integer nsource,sourid,nbls, fbls
         logical xupd,yupd,doflag,tupd
         double precision preamble(4), time, ctime
         double precision mytime(maxinte)
         include 'maxdim.h'
         complex data(maxchan)
         logical flags(maxchan),updated,tsysflag(maxant,maxinte)
-        integer nchan,vupd,nspect,i1,i2, nrecord,nants,nflagbl(maxant)
-        double precision sfreq(maxspect), sdf(maxspect)
-        integer nschan(maxspect),varlen
-        character xt*1,yt*1, tt*1, souread*32, vartype
+        integer nchan,i1,i2,nrecord,nants,nflagbl(maxant)
+        character xt*1,yt*1, tt*1, souread*32
         common/sour/soupnt,source,nsource
 c
 c  Externals.
 c
         integer uvscan
 c
+c initialize flfrun 1 -> good data
+        do i=1,maxruns
+        flgrun(i)=1.
+        end do
         if(max(xdim,ydim).gt.maxruns)
      *    call bug('f','Too many variables to hold in buffer')
         npnts = 0
         xpnt = 0
         ypnt = 0
-        do i=1,maxants
+        do i=1,maxant
                nflagbl(i1)=0
                nflagbl(i2)=0
         end do
@@ -1335,25 +1324,15 @@ c  Read the data.
 c
           xsoupnt=0
           call uvopen(tin,vis,'old')
-c          call uvset(tin,'preamble','uvw/time/baseline',0,0.,0.,0.)
-c          call uvrewind(tin)
-c          iostat = uvscan(tin, ' ')
             nrecord=1
              call uvread(tin,preamble,data,flags,maxchan,nchan)
         if(nchan.le.0) call bug('f','No data found in the input.')
                 
-c        if(.not.flags(1).and..not.flags(nchan).and..not.flags(nchan/2)) 
-c     *       then
              call basant(preamble(4),i1,i2)
-c           write(*,*) i1,i2,flags(2),preamble(5),nflagbl(i1),nflagbl(i2)
-c          write(*,*) 'outside loop'
              if(.not.flags(1)) then
                nflagbl(i1)= nflagbl(i1)+1
                nflagbl(i2)= nflagbl(i2)+1
              end if
-c             tsysflag(i1,1) = .true.
-c             tsysflag(i2,1) = .true.
-c             end if
              ctime=preamble(3)
              inhid=1
              mytime(1)= ctime
@@ -1367,18 +1346,13 @@ c             end if
              if(.not.flags(1).and..not.tupd) then
              nflagbl(i1)= nflagbl(i1)+1
              nflagbl(i2)= nflagbl(i2)+1
-c            write(*,*) 
-c     *       nbls,i1,i2,flags(2),preamble(5),nflagbl(i1),nflagbl(i2)
              end if
              if(tupd) call uvgetvri(tin, 'nants',nants, 1)
-c             if(tupd) write(*,*) 'nant=', nants, nbls
              if(tupd) then
                  do i=1, nants
                   fbls=nflagbl(i)*(nflagbl(i)+1)/2
-c                  write(*,*) i, fbls
                   if(fbls.eq.nbls) then
                   if(doflag) tsysflag(i,inhid)=.true.
-c                  write(*,*) 'ant=', i
                   end if
                   nflagbl(i)=0
                 end do
@@ -1386,8 +1360,6 @@ c                  write(*,*) 'ant=', i
               if(.not.flags(1)) then
              nflagbl(i1)= nflagbl(i1)+1
              nflagbl(i2)= nflagbl(i2)+1
-c            write(*,*)
-c     *       nbls,i1,i2,flags(2),preamble(5),nflagbl(i1),nflagbl(i2)
              end if
 
              endif
@@ -1438,7 +1410,7 @@ c     *       nbls,i1,i2,flags(2),preamble(5),nflagbl(i1),nflagbl(i2)
           if((xupd.or.yupd).and.(xdims.eq.xdim.and.ydims.eq.ydim))then
             if(max(xpnt+xdim,ypnt+ydim).gt.maxruns)then
               k = min(xpnt/xdim,maxpnt-npnts)
-              call transf(k,npnts,flgrun,flagvar,foff,
+              call transf(k,npnts,flgrun,flagvar,
      *          xtype,xirun,xrrun,xdrun,xdim,xvals,xscale,xoff,
      *          ytype,yirun,yrrun,ydrun,ydim,yvals,yscale,yoff)
               xpnt = 0
@@ -1472,12 +1444,12 @@ c
              do i=1, ydim
              if(bant(i).ne.-1) then
                yrrun(ypnt+bant(i)) = yrrun(ypnt+ggant)
+               tsysflag(bant(i),inhid)=tsysflag(ggant,inhid) 
                if (ggant.eq.-1) yrrun(ypnt+bant(i)) =0.0 
+               
                end if
               if(tsysflag(i,inhid)) then 
-               yrrun(ypnt+i) = 0.0
                flgrun(ypnt+i) = -1
-c               write(*,*) i, flgrun(ypnt+i)
                      else
                flgrun(ypnt+i) =1
                     end if
@@ -1499,13 +1471,13 @@ c  Flush out anything remaining.
 c
         if(xpnt.gt.0)then
           k = min(xpnt/xdim,maxpnt-npnts)
-          call transf(k,npnts,flgrun,flagvar,foff,
+          call transf(k,npnts,flgrun,flagvar,
      *        xtype,xirun,xrrun,xdrun,xdim,xvals,xscale,xoff,
      *        ytype,yirun,yrrun,ydrun,ydim,yvals,yscale,yoff)
         endif
         end
 c************************************************************************
-        subroutine transf(k,npnts,flgrun,flagvar,foff,
+        subroutine transf(k,npnts,flgrun,flagvar,
      *        xtype,xirun,xrrun,xdrun,xdim,xvals,xscale,xoff,
      *        ytype,yirun,yrrun,ydrun,ydim,yvals,yscale,yoff)
 c
@@ -1513,11 +1485,11 @@ c
         character xtype*1,ytype*1
         integer xirun(k*xdim),yirun(k*ydim)
         real xrrun(k*xdim),yrrun(k*ydim)
-        integer flgrun(k*ydim)
+        real flgrun(k*ydim)
         double precision xdrun(k*xdim),ydrun(k*ydim)
         real xvals(*),yvals(*)
         real flagvar(*)
-        double precision xscale,xoff,yscale,yoff,foff
+        double precision xscale,xoff,yscale,yoff
 c
 c------------------------------------------------------------------------
         integer xpnt,ypnt
@@ -1530,7 +1502,7 @@ c------------------------------------------------------------------------
         else if(xtype.eq.'d')then
           call cvtdr(xdrun,xvals(xpnt),k*xdim,xscale,xoff)
         endif
-           call cvtir(flgrun,flagvar(ypnt),k*ydim,yscale,foff)
+          call cvtrr(flgrun,flagvar(ypnt),k*ydim,yscale,yoff)
         if(ytype.eq.'i')then
           call cvtir(yirun,yvals(ypnt),k*ydim,yscale,yoff)
         else if(ytype.eq.'r')then
@@ -1827,187 +1799,9 @@ c
       var=(var-ep**2/n)/(n-1)
       return
       END
-C  (C) Copr. 1986-92 Numerical Recipes Software ?)!!.
-
-
-c  subroutine polfit
-c    purpose
-c    make a least-sqaure fit to data with a polynomial curve
-c        y = a(1) + a(2)*x + a(3)*x**2 + a(4)*x**3 + ...
-c    usage call polfit ( x, y, sigmay, npts, nterms, mode, a, chisqr)
-c
-c    parameters:
-c       x - array of data points for independent variable
-c       y - array of data points for dependent variable
-c       sigmay - array of std for y data points
-c       npts - number of pairs of data points
-c       nterms - number of coefficients (degeree of polynomial + 1)
-c       mode - determine the emthod of weighting least squares fit
-c           +1 instrumental weight(i) = 1/sigmay(i)**2
-c            0 no weight       weight(i) =  1.
-c           -1 statistical   weight(i) =  1/y(i)
-c       a  - array of coefficients of polynomial
-c       chisqr - reduced chi square for fit
-c
-c       function used
-c         determ(array, norder)
-c           evaluates the determinat of a symmetric 2-d matrix of order norder
-c
-
-         subroutine polfit(x,y,yerr,npts,nterms,mode,a,chisq)
-         double precision sumx, sumy, xterm, yterm, array, chisq
-         dimension x(npts), y(npts),sigmay(npts),yerr(npts), A(npts)
-c         dimension sumx(19), sumy(10), array(10,10)
-          dimension sumx(39), sumy(20), array(20,20)
-         integer mode, npts, nterms
-              wf = 1.
-11            nmax = 2*nterms -1
-           do 13 n = 1, nmax
-13           sumx(n) = 0.
-            do j =1, nterms
-            sumy(j) = 0.
-               end do
-               chisq = 0.
-              wf = 0
-
-              if (mode.eq.1) then
-             do  i =1, npts
-c  add the fractional uncertainty to the errors
-c                 sigmay(i)=yerr(i)+frac*y(i)
-                  sigmay(i)= sqrt( yerr(i)**2+(frac*y(i))**2)
-                wf = wf + 1./sigmay(i)**2
-             end do
-              wf = wf/npts
-               else
-               wf =1.
-               end if
-c  in order to make the matrix converge
-c  the 1.0e10 will be canceled in the reduced
-c  chi-square calculation
-             wf= wf*1.0e15
-c            write(*,*) 'wf=', wf
-          do 50 i =1, npts
-               xi = x(i)
-               yi = y(i)
-
-31       if (mode) 32, 37, 39
-32        if (yi) 35, 37, 33
-33         weight = 1./yi
-           go to 41
-35          weight = 1. / (-yi)
-             go to 41
-37        weight = 1 
-
-            go to 41
-39             weight = 1./sigmay(i)**2/wf
-c               write(*,*) 'weight =', weight, sigmay(i), i
-41         xterm = weight
-
-           do  n=1, nmax
-           sumx(n) = sumx(n) + xterm
-            xterm = xterm * xi
-            end do
-45         yterm = weight * yi
-           do n = 1, nterms
-           sumy(n) = sumy(n) + yterm
-           yterm = yterm * xi
-           end do
-49      chisq = chisq + weight*yi**2
-50      continue
-c
-c     construct matrices and calculate coefficients
-c
-   51  do j =1, nterms
-       do k =1, nterms
-       n = j + k -1
-       array(j, k) = sumx(n)
-
-       end do
-       end do
-c       do i = 1, nterms
-c         write(*,*) 'array(i,i)',array(i,i)
-c         end do
-c       write(*,*) 'delta=', delta
-
-        delta = determ (array, nterms)
-c        write(*,*) 'delta nterm=', delta, nterms
-           if (delta) 61, 57, 61
-57       chisq = 0.
-         do j = 1, nterms
-            a(j) = 0.
-            end do
-                go to 80
-61     do  l = 1, nterms
-62       do  j = 1, nterms
-               do  k = 1, nterms
-                 n = j + k -1
-                 array(j, k) = sumx(n)
-                end do
-                 array(j, l) = sumy(j)
-             end do
-                 a(l) = determ(array, nterms)/delta
-           end do
-
-c
-c   calculate chi square
-c
-
-71       do  j =1, nterms
-           chisq = chisq - 2.* a(j) *sumy(j)
-              do  k =1, nterms
-                 n = j + k -1
-               chisq = chisq + a(j) *a(k)*sumx(n)
-            end do
-            end do
-76         free = npts - nterms
-77         chisq = wf*chisq/free
-c           write(*,*) 'chisq=', chisq
-80          return
-
-             end
-
-                      function determ(array, norder)
-           double precision array, save, determ
-           dimension array(20,20)
-c           write(*,*) 'norder=' , norder
-  10       determ = 1.
-  11         do 50 k =1, norder
-c             write(*,*) 'array(k,k)=', array(k,k)
-c
-c     interchange columns if diagonal element is zero
-c
-           if (array(k, k)) 41, 21, 41
-  21       do 23 j = k, norder
-           if (array(k, j)) 31, 23, 31
-  23      continue
-            determ = 0.
-               go to 60
-  31      do  i =k, norder
-                  save = array(i,j)
-                  array(i,j) = array (i, k)
-                  array (i, k) = save
-           end do
-           determ = - determ
-c
-c               subtract row k from lower rows to get diagonal matrix
-c
-  41       determ = determ * array (k, k)
-c           write(*,*) 'determ=', determ, norder
-       if (k - norder) 43, 50, 50
-  43        k1 = k +1
-            do i = k1, norder
-            do j = k1, norder
-            array(i, j) = array(i,j) - array(i,k)*array(k,j)/array(k,k)
-            end do
-            end do
-  50        continue
-  60        return
-              end
-
 
 c************************************************************************
         subroutine uvdatafix (vis, out, dotime,bant,gant,rant)
-c - MAXBUF tells us how many words of memory we can use for data
         integer bant(10), gant(10), rant(10)
       include 'maxdim.h'
 c  Pi.
@@ -2047,21 +1841,18 @@ c=======================================================================
         parameter(version='SmaFix: version 1.0 01-Aug-04')
         parameter(maxsels=256,atant=6)
 c
-        real sels(maxsels),xyz(3*maxant)
-        character array(maxant)*8,aname*8,mdata*80
-        integer lvis,lout,vtsys,vant,vgmet,vnif,vmdata
+        integer lvis,lout,vtsys,vant,vgmet,vnif
         integer pol,npol,i1,i2,nant,i,j,k
-        logical updated,dogel,domet,newel,dobl,doopcorr
+        logical updated,newel
         character vis*64,out*64,type*1
         integer nschan(maxwin),nif,nchan,nants,length,tcorr,na
         real xtsys(maxant*maxwin),ytsys(maxant*maxwin)
         real tsys(maxant*maxwin), otsys(maxant*maxwin)
-        real gel, tscale
+        real  tscale
         logical dojpk
 c
-        real delta(3,maxant)
-        real freq0(maxwin),scale,fac(maxwin),tb(maxwin),t0,p0,h0,jyperk
-        double precision ra,dec,lat,lst,az,el
+        real freq0(maxwin),jyperk
+        double precision ra,dec,lat
 c
         complex data(maxchan)
         logical flags(maxchan)
@@ -2071,17 +1862,14 @@ c  Externals.
 c
         integer year, month, sday
         double precision day
-        logical uvvarupd,selprobe,hdprsnt,keyprsnt
-        real elescale,getjpk
-        character yaxis*16, xaxis*16
+        logical uvvarupd,hdprsnt
+        real getjpk
         real rmsflag, antel, tsysv, timev
         integer dofit, antid, xaxisparm, nterms
         logical dotsys, tsysplt, dotime, dosour,dotswap
         real apl(10,32,10)
         double precision xapl(10,32,10),bppl(10,32,10,10) 
-        real a(10)
         double precision XA(10), BP(10,10) 
-        real aveapl(32,10)
         double precision aveXA(32,10), aveBP(32,10,10)
         common/smfix/rmsflag,dofit,dotsys,dotswap,
      *               tsysplt,xaxisparm,dosour
@@ -2090,6 +1878,7 @@ c
         integer soupnt(10000*10),nsource, sourid
         common/sour/soupnt,source,nsource
         integer nave, navel
+              sourid=0
 c  
 c   process replacement of Tsys from ant1 to ant2
 c   apl(ant,sour,term)
@@ -2110,11 +1899,9 @@ c
                do i=1, 8
                if (gant(i).gt.0) then
                 nave=nave+1
-c               aveapl(j,k) = aveapl(j,k)+apl(gant(i),j,k)
                 aveXA(j,k) = aveXA(j,k) + xapl(gant(i),j,k)
                end if
                end do
-c               aveapl(j,k) = aveapl(j,k)/nave
                 aveXA(j,k) = aveXA(j,k)/nave
                do l=1, 10
                navel=0
@@ -2133,11 +1920,9 @@ c               aveapl(j,k) = aveapl(j,k)/nave
          do k=1, 10
               do i=1,8
               if((bant(i).gt.0).and.(rant(i).le.8)) then
-c               apl(bant(i),j,k) = apl(rant(i),j,k)
               xapl(bant(i),j,k) = xapl(rant(i),j,k)
                end if
               if((bant(i).gt.0).and.(rant(i).gt.8)) then
-c               apl(bant(i),j,k) = aveapl(j,k)
               xapl(bant(i),j,k) = aveXA(j,k)
                end if
               end do
@@ -2172,6 +1957,7 @@ c
 c
 c  Get ready to handle the antenna location.
 c
+           nant=0
         if(nant.gt.0)then
           call uvvarini(lvis,vant)
           call uvvarset(vant,'antpos')
@@ -2198,10 +1984,6 @@ c         each antenna
 c         is stored. No block or chunk dependent tsys has been stored.
           call uvvarini(lvis,vtsys)
           call uvvarset(vtsys,'systemp')
-c          call uvvarset(vtsys,'nschan')
-c          call uvvarset(vtsys,'systemp')
-c          call uvvarset(vtsys,'xtsys')
-c          call uvvarset(vtsys,'ytsys')
         endif
 c
 c  Open the output, and make its history.
@@ -2232,7 +2014,6 @@ c   in the plot-fitting routine.
          sday=day
          ptime=0
          dowhile(nchan.gt.0)
-c         call uvrdvrr(lVis,'jyperk',jyperk,0.0)
           call varcopy(lvis,lout)
           call uvgetvra(lvis,'source',souread)
               do i=1, nsource
@@ -2256,29 +2037,6 @@ c
 
             jyperk = getjpk(freq0(1)*1e-9)
             dojpk = .false.
-c
-c  Do antenna table correction, if needed. Not for SMA data yet.
-c
-
-c
-c  For elevation-related changes, check if the time has changed, and so
-c  we need to update all the associated information. not for SMA data yet.
-c
-
-c
-c  Apply gain/elevation correction, if needed. Not for SMA data yet.
-c
-
-c
-c  Apply atmospheric opacity correction, if needed. Apply this both
-c  to the data, and to the jyperk system efficiency factor. Not for 
-c  SMA data yet.
-c
-
-c
-c  Apply baseline correction, if needed. Not for SMA data yet
-c
-
 c
 c  Apply the Tsys correction, if needed.
 c
@@ -2487,9 +2245,7 @@ c------------------------------------------------------------------------
         integer xx,yy,xy,yx
         parameter(xx=-5,yy=-6,xy=-7,yx=-8,rr=-1,ll=-2,rl=-3,lr=-4,uk=0)
         integer i,j,k
-        real t1t2
-        character xaxis*16, yaxis*16
-         real rmsflag
+         real rmsflag, t1t2
          integer dofit, antid, xaxisparm, nterms 
          logical dotsys,tsysplt,dosour
          real apl(10,32,10)
@@ -2500,21 +2256,11 @@ c------------------------------------------------------------------------
 c
       
         i = 0
+        t1t2=0.
         do k=1,nif
           if(i+nschan(k).gt.nchan)call bug('f','Invalid description')
           do j=1,nschan(k)
             i = i + 1
-c            if(pol.eq.xx)then
-c              t1t2 = xtsys(i1,k)*xtsys(i2,k)
-c            else if(pol.eq.yy)then
-c             t1t2 = ytsys(i1,k)*ytsys(i2,k)
-c            else if(pol.eq.xy)then
-c              t1t2 = xtsys(i1,k)*ytsys(i2,k)
-c            else if(pol.eq.yx)then
-c              t1t2 = ytsys(i1,k)*xtsys(i2,k)
-c            else
-c              call bug('f','Invalid polarization code')
-c            endif
              if(pol.eq.xx)then
               t1t2 = tsys(i1)*tsys(i2)
             else if(pol.eq.yy)then
