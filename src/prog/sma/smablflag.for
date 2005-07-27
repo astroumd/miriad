@@ -2,15 +2,15 @@ c************************************************************************
         program smablflag
 c
 c= smablflag -- Interactive flagging task.
-c& jhz for SMA (some changes based on rjs' blflag)
+c& jhz for SMA (based on rjs's blflag with changes and new features) 
 c: uv analysis
 c+
 c	SmaBLFLAG is an interactive flagger. SmaBLFLAG plots the visibilities
-c	(e.g. time vs amplitude) either a baseline at a time or all at once,
-c	and allows you to flag discrepant points using the plotting cursor.
-c	There are a few simple flagging commands, which you enter as
-c	a single character at the keyboard. The following commands are
-c	possible:
+c	(e.g. time vs amplitude or antel vs systemp) either a baseline at a 
+c       time or all at once, and allows you to flag discrepant points using 
+c       the plotting cursor. There are a few simple flagging commands, which 
+c       you enter as a single character at the keyboard. The following commands 
+c       are possible:
 c	  Left-Button  Left mouse button flags the nearest visibility.
 c	  Right-Button Right mouse button causes SmaBLFLAG to precede to the
 c	               next baseline.
@@ -56,12 +56,14 @@ c	Two character strings, giving the X and Y axes of the plot. Possible
 c	axis values are:
 c	  time         (the default for the X axis)
 c	  lst	       Local apparent sidereal time.
+c         antel        antenna elevation in degree
 c	  uvdistance   sqrt(u**2+v**2)
 c	  hangle       (hour angle)
 c	  amplitude    (the default for the Y axis)
 c	  phase
 c	  real
 c	  imaginary
+c         systemp      (only for Y axis)
 c@ options
 c	Task enrichment parameters. Several can be given, separated by
 c	commas. Minimum match is used. Possible values are:
@@ -104,12 +106,16 @@ c                 the orignal atnf
 c                 PARAMETER(MAXBASE=((MAXANT*(MAXANT+1))/2))
 c                 is used instead of PARAMETER(MAXBASE=435).
 c                 Using PARAMETER(MAXBASE=435) causes problem.
+c    27Jul05 jhz  Added systemp,antel to the axis so that
+c                 systemp as function of either elevation or
+c                 time can be selected to flag the data.
+c                 This is a useful feature for the SMA users.
 c
 c------------------------------------------------------------------------
         include 'smablflag.h'
 	character version*(*)
         integer maxdat,maxplt,maxedit
-        parameter(version='SmaBlFlag: version 1.0 08-July-2005')
+        parameter(version='SmaBlFlag: version 1.1 27-July-2005')
         parameter(maxdat=500000,maxplt=20000,maxedit=20000)
 c
         logical present(maxbase),nobase,selgen,noapply,rms,scalar
@@ -139,11 +145,13 @@ c  Externals.
 c
         character itoaf*4
         integer pgbeg,len1
-        logical uvdatopn
+        logical uvdatopn,dotsys
         integer soupnt(maxdat)
         character source(32)*32
         integer nsource, sourid
         common/sour/soupnt,source,nsource, sourid
+c
+         dotsys=.false.
 c
 c  Get the input parameters.
 c
@@ -151,7 +159,7 @@ c
         call keyini
         call keya('device',device,' ')
         if(device.eq.' ')call bug('f','A PGPLOT device must be given')
-        call getaxis(xaxis,yaxis)
+        call getaxis(xaxis,yaxis,dotsys)
         call getopt(nobase,selgen,noapply,rms,scalar,uvflags)
         call uvdatinp('vis',uvflags)
         call keyfin
@@ -179,7 +187,7 @@ c
 c  Get the data.
 c
         call getdat(tno,rms,scalar,xaxis,yaxis,present,maxbase,
-     *          xdat,ydat,bldat,timedat,ndat,maxdat)
+     *          xdat,ydat,bldat,timedat,ndat,maxdat,dotsys)
         if(ndat.eq.0)call bug('f','No points to flag')
 c
 c  Loop over the baselines.
@@ -784,11 +792,11 @@ c
         end
 c************************************************************************
         subroutine getdat(tno,rms,scalar,xaxis,yaxis,present,maxbase1,
-     *          xdat,ydat,bldat,timedat,ndat,maxdat)
+     *          xdat,ydat,bldat,timedat,ndat,maxdat,dotsys)
 c
         integer tno,maxbase1,maxdat,ndat
         integer bldat(maxdat)
-        logical present(maxbase1),rms,scalar
+        logical present(maxbase1),rms,scalar,dotsys
         double precision timedat(maxdat)
         real xdat(maxdat),ydat(maxdat)
         character xaxis*(*),yaxis*(*)
@@ -803,9 +811,11 @@ c
         double precision preamble(4),time,time0,tprev,lst,ra
         real uvdist2(maxbase)
         integer i,n,bl,i1,i2,nants,npnt(maxbase),mbase,nchan
+        real tsys(maxant),tsys12(maxbase)
+        double precision antel(maxant), el
         integer soupnt(500000), is
         character source(32)*32, souread*32
-        integer nsource, sourid
+        integer nsource, sourid, iel
         common/sour/soupnt,source,nsource, sourid
 c
 c  Miscellaneous initialisation.
@@ -834,6 +844,21 @@ c
         nants = 0
         tprev = preamble(3)
         time0 = int(tprev - 0.5d0) + 0.5d0
+c
+c get tsys
+c
+         call uvrdvri(tno,'nants',nants,0.d0) 
+         call uvgetvrr(tno,'systemp',tsys,nants)
+         call uvgetvrd(tno,'antel',antel,nants)
+              iel=0
+              do i=1,nants
+              if(antel(i).gt.0.) then
+              iel=iel+1
+              el=el+antel(i)
+              endif
+              end do
+              el=el/iel
+          
 c
 c  do source
 c
@@ -867,8 +892,8 @@ c
          if(ok)then
          time = preamble(3)
          if(abs(time-tprev).gt.ttol)then
-         if(nants.gt.0)call intflush(nants,rms,scalar,ra,lst,tprev,
-     *     uvdist2,corr,corr1,corr2,xaxis,yaxis,npnt,
+         if(nants.gt.0)call intflush(nants,rms,scalar,ra,lst,tprev,el,
+     *     tsys12,uvdist2,corr,corr1,corr2,xaxis,yaxis,npnt,
      *     time0,present,mbase,xdat,ydat,timedat,bldat,ndat,maxdat)
            nants = 0
            tprev = time
@@ -883,8 +908,10 @@ c
                 corr1(bl) = corr1(bl) + abs(data(i))
                 corr2(bl) = corr2(bl) +
      *                      cmplx(real(data(i))**2,aimag(data(i))**2)
+               if(dotsys) tsys12(bl) = sqrt(tsys(i1)*tsys(i2))
               endif
             enddo
+              n=1
             if(n.gt.0)then
               uvdist2(bl) = uvdist2(bl) +
      *          n * (preamble(1)*preamble(1)+preamble(2)*preamble(2))
@@ -912,23 +939,37 @@ c
           end if
 556       continue
           call uvdatrd(preamble,data,flags,maxchan,nchan)
+          call uvrdvri(tno,'nants',nants,0.d0)
+c get systemp
+          call uvgetvrr(tno,'systemp',tsys,nants)
+c get elevation               
+          call uvgetvrd(tno,'antel',antel,nants)
+              iel=0
+              do i=1,nants
+              if(antel(i).gt.0.) then
+              iel=iel+1
+              el=el+antel(i)
+              endif
+              end do
+              el=el/iel
+
         enddo
 c
 
         if(nants.gt.0)
-     *      call intflush(nants,rms,scalar,ra,lst,time,uvdist2,
-     *          corr,corr1,corr2,xaxis,yaxis,npnt,
+     *      call intflush(nants,rms,scalar,ra,lst,time,el,
+     *          tsys12, uvdist2,corr,corr1,corr2,xaxis,yaxis,npnt,
      *          time0,present,mbase,xdat,ydat,timedat,bldat,ndat,maxdat)
 c
         end
 c************************************************************************
-        subroutine intflush(nants,rms,scalar,ra,lst,time,uvdist2,
-     *    corr,corr1,corr2,xaxis,yaxis,npnt,
+        subroutine intflush(nants,rms,scalar,ra,lst,time,el,tsys12,
+     *    uvdist2,corr,corr1,corr2,xaxis,yaxis,npnt,
      *    time0,present,maxbase,xdat,ydat,timedat,bldat,ndat,maxdat)
 c
         integer maxbase,maxdat,nants,npnt(maxbase),bldat(maxdat),ndat
-        double precision ra,lst,time,time0,timedat(maxdat)
-        real uvdist2(maxbase),xdat(maxdat),ydat(maxdat)
+        double precision ra,lst,time,time0,timedat(maxdat),el
+        real uvdist2(maxbase),xdat(maxdat),ydat(maxdat),tsys12(maxbase)
         complex corr(maxbase),corr1(maxbase),corr2(maxbase)
         logical present(maxbase),rms,scalar
         character xaxis*(*),yaxis*(*)
@@ -955,9 +996,9 @@ c
               ndat = ndat + 1
               if(ndat.gt.maxdat)call bug('f','Too many points')
               xdat(ndat) = getval(xaxis,uvdist2(k),corr(k),corr1(k),
-     *          corr2(k),npnt(k),lst,time,ra,time0,rms,scalar)
+     *      corr2(k),npnt(k),lst,time,el,tsys12(k),ra,time0,rms,scalar)
               ydat(ndat) = getval(yaxis,uvdist2(k),corr(k),corr1(k),
-     *          corr2(k),npnt(k),lst,time,ra,time0,rms,scalar)
+     *      corr2(k),npnt(k),lst,time,el,tsys12(k),ra,time0,rms,scalar)
               bldat(ndat) = k
               timedat(ndat) = time
               soupnt(ndat)= sourid
@@ -974,12 +1015,12 @@ c
         end
 c************************************************************************
         real function getval(axis,uvdist2,corr,corr1,corr2,npnt,
-     *          lst,time,ra,time0,rms,scalar)
+     *          lst,time,el,tsys12,ra,time0,rms,scalar)
 c
         character axis*(*)
-        real uvdist2
+        real uvdist2,tsys12
         complex corr,corr1,corr2
-        double precision time,time0,lst,ra
+        double precision time,time0,lst,ra,el
         integer npnt
         logical rms,scalar
 c------------------------------------------------------------------------
@@ -1042,12 +1083,16 @@ c
           getval = aimag(data)
         else if(axis.eq.'amplitude')then
           getval = abs(data)
+        else if(axis.eq.'systemp')then
+          getval = tsys12
         else if(axis.eq.'phase')then
           getval = 180/pi * atan2(aimag(data),real(data))
         else if(axis.eq.'uvdistance')then
           getval = 0.001 * sqrt(uvdist2/npnt)
         else if(axis.eq.'time')then
           getval = 86400*(time - time0)
+        else if(axis.eq.'antel')then
+          getval = el
         else if(axis.eq.'lst')then
           getval = 86400*lst/(2*pi)
         else if(axis.eq.'hangle')then
@@ -1063,22 +1108,27 @@ c
         endif
         end
 c************************************************************************
-        subroutine getaxis(xaxis,yaxis)
+        subroutine getaxis(xaxis,yaxis,dotsys)
 c
         character xaxis*(*),yaxis*(*)
 c------------------------------------------------------------------------
         integer nax
-        parameter(nax=8)
+        parameter(nax=10)
         integer n
         character axes(nax)*12
+        logical dotsys
         data axes/'amplitude   ','phase       ',
      *            'real        ','imaginary   ',
      *            'time        ','uvdistance  ',
-     *            'lst         ','hangle      '/
+     *            'lst         ','hangle      ',
+     8            'systemp     ','antel       '/
         call keymatch('axis',nax,axes,1,xaxis,n)
         if(n.eq.0)xaxis = 'time'
         call keymatch('axis',nax,axes,1,yaxis,n)
         if(n.eq.0)yaxis = 'amplitude'
+        if(yaxis.eq.'systemp') dotsys=.true.
+        if(xaxis.eq.'systemp') 
+     *   call bug('f', 'illegal variable for x-axis.')
         end
 c************************************************************************
         subroutine getopt(nobase,selgen,noapply,rms,scalar,uvflags)
