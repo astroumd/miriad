@@ -31,35 +31,43 @@ c@ options
 c       Extra processing options. Possible values are:
 c         debug    Print more output
 c         histo    Print histogram
+c         circular for circular polarization data (RR,LL,RL,LR), 
+c                  flag out the non-circular polarization data if
+c                  flagval is flag or default or unflag the non-circular 
+c                  polarization data if flagval is unflag.
+c                  
 c--
 c  History:
 c  jhz    2005-05-16 created the 1st version based mel wright's 
 c                    uvcheck
 c  jhz    2005-06-01 added inttime into the var for flagging
+c  jhz    2005-07-28 add options of circular for flagging/unflagging 
+c                    non-circular polarization data.
+c                    separate the output message between flag and unflag
 c----------------------------------------------------------------------c
 	include 'maxdim.h'
 	character*(*) version
-	parameter(version='SmaCheck: version 1.0 01-June-2005')
+	parameter(version='SmaCheck: version 1.1 28-July-2005')
 	integer maxsels, ochan, nbugs, nflag, nwflag
 	parameter(MAXSELS=512)
 	real sels(MAXSELS)
 	complex data(MAXCHAN)
-	double precision preamble(5),freq,ofreq,delayflag,ddelay,obsdec
-	integer lIn,nchan,nread,nvis,nspect,onspect,varlen,onwide
-	real start,width,step,varmin,varmax,uvdist,uvmin,uvmax,fringe
+	double precision preamble(5),freq,ofreq,obsdec
+	integer lIn,nread,nvis,nspect,onspect,varlen
+	real varmin,varmax,uvdist,uvmin,uvmax,fringe
 	real refstart, refwidth, reflo, refhi
 	character vis*64,log*64,line*80,date*18,var*9,vartype*1
-	character source*9,osource*9,linetype*20,refline*20,flagval*10
+	character source*9,osource*9,refline*20,flagval*10
 	logical flags(MAXCHAN),varcheck,updated,doflag,varflag,newflag
 	integer nvar,ant1,ant2
         logical bant(MAXANT) 
 	real ave,rms
-	double precision vmin,vmax,delay(MAXANT),datline(6)
-        integer CHANNEL,WIDE,VELOCITY,type
+	double precision vmin,vmax
+        integer CHANNEL,WIDE,VELOCITY
         parameter(CHANNEL=1,WIDE=2,VELOCITY=3)
-        logical histo,debug
+        logical histo,debug,docircular
 c
-        integer NBIN
+        integer NBIN, npol,pol
         parameter (NBIN=30)
         integer bin(NBIN),under,over,i,nants
         real blo,binc
@@ -68,7 +76,7 @@ c
 c  Externals and data
 c
 	integer len1
-	data osource,ochan,onspect,onwide,ofreq/' ',0,0,0,0./
+	data osource,ochan,onspect,ofreq/' ',0,0,0./
 	data nvar,vmin,vmax,ave,rms/0,1.d20,-1.d20,0.,0./
 c
 c  Get the parameters given by the user.
@@ -82,14 +90,18 @@ c
 	call keyr ('range',varmin,-1.e20)
 	call keyr ('range',varmax,1.e20)
 	call keya ('log',log,' ')
-        call GetOpt(histo,debug)
+        call GetOpt(histo,debug,docircular)
 	call keyfin
 c
 c  Check that the inputs are reasonable.
 c
+        
 	if (vis.eq.' ') call bug ('f', 'Input name must be given')
         doflag = flagval.eq.'flag' .or. flagval.eq.'unflag'
         newflag = flagval.eq.'unflag'
+        if(docircular) then
+          doflag = .true.
+        end if
 c
 c  Open an old visibility file, and apply selection criteria.
 c
@@ -174,10 +186,25 @@ c
 	  if(varcheck.and.updated) call checkvar(histo,debug,bant,
      *      lIn,date,var,varmin,varmax,varflag,nvar,vmin,vmax,ave,rms,
      *          blo,binc,bin,nbin,under,over,uvdist,fringe)
+
+c
+c  Check the polarization states
+c
+          call uvgetvri (lin,'npol', npol, 1)
+          call uvgetvri (lin,'pol', pol, 1)
+
+          if(docircular.and.((pol.gt.-1).or.(pol.lt.-4))) then
+              do i=1, nread
+              flags(i) = newflag 
+              end do
+              nflag=nflag+nread
+          endif
+
 c
 c  Flag the data, if requested
 c
           if (doflag) then
+               if(var.eq.' ') varflag = .false.
 c
 c flag any baseline pairs associated with the bad antennas
 c
@@ -186,7 +213,7 @@ c
                  if(bant(i).and.(i.eq.ant1.or.i.eq.ant2)) then
          call uvxflag(lIn, data, flags, nread, 
      *              refline, refstart, refwidth, reflo, refhi, newflag,
-     *              varflag, nflag)
+     *              varflag, nflag, docircular)
 c                write(*,*) 'flag ants', ant1,ant2
                  end if
              end do
@@ -204,8 +231,11 @@ c
      *				' uvrange=(',uvmin,uvmax,') nanosecs'
       call LogWrit(line)
       write(line,'(i6,a)') nbugs, ' known problems in this data'
-      call LogWrit(line)
-      write(line,'(i10,a)') nflag,  ' channels flagged'
+      call LogWrit(line)      
+      if(.not.newflag) 
+     * write(line,'(i10,a)') nflag,  ' channels flagged'
+      if(newflag)
+     * write(line,'(i10,a)') nflag,  ' channels unflagged'
       call LogWrit(line)
 	if(nvar.gt.0)then
 	  ave = ave/nvar
@@ -346,7 +376,6 @@ c
               
 	      write(line,'(a,x,a,a,i3,a,g13.5)')
      *			date,var(1:len1(var)),'(',i,') = ',ddata(i)
-                
 	      call LogWrit(line)
                             
 	    endif
@@ -393,13 +422,13 @@ c  assign all the baseline to the flag status
       endif
       end
 c********1*********2*********3*********4*********5*********6*********7*c
-        subroutine uvxflag(lIn, data, flags, nread,
+        subroutine uvxflag(lIn, data, flags, nread, 
      *              refline, refstart, refwidth, reflo, refhi, newflag,
-     *              varflag, nflag)
+     *              varflag, nflag,docircular)
 	implicit none
         integer lIn, nread, nflag
         complex data(nread)
-        logical flags(nread), varflag, newflag
+        logical flags(nread), varflag, newflag, docircular
         character refline*(*)
         real refstart, refwidth, reflo, refhi
 c
@@ -407,19 +436,24 @@ c  flag data if uv-variable, or reference amplitude
 c	is outside the specified range.
 c
 	include 'maxdim.h'
-        complex wdata(MAXWIDE)
-        logical ampflag, wflags(MAXWIDE), reflag
-        integer nwread,i
+        integer i
 
 
 c
+c         write(*,*) 'varflag',varflag
         if (varflag) then
            do i=1,nread
               flags(i) = newflag
+             
            enddo
            call uvflgwr(lIn,flags)
 	   nflag = nflag + nread
         endif
+        if (docircular) then
+           call uvflgwr(lIn,flags)
+c           nflag = nflag + nread
+          end if
+       
       end
 c********1*********2*********3*********4*********5*********6*********7*c
       logical function reflag(nread,data,flags,
@@ -457,22 +491,25 @@ c--
       end
 
 c********1*********2*********3*********4*********5*********6*********7**
-        subroutine GetOpt(histo,debug)
+        subroutine GetOpt(histo,debug,docircular)
 c
         implicit none
-        logical histo,debug
+        logical histo,debug,docircular
 c
 c  Get extra processing options.
 c------------------------------------------------------------------------
         integer nopts
-        parameter(nopts=2)
+        parameter(nopts=3)
         logical present(nopts)
         character opts(nopts)*8
-        data opts/'histo   ','debug    '/
+        data opts/'histo   ',
+     *              'debug   ',
+     *              'circular'/
 c
         call options('options',opts,present,nopts)
         histo = present(1)
         debug = present(2)
+        docircular = present(3)
         end
 c********1*********2*********3*********4*********5*********6*********7*c
         subroutine histplt(blo,binc,bin,nbin,under,over)
