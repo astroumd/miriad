@@ -36,6 +36,8 @@ c                  flag out the non-circular polarization data if
 c                  flagval is flag or default or unflag the non-circular 
 c                  polarization data if flagval is unflag.
 c                  
+c@ log
+c       The output logfile name. The default is the terminal
 c--
 c  History:
 c  jhz    2005-05-16 created the 1st version based mel wright's 
@@ -44,6 +46,7 @@ c  jhz    2005-06-01 added inttime into the var for flagging
 c  jhz    2005-07-28 add options of circular for flagging/unflagging 
 c                    non-circular polarization data.
 c                    separate the output message between flag and unflag
+c  jhz    2005-07-28 add back the keyword log
 c----------------------------------------------------------------------c
 	include 'maxdim.h'
 	character*(*) version
