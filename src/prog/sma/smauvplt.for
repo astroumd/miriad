@@ -310,6 +310,7 @@ c    jhz  22jan05  removed the duplication define of maxbas2
 c    jhz  29jul05  change pgpts to smapgpts and add color
 c                  index and lable to distinguish source-based
 c                  polarization data.
+c    jhz  29jul05  fix the start source labelling position.
 c To do:
 c
 c   Vector averaging rms not yet implemented
@@ -3471,7 +3472,8 @@ C
       END IF
        end do
       CALL PGEBUF
-            yloc=1.1-(lp-1.)*1./25.
+            
+            yloc=1.0-(lp-1.)*1./25. +(npol-1)*1./25.
             do j=1, mindx
        CALL PGBBUF
             cindx = (j-1)*npol+lp
