@@ -8,8 +8,9 @@ c+
 c	SmaBLFLAG is an interactive flagger. SmaBLFLAG plots the visibilities
 c	(e.g. time vs amplitude or antel vs systemp) either a baseline at a 
 c       time or all at once, and allows you to flag discrepant points using 
-c       the plotting cursor. There are a few simple flagging commands, which 
-c       you enter as a single character at the keyboard. The following commands 
+c       the plotting cursor. The sources and polarization states are color-coded.
+c       There are a few simple flagging commands, which  you enter as a single 
+c       character at the keyboard. The following commands 
 c       are possible:
 c	  Left-Button  Left mouse button flags the nearest visibility.
 c	  Right-Button Right mouse button causes SmaBLFLAG to precede to the
@@ -110,16 +111,18 @@ c    27Jul05 jhz  Added systemp,antel to the axis so that
 c                 systemp as function of either elevation or
 c                 time can be selected to flag the data.
 c                 This is a useful feature for the SMA users.
-c
+c    29jul05 jhz  comment out the set default polarization, which
+c                 causes trouble to sma data. 
+c                 add color to the polarization states.
 c------------------------------------------------------------------------
         include 'smablflag.h'
 	character version*(*)
         integer maxdat,maxplt,maxedit
-        parameter(version='SmaBlFlag: version 1.1 27-July-2005')
+        parameter(version='SmaBlFlag: version 1.2 29-July-2005')
         parameter(maxdat=500000,maxplt=20000,maxedit=20000)
 c
         logical present(maxbase),nobase,selgen,noapply,rms,scalar
-        integer tno,i,j,k,length,npol
+        integer tno,i,j,k,length
         character xaxis*12,yaxis*12,title*32,device*64
         character val*16,uvflags*12
 c
@@ -146,8 +149,8 @@ c
         character itoaf*4
         integer pgbeg,len1
         logical uvdatopn,dotsys
-        integer soupnt(maxdat)
-        character source(32)*32
+        integer soupnt(maxdat),polst(maxdat)
+        character source(32)*32, polstr(13)*2
         integer nsource, sourid
         common/sour/soupnt,source,nsource, sourid
 c
@@ -166,8 +169,8 @@ c
 c
 c  Set the default polarisation type if needed.
 c
-        call uvdatgti('npol',npol)
-        if(npol.eq.0)call uvdatset('stokes',0)
+c            call uvdatgti('npol',npol)
+c        if(npol.eq.0)call uvdatset('stokes',0)
 c
 c  Open the input data.
 c
@@ -187,7 +190,7 @@ c
 c  Get the data.
 c
         call getdat(tno,rms,scalar,xaxis,yaxis,present,maxbase,
-     *          xdat,ydat,bldat,timedat,ndat,maxdat,dotsys)
+     *          xdat,ydat,bldat,timedat,ndat,maxdat,dotsys,polst,polstr)
         if(ndat.eq.0)call bug('f','No points to flag')
 c
 c  Loop over the baselines.
@@ -197,7 +200,7 @@ c
         if(nobase)then
           call edit(xdat,ydat,bldat,soupnt,timedat,ltemp,ndat,
      *      xaxis,yaxis,'All baselines',
-     *      timeedit,bledit,maxedit,nedit)
+     *      timeedit,bledit,maxedit,nedit,polst,polstr)
         else
           k = 0
           do j=1,maxant
@@ -212,7 +215,7 @@ c
      *        xplt,yplt,blplt,timeplt,spntplt, maxplt,nplt)
            call edit(xplt,yplt,blplt,spntplt,timeplt,ltemp,nplt,
      *        xaxis,yaxis,title,
-     *        timeedit,bledit,maxedit,nedit)
+     *        timeedit,bledit,maxedit,nedit,polst,polstr)
               endif
             enddo
           enddo
@@ -389,16 +392,18 @@ c
         end
 c************************************************************************
         subroutine edit(xplt,yplt,blplt,spntplt,timeplt,flag,nplt,
-     *          xaxis,yaxis,title,timeedit,bledit,maxedit,nedit)
+     *          xaxis,yaxis,title,timeedit,bledit,maxedit,nedit,
+     *          polst,polstr)
 c
         integer nplt,maxedit,nedit
         integer blplt(nplt),bledit(maxedit),spntplt(nplt)
+        integer polst(nplt)
         logical flag(nplt)
         double precision timeplt(nplt),timeedit(maxedit)
         real xplt(nplt),yplt(nplt)
         character xaxis*(*),yaxis*(*),title*(*)
 c------------------------------------------------------------------------
-        character mode*1
+        character mode*1, polstr(13)*2
         integer nedit0,i
         logical more
         real xv,yv,xs,ys,xmin,xmax
@@ -426,10 +431,10 @@ c
               flag(i) = .true.
             enddo
             call draw(xmin,xmax,xplt,yplt,spntplt,flag,nplt,
-     *                  xaxis,yaxis,title,xs,ys)
+     *                  xaxis,yaxis,title,xs,ys,polst,polstr)
           else if(mode.eq.'r')then
             call draw(xmin,xmax,xplt,yplt,spntplt,flag,nplt,
-     *                  xaxis,yaxis,title,xs,ys)
+     *                  xaxis,yaxis,title,xs,ys,polst,polstr)
           else if(mode.eq.'h'.or.mode.le.' '.or.mode.eq.'?')then
             call output('-------------------------------------')
             call output('Single key commands are')
@@ -451,7 +456,7 @@ c
             xmin = 0
             xmax = 0
             call draw(xmin,xmax,xplt,yplt,spntplt,flag,nplt,
-     *                  xaxis,yaxis,title,xs,ys)
+     *                  xaxis,yaxis,title,xs,ys,polst,polstr)
           else if(mode.eq.'x')then
             more = .false.
           else if(mode.eq.'z')then
@@ -460,7 +465,7 @@ c
             call output('Click on right-hand edge of the zoomed region')
             call pgcurs(xmax,yv,mode)
             call draw(xmin,xmax,xplt,yplt,spntplt,flag,nplt,
-     *                  xaxis,yaxis,title,xs,ys)
+     *                  xaxis,yaxis,title,xs,ys,polst,polstr)
           else if(mode.eq.'a')then
           call nearest(xv,yv,xs,ys,xplt,yplt,blplt,timeplt,flag,nplt,
      *      bledit,timeedit,nedit,maxedit)
@@ -536,9 +541,9 @@ c
         end
 c************************************************************************
         subroutine draw(xmin,xmax,xplt,yplt,spntplt,flag,nplt,
-     *                          xaxis,yaxis,title,xs,ys)
+     *            xaxis,yaxis,title,xs,ys,polst,polstr)
 c
-        integer nplt, spntplt(nplt)
+        integer nplt, spntplt(nplt),polst(nplt)
         real xplt(nplt),yplt(nplt),xs,ys,xmin,xmax
         logical flag(nplt)
         character xaxis*(*),yaxis*(*),title*(*)
@@ -550,7 +555,7 @@ c------------------------------------------------------------------------
         integer maxdat
         parameter(maxdat=500000)
                integer soupnt(maxdat)
-        character source(32)*32
+        character source(32)*32,polstr(13)*2
         integer nsource, sourid
         common/sour/soupnt,source,nsource, sourid
 c
@@ -589,14 +594,15 @@ c
         do i=2,nplt
           if(good.neqv.flag(i))then
             if(good)then
-              call pgpts(i-n,xplt(n),yplt(n),spntplt(n), 1)
+              call pgpts(i-n,xplt(n),yplt(n),spntplt(n),1,polst,polstr)
             else
               n = i
             endif
             good = flag(i)
           endif
         enddo
-        if(good)call pgpts(nplt-n+1,xplt(n),yplt(n),spntplt(n),1)
+        if(good)
+     *  call pgpts(nplt-n+1,xplt(n),yplt(n),spntplt(n),1,polst,polstr)
 c
 c  Change the colour to red.
 c
@@ -604,36 +610,70 @@ c
         call pgebuf
         end
 
-      SUBROUTINE pgpts (N, XPTS, YPTS, SPNT, SYMBOL)
+      SUBROUTINE pgpts (N, XPTS, YPTS, SPNT, SYMBOL,polst,polstr)
       INTEGER N
       REAL XPTS(N), YPTS(N)
+      integer  polst(N)
       INTEGER SPNT(N), indx,mindx
 c      INTEGER FPTS(N)
       INTEGER SYMBOL
       LOGICAL PGNOTO 
-        integer maxdat
+        integer maxdat,npol
         parameter(maxdat=500000)
         character  title*64
         integer soupnt(maxdat)
-        character source(32)*32
-        integer nsource, sourid
+        character source(32)*32,polstr(13)*2
+        integer nsource, sourid, cindx, minpol, lp
         common/sour/soupnt,source,nsource, sourid
+        logical polson(13)
         mindx=0
+        minpol=4
 
 C
+c sort pol state
+C
+        npol=0
+        do i=1,13
+        polson(i) =.false.
+        end do
+c
+        do i=1, N
+        polson(polst(i)+9)=.true.
+        if(polst(i).lt.minpol) minpol=polst(i)        
+        end do
+c
+        do i=1,13
+        if(polson(i)) npol=npol+1
+        end do
+
       IF (N.LT.1) RETURN
       IF (PGNOTO('PGPT')) RETURN
 C
              CALL PGBBUF
        do i=1, N
+         lp=polst(i)-minpol+1
          indx=SPNT(i)
          if(indx.gt.mindx) mindx =indx
-         if(indx.eq.2) then 
-             call pgscr(20, 0.80, 0.5, 0.3)
-                indx=20
+         cindx = (indx-1)*npol+lp
+         if(cindx.eq.2) then 
+             call pgscr(25, 1., 0.5, 0.8)
+             cindx=25
              end if
-c       write(*,*) 'i SPNT(i)', i, SPNT(i)
-           call pgsci(indx)
+                     if(cindx.gt.12) then
+            if(cindx.eq.13) call pgscr(cindx, .8, .2, 0.5)
+            if(cindx.eq.14) call pgscr(cindx, .7, .3, 0.0)
+            if(cindx.eq.15) call pgscr(cindx, .6, 0.4, 0.5)
+            if(cindx.eq.16) call pgscr(cindx, .5, 0.5, 0.2)
+            if(cindx.eq.17) call pgscr(cindx, .8, 0.6, 0.5)
+            if(cindx.eq.18) call pgscr(cindx, .7, 0.7, 0.2)
+            if(cindx.eq.19) call pgscr(cindx, 0.6, 1.0, 0.5)
+            if(cindx.eq.20) call pgscr(cindx, 0.5, 0.70, 0.70)
+            if(cindx.eq.21) call pgscr(cindx, 0.8, 0.5, 0.5)
+            if(cindx.eq.22) call pgscr(cindx, 0.7, 0.5, 0.9)
+            if(cindx.eq.23) call pgscr(cindx, 0.6, 0.0, 0.5)
+            if(cindx.eq.24) call pgscr(cindx, 0.5, 0.2, 0.3)
+                      end if
+           call pgsci(cindx)
       IF (SYMBOL.GE.0 .OR. SYMBOL.LE.-3) THEN
           CALL GRMKER(SYMBOL,.FALSE.,1,XPTS(i),YPTS(i))
       ELSE
@@ -641,24 +681,42 @@ c       write(*,*) 'i SPNT(i)', i, SPNT(i)
       END IF
        end do
       CALL PGEBUF
-       yloc=0.9
+               do lp=1,npol
+       yloc=1.0-(lp-1.)*1./25. +(npol-1)*1./25.
             do j=1, mindx
-              indx=j
-             if(indx.eq.2) then
-             call pgscr(20, 0.80, 0.5, 0.3)
-                indx=20
-             end if
+              cindx=(j-1)*npol+lp
+             if(cindx.eq.2) then
+              cindx=25
+             call pgscr(cindx, 1., 0.5, 0.8)
+                
+            end if
+             if(cindx.gt.12) then
+            if(cindx.eq.13) call pgscr(cindx, .8, .2, 0.5)
+            if(cindx.eq.14) call pgscr(cindx, .7, .3, 0.0)
+            if(cindx.eq.15) call pgscr(cindx, .6, 0.4, 0.5)
+            if(cindx.eq.16) call pgscr(cindx, .5, 0.5, 0.2)
+            if(cindx.eq.17) call pgscr(cindx, .8, 0.6, 0.5)
+            if(cindx.eq.18) call pgscr(cindx, .7, 0.7, 0.2)
+            if(cindx.eq.19) call pgscr(cindx, 0.6, 1.0, 0.5)
+            if(cindx.eq.20) call pgscr(cindx, 0.5, 0.70, 0.70)
+            if(cindx.eq.21) call pgscr(cindx, 0.8, 0.5, 0.5)
+            if(cindx.eq.22) call pgscr(cindx, 0.7, 0.5, 0.9)
+            if(cindx.eq.23) call pgscr(cindx, 0.6, 0.0, 0.5)
+            if(cindx.eq.24) call pgscr(cindx, 0.5, 0.2, 0.3)
+            end if
  
        CALL PGBBUF
-             call pgsci(indx)
+             call pgsci(cindx)
              write(title,'(a)') source(j)
+               title=title(1:len1(title))//'-'//polstr(lp+minpol+8)
                l = len1(title)
                call pglen(5,title(1:l),xlen,ylen)
                xloc = 0.8
-               yloc = yloc-1/25.
+               yloc = yloc-1/25.*npol
               call pgmtxt('RV',-7.0,yloc,0.,title(1:l))
           call pgebuf
             end do
+             end do
             call pgsci(1)
       END
 
@@ -792,10 +850,10 @@ c
         end
 c************************************************************************
         subroutine getdat(tno,rms,scalar,xaxis,yaxis,present,maxbase1,
-     *          xdat,ydat,bldat,timedat,ndat,maxdat,dotsys)
+     *          xdat,ydat,bldat,timedat,ndat,maxdat,dotsys,polst,polstr)
 c
         integer tno,maxbase1,maxdat,ndat
-        integer bldat(maxdat)
+        integer bldat(maxdat), polst(maxdat)
         logical present(maxbase1),rms,scalar,dotsys
         double precision timedat(maxdat)
         real xdat(maxdat),ydat(maxdat)
@@ -813,14 +871,14 @@ c
         integer i,n,bl,i1,i2,nants,npnt(maxbase),mbase,nchan
         real tsys(maxant),tsys12(maxbase)
         double precision antel(maxant), el
-        integer soupnt(500000), is
-        character source(32)*32, souread*32
+        integer soupnt(500000), is, npol, pols
+        character source(32)*32, souread*32,polstr(13)*2
         integer nsource, sourid, iel
         common/sour/soupnt,source,nsource, sourid
 c
 c  Miscellaneous initialisation.
 c
-        
+
         mbase = min(maxbase,maxbase1)
         do i=1,maxbase
           present(i) = .false.
@@ -834,11 +892,33 @@ c
           corr2(i)   = 0
         enddo
         ndat = 0
+
+
+            do i=1, 13
+            pols=i-9
+            if(pols.eq.0) polstr(pols+9)='NO'
+            if(pols.eq.1) polstr(pols+9)='II'
+            if(pols.eq.2) polstr(pols+9)='QQ'
+            if(pols.eq.3) polstr(pols+9)='UU'
+            if(pols.eq.4) polstr(pols+9)='VV'
+            if(pols.eq.-1) polstr(pols+9)='RR'
+            if(pols.eq.-2) polstr(pols+9)='LL'
+            if(pols.eq.-3) polstr(pols+9)='RL'
+            if(pols.eq.-4) polstr(pols+9)='LR'
+            if(pols.eq.-5) polstr(pols+9)='XX'
+            if(pols.eq.-6) polstr(pols+9)='YY'
+            if(pols.eq.-7) polstr(pols+9)='XY'
+            if(pols.eq.-8) polstr(pols+9)='YX'
+            end do
 c
 c  Lets get going.
 c
         call output('Reading the data ...')
         call uvdatrd(preamble,data,flags,maxchan,nchan)
+           call uvdatgti ('npol',npol)
+           call uvdatgti ('pol',pols)
+
+c           write(*,*) npol,pols, polstr(pols+9)
         if(nchan.eq.0)call bug('f','No visibility data found')
         call flagchk(tno)
         nants = 0
@@ -894,7 +974,8 @@ c
          if(abs(time-tprev).gt.ttol)then
          if(nants.gt.0)call intflush(nants,rms,scalar,ra,lst,tprev,el,
      *     tsys12,uvdist2,corr,corr1,corr2,xaxis,yaxis,npnt,
-     *     time0,present,mbase,xdat,ydat,timedat,bldat,ndat,maxdat)
+     *     time0,present,mbase,xdat,ydat,timedat,bldat,ndat,maxdat,
+     *     pols,polst)
            nants = 0
            tprev = time
            call uvrdvrd(tno,'lst',lst,0.d0)
@@ -939,6 +1020,13 @@ c
           end if
 556       continue
           call uvdatrd(preamble,data,flags,maxchan,nchan)
+           call uvdatgti ('npol',npol)
+           call uvdatgti ('pol', pols)
+           if(pols.eq.-1) polstr(pols+9)='RR'
+           if(pols.eq.-2) polstr(pols+9)='LL'
+           if(pols.eq.-3) polstr(pols+9)='RL'
+           if(pols.eq.-4) polstr(pols+9)='LR'
+c           write(*,*) npol,pols, polstr(pols+9)
           call uvrdvri(tno,'nants',nants,0.d0)
 c get systemp
           call uvgetvrr(tno,'systemp',tsys,nants)
@@ -952,22 +1040,23 @@ c get elevation
               endif
               end do
               el=el/iel
-
         enddo
 c
-
         if(nants.gt.0)
      *      call intflush(nants,rms,scalar,ra,lst,time,el,
      *          tsys12, uvdist2,corr,corr1,corr2,xaxis,yaxis,npnt,
-     *          time0,present,mbase,xdat,ydat,timedat,bldat,ndat,maxdat)
+     *          time0,present,mbase,xdat,ydat,timedat,bldat,ndat,maxdat,
+     *          pols,polst)
 c
         end
 c************************************************************************
         subroutine intflush(nants,rms,scalar,ra,lst,time,el,tsys12,
      *    uvdist2,corr,corr1,corr2,xaxis,yaxis,npnt,
-     *    time0,present,maxbase,xdat,ydat,timedat,bldat,ndat,maxdat)
+     *    time0,present,maxbase,xdat,ydat,timedat,bldat,ndat,maxdat,
+     *    pols,polst)
 c
         integer maxbase,maxdat,nants,npnt(maxbase),bldat(maxdat),ndat
+        integer polst(maxdat)
         double precision ra,lst,time,time0,timedat(maxdat),el
         real uvdist2(maxbase),xdat(maxdat),ydat(maxdat),tsys12(maxbase)
         complex corr(maxbase),corr1(maxbase),corr2(maxbase)
@@ -975,14 +1064,11 @@ c
         character xaxis*(*),yaxis*(*)
 c
 c------------------------------------------------------------------------
-        integer i,j,k
+        integer i,j,k,pols
         integer soupnt(500000)
         character source(32)*32
         integer nsource, sourid
         common/sour/soupnt,source,nsource, sourid
-
-
-
 c
 c  Externals.
 c
@@ -999,6 +1085,7 @@ c
      *      corr2(k),npnt(k),lst,time,el,tsys12(k),ra,time0,rms,scalar)
               ydat(ndat) = getval(yaxis,uvdist2(k),corr(k),corr1(k),
      *      corr2(k),npnt(k),lst,time,el,tsys12(k),ra,time0,rms,scalar)
+              polst(ndat) = pols
               bldat(ndat) = k
               timedat(ndat) = time
               soupnt(ndat)= sourid
@@ -1154,7 +1241,7 @@ c
         scalar = present(8)
         if(scalar.and.rms)
      *    call bug('f','Options scalar and rms cannot be used together')
-        uvflags = 'sdlwb'
+        uvflags = 'sdlpwb'
         if(.not.present(2))uvflags(6:6) = 'c'
         if(.not.present(3))uvflags(7:7) = 'f'
         if(.not.present(4))uvflags(8:8) = 'e'
@@ -1171,11 +1258,9 @@ c------------------------------------------------------------------------
         integer channel,wide
         parameter(channel=1,wide=2)
         double precision line(6)
-c
         call uvinfo(tno,'line',line)
         if(nint(line(1)).ne.channel.and.nint(line(1)).ne.wide)
      *    call bug('f','Can only flag "channel" or "wide" linetypes')
         if(nint(line(4)).ne.1)
      *    call bug('f','Cannot flag when the linetype width is not 1')
-c
         end
