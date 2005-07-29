@@ -9,8 +9,8 @@ c+
 c  SmaUVPLT - Plot a variety of quantities from visibility data bases.
 c	Options are available to time average data (plot with optional
 c	error bars) and to plot different baselines on separate
-c	sub-plots on each page plus many others. When no time-average is applied,
-c       the source-based visibilities will be color-coded for each
+c	sub-plots on each page plus many others. With no time-averaging
+c       applied, the source-based visibilities will be color-coded for each
 c       of the polarization components.
 c@ vis
 c	The input visibility file(s). Multiple input files and wild card
@@ -72,17 +72,6 @@ c	Default is to self-scale (see also OPTIONS=XIND).
 c@ yrange
 c	Plot range in the y-direction as for the x axis.  The
 c	default is to self-scale (see also OPTIONS=YIND).
-c@ average
-c	The averaging time in minutes (unless OPTIONS=DAYS,HOURS,SECONDS).
-c	Averaging is reset at frequency, source, or pointing centre
-c	changes.  Individual baselines and polarizations are averaged
-c	separately (unless OPTIONS=AVALL).  If you have selected multiple
-c	channels and you also ask for time averaging, then all the
-c	selected channels are averaged together in the time interval.
-c	If you wish to use OPTIONS=AVALL to average everything on
-c	the one subplot (e.g. polarizations) but don't want temporal
-c	averaging, set AVERAGE to less than one integration.
-c	Default is no averaging.
 c@ hann
 c	Hanning smoothing length (an odd integer < 15).   Is applied
 c	after any time averaging and INC selection. Useful for amplitude
@@ -126,19 +115,6 @@ c		 space.  This option instructs uvplt to make two passes
 c		 through the data, the first to accumulate precise
 c		 information on the contents of the selected data so
 c		 that buffer space is optimally allocated.
-c
-c	 scalar  Do scalar (average amplitudes or phases) rather than
-c	         vector (average real and imaginary) averaging.
-c	         This is useful if the visibilities are uncalibrated &
-c	         the phase is winding over the averaging interval & you
-c	         would like an averaged amplitude. Scalar averaged phase
-c	         is not very meaningful in general.
-c	 avall   If you are averaging in time, then average all data
-c		 selected on each sub-plot together.  E.g. all selected
-c		 polarizations, and, if OPTIONS=NOBASE, all baselines
-c		 as well.  If you wish to average all the things on
-c		 one subplot together but without temporal averaging,
-c		 just set the averaging time to less than one integration.
 c	 unwrap  When plotting phase, try to unwrap it so that
 c	         say, if one point is 179 deg and the next -179,
 c		 they will be plotted as 179 and 181 deg.  NOTE:
