@@ -53,7 +53,7 @@ c       channels and you also ask for time averaging, then all the
 c       selected channels are averaged together in the time interval.
 c       The vector averaging for the visibility in a time interval
 c       is done before data is binned if nbin > 0 is selected.
-c       Default is no averaging.
+c       Default is no averaging. 
 c@ nbin 
 c       Number of bins in xrange for xaxis.
 c       Default is no bin.
@@ -130,6 +130,7 @@ c   jhz 30 Jun 05 work out multiple files
 c   jhz 30 Jun 05 add time for axis
 c   jhz 30 Jun 05 take out nxy and make one plot
 c                 per trial.
+c   jhz 29 Jun 05 implement the bin statistics
 c   Notes
 c   -----
 c
@@ -157,7 +158,8 @@ c
      +  xsig(maxbase,maxpol),    ysumr(maxbase,maxpol), 
      +  ysig(maxbase,maxpol),    ysumi(maxbase,maxpol),
      +  ysumsqr(maxbase,maxpol), ysumsqi(maxbase,maxpol),
-     +  xave(maxbase,maxpol),    yave(maxbase,maxpol)
+     +  xave(maxbase,maxpol),    yave(maxbase,maxpol),
+     +  sumivar(maxbase,maxpol)
       integer nsum(maxbase,maxpol)
 c
 c Plot extrema
@@ -194,6 +196,7 @@ c
       real dra,ddec,phaz
       real secrad, PA, Utr,Vtr
       parameter(secrad=PI/180./3600.)
+      real wwt, visvar
 c
 c Externals
 c
@@ -213,7 +216,7 @@ c
 c      data npts, plpts, basmsk /ifac1*0, ifac1*0, ifac2*0/ -- see izero
       data polmsk /13*0/
 c-----------------------------------------------------------------------
-      call output ('SmaUvAmp: version 1.30 30-jun-05')
+      call output ('SmaUvAmp: version 1.4 29-jul-05')
       call output (' ')
 
       call izero(ifac1,npts)
@@ -229,7 +232,7 @@ c
      +   logf, comment, size, hann, ops, twopass, dofqav,PA,nbin)
       call chkinp (xaxis, yaxis, xmin, xmax, ymin, ymax, dayav,
      +   dodoub, dowave, doave, dovec, dorms, dointer, doperr,
-     +   dowrap, hann, xrtest, yrtest)
+     +   dowrap, hann, xrtest, yrtest, nbin)
 c
 c  Open the log file and write some messages
 c
@@ -263,7 +266,7 @@ c
 c  Initialize counters  and accumulators
 c
       call init (maxbase, maxpol, nsum, xsumr, xsumi, xsumsqr, xsumsqi, 
-     +           ysumr, ysumi, ysumsqr, ysumsqi)
+     +           ysumr, ysumi, ysumsqr, ysumsqi, sumivar)
 c
 c Loop over visibility files 
 c
@@ -294,8 +297,8 @@ c
 c
 c Read first visibility
 c
-        call getdat (preamble, data, goodf, maxchan, nread,
-     *               dofqav, doflag, doall)
+        call getdat (lin,preamble, data, goodf, maxchan, nread,
+     *               dofqav, doflag, doall, wwt, visvar)
                  
 c
 c Make plot title when we get some data from a file
@@ -328,21 +331,22 @@ c Averaging over; work out averaged quantities and dump to plot buffer
 c If we cross a file boundary, and are distinguishing between files, 
 c label point as if from previous file; this is fairly arbitrary
 c
-              jfile = plfidx
-              if ((dosymb .or. docol) .and. ifile.ne.ofile .and.
+          jfile = plfidx
+            if ((dosymb .or. docol) .and. ifile.ne.ofile .and.
      +            ifile.ne.1) jfile = jfile - 1
               call avdump (dorms, dovec, dobase, dodoub, doavall,
-     +           nbases, npols, pl1dim, pl2dim, pl3dim, pl4dim, 
-     +           maxpnt, maxbase, maxpol, maxfile, buffer(ip),
-     +           npts, xo, yo, elo, eho, xaxis, xrtest, xmin, xmax, 
-     +           yaxis, yrtest, ymin, ymax, nsum, xsumr, xsumsqr, xsumi, 
-     +           xsumsqi, ysumr, ysumsqr, ysumi, ysumsqi, xave, yave, 
-     +           xsig, ysig, plpts, inc, jfile)
+     +          nbases, npols, pl1dim, pl2dim, pl3dim, pl4dim, 
+     +          maxpnt, maxbase, maxpol, maxfile, buffer(ip),
+     +        npts, xo, yo, elo, eho, xaxis, xrtest, xmin, xmax, 
+     +        yaxis, yrtest, ymin, ymax, sumivar, 
+     +        nsum, xsumr, xsumsqr, xsumi, 
+     +        xsumsqi, ysumr, ysumsqr, ysumi, ysumsqi, xave, yave, 
+     +        xsig, ysig, plpts, inc, jfile)
 c
 c Reinitialize accumulators for next averaging period
 c
               call init (maxbase, maxpol, nsum, xsumr, xsumi, xsumsqr,
-     +           xsumsqi, ysumr, ysumi, ysumsqr, ysumsqi)
+     +           xsumsqi, ysumr, ysumi, ysumsqr, ysumsqi, sumivar)
             end if
           end if
 c
@@ -404,12 +408,13 @@ c
 c
 c Accumulate in averaging buffers
 c
-                  call accum (dovec, xvalr, yvalr, data(j),
-     +               xsumr(stbidx,pidx), xsumsqr(stbidx,pidx),
-     +               xsumi(stbidx,pidx), xsumsqi(stbidx,pidx),
-     +               ysumr(stbidx,pidx), ysumsqr(stbidx,pidx),
-     +               ysumi(stbidx,pidx), ysumsqi(stbidx,pidx),
-     +               nsum(stbidx,pidx))
+              call accum (dovec, xvalr, yvalr, data(j),
+     +          visvar, sumivar(stbidx,pidx),
+     +          xsumr(stbidx,pidx), xsumsqr(stbidx,pidx),
+     +          xsumi(stbidx,pidx), xsumsqi(stbidx,pidx),
+     +          ysumr(stbidx,pidx), ysumsqr(stbidx,pidx),
+     +          ysumi(stbidx,pidx), ysumsqi(stbidx,pidx),
+     +          nsum(stbidx,pidx))
                 else
 c
 c Put points into plot buffer
@@ -450,8 +455,8 @@ c
 c
 c Read next visibility
 c
-950       if (.not.allfull) call getdat (preamble, data, goodf, 
-     *        maxchan, nread, dofqav, doflag, doall)
+950       if (.not.allfull) call getdat (lin,preamble, data, goodf, 
+     *        maxchan, nread, dofqav, doflag, doall,wwt,visvar)
         end do
 c
 c Issue a message if any (but not all) of the baseline/polarization 
@@ -470,6 +475,7 @@ c
      +     npols, pl1dim, pl2dim, pl3dim, pl4dim, maxpnt, maxbase, 
      +     maxpol, maxfile, buffer(ip), npts, xo, yo, elo, eho,
      +     xaxis, xrtest, xmin, xmax, yaxis, yrtest, ymin, ymax,
+     +     sumivar,
      +     nsum, xsumr, xsumsqr, xsumi, xsumsqi, ysumr, ysumsqr, ysumi,
      +     ysumsqi, xave, yave, xsig, ysig, plpts, inc, plfidx)
 c
@@ -525,7 +531,9 @@ c
       end
 c
 c
-      subroutine accum  (dovec, xvalr, yvalr, cval, xsumr, xsumsqr,
+      subroutine accum  (dovec, xvalr, yvalr, cval, 
+     +   visvar, sumivar,
+     +   xsumr, xsumsqr,
      +   xsumi, xsumsqi, ysumr, ysumsqr, ysumi, ysumsqi, nsum)
 c-----------------------------------------------------------------------
 c     Accumulate sums when averaging over a time interval
@@ -537,9 +545,11 @@ c                 Otherwise, the scalar value is used; x and y
 c    xvalr        Potential real value of the X-axis
 c    yvalr        Potential real value of the Y-axis
 c    cval         Potential complex value of either the X or Y axis
+c    visvar       variance of the visibility data
 c  Input/output:
 c    x,ysum,sqr   Sum and sum of square of real quantity
 c    x,ysum,sqi   Sum and sum of square of imaginary quantity
+c    sumivar       sum of the 1/variance
 c    nsum         Number of points accumulated so far this interval
 c
 c-----------------------------------------------------------------------
@@ -548,17 +558,22 @@ c
       logical dovec(2)
       integer nsum
       real xvalr, yvalr, xsumr, ysumr, xsumsqr, ysumsqr, 
-     +xsumi, ysumi, xsumsqi, ysumsqi
+     + xsumi, ysumi, xsumsqi, ysumsqi, visvar, sumivar
       complex cval
 c-----------------------------------------------------------------------
       nsum = nsum + 1
-      call accum2(dovec(1), cval, xvalr, xsumr, xsumi, xsumsqr, xsumsqi)
-      call accum2(dovec(2), cval, yvalr, ysumr, ysumi, ysumsqr, ysumsqi)
+      sumivar = sumivar + 1./visvar
+     
+      call accum2(dovec(1), cval, xvalr, xsumr, xsumi, xsumsqr, xsumsqi,
+     +  visvar)
+      call accum2(dovec(2), cval, yvalr, ysumr, ysumi, ysumsqr, ysumsqi,
+     +  visvar)
 c
       end    
 c
 c
-      subroutine accum2 (dovec, cval, rval, sumr, sumi, sumsqr, sumsqi)
+      subroutine accum2 (dovec, cval, rval, sumr, sumi, sumsqr, sumsqi, 
+     +  visvar)
 c-----------------------------------------------------------------------
 c     Update averaging sums
 c
@@ -566,6 +581,7 @@ c  Input:
 c    dovec     True for vector averaging, else scalar
 c    cval      Complex value
 c    rval      Real value
+c    visvar    Variance
 c  Input/Output:
 c    sumr      Real sum (vector and scalar)
 c    sumi      Imaginary sum (vector)
@@ -577,17 +593,19 @@ c-----------------------------------------------------------------------
 c
       logical dovec
       complex cval
-      real rval, sumr, sumi, sumsqr, sumsqi
+      real rval, sumr, sumi, sumsqr, sumsqi, visvar
 c-----------------------------------------------------------------------
+      if(visvar.gt.0.) then
       if (dovec) then
-        sumr = sumr +  real(cval)
-        sumi = sumi + aimag(cval)
-        sumsqr = sumsqr +  real(cval)**2
-        sumsqi = sumsqi + aimag(cval)**2
+        sumr = sumr +  real(cval)/visvar
+        sumi = sumi + aimag(cval)/visvar
+        sumsqr = sumsqr +  real(cval)**2/visvar
+        sumsqi = sumsqi + aimag(cval)**2/visvar
       else
-        sumr = sumr + rval
-        sumsqr = sumsqr + rval**2
+        sumr = sumr + rval/visvar
+        sumsqr = sumsqr + rval**2/visvar
       end if        
+      end if
 c
       end
 c
@@ -634,7 +652,8 @@ c
       subroutine avdump (dorms, dovec, dobase, dodoub, doavall, nbases,
      +   npols, pl1dim, pl2dim, pl3dim, pl4dim, maxpnt, maxbase, 
      +   maxpol, maxfile, buffer, npts, xo, yo, elo, eho, xaxis,
-     +   xrtest, xmin, xmax, yaxis, yrtest, ymin, ymax, nsum, xsumr,
+     +   xrtest, xmin, xmax, yaxis, yrtest, ymin, ymax, 
+     +   sumivar, nsum, xsumr,
      +   xsumsqr, xsumi, xsumsqi, ysumr, ysumsqr, ysumi, ysumsqi, 
      +   xave, yave, xsig, ysig, plpts, inc, plfidx)
 c-----------------------------------------------------------------------
@@ -703,7 +722,8 @@ c
      +  xsumsqr(maxbase,maxpol), ysumsqr(maxbase,maxpol), 
      +  xsumsqi(maxbase,maxpol), ysumsqi(maxbase,maxpol),
      +  xave(maxbase,maxpol), yave(maxbase,maxpol), 
-     +  xsig(maxbase,maxpol), ysig(maxbase,maxpol)
+     +  xsig(maxbase,maxpol), ysig(maxbase,maxpol),
+     +  sumivar(maxbase,maxpol)
 c
       integer xo, yo, elo(2), eho(2), inc, plfidx, maxpnt
       real xmin, xmax, ymin, ymax
@@ -723,10 +743,10 @@ c
       do i = 1, np
         call avquant(dorms(1), dorms(3), dovec(1), xaxis, nb, nsum(1,i),
      +     xsumr(1,i), xsumsqr(1,i), xsumi(1,i), xsumsqi(1,i), 
-     +     xave(1,i), xsig(1,i))
+     +     xave(1,i), xsig(1,i), sumivar(1,i))
         call avquant(dorms(2), dorms(3), dovec(2), yaxis, nb, nsum(1,i),
      +     ysumr(1,i), ysumsqr(1,i), ysumi(1,i), ysumsqi(1,i), 
-     +     yave(1,i), ysig(1,i))
+     +     yave(1,i), ysig(1,i), sumivar(1,i))
       end do
 c
 c Now dump averages to plot buffer.  Put all the points on the
@@ -769,7 +789,8 @@ c
 c
 c
       subroutine avquant (dorms, errmean, dovec, axis, nbasst, nsum, 
-     +                    sumr, sumsqr, sumi, sumsqi, ave, sig)
+     +                    sumr, sumsqr, sumi, sumsqi, ave, sig,
+     +                    sumivar)
 c-----------------------------------------------------------------------
 c     Work out the average and rms from the solution interval
 c
@@ -796,7 +817,7 @@ c
       character axis*(*)
       integer nbasst, nsum(nbasst)
       real sumr(nbasst), sumi(nbasst), sumsqr(nbasst), sumsqi(nbasst),
-     +  ave(nbasst), sig(nbasst)
+     +  ave(nbasst), sig(nbasst),sumivar(nbasst)
 cc
       real var
       integer i
@@ -810,14 +831,22 @@ c
 c Loop over each baseline.  May be no points for some baselines
 c in some time intervals
 c
-          if (nsum(i).gt.0) then
-            call setvl2 (axis, cmplx(sumr(i)/nsum(i),sumi(i)/nsum(i)),
-     +                   ave(i))
+c          if (nsum(i).gt.0) then
+c            call setvl2 (axis, cmplx(sumr(i)/nsum(i),sumi(i)/nsum(i)),
+c     +                   ave(i))
+           if (sumivar(i).gt.0) then
+        call setvl2 (axis, cmplx(sumr(i)/sumivar(i),sumi(i)/sumivar(i)),
+      +                   ave(i))
+
 c
 c No errors for vector averaging yet
 c
             if (dorms) then
+              if(sumivar(i).gt.0.0) then
+              sig(i) = sqrt(1./sumivar(i))
+               else
               sig(i) = 0.0
+              endif
             end if
           end if
         end do
@@ -826,17 +855,21 @@ c
 c Scalar averaging
 c
         do i = 1, nbasst
-          if (nsum(i).gt.0) then
-            ave(i) = sumr(i) / nsum(i)
+c          if (nsum(i).gt.0) then
+c            ave(i) = sumr(i) / nsum(i)
+           if (nsum(i).gt.0) then
+            ave(i) = sumr(i) / sumivar(i)
 c
             if (dorms) then
-              var = (sumsqr(i)/nsum(i)) - ave(i)**2
+c              var = (sumsqr(i)/nsum(i)) - ave(i)**2
+              var = (sumsqr(i)/sumivar(i)) - ave(i)**2
               if (var.gt.0.0) then
                 sig(i) = sqrt(var)
               else
                 sig(i) = 0.0
               end if
-              if (errmean) sig(i) = sig(i) / sqrt(real(nsum(i)))
+c              if (errmean) sig(i) = sig(i) / sqrt(real(nsum(i)))
+              if (errmean) sig(i) = 1. / sqrt(sumivar(i))
             end if
           end if
         end do
@@ -1108,7 +1141,7 @@ c
 c
       subroutine chkinp (xaxis, yaxis, xmin, xmax, ymin, ymax, dayav,
      +   dodoub, dowave, doave, dovec, dorms, dointer, doperr, dowrap,
-     +   hann, xrtest, yrtest)
+     +   hann, xrtest, yrtest,nbin)
 c-----------------------------------------------------------------------
 c     Check the validity of some of the inputs
 c
@@ -1142,7 +1175,7 @@ c
 c-----------------------------------------------------------------------
       implicit none
 c
-      integer hann
+      integer hann,nbin
       character*(*) xaxis, yaxis
       double precision dayav
       real xmin, xmax, ymin, ymax
@@ -1186,12 +1219,12 @@ c Check for sensible axes when asking for errors
 c
       if (dorms(1) .and. xaxis.ne.'amplitude'.and. xaxis.ne.'real'
      +    .and. xaxis.ne.'imag' .and. xaxis.ne.'phase') then
-        call bug ('w', 'Errors not useful for this x-axis')
+       if(nbin.eq.0) call bug ('w', 'Errors not useful for this x-axis')
         dorms(1) = .false.
       end if
       if (dorms(2) .and. yaxis.ne.'amplitude'.and. yaxis.ne.'real'
      +    .and. yaxis.ne.'imag' .and. yaxis.ne.'phase') then
-        call bug ('w', 'Errors not useful for this y-axis')
+       if(nbin.eq.0) call bug ('w', 'Errors not useful for this y-axis')
         dorms(2) = .false.
       end if
 c
@@ -1212,11 +1245,11 @@ c
         call bug ('w', 
      +   'x-error bars not yet implimented for vector averaging')
       end if
-      if (doave .and. dovec(2) .and. dorms(2)) then
-        dorms(2) = .false.
-        call bug ('w', 
-     +   'y-error bars not yet implimented for vector averaging')
-      end if
+c      if (doave .and. dovec(2) .and. dorms(2)) then
+c        dorms(2) = .false.
+c        call bug ('w', 
+c     +   'y-error bars not yet implimented for vector averaging')
+c      end if
       if (.not.dorms(1) .and. .not.dorms(2)) doperr = .false.
 c
 c  Set switches for case when interactive mode not selected so that
@@ -1535,8 +1568,8 @@ c
 999   end
 c
 c
-      subroutine getdat(preamble,data,flags,maxchan,nread,
-     *                  dofqav,doflag,doall)
+      subroutine getdat(lin,preamble,data,flags,maxchan,nread,
+     *                  dofqav,doflag,doall,wwt,visvar)
 c-----------------------------------------------------------------------
 c  Get a visibility. If needed, perform channel averaging.
 c
@@ -1559,6 +1592,12 @@ c------------------------------------------------------------------------
       logical flags(maxchan),dofqav,doflag,doall
       integer i,n
       complex sum
+      integer lin
+      real    wwt,visvar 
+c      real tsys(8), jperk,sdf,dt
+c      logical updated
+c      integer length, nants,i1,i2
+c      character type*1
 c-----------------------------------------------------------------------
       call uvdatrd(preamble,data,flags,maxchan,nread)
 c
@@ -1591,6 +1630,22 @@ c
         if(flags(1))data(1) = sum/n
       endif
 c
+c derive wt the current Tsys measurement and BW and integration time
+c
+c          call basant(preamble(4),i1,i2)
+          call uvdatgtr('variance',visvar)
+c          call uvrdvrr(lin,'inttime',dt,0.0)
+c          call uvprobvr(lin,'systemp',type, length, updated)
+c          nants = length
+c          call uvgetvrr(lin,'systemp',tsys,nants)
+c          call uvrdvrr(lin,'jyperk',jperk,0.0)
+c          call uvrdvrr(lin,'sdf',sdf, 0.0)
+c          sdf=abs(sdf)
+c          write(*,*) 'visvar', visvar,i1,i2
+c           write(*,*) 'tempjy',
+c     *     (tsys(i1)*tsys(i2)/dt/jperk**2)
+           wwt = 1./visvar
+         
       end
 c
 c
@@ -1739,6 +1794,10 @@ c
         dorms(2) = .true.
         if (present(27)) dorms(3) = .true.
       end if
+c   in the processing, std is calculated
+        dorms(1) = .true.
+        dorms(2) = .true.
+        dorms(3) = .false.
 c
       dovec(1) = .not.present(2)
       dovec(2) = .not.present(2)
@@ -2143,7 +2202,7 @@ c
 c
 c
       subroutine init (maxbase, maxpol, nsum, xsumr, xsumi, xsumsqr, 
-     +                 xsumsqi, ysumr, ysumi, ysumsqr, ysumsqi)
+     +    xsumsqi, ysumr, ysumi, ysumsqr, ysumsqi, sumivar)
 c-----------------------------------------------------------------------
 c     Initialize accumulators
 c-----------------------------------------------------------------------
@@ -2153,7 +2212,8 @@ c
       real xsumr(maxbase,maxpol), ysumr(maxbase,maxpol),
      +  xsumsqr(maxbase,maxpol), ysumsqr(maxbase,maxpol),
      +  xsumi(maxbase,maxpol), ysumi(maxbase,maxpol),
-     +  xsumsqi(maxbase,maxpol), ysumsqi(maxbase,maxpol)
+     +  xsumsqi(maxbase,maxpol), ysumsqi(maxbase,maxpol),
+     + sumivar(maxbase,maxpol)
 cc
       integer i, j
 c-----------------------------------------------------------------------
@@ -2168,6 +2228,7 @@ c-----------------------------------------------------------------------
           ysumsqr(i,j) = 0.0
           xsumsqi(i,j) = 0.0
           ysumsqi(i,j) = 0.0
+          sumivar(i,j) = 0.0
         end do
       end do
 c
@@ -2631,8 +2692,8 @@ c
 
 
 c for bin
-      integer maxbins
-      parameter (maxbins = 1000)
+      integer maxbins, maxpnts
+      parameter (maxbins = 1000, maxpnts=500000)
       integer nbin, ibin, numdat(maxbins,pl4dim), nnbin
       real xbin(maxbins,pl4dim),xdbin(maxbins,pl4dim)
       real xerbin(maxbins,pl4dim)
@@ -2640,6 +2701,11 @@ c for bin
       real xermean(maxbins,pl4dim),yermean(maxbins,pl4dim)
       real xbhi(maxbins,pl4dim),xblo(maxbins,pl4dim)
       real ybhi(maxbins,pl4dim),yblo(maxbins,pl4dim)
+      real xsumivar(maxbins,pl4dim),ysumivar(maxbins,pl4dim)
+c      real xsig(pl1dim,pl2dim,pl3dim,pl4dim)
+c      real ysig(pl1dim,pl2dim,pl3dim,pl4dim)
+       real xxsig(maxpnts,pl4dim)
+       real yysig(maxpnts,pl4dim)
       real xbsize
       character aline*80
 
@@ -2975,25 +3041,47 @@ c
                  xdbin(i,jf)   = 0.
                  xerbin(i,jf) = 0.
                  xermean(i,jf) = 0.
+                 xsumivar(i,jf) = 0.
                  ydbin(i,jf)   = 0.
                  yerbin(i,jf) = 0.
                  yermean(i,jf) = 0.
+                 ysumivar(i,jf) = 0.
                  numdat(i,jf) = 0
+                 end do
+c calculate the sigma for each data value
+                 do i=1,npts(kp,lp,jf)
+                 if(dorms(1)) then
+                 xxsig(i,jf) = (buffer(eho(1)+i,kp,lp,jf)
+     +                       -  buffer(elo(1)+i,kp,lp,jf))*0.5
+                 else
+                 xxsig(i,jf) =1.
+                 end if
+                 if(dorms(2)) then
+
+                 yysig(i,jf) = (buffer(eho(2)+i,kp,lp,jf)
+     +                       -  buffer(elo(2)+i,kp,lp,jf))*0.5
+                 else
+                 yysig(i,jf) =1.
+                 end if
                  end do
 c
 c accumulate the data for each bin
 c
-                 ibin=1
-                 do i=1, npts(kp,lp,jf)     
-c       write(*,*) buffer(xo+i,kp,lp,jf),buffer(yo+i,kp,lp,jf) 
-                 do ibin=1,nbin           
+         do i=1, npts(kp,lp,jf)     
+         do ibin=1,nbin           
          if(buffer(xo+i,kp,lp,jf).lt.(xbin(ibin,jf)+0.5*xbsize).and.
-     *    buffer(xo+i,kp,lp,jf).ge.(xbin(ibin,jf)-0.5*xbsize)) then
-        xdbin(ibin,jf)  = xdbin(ibin,jf)  + buffer(xo+i,kp,lp,jf)
-        xerbin(ibin,jf) = xerbin(ibin,jf) + buffer(xo+i,kp,lp,jf)**2
-        ydbin(ibin,jf)  = ydbin(ibin,jf)  + buffer(yo+i,kp,lp,jf)
-        yerbin(ibin,jf) = yerbin(ibin,jf) + buffer(yo+i,kp,lp,jf)**2
-        numdat(ibin,jf) = numdat(ibin,jf) + 1
+     *      buffer(xo+i,kp,lp,jf).ge.(xbin(ibin,jf)-0.5*xbsize)) then
+         xdbin(ibin,jf)  = xdbin(ibin,jf)  + 
+     *                     buffer(xo+i,kp,lp,jf)/xxsig(i,jf)**2
+         xerbin(ibin,jf) = xerbin(ibin,jf) + 
+     *                     buffer(xo+i,kp,lp,jf)**2/xxsig(i,jf)**2
+         xsumivar(ibin,jf) = xsumivar(ibin,jf) + 1./xxsig(i,jf)**2
+         ydbin(ibin,jf)  = ydbin(ibin,jf)  + 
+     *                     buffer(yo+i,kp,lp,jf)/yysig(i,jf)**2
+         yerbin(ibin,jf) = yerbin(ibin,jf) + 
+     *                     buffer(yo+i,kp,lp,jf)**2/yysig(i,jf)**2
+         ysumivar(ibin,jf) = ysumivar(ibin,jf) + 1./yysig(i,jf)**2
+         numdat(ibin,jf) = numdat(ibin,jf) + 1
                  endif
                  enddo
                  enddo
@@ -3001,28 +3089,48 @@ c
 c derive mean value for each bin
 c squeaze out the empty bins
 c
+                 
                  ibin=1
                  do i=1, nbin
-                 if(numdat(i,jf).ge.1) then
-                 xdbin(ibin,jf)=xdbin(i,jf)/numdat(i,jf)
-                 ydbin(ibin,jf)=ydbin(i,jf)/numdat(i,jf)
-                 if(numdat(i,jf).ne.1) then
-           xermean(ibin,jf) = 
-     *     (xerbin(i,jf)-numdat(i,jf)*xdbin(ibin,jf)**2)/
-     *     (numdat(i,jf)-1)/numdat(i,jf)
-           xermean(ibin,jf) = (abs(xermean(ibin,jf)))**0.5
-           yermean(ibin,jf) =
-     *     (yerbin(i,jf)-numdat(i,jf)*ydbin(ibin,jf)**2)/
-     *     (numdat(i,jf)-1)/numdat(i,jf)
-           yermean(ibin,jf) = (abs(yermean(ibin,jf)))**0.5
-                 else
-                 xermean(ibin,jf) =0.0
-                 yermean(ibin,jf) =0.0       
-                 endif
-                 ibin=ibin+1
-                 endif
+                 if(numdat(i,jf).gt.0) then 
+                numdat(ibin,jf)    =   numdat(i,jf)
+                 xdbin(ibin,jf)    =    xdbin(i,jf)
+                xerbin(ibin,jf)    =   xerbin(i,jf)
+              xsumivar(ibin,jf)    = xsumivar(i,jf)
+                 ydbin(ibin,jf)    =    ydbin(i,jf)
+                yerbin(ibin,jf)    =   yerbin(i,jf)
+              ysumivar(ibin,jf)    = ysumivar(i,jf)
+                 ibin=ibin+1                 
+                 end if
                  end do
-             nnbin=ibin-1
+                 nnbin =ibin-1
+
+                 do i=1, nnbin
+c                 xdbin(i,jf)=xdbin(i,jf)/numdat(i,jf)
+c                 ydbin(i,jf)=ydbin(i,jf)/numdat(i,jf)
+            if(xsumivar(i,jf).ne.0.0) 
+     *         xdbin(i,jf)=xdbin(i,jf)/xsumivar(i,jf)
+            if(ysumivar(i,jf).ne.0.0)
+     *         ydbin(i,jf)=ydbin(i,jf)/ysumivar(i,jf)
+        if(numdat(i,jf).gt.1) then
+          xerbin(i,jf) = (xerbin(i,jf)-numdat(i,jf)*xdbin(i,jf)**2)
+     *                    / xsumivar(i,jf)
+          xerbin(i,jf) = xerbin(i,jf) * numdat(i,jf)/(numdat(i,jf)-1)
+          yerbin(i,jf) = (yerbin(i,jf)-numdat(i,jf)*ydbin(i,jf)**2)
+     *                    / ysumivar(i,jf)
+          yerbin(i,jf) = yerbin(i,jf) * numdat(i,jf)/(numdat(i,jf)-1)
+          xermean(i,jf) = xerbin(i,jf)/numdat(i,jf)
+          yermean(i,jf) = yerbin(i,jf)/numdat(i,jf)
+                          else
+          xerbin(i,jf) = xerbin(i,jf)/xdbin(i,jf)**2
+          yerbin(i,jf) = yerbin(i,jf)/ydbin(i,jf)**2
+          xermean(i,jf) = xerbin(i,jf)/numdat(i,jf)
+          yermean(i,jf) = yerbin(i,jf)/numdat(i,jf)
+                          endif
+          xermean(i,jf) = (abs(xermean(i,jf)))**0.5
+          yermean(i,jf) = (abs(yermean(i,jf)))**0.5
+c write(*,*) numdat(i,jf), ydbin(i,jf), yerbin(i,jf),yermean(i,jf)
+                 end do
                  
 c work out error bar for the mean errors in both axes
                 do i=1, nnbin
@@ -3407,8 +3515,6 @@ c
 c-----------------------------------------------------------------------
       if (axis.eq.'amplitude') then
         call amphase (data, val, phase)
-c           write(*,*) val, phase
-c            stop
       else if (axis.eq.'phase') then
         call amphase (data, amp, val)
       else if (axis.eq.'real') then
@@ -3788,6 +3894,8 @@ cc
       character*80 line
 c
       logical uvdatopn, open, keep
+c   
+      real wwt, visvar
 c-----------------------------------------------------------------------
       npols = 0
       nbases = 0
@@ -3802,8 +3910,8 @@ c
 c
 c Read first visbility (making variables available)
 c
-        call getdat (preamble, data, goodf, maxchan, nread,
-     *					dofqav, doflag, doall)
+        call getdat (lin,preamble, data, goodf, maxchan, nread,
+     *		dofqav, doflag, doall, wwt, visvar)
 c
         if (i.eq.1) then
 c
@@ -3851,8 +3959,8 @@ c
 c
 c Read another visibility
 c
-          call getdat (preamble, data, goodf, maxchan, nread,
-     *					dofqav, doflag, doall)
+          call getdat (lin,preamble, data, goodf, maxchan, nread,
+     *			dofqav, doflag, doall, wwt, visvar)
         end do
         call uvdatcls
       end do
