@@ -4,7 +4,9 @@ c= smauvamp - plot vis amplitude as uc or vc  on a PGPLOT device.
 c& jhz 
 c: uv analysis, plotting
 c+
-c  smauvamp - Plot vis amplitude as uc or vc.
+c  smauvamp - Plot visibiliy amplitude v.s. other variables
+c             with error bars for 1 standard deviation in the mean
+c             if averaging is invoked.
 c@ vis
 c	The input visibility file(s). Multiple input files and wild card
 c	card expansion are supported.    
@@ -3000,10 +3002,14 @@ c
 c
 c  Plot points and errors
 c
-              do lp = 1, np
-                if (np.ne.1 .and. .not.doavall) call pgsci (cols(lp))
-                do jf = 1, pl4dim
-                  if (np.eq.1 .and. docol) call pgsci (cols(jf))
+c         write(*,*) dorms(1),dorms(2)
+c   dorms(1) -> rms for x
+c   dorms(2) -> rms for y
+c
+          do lp = 1, np
+       if (np.ne.1 .and. .not.doavall) call pgsci (cols(lp))
+             do jf = 1, pl4dim
+              if (np.eq.1 .and. docol) call pgsci (cols(jf))
                   if (dosymb) then
                     sym = jf
                     if (sym.eq.2) then
@@ -3029,6 +3035,7 @@ c
      +                             buffer(xo+1,kp,lp,jf), 
      +                             buffer(elo(2)+1,kp,lp,jf), 
      +                             buffer(eho(2)+1,kp,lp,jf), 1.0)
+
                     else
 c
 c  work out bin statistics 
@@ -3057,7 +3064,6 @@ c calculate the sigma for each data value
                  xxsig(i,jf) =1.
                  end if
                  if(dorms(2)) then
-
                  yysig(i,jf) = (buffer(eho(2)+i,kp,lp,jf)
      +                       -  buffer(elo(2)+i,kp,lp,jf))*0.5
                  else
@@ -3129,7 +3135,8 @@ c                 ydbin(i,jf)=ydbin(i,jf)/numdat(i,jf)
                           endif
           xermean(i,jf) = (abs(xermean(i,jf)))**0.5
           yermean(i,jf) = (abs(yermean(i,jf)))**0.5
-c write(*,*) numdat(i,jf), ydbin(i,jf), yerbin(i,jf),yermean(i,jf)
+        if(dorms(1)) xermean(i,jf)=(abs(1./xsumivar(i,jf)))**0.5
+        if(dorms(2)) yermean(i,jf)=(abs(1./ysumivar(i,jf)))**0.5
                  end do
                  
 c work out error bar for the mean errors in both axes
