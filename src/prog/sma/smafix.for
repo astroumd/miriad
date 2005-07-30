@@ -3,10 +3,10 @@ c*************************:***********************************************
         implicit none
 c
 c= smafix -- Plot and fit Tsys and do Tsys corrections.
-c& Jun-Hui Zhao 
+c& jhz for SMA 
 c: plotting, analysis and uvdata correction
 c+
-c	SmaFix plots and does least square fits with an order
+c	SmaFix plots and does least square fitting with an order
 c       of polynomial to the antenna-based Tsys measurements.
 c       Tsys corrections for SMA uv data can be made with 
 c       either the original Tsys measurements or the fitted 
@@ -49,14 +49,9 @@ c@ yrange
 c	The min and max range along the y axis of the plots. The default
 c	is to autoscale. Note that for "time" should be given in normal Miriad
 c	time format (either absolute time or time-of-day).
-c@ rmsflag
-c       Flag level. Number of rms beyond which data is flagged.
-c       A value in a range of 1 to 3 is recommended. Default is 2.
-c       Value of 0 is no flagging.
 c@ dofit
 c       A degree polynomial fit. Value 2 is for parabolic, 3 for cubic.
-c       A parabolic fit (dofit=2) is recommended.  Default is 2 (parabolic).
-c       Value of 0 is no fit to perform.
+c       Default or a value of 0 and smaller corresponds to no fit to perform.
 c@ options
 c	Extra processing options. Several can be given, separated by
 c	commas. Minimum match is used.
@@ -122,11 +117,13 @@ c                 with unflagged uv data.
 c  jhz: 2005-5-25 a bug is fixed in flagging 
 c  jhz: 2005-7-26 fix a bug in polynomial fit to the Tsys
 c                 when flag options is taken.
+c  jhz: 2005-7-29 change the default for dofit;
+c                 remove rmsflag.
 c------------------------------------------------------------------------
         character version*(*)
         integer maxpnts
         parameter(maxpnts=100000)
-        parameter(version='SmaFix: version 1.6 26-Jul-05')
+        parameter(version='SmaFix: version 1.7 29-Jul-05')
         logical doplot,dolog,dotime,dounwrap
         character vis*64,device*64,logfile*64,xaxis*16,yaxis*16
         character out*64
@@ -234,8 +231,8 @@ c
         endif
         call keyr('rmsflag',rmsflag,2.)
            if(rmsflag<0.) rmsflag=2.
-        call keyi('dofit',dofit,2)
-           if(dofit<0) dofit=2 
+        call keyi('dofit',dofit,0)
+           if(dofit<0) dofit=0
         call keyfin
 c
 c  Open up all the inputs.
