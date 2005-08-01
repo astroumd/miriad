@@ -101,12 +101,12 @@ c    05oct99 rjs  Added options=scalar
 c    01Aug04 jhz  modified for sma data.
 c    01Aug04 jhz  Added color code for sources.
 c    08Jul05 jhz  remove unused variables.
-c                 replace maxdim.h with smablflag.h
-c                 (a sma configured maxdim.h) in which
-c                 the orignal atnf 
-c                 PARAMETER(MAXBASE=((MAXANT*(MAXANT+1))/2))
+c                 replace maxdim.h with smablflag.h in which the 
+c                 orignal atnf PARAMETER(MAXBASE=((MAXANT*(MAXANT+1))/2))
 c                 is used instead of PARAMETER(MAXBASE=435).
-c                 Using PARAMETER(MAXBASE=435) causes problem.
+c                 In the maxdim.h configured for SMA 
+c                 PARAMETER(MAXBASE=435) was is used, which causes 
+c                 a problem in blflag.
 c    27Jul05 jhz  Added systemp,antel to the axis so that
 c                 systemp as function of either elevation or
 c                 time can be selected to flag the data.
@@ -114,11 +114,18 @@ c                 This is a useful feature for the SMA users.
 c    29jul05 jhz  comment out the set default polarization, which
 c                 causes trouble to sma data. 
 c                 add color to the polarization states.
+c    01aug05 jhz  add 'if(dotsys)' to the systemp retrieving call
+c                 so that the systemp call will be skipped when
+c                 other flagging axis is selected.
+c                 The inconsistent tsys array size should not affect 
+c                 flagging selections of other variables in the case of
+c                 mir output data is used in which the size of tsys is 
+c                 not matched with the visibility.
 c------------------------------------------------------------------------
         include 'smablflag.h'
 	character version*(*)
         integer maxdat,maxplt,maxedit
-        parameter(version='SmaBlFlag: version 1.2 29-July-2005')
+        parameter(version='SmaBlFlag: version 1.3 1-August-2005')
         parameter(maxdat=500000,maxplt=20000,maxedit=20000)
 c
         logical present(maxbase),nobase,selgen,noapply,rms,scalar
@@ -890,7 +897,13 @@ c
           corr(i)    = 0
           corr1(i)   = 0
           corr2(i)   = 0
+          tsys12(i)  = 0
         enddo
+c
+        do i=1,maxant
+         tsys(i)     = 0
+        end do
+
         ndat = 0
 
 
@@ -927,8 +940,9 @@ c           write(*,*) npol,pols, polstr(pols+9)
 c
 c get tsys
 c
+         
          call uvrdvri(tno,'nants',nants,0.d0) 
-         call uvgetvrr(tno,'systemp',tsys,nants)
+         if(dotsys) call uvgetvrr(tno,'systemp',tsys,nants)
          call uvgetvrd(tno,'antel',antel,nants)
               iel=0
               do i=1,nants
@@ -1029,7 +1043,7 @@ c
 c           write(*,*) npol,pols, polstr(pols+9)
           call uvrdvri(tno,'nants',nants,0.d0)
 c get systemp
-          call uvgetvrr(tno,'systemp',tsys,nants)
+      if(dotsys) call uvgetvrr(tno,'systemp',tsys,nants)
 c get elevation               
           call uvgetvrd(tno,'antel',antel,nants)
               iel=0
