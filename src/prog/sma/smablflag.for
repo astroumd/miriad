@@ -57,7 +57,8 @@ c	Two character strings, giving the X and Y axes of the plot. Possible
 c	axis values are:
 c	  time         (the default for the X axis)
 c	  lst	       Local apparent sidereal time.
-c         antel        antenna elevation in degree
+c         antel        antenna elevation in degree;
+c                      only for systemp flagging.
 c	  uvdistance   sqrt(u**2+v**2)
 c	  hangle       (hour angle)
 c	  amplitude    (the default for the Y axis)
@@ -121,11 +122,12 @@ c                 The inconsistent tsys array size should not affect
 c                 flagging selections of other variables in the case of
 c                 mir output data is used in which the size of tsys is 
 c                 not matched with the visibility.
+c    01aug05 jhz  antel restricted for systemp flagging. 
 c------------------------------------------------------------------------
         include 'smablflag.h'
 	character version*(*)
         integer maxdat,maxplt,maxedit
-        parameter(version='SmaBlFlag: version 1.3 1-August-2005')
+        parameter(version='SmaBlFlag: version 1.4 1-August-2005')
         parameter(maxdat=500000,maxplt=20000,maxedit=20000)
 c
         logical present(maxbase),nobase,selgen,noapply,rms,scalar
@@ -942,7 +944,8 @@ c get tsys
 c
          
          call uvrdvri(tno,'nants',nants,0.d0) 
-         if(dotsys) call uvgetvrr(tno,'systemp',tsys,nants)
+         if(dotsys) then
+         call uvgetvrr(tno,'systemp',tsys,nants)
          call uvgetvrd(tno,'antel',antel,nants)
               iel=0
               do i=1,nants
@@ -952,6 +955,7 @@ c
               endif
               end do
               el=el/iel
+          end if
           
 c
 c  do source
@@ -1043,7 +1047,8 @@ c
 c           write(*,*) npol,pols, polstr(pols+9)
           call uvrdvri(tno,'nants',nants,0.d0)
 c get systemp
-      if(dotsys) call uvgetvrr(tno,'systemp',tsys,nants)
+      if(dotsys) then
+          call uvgetvrr(tno,'systemp',tsys,nants)
 c get elevation               
           call uvgetvrd(tno,'antel',antel,nants)
               iel=0
@@ -1054,6 +1059,7 @@ c get elevation
               endif
               end do
               el=el/iel
+              end if
         enddo
 c
         if(nants.gt.0)
