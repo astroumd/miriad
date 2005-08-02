@@ -117,6 +117,11 @@ c    jhz  12jul05 fix a bug in logwrite
 c    jhz  14jul05 force the absolute values of the max and min in y
 c                 range greater than 1e-18. In the case of auto range,
 c                 smaller values may collapse the plot frame.
+c    jhz  01aug05 add a gain pointer to distinguish the dual polarizations 
+c                 in a gain table, count the gain solution for each polarization, 
+c                 and skip the failed gain solutions in the polynomial fitting.
+c                 label the circular polarizations in the case of
+c                 dual polarizations involved.
 c  Bugs:
 c------------------------------------------------------------------------
         integer maxsels
@@ -126,7 +131,7 @@ c------------------------------------------------------------------------
         parameter (DPI = 3.14159265358979323846)
         parameter (TWOPI = 2 * PI)
         parameter (DTWOPI = 2 * DPI)        
-        parameter(version='SmaGpPlt: version 1.4 14-July-05')
+        parameter(version='SmaGpPlt: version 1.5 1-Aug-05')
         include 'smagpplt.h'
         integer iostat,tin,nx,ny,nfeeds,nants,nsols,ierr,symbol,nchan
         integer ntau,length, i, j, k,nschann(maxspect)
@@ -147,9 +152,11 @@ c  Externals.
 c
         logical hdprsnt
         integer pgbeg,len1
-c
-        data feeds/'I','X','Y'/
-        integer pee(2),nfiles,lin,offset
+c linear feeds
+c        data feeds/'I','X','Y'/
+c circular feeds
+        data feeds/'I','R','L'/
+        integer pee(2),nfiles,lin,offset,nnsols(10,2),gns
         character ops*9
         logical uvdatopn
         complex pass(10,6145,2), gains(10,2,6145)
@@ -158,7 +165,7 @@ c
         real smoothg(3), rgain(10,2,6145), igain(10,2,6145)
         integer nply(2), gnply, bnply, greport,breport, weight
         common/bsmooth/smooth,rpass,ipass,apass,ppass,bnply,breport
-        common/gsmooth/smoothg,rgain,igain,gnply,greport
+        common/gsmooth/smoothg,rgain,igain,gnply,greport,nnsols
 c
 c  Get the user parameters.
 c
@@ -268,30 +275,30 @@ c
 c  Open up all the inputs.
 c
         if(nfiles.ge.2) then
-         do lin= 1, nfiles
+            do lin= 1, nfiles
              
             if(.not.uvdatopn(tin))call bug('f','Error opening inputs')
             call uvdatgta ('name', vis)
             write(*,*) lin,':file', vis
             call uvdatcls         
-        call hopen(tin,vis,'old',iostat)
-        if(iostat.ne.0)then
-          call bug('w','Error opening input '//vis)
-          call bugno('f',iostat)
-        endif
-          if(dopass)then
-            dopass = hdprsnt(tin,'bandpass')
+            call hopen(tin,vis,'old',iostat)
+            if(iostat.ne.0)then
+            call bug('w','Error opening input '//vis)
+            call bugno('f',iostat)
+             endif
+             if(dopass)then
+             dopass = hdprsnt(tin,'bandpass')
             if(.not.dopass)call bug('w','Bandpass function not present')
-            endif
-           if(doplot)then
+             endif
+            if(doplot)then
           length = len1(device)
           ierr = pgbeg(0,device(1:length),nx,ny)
-          if (ierr.ne.1)then
+            if (ierr.ne.1)then
             call pgldev
             call bug ('f', 'Error in PGPLOT device')
-          endif
+             endif
           call pgsch(real(max(nx,ny))**0.4)
-        endif
+             endif
        if(dolog.and.(lin.eq.1)) call logopen(logfile,' ')
        if(dolog) call logwrite('# file:'//vis,more)
        if(dolog.and.(lin.eq.2).and.doratio) 
@@ -300,7 +307,7 @@ c
      * call logwrite('# bandpass difference for above two files',more) 
 
 
-            if(dopass)then
+       if(dopass)then
           call bload(tin,times,g1,nfeeds,nants,nchan,sels,
      *          maxgains,maxtimes,nschann)
           do i=1, nants
@@ -316,7 +323,7 @@ c
        if(.not.doratio) g1(k+offset*nchan)= 
      *     g1(k+offset*nchan)-pass(i,k,j)
         if(doratio)
-     *     g1(k+offset*nchan)= pass(i,k,j)/g1(k+offset*nchan)             
+     *   g1(k+offset*nchan)= pass(i,k,j)/g1(k+offset*nchan)             
 c           call bug('f','inconsistent frequency between the two files')
                endif
            end do
@@ -409,42 +416,56 @@ c
         if(dogains.or.doxy.or.doxbyy.or.dodelay.or.dospec)then
           call gload(tin,t0,times,jtime, g1,nfeeds,ntau,nants,
      *      nsols,sels, maxgains,maxtimes)
+c         write(*,*) 'gload',nsols,nants,nfeeds
           if(.not.dodtime)call tscale(times,nsols)
           call julday(t0,'H',basetime)
           call output('The base time is '//basetime)
           if(dolog)
      *      call logwrite('# The base time is '//basetime,more)
           if(dogains)then
-            call gncvt(g1,g2,nfeeds,ntau,nants*nsols)
-            call gainplt(vis,times,g2,nfeeds,nants,nsols,range,
-     *          feeds(nfeeds),doamp,dophase,dowrap,doreal,doimag,
-     *          doplot,dolog,dodtime,symbol,nx*ny,weight)           
+         call gncvt(g1,g2,nfeeds,ntau,nants*nsols)
+         call gainplt(vis,times,g2,nfeeds,nants,nsols,range,
+     *       feeds(nfeeds),doamp,dophase,dowrap,doreal,doimag,
+     *       doplot,dolog,dodtime,symbol,nx*ny,weight)           
           endif
+c
+c the memory of nsols appears to be changed
+c when the actually array size of the gains
+c is changed
+c assign the nsols (maximun nsols for each set of ant/feed)
+c to gns
+           gns = nsols
 c
 c Apply the smooth to the gain table
 c
          if((donply.or.dosmooth).and.dogains) then
+
+c 
+c the memory of nsols appears to be changed
+c when the actually array size of the gains 
+c is changed
+          
            do i=1, nants
-c           write(*,*) 'ant', i
            do j=1, nfeeds
-           pee(i) =j
-           do k=1, nsols
-            gains(i,j,k) = cmplx(rgain(i,j,k),igain(i,j,k))
-c            write(*,*) 'times=' ,  jtime(k)
-c          write(*,*) 'pass g', gains(i,j,k), g2(k*i)
+           do k=1,gns
+           gains(i,j,k)=0.0
+           enddo
+           enddo
+           enddo    
+
+           do i=1, nants
+           do j=1, nfeeds
+           pee(j) =j
+           do k=1,gns 
+c           if (nnsols(i,j).gt.0) 
+           gains(i,j,k) = cmplx(rgain(i,j,k),igain(i,j,k))
             end do
             end do
             end do
-c            do i=1, nsols
-c            do j=1, nfeeds
-c            do k=1, nants
-c             write(*,*) 'i j k gains', i, k, j, gains(k,j,i)
-c             end do
-c             end do
-c            end do
           call hdelete(tin,'gains',iostat)
           write(*,*) 'delete the old gains table'
-          call gaintab(tin,jtime,gains,nfeeds,nants,nsols,
+c
+          call gaintab(tin,jtime,gains,nfeeds,nants,gns,
      *    pee)          
 
           end if
@@ -1176,7 +1197,7 @@ c	GetVal	Routine used to convert to the desired quantity.
 c------------------------------------------------------------------------
         include 'smagpplt.h'
         character line*80,title*48,label*20
-        logical more
+        logical more, xpntr(maxtimes)
         real x(maxtimes),y(maxtimes),value(2*maxant)
         real wt(maxtimes)
         complex gain
@@ -1198,17 +1219,21 @@ c
               ng = 0
               value(offset) = 0
               do isol=1,nsols
-                gain = g(offset+(isol-1)*nfeeds*nants)
-                if(abs(real(gain))+abs(aimag(gain)).gt.0)then
-                  ng = ng + 1
-                  x(ng) = time(isol)
-                  y(ng) = getval(gain,value(offset))
-                  wt(ng) = real(gain)**2+imag(gain)**2
-                endif
+              gain = g(offset+(isol-1)*nfeeds*nants)
+              if(abs(real(gain))+abs(aimag(gain)).gt.0)then
+                xpntr(isol) = .true.
+                ng = ng + 1
+                x(ng) = time(isol)
+                y(ng) = getval(gain,value(offset))
+                wt(ng) = real(gain)**2+imag(gain)**2
+                else
+                 xpntr(isol) = .false.
+              endif
               enddo
               if(ng.gt.0)then
                 call setpg(time(1),time(nsols),y,ng,range,dodtime)
-                call pgptsgain(ng,x,y,symbol,iant,ifeed,type,wt,weight)
+           call pgptsgain(ng,x,y,symbol,iant,ifeed,type,wt,
+     *      weight,xpntr,time,nsols)
                 label = feeds(ifeed)//'-Gain-'//type
                 title = 'Antenna '//itoaf(iant)//'File='//vis
                 length = len1(title)
@@ -1450,11 +1475,14 @@ c
       call pgsci(1)
       END
 
-      SUBROUTINE PGPTSGAIN(N,XPTS,YPTS,SYMBOL,IANT,IFEED,type,WT,weight)
+      SUBROUTINE PGPTSGAIN(N,XPTS,YPTS,SYMBOL,IANT,IFEED,
+     *  type,WT,weight,xpntr,time,nsols)
       INTEGER N,IANT,IFEED
       REAL XPTS(*), YPTS(*),WT(*)
       INTEGER SYMBOL,weight
       character type*(*)
+      real time(nsols)
+      LOGICAL xpntr(nsols)
 C
 C-----------------------------------------------------------------------
       LOGICAL PGNOTO
@@ -1464,12 +1492,21 @@ c     for moving smooth
       double precision ETA(6200),CONETA(6200),A(21,6)
       double precision ATA1(6,6),ATA1AT(6,21),SCRAT(6,6)
       double precision XA(MAXNR),BP(MAXNR,MAXNR),AP(N,MAXNR)
-      double precision CHI2(MAXNR), P
+      double precision CHI2(MAXNR),P
       real x(MAXN), ys(MAXN)
-      integer K, L, i, gnply, greport, nterm
+      integer K, L, i, gnply, greport, nterm, nnsols(10,2)
       real smoothg(3), rgain(10,2,6145),igain(10,2,6145)
-      common/gsmooth/smoothg,rgain,igain,gnply,greport
+      common/gsmooth/smoothg,rgain,igain,gnply,greport,nnsols
 C
+c   load the nnsols
+c   initialize x(i),ys(i)
+c
+          nnsols(IANT,IFEED)=nsols
+          do i=1, nsols
+           x(i)= time(i)/3600.
+           ys(i) = 0. 
+          end do
+c          write(*,*) ' '
       call pgsci(2)
       IF (N.LT.1) RETURN
       IF (PGNOTO('PGPT')) RETURN
@@ -1483,16 +1520,10 @@ C
       CALL PGEBUF
         do i=1, N
         T(i) = XPTS(i)/3600.
-        x(i) = XPTS(i)/3600.
         Y(i) = YPTS(i)
-        ys(i)= YPTS(i)
         DELTAY(i)=1.0D0
         if(weight.ge.1) DELTAY(i)=1.0D0*WT(i)
         end do
-c
-c        K=3
-c        L=3
-c        P=0.9
 c
          K = smoothg(1)
          L = smoothg(2)
@@ -1505,7 +1536,10 @@ c
         CALL TIMSER(Y,N,K,L,P,ETA,CONETA,A,ATA1,ATA1AT,SCRAT)
          do i=1, N
            ys(i) = ETA(i+K)
+            x(i) = T(i)
+            
          end do
+            nsols=N
          end if
 c
 c Orthogonal polynomial fit to the bpass
@@ -1519,19 +1553,15 @@ c
          end do
             end if
             nterm=gnply+1
-            call regpolfitg(nterm,xa,bp,N,x,ys)
+            call regpolfitg(nterm,xa,bp,nsols,x,ys)
             end if
-         do i=1, N
+         do i=1,nsols 
         if(type.eq.'Real') rgain(IANT, IFEED,i) = ys(i)
         if(type.eq.'Imag') igain(IANT, IFEED,i) = ys(i)
             x(i)=3600.*x(i)
-c           if(type.eq.'Real') rgain(IANT,  IFEED, i) =y(i)
-c            if(type.eq.'Imag') igain(IANT, IFEED, i) =y(i)
-c            write(*,*) 'IANT IFEED i ga N', IANT,  IFEED, i,
-c     *       rgain(IANT,IFEED, i), igain(IANT, IFEED, i),N
          end do
         call pgsci(5)
-        call pgline (N, x, ys)
+        call pgline (nsols, x, ys)
         call pgsci(1)
         END
 c-----------------------------------------------------------
@@ -1539,7 +1569,7 @@ c         subroutine gaintab(tno,time,gains,tau,npol,nants,nsoln,
 c     *                                          freq0,dodelay,pee)
           subroutine gaintab(tno,time,gains,npol,nants,nsoln,pee)
 c
-        integer tno,nants,nsoln,npol,pee(2)
+        integer tno,nants,nsoln,npol,pee(npol)
         double precision time(nsoln),freq0
         complex gains(10,2,6145)
         logical dodelay
@@ -1620,17 +1650,15 @@ c
         endif
         write(*,*) 
      * 'create new gain table with smoothed or interpolated values.'
-c           write(*,*) 'nsoln nantsi npol', nsoln, nants, npol
 c
 c  Write out all the gains.
 c
          ngains = npol*nants
         if(dodelay) ngains = (npol+1)*nants
 c
-              
         off = 8
+        write(*,*) nants, npol, nsoln
         do i=1,nsoln
-c           write(*,*) 'time=' ,  time(i)
           call hwrited(item,time(i),off,8,iostat)
           off = off + 8
           if(iostat.ne.0)then
@@ -1641,14 +1669,7 @@ c           write(*,*) 'time=' ,  time(i)
           do j=1,nants
             do p=1,npol
               pd = pee(p)
-c          write(*,*) 'i j p gains', i, j, p, gains(j,pd,i)
-c              if(abs(real( gains(j,pd,i)))+
-c     *           abs(aimag(gains(j,pd,i))).ne.0)then
-c                g(j1) = 1/gains(j,pd,i)
-c              else
-c                g(j1) = (0.,0.)
-c              endif
-               g(j1) =gains(j,pd,i)
+              g(j1) =gains(j,pd,i)
              j1 = j1 + 1
             enddo
           enddo
@@ -1668,16 +1689,16 @@ c
 c
 c  Now write out the other parameters that need to go along with this.
 c
-c        call wrhdi(tno,'nfeeds',npol)
-c        call wrhdi(tno,'ngains',ngains)
-c        call wrhdi(tno,'nsols',nsoln)
-c        call wrhdd(tno,'interval',0.5d0)
-c        if(dodelay)then
-c          call wrhdi(tno,'ntau',1)
-c          call wrhdd(tno,'freq0',freq0)
-c        else
-c          call wrhdi(tno,'ntau',0)
-c        endif
+        call wrhdi(tno,'nfeeds',npol)
+        call wrhdi(tno,'ngains',ngains)
+        call wrhdi(tno,'nsols',nsoln)
+        call wrhdd(tno,'interval',0.5d0)
+        if(dodelay)then
+          call wrhdi(tno,'ntau',1)
+          call wrhdd(tno,'freq0',freq0)
+        else
+          call wrhdi(tno,'ntau',0)
+        endif
 c
         end
 
@@ -2057,9 +2078,9 @@ c
 c
 c get rid of a bug when lo and li is small at e-42,
 c which collapes the plot frame
-c 
-             if(abs(yhi).le.1.e-18)  yhi=yhi/abs(yhi)*1.e-18
-             if(abs(ylo).le.1.e-18)  ylo=ylo/abs(ylo)*1.e-18
+c
+      if(abs(yhi).le.1.e-18) yhi=1.e-18
+      if((abs(ylo).le.1.e-18)) ylo=-1.e-18
 c
           delta = 0.05*(yhi-ylo)
           maxv = max(abs(ylo),abs(yhi))
