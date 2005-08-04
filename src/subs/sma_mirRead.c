@@ -87,6 +87,8 @@
 //                  any two source name entries from mir data.
 // 2005-08-03 (JHZ) fixed a bug in the channel pntr in the
 //                  case of resampling the data to a lower channel resolution.
+// 2005-08-03 (JHZ) change the apperture efficiency to 0.5 for 340 GHz
+//                  
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -384,7 +386,7 @@ void rspokeflshsma_c(char *kst[])
   switch(smabuffer.rxif) {  
   case 0: eta_a=0.75;     /* jyperk=139. assuming eta_a=0.7 d=6m */
           break;
-  case 1: eta_a=0.65;     /* jyperk=194. assuming eta_a=0.5 d=6m */   
+  case 1: eta_a=0.5;     /* jyperk=194. assuming eta_a=0.5 d=6m */   
           break;
   case 2: eta_a=0.4;     /* jyperk=242. assuming eta_a=0.4 d=6m */  
           break;
