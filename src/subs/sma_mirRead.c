@@ -85,6 +85,8 @@
 // 2005-07-07 (JHZ) add  parsing source name and changing the source
 //                  name if the first 8 chars are identical in
 //                  any two source name entries from mir data.
+// 2005-08-03 (JHZ) fixed a bug in the channel pntr in the
+//                  case of resampling the data to a lower channel resolution.
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -511,17 +513,15 @@ int rsgetdata(float smavis[2*MAXCHAN], int smaflags[MAXCHAN], int *smanchan, int
       }
       for (i=nchan; i< nchan+smabuffer.nfreq[n]; i++){
 	fac[n]=1000000.;
-	/*          printf("sb=%d %f\n", sb, pow((double)(-1),(double)(sb+1))); 
-	 */
-	smavis[2*i] =  fac[n]*smabuffer.data[ipnt].real;
+	smavis[2*i]   =  fac[n]*smabuffer.data[ipnt].real;
 	smavis[2*i+1] =  fac[n]*smabuffer.data[ipnt].imag;
 //	  (float)pow((double)(-1),(double)(sb+1)); 
-	smaflags[i] =  smabuffer.flag[n][p][bl][sb];       
+         smaflags[i] =  smabuffer.flag[n][p][bl][sb];       
 	ipnt++;    
       }
       if(smabuffer.bchan[n]>=1&&smabuffer.bchan[n]<=smabuffer.nfreq[n])
 	smaflags[nchan+smabuffer.bchan[n]] = -1;
-      nchan = nchan + smabuffer.nfreq[n];
+        nchan = nchan + smabuffer.nfreq[n];
     }
     nchand = nchand + smabuffer.nfreq[n];
   }
@@ -2093,30 +2093,29 @@ int rsmir_Read(char *datapath, int jstat)
 	    for(i=0;i<sph[kk]->nch;i++){
 	      if (smabuffer.rsnchan> 0) {
 		/* average the channel to the desired resolution */
-             if(avenchan< (sph[kk]->nch/smabuffer.rsnchan) ) {
+//          if(avenchan< (sph[kk]->nch/smabuffer.rsnchan) ) {
 	  avereal = avereal + (float)pow(2.,(double)scale)*shortdata[5+2*i];
 		  // convert ovro sign convention to miriad
 	  aveimag = aveimag + (float)pow(2.,(double)scale)*(-shortdata[6+2*i]*phaseSign);
 		  avenchan++;
-		} else {
+//		} else {
+            if(avenchan==(sph[kk]->nch/smabuffer.rsnchan)) {
 		  avereal = avereal/avenchan;
 		  aveimag = aveimag/avenchan;
 		  smabuffer.data[ipnt].real=avereal;
 		  smabuffer.data[ipnt].imag=aveimag;
 		  ipnt++;
-		  avenchan = 1;
-		  // convert ovro sign convention to miriad
-		  avereal  = (float)pow(2.,(double)scale)*shortdata[5+2*i];
-		  aveimag  = (float)pow(2.,(double)scale)*(-shortdata[6+2*i]*phaseSign);
+		  avenchan = 0;
+                  avereal  = 0.;
+                  aveimag  = 0.;
 		}
 	      } else {
 		/* loading the original vis with no average */
 		// convert ovro sign convention to miriad
-		smabuffer.data[ipnt].real=(float)pow(2.,(double)scale)*shortdata[5+2*i];
-		smabuffer.data[ipnt].imag=
+	smabuffer.data[ipnt].real=(float)pow(2.,(double)scale)*shortdata[5+2*i];
+	smabuffer.data[ipnt].imag=
 		  (float)pow(2.,(double)scale)*(-shortdata[6+2*i]*phaseSign);
 		ipnt++;    }
-	      
 	    }
 	    
 	    free(shortdata);
