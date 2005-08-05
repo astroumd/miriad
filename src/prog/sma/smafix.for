@@ -8,11 +8,8 @@ c: plotting, analysis and uvdata correction
 c+
 c	SmaFix plots and does least square fitting with an order
 c       of polynomial to the antenna-based Tsys measurements.
-c       Tsys corrections for SMA uv data can be made with 
-c       either the original Tsys measurements or the fitted 
-c       polynomial values. The values of the variable systemp 
-c       will be replaced by the values that are used in the Tsys
-c       corrections. 
+c       SmaFix also applies the Tsys corrections to the visibilies. 
+c       
 c@ vis
 c	The name of the input data-set. No default.
 c@ out
@@ -75,12 +72,22 @@ c                    in the Tsys corrections, saves the values from
 c                    the polynomial fit to replace the original
 c                    systemp and creates a new variable systmp to
 c                    save the original Tsys measurements.
-c                    By default, the original Tsys measurements will
-c                    be used in the Tsys corrections and the variables
-c                    from the input uvdata file remains unchanged. 
 c         "all"      uses all data associated with flagged and unflagged 
 c                    visibilties. The default uses only unflagged
 c                    (good) data.
+c         "tsysfix"  uses the polynomial fit to Tsys from the unflagged (good) 
+c                    data to interpolate the Tsys at flagged data points
+c                    and replaces only the bad Tsys with the polynomial fit
+c                    in the case of the Keyword dofit = 1 or greater. 
+c                    The flag state will be reset to 'unflag' for all the 
+c                    visibilities except for those with illegal polarization states. 
+c
+c                    By default (both tsysswap and tsysfix are not chosen
+c                    in options), the original Tsys measurements will
+c                    be used in the Tsys corrections and the variables
+c                    from the input uvdata file remains unchanged if
+c                    options=tsyscorr is chosen.
+c
 c--
 c  History:
 c  jhz: 2004-7-26  made the original by modifying miriad tasks varplot 
@@ -119,11 +126,20 @@ c  jhz: 2005-7-26 fix a bug in polynomial fit to the Tsys
 c                 when flag options is taken.
 c  jhz: 2005-7-29 change the default for dofit;
 c                 remove rmsflag.
+c  jhz: 2005-8-04 add options=tsysfix to allow users to
+c                 fix the bad (flagged) tsys values with
+c                 the values derived from the polynomial
+c                 fits to the good (unflagged) tsys measurements;
+c                 the flag states of the output file
+c                 will be reset back to unflag.
+c                 apply jyperk along with the Tsys correction to
+c                 the visibility data so that the amplitude
+c                 of the visibility is in Jy scale after Tsys correction. 
 c------------------------------------------------------------------------
         character version*(*)
         integer maxpnts
         parameter(maxpnts=100000)
-        parameter(version='SmaFix: version 1.7 29-Jul-05')
+        parameter(version='SmaFix: version 1.8 4-Aug-05')
         logical doplot,dolog,dotime,dounwrap
         character vis*64,device*64,logfile*64,xaxis*16,yaxis*16
         character out*64
@@ -137,7 +153,7 @@ c------------------------------------------------------------------------
         integer dofit, antid, xaxisparm, nterms
         integer i,j,k,l,bant(10),gant(10),rant(10),ggant
         real flagvar(maxpnts)
-        logical dotsys,tsysplt,dosour,dotswap,doflag
+        logical dotsys,tsysplt,dosour,dotswap,doflag,dotsysfix
         real apl(10,32,10)
         double precision xapl(10,32,10),bppl(10,32,10,10)
         common/smfix/rmsflag,dofit,dotsys,dotswap,
@@ -214,7 +230,7 @@ c
         if(yaxis.ne.'systemp') 
      * call bug('f','SMAFIX only accepts systemp for yaxis')
         call getopt(compress,dtime,overlay,dounwrap,dotsys,
-     *              dosour,equal,dotswap,doflag)
+     *              dosour,equal,dotswap,doflag,dotsysfix)
         if(xaxis.eq.'time')then
         call keyt('xrange',xtime1,'time',0.d0)
         call keyt('xrange',xtime2,'time',0.d0)
@@ -233,6 +249,8 @@ c
            if(rmsflag<0.) rmsflag=2.
         call keyi('dofit',dofit,0)
            if(dofit<0) dofit=0
+        if(dotsysfix.and.(dofit.eq.0)) 
+     *  call bug('f', 'Set dofit to 1 or greater for options=tsysfix.')
         call keyfin
 c
 c  Open up all the inputs.
@@ -283,8 +301,6 @@ c
      *          flagvar,doflag,
      *          xaxis,xvals,xdim1*xdim2,xscale,xoff,xtype,
      *          yaxis,yvals,ydim1*ydim2,yscale,yoff,ytype)
-
-
 c
 c  Unwrap the phases
 c
@@ -320,7 +336,7 @@ c
           endif
           call pgsch(real(max(nx,ny))**0.4)
           call plotit(npnts,dotime,equal,overlay,vis,
-     *      flagvar,doflag,
+     *      flagvar,doflag, dotsysfix,
      *      xvals,xdim1,xdim2,xaxis,xrange,xunit,
      *      yvals,ydim1,ydim2,yaxis,yrange,yunit)
           call pgend
@@ -343,7 +359,8 @@ c
 c 
 c do uvdata correction
 c
-         if(dotsys) call uvdatafix(vis,out,dotime,bant,gant,rant)
+         if(dotsys) 
+     *    call uvdatafix(vis,out,dotime,bant,gant,rant,dotsysfix)
 c
 c  Bye bye.
 c
@@ -375,10 +392,10 @@ c
         end
 c************************************************************************
         subroutine getopt(compress,dtime,overlay,dounwrap,
-     *                    dotsys,dosour,equal,dotswap,doflag)
+     *             dotsys,dosour,equal,dotswap,doflag,dotsysfix)
 c
         logical compress,dtime,overlay,dounwrap,dotsys,
-     *     dosour,equal,dotswap,doflag
+     *     dosour,equal,dotswap,doflag,dotsysfix
 c
 c  Get extra processing options.
 c
@@ -392,14 +409,16 @@ c    dosour     do source-based fit to Tsys.
 c    equal	Make axes equal scales.
 c    dotswap    swap systemp with the polynomial fit.
 c    doflag     using the data unflagged (good).
+c    dotsysfix  fix tsys of the flagged data with the polynomial fit
+c               from unflagged data.
 c------------------------------------------------------------------------
         integer nopts
-        parameter(nopts=9)
+        parameter(nopts=10)
         character opts(nopts)*8
         logical present(nopts)
         data opts/'compress','dtime   ','overlay ','unwrap  ',
      *            'tsyscorr','dosour  ','equal   ','tsysswap ',
-     *              'all     '/
+     *            'all     ','tsysfix '/
 c
         call options('options',opts,present,nopts)
         compress = present(1)
@@ -411,6 +430,7 @@ c
         equal    = present(7)
         dotswap  = present(8)
         doflag   = .not.present(9)
+        dotsysfix= present(10)   
         end
 c************************************************************************
         subroutine compact(vals,n1,n2,n3)
@@ -588,17 +608,17 @@ c
         end
 c************************************************************************
         subroutine plotit(npnts,dotime,equal,overlay,vis,
-     *      flagvar,doflag,
+     *      flagvar,doflag,dotsysfix,
      *      xvals,xdim1,xdim2,xaxis,xrange,xunit,
      *      yvals,ydim1,ydim2,yaxis,yrange,yunit)
 c
         integer npnts,xdim1,xdim2,ydim1,ydim2
         real xrange(2),yrange(2)
         character xaxis*(*),yaxis*(*),xunit*(*),yunit*(*),vis*(*)
-        logical dotime,overlay,equal,doflag
+        logical dotime,overlay,equal,doflag,dotsysfix
         real xvals(*),yvals(*), flagvar(npnts)
 c------------------------------------------------------------------------
-        integer x1,x2,y1,y2,xoff,yoff,kx,ky
+        integer x1,x2,y1,y2,xoff,yoff,kx,ky, symbol
         logical xext,yext,xr,yr
         real xlo,xhi,ylo,yhi
         character source(32)*32
@@ -613,7 +633,6 @@ c
 c  Determine if we have to extract the data. Also determine offsets
 c  of were we have to extract it to.
 c
-         
         xext = xdim1.ne.1.or.xdim2.ne.1
         if(xext)then
           xoff = xdim1*xdim2*npnts+1
@@ -645,7 +664,8 @@ c
             ky = ky + 1
             if(yext)then
               call extract(yvals(ky),ydim1*ydim2,npnts,yvals(yoff))
-              if(yr) call getscale(yvals(yoff),npnts,ylo,yhi)
+              call extract(flagvar(ky),ydim1*ydim2,npnts,flagvar(yoff))
+         if(yr) call fgetscale(yvals(yoff),flagvar(yoff),npnts,ylo,yhi)
             endif
             kx = 0
              do x2=1,xdim2
@@ -659,9 +679,10 @@ c
      *            xaxis,xunit,xlo,xhi,x1,xdim1,x2,xdim2,
      *            yaxis,yunit,ylo,yhi,y1,ydim1,y2,ydim2)
 
+        symbol=1
         if(tsysplt) 
      * call tsyspgpts (npnts,xvals(xoff),yvals(yoff),
-     * flagvar(1),doflag,1)
+     * flagvar(yoff),doflag,dotsysfix,symbol)
               enddo
             enddo
           enddo
@@ -670,11 +691,11 @@ c
 CPGPT -- draw several graph markers
 Cvoid cpgpt(int n, const float *xpts, const float *ypts, int symbol);
 C
-      SUBROUTINE tsyspgpts (N, XPTS, YPTS, YFLAG,DOFLAG,SYMBOL)
+      SUBROUTINE tsyspgpts (N,XPTS,YPTS,YFLAG,DOFLAG,dotsysfix,SYMBOL)
       INTEGER N, NPNTS
       REAL XPTS(N), YPTS(N), YFLAG(N)
-      INTEGER SYMBOL, FPTS(N)
-      LOGICAL DOFLAG
+      INTEGER SYMBOL,FPTS(N)
+      LOGICAL DOFLAG,FLAG(N),dotsysfix
 C Primitive routine to draw Graph Markers (polymarker). The markers
 C are drawn using the current values of attributes color-index,
 C line-width, and character-height (character-font applies if the symbol
@@ -716,6 +737,7 @@ C-----------------------------------------------------------------------
         real xx(100), yy(100), xloc, yloc
         real xfit(N),yfit(N), yerr(N)
         integer Fsfit(N,32)
+        logical FsFlag(N,32)
         real xsfit(N,32),ysfit(N,32)
         double precision dxsfit(N,32),dysfit(N,32), dyserr(N,32)
         integer Ns(32), Nss
@@ -736,17 +758,22 @@ C
       IF (PGNOTO('PGPT')) RETURN
 c
 c sort the data
-c          
+c    FLAG(i)=.false. -> bad
+c    FLAG(i)=.true.  -> good      
             do i=1, N
                FPTS(i)=1
-               if(DOFLAG.and.(YFLAG(i).lt.0)) FPTS(i)=-1
+               FLAG(i)=.true.     
+               if(DOFLAG.and.(YFLAG(i).lt.0)) then
+               FPTS(i)=-1
+               FLAG(i)=.false.
+               end if
                xfit(i) =XPTS(i)
                yfit(i) =YPTS(i)
                XD(i) = XFIT(i)
                YD(i) = YFIT(i)
                if(YFLAG(i).gt.0) DDELTAY(i) =1.D0
                if(YFLAG(i).lt.0) DDELTAY(i) =1.D10
-               if(DOFLAG.and.FPTS(i).eq.-1) DDELTAY(i) =1.D10
+               if(DOFLAG.and.(.not.FLAG(i))) DDELTAY(i) =1.D10
             end do
             call xysort(N, xfit, yfit)
                do i=1, 32
@@ -764,7 +791,8 @@ c
                dysfit(Ns(k),k) =YPTS(i)
                dyserr(Ns(k),k) =1.0D0
         if(YFLAG(i).le.0) dyserr(Ns(k),k) =1.0D10
-                 FsFIT(Ns(k),k)= FPTS(i)
+               FsFIT(Ns(k),k)= FPTS(i)
+               FsFLAG(Ns(k),k)= FLAG(i)
                end if
                end do
             end do
@@ -784,62 +812,32 @@ c
                dyserr(Ns(k),k) =1.0D0
        if(YFLAG(i).lt.0) dyserr(Ns(k),k) =1.0D10
                 FsFIT(Ns(k),k)=FPTS(i)
+                FsFLAG(Ns(k),k)=FLAG(i)
                 end do
                 end do
              end if
-c
-c    doflag tsys before fit
-c
-             
-              if((rmsflag>0.).and.(.not.dosour)) then
-c
-c call polynomial fit
-c
-               mode=0;
-               nterms =dofit+1
-            CALL REGPOL(XD,YD,DDELTAY,N,MAXNR,XA,BP,AP,CHI2)
-            call pgsci(2)
-            call regrmsflags(nterms,xa,bp,N,XPTS,YPTS,FPTS)
-              end if
-           
-           if((rmsflag>0.).and.dosour) then
-c
-c call polynomial fit
-c
-           mode=0;
-           nterms =dofit+1
-            do k=1, nsource
-                 if(Ns(k).gt.1) then 
-           CALL REGPOL(dxsfit(1,k),dysfit(1,k),dyserr(1,k),Ns(k),
-     *          MAXNR,XA,BP,AP,CHI2)
-           call pgsci(k)
-           call regrmsflags(nterms,xa,bp,Ns(k),xsfit(1,k),YsFIT(1,k),
-     *          FsFIT(1,k))
-                 end if
-            end do
-           end if
+
 c            
 c handling data plot 
-c        
+c      
        NPNTS=1
        mindx =0
        NPL=0
-      CALL PGBBUF
+       CALL PGBBUF
        do i=1, N
         indx=soupnt(i) 
         if(indx.gt.mindx) mindx =indx
             call pgsci(indx)
                xx(1) = XPTS(i)
                yy(1) = YPTS(i)
-                  if(FPTS(i).ne.-1) then
+                  if(FLAG(i)) then
                              IF (SYMBOL.GE.0 .OR. SYMBOL.LE.-3) THEN
                              CALL GRMKER(SYMBOL,.FALSE.,NPNTS,xx,yy)
                              ELSE
                              CALL GRDOT1(NPNTS,xx,yy)
                              END IF
                   end if
-c           if(.not.dosour) then
-               if((FPTS(i).eq.1).and.(yy(1).gt.0))  then
+               if(FLAG(i).and.(yy(1).gt.0))  then
                 if(yy(1).gt.0) then
                NPL=NPL+1
                XFIT(NPL)=xx(1)
@@ -919,7 +917,7 @@ c
               NPL =0
               if(Ns(k)>1) then
               do i=1, ns(k)
-              if(FsFIT(i,k)>0) then
+              if(FsFLAG(i,k)) then
                   NPL=NPL+1
                   XFIT(NPL)=XsFIT(i,k) 
                   YFIT(NPL)=YsFIT(i,k)
@@ -952,6 +950,46 @@ c
                             end if
             end do
             end if
+c
+c  replace the flagged tsys
+c  with the values from polynomial fit
+c
+       if(dotsysfix) then
+
+       NPNTS=1
+       mindx =0
+       NPL=0
+       CALL PGBBUF
+       SYMBOL = 9 
+       do i=1, N
+        if(dosour) k=soupnt(i)
+        if(.not.dosour) k=1
+        if(indx.gt.mindx) mindx =indx
+            call pgsci(k)
+               xx(1) = XPTS(i)
+               yy(1) = YPTS(i)
+                 if(.not.FLAG(i)) then
+                 do ii=1,MAXNR
+                 xa(ii)= xapl(antid,k,ii) 
+                 do j=1,MAXNR
+                 bp(ii,j)= bppl(antid,k,ii,j)
+                 end do
+                 end do
+            call regpolfitg(nterms,xa,bp,1,xx(1),yy(1))
+c
+c   skip the bad fitting when no good values for xa and bp
+c   are achiedved.
+c
+               if(yy(1).ge.0.and.yy(1).le.1e10) then
+               IF (SYMBOL.GE.0 .OR. SYMBOL.LE.-3) THEN
+                  CALL GRMKER(SYMBOL,.FALSE.,NPNTS,xx,yy)
+                        ELSE
+                  CALL GRDOT1(NPNTS,xx,yy)
+                        END IF
+                end if
+                    end if
+       end do
+       end if
            call pgsci(1)
       END
 
@@ -1265,9 +1303,39 @@ c
         loval = loval - delta
         hival = hival + delta
         end
+        subroutine fgetscale(vals,flag,npnts,loval,hival)
+c
+        integer npnts
+        real vals(npnts),flag(npnts),loval,hival
+c
+c------------------------------------------------------------------------
+        real delta,absmax
+c
+c  Externals.
+c
+        integer i
+c
+c        loval = vals(ismin(npnts,vals,1))
+c        hival = vals(ismax(npnts,vals,1))
+         loval =10000.
+         hival =-10000.
+         do i=1, npnts
+             if(flag(i).gt.0.) then
+             if(vals(i).gt.hival) hival=vals(i)
+             if(vals(i).lt.loval) loval=vals(i)
+             end if
+         end do
+        delta = 0.05*(hival-loval)
+        absmax = max(abs(hival),abs(loval))
+        if(delta.le.1e-4*absmax) delta = 0.01*absmax
+        if(delta.eq.0) delta = 1
+        loval = loval - delta
+        hival = hival + delta
+        end
+
 c************************************************************************
         subroutine datread(vis,maxpnt,npnts,bant,ggant,
-     *          flagvar,doflag,
+     *          flagvar,doflag, 
      *          xaxis,xvals,xdim,xscale,xoff,xtype,
      *          yaxis,yvals,ydim,yscale,yoff,ytype)
 c
@@ -1290,13 +1358,15 @@ c------------------------------------------------------------------------
         integer nsource,sourid,nbls, fbls
         logical xupd,yupd,doflag,tupd
         double precision preamble(4), time, ctime
-        double precision mytime(maxinte)
         include 'maxdim.h'
         complex data(maxchan)
-        logical flags(maxchan),updated,tsysflag(maxant,maxinte)
+        logical flags(maxchan),updated
         integer nchan,i1,i2,nrecord,nants,nflagbl(maxant)
         character xt*1,yt*1, tt*1, souread*32
         common/sour/soupnt,source,nsource
+        logical tsysflag(maxant,maxinte)
+        double precision mytime(maxinte)
+        common/tsysflag/tsysflag,mytime
 c
 c  Externals.
 c
@@ -1314,6 +1384,9 @@ c initialize flfrun 1 -> good data
         do i=1,maxant
                nflagbl(i1)=0
                nflagbl(i2)=0
+            do j=1,maxinte
+               tsysflag(i,j) = .false.
+            enddo
         end do
            nbls=1
 c
@@ -1324,7 +1397,6 @@ c
             nrecord=1
              call uvread(tin,preamble,data,flags,maxchan,nchan)
         if(nchan.le.0) call bug('f','No data found in the input.')
-                
              call basant(preamble(4),i1,i2)
              if(.not.flags(1)) then
                nflagbl(i1)= nflagbl(i1)+1
@@ -1335,11 +1407,21 @@ c
              mytime(1)= ctime
           dowhile(nchan.gt.0)
              call uvread(tin,preamble,data,flags,maxchan,nchan)
-            call uvgetvrd(tin, 'time', time, 1)
+             call uvgetvrd(tin, 'time', time, 1)
              call uvprobvr(tin,'time',tt,tdims,tupd)
+c
+c nbls: number of total baselines for a n antennas' array;
+c nbls=n(n-1)/2
+c ibls: number of baselines related to ith antenna in the array;
+c ibls = n-1;
+c nflagbl(i): number of baselines related to ith antenna which
+c has been marked flag;
+c so if nflagbl(i) = ibls, i.e.,
+c nbls=nflagbl(i)(nflagbl(i)+1)/2, antenna i should be flagged.
 
              if(.not.tupd) nbls=nbls+1
              call basant(preamble(4),i1,i2)
+c             write(*,*) 'flag=',flags(1),flags(50)
              if(.not.flags(1).and..not.tupd) then
              nflagbl(i1)= nflagbl(i1)+1
              nflagbl(i2)= nflagbl(i2)+1
@@ -1348,26 +1430,41 @@ c
              if(tupd) then
                  do i=1, nants
                   fbls=nflagbl(i)*(nflagbl(i)+1)/2
-                  if(fbls.eq.nbls) then
+c                  write(*,*) fbls,nbls
+                  if(fbls.ge.nbls) then
                   if(doflag) tsysflag(i,inhid)=.true.
+c                  write(*,*) 'tsysflg=', tsysflag(i,inhid), i,inhid
                   end if
                   nflagbl(i)=0
-                end do
+                  end do
                nbls=1
               if(.not.flags(1)) then
-             nflagbl(i1)= nflagbl(i1)+1
-             nflagbl(i2)= nflagbl(i2)+1
-             end if
+               nflagbl(i1)= nflagbl(i1)+1
+               nflagbl(i2)= nflagbl(i2)+1
+              end if
 
              endif
                 
              if(preamble(3).gt.ctime) then
-             ctime= preamble(3)
-             inhid=inhid+1   
-             mytime(inhid) = ctime         
+                ctime= preamble(3)
+                inhid=inhid+1   
+                mytime(inhid) = ctime         
              endif
           nrecord=nrecord+1
           end do
+c
+c check the last integration
+c
+                   nbls=nbls-1
+                  do i=1, nants
+                  fbls=nflagbl(i)*(nflagbl(i)+1)/2
+c                  write(*,*) fbls,nbls, i
+          if(fbls.ge.nbls) then
+          if(doflag) tsysflag(i,inhid)=.true.
+c         write(*,*) 'tsysflg=', tsysflag(i,inhid), i,inhid,mytime(inhid)
+                  end if
+                  nflagbl(i)=0
+                  end do
               call uvrewind(tin)
           sourid=1
           nsource=1
@@ -1375,12 +1472,12 @@ c
           ctime=0
           inhid=0
             iostat = uvscan(tin, ' ')
-        dowhile(iostat.eq.0.and.npnts.lt.maxpnt)
+          dowhile(iostat.eq.0.and.npnts.lt.maxpnt)
           call uvgetvra(tin,'source',souread)
-       if (souread.ne.' '.and.sourid.eq.1) then
+          if (souread.ne.' '.and.sourid.eq.1) then
                   sourid=sourid+1
-                 nsource=nsource+1
-          source(sourid)=souread
+                  nsource=nsource+1
+           source(sourid)=souread
            else
                do i=1, nsource
                 if(souread.eq.source(i)) then
@@ -1450,10 +1547,11 @@ c
                      else
                flgrun(ypnt+i) =1
                     end if
+                
              end do
-c
-            xpnt = xpnt + xdim
-            ypnt = ypnt + ydim
+c                write(*,*) xdrun(xpnt+6),yrrun(ypnt+6),flgrun(ypnt+6)
+               xpnt = xpnt + xdim
+               ypnt = ypnt + ydim
           endif
           
           iostat = uvscan(tin,' ')
@@ -1466,12 +1564,17 @@ c
 c
 c  Flush out anything remaining.
 c
-        if(xpnt.gt.0)then
+        if(xpnt.gt.0) then
           k = min(xpnt/xdim,maxpnt-npnts)
           call transf(k,npnts,flgrun,flagvar,
      *        xtype,xirun,xrrun,xdrun,xdim,xvals,xscale,xoff,
      *        ytype,yirun,yrrun,ydrun,ydim,yvals,yscale,yoff)
         endif
+c            write(*,*) npnts
+c          do i=0,npnts-1
+c        write(*,*) xvals(i*xdim+7),flagvar(i*ydim+7),yvals(i*ydim+7)
+c           enddo
+c          stop
         end
 c************************************************************************
         subroutine transf(k,npnts,flgrun,flagvar,
@@ -1798,8 +1901,9 @@ c
       END
 
 c************************************************************************
-        subroutine uvdatafix (vis, out, dotime,bant,gant,rant)
-        integer bant(10), gant(10), rant(10)
+      subroutine uvdatafix (vis,out,dotime,bant,gant,rant,dotsysfix)
+      integer bant(10), gant(10), rant(10)
+      logical dotsysfix
       include 'maxdim.h'
 c  Pi.
       real pi, twopi
@@ -1836,7 +1940,7 @@ c=======================================================================
         character version*(*)
         integer maxsels,atant
         parameter(version='SmaFix: version 1.0 01-Aug-04')
-        parameter(maxsels=256,atant=6)
+        parameter(maxsels=256,atant=6,maxinte=5000)
 c
         integer lvis,lout,vtsys,vant,vgmet,vnif
         integer pol,npol,i1,i2,nant,i,j,k
@@ -1846,7 +1950,7 @@ c
         real xtsys(maxant*maxwin),ytsys(maxant*maxwin)
         real tsys(maxant*maxwin), otsys(maxant*maxwin)
         real  tscale
-        logical dojpk
+c        logical dojpk
 c
         real freq0(maxwin),jyperk
         double precision ra,dec,lat
@@ -1860,8 +1964,8 @@ c
         integer year, month, sday
         double precision day
         logical uvvarupd,hdprsnt
-        real getjpk
-        real rmsflag, antel, tsysv, timev
+c        real getjpk
+        real rmsflag, antel, tsysv, timev,tsts(maxinte)
         integer dofit, antid, xaxisparm, nterms
         logical dotsys, tsysplt, dotime, dosour,dotswap
         real apl(10,32,10)
@@ -1874,8 +1978,18 @@ c
         character source(32)*32, souread*32
         integer soupnt(10000*10),nsource, sourid
         common/sour/soupnt,source,nsource
-        integer nave, navel
+        integer nave, navel, inhid, len1
+        logical tsysflag(maxant,maxinte)
+        double precision mytime(maxinte)
+        common/tsysflag/tsysflag,mytime
+c
+c initialize
+c
               sourid=0
+              inhid=0
+        do i=1,maxinte
+              tsts(i) = 0.
+        enddo
 c  
 c   process replacement of Tsys from ant1 to ant2
 c   apl(ant,sour,term)
@@ -1999,7 +2113,7 @@ c
         call uvrdvrr(lvis, 'antel', antel, 1)
         call uvread(lvis,preamble,data,flags,maxchan,nchan)
         if(nchan.eq.0)call bug('f','No data found')
-
+            inhid=1
            call uvrdvri(lvis,'nants',na,0)
 
 c   convert preamble(4) (julian day) to  utc time in day
@@ -2011,14 +2125,18 @@ c   in the plot-fitting routine.
          sday=day
          ptime=0
          dowhile(nchan.gt.0)
+c
+c  check up the integration
+c
+          if((preamble(4)-mytime(inhid)).gt.0.0) inhid=inhid+1
           call varcopy(lvis,lout)
           call uvgetvra(lvis,'source',souread)
               do i=1, nsource
                 if(souread.eq.source(i)) sourid=i
               end do
           call uvrdvrr(lvis, 'antel', antel, 1)
-          call uvrdvri(lvis,'pol',pol,0)
-          call uvrdvri(lvis,'npol',npol,0)
+          call uvrdvri(lvis,'pol',pol,1)
+          call uvrdvri(lvis,'npol',npol,1)
 c
 c  Check whether nif and nschan parameters have changed.
 c
@@ -2032,8 +2150,7 @@ c
           call felget(lvis,vgmet,nif,nschan,freq0,freq,nchan,
      *                                                  ra,dec,lat)
 
-            jyperk = getjpk(freq0(1)*1e-9)
-            dojpk = .false.
+              call uvrdvrr(lvis,'jyperk', jyperk, 1)
 c
 c  Apply the Tsys correction, if needed.
 c
@@ -2079,8 +2196,13 @@ c    axis = time for xaxisparm.eq.1
                             end do
                             end do
          call regpolfitg(nterms,xa,bp,1,timev,tsysv)
-                            otsys(i) = tsys(i)
-                             tsys(i) = tsysv
+                         otsys(i) = tsys(i)
+         if(tsysflag(i,inhid).and.dotsysfix) then
+                         tsys(i) = tsysv
+                         else
+                         tsys(i) = tsys(i)
+                         end if
+         if(.not.dotsysfix) tsys(i) = tsysv
                      
                          end do
                                            end if
@@ -2105,16 +2227,28 @@ c    axis = antel for xaxisparm.eq.2
                             end do
           call regpolfitg(nterms,xa,bp,1,antel,tsysv)
                              otsys(i) = tsys(i) 
+         if(tsysflag(i,inhid).and.dotsysfix) then
                              tsys(i) = tsysv
+c reset flags back unflag state
+                             else
+                             tsys(i) =tsys(i)
+                             end if
+                if(.not.dotsysfix) tsys(i) = tsysv 
                          end do
                 end if
                 endif
-         if(dotsys.and.dotswap) 
-     *   call tsysap(data,nchan,nschan,xtsys,ytsys,tsys,
-     *               nants,nif,i1,i2,pol)
-         if(dotsys.and.(.not.dotswap))
-     *   call tsysap(data,nchan,nschan,xtsys,ytsys,otsys,
-     *               nants,nif,i1,i2,pol)              
+         if(dotsysfix.and.dotsys) dotswap = .true.  
+         if(dofit.eq.0.and.dotsys) dotswap = .true.
+         if(dotsys.and.dotswap) then
+        call tsysap(data,nchan,nschan,xtsys,ytsys,tsys,
+     *               nants,nif,i1,i2,pol,jyperk)
+               tsts(inhid) = tsts(inhid)+tsys(i1)*tsys(i2)
+                                end if
+         if(dotsys.and.(.not.dotswap)) then
+        call tsysap(data,nchan,nschan,xtsys,ytsys,otsys,
+     *               nants,nif,i1,i2,pol,jyperk)  
+               tsts(inhid) = tsts(inhid)+otsys(i1)*otsys(i2)
+                                end if            
          if(npol.gt.0)then
          call uvputvri(lout,'npol',npol,1)
          call uvputvri(lout,'pol',pol,1)
@@ -2128,9 +2262,11 @@ c
 c  if(dotsys.and.(.not.dotswap)
 c  the original Tsys is applied to vis; the systemp remains
 c  unchanged.    
+c
               if((day-ptime).gt.0) then
        if(dotswap) call uvputvrr(lout, 'systemp', tsys, nants)
        if(dotswap) call uvputvrr(lout, 'systmp', otsys, nants)
+       if(.not.dotswap) call uvputvrr(lout, 'systmp', tsys, nants)
        ptime=day
               end if 
          call uvwrite(lout,preamble,data,flags,nchan)
@@ -2143,8 +2279,68 @@ c
 
         write(*,*) 'Done Tsys correction!!'
         write(*,*) 'Output file = ',out
-           
-          end
+        write(*,*) ' '
+        write(*,*) 'Additional messages for what have been done:'
+c
+        if(.not.dotsysfix.and.(dofit.le.0)) then
+      write(*,*) 'Used unflagged syetemp in Tsys correction.'
+      write(*,*) 'Copied the flag states from input, ',vis(1:len1(vis)),
+     *' , over to, ',out(1:len1(out))
+        end if
+c        
+       if(.not.dotsysfix.and.(dofit.gt.0)) then
+        if(dotswap) write(*,*)
+     *'Used the polynomial fits to systemp in Tsys correction.',
+     *'Replaced the systemp values with the polynomial fits.',
+     *'Stored the original systemp values in the variable systmp.'
+        if(.not.dotswap) write(*,*)
+     *'Used the original systemp in Tsys correction.',
+     *'Stored polynomial fits in the variable systmp.'
+        end if
+c
+        if(dotsysfix) then
+        write(*,*) 
+     *'Replaced the flagged systemp with the polynomial interpolation.',
+     *'Used the original/fixed systemp in Tsys correction.'  
+        write(*,*) 
+     * 'Reset the flag states back to unflag in the output file, ',
+     * out(1:len1(out))
+c
+c go through the output data again
+c reset flag states
+c
+        call uvopen (lout,out,'old')  
+        call uvset(lout,'preamble','uvw/time/baseline',0,0.,0.,0.)
+        inhid=0
+        call uvread(lout,preamble,data,flags,maxchan,nchan)
+        inhid=1
+        if(nchan.eq.0)call bug('f','No data found')
+         dowhile(nchan.gt.0)
+         if((preamble(4)-mytime(inhid)).gt.0.0) inhid=inhid+1
+         call uvgetvri (lout,'npol', npol, 1)
+         call uvgetvri (lout,'pol', pol, 1)
+c 
+c  reset flag state to unflag for all the visibilities
+c  except for those visibility with illegal pol states 
+c  or the all the baseline pair tsys with zero value.
+c
+         if((pol.ne.0).and.(tsts(inhid).gt.0.)) 
+     *   call rsetflag (lout,nchan)
+         call uvread(lout,preamble,data,flags,maxchan,nchan)
+         end do
+         call uvclose(lout)
+         end if
+        end
+
+        subroutine rsetflag(lout,nchan)
+        integer i, nchan, lout
+        logical flags(nchan)
+        do i=1, nchan
+        flags(i) = .true.
+        end do
+        call uvflgwr(lout,flags)
+        end
+
         subroutine felget(lvis,vmet,nif,nschan,freq0,freq,nchan,
      *                                                  ra,dec,lat)
 c
@@ -2230,12 +2426,12 @@ c
       end
 
         subroutine tsysap(data,nchan,nschan,xtsys,ytsys,tsys,nants,nif,
-     *   i1,i2,pol)
+     *   i1,i2,pol,jyperk)
 c
         integer nchan,nants,nif,nschan(nif),i1,i2,pol
         real xtsys(nants,nif),ytsys(nants,nif)
 c       only tsys dependence provided
-        real tsys(nants)
+        real tsys(nants),jyperk
         complex data(nchan)
 c
 c------------------------------------------------------------------------
@@ -2284,7 +2480,10 @@ c
 c        why 50 ? mean tsys=50 at ATCA?
 c            data(i) = data(i)*sqrt(t1t2)/50.0
 c        in the smalod we multiple the raw data by a constant factor of 1e6
-             data(i) = data(i)*sqrt(t1t2)/200.0
+c            data(i) = data(i)*sqrt(t1t2)/200.0
+c         after tsys correction the vis amplitude scale
+c         should be close to the actual Jy scale.
+          data(i) = data(i)*sqrt(t1t2)*jyperk/200000.
           enddo
         enddo
 c
