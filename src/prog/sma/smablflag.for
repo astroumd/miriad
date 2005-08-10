@@ -123,11 +123,14 @@ c                 flagging selections of other variables in the case of
 c                 mir output data is used in which the size of tsys is 
 c                 not matched with the visibility.
 c    01aug05 jhz  antel restricted for systemp flagging. 
+c    10aug05 jhz  fixed a bug in uvdist selection (commented out n=1 at line 1016)
+c                 for initializing the baseline weighting before calculating
+c                 baseline distances. 
 c------------------------------------------------------------------------
         include 'smablflag.h'
 	character version*(*)
         integer maxdat,maxplt,maxedit
-        parameter(version='SmaBlFlag: version 1.4 1-August-2005')
+        parameter(version='SmaBlFlag: version 1.5 10-August-2005')
         parameter(maxdat=500000,maxplt=20000,maxedit=20000)
 c
         logical present(maxbase),nobase,selgen,noapply,rms,scalar
@@ -1010,7 +1013,7 @@ c
                if(dotsys) tsys12(bl) = sqrt(tsys(i1)*tsys(i2))
               endif
             enddo
-              n=1
+c              n=1
             if(n.gt.0)then
               uvdist2(bl) = uvdist2(bl) +
      *          n * (preamble(1)*preamble(1)+preamble(2)*preamble(2))
