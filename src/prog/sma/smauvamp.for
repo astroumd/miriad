@@ -1,10 +1,10 @@
        program smauvamp
 c-----------------------------------------------------------------------
-c= smauvamp - plot vis amplitude as uc or vc  on a PGPLOT device.	
-c& jhz 
+c= smauvamp - Analyses visibiliy amplitude by plotting data on a PGPLOT device.	
+c& jhz for sma
 c: uv analysis, plotting
 c+
-c  smauvamp - Plot visibiliy amplitude v.s. other variables
+c  smauvamp - Analyses visibiliy amplitude by plotting visibility data 
 c             with error bars for 1 standard deviation in the mean
 c             if averaging is invoked.
 c@ vis
@@ -58,6 +58,8 @@ c       is done before data is binned if nbin > 0 is selected.
 c       Default is no averaging. 
 c@ nbin 
 c       Number of bins in xrange for xaxis.
+c       If average > 0, the weighting in the bin statistics utilizes
+c       the rms of the variables for axis = amplitude, real, imag and phase.
 c       Default is no bin.
 c@ options
 c	Task enrichment options. Minimum match is effective. 
@@ -132,7 +134,10 @@ c   jhz 30 Jun 05 work out multiple files
 c   jhz 30 Jun 05 add time for axis
 c   jhz 30 Jun 05 take out nxy and make one plot
 c                 per trial.
-c   jhz 29 Jun 05 implement the bin statistics
+c   jhz 29 Jun 05 implemented the bin statistics
+c   jhz 10 Aug 05 implemented rms weighting and fixed a bug
+c                 in the bin statistics (replacing -N by
+c                -(2 sum wi -N) in the variance calculation. )
 c   Notes
 c   -----
 c
@@ -195,7 +200,7 @@ c
      +  skip, xgood, ygood, doxind, doyind, dowrap, none, dosymb, 
      +  dodots, false(2), allfull, docol, twopass, keep, dofqav
       integer nbin
-      real dra,ddec,phaz
+      real dra,ddec,phaz, xssig,yssig
       real secrad, PA, Utr,Vtr
       parameter(secrad=PI/180./3600.)
       real wwt, visvar
@@ -218,7 +223,7 @@ c
 c      data npts, plpts, basmsk /ifac1*0, ifac1*0, ifac2*0/ -- see izero
       data polmsk /13*0/
 c-----------------------------------------------------------------------
-      call output ('SmaUvAmp: version 1.4 29-jul-05')
+      call output ('SmaUvAmp: version 1.5 10-Aug-05')
       call output (' ')
 
       call izero(ifac1,npts)
@@ -421,12 +426,14 @@ c
 c
 c Put points into plot buffer
 c
-                  if (npts(plbidx,pidx,plfidx).lt.maxpnt) then
-                    call bufput (false, pl1dim, pl2dim, pl3dim, pl4dim,
-     +                 maxbase, maxpol, maxfile, plbidx, pidx, plfidx,
-     +                 xrtest, yrtest, xmin, xmax, ymin, ymax, xvalr,
-     +                 yvalr, 0.0, 0.0, npts, buffer(ip), xo, yo, elo,
-     +                 eho, plpts, inc)
+                xssig=0.0 
+                yssig=0.0
+             if (npts(plbidx,pidx,plfidx).lt.maxpnt) then
+                 call bufput (false, pl1dim, pl2dim, pl3dim, pl4dim,
+     +             maxbase, maxpol, maxfile, plbidx, pidx, plfidx,
+     +             xrtest, yrtest, xmin, xmax, ymin, ymax, xvalr,
+     +             yvalr, xssig, yssig, npts, buffer(ip), xo, yo, elo,
+     +             eho, plpts, inc)
 c
 c Add -u and -v if requested
 c
@@ -440,7 +447,7 @@ c
                       call bufput (false, pl1dim, pl2dim, pl3dim, 
      +                   pl4dim, maxbase, maxpol, maxfile, plbidx, 
      +                   pidx, plfidx, xrtest, yrtest, xmin, xmax, 
-     +                   ymin, ymax, xvalr,yvalr, 0.0, 0.0, npts, 
+     +                   ymin, ymax, xvalr,yvalr, xssig,yssig, npts, 
      +                   buffer(ip), xo, yo, elo, eho, plpts, inc)
                     end if
                   end if
@@ -876,6 +883,9 @@ c              if (errmean) sig(i) = sig(i) / sqrt(real(nsum(i)))
           end if
         end do
       end if
+c               do i = 1, nbasst
+c             write(*,*) 'sig', sig(i), 1. / sqrt(sumivar(i))
+c               end do
 c
       end
 c
@@ -1124,6 +1134,7 @@ c
           npts(plbidx,plpidx,plfidx) = npts(plbidx,plpidx,plfidx)+1
           n = npts(plbidx,plpidx,plfidx) 
 c
+          
           buffer(xo+n,plbidx,plpidx,plfidx) = x
           buffer(yo+n,plbidx,plpidx,plfidx) = y
 c
@@ -1214,7 +1225,11 @@ c
       doave = (dayav.gt.0.0)
       if (.not.doave) then
         dorms(1) = .false.
+      if(xaxis.eq.'amplitude'.or.xaxis.eq.'phase'.or.xaxis.eq.'real'.
+     +    or.xaxis.eq.'imag') dorms(1) = .true.
         dorms(2) = .false.
+      if(yaxis.eq.'amplitude'.or.yaxis.eq.'phase'.or.yaxis.eq.'real'.
+     +    or.yaxis.eq.'imag') dorms(1) = .true.
       end if
 c
 c Check for sensible axes when asking for errors
@@ -1592,10 +1607,11 @@ c------------------------------------------------------------------------
       double precision preamble(4)
       complex data(maxchan)
       logical flags(maxchan),dofqav,doflag,doall
-      integer i,n
+      integer i,n, nchan
       complex sum
       integer lin
       real    wwt,visvar 
+c
 c      real tsys(8), jperk,sdf,dt
 c      logical updated
 c      integer length, nants,i1,i2
@@ -1605,6 +1621,7 @@ c-----------------------------------------------------------------------
 c
 c  Fudge the flags so the user gets what he or she wants!
 c
+      nchan=nread
       if(doall)then
         do i=1,nread
           flags(i) = .true.
@@ -1635,7 +1652,6 @@ c
 c derive wt the current Tsys measurement and BW and integration time
 c
 c          call basant(preamble(4),i1,i2)
-          call uvdatgtr('variance',visvar)
 c          call uvrdvrr(lin,'inttime',dt,0.0)
 c          call uvprobvr(lin,'systemp',type, length, updated)
 c          nants = length
@@ -1643,9 +1659,17 @@ c          call uvgetvrr(lin,'systemp',tsys,nants)
 c          call uvrdvrr(lin,'jyperk',jperk,0.0)
 c          call uvrdvrr(lin,'sdf',sdf, 0.0)
 c          sdf=abs(sdf)
-c          write(*,*) 'visvar', visvar,i1,i2
+c
+c  variance calculates the variance of the data per channel, per integration
+c  variance = (tsys(i1)*tsys(i2)/dt/sdf/2)*jperk**2
+c  
+          call uvdatgtr('variance',visvar)
+c  calculate variance in nchan
+          if(nchan.ne.0) visvar=visvar/nchan
+c           write(*,*) 'visvar', visvar,i1,i2, nchan
 c           write(*,*) 'tempjy',
-c     *     (tsys(i1)*tsys(i2)/dt/jperk**2)
+c     *     (tsys(i1)*tsys(i2)/dt/2)*jperk**2, 
+c     *     (tsys(i1)*tsys(i2)/dt/2)*jperk**2/visvar
            wwt = 1./visvar
          
       end
@@ -2591,13 +2615,13 @@ c Write averaging time
 c
       if (dayav.gt.0.0) then
         if (tunit.eq.1) then
-          str2 = '\ud\d'
+          str2 = 'd'
         else if (tunit.eq.24) then
-          str2 = '\uh\d'
+          str2 = 'h'
         else if (tunit.eq.24*60) then
-          str2 = '\um\d'
+          str2 = 'm'
         else if (tunit.eq.24*60*60) then
-          str2 = '\us\d'
+          str2 = 's'
         end if
         av = dayav * tunit
 c
@@ -3035,7 +3059,11 @@ c
      +                             buffer(xo+1,kp,lp,jf), 
      +                             buffer(elo(2)+1,kp,lp,jf), 
      +                             buffer(eho(2)+1,kp,lp,jf), 1.0)
-
+           do i=1,npts(kp,lp,jf)
+                           yysig(i,jf) = (buffer(eho(2)+i,kp,lp,jf)
+     +                       -  buffer(elo(2)+i,kp,lp,jf))*0.5
+c                 write(*,*) yysig(i,jf)
+           end do
                     else
 c
 c  work out bin statistics 
@@ -3069,6 +3097,8 @@ c calculate the sigma for each data value
                  else
                  yysig(i,jf) =1.
                  end if
+                 yysig(i,jf) =1.
+c                    write(*,*) yysig(i,jf)
                  end do
 c
 c accumulate the data for each bin
@@ -3082,12 +3112,15 @@ c
          xerbin(ibin,jf) = xerbin(ibin,jf) + 
      *                     buffer(xo+i,kp,lp,jf)**2/xxsig(i,jf)**2
          xsumivar(ibin,jf) = xsumivar(ibin,jf) + 1./xxsig(i,jf)**2
+c 
          ydbin(ibin,jf)  = ydbin(ibin,jf)  + 
      *                     buffer(yo+i,kp,lp,jf)/yysig(i,jf)**2
          yerbin(ibin,jf) = yerbin(ibin,jf) + 
      *                     buffer(yo+i,kp,lp,jf)**2/yysig(i,jf)**2
          ysumivar(ibin,jf) = ysumivar(ibin,jf) + 1./yysig(i,jf)**2
+c
          numdat(ibin,jf) = numdat(ibin,jf) + 1
+       
                  endif
                  enddo
                  enddo
@@ -3109,34 +3142,34 @@ c
                  ibin=ibin+1                 
                  end if
                  end do
-                 nnbin =ibin-1
-
+                  nnbin = ibin-1
+                  do i=1, nnbin
+                  end do
                  do i=1, nnbin
-c                 xdbin(i,jf)=xdbin(i,jf)/numdat(i,jf)
-c                 ydbin(i,jf)=ydbin(i,jf)/numdat(i,jf)
             if(xsumivar(i,jf).ne.0.0) 
      *         xdbin(i,jf)=xdbin(i,jf)/xsumivar(i,jf)
             if(ysumivar(i,jf).ne.0.0)
      *         ydbin(i,jf)=ydbin(i,jf)/ysumivar(i,jf)
-        if(numdat(i,jf).gt.1) then
-          xerbin(i,jf) = (xerbin(i,jf)-numdat(i,jf)*xdbin(i,jf)**2)
-     *                    / xsumivar(i,jf)
+        if(numdat(i,jf).gt.1.5) then
+          xerbin(i,jf) = (xerbin(i,jf)-(2.*xsumivar(i,jf)-numdat(i,jf))
+     *                   *xdbin(i,jf)**2)/ xsumivar(i,jf)
           xerbin(i,jf) = xerbin(i,jf) * numdat(i,jf)/(numdat(i,jf)-1)
-          yerbin(i,jf) = (yerbin(i,jf)-numdat(i,jf)*ydbin(i,jf)**2)
-     *                    / ysumivar(i,jf)
+          yerbin(i,jf) = (yerbin(i,jf)-(2.*ysumivar(i,jf)-numdat(i,jf))
+     *                   *ydbin(i,jf)**2)/ ysumivar(i,jf)
           yerbin(i,jf) = yerbin(i,jf) * numdat(i,jf)/(numdat(i,jf)-1)
           xermean(i,jf) = xerbin(i,jf)/numdat(i,jf)
           yermean(i,jf) = yerbin(i,jf)/numdat(i,jf)
+c          write(*,*) xerbin(i,jf), yerbin(i,jf)
                           else
-          xerbin(i,jf) = xerbin(i,jf)/xdbin(i,jf)**2
-          yerbin(i,jf) = yerbin(i,jf)/ydbin(i,jf)**2
+          if(dorms(1)) xerbin(i,jf) = xerbin(i,jf)/xdbin(i,jf)**2
+          if(.not.dorms(1)) xerbin(i,jf) = 0.
+          if(dorms(2)) yerbin(i,jf) = yerbin(i,jf)/ydbin(i,jf)**2
+          if(.not.dorms(2)) yerbin(i,jf) = 0.
           xermean(i,jf) = xerbin(i,jf)/numdat(i,jf)
           yermean(i,jf) = yerbin(i,jf)/numdat(i,jf)
                           endif
           xermean(i,jf) = (abs(xermean(i,jf)))**0.5
           yermean(i,jf) = (abs(yermean(i,jf)))**0.5
-        if(dorms(1)) xermean(i,jf)=(abs(1./xsumivar(i,jf)))**0.5
-        if(dorms(2)) yermean(i,jf)=(abs(1./ysumivar(i,jf)))**0.5
                  end do
                  
 c work out error bar for the mean errors in both axes
@@ -3161,7 +3194,8 @@ c
             write (aline, 200)  nnbin,jf
 200       format ('Plot ', i6, ' bins', ' for file:', i6)
           call logwrite (aline(1:len1(aline)), more)
-             if(nbin.ne.0) then
+          call logwrite ('xm          ym          ym-rms', more)
+             if(nnbin.gt.0) then
                do  ii = 1, nnbin
                         str = ' '
                         ipt = 1
