@@ -6562,6 +6562,9 @@ case $TELESCOPE in
 	def_maxant2=128
         def_maxbase=8128
 	continue;;
+     "gmrt")  echo "Selecting GMRT array"
+	def_maxant=30
+	continue;;
      "sma")  echo "Selecting SMA array"
         def_maxdim=4096
 	def_maxant=30
