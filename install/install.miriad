@@ -85,7 +85,11 @@ echo MIRIAD installation $version, for $hosttype
 #       AMD64 may use /usr/X11R6/lib64 here !!!
 if ($hosttype == linux) then
   set mirxinc="/usr/include/X11"
-  set mirxlib="/usr/X11R6/lib"
+  if (-e /usr/X11R6/lib64) then
+    set mirxlib="/usr/X11R6/lib64"
+  else
+    set mirxlib="/usr/X11R6/lib"
+  endif
 else if ($hosttype == sun4sol) then
 	# sunos 5.6
   set mirxinc="/usr/include/X11"
