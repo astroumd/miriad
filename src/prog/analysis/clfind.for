@@ -12,7 +12,7 @@ c  by tracing contours, proceeding to lower levels and following
 c  merging of said clumps. For full description/testing/application in
 c    Williams, J.P, de Geus, E.J. & Blitz, L., ApJ, 428, 693. (1994)
 c  Also see
-c    http://cfa-www.harvard.edu/~jpw/clfind.html
+c    http://www.ifa.hawaii.edu/~jpw/research/clfind/clfind.html
 c  for a general description and access to a postscript memo.
 c
 c
