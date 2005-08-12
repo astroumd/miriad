@@ -73,6 +73,9 @@ c	rjs 26aug94 Better coordinate handling. Fix a few problems.
 c       lgm 03mar97 Corrected standard deviation calculation
 c       pjt  3may99 proper logopen/close interface; better line= stmts
 c	mchw 16may02 format change on output listing.
+c       jhz 12aug05 implemented input of multiple uv data sets
+c                   and processing annular averaging of the visibility
+c                   from a bundle of uv files.
 c  Bugs:
 c------------------------------------------------------------------------
 	include 'maxdim.h'
@@ -84,7 +87,7 @@ c
 	parameter (maxbins = 200)
 c
 	character version*(*)
-	parameter(version='UvAmp: version 2.0 16-may-02')
+	parameter(version='UvAmp: version 2.1 12-Aug-05')
 	character uvflags*8,line*80,pldev*60,logfile*60
 	character bunit*10,type*5
 	integer tIn,i,nread,numdat(maxbins),numbins,ibin
@@ -98,6 +101,9 @@ c
 	double precision chfreq(maxchan)
 	complex data(maxchan),sumdat(maxbins)
 	logical flags(maxchan)
+c
+        character  vis*80
+        integer ifile,nfiles,len1
 c
 c  Externals.
 c
@@ -130,6 +136,10 @@ c
 	call keya('log',logfile,' ')
 	call keyfin
 c
+c       check a number of input files
+c
+         call uvdatgti ('nfiles', nfiles)
+c
 c   Check input parameters
 c
 	if(numbins .lt. 0. .or. binsiz .le. 0.) 
@@ -157,8 +167,15 @@ c
 c
 c  Open the input uv file and output logfile.
 c
+          call LogOpen(logfile,' ')
+
+        do ifile=1,nfiles
 	if(.not.uvDatOpn(tIn))call bug('f','Error opening input')
-	call LogOpen(logfile,' ')
+        call   uvdatgta ('name', vis)
+        print*, 'Processing input', ifile,':', vis(1:len1(vis))
+        if(vis.eq.' ') call bug('f','Input visibility file is missing')
+c        call uvopen(tIn,vis,'old')
+
 c
 c  Convert dra,ddec from true to grid offsets.
 c
@@ -191,6 +208,13 @@ c
 	   enddo
 	   call uvDatRd(preamble,data,flags,maxchan,nread)
 	enddo
+c
+c  Close up the vis file.
+c
+             call uvdatcls
+        end do
+
+
 c
 c  Write out header stuff for log file
 c
@@ -288,7 +312,6 @@ c
 	   call pgend
 	endif
 	call LogClose
-	call uvDatCls
 c
 	end
 c************************************************************************
