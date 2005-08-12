@@ -82,9 +82,10 @@ c  25aug98  pjt  change keywords in doc section to lower case
 c                and removed that awkward case checking code
 c  14mar00  ks/pjt format and output changes
 c  20nov01  pjt  minor output format change
+c  12aug05  pjt  using clpars.h
 c-------------------------------------------------------------------------
       character version*(*)
-      parameter(version='version 1.5 20-nov-01' )
+      parameter(version='version 12-aug-05' )
       include 'clstats.h'
 
       integer lenline,imax,ncmax

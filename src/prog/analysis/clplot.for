@@ -58,10 +58,11 @@ c  History:
 c    20jan94 jpw   Copied from MIRIAD program velplot
 c    13jul98 pjt   linux/g77 cleanup
 c    26aug98 pjt   fixed bug with long words in history file of .cf file
+c    12aug05 pjt   use new clpars.h
 c----------------------------------------------------------------------c
 	include 'clplot.h'
 	character*(*) version
-	parameter(version='(version 1.0 26-aug-98)')
+	parameter(version='(version 1.0 12-aug-05)')
 c
 	integer maxnax,maxboxes
 	parameter(maxnax=3,maxboxes=maxdim)

@@ -52,6 +52,7 @@ c   07/19/94 jpw dynamic memory (memalloc, etc)
 c   09/20/96 jpw/pjt   Formal miriad version (finally)
 c   18-may-98 rjs/pjt  Moved over to a single-source file
 c   13-jul-98 pjt linux/g77 cleanup, and fixed CntLevs counting bug
+c   12-aug-05 pjt  use new clpars.h for common size
 c
 c  Note:
 c   This program comes with a testsuite dataset, which you should run
@@ -67,7 +68,7 @@ c         code won't pass FLINT.
 c
 c --------------------------------------------------------------------
       character version*(*)
-      parameter(version='version 1.0 13-jul-98' )
+      parameter(version='version 1.0 12-aug-05' )
       include 'clfind.h'
 
       character*40 filein,filecf

@@ -7,8 +7,7 @@ c---------------------------------------------------------------------c
 c  box in absolute pixels. (is,ib) (ie,it) can be reset by cursor.
 c---------------------------------------------------------------------c
 
-	integer maxbuf,maxdim
-	parameter(maxbuf=4194304,maxdim=400)
+        include 'clpars.h'
 
 	common/head/ras,decs,epoch,xy,vel,delv,posx,posy,pospa,
      *	     bmaj,bmin,bpa,dperjy,cbof,restfreq,posend,velend,
