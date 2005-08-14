@@ -13,9 +13,9 @@ c  merging of said clumps. For full description/testing/application in
 c    Williams, J.P, de Geus, E.J. & Blitz, L., ApJ, 428, 693. (1994)
 c  Also see
 c    http://www.ifa.hawaii.edu/~jpw/research/clfind/clfind.html
-c  for a general description and access to a postscript memo.
-c
-c
+c  for a general description and for the BIMA memo on
+c    http://bima.astro.umd.edu/memo/memo56.ps
+
 c@ in
 c     The input image containing the data cube.  (No default)
 c     The output clump assignment file (also a miriad datacube
@@ -53,10 +53,11 @@ c   09/20/96 jpw/pjt   Formal miriad version (finally)
 c   18-may-98 rjs/pjt  Moved over to a single-source file
 c   13-jul-98 pjt linux/g77 cleanup, and fixed CntLevs counting bug
 c   12-aug-05 pjt  use new clpars.h for common size
+c   13-aug-05 pjt  better error messages
 c
 c  Note:
 c   This program comes with a testsuite dataset, which you should run
-c   clfind on after you've made any importants changes, and compare the 
+c   clfind on after you have made any importants changes, and compare the 
 c   output with. We expect this dataset and the regression output to 
 c   become available in $MIR/test, whenever this feature has been merged 
 c   into the public release of MIRIAD.
@@ -68,7 +69,7 @@ c         code won't pass FLINT.
 c
 c --------------------------------------------------------------------
       character version*(*)
-      parameter(version='version 1.0 12-aug-05' )
+      parameter(version='version 13-aug-05' )
       include 'clfind.h'
 
       character*40 filein,filecf
@@ -184,6 +185,10 @@ c      print 1013, data(1)
 c 1013 format(' t(1) = ',f)
       call CntLevs(data(It),nlevs,npx1,npx2)
       nlevels=nlevs
+      if (npx1.eq.0) call bug('f',
+     *     'npx1 = 0, bad choice of dt= and/or start=')
+      if (npx2.eq.0) call bug('f',
+     *     'npx2 = 0, bad choice of dt= and/or start=')
 
 c.....space allocation for coded position arrays
       call memalloc(Ipos1,npx1,'i')
@@ -261,42 +266,48 @@ c-----------------------------------------------------------------
       integer nlevs,npx1,npx2
       integer nps,npx,ngy,ngx
       real t(*)
+      
+c 1007   format(' p1 = ',i)
+c 1008   format(' p2 = ',f)
+c 1009   format(' t(',i,') = ',f)
+c 1010   format(' Number of contours:                   ',i)
+c 1011   format(' Number of pixels in level 1:                   ',i4)
 
       nlevs=-999
       do nps=1,nx*ny*nz
 c......Determine contour level
 
-c 1007   format(' p1 = ',i)
-c 1008   format(' p2 = ',f)
-c 1009   format(' t(',i,') = ',f)
-c         print 1007,  p1
-c         print 1008,  p2
-c         print 1009, nps, t(nps)
+c        print 1007,  p1
+c        print 1008,  p2
+c        print 1009, nps, t(nps)
 
          ngy=int(t(nps)/p2)-p1+1
 
-c         print 1010, ngy
-c 1010   format(' Number of contours:                   ',i)
+c        print 1010, ngy
 
-      if(ngy.gt.maxlvl) then 
-        call bug('f','Too many contour levels')
-      endif
-c     only count when in range, above the minimum (p1)
-      if(ngy.gt.0) then
+         if(ngy.gt.maxlvl) then 
+            call bug('f','Too many contour levels')
+         endif
+c        only count when in range, above the minimum (p1)
+         if(ngy.gt.0) then
 
-         npix(ngy)=npix(ngy)+1
-         npx=npix(ngy)
-         if(ngy.gt.1 .and. npx.gt.maxpix)
-     *       call bug('f','Too many pixels per level')
+            npix(ngy)=npix(ngy)+1
+            npx=npix(ngy)
+            if(ngy.gt.1 .and. npx.gt.maxpix) then
+               write(*,*) '### contours: ',ngy,npx,maxpix
+               call bug('f','Too many pixels per level')
+            endif
 
-c         print 1011, ngx
-c 1011   format(' Number of pixels in level 1:                   ',i4)
+c           print 1011, ngx
 
-         if(ngy.eq.1 .and. npx.gt.maxpix1)
-     *        call bug('f','Too many pixels in level 1')
 
-         if (ngy.gt.nlevs) nlevs=ngy
-      endif
+            if(ngy.eq.1 .and. npx.gt.maxpix1) then
+               write(*,*) '### contours: ',ngy,npx,maxpix1
+               call bug('f','Too many pixels in level 1')
+            endif
+
+            if (ngy.gt.nlevs) nlevs=ngy
+         endif
 
       enddo
 

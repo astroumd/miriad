@@ -4,31 +4,31 @@ c     include file for the clump finding program
 c---------------------------------------------------------------
       include 'clpars.h'
 
-c maxlvl = number of contour levels
-c maxreg = number of regions/level
-c maxpix = number of pixels/level (level>2)
-c maxclp = total number of clumps
-c maxpix1 = number of pixels in level 1 (dT < T < 2dT)
+c MAXLVL  = number of contour levels
+c MAXREG  = number of regions/level
+c MAXPIX  = number of pixels/level (level>2)
+c MAXCLP  = total number of clumps
+c MAXPIX1 = number of pixels in level 1 (dT < T < 2dT)
       integer maxlvl,maxreg,maxpix,maxclp,maxpix1
-      parameter(maxlvl=50,maxreg=250,maxclp=250)
-      parameter(maxpix=25000,maxpix1=100000)
+      parameter(MAXLVL=50,MAXREG=250,MAXCLP=250)
+      parameter(MAXPIX=250000,MAXPIX1=1000000)
 
 c #pixels/level
-      integer npix(maxlvl)                    
+      integer npix(MAXLVL)                    
 
 c #regions/level
-      integer nregions(maxlvl)                
+      integer nregions(MAXLVL)                
 
 c merge flag
-      logical merge(maxreg)                   
+      logical merge(MAXREG)                   
 
 c tree structure
-      logical tree(maxlvl,maxreg,maxclp)
+      logical tree(MAXLVL,MAXREG,MAXCLP)
 
       common /ianalyz/ npix,nregions
       common /lanalyz/ tree,merge
 
-      integer clump(maxclp,4)
+      integer clump(MAXCLP,4)
       common /clumps/ clump
 
       integer nlevels,badcl
