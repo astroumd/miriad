@@ -1,0 +1,23 @@
+#! /bin/csh -f
+#
+#
+
+set mode=1
+
+set url=http://sma-www.cfa.harvard.edu/miriadWWW/smaspec/catalog/jplcatalog.tar.gz
+
+
+cd $MIRCAT
+if (-e jplcat) then
+  echo Warning: existing directory $MIRCAT/jplcat will be filled again
+endif
+
+if ($mode == 1) then
+  curl $url | tar zxf -
+else if ($mode = 2) then
+  wget $url
+  tar zxf $url:t
+  rm $url:t
+else
+  echo mode $mode not supported
+endif
