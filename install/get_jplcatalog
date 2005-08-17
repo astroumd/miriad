@@ -1,6 +1,13 @@
 #! /bin/csh -f
 #
+#  Install the JPL line catalog in $MIRCAT
+#  Clients that can use this are:
+#      (sma)miriad's program SmaUvSpec
+#      nemo's program        tabpp      (needs PP_DIR set to $MIRCAT/jplcat)
 #
+#  See also (node #'s might change)
+#      http://sma-www.cfa.harvard.edu/miriadWWW/manuals/SMAuguide/smauserhtml/node84.html
+#      http://sma-www.cfa.harvard.edu/miriadWWW/manuals/SMAuguide/smauserhtml/node14.html
 
 set mode=1
 
