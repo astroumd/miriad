@@ -6,7 +6,8 @@ c& jhz for SMA
 c: uv analysis
 c+
 c	SmaUVSPEC plots averaged spectra of a visibility dataset. Averaging can
-c	be in both time and frequency
+c	be in both time and frequency. SmaUVSPEC also provides facility
+c       for users to identify spectral lines using the on-line JPL catalog.
 c@ vis
 c	The name of the input uv data sets. Several can be given (wild
 c	cards are supported). No default.
@@ -54,6 +55,9 @@ c	                 default is to plot only unflagged data.
 c	   'all'         Plot both flagged and unflagged data.
 c          'jplcat'      Plot JPL catalog lines. The xaxis and yaxis are
 c                        then forced to be frequency and ampltiude.
+c          'restfreq'    plot the rest frequency in the identification of 
+c                        the spectral lines using the JPL (options=jplcat is chosen.)
+c                        Default is to plot the sky frequency.
 c@ catpath
 c       This gives the path of JPL catalog. No Default. In general, 
 c       the path of JPL catalog are: $MIRCAT/jpl/; otherwise, it can
@@ -69,6 +73,10 @@ c          radio         is the radio definition.
 c          optical       is the optical definion.
 c       The default is "radio".
 c          
+c@ strngl
+c      This is the common log of the minimum strength in the JPL catalog units.
+c      The default is -500.
+c
 c@ axis
 c	This gives two strings, which determine the X and Y axes of each plot.
 c	The values can be abbreviated to uniqueness.
@@ -143,6 +151,12 @@ c                 random lin at end of the line drawing.
 c    jhz  24jul05 add back the do both amplitude and phase
 c    jhz  26jul05 label the phase panel for the case of
 c                 plotting both amplitude and phase.
+c    jhz  12aug05 test jplcatalog and activiate the function of 
+c                 line idetification using this program.
+c    jhz  13aug05 added option to shift the spectrum to the rest frame.
+c    jhz  15aug05 fixed a bug in the jpl catalog: the file id
+c                 is inconsistent with the moltag in c020007.cat.
+c    jhz  16aug05 fixed chunk labelling when selection=window(????) applies.
 c>  Bugs:
 c------------------------------------------------------------------------
 c=======================================================================
@@ -188,9 +202,10 @@ c
         character mname*8000, moln*16
         integer mtag(maxmline), nmline, j, jp, js, je, iline
         character version*(*)
-        parameter(version='SmaUvSpec: version 1.6 26-Jul-05')
+        parameter(version='SmaUvSpec: version 1.7 17-Aug-05')
         character uvflags*8,device*64,xaxis*12,yaxis*12,logf*64
         character xtitle*64,ytitle*64, veldef*8
+        character xtitlebuf*64
         logical ampsc,rms,nobase,avall,first,buffered,doflush,dodots
         logical doshift,doflag,doall,dolag,docat
         double precision interval,t0,t1,preamble(4),shift(2),shft(2)
@@ -212,14 +227,19 @@ c
 c
 c common jpl
 c
-        
+        real strl 
         integer nmol, moltag(maxmline)
         character molname(maxmline)*16, jplpath*80 
-        common/jplcat/nmol,moltag,molname,docat,lsrvel,veldef,veldop
-        logical docolor
+        common/jplcat/nmol,moltag,molname,docat,lsrvel,
+     *  veldef,veldop,strl
+        logical docolor,dorestfreq
         integer nspect, nschan(maxwin),nchan0
-        common/spectrum/nspect,nschan,nchan0,docolor
-
+        common/spectrum/nspect,nschan,nchan0,docolor,dorestfreq
+        integer maxsels
+        parameter(maxsels=256)
+        real sels(maxsels)
+        logical SelProbe, selwins(MAXWIN),winsel
+        common/windows/selwins
 
 
 c
@@ -230,9 +250,10 @@ c
         call keyini
         call mkeyf('vis',in,1,nin)
         call vishd(in)
+         call SelInput('select',sels,maxsels)
         call keyini
         call getopt(uvflags,ampsc,rms,nobase,avall,dodots,doflag,doall,
-     &          docat)
+     &          docat,dorestfreq)
         call keya('catpath', jplpath, ' ')
         call keyr('lsrvel', lsrvel, 0.0)
         call keya('veldef', veldef, 'radio')
@@ -241,9 +262,10 @@ c
                   else
                 veldef = 'radio'
               end if
+        call keyr('strngl', strl, -500.)
         call getaxis(xaxis,yaxis)
-        if(docat) 
-     & call bug('f','has not fully implemented yet for jpl catalog.')
+c        if(docat) 
+c     & call bug('f','has not fully implemented yet for jpl catalog.')
         dolag = xaxis.eq.'lag'
         call uvdatinp('vis',uvflags)
         call keyd('interval',interval,0.d0)
@@ -257,6 +279,15 @@ c
         call keyr('yrange',yrange(2),yrange(1)-1)
         call keya('log',logf,' ')
         call keyfin
+          winsel = SelProbe(sels,'window?',0.d0)
+         do i=1,MAXWIN
+          if(winsel)then
+            selwins(i) = SelProbe(sels,'window',dble(i))
+          else
+            selwins(i) = .true.
+          endif
+        enddo
+
 c
 c select molecular species
 c 
@@ -273,7 +304,7 @@ c
             pathlen=pathlen+1
             end if
          xaxis='frequency'
-         yaxis='amplitude'
+c         yaxis='amplitude'
 
          call molselect(jplpath,pathlen,mtag,nmline,mname)
                    jp=1
@@ -297,8 +328,9 @@ c
 c  check
 c
 c               do i=1, nmol
-c               write(*,*) "moltag", moltag(i)," molname   ", molname(i) 
+c               write(*,*) 'moltag', moltag(i),' molname   ', molname(i) 
 c               end do
+c               write(*,*) 'nmol=', nmol
                     end if
 c
 c  Check the input parameters.
@@ -322,6 +354,7 @@ c  Various initialisation.
 c
         ytitle = yaxis
         if(ytitle.eq.'both') ytitle='BothA&P'
+       
         call ucase(ytitle(1:1))
         interval = interval/(24.*60.)
         doflush = .false.
@@ -348,8 +381,8 @@ c  Loop over the data.
 c
           
           call uvdatrd(preamble,data,flags,maxchan,nread)
-           
-          if((nread.lt.nchan0).and.docolor) docolor = .false.
+c          write(*,*) nread, nchan0 
+c          if((nread.lt.nchan0).and.docolor) docolor = .false.
           nplot = nread
           if(dolag)nplot = nextpow2(2*(nread-1))
           if(doshift)then
@@ -379,7 +412,8 @@ c  in the case of time averaging.
 c
          if(doflush)then
        call bufflush(source,ampsc,rms,nobase,dodots,hann,hc,hw,first,
-     *          device,x,nplot,xtitle,ytitle,nxy,yrange,logf)
+     *          device,x,nplot,xtitle,ytitle,nxy,yrange,logf,
+     *          docat,dorestfreq,veldef,lsrvel,veldop)
               t0 = preamble(3)
               t1 = t0
               buffered = .false.
@@ -387,8 +421,15 @@ c
 c
 c  Accumulate more data, if we are time averaging.
 c
-            if(.not.buffered)call getxaxis(tin,xaxis,xtitle,x,nplot)
-            if(avall)preamble(4) = 257
+            if(.not.buffered) then 
+            call getxaxis(tin,xaxis,xtitle,x,nplot)
+             xtitlebuf=xtitle
+            if(docat.and.(.not.dorestfreq)) 
+     *             xtitle = 'Sky '//xtitlebuf(1:len1(xtitlebuf))
+            if(docat.and.dorestfreq)
+     *             xtitle = 'Rest '//xtitlebuf(1:len1(xtitlebuf))  
+             end if
+               if(avall)preamble(4) = 257
             call uvrdvrr(tin,'inttime',inttime,0.)
             call bufacc(doflag,doall,preamble,inttime,data,flags,nread)
             buffered = .true.
@@ -405,7 +446,8 @@ c  Flush out and plot anything remaining.
 c
           if(buffered)then
          call bufflush(source,ampsc,rms,nobase,dodots,hann,hc,hw,first,
-     *        device,x,nplot,xtitle,ytitle,nxy,yrange,logf)
+     *        device,x,nplot,xtitle,ytitle,nxy,yrange,logf,
+     *        docat,dorestfreq,veldef,lsrvel,veldop)
             buffered = .false.
           endif
           call uvdatcls
@@ -601,9 +643,10 @@ c
         end
 c************************************************************************
         subroutine getopt(uvflags,ampsc,rms,nobase,avall,dodots,
-     *          doflag,doall,docat)
+     *          doflag,doall,docat,dorestfreq)
 c
-        logical ampsc,rms,nobase,avall,dodots,doflag,doall,docat
+        logical ampsc,rms,nobase,avall,dodots,doflag,doall,docat,
+     *   dorestfreq
         character uvflags*(*)
 c
 c  Determine the flags to pass to the uvdat routines.
@@ -618,14 +661,15 @@ c    dodots
 c    doflag
 c    doall
 c    dojplcat
+c    dorestfreq
 c------------------------------------------------------------------------
         integer nopts
-        parameter(nopts=11)
+        parameter(nopts=12)
         character opts(nopts)*9
         logical present(nopts),docal,dopol,dopass
         data opts/'nocal    ','nopol    ','ampscalar','nopass   ',
      *            'nobase   ','avall    ','dots     ','rms      ',
-     *            'flagged  ','all      ','jplcat   '/
+     *            'flagged  ','all      ','jplcat   ','restfreq '/
 c
         call options('options',opts,present,nopts)
         docal = .not.present(1)
@@ -641,6 +685,9 @@ c
         doflag =   present(9)
         doall  =   present(10)
         docat  =   present(11)
+        dorestfreq = present(12)
+        if(dorestfreq.and.(.not.docat)) call bug('f',
+     *    'To plot the rest frequency must choose "options=jplcat".')
         if(doflag.and.doall)call bug('f',
      *    'The "flagged" and "all" options are mutually exclusive')
 c
@@ -694,7 +741,12 @@ c       parameter(maxaver=276525,maxpol=4)
         end
 c************************************************************************
         subroutine bufflush(source,ampsc,rms,nobase,dodots,hann,hc,hw,
-     *          first,device,x,n,xtitle,ytitle,nxy,yrange,logf)
+     *          first,device,x,n,xtitle,ytitle,nxy,yrange,logf,
+     *          docat,dorestfreq,veldef,lsrvel,veldop)
+        logical docat,dorestfreq
+        real lsrvel,veldop
+        character veldef*8
+        parameter(cmks = 299792458.0)
 c
         character source*32
         logical ampsc,rms,nobase,first,dodots
@@ -783,6 +835,19 @@ c
 c  Autoscale the X axis.
 c
         call setaxisd(x,n,xrange)
+           if(docat.and.dorestfreq) then
+            if(veldef.eq."radio") then
+              do i=1,2
+              xrange(i) = xrange(i)/(1.-(lsrvel+veldop)*1.e3/cmks)
+              end do
+        end if
+        if(veldef.eq."optical") then
+              do i=1,2
+              xrange(i) = xrange(i)*(1.+(lsrvel+veldop)*1.e3/cmks)
+              end do
+        end if
+
+           end if
 c
 c  Now loop through the good baselines, plotting them.
 c
@@ -816,13 +881,14 @@ c
               p = pnt(i,j)
               if(cntp(i,j).ge.1)then
                 if(dolag)then
-                  call lagext(x,buf(p),count(p),nchan(i,j),n,
-     *              xp,yp,maxpnt,npnts)
+          call lagext(x,buf(p),count(p),nchan(i,j),n,
+     *         xp,yp,maxpnt,npnts)
                 else
-                  call visext(x,buf(p),buf2(p),bufr(p),count(p),
-     *              nchan(i,j),chnkpntr(p),
-     *              doamp,doampsc,dorms,dophase,doreal,doimag,
-     *              doboth,xp,yp,ypp,maxpnt,npnts,sppntr)
+c                  write(*,*) p, chnkpntr(p)
+          call visext(x,buf(p),buf2(p),bufr(p),count(p),
+     *         nchan(i,j),chnkpntr(p),
+     *         doamp,doampsc,dorms,dophase,doreal,doimag,
+     *         doboth,xp,yp,ypp,maxpnt,npnts,sppntr)
                 endif
               endif
 c
@@ -841,6 +907,7 @@ c
      *          nplts,
      *          xtitle,ytitle,j,time/ntime,inttime/nplts,pol,npol,
      *          dopoint,hann,hc,hw,logf,doboth,sppntr)
+                
 c
               npol = 0
               do i=polmin,polmax
@@ -870,8 +937,8 @@ c
         end
 c************************************************************************
         subroutine visext(x,buf,buf2,bufr,count,nchan,chnkpntr,
-     *              doamp,doampsc,dorms,dophase,doreal,doimag,
-     *              doboth,xp,yp,ypp,maxpnt,npnts,sppntr)
+     *  doamp,doampsc,dorms,dophase,doreal,doimag,
+     *  doboth,xp,yp,ypp,maxpnt,npnts,sppntr)
 c
         integer nchan,npnts,maxpnt,count(nchan)
         logical doamp,doampsc,dorms,dophase,doreal,doimag
@@ -927,12 +994,13 @@ c=======================================================================
         complex ctemp
         integer maxwin
         parameter(maxwin=48)
-        logical docolor
+        logical docolor,dorestfreq
         integer nspect,nschan(maxwin), nchan0        
-        common/spectrum/nspect,nschan,nchan0,docolor
+        common/spectrum/nspect,nschan,nchan0,docolor,dorestfreq
+        logical selwins(maxwin)
+        common/windows/selwins
         temp=0.
         temp2=0.
-c
         do k=1,nchan
           if(count(k).gt.0)then
             if(doamp)then
@@ -966,10 +1034,10 @@ c    phas
             npnts = npnts + 1
           if(npnts.gt.maxpnt)call bug('f',
      *    'Buffer overflow(points), when accumulating plots')
-             xp(npnts) = x(k)
-             yp(npnts) = temp
+            xp(npnts) = x(k)
+            yp(npnts) = temp
             ypp(npnts) = temp2
-         sppntr(npnts) = chnkpntr(k)
+            sppntr(npnts) = chnkpntr(k)
           endif
         enddo
 c
@@ -1067,11 +1135,11 @@ c
      *    pols,cnt,cntp,free,mbase,chnkpntr
         integer i,i1,i2,p,bl,pol
         real t
-        logical ok,docolor
+        logical ok,docolor,dorestfreq
 c        integer maxwin
 c        parameter(maxwin=48)
         integer nspect, nschan(maxwin),nchan0
-        common/spectrum/nspect,nschan,nchan0,docolor
+        common/spectrum/nspect,nschan,nchan0,docolor,dorestfreq
 c
 c  Does this spectrum contain some good data.
 c
@@ -1509,20 +1577,43 @@ c-------------------------------------------------------------------------
         real xlen,ylen,xloc
         integer maxwin,symbol
         parameter(maxwin=48)
-        logical doboth,docolor
+        logical doboth,docolor,dorestfreq
         integer nspect, nschan(maxwin),fnschan(maxwin),nchan0
-        common/spectrum/nspect,nschan,nchan0,docolor
+        common/spectrum/nspect,nschan,nchan0,docolor,dorestfreq
 c
 c common jpl
 c
         parameter(maxmline=500)
-        integer nmol, moltag(maxmline)
+        integer nmol, moltag(maxmline), len1, startchunk
         character molname(maxmline)*16, veldef*8
         real lsrvel,veldop
         logical docat
-        common/jplcat/nmol,moltag,molname,docat,lsrvel,veldef,veldop
+        common/jplcat/nmol,moltag,molname,docat,lsrvel,
+     *                veldef,veldop,strl
+        logical selwins(maxwin)
+        common/windows/selwins
+                startchunk=0
+                do i=1, maxwin
+                if(startchunk.eq.0.and.selwins(i)) startchunk=i
+                end do  
            apline(1)=pline
            apline(2)=pline
+c 
+c convert to the rest frame
+c
+        if (dorestfreq) then
+
+        if(veldef.eq."radio") then
+              do i=1,npts
+              x(i) = x(i)/(1.-(lsrvel+veldop)*1.e3/cmks)
+              end do
+        end if
+        if(veldef.eq."optical") then
+              do i=1,npts
+              x(i) = x(i)*(1.+(lsrvel+veldop)*1.e3/cmks) 
+              end do
+        end if
+        end if
 c
 c  sort the spectral window pointr after flagging
 c
@@ -1619,7 +1710,7 @@ c
              call pgdraw(x(end),y(end))
               start=end+1
              if(docolor) then
-             write(title,'(a,i2)') 's',j
+             write(title,'(a,i2)') 's',j+startchunk-1
                l = len1(title)
                call pglen(5,title(1:l),xlen,ylen)
                xloc = 0.8
@@ -1647,7 +1738,7 @@ c          plot phase
           if(docat) then
       fmn  = minf
       fmx  = maxf
-      strl = -500
+c      strl = -500
           call  pgsci(2)
        if(abs(lsrvel).lt.1000) then
        write(title,'(a,f7.1,a)') 'Vlsr =',lsrvel,' km/s'
@@ -1655,6 +1746,7 @@ c          plot phase
        write(title,'(a,f7.3)') 'z =',lsrvel*1.0e3/cmks
        end if
        call pgmtxt('RV',-12.0, 0.925, 0., title)
+       if(.not.dorestfreq) then
        if(veldef.eq."radio") then 
                  fmn = fmn /(1.-lsrvel*1.e3/cmks)
                  fmx = fmx /(1.-lsrvel*1.e3/cmks)
@@ -1663,48 +1755,51 @@ c          plot phase
                  fmn = fmn*(1.+lsrvel*1.e3/cmks)
                  fmx = fmx*(1.+lsrvel*1.e3/cmks)
                end if
+                           end if
 c
 c fmx,fmn,strl,nmol,moltag are input parameters
-c       
+c      
+         do i=1, nmol
+         end do
        call JPLlineRD(fmx,fmn,strl,nmol,moltag,mxnline,
      &               freq,intensity,uqst,lqst,mtag)
-c      write(*,*) 'mxnline=', mxnline
+      if(mxnline.ge.maxmline) 
+     & call bug('f','too many lines, limited your search.')
       iubuff=0
       ilbuff=0
       maxcatstr=strl
       do i=1, mxnline
       if(maxcatstr.lt.intensity(i)) maxcatstr=intensity(i)
       end do
-
-c      write(*, *) 'maxcatstr maxstr', maxcatstr, maxstr
       call  pgsci(1)
       do i=1, mxnline
+       if(.not.dorestfreq) then
        if(veldef.eq."radio") 
      &  freq(i) = freq(i)*(1.-(lsrvel+veldop)*1.e3/cmks) 
        if(veldef.eq."optical") 
      &  freq(i) = freq(i)/(1.+(lsrvel+veldop)*1.e3/cmks)
-c      write(*,*) freq(i)/1000.,intensity(i)/maxcatstr*maxstr
+                         end if
               intensity(i)=maxstr
               ylstr(2) = intensity(i)*.75
               ylstr(1) = intensity(i)*.65 
               xlfrq(1) = freq(i)/1000.
               xlfrq(2) = freq(i)/1000.
               do j=1, nmol
-               mtag(i)=abs(mtag(i))
+              mtag(i)=abs(mtag(i))
+c
+c correction for molecular tag inconsistence in
+c the jpl catalog cat027004 mtag 26002
+c
+              if(mtag(i).eq.26002) mtag(i)=27004
               if(moltag(j).eq.mtag(i)) then
-c                 write(*,*) molname(j)
-                write(title,'(a)') molname(j)
-                endif
+              write(title,'(a)') molname(j)
+              endif
               end do
-              lm=1
-              do while (title(lm:lm).ne."\n") 
-                  lm=lm+1
-              end do
+               lm=len1(title)
          call pgline (2, xlfrq, ylstr)
          call pgebuf
                 xloc=xlfrq(1)+(maxf-minf)/npts
                 yloc=ylstr(2)*1.02
-                lm=lm-1
          call pgptext(xloc,yloc, 90.0, 0.0, title(1:lm))
           end do
           end if
@@ -1755,14 +1850,14 @@ C 14-Mar-1997 - optimization: use GRDOT1 [TJP].
 C 23-Jub-2005 - jhz - implemented spectral window pntr and color index
 C-----------------------------------------------------------------------
 ccccccccccccccccccccccccccc
-      LOGICAL PGNOTO, docolor
+      LOGICAL PGNOTO, docolor, dorestfreq
       integer j, k, ci, l
       character title*64
       real xlen,ylen,xloc
       integer   i,maxwin
       parameter(maxwin=48)
       integer  nspect, nschan(maxwin),fnschan(maxwin),nchan0
-      common/spectrum/nspect,nschan,nchan0,docolor
+      common/spectrum/nspect,nschan,nchan0,docolor,dorestfreq
 c
 c  sort the spectral window pointr after flagging
 c
@@ -1846,8 +1941,8 @@ c------------------------------------------------------------------------
       double precision sdf(maxwin),sfreq(maxwin),restfreq(maxwin)
       double precision time
       real veldop
-      logical updated, docolor
-      common/spectrum/nspect,nschan,nchan0,docolor
+      logical updated, docolor, dorestfreq
+      common/spectrum/nspect,nschan,nchan0,docolor,dorestfreq
 c
 c  Close and reopen the file as a visibility file.
 c
