@@ -2,8 +2,11 @@
 #
 #  Install the JPL line catalog in $MIRCAT
 #  Clients that can use this are:
-#      (sma)miriad's program SmaUvSpec
-#      nemo's program        tabpp      (needs PP_DIR set to $MIRCAT/jplcat)
+#   1) (sma)miriad's program SmaUvSpec
+# 
+#   2)  nemo's program  tabpp      (needs PP_DIR set to $MIRCAT/jplcat)
+#       http://bima.astro.umd.edu/nemo/man_html/tabpp.1.html
+#      
 #
 #  See also (node #'s might change)
 #      http://sma-www.cfa.harvard.edu/miriadWWW/manuals/SMAuguide/smauserhtml/node84.html
