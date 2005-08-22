@@ -77,7 +77,8 @@ c
 c@ veldef  
 c       This is the velocity definition used in the shift of the catalog lines.
 c          radio         is the radio definition.
-c          optical       is the optical definion.
+c          optic         is the optical definition.
+c          relat         is the special relativistic expressions.
 c       The default is "radio".
 c          
 c@ strngl
@@ -168,6 +169,7 @@ c    jhz  22aug05 replaced lsrvel with vsource and added veltype in Keywords;
 c                 The rest frame of either LSR or Barycenter is now
 c                 supported in the spectral line identification with
 c                 the JPL catalog.
+c    jhz 22aug05  added special relativistic expressions to the veldef.
 c>  Bugs:
 c------------------------------------------------------------------------
 c=======================================================================
@@ -274,10 +276,13 @@ c
            if (veltyp(1:1).eq."B".or.veltyp(1:1).eq."b")
      & veltyp = 'VELO-HEL'
         call keya('veldef', veldef, 'radio')
-         if((veldef(1:1).eq."O").or.(veldef(1:1).eq."o")) then
-                veldef = 'optical'
-                  else
-                veldef = 'radio'
+         if((veldef(1:1).eq."O").or.(veldef(1:1).eq."o")) 
+     &       veldef = 'optical'
+         if((veldef(1:1).eq."R").or.(veldef(1:1).eq."r")) then
+             if((veldef(2:2).eq."A").or.(veldef(2:2).eq."a"))
+     &       veldef = 'radio'
+             if((veldef(2:2).eq."E").or.(veldef(2:2).eq."e"))
+     &       veldef = 'relativ'
               end if
         call keyr('strngl', strl, -500.)
         call getaxis(xaxis,yaxis)
@@ -872,6 +877,12 @@ c
         if(veldef.eq."optical") then
               do i=1,2
               xrange(i) = xrange(i)*(1.+(lsrvel+veldop)*1.e3/cmks)
+              end do
+        end if
+        if(veldef.eq."relativ") then
+              do i=1,2
+              xrange(i) = xrange(i)*sqrt((1.+(lsrvel+veldop)*1.e3/cmks)/
+     &                                   (1.-(lsrvel+veldop)*1.e3/cmks))
               end do
         end if
 
@@ -1641,6 +1652,14 @@ c
               x(i) = x(i)*(1.+(lsrvel+veldop)*1.e3/cmks) 
               end do
         end if
+
+        if(veldef.eq."relativ") then
+              do i=1,npts
+              x(i) = x(i)*sqrt((1.+(lsrvel+veldop)*1.e3/cmks)
+     &                        /(1.-(lsrvel+veldop)*1.e3/cmks))
+              end do
+        end if
+
         end if
 c
 c  sort the spectral window pointr after flagging
@@ -1776,12 +1795,18 @@ c      strl = -500
        call pgmtxt('RV',-12.0, 0.925, 0., title)
        if(.not.dorestfreq) then
        if(veldef.eq."radio") then 
-                 fmn = fmn /(1.-lsrvel*1.e3/cmks)
-                 fmx = fmx /(1.-lsrvel*1.e3/cmks)
+                 fmn = fmn /(1.-(lsrvel+veldop)*1.e3/cmks)
+                 fmx = fmx /(1.-(lsrvel+veldop)*1.e3/cmks)
                end if
        if(veldef.eq."optical") then
-                 fmn = fmn*(1.+lsrvel*1.e3/cmks)
-                 fmx = fmx*(1.+lsrvel*1.e3/cmks)
+                 fmn = fmn*(1.+(lsrvel+veldop)*1.e3/cmks)
+                 fmx = fmx*(1.+(lsrvel+veldop)*1.e3/cmks)
+               end if
+       if(veldef.eq."relativ") then
+                 fmn = fmn*sqrt((1.+(lsrvel+veldop)*1.e3/cmks)
+     c                        /(1.-(lsrvel+veldop)*1.e3/cmks))
+                 fmx = fmx*sqrt((1.+(lsrvel+veldop)*1.e3/cmks)
+     c                        /(1.-(lsrvel+veldop)*1.e3/cmks))
                end if
                            end if
 c
@@ -1806,6 +1831,9 @@ c
      &  freq(i) = freq(i)*(1.-(lsrvel+veldop)*1.e3/cmks) 
        if(veldef.eq."optical") 
      &  freq(i) = freq(i)/(1.+(lsrvel+veldop)*1.e3/cmks)
+        if(veldef.eq."relativ")
+     &  freq(i) = freq(i)*sqrt((1.-(lsrvel+veldop)*1.e3/cmks)
+     &                        /(1.+(lsrvel+veldop)*1.e3/cmks))
                          end if
               intensity(i)=maxstr
               ylstr(2) = intensity(i)*.75
