@@ -63,9 +63,16 @@ c       This gives the path of JPL catalog. No Default. In general,
 c       the path of JPL catalog are: $MIRCAT/jpl/; otherwise, it can
 c       be specified by users.
 c
-c@ lsrvel  
-c       This gives the system velocity n km/s with respect to LSR to shift the 
-c       catalog lines. The default is 0.
+c@ vsource
+c       The radial velocity of source in km/s w.r.t. the LSR or
+c       the barycenter. The velocity reference frame is given 
+c       in veltype. Positive velocity is away from observer.
+c       Default is zero.
+c
+c@ veltype  
+c       This gives the rest frame. Either the LSR or the BARY 
+c       (barycenter) is supported. The default is the one defined 
+c       in the uv data. 
 c
 c@ veldef  
 c       This is the velocity definition used in the shift of the catalog lines.
@@ -157,6 +164,10 @@ c    jhz  13aug05 added option to shift the spectrum to the rest frame.
 c    jhz  15aug05 fixed a bug in the jpl catalog: the file id
 c                 is inconsistent with the moltag in c020007.cat.
 c    jhz  16aug05 fixed chunk labelling when selection=window(????) applies.
+c    jhz  22aug05 replaced lsrvel with vsource and added veltype in Keywords;  
+c                 The rest frame of either LSR or Barycenter is now
+c                 supported in the spectral line identification with
+c                 the JPL catalog.
 c>  Bugs:
 c------------------------------------------------------------------------
 c=======================================================================
@@ -202,7 +213,7 @@ c
         character mname*8000, moln*16
         integer mtag(maxmline), nmline, j, jp, js, je, iline
         character version*(*)
-        parameter(version='SmaUvSpec: version 1.7 17-Aug-05')
+        parameter(version='SmaUvSpec: version 1.8 22-Aug-05')
         character uvflags*8,device*64,xaxis*12,yaxis*12,logf*64
         character xtitle*64,ytitle*64, veldef*8
         character xtitlebuf*64
@@ -230,6 +241,7 @@ c
         real strl 
         integer nmol, moltag(maxmline)
         character molname(maxmline)*16, jplpath*80 
+        character veltyp*8, veltype*32 
         common/jplcat/nmol,moltag,molname,docat,lsrvel,
      *  veldef,veldop,strl
         logical docolor,dorestfreq
@@ -255,7 +267,12 @@ c
         call getopt(uvflags,ampsc,rms,nobase,avall,dodots,doflag,doall,
      &          docat,dorestfreq)
         call keya('catpath', jplpath, ' ')
-        call keyr('lsrvel', lsrvel, 0.0)
+        call keyr('vsource', lsrvel, 0.0)
+        call keya('veltype', veltyp, ' ') 
+           if (veltyp(1:1).eq."L".or.veltyp(1:1).eq."l") 
+     & veltyp = 'VELO-LSR'
+           if (veltyp(1:1).eq."B".or.veltyp(1:1).eq."b")
+     & veltyp = 'VELO-HEL'
         call keya('veldef', veldef, 'radio')
          if((veldef(1:1).eq."O").or.(veldef(1:1).eq."o")) then
                 veldef = 'optical'
@@ -304,7 +321,8 @@ c
             pathlen=pathlen+1
             end if
          xaxis='frequency'
-c         yaxis='amplitude'
+c         if((yaxis(1:1).ne.'b').and.
+c     &      (yaxis(1:1).ne.'B')) yaxis='amplitude'
 
          call molselect(jplpath,pathlen,mtag,nmline,mname)
                    jp=1
@@ -439,6 +457,16 @@ c  Keep on going. Read in another record.
 c
             call uvgetvra(tin,'source',source)
             call uvgetvrr(tin,'veldop',veldop,1)
+c
+c  Pursing the velocity type
+c
+            if (docat) then 
+            call uvgetvra(tin,'veltype',veltype)
+            if(veltyp(1:1).eq.' ') veltyp(1:8)=veltype(1:8)
+            if(veltype(6:8).ne.veltyp(6:8)) 
+     * call bug('f',
+     * 'The input veltype differs from that defined in the uv data.')
+            end if  
             call uvdatrd(preamble,data,flags,maxchan,nread)
           enddo
 c
