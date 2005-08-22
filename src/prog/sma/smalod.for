@@ -35,8 +35,9 @@ c       the first of which is CO(3-2), and the second is continuum, use
 c       restfreq=345.795991,0
 c
 c@ vsource
-c       The velocity of source in km/s w.r.t. the LSR.
-c       Positive velocity is away from observer.
+c       The radial velocity of source in km/s w.r.t. the LSR or 
+c       the barycenter. The velocity reference frame can be selected 
+c       in options. Positive velocity is away from observer.
 c       Default is zero.
 c
 c@ refant
@@ -186,14 +187,18 @@ c    jhz  07-jul-05 update jyperk in sma_mirRead.c
 c                   change the default of the first argument in 
 c                   nscans to 1
 c    jhz 07-jul-05 pasring the source name in sma_mirRead.c
-c                  changing the source name if the first 8
-c                  characters are identical for any of the two source
-c                  name entries from mir data.
+c                   changing the source name if the first 8
+c                   characters are identical for any of the two source
+c                   name entries from mir data.
+c    jhz 08-aug-05 updating the inline document for vsource;
+c                   the velocity reference frame for vsource
+c                   is defined using options; either bary or lsr
+c                   is supported. 
 c------------------------------------------------------------------------
         integer maxfiles
         parameter(maxfiles=128)
         character version*(*)
-        parameter(version='SmaLod: version 1.10 07-July-05')
+        parameter(version='SmaLod: version 1.11 22-Aug-05')
 c
         character in(maxfiles)*64,out*64,line*64, rxc*4
         integer tno, length, len1
