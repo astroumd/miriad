@@ -11,27 +11,34 @@ c       for users to identify spectral lines using the on-line JPL catalog.
 c@ vis
 c	The name of the input uv data sets. Several can be given (wild
 c	cards are supported). No default.
+c
 c@ select
 c	The normal uv selection commands. The default is plot everything.
+c
 c@ line
 c	The normal uv linetype in the form:
 c	  line,nchan,start,width,step
 c	The default is all channels (or all wide channels if there are no
 c	spectral channels).
+c
 c@ stokes
 c	The Stokes/polarization types to be plotted. The default is to
 c	plot those polarizations present in the input files.
+c
 c@ interval
 c	Time averaging interval, in minutes. The default is 0 (i.e. no
 c	averaging).
+c
 c@ hann
 c	Hanning smoothing width (an odd integer).  Smoothing is
 c	applied after averaging. Default is 1 (no Hanning smoothing).
+c
 c@ offset
 c	An offset (in arcsec) to shift the data. Positive values result in
 c	the data center being shifted to the North and East. Two values
 c	should be given, being the shift in the RA and DEC directions.
 c	The default is 0,0 (i.e. no shift).
+c
 c@ options
 c	This gives extra processing options. Several options can be given,
 c	each separated by commas. They may be abbreviated to the minimum
@@ -58,10 +65,12 @@ c                        then forced to be frequency and ampltiude.
 c          'restfreq'    plot the rest frequency in the identification of 
 c                        the spectral lines using the JPL (options=jplcat is chosen.)
 c                        Default is to plot the sky frequency.
+c
 c@ catpath
-c       This gives the path of JPL catalog. No Default. In general, 
-c       the path of JPL catalog are: $MIRCAT/jpl/; otherwise, it can
-c       be specified by users.
+c       This gives the path of JPL catalog. No Default. When script
+c       $MIR/install/get_jplcatalog is used to install the JPL catalog,
+c       the path of JPL catalog is assigned to: $MIRCAT/jplcat/; 
+c       otherwise, it can be specified by users.
 c
 c@ vsource
 c       The radial velocity of source in km/s w.r.t. the LSR or
@@ -102,6 +111,7 @@ c	   real          Plot real part of the data.
 c	   imaginary     Plot imaginary part of the data.
 c          both          Plot both amplitude and phase.
 c	The default is axis=channel,amplitude.
+c
 c@ yrange
 c	The min and max range along the y axis of the plots. The default
 c	is to autoscale.
@@ -109,14 +119,18 @@ c       Note: in the case of yaxis=both, the range is specified by the
 c             yrange to the variable amplitude. The phase is plotted below 
 c             the amplitude in the bottom panel with the range from -180 to 
 c             180 degree. 
+c
 c@ device
 c	PGPLOT plot device/type. No default.
+c
 c@ nxy
 c	Number of plots in the x and y directions. The default is
 c	determined from the number of antennae in the data-sets.
+c
 c@ log
 c	Log file into which the spectra are dumped in the order in which
 c	they are plotted.  Really only useful if your plot is quite simple.
+c
 c--
 c  History:
 c    rjs  18sep92 Derived from uvaver.
@@ -170,6 +184,10 @@ c                 The rest frame of either LSR or Barycenter is now
 c                 supported in the spectral line identification with
 c                 the JPL catalog.
 c    jhz 22aug05  added special relativistic expressions to the veldef.
+c    jhz 23aug05  in pghline, add velocity labelling options for
+c                 lsr, hel, and z of full special relativistic
+c                 expressions in the case of spectral line identifications.             
+c
 c>  Bugs:
 c------------------------------------------------------------------------
 c=======================================================================
@@ -215,7 +233,7 @@ c
         character mname*8000, moln*16
         integer mtag(maxmline), nmline, j, jp, js, je, iline
         character version*(*)
-        parameter(version='SmaUvSpec: version 1.8 22-Aug-05')
+        parameter(version='SmaUvSpec: version 1.8 23-Aug-05')
         character uvflags*8,device*64,xaxis*12,yaxis*12,logf*64
         character xtitle*64,ytitle*64, veldef*8
         character xtitlebuf*64
@@ -245,7 +263,7 @@ c
         character molname(maxmline)*16, jplpath*80 
         character veltyp*8, veltype*32 
         common/jplcat/nmol,moltag,molname,docat,lsrvel,
-     *  veldef,veldop,strl
+     *  veltype,veldef,veldop,strl
         logical docolor,dorestfreq
         integer nspect, nschan(maxwin),nchan0
         common/spectrum/nspect,nschan,nchan0,docolor,dorestfreq
@@ -326,9 +344,8 @@ c
             pathlen=pathlen+1
             end if
          xaxis='frequency'
-c         if((yaxis(1:1).ne.'b').and.
-c     &      (yaxis(1:1).ne.'B')) yaxis='amplitude'
-
+         if((yaxis(1:1).ne.'p').or.
+     &      (yaxis(1:1).ne.'P')) yaxis='both'
          call molselect(jplpath,pathlen,mtag,nmline,mname)
                    jp=1
                    iline=0 
@@ -1624,11 +1641,11 @@ c common jpl
 c
         parameter(maxmline=500)
         integer nmol, moltag(maxmline), len1, startchunk
-        character molname(maxmline)*16, veldef*8
-        real lsrvel,veldop
+        character molname(maxmline)*16, veldef*8,veltype*32
+        real lsrvel,veldop,z
         logical docat
         common/jplcat/nmol,moltag,molname,docat,lsrvel,
-     *                veldef,veldop,strl
+     *       veltype,veldef,veldop,strl
         logical selwins(maxwin)
         common/windows/selwins
                 startchunk=0
@@ -1788,11 +1805,21 @@ c          plot phase
 c      strl = -500
           call  pgsci(2)
        if(abs(lsrvel).lt.1000) then
-       write(title,'(a,f7.1,a)') 'Vlsr =',lsrvel,' km/s'
+       if(veltype(6:6).eq.'L') 
+     *    write(title,'(a,f7.1,a)') 'Vlsr =',lsrvel,' km/s'
+       if(veltype(6:6).eq.'H')
+     *    write(title,'(a,f7.1,a)') 'Vhel =',lsrvel,' km/s'
+         call pgmtxt('RV',-11.0, 1.025, 0., title)
          else
-       write(title,'(a,f7.3)') 'z =',lsrvel*1.0e3/cmks
+c 
+c  calculate z based on the full special
+c  relativistic expressions
+c
+         z = lsrvel*1.0e3/cmks
+         z = sqrt((1+z)/(1-z)) - 1.0         
+       write(title,'(a,f7.3)') 'z =', z
+       call pgmtxt('RV',-6.0, 1.025, 0., title)
        end if
-       call pgmtxt('RV',-12.0, 0.925, 0., title)
        if(.not.dorestfreq) then
        if(veldef.eq."radio") then 
                  fmn = fmn /(1.-(lsrvel+veldop)*1.e3/cmks)
