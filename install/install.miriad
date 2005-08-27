@@ -1,6 +1,6 @@
 #! /bin/csh -f
 #
-set version=13-jul-05
+set version=26-aug-05
 #
 #  2-aug-99 Updated for Sebok's Mandrake setup
 #  1-aug-00 Updated to allow to build private PGPLOT version
@@ -27,6 +27,7 @@ set version=13-jul-05
 #  4-jan-05 MacOSX (10.3=panther)
 # 11-jan-05 some temporary MacOSX related fixes, and cleanup
 # 19-jun-05 g95 an option
+# 26-aug-05 miriad_start.$SHELL scripts
 #
 #   Simple single-architecture installation of MIRIAD
 #   (linux)
@@ -61,13 +62,8 @@ set telescope=carma
 #   later on this will also be stored again in the file $MIR/DATE, where the CVS miriad
 #   version will be stored in $MIR/VERSION
 
-if (0) then
- set newdir=`date +%y%b%d | tr '[:upper:]' '[:lower:]'`
- set hosttype=`uname -s | tr '[:upper:]' '[:lower:]'`
-else
- set newdir=`date +%y%b%d | tr A-Z a-z`
- set hosttype=`uname -s | tr A-Z a-z`
-endif
+set newdir=`date +%y%b%d | tr A-Z a-z`
+set hosttype=`uname -s | tr A-Z a-z`
 
 # hosttypes we support:  linux, darwin (MacOSX), sunos (->sun4sol)
 
@@ -268,6 +264,18 @@ endif
 echo 'export WIPHELP=$MIR/borrow/wip/wiphelp.dat'             >> $startsh
 
 
+# in preparation for single $MIR/bin and $MIR/lib directories
+# we're going to instroduce the new miriad_start.$shell scripts:
+
+set start1=miriad_start.csh
+echo "setenv MIR $MIR"               > $start1
+echo "source $MIR/MIRRC.$MIRHOST"   >> $start1
+cp $start1 ..
+
+set start2=miriad_start.sh
+echo "export MIR=$MIR"               > $start2
+echo "source $MIR/MIRRC.$MIRHOST"   >> $start2
+cp $start2 ..
 
 # astromake: only do this if you want to make THIS version miriad's 
 # official one.
