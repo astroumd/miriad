@@ -1,6 +1,6 @@
 #! /bin/csh -f
 #
-set version=26-aug-05
+set version=27-aug-05
 #
 #  2-aug-99 Updated for Sebok's Mandrake setup
 #  1-aug-00 Updated to allow to build private PGPLOT version
@@ -268,13 +268,15 @@ echo 'export WIPHELP=$MIR/borrow/wip/wiphelp.dat'             >> $startsh
 # we're going to instroduce the new miriad_start.$shell scripts:
 
 set start1=miriad_start.csh
-echo "setenv MIR $MIR"               > $start1
-echo "source $MIR/MIRRC.$MIRHOST"   >> $start1
+echo "# source this file to set MIR env"  > $start1
+echo "setenv MIR $MIRTEMP"               >> $start1
+echo "source $MIRTEMP/MIRRC.$hosttype"   >> $start1
 cp $start1 ..
 
 set start2=miriad_start.sh
-echo "export MIR=$MIR"               > $start2
-echo "source $MIR/MIRRC.$MIRHOST"   >> $start2
+echo "# source this file to set MIR env"  > $start2
+echo "export MIR=$MIRTEMP"               >> $start2
+echo "source $MIRTEMP/MIRRC.$hosttype"   >> $start2
 cp $start2 ..
 
 # astromake: only do this if you want to make THIS version miriad's 
