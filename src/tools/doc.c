@@ -2622,7 +2622,7 @@ void fn_dne(filename,fname) char *filename, *fname; { char s[NAMELEN];
 void fn_parse(char *filename,char *output,char *part)
 {
     char *f, *s, *d, *n, *e, *v;
-    char part_[3]; int  c; strcpy(part_,part); lowcase(part_);
+    char part_[4]; int  c; strcpy(part_,part); lowcase(part_);
     f = filename;
     if( !strncmp(part_,"dev",3) ) c='s';  s=f;
     if( !strncmp(part_,"dir",3) ) c='d';  d=f;
