@@ -82,12 +82,13 @@ History:
   rlp 10jun97 Print keywords out in lower case.
   pjt 12jun01 Increased N_PGMR, made a static in lognam()
       15jun01 and defensed agains future increments for N_PGMR
+  pjt 28aug05 uninitialized variables in gcc4 with -O  ; removed vaxc code
 
 TODO:
   - spaces before slash-star commands are not understood 
 
 ********************************************************************/
-char *version = { "version 2.6 - 15-Jun-01" };
+char *version = { "version 2.7 - 28-aug-05" };
 /*******************************************************************/
 /*= doc - MIRIAD documentation program                             */
 /*& bpw                                                            */
@@ -263,8 +264,7 @@ documentation info can be converted to doc-format (options -p and -P).
 Or special information can be extracted to produce an alphabetical or
 systematic index (options -i, and -t) or the name (initials) of the
 person responsible (option -r) . All these options can be combined.
-Option -d is the default. On vaxes, the lowercase options must be
-surrounded by quotes of the " type.
+Option -d is the default. 
 
 3. Description of options
 
@@ -689,25 +689,82 @@ c* directive) will have extension .tdoc.
 #include <ctype.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 
-void     exit();
-void     setarr();
-int      ndec(), nelc();
-logical  eol(), eof();
-logical  occurs();
-char    *indexl(), *indexr();
-void     streq(), strconcat(), blank(), upcase(), lowcase(), unspecial();
-int      strccmp();
-int      locate();
-logical  get_element();
-void     remove_leading_spaces(), remove_trailing_spaces(), untab();
+ /* all locally used routines */
 
-logical  isfilename();
-void     fn_dne(), fn_parse();
-FILE    *f_open(), *f_open_expand();
-logical  rdline();
-void     type();
-char    *lognam(), *getenv();
+void build_namelist(void);
+void decode(int argc, char *argv[], char *listfile[], int *nsingle);
+void tell_usage(void);
+void show_format(void);
+void show_categs(int num);
+void show_cats(char *pr_categories[], int N_CATS);
+void process(char *listfile);
+void get_name(char *listfile, char *filename);
+void process_docfile(char *filename);
+FILE *new_file(char *filename);
+void re_init(int bof);
+void end_module(int eof);
+void treat_flag_line(char *fname, char *line);
+void handle_option_N(int directive, char *line, char *filename);
+void start_new_module(void);
+int find_sourcetype(int directive, char *filename);
+void write_filename_on_index(char *filename);
+int change_outstream(char modulename[]);
+void handle_option_P(char person[]);
+void handle_option_D(char *describes);
+void handle_option_K(char *keyword);
+void handle_option_I(char *keyword);
+void handle_option_colon(char *categories_line);
+void handle_option_plus(char line[]);
+void handle_option_B(char line[]);
+void handle_option_plus_and_B(char line[], int opt);
+void handle_option_dash(char line[]);
+void treat_description_line(char *line, int start);
+void putc_chks(int c, FILE *stream);
+void putc_chkd(int c, FILE *stream);
+void index_files(int mode);
+void add_dots(char line[], int person);
+void type_persons_info(FILE *indexfile);
+void category_list(char *categories[], char *pr_categories[], int N_CATS);
+int print_routines(int f, int i, FILE *sysindfile, char *category, char *pr_category);
+int print_header(int i, char *category, char *pr_category);
+int type_dashes_line(void);
+int toggle_if(int select, int the_logical, int mode, char name_of_logical[]);
+void toggle_write(int the_logical, int mode, char name_of_logical[], FILE *output);
+int wl(void);
+int ndec(int i);
+void setarr(int array[], int len, int val);
+int nelc(char *s);
+int occurs(int c, char *s);
+char *indexl(int c, char *s);
+char *indexr(int c, char *s);
+void blank(char *s, int n);
+void upcase(char *s);
+void lowcase(char *s);
+void unspecial(char *s, char *t);
+void streq(char *str1, int i1, int i2, char *str2, int j1, int j2);
+void strconcat(char *sout, char *s1, char *s2);
+int strccmp(char *str1, char *str2);
+int strcncmp(char *str1, char *str2, int n);
+int get_element(int nr, char *string, char *separator, char *substring);
+int locate(char *s, char *ss[], int ns);
+int matches(char *to_search, char *mname);
+void remove_leading_spaces(char *s);
+void remove_trailing_spaces(char *s);
+void untab(char *s, int start);
+int isfilename(char *f);
+void fn_dne(char *filename, char *fname);
+void fn_parse(char *filename, char *output, char *part);
+FILE *f_open(char *filename, char *mode);
+FILE *f_open_expand(char *string, char *mode);
+int rdline(FILE *file, char *data);
+void type(char *filename);
+int eol(int c);
+int eof(int c);
+int remov(char *filename);
+char *lognam(char *envvar);
 
 /************************************************************************/
 
@@ -718,13 +775,9 @@ char    *lognam(), *getenv();
 
 /* the logical name / environment variable of the root */
 /* and the directory of temporary files */
-#ifdef vaxc
-char    *root = { "MIR:[" }; char directory_separator = '.';
-char    *TEMPDIR = "sys$login:";
-#else
 char    *root = { "$MIR"  }; char directory_separator = '/';
 char    *TEMPDIR = "/tmp/";
-#endif
+
 /* the logical name / environment variable where task documentation resides */
 #define PDOCDIR "MIRPDOC"
 /* the logical name / environment variable where routine documentation resides*/
@@ -818,11 +871,7 @@ logical  written[NT]={FALSE,FALSE,FALSE};/* TRUE if line written to indexfile */
 FILE    *sysindfile;
 
 char     tempalfind[NT][NAMELEN];
-#ifdef vaxc
-char    *tempsysind = "sys$login:sysind.tmp";
-#else
 char    *tempsysind = "/tmp/sysind.tmp";
-#endif
 char    *indexfnam[NT]    = { "index.plst",   "index.slst",   "index.clst"    };
 char    *sysindexfnam[NT] = { "sysindex.plst","sysindex.slst","sysindex.clst" };
 
@@ -924,9 +973,7 @@ char     scrline[STRINGLEN];             /* common character scratch variable */
 /* set logicals based on input options                                  */
 /* and treat input                                                      */
 
-main(argc,argv)
-int   argc;
-char *argv[];
+int main(int argc,char *argv[])
 {
     char *file[FMAX];
     int   n, nsingle;
@@ -955,7 +1002,7 @@ char *argv[];
 /* build_namelist makes the connection between a programmer's initials  */
 /* and his/her real name, for later use when typing the name of the     */
 /* responsible person. The associations are read from a file.           */
-void build_namelist()
+void build_namelist(void)
 {
     FILE *catfile;
     int   i=0;
@@ -1062,7 +1109,7 @@ void tell_usage()
 {
 /* Option letters used up: "a cdef  ij lm op rstu wx  " */
 printf ("doc ... %s\n",version);
-printf("Usage:\n",version);
+printf("Usage:\n");
 printf("doc [-f] [-c#] [-ditruUpP] [-m module] [-x texformat] [-s sectiontype]\n");
 printf("    [-o dir] [-a] [-w#] [-e] [-l listfile] [files]\n");
 printf("  Extract documentation from .doc, .cdoc .sdoc, .for, .f, .f2c, .c files.\n");
@@ -2566,19 +2613,13 @@ logical isfilename(f) char *f; {
 /* expand filename to a filename consisting of directory/name.extension */
 void fn_dne(filename,fname) char *filename, *fname; { char s[NAMELEN];
     fn_parse( filename, s, "dir" ); strcpy( fname, s );
-#ifndef vaxc
     strcat( fname, "/" );
-#endif
     fn_parse( filename, s, "nam" ); strcat( fname, s );
     fn_parse( filename, s, "ext" ); strcat( fname, s ); return; }
 /************************************************************************/
 /* extract the asked-for part from the string filename. The part can be */
 /* "dev", "dir", "nam", "ext" or "vsn".                                 */
-void fn_parse(filename,output,part)
-char *filename;
-char *output;
-
-char *part;
+void fn_parse(char *filename,char *output,char *part)
 {
     char *f, *s, *d, *n, *e, *v;
     char part_[3]; int  c; strcpy(part_,part); lowcase(part_);
@@ -2619,12 +2660,14 @@ FILE *f_open(filename,mode) char *filename; char *mode;
     return (filepointer); }
 /************************************************************************/
 /* first expand to full filename before opening                         */
-FILE *f_open_expand( string, mode ) char *string; char *mode;
-{   char temp[NAMELEN]; char file[NAMELEN];
-    fn_parse( string, temp, "dir" ); strcpy( file, lognam(temp) );
-    fn_parse( string, temp, "nam" ); strcat( file, temp );
-    fn_parse( string, temp, "ext" ); strcat( file, temp );
-    return ( f_open(file,mode) ); }
+FILE *f_open_expand( char *string, char *mode ) {
+  char temp[NAMELEN]; char file[NAMELEN];
+  fn_parse( string, temp, "dir" ); strcpy( file, lognam(temp) );
+  fn_parse( string, temp, "nam" ); strcat( file, temp );
+  fn_parse( string, temp, "ext" ); strcat( file, temp );
+  return ( f_open(file,mode) ); 
+}
+
 /************************************************************************/
 /* Read from file until the newline character. Delimit the output by a  */
 /* zero byte. On returning rdline becomes FALSE at end-of-file.         */
@@ -2640,27 +2683,22 @@ void type(filename) char *filename; { FILE *file; char line[STRINGLEN];
 /* return TRUE of FALSE whether character c is end-of-line/end-of-file  */
 logical eol(c) int c; { return ( c == '\n' || c == '\r' ); }
 logical eof(c) int c; { return ( c == EOF ); }
+
 /************************************************************************/
 /* translate the unlink to the remove function for unix machines        */
-remov(filename) char *filename; {
-#ifndef vaxc
-unlink(filename);
-#endif
-#ifdef vaxc
-remove(filename);
-#endif
+remov(char *filename) {
+  unlink(filename);
 }
+
 /************************************************************************/
 /* expand logical name for unix, don't for vms                          */
-char *lognam(envvar) char *envvar; {
-static char log_nam[NAMELEN]; char *env;
-strcpy( log_nam, "\0" );
-#ifdef vaxc
-if( *envvar != '\0' ) strconcat( log_nam, envvar, ":" );
-#else
-if( *envvar != '\0' ) { env = getenv(envvar);
+char *lognam(char *envvar) {
+  static char log_nam[NAMELEN]; 
+  char *env;
+  strcpy( log_nam, "\0" );
+  if( *envvar != '\0' ) { env = getenv(envvar);
     if( env != '\0' ) strconcat( log_nam, getenv(envvar), "/" );
     if( env == '\0' ) fprintf( stderr, "%s is not defined\n", envvar ); }
-#endif
-return (&log_nam[0]); }
+  return (&log_nam[0]); 
+}
 
