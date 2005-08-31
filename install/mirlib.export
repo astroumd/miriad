@@ -1,7 +1,7 @@
 #! /bin/csh -f
 #
-#  Generate files for subsystems like:  $AIPS++/code/aips/mirlib
-#  (though note as of this writing, summer 2004) this is still the old MIR3
+#  Generate files for subsystems like:  CARMA_TOOLS and $AIPS++/code/aips/mirlib
+#  (though note as of this writing, summer 2004, AIPS++ still the old MIR3)
 #  We assume here the new MIR4 version, this script produces unpredictable
 #  things for MIR3
 #
@@ -12,8 +12,9 @@ if ($?MIR == 0) then
   exit 1
 endif
 
-set tar=0
-set src=mirlib
+#                             command line options
+set tar=0                     #  0=no tar file   1=make a tar file
+set src=mirlib                #  local subdirectory name in which mirlib is built
 set lib=/dev/null
 set inc=/dev/null
 set bin=/dev/null
@@ -54,7 +55,8 @@ cp -p $MIR/install/Makefile .
 
 echo `cat $MIR/VERSION`_mirlib > VERSION
 
-echo "Created by the mirlib.export script on `date`" > README.mirlib
+echo "Created by the MIRIAD/install/mirlib.export script on `date`" > README.mirlib
+echo "Please do not edit file, instead use full MIRIAD via CVS"    >> README.mirlib
 
 # only compile if a tar file is not made
 

@@ -63,7 +63,7 @@ void test_xyio(char *fname, int nx, int ny, int nz)
   float data[MAXDIM];
   int axes[3];
 
-  fprintf(stderr,"test_xyio: %s %d %d %d\n",fname,nx,ny,nz);
+  fprintf(stderr,"test_xyio: %s nx,ny,nz=%d %d %d\n",fname,nx,ny,nz);
 
   /* delete old one , if exists */
   hopen_c(&t1, fname, "old", &iostat);
@@ -91,7 +91,7 @@ void test_uvio(char *fname, int nc, int nw, int nr)
   float data[2*MAXCHAN];
   int  flags[MAXCHAN];
 
-  fprintf(stderr,"test_uvio: %s %d %d %d\n",fname,nc,nw,nr);
+  fprintf(stderr,"test_uvio: %s nc,nw,nr=%d %d %d\n",fname,nc,nw,nr);
 
   /* delete old one , if exists */
   hopen_c(&t1, fname, "old", &iostat);
@@ -130,8 +130,15 @@ int main(int argc, char *argv[])
 {
   int n1, n2, n3;
   char *buf;
-  fprintf(stderr,"Testing MIRLIB: choose a mode and bunch of integers\n");
-  if (argc==1) return 1;
+  fprintf(stderr,"Testing MIRLIB:\n");
+  if (argc==1) {
+    fprintf(stderr,"Command line options\n");
+    fprintf(stderr," h                              hio test on test1.mir \n");
+    fprintf(stderr," x [nx ny nz]                   xyio write test on test1.xy\n");
+    fprintf(stderr," u [nc nw nr]                   uvio write test on test1.uv\n");
+    fprintf(stderr," m                              malloc loop until full memory [sic]\n");
+    return 1;
+  }
 
   switch (*argv[1]) {
   case 'h': 
@@ -142,6 +149,8 @@ int main(int argc, char *argv[])
       n1 = atoi(argv[2]);
       n2 = atoi(argv[3]);
       n3 = atoi(argv[4]);
+    } else {
+      n1 = n2 = n3 = 64;
     }
     test_xyio("test1.xy", n1,n2,n3);
     break;
@@ -150,11 +159,17 @@ int main(int argc, char *argv[])
       n1 = atoi(argv[2]);
       n2 = atoi(argv[3]);
       n3 = atoi(argv[4]);
+    } else {
+      n1 = 1024;
+      n2 = 16;
+      n3 = 40000;
     }
-    test_uvio("test1.uv", 1024, 16, 40000);
+    test_uvio("test1.uv", n1,n2,n3);
     break;
   case 'm':
-    fprintf(stderr,"Malloc loop until memory full\n");  
+    fprintf(stderr,"Malloc loop until memory full, incrementing by %d ... ",BUFSIZE);  
+    sleep(1);
+    fprintf(stderr,"... go!\n");
     do {
       buf = malloc(BUFSIZE);
     } while (buf);
