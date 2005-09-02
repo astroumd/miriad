@@ -61,6 +61,11 @@ c		   Default uses the on-line values.
 c       'lsr'      Compute the radial velocities of the observatory, in the 
 c                  direction of a source, w.r.t. the LSR. 
 c                  Default uses the on-line values.
+c                  The above two options might be applied only when
+c                  the chunk frequency stored in the SMA raw data
+c                  corresponds to the true Doppler tracked sky frequency
+c                  or no online correction to the frequency has been
+c                  made. 
 c       'nopol'    Disable polarization. All the correlations will be
 c                  labelled as XX. Default in options for polarization 
 c                  is nopol.
@@ -194,11 +199,12 @@ c    jhz 08-aug-05 updating the inline document for vsource;
 c                   the velocity reference frame for vsource
 c                   is defined using options; either bary or lsr
 c                   is supported. 
+c    jhz 31-aug-05 update the inline doc for option lsr and bary.
 c------------------------------------------------------------------------
         integer maxfiles
         parameter(maxfiles=128)
         character version*(*)
-        parameter(version='SmaLod: version 1.11 22-Aug-05')
+        parameter(version='SmaLod: version 1.12 31-Aug-05')
 c
         character in(maxfiles)*64,out*64,line*64, rxc*4
         integer tno, length, len1
