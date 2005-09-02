@@ -200,13 +200,14 @@ c    14oct04 mchw  New data format for ATA.
 c    09mar05 mchw  Equation 5 fits daz = v(5) * sin(El) * cos(El) for ATA
 c    14mar05 mchw  change UT to day of year on plots and listings.
 c    07jul05 mchw  added OVRO data format.
+c    02sep05 pjt   merged web version with cvs version (grrrr)
 c----------------------------------------------------------------------c
 	include 'pnt.h'
 	character version*(*)
-	parameter(version='(version 3.1  8-jul-2005)')
+	parameter(version='(version 3.1  02-sep-2005)')
 c
 	integer i,iant,kans
-	character ans*20,options*1,log*80,buffer*80
+	character ans*20,options*1,log*80,buffer*80, telescope*20
 c
 c  Get user input parameters.
 c
@@ -224,7 +225,8 @@ c
 	write(buffer,100) dat
 100	format('HAT CREEK INTERFEROMETER POINTING FITTING - ', A)      
 	call outlog(buffer)
-	call ptfile(options)
+        telescope = 'ATA'
+	call ptfile(options,telescope)
 3	call output(' available commands are:')
 	call output(' CO   Enter comment into log file')
 	call output(' IN   Input new file of pointing data')
@@ -241,7 +243,7 @@ c
 1     	call prompt(ans,kans,'COMMAND= ') 
 	if (kans.eq.0) goto 3
 	call ucase(ans)
-	if(ans.eq.'IN') call ptfile(options)
+	if(ans.eq.'IN') call ptfile(options,telescope)
 	if(ans.eq.'FL') call PTFLUX
 	if(ans.eq.'FI') call PTFIT
 	if(ans.eq.'GR') call PTPLOT
@@ -475,7 +477,7 @@ c
      *	   + v(3)*cos(az)) + cosel*(v(6)*sin(az) + v(7)*cos(az))
      *	   + cosel*(v(8)*sin(2*az) + v(9)*cos(2*az))
 	else
-	   ansaz = 0.0
+	  ansaz = 0.0
 	endif
 	end
 c********1*********2*********3*********4*********5*********6*********7*c
@@ -1018,7 +1020,7 @@ c
 	enddo
 	end
 c********1*********2*********3*********4*********5*********6*********7*c
-	subroutine ptfile(options)
+	subroutine ptfile(options,telescope)
 	implicit none
 c
 c  Input new file of pointing data.
@@ -1162,7 +1164,7 @@ c
 
 20     continue
 
-       telescope = 'OVRO'
+       telescope = 'ATA'
        if (telescope.eq.'OVRO')then
 c
 c  read OVRO pointing data file.
@@ -1201,8 +1203,8 @@ c
 
 c********1*********2*********3*********4*********5*********6*********7*c
 21	read(1,211,end=10) 
-      *      az(n), el(n), daz(n), del(n), ut(n), t1(n), source
-	print 212, az(n), el(n), daz(n), del(n), ut(n), t1(n), source
+      *      ut(n), az(n), el(n), daz(n), del(n), t1(n), source
+	print 212, ut(n), az(n), el(n), daz(n), del(n), t1(n), source
 211	format(6f8.3, a8)
 212	format(1x,6f8.3, 1x, a8)
 
@@ -1211,8 +1213,11 @@ c	source = "ata1"
 c
 c  Convert daz and del to arcmin in the sky
 c
-	daz(n) = 60. * daz(n) * cos(el(n))
-	del(n) = 60. * del(n)
+C not needed for carma on 18 aug 2005
+
+
+c	daz(n) = 60. * daz(n) * cos(el(n))
+c	del(n) = 60. * del(n)
 
 	endif
 c
@@ -1525,9 +1530,9 @@ c
 	  else if(type.eq.'TILT') then
 	    calc = anstilt(az(i),el(i),vector)
 	    error = tilt(i)
-          else
-	     calc = 0.0
-	     error = 0.0
+	  else
+	    calc = 0.0
+	    error = 0.0
 	  endif
 	  diff(i) = error - calc
 	  av = av + error
