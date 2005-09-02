@@ -88,7 +88,24 @@
 // 2005-08-03 (JHZ) fixed a bug in the channel pntr in the
 //                  case of resampling the data to a lower channel resolution.
 // 2005-08-03 (JHZ) change the apperture efficiency to 0.5 for 340 GHz
-//                  
+// 2005-09-01 (JHZ) add smaveldop in the structure smlodd. 
+//                  see the comment around line 1610. the chunk frequency
+//                  stored in the header of MIR data appears to be not the
+//                  sky frequency that is actually Doppler tracked by the 
+//                  on-line system. The chunk frequency is the sky frequency to 
+//                  which the part of Doppler velocity (diurnal term and part 
+//                  of the annual term) has been corrected.
+//                  smaveldop is the residual veldop after taking out the part
+//                  that have been corrected to the chunk frequency.
+//                  smaveldop will be specially stored in a variable
+//                  called velsma. A special patch in the uvredo (miriad task)
+//                  is required to compute the "SMA veldop" for other sources
+//                  corresponding to the SMA "sky frequency".
+//                  So that, the users can use the rest of Miriad task
+//                  to properly reduce the SMA data avoiding the problem 
+//                  of smearing spectral lines.  
+// 2005-09-01 (JHZ) Removed lines for storing velsma;
+//                  The residual Doppler velocity can be stored in veldop. 
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -371,11 +388,10 @@ void rspokeflshsma_c(char *kst[])
      uvputvrd_c(tno,"lst",&(smabuffer.lst),1);
   /* store elaz data */
   elaz(tno);
-  /* Compute radial velocity of the observatory */
-  /*call velrad(.not.dobary,tdash,obsra,obsdec,ra,dec,lst,lat,vel)*/
-  // store radial velocity of the observatory w.r.t. source
+  // store radial velocity of the observatory w.r.t. the rest frame 
   uvputvrr_c(tno,"veldop",&(smabuffer.veldop),1);
-  // store the source velocity w.r.t. lsr
+//  uvputvrr_c(tno,"velsma",&(smabuffer.smaveldop),1);
+  // store the source velocity w.r.t. the rest frame
   uvputvrr_c(tno,"vsource",&(smabuffer.vsource),1);
 //
 // antenna aperture efficiency from TK
@@ -450,6 +466,7 @@ void rspokeflshsma_c(char *kst[])
       uvputvrd_c(tno,"sdf",&(smabuffer.sdf),smabuffer.nifs);
       uvputvrd_c(tno,"restfreq",&(smabuffer.restfreq),smabuffer.nifs);
       uvputvrr_c(tno,"veldop",&(smabuffer.veldop),1);
+//      uvputvrr_c(tno,"velsma",&(smabuffer.smaveldop),1);
     }
     /* call tsysStore */
     uvputvri_c(tno,"tcorr",&(smabuffer.tcorr),1);
@@ -1448,11 +1465,15 @@ int rsmir_Read(char *datapath, int jstat)
 	  spn[inset]->inhid                = sph1->inhid;
 	  spn[inset]->iband[sph1->iband]   = sph1->iband;
 	  
-	  // lsr velocity with respect to the rest frequency
+	  // velocity with respect to the rest frame
+          // given by the SMA on-line system. This is 
+          // only meaningful to the line transition at the
+          // rest frequency 
 	  spn[inset]->vel[sph1->iband]     = sph1->vel;
 	  spn[inset]->vres[sph1->iband]    = sph1->vres;
 	  spn[inset]->ivtype               = sph1->ivtype;
-	  // sky frequency
+	  // sky frequency (corrected for a part of the Doppler
+          // velocity, the diurnal term and a part of the annual term) 
 	  spn[inset]->fsky[sph1->iband]    = sph1->fsky;
 	  spn[inset]->fres[sph1->iband]    = sph1->fres;
    if(smaCorr.no_rxif!=2) spn[inset]->nch[sph1->iband][0]  = sph1->nch;
@@ -1502,7 +1523,7 @@ int rsmir_Read(char *datapath, int jstat)
       int pair1;
       int pair2;
       int blset;
-      // solve for tsys of a reference ante
+    // solve for tsys of a reference ante
       set=0;
       refant=0;
       pair1=0;
@@ -1511,7 +1532,7 @@ int rsmir_Read(char *datapath, int jstat)
       for(blset=0; blset<nsets[1]; blset++) {
 	if(set==nsets[0]-1) goto next;
 	if(tsys[blset]->inhid!=inh[set]->inhid) {set++; refant=0;}
-	// choose rx
+    // choose rx
 	if(tsys[blset]->irec==smabuffer.rxif||smabuffer.rxif==-1) {
 	  if(tsys[blset]->inhid==inh[set]->inhid&&tsys[blset]->isb==0) {
 	    if(refant==0) {
@@ -1604,9 +1625,56 @@ int rsmir_Read(char *datapath, int jstat)
 	vabsolute = vabsolute*DCMKS/1000.;
         // Derive the Doppler velocity from observer to the LSR
         // by taking out the Radial velocity (at chunk 1) of the source 
-        // w.r.t. the LSR. 
+        // w.r.t. the LSR or HEL.
+        // Based on the information from Taco after the discussion with
+        // Dan Marrone and Jim Moran on 05aug26's meeting,
+        // There are two operation modes that we have supported:
+        // 1) non-planet source and 2) planet source;
+        // For mode 1) the chunk frequency recorded in the MIR data header
+        // is the sky frequency at the transit of the source being Doppler
+        // tracked, i.e., the recorded frequency is the true sky frequency 
+        // only corrected for the diurnal term due to the earth rotation.
+        // Then, Jun-Hui started to build a patch in UVREDO for handling
+        // this SMA specification and he found that additional amount
+        // correction for the part of annual term that has been made to 
+        // the sky frequency by the SMA online system. Then he tried to
+        // decode the reference time corresonding to a zero value that 
+        // the online system uses to take out the steady variation in 
+        // the sky frequnecy due to annual term. Jun-Hui further consulted 
+        // with Taco on 05Aug31. Taco commented that it should be the 
+        // time at the source transit but he could be
+        // wrong. Based on the observation on 2005Aug01 for the SgrB2 track,
+        // Jun-Hui tried to figure out the reference time using veldop calculated
+        // from UVREDO and the SMA veldop decoded from the MIR header.
+        // Apparently, using the reference time at the source transit,
+        // it gives large difference between result from Miriad and
+        // the value of the veldop decoded from the SMA data. There are other
+        // possible times for the reference: 1) the time at which 
+        // the DopplerTrack command issued by the operator (Mon Aug  1 04:06:14 2005 (brownd)
+        // for the SgrB2 observation; 2) the time at which the project command
+        // is issued by the operator. (in the SgrB2 observations, the project
+        // command was issued towice at Mon Aug  1 04:50:35 2005 (brownd)
+        // and at Mon Aug  1 05:35:48 2005 (brownd). Among the three possible time,
+        // the time 05:35:48 appears to be the closest to the reference time
+        // (which gives precision in velocity of 0.0015 km/s). Therefore 
+        // two approaches are used to implement the patch in uvredo to calculate
+        // the residual Doppler velocity: 
+        // a) Giving the reference time from which the offset in the annual 
+        // term that has been corrected to the chunk frequency;
+        // b) Using veldop decoded from the MIR header (the sky frequency/the 
+        // radial velocity at a channel and the corresponding rest frequency). 
+        // The value of decoded veldop is to be stored
+        // in the variable 'veldop' but it is not the Tracked Doppler velocity;
+        // In other document (users guide), it is called as residual Doppler
+        // velocity.
+        //  
+        // For mode 2) the chunk frequency recorded in the MIR data header
+        // is the sky frequency corrected for the radial velocity of the planet
+        // at the moment when the dopplerTrack command is issued.
+        //   
 	spn[set]->veldop = vabsolute - spn[set]->vel[12];
-	//         printf("%d veldop=%f\n", set, spn[set]->veldop);
+        spn[set]->smaveldop = vabsolute - spn[set]->vel[12];
+//	printf("%d veldop=%f %f\n", set, spn[set]->veldop,spn[set]->vel[12]);
       }
     }                   
     // rewind the data file
@@ -1864,6 +1932,7 @@ int rsmir_Read(char *datapath, int jstat)
       // configure the frequency for each of the integration set
       smabuffer.newfreq =1;
       smabuffer.veldop = (float) spn[inhset]->veldop;
+      smabuffer.smaveldop = (float) spn[inhset]->smaveldop;
       // calculate radial velocity to replace the on-line value
       { 
 	short dolsr;
