@@ -237,6 +237,10 @@ struct sph_config {
         float   veldop        ; /*  velocity of observatory in the 
                                     direction of the source tracked 
                                     with doppler correction   */
+        float   smaveldop     ; /* the residual veldop after taking out
+                                   the amount corrected to the 
+                                   chunk frequency by the SMA on-line
+                                   system. */
         short   isb           ; /*  sideband int code         */
         short   irec          ; /*  receiver int code         */
         int     souid         ; /* source id #               */
@@ -502,6 +506,7 @@ struct smlodd {
         double az[SMANT+1];
         visdata data[SMADATA+1];
         float veldop;
+        float smaveldop;
         float vsource;
         float xtsys[SMIF+1][SMANT+1];
         float ytsys[SMIF+1][SMANT+1];
