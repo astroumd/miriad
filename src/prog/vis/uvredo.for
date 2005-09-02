@@ -11,6 +11,14 @@ c	reason, or if there is a need to change a coordinate system.
 c	For example uvredo can recompute velocity information, thus
 c	allowing conversion between different velocity rest frames.
 c
+c       A patch for handling SMA data has been added into UVREDO in 
+c       consideration of the fact that the sky frequency given in the 
+c       archived SMA data has been corrected for a part of the tracked 
+c       Doppler velocity (the diurnal term and a part of the annual term).
+c       The SMA patch calculates the proper residual Doppler velocity for 
+c       each of the data records corresponding to the "corrected sky 
+c       frequency".
+c
 c	NOTE: The recomputation relies on a number of parameters in the
 c	data-set, such as "time". It is assumed that this information is
 c	correct. Uv variables that are important are:
@@ -43,10 +51,30 @@ c	The default is to apply any calibration present.
 c	   'nocal'       Do not apply the gains table.
 c	   'nopass'      Do not apply bandpass corrections.
 c	   'nopol'       Do not apply polarizatiopn corrections.
+c          'smaveldop'   Recompute the veldop for SMA data.
+c                        Keyword: dopsour must be given. 
+c
+c@ dopsour
+c      If options=smaveldop, this gives the source name, on which the Doppler
+c      motions were tracked by the SMA online system.
+c      dopsour is case-sensitive.
+c    
+c@ doptime
+c      If options=smaveldop, this gives the UT time to calculate the annual 
+c      term as a reference value. The offset from this reference value in the 
+c      annual term has been used in the SMA online correction to the Doppler 
+c      tracked sky frequency in addition to the diurnal term. The keyword 
+c      doptime is in the format of [dd,hh,mm,ss.s; 4 values]. The default is 
+c      null. If doptime is null, UVREDO reads the residual Doppler velocity 
+c      (veldop) of the Doppler tracked source and recomputes the residual 
+c      Doppler velocity for each of the selected data records. The residual 
+c      Doppler velocity is then stored into the header variable "veldop" 
+c      corresponding to the "corrected sky frequency" ("sfreq").
+c
 c@ velocity
-c	If options=velocity, this gives the rest frame of the output
-c	data-set. Possible values are 'observatory', 'lsr' and 'barycentric'.
-c	The default is the rest frame of the input data-set.
+c	If options=velocity or options=smaveldop, this gives the rest frame 
+c       of the output data-set. Possible values are 'observatory', 'lsr' and 
+c       'barycentric'. The default is the rest frame of the input data-set.
 c--
 c	It can also recompute equatorial and (u,v) coordinates, to allow
 c	a data-set to be converted between different coordinate epochs
@@ -70,6 +98,12 @@ c		  history. I have improved it a bit.
 c    rjs  19jun97 Eliminate jupaxis business (now in uvjup).
 c    dpr  22may01 Marginal XY-EW support
 c    mchw 26aug03 Added Nasmyth for SMA
+c    jhz  31aug05 A patch for handling SMA data has been added to calculate
+c    the residual Doppler velocity considering the sky frequency
+c    in the archived SMA data has been corrected for a part of the
+c    tracked Doppler velocity (the diurnal term and part of the annual
+c    term).
+
 c
 c  Bugs:
 c    * Much more needs to be added.
@@ -77,25 +111,34 @@ c------------------------------------------------------------------------
 	include 'maxdim.h'
 	include 'mirconst.h'
 	character version*(*)
-	parameter(version='UvRedo: version 1.0 19-Jun-97')
+	parameter(version='UvRedo: version 1.1 02-Sept-05')
 	integer OBS,HEL,LSR
 	parameter(OBS=1,HEL=2,LSR=3)
 c
-	character out*64,ltype*16,uvflags*16
+	character out*64,ltype*16,uvflags*16,dsource*8
 	integer frame,lIn,lOut
-	logical dovel,dochi
+	logical dovel,dochi,dosma
 c
 c  Externals.
 c
 	logical uvDatOpn
+         real doptime(4)
+         integer  nt
 c
 c  Get the input parameters.
 c
+        dosma=.false.
 	call output(version)
+c  
 	call keyini
-	call GetOpt(dovel,dochi,uvflags)
-	frame = 0
-	if(dovel)call GetRest(frame)
+	call GetOpt(dovel,dochi,uvflags,dosma)
+            if(dosma) then 
+            call keya('dopsour',dsource, ' ')
+            dovel = .true.
+            call mkeyr ('doptime',doptime,4,nt)
+            end if
+	    frame = 0
+	if(dovel) call GetRest(frame)
 	call uvDatInp('vis',uvflags)
 	call keya('out',out,' ')
 c
@@ -106,9 +149,33 @@ c
 	if(out.eq.' ')call bug('f','An output must be given')
 	if(.not.dovel.and..not.dochi)
      *	  call bug('f','Nothing to recompute!')
+
 c
+c for the SMA patch
+c
+       if(dosma.and.(dsource(1:1).eq.' '))
+     *     call bug('f', 'no dopsour is given.')
+       if(dosma) then
+        if(.not.uvdatopn(lIn))call bug('f','Error opening input file')
+      call sourfind(lIn,dsource,doptime)
+        call uvdatcls     
+        end if
+c
+c  Regets the input parameters and
 c  Open the inputs and the outputs.
-c
+c 
+        call keyini
+           call GetOpt(dovel,dochi,uvflags,dosma)
+            if(dosma) then
+            call keya('dopsour',dsource, ' ')
+            dovel = .true.
+            call mkeyr ('doptime',doptime,4,nt)
+            end if
+        frame = 0
+        if(dovel) call GetRest(frame)
+        call uvDatInp('vis',uvflags)
+        call keya('out',out,' ')
+        call keyfin
 	if(.not.uvDatOpn(lIn))
      *	  call bug('f','Failed to open the input data-set')
 	call uvDatGta('ltype',ltype)
@@ -124,7 +191,7 @@ c
 c
 c  Do the work.
 c
-	call Process(lIn,lOut,dovel,frame,dochi)
+	call Process(lIn,lOut,dovel,frame,dochi,dosma)
 c
 c  All said and done. Close up shop.
 c
@@ -155,10 +222,10 @@ c
 	if(nout.ne.0)frame = binsrcha(rframe,rframes,nframes)
 	end
 c************************************************************************
-	subroutine GetOpt(dovel,dochi,uvflags)
+	subroutine GetOpt(dovel,dochi,uvflags,dosma)
 c
 	implicit none
-	logical dovel,dochi
+	logical dovel,dochi,dosma
 	character uvflags*(*)
 c
 c  Determine extra processing options.
@@ -167,14 +234,16 @@ c  Output:
 c    dovel
 c    dochi
 c    uvflags
+c    dosma
 c------------------------------------------------------------------------
 	integer NOPTS
-	parameter(NOPTS=5)
+	parameter(NOPTS=6)
 	logical present(NOPTS)
-	character opts(NOPTS)*8
+	character opts(NOPTS)*9
 c
-	data opts/'velocity','chi     ',
-     *		  'nocal   ','nopol   ','nopass  '/
+	data opts/'velocity ','chi      ',
+     *		  'nocal    ','nopol    ','nopass   ',
+     *            'smaveldop'/
 c
 	call options('options',opts,present,NOPTS)
 	dovel = present(1)
@@ -193,15 +262,17 @@ c
 	if(.not.present(3))uvflags(5:5) = 'c'
 	if(.not.present(4))uvflags(6:6) = 'e'
 	if(.not.present(5))uvflags(7:7) = 'f'
+         dosma = present(6)
 c
 	end
 c************************************************************************
-	subroutine Process(lIn,lOut,dovel,frame,dochi)
+	subroutine Process(lIn,lOut,dovel,frame,dochi,dosma)
 c
 	implicit none
 	integer lIn,lOut
 	logical dovel,dochi
 	integer frame
+        logical dosma
 
 c  Do all the real work.
 c
@@ -276,7 +347,7 @@ c  Recompute velocity.
 c
 	  if(dovel)then
 	    if(uvvarupd(velupd))call VelComp(lIn,lOut,frame,
-     *		lst,time,rapp,dapp,epoch,ra,dec)
+     *		lst,time,rapp,dapp,epoch,ra,dec,dosma)
 	  endif
 c
 c  All done. Loop the loop.
@@ -360,7 +431,7 @@ c
 	  call uvrdvra(lIn,'telescop',telescop,' ')
 	  call obspar(telescop,'mount',dtemp,ok)
 	  if(.not.ok)call bug('f',
-     *	    'Could not determine the telescope mount')
+     *	   'Could not determine the telescope mount')
 	  mount = nint(dtemp)
 	endif
 c
@@ -443,11 +514,12 @@ c
 	end
 c************************************************************************
 	subroutine VelComp(lIn,lOut,frame,lst,time,rapp,dapp,
-     *					      epoch,ra,dec)
+     *					epoch,ra,dec,dosma)
 c
 	implicit none
 	integer lIn,lOut,frame
 	double precision lst,time,rapp,dapp,epoch,ra,dec
+        logical dosma
 c
 c  Compute the radial velocity, and update the output file.
 c
@@ -465,8 +537,10 @@ c
 c  Externals.
 c
 	double precision epo2jul
+        real smaveldop
 c
 	data rframes/'VELO-HEL','VELO-LSR','VELO-OBS'/
+       
 c
 c  If its a topocentric velocity, determining it is pretty easy!
 c
@@ -496,16 +570,24 @@ c  Diurnal.
 	  do i=1,3
 	    veldop = veldop - vel(i)*lmn(i)
 	  enddo
+
 c  Annual.
 	  call vearth(time,pos,vel)
 	  do i=1,3
 	    veldop = veldop - vel(i)*lmn(i)
 	  enddo
+
+          if(dosma) then
+          veldop = veldop -
+     *    smaveldop(time,lst,lat,frame)
+          end if
+
+
 c  LSR
 	  if(frame.eq.LSR)then
 	    if(abs(epoch-2000).gt.0.001)then
 	      call precess(epo2jul(epoch,' '),ra,dec,
-     *			   epo2jul(2000.d0,'J'),ra2000,dec2000)
+     *	        epo2jul(2000.d0,'J'),ra2000,dec2000)
 	      call sph2lmn(ra2000,dec2000,lmn)
 	    else
 	      call sph2lmn(ra,dec,lmn)
@@ -580,3 +662,194 @@ c
 	if(frame.eq.0) frame = 2
 c
 	end
+c************************************************************************
+        real function smaveldop(time,lst,smalat,frame)
+        double precision doptrkra, doptrkdec, time, lst,Jultransit
+        logical dosma,getsmavel
+        real velsma0
+        common/smavel/doptrkra,doptrkdec,
+      &                 Jultransit,velsma0,dosma,getsmavel
+
+c
+c Calculate the part of Doppler tracked velocity that has been 
+c corrected to the chunk frequency recorded in the MIR data header
+c (the raw SMA data).
+c input from common/smavel/
+c     doptrkra      Right ascension (radian) of the phase center (source)
+c                   in J2000 that is used for Doppler tracking.
+c     doptrkdec     Declination (radian) of the phase center (source)
+c                   in J2000 that is used for Doppler tracking.
+c     Jultransit    The reference time at which the offset in the annual
+c                   term has been used in the correction to the
+c                   chunk frequency.
+c     velsma0       The residual doppler velocity corresponds
+c                   to the Doppler tracked source and the SMA
+c                   "sky frequnecy"
+c input from the calling:
+c     time          Time in Julian date.
+c     lst           Local apparent sideral time in radian.
+c     smalat        Geodetic latitude of the SMA (radian).
+        double precision raapp,decapp,r1,d1,lmn(3)
+        double precision lmnapp(3),vel(3),pos(3),smalat
+        real veldop
+        integer i,frame
+        integer OBS,LSR,HEL
+        parameter(OBS=3,LSR=2,HEL=1)
+
+c
+c   external
+c 
+         double precision epo2jul
+c
+c Calculate the apparent right ascension (radian) and the apparent 
+c declination (radian) of the phase center (source)    
+c
+         call precess(epo2jul(2000.d0,'J'),
+     &        doptrkra,doptrkdec,time,raapp,decapp)
+         call Nutate(time,raapp,decapp,r1,d1)
+         call Aberrate(time,r1,d1,raapp,decapp)
+c
+c  Convert spherical coordinates (e.g. ra,dec) into
+c  direction cosines.
+c
+         call sph2lmn(raapp,decapp,lmnapp)
+c
+c Calculate the Diurnal term 
+c
+          call vsite(smalat,lst,vel)
+          veldop = 0
+          do i=1,3
+          veldop = veldop - vel(i)*lmnapp(i)
+          enddo
+
+c
+c Calculate the Annual term 
+c
+
+          call vearth(time,pos,vel)
+          do i=1,3
+          veldop = veldop - vel(i)*lmnapp(i)
+          enddo
+
+            if(getsmavel) then
+c
+c  The sun motion w.r.t LSR
+c 
+c  LSR
+          if(frame.eq.LSR)then
+            call sph2lmn(doptrkra,doptrkdec,lmn)
+            call vsun(vel)
+            do i=1,3
+              veldop = veldop + vel(i)*lmn(i)
+            enddo
+          endif
+c
+c  calculate the part of veldop corrected to the chunk frequency.
+c
+                   veldop = veldop - velsma0
+                         else
+
+c
+c upto now, we have calculated the time variation part of
+c the veldop (diurnal and annual).
+c Now we need to calculate the annual term at the reference time,
+c a constant offset which has been taken out from the total contribution 
+c from the diurnal and annual.
+c
+         call precess(epo2jul(2000.d0,'J'),
+     &       doptrkra,doptrkdec,Jultransit,raapp,decapp)
+         call Nutate(time,raapp,decapp,r1,d1)
+         call Aberrate(time,r1,d1,raapp,decapp)
+c
+c  Convert spherical coordinates (e.g. ra,dec) into
+c  direction cosines.
+c
+          call sph2lmn(raapp,decapp,lmn)
+c
+c    calculate the earth velocity at transit
+c
+c         write(*,*) (Jultransit-int(Jultransit-0.5)-0.5)*24.
+          call vearth((Jultransit),pos,vel)
+          do i=1,3
+          veldop = veldop + vel(i)*lmn(i)
+          enddo
+                        end if
+c
+c  this part has been corrected
+c  in the SMA chunk frequency recorded
+c
+          smaveldop = veldop
+          end
+c  ******************************
+         subroutine sourfind(tno,dsource,doptime)
+          real doptime(4), sumtime
+          integer tno,vupd,nread
+          include 'maxdim.h'
+c
+c retrieve the Doppler-tracked source and get its ra-dec coordinates
+c in the epoch J2000.0, the epoch of catalog coordinates that the SMA supports.
+c
+          double precision preamble(4),long,lat
+          complex data(maxchan)
+          logical flags(maxchan)
+          character dsource*8, source*32
+          double precision time
+          double precision doptrkra,doptrkdec,Jultransit
+          real velsma0
+          logical dosma, getsmavel
+          common/smavel/doptrkra,doptrkdec,
+      &                 Jultransit,velsma0,dosma,getsmavel
+
+                
+c
+c   external
+c
+c          double precision epo2jul,LstJul
+          logical ok, uvvarupd
+                     call uvvarini(tno,vupd)
+                     call uvvarset(vupd,'source')
+          ok=.false.
+          nread=maxchan
+          time=0.0
+          sumtime=0.0
+          getsmavel=.false.
+          dosma=.true.
+c              write(*,*) dsource(1:8)
+          call uvnext(tno, ' ')
+          call uvrdvra(tno,'source', source,' ')
+            call uvgetvrd(tno,'longitu',long,1)
+         call uvgetvrd(tno,'latitud',lat,1)
+         call uvdatrd(preamble,data,flags,maxchan,nread)
+          dowhile((.not.ok).and.(nread.gt.0))
+c              dowhile(nread.gt.0) 
+           if(source(1:len1(source)).eq.dsource(1:len1(dsource))) then 
+                call uvrdvrd(tno,'ra',doptrkra,0.d0)
+                call uvrdvrd(tno,'dec',doptrkdec,0.d0)
+                call uvrdvrr(tno,'veldop',velsma0,0.)
+                ok=.true.
+           end if
+            call uvnext(tno, ' ')
+              if(uvvarupd(vupd)) then
+              call uvrdvra(tno,'source', source,' ')
+              end if
+             call uvdatrd(preamble,data,flags,maxchan,nread)
+             time = preamble(3)
+            end do
+          Jultransit=time
+          if(.not.ok) call bug('f', 
+      *   'The source = '//dsource(1:len1(dsource))//' is not found.')
+          do i=1, 4
+          sumtime=sumtime+doptime(i)
+          end do
+          if(abs(sumtime).le.1.e-15) then
+          getsmavel=.true.
+          else
+c
+c         assign the time in Julian date at which the annual term (of veldop)
+c         was used in the correction to sfreq
+c
+          Jultransit = int(Jultransit-0.5)+0.5
+      &  + doptime(1)+doptime(2)/24.+doptime(3)/24./60.
+      &  + doptime(4)/24./3600.
+          end if
+          end
