@@ -12,22 +12,22 @@ c	directed by the commands below, and writes a log file  PNT.LOG,
 c	and an ascii file of the final pointing constants, PNTFIT.date,
 c	which is updated if the program is restarted.  This file can be
 c	used to change the pointing constants used at Hat Creek. 
+c@ device
+c	PGPLOT display device. Default is to prompt the user.
+c@ telescop
+c   telescope name for telescope dependent pointing data format.
+c   known telescopes are ATA BIMA OVRO and CARMA
+c   default is telescop=CARMA with data format
+c
+c@ pdevice
+c	Hardcopy plot device in the format plot#/pgplot device.
+c	# increments for sucessive plots. Default is 'plot1/ps'
+c@log
+c	Output log file. Default is 'pnt.log'
+c@options
+c	Special processing options. [Y/N]. Default=N.
 c
 c	COMMANDS
-c
-c  ATA POINTING DATA FORMAT oct 2004
-c
-c # 1         2       3       4         5        6      7   8       9        10          11
-c #az_avg, el_avg, az_meas, el_meas, rad_err, day_of_yr ! az_err, el_err, alidade_temp, source
-c 306.694, 71.150, 304.699, 71.661, 7.713E-1, 55.781 ! -2.105, 0.364, 91.400, Mirfak_S038787,
-c 306.498, 70.969, 304.517, 71.482, 7.723E-1, 55.782 ! -2.086, 0.366, 91.400, Mirfak_S038787,
-c
-c  Original pointing residuals are:    az_ave - az_meas, el_avg - el_meas
-c  Pointing residuals after on-line fit are:  az_err,    el_err
-c make into format read by ptfile subroutine. e.g.
-c awk '{printf("%7.3f %7.3f %7.3f %7.3f %7.3f %7.3f % s\n", $1,$2,$1-$3,$2-$4,$6,$12,$13)}' 07-08mar.data 
-c    > 07-08mar.ave-meas+source
-c
 c
 c	  IN	Read multiple files of  pointing data  written by the
 c		programs SPOINT or CROSS. The program starts by asking
@@ -141,15 +141,6 @@ c	I(dentify) labels the data. W(rite) lists the labels. N(ew) sets
 c	new limits for the plot. M(ore) adds points to a plot. S(ee)
 c	replots the data and P(rinter) makes a printer plot. H(elp)
 c	lists the cursor options.
-c@ device
-c	PGPLOT display device. Default is to prompt the user.
-c@ pdevice
-c	Hardcopy plot device in the format plot#/pgplot device.
-c	# increments for sucessive plots. Default is 'plot1/ps'
-c@log
-c	Output log file. Default is 'pnt.log'
-c@options
-c	Special processing options. [Y/N]. Default=N.
 c-- 
 c
 c  History:
@@ -201,10 +192,11 @@ c    09mar05 mchw  Equation 5 fits daz = v(5) * sin(El) * cos(El) for ATA
 c    14mar05 mchw  change UT to day of year on plots and listings.
 c    07jul05 mchw  added OVRO data format.
 c    02sep05 pjt   merged web version with cvs version (grrrr)
+c    03sep05 mchw  added keyword telescop; revised CARMA data format.
 c----------------------------------------------------------------------c
 	include 'pnt.h'
 	character version*(*)
-	parameter(version='(version 3.1  02-sep-2005)')
+	parameter(version='(version 3.1  03-sep-2005)')
 c
 	integer i,iant,kans
 	character ans*20,options*1,log*80,buffer*80, telescope*20
@@ -214,6 +206,7 @@ c
 	call output('PNT '//version)
 	call keyini
 	call keya('device',tdevice,'?')
+	call keya('telescop',telescope,'CARMA')
 	call keya('pdevice',pdevice,'plot1/ps')
 	call keya('log',log,'pnt.log')
 	call keya('options',options,'N')
@@ -225,7 +218,6 @@ c
 	write(buffer,100) dat
 100	format('HAT CREEK INTERFEROMETER POINTING FITTING - ', A)      
 	call outlog(buffer)
-        telescope = 'ATA'
 	call ptfile(options,telescope)
 3	call output(' available commands are:')
 	call output(' CO   Enter comment into log file')
@@ -1164,7 +1156,6 @@ c
 
 20     continue
 
-       telescope = 'ATA'
        if (telescope.eq.'OVRO')then
 c
 c  read OVRO pointing data file.
@@ -1194,6 +1185,18 @@ c221     format(a8,1x,f12.2,4f10.5,f4.0,17f8.3,2f9.3,5f8.3)
 c        if(an.ne.ant.and.ant.ne.0.) goto 20
 
 	else if (telescope.eq.'ATA')then
+c  ATA POINTING DATA FORMAT oct 2004
+c
+c # 1         2       3       4         5        6      7   8       9        10          11
+c #az_avg, el_avg, az_meas, el_meas, rad_err, day_of_yr ! az_err, el_err, alidade_temp, source
+c 306.694, 71.150, 304.699, 71.661, 7.713E-1, 55.781 ! -2.105, 0.364, 91.400, Mirfak_S038787,
+c 306.498, 70.969, 304.517, 71.482, 7.723E-1, 55.782 ! -2.086, 0.366, 91.400, Mirfak_S038787,
+c
+c  Original pointing residuals are:    az_ave - az_meas, el_avg - el_meas
+c  Pointing residuals after on-line fit are:  az_err,    el_err
+c make into format read by ptfile subroutine. e.g.
+c awk '{printf("%7.3f %7.3f %7.3f %7.3f %7.3f %7.3f % s\n", $1,$2,$1-$3,$2-$4,$6,$12,$13)}' 07-08mar.data 
+c    > 07-08mar.ave-meas+source
 c
 c  read ATA pointing data file.
 c
@@ -1202,22 +1205,29 @@ c awk '{printf("%7.3f %7.3f %7.3f %7.3f %7.3f %7.3f % s\n", $1,$2,$1-$3,$2-$4,$6
 c
 
 c********1*********2*********3*********4*********5*********6*********7*c
+	else if (telescope.eq.'CARMA')then
+c********1*********2*********3*********4*********5*********6*********7*c
+c starting UT day 01 aug 2005
+c set source = antenna name.
+
+c awk '{printf("%9.3f %9.3f %9.3f %9.3f %9.3f %9.3f %-8s\n", $4-53608+26, $5, $6, $7, $8, 0., $1)}' pointingData.txt | grep bima > bima_pointingData.02sep05
+
 21	read(1,211,end=10) 
       *      ut(n), az(n), el(n), daz(n), del(n), t1(n), source
 	print 212, ut(n), az(n), el(n), daz(n), del(n), t1(n), source
-211	format(6f8.3, a8)
-212	format(1x,6f8.3, 1x, a8)
-
-c	source = "ata1"
+211	format(6f10.3, a8)
+212	format(1x,6f10.3, 1x, a8)
 
 c
 c  Convert daz and del to arcmin in the sky
-c
-C not needed for carma on 18 aug 2005
-
+c   not needed for carma on 18 aug 2005
 
 c	daz(n) = 60. * daz(n) * cos(el(n))
 c	del(n) = 60. * del(n)
+
+	else
+        call bug('f',
+      *  'known telescopes are ATA BIMA OVRO and CARMA')
 
 	endif
 c
