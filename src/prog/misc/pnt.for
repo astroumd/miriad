@@ -17,7 +17,8 @@ c	PGPLOT display device. Default is to prompt the user.
 c@ telescop
 c   telescope name for telescope dependent pointing data format.
 c   known telescopes are ATA BIMA OVRO and CARMA
-c   default is telescop=CARMA with data format
+c   default is telescop=CARMA with data format. Note telescop
+c   is case sensitive and we use the upper case versions here.
 c
 c@ pdevice
 c	Hardcopy plot device in the format plot#/pgplot device.
@@ -193,10 +194,12 @@ c    14mar05 mchw  change UT to day of year on plots and listings.
 c    07jul05 mchw  added OVRO data format.
 c    02sep05 pjt   merged web version with cvs version (grrrr)
 c    03sep05 mchw  added keyword telescop; revised CARMA data format.
+c    06sep05 pjt   slight mod to  CARMA format, changed ant/equ as integer
+c    12sep05 pjt   added ddmmmyy before the UT format.
 c----------------------------------------------------------------------c
 	include 'pnt.h'
 	character version*(*)
-	parameter(version='(version 3.1  03-sep-2005)')
+	parameter(version='(version 3.1  12-sep-2005)')
 c
 	integer i,iant,kans
 	character ans*20,options*1,log*80,buffer*80, telescope*20
@@ -216,7 +219,7 @@ c
 	open (unit=8, file=log, form='formatted', status='unknown')
 	call mfdate(dat)
 	write(buffer,100) dat
-100	format('HAT CREEK INTERFEROMETER POINTING FITTING - ', A)      
+100	format('MIRIAD INTERFEROMETER POINTING FITTING - ', A)      
 	call outlog(buffer)
 	call ptfile(options,telescope)
 3	call output(' available commands are:')
@@ -427,7 +430,8 @@ c  28 aug 1986 mchw	Allow correction for encoder errors.
 c********1*********2*********3*********4*********5*********6*********7*c
 	real function ansaz(equ,az,el,v)
 	implicit none
-	real equ,az,el,v(9)
+	integer equ
+	real az,el,v(9)
 c
 c  Azimuth pointing equations.
 c
@@ -475,7 +479,8 @@ c
 c********1*********2*********3*********4*********5*********6*********7*c
 	real function ansel(equ,az,el,v)
 	implicit none
-	real equ,az,el,v(9)
+	integer equ
+	real az,el,v(9)
 c
 	if(equ.eq.4 .or. equ.eq.5) then
 	  ansel = v(1) +v(4)*sin(el) + v(5)*cos(el) + v(2)*sin(az)
@@ -498,7 +503,8 @@ c
 c********1*********2*********3*********4*********5*********6*********7*c
 	subroutine paraz(equ,az,el,b)
 	implicit none
-	real equ,az,el,b(9)
+	integer equ
+	real az,el,b(9)
 c
 c  partial derivatives
 c
@@ -558,7 +564,8 @@ c
 c********1*********2*********3*********4*********5*********6*********7*c
 	subroutine parel(equ,az,el,b)
 	implicit none
-	real equ,az,el,b(9)
+	integer equ
+	real az,el,b(9)
 c
 	if (equ.eq.4 .or. equ.eq.5)then
 	  b(1) = 1.
@@ -1014,18 +1021,19 @@ c
 c********1*********2*********3*********4*********5*********6*********7*c
 	subroutine ptfile(options,telescope)
 	implicit none
+	character options*1, telescope*20
 c
 c  Input new file of pointing data.
 c
 	real PI,RTOD,RTOM
 	parameter(PI=3.141592654,RTOD=57.29577951,RTOM=3437.746771)
 	include 'pnt.h'
-	character infile*40,source*8,line*80,input*40,telescope*20
-	character*1 options,noedit,diag,rawdata,flipdaz,flipdel,rawazel
+	character infile*40,source*8,line*80,input*40, udate*7
+	character*1 noedit,diag,rawdata,flipdaz,flipdel,rawazel
 	logical firstime
-	integer i,k,n,kf,isrc
-	real az0,el0,az1,el1,an
-	real dazcor,delcor,daznew,delnew,oldequ
+	integer i,k,n,kf,isrc,oldequ,an
+	real az0,el0,az1,el1
+	real dazcor,delcor,daznew,delnew
 
 c
 c  External
@@ -1082,10 +1090,10 @@ c
 	  rawazel = 'N'
 	  flipdaz = 'N'
 	  flipdel = 'N'
-	  equ = 4.
-	  oldequ = 4.
+	  equ = 4
+	  oldequ = 4
 	endif
-106	format(f10.0)
+106	format(i10)
 c
 c  Move out of special options 20jun95 mchw.
 c  pointing equations questions.
@@ -1099,17 +1107,17 @@ c
 	  call output(' ')
 	  call prompt(input,k,'Fit pointing equation 1 - 5 [4] :')
 	  read(input(1:k),106,err=5) equ
-5	  if(k.eq.0.or.(equ.lt.1..or.equ.gt.5.)) equ = 4.
+5	  if(k.eq.0.or.(equ.lt.1 .or. equ.gt.5)) equ = 4
 	  call prompt(input,k,
      *		'Observation used equation 1 2 3 4 or 5 [4] :')
 	  read(input(1:k),106,err=6) oldequ
-6	  if(k.eq.0.or.(oldequ.lt.1..or.oldequ.gt.5.)) oldequ = 4.
+6	  if(k.eq.0.or.(oldequ.lt.1 .or. oldequ.gt.5)) oldequ = 4
 c
 c  Update log file.
 c
-	write(line,'(a,f3.0)') ' Fitting Pointing Equation No.',equ
+	write(line,'(a,i2)') ' Fitting Pointing Equation No.',equ
 	call outlog(line)
-	write(line,'(a,f3.0)') ' Observation used Equation No.',oldequ
+	write(line,'(a,i2)') ' Observation used Equation No.',oldequ
 	call outlog(line)
 c
 c  If fitting different pointing equation, then remove old parameters.
@@ -1125,7 +1133,7 @@ c  Enter inputs.
 c
 1	call prompt(input,k,'Antenna number: ')
 	read(input(1:k),106,err=1,end=99) ant
-	write(8,'(a,f3.0)') ' Antenna No. ', ant
+	write(8,'(a,i3)') ' Antenna No. ', ant
 c
 c  Initialise constants.
 c
@@ -1141,7 +1149,8 @@ c
 c  Enter filename.
 c
 10	if(n.eq.1) goto 11
-	write(line,'(1x,i3,a)') n-1,' Total points entered'
+	write(line,'(1x,i3,a,i3)') n-1,
+     *     ' Total points entered for ant ',ant
 	call outlog(line)
 	close(1)
 
@@ -1170,9 +1179,9 @@ c awk '{printf("%3.0f %7s %11.5f %7.3f %7.3f %7.3f %7.3f\n", $1,$3,$5-53000,$6,$
       *      az(n), el(n), daz(n), del(n)
        print 232,         an, source, ut(n),
       *      az(n), el(n), daz(n), del(n)
-231    format(f3.0,a8,f12.5,4f8.3)
-232    format(1x,f3.0,a8,1x,f12.5,4f8.3)
-       if(an.ne.ant.and.ant.ne.0.) goto 20
+231    format(i3,a8,f12.5,4f8.3)
+232    format(1x,i3,a8,1x,f12.5,4f8.3)
+       if(an.ne.ant .and. ant.ne.0) goto 20
 
 	else if (telescope.eq.'BIMA')then
 c
@@ -1205,7 +1214,8 @@ c awk '{printf("%7.3f %7.3f %7.3f %7.3f %7.3f %7.3f % s\n", $1,$2,$1-$3,$2-$4,$6
 c
 
 c********1*********2*********3*********4*********5*********6*********7*c
-	else if (telescope.eq.'CARMA')then
+c                           deprecated, this is a dataformat used before 12sep05
+	else if (telescope.eq.'CARMA1')then
 c********1*********2*********3*********4*********5*********6*********7*c
 c starting UT day 01 aug 2005
 c set source = antenna name.
@@ -1213,11 +1223,26 @@ c set source = antenna name.
 c awk '{printf("%9.3f %9.3f %9.3f %9.3f %9.3f %9.3f %-8s\n", $4-53608+26, $5, $6, $7, $8, 0., $1)}' pointingData.txt | grep bima > bima_pointingData.02sep05
 
 21	read(1,211,end=10) 
-      *      ut(n), az(n), el(n), daz(n), del(n), t1(n), source
-	print 212, ut(n), az(n), el(n), daz(n), del(n), t1(n), source
-211	format(6f10.3, a8)
-212	format(1x,6f10.3, 1x, a8)
+      *      ut(n),az(n),el(n),daz(n),del(n),t1(n),an,source
+	print 212,ut(n),az(n),el(n),daz(n),del(n),t1(n),an,source
+211	format(6f10.3, i2, a8)
+212	format(1x,6f10.3, 1x, i2, 1x, a8)
+	if(an.ne.ant .and. ant.ne.0) goto 20
+c
+c  Convert daz and del to arcmin in the sky
+c   not needed for carma on 18 aug 2005
 
+c	daz(n) = 60. * daz(n) * cos(el(n))
+c	del(n) = 60. * del(n)
+
+	else if (telescope.eq.'CARMA')then
+
+31	read(1,311,end=10) 
+      *      udate,ut(n),az(n),el(n),daz(n),del(n),t1(n),an,source
+	print 312,udate,ut(n),az(n),el(n),daz(n),del(n),t1(n),an,source
+311	format(a7,6f10.3, i2, a8)
+312	format(1x,a7,1x,6f10.3, 1x, i2, 1x, a8)
+	if(an.ne.ant .and. ant.ne.0) goto 20
 c
 c  Convert daz and del to arcmin in the sky
 c   not needed for carma on 18 aug 2005
@@ -1227,7 +1252,7 @@ c	del(n) = 60. * del(n)
 
 	else
         call bug('f',
-      *  'known telescopes are ATA BIMA OVRO and CARMA')
+      *  'known telescopes are ATA BIMA OVRO and CARMA and CARMA1')
 
 	endif
 c
@@ -1347,10 +1372,10 @@ c
 c
 c  Finish up.
 c
-  	write(line,180) npmax
-c80	write(line,180) npmax
+  	write(line,180) npmax,ant
+c80	write(line,180) npmax,ant
 	call outlog(line)
-180	format(' Maximum of ',i4,' points entered')
+180	format(' Maximum of ',i4,' points entered for ant ',i4)
 90	np = n-1
 	do i = 1,MAXFIT
 	  apc(i) = 0.
@@ -1809,7 +1834,7 @@ c
 100	format('Antenna ',f3.0,3x,a,3x,a)
 	call pgmtxt('T',4.5,.15,0.,buffer)
 	write(buffer,110) apcs,equ
-110	format('APC ',2f7.2, 7f6.2,' Eq:',f3.0)
+110	format('APC ',2f7.2, 7f6.2,' Eq:',i2)
 	call pgmtxt('T',3.,.15,0.,buffer)
 	write(buffer,120) epcs
 120	format('EPC ',2f7.2, 7f6.2,' arcmin')
