@@ -104,6 +104,11 @@ c                      polynomial of degree n which can be given in keyword
 c                      polyfit.
 c         wrap         Don't unwrap phase while do fit or smooth
 c                      the uv data.
+c         averrll      In the case of solving for bandpass of dual
+c                      polarizations, averrll gives vector average 
+c                      of rr and ll bandpass solutions; the mean value 
+c                      is written into the bandpass table for each of rr 
+c                      and ll.
 c
 c@ smooth
 c       This gives three parameters of moving smooth calculation of the
@@ -132,6 +137,10 @@ c    jhz  31Dec04 added weight=1/sigma**2, divided by channel zero
 c    jhz  05May05 enable to handle dual polarization data
 c    jhz  27May05 fixed edge problem
 c    jhz  20Jul05 fixed things caused the warning messages.
+c    jhz  16sep05 fixed normaliztion by channel zero in the case of
+c                 solving for bandpass 
+c                 added the options of averrll for
+c                 taking vector average of rr and ll bandpass.
 c  Problems:
 c    * Should do simple spectral index fit.
 c------------------------------------------------------------------------
@@ -141,7 +150,7 @@ c------------------------------------------------------------------------
         parameter(maxpol=2)
 c
         character version*(*)
-        parameter(version='SmaMfCal: version 1.3 20-Jul-05')
+        parameter(version='SmaMfCal: version 1.4 16-Sept-05')
 c
         integer tno
         integer pwgains,pfreq,psource,ppass,pgains,ptau
@@ -158,7 +167,7 @@ c
         real wt(maxvis)
         character line*64,uvflags*16,source*64
         logical dodelay,dopass,defflux,interp,oldflux
-        logical dosmooth,donply,dowrap
+        logical dosmooth,donply,dowrap,doaverrll
 c
 c  Dynamic memory stuff.
 c
@@ -181,7 +190,7 @@ c
         call output(version)
         call keyini
         call getopt(dodelay,dopass,interp,oldflux,
-     *              dosmooth,donply,dowrap)
+     *              dosmooth,donply,dowrap,doaverrll)
         uvflags = 'dlbx'
         if(.not.dopass)uvflags(5:5) = 'f'
         call uvdatinp('vis',uvflags)
@@ -375,7 +384,8 @@ c
         if (dopass.and.interp) call intext(npol,nants,nchan,nspect,
      *    nschan,cref(ppass))
         if(dopass)call passtab(tno,npol,nants,nchan,
-     *    nspect,sfreq,sdf,nschan,cref(ppass),pee,donply,dowrap)
+     *    nspect,sfreq,sdf,nschan,cref(ppass),pee,
+     *    donply,dowrap,doaverrll)
 c
 c  Free up all the memory, and close down shop.
 c
@@ -462,20 +472,20 @@ c------------------------------------------------------------------------
         end
 c************************************************************************
         subroutine getopt(dodelay,dopass,interp,oldflux,
-     *   dosmooth,donply,dowrap)
+     *   dosmooth,donply,dowrap,doaverrll)
 c
         logical dodelay,dopass,interp,oldflux
-        logical dosmooth,donply,dowrap
+        logical dosmooth,donply,dowrap,doaverrll
 c
 c  Get extra processing options.
 c------------------------------------------------------------------------
         integer nopt
-        parameter(nopt=7)
+        parameter(nopt=8)
         logical present(nopt)
         character opts(nopt)*11
         data opts/ 'delay      ','nopassol   ','interpolate',
      *             'oldflux    ','msmooth    ',
-     *             'opolyfit   ','wrap       ' /
+     *             'opolyfit   ','wrap       ','averrll  ' /
 c
         call options('options',opts,present,nopt)
 c
@@ -487,9 +497,7 @@ c
         dosmooth=      present(5)
         donply  =      present(6)
         dowrap  =      present(7)
-c           if(dosmooth.and.donply) then
-c           call  bug('f','choose either msmooth or opolyfit')
-c           end if
+        doaverrll =    present(8)
         end
 c************************************************************************
         subroutine gaintab(tno,time,gains,tau,npol,nants,nsoln,
@@ -630,7 +638,8 @@ c
         end
 c************************************************************************
         subroutine passtab(tno,npol,nants,nchan,
-     *                  nspect,sfreq,sdf,nschan,pass,pee,donply,dowrap)
+     *  nspect,sfreq,sdf,nschan,pass,pee,
+     *  donply,dowrap,doaverrll)
 c
         integer tno,npol,nants,nchan,nspect,nschan(nspect),pee(npol)
         complex pass(nants,nchan,npol)
@@ -666,7 +675,7 @@ c    sfreq	Start frequency for each observing band.
 c------------------------------------------------------------------------
         include 'maxdim.h'
         integer iostat,off,item,i,j,k,n,p,pd,nsp,nterm
-        complex g(maxchan),temp
+        complex g(maxchan),temp,avbuf
         double precision freqs(2)
         PARAMETER(MAXNR=20, pi=3.14159265358979323846)
         double precision Rsp(nchan),Isp(nchan),xchan(nchan),DELY(nchan)
@@ -674,11 +683,37 @@ c------------------------------------------------------------------------
         double precision AP(nchan,MAXNR),CHI2(MAXNR)
         real rxchan(nchan),rRsp(nchan),rIsp(nchan)
         real amp,phase,pphase,revis,imvis,plamp(nchan),plpha(nchan)
-        logical dev, donply, dowrap
+        logical dev, donply, dowrap,doaverrll
         real smooth(3)
         integer bnply(3)
         common/bsmooth/smooth,bnply
+        real wt(2)
         n=0
+c
+c average rr and ll
+c
+          if(doaverrll.and.(npol.eq.2)) then
+         do i = 1,nants
+         do j = 1,nchan
+         wt(1)=0.5
+         wt(2)=0.5
+      if(((real(pass(i,j,1)))**2+(aimag(pass(i,j,1)))**2).lt.1.e-10)
+     * then
+         wt(1)=0.0
+         wt(2)=1.0
+       end if
+      if(((real(pass(i,j,2)))**2+(aimag(pass(i,j,2)))**2).lt.1.e-10)
+     * then
+         if(wt(1).ge.0.5) wt(1)=1.0
+         wt(2)=0.0
+       end if
+         avbuf= wt(1)*pass(i,j,1)+wt(2)*pass(i,j,2)
+         pass(i,j,1)=avbuf
+         pass(i,j,2)=avbuf
+         enddo
+         enddo
+               end if
+
 c
 c  Fudge to create a "complex" table, then open it again.
 c
@@ -1498,8 +1533,6 @@ c
 c  Loop over everything.
 c
         call uvdatrd(preamble,data,flags,maxchan,nchan)
-c       call uvrdvri(tno,'nspect',bpnspect,0)
-c        call uvgetvri(tno,'nschan',bpnschan,bpnspect)
         updated =.true.
        call despect(updated,tno,nchan,edge,chan,spect,
      *          maxspect,nspect,sfreq,sdf,nschan,state)
@@ -1531,12 +1564,6 @@ c
      *    nschan,maxchan,dosmooth,donply,dowrap,wwt)
           
          endif
-
-          
-c          if(dosmooth) call smoothply(preamble,ndata,
-c     *    flags,nchan,bpnspect,
-c     *    bpnschan,maxchan,dosmooth,donply,dowrap,wwt)
-c         endif
          
         call uvrdvra(tno,'source',source,' ')
         call uvrdvri(tno,'nants',nants,0)
@@ -1620,7 +1647,7 @@ c
 c assign visid based on i1,i2,p, spect chan
 c
                 ninter = ninter + 1
-          if(dopass) call accum(hash,data(i),visid,
+          if(dopass) call accum(hash,ndata(i),visid,
      *       nsoln,nvis,vis,wt,vid,count,chnwt(i))
           if(.not.dopass) call accum(hash,data(i),visid,
      *       nsoln,nvis,vis,wt,vid,count,chnwt(i))
@@ -2002,7 +2029,6 @@ c
           enddo
             endif
          enddo
-c          write(*,*) 'inside2 chnwt data=', chnwt(6144), data(6144)
          end
 c************************************************************************
         subroutine smoothply(preamble,data,flags,nchan,bpnspect,
@@ -2041,9 +2067,6 @@ c initialize the moving smooth parameters
         L=smooth(2)
         P=smooth(3)
 c
-c        nply = bnply(1)
-c
-c
          ntcount=0
          pphase=0
 c        
@@ -2052,12 +2075,12 @@ c
            do i=1, bpnschan(j)
             ntcount=ntcount+1
             xchan(i)=i
-             xply(i)=i
+            xply(i)=i
 c   smooth the vis vector
             if(dosmooth) then
-             YR(i) = real(data(ntcount))
-             YI(i) = aimag(data(ntcount))
-             end if 
+            YR(i) = real(data(ntcount))
+            YI(i) = aimag(data(ntcount))
+            end if 
             end do
          CALL TIMSER(YR,bpnschan,K,L,P,ETA,CONETA,A,ATA1,ATA1AT,SCRAT)
          do i=1, bpnschan(j)
