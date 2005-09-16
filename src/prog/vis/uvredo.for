@@ -103,7 +103,8 @@ c    the residual Doppler velocity considering the sky frequency
 c    in the archived SMA data has been corrected for a part of the
 c    tracked Doppler velocity (the diurnal term and part of the annual
 c    term).
-
+c    jhz  16sep05 initialize the array doptime; otherwise
+c                 it may cause problem in some syetems.
 c
 c  Bugs:
 c    * Much more needs to be added.
@@ -111,7 +112,7 @@ c------------------------------------------------------------------------
 	include 'maxdim.h'
 	include 'mirconst.h'
 	character version*(*)
-	parameter(version='UvRedo: version 1.1 02-Sept-05')
+	parameter(version='UvRedo: version 1.2 16-Sept-05')
 	integer OBS,HEL,LSR
 	parameter(OBS=1,HEL=2,LSR=3)
 c
@@ -123,7 +124,13 @@ c  Externals.
 c
 	logical uvDatOpn
          real doptime(4)
-         integer  nt
+         integer  nt,i
+c
+c intialize
+c
+           do i=1,4
+           doptime(i) = 0.0
+           end do
 c
 c  Get the input parameters.
 c
