@@ -1,7 +1,11 @@
       SUBROUTINE DATFIT (OLDDAT, NEWDAT, IERR)
 *-----------------------------------------------------------------------
-* DATFIT converts a date from the old form, DD/MM/YY, to the new form
-* YYYY-MM-DD.  Returns the current UTC date if the input date is blank.
+* DATFIT translates a date from the old form, DD/MM/YY (or rarely
+* DD/MM/YYYY), to the new form, YYYY-MM-DD, and also fixes some bad
+* dates written at Mopra in 2000 with the year as '**'.
+*
+* Returns the current UTC date if the input date is blank (as used by
+* RPFITSOUT).
 *
 *   Given:
 *      OLDDAT   C**      Date in DD/MM/YY format.  If blank the current
@@ -13,6 +17,13 @@
 *      IERR     I        Error status:
 *                           0: Success.
 *                           1: Illegal OLDDAT.
+*
+*   Notes:
+*      1) A date of the form DD/MM/YYYY is known to have been written
+*         at least once at the ATCA on 18/11/1998 when the date format
+*         was changed from DD/MM/YY to YYYY-MM-DD.
+*
+* $Id$
 *-----------------------------------------------------------------------
       INTEGER   IMON, IDAY, IYEAR, IERR
       INTEGER*4 TIME, TARRAY(9)
@@ -23,6 +34,20 @@
       EQUIVALENCE (IYEAR, TARRAY(6))
 *-----------------------------------------------------------------------
       IF (LEN(OLDDAT).GE.8 .AND. OLDDAT.NE.' ') THEN
+         IF (OLDDAT(3:3).NE.'/') THEN
+*           New date format.
+            NEWDAT = OLDDAT
+            IERR = 0
+            RETURN
+         END IF
+
+         IF (LEN(OLDDAT).GE.10) THEN
+            IF (OLDDAT(7:8).EQ.'19' .AND. OLDDAT(9:10).NE.' ') THEN
+*              Convert DD/MM/YYYY (rare) to DD/MM/YY.
+               OLDDAT(7:) = OLDDAT(9:10)
+            END IF
+         END IF
+
 *        Rescue bad dates written at Mopra in 2000.
          INDATE = OLDDAT
          IF (INDATE(7:8).EQ.'**') INDATE(7:8) = '00'

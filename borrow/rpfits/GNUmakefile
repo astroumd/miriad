@@ -99,7 +99,7 @@ show :
 	-@echo "ARCHSRC =$(ARCHSRC)"
 	-@echo "INCLUDES=$(INCLUDES)"
 	-@echo ""
-	-@echo "F77     =$(F77)"
+	-@echo "FC      =$(FC)"
 	-@echo "FFLAGS  =$(FFLAGS)"
 	-@echo "FSUBS   =$(FSUBS)"
 	-@echo "FOBJS   =$(FOBJS)"

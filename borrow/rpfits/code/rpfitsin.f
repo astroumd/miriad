@@ -24,12 +24,12 @@ C-----------------------------------------------------------------------
       logical   async, endhdr, endscan, new_antenna, open, open_only,
      +          starthdr
       integer   AT_CLOSE, AT_OPEN_READ, AT_READ, AT_SKIP_EOF, AT_UNREAD,
-     +          bufleft, bufleft3, bufptr, datstat, grplength, grpptr,
-     +          i, i1, i2, i3, i_buff(640), i_grphdr(11), icard, ichar,
+     +          bufleft, bufleft3, bufptr, grplength, grpptr, i, i1, i2,
+     +          i3, i_buff(640), i_grphdr(11), icard, ichar, ierr,
      +          illegal, j, jstat, k, lun, nchar, pcount, SIMPLE
       real      buffer(640), crpix4, grphdr(11), r1, r2, revis,
      +          sc_buf(max_sc*max_if*ant_max), velref, pra, pdec
-      character m(32)*80, olddat*8
+      character m(32)*80
 
       equivalence (i_buff(1), buffer(1))
       equivalence (i_grphdr(1), grphdr(1))
@@ -190,21 +190,13 @@ C              Note fudge for intermediate format PTI data.
             else if (m(i)(1:8).EQ.'OBSERVER') then
                read (m(i)(12:30),'(a16)') rp_observer
             else if (m(i)(1:8).EQ.'DATE-OBS') then
-               read (m(i)(12:40),'(a12,12x,a4)') datobs, datsys
-C              Version 1.0 had UT dates in the form dd/mm/yy.
-C              Version 2.0 has UT dates in the form yyyy-mm-dd.
-               if (datobs(5:5) .ne. '-') then
-                 read (datobs,'(a8,2x)') olddat
-                 call datfit(olddat, datobs, datstat)
-               end if
+C              Fix old-format dates.
+               call datfit(m(i)(12:21), datobs, ierr)
+               datsys = m(i)(35:36)
+               if (datsys.eq.'UT D') datsys = 'UT'
             else if (m(i)(1:8).EQ.'DATE    ') then
-               read (m(i)(12:30),'(a12)') datwrit
-C              Version 1.0 had UT dates in the form dd/mm/yy.
-C              Version 2.0 has UT dates in the form yyyy-mm-dd.
-               if (datwrit(5:5) .ne. '-') then
-                 read (datwrit,'(a8,2x)') olddat
-                 call datfit(olddat, datwrit, datstat)
-               end if
+C              Fix old-format dates.
+               call datfit(m(i)(12:21), datwrit, ierr)
             else if (m(i)(1:8).EQ.'EPOCH') then
                read (m(i)(12:30),'(a8)')coord
             else if (m(i)(1:5).EQ.'PRESS') then
@@ -440,8 +432,8 @@ C     ------------NOW READ DATA -------------
 
 C        If it will all fit in current buffer, then things are easy.
          call GETPARM (jstat, buffer, i_buff, bufptr, bufptr, buffer,
-     +      pcount, u, v, w, baseline, lun,
-     +      ut, flag, bin, if_no, sourceno)
+     +      pcount, u, v, w, baseline, lun, ut, flag, bin, if_no,
+     +      sourceno)
          if (jstat.eq.-2) goto 3100
          if (jstat.ne.0) RETURN
          bufptr = bufptr+pcount
@@ -480,8 +472,8 @@ C        Extract bufptr items from the next buffer.
          end do
 
          call GETPARM (jstat, grphdr, i_grphdr, 1, bufptr, buffer,
-     +      pcount, u, v, w, baseline, lun,
-     +      ut, flag, bin, if_no, sourceno)
+     +      pcount, u, v, w, baseline, lun, ut, flag, bin, if_no,
+     +      sourceno)
          if (jstat.eq.-2) goto 3100
          if (jstat.ne.0) RETURN
 
@@ -762,31 +754,36 @@ C     First 5 parameters are always there - you hope!
       call VAXR4 (grphdr(grpptr+4), ut)
 
       if (rbase.lt.0.0) then
-C        Syscal parameters?
+C        Syscal parameters.
          call VAXI4 (i_grphdr(grpptr+5), iant)
          call VAXI4 (i_grphdr(grpptr+6), iif)
          call VAXI4 (i_grphdr(grpptr+7), iq)
       else
 C        IF number.
          call VAXI4 (i_grphdr(grpptr+7), iif)
+
+         if (pcount.ge.11) then
+C           Otherwise, data_format comes from NAXIS2.
+            call VAXI4 (i_grphdr(grpptr+10), data_format)
+         end if
       end if
 
 C     Check for illegal parameters.
       if (ILLPARM(u, v, w, rbase, ut, iant, iif, iq)) then
 C        This can be caused by a bad block, so look for more data.
          write (6, *) 'Corrupted data encountered, skipping...'
-         call SKIPTHRU (jstat, bufptr, buffer, lun)
+         call SKIPTHRU (jstat, bufptr, buffer, lun, pcount)
          RETURN
       end if
 
-
+C     Looks ok, pick up remaining parameters.
       baseline = NINT(rbase)
       if (baseline.eq.-1) then
-C        Have syscal parameters.
-         sc_ut = ut
-         call VAXI4 (i_grphdr(grpptr+5), sc_ant)
-         call VAXI4 (i_grphdr(grpptr+6), sc_if)
-         call VAXI4 (i_grphdr(grpptr+7), sc_q)
+C        Syscal parameters.
+         sc_ut  = ut
+         sc_ant = iant
+         sc_if  = iif
+         sc_q   = iq
          call VAXI4 (i_grphdr(grpptr+8), sc_srcno)
          if (pcount.gt.9) then
             call VAXR4 (REAL(i_grphdr(grpptr+9)), intbase)
@@ -795,7 +792,6 @@ C        Have syscal parameters.
          end if
 
       else if (pcount.gt.5) then
-C        Pick up remaining parameters.
          call VAXI4 (i_grphdr(grpptr+5), flag)
          call VAXI4 (i_grphdr(grpptr+6), bin)
          call VAXI4 (i_grphdr(grpptr+7), if_no)
@@ -806,11 +802,6 @@ C        Pick up remaining parameters.
          else
             intbase = intime
          end if
-
-         if (pcount.gt.10) then
-C           If pcount is 10 or less, data_format comes from scan header.
-            call VAXI4 (i_grphdr(grpptr+10), data_format)
-         end if
       end if
 
       jstat = 0
@@ -819,7 +810,7 @@ C           If pcount is 10 or less, data_format comes from scan header.
 
 C-----------------------------------------------------------------------
 
-      subroutine SKIPTHRU (jstat, bufptr, buffer, lun)
+      subroutine SKIPTHRU (jstat, bufptr, buffer, lun, pcount)
 
 C-----------------------------------------------------------------------
 C     Skip through data looking for recognisable data or header.
@@ -833,10 +824,10 @@ C-----------------------------------------------------------------------
 
       logical   ILLPARM
       integer   AT_READ, AT_UNREAD, bufptr, i, iant, iif, iq, j, jstat,
-     +          lun, SIMPLE
+     +          lun, pcount, SIMPLE
       real      buffer(640), rbase, u, ut, v, w
 
-      do 999 j = 1, 1000
+      do 10 j = 1, 1000
 C        Read a new block; the remainder of the old one is unlikely to
 C        contain anything useful (and at most one integration).
          rp_iostat = AT_READ (lun, buffer)
@@ -868,26 +859,31 @@ C        Scan through the block looking for something legal.
             call VAXR4 (buffer(bufptr+4), ut)
 
             if (rbase.lt.0.0) then
-C              Syscal parameters?
+C              Syscal parameters.
                call VAXI4 (buffer(bufptr+5), iant)
                call VAXI4 (buffer(bufptr+6), iif)
                call VAXI4 (buffer(bufptr+7), iq)
             else
 C              IF number.
                call VAXI4 (buffer(bufptr+7), iif)
+
+               if (pcount.ge.11) then
+C                 Otherwise, data_format comes from NAXIS2.
+                  call VAXI4 (buffer(bufptr+10), data_format)
+               end if
             end if
 
             if (.not.ILLPARM(u, v, w, rbase, ut, iant, iif, iq)) then
-               goto 200
+               goto 999
             end if
 
             bufptr = bufptr + 1
-            if (bufptr.gt.632) goto 999
+            if (bufptr.gt.632) goto 10
          end do
-  999 continue
+ 10   continue
 
 C     Success!
-  200 jstat = -2
+ 999  jstat = -2
       return
       end
 
@@ -904,12 +900,16 @@ C     Success!
       integer  baseline, iant, iant1, iant2, iif, iq
       real     u, ut, v, w, rbase
 
-      if (ut.lt.0.0 .or. ut.gt.172800.0) then
-*        Invalid time.
+      if (data_format.lt.1 .or. data_format.gt.3) then
+*        Invalid data format.
          ILLPARM = .true.
 
       else if (rbase.lt.-1.1 .or. rbase.gt.(257*nant+0.1)) then
-*        Corrupted baseline number.
+*        Invalid baseline number.
+         ILLPARM = .true.
+
+      else if (ut.lt.0.0 .or. ut.gt.172800.0) then
+*        Invalid time.
          ILLPARM = .true.
 
       else
