@@ -52,3 +52,10 @@ echo "setenv PGPLOT_DIR $PGPLOT_DIR"                    >> $rc
 echo 'set path=($MIR/bin/linux $path); rehash'          >> $rc
 echo 'setenv LD_LIBRARY_PATH $MIR/lib/linux'            >> $rc
 echo 'setenv MIRPDOC $MIR/doc'                          >> $rc
+echo 'setenv MIRCAT $MIR/cat'                           >> $rc
+echo '#  it is quite likely a few more MIRs needed'     >> $rc
+
+exit 0
+
+
+# mir.bigbench    5392.064u 26.824s 1:34:09.40 95.9%      0+0k 0+0io 4pf+0w
