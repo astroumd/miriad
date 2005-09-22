@@ -18,14 +18,26 @@ c	and y axes chosen from:
 c	  time                     
 c         el                       
 c	Defaults are axis=time,el  (x and y axes).
+c
+c@ telescop 
+c       This specifies the observatory to be used for the observation.
+c       The observatory must be defined in obspar.for:
+c       alma,      atca,      carma,     ceduna30m, 
+c       cso,       hatcreek,  hobart26m, iram15m,
+c       jcmt,      kittpeak,  mopra,     nro10m,
+c       onsala,    ovro,      parkes,    penticton,
+c       rpa,       sest,      sma,       sza,
+c       sza10,     sza6,      vla,       wsrt. 
+c       Default is sma.
+c
 c@ obsdate
 c       This gives observing date in format of [yyyymmmdd], e.g.,
-c         obsdate = 2006mar10    
+c       obsdate = 2006mar10    
 c
 c@ UTstart
 c       This gives the beginning time of the track in UT 
 c       [hh,mm,ss.s] format, e.g.,
-c        UTstart = 8,30,0.0
+c       UTstart = 8,30,0.0
 c
 c@ obshours
 c       This gives total observing time in hours.
@@ -48,7 +60,7 @@ c       character followed by the Dec string.
 c       Source name must consist of 8 characters or less.
 c       Coordinates must be given in J2000. For objects
 c       in the Solar system, one needs to find their coordinates
-c       in the observing epoch from ephemeris.
+c       at the observing epoch from ephemeris.
 c@ device
 c       PGPLOT plot device/type. No default.
 c@ nxy
@@ -66,7 +78,10 @@ c--
 c
 c  History:
 c-----------------------------------------------------------------------
-c
+c jhz  05sept15 created the the first version for SMA.
+c jhz  05sept21 added input Keyword 'observatory' so that
+c               the program works for general purpose for
+c               the observatories that are listed in obspar.for 
       include 'maxdim.h'
 c ----------------------------------------------------------------------
 c  Pi.
@@ -140,7 +155,7 @@ c
       logical dout,dohst
       common/tlable/dout,dohst
 c-----------------------------------------------------------------------
-      call output ('SchedObs: version 1.1 29-Sept-05')
+      call output ('SchedObs: version 1.2 21-Sept-05')
 c
 c  Get the parameters given by the user and check them for blunders
 c
@@ -184,12 +199,10 @@ c
 c
 c input source
 c
-c          sfile='mysource.txt'
           if (sfile(1:len1(sfile)).ne.' ') then
            call txtopen (hdr, sfile, 'old', iostat)
          if (iostat.ne.0) call bug ('f', 'Error opening source file')
           end if
-c          write(*,*) sfile(1:len1(sfile))
           nsource=0
           sourid=0
           slen=0
@@ -343,7 +356,7 @@ c
        double precision function getdec(cdec)
 c
 c convert dec string in format [dd:mm:ss.ss] to double precision
-c in degeree
+c in degree
 c
         character cdec*(*)
         double precision ddec
@@ -605,7 +618,7 @@ c
 c  Get lst of the current data point.
 c
 c  Input:
-c    lin         Handle of file
+c    time        time
 c  Output:
 c    lst         LAST in radians
 c-----------------------------------------------------------------------
@@ -617,18 +630,6 @@ c
 c
          lst = 0.0d0
         call getlong(long)
-c         time=time+221 
-c         write(*,*) 'time=', time
-c         calday = '06mar10'
-c         call dayjul(calday, time)
-c         write(*,*) 'timeNew=',time
-c         stop
-c 3c279          time=time+3./24.
-c sgra           time=time+8.5/24.
-c 1921-293       time=time+10./24.
-c 3c454.3        
-c                 time=time+13./24.
-          
         call jullst (time, long, lst)
         lst = lst + eqeq(time)
       end
@@ -638,17 +639,18 @@ c
 c
       subroutine getlong (long)
 c-----------------------------------------------------------------------
-c     Get longitude from obspar subroutine
+c    Get longitude from obspar subroutine
 c  Output:
-c    longitude   Longitude in radians
+c    longitude  Longitude in radians
 c-----------------------------------------------------------------------
       double precision long
 c
       character telescop*10
       logical ok
+      common/observatory/telescop
 c------------------------------------------------------------------------
       long = 0.0d0
-      telescop = 'SMA'
+c      telescop = 'SMA'
       call obspar (telescop, 'longitude', long, ok)
             if (.not.ok) call bug('f',
      *          'No valid longitude found for '//telescop)
@@ -666,9 +668,10 @@ c-----------------------------------------------------------------------
 c
       character telescop*10
       logical ok
+      common/observatory/telescop
 c------------------------------------------------------------------------
       lat = 0.0d0
-      telescop='SMA'
+c      telescop='SMA'
       call obspar (telescop, 'latitude', lat, ok)
             if (.not.ok) call bug('f',
      *          'No valid latitude found for '//telescop)
@@ -830,7 +833,7 @@ c
       integer nx, ny, inc,tunit
 cc
       integer i
-      character axis(2)*10, obsday*32
+      character axis(2)*10, obsday*32,telescop*10
 c
       integer len1
 c
@@ -845,9 +848,10 @@ c
      * 'parang    ','lst       ','az        ','el        ','airmass   '/
 
         logical dohst
-        character sfile*32
+        character sfile*32, tele*10
         integer nt
         real UTtime(3),obshrs
+      common/observatory/telescop
 c-----------------------------------------------------------------------
       call keyini
       i = 4
@@ -862,6 +866,15 @@ c-----------------------------------------------------------------------
       call keyi ('nxy', ny, nx)
 c        nx = 1
 c        ny = 1
+c
+c  input the name of telescope which must be defined
+c  in obspar.for
+c
+      call keya ('telescop',telescop,'sma')
+       tele=telescop
+       call ucase(tele)
+       print*, 'Observatory = ',tele(1:len1(tele)) 
+c
       call keya ('obsdate',obsday, ' ')
       if(obsday(1:1).eq.' ') call bug('f','obsdate must be given')
        print*, 'Observing Epoch = ', obsday(1:len1(obsday))
@@ -880,14 +893,12 @@ c        ny = 1
       if(len1(sfile).eq.0) 
      * call bug('f','Input source file must be given')
       call keya ('device', pdev,' ')
-c
       call getopt(dohst)
       call keyfin
-c
       end
 
           
-           subroutine getopt(dohst)
+      subroutine getopt(dohst)
         logical dohst
 c
 c  Get extra processing options.
@@ -1010,6 +1021,9 @@ c
       save cols
       data cols1 /1, 7, 2, 5, 3, 4, 6, 8, 9,  10, 11, 12/
       data cols2 /1, 2, 5, 3, 4, 6, 8, 9, 10, 11, 12, 13/
+c
+      character telescop*10, upcase*10
+      common/observatory/telescop
 c----------------------------------------------------------------------
            dosmaplt=.true.
            nbases=1
@@ -1208,6 +1222,10 @@ c  Draw box and label
 c
               call pgpage
               call pgtbox (xopt, 0.0, 0, yopt, 0.0, 0)
+c
+          upcase = telescop
+          call ucase(upcase)
+          title=title(1:len1(title))//'-'//upcase(1:len1(upcase))
               call pglab (xlabel, ylabel, title)
 c
 c  Plot points and errors
@@ -1477,8 +1495,6 @@ c  Output:
 c    val      Value
 c    ok       True if value is a valid number to plot
 c
-c-----------------------------------------------------------------------
-c=======================================================================
 c - mirconst.h  Include file for various fundamental physical constants.
 c
 c  History:
