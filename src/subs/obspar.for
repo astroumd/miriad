@@ -36,6 +36,7 @@ c    mchw 26aug03 Added SMA
 c    gxm  27jan04 Added generic systemp for WSRT (to please wsrtfits).
 c    mchw 07jul04 Added SMA10 and SZA6 cross correlations for CARMA.
 c    pjt  24sep04 Final location of CARMA at Cedar Flats
+c    dm/jhz 23sep05 Corrected JyperK and MOUNT for SMA entries
 c************************************************************************
 c* ObsPrint -- Print list of known observatories.
 c: utility
@@ -427,16 +428,15 @@ c Reference:  Todd Hunter  Log#7242
 
 	call obsad('sma/height',	4080.0d0)
 c frequency dependent - but clearly one of these two is the better one
-        call obsad('sma/jyperk',        13.d0)
-c	call obsad('sma/jyperk',	130.d0)
+        call obsad('sma/jyperk',        130.d0)
 c older value from Ram?
 c	call obsad('sma/latitude',	obsdms( 1, 19,49,33.8))
 c	call obsad('sma/longitude',	obsdms(-1,155,28,46.4))
 c reference: from Taco Young
         call obsad('sma/latitude',      obsdms(1, 19, 49, 27.1389))
         call obsad('sma/longitude',     obsdms( 1, 204, 31, 22.79606))
-c	call obsad('sma/mount',	        NASMYTH)
-        call obsad('sma/mount',         altaz)
+	call obsad('sma/mount',	        NASMYTH)
+c        call obsad('sma/mount',         altaz)
 	call obsad('sma/nants',	        8.0d0)
         call obsad('sma/subdiam',      2.8d0)
         call obsad('sma/systemp',      200.d0)
