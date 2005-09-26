@@ -23,7 +23,8 @@ c@ out
 c	The name of the output uv data set. No default.
 c--
 c  History:
-c  jhz 22sept05 make an initiative versioni, requested by dan marrone.
+c  jhz 22sept05 made an initiative versioni, requested by dan marrone.
+c  jhz 26sept05 purged irrelevant lines and notes.
 c  Bugs:
 c------------------------------------------------------------------------
 	include 'maxdim.h'
@@ -32,8 +33,8 @@ c------------------------------------------------------------------------
 	character uvflags*12,ltype*16,out*64
 	integer npol,Snpol,pol,tIn,tOut,vupd,nread,nrec,i
 	real jyperk
-	logical dotaver,doflush,buffered,PolVary,ampsc,vecamp,first
-	logical relax,ok,donenpol
+	logical dotaver,doflush,buffered,PolVary,first
+	logical ok,donenpol
 	double precision preamble(5),Tprev,interval
         double precision time0
 	complex data(MAXCHAN)
@@ -47,7 +48,7 @@ c
 c  Externals.
 c
 	logical uvDatOpn
-c   initialize
+c   initialize the time array
         do i=1, MAXREC
         sortedtime(i)=0.0d0
         end do
@@ -56,7 +57,7 @@ c  Get the input parameters.
 c
 	call output(version)
 	call keyini
-	call GetOpt(uvflags,ampsc,vecamp,relax)
+	call GetOpt(uvflags)
 	call uvDatInp('vis',uvflags)
               
 	call keyd('interval',interval,0.d0)
@@ -66,25 +67,19 @@ c
 c  Check the input parameters.
 c
 	if(out.eq.' ')call bug('f','Output file must be specified')
-	if(interval.lt.0)call bug('f','Illegal value for interval')
-        if(ampsc)call output('Amp-scalar averaging used')
-	if(vecamp)
-     *	  call output('Amp-scalar averaging on parallel hands used')
 c
 c  Various initialisation.
 c
 	interval = interval/(24.*60.)
-	npol = 0
-	Snpol = 0
-	first = .true.
-	PolVary = .false.
-	doflush = .false.
+	    npol = 0
+	   Snpol = 0
+           first = .true.
+	 PolVary = .false.
+	 doflush = .false.
 	buffered = .false.
 	donenpol = .false.
          dotaver = .false.
-c	dotaver = interval.gt.0.or.uvDatPrb('polarization?',0.d0)
-c	call BufIni
-	nrec = 0
+	    nrec = 0
 c
 c making time sorted array
 c
@@ -93,12 +88,12 @@ c
           call uvDatRd(preamble,data,flags,maxchan,nread)
           time0 = preamble(4)
           dowhile(nread.gt.0)
-              nrec = nrec + 1
+             nrec = nrec + 1
              sortedtime(nrec) = preamble(4) 
-           call uvDatRd(preamble,data,flags,maxchan,nread)
+          call uvDatRd(preamble,data,flags,maxchan,nread)
           end do
            call uvDatCls
-           call  sortd (sortedtime,nrec)
+           call sortd (sortedtime,nrec)
 
 c
 c
@@ -144,7 +139,7 @@ c
           totalrec=0
           idone=0
           Tprev=0.0d0
-           ok = .false.
+          ok = .false.
 12345     call uvDatRd(preamble,data,flags,maxchan,nread)
           irec=0
 	  dowhile(nread.gt.0)
@@ -172,34 +167,34 @@ c
             call uvrewind(tIn)
              nread=-1
            ok=.false.
-             if((isrec*100/nrec).eq.10.and.idone.lt.10) then
-              write(*,*) isrec*100/nrec, '% completed.'
-              idone=10
-              else if ((isrec*100/nrec).eq.20.and.idone.lt.20) then
-              write(*,*) isrec*100/nrec, '% completed.'
-             idone=20
-              else if ((isrec*100/nrec).eq.30.and.idone.lt.30) then
-              write(*,*) isrec*100/nrec, '% completed.'
-              idone=30
-              else if ((isrec*100/nrec).eq.40.and.idone.lt.40) then
-              write(*,*) isrec*100/nrec, '% completed.'
-              idone=40
-              else if ((isrec*100/nrec).eq.50.and.idone.lt.50) then
-              write(*,*) isrec*100/nrec, '% completed.'
-              idone=50
-              else if ((isrec*100/nrec).eq.60.and.idone.lt.60) then
-              write(*,*) isrec*100/nrec, '% completed.'
-              idone=60
-             else if ((isrec*100/nrec).eq.70.and.idone.lt.70) then
-             write(*,*) isrec*100/nrec, '% completed.'
-              idone=70
-              else if ((isrec*100/nrec).eq.80.and.idone.lt.80) then
-              write(*,*) isrec*100/nrec, '% completed.'
-              idone=80
-              else if ((isrec*100/nrec).eq.90.and.idone.lt.90) then
-             write(*,*) isrec*100/nrec, '% completed.'
-              idone=90
-             end if
+           if((isrec*100/nrec).eq.10.and.idone.lt.10) then
+           write(*,*) isrec*100/nrec, '% completed.'
+           idone=10
+           else if ((isrec*100/nrec).eq.20.and.idone.lt.20) then
+           write(*,*) isrec*100/nrec, '% completed.'
+           idone=20
+           else if ((isrec*100/nrec).eq.30.and.idone.lt.30) then
+           write(*,*) isrec*100/nrec, '% completed.'
+           idone=30
+           else if ((isrec*100/nrec).eq.40.and.idone.lt.40) then
+           write(*,*) isrec*100/nrec, '% completed.'
+           idone=40
+           else if ((isrec*100/nrec).eq.50.and.idone.lt.50) then
+           write(*,*) isrec*100/nrec, '% completed.'
+           idone=50
+           else if ((isrec*100/nrec).eq.60.and.idone.lt.60) then
+           write(*,*) isrec*100/nrec, '% completed.'
+           idone=60
+           else if ((isrec*100/nrec).eq.70.and.idone.lt.70) then
+           write(*,*) isrec*100/nrec, '% completed.'
+           idone=70
+           else if ((isrec*100/nrec).eq.80.and.idone.lt.80) then
+           write(*,*) isrec*100/nrec, '% completed.'
+           idone=80
+           else if ((isrec*100/nrec).eq.90.and.idone.lt.90) then
+           write(*,*) isrec*100/nrec, '% completed.'
+           idone=90
+           end if
 c          write(*,*) preamble(4)- sortedtime(isrec-1),irec,
 c     *    Tprev-sortedtime(isrec-1),isrec-1,preamble(5),blid,'e',
 c     *    totalrec
@@ -219,64 +214,20 @@ c
 	call uvclose(tOut)
 	end
 c************************************************************************
-	subroutine GetOpt(uvflags, ampsc, vecamp,relax)
+	subroutine GetOpt(uvflags)
 c
 	implicit none
-        logical ampsc,vecamp,relax
 	character uvflags*(*)
 c
 c  Determine the flags to pass to the uvdat routines.
-c
 c  Output:
 c    uvflags	Flags to pass to the uvdat routines.
-c    ampsc      True for amp-scalar averaging
-c    vecamp	True for vector averaging on everything except
-c		parallel-hand amplitudes.
-c    relax	Do not discard bad records.
 c------------------------------------------------------------------------
-	integer nopts
-	parameter(nopts=7)
-	character opts(nopts)*9
-c	integer l
-	logical present(nopts),docal,dopol,dopass,vector
-	data opts/'nocal    ','nopol    ','nopass   ',
-     *            'vector   ','scalar   ','scavec   ','relax    '/
-c
-	call options('options',opts,present,nopts)
-	docal = .not.present(1)
-	dopol = .not.present(2)
-	dopass= .not.present(3)
-        vector = present(4)
-        ampsc  = present(5)
-        vecamp = present(6)
-	relax  = present(7)
-c
-c Default averaging is vector
-c
-        if (vector .and. ampsc) call bug ('f',
-     *     'You can''t have options=vector and options=scalar')
-        if (vector .and. vecamp) call bug ('f',
-     *     'You can''t have options=vector and options=scavec')
-        if (ampsc .and. vecamp) call bug ('f',
-     *     'You can''t have options=scalar and options=scavec')
 c
 c Set up calibration flags
 c
 c
-c	uvflags = 'dslr3'
            uvflags = 'bxdlr3'
-c	if(docal)then
-c	  l = l + 1
-c	  uvflags(l:l) = 'c'
-c	endif
-c	if(dopass)then
-c	  l = l + 1
-c	  uvflags(l:l) = 'f'
-c	endif
-cc	if(dopol)then
-c	  l = l + 1
-c	  uvflags(l:l) = 'e'
-c	endif
 	end
 c************************************************************************
         subroutine sortd(array,n)
@@ -287,7 +238,7 @@ c
 c
 c  Sorts an array, ARRAY, of length N into ascending order using a
 c  Heapsort algorithm. ARRAY is replaced on output by its sorted
-c  rearrangement. The array elements is in double precision.
+c  rearrangement. The array elements are in double precision.
 c
 c  Input:
 c    n          Number of elements to be sorted.
