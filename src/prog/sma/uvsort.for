@@ -2,12 +2,12 @@ c************************************************************************
 	program uvsort
 	implicit none
 c
-c= uvsort - Copy and sort a uv dataset into a time order.
+c= uvsort - Copy and sort a uv dataset into ascending order in time.
 c& jhz for SMA 
 c: uv analysis
 c+
-c	UVSORT copies a uv dataset, sorting uvdata into a time
-c	order.
+c	UVSORT copies a uv dataset, sorting uvdata into ascending
+c	order in time.
 c@ vis
 c	The name of the input uv data set. It must be a single file. 
 c	No default.
