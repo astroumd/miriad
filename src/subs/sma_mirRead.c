@@ -106,6 +106,7 @@
 //                  of smearing spectral lines.  
 // 2005-09-01 (JHZ) Removed lines for storing velsma;
 //                  The residual Doppler velocity can be stored in veldop. 
+// 2005-09-25 (JHZ) removed unused variables.
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
