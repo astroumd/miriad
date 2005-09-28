@@ -62,8 +62,8 @@ c	                 default is to plot only unflagged data.
 c	   'all'         Plot both flagged and unflagged data.
 c          'jplcat'      Plot JPL catalog lines. The xaxis and yaxis are
 c                        then forced to be frequency and ampltiude.
-c          'restfreq'    plot the rest frequency in the identification of 
-c                        the spectral lines using the JPL (options=jplcat is chosen.)
+c          'restfreq'    plot the frequency in the rest frame chosen
+c                        when using the JPL catalog (options=jplcat is chosen.)
 c                        Default is to plot the sky frequency.
 c
 c@ catpath
@@ -187,6 +187,8 @@ c    jhz 22aug05  added special relativistic expressions to the veldef.
 c    jhz 23aug05  in pghline, add velocity labelling options for
 c                 lsr, hel, and z of full special relativistic
 c                 expressions in the case of spectral line identifications.             
+c    jhz 28sep05  Fixed spectral channel pntr for the case of
+c                 hybrid spectral resolutions.
 c
 c>  Bugs:
 c------------------------------------------------------------------------
@@ -233,7 +235,7 @@ c
         character mname*8000, moln*16
         integer mtag(maxmline), nmline, j, jp, js, je, iline
         character version*(*)
-        parameter(version='SmaUvSpec: version 1.8 23-Aug-05')
+        parameter(version='SmaUvSpec: version 1.9 28-Sep-05')
         character uvflags*8,device*64,xaxis*12,yaxis*12,logf*64
         character xtitle*64,ytitle*64, veldef*8
         character xtitlebuf*64
@@ -280,9 +282,9 @@ c
         call output(version)
         docolor=.true.
         call keyini
-        call mkeyf('vis',in,1,nin)
+        call mkeyf('vis',in,1, nin)
         call vishd(in)
-         call SelInput('select',sels,maxsels)
+        call SelInput('select',sels,maxsels)
         call keyini
         call getopt(uvflags,ampsc,rms,nobase,avall,dodots,doflag,doall,
      &          docat,dorestfreq)
@@ -327,7 +329,6 @@ c     & call bug('f','has not fully implemented yet for jpl catalog.')
             selwins(i) = .true.
           endif
         enddo
-
 c
 c select molecular species
 c 
@@ -604,10 +605,8 @@ c
 c  Externals.
 c
         integer len1
-c
         if(xaxis.eq.'channel')then
           call uvinfo(tin,'line',data)
-          
           start = data(3)
           if(nint(data(1)).ne.velo)start = start + 0.5*(data(4)-1)
           step = data(5)
@@ -1093,7 +1092,7 @@ c    phas
             xp(npnts) = x(k)
             yp(npnts) = temp
             ypp(npnts) = temp2
-            sppntr(npnts) = chnkpntr(k)
+              sppntr(npnts) = chnkpntr(k)
           endif
         enddo
 c
@@ -1192,10 +1191,10 @@ c
         integer i,i1,i2,p,bl,pol
         real t
         logical ok,docolor,dorestfreq
-c        integer maxwin
-c        parameter(maxwin=48)
-        integer nspect, nschan(maxwin),nchan0
+        integer nspect, nschan(maxwin),nchan0,jstart,jend
         common/spectrum/nspect,nschan,nchan0,docolor,dorestfreq
+         logical selwins(maxwin)
+         common/windows/selwins
 c
 c  Does this spectrum contain some good data.
 c
@@ -1268,7 +1267,15 @@ c
 c make spectral window pntr
 c
           i=0
+          jstart=0
+          jend=0
           do j=1,nspect
+          if(selwins(j).and.jstart.eq.0) jstart=j
+          if(.not.selwins(j).and.jstart.ne.0.and.jend.eq.0) 
+     *        jend=j-1
+          if(selwins(j).and.jend.eq.0) jend=nspect
+          enddo
+          do j=jstart,jend
           do k=1,nschan(j)
           i=i+1
           chnkpntr(i+p) =j
@@ -1597,8 +1604,8 @@ c plotting,uv-data
 c
         subroutine pghline(npts,x,y,yp,gapfac,doboth,maxstr,sppntr,
      *   pline,xrange)
-              parameter(maxsline=10000)
-              parameter(cmks = 299792458.0)
+        parameter(maxsline=10000)
+        parameter(cmks = 299792458.0)
         real fmx,fmn,strl
         real freq(maxsline),intensity(maxsline)
         integer uqst(6*maxsline),lqst(6*maxsline),mtag(6*maxsline)
@@ -1607,7 +1614,7 @@ c
         real xlfrq(2), ylstr(2)
         integer npts,sppntr(npts)
         real x(npts), y(npts), yp(npts), gapfac
-        REAL XPTS(npts),YPTS(npts), pline,apline(2),xrange(2)
+        REAL XPTS(npts),YPTS(npts),pline,apline(2),xrange(2)
         INTEGER N
 c
 c  Histogram style line plot of y-array versus x-array. Points are not
@@ -1640,7 +1647,8 @@ c
 c common jpl
 c
         parameter(maxmline=500)
-        integer nmol, moltag(maxmline), len1, startchunk
+        integer nmol, moltag(maxmline), len1
+        integer endchunk, startchunk
         character molname(maxmline)*16, veldef*8,veltype*32
         real lsrvel,veldop,z
         logical docat
@@ -1648,11 +1656,15 @@ c
      *       veltype,veldef,veldop,strl
         logical selwins(maxwin)
         common/windows/selwins
-                startchunk=0
-                do i=1, maxwin
-                if(startchunk.eq.0.and.selwins(i)) startchunk=i
-                end do  
-           apline(1)=pline
+         startchunk=0
+         endchunk=0
+         do i=1,nspect 
+         if(startchunk.eq.0.and.selwins(i)) startchunk=i
+         if(startchunk.ne.0.and.endchunk.eq.0.and..not.selwins(i)) 
+     *   endchunk=i-1
+         if(endchunk.eq.0.and.i.eq.nspect)  endchunk=nspect       
+         end do
+         apline(1)=pline
            apline(2)=pline
 c 
 c convert to the rest frame
@@ -1710,7 +1722,8 @@ c
            i=0
            ci=25
            call pgscr(ci, .3, 0.5, 0.7)
-           do j=1, nspect 
+c           do j=1, nspect 
+            do j=startchunk,endchunk
             ci=j
         if(j.gt.12) then
             if(ci.eq.13) call pgscr(ci, 1.0, 1.0, 0.5)
@@ -1774,7 +1787,7 @@ c
              call pgdraw(x(end),y(end))
               start=end+1
              if(docolor) then
-             write(title,'(a,i2)') 's',j+startchunk-1
+             write(title,'(a,i2)') 's',j
                l = len1(title)
                call pglen(5,title(1:l),xlen,ylen)
                xloc = 0.8
