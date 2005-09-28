@@ -36,7 +36,8 @@ c       restfreq=345.795991,0
 c
 c@ vsource
 c       The radial velocity of source in km/s w.r.t. the LSR or 
-c       the barycenter. The velocity reference frame can be selected 
+c       the barycenter, which was included in the online Doppler
+c       track. The velocity reference frame can be selected 
 c       in options. Positive velocity is away from observer.
 c       Default is zero.
 c
@@ -200,11 +201,12 @@ c                   the velocity reference frame for vsource
 c                   is defined using options; either bary or lsr
 c                   is supported. 
 c    jhz 31-aug-05 update the inline doc for option lsr and bary.
+c    jhz 28-sep-05 update the inline doc for vsource.
 c------------------------------------------------------------------------
         integer maxfiles
         parameter(maxfiles=128)
         character version*(*)
-        parameter(version='SmaLod: version 1.12 31-Aug-05')
+        parameter(version='SmaLod: version 1.13 28-Sep-05')
 c
         character in(maxfiles)*64,out*64,line*64, rxc*4
         integer tno, length, len1
