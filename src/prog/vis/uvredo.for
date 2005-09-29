@@ -105,6 +105,8 @@ c    tracked Doppler velocity (the diurnal term and part of the annual
 c    term).
 c    jhz  16sep05 initialize the array doptime; otherwise
 c                 it may cause problem in some syetems.
+c    jhz  29sep05 add vsource to smavelop when calculates
+c                 the residual veldop for SMA data.
 c
 c  Bugs:
 c    * Much more needs to be added.
@@ -112,7 +114,7 @@ c------------------------------------------------------------------------
 	include 'maxdim.h'
 	include 'mirconst.h'
 	character version*(*)
-	parameter(version='UvRedo: version 1.2 16-Sept-05')
+	parameter(version='UvRedo: version 1.3 29-Sept-05')
 	integer OBS,HEL,LSR
 	parameter(OBS=1,HEL=2,LSR=3)
 c
@@ -586,7 +588,7 @@ c  Annual.
 
           if(dosma) then
           veldop = veldop -
-     *    smaveldop(time,lst,lat,frame)
+     *    smaveldop(lIn,time,lst,lat,frame)
           end if
 
 
@@ -670,7 +672,8 @@ c
 c
 	end
 c************************************************************************
-        real function smaveldop(time,lst,smalat,frame)
+        real function smaveldop(lIn,time,lst,smalat,frame)
+        integer lIn
         double precision doptrkra, doptrkdec, time, lst,Jultransit
         logical dosma,getsmavel
         real velsma0
@@ -698,7 +701,7 @@ c     lst           Local apparent sideral time in radian.
 c     smalat        Geodetic latitude of the SMA (radian).
         double precision raapp,decapp,r1,d1,lmn(3)
         double precision lmnapp(3),vel(3),pos(3),smalat
-        real veldop
+        real veldop,vsource
         integer i,frame
         integer OBS,LSR,HEL
         parameter(OBS=3,LSR=2,HEL=1)
@@ -785,7 +788,8 @@ c
 c  this part has been corrected
 c  in the SMA chunk frequency recorded
 c
-          smaveldop = veldop
+          call uvrdvrr (lin, 'vsource', vsource, 0.0)
+          smaveldop = veldop+vsource
           end
 c  ******************************
          subroutine sourfind(tno,dsource,doptime)
