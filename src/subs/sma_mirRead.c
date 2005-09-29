@@ -107,6 +107,7 @@
 // 2005-09-01 (JHZ) Removed lines for storing velsma;
 //                  The residual Doppler velocity can be stored in veldop. 
 // 2005-09-25 (JHZ) removed unused variables.
+// 2005-09-29 (JHZ) added vsource (from users input) back to veldop.
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -1674,7 +1675,11 @@ int rsmir_Read(char *datapath, int jstat)
         // at the moment when the dopplerTrack command is issued.
         //   
 	spn[set]->veldop = vabsolute - spn[set]->vel[12];
-        spn[set]->smaveldop = vabsolute - spn[set]->vel[12];
+//
+// add back the radial velocity of the source
+//
+        spn[set]->veldop = spn[set]->veldop + smabuffer.vsource;
+//        spn[set]->smaveldop = vabsolute - spn[set]->vel[12];
 //	printf("%d veldop=%f %f\n", set, spn[set]->veldop,spn[set]->vel[12]);
       }
     }                   
