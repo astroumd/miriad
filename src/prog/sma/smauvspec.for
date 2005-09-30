@@ -187,8 +187,11 @@ c    jhz 22aug05  added special relativistic expressions to the veldef.
 c    jhz 23aug05  in pghline, add velocity labelling options for
 c                 lsr, hel, and z of full special relativistic
 c                 expressions in the case of spectral line identifications.             
-c    jhz 28sep05  Fixed spectral channel pntr for the case of
+c    jhz 28sep05  implemented spectral channel pntr for the case of
 c                 hybrid spectral resolutions.
+c    jhz 30sep05  fixed a bug in plotting both (amplitude and phase) for yaxis
+c                 in the case that plotting interval is less than the 
+c                 total observing interval.
 c
 c>  Bugs:
 c------------------------------------------------------------------------
@@ -235,7 +238,7 @@ c
         character mname*8000, moln*16
         integer mtag(maxmline), nmline, j, jp, js, je, iline
         character version*(*)
-        parameter(version='SmaUvSpec: version 1.9 28-Sep-05')
+        parameter(version='SmaUvSpec: version 1.10 30-Sep-05')
         character uvflags*8,device*64,xaxis*12,yaxis*12,logf*64
         character xtitle*64,ytitle*64, veldef*8
         character xtitlebuf*64
@@ -864,7 +867,7 @@ c
         doreal  = ytitle.eq.'Real'
         doimag  = ytitle.eq.'Imaginary'
         doboth  = ytitle.eq.'BothA&P'
-        if(doboth) ytitle=''
+c        if(doboth) ytitle=''
 c
 c  Determine the number of good baselines.
 c
@@ -936,16 +939,16 @@ c
               p = pnt(i,j)
               if(cntp(i,j).ge.1)then
                 if(dolag)then
-          call lagext(x,buf(p),count(p),nchan(i,j),n,
+           call lagext(x,buf(p),count(p),nchan(i,j),n,
      *         xp,yp,maxpnt,npnts)
                 else
-c                  write(*,*) p, chnkpntr(p)
-          call visext(x,buf(p),buf2(p),bufr(p),count(p),
-     *         nchan(i,j),chnkpntr(p),
-     *         doamp,doampsc,dorms,dophase,doreal,doimag,
-     *         doboth,xp,yp,ypp,maxpnt,npnts,sppntr)
+           call visext(x,buf(p),buf2(p),bufr(p),count(p),
+     *          nchan(i,j),chnkpntr(p),
+     *          doamp,doampsc,dorms,dophase,doreal,doimag,
+     *          doboth,xp,yp,ypp,maxpnt,npnts,sppntr)
                 endif
               endif
+            
 c
 c  Did we find another plot.
 c
@@ -959,10 +962,9 @@ c
             enddo
             if(.not.nobase.and.npnts.gt.0)then
         call plotit(source,npnts,xp,yp,ypp,xrange,yrange,dodots,plot,
-     *          nplts,
-     *          xtitle,ytitle,j,time/ntime,inttime/nplts,pol,npol,
-     *          dopoint,hann,hc,hw,logf,doboth,sppntr)
-                
+     *       nplts,
+     *       xtitle,ytitle,j,time/ntime,inttime/nplts,pol,npol,
+     *       dopoint,hann,hc,hw,logf,doboth,sppntr)
 c
               npol = 0
               do i=polmin,polmax
@@ -979,7 +981,7 @@ c
 c
 c  Do the final plot.
 c
-        if(npnts.gt.0)call plotit(source,npnts,xp,yp,ypp,
+        if(npnts.gt.0) call plotit(source,npnts,xp,yp,ypp,
      *    xrange,yrange,dodots,
      *    plot,nplts,xtitle,ytitle,0,time/ntime,inttime/nplts,
      *    pol,npol,dopoint,hann,hc,hw,logf,doboth,sppntr)
@@ -1067,9 +1069,9 @@ c=======================================================================
             else if(dophase)then
               ctemp = buf(k)
               if(abs(real(ctemp))+abs(aimag(ctemp)).eq.0)then
-                temp = 0
+              temp = 0
               else
-                temp=180/pi*atan2(aimag(ctemp),real(ctemp))
+              temp=180/pi*atan2(aimag(ctemp),real(ctemp))
               endif
             else if(doreal)then
               temp = real(buf(k)) / count(k)
@@ -1078,12 +1080,13 @@ c=======================================================================
             else if(doboth)then
 c    ampl
               temp = abs(buf(k)) / count(k)
+              
 c    phas
               ctemp = buf(k)
               if(abs(real(ctemp))+abs(aimag(ctemp)).eq.0)then
-                temp2 = 0
+              temp2 = 0
               else
-                temp2=180/pi*atan2(aimag(ctemp),real(ctemp))
+              temp2=180/pi*atan2(aimag(ctemp),real(ctemp))
               endif
             endif
             npnts = npnts + 1
@@ -1095,7 +1098,6 @@ c    phas
               sppntr(npnts) = chnkpntr(k)
           endif
         enddo
-c
         end
 c************************************************************************
         subroutine lagext(x,buf,count,nchan,n,
@@ -1462,7 +1464,7 @@ cc          yrange(1)=yranged(1)
            pline = yrange(1)
             if(doboth) yrange(1) = yrange(1)-0.5*pscale
           call pgswin(xrange(1),xrange(2),yrange(1),yrange(2))
-           if(doboth) yrange(1) = yrange(1)+0.5*pscale
+            if(doboth) yrange(1) = yrange(1)+0.5*pscale
         endif
          call setaxisr(ypp,npnts,ypranged)
             ypranged(1) =-200.
@@ -1648,7 +1650,7 @@ c common jpl
 c
         parameter(maxmline=500)
         integer nmol, moltag(maxmline), len1
-        integer endchunk, startchunk
+        integer endchunk, startchunk, istart
         character molname(maxmline)*16, veldef*8,veltype*32
         real lsrvel,veldop,z
         logical docat
@@ -1665,7 +1667,7 @@ c
          if(endchunk.eq.0.and.i.eq.nspect)  endchunk=nspect       
          end do
          apline(1)=pline
-           apline(2)=pline
+         apline(2)=pline
 c 
 c convert to the rest frame
 c
@@ -1723,6 +1725,7 @@ c
            ci=25
            call pgscr(ci, .3, 0.5, 0.7)
 c           do j=1, nspect 
+            istart=0
             do j=startchunk,endchunk
             ci=j
         if(j.gt.12) then
@@ -1744,6 +1747,7 @@ c           do j=1, nspect
              if(j.eq.7) call  pgsci(25)
              call pgmove(x(start),y(start))
              N=0
+              
           do k=1, fnschan(j)
                i=i+1
                N=N+1
@@ -1765,13 +1769,13 @@ c
 c make the single spectral window to be green
 c
              if(.not.docolor)  call  pgsci(3)
-               XPTS(k) = x(k+(j-1)*fnschan(j))
-               YPTS(k) = yp(k+(j-1)*fnschan(j))
-          if(maxf.lt.(x(k+(j-1)*fnschan(j)))) maxf=x(k+(j-1)*fnschan(j))
-          if(minf.gt.(x(k+(j-1)*fnschan(j)))) minf=x(k+(j-1)*fnschan(j))
-          if(maxstr.lt.(y(k+(j-1)*fnschan(j)))) 
+               XPTS(k) = x(k+istart)
+               YPTS(k) = yp(k+istart)
+          if(maxf.lt.(x(k+istart))) maxf=x(k+istart)
+          if(minf.gt.(x(k+istart))) minf=x(k+istart)
+          if(maxstr.lt.(y(k+istart))) 
      *      then
-                maxstr=y(k+(j-1)*fnschan(j))
+                maxstr=y(k+istart)
             end if
             if(i<npts.and.k<fnschan(j)) then
               call pgdraw (0.5*(x(i+1)+x(i)), y(i))
@@ -1783,6 +1787,7 @@ c
              endif
             call pgebuf
           enddo
+             istart=istart+fnschan(j)
              end=i
              call pgdraw(x(end),y(end))
               start=end+1
@@ -1801,7 +1806,8 @@ c          plot phase
            call pgline(2,xrange,apline)
            call  pgsci(2)
            IF (SYMBOL.GE.0 .OR. SYMBOL.LE.-3) THEN
-           CALL GRMKER(SYMBOL,.FALSE.,N,XPTS,YPTS)
+          CALL GRMKER(SYMBOL,.FALSE.,N,XPTS,YPTS)
+            
            ELSE
            CALL GRDOT1(N,XPTS,YPTS)
            END IF
@@ -1810,7 +1816,6 @@ c          plot phase
            if(end.eq.npts) goto 556
            enddo        
 556        continue 
-
 
           if(docat) then
       fmn  = minf
@@ -1950,13 +1955,25 @@ ccccccccccccccccccccccccccc
       integer j, k, ci, l
       character title*64
       real xlen,ylen,xloc
-      integer   i,maxwin
+      integer   i,maxwin,  startchunk,endchunk,istart
       parameter(maxwin=48)
       integer  nspect, nschan(maxwin),fnschan(maxwin),nchan0
       common/spectrum/nspect,nschan,nchan0,docolor,dorestfreq
+      logical selwins(maxwin)
+        common/windows/selwins
+
 c
 c  sort the spectral window pointr after flagging
 c
+         startchunk=0
+         endchunk=0
+         do i=1,nspect
+         if(startchunk.eq.0.and.selwins(i)) startchunk=i
+         if(startchunk.ne.0.and.endchunk.eq.0.and..not.selwins(i))
+     *   endchunk=i-1
+         if(endchunk.eq.0.and.i.eq.nspect)  endchunk=nspect
+         end do
+
         do j=1, nspect
         fnschan(j)=0
         enddo
@@ -1977,7 +1994,8 @@ C
       IF (N.LT.1) RETURN
       IF (PGNOTO('PGPTS')) RETURN
 C
-          do j=1, nspect
+          istart=0
+          do j=startchunk,endchunk
             ci=j
         if(j.gt.12) then
             if(ci.eq.12) call pgscr(ci, 0.8, 0.6, 0.4)
@@ -2000,9 +2018,10 @@ C
           do k=1, fnschan(j)
           i=i+1
           N=N+1
-          XPTS(k) = XPTS(k+(j-1)*fnschan(j))
-          YPTS(k) = YPTS(k+(j-1)*fnschan(j))
+          XPTS(k) = XPTS(k+istart)
+          YPTS(k) = YPTS(k+istart)
           enddo
+          istart=istart+fnschan(j)
        write(title,'(a,i2)') 's' ,j
                l = len1(title)
                call pglen(5,title(1:l),xlen,ylen)
