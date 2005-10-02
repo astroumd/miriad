@@ -14,5 +14,8 @@ The standard Miriad library libmir.so / libmir.a
 has too many dependencies (pgplot, f2c, etc.)
 to be useful.
 
+See also the $MIR/install/mirlib.export file
+for an example how to generate one of those.
+
 The *.i files for SWIG explain how to build
 the python bindings.
