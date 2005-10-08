@@ -10,6 +10,7 @@
 #   26-jun-01   endianism check using 'od'      PJT
 #   22-sep-01   summary.log file now contains $USER	PJT
 #   26-jan-03   add rad testing, if present		PJT
+#    8-oct-05   remove confusing verbosities if test passes       PJT
 #
 #-----------------------------------------------------------------------
 
@@ -213,9 +214,13 @@ rad() {
 
 check() {
   (
-  echo Checking $1, errors are reported by:
-  echo "# errors    Program Exit_status"
-  grep \^RUN $1 | awk '{if ($3!=0) print $2,$3}' | uniq -c
+  grep \^RUN $1 | awk '{if ($3!=0) print $2,$3}' | uniq -c > tmp.0
+  if test -s tmp.0; then
+    echo Checking $1, errors are reported by:
+    echo "# errors    Program Exit_status"
+  else
+    echo OK
+  fi
   )
 }
 
@@ -226,28 +231,28 @@ check() {
   cd $data
 
 # Run tests
-  echo Running basic
+  echo -n "Running basic: "
   basic basic > basic.log 2>&1
   check basic.log
 
 
-  echo Running xyio
+  echo -n "Running xyio: "
   xyio xyio > xyio.log 2>&1
   check xyio.log
 
 
-  echo Running uvio
+  echo -n "Running uvio: "
   uvio uvio > uvio.log 2>&1
   check uvio.log
 
-  echo Running map
+  echo -n "Running map: "
   map map > map.log 2>&1
   check map.log
 
   if test -f $MIR/borrow/rad/README; then
-    echo Running rad
+    echo -n "Running rad: "
     rad rad > rad.log 2>&1
-    exit 1
+    echo "OK"
   fi
 
   echo Creating logfile for baseline check:
