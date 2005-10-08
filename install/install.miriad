@@ -489,7 +489,14 @@ if (-e checklist) then
     endif
   end
   if ($bad > 0) then
-    echo Found $bad / $all binaries missing, check $badlist
+    if ($bad > 5) then
+	echo Found $bad / $all binaries missing, check $badlist
+    else
+	echo Found $bad / $all binaries missing:
+	cat $badlist
+    endif
+  else
+    echo "Wow, they all compiled"
   endif
 endif
 
