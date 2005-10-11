@@ -3,7 +3,7 @@ c************************************************************************
         implicit none
 c
 c= smalod - Convert an Sma archive data (Caltech MIR) into Miriad uv format
-c& Jun-Hui Zhao 
+c& jhz 
 c: data transfer
 c+
 c       SMALOD is a MIRIAD task, which converts a uv data-set from the MIR
@@ -54,6 +54,14 @@ c      dBValue -d hal9000-newdds -v dsm_dds_hal_y_v11_d -t "2004-11-16 00:00:00"
 c      dBValue -d hal9000-newdds -v dsm_dds_hal_z_v11_d -t "2004-11-16 00:00:00"
 c      If the reference antenna is not the default value 6, one may need
 c      to give the reference antenna here.
+c
+c@ readant
+c      Gives the number of antennas to read antenna positions from 
+c      the ASCII file of 'antennas' under the input file derectory 
+c      if readant=8 or large; readant must the same as the number 
+c      of rows in the file of 'antennas'.
+c      Default is to decode antenna position from the baseline
+c      vectors.
 c
 c@ options
 c       'bary'     Compute the radial velocities of the observatory, in the 
@@ -202,11 +210,14 @@ c                   is defined using options; either bary or lsr
 c                   is supported. 
 c    jhz 31-aug-05 update the inline doc for option lsr and bary.
 c    jhz 28-sep-05 update the inline doc for vsource.
+c    jhz 11-oct-05 add on-line flagging
+c    jhz 11-oct-05 add an option to read antenna positions 
+c                  from the ASCII file 'antennas'.
 c------------------------------------------------------------------------
         integer maxfiles
         parameter(maxfiles=128)
         character version*(*)
-        parameter(version='SmaLod: version 1.13 28-Sep-05')
+        parameter(version='SmaLod: version 1.15 11-Oct-05')
 c
         character in(maxfiles)*64,out*64,line*64, rxc*4
         integer tno, length, len1
@@ -218,7 +229,8 @@ c
      *          dospc,doengrd, doconjug, dolsr
         integer fileskip,fileproc,scanskip,scanproc,sb, dosporder
         integer doeng
-	integer rsNCHAN, refant
+	integer rsNCHAN, refant, readant, antid
+        double precision antpos(10*3),xyz(3)
         real vsour
 c
 c  Externals.
@@ -259,6 +271,8 @@ c        call mkeyd('restfreq',rfreq,2,nfreq)
         call keyd('restfreq',rfreq,0.0)
         call keyr('vsource', vsour,0.0)
         call keyi('refant',refant,6)
+        call keyi('readant',readant,0)
+        if(readant.lt.8.and.readant.gt.0) readant=8
         call getopt(doauto,docross,docomp,dosam,doxyp,doop,relax,
      *    sing,unflag,dohann,birdie,dobary,doif,dowt,dopmps,polflag,
      *    hires,nopol,circular,linear,oldpol,dospc,doengrd,doconjug,
@@ -287,6 +301,26 @@ c        call mkeyd('restfreq',rfreq,2,nfreq)
         if(scanskip.lt.0.or.scanproc.lt.0)
      *  call bug('f','Invalid NSCANS parameter')
         call keyfin
+c
+c alternatively reading the antenna positions from
+c the ASCII file antennas
+c
+        if(readant.ge.8) then
+        call bug('w',
+     *   'Reading antenna positions from ASCII file antennas:')
+        open(16,file=in(1)(1:len1(in(1)))//'antennas',status='unknown')
+             do i=1,readant
+             read(16,*) antid,xyz(1),xyz(2),xyz(3)
+             antpos(1+(antid-1)*3) = xyz(1)
+             antpos(2+(antid-1)*3) = xyz(2)
+             antpos(3+(antid-1)*3) = xyz(3)
+             end do
+             do i=1,readant
+             write(*,100) i,antpos(1+(i-1)*3),
+     *             antpos(2+(i-1)*3),antpos(3+(i-1)*3)
+             end do
+        end if
+100        format(i2,5x,3(f12.6,2x))
 c
 c    do both side bands
 c
@@ -329,7 +363,7 @@ c
           else
             call pokeini(tno,dosam,doxyp,doop,dohann,birdie,dowt,
      *      dopmps,dobary,doif,hires,nopol,circular,linear,oldpol,
-     *      rsnchan,refant,dolsr,rfreq,vsour)
+     *      rsnchan,refant,dolsr,rfreq,vsour,antpos,readant)
             if(nfiles.eq.1)then
               i = 1
             else
@@ -518,13 +552,14 @@ c************************************************************************
         subroutine pokeini(tno1,dosam1,doxyp1,doop1,
      *          dohann1,birdie1,dowt1,dopmps1,dobary1,
      *          doif1,hires1,nopol1,circular1,linear1,oldpol1,
-     *	        rsnchan1,refant1,dolsr1,rfreq1,vsour1)
+     *	        rsnchan1,refant1,dolsr1,rfreq1,vsour1,antpos1,
+     *          readant1)
 c
-        integer tno1, rsnchan1, refant1
+        integer tno1, rsnchan1, refant1,readant1
         logical dosam1,doxyp1,dohann1,doif1,dobary1,birdie1,dowt1
         logical dopmps1,hires1,doop1,nopol1,circular1,linear1,oldpol1
         logical dolsr1
-        double precision rfreq1
+        double precision rfreq1,antpos1(10*3)
         real vsour1
 c
 c  Initialise the Poke routines.
@@ -552,7 +587,7 @@ c
         call rspokeinisma(kstat,tno1,dosam1,doxyp1,doop1,
      *  dohann1,birdie1,dowt1,dopmps1,dobary1,doif1,hires1,
      *  nopol1,circular1,linear1,oldpol1,lat1,long1,rsnchan1,
-     *  refant1,dolsr1,rfreq1,vsour1)
+     *  refant1,dolsr1,rfreq1,vsour1,antpos1,readant1)
         end
 c************************************************************************
         subroutine liner(string)
