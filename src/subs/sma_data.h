@@ -257,8 +257,10 @@ struct blh_config {
 struct bltsys  {
         int     blhid     ; /*  proj. baseline id #       */
         int     inhid     ; /*  integration id #          */
+        int     blsid     ; /*  physical baseline id #    */
         short   isb       ; /*  sideband int code         */
         short   irec      ; /*  receiver int code         */
+        short   ipol      ; /*  polarization int code     */
         short   itel1     ; /*  tel 1 int code            */
         short   itel2     ; /*  tel 2 int code            */
         float   tssb[25]  ; /*  tsys (ssb) 25 spectra     */
@@ -274,6 +276,7 @@ struct anttsys {
         float   tssb[30]  ; /*  upto 30 ant               */
 };
 
+       
 /* the following definition and struct for smalod */
 
 #define DPI 3.14159265358979323846   /* pi */
@@ -309,6 +312,11 @@ struct anttsys {
 #else
 # define SWAP_ENDIAN     1 /* for little endian computers (e.g. intel) */
 #endif
+
+struct wtt {
+        float wt[SMIF][SMPOL][MAXBAS][SMSB][SMRX];
+            };
+                                                                                              
 
 struct uvw {
         double u;
@@ -504,6 +512,7 @@ struct smlodd {
         double dec;
         double el[SMANT+1];
         double az[SMANT+1];
+        double antpos[SMANT*3+1];
         visdata data[SMADATA+1];
         float veldop;
         float smaveldop;
@@ -542,7 +551,7 @@ struct smlodd {
         int bchan[SMIF+1];
         int tcorr;
 /*        int flag[SMIF+1][SMPOL+1][SMBAS+1][SMBIN+1];*/
-        int flag[SMIF+1][SMPOL+1][SMBAS+1][SMSB];   
+        int flag[SMIF+1][SMPOL+1][SMBAS+1][SMSB][SMRX];   
         int dosw[SMBAS+1];
         int dosam;
         int dohann;
