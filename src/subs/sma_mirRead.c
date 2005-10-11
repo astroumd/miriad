@@ -108,6 +108,10 @@
 //                  The residual Doppler velocity can be stored in veldop. 
 // 2005-09-25 (JHZ) removed unused variables.
 // 2005-09-29 (JHZ) added vsource (from users input) back to veldop.
+// 2005-10-10 (JHZ) added online flagging pntr (convert negative wt to
+//                  to online-flagging state of 0).
+// 2005-10-11 (JHZ) added option of reading antenna positions from
+//                  the ASCII file 'antennas'. 
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -163,7 +167,7 @@ void rssmaflush_c(int scanskip, int scanproc, int sb, int rxif, int dosporder, i
 void rspokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1, int *doop1, int *dohann1, 
 int *birdie1, int *dowt1, int *dopmps1, int *dobary1, int *doif1, int *hires1, int *nopol1, 
 int *circular1, int *linear1, int *oldpol1, double lat1, double long1, int rsnchan1, 
-int refant1, int *dolsr1, double rfreq1, float *vsour1);
+int refant1, int *dolsr1, double rfreq1, float *vsour1, double *antpos1, int readant1);
 void rspokeflshsma_c(char *kst[]);
 
 
@@ -195,6 +199,8 @@ double velrad(short dolsr, double time, double raapp, double decapp, double raep
 struct lmn *sph2lmn(double ra, double dec);
 struct vel *vsite(double phi, double st);
 void vsun(double *VEL);
+short ipolmap(short input_ipol);
+
 
 /* interface between fortran and c */
 void rsmirread_c(char *datapath, char *jst[])
@@ -262,10 +268,11 @@ void rspokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1,
 		    int *doop1, int *dohann1, int *birdie1, int *dowt1, int *dopmps1,
 		    int *dobary1, int *doif1, int *hires1, int *nopol1, int *circular1,
 		    int *linear1, int *oldpol1, double lat1, double long1, int rsnchan1, 
-		    int refant1, int *dolsr1, double rfreq1, float *vsour1)
+		    int refant1, int *dolsr1, double rfreq1, float *vsour1,
+		    double *antpos1, int readant1)
 { 
   /* rspokeflshsma_c == pokeflsh */
-  int buffer, i;
+  int buffer, i,ii;
   /* initialize the external buffers */   
   strcpy(sname, " ");
   smabuffer.tno    = tno1;
@@ -301,7 +308,10 @@ void rspokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1,
                     } else {
              smabuffer.dorfreq =  1;
                                       }
- 
+           smabuffer.antpos[0]=readant1;
+             for (i=1; i<readant1*3+1; i++) {
+             smabuffer.antpos[i]=antpos1[i-1];
+                    }
   if(smabuffer.dowt>0) {
     /* call lagwt(wts,2*smcont-2,0.04) */
     /* process weights here. */ 
@@ -507,6 +517,7 @@ void rspokeflshsma_c(char *kst[])
 	for (sb=0; sb<SMSB; sb++) {
 	  for (rx=0; rx<SMRX; rx++) {
 	    smabuffer.pnt[ifs][p][bl][sb][rx]=0;
+            smabuffer.flag[ifs][p][bl][sb][rx]=-1;
 	  }
 	}
       }
@@ -523,7 +534,7 @@ int rsgetdata(float smavis[2*MAXCHAN], int smaflags[MAXCHAN], int *smanchan, int
   nchand = 0;
   for (n=0; n<nifs; n++) {
     ipnt = smabuffer.pnt[n][p][bl][sb][rx]; 
-    if(ipnt>0) {
+      if(ipnt>0) {
       if(nchan<nchand) {
 	for (i=nchan; i<nchand; i++) {
 	  smaflags[i] = -1;
@@ -537,11 +548,11 @@ int rsgetdata(float smavis[2*MAXCHAN], int smaflags[MAXCHAN], int *smanchan, int
 	smavis[2*i]   =  fac[n]*smabuffer.data[ipnt].real;
 	smavis[2*i+1] =  fac[n]*smabuffer.data[ipnt].imag;
 //	  (float)pow((double)(-1),(double)(sb+1)); 
-         smaflags[i] =  smabuffer.flag[n][p][bl][sb];       
+        smaflags[i] =  smabuffer.flag[n][p][bl][sb][rx];       
 	ipnt++;    
       }
       if(smabuffer.bchan[n]>=1&&smabuffer.bchan[n]<=smabuffer.nfreq[n])
-	smaflags[nchan+smabuffer.bchan[n]] = -1;
+	smaflags[nchan+smabuffer.bchan[n]] = smabuffer.flag[n][p][bl][sb][rx]; 
         nchan = nchan + smabuffer.nfreq[n];
     }
     nchand = nchand + smabuffer.nfreq[n];
@@ -549,7 +560,7 @@ int rsgetdata(float smavis[2*MAXCHAN], int smaflags[MAXCHAN], int *smanchan, int
   
   if(nchan<nchand&&nchan>0) {
     for(i=nchan+1; i< nchand+1; i++) {
-      smaflags[i] = -1;
+      smaflags[i] = smabuffer.flag[n][p][bl][sb][rx]; 
       smavis[2*i] = 0;
       smavis[2*i+1] = 0;
     }
@@ -647,6 +658,7 @@ int rsmir_Read(char *datapath, int jstat)
   extern struct sch_def   **sch;
   struct bltsys    **tsys;
   struct anttsys   **atsys;
+  struct wtt    **wts;
 // initialize
   startTime = time(NULL);
   phaseSign = 1;
@@ -822,7 +834,7 @@ int rsmir_Read(char *datapath, int jstat)
     for (set=0;set<nsets[1];set++) {
       tsys[set] = (struct bltsys *)malloc(sizeof(struct bltsys ));
       if (tsys[set] == NULL ){
-	printf("ERROR: Memory allocation for blh failed trying to allocate %d bytes\n",
+	printf("ERROR: Memory allocation for tsys failed trying to allocate %d bytes\n",
 	       nsets[1]*sizeof(struct bltsys));
 	exit(-1);
       }
@@ -831,11 +843,22 @@ int rsmir_Read(char *datapath, int jstat)
     for (set=0;set<nsets[0];set++) {
       atsys[set] = (struct anttsys *)malloc(sizeof(struct anttsys ));
       if (atsys[set] == NULL ){
-	printf("ERROR: Memory allocation for blh failed trying to allocate %d bytes\n",
+	printf("ERROR: Memory allocation for atsys failed trying to allocate %d bytes\n",
 	       nsets[0]*sizeof(struct anttsys));
 	exit(-1);
       }
     }
+    wts = (struct wtt **) malloc(nsets[0]*sizeof( struct wtt *));
+    for (set=0;set<nsets[0];set++) {
+      wts[set] = (struct wtt *)malloc(sizeof(struct wtt ));
+      if (wts[set] == NULL ){
+        printf("ERROR: Memory allocation for wts failed trying to allocate %d bytes\n",
+               nsets[0]*sizeof(struct wtt));
+        exit(-1);
+      }
+    }
+
+
     /* loading baselines */
     blhset =0;
     { 
@@ -865,8 +888,10 @@ int rsmir_Read(char *datapath, int jstat)
 	// loading baseline based structure
 	tsys[blset]->blhid=blh[blset]->blhid;
 	tsys[blset]->inhid=blh[blset]->inhid;
+        tsys[blset]->blsid=blh[blset]->blsid;
 	tsys[blset]->isb  =blh[blset]->isb;
 	tsys[blset]->irec =blh[blset]->irec;
+        tsys[blset]->ipol = ipolmap(blh[blset]->ipol);
 	tsys[blset]->itel1=blh[blset]->itel1;
 	tsys[blset]->itel2=blh[blset]->itel2;
 	
@@ -1218,9 +1243,25 @@ int rsmir_Read(char *datapath, int jstat)
       antxyz[6].z = 0.0000000000000000e+00;
       antxyz[7].z = 3.0769280999999999e+01;
       antxyz[8].z = 3.6370589999999998e+00;
+
+// reading antenna position from ASCII file
+      if(smabuffer.antpos[0] > 0) {
+double xyzpos;
+       for (i=1; i < smabuffer.antpos[0]+1; i++) {
+         geocxyz[i].x = smabuffer.antpos[1+(i-1)*3];
+         geocxyz[i].y = smabuffer.antpos[2+(i-1)*3];
+         geocxyz[i].z = smabuffer.antpos[3+(i-1)*3];
+         xyzpos = geocxyz[i].x+geocxyz[i].y+geocxyz[i].z;
+      if(xyzpos==0) smabuffer.refant = i;
+                                 }
+                  }
+
+
+
       printf("Geocentrical coordinates of antennas (m), reference antenna=%d\n",
 	     smabuffer.refant); 
       for (i=1; i < smabuffer.nants+1; i++) {
+       
 	printf("ANT x y z %s %11.4f %11.4f %11.4f\n",
 	       antenna[i].name,
 	       geocxyz[i].x,
@@ -1448,11 +1489,29 @@ int rsmir_Read(char *datapath, int jstat)
 	  smabuffer.scanskip++;
 	  inset = smabuffer.scanskip;
 	}
+ //          if(sph1->wt <0.) {
+ //           printf( "online flag wt=%f inhid=%d blhid=%d",
+ //                sph1->wt ,sph1->inhid, sph1->blhid); }
 	// load baseline based tsys structure
 	if(sph1->blhid==tsys[0]->blhid) nspectra++;
 	if(sph1->blhid==tsys[blset]->blhid&&sph1->inhid==tsys[blset]->inhid) {
 	  //       printf("%d %f \n", sph1->iband,sph1->tssb);
 	  tsys[blset]->tssb[sph1->iband] = sph1->tssb;
+          // loading online flagging information
+      if(tsys[blset]->ipol < -4||sph1->iband!=0) {
+       wts[inset]->wt[sph1->iband-1][-4-tsys[blset]->ipol][tsys[blset]->blsid][tsys[blset]->isb][tsys[blset]->irec] = sph1->wt; 
+/*      if(sph1->wt <0.) {
+       printf( "online flag wt=%f inhid=%d blsid=%d ipol%d 
+       iband=%d sb=%d rec=%d inset=%d\n", sph1->wt, sph1->inhid, 
+       tsys[blset]->blsid,tsys[blset]->ipol,sph1->iband-1,
+       tsys[blset]->isb,tsys[blset]->irec, inset); 
+                        }
+*/
+                                     }
+          else {
+         if(sph1->iband!=0)
+ wts[inset]->wt[sph1->iband-1][-tsys[blset]->ipol][tsys[blset]->blsid][tsys[blset]->isb][tsys[blset]->irec] = sph1->wt;
+           }   
 	  if(sph1->iband==nspectra-1) blset++;
 	}
 	// purse the spectral configuration
@@ -1679,7 +1738,8 @@ int rsmir_Read(char *datapath, int jstat)
 // add back the radial velocity of the source
 //
         spn[set]->veldop = spn[set]->veldop + smabuffer.vsource;
-//        spn[set]->smaveldop = vabsolute - spn[set]->vel[12];
+        spn[set]->smaveldop = vabsolute - spn[set]->vel[12]+ 
+                              smabuffer.vsource;
 //	printf("%d veldop=%f %f\n", set, spn[set]->veldop,spn[set]->vel[12]);
       }
     }                   
@@ -1752,10 +1812,10 @@ int rsmir_Read(char *datapath, int jstat)
     for (i=1; i<SMIF+1; i++)  {
       for (j=1; j<SMPOL+1; j++) {
 	for (k=1; k<SMBAS+1; k++) {
-	  for (l=1; l<3; l++) { /* 2 sb */
-	    smabuffer.flag[i-1][j-1][k-1][l-1]=-1;
+	  for (l=1; l<3; l++) { 
 	    for (m=1; m<SMRX+1; m++) {
-	      smabuffer.pnt[i-1][j-1][k-1][l-1][m-1]=0;
+              smabuffer.flag[i-1][j-1][k-1][l-1][m-1]=-1;
+	       smabuffer.pnt[i-1][j-1][k-1][l-1][m-1]= 0;
 	    }
 	  }
 	}
@@ -2161,6 +2221,11 @@ int rsmir_Read(char *datapath, int jstat)
 	    smabuffer.polcode[ifpnt][polpnt][blpnt]=visSMAscan.blockID.polid;
 	    /* smabuffer.pnt[ifpnt][polpnt][blpnt][0] = ipnt;*/
 	    smabuffer.pnt[ifpnt][polpnt][blpnt][sbpnt][rxpnt] = ipnt;
+            if(wts[inhset]->wt[ifpnt][polpnt][blpnt][sbpnt][rxpnt] < 0.)
+           { smabuffer.flag[ifpnt][polpnt][blpnt][sbpnt][rxpnt] = 0;
+//           printf("flag online inh=%d pol=%d bl=%d sb=%d rx=%d if=%d\n", 
+//           inhset,polpnt,blpnt,sbpnt,rxpnt,ifpnt);
+            }
 	    /* Now the channel data.  */
 	    /* Make pseudo continuum */
 	    avenchan = 0;
@@ -2213,12 +2278,13 @@ int rsmir_Read(char *datapath, int jstat)
 		 visSMAscan.blockID.inhid,
 		 visSMAscan.time.UTCtime,
 		 visSMAscan.time.intTime);
-	/* call rspokeflshsma_c to store databuffer to uvfile */
+/* call rspokeflshsma_c to store databuffer to uvfile */
 	kstat = -1;
 	*kst = (char *)&kstat;
         if((strncmp(multisour[sourceID].name,target,6)!=0)&&
            (strncmp(multisour[sourceID].name,unknown,7)!=0)) {
 	  rspokeflshsma_c(kst);
+
 	} else {
           ntarget++;
 	}
@@ -3271,5 +3337,58 @@ void vsun(double *VEL) {
   VEL[0] = VA[0];
   VEL[1] = VA[1];
   VEL[2] = VA[2];
+}
+
+short ipolmap(short input_ipol) {
+// mapping ipol to miriad polarization states id
+short iPolmiriad;
+int   ipol;
+      ipol=input_ipol;
+if(smabuffer.oldpol==1) {
+            switch(ipol) {
+            case 0: iPolmiriad = 1; break;
+            case 1: iPolmiriad =-5; break;
+            case 2: iPolmiriad =-7; break;
+            case 3: iPolmiriad =-8; break;
+            case 4: iPolmiriad =-6; break;
+              // convert MIR polarization label used befor sep1,2004 to Miriad
+              // used   MIR  actual          Miriad
+              //non      0   I                 1
+              //RR       1   HH               -5
+              //RL       2   HV               -7
+              //LR       3   VH               -8
+              //LL       4   VV               -6
+                      }
+                        } else {
+if(smabuffer.circular==1)
+              switch(ipol) {
+              case 1: iPolmiriad =-1; break;
+              case 2: iPolmiriad =-3; break;
+              case 3: iPolmiriad =-4; break;
+              case 4: iPolmiriad =-2; break;
+                //MIR     MIRIAD     STATE
+                //1       -1         RR
+                //2       -3         RL
+                //3       -4         LR
+                //4       -2         LL
+                           }
+if(smabuffer.linear==1)
+              switch(ipol) {
+              case 1: iPolmiriad =-6; break;
+              case 2: iPolmiriad =-7; break;
+              case 3: iPolmiriad =-8; break;
+              case 4: iPolmiriad =-5; break;
+// from ram mar7,2005
+                // In the case where options=linear then
+                // MIR MIRIAD  POL
+                // 1   -6      VV (YY)
+                // 2   -7      HV (XY)
+                // 3   -8      VH (YX)
+                // 4   -5      HH (XX)
+                          }
+                 }
+        if(smabuffer.nopol==1) iPolmiriad=-5;
+
+     return iPolmiriad;
 }
 
