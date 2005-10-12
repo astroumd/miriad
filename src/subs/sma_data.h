@@ -543,6 +543,7 @@ struct smlodd {
         int rsnchan;
         int nants;
         int refant;
+        int readant;
         int nifs;
         int nfreq[SMIF+1];
         int nstoke[SMIF+1];
