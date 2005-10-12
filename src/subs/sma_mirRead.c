@@ -308,7 +308,8 @@ void rspokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1,
                     } else {
              smabuffer.dorfreq =  1;
                                       }
-           smabuffer.antpos[0]=readant1;
+             smabuffer.antpos[0] = 0.0d0;
+             smabuffer.readant   = readant1;
              for (i=1; i<readant1*3+1; i++) {
              smabuffer.antpos[i]=antpos1[i-1];
                     }
@@ -1245,9 +1246,9 @@ int rsmir_Read(char *datapath, int jstat)
       antxyz[8].z = 3.6370589999999998e+00;
 
 // reading antenna position from ASCII file
-      if(smabuffer.antpos[0] > 0) {
+      if(smabuffer.readant > 0) {
 double xyzpos;
-       for (i=1; i < smabuffer.antpos[0]+1; i++) {
+       for (i=1; i < smabuffer.readant+1; i++) {
          geocxyz[i].x = smabuffer.antpos[1+(i-1)*3];
          geocxyz[i].y = smabuffer.antpos[2+(i-1)*3];
          geocxyz[i].z = smabuffer.antpos[3+(i-1)*3];
