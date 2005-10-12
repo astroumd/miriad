@@ -308,7 +308,7 @@ void rspokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1,
                     } else {
              smabuffer.dorfreq =  1;
                                       }
-             smabuffer.antpos[0] = 0.0d0;
+             smabuffer.antpos[0] = readant1;
              smabuffer.readant   = readant1;
              for (i=1; i<readant1*3+1; i++) {
              smabuffer.antpos[i]=antpos1[i-1];
