@@ -56,11 +56,11 @@ c      If the reference antenna is not the default value 6, one may need
 c      to give the reference antenna here.
 c
 c@ readant
-c      Gives the number of antennas to read antenna positions from 
-c      the ASCII file of 'antennas' under the input file derectory 
-c      if readant=8 or large; readant must the same as the number 
+c      Gives the number of antennas for reading the antenna positions 
+c      from the ASCII file of 'antennas' under the input MIR file directory 
+c      if readant=8 or larger; readant must be the same as the number 
 c      of rows in the file of 'antennas'.
-c      Default is to decode antenna position from the baseline
+c      Default is to decode antenna positions from the baseline
 c      vectors.
 c
 c@ options
