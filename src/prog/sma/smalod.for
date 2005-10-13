@@ -213,11 +213,17 @@ c    jhz 28-sep-05 update the inline doc for vsource.
 c    jhz 11-oct-05 add on-line flagging
 c    jhz 11-oct-05 add an option to read antenna positions 
 c                  from the ASCII file 'antennas'.
+c    jhz 13-oct-05 the sma_mirRead.c is implemented
+c                  for swapping r with l for the polarization data
+c                  observed before 2005-6-10.
+c                  also skipping the decoding Doppler velocity
+c                  because of the velocity entry in the header
+c                  of MIR data appeared to be screwed up.
 c------------------------------------------------------------------------
         integer maxfiles
         parameter(maxfiles=128)
         character version*(*)
-        parameter(version='SmaLod: version 1.15 11-Oct-05')
+        parameter(version='SmaLod: version 1.16 13-Oct-05')
 c
         character in(maxfiles)*64,out*64,line*64, rxc*4
         integer tno, length, len1
