@@ -112,6 +112,14 @@
 //                  to online-flagging state of 0).
 // 2005-10-11 (JHZ) added option of reading antenna positions from
 //                  the ASCII file 'antennas'. 
+// 2005-11-13 (JHZ) added swapping polarization states (RR<->LL, LR<->RL)
+//                  for the circular polarization data taken before
+//                  2005-06-10 or julian date 2453531.5
+//                  (asked by dan marrone).
+// 2005-11-13 (JHZ) add skipping decoding Doppler velocity
+//                  for the polarization data old than 2005-06-10
+//                  because the velocity entry in the Mir header
+//                  was screwed up.
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -1490,24 +1498,14 @@ double xyzpos;
 	  smabuffer.scanskip++;
 	  inset = smabuffer.scanskip;
 	}
- //          if(sph1->wt <0.) {
- //           printf( "online flag wt=%f inhid=%d blhid=%d",
- //                sph1->wt ,sph1->inhid, sph1->blhid); }
 	// load baseline based tsys structure
 	if(sph1->blhid==tsys[0]->blhid) nspectra++;
 	if(sph1->blhid==tsys[blset]->blhid&&sph1->inhid==tsys[blset]->inhid) {
 	  //       printf("%d %f \n", sph1->iband,sph1->tssb);
 	  tsys[blset]->tssb[sph1->iband] = sph1->tssb;
           // loading online flagging information
-      if(tsys[blset]->ipol < -4||sph1->iband!=0) {
+        if(tsys[blset]->ipol < -4||sph1->iband!=0) {
        wts[inset]->wt[sph1->iband-1][-4-tsys[blset]->ipol][tsys[blset]->blsid][tsys[blset]->isb][tsys[blset]->irec] = sph1->wt; 
-/*      if(sph1->wt <0.) {
-       printf( "online flag wt=%f inhid=%d blsid=%d ipol%d 
-       iband=%d sb=%d rec=%d inset=%d\n", sph1->wt, sph1->inhid, 
-       tsys[blset]->blsid,tsys[blset]->ipol,sph1->iband-1,
-       tsys[blset]->isb,tsys[blset]->irec, inset); 
-                        }
-*/
                                      }
           else {
          if(sph1->iband!=0)
@@ -1672,7 +1670,10 @@ double xyzpos;
       printf("Decoded baseline-based Tsys\n");
     }
     // decode the doppler velocity
-    {
+
+ if (jday <2453531.5 && smabuffer.circular == 1) {
+      printf("Skip decoding the Doppler velocity\n");
+     } else {
       double vabsolute;
       double fratio;
       for(set= smabuffer.scanskip; 
@@ -1743,6 +1744,7 @@ double xyzpos;
                               smabuffer.vsource;
 //	printf("%d veldop=%f %f\n", set, spn[set]->veldop,spn[set]->vel[12]);
       }
+        printf("Decoded the Doppler velocity\n");
     }                   
     // rewind the data file
     rewind(fpin[5]);
@@ -2219,14 +2221,27 @@ double xyzpos;
 	    /* There is a different scale factor for each record (spectrum) */
 	    scale = shortdata[4];
 	    /* update polcode and pnt to smabuffer  */
+//
+// swapping pol state (RR<->LL, RL<->LR) before 2005-6-10 or 
+//                     -1<->-2,-3<->-4
+// julian day 2453531.5
+// 
+            if (jday <2453531.5 && smabuffer.circular == 1) {
+            if(visSMAscan.blockID.polid == -1) 
+                 smabuffer.polcode[ifpnt][polpnt][blpnt]=-2;
+            if(visSMAscan.blockID.polid == -2)
+                 smabuffer.polcode[ifpnt][polpnt][blpnt]=-1;
+            if(visSMAscan.blockID.polid == -3)
+                 smabuffer.polcode[ifpnt][polpnt][blpnt]=-4;
+            if(visSMAscan.blockID.polid == -4)
+                 smabuffer.polcode[ifpnt][polpnt][blpnt]=-3;
+               } else {
 	    smabuffer.polcode[ifpnt][polpnt][blpnt]=visSMAscan.blockID.polid;
+                   }
 	    /* smabuffer.pnt[ifpnt][polpnt][blpnt][0] = ipnt;*/
 	    smabuffer.pnt[ifpnt][polpnt][blpnt][sbpnt][rxpnt] = ipnt;
             if(wts[inhset]->wt[ifpnt][polpnt][blpnt][sbpnt][rxpnt] < 0.)
-           { smabuffer.flag[ifpnt][polpnt][blpnt][sbpnt][rxpnt] = 0;
-//           printf("flag online inh=%d pol=%d bl=%d sb=%d rx=%d if=%d\n", 
-//           inhset,polpnt,blpnt,sbpnt,rxpnt,ifpnt);
-            }
+            smabuffer.flag[ifpnt][polpnt][blpnt][sbpnt][rxpnt] = 0;
 	    /* Now the channel data.  */
 	    /* Make pseudo continuum */
 	    avenchan = 0;
