@@ -1,6 +1,6 @@
 #! /bin/csh -f
 #
-set version=27-aug-05
+set version=16-oct-05
 #
 #  2-aug-99 Updated for Sebok's Mandrake setup
 #  1-aug-00 Updated to allow to build private PGPLOT version
@@ -28,6 +28,7 @@ set version=27-aug-05
 # 11-jan-05 some temporary MacOSX related fixes, and cleanup
 # 19-jun-05 g95 an option
 # 26-aug-05 miriad_start.$SHELL scripts
+# 16-oct-05 64bit fix for pgplot
 #
 #   Simple single-architecture installation of MIRIAD
 #   (linux)
@@ -83,6 +84,10 @@ if ($hosttype == linux) then
   set mirxinc="/usr/include/X11"
   if (-e /usr/X11R6/lib64) then
     set mirxlib="/usr/X11R6/lib64"
+    if (borrow/pgplot/sys_linux/g77_gcc_64.conf) then
+      echo Patching your PGPLOT for 64bit
+      cp borrow/pgplot/sys_linux/g77_gcc_64.conf borrow/pgplot/sys_linux/g77_gcc.conf
+    endif
   else
     set mirxlib="/usr/X11R6/lib"
   endif
