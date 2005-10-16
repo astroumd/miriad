@@ -43,7 +43,15 @@ endif
 if (`echo $Coptions | grep -c "ansi"` > 0) then
   set copts = "$copts -ansi"
 endif
-if (-e $libdir/libreadline.a) set options = ( $options -readline "$libdir" )
+if (-e $libdir/libreadline.a) then
+  set options = ( $options -readline "$libdir" )
+else if (-e /usr/lib64/libreadline.a) then
+  set options = ( $options -readline /usr/lib64 )
+else if (-e /usr/lib/libreadline.a) then
+  set options = ( $options -readline /usr/lib )
+else
+  echo "Cannot find libreadline.a - skipping wip support for it"
+endif
 if ($?MIRDEBUG != 0) set options = ( $options -debug )
 #
 $wipdir/makewip -wip "$wipdir" -pgplot "$libdir" -lib "$libdir" \
