@@ -77,10 +77,12 @@ c                    visibilties. The default uses only unflagged
 c                    (good) data.
 c         "tsysfix"  uses the polynomial fit to Tsys from the unflagged (good) 
 c                    data to interpolate the Tsys at flagged data points
-c                    and replaces only the bad Tsys with the polynomial fit
-c                    in the case of the Keyword dofit = 1 or greater. 
+c                    and replaces only the bad Tsys values with the polynomial 
+c                    fit in the case of the Keyword dofit = 1 or greater. 
 c                    The flag state will be reset to 'unflag' for all the 
-c                    visibilities except for those with illegal polarization states. 
+c                    visibilities except for those with illegal polarization 
+c                    states. Warning: this options will also reset the flag 
+c                    states passed from the SMA online system.
 c
 c                    By default (both tsysswap and tsysfix are not chosen
 c                    in options), the original Tsys measurements will
@@ -135,11 +137,15 @@ c                 will be reset back to unflag.
 c                 apply jyperk along with the Tsys correction to
 c                 the visibility data so that the amplitude
 c                 of the visibility is in Jy scale after Tsys correction. 
+c jhz: 2005-10-17 fix a bug in flagging pointering while sorting the data.
+c                 add warning statement undert options =tsysfix
+c                 considering the fact that  the smalod takes online flag 
+c                 states.
 c------------------------------------------------------------------------
         character version*(*)
         integer maxpnts
         parameter(maxpnts=100000)
-        parameter(version='SmaFix: version 1.8 4-Aug-05')
+        parameter(version='SmaFix: version 1.9 15-Oct-05')
         logical doplot,dolog,dotime,dounwrap
         character vis*64,device*64,logfile*64,xaxis*16,yaxis*16
         character out*64
@@ -691,7 +697,7 @@ c
 CPGPT -- draw several graph markers
 Cvoid cpgpt(int n, const float *xpts, const float *ypts, int symbol);
 C
-      SUBROUTINE tsyspgpts (N,XPTS,YPTS,YFLAG,DOFLAG,dotsysfix,SYMBOL)
+      subroutine tsyspgpts (N,XPTS,YPTS,YFLAG,DOFLAG,dotsysfix,SYMBOL)
       INTEGER N, NPNTS
       REAL XPTS(N), YPTS(N), YFLAG(N)
       INTEGER SYMBOL,FPTS(N)
@@ -736,10 +742,12 @@ C-----------------------------------------------------------------------
         integer soupnt(10000*10), indx, mindx
         real xx(100), yy(100), xloc, yloc
         real xfit(N),yfit(N), yerr(N)
-        integer Fsfit(N,32)
-        logical FsFlag(N,32)
+        real xbuf(N),ybuf(N),flagbuf(N)
+        integer Fsfit(N,32), Fsfitbuf(N)
+        logical FsFlag(N,32), FsFlagbuf(N)
         real xsfit(N,32),ysfit(N,32)
         double precision dxsfit(N,32),dysfit(N,32), dyserr(N,32)
+        real dflag(N,32)
         integer Ns(32), Nss
         integer nterms, mode, Npl, i,j,k
         real pl(N)
@@ -767,59 +775,74 @@ c    FLAG(i)=.true.  -> good
                FPTS(i)=-1
                FLAG(i)=.false.
                end if
-               xfit(i) =XPTS(i)
-               yfit(i) =YPTS(i)
+               XFIT(i) =XPTS(i)
+               YFIT(i) =YPTS(i)
                XD(i) = XFIT(i)
                YD(i) = YFIT(i)
+c
                if(YFLAG(i).gt.0) DDELTAY(i) =1.D0
                if(YFLAG(i).lt.0) DDELTAY(i) =1.D10
                if(DOFLAG.and.(.not.FLAG(i))) DDELTAY(i) =1.D10
             end do
-            call xysort(N, xfit, yfit)
+c source in xfit and xfit in the order of ascending xfit value
+               call xysortr(N, XFIT, YFIT)
+c initialize the source-based number of data
                do i=1, 32
                Ns(i) = 0
                end do
-
+c do source separation
             if(dosour) then
             do i=1, N
                do k=1, nsource
                if(soupnt(i).eq.k) then 
-               Ns(k)=Ns(k)+1
-               xsfit(Ns(k),k) =XPTS(i)
-               ysfit(Ns(k),k) =YPTS(i)
-               dxsfit(Ns(k),k) =XPTS(i)
-               dysfit(Ns(k),k) =YPTS(i)
-               dyserr(Ns(k),k) =1.0D0
-        if(YFLAG(i).le.0) dyserr(Ns(k),k) =1.0D10
-               FsFIT(Ns(k),k)= FPTS(i)
-               FsFLAG(Ns(k),k)= FLAG(i)
+                         Ns(k) = Ns(k)+1
+                xsfit(Ns(k),k) = XPTS(i)
+                ysfit(Ns(k),k) = YPTS(i)
+               dxsfit(Ns(k),k) = XPTS(i)
+               dysfit(Ns(k),k) = YPTS(i)
+                dflag(Ns(k),k) = YFLAG(i)
+               dyserr(Ns(k),k) = 1.0D0
+        if(YFLAG(i).le.0) dyserr(Ns(k),k) = 1.0D10
+                FsFIT(Ns(k),k) = FPTS(i)
+               FsFLAG(Ns(k),k) = FLAG(i)
+c
                end if
                end do
-            end do
-                
-               do k=1, nsource
+               end do
+                 
+                do k=1, nsource
+c sorting data into an order of ascending xsfit value for each source                
                 do i=1, Ns(k)
-                XFIT(i) = xsfit(i,k)
-                YFIT(i) = ysfit(i,k)               
+c XFIT used as swap buffer
+                     xbuf(i) = xsfit(i,k)
+                     ybuf(i) = ysfit(i,k) 
+                  flagbuf(i) = dflag(i,k)
+                 FsFITbuf(i) = FsFIT(i,k)
+                FsFLAGbuf(i) = FsFLAG(i,k)             
                 end do
                 Nss=Ns(k)
-            if(Nss.gt.0) call xyssort(N,xfit,yfit,Nss)
+c sorting the arrays into an order based on ascending value of xbuf
+                if(Nss.gt.0) 
+     * call xyfsort(N,xbuf,ybuf,flagbuf,FsFITbuf,FsFLAGbuf,Nss)
                 do i=1, Nss
-               xsfit(i,k)= XFIT(i)
-               ysfit(i,k)= YFIT(i)
-               dxsfit(Ns(k),k) =XFIT(i)
-               dysfit(Ns(k),k) =YFIT(i)
-               dyserr(Ns(k),k) =1.0D0
-       if(YFLAG(i).lt.0) dyserr(Ns(k),k) =1.0D10
-                FsFIT(Ns(k),k)=FPTS(i)
-                FsFLAG(Ns(k),k)=FLAG(i)
+                    xsfit(i,k) = xbuf(i)
+                    ysfit(i,k) = ybuf(i)
+                    dflag(i,k) = flagbuf(i)  
+               dxsfit(i,k) = xbuf(i)
+               dysfit(i,k) = ybuf(i)
+               dyserr(i,k) = 1.0D0
+            if(flagbuf(i).lt.0) dyserr(i,k) =1.0D10
+                FsFIT(i,k) = FsFITbuf(i)
+               FsFLAG(i,k) = FsFLAGbuf(i)
                 end do
                 end do
              end if
 
+
 c            
-c handling data plot 
-c      
+c handling data plot by plotting all unflagged data points;  
+c different sources are in different colors.
+c     
        NPNTS=1
        mindx =0
        NPL=0
@@ -839,7 +862,7 @@ c
                   end if
                if(FLAG(i).and.(yy(1).gt.0))  then
                 if(yy(1).gt.0) then
-               NPL=NPL+1
+                     NPL=NPL+1
                XFIT(NPL)=xx(1)
                YFIT(NPL)=yy(1)
                end if
@@ -854,19 +877,19 @@ c
                  YFIT(2)=YPTS(2)
              end if
            end if
-        CALL PGEBUF
+          CALL PGEBUF
 
-
+c label the sources
           yloc=0.9
             do j=1, mindx
-       CALL PGBBUF
-              call pgsci(j)
-             write(title,'(a)') source(j)
+          CALL PGBBUF
+               call pgsci(j)
+               write(title,'(a)') source(j)
                l = len1(title)
                call pglen(5,title(1:l),xlen,ylen)
                xloc = 0.8
                yloc = yloc-1/25.
-              call pgmtxt('RV',-7.0,yloc,0.,title(1:l))
+               call pgmtxt('RV',-7.0,yloc,0.,title(1:l))
           call pgebuf
             end do
 
@@ -905,6 +928,7 @@ c          nterms =3 parabolic
            call pgsci(1)
            call pgline (NPL, XFIT, pl)
                 end if
+
 c 
 c do fit  with source separation
 c           
@@ -916,7 +940,7 @@ c
           do k=1, nsource
               NPL =0
               if(Ns(k)>1) then
-              do i=1, ns(k)
+              do i=1, Ns(k)
               if(FsFLAG(i,k)) then
                   NPL=NPL+1
                   XFIT(NPL)=XsFIT(i,k) 
@@ -926,10 +950,12 @@ c
                   dXsFIT(NPL,k)=XsFIT(NPL,k)
                   dYsFIT(NPL,k)=YsFIT(NPL,k)
                   dyserr(NPL,k)=1.0D0
-                 if(YFLAG(NPL).lt.0.)  dyserr(NPL,k)=1.0D10
               end if
               end do
-                 ns(k)= NPL
+c
+c reset number of points for source k after check up the flag
+c
+              Ns(k)= NPL
 c
 c call polynomial fit
 c
@@ -937,7 +963,7 @@ c
            nterms= dofit+1
            CALL REGPOL(dxsfit(1,k),dysfit(1,k),dyserr(1,k),Ns(k),
      *          MAXNR,XA,BP,AP,CHI2)
-             do i=1,MAXNR
+                do i=1,MAXNR
                 xapl(antid,k,i) = xa(i)
                 do j=1,MAXNR
                 bppl(antid,k,i,j) = bp(i,j)
@@ -947,7 +973,7 @@ c
            call regpolfitg(nterms,xa,bp,Ns(k),XsFIT(1,k),YsFIT(1,k))
            call pgsci(k)
            call pgline (Ns(k), XsFIT(1,k), YsFIT(1,k))
-                            end if
+            end if
             end do
             end if
 c
@@ -1026,9 +1052,77 @@ c************************************************************************
                 return
                 end
 
+        subroutine xysortr(n,array,yarray)
+c
+c the same function as xysort but with different algorithm
+c
+        implicit none
+        integer n
+        real array(n),yarray(n)
+c
+c  Sorts an array, ARRAY, of length N into ascending order using a
+c  Heapsort algorithm. ARRAY is replaced on output by its sorted
+c  rearrangement. The array elements are in double precision.
+c
+c  Input:
+c  n              Number of elements to be sorted.
+c
+c  Input/Output:
+c  array,yarray  Input: Elements to be sorted.
+c                 Output: Sorted elements.
+c--
+c------------------------------------------------------------------------
+      INTEGER L,IR,J,I
+      real RRA, YRRA
+c
+      L=N/2+1
+      IR=N
+10    CONTINUE
+        IF(L.GT.1)THEN
+          L=L-1
+          RRA=ARRAY(L)
+
+          YRRA=YARRAY(L)
+        ELSE
+          RRA=ARRAY(IR)
+          ARRAY(IR)=ARRAY(1)
+
+          YRRA=YARRAY(IR)
+          YARRAY(IR)=YARRAY(1)
+
+          IR=IR-1
+          IF(IR.LE.1)THEN
+            ARRAY(1)=RRA
+            YARRAY(1)=YRRA
+            RETURN
+          ENDIF
+        ENDIF
+        I=L
+        J=L+L
+20      IF(J.LE.IR)THEN
+          IF(J.LT.IR)THEN
+            IF(ARRAY(J).LT.ARRAY(J+1))J=J+1
+          ENDIF
+          IF(RRA.LT.ARRAY(J))THEN
+            ARRAY(I)=ARRAY(J)
+            YARRAY(I)=YARRAY(J)
+            I=J
+            J=J+J
+          ELSE
+            J=IR+1
+          ENDIF
+        GO TO 20
+        ENDIF
+        ARRAY(I)=RRA
+        YARRAY(I)=YRRA
+      GO TO 10
+      END
+
 
         subroutine xysort(N, x,y)
-c sort the data in x sequence
+c
+c sort the data in an order based on ascending value of x 
+c
         integer N, i, ind(N)
         real x(N), y(N)
         real xsrt(N), ysrt(N)
@@ -1043,27 +1137,42 @@ c sort the data in x sequence
         end do
          return 
             end
-        subroutine xyssort(N, x,y, Ns)
-c sort the data in x sequence
-        integer N, i, Ns, ind(Ns)
-        real xs(Ns), ys(Ns)
-        real x(N), y(N)
-        real xsrt(N), ysrt(N)
+        subroutine xyfsort(N, x,y,f,fint,flog,Ns)
+c
+c sort the data into an order based on ascending value of x 
+c
+        integer N, i, Ns
+        integer ind(Ns), fints(Ns)
+        integer  fint(N), fintsrt(N)
+        logical flogs(Ns), flog(N),flogsrt(N)
+        real xs(Ns), ys(Ns), fs(Ns)
+        real x(N), y(N), f(N)
+        real xsrt(N), ysrt(N), fsrt(N)
             do i=1, Ns
               xs(i) = x(i)
               ys(i) = y(i)
+              fs(i) = f(i)
+              fints(i) = fint(i)
+              flogs(i) = flog(i)
             end do
         call hsortr(Ns, xs, ind)
         do i=1, Ns
             xsrt(i) = xs(ind(i))
             ysrt(i) = ys(ind(i))
+            fsrt(i) = fs(ind(i))
+            fintsrt(i) = fints(ind(i))
+            flogsrt(i) = flogs(ind(i))
         end do
         do i=1, Ns
            x(i) = xsrt(i)
            y(i) = ysrt(i)
+           f(i) = fsrt(i)
+           fint(i) = fintsrt(i)
+           flog(i) = flogsrt(i)
         end do
          return
             end
+
           subroutine rmsflags(nterms,a,N,XPTS,YPTS,FPTS);
            integer nterms, N, i, FPTS(N)
            real a(nterms), XPTS(N), YPTS(N), pl(N), YD(N)
