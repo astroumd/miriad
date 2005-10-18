@@ -11,11 +11,15 @@ c	plot for bandpass is against the frequency. SmaGpPlt provides
 c       options to moving smooth or orthogal polynomial fit to the
 c       gain/bandpass solutions and to over write the old gain/bandpass
 c       tables with the smoothed or polynomial fit results. In addition,
-c       SmaGpPlt allows to compare bandpass slutions in two vis files. 
+c       SmaGpPlt allows to compare bandpass solutions in two vis files.
+c       SmaGpPlt can also merge two gain tables computed (using either
+c       SmaMfCal or MfCal from two calibrators that were observed 
+c       interleavely.
+c            
 c@ vis
 c	The name of the input data-set. This will normally be a visibility
 c	data-set. No default. If two files are given, options must be
-c       bandpass.
+c       either 'bandpass' or 'gains,merge'.
 c@ device
 c	The PGPLOT plotting device to use. The default is no plot.
 c@ log
@@ -63,6 +67,9 @@ c                      either msmooth or opolyfit.
 c         ratio        do ratio (bp1/bp2) in comparison of two bandpasse
 c                      solutions if Keyword vis is given two input vis files. 
 c                      The default is to compare the difference (bp2-bp1).
+c         merge        merge two gain tables associated with the two
+c                      visibility files respectively. Two input vis
+c                      file must be given.
 c
 c@ smooth
 c       This gives three parameters of moving smooth calculation of the 
@@ -122,6 +129,8 @@ c                 in a gain table, count the gain solution for each polarization
 c                 and skip the failed gain solutions in the polynomial fitting.
 c                 label the circular polarizations in the case of
 c                 dual polarizations involved.
+c    jhz 18oct05 add an options for merging two gain tables.
+c
 c  Bugs:
 c------------------------------------------------------------------------
         integer maxsels
@@ -131,7 +140,7 @@ c------------------------------------------------------------------------
         parameter (DPI = 3.14159265358979323846)
         parameter (TWOPI = 2 * PI)
         parameter (DTWOPI = 2 * DPI)        
-        parameter(version='SmaGpPlt: version 1.5 1-Aug-05')
+        parameter(version='SmaGpPlt: version 1.6 18-Oct-05')
         include 'smagpplt.h'
         integer iostat,tin,nx,ny,nfeeds,nants,nsols,ierr,symbol,nchan
         integer ntau,length, i, j, k,nschann(maxspect)
@@ -139,7 +148,7 @@ c------------------------------------------------------------------------
         double precision t0
         logical doamp,dophase,doreal,doimag,dogains,dopol,dodtime,doxy
         logical doxbyy,doplot,dolog,more,ltemp,dodots,dodelay,dopass
-        logical dospec,dowrap, dosmooth, donply, doratio
+        logical dospec,dowrap, dosmooth, donply, doratio, domerge
         complex g1(maxgains),g2(maxgains)
         real alpha(maxgains)
         real times(maxtimes),range(2)
@@ -166,6 +175,13 @@ c circular feeds
         integer nply(2), gnply, bnply, greport,breport, weight
         common/bsmooth/smooth,rpass,ipass,apass,ppass,bnply,breport
         common/gsmooth/smoothg,rgain,igain,gnply,greport,nnsols
+        integer nants1, nfeeds1, nsols1
+        integer nsols2
+        complex g2buf(maxgains),gbuf(maxgains)
+        complex gf12(maxgains)
+        real times1(maxtimes),times2(maxtimes)
+        double precision t01,t02
+        double precision jtime1(6154),jtime2(6154)
 c
 c  Get the user parameters.
 c
@@ -185,7 +201,8 @@ c        call keya('vis',vis,' ')
         call getaxis(doamp,dophase,doreal,doimag)
 c       write(*,*) 'axis-amp pha re im', doamp,dophase,doreal,doimag
         call getopt(dogains,doxy,doxbyy,dopol,dodtime,dodots,
-     *    dodelay,dospec,dopass,dowrap,dosmooth,donply,doratio)
+     *    dodelay,dospec,dopass,dowrap,dosmooth,donply,doratio,
+     *    domerge)
          if(dosmooth.and.dopass) then
               if(doamp) dophase=.true.
               if(dophase) doamp=.true.
@@ -256,10 +273,14 @@ c
         call keyr('yrange',range(2),range(1)-1.)
         call keyfin
             call uvdatgti ('nfiles', nfiles)
-            if(dopass.and.nfiles.gt.2)
+            if(nfiles.gt.2)
      *   call bug('f','Too many uv files.')
-            if(.not.dopass.and.nfiles.gt.1)
+            if((.not.dopass.and.nfiles.gt.1)
+     *          .and.(.not.domerge.and.nfiles.gt.1))
      *   call bug('f','Too many uv files.')
+              if(domerge.and.nfiles.lt.2)
+     *   call bug('f','Need two uv files.')
+
 c
 c  Determine the plotting symbol.
 c
@@ -286,59 +307,149 @@ c
             call bug('w','Error opening input '//vis)
             call bugno('f',iostat)
              endif
-             if(dopass)then
-             dopass = hdprsnt(tin,'bandpass')
-            if(.not.dopass)call bug('w','Bandpass function not present')
-             endif
-            if(doplot)then
-          length = len1(device)
-          ierr = pgbeg(0,device(1:length),nx,ny)
-            if (ierr.ne.1)then
-            call pgldev
-            call bug ('f', 'Error in PGPLOT device')
-             endif
+          if(dopass)then
+           dopass = hdprsnt(tin,'bandpass')
+           if(.not.dopass)call bug('w','Bandpass function not present')
+          endif
+          if(doplot)then
+           length = len1(device)
+           ierr = pgbeg(0,device(1:length),nx,ny)
+          if (ierr.ne.1)then
+           call pgldev
+           call bug ('f', 'Error in PGPLOT device')
+          endif
           call pgsch(real(max(nx,ny))**0.4)
-             endif
+          endif
        if(dolog.and.(lin.eq.1)) call logopen(logfile,' ')
        if(dolog) call logwrite('# file:'//vis,more)
        if(dolog.and.(lin.eq.2).and.doratio) 
      * call logwrite('# bandpass ratio for above two files',more)
-       if(dolog.and.(lin.eq.2).and.(.not.doratio))
+       if(dolog.and.(lin.eq.2).and.(.not.doratio.and..not.domerge))
      * call logwrite('# bandpass difference for above two files',more) 
-
-
        if(dopass)then
           call bload(tin,times,g1,nfeeds,nants,nchan,sels,
      *          maxgains,maxtimes,nschann)
-          do i=1, nants
+            do i=1, nants
             do j=1, nfeeds
             peeds =j
             offset = (j-1) + (i-1)*nfeeds
-           do k=1, nchan
-          if(lin.eq.1) then 
+            do k=1, nchan
+            if(lin.eq.1) then 
                   pass(i,k,j) = g1(k+offset*nchan)
                   freqs(k)=times(k)
                   endif
-          if(lin.eq.2) then
-       if(.not.doratio) g1(k+offset*nchan)= 
-     *     g1(k+offset*nchan)-pass(i,k,j)
-        if(doratio)
+            if(lin.eq.2) then
+            if(.not.doratio) g1(k+offset*nchan)= 
+     *      g1(k+offset*nchan)-pass(i,k,j)
+            if(doratio)
      *   g1(k+offset*nchan)= pass(i,k,j)/g1(k+offset*nchan)             
 c           call bug('f','inconsistent frequency between the two files')
-               endif
-           end do
-           end do
-        end do
+                 endif
+            end do
+            end do
+            end do
           if(lin.eq.2) 
      *     call bpplt(times,g1,nfeeds,nants,nchan,range,
      *          feeds(nfeeds),doamp,dophase,dowrap,doreal,doimag,
      *          doplot,dolog,symbol,nx*ny,nschann)
-           endif
-          call hclose(tin)
-          end do
-          if(dolog) call logclose
-          stop
+         endif
+             
+        if(dolog.and.(lin.eq.2).and.domerge)
+     * call logwrite('# merge two gain tables from two files',more)
+
+c
+c  merge two gain tables
+c
+        if(dogains) then
+            if(lin.eq.1) then 
+        call gload(tin,t01,times1,jtime1,g1,nfeeds1,ntau,nants1,
+     *      nsols1,sels, maxgains,maxtimes) 
+            
+            call gncvt(g1,g2buf,nfeeds1,ntau,nants1*nsols1)
+
+                         end if
+            if(lin.eq.2) then
+        call gload(tin,t02,times2,jtime2,g1,nfeeds,ntau,nants,
+     *      nsols2,sels, maxgains,maxtimes)
+            call gncvt(g1,g2,nfeeds,ntau,nants*nsols2)
+            if(t01.ne.t02) 
+     *      call bug('f',
+     *  'The two gain tables  do not match in the basetime.');
+            if(nfeeds1.ne.nfeeds) 
+     *      call bug('f',
+     *  'The two gain tables do not match in the number of feeds.');
+            if(nants1.ne.nants) 
+     *      call bug('f',
+     *  'The two gain tables do not match in the number of antennas.'); 
+             
+             nsols= nsols1+nsols2 
+ 
+            do ifeed=1,nfeeds
+            do j=1,nants
+            offset = ifeed + (j-1)*nfeeds
+c handle lin=1
+            do i=1,nsols1
+            gf12(i)  = g2buf(offset+(i-1)*nfeeds*nants)
+            times(i) = times1(i)
+            jtime(i) = jtime1(i)
+            end do
+c handle lin=2 and merge g2 to g1
+            do i=1,nsols2
+            gf12(i+nsols1) = g2(offset+(i-1)*nfeeds*nants)
+            times(i+nsols1) = times2(i)
+            jtime(i+nsols1) = jtime2(i)
+            end do
+c sorting gbuf based on the order of ascending time 
+            call xysortcd(nsols1+nsols2,times,gf12,jtime)
+c put back to gbuf
+            do i=1,nsols
+            gbuf(offset+(i-1)*nfeeds*nants) = gf12(i)
+            end do
+            end do
+            end do 
+            end if
           endif
+          end do
+c
+c plot the gains
+c
+          if(dogains) 
+     *       call gainplt(vis,times,gbuf,nfeeds,nants,nsols,range,
+     *       feeds(nfeeds),doamp,dophase,dowrap,doreal,doimag,
+     *       doplot,dolog,dodtime,symbol,nx*ny,weight)
+          if(dolog) call logclose
+
+c assign the nsols (maximun nsols for each set of ant/feed)
+c to gns
+          gns = nsols
+c
+c Apply the polyfit or smooth to the gain table
+c
+          if((donply.or.dosmooth).and.dogains) then
+          do i=1, nants
+           do j=1, nfeeds
+           do k=1,gns
+           gains(i,j,k)=0.0
+           enddo
+           enddo
+           enddo
+           do i=1, nants
+           do j=1, nfeeds
+           pee(j) =j
+           do k=1,gns
+           gains(i,j,k) = cmplx(rgain(i,j,k),igain(i,j,k))
+            end do
+            end do
+            end do
+          call hdelete(tin,'gains',iostat)
+          write(*,*) 'delete the old gains table'
+          call gaintab(tin,jtime,gains,nfeeds,nants,gns,
+     *    pee)
+          end if
+
+          call hclose(tin)
+          stop
+        endif
 
         if(.not.uvdatopn(tin))call bug('f','Error opening inputs')
             call uvdatgta ('name', vis)
@@ -1657,7 +1768,6 @@ c
         if(dodelay) ngains = (npol+1)*nants
 c
         off = 8
-        write(*,*) nants, npol, nsoln
         do i=1,nsoln
           call hwrited(item,time(i),off,8,iostat)
           off = off + 8
@@ -2230,10 +2340,12 @@ c
         end
 c************************************************************************
         subroutine getopt(dogains,doxy,doxbyy,dopol,dodtime,dodots,
-     *     dodelay,dospec,dopass,dowrap,dosmooth,donply,doratio)
+     *     dodelay,dospec,dopass,dowrap,dosmooth,donply,doratio,
+     *     domerge)
 c
         logical dogains,dopol,dodtime,doxy,doxbyy,dodots,dodelay
         logical dospec,dopass,dowrap,dosmooth,donply,doratio
+        logical domerge
 c
 c  Get extra processing options.
 c
@@ -2246,12 +2358,14 @@ c    dodtime	If true, give time as day fractions.
 c    dodots	If true, plot small dots (rather than big circles).
 c    dodelay	If true, process the delays table.
 c    dopass	If true, process the bandpass table.
-c    dowrap     If true, don't unwrap phases
-c    dosmooth   If true, replace old gain curve with the smooth
-c    donply     If true, replace old gain curve with the polynomial fit
+c    dowrap     If true, don't unwrap phases.
+c    dosmooth   If true, replace old gain curve with the smooth.
+c    donply     If true, replace old gain curve with the polynomial fit.
+c    doratio    If true, calculate bandpass ratio.
+c    domerge    If true, merge two gains tables.
 c------------------------------------------------------------------------
         integer nopt
-        parameter(nopt=13)
+        parameter(nopt=14)
         logical present(nopt)
         character opts(nopt)*12
 c
@@ -2259,7 +2373,7 @@ c
      *            'xygains     ','xbyygains   ','dots        ',
      *            'delays      ','bandpass    ','speccor     ',
      *            'wrap        ','msmooth     ','opolyfit    ',
-     *            'ratio       '/
+     *            'ratio       ','merge       '/
 c
         call options('options',opts,present,nopt)
         dogains = present(1)
@@ -2275,6 +2389,7 @@ c
         dosmooth= present(11)
         donply  = present(12)
         doratio = present(13)
+        domerge = present(14)
         if(dosmooth.and.donply) then
            call  bug('f','choose either msmooth or opolyfit')
         end if
@@ -2866,3 +2981,82 @@ C renormalize and test for convergence
         GLNGAM=G
       END IF
       END
+    
+        subroutine xysortcd(n,array,yarray,zarray)
+c
+c the same function as xysort but with different algorithm
+c
+        implicit none
+        integer n
+        real array(n)
+        complex yarray(n)
+        double precision zarray(n)
+c
+c  Sorts an array, ARRAY, of length N into ascending order using a
+c  Heapsort algorithm. ARRAY is replaced on output by its sorted
+c  rearrangement. The second array elements are in complex.
+c  The third array elements are in double precision.
+c
+c  Input:
+c  n              Number of elements to be sorted.
+c
+c  Input/Output:
+c  array,yarray,zarray  Input: Elements to be sorted.
+c                 Output: Sorted elements.
+c--
+c------------------------------------------------------------------------
+      INTEGER L,IR,J,I
+      real RRA
+      complex YRRA
+      double precision ZRRA
+c
+      L=N/2+1
+      IR=N
+10    CONTINUE
+        IF(L.GT.1)THEN
+          L=L-1
+          RRA=ARRAY(L)
+                                                                                
+          YRRA=YARRAY(L)
+          ZRRA=ZARRAY(L)
+        ELSE
+          RRA=ARRAY(IR)
+          ARRAY(IR)=ARRAY(1)
+                                                                                
+          YRRA=YARRAY(IR)
+          YARRAY(IR)=YARRAY(1)
+
+          ZRRA=ZARRAY(IR)
+          ZARRAY(IR)=ZARRAY(1)
+                                                                      
+          IR=IR-1
+          IF(IR.LE.1)THEN
+            ARRAY(1)=RRA
+            YARRAY(1)=YRRA
+            ZARRAY(1)=ZRRA
+            RETURN
+          ENDIF
+        ENDIF
+        I=L
+        J=L+L
+20      IF(J.LE.IR)THEN
+          IF(J.LT.IR)THEN
+            IF(ARRAY(J).LT.ARRAY(J+1))J=J+1
+          ENDIF
+          IF(RRA.LT.ARRAY(J))THEN
+            ARRAY(I)=ARRAY(J)
+            YARRAY(I)=YARRAY(J)
+            ZARRAY(I)=ZARRAY(J)
+            I=J
+            J=J+J
+          ELSE
+            J=IR+1
+          ENDIF
+        GO TO 20
+        ENDIF
+        ARRAY(I)=RRA
+        YARRAY(I)=YRRA
+        ZARRAY(I)=ZRRA
+         GO TO 10
+      END
+
