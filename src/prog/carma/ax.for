@@ -72,14 +72,19 @@ c                date +%y%b%d:%H:%M:%S | tr '[A-Z]' '[a-z]'
 c   Default is to take date from the ascii correlation data file.
 c
 c@ inttime
-c	Integration time for each record. Also used as the time increment
-c	for each record written. default  inttime=26.21571072 seconds.
+c	Integration time for each record. Default inttime=10 seconds.
 c
 c@ freq
-c   Frequency and Bandwidth in GHz.  Default 100.0,0.5 GHz.
-c	The first spectral channel is centered at frequency. The spectral channel 
-c	increment is Bandwidth/nchan. nchan is taken from the input data. 
-c	Set the bandwidth to a negative value to reverse the spectrum.
+c   LO1 frequency, bandwidth (GHz), and frequency band. Default 100.0,0.5,1
+c	The spectral channels are centered at frequencies:
+c   Band 1   USB  = LO1 + 1.0 + [1:nchan] * bandwidth/(nchan+1) GHz.
+c   Band 1   LSB  = LO1 - 1.0 - [1:nchan] * bandwidth/(nchan+1) GHz.
+c   Band 2   USB  = LO1 + 1.5 + [1:nchan] * bandwidth/(nchan+1) GHz.
+c   Band 2   LSB  = LO1 - 1.5 - [1:nchan] * bandwidth/(nchan+1) GHz.
+c   Band 3   USB  = LO1 + 2.0 + [1:nchan] * bandwidth/(nchan+1) GHz.
+c   Band 3   LSB  = LO1 - 2.0 - [1:nchan] * bandwidth/(nchan+1) GHz.
+c	Set the bandwidth to a negative value for LSB spectrum.
+c
 c--
 c
 c  History:
@@ -94,9 +99,10 @@ c    07jan05 mchw reverse signs for offsets for channels 153 158 163.
 c    07oct05 mchw Convert ascii data to Miriad for CARMA.
 c    13oct05 mchw correct phase for fringe rate at LO3 == 1 GHz sampler
 c    14oct05 mchw JD = 240000.5d0 + MJD = mjd(1970) + UnixTime
+c    15oct05 mchw set channel frequencies for band 1, 2 and 3.
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version = 'AX: version 1.0 14-Oct-2005')
+	parameter(version = 'AX: version 1.0 15-Oct-2005')
 
 	include 'maxdim.h'
 	include 'mirconst.h'
@@ -113,7 +119,7 @@ c
 	double precision bxx,byy,bzz
 	real sinha,cosha,HA
 	integer nchan,nwide,ns,unit,nvis,nave
-	integer i, nant, ant(2), nc
+	integer i, nant, ant(2), nc, band
 	double precision visR,visI,amp,ph,ut,chan
 	real inttime,x,z,wfreq,wwidth
 c
@@ -122,7 +128,7 @@ c
 	character sfile*80,outfile*80,antfile*80
 	real baseunit
 	double precision along,alat,ra,dec,sra,sdec,obsra,obsdec
-	double precision jd2000,lst,timeout,sfreq,bandwidth
+	double precision jd2000,lst,timeout,sfreq,bandwidth,LO1,LO2
 c
 	real b1(MAXANT),b2(MAXANT),b3(MAXANT)
 	real sind,cosd,sinl,cosl
@@ -152,9 +158,10 @@ c
 	call keyt('time',timeout,'atime',0.d0)
 	if(timeout.le.1)call dayjul('04DEC23.00',timeout)
 	print *, 'Start time = Julian day ',timeout
-	call keyr('inttime',inttime,26.21571072)
-	call keyd('freq',sfreq,100.0d0)
+	call keyr('inttime',inttime,10.0)
+	call keyd('freq',LO1,100.0d0)
 	call keyd('freq',bandwidth,0.5d0)
+	call keyi('freq',band,1)
 	call keyi('baseline',ant(1),8)
 	call keyi('baseline',ant(2),9)
 	call keyi('nchan',nchan,15)
@@ -227,9 +234,6 @@ c
 	enddo
 	call uvputvrd(unit,'antpos',antpos,nant*3)
 
-c  frequency
-	call uvputvrd(unit,'freq',sfreq,1)
-	call uvputvrd(unit,'freqif',0.d0,1)
 
 c	inttime, veldop, nants
 	call uvputvrr(unit,'inttime',inttime,1)
@@ -238,7 +242,15 @@ c	inttime, veldop, nants
 	call uvputvri(unit,'nants',nant,1)
 
 c Spectral channels
-	sdf = bandwidth/(nchan+1)
+c   Band 1   USB  = LO1 + 1.0 + [1:nchan] * bandwidth/(nchan+1) GHz.
+c   Band 1   LSB  = LO1 - 1.0 - [1:nchan] * bandwidth/(nchan+1) GHz.
+c   Band 2   USB  = LO1 + 1.5 + [1:nchan] * bandwidth/(nchan+1) GHz.
+c   Band 2   LSB  = LO1 - 1.5 - [1:nchan] * bandwidth/(nchan+1) GHz.
+c   Band 3   USB  = LO1 + 2.0 + [1:nchan] * bandwidth/(nchan+1) GHz.
+c   Band 3   LSB  = LO1 - 2.0 - [1:nchan] * bandwidth/(nchan+1) GHz.
+      LO2 = 0.5 * (band + 1)
+      sfreq = LO1 + sign(LO2,bandwidth) + bandwidth/(nchan+1)
+      sdf   = bandwidth/(nchan+1)
 	  call uvputvri(unit,'nchan',nchan,1)
 	  call uvputvri(unit,'nspect',1,1)
 	  call uvputvrd(unit,'sfreq',sfreq,1)
@@ -246,6 +258,8 @@ c Spectral channels
 	  call uvputvri(unit,'ischan',1,1)
 	  call uvputvri(unit,'nschan',nchan,1)
 	  call uvputvrd(unit,'restfreq',sfreq,1)
+      call uvputvrd(unit,'freq',sfreq,1)
+      call uvputvrd(unit,'freqif',LO2,1)
 
 c Wideband channels
 	nwide=1
