@@ -66,6 +66,7 @@ c--
 c  History:
 c   JHZ ---> miriad software to remove time-dependent bandpass ripples 
 c   jhz 19jul05 creates the first version
+c   jhz 18oct05 change processing message.
 c  Bugs:
 c     not for dual pol case, must select one of pol in the case
 c     of multiple polarizations. For dual polarization present,
@@ -79,7 +80,7 @@ c------------------------------------------------------------------------
         parameter (DPI = 3.14159265358979323846)
         parameter (TWOPI = 2 * PI)
         parameter (DTWOPI = 2 * DPI)        
-        parameter(version='SmaTbpass: version 1.0 20-July-05')
+        parameter(version='SmaTbpass: version 1.0 18-Oct-05')
         include 'maxdim.h'
         integer maxTimes,maxGains
         parameter(maxTimes=2*MAXCHAN*MAXANT)
@@ -327,7 +328,7 @@ c for each of the antennas
         if(dopolfit) call tpolbpass(nterm,nants,nchan,nfiles,
      *            nfeeds,ppass,tpass,bptime,UT)
 
-            write(*,500) 'done with bpass apply at UT=',
+            write(*,500) 'applied bandpass at UT=',
      * UT*24.
           UT=UT+UTstep
           dowhile(nread.gt.0)
@@ -346,7 +347,7 @@ c for each of the antennas
         if(.not.dopolfit) call t2ptbpass(nterm,nants,nchan,nfiles,
      *            nfeeds,ppass,tpass,bptime,UT)
 
-       write(*,500) 'done with bpass apply at UT=',
+       write(*,500) 'applied bpass at UT=',
      * UT*24.
            UT=UT+UTstep
                        endif
