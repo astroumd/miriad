@@ -69,7 +69,9 @@ c                      solutions if Keyword vis is given two input vis files.
 c                      The default is to compare the difference (bp2-bp1).
 c         merge        merge two gain tables associated with the two
 c                      visibility files respectively. Two input vis
-c                      file must be given.
+c                      file must be given. The merged gain table
+c                      will be placed in the second input vis file
+c                      by overwritting on the old gain table.
 c
 c@ smooth
 c       This gives three parameters of moving smooth calculation of the 
@@ -130,7 +132,9 @@ c                 and skip the failed gain solutions in the polynomial fitting.
 c                 label the circular polarizations in the case of
 c                 dual polarizations involved.
 c    jhz 18oct05 add an options for merging two gain tables.
-c
+c    jhz 19oct05 add a description in inline doc for options=merge
+c                fixed a bug in ending x-window plot for
+c                the case of more than one input files involved.
 c  Bugs:
 c------------------------------------------------------------------------
         integer maxsels
@@ -446,7 +450,7 @@ c
           call gaintab(tin,jtime,gains,nfeeds,nants,gns,
      *    pee)
           end if
-
+          if(doplot)call pgend
           call hclose(tin)
           stop
         endif
