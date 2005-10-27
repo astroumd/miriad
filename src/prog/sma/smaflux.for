@@ -19,9 +19,12 @@ c       in the following list:
 c       Mercury, Venus, Mars, Jupiter, Saturn, Uranus, Neptune, Pluto,
 c       Ganymede, Callisto, Titan, Ceres, Pallas, Vesta.
 c  
-c
 c	To fix the flux density scale, SmaFlux creates or modifies calibration 
 c       tables attached to each dataset.
+c       To run this program, the data directory for the SMA planetary
+c       model needs to be installed by excuting the following script:
+c       cd $MIR/install
+c       get_smaplmodel
 c@ vis
 c	Input visibility datasets. Several datasets can be given (wildcards
 c	are supported). The datasets should include observations of a planet.
@@ -45,12 +48,14 @@ c                 averaging in frequency first, to avoid noise
 c	          biases. The nofqav disables this averaging.
 c--
 c  History:
-c    jhz     The original version (2005-10-20) based on
-c            rjs' plboot version 1.0 19-May-03 
+c    jhz  2005-10-20   The original version  based on rjs' plboot.for's
+c                      version 1.0 19-May-03 
+c    jhz  2005-10-27   Following the suggetion from Peter Teuben, the data
+c                      directory is replaced to $MIRCAT/smaplmdl
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='SmaFlux: version 1.0 26-Oct-05')
+	parameter(version='SmaFlux: version 1.0 27-Oct-05')
 	integer MAXVIS
 	parameter(MAXVIS=32)
 c
@@ -83,7 +88,7 @@ c
         call keya('mirhome',mirhome,' ')
         if(mirhome(1:1).eq.' ') 
      *  call bug('f', 'The home directory of Miriad must be given.')
-        smadir=mirhome(1:len1(mirhome))//'/src/prog/sma/data/'
+        smadir=mirhome(1:len1(mirhome))//'/cat/smaplmdl/'
 	call getopt(vector,noapply,nofqav)
 	call keyfin
 c
