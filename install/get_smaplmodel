@@ -1,0 +1,29 @@
+#! /bin/csh -f
+#  jhz 27-Oct-2005
+#  Install the SMA planetary model data directory in $MIRCAT
+#  Clients that can use this are:
+#   1) (sma)miriad's program SmaFlux
+# 
+#  See also 
+# http://sma-www.cfa.harvard.edu/miriadWWW/manuals/SMAuguide/smauserhtml/index_CalibrationFlux.html
+# http://sma-www.cfa.harvard.edu/miriadWWW/manuals/SMAuguide/smauserhtml/index_SMAplModelInstall.html
+
+set mode=1
+
+set url=http://sma-www.cfa.harvard.edu/miriadWWW/smaspec/smaplmodel/smaplmodel.tar.gz
+
+
+cd $MIRCAT
+if (-e smaplmdl ) then
+  echo Warning: existing directory $MIRCAT/smaplmdl will be filled again
+endif
+
+if ($mode == 1) then
+  curl $url | tar zxf -
+else if ($mode = 2) then
+  wget $url
+  tar zxf $url:t
+  rm $url:t
+else
+  echo mode $mode not supported
+endif
