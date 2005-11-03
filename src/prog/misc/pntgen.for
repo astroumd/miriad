@@ -44,7 +44,7 @@ c----------------------------------------------------------------------c
 	parameter(rtd=180./pi,rtm=60.*180./pi,dtr=pi/180.)
 	real daz1,del1,z,z1,cosz1,sinaz1,az1,el1
 	integer iaz,iel,it
-	character source*8,out*40, udate*7
+	character source*8,out*40, udate*7/'02nov05'/
 	double precision ut
 	real day,st,ra,dec,apc(9),epc(8),az,el,daz,del,tilt
 	real coll,collim,theta,azbeg,azfin,elbeg,elfin,randoms(2),t
