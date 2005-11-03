@@ -27,6 +27,7 @@ c	Elevation range of pointing data generated. Minimum and
 c	maximum values in degrees. Default=5,85.
 c@ out
 c	Output filename for pointing data.
+c   write data in CARMA 12sep05 ddmmmyy before the UT format
 c-- 
 c
 c  History:
@@ -34,19 +35,20 @@ c    14may92 mchw  Original version.
 c    15mar95 pjt   fixed statement orders, call uniform instead of rand()
 c    23aug95 mchw  Update pointing format.
 c    22mar99 pjt   fixed ,x, -> ,1x, in format stmt (linux)
+c    02nov05 mchw  write data in CARMA 12sep05 ddmmmyy before the UT format 
 c----------------------------------------------------------------------c
 	character version*(*)
-	parameter(version='(version 1.0 22-mar-99)')
+	parameter(version='(version 1.0 02-nov-05)')
 	real pi,rtd,rtm,dtr
 	parameter(pi=3.141592654)
 	parameter(rtd=180./pi,rtm=60.*180./pi,dtr=pi/180.)
 	real daz1,del1,z,z1,cosz1,sinaz1,az1,el1
 	integer iaz,iel,it
-	character source*8,out*40
+	character source*8,out*40, udate*7
 	double precision ut
-	real day,st,ra,dec,an,apc(9),epc(8),az,el,daz,del,tilt,t1,t2
+	real day,st,ra,dec,apc(9),epc(8),az,el,daz,del,tilt
 	real coll,collim,theta,azbeg,azfin,elbeg,elfin,randoms(2),t
-	integer n,npts
+	integer n, npts, an
 c
 c  Get user input parameters.
 c
@@ -102,7 +104,7 @@ c
 	endif
 c
 	if(out.ne.' ')then
-	    print *, 'az el collim(daz,del) collim+tilt(daz,del)'
+       print *, ' az, el, daz, del, daz-tilt, del-tilt' 
 	  do n=1,npts
 	    call uniform(randoms,2)
 	    az = (azbeg + (azfin-azbeg)*randoms(1))/rtd
@@ -113,12 +115,26 @@ c
 	    daz1 = daz - tilt*sin(el)*sin(az)
 	    del1 = del - tilt*cos(az)
 	    print *, az1/dtr, el1/dtr, daz, del, daz1, del1
-	    write(1,990) source, day, ut, st, ra, dec,
-     *		 an, apc, epc, az1/dtr, el1/dtr, daz, del, tilt, t1, t2
+c
+c BIMA format
+c	    write(1,990) source, day, ut, st, ra, dec,
+c     *		 an, apc, epc, az1/dtr, el1/dtr, daz, del, tilt, t1, t2
+c990      format(a8,1x,f12.2,4f10.5,f4.0,17f8.3,2f9.3,5f8.3)
+
+c
+c CARMA format
+       write(1,311) udate,ut,az1/dtr,el1/dtr,daz,del,tilt,an,source
+311    format(a7, 6f10.3, i2, a8)
 	  enddo
-990      format(a8,1x,f12.2,4f10.5,f4.0,17f8.3,2f9.3,5f8.3)
 	endif
 c
+c	PNTGEN generates fake pointing data and calculates the errors
+c	which arise from using linear pointing equations.
+c	The default is to print out the pointing errors and the
+c	difference in arcmin from the linear pointing equations.
+
+       print *, 'tilt, az, el, daz, del, daz-tilt, del-tilt' 
+
 	if(tilt.ne.0.) then
 	 do iaz=5,85,20
 	  do iel=5,85,20
@@ -128,7 +144,7 @@ c
 	    cosz1 = cos(z)*cos(t) - sin(z)*sin(t)*cos(az)
 	    z1 = acos(cosz1)
 	    sinaz1 = sin(z1)*sin(az)/sin(z)
-	    daz = cos(el)*(asin(sinaz1) - az) * rtm
+	    daz = cos(el) * (asin(sinaz1) - az) * rtm
 	    del = (z1 - z) * rtm
 	    daz1 = daz - tilt*sin(el)*sin(az)
 	    del1 = del - tilt*cos(az)
@@ -159,5 +175,5 @@ c
 c
 c  Add on collimation error.
 c
-c	az1 = az1 + asin(sin(coll)/cos(el1))
+	az1 = az1 + asin(sin(coll)/cos(el1))
 	end
