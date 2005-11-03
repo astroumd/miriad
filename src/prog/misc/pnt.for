@@ -1830,8 +1830,8 @@ c
 	pdevice(5:5) = char(ichar(pdevice(5:5))+1)
 	call pgmtxt('T',6.,.02,.0,buffer)
 	call mfdate(dat)
-	write(buffer,100) ant, dat(5:16), file
-100	format('Antenna ',f3.0,3x,a,3x,a)
+	write(buffer,100) ant, file
+100	format('Antenna ',i3,3x,a)
 	call pgmtxt('T',4.5,.15,0.,buffer)
 	write(buffer,110) apcs,equ
 110	format('APC ',2f7.2, 7f6.2,' Eq:',i2)
@@ -2250,7 +2250,7 @@ c
 c		this routine appears more than once and needs to be in SUBS
 	subroutine mfdate(dat)
 	character*(*) dat
-	dat = '  xx-xx-xx'
+       call date(dat)
 	end
 #endif
 c********1*********2*********3*********4*********5*********6*********7*c
