@@ -186,13 +186,15 @@ c                 the JPL catalog.
 c    jhz 22aug05  added special relativistic expressions to the veldef.
 c    jhz 23aug05  in pghline, add velocity labelling options for
 c                 lsr, hel, and z of full special relativistic
-c                 expressions in the case of spectral line identifications.             
+c                 expressions in the case of spectral line 
+c                 identifications.             
 c    jhz 28sep05  implemented spectral channel pntr for the case of
 c                 hybrid spectral resolutions.
 c    jhz 30sep05  fixed a bug in plotting both (amplitude and phase) for yaxis
 c                 in the case that plotting interval is less than the 
 c                 total observing interval.
-c
+c    jhz 08sep05 fixed a small bug in the pghline
+c                 when the start spectral chunks are flagged.
 c>  Bugs:
 c------------------------------------------------------------------------
 c=======================================================================
@@ -238,7 +240,7 @@ c
         character mname*8000, moln*16
         integer mtag(maxmline), nmline, j, jp, js, je, iline
         character version*(*)
-        parameter(version='SmaUvSpec: version 1.10 30-Sep-05')
+        parameter(version='SmaUvSpec: version 1.11 08-Nov-05')
         character uvflags*8,device*64,xaxis*12,yaxis*12,logf*64
         character xtitle*64,ytitle*64, veldef*8
         character xtitlebuf*64
@@ -1640,7 +1642,7 @@ c-------------------------------------------------------------------------
         integer start,end,i,j, k, ci, l, lm
         character title*64
         real xlen,ylen,xloc
-        integer maxwin,symbol
+        integer maxwin,symbol,startpntr
         parameter(maxwin=48)
         logical doboth,docolor,dorestfreq
         integer nspect, nschan(maxwin),fnschan(maxwin),nchan0
@@ -1687,7 +1689,7 @@ c
         if(veldef.eq."relativ") then
               do i=1,npts
               x(i) = x(i)*sqrt((1.+(lsrvel+veldop)*1.e3/cmks)
-     &                        /(1.-(lsrvel+veldop)*1.e3/cmks))
+     &             / (1.-(lsrvel+veldop)*1.e3/cmks))
               end do
         end if
 
@@ -1707,6 +1709,7 @@ c
           j=sppntr(i)
           fnschan(j)=1
          endif
+           write(*,*) sppntr(i),i,x(i),y(i)
         enddo
 c
         maxf=0.
@@ -1719,14 +1722,16 @@ c
         symbol=2
         yloc=0.95
         call pgbbuf
-        start = 1
+        start = 1+(startchunk-1)*nspect
         end = 2
            i=0
            ci=25
            call pgscr(ci, .3, 0.5, 0.7)
-c           do j=1, nspect 
             istart=0
+            startpntr=0
             do j=startchunk,endchunk
+            startpntr=startpntr+fnschan(j)
+            write(*,*) 'j=', startpntr
             ci=j
         if(j.gt.12) then
             if(ci.eq.13) call pgscr(ci, 1.0, 1.0, 0.5)
@@ -1745,9 +1750,8 @@ c           do j=1, nspect
              call  pgsci(ci)
              if(j.eq.1) call  pgsci(7)
              if(j.eq.7) call  pgsci(25)
-             call pgmove(x(start),y(start))
+             if(startpntr.ne.0) call pgmove(x(start),y(start))
              N=0
-              
           do k=1, fnschan(j)
                i=i+1
                N=N+1
@@ -1777,6 +1781,7 @@ c
      *      then
                 maxstr=y(k+istart)
             end if
+             if(startpntr.gt.0) then
             if(i<npts.and.k<fnschan(j)) then
               call pgdraw (0.5*(x(i+1)+x(i)), y(i))
               call pgdraw (0.5*(x(i+1)+x(i)), y(i+1))
@@ -1785,12 +1790,13 @@ c
               call pgdraw (0.5*(x(i)+x(i)), y(i))
               call pgdraw (0.5*(x(i)+x(i)), y(i))
              endif
+                               end if
             call pgebuf
           enddo
              istart=istart+fnschan(j)
              end=i
-             call pgdraw(x(end),y(end))
-              start=end+1
+              if(startpntr.gt.0) call pgdraw(x(end),y(end))
+             start=end+1
              if(docolor) then
              write(title,'(a,i2)') 's',j
                l = len1(title)
