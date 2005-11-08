@@ -1709,7 +1709,6 @@ c
           j=sppntr(i)
           fnschan(j)=1
          endif
-           write(*,*) sppntr(i),i,x(i),y(i)
         enddo
 c
         maxf=0.
@@ -1731,7 +1730,6 @@ c
             startpntr=0
             do j=startchunk,endchunk
             startpntr=startpntr+fnschan(j)
-            write(*,*) 'j=', startpntr
             ci=j
         if(j.gt.12) then
             if(ci.eq.13) call pgscr(ci, 1.0, 1.0, 0.5)
