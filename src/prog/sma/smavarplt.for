@@ -70,13 +70,14 @@ c    jhz  01aug04 extended for SMA
 c    jhz  02aug04 added color index coded for sources
 c    jhz  09feb05 fixed the units for variable systmp.
 c    jhz  05aug05 add the flag (all) to options
+c    jhz  08nov05 fixed a bug in yaxis scale range when flagging is involved
 c  Bugs:
 c    ?? Perfect?
 c------------------------------------------------------------------------
         character version*(*)
         integer maxpnts
         parameter(maxpnts=100000)
-        parameter(version='SmaVarPlt: version 1.1 05-Aug-05')
+        parameter(version='SmaVarPlt: version 1.2 08-Nov-05')
         logical doplot,dolog,dotime,dounwrap
         character vis*64,device*64,logfile*64,xaxis*16,yaxis*16
         character xtype*1,ytype*1,xunit*16,yunit*16,calday*24
@@ -527,7 +528,7 @@ c
             if(yext)then
               call extract(yvals(ky),ydim1*ydim2,npnts,yvals(yoff))
               call extract(flagvar(ky),ydim1*ydim2,npnts,flagvar(yoff))
-              if(yr) call getscale(yvals(yoff),npnts,ylo,yhi)
+          if(yr) call fgetscale(yvals(yoff),flagvar(yoff),npnts,ylo,yhi)
             endif
             kx = 0
              do x2=1,xdim2
@@ -609,10 +610,11 @@ c
                FPTS(i) = 1
                FLAG(i)=.true.
                if(DOFLAG.and.(YFLAG(i).lt.0)) then
+               FPTS(i)=-1
                FLAG(i)=.false.
                end if
-              xfit(i) =XPTS(i)
-              yfit(i) =YPTS(i)
+               xfit(i) =XPTS(i)
+               yfit(i) =YPTS(i)
             end do
        NPNTS=1
        mindx =0
@@ -622,7 +624,7 @@ c
         indx=soupnt(i) 
         if(indx.gt.mindx) mindx =indx
             call pgsci(indx)
-           if(FPTS(i).eq.1) then
+            if(FPTS(i).eq.1) then
                xx(1) = XPTS(i)
                yy(1) = YPTS(i)
                NPL=NPL+1
@@ -1603,4 +1605,33 @@ c           write(*,*) 'determ=', determ, norder
   50        continue
   60        return
               end
+        subroutine fgetscale(vals,flag,npnts,loval,hival)
+c
+        integer npnts
+        real vals(npnts),flag(npnts),loval,hival
+c
+c------------------------------------------------------------------------
+        real delta,absmax
+c
+c  Externals.
+c
+        integer i
+c
+c        loval = vals(ismin(npnts,vals,1))
+c        hival = vals(ismax(npnts,vals,1))
+         loval =10000.
+         hival =-10000.
+         do i=1, npnts
+             if(flag(i).gt.0.) then
+             if(vals(i).gt.hival) hival=vals(i)
+             if(vals(i).lt.loval) loval=vals(i)
+             end if
+         end do
+        delta = 0.05*(hival-loval)
+        absmax = max(abs(hival),abs(loval))
+        if(delta.le.1e-4*absmax) delta = 0.01*absmax
+        if(delta.eq.0) delta = 1
+        loval = loval - delta
+        hival = hival + delta
+        end
 
