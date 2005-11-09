@@ -564,6 +564,7 @@ struct smlodd {
         int doif;
         int dobary; 
         int dolsr;
+        int noskip;
         int newfreq;
         int dorfreq;
         int hires;
