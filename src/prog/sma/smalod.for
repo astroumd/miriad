@@ -118,6 +118,8 @@ c       'conjugat' to phase conjugate for lsb data.
 c                   Default: 
 c                   conjugate the phase of the lsb data observed before 2005-04-28;
 c                   no phase flip for the data observed after 2005-04-28.
+c       'noskip'   not to skip any data; the default is to skip
+c                  data with source name "target" and/or "unknown".
 c
 c       No extra processing options have been given yet. The default
 c       works.
@@ -219,11 +221,12 @@ c                  observed before 2005-6-10.
 c                  also skipping the decoding Doppler velocity
 c                  because of the velocity entry in the header
 c                  of MIR data appeared to be screwed up.
+c    jhz 09-nov-05 add options of noskip.
 c------------------------------------------------------------------------
         integer maxfiles
         parameter(maxfiles=128)
         character version*(*)
-        parameter(version='SmaLod: version 1.16 13-Oct-05')
+        parameter(version='SmaLod: version 1.17 09-Nov-05')
 c
         character in(maxfiles)*64,out*64,line*64, rxc*4
         integer tno, length, len1
@@ -232,7 +235,7 @@ c
         logical doauto,docross,docomp,dosam,relax,unflag,dohann
         logical dobary,doif,birdie,dowt,dopmps,doxyp,doop
         logical polflag,hires,nopol,sing,circular,linear,oldpol,dsb,
-     *          dospc,doengrd, doconjug, dolsr
+     *          dospc,doengrd, doconjug, dolsr,noskip
         integer fileskip,fileproc,scanskip,scanproc,sb, dosporder
         integer doeng
 	integer rsNCHAN, refant, readant, antid
@@ -282,7 +285,7 @@ c        call mkeyd('restfreq',rfreq,2,nfreq)
         call getopt(doauto,docross,docomp,dosam,doxyp,doop,relax,
      *    sing,unflag,dohann,birdie,dobary,doif,dowt,dopmps,polflag,
      *    hires,nopol,circular,linear,oldpol,dospc,doengrd,doconjug,
-     *    dolsr)
+     *    dolsr,noskip)
             dosporder=-1
             if(dospc) dosporder=1
             doeng =-1
@@ -369,7 +372,7 @@ c
           else
             call pokeini(tno,dosam,doxyp,doop,dohann,birdie,dowt,
      *      dopmps,dobary,doif,hires,nopol,circular,linear,oldpol,
-     *      rsnchan,refant,dolsr,rfreq,vsour,antpos,readant)
+     *      rsnchan,refant,dolsr,rfreq,vsour,antpos,readant,noskip)
             if(nfiles.eq.1)then
               i = 1
             else
@@ -431,12 +434,12 @@ c************************************************************************
         subroutine getopt(doauto,docross,docomp,dosam,doxyp,doop,
      *    relax,sing,unflag,dohann,birdie,dobary,doif,dowt,dopmps,
      *    polflag,hires,nopol,circular,linear,oldpol,dospc,doengrd,
-     *    doconjug,dolsr)
+     *    doconjug,dolsr,noskip)
 c
         logical doauto,docross,dosam,relax,unflag,dohann,dobary,doop
         logical docomp,doif,birdie,dowt,dopmps,doxyp,polflag,hires,sing
         logical nopol,circular,linear,oldpol,dospc,doengrd,doconjug
-        logical dolsr
+        logical dolsr,noskip
 c
 c  Get the user options.
 c
@@ -466,18 +469,19 @@ c               the last three blocks.
 c    doengrd    read engineer file.
 c    doconjug   phase conjugate for lsb data (data before 2004 April 28)
 c    dolsr      Compute LSR radial velocities.
+c    noskip     Do not skip any adta.
 c------------------------------------------------------------------------
         integer nopt
-        parameter(nopt=26)
+        parameter(nopt=27)
         character opts(nopt)*8
         logical present(nopt)
         data opts/'noauto  ','nocross ','compress','relax   ',
      *            'unflag  ','samcorr ','hanning ','bary    ',
      *            'noif    ','birdie  ','reweight','xycorr  ',
      *            'opcorr  ','nopflag ','hires   ','pmps    ',
-     *            'mmrelax ','single  ','nopol   ','circular  ',
-     *            'linear', 'oldpol','dospc', 'doengrd',
-     *            'conjugat', 'lsr'/
+     *            'mmrelax ','single  ','nopol   ','circular',
+     *            'linear  ','oldpol  ','dospc   ','doengrd ',
+     *            'conjugat','lsr     ','noskip  '/
         call options('options',opts,present,nopt)
         doauto  = .not.present(1)
         docross = .not.present(2)
@@ -508,6 +512,7 @@ c       mmrelax = present(17)
         doengrd = present(24)
         doconjug= present(25)
         dolsr   = present(26)
+        noskip  = present(27)
         if(dobary.and.dolsr) 
      *  call bug('f','choose options of either bary or lsr')
         if((.not.circular.and..not.linear).and..not.oldpol) nopol=.true.
@@ -559,12 +564,12 @@ c************************************************************************
      *          dohann1,birdie1,dowt1,dopmps1,dobary1,
      *          doif1,hires1,nopol1,circular1,linear1,oldpol1,
      *	        rsnchan1,refant1,dolsr1,rfreq1,vsour1,antpos1,
-     *          readant1)
+     *          readant1,noskip1)
 c
         integer tno1, rsnchan1, refant1,readant1
         logical dosam1,doxyp1,dohann1,doif1,dobary1,birdie1,dowt1
         logical dopmps1,hires1,doop1,nopol1,circular1,linear1,oldpol1
-        logical dolsr1
+        logical dolsr1,noskip1
         double precision rfreq1,antpos1(10*3)
         real vsour1
 c
@@ -593,7 +598,7 @@ c
         call rspokeinisma(kstat,tno1,dosam1,doxyp1,doop1,
      *  dohann1,birdie1,dowt1,dopmps1,dobary1,doif1,hires1,
      *  nopol1,circular1,linear1,oldpol1,lat1,long1,rsnchan1,
-     *  refant1,dolsr1,rfreq1,vsour1,antpos1,readant1)
+     *  refant1,dolsr1,rfreq1,vsour1,antpos1,readant1,noskip1)
         end
 c************************************************************************
         subroutine liner(string)
