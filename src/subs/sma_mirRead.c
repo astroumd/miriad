@@ -112,14 +112,15 @@
 //                  to online-flagging state of 0).
 // 2005-10-11 (JHZ) added option of reading antenna positions from
 //                  the ASCII file 'antennas'. 
-// 2005-11-13 (JHZ) added swapping polarization states (RR<->LL, LR<->RL)
+// 2005-10-13 (JHZ) added swapping polarization states (RR<->LL, LR<->RL)
 //                  for the circular polarization data taken before
 //                  2005-06-10 or julian date 2453531.5
 //                  (asked by dan marrone).
-// 2005-11-13 (JHZ) add skipping decoding Doppler velocity
+// 2005-10-13 (JHZ) add skipping decoding Doppler velocity
 //                  for the polarization data old than 2005-06-10
 //                  because the velocity entry in the Mir header
 //                  was screwed up.
+// 2005-10-13 (JHZ) add options of noskip
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -175,7 +176,7 @@ void rssmaflush_c(int scanskip, int scanproc, int sb, int rxif, int dosporder, i
 void rspokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1, int *doop1, int *dohann1, 
 int *birdie1, int *dowt1, int *dopmps1, int *dobary1, int *doif1, int *hires1, int *nopol1, 
 int *circular1, int *linear1, int *oldpol1, double lat1, double long1, int rsnchan1, 
-int refant1, int *dolsr1, double rfreq1, float *vsour1, double *antpos1, int readant1);
+int refant1, int *dolsr1, double rfreq1, float *vsour1, double *antpos1, int readant1, int *noskip1);
 void rspokeflshsma_c(char *kst[]);
 
 
@@ -277,7 +278,7 @@ void rspokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1,
 		    int *dobary1, int *doif1, int *hires1, int *nopol1, int *circular1,
 		    int *linear1, int *oldpol1, double lat1, double long1, int rsnchan1, 
 		    int refant1, int *dolsr1, double rfreq1, float *vsour1,
-		    double *antpos1, int readant1)
+		    double *antpos1, int readant1, int *noskip1)
 { 
   /* rspokeflshsma_c == pokeflsh */
   int buffer, i,ii;
@@ -303,6 +304,7 @@ void rspokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1,
   smabuffer.longi  = long1;
   smabuffer.refant = refant1;
   smabuffer.dolsr  = *dolsr1;
+  smabuffer.noskip = *noskip1;
   smabuffer.vsource= *vsour1;
   smabuffer.juldate= -10.00;
          
@@ -1977,8 +1979,9 @@ double xyzpos;
       }
       
       /* write source to uvfile */
-      if((strncmp(multisour[sourceID].name,target,6)!=0)&&
-	 (strncmp(multisour[sourceID].name,unknown,7)!=0)) {
+      if(((strncmp(multisour[sourceID].name,target,6)!=0)&&
+        (strncmp(multisour[sourceID].name,unknown,7)!=0))||
+          smabuffer.noskip==1) {
 	char sour[9];
 	strncpy(sour, multisour[sourceID].name, 9);
 	//     printf(" %s %8s\n", sour, sour);
@@ -2297,13 +2300,16 @@ double xyzpos;
 /* call rspokeflshsma_c to store databuffer to uvfile */
 	kstat = -1;
 	*kst = (char *)&kstat;
+        if(smabuffer.noskip!=1) {
         if((strncmp(multisour[sourceID].name,target,6)!=0)&&
            (strncmp(multisour[sourceID].name,unknown,7)!=0)) {
 	  rspokeflshsma_c(kst);
 
 	} else {
           ntarget++;
-	}
+	}      } else {
+              rspokeflshsma_c(kst);
+                      }
       }
     }
     printf("set=%4d ints=%4d inhid=%4d time(JulianDay)=%9.5f int=% 4.1f \n",
