@@ -100,9 +100,10 @@ c    07oct05 mchw Convert ascii data to Miriad for CARMA.
 c    13oct05 mchw correct phase for fringe rate at LO3 == 1 GHz sampler
 c    14oct05 mchw JD = 240000.5d0 + MJD = mjd(1970) + UnixTime
 c    15oct05 mchw set channel frequencies for band 1, 2 and 3.
+c    10nov05 mchw add lst uvvariable.
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version = 'AX: version 1.0 15-Oct-2005')
+	parameter(version = 'AX: version 1.0 10-Nov-2005')
 
 	include 'maxdim.h'
 	include 'mirconst.h'
@@ -307,6 +308,7 @@ c  Apparent RA and DEC of phase center at time of observation.
 
 c  get LST
 	call Jullst(preamble(4),along,lst)
+	call uvputvrd(unit,'lst',lst,1)
 	call uvputvrd(unit,'ra',ra,1)
 	call uvputvrd(unit,'dec',dec,1)
 	call uvputvrr(unit,'epoch',2000.,1)
