@@ -111,10 +111,11 @@ c    10jun96 mchw  Added # to antpos title so uvgen can read antpos file.
 c    29jun98 pjt   fixed linux/g77 fortran standards (x->1x, removed fdate)
 c    26dec01 mchw  Format change in befit to handle a-array.
 c    22mar05 mchw  Get longitude from uvvariable instead of obspar.
+c    10nov05 mchw  Added summary in topocentric coordinates.
 c-----------------------------------------------------------------------
 	include 'bee.h'
 	character version*(*),device*80,log*80,ans*20
-	parameter(version='(version 3.0 22-MAR-2005)')
+	parameter(version='(version 3.0 10-NOV-2005)')
 	integer length,tvis,tgains,iostat
 	logical doscale
 c
@@ -1359,6 +1360,7 @@ c
 c
 c  Same position change for all sources !!
 c
+c	print *, 'drar= ',drar,'   ddecr= ',ddecr
 	  if(drar.ne.0. .or. ddecr.ne.0.) then
 	    u =   b(1)*sinh + b(2)*cosh
 	    v = (-b(1)*cosh + b(2)*sinh)*sind + b(3)*cosd
@@ -3065,6 +3067,36 @@ c
      *      amdone(k),phdone(k),eddone(k)
 	  call LogWrit(line)
 	enddo
+c
+c  Convert to topocentric coordinates.
+c
+c        b1 = -x * sinl + z * cosl
+c        b2 =           y
+c        b3 =  x * cosl + z * sinl
+c
+	call LogWrit(' ')
+	write(line,'(a)')
+     *	  'Convert to topocentric coordinates.'
+	call LogWrit(line)
+	write(line,'(a,7x,a,19x,a,10x,a)')
+     *	  'Ant','Original antenna positions','Changes','AM PH ED'
+	call LogWrit(line)
+	do k=1,nants
+	  write(line,'(i3,2x,3f11.4,5x,3f9.4,3x,a,2x,a,2x,a)')
+     *	 k,-antpos(k)*slat+antpos(k+nants*2)*clat,
+     *	 antpos(k+nants),
+     *	 antpos(k)*clat+antpos(k+nants*2)*slat,
+     *   -(antfit(k,1)-antpos(k))*slat + 
+     *                      (antfit(k,3)-antpos(k+nants*2))*clat,
+     *   antfit(k,2)-antpos(k+nants),
+     *   (antfit(k,1)-antpos(k))*clat + 
+     *                      (antfit(k,3)-antpos(k+nants*2))*slat,
+     *   amdone(k),phdone(k),eddone(k)
+	  call LogWrit(line)
+	enddo
+c        b1 = -x * sinl + z * cosl
+c        b2 =           y
+c        b3 =  x * cosl + z * sinl
 c
 	end 
 c********1*********2*********3*********4*********5*********6*********7*c
