@@ -307,6 +307,9 @@ if ($intel) then
 else if ($g95) then
   echo "Using g95 compiler for linux"
   cp $MIR/src/sys/bin/compile.linux_g95   $MIR/bin/localsys/compile.linux
+else
+  echo "Using g77 compiler for linux"
+  cp $MIR/src/sys/bin/compile.linux   $MIR/bin/localsys/compile.linux
 endif
 
 cd $MIR
