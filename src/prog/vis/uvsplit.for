@@ -66,6 +66,8 @@ c    rjs  05aug96 Increased maxfiles.
 c    rjs  23jul97 Added pbtype.
 c    rjs  16aug04 Added various variables to the list to be copied across.
 c    rjs  19sep04 Copy across sensitivity model and more variables.
+c    jhz  16nov05 changed MAXINDX from 16 to 48 for handling
+c                 large number of spectral windows data (SMA data).
 c  Bugs:
 c   Perfect?
 c------------------------------------------------------------------------
@@ -73,7 +75,7 @@ c------------------------------------------------------------------------
 	integer MAXSELS
 	parameter(MAXSELS=256)
 	character version*(*)
-	parameter(version='UvSplit: version 1.0 19-Sep-04')
+	parameter(version='UvSplit: version 1.0 16-Nov-05')
 c
 	character vis*64,dtype*1
 	integer tvis
@@ -172,7 +174,7 @@ c    mosaic
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	integer MAXINDX
-	parameter(MAXINDX=16)
+	parameter(MAXINDX=48)
 c
 	complex data(MAXCHAN)
 	logical flags(MAXCHAN),skip
