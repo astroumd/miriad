@@ -193,8 +193,11 @@ c                 hybrid spectral resolutions.
 c    jhz 30sep05  fixed a bug in plotting both (amplitude and phase) for yaxis
 c                 in the case that plotting interval is less than the 
 c                 total observing interval.
-c    jhz 08sep05 fixed a small bug in the pghline
+c    jhz 08nov05  fixed a small bug in the pghline
 c                 when the start spectral chunks are flagged.
+c    jhz 16nov05  fixed a bug in spectral channel pointer in the pghline 
+c                 when hybrid spectral channel numbers used in the spectral 
+c                 windows.
 c>  Bugs:
 c------------------------------------------------------------------------
 c=======================================================================
@@ -240,7 +243,7 @@ c
         character mname*8000, moln*16
         integer mtag(maxmline), nmline, j, jp, js, je, iline
         character version*(*)
-        parameter(version='SmaUvSpec: version 1.11 08-Nov-05')
+        parameter(version='SmaUvSpec: version 1.12 16-Nov-05')
         character uvflags*8,device*64,xaxis*12,yaxis*12,logf*64
         character xtitle*64,ytitle*64, veldef*8
         character xtitlebuf*64
@@ -1703,11 +1706,15 @@ c
         enddo
         j=sppntr(1)
         do i=1, npts
-        if(sppntr(i).eq.j) then
-         fnschan(j)=fnschan(j)+1
-         else
-          j=sppntr(i)
-          fnschan(j)=1
+c           write(*,*) sppntr(i),i, j
+         if(sppntr(i).eq.j) then
+           fnschan(j)=fnschan(j)+1
+           else
+c if the spectral window pointer "sppntr(i)"
+c is changed, j needs to be updated to the next spectral
+c window and the channel pointer needs to be initialized to 1
+           j=sppntr(i)
+           fnschan(j)=1
          endif
         enddo
 c
@@ -1721,7 +1728,13 @@ c
         symbol=2
         yloc=0.95
         call pgbbuf
-        start = 1+(startchunk-1)*nspect
+c        start = 1+(startchunk-1)*nspect
+          start=1
+          if (startchunk.gt.1) then
+          do i=1, startchunk
+          start=start+fnschan(startchunk-1)
+          end do
+          end if
         end = 2
            i=0
            ci=25
@@ -1748,7 +1761,8 @@ c
              call  pgsci(ci)
              if(j.eq.1) call  pgsci(7)
              if(j.eq.7) call  pgsci(25)
-             if(startpntr.ne.0) call pgmove(x(start),y(start))
+             if(startpntr.ne.0) 
+     *          call pgmove(x(start),y(start))
              N=0
           do k=1, fnschan(j)
                i=i+1
