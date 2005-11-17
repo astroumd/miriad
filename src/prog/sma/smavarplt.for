@@ -6,7 +6,12 @@ c& jhz for SMA
 c: plotting
 c+
 c	SmaVarPlt is a MIRIAD task which plots and lists variables from a
-c	uv file.
+c	uv file. Maximum number of sources in the uvdata must be less
+c       than 100. The data points are color-coded for each of the
+c       sources if the total number of source is less than or equal
+c       to 48. If the total number of sources exceeds 48, the data 
+c       points are plotted in mono-color.
+c
 c@ vis
 c	The name of the input data-set. No default.
 c@ device
@@ -71,13 +76,16 @@ c    jhz  02aug04 added color index coded for sources
 c    jhz  09feb05 fixed the units for variable systmp.
 c    jhz  05aug05 add the flag (all) to options
 c    jhz  08nov05 fixed a bug in yaxis scale range when flagging is involved
+c    jhz  17nov05 extended the size of the source array from 32 to 100; 
+c                 color coding the variable for each source if the total 
+c                 number of sources is less than or equal to 48.
 c  Bugs:
 c    ?? Perfect?
 c------------------------------------------------------------------------
         character version*(*)
         integer maxpnts
         parameter(maxpnts=100000)
-        parameter(version='SmaVarPlt: version 1.2 08-Nov-05')
+        parameter(version='SmaVarPlt: version 1.3 17-Nov-05')
         logical doplot,dolog,dotime,dounwrap
         character vis*64,device*64,logfile*64,xaxis*16,yaxis*16
         character xtype*1,ytype*1,xunit*16,yunit*16,calday*24
@@ -488,7 +496,9 @@ c------------------------------------------------------------------------
         integer x1,x2,y1,y2,xoff,yoff,kx,ky
         logical xext,yext,xr,yr
         real xlo,xhi,ylo,yhi
-        character source(32)*32
+        integer maxsource
+        parameter(maxsource=100)
+        character source(maxsource)*32
         integer soupnt(10000*10), nsource
         common/sour/soupnt,source,nsource
 c
@@ -587,16 +597,18 @@ C 17-Dec-1990 - add polygons [PAH].
 C 14-Mar-1997 - optimization: use GRDOT1 [TJP].
 C-----------------------------------------------------------------------
       LOGICAL PGNOTO, FLAG(N)
-        character source(32)*32, title*64
+      integer maxsource
+      parameter(maxsource=100)
+        character source(maxsource)*32, title*64
       integer soupnt(10000*10), indx, mindx
-      real xx(100), yy(100), xloc, yloc, yerr(100)
+      real xx(100), yy(100), yloc, yerr(100)
       real  a(10),xfit(N),yfit(N)
       double precision chisq
       integer nterms, mode, Npl, i, nsource
       real pl(N)
       common/sour/soupnt,source,nsource
       real rmsflag
-      integer dofit
+      integer dofit,ci
       common/smfix/rmsflag,dofit
 
 C
@@ -621,9 +633,58 @@ c
        NPL=0
       CALL PGBBUF
        do i=1, N
+          if(nsource.le.48) then
         indx=soupnt(i) 
         if(indx.gt.mindx) mindx =indx
-            call pgsci(indx)
+            if (indx.le.12) then
+                  call pgsci(indx)
+                            else
+            ci=indx
+            if(ci.eq.13) call pgscr(ci, 1.0, 1.0, 0.5)
+            if(ci.eq.14) call pgscr(ci, 1.0, 1.0, 0.0)
+            if(ci.eq.15) call pgscr(ci, 1.0, 0.5, 0.5)
+            if(ci.eq.16) call pgscr(ci, 1.0, 0.5, 0.2)
+            if(ci.eq.17) call pgscr(ci, 1.0, 0.0, 0.5)
+            if(ci.eq.18) call pgscr(ci, 1.0, 0.2, 0.2)
+            if(ci.eq.19) call pgscr(ci, 0.5, 1.0, 0.5)
+            if(ci.eq.20) call pgscr(ci, 0.7, 0.70, 0.70)
+            if(ci.eq.21) call pgscr(ci, 0.7, 0.5, 0.5)
+            if(ci.eq.22) call pgscr(ci, 0.7, 0.5, 0.9)
+            if(ci.eq.23) call pgscr(ci, 0.5, 0.0, 0.5)
+            if(ci.eq.24) call pgscr(ci, 0.75, 0.2, 0.3)
+c
+            if(ci.eq.25) call pgscr(ci, 0.8, 1.0, 0.5)
+            if(ci.eq.26) call pgscr(ci, 0.8, 1.0, 0.0)
+            if(ci.eq.27) call pgscr(ci, 0.8, 0.5, 0.5)
+            if(ci.eq.28) call pgscr(ci, 0.8, 0.5, 0.2)
+            if(ci.eq.29) call pgscr(ci, 0.8, 0.0, 0.5)
+            if(ci.eq.30) call pgscr(ci, 0.8, 0.2, 0.2)
+            if(ci.eq.31) call pgscr(ci, 0.3, 1.0, 0.5)
+            if(ci.eq.32) call pgscr(ci, 0.5, 0.70, 0.70)
+            if(ci.eq.33) call pgscr(ci, 0.5, 0.5, 0.5)
+            if(ci.eq.34) call pgscr(ci, 0.5, 0.5, 0.9)
+            if(ci.eq.35) call pgscr(ci, 0.3, 0.0, 0.5)
+            if(ci.eq.36) call pgscr(ci, 0.55, 0.2, 0.3)
+
+c
+            if(ci.eq.37) call pgscr(ci, 0.8, 0.8, 0.5)
+            if(ci.eq.38) call pgscr(ci, 0.8, 0.8, 0.0)
+            if(ci.eq.39) call pgscr(ci, 0.8, 0.3, 0.5)
+            if(ci.eq.40) call pgscr(ci, 0.8, 0.3, 0.2)
+            if(ci.eq.41) call pgscr(ci, 0.8, 0.0, 0.3)
+            if(ci.eq.42) call pgscr(ci, 0.8, 0.0, 0.2)
+            if(ci.eq.43) call pgscr(ci, 0.3, 0.8, 0.5)
+            if(ci.eq.44) call pgscr(ci, 0.5, 0.50, 0.70)
+            if(ci.eq.45) call pgscr(ci, 0.5, 0.3, 0.5)
+            if(ci.eq.46) call pgscr(ci, 0.5, 0.3, 0.9)
+            if(ci.eq.47) call pgscr(ci, 0.3, 0.0, 0.2)
+            if(ci.eq.48) call pgscr(ci, 0.55, 0.0, 0.3)
+            call  pgsci(ci)
+            end if
+            else
+            ci=3   ! green
+            call  pgsci(ci)
+            end if
             if(FPTS(i).eq.1) then
                xx(1) = XPTS(i)
                yy(1) = YPTS(i)
@@ -638,18 +699,23 @@ c
       END IF
        end do
       CALL PGEBUF
-          yloc=0.9
+          if (nsource.le.48) then 
+          yloc=1.0
             do j=1, mindx
-       CALL PGBBUF
+              CALL PGBBUF
               call pgsci(j)
-             write(title,'(a)') source(j)
+              write(title,'(a)') source(j)
                l = len1(title)
                call pglen(5,title(1:l),xlen,ylen)
-               xloc = 0.8
+               if(j.eq.25) then
+               yloc=1.0
+               end if
                yloc = yloc-1/25.
-              call pgmtxt('RV',-7.0,yloc,0.,title(1:l))
+              if(j.ge.25) call pgmtxt('RV',-7.0,yloc,0.,title(1:l))
+              if(j.le.24) call pgmtxt('LV',-1.0,yloc,0.,title(1:l))
           call pgebuf
             end do
+            end if
 
 
 
@@ -661,25 +727,13 @@ c
 c sort the data
 c
            call xysort(NPL, XFIT, YFIT)
-c                  do i=1, NPL
-c                     write(*,*) XFIT(i),i
-c                  end do
 c
 c call polynomial fit
 c
           mode=0;
-c          nterms =3 parabolic
            nterms= dofit+1
           call polfit(XFIT,YFIT,yerr,NPL,nterms,mode,a,chisq)
-c               do i=1, nterms
-c                 write(*,*) 'i a', i, a(i)
-c               end do
            call curvefit(nterms,a,NPL, XFIT, pl)
-c
-c call avevar
-c
-c          call avevar(YPTS, N, ave, var)
-c          write (*,*) 'N ave rms', N, ave, sqrt(var)
          call pgsci(1)
          call pgline (NPL, XFIT, pl)
                 end if
@@ -893,7 +947,9 @@ c************************************************************************
         real flagvar(ydim*maxpnt)
         double precision xscale,xoff,yscale,yoff
         integer soupnt(10000*10)
-        character source(32)*32
+        integer maxsource
+        parameter(maxsource=100)
+        character source(maxsource)*32
 c
 c------------------------------------------------------------------------
         integer maxruns,xsoupnt,maxspect
@@ -1014,17 +1070,19 @@ c         write(*,*) 'tsysflg=', tsysflag(i,inhid), i,inhid,mytime(inhid)
                   nflagbl(i)=0
                   end do
               call uvrewind(tin)
-          sourid=1
-          nsource=1
+          sourid=0
+          nsource=0
           nrecord=0
           ctime=0
           inhid=0
             iostat = uvscan(tin, ' ')
           dowhile(iostat.eq.0.and.npnts.lt.maxpnt)
           call uvgetvra(tin,'source',souread)
-          if (souread.ne.' '.and.sourid.eq.1) then
+          if (souread.ne.' '.and.sourid.eq.0) then
                   sourid=sourid+1
                   nsource=nsource+1
+          if(nsource.gt.maxsource) 
+     *    call bug('f','too many sources!')
            source(sourid)=souread
            else
                do i=1, nsource
@@ -1035,6 +1093,9 @@ c         write(*,*) 'tsysflg=', tsysflag(i,inhid), i,inhid,mytime(inhid)
                  if(i.eq.nsource) then
                       source(i+1)=souread
                       nsource=nsource+1
+             if(nsource.gt.maxsource)
+     *    call bug('f','too many sources!')
+
                       goto 555
                   end if
                end do
