@@ -9,6 +9,10 @@ c+
 c	SmaFix plots and does least square fitting with an order
 c       of polynomial to the antenna-based Tsys measurements.
 c       SmaFix also applies the Tsys corrections to the visibilies. 
+c       SmaFix can handle upto 100 sources per file. For options
+c       of polynomial fitting to the data of individual sources 
+c       separately, the maximum number sources that can be handled 
+c       in SmaFix is 48.
 c       
 c@ vis
 c	The name of the input data-set. No default.
@@ -75,6 +79,7 @@ c                    save the original Tsys measurements.
 c         "all"      uses all data associated with flagged and unflagged 
 c                    visibilties. The default uses only unflagged
 c                    (good) data.
+c
 c         "tsysfix"  uses the polynomial fit to Tsys from the unflagged (good) 
 c                    data to interpolate the Tsys at flagged data points
 c                    and replaces only the bad Tsys values with the polynomial 
@@ -141,11 +146,15 @@ c jhz: 2005-10-17 fix a bug in flagging pointering while sorting the data.
 c                 add warning statement undert options =tsysfix
 c                 considering the fact that  the smalod takes online flag 
 c                 states.
+c jhz: 2005-11-17 extended the maximum size of the source array
+c                 to 100. Added maximum number sources of 48 for polynomial
+c                 fitting to individual sources' data separately.
+c
 c------------------------------------------------------------------------
         character version*(*)
-        integer maxpnts
-        parameter(maxpnts=100000)
-        parameter(version='SmaFix: version 1.9 15-Oct-05')
+        integer maxpnts,maxfit
+        parameter(maxpnts=100000,maxfit=48)
+        parameter(version='SmaFix: version 1.10 17-Nov-05')
         logical doplot,dolog,dotime,dounwrap
         character vis*64,device*64,logfile*64,xaxis*16,yaxis*16
         character out*64
@@ -160,8 +169,8 @@ c------------------------------------------------------------------------
         integer i,j,k,l,bant(10),gant(10),rant(10),ggant
         real flagvar(maxpnts)
         logical dotsys,tsysplt,dosour,dotswap,doflag,dotsysfix
-        real apl(10,32,10)
-        double precision xapl(10,32,10),bppl(10,32,10,10)
+        real apl(10,maxfit,10)
+        double precision xapl(10,maxfit,10),bppl(10,maxfit,10,10)
         common/smfix/rmsflag,dofit,dotsys,dotswap,
      *               tsysplt,xaxisparm,dosour 
         common/cpolfit/apl,xapl,bppl,antid,nterms 
@@ -627,7 +636,9 @@ c------------------------------------------------------------------------
         integer x1,x2,y1,y2,xoff,yoff,kx,ky, symbol
         logical xext,yext,xr,yr
         real xlo,xhi,ylo,yhi
-        character source(32)*32
+        integer maxsource
+        parameter(maxsource=100)
+        character source(maxsource)*32
         integer soupnt(10000*10),nsource
         common/sour/soupnt,source,nsource
         real rmsflag
@@ -738,17 +749,20 @@ C-----------------------------------------------------------------------
         double precision XD(N), YD(N), DDELTAY(N)
         double precision XA(MAXNR),BP(MAXNR,MAXNR),AP(N,MAXNR)
         double precision CHI2(MAXNR)
-        character source(32)*32, title*64
+        integer maxsource,maxfit
+        parameter(maxsource=100, maxfit=48)
+        character source(maxsource)*32, title*64
         integer soupnt(10000*10), indx, mindx
-        real xx(100), yy(100), xloc, yloc
+        real xx(100), yy(100),  yloc
         real xfit(N),yfit(N), yerr(N)
         real xbuf(N),ybuf(N),flagbuf(N)
-        integer Fsfit(N,32), Fsfitbuf(N)
-        logical FsFlag(N,32), FsFlagbuf(N)
-        real xsfit(N,32),ysfit(N,32)
-        double precision dxsfit(N,32),dysfit(N,32), dyserr(N,32)
-        real dflag(N,32)
-        integer Ns(32), Nss
+        integer Fsfit(N,maxfit), Fsfitbuf(N)
+        logical FsFlag(N,maxfit), FsFlagbuf(N)
+        real xsfit(N,maxfit),ysfit(N,maxfit)
+        double precision dxsfit(N,maxfit),dysfit(N,maxfit) 
+        double precision dyserr(N,maxfit)
+        real dflag(N,maxfit)
+        integer Ns(maxfit), Nss,ci
         integer nterms, mode, Npl, i,j,k
         real pl(N)
         integer nsource
@@ -756,12 +770,14 @@ C-----------------------------------------------------------------------
         real rmsflag
         integer dofit, antid, xaxisparm
         logical dotsys, tsysplt, dosour, dotswap
-        real apl(10,32,10)
-        double precision xapl(10,32,10),bppl(10,32,10,10)
+        real apl(10,maxfit,10)
+        double precision xapl(10,maxfit,10),bppl(10,maxfit,10,10)
         common/smfix/rmsflag,dofit,dotsys,dotswap,
      *               tsysplt,xaxisparm, dosour
         common/cpolfit/apl,xapl,bppl,antid,nterms
 C
+       if(nsource.gt.maxfit.and.dosour.and.(dofit.gt.0))
+     * call bug('f', 'Too many sources to fit the sources separately.') 
       IF (N.LT.1) RETURN
       IF (PGNOTO('PGPT')) RETURN
 c
@@ -787,7 +803,7 @@ c
 c source in xfit and xfit in the order of ascending xfit value
                call xysortr(N, XFIT, YFIT)
 c initialize the source-based number of data
-               do i=1, 32
+               do i=1,maxfit 
                Ns(i) = 0
                end do
 c do source separation
@@ -809,7 +825,6 @@ c
                end if
                end do
                end do
-                 
                 do k=1, nsource
 c sorting data into an order of ascending xsfit value for each source                
                 do i=1, Ns(k)
@@ -848,9 +863,58 @@ c
        NPL=0
        CALL PGBBUF
        do i=1, N
+          if(nsource.le.48) then
         indx=soupnt(i) 
         if(indx.gt.mindx) mindx =indx
+             if (indx.le.12) then
             call pgsci(indx)
+                  else
+            ci=indx
+            if(ci.eq.13) call pgscr(ci, 1.0, 1.0, 0.5)
+            if(ci.eq.14) call pgscr(ci, 1.0, 1.0, 0.0)
+            if(ci.eq.15) call pgscr(ci, 1.0, 0.5, 0.5)
+            if(ci.eq.16) call pgscr(ci, 1.0, 0.5, 0.2)
+            if(ci.eq.17) call pgscr(ci, 1.0, 0.0, 0.5)
+            if(ci.eq.18) call pgscr(ci, 1.0, 0.2, 0.2)
+            if(ci.eq.19) call pgscr(ci, 0.5, 1.0, 0.5)
+            if(ci.eq.20) call pgscr(ci, 0.7, 0.70, 0.70)
+            if(ci.eq.21) call pgscr(ci, 0.7, 0.5, 0.5)
+            if(ci.eq.22) call pgscr(ci, 0.7, 0.5, 0.9)
+            if(ci.eq.23) call pgscr(ci, 0.5, 0.0, 0.5)
+            if(ci.eq.24) call pgscr(ci, 0.75, 0.2, 0.3)
+c
+            if(ci.eq.25) call pgscr(ci, 0.8, 1.0, 0.5)
+            if(ci.eq.26) call pgscr(ci, 0.8, 1.0, 0.0)
+            if(ci.eq.27) call pgscr(ci, 0.8, 0.5, 0.5)
+            if(ci.eq.28) call pgscr(ci, 0.8, 0.5, 0.2)
+            if(ci.eq.29) call pgscr(ci, 0.8, 0.0, 0.5)
+            if(ci.eq.30) call pgscr(ci, 0.8, 0.2, 0.2)
+            if(ci.eq.31) call pgscr(ci, 0.3, 1.0, 0.5)
+            if(ci.eq.32) call pgscr(ci, 0.5, 0.70, 0.70)
+            if(ci.eq.33) call pgscr(ci, 0.5, 0.5, 0.5)
+            if(ci.eq.34) call pgscr(ci, 0.5, 0.5, 0.9)
+            if(ci.eq.35) call pgscr(ci, 0.3, 0.0, 0.5)
+            if(ci.eq.36) call pgscr(ci, 0.55, 0.2, 0.3)
+c
+            if(ci.eq.37) call pgscr(ci, 0.8, 0.8, 0.5)
+            if(ci.eq.38) call pgscr(ci, 0.8, 0.8, 0.0)
+            if(ci.eq.39) call pgscr(ci, 0.8, 0.3, 0.5)
+            if(ci.eq.40) call pgscr(ci, 0.8, 0.3, 0.2)
+            if(ci.eq.41) call pgscr(ci, 0.8, 0.0, 0.3)
+            if(ci.eq.42) call pgscr(ci, 0.8, 0.0, 0.2)
+            if(ci.eq.43) call pgscr(ci, 0.3, 0.8, 0.5)
+            if(ci.eq.44) call pgscr(ci, 0.5, 0.50, 0.70)
+            if(ci.eq.45) call pgscr(ci, 0.5, 0.3, 0.5)
+            if(ci.eq.46) call pgscr(ci, 0.5, 0.3, 0.9)
+            if(ci.eq.47) call pgscr(ci, 0.3, 0.0, 0.2)
+            if(ci.eq.48) call pgscr(ci, 0.55, 0.0, 0.3)
+            call  pgsci(ci)
+            end if
+            else
+            ci=3   ! green
+            call  pgsci(ci)
+            end if
+
                xx(1) = XPTS(i)
                yy(1) = YPTS(i)
                   if(FLAG(i)) then
@@ -880,18 +944,23 @@ c
           CALL PGEBUF
 
 c label the sources
-          yloc=0.9
+             if (nsource.le.48) then
+          yloc=1.0
             do j=1, mindx
           CALL PGBBUF
                call pgsci(j)
                write(title,'(a)') source(j)
                l = len1(title)
                call pglen(5,title(1:l),xlen,ylen)
-               xloc = 0.8
+               if(j.eq.25) then
+               yloc=1.0
+               end if
                yloc = yloc-1/25.
-               call pgmtxt('RV',-7.0,yloc,0.,title(1:l))
+            if(j.ge.25) call pgmtxt('RV',-7.0,yloc,0.,title(1:l))
+            if(j.le.24) call pgmtxt('LV',-1.0,yloc,0.,title(1:l))
           call pgebuf
             end do
+            end if
 
 c
 c do fit with no source separation
@@ -971,7 +1040,52 @@ c
                 end do
 
            call regpolfitg(nterms,xa,bp,Ns(k),XsFIT(1,k),YsFIT(1,k))
-           call pgsci(k)
+           if (k.le.12) then
+                  call pgsci(k)
+                else
+            ci=k
+            if(ci.eq.13) call pgscr(ci, 1.0, 1.0, 0.5)
+            if(ci.eq.14) call pgscr(ci, 1.0, 1.0, 0.0)
+            if(ci.eq.15) call pgscr(ci, 1.0, 0.5, 0.5)
+            if(ci.eq.16) call pgscr(ci, 1.0, 0.5, 0.2)
+            if(ci.eq.17) call pgscr(ci, 1.0, 0.0, 0.5)
+            if(ci.eq.18) call pgscr(ci, 1.0, 0.2, 0.2)
+            if(ci.eq.19) call pgscr(ci, 0.5, 1.0, 0.5)
+            if(ci.eq.20) call pgscr(ci, 0.7, 0.70, 0.70)
+            if(ci.eq.21) call pgscr(ci, 0.7, 0.5, 0.5)
+            if(ci.eq.22) call pgscr(ci, 0.7, 0.5, 0.9)
+            if(ci.eq.23) call pgscr(ci, 0.5, 0.0, 0.5)
+            if(ci.eq.24) call pgscr(ci, 0.75, 0.2, 0.3)
+c
+            if(ci.eq.25) call pgscr(ci, 0.8, 1.0, 0.5)
+            if(ci.eq.26) call pgscr(ci, 0.8, 1.0, 0.0)
+            if(ci.eq.27) call pgscr(ci, 0.8, 0.5, 0.5)
+            if(ci.eq.28) call pgscr(ci, 0.8, 0.5, 0.2)
+            if(ci.eq.29) call pgscr(ci, 0.8, 0.0, 0.5)
+            if(ci.eq.30) call pgscr(ci, 0.8, 0.2, 0.2)
+            if(ci.eq.31) call pgscr(ci, 0.3, 1.0, 0.5)
+            if(ci.eq.32) call pgscr(ci, 0.5, 0.70, 0.70)
+            if(ci.eq.33) call pgscr(ci, 0.5, 0.5, 0.5)
+            if(ci.eq.34) call pgscr(ci, 0.5, 0.5, 0.9)
+            if(ci.eq.35) call pgscr(ci, 0.3, 0.0, 0.5)
+            if(ci.eq.36) call pgscr(ci, 0.55, 0.2, 0.3)
+                                                                                           
+c
+            if(ci.eq.37) call pgscr(ci, 0.8, 0.8, 0.5)
+            if(ci.eq.38) call pgscr(ci, 0.8, 0.8, 0.0)
+            if(ci.eq.39) call pgscr(ci, 0.8, 0.3, 0.5)
+            if(ci.eq.40) call pgscr(ci, 0.8, 0.3, 0.2)
+            if(ci.eq.41) call pgscr(ci, 0.8, 0.0, 0.3)
+            if(ci.eq.42) call pgscr(ci, 0.8, 0.0, 0.2)
+            if(ci.eq.43) call pgscr(ci, 0.3, 0.8, 0.5)
+            if(ci.eq.44) call pgscr(ci, 0.5, 0.50, 0.70)
+            if(ci.eq.45) call pgscr(ci, 0.5, 0.3, 0.5)
+            if(ci.eq.46) call pgscr(ci, 0.5, 0.3, 0.9)
+            if(ci.eq.47) call pgscr(ci, 0.3, 0.0, 0.2)
+            if(ci.eq.48) call pgscr(ci, 0.55, 0.0, 0.3)
+            call  pgsci(ci)
+            end if
+
            call pgline (Ns(k), XsFIT(1,k), YsFIT(1,k))
             end if
             end do
@@ -1329,9 +1443,10 @@ c
 c------------------------------------------------------------------------
         integer n,nsize(2),lints,lunits,laxis
         character ints*24
-        integer antid, nterms
-        real apl(10,32,10)
-        double precision  xapl(10,32,10),bppl(10,32,10,10)
+        integer antid, nterms, maxfit
+        parameter(maxfit=48)
+        real apl(10,maxfit,10)
+        double precision  xapl(10,maxfit,10),bppl(10,maxfit,10,10)
         common/cpolfit/apl,xapl,bppl,antid, nterms
 c
 c  Externals.
@@ -1454,7 +1569,9 @@ c
         real flagvar(ydim*maxpnt)
         double precision xscale,xoff,yscale,yoff
         integer soupnt(10000*10)
-        character source(32)*32
+        integer maxsource
+        parameter(maxsource=100)
+        character source(maxsource)*32
 c
 c------------------------------------------------------------------------
         integer maxruns,xsoupnt,maxspect
@@ -1575,18 +1692,21 @@ c         write(*,*) 'tsysflg=', tsysflag(i,inhid), i,inhid,mytime(inhid)
                   nflagbl(i)=0
                   end do
               call uvrewind(tin)
-          sourid=1
-          nsource=1
+          sourid=0
+          nsource=0
           nrecord=0
           ctime=0
           inhid=0
             iostat = uvscan(tin, ' ')
           dowhile(iostat.eq.0.and.npnts.lt.maxpnt)
           call uvgetvra(tin,'source',souread)
-          if (souread.ne.' '.and.sourid.eq.1) then
+          if (souread.ne.' '.and.sourid.eq.0) then
                   sourid=sourid+1
                   nsource=nsource+1
+             if(nsource.gt.maxsource)
+     *    call bug('f','too many sources!')
            source(sourid)=souread
+
            else
                do i=1, nsource
                 if(souread.eq.source(i)) then
@@ -1596,6 +1716,8 @@ c         write(*,*) 'tsysflg=', tsysflag(i,inhid), i,inhid,mytime(inhid)
                  if(i.eq.nsource) then
                       source(i+1)=souread
                       nsource=nsource+1
+                 if(nsource.gt.maxsource)
+     *    call bug('f','too many sources!')
                       goto 555
                   end if
                end do
@@ -2077,14 +2199,18 @@ c        real getjpk
         real rmsflag, antel, tsysv, timev,tsts(maxinte)
         integer dofit, antid, xaxisparm, nterms
         logical dotsys, tsysplt, dotime, dosour,dotswap
-        real apl(10,32,10)
-        double precision xapl(10,32,10),bppl(10,32,10,10) 
+        integer maxfit
+        parameter(maxfit=48)
+        real apl(10,48,10)
+        double precision xapl(10,48,10),bppl(10,48,10,10) 
         double precision XA(10), BP(10,10) 
-        double precision aveXA(32,10), aveBP(32,10,10)
+        double precision aveXA(48,10), aveBP(48,10,10)
         common/smfix/rmsflag,dofit,dotsys,dotswap,
      *               tsysplt,xaxisparm,dosour
         common/cpolfit/apl, xapl, bppl, antid, nterms
-        character source(32)*32, souread*32
+        integer maxsource
+        parameter(maxsource=100)
+        character source(maxsource)*32, souread*32
         integer soupnt(10000*10),nsource, sourid
         common/sour/soupnt,source,nsource
         integer nave, navel, inhid, len1
@@ -2550,8 +2676,10 @@ c------------------------------------------------------------------------
          real rmsflag, t1t2
          integer dofit, antid, xaxisparm, nterms 
          logical dotsys,tsysplt,dosour
-         real apl(10,32,10)
-         double precision  xapl(10,32,10),bppl(10,32,10,10)
+         integer maxfit
+         parameter(maxfit=48)
+         real apl(10,maxfit,10)
+         double precision  xapl(10,maxfit,10),bppl(10,maxfit,10,10)
          common/smfix/rmsflag,dofit,dotsys,dotswap,
      *                tsysplt,xaxisparm,dosour
          common/cpolfit/apl,xapl,bppl,antid, nterms
