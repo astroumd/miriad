@@ -126,11 +126,13 @@ c    01aug05 jhz  antel restricted for systemp flagging.
 c    10aug05 jhz  fixed a bug in uvdist selection (commented out n=1 at line 1016)
 c                 for initializing the baseline weighting before calculating
 c                 baseline distances. 
+c    18nov05 jhz  extended the size of source array to 100;
+c                 extended the max color index to 48.
 c------------------------------------------------------------------------
         include 'smablflag.h'
 	character version*(*)
         integer maxdat,maxplt,maxedit
-        parameter(version='SmaBlFlag: version 1.5 10-August-2005')
+        parameter(version='SmaBlFlag: version 1.6 18-Nov-2005')
         parameter(maxdat=500000,maxplt=20000,maxedit=20000)
 c
         logical present(maxbase),nobase,selgen,noapply,rms,scalar
@@ -162,7 +164,9 @@ c
         integer pgbeg,len1
         logical uvdatopn,dotsys
         integer soupnt(maxdat),polst(maxdat)
-        character source(32)*32, polstr(13)*2
+        integer maxsource
+        parameter(maxsource=100)
+        character source(maxsource)*32, polstr(13)*2
         integer nsource, sourid
         common/sour/soupnt,source,nsource, sourid
 c
@@ -422,8 +426,9 @@ c------------------------------------------------------------------------
         integer maxdat
         external nearest
         parameter(maxdat=500000)        
-        integer soupnt(maxdat)
-        character source(32)*32
+        integer soupnt(maxdat),maxsource
+        parameter(maxsource=100)
+        character source(maxsource)*32
         integer nsource, sourid
         common/sour/soupnt,source,nsource,sourid
 c
@@ -443,10 +448,10 @@ c
               flag(i) = .true.
             enddo
             call draw(xmin,xmax,xplt,yplt,spntplt,flag,nplt,
-     *                  xaxis,yaxis,title,xs,ys,polst,polstr)
+     *           xaxis,yaxis,title,xs,ys,polst,polstr,mode)
           else if(mode.eq.'r')then
             call draw(xmin,xmax,xplt,yplt,spntplt,flag,nplt,
-     *                  xaxis,yaxis,title,xs,ys,polst,polstr)
+     *           xaxis,yaxis,title,xs,ys,polst,polstr,mode)
           else if(mode.eq.'h'.or.mode.le.' '.or.mode.eq.'?')then
             call output('-------------------------------------')
             call output('Single key commands are')
@@ -468,7 +473,7 @@ c
             xmin = 0
             xmax = 0
             call draw(xmin,xmax,xplt,yplt,spntplt,flag,nplt,
-     *                  xaxis,yaxis,title,xs,ys,polst,polstr)
+     *       xaxis,yaxis,title,xs,ys,polst,polstr,mode)
           else if(mode.eq.'x')then
             more = .false.
           else if(mode.eq.'z')then
@@ -477,7 +482,7 @@ c
             call output('Click on right-hand edge of the zoomed region')
             call pgcurs(xmax,yv,mode)
             call draw(xmin,xmax,xplt,yplt,spntplt,flag,nplt,
-     *                  xaxis,yaxis,title,xs,ys,polst,polstr)
+     *       xaxis,yaxis,title,xs,ys,polst,polstr,mode)
           else if(mode.eq.'a')then
           call nearest(xv,yv,xs,ys,xplt,yplt,blplt,timeplt,flag,nplt,
      *      bledit,timeedit,nedit,maxedit)
@@ -553,7 +558,7 @@ c
         end
 c************************************************************************
         subroutine draw(xmin,xmax,xplt,yplt,spntplt,flag,nplt,
-     *            xaxis,yaxis,title,xs,ys,polst,polstr)
+     *            xaxis,yaxis,title,xs,ys,polst,polstr,mode)
 c
         integer nplt, spntplt(nplt),polst(nplt)
         real xplt(nplt),yplt(nplt),xs,ys,xmin,xmax
@@ -564,10 +569,12 @@ c------------------------------------------------------------------------
         integer i,n
         logical good
         character xtitle*32,ytitle*32,xflags*12,yflags*12
+        character mode*1
         integer maxdat
         parameter(maxdat=500000)
-               integer soupnt(maxdat)
-        character source(32)*32,polstr(13)*2
+               integer soupnt(maxdat),maxsource
+        parameter(maxsource=100)
+        character source(maxsource)*32,polstr(13)*2
         integer nsource, sourid
         common/sour/soupnt,source,nsource, sourid
 c
@@ -606,7 +613,7 @@ c
         do i=2,nplt
           if(good.neqv.flag(i))then
             if(good)then
-              call pgpts(i-n,xplt(n),yplt(n),spntplt(n),1,polst,polstr)
+        call pgpts(i-n,xplt(n),yplt(n),spntplt(n),1,polst,polstr,mode)
             else
               n = i
             endif
@@ -614,7 +621,8 @@ c
           endif
         enddo
         if(good)
-     *  call pgpts(nplt-n+1,xplt(n),yplt(n),spntplt(n),1,polst,polstr)
+     * call pgpts(nplt-n+1,xplt(n),yplt(n),spntplt(n),1,polst,
+     * polstr,mode)
 c
 c  Change the colour to red.
 c
@@ -622,7 +630,7 @@ c
         call pgebuf
         end
 
-      SUBROUTINE pgpts (N, XPTS, YPTS, SPNT, SYMBOL,polst,polstr)
+      SUBROUTINE pgpts (N,XPTS,YPTS,SPNT,SYMBOL,polst,polstr,mode)
       INTEGER N
       REAL XPTS(N), YPTS(N)
       integer  polst(N)
@@ -632,14 +640,25 @@ c      INTEGER FPTS(N)
       LOGICAL PGNOTO 
         integer maxdat,npol
         parameter(maxdat=500000)
-        character  title*64
-        integer soupnt(maxdat)
-        character source(32)*32,polstr(13)*2
+        character  title*64,mode*1
+        integer soupnt(maxdat),maxsource,maxdx,limitdx
+        parameter(maxsource=100,limitdx=48)
+        character source(maxsource)*32,polstr(13)*2
         integer nsource, sourid, cindx, minpol, lp
         common/sour/soupnt,source,nsource, sourid
         logical polson(13)
         mindx=0
         minpol=4
+c  get the maxdx
+        do i=1, N
+        indx=SPNT(i)
+        if(indx.gt.mindx) mindx =indx
+        end do
+        maxdx=mindx
+        if(maxdx.gt.limitdx) then
+        call bug('w', 'Color index exceeds the limit 48.')
+        call bug('w', 'Mono-color is used for all the data points.')
+        end if
 
 C
 c sort pol state
@@ -668,24 +687,55 @@ C
          if(indx.gt.mindx) mindx =indx
          cindx = (indx-1)*npol+lp
          if(cindx.eq.2) then 
-             call pgscr(25, 1., 0.5, 0.8)
-             cindx=25
+             call pgscr(49, 1., 0.5, 0.8)
+             cindx=49
              end if
-                     if(cindx.gt.12) then
-            if(cindx.eq.13) call pgscr(cindx, .8, .2, 0.5)
-            if(cindx.eq.14) call pgscr(cindx, .7, .3, 0.0)
-            if(cindx.eq.15) call pgscr(cindx, .6, 0.4, 0.5)
-            if(cindx.eq.16) call pgscr(cindx, .5, 0.5, 0.2)
-            if(cindx.eq.17) call pgscr(cindx, .8, 0.6, 0.5)
-            if(cindx.eq.18) call pgscr(cindx, .7, 0.7, 0.2)
-            if(cindx.eq.19) call pgscr(cindx, 0.6, 1.0, 0.5)
-            if(cindx.eq.20) call pgscr(cindx, 0.5, 0.70, 0.70)
-            if(cindx.eq.21) call pgscr(cindx, 0.8, 0.5, 0.5)
+            if(cindx.gt.12) then
+            if(cindx.eq.13) call pgscr(cindx, 1.0, 1.0, 0.5)
+            if(cindx.eq.14) call pgscr(cindx, 1.0, 1.0, 0.0)
+            if(cindx.eq.15) call pgscr(cindx, 1.0, 0.5, 0.5)
+            if(cindx.eq.16) call pgscr(cindx, 1.0, 0.5, 0.2)
+            if(cindx.eq.17) call pgscr(cindx, 1.0, 0.0, 0.5)
+            if(cindx.eq.18) call pgscr(cindx, 0.5, 0.7, 0.2)
+            if(cindx.eq.19) call pgscr(cindx, 0.5, 1.0, 0.5)
+            if(cindx.eq.20) call pgscr(cindx, 0.7, 0.70, 0.70)
+            if(cindx.eq.21) call pgscr(cindx, 0.7, 0.5, 0.5)
             if(cindx.eq.22) call pgscr(cindx, 0.7, 0.5, 0.9)
-            if(cindx.eq.23) call pgscr(cindx, 0.6, 0.0, 0.5)
-            if(cindx.eq.24) call pgscr(cindx, 0.5, 0.2, 0.3)
+            if(cindx.eq.23) call pgscr(cindx, 0.5, 0.0, 0.5)
+            if(cindx.eq.24) call pgscr(cindx, 0.75, 0.2, 0.3)
+c
+            if(cindx.eq.25) call pgscr(cindx, 0.8, 1.0, 0.5)
+            if(cindx.eq.26) call pgscr(cindx, 0.8, 1.0, 0.0)
+            if(cindx.eq.27) call pgscr(cindx, 0.8, 0.5, 0.5)
+            if(cindx.eq.28) call pgscr(cindx, 0.8, 0.5, 0.2)
+            if(cindx.eq.29) call pgscr(cindx, 0.8, 0.2, 0.5)
+            if(cindx.eq.30) call pgscr(cindx, 0.8, 0.2, 0.2)
+            if(cindx.eq.31) call pgscr(cindx, 0.3, 1.0, 0.5)
+            if(cindx.eq.32) call pgscr(cindx, 0.5, 0.70, 0.70)
+            if(cindx.eq.33) call pgscr(cindx, 0.5, 0.5, 0.5)
+            if(cindx.eq.34) call pgscr(cindx, 0.5, 0.5, 0.9)
+            if(cindx.eq.35) call pgscr(cindx, 0.3, 0.0, 0.5)
+            if(cindx.eq.36) call pgscr(cindx, 0.55, 0.2, 0.3)
+c
+            if(cindx.eq.37) call pgscr(cindx, 0.8, 0.8, 0.5)
+            if(cindx.eq.38) call pgscr(cindx, 0.8, 0.8, 0.0)
+            if(cindx.eq.39) call pgscr(cindx, 0.8, 0.3, 0.5)
+            if(cindx.eq.40) call pgscr(cindx, 0.8, 0.3, 0.2)
+            if(cindx.eq.41) call pgscr(cindx, 0.8, 1.0, 0.3)
+            if(cindx.eq.42) call pgscr(cindx, 0.8, 1.0, 0.2)
+            if(cindx.eq.43) call pgscr(cindx, 0.3, 0.8, 0.5)
+            if(cindx.eq.44) call pgscr(cindx, 0.5, 0.50, 0.70)
+            if(cindx.eq.45) call pgscr(cindx, 0.5, 0.3, 0.5)
+            if(cindx.eq.46) call pgscr(cindx, 0.5, 0.3, 0.9)
+            if(cindx.eq.47) call pgscr(cindx, 0.3, 0.0, 0.2)
+            if(cindx.eq.48) call pgscr(cindx, 0.55, 0.0, 0.3)
                       end if
-           call pgsci(cindx)
+           if(maxdx.le.limitdx) then
+            call pgsci(cindx)
+            else
+            call pgsci(3) ! green
+            endif
+
       IF (SYMBOL.GE.0 .OR. SYMBOL.LE.-3) THEN
           CALL GRMKER(SYMBOL,.FALSE.,1,XPTS(i),YPTS(i))
       ELSE
@@ -693,39 +743,71 @@ C
       END IF
        end do
       CALL PGEBUF
-               do lp=1,npol
-       yloc=1.0-(lp-1.)*1./25. +(npol-1)*1./25.
+            do lp=1,npol
+            yloc=1.0-(lp-1.)*1./25. +(npol-1)*1./25.
             do j=1, mindx
               cindx=(j-1)*npol+lp
              if(cindx.eq.2) then
-              cindx=25
-             call pgscr(cindx, 1., 0.5, 0.8)
-                
+              cindx=49
+             call pgscr(49, 1., 0.5, 0.8)
             end if
-             if(cindx.gt.12) then
-            if(cindx.eq.13) call pgscr(cindx, .8, .2, 0.5)
-            if(cindx.eq.14) call pgscr(cindx, .7, .3, 0.0)
-            if(cindx.eq.15) call pgscr(cindx, .6, 0.4, 0.5)
-            if(cindx.eq.16) call pgscr(cindx, .5, 0.5, 0.2)
-            if(cindx.eq.17) call pgscr(cindx, .8, 0.6, 0.5)
-            if(cindx.eq.18) call pgscr(cindx, .7, 0.7, 0.2)
-            if(cindx.eq.19) call pgscr(cindx, 0.6, 1.0, 0.5)
-            if(cindx.eq.20) call pgscr(cindx, 0.5, 0.70, 0.70)
-            if(cindx.eq.21) call pgscr(cindx, 0.8, 0.5, 0.5)
+            if(cindx.gt.12) then
+            if(cindx.eq.13) call pgscr(cindx, 1.0, 1.0, 0.5)
+            if(cindx.eq.14) call pgscr(cindx, 1.0, 1.0, 0.0)
+            if(cindx.eq.15) call pgscr(cindx, 1.0, 0.5, 0.5)
+            if(cindx.eq.16) call pgscr(cindx, 1.0, 0.5, 0.2)
+            if(cindx.eq.17) call pgscr(cindx, 1.0, 0.0, 0.5)
+            if(cindx.eq.18) call pgscr(cindx, 0.5, 0.7, 0.2)
+            if(cindx.eq.19) call pgscr(cindx, 0.5, 1.0, 0.5)
+            if(cindx.eq.20) call pgscr(cindx, 0.7, 0.70, 0.70)
+            if(cindx.eq.21) call pgscr(cindx, 0.7, 0.5, 0.5)
             if(cindx.eq.22) call pgscr(cindx, 0.7, 0.5, 0.9)
-            if(cindx.eq.23) call pgscr(cindx, 0.6, 0.0, 0.5)
-            if(cindx.eq.24) call pgscr(cindx, 0.5, 0.2, 0.3)
+            if(cindx.eq.23) call pgscr(cindx, 0.5, 0.0, 0.5)
+            if(cindx.eq.24) call pgscr(cindx, 0.75, 0.2, 0.3)
+c
+            if(cindx.eq.25) call pgscr(cindx, 0.8, 1.0, 0.5)
+            if(cindx.eq.26) call pgscr(cindx, 0.8, 1.0, 0.0)
+            if(cindx.eq.27) call pgscr(cindx, 0.8, 0.5, 0.5)
+            if(cindx.eq.28) call pgscr(cindx, 0.8, 0.5, 0.2)
+            if(cindx.eq.29) call pgscr(cindx, 0.8, 0.2, 0.5)
+            if(cindx.eq.30) call pgscr(cindx, 0.8, 0.2, 0.2)
+            if(cindx.eq.31) call pgscr(cindx, 0.3, 1.0, 0.5)
+            if(cindx.eq.32) call pgscr(cindx, 0.5, 0.70, 0.70)
+            if(cindx.eq.33) call pgscr(cindx, 0.5, 0.5, 0.5)
+            if(cindx.eq.34) call pgscr(cindx, 0.5, 0.5, 0.9)
+            if(cindx.eq.35) call pgscr(cindx, 0.3, 0.0, 0.5)
+            if(cindx.eq.36) call pgscr(cindx, 0.55, 0.2, 0.3)
+c
+            if(cindx.eq.37) call pgscr(cindx, 0.8, 0.8, 0.5)
+            if(cindx.eq.38) call pgscr(cindx, 0.8, 0.8, 0.0)
+            if(cindx.eq.39) call pgscr(cindx, 0.8, 0.3, 0.5)
+            if(cindx.eq.40) call pgscr(cindx, 0.8, 0.3, 0.2)
+            if(cindx.eq.41) call pgscr(cindx, 0.8, 1.0, 0.3)
+            if(cindx.eq.42) call pgscr(cindx, 0.8, 1.0, 0.2)
+            if(cindx.eq.43) call pgscr(cindx, 0.3, 0.8, 0.5)
+            if(cindx.eq.44) call pgscr(cindx, 0.5, 0.50, 0.70)
+            if(cindx.eq.45) call pgscr(cindx, 0.5, 0.3, 0.5)
+            if(cindx.eq.46) call pgscr(cindx, 0.5, 0.3, 0.9)
+            if(cindx.eq.47) call pgscr(cindx, 0.3, 0.0, 0.2)
+            if(cindx.eq.48) call pgscr(cindx, 0.55, 0.0, 0.3)
             end if
  
        CALL PGBBUF
+             if(maxdx.le.limitdx) then
              call pgsci(cindx)
              write(title,'(a)') source(j)
                title=title(1:len1(title))//'-'//polstr(lp+minpol+8)
                l = len1(title)
                call pglen(5,title(1:l),xlen,ylen)
-               xloc = 0.8
+               if(cindx.eq.25) yloc=1.0-(lp-1.)*1./25. +(npol-1)*1./25.
                yloc = yloc-1/25.*npol
-              call pgmtxt('RV',-7.0,yloc,0.,title(1:l))
+          if(mode.ne.'r') then
+          if(cindx.gt.24.and.cindx.ne.49) 
+     *    call pgmtxt('RV',-8.5,yloc,0.,title(1:l))
+          if(cindx.le.24.or.cindx.eq.49) 
+     *       call pgmtxt('LV',-1.0,yloc,0.,title(1:l))
+          end if
+             end if
           call pgebuf
             end do
              end do
@@ -839,8 +921,9 @@ c------------------------------------------------------------------------
           
              integer maxdat
         parameter(maxdat=500000)
-               integer soupnt(maxdat)
-        character source(32)*32
+               integer soupnt(maxdat),maxsource
+        parameter(maxsource=100)
+        character source(maxsource)*32
         integer nsource, sourid
         common/sour/soupnt,source,nsource, sourid
 c
@@ -883,14 +966,15 @@ c
         integer i,n,bl,i1,i2,nants,npnt(maxbase),mbase,nchan
         real tsys(maxant),tsys12(maxbase)
         double precision antel(maxant), el
-        integer soupnt(500000), is, npol, pols
-        character source(32)*32, souread*32,polstr(13)*2
+        integer soupnt(500000), is, npol, pols,maxsource,limitnsource
+        parameter(maxsource=100)
+        character source(maxsource)*32, souread*32,polstr(13)*2
         integer nsource, sourid, iel
         common/sour/soupnt,source,nsource, sourid
 c
 c  Miscellaneous initialisation.
 c
-
+        limitnsource=maxsource
         mbase = min(maxbase,maxbase1)
         do i=1,maxbase
           present(i) = .false.
@@ -987,6 +1071,10 @@ c
         call uvrdvrd(tno,'lst',lst,0.d0)
         call uvrdvrd(tno,'ra',ra,0.d0)
         dowhile(nchan.gt.0)
+        if(pols.eq.0) then
+        call bug('w','Visibility data with an illegal pol state.')
+        call bug('f','Redo with selecting proper polarizations.')
+        end if
          call basant(preamble(4),i1,i2)
          bl = (i2*(i2-1))/2 + i1
          ok = bl.lt.mbase
@@ -1033,6 +1121,9 @@ c              n=1
                  goto 556
                  end if
                  if(is.eq.nsource) then
+                 if(is+1.ge.limitnsource)
+     *   call bug ('f', 'Exceeds the limit of source array size 100.')
+
                       source(is+1)=souread
                       nsource=nsource+1
                       goto 556
@@ -1047,7 +1138,11 @@ c              n=1
            if(pols.eq.-2) polstr(pols+9)='LL'
            if(pols.eq.-3) polstr(pols+9)='RL'
            if(pols.eq.-4) polstr(pols+9)='LR'
-c           write(*,*) npol,pols, polstr(pols+9)
+           if(pols.eq.-5) polstr(pols+9)='XX'
+            if(pols.eq.-6) polstr(pols+9)='YY'
+            if(pols.eq.-7) polstr(pols+9)='XY'
+            if(pols.eq.-8) polstr(pols+9)='YX'
+
           call uvrdvri(tno,'nants',nants,0.d0)
 c get systemp
       if(dotsys) then
@@ -1088,8 +1183,9 @@ c
 c
 c------------------------------------------------------------------------
         integer i,j,k,pols
-        integer soupnt(500000)
-        character source(32)*32
+        integer soupnt(500000),maxsource
+        parameter(maxsource=100)
+        character source(maxsource)*32
         integer nsource, sourid
         common/sour/soupnt,source,nsource, sourid
 c
