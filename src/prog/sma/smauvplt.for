@@ -10,8 +10,8 @@ c  SmaUVPLT - Plot a variety of quantities from visibility data bases.
 c	Options are available to time average data (plot with optional
 c	error bars) and to plot different baselines on separate
 c	sub-plots on each page plus many others. With no time-averaging
-c       applied, the source-based visibilities will be color-coded for each
-c       of the polarization components.
+c       applied, the source-based visibilities are color-coded for each
+c       of the source-based polarization components. 
 c@ vis
 c	The input visibility file(s). Multiple input files and wild card
 c	card expansion are supported.
@@ -311,6 +311,8 @@ c    jhz  29jul05  change pgpts to smapgpts and add color
 c                  index and lable to distinguish source-based
 c                  polarization data.
 c    jhz  29jul05  fix the start source labelling position.
+c    jhz  18nov05  extended the size of source array to 100
+c                  and maximum color index to 48.
 c To do:
 c
 c   Vector averaging rms not yet implemented
@@ -419,8 +421,10 @@ c
       integer maxbuf2
       common buffer
       integer sourid
-      character source(32)*32, souread*32
-      common/sour/source,sourid
+      integer maxsource, limitnsource
+      parameter(maxsource=100)
+      character source(maxsource)*32, souread*32
+      common/sour/source,nsource,sourid
 c
 c These arrays for averaging
 c
@@ -481,8 +485,9 @@ c
       data plfidx, ifile, ofile /0, 0, 0/
       data npts, plpts, basmsk /ifac1*0, ifac1*0, ifac2*0/
       data polmsk /13*0/
+      limitnsource = maxsource 
 c-----------------------------------------------------------------------
-      call output ('SmaUvPlt: version 1.1 29-July-05')
+      call output ('SmaUvPlt: version 1.2 18-Nov-05')
 c
 c  Get the parameters given by the user and check them for blunders
 c
@@ -572,7 +577,6 @@ c
         nsource=0
         do while (nread.ne.0 .and. .not.allfull)
           call uvgetvra(lin,'source',souread)
-c          call uvgetvri(lin,'sourid',sourid,1)
        if (souread.ne.' '.and.sourid.eq.0) then
           sourid=1
           nsource=nsource+1
@@ -584,6 +588,8 @@ c          call uvgetvri(lin,'sourid',sourid,1)
                  goto 555
                  end if
                  if(i.eq.nsource) then
+                      if(i+1.ge.limitnsource)
+     *   call bug ('f', 'Exceeds the limit of source array size.')     
                       source(i+1)=souread
                       nsource=nsource+1
                       goto 555
@@ -591,7 +597,6 @@ c          call uvgetvri(lin,'sourid',sourid,1)
                 end do
           end if
 555        continue
-c               write(*,*) 'source souid ', souread, sourid
 c
 c Is there some data we want in this visibility ?
 c
@@ -1013,8 +1018,10 @@ c
       character xaxis*(*), yaxis*(*)
 cc
       integer i, j, plbidx, nb, np
-            character source(32)*32
-        common/sour/source,sourid
+      integer maxsource,nsource,sourid
+      parameter(maxsource=100)
+            character source(maxsource)*32
+        common/sour/source,nsource,sourid
    
 c-------------------------------------------------------------------------
 c
@@ -1372,8 +1379,10 @@ c
       real xmin, xmax, ymin, ymax, x, y, xsig, ysig,
      *  buffer(pl1dim,pl2dim,pl3dim,pl4dim)
       integer soupnt(pl1dim,pl2dim,pl3dim,pl4dim), sourid
-      character source(32)*32
-      common/sour/source,sourid
+      integer maxsource,nsource
+      parameter(maxsource=100)
+      character source(maxsource)*32
+      common/sour/source,nsource,sourid
 cc
       integer n
 c-----------------------------------------------------------------------
@@ -3388,7 +3397,6 @@ c
       end
 
 
-
       SUBROUTINE smapgpts(N,XPTS,YPTS,soupnt,SYMBOL,fileid,lp,
      * npol,polstr)
       INTEGER N, NPNTS
@@ -3428,13 +3436,25 @@ C 17-Dec-1990 - add polygons [PAH].
 C 14-Mar-1997 - optimization: use GRDOT1 [TJP].
 C-----------------------------------------------------------------------
       LOGICAL PGNOTO
-        character source(32)*32, title*64
-      integer  indx, mindx, cindx
-      real xx(100), yy(100), xloc, yloc
+      integer maxsource,limitdx
+      parameter(maxsource=100, limitdx=48)
+        character source(maxsource)*32, title*64
+      integer  indx, mindx, cindx,maxdx
+      real xx(100), yy(100), yloc
       real  xfit(N),yfit(N)
-      integer Npl,i
-      common/sour/source,sourid
+      integer Npl,i,nsource,sourid
+      common/sour/source,nsource,sourid
 C
+      mindx=0
+      do i=1, N
+        indx=soupnt(i)
+        if(indx.gt.mindx) mindx =indx
+      end do
+      maxdx =mindx
+      if(maxdx.gt.limitdx) then
+      call bug('w', 'Exceeds the limit of maximum color index;')
+      call bug('w', 'Mono-color is used for all the data points.')
+      end if
       IF (N.LT.1) RETURN
       IF (PGNOTO('PGPT')) RETURN
        NPNTS=1
@@ -3446,20 +3466,51 @@ C
         if(indx.gt.mindx) mindx =indx
             cindx = (indx-1)*npol+lp
             if(cindx.gt.12) then
-            if(cindx.eq.13) call pgscr(cindx, .5, .2, 0.5)
-            if(cindx.eq.14) call pgscr(cindx, .5, .3, 0.0)
-            if(cindx.eq.15) call pgscr(cindx, .5, 0.4, 0.5)
-            if(cindx.eq.16) call pgscr(cindx, .5, 0.5, 0.2)
-            if(cindx.eq.17) call pgscr(cindx, .5, 0.6, 0.5)
-            if(cindx.eq.18) call pgscr(cindx, .5, 0.7, 0.2)
+            if(cindx.eq.13) call pgscr(cindx, 1.0, 1.0, 0.5)
+            if(cindx.eq.14) call pgscr(cindx, 1.0, 1.0, 0.0)
+            if(cindx.eq.15) call pgscr(cindx, 1.0, 0.5, 0.5)
+            if(cindx.eq.16) call pgscr(cindx, 1.0, 0.5, 0.2)
+            if(cindx.eq.17) call pgscr(cindx, 1.0, 0.0, 0.5)
+            if(cindx.eq.18) call pgscr(cindx, 1.0, 0.2, 0.2)
             if(cindx.eq.19) call pgscr(cindx, 0.5, 1.0, 0.5)
             if(cindx.eq.20) call pgscr(cindx, 0.7, 0.70, 0.70)
             if(cindx.eq.21) call pgscr(cindx, 0.7, 0.5, 0.5)
             if(cindx.eq.22) call pgscr(cindx, 0.7, 0.5, 0.9)
             if(cindx.eq.23) call pgscr(cindx, 0.5, 0.0, 0.5)
             if(cindx.eq.24) call pgscr(cindx, 0.75, 0.2, 0.3)
+c
+            if(cindx.eq.25) call pgscr(cindx, 0.8, 1.0, 0.5)
+            if(cindx.eq.26) call pgscr(cindx, 0.8, 1.0, 0.0)
+            if(cindx.eq.27) call pgscr(cindx, 0.8, 0.5, 0.5)
+            if(cindx.eq.28) call pgscr(cindx, 0.8, 0.5, 0.2)
+            if(cindx.eq.29) call pgscr(cindx, 0.8, 0.0, 0.5)
+            if(cindx.eq.30) call pgscr(cindx, 0.8, 0.2, 0.2)
+            if(cindx.eq.31) call pgscr(cindx, 0.3, 1.0, 0.5)
+            if(cindx.eq.32) call pgscr(cindx, 0.5, 0.70, 0.70)
+            if(cindx.eq.33) call pgscr(cindx, 0.5, 0.5, 0.5)
+            if(cindx.eq.34) call pgscr(cindx, 0.5, 0.5, 0.9)
+            if(cindx.eq.35) call pgscr(cindx, 0.3, 0.0, 0.5)
+            if(cindx.eq.36) call pgscr(cindx, 0.55, 0.2, 0.3)
+c
+            if(cindx.eq.37) call pgscr(cindx, 0.8, 0.8, 0.5)
+            if(cindx.eq.38) call pgscr(cindx, 0.8, 0.8, 0.0)
+            if(cindx.eq.39) call pgscr(cindx, 0.8, 0.3, 0.5)
+            if(cindx.eq.40) call pgscr(cindx, 0.8, 0.3, 0.2)
+            if(cindx.eq.41) call pgscr(cindx, 0.8, 0.0, 0.3)
+            if(cindx.eq.42) call pgscr(cindx, 0.8, 0.0, 0.2)
+            if(cindx.eq.43) call pgscr(cindx, 0.3, 0.8, 0.5)
+            if(cindx.eq.44) call pgscr(cindx, 0.5, 0.50, 0.70)
+            if(cindx.eq.45) call pgscr(cindx, 0.5, 0.3, 0.5)
+            if(cindx.eq.46) call pgscr(cindx, 0.5, 0.3, 0.9)
+            if(cindx.eq.47) call pgscr(cindx, 0.3, 0.0, 0.2)
+            if(cindx.eq.48) call pgscr(cindx, 0.55, 0.0, 0.3)
+
             end if
-            call pgsci(cindx)           
+            if(maxdx.le.limitdx) then
+            call pgsci(cindx)   
+            else
+            call pgsci(3) ! green
+            endif        
                xx(1) = XPTS(i)
                yy(1) = YPTS(i)
                NPL=NPL+1
@@ -3478,31 +3529,60 @@ C
        CALL PGBBUF
             cindx = (j-1)*npol+lp
             if(cindx.gt.12) then
-            if(cindx.eq.13) call pgscr(cindx, .5, .2, 0.5)
-            if(cindx.eq.14) call pgscr(cindx, .5, .3, 0.0)
-            if(cindx.eq.15) call pgscr(cindx, .5, 0.4, 0.5)
-            if(cindx.eq.16) call pgscr(cindx, .5, 0.5, 0.2)
-            if(cindx.eq.17) call pgscr(cindx, .5, 0.6, 0.5)
-            if(cindx.eq.18) call pgscr(cindx, .5, 0.7, 0.2)
+            if(cindx.eq.13) call pgscr(cindx, 1.0, 1.0, 0.5)
+            if(cindx.eq.14) call pgscr(cindx, 1.0, 1.0, 0.0)
+            if(cindx.eq.15) call pgscr(cindx, 1.0, 0.5, 0.5)
+            if(cindx.eq.16) call pgscr(cindx, 1.0, 0.5, 0.2)
+            if(cindx.eq.17) call pgscr(cindx, 1.0, 0.0, 0.5)
+            if(cindx.eq.18) call pgscr(cindx, 1.0, 0.2, 0.2)
             if(cindx.eq.19) call pgscr(cindx, 0.5, 1.0, 0.5)
             if(cindx.eq.20) call pgscr(cindx, 0.7, 0.70, 0.70)
             if(cindx.eq.21) call pgscr(cindx, 0.7, 0.5, 0.5)
             if(cindx.eq.22) call pgscr(cindx, 0.7, 0.5, 0.9)
             if(cindx.eq.23) call pgscr(cindx, 0.5, 0.0, 0.5)
             if(cindx.eq.24) call pgscr(cindx, 0.75, 0.2, 0.3)
+c
+            if(cindx.eq.25) call pgscr(cindx, 0.8, 1.0, 0.5)
+            if(cindx.eq.26) call pgscr(cindx, 0.8, 1.0, 0.0)
+            if(cindx.eq.27) call pgscr(cindx, 0.8, 0.5, 0.5)
+            if(cindx.eq.28) call pgscr(cindx, 0.8, 0.5, 0.2)
+            if(cindx.eq.29) call pgscr(cindx, 0.8, 0.0, 0.5)
+            if(cindx.eq.30) call pgscr(cindx, 0.8, 0.2, 0.2)
+            if(cindx.eq.31) call pgscr(cindx, 0.3, 1.0, 0.5)
+            if(cindx.eq.32) call pgscr(cindx, 0.5, 0.70, 0.70)
+            if(cindx.eq.33) call pgscr(cindx, 0.5, 0.5, 0.5)
+            if(cindx.eq.34) call pgscr(cindx, 0.5, 0.5, 0.9)
+            if(cindx.eq.35) call pgscr(cindx, 0.3, 0.0, 0.5)
+            if(cindx.eq.36) call pgscr(cindx, 0.55, 0.2, 0.3)
+c
+            if(cindx.eq.37) call pgscr(cindx, 0.8, 0.8, 0.5)
+            if(cindx.eq.38) call pgscr(cindx, 0.8, 0.8, 0.0)
+            if(cindx.eq.39) call pgscr(cindx, 0.8, 0.3, 0.5)
+            if(cindx.eq.40) call pgscr(cindx, 0.8, 0.3, 0.2)
+            if(cindx.eq.41) call pgscr(cindx, 0.8, 0.0, 0.3)
+            if(cindx.eq.42) call pgscr(cindx, 0.8, 0.0, 0.2)
+            if(cindx.eq.43) call pgscr(cindx, 0.3, 0.8, 0.5)
+            if(cindx.eq.44) call pgscr(cindx, 0.5, 0.50, 0.70)
+            if(cindx.eq.45) call pgscr(cindx, 0.5, 0.3, 0.5)
+            if(cindx.eq.46) call pgscr(cindx, 0.5, 0.3, 0.9)
+            if(cindx.eq.47) call pgscr(cindx, 0.3, 0.0, 0.2)
+            if(cindx.eq.48) call pgscr(cindx, 0.55, 0.0, 0.3)
             end if
+             if(maxdx.le.limitdx) then
              call pgsci(cindx)
              write(title,'(a)') source(j)
                title=title(1:len1(title))//'-'//polstr(lp)
                l = len1(title)
               call pglen(5,title(1:l),xlen,ylen)
-               xloc = 0.8
+              if(cindx.eq.25) yloc=1.0-(lp-1.)*1./25. +(npol-1)*1./25.
                yloc = yloc-1./25.*npol
                if(yloc.gt.0.0) then
-              call pgmtxt('RV',-7.0,yloc,0.,title(1:l))
+          if(cindx.gt.24) call pgmtxt('RV',-8.5,yloc,0.,title(1:l))
+          if(cindx.le.24) call pgmtxt('LV',-1.0,yloc,0.,title(1:l))
                else 
-              call bug('w','too many sources to be labelled.')
-              end if
+               call bug('w','too many sources to be labelled.')
+               end if
+               end if
           call pgebuf
             end do
          call pgsci(1)
