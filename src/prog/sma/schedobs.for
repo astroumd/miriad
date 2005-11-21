@@ -74,6 +74,10 @@ c               to HST time and the time axis will be labelled as
 c               'Time (HST)'.
 c       The default is UT time and the time axis is labelled as
 c               'Time (UT)'.
+c@ mirhome
+c       location of MIRIAD's home directory;
+c       mirlocal=$MIR; no defaults.
+c
 c--
 c
 c  History:
@@ -82,6 +86,7 @@ c jhz  05sept15 created the the first version for SMA.
 c jhz  05sept21 added input Keyword 'observatory' so that
 c               the program works for general purpose for
 c               the observatories that are listed in obspar.for 
+c jhz  05nove21 implemented the emphemris for planet positions.   
       include 'maxdim.h'
 c ----------------------------------------------------------------------
 c  Pi.
@@ -101,7 +106,7 @@ c
       integer maxbuf2
       common buffer
       integer sourid
-      character source(32)*32
+      character source(32)*32, source1*8
       double precision sourra(32), sourdec(32)
       common/sour/source,sourra,sourdec,sourid
 c
@@ -137,11 +142,11 @@ c
 c
 c Externals
 c
-      integer membuf
+      integer membuf, smapllook
 c
 c Initialize
 c
-      integer ifac1,  nsource
+      integer ifac1,nsource,iplanetp
       parameter (ifac1 = 1) 
       data none /.true./
       data ivis, title /0, ' '/
@@ -149,13 +154,16 @@ c
       data npts, plpts /ifac1*0, ifac1*0/
       data polmsk /13*0/
       character obsday*32,sfile*32,aline*300
-      character cra*12,cdec*12
-      integer hdr,iostat,ilen,blen,elen
-      real UTtime(3), obshrs
+      character cra*12,cdec*12,radec*60
+      character hh*2,mm*2,ss*6
+      character dd*3,amm*2,ass*5
+      double precision dpra,dpdec
+      integer hdr,iostat,ilen,blen,elen, iplanet
+      real UTtime(3), obshrs, pra,pdec
       logical dout,dohst
       common/tlable/dout,dohst
 c-----------------------------------------------------------------------
-      call output ('SchedObs: version 1.2 21-Sept-05')
+      call output ('SchedObs: version 1.3 21-Nov-05')
 c
 c  Get the parameters given by the user and check them for blunders
 c
@@ -169,6 +177,9 @@ c
              jtime0=jtime0+UTtime(1)/24.0d0
      *                    +UTtime(1)/24.0d0/60.0d0
      *                    +UTtime(1)/24.0d0/3600.0d0
+
+          write(*,*) 'mjd=', jtime0-2400000.5, '  for source list:'
+   
           dout=.true.
           if(dohst) dout=.false.
 c
@@ -206,23 +217,84 @@ c
           nsource=0
           sourid=0
           slen=0
+          iplanetp = 0
+          iplanet = 0
           do while(iostat.ne.-1)
           aline = ' '
           call txtread (hdr, aline, ilen, iostat)
-          if(iostat.ne.-1) 
-     *    write(*,*) aline(1:len1(aline))
           sourid=sourid+1
           blen=1
           elen=8
           source(sourid)=aline(blen:elen)
+          source1=source(sourid)(1:8)
+          iplanet = SmaplLook(source1)
+             if(iplanet.ne.iplanetp) then
+          call 
+     * output('Found Solar System Object:')
+          call  smaplradec(jtime0,iplanet,pra,pdec)
+             dpra=pra
+             dpdec=pdec
+          call deghms (dpra,dpdec,radec)
+         if(radec(2:2).eq.' ') then
+         hh(1:1)='0'
+         hh(2:2)=radec(1:1)
+         mm(1:2)=radec(3:4)
+         ss(1:6)=radec(6:10)//'0'
+           if(radec(12:12).ne.'-') then
+             dd(1:1)=' '
+             if(radec(14:14).ne.' ') then
+             dd(2:3)=radec(13:14)
+             amm(1:2)=radec(16:17)
+             ass(1:5)=radec(19:23)
+             else
+             dd(2:2)='0'
+             dd(3:3)=radec(13:13)
+             amm(1:2)=radec(15:16)
+             ass(1:5)=radec(18:22)
+             end if
+           else 
+             if(radec(14:14).ne.' ') then
+             dd(1:3)=radec(12:14)
+             amm(1:2)=radec(16:17)
+             ass(1:5)=radec(19:23)
+             end if
+           end if
+         else
+         hh(1:2)=radec(1:2)
+         mm(1:2)=radec(4:5)
+         ss(1:6)=radec(7:11)//'0'
+              if(radec(15:15).ne.' ') then
+                 dd(1:3)=radec(13:15)
+                 amm(1:2)=radec(17:18)
+                 ass(1:5)=radec(20:24)
+              else
+                 dd(1:1)=radec(13:13)
+                 dd(2:2)='0'
+                 dd(3:3)=radec(14:14)
+                 amm(1:2)=radec(16:17)
+                 ass(1:5)=radec(19:23)
+              end if
+          end if
+       
+         cra=hh(1:2)//':'//mm(1:2)//':'//ss(1:6)
+         cdec=dd(1:3)//':'//amm(1:2)//':'//ass(1:5)//'0'
+       write(*,*) source1,' ', cra,' ',cdec, ' '
+          end if
+          if(iostat.ne.-1.and.iplanet.eq.0)
+     *    write(*,*) aline(1:len1(aline))
+
+
           blen=elen+2
           elen=blen+11
           cra=aline(blen:elen)
-          sourra(sourid) = getra(cra)*2.0*dpi/24.          
+          sourra(sourid) = getra(cra)*2.0*dpi/24.
+c          write(*,*) cra,sourra(sourid)          
           blen=elen+2
           elen=blen+11
           cdec=aline(blen:elen)
-          sourdec(sourid) = getdec(cdec)*2.0*dpi/360. 
+          sourdec(sourid) = getdec(cdec)*2.0*dpi/360.
+c           write(*,*) cdec,sourdec(sourid)
+          iplanet = 0 
           end do
           nsource=sourid-1
 c start time input from jtime0
@@ -831,11 +903,15 @@ c-----------------------------------------------------------------------
 c
       character*(*) xaxis, yaxis, pdev
       integer nx, ny, inc,tunit
+      character mirhome*80
 cc
       integer i
       character axis(2)*10, obsday*32,telescop*10
 c
       integer len1
+        character smadir*82
+        common/smadata/smadir
+
 c
 c Types of axes allowed
 c
@@ -854,6 +930,7 @@ c
       common/observatory/telescop
 c-----------------------------------------------------------------------
       call keyini
+
       i = 4
       call keymatch ('axis', naxmax, axtyp, 2, axis, nax)
       xaxis = axis(1)
@@ -894,6 +971,11 @@ c
      * call bug('f','Input source file must be given')
       call keya ('device', pdev,' ')
       call getopt(dohst)
+       call keya('mirhome',mirhome,' ')
+        if(mirhome(1:1).eq.' ')
+     *  call bug('f', 'The home directory of Miriad must be given.')
+        smadir=mirhome(1:len1(mirhome))//'/cat/smaplmdl/'
+
       call keyfin
       end
 
@@ -1774,4 +1856,123 @@ c
       end if
 c
       end
+
+c************************************************************************
+        integer function smaplLook(source)
 c
+        implicit none
+        character source*(*)
+c
+c  Identify a planet.
+c
+c------------------------------------------------------------------------
+        character source1*8
+        integer ip
+c
+        integer NPLANETS
+        parameter(NPLANETS=16)
+        character planets(NPLANETS)*8
+        integer np(NPLANETS),len1
+c
+c  Externals.
+        integer binsrcha
+c add sma iplanet mapping
+        data planets
+     * /   'callisto','ceres   ','earth   ','ganymede',
+     *     'io      ','jupiter ','mars    ','mercury ',
+     *     'neptune ','pallas  ','pluto   ','saturn  ',
+     *     'titan   ','uranus  ','venus   ','vesta   ' /
+        data np
+     * /    11,       12,        3,        10,
+     *      13,        5,        4,         1,
+     *       8,       14,        9,         6,
+     *      16,        7,        2,        15 /
+        source1 = source(1:len1(source))
+        call lcase(source1)
+        ip = binsrcha(source1,planets,NPLANETS)
+        if(ip.gt.0)ip = np(ip)
+        SmaplLook = ip
+        end
+cccccccccccccccccccccccccccccccccccccc
+        subroutine smaplradec(jday,iplanet,ra,dec)
+c
+        implicit none
+        double precision jday
+        real ra,dec
+        integer iplanet
+c
+c  Return information about the apparent ra and dec of a planet
+c  at a given time. 
+c
+c  Input:
+c    jday       Julian day, in the TDB timescale.
+c    iplanet         Planet number.
+c  Output:
+c    ra,dec     The apparent ra and dec, in radians
+c------------------------------------------------------------------------
+        real oblate(20)
+c ,a,b,f1,f2,f3
+        real mjdf,diam_a,selat,nppa,mjd
+        logical update
+        integer j, ip, len1
+        character smadir*82,line*1
+        common/smadata/smadir
+        character planet*8
+        include 'mirconst.h'
+        integer NPLANETS
+        parameter(NPLANETS=16)
+        character planets(NPLANETS)*8
+        integer np(NPLANETS)
+c add sma iplanet mapping
+        data planets /'callisto','ceres   ','earth   ',
+     *     'ganymede','io      ','jupiter ','mars    ',
+     *     'mercury ','neptune ','pallas  ','pluto   ',
+     *     'saturn  ','titan   ','uranus  ','venus   ',
+     *     'vesta   '/
+        data np     / 11,       12,        3,
+     *      10,       13,        5,        4,
+     *       1,        8,       14,        9,
+     *       6,       16,        7,        2,
+     *      15/
+        ip=1
+        do while(iplanet.ne.np(ip))
+        ip=ip+1
+        end do
+        planet=planets(ip)
+        call ucase(planet(1:1))
+c  assign  the value of planet oblate
+        oblate(1)=0.00e-0         !mercury
+        oblate(2)=0.00e-0         !venus
+        oblate(3)=0.00e-0         !
+        oblate(4)=6.48e-3         !mars
+        oblate(5)=6.49e-2         !jupiter
+        oblate(6)=9.80e-2         !saturn
+        oblate(7)=2.29e-2         !uranus
+        oblate(8)=1.71e-2         !neptune
+        do j=9,20
+        oblate(j)=0.0
+        enddo
+c  convert Julian date to mjd
+         mjd=jday-2400000.5
+c  read the ephemeris data
+         open(unit=10, file=
+     *  smadir(1:len1(smadir))//planet(1:len1(planet))//'.ephem.dat',
+     *  status='old')
+c  read the comments line in the file header
+         line(1:1)='!'
+         do while(line(1:1).eq.'!')
+            read(10,'(a)')line
+         enddo
+c read the ephemris data on the date macth the input mjd
+           mjdf = 0.0
+           update=.true.
+           do while (int(mjdf).lt.int(mjd))
+           read (10,*,err=100) mjdf,ra,dec,diam_a,selat,nppa
+           end do
+           close(10)
+           goto 200
+100        update=.false.
+200        if(.not.update)
+     *     call bug('f', 'End of the ephemeris data file.')
+        end
+
