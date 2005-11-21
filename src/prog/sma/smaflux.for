@@ -52,6 +52,8 @@ c    jhz  2005-10-20   The original version  based on rjs' plboot.for's
 c                      version 1.0 19-May-03 
 c    jhz  2005-10-27   Following the suggetion from Peter Teuben, the data
 c                      directory is replaced to $MIRCAT/smaplmdl
+c    jhz  2005-11-21   Replace comment "Found planet" with
+c                                      "Found solar system object"
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
@@ -131,7 +133,7 @@ c using sma planet id lookup
 c	      planet = iplanet.ge.1.and.iplanet.le.9.and.iplanet.ne.3
               planet = iplanet.ge.1.and.iplanet.le.16.and.iplanet.ne.3
 	      if(planet.and.iplanet.ne.iplanetp)
-     *		call output('Found planet '//source)
+     *		call output('Found solar system objects: '//source)
 	      iplanetp = iplanet
 	    endif
 	    if(planet)then
