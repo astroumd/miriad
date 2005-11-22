@@ -910,13 +910,13 @@ c-----------------------------------------------------------------------
 c
       character*(*) xaxis, yaxis, pdev
       integer nx, ny, inc,tunit
-      character mirhome*80
+      character mirhome*256
 cc
       integer i
       character axis(2)*10, obsday*32,telescop*10
 c
       integer len1
-        character smadir*82
+        character smadir*256
         common/smadata/smadir
 
 c
@@ -978,10 +978,9 @@ c
      * call bug('f','Input source file must be given')
       call keya ('device', pdev,' ')
       call getopt(dohst)
-       call keya('mirhome',mirhome,' ')
-        if(mirhome(1:1).eq.' ')
-     *  call bug('f', 'The home directory of Miriad must be given.')
-        smadir=mirhome(1:len1(mirhome))//'/cat/smaplmdl/'
+      call keya('mirhome',mirhome,' ')
+      if(len1(mirhome).eq.0) call mgetenv(mirhome,'MIR')
+      smadir=mirhome(1:len1(mirhome))//'/cat/smaplmdl/'
 
       call keyfin
       end
@@ -1922,7 +1921,7 @@ c ,a,b,f1,f2,f3
         real mjdf,diam_a,selat,nppa,mjd
         logical update
         integer j, ip, len1
-        character smadir*82,line*1
+        character smadir*256,line*1
         common/smadata/smadir
         character planet*8
         include 'mirconst.h'

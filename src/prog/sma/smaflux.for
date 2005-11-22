@@ -57,12 +57,12 @@ c                                      "Found solar system object"
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='SmaFlux: version 1.0 27-Oct-05')
+	parameter(version='SmaFlux: version 1.0 22-Nov-05')
 	integer MAXVIS
 	parameter(MAXVIS=32)
 c
 	character vis(MAXVIS)*64,source*32,line*64
-        character mirhome*80
+        character mirhome*256
 	logical vector,planet,noapply,nofqav
 	integer nvis,lVis,vsource,nchan,iplanet,nants,i,iplanetp
 	real fac
@@ -77,7 +77,7 @@ c
 c	integer plLook
         integer smaplLook, len1
 	character streal*16
-        character smadir*82
+        character smadir*256
         common/smadata/smadir
         domsg = .true.
 c
@@ -88,8 +88,7 @@ c
 	call uvDatInp('vis','xcefd')
 	call uvDatSet('stokes',0)
         call keya('mirhome',mirhome,' ')
-        if(mirhome(1:1).eq.' ') 
-     *  call bug('f', 'The home directory of Miriad must be given.')
+        if(len1(mirhome).eq.0) call mgetenv(mirhome,'MIR')
         smadir=mirhome(1:len1(mirhome))//'/cat/smaplmdl/'
 	call getopt(vector,noapply,nofqav)
 	call keyfin
@@ -7094,7 +7093,7 @@ c------------------------------------------------------------------------
         real mjdf,ra,dec,diam_a,selat,nppa
         logical update
         integer j, ip, len1
-        character smadir*82,line*1
+        character smadir*256,line*1
         common/smadata/smadir
         character planet*8
         include 'mirconst.h'
