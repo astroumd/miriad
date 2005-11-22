@@ -86,7 +86,10 @@ c jhz  05sept15 created the the first version for SMA.
 c jhz  05sept21 added input Keyword 'observatory' so that
 c               the program works for general purpose for
 c               the observatories that are listed in obspar.for 
-c jhz  05nove21 implemented the emphemris for planet positions.   
+c jhz  05nove21 implemented the emphemris for planet positions.
+c jhz  05nove22 fixed a bug for decode character coordinates
+c               for planets.
+c-----------------------------------------------------------------------   
       include 'maxdim.h'
 c ----------------------------------------------------------------------
 c  Pi.
@@ -163,7 +166,7 @@ c
       logical dout,dohst
       common/tlable/dout,dohst
 c-----------------------------------------------------------------------
-      call output ('SchedObs: version 1.3 21-Nov-05')
+      call output ('SchedObs: version 1.3 22-Nov-05')
 c
 c  Get the parameters given by the user and check them for blunders
 c
@@ -280,8 +283,8 @@ c
          cdec=dd(1:3)//':'//amm(1:2)//':'//ass(1:5)//'0'
        write(*,*) source1,' ', cra,' ',cdec, ' '
           end if
-          if(iostat.ne.-1.and.iplanet.eq.0)
-     *    write(*,*) aline(1:len1(aline))
+          if(iostat.ne.-1.and.iplanet.eq.0) then
+         write(*,*) aline(1:len1(aline))
 
 
           blen=elen+2
@@ -293,6 +296,10 @@ c          write(*,*) cra,sourra(sourid)
           elen=blen+11
           cdec=aline(blen:elen)
           sourdec(sourid) = getdec(cdec)*2.0*dpi/360.
+          else
+            sourra(sourid) = getra(cra)*2.0*dpi/24.
+             sourdec(sourid) = getdec(cdec)*2.0*dpi/360.
+          end if
 c           write(*,*) cdec,sourdec(sourid)
           iplanet = 0 
           end do
