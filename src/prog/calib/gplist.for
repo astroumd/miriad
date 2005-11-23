@@ -14,9 +14,9 @@ c
 c     WARNING: if you modify the gains, the resulting amplitude gains will be 
 c              constant with time! The original gains table is overwritten.
 c
-c     The motivation for this routine arose from datasets in which the
+c     The motivation for this routine arose from BIMA datasets in which the
 c     calibrator is weak so that conventional amplitude calibration was not
-c     very successful. This was compounded by antenna 3 being blown about 
+c     very successful. This was compounded by old BIMA ant3 being blown about 
 c     by the wind. The source, on the other hand, was strong but time
 c     variable, hence not susceptible to self-cal. From observations of
 c     strong planets before and after it was observed that the amplitude
@@ -25,6 +25,8 @@ c     by the phase-calibrator data, so that only phase calibration really needs
 c     to be applied to the source. This program allows the amplitude scale
 c     to be forced to the desired values (in this case, obtained from the
 c     planet observations) without changing the phase calibration.
+c
+c     This routine is specific to CARMA, hardcoded for 15 antennae.
 c       
 c@ vis
 c     The input visibility file, containing the gain file to list/massage
@@ -64,8 +66,8 @@ c	  Use options=replace,zerophas with suitable jyperk list to
 c	  both set amp scale and zero phases (the two steps are 
 c	  carried out sequentially with the amplitudes being set first)
 c@ jyperk 
-c     Array of 12 numbers (1 per antenna) giving the Jy-per-K values.
-c     Array elements default to zero so you don't have to give 12 numbers.
+c     Array of 15 numbers (1 per antenna) giving the Jy-per-K values.
+c     Array elements default to zero so you don't have to give 15 numbers.
 c     Action will only be taken for antennas corresponding to nonzero 
 c     elements of jyperk.
 c     Used for options=replace or options=multiply. For options=replace,
@@ -102,28 +104,31 @@ c    pjt     27jul00 Fixed bug in options=phase for 10th ant
 c    pjt      4aug00 smw generously allowed me to fix the write-history
 c   		     'bug' when nothing was modified
 c    smw     21nov03 Modified "force" option to enforce any value
+c    pjt     22nov05 Increased 12 to 15 for CARMA array, use MAXGANT
+c                    removed 'dbcor'
 c
 c  Bugs and Shortcomings:
-c    Like gpaver, gplist is hardwired for 12 antennas!
-c    This will have to be changed when expansion occurs
+c    gplist is hardwired for 12 antennas!
+c    although we're using MAXGANT, there are format statements with
+c    usage with 15 or 30 elements. 
 c-----------------------------------------------------------------------
-	include 'maxdim.h'
+	include 'gplist.h'
 	character version*(*)
-	parameter(version='GpList: version 2.0b 22-nov-03')
+	parameter(version='GpList: version 22-nov-05')
 	logical dovec,docomp,dophas,doall,dozero,domult,hexists,doamp
-      logical dolimit,doclip,dosigclip,doforce,dohist
-	real jyperk(12) 
+	logical dolimit,doclip,dosigclip,doforce,dohist
+	real jyperk(MAXGANT) 
 	character vis*80,msg*80
 	integer ngains,nfeeds,ntau,nants,iostat,njyperk
 	integer tVis
-      data jyperk /0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0/
+	data jyperk /MAXGANT * 0.0/
 c
 c  Get the input parameters.
 c
 	call output(version)
 	call keyini
 	call keya('vis',vis,' ')
-	call mkeyr('jyperk',jyperk,12,njyperk)
+	call mkeyr('jyperk',jyperk,MAXGANT,njyperk)
 	call GetOpt(doamp,dovec,docomp,dophas,doall,dozero,domult,
      *            dolimit,doclip,dosigclip,doforce)
 	call keyfin
@@ -252,31 +257,36 @@ c***********************************************************************
      *              nfeeds,ntau,nants,jyperk)
 c
       implicit none
+      include 'gplist.h'
+      integer MAXSOLS,MAXGAINS
+      parameter(MAXSOLS=10000,MAXGAINS=3*MAXSOLS*MAXGANT)
       logical doamp,dovec,docomp,dophas,doall,dozero,domult,dolimit,
      *        doclip,dosigclip,doforce,dohist
-      integer nfeeds,ntau,nants,tVis,j,jant(12),k,jind(3600)
-      real jyperk(12),dbcor(12),MeanGain(12),radtodeg,GainArr(12,3600),
-     *     MednGain(12), MedArr(3600), GainRms(12), mingain, maxgain
+      integer nfeeds,ntau,nants,tVis,j,jant(MAXGANT),k,jind(3600)
+      real jyperk(MAXGANT),MeanGain(MAXGANT),radtodeg,
+     *     GainArr(MAXGANT,3600),
+     *     MednGain(MAXGANT), MedArr(3600), GainRms(MAXGANT), 
+     *     mingain, maxgain
       logical doMed
-      data doMed /.false./
 c
 c  Read and write the gains, and list gains and replace amplitudes
 c
 c------------------------------------------------------------------------
-	include 'maxdim.h'
-	integer MAXSOLS,MAXGAINS
-	parameter(MAXSOLS=10000,MAXGAINS=3*MAXSOLS*MAXANT)
 	complex Gains(MAXGAINS)
 	double precision time(MAXSOLS)
 	integer nsols,offset,pnt,i,tGains,iostat,ngains
-      character line*128,ctime*8,msg*80
+	character line*128,ctime*8,msg*128
 c
 c  Externals.
 c
 	integer hsize
+
 c
-      data dbcor 
-     *     /1.87,0.00,1.88,2.25,2.00,2.75,1.70,0.00,0.00,0.0,0.0,0.0/
+c  Data 
+c
+	data doMed /.false./
+
+
 c
 c  Open the gains table and read them all in.
 c
@@ -310,8 +320,9 @@ c
 
       if (docomp) then
          call output('The complex gains listed in the table are:')
-         write(msg(1:37),94) '  Time     Ants 1/6     Ants 2/7     '
-         write(msg(38:76),94) 'Ants 3/8     Ants 4/9     Ants 5/10    '
+         write(msg(1:37),94) '  Time     Ants 1/9     Ants 2/10     '
+         write(msg(38:76),94) 'Ants 3/11    Ants 4/12    Ants 5/13  '
+         write(msg(77:120),94)'Ants 6/14    Ants 7/15    Ant  8'
          call output(msg)
          do i=1,nsols
             call JulDay(time(i),'H',line(1:18))
@@ -320,13 +331,18 @@ c
      *                          Gains((i-1)*nants+2),
      *                          Gains((i-1)*nants+3),
      *                          Gains((i-1)*nants+4),
-     *                          Gains((i-1)*nants+5)
-            call output(msg)
-            write(msg,95) '   ',Gains((i-1)*nants+6),
+     *                          Gains((i-1)*nants+5),
+     *                          Gains((i-1)*nants+6),
      *                          Gains((i-1)*nants+7),
-     *                          Gains((i-1)*nants+8),
-     *                          Gains((i-1)*nants+9),
-     *                          Gains((i-1)*nants+10)
+     *                          Gains((i-1)*nants+8)
+            call output(msg)
+            write(msg,95) '   ',Gains((i-1)*nants+9),
+     *                          Gains((i-1)*nants+10),
+     *                          Gains((i-1)*nants+11),
+     *                          Gains((i-1)*nants+12),
+     *                          Gains((i-1)*nants+13),
+     *                          Gains((i-1)*nants+14),
+     *                          Gains((i-1)*nants+15)
             call output(msg)
          enddo
       else if (doall) then
@@ -344,7 +360,8 @@ c
       else if (dophas) then
          call output('The phase gain values listed in the table are:')
          write(msg(1:35),94) '  Time     Ant 1 Ant 2 Ant 3 Ant 4 '
-         write(msg(36:71),94) 'Ant 5 Ant 6 Ant 7 Ant 8 Ant 9 Ant 10'
+         write(msg(36:70),94) 'Ant 5 Ant 6 Ant 7 Ant 8 Ant 9 Ant10'
+         write(msg(71:100),94) ' Ant11 Ant12 Ant13 Ant14 Ant15'
          call output(msg)
          radtodeg=180.0/3.14159
          do i=1,nsols
@@ -361,7 +378,12 @@ c
      *        int(radtodeg*atan2(AImag(Gains(k+7)),Real(Gains(k+7)))),
      *        int(radtodeg*atan2(AImag(Gains(k+8)),Real(Gains(k+8)))),
      *        int(radtodeg*atan2(AImag(Gains(k+9)),Real(Gains(k+9)))),
-     *        int(radtodeg*atan2(AImag(Gains(k+10)),Real(Gains(k+10))))
+     *        int(radtodeg*atan2(AImag(Gains(k+10)),Real(Gains(k+10)))),
+     *        int(radtodeg*atan2(AImag(Gains(k+11)),Real(Gains(k+11)))),
+     *        int(radtodeg*atan2(AImag(Gains(k+12)),Real(Gains(k+12)))),
+     *        int(radtodeg*atan2(AImag(Gains(k+13)),Real(Gains(k+13)))),
+     *        int(radtodeg*atan2(AImag(Gains(k+14)),Real(Gains(k+14)))),
+     *        int(radtodeg*atan2(AImag(Gains(k+15)),Real(Gains(k+15))))
             call output(msg)
          enddo
       else if (doamp) then
@@ -370,9 +392,10 @@ c
             GainRms(j)=0.0
             jant(j)=0
          enddo
-      call output('The amplitude gain values listed in the table are:')
+       call output('The amplitude gain values listed in the table are:')
          write(msg(1:35),94) '  Time     Ant 1 Ant 2 Ant 3 Ant 4 '
-         write(msg(36:71),94) 'Ant 5 Ant 6 Ant 7 Ant 8 Ant 9 Ant 10'
+         write(msg(36:70),94) 'Ant 5 Ant 6 Ant 7 Ant 8 Ant 9 Ant10'
+         write(msg(71:100),94) ' Ant11 Ant12 Ant13 Ant14 Ant15'
          call output(msg)
          do i=1,nsols
             call JulDay(time(i),'H',line(1:18))
@@ -386,7 +409,12 @@ c
      *                  abs(Gains((i-1)*nants+7)),
      *                  abs(Gains((i-1)*nants+8)),
      *                  abs(Gains((i-1)*nants+9)),
-     *                  abs(Gains((i-1)*nants+10))
+     *                  abs(Gains((i-1)*nants+10)),
+     *                  abs(Gains((i-1)*nants+11)),
+     *                  abs(Gains((i-1)*nants+12)),
+     *                  abs(Gains((i-1)*nants+13)),
+     *                  abs(Gains((i-1)*nants+14)),
+     *                  abs(Gains((i-1)*nants+15))
             call output(msg)
             do j=1,nants
                if (abs(Gains((i-1)*nants+j)).gt.0.0) then
@@ -407,7 +435,7 @@ c
             call sortidxr( jant(j), MedArr, jind)
             MednGain(j)=MedArr(jind(int(jant(j)/2)))
             GainRms(j)=
-     * sqrt((GainRms(j)-jant(j)*MeanGain(j)*MeanGain(j))/(jant(j)-1))
+     *    sqrt((GainRms(j)-jant(j)*MeanGain(j)*MeanGain(j))/(jant(j)-1))
          else
             GainRms(j)=0.0
          endif
@@ -417,16 +445,22 @@ c
       call output(msg)
       write(msg,199) 'Means:  ',MeanGain(1),MeanGain(2),MeanGain(3),
      *                          MeanGain(4),MeanGain(5),MeanGain(6),
-     *              MeanGain(7),MeanGain(8),MeanGain(9),MeanGain(10)
+     *              MeanGain(7),MeanGain(8),MeanGain(9),MeanGain(10),
+     *           MeanGain(11),MeanGain(12),MeanGain(13),MeanGain(14),
+     *                                                  MeanGain(15)
       call output(msg)
       if (doMed) then
         write(msg,199) 'Medians:',MednGain(1),MednGain(2),MednGain(3),
      *                            MednGain(4),MednGain(5),MednGain(6),
-     *                MednGain(7),MednGain(8),MednGain(9),MednGain(10)
+     *                MednGain(7),MednGain(8),MednGain(9),MednGain(10),
+     *           MeanGain(11),MeanGain(12),MeanGain(13),MeanGain(14),
+     *                                                  MeanGain(15)
         call output(msg)
         write(msg,199) 'Rms:    ',GainRms(1),GainRms(2),GainRms(3),
      *                            GainRms(4),GainRms(5),GainRms(6),
-     *                GainRms(7),GainRms(8),GainRms(9),GainRms(10)
+     *                GainRms(7),GainRms(8),GainRms(9),GainRms(10),
+     *         MeanGain(11),MeanGain(12),MeanGain(13),MeanGain(14),
+     *                                                MeanGain(15)
         call output(msg)
       endif
       write(msg,197) '------------------------------------',
@@ -447,7 +481,8 @@ c
          end if
          write(msg,99) '        ',jyperk(1),jyperk(2),jyperk(3),
      *     jyperk(4),jyperk(5),jyperk(6),jyperk(7),jyperk(8),
-     *     jyperk(9),jyperk(10)
+     *     jyperk(9),jyperk(10),jyperk(11),jyperk(12),jyperk(13),
+     *     jyperk(14),jyperk(15)
          call output(msg)
          do i=1,nsols
             do j=1,nants
@@ -483,7 +518,8 @@ c
          call output(msg)
          write(msg,99) 'sqrt(Jy/K) x ',jyperk(1),jyperk(2),jyperk(3),
      *     jyperk(4),jyperk(5),jyperk(6),jyperk(7),jyperk(8),
-     *     jyperk(9),jyperk(10)
+     *     jyperk(9),jyperk(10),jyperk(11),jyperk(12),jyperk(13),
+     *     jyperk(14),jyperk(15)
          call output(msg)
          do i=1,nsols
             do j=1,nants
@@ -501,7 +537,8 @@ c
          call output(msg)
          write(msg,99) ' ',jyperk(1),jyperk(2),jyperk(3),
      *     jyperk(4),jyperk(5),jyperk(6),jyperk(7),jyperk(8),
-     *     jyperk(9),jyperk(10)
+     *     jyperk(9),jyperk(10),jyperk(11),jyperk(12),jyperk(13),
+     *     jyperk(14),jyperk(15)
          call output(msg)
          do i=1,nsols
             do j=1,nants
@@ -592,13 +629,13 @@ c
 	call hdaccess(tGains,iostat)
 	if(iostat.ne.0)call AverBug(iostat,'Error reclosing gain table')
 c
-199   format(a8,2x,10f6.3)
-198   format(a8,2x,10i6)
+199   format(a8,2x,15f6.3)
+198   format(a8,2x,15i6)
 197   format(a36,a36)
-99    format(a8,2x,10(f5.2,1x))
+99    format(a8,2x,15(f5.2,1x))
 97    format(10x,a,i2,a,f9.3,f9.3)
 96    format(a8,2x,a,i2,a,f9.3,f9.3)
-95    format(a8,1x,5(f5.2,1x,f5.2,2x))
+95    format(a8,1x,8(f5.2,1x,f5.2,2x))
 94    format(a)
 93    format(a30,1x,f5.2,1x,f5.2)
 92    format(a9,1x,i4,a25)
