@@ -1,0 +1,73 @@
+#! /bin/csh -f
+#
+#   Example of a script that assembles miriad from scratch and compiles
+#   could be part of a nightly script.
+#
+#   dark-ages    -- written                      Peter Teuben
+#   23-nov-05    added to CVS                    PJT
+#
+#----
+
+
+
+#   this should be a local directory, it will fail now if you
+#   give an absolute address
+#   
+set rootdir=miriad
+
+#  all(miriad,wip,rad) or just miriad(all=0) -- not implemented
+set all=0
+
+set opts=()
+#set opts=(intel=1 bench=32,512,1)
+#set opts=(intel=1)
+
+#   set a branch (-r <something>) or date (-D <something>)
+set branch=()
+#set branch=(-r MIR3)
+#set branch=(-r mir_3_1_1)
+#set branch=(-D 12/25/04)
+
+set cvsroot=:pserver:anonymous@cvs.astro.umd.edu:/home/cvsroot
+
+if ($?CVSROOT == 0) then
+   echo No CVSROOT, trying out $cvsroot
+   setenv CVSROOT $cvsroot
+   grep -q `echo $cvsroot | awk -F: '{print $3}'` ~/.cvspass
+   if ($status) then
+      echo 'Oops, no $CVSROOT was present, '
+      echo '  and this appears to be the first time you install miriad'
+      echo '  so, we have to initialize your anonymous cvs account for'
+      echo "  cvsroot=$cvsroot"
+      echo '  anonymous cvsroot should use a blank password, just hit <RETURN>:'
+      cvs login
+   endif
+endif
+
+if ($?MIR) then
+  echo Cannot test if MIR=$MIR is present already
+  exit 1
+endif
+
+echo "Using cvs with CVSROOT=$CVSROOT"
+echo -n "Removing your local $rootdir in 2 seconds..." 
+sleep 2
+rm -rf $rootdir
+echo "...done".
+if (1) then
+  (cvs -Q co $branch -d $rootdir miriad; cd $rootdir/borrow; cvs -Q co wip; cvs -Q co rad)
+else
+  (cvs -Q co $branch -d $rootdir miriad)
+endif
+
+if (-e  $rootdir/src/tools/ercmd.c) rm $rootdir/src/tools/ercmd.c
+
+if (0) then
+ time $rootdir/install/install.miriad $opts
+else
+ cd $rootdir/install
+ time ./install.miriad $opts
+endif
+
+
+
