@@ -47,9 +47,9 @@
 %
 %        21-jan-03  rjs  Added new baseline convention and pbtype.
 %        30-dec-03  rjs  Add new weather variables.
-%  22-nov-05  pjt  Merged in the above 2 changes 
+%  22-nov-05  pjt  Merged in the above 2 changes, and marked some CARMA proposed uvvars
 
-\newcommand{\uvversion}{November 22, 2005}
+\newcommand{\uvversion}{November 23, 2005}
 
 A \miriad\ uv dataset is composed of a collection of items and `\MM{u-v} variables'.
 The variables are parameters that are known at the time of the observation,
@@ -423,7 +423,7 @@ pbfwhm		\>R     \>arcsec
 \>(Deprecated) Primary Beam at Full Width Half Maximum\\
 \>\>\> For Hat Ck, it is approximately 11040.0/{\tt lo1}.\\
 
-pbtype		\>A     \>-
+pbtype(*)	\>A     \>-
 \>Primary beam type to be used in imaging.\\
 
 phaselo1(nants)	\>R	\>radians
