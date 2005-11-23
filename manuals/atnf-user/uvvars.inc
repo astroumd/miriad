@@ -44,8 +44,12 @@
 %   8-may-02  pjt  Added some more variables that had been added to HatCreek
 %                  (jyperka,obsline,rmspath,tau230,srv2k)
 %  22-may-02  pjt  added example of uvio output
+%
+%        21-jan-03  rjs  Added new baseline convention and pbtype.
+%        30-dec-03  rjs  Add new weather variables.
+%  22-nov-05  pjt  Merged in the above 2 changes 
 
-\newcommand{\uvversion}{May 22, 2002}
+\newcommand{\uvversion}{November 22, 2005}
 
 A \miriad\ uv dataset is composed of a collection of items and `\MM{u-v} variables'.
 The variables are parameters that are known at the time of the observation,
@@ -155,8 +159,10 @@ axisrms(2,nants) \>R    \>arcsec
 
 baseline        \>R     \>-
 \>The current antenna baseline\\
-\>\>\> Baseline is stored as \MM{256*ant1 + ant2}. The uv coordinates are\\
-\>\>\> calculated as \MM{uvw = xyz(ant2) - xyz(ant1)}.\\
+\>\>\> Baseline is stored as \MM{256*ant1 + ant2} or \\
+\>\>\> \MM{2048*ant1 + ant2 + 65536}\\
+\>\>\> The uv coordinates are calculated as\\
+\>\>\> \MM{uvw = xyz(ant2) - xyz(ant1)}.\\
 \>\>\> Note that this is different from the AIPS/FITS convention\\
 \>\>\> (where \MM{uvw = xyz(ant1) - xyz(ant2)}).\\
 \>\>\> When writing this variable, software must ensure that\\
@@ -226,6 +232,10 @@ cortaper	\>R	\>-
 \>\>\>  This is the value at the edge of the window \\
 \>\>\>  The value is from 0-1.\\
 
+dazim(nants)	\>R	\>radians?
+\>Offset in Azimuth. (CARMA proposed)\\
+
+
 ddec		\>R	\>radians
 \> Offset in declination from {\tt dec} in {\tt epoch} coordinates.\\
 \>\>\>  The actual observed DEC is calculated as dec + ddec.\\
@@ -246,6 +256,10 @@ deldec		\>R or	\>radians
 \> Declination of the delay tracking center. See {\tt epoch} for coordinate\\
 		\>D	\>
 \> definition.\\
+
+delev(nants)	\>R	\>radians?
+\>Offset in Elevation (CARMA proposed)\\
+
 
 delra		\>R or	\>radians
 \> Right ascension of the delay tracking center. See {\tt epoch} \\
@@ -406,8 +420,11 @@ operator(*)	\>A	\>-
 \>The name of the current operator\\
 
 pbfwhm		\>R     \>arcsec
-\>Primary Beam at Full Width Half Maximum\\
+\>(Deprecated) Primary Beam at Full Width Half Maximum\\
 \>\>\> For Hat Ck, it is approximately 11040.0/{\tt lo1}.\\
+
+pbtype		\>A     \>-
+\>Primary beam type to be used in imaging.\\
 
 phaselo1(nants)	\>R	\>radians
 \> Antenna phase offset (Hat Ck)\\
@@ -480,6 +497,9 @@ restfreq(nspect) \>D	\>GHz
 
 rmspath		\>R     \>\%
 \>RMS path variation (Hat Ck)\\
+
+sctype	\>A	\>-
+\> Scan type (ATNF?)\\
 
 sdf(nspect)	\>D	\>GHz	
 \> Change in frequency per channel\\
@@ -566,12 +586,15 @@ wcorr(nwide)		\>C     \>-
 wfreq(nwide)	\>R	\>GHz
 \> Wideband correlation average frequencies\\
 
+wind		\>R     \>km/h
+\> Wind speed in km/h (ATNF)\\
+
 winddir		\>R     \>deg
 \>Wind direction\\
 \>\>\> (note: originally encoded as `N', `SE', `W', etc.)\\
 
 windmph		\>R     \>mph
-\> Wind speed\\
+\> Wind speed - in imperial units!\\
 
 wsystemp			\>R	\>K
 \> System temperature for wide channels. \\
@@ -707,3 +730,5 @@ uvio Version 16-jan-01 rjs
 .....
 
 \end{verbatim}\normalsize
+
+%% ** dazim(nants) and delev(nants)
