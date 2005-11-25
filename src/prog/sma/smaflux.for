@@ -36,7 +36,7 @@ c	as a planet. You may wish to select just the shortest spacing, where
 c	the planet is strongest.
 c@ mirhome
 c       location of MIRIAD's home directory; 
-c       mirlocal=$MIR; no defaults.
+c       The default is $MIR.
 c@ options
 c	Extra processing options. Several can be given, separated by commas.
 c	  vector  Use the real part (rather than amplitude) of the data and
@@ -54,10 +54,13 @@ c    jhz  2005-10-27   Following the suggetion from Peter Teuben, the data
 c                      directory is replaced to $MIRCAT/smaplmdl
 c    jhz  2005-11-21   Replace comment "Found planet" with
 c                                      "Found solar system object"
+c    pjb/jhz 2005-11-25
+c                      Extended smadir from 82 chars to 256.
+c                      Added  call mgetenv(mirhome,'MIR')
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='SmaFlux: version 1.0 22-Nov-05')
+	parameter(version='SmaFlux: version 1.1 25-Nov-05')
 	integer MAXVIS
 	parameter(MAXVIS=32)
 c
