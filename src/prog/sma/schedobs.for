@@ -76,7 +76,7 @@ c       The default is UT time and the time axis is labelled as
 c               'Time (UT)'.
 c@ mirhome
 c       location of MIRIAD's home directory;
-c       mirlocal=$MIR; no defaults.
+c       The default is $MIR.
 c
 c--
 c
@@ -89,6 +89,8 @@ c               the observatories that are listed in obspar.for
 c jhz  05nove21 implemented the emphemris for planet positions.
 c jhz  05nove22 fixed a bug for decode character coordinates
 c               for planets.
+c pjb/jhz 05nove22 extdended smadir from 82 chars to 256
+c               add mgetenv(mirhome,'MIR')
 c-----------------------------------------------------------------------   
       include 'maxdim.h'
 c ----------------------------------------------------------------------
@@ -166,7 +168,7 @@ c
       logical dout,dohst
       common/tlable/dout,dohst
 c-----------------------------------------------------------------------
-      call output ('SchedObs: version 1.3 22-Nov-05')
+      call output ('SchedObs: version 1.3 25-Nov-05')
 c
 c  Get the parameters given by the user and check them for blunders
 c
