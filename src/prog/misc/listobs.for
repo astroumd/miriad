@@ -5,6 +5,9 @@ c  Makes a listing of time ordered inforamtion about the observations in
 c  modest detail. If multiple files or wildcards are used as input the 
 c  resulting listing is time ordered.
 c
+c  Note: this program was rather BIMA specific, and is now becoming
+c        rather CARMA specific
+c
 c= Listobs - Makes a summary of a set of observations.
 c& lgm
 c: utility
