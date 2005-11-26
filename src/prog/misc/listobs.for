@@ -52,6 +52,8 @@ c	   09-oct-97 mchw  more format changes to fit onto page.
 c          19-jun-98 pjt fixed some ansi problems for linux g77
 c          14-mar-01 pjt realigned Mel's versino with test for missing systemp
 c			 (originally done 20jan99)
+c          25-nov-05 pjt hacked it for CARMA, where some uv variables not present
+c                        LOOK FOR Comment LINES "Carma"
 c
 c Note:  for nants>10 the code must once more be updated !! 
 c       See fmt # 2201, 2202, 2305
@@ -62,7 +64,7 @@ c-----------------------------------------------------------------------
         include 'listobs.h'
 c
 	character pversion*10
-	parameter (pversion = '14-mar-01')
+	parameter (pversion = '25-nov-05 **carma**')
 c
         integer ipt,nfiles,uvflag,order(MAXP),nameidx(100),nnames
         integer isys(MAXANT),i,uvscan,j,ii,jj,ipicked,ifix
@@ -114,7 +116,7 @@ c
 c --- check if focus is missing as it is in old data ----
 	   call uvprobvr(tin,'focus',type,length,fthere)
            ipt = ipt + 1
-	   if(ipt.gt.MAXP)CALL bug('f','Too many points')
+	   if(ipt.gt.MAXP)CALL bug('f','Too many points for MAXP')
 	   call getall(tin,ipt)
 	   jdold = jday(ipt)
 	   call uvgetvrr(tin,'inttime',tint,1)
@@ -148,7 +150,8 @@ c --- check if focus is missing as it is in old data ----
      1                      newsou .ne. oldsou) then
 		    dur(ipt) = totint/60.0
 		    ipt      = ipt + 1
-	            if(ipt.gt.MAXP)CALL bug('f','Too many points')
+	            if(ipt.gt.MAXP)
+     1                          CALL bug('f','Too many points for MAXP')
 		    call getall(tin,ipt)
 		    totint   = 8.640e4 * tint
                     oldsou = newsou
@@ -430,18 +433,18 @@ c
         include 'caldefs.h'
         include 'listobs.h'
 
-	integer tin,ipt,iants,j,i,length
+	integer tin,ipt,iants,j,i,length,clen
 	double precision utdouble,dlst,dlinef,dlo1,dif,draobs,
      1                   ddecobs
 	real cbw(MAXSPECT/2),systemps(MAXSPECT*MAXANT)
         real cfreq(MAXSPECT/2),haobs,decobs,sum
-        character vtype*4
-        logical vupd,systhere
+        character vtype*4,ctype*4
+        logical vupd,systhere,cthere
 c
 c   get all of the desired uv variables from header
 c
-	call uvgetvrd(tin,'time',jday(ipt),1)
-	call uvgetvrd(tin,'ut',utdouble,1)
+        call uvgetvrd(tin,'time',jday(ipt),1)
+        call uvgetvrd(tin,'ut',utdouble,1)
 	call uvgetvra(tin,'source',objs(ipt))
 c	call uvgetvrd(tin,'ra',ra(ipt),1)
 c	call uvgetvrd(tin,'dec',dec(ipt),1)
@@ -451,29 +454,38 @@ c	call uvgetvrd(tin,'dec',dec(ipt),1)
 	call uvgetvrr(tin,'vsource',vel(ipt),1)
 	call uvgetvri(tin,'nants',iants,1)
 	call uvrdvri(tin,'nspect',nspec,0)
-	call uvgetvri(tin,'cormode',cmode(ipt),1)
+        call uvprobvr(tin,'cormode',ctype,clen,cthere)
+        if (cthere) then
+           call uvgetvri(tin,'cormode',cmode(ipt),1)
+        else
+           cmode(ipt) = 0
+        endif
 	if(nspec.ne.0)then
 	  call uvgetvri(tin,'nchan',nchan,1)
           call uvprobvr(tin,'corfin',vtype,ncorfin,vupd)
-	  call uvgetvrr(tin,'corfin',cfreq,ncorfin)
+          if (vupd) 
+     *         call uvgetvrr(tin,'corfin',cfreq,ncorfin)
 	  call uvprobvr(tin,'systemp',vtype,length,systhere)
 	  if(systhere)
-     *	  	call uvgetvrr(tin,'systemp',systemps,iants*nspec)
-	else
+     *         call uvgetvrr(tin,'systemp',systemps,iants*nspec)
 	  call uvrdvri(tin,'nwide',nspec,0)
-	  if(nspec.ne.0)
-     *		call uvgetvrr(tin,'wsystemp',systemps,iants*nspec)
-
+carma
+c          if (nspec.ne.0)
+c     *         call uvgetvrr(tin,'wsystemp',systemps,iants*nspec)
 	endif
-        call uvprobvr(tin,'corbw',vtype,ncorbw,vupd)
-        if (vtype(1:1).eq.'r') then
-          if (ncorbw.gt.4) call bug('f','corbw array too large')
-          call uvgetvrr(tin,'corbw',cbw,ncorbw)
-        else
-          call bug('f','Unexpected type for corbw: ' // vtype)
+        if (cthere) then
+           call uvprobvr(tin,'corbw',vtype,ncorbw,vupd)
+           if (vtype(1:1).eq.'r') then
+              if (ncorbw.gt.4) call bug('f','corbw array too large')
+              call uvgetvrr(tin,'corbw',cbw,ncorbw)
+           else
+              call bug('f','Unexpected type for corbw: ' // vtype)
+           endif
         endif
 
-	call uvgetvrd(tin,'lst',dlst,1)
+carma	call uvgetvrd(tin,'lst',dlst,1)
+        dlst=0
+
 	call uvrdvrd(tin,'freq',dlinef,0.d0)
 	call uvgetvra(tin,'veltype',veltype(ipt))
 	call uvrdvrr(tin,'veldop',veldop(ipt),0.)
@@ -494,8 +506,10 @@ c
 	   corbw(ipt,1) = 1000.0*cbw(1)
 	   corbw(ipt,2) = 1000.0*cbw(3)
         else
-           write(*,*) 'ncorbw = ',ncorbw
-           call bug('f','Cannot handle this corbw length')
+carma           write(*,*) 'ncorbw = ',ncorbw
+carma           call bug('w','Cannot handle this corbw length')
+           corbw(ipt,1) = 0
+           corbw(ipt,2) = 0
         endif
 	do 200 i=1,iants
 	   sum = 0.0
