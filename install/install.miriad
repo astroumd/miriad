@@ -1,6 +1,6 @@
 #! /bin/csh -f
 #
-set version=16-oct-05
+set version=27-nov-05
 #
 #  2-aug-99 Updated for Sebok's Mandrake setup
 #  1-aug-00 Updated to allow to build private PGPLOT version
@@ -29,6 +29,7 @@ set version=16-oct-05
 # 19-jun-05 g95 an option
 # 26-aug-05 miriad_start.$SHELL scripts
 # 16-oct-05 64bit fix for pgplot
+# 27-nov-05 gfortran an option
 #
 #   Simple single-architecture installation of MIRIAD
 #   (linux)
@@ -135,6 +136,7 @@ set testx=0		    #  mir.testx testing X routines (interactive)
 set bench=0,512,1           #  mir.bench nchan,mapsize,cell  (nchan=0 will skip bench)
 set intel=0                 #  use intel compiler (ifc/icc) for linux?
 set g95=0                   #  use g95 as default gnu compiler, instead of g77
+set gfortran=0              #  use gfortran as default gnu compiler, instead of g77
 set man=1		    #  do manual pages
 set lfs=(-D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE) # LFS flags for uvio
 
@@ -163,6 +165,8 @@ if ($intel) then
   set fortran=ifort
 else if ($g95) then
   set fortran=g95
+else if ($gfortran) then
+  set fortran=gfortran
 else
   set fortran=g77
 endif
@@ -307,6 +311,9 @@ if ($intel) then
 else if ($g95) then
   echo "Using g95 compiler for linux"
   cp $MIR/src/sys/bin/compile.linux_g95   $MIR/bin/localsys/compile.linux
+else if ($gfortran) then
+  echo "Using gfortran compiler for linux"
+  cp $MIR/src/sys/bin/compile.linux_gfortran   $MIR/bin/localsys/compile.linux
 else
   echo "Using g77 compiler for linux"
   cp $MIR/src/sys/bin/compile.linux   $MIR/bin/localsys/compile.linux
