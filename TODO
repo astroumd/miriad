@@ -4,6 +4,17 @@
   (ifort -i8 solves some of these problems)
   (gfortran -fdefault-integer-8 might do the same
 
+- 64bit machines might need a few manual patches, mostly because our software
+  does not everywhere know that /usr/X11R6/lib should be /usr/X11R6/lib64:
+	- in pgplot/sys_linux make sure /usr/X11R6/lib64 is used in
+	  g77_gcc.conf. Normally the install.miriad file now takes care
+	  of this.
+	- in wip, readline is not found, so make a symlink:
+
+		ln -s /usr/lib64/libreadline.a $MIRLIB
+
+          this is also mostly solved by pgm.wip now
+
 - no more maxdim.h and maxdimc.h in $MIRINC, since they are 
   generated via configure (planned for 4.0.4)
 
@@ -47,3 +58,4 @@
 	solaris:/usr/ucb/implot
 
 - pgplot:  gfortran cannot compile the GIF drivers
+
