@@ -1,5 +1,8 @@
 - MIR4 vs. MIR5: consider Sault's proposal to handle long integers.
 
+- mem.for and mm.f2c are buggy on 64bit machines
+  (ifort -i8 solves some of these problems)
+
 - no more maxdim.h and maxdimc.h in $MIRINC, since they are 
   generated via configure (planned for 4.0.4)
 
@@ -41,3 +44,5 @@
 
 - miriad name collisions:
 	solaris:/usr/ucb/implot
+
+- gfortran:   cannot compile pgplot's GIF drivers, they are default in miriad
