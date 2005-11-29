@@ -30,7 +30,7 @@ c	  "variables" uv variables.
 c	  "stat"      max, ave, rms and high channels for each record.
 c	  "birds      frequencies for high channels in each record.
 c	  "spectra"   information about the spectral windows.
-c         "carma"     carma export format (the Scoville table)
+c         "baseline"  baseline export format (the Scoville table)
 c	If no options are given, uvlist uses options=brief,data.
 c@ select
 c	This selects the data to be processed, using the standard uvselect
@@ -131,11 +131,11 @@ c   21may04 pjt  = CVS merged the two previous modifications
 c   19jun05 pjt  - fixes for g95: num() is now integer array
 c   01jul05 jhz  - add a space (1x) before Amp and Phase in the formats
 c                  for the vis list in AveDat,BriefDat,Allan
-c   27nov05 pjt  - added a 'carma' option
+c   27nov05 pjt  - added a 'carma' option, but renamed it to 'baseline'
 c-----------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='UVLIST: version  28-nov-05')
+	parameter(version='UVLIST: version  28-nov-05 PJT-2')
 	real rtoh,rtod,pi
 	integer maxsels
 	parameter(pi=3.141592653589793,rtoh=12/pi,rtod=180/pi)
@@ -147,7 +147,7 @@ c
 	complex data(maxchan)
 	logical flags(maxchan)
 	logical dohead,dodata,dospect,dohist,dobrief,dolist,dostat
-	logical eof,more,ltemp,doallan,doave,doflux,dobird,docarma
+	logical eof,more,ltemp,doallan,doave,doflux,dobird,dobase
 	double precision ut,lst,visno
 	integer unit,numrec,numchan,num,time0,p,i
 	double precision uin,vin,win,timein,basein,preamble(5)
@@ -165,7 +165,7 @@ c
 	if(vis.eq.' ')call bug('f','Input file must be given (vis=)')
 	call GetOpt(dohead,dodata,dospect,dohist,
      *		    dobrief,dolist,dostat,doallan,doave,doflux,dobird,
-     *              docarma)
+     *              dobase)
 	call SelInput('select',sels,maxsels)
 	call keyline(linetype,numchan,start,width,step)
 	call keyi('recnum',numrec,1)
@@ -184,10 +184,10 @@ c
 	call SelApply(unit,sels,.true.)
 c-----------------------------------------------------------------------
 	if(dodata.or.dolist.or.dostat.or.doflux.or.dobird.or.
-     *     docarma)then
+     *     dobase)then
 	  if(linetype.ne.' ')
      *	    call uvset(unit,'data',linetype,numchan,start,width,step)
-	  if (docarma) then
+	  if (dobase) then
 	     call uvset(unit,'preamble','uvw/time/baseline',0,0.,0.,0.)
 	     call uvset(unit,'coord','nanosec',0,0.,0.,0.)
 	  else
@@ -200,7 +200,7 @@ c
 c  Read through the file, listing what we have to.
 c
 	num=0
-	if (docarma)then
+	if (dobase)then
 	   call uvread(unit,preamble,data,flags,maxchan,numchan)
 	   uin = preamble(1)
 	   vin = preamble(2)
@@ -219,7 +219,7 @@ c
 	time0 = timein + 100
 	call writein(unit,vis,dohead,dodata,dospect,
      *	  dohist,dolist,dobrief,dostat,doallan,doave,doflux,dobird,
-     *                  docarma,scale)
+     *                  dobase,scale)
 	last = ' '
 	dowhile ( numchan.gt.0 .and. num.lt.numrec)
 	  num = num + 1
@@ -231,15 +231,15 @@ c
 	    last = 'v'
 	  endif
 	  if(dodata.or.dolist.or.dostat.or.doflux.or.dobird.or.
-     *       docarma)then
+     *       dobase)then
 	    call uvinfo(unit,'visno',VisNo)
 	    call uvrdvrd(unit,'ut',ut,
      *			((timein-0.5)-int((timein-0.5)))*24.d0/rtoh)
             call uvrdvrd(unit,'lst',lst,0.d0/rtoh)
 	    call uvrdvri(unit,'pol',p,0)
-	    if(dolist.or.docarma)then
+	    if(dolist.or.dobase)then
 	      call ListDat(last.ne.'d',unit,uin,vin,win,basein,ut,lst,
-     *		       dobrief,docarma,nint(VisNo),data,flags,numchan,p)
+     *		       dobrief,dobase,nint(VisNo),data,flags,numchan,p)
 	    else if(dobrief)then
 	      if(int(timein-0.5).ne.time0)then
 	        ltemp = .true.
@@ -284,7 +284,7 @@ c
 c
 c  Loop the loop.
 c
-	  if (docarma) then
+	  if (dobase) then
 	   call uvread(unit,preamble,data,flags,maxchan,numchan)
 	   uin = preamble(1)
 	   vin = preamble(2)
@@ -723,10 +723,10 @@ c
 	end
 c********1*********2*********3*********4*********5*********6*********7**
 	subroutine ListDat(needhd,unit,uin,vin,win,basein,ut,lst,
-     *			     dobrief,docarma,VisNo,data,flags,numchan,p)
+     *			     dobrief,dobase,VisNo,data,flags,numchan,p)
 	implicit none
 	integer numchan,VisNo,p,unit
-	logical needhd,flags(numchan),dobrief,docarma
+	logical needhd,flags(numchan),dobrief,dobase
 	complex data(numchan)
 	double precision uin,vin,win,basein,ut,lst
 	include 'mirconst.h'
@@ -736,7 +736,7 @@ c
 c  Input:
 c    needhd	If true, give a heading line.
 c    dobrief	Do brief listing.
-c    docarma    Do a carma style listing
+c    dobase     List baselines with enough info to debug
 c    unit	Handle of the uvdata.
 c    VisNo	Visibility number.
 c    uin,vin,win U,V (optionally W)coordinates, in wavelengths.
@@ -764,20 +764,14 @@ c
 c
 	if(needhd)then
 	  call LogWrite(' ',more)
-	  if (docarma) then
+	  if (dobase) then
 	     if (needhd) then
 		call uvgetvrd(unit,'freq',freq,1)
 		write(line,'(''freq='',f16.10,'' Ghz'')') freq
 		call LogWrite(line,more)
-		call uvrdvrd(unit,'obsra',obsra,0.d0)
-		write(line,'(''obsra='',f16.10,'' deg'')') obsra*rtod
-		call LogWrite(line,more)
-		call uvrdvrd(unit,'obsdec',obsdec,0.d0)
-		write(line,'(''obsdec='',f16.10,'' deg'')') obsdec*rtod
-		call LogWrite(line,more)
 	     endif
 	     line =' Vis # Source      UT(hrs)  LST(hrs)   HA(hrs)'
-     *           //'   Ant     u(m)     v(m)     w(m)  '
+     *           //'   Dec(hrs)  Ant     u(m)     v(m)     w(m)  '
      *           //' Azim  Elev(deg)   Amp/Phas'
 	  else
 	     line =' Vis #   UT(hrs)  LST(hrs)   Ant    Pol  u(kLam)'
@@ -821,14 +815,14 @@ c
 	pol = ' '
 	if(p.ne.0) pol = PolsC2P(p)
 
-	if (docarma) then
+	if (dobase) then
 	   call uvrdvra(unit,'source',src,'unknown')
 	   call amphase(data(1),amp(1),phas(1))
 	   ntm =CMKS/1d9 
 	   write(line,
-     *    '(i6,1x,a,3f10.4,1x,i2,1x,i2,1x,3f9.3,2f8.2,f7.3,1x,i4)')
-     *	  mod(Visno,1000000),src,ut*rtoh,lst*rtoh,ha*rtoh,ant1,ant2,
-     *	  uin*ntm,vin*ntm,win*ntm,azim*rtod,elev*rtod,
+     *    '(i6,1x,a,4f10.4,1x,i2,1x,i2,1x,3f9.3,2f8.2,f7.3,1x,i4)')
+     *	  mod(Visno,1000000),src,ut*rtoh,lst*rtoh,ha*rtoh,obsdec*rtod,
+     *	  ant1,ant2,uin*ntm,vin*ntm,win*ntm,azim*rtod,elev*rtod,
      *    amp(1),nint(phas(1))
 
 	else
@@ -939,11 +933,11 @@ c
 c************************************************************************
 	subroutine GetOpt(dohead,dodata,dospect,dohist,
      *		    dobrief,dolist,dostat,doallan,doave,doflux,dobird,
-     *              docarma)
+     *              dobase)
 c
 	implicit none
 	logical dohead,dodata,dospect,dohist,dobrief,dolist,dostat,doave
-	logical doallan,doflux,dobird,docarma
+	logical doallan,doflux,dobird,dobase
 c
 c  Determine which of the options is to be done. Default is
 c  "brief" "data".
@@ -960,7 +954,7 @@ c
 	data opts/'brief    ','full     ','data     ','variables',
      *		  'spectra  ','list     ','history  ','statistic',
      *		  'average  ','allan    ','flux     ','birds    ',
-     *            'carma    '/
+     *            'baseline '/
 c
 	call options('options',opts,present,nopts)
 c
@@ -977,7 +971,7 @@ c
 	doallan = present(10)
 	doflux  = present(11)
 	dobird  = present(12)
-	docarma = present(13)
+	dobase  = present(13)
 	if(.not.(dohead.or.dolist.or.dospect.or.dohist
      *			.or.dostat.or.doflux.or.dobird))
      *							dodata = .true.
@@ -986,13 +980,13 @@ c
 c********1*********2*********3*********4*********5*********6*********7**
 	subroutine writein(unit,vis,dohead,dodata,dospect,
      *	  dohist,dolist,dobrief,dostat,doallan,doave,doflux,dobird,
-     *                  docarma,scale)
+     *                  dobase,scale)
 c
 	implicit none
 	integer unit
 	character vis*(*)
 	logical dohead,dodata,dospect,dohist,dolist,dobrief,dostat
-	logical doave,doallan,doflux,dobird,docarma
+	logical doave,doallan,doflux,dobird,dobase
         real scale
 c
 c  Write out the input parameters to the output log file / terminal.
@@ -1049,7 +1043,7 @@ c
 	if(doallan) call cat(line,length,',Allan standard deviation')
 	if(doflux)  call cat(line,length,',planet flux visibility')
 	if(dobird)  call cat(line,length,',frequency birdies')
-	if(docarma) call cat(line,length,',carma')
+	if(dobase)  call cat(line,length,',baseline')
 	call LogWrite(line,more)
 c
 	if(dodata)then
