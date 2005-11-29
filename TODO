@@ -3,6 +3,17 @@
 - mem.for and mm.f2c are most likely buggy on 64bit machines:
   (ifort -i8 solves some of these problems)
   (gfortran -fdefault-integer-8 might do the same
+  This affects all memory allocated above MAXBUF, as it will use 
+  somewhat system dependant techniques to use malloc() via mm.f2c.
+
+- integer*8 support; ratty flag to go back to the old situation if
+  the fortran compiler does not support integer*8
+  [this will support scratchfiles > 8GB]
+  This could now be solved with the -i8 type flags to compilers,
+  but need some code overhaul - see configure for detection/setting
+
+- write out proper long integers in itemize
+  question is how fortran can do this?
 
 - 64bit machines might need a few manual patches, mostly because our software
   does not everywhere know that /usr/X11R6/lib should be /usr/X11R6/lib64:
@@ -22,13 +33,6 @@
   miriad f2c interface. Sault reverted the bug i found in uvdat.for.
 
 - SMA code integration (sma_Resample.o has been integrated and removed)
-
-- integer*8 support; ratty flag to go back to the old situation if
-  the fortran compiler does not support integer*8
-  [this will support scratchfiles > 8GB]
-
-- write out proper long integers in itemize
-  question is how fortran can do this?
 
 - a conversion routine from MIR4 to MIR3 format (int8 -> int) if possible
   this program/script should check if all the int8 variables are short
