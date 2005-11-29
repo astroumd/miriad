@@ -30,6 +30,7 @@ c	  "variables" uv variables.
 c	  "stat"      max, ave, rms and high channels for each record.
 c	  "birds      frequencies for high channels in each record.
 c	  "spectra"   information about the spectral windows.
+c         "carma"     carma export format (the Scoville table)
 c	If no options are given, uvlist uses options=brief,data.
 c@ select
 c	This selects the data to be processed, using the standard uvselect
@@ -130,10 +131,11 @@ c   21may04 pjt  = CVS merged the two previous modifications
 c   19jun05 pjt  - fixes for g95: num() is now integer array
 c   01jul05 jhz  - add a space (1x) before Amp and Phase in the formats
 c                  for the vis list in AveDat,BriefDat,Allan
+c   27nov05 pjt  - added a 'carma' option
 c-----------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='UVLIST: version  05-jul-05')
+	parameter(version='UVLIST: version  28-nov-05')
 	real rtoh,rtod,pi
 	integer maxsels
 	parameter(pi=3.141592653589793,rtoh=12/pi,rtod=180/pi)
@@ -145,10 +147,10 @@ c
 	complex data(maxchan)
 	logical flags(maxchan)
 	logical dohead,dodata,dospect,dohist,dobrief,dolist,dostat
-	logical eof,more,ltemp,doallan,doave,doflux,dobird
+	logical eof,more,ltemp,doallan,doave,doflux,dobird,docarma
 	double precision ut,lst,visno
 	integer unit,numrec,numchan,num,time0,p,i
-	double precision uin,vin,timein,basein
+	double precision uin,vin,win,timein,basein,preamble(5)
 	common/preamb/uin,vin,timein,basein
 c
 c  Externals.
@@ -162,7 +164,8 @@ c
 	call keyf('vis',vis,' ')
 	if(vis.eq.' ')call bug('f','Input file must be given (vis=)')
 	call GetOpt(dohead,dodata,dospect,dohist,
-     *		    dobrief,dolist,dostat,doallan,doave,doflux,dobird)
+     *		    dobrief,dolist,dostat,doallan,doave,doflux,dobird,
+     *              docarma)
 	call SelInput('select',sels,maxsels)
 	call keyline(linetype,numchan,start,width,step)
 	call keyi('recnum',numrec,1)
@@ -179,17 +182,34 @@ c  determine the variables of interest.
 c
 	call uvopen(unit,vis,'old')
 	call SelApply(unit,sels,.true.)
-	if(dodata.or.dolist.or.dostat.or.doflux.or.dobird)then
+c-----------------------------------------------------------------------
+	if(dodata.or.dolist.or.dostat.or.doflux.or.dobird.or.
+     *     docarma)then
 	  if(linetype.ne.' ')
      *	    call uvset(unit,'data',linetype,numchan,start,width,step)
-	  call uvset(unit,'coord','wavelength',0,0.,0.,0.)
+	  if (docarma) then
+	     call uvset(unit,'preamble','uvw/time/baseline',0,0.,0.,0.)
+	     call uvset(unit,'coord','nanosec',0,0.,0.,0.)
+	  else
+	     call uvset(unit,'preamble','uv/time/baseline',0,0.,0.,0.)
+	     call uvset(unit,'coord','wavelength',0,0.,0.,0.)
+	  endif
 	endif
 	if(dohead)call VarLoad(unit,dobrief)
 c
 c  Read through the file, listing what we have to.
 c
 	num=0
-	call uvread(unit,uin,data,flags,maxchan,numchan)
+	if (docarma)then
+	   call uvread(unit,preamble,data,flags,maxchan,numchan)
+	   uin = preamble(1)
+	   vin = preamble(2)
+	   win = preamble(3)
+	   timein = preamble(4)
+	   basein = preamble(5)
+	else
+	   call uvread(unit,uin,data,flags,maxchan,numchan)
+	endif
 	if(scale.ne.1.)then
           do i=1,numchan
             data(i) = data(i) * scale
@@ -199,7 +219,7 @@ c
 	time0 = timein + 100
 	call writein(unit,vis,dohead,dodata,dospect,
      *	  dohist,dolist,dobrief,dostat,doallan,doave,doflux,dobird,
-     *                  scale)
+     *                  docarma,scale)
 	last = ' '
 	dowhile ( numchan.gt.0 .and. num.lt.numrec)
 	  num = num + 1
@@ -210,16 +230,16 @@ c
 	    call printhd(unit,timein)
 	    last = 'v'
 	  endif
-c
-	  if(dodata.or.dolist.or.dostat.or.doflux.or.dobird)then
+	  if(dodata.or.dolist.or.dostat.or.doflux.or.dobird.or.
+     *       docarma)then
 	    call uvinfo(unit,'visno',VisNo)
 	    call uvrdvrd(unit,'ut',ut,
      *			((timein-0.5)-int((timein-0.5)))*24.d0/rtoh)
             call uvrdvrd(unit,'lst',lst,0.d0/rtoh)
 	    call uvrdvri(unit,'pol',p,0)
-	    if(dolist)then
-	      call ListDat(last.ne.'d',unit,uin,vin,basein,ut,lst,
-     *			dobrief,nint(VisNo),data,flags,numchan,p)
+	    if(dolist.or.docarma)then
+	      call ListDat(last.ne.'d',unit,uin,vin,win,basein,ut,lst,
+     *		       dobrief,docarma,nint(VisNo),data,flags,numchan,p)
 	    else if(dobrief)then
 	      if(int(timein-0.5).ne.time0)then
 	        ltemp = .true.
@@ -264,7 +284,16 @@ c
 c
 c  Loop the loop.
 c
-	  call uvread(unit,uin,data,flags,maxchan,numchan)
+	  if (docarma) then
+	   call uvread(unit,preamble,data,flags,maxchan,numchan)
+	   uin = preamble(1)
+	   vin = preamble(2)
+	   win = preamble(3)
+	   timein = preamble(4)
+	   basein = preamble(5)
+	  else
+	     call uvread(unit,uin,data,flags,maxchan,numchan)
+	  endif
           do i=1,numchan
             data(i) = data(i) * scale
           enddo
@@ -693,22 +722,24 @@ c
 	call LogWrite(line(1:length),more)
 	end
 c********1*********2*********3*********4*********5*********6*********7**
-	subroutine ListDat(needhd,unit,uin,vin,basein,ut,lst,
-     *				dobrief,VisNo,data,flags,numchan,p)
+	subroutine ListDat(needhd,unit,uin,vin,win,basein,ut,lst,
+     *			     dobrief,docarma,VisNo,data,flags,numchan,p)
 	implicit none
 	integer numchan,VisNo,p,unit
-	logical needhd,flags(numchan),dobrief
+	logical needhd,flags(numchan),dobrief,docarma
 	complex data(numchan)
-	double precision uin,vin,basein,ut,lst
+	double precision uin,vin,win,basein,ut,lst
+	include 'mirconst.h'
 c
 c  List ut lst antennas u,v elev and paralactic angle with the data.
 c
 c  Input:
 c    needhd	If true, give a heading line.
 c    dobrief	Do brief listing.
+c    docarma    Do a carma style listing
 c    unit	Handle of the uvdata.
 c    VisNo	Visibility number.
-c    uin,vin	U,V coordinates, in wavelengths.
+c    uin,vin,win U,V (optionally W)coordinates, in wavelengths.
 c    basein	Baseline number.
 c    ut,lst	UT and LST, in radians.
 c    data	The correlation data.
@@ -716,14 +747,14 @@ c    flags	The data flags.
 c    numchan	The number of channels.
 c    p		Polarisation code. A zero value indicates it is unknown.
 c------------------------------------------------------------------------
-	real rtoh,rtod,pi,rts
+	real rtoh,rtod,rts
 	integer mchan
-	parameter(pi=3.141592653589793,rtoh=12/pi,rtod=180/pi)
-	parameter(mchan=5,rts=3600.*180./pi)
-	character line*100,cflag(mchan)*1, telescop*20, pol*2
+	parameter(rtoh=12/PI,rtod=180/PI)
+	parameter(mchan=5,rts=3600.*180./PI)
+	character line*128,cflag(mchan)*1, telescop*20, pol*2,src*9
 	real amp(mchan),phas(mchan),ha,elev,sinaz,cosaz,azim
 	real sinha,cosha,sind,cosd,sinl,cosl,chi
-	double precision obsra,obsdec,latitude,dra,ddec
+	double precision obsra,obsdec,latitude,dra,ddec,freq,ntm
 	logical more,ok
 	integer i,j,ant1,ant2,nchan
 c
@@ -733,8 +764,25 @@ c
 c
 	if(needhd)then
 	  call LogWrite(' ',more)
-	  line =' Vis #   UT(hrs)  LST(hrs)   Ant    Pol  u(kLam)'
-     *	  //'  v(kLam)  Azim  Elev(deg)  Chi  dra(")  ddec(")'
+	  if (docarma) then
+	     if (needhd) then
+		call uvgetvrd(unit,'freq',freq,1)
+		write(line,'(''freq='',f16.10,'' Ghz'')') freq
+		call LogWrite(line,more)
+		call uvrdvrd(unit,'obsra',obsra,0.d0)
+		write(line,'(''obsra='',f16.10,'' deg'')') obsra*rtod
+		call LogWrite(line,more)
+		call uvrdvrd(unit,'obsdec',obsdec,0.d0)
+		write(line,'(''obsdec='',f16.10,'' deg'')') obsdec*rtod
+		call LogWrite(line,more)
+	     endif
+	     line =' Vis # Source      UT(hrs)  LST(hrs)   HA(hrs)'
+     *           //'   Ant     u(m)     v(m)     w(m)  '
+     *           //' Azim  Elev(deg)   Amp/Phas'
+	  else
+	     line =' Vis #   UT(hrs)  LST(hrs)   Ant    Pol  u(kLam)'
+     *	         //'  v(kLam)  Azim  Elev(deg)  Chi  dra(")  ddec(")'
+	  endif
 c********1*********2*********3*********4*********5*********6*********7**
 	  call LogWrite(line,more)
 	endif
@@ -772,12 +820,24 @@ c
         call basant(basein,ant1,ant2)
 	pol = ' '
 	if(p.ne.0) pol = PolsC2P(p)
-c
-	write(line,
+
+	if (docarma) then
+	   call uvrdvra(unit,'source',src,'unknown')
+	   call amphase(data(1),amp(1),phas(1))
+	   ntm =CMKS/1d9 
+	   write(line,
+     *    '(i6,1x,a,3f10.4,1x,i2,1x,i2,1x,3f9.3,2f8.2,f7.3,1x,i4)')
+     *	  mod(Visno,1000000),src,ut*rtoh,lst*rtoh,ha*rtoh,ant1,ant2,
+     *	  uin*ntm,vin*ntm,win*ntm,azim*rtod,elev*rtod,
+     *    amp(1),nint(phas(1))
+
+	else
+	   write(line,
      *    '(i6,2f10.4,1x,i4,''-'',i4,1x,a,2f9.2,3f8.2,2x,2f6.0)')
      *	  mod(Visno,1000000),ut*rtoh,lst*rtoh,ant1,ant2,pol,
      *	  0.001*uin,0.001*vin,azim*rtod,elev*rtod,
      *    chi*rtod,dra*rts,ddec*rts
+	endif
 c********1*********2*********3*********4*********5*********6*********7**
 	call LogWrite(line,more)
 c
@@ -878,11 +938,12 @@ c
 	end
 c************************************************************************
 	subroutine GetOpt(dohead,dodata,dospect,dohist,
-     *		    dobrief,dolist,dostat,doallan,doave,doflux,dobird)
+     *		    dobrief,dolist,dostat,doallan,doave,doflux,dobird,
+     *              docarma)
 c
 	implicit none
 	logical dohead,dodata,dospect,dohist,dobrief,dolist,dostat,doave
-	logical doallan,doflux,dobird
+	logical doallan,doflux,dobird,docarma
 c
 c  Determine which of the options is to be done. Default is
 c  "brief" "data".
@@ -892,13 +953,14 @@ c    dohead,dodata,dospect,dohist,dolist,dostat,dobird,doallan,doave
 c    dobrief			  Do it in brief or verbose mode.
 c------------------------------------------------------------------------
 	integer nopts
-	parameter(nopts=12)
+	parameter(nopts=13)
 	character opts(nopts)*9
 	logical present(nopts)
 c
 	data opts/'brief    ','full     ','data     ','variables',
      *		  'spectra  ','list     ','history  ','statistic',
-     *		  'average  ','allan    ','flux     ','birds    '/
+     *		  'average  ','allan    ','flux     ','birds    ',
+     *            'carma    '/
 c
 	call options('options',opts,present,nopts)
 c
@@ -915,6 +977,7 @@ c
 	doallan = present(10)
 	doflux  = present(11)
 	dobird  = present(12)
+	docarma = present(13)
 	if(.not.(dohead.or.dolist.or.dospect.or.dohist
      *			.or.dostat.or.doflux.or.dobird))
      *							dodata = .true.
@@ -923,13 +986,13 @@ c
 c********1*********2*********3*********4*********5*********6*********7**
 	subroutine writein(unit,vis,dohead,dodata,dospect,
      *	  dohist,dolist,dobrief,dostat,doallan,doave,doflux,dobird,
-     *                  scale)
+     *                  docarma,scale)
 c
 	implicit none
 	integer unit
 	character vis*(*)
 	logical dohead,dodata,dospect,dohist,dolist,dobrief,dostat
-	logical doave,doallan,doflux,dobird
+	logical doave,doallan,doflux,dobird,docarma
         real scale
 c
 c  Write out the input parameters to the output log file / terminal.
@@ -986,6 +1049,7 @@ c
 	if(doallan) call cat(line,length,',Allan standard deviation')
 	if(doflux)  call cat(line,length,',planet flux visibility')
 	if(dobird)  call cat(line,length,',frequency birdies')
+	if(docarma) call cat(line,length,',carma')
 	call LogWrite(line,more)
 c
 	if(dodata)then
@@ -1055,8 +1119,9 @@ c
 c
 c  The following table is a list of "important" and "unimportant" variables.
 c  In brief mode, only the important variables are listed. In full mode,
-c  all, except the unimportant variables, are listed. NOTE: the tables MUST
-c  be in alphabetic order!
+c  all, except the unimportant variables, are listed. 
+c
+c  !! NOTE: theese two tables MUST be in alphabetic order !!
 c
 	integer ngood,nbad
 	parameter(ngood=12,nbad=8)
