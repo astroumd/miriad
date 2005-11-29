@@ -56,8 +56,10 @@ void myalloc_(float *x,fortran_integer *n){
     i = (fortran_integer)d;
     if(d != i){
       printf("myalloc: Funny rounding problem\n");
+      exit(1);
     }else{
       printf("Success\n");
+      exit(0);
     }
   }
 }
@@ -94,7 +96,13 @@ endif
 #------------------------------------------------------------------------
 # Run the test
 
+echo "============> First a size:"
+size exa
+echo "============> and a loadmap:" 
+ldd exa
+echo "============> now the run:"
 
-exa <<EOF
+./exa <<EOF
 10000000
 EOF
+echo $status
