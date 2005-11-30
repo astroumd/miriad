@@ -55,9 +55,10 @@ c    rjs   19sep04    Copy across sensitivity model, if appropriate.
 c    jhz   05jul05    add options = sma for SMA, which takes
 c                     sma geocentric coordinates and antenna position
 c                     offsets given in SMA logs
+c    pjt   30nov05    compute (u,v,w) instead of (u,v)
 c***********************************************************************
 c= Uvedit - Editing of the baseline of a UV data set.
-c& jm
+c& pjt
 c: calibration, uv-data
 c+
       program uvedit
@@ -248,7 +249,7 @@ c
       character PROG*(*)
       parameter (PROG = 'UVEDIT: ')
       character VERSION*(*)
-      parameter (VERSION = 'version 1.9 05-July-05')
+      parameter (VERSION = 'version 30-Nov-05')
 c
       double precision SECRAD, ASECRAD
 c  -------------(SECRAD = DPI / (12.d0 * 3600.d0))
@@ -294,8 +295,8 @@ c
       double precision delX, delY, delZ
       double precision bxnew, bynew, bznew
       double precision BX, BY, BZ
-      double precision uu, vv
-      double precision preamble(4)
+      double precision uu, vv, ww
+      double precision preamble(5)
       double precision dummy(3 * MAXANT)
       double precision antpos(MAXANT, 3)
       double precision XYZ(MAXANT, 3), newxyz(MAXANT, 3)
@@ -702,6 +703,7 @@ c
         srcfound = allsrc
         changed = .FALSE.
         call UvOpen(Lin, Vis(j), 'old')
+        call uvset(Lin,'preamble','uvw/time/baseline',0,0.,0.,0.)
         call UvTrack(Lin, 'antpos', 'u')
         call TrackIt(Lin, except, Nexcept)
         call UvNext(Lin)
@@ -762,6 +764,7 @@ c
             call UvOpen(Lout, Outfile, 'new')
             mesg = PROG // 'Writing visibilities to: '// Outfile
             call Output(mesg)
+            call uvset(Lout,'preamble','uvw/time/baseline',0,0.,0.,0.)
             if (docorr)
      *        call uvset(Lout, 'corr', corrtype, 0, 0.0, 0.0, 0.0)
 c
@@ -883,7 +886,7 @@ c
                     enddo
                     call UvPutvrd(Lout, 'antpos', dummy, Nant * 3)
                   endif
-                  call BasAnt(preamble(4), ant1, ant2)
+                  call BasAnt(preamble(5), ant1, ant2)
                   BX = antpos(ant2, 1) - antpos(ant1, 1)
                   BY = antpos(ant2, 2) - antpos(ant1, 2)
                   BZ = antpos(ant2, 3) - antpos(ant1, 3)
@@ -987,6 +990,7 @@ c
 c Get original uv coordinates.
                   uu = preamble(1)
                   vv = preamble(2)
+                  ww = preamble(3)
                   phase = 0.0
 c Time.
                   timphz = -uu * cosdec * timeoff
@@ -1014,7 +1018,7 @@ c  Set headers variables to new values.
 c
 c  Get new uv coordinates...
                   if (dotime) then
-                    preamble(3) = preamble(3) + (timeoff / (2 * PI))
+                    preamble(4) = preamble(4) + (timeoff / (2 * PI))
                     HA = HA + timeoff
                   endif
                   if (dorad) HA = HA - delra
@@ -1028,15 +1032,18 @@ c  Get new uv coordinates...
                     uu = (bxnew * sinHA) + (bynew * cosHA)
                     vv = (((-bxnew * cosHA) + (bynew * sinHA)) * sindec)
      *                 + (bznew * cosdec)
+                    ww = (bxnew * cosHA - bynew * sinHA)*cosdec 
+     *                 + (bznew * sindec)
 c
                     call uvrdvrd(Lin, 'epoch', epoch, 2000.0d0)
                     jepoch = epo2jul(epoch, ' ')
-                    call prerotat(jepoch, RA, dec, preamble(3), theta)
+                    call prerotat(jepoch, RA, dec, preamble(4), theta)
                     costh = cos(theta)
                     sinth = sin(theta)
 c
                     preamble(1) = (uu * costh) + (vv * sinth)
                     preamble(2) = (vv * costh) - (uu * sinth)
+                    preamble(3) = ww
                   endif
 c
 c  Get particular headers necessary to do editing (these items have
