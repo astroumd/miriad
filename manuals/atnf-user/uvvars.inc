@@ -49,7 +49,7 @@
 %        30-dec-03  rjs  Add new weather variables.
 %  22-nov-05  pjt  Merged in the above 2 changes, and marked some CARMA proposed uvvars
 
-\newcommand{\uvversion}{November 23, 2005}
+\newcommand{\uvversion}{November 30, 2005}
 
 A \miriad\ uv dataset is composed of a collection of items and `\MM{u-v} variables'.
 The variables are parameters that are known at the time of the observation,
@@ -167,7 +167,8 @@ baseline        \>R     \>-
 \>\>\> (where \MM{uvw = xyz(ant1) - xyz(ant2)}).\\
 \>\>\> When writing this variable, software must ensure that\\
 \>\>\> \MM{ant1 < ant2}. \\
-\>\>\> {\tt baseline} is also known as {\tt preamble(4)}\\
+\>\>\> {\tt baseline} is also known as {\tt preamble(4)} or  {\tt preamble(5)}\\
+\>\>\> depending if you have uv or uvw data resp.\\
 
 bin		\>I	\>-
 \> Pulsar bin number.\\
@@ -182,9 +183,11 @@ chi		\>R	\>radians
 \>\>\>If only one value is present, all antennas are \\
 \>\>\>assumed to have identical values.\\
 
-coord(2)        \>D     \>nanosec
-\> uv baseline coordinates\\
-\>\>\> {\tt coord} is also known as {\tt preamble(1:2)}\\
+coord(*)        \>D     \>nanosec
+\> uv(w) baseline coordinates\\
+\>\>\> {\tt coord} is also known as {\tt preamble(1:2)} or  {\tt preamble(1:3)}\\
+\>\>\> depending if you have uv or uvw data resp.\\
+
 
 corbit		\>R	\>-	
 \>  Number of correlator bits (Hat Ck)\\
@@ -541,7 +544,8 @@ tif2(nants)	\>R	\>Kelvin
 time			\>D     \>days
 \> The time (nominally UT1) stored as a Julian date.\\
 \>\>\> For example, noon on Jan 1, 1980 is 2,444,240.0! \\
-\>\>\> {\tt time} is also known as {\tt preamble(3)}\\
+\>\>\> {\tt time} is also known as {\tt preamble(3)} or {\tt preamble(4)}\\
+\>\>\> depending if you have uv or uvw data resp.\\
 
 tpower		\>R	\>volts
 \> Total power measurements (Hat Ck)\\
