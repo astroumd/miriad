@@ -121,6 +121,12 @@
 //                  because the velocity entry in the Mir header
 //                  was screwed up.
 // 2005-10-13 (JHZ) add options of noskip
+// 2005-11-30 (JHZ) store J2000 coordinates of the true
+//                  pointing position for all the cases other than stored
+//                  the true pointing position only
+//                  when the true pointing position differs from
+//                  the J2000 coordinates of source catalog
+//                  position.
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -1989,13 +1995,13 @@ double xyzpos;
 	uvputvra_c(tno,"source", sour);
 	uvputvrd_c(tno,"ra",&(smabuffer.ra),1);
 	uvputvrd_c(tno,"dec",&(smabuffer.dec),1);
-	/* store the true pointing position */
+// store the true pointing position 
 	rar = inh[inhset]->rar;
-	if (rar!=smabuffer.ra) 
+//	if (rar!=smabuffer.ra) 
 	  uvputvrd_c(tno,"pntra", &rar, 1);
 	decr = inh[inhset]->decr;
-	if (decr!=smabuffer.dec)
-	  uvputvrd_c(tno,"pntdec",&decr,1);
+//	if (decr!=smabuffer.dec)
+        uvputvrd_c(tno,"pntdec",&decr,1);
 	uvputvrd_c(tno,"obsra",&(smabuffer.obsra),1);
 	uvputvrd_c(tno,"obsdec",&(smabuffer.obsdec),1);
 	uvputvra_c(tno,"calcode",multisour[sourceID].calcode);
