@@ -222,11 +222,17 @@ c                  also skipping the decoding Doppler velocity
 c                  because of the velocity entry in the header
 c                  of MIR data appeared to be screwed up.
 c    jhz 09-nov-05 add options of noskip.
+c    jhz 30-nov-05 update version number according to the
+c                  change made in sma_mirRead.c for
+c                  storing pointing position in all the cases
+c                  rather than only when pointing position
+c                  differs from source catalog position
+c                  (FITS convention)
 c------------------------------------------------------------------------
         integer maxfiles
         parameter(maxfiles=128)
         character version*(*)
-        parameter(version='SmaLod: version 1.17 09-Nov-05')
+        parameter(version='SmaLod: version 1.18 30-Nov-05')
 c
         character in(maxfiles)*64,out*64,line*64, rxc*4
         integer tno, length, len1
