@@ -1,6 +1,6 @@
 #! /bin/csh -f
 #
-set version=30-nov-05
+set version=1-dec-05
 #
 #  2-aug-99 Updated for Sebok's Mandrake setup
 #  1-aug-00 Updated to allow to build private PGPLOT version
@@ -234,6 +234,7 @@ cat $MIRTEMP/src/sys/files/MIRRC.skel |\
   sed s,mir_hosttype,$hosttype, |\
   sed s,/usr/openwin/include,$mirxinc, |\
   sed s,/usr/local/lib/X11,$mirxlib, |\
+  sed s,MIRTEL:unknown,$MIRTEL, |\
   grep -v PGPLOT_FONT                                         >! $startcsh
 
 cat $MIRTEMP/src/sys/files/MIRSRC.skel |\
@@ -241,6 +242,7 @@ cat $MIRTEMP/src/sys/files/MIRSRC.skel |\
   sed s,mir_hosttype,$hosttype, |\
   sed s,/usr/openwin/include,$mirxinc, |\
   sed s,/usr/local/lib/X11,$mirxlib, |\
+  sed s,MIRTEL:unknown,$MIRTEL, |\
   grep -v PGPLOT_FONT                                         >! $startsh
 
 
@@ -257,7 +259,6 @@ else
   echo 'setenv PGPLOT_DIR /usr/lib/pgplot'                    >> $startcsh
 endif
 echo 'setenv WIPHELP $MIR/borrow/wip/wiphelp.dat'             >> $startcsh
-echo "setenv MIRTEL $telescope"                               >> $startcsh
 
 
 echo '# special additions'                                    >> $startsh
@@ -273,7 +274,6 @@ else
   echo 'export PGPLOT_DIR=/usr/lib/pgplot'                    >> $startsh
 endif
 echo 'export WIPHELP=$MIR/borrow/wip/wiphelp.dat'             >> $startsh
-echo "export MIRTEL=$telescope"                               >> $startsh
 
 
 # in preparation for single $MIR/bin and $MIR/lib directories
