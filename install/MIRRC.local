@@ -7,7 +7,9 @@ if ($?TERM && ! $?MIRHELLO) then
       setenv MIRHELLO x
       echo ""
       echo "MIRIAD version "`cat $MIR/VERSION`" [`cat $MIR/DATE`] loaded from MIR=$MIR"
-      if ($?MIRTEL) echo "  Optimized for telescope=$MIRTEL"
+      if ($?MIRTEL) then
+	echo "  Optimized for telescope=$MIRTEL"
+      endif
       echo ""
 endif
 
