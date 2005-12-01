@@ -51,7 +51,6 @@ export MIRPROG=$MIR/src/prog
 export MIRSDOC=$MIR/doc/subs
 export MIRSRC=$MIR/src
 export MIRSUBS=$MIR/src/subs
-export MIRTEL=unknown
 
 export PGPLOT_FONT=$MIRLIB/grfont.dat
 
