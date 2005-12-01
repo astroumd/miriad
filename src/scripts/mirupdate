@@ -1,0 +1,42 @@
+#! /bin/csh -f
+#
+#   Simplied "cvs update & install updated miriad subroutines and programs"
+#   This will only look 
+
+set tmp=/tmp/mirupdate$$
+set log=$tmp.log
+
+if ($?MIR == 0) then
+  echo "Cannot handle a missing MIR (miriad) environment"
+  exit 1
+endif
+
+if (! -e $MIR/CVS) then
+  echo "MIR=$MIR does not contain a CVS/ link, so no update is possible"
+  exit 1
+endif
+
+cd $MIR
+cvs -q update > $tmp.cvs
+
+set nc=(`grep ^C $tmp.cvs | wc -l`)
+set nu=(`grep ^U $tmp.cvs | wc -l`)
+set np=(`grep ^P $tmp.cvs | wc -l`)
+set nm=(`grep ^M $tmp.cvs | grep -v maxdim | grep -v VERSION | wc -l`)
+
+#echo C: $nc   U: $nu   P: $np   M: $nm
+
+if ($nc > 0) echo "Warning: there are $nc CVS conflicts, they should be fixed. Compile probably fails"
+if ($nm > 0) echo "Warning: there are $nm new local files, they should be checked"
+
+if ($np ==0 && $nm == 0) then
+  echo "There were no detected CVS updates, no rebuild neccesary"
+  rm -f $tmp.*
+  exit 0
+endif
+
+# ensure path to old installation script is included
+set path=($MIR/src/sys/bin $path); rehash
+
+# brute force do all the subs and prog 
+mir.install subs prog
