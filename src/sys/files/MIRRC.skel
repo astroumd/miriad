@@ -50,6 +50,7 @@ setenv MIRPROG  $MIR/src/prog
 setenv MIRSDOC  $MIR/doc/subs
 setenv MIRSRC   $MIR/src
 setenv MIRSUBS  $MIR/src/subs
+setenv MIRTEL   MIRTEL:unknown
 
 setenv PGPLOT_FONT $MIRLIB/grfont.dat
 
