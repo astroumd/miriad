@@ -234,7 +234,7 @@ cat $MIRTEMP/src/sys/files/MIRRC.skel |\
   sed s,mir_hosttype,$hosttype, |\
   sed s,/usr/openwin/include,$mirxinc, |\
   sed s,/usr/local/lib/X11,$mirxlib, |\
-  sed s,MIRTEL:unknown,$MIRTEL, |\
+  sed s,MIRTEL:unknown,$telescope, |\
   grep -v PGPLOT_FONT                                         >! $startcsh
 
 cat $MIRTEMP/src/sys/files/MIRSRC.skel |\
@@ -242,7 +242,7 @@ cat $MIRTEMP/src/sys/files/MIRSRC.skel |\
   sed s,mir_hosttype,$hosttype, |\
   sed s,/usr/openwin/include,$mirxinc, |\
   sed s,/usr/local/lib/X11,$mirxlib, |\
-  sed s,MIRTEL:unknown,$MIRTEL, |\
+  sed s,MIRTEL:unknown,$telescope, |\
   grep -v PGPLOT_FONT                                         >! $startsh
 
 
