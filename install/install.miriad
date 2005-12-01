@@ -1,6 +1,6 @@
 #! /bin/csh -f
 #
-set version=27-nov-05
+set version=30-nov-05
 #
 #  2-aug-99 Updated for Sebok's Mandrake setup
 #  1-aug-00 Updated to allow to build private PGPLOT version
@@ -257,6 +257,7 @@ else
   echo 'setenv PGPLOT_DIR /usr/lib/pgplot'                    >> $startcsh
 endif
 echo 'setenv WIPHELP $MIR/borrow/wip/wiphelp.dat'             >> $startcsh
+echo "setenv MIRTEL $telescope"                               >> $startcsh
 
 
 echo '# special additions'                                    >> $startsh
@@ -272,6 +273,7 @@ else
   echo 'export PGPLOT_DIR=/usr/lib/pgplot'                    >> $startsh
 endif
 echo 'export WIPHELP=$MIR/borrow/wip/wiphelp.dat'             >> $startsh
+echo "export MIRTEL=$telescope"                               >> $startsh
 
 
 # in preparation for single $MIR/bin and $MIR/lib directories
