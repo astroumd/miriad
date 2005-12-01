@@ -53,6 +53,7 @@ echo 'set path=($MIR/bin/linux $path); rehash'          >> $rc
 echo 'setenv LD_LIBRARY_PATH $MIR/lib/linux'            >> $rc
 echo 'setenv MIRPDOC $MIR/doc'                          >> $rc
 echo 'setenv MIRCAT $MIR/cat'                           >> $rc
+echo 'setenv MIRTEL atnf'                               >> $rc
 echo '#  it is quite likely a few more MIRs needed'     >> $rc
 
 exit 0
