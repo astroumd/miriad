@@ -24,6 +24,7 @@ c    16jul97 rjs  Added azel.
 c    15jan99 rjs  Added new leap second.
 c    13sep99 rjs  Make jullst more robust.
 c    12may04 rjs  Make jullst more robust - again.
+c     1dec05 pjt  Added leapsec (the last?) for the coming newyear
 c
 c  General Reference:
 c    Explanatory Supplement to the Astronomical Almanac. 1993.
@@ -456,6 +457,7 @@ c
 	character sys*(*)
 c
 c  Determine the difference between UTC and some other time system.
+c  Leapseconds are also incoorporated in here. 
 c  For example
 c
 c	double precision TAI,UTC
@@ -478,7 +480,7 @@ c------------------------------------------------------------------------
 c
 	logical init
 	integer NLEAP
-	parameter(NLEAP=22)
+	parameter(NLEAP=23)
 	character leap(NLEAP)*7
 	double precision dtime(NLEAP)
 	save init,leap
@@ -491,7 +493,7 @@ c
      *		   '77JAN01','78JAN01','79JAN01','80JAN01','81JUL01',
      *		   '82JUL01','83JUL01','85JUL01','88JAN01','90JAN01',
      *		   '91JAN01','92JUL01','93JUL01','94JUL01','96JAN01',
-     *		   '97JUL01','99JAN01'/
+     *		   '97JUL01','99JAN01','05JAN01'/
 c
 c  Initialise the table of leap seconds.
 c
