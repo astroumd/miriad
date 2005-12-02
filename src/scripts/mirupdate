@@ -29,7 +29,7 @@ set nm=(`grep ^M $tmp.cvs | grep -v maxdim | grep -v VERSION | wc -l`)
 if ($nc > 0) echo "Warning: there are $nc CVS conflicts, they should be fixed. Compile probably fails"
 if ($nm > 0) echo "Warning: there are $nm new local files, they should be checked"
 
-if ($np ==0 && $nm == 0) then
+if ($np == 0 && $nm == 0) then
   echo "There were no detected CVS updates, no rebuild neccesary"
   rm -f $tmp.*
   exit 0
@@ -40,3 +40,6 @@ set path=($MIR/src/sys/bin $path); rehash
 
 # brute force do all the subs and prog 
 mir.install subs prog
+
+
+#  rm -rf $tmp.*
