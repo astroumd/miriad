@@ -219,10 +219,10 @@ c     and "jupiter_c").
 c
 c@ options
 c     Task enrichment options.  Minimum match is active.
-c       nouv     Do not recompute the u and v variables (coord(1) and
-c                coord(2), respectively).  This option should, in
-c                principle, only be used with the delay correction;
-c                all other corrections should recompute u and v.
+c       nouv     Do not recompute the uvw (coord(1..3)
+c                This option should, in principle, only be used with 
+c                the delay correction; 
+c                all other corrections should recompute u,v and w
 c       dra
 c                Multiply the dra values by a cos(obsdec) correction.
 c                This is used to correct the dra value in the uv
@@ -238,6 +238,10 @@ c                in computing the cos(obsdec).
 c       sma
 c                Allows to use the SMA corrdinates system, i.e.
 c                The geocentric coodinates in unit of meter
+c       uvrotate Rotate uv-coordinates from current to standard epoch.
+c                This is needed for BIMA data, or any data that keeps
+c                their UV(W) in current epoch instead of the more common
+c                standard epoch.
 c
 c--
 c-----------------------------------------------------------------------
@@ -249,7 +253,7 @@ c
       character PROG*(*)
       parameter (PROG = 'UVEDIT: ')
       character VERSION*(*)
-      parameter (VERSION = 'version 30-Nov-05')
+      parameter (VERSION = 'version 1-dec-05')
 c
       double precision SECRAD, ASECRAD
 c  -------------(SECRAD = DPI / (12.d0 * 3600.d0))
@@ -306,7 +310,7 @@ c
       complex data(MAXCHAN), wdata(MAXCHAN)
       logical suffix, allsrc, srcfound, changed
       logical raabs, decabs, antabs
-      logical dotime, dorad, doants, dodelay, douv, dodra
+      logical dotime, dorad, doants, dodelay, douv, dodra, douvrot
       logical dopntra, dopntdec, dodelra, dodeldec
       logical updUT, updLst, updodra, updora, updodec, updra, upddec
       logical dowide, docorr
@@ -440,7 +444,7 @@ c
 c Options.
 c
 
-       call GetOpt(douv, dodra, dosma)
+       call GetOpt(douv, dodra, dosma, douvrot)
 
 c
 c Antenna.
@@ -1017,6 +1021,7 @@ c
 c  Set headers variables to new values.
 c
 c  Get new uv coordinates...
+c  
                   if (dotime) then
                     preamble(4) = preamble(4) + (timeoff / (2 * PI))
                     HA = HA + timeoff
@@ -1035,14 +1040,19 @@ c  Get new uv coordinates...
                     ww = (bxnew * cosHA - bynew * sinHA)*cosdec 
      *                 + (bznew * sindec)
 c
-                    call uvrdvrd(Lin, 'epoch', epoch, 2000.0d0)
-                    jepoch = epo2jul(epoch, ' ')
-                    call prerotat(jepoch, RA, dec, preamble(4), theta)
-                    costh = cos(theta)
-                    sinth = sin(theta)
+                    if (douvrot) then
+                       call uvrdvrd(Lin, 'epoch', epoch, 2000.0d0)
+                       jepoch = epo2jul(epoch, ' ')
+                       call prerotat(jepoch, RA, dec, preamble(4),theta)
+                       costh = cos(theta)
+                       sinth = sin(theta)
 c
-                    preamble(1) = (uu * costh) + (vv * sinth)
-                    preamble(2) = (vv * costh) - (uu * sinth)
+                       preamble(1) = (uu * costh) + (vv * sinth)
+                       preamble(2) = (vv * costh) - (uu * sinth)
+                    else
+                       preamble(1) = uu
+                       preamble(2) = vv
+                    endif
                     preamble(3) = ww
                   endif
 c
@@ -1275,9 +1285,9 @@ cc= GetOpt - Internal routine to get command line options.
 cc& jm
 cc: internal utility
 cc+
-      subroutine GetOpt(douv, dodra, dosma)
+      subroutine GetOpt(douv, dodra, dosma, douvrot)
       implicit none
-      logical douv, dodra, dosma
+      logical douv, dodra, dosma, douvrot
 c
 c  Get user options from the command line.
 c
@@ -1289,22 +1299,24 @@ c    douv     If true, then recompute u and v.
 c    dodra    If true, then multiply dra by 1/cos(obsdec).
 c    dosma    if true, then convert geocentric coordinates (meter)
 c                      to equatorial coordinates (nonasec).
+c    douvrot  if true, also rotate the u and v for epoch
 c--
 c-----------------------------------------------------------------------
 c
 c  Internal variables.
 c
       integer NOPTS
-      parameter (NOPTS = 3)
+      parameter (NOPTS = 4)
 c
       character opts(NOPTS)*9
       logical present(NOPTS)
-      data opts/'nouv', 'dra', 'sma'/
+      data opts/'nouv', 'dra', 'sma', 'uvrotate'/
 c
       call Options('options', opts, present, NOPTS)
       douv = .not. present(1)
       dodra = present(2)
       dosma = present(3)
+      douvrot = present(4)
 c
       end
 c************************************************************************
