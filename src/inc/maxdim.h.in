@@ -2,7 +2,7 @@ c @WARNING@
 c TELESCOPE=@TELESCOPE@
 c=======================================================================
 	CHARACTER*(*) MIRTEL
-	PARAMETER=(MIRTEL='@TELESCOPE@')
+	PARAMETER(MIRTEL='@TELESCOPE@')
 	INTEGER   MAXBUF
 	PARAMETER(MAXBUF=@MAXBUF@)
 c
