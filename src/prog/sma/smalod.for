@@ -81,25 +81,12 @@ c                  is nopol.
 c       'circular' when circular polarization data taken with single
 c                  receivers and waveplates for each antenna. For the 
 c                  circular polarization data observed before 2005-06-10, 
-c                  the polarization states are swapped  
+c                  the polarization states are swapped by the default 
 c                  (RR<->LL, RL<->LR or -1 <-> -2, -3 <-> -4).
 c
 c       'linear'   when linear polarization data taken with dual linear feeds.
 c   
-c       'oldpol'   Converts MIR polarization data observed before
-c                  2004-09-01: 
-c                   iPol-state conversion
-c                    MIR         Miriad
-c                     1            -5            
-c                     2            -7
-c                     3            -8
-c                     4            -6
-c
-c                  In addition, for the circular polarization data
-c                  observed before 2005-06-10 (if options=circular), 
-c                  the polarization states are swapped (RR<->LL, RL<->LR
-c                  or -1 <-> -2, -3 <-> -4).       
-c 
+c       'oldpol'   Obsoleted. 
 c                  Defaults assumes non-polarization state is assigned.
 c       'dospc'    reverses the order of the spectral chunks in frequency
 c                  only for the first three blocks (1 2 3).
@@ -248,11 +235,12 @@ c    jhz 05-dec-05 add the inline doc to options oldpol
 c                  to explain the two stages in pol state
 c                  conversion from MIR data to Miriad convention:
 c                  1) before 2004-9-1 and 2) before 2005-6-10
+c    jhz 05-dec-05 Obsoleted options=oldpol
 c------------------------------------------------------------------------
         integer maxfiles
         parameter(maxfiles=128)
         character version*(*)
-        parameter(version='SmaLod: version 1.18 05-Dec-05')
+        parameter(version='SmaLod: version 1.19 05-Dec-05')
 c
         character in(maxfiles)*64,out*64,line*64, rxc*4
         integer tno, length, len1
@@ -539,6 +527,10 @@ c       mmrelax = present(17)
         doconjug= present(25)
         dolsr   = present(26)
         noskip  = present(27)
+c  oldpol obsoleted
+        if(oldpol) 
+     *  call bug('w', 'Hey, options=oldpol has been obsoleted!')
+           oldpol  = .false.
         if(dobary.and.dolsr) 
      *  call bug('f','choose options of either bary or lsr')
         if((.not.circular.and..not.linear).and..not.oldpol) nopol=.true.
