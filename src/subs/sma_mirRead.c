@@ -127,6 +127,9 @@
 //                  when the true pointing position differs from
 //                  the J2000 coordinates of source catalog
 //                  position.
+// 2005-12-5  (JHZ) obsoleted options=oldpol;
+//                  unified the pol-state conversion using
+//                  the function ipolmap
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -983,9 +986,10 @@ int rsmir_Read(char *datapath, int jstat)
 	    blh[blset]->itel1*256+blh[blset]->itel2;
 	  uvwbsln[set]->uvwID[blset-blhid_hdr].isb = blh[blset]->isb;
 	  uvwbsln[set]->uvwID[blset-blhid_hdr].irec = blh[blset]->irec;
-	  uvwbsln[set]->uvwID[blset-blhid_hdr].ipol = blh[blset]->ipol;
+//	  uvwbsln[set]->uvwID[blset-blhid_hdr].ipol = blh[blset]->ipol;
 	  // polarization
-	  
+        uvwbsln[set]->uvwID[blset-blhid_hdr].ipol = ipolmap(blh[blset]->ipol);
+/*	  
 	  if(smabuffer.oldpol==1) {
 	    switch(uvwbsln[set]->uvwID[blset-blhid_hdr].ipol) {
 	    case 0: uvwbsln[set]->uvwID[blset-blhid_hdr].ipol= 1; break;
@@ -1031,7 +1035,7 @@ int rsmir_Read(char *datapath, int jstat)
 		// 4   -5      HH (XX)
 	      }
 	  }
-	  
+*/	  
 	  // counting baseline for each integration set
 	  uvwbsln[set]->n_bls++;
 	}
