@@ -79,20 +79,25 @@ c       'nopol'    Disable polarization. All the correlations will be
 c                  labelled as XX. Default in options for polarization 
 c                  is nopol.
 c       'circular' when circular polarization data taken with single
-c                  with waveplates.
+c                  receivers and waveplates for each antenna. For the 
+c                  circular polarization data observed before 2005-06-10, 
+c                  the polarization states are swapped  
+c                  (RR<->LL, RL<->LR or -1 <-> -2, -3 <-> -4).
+c
 c       'linear'   when linear polarization data taken with dual linear feeds.
 c   
 c       'oldpol'   Converts MIR polarization data observed before
 c                  2004-09-01: 
-c                   MIR         Miriad
-c    ipol-state       1            -5            
+c                   iPol-state conversion
+c                    MIR         Miriad
+c                     1            -5            
 c                     2            -7
 c                     3            -8
 c                     4            -6
 c
 c                  In addition, for the circular polarization data
-c                  observed before 2005-06-10, the polarization
-c                  state is swapped as the default (RR<->LL, RL<->LR
+c                  observed before 2005-06-10 (if options=circular), 
+c                  the polarization states are swapped (RR<->LL, RL<->LR
 c                  or -1 <-> -2, -3 <-> -4).       
 c 
 c                  Defaults assumes non-polarization state is assigned.
