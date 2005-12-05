@@ -83,7 +83,18 @@ c                  with waveplates.
 c       'linear'   when linear polarization data taken with dual linear feeds.
 c   
 c       'oldpol'   Converts MIR polarization data observed before
-c                  2004-9-1.
+c                  2004-09-01: 
+c                   MIR         Miriad
+c    ipol-state       1            -5            
+c                     2            -7
+c                     3            -8
+c                     4            -6
+c
+c                  In addition, for the circular polarization data
+c                  observed before 2005-06-10, the polarization
+c                  state is swapped as the default (RR<->LL, RL<->LR
+c                  or -1 <-> -2, -3 <-> -4).       
+c 
 c                  Defaults assumes non-polarization state is assigned.
 c       'dospc'    reverses the order of the spectral chunks in frequency
 c                  only for the first three blocks (1 2 3).
@@ -228,11 +239,15 @@ c                  storing pointing position in all the cases
 c                  rather than only when pointing position
 c                  differs from source catalog position
 c                  (FITS convention)
+c    jhz 05-dec-05 add the inline doc to options oldpol
+c                  to explain the two stages in pol state
+c                  conversion from MIR data to Miriad convention:
+c                  1) before 2004-9-1 and 2) before 2005-6-10
 c------------------------------------------------------------------------
         integer maxfiles
         parameter(maxfiles=128)
         character version*(*)
-        parameter(version='SmaLod: version 1.18 30-Nov-05')
+        parameter(version='SmaLod: version 1.18 05-Dec-05')
 c
         character in(maxfiles)*64,out*64,line*64, rxc*4
         integer tno, length, len1
