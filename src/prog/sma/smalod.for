@@ -87,7 +87,7 @@ c
 c       'linear'   when linear polarization data taken with dual linear feeds.
 c   
 c       'oldpol'   Obsoleted. 
-c                  Defaults assumes non-polarization state is assigned.
+c                  Defaults assume that non-polarization state is assigned.
 c       'dospc'    reverses the order of the spectral chunks in frequency
 c                  only for the first three blocks (1 2 3).
 c                  frequency code vs. spectral window orders:
