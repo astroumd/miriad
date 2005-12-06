@@ -129,7 +129,9 @@
 //                  position.
 // 2005-12-5  (JHZ) obsoleted options=oldpol;
 //                  unified the pol-state conversion using
-//                  the function ipolmap
+//                  the function ipolmap.
+// 2005-12-6  (JHZ) implemented a feature skipping spectral
+//                  windows (spskip).
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -185,7 +187,7 @@ void rssmaflush_c(int scanskip, int scanproc, int sb, int rxif, int dosporder, i
 void rspokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1, int *doop1, int *dohann1, 
 int *birdie1, int *dowt1, int *dopmps1, int *dobary1, int *doif1, int *hires1, int *nopol1, 
 int *circular1, int *linear1, int *oldpol1, double lat1, double long1, int rsnchan1, 
-int refant1, int *dolsr1, double rfreq1, float *vsour1, double *antpos1, int readant1, int *noskip1);
+int refant1, int *dolsr1, double rfreq1, float *vsour1, double *antpos1, int readant1, int *noskip1, int *spskip1);
 void rspokeflshsma_c(char *kst[]);
 
 
@@ -287,7 +289,7 @@ void rspokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1,
 		    int *dobary1, int *doif1, int *hires1, int *nopol1, int *circular1,
 		    int *linear1, int *oldpol1, double lat1, double long1, int rsnchan1, 
 		    int refant1, int *dolsr1, double rfreq1, float *vsour1,
-		    double *antpos1, int readant1, int *noskip1)
+		    double *antpos1, int readant1, int *noskip1, int *spskip1)
 { 
   /* rspokeflshsma_c == pokeflsh */
   int buffer, i,ii;
@@ -316,7 +318,8 @@ void rspokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1,
   smabuffer.noskip = *noskip1;
   smabuffer.vsource= *vsour1;
   smabuffer.juldate= -10.00;
-         
+  smabuffer.spskip[0] = spskip1[0];
+  smabuffer.spskip[1] = spskip1[1];
       printf("User's input vSource = %f km/s\n", smabuffer.vsource);
       if(rfreq1 > 0.00001 || rfreq1 < -0.00001) {
              for (i=0; i<SMIF+1; i++) {
@@ -381,6 +384,10 @@ void rspokeflshsma_c(char *kst[])
     uvputvra_c(tno, "version", version);
   }
 
+//            printf("nifs=%d\n", smabuffer.nifs);
+//            for (ifs=1; ifs < smabuffer.nifs; ifs++) {
+//                printf("ifs=%d\n", smabuffer.nstoke[ifs-1]);
+//                }
   if(smabuffer.newfreq>0) {
     if(smabuffer.doif>0) {
       for (ifs=1; ifs < smabuffer.nifs; ifs++) {
@@ -1354,7 +1361,16 @@ double xyzpos;
       // decode the ids 
       if((cdh[set]->v_name[0]=='b'&&cdh[set]->v_name[1]=='a')&&
 	 cdh[set]->v_name[2]=='n'){
+        if(smabuffer.spskip[0]==0) { 
 	spcode[cdh[set]->icode]=spdecode(&cdh[set]);
+          } else { 
+           if(cdh[set]->icode < smabuffer.spskip[0]) {
+            spcode[cdh[set]->icode]=spdecode(&cdh[set]);
+              } else {
+     spcode[cdh[set]->icode]
+      =spdecode(&cdh[set])-smabuffer.spskip[1];
+              }
+                }
       }
       // decode the julian date for from the observing date 
       if((cdh[set]->v_name[0]=='r'&&cdh[set]->v_name[1]=='e')&&
@@ -1582,7 +1598,6 @@ double xyzpos;
     //       printf("skipping %d in the beginning.\n",smabuffer.scanskip); 
     printf("number of Spectra = %d\n", numberSpectra);
     
-    
     if (SWAP_ENDIAN) {
       printf("FINISHED READING SP HEADERS (endian-swapped)\n");
     } else {
@@ -1794,6 +1809,7 @@ double xyzpos;
     // initialize the polcode
     
     for(j=1;j<smaCorr.n_chunk+1;j++) {
+           smabuffer.nstoke[j-1]=4;
       for(i=1; i<smabuffer.nstoke[j-1]; i++) {
 	for (k=1; k<SMBAS+1; k++) {
 	  smabuffer.polcode[j-1][i-1][k-1] = -5;
@@ -2049,7 +2065,6 @@ double xyzpos;
 //      smabuffer.vsource, spn[inhset]->vres[12],
 //      spn[inhset]->vel[13],spn[inhset]->vres[13],
 //      spn[inhset]->vel[14],spn[inhset]->vres[14]);
-      
       for(i=1;i<smaCorr.n_chunk+1; i++) {
 	// the reference channel is the first channel in each chunk in miriad
 	// the reference channel is the center (nch/2+0.5) in each chunk in MIR
@@ -2086,10 +2101,24 @@ double xyzpos;
 	smabuffer.nstoke[spcode[i]-1]=4;
 	smabuffer.edge[spcode[i]-1]=0;
 	smabuffer.nbin[spcode[i]-1]=1;
-	// printf("spcode icode %d %d fsky %f\n", spcode[i], spn[inhset]->iband[i],
-	//    spn[inhset]->fsky[i]);
+// check the spectral window skipping in MIR data
+         if(spcode[i]!=spn[inhset]->iband[i]) {
+// printf("spcode icode %d %d fsky %f nch%d\n", 
+// spcode[i], spn[inhset]->iband[i],
+// spn[inhset]->fsky[i], smabuffer.nfreq[spcode[i]-1]);
+   printf("\n");
+   if(smabuffer.spskip[0]==0) {
+   printf("Spotted skipping in spectral chunks starting at spcode=%d iband=%d\n", spcode[i], spn[inhset]->iband[i]);
+   printf("Try smalod with keyword spskip=%d,%d again.\n",
+    spn[inhset]->iband[i], spcode[i]-spn[inhset]->iband[i]);
+       } else {
+   printf("The skipping parameter spskip =%d,%d is inconsistent with\n",
+           spcode[i], spn[inhset]->iband[i]);
+   printf("the spectral chunks skipped in the MIR data!\n");
+        }
+   bug_c( 'f', "spcode must match with iband!\n");
       }
-      //exit(0);
+      }
       sblpnt=0;
       //printf("numberBaselines=%d\n", numberBaselines);
       for(j=0; j < numberBaselines; j++) {
@@ -2159,14 +2188,14 @@ double xyzpos;
 	      }
 	    }
 	    
-	    for (i=0;i<25;i++) {
+	    for (i=0;i<numberSpectra;i++) {
            sph[i]->nch = spn[smabuffer.scanskip]->nch[i][0];
 	    }
 	    sph[0]->dataoff = 0;
                }
 // separate frequency configuration for rx1 and rx2 in dual rx case
           if(smaCorr.no_rxif==2)
-          for (i=0;i<25;i++) {
+          for (i=0;i<numberSpectra;i++) {
            if(rxpnt==smabuffer.rx1) 
               sph[i]->nch = spn[smabuffer.scanskip]->nch[i][0];
            if(rxpnt==smabuffer.rx2)
@@ -2335,19 +2364,47 @@ double xyzpos;
       printf("to low and uniform resolution spectra:\n");
       printf("         input     output\n");
       for (kk=1; kk<numberSpectra; kk++) {
-	printf("  s%02d     %3d  =>  %2d\n",kk, 
-        spn[smabuffer.scanskip]->nch[kk][rxlod], avenchan);
+        if(smabuffer.spskip[0]==0) {
+	printf("  s%02d     %3d  =>  s%02d %3d\n",kk, 
+        spn[smabuffer.scanskip]->nch[kk][rxlod], kk, avenchan);
+          } else {
+        if(kk < smabuffer.spskip[0]) {
+        printf("  s%02d     %3d  =>  s%02d %3d\n",kk,
+        spn[smabuffer.scanskip]->nch[kk][rxlod], kk, avenchan);
+          } else {
+         printf("  s%02d     %3d  =>  s%02d %3d\n",kk+smabuffer.spskip[1],
+        spn[smabuffer.scanskip]->nch[kk][rxlod], kk, avenchan);
+           }
+           }
+
       }
     } else {
       printf("vis spectra from the original correlator configuration: \n");
       printf("         input     output\n");
       for (kk=1; kk<numberSpectra; kk++) {
-        printf("  s%02d     %3d  =>  %2d\n",kk, 
-        spn[smabuffer.scanskip]->nch[kk][rxlod], 
+       if(smabuffer.spskip[0]==0) {
+        printf("  s%02d     %3d  =>  s%02d %3d\n",kk, 
+        spn[smabuffer.scanskip]->nch[kk][rxlod], kk, 
         spn[smabuffer.scanskip]->nch[kk][rxlod]);
+         } else {
+        if(kk < smabuffer.spskip[0]) {
+        printf("  s%02d     %3d  =>  s%02d %3d\n",kk,
+        spn[smabuffer.scanskip]->nch[kk][rxlod], kk,
+        spn[smabuffer.scanskip]->nch[kk][rxlod]); 
+        } else {
+        printf("  s%02d     %3d  =>  s%02d %3d\n",
+        kk+smabuffer.spskip[1],
+        spn[smabuffer.scanskip]->nch[kk][rxlod], kk,
+        spn[smabuffer.scanskip]->nch[kk][rxlod]);
+               }
+         }
       }
     }
-    printf("done with data conversion from mir to miriad!\n");
+    if(smabuffer.spskip[0]!=0)
+     printf("The MIR s%02d - s%02d contain no data and are skipped!\n",
+        smabuffer.spskip[0],
+        smabuffer.spskip[0]+smabuffer.spskip[1]-1); 
+    printf("Done with data conversion from mir to miriad!\n");
   }
   /* ---------------------------------------------------------------------- */
   endTime = time(NULL);

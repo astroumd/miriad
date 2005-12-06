@@ -140,6 +140,27 @@ c       will take the a number of 2**n which is close to the input
 c       value. If rsnchan is greater than the smallest channel  number,
 c       the program will take the smallest channel number. 
 c
+c@ spskip
+c       This keyword specifies the skipping in spectral windows, e.g.:
+c       spskip=21,2 means that starting at spcode (MIR) = 21, two
+c       spectral chunks are skipped, i.e. no data are produced for the
+c       spectral chunks with spcode=21 and 22. Then smalod will
+c       move up by two spectral windows while storing the rest of
+c       the chunks' data with the following mapping between MIR
+c       spcode and Miriad spectral window id:
+c                 MIR       Miriad
+c                  1    ->    1
+c                  2    ->    2
+c                 ...
+c                 20    ->   20
+c                 21 skipped
+c                 22 skipped
+c                 23    ->   21
+c                 24    ->   22
+c       Thus, the data in Miriad format will have a total
+c       of 22 spectral windows instead of 24.
+c       The default is no skipping in spectral windows.
+c 
 c@ sideband
 c       This is an option for separating sidebands. A value of 0 is for
 c       lower sideband only, 1 for upper sideband and 2 for both.
@@ -234,13 +255,14 @@ c                  (FITS convention)
 c    jhz 05-dec-05 add the inline doc to options oldpol
 c                  to explain the two stages in pol state
 c                  conversion from MIR data to Miriad convention:
-c                  1) before 2004-9-1 and 2) before 2005-6-10
-c    jhz 05-dec-05 Obsoleted options=oldpol
+c                  1) before 2004-9-1 and 2) before 2005-6-10.
+c    jhz 05-dec-05 Obsoleted options=oldpol.
+c    jhz 06-dec-05 add keyword spskip.
 c------------------------------------------------------------------------
         integer maxfiles
         parameter(maxfiles=128)
         character version*(*)
-        parameter(version='SmaLod: version 1.19 05-Dec-05')
+        parameter(version='SmaLod: version 1.20 06-Dec-05')
 c
         character in(maxfiles)*64,out*64,line*64, rxc*4
         integer tno, length, len1
@@ -251,7 +273,7 @@ c
         logical polflag,hires,nopol,sing,circular,linear,oldpol,dsb,
      *          dospc,doengrd, doconjug, dolsr,noskip
         integer fileskip,fileproc,scanskip,scanproc,sb, dosporder
-        integer doeng
+        integer doeng, spskip(2)
 	integer rsNCHAN, refant, readant, antid
         double precision antpos(10*3),xyz(3)
         real vsour
@@ -310,6 +332,14 @@ c        call mkeyd('restfreq',rfreq,2,nfreq)
                         else
                         rsnchan=-1
                         end if
+        call keyi('spskip',spskip(1),0)
+        call keyi('spskip',spskip(2),0)
+        if(spskip(1).gt.0.and.spskip(2).le.0)
+     *  call bug('f','spskip(2) must > 0 if spskip(1) > 0 !')
+        if(spskip(1).lt.0.or.spskip(2).lt.0)
+     *  call bug('f','spskip(1) & spskip(2) must be zero or positive!')
+        if(spskip(1).ge.24.or.spskip(2).ge.24)
+     *  call bug('f','spskip(1) or spskip(2) must be less than 24!')
         call keyi('sideband',sb,0)
         if(sb.lt.0.or.sb.gt.2)
      *  call bug('f','Invalid SIDEBAND parameter')
@@ -386,7 +416,8 @@ c
           else
             call pokeini(tno,dosam,doxyp,doop,dohann,birdie,dowt,
      *      dopmps,dobary,doif,hires,nopol,circular,linear,oldpol,
-     *      rsnchan,refant,dolsr,rfreq,vsour,antpos,readant,noskip)
+     *      rsnchan,refant,dolsr,rfreq,vsour,antpos,readant,noskip,
+     *      spskip)
             if(nfiles.eq.1)then
               i = 1
             else
@@ -582,9 +613,9 @@ c************************************************************************
      *          dohann1,birdie1,dowt1,dopmps1,dobary1,
      *          doif1,hires1,nopol1,circular1,linear1,oldpol1,
      *	        rsnchan1,refant1,dolsr1,rfreq1,vsour1,antpos1,
-     *          readant1,noskip1)
+     *          readant1,noskip1,spskip1)
 c
-        integer tno1, rsnchan1, refant1,readant1
+        integer tno1, rsnchan1, refant1,readant1,spskip1(2)
         logical dosam1,doxyp1,dohann1,doif1,dobary1,birdie1,dowt1
         logical dopmps1,hires1,doop1,nopol1,circular1,linear1,oldpol1
         logical dolsr1,noskip1
@@ -616,7 +647,8 @@ c
         call rspokeinisma(kstat,tno1,dosam1,doxyp1,doop1,
      *  dohann1,birdie1,dowt1,dopmps1,dobary1,doif1,hires1,
      *  nopol1,circular1,linear1,oldpol1,lat1,long1,rsnchan1,
-     *  refant1,dolsr1,rfreq1,vsour1,antpos1,readant1,noskip1)
+     *  refant1,dolsr1,rfreq1,vsour1,antpos1,readant1,noskip1,
+     *  spskip1)
         end
 c************************************************************************
         subroutine liner(string)

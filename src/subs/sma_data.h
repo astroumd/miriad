@@ -585,6 +585,7 @@ struct smlodd {
         int scanskip;
         int scanproc;
         int currentscan;
+        int spskip[2];
 };
 typedef struct smlodd smlodd;
 
