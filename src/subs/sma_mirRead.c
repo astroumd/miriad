@@ -2365,14 +2365,14 @@ double xyzpos;
       printf("         input     output\n");
       for (kk=1; kk<numberSpectra; kk++) {
         if(smabuffer.spskip[0]==0) {
-	printf("  s%02d     %3d  =>  s%02d %3d\n",kk, 
+	printf("  s%02d     %4d  =>  s%02d %4d\n",kk, 
         spn[smabuffer.scanskip]->nch[kk][rxlod], kk, avenchan);
           } else {
         if(kk < smabuffer.spskip[0]) {
-        printf("  s%02d     %3d  =>  s%02d %3d\n",kk,
+        printf("  s%02d     %4d  =>  s%02d %4d\n",kk,
         spn[smabuffer.scanskip]->nch[kk][rxlod], kk, avenchan);
           } else {
-         printf("  s%02d     %3d  =>  s%02d %3d\n",kk+smabuffer.spskip[1],
+        printf("  s%02d     %4d  =>  s%02d %4d\n",kk+smabuffer.spskip[1],
         spn[smabuffer.scanskip]->nch[kk][rxlod], kk, avenchan);
            }
            }
@@ -2383,16 +2383,16 @@ double xyzpos;
       printf("         input     output\n");
       for (kk=1; kk<numberSpectra; kk++) {
        if(smabuffer.spskip[0]==0) {
-        printf("  s%02d     %3d  =>  s%02d %3d\n",kk, 
+        printf("  s%02d     %4d  =>  s%02d %4d\n",kk, 
         spn[smabuffer.scanskip]->nch[kk][rxlod], kk, 
         spn[smabuffer.scanskip]->nch[kk][rxlod]);
          } else {
         if(kk < smabuffer.spskip[0]) {
-        printf("  s%02d     %3d  =>  s%02d %3d\n",kk,
+        printf("  s%02d     %4d  =>  s%02d %4d\n",kk,
         spn[smabuffer.scanskip]->nch[kk][rxlod], kk,
         spn[smabuffer.scanskip]->nch[kk][rxlod]); 
         } else {
-        printf("  s%02d     %3d  =>  s%02d %3d\n",
+        printf("  s%02d     %4d  =>  s%02d %4d\n",
         kk+smabuffer.spskip[1],
         spn[smabuffer.scanskip]->nch[kk][rxlod], kk,
         spn[smabuffer.scanskip]->nch[kk][rxlod]);
