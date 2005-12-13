@@ -55,6 +55,10 @@ c                      bandpasses given in all the bpfile_i files with an
 c                      orthogonal polynomial of degree n input from 
 c                      Keyword: polyfit; n upto 10 is supported.
 c                      Default: linear fit from two nearby time points.
+c          cross       Apply the bandpass to the cross-hand visibilities
+c                      in addition to the parallel ones.
+c                      Default: to the parallel ones only.
+c
 c@ polyfit
 c       polyfit gives a degree of orthogonal polynomial in least-sqaure
 c       fit to the time variaton of the bandpass. Default: 3 or cubic.
@@ -67,11 +71,20 @@ c  History:
 c   JHZ ---> miriad software to remove time-dependent bandpass ripples 
 c   jhz 19jul05 creates the first version
 c   jhz 18oct05 change processing message.
+c   jhz 12dec05 add options of cross for applying the bandpass
+c               to the cross-hand visibilities.
+c   jhz 13dec05 add initialization for the ppass array
+c               in sub tpolbpass and
+c                  sub t2ptbpass
+c
 c  Bugs:
 c     not for dual pol case, must select one of pol in the case
 c     of multiple polarizations. For dual polarization present,
 c     the mean bandpass solutions of the dual polarization data is used to
-c     correct for the bandpass shape.
+c     correct for the bandpass shape. 
+c     For cross-hand polarization, the mean bandpass solutions of 
+c     the dual polarization data is used to correct for the bandpass 
+c     shape.
 c------------------------------------------------------------------------
         integer maxsels
         character version*(*)
@@ -80,7 +93,7 @@ c------------------------------------------------------------------------
         parameter (DPI = 3.14159265358979323846)
         parameter (TWOPI = 2 * PI)
         parameter (DTWOPI = 2 * DPI)        
-        parameter(version='SmaTbpass: version 1.0 18-Oct-05')
+        parameter(version='SmaTbpass: version 1.1 12-Dec-05')
         include 'maxdim.h'
         integer maxTimes,maxGains
         parameter(maxTimes=2*MAXCHAN*MAXANT)
@@ -89,7 +102,7 @@ c------------------------------------------------------------------------
         integer  i, j, k,nschann(maxspect),nsols,ntau
         character vis*64,bpfile*64,out*64,itoaf*3,ltype*16
         logical dopass,first
-        logical doratio
+        logical doratio,docross
         complex g1(maxgains),g2(maxgains)
         real times(maxtimes),bptime(maxtimes),UT, UTstep
         real freqs(maxtimes)
@@ -107,7 +120,6 @@ c------------------------------------------------------------------------
         logical flags(MAXCHAN), tupdate, bpupdate
         logical bpflags(MAXCHAN), dopolfit
         logical dotaver,doflush,buffered,PolVary,ampsc,vecamp
-
 c
 c  Externals.
 c
@@ -144,7 +156,7 @@ c
         call keyi ('nfiles', nfiles, 0)
         if (nfiles.eq.0)
      *  call bug ('f', 'Number of bandpass files not given')
-         call GetOpt(uvflags,ampsc,vecamp,relax,dopolfit)
+         call GetOpt(uvflags,ampsc,vecamp,relax,dopolfit,docross)
         call uvDatInp('vis',uvflags)
         call selinput('select',sels,maxsels)
         call keyr('bptime', UTstep, 60.)
@@ -199,7 +211,7 @@ c load the bpass time
          end do
          end do
          end do
-          write(*,500) 'load bandpass at UT=',
+         write(*,500) 'load bandpass at UT=',
      * bptime(lin)*24.
 
           endif
@@ -239,7 +251,7 @@ c
      *        'Time averaging or pol''n selection of bin-mode data')
               call bug('w',
      *        'This will average all bins together')
-            endif
+          endif
           endif
           call uvDatGta('ltype',ltype)
           call VarInit(tIn,ltype)
@@ -248,12 +260,16 @@ c
           call uvVarSet(vupd,'ddec')
           call uvVarSet(vupd,'source')
           call uvVarSet(vupd,'on')
-
+        if(docross) 
+     *  write(*,*) 
+     * 'Apply the bpass to all the polarization components.'
+        if(.not.docross) then 
         call uvselect(tIn,'polarization',dble(polxx),0.d0,.true.)
         call uvselect(tIn,'polarization',dble(polyy),0.d0,.true.)
         call uvselect(tIn,'polarization',dble(polrr),0.d0,.true.)
         call uvselect(tIn,'polarization',dble(polll),0.d0,.true.)
         call uvselect(tIn,'polarization',dble(poli),0.d0,.true.)
+        end if
 c
         do p=polmin,polmax
           pols(p) = 0
@@ -286,13 +302,11 @@ c
             call uvgetvrd(tin,'sfreq',sfreq,nspect)
             call uvgetvrd(tin,'sdf',sdf,nspect)
             call uvgetvri(tin,'nschan',nschan,nspect)
-c             write(*,*) 'nspect=', nspect,nspectt
              k=0
              do i=1, nspectt
              if(i.eq.1) k=1
              if(i.gt.1) k=k+nschann(i-1) 
              sfreqq(i) = freqs(k)
-c             write(*,*) i, k, nschann(i),sfreqq(i)
              enddo
 c
 c detemine the bpflag
@@ -323,12 +337,13 @@ c
 c
 c polynomial interpolate bpass and get a new bpass at UT
 c for each of the antennas
+c
         if(.not.dopolfit) call t2ptbpass(nterm,nants,nchan,nfiles,
      *            nfeeds,ppass,tpass,bptime,UT)
         if(dopolfit) call tpolbpass(nterm,nants,nchan,nfiles,
      *            nfeeds,ppass,tpass,bptime,UT)
 
-            write(*,500) 'applied bandpass at UT=',
+            write(*,500) 'applied bpass at UT=',
      * UT*24.
           UT=UT+UTstep
           dowhile(nread.gt.0)
@@ -417,9 +432,14 @@ c
                 else
                 flags(k) = .false.
                 end if
-                 if(flags(k))
-     *  data(k)  = 
+                 if(flags(k)) then
+        if(abs(ppass(i1,i,1)).eq.0..and.abs(ppass(i1,i,2)).eq.0.) 
+     *         ppass(i1,i,1) = ppass(i1,i,2)
+       if(abs(ppass(i1,i,1)).eq.0) 
+     * write(*,*) ppass(i1,i,1),i1,i, UT*24
+        data(k)  = 
      *  data(k)/(ppass(i1,i,1)*conjg(ppass(i2,i,1)))
+                 endif
                 enddo
                      
                 call uvwrite(tOut,preamble,data,flags,nread)
@@ -501,6 +521,14 @@ c       ppass  - a fitted bandpass
          double precision T(ntime),Y(ntime),DELTAY(ntime)
          integer i,j,k, nfit,ant
          real fitUT, rfitBP, ifitBP
+c        initialize the ppass array
+          do ant=1,maxant
+          do   k=1,maxchan
+          do   j=1,nfeeds
+          ppass(ant,k,j) = complex(1.0,0.0)
+          enddo
+          enddo
+          enddo
 c        load the time to T and convert to min from day
               nfit=1
               fitUT = UT*24.*60.
@@ -570,6 +598,14 @@ c       ppass  - a fitted bandpass
          real dy,y0,fitUT, rfitBP, ifitBP
          real dt,t0
          integer ipntr
+c        initialize the ppass array
+             do ant=1, maxant
+             do   k=1, maxchan
+             do   j=1,nfeeds
+             ppass(ant,k,j) =complex(1.0,0.0)
+             enddo
+             enddo
+             enddo  
 c        load the time to T and convert to min from day
               fitUT = UT*24.*60.
 c
@@ -954,10 +990,11 @@ c
 c
         end
 c************************************************************************
-        subroutine GetOpt(uvflags, ampsc, vecamp,relax,dopolfit)
+        subroutine GetOpt(uvflags,ampsc,vecamp,relax,
+     *  dopolfit,docross)
 c
         implicit none
-        logical ampsc,vecamp,relax,dopolfit
+        logical ampsc,vecamp,relax,dopolfit,docross
         character uvflags*(*)
 c
 c  Determine the flags to pass to the uvdat routines.
@@ -969,15 +1006,16 @@ c    vecamp     True for vector averaging on everything except
 c               parallel-hand amplitudes.
 c    relax      Do not discard bad records.
 c    dopolfit   Do polynomial fit
+c    docross    Apply bandpass to cross-hand visibilities.
 c------------------------------------------------------------------------
         integer nopts
-        parameter(nopts=8)
+        parameter(nopts=9)
         character opts(nopts)*9
         integer l
         logical present(nopts),docal,dopol,dopass,vector
         data opts/'nocal    ','nopol    ','nopass   ',
      *            'vector   ','scalar   ','scavec   ',
-     *            'relax    ','opolyfit '/
+     *            'relax    ','opolyfit ','cross    '/
 c
         call options('options',opts,present,nopts)
         docal = .not.present(1)
@@ -988,6 +1026,7 @@ c
         vecamp = present(6)
         relax  = present(7)
         dopolfit = present(8)
+        docross = present(9)
 c
 c Default averaging is vector
 c
