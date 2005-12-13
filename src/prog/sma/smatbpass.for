@@ -55,8 +55,8 @@ c                      bandpasses given in all the bpfile_i files with an
 c                      orthogonal polynomial of degree n input from 
 c                      Keyword: polyfit; n upto 10 is supported.
 c                      Default: linear fit from two nearby time points.
-c          cross       Apply the bandpass to the cross-hand visibilities
-c                      in addition to the parallel ones.
+c          cross       Apply the bandpass to the cross-hand polarization
+c                      visibilities in addition to the parallel ones.
 c                      Default: to the parallel ones only.
 c
 c@ polyfit
