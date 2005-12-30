@@ -258,11 +258,14 @@ c                  conversion from MIR data to Miriad convention:
 c                  1) before 2004-9-1 and 2) before 2005-6-10.
 c    jhz 05-dec-05 Obsoleted options=oldpol.
 c    jhz 06-dec-05 add keyword spskip.
+c    jhz 30-dec-05 fix  the inconsistence
+c                  of the total number of integrations
+c                  in the mir header files (in_read and bl_read).
 c------------------------------------------------------------------------
         integer maxfiles
         parameter(maxfiles=128)
         character version*(*)
-        parameter(version='SmaLod: version 1.20 06-Dec-05')
+        parameter(version='SmaLod: version 1.21 30-Dec-05')
 c
         character in(maxfiles)*64,out*64,line*64, rxc*4
         integer tno, length, len1
