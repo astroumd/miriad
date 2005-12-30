@@ -132,6 +132,19 @@
 //                  the function ipolmap.
 // 2005-12-6  (JHZ) implemented a feature skipping spectral
 //                  windows (spskip).
+// 2005-12-30 (JHZ) in the new MIR data sets (230/690
+//                  observation 051214_05:48:56 for example),
+//                  the the number of inregrations (inhid)
+//                  in the integration header (in_read) differs from 
+//                  that in the baseline header (bl_read).
+//                  The baseline header stores additional
+//                  integration in the end of the file; this
+//                  bug (spotted for the first time)
+//                  causes the segmentation fault in smalod.
+//                  The problem has been fixed by adding
+//                  a parsing sentence for selecting
+//                  the smaller  number of total integrations
+//                  from the header files (in_read and bl_read).
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -928,7 +941,9 @@ int rsmir_Read(char *datapath, int jstat)
 	  set++;
 	  blhid_hdr = blset;  
 	}
-	// select side band 
+// check if set exceeds nsets[0]
+       if(set==nsets[0]) goto handling_blarray;        
+// select side band 
 	if(blh[blset]->inhid==inh[set]->inhid) {
 // get the baseline id for the first bl in the new integration
         if(blh[blset]->inhid>blh[0]->inhid){
@@ -1050,6 +1065,7 @@ int rsmir_Read(char *datapath, int jstat)
 	numberBaselines=uvwbsln[set]->n_bls;
       } /* blset */
     }
+handling_blarray:
     /* set antennas */
     {
       int bset;
