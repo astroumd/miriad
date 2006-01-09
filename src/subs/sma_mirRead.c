@@ -145,6 +145,12 @@
 //                  a parsing sentence for selecting
 //                  the smaller  number of total integrations
 //                  from the header files (in_read and bl_read).
+// 2006-01-9 (JHZ)  The LONG_MAX used in function mfsize
+//                  is a system variable depending on the WORDSIZE
+//                  of the computers. The function mfsize worked
+//                  only for LONG_MAX=2147483647L, the value for 32bits computer.
+//                  The LONG_MAX is replaced by SMA_LONG_MAX which
+//                  is defined to 2147483647L. 
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -158,8 +164,10 @@
 #include <string.h>
 #include <errno.h>
 #include "sma_data.h"
-
 #define OK         0
+// define SMA_LONG_MAX 
+# define SMA_LONG_MAX  2147483647L
+
 
 /* extern variable while read mir data */
 char pathname[36];
@@ -2616,7 +2624,7 @@ unsigned long mfsize(FILE *fp)
 {
   /* Optimization stuff */
   char temp[BUFSIZ];
-  static const long DATALENGTH_MAX=LONG_MAX%2!=0?LONG_MAX-1:LONG_MAX;
+  static const long DATALENGTH_MAX=SMA_LONG_MAX%2!=0?SMA_LONG_MAX-1:SMA_LONG_MAX;
   long datalength=DATALENGTH_MAX;
   
   unsigned long counter, fsize;
