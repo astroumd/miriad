@@ -30,6 +30,8 @@ set version=1-dec-05
 # 26-aug-05 miriad_start.$SHELL scripts
 # 16-oct-05 64bit fix for pgplot
 # 27-nov-05 gfortran an option
+#  9-jan-06 (JHZ) replaces 'borrow' with '../borrow' in lines 88-90
+#           to fix installation of pgplot for 64bits linux
 #
 #   Simple single-architecture installation of MIRIAD
 #   (linux)
@@ -85,9 +87,9 @@ if ($hosttype == linux) then
   set mirxinc="/usr/include/X11"
   if (-e /usr/X11R6/lib64) then
     set mirxlib="/usr/X11R6/lib64"
-    if (-e borrow/pgplot/sys_linux/g77_gcc_64.conf) then
+    if (-e ../borrow/pgplot/sys_linux/g77_gcc_64.conf) then
       echo Patching your PGPLOT for 64bit
-      cp borrow/pgplot/sys_linux/g77_gcc_64.conf borrow/pgplot/sys_linux/g77_gcc.conf
+      cp ../borrow/pgplot/sys_linux/g77_gcc_64.conf ../borrow/pgplot/sys_linux/g77_gcc.conf
     endif
   else
     set mirxlib="/usr/X11R6/lib"
