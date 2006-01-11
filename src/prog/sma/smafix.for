@@ -149,12 +149,13 @@ c                 states.
 c jhz: 2005-11-17 extended the maximum size of the source array
 c                 to 100. Added maximum number sources of 48 for polynomial
 c                 fitting to individual sources' data separately.
+c jhz: 2006-1-11  fixed a bug related to MAC OS X10.4 
 c
 c------------------------------------------------------------------------
         character version*(*)
         integer maxpnts,maxfit
         parameter(maxpnts=100000,maxfit=48)
-        parameter(version='SmaFix: version 1.10 17-Nov-05')
+        parameter(version='SmaFix: version 1.11 11-Jan-06')
         logical doplot,dolog,dotime,dounwrap
         character vis*64,device*64,logfile*64,xaxis*16,yaxis*16
         character out*64
@@ -1608,8 +1609,8 @@ c initialize flfrun 1 -> good data
         xpnt = 0
         ypnt = 0
         do i=1,maxant
-               nflagbl(i1)=0
-               nflagbl(i2)=0
+               nflagbl(i)=0
+               nflagbl(i)=0
             do j=1,maxinte
                tsysflag(i,j) = .false.
             enddo
@@ -2170,7 +2171,7 @@ c  Planck constant divided by Boltzmann constant (Kelvin/GHz).
 c=======================================================================
         character version*(*)
         integer maxsels,atant
-        parameter(version='SmaFix: version 1.0 01-Aug-04')
+        parameter(version='SmaFix: 1.11 11-Jan-06')
         parameter(maxsels=256,atant=6,maxinte=5000)
 c
         integer lvis,lout,vtsys,vant,vgmet,vnif
