@@ -79,13 +79,14 @@ c    jhz  08nov05 fixed a bug in yaxis scale range when flagging is involved
 c    jhz  17nov05 extended the size of the source array from 32 to 100; 
 c                 color coding the variable for each source if the total 
 c                 number of sources is less than or equal to 48.
+c    jhz  11nov06 fixed a bug related to MAC OS X10.4
 c  Bugs:
 c    ?? Perfect?
 c------------------------------------------------------------------------
         character version*(*)
         integer maxpnts
         parameter(maxpnts=100000)
-        parameter(version='SmaVarPlt: version 1.3 17-Nov-05')
+        parameter(version='SmaVarPlt: version 1.4 11-Jan-06')
         logical doplot,dolog,dotime,dounwrap
         character vis*64,device*64,logfile*64,xaxis*16,yaxis*16
         character xtype*1,ytype*1,xunit*16,yunit*16,calday*24
@@ -183,7 +184,7 @@ c
 c
 c  Read in the data.
 c
-        call datread(vis,maxpnt,npnts,flagvar,doflag,
+         call datread(vis,maxpnt,npnts,flagvar,doflag,
      *          xaxis,xvals,xdim1*xdim2,xscale,xoff,xtype,
      *          yaxis,yvals,ydim1*ydim2,yscale,yoff,ytype)
 c        call uvclose(tin)
@@ -986,8 +987,8 @@ c initialize flfrun 1 -> good data
         xpnt = 0
         ypnt = 0
         do i=1,maxant
-               nflagbl(i1)=0
-               nflagbl(i2)=0
+               nflagbl(i)=0
+               nflagbl(i)=0
             do j=1,maxinte
                tsysflag(i,j) = .false.
             enddo
