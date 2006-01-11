@@ -40,7 +40,7 @@ c---------------------------------------------------------------------------
       character version*(*)
       parameter(version='version 22-Jul-05',
      $    frqmax=8,   ! maximum number of frequency bands
-     +    polmax = 2, ! maximum number of polarizations
+     +    polmax = 4, ! maximum number of polarizations
      $    antmax=16,  ! maximum number of antennas
      $    timemax=3000, !maximum number of time slots
      +    allmax=antmax*polmax*frqmax)
