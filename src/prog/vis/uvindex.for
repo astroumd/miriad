@@ -15,6 +15,9 @@ c	The input visibility file. No default.
 c@ interval
 c	Reissue source information if no data for this period in minutes.
 c	The default is 60 minutes.
+c@ refant
+c       Reference antenna for variables that are antenna based
+c       (e.g. dazim, delev). Default: 1
 c@ log
 c	The output log file. Default is the terminal.
 c@ options
@@ -58,6 +61,7 @@ c    rjs  08jan97  options=mosaic
 c    rjs  08jun97  Fix bug in error message
 c    rjs  15jun00  Simple handling of blank source name.
 c    pjt  11feb05  Adapt to use maxdim.h, MAXSPECT=MAXWIDE, not 18.
+c    pjt  11jan06  Scan for the new dazim/delev CARMA, and report if present (add refant=)
 c----------------------------------------------------------------------c
 	include 'mirconst.h'
 	include 'maxdim.h'
@@ -69,11 +73,11 @@ c           MAXFREQ  = max number of freq setups we can handle
 c           MAXSPECT = max number of "channels" in the widebands to check for
 	parameter(MAXSRC=2048,MAXFREQ=32,MAXSPECT=MAXWIDE)
 	parameter(PolMin=-8,PolMax=4,PolI=1)
-	parameter(version='UVINDEX: version 11-feb-05')
+	parameter(version='UVINDEX: version 13-jan-06')
 c
 	integer pols(PolMin:PolMax),pol
 	integer lIn,i,j,j1,nvis,nants,l
-	character vis*80,logf*80,date*18,line*80,ras*14,decs*14
+	character vis*80,logf*80,date*18,line*180,ras*14,decs*14
 	double precision time,tprev,total
 	real dra,ddec,interval,inttime
 c
@@ -91,6 +95,10 @@ c
 	character sources(MAXSRC)*16,prevsrc*16
 	integer indx(MAXSRC)
 c
+	integer npnt,vpoint,refant
+	real azeloff(2,MAXSRC)
+	double precision azeltim(MAXSRC)
+c
 c  Externals
 c
 	integer len1,uvscan
@@ -103,6 +111,7 @@ c
 	call keyini
 	call keya('vis',vis,' ')
         call keyr('interval',interval,0.0)
+        call keyi('refant',refant,1)
 	call keya('log',logf,' ')
 	call GetOpt(mosaic)
 	call keyfin
@@ -158,9 +167,16 @@ c
 	call uvvarset(vfreq,'wfreq')
 	call uvvarset(vfreq,'wwidth')
 c
+c  Set up a variable handle to track changes in the Az/El pointing
+c
+	call uvvarini(lIn,vpoint)
+	call uvvarset(vpoint,'dazim')
+	call uvvarset(vpoint,'delev')
+c
 c  Initialise the counters.
 c
 	nsrc = 0
+	npnt = 0
 	nvis = 0
 	nfreq = 0
 	do i=PolMin,PolMax
@@ -192,6 +208,8 @@ c
 	  if(uvvarupd(vfreq))  call GetFreq(lIn,newfreq,ifreq,nfreq,
      *		nchan,nspect,nschan,sfreqs,nwide,wfreqs,
      *		MAXFREQ,MAXSPECT)
+	  if(uvvarupd(vpoint))  call GetPnt(lIn, refant, npnt, 
+     *          azeloff,azeltim, MAXSRC)
 c
 c  If something has changed, give a summary of things.
 c
@@ -298,6 +316,26 @@ c
 	  prevsrc = sources(j1)
 	enddo
 	call LogWrit(' ')
+	call LogWrit('------------------------------------------------')
+
+c
+c  AzEl offsets, but only if we have more than 1 offset
+c
+	if (npnt.gt.0) then
+	   call LogWrit(' ')
+	   call LogWrit(
+     *          'The input data contain the following AzEl offsets')
+	   call LogWrit(
+     *          '   Date           ant   dAz   dEl (ArcMin)')
+	   call LogWrit(' ')
+	   do j=1,npnt
+	      call JulDay(azeltim(j),'H',date)
+	      write(line,'(a,1x,i3,1x,f5.2,1x,f5.2)') date, refant,
+     *              azeloff(1,j),azeloff(2,j)
+	      call LogWrit(line)
+	   enddo
+	endif
+
 	call LogWrit('------------------------------------------------')
 	call LogClose
 c
@@ -679,4 +717,29 @@ c
 	  call logwrit(line)
 	enddo
 	end
+c***********************************************************************
+	subroutine getPnt(lIn,refant,npnt,azeloff,azeltim,maxsrc)
+	implicit none
+	integer lIn,refant,npnt,maxsrc
+	real azeloff(2,maxsrc)
+	double precision azeltim(maxsrc)
+c
+	include 'maxdim.h'
+	include 'mirconst.h'
+	double precision dazim(MAXANT), delev(MAXANT),time
+	integer nants
+	
+	if (npnt .ge. maxsrc) call bug('f','too many az/el offsets')
 
+	call uvrdvri(lIn,'nants',nants,0)
+	call uvrdvrd(lIn,'time',time,0.0d0)
+	call uvgetvrd(lIn,'dazim', dazim, nants)
+	call uvgetvrd(lIn,'delev', delev, nants)
+
+
+	npnt = npnt + 1
+	azeloff(1,npnt) = dazim(refant) * 180 * 60 / PI
+	azeloff(2,npnt) = delev(refant) * 180 * 60 / PI
+	azeltim(npnt)   = time
+
+	end
