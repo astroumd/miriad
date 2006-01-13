@@ -17,7 +17,9 @@ c	Reissue source information if no data for this period in minutes.
 c	The default is 60 minutes.
 c@ refant
 c       Reference antenna for variables that are antenna based
-c       (e.g. dazim, delev). Default: 1
+c       (e.g. dazim, delev). 
+c       Use 0 to skip accumulating this type of data .
+c       Default: 1
 c@ log
 c	The output log file. Default is the terminal.
 c@ options
@@ -95,7 +97,7 @@ c
 	character sources(MAXSRC)*16,prevsrc*16
 	integer indx(MAXSRC)
 c
-	integer npnt,vpoint,refant
+	integer npnt,vpoint,refant,azelidx(MAXSRC)
 	real azeloff(2,MAXSRC)
 	double precision azeltim(MAXSRC)
 c
@@ -208,8 +210,8 @@ c
 	  if(uvvarupd(vfreq))  call GetFreq(lIn,newfreq,ifreq,nfreq,
      *		nchan,nspect,nschan,sfreqs,nwide,wfreqs,
      *		MAXFREQ,MAXSPECT)
-	  if(uvvarupd(vpoint))  call GetPnt(lIn, refant, npnt, 
-     *          azeloff,azeltim, MAXSRC)
+	  if(uvvarupd(vpoint))  call GetPnt(lIn, nvis, refant, npnt, 
+     *          azeloff,azeltim,azelidx,MAXSRC)
 c
 c  If something has changed, give a summary of things.
 c
@@ -316,21 +318,23 @@ c
 	  prevsrc = sources(j1)
 	enddo
 	call LogWrit(' ')
-	call LogWrit('------------------------------------------------')
 
 c
 c  AzEl offsets, but only if we have more than 1 offset
 c
 	if (npnt.gt.0) then
+	   call LogWrit
+     *          ('------------------------------------------------')
 	   call LogWrit(' ')
 	   call LogWrit(
      *          'The input data contain the following AzEl offsets')
 	   call LogWrit(
-     *          '   Date           ant   dAz   dEl (ArcMin)')
+     *          '   Date             vis# ant   dAz   dEl (ArcMin)')
 	   call LogWrit(' ')
 	   do j=1,npnt
 	      call JulDay(azeltim(j),'H',date)
-	      write(line,'(a,1x,i3,1x,f5.2,1x,f5.2)') date, refant,
+	      write(line,'(a,1x,i6,1x,i3,1x,f5.2,1x,f5.2)') date, 
+     *              azelidx(j), refant,
      *              azeloff(1,j),azeloff(2,j)
 	      call LogWrit(line)
 	   enddo
@@ -718,9 +722,10 @@ c
 	enddo
 	end
 c***********************************************************************
-	subroutine getPnt(lIn,refant,npnt,azeloff,azeltim,maxsrc)
+	subroutine getPnt(lIn,nvis,refant,npnt, 
+     *                    azeloff,azeltim,azelidx,maxsrc)
 	implicit none
-	integer lIn,refant,npnt,maxsrc
+	integer lIn,nvis,refant,npnt,maxsrc,azelidx(maxsrc)
 	real azeloff(2,maxsrc)
 	double precision azeltim(maxsrc)
 c
@@ -729,6 +734,8 @@ c
 	double precision dazim(MAXANT), delev(MAXANT),time
 	integer nants
 	
+	if (refant .le. 0) return
+
 	if (npnt .ge. maxsrc) call bug('f','too many az/el offsets')
 
 	call uvrdvri(lIn,'nants',nants,0)
@@ -741,5 +748,6 @@ c
 	azeloff(1,npnt) = dazim(refant) * 180 * 60 / PI
 	azeloff(2,npnt) = delev(refant) * 180 * 60 / PI
 	azeltim(npnt)   = time
+	azelidx(npnt)   = nvis
 
 	end
