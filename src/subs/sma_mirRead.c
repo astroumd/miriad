@@ -151,6 +151,8 @@
 //                  only for LONG_MAX=2147483647L, the value for 32bits computer.
 //                  The LONG_MAX is replaced by SMA_LONG_MAX which
 //                  is defined to 2147483647L. 
+// 2006-01-18 (JHZ) add instruction print out in case
+//                  the option rxif is not properly set.
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -869,6 +871,11 @@ int rsmir_Read(char *datapath, int jstat)
 	goto foundTheRx;       } 
     printf("ERROR: there is no receiver %d in this data set.\n",
 	   smabuffer.rxif);
+    if(smaCorr.no_rxif == 1)
+    printf("       please try it again with rxif=%d\n", smabuffer.rx1);
+     if(smaCorr.no_rxif == 2)
+     printf("       please try it again with rxif=%d or rxif=%d\n", 
+     smabuffer.rx1,  smabuffer.rx2);
     exit(-1);
   foundTheRx:
 // assign the rx id to load in the case of dual rx
