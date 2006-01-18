@@ -47,6 +47,9 @@ c	parameter gives this inclination angle in degrees. Default=0. (face on)
 c@ radius
 c	Inner and outer radii and step size along major axis in arcsecs.
 c	The default is the whole image in steps equal to the pixel size.
+c       Warning: for images where the center is not in the center you
+c       may want to explicitly specify this keyword, to avoid missing
+c       data.
 c@ telescop
 c	If you request that the fluxes be corrected for the primary beam
 c	(see OPTIONS), ELLINT will normally construct a primary beam type
@@ -125,13 +128,14 @@ c    pjt   13dec03      Documented the previous, add output history,
 c                       fixed residual map computation
 c    pjt   15dec03      make sure median .or. mode is selected, not both
 c    pjt   20jun05      g95 wants medsmooth to be an integer
+c    pjt/ml 18jan06     fix for rings with '0' pixels
 c
 c----------------------------------------------------------------------c
         include 'mirconst.h'
 	include 'maxdim.h'
 	include 'mem.h'
         character*(*) label,version
-        parameter(version='version 20-jun-2005')
+        parameter(version='version 18-jan-2006')
         double precision rts,value
         parameter(label='Integrate a Miriad image in elliptical annuli')
         integer maxnax,maxboxes,maxruns,naxis,axis,plane,maxring
@@ -356,10 +360,14 @@ c
 c     If we want the median or mode, make a second pass through the plane.
 c     We now know how big the arrays need to be for each annulus
 c     so allocate memory first for median/mode arrays
+c     Be careful, some intermediate rings could contain 0 data if masking
+c     was used, so need to check for pixe(ir) > 0
 c     
           if (domedian.or.domode) then
              do ir = irmin, irmax
-                call memalloc (ipm(ir), nint(pixe(ir)), 'r')
+                if (nint(pixe(ir)).gt.0) then
+                   call memalloc (ipm(ir), nint(pixe(ir)), 'r')
+                endif
                 pixe(ir) = 0.0
              enddo
 c     
@@ -427,8 +435,12 @@ c
                 endif
 c     
                 if (domedian) then
-                   call median (memr(ipm(ir)), nint(pixe(ir)), med)
-                   if(scale.ne.1.) med = med * scale
+                   if (nint(pixe(ir)).gt.0) then
+                      call median (memr(ipm(ir)), nint(pixe(ir)), med)
+                      if(scale.ne.1.) med = med * scale
+                   else
+                      med = 0
+                   endif
                    fmed(ir)=med
                    write(line,'(6f11.3,1x)') r,pixe(ir),med,rms,
      *                  flux(ir)/cbof,fsum/cbof
@@ -469,7 +481,11 @@ c
                    fsum = fsum + flux(ir)
 c     
                    if (domode) then
-                      call mode (memr(ipm(ir)), nint(pixe(ir)), xmode)
+                      if (nint(pixe(ir)).gt.0) then
+                        call mode (memr(ipm(ir)), nint(pixe(ir)), xmode)
+                      else
+                        xmode = 0.0
+                      endif
                       write(line,'(6f11.3,1x)') r,pixe(ir),xmode,rms,
      *                     flux(ir)/cbof,fsum/cbof
                    else
@@ -506,7 +522,11 @@ c
                 enddo
              else
                 do i=irmin,irmax
-                   fmed(i) = flux(i)/pixe(i)
+                   if (pixe(i).gt.0) then
+                      fmed(i) = flux(i)/pixe(i)
+                   else
+                      fmed(i) = flux(i)
+                   endif
                 enddo
              endif
 
@@ -517,7 +537,11 @@ c
                    if (domedian) then
                       fluxfit(i) = fmed(i)
                    else
-                      fluxfit(i) = flux(i)/pixe(i)
+                      if (pixe(i).gt.0) then
+                         fluxfit(i) = flux(i)/pixe(i)
+                      else
+                         fluxfit(i) = flux(i)
+                      endif
                    endif
                 enddo
                 nspl = irmax-irmin+1
@@ -575,7 +599,9 @@ c
 
              if (domedian.or.domode) then
                 do ir = irmin, irmax
-                   call memfree (ipm(ir), nint(pixe(ir)), 'r')
+                   if (nint(pixe(ir)).gt.0) then
+                      call memfree (ipm(ir), nint(pixe(ir)), 'r')
+                   endif
                 enddo
              endif
 c     
@@ -666,6 +692,8 @@ c------------------------------------------------------------------------
         integer i,j,ilo,ihi,iter,maxcount
         real sum,sum2,av,rms,xi,xmed,xmode
         real xlo,xhi,dx,xnext,xcount(MAXBINS)
+
+        if (n.le.0) return
 c
 c     sort data and evaluate the median
 c
