@@ -1032,7 +1032,7 @@ c
 	character*1 noedit,diag,rawdata,flipdaz,flipdel,rawazel
 	logical firstime
 	integer i,k,n,kf,isrc,oldequ,an
-	real az0,el0,az1,el1
+	real az0,el0,az1,el1,day,st,ra,dec
 	real dazcor,delcor,daznew,delnew
 
 c
