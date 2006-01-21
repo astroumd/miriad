@@ -1187,11 +1187,11 @@ c awk '{printf("%3.0f %7s %11.5f %7.3f %7.3f %7.3f %7.3f\n", $1,$3,$5-53000,$6,$
 c
 c  BIMA pointing data format.
 c
-c22      read(1,221,end=10) source, day, ut(n), st, ra, dec,
-c     *	  an,(apc(i),i=1,9),(epc(i),i=1,8),
-c     *	  az(n),el(n),daz(n),del(n),tilt(n),t1(n),t2(n)
-c221     format(a8,1x,f12.2,4f10.5,f4.0,17f8.3,2f9.3,5f8.3) 
-c        if(an.ne.ant.and.ant.ne.0.) goto 20
+22      read(1,221,end=10) source, day, ut(n), st, ra, dec,
+     *	  an,(apc(i),i=1,9),(epc(i),i=1,8),
+     *	  az(n),el(n),daz(n),del(n),tilt(n),t1(n),t2(n)
+221     format(a8,1x,f12.2,4f10.5,f4.0,17f8.3,2f9.3,5f8.3) 
+        if(an.ne.ant.and.ant.ne.0.) goto 20
 
 	else if (telescope.eq.'ATA')then
 c  ATA POINTING DATA FORMAT oct 2004
