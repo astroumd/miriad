@@ -1243,7 +1243,7 @@ c
 	  endif
 	  if(.not.isplanet)then
 	    flux = 0.
-	    call CalGet(' ',source1,freq,100.,day,1000.,flux,iostat)
+	    call CalGet(' ',source1,freq,100.,day,2000.,flux,iostat)
 	    if(iostat.ne.0)then
 	      call bug('w','Error determining flux of '//source)
 	      write(line,'(a,f8.3,a)') 'Setting flux to ',level,' Jy'
