@@ -94,8 +94,8 @@ c    get data set name and output file name
 c
         call keyini
         call mkeyf('in',dataset,MAXF,nfiles)
-        if(dataset(1) .eq. ' ')
-     *      call bug('f','Data set name must be specified')
+        if (nfiles.eq.0)
+     *      call bug('f','need data..., in= missing')
 	call keya('time',ptime,'ut')
 	call keya('log',outlog,' ')
         call keyfin

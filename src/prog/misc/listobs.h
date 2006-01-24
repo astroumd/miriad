@@ -2,6 +2,9 @@ C
 C Include file for program LISTOBS
 C
 C   Amount of space needed: ~ (22+MAXANT)*MAXP words ('REAL's)
+C   MAXP = 
+C   MAXF = 
+C   MAXSPECT = 
 C
         integer MAXP,MAXF, MAXSPECT
         parameter (MAXP = 5000 )
