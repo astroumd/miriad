@@ -5,9 +5,6 @@ c  Makes a listing of time ordered inforamtion about the observations in
 c  modest detail. If multiple files or wildcards are used as input the 
 c  resulting listing is time ordered.
 c
-c  Note: this program was rather BIMA specific, and is now becoming
-c        rather CARMA specific
-c
 c= Listobs - Makes a summary of a set of observations.
 c& lgm
 c: utility
@@ -19,7 +16,7 @@ c	observed is compiled.  The primary use of this program is to
 c	create a summary of the instrument setup and all observations
 c	made during a track.  Use wild cards or an include file to specify
 c	all files relevent for your observations.
-c< in
+c< vis
 c< time
 c	Takes value "ut" or "lst" to print time as UT or LST (default: ut)
 c@ log 
@@ -55,11 +52,14 @@ c	   09-oct-97 mchw  more format changes to fit onto page.
 c          19-jun-98 pjt fixed some ansi problems for linux g77
 c          14-mar-01 pjt realigned Mel's versino with test for missing systemp
 c			 (originally done 20jan99)
-c          25-nov-05 pjt hacked it for CARMA, where some uv variables not present
-c                        LOOK FOR Comment LINES "Carma"
-c
-c Note:  for nants>10 the code must once more be updated !! 
-c       See fmt # 2201, 2202, 2305
+c          09-jan-06 dnf changed formats of outputs for nants<=15 (CARMA)
+c                        made changes in reading of cormore, corfin,
+c                        and corbw as these variables are not included in
+c                        CARMA data. the output will read 0 for these 
+c                        variables for CARMA data and will behave as normal
+c                        for other (old BIMA) data
+c                        changed in to vis to make listobs consistent with
+c                        other uv data tasks
 c-----------------------------------------------------------------------
 	include 'mirconst.h'
         include 'caldefs.h'
@@ -67,7 +67,7 @@ c-----------------------------------------------------------------------
         include 'listobs.h'
 c
 	character pversion*10
-	parameter (pversion = '25-nov-05 **carma**')
+	parameter (pversion = '09-jan-06')
 c
         integer ipt,nfiles,uvflag,order(MAXP),nameidx(100),nnames
         integer isys(MAXANT),i,uvscan,j,ii,jj,ipicked,ifix
@@ -93,9 +93,9 @@ c-----------------------------------------------------------------------
 c    get data set name and output file name
 c
         call keyini
-        call mkeyf('in',dataset,MAXF,nfiles)
-        if (nfiles.eq.0)
-     *      call bug('f','need data..., in= missing')
+        call mkeyf('vis',dataset,MAXF,nfiles)
+        if(dataset(1) .eq. ' ')
+     *      call bug('f','Data set name must be specified')
 	call keya('time',ptime,'ut')
 	call keya('log',outlog,' ')
         call keyfin
@@ -119,7 +119,7 @@ c
 c --- check if focus is missing as it is in old data ----
 	   call uvprobvr(tin,'focus',type,length,fthere)
            ipt = ipt + 1
-	   if(ipt.gt.MAXP)CALL bug('f','Too many points for MAXP')
+	   if(ipt.gt.MAXP)CALL bug('f','Too many points')
 	   call getall(tin,ipt)
 	   jdold = jday(ipt)
 	   call uvgetvrr(tin,'inttime',tint,1)
@@ -153,8 +153,7 @@ c --- check if focus is missing as it is in old data ----
      1                      newsou .ne. oldsou) then
 		    dur(ipt) = totint/60.0
 		    ipt      = ipt + 1
-	            if(ipt.gt.MAXP)
-     1                          CALL bug('f','Too many points for MAXP')
+	            if(ipt.gt.MAXP)CALL bug('f','Too many points')
 		    call getall(tin,ipt)
 		    totint   = 8.640e4 * tint
                     oldsou = newsou
@@ -330,12 +329,12 @@ c
 	  write(text,2201) objs(ii),uthms,dur(ii),el(ii),
      1        (corbw(ii,j),j=1,2),cmode(ii),(isys(hereidx(j)),j=1,nhere)
  2201	  format(a,1x,a,1x,f4.1,1x,f4.0,1x,f4.0,1x,f4.0,1x,
-     1         i1,1x,10(i4,1x))
+     1         i1,1x,15(i4,1x))
         else
 	  write(text,2202) objs(ii),lsthms,dur(ii),el(ii),
      1        (corbw(ii,j),j=1,2),cmode(ii),(isys(hereidx(j)),j=1,nhere)
  2202	  format(a,1x,a,1x,f4.1,1x,f5.1,1x,f4.0,1x,f4.0,1x,
-     1         i1,1x,10(i4,1x))
+     1         i1,1x,15(i4,1x))
         endif
 	call LogWrite(text,more)
   300	continue
@@ -353,7 +352,7 @@ c
 	   call rad2hms(rlst,lsthms)
 	   write(text,2305) lsthms,
      1                      (focus(hereidx(j),order(1)),j=1,nhere)
- 2305      format('At LST: ',a,' Focus=',10(f5.1,1x))
+ 2305      format('At LST: ',a,' Focus=',15(f5.1,1x))
 	   call LogWrite(text,more)
 	   do i=2,nfocs
 	      ii = order(i)
@@ -436,18 +435,18 @@ c
         include 'caldefs.h'
         include 'listobs.h'
 
-	integer tin,ipt,iants,j,i,length,clen
+	integer tin,ipt,iants,j,i,length
 	double precision utdouble,dlst,dlinef,dlo1,dif,draobs,
      1                   ddecobs
 	real cbw(MAXSPECT/2),systemps(MAXSPECT*MAXANT)
         real cfreq(MAXSPECT/2),haobs,decobs,sum
-        character vtype*4,ctype*4
-        logical vupd,systhere,cthere
+        character vtype*4
+        logical vupd,systhere
 c
 c   get all of the desired uv variables from header
 c
-        call uvgetvrd(tin,'time',jday(ipt),1)
-        call uvgetvrd(tin,'ut',utdouble,1)
+	call uvgetvrd(tin,'time',jday(ipt),1)
+	call uvgetvrd(tin,'ut',utdouble,1)
 	call uvgetvra(tin,'source',objs(ipt))
 c	call uvgetvrd(tin,'ra',ra(ipt),1)
 c	call uvgetvrd(tin,'dec',dec(ipt),1)
@@ -457,38 +456,48 @@ c	call uvgetvrd(tin,'dec',dec(ipt),1)
 	call uvgetvrr(tin,'vsource',vel(ipt),1)
 	call uvgetvri(tin,'nants',iants,1)
 	call uvrdvri(tin,'nspect',nspec,0)
-        call uvprobvr(tin,'cormode',ctype,clen,cthere)
-        if (cthere) then
+c the following was changed to accomodate CARMA data
+        call uvprobvr(tin,'cormode',vtype,length,vupd)
+        if(length.ne.0)then
            call uvgetvri(tin,'cormode',cmode(ipt),1)
         else
-           cmode(ipt) = 0
+           cmode(ipt)=0
         endif
 	if(nspec.ne.0)then
 	  call uvgetvri(tin,'nchan',nchan,1)
+c the following was changed to accomodate CARMA data
           call uvprobvr(tin,'corfin',vtype,ncorfin,vupd)
-          if (vupd) 
-     *         call uvgetvrr(tin,'corfin',cfreq,ncorfin)
+          if(ncorfin.ne.0)then
+             call uvgetvrr(tin,'corfin',cfreq,ncorfin)
+          else
+             ncorfin=1
+             cfreq(1)=0
+          endif
 	  call uvprobvr(tin,'systemp',vtype,length,systhere)
 	  if(systhere)
-     *         call uvgetvrr(tin,'systemp',systemps,iants*nspec)
+     *	  	call uvgetvrr(tin,'systemp',systemps,iants*nspec)
+	else
 	  call uvrdvri(tin,'nwide',nspec,0)
-carma
-c          if (nspec.ne.0)
-c     *         call uvgetvrr(tin,'wsystemp',systemps,iants*nspec)
+	  if(nspec.ne.0)
+     *		call uvgetvrr(tin,'wsystemp',systemps,iants*nspec)
+
 	endif
-        if (cthere) then
-           call uvprobvr(tin,'corbw',vtype,ncorbw,vupd)
+c  the following was changed to accomodate CARMA data
+        call uvprobvr(tin,'corbw',vtype,ncorbw,vupd)
+        if(ncorbw.ne.0)then
            if (vtype(1:1).eq.'r') then
               if (ncorbw.gt.4) call bug('f','corbw array too large')
               call uvgetvrr(tin,'corbw',cbw,ncorbw)
            else
               call bug('f','Unexpected type for corbw: ' // vtype)
            endif
+        else
+           ncorbw=2
+           cbw(1)=0
+           cbw(2)=0
         endif
 
-carma	call uvgetvrd(tin,'lst',dlst,1)
-        dlst=0
-
+	call uvgetvrd(tin,'lst',dlst,1)
 	call uvrdvrd(tin,'freq',dlinef,0.d0)
 	call uvgetvra(tin,'veltype',veltype(ipt))
 	call uvrdvrr(tin,'veldop',veldop(ipt),0.)
@@ -509,10 +518,8 @@ c
 	   corbw(ipt,1) = 1000.0*cbw(1)
 	   corbw(ipt,2) = 1000.0*cbw(3)
         else
-carma           write(*,*) 'ncorbw = ',ncorbw
-carma           call bug('w','Cannot handle this corbw length')
-           corbw(ipt,1) = 0
-           corbw(ipt,2) = 0
+           write(*,*) 'ncorbw = ',ncorbw
+           call bug('f','Cannot handle this corbw length')
         endif
 	do 200 i=1,iants
 	   sum = 0.0
