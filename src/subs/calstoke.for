@@ -187,7 +187,8 @@ c
       data frange /0.3000,  50.000,
      +		   0.300,   50.000,
      +		   0.300,   50.000,
-     +		   0.3000,  40.000, ! fit goes <0 for f > 47
+c     fit goes negative for f > 47
+     +		   0.3000,  40.000, 
      +		   0.4080,  10.000,
      +		   1.380,    8.640,
      +		   0.408,    8.400,
@@ -195,8 +196,9 @@ c
      +		   1.408,   10.550,
      +		   1.408,   10.550,
      +             0.300,   50.000,
-     +             1.3,     1.8,    ! strictly, see notes above
-     +             1.3,     1.8,    ! strictly, see notes above
+c     the next two strictly, see notes above
+     +             1.3,     1.8,    
+     +             1.3,     1.8,
      +		  10.000,   25.000/
 c-----------------------------------------------------------------------
       ierr = 2
@@ -223,8 +225,9 @@ c
 c Horrible fudge to allow 2 polynomial approximations for 1934-638
 c
 	  if(isrc.eq.5.and.x.ge.frange(1,11).and.x.le.frange(2,11))
-     +	    isrcd=nsrc ! Warning: this extra source is in fact a
-                       ! different fit for source 5
+c     Warning: this extra source is in fact a different fit for source 5
+     +	    isrcd=nsrc 
+                       
 c
 	  if (frange(1,isrcd).ne.0.0 .and. frange(2,isrcd).ne.0.0 .and.
      +	    (x.lt.frange(1,isrcd) .or. x.gt.frange(2,isrcd)))
