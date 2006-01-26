@@ -159,6 +159,13 @@ c                 23    ->   21
 c                 24    ->   22
 c       Thus, the data in Miriad format will have a total
 c       of 22 spectral windows instead of 24.
+c
+c       In addition, spskip=-1 takes the frequency 
+c       configuration from that of the first integration
+c       assigned by nscans assuming that the frequency 
+c       configuration for the rest of integrations does not 
+c       change. 
+c
 c       The default is no skipping in spectral windows.
 c 
 c@ sideband
@@ -261,11 +268,12 @@ c    jhz 06-dec-05 add keyword spskip.
 c    jhz 30-dec-05 fix  the inconsistence
 c                  of the total number of integrations
 c                  in the mir header files (in_read and bl_read).
+c    jhz 24-jan-06 add options for skipsp=-1
 c------------------------------------------------------------------------
         integer maxfiles
         parameter(maxfiles=128)
         character version*(*)
-        parameter(version='SmaLod: version 1.21 30-Dec-05')
+        parameter(version='SmaLod: version 1.22 26-Jan-06')
 c
         character in(maxfiles)*64,out*64,line*64, rxc*4
         integer tno, length, len1
@@ -339,8 +347,8 @@ c        call mkeyd('restfreq',rfreq,2,nfreq)
         call keyi('spskip',spskip(2),0)
         if(spskip(1).gt.0.and.spskip(2).le.0)
      *  call bug('f','spskip(2) must > 0 if spskip(1) > 0 !')
-        if(spskip(1).lt.0.or.spskip(2).lt.0)
-     *  call bug('f','spskip(1) & spskip(2) must be zero or positive!')
+c        if(spskip(1).lt.0.or.spskip(2).lt.0)
+c     *  call bug('f','spskip(1) & spskip(2) must be zero or positive!')
         if(spskip(1).ge.24.or.spskip(2).ge.24)
      *  call bug('f','spskip(1) or spskip(2) must be less than 24!')
         call keyi('sideband',sb,0)

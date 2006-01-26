@@ -153,6 +153,12 @@
 //                  is defined to 2147483647L. 
 // 2006-01-18 (JHZ) add instruction print out in case
 //                  the option rxif is not properly set.
+// 2006-01-24 (JHZ) add the options spskip=-1 to take the frequency
+//                  configuration of the first integration and
+//                  skip the rest of the frequency configuration.
+//                  This assumes that the frequency configuration
+//                  does not change during the observing run.
+//                  This is for loading the old SMA data. 
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -664,7 +670,7 @@ int rsmir_Read(char *datapath, int jstat)
   int numberBaselines=0;
   int numberSpectra,numberSidebands,numberRxif;
   int blhid,firstsp,lastsp;
-  int inhset,blhset,sphset;
+  int inhset,blhset,sphset,inhset1st;
   int spcode[25], frcode[25];
   short int scale;
   short int *shortdata;
@@ -1980,7 +1986,6 @@ double xyzpos;
     while(inhset<(nsets[0]-1)) {
       /* inhset=inh[inhset+1]->ints;*/
       inhset++;
-      
       visSMAscan.blockID.ints = inh[inhset]->ints;
       visSMAscan.blockID.inhid = inh[inhset]->inhid;
       visSMAscan.blockID.sourID = inh[inhset]->souid;
@@ -2096,6 +2101,7 @@ double xyzpos;
 //      smabuffer.vsource, spn[inhset]->vres[12],
 //      spn[inhset]->vel[13],spn[inhset]->vres[13],
 //      spn[inhset]->vel[14],spn[inhset]->vres[14]);
+//        printf("nChunk = %d\n", smaCorr.n_chunk);
       for(i=1;i<smaCorr.n_chunk+1; i++) {
 	// the reference channel is the first channel in each chunk in miriad
 	// the reference channel is the center (nch/2+0.5) in each chunk in MIR
@@ -2104,9 +2110,10 @@ double xyzpos;
 	// for the first three blocks (1,2,3), the chunk order is normal in each block.
 	// for the rest three blocks (4,5,6), the chunk order is reversed in each block.
 	// 1 2 3 4 5 6 7 8 9 10 12 16 15 14 13 20 19 18 17 24 23 22 21
-	// reverse chunk order for the frequnecy only
+	// reverse chunk order for the frequency only
+        if(!smabuffer.spskip[0]==-1) {
 	if(smabuffer.doChunkOrder==1) {
-	  smabuffer.sfreq[frcode[i]-1]    = spn[inhset]->fsky[i]
+	  smabuffer.sfreq[frcode[i]-1] = spn[inhset]->fsky[i]
 	    - spn[inhset]->fres[i]/1000.0*
 	    (spn[inhset]->nch[i][rxlod]/2-0.5);
 	} else {
@@ -2128,15 +2135,48 @@ double xyzpos;
 	  smabuffer.nfreq[spcode[i]-1]    = smabuffer.rsnchan;
 	}
 	smabuffer.basefreq = spn[inhset]->basefreq;
+           } else {
+//
+// take the frequency configuration from the 1st integration set
+// assuming no frequency configuration change during the 
+// observing track.
+//
+            inhset1st=smabuffer.scanskip;
+                 if(smabuffer.doChunkOrder==1) {
+          smabuffer.sfreq[frcode[i]-1] = spn[inhset1st]->fsky[i]
+            - spn[inhset1st]->fres[i]/1000.0*
+            (spn[inhset1st]->nch[i][rxlod]/2-0.5);
+        } else {
+          smabuffer.sfreq[spcode[i]-1] = spn[inhset1st]->fsky[i]
+            - spn[inhset1st]->fres[i]/1000.0*
+            (spn[inhset1st]->nch[i][rxlod]/2-0.5);
+        }
+        if(smabuffer.dorfreq==1)
+        smabuffer.restfreq[spcode[i]-1] = spn[inhset1st]->rfreq[i];
+        if(smabuffer.rsnchan<0) {
+        smabuffer.sdf[spcode[i]-1] = spn[inhset1st]->fres[i]/1000.0;
+        smabuffer.nfreq[spcode[i]-1] = spn[inhset1st]->nch[i][rxlod];
+        } else {
+// re-sample the channel
+        smabuffer.sdf[spcode[i]-1] = spn[inhset1st]->fres[i]/1000.0*
+        spn[inhset1st]->nch[i][rxlod]/
+        smabuffer.rsnchan;
+        smabuffer.nfreq[spcode[i]-1] = smabuffer.rsnchan;
+        }
+        smabuffer.basefreq = spn[inhset1st]->basefreq;
+          }
+
+
 	smabuffer.bchan[spcode[i]-1]=1;
 	smabuffer.nstoke[spcode[i]-1]=4;
 	smabuffer.edge[spcode[i]-1]=0;
 	smabuffer.nbin[spcode[i]-1]=1;
 // check the spectral window skipping in MIR data
-         if(spcode[i]!=spn[inhset]->iband[i]) {
+         if(!smabuffer.spskip[0]==-1) {
 // printf("spcode icode %d %d fsky %f nch%d\n", 
 // spcode[i], spn[inhset]->iband[i],
 // spn[inhset]->fsky[i], smabuffer.nfreq[spcode[i]-1]);
+   if(spcode[i]!=spn[inhset]->iband[i]) {
    printf("\n");
    if(smabuffer.spskip[0]==0) {
    printf("Spotted skipping in spectral chunks starting at spcode=%d iband=%d\n", spcode[i], spn[inhset]->iband[i]);
@@ -2150,7 +2190,7 @@ double xyzpos;
    bug_c( 'f', "spcode must match with iband!\n");
       }
       }
-      sblpnt=0;
+      }
       //printf("numberBaselines=%d\n", numberBaselines);
       for(j=0; j < numberBaselines; j++) {
 	{
@@ -2431,7 +2471,7 @@ double xyzpos;
          }
       }
     }
-    if(smabuffer.spskip[0]!=0)
+    if(smabuffer.spskip[0]!=0&&smabuffer.spskip[0]!=-1)
      printf("The MIR s%02d - s%02d contain no data and are skipped!\n",
         smabuffer.spskip[0],
         smabuffer.spskip[0]+smabuffer.spskip[1]-1); 
