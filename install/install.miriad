@@ -1,6 +1,6 @@
 #! /bin/csh -f
 #
-set version=1-dec-05
+set version=30-jan-06
 #
 #  2-aug-99 Updated for Sebok's Mandrake setup
 #  1-aug-00 Updated to allow to build private PGPLOT version
@@ -32,6 +32,7 @@ set version=1-dec-05
 # 27-nov-05 gfortran an option
 #  9-jan-06 (JHZ) replaces 'borrow' with '../borrow' in lines 88-90
 #           to fix installation of pgplot for 64bits linux
+# 30-jan-06 fix typo for poor (ba)sh users
 #
 #   Simple single-architecture installation of MIRIAD
 #   (linux)
@@ -285,12 +286,14 @@ set start1=miriad_start.csh
 echo "# source this file to set MIR env"  > $start1
 echo "setenv MIR $MIRTEMP"               >> $start1
 echo "source $MIRTEMP/MIRRC.$hosttype"   >> $start1
+echo "# this script was created by $0"   >> $start1
 cp $start1 ..
 
 set start2=miriad_start.sh
 echo "# source this file to set MIR env"  > $start2
 echo "export MIR=$MIRTEMP"               >> $start2
-echo "source $MIRTEMP/MIRRC.$hosttype"   >> $start2
+echo "source $MIRTEMP/MIRSRC.$hosttype"  >> $start2
+echo "# this script was created by $0"   >> $start2
 cp $start2 ..
 
 # astromake: only do this if you want to make THIS version miriad's 
