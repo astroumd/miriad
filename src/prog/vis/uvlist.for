@@ -239,7 +239,7 @@ c	    call uvrdvrd(unit,'ut',ut,
 c     *			((timein-0.5)-int((timein-0.5)))*24.d0/rtoh)
 c           'ut' and 'time' at times could differ by 1/2 int.time
 c           we really want to use the midpoint of the integration (time)
-	    ut = ((timein-0.5)-int((timein-0.5)))*24.0d0
+	    ut = ((timein-0.5)-int((timein-0.5)))*24.0d0/rtoh
             call uvrdvrd(unit,'lst',lst,0.d0/rtoh)
 	    call uvrdvri(unit,'pol',p,0)
 	    if(dolist.or.dobase)then
