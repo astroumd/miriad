@@ -48,8 +48,9 @@
 %        21-jan-03  rjs  Added new baseline convention and pbtype.
 %        30-dec-03  rjs  Add new weather variables.
 %  22-nov-05  pjt  Merged in the above 2 changes, and marked some CARMA proposed uvvars
+%  30-jan-06  pjt  documented the CARMA filler version (0.1.1 at this moment)
 
-\newcommand{\uvversion}{November 30, 2005}
+\newcommand{\uvversion}{January 30, 2006}
 
 A \miriad\ uv dataset is composed of a collection of items and `\MM{u-v} variables'.
 The variables are parameters that are known at the time of the observation,
@@ -184,7 +185,7 @@ chi		\>R	\>radians
 \>\>\>assumed to have identical values.\\
 
 coord(*)        \>D     \>nanosec
-\> uv(w) baseline coordinates\\
+\> uv(w) baseline coordinates ?? what epoch ??\\
 \>\>\> {\tt coord} is also known as {\tt preamble(1:2)} or  {\tt preamble(1:3)}\\
 \>\>\> depending if you have uv or uvw data resp.\\
 
@@ -235,7 +236,7 @@ cortaper	\>R	\>-
 \>\>\>  This is the value at the edge of the window \\
 \>\>\>  The value is from 0-1.\\
 
-dazim(nants)	\>R	\>radians?
+dazim(nants)	\>R	\>radians
 \>Offset in Azimuth. (CARMA proposed)\\
 
 
@@ -260,7 +261,7 @@ deldec		\>R or	\>radians
 		\>D	\>
 \> definition.\\
 
-delev(nants)	\>R	\>radians?
+delev(nants)	\>R	\>radians
 \>Offset in Elevation (CARMA proposed)\\
 
 
@@ -284,6 +285,7 @@ epoch		\>R	\>years
 \>\>\> actually the observing time. Values less than 1984.0 are \\
 \>\>\> Besselian with coordinates in the FK4 system. Values greater \\
 \>\>\> than 1984.0 are Julian with coordinates in the FK5 system.\\
+\>\>\> You will typically find 1950.0 or 2000.0 here.\\
 
 evector		\>R	\>radians
 \>Position angle of the X feed, to the local vertical.\\
@@ -577,6 +579,7 @@ veltype(*)		\>A	\>-
 version(*)		\>A	\>-
 \>The current hardware/software version\\
 \>\>\> Current options: oldhat, newhat\\
+\>\>\> For carma: x.y.z\\
 
 vsource		\>R	\>\kms
 \> Nominal radial systemic velocity of source.\\
