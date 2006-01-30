@@ -151,11 +151,15 @@ c                 to 100. Added maximum number sources of 48 for polynomial
 c                 fitting to individual sources' data separately.
 c jhz: 2006-1-11  fixed a bug related to MAC OS X10.4 
 c
+c jhz: 2006-1-30  implement a feature of replacing bad antennas' tsys
+c                 with those of a good antenna without
+c                 performing polynomial fitting and
+c                 options=tsysswap
 c------------------------------------------------------------------------
         character version*(*)
         integer maxpnts,maxfit
         parameter(maxpnts=100000,maxfit=48)
-        parameter(version='SmaFix: version 1.11 11-Jan-06')
+        parameter(version='SmaFix: version 1.12 30-Jan-06')
         logical doplot,dolog,dotime,dounwrap
         character vis*64,device*64,logfile*64,xaxis*16,yaxis*16
         character out*64
@@ -2182,7 +2186,7 @@ c
         real xtsys(maxant*maxwin),ytsys(maxant*maxwin)
         real tsys(maxant*maxwin), otsys(maxant*maxwin)
         real  tscale
-c        logical dojpk
+c      logical dojpk
 c
         real freq0(maxwin),jyperk
         double precision ra,dec,lat
@@ -2214,7 +2218,7 @@ c        real getjpk
         character source(maxsource)*32, souread*32
         integer soupnt(10000*10),nsource, sourid
         common/sour/soupnt,source,nsource
-        integer nave, navel, inhid, len1
+        integer nave, navel, inhid, len1, nbant,ibant
         logical tsysflag(maxant,maxinte)
         double precision mytime(maxinte)
         common/tsysflag/tsysflag,mytime
@@ -2225,6 +2229,11 @@ c
               inhid=0
         do i=1,maxinte
               tsts(i) = 0.
+        enddo
+c count # of bad ant
+        nbant=0
+        do i=1,10
+        if(bant(i).ne.-1) nbant=nbant+1
         enddo
 c  
 c   process replacement of Tsys from ant1 to ant2
@@ -2406,11 +2415,19 @@ c
          call uvgetvrr(lvis,'systemp',tsys,nants)
                                   endif
          call basant(preamble(5),i1,i2)
+c    check if antenna replacement
+          if(gant(1).ne.-1) then
+          do ibant=1,nbant
+           if(i1.eq.bant(ibant)) tsys(i1)=tsys(gant(1))
+           if(i2.eq.bant(ibant)) tsys(i2)=tsys(gant(1))
+          end do
+          end if
+
 c    check if the polynomial fitting parameters have been calculated.
-              if((dofit.gt.0).and.(tsysplt)) then
          call julcal(preamble(4), year, month, day)
                          timev = (day-sday)*tscale
                          day = (day-sday)*tscale
+                      if((dofit.gt.0).and.(tsysplt)) then
 c    axis = time for xaxisparm.eq.1
                      if(.not.dosour) sourid=1
                        if(xaxisparm.eq.1)  then
@@ -2461,7 +2478,7 @@ c    axis = antel for xaxisparm.eq.2
        endif
                             end do
                             end do
-          call regpolfitg(nterms,xa,bp,1,antel,tsysv)
+         call regpolfitg(nterms,xa,bp,1,antel,tsysv)
                              otsys(i) = tsys(i) 
          if(tsysflag(i,inhid).and.dotsysfix) then
                              tsys(i) = tsysv
@@ -2475,13 +2492,13 @@ c reset flags back unflag state
                 endif
          if(dotsysfix.and.dotsys) dotswap = .true.  
          if(dofit.eq.0.and.dotsys) dotswap = .true.
+         if(gant(1).ne.-1.and.dotsys) dotswap = .true.
          if(dotsys.and.dotswap) then
-        call tsysap(data,nchan,nschan,xtsys,ytsys,tsys,
-     *               nants,nif,i1,i2,pol,jyperk)
-               tsts(inhid) = tsts(inhid)+tsys(i1)*tsys(i2)
+         call tsysap(data,nchan,nschan,xtsys,ytsys,tsys,
+     *         nants,nif,i1,i2,pol,jyperk)
                                 end if
          if(dotsys.and.(.not.dotswap)) then
-        call tsysap(data,nchan,nschan,xtsys,ytsys,otsys,
+         call tsysap(data,nchan,nschan,xtsys,ytsys,otsys,
      *               nants,nif,i1,i2,pol,jyperk)  
                tsts(inhid) = tsts(inhid)+otsys(i1)*otsys(i2)
                                 end if            
@@ -2498,7 +2515,7 @@ c
 c  if(dotsys.and.(.not.dotswap)
 c  the original Tsys is applied to vis; the systemp remains
 c  unchanged.    
-c
+c   
               if((day-ptime).gt.0) then
        if(dotswap) call uvputvrr(lout, 'systemp', tsys, nants)
        if(dotswap) call uvputvrr(lout, 'systmp', otsys, nants)
@@ -2518,10 +2535,16 @@ c
         write(*,*) ' '
         write(*,*) 'Additional messages for what have been done:'
 c
+        if(gant(1).ne.-1) then
+        write(*,*) 'Tsys values of bad antennas', 
+     * (bant(ibant),ibant=1,nbant), ' replaced by those of ant',
+     * gant(1),'.'
+        end if
+c
         if(.not.dotsysfix.and.(dofit.le.0)) then
       write(*,*) 'Used unflagged syetemp in Tsys correction.'
-      write(*,*) 'Copied the flag states from input, ',vis(1:len1(vis)),
-     *' , over to, ',out(1:len1(out))
+      write(*,*) 'Copied the flag states from input (',vis(1:len1(vis)),
+     *') over to, ',out(1:len1(out))
         end if
 c        
        if(.not.dotsysfix.and.(dofit.gt.0)) then
@@ -2533,6 +2556,8 @@ c
      *'Used the original systemp in Tsys correction.',
      *'Stored polynomial fits in the variable systmp.'
         end if
+          
+
 c
         if(dotsysfix) then
         write(*,*) 
@@ -2541,6 +2566,7 @@ c
         write(*,*) 
      * 'Reset the flag states back to unflag in the output file, ',
      * out(1:len1(out))
+
 c
 c go through the output data again
 c reset flag states
