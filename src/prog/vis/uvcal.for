@@ -59,13 +59,11 @@ c                   passband errors. The uv-data must contain the same
 c                   spectral windows in both sidebands of LO1.
 c	   'uvrotate'	Rotate uv-coordinates from current to standard epoch.
 c                   The standard epoch, ra, dec can be changed using PUTHD.
-c	   'avechan'	Average unflagged spectral channels into wide,2,1 for
-c                   lsb and usb of LO1 respectively. The data are weighted by
-c                   bandwidth and exclude badchan and endchan specified below.
-c                   Also remake wideband average for each spectral window.
-c	   'avewide'	Average unflagged wideband channels into wide,2,1 for
-c                   lsb and usb of LO1 respectively. The data are weighted by
-c                   bandwidth and exclude badchan specified below and wide,2,1
+c	   'avechan'	Average unflagged spectral channels into wideband
+c                   excluding badchan and endchan specified below.
+c	   'slope'	    Fit phase slope for each spectral window and store into
+c                   wideband channel phase in units radians/GHz. 
+c                   Exclude badchan and endchan.
 c
 c	NOTE: 	Options=nochannel cannot be used with "hanning", "passband"
 c	and "contsub". For these 3 options no processing is performed on the
@@ -127,44 +125,44 @@ c--
 c
 c  History:
 c    rjs  Dark-ages Original version of uvcat.
-c    mchw 07mar91   Added passband option for planet observations.
-c    mchw 19mar91   Added hanning option.
-c    mchw 28mar91   Changes to handle processing options after window selection.
-c    rjs  19apr91   Repaired options=nochan, which I apparently broke on
-c		    20feb91.
-c    rjs  20may91   Added xyphase to the list of variables to copy.
-c    rjs  28jun91   Handle the flags for polarisation leakage correction.
-c    mjs  04aug91   Replaced local maxants with maxdim.h value MAXANT
-c    mchw 08oct91   Continuum subtraction option using linear fit to spectra.
-c    mchw 22oct91   Split off special processing options from uvcat.
-c    mchw 23oct91   Added flagging of noisy data in options=contsub.
-c    nebk 16jan92   Add option to conjugate visibilities, corrected
-c                   help to include NOPOL option.   Added code stolen
-c                   from parent UVCAT to write out polarization info.
-c    mchw 21jul92   Fixed a precision problem in linfit.
-c    rjs  17aug92   Added var routines. Some changes to .doc.
-c    mchw 16jun93   Add imaginary option to multiply by sqrt(-1)
-c		    Handle wideband for conjugate and imaginary options.
-c    mchw 12aug93   Elliminate time average in options=passband.
-c			Added avechan keyword.
-c    mchw 20sep93   Option 'phasem' Replace last channel and wideband
-c			  with predicted line length phase.
-c    mchw 07oct93   Option 'holo' Replace u,v with dra,ddec for holography.
-c    mchw 30nov93   Option 'tpower' Replace last channel and wideband
-c			  with predicted phase from tpower differences.
-c    mchw 01jan94   Option 'wide'  Make wideband from channel average
-c		    	for each sideband of LO1.
+c    mchw 07mar91  Added passband option for planet observations.
+c    mchw 19mar91  Added hanning option.
+c    mchw 28mar91  Changes to handle processing options after window selection.
+c    rjs  19apr91  Repaired options=nochan, which I apparently broke on
+c		           20feb91.
+c    rjs  20may91  Added xyphase to the list of variables to copy.
+c    rjs  28jun91  Handle the flags for polarisation leakage correction.
+c    mjs  04aug91  Replaced local maxants with maxdim.h value MAXANT
+c    mchw 08oct91  Continuum subtraction option using linear fit to spectra.
+c    mchw 22oct91  Split off special processing options from uvcat.
+c    mchw 23oct91  Added flagging of noisy data in options=contsub.
+c    nebk 16jan92  Add option to conjugate visibilities, corrected
+c                  help to include NOPOL option.   Added code stolen
+c                  from parent UVCAT to write out polarization info.
+c    mchw 21jul92  Fixed a precision problem in linfit.
+c    rjs  17aug92  Added var routines. Some changes to .doc.
+c    mchw 16jun93  Add imaginary option to multiply by sqrt(-1)
+c		           Handle wideband for conjugate and imaginary options.
+c    mchw 12aug93  Elliminate time average in options=passband.
+c			       Added avechan keyword.
+c    mchw 20sep93  Option 'phasem' Replace last channel and wideband
+c			       with predicted line length phase.
+c    mchw 07oct93  Option 'holo' Replace u,v with dra,ddec for holography.
+c    mchw 30nov93  Option 'tpower' Replace last channel and wideband
+c			       with predicted phase from tpower differences.
+c    mchw 01jan94  Option 'wide'  Make wideband from channel average
+c		    	   for each sideband of LO1.
 c    mchw 10apr94  Changed maxwins to MAXWIN; put MAXWIN into maxdim.h.
 c    mchw 26aug94  More documentation and checks. Contsub each window.
-c		   New options=linecal. Add window selection and remove
-c			badchan from options=wide.
+c		           New options=linecal. Add window selection and remove
+c			       badchan from options=wide.
 c    mchw 18may95  Added keyword scale; removed options=minus, imaginary.
 c    mchw 15mar96  Use badchan mask in options=wide.
 c    mchw 04jun96  Rotate uv-coordinates from current to standard epoch.
 c    mchw 04jul96  Multiply LR by expi(2*chi) and RL by expi(-2*chi)
 c    mchw 09jul96  Subtract source polarization from the uv-data.
 c    mchw 01aug96  Changes to support variable nwide. Change polcode.
-c		   Removed options=phasem and tpower.
+c		           Removed options=phasem and tpower.
 c    mchw 18jun97  Subtract power law model from the uv-data.
 c    mchw 25jun97  remake wideband average for each spectral window.
 c    pjt  25jun98  better fortran standards for linux/g77 
@@ -174,11 +172,12 @@ c    mchw 27nov04  Add fxcal.  uvset(tOut,'preamble','uvw/time/baseline')
 c    mchw 22dec04  Subtract offset from uvdata.
 c    mchw 22apr05  add code to change phase center.
 c    mchw 05may05  change sign of phase correction in pcenter.
+c    mchw 28jan06  update options=avechan.
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	integer maxbad
 	character version*(*)
-	parameter(version='UVCAL: version 3.0 05-May-2005')
+	parameter(version='UVCAL: version 3.0 28-Jan-2006')
 	parameter(maxbad=20)
 	real PI
 	parameter(PI=3.1415926)
@@ -191,7 +190,7 @@ c
 	logical first,init,new,more,dopol,PolVary
 	logical dochan,dowide,docopy,updated,doscale,dopolcal,domodel
 	logical nocal,nopol,nopass,nowide,nochan,doall,dopass,
-     *       dohann,docont,doconj,dophase,holo,dopower,avechan,avewide,
+     *       dohann,docont,doconj,dophase,holo,dopower,avechan,slope,
      *       linecal,uvrot,doparang,dooffset,dofxcal
 	character out*64,type*1,uvflags*8
 	real mask(MAXCHAN),sigma
@@ -209,11 +208,10 @@ c
 	complex expi
 c
 	call output(version)
-	call bug('i','        New FXCAL option  27nov04')
-	call bug('i','Change sign of phase center 05may05')
+	call bug('i','   New options: avechan 27Jan06')
 	call keyini
 	call GetOpt(nocal,nopol,nopass,nowide,nochan,doall,dopass,
-     *       dohann,docont,doconj,dophase,holo,dopower,avechan,avewide,
+     *       dohann,docont,doconj,dophase,holo,dopower,avechan,slope,
      *       linecal,uvrot,doparang,dofxcal)
 	lflags = 3
 	uvflags(1:3) = 'ds3'
@@ -431,15 +429,15 @@ c
      *					dowide,dochan,preamble)
 	      if(avechan)
      *	          call makewide(lIn,data,flags,nchan,wdata,wflags,nwide,
-     *					endchan,mask,'chan')
-	      if(avewide)
-     *	          call makewide(lIn,data,flags,nchan,wdata,wflags,nwide,
-     *					endchan,mask,'wide')
+     *					endchan,mask)
+	      if(slope)
+     *	          call fitslope(lIn,data,flags,nchan,wdata,wflags,nwide,
+     *					endchan,mask)
 c
 c  Process the wideband data separately if doing both wide and channel data.
 c
 	      if(dowide.and.dochan)then
-                if(.not.(avewide.or.avechan.or.linecal))
+                if(.not.(slope.or.avechan.or.linecal))
      *                    call uvDatWRd(wdata,wflags,maxchan,nwide)
 		if(dooffset)then
 		  do i=1,nwide
@@ -556,12 +554,12 @@ c
 	end
 c********1*********2*********3*********4*********5*********6*********7*c
 	subroutine GetOpt(nocal,nopol,nopass,nowide,nochan,doall,dopass,
-     *       dohann,docont,doconj,dophase,holo,dopower,avechan,avewide,
+     *       dohann,docont,doconj,dophase,holo,dopower,avechan,slope,
      *       linecal,uvrot,doparang,dofxcal)
 c
 	implicit none
 	logical nocal,nopol,nopass,nowide,nochan,doall,dopass,
-     *       dohann,docont,doconj,dophase,holo,dopower,avechan,avewide,
+     *       dohann,docont,doconj,dophase,holo,dopower,avechan,slope,
      *       linecal,uvrot,doparang,dofxcal
 c
 c  Determine extra processing options.
@@ -581,8 +579,8 @@ c    dophase   Predict line length phase.
 c    dopower   Predict phase from tpower differences.
 c    dofxcal   Calibrate cross correlations using sqrt(autcorrelations)
 c    holo      Replace u,v with dra,ddec for holography.
-c    avechan   Average unflagged spectral channels into wide,2,1
-c    avewide   Average unflagged wideband channels into wide,2,1
+c    avechan   Average unflagged spectral channels into wideband.
+c    slope     Fit phase slope and store in wideband.
 c    linecal   Correct phase slope due to line length change.
 c    uvrot     Rotate uv-coordinates from current to standard epoch.
 c    doparang  Multiply LR by expi(2*chi) and RL by expi(-2*chi)
@@ -594,7 +592,7 @@ c------------------------------------------------------------------------
 	data opts/'nocal    ','nowide   ','nochannel','unflagged',
      *		  'passband ','hanning  ','nopol    ','contsub  ',
      *            'conjugate','nopass   ','holo     ',
-     *            'avechan  ','avewide  ','linecal  ',
+     *            'avechan  ','slope    ','linecal  ',
      *            'uvrotate ','parang   ','fxcal    '/
 
 	call options('options',opts,present,nopt)
@@ -610,7 +608,7 @@ c------------------------------------------------------------------------
 	nopass  = present(10)
 	holo    = present(11)
 	avechan = present(12)
-	avewide = present(13)
+	slope   = present(13)
 	linecal = present(14)
 	uvrot   = present(15)
 	doparang= present(16)
@@ -618,8 +616,8 @@ c------------------------------------------------------------------------
 c
 c  Check for imcompatible options
 c
-	if(avechan.and.avewide)call bug('f',
-     *	  'Options "avechan" and "avewide" cannot be used together.')
+	if(avechan.and.slope)call bug('f',
+     *	  'Options "avechan" and "slope" cannot be used together.')
 	if(nochan.and.(dohann.or.dopass.or.docont))call bug('f',
      *	  'options=nochannel cannot be used with "hanning", "passband"
      * or "contsub"')
@@ -827,15 +825,14 @@ c
 	end
 c********1*********2*********3*********4*********5*********6*********7*c
 	subroutine makewide(lIn,data,flags,nchan,wdata,wflags,nwide,
-     *					endchan,mask,line)
+     *					endchan,mask)
 	implicit none
 	integer lIn,nchan,nwide,endchan
 	complex data(nchan),wdata(nchan)
 	logical flags(nchan),wflags(nchan)
 	real mask(nchan)
-	character*4 line
 c
-c  Make wideband average for each sideband of LO1.
+c  Make wideband average for each spectral window
 c
 c  In:
 c    lIn	Handle of input uv-data.
@@ -844,108 +841,134 @@ c    flags	flags
 c    nchan	Number of input channel or wideband data.
 c    endchan	Number of end channels to drop.
 c    mask       Mask for bad channels.
-c    line	'wide' or 'chan' data
 c  Out:
 c    wdata	wide data
 c    wflags	wide flags
 c    nwide	number of output wideband data.
 c------------------------------------------------------------------------
-	include 'maxdim.h'
-	double precision sfreq(MAXWIN),sdf(MAXWIN),lo1,freq
-	integer nspect,ischan(MAXWIN),nschan(MAXWIN)
-	real wfreq(MAXCHAN),wwidth(MAXCHAN)
-	real wt(MAXWIDE)
-	integer i,j,j1,j2,k,newide
+      include 'maxdim.h'
+      double precision sfreq(MAXWIN),sdf(MAXWIN)
+      integer nspect,ischan(MAXWIN),nschan(MAXWIN)
+      real wt(MAXWIDE)
+      integer i,j,j1,j2
 c
 c  Get the dimensioning info.
 c
-	call uvrdvrd(lIn,'lo1',lo1,0.d0)
-	if(lo1.eq.0.d0) call bug('f','LO1 zero or missing in uv-data')
-	if(line.eq.'chan')then
-	  call uvgetvri(lIn,'nspect',nspect,1)
-	  if(nspect.le.0)
-     *	    call bug('f','Bad value for uv-variable nspect')
-	  call uvgetvri(lIn,'ischan',ischan,nspect)
-	  call uvgetvri(lIn,'nschan',nschan,nspect)
-	  call uvgetvrd(lIn,'sdf',sdf,nspect)
-	  call uvgetvrd(lIn,'sfreq',sfreq,nspect)
-	else if(line.eq.'wide')then
-          call uvgetvri(lIn,'nwide',nwide,1)
-          if(nwide.le.0)
-     *      call bug('f','Bad value for uv-variable nwide')
-          call uvgetvrr(lIn,'wfreq',wfreq,nwide)
-          call uvgetvrr(lIn,'wwidth',wwidth,nwide)
-	else
-	  call bug('f','Invalid line in subroutine makewide')
-	endif
+      call uvgetvri(lIn,'nspect',nspect,1)
+      if(nspect.le.0)
+     *  call bug('f','Bad value for uv-variable nspect')
+      call uvgetvri(lIn,'ischan',ischan,nspect)
+      call uvgetvri(lIn,'nschan',nschan,nspect)
+      call uvgetvrd(lIn,'sfreq',sfreq,nspect)
+      call uvgetvrd(lIn,'sdf',sdf,nspect)
 c
-c  Make wideband channels with lsb in wide,1,1 and usb in wide,1,2
+c  Average channels into wideband.
 c
-     	call uvDatWRd(wdata,wflags,MAXCHAN,nwide)
-	if(line.eq.'chan')then
-	  newide = nwide
-	else if(line.eq.'wide')then
-	  newide = 2
-	endif
-	do i=1,newide
-	  wdata(i) = (0.,0.)
-	  wt(i) = 0.
-	enddo
+      nwide = nspect
+      do i=1,nwide
+        wdata(i) = (0.,0.)
+        wt(i) = 0.
+      enddo
 c
 c  Sum the good channels.
 c
-	if(line.eq.'chan')then
-	  k = 0
 	  do i=1,nspect
-	    j1=ischan(i)+endchan
-	    j2=ischan(i)+nschan(i)-1-endchan
+        j1 = ischan(i)+endchan
+        j2 = ischan(i)+nschan(i)-1-endchan
 	    do j=j1,j2
-	      freq = sfreq(i) + sdf(i) * (j-ischan(i))
-	      k = k + 1
-	      if(flags(k).and.mask(k).ne.0)then
-		wdata(i+2) = wdata(i+2) + sdf(i) * data(k)
-	        wt(i+2) = wt(i+2) + sdf(i)
-	        if(freq.lt.lo1)then
-	          wdata(1) = wdata(1) + sdf(i) * data(k)
-	          wt(1) = wt(1) + sdf(i)
-	        else
-	          wdata(2) = wdata(2) + sdf(i) * data(k)
-	  	  wt(2) = wt(2) + sdf(i)
-	        endif
-	      endif
-	    enddo
-	  enddo
-	else if(line.eq.'wide')then
-	  do i=3,nwide
-	    if(wflags(i).and.mask(i).ne.0)then
-	      if(wfreq(i).lt.lo1)then
-	        wdata(1) = wdata(1) + wwidth(i) * wdata(i)
-	 	wt(1) = wt(1) + wwidth(i)
-	      else
-	        wdata(2) = wdata(2) + wwidth(i) * wdata(i)
-		wt(2) = wt(2) + wwidth(i)
-	      endif
-	    endif
-	  enddo
-	endif
+	      if(flags(j).and.mask(j).ne.0)then
+            wdata(i) = wdata(i) + data(j)
+            wt(i) = wt(i) + 1.
+          endif
+        enddo
+      enddo
 c
 c  Average the new wdata and set wflags.
 c
-	do i=1,newide
-	  if(wt(i).ne.0.)then
-	    wdata(i) = wdata(i)/wt(i)
-	    wflags(i) = .true.
-	  else
-	    wflags(i) = .false.
-	  endif
-	enddo
+      do i=1,nwide
+        if(wt(i).ne.0.)then
+          wdata(i) = wdata(i)/wt(i)
+          wflags(i) = .true.
+        else
+          wflags(i) = .false.
+        endif
+      enddo
 c
-	call uvrdvri(lIn,'nwide',nwide,0)
-	nwide = max(2,nwide)
-	end
+      end
+c********1*********2*********3*********4*********5*********6*********7*c
+	subroutine fitslope(lIn,data,flags,nchan,wdata,wflags,nwide,
+     *					endchan,mask)
+	implicit none
+	integer lIn,nchan,nwide,endchan
+	complex data(nchan),wdata(nchan)
+	logical flags(nchan),wflags(nchan)
+	real mask(nchan)
+c
+c  fit phase slope for each spectral window
+c
+c  In:
+c    lIn	Handle of input uv-data.
+c    data	data
+c    flags	flags
+c    nchan	Number of input channel or wideband data.
+c    endchan	Number of end channels to drop.
+c    mask       Mask for bad channels.
+c  Out:
+c    wdata	wide data
+c    wflags	wide flags
+c    nwide	number of output wideband data.
+c------------------------------------------------------------------------
+      include 'maxdim.h'
+      double precision sfreq(MAXWIN),sdf(MAXWIN)
+      integer nspect,ischan(MAXWIN),nschan(MAXWIN)
+      real wt(MAXWIDE)
+      integer i,j,j1,j2
+c
+c  Get the dimensioning info.
+c
+      call uvgetvri(lIn,'nspect',nspect,1)
+      if(nspect.le.0)
+     *  call bug('f','Bad value for uv-variable nspect')
+      call uvgetvri(lIn,'ischan',ischan,nspect)
+      call uvgetvri(lIn,'nschan',nschan,nspect)
+      call uvgetvrd(lIn,'sfreq',sfreq,nspect)
+      call uvgetvrd(lIn,'sdf',sdf,nspect)
+c
+c  Average channels into wideband.
+c
+      nwide = nspect
+      do i=1,nwide
+        wdata(i) = (0.,0.)
+        wt(i) = 0.
+      enddo
+c
+c  Sum the good channels.
+c
+	  do i=1,nspect
+        j1 = ischan(i)+endchan
+        j2 = ischan(i)+nschan(i)-1-endchan
+	    do j=j1,j2
+	      if(flags(j).and.mask(j).ne.0)then
+            wdata(i) = wdata(i) + data(j)
+            wt(i) = wt(i) + 1.
+          endif
+        enddo
+      enddo
+c
+c  Average the new wdata and set wflags.
+c
+      do i=1,nwide
+        if(wt(i).ne.0.)then
+          wdata(i) = wdata(i)/wt(i)
+          wflags(i) = .true.
+        else
+          wflags(i) = .false.
+        endif
+      enddo
+c
+      end
 c********1*********2*********3*********4*********5*********6*********7*c
        subroutine pcenter(lIn,preamble,data,nchan,obsra,obsdec,line)
-c********1*********2*********3*********4*********5*********6*********7*c
        implicit none
        integer lIn,nchan
        complex data(nchan)
