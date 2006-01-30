@@ -132,10 +132,12 @@ c   19jun05 pjt  - fixes for g95: num() is now integer array
 c   01jul05 jhz  - add a space (1x) before Amp and Phase in the formats
 c                  for the vis list in AveDat,BriefDat,Allan
 c   27nov05 pjt  - added a 'carma' option, but renamed it to 'baseline'
+c                  this was somewhat involved and hopefully i dind't break the logic
+c   30jan06 pjt/sw - output in listdat/longdat now using 'time', not 'ut'
 c-----------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='UVLIST: version  28-nov-05 PJT-2')
+	parameter(version='UVLIST: version  30-jan-06')
 	real rtoh,rtod,pi
 	integer maxsels
 	parameter(pi=3.141592653589793,rtoh=12/pi,rtod=180/pi)
@@ -233,8 +235,11 @@ c
 	  if(dodata.or.dolist.or.dostat.or.doflux.or.dobird.or.
      *       dobase)then
 	    call uvinfo(unit,'visno',VisNo)
-	    call uvrdvrd(unit,'ut',ut,
-     *			((timein-0.5)-int((timein-0.5)))*24.d0/rtoh)
+c	    call uvrdvrd(unit,'ut',ut,
+c     *			((timein-0.5)-int((timein-0.5)))*24.d0/rtoh)
+c           'ut' and 'time' at times could differ by 1/2 int.time
+c           we really want to use the midpoint of the integration (time)
+	    ut = ((timein-0.5)-int((timein-0.5)))*24.0d0
             call uvrdvrd(unit,'lst',lst,0.d0/rtoh)
 	    call uvrdvri(unit,'pol',p,0)
 	    if(dolist.or.dobase)then
@@ -771,7 +776,7 @@ c
 		call LogWrite(line,more)
 	     endif
 	     line =' Vis # Source      UT(hrs)  LST(hrs)   HA(hrs)'
-     *           //'   Dec(hrs)  Ant     u(m)     v(m)     w(m)  '
+     *           //'   Dec(deg)  Ant     u(m)      v(m)      w(m)  '
      *           //' Azim  Elev(deg)   Amp/Phas'
 	  else
 	     line =' Vis #   UT(hrs)  LST(hrs)   Ant    Pol  u(kLam)'
@@ -820,7 +825,7 @@ c
 	   call amphase(data(1),amp(1),phas(1))
 	   ntm =CMKS/1d9 
 	   write(line,
-     *    '(i6,1x,a,4f10.4,1x,i2,1x,i2,1x,3f9.3,2f8.2,f7.3,1x,i4)')
+     *    '(i6,1x,a,4f10.4,1x,i2,1x,i2,3f10.4,2f8.2,f7.3,1x,i4)')
      *	  mod(Visno,1000000),src,ut*rtoh,lst*rtoh,ha*rtoh,obsdec*rtod,
      *	  ant1,ant2,uin*ntm,vin*ntm,win*ntm,azim*rtod,elev*rtod,
      *    amp(1),nint(phas(1))
