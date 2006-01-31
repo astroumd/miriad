@@ -2420,15 +2420,16 @@ c
               if(na.ne.nants)        
      *   call bug('f','Inconsistency in number of IFs')
          call uvgetvrr(lvis,'systemp',tsys,nants)
-                                  endif
-         call basant(preamble(5),i1,i2)
 c    check if antenna replacement
           if(gant(1).ne.-1) then
+          do i=1,nants
           do ibant=1,nbant
-           if(i1.eq.bant(ibant)) tsys(i1)=tsys(gant(1))
-           if(i2.eq.bant(ibant)) tsys(i2)=tsys(gant(1))
+           if(i.eq.bant(ibant)) tsys(i)=tsys(gant(1))
+          end do
           end do
           end if
+          end if
+          call basant(preamble(5),i1,i2)
 
 c    check if the polynomial fitting parameters have been calculated.
          call julcal(preamble(4), year, month, day)
