@@ -2230,6 +2230,13 @@ c
         do i=1,maxinte
               tsts(i) = 0.
         enddo
+        do i=1,maxant*maxwin
+        xtsys(i)=0.
+        ytsys(i)=0.
+         tsys(i)=0.
+        otsys(i)=0.
+         end do
+
 c count # of bad ant
         nbant=0
         do i=1,10
