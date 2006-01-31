@@ -41,6 +41,7 @@ c    gmx  08apr04 Changed handling of xtsys and ytsys to be identical
 c                 to that of systemp
 c    gmx  14may04 Added variable lefty (to indicate that y coordinate was 
 c                 flipped from the original WSRT UVfits file)
+c    pjt  30jan06 added dazim,delev (CARMA specific)
 c
 c************************************************************************
 c*VarInit -- Initialise the copy routines.
@@ -98,7 +99,7 @@ c
 	integer i
 c
 	integer nvar,nline,nwide,nvelo
-	parameter(nvar=85,nline=10,nwide=3,nvelo=6)
+	parameter(nvar=87,nline=10,nwide=3,nvelo=6)
         character var(nvar)*8,line(nline)*8,wide(nwide)*8,velo(nvelo)*8
 c
 c  Variables to check for a change, for line=channel.
@@ -121,7 +122,8 @@ c
 	data var/     'airtemp ','antaz   ','antdiam ','antel   ',
      *	   'antpos  ','atten   ','axisrms ','bin     ','cable   ',
      *	   'chi     ','corbit  ','corbw   ','corfin  ','cormode ',
-     *	   'coropt  ','cortaper','ddec    ','dec     ','deldec  ',
+     *	   'coropt  ','cortaper','dazim   ',
+     *     'ddec    ','dec     ','deldec  ','delev'   ,
      *	   'delra   ','dewpoint','dra     ','epoch   ','evector ',
      *	   'focus   ','freq    ','freqif  ','inttime ','ivalued ',
      *     'jyperk  ','jyperka ','latitud ','longitu ','lo1     ',
