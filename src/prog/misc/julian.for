@@ -9,6 +9,7 @@ c
 c
 c  History:
 c      mwp  27-aug-1999 original version
+c      pjt   2-dec-2005 added MJD
 c
 c------ Inline doc (retrieved with doc to a .doc file) --------------72]
 c
@@ -22,6 +23,9 @@ c   This task computes the Julian Day given an input date. The
 c   reverse calculation, Julian Day to a formatted date, is also
 c   possible. With no arguments, JULIAN will convert the current
 C   date and time to Julian Day.
+c   A modified julian day is also printed out, which is simply
+c   JD - 2400000.5
+c   For reference. MJD2000 = 51544.0, JD2000 = 2451544.5 
 c    
 c    
 c@ date  
@@ -75,7 +79,7 @@ C referenced routines
 	integer len1
 	logical islowerf
 C
-	parameter(version='(Version 27-aug-1999)')
+	parameter(version='(Version 2-dec-2005)')
 	quiet = .false.
 c
 	call keyini
@@ -123,6 +127,8 @@ C
 		if(thedate.eq.' ') call julday(jday,theform,thedate)
 		if(.not.quiet) then
 			write(6,1001) thedate(1:len1(thedate)), jday
+			write(6,1005) thedate(1:len1(thedate)), 
+     *                                                  jday-2400000.5d0
 		else
 			write(6,1003) jday
 		endif
@@ -140,6 +146,7 @@ C
  1002   format('Julian Day ',f14.6,' is the date ',a)
  1003   format(f14.6)
  1004   format(a)
+ 1005   format(a,' is Modified Julian Day ',f14.6)
 
 	
 	end
