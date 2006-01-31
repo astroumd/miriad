@@ -1,3 +1,7 @@
+// jhz 2006-1-31: change the system variable define SMRX 
+//                from 5 to 2 (number of sma rx per operation run)
+//                so that to reduce the memory requirements
+//                for the data structure wt
 #include "miriad.h"
 
 
@@ -295,7 +299,7 @@ struct anttsys {
 
 #define MAXSOURCE 50
 #define SMIF 48
-#define SMRX  5 
+#define SMRX  2     /* number of rx per track operattion */ 
 #define SMANT 10
 #define SMPOL 5 
 #define SMBAS 90   /* smant*(smant-1) */
