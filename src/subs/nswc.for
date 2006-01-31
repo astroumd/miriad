@@ -1,5 +1,12 @@
 c     nswc.for:   some math routines
+c  The NSWC Math Subroutine Library is provided by the Engineering and
+c  Information Systems Department of the National Surface Weapons Center
+c  in Dahlgren, Virginia, USA.
+c  See also:
+c     http://www.utoronto.ca/cat/services/services_other/fortran.html
 c
+c Miriad history (we only use a selected set from the large NSWC library,
+c                 which is 115,000+ lines of code, here we have only 3,700+ lines)
 c pre-1994			created
 c somewhere before 2001:	somebody added gamma etc.
 c 5-oct-2001			declared variables to make it compile with -u on solaris
