@@ -1,7 +1,12 @@
-// jhz 2006-1-31: change the system variable define SMRX 
+// jhz 2006-1-31: change the symbolic SMRX 
 //                from 5 to 2 (number of sma rx per operation run)
 //                so that to reduce the memory requirements
-//                for the data structure wt
+//                for the data structure wt.
+// jhz 2006-2-1: the symbolic constant SMRX is also used as the maximum size
+//               of the rx-id array 0(230), 1(340), 2(??), 3(690), 4(??)
+//               used in the MIR data. It must be 5 (it can be 4 for now but not 2).
+//               SMIF can be 24 instead of 48 which was redundant since in the wt array
+//               a sideband variable is used. 
 #include "miriad.h"
 
 
@@ -298,13 +303,13 @@ struct anttsys {
 #define MAXBAS 90    /* maxant*(maxant-1)/2*2sb */
 
 #define MAXSOURCE 50
-#define SMIF 48
+#define SMIF 24
 #define SMRX  2     /* number of rx per track operattion */ 
 #define SMANT 10
 #define SMPOL 5 
 #define SMBAS 90   /* smant*(smant-1) */
 #define SMBIN 1
-#define SMSB  2    /* number of size bands */
+#define SMSB  5    /* number of size bands */
 #define SMCONT 33
 #define CONTCH 16 /* number of continuum chan per chaunk */
 #define SMADATA 8294400 /* 24*maxchan*smbase */
