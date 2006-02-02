@@ -304,12 +304,12 @@ struct anttsys {
 
 #define MAXSOURCE 50
 #define SMIF 24
-#define SMRX  2     /* number of rx per track operattion */ 
+#define SMRX  5     /* number of rx per track operattion */ 
 #define SMANT 10
 #define SMPOL 5 
 #define SMBAS 90   /* smant*(smant-1) */
 #define SMBIN 1
-#define SMSB  5    /* number of size bands */
+#define SMSB  2    /* number of size bands */
 #define SMCONT 33
 #define CONTCH 16 /* number of continuum chan per chaunk */
 #define SMADATA 8294400 /* 24*maxchan*smbase */
