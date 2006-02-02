@@ -1,5 +1,6 @@
 c********1*********2*********3*********4*********5*********6*********7**
-	program varmap
+       program varmap
+       implicit none
 c
 c= VARMAP  Image uv-data versus selected xaxis and yaxis uv-variables.
 c& mchw
@@ -20,7 +21,7 @@ c       Linetype of the data in the format line,nchan,start,width,step
 c       "line" can be `channel', `wide' or `velocity'.
 c       Default is channel,0,1,1,1, which uses all the spectral
 c       channels. For line=channel, select only one spectral window
-c	if the channels are not contiguous in velocity.
+c       if the channels are not contiguous in velocity.
 c@ xaxis
 c	uv-variable to be used for xaxis (internal units).
 c	Can also be 'u' or 'v' (nanosecs). Default xaxis=dra (arcsec).
@@ -52,11 +53,12 @@ c    mchw  23feb96  Initial version.
 c     mwp  26feb96  Bug fix in averaging loop. Datamin/datamax calculated.
 c    mchw  26feb97  Add xaxis, yaxis and zaxis. Discard flagged data.
 c     pjt   3dec02  MAX....
+c    mchw  01feb06  Elliminate LogWrite. Update to standard keyline input.
 c----------------------------------------------------------------------c
         include 'maxdim.h'
         include 'mirconst.h'
         character*(*) version
-        parameter(version='VARMAP: version 3-dec-02')
+        parameter(version='VARMAP: version 01-Feb-2006')
         integer MAXSELS
         parameter(MAXSELS=512)
         real sels(MAXSELS)
@@ -80,25 +82,21 @@ c----------------------------------------------------------------------c
 c
 c  Get the input parameters.
 c
-        call output(version)
-	call keyini
-        call keyf ('vis',vis,' ')
-        call keya ('line',linetype,'channel')
-        call keyi ('line',nchan,0)
-        call keyr ('line',start,1.)
-        call keyr ('line',width,1.)
-        call keyr ('line',step,1.)
-        call SelInput ('select',sels,maxsels)
-	call keya ('out',out,' ')
-	call keya ('xaxis',xaxis,'dra')
-	call keya ('yaxis',yaxis,'ddec')
-	call keya ('zaxis',zaxis,'real')
-	call keyi ('imsize',nsize(1),0)
-	call keyi ('imsize',nsize(2),nsize(1))
-	call keyr ('cell',cell(1),0.)
-	call keyr ('cell',cell(2),cell(1))
-        call GetOpt(sum)
-	call keyfin
+       call output(version)
+       call keyini
+       call keyf ('vis',vis,' ')
+       call keyline(linetype,nchan,start,width,step)
+       call SelInput ('select',sels,maxsels)
+       call keya ('out',out,' ')
+       call keya ('xaxis',xaxis,'dra')
+       call keya ('yaxis',yaxis,'ddec')
+       call keya ('zaxis',zaxis,'real')
+       call keyi ('imsize',nsize(1),0)
+       call keyi ('imsize',nsize(2),nsize(1))
+       call keyr ('cell',cell(1),0.)
+       call keyr ('cell',cell(2),cell(1))
+       call GetOpt(sum)
+       call keyfin
 c
 c  Check that the inputs are reasonable.
 c
@@ -258,9 +256,9 @@ c
 c  Write summary.
 c
       write(line,'(a,i6)') ' number of records read= ',nvis
-      call LogWrit(line)
+      call output(line)
       write(line,'(a,i6)') ' number of records mapped= ',ngrid
-      call LogWrit(line)
+      call output(line)
 c
 c  Write the history file.
 c
