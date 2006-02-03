@@ -269,11 +269,12 @@ c    jhz 30-dec-05 fix  the inconsistence
 c                  of the total number of integrations
 c                  in the mir header files (in_read and bl_read).
 c    jhz 24-jan-06 add options for skipsp=-1
+c    jhz 03-feb-06 optimize the memory requirement
 c------------------------------------------------------------------------
         integer maxfiles
         parameter(maxfiles=128)
         character version*(*)
-        parameter(version='SmaLod: version 1.22 26-Jan-06')
+        parameter(version='SmaLod: version 1.23 03-feb-06')
 c
         character in(maxfiles)*64,out*64,line*64, rxc*4
         integer tno, length, len1
@@ -428,7 +429,7 @@ c
             call pokeini(tno,dosam,doxyp,doop,dohann,birdie,dowt,
      *      dopmps,dobary,doif,hires,nopol,circular,linear,oldpol,
      *      rsnchan,refant,dolsr,rfreq,vsour,antpos,readant,noskip,
-     *      spskip)
+     *      spskip,dsb)
             if(nfiles.eq.1)then
               i = 1
             else
@@ -624,12 +625,12 @@ c************************************************************************
      *          dohann1,birdie1,dowt1,dopmps1,dobary1,
      *          doif1,hires1,nopol1,circular1,linear1,oldpol1,
      *	        rsnchan1,refant1,dolsr1,rfreq1,vsour1,antpos1,
-     *          readant1,noskip1,spskip1)
+     *          readant1,noskip1,spskip1,dsb1)
 c
         integer tno1, rsnchan1, refant1,readant1,spskip1(2)
         logical dosam1,doxyp1,dohann1,doif1,dobary1,birdie1,dowt1
         logical dopmps1,hires1,doop1,nopol1,circular1,linear1,oldpol1
-        logical dolsr1,noskip1
+        logical dolsr1,noskip1,dsb1
         double precision rfreq1,antpos1(10*3)
         real vsour1
 c
@@ -659,7 +660,7 @@ c
      *  dohann1,birdie1,dowt1,dopmps1,dobary1,doif1,hires1,
      *  nopol1,circular1,linear1,oldpol1,lat1,long1,rsnchan1,
      *  refant1,dolsr1,rfreq1,vsour1,antpos1,readant1,noskip1,
-     *  spskip1)
+     *  spskip1,dsb1)
         end
 c************************************************************************
         subroutine liner(string)
