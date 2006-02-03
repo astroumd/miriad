@@ -4,7 +4,7 @@
 //                for the data structure wt.
 // jhz 2006-2-1: the symbolic constant SMRX is also used as the maximum size
 //               of the rx-id array 0(230), 1(340), 2(690), 3(??), 4(??)
-//               used in the MIR data. It must be 5 (it can be 4 for now but not 2).
+//               used in the MIR data. It must be 5 (it can be 3 for now but not 2).
 //               SMIF can be 24 instead of 48 which was redundant since in the wt array
 //               a sideband variable is used. 
 // jhz 2006-2-3: add dsb to smlodd.
