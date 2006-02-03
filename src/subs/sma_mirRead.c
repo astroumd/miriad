@@ -159,6 +159,8 @@
 //                  This assumes that the frequency configuration
 //                  does not change during the observing run.
 //                  This is for loading the old SMA data. 
+// 2006-02-03 (JHZ) optimized the memory requirements.
+//                  for wts structure and double sideband loading.
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -195,8 +197,7 @@ struct sch_def   **sch;
 
 char sname[64];
 smlodd smabuffer;
-/*smEng smaEng;
-*/
+// initialize 
 
 struct vis { float real;
   float imag;
@@ -216,7 +217,8 @@ void rssmaflush_c(int scanskip, int scanproc, int sb, int rxif, int dosporder, i
 void rspokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1, int *doop1, int *dohann1, 
 int *birdie1, int *dowt1, int *dopmps1, int *dobary1, int *doif1, int *hires1, int *nopol1, 
 int *circular1, int *linear1, int *oldpol1, double lat1, double long1, int rsnchan1, 
-int refant1, int *dolsr1, double rfreq1, float *vsour1, double *antpos1, int readant1, int *noskip1, int *spskip1);
+int refant1, int *dolsr1, double rfreq1, float *vsour1, double *antpos1, int readant1, 
+int *noskip1, int *spskip1, int *dsb1);
 void rspokeflshsma_c(char *kst[]);
 
 
@@ -318,7 +320,8 @@ void rspokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1,
 		    int *dobary1, int *doif1, int *hires1, int *nopol1, int *circular1,
 		    int *linear1, int *oldpol1, double lat1, double long1, int rsnchan1, 
 		    int refant1, int *dolsr1, double rfreq1, float *vsour1,
-		    double *antpos1, int readant1, int *noskip1, int *spskip1)
+		    double *antpos1, int readant1, int *noskip1, int *spskip1,
+	            int *dsb1)
 { 
   /* rspokeflshsma_c == pokeflsh */
   int buffer, i,ii;
@@ -346,6 +349,7 @@ void rspokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1,
   smabuffer.dolsr  = *dolsr1;
   smabuffer.noskip = *noskip1;
   smabuffer.vsource= *vsour1;
+  smabuffer.dsb    = *dsb1;
   smabuffer.juldate= -10.00;
   smabuffer.spskip[0] = spskip1[0];
   smabuffer.spskip[1] = spskip1[1];
@@ -867,6 +871,8 @@ int rsmir_Read(char *datapath, int jstat)
    case 2: printf("rx2->690\n"); break;
                          }    
 
+           if(smabuffer.sb==0) printf("Processing LSB\n");
+           if(smabuffer.sb==1) printf("Processing USB\n");
  
     numberRxif = smaCorr.no_rxif;
     // check if the receiver  smabuffer.rxif==0 for all receivers
@@ -909,6 +915,8 @@ int rsmir_Read(char *datapath, int jstat)
 	exit(-1);
       }
     }
+
+         if(smabuffer.dsb!=1||smabuffer.dsb==1&&smabuffer.sb==0){
     wts = (struct wtt **) malloc(nsets[0]*sizeof( struct wtt *));
     for (set=0;set<nsets[0];set++) {
       wts[set] = (struct wtt *)malloc(sizeof(struct wtt ));
@@ -917,7 +925,7 @@ int rsmir_Read(char *datapath, int jstat)
                nsets[0]*sizeof(struct wtt));
         exit(-1);
       }
-    }
+    } }
 
 
     /* loading baselines */
