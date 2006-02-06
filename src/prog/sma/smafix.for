@@ -31,10 +31,17 @@ c       Currently supports only "systemp".
 c@ nxy
 c	Number of plots in the x and y directions. The default varies.
 c@ bant
-c       A matrix of antenna ids of which the antennas
+c       An array of antenna ids of which the antennas
 c       are corrupted in Tsys measurements.
 c       example: bant=4, 8  indicates that  the Tsys values of both
 c       the antennas 4 and 8 are corrupted.
+c@ fscal
+c       An array of scaling factors to scale the Tsys values from
+c       the good antenna (gant) to those of bad antennas (bant):
+c
+c       Tsys_bant(i) = fscal(i) * Tsys_gant.
+c
+c       Default is unity.  
 c@ gant
 c       A antenna id with good Tsys measurements which will
 c       be used to replace the Tsys of the antennas assigend
@@ -76,6 +83,8 @@ c                    in the Tsys corrections, saves the values from
 c                    the polynomial fit to replace the original
 c                    systemp and creates a new variable systmp to
 c                    save the original Tsys measurements.
+c                    For the cases of options=tsysfix or dofit > 0, gant > 0,
+c                    tsysswap is the defualt.
 c         "all"      uses all data associated with flagged and unflagged 
 c                    visibilties. The default uses only unflagged
 c                    (good) data.
@@ -155,11 +164,13 @@ c jhz: 2006-1-30  implement a feature of replacing bad antennas' tsys
 c                 with those of a good antenna without
 c                 performing polynomial fitting and
 c                 options=tsysswap
+c jhz: 2006-2-06  add fscal to re-scale the tsys from a good antenna
+c                 to those of bad antennas.
 c------------------------------------------------------------------------
         character version*(*)
         integer maxpnts,maxfit
         parameter(maxpnts=100000,maxfit=48)
-        parameter(version='SmaFix: version 1.12 30-Jan-06')
+        parameter(version='SmaFix: version 1.13 06-Feb-06')
         logical doplot,dolog,dotime,dounwrap
         character vis*64,device*64,logfile*64,xaxis*16,yaxis*16
         character out*64
@@ -171,8 +182,8 @@ c------------------------------------------------------------------------
         logical xaver,yaver,compress,dtime,overlay,more,equal
         real rmsflag
         integer dofit, antid, xaxisparm, nterms
-        integer i,j,k,l,bant(10),gant(10),rant(10),ggant
-        real flagvar(maxpnts)
+        integer i,j,k,l,bant(10),gant(10),ggant
+        real flagvar(maxpnts),fant(10)
         logical dotsys,tsysplt,dosour,dotswap,doflag,dotsysfix
         real apl(10,maxfit,10)
         double precision xapl(10,maxfit,10),bppl(10,maxfit,10,10)
@@ -212,28 +223,21 @@ c
      *    call bug('f','One of the device and log must be given')
         call keyi('nxy',nx,0)
         call keyi('nxy',ny,nx)
-
-        call keyi('bant',bant(1), -1)
-        call keyi('bant',bant(2), -1)
-        call keyi('bant',bant(3), -1)
-        call keyi('bant',bant(4), -1)
-        call keyi('bant',bant(5), -1)
-        call keyi('bant',bant(6), -1)
-        call keyi('bant',bant(7), -1)
-        call keyi('bant',bant(8), -1)
-        call keyi('bant',bant(9), -1)
-        call keyi('bant',bant(10), -1)
+           do i=1, 10
+           call keyi('bant',bant(i), -1)
+           enddo
+           do i=1, 10
+        call keyr('fscal',fant(i), 1.0)
+           end do
         call keyi('gant',ggant, -1)  
               
            do i=1, 10
              gant(i) =-1
-             rant(i) =-1
         if(bant(i).ne.-1.and.ggant.eq.-1) 
      *  call bug('f',
      * 'assign good antenna to gant for the replacement of bant')
              if(bant(i).ne.-1) then
              gant(i) = ggant
-             rant(i) = ggant
              end if
            enddo
         call keya('xaxis',xaxis,'time')
@@ -317,7 +321,7 @@ c
 c
 c  Read in the data.
 c
-        call datread(vis,maxpnt,npnts,bant,ggant,
+        call datread(vis,maxpnt,npnts,bant,fant,ggant,
      *          flagvar,doflag,
      *          xaxis,xvals,xdim1*xdim2,xscale,xoff,xtype,
      *          yaxis,yvals,ydim1*ydim2,yscale,yoff,ytype)
@@ -380,7 +384,7 @@ c
 c do uvdata correction
 c
          if(dotsys) 
-     *    call uvdatafix(vis,out,dotime,bant,gant,rant,dotsysfix)
+     * call uvdatafix(vis,out,dotime,bant,fant,gant,dotsysfix,version)
 c
 c  Bye bye.
 c
@@ -1090,8 +1094,7 @@ c
             if(ci.eq.48) call pgscr(ci, 0.55, 0.0, 0.3)
             call  pgsci(ci)
             end if
-
-           call pgline (Ns(k), XsFIT(1,k), YsFIT(1,k))
+            call pgline (Ns(k), XsFIT(1,k), YsFIT(1,k))
             end if
             end do
             end if
@@ -1563,7 +1566,7 @@ c        hival = vals(ismax(npnts,vals,1))
         end
 
 c************************************************************************
-        subroutine datread(vis,maxpnt,npnts,bant,ggant,
+        subroutine datread(vis,maxpnt,npnts,bant,fant,ggant,
      *          flagvar,doflag, 
      *          xaxis,xvals,xdim,xscale,xoff,xtype,
      *          yaxis,yvals,ydim,yscale,yoff,ytype)
@@ -1571,7 +1574,7 @@ c
         integer tin,maxpnt,npnts,xdim,ydim,bant(10),ggant
         character xtype*1,ytype*1,xaxis*(*),yaxis*(*),vis*32
         real xvals(xdim*maxpnt),yvals(ydim*maxpnt)
-        real flagvar(ydim*maxpnt)
+        real flagvar(ydim*maxpnt),fant(10)
         double precision xscale,xoff,yscale,yoff
         integer soupnt(10000*10)
         integer maxsource
@@ -1773,7 +1776,7 @@ c good antennas.
 c
              do i=1, ydim
              if(bant(i).ne.-1) then
-               yrrun(ypnt+bant(i)) = yrrun(ypnt+ggant)
+               yrrun(ypnt+bant(i)) = fant(i) * yrrun(ypnt+ggant)
                tsysflag(bant(i),inhid)=tsysflag(ggant,inhid) 
                if (ggant.eq.-1) yrrun(ypnt+bant(i)) =0.0 
                
@@ -2137,9 +2140,12 @@ c
       END
 
 c************************************************************************
-      subroutine uvdatafix (vis,out,dotime,bant,gant,rant,dotsysfix)
-      integer bant(10), gant(10), rant(10)
+      subroutine uvdatafix (vis,out,dotime,bant,fant,gant,dotsysfix,
+     *      version)
+      integer bant(10), gant(10)
+      real fant(10)
       logical dotsysfix
+      character version*(*)
       include 'maxdim.h'
 c  Pi.
       real pi, twopi
@@ -2173,9 +2179,7 @@ c  Planck constant divided by Boltzmann constant (Kelvin/GHz).
       parameter (hoverk = 0.04799216)
       parameter (dhoverk = 0.04799216)
 c=======================================================================
-        character version*(*)
         integer maxsels,atant
-        parameter(version='SmaFix: 1.11 11-Jan-06')
         parameter(maxsels=256,atant=6,maxinte=5000)
 c
         integer lvis,lout,vtsys,vant,vgmet,vnif
@@ -2185,6 +2189,7 @@ c
         integer nschan(maxwin),nif,nchan,nants,length,tcorr,na
         real xtsys(maxant*maxwin),ytsys(maxant*maxwin)
         real tsys(maxant*maxwin), otsys(maxant*maxwin)
+        real ftsys(maxant*maxwin)
         real  tscale
 c      logical dojpk
 c
@@ -2209,7 +2214,6 @@ c        real getjpk
         real apl(10,48,10)
         double precision xapl(10,48,10),bppl(10,48,10,10) 
         double precision XA(10), BP(10,10) 
-        double precision aveXA(48,10), aveBP(48,10,10)
         common/smfix/rmsflag,dofit,dotsys,dotswap,
      *               tsysplt,xaxisparm,dosour
         common/cpolfit/apl, xapl, bppl, antid, nterms
@@ -2235,6 +2239,7 @@ c
         ytsys(i)=0.
          tsys(i)=0.
         otsys(i)=0.
+        ftsys(i)=0.
          end do
 
 c count # of bad ant
@@ -2242,18 +2247,6 @@ c count # of bad ant
         do i=1,10
         if(bant(i).ne.-1) nbant=nbant+1
         enddo
-c  
-c   process replacement of Tsys from ant1 to ant2
-c   apl(ant,sour,term)
-c     
-        do j=1,32
-        do k=1,10 
-        aveXA(j,k)=0.0
-        do l=1,10
-        aveBP(j,k,l)=0.0
-        end do
-        end do
-        end do
          write(*,*) 'apply tsys correction to visibility data.'
          write(*,*) 'it may take a little while.'
             do j=1, 32
@@ -2262,45 +2255,19 @@ c
                do i=1, 8
                if (gant(i).gt.0) then
                 nave=nave+1
-                aveXA(j,k) = aveXA(j,k) + xapl(gant(i),j,k)
                end if
                end do
-                aveXA(j,k) = aveXA(j,k)/nave
                do l=1, 10
                navel=0
                do i=1, 8
              if (gant(i).gt.0) then
           navel=navel+1
-          aveBP(j,k,l)=aveBP(j,k,l)+bppl(gant(i),j,k,l)
          end if
                end do
-                aveBP(j,k,l) = aveBP(j,k,l)/navel
                end do
            end do
            end do
 
-         do j=1, 32
-         do k=1, 10
-              do i=1,8
-              if((bant(i).gt.0).and.(rant(i).le.8)) then
-              xapl(bant(i),j,k) = xapl(rant(i),j,k)
-               end if
-              if((bant(i).gt.0).and.(rant(i).gt.8)) then
-              xapl(bant(i),j,k) = aveXA(j,k)
-               end if
-              end do
-           do l=1, 10
-               do i=1,8
-               if((bant(i).gt.0).and.(rant(i).le.8)) then
-              bppl(bant(i),j,k,l) = bppl(rant(i),j,k,l)
-               end if
-               if((bant(i).gt.0).and.(rant(i).gt.8)) then
-              bppl(bant(i),j,k,l) = aveBP(j,k,l)
-               end if
-               end do
-           end do
-         end do
-         end do
 c      
 c  Get ready to copy the data.
 c
@@ -2356,7 +2323,9 @@ c
         call uvset(lout,'preamble','uvw/time/baseline',0,0.,0.,0.)
         call hdcopy(lvis,lout,'history')
         call hisopen(lout,'append')
-        call hiswrite(lout,'SMAFIX: Miriad '//version)
+          write(*,*) 'version=', version
+        call hiswrite(lout,'SMAFIX: Miriad ')
+        call hiswrite(lout, version)
         call hisinput(lout,'SMAFIX')
         call hisclose(lout)
 c
@@ -2420,11 +2389,14 @@ c
               if(na.ne.nants)        
      *   call bug('f','Inconsistency in number of IFs')
          call uvgetvrr(lvis,'systemp',tsys,nants)
-c    check if antenna replacement
+c    check if antennas need replacement for tsys
           if(gant(1).ne.-1) then
           do i=1,nants
+            otsys(i) = tsys(i)
+            ftsys(i) = tsys(i)
           do ibant=1,nbant
-           if(i.eq.bant(ibant)) tsys(i)=tsys(gant(1))
+          if((i.eq.bant(ibant)).and.dofit.le.0)
+     *      ftsys(i)=fant(ibant)*tsys(gant(1))
           end do
           end do
           end if
@@ -2457,14 +2429,12 @@ c    axis = time for xaxisparm.eq.1
                             end do
                             end do
          call regpolfitg(nterms,xa,bp,1,timev,tsysv)
-                         otsys(i) = tsys(i)
          if(tsysflag(i,inhid).and.dotsysfix) then
-                         tsys(i) = tsysv
+                         ftsys(i) = tsysv
                          else
-                         tsys(i) = tsys(i)
+                         ftsys(i) = tsys(i)
                          end if
-         if(.not.dotsysfix) tsys(i) = tsysv
-                     
+         if(.not.dotsysfix) ftsys(i) = tsysv
                          end do
                                            end if
 c    axis = antel for xaxisparm.eq.2
@@ -2487,22 +2457,21 @@ c    axis = antel for xaxisparm.eq.2
                             end do
                             end do
          call regpolfitg(nterms,xa,bp,1,antel,tsysv)
-                             otsys(i) = tsys(i) 
          if(tsysflag(i,inhid).and.dotsysfix) then
-                             tsys(i) = tsysv
+                             ftsys(i) = tsysv
 c reset flags back unflag state
                              else
-                             tsys(i) =tsys(i)
+                             ftsys(i) =tsys(i)
                              end if
-                if(.not.dotsysfix) tsys(i) = tsysv 
+                if(.not.dotsysfix) ftsys(i) = tsysv 
                          end do
                 end if
                 endif
-         if(dotsysfix.and.dotsys) dotswap = .true.  
-         if(dofit.eq.0.and.dotsys) dotswap = .true.
+         if(dotsysfix.and.dotsys)     dotswap = .true.  
+         if(dofit.eq.0.and.dotsys)    dotswap = .true.
          if(gant(1).ne.-1.and.dotsys) dotswap = .true.
          if(dotsys.and.dotswap) then
-         call tsysap(data,nchan,nschan,xtsys,ytsys,tsys,
+         call tsysap(data,nchan,nschan,xtsys,ytsys,ftsys,
      *         nants,nif,i1,i2,pol,jyperk)
                                 end if
          if(dotsys.and.(.not.dotswap)) then
@@ -2525,9 +2494,9 @@ c  the original Tsys is applied to vis; the systemp remains
 c  unchanged.    
 c   
               if((day-ptime).gt.0) then
-       if(dotswap) call uvputvrr(lout, 'systemp', tsys, nants)
+       if(dotswap) call uvputvrr(lout, 'systemp', ftsys, nants)
        if(dotswap) call uvputvrr(lout, 'systmp', otsys, nants)
-       if(.not.dotswap) call uvputvrr(lout, 'systmp', tsys, nants)
+       if(.not.dotswap) call uvputvrr(lout, 'systmp', ftsys, nants)
        ptime=day
               end if 
          call uvwrite(lout,preamble,data,flags,nchan)
@@ -2546,7 +2515,11 @@ c
         if(gant(1).ne.-1) then
         write(*,*) 'Tsys values of bad antennas', 
      * (bant(ibant),ibant=1,nbant), ' replaced by those of ant',
-     * gant(1),'.'
+     * gant(1)
+        write(*,1222)
+     * (fant(ibant),ibant=1,nbant)
+1222   format(1x,'with corresponding scaling factors of',1x,10(f3.1,1x))
+         write(*,*) ' '
         end if
 c
         if(.not.dotsysfix.and.(dofit.le.0)) then
@@ -2574,6 +2547,7 @@ c
         write(*,*) 
      * 'Reset the flag states back to unflag in the output file, ',
      * out(1:len1(out))
+         write(*,*) ' '
 
 c
 c go through the output data again
