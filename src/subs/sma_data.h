@@ -597,6 +597,7 @@ struct smlodd {
         int currentscan;
         int spskip[2];
         int dsb; 
+        int mcconfig;
 };
 typedef struct smlodd smlodd;
 
