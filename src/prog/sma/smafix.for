@@ -166,11 +166,12 @@ c                 performing polynomial fitting and
 c                 options=tsysswap
 c jhz: 2006-2-06  add fscal to re-scale the tsys from a good antenna
 c                 to those of bad antennas.
+c jhz: 2006-2-10  fixed a bug in tsys apply routine after the last modification.
 c------------------------------------------------------------------------
         character version*(*)
         integer maxpnts,maxfit
         parameter(maxpnts=100000,maxfit=48)
-        parameter(version='SmaFix: version 1.13 06-Feb-06')
+        parameter(version='SmaFix: version 1.13 10-Feb-06')
         logical doplot,dolog,dotime,dounwrap
         character vis*64,device*64,logfile*64,xaxis*16,yaxis*16
         character out*64
@@ -2390,16 +2391,16 @@ c
      *   call bug('f','Inconsistency in number of IFs')
          call uvgetvrr(lvis,'systemp',tsys,nants)
 c    check if antennas need replacement for tsys
-          if(gant(1).ne.-1) then
           do i=1,nants
             otsys(i) = tsys(i)
             ftsys(i) = tsys(i)
+           if(gant(1).ne.-1) then
           do ibant=1,nbant
           if((i.eq.bant(ibant)).and.dofit.le.0)
      *      ftsys(i)=fant(ibant)*tsys(gant(1))
           end do
+            endif
           end do
-          end if
           end if
           call basant(preamble(5),i1,i2)
 
@@ -2468,7 +2469,7 @@ c reset flags back unflag state
                 end if
                 endif
          if(dotsysfix.and.dotsys)     dotswap = .true.  
-         if(dofit.eq.0.and.dotsys)    dotswap = .true.
+         if(dofit.gt.0.and.dotsys)    dotswap = .true.
          if(gant(1).ne.-1.and.dotsys) dotswap = .true.
          if(dotsys.and.dotswap) then
          call tsysap(data,nchan,nschan,xtsys,ytsys,ftsys,
