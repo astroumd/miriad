@@ -33,6 +33,9 @@ set version=30-jan-06
 #  9-jan-06 (JHZ) replaces 'borrow' with '../borrow' in lines 88-90
 #           to fix installation of pgplot for 64bits linux
 # 30-jan-06 fix typo for poor (ba)sh users
+# 10-jan-06 (JHZ) change g77_gcc.conf to mirg77_gcc.conf when copy over
+#           g77_gcc_64.conf (the pgplot config file for 64bits linux)
+#           
 #
 #   Simple single-architecture installation of MIRIAD
 #   (linux)
@@ -51,7 +54,8 @@ set version=30-jan-06
 # sanity check: find out from the way it was called where the script lives
 # since it needs to be run from the $MIR/install directory
 
-set here=$0:h
+#set here=$0:h
+set here=$MIR/install
 cd $here
  
 if (! -e ../VERSION) then
@@ -61,7 +65,7 @@ if (! -e ../VERSION) then
 endif
 
 #  carma, wsrt, atnf, sma, bima, ....
-set telescope=carma
+set telescope=sma
 
 #   'newdir' is something that tags the date this version was made (e.g. 98jun08)
 #   later on this will also be stored again in the file $MIR/DATE, where the CVS miriad
@@ -90,7 +94,7 @@ if ($hosttype == linux) then
     set mirxlib="/usr/X11R6/lib64"
     if (-e ../borrow/pgplot/sys_linux/g77_gcc_64.conf) then
       echo Patching your PGPLOT for 64bit
-      cp ../borrow/pgplot/sys_linux/g77_gcc_64.conf ../borrow/pgplot/sys_linux/g77_gcc.conf
+      cp ../borrow/pgplot/sys_linux/g77_gcc_64.conf ../borrow/pgplot/sys_linux/mirg77_gcc.conf
     endif
   else
     set mirxlib="/usr/X11R6/lib"
