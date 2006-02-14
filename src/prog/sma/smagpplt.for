@@ -135,6 +135,7 @@ c    jhz 18oct05 add an options for merging two gain tables.
 c    jhz 19oct05 add a description in inline doc for options=merge
 c                fixed a bug in ending x-window plot for
 c                the case of more than one input files involved.
+c    jhz 14feb06 fixed a bug in merging two gains
 c  Bugs:
 c------------------------------------------------------------------------
         integer maxsels
@@ -144,7 +145,7 @@ c------------------------------------------------------------------------
         parameter (DPI = 3.14159265358979323846)
         parameter (TWOPI = 2 * PI)
         parameter (DTWOPI = 2 * DPI)        
-        parameter(version='SmaGpPlt: version 1.6 18-Oct-05')
+        parameter(version='SmaGpPlt: version 1.7 18-Oct-05')
         include 'smagpplt.h'
         integer iostat,tin,nx,ny,nfeeds,nants,nsols,ierr,symbol,nchan
         integer ntau,length, i, j, k,nschann(maxspect)
@@ -194,7 +195,7 @@ c
         call keyini
 c        call keya('vis',vis,' ')
          ops = 'sdlp'
-          call uvdatinp ('vis', ops)
+        call uvdatinp ('vis', ops)
         if(vis.eq.' ')call bug('f','Input data-set must be given')
         call keya('device',device,' ')
         doplot = device.ne.' '
@@ -408,11 +409,13 @@ c sorting gbuf based on the order of ascending time
 c put back to gbuf
             do i=1,nsols
             gbuf(offset+(i-1)*nfeeds*nants) = gf12(i)
+            rgain(j,ifeed,i)=real(gf12(i)) 
+            igain(j,ifeed,i)=aimag(gf12(i))
             end do
             end do
             end do 
             end if
-          endif
+            endif
           end do
 c
 c plot the gains
@@ -429,8 +432,9 @@ c to gns
 c
 c Apply the polyfit or smooth to the gain table
 c
-          if((donply.or.dosmooth).and.dogains) then
-          do i=1, nants
+c          if((donply.or.dosmooth).and.dogains) then
+           if(dogains) then
+           do i=1, nants
            do j=1, nfeeds
            do k=1,gns
            gains(i,j,k)=0.0
