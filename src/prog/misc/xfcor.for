@@ -18,8 +18,8 @@ c	and $MIRCAT/recom.lis. The default is $MIRCAT/lovas.3mm.
 c@ freq
 c	The rest frequency of the line in GHz. The default 110.0 GHz.
 c@ iffreq
-c	The intermediate frequency in MHz. The default 150.0 MHz.
-c	This is the frequency in the 90-900 MHz IF at which the line
+c	The intermediate frequency MHz. The default 1250.0 MHz.
+c	This is the frequency in the IF at which the line
 c	rest frequency will appear. A negative value indictes that
 c	the line should appear in the lower sideband of the first LO. 
 c@ vlsr
@@ -80,11 +80,12 @@ c    mchw 22may96  Increased MAXLINES to 500 and trapped excess lines.
 c    mchw 23dec96  print out defective line in CRSTLINE.
 c    mchw 01jan97  Fiddles for 1mm band. Change default to lovas.3mm.
 c    mchw 02feb06  XFCOR CARMA version. channel numbers are not yet correct.
+c    mchw 16feb06  channel numbers for spectral windows in order band 1 2 3 LSB, 1 2 3 USB
 c----------------------------------------------------------------------
 c  Parameters.
 c
 	character VERSION*(*)
- 	parameter (VERSION='Version 4.0 02-FEB-2006')
+ 	parameter (VERSION='Version 4.0 16-FEB-2006')
 	character PROG*(*)
 	parameter (PROG='XFCOR: ')
 	integer NMAX
@@ -120,15 +121,17 @@ c
 c  Announce program.
 c
 	call Output(PROG // VERSION)
-	call Output('CARMA VERSION - Channel numbers are not correct.')
+	call Output('CARMA VERSION')
+	call Output('spectral windows:  band 1 2 3 LSB, 1 2 3 USB')
+c********1*********2*********3*********4*********5*********6*********7**
 c
 c  Get command line arguments.
 c
 	nfile = 0
 	call keyini
 	call mkeyf('in',file,NMAX,nfile)
-	call keyd('freq',obsfreq,86.243D0)
-	call keyd('iffreq',ifrq,-2.257D3)
+	call keyd('freq',obsfreq,115.D0)
+	call keyd('iffreq',ifrq,1250d0)
 	call keyd('vlsr',vlsr,0.0D0)
 	call keya('device',pldev,'?')
 	call keya('log',ldev,' ')
@@ -154,12 +157,26 @@ c
 	  file(1) = 'MIRCAT:lovas.3mm'
 	endif
 c
-	  NUMCHAN = 45
-c
 	if (obsfreq .lt. 0.0d0) then
 	  errmsg = PROG // 'Negative obsfreq makes no sense.'
 	  call bug('f',errmsg(1:Len1(errmsg)))
 	endif
+c
+c  Calculate the range of sky frequencies observable
+c
+       LO1 = obsfreq - ifrq/1.0E3
+       if (LO1.gt.68.d0.and.LO1.lt.116.d0) then
+         file(1) = 'MIRCAT:lovas.3mm'
+         call bug('i','LO1 is between 68 and 116 GHz for 3mm band.')
+       else if(LO1.gt.200.d0.and.LO1.lt.280.d0) then
+         file(1) = 'MIRCAT:lovas.1mm'
+         call bug('i','LO1 is between 200 and 280 GHz for 1mm band.')
+       else
+         call bug('w','LO1 is not in 3mm band nor in 1mm band.')
+       endif
+c********1*********2*********3*********4*********5*********6*********7**
+c
+	  NUMCHAN = 45
 c
 c  check bandwidths
 c
@@ -176,21 +193,6 @@ c
 c
 c  nsf is the number of significant figures in the numerical output
 	nsf = 8
-c  Calculate the range of sky frequencies observable
-	if (ifrq .ge. 0.d0) then
-	  LO1 = (obsfreq*1.0E3 - abs(ifrq))/1.0E3
-	else
-	  LO1 = (obsfreq*1.0E3 + abs(ifrq))/1.0E3
-	endif
-c  Check values of LO1
-	if ((LO1.gt.68.d0).and.(LO1.lt.116.d0)
-     *	 .or.(LO1.gt.200.d0).and.(LO1.lt.280.d0)) then
-	  call bug('i','LO1 is between 70 and 118 GHz for 3mm band.')
-	  call bug('i','LO1 is between 200 and 280 GHz for 1mm band.')
-	else
-	  call bug('w','LO1 is between 70 and 118 GHz for 3mm band.')
-	  call bug('w','LO1 is between 200 and 280 GHz for 1mm band.')
-	endif
 c********1*********2*********3*********4*********5*********6*********7**
 	freqminu = LO1 + 1.0
 	freqmaxu = LO1 + 2.5
@@ -245,12 +247,15 @@ c
 c  number of channels in each sideband of LO1
 c
 	nchan = 45
+c
+c  get channel numbers for spectral windows in order band 1 2 3 LSB, 1 2 3 USB
+c
        do i = 1, numlines
 c         print *, dlineif(i), bw
          if(dlineif(i).gt.1000.and.dlineif(i).lt.2500)then
-           chan(1,i) = 45+(dlineif(i)-1000)*15/bw(1)
+           chan(1,i) = 46+(dlineif(i)-1.03125e3)*16/bw(1)
          else if(dlineif(i).gt.-2500.and.dlineif(i).lt.-1000)then
-           chan(1,i) = (dlineif(i)+2500)*15/bw(1)
+           chan(1,i) = 1-(dlineif(i)+1.03125e3)*16/bw(1)
          endif
        enddo
 c
