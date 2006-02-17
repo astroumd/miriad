@@ -194,11 +194,11 @@ c
      *       linecal,uvrot,doparang,dooffset,dofxcal
 	character out*64,type*1,uvflags*8
 	real mask(MAXCHAN),sigma
-	integer polcode
+	integer polcode,nants
 	real dra,ddec,parot,sinpa,cospa
 	real scale(2),polcal(2),model(3),offset(2)
 	complex coffset
-	double precision obsra,obsdec
+	double precision obsra,obsdec,dazim(MAXANT),delev(MAXANT)
 	double precision ra,dec,uu,vv,epoch,jepoch,theta,costh,sinth,jd
 c
 c  Externals.
@@ -413,8 +413,27 @@ c   Default is no rotation.
               endif
 c
 	      if(holo)then
-	        call uvgetvrr(lIn,'dra',dra,1)
-	        call uvgetvrr(lIn,'ddec',ddec,1)
+	        call uvgetvri(lIn,'nants',nants,1)
+            print *, ' nants=',nants
+	        call uvgetvrd(lIn,'dazim',dazim,nants)
+            print *, ' dazim=',(2.062648062d05*dazim(i),i=1,nants)
+	        call uvgetvrd(lIn,'delev',delev,nants)
+            print *, ' delev=',(2.062648062d05*delev(i),i=1,nants)
+c
+c if dazim(i)=delev(i)=0. for i=1,nants, then set dra=ddec=0., else dra=ddec=1.e-3
+            dra  = 0. 
+            ddec = 0. 
+c            do i=1,nants
+c unfortunately, antennas which are not used have non-zero dazim,delev
+c so just use antennas 1,5,9 which were active antennas for 2006feb16.rpoint.grid.2.mir
+            do i=1,9,4
+              if(dazim(i).ne.0.d0 .or. delev(i).ne.0.d0) then
+                dra  = 1.e-3
+                ddec = 1.e-3
+              endif
+            enddo
+	        call uvputvrr(lOut,'dra',dra,1)
+	        call uvputvrr(lOut,'ddec',ddec,1)
 	        preamble(1) = 2.062648062d05*dra
 	        preamble(2) = 2.062648062d05*ddec
 	      endif
