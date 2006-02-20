@@ -7,8 +7,9 @@ c& jhz
 c: uv analysis
 c+
 c	SmaReWt copies a uv dataset, calculating the mean values
-c       of antenna gains, re-weighting the visibility by multipling
-c       the visibility variances with the mean antenna gains.
+c       of antenna gains in amplitude and multipling the visibility 
+c       variances by the mean antenna gains. The re-scaled visibility
+c       variances can be used as the weights in the imaging process.
 c@ vis
 c	The name of the input uv data sets. Several can be given (wild
 c	cards are supported). No default.
@@ -35,12 +36,13 @@ c--
 c  History:
 c  jhz: 2006-2-17  made the original version as suggested
 c                  by Dan Marrone.
+c  jhz: 2006-2-20  rewrite the inline doc.
 c
 c  Bugs:
 c------------------------------------------------------------------------
 	include 'smagpplt.h'
         character version*(*)
-	parameter(version='SmaReWt: version 1.0 17-feb-06')
+	parameter(version='SmaReWt: version 1.0 20-feb-06')
         character uvflags*12,ltype*16,out*64
         integer npol,Snpol,pol,tIn,tOut,vupd,nread,nrec,i
         integer tvis
@@ -75,7 +77,7 @@ c
 c  intialization
 c
           do j=1,maxsels
-            sels(j)=0.0
+          sels(j)=0.0
           end do
           do ifeed=1,2
           do j=1,10
@@ -115,9 +117,9 @@ c
             if(nfeeds.eq.2) 
      *    call bug('f','Not implemented yet for nfeeds=2.')
             do ifeed=1,nfeeds
-c            write(*,*) 'feeds=',ifeed
+c  feeds_id = ifeed
             do j=1,nants
-c            write(*,*) 'ant=', j
+c  anti_d = j
                 offset = ifeed + (j-1)*nfeeds
             do i=1,nsols
             rgain(j,ifeed,i)=real(gbuf(offset+(i-1)*nfeeds*nants))
@@ -139,8 +141,6 @@ c            write(*,*) 'ant=', j
             else
             rewtfactor(j,ifeed,1) = 0.0
             end if
-c         write(*,*) j,ifeed, rewtfactor(j,ifeed,1), avamp(j,ifeed,1),
-c     * avrgain(j,ifeed,1),avigain(j,ifeed,1),ngains(j,ifeed,1) 
             end do
             end do
 c
