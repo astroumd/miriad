@@ -7,7 +7,7 @@ c& jhz
 c: uv analysis
 c+
 c	SmaReWt copies a uv dataset, calculating the mean values
-c       of antenna gains in amplitude and multipling the visibility 
+c       of antenna gains in amplitude and multiplying the visibility 
 c       variances by the mean antenna gains. The re-scaled visibility
 c       variances can be used as the weights in the imaging process.
 c@ vis
