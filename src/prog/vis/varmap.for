@@ -2,46 +2,75 @@ c********1*********2*********3*********4*********5*********6*********7**
        program varmap
        implicit none
 c
-c= VARMAP  Image uv-data versus selected xaxis and yaxis uv-variables.
+c= VARMAP  Image uvdata versus selected x-axis and y-axis uv-variables.
 c& mchw
 c: image conversion, analysis.
 c+
-c       VARMAP makes a Miriad image of the visibility data versus 
-c	selected xaxis and yaxis uv-variables.
-c	E.g. map autocorrelation data versus dra and ddec. 
-c	Averages unflagged data into array with given cell and imsize.
+c       VARMAP makes a Miriad image of uvdata or single dish data
+c	versus selected x-axis and y-axis uv-variables.
+c	Data is averaged into an image with the given cell and imsize.
+c	No interpolation into adjacent pixels is made.
+c	E.g. VARMAP can map autocorrelation data versus dra and ddec. 
+c	Related tasks:
+c	  	UVCAL options=holo replace [u,v] with [dazim,delev]
+c	  	INVERT convolves uvdata into a grid and makes a 2D FFT.
 c@ vis
 c       The input uv-dataset name. No default.
 c@ select
 c       This selects which visibilities to be used. Default uses
 c       all the data. See the Users Guide for information about
 c       how to specify uv data selection.
+c       e.g. 'select=ant(1)(5),-time(00:00,01:09)'
 c@ line
 c       Linetype of the data in the format line,nchan,start,width,step
 c       "line" can be `channel', `wide' or `velocity'.
 c       Default is channel,0,1,1,1, which uses all the spectral
 c       channels. For line=channel, select only one spectral window
 c       if the channels are not contiguous in velocity.
+c       Flagged data are not used.
+c       e.g. line=channel,6,1,15,15 makes the 6 band averages for CARMA.
+c
 c@ xaxis
-c	uv-variable to be used for xaxis (internal units).
-c	Can also be 'u' or 'v' (nanosecs). Default xaxis=dra (arcsec).
+c	x-axis uvvariable, index, and units used for x-axis. Three values.
+c   An optional second argument gives the index of the uvvariable.
+c	The default index=1.
+c	The default units are defined in an appendix of the Users Guide.
+c   An optional third argument causes conversion of the units. 
+c	Possible values for the units (a minimum match algorithm is used)
+c   are "arcsec", "arcmin", "degrees" and "hours".
+c	xaxis can also be 'u' or 'v' (nanosecs). Default xaxis=dra,1,arcsec
+c
 c@ yaxis
-c	uv-variable to be used for yaxis (internal units).
-c	Can also be 'u' or 'v' (nanosecs). Default yaxis=ddec (arcsec).
+c	y-axis uvvariable, index, and units used for y-axis. Three values.
+c   An optional second argument gives the index of the uvvariable.
+c	The default index=1.
+c	The default units are defined in an appendix of the Users Guide.
+c   An optional third argument causes conversion of the units. 
+c	Possible values for the units (a minimum match algorithm is used)
+c   are "arcsec", "arcmin", "degrees" and "hours".
+c	yaxis can also be 'u' or 'v' (nanosecs). Default yaxis=ddec,1,arcsec
+c	e.g. xaxis=dazim,1,arcsec yaxis=delev,1,arcsec
+c
 c@ zaxis
 c	Visibility 'amplitude', 'phase', 'real', or 'imaginary'.
-c	Default zaxis=real.
+c	Default zaxis=amplitude
+c
 c@ out
 c	Output image. No default.
+c
 c@ imsize
-c	The size of the output image in RA and DEC. If only one value is
-c	given it is used for both RA and DEC axes. The 3rd axis is
+c	The size of the output image x-axis and y-axis. If only one value is
+c	given it is used for both axes. The 3rd axis is
 c	determined by the number of channels in the selected linetype.
+c
 c@ cell
-c       Image cell size, in arcsec. If two values are given, they give
-c       the x and y cell sizes. If only one value is given, the cells
-c       are made square. No default. Use dra and ddec grid size for
-c	autocorrelation data. No interpolation is done.
+c     Image pixel size. If two values are given, they specify
+c     the x and y pixel size. If only one value is given, the x,y sizes
+c     are made equal. No default. 
+c     No interpolation into adjacent pixels is made. Use the same pixel
+c     size as any gridding of the uvvariable. e.g. the dazim and delev
+c     step size used to aquire pointing data. e.g. cell=30
+c
 c@ options
 c       This gives extra processing options. Several options can be given,
 c       each separated by commas. They may be abbreivated to the minimum
@@ -54,31 +83,42 @@ c     mwp  26feb96  Bug fix in averaging loop. Datamin/datamax calculated.
 c    mchw  26feb97  Add xaxis, yaxis and zaxis. Discard flagged data.
 c     pjt   3dec02  MAX....
 c    mchw  01feb06  Elliminate LogWrite. Update to standard keyline input.
+c    mchw  22feb06  Support for arrays and unit conversion of uvvariables.
 c----------------------------------------------------------------------c
-        include 'maxdim.h'
-        include 'mirconst.h'
-        character*(*) version
-        parameter(version='VARMAP: version 01-Feb-2006')
-        integer MAXSELS
-        parameter(MAXSELS=512)
-        real sels(MAXSELS)
-        complex data(MAXCHAN)
-	logical flags(MAXCHAN)
-        double precision preamble(4)
-        integer lIn,nchan,nread,nvis,ngrid
-        real start,width,step
-	character*128 vis,out,linetype,line
-	character*10 xaxis,yaxis,zaxis
-	integer lout,nsize(3),i,j,k
-	real cell(2)
-        integer MAXSIZE
-        parameter(MAXSIZE=64)
-        real array(MAXSIZE,MAXSIZE,MAXCHAN)
-        real weight(MAXSIZE,MAXSIZE,MAXCHAN)
-        real x,y,z,datamin,datamax
-        character*1 xtype, ytype, type
-        integer length, ix, iy
-        logical updated,sum
+       include 'maxdim.h'
+       include 'mirconst.h'
+       character*(*) version
+       parameter(version='VARMAP: version 22-Feb-2006')
+       integer MAXSELS
+       parameter(MAXSELS=512)
+       real sels(MAXSELS)
+       complex data(MAXCHAN)
+       logical flags(MAXCHAN)
+       double precision preamble(4)
+       integer lIn,nchan,nread,nvis,ngrid
+       real start,width,step
+       character*128 vis,out,linetype,line
+       character*10 xaxis,yaxis,zaxis,xunit,yunit
+       integer idata(MAXANT)
+       real rdata(MAXANT)
+       double precision ddata(MAXANT)
+       integer lout,nsize(3),i,j,k
+       real cell(2)
+       integer MAXSIZE
+       parameter(MAXSIZE=64)
+       real array(MAXSIZE,MAXSIZE,MAXCHAN)
+       real weight(MAXSIZE,MAXSIZE,MAXCHAN)
+       real x,y,z,datamin,datamax
+       character*1 xtype, ytype, type
+       integer length, xlength, ylength, xindex, yindex
+       logical updated,sum
+c
+       integer nout, nopt
+       parameter(nopt=8)
+       character opts(nopt)*10
+       data opts/'arcseconds','arcminutes','radians   ',
+     *        'degrees   ','hours     ','dms       ',
+     *        'hms       ','time      '/
 c
 c  Get the input parameters.
 c
@@ -89,9 +129,15 @@ c
        call SelInput ('select',sels,maxsels)
        call keya ('out',out,' ')
        call keya ('xaxis',xaxis,'dra')
+       call keyi ('xaxis',xindex,1)
+       call keymatch('xaxis',nopt,opts,1,xunit,nout)
+       if(nout.eq.0)xunit = ' '
        call keya ('yaxis',yaxis,'ddec')
-       call keya ('zaxis',zaxis,'real')
-       call keyi ('imsize',nsize(1),0)
+       call keyi ('yaxis',yindex,1)
+       call keymatch('yaxis',nopt,opts,1,yunit,nout)
+       if(nout.eq.0)yunit = ' '
+       call keya ('zaxis',zaxis,'amplitude')
+       call keyi ('imsize',nsize(1),16)
        call keyi ('imsize',nsize(2),nsize(1))
        call keyr ('cell',cell(1),0.)
        call keyr ('cell',cell(2),cell(1))
@@ -100,72 +146,78 @@ c
 c
 c  Check that the inputs are reasonable.
 c
-        if (vis.eq.' ') call bug('f','Input name must be given')
-        if (out.eq.' ') call bug('f','Output image missing')
-        if (nchan.gt.0) nchan = min (nchan,maxchan)
-	if (nsize(1)*nsize(2).le.0)
+       if (vis.eq.' ') call bug('f','Input name must be given')
+       if (out.eq.' ') call bug('f','Output image missing')
+       if (nchan.gt.0) nchan = min (nchan,maxchan)
+       if (nsize(1)*nsize(2).le.0)
      *		call bug('f','imsize unreasonable')
-	if (cell(1)*cell(2).le.0)
+       if (cell(1)*cell(2).le.0)
      *		call bug('f','cell size must be given')
-        do j=1,2
+       do j=1,2
          if (nsize(j).gt.MAXSIZE) then
  	   write(line,'(a,i2,a,i4)') 'Map axis',j,' larger than',MAXSIZE 
             call bug('f',line)
-           endif
-        enddo
-	if (xaxis.eq.'dra'.or.xaxis.eq.'ddec')
-     *		 		cell(1)=cell(1)*pi/180./3600.
-	if (yaxis.eq.'dra'.or.yaxis.eq.'ddec')
-     *		 		cell(2)=cell(2)*pi/180./3600.
-	write(line,'(a,a,a,a,a,a)')
-     *		 'Mapping ', zaxis, ' versus ', xaxis, ' and ', yaxis
-	call output(line)
+          endif
+       enddo
+       if (xunit.ne.' ') call units(cell(1),xunit)
+       if (yunit.ne.' ') call units(cell(2),yunit)
+       write(line,'(a,a, a,a,i3,1x,a,5x,a,a,i3,1x,a)')
+     *	 'Mapping ', zaxis, 
+     *   ' x-axis: ', xaxis,xindex,xunit,
+     *   ' y-axis: ', yaxis,yindex,yunit
+       call output(line)
 c
 c  Open an old visibility file, and apply selection criteria.
 c
-        call uvopen (lIn,vis,'old')
-        call uvset (lIn,'data',linetype,nchan,start,width,step)
-        call uvset (lIn,'coord','nanosec',0, 0.0, 0.0, 0.0)
-        call uvset (lIn,'planet', ' ', 0, 0.0, 0.0, 0.0)
-        call SelApply(lIn,sels,.true.)
+       call uvopen (lIn,vis,'old')
+       if(linetype.ne.' ')
+     *   call uvset (lIn,'data',linetype,nchan,start,width,step)
+       call uvset (lIn,'coord','nanosec',0, 0.0, 0.0, 0.0)
+       call uvset (lIn,'planet', ' ', 0, 0.0, 0.0, 0.0)
+       call SelApply(lIn,sels,.true.)
 c
 c  Read the first record and check the data type.
 c
-        call uvread (lIn, preamble, data, flags, maxchan, nread)
-        if(nread.le.0) call bug('f','No data found in the input.')
-        if(index(linetype,'wide').gt.0)then
-	  call uvprobvr(lIn,'wcorr',type,length,updated)
-	else
-	  call uvprobvr(lIn,'corr',type,length,updated)
-	endif
-        if(type.eq.'r') call bug('i','data is real')
-        if(type.eq.'j'.or.type.eq.'c') call bug('i','data is complex')
+       call uvread (lIn, preamble, data, flags, maxchan, nread)
+       if(nread.le.0) call bug('f','No data found in the input.')
+       if(index(linetype,'wide').gt.0)then
+         call uvprobvr(lIn,'wcorr',type,length,updated)
+       else
+         call uvprobvr(lIn,'corr',type,length,updated)
+       endif
+       if(type.eq.'r') call bug('i','data is real')
+       if(type.eq.'j'.or.type.eq.'c') call bug('i','data is complex')
 c
-c  Check out xaxis and yaxis
+c  Check out xaxis and yaxis variables and length
 c
-	if(xaxis.ne.'u'.and.xaxis.ne.'v')then
-	  call uvprobvr(lIn,xaxis,xtype,length,updated)
-          if(xtype.ne.'r'.and.xtype.ne.'i'.and.xtype.ne.'d')
-     *      call bug('f','valid xaxis not in input file')
-	endif
-	if(yaxis.ne.'u'.and.yaxis.ne.'v')then
-	  call uvprobvr(lIn,yaxis,ytype,length,updated)
-          if(ytype.ne.'r'.and.ytype.ne.'i'.and.ytype.ne.'d')
-     *      call bug('f','valid yaxis not in input file')
-	endif
+       if(xaxis.ne.'u'.and.xaxis.ne.'v')then
+          call uvprobvr(lIn,xaxis,xtype,xlength,updated)
+        if(xtype.ne.'r' .and. xtype.ne.'i' .and. xtype.ne.'d')
+     *    call bug('f','valid xaxis not in input file')
+        if(xindex.lt.1. .or. xindex.gt.xlength)
+     *    call bug('f','x-axis index is not between 1 and xlength')
+       endif
+       if(yaxis.ne.'u'.and.yaxis.ne.'v')then
+          call uvprobvr(lIn,yaxis,ytype,ylength,updated)
+        if(ytype.ne.'r' .and. ytype.ne.'i'.and. ytype.ne.'d')
+     *    call bug('f','valid yaxis not in input file')
+        if(yindex.lt.1. .or. yindex.gt.ylength)
+     *    call bug('f','y-axis index is not between 1 and ylength')
+       endif
 c
 c  Open the output array
 c
-	nsize(3) = nread
-c	write(line,'(a,i16)') 'Opening XY file...nsize=',nread
-c	call output(line)
-	call xyopen(lOut,Out,'new',3,nsize)
-        call maphead(lIn,lOut,nsize,cell,xaxis,yaxis,linetype)
+      nsize(3) = nread
+      write(line,'(a,i16)') 'Opening XY file...nsize(3)=',nread
+      call output(line)
+      call xyopen(lOut,Out,'new',3,nsize)
+      call maphead(lIn,lOut,nsize,cell,xaxis,yaxis,
+     *   xunit,yunit,linetype)
 c
 c  Read through the uvdata
 c
-        do while(nread.gt.0)
-          if(nread.ne.nsize(3))
+      do while(nread.gt.0)
+         if(nread.ne.nsize(3))
      *		 call bug('w','Number of channels has changed.')
 c
 c  Get the selected axes.
@@ -174,11 +226,15 @@ c
 	    x = preamble(1)
 	  else if(xaxis.eq.'v')then
 	    x = preamble(2)
-	  else if(xtype.eq.'r'.or.xtype.eq.'d')then
-            call uvrdvrr(lIn,xaxis,x,0.d0)
 	  else if(xtype.eq.'i')then
-            call uvrdvri(lIn,xaxis,ix,0)
-	    x = ix
+        call uvgetvri(lIn,xaxis,idata,xlength)
+	    x = idata(xindex)
+	  else if(xtype.eq.'r')then
+        call uvgetvrr(lIn,xaxis,rdata,xlength)
+	    x = rdata(xindex)
+	  else if(xtype.eq.'d')then
+        call uvgetvrd(lIn,xaxis,ddata,xlength)
+	    x = ddata(xindex)
 	  else
 	    call bug('f','Invalid xaxis')
 	  endif
@@ -187,11 +243,15 @@ c
 	    y = preamble(1)
 	  else if(yaxis.eq.'v')then
 	    y = preamble(2)
-	  else if(ytype.eq.'r'.or.ytype.eq.'d')then
-            call uvrdvrr(lIn,yaxis,y,0.d0)
-	  else if(ytype.eq.'i')then
-            call uvrdvri(lIn,yaxis,iy,0)
-	    y = iy
+      else if(ytype.eq.'i')then
+        call uvgetvri(lIn,yaxis,idata,ylength)
+        y = idata(yindex)
+      else if(ytype.eq.'r')then
+        call uvgetvrr(lIn,yaxis,rdata,ylength)
+        y = rdata(yindex)
+      else if(ytype.eq.'d')then
+        call uvgetvrd(lIn,yaxis,ddata,ylength)
+        y = ddata(yindex)
 	  else
 	    call bug('f','Invalid yaxis')
 	  endif
@@ -203,13 +263,13 @@ c
 	  if(i.ge.1.and.i.le.nsize(1).and.j.ge.1.and.j.le.nsize(2))then
 	    do k=1,nread
 	      if(flags(k)) then
-		if(index(zaxis,'real').gt.0) then
+		if(index(zaxis,'re').gt.0) then
 		  z = real(data(k))
-		else if(index(zaxis,'imag').gt.0) then
+		else if(index(zaxis,'im').gt.0) then
 		  z = aimag(data(k))
-		else if(index(zaxis,'amp').gt.0) then
+		else if(index(zaxis,'am').gt.0) then
 		  z = cabs(data(k))
-		else if(index(zaxis,'pha').gt.0) then
+		else if(index(zaxis,'ph').gt.0) then
 		  z = 180./pi * atan2(aimag(data(k)),real(data(k)))
 		else
 		  call bug('f','Unknown zaxis')
@@ -217,41 +277,41 @@ c
 		array(i,j,k)  = array(i,j,k)  + z
 		weight(i,j,k) = weight(i,j,k) + 1.
 	      endif
-	    enddo
+	   enddo
 	    ngrid = ngrid + 1
-	  endif
+       endif
 c
 c  Loop the loop (get next record)
 c
           call uvread(lIn, preamble, data, flags, maxchan, nread)
           nvis = nvis + 1
-        enddo
+       enddo
 c
 c  Average the data.
 c
-	  if(.not.sum)then
-	write(line,'(a)') 'Averaging the XY pixels...'
-	call output(line)
+      if(.not.sum)then
+        write(line,'(a)') 'Averaging the XY pixels...'
+        call output(line)
         datamin = 1.E10
-	datamax = 0.
-	do i=1,MAXSIZE
-	  do j=1,MAXSIZE
-	    do k=1,nsize(3)
-	      if(weight(i,j,k).ne.0.)then
-	        array(i,j,k) = array(i,j,k) / weight(i,j,k)
+        datamax = 0.
+        do i=1,MAXSIZE
+          do j=1,MAXSIZE
+            do k=1,nsize(3)
+              if(weight(i,j,k).ne.0.)then
+                array(i,j,k) = array(i,j,k) / weight(i,j,k)
                 if(array(i,j,k).gt.datamax) datamax=array(i,j,k)
                 if(array(i,j,k).lt.datamin) datamin=array(i,j,k)
-	      endif
-	    enddo
-	  enddo
-	enddo
-	  endif
+              endif
+            enddo
+          enddo
+        enddo
+      endif
 c
 c  Write the image and it's header.
 c
-	call putimage(lOut,nsize,array)
-        call wrhdr(lOut,'datamin',datamin)
-        call wrhdr(lOut,'datamax',datamax)
+      call putimage(lOut,nsize,array)
+      call wrhdr(lOut,'datamin',datamin)
+      call wrhdr(lOut,'datamax',datamax)
 c
 c  Write summary.
 c
@@ -262,43 +322,45 @@ c
 c
 c  Write the history file.
 c
-	call hisopen(lOut,'append')
-        call hiswrite(lOut, version)
-        call hisinput(lOut, 'VARMAP')
-	call hisclose(lOut)
+      call hisopen(lOut,'append')
+      call hiswrite(lOut, 'VARMAP '//version)
+      call hisinput(lOut, 'VARMAP')
+      call hisclose(lOut)
 c
 c  Close the files after writing history
 c
-	call xyclose(lOut)
+      call xyclose(lOut)
 c
-	end
+      end
 c********1*********2*********3*********4*********5*********6*********7**
-        subroutine maphead(lIn,lOut,nsize,cell,xaxis,yaxis,linetype)
-	implicit none
-	integer	lin,lout,nsize(3)
-	real cell(2)
-	character*(*) xaxis,yaxis,linetype
+      subroutine maphead(lIn,lOut,nsize,cell,xaxis,yaxis,
+     *   xunit,yunit,linetype)
+      implicit none
+      integer	lin,lout,nsize(3)
+      real cell(2)
+      character*(*) xaxis,yaxis,xunit,yunit,linetype
 c  Inputs:
 c    lIn	The handle of the autocorrelation data.
 c    lOut	The handle of the output image.
 c    nsize	The output image size.
 c    cell	The output image cell size.
-c    xaxis,yaxis  x- and y-axes
+c    xaxis,yaxis  x- and y-axis
+c    xunit,yunit  x- and y-axis units
 c    linetype	linetype
 c-------------------------------------------------------------------------
-	include 'maxdim.h'
-        character source*16,telescop*16
-        double precision ra,dec,restfreq,wfreq,wwidth,velocity(MAXCHAN)
-	real epoch
+      include 'maxdim.h'
+      character source*16,telescop*16
+      double precision ra,dec,restfreq,wfreq,wwidth,velocity(MAXCHAN)
+      real epoch
 c
 c  Get source parameters.
 c
-        call uvrdvra(lIn,'source',source,' ')
-        call uvrdvrd(lIn,'ra',ra,0.d0)
-        call uvrdvrd(lIn,'dec',dec,0.d0)
-        call uvrdvrd(lIn,'restfreq',restfreq,0.d0)
-        call uvrdvrr(lIn,'epoch',epoch,0.d0)
-        call uvrdvra(lIn,'telescop',telescop,' ')
+      call uvrdvra(lIn,'source',source,' ')
+      call uvrdvrd(lIn,'ra',ra,0.d0)
+      call uvrdvrd(lIn,'dec',dec,0.d0)
+      call uvrdvrd(lIn,'restfreq',restfreq,0.d0)
+      call uvrdvrr(lIn,'epoch',epoch,0.d0)
+      call uvrdvra(lIn,'telescop',telescop,' ')
 c
 c  Write header values.
 c
@@ -321,25 +383,25 @@ c
 c
 c  Select axis values.
 c
-	if(xaxis.eq.'dra')then
+	if(xunit.eq.'arcseconds')then
 	  call wrhda(lOut,'ctype1','RA---SIN')
 	else
 	  call wrhda(lOut,'ctype1','ANGLE')
 	endif
-	if(yaxis.eq.'ddec')then
+	if(yunit.eq.'arcseconds')then
 	  call wrhda(lOut,'ctype2','DEC--SIN')
 	else
-          call wrhda(lOut,'ctype2','ANGLE')
+      call wrhda(lOut,'ctype2','ANGLE')
 	endif
 c
 	if(index(linetype,'wide').eq.0)then
-          call uvinfo(lIn,'velocity', velocity)
+      call uvinfo(lIn,'velocity', velocity)
 	  call wrhda(lOut,'ctype3','VELO-LSR')
 	  call wrhdd(lOut,'crval3',velocity(1))
 	  call wrhdd(lOut,'cdelt3',velocity(2)-velocity(1))
 	else
-          call uvrdvrd(lIn,'wfreq',wfreq,0.d0)
-          call uvrdvrd(lIn,'wwidth',wwidth,1.d0)
+      call uvrdvrd(lIn,'wfreq',wfreq,0.d0)
+      call uvrdvrd(lIn,'wwidth',wwidth,1.d0)
 	  call wrhda(lOut,'ctype3','FREQUENCY')
 	  call wrhdd(lOut,'crval3',wfreq)
 	  call wrhdd(lOut,'cdelt3',wwidth)
@@ -389,7 +451,7 @@ c
 c  Determine extra processing options.
 c
 c  Output:
-c    sum      If true, do not average the data in each pixel
+c    sum      Sum the data in each pixel. Default is to average.
 c------------------------------------------------------------------------
         integer nopt
         parameter(nopt=1)
@@ -401,4 +463,31 @@ c
         sum = present(1)
 c
 	end
+c********1*********2*********3*********4*********5*********6*********7**
+      SUBROUTINE units(d,unit)
+      real d
+      character unit*(*)
+c
+c The following units are understood and converted to:
+c
+c   arcmin, arcsec, degrees, hours, radians
+c
+c------------------------------------------------------------------------
+      include 'mirconst.h'
+c
+      IF(unit.EQ.'radians'.OR.unit.eq.' ') THEN
+     continue
+      ELSE IF(unit.EQ.'arcminutes') THEN
+         d = d * DPI / (180d0 * 60d0)
+      ELSE IF(unit.EQ.'arcseconds') THEN
+         d = d * DPI / (180d0 * 3600d0)
+      ELSE IF(unit.EQ.'degrees') THEN
+         d = d * DPI / 180d0
+      ELSE IF(unit.EQ.'hours') THEN
+         d = d * DPI / 12.d0
+      ELSE
+         call bug('w','Unrecognised units, in UNITS')
+      ENDIF
+
+      END
 c********1*********2*********3*********4*********5*********6*********7**
