@@ -32,22 +32,22 @@ c       e.g. line=channel,6,1,15,15 makes the 6 band averages for CARMA.
 c
 c@ xaxis
 c	x-axis uvvariable, index, and units used for x-axis. Three values.
-c   An optional second argument gives the index of the uvvariable.
+c	An optional second argument gives the index of the uvvariable.
 c	The default index=1.
 c	The default units are defined in an appendix of the Users Guide.
-c   An optional third argument causes conversion of the units. 
+c	An optional third argument causes conversion of the units. 
 c	Possible values for the units (a minimum match algorithm is used)
-c   are "arcsec", "arcmin", "degrees" and "hours".
+c	are "arcsec", "arcmin", "degrees" and "hours".
 c	xaxis can also be 'u' or 'v' (nanosecs). Default xaxis=dra,1,arcsec
 c
 c@ yaxis
 c	y-axis uvvariable, index, and units used for y-axis. Three values.
-c   An optional second argument gives the index of the uvvariable.
+c	An optional second argument gives the index of the uvvariable.
 c	The default index=1.
 c	The default units are defined in an appendix of the Users Guide.
-c   An optional third argument causes conversion of the units. 
+c	An optional third argument causes conversion of the units. 
 c	Possible values for the units (a minimum match algorithm is used)
-c   are "arcsec", "arcmin", "degrees" and "hours".
+c	are "arcsec", "arcmin", "degrees" and "hours".
 c	yaxis can also be 'u' or 'v' (nanosecs). Default yaxis=ddec,1,arcsec
 c	e.g. xaxis=dazim,1,arcsec yaxis=delev,1,arcsec
 c
