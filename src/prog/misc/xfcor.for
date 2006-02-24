@@ -6,9 +6,9 @@ c= corset - model correlator setups.
 c& mchw
 c: utility
 c+
-c	XFCOR is a MIRIAD task to model the CARMA correlator setup.  It takes
-c	as input, an observing frequency and IF and then searches
-c       spectral line files for all spectral lines that would be
+c	XFCOR is a MIRIAD task to model the CARMA correlator setup.
+c	Input an observing frequency and IF freq and search
+c	spectral line files for all spectral lines that would be
 c	observable in IF passband. The positions of the lines in
 c	the correlator for the selected correlator settup are plotted. 
 c@ in
@@ -18,7 +18,7 @@ c	and $MIRCAT/recom.lis. The default is $MIRCAT/lovas.3mm.
 c@ freq
 c	The rest frequency of the line in GHz. The default 110.0 GHz.
 c@ iffreq
-c	The intermediate frequency MHz. The default 1250.0 MHz.
+c	The intermediate frequency in MHz. The default 1250.0 MHz.
 c	This is the frequency in the IF at which the line
 c	rest frequency will appear. A negative value indictes that
 c	the line should appear in the lower sideband of the first LO. 
@@ -81,11 +81,13 @@ c    mchw 23dec96  print out defective line in CRSTLINE.
 c    mchw 01jan97  Fiddles for 1mm band. Change default to lovas.3mm.
 c    mchw 02feb06  XFCOR CARMA version. channel numbers are not yet correct.
 c    mchw 16feb06  channel numbers for spectral windows in order band 1 2 3 LSB, 1 2 3 USB
+c    mchw 23feb06  Add routine cormode to calculate channel numbers.
 c----------------------------------------------------------------------
 c  Parameters.
 c
+	include 'maxdim.h'
 	character VERSION*(*)
- 	parameter (VERSION='Version 4.0 16-FEB-2006')
+ 	parameter (VERSION='Version 4.0 23-FEB-2006')
 	character PROG*(*)
 	parameter (PROG='XFCOR: ')
 	integer NMAX
@@ -95,23 +97,23 @@ c
 c
 c  Internal variables.
 c
-	character lines(MAXLINES)*20, str*1
+	character lines(MAXLINES)*20
 	character errmsg*80, pldev*25, ldev*25
 	character file(NMAX)*80, linefile(NMAX)*80
 	character linetran(MAXLINES)*30
 	integer L1, nsf
-	integer NUMCHAN
 	integer coropt
-	integer numlines, i, j, mode, nfile, length
+	integer numlines,i,j,k,nfile
 	integer nbirdie
 	double precision obsfreq, vlsr, ifrq, LO1
 	double precision cor, fif, freqmaxu, freqminu
 	double precision freqmaxl, freqminl, linefreq(MAXLINES)
 	double precision lineif(MAXLINES), dlineif(MAXLINES)
-	double precision bw(4)
-	real nchan,nschan(8)
+	real nchan,nschan(MAXWIN)
 	real birdif(20)
 	real chan(4,MAXLINES)
+       integer mode,nbands,nspect,ischan(MAXWIN)
+       double precision bw(MAXWIN),sfreq(MAXWIN),sdf(MAXWIN)
 c
 c  External functions.
 c
@@ -130,7 +132,7 @@ c
 	nfile = 0
 	call keyini
 	call mkeyf('in',file,NMAX,nfile)
-	call keyd('freq',obsfreq,115.D0)
+	call keyd('freq',obsfreq,115.2712D0)
 	call keyd('iffreq',ifrq,1250d0)
 	call keyd('vlsr',vlsr,0.0D0)
 	call keya('device',pldev,'?')
@@ -175,8 +177,6 @@ c
          call bug('w','LO1 is not in 3mm band nor in 1mm band.')
        endif
 c********1*********2*********3*********4*********5*********6*********7**
-c
-	  NUMCHAN = 45
 c
 c  check bandwidths
 c
@@ -238,25 +238,21 @@ c
 	  enddo
 	endif
 c
-c  compute the number of channels in each window
-c
-	  do i=1,6
-	    nschan(i)=NUMCHAN/3
-	  enddo
-c
-c  number of channels in each sideband of LO1
-c
-	nchan = 45
-c
 c  get channel numbers for spectral windows in order band 1 2 3 LSB, 1 2 3 USB
 c
-       do i = 1, numlines
-c         print *, dlineif(i), bw
-         if(dlineif(i).gt.1000.and.dlineif(i).lt.2500)then
-           chan(1,i) = 46+(dlineif(i)-1.03125e3)*16/bw(1)
-         else if(dlineif(i).gt.-2500.and.dlineif(i).lt.-1000)then
-           chan(1,i) = 1-(dlineif(i)+1.03125e3)*16/bw(1)
-         endif
+       nbands = 3
+       call cormode(mode,bw,nbands,ischan,nschan,sfreq,sdf,nspect)
+c
+c  number of channels in each sideband of LO1
+	nchan = (ischan(nspect) + nschan(nspect) - 1)/2
+c	print *, nchan, ischan,nschan,sfreq,sdf,nspect
+       do j=1,nspect
+         do i=1,numlines
+           k = nint(dlineif(i)-sfreq(j))/sdf(j)
+           if(k.ge.1 .and. k.le.nschan(j)) then
+             chan(j,i) = ischan(j) + k-1
+           endif
+         enddo
        enddo
 c
 c  Plot correlator setup
@@ -273,20 +269,6 @@ c          print *, chan(1,i)
 	call crstlist(lines,linefreq,lineif,linetran,numlines,ldev,
      *                nsf,obsfreq,LO1,ifrq,chan,
      *                mode,bw,coropt)
-c
-	if (ldev .eq. ' ') then
-	  call Prompt(str, length, 'Print list to printer (y/n) [n]? ')
-	  if (str .eq. 'Y') str = 'y'
-	  if (str .eq. 'N') str = 'n'
-	  if ((str .ne. 'y') .and. (str .ne. 'n')) str = 'n'
-	  if (str .ne. 'n') then
-	    ldev = '/printer'
-	    call crstlist(lines,linefreq,lineif,linetran,numlines,ldev,
-     *                nsf,obsfreq,LO1,ifrq,chan,
-     *                mode,bw,coropt)
-	  endif
-	endif
-c
 	end
 c***********************************************************************
 	subroutine crstline(lines,linefreq,numlines,maxlines,freqmaxu,
@@ -698,7 +680,7 @@ c-----------------------------------------------------------------------
 	double precision bw(*)
 	character msg*80, cfreq*40, cmode*40
 	character cbw(4)*40, cvlsr*40
-	character cif*40, C, CLO1*40
+	character cif*40, CLO1*40
 	integer form, i
 c
 	integer Len1
@@ -813,4 +795,36 @@ c
 	return
 	end
 c********1*********2*********3*********4*********5*********6*********7**
+       subroutine cormode(mode,bw,nbands,ischan,nschan,sfreq,sdf,nspect)
+       implicit none
+       integer mode,nbands,nspect,ischan(nspect)
+       double precision bw(nbands),sfreq(nspect),sdf(nspect)
+       real nschan(nspect)
+c
+c  Get correlator configuration
+c
+c  Input:  mode bw nbands
+c  Output: ischan,nschan,sfreq,sdf,nspect
+c
+       real sb
+       integer i,j,k
 
+       if(mode.eq.3) then
+         nspect = 2*nbands
+         do i = 0,1
+           sb =  2.*i -1.
+           do j = 1,nbands
+             k = j + i*nbands
+             sfreq(k) = sb * (500.0d0*(j+1) + bw(j)/16.)
+             sdf(k) = sb * bw(j)/16.
+             nschan(k) = 15
+           enddo
+         enddo
+c
+         ischan(1) = 1
+         do i = 2,nspect
+           ischan(i) = ischan(i-1) + nschan(i-1)
+         enddo
+       endif
+       end
+c********1*********2*********3*********4*********5*********6*********7**
