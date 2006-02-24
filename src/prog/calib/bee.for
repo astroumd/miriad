@@ -112,10 +112,11 @@ c    29jun98 pjt   fixed linux/g77 fortran standards (x->1x, removed fdate)
 c    26dec01 mchw  Format change in befit to handle a-array.
 c    22mar05 mchw  Get longitude from uvvariable instead of obspar.
 c    10nov05 mchw  Added summary in topocentric coordinates.
+c    23feb06 jkoda different numbers of grids between bx/by bz in 'FI'
 c-----------------------------------------------------------------------
 	include 'bee.h'
 	character version*(*),device*80,log*80,ans*20
-	parameter(version='(version 3.0 10-NOV-2005)')
+	parameter(version='(version 3.0 23-Feb-2006)')
 	integer length,tvis,tgains,iostat
 	logical doscale
 c
@@ -2125,15 +2126,17 @@ c----------------------------------------------------------------------
 	real sinh,cosh
 	real sind,cosd,dbx,dby,dbz,dphi,base
 	real step,step1,chimin,chiorg,chisq,cmin(5),corg(5),rnstep
-	integer i,nstep,nstep1,ix,iy,iz,iaxis
+	integer i,nstep,nstep1,nstepz,ix,iy,iz,iaxis
 c
 c  External.
 c
 	integer len1
 c
         call promptf(step,'f10.4','Step size for bx/by/bz',0.002)
-        call promptf(rnstep,'f10.0','# of steps in 1-D',40.)
+        call promptf(rnstep,'f10.0','# of steps in 1-D for bx/by',40.)
 	nstep=rnstep
+        call promptf(rnstep,'f10.0','# of steps in 1-D for bz',40.)
+	nstepz=rnstep
         call promptf(step1,'f10.4','Step size for antmiss',0.002)
         call promptf(rnstep,'f10.0','# of steps (1=nofit)',1.)
 	nstep1=rnstep
@@ -2175,7 +2178,7 @@ c  Start big loop
 	  c(1) = corg(1) + 0.5*step*float(2*ix-1-nstep)
 	  do iy=1,nstep
 	    c(2) = corg(2) + 0.5*step*float(2*iy-1-nstep)
-	    do iz=1,nstep
+	    do iz=1,nstepz
 	      c(3) = corg(3) + 0.5*step*float(2*iz-1-nstep)
               do iaxis=1,nstep1
                 c(5) = corg(5) + 0.5*step1*float(2*iaxis-1-nstep1)
