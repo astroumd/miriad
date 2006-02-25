@@ -31,29 +31,29 @@ c       Flagged data are not used.
 c       e.g. line=channel,6,1,15,15 makes the 6 band averages for CARMA.
 c
 c@ xaxis
-c	x-axis uvvariable, index, and units used for x-axis. Three values.
+c	x-axis uvvariable used for x-axis.
 c	An optional second argument gives the index of the uvvariable.
 c	The default index=1.
 c	The default units are defined in an appendix of the Users Guide.
-c	An optional third argument causes conversion of the units. 
-c	Possible values for the units (a minimum match algorithm is used)
-c	are "arcsec", "arcmin", "degrees" and "hours".
-c	xaxis can also be 'u' or 'v' (nanosecs). Default xaxis=dra,1,arcsec
+c	xaxis can also be 'u' or 'v' (nanosecs). Default xaxis=dra,1
+c	e.g. xaxis=dazim,1
 c
 c@ yaxis
-c	y-axis uvvariable, index, and units used for y-axis. Three values.
+c	y-axis uvvariable used for y-axis.
 c	An optional second argument gives the index of the uvvariable.
 c	The default index=1.
 c	The default units are defined in an appendix of the Users Guide.
-c	An optional third argument causes conversion of the units. 
-c	Possible values for the units (a minimum match algorithm is used)
-c	are "arcsec", "arcmin", "degrees" and "hours".
-c	yaxis can also be 'u' or 'v' (nanosecs). Default yaxis=ddec,1,arcsec
-c	e.g. xaxis=dazim,1,arcsec yaxis=delev,1,arcsec
+c	yaxis can also be 'u' or 'v' (nanosecs). Default yaxis=ddec,1
+c	e.g. yaxis=delev,1
 c
 c@ zaxis
 c	Visibility 'amplitude', 'phase', 'real', or 'imaginary'.
 c	Default zaxis=amplitude
+c	No calibration is applied by VARMAP. 'amplitude' is OK on uncalibrated
+c	data, but we need to calibrate the data, e.g. using UVCAL
+c	w.r.t. the (0,0) offset to get  'real', 'imag' or 'phase' correct.
+c	This also could also be an option in varmap to save a
+c	pre-calibration step.
 c
 c@ out
 c	Output image. No default.
@@ -63,13 +63,26 @@ c	The size of the output image x-axis and y-axis. If only one value is
 c	given it is used for both axes. The 3rd axis is
 c	determined by the number of channels in the selected linetype.
 c
-c@ cell
-c     Image pixel size. If two values are given, they specify
-c     the x and y pixel size. If only one value is given, the x,y sizes
-c     are made equal. No default. 
+c@ xcell
+c     Image pixel size along x-axis.
 c     No interpolation into adjacent pixels is made. Use the same pixel
 c     size as any gridding of the uvvariable. e.g. the dazim and delev
-c     step size used to aquire pointing data. e.g. cell=30
+c     step size used to aquire pointing data.
+c     An optional second argument causes conversion of the units. 
+c     Possible values for the units (a minimum match algorithm is used)
+c     are "arcsec", "arcmin", "degrees" and "hours".
+c     No default. e.g. xcell=30,arcsec
+c
+c
+c@ ycell
+c     Image pixel size along xaxis.
+c     No interpolation into adjacent pixels is made. Use the same pixel
+c     size as any gridding of the uvvariable. e.g. the delev step used
+c     to aquire pointing data, or the delay step in a delay search etc.
+c     An optional second argument causes conversion of the units. 
+c     Possible values for the units (a minimum match algorithm is used)
+c     are "arcsec", "arcmin", "degrees" and "hours".
+c     Default is to use the same value and units as xcell.
 c
 c@ options
 c       This gives extra processing options. Several options can be given,
@@ -84,11 +97,12 @@ c    mchw  26feb97  Add xaxis, yaxis and zaxis. Discard flagged data.
 c     pjt   3dec02  MAX....
 c    mchw  01feb06  Elliminate LogWrite. Update to standard keyline input.
 c    mchw  22feb06  Support for arrays and unit conversion of uvvariables.
+c    mchw  25feb06  Move units conversion into xcell and ycell keywords.
 c----------------------------------------------------------------------c
        include 'maxdim.h'
        include 'mirconst.h'
        character*(*) version
-       parameter(version='VARMAP: version 22-Feb-2006')
+       parameter(version='VARMAP: version 25-Feb-2006')
        integer MAXSELS
        parameter(MAXSELS=512)
        real sels(MAXSELS)
@@ -130,17 +144,17 @@ c
        call keya ('out',out,' ')
        call keya ('xaxis',xaxis,'dra')
        call keyi ('xaxis',xindex,1)
-       call keymatch('xaxis',nopt,opts,1,xunit,nout)
-       if(nout.eq.0)xunit = ' '
        call keya ('yaxis',yaxis,'ddec')
        call keyi ('yaxis',yindex,1)
-       call keymatch('yaxis',nopt,opts,1,yunit,nout)
-       if(nout.eq.0)yunit = ' '
        call keya ('zaxis',zaxis,'amplitude')
        call keyi ('imsize',nsize(1),16)
        call keyi ('imsize',nsize(2),nsize(1))
-       call keyr ('cell',cell(1),0.)
-       call keyr ('cell',cell(2),cell(1))
+       call keyr ('xcell',cell(1),0.)
+       call keymatch('xcell',nopt,opts,1,xunit,nout)
+       if(nout.eq.0)xunit = ' '
+       call keyr ('ycell',cell(2),cell(1))
+       call keymatch('ycell',nopt,opts,1,yunit,nout)
+       if(nout.eq.0)yunit = xunit
        call GetOpt(sum)
        call keyfin
 c
@@ -161,10 +175,14 @@ c
        enddo
        if (xunit.ne.' ') call units(cell(1),xunit)
        if (yunit.ne.' ') call units(cell(2),yunit)
-       write(line,'(a,a, a,a,i3,1x,a,5x,a,a,i3,1x,a)')
-     *	 'Mapping ', zaxis, 
-     *   ' x-axis: ', xaxis,xindex,xunit,
-     *   ' y-axis: ', yaxis,yindex,yunit
+       write(line,'(a,a)')
+     *	 'Mapping ', zaxis 
+       call output(line)
+       write(line,'(a,a,i3,4x,  a,g12.4,2x,a)')
+     *   ' x-axis: ', xaxis, xindex, '   pixel size =', cell(1), xunit
+       call output(line)
+       write(line,'(a,a,i3,4x,  a,g12.4,2x,a)')
+     *   ' y-axis: ', yaxis, yindex, '   pixel size =', cell(2), yunit
        call output(line)
 c
 c  Open an old visibility file, and apply selection criteria.
