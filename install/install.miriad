@@ -54,8 +54,8 @@ set version=30-jan-06
 # sanity check: find out from the way it was called where the script lives
 # since it needs to be run from the $MIR/install directory
 
-#set here=$0:h
-set here=$MIR/install
+set here=$0:h
+#set here=$MIR/install
 cd $here
  
 if (! -e ../VERSION) then
@@ -65,7 +65,7 @@ if (! -e ../VERSION) then
 endif
 
 #  carma, wsrt, atnf, sma, bima, ....
-set telescope=sma
+set telescope=carma
 
 #   'newdir' is something that tags the date this version was made (e.g. 98jun08)
 #   later on this will also be stored again in the file $MIR/DATE, where the CVS miriad
