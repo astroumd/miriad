@@ -32,8 +32,11 @@ c	The output log file.  The default is the terminal.
 c@ cormode
 c	The mode determines the correlator configuration and number of
 c	spectral windows. 
+c@ corf
+c   Correlator LO frequencies in MHz. Up to 4 values.
+c	Default corbw=1000,1500,2000,2500
 c@ corbw
-c	Correlator bandwidths. Up to 4 values depending on the mode.
+c	Correlator bandwidths in MHz. Up to 4 values.
 c	Default corbw=500,500,500,500
 c@ birdie
 c	Number of birdies followed by a list of the birdie frequencies 
@@ -85,12 +88,13 @@ c    mchw 01jan97  Fiddles for 1mm band. Change default to lovas.3mm.
 c    mchw 02feb06  XFCOR CARMA version. channel numbers are not yet correct.
 c    mchw 16feb06  channel numbers for spectral windows in order band 1 2 3 LSB, 1 2 3 USB
 c    mchw 23feb06  Add routine cormode to calculate channel numbers.
+c    mchw 26feb06  Added corf and corbw keywords.
 c----------------------------------------------------------------------
 c  Parameters.
 c
 	include 'maxdim.h'
 	character VERSION*(*)
- 	parameter (VERSION='Version 4.0 23-FEB-2006')
+ 	parameter (VERSION='Version 4.0 26-FEB-2006')
 	character PROG*(*)
 	parameter (PROG='XFCOR: ')
 	integer NMAX
@@ -116,7 +120,8 @@ c
 	real birdif(20)
 	real chan(4,MAXLINES)
        integer mode,nbands,nspect,ischan(MAXWIN)
-       double precision bw(MAXWIN),sfreq(MAXWIN),sdf(MAXWIN)
+       double precision corf(MAXWIN),bw(MAXWIN)
+       double precision sfreq(MAXWIN),sdf(MAXWIN)
 c
 c  External functions.
 c
@@ -142,6 +147,10 @@ c
 	call keya('log',ldev,' ')
 	call keyi('cormode',mode,3)
 	call keyi('coropt',coropt,0)
+	call keyd('corf',corf(1),1000.0D0)
+	call keyd('corf',corf(2),1500.0D0)
+	call keyd('corf',corf(3),2000.0D0)
+	call keyd('corf',corf(4),2500.0D0)
 	call keyd('corbw',bw(1),500.0D0)
 	call keyd('corbw',bw(2),500.0D0)
 	call keyd('corbw',bw(3),500.0D0)
@@ -244,7 +253,8 @@ c
 c  get channel numbers for spectral windows in order band 1 2 3 LSB, 1 2 3 USB
 c
        nbands = 3
-       call cormode(mode,bw,nbands,ischan,nschan,sfreq,sdf,nspect)
+       call cormode
+     *  (mode,corf,bw,nbands,ischan,nschan,sfreq,sdf,nspect)
 c
 c  number of channels in each sideband of LO1
 	nchan = (ischan(nspect) + nschan(nspect) - 1)/2
@@ -798,15 +808,18 @@ c
 	return
 	end
 c********1*********2*********3*********4*********5*********6*********7**
-       subroutine cormode(mode,bw,nbands,ischan,nschan,sfreq,sdf,nspect)
+       subroutine cormode
+     *  (mode,corf,bw,nbands,ischan,nschan,sfreq,sdf,nspect)
        implicit none
        integer mode,nbands,nspect,ischan(nspect)
-       double precision bw(nbands),sfreq(nspect),sdf(nspect)
+       double precision corf(nbands),bw(nbands)
+       double precision sfreq(nspect),sdf(nspect)
+c********1*********2*********3*********4*********5*********6*********7**
        real nschan(nspect)
 c
 c  Get correlator configuration
 c
-c  Input:  mode bw nbands
+c  Input:  mode corf bw nbands
 c  Output: ischan,nschan,sfreq,sdf,nspect
 c
        real sb
@@ -818,7 +831,7 @@ c
            sb =  2.*i -1.
            do j = 1,nbands
              k = j + i*nbands
-             sfreq(k) = sb * (500.0d0*(j+1) + bw(j)/16.)
+             sfreq(k) = sb * (corf(j) + bw(j)/16.)
              sdf(k) = sb * bw(j)/16.
              nschan(k) = 15
            enddo
