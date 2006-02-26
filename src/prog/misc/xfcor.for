@@ -2,11 +2,11 @@ c********1*********2*********3*********4*********5*********6*********7**
 	program corset
 	implicit none
 c
-c= corset - model correlator setups.
+c= XFCOR - model correlator configuration for CARMA.
 c& mchw
 c: utility
 c+
-c	XFCOR is a MIRIAD task to model the CARMA correlator setup.
+c	XFCOR is a MIRIAD task to model the CARMA correlator configuration.
 c	Input an observing frequency and IF freq and search
 c	spectral line files for all spectral lines that would be
 c	observable in IF passband. The positions of the lines in
@@ -32,6 +32,9 @@ c	The output log file.  The default is the terminal.
 c@ cormode
 c	The mode determines the correlator configuration and number of
 c	spectral windows. 
+c@ corbw
+c	Correlator bandwidths. Up to 4 values depending on the mode.
+c	Default corbw=500,500,500,500
 c@ birdie
 c	Number of birdies followed by a list of the birdie frequencies 
 c	in MHz. Up to 20 birdies are allowed. The default is 0 birdies.
@@ -181,7 +184,7 @@ c
 c  check bandwidths
 c
 	do i=1,4
-	  if(bw(i) .ne. 500.0d0) then 
+	  if(bw(i) .le. 0.0d0) then 
 	   errmsg=PROG // 'Illegal value for corbw '
 	   call bug('f',errmsg(1:Len1(errmsg)))
 	  endif
