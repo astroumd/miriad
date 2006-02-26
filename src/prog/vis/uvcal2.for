@@ -455,8 +455,8 @@ c            print *, ' dazim=',(2.062648062d05*dazim(i),i=1,nants)
 c            print *, ' delev=',(2.062648062d05*delev(i),i=1,nants)
 c
             call basant(preamble(5),ant1,ant2)
-              print *, ant1,dazim(ant1),delev(ant1)
-              print *, ant2,dazim(ant2),delev(ant2)
+c              print *, ant1,dazim(ant1),delev(ant1)
+c              print *, ant2,dazim(ant2),delev(ant2)
 c          print *, 'ant2,dazim,delev=',ant2,2.062648062d05*dazim(ant(2)
 c voltage pattern for ant2
             if(dazim(ant1).eq.0..and.delev(ant1).eq.0.) then
