@@ -6,15 +6,15 @@ c: image analysis
 c+
 c	IMHOL computes amplitude and phase images from real and
 c	imaginary holographic images. The amplitude image can be debiased,
-c       and the phase image is computed as atan2(imaginary/real).
+c	and the phase image is computed as atan2(imaginary/real).
 c@ in
 c	Two values; the real and imaginary images, respectively. The
 c	imaginary image can be made using the INVERT task with options=imaginary
 c	If the (u,v) coordinates for the holography data are in arcsec units
 c	then the images have units of nanosec (The inverse of the usual
 c	situation for astronomical imaging).
-c     Alternatively, the real and imaginary images can be obtained from
-c     images of the beam pattern using the MIRIAD task FFT.
+c	Alternatively, the real and imaginary images can be obtained from
+c	images of the beam pattern using the MIRIAD task FFT.
 c	The default units for the axes are in wavelengths.
 c	Wild card expansion is supported. 
 c@ mag
@@ -82,14 +82,15 @@ c    mchw 09aug93 Renamed IMHOL to keep Neil happy.
 c    mchw 09nov93 Fixed a bug in bmproc for planet holography.
 c    rjs  11oct95 Rework.
 c    rjs  02jul97 cellscal change.
-c    mchw 15apr98 Re-use and fix both doc and code in a few places.
+c    mchw 15apr98 Fix both doc and code in a few places.
 c    mchw 05aug04 Change default image axes to wavelengths, and default antenna size 6.1m.
+c    mchw 27feb06 CARMA holography. Use restfreq if frequency axis is missing.
 c------------------------------------------------------------------------
       implicit none
       include 'maxdim.h'
       include 'maxnax.h'
       character version*40
-      parameter (version = 'ImHol : version 05-Aug-2004')
+      parameter (version = 'IMHOL: version 27-FEB-2006')
 c
       real qepoch, uepoch, qcrpix(maxnax),ucrpix(maxnax), sigma,
      *		snclip, paclip
@@ -601,7 +602,7 @@ c
      *	epline(maxdim),paline(maxdim),epaline(maxdim)
       logical pass1, ok
       integer i,j,k, frqax
-      double precision fac, antdiam, subdiam
+      double precision fac, antdiam, subdiam, restfreq
       real psq, sigsq, snclipsq, freq, snr, p, rms, rmsw
       character ustr*8, aline*80, telescop*10
       double precision sum,sumxx,sumyy,sumr2,sumr4,sumz,sumzz,sumw,
@@ -612,6 +613,9 @@ c
       call rdhda(lq,'telescop',telescop,' ')
       call obspar(telescop,'antdiam',antdiam,ok)
       if(ok)then
+        write(aline,'(a,a,a,f4.1,a)')
+     *      'telescope= ', telescop, '  antdiam= ',antdiam, ' m'
+        call output(aline)
         antdiam = antdiam / 2. / 0.3
       else
         antdiam = 6.1
@@ -632,10 +636,21 @@ c
       do i = 1, naxis
         if (index(ctype(i),'FREQ').ne.0) frqax = i
       enddo
-      if (frqax.eq.0) call bug ('w', 
-     +    'Could not find frequency axis')
-      if (frqax.le.2) call bug ('f',
-     +    'Frequency axis is either 1 or 2.  These should be spatial')
+      if(frqax.eq.0) then
+        call bug ('w','Could not find frequency axis')
+        call rdhdd(lq,'restfreq',restfreq,0.)
+        if(restfreq.ne.0.d0) then
+          freq = restfreq
+        else
+          freq = 100.
+        endif
+        write(aline,'(a,g12.4,a)')
+     *      'Using frequency =', freq, ' GHz'
+        call output(aline)
+      else if(frqax.eq.1 .or. frqax.eq.2) then
+        call bug ('f',
+     *    'Frequency axis is 1 or 2.  These should be spatial')
+      endif
 c
 c  Make amplitude and phase images for each plane (frequency axis)
 c
@@ -647,26 +662,26 @@ c
         if (lpaout(1).ne.0) call xysetpl (lpaout(1), 1, k)
         if (lpaout(2).ne.0) call xysetpl (lpaout(2), 1, k)
 c
-	fac = 180./pi
-	ustr = 'degrees'
-	if(radians)then
-	  fac = 1.
-	  ustr = 'radians'
-	endif
+        fac = 180./pi
+        ustr = 'degrees'
+        if(radians)then
+          fac = 1.
+          ustr = 'radians'
+        endif
 c
 c Convert antdiam to wavelengths, and output phase image to microns
 c
-	if(frqax.eq.3)then
-		freq = (k-crpix(3))*cdelt(3) + crval(3)
-		antdiam = antdiam * freq
-		if(microns)then
+        if(frqax.ne.0)then
+          freq = (k-crpix(frqax))*cdelt(frqax) + crval(frqax)
+        endif
+        antdiam = antdiam * freq
+        if(microns)then
           fac = 0.5 / (2*pi) * cmks/freq * 1e-3
           ustr = 'microns'
-		endif
-	endif
-	sigsq = sigma * sigma
-	snclipsq = snclip * snclip
-	paclip = fac * paclip
+        endif
+        sigsq = sigma * sigma
+        snclipsq = snclip * snclip
+        paclip = fac * paclip
 c
 c  If(bmfit) then go thro' this loop twice:
 c  1st pass to accumulate the sums and 2nd pass to correct the data.
