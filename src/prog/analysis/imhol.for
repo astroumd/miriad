@@ -578,9 +578,9 @@ c
 c
       end
 c************************************************************************
-	subroutine bmproc (lq, lu, lpout, lpaout, naxis, size, crpix, 
-     +   crval, cdelt, ctype, debias, radians, microns, snclip, paclip,
-     +   sigma, zero,bmfit)
+      subroutine bmproc (lq, lu, lpout, lpaout, naxis, size, crpix, 
+     *   crval, cdelt, ctype, debias, radians, microns, snclip, paclip,
+     *   sigma, zero,bmfit)
 c
       implicit none
       integer lq, lu, lpout(2), lpaout(2), naxis, size(naxis)
@@ -686,21 +686,21 @@ c
 c  If(bmfit) then go thro' this loop twice:
 c  1st pass to accumulate the sums and 2nd pass to correct the data.
 c
-	pass1 = .true.
-100	continue
-	sum    = 0.d0
-	sumz   = 0.d0
-	sumzz  = 0.d0
-	sumw   = 0.d0
-	sumwz  = 0.d0
-	sumwzz = 0.d0
-	sumxx  = 0.d0
-	sumyy  = 0.d0
-	sumr2  = 0.d0
-	sumr4  = 0.d0
-	sumzx  = 0.d0
-	sumzy  = 0.d0
-	sumzr2 = 0.d0
+        pass1 = .true.
+100     continue
+        sum    = 0.d0
+        sumz   = 0.d0
+        sumzz  = 0.d0
+        sumw   = 0.d0
+        sumwz  = 0.d0
+        sumwzz = 0.d0
+        sumxx  = 0.d0
+        sumyy  = 0.d0
+        sumr2  = 0.d0
+        sumr4  = 0.d0
+        sumzx  = 0.d0
+        sumzy  = 0.d0
+        sumzr2 = 0.d0
 c
         do j = 1, size(2)
           call xyread  (lq, j, qline)
@@ -716,12 +716,12 @@ c
             if (snclip.gt.0.0) snr = psq / sigsq
 c
             call allblnk (pline(i), pflags(i), epline(i), 
-     +         epflags(i), paline(i), paflags(i), epaline(i),
-     +         epaflags(i))
+     *         epflags(i), paline(i), paflags(i), epaline(i),
+     *         epaflags(i))
             if (zero) pflags(i) = .true.
 c
             if ( (uline(i).eq.0.0 .and. qline(i).eq.0.0) .or.
-     +           (.not.qflags(i) .or. .not.uflags(i)) ) then
+     *           (.not.qflags(i) .or. .not.uflags(i)) ) then
 c
 c Undefined, so don't allow the "zero" blanking option
 c
@@ -746,8 +746,8 @@ c Failed the phase error blanking test.   Don't allow "zero"
 c blanking here. Blank both amplitude and phase.
 c
                 call allblnk (pline(i), pflags(i), epline(i), 
-     +            epflags(i), paline(i), paflags(i), epaline(i),
-     +            epaflags(i))
+     *            epflags(i), paline(i), paflags(i), epaline(i),
+     *            epaflags(i))
               else
 c
 c Debias intensity if required
@@ -761,8 +761,8 @@ c
 c Blank amplitude and phase if we can't debias amplitude
 c
                     call allblnk (pline(i), pflags(i), epline(i), 
-     +                epflags(i), paline(i), paflags(i), epaline(i),
-     +                epaflags(i))
+     *                epflags(i), paline(i), paflags(i), epaline(i),
+     *                epaflags(i))
 c
 c Zero is a reasonable estimate for this pixel so if requested,
 c leave the flag mask at good for the amplitude image
@@ -819,7 +819,7 @@ c
 c
 c Write out the images.
 c
-	  if(bmfit.and..not.pass1 .or. pass1.and..not.bmfit)then
+          if(bmfit.and..not.pass1 .or. pass1.and..not.bmfit)then
             if (lpout(1).ne.0) then
               call xywrite (lpout(1), j, pline)
               call xyflgwr (lpout(1), j, pflags)
@@ -844,86 +844,86 @@ c
 c  Sumarize results of focus and pointing fits.
 c
         if(pass1)then
-	  write(aline,'(a,i6)')
-     *	    'Number of points in phase fit =',int(sum)
-	  call output(aline)
-	  b   = sumzx/sumxx
-	  c   = sumzy/sumyy
-	  det = sumr2*sumr2 - sum*sumr4
-	  if (abs(det) .gt. 1.d-10) then
-	    dd = (sumz*sumr2-sumzr2*sum)/det
-	    d  = dd
-	    a  = (sumz-dd*sumr2)/sum
+          write(aline,'(a,i6)')
+     *	  'Number of points in phase fit =',int(sum)
+          call output(aline)
+          b   = sumzx/sumxx
+          c   = sumzy/sumyy
+          det = sumr2*sumr2 - sum*sumr4
+          if (abs(det) .gt. 1.d-10) then
+            dd = (sumz*sumr2-sumzr2*sum)/det
+            d  = dd
+            a  = (sumz-dd*sumr2)/sum
           else
-	    call output('Not fitting focus')
+            call output('Not fitting focus')
             a  = sumz/sum
-	    d  = 0.0
+            d  = 0.0
           endif
 c
-	  call output(
-     *      'Fit linear and quadratic terms to phase across aperture')
-	  call output('Phase(x,y) = A + Bx + Cy + D(x*x+y*y) '//ustr)
+          call output(
+     *    'Fit linear and quadratic terms to phase across aperture')
+          call output('Phase(x,y) = A + Bx + Cy + D(x*x+y*y) '//ustr)
           call output('Results of Phase Fit are:')
           write(aline,'(a,4(g12.5,3x))') 'A,B,C,D = ',A,B,C,D
-	  call output(aline)
+          call output(aline)
         endif
 c
 c  Compute the surface rms.
 c
-	if(sum.gt.0.)then
-	  rms = sqrt(sumzz/sum - (sumz/sum)**2)
-	  if(pass1)then
-	    write(aline,'(a,g12.5,1x,a)')
-     +		 'Surface rms before fit = ',rms, ustr
-	  else
-	    write(aline,'(a,g12.5,1x,a)')
-     +		 'Surface rms after fit = ',rms, ustr
-	  endif
-	  call output(aline)
-	endif
+        if(sum.gt.0.)then
+          rms = sqrt(sumzz/sum - (sumz/sum)**2)
+          if(pass1)then
+            write(aline,'(a,g12.5,1x,a)')
+     *		 'Surface rms before fit = ',rms, ustr
+          else
+            write(aline,'(a,g12.5,1x,a)')
+     *		 'Surface rms after fit = ',rms, ustr
+          endif
+          call output(aline)
+        endif
 c
 c  Compute the amplitude weighted surface rms.
 c
-	if(sumw.gt.0.)then
-	  rmsw = sqrt(sumwzz/sumw - (sumwz/sumw)**2)
-	  if(.not.pass1)then
-	    write(aline,'(a,g12.5,1x,a)')
-     +        'Amplitude weighted surface rms after fit = ',
-     +		rmsw, ustr
-	    call output(aline)
-	  endif
-	endif
+        if(sumw.gt.0.)then
+          rmsw = sqrt(sumwzz/sumw - (sumwz/sumw)**2)
+          if(.not.pass1)then
+            write(aline,'(a,g12.5,1x,a)')
+     *      'Amplitude weighted surface rms after fit = ',
+     *		rmsw, ustr
+            call output(aline)
+          endif
+        endif
 c
 c  Convert the fits to sensible units.
 c  B and C have units of 1/fac radians per wavelength. Convert to arcsecs.
 c
         if(frqax.eq.3)then
           freq = (real(k)-crpix(3))*cdelt(3) + crval(3)
-	  write(aline,'(a,2g12.5,a)') 'Pointing offset in az,el = ',
+        endif
+        write(aline,'(a,2g12.5,a)') 'Pointing offset in az,el = ',
      *	    b/fac/twopi*cmks/(freq*1e9)*180/pi*3600,
      *	    c/fac/twopi*cmks/(freq*1e9)*180/pi*3600, ' arcsecs'
-	  call output(aline)
-	  if(pass1)then
-	    write(aline,'(a,g12.5,a)') 'Surface rms before fit = ',
-     +	      0.5*rms/fac/twopi/freq*cmks*1.e-3, ' microns'
-	    call output(aline)
-	  else
-	    write(aline,'(a,g12.5,a)') 'Surface rms after fit = ',
-     +	      0.5*rms/fac/twopi/freq*cmks*1.e-3, ' microns'
-	    call output(aline)
-	    write(aline,'(a,g12.5,a)')
-     +        'Amplitude weighted surface rms after fit = ',
-     +	      0.5*rmsw/fac/twopi/freq*cmks*1.e-3, ' microns'
-	    call output(aline)
-          endif
+        call output(aline)
+        if(pass1)then
+	      write(aline,'(a,g12.5,a)') 'Surface rms before fit = ',
+     *	  0.5*rms/fac/twopi/freq*cmks*1.e-3, ' microns'
+	      call output(aline)
+        else
+	      write(aline,'(a,g12.5,a)') 'Surface rms after fit = ',
+     *	  0.5*rms/fac/twopi/freq*cmks*1.e-3, ' microns'
+	      call output(aline)
+	      write(aline,'(a,g12.5,a)')
+     *    'Amplitude weighted surface rms after fit = ',
+     *	  0.5*rmsw/fac/twopi/freq*cmks*1.e-3, ' microns'
+          call output(aline)
         endif
 c
         if(pass1.and.bmfit)then
-	  call output('  ')
-	  call output('Applying the fit to the output images')
-  	  pass1 = .false.
-  	  goto 100
-	endif
+          call output('  ')
+          call output('Applying the fit to the output images')
+  	      pass1 = .false.
+  	      goto 100
+        endif
 c
 c  Get next image plane
 c
