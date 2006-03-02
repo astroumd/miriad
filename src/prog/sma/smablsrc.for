@@ -7,8 +7,7 @@ c& jhz
 c: uv analysis
 c+
 c	SMABLSRC creates a uv dataset of pseudo-point sources, dividing 
-c       the channel data by the continuum vector. SMABLSRC also
-c       performs averaging, both in time and/or frequency.
+c       the channel data by the continuum vector.
 c@ vis
 c	The name of the input uv data sets. Several can be given (wild
 c	cards are supported). No default.
@@ -29,48 +28,33 @@ c@ stokes
 c	If a value is given, smablsrc converts the input into the required
 c	polarizations before writing to the output. Default is to copy
 c	across the polarizations present in the input files.
-c@ interval
-c	Time averaging interval, in minutes. The default is 0 (i.e. no
-c	averaging).
+c
 c@ options
-c	This gives extra processing options. Several options can be given,
-c	each separated by commas. They may be abbreivated to the minimum
-c	needed to avoid ambiguity. Possible options are:
-c	   nocal       Do not apply the gains file. By default, SMABLSRC
-c	               applies the gains file in copying the data.
-c	   nopass      Do not apply bandpass corrections. By default,
-c	               SMABLSRC corrects for the bandpass shape if the
-c	               required information is available.
-c	   nopol       Do not apply polarizatiopn corrections. By default
-c	               SMABLSRC corrects for polarization corss-talk.
-c	   relax       Normally SMABLSRC discards a correlation record if
-c	               all the correlations are bad. This option causes
-c	               SMABLSRC to retain all records.
-c	   vector      Means do vector averaging.  This is the default.
-c	   scalar      Means do scalar averaging for the amplitudes
-c	               and vector averaging for the phase.
-c	   scavec      Means do scalar averaging for the amplitudes of
-c	               the  `parallel-hand' polarisations (i,xx,yy,rr,ll).
-c	               Vector averaging is used for the amplitudes of
-c	               the cross-hand visibilities (q,u,v,xy,yx,rl,lr)
-c	               and for the phases for all visibilities.
+c	This gives extra processing options. 
+c          avechunk    do chunk based average.
 c@ out
 c	The name of the output uv data set. No default.
 c--
 c  History:
-c  jhz 2005-11-4 changed based on rjs's uvaver
+c  jhz 2005-11-4 changed based on  the uvaver of rjs
 c                for the purpose of make pseudo-point source
-c                data sets for baseline-based bandpass calibration.
-c                
+c                data sets for baseline-based bandpass calibration,
+c                taking out the hann and time average.
+c  jhz 2006-3-2  updated the algorithm: produce a vis data 
+c                fluctuating around the phase center with the
+c                amplitude unchanged.
+c                cleaned up unused options and keywords.
+c                added an options: avechunk-for calculating chunk
+c                amplitude level offsets.                     
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='SmaBlSrc: version 1.0 7-11-05')
+	parameter(version='SmaBlSrc: version 1.1 3-2-06')
 	character uvflags*12,ltype*16,out*64
 	integer npol,Snpol,pol,tIn,tOut,vupd,nread,nrec,i,nbin
 	real inttime,jyperk
 	logical dotaver,doflush,buffered,PolVary,ampsc,vecamp,first
-	logical relax,ok,donenpol
+	logical relax,ok,donenpol,dochunk
 	double precision preamble(5),Tmin,Tmax,Tprev,interval
 	complex data(MAXCHAN), ndata(maxchan)
 	logical flags(MAXCHAN)
@@ -82,23 +66,37 @@ c------------------------------------------------------------------------
         double precision sfreq(maxspect),sdf(maxspect)
         real chzwt(maxwin,maxpol), chnwt(maxchan)
         complex chz(maxwin,maxpol)
-        integer weight
-
-
+        integer weight,hann
+        integer maxco
+        parameter (maxco=15)
+        real hc(maxco)
 c
 c  Externals.
 c
 	logical uvDatPrb,uvDatOpn,uvVarUpd,updated
 c
+c initialization
+c
+        ampsc  = .false.
+        vecamp = .false.
+        relax  = .false. 
+
+c
 c  Get the input parameters.
 c
 	call output(version)
 	call keyini
-	call GetOpt(uvflags,ampsc,vecamp,relax)
+	call GetOpt(uvflags,dochunk)
 	call uvDatInp('vis',uvflags)
-	call keyd('interval',interval,0.d0)
+c	call keyd('interval',interval,0.d0)
+c        call keyi('hann',hann,1)
+              interval=0.d0
+              hann=1
 	call keya('out',out,' ')
 	call keyfin
+           if(hann.gt.15) call bug('f', 'hann exceeds the limits 15.')
+           if(hann.gt.1) call hcoeffs(hann,hc)
+
 c
 c  Check the input parameters.
 c
@@ -171,6 +169,7 @@ c
 c  Loop over the data.
 c
 	  call uvDatRd(preamble,data,flags,maxchan,nread)
+              
         updated =.true.
            nchan=nread
          call despect(updated,tIn,nchan,edge,chan,spect,
@@ -186,12 +185,15 @@ c
           bchan  = 0
           echan  = 0
           call avgchn(numpol,bchan,echan,data,flags,nchan,
-     *    nspect,nschan,maxchan,chnwt,chz,chzwt,weight)
+     *    nspect,nschan,maxchan,chnwt,chz,chzwt,
+     *    weight,dochunk)
 c
 c  divide the spectral channel by the pseudo continuum
 c
           call divchz(numpol,data,ndata,nchan,
-     *    nspect,nschan,maxchan,chnwt,chz,chzwt,weight,edge)
+     *    nspect,nschan,maxchan,chnwt,chz,chzwt,weight,
+     *    edge,dochunk)
+          if(hann.gt.1) call hannsm(hann,hc,nchan,ndata)
 
 	  Tprev = preamble(4)
 	  Tmin = Tprev
@@ -277,9 +279,8 @@ c
            if(nchan.gt.0) then
           call despect(updated,tIn,nchan,edge,chan,spect,
      *          maxspect,nspect,sfreq,sdf,nschan,state)
-         call rmsweight(tIn,chnwt,nchan,nspect,nschan,maxspect,
+          call rmsweight(tIn,chnwt,nchan,nspect,nschan,maxspect,
      *    maxchan,weight,edge)
-                                                                                                       
 c
 c  calculate pseudo continuum channels
 c
@@ -287,12 +288,14 @@ c
           bchan  = 0
           echan  = 0
           call avgchn(numpol,bchan,echan,data,flags,nchan,
-     *    nspect,nschan,maxchan,chnwt,chz,chzwt,weight)
+     *    nspect,nschan,maxchan,chnwt,chz,chzwt,weight,dochunk)
 c
 c  divide the spectral channel by the pseudo continuum
 c
           call divchz(numpol,data,ndata,nchan,
-     *    nspect,nschan,maxchan,chnwt,chz,chzwt,weight,edge)
+     *    nspect,nschan,maxchan,chnwt,chz,chzwt,weight,
+     *    edge,dochunk)
+             if(hann.gt.1) call hannsm(hann,hc,nchan,ndata)
            end if
 	  enddo
 c
@@ -319,46 +322,33 @@ c
 	call uvclose(tOut)
 	end
 c************************************************************************
-	subroutine GetOpt(uvflags, ampsc, vecamp,relax)
+	subroutine GetOpt(uvflags,dochunk)
 c
 	implicit none
-        logical ampsc,vecamp,relax
+        logical dochunk
 	character uvflags*(*)
 c
 c  Determine the flags to pass to the uvdat routines.
 c
 c  Output:
-c    uvflags	Flags to pass to the uvdat routines.
-c    ampsc      True for amp-scalar averaging
-c    vecamp	True for vector averaging on everything except
-c		parallel-hand amplitudes.
-c    relax	Do not discard bad records.
+c   dochunk  Do chunk-based avarage, filling a constant
+c            in each of spectral chunks.
 c------------------------------------------------------------------------
 	integer nopts
-	parameter(nopts=7)
+	parameter(nopts=1)
 	character opts(nopts)*9
 	integer l
-	logical present(nopts),docal,dopol,dopass,vector
-	data opts/'nocal    ','nopol    ','nopass   ',
-     *            'vector   ','scalar   ','scavec   ','relax    '/
+	logical present(nopts),docal,dopol,dopass
+	data opts/'avechunk '/
 c
 	call options('options',opts,present,nopts)
-	docal = .not.present(1)
-	dopol = .not.present(2)
-	dopass= .not.present(3)
-        vector = present(4)
-        ampsc  = present(5)
-        vecamp = present(6)
-	relax  = present(7)
+	docal = .false.
+	dopol = .false.
+	dopass= .false.
+        dochunk= present(1)
 c
 c Default averaging is vector
 c
-        if (vector .and. ampsc) call bug ('f',
-     *     'You can''t have options=vector and options=scalar')
-        if (vector .and. vecamp) call bug ('f',
-     *     'You can''t have options=vector and options=scavec')
-        if (ampsc .and. vecamp) call bug ('f',
-     *     'You can''t have options=scalar and options=scavec')
 c
 c Set up calibration flags
 c
@@ -735,13 +725,14 @@ c
         end
 c************************************************************************
         subroutine avgchn(numpol,bchan,echan,data,flags,nchan,
-     *  bpnspect,bpnschan,maxchan,chnwt,chz,chzwt,weight)
+     *  bpnspect,bpnschan,maxchan,chnwt,chz,chzwt,
+     *  weight,dochunk)
         PARAMETER(maxwin=33, maxschan=1024, maxpol=2)
         integer nchan,bpnspect,maxchan,bpnschan(maxwin)
         integer i,j,numpol,bchan,echan, ipol
         integer bschan, eschan
         complex data(maxchan)
-        logical flags(maxchan), nsflag(maxschan)
+        logical flags(maxchan), nsflag(maxschan),dochunk
         real ysr(maxschan), ysi(maxschan)
 c
 c  calculate pseudo continuum vector
@@ -810,11 +801,13 @@ c initialize
         cntnumreal = 1.0
         cntnumimag = 0.
         endif
+       if(.not.dochunk) then 
        do j =1, bpnspect
          chzwt(j,ipol) = cntnumwt
          chz(j,ipol) =
      * cmplx(cntnumreal*cntnumnorm,cntnumimag*cntnumnorm)
        enddo
+         end if
              endif
          end
                                                                                 
@@ -822,7 +815,7 @@ c initialize
 c************************************************************************
         subroutine divchz(numpol,data,ndata,nchan,
      *  bpnspect,bpnschan,maxchan,chnwt,chz,chzwt,weight,
-     *  edge)
+     *  edge,dochunk)
         PARAMETER(maxwin=49, maxschan=1024, maxpol=2)
         PARAMETER(pi=3.14159265358979323846)
         integer nchan,bpnspect,maxchan,bpnschan(maxwin)
@@ -831,6 +824,7 @@ c************************************************************************
         complex data(maxchan),ndata(maxchan)
         real chnwt(maxchan), chwt
         real vr,vi,chzr,chzi
+        logical dochunk
 c
 c  normalize the channel data by dividing the pseudo continuum vector
 c  calculate the correspoding weight for the channel data.
@@ -840,8 +834,24 @@ c  chzwt: weight of channel zero
 c  chz:   vis data of channel zero
         real chzwt(maxwin,maxpol)
         complex chz(maxwin,maxpol)
-        real DENOM, AMPD,ar,ai
-        integer weight
+        real DENOM, AMPD,ar,ai, ALLDENOM
+        integer weight, nchunk
+          nchunk=0
+          ALLDENOM =0.0
+          ipol=1
+          if(dochunk) then
+           do j=1, bpnspect
+          chzr=real(chz(j,ipol))
+          chzi=aimag(chz(j,ipol))
+         if(chzwt(j,ipol).gt.0.0) then
+             ALLDENOM=ALLDENOM+chzr**2+chzi**2
+             nchunk=nchunk+1
+             end if
+           end do
+             if(nchunk.gt.0) then
+             ALLDENOM=ALLDENOM/nchunk
+             end if
+          end if
          ntcount=0
 c assuming numpol =1
          ipol=1
@@ -868,8 +878,14 @@ c
                    chwt=chnwt(ntcount)
          chnwt(ntcount)=DENOM*DENOM*chwt*chzwt(j,ipol)
      *   / (DENOM*chzwt(j,ipol)+AMPD*chwt)
-              ar = (chzr*vr+chzi*vi)  / DENOM
-              ai = (chzr*vi-chzi*vr) / DENOM
+c   keep the original ampl scale
+               ar = (chzr*vr+chzi*vi)/ sqrt(DENOM) 
+               ai = (chzr*vi-chzi*vr)/ sqrt(DENOM) 
+             if(dochunk) then
+c normalized
+             ar = chzr
+             ai = chzi  
+                 end if  
            ndata(ntcount) = cmplx(ar,ai)
           if(weight.ge.2) chnwt(ntcount)=chnwt(ntcount)**2
           enddo
@@ -1028,4 +1044,167 @@ c
             enddo
             end
                                                                                 
+       subroutine hannsm (nsmth, coeffs, npts,arr)
+        implicit none
+        integer npts, nsmth
+        complex arr(npts), coeffs(nsmth)
+c
+c  Hanning smooth an array.
+c
+c  Input:
+c    nsmth    i    Smoothing length.  SHould be odd integer.
+c    coeffs   r    Weights.
+c    npts     i    Number of data points.
+c  Input/output:
+c    arr      r    Data array.  Contains smoothed result on output
+c-------------------------------------------------------------------------
+        complex work(nsmth)
+        complex sum
+        integer half, i, j, k, j1, j2
+c--------------------------------------------------------------------------
+      if (nsmth.lt.3) return
+            do i=1, nsmth
+            work(i)=cmplx(1., 0.0)
+            end do
+c
+      half = (nsmth - 1) / 2
+      j1 = 1
+      j2 = 1
+c
+      do i = 1, npts
+c
+c Compute smoothed output point and do something with ends
+                                                                                                   
+c
+        k = 1
+        sum = 0.0
+        do j = i-half, i+half
+          if (j.lt.1) then
+            sum = sum + coeffs(k)*arr(1)
+          else if (j.gt.npts) then
+            sum = sum + coeffs(k)*arr(npts)
+          else
+            sum = sum + coeffs(k)*arr(j)
+          end if
+          k = k + 1
+        end do
+c
+c Assign smoothed point to temporary cyclic buffer
+c
+        work(j1) = sum
+c
+c Copy smoothed point to input array when no longer needed as input
+c
+        if (i.ge.half+1) then
+           arr(i-half) = work(j2)
+c
+           j2 = j2 + 1
+           if (j2.gt.nsmth) j2 = 1
+        end if
+c
+        j1 = j1 + 1
+        if (j1.gt.nsmth) j1 = 1
+      end do
+c
+c Copy remaining smoothed points into input
+c
+      do j = npts-half+1, npts
+        arr(j) = work(j2)
+c
+        j2 = j2 + 1
+        if (j2.gt.nsmth) j2 = 1
+      end do
+c
+      end
+
+        subroutine hannssm (nsmth, coeffs, npts,data)
+        implicit none
+        integer npts, nsmth
+        complex data(npts), coeffs(nsmth)
+c
+c  Hanning smooth amplitude and phase of an array, separately.
+c
+c  Input:
+c    nsmth    i    Smoothing length.  Should be odd integer.
+c    coeffs   r    Weights.
+c    npts     i    Number of data points.
+c  Input/output:
+c    arr      r    Data array.  Contains smoothed result on output
+c-------------------------------------------------------------------------
+        real worka(nsmth),workp(nsmth), ampl(npts), phas(npts)
+        real suma, sump, pi
+        integer half, i, j, k, j1, j2
+        parameter(pi=3.14159265358979323846)
+c--------------------------------------------------------------------------
+      if (nsmth.lt.3) return
+c
+      half = (nsmth - 1) / 2
+      j1 = 1
+      j2 = 1
+c
+      do i = 1, npts
+c ampl
+              ampl(i) = sqrt(real(data(i))**2 + aimag(data(i))**2)
+c phas
+              if(abs(real(data(i)))+abs(aimag(data(i))).eq.0)then
+              phas(i) =0.0
+              else
+              phas(i)=180./pi*atan2(aimag(data(i)),real(data(i)))
+              endif
+         end do
+         do i = 1, npts
+c
+c Compute smoothed output point and do something with ends
+c
+         k = 1
+         suma = 0.0
+         sump = 0.0
+          do j = i-half, i+half
+          if (j.lt.1) then
+            suma = suma + coeffs(k)*ampl(1)
+            sump = sump + coeffs(k)*phas(1)
+          else if (j.gt.npts) then
+            suma = suma + coeffs(k)*ampl(npts)
+            sump = sump + coeffs(k)*phas(npts)
+          else
+            suma = suma + coeffs(k)*ampl(j)
+            sump = sump + coeffs(k)*phas(j)
+          end if
+          k = k + 1
+          end do
+c
+c Assign smoothed point to temporary cyclic buffer
+c
+        worka(j1) = suma
+         workp(j1) = sump
+c
+c Copy smoothed point to input array when no longer needed as input
+c
+        if (i.ge.half+1) then
+           ampl(i-half) = worka(j2)
+           phas(i-half) = workp(j2)
+c
+           j2 = j2 + 1
+           if (j2.gt.nsmth) j2 = 1
+        end if
+c
+           j1 = j1 + 1
+           if (j1.gt.nsmth) j1 = 1
+      end do
+c
+c Copy remaining smoothed points into input
+c
+       do j = npts-half+1, npts
+       ampl(j) = worka(j2)
+       phas(j) = workp(j2)
+c
+       j2 = j2 + 1
+       if (j2.gt.nsmth) j2 = 1
+       end do
+       do j=1, npts
+       data(j) = ampl(j)*cmplx(cos(phas(j)), sin(phas(j)))
+       end do
+c
+      end
+                                                                                           
 
