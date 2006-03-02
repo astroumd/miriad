@@ -1,6 +1,6 @@
 c************************************************************************
 c
-c  Include file for uvaver.for
+c  Include file for smablsrc.for
 c
 c  Buf		Buffer used to accumulate the data.
 c  Bufr         Buffer used to accumulate amplitudes
