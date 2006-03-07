@@ -149,6 +149,13 @@ c	Rotate uv coordinates and hence image by parot degrees.
 c	Rotation is +ve to the E from N. i.e. increasing PA.
 c	Default is no rotation.
 c
+c@ seeing
+c	Amplitude correction for atmospheric coherence, specified by
+c	the FWHM in arcsec, of a circular Gaussian fit to
+c	the phase calibrator(s) for the target source.
+c	Use uvfit object=gauss fix=xyc....
+c	Default seeing=0. is no amplitude correction.
+c
 c@ out
 c	The name of the output uv data set. No default.
 c--
@@ -202,6 +209,7 @@ c    mchw 27nov04  Add fxcal.  uvset(tOut,'preamble','uvw/time/baseline')
 c    mchw 22dec04  Subtract offset from uvdata.
 c    mchw 22apr05  add code to change phase center.
 c    mchw 05may05  change sign of phase correction in pcenter.
+c    mchw 05aug05  seeing correction for atmospheric coherence
 c    mchw 28jan06  update options=avechan.
 c    mchw 25feb06  update holography options=holo.
 c    mchw 05mar06  options=slope: fit phase slope for each spectral window. 
@@ -209,7 +217,7 @@ c------------------------------------------------------------------------
 	include 'maxdim.h'
 	integer maxbad
 	character version*(*)
-	parameter(version='UVCAL: version 3.0 05-mar-2006')
+	parameter(version='UVCAL: version 3.0 06-mar-2006')
 	parameter(maxbad=20)
 	real PI
 	parameter(PI=3.1415926)
@@ -223,7 +231,7 @@ c
 	logical dochan,dowide,docopy,updated,doscale,dopolcal,domodel
 	logical nocal,nopol,nopass,nowide,nochan,doall,dopass,
      *       dohann,docont,doconj,dophase,holo,dopower,avechan,slope,
-     *       linecal,uvrot,doparang,dooffset,dofxcal
+     *       linecal,uvrot,doparang,dooffset,dofxcal,doseeing
 	character out*64,type*1,uvflags*8
 	real mask(MAXCHAN),sigma
 	integer polcode,nants,ant1,ant2
@@ -232,6 +240,7 @@ c
 	complex coffset
 	double precision obsra,obsdec,dazim(MAXANT),delev(MAXANT)
 	double precision ra,dec,uu,vv,epoch,jepoch,theta,costh,sinth,jd
+	real seeing, fwhms, uvsig, gauss
 c
 c  Externals.
 c
@@ -240,6 +249,7 @@ c
 	complex expi
 c
 	call output(version)
+	call bug('i','05aug05 seeing correction for coherence')
 	call bug('i','28jan06 options=avechan. Make new wideband')
 	call bug('i','25feb06 options=holo: pointing and holography')
 	call bug('i','05mar06 options=slope: phase slope and baseline')
@@ -287,6 +297,7 @@ c
 	call keyr('polcal',polcal(2),0.)
 	call keyi('polcode',polcode,0)
 	call keyr('parot',parot,0.)
+	call keyr('seeing',seeing,0.)
 	call keyfin
 c
 c  Check user inputs.
@@ -301,6 +312,7 @@ c
 	doscale = scale(1).ne.0..or.scale(2).ne.0.
 	dopolcal = polcal(1).ne.0.
 	if(dopolcal) polcal(2) = polcal(2)*PI/180.
+	doseeing = seeing.ne.0.
 c
 c  Open the output.
 c
@@ -396,6 +408,20 @@ c
 c  Special processing options.
 c
 
+c
+c  Correct amplitude for atmospheric phase coherence
+c
+       if(doseeing)then
+         fwhms = seeing * pi / 180. / 3600.
+         uvsig = 1. / (pi * 0.6 * fwhms)
+         uu = preamble(1)
+         vv = preamble(2)
+         gauss = ( uu * uu + vv * vv) / uvsig**2
+c         print *, fwhms, uvsig, gauss
+         call cohere(lIn,data,flags,nchan,wdata,wflags,nwide,
+     *                  dowide,dochan,gauss)
+       endif
+c
 c   Calibrate FX correlator data
 c   by dividing the cross correlations by the geometric mean
 c   of the autocorrelations.
@@ -1525,4 +1551,59 @@ c
 	endif
 c
 	end
+c********1*********2*********3*********4*********5*********6*********7*c
+       subroutine cohere(lIn,data,flags,nchan,wdata,wflags,nwide,
+     *                  dowide,dochan,gauss)
+c********1*********2*********3*********4*********5*********6*********7*c
+       implicit none
+       integer lIn,nchan,nwide
+       complex data(nchan), wdata(nchan)
+       real gauss
+       logical flags(nchan), wflags(nchan), dowide, dochan
+c
+c  Apply atmospheric phase coherence correction.
+c
+c
+c  In:
+c    lIn    Handle of input uv-data.
+c    data   data
+c    nchan  Number of input channel or wideband data.
+c    gauss  u**2 + v**2 in nanosec / sigma**2 in wavelengths
+c    dowide do wide data.
+c    dochan do channel data
+c  Out:
+c    data
+c    wdata  wide data
+c    wflags wide flags
+c    wflags chan flags
+c    nwide  number of wide data.
+
+c------------------------------------------------------------------------
+       include 'maxdim.h'
+       include 'mirconst.h'
+       integer i
+       double precision sfreq(MAXCHAN)
+       real wfreq(MAXCHAN)
+
+c
+c  correct the amplitude by exp [( u**2 + v**2 ) / sigma**2.]
+c
+c
+c  Handle the wideband if channel data also present.
+c
+       if(dowide.and.dochan) then
+         call uvDatWRd(wdata,wflags,MAXCHAN,nwide)
+         call uvgetvrr(lIn,'wfreq',wfreq,nwide)
+         do i=1,nwide
+           wdata(i) = wdata(i) * exp(wfreq(i)*wfreq(i)*gauss)
+         enddo
+       endif
+c
+c  Handle the selected data.
+c
+       call uvinfo(lIn,'sfreq',sfreq)
+       do i=1,nchan
+	     data(i) = data(i) * exp(sfreq(i)*sfreq(i)*gauss)
+       enddo
+       end
 c********1*********2*********3*********4*********5*********6*********7*c
