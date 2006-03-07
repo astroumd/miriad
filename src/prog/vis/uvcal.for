@@ -9,89 +9,115 @@ c+
 c	UVCAL is a MIRIAD task which applies special processing options
 c	to uv-data. By default, UVCAL applies the calibration files 
 c	before it processes the uv-data into the output file.
+c
 c@ vis
 c	The names of the input uv data sets. Multiple names can be given,
 c	separated by commas. At least one name must be given.
+c
 c@ select
 c	The normal uv selection commands. See the Users manual for details.
 c	The default is to process all data. Note that window selection can
 c	not be used with options=hanning, passband, contsub, or wide.
+c
 c@ radec
 c   Source right ascension and declination. These can be given in
 c   hh:mm:ss,dd:mm:ss format, or as decimal hours and decimal
 c   degrees. Setting RA and DEC will change the phase center to
 c   the RA and DEC specified. The default leaves the data unchanged.
+c
 c@ options
 c	This gives extra processing options. Several options can be given,
 c	each separated by commas. They may be abbreivated to the minimum
 c	needed to avoid ambiguity. Possible options are:
-c	   'nocal'      Do not apply the gains file.
-c	   'nopass'     Do not apply bandpass corrections.
-c	   'nopol'      Do not apply the polarization leakage file.
-c	   'nowide'     Do not copy across wide-band channels.
-c	   'nochannel'  Do not copy across spectral channels.
-c	   'unflagged'  Copy only those records where there are some
-c	                unflagged visibilites.
-c	   'contsub'    Continuum subtraction using a linear fit to the real
-c                   and imaginary parts of each spectral window.
-c 	                Exclude badchan and endchan specified below.
-c	   'conjugate'  Conjugate visibilities
-c      'fxcal'      Calibrate FX correlator data
-c                   by dividing the cross correlations by the 
-c                   geometric mean of the autocorrelations.
-c	   'hanning'    Hanning smooth each spectral window.
-c	   'holo'       Replace u,v with dra,ddec for holography.
-c	   'linecal'	Remove phase slope across passband due to line length
-c                   changes. This option also corrects the phase difference
-c                   between the wide channels due to line length.
-c                   options=linecal,wide will re-make the wideband from
-c                   the channel data after the phase slope is removed.	
-c                   option can gain in SNR for the wide channels might be
-c      'parang'	    Multiply LR by expi(2*chi) and RL by expi(-2*chi)
-c                   where chi is the parallactic angle for Alt-Az antennas.
-c	   'passband'   Fit passband to lsb and correct the uv-data.
-c                   Can be used when the source is strong. e.g. for
-c	                planets. The passband is estimated from the lsb,
-c	                smoothed within each spectral window, and applied
-c	                to the lsb data. The complex conjugate is applied
-c                   to the usb. This corrects for time variable IF
-c                   passband errors. The uv-data must contain the same
-c                   spectral windows in both sidebands of LO1.
-c	   'uvrotate'	Rotate uv-coordinates from current to standard epoch.
-c                   The standard epoch, ra, dec can be changed using PUTHD.
-c	   'avechan'	Average unflagged spectral channels into wideband
+c	'nocal'      Do not apply the gains file.
+c	'nopass'     Do not apply bandpass corrections.
+c	'nopol'      Do not apply the polarization leakage file.
+c	'nowide'     Do not copy across wide-band channels.
+c	'nochannel'  Do not copy across spectral channels.
+c	'unflagged'  Copy only those records where there are some
+c	             unflagged visibilites.
+c	'contsub'    Continuum subtraction using a linear fit to the real
+c	             and imaginary parts of each spectral window.
+c 	             Exclude badchan and endchan specified below.
+c	'conjugate'  Conjugate visibilities
+c	'fxcal'      Calibrate FX correlator data
+c	             by dividing the cross correlations by the 
+c	             geometric mean of the autocorrelations.
+c	'hanning'    Hanning smooth each spectral window.
+c
+c	'linecal'    Remove phase slope across passband due to line length
+c	             changes. This option also corrects the phase difference
+c	             between the wide channels due to line length.
+c	             options=linecal,avechan remakes the wideband from
+c	             the channel data after the phase slope is removed.	
+c	'parang'     Multiply LR by expi(2*chi) and RL by expi(-2*chi)
+c	             where chi is the parallactic angle for Alt-Az antennas.
+c	'passband'   Fit passband to lsb and correct the uv-data.
+c	             Can be used when the source is strong. e.g. for
+c	             planets. The passband is estimated from the lsb,
+c	             smoothed within each spectral window, and applied
+c	             to the lsb data. The complex conjugate is applied
+c	             to the usb. This corrects for time variable IF
+c	             passband errors. The uv-data must contain the same
+c	             spectral windows in both sidebands of LO1.
+c	 'uvrotate'  Rotate uv-coordinates from current to standard epoch.
+c	             The standard epoch, ra, dec can be changed using PUTHD.
+c	 'avechan'   Average unflagged spectral channels. Make new wideband.
 c                   excluding badchan and endchan specified below.
-c	   'slope'	    Fit phase slope for each spectral window and store into
-c                   wideband channel phase in units radians/GHz. 
+c	 'slope'    Fit phase slope for each spectral window. Make new wideband.
+c                   wideband phase is slope in units radians/GHz, and can
+c                   be used to fit delay and antenna positions using BEE. 
 c                   Exclude badchan and endchan.
+c	 'holo'      
+c       Enable other MIRIAD tasks to analyze interferometer pointing data.
+c       replace [u,v] with [dazim,delev] for ant1 in each baseline.
+c       if(dazim(ant1).eq.0  .and.  delev(ant1).eq.0) then replace [u,v] with
+c       [dazim,delev] for ant2 in each baseline. If both ant1 and ant2 have
+c       zero dazim and delev, then [u,v] = [0,0]. [u,v] are in arcsec units. 
+c       The data can be calibrated using select=uvnrange. N.B. not "uvrange".
+c       e.g. uvcal options=holo vis='infile' out='outfile'
+c          selfcal vis='outfile' 'select=uvnrange(0,1)' options=amp flux=1
+c       Beam profiles can then be analysed using standard programs. e.g. UVPLT.
+c       Holography images of antenna surfaces are made using INVERT and IMHOL.
+c       INVERT makes a real image; options=imaginary makes the imaginary part.
+c       IMHOL combines the real and imaginary images into amplitude and phase
+c       images of the antenna surface.
+c       Related tasks: VARMAP makes images versus [dazim,delev] directly.
 c
 c	NOTE: 	Options=nochannel cannot be used with "hanning", "passband"
 c	and "contsub". For these 3 options no processing is performed on the
 c	wideband data.
+c
 c@ badchan
 c	Number of ranges of bad channels followed by list of up to 20 pairs
 c	of numbers giving range of channels to exclude in options=contsub
 c	and options=avechan. E.g. badchan=3,1,3,15,16,256,257 
 c	excludes the 3 ranges	(1,3) (15,16) and (265,257)
+c
 c@ endchan
 c	Number of channels to drop from the ends of each spectral
 c	window in options=passband, contsub, and avechan. Default=0.
+c
 c@ nave
 c	Number of channels to average in options=passband. Default=1.
+c
 c@ sigma
 c	Rms noise level used to flag data in options=contsub. All channels
 c	are flagged if the rms noise level per channel is greater than sigma
 c	after subtracting the continuum. Endchan and badchan are not included
 c	in computing the rms. The default is sigma=0. which does not flag
 c	any data.
+c
 c@ scale
 c	Multiply the data and wideband by cmplx(scale1,scale2). Two values.
 c	Default is no scaling. If only one value is given it is assumed to
 c	be a real value. E.g. scale=0,1 multiplies the data by sqrt(-1)
+c
 c@ offset
 c	Subtract a complex valued offset from the uv-data. Two values give
 c   amplitude (after calibrations have been applied by uvcal) 
 c   and phase in degrees.  Default is none.
+c
 c@ model
 c	Subtract a source model from the uv-data. Three values
 c	give the flux density [Jy], scale [nanosecs], and index 
@@ -99,6 +125,7 @@ c	for a radial power law:
 c		model = flux * (uvdist/scale) ** index
 c	The model visibility is subtracted from the uv-data.
 c	Default model=0,0,0. i.e. no model is subtracted.
+c
 c@ polcal
 c	Subtract the source polarization from the uv-data. Two values
 c	give polarized intensity, Ip, and position angle, 2*psi, in degrees.
@@ -109,16 +136,19 @@ c	where chi is the parallactic angle for Alt-Az antennas.
 c	Default=0,0. is no correction.
 c	After subtracting the source polarization, the averaged uv-data
 c	gives the instrumental polarization for each baseline.
+c
 c@ polcode
 c	Change the polarization code. Default polcode=0 makes no change.
 c	Polarizations are  YX,XY,YY,XX,LR,RL,LL,RR,-,I,Q,U,V
 c	Polarization codes -8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4
 c	E.g.  polcode=4  changes YX,XY,YY,XX to LR,RL,LL,RR
 c	E.g.  polcode=-4 changes LR,RL,LL,RR to YX,XY,YY,XX
+c
 c@ parot
 c	Rotate uv coordinates and hence image by parot degrees.
 c	Rotation is +ve to the E from N. i.e. increasing PA.
 c	Default is no rotation.
+c
 c@ out
 c	The name of the output uv data set. No default.
 c--
@@ -173,11 +203,13 @@ c    mchw 22dec04  Subtract offset from uvdata.
 c    mchw 22apr05  add code to change phase center.
 c    mchw 05may05  change sign of phase correction in pcenter.
 c    mchw 28jan06  update options=avechan.
+c    mchw 25feb06  update holography options=holo.
+c    mchw 05mar06  options=slope: fit phase slope for each spectral window. 
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	integer maxbad
 	character version*(*)
-	parameter(version='UVCAL: version 3.0 28-Jan-2006')
+	parameter(version='UVCAL: version 3.0 05-mar-2006')
 	parameter(maxbad=20)
 	real PI
 	parameter(PI=3.1415926)
@@ -194,8 +226,8 @@ c
      *       linecal,uvrot,doparang,dooffset,dofxcal
 	character out*64,type*1,uvflags*8
 	real mask(MAXCHAN),sigma
-	integer polcode,nants
-	real dra,ddec,parot,sinpa,cospa
+	integer polcode,nants,ant1,ant2
+	real parot,sinpa,cospa
 	real scale(2),polcal(2),model(3),offset(2)
 	complex coffset
 	double precision obsra,obsdec,dazim(MAXANT),delev(MAXANT)
@@ -208,7 +240,11 @@ c
 	complex expi
 c
 	call output(version)
-	call bug('i','   New options: avechan 27Jan06')
+	call bug('i','28jan06 options=avechan. Make new wideband')
+	call bug('i','25feb06 options=holo: pointing and holography')
+	call bug('i','05mar06 options=slope: phase slope and baseline')
+c********1*********2*********3*********4*********5*********6*********7*c
+c
 	call keyini
 	call GetOpt(nocal,nopol,nopass,nowide,nochan,doall,dopass,
      *       dohann,docont,doconj,dophase,holo,dopower,avechan,slope,
@@ -412,107 +448,108 @@ c   Default is no rotation.
                preamble(2) = (vv * cospa) - (uu * sinpa)
               endif
 c
+c  Make Holographic data.
+c
 	      if(holo)then
 	        call uvgetvri(lIn,'nants',nants,1)
-            print *, ' nants=',nants
+c            print *, ' nants=',nants
 	        call uvgetvrd(lIn,'dazim',dazim,nants)
-            print *, ' dazim=',(2.062648062d05*dazim(i),i=1,nants)
+c            print *, ' dazim=',(2.062648062d05*dazim(i),i=1,nants)
 	        call uvgetvrd(lIn,'delev',delev,nants)
-            print *, ' delev=',(2.062648062d05*delev(i),i=1,nants)
+c            print *, ' delev=',(2.062648062d05*delev(i),i=1,nants)
 c
-c if dazim(i)=delev(i)=0. for i=1,nants, then set dra=ddec=0., else dra=ddec=1.e-3
-            dra  = 0. 
-            ddec = 0. 
-c            do i=1,nants
-c unfortunately, antennas which are not used have non-zero dazim,delev
-c so just use antennas 1,5,9 which were active antennas for 2006feb16.rpoint.grid.2.mir
-            do i=1,9,4
-              if(dazim(i).ne.0.d0 .or. delev(i).ne.0.d0) then
-                dra  = 1.e-3
-                ddec = 1.e-3
-              endif
-            enddo
-	        call uvputvrr(lOut,'dra',dra,1)
-	        call uvputvrr(lOut,'ddec',ddec,1)
-	        preamble(1) = 2.062648062d05*dra
-	        preamble(2) = 2.062648062d05*ddec
+            call basant(preamble(5),ant1,ant2)
+c              print *, ant1,dazim(ant1),delev(ant1)
+c              print *, ant2,dazim(ant2),delev(ant2)
+c          print *, 'ant2,dazim,delev=',ant2,2.062648062d05*dazim(ant(2)
+c voltage pattern for ant2
+            if(dazim(ant1).eq.0..and.delev(ant1).eq.0.) then
+              preamble(1) = 2.062648062d05*dazim(ant2)
+              preamble(2) = 2.062648062d05*delev(ant2)
+c voltage pattern for ant1
+            else
+              preamble(1) = 2.062648062d05*dazim(ant1)
+              preamble(2) = 2.062648062d05*delev(ant1)
+	        endif
 	      endif
+c
+c  Processing options
 c
 	      if(dohann) call Hanning(lIn,data,flags,nchan)
 	      if(dopass) call Passband(lIn,data,flags,nchan,
      *							endchan,nave)
-	      if(docont) call Contsub(lIn,data,flags,nchan,
+	      if(docont) call contsub(lIn,data,flags,nchan,
      *						endchan,mask,sigma)
 	      if(linecal)
      *		  call linecal1(lIn,data,flags,nchan,wdata,wflags,nwide,
      *					dowide,dochan,preamble)
 	      if(avechan)
      *	          call makewide(lIn,data,flags,nchan,wdata,wflags,nwide,
-     *					endchan,mask)
+     *					dowide,lOut,endchan,mask)
 	      if(slope)
      *	          call fitslope(lIn,data,flags,nchan,wdata,wflags,nwide,
-     *					endchan,mask)
+     *					dowide,lOut,endchan,mask,sigma)
 c
 c  Process the wideband data separately if doing both wide and channel data.
 c
 	      if(dowide.and.dochan)then
                 if(.not.(slope.or.avechan.or.linecal))
      *                    call uvDatWRd(wdata,wflags,maxchan,nwide)
-		if(dooffset)then
-		  do i=1,nwide
-		    wdata(i) = wdata(i) - coffset
-		  enddo
-		endif
-		if(doscale)then
-		  do i=1,nwide
-		    wdata(i) = cmplx(scale(1),scale(2)) * wdata(i)
-		  enddo
-		endif
-		if(doconj)then
-		  do i=1,nwide
-		    wdata(i) = conjg(wdata(i))
-		  enddo
-		endif
-		if(doparang)then
-		  call parang1(lIn,Pol,wdata,nwide)
-		endif
-		if(domodel)then
-		  call model1(lIn,preamble,wdata,nwide,model)
-		endif
-		if(dopolcal)then
-		  call polcal1(lIn,Pol,wdata,nwide,polcal)
-		endif
+            if(dooffset)then
+              do i=1,nwide
+                wdata(i) = wdata(i) - coffset
+              enddo
+            endif
+            if(doscale)then
+              do i=1,nwide
+                wdata(i) = cmplx(scale(1),scale(2)) * wdata(i)
+              enddo
+            endif
+            if(doconj)then
+              do i=1,nwide
+                wdata(i) = conjg(wdata(i))
+              enddo
+            endif
+            if(doparang)then
+              call parang1(lIn,Pol,wdata,nwide)
+            endif
+            if(domodel)then
+              call model1(lIn,preamble,wdata,nwide,model)
+            endif
+            if(dopolcal)then
+              call polcal1(lIn,Pol,wdata,nwide,polcal)
+            endif
 	        call uvwwrite(lOut,wdata,wflags,nwide)
-	      endif
+          endif
 c
 c  Now process the line data, or the wideband data in the case of no channel data.
 c
-		if(dooffset)then
-		  do i=1,nchan
-		    data(i) = data(i) - coffset
-		  enddo
-		endif
-		if(doscale)then
-		  do i=1,nchan
-		    data(i) = cmplx(scale(1),scale(2)) * data(i)
-		  enddo
-		endif
-		if(doconj)then
-		  do i=1,nchan
-		    data(i) = conjg(data(i))
-		  enddo
-		endif
-		if(doparang)then
-		  call parang1(lIn,Pol,data,nchan)
-		endif
-		if(domodel)then
-		  call model1(lIn,preamble,data,nchan,model)
-		endif
-		if(dopolcal)then
-		  call polcal1(lIn,Pol,data,nchan,polcal)
-		endif
-	      call uvwrite(lOut,preamble,data,flags,nchan)
-	    endif
+          if(dooffset)then
+            do i=1,nchan
+              data(i) = data(i) - coffset
+            enddo
+          endif
+          if(doscale)then
+            do i=1,nchan
+              data(i) = cmplx(scale(1),scale(2)) * data(i)
+            enddo
+          endif
+          if(doconj)then
+            do i=1,nchan
+              data(i) = conjg(data(i))
+            enddo
+          endif
+          if(doparang)then
+            call parang1(lIn,Pol,data,nchan)
+          endif
+          if(domodel)then
+            call model1(lIn,preamble,data,nchan,model)
+          endif
+          if(dopolcal)then
+            call polcal1(lIn,Pol,data,nchan,polcal)
+          endif
+          call uvwrite(lOut,preamble,data,flags,nchan)
+        endif
 	  endif
 	enddo
 c
@@ -643,7 +680,7 @@ c
 c
 	end
 c********1*********2*********3*********4*********5*********6*********7*c
-	      subroutine Passband(lIn,data,flags,nchan,
+      subroutine Passband(lIn,data,flags,nchan,
      *							endchan,nave)
 c
 	implicit none
@@ -844,17 +881,18 @@ c
 	end
 c********1*********2*********3*********4*********5*********6*********7*c
 	subroutine makewide(lIn,data,flags,nchan,wdata,wflags,nwide,
-     *					endchan,mask)
+     *					dowide,lOut,endchan,mask)
 	implicit none
-	integer lIn,nchan,nwide,endchan
+	integer lIn,lOut,nchan,nwide,endchan
 	complex data(nchan),wdata(nchan)
-	logical flags(nchan),wflags(nchan)
+	logical flags(nchan),wflags(nchan),dowide
 	real mask(nchan)
 c
 c  Make wideband average for each spectral window
 c
 c  In:
 c    lIn	Handle of input uv-data.
+c    lOut   Handle of output uv-data.
 c    data	data
 c    flags	flags
 c    nchan	Number of input channel or wideband data.
@@ -868,7 +906,8 @@ c------------------------------------------------------------------------
       include 'maxdim.h'
       double precision sfreq(MAXWIN),sdf(MAXWIN)
       integer nspect,ischan(MAXWIN),nschan(MAXWIN)
-      real wt(MAXWIDE)
+      real wgt(MAXWIDE)
+      real wfreq(MAXWIDE),wwidth(MAXWIDE)
       integer i,j,j1,j2
 c
 c  Get the dimensioning info.
@@ -881,15 +920,18 @@ c
       call uvgetvrd(lIn,'sfreq',sfreq,nspect)
       call uvgetvrd(lIn,'sdf',sdf,nspect)
 c
-c  Average channels into wideband.
+c  Initialize new wideband data
 c
+      dowide = .true.
       nwide = nspect
       do i=1,nwide
         wdata(i) = (0.,0.)
-        wt(i) = 0.
+        wfreq(i) = 0.
+        wwidth(i) = 0.
+        wgt(i) = 0.
       enddo
 c
-c  Sum the good channels.
+c  Average the good channels.
 c
 	  do i=1,nspect
         j1 = ischan(i)+endchan
@@ -897,7 +939,9 @@ c
 	    do j=j1,j2
 	      if(flags(j).and.mask(j).ne.0)then
             wdata(i) = wdata(i) + data(j)
-            wt(i) = wt(i) + 1.
+            wfreq(i) = wfreq(i) + sfreq(i) + sdf(i) * (j-ischan(i))
+            wwidth(i) = wwidth(i) + sdf(i)
+            wgt(i) = wgt(i) + 1.
           endif
         enddo
       enddo
@@ -905,9 +949,13 @@ c
 c  Average the new wdata and set wflags.
 c
       do i=1,nwide
-        if(wt(i).ne.0.)then
-          wdata(i) = wdata(i)/wt(i)
+        if(wgt(i).ne.0.)then
+          wdata(i) = wdata(i)/wgt(i)
+          wfreq(i) = wfreq(i)/wgt(i)
+c          wwidth(i) = wwidth(i)/wgt(i)
           wflags(i) = .true.
+          call uvputvrr(lOut,'wfreq',wfreq,nwide)
+          call uvputvrr(lOut,'wwidth',wwidth,nwide)
         else
           wflags(i) = .false.
         endif
@@ -916,32 +964,44 @@ c
       end
 c********1*********2*********3*********4*********5*********6*********7*c
 	subroutine fitslope(lIn,data,flags,nchan,wdata,wflags,nwide,
-     *					endchan,mask)
+     *					dowide,lOut,endchan,mask,sigma)
 	implicit none
-	integer lIn,nchan,nwide,endchan
+	integer lIn,lOut,nchan,nwide,endchan
 	complex data(nchan),wdata(nchan)
-	logical flags(nchan),wflags(nchan)
-	real mask(nchan)
+	logical flags(nchan),wflags(nchan),dowide
+	real mask(nchan),sigma
 c
 c  fit phase slope for each spectral window
 c
 c  In:
 c    lIn	Handle of input uv-data.
+c    lOut	Handle of output uv-data.
 c    data	data
 c    flags	flags
 c    nchan	Number of input channel or wideband data.
 c    endchan	Number of end channels to drop.
 c    mask       Mask for bad channels.
+c    sigma  Rms noise level used to flag data.
 c  Out:
+c    data	data
+c    dowide write wideband data
 c    wdata	wide data
 c    wflags	wide flags
 c    nwide	number of output wideband data.
 c------------------------------------------------------------------------
       include 'maxdim.h'
+      include 'mirconst.h'
       double precision sfreq(MAXWIN),sdf(MAXWIN)
       integer nspect,ischan(MAXWIN),nschan(MAXWIN)
-      real wt(MAXWIDE)
-      integer i,j,j1,j2
+      integer i,j,j1,j2,n
+      real sumsq,wt,x1,y1
+      real x(MAXCHAN),y(MAXCHAN),w(MAXCHAN),a,b
+      real amp(MAXCHAN),phi(MAXCHAN),wgt(MAXCHAN),theta
+      real wfreq(MAXWIDE),wwidth(MAXWIDE)
+c
+c  Externals.
+c
+       complex expi
 c
 c  Get the dimensioning info.
 c
@@ -953,39 +1013,101 @@ c
       call uvgetvrd(lIn,'sfreq',sfreq,nspect)
       call uvgetvrd(lIn,'sdf',sdf,nspect)
 c
-c  Average channels into wideband.
+c  Initialize new wideband data 
 c
+      dowide = .true.
       nwide = nspect
       do i=1,nwide
         wdata(i) = (0.,0.)
-        wt(i) = 0.
+        wfreq(i) = 0.
+        wwidth(i) = 0.
+        wgt(i) = 0.
       enddo
 c
-c  Sum the good channels.
+c  Linear Fit to the phase of the good channels.
 c
 	  do i=1,nspect
+        n = 0
         j1 = ischan(i)+endchan
         j2 = ischan(i)+nschan(i)-1-endchan
 	    do j=j1,j2
-	      if(flags(j).and.mask(j).ne.0)then
-            wdata(i) = wdata(i) + data(j)
-            wt(i) = wt(i) + 1.
-          endif
+          call amphase(data(j),amp(j),phi(j))
+c
+c unwrap phase
+c
+c	      if(flags(j).and.mask(j).ne.0)then
+            n = n + 1
+            if(n.eq.1) theta = phi(j)
+            x(n) = mask(j) * (sfreq(i) + sdf(i) * (j-ischan(i)))
+            phi(j) = phi(j) - 360.*nint((phi(j)-theta)/360.)
+            theta = 0.5*(phi(j) + theta)
+            y(n) = mask(j) * phi(j)
+            w(n) = mask(j)
+c          endif
         enddo
-      enddo
 c
-c  Average the new wdata and set wflags.
+        call linfit(x,y,w,n,a,b)
 c
-      do i=1,nwide
-        if(wt(i).ne.0.)then
-          wdata(i) = wdata(i)/wt(i)
+c  Subtract the linear fit from the data and average the wideband.
+c
+        j1=ischan(i)+endchan
+        j2=ischan(i)+nschan(i)-1-endchan
+        do j=j1,j2
+c        if(flags(j).and.mask(j).ne.0)then
+          x1 = sfreq(i) + sdf(i) * (j-ischan(i))
+          y1 = phi(j) - a*x1 - b
+c remake original as a test
+c         data(j) = amp(j) * expi(phi(j)*pi/180.)
+          data(j) = amp(j) * expi(y1*pi/180.)
+          wdata(i) = wdata(i) + data(j)
+          wfreq(i) = wfreq(i) + x1
+          wwidth(i) = wwidth(i) + sdf(i)
+          wgt(i) = wgt(i) + 1.
+c        endif
+        enddo
+c
+c  average wideband. phase is slope in radians/GHz
+c
+        if(wgt(i).ne.0.)then
+          wdata(i) = cabs(wdata(i)/wgt(i)) * expi(a*pi/180.)
+          wfreq(i) = wfreq(i)/wgt(i)
+c          wwidth(i) = wwidth(i)/wgt(i)
           wflags(i) = .true.
+          call uvputvrr(lOut,'wfreq',wfreq,nwide)
+          call uvputvrr(lOut,'wwidth',wwidth,nwide)
         else
           wflags(i) = .false.
-        endif
+        endif      
       enddo
 c
-      end
+c  Flag data if channel rms after linear fit is .gt. sigma.
+c
+      if(sigma.gt.0.) then
+        sumsq = 0.
+        wt = 0.
+        do i=1,nspect
+          j1=ischan(i)+endchan
+          j2=ischan(i)+nschan(i)-1-endchan
+          do j=j1,j2
+            sumsq = sumsq + mask(j) * real(data(j)) * real(data(j))
+     *            + mask(j) * aimag(data(j)) *aimag(data(j))
+            wt = wt + mask(j)
+          enddo
+        enddo
+c
+        if(sumsq.gt.wt*sigma*sigma) then
+          do i=1,nspect
+            wflags(i) = .false.
+          enddo
+          do i=1,nchan
+            flags(i) = .false.
+          enddo
+        endif
+      endif
+c
+c  Return with the corrected data.
+c
+       end
 c********1*********2*********3*********4*********5*********6*********7*c
        subroutine pcenter(lIn,preamble,data,nchan,obsra,obsdec,line)
        implicit none
@@ -1085,7 +1207,7 @@ c
       preamble(3) = w
       end
 c********1*********2*********3*********4*********5*********6*********7*c
-	subroutine Contsub(lIn,data,flags,nchan,
+	subroutine contsub(lIn,data,flags,nchan,
      *						endchan,mask,sigma)
 c
 	implicit none
@@ -1111,7 +1233,7 @@ c------------------------------------------------------------------------
 	real x(MAXCHAN),y(MAXCHAN),z(MAXCHAN),w(MAXCHAN),ay,az,by,bz
 	integer nspect,ischan(MAXWIN),nschan(MAXWIN)
 	real sumsq,wt,x1,y1,z1
-	integer i,j,j1,j2,k
+	integer i,j,j1,j2,n
 c
 c  Get the dimensioning info.
 c
@@ -1125,20 +1247,20 @@ c
 c
 c  Linear fit to real and imaginary part of each spectral window.
 c
-	k = 0
 	do i=1,nspect
+      n = 0
 	  j1=ischan(i)+endchan
 	  j2=ischan(i)+nschan(i)-1-endchan
 	  do j=j1,j2
-	    k = k + 1
-	    x(k) = mask(j) * (sfreq(i) + sdf(i) * (j-ischan(i)))
-	    y(k) = mask(j) * real(data(j))
-	    z(k) = mask(j) * aimag(data(j))
-	    w(k) = mask(j)
+	    n = n + 1
+	    x(n) = mask(j) * (sfreq(i) + sdf(i) * (j-ischan(i)))
+	    y(n) = mask(j) * real(data(j))
+	    z(n) = mask(j) * aimag(data(j))
+	    w(n) = mask(j)
 	  enddo
 c
-	  call linfit(x,y,w,k,ay,by)
-	  call linfit(x,z,w,k,az,bz)
+	  call linfit(x,y,w,n,ay,by)
+	  call linfit(x,z,w,n,az,bz)
 c
 c  Subtract the linear fit from the data.
 c
@@ -1155,28 +1277,28 @@ c
 c  Flag data if channel rms after linear fit is .gt. sigma.
 c
       if(sigma.gt.0.) then
-	sumsq = 0.
-	wt = 0.
-	do i=1,nspect
-	  j1=ischan(i)+endchan
-	  j2=ischan(i)+nschan(i)-1-endchan
-	  do j=j1,j2
-	    sumsq = sumsq + mask(j) * real(data(j)) * real(data(j))
+        sumsq = 0.
+        wt = 0.
+        do i=1,nspect
+          j1=ischan(i)+endchan
+          j2=ischan(i)+nschan(i)-1-endchan
+          do j=j1,j2
+            sumsq = sumsq + mask(j) * real(data(j)) * real(data(j))
      *	 		  + mask(j) * aimag(data(j)) *aimag(data(j))
-	    wt = wt + mask(j)
-	  enddo
-	enddo
+            wt = wt + mask(j)
+          enddo
+        enddo
 c
-	if(sumsq.gt.wt*sigma*sigma) then
-	  do i=1,nchan
-	    flags(i) = .false.
-	  enddo
-	endif
+        if(sumsq.gt.wt*sigma*sigma) then
+          do i=1,nchan
+            flags(i) = .false.
+          enddo
+        endif
       endif
 c
 c  Return with the corrected data.
 c
-	end
+       end
 c********1*********2*********3*********4*********5*********6*********7*c
 	subroutine badinit(nbad,badchan,maxbad,mask,maxchan)
 	implicit none
@@ -1234,7 +1356,7 @@ c
       sumsqy = 0.
       sumxy  = 0.
       do i = 1,n
-	sumx   = sumx   + w(i) * x(i)
+        sumx   = sumx   + w(i) * x(i)
         sumy   = sumy   + w(i) * y(i)
         sumw   = sumw   + w(i)
         sumsqx = sumsqx + w(i) * x(i) * x(i)
