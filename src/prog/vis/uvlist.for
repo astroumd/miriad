@@ -134,10 +134,11 @@ c                  for the vis list in AveDat,BriefDat,Allan
 c   27nov05 pjt  - added a 'carma' option, but renamed it to 'baseline'
 c                  this was somewhat involved and hopefully i dind't break the logic
 c   30jan06 pjt/sw - output in listdat/longdat now using 'time', not 'ut'
+c    8mar06 pjt  - added dazim/delev for ant1/2 in option=baseline (units: arcmin)
 c-----------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='UVLIST: version  30-jan-06')
+	parameter(version='UVLIST: version  8-mar-06')
 	real rtoh,rtod,pi
 	integer maxsels
 	parameter(pi=3.141592653589793,rtoh=12/pi,rtod=180/pi)
@@ -735,6 +736,7 @@ c********1*********2*********3*********4*********5*********6*********7**
 	complex data(numchan)
 	double precision uin,vin,win,basein,ut,lst
 	include 'mirconst.h'
+	include 'maxdim.h'
 c
 c  List ut lst antennas u,v elev and paralactic angle with the data.
 c
@@ -755,13 +757,14 @@ c------------------------------------------------------------------------
 	real rtoh,rtod,rts
 	integer mchan
 	parameter(rtoh=12/PI,rtod=180/PI)
-	parameter(mchan=5,rts=3600.*180./PI)
-	character line*128,cflag(mchan)*1, telescop*20, pol*2,src*9
-	real amp(mchan),phas(mchan),ha,elev,sinaz,cosaz,azim
+	parameter(MCHAN=5,rts=3600.*180./PI)
+	character line*256,cflag(MCHAN)*1, telescop*20, pol*2,src*9
+	real amp(MCHAN),phas(MCHAN),ha,elev,sinaz,cosaz,azim
 	real sinha,cosha,sind,cosd,sinl,cosl,chi
 	double precision obsra,obsdec,latitude,dra,ddec,freq,ntm
+	double precision dazim(MAXANT), delev(MAXANT)
 	logical more,ok
-	integer i,j,ant1,ant2,nchan
+	integer i,j,ant1,ant2,nchan,nants
 c
 c  Externals.
 c
@@ -777,7 +780,8 @@ c
 	     endif
 	     line =' Vis # Source      UT(hrs)  LST(hrs)   HA(hrs)'
      *           //'   Dec(deg)  Ant     u(m)      v(m)      w(m)  '
-     *           //' Azim  Elev(deg)   Amp/Phas'
+     *           //' Azim  Elev(deg)   Amp/Phas '
+     *           //'  daz1   del1   daz2   del2'
 	  else
 	     line =' Vis #   UT(hrs)  LST(hrs)   Ant    Pol  u(kLam)'
      *	         //'  v(kLam)  Azim  Elev(deg)  Chi  dra(")  ddec(")'
@@ -822,13 +826,20 @@ c
 
 	if (dobase) then
 	   call uvrdvra(unit,'source',src,'unknown')
+	   call uvrdvri(unit,'nants',nants,0)
+	   call uvgetvrd(unit,'dazim',dazim,nants)
+	   call uvgetvrd(unit,'delev',delev,nants)
 	   call amphase(data(1),amp(1),phas(1))
 	   ntm =CMKS/1d9 
 	   write(line,
-     *    '(i6,1x,a,4f10.4,1x,i2,1x,i2,3f10.4,2f8.2,f7.3,1x,i4)')
+     *    '(i6,1x,a,4f10.4,1x,i2,1x,i2,3f10.4,2f8.2,f7.3,1x,i4,4f7.2)')
      *	  mod(Visno,1000000),src,ut*rtoh,lst*rtoh,ha*rtoh,obsdec*rtod,
      *	  ant1,ant2,uin*ntm,vin*ntm,win*ntm,azim*rtod,elev*rtod,
-     *    amp(1),nint(phas(1))
+     *    amp(1),nint(phas(1)),
+     *    dazim(ant1)*rtod*60,
+     *    delev(ant1)*rtod*60,
+     *    dazim(ant2)*rtod*60,
+     *    delev(ant2)*rtod*60
 
 	else
 	   write(line,
@@ -843,8 +854,8 @@ c
 c  List the channel data.
 c
 	if(.not.dobrief)then
-	  do i=1,numchan,mchan
-	    nchan = min(numchan-i+1,mchan)
+	  do i=1,numchan,MCHAN
+	    nchan = min(numchan-i+1,MCHAN)
 	    do j=1,nchan
 	      if(flags(i+j-1))then
 	        cflag(j) = ' '
