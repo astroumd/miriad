@@ -283,7 +283,7 @@ c------------------------------------------------------------------------
         integer maxfiles
         parameter(maxfiles=128)
         character version*(*)
-        parameter(version='SmaLod: version 1.25 06-mar-06')
+        parameter(version='SmaLod: version 1.25 13-mar-06')
 c
         character in(maxfiles)*64,out*64,line*64, rxc*4
         integer tno, length, len1
