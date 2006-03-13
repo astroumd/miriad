@@ -168,6 +168,9 @@ c       configuration from that of the first integration
 c       assigned by nscans assuming that the frequency 
 c       configuration for the rest of integrations does not 
 c       change. 
+c       
+c       For old data sets (such as 2003), spskip=-2003 might be 
+c       useful to handle data from an incompleted correlator.
 c
 c       The default is no skipping in spectral windows.
 c 
@@ -274,11 +277,13 @@ c                  in the mir header files (in_read and bl_read).
 c    jhz 24-jan-06 add options for skipsp=-1
 c    jhz 03-feb-06 optimize the memory requirement
 c    jhz 08-feb-05 add a feature to handle multiple correlator configu.
+c    jhz 06-mar-06 add a feature to handle 2003 data with incompleted
+c                  correlator.
 c------------------------------------------------------------------------
         integer maxfiles
         parameter(maxfiles=128)
         character version*(*)
-        parameter(version='SmaLod: version 1.24 09-feb-06')
+        parameter(version='SmaLod: version 1.25 06-mar-06')
 c
         character in(maxfiles)*64,out*64,line*64, rxc*4
         integer tno, length, len1
