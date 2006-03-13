@@ -163,6 +163,8 @@
 // 2006-02-03 (JHZ) optimized the memory requirements.
 //                  for wts structure and double sideband loading.
 // 2006-02-09 (JHZ) added a feature to handle multiple correlator configuration.
+// 2006-03-13 (JHZ) added a feature to handle 2003 incompleted-correlator
+//                  data.
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -253,7 +255,6 @@ struct lmn *sph2lmn(double ra, double dec);
 struct vel *vsite(double phi, double st);
 void vsun(double *VEL);
 short ipolmap(short input_ipol);
-
 
 /* interface between fortran and c */
 void rsmirread_c(char *datapath, char *jst[])
@@ -1565,8 +1566,6 @@ double xyzpos;
 	  if(sph1->iband==0) spn[inset]->basefreq = sph1->fsky;                
 	}
       if(smaCorr.no_rxif==2&&sph1->inhid==inh[inset]->inhid) {
-//          printf("inset blhid  %d %d %d \n",inset,
-//       sph1->blhid,blid_intchng[inset]);
       if(sph1->blhid==blid_intchng[inset])
         spn[inset]->nch[sph1->iband][1] = sph1->nch;    
         
@@ -1586,9 +1585,36 @@ double xyzpos;
 	}
       }
     }
-  sphend:
-
-
+sphend:
+// handling 2003 inc0mpleted correlator data
+if (smabuffer.spskip[0]==-2003) {
+double spfreq[25];
+double spfreqo[25];
+int nchunk=0;
+int minspID=25;
+int fa,fb;
+         for (i=1;i<25;i++) {
+         if (spn[smabuffer.scanskip]->fsky[i]>0.0) {
+         nchunk++;
+         spfreq[nchunk]=spn[smabuffer.scanskip]->fsky[i];
+                            }
+                }
+         for (i=1;i<25;i++) {
+         if(spfreq[i]<100.0) {
+         spfreq[i]=0.0;
+         spcode[i]=0;        }
+         spfreqo[i] =  spfreq[i];
+         if (spcode[i]!=0&&spcode[i]<minspID) minspID=spcode[i];
+//         printf("%f %d\n", spfreqo[i], spcode[i]);
+                           }
+//         printf("MinspID=%d after dsort \n", minspID);
+//         dsort(spfreq,nchunk);
+         for (i=1;i<25;i++) {
+          spcode[i]=spcode[i]-minspID+1;
+//        printf("%f %f %d\n",spfreq[i],spfreqo[i],spcode[i]);
+                           }
+goto dat2003; }
+                
                  lastinset=lastinset-1;
               ireset = 0;
                 reset_id[0]= smabuffer.scanskip;
@@ -1623,7 +1649,7 @@ double xyzpos;
         }
                                     }
                                      }
-                                                                                
+dat2003:                                                                           
      printf("\n");
 
     printf("number of Spectra = %d\n", numberSpectra);
@@ -2095,6 +2121,7 @@ double xyzpos;
 //      spn[inhset]->vel[13],spn[inhset]->vres[13],
 //      spn[inhset]->vel[14],spn[inhset]->vres[14]);
 //        printf("nChunk = %d\n", smaCorr.n_chunk);
+
       for(i=1;i<smaCorr.n_chunk+1; i++) {
 	// the reference channel is the first channel in each chunk in miriad
 	// the reference channel is the center (nch/2+0.5) in each chunk in MIR
@@ -2107,11 +2134,11 @@ double xyzpos;
         if(smabuffer.spskip[0]!=-1) {
 	  if(smabuffer.doChunkOrder==1) {
 	  smabuffer.sfreq[frcode[i]-1] = spn[inhset]->fsky[i]
-	    - spn[inhset]->fres[i]/1000.0*
+      - spn[inhset]->fres[i]/1000.0*
 	    (spn[inhset]->nch[i][rxlod]/2-0.5);
    	                                } else {
 	  smabuffer.sfreq[spcode[i]-1] = spn[inhset]->fsky[i]
-	    - spn[inhset]->fres[i]/1000.0*
+      - spn[inhset]->fres[i]/1000.0*
 	    (spn[inhset]->nch[i][rxlod]/2-0.5);
 	                                       }
 	if(smabuffer.dorfreq==1) 
@@ -2163,6 +2190,8 @@ double xyzpos;
 	smabuffer.nstoke[spcode[i]-1]=4;
 	smabuffer.edge[spcode[i]-1]=0;
 	smabuffer.nbin[spcode[i]-1]=1;
+// if 2003 data skip the spcode examination
+        if(smabuffer.spskip[0]!=-2003)  
 // check the spectral window skipping in MIR data
          if(smabuffer.spskip[0]!=-1) {
 // printf("spcode icode %d %d fsky %f nch%d\n", 
@@ -2183,7 +2212,7 @@ double xyzpos;
       }
       }
       }
-
+      
       //printf("numberBaselines=%d\n", numberBaselines);
       for(j=0; j < numberBaselines; j++) {
 	{
@@ -2194,7 +2223,6 @@ double xyzpos;
 	  visSMAscan.blockID.polid = uvwbsln[inhset]->uvwID[j].ipol;
 	  sbpnt = visSMAscan.blockID.sbid;
 	  rxpnt = uvwbsln[inhset]->uvwID[j].irec;
-//          printf("rxpnt=%d\n", rxpnt);
 	  if(smabuffer.rxif==uvwbsln[inhset]->uvwID[j].irec||smabuffer.rxif==-1) {
 	    switch(sbpnt) {
 	    case 0: blpnt=uvwbsln[inhset]->uvwID[j].blsid;
@@ -2203,9 +2231,9 @@ double xyzpos;
 	      // if data observed earlier than JD 2453488.5 (2005 4 28)
 	      if(smabuffer.doConjugate==-1||jday<2453488.5) phaseSign=-1;
 	      if(smabuffer.sb==0) {
-		smabuffer.u[blpnt] = uvwbsln[inhset]->uvwID[j].u/smabuffer.basefreq*1000.;
-		smabuffer.v[blpnt] = uvwbsln[inhset]->uvwID[j].v/smabuffer.basefreq*1000.;
-		smabuffer.w[blpnt] = uvwbsln[inhset]->uvwID[j].w/smabuffer.basefreq*1000.;
+smabuffer.u[blpnt] = uvwbsln[inhset]->uvwID[j].u/smabuffer.basefreq*1000.;
+smabuffer.v[blpnt] = uvwbsln[inhset]->uvwID[j].v/smabuffer.basefreq*1000.;
+smabuffer.w[blpnt] = uvwbsln[inhset]->uvwID[j].w/smabuffer.basefreq*1000.;
 	      }
 	      break;
 	    case 1: blpnt=uvwbsln[inhset]->uvwID[j].blsid;
@@ -2483,10 +2511,15 @@ double xyzpos;
       }
     }
      }
+    if(smabuffer.spskip[0]!=-2003) {
     if(smabuffer.spskip[0]!=0&&smabuffer.spskip[0]!=-1)
      printf("The MIR s%02d - s%02d contain no data and are skipped!\n",
         smabuffer.spskip[0],
-        smabuffer.spskip[0]+smabuffer.spskip[1]-1); 
+        smabuffer.spskip[0]+smabuffer.spskip[1]-1);}
+     else {
+     printf("The MIR s%d contains incompleted-correlator data!\n",
+       -smabuffer.spskip[0]);
+          } 
     printf("Done with data conversion from mir to miriad!\n");
   }
   /* ---------------------------------------------------------------------- */
@@ -3563,4 +3596,3 @@ if(smabuffer.linear==1)
 
      return iPolmiriad;
 }
-
