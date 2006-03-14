@@ -6574,6 +6574,8 @@ case $TELESCOPE in
 	def_maxwide=50
 	continue;;
      "wsrt")  echo "Selecting WSRT array"
+        def_maxchan=8193
+        def_maxbuf=40000000
 	continue;;
      *) echo "Not a valid array"
 esac
