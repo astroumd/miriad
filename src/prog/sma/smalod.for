@@ -283,7 +283,7 @@ c------------------------------------------------------------------------
         integer maxfiles
         parameter(maxfiles=128)
         character version*(*)
-        parameter(version='SmaLod: version 1.25 13-mar-06')
+        parameter(version='SmaLod: version 1.25 15-mar-06')
 c
         character in(maxfiles)*64,out*64,line*64, rxc*4
         integer tno, length, len1
@@ -433,7 +433,7 @@ c
               call output('Ignoring file '//in(ifile))
               iostat = 0
             endif
-            if(iostat.ne.0)call bug('f','Error skipping SMAMIR file')
+            if(iostat.ne.0)call bug('f','Error skipping SMA-MIR file')
           else
             call pokeini(tno,dosam,doxyp,doop,dohann,birdie,dowt,
      *      dopmps,dobary,doif,hires,nopol,circular,linear,oldpol,
@@ -819,7 +819,6 @@ c
         end
 c************************************************************************
         subroutine smaeof(jstat)
-c
         integer jstat
 c
 c  Skip to the EOF.
@@ -837,14 +836,12 @@ c
         end
 c************************************************************************
         character*(*) function smaerr(jstat)
-c
         integer jstat
 c
 c  Translate an RPFITSIN jstat value into something a bit more
 c  meaningful.
 c------------------------------------------------------------------------
         character itoaf*8
-c
         integer nmess
         parameter(nmess=7)
         character mess(nmess)*32
@@ -865,7 +862,6 @@ c
         end
 c************************************************************************
         subroutine smaopen(in,jstat)
-c
         character in*(*)
         character*80 file
         integer jstat
@@ -873,8 +869,6 @@ c
 c  External.
 c
         character smaerr*32
-c
-c
         file = in
 c   jstat=-3 -> open the input data file 
         jstat = -3
@@ -887,7 +881,6 @@ c jhz test
 c************************************************************************
 c************************************************************************
         character*(*) function pcent(frac,total)
-c
         integer frac,total
 c------------------------------------------------------------------------
         character val*5
@@ -902,7 +895,6 @@ c------------------------------------------------------------------------
         end
 c************************************************************************
         real function getjpk(freq)
-c
         real freq
 c------------------------------------------------------------------------
         if(freq.lt.15)then
@@ -912,5 +904,4 @@ c------------------------------------------------------------------------
         else
           getjpk = 25
         endif
-c
         end
