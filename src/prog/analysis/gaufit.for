@@ -263,6 +263,7 @@ c                 compiler.
 c     bpw 28feb01 Make it work under linux
 c     bpw 21may01 Add smooth keyword
 c     pjt 25nov04 another fortran standard..... this for intel 8.1
+c     pjt 16mar06 solaris compiler barf fix
 c
 c************************************************************************
 
@@ -311,7 +312,7 @@ c              el 4=max # gaussians, used when sorting a range
       program gaufit
 
       character*50 version
-      parameter    ( version = 'gaufit: version 2.1 25-nov-04' )
+      parameter    ( version = 'gaufit: version 2.1 16-mar-06' )
       integer      units(   6)
       integer      prfinfo(10)
       integer      MAXRUNS
@@ -1916,6 +1917,7 @@ c************************************************************************
       logical   dofit, tryagain
       integer   dogssfit, cutoffs
 
+      integer   MAXFIT
       parameter ( MAXFIT = 30 )
       integer   fitnum, nfit(MAXFIT)
       integer   ier(MAXFIT)
