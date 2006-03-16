@@ -199,7 +199,7 @@ c    12sep05 pjt   added ddmmmyy before the UT format.
 c----------------------------------------------------------------------c
 	include 'pnt.h'
 	character version*(*)
-	parameter(version='(version 3.1  12-sep-2005)')
+	parameter(version='(version 3.1  16-mar-2006)')
 c
 	integer i,iant,kans
 	character ans*20,options*1,log*80,buffer*80, telescope*20
@@ -2237,22 +2237,13 @@ c
 	return
 	end
 c********1*********2*********3*********4*********5*********6*********7*c
-#ifdef vms
-	subroutine mfdate(dat)
-	character*(*) dat
-c
-	call date(dat)
-	dat = '    '//dat
-	print *, dat
-	end
-#endif
-#ifdef linux
 c		this routine appears more than once and needs to be in SUBS
+c               solaris compiler says: Warning: Subroutine "date" is not safe after year 2000; use "date_and_time" instead
+c               linux gnu compiler: Intrinsic `DATE', invoked at (^), known to be non-Y2K-compliant
 	subroutine mfdate(dat)
 	character*(*) dat
-       call date(dat)
+        call date(dat)
 	end
-#endif
 c********1*********2*********3*********4*********5*********6*********7*c
 	subroutine ptcol
 	implicit none
