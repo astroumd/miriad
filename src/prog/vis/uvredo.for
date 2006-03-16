@@ -107,6 +107,7 @@ c    jhz  16sep05 initialize the array doptime; otherwise
 c                 it may cause problem in some syetems.
 c    jhz  29sep05 add vsource to smavelop when calculates
 c                 the residual veldop for SMA data.
+c    pjt  16mar06 fortran solaris compiler fixes
 c
 c  Bugs:
 c    * Much more needs to be added.
@@ -114,7 +115,7 @@ c------------------------------------------------------------------------
 	include 'maxdim.h'
 	include 'mirconst.h'
 	character version*(*)
-	parameter(version='UvRedo: version 1.3 29-Sept-05')
+	parameter(version='UvRedo: version 1.3 16-mar-06')
 	integer OBS,HEL,LSR
 	parameter(OBS=1,HEL=2,LSR=3)
 c
@@ -673,6 +674,7 @@ c
 	end
 c************************************************************************
         real function smaveldop(lIn,time,lst,smalat,frame)
+	implicit none
         integer lIn
         double precision doptrkra, doptrkdec, time, lst,Jultransit
         logical dosma,getsmavel
@@ -709,55 +711,55 @@ c     smalat        Geodetic latitude of the SMA (radian).
 c
 c   external
 c 
-         double precision epo2jul
+	double precision epo2jul
 c
 c Calculate the apparent right ascension (radian) and the apparent 
 c declination (radian) of the phase center (source)    
 c
-         call precess(epo2jul(2000.d0,'J'),
-     &        doptrkra,doptrkdec,time,raapp,decapp)
-         call Nutate(time,raapp,decapp,r1,d1)
-         call Aberrate(time,r1,d1,raapp,decapp)
+	call precess(epo2jul(2000.d0,'J'),
+     1               doptrkra,doptrkdec,time,raapp,decapp)
+	call Nutate(time,raapp,decapp,r1,d1)
+	call Aberrate(time,r1,d1,raapp,decapp)
 c
 c  Convert spherical coordinates (e.g. ra,dec) into
 c  direction cosines.
 c
-         call sph2lmn(raapp,decapp,lmnapp)
+	call sph2lmn(raapp,decapp,lmnapp)
 c
 c Calculate the Diurnal term 
 c
-          call vsite(smalat,lst,vel)
-          veldop = 0
-          do i=1,3
-          veldop = veldop - vel(i)*lmnapp(i)
-          enddo
+	call vsite(smalat,lst,vel)
+	veldop = 0
+	do i=1,3
+	   veldop = veldop - vel(i)*lmnapp(i)
+	enddo
 
 c
 c Calculate the Annual term 
 c
 
-          call vearth(time,pos,vel)
-          do i=1,3
-          veldop = veldop - vel(i)*lmnapp(i)
-          enddo
-
-            if(getsmavel) then
+	call vearth(time,pos,vel)
+	do i=1,3
+	   veldop = veldop - vel(i)*lmnapp(i)
+	enddo
+	
+	if(getsmavel) then
 c
 c  The sun motion w.r.t LSR
 c 
 c  LSR
-          if(frame.eq.LSR)then
-            call sph2lmn(doptrkra,doptrkdec,lmn)
-            call vsun(vel)
-            do i=1,3
-              veldop = veldop + vel(i)*lmn(i)
-            enddo
-          endif
-c
+	   if(frame.eq.LSR)then
+	      call sph2lmn(doptrkra,doptrkdec,lmn)
+	      call vsun(vel)
+	      do i=1,3
+		 veldop = veldop + vel(i)*lmn(i)
+	      enddo
+	   endif
+c       
 c  calculate the part of veldop corrected to the chunk frequency.
-c
-                   veldop = veldop - velsma0
-                         else
+c       
+	   veldop = veldop - velsma0
+	else
 
 c
 c upto now, we have calculated the time variation part of
@@ -765,102 +767,105 @@ c the veldop (diurnal and annual).
 c Now we need to calculate the annual term at the reference time,
 c a constant offset which has been taken out from the total contribution 
 c from the diurnal and annual.
-c
-         call precess(epo2jul(2000.d0,'J'),
-     &       doptrkra,doptrkdec,Jultransit,raapp,decapp)
-         call Nutate(time,raapp,decapp,r1,d1)
-         call Aberrate(time,r1,d1,raapp,decapp)
+c       
+	   call precess(epo2jul(2000.d0,'J'),
+     &                  doptrkra,doptrkdec,Jultransit,raapp,decapp)
+	   call Nutate(time,raapp,decapp,r1,d1)
+	   call Aberrate(time,r1,d1,raapp,decapp)
 c
 c  Convert spherical coordinates (e.g. ra,dec) into
 c  direction cosines.
 c
-          call sph2lmn(raapp,decapp,lmn)
+	   call sph2lmn(raapp,decapp,lmn)
 c
 c    calculate the earth velocity at transit
 c
 c         write(*,*) (Jultransit-int(Jultransit-0.5)-0.5)*24.
-          call vearth((Jultransit),pos,vel)
-          do i=1,3
-          veldop = veldop + vel(i)*lmn(i)
-          enddo
-                        end if
+	   call vearth((Jultransit),pos,vel)
+	   do i=1,3
+	      veldop = veldop + vel(i)*lmn(i)
+	   enddo
+	end if
 c
 c  this part has been corrected
 c  in the SMA chunk frequency recorded
 c
-          call uvrdvrr (lin, 'vsource', vsource, 0.0)
-          smaveldop = veldop+vsource
-          end
+	call uvrdvrr (lin, 'vsource', vsource, 0.0)
+	smaveldop = veldop+vsource
+	end
 c  ******************************
-         subroutine sourfind(tno,dsource,doptime)
-          real doptime(4), sumtime
-          integer tno,vupd,nread
-          include 'maxdim.h'
+	subroutine sourfind(tno,dsource,doptime)
+	implicit none
+	real doptime(4), sumtime
+	integer tno,vupd,nread
+	include 'maxdim.h'
 c
 c retrieve the Doppler-tracked source and get its ra-dec coordinates
 c in the epoch J2000.0, the epoch of catalog coordinates that the SMA supports.
 c
-          double precision preamble(4),long,lat
-          complex data(maxchan)
-          logical flags(maxchan)
-          character dsource*8, source*32
-          double precision time
-          double precision doptrkra,doptrkdec,Jultransit
-          real velsma0
-          logical dosma, getsmavel
-          common/smavel/doptrkra,doptrkdec,
-      &                 Jultransit,velsma0,dosma,getsmavel
+	double precision preamble(4),long,lat
+	complex data(maxchan)
+	logical flags(maxchan)
+	character dsource*8, source*32
+	double precision time
+	double precision doptrkra,doptrkdec,Jultransit
+	integer i
+	real velsma0
+	logical dosma, getsmavel
+	common/smavel/doptrkra,doptrkdec,
+     &                Jultransit,velsma0,dosma,getsmavel
 
                 
 c
 c   external
 c
 c          double precision epo2jul,LstJul
-          logical ok, uvvarupd
-                     call uvvarini(tno,vupd)
-                     call uvvarset(vupd,'source')
-          ok=.false.
-          nread=maxchan
-          time=0.0
-          sumtime=0.0
-          getsmavel=.false.
-          dosma=.true.
-c              write(*,*) dsource(1:8)
-          call uvnext(tno, ' ')
-          call uvrdvra(tno,'source', source,' ')
-            call uvgetvrd(tno,'longitu',long,1)
-         call uvgetvrd(tno,'latitud',lat,1)
-         call uvdatrd(preamble,data,flags,maxchan,nread)
-          dowhile((.not.ok).and.(nread.gt.0))
-c              dowhile(nread.gt.0) 
-           if(source(1:len1(source)).eq.dsource(1:len1(dsource))) then 
-                call uvrdvrd(tno,'ra',doptrkra,0.d0)
-                call uvrdvrd(tno,'dec',doptrkdec,0.d0)
-                call uvrdvrr(tno,'veldop',velsma0,0.)
-                ok=.true.
+	logical ok, uvvarupd
+	integer len1
+
+	call uvvarini(tno,vupd)
+	call uvvarset(vupd,'source')
+	ok=.false.
+	nread=maxchan
+	time=0.0
+	sumtime=0.0
+	getsmavel=.false.
+	dosma=.true.
+c       write(*,*) dsource(1:8)
+	call uvnext(tno, ' ')
+	call uvrdvra(tno,'source', source,' ')
+	call uvgetvrd(tno,'longitu',long,1)
+	call uvgetvrd(tno,'latitud',lat,1)
+	call uvdatrd(preamble,data,flags,maxchan,nread)
+	do while((.not.ok).and.(nread.gt.0))
+	   if(source(1:len1(source)).eq.dsource(1:len1(dsource))) then 
+	      call uvrdvrd(tno,'ra',doptrkra,0.d0)
+	      call uvrdvrd(tno,'dec',doptrkdec,0.d0)
+	      call uvrdvrr(tno,'veldop',velsma0,0.)
+	      ok=.true.
            end if
-            call uvnext(tno, ' ')
-              if(uvvarupd(vupd)) then
+	   call uvnext(tno, ' ')
+	   if(uvvarupd(vupd)) then
               call uvrdvra(tno,'source', source,' ')
-              end if
-             call uvdatrd(preamble,data,flags,maxchan,nread)
-             time = preamble(3)
-            end do
-          Jultransit=time
-          if(.not.ok) call bug('f', 
-      *   'The source = '//dsource(1:len1(dsource))//' is not found.')
-          do i=1, 4
-          sumtime=sumtime+doptime(i)
-          end do
-          if(abs(sumtime).le.1.e-15) then
-          getsmavel=.true.
-          else
-c
+	   end if
+	   call uvdatrd(preamble,data,flags,maxchan,nread)
+	   time = preamble(3)
+	end do
+	Jultransit=time
+	if(.not.ok) call bug('f', 
+	*   'The source = '//dsource(1:len1(dsource))//' is not found.')
+	do i=1, 4
+	   sumtime=sumtime+doptime(i)
+	end do
+	if(abs(sumtime).le.1.e-15) then
+	   getsmavel=.true.
+	else
+c       
 c         assign the time in Julian date at which the annual term (of veldop)
 c         was used in the correction to sfreq
 c
-          Jultransit = int(Jultransit-0.5)+0.5
-      &  + doptime(1)+doptime(2)/24.+doptime(3)/24./60.
-      &  + doptime(4)/24./3600.
-          end if
-          end
+	   Jultransit = int(Jultransit-0.5)+0.5
+      &             + doptime(1)+doptime(2)/24.+doptime(3)/24./60.
+      &             + doptime(4)/24./3600.
+	end if
+	end
