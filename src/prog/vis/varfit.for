@@ -160,10 +160,11 @@ c                                      gflag options to flag no-solution
 c                                      interval while do ph-ph regression;
 c                                      uniformly scaling the ph-ph plot
 c                                      for each antenna.
+c    16mar06 pjt   fix for npntf ??
 c                                            
 c-----------------------------------------------------------------------
 	character version*(*)
-	parameter(version='(version 1.2 10-JUN-05)')
+	parameter(version='(version 1.2 16-mar-06)')
 	character device*80, log*80, vis*80, xaxis*40, yaxis*40
 	integer tvis, refant, refant2, nx, ny
 	logical dowrap, xsc,ysc, dostruct, doallan, doquad
@@ -973,6 +974,7 @@ c         print*,j,k,mgains(j,1,k),aampl(j,k,2),pphi(j,k,2)
 	end
 
         subroutine slopetab(tno,slope,yoffset,nants)
+	implicit none
 c        include 'maxdim.h'
         integer MAXANTS
         parameter(MAXANTS=28)
@@ -1016,6 +1018,7 @@ c
  
 
         subroutine gaintab(tno,time,gains,npol,nants,nsoln,pee)
+	implicit none
 c
         integer tno,nants,nsoln,npol,pee(2)
         double precision time(nsoln),freq0
@@ -1037,65 +1040,25 @@ c    dodelay    True if the delays are to be written out.
 c    pee        Mapping from internal polarisation number to the order
 c               that we write the gains out in.
 c------------------------------------------------------------------------
-c=======================================================================
-            include 'maxdim.h'
-c=======================================================================
-c=======================================================================
-c - mirconst.h  Include file for various fundamental physical constants.
-c
-c  History:
-c    jm  18dec90  Original code.  Constants taken from the paper
-c                 "The Fundamental Physical Constants" by E. Richard
-c                 Cohen and Barry N. Taylor (PHYICS TODAY, August 1989).
-c ----------------------------------------------------------------------
-c  Pi.
-      real pi, twopi
-      double precision dpi, dtwopi
-      parameter (pi = 3.14159265358979323846)
-      parameter (dpi = 3.14159265358979323846)
-      parameter (twopi = 2 * pi)
-      parameter (dtwopi = 2 * dpi)
-c ----------------------------------------------------------------------
-c  Speed of light (meters/second).
-      real cmks
-      double precision dcmks
-      parameter (cmks = 299792458.0)
-      parameter (dcmks = 299792458.0)
-c ----------------------------------------------------------------------
-c  Boltzmann constant (Joules/Kelvin).
-       real kmks
-      double precision dkmks
-      parameter (kmks = 1.380658e-23)
-      parameter (dkmks = 1.380658d-23)
-c ----------------------------------------------------------------------
-c  Planck constant (Joules-second).
-      real hmks
-      double precision dhmks
-      parameter (hmks = 6.6260755e-34)
-      parameter (dhmks = 6.6260755d-34)
-c ----------------------------------------------------------------------
-c  Planck constant divided by Boltzmann constant (Kelvin/GHz).
-      real hoverk
-      double precision dhoverk
-      parameter (hoverk = 0.04799216)
-      parameter (dhoverk = 0.04799216)
-c=======================================================================
+	include 'maxdim.h'
+	include 'mirconst.h'
+
         integer iostat,off,item,i,j,p,pd,j1,ngains
         complex g(3*maxant)
 c
 c  no delay correction
 c
-            dodelay=.false.
-            freq0=100.
+	dodelay=.false.
+	freq0=100.
         call haccess(tno,item,'gains','write',iostat)
         if(iostat.ne.0)then
-          call bug('w','Error opening output amp/phase table.')
-          call bugno('f',iostat)
-       endif
+	   call bug('w','Error opening output amp/phase table.')
+	   call bugno('f',iostat)
+	endif
         call hwritei(item,0,0,4,iostat)
         if(iostat.ne.0)then
-         call bug('w','Error writing header of amp/phase table')
-          call bugno('f',iostat)
+	   call bug('w','Error writing header of amp/phase table')
+	   call bugno('f',iostat)
         endif
         write(*,*)
      * 'create new gain table with smoothed or interpolated values.'
@@ -1103,23 +1066,23 @@ c           write(*,*) 'nsoln nantsi npol', nsoln, nants, npol
 c
 c  Write out all the gains.
 c
-         ngains = npol*nants
+	ngains = npol*nants
         if(dodelay) ngains = (npol+1)*nants
 c
 
         off = 8
         do i=1,nsoln
-c           write(*,*) 'time=' ,  time(i)
-          call hwrited(item,time(i),off,8,iostat)
-          off = off + 8
-          if(iostat.ne.0)then
-            call bug('w','Error writing time to amp/phase table')
-            call bugno('f',iostat)
-          endif
-          j1 = 1
-          do j=1,nants
-            do p=1,npol
-              pd = pee(p)
+c          write(*,*) 'time=' ,  time(i)
+	   call hwrited(item,time(i),off,8,iostat)
+	   off = off + 8
+	   if(iostat.ne.0)then
+	      call bug('w','Error writing time to amp/phase table')
+	      call bugno('f',iostat)
+	   endif
+	   j1 = 1
+	   do j=1,nants
+	      do p=1,npol
+		 pd = pee(p)
 c          write(*,*) 'i j p gains', i, j, p, gains(j,pd,i)
 c              if(abs(real( gains(j,pd,i)))+
 c     *           abs(aimag(gains(j,pd,i))).ne.0)then
@@ -1127,37 +1090,37 @@ c                g(j1) = 1/gains(j,pd,i)
 c              else
 c                g(j1) = (0.,0.)
 c              endif
-               g(j1) =gains(j,pd,i)
-             j1 = j1 + 1
-            enddo
-          enddo
-          call hwriter(item,g,off,8*ngains,iostat)
-          off = off + 8*ngains
-          if(iostat.ne.0)then
-            call bug('w','Error writing gains to amp/phase table')
-            call bugno('f',iostat)
-          endif
+		 g(j1) =gains(j,pd,i)
+		 j1 = j1 + 1
+	      enddo
+	   enddo
+	   call hwriter(item,g,off,8*ngains,iostat)
+	   off = off + 8*ngains
+	   if(iostat.ne.0)then
+	      call bug('w','Error writing gains to amp/phase table')
+	      call bugno('f',iostat)
+	   endif
         enddo
 c
 c  Finished writing the gain table.
 c
-          call hdaccess(item,iostat)
+	call hdaccess(item,iostat)
         if(iostat.ne.0)call bugno('f',iostat)
-          
-         end
+	
+	end
 
 
 
 c********1*********2*********3*********4*********5*********6*********7*c
 	subroutine linlsq1(xarr,yarr,npnt, yave,sigy,a1,b1,sigy1,corr)
-
-      real           xarr(*)
-      real           yarr(*)
-      integer        npnt
-      real           yave, a1, b1
-      real           sigx, sigy, corr
-      real           sigy1
-
+	implicit none
+	real           xarr(*)
+	real           yarr(*)
+	integer        npnt
+	real           yave, a1, b1
+	real           sigx, sigy, corr
+	real           sigy1
+	
 c This routine returns the parameters of a linear least squares fit to the
 c relation defined by xarr and yarr. Add rms after fit. mchw 1995.
 c 
@@ -1174,68 +1137,68 @@ c   sigy1: 	  rms fits of y to above relation
 c   corr:         correlation coefficient
 c--
 
-      real           sumx, sumy, sumsqx, sumsqy, sumxy
-      real           x, y
+	real           sumx, sumy, sumsqx, sumsqy, sumxy
+	real           x, y
 
-      integer        i
+	integer        i
 
-      sumx   = 0.
-      sumy   = 0.
-      sumsqx = 0.
-      sumsqy = 0.
-      sumxy  = 0.
-      do i = 1, npnt
-        x      = xarr( i )
-        y      = yarr( i )
-        sumx   = sumx   + x
-        sumy   = sumy   + y
-        sumsqx = sumsqx + x**2
-        sumsqy = sumsqy + y**2
-        sumxy  = sumxy  + x*y
-      enddo
-
-      if( sumy.eq.0. .and. sumsqy.eq.0. ) then
-        a1   = 0.
-        b1   = 0.
-        yave = 0.
-        sigx = 0.
-        sigy = 0.
-        corr = 0.
-      else
-        a1   = ( npnt*sumxy - sumx*sumy ) / ( npnt*sumsqx - sumx**2 )
-        yave = sumy / npnt
-        b1   = ( sumy - a1*sumx ) / npnt
-        sigx = sqrt(  sumsqx/npnt - sumx*sumx/npnt/npnt )
-        sigy = sqrt(  sumsqy/npnt - sumy*sumy/npnt/npnt )
-        corr = ( sumxy/npnt  - sumx*sumy/npnt/npnt ) / (sigx*sigy)
-      endif
-c 
+	sumx   = 0.
+	sumy   = 0.
+	sumsqx = 0.
+	sumsqy = 0.
+	sumxy  = 0.
+	do i = 1, npnt
+	   x      = xarr( i )
+	   y      = yarr( i )
+	   sumx   = sumx   + x
+	   sumy   = sumy   + y
+	   sumsqx = sumsqx + x**2
+	   sumsqy = sumsqy + y**2
+	   sumxy  = sumxy  + x*y
+	enddo
+	
+	if( sumy.eq.0. .and. sumsqy.eq.0. ) then
+	   a1   = 0.
+	   b1   = 0.
+	   yave = 0.
+	   sigx = 0.
+	   sigy = 0.
+	   corr = 0.
+	else
+	   a1   = ( npnt*sumxy - sumx*sumy ) / ( npnt*sumsqx - sumx**2 )
+	   yave = sumy / npnt
+	   b1   = ( sumy - a1*sumx ) / npnt
+	   sigx = sqrt(  sumsqx/npnt - sumx*sumx/npnt/npnt )
+	   sigy = sqrt(  sumsqy/npnt - sumy*sumy/npnt/npnt )
+	   corr = ( sumxy/npnt  - sumx*sumy/npnt/npnt ) / (sigx*sigy)
+	endif
+c       
 c  rms after fit.
 c
-      if(npnt.gt.0)then
-        sumsqy = 0.
-        do i = 1, npnt
-          x      = xarr( i )
-          y      = yarr( i )
-          sumsqy = sumsqy + (y-a1*x-b1)**2
-        enddo
-        sigy1 = sqrt(sumsqy/npnt)
-      else
-        sigy1 = 0.
-      endif
-c      
-      end
+	if(npnt.gt.0)then
+	   sumsqy = 0.
+	   do i = 1, npnt
+	      x      = xarr( i )
+	      y      = yarr( i )
+	      sumsqy = sumsqy + (y-a1*x-b1)**2
+	   enddo
+	   sigy1 = sqrt(sumsqy/npnt)
+	else
+	   sigy1 = 0.
+	endif
+c       
+	end
 c********1*********2*********3*********4*********5*********6*********7*c
-        subroutine linlsq1f(xarr,yarr,npnt,yave,sigy,a1,b1,sigy1,corr,
-     *     gf)
-
-      real           xarr(*)
-      real           yarr(*)
-      logical        gf(*)
-      integer        npnt
-      real           yave, a1, b1
-      real           sigx, sigy, corr
-      real           sigy1
+      subroutine linlsq1f(xarr,yarr,npnt,yave,sigy,a1,b1,sigy1,corr,gf)
+	
+	implicit none
+	real           xarr(*)
+	real           yarr(*)
+	logical        gf(*)
+	integer        npnt
+	real           yave, a1, b1
+	real           sigx, sigy, corr
+	real           sigy1
 
 c This routine returns the parameters of a linear least squares fit to the
 c relation defined by xarr and yarr. Add rms after fit. mchw 1995.
@@ -1246,8 +1209,6 @@ c   xarr:         the x values
 c   yarr:         the y values
 c   npnt:         number of elements of xarr and yarr 
 c                 including the flagged ones
-c   npntf:        number of elements of xarr and yarr
-c                 excluding the flagged ones 
 c
 c Output:
 c   a1, b1:       coefficients of the relation y=a1*x+b1
@@ -1255,63 +1216,62 @@ c   yave, sigy:   average and rms values y
 c   sigy1:        rms fits of y to above relation
 c   corr:         correlation coefficient
 c--
-      real           sumx, sumy, sumsqx, sumsqy, sumxy
-      real           x, y
+	real           sumx, sumy, sumsqx, sumsqy, sumxy
+	real           x, y
+	integer        i, npntf
 
-      integer        i
-
-      sumx   = 0.
-      sumy   = 0.
-      sumsqx = 0.
-      sumsqy = 0.
-      sumxy  = 0.
-      npntf  = 0
-      do i = 1, npnt
+	sumx   = 0.
+	sumy   = 0.
+	sumsqx = 0.
+	sumsqy = 0.
+	sumxy  = 0.
+	npntf  = 0
+	do i = 1, npnt
         if(.not.gf(i)) then
-        x      = xarr( i )
-        y      = yarr( i )
-        sumx   = sumx   + x
-        sumy   = sumy   + y
-        sumsqx = sumsqx + x**2
-        sumsqy = sumsqy + y**2
-        sumxy  = sumxy  + x*y
-        npntf  = npntf  + 1
+	   x      = xarr( i )
+	   y      = yarr( i )
+	   sumx   = sumx   + x
+	   sumy   = sumy   + y
+	   sumsqx = sumsqx + x**2
+	   sumsqy = sumsqy + y**2
+	   sumxy  = sumxy  + x*y
+	   npntf  = npntf  + 1
         end if
-      enddo
-
-      if( sumy.eq.0. .and. sumsqy.eq.0. ) then
-        a1   = 0.
-        b1   = 0.
-        yave = 0.
-        sigx = 0.
-        sigy = 0.
-        corr = 0.
-      else
-        a1   = ( npntf*sumxy - sumx*sumy ) / ( npntf*sumsqx - sumx**2 )
-        yave = sumy / npntf
-        b1   = ( sumy - a1*sumx ) / npntf
-        sigx = sqrt(  sumsqx/npntf - sumx*sumx/npntf/npntf )
-        sigy = sqrt(  sumsqy/npntf - sumy*sumy/npntf/npntf )
-        corr = ( sumxy/npntf  - sumx*sumy/npntf/npntf ) / (sigx*sigy)
-      endif
-c
+	enddo
+	
+	if( sumy.eq.0. .and. sumsqy.eq.0. ) then
+	   a1   = 0.
+	   b1   = 0.
+	   yave = 0.
+	   sigx = 0.
+	   sigy = 0.
+	   corr = 0.
+	else
+	   a1   = (npntf*sumxy - sumx*sumy) / (npntf*sumsqx - sumx**2)
+	   yave = sumy / npntf
+	   b1   = ( sumy - a1*sumx ) / npntf
+	   sigx = sqrt(  sumsqx/npntf - sumx*sumx/npntf/npntf )
+	   sigy = sqrt(  sumsqy/npntf - sumy*sumy/npntf/npntf )
+	   corr = (sumxy/npntf  - sumx*sumy/npntf/npntf) / (sigx*sigy)
+	endif
+c       
 c  rms after fit.
 c
-      if(npntf.gt.0)then
-        sumsqy = 0.
-        do i = 1, npnt
-          if(.not.gf(i)) then
-          x      = xarr( i )
-          y      = yarr( i )
-          sumsqy = sumsqy + (y-a1*x-b1)**2
-          end if
-        enddo
-        sigy1 = sqrt(sumsqy/npntf)
-      else
-        sigy1 = 0.
-      endif
-c
-      end
+	if(npntf.gt.0)then
+	   sumsqy = 0.
+	   do i = 1, npnt
+	      if(.not.gf(i)) then
+		 x      = xarr( i )
+		 y      = yarr( i )
+		 sumsqy = sumsqy + (y-a1*x-b1)**2
+	      end if
+	   enddo
+	   sigy1 = sqrt(sumsqy/npntf)
+	else
+	   sigy1 = 0.
+	endif
+c       
+	end
 
 c********1*********2*********3*********4*********5*********6*********7*c
 	subroutine quadfit(xarr,yarr,npnt,a1,b1)
