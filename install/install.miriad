@@ -1,6 +1,6 @@
 #! /bin/csh -f
 #
-set version=30-jan-06
+set version=16-mar-06
 #
 #  2-aug-99 Updated for Sebok's Mandrake setup
 #  1-aug-00 Updated to allow to build private PGPLOT version
@@ -54,8 +54,7 @@ set version=30-jan-06
 # sanity check: find out from the way it was called where the script lives
 # since it needs to be run from the $MIR/install directory
 
-set here=$0:h
-#set here=$MIR/install
+set here=`dirname $0`
 cd $here
  
 if (! -e ../VERSION) then
