@@ -110,7 +110,12 @@ help:
 	@echo " clean       remove .o, .f, .doc etc."
 	@echo " $(PROG)       compile and link $(PROG)"
 
+# either via configure, or manually, but slib needs to point to the correct
+# way to make a shared library out of the static one (or skip making one)
 slib:	slib_@SLIB@
+
+slib_none:
+	@echo No shared lib building implemented
 
 slib_mac:
 	@echo No shared lib for MacOSX yet
