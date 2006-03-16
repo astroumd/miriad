@@ -56,6 +56,8 @@ c    jhz   05jul05    add options = sma for SMA, which takes
 c                     sma geocentric coordinates and antenna position
 c                     offsets given in SMA logs
 c    pjt   30nov05    compute (u,v,w) instead of (u,v)
+c    pjt   16mar06    reformatted sma to keep the solaris compiler happy
+c                     and somehow linux allowed r>0 instead of r.gt.0
 c***********************************************************************
 c= Uvedit - Editing of the baseline of a UV data set.
 c& pjt
@@ -253,7 +255,7 @@ c
       character PROG*(*)
       parameter (PROG = 'UVEDIT: ')
       character VERSION*(*)
-      parameter (VERSION = 'version 1-dec-05')
+      parameter (VERSION = 'version 16-mar-06')
 c
       double precision SECRAD, ASECRAD
 c  -------------(SECRAD = DPI / (12.d0 * 3600.d0))
@@ -618,35 +620,34 @@ c
       call KeyFin
 c
 c  geocentric coordinates (in meter) to
-c  equatorial coordinates (in nonasec).
+c  equatorial coordinates (in nanosec).
 c
-       if(dosma) then
-       mesg = PROG //
-     * 'Convert the input geocentric coordinates to equatorial coordinat
-     *es'
-            call Output(mesg)
-        r = sqrt(XYZ(refant,1)**2+ XYZ(refant,2)**2)
-            if(r>0) then
+      if(dosma) then
+         mesg = PROG // 'Convert the input geocentric coordinates' //
+     *          ' to equatorial coordinates'
+         call Output(mesg)
+         r = sqrt(XYZ(refant,1)**2+ XYZ(refant,2)**2)
+         if(r.gt.0) then
             cost = XYZ(refant,1) / r
             sint = XYZ(refant,2) / r
             z0   = XYZ(refant,3)
-                else
+         else
             cost = 1.
             sint = 0.
             z0 = 0.
-            end if
-       do j =1,nants 
-        tmp  = XYZ(j,1)*cost + XYZ(j,2)*sint - r
-        smaoffxyz(j,1) = (1e9/DCMKS) * tmp
-        tmp  = -XYZ(j,1)*sint + XYZ(j,2)*cost - r
-        smaoffxyz(j,2) = (1e9/DCMKS) * tmp   
-        smaoffxyz(j,3) = (1e9/DCMKS) * (XYZ(j,3)-z0);
-        XYZ(j,1) = smaoffxyz(j,1)
-        XYZ(j,2) = smaoffxyz(j,2)
-        XYZ(j,3) = smaoffxyz(j,3)
-       end do
-       end if
-c
+         end if
+         do j =1,nants 
+            tmp  = XYZ(j,1)*cost + XYZ(j,2)*sint - r
+            smaoffxyz(j,1) = (1e9/DCMKS) * tmp
+            tmp  = -XYZ(j,1)*sint + XYZ(j,2)*cost - r
+            smaoffxyz(j,2) = (1e9/DCMKS) * tmp   
+            smaoffxyz(j,3) = (1e9/DCMKS) * (XYZ(j,3)-z0)
+            XYZ(j,1) = smaoffxyz(j,1)
+            XYZ(j,2) = smaoffxyz(j,2)
+            XYZ(j,3) = smaoffxyz(j,3)
+         end do
+      end if
+c     
 c Should never get in this if-conditional!
 c
       if (Nflags .eq. 0) then
