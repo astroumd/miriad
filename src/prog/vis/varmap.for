@@ -98,11 +98,12 @@ c     pjt   3dec02  MAX....
 c    mchw  01feb06  Elliminate LogWrite. Update to standard keyline input.
 c    mchw  22feb06  Support for arrays and unit conversion of uvvariables.
 c    mchw  25feb06  Move units conversion into xcell and ycell keywords.
+c    pjt   16mar06  fortran fix for solaris
 c----------------------------------------------------------------------c
        include 'maxdim.h'
        include 'mirconst.h'
        character*(*) version
-       parameter(version='VARMAP: version 25-Feb-2006')
+       parameter(version='VARMAP: version 16-mar-2006')
        integer MAXSELS
        parameter(MAXSELS=512)
        real sels(MAXSELS)
@@ -483,6 +484,7 @@ c
 	end
 c********1*********2*********3*********4*********5*********6*********7**
       SUBROUTINE units(d,unit)
+      implicit none
       real d
       character unit*(*)
 c
@@ -494,7 +496,7 @@ c------------------------------------------------------------------------
       include 'mirconst.h'
 c
       IF(unit.EQ.'radians'.OR.unit.eq.' ') THEN
-     continue
+         continue
       ELSE IF(unit.EQ.'arcminutes') THEN
          d = d * DPI / (180d0 * 60d0)
       ELSE IF(unit.EQ.'arcseconds') THEN
