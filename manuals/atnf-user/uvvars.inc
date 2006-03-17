@@ -49,8 +49,9 @@
 %        30-dec-03  rjs  Add new weather variables.
 %  22-nov-05  pjt  Merged in the above 2 changes, and marked some CARMA proposed uvvars
 %  30-jan-06  pjt  documented the CARMA filler version (0.1.1 at this moment)
+%   8-mar-06  pjt  reminder how the channels and windows are laid out
 
-\newcommand{\uvversion}{January 30, 2006}
+\newcommand{\uvversion}{March 8, 2006}
 
 A \miriad\ uv dataset is composed of a collection of items and `\MM{u-v} variables'.
 The variables are parameters that are known at the time of the observation,
@@ -358,6 +359,8 @@ nants		\>I	\>-
 \>\>\>    temp(nants, ntemp) \\ 
 \>\>\>    tpower(nants, ntpower) \\ 
 \>\>\>    axisrms(2,nants) \\ 
+\>\>\>    dazim(nants) \\ 
+\>\>\>    delev(nants) \\ 
 \>\>\> The antennas are always numbered starting at 1. \\ 
 
 nbin		\>I	\>-
