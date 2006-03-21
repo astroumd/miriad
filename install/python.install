@@ -1,0 +1,151 @@
+#! /bin/csh -f
+#
+#
+#  Sample script to install python and some friends to your choice of a prefix
+#  Count on diskspace:
+#  tar tree:     20 MB
+#  build tree:  135 MB
+#  opt tree:     66 MB
+#
+#  TODO: should really do this script in python!!!
+
+#                         binaries
+set prefix=`pwd`/opt
+#                         control the sources
+set dir=`pwd`             # place where tar balls live
+set download=0            # or download them from scratch
+set sf=superb             # sourceforge mirror ($sf.dl.sourceforge.net)   [superb,easynews,umn,internap]
+
+#                         basenames for url to get source from
+set url_Python=http://www.python.org//ftp/python/%s/Python-%s.tar.bz2
+set url_ipython=http://ipython.scipy.org/dist/ipython-%s.tar.gz
+set url_numarray=http://%s.dl.sourceforge.net/numpy/numarray-%s.tar.gz
+set url_numpy=http://%s.dl.sourceforge.net/numpy/numpy-%s.tar.gz
+set url_Numeric=http://%s.dl.sourceforge.net/numpy/Numeric-%s.tar.gz
+set url_scipy=http://%s.dl.sourceforge.net/scipy/scipy-%s.tar.gz
+set url_ppgplot=http://efault.net/npat/hacks/ppgplot/dist/ppgplot-%s.tar.gz
+set url_pyfits=ftp://ra.stsci.edu/pub/pyfits/pyfits_v%s.tar.gz
+set url_TableIO=http://php.iupui.edu/~mmiller3/python/TableIO.tar.gz
+
+
+#                         the versions of the tar balls
+set Python=2.4.2
+set ipython=0.7.1.fix1
+set numarray=1.5.1
+set numpy=0.9.6
+set Numeric=24.2
+set scipy=0.4.8
+set ppgplot=1.3
+set pyfits=1.0
+set TableIO=0
+
+#                         poor mans command line parser....
+foreach arg ($*)
+  set $arg
+end
+
+#                         we'll do all the work in a clean build tree
+mkdir -p build
+cd build
+
+#                         useful aliases
+alias report_status 'set err=$status;\
+if ($err) then;\
+echo FAILED;\
+else\
+echo OK;\
+endif'
+
+alias url_get 'set file=$url:t;\
+if (-e $file) then\
+echo $file exists\
+else\
+wget $url\
+endif'
+
+#                         Grab all the sources
+if ($download) then
+  echo Downloading....
+  pushd $dir 
+  set url=`printf $url_Python     $Python   $Python`   ; url_get $url
+  set url=`printf $url_ipython    $ipython`            ; url_get $url
+  set url=`printf $url_numarray   $sf       $numarray` ; url_get $url
+  set url=`printf $url_numpy      $sf       $numpy`    ; url_get $url
+  set url=`printf $url_Numeric    $sf       $Numeric`  ; url_get $url
+  set url=`printf $url_scipy      $sf       $scipy`    ; url_get $url
+  set url=`printf $url_ppgplot    $ppgplot`            ; url_get $url
+  set url=`printf $url_pyfits     $pyfits`             ; url_get $url
+  set url=`printf $url_TableIO`                        ; url_get $url
+  popd
+endif
+
+
+#                                                   python
+echo -n "Python $Python "
+set p=Python-$Python
+tar jxf $dir/$p.tar.bz2
+(cd $p ; ./configure --prefix=$prefix ; make ; make install) >& install.python.log
+report_status
+
+
+set path=($prefix/bin $path)
+rehash
+
+#                                                   ipython
+echo -n "ipython $ipython "
+set p=ipython-$ipython
+tar zxf $dir/$p.tar.gz
+(cd $p ; python setup.py install) >& install.ipython.log
+report_status
+
+
+#                                                   numarray
+echo -n "numarray $numarray "
+set p=numarray-$numarray
+tar zxf $dir/$p.tar.gz
+(cd $p ; python setup.py install) >& install.numarray.log
+report_status
+
+
+#                                                   numpy
+echo -n "numpy $numpy "
+set p=numpy-$numpy
+tar zxf $dir/$p.tar.gz
+(cd $p ; python setup.py install) >& install.numpy.log
+report_status
+
+#                                                   Numeric
+echo -n "Numeric $Numeric "
+set p=Numeric-$Numeric
+tar zxf $dir/$p.tar.gz
+(cd $p ; python setup.py install) >& install.Numeric.log
+report_status
+
+#                                                   scipy
+echo -n "scipy $scipy "
+set p=scipy-$scipy
+tar zxf $dir/$p.tar.gz
+(cd $p ; python setup.py install) >& install.scipy.log
+report_status
+
+#                                                   ppgplot
+if ($?PGPLOT_DIR == 0) echo "Warning: PGPLOT_DIR not set"
+echo -n "ppgplot $ppgplot "
+set p=ppgplot-$ppgplot
+tar zxf $dir/$p.tar.gz
+(cd $p ; python setup.py install) >& install.ppgplot.log
+report_status
+
+#                                                   pyfits
+echo -n "pyfits $pyfits "
+set p=pyfits_v$pyfits
+tar zxf $dir/$p.tar.gz
+(cd pyfits ; python setup.py install) >& install.pyfits.log
+report_status
+
+#                                                   TableIO
+echo -n "TableIO "
+set p=TableIO
+tar zxf $dir/$p.tar.gz
+(cd $p ; python setup.py install) >& install.TableIO.log
+report_status
