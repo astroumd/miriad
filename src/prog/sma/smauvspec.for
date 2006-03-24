@@ -1,5 +1,6 @@
 c************************************************************************
         program smauvspec
+        implicit none
 c
 c= smauvspec - Plot averaged spectra of a visibility dataset.
 c& jhz for SMA 
@@ -169,7 +170,7 @@ c    jhz  22jun05 fixed problem of chunk boundary allowing
 c                 edge flag.
 c    jhz  23jun05 enable phase plot
 c    jhz  21jul05 fixed a bug in pghline which cause draw a
-c                 random lin at end of the line drawing. 
+c                 random line at end of the line drawing. 
 c    jhz  24jul05 add back the do both amplitude and phase
 c    jhz  26jul05 label the phase panel for the case of
 c                 plotting both amplitude and phase.
@@ -198,43 +199,12 @@ c                 when the start spectral chunks are flagged.
 c    jhz 16nov05  fixed a bug in spectral channel pointer in the pghline 
 c                 when hybrid spectral channel numbers used in the spectral 
 c                 windows.
-c>  Bugs:
+c    pjt 16mar06  intel compiler fix, use mirconst.h, use 'implicit none'
+c  Bugs:
 c------------------------------------------------------------------------
-c=======================================================================
-c  Pi.
-      real pi, twopi
-      double precision dpi, dtwopi
-      parameter (pi = 3.14159265358979323846)
-      parameter (dpi = 3.14159265358979323846)
-      parameter (twopi = 2 * pi)
-      parameter (dtwopi = 2 * dpi)
-c ----------------------------------------------------------------------
-c  Speed of light (meters/second).
-      real cmks
-      double precision dcmks
-      parameter (cmks = 299792458.0)
-      parameter (dcmks = 299792458.0)
-c ----------------------------------------------------------------------
-c  Boltzmann constant (Joules/Kelvin).
-      real kmks
-      double precision dkmks
-      parameter (kmks = 1.380658e-23)
-      parameter (dkmks = 1.380658d-23)
-c ----------------------------------------------------------------------
-c  Planck constant (Joules-second).
-      real hmks
-      double precision dhmks
-      parameter (hmks = 6.6260755e-34)
-      parameter (dhmks = 6.6260755d-34)
-c ----------------------------------------------------------------------
-c  Planck constant divided by Boltzmann constant (Kelvin/GHz).
-      real hoverk
-      double precision dhoverk
-      parameter (hoverk = 0.04799216)
-      parameter (dhoverk = 0.04799216)
-c=======================================================================
         include 'maxdim.h'
-        integer maxco
+        include 'mirconst.h'
+        integer maxco,maxmline
         parameter (maxco=15)
 c
 c catalog
@@ -243,7 +213,7 @@ c
         character mname*8000, moln*16
         integer mtag(maxmline), nmline, j, jp, js, je, iline
         character version*(*)
-        parameter(version='SmaUvSpec: version 1.12 16-Nov-05')
+        parameter(version='SmaUvSpec: version 1.13 16-mar-06')
         character uvflags*8,device*64,xaxis*12,yaxis*12,logf*64
         character xtitle*64,ytitle*64, veldef*8
         character xtitlebuf*64
@@ -263,7 +233,7 @@ c
 c
 c  Externals.
 c
-        integer nextpow2
+        integer nextpow2,len1
         logical uvdatopn,uvvarupd
 c
 c common jpl
@@ -277,7 +247,7 @@ c
         logical docolor,dorestfreq
         integer nspect, nschan(maxwin),nchan0
         common/spectrum/nspect,nschan,nchan0,docolor,dorestfreq
-        integer maxsels
+        integer maxsels,nin,i
         parameter(maxsels=256)
         real sels(maxsels)
         logical SelProbe, selwins(MAXWIN),winsel
@@ -299,23 +269,23 @@ c
         call keya('catpath', jplpath, ' ')
         call keyr('vsource', lsrvel, 0.0)
         call keya('veltype', veltyp, ' ') 
-           if (veltyp(1:1).eq."L".or.veltyp(1:1).eq."l") 
-     & veltyp = 'VELO-LSR'
-           if (veltyp(1:1).eq."B".or.veltyp(1:1).eq."b")
-     & veltyp = 'VELO-HEL'
+        if (veltyp(1:1).eq."L".or.veltyp(1:1).eq."l") 
+     &       veltyp = 'VELO-LSR'
+        if (veltyp(1:1).eq."B".or.veltyp(1:1).eq."b")
+     &       veltyp = 'VELO-HEL'
         call keya('veldef', veldef, 'radio')
-         if((veldef(1:1).eq."O").or.(veldef(1:1).eq."o")) 
+        if((veldef(1:1).eq."O").or.(veldef(1:1).eq."o")) 
      &       veldef = 'optical'
-         if((veldef(1:1).eq."R").or.(veldef(1:1).eq."r")) then
-             if((veldef(2:2).eq."A").or.(veldef(2:2).eq."a"))
-     &       veldef = 'radio'
-             if((veldef(2:2).eq."E").or.(veldef(2:2).eq."e"))
-     &       veldef = 'relativ'
-              end if
+        if((veldef(1:1).eq."R").or.(veldef(1:1).eq."r")) then
+           if((veldef(2:2).eq."A").or.(veldef(2:2).eq."a"))
+     &          veldef = 'radio'
+           if((veldef(2:2).eq."E").or.(veldef(2:2).eq."e"))
+     &          veldef = 'relativ'
+        end if
         call keyr('strngl', strl, -500.)
         call getaxis(xaxis,yaxis)
-c        if(docat) 
-c     & call bug('f','has not fully implemented yet for jpl catalog.')
+c       if(docat) 
+c     &  call bug('f','has not fully implemented yet for jpl catalog.')
         dolag = xaxis.eq.'lag'
         call uvdatinp('vis',uvflags)
         call keyd('interval',interval,0.d0)
@@ -329,69 +299,69 @@ c     & call bug('f','has not fully implemented yet for jpl catalog.')
         call keyr('yrange',yrange(2),yrange(1)-1)
         call keya('log',logf,' ')
         call keyfin
-          winsel = SelProbe(sels,'window?',0.d0)
-         do i=1,MAXWIN
-          if(winsel)then
-            selwins(i) = SelProbe(sels,'window',dble(i))
-          else
-            selwins(i) = .true.
-          endif
+        winsel = SelProbe(sels,'window?',0.d0)
+        do i=1,MAXWIN
+           if(winsel)then
+              selwins(i) = SelProbe(sels,'window',dble(i))
+           else
+              selwins(i) = .true.
+           endif
         enddo
 c
 c select molecular species
 c 
-         if(docat) then
-         if(jplpath(1:1).eq." ") 
-     &   call bug('f','Zero length of keyword catpath.')
-         pathlen=1
-         do while (jplpath(pathlen:pathlen).ne." ")
-         pathlen=pathlen+1
-         end do
-         pathlen=pathlen-1
-         if(jplpath(pathlen:pathlen).ne."/") then
-            jplpath=jplpath(1:pathlen)//'/'
-            pathlen=pathlen+1
-            end if
-         xaxis='frequency'
-         if((yaxis(1:1).ne.'p').or.
-     &      (yaxis(1:1).ne.'P')) yaxis='both'
-         call molselect(jplpath,pathlen,mtag,nmline,mname)
-                   jp=1
-                   iline=0 
-                   do while(iline.lt.nmline)
-                   js=jp
-                   j=1
-                   do while((mname(jp:jp).ne."\n").and.(j.lt.16))
-                       jp=jp+1
-                       j=j+1
-                   end do
-                   je=jp
-                   moln=mname(js:je)
-                   iline=iline+1
-                   jp=jp+1
-                   moltag(iline)=mtag(iline)
-                   molname(iline)=moln
-                   end do
-               nmol= nmline
-c
+        if(docat) then
+           if(jplpath(1:1).eq." ") 
+     &          call bug('f','Zero length of keyword catpath.')
+           pathlen=1
+           do while (jplpath(pathlen:pathlen).ne." ")
+              pathlen=pathlen+1
+           end do
+           pathlen=pathlen-1
+           if(jplpath(pathlen:pathlen).ne."/") then
+              jplpath=jplpath(1:pathlen)//'/'
+              pathlen=pathlen+1
+           end if
+           xaxis='frequency'
+           if((yaxis(1:1).ne.'p').or.
+     &          (yaxis(1:1).ne.'P')) yaxis='both'
+           call molselect(jplpath,pathlen,mtag,nmline,mname)
+           jp=1
+           iline=0 
+           do while(iline.lt.nmline)
+              js=jp
+              j=1
+              do while((mname(jp:jp).ne."\n").and.(j.lt.16))
+                 jp=jp+1
+                 j=j+1
+              end do
+              je=jp
+              moln=mname(js:je)
+              iline=iline+1
+              jp=jp+1
+              moltag(iline)=mtag(iline)
+              molname(iline)=moln
+           end do
+           nmol= nmline
+c     
 c  check
 c
 c               do i=1, nmol
 c               write(*,*) 'moltag', moltag(i),' molname   ', molname(i) 
 c               end do
 c               write(*,*) 'nmol=', nmol
-                    end if
+        end if
 c
 c  Check the input parameters.
 c
         if(interval.lt.0)call bug('f','Illegal value for interval')
         if((ampsc.or.rms).and.yaxis.ne.'amplitude')
-     *    call bug('w','Amplitude averaging option ignored')
+     *       call bug('w','Amplitude averaging option ignored')
         if(avall.and..not.nobase)
-     *    call bug('w','Option NOBASE being used because of AVALL')
+     *       call bug('w','Option NOBASE being used because of AVALL')
         nobase = nobase.or.avall
         if (hann.lt.1 .or. hann.gt.maxco) call bug('f',
-     *    'Illegal Hanning smoothing width')
+     *       'Illegal Hanning smoothing width')
 c
 c  Convert the shifts, and determine whether a shift is to be performed.
 c
@@ -415,101 +385,104 @@ c
 c
 c  Open the input file(s).
 c
-        dowhile(uvdatopn(tin))
+        do while(uvdatopn(tin))
 c
 c No comment.
 c
-          call uvvarini(tin,vupd)
-          call uvvarset(vupd,'dra')
-          call uvvarset(vupd,'ddec')
-          call uvvarset(vupd,'source')
-          call uvvarset(vupd,'nchan')
+           call uvvarini(tin,vupd)
+           call uvvarset(vupd,'dra')
+           call uvvarset(vupd,'ddec')
+           call uvvarset(vupd,'source')
+           call uvvarset(vupd,'nchan')
            
 c
 c  Loop over the data.
 c
           
-          call uvdatrd(preamble,data,flags,maxchan,nread)
+           call uvdatrd(preamble,data,flags,maxchan,nread)
 c          write(*,*) nread, nchan0 
 c          if((nread.lt.nchan0).and.docolor) docolor = .false.
-          nplot = nread
-          if(dolag)nplot = nextpow2(2*(nread-1))
-          if(doshift)then
-            call coinit(tin)
-            call cocvt(tin,'ow/ow',shift,'op/op',shft)
-            call cofin(tin)
-          endif
-          nchan = nread
-          t1 = preamble(3)
-          t0 = t1
-          dowhile(nread.gt.0)
+           nplot = nread
+           if(dolag)nplot = nextpow2(2*(nread-1))
+           if(doshift)then
+              call coinit(tin)
+              call cocvt(tin,'ow/ow',shift,'op/op',shft)
+              call cofin(tin)
+           endif
+           nchan = nread
+           t1 = preamble(3)
+           t0 = t1
+           do while(nread.gt.0)
 c
 c  Shift the data if needed.
 c
-            if(doshift)call shiftit(tin,preamble,data,nchan,shft)
+              if(doshift)call shiftit(tin,preamble,data,nchan,shft)
 c
 c  Determine if we need to flush out the averaged data.
-c
-            doflush = uvvarupd(vupd)
-            doflush = nread.ne.nchan
-            t0 = min(preamble(3),t0)
-            t1 = max(preamble(3),t1)
-            doflush = (doflush.or.t1-t0.gt.interval).and.buffered
-c
+c     
+              doflush = uvvarupd(vupd)
+              doflush = nread.ne.nchan
+              t0 = min(preamble(3),t0)
+              t1 = max(preamble(3),t1)
+              doflush = (doflush.or.t1-t0.gt.interval).and.buffered
+c     
 c  Pull the chain and flush out and plot the accumulated data
 c  in the case of time averaging.
 c
-         if(doflush)then
-       call bufflush(source,ampsc,rms,nobase,dodots,hann,hc,hw,first,
-     *          device,x,nplot,xtitle,ytitle,nxy,yrange,logf,
-     *          docat,dorestfreq,veldef,lsrvel,veldop)
-              t0 = preamble(3)
-              t1 = t0
-              buffered = .false.
-            endif
+              if(doflush)then
+                 call bufflush(source,ampsc,rms,nobase,dodots,hann,hc,
+     *                hw,first,
+     *                device,x,nplot,xtitle,ytitle,nxy,yrange,logf,
+     *                docat,dorestfreq,veldef,lsrvel,veldop)
+                 t0 = preamble(3)
+                 t1 = t0
+                 buffered = .false.
+              endif
 c
 c  Accumulate more data, if we are time averaging.
 c
-            if(.not.buffered) then 
-            call getxaxis(tin,xaxis,xtitle,x,nplot)
-             xtitlebuf=xtitle
-            if(docat.and.(.not.dorestfreq)) 
-     *             xtitle = 'Sky '//xtitlebuf(1:len1(xtitlebuf))
-            if(docat.and.dorestfreq)
-     *             xtitle = 'Rest '//xtitlebuf(1:len1(xtitlebuf))  
-             end if
-               if(avall)preamble(4) = 257
-            call uvrdvrr(tin,'inttime',inttime,0.)
-            call bufacc(doflag,doall,preamble,inttime,data,flags,nread)
-            buffered = .true.
-            nchan = nread
+              if(.not.buffered) then 
+                 call getxaxis(tin,xaxis,xtitle,x,nplot)
+                 xtitlebuf=xtitle
+                 if(docat.and.(.not.dorestfreq)) 
+     *                xtitle = 'Sky '//xtitlebuf(1:len1(xtitlebuf))
+                 if(docat.and.dorestfreq)
+     *                xtitle = 'Rest '//xtitlebuf(1:len1(xtitlebuf))  
+              end if
+              if(avall)preamble(4) = 257
+              call uvrdvrr(tin,'inttime',inttime,0.)
+              call bufacc(doflag,doall,preamble,inttime,data,flags,
+     *             nread)
+              buffered = .true.
+              nchan = nread
 c
 c  Keep on going. Read in another record.
 c
-            call uvgetvra(tin,'source',source)
-            call uvgetvrr(tin,'veldop',veldop,1)
+              call uvgetvra(tin,'source',source)
+              call uvgetvrr(tin,'veldop',veldop,1)
 c
 c  Pursing the velocity type
 c
-            if (docat) then 
-            call uvgetvra(tin,'veltype',veltype)
-            if(veltyp(1:1).eq.' ') veltyp(1:8)=veltype(1:8)
-            if(veltype(6:8).ne.veltyp(6:8)) 
-     * call bug('f',
-     * 'The input veltype differs from that defined in the uv data.')
-            end if  
-            call uvdatrd(preamble,data,flags,maxchan,nread)
-          enddo
-c
+              if (docat) then 
+                 call uvgetvra(tin,'veltype',veltype)
+                 if(veltyp(1:1).eq.' ') veltyp(1:8)=veltype(1:8)
+                 if(veltype(6:8).ne.veltyp(6:8)) call bug('f', 
+     *                'The input veltype differs from that ' //
+     *                ' defined in the uv data.')
+              end if  
+              call uvdatrd(preamble,data,flags,maxchan,nread)
+           enddo
+c     
 c  Flush out and plot anything remaining.
 c
-          if(buffered)then
-         call bufflush(source,ampsc,rms,nobase,dodots,hann,hc,hw,first,
-     *        device,x,nplot,xtitle,ytitle,nxy,yrange,logf,
-     *        docat,dorestfreq,veldef,lsrvel,veldop)
-            buffered = .false.
-          endif
-          call uvdatcls
+           if(buffered)then
+              call bufflush(source,ampsc,rms,nobase,dodots,hann,hc,
+     *             hw,first,
+     *             device,x,nplot,xtitle,ytitle,nxy,yrange,logf,
+     *             docat,dorestfreq,veldef,lsrvel,veldop)
+              buffered = .false.
+           endif
+           call uvdatcls
         enddo
 c
         if(first)call bug('f','Nothing to plot')
@@ -518,6 +491,7 @@ c
         end
 c************************************************************************
         subroutine shiftit(tin,uv,data,nchan,shift)
+        implicit none
 c
         integer tin,nchan
         double precision uv(2)
@@ -527,47 +501,8 @@ c
 c  Shift the data.
 c
 c------------------------------------------------------------------------
-       include 'maxdim.h'
-c=======================================================================
-c - mirconst.h  Include file for various fundamental physical constants.
-c
-c  History:
-c    jm  18dec90  Original code.  Constants taken from the paper
-c                 "The Fundamental Physical Constants" by E. Richard
-c                 Cohen and Barry N. Taylor (PHYICS TODAY, August 1989).
-c ----------------------------------------------------------------------
-c  Pi.
-      real pi, twopi
-      double precision dpi, dtwopi
-      parameter (pi = 3.14159265358979323846)
-      parameter (dpi = 3.14159265358979323846)
-      parameter (twopi = 2 * pi)
-      parameter (dtwopi = 2 * dpi)
-c ----------------------------------------------------------------------
-c  Speed of light (meters/second).
-      real cmks
-      double precision dcmks
-      parameter (cmks = 299792458.0)
-      parameter (dcmks = 299792458.0)
-c ----------------------------------------------------------------------
-c  Boltzmann constant (Joules/Kelvin).
-      real kmks
-      double precision dkmks
-      parameter (kmks = 1.380658e-23)
-      parameter (dkmks = 1.380658d-23)
-c ----------------------------------------------------------------------
-c  Planck constant (Joules-second).
-      real hmks
-      double precision dhmks
-      parameter (hmks = 6.6260755e-34)
-      parameter (dhmks = 6.6260755d-34)
-c ----------------------------------------------------------------------
-c  Planck constant divided by Boltzmann constant (Kelvin/GHz).
-      real hoverk
-      double precision dhoverk
-      parameter (hoverk = 0.04799216)
-      parameter (dhoverk = 0.04799216)
-c=======================================================================
+        include 'maxdim.h'
+        include 'mirconst.h'
         double precision sfreq(maxchan)
         real theta,theta0
         complex w
@@ -589,6 +524,7 @@ c
         end
 c************************************************************************
         subroutine getxaxis(tin,xaxis,xtitle,x,nchan)
+        implicit none
 c
         integer tin,nchan
         character xaxis*(*),xtitle*(*)
@@ -614,66 +550,68 @@ c  Externals.
 c
         integer len1
         if(xaxis.eq.'channel')then
-          call uvinfo(tin,'line',data)
-          start = data(3)
-          if(nint(data(1)).ne.velo)start = start + 0.5*(data(4)-1)
-          step = data(5)
-          do i=1,nchan
-            x(i) = start + (i-1)*step
-          enddo
-          if(nint(data(1)).eq.velo)then
-            call velsys(tin,vel,'radio')
-            xtitle = 'Velocity Channels('//vel(1:len1(vel))//') (km/s)'
-          else
-            xtitle = 'Channels'
-          endif
+           call uvinfo(tin,'line',data)
+           start = data(3)
+           if(nint(data(1)).ne.velo)start = start + 0.5*(data(4)-1)
+           step = data(5)
+           do i=1,nchan
+              x(i) = start + (i-1)*step
+           enddo
+           if(nint(data(1)).eq.velo)then
+              call velsys(tin,vel,'radio')
+              xtitle='Velocity Channels('//vel(1:len1(vel))//') (km/s)'
+           else
+              xtitle = 'Channels'
+           endif
         else if(xaxis.eq.'velocity')then
-          call velsys(tin,vel,'radio')
-          xtitle = 'Velocity('//vel(1:len1(vel))//') (km/s)'
-          call uvinfo(tin,'velocity',x)
+           call velsys(tin,vel,'radio')
+           xtitle = 'Velocity('//vel(1:len1(vel))//') (km/s)'
+           call uvinfo(tin,'velocity',x)
         else if(xaxis.eq.'felocity')then
-          call velsys(tin,vel,'optical')
-          xtitle = 'Velocity('//vel(1:len1(vel))//') (km/s)'
-          call uvinfo(tin,'felocity',x)
+           call velsys(tin,vel,'optical')
+           xtitle = 'Velocity('//vel(1:len1(vel))//') (km/s)'
+           call uvinfo(tin,'felocity',x)
         else if(xaxis.eq.'frequency')then
-          xtitle = 'Frequency (GHz)'
-          call uvinfo(tin,'sfreq',x)
+           xtitle = 'Frequency (GHz)'
+           call uvinfo(tin,'sfreq',x)
         else if(xaxis.eq.'dfrequency')then
-          xtitle = 'Doppler-Corrected Frequency (GHz)'
-          call uvinfo(tin,'frequency',x)
+           xtitle = 'Doppler-Corrected Frequency (GHz)'
+           call uvinfo(tin,'frequency',x)
         else if(xaxis.eq.'lag')then
-          i0 = -nchan/2
-          do i=1,nchan
-            x(i) = i0
-            i0 = i0 + 1
-          enddo
-          xtitle = 'Lag Number'
+           i0 = -nchan/2
+           do i=1,nchan
+              x(i) = i0
+              i0 = i0 + 1
+           enddo
+           xtitle = 'Lag Number'
         else
-          call bug('f','Unrecognised xaxis')
+           call bug('f','Unrecognised xaxis')
         endif
         end
 c************************************************************************
         subroutine velsys(tin,vel,type)
+        implicit none
 c
         integer tin
         character vel*(*),type*(*)
 c
 c------------------------------------------------------------------------
         character veltype*32
-c
+c     
         call uvrdvra(tin,'veltype',veltype,'VELO-LSR')
         if(veltype(6:8).eq.'LSR')then
-          vel = type//',LSR'
+           vel = type//',LSR'
         else if(veltype(6:8).eq.'HEL')then
-          vel = type//',Barycentric'
+           vel = type//',Barycentric'
         else if(veltype(6:8).eq.'OBS')then
-          vel = type//',Topocentric'
+           vel = type//',Topocentric'
         else
-          vel = type//',unknown'
+           vel = type//',unknown'
         endif
         end
 c************************************************************************
         subroutine getaxis(xaxis,yaxis)
+        implicit none
 c
         character xaxis*(*),yaxis*(*)
 c
@@ -700,10 +638,11 @@ c
         end
 c************************************************************************
         subroutine getopt(uvflags,ampsc,rms,nobase,avall,dodots,
-     *          doflag,doall,docat,dorestfreq)
+     *                    doflag,doall,docat,dorestfreq)
+        implicit none
 c
         logical ampsc,rms,nobase,avall,dodots,doflag,doall,docat,
-     *   dorestfreq
+     *       dorestfreq
         character uvflags*(*)
 c
 c  Determine the flags to pass to the uvdat routines.
@@ -735,7 +674,7 @@ c
         ampsc =    present(3)
         rms   =    present(8)
         if(ampsc.and.rms)call bug('f',
-     *    'Only one amplitude averaging option can be given')
+     *       'Only one amplitude averaging option can be given')
         nobase =   present(5)
         avall  =   present(6)
         dodots =   present(7)
@@ -755,6 +694,7 @@ c
         end
 c************************************************************************
         subroutine bufini
+        implicit none
 c
 c  Initialise the routines which do the buffering and averaging of
 c  the visibility data.
@@ -800,10 +740,12 @@ c************************************************************************
         subroutine bufflush(source,ampsc,rms,nobase,dodots,hann,hc,hw,
      *          first,device,x,n,xtitle,ytitle,nxy,yrange,logf,
      *          docat,dorestfreq,veldef,lsrvel,veldop)
+        implicit none
         logical docat,dorestfreq
         real lsrvel,veldop
         character veldef*8
-        parameter(cmks = 299792458.0)
+        include 'mirconst.h'
+
 c
         character source*32
         logical ampsc,rms,nobase,first,dodots
@@ -834,7 +776,7 @@ c  pols		The polarisation codes.
 c  preamble	The accumulated preambles.
 c  cnt		The number of things accumulated into the preambles.
 c  chnkpntr     The spectral chunk pntr.
-         include 'maxdim.h'
+        include 'maxdim.h'
         integer maxaver,maxpol
         parameter(maxaver=276525,maxpol=4)
         complex buf(maxaver)
@@ -892,25 +834,25 @@ c
 c  Autoscale the X axis.
 c
         call setaxisd(x,n,xrange)
-           if(docat.and.dorestfreq) then
-            if(veldef.eq."radio") then
+        if(docat.and.dorestfreq) then
+           if(veldef.eq."radio") then
               do i=1,2
-              xrange(i) = xrange(i)/(1.-(lsrvel+veldop)*1.e3/cmks)
+                 xrange(i) = xrange(i)/(1.-(lsrvel+veldop)*1.e3/cmks)
               end do
-        end if
-        if(veldef.eq."optical") then
-              do i=1,2
-              xrange(i) = xrange(i)*(1.+(lsrvel+veldop)*1.e3/cmks)
-              end do
-        end if
-        if(veldef.eq."relativ") then
-              do i=1,2
-              xrange(i) = xrange(i)*sqrt((1.+(lsrvel+veldop)*1.e3/cmks)/
-     &                                   (1.-(lsrvel+veldop)*1.e3/cmks))
-              end do
-        end if
-
            end if
+           if(veldef.eq."optical") then
+              do i=1,2
+                 xrange(i) = xrange(i)*(1.+(lsrvel+veldop)*1.e3/cmks)
+              end do
+           end if
+           if(veldef.eq."relativ") then
+             do i=1,2
+                xrange(i)=xrange(i)*sqrt((1.+(lsrvel+veldop)*1.e3/cmks)/
+     &                (1.-(lsrvel+veldop)*1.e3/cmks))
+             end do
+           end if
+           
+        end if
 c
 c  Now loop through the good baselines, plotting them.
 c
@@ -921,75 +863,76 @@ c
         nplts = 0
         npol = 0
         do i=polmin,polmax
-          hit(i) = .false.
+           hit(i) = .false.
         enddo
 c
         do j=1,mbase
-          if(cnt(j).gt.0)then
-            inttime = inttime + preamble(5,j)
-            time = time + preamble(3,j)
-            ntime = ntime + cnt(j)
+           if(cnt(j).gt.0)then
+              inttime = inttime + preamble(5,j)
+              time = time + preamble(3,j)
+              ntime = ntime + cnt(j)
 c
 c  Average the data in each polarisation. If there is only one scan in the
 c  average, not bother to average it.
 c
-            do i=1,npols(j)
-              if(.not.hit(pols(i,j)))then
-                npol = npol + 1
-                if(npol.gt.maxpol)call bug('f','Too many polarisations')
-                pol(npol) = pols(i,j)
-                hit(pols(i,j)) = .true.
-              endif
-              nprev = npnts
-              p = pnt(i,j)
-              if(cntp(i,j).ge.1)then
-                if(dolag)then
-           call lagext(x,buf(p),count(p),nchan(i,j),n,
-     *         xp,yp,maxpnt,npnts)
-                else
-           call visext(x,buf(p),buf2(p),bufr(p),count(p),
-     *          nchan(i,j),chnkpntr(p),
-     *          doamp,doampsc,dorms,dophase,doreal,doimag,
-     *          doboth,xp,yp,ypp,maxpnt,npnts,sppntr)
-                endif
-              endif
+              do i=1,npols(j)
+                 if(.not.hit(pols(i,j)))then
+                    npol = npol + 1
+                    if(npol.gt.maxpol)call bug('f',
+     *                   'Too many polarisations')
+                    pol(npol) = pols(i,j)
+                    hit(pols(i,j)) = .true.
+                 endif
+                 nprev = npnts
+                 p = pnt(i,j)
+                 if(cntp(i,j).ge.1)then
+                    if(dolag)then
+                       call lagext(x,buf(p),count(p),nchan(i,j),n,
+     *                      xp,yp,maxpnt,npnts)
+                    else
+                       call visext(x,buf(p),buf2(p),bufr(p),count(p),
+     *                      nchan(i,j),chnkpntr(p),
+     *                      doamp,doampsc,dorms,dophase,doreal,doimag,
+     *                      doboth,xp,yp,ypp,maxpnt,npnts,sppntr)
+                    endif
+                 endif
             
 c
 c  Did we find another plot.
 c
-              if(npnts.gt.nprev)then
-                nplts = nplts + 1
-                if(nplts.gt.maxplt)call bug('f',
-     *            'Buffer overflow(plots), when accumulating plots')
-                plot(nplts) = nprev + 1
-                plot(nplts+1) = npnts + 1
-              endif
-            enddo
-            if(.not.nobase.and.npnts.gt.0)then
-        call plotit(source,npnts,xp,yp,ypp,xrange,yrange,dodots,plot,
-     *       nplts,
-     *       xtitle,ytitle,j,time/ntime,inttime/nplts,pol,npol,
-     *       dopoint,hann,hc,hw,logf,doboth,sppntr)
-c
-              npol = 0
-              do i=polmin,polmax
-                hit(i) = .false.
+                 if(npnts.gt.nprev)then
+                    nplts = nplts + 1
+                    if(nplts.gt.maxplt)call bug('f',
+     *               'Buffer overflow(plots), when accumulating plots')
+                    plot(nplts) = nprev + 1
+                    plot(nplts+1) = npnts + 1
+                 endif
               enddo
-              npnts = 0
-              nplts = 0
-              ntime = 0
-              time = 0
-              inttime = 0
-            endif
-          endif
+              if(.not.nobase.and.npnts.gt.0)then
+                 call plotit(source,npnts,xp,yp,ypp,xrange,yrange,
+     *                dodots,plot,nplts,
+     *                xtitle,ytitle,j,time/ntime,inttime/nplts,pol,npol,
+     *                dopoint,hann,hc,hw,logf,doboth,sppntr)
+c     
+                 npol = 0
+                 do i=polmin,polmax
+                    hit(i) = .false.
+                 enddo
+                 npnts = 0
+                 nplts = 0
+                 ntime = 0
+                 time = 0
+                 inttime = 0
+              endif
+           endif
         enddo
 c
 c  Do the final plot.
 c
         if(npnts.gt.0) call plotit(source,npnts,xp,yp,ypp,
-     *    xrange,yrange,dodots,
-     *    plot,nplts,xtitle,ytitle,0,time/ntime,inttime/nplts,
-     *    pol,npol,dopoint,hann,hc,hw,logf,doboth,sppntr)
+     *       xrange,yrange,dodots,
+     *       plot,nplts,xtitle,ytitle,0,time/ntime,inttime/nplts,
+     *       pol,npol,dopoint,hann,hc,hw,logf,doboth,sppntr)
 c
 c  Reset the counters.
 c
@@ -999,8 +942,9 @@ c
         end
 c************************************************************************
         subroutine visext(x,buf,buf2,bufr,count,nchan,chnkpntr,
-     *  doamp,doampsc,dorms,dophase,doreal,doimag,
-     *  doboth,xp,yp,ypp,maxpnt,npnts,sppntr)
+     *     doamp,doampsc,dorms,dophase,doreal,doimag,
+     *     doboth,xp,yp,ypp,maxpnt,npnts,sppntr)
+        implicit none
 c
         integer nchan,npnts,maxpnt,count(nchan)
         logical doamp,doampsc,dorms,dophase,doreal,doimag
@@ -1010,47 +954,8 @@ c
         integer sppntr(maxpnt),chnkpntr(nchan)
         double precision x(nchan)
         complex buf(nchan)
-c------------------------------------------------------------------------
-c=======================================================================
-c - mirconst.h  Include file for various fundamental physical constants.
-c
-c  History:
-c    jm  18dec90  Original code.  Constants taken from the paper
-c                 "The Fundamental Physical Constants" by E. Richard
-c                 Cohen and Barry N. Taylor (PHYICS TODAY, August 1989).
-c ----------------------------------------------------------------------
-c  Pi.
-      real pi, twopi
-      double precision dpi, dtwopi
-      parameter (pi = 3.14159265358979323846)
-      parameter (dpi = 3.14159265358979323846)
-      parameter (twopi = 2 * pi)
-      parameter (dtwopi = 2 * dpi)
-c ----------------------------------------------------------------------
-c  Speed of light (meters/second).
-      real cmks
-      double precision dcmks
-      parameter (cmks = 299792458.0)
-      parameter (dcmks = 299792458.0)
-c ----------------------------------------------------------------------
-c  Boltzmann constant (Joules/Kelvin).
-      real kmks
-      double precision dkmks
-      parameter (kmks = 1.380658e-23)
-      parameter (dkmks = 1.380658d-23)
-c ----------------------------------------------------------------------
-c  Planck constant (Joules-second).
-      real hmks
-      double precision dhmks
-      parameter (hmks = 6.6260755e-34)
-      parameter (dhmks = 6.6260755d-34)
-c ----------------------------------------------------------------------
-c  Planck constant divided by Boltzmann constant (Kelvin/GHz).
-      real hoverk
-      double precision dhoverk
-      parameter (hoverk = 0.04799216)
-      parameter (dhoverk = 0.04799216)
-c=======================================================================
+        include 'mirconst.h'
+
         integer k
         real temp, temp2
         complex ctemp
@@ -1064,49 +969,50 @@ c=======================================================================
         temp=0.
         temp2=0.
         do k=1,nchan
-          if(count(k).gt.0)then
-            if(doamp)then
-              temp = abs(buf(k)) / count(k)
-            else if(doampsc)then
-              temp = bufr(k) / count(k)
-            else if(dorms)then
-              temp = sqrt(buf2(k) / count(k))
-            else if(dophase)then
-              ctemp = buf(k)
-              if(abs(real(ctemp))+abs(aimag(ctemp)).eq.0)then
-              temp = 0
-              else
-              temp=180/pi*atan2(aimag(ctemp),real(ctemp))
-              endif
-            else if(doreal)then
-              temp = real(buf(k)) / count(k)
-            else if(doimag)then
-              temp = aimag(buf(k)) / count(k)
-            else if(doboth)then
+           if(count(k).gt.0)then
+              if(doamp)then
+                 temp = abs(buf(k)) / count(k)
+              else if(doampsc)then
+                 temp = bufr(k) / count(k)
+              else if(dorms)then
+                 temp = sqrt(buf2(k) / count(k))
+              else if(dophase)then
+                 ctemp = buf(k)
+                 if(abs(real(ctemp))+abs(aimag(ctemp)).eq.0)then
+                    temp = 0
+                 else
+                    temp=180/pi*atan2(aimag(ctemp),real(ctemp))
+                 endif
+              else if(doreal)then
+                 temp = real(buf(k)) / count(k)
+              else if(doimag)then
+                 temp = aimag(buf(k)) / count(k)
+              else if(doboth)then
 c    ampl
-              temp = abs(buf(k)) / count(k)
+                 temp = abs(buf(k)) / count(k)
               
 c    phas
-              ctemp = buf(k)
-              if(abs(real(ctemp))+abs(aimag(ctemp)).eq.0)then
-              temp2 = 0
-              else
-              temp2=180/pi*atan2(aimag(ctemp),real(ctemp))
+                 ctemp = buf(k)
+                 if(abs(real(ctemp))+abs(aimag(ctemp)).eq.0)then
+                    temp2 = 0
+                 else
+                    temp2=180/pi*atan2(aimag(ctemp),real(ctemp))
+                 endif
               endif
-            endif
-            npnts = npnts + 1
-          if(npnts.gt.maxpnt)call bug('f',
-     *    'Buffer overflow(points), when accumulating plots')
-            xp(npnts) = x(k)
-            yp(npnts) = temp
-            ypp(npnts) = temp2
+              npnts = npnts + 1
+              if(npnts.gt.maxpnt)call bug('f',
+     *             'Buffer overflow(points), when accumulating plots')
+              xp(npnts) = x(k)
+              yp(npnts) = temp
+              ypp(npnts) = temp2
               sppntr(npnts) = chnkpntr(k)
-          endif
+           endif
         enddo
         end
 c************************************************************************
         subroutine lagext(x,buf,count,nchan,n,
      *              xp,yp,maxpnt,npnts)
+        implicit none
 c
         integer nchan,n,npnts,maxpnt,count(nchan)
         double precision x(n)
@@ -1147,6 +1053,7 @@ c
         end
 c************************************************************************
         subroutine bufacc(doflag,doall,preambl,inttime,data,flags,nread)
+        implicit none
 c
         integer nread
         double precision preambl(4)
@@ -1183,7 +1090,7 @@ c  pols		The polarisation codes.
 c  preamble	The accumulated preambles.
 c  cnt		The number of things accumulated into the preambles.
 c
-         include 'maxdim.h'
+        include 'maxdim.h'
         integer maxaver,maxpol
         parameter(maxaver=276525,maxpol=4)
         complex buf(maxaver)
@@ -1195,17 +1102,17 @@ c
         double precision preamble(5,maxbase)
         common/uvavcom/preamble,buf,bufr,buf2,count,pnt,nchan,npols,
      *    pols,cnt,cntp,free,mbase,chnkpntr
-        integer i,i1,i2,p,bl,pol
+        integer i,j,k,i1,i2,p,bl,pol
         real t
         logical ok,docolor,dorestfreq
         integer nspect, nschan(maxwin),nchan0,jstart,jend
         common/spectrum/nspect,nschan,nchan0,docolor,dorestfreq
-         logical selwins(maxwin)
-         common/windows/selwins
+        logical selwins(maxwin)
+        common/windows/selwins
 c
 c  Does this spectrum contain some good data.
 c
-       ok = doall
+        ok = doall
         if(.not.ok)then
           do i=1,nread
             ok = ok.or.(flags(i).neqv.doflag)
@@ -1325,6 +1232,7 @@ c
         end
 c************************************************************************
         subroutine pltini(device,ngood,nxy)
+        implicit none
 c
         character device*(*)
         integer ngood,nxy(2)
@@ -1360,6 +1268,7 @@ c
         end
 c************************************************************************
         subroutine setaxisd(data,npnts,range)
+        implicit none
 c
         integer npnts
         real range(2)
@@ -1388,6 +1297,7 @@ c
         end
 c************************************************************************
         subroutine setaxisr(data,npnts,range)
+        implicit none
 c
         integer npnts
         real range(2)
@@ -1419,172 +1329,173 @@ c
         range(2) = dmax + delta
         end
 c************************************************************************
-        subroutine plotit(source,npnts,xp,yp,ypp,xrange,yrange,dodots,
-     *            plot,nplts,xtitle,ytitle,bl,time,inttime,
-     *            pol,npol,dopoint,hann,hc,hw,logf,doboth,sppntr)
+      subroutine plotit(source,npnts,xp,yp,ypp,xrange,yrange,dodots,
+     *     plot,nplts,xtitle,ytitle,bl,time,inttime,
+     *     pol,npol,dopoint,hann,hc,hw,logf,doboth,sppntr)
+      implicit none
 c
-        integer npnts,bl,nplts,plot(nplts+1),npol,pol(npol),hann
-        double precision time
-        real xp(npnts),yp(npnts),xrange(2),yrange(2),inttime,hc(*),hw(*)
-        real ypp(npnts)
-        logical dopoint,dodots, doboth
-        character xtitle*(*),ytitle*(*),logf*(*)
-        integer sppntr(npnts)
-c
+      integer npnts,bl,nplts,plot(nplts+1),npol,pol(npol),hann
+      double precision time
+      real xp(npnts),yp(npnts),xrange(2),yrange(2),inttime,hc(*),hw(*)
+      real ypp(npnts)
+      logical dopoint,dodots, doboth
+      character xtitle*(*),ytitle*(*),logf*(*)
+      integer sppntr(npnts)
+c     
 c  Draw a plot
 c------------------------------------------------------------------------
-        integer ncol
-        parameter(ncol=12)
-        integer hr,mins,sec,b1,b2,l,i,j,xl,yl,symbol,lp,lt
-        character title*64,baseline*12,tau*16,line*80
-        character pollab*32, source*32
-        double precision t0
-        real yranged(2), ypranged(2)
-        real xlen,ylen,xloc, pscale, pline
-        integer k1,k2, k
+      integer ncol
+      parameter(ncol=12)
+      integer hr,mins,sec,b1,b2,l,i,j,xl,yl,symbol,lp,lt
+      character title*64,baseline*12,tau*16,line*80
+      character pollab*32, source*32
+      double precision t0
+      real yranged(2), ypranged(2)
+      real xlen,ylen,xloc, pscale, pline
+      integer k1,k2, k
 c
 c  Externals.
 c
-        integer len1
-        character itoaf*4,polsc2p*2
+      integer len1
+      character itoaf*4, polsc2p*2
 c
 c
-        symbol = 17
-        if (dodots) symbol = 1
+      symbol = 17
+      if (dodots) symbol = 1
 c
-        call pgpage
-        call pgvstd
-        if(yrange(2).le.yrange(1))then
-          call setaxisr(yp,npnts,yranged)
-           pscale= (yranged(2)-yranged(1))
-           pline = yranged(1)
-          if(doboth) yranged(1) = yranged(1)-0.5*pscale
-          call pgswin(xrange(1),xrange(2),yranged(1),yranged(2))
-           if(doboth) yranged(1) = yranged(1)+0.5*pscale
+      call pgpage
+      call pgvstd
+      if(yrange(2).le.yrange(1))then
+         call setaxisr(yp,npnts,yranged)
+         pscale= (yranged(2)-yranged(1))
+         pline = yranged(1)
+         if(doboth) yranged(1) = yranged(1)-0.5*pscale
+         call pgswin(xrange(1),xrange(2),yranged(1),yranged(2))
+         if(doboth) yranged(1) = yranged(1)+0.5*pscale
 cc          yrange(2)=yranged(2)
 cc          yrange(1)=yranged(1)
           
-        else
-           pscale= (yrange(2)-yrange(1))
-           pline = yrange(1)
-            if(doboth) yrange(1) = yrange(1)-0.5*pscale
-          call pgswin(xrange(1),xrange(2),yrange(1),yrange(2))
-            if(doboth) yrange(1) = yrange(1)+0.5*pscale
-        endif
-         call setaxisr(ypp,npnts,ypranged)
-            ypranged(1) =-200.
-            ypranged(2) = 200.
+      else
+         pscale= (yrange(2)-yrange(1))
+         pline = yrange(1)
+         if(doboth) yrange(1) = yrange(1)-0.5*pscale
+         call pgswin(xrange(1),xrange(2),yrange(1),yrange(2))
+         if(doboth) yrange(1) = yrange(1)+0.5*pscale
+      endif
+      call setaxisr(ypp,npnts,ypranged)
+      ypranged(1) =-200.
+      ypranged(2) = 200.
 c
-        if(.not.doboth) call pgbox('BCNST',0.,0.,'BCNST',0.,0.)
-        if(doboth) call pg2box('BCNST',0.,0,'BCNST',0.,0,pline)
-           do i=1,nplts
+      if(.not.doboth) call pgbox('BCNST',0.,0.,'BCNST',0.,0.)
+      if(doboth) call pg2box('BCNST',0.,0,'BCNST',0.,0,pline)
+      do i=1,nplts
 c   rescale the phase for plotting both
-           do k=plot(i),plot(i+1)
-         if(ypranged(2).gt.ypranged(1)) then
-             if(yrange(2).le.yrange(1))then
-         ypp(k) = 0.5*(ypp(k)-ypranged(2))*(yranged(2)-yranged(1))/
-     *    (ypranged(2)-ypranged(1)) + yranged(1)
+         do k=plot(i),plot(i+1)
+            if(ypranged(2).gt.ypranged(1)) then
+              if(yrange(2).le.yrange(1))then
+                ypp(k)=0.5*(ypp(k)-ypranged(2))*(yranged(2)-yranged(1))/
+     *                 (ypranged(2)-ypranged(1)) + yranged(1)
           
-                  else
-        ypp(k) = 0.5*(ypp(k)-ypranged(2))*(yrange(2)-yrange(1))/
-     *    (ypranged(2)-ypranged(1))+yrange(1)
+              else
+                ypp(k)=0.5*(ypp(k)-ypranged(2))*(yrange(2)-yrange(1))/
+     *                 (ypranged(2)-ypranged(1))+yrange(1)
          
-                  endif
-          else
-          call bug('f','the plotting range in phase is 0 degree!!')
-          end if
-          end do
+              endif
+            else
+              call bug('f','the plotting range in phase is 0 degree!!')
+            end if
+         end do
           
-          call  pgsci(i)
-c          call pgsci(mod(i-1,ncol)+1)
-          if(dopoint)then
-          call pgpts(plot(i+1)-plot(i),xp(plot(i)),yp(plot(i)),symbol,
-     *               sppntr)
-          else
+         call  pgsci(i)
+c        call pgsci(mod(i-1,ncol)+1)
+         if(dopoint)then
+            call pgpts(plot(i+1)-plot(i),xp(plot(i)),yp(plot(i)),symbol,
+     *           sppntr)
+         else
             if (hann.gt.1) call hannsm(hann,hc,plot(i+1)-plot(i),
-     *         yp(plot(i)),hw)
-             if (hann.gt.1) call hannsm(hann,hc,plot(i+1)-plot(i),
-     *         ypp(plot(i)),hw)
-        call pghline(plot(i+1)-plot(i),xp(plot(i)),yp(plot(i)),
-     *      ypp(plot(i)),2.0,doboth, yranged(2), sppntr, 
-     *      pline,xrange)
-          endif
-          if (logf.ne.' ') then
+     *           yp(plot(i)),hw)
+            if (hann.gt.1) call hannsm(hann,hc,plot(i+1)-plot(i),
+     *           ypp(plot(i)),hw)
+            call pghline(plot(i+1)-plot(i),xp(plot(i)),yp(plot(i)),
+     *           ypp(plot(i)),2.0,doboth, yranged(2), sppntr, 
+     *           pline,xrange)
+         endif
+         if (logf.ne.' ') then
             do j = 1, plot(i+1)-plot(i)
-              write(line,'(1pe13.6,2x,1pe13.6)')
-     *          xp(plot(i)+j-1),yp(plot(i)+j-1)
-              call logwrit(line)
+               write(line,'(1pe13.6,2x,1pe13.6)')
+     *              xp(plot(i)+j-1),yp(plot(i)+j-1)
+               call logwrit(line)
             end do
-          end if
-        enddo
-        call pgsci(1)
+         end if
+      enddo
+      call pgsci(1)
 c
 c  The polarisation label.
 c
-        pollab = ' '
-        lp = 0
-        do i=1,npol
-          pollab(lp+1:lp+2) = polsc2p(pol(i))
-          lp = len1(pollab)
-          pollab(lp+1:lp+1) = ','
-          lp = lp + 1
-        enddo
+      pollab = ' '
+      lp = 0
+      do i=1,npol
+         pollab(lp+1:lp+2) = polsc2p(pol(i))
+         lp = len1(pollab)
+         pollab(lp+1:lp+1) = ','
+         lp = lp + 1
+      enddo
 c
 c  The integration time label.
 c
-        write(tau,'(f16.1)')inttime/60.
-        lt = 1
-        dowhile(tau(lt:lt).eq.' ')
-          lt = lt + 1
-        enddo
+      write(tau,'(f16.1)')inttime/60.
+      lt = 1
+      do while(tau(lt:lt).eq.' ')
+         lt = lt + 1
+      enddo
 c
 c  Time of day.
 c
-        t0 = nint(time - 1.d0) + 0.5
-        sec = nint(24*3600*(time - t0))
-        hr = sec / 3600
-        sec = sec - 3600*hr
-        mins = sec / 60
-        sec = sec - 60*mins
+      t0 = nint(time - 1.d0) + 0.5
+      sec = nint(24*3600*(time - t0))
+      hr = sec / 3600
+      sec = sec - 3600*hr
+      mins = sec / 60
+      sec = sec - 60*mins
 c
-        if(bl.eq.0)then
-          write(title,'(a,i2.2,a,i2.2,a,i2.2)')
-     *      pollab(1:lp)//' \gt='//tau(lt:)//' min, T=',
-     *      hr,':',mins,':',sec
-        else
+      if(bl.eq.0)then
+         write(title,'(a,i2.2,a,i2.2,a,i2.2)')
+     *        pollab(1:lp)//' \gt='//tau(lt:)//' min, T=',
+     *        hr,':',mins,':',sec
+      else
 c
 c  Decode baseline number into antenna numbers.
-c
-          b2 = 1
-          l = 1
-          dowhile(bl.ge.l+b2)
+c     
+         b2 = 1
+         l = 1
+         do while(bl.ge.l+b2)
             l = l + b2
             b2 = b2 + 1
-          enddo
-          b1 = bl - l + 1
-c
-          baseline = itoaf(b1)
-          l = len1(baseline)
-          baseline(l+1:) = '-'//itoaf(b2)
-          l = len1(baseline)
-c
-          write(title,'(a,i2.2,a,i2.2,a,i2.2)')
-     *      pollab(1:lp)//' \gt='//tau(lt:)//' min, Bl='//
-     *      baseline(1:l)//', T=',hr,':',mins,':',sec
-        endif
-        l = len1(title)
-        xl = len1(xtitle)
-        yl = len1(ytitle)
-c
-        if(npol.eq.1)then
-          call pglab(xtitle(1:xl),ytitle(1:yl),title(1:l))
-        else
-          call pglab(xtitle(1:xl),ytitle(1:yl),' ')
-          call pglen(5,title(1:l),xlen,ylen)
-          xloc = 0.5 - 0.5*xlen
-c
-          k1 = 1
-          do i=1,npol
+         enddo
+         b1 = bl - l + 1
+c     
+         baseline = itoaf(b1)
+         l = len1(baseline)
+         baseline(l+1:) = '-'//itoaf(b2)
+         l = len1(baseline)
+c     
+         write(title,'(a,i2.2,a,i2.2,a,i2.2)')
+     *        pollab(1:lp)//' \gt='//tau(lt:)//' min, Bl='//
+     *        baseline(1:l)//', T=',hr,':',mins,':',sec
+      endif
+      l = len1(title)
+      xl = len1(xtitle)
+      yl = len1(ytitle)
+c     
+      if(npol.eq.1)then
+         call pglab(xtitle(1:xl),ytitle(1:yl),title(1:l))
+      else
+         call pglab(xtitle(1:xl),ytitle(1:yl),' ')
+         call pglen(5,title(1:l),xlen,ylen)
+         xloc = 0.5 - 0.5*xlen
+c     
+         k1 = 1
+         do i=1,npol
             k2 = k1 + len1(polsc2p(pol(i))) - 1
             if(i.ne.npol)k2 = k2 + 1
             call pgsci(i)
@@ -1592,37 +1503,39 @@ c
             call pglen(5,title(k1:k2),xlen,ylen)
             xloc = xloc + xlen
             k1 = k2 + 1
-          enddo
-          call pgsci(1)
-          k2 = l
-          call pgmtxt('T',2.0,xloc,0.,title(k1:k2))
-        endif
-c          call uvgetvra(lvis,'source',source)
-          call pgsci(2)
-          call pgmtxt('LV',0.0, 1.025, 0., source(1:32))
-          call pgsci(1)
+         enddo
+         call pgsci(1)
+         k2 = l
+         call pgmtxt('T',2.0,xloc,0.,title(k1:k2))
+      endif
+c     call uvgetvra(lvis,'source',source)
+      call pgsci(2)
+      call pgmtxt('LV',0.0, 1.025, 0., source(1:32))
+      call pgsci(1)
 c
-        end
+      end
 
 c************************************************************************
 c PgHline -- Histogram line plot for pgplot.
 c mchw:
 c plotting,uv-data
 c
-        subroutine pghline(npts,x,y,yp,gapfac,doboth,maxstr,sppntr,
-     *   pline,xrange)
-        parameter(maxsline=10000)
-        parameter(cmks = 299792458.0)
-        real fmx,fmn,strl
-        real freq(maxsline),intensity(maxsline)
-        integer uqst(6*maxsline),lqst(6*maxsline),mtag(6*maxsline)
-        integer mxnline,iubuff, ilbuff
-        real maxf, minf, maxstr, minstr, maxcatstr
-        real xlfrq(2), ylstr(2)
-        integer npts,sppntr(npts)
-        real x(npts), y(npts), yp(npts), gapfac
-        REAL XPTS(npts),YPTS(npts),pline,apline(2),xrange(2)
-        INTEGER N
+      subroutine pghline(npts,x,y,yp,gapfac,doboth,maxstr,sppntr,
+     *     pline,xrange)
+      implicit none
+      integer maxsline
+      parameter(maxsline=10000)
+      include 'mirconst.h'
+      real fmx,fmn,strl
+      real freq(maxsline),intensity(maxsline)
+      integer uqst(6*maxsline),lqst(6*maxsline),mtag(6*maxsline)
+      integer mxnline,iubuff, ilbuff
+      real maxf, minf, maxstr, minstr, maxcatstr
+      real xlfrq(2), ylstr(2)
+      integer npts,sppntr(npts)
+      real x(npts), y(npts), yp(npts), gapfac
+      REAL XPTS(npts),YPTS(npts),pline,apline(2),xrange(2)
+      INTEGER N
 c
 c  Histogram style line plot of y-array versus x-array. Points are not
 c  connected over gaps or reversals in the x-array.
@@ -1653,26 +1566,28 @@ c-------------------------------------------------------------------------
 c
 c common jpl
 c
+        integer maxmline
         parameter(maxmline=500)
         integer nmol, moltag(maxmline), len1
         integer endchunk, startchunk, istart
         character molname(maxmline)*16, veldef*8,veltype*32
-        real lsrvel,veldop,z
+        real lsrvel,veldop,z,yloc
         logical docat
         common/jplcat/nmol,moltag,molname,docat,lsrvel,
      *       veltype,veldef,veldop,strl
         logical selwins(maxwin)
         common/windows/selwins
-         startchunk=0
-         endchunk=0
-         do i=1,nspect 
-         if(startchunk.eq.0.and.selwins(i)) startchunk=i
-         if(startchunk.ne.0.and.endchunk.eq.0.and..not.selwins(i)) 
-     *   endchunk=i-1
-         if(endchunk.eq.0.and.i.eq.nspect)  endchunk=nspect       
-         end do
-         apline(1)=pline
-         apline(2)=pline
+
+        startchunk=0
+        endchunk=0
+        do i=1,nspect 
+           if(startchunk.eq.0.and.selwins(i)) startchunk=i
+           if(startchunk.ne.0.and.endchunk.eq.0.and..not.selwins(i)) 
+     *          endchunk=i-1
+           if(endchunk.eq.0.and.i.eq.nspect)  endchunk=nspect       
+        end do
+        apline(1)=pline
+        apline(2)=pline
 c 
 c convert to the rest frame
 c
@@ -1929,6 +1844,7 @@ CPGPT -- draw several graph markers
 Cvoid cpgpt(int n, const float *xpts, const float *ypts, int symbol);
 C
       SUBROUTINE PGPTS (N, XPTS, YPTS, SYMBOL,sppntr)
+      implicit none
       INTEGER N
       REAL XPTS(*), YPTS(*)
       INTEGER SYMBOL, sppntr(N)
@@ -1972,50 +1888,50 @@ ccccccccccccccccccccccccccc
       LOGICAL PGNOTO, docolor, dorestfreq
       integer j, k, ci, l
       character title*64
-      real xlen,ylen,xloc
+      real xlen,ylen,xloc,yloc
       integer   i,maxwin,  startchunk,endchunk,istart
       parameter(maxwin=48)
-      integer  nspect, nschan(maxwin),fnschan(maxwin),nchan0
+      integer  nspect, nschan(maxwin),fnschan(maxwin),nchan0,len1
       common/spectrum/nspect,nschan,nchan0,docolor,dorestfreq
       logical selwins(maxwin)
-        common/windows/selwins
+      common/windows/selwins
 
 c
 c  sort the spectral window pointr after flagging
 c
-         startchunk=0
-         endchunk=0
-         do i=1,nspect
+      startchunk=0
+      endchunk=0
+      do i=1,nspect
          if(startchunk.eq.0.and.selwins(i)) startchunk=i
          if(startchunk.ne.0.and.endchunk.eq.0.and..not.selwins(i))
-     *   endchunk=i-1
+     *        endchunk=i-1
          if(endchunk.eq.0.and.i.eq.nspect)  endchunk=nspect
-         end do
+      end do
 
-        do j=1, nspect
-        fnschan(j)=0
-        enddo
-        j=sppntr(1)
-        do i=1, N 
-        if(sppntr(i).eq.j) then
-         fnschan(j)=fnschan(j)+1
+      do j=1, nspect
+         fnschan(j)=0
+      enddo
+      j=sppntr(1)
+      do i=1, N 
+         if(sppntr(i).eq.j) then
+            fnschan(j)=fnschan(j)+1
          else
-          j=sppntr(i)
-          fnschan(j)=1
+            j=sppntr(i)
+            fnschan(j)=1
          endif
-        enddo
+      enddo
 
 
-        yloc=0.95
+      yloc=0.95
 C
-         i=0
+      i=0
       IF (N.LT.1) RETURN
       IF (PGNOTO('PGPTS')) RETURN
 C
-          istart=0
-          do j=startchunk,endchunk
-            ci=j
-        if(j.gt.12) then
+      istart=0
+      do j=startchunk,endchunk
+         ci=j
+         if(j.gt.12) then
             if(ci.eq.12) call pgscr(ci, 0.8, 0.6, 0.4)
             if(ci.eq.13) call pgscr(ci, 1.0, 1.0, 0.5)
             if(ci.eq.14) call pgscr(ci, 1.0, 1.0, 0.0)
@@ -2029,41 +1945,40 @@ C
             if(ci.eq.22) call pgscr(ci, 0.7, 0.5, 0.9)
             if(ci.eq.23) call pgscr(ci, 0.5, 0.0, 0.5)
             if(ci.eq.24) call pgscr(ci, 0.75, 0.2, 0.3)
-            end if
-            call  pgsci(ci)
+         end if
+         call  pgsci(ci)
             
-          N=0
-          do k=1, fnschan(j)
-          i=i+1
-          N=N+1
-          XPTS(k) = XPTS(k+istart)
-          YPTS(k) = YPTS(k+istart)
-          enddo
-          istart=istart+fnschan(j)
-       write(title,'(a,i2)') 's' ,j
-               l = len1(title)
-               call pglen(5,title(1:l),xlen,ylen)
-               xloc = 0.8
-               yloc = yloc-1/30.
-               call pgmtxt('RV',1.0,yloc,0.,title(1:l))
-
-      CALL PGBBUF
-      IF (SYMBOL.GE.0 .OR. SYMBOL.LE.-3) THEN
-          CALL GRMKER(SYMBOL,.FALSE.,N,XPTS,YPTS)
-      ELSE
-          CALL GRDOT1(N,XPTS,YPTS)
-      END IF
-      CALL PGEBUF
-          enddo
-555       continue
+         N=0
+         do k=1, fnschan(j)
+            i=i+1
+            N=N+1
+            XPTS(k) = XPTS(k+istart)
+            YPTS(k) = YPTS(k+istart)
+         enddo
+         istart=istart+fnschan(j)
+         write(title,'(a,i2)') 's' ,j
+         l = len1(title)
+         call pglen(5,title(1:l),xlen,ylen)
+         xloc = 0.8
+         yloc = yloc-1/30.
+         call pgmtxt('RV',1.0,yloc,0.,title(1:l))
+         
+         CALL PGBBUF
+         IF (SYMBOL.GE.0 .OR. SYMBOL.LE.-3) THEN
+            CALL GRMKER(SYMBOL,.FALSE.,N,XPTS,YPTS)
+         ELSE
+            CALL GRDOT1(N,XPTS,YPTS)
+         END IF
+         CALL PGEBUF
+      enddo
+ 555  continue
       
-        END
-
-
-
-        subroutine vishd(in)
+      END
+      
+      subroutine vishd(in)
+      implicit none
 c
-        character in*(*)
+      character in*(*)
 c
 c  Give a summary about a uv data-set.
 c------------------------------------------------------------------------
@@ -2115,6 +2030,7 @@ c
       end
 
       SUBROUTINE PG2BOX(XOPT,XTICK,NXSUB,YOPT,YTICK,NYSUB,YSTART)
+      implicit none
       CHARACTER*(*) XOPT, YOPT
        REAL XTICK,YTICK,YSTART
       INTEGER NXSUB, NYSUB
@@ -2203,7 +2119,7 @@ C-----------------------------------------------------------------------
       CHARACTER*64  OPT
       LOGICAL  XOPTA, XOPTB, XOPTC, XOPTG, XOPTN, XOPTM, XOPTT, XOPTS
       LOGICAL  YOPTA, YOPTB, YOPTC, YOPTG, YOPTN, YOPTM, YOPTT, YOPTS
-      LOGICAL  XOPTI, YOPTI, YOPTV, XOPTL, YOPTL, XOPTP, YOPTP, RANGE
+      LOGICAL  XOPTI, YOPTI, YOPTV, XOPTL, YOPTL, XOPTP, YOPTP, RRANGE
       LOGICAL  IRANGE, MAJOR, XOPTLS, YOPTLS, PGNOTO
       REAL     TAB(9), UTAB(9)
       INTEGER  I, I1, I2, J, NC, NP, NV, KI, CLIP
@@ -2222,7 +2138,7 @@ C
       DATA TAB / 0.00000, 0.30103, 0.47712, 0.60206, 0.69897,
      1           0.77815, 0.84510, 0.90309, 0.95424 /
 C
-      RANGE(A,B,C) = (A.LT.B.AND.B.LT.C) .OR. (C.LT.B.AND.B.LT.A)
+      RRANGE(A,B,C) = (A.LT.B.AND.B.LT.C) .OR. (C.LT.B.AND.B.LT.A)
       IRANGE(A,B,C) = (A.LE.B.AND.B.LE.C) .OR. (C.LE.B.AND.B.LE.A)
 C
       IF (PGNOTO('PGBOX')) RETURN
@@ -2232,7 +2148,7 @@ C
 C Decode options.
 C
       CALL GRTOUP(OPT,XOPT)
-      XOPTA = INDEX(OPT,'A').NE.0 .AND. RANGE(YBLC,0.0,YTRC)
+      XOPTA = INDEX(OPT,'A').NE.0 .AND. RRANGE(YBLC,0.0,YTRC)
       XOPTB = INDEX(OPT,'B').NE.0
       XOPTC = INDEX(OPT,'C').NE.0
       XOPTG = INDEX(OPT,'G').NE.0
@@ -2247,7 +2163,7 @@ C
       IF (INDEX(OPT,'1').NE.0) XNFORM = 1
       IF (INDEX(OPT,'2').NE.0) XNFORM = 2
       CALL GRTOUP(OPT,YOPT)
-      YOPTA = INDEX(OPT,'A').NE.0 .AND. RANGE(XBLC,0.0,XTRC)
+      YOPTA = INDEX(OPT,'A').NE.0 .AND. RRANGE(XBLC,0.0,XTRC)
       YOPTB = INDEX(OPT,'B').NE.0
       YOPTC = INDEX(OPT,'C').NE.0
       YOPTG = INDEX(OPT,'G').NE.0
