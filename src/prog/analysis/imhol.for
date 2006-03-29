@@ -85,12 +85,13 @@ c    rjs  02jul97 cellscal change.
 c    mchw 15apr98 Fix both doc and code in a few places.
 c    mchw 05aug04 Change default image axes to wavelengths, and default antenna size 6.1m.
 c    mchw 27feb06 CARMA holography. Use restfreq if frequency axis is missing.
+c    mchw 27mar06 set default subreflector diameter = antdiam/10.
 c------------------------------------------------------------------------
       implicit none
       include 'maxdim.h'
       include 'maxnax.h'
       character version*40
-      parameter (version = 'IMHOL: version 27-FEB-2006')
+      parameter (version = 'IMHOL: version 27-MAR-2006')
 c
       real qepoch, uepoch, qcrpix(maxnax),ucrpix(maxnax), sigma,
      *		snclip, paclip
@@ -141,6 +142,12 @@ c
       bflag = 'f'
       if (relax) bflag = 'w'
       call keyfin
+c
+c Information for user.
+c
+
+      call bug ('i', 
+     + '27mar06 set default subreflector diameter = antdiam/10.')
 c
 c Issue some messages if producing an output image
 c
@@ -626,8 +633,8 @@ c
       if(ok)then
         subdiam = subdiam / 2. / 0.3
       else
-        subdiam = 0.
-        call output('Unknown subreflector diameter; setting to 0.')
+        subdiam = antdiam / 2. / 0.3 /10.
+        call output('Unknown subreflector; setting to antdiam/10')
       endif
 c
 c  Find frequency axis.
