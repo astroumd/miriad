@@ -113,16 +113,17 @@ c    26dec01 mchw  Format change in befit to handle a-array.
 c    22mar05 mchw  Get longitude from uvvariable instead of obspar.
 c    10nov05 mchw  Added summary in topocentric coordinates.
 c    23feb06 jkoda different numbers of grids between bx/by bz in 'FI'
+c    29mar06 mchw  Antel in degrees.
 c-----------------------------------------------------------------------
 	include 'bee.h'
 	character version*(*),device*80,log*80,ans*20
-	parameter(version='(version 3.0 23-Feb-2006)')
+	parameter(version='(version 3.0 29-Mar-2006)')
 	integer length,tvis,tgains,iostat
 	logical doscale
 c
 c  Get input parameters.
 c
-	call output('BEE for antel in RADIANS '//version )
+	call output('BEE for antel in DEGREES '//version )
 	call keyini
 	call keyf('vis',vis,' ')
 	call keya('device',device,'?')
@@ -423,9 +424,9 @@ c Get lst in radians
 	      call uvprobvr(tvis,'antel',type,length,updated)
 	      if(type.eq.'d')then
 	        call uvgetvrd(tvis,'antel',antel(1,k),nants)
-		do i=1,nants
-	          antel(i,k) =  180./pi * antel(i,k)
-		enddo
+c		do i=1,nants
+c	          antel(i,k) =  180./pi * antel(i,k)
+c		enddo
 	      else
 	        sinel=sin(latitude)*sin(obsdec(k))
      *		  +cos(latitude)*cos(obsdec(k))*cos(lst(k)-obsra(k))
