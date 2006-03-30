@@ -908,8 +908,8 @@ c
           freq = (real(k)-crpix(3))*cdelt(3) + crval(3)
         endif
         write(aline,'(a,2g12.5,a)') 'Pointing offset in az,el = ',
-     *	    b/fac/*cmks/(freq*1e9)*180/pi*3600,
-     *	    c/fac/*cmks/(freq*1e9)*180/pi*3600, ' arcsecs'
+     *	    b/fac*cmks/(freq*1e9)*180/pi*3600,
+     *	    c/fac*cmks/(freq*1e9)*180/pi*3600, ' arcsecs'
         call output(aline)
         if(pass1)then
 	      write(aline,'(a,g12.5,a)') 'Surface rms before fit = ',
