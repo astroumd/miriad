@@ -85,13 +85,13 @@ c    rjs  02jul97 cellscal change.
 c    mchw 15apr98 Fix both doc and code in a few places.
 c    mchw 05aug04 Change default image axes to wavelengths, and default antenna size 6.1m.
 c    mchw 27feb06 CARMA holography. Use restfreq if frequency axis is missing.
-c    mchw 27mar06 set default subreflector diameter = antdiam/10.
+c    mchw 28mar06 set default subreflector diameter = antdiam/10.
 c------------------------------------------------------------------------
       implicit none
       include 'maxdim.h'
       include 'maxnax.h'
       character version*40
-      parameter (version = 'IMHOL: version 27-MAR-2006')
+      parameter (version = 'IMHOL: version 28-MAR-2006')
 c
       real qepoch, uepoch, qcrpix(maxnax),ucrpix(maxnax), sigma,
      *		snclip, paclip
@@ -908,8 +908,8 @@ c
           freq = (real(k)-crpix(3))*cdelt(3) + crval(3)
         endif
         write(aline,'(a,2g12.5,a)') 'Pointing offset in az,el = ',
-     *	    b/fac/twopi*cmks/(freq*1e9)*180/pi*3600,
-     *	    c/fac/twopi*cmks/(freq*1e9)*180/pi*3600, ' arcsecs'
+     *	    b/fac/*cmks/(freq*1e9)*180/pi*3600,
+     *	    c/fac/*cmks/(freq*1e9)*180/pi*3600, ' arcsecs'
         call output(aline)
         if(pass1)then
 	      write(aline,'(a,g12.5,a)') 'Surface rms before fit = ',
