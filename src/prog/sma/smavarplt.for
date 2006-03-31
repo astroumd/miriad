@@ -18,6 +18,9 @@ c@ device
 c	The PGPLOT plotting device to use. The default is no plot.
 c@ log
 c	The log to give a listing of the variables. The	default is no log.
+c@ ylen 
+c       The length of the y-axis variable to write in log including
+c       the space. The default is 12.
 c@ xaxis
 c	Variable to plot on the X axis. Default is "time".
 c@ yaxis
@@ -79,14 +82,19 @@ c    jhz  08nov05 fixed a bug in yaxis scale range when flagging is involved
 c    jhz  17nov05 extended the size of the source array from 32 to 100; 
 c                 color coding the variable for each source if the total 
 c                 number of sources is less than or equal to 48.
-c    jhz  11nov06 fixed a bug related to MAC OS X10.4
+c    jhz  11jan06 fixed a bug related to MAC OS X10.4
+c    jhz  31mar06 add ylen allowing users to change the length
+c                 of y-axis variable so that the whole things
+c                 can be in one line.
+c                 cleaned up the old smamiriad stuff and
+c                 replace them with "mirconst.h".
 c  Bugs:
 c    ?? Perfect?
 c------------------------------------------------------------------------
         character version*(*)
         integer maxpnts
         parameter(maxpnts=100000)
-        parameter(version='SmaVarPlt: version 1.4 11-Jan-06')
+        parameter(version='SmaVarPlt: version 1.5 31-Mar-06')
         logical doplot,dolog,dotime,dounwrap
         character vis*64,device*64,logfile*64,xaxis*16,yaxis*16
         character xtype*1,ytype*1,xunit*16,yunit*16,calday*24
@@ -97,7 +105,7 @@ c------------------------------------------------------------------------
         logical xaver,yaver,compress,dtime,overlay,more,equal,doflag
         real flagvar(maxpnts)
         real rmsflag
-        integer dofit
+        integer dofit, ylen
         common/smfix/rmsflag, dofit
 c
 c  Externals.
@@ -117,6 +125,9 @@ c
         dolog = logfile.ne.' '
         if(.not.(dolog.or.doplot))
      *    call bug('f','One of the device and log must be given')
+        call keyi('ylen',ylen,0)
+        if(ylen.gt.12) 
+     *    call bug('f','ylen must be less or equal to 12')
         call keyi('nxy',nx,0)
         call keyi('nxy',ny,nx)
         call keya('xaxis',xaxis,'time')
@@ -242,7 +253,7 @@ c
             call julday(xoff,'H',calday)
             call logwrite('# Base time is '//calday,more)
           endif
-          call logit(npnts,dotime,
+          call logit(ylen,npnts,dotime,
      *      xvals,xdim1,xdim2,xaxis,xunit,
      *      yvals,ydim1,ydim2,yaxis,yunit)
           call logclose
@@ -392,7 +403,7 @@ c------------------------------------------------------------------------
 c
       end
 c************************************************************************
-        subroutine logit(npnts,dotime,
+        subroutine logit(ylen,npnts,dotime, 
      *      xvals,xdim1,xdim2,xaxis,xunit,
      *      yvals,ydim1,ydim2,yaxis,yunit)
 c
@@ -402,8 +413,8 @@ c
         real xvals(xdim1*xdim2*npnts),yvals(ydim1*ydim2*npnts)
 c------------------------------------------------------------------------
         character line*80,label*32
-        integer xstep,ystep,xpnt,ypnt,j,length
-        logical more
+        integer xstep,ystep,xpnt,ypnt,j,length,ylen
+        logical more, short
 c
 c  Externals.
 c
@@ -435,20 +446,25 @@ c
         ypnt = 1
         do j=1,npnts
           length = 0
-          call doline(line,length,xvals(xpnt),xstep,dotime,.true.)
-          call doline(line,length,yvals(ypnt),ystep,.false.,.false.)
+       short=.false.
+       call doline(ylen,short,line,
+     *        length,xvals(xpnt),xstep,dotime,.true.)
+       if(ylen.gt.0) short=.true.
+       call doline(ylen,short,line,
+     *        length,yvals(ypnt),ystep,.false.,.false.)
           if(length.gt.0)call logwrite(line(1:length),more)
           xpnt = xpnt + xstep
           ypnt = ypnt + ystep
         enddo
         end
 c************************************************************************
-        subroutine doline(line,length,vals,nvals,dotime,first)
+        subroutine doline(ylen,doshort,line,
+     *                    length,vals,nvals,dotime,first)
 c
         character line*(*)
-        integer length,nvals
+        integer length,nvals,ylen
         real vals(nvals)
-        logical dotime,first
+        logical dotime,first,doshort
 c------------------------------------------------------------------------
         integer isec,imin,ihr,iday,i
         logical dospace,more
@@ -476,9 +492,17 @@ c
             write(line(length+1:length+12),'(i2,a,i2.2,a,i2.2,a,i2.2)')
      *          iday,' ',ihr,':',imin,':',isec
           else
+            if(doshort) then
+            write(line(length+1:length+ylen),'(1pg12.5)')vals(i)
+            else
             write(line(length+1:length+12),'(1pg12.5)')vals(i)
+            end if
           endif
-          length = length + 12
+            if(doshort) then
+            length = length + ylen
+            else
+            length = length + 12
+            end if
         enddo
         end
 c************************************************************************
@@ -1280,46 +1304,7 @@ c    unit	Gives the units of the variable.
 c    scale,offset Conversion factors. User-val = scale*(raw-val - offset)
 c
 c------------------------------------------------------------------------
-c=======================================================================
-c - mirconst.h  Include file for various fundamental physical constants.
-c
-c  History:
-c    jm  18dec90  Original code.  Constants taken from the paper
-c                 "The Fundamental Physical Constants" by E. Richard
-c                 Cohen and Barry N. Taylor (PHYICS TODAY, August 1989).
-c ----------------------------------------------------------------------
-c  Pi.
-      real pi, twopi
-      double precision dpi, dtwopi
-      parameter (pi = 3.14159265358979323846)
-      parameter (dpi = 3.14159265358979323846)
-      parameter (twopi = 2 * pi)
-      parameter (dtwopi = 2 * dpi)
-c ----------------------------------------------------------------------
-c  Speed of light (meters/second).
-      real cmks
-      double precision dcmks
-      parameter (cmks = 299792458.0)
-      parameter (dcmks = 299792458.0)
-c ----------------------------------------------------------------------
-c  Boltzmann constant (Joules/Kelvin).
-      real kmks
-      double precision dkmks
-      parameter (kmks = 1.380658e-23)
-      parameter (dkmks = 1.380658d-23)
-c ----------------------------------------------------------------------
-c  Planck constant (Joules-second).
-      real hmks
-      double precision dhmks
-      parameter (hmks = 6.6260755e-34)
-      parameter (dhmks = 6.6260755d-34)
-c ----------------------------------------------------------------------
-c  Planck constant divided by Boltzmann constant (Kelvin/GHz).
-      real hoverk
-      double precision dhoverk
-      parameter (hoverk = 0.04799216)
-      parameter (dhoverk = 0.04799216)
-c=======================================================================
+      include 'mirconst.h'
         integer i,iostat
         logical update
 c
