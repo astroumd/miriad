@@ -114,10 +114,11 @@ c    22mar05 mchw  Get longitude from uvvariable instead of obspar.
 c    10nov05 mchw  Added summary in topocentric coordinates.
 c    23feb06 jkoda different numbers of grids between bx/by bz in 'FI'
 c    29mar06 mchw  Antel in degrees.
+c    01apr06 mchw  Fitting phase versus elevation.
 c-----------------------------------------------------------------------
 	include 'bee.h'
 	character version*(*),device*80,log*80,ans*20
-	parameter(version='(version 3.0 29-Mar-2006)')
+	parameter(version='(version 3.0 01-Apr-2006)')
 	integer length,tvis,tgains,iostat
 	logical doscale
 c
@@ -790,7 +791,8 @@ c
 c
 c  Amp/phase correction point versus time.
 c
-	ELSE IF(KEY.EQ.'C'.AND.(IWH.EQ.3.OR.IWH.EQ.5.OR.IWH.EQ.6)) THEN
+c	ELSE IF(KEY.EQ.'C'.AND.(IWH.EQ.3.OR.IWH.EQ.5.OR.IWH.EQ.6)) THEN
+	ELSE IF(KEY.EQ.'C') THEN
 	  if(nph.ge.MAXSOLS) go to 54
 	  if((nph.gt.0).and.(xx.lt.xph(nph))) goto 58
 	  nph=nph+1
@@ -947,6 +949,8 @@ c	amplitude versus ha or time.
 	      if(iwh.eq.4.or.iwh.eq.6) yph(nph) = amp(i)
 c	phase or amplitude versus ha.
 	      if(iwh.eq.1.or.iwh.eq.4) xph(nph) = ha(i)
+c   amplitude or phase versus elevation
+          if(iwh.eq.7.or.iwh.eq.8) xph(nph)=180./pi*elev(i)
 c	connect points directly
 	      IF (KEY.EQ.'J') THEN
 		if(nph.eq.1) call pgmove(xph(1),yph(1))
@@ -1012,7 +1016,12 @@ c rmsfit
 	    yph(i) = zph(i)		! store fit in correction array
 	    if(i .eq. 1) call pgmove(xph(1),yph(1))
 	    call pgsci(3)			! green
-	    call pgdraw(xph(i),yph(i))		! and plot it
+        if(iwh.eq.7.or.iwh.eq.8)then
+          if(iwh.eq.7)phint(i)=zph(i)  ! store in phase corrections array.
+          call pgpt(1,xph(i),yph(i),5)
+        else
+          call pgdraw(xph(i),yph(i))        ! and plot it
+        endif
 	    call pgsci(1)
 	  enddo
 c
@@ -1085,14 +1094,15 @@ c
 	      if(iwh.eq.1) x=ha(i)
 	      if(iwh.eq.2) x=sin(dec(i))
 	      if(iwh.eq.3) x=tim(i)
+          if(iwh.eq.7.or.iwh.eq.8) x=180./pi*elev(i)
 	      if(iwh.eq.9) x=tpower(i)
 	      add = tupi*nint((edph(i)-theta)/tupi)
 	      if(add.ne.0.and.(iwh.le.3.or.iwh.eq.9))then
-		call pgsci(2)				! red
-		call pgpt(1, x, edph(i), 5)
-		call pgsci(1)				! white
-		edph(i)=edph(i)-add
-		call pgpt(1, x, edph(i), 5)
+		    call pgsci(2)				! red
+		    call pgpt(1, x, edph(i), 5)
+		    call pgsci(1)				! white
+		    edph(i)=edph(i)-add
+		    call pgpt(1, x, edph(i), 5)
 	      endif
 	      theta = 0.5 * (edph(i) + theta)
 	    endif
@@ -2596,10 +2606,15 @@ c
 c
 c  Plot amplitude or phase correction array versus time.
 c
-	if(iwh.ne.3 .and. iwh.ne.6) goto 80
+c	if(iwh.ne.3 .and. iwh.ne.6) goto 80
 	if(nph.le.1) goto 70
-	call pgsls(1)
-	call pgline(nph,xph,yph)
+       call pgsls(1)
+       call pgsci(2)            ! red
+       if(iwh.eq.7.or.iwh.eq.8)then
+         call pgpt(nph,xph,yph,5)
+       else
+         call pgline(nph,xph,yph)
+       endif
 c
 c  Plot phint array versus time.
 c
