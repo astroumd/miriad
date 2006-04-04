@@ -161,10 +161,11 @@ c                                      interval while do ph-ph regression;
 c                                      uniformly scaling the ph-ph plot
 c                                      for each antenna.
 c    16mar06 pjt   fix for npntf ??
+c    01apr06 mchw  use lspoly instead of quadratic fit.
 c                                            
 c-----------------------------------------------------------------------
 	character version*(*)
-	parameter(version='(version 1.2 16-mar-06)')
+	parameter(version='(version 1.2 01-Apr-06)')
 	character device*80, log*80, vis*80, xaxis*40, yaxis*40
 	integer tvis, refant, refant2, nx, ny
 	logical dowrap, xsc,ysc, dostruct, doallan, doquad
@@ -294,6 +295,7 @@ c----------------------------------------------------------------------c
         real xvarf(MAXANTS,MAXSOLS), yvarf(MAXANTS,MAXSOLS)
         real yrsd(MAXANTS,MAXSOLS), xtamb(MAXANTS,MAXSOLS)
 	real xx(MAXSOLS),yy(MAXSOLS),sf(MAXSOLS)
+	real wt(MAXSOLS),zz(MAXSOLS),coef(MAXSOLS)
 	complex ref
 	double precision longitude,latitude
 	logical ok,xref,yref
@@ -718,8 +720,8 @@ c  yaxis versus xaxis(refant2)
 c
 	if(refant2.gt.0)then
 	  print *,' '
-	  if(doquad) call LogWrit(
-     *    'yaxis = a + b * xaxis(refant2) + c * xaxis(refant2)**2')
+c	  if(doquad) call LogWrit(
+c     *    'yaxis = a + b * xaxis(refant2) + c * xaxis(refant2)**2')
 	  print *, 'yaxis = slope * xaxis(refant2) + intercept'
 	  print *, 'ant   yaxis_ave   yaxis_rms   slope   intercept',
      *  '   rms-fit   correlation'
@@ -728,10 +730,17 @@ c
 	    do i=1,nSols
 	      xx(i) = xvar(refant2,i)
 	      yy(i) = yvar(ant,i)
+	      wt(i) = 1.
+	      zz(i) = 0.
+	      coef(i) = 0.
 	    enddo
 	    call linlsq1(xx,yy,nSols, yyave,sigy,a1,b1,sigy1,corr)
 	    print *,ant, yyave, sigy, a1,b1, sigy1, corr
-	    if(doquad)call quadfit(xx,yy,nSols,a1,b1)
+c	    if(doquad)call quadfit(nSols,xx,yy)
+	    if(doquad)then
+          call lspoly(2,nSols,xx,yy,wt,zz,coef)
+          print *, 'polyfit coef ant=', ant, (coef(i),i=1,4)
+        endif
 	   endif
 	  enddo
 c
@@ -1272,68 +1281,6 @@ c
 	endif
 c       
 	end
-
-c********1*********2*********3*********4*********5*********6*********7*c
-	subroutine quadfit(xarr,yarr,npnt,a1,b1)
-	implicit none
-	real xarr(*),yarr(*),a1,b1
-	integer        npnt
-c
-c Fit yaxis = b1 + a1*xaxis + c1*xaxis**2
-c
-c Input:
-c   xarr:         the x values
-c   yarr:         the y values
-c   npnt:         number of elements of xarr and yarr
-c   a1, b1:       coefficients of the relation y=a1*x+b1
-c--
-
-      real           sum1, sum2, xsq, c1, sumsqy, rms
-      real           x, y
-      integer        i, k
-	character*40 line, line2
-c
-      sum1   = 0.
-      sum2   = 0.
-      c1     = 0.
-      do i = 1, npnt
-        x    = xarr( i )
-        y    = yarr( i )
-        xsq  = x * x
-        sum1 = sum1   + (y - b1 - a1*x) * xsq
-        sum2 = sum2   + xsq * xsq
-      enddo
-
-      if( sum2.ne.0.) c1 = sum1/sum2
-c 
-c  rms after fit.
-c
-      if(npnt.gt.0)then
-        sumsqy = 0.
-        do i = 1, npnt
-          x      = xarr( i )
-          y      = yarr( i )
-          sumsqy = sumsqy + (y - a1*x - b1 - c1*x*x)**2
-        enddo
-        rms = sqrt(sumsqy/npnt)
-      else
-        rms = 0.
-      endif
-c      
-c	print *, 'quadratic coeficient= ', c1, ' rms after fit= ', rms
-	line = ' '
-	write(line,'(e12.4,a,e12.4,a,e12.4)') b1, ',', a1, ',', c1
-c	call LogWrit(line)
-	k = 0
-	line2 = ' '
-	do i=1,40
-	  if(line(i:i).ne.' ')then
-	    k = k + 1
-	    line2(k:k) = line(i:i)
-	  endif
-	enddo
-	call LogWrit(line2)
-      end
 c********1*********2*********3*********4*********5*********6*********7*c
 	subroutine GetOpt(dowrap,xsc,ysc,dostruct,doallan,doquad,
      * dophareg,dophatran,dotamb,dogflag,douniscale)
