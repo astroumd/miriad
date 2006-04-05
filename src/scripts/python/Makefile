@@ -17,16 +17,27 @@ help:
 
 TMPDIR = $(MIR)/install/mirlib
 
+#              setenv LD_LIBRARY_PATH $MIR/install/mirlib:...
+
 uvio:
 	swig -python uvio.i
 	$(CC) $(CFLAGS) -I$(PYTHONINC) -I$(TMPDIR) -c uvio_wrap.c 
 	ld $(LDFLAGS) -shared -L$(TMPDIR) -lmir uvio_wrap.o -o _uvio.so 
 	python -c 'import uvio'
+# -> undefined symbol: stat64 
 
+
+
+#
+#   this needs CFLAGS=-g
+#              setenv LD_LIBRARY_PATH `pwd`/mirlib:...
+
+LDIR = `pwd`/mirlib
 
 test:
 	swig -python uvio.i
-	$(CC) $(CFLAGS) -I$(PYTHONINC) -I$(MIRINC) -I$(MIRSUBS)  -c uvio_wrap.c 
-	ld $(LDFLAGS) -shared ./libmir.so uvio_wrap.o -o _uvio.so 
-
+	$(CC) $(CFLAGS) -I$(PYTHONINC) -I$(LDIR) -c uvio_wrap.c 
+	ld $(LDFLAGS) -shared $(LDIR)/libmir.so uvio_wrap.o -o _uvio.so 
+	python -c 'import uvio'
+# -> undefined symbol: stat 
 
