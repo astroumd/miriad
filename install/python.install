@@ -81,18 +81,19 @@ endif'
 if ($download) then
   echo Downloading....
   pushd $dir 
-  set url=`printf $url_Python     $Python   $Python`   ; url_get $url
-  set url=`printf $url_ipython    $ipython`            ; url_get $url
-  set url=`printf $url_Numeric    $sf       $Numeric`  ; url_get $url
-  set url=`printf $url_numarray   $sf       $numarray` ; url_get $url
-  set url=`printf $url_numpy      $sf       $numpy`    ; url_get $url
-  set url=`printf $url_scipy      $sf       $scipy`    ; url_get $url
-  set url=`printf $url_ppgplot    $ppgplot`            ; url_get $url
-  set url=`printf $url_pyfits     $pyfits`             ; url_get $url
-  set url=`printf $url_TableIO`                        ; url_get $url
-  set url=$url_blas                                    ; url_get $url
-  set url=$url_lapack                                  ; url_get $url
-  set url=$url_matplotlib                              ; url_get $url
+  set url=`printf $url_Python     $Python   $Python`    ; url_get $url
+  set url=`printf $url_ipython    $ipython`             ; url_get $url
+  set url=`printf $url_Numeric    $sf       $Numeric`   ; url_get $url
+  set url=`printf $url_numarray   $sf       $numarray`  ; url_get $url
+  set url=`printf $url_numpy      $sf       $numpy`     ; url_get $url
+  set url=`printf $url_scipy      $sf       $scipy`     ; url_get $url
+  set url=`printf $url_ppgplot    $ppgplot`             ; url_get $url
+  set url=`printf $url_pyfits     $pyfits`              ; url_get $url
+  set url=`printf $url_TableIO`                         ; url_get $url
+  set url=$url_blas                                     ; url_get $url
+  set url=$url_lapack                                   ; url_get $url
+  set url=`printf $url_matplotlib $sf       $matplotlib`; url_get $url
+
   popd
 endif
 
