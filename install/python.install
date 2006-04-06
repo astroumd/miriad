@@ -36,6 +36,9 @@ set url_pyfits=ftp://ra.stsci.edu/pub/pyfits/pyfits_v%s.tar.gz
 set url_TableIO=http://php.iupui.edu/~mmiller3/python/TableIO.tar.gz
 set url_blas=http://www.netlib.org/blas/blas.tgz
 set url_lapack=http://www.netlib.org/lapack/lapack.tgz
+set url_matplotlib=http://%s.dl.sourceforge.net/matplotlib/matplotlib-%s.tar.gz
+set url_basemap=http://%s.dl.sourceforge.net/matplotlib/basemap-%s.tar.gz
+set url_basemap-data=http://%s.dl.sourceforge.net/matplotlib/basemap-data-%s.tar.gz
 
 #                         the versions of the tar balls
 set Python=2.4.2
@@ -49,6 +52,9 @@ set pyfits=1.0
 set TableIO=0
 set blas=0
 set lapack=0
+set matplotlib=0.87.2
+set basemap=0.8
+set basemap-data=0.8
 
 #                         poor mans command line parser....
 foreach arg ($*)
@@ -90,6 +96,7 @@ if ($download) then
   set url=`printf $url_TableIO`                        ; url_get $url
   set url=$url_blas                                    ; url_get $url
   set url=$url_lapack                                  ; url_get $url
+  set url=$url_matplotlib                              ; url_get $url
   popd
 endif
 
@@ -183,6 +190,14 @@ set p=TableIO
 tar zxf $dir/$p.tar.gz
 (cd $p ; python setup.py install) >& install.TableIO.log
 report_status
+
+#                                                   matplotlib
+echo -n "matplotlib $matplotlib "
+set p=matplotlib-$matplotlib
+tar zxf $dir/$p.tar.gz
+(cd $p ; python setup.py install) >& install.matplotlib.log
+report_status
+
 
 
 
