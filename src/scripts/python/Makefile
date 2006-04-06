@@ -36,7 +36,5 @@ LDIR = `pwd`/mirlib
 test:
 	swig -python uvio.i
 	$(CC) $(CFLAGS) -I$(PYTHONINC) -I$(LDIR) -c uvio_wrap.c 
-	ld $(LDFLAGS) -shared $(LDIR)/libmir.so uvio_wrap.o -o _uvio.so 
+	$(CC) $(LDFLAGS) -shared $(LDIR)/libmir.so uvio_wrap.o -o _uvio.so 
 	python -c 'import uvio'
-# -> undefined symbol: stat 
-
