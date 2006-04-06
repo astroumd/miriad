@@ -22,9 +22,8 @@ TMPDIR = $(MIR)/install/mirlib
 uvio:
 	swig -python uvio.i
 	$(CC) $(CFLAGS) -I$(PYTHONINC) -I$(TMPDIR) -c uvio_wrap.c 
-	ld $(LDFLAGS) -shared -L$(TMPDIR) -lmir uvio_wrap.o -o _uvio.so 
+	$(CC) $(LDFLAGS) -shared -L$(TMPDIR) -lmir uvio_wrap.o -o _uvio.so 
 	python -c 'import uvio'
-# -> undefined symbol: stat64 
 
 
 
