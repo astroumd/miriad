@@ -71,7 +71,7 @@ else
     $cc $cflags -c $f
   end
   ar ruv libmir.a *.o
-  ld -shared -o libmir.so --whole-archive libmir.a
+  $cc -shared -o libmir.so *.o
   $cc $cflags -DTESTBED -o uvio uvio.c libmir.a -lm
 
   #  install
