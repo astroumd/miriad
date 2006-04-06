@@ -268,7 +268,7 @@ echo 'setenv WIPHELP $MIR/borrow/wip/wiphelp.dat'             >> $startcsh
 
 
 echo '# special additions'                                    >> $startsh
-echo 'if test -z "$LD_LIBRARY_PATH"; then'	              >> $startsh
+echo 'if test -n "$LD_LIBRARY_PATH"; then'	              >> $startsh
 echo '  export LD_LIBRARY_PATH=${MIRLIB}:${LD_LIBRARY_PATH}'  >> $startsh
 echo 'else'                                                   >> $startsh
 echo '  export LD_LIBRARY_PATH=$MIRLIB'                       >> $startsh
