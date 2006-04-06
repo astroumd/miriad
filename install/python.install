@@ -1,13 +1,21 @@
 #! /bin/csh -f
 #
 #
-#  Sample script to install python and some friends to your choice of a prefix
+#  A sample shell script to install python and some friends to 
+#  your choice of a prefix directory (prefix=)
+#
 #  Count on diskspace:
 #  tar tree:     20 MB
 #  build tree:  135 MB
 #  opt tree:     66 MB
 #
-#  TODO: should really do this script in python!!!
+#  ToDo: 
+#  - should really do this script in python!!!
+#  - write a -help
+#
+#  Known Problems:
+#  - ppgplot and gfortran seem not to work together
+#  - scipy still missing numerous things (now solved with blas and lapack)
 
 #                         binaries
 set prefix=`pwd`/opt
@@ -19,25 +27,28 @@ set sf=superb             # sourceforge mirror ($sf.dl.sourceforge.net)   [super
 #                         basenames for url to get source from
 set url_Python=http://www.python.org//ftp/python/%s/Python-%s.tar.bz2
 set url_ipython=http://ipython.scipy.org/dist/ipython-%s.tar.gz
+set url_Numeric=http://%s.dl.sourceforge.net/numpy/Numeric-%s.tar.gz
 set url_numarray=http://%s.dl.sourceforge.net/numpy/numarray-%s.tar.gz
 set url_numpy=http://%s.dl.sourceforge.net/numpy/numpy-%s.tar.gz
-set url_Numeric=http://%s.dl.sourceforge.net/numpy/Numeric-%s.tar.gz
 set url_scipy=http://%s.dl.sourceforge.net/scipy/scipy-%s.tar.gz
 set url_ppgplot=http://efault.net/npat/hacks/ppgplot/dist/ppgplot-%s.tar.gz
 set url_pyfits=ftp://ra.stsci.edu/pub/pyfits/pyfits_v%s.tar.gz
 set url_TableIO=http://php.iupui.edu/~mmiller3/python/TableIO.tar.gz
-
+set url_blas=http://www.netlib.org/blas/blas.tgz
+set url_lapack=http://www.netlib.org/lapack/lapack.tgz
 
 #                         the versions of the tar balls
 set Python=2.4.2
 set ipython=0.7.1.fix1
+set Numeric=24.2
 set numarray=1.5.1
 set numpy=0.9.6
-set Numeric=24.2
 set scipy=0.4.8
 set ppgplot=1.3
 set pyfits=1.0
 set TableIO=0
+set blas=0
+set lapack=0
 
 #                         poor mans command line parser....
 foreach arg ($*)
@@ -70,13 +81,15 @@ if ($download) then
   pushd $dir 
   set url=`printf $url_Python     $Python   $Python`   ; url_get $url
   set url=`printf $url_ipython    $ipython`            ; url_get $url
+  set url=`printf $url_Numeric    $sf       $Numeric`  ; url_get $url
   set url=`printf $url_numarray   $sf       $numarray` ; url_get $url
   set url=`printf $url_numpy      $sf       $numpy`    ; url_get $url
-  set url=`printf $url_Numeric    $sf       $Numeric`  ; url_get $url
   set url=`printf $url_scipy      $sf       $scipy`    ; url_get $url
   set url=`printf $url_ppgplot    $ppgplot`            ; url_get $url
   set url=`printf $url_pyfits     $pyfits`             ; url_get $url
   set url=`printf $url_TableIO`                        ; url_get $url
+  set url=$url_blas                                    ; url_get $url
+  set url=$url_lapack                                  ; url_get $url
   popd
 endif
 
@@ -92,6 +105,28 @@ report_status
 set path=($prefix/bin $path)
 rehash
 
+#                                                   blas
+echo -n "blas "
+set p=blas
+(mkdir -p $p ; cd $p; tar zxf $dir/$p.tgz;\
+  g77 -fno-second-underscore -O2 -c *.f;\
+  ar r libfblas.a *.o;\
+  ranlib libfblas.a;\
+  mv libfblas.a $prefix/lib) >& install.blas.log
+report_status
+setenv BLAS $prefix/lib/libfblas.a
+
+#                                                   lapack
+echo -n "lapack "
+set p=lapack
+tar zxf $dir/$p.tgz
+(cd LAPACK;\
+  cp INSTALL/make.inc.LINUX make.inc;\
+  make lapacklib OPTS=-O2;\
+  mv lapack_LINUX.a $prefix/lib/libflapack.a) >& install.lapack.log
+report_status
+setenv LAPACK $prefix/lib/libflapack.a
+
 #                                                   ipython
 echo -n "ipython $ipython "
 set p=ipython-$ipython
@@ -99,6 +134,12 @@ tar zxf $dir/$p.tar.gz
 (cd $p ; python setup.py install) >& install.ipython.log
 report_status
 
+#                                                   Numeric
+echo -n "Numeric $Numeric "
+set p=Numeric-$Numeric
+tar zxf $dir/$p.tar.gz
+(cd $p ; python setup.py install) >& install.Numeric.log
+report_status
 
 #                                                   numarray
 echo -n "numarray $numarray "
@@ -107,19 +148,11 @@ tar zxf $dir/$p.tar.gz
 (cd $p ; python setup.py install) >& install.numarray.log
 report_status
 
-
 #                                                   numpy
 echo -n "numpy $numpy "
 set p=numpy-$numpy
 tar zxf $dir/$p.tar.gz
 (cd $p ; python setup.py install) >& install.numpy.log
-report_status
-
-#                                                   Numeric
-echo -n "Numeric $Numeric "
-set p=Numeric-$Numeric
-tar zxf $dir/$p.tar.gz
-(cd $p ; python setup.py install) >& install.Numeric.log
 report_status
 
 #                                                   scipy
