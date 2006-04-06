@@ -1,9 +1,10 @@
 /*uvio.i*/
 /* SWIG interface file for binding to the Miriad I/O libraries
    Author: Garrelt Mellema
-   Date: 30-sept-2005
+   Date: 6-apr-2006
    Currently binds to:
     uvopen_c
+    uvrewind_c
     uvread_c
     uvprobvr_c
     uvgetvr_c
@@ -30,6 +31,7 @@
 #include "miriad.h"
 %}
 extern void uvopen_c (int *tno, const char *name, const char *status);
+extern void uvrewind_c (int tno);
 extern void uvread_c (int tno, double *preamble, float *data, int *flags, int n, int *nread);
 extern void uvprobvr_c (int tno, const char *var, char *type, int *length, int *updated);
 extern void uvgetvr_c (int tno, int type, const char *var, char *data, int n);
