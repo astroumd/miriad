@@ -165,6 +165,7 @@
 // 2006-02-09 (JHZ) added a feature to handle multiple correlator configuration.
 // 2006-03-13 (JHZ) added a feature to handle 2003 incompleted-correlator
 //                  data.
+// 2006-04-07 (JHZ) added an instruction message for properly using nscan.
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -1586,6 +1587,12 @@ double xyzpos;
       }
     }
 sphend:
+     if (smabuffer.scanskip+smabuffer.scanproc>nsets[0]) {
+printf("Hits the end of integration %d\n", nsets[0]);
+printf("Reset 'nscans=%d, ' and run it again.\n",smabuffer.scanskip);
+         exit(-1);
+                  }
+
 // handling 2003 inc0mpleted correlator data
 if (smabuffer.spskip[0]==-2003) {
 double spfreq[25];
