@@ -2,6 +2,7 @@
 
 # this script is deprecated, you should call install.miriad
 
+echo "### Warning: this script is deprecated, use install.miriad now"
 
 # sanity check: find out from the way it was called where the script lives
 # since it needs to be run from the $MIR/install directory
@@ -14,7 +15,5 @@ if (! -e ../VERSION) then
   echo Since somehow i cannot find where it is....
   exit 1
 endif
-
-echo "### Warning: this script is deprecated, use install.miriad now"
 
 ./install.miriad $*
