@@ -7,10 +7,11 @@ c    17aug94 mchw Added common phfit.
 c    20jun95 added MAXFIT pointing parameters.
 c     8jul05 proper ansi fortran declaration order/style  (pjt)
 c    12sep05 equ and ant are now integers!
+c    11apr06 save fits in /pntfit/ for printing summary
 c
 c********1*********2*********3*********4*********5*********6*********7*c
       INTEGER NPMAX,NSMAX,MAXANT,MAXFIT
-      PARAMETER(NPMAX=2000,NSMAX=1000,MAXANT=10,MAXFIT=9)
+      PARAMETER(NPMAX=2000,NSMAX=1000,MAXANT=15,MAXFIT=9)
 
       INTEGER np,is(NPMAX)
       REAL ut(NPMAX),az(NPMAX),el(NPMAX),daz(NPMAX),del(NPMAX),
@@ -31,9 +32,12 @@ c********1*********2*********3*********4*********5*********6*********7*c
 
       INTEGER equ
       REAL apc(MAXFIT),epc(MAXFIT),apcs(MAXFIT),epcs(MAXFIT),
-     *     azfit(MAXFIT,MAXANT),elfit(MAXFIT,MAXANT)
+     *     azfit(MAXFIT,MAXANT),elfit(MAXFIT,MAXANT),
+     *     azrms(MAXANT),azrmsfit(MAXANT),aznp(MAXANT),
+     *     elrms(MAXANT),elrmsfit(MAXANT),elnp(MAXANT)
       COMMON /answer/ apc,epc,apcs,epcs,equ
-      COMMON /pntfit/ azfit,elfit
+      COMMON /pntfit/ azfit, elfit,
+     *     azrms, azrmsfit, aznp, elrms, elrmsfit, elnp
 
       CHARACTER file*80, pntfile*80,dat*24,pdevice*80,tdevice*20
       CHARACTER*8 sname(NSMAX)

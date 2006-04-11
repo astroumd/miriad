@@ -196,10 +196,11 @@ c    02sep05 pjt   merged web version with cvs version (grrrr)
 c    03sep05 mchw  added keyword telescop; revised CARMA data format.
 c    06sep05 pjt   slight mod to  CARMA format, changed ant/equ as integer
 c    12sep05 pjt   added ddmmmyy before the UT format.
+c    11apr06 save fits in /pntfit/ for printing summary
 c----------------------------------------------------------------------c
 	include 'pnt.h'
 	character version*(*)
-	parameter(version='(version 3.1  16-mar-2006)')
+	parameter(version='(version 3.1  11-apr-2006)')
 c
 	integer i,iant,kans
 	character ans*20,options*1,log*80,buffer*80, telescope*20
@@ -232,6 +233,7 @@ c
 	call output(' EC   Edit data for elevation collimation')
 	call output(' LI   List pointing data')
 	call output(' HI   Histogram plot of pointing errors')
+	call output(' SU   Print Summary')
 	call output(' EX   Exit')
 	call output(' ?    This help')
 c
@@ -247,13 +249,18 @@ c
 	if(ans.eq.'LI') call PTLIST
 	if(ans.eq.'HI') call PTHIST
 	if(ans.eq.'CO') call comment
+	if(ans.eq.'SU') call summary
 	if(ans.eq.'EX') goto 99
 	if(ans.eq.'?') goto 3
 	goto 1
 c
+c  print summary
+c
+99	call summary
+c
 c  Write pointing fit file.
 c
-99	CALL Output('Listing file is '//log)
+	call Output('Listing file is '//log)
 	call output('Pointing fit file is '//PNTFILE)
 	open(7,file=pntfile, form='formatted', status='unknown')
 	write(7,106) dat
@@ -263,7 +270,7 @@ c
 	do iant = 1,maxant
 	  write(7,108) iant, 'azim', (azfit(i,iant), i = 1,MAXFIT)
 	  write(7,108) iant, 'elev', (elfit(i,iant), i = 1,MAXFIT)
-	end do
+	enddo
 108	format(1x,i3,1x,a,3x,9f7.2)
 	end
 c********1*********2*********3*********4*********5*********6*********7*c
@@ -1028,7 +1035,7 @@ c
 	real PI,RTOD,RTOM
 	parameter(PI=3.141592654,RTOD=57.29577951,RTOM=3437.746771)
 	include 'pnt.h'
-	character infile*40,source*8,line*80,input*40, udate*7
+	character infile*80,source*8,line*80,input*80, udate*7
 	character*1 noedit,diag,rawdata,flipdaz,flipdel,rawazel
 	logical firstime
 	integer i,k,n,kf,isrc,oldequ,an
@@ -1607,6 +1614,20 @@ c
 	 nbad = nbad+1
 30	continue
 	if(nbad.gt.0) goto 5
+	endif
+c
+c save fits in /pntfit/ for printing summary
+c
+	if(type.eq.'DAZ') then
+	  azrms(ant) = rms
+	  azrmsfit(ant) = rmsfit
+	  aznp(ant) = count
+c	  print *, ant, aznp(ant), azrms(ant)*60., azrmsfit(ant)*60.
+	else if(type.eq.'DEL') then
+	  elrms(ant) = rms
+	  elrmsfit(ant) = rmsfit
+	  elnp(ant) = count
+c	  print *, ant, elnp(ant), elrms(ant)*60., elrmsfit(ant)*60.
 	endif
 c
 c  Look for Fourier residuals
@@ -2270,6 +2291,30 @@ c
 	call outlog(line)
 	do n=1,np
 	  del(n) = del(n)-ecol*tan(el(n))
+	enddo
+	end
+c********1*********2*********3*********4*********5*********6*********7*c
+	subroutine summary
+	implicit none
+c
+c  Print summary.
+c
+	include 'pnt.h'
+	character*80 line
+	integer iant
+c
+	call outlog(' ')
+	call outlog('SUMMARY')
+	call outlog(' ')
+	call outlog(' Ant  AZ_npts  AZ_RMS[arcsec]  AZ_rmsfit  EL_npts
+      * EL_RMS[arcsec]  EL_rmsfit')
+	do iant = 1,MAXANT
+c      print *, iant, aznp(iant), azrms(iant)*60., azrmsfit(iant)*60.
+c      print *, iant, elnp(iant), elrms(iant)*60., elrmsfit(iant)*60
+	  write(line,'(1x,i3,2(2x,f5.0,2x,f7.2,2x,f7.2))')
+      * iant, aznp(iant), azrms(iant)*60., azrmsfit(iant)*60.,
+      * elnp(iant), elrms(iant)*60., elrmsfit(iant)*60.
+	  call outlog(line)
 	enddo
 	end
 c********1*********2*********3*********4*********5*********6*********7*c
