@@ -3,6 +3,7 @@
 //             retrieve jpl line catalog and plot them on xterm device
 //             using pgplot routine and compare with the uv spectral
 //             line data.
+
 #define CATDATA struct catdata
 CATDATA {
   double freq, derr, str, elow;
@@ -10,11 +11,16 @@ CATDATA {
   short iqn[12];
 };
 char *catfil(int num);
+
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
 #define OK 1
+
 char path[80];
 int  length;
+
 void molselect_c(jplpath, pathlen, mtag, nmline, mname)
 char *jplpath;
 int pathlen;
