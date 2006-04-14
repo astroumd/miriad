@@ -64,6 +64,7 @@ c    rjs  08jun97  Fix bug in error message
 c    rjs  15jun00  Simple handling of blank source name.
 c    pjt  11feb05  Adapt to use maxdim.h, MAXSPECT=MAXWIDE, not 18.
 c    pjt  11jan06  Scan for the new dazim/delev CARMA, and report if present (add refant=)
+c    pjt  14apr06  Change some bug() calls to assert*()
 c----------------------------------------------------------------------c
 	include 'mirconst.h'
 	include 'maxdim.h'
@@ -75,7 +76,7 @@ c           MAXFREQ  = max number of freq setups we can handle
 c           MAXSPECT = max number of "channels" in the widebands to check for
 	parameter(MAXSRC=2048,MAXFREQ=32,MAXSPECT=MAXWIDE)
 	parameter(PolMin=-8,PolMax=4,PolI=1)
-	parameter(version='UVINDEX: version 13-jan-06')
+	parameter(version='UVINDEX: version 14-apr-06')
 c
 	integer pols(PolMin:PolMax),pol
 	integer lIn,i,j,j1,nvis,nants,l
@@ -120,7 +121,7 @@ c
 c
 c  Check that the inputs are reasonable.
 c
-	if(vis.eq.' ') call bug ('f', 'Input name must be given')
+	if(vis.eq.' ') call bug('f', 'Input name must be given')
 c
 c  Initialise the source table.
 c
@@ -453,7 +454,8 @@ c  Did we find this source?
 c
 	  if(.not.found)then
 	    nsrc = nsrc + 1
-	    if(nsrc.ge.MAXSRC)call bug('f','Too many sources')
+	    call assertigti(MAXSRC,nsrc,
+     *         'MAXSRC: too many sources')
 	    sources(isrc) = source
 	    ra0(isrc) = ra
 	    dec0(isrc) = dec
@@ -576,15 +578,18 @@ c
 	logical FreqEq
 c
 	itmp = nfreq + 1
-	if(itmp.gt.MAXFREQ)call bug('f','Frequency table overflow')
+	call assertigei(MAXFREQ,itmp,
+     *      'MAXFREQ: Frequency table overflow')
 c
 c  Load the current freq/correlator description.
 c
 	call uvrdvri(lIn,'nchan',nchan(itmp),0)
 	call uvrdvri(lIn,'nspect',nspect(itmp),0)
-	if(nspect(itmp).gt.MAXSPECT)call bug('f','Too many windows')
+	call assertigei(MAXSPECT,nspect(itmp),
+     *      'MAXSPECT:  too many windows')
 	call uvrdvri(lIn,'nwide',nwide(itmp),0)
-	if(nwide(itmp).gt.MAXSPECT)call bug('f','Too many wide chans')
+	call assertigei(MAXSPECT,nwide(itmp),
+     *      'MAXSPECT: too many wide channels')
 	if(nchan(itmp).gt.0)then
 	  call uvgetvrd(lIn,'sfreq', sfreqs(1,1,itmp),nspect(itmp))
 	  call uvgetvrd(lIn,'sdf',   sfreqs(1,2,itmp),nspect(itmp))
@@ -737,6 +742,8 @@ c
 	if (refant .le. 0) return
 
 	if (npnt .ge. maxsrc) call bug('f','too many az/el offsets')
+	call assertigti(maxsrc,npnt,
+     *     'MAXSRC: too many az/el offsets')
 
 	call uvrdvri(lIn,'nants',nants,0)
 	call uvrdvrd(lIn,'time',time,0.0d0)
