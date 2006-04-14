@@ -741,7 +741,6 @@ c
 	
 	if (refant .le. 0) return
 
-	if (npnt .ge. maxsrc) call bug('f','too many az/el offsets')
 	call assertigti(maxsrc,npnt,
      *     'MAXSRC: too many az/el offsets')
 
