@@ -518,8 +518,8 @@ c          * completely new polynomial, no fancy programming here
         ELSE
 c----------------------------------------------------------------------|
 c          * fill scratch array, twice the length, with all "breaks"
-           CALL asserti2(MAXBREAK+1,npol,
-     -          'ADDPOLY: MAXBREAK+1 < npol: not enough scratch space')
+           CALL assertigei(MAXBREAK,npol,
+     -          'ADDPOLY::MAXBREAK: too many breakpoints')
            DO ipol = 1,npol
               val(2*ipol-1) = tvalid(1,ipol,s,b)  
               val(2*ipol  ) = tvalid(2,ipol,s,b)
