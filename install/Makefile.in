@@ -43,6 +43,8 @@
 VERSION = Makefile.linux    16-mar-06
 MESG = Default Makefile for MIRIAD tasks in `pwd`
 
+#       Misc settings
+LFS = -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE
 
 #	Default Flags for C, Fortran and Ratty compiler
 IFLAGS = -I$(MIRINC) -I$(MIRLIB)
@@ -120,9 +122,13 @@ slib_none:
 slib_mac:
 	@echo No shared lib for MacOSX yet
 
+slib_solaris:
+	(cd $(MIRLIB); mkdir -p tmp; cd tmp; \
+	   ar xv ../libmir.a; \
+	   CC -G -o ../libmir.so *.o)
+
 slib_linux:
 	(cd $(MIRLIB); \
-           ar dv libmir.a iscoords.o; \
 	   ld -shared -o libmir.so --whole-archive libmir.a)
 
 lib:	$(L)
