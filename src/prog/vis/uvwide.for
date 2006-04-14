@@ -36,6 +36,8 @@ c
 c     It is also possible to reset the narrow band flags, based
 c     on the wide band flags, and vice versa.
 c
+c     Note: this program will be adopted for CARMA.
+c
 c@ vis
 c     The name of the input visibility dataset.  
 c     No default.

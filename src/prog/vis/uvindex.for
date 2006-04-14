@@ -74,7 +74,7 @@ c----------------------------------------------------------------------c
 c           MAXSRC   = max number of source (changes) we can handle
 c           MAXFREQ  = max number of freq setups we can handle
 c           MAXSPECT = max number of "channels" in the widebands to check for
-	parameter(MAXSRC=2048,MAXFREQ=32,MAXSPECT=MAXWIDE)
+	parameter(MAXSRC=5000,MAXFREQ=32,MAXSPECT=MAXWIDE)
 	parameter(PolMin=-8,PolMax=4,PolI=1)
 	parameter(version='UVINDEX: version 14-apr-06')
 c
