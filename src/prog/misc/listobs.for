@@ -307,15 +307,15 @@ c
         write(text,2110) sftime(1:7)
 	call LogWrite(text,more)
         if(ptime .eq. 'ut') then
-	  text = 'Source      UT    Dur  Elev  BW(1,2)' //
+	  text = 'Source              UT    Dur  Elev  BW(1,2)' //
      1	       ' Corr              Sys Temps (K)'
 	else
-	  text = 'Source     LST    Dur  Elev  BW(1,2)' //
+	  text = 'Source             LST    Dur  Elev  BW(1,2)' //
      1	       ' Corr              Sys Temps (K)'
         endif
 	call LogWrite(text,more)
-        write(text(1:29),'(''          hhmmss  min  deg '')')
-        write(text(30:90),'(''MHz    mode'',10(i2,3x))')
+        write(text(1:37),'(''                  hhmmss  min  deg '')')
+        write(text(38:98),'(''MHz    mode'',10(i2,3x))')
      1        (hereidx(i),i=1,nhere)
 	call LogWrite(text,more)
  2110   format('               Chronology of Observations on ',A)
