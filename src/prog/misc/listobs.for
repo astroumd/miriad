@@ -60,6 +60,7 @@ c                        variables for CARMA data and will behave as normal
 c                        for other (old BIMA) data
 c                        changed in to vis to make listobs consistent with
 c                        other uv data tasks
+c          18-apr-06 pjt sourcename now allowed 16
 c-----------------------------------------------------------------------
 	include 'mirconst.h'
         include 'caldefs.h'
@@ -67,13 +68,13 @@ c-----------------------------------------------------------------------
         include 'listobs.h'
 c
 	character pversion*10
-	parameter (pversion = '09-jan-06')
+	parameter (pversion = '18-apr-06')
 c
         integer ipt,nfiles,uvflag,order(MAXP),nameidx(100),nnames
         integer isys(MAXANT),i,uvscan,j,ii,jj,ipicked,ifix
         integer tin,k,nfocs,length,nhere,hereidx(MAXANT)
 	character dataset(MAXF)*60,outlog*60,text*128,dash*80
-	character radec*24,uthms*6,lsthms*6,oldsou*9,newsou*9
+	character radec*24,uthms*6,lsthms*6,oldsou*17,newsou*17
 	character type*1, sftime*30, ptime*4
 	real diff,totint,tint,baseline(MAXBASE),focus(MAXANT,50)
 	real focnew(MAXANT),focold(MAXANT),focdiff,rlst

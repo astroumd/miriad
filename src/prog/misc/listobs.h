@@ -6,7 +6,7 @@ C   MAXP =
 C   MAXF = 
 C   MAXSPECT = 
 C
-        integer MAXP,MAXF, MAXSPECT
+        integer MAXP,MAXF,MAXSPECT
         parameter (MAXP = 5000 )
         parameter (MAXF = 50 )
         parameter (MAXSPECT = 8)
@@ -17,7 +17,7 @@ C
         real corfs(MAXP,MAXSPECT/2)
         real lst(MAXP),linefreq(MAXP),veldop(MAXP),flo(MAXP),
      1       iffreq(MAXP)
-        character objs(MAXP)*9,linname(MAXP)*8,veltype(MAXP)*10
+        character objs(MAXP)*17,linname(MAXP)*8,veltype(MAXP)*10
         double precision jday(MAXP), ra(MAXP),dec(MAXP)
         common /prarra_i/ nspec,nchan,cmode,nants,ncorbw,ncorfin
         common /prarra_r/ utst,dur,el,vel,corbw,flo,iffreq,
