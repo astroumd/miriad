@@ -5,6 +5,7 @@ c    rjs  25sep92 Added sortr.
 c    mjs  24feb93 Added pgmr doc lines; no code mods.
 c    rjs   2may94 Corrected bug in sortr, which cause it to bomb when
 c		  sorting 1 element.
+c    pjt  18apr06 added sortd (via SMA'a uvsort.for)
 c************************************************************************
 c*Sortr -- Sort a real array.
 c&rjs
@@ -30,6 +31,61 @@ c--
 c------------------------------------------------------------------------
       INTEGER L,IR,J,I
       REAL RRA
+c
+      L=N/2+1
+      IR=N
+10    CONTINUE
+        IF(L.GT.1)THEN
+          L=L-1
+          RRA=ARRAY(L)
+        ELSE
+          RRA=ARRAY(IR)
+          ARRAY(IR)=ARRAY(1)
+          IR=IR-1
+          IF(IR.LE.1)THEN
+            ARRAY(1)=RRA
+            RETURN
+          ENDIF
+        ENDIF
+        I=L
+        J=L+L
+20      IF(J.LE.IR)THEN
+          IF(J.LT.IR)THEN
+            IF(ARRAY(J).LT.ARRAY(J+1))J=J+1
+          ENDIF
+          IF(RRA.LT.ARRAY(J))THEN
+            ARRAY(I)=ARRAY(J)
+            I=J
+            J=J+J
+          ELSE
+            J=IR+1
+          ENDIF
+        GO TO 20
+        ENDIF
+        ARRAY(I)=RRA
+      GO TO 10
+      END
+c************************************************************************
+        subroutine sortd(array,n)
+c
+        implicit none
+        integer n
+        double precision array(n)
+c
+c  Sorts an array, ARRAY, of length N into ascending order using a
+c  Heapsort algorithm. ARRAY is replaced on output by its sorted
+c  rearrangement. The array elements are in double precision.
+c
+c  Input:
+c    n          Number of elements to be sorted.
+c
+c  Input/Output:
+c    array      Input: Elements to be sorted.
+c               Output: Sorted elements.
+c--
+c------------------------------------------------------------------------
+      INTEGER L,IR,J,I
+      double precision RRA
 c
       L=N/2+1
       IR=N
