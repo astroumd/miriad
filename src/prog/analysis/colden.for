@@ -90,12 +90,14 @@ c  28oct91  jt   Created by Jan Tauber.
 c  15dec92  nebk Write a blank "btype" to output, change "float
 c                to "real"
 c  08may00  rjs  Change incorrect keyf call to keya.
+c  20apr06  pjt  gfortran claims it can't do big PARAMETERS math for MAXPTS
 c
       INCLUDE 'maxdim.h'
       CHARACTER PVERSION*(*)
-      INTEGER NAXIS, MAXPTS, MAXNAX, imask,method
-      PARAMETER(NAXIS=3, MAXPTS=MAXDIM*MAXDIM/4, MAXNAX=7)
-      PARAMETER(PVERSION='Version 1.0 05-feb-92')
+      INTEGER NAXIS, MAXTMP4, MAXPTS, MAXNAX, imask,method
+      PARAMETER(NAXIS=3, MAXTMP4=MAXDIM/4, MAXNAX=7)
+      PARAMETER(MAXPTS=MAXDIM*MAXTMP4)
+      PARAMETER(PVERSION='Version 1.0 20-apr-06')
 c
       CHARACTER in1*80,in2*80,out*80,total*6,masked*6
       CHARACTER opts(3)*6
