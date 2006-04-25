@@ -158,7 +158,8 @@
 /*    rjs  27jul04 Handle uvinfo_variance Tsys table in a more elegant  */
 /*                 fashion to deal with many antennas. (MAXANT)         */
 /*    rjs  16aug04 Add selection based on LST, elevation and HA - but	*/
-/*		   only when the relevant uv variables are in the dataset*/
+/*		  only when the relevant uv variables are in the dataset*/
+/*  pjt  25apr06 Add ATNF's new uvdim_c and match sourcenames w/o case  */
 /*----------------------------------------------------------------------*/
 /*									*/
 /*		Handle UV files.					*/
@@ -2713,6 +2714,29 @@ private void uvset_linetype(LINE_INFO *line, char *type, int n,
       "Unrecognised line type \"%s\" ignored, in UVSET",type));
   }
 }
+
+/************************************************************************/
+int uvdim_c(tno)
+int tno;
+/**uvdim - Number of channels.						*/
+/*&rjs                                                                  */
+/*:uv-i/o								*/
+/*+ FORTRAN call sequence:
+
+	integer function uvdim(tno)
+	integer tno
+
+  Input:
+    tno		Handle of the uv data set.
+  Output:
+    uvdim	Number of channels.                                     */
+/*--									*/
+/*----------------------------------------------------------------------*/
+{
+  UV *uv;
+  uv = uvs[tno];
+  return(uv->actual_line.n);
+}
 /************************************************************************/
 void uvread_c(int tno,double *preamble,float *data,int *flags,int n,int *nread)
 /**uvread -- Read in some uv correlation data.				*/
@@ -3439,7 +3463,13 @@ private int uvread_match(char *s1,char *s2, int length)
       }
       return 0;
     } else {
+#if 0
+      /* before april 2006 we did a direct match */
       if(*s1++ != *s2++) return 0;
+#else
+      /* here we match ignoring case */
+      if(toupper(*s1++) != toupper(*s2++)) return 0;
+#endif
       length--;
     }
   }
