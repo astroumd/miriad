@@ -26,7 +26,7 @@ c    mjs  04aug91 Replaced hardcoded MAXANT(S) by including maxdim.h
 c    rjs  05sep91 DAYTIME values can cross day boundaries.
 c    rjs  22nov91 Added select=auto.
 c    rjs  25mar92 Added frequency selection.
-c    rjs  ??????? Source selection.
+c    rjs  ??????? Source selection,
 c    rjs   2nov92 Documentation changes only.
 c    rjs  23sep93 improve misleading error messages.
 c    rjs  22jul94 Added ra and dec selection.
@@ -69,6 +69,10 @@ c    dra(p1,p2)		Data with "dra" parameter (in arcsec) between two
 c			limits. Both limits must be given.
 c    ddec(p1,p2)	Data with "ddec" parameter (in arcsec) between two
 c			limits. Both limits must be given.
+c    dazim(p1,p2)	Data with "dazim" parameter (in arcsec) between two
+c			limits. Both limits must be given.
+c    delev(p1,p2)	Data with "delev" parameter (in arcsec) between two
+c			limits. Both limits must be given.
 c    increment(n)	Every nth visibility is selected.
 c    on(n)		Those records when the appropriate value of "on"
 c    polarization(x)	Select records of a particular polarisation,
@@ -79,7 +83,7 @@ c			"x" meters.
 c    auto		Select autocorrelation data.
 c    freq(lo,hi)	Frequency selection, based on sky frequency of the
 c			first channel.
-c    source(src1,src2...) Select by source.
+c    source(src1,src2...) Select by source, ignoring case.
 c    ra(hh:mm:ss,hh:mm:ss) Select by RA.
 c    dec(dd:mm:ss,dd:mm:ss) Select by DEC.
 c    bin(lo,hi)		Select pulsar bin
@@ -130,6 +134,8 @@ c		  'uvnrange'		Nanoseconds.
 c		  'visibility'		Visibility number (1 relative).
 c		  'dra'			Radians.
 c		  'ddec'		Radians.
+c		  'dazim'		Radians.
+c		  'delev'		Radians.
 c		  'pointing'		Arcseconds.
 c		  'amplitude'		Same as correlation data.
 c		  'window'		Window Number.
@@ -375,6 +381,7 @@ c
      *		seltype.eq.UV.or.seltype.eq.POINT.or.
      *		seltype.eq.AMP.or.seltype.eq.UVN.or.
      *		seltype.eq.DRA.or.seltype.eq.DDEC.or.
+     *		seltype.eq.DAZIM.or.seltype.eq.DELEV.or.
      *		seltype.eq.SHADOW.or.seltype.eq.FREQ.or.
      *		seltype.eq.ELEV.or.seltype.eq.HA)then
 	    call SelDcde(spec,k1,k2,vals,n,2,'real')
@@ -383,7 +390,8 @@ c  Expand to two parameters, using some default mechanism.
 c
 	    if(n.eq.1)then
 	      vals(2) = vals(1)
-	      if(seltype.eq.DRA.or.seltype.eq.DDEC)then
+	      if(seltype.eq.DRA.or.seltype.eq.DDEC.or.
+     *           seltype.eq.DAZIM.or.seltype.eq.DELEV)then
 		vals(2) = vals(2) + 1
 		vals(1) = vals(1) - 1
 	      else if(seltype.eq.FREQ)then
@@ -400,7 +408,8 @@ c
 c
 c  Perform unit conversion.
 c
-	    if(seltype.eq.DRA.or.seltype.eq.DDEC)then
+	    if(seltype.eq.DRA.or.seltype.eq.DDEC.or.
+     *         seltype.eq.DAZIM.or.seltype.eq.DELEV)then
 	      vals(1) = vals(1) * pi/180/3600
 	      vals(2) = vals(2) * pi/180/3600
 	    else if(seltype.eq.HA)then
@@ -521,7 +530,7 @@ c
 		offset = offset + 4
 		nsels = nsels + 1
 		if(offset+3.gt.maxsels)
-     *			call SelBug(Spec,'Buffer overflow')
+     *			call SelBug(Spec,'Buffer overflow-1')
 		sels(offset+ITYPE) = sgn*DAYTIME
 		sels(offset+LOVAL) = 0
 	      endif
@@ -553,7 +562,7 @@ c
 	    do i1=1,n1
 	      do i2=1,n2
 		if(offset+3.gt.maxsels)
-     *		    call SelBug(spec,'Buffer overflow')
+     *		    call SelBug(spec,'Buffer overflow-2')
 		sels(offset+ITYPE) = sgn*seltype
 		sels(offset+LOVAL) = nint(ant1(i1))
 		sels(offset+HIVAL) = nint(ant2(i2))
@@ -572,7 +581,7 @@ c
 	    if(seltype.eq.POL)
      *		call SelDcde(spec,k1,k2,vals,n,MAXVALS,'pol')
 	    if(offset+n+1.gt.maxsels)
-     *		call SelBug(spec,'Buffer overflow')
+     *		call SelBug(spec,'Buffer overflow-3')
 	    sels(offset+ITYPE) = sgn*seltype
 	    sels(offset+NSIZE) = n + 2
 	    do i=1,n
