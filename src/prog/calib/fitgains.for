@@ -34,12 +34,13 @@ c    mchw  12dec90 Removed maxdim.h, using larger maxant.
 c			changed logwrite to logwrit.
 c    mjs   25feb91 Changed references of itoa to itoaf.
 c    mjs   04aug91 Replaced local maxant with maxdim.h MAXANT
-c    mchw  31mar93 Fixed format for more than 6 antennae.
+c    mchw  31mar93 Fixed format for more than 6 antennas.
 c    mjs   02jul93 Commented out unused fmt stmt to elim compiler warn.
+c    mchw  28apr06 Format change.
 c------------------------------------------------------------------------
 	include 'maxdim.h'
-	character version*(*),vis*64,log*64,line*80
-	parameter(version='version 1.0 31-mar-93')
+	character version*(*),vis*120,log*120,line*80
+	parameter(version='version 1.0 28-Apr-06')
 	integer tgains,header(2),nants,nsols,item,offset
 	double precision interval,dtime
 	integer refant,iostat,i,j,k
@@ -140,8 +141,8 @@ c
 	  enddo
 c	  write(line,100) dtime-2444239.5d0,(amp(i),nint(phi(i)),
 c     *							i=1,nchan)
-c100  	  format(f13.7,' ',6(f8.3,i5))
-c	  length = 13 + 1 + nchan*(8+5)
+c100  	  format(f13.7,' ',6(f9.2,1x,i5))
+c	  length = 13 + 1 + nchan*(9+1+5)
 c	  call LogWrit(line(1:length))
 	  offset = offset + 8*nants
     	enddo
@@ -168,10 +169,10 @@ c
 	do j=1,nants,6
 	  k = min(j+5,nants)
 	  write(line,110) (AveAmp(i),nint(AvePhi(i)),i=j,k)
-110  	  format(3x,'Average',3x,6(f7.3,i4))
+110  	  format(3x,'Average',3x,6(f9.2,i5))
 	  call LogWrit(line)
 	  write(line,120) (RmsAmp(i),nint(RmsPhi(i)),i=j,k)
-120  	  format(5x,'Rms',5x,6(f7.3,i4))
+120  	  format(5x,'Rms',5x,6(f9.2,i5))
 	  call LogWrit(line)
 	enddo
 c
