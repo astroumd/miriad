@@ -39,7 +39,7 @@ c    mjs   02jul93 Commented out unused fmt stmt to elim compiler warn.
 c    mchw  28apr06 Format change.
 c------------------------------------------------------------------------
 	include 'maxdim.h'
-	character version*(*),vis*120,log*120,line*80
+	character version*(*),vis*120,log*120,line*100
 	parameter(version='version 1.0 28-Apr-06')
 	integer tgains,header(2),nants,nsols,item,offset
 	double precision interval,dtime
