@@ -139,7 +139,7 @@ airtemp         \>R     \>centigr.
 \> Air temperature at observatory\\
 
 antaz(nants)    \>D     \>deg.
-\> azimuth of antennas\\
+\> azimuth of antennas (BIMA was using 0=south  CARMA will use 0=north)\\
 
 antdiam		\>R	\>meters
 \> Antenna diameter\\
@@ -238,7 +238,7 @@ cortaper	\>R	\>-
 \>\>\>  The value is from 0-1.\\
 
 dazim(nants)	\>R	\>radians
-\>Offset in Azimuth. (CARMA proposed)\\
+\>Offset in Azimuth. (CARMA)\\
 
 
 ddec		\>R	\>radians
@@ -263,7 +263,7 @@ deldec		\>R or	\>radians
 \> definition.\\
 
 delev(nants)	\>R	\>radians
-\>Offset in Elevation (CARMA proposed)\\
+\>Offset in Elevation (CARMA)\\
 
 
 delra		\>R or	\>radians
@@ -741,4 +741,3 @@ uvio Version 16-jan-01 rjs
 
 \end{verbatim}\normalsize
 
-%% ** dazim(nants) and delev(nants)
