@@ -106,6 +106,7 @@ c   		     'bug' when nothing was modified
 c    smw     21nov03 Modified "force" option to enforce any value
 c    pjt     22nov05 Increased 12 to 15 for CARMA array, use MAXGANT
 c                    removed 'dbcor'
+c    pjt/smw  2may06 Fixed a cut&paste error in displaying median & rms
 c
 c  Bugs and Shortcomings:
 c    gplist is hardwired for 12 antennas!
@@ -114,7 +115,7 @@ c    usage with 15 or 30 elements.
 c-----------------------------------------------------------------------
 	include 'gplist.h'
 	character version*(*)
-	parameter(version='GpList: version 22-nov-05')
+	parameter(version='GpList: version 2-may-06')
 	logical dovec,docomp,dophas,doall,dozero,domult,hexists,doamp
 	logical dolimit,doclip,dosigclip,doforce,dohist
 	real jyperk(MAXGANT) 
@@ -453,14 +454,14 @@ c
         write(msg,199) 'Medians:',MednGain(1),MednGain(2),MednGain(3),
      *                            MednGain(4),MednGain(5),MednGain(6),
      *                MednGain(7),MednGain(8),MednGain(9),MednGain(10),
-     *           MeanGain(11),MeanGain(12),MeanGain(13),MeanGain(14),
-     *                                                  MeanGain(15)
+     *           MednGain(11),MednGain(12),MednGain(13),MednGain(14),
+     *                                                  MednGain(15)
         call output(msg)
         write(msg,199) 'Rms:    ',GainRms(1),GainRms(2),GainRms(3),
      *                            GainRms(4),GainRms(5),GainRms(6),
      *                GainRms(7),GainRms(8),GainRms(9),GainRms(10),
-     *         MeanGain(11),MeanGain(12),MeanGain(13),MeanGain(14),
-     *                                                MeanGain(15)
+     *             GainRms(11),GainRms(12),GainRms(13),GainRms(14),
+     *                                                 GainRms(15)
         call output(msg)
       endif
       write(msg,197) '------------------------------------',
