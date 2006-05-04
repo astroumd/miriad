@@ -135,10 +135,11 @@ c   27nov05 pjt  - added a 'carma' option, but renamed it to 'baseline'
 c                  this was somewhat involved and hopefully i dind't break the logic
 c   30jan06 pjt/sw - output in listdat/longdat now using 'time', not 'ut'
 c    8mar06 pjt  - added dazim/delev for ant1/2 in option=baseline (units: arcmin)
+c    4may06 sw   - added integration time to header
 c-----------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='UVLIST: version  8-mar-06')
+	parameter(version='UVLIST: version  4-may-06')
 	real rtoh,rtod,pi
 	integer maxsels
 	parameter(pi=3.141592653589793,rtoh=12/pi,rtod=180/pi)
@@ -760,7 +761,7 @@ c------------------------------------------------------------------------
 	parameter(MCHAN=5,rts=3600.*180./PI)
 	character line*256,cflag(MCHAN)*1, telescop*20, pol*2,src*9
 	real amp(MCHAN),phas(MCHAN),ha,elev,sinaz,cosaz,azim
-	real sinha,cosha,sind,cosd,sinl,cosl,chi
+	real sinha,cosha,sind,cosd,sinl,cosl,chi,inttime
 	double precision obsra,obsdec,latitude,dra,ddec,freq,ntm
 	double precision dazim(MAXANT), delev(MAXANT)
 	logical more,ok
@@ -775,7 +776,9 @@ c
 	  if (dobase) then
 	     if (needhd) then
 		call uvgetvrd(unit,'freq',freq,1)
-		write(line,'(''freq='',f16.10,'' Ghz'')') freq
+            call uvgetvrr(unit,'inttime',inttime,1)
+		write(line,'(''freq='',f16.10,'' Ghz  inttime='',f7.3)') 
+     *            freq,inttime
 		call LogWrite(line,more)
 	     endif
 	     line =' Vis # Source      UT(hrs)  LST(hrs)   HA(hrs)'
