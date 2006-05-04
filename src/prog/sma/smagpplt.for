@@ -145,7 +145,7 @@ c                the case of more than one input files involved.
 c    jhz 14feb06 fixed a bug in merging two gains
 c    jhz 03may06 implemented polynomial fitting to amp&pha of 
 c                the gain solutions.
-c    jhz 03may06 fixed a bud in time selection.
+c    jhz 03may06 fixed a bug in time selection.
 c    jhz 04may06 added an input parameter (filelabel) for option
 c                to label the file name.
 c  Bugs:
@@ -157,7 +157,7 @@ c------------------------------------------------------------------------
         parameter (DPI = 3.14159265358979323846)
         parameter (TWOPI = 2 * PI)
         parameter (DTWOPI = 2 * DPI)        
-        parameter(version='SmaGpPlt: version 1.7 18-Oct-05')
+        parameter(version='SmaGpPlt: version 1.8 04-May-06')
         include 'smagpplt.h'
         integer iostat,tin,nx,ny,nfeeds,nants,nsols,ierr,symbol,nchan
         integer ntau,length, i, j, k,nschann(maxspect)
