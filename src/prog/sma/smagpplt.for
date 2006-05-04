@@ -73,6 +73,13 @@ c                      file must be given. The merged gain table
 c                      will be placed in the second input vis file
 c                      by overwritting on the old gain table.
 c
+c@ filelabel
+c       This gives an option to label the file name in the plot:
+c        filelabel = -1, not to label the file name, the default;
+c        filelabel =  0, label the file name to each of panel plots;
+c        filelabel =  1, label the file name to the 1st panel in
+c                     the case of multiple panels.
+c
 c@ smooth
 c       This gives three parameters of moving smooth calculation of the 
 c       bandpass/gain curves
@@ -136,6 +143,11 @@ c    jhz 19oct05 add a description in inline doc for options=merge
 c                fixed a bug in ending x-window plot for
 c                the case of more than one input files involved.
 c    jhz 14feb06 fixed a bug in merging two gains
+c    jhz 03may06 implemented polynomial fitting to amp&pha of 
+c                the gain solutions.
+c    jhz 03may06 fixed a bud in time selection.
+c    jhz 04may06 added an input parameter (filelabel) for option
+c                to label the file name.
 c  Bugs:
 c------------------------------------------------------------------------
         integer maxsels
@@ -181,7 +193,7 @@ c circular feeds
         common/bsmooth/smooth,rpass,ipass,apass,ppass,bnply,breport
         common/gsmooth/smoothg,rgain,igain,gnply,greport,nnsols
         integer nants1, nfeeds1, nsols1
-        integer nsols2
+        integer nsols2,filelabel
         complex g2buf(maxgains),gbuf(maxgains)
         complex gf12(maxgains)
         real times1(maxtimes),times2(maxtimes)
@@ -193,8 +205,8 @@ c
             nfile=0
         call output(version)
         call keyini
-c        call keya('vis',vis,' ')
-         ops = 'sdlp'
+c       ops = 'sdlp'
+        ops = ' '
         call uvdatinp ('vis', ops)
         if(vis.eq.' ')call bug('f','Input data-set must be given')
         call keya('device',device,' ')
@@ -204,7 +216,6 @@ c        call keya('vis',vis,' ')
         if(.not.(dolog.or.doplot))
      *    call bug('f','One of the device and log must be given')
         call getaxis(doamp,dophase,doreal,doimag)
-c       write(*,*) 'axis-amp pha re im', doamp,dophase,doreal,doimag
         call getopt(dogains,doxy,doxbyy,dopol,dodtime,dodots,
      *    dodelay,dospec,dopass,dowrap,dosmooth,donply,doratio,
      *    domerge)
@@ -215,19 +226,6 @@ c       write(*,*) 'axis-amp pha re im', doamp,dophase,doreal,doimag
               if(doimag) doreal=.true.
          end if  
 
-           if(dosmooth.and.dogains) then
-              doamp   = .false.
-              dophase = .false.
-              doreal  = .true.
-              doimag  = .true.
-           end if
-           if(donply.and.dogains) then
-              doamp   = .false.
-              dophase = .false.
-              doreal  = .true.
-              doimag  = .true.
-           end if
-c          write(*,*) 'axis-amp pha re im', doamp,dophase,doreal,doimag
         call keyr('smooth',smooth(1), 3.)
         call keyr('smooth',smooth(2), 3.)
         call keyr('smooth',smooth(3), 0.9)
@@ -235,6 +233,7 @@ c          write(*,*) 'axis-amp pha re im', doamp,dophase,doreal,doimag
                smoothg(i) = smooth(i)
                end do 
         call keyi('weight', weight, 1)
+        call keyi('filelabel', filelabel, -1)
         if(donply) smooth(1)=0
         call keyi('polyfit', nply(1), 0)
         call keyi('polyfit', nply(2), 0)
@@ -302,7 +301,6 @@ c  Open up all the inputs.
 c
         if(nfiles.ge.2) then
             do lin= 1, nfiles
-             
             if(.not.uvdatopn(tin))call bug('f','Error opening inputs')
             call uvdatgta ('name', vis)
             write(*,*) lin,':file', vis
@@ -354,9 +352,10 @@ c           call bug('f','inconsistent frequency between the two files')
             end do
             end do
           if(lin.eq.2) 
-     *     call bpplt(times,g1,nfeeds,nants,nchan,range,
+     *     call bpplt(vis,times,g1,nfeeds,nants,nchan,range,
      *          feeds(nfeeds),doamp,dophase,dowrap,doreal,doimag,
-     *          doplot,dolog,symbol,nx*ny,nschann)
+     *          doplot,dolog,symbol,nx*ny,nschann,donply,dosmooth,
+     *          filelabel)
          endif
              
         if(dolog.and.(lin.eq.2).and.domerge)
@@ -387,8 +386,7 @@ c
      *      call bug('f',
      *  'The two gain tables do not match in the number of antennas.'); 
              
-             nsols= nsols1+nsols2 
- 
+            nsols= nsols1+nsols2 
             do ifeed=1,nfeeds
             do j=1,nants
             offset = ifeed + (j-1)*nfeeds
@@ -423,7 +421,8 @@ c
           if(dogains) 
      *       call gainplt(vis,times,gbuf,nfeeds,nants,nsols,range,
      *       feeds(nfeeds),doamp,dophase,dowrap,doreal,doimag,
-     *       doplot,dolog,dodtime,symbol,nx*ny,weight)
+     *       doplot,dolog,dodtime,donply,dosmooth,
+     *       symbol,nx*ny,weight,filelabel)
           if(dolog) call logclose
 
 c assign the nsols (maximun nsols for each set of ant/feed)
@@ -545,7 +544,8 @@ c         write(*,*) 'gload',nsols,nants,nfeeds
          call gncvt(g1,g2,nfeeds,ntau,nants*nsols)
          call gainplt(vis,times,g2,nfeeds,nants,nsols,range,
      *       feeds(nfeeds),doamp,dophase,dowrap,doreal,doimag,
-     *       doplot,dolog,dodtime,symbol,nx*ny,weight)           
+     *       doplot,dolog,dodtime,donply,dosmooth,
+     *       symbol,nx*ny,weight,filelabel)           
           endif
 c
 c the memory of nsols appears to be changed
@@ -577,7 +577,7 @@ c is changed
            pee(j) =j
            do k=1,gns 
 c           if (nnsols(i,j).gt.0) 
-           gains(i,j,k) = cmplx(rgain(i,j,k),igain(i,j,k))
+            gains(i,j,k) = cmplx(rgain(i,j,k),igain(i,j,k))
             end do
             end do
             end do
@@ -593,13 +593,15 @@ c
             call xycvt(g1,g2,nfeeds,ntau,nants*nsols,.true.)
             call gainplt(vis,times,g2,1,nants,nsols,range,
      *          'XY',doamp,dophase,dowrap,doreal,doimag,
-     *          doplot,dolog,dodtime,symbol,nx*ny,weight)
+     *          doplot,dolog,dodtime,donply,dosmooth,
+     *          symbol,nx*ny,weight,filelabel)
           endif
           if(doxbyy)then
             call xycvt(g1,g2,nfeeds,ntau,nants*nsols,.false.)
             call gainplt(vis,times,g2,1,nants,nsols,range,
      *          'X*Y',doamp,dophase,dowrap,doreal,doimag,
-     *          doplot,dolog,dodtime,symbol,nx*ny,weight)
+     *          doplot,dolog,dodtime,donply,dosmooth,
+     *          symbol,nx*ny,weight,filelabel)
           endif
           if(dodelay)then
             call alphacvt(g1,alpha,nfeeds,ntau,nants*nsols,.true.)
@@ -620,9 +622,10 @@ c
         if(dopass)then
           call bload(tin,times,g1,nfeeds,nants,nchan,sels,
      *          maxgains,maxtimes,nschann)
-          call bpplt(times,g1,nfeeds,nants,nchan,range,
+          call bpplt(vis,times,g1,nfeeds,nants,nchan,range,
      *          feeds(nfeeds),doamp,dophase,dowrap,doreal,doimag,
-     *          doplot,dolog,symbol,nx*ny,nschann)
+     *          doplot,dolog,symbol,nx*ny,nschann,
+     *          donply,dosmooth,filelabel)
         endif
             
 c
@@ -1140,12 +1143,13 @@ c
 c************************************************************************
         subroutine gainplt(vis,time,g,nfeeds,nants,nsols,range,
      *    feeds,doamp,dophase,dowrap,doreal,doimag,doplot,dolog,
-     *    dodtime,symbol,ppp,weight)
+     *    dodtime,donply,dosmooth,symbol,ppp,weight,filelabel)
 c
-        integer nfeeds,nants,nsols,ppp,symbol
+        integer nfeeds,nants,nsols,ppp,symbol,filelabel
         complex g(nfeeds*nants*nsols)
         real time(nsols),range(2)
         logical doamp,dophase,dowrap,doreal,doimag,doplot,dolog,dodtime
+        logical donply,dosmooth
         character feeds(nfeeds)*(*),vis*(*)
 c
 c  Plot/list the antenna gains.
@@ -1175,32 +1179,39 @@ c
         integer weight
 c
        if(doamp) call gainplt2(vis,time,g,nfeeds,nants,nsols,range,
-     *   'Amp',feeds,doplot,dolog,dodtime,symbol,getamp,ppp,weight)
+     *   'Amp',feeds,doplot,dolog,dodtime,donply,dosmooth, 
+     *   symbol,getamp,ppp,weight,filelabel)
         if(dophase)then
         if(dowrap)then
             call gainplt2(vis,time,g,nfeeds,nants,nsols,range,
-     *  'Phase',feeds,doplot,dolog,dodtime,symbol,getphasw,ppp,weight)
+     *  'Phase',feeds,doplot,dolog,dodtime,donply,dosmooth,
+     *   symbol,getphasw,ppp,weight,filelabel)
           else
             call gainplt2(vis,time,g,nfeeds,nants,nsols,range,
-     *  'Phase',feeds,doplot,dolog,dodtime,symbol,getphase,ppp,weight)
+     *  'Phase',feeds,doplot,dolog,dodtime,donply,dosmooth,
+     *   symbol,getphase,ppp,weight,filelabel)
           endif
         endif
        if(doreal) call gainplt2(vis,time,g,nfeeds,nants,nsols,range,
-     *  'Real',feeds,doplot,dolog,dodtime,symbol,getreal,ppp,weight)
+     *  'Real',feeds,doplot,dolog,dodtime,donply,dosmooth,
+     *   symbol,getreal,ppp,weight,filelabel)
         if(doimag) call gainplt2(vis,time,g,nfeeds,nants,nsols,range,
-     *  'Imag',feeds,doplot,dolog,dodtime,symbol,getimag,ppp,weight)
+     *  'Imag',feeds,doplot,dolog,dodtime,donply,dosmooth,
+     *  symbol,getimag,ppp,weight,filelabel)
         end
 c************************************************************************
-        subroutine bpplt(freq,g,nfeeds,nants,nchan,range,
+        subroutine bpplt(vis,freq,g,nfeeds,nants,nchan,range,
      *    feeds,doamp,dophase,dowrap,doreal,doimag,doplot,dolog,
-     *    symbol,ppp,nschann)
+     *    symbol,ppp,nschann,donply,dosmooth,filelabel)
 c
         parameter(maspect=49)
         integer nfeeds,nants,nchan,ppp,symbol,nschann(49)
+        integer filelabel
         complex g(nchan*nfeeds*nants)
         real freq(nchan),range(2)
         logical doamp,dophase,dowrap,doreal,doimag,doplot,dolog
-        character feeds(nfeeds)*(*)
+        character feeds(nfeeds)*(*),vis*(*)
+        logical donply,dosmooth
 c
 c  Plot/list the bandpass shape.
 c
@@ -1225,21 +1236,26 @@ c
         real     getamp,getphasw,getphase,getreal,getimag
         external getamp,getphasw,getphase,getreal,getimag
 c
-        if(doamp)  call bpplt2(freq,g,nfeeds,nants,nchan,range,
-     *    'Amp',feeds,doplot,dolog,symbol,getamp,ppp,nschann)
+        if(doamp)  call bpplt2(vis,freq,g,nfeeds,nants,nchan,range,
+     *    'Amp',feeds,doplot,dolog,symbol,getamp,ppp,nschann,
+     *     donply,dosmooth,filelabel)
         if(dophase)then
           if(dowrap)then
-            call bpplt2(freq,g,nfeeds,nants,nchan,range,
-     *        'Phase',feeds,doplot,dolog,symbol,getphasw,ppp,nschann)
+            call bpplt2(vis,freq,g,nfeeds,nants,nchan,range,
+     *    'Phase',feeds,doplot,dolog,symbol,getphasw,ppp,nschann,
+     *     donply,dosmooth,filelabel)
           else
-            call bpplt2(freq,g,nfeeds,nants,nchan,range,
-     *        'Phase',feeds,doplot,dolog,symbol,getphase,ppp,nschann)
+            call bpplt2(vis,freq,g,nfeeds,nants,nchan,range,
+     *    'Phase',feeds,doplot,dolog,symbol,getphase,ppp,nschann,
+     *     donply,dosmooth,filelabel)
           endif
         endif
-        if(doreal) call bpplt2(freq,g,nfeeds,nants,nchan,range,
-     *    'Real',feeds,doplot,dolog,symbol,getreal,ppp,nschann)
-        if(doimag) call bpplt2(freq,g,nfeeds,nants,nchan,range,
-     *    'Imag',feeds,doplot,dolog,symbol,getimag,ppp,nschann)
+        if(doreal) call bpplt2(vis,freq,g,nfeeds,nants,nchan,range,
+     *    'Real',feeds,doplot,dolog,symbol,getreal,ppp,nschann,
+     *     donply,dosmooth,filelabel)
+        if(doimag) call bpplt2(vis,freq,g,nfeeds,nants,nchan,range,
+     *    'Imag',feeds,doplot,dolog,symbol,getimag,ppp,nschann,
+     *     donply,dosmooth,filelabel)
         end
 c************************************************************************
         subroutine polplt2(leaks,nfeeds,nants,range,type,feeds,
@@ -1298,12 +1314,13 @@ c
         end
 c************************************************************************
         subroutine gainplt2(vis,time,g,nfeeds,nants,nsols,range,
-     *  type,feeds,doplot,dolog,dodtime,symbol,getval,ppp,weight)
+     *  type,feeds,doplot,dolog,dodtime,donply,dosmooth,
+     *  symbol,getval,ppp,weight,filelabel)
 c
         integer nfeeds,nants,nsols,ppp,symbol
         real time(nsols),range(2)
         complex g(nfeeds*nants*nsols)
-        logical doplot,dolog,dodtime
+        logical doplot,dolog,dodtime,donply,dosmooth
         character feeds(nfeeds)*(*),vis*(*),type*(*)
         real getval
         external getval
@@ -1316,20 +1333,23 @@ c	GetVal	Routine used to convert to the desired quantity.
 c------------------------------------------------------------------------
         include 'smagpplt.h'
         character line*80,title*48,label*20
+        character uvfile*48
         logical more, xpntr(maxtimes)
         real x(maxtimes),y(maxtimes),value(2*maxant)
         real wt(maxtimes)
         complex gain
         integer iday,ihr,imin,isec,j,j1,j2,isol,ifeed,iant
-        integer offset,nres,ng,length,weight
+        integer offset,nres,ng,length,weight,lfile
 c
 c  Externals.
 c
         character itoaf*3
-        integer len1
+        integer len1,filelabel
 c
 c  Do the plots.
 c
+            uvfile = 'File='//vis
+            lfile = len1(uvfile)
         if(doplot)then
           do ifeed=1,nfeeds
             nres = 0
@@ -1349,20 +1369,26 @@ c
                  xpntr(isol) = .false.
               endif
               enddo
-              if(ng.gt.0)then
-                call setpg(time(1),time(nsols),y,ng,range,dodtime)
+              if(ng.gt.0) then
+           call setpg(time(1),time(nsols),y,ng,range,dodtime)
            call pgptsgain(ng,x,y,symbol,iant,ifeed,type,wt,
-     *      weight,xpntr,time,nsols)
+     *  weight,xpntr,time,nsols,donply,dosmooth)
+            if(filelabel.gt.-1) then
+            if((filelabel.eq.1).and.(iant.eq.1)) 
+     *      call pgmtxt('LV',-1.,0.9,.0,uvfile(1:lfile))
+            if(filelabel.eq.0) 
+     *      call pgmtxt('LV',-1.,0.9,.0,uvfile(1:lfile))
+            end if
                 label = feeds(ifeed)//'-Gain-'//type
-                title = 'Antenna '//itoaf(iant)//'File='//vis
+                title = 'Antenna '//itoaf(iant)
                 length = len1(title)
-                call pglab('Time',label,title(1:length))
+                call pglab('Time',label,title(1:lfile))
                 nres = nres + 1
               endif
             enddo
             call subfill(nres,ppp)
-          enddo
-        endif
+            enddo
+            endif
 c
 c  Write the needed data to the listing file.
 c
@@ -1407,15 +1433,16 @@ c
         endif
         end
 c************************************************************************
-        subroutine bpplt2(freq,g,nfeeds,nants,nchan,range,
-     *    type,feeds,doplot,dolog,symbol,getval,ppp,nschann)
+        subroutine bpplt2(vis,freq,g,nfeeds,nants,nchan,range,
+     *    type,feeds,doplot,dolog,symbol,getval,ppp,nschann,
+     *    donply,dosmooth,filelabel)
 c
         parameter(maxspect=49)
         integer nfeeds,nants,nchan,ppp,symbol,nschann(maxspect)
         real freq(nchan),range(2)
         complex g(nchan*nfeeds*nants)
         logical doplot,dolog
-        character feeds(nfeeds)*(*),type*(*)
+        character feeds(nfeeds)*(*),type*(*),vis*(*)
         real getval
         external getval
 c
@@ -1427,11 +1454,13 @@ c	GetVal	Routine used to convert to the desired quantity.
 c------------------------------------------------------------------------
         include 'smagpplt.h'
         character line*80,label*20,title*12
-        logical more
+        character uvfile*48
+        logical more,donply,dosmooth
         real x(maxtimes),y(maxtimes),freqmin,freqmax
         real value(2*maxant)
         complex gain
         integer ichan,ifeed,iant,offset,j,j1,j2,nres,ng
+        integer filelabel,lfile
 c
 c  Externals.
 c
@@ -1439,6 +1468,9 @@ c
 c
 c  Do the plots.
 c
+            uvfile = 'File='//vis
+            lfile = len1(uvfile)
+
         if(doplot)then
 c
 c  Determine the min and max frequencies.
@@ -1467,12 +1499,22 @@ c
               if(ng.gt.0)then
                 call setpg(freqmin,freqmax,y,ng,range,.true.)
 c        write(*,*) 'ifeed iant type nfeed',ifeed,iant,type,nfeeds
-          call pgptbpass(ng,x,y,symbol,ifeed,iant,type,nschann)
+          call pgptbpass(ng,x,y,symbol,ifeed,iant,type,
+     *    nschann,donply,dosmooth)
+
+            if(filelabel.gt.-1) then
+            if((filelabel.eq.1).and.(iant.eq.1))
+     *      call pgmtxt('LV',-1.,0.9,.0,uvfile(1:lfile))
+            if(filelabel.eq.0)
+     *      call pgmtxt('LV',-1.,0.9,.0,uvfile(1:lfile))
+            end if
+
            label = feeds(ifeed)//'-BandPass-'//type
            title = 'Antenna '//itoaf(iant)
            call pglab('Frequency (GHz)',label,title)
                 nres = nres + 1
               endif
+            
             enddo
             call subfill(nres,ppp)
           enddo
@@ -1595,18 +1637,20 @@ c
       END
 
       SUBROUTINE PGPTSGAIN(N,XPTS,YPTS,SYMBOL,IANT,IFEED,
-     *  type,WT,weight,xpntr,time,nsols)
+     *  type,WT,weight,xpntr,time,nsols,donply,dosmooth)
       INTEGER N,IANT,IFEED
       REAL XPTS(*), YPTS(*),WT(*)
       INTEGER SYMBOL,weight
       character type*(*)
       real time(nsols)
-      LOGICAL xpntr(nsols)
+      LOGICAL xpntr(nsols),donply,dosmooth
 C
 C-----------------------------------------------------------------------
       LOGICAL PGNOTO
 c     for moving smooth
       PARAMETER(MAXNR=20,MAXN=7681)
+      double precision dpi
+      parameter(dpi=3.14159265358979323846)
       double precision T(N),Y(N),DELTAY(N)
       double precision ETA(6200),CONETA(6200),A(21,6)
       double precision ATA1(6,6),ATA1AT(6,21),SCRAT(6,6)
@@ -1615,6 +1659,7 @@ c     for moving smooth
       real x(MAXN), ys(MAXN)
       integer K, L, i, gnply, greport, nterm, nnsols(10,2)
       real smoothg(3), rgain(10,2,6145),igain(10,2,6145)
+      real  again(10,2,6145),pgain(10,2,6145)
       common/gsmooth/smoothg,rgain,igain,gnply,greport,nnsols
 C
 c   load the nnsols
@@ -1625,7 +1670,6 @@ c
            x(i)= time(i)/3600.
            ys(i) = 0. 
           end do
-c          write(*,*) ' '
       call pgsci(2)
       IF (N.LT.1) RETURN
       IF (PGNOTO('PGPT')) RETURN
@@ -1661,7 +1705,7 @@ c
             nsols=N
          end if
 c
-c Orthogonal polynomial fit to the bpass
+c Orthogonal polynomial fit to the gains 
 c        
          if(gnply.gt.0) then 
         CALL REGPOL(T,Y,DELTAY,N,MAXNR,XA,BP,AP,CHI2)
@@ -1675,6 +1719,16 @@ c
             call regpolfitg(nterm,xa,bp,nsols,x,ys)
             end if
          do i=1,nsols 
+        if(donply.or.dosmooth) then
+        if(type.eq.'Amp') again(IANT, IFEED,i) = ys(i)
+        if(type.eq.'Phase') then
+              pgain(IANT, IFEED,i) = ys(i)*dpi/180.
+           rgain(IANT, IFEED,i) = 
+     *        again(IANT, IFEED,i)*cos(pgain(IANT, IFEED,i))
+           igain(IANT, IFEED,i) =
+     *        again(IANT, IFEED,i)*sin(pgain(IANT, IFEED,i))
+         end if
+         end if
         if(type.eq.'Real') rgain(IANT, IFEED,i) = ys(i)
         if(type.eq.'Imag') igain(IANT, IFEED,i) = ys(i)
             x(i)=3600.*x(i)
@@ -1821,14 +1875,17 @@ c
         end
 
 c************************************************************************
-      SUBROUTINE PGPTBPASS (N,XPTS,YPTS,SYMBOL,IFEED,IANT,type,nschann)
+      SUBROUTINE PGPTBPASS (N,XPTS,YPTS,SYMBOL,IFEED,
+     *   IANT,type,nschann,donply,dosmooth)
       INTEGER N, IFEED, IANT
       REAL XPTS(*), YPTS(*)
       INTEGER SYMBOL
       LOGICAL PGNOTO
       character type*(*)
 c     for movinf smooth
-       PARAMETER(MAXNR=20,MAXN=7681,maxspect=49)
+      PARAMETER(MAXNR=20,MAXN=7681,maxspect=49)
+      double precision dpi
+      parameter(dpi=3.14159265358979323846)
       integer nschann(maxspect)
       double precision T(N),Y(N),DELTAY(N)
       double precision ETA(6200),CONETA(6200),A(21,6)
@@ -1842,6 +1899,7 @@ c     for movinf smooth
       real smooth(3), ymean
       real rpass(10,6145,2), ipass(10,6145,2)
       real apass(10,6145,2), ppass(10,6145,2)
+      logical donply, dosmooth
       common/bsmooth/smooth,rpass,ipass,apass,ppass,bnply,breport
 C
       call pgsci(1)
@@ -1938,8 +1996,19 @@ c
         do ii=1, schan
         if(type.eq.'Real') rpass(IANT, i-schan+ii, IFEED) = ys(ii)
         if(type.eq.'Imag') ipass(IANT, i-schan+ii, IFEED) = ys(ii)
-        if(type.eq.'Amp')  apass(IANT, i-schan+ii, IFEED) = ys(ii)
-        if(type.eq.'Phase') ppass(IANT, i-schan+ii, IFEED) = ys(ii)
+        if(type.eq.'Amp')  apass(IANT,i-schan+ii, IFEED) = ys(ii)
+         if(type.eq.'Phase') ppass(IANT, i-schan+ii, IFEED) = ys(ii)
+c
+c        if(donply.or.dosmooth) then
+c        if(type.eq.'Amp') apass(IANT,i-schan+ii, IFEED) = ys(ii)
+c        if(type.eq.'Phase') then
+c              ppass(IANT, i-schan+ii, IFEED) = ys(ii)*dpi/180.
+c           rpass(IANT,i-schan+ii, IFEED) =
+c     * apass(IANT,i-schan+ii, IFEED)*cos(ppass(IANT,i-schan+ii,IFEED))
+c           ipass(IANT,i-schan+ii, IFEED) =
+c     * apass(IANT,i-schan+ii, IFEED)*sin(ppass(IANT,i-schan+ii,IFEED))
+c         end if
+c         end if
         end do
        call pgsci(1)
        call pgline (schan, x, ys)
