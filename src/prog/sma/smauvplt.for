@@ -310,9 +310,13 @@ c    jhz  22jan05  removed the duplication define of maxbas2
 c    jhz  29jul05  change pgpts to smapgpts and add color
 c                  index and lable to distinguish source-based
 c                  polarization data.
-c    jhz  29jul05  fix the start source labelling position.
+c    jhz  29jul05  fixed the labelling position for the first source.
 c    jhz  18nov05  extended the size of source array to 100
 c                  and maximum color index to 48.
+c    jhz  10may06  fixed a bug in the source id variable
+c                  sourid, which was reported by carma folks
+c                  (Jin and Jerry). 
+c    jhz  10may06  put back the include file: mirconst.h  
 c To do:
 c
 c   Vector averaging rms not yet implemented
@@ -369,46 +373,7 @@ c
 c-----------------------------------------------------------------------
 c
       include 'maxdim.h'
-c=======================================================================
-c - mirconst.h  Include file for various fundamental physical constants.
-c
-c  History:
-c    jm  18dec90  Original code.  Constants taken from the paper
-c                 "The Fundamental Physical Constants" by E. Richard
-c                 Cohen and Barry N. Taylor (PHYICS TODAY, August 1989).
-c ----------------------------------------------------------------------
-c  Pi.
-      real pi, twopi
-      double precision dpi, dtwopi
-      parameter (pi = 3.14159265358979323846)
-      parameter (dpi = 3.14159265358979323846)
-      parameter (twopi = 2 * pi)
-      parameter (dtwopi = 2 * dpi)
-c ----------------------------------------------------------------------
-c  Speed of light (meters/second).
-      real cmks
-      double precision dcmks
-      parameter (cmks = 299792458.0)
-      parameter (dcmks = 299792458.0)
-c ----------------------------------------------------------------------
-c  Boltzmann constant (Joules/Kelvin).
-      real kmks
-      double precision dkmks
-      parameter (kmks = 1.380658e-23)
-      parameter (dkmks = 1.380658d-23)
-c ----------------------------------------------------------------------
-c  Planck constant (Joules-second).
-      real hmks
-      double precision dhmks
-      parameter (hmks = 6.6260755e-34)
-      parameter (dhmks = 6.6260755d-34)
-c ----------------------------------------------------------------------
-c  Planck constant divided by Boltzmann constant (Kelvin/GHz).
-      real hoverk
-      double precision dhoverk
-      parameter (hoverk = 0.04799216)
-      parameter (dhoverk = 0.04799216)
-c=======================================================================
+      include 'mirconst.h'
 c
       integer  maxco, maxpol, maxfile
       parameter (maxco = 7, maxpol = 4, maxfile = 30)
@@ -487,7 +452,7 @@ c
       data polmsk /13*0/
       limitnsource = maxsource 
 c-----------------------------------------------------------------------
-      call output ('SmaUvPlt: version 1.2 18-Nov-05')
+      call output ('SmaUvPlt: version 1.3 10-May-06')
 c
 c  Get the parameters given by the user and check them for blunders
 c
@@ -576,8 +541,8 @@ c
         sourid=0
         nsource=0
         do while (nread.ne.0 .and. .not.allfull)
-          call uvgetvra(lin,'source',souread)
-       if (souread.ne.' '.and.sourid.eq.0) then
+        call uvgetvra(lin,'source',souread)
+        if (souread.ne.' '.and.sourid.eq.0) then
           sourid=1
           nsource=nsource+1
           source(sourid)=souread
@@ -592,6 +557,7 @@ c
      *   call bug ('f', 'Exceeds the limit of source array size.')     
                       source(i+1)=souread
                       nsource=nsource+1
+                      sourid=i+1
                       goto 555
                   end if
                 end do
