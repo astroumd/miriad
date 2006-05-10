@@ -182,6 +182,13 @@ c	PGPLOT character sizes, in units of the default size (i.e., 1)
 c	First value is for the labels, the second is for the symbol size
 c	Defaults depend upon the number of sub-plots. The second value
 c	defaults to the first.
+c@ filelabel
+c       This gives an option to label the file name in the plot:
+c        filelabel = -1, not to label the file name, the default;
+c        filelabel =  0, label the file name to each of panel plots;
+c        filelabel =  1, label the file name to the 1st panel in
+c                     the case of multiple panels.
+c
 c@ log
 c	The output logfile name. The default is the terminal.
 c@ comment
@@ -315,8 +322,10 @@ c    jhz  18nov05  extended the size of source array to 100
 c                  and maximum color index to 48.
 c    jhz  10may06  fixed a bug in the source id variable
 c                  sourid, which was reported by carma folks
-c                  (Jin and Jenny). 
+c                  (Jin and Jerry). 
 c    jhz  10may06  put back the include file: mirconst.h  
+c    jhz  10may06  added keyword filelabel to handle file
+c                  name labelling.
 c To do:
 c
 c   Vector averaging rms not yet implemented
@@ -437,11 +446,11 @@ c Externals
 c
       integer membuf
       logical uvdatopn
-      character itoaf*2
+      character itoaf*2, filen*48
 c
 c Initialize
 c
-      integer ifac1, ifac2, nsource
+      integer ifac1, ifac2, nsource, filelabel
       parameter (ifac1 = maxpol*maxbase*maxfile,
      *           ifac2 = maxbase)
       data false, bwarn /.false., .false., .false., .false./
@@ -460,7 +469,8 @@ c
      *   tunit, dorms, dovec, doflag, doall, dobase, dointer, doperr,
      *   dolog, dozero, doequal, donano, dosrc, doavall, doxind,
      *   doyind, dowrap, dosymb, dodots, docol, inc, nx, ny, pdev,
-     *   logf, comment, size, hann, ops, twopass, dofqav, dotitle)
+     *   logf, comment, size, hann, ops, twopass, dofqav, dotitle,
+     *   filelabel)
       call chkinp (xaxis, yaxis, xmin, xmax, ymin, ymax, dayav,
      *   dodoub, dowave, doave, dovec, dorms, dointer, doperr,
      *   dowrap, hann, xrtest, yrtest)
@@ -526,6 +536,8 @@ c
         call uvdatgta ('name', in)
         call logwrite (' ', more)
         str = itoaf (ifile)
+        filen='File #'//str(1:len1(str))//' = '//in(1:len1(in))
+        write(*,*) filen
         call logwrite ('File # '//str//' = '//in, more)
 c
 c Read first visibility
@@ -793,7 +805,7 @@ c
      *     xxmax, yymin, yymax, pdev, pl1dim, pl2dim, pl3dim, pl4dim,
      *     maxbase, maxpol, maxfile, nbases, npols, npts, buffer(ip),
      *     soupnt(ip), xo, yo, elo, eho, nx, ny, a1a2, order, size, 
-     *     polmsk, doavall, docol, dotitle,ifile)
+     *     polmsk, doavall, docol, dotitle,ifile,filen,filelabel)
          enddo
 c
       call logclose
@@ -2533,7 +2545,7 @@ c
      *    doperr, dolog, dozero, doequal, donano, dosrc, doavall,
      *    doxind, doyind, dowrap, dosymb, dodots, docol, inc, nx, ny,
      *    pdev, logf, comment, size, hann, ops, twopass, dofqav,
-     *    dotitle )
+     *    dotitle, filelabel)
 c-----------------------------------------------------------------------
 c     Get the user's inputs
 c
@@ -2579,6 +2591,7 @@ c    hann         Hanning smoothing length
 c    twopass      Make two passes through the data
 c    dofqav       Average frequency channels before plotting.
 c    dotitle      When false don't write plot title
+c    filelabel    File labelling handle
 c-----------------------------------------------------------------------
 c
       character*(*) xaxis, yaxis, pdev, logf, comment
@@ -2594,7 +2607,7 @@ cc
       character itoaf*3, str*3, word*50, ops*9, axis(2)*10
       logical doday, dohour, dosec
 c
-      integer len1
+      integer len1, filelabel
       logical keyprsnt
 c
 c Types of axes allowed
@@ -2697,6 +2710,7 @@ c
 c
       if (doall) doflag = .false.
 c
+      call keyi('filelabel', filelabel, -1)
       call keyi ('nxy', nx, 0)
       call keyi ('nxy', ny, nx)
 c
@@ -2834,7 +2848,8 @@ cc
       double precision data(maxchan)
       logical more
       real av
-      character source*9, str*40, name*30, str2*10, str3*30
+      character source*9, str*40, str2*10, str3*30
+c     character  name*30
       integer len1, il1, il2, il3
 c-----------------------------------------------------------------------
       call uvrdvra (lin, 'source', source, ' ')
@@ -2849,14 +2864,14 @@ c
       if (dosrc) then
         write(title, 100) source(1:len1(source)), str(1:il1)
       else
-        if (nfiles.eq.1) then
-          call uvdatgta ('name', name)
-          write(title,100) name(1:len1(name)), str(1:il1)
+c        if (nfiles.eq.1) then
+c          call uvdatgta ('name', name)
+c          write(title,100) name(1:len1(name)), str(1:il1)
 100       format (a, 1x, a,' GHz')
-        else
+c        else
           write(title,200) str(1:il1)
 200       format (a, ' GHz')
-        end if
+c        end if
       end if
       il1 = len1(title)
 c
@@ -2912,7 +2927,7 @@ c
      *   xxmax, yymin, yymax, pdev, pl1dim, pl2dim, pl3dim, pl4dim,
      *   maxbase, maxpol, maxfile, nbases, npols, npts, buffer, soupnt,
      *   xo,yo, elo, eho, nx, ny, a1a2, order, size, polmsk,
-     *   doavall, docol, dotitle, fileid)
+     *   doavall, docol, dotitle, fileid, filen, filelabel)
 c-----------------------------------------------------------------------
 c     Draw the plot
 c
@@ -2953,6 +2968,8 @@ c   doavall        True if averaging everything on the sub-plot
 c                  together
 c   nbases         Number of baseline encountered in files
 c   npols          Number of poalrizations encountered in files
+c   filen          Input file name
+c   filelabel      File labelling handle.
 c
 c Input/output
 c   xx,yymin,max   Work array (automatically determined plot extrema)
@@ -2968,7 +2985,7 @@ c
      *  buffer(pl1dim,pl2dim,pl3dim,pl4dim)
       integer soupnt(pl1dim,pl2dim,pl3dim,pl4dim)
       character title*(*), xaxis*(*), yaxis*(*), pdev*(*), xopt*10,
-     *  yopt*10
+     *  yopt*10, filen*(*)
       logical doave, dorms(2), dobase, dointer, dolog, dozero, doequal,
      *  donano, doxind, doyind, dowrap, doperr, dosymb, dodots, doavall,
      *  docol, dotitle
@@ -2984,7 +3001,7 @@ cc
       character*2 fmt(2), polstr(12)*2, hard*3
       logical new, more, redef, none, dosmaplt
 c
-      integer pgbeg, len1, fileid
+      integer pgbeg, len1, fileid, filelabel
       character polsc2p*2
 c
       double precision ddayav
@@ -3255,6 +3272,15 @@ c  Draw box and label
 c
               call pgpage
               call pgtbox (xopt, 0.0, 0, yopt, 0.0, 0)
+c
+c label the file name
+c
+              if(filelabel.gt.-1) then
+              if((filelabel.eq.1).and.(ip.eq.1))
+     *    call pgmtxt('LV',-.0,1.03,.0,filen(1:len1(filen)))
+              if(filelabel.eq.0)
+     *    call pgmtxt('LV',-.0,1.03,.0,filen(1:len1(filen)))
+              end if  
               call pglab (xlabel, ylabel, ' ')
               if (dotitle) then
               call pltitle (npol, polstr, title, cols, doavall,dosmaplt)
