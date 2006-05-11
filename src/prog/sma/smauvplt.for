@@ -322,7 +322,7 @@ c    jhz  18nov05  extended the size of source array to 100
 c                  and maximum color index to 48.
 c    jhz  10may06  fixed a bug in the source id variable
 c                  sourid, which was reported by carma folks
-c                  (Jin and Jerry). 
+c                  (Jin and Jenny). 
 c    jhz  10may06  put back the include file: mirconst.h  
 c    jhz  10may06  added keyword filelabel to handle file
 c                  name labelling.
