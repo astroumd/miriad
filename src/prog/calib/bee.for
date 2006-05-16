@@ -115,10 +115,12 @@ c    10nov05 mchw  Added summary in topocentric coordinates.
 c    23feb06 jkoda different numbers of grids between bx/by bz in 'FI'
 c    29mar06 mchw  Antel in degrees.
 c    01apr06 mchw  Fitting phase versus elevation.
+c    06may06 jkoda Added constant phase offset and axis offset in summary
+c    16may06 mchw  Merged 06may with 2 previous changes in CVS.
 c-----------------------------------------------------------------------
 	include 'bee.h'
 	character version*(*),device*80,log*80,ans*20
-	parameter(version='(version 3.0 01-Apr-2006)')
+	parameter(version='(version 3.0 16-May-2006)')
 	integer length,tvis,tgains,iostat
 	logical doscale
 c
@@ -176,7 +178,9 @@ c
 	call output('3P   3-parameter fit to phase differences')
 	call output('4P   4-parameter fit; no 2PI discontinuities !')
 	call output('5P   5-parameter fit includes axis offset')
+	call output('6P   6-parameter fit [axis and focus offset]')
 	call output('AM   Plot amplitudes versus time')
+	call output('CS   Fit axis offset and focus: cos and sin(EL)')
 	call output('ED   Edit to new baseline etc.')
 	call output('EX   Exit BEE and write antpos file')
 	call output('FI   Seach for best fit baseline')
@@ -201,7 +205,9 @@ c
 	if (ans(1:2) .eq. '3P') call be3p
  	if (ans(1:2) .eq. '4P') call be4p         
  	if (ans(1:2) .eq. '5P') call be5p         
+ 	if (ans(1:2) .eq. '6P') call be6p         
 	if (ans(1:2) .eq. 'AM') call beamp(device)
+ 	if (ans(1:2) .eq. 'CS') call becs
 	if (ans(1:2) .eq. 'ED') call beedr 
 	if (ans(1:2) .eq. 'FI') call befit
 	if (ans(1:2) .eq. 'GR') call begr(device)
@@ -491,7 +497,7 @@ c
 c  Initialize BEE common block
 c
 	phed=.false.
-	do i=1,5
+	do i=1,6
 	  b(i)=0.
 	  bnew(i)=0.
 	  c(i)=0.
@@ -558,7 +564,7 @@ c
 	    b(i) = antpos(k+nants*(i-1))
 	    c(i) = b(i)
 	  enddo
-	  do i=4,5
+	  do i=4,6
 	    b(i) = 0.
 	    c(i) = 0.
 	  enddo
@@ -1238,8 +1244,8 @@ c
 	call LogWrit('ANTPOS File: '//file(1:len1(file)))
 	call LogWrit(line(1:len1(line)))
 	do i=1,nants
-	  write(7,'(3f12.4)') (antfit(i,j),j=1,3)
-	  write(line,'(3f12.4)') (antfit(i,j),j=1,3)
+	  write(7,'(6f12.4)') (antfit(i,j),j=1,6)
+	  write(line,'(6f12.4)') (antfit(i,j),j=1,6)
 	  call output(line)
 	  call LogWrit(line(1:len1(line)))
 	enddo
@@ -1251,7 +1257,7 @@ c********1*********2*********3*********4*********5*********6*********7*c
 c  Edit data for baseline, clock, axis offsets etc.
 c----------------------------------------------------------------------c  
 	include 'bee.h'
-	character*1 ans,line*80,refract
+	character*1 ans,line*128,refract
 	real value,dra,ddec,drar,ddecr,sinh,cosh
 	real sind,cosd,dbx,dby,dbz,dphi,base,u,v
 	integer length,i
@@ -1275,7 +1281,7 @@ c
 	call ucase(ans)
 	if(ans.eq.'Y')then
 	  call LogWrit('Edit to baseline fit')
-	  do i=1,5
+	  do i=1,6
 	    c(i) = c(i) + bnew(i)
 	  enddo
 	  goto 30
@@ -1297,6 +1303,8 @@ c
 	  c(4) = c(4) + value
 	  call promptf(value,'f8.4','Enter axis offset',bnew(5))
 	  c(5) = c(5) + value
+	  call promptf(value,'f8.4','Enter focus offset',bnew(6))
+	  c(6) = c(6) + value
 	  goto 30
 	endif
 c103	format(f20.0)
@@ -1385,6 +1393,12 @@ c
 	    dphi = dphi + tupi*frq(i)*c(5)*cos(elev(i))
 	  endif
 c
+c  Correction for focus change due to deformation
+c
+	  if(c(6).ne.0) then
+	     dphi = dphi + tupi*frq(i)*c(6)*sin(elev(i))
+	  endif
+c
 c  Refraction correction - 29 December 1994
 c
 	  if(refract.eq.'Y')then
@@ -1467,22 +1481,22 @@ c
 c
 c  Summarize change.
 c
-60	write(line,'(a,5f12.4)') 'Orig. Baseline:',b
+60	write(line,'(a,6f12.4)') 'Orig. Baseline:',b
 	  call output(line)
 	  call LogWrit(line(1:len1(line)))
-	write(line,'(a,5f12.4)') 'New   Baseline:',c
+	write(line,'(a,6f12.4)') 'New   Baseline:',c
 	  call output(line)
 	  call LogWrit(line(1:len1(line)))
-	write(line,'(a,5f12.4)') 'Total  Change :',(c(i)-b(i),i=1,5)
+	write(line,'(a,6f12.4)') 'Total  Change :',(c(i)-b(i),i=1,6)
 	  call output(line)
 	  call LogWrit(line(1:len1(line)))
-	write(line,'(a,5f12.4)') 'Last   Change :',bnew
+	write(line,'(a,6f12.4)') 'Last   Change :',bnew
 	  call output(line)
 	  call LogWrit(line(1:len1(line)))
 c
 c  Correction applied; reset the delta baseline.
 c
-	do i=1,5
+	do i=1,6
 	  bnew(i)=0.
 	enddo
 c
@@ -1497,7 +1511,7 @@ c	call prompt(ans,length,
 c     *		'Save position and gains for this antenna ?')
 c	call ucase(ans)
 c	if(ans.eq.'Y')then
-	  do i=1,3
+	  do i=1,6
 	    antfit(antenna,i) = c(i)
 	  enddo
 	  do i=1,np
@@ -1516,7 +1530,8 @@ c  Invert matrix and vector of order n
 c	used for baseline and position fittting
 c----------------------------------------------------------------------c
 	integer i,j,k
-	double precision work(6,6),pivot,same
+	double precision pivot,same
+	double precision work(7,7) / 49*0.0 /
 c
 c  Fill in work area with matrix and vector
 c
@@ -1546,6 +1561,9 @@ c
       do i=1,n
       ans(i)=work(i,n+1)
       relat(i)=sqrt(abs(work(i,i)))
+      do j=1,n
+      rmat(i,j)=work(i,j)
+      enddo
       enddo
 	end
 c********1*********2*********3*********4*********5*********6*********7*c
@@ -1555,7 +1573,9 @@ c  1-parameter fit for axis offset.
 c----------------------------------------------------------------------c  
 	include 'bee.h'
 	real xn,sig,resid,calc
-	real m(2,2),v(2),row(2),ans(5),relat(5)     
+	real m(2,2),v(2),row(2)
+	real ans(5) / 5*0.0 /
+	real relat(6) / 6*0.0 /     
 	integer numb,i,j,k
 	character line*80
 c
@@ -1607,31 +1627,31 @@ c
 	  if (is(j).le.0) goto 10
 	  if (.not.stf(is(j))) goto 10
 	  xn=xn+1.
- 	  calc = ans(1) + tupi*frq(j)*ans(2)
+ 	  calc = ans(1) + tupi*frq(j)*ans(2)*cos(elev(j))
 	  resid = amod((edph(j)-calc + 3.*pi),tupi) - pi
 	  sig = sig + resid**2     
 10	continue
 
-	if(xn.gt.2.) sig = sqrt( sig / (xn*(xn-2)) ) 
+	if(xn.gt.2.) sig = sqrt( sig / (xn-2) ) 
 
 	do i = 1,2
-	  relat(i+3) = relat(i) * sig
+	  relat(i+3) = relat(i)
 	  bnew(i+3) = ans(i)     
 	enddo
 	do i = 1,3
 	  relat(i) = 0.
 	  bnew(i) = 0.
 	enddo
+	bnew(6) = 0.
 	call title(1,sig,relat)
 	do 70 i=1,2
-	v(i) = sqrt(m(i,i))
-	do 70 j=1,2
-70	m(i,j) = m(i,j)/v(i)/v(j)
+70	v(i) = sqrt(m(i,i))
+	do 80 i=1,2
 	do 80 j=1,2
-80	m(j,j) = v(j)
+80	m(i,j) = m(i,j)/v(i)/v(j)
 c
-	call output('covariance matrix')
-	call LogWrit('covariance matrix')
+	call output('correlation matrix')
+	call LogWrit('correlation matrix')
 	do j=1,2
 	  write (line,'(2f15.5)') (m(i,j),i=1,2)
 	  call output(line)
@@ -1649,7 +1669,9 @@ c  answer is then divided by 87. revised for vax, snv and jah, 29-jul-1982
 c  revised for 3 baselines to pass delta baseline as bnew mchw mar 85
 c----------------------------------------------------------------------c  
 	include 'bee.h'
-	real m(3,3),v(3),row(3),ans(3),relat(4)  
+	real m(3,3),v(3),row(3)
+	real ans(3) / 3*0.0 /
+	real relat(6) / 6*0.0 /  
 	real points,xn,sig,calc,resid
 	integer numb,i,j,k
 c
@@ -1710,15 +1732,16 @@ c
 	  sig = sig + resid**2
 2	continue
 
-	if(xn.gt.3.) sig = sqrt( sig / (xn*(xn-3)) )
+	if(xn.gt.3.) sig = sqrt( sig / (xn-3) )
 
 	do i=1,2
 	  bnew(i) = ans(i)  
-	  relat(i) = relat(i) * sig
+	  relat(i) = relat(i)
 	enddo
 	bnew(3) = -1.1578*bnew(1)
 	bnew(4) = c(4)+ans(3)
 	bnew(5) = 0.
+	bnew(6) = 0.
 	relat(4)=relat(3)*sig
 	relat(3)=0.
 	call title(2,sig,relat)
@@ -1731,7 +1754,9 @@ c----------------------------------------------------------------------c
 	include 'bee.h'
 	character*80 line
 	integer i,j,k,iadd,ii,j1,icount,numb
-	real m(3,3),v(3),ans(3),relat(3),row(3),row1(3)
+	real m(3,3),v(3),row(3),row1(3)
+	real ans(3) / 3*0.0 /
+	real relat(6) / 6*0.0 /
 	real x,y,deltim,delh,calc,calc1,resid,sig
 	real r1,r2,r3
 	r1(x,y)=cos(x)*cos(y)   
@@ -1819,20 +1844,19 @@ c     *		 .or. abs(dec(j)-dec(j1)).gt.declim) goto 10
 	sig = sqrt(sig/float(icount*(icount-3)))
 	do i=1,3   
 	  bnew(i) = ans(i)     
-	  relat(i) = relat(i) * sig
+	  relat(i) = relat(i)
 	enddo
-	do i=4,5   
+	do i=4,6   
 	  bnew(i) = 0.
 	enddo
 	call title(3,sig,relat)
 	do 70 i=1,3
-	v(i) = sqrt(m(i,i))
-	do 70 j=1,3
-70	m(i,j) = m(i,j)/v(i)/v(j)
+70	v(i) = sqrt(m(i,i))
+	do 80 i=1,3
 	do 80 j=1,3
-80	m(j,j) = v(j)
-	call output('covariance matrix')
-	call LogWrit('covariance matrix')
+80	m(i,j) = m(i,j)/v(i)/v(j)
+	call output('correlation matrix')
+	call LogWrit('correlation matrix')
 	do j=1,4
 	  write (line,'(4f14.4)') (m(i,j),i=1,4)
 	  call output(line)
@@ -1848,7 +1872,9 @@ c  4-parameter fit to antenna positions and phase offset.
 c----------------------------------------------------------------------c  
 	include 'bee.h'
 	real x,y,r1,r2,r3,xn,sig,resid,calc
-	real m(4,4),v(4),row(4),ans(4),relat(4)     
+	real m(4,4),v(4),row(4)
+	real ans(4) / 4*0.0 /
+	real relat(6) / 6*0.0 /     
 	integer numb,i,j,k
 	character line*56
 c
@@ -1914,23 +1940,23 @@ c
 	  sig = sig + resid**2     
 10	continue
 
-	if(xn.gt.4.) sig = sqrt( sig / (xn*(xn-4)) ) 
+	if(xn.gt.4.) sig = sqrt( sig / (xn-4) ) 
 
 	do i=1,4
 	  bnew(i) = ans(i)     
-	  relat(i) = relat(i) * sig
+	  relat(i) = relat(i)
 	enddo
 	  bnew(5) = 0.
+	  bnew(6) = 0.
 	call title(4,sig,relat)
 	do 70 i=1,4
-	v(i) = sqrt(m(i,i))
-	do 70 j=1,4
-70	m(i,j) = m(i,j)/v(i)/v(j)
+70	v(i) = sqrt(m(i,i))
+	do 80 i=1,4
 	do 80 j=1,4
-80	m(j,j) = v(j)
+80	m(i,j) = m(i,j)/v(i)/v(j)
 c
-	call output('covariance matrix')
-	call LogWrit('covariance matrix')
+	call output('correlation matrix')
+	call LogWrit('correlation matrix')
 	do j=1,4
 	  write (line,'(4f14.4)') (m(i,j),i=1,4)
 	  call output(line)
@@ -1944,7 +1970,9 @@ c  5-parameter fit to antenna positions and axis offset.
 c----------------------------------------------------------------------c  
 	include 'bee.h'
 	real x,y,r1,r2,r3,xn,sig,resid,calc
-	real m(5,5),v(5),row(5),ans(5),relat(5)     
+	real m(5,5),v(5),row(5)
+	real ans(5) / 5*0.0 /
+	real relat(6) / 6*0.0 /     
 	integer numb,i,j,k
 	character line*80
 c
@@ -2009,29 +2037,226 @@ c
 	  xn=xn+1.
  	  calc = tupi*frq(j)*(r1(ha(j),dec(j))*ans(1)
      *		+ r2(ha(j),dec(j))*ans(2) + r3(dec(j))*ans(3)) + ans(4)        
-     *		+ tupi*frq(j)*ans(5)
+     *		+ tupi*frq(j)*ans(5)*cos(elev(j))
 	  resid = amod((edph(j)-calc + 3.*pi),tupi) - pi
 	  sig = sig + resid**2     
 10	continue
 
-	if(xn.gt.5.) sig = sqrt( sig / (xn*(xn-5)) ) 
+	if(xn.gt.5.) sig = sqrt( sig / (xn-5) ) 
 
 	do i=1,5
 	  bnew(i) = ans(i)     
-	  relat(i) = relat(i) * sig
+	  relat(i) = relat(i)
 	enddo
+	bnew(6) = 0.0
 	call title(5,sig,relat)
 	do 70 i=1,5
-	v(i) = sqrt(m(i,i))
-	do 70 j=1,5
-70	m(i,j) = m(i,j)/v(i)/v(j)
+70	v(i) = sqrt(m(i,i))
+	do 80 i=1,5
 	do 80 j=1,5
-80	m(j,j) = v(j)
+80	m(i,j) = m(i,j)/v(i)/v(j)
 c
-	call output('covariance matrix')
-	call LogWrit('covariance matrix')
+	call output('correlation matrix')
+	call LogWrit('correlation matrix')
 	do j=1,5
 	  write (line,'(5f15.5)') (m(i,j),i=1,5)
+	  call output(line)
+	  call LogWrit(line)
+	enddo
+	end 
+c********1*********2*********3*********4*********5*********6*********7*c
+	subroutine be6p        
+	implicit none
+c  5-parameter fit to antenna positions and axis offset.
+c----------------------------------------------------------------------c  
+	include 'bee.h'
+	real x,y,r1,r2,r3,xn,sig,resid,calc
+	real m(6,6),v(6),row(6)
+	real ans(6) / 6*0.0 /
+	real relat(6) / 6*0.0 /
+	integer numb,i,j,k
+	character line*128
+c
+	r1(x,y)=cos(x)*cos(y)   
+	r2(x,y)=-sin(x)*cos(y)  
+	r3(y)=sin(y)  
+c
+	call output('6-PARAMETER FIT')
+	call output('Fit antenna positions, axis and focus offset')
+	call LogWrit('6-PARAMETER FIT')
+c
+c  Select sources.
+c
+	call beincl(numb)
+	if(numb .eq. 0) return
+c
+c  Zero arrays.
+c
+	do 1 i=1,6   
+	  v(i)=0.       
+	do 1 j=1,6    
+1	  m(i,j)=0.     
+	xn = 0.
+c
+c  Fill matrix.
+c
+	do 2 j=1,np  
+	  if(is(j).le.0) goto 2
+	  if(.not.stf(is(j))) goto 2
+	  xn = xn + 1.
+	  row(1)=r1(ha(j),dec(j)) 
+	  row(2)=r2(ha(j),dec(j)) 
+	  row(3)=r3(dec(j))       
+	  row(4)=1.     
+	  row(5)=cos(elev(j))     
+	  row(6)=sin(elev(j))     
+	  do 6 i=1,6    
+	    v(i)=v(i)+edph(j)*row(i)
+	  do 6 k=1,6    
+6	    m(i,k)=m(i,k)+row(i)*row(k)       
+2 	continue
+
+	if( xn.lt.6.) then
+	  call output('too few points to fit')
+	  return
+	endif
+
+	call invert(6,m,v,ans,relat)      
+c
+c  Scale from radians to nanosecs
+c
+	do i=1,3
+	  ans(i)=ans(i)/(tupi*frq(1))
+	  relat(i)=relat(i)/(tupi*frq(1))
+	enddo
+	ans(4) = amod(ans(4),tupi) - pi
+	do i=5,6
+	  ans(i)=ans(i)/(tupi*frq(1))
+	  relat(i)=relat(i)/(tupi*frq(1))
+	enddo
+	sig=0.
+	xn=0.
+	do 10 j=1,np  
+	  if (is(j).le.0) goto 10
+	  if (.not.stf(is(j))) goto 10
+	  xn=xn+1.
+ 	  calc = tupi*frq(j)*(r1(ha(j),dec(j))*ans(1)
+     *		+ r2(ha(j),dec(j))*ans(2) + r3(dec(j))*ans(3)) + ans(4)        
+     *		+ tupi*frq(j)*(ans(5)*cos(elev(j))+ans(6)*sin(elev(j)))
+	  resid = amod((edph(j)-calc + 3.*pi),tupi) - pi
+	  sig = sig + resid**2     
+10	continue
+
+	if(xn.gt.6.) sig = sqrt( sig / (xn-6) ) 
+
+	do i=1,6
+	  bnew(i) = ans(i)     
+	  relat(i) = relat(i)
+	enddo
+	call title(6,sig,relat)
+	do 70 i=1,6
+70	  v(i) = sqrt(m(i,i))
+	do 80 i=1,6
+	do 80 j=1,6
+80	  m(i,j) = m(i,j)/v(i)/v(j)
+c
+	call output('correlation matrix')
+	call LogWrit('correlation matrix')
+	do j=1,6
+	  write (line,'(6f15.5)') (m(i,j),i=1,6)
+	  call output(line)
+	  call LogWrit(line)
+	enddo
+	end 
+c********1*********2*********3*********4*********5*********6*********7*c
+	subroutine becs
+	implicit none
+c  cos & sin fit for axis offset and focus offset
+c----------------------------------------------------------------------c  
+	include 'bee.h'
+	real xn,sig,resid,calc
+	real m(3,3),v(3),row(3),ans(5),relat(6)
+	integer numb,i,j,k
+	character line*80
+c
+	call output('COS & SIN FIT')
+	call output('Fit axis offset and focus offset')
+	call LogWrit('COS & SIN FIT')
+c
+c  Select sources.
+c
+	call beincl(numb)
+	if(numb .eq. 0) return
+c
+c  Zero arrays.
+c
+	do 1 i=1,3
+	  v(i)=0.       
+	do 1 j=1,3    
+1	  m(i,j)=0.     
+	xn = 0.
+c
+c  Fill matrix.
+c
+	do 2 j=1,np  
+	  if(is(j).le.0) goto 2
+	  if(.not.stf(is(j))) goto 2
+	  xn = xn + 1.
+	  row(1)=1.
+	  row(2)=cos(elev(j))
+	  row(3)=sin(elev(j))
+	  do 6 i=1,3
+	    v(i)=v(i)+edph(j)*row(i)
+	  do 6 k=1,3
+6	    m(i,k)=m(i,k)+row(i)*row(k)       
+2 	continue
+
+	if( xn.lt.3.) then
+	  call output('too few points to fit')
+	  return
+	endif
+
+	call invert(3,m,v,ans,relat)
+c
+c  Scale from radians to nanosecs
+c
+	do i=2,3
+	   ans(i)=ans(i)/(tupi*frq(1))
+	   relat(i)=relat(i)/(tupi*frq(1))
+	enddo
+	sig=0.
+	xn=0.
+	do 10 j=1,np  
+	  if (is(j).le.0) goto 10
+	  if (.not.stf(is(j))) goto 10
+	  xn=xn+1.
+ 	  calc = tupi*frq(j)*(ans(2)*cos(elev(j)) + 
+     *                 ans(3)*sin(elev(j))) + ans(1)
+	  resid = amod((edph(j)-calc + 3.*pi),tupi) - pi
+	  sig = sig + resid**2     
+10	continue
+
+	if(xn.gt.3.) sig = sqrt( sig / (xn-3) ) 
+
+	do i = 1,3
+	  relat(i+3) = relat(i)
+	  bnew(i+3) = ans(i)     
+	enddo
+	do i = 1,3
+	  relat(i) = 0.
+	  bnew(i) = 0.
+	enddo
+	call title(2,sig,relat)
+	do 70 i=1,3
+70	  v(i) = sqrt(m(i,i))
+	do 80 i=1,3
+	do 80 j=1,3
+80	m(i,j) = m(i,j)/v(i)/v(j)
+c
+	call output('correlation matrix')
+	call LogWrit('correlation matrix')
+	do j=1,3
+	  write (line,'(3f15.5)') (m(i,j),i=1,3)
 	  call output(line)
 	  call LogWrit(line)
 	enddo
@@ -2136,7 +2361,7 @@ c----------------------------------------------------------------------
 	character*1 line*90
 	real sinh,cosh
 	real sind,cosd,dbx,dby,dbz,dphi,base
-	real step,step1,chimin,chiorg,chisq,cmin(5),corg(5),rnstep
+	real step,step1,chimin,chiorg,chisq,cmin(6),corg(6),rnstep
 	integer i,nstep,nstep1,nstepz,ix,iy,iz,iaxis
 c
 c  External.
@@ -2151,7 +2376,7 @@ c
         call promptf(step1,'f10.4','Step size for antmiss',0.002)
         call promptf(rnstep,'f10.0','# of steps (1=nofit)',1.)
 	nstep1=rnstep
-	do i=1,5
+	do i=1,6
 	  cmin(i) = c(i)
 	  corg(i) = c(i)
 	enddo
@@ -2218,7 +2443,7 @@ c  Calculate running chi-squared
 	chisq=chisq/float(np-1)
         if(chisq.lt.chimin) then
 	  chimin=chisq
-	  do i=1,5
+	  do i=1,6
 	    cmin(i) = c(i)
 	  enddo
           write(line,100) c(1),c(2),c(3),c(5),chisq
@@ -2237,13 +2462,13 @@ c  Set parameters to minimum chi-squared
 c  and save fitted positions for this antenna.
 c
 	if(chimin.ge.chiorg) then
-	  do i=1,5
+	  do i=1,6
 	    c(i) = corg(i)
 	  enddo
 	  call output('baseline parameters unchanged')
 	  call LogWrit('baseline parameters unchanged')
 	else
-	  do i=1,5
+	  do i=1,6
 	    c(i) = cmin(i)
 	    antfit(antenna,i) = c(i)
 	  enddo
@@ -2783,7 +3008,7 @@ c********1*********2*********3*********4*********5*********6*********7*c
 	subroutine title(ipar,sig,uncer)
 	implicit none
 	integer ipar
-	real sig,uncer(ipar)
+	real sig,uncer(*)
 c
 c  Print information about baseline fit
 c
@@ -2802,22 +3027,22 @@ c
 	call LogWrit(line)
 c
 	write (line,101) c
-101	format(' initial baseline',5f11.5)
+101	format(' initial baseline',3f11.5,3f10.5)
 	call output(line)
 	call LogWrit(line)
 c
-	write (line,102) ((c(i)+bnew(i)),i=1,5)
-102	format('   new   baseline',5f11.5)	
+	write (line,102) ((c(i)+bnew(i)),i=1,6)
+102	format('   new   baseline',3f11.5,3f10.5)	
 	call output(line)
 	call LogWrit(line)
 c
-	write(line,103) (bnew(i),i=1,5)
-103	format('  delta  baseline',5f11.5)
+	write(line,103) (bnew(i),i=1,6)
+103	format('  delta  baseline',3f11.5,3f10.5)
 	call output(line)
 	call LogWrit(line)
 c
-	write(line,104) uncer
-104	format('  uncertainties  ',5f11.6)
+	write(line,104) (uncer(i),i=1,6)
+104	format('  uncertainties  ',3f11.5,3f10.5)
 	call output(line)
 	call LogWrit(line)
 	end
@@ -2832,7 +3057,7 @@ c  Position fit (point source) 	mchw	june 1982
 c-----------------------------------------------------------------------
 	integer i,k,id,kf
 	real s(15),r(15),d(15),ang(3),anq(3),er(15),ed(15)
-	character lobe*1,line*80
+	character lobe*1,line*128
 	real tupi,rts,rtas,pcal,dr,dd,resid,tave,tsig,ami
 	data tupi/6.2831853/
 	rts = 24. * 3600. / tupi
@@ -3025,7 +3250,7 @@ c********1*********2*********3*********4*********5*********6*********7*c
 c  List antenna positions and current state of fitting.
 c----------------------------------------------------------------------c  
 	include 'bee.h'
-	character*1 line*80
+	character*1 line*128
 	integer i,k
 c
 c  Externals.
@@ -3054,13 +3279,13 @@ c
 	call output('--------------------------------------')
 	call output('    Fitting Antenna '//itoaf(antenna)  )
 	call output('--------------------------------------')
-	write(line,'(a,5f12.4)') 'Orig. Baseline:',b
+	write(line,'(a,6f12.4)') 'Orig. Baseline:',b
 	  call output(line)
-	write(line,'(a,5f12.4)') 'New   Baseline:',c
+	write(line,'(a,6f12.4)') 'New   Baseline:',c
 	  call output(line)
-	write(line,'(a,5f12.4)') 'Total  Change :',(c(i)-b(i),i=1,5)
+	write(line,'(a,6f12.4)') 'Total  Change :',(c(i)-b(i),i=1,6)
 	  call output(line)
-	write(line,'(a,5f12.4)') 'Last   Change :',bnew
+	write(line,'(a,6f12.4)') 'Last   Change :',bnew
 	  call output(line)
 	end 
 c********1*********2*********3*********4*********5*********6*********7*c
@@ -3290,8 +3515,8 @@ c
 	print *, 'rms phase after  fit:', sig2/xn
 	print *, 'mean (tpower - tref):', ave1/xn
 	print *, 'rms  (tpower - tref):', sqrt((ave2/xn)-(ave1/xn)**2)
-	call output('covariance matrix')
-	call LogWrit('covariance matrix')
+	call output('correlation matrix')
+	call LogWrit('correlation matrix')
 	do j=1,3
 	  write (line,'(3f14.4)') (m(i,j),i=1,3)
 	  call output(line)

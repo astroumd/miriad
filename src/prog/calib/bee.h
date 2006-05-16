@@ -9,8 +9,8 @@ c	23dec94 mchw increase MAXSOLS to 2048
 c	02aug95 mchw added elev to common/base/
 c----------------------------------------------------------------------c
 c
-	integer MAXANTS,MAXSOLS
-	parameter(MAXANTS=28,MAXSOLS=2048)
+        integer MAXANTS,MAXSOLS
+        parameter(MAXANTS=28,MAXSOLS=2048)
 c
 c  Source list.
 c
@@ -50,7 +50,7 @@ c
      *    frq(MAXSOLS),pase(MAXSOLS),amp(MAXSOLS),edph(MAXSOLS),
      *    phint(MAXSOLS),ampint(MAXSOLS),tpower(MAXSOLS),focus(MAXSOLS),
      *    elev(MAXSOLS)
-	real b(5),c(5),bnew(5)
+	real b(6),c(6),bnew(6)
 	logical phed
 	common/base/np,is,ha,dec,tim,tair,frq,pase,amp,edph,phint,
      *              tpower,focus,b,c,bnew,phed,ampint,elev
@@ -67,7 +67,7 @@ c
 	integer nants,nsols
 	double precision interval,antpos(3*MAXANTS),dtime(MAXSOLS)
 	complex gains(MAXANTS,MAXSOLS)
-	double precision antfit(MAXANTS,3)
+	double precision antfit(MAXANTS,6)
 	common/gain/interval,antpos,dtime,antfit,gains,nants,nsols
 c  
 c  constants and telescope parameters
