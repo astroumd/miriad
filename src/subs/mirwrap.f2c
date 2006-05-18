@@ -1,0 +1,82 @@
+/************************************************************************/
+/*                                                                      */
+/*    Converter from Fortran to C calling sequence                      */
+/*            For MIRIAD to MIR conversion                              */
+/*  History:                                                            */
+/*    dnf  15mar06  initial version                                     */
+/************************************************************************/
+#include <string.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include "miriad.h"
+#include "sysdep.h"
+/************************************************************************/
+fortran subroutine mirInit(character fname)
+{
+  mirInit_c(fname.zterm);
+}
+/************************************************************************/
+fortran subroutine mirClose()
+{
+  mirClose_c();
+}
+/************************************************************************/
+fortran subroutine inWrite(integer conid, integer icocd, integer traid,
+  integer inhid, integer ints, integer itq, real az, real el, real ha,
+  integer iut, integer ireftime, double dhrs, real vc,
+  integer ivctype, double sx, double sy, 
+  double sz, real rinteg, integer proid, integer souid, 
+  integer isource, integer ipos, real offx, real offy, 
+  integer iofftype, integer ira, integer idec, double rar,
+  double decr, real epoch, real sflux, real size)
+{ 
+  inWrite_c(conid.val, icocd.val, traid.val, inhid.val, ints.val, itq.val, 
+    az.val, el.val, ha.val, iut.val, ireftime.val, dhrs.val, vc.val, 
+    ivctype.val, sx.val, sy.val, sz.val, rinteg.val, proid.val, souid.val, 
+    isource.val, ipos.val, offx.val, offy.val, iofftype.val, ira.val, 
+    idec.val, rar.val, decr.val, epoch.val, sflux.val, size.val);
+}
+/************************************************************************/
+fortran subroutine blWrite(integer blhid, integer inhid, integer isb,
+  integer ipol, real pa, integer iaq, integer ibq, 
+  integer icq, integer ioq, integer irec, integer iifc, 
+  real u, real v, real w, real prbl, real angres, real vis, real coh, 
+  real sigcoh, real csnr, real vflux, real cnoise, 
+  double avedhrs, real ampav, real phaave, real tpvar, 
+  integer blsid, integer itel1, integer itel2, integer iblcd,
+  real ble, real bln, real blu, integer soid)
+{
+  blWrite_c(blhid.val, inhid.val, isb.val, ipol.val, pa.val, iaq.val,
+    ibq.val, icq.val, ioq.val, irec.val, iifc.val, u.val, v.val, w.val,
+    prbl.val, angres.val, vis.val, coh.val, sigcoh.val, csnr.val, vflux.val,
+    cnoise.val, avedhrs.val, ampav.val, phaave.val, tpvar.val, blsid.val,
+    itel1.val, itel2.val, iblcd.val, ble.val, bln.val, blu.val, soid.val);
+}
+/************************************************************************/
+fortran subroutine spWrite(integer sphid, integer blhid, integer inhid,
+  integer igq, integer ipq, integer iband, integer ipstate,
+  real tau0, double vel, real vres, integer ivtype,
+  double fsky, real fres, real tssb, real integ, real wt,
+  integer itaper, real snoise, integer nch, integer nrec,
+  integer dataoff, integer linid, integer itrans, double rfreq,
+  integer pasid, integer gaiidamp, integer gaiidpha, integer flcid,
+  integer atmid)
+{
+  spWrite_c(sphid.val, blhid.val, inhid.val, igq.val, ipq.val, iband.val,
+    ipstate.val, tau0.val, vel.val, vres.val, ivtype.val, fsky.val,
+    fres.val, tssb.val, integ.val, wt.val, itaper.val, snoise.val, nch.val,
+    nrec.val, dataoff.val, linid.val, itrans.val, rfreq.val, pasid.val,
+    gaiidamp.val, gaiidpha.val, flcid.val, atmid.val);
+}
+
+/************************************************************************/
+fortran subroutine codeWrite(character v_name, integer icode, 
+  character code, integer ncode)
+{
+  codeWrite_c(v_name.zterm, icode.val, code.zterm, ncode.val);
+}
+/************************************************************************/
+fortran subroutine visWrite(real re, real im, integer numvis, integer startvis, integer nbytes)
+{
+  visWrite_c(re.addr, im.addr, numvis.val, startvis.val, nbytes.addr);
+}
