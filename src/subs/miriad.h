@@ -24,6 +24,7 @@
 // 23-jun-02 pjt define MIR4 here if you want to enable the LSF and MIR4
 // 30-aug-04 pjt removed deprecated ARGS() macro
 //  1-dec-05 pjt added bugv_c
+// 18-may-06 pjt/df  added mir.c prototypes for mir (the miriad->mir converter)
 */
 
 #if !defined(MIR_MIRIAD_H)
@@ -331,6 +332,15 @@ void keyl_c    (Const char *keyword, int *value, Const int keydef);
 void mkeyd_c   (Const char *keyword, double value[], Const int nmax, int *n);
 void mkeyr_c   (Const char *keyword, float value[], Const int nmax, int *n);
 void mkeyi_c   (Const char *keyword, int value[], Const int nmax, int *n);
+
+/* mir.c */
+void mirInit_c(const char *f_name);
+void mirClose_c();
+void inWrite_c(const int conid, const int icocd, const int traid, const int inhid, const int ints, const int itq, const float az, const float el, const float ha, const int iut, const int iref_time, const double dhrs, const float vc, const int ivctype, const double sx, const double sy, const double sz, const float rinteg, const int proid, const int souid, const int isource, const int ipos, const float offx, const float offy, const int iofftype, const int ira, const int idec, const double rar, const double decr, const float epoch, const float sflux, const float size);
+void blWrite_c(const int blhid, const int inhid, const int isb, const int ipol, const float pa, const int iaq, const int ibq, const int icq, const int ioq, const int irec, const int iffc, const float u, const float v, const float w, const float prbl, const float angres, const float vis, const float coh, const float sigcoh, const float csnr, const float vflux, const float cnoise, const double avedhrs, const float ampav, const float phaave, const float tpvar, const int blsid, const int itel1, const int itel2, const int iblcd, const float ble, const float bln, const float blu, const int soid);
+void spWrite_c(const int sphid, const int blhid, const int inhid, const int igq, const int ipq, const int iband, const int ipstate, const float tau0, const double vel, const float vres, const int ivtype, const double fsky, const float fres, const float tssb, const float integ, const float wt, const int itaper, const float snoise, const int nch, const int nrec, const int dataoff, const int linid, const int itrans, const double rfreq, const int pasid, const int gaiidamp, const int gaiidpha, const int flcid, const int atmid);
+void codeWrite_c(const char *v_name, const int icode, const char *code, const int ncode);
+void visWrite_c(const float *re, const float *im, const int numvis, const int startvis, int *nbytes);
 
 /* interface.c */
 void pad(char *string, int length);
