@@ -64,13 +64,18 @@ c		  records.
 c    rjs  13oct95 xrange and yrange handle times in normal Miriad format.
 c    rjs  02feb01 Added options=equal.
 c    rjs  16nov03 Added extra variables. pressmb, wind,winddir,axismax
+c    rjs  10may05 Increase buffer size.
+c    rjs  26may05 Add pntra,pntdec to list of know variables.
+c    rjs  19jun05 More spaces in log file.
+c    rjs  01jan06 Added definition of ref pointing solution.
+c
 c  Bugs:
 c    ?? Perfect?
 c------------------------------------------------------------------------
 	character version*(*)
 	integer MAXPNTS
-	parameter(MAXPNTS=100000)
-	parameter(version='VarPlt: version 1.1 16-Nov-03')
+	parameter(MAXPNTS=1000000)
+	parameter(version='VarPlt: version 1.1 01-Jan-06')
 	logical doplot,dolog,dotime,dounwrap
 	character vis*64,device*64,logfile*64,xaxis*16,yaxis*16
 	character xtype*1,ytype*1,xunit*16,yunit*16,calday*24
@@ -425,18 +430,20 @@ c
 	real vals(nvals)
 	logical dotime,first
 c------------------------------------------------------------------------
+	integer ctime,cnum
+	parameter(ctime=12,cnum=15)
 	integer isec,imin,ihr,iday,i
 	logical dospace,more
 c
 	dospace = .not.first
 	do i=1,nvals
 	  if(length.eq.0.and.dospace)then
-	    line(1:12) = ' '
-	    length = 12
-	  else if(length+12.gt.len(line))then
+	    line(1:ctime) = ' '
+	    length = ctime
+	  else if(length+cnum.gt.len(line))then
 	    call LogWrite(line(1:length),more)
-	    line(1:12) = ' '
-	    length = 12
+	    line(1:ctime) = ' '
+	    length = ctime
 	    dospace = .true.
 	  endif
 	  if(dotime)then
@@ -448,12 +455,14 @@ c
 	    isec = isec - 3600*ihr
 	    imin = isec /60
 	    isec = isec - 60*imin
-	    write(line(length+1:length+12),'(i2,a,i2.2,a,i2.2,a,i2.2)')
+	    write(line(length+1:length+ctime),
+     *		'(i2,a,i2.2,a,i2.2,a,i2.2)')
      *		iday,' ',ihr,':',imin,':',isec
+	    length = length + ctime
 	  else
-	    write(line(length+1:length+12),'(1pg12.5)')vals(i)
+	    write(line(length+1:length+cnum),'(1pg15.8)')vals(i)
+	    length = length + cnum
 	  endif
-	  length = length + 12
 	enddo
 	end
 c************************************************************************
@@ -876,7 +885,7 @@ c  in the table.
 c
 	integer nvars
 	double precision rad2deg,rad2arc,rad2hr
-	parameter(nvars=62)
+	parameter(nvars=65)
 	parameter(rad2deg=180.d0/pi,rad2arc=3600.d0*rad2deg)
 	parameter(rad2hr=12.d0/pi)
 c
@@ -932,12 +941,15 @@ c
      *	  'phasem1 ','degrees ',	1, rad2deg,
      *	  'plangle ','degrees ',	1, 1.d0,
      *	  'plmaj   ','arcsec  ',	1, 1.d0/
-	data (names(i),units(i),dim2s(i),scales(i),i=35,50)/
+	data (names(i),units(i),dim2s(i),scales(i),i=35,53)/
      *	  'plmin   ','arcsec  ',	1, 1.d0,
      *	  'pltb    ','Kelvin  ',	1, 1.d0,
+     *	  'pntdec  ','degrees ',	1, rad2deg,
+     *	  'pntra   ','hours   ',	1, rad2hr,
      *	  'precipmm','mm      ',	1, 1.d0,
      *	  'pressmb ','mB      ',        1, 1.d0,
      *	  'ra      ','hours   ',	1, rad2hr,
+     *	  'refpnt  ','arcsec  ',    NANTS, 1.d0,
      *	  'relhumid','percent?',	1, 1.d0,
      *	  'restfreq','GHz     ',	1, 1.d0,
      *	  'sdf     ','GHz     ',	1, 1.d0,
@@ -949,7 +961,7 @@ c
      *	  'ut      ','hours   ',	1, rad2hr,
      *	  'veldop  ','km/sec  ',	1, 1.d0,
      *	  'vsource ','km/sec  ',	1, 1.d0/
-	data (names(i),units(i),dim2s(i),scales(i),i=51,nvars)/
+	data (names(i),units(i),dim2s(i),scales(i),i=54,nvars)/
      *	  'wfreq   ','GHz     ',	1, 1.d0,
      *	  'wind    ','km/h    ',        1, 1.d0,
      *    'winddir ','degrees ',        1, 1.d0,
