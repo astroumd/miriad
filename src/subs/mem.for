@@ -16,6 +16,7 @@ c    rjs  24dec92 Doc changes only, for jm.
 c    rjs  28jun93 Improvement to membuf routine, to bring it better in
 c		  line with the 27jul92 changes.
 c    pjt  25jun03 more verbose when running out of memory
+c    pjt  13aug05 more verbose in yet another case
 c************************************************************************
 c* MemBuf -- Return suggested memory buffer size.
 c& rjs
@@ -146,7 +147,7 @@ c		be an index into a double precision array.
 c--
 c------------------------------------------------------------------------
 	include 'maxdim.h'
-	integer p,q,nc,sized,pntd,elsize
+	integer p,q,nc,sized,pntd,elsize,size1
 	integer Data(MAXBUF)
 	common Data
 c
@@ -163,13 +164,20 @@ c
 c
 c  Find a block of memory that is big enough.
 c
-	if(size.le.0)
-     *	  call bug('f','Bad value for size, in MemAlloc')
+	if(size.lt.0) then
+	   write(*,*) '### MemAlloc: pnt,size=',pnt,size,' type= ',type
+	   call bug('f','Bad value for size, in MemAlloc')
+	else if (size.eq.0) then
+	   call bug('w','Trying to allocate 0, fixing up 1')
+	   size1 = 1
+	else
+	   size1 = size
+	endif
 	q = 1
 	p = 0
 	nc = align
 	elsize = mmSize(ichar(type))
-	sized = ( (size*elsize-1)/align + 1 ) * align
+	sized = ( (size1*elsize-1)/align + 1 ) * align
 c
 	dowhile(q.gt.0.and.Data(q+1).lt.sized+nc)
 	  nc = 0
@@ -182,7 +190,7 @@ c
 	if(q.eq.0)then
 	  pntd = mmAlloc(Data,sized)
 	  if(pntd.eq.0) then
-	    write(*,*) 'sized=',sized
+	    write(*,*) '### MemAlloc: sized=',sized
 	    call bug('f','Unable to allocate memory')
 	  endif
 c
