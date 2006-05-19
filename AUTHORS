@@ -1,0 +1,7 @@
+Bob Sault (while at UIUC) is the main architect of MIRIAD,
+largely based on his earlier design of the WERONG system.
+
+Many programmers contributed to MIRIAD, usually source code
+refers to 2 or 3 letter acronyms of their contributions.You
+can find a lookup table of who they are in the file
+$MIR/cat/miriad.pgmrs.
