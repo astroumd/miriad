@@ -1,3 +1,6 @@
+Title:Explanation on the SWIG bindings via uvio.i :
+Author:	(WSRT group)
+
 To compile the python utilities which bind
 to the Miriad library, we need a clean
 Miriad library, consisting only of the 

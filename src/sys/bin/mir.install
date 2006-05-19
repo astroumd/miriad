@@ -10,8 +10,7 @@
 #    Usage:  mir.install [$argv]
 #
 #            $argv  = [scripts] [libs] [tasks] [gendoc]
-#            libs   = [dtm] [www] [hdf] [linpack] [pgplot]
-#                     [readline] [subs]
+#            libs   = [linpack] [pgplot] [readline] [subs]
 #            tasks  = [wip] [rad] [mxv] [prog] [xmrecvlist]
 #
 #    $argv = subsystems to load.  None means to load the entire
@@ -21,6 +20,9 @@
 #    Specifying one or more of these will load only the specified
 #    section in the order given by the user.  Logfiles are placed
 #    in miriad's tmp directory.
+#
+#    Note: in 2006 the libs = dtm, www and hdf have been disabled
+#          as well as tasks = xmrecvlist
 #--
 # ---------------------------------------------------------------
 set mir    = $MIR
