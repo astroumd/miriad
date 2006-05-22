@@ -128,11 +128,12 @@ c                 for initializing the baseline weighting before calculating
 c                 baseline distances. 
 c    18nov05 jhz  extended the size of source array to 100;
 c                 extended the max color index to 48.
+c    19may06 jhz  increased maxchan;
 c------------------------------------------------------------------------
         include 'smablflag.h'
 	character version*(*)
         integer maxdat,maxplt,maxedit
-        parameter(version='SmaBlFlag: version 1.6 18-Nov-2005')
+        parameter(version='SmaBlFlag: version 1.7 19-may-2006')
         parameter(maxdat=500000,maxplt=20000,maxedit=20000)
 c
         logical present(maxbase),nobase,selgen,noapply,rms,scalar
