@@ -166,6 +166,9 @@
 // 2006-03-13 (JHZ) added a feature to handle 2003 incompleted-correlator
 //                  data.
 // 2006-04-07 (JHZ) added an instruction message for properly using nscan.
+// 2006-05-19 (JHZ) implemented feature to handle hybrid high spectral
+//                  resolution frequency configuration, allowing
+//                  presence of empty chunks.
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -223,7 +226,7 @@ void rspokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1, int *doop1,
 int *birdie1, int *dowt1, int *dopmps1, int *dobary1, int *doif1, int *hires1, int *nopol1, 
 int *circular1, int *linear1, int *oldpol1, double lat1, double long1, int rsnchan1, 
 int refant1, int *dolsr1, double rfreq1, float *vsour1, double *antpos1, int readant1, 
-int *noskip1, int *spskip1, int *dsb1, int*mcconfig1);
+int *noskip1, int *spskip1, int *dsb1, int*mcconfig1, int*nohighspr);
 void rspokeflshsma_c(char *kst[]);
 
 
@@ -325,7 +328,7 @@ void rspokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1,
 		    int *linear1, int *oldpol1, double lat1, double long1, int rsnchan1, 
 		    int refant1, int *dolsr1, double rfreq1, float *vsour1,
 		    double *antpos1, int readant1, int *noskip1, int *spskip1,
-	            int *dsb1, int *mcconfig1)
+	            int *dsb1, int *mcconfig1, int *nohighspr1)
 { 
   /* rspokeflshsma_c == pokeflsh */
   int buffer, i,ii;
@@ -358,6 +361,7 @@ void rspokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1,
   smabuffer.spskip[0] = spskip1[0];
   smabuffer.spskip[1] = spskip1[1];
   smabuffer.mcconfig  = *mcconfig1;
+  smabuffer.highrspectra = *nohighspr1;
       printf("User's input vSource = %f km/s\n", smabuffer.vsource);
       if(rfreq1 > 0.00001 || rfreq1 < -0.00001) {
              for (i=0; i<SMIF+1; i++) {
@@ -443,10 +447,9 @@ void rspokeflshsma_c(char *kst[])
   } 
   tdash  = smabuffer.time;
   tbinhi = 1;
-  /* convert julian date to ut and store ut */
-  /* ut and julian date on 2000 julian2000=2451544.5 */
-  /* julain date = 2451544.5 + day of the yr + fraction of day from 0h UT */
-
+// convert julian date to ut and store ut 
+// ut and julian date on 2000 julian2000=2451544.5
+// julain date = 2451544.5 + day of the yr + fraction of day from 0h UT 
 // determine julian date
      if(smabuffer.juldate < -1.) { 
      dummy =  (long int) (smabuffer.time);
@@ -457,14 +460,13 @@ void rspokeflshsma_c(char *kst[])
      smabuffer.ut = smabuffer.ut*DPI*2.0;
 // store ut
      uvputvrd_c(tno,"ut",&(smabuffer.ut),1);
-  /* store apparent LST */
+// store apparent LST 
      uvputvrd_c(tno,"lst",&(smabuffer.lst),1);
-  /* store elaz data */
-  elaz(tno);
-  // store radial velocity of the observatory w.r.t. the rest frame 
+// store elaz data 
+     elaz(tno);
+// store radial velocity of the observatory w.r.t. the rest frame 
   uvputvrr_c(tno,"veldop",&(smabuffer.veldop),1);
-//  uvputvrr_c(tno,"velsma",&(smabuffer.smaveldop),1);
-  // store the source velocity w.r.t. the rest frame
+// store the source velocity w.r.t. the rest frame
   uvputvrr_c(tno,"vsource",&(smabuffer.vsource),1);
 //
 // antenna aperture efficiency from TK
@@ -483,11 +485,11 @@ void rspokeflshsma_c(char *kst[])
    eta_c = 0.88;
    eta   = eta_a*eta_c;
    pi    = (float) DPI;
+// calculate jyperk
    jyperk=2.* 1.38e3/pi/(eta*r_ant*r_ant);
    uvputvrr_c(tno,"jyperk",&jyperk,1);
-//   printf("jyperk=%f\n", jyperk);
-  /* Handle the case that we are writing the multiple IFs out as multiple
-     records. */
+// Handle the case that we are writing the multiple 
+// IFs out as multiple records. 
   if(smabuffer.doif!=1&&smabuffer.nifs>1) {
     nspect =ischan[0]= 1;
     for(ifs=0; ifs < smabuffer.nifs; ifs++) {
@@ -509,15 +511,15 @@ void rspokeflshsma_c(char *kst[])
 	  preamble[3] = tdash;
 	  preamble[4] = 256*i1 + i2;
 	  for(p=0; p<smabuffer.nstoke[ifs]; p++){
-	    ipnt = smabuffer.pnt[ifs][p][bl][0][0];
-	    printf("ipnt=%d\n", ipnt);
-	    if(ipnt>0) 
-	      uvputvrr_c(tno,"inttime",&smabuffer.inttime[bl],1);
-	    if(smabuffer.opcorr==0) {
-	      /* call opapply(data(ipnt),nfreq(if),fac(if)) */
-	      /* bug_c('f',"This code section had a bug"); */
-	      /* next line had serious bug before may 23 */
-//	  uvwrite_c(tno,preamble,&smabuffer.data[ipnt],flags,smabuffer.nfreq[ifs]); 
+          ipnt = smabuffer.pnt[ifs][p][bl][0][0];
+          printf("ipnt=%d\n", ipnt);
+	  if(ipnt>0) 
+	  uvputvrr_c(tno,"inttime",&smabuffer.inttime[bl],1);
+	  if(smabuffer.opcorr==0) {
+/* call opapply(data(ipnt),nfreq(if),fac(if)) */
+/* bug_c('f',"This code section had a bug"); */
+/* next line had serious bug before may 23 */
+// uvwrite_c(tno,preamble,&smabuffer.data[ipnt],flags,smabuffer.nfreq[ifs]); 
 	    }
 	  }
 	  bl++;
@@ -525,16 +527,15 @@ void rspokeflshsma_c(char *kst[])
       }
     }
   } else {
-    /* Handle the case were we are writing the multiple IFs out as a single record.
-     */
+// Handle the case were we are writing the multiple IFs out as a single record.
+// This way is adopted to store SMA data in Miriad format.
     if(smabuffer.newfreq>0) {
       ischan[0] = 1;
-//        printf("uvput: \n");
+// counting total number of spectral channels
       for (ifs = 1; ifs < smabuffer.nifs; ifs++) {
 	ischan[ifs] = ischan[ifs-1] + smabuffer.nfreq[ifs];
-//        printf(" %d", smabuffer.nfreq[ifs]);
-      } 
-//        printf(" \n");
+//        printf("MMMMM %d", smabuffer.nfreq[ifs]);
+      }
       uvputvri_c(tno,"nspect",&(smabuffer.nifs),1);
       uvputvri_c(tno,"ischan",&(ischan),smabuffer.nifs);
       uvputvri_c(tno,"nschan",&(smabuffer.nfreq),smabuffer.nifs);
@@ -542,13 +543,13 @@ void rspokeflshsma_c(char *kst[])
       uvputvrd_c(tno,"sdf",&(smabuffer.sdf),smabuffer.nifs);
       uvputvrd_c(tno,"restfreq",&(smabuffer.restfreq),smabuffer.nifs);
       uvputvrr_c(tno,"veldop",&(smabuffer.veldop),1);
-//      uvputvrr_c(tno,"velsma",&(smabuffer.smaveldop),1);
     }
-    /* call tsysStore */
     uvputvri_c(tno,"tcorr",&(smabuffer.tcorr),1);
+// store system temperature 
     tsysStore(tno); 
+// store the random parameters and the visibility data
     bl=0;
-    for(i2=1; i2<smabuffer.nants+1; i2++){
+    for(i2=1; i2<smabuffer.nants+1; i2++) {
       for(i1=1; i1<i2+1; i1++){
 	preamble[0] = smabuffer.u[bl];
 	preamble[1] = smabuffer.v[bl];
@@ -558,23 +559,24 @@ void rspokeflshsma_c(char *kst[])
 	polcnt = rscntstokes(npol, bl, sb, rx);
 	npol = polcnt->npol;
 	if(npol>0) {
-	  uvputvri_c(tno,"npol",&npol,1);
-	  for(p=polcnt->polstart; p<polcnt->polend+1; p++){
-	    nchan = rsgetdata(vis,flags,&nchan, p, bl, sb, rx);     
+	uvputvri_c(tno,"npol",&npol,1);
+	for(p=polcnt->polstart; p<polcnt->polend+1; p++) {
+	    nchan = rsgetdata(vis,flags,&nchan, p, bl, sb, rx);    
 	    if(nchan>0) {
-	      ibuff = smabuffer.polcode[0][p][bl];
+	    ibuff = smabuffer.polcode[0][p][bl];
 	    uvputvri_c(tno,"pol",&ibuff,1);
 	    uvputvrr_c(tno,"inttime",&smabuffer.inttime[bl],1);
 	    uvwrite_c(tno,preamble, vis,flags,nchan);         
-	    }
-	  }
-	}
+	                }
+	                                                  }
+                        }               
 	bl++;
-      }
-    }
-  }
+            }
+          }
+        }
+// reset the frequency processing handle
   smabuffer.newfreq=-1;
-  /* re-initialize the pntr */
+// re-initialize the pntr 
   for (ifs=0; ifs<SMIF; ifs++) {
     for (p=0; p<SMPOL; p++) {
       for (bl=0; bl<SMBAS; bl++) {
@@ -598,6 +600,7 @@ int rsgetdata(float smavis[2*MAXCHAN], int smaflags[MAXCHAN], int *smanchan, int
   nchand = 0;
   for (n=0; n<nifs; n++) {
     ipnt = smabuffer.pnt[n][p][bl][sb][rx]; 
+//      printf("n ipnt %d %d\n", n, ipnt);
       if(ipnt>0) {
       if(nchan<nchand) {
 	for (i=nchan; i<nchand; i++) {
@@ -609,6 +612,7 @@ int rsgetdata(float smavis[2*MAXCHAN], int smaflags[MAXCHAN], int *smanchan, int
       }
       for (i=nchan; i< nchan+smabuffer.nfreq[n]; i++){
 	fac[n]=1000000.;
+
 	smavis[2*i]   =  fac[n]*smabuffer.data[ipnt].real;
 	smavis[2*i+1] =  fac[n]*smabuffer.data[ipnt].imag;
 //	  (float)pow((double)(-1),(double)(sb+1)); 
@@ -670,7 +674,7 @@ int rsmir_Read(char *datapath, int jstat)
   int file,nfiles = 6;
   int headerbytes[6];
   smEng **smaEngdata;
-  int i,j,k,l,m;
+  int i,j,k,l,m,i0,ii;
   int kk,iinset,lastinset,ireset,reset_id[10];
   long imax,bytepos,nbytes,datalength;
   long *data_start_pos;
@@ -702,14 +706,14 @@ int rsmir_Read(char *datapath, int jstat)
   frequency  smaFreq[2];
   uvwPack **uvwbsln;
   visdataBlock  visSMAscan;
-  int sphSizeBuffer=SMIF*MAXBAS*6;
-  int  nnants, flush;
+  int sphSizeBuffer;
+  int nnants, flush;
   int ifpnt, polpnt, blpnt, sbpnt, rxpnt, sblpnt;
-  int avenchan;
+  int avenchan,miriadsp[SMIF+1];
   int blid_intchng[MAXINT];  
-                      /* the baseline id right after integration change */
-  int rxlod;               /* the rx to load rxlod=0 -> smabuffer.rx1        
-                                             rxlod=1 -> smabuffer.rx2        */
+               /* the baseline id right after integration change */
+  int rxlod;   /* the rx to load rxlod=0 -> smabuffer.rx1        
+                                 rxlod=1 -> smabuffer.rx2        */
   float avereal, aveimag;
   extern struct inh_def   **inh;
   extern struct blh_def   **blh;
@@ -750,6 +754,7 @@ int rsmir_Read(char *datapath, int jstat)
   headerbytes[3] = 42;
   headerbytes[4] = 188;
   headerbytes[5] = 0;
+  
   switch(jstat) {
   case -3:
     /* Open all the files */
@@ -1227,7 +1232,7 @@ handling_blarray:
 	geocxyz[i].y = (antenna[i].x);
 	geocxyz[i].z = (antenna[i].z)*sin(smabuffer.lat)
 	  + (antenna[i].y)*cos(smabuffer.lat);
-//       printf("ant x y z %d %f %f %f\n", i, antenna[i].x,antenna[i].y,antenna[i].z);
+// printf("ant x y z %d %f %f %f\n", i, antenna[i].x,antenna[i].y,antenna[i].z);
       }
       printf("NUMBER OF ANTENNAS =%d\n", smabuffer.nants);
       //
@@ -1280,7 +1285,7 @@ double xyzpos;
 
 
 
-      printf("Geocentrical coordinates of antennas (m), reference antenna=%d\n",
+    printf("Geocentrical coordinates of antennas (m), reference antenna=%d\n",
 	     smabuffer.refant); 
       for (i=1; i < smabuffer.nants+1; i++) {
        
@@ -1354,15 +1359,15 @@ double xyzpos;
     for (set=0;set<nsets[3];set++){
       // decode the ids 
       if((cdh[set]->v_name[0]=='b'&&cdh[set]->v_name[1]=='a')&&
-	 cdh[set]->v_name[2]=='n'){
+        cdh[set]->v_name[2]=='n'){
         if(smabuffer.spskip[0]==0) { 
 	spcode[cdh[set]->icode]=spdecode(&cdh[set]);
           } else { 
            if(cdh[set]->icode < smabuffer.spskip[0]) {
             spcode[cdh[set]->icode]=spdecode(&cdh[set]);
               } else {
-     spcode[cdh[set]->icode]
-      =spdecode(&cdh[set])-smabuffer.spskip[1];
+        spcode[cdh[set]->icode]
+        =spdecode(&cdh[set])-smabuffer.spskip[1];
               }
                 }
       }
@@ -1461,17 +1466,17 @@ double xyzpos;
 	  multisour[sourceID].pmra     = 0.;
 	  multisour[sourceID].pmdec    = 0.;
 	  multisour[sourceID].parallax = 0.;
-	  //         strcpy(multisour[sourceID].veltyp, "lsr");
+  //         strcpy(multisour[sourceID].veltyp, "lsr");
 	  strcpy(multisour[sourceID].veldef, "radio");
 	  strcpy(multisour[sourceID].calcode, "c");
 	}
       }
     }
-    // setup correlator  
-    // sph1 is a single set of spectra, assign memory to it.    
+// setup correlator  
+// sph1 is a single set of spectra, assign memory to it.    
     sph1 = (struct sph_def *) malloc(sizeof( struct sph_def ));
-    // spn is a buffer for configuring spectra with an array length
-    // of the total number of integration sets.
+// spn is a buffer for configuring spectra with an array length
+// of the total number of integration sets.
     spn  = (struct sph_config **) malloc(nsets[0]*sizeof( struct sph_config *));
     for (set=0; set<nsets[0]; set++) {
       spn[set] = (struct sph_config *)malloc(sizeof(struct sph_config ));
@@ -1481,6 +1486,16 @@ double xyzpos;
 	exit(-1);
       }
     }
+//
+// determine if perform high resolution mode:
+// data obtained earlier than 2006-may-12 is to be done
+// with a low resolution mode;
+// data obtained later than  2006-may-12 is handled in the high
+// resolution mode unless this mode turned off by options=nohspr
+//
+    if(smabuffer.highrspectra==0&&jday>2453867) {
+      smabuffer.highrspectra = 1;
+      } else { smabuffer.highrspectra =-1; }
     
     { 
       int inhid_hdr;
@@ -1520,12 +1535,15 @@ double xyzpos;
 	  smabuffer.scanskip++;
 	  inset = smabuffer.scanskip;
 	}
-	// load baseline based tsys structure
+// load baseline based tsys structure
 	if(sph1->blhid==tsys[0]->blhid) nspectra++;
+//      printf("nspectra = %d\n", nspectra);
+//      printf("sph1->inhid tsys[blset]->inhid sph1->blhid tsys[blset]->blhid blset %d %d %d %d %d\n",
+//        sph1->inhid,tsys[blset]->inhid,sph1->blhid,tsys[blset]->blhid,blset);
 	if(sph1->blhid==tsys[blset]->blhid&&sph1->inhid==tsys[blset]->inhid) {
-	  //       printf("%d %f \n", sph1->iband,sph1->tssb);
-	  tsys[blset]->tssb[sph1->iband] = sph1->tssb;
-          // loading online flagging information
+// printf("sphset blid iband tsys %d  %d  %d %f \n",set,sph1->blhid, sph1->iband,sph1->tssb);
+ tsys[blset]->tssb[sph1->iband] = sph1->tssb;
+// loading online flagging information
         if(tsys[blset]->ipol < -4||sph1->iband!=0) {
        wts[inset]->wt[sph1->iband-1][-4-tsys[blset]->ipol][tsys[blset]->blsid][tsys[blset]->isb][tsys[blset]->irec] = sph1->wt; 
                                      }
@@ -1533,7 +1551,12 @@ double xyzpos;
          if(sph1->iband!=0)
  wts[inset]->wt[sph1->iband-1][-tsys[blset]->ipol][tsys[blset]->blsid][tsys[blset]->isb][tsys[blset]->irec] = sph1->wt;
            }   
-	  if(sph1->iband==nspectra-1) blset++;
+	if(smabuffer.highrspectra !=1){  
+        if(sph1->iband==nspectra-1) blset++;
+        } else {
+        if(sph1->iband==24) blset++;
+        
+        }
 	}
 	// purse the spectral configuration
 	// check up inhid to work on the same set of integration 
@@ -1593,32 +1616,28 @@ printf("Reset 'nscans=%d, ' and run it again.\n",smabuffer.scanskip);
          exit(-1);
                   }
 
-// handling 2003 inc0mpleted correlator data
+// handling 2003 incompleted correlator data
 if (smabuffer.spskip[0]==-2003) {
 double spfreq[25];
 double spfreqo[25];
 int nchunk=0;
 int minspID=25;
 int fa,fb;
-         for (i=1;i<25;i++) {
+         for (i=1;i<SMIF+1;i++) {
          if (spn[smabuffer.scanskip]->fsky[i]>0.0) {
          nchunk++;
          spfreq[nchunk]=spn[smabuffer.scanskip]->fsky[i];
                             }
                 }
-         for (i=1;i<25;i++) {
+         for (i=1;i<SMIF+1;i++) {
          if(spfreq[i]<100.0) {
          spfreq[i]=0.0;
          spcode[i]=0;        }
          spfreqo[i] =  spfreq[i];
          if (spcode[i]!=0&&spcode[i]<minspID) minspID=spcode[i];
-//         printf("%f %d\n", spfreqo[i], spcode[i]);
                            }
-//         printf("MinspID=%d after dsort \n", minspID);
-//         dsort(spfreq,nchunk);
-         for (i=1;i<25;i++) {
+         for (i=1;i<SMIF+1;i++) {
           spcode[i]=spcode[i]-minspID+1;
-//        printf("%f %f %d\n",spfreq[i],spfreqo[i],spcode[i]);
                            }
 goto dat2003; }
                 
@@ -1628,7 +1647,7 @@ goto dat2003; }
               for (iinset=smabuffer.scanskip;
                    iinset < lastinset;
                    iinset++) {
-              for (i=0;i<25;i++) {
+              for (i=0;i<SMIF+1;i++) {
               if (spn[iinset]->nch[i][0]
                !=spn[iinset+1]->nch[i][0]) {
          printf("Warning: The correlator was reconfigured at integrations=%d\n",
@@ -1636,7 +1655,7 @@ goto dat2003; }
                           ireset++;
                     reset_id[ireset] = iinset+1;
          printf("From    -> To\n");
-                    for (i=1;i<25;i++) {
+                    for (i=1;i<SMIF+1;i++) {
          printf("s%2d:%3d -> :%3d\n", i, spn[iinset]->nch[i][0],
                  spn[iinset+1]->nch[i][0]);
                                        }
@@ -1657,23 +1676,23 @@ goto dat2003; }
                                     }
                                      }
 dat2003:                                                                           
-     printf("\n");
-
-    printf("number of Spectra = %d\n", numberSpectra);
-    
+    printf("\n");
+    printf("number of non-empty Spectra = %d\n", numberSpectra);
+// reset number of spectra
+    if(smabuffer.highrspectra==1) numberSpectra=25;
     if (SWAP_ENDIAN) {
       printf("FINISHED READING SP HEADERS (endian-swapped)\n");
     } else {
       printf("FINISHED READING SP HEADERS\n");
     }
-    // solve for tsys
+// solve for tsys
     {
       int refant;
       int done;
       int pair1;
       int pair2;
       int blset;
-    // solve for tsys of a reference ante
+// solve for tsys of a reference ante
       set=0;
       refant=0;
       pair1=0;
@@ -1682,7 +1701,7 @@ dat2003:
       for(blset=0; blset<nsets[1]; blset++) {
 	if(set==nsets[0]-1) goto next;
 	if(tsys[blset]->inhid!=inh[set]->inhid) {set++; refant=0;}
-    // choose rx
+// choose rx
 	if(tsys[blset]->irec==smabuffer.rxif||smabuffer.rxif==-1) {
 	  if(tsys[blset]->inhid==inh[set]->inhid&&tsys[blset]->isb==0) {
 	    if(refant==0) {
@@ -1757,7 +1776,7 @@ dat2003:
       //          smaEngdata[set]->tsys[7]); 
       //   printf("%d tsys %f %f \n", atsys[set]->tssb[3],atsys[set]->tssb[7]);
       //}
-      printf("Decoded baseline-based Tsys\n");
+    printf("Decoded baseline-based Tsys\n");
     }
     // decode the doppler velocity
 
@@ -1825,34 +1844,45 @@ dat2003:
         // is the sky frequency corrected for the radial velocity of the planet
         // at the moment when the dopplerTrack command is issued.
         //   
-	spn[set]->veldop = vabsolute - spn[set]->vel[12];
+        spn[set]->veldop = vabsolute - spn[set]->vel[12];
 //
 // add back the radial velocity of the source
 //
         spn[set]->veldop = spn[set]->veldop + smabuffer.vsource;
         spn[set]->smaveldop = vabsolute - spn[set]->vel[12]+ 
-                              smabuffer.vsource;
-//	printf("%d veldop=%f %f\n", set, spn[set]->veldop,spn[set]->vel[12]);
+                 smabuffer.vsource;
+// printf("%d veldop=%f %f\n", set, spn[set]->veldop,spn[set]->vel[12]);
       }
-        printf("Decoded the Doppler velocity\n");
+    printf("Decoded the Doppler velocity\n");
     }                   
-    // rewind the data file
+// rewind the data file
     rewind(fpin[5]);
-    /* start from the inhset = smabuffer.scanskip */
+// start from the inhset = smabuffer.scanskip 
     inhset = smabuffer.scanskip;
     numberBaselines=  uvwbsln[inhset]->n_bls,
     printf("here we are!\n");
-    /* take out 1 for eliminating the continuum channel */
-    smaCorr.n_chunk = numberSpectra -1;
-    // end of spectral configuring.
+//
+// parsing to handle spectral chunk data assuming
+// 24 spectral chunks handled online regardless
+// some of the chunks may be skipped;
+// or only partial (< 24) chunks handled online
+// (early days' data for exmaple).
+//
+   if(smabuffer.highrspectra==1) {
+   smaCorr.n_chunk = SMIF;
+    } else { 
+// take out 1 for eliminating the continuum channel
+   smaCorr.n_chunk = numberSpectra -1;
+    }
+// end of spectral configuration loading.
     
-    // initialize system velocity
+// initialize system velocity
     for (j=1; j<sourceID+1; j++) {
       for (i=1; i<smaCorr.n_chunk+1; i++) {
 	multisour[j].sysvel[i] = 0.0;
       }           
     }
-    // print out sources observed
+// print out sources observed
     for (i=1; i< sourceID+1; i++) {
       printf("source: %-21s id=%2d RA=%13s ", 
 	     multisour[i].name,
@@ -1861,15 +1891,14 @@ dat2003:
       printf("DEC=%13s\n", (char *)decr2c(multisour[i].dec));
     }
     
-    /* now loading the smabuffer */
+// now loading the smabuffer, parameters for headers
     
-    // initialize Tsys
+// initialize Tsys
     for (i=1; i<smabuffer.nants+1; i++){
       smabuffer.tsys[i-1]=0;
     } 
     
-    // initialize the polcode
-    
+// initialize the polcode
     for(j=1;j<smaCorr.n_chunk+1;j++) {
            smabuffer.nstoke[j-1]=4;
       for(i=1; i<smabuffer.nstoke[j-1]; i++) {
@@ -1878,7 +1907,7 @@ dat2003:
 	}
       }
     }
-    // initialize the tsys for the polarization components
+// initialize the tsys for the polarization components
     for(j=1;j<smabuffer.nants+1;j++) {
       for(i=1;i<smaCorr.n_chunk+1;i++) {
 	smabuffer.xtsys[i-1][j-1]=0.;
@@ -1888,7 +1917,7 @@ dat2003:
       }
     }
     
-    // initialize the sampler for the polarization components
+// initialize the sampler for the polarization components
 
     for(k=0; k<3; k++) {
       for(j=1;j<smabuffer.nants+1;j++) {
@@ -1898,10 +1927,10 @@ dat2003:
 	}
       }
     }
-  
-    smabuffer.nifs = smaCorr.n_chunk;
- 
-    /* initialize pnt flags */
+// assign actual number of spectral chunks to smabuffer  
+//   smabuffer.nifs = smaCorr.n_chunk;
+     smabuffer.nifs = numberSpectra-1;
+// initialize pnt flags 
     for (i=1; i<SMIF+1; i++)  {
       for (j=1; j<SMPOL+1; j++) {
 	for (k=1; k<SMBAS+1; k++) {
@@ -1914,9 +1943,7 @@ dat2003:
 	}
       }
     }
-
-    /* reverse the spectral chunk order for blocks
-       1 2 3 4 */
+// reverse the spectral chunk order for blocks 1 2 3 4 
     if(smabuffer.doChunkOrder==1) {
       frcode[1]=4;
       frcode[2]=3;
@@ -1949,6 +1976,7 @@ dat2003:
       frcode[24]=24;
     }
     
+// print the side band to be processed
     switch(smabuffer.sb) {
     case 0:
       printf("LSB only\n");
@@ -1956,7 +1984,7 @@ dat2003:
     case 1:
       printf("USB only\n");
     }
-    
+// initializing the number vis points to be read    
     smabuffer.nused=0;
     free(cdh);
     free(sph);
@@ -1974,10 +2002,13 @@ dat2003:
     }
     
     
-    /* Need an array to hold the starting byte for each integration of data */
+// Need an array to hold the starting byte for each integration of data 
+// allocate the memory for data_start_pos
     data_start_pos = (long int*)malloc(nsets[0]*sizeof(long int));
+    inhset=smabuffer.scanskip;
     inhset=0;
-    for (set=inhset;set<nsets[0]-1;set++) {
+    for (set=inhset;
+      set<smabuffer.scanskip+smabuffer.scanproc; set++) {
       data_start_pos[set] = ftell(fpin[5]);
       *sch[set] = *(sch_head_read(fpin[5]));
       if (SWAP_ENDIAN) {
@@ -1985,77 +2016,86 @@ dat2003:
       }
       i = fseek(fpin[5],(long int)sch[set]->nbyt,SEEK_CUR);
     }
-    /* rewind vis data file */
+// rewind vis data file
     rewind(fpin[5]);  
-    /* initilize the handles for baseline, spectral, integration */
+// initilize the handles for baseline, spectral, integration 
     blhset  = -1;
     sphset  =  0;
     readSet =  1;
     numberBaselines = uvwbsln[smabuffer.scanskip]->n_bls;
-    /* numberBaselines = 2;*/
-    printf("#Baselines=%d #Spectra=%d  #Sidebands=%d #Receivers=%d\n",
+// print the information on # of baselines,
+//                          # of spectral windows,
+//                          # of sidebands,
+//                          # of receivers to be processed 
+ printf("#Baselines=%d #Spectra=%d  #Sidebands=%d #Receivers=%d\n",
 	   numberBaselines/2, numberSpectra-1, numberSidebands, 
 	   numberRxif);
     
     if(smabuffer.dobary==1) printf("Compute radial velocity wrt barycenter\n");
     if(smabuffer.dolsr==1) printf("Compute radial velocity wrt LSR\n");
-    sphSizeBuffer = numberSpectra; /* numberBaselines for usb and lsb */
+    sphSizeBuffer = numberSpectra*numberBaselines; 
+//sphSizeBuffer: a number of total spectral sets for usb and lsb together 
+//               in each of the integration sets
     firstsp = sphset;
     firstbsl= blhset;
     printf("start to read vis data!!!\n");
-    /* initialize vis point handle */
+// initialize the vis point handle
     ipnt=1;
-    if(smabuffer.scanskip!=0) inhset=smabuffer.scanskip-1;
-    if(smabuffer.scanproc!=0&&(nsets[0]>(smabuffer.scanskip+smabuffer.scanproc)))
-      nsets[0]=smabuffer.scanskip+smabuffer.scanproc;
-
+// assign the start integration set to be processed
+  if(smabuffer.scanskip!=0) inhset=smabuffer.scanskip-1;
+  if(smabuffer.scanproc!=0&&(nsets[0]>(smabuffer.scanskip+smabuffer.scanproc)))
+     nsets[0]=smabuffer.scanskip+smabuffer.scanproc;
+// start the processing loop
     while(inhset<(nsets[0]-1)) {
-      /* inhset=inh[inhset+1]->ints;*/
+// progressing the integration set
       inhset++;
       visSMAscan.blockID.ints = inh[inhset]->ints;
       visSMAscan.blockID.inhid = inh[inhset]->inhid;
       visSMAscan.blockID.sourID = inh[inhset]->souid;
       visSMAscan.blockID.freqID = smaFreq[0].freqid;
       visSMAscan.time.UTCtime = jday+inh[inhset]->dhrs/24.000; /*hrs*/
-      /* loading smabuffer */
+// loading smabuffer 
       smabuffer.currentscan=inhset-smabuffer.scanskip;
       smabuffer.time = visSMAscan.time.UTCtime;
-      /* handle source information */
+// handle source information 
       sourceID = visSMAscan.blockID.sourID;
       smabuffer.obsra = multisour[sourceID].ra_app;
       smabuffer.obsdec = multisour[sourceID].dec_app;
       smabuffer.ra = multisour[sourceID].ra;
       smabuffer.dec = multisour[sourceID].dec;
       {
-      //double HA;
-      //double LST;
-      //double ra_apparent;
-      //double delLST;
-      // HA = LST - ra_apparent
-      //if(inh[inhset]->inhid==smaEngdata[inhset]->inhid) 
-      //{ smabuffer.lst = smaEngdata[inhset]->lst*DPI/12.0;
-      // LST= (double) inh[inhset]->ha*DPI/12.0 + smabuffer.obsra;
-      //  delLST=(smabuffer.lst-LST)*12.0/DPI*3600;
-      /* in unit of hr in mir format; in unit of radian in miriad format */
-      // printf("%d lst engLst %f %f delLST=%f obsra=%f %f\n", 
-      // inhset, smabuffer.lst, LST, delLST, smabuffer.obsra, smabuffer.ra);
-      //  for (i=0; i<smabuffer.nants; i++) {
-      //       smabuffer.el[i] = smaEngdata[inhset]->el[i+1];
-      //       smabuffer.az[i] = smaEngdata[inhset]->az[i+1];
-      //       smabuffer.tsys[i] = smaEngdata[inhset]->tsys[i+1];
-      // printf("%d %f %f --- %f %f\n",i, smabuffer.el[i], inh[inhset]->el,
-      //                              smabuffer.az[i], inh[inhset]->az);     
-      //                                    }
-      //}
-      // calculate lst
-      if (smabuffer.doeng!=1) {
+// the source information was used to be obtained 
+// from the engineer file.      
+//double HA;
+//double LST;
+//double ra_apparent;
+//double delLST;
+// HA = LST - ra_apparent
+// if(inh[inhset]->inhid==smaEngdata[inhset]->inhid) 
+// { smabuffer.lst = smaEngdata[inhset]->lst*DPI/12.0;
+// LST= (double) inh[inhset]->ha*DPI/12.0 + smabuffer.obsra;
+//  delLST=(smabuffer.lst-LST)*12.0/DPI*3600;
+// in unit of hr in mir format; in unit of radian in miriad format 
+// printf("%d lst engLst %f %f delLST=%f obsra=%f %f\n", 
+// inhset, smabuffer.lst, LST, delLST, smabuffer.obsra, smabuffer.ra);
+//  for (i=0; i<smabuffer.nants; i++) {
+//       smabuffer.el[i] = smaEngdata[inhset]->el[i+1];
+//       smabuffer.az[i] = smaEngdata[inhset]->az[i+1];
+//       smabuffer.tsys[i] = smaEngdata[inhset]->tsys[i+1];
+// printf("%d %f %f --- %f %f\n",i, smabuffer.el[i], inh[inhset]->el,
+//                              smabuffer.az[i], inh[inhset]->az);     
+//                                    }
+//}
+//
+// calculate lst
+    if (smabuffer.doeng!=1) {
 	smabuffer.lst =(double) inh[inhset]->ha*DPI/12.0 + smabuffer.obsra;
       } else {
 	smabuffer.lst = smaEngdata[inhset]->lst*DPI/12.0;
       }
-      //loading el az and tsys to smabuffer
+//loading el az and tsys to smabuffer
       for (i=0; i<smabuffer.nants; i++) {
-      // mir inh file gives the mean el and mane az
+// mir inh file gives the mean el and mane az
 	smabuffer.el[i] = inh[inhset]->el;
 	smabuffer.az[i] = inh[inhset]->az;
 	if (smabuffer.doeng!=1) {
@@ -2063,18 +2103,17 @@ dat2003:
 	} else {
 	  smabuffer.tsys[i] = smaEngdata[inhset]->tsys[i+1];
 	}
-      }
-      }
-      
-      /* write source to uvfile */
+        }
+        }
+        
+// write source to uvfile 
       if(((strncmp(multisour[sourceID].name,target,6)!=0)&&
         (strncmp(multisour[sourceID].name,unknown,7)!=0))||
           smabuffer.noskip==1) {
 	char sour[9];
 	strncpy(sour, multisour[sourceID].name, 9);
-	//     printf(" %s %8s\n", sour, sour);
-	//uvputvra_c(tno,"source",multisour[sourceID].name);
-	uvputvra_c(tno,"source", sour);
+// uvputvra_c(tno,"source",multisour[sourceID].name);
+        uvputvra_c(tno,"source", sour);
 	uvputvrd_c(tno,"ra",&(smabuffer.ra),1);
 	uvputvrd_c(tno,"dec",&(smabuffer.dec),1);
 // store the true pointing position 
@@ -2103,43 +2142,54 @@ dat2003:
 	double decepo = smabuffer.dec;
 	double lst    = smabuffer.lst;
 	double lat    = smabuffer.lat;
-	//
-	// recalculate the radial velocity
-	//
+//
+// recalculate the radial velocity
+//
 	if(smabuffer.dolsr==1) {
-	  dolsr   = 1;
-	  smabuffer.veldop = (float)velrad(dolsr,time, raapp,decapp,raepo,decepo,lst,lat);
+  dolsr   = 1;
+smabuffer.veldop=(float)velrad(dolsr,time, raapp,decapp,raepo,decepo,lst,lat);
 	}
 	if(smabuffer.dobary==1) {
 	  dolsr   = -1;
-	  smabuffer.veldop = (float)velrad(dolsr,time, raapp,decapp,raepo,decepo,lst,lat);
+smabuffer.veldop = (float)velrad(dolsr,time, raapp,decapp,raepo,decepo,lst,lat);
 	}
-	//  printf("Main: %s: velrad = %f veldop=%f\n",multisour[sourceID].name, velrad(dolsr,time,
-	//  raapp,decapp,raepo,decepo,lst,lat),
-	//  smabuffer.veldop);
         }
 // get vsource which is source radial velocity w.r.t the LSR
 // it is difficult to decode vsource from the MIR data
 // unless given enough information in the Doppler tracking
 // (sideband, chunk, and channel) from the users.  
 //         smabuffer.vsource = spn[inhset]->vel[12];
-//      printf("vel %f %f %f %f %f %f %f %f\n",spn[inhset]->vel[11],spn[inhset]->vres[11], 
-//      smabuffer.vsource, spn[inhset]->vres[12],
-//      spn[inhset]->vel[13],spn[inhset]->vres[13],
-//      spn[inhset]->vel[14],spn[inhset]->vres[14]);
-//        printf("nChunk = %d\n", smaCorr.n_chunk);
-
+// checkup skipped sp chunks
+    for(i=1;i<SMIF+1;i++) {
+        miriadsp[i]=0;
+                      }
+        i0=0;
+        for(i=1;i<SMIF+1;i++) {
+        if (spn[inhset]->nch[i][rxlod]!=0) {
+// miriadsp: an integer array; if the chunk i
+// is empty, miriadsp[i]=0, otherwise miriadsp[i]=i. 
+        miriadsp[i]= i;
+          } }
+//
+// now handle the frequency configuration for
+// each of the integration sets
+//
       for(i=1;i<smaCorr.n_chunk+1; i++) {
-	// the reference channel is the first channel in each chunk in miriad
-	// the reference channel is the center (nch/2+0.5) in each chunk in MIR
-	// conversion => nch/2+0.5 - 1 = nch-0.5
-	// spcode[i]:
-	// for the first three blocks (1,2,3), the chunk order is normal in each block.
-	// for the rest three blocks (4,5,6), the chunk order is reversed in each block.
-	// 1 2 3 4 5 6 7 8 9 10 12 16 15 14 13 20 19 18 17 24 23 22 21
-	// reverse chunk order for the frequency only
-        if(smabuffer.spskip[0]!=-1) {
-	  if(smabuffer.doChunkOrder==1) {
+//         for(i=1;i<20;i++) {
+// the reference channel is the first channel in each chunk in miriad
+// the reference channel is the center (nch/2+0.5) in each chunk in MIR
+// conversion => nch/2+0.5 - 1 = nch-0.5
+         if(smabuffer.spskip[0]!=-1) {
+         if(smabuffer.doChunkOrder==1) {
+//
+// spcode[i]:
+// for the last three blocks (4,5,6), the chunk order is normal in each block.
+// for the first three blocks (1,2,3), the chunk order is reversed 
+// in each block.
+// 4 3 2 1, 8 7 6 5, 12 11 10 9, 13 14 15 16, 17 18 19 20, 21 22 23 24 
+// reverse chunk order for the frequency only using 
+// conversion code frcode defined early:
+//
 	  smabuffer.sfreq[frcode[i]-1] = spn[inhset]->fsky[i]
       - spn[inhset]->fres[i]/1000.0*
 	    (spn[inhset]->nch[i][rxlod]/2-0.5);
@@ -2148,51 +2198,61 @@ dat2003:
       - spn[inhset]->fres[i]/1000.0*
 	    (spn[inhset]->nch[i][rxlod]/2-0.5);
 	                                       }
+//
+// handle rest frequency
+//
 	if(smabuffer.dorfreq==1) 
         smabuffer.restfreq[spcode[i]-1] = spn[inhset]->rfreq[i];
-	if(smabuffer.rsnchan<0) {
-	  smabuffer.sdf[spcode[i]-1]      = spn[inhset]->fres[i]/1000.0;
-	  smabuffer.nfreq[spcode[i]-1]    = spn[inhset]->nch[i][rxlod];
-
+//
+// parsing the resampling option
+//
+        if(smabuffer.rsnchan<0) {
+        smabuffer.sdf[spcode[i]-1]   = spn[inhset]->fres[i]/1000.0;
+        smabuffer.nfreq[spcode[i]-1] = spn[inhset]->nch[i][rxlod];
 	                        } else {
-	  // re-sample the channel
-	  smabuffer.sdf[spcode[i]-1]      = spn[inhset]->fres[i]/1000.0*
-	  spn[inhset]->nch[i][rxlod]/
-	  smabuffer.rsnchan;
-	  smabuffer.nfreq[spcode[i]-1]    = smabuffer.rsnchan;
+//
+// re-sample the channel
+//
+        smabuffer.sdf[spcode[i]-1]   = spn[inhset]->fres[i]/1000.0*
+  	spn[inhset]->nch[i][rxlod]/smabuffer.rsnchan;
+	smabuffer.nfreq[spcode[i]-1] = smabuffer.rsnchan;
                                      	}
 	smabuffer.basefreq = spn[inhset]->basefreq;
-
            } else {
 //
 // take the frequency configuration from the 1st integration set
 // assuming no frequency configuration change during the 
 // observing track.
 //
-            inhset1st=smabuffer.scanskip;
+          inhset1st=smabuffer.scanskip;
+// parsing the option for chunk order reversing
           if(smabuffer.doChunkOrder==1) {
+// reversing the chunk order
           smabuffer.sfreq[frcode[i]-1] = spn[inhset1st]->fsky[i]
             - spn[inhset1st]->fres[i]/1000.0*
             (spn[inhset1st]->nch[i][rxlod]/2-0.5);
         } else {
           smabuffer.sfreq[spcode[i]-1] = spn[inhset1st]->fsky[i]
             - spn[inhset1st]->fres[i]/1000.0*
-            (spn[inhset1st]->nch[i][rxlod]/2-0.5);
+          (spn[inhset1st]->nch[i][rxlod]/2-0.5);
         }
+// processing the rest frequency
         if(smabuffer.dorfreq==1)
         smabuffer.restfreq[spcode[i]-1] = spn[inhset1st]->rfreq[i];
+// parsing the resampling option
         if(smabuffer.rsnchan<0) {
         smabuffer.sdf[spcode[i]-1] = spn[inhset1st]->fres[i]/1000.0;
         smabuffer.nfreq[spcode[i]-1] = spn[inhset1st]->nch[i][rxlod];
         } else {
 // re-sample the channel
         smabuffer.sdf[spcode[i]-1] = spn[inhset1st]->fres[i]/1000.0*
-        spn[inhset1st]->nch[i][rxlod]/
-        smabuffer.rsnchan;
+        spn[inhset1st]->nch[i][rxlod]/smabuffer.rsnchan;
         smabuffer.nfreq[spcode[i]-1] = smabuffer.rsnchan;
         }
+// assign the base frequency
         smabuffer.basefreq = spn[inhset1st]->basefreq;
           }
+// assign the rest of the header parameters
 	smabuffer.bchan[spcode[i]-1]=1;
 	smabuffer.nstoke[spcode[i]-1]=4;
 	smabuffer.edge[spcode[i]-1]=0;
@@ -2200,28 +2260,45 @@ dat2003:
 // if 2003 data skip the spcode examination
         if(smabuffer.spskip[0]!=-2003)  
 // check the spectral window skipping in MIR data
-         if(smabuffer.spskip[0]!=-1) {
-// printf("spcode icode %d %d fsky %f nch%d\n", 
-// spcode[i], spn[inhset]->iband[i],
-// spn[inhset]->fsky[i], smabuffer.nfreq[spcode[i]-1]);
+        if(smabuffer.highrspectra!=1) {
+        if(smabuffer.spskip[0]!=-1) {
+//
+// when only one skipping gap occured
+//
    if(spcode[i]!=spn[inhset]->iband[i]) {
-   printf("\n");
+ printf("\n");
    if(smabuffer.spskip[0]==0) {
-   printf("Spotted skipping in spectral chunks starting at spcode=%d iband=%d\n", spcode[i], spn[inhset]->iband[i]);
-   printf("Try smalod with keyword spskip=%d,%d again.\n",
+ printf("Spotted skipping in spectral chunks starting at spcode=%d iband=%d\n", spcode[i], spn[inhset]->iband[i]);
+ printf("Try smalod with keyword spskip=%d,%d again.\n",
     spn[inhset]->iband[i], spcode[i]-spn[inhset]->iband[i]);
        } else {
-   printf("The skipping parameter spskip =%d,%d is inconsistent with\n",
+ printf("The skipping parameter spskip =%d,%d is inconsistent with\n",
            spcode[i], spn[inhset]->iband[i]);
-   printf("the spectral chunks skipped in the MIR data!\n");
+ printf("the spectral chunks skipped in the MIR data!\n");
         }
    bug_c( 'f', "spcode must match with iband!\n");
       }
       }
       }
-      
-      //printf("numberBaselines=%d\n", numberBaselines);
-      for(j=0; j < numberBaselines; j++) {
+      }
+//
+// handling multiple chunk skip gaps
+//
+// reconfigure 
+   if(smabuffer.highrspectra==1) 
+   for(i=1;i<SMIF+1; i++) {
+   if(spn[inhset]->nch[i][rxlod]==0) {
+// for those empty chunks, padding frequency
+// header parameters with artifical numbers.
+   smabuffer.sdf[spcode[i]-1]=0.104*pow(-1,smabuffer.sb+1);       
+   smabuffer.sfreq[spcode[i]-1]=
+   spn[inhset]->basefreq+0.084*(spcode[i]-11.5)*pow(-1,smabuffer.sb+1);
+   smabuffer.restfreq[spcode[i]-1]=spn[inhset]->basefreq;
+   smabuffer.nfreq[spcode[i]-1]=1;
+                      }
+        }       
+
+   for(j=0; j < numberBaselines; j++) {
 	{
 	  sblpnt=j;
 	  blhset++;
@@ -2230,31 +2307,32 @@ dat2003:
 	  visSMAscan.blockID.polid = uvwbsln[inhset]->uvwID[j].ipol;
 	  sbpnt = visSMAscan.blockID.sbid;
 	  rxpnt = uvwbsln[inhset]->uvwID[j].irec;
-	  if(smabuffer.rxif==uvwbsln[inhset]->uvwID[j].irec||smabuffer.rxif==-1) {
-	    switch(sbpnt) {
-	    case 0: blpnt=uvwbsln[inhset]->uvwID[j].blsid;
+   if(smabuffer.rxif==uvwbsln[inhset]->uvwID[j].irec||smabuffer.rxif==-1) 
+        {
+   switch(sbpnt) {
+      case 0: blpnt=uvwbsln[inhset]->uvwID[j].blsid;
 	      phaseSign=1;
-	      // if required by users
-	      // if data observed earlier than JD 2453488.5 (2005 4 28)
-	      if(smabuffer.doConjugate==-1||jday<2453488.5) phaseSign=-1;
-	      if(smabuffer.sb==0) {
+// if required by users
+// if data observed earlier than JD 2453488.5 (2005 4 28)
+      if(smabuffer.doConjugate==-1||jday<2453488.5) phaseSign=-1;
+      if(smabuffer.sb==0) {
 smabuffer.u[blpnt] = uvwbsln[inhset]->uvwID[j].u/smabuffer.basefreq*1000.;
 smabuffer.v[blpnt] = uvwbsln[inhset]->uvwID[j].v/smabuffer.basefreq*1000.;
 smabuffer.w[blpnt] = uvwbsln[inhset]->uvwID[j].w/smabuffer.basefreq*1000.;
 	      }
-	      break;
-	    case 1: blpnt=uvwbsln[inhset]->uvwID[j].blsid;
-	      phaseSign= 1;
-	      if(smabuffer.sb==1) {
-		smabuffer.u[blpnt] = uvwbsln[inhset]->uvwID[j].u/smabuffer.basefreq*1000.;
-		smabuffer.v[blpnt] = uvwbsln[inhset]->uvwID[j].v/smabuffer.basefreq*1000.;
-		smabuffer.w[blpnt] = uvwbsln[inhset]->uvwID[j].w/smabuffer.basefreq*1000.;
+      break;
+      case 1: blpnt=uvwbsln[inhset]->uvwID[j].blsid;
+      phaseSign= 1;
+      if(smabuffer.sb==1) {
+   smabuffer.u[blpnt] = uvwbsln[inhset]->uvwID[j].u/smabuffer.basefreq*1000.;
+   smabuffer.v[blpnt] = uvwbsln[inhset]->uvwID[j].v/smabuffer.basefreq*1000.;
+   smabuffer.w[blpnt] = uvwbsln[inhset]->uvwID[j].w/smabuffer.basefreq*1000.;
 	      }
-	      break;
+      break;
 	    }
 	  }
-	  flush=1;
-	  if(smabuffer.nopol==1) visSMAscan.blockID.polid=-5;
+      flush=1;
+      if(smabuffer.nopol==1) visSMAscan.blockID.polid=-5;
 	  switch(visSMAscan.blockID.polid)  {
 	  case  0: polpnt=0; break;
 	  case -1: polpnt=1; break;
@@ -2265,110 +2343,106 @@ smabuffer.w[blpnt] = uvwbsln[inhset]->uvwID[j].w/smabuffer.basefreq*1000.;
 	  case -6: polpnt=2; break;
 	  case -7: polpnt=3; break;
 	  case -8: polpnt=4; break;         }
-	  /* loading smabuffer uvw*/
-	  smabuffer.blcode[blpnt] = (float) visSMAscan.uvblnID;
-	  /* read sph for a complete spectral records assuming that the correlator
-	     configuration is not changed during the observation */
-	  if(readSet<= 1&&j==0) { 
-	    free(sph);
-	    sph = (struct sph_def **) malloc(sphSizeBuffer*sizeof( struct sph_def *));
-	    for (set=0; set < sphSizeBuffer; set++) {
-	      sph[set] = (struct sph_def *)malloc(sizeof(struct sph_def ));
-	      if (sph[set] == NULL ){
-		printf("ERROR: Memory allocation for sph failed for %d bytes\n",
-                       sphSizeBuffer*sizeof(struct sph_def));
-		exit(-1);
+// loading smabuffer uvw
+  smabuffer.blcode[blpnt] = (float) visSMAscan.uvblnID;
+// read sph for a complete spectral records assuming that the correlator
+// configuration is not changed during the observation 
+  if(readSet<= 1&&j==0) { 
+    free(sph);
+    sph = (struct sph_def **) malloc(sphSizeBuffer*sizeof( struct sph_def *));
+    for (set=0; set < sphSizeBuffer; set++) {
+    sph[set] = (struct sph_def *)malloc(sizeof(struct sph_def ));
+    if (sph[set] == NULL ){
+      printf("ERROR: Memory allocation for sph failed for %d bytes\n",
+      sphSizeBuffer*sizeof(struct sph_def));
+      exit(-1);
 	      }
 	    }
-	    for (set=0; set< sphSizeBuffer; set++) {
-	      *sph[set] = *(sph_read(fpin[2]));
-	      if (SWAP_ENDIAN) {
-		sph[set] =  swap_sph(sph[set]);
+    for (set=0; set< sphSizeBuffer; set++) {
+      *sph[set] = *(sph_read(fpin[2]));
+      if (SWAP_ENDIAN) {
+       sph[set] =  swap_sph(sph[set]);
 	      }
 	    }
-	    
+// set the dataoff for the first spectrum is 0	    
 	    sph[0]->dataoff = 0;
                }
 
 // for single rx case
-            for (i=0;i<numberSpectra;i++) {
-//           sph[i]->nch = spn[smabuffer.scanskip]->nch[i][0];
-             sph[i]->nch = spn[inhset]->nch[i][0];
+            for (i=0;i<smaCorr.n_chunk+1;i++) 
+            {
+            sph[i]->nch = spn[inhset]->nch[i][0];
             }
-
 
 // separate frequency configuration for rx1 and rx2 in dual rx case
           if(smaCorr.no_rxif==2)
-          for (i=0;i<numberSpectra;i++) {
+          for (i=0;i<smaCorr.n_chunk+1;i++) {
            if(rxpnt==smabuffer.rx1) 
               sph[i]->nch = spn[inhset]->nch[i][0];
-//              sph[i]->nch = spn[smabuffer.scanskip]->nch[i][0];
            if(rxpnt==smabuffer.rx2)
               sph[i]->nch = spn[inhset]->nch[i][1];
-//              sph[i]->nch = spn[smabuffer.scanskip]->nch[i][1];
-
-/* printf("i sph rxpnt rx1 rx2 %d %d %d %d %d \n", 
-                 i,sph[i]->nch,rxpnt,smabuffer.rx1,
-                                           smabuffer.rx2);
-*/
                 }
 
-
-	  /* The data for this spectrum consists of a 5 short int record header 
-	     and the data  which is a short for each real and a short for 
-	     each imag vis */
+// The data for this spectrum consists of a 5 short int record header 
+// and the data  which is a short for each real and a short for 
+// each imag vis 
+// for the ch0 
 	  datalength = 5 + 2*sph[0]->nch;
-	  /* Get some memory to hold the data */
+// Get some memory to hold the data 
 	  shortdata = (short int* )malloc(datalength*sizeof(short int));
-	  /* Here is the starting byte for the data for this spectrum */
-	  /* The 16 is to skip over the data integration header which precedes 
-	     all the records. We already read this data integration header 
-	     with sch_head_read  */
-	  bytepos = 16 + data_start_pos[inhset] + sph[0]->dataoff ; 
+// Here is the starting byte for the data for this spectrum 
+// The 16 is to skip over the data integration header which precedes 
+// all the records. We already read this data integration header 
+// with sch_head_read. 
+// inhset has the integration id 
+	  bytepos = 16 + data_start_pos[inhset] + sph[0]->dataoff; 
 	  bytepos = bytepos * (sblpnt+1);
-	  /* Move to this position in the file and read the data by
-           skipping the first a few integration */
+// Move to this position in the file and read the data by
+// skipping the first a few integration 
 	  if(j<1) fseek(fpin[5],bytepos,SEEK_SET);
 	  nbytes = sch_data_read(fpin[5],datalength,shortdata);
 	  if (SWAP_ENDIAN) {
 	    shortdata=swap_sch_data(shortdata, datalength);
 	  }
-	  /* take a look at the record header */
-	  /* intTime in sec */
+// take a look at the record header 
+// intTime in sec, integration time
 	  visSMAscan.time.intTime = (double) (shortdata[0]/10.);
-	  /* loading smabuffer intTime */
+// loading smabuffer intTime 
 	  smabuffer.inttime[j]= visSMAscan.time.intTime;
 	  smabuffer.inttim = visSMAscan.time.intTime;
-	  /* There is a different scale factor for each record (spectrum) */
+// There is a different scale factor for each record (spectrum) 
 	  scale = shortdata[4];
-	  /* Now the data There is only one channel for the continuum*/
+// Now the data: There is only one channel for the continuum
+// which can recalculated and are not stored in Miriad data
 	  visSMAscan.bsline.continuum.real = 
-            pow(2.,(double)scale)*shortdata[5];
+          pow(2.,(double)scale)*shortdata[5];
 	  visSMAscan.bsline.continuum.imag = 
-	    pow(2.,(double)scale)*(-shortdata[6]*phaseSign);
+	  pow(2.,(double)scale)*(-shortdata[6]*phaseSign);
 	  free(shortdata);
 	  sphset++;  
-	  /* The file is positioned at the record header for the next spectrum. */
-	  /* There is no 16 byte integration header between records */
-	  /* numberSpectra */
+// The file is positioned at the record header for the next spectrum. 
+// There is no 16 byte integration header between records 
 	  ifpnt=0;
-	  for (kk=1;kk<numberSpectra; kk++) {
-	    /*ifpnt=kk-1;*/
+//	  for (kk=1;kk<numberSpectra; kk++) {
+          for (kk=1;kk<smaCorr.n_chunk+1; kk++) {
+// assign sp pointr:
 	    ifpnt = spcode[kk]-1;
-	    datalength = 5 + 2*sph[kk]->nch;
-	    /* 5 short in header of each spectral visibility data */
-	    /* 2 shorts for real amd imaginary */
-	    /* sph[sphset]->nch number of channel in each spectral set*/
-	    /* Get some memory to hold the data */
-	    /* memory size = datalength*sizeof(short)) */
-	    shortdata = (short int* )malloc(datalength*sizeof(short int));
-	    nbytes = sch_data_read(fpin[5],datalength,shortdata);
-	    if (SWAP_ENDIAN) {
-	      shortdata=swap_sch_data(shortdata, datalength);
-	    }
-	    /* There is a different scale factor for each record (spectrum) */
-	    scale = shortdata[4];
-	    /* update polcode and pnt to smabuffer  */
+	   datalength = 5 + 2*sph[kk]->nch;
+// 5 short in header of each spectral visibility data 
+// 2 shorts for real amd imaginary 
+// sph[sphset]->nch number of channel in each spectral set
+// Get some memory to hold the data 
+// memory size = datalength*sizeof(short)) 
+//    if(smabuffer.highrspectra==1&&miriadsp[kk]==0) goto chunkskip;
+//    shortdata = (short int* )malloc(datalength*sizeof(short int));
+//	    nbytes = sch_data_read(fpin[5],datalength,shortdata);
+//	    if (SWAP_ENDIAN) {
+//	      shortdata=swap_sch_data(shortdata, datalength);
+//	    }
+     
+// There is a different scale factor for each record (spectrum) 
+//	    scale = shortdata[4];
+// update polcode and pnt to smabuffer  
 //
 // swapping pol state (RR<->LL, RL<->LR) before 2005-6-10 or 
 //                     -1<->-2,-3<->-4
@@ -2388,29 +2462,41 @@ smabuffer.w[blpnt] = uvwbsln[inhset]->uvwID[j].w/smabuffer.basefreq*1000.;
                    }
 	    /* smabuffer.pnt[ifpnt][polpnt][blpnt][0] = ipnt;*/
 	    smabuffer.pnt[ifpnt][polpnt][blpnt][sbpnt][rxpnt] = ipnt;
+//         printf("kk spcode ifpnt smabuffer.pnt %d %d %d %d\n",kk,spcode[kk],
+//            ifpnt,smabuffer.pnt[ifpnt][polpnt][blpnt][sbpnt][rxpnt]);
             if(wts[inhset]->wt[ifpnt][polpnt][blpnt][sbpnt][rxpnt] < 0.)
             smabuffer.flag[ifpnt][polpnt][blpnt][sbpnt][rxpnt] = 0;
+            if(smabuffer.highrspectra==1&&miriadsp[kk]==0)
+            smabuffer.flag[ifpnt][polpnt][blpnt][sbpnt][rxpnt] = 0;
+
+    if(smabuffer.highrspectra==1&&miriadsp[kk]==0) goto chunkskip;
+    shortdata = (short int* )malloc(datalength*sizeof(short int));
+          nbytes = sch_data_read(fpin[5],datalength,shortdata);
+          if (SWAP_ENDIAN) {
+            shortdata=swap_sch_data(shortdata, datalength);
+          }
+
+// There is a different scale factor for each record (spectrum)
+          scale = shortdata[4];
+
 	    /* Now the channel data.  */
 	    /* Make pseudo continuum */
 	    avenchan = 0;
 	    avereal  = 0.;
 	    aveimag  = 0.;
-        
 	    for(i=0;i<sph[kk]->nch;i++){
 	      if (smabuffer.rsnchan> 0) {
               if(sph[kk]->nch < smabuffer.rsnchan) {
-            printf("Error: rsnchan=%d is greater than %d, the number of channels in a chunk,\n",
-              smabuffer.rsnchan, sph[kk]->nch);
+ printf("Error: rsnchan=%d is greater than %d, the number of channels in a chunk,\n",
+            smabuffer.rsnchan, sph[kk]->nch);
             printf("       redo it with a smaller rsnchan.\n");
             exit(-1);
                                                     }
-		/* average the channel to the desired resolution */
-//          if(avenchan< (sph[kk]->nch/smabuffer.rsnchan) ) {
-	  avereal = avereal + (float)pow(2.,(double)scale)*shortdata[5+2*i];
-		  // convert ovro sign convention to miriad
-	  aveimag = aveimag + (float)pow(2.,(double)scale)*(-shortdata[6+2*i]*phaseSign);
-		  avenchan++;
-//		} else {
+// average the channel to the desired resolution 
+  avereal = avereal+(float)pow(2.,(double)scale)*shortdata[5+2*i];
+// convert ovro sign convention to miriad
+  aveimag = aveimag+(float)pow(2.,(double)scale)*(-shortdata[6+2*i]*phaseSign);
+	  avenchan++;
             if(avenchan==(sph[kk]->nch/smabuffer.rsnchan)) {
 		  avereal = avereal/avenchan;
 		  aveimag = aveimag/avenchan;
@@ -2429,37 +2515,44 @@ smabuffer.w[blpnt] = uvwbsln[inhset]->uvwID[j].w/smabuffer.basefreq*1000.;
 		  (float)pow(2.,(double)scale)*(-shortdata[6+2*i]*phaseSign);
 		ipnt++;    }
 	    }
-	    
-	    free(shortdata);
+            free(shortdata);
+	    chunkskip:
+            printf("");
+    if(smabuffer.highrspectra==1&&miriadsp[kk]==0) {
+            smabuffer.data[ipnt].real=0.0001;
+            smabuffer.data[ipnt].imag=0.;
+            ipnt++;  
+                                                   }
 	    sphset++;  /* count for each spectral chunk */
 	  }
-	  firstsp = sphset;
+	    firstsp = sphset;
         }
       }
       readSet++;
       smabuffer.nused=ipnt;
-      /* re-initialize vis point for next integration */
+// re-initialize vis point for next integration 
       ipnt=1;
       if(flush==1) {
-	if (fmod((readSet-1), 100.)<0.5||(readSet-1)==1)
-	  printf("set=%4d ints=%4d inhid=%4d time(JulianDay)=%9.5f int=% 4.1f \n",
+      if (fmod((readSet-1), 100.)<0.5||(readSet-1)==1)
+  printf("set=%4d ints=%4d inhid=%4d time(JulianDay)=%9.5f int=% 4.1f \n",
 		 readSet-1,
 		 visSMAscan.blockID.ints,
 		 visSMAscan.blockID.inhid,
 		 visSMAscan.time.UTCtime,
 		 visSMAscan.time.intTime);
-/* call rspokeflshsma_c to store databuffer to uvfile */
+// call rspokeflshsma_c to store databuffer to uvfile 
 	kstat = -1;
 	*kst = (char *)&kstat;
         if(smabuffer.noskip!=1) {
         if((strncmp(multisour[sourceID].name,target,6)!=0)&&
            (strncmp(multisour[sourceID].name,unknown,7)!=0)) {
 	  rspokeflshsma_c(kst);
+	                                    } else {
+                                            ntarget++;
+	                                         }      
 
-	} else {
-          ntarget++;
-	}      } else {
-              rspokeflshsma_c(kst);
+                                } else {
+         rspokeflshsma_c(kst);
                       }
       }
     }
@@ -2475,44 +2568,64 @@ smabuffer.w[blpnt] = uvwbsln[inhset]->uvwID[j].w/smabuffer.basefreq*1000.;
          for (i=0; i<ireset+1; i++) {
              if(i>0) smabuffer.scanskip = reset_id[i];
     if (smabuffer.rsnchan>0) {
+int nnpadding;
       printf("converted vis spectra from the original correlator configuration\n");
       printf("to low and uniform resolution spectra:\n");
       printf("(starting at integrations=%d)\n", smabuffer.scanskip);
       printf("         input     output\n");
       for (kk=1; kk<numberSpectra; kk++) {
+ if(smabuffer.highrspectra==1&&spn[smabuffer.scanskip]->nch[kk][rxlod]==0)
+{
+       nnpadding = 1-avenchan;
+printf("warning: each of the empty chunks is padded with one flagged channel.\n");
+
+} else {
+       nnpadding = 0;
+}
+
         if(smabuffer.spskip[0]==0) {
 	printf("  s%02d     %4d  =>  s%02d %4d\n",kk, 
-        spn[smabuffer.scanskip]->nch[kk][rxlod], kk, avenchan);
+        spn[smabuffer.scanskip]->nch[kk][rxlod], kk, avenchan+nnpadding);
           } else {
         if(kk < smabuffer.spskip[0]) {
         printf("  s%02d     %4d  =>  s%02d %4d\n",kk,
-        spn[smabuffer.scanskip]->nch[kk][rxlod], kk, avenchan);
+        spn[smabuffer.scanskip]->nch[kk][rxlod], kk, avenchan+nnpadding);
           } else {
         printf("  s%02d     %4d  =>  s%02d %4d\n",kk+smabuffer.spskip[1],
-        spn[smabuffer.scanskip]->nch[kk][rxlod], kk, avenchan);
+        spn[smabuffer.scanskip]->nch[kk][rxlod], kk, avenchan+nnpadding);
            }
            }
 
       }
     } else {
+int npadding=0;
       printf("vis spectra from the original correlator configuration: \n");
       printf("(starting at integrations=%d)\n", smabuffer.scanskip);
       printf("         input     output\n");
       for (kk=1; kk<numberSpectra; kk++) {
+ if(smabuffer.highrspectra==1&&spn[smabuffer.scanskip]->nch[kk][rxlod]==0)
+{ 
+       npadding = 1; 
+printf("warning: each of the empty chunks is padded with one flagged channel.\n")
+;
+
+} else { 
+       npadding = 0;
+}   
        if(smabuffer.spskip[0]==0) {
         printf("  s%02d     %4d  =>  s%02d %4d\n",kk, 
         spn[smabuffer.scanskip]->nch[kk][rxlod], kk, 
-        spn[smabuffer.scanskip]->nch[kk][rxlod]);
+        spn[smabuffer.scanskip]->nch[kk][rxlod]+npadding);
          } else {
         if(kk < smabuffer.spskip[0]) {
         printf("  s%02d     %4d  =>  s%02d %4d\n",kk,
         spn[smabuffer.scanskip]->nch[kk][rxlod], kk,
-        spn[smabuffer.scanskip]->nch[kk][rxlod]); 
+        spn[smabuffer.scanskip]->nch[kk][rxlod]+npadding); 
         } else {
         printf("  s%02d     %4d  =>  s%02d %4d\n",
         kk+smabuffer.spskip[1],
         spn[smabuffer.scanskip]->nch[kk][rxlod], kk,
-        spn[smabuffer.scanskip]->nch[kk][rxlod]);
+        spn[smabuffer.scanskip]->nch[kk][rxlod]+npadding);
                }
          }
       }
