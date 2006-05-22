@@ -141,6 +141,8 @@ c    jhz  16sep05 fixed normaliztion by channel zero in the case of
 c                 solving for bandpass 
 c                 added the options of averrll for
 c                 taking vector average of rr and ll bandpass.
+c    jhz  22may06 increased  maxschan from 1024 to 4096 for
+c                 handling high spectral resolution data.
 c  Problems:
 c    * Should do simple spectral index fit.
 c------------------------------------------------------------------------
@@ -150,7 +152,7 @@ c------------------------------------------------------------------------
         parameter(maxpol=2)
 c
         character version*(*)
-        parameter(version='SmaMfCal: version 1.4 16-Sept-05')
+        parameter(version='SmaMfCal: version 1.5 22-May-06')
 c
         integer tno
         integer pwgains,pfreq,psource,ppass,pgains,ptau
@@ -1891,7 +1893,7 @@ c
 c************************************************************************
         subroutine avgchn(numpol,bchan,echan,data,flags,nchan,
      *  bpnspect,bpnschan,maxchan,chnwt,chz,chzwt,weight)
-        PARAMETER(maxwin=33, maxschan=1024, maxpol=2)
+        PARAMETER(maxwin=33, maxschan=4096, maxpol=2)
         integer nchan,bpnspect,maxchan,bpnschan(maxwin)
         integer i,j,numpol,bchan,echan, ipol
         integer bschan, eschan 
@@ -1977,7 +1979,7 @@ c************************************************************************
         subroutine divchz(numpol,data,ndata,nchan,
      *  bpnspect,bpnschan,maxchan,chnwt,chz,chzwt,weight,
      *  edge)
-        PARAMETER(maxwin=33, maxschan=1024, maxpol=2)
+        PARAMETER(maxwin=33, maxschan=4096, maxpol=2)
         PARAMETER(pi=3.14159265358979323846)
         integer nchan,bpnspect,maxchan,bpnschan(maxwin)
         integer i,j,numpol, ipol
@@ -2034,7 +2036,7 @@ c************************************************************************
         subroutine smoothply(preamble,data,flags,nchan,bpnspect,
      *    bpnschan,maxchan,dosmooth,donply,dowrap,wwt)
 c
-        PARAMETER(maxwin=48, maxschan=1024)
+        PARAMETER(maxwin=48, maxschan=4096)
         integer nchan,bpnspect,maxchan,bpnschan(maxwin)
         integer i,j,ntcount
         PARAMETER(MAXNR=20, pi=3.14159265358979323846)
