@@ -4,6 +4,7 @@
 /*   02-jun-2005   jhz      add arguments rfreq1 and vsour1 to          */
 /*                          rspokeinisma                                */
 /*   03-feb-2006   jhz      added dsb1 to  rspokeinisma_c               */
+/*   18-may-2006   jhz      added nohighspr1 to rspokeinisma_c          */
 /************************************************************************/
 #include <string.h>
 #include "miriad.h"
@@ -58,7 +59,8 @@ fortran subroutine rspokeinisma(integer tbd, integer tno1,
  logical linear1, logical oldpol1, double lat1, double long1, 
  integer rsnchan1, integer refant1, logical dolsr1, 
  double rfreq1, real vsour1, double antpos1, integer readant1,
- logical noskip1, integer spskip1, logical dsb1, logical mcconfig1)
+ logical noskip1, integer spskip1, logical dsb1, logical mcconfig1,
+ logical nohighspr1)
         {
       rspokeinisma_c((char *)tbd.addr, tno1.val,
           dosam1.addr, doxyp1.addr, doop1.addr, dohann1.addr,
@@ -67,7 +69,7 @@ fortran subroutine rspokeinisma(integer tbd, integer tno1,
           linear1.addr, oldpol1.addr, lat1.val, long1.val, rsnchan1.val,
           refant1.val, dolsr1.addr, rfreq1.val, vsour1.addr,
 	  antpos1.addr, readant1.val, noskip1.addr, spskip1.addr,
-	  dsb1.addr, mcconfig1.addr);
+	  dsb1.addr, mcconfig1.addr, nohighspr1.addr);
         }
 fortran subroutine rspokeflshsma(integer tbd)
 {

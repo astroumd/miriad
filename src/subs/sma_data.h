@@ -8,6 +8,10 @@
 //               SMIF can be 24 instead of 48 which was redundant since in the wt array
 //               a sideband variable is used. 
 // jhz 2006-2-3: add dsb to smlodd.
+// jhz 2006-5-17: add highrspectra to smlodd to handle 
+//                high spectral resolution mode, allowing 
+//                empty chunks.
+// jhz 2006-5-18: change MAXCHAN from 7681 to 8217
 #include "miriad.h"
 
 
@@ -299,7 +303,7 @@ struct anttsys {
  */
 #define MAXINT 5000  /* maximum number of integration */
 #define MAXANT 10
-#define MAXCHAN 7681
+#define MAXCHAN 8217 /* 7681 8193+24=8217*/
 
 #define MAXBAS 90    /* maxant*(maxant-1)/2*2sb */
 
@@ -587,7 +591,7 @@ struct smlodd {
         int mflag;
         int newsc;
         int newpnt;
-        int sb;  /* side band sb=0 for lsb, 1 for usb, sb for both */
+        int sb;   /* side band sb=0 for lsb, 1 for usb, sb for both */
         int rxif; /* corresponding to irec in blh */
         int rx1;  /* the first rx in the data structure in the dual rx case */
         int rx2;  /* the second rx in the data structure in the dual rx case */
@@ -598,7 +602,15 @@ struct smlodd {
         int spskip[2];
         int dsb; 
         int mcconfig;
-};
+        int highrspectra; /* highrspectra=1; full spectral chunks (24)
+                                           to be processed, allowing
+                                           empty chunks.
+                             highrspectra=-1; partial spectral chunks
+                                           to be processed, the
+                                           number of spectral chunks
+                                           to be determined by the 
+                                           program. */
+    };
 typedef struct smlodd smlodd;
 
 struct smEng {
