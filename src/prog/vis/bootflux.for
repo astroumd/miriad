@@ -77,6 +77,9 @@ c                   for compatability with SGI 64-bit compiler.
 c    pjt 20jun98 fixed 0 -> .FALSE. for flags(i) assignment
 c    pjt  3dec02 using MAXBASE3
 c    pjt 26feb03 also using MAXANT3, since this is only for BIMA
+c    dnf 09dec05 Added average and median fluxs to output
+c    dnf 23may05 Changed MAXANT3 and MAXBASE3 to work with CARMA data
+c                also included workaround in the case tsys is not in the data
 c  Bugs:
 
 c   Polarization mode not tested.
@@ -85,7 +88,7 @@ c------------------------------------------------------------------------
       include 'mirconst.h'
       integer MAXPOL,MAXSRC,MAXANT3,MAXBASE3,PolMin,PolMax
       character version*(*),defdir*(*)
-      parameter(MAXPOL=4,MAXSRC=512,MAXANT3=10,MAXBASE3=45,
+      parameter(MAXPOL=4,MAXSRC=512,MAXANT3=MAXANT,MAXBASE3=MAXBASE,
      *          PolMin=-9,PolMax=4)
       parameter(version='BootFlux: version 26-feb-03')
       parameter(defdir=
@@ -93,7 +96,7 @@ c     *         '/home/bima2/data/flux/measured_fluxes/')
 c     *          '/lma/mirth/programmers/lgm/measured_fluxes/')
      *          './' )
 c
-      character uvflags*16,polcode*2,line*132
+      character uvflags*16,polcode*2,line*132,type
       logical docal,dopol,dopass,found,valid(MAXSRC)
       character sources(MAXSRC)*16,source*16
       complex flux(MAXPOL,MAXBASE3,MAXSRC)
@@ -105,9 +108,9 @@ c
       integer i,j,ii,jj,t
       integer ncnt(MAXPOL,MAXBASE3,MAXSRC)
       integer PolIndx(PolMin:PolMax),p(MAXPOL),pp(MAXPOL)
-      integer nsrc,npol,isrc,ipol,vsource,tno
+      integer nsrc,npol,isrc,ipol,vsource,tno,length
 c
-      integer nchan
+      integer nchan,k
       double precision preamble(4),skyfreq(MAXCHAN)
       real antel(MAXSRC)
       complex data(MAXCHAN)
@@ -115,7 +118,7 @@ c
 c
       integer base,bases(MAXBASE3),ibl,nbase,ant1,ant2,bigant
       integer blmatrx(MAXANT3,MAXANT3),ncal,calscan(MAXSRC),iclose
-      integer nsamp,fno,iostat,nants,nspec,nsys
+      integer nsamp,fno,iostat,nants,nspec,nsys,pass,first,medcnt
       real dtime,temp1,temp2,temp3,scalamp2,pltb,factor,sumw,weight
       real tave,sigr,sigi,newflux(MAXBASE3),sigflux(MAXBASE3)
       real rflux2(MAXPOL,MAXBASE3,MAXSRC)
@@ -124,12 +127,13 @@ c
       real obsfreq(MAXSRC),tsys(MAXSRC),reslim
       real tint,inttime(MAXBASE3,MAXSRC),wallclk,visib,plflux,freq
       real sumdy2,sformal,finscal(MAXSRC),finssig(MAXSRC)
+      real finsavg,finsavgs,median,med(MAXSRC),temp5
       real finvec(MAXSRC),finvsig(MAXSRC),decobs,haobs
       double precision starttm(MAXSRC),startut(MAXSRC),thisbas
       double precision startjd(MAXSRC),dlst,draobs,ddecobs
       character calsou*16,ctime*18,caltime*18,filename*80
       character savedir*80,logfile*80
-      logical newtime,save,more
+      logical newtime,save,more,sorted,ok
 c
 c  Externals.
 c
@@ -139,6 +143,8 @@ c
 c
 c  Get the user parameters.
 c
+      finsavg=0.
+      finsavgs=0.
       call output(version)
       call keyini
       call GetOpt(docal,dopol,dopass)
@@ -193,6 +199,10 @@ c
       call logwrite('------------------------------------------'//
      *         '-------------------------------------',more)
 
+c workaround for data with no tsys
+      do k=1,(MAXANT3*16)
+	 systemps(k)=0.
+      enddo
 c
 c  Loop the loop until we have no more files.
 c
@@ -276,11 +286,14 @@ c
             call uvgetvri(tno,'nants',nants,1)
             call uvgetvri(tno,'nspect',nspec,1)
             if(nspec .ne. 0) then
-              call uvgetvrr(tno,'systemp',systemps,nants*nspec)
+	       call uvprobvr(tno,'systemp',type,length,ok)
+	       if(ok)call uvgetvrr(tno,'systemp',systemps,nants*nspec)
             else
               call uvrdvri(tno,'nwide',nspec,1)
-              if(nspec .ne. 0)
-     *             call uvgetvrr(tno,'wsystemp',systemps,nants*nspec)
+              if(nspec .ne. 0)then
+		call uvprobvr(tno,'wystemp',type,length,ok)
+                if(ok)call uvgetvrr(tno,'wsystemp',systemps,nants*nspec)
+	      endif
             endif
             do i=1,nants
               sum = 0.0
@@ -312,12 +325,15 @@ c  Accumulate the data. Drop data where the fractional visibility is
 c     is less then "reslim" input by user.
 c
          base = preamble(4)
-         ibl  = findbase(base,bases,nbase)
+	 ibl  = findbase(base,bases,nbase)
          if(ibl .eq. 0) then
            nbase      = nbase + 1
            ibl        = nbase
            bases(ibl) = base
          endif
+c	 if(bases(ibl) .lt.256)then
+c	 print*,bases(ibl),ibl,nbase
+c	 endif
          do i=1,nchan
            freq = skyfreq(i)
            call PlanVis(tno,freq,pltb,visib,temp,.false.)
@@ -414,6 +430,7 @@ c      set sigma to 10 percent of amplitude
 c
           do ibl=1,nbase
             thisbas = bases(ibl)
+c	    print*,thisbas,nbase,ibl
             call basant(thisbas,ant1,ant2)
             bigant = max0(bigant,ant2)
             if(ncnt(ipol,ibl,isrc).gt.0) then
@@ -713,6 +730,7 @@ c
       if(logfile .ne. ' ')
      * call output('----------------------------------------'//
      *          '-------------------------------------')
+      medcnt=0
       do isrc=1,nsrc
         if(sources(isrc) .ne. calsou .and. valid(isrc)) then
           call julday(startjd(isrc),'H',ctime)
@@ -721,9 +739,40 @@ c
      *       sources(isrc),ctime,obsfreq(isrc),antel(isrc),calsou,
      *         nint(tsys(isrc)),finscal(isrc),finssig(isrc)
           call logwrite(line,more)
-          if(logfile .ne. ' ') call  output(line)
+	  medcnt=medcnt+1
+	  med(medcnt)=finscal(isrc)
+	  finsavg=finsavg+(finscal(isrc)/(finssig(isrc)**2))
+	  finsavgs=finsavgs+(1/(finssig(isrc)**2))
+          if(logfile .ne. ' ') call  output(line)	  
         endif
       enddo 
+      pass=1
+      sorted=.false.
+      do while(.not.sorted)
+	 sorted=.true.
+	 do first=1,medcnt-pass
+	    if(med(first).gt.med(first+1))then
+	       temp5=med(first)
+	       med(first)=med(first+1)
+	       med(first+1)=temp5
+	       sorted=.false.
+	    endif
+	 enddo
+	 pass=pass+1
+      enddo
+      pass=mod(medcnt,2)
+      if(pass.eq.0)then
+	 median=(med(medcnt/2)+med(medcnt/2 +1))/2.
+      else
+	 median=med(medcnt/2)
+      endif
+      call logwrite(' ',more)
+      finsavg=finsavg/finsavgs
+      finsavgs=1./(sqrt(finsavgs))
+      write(line,'(a15,f8.3,1x,f6.3,a20,f8.3)')'Average Flux:  ',finsavg
+     *   ,finsavgs,'     Median Flux:  ',median
+      call logwrite(line,more)
+      if(logfile .ne. ' ') call  output(line)
 c
       call logwrite(' ',more)
       if(logfile .ne. ' ') call output(line)
