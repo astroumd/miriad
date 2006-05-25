@@ -37,11 +37,14 @@ AC_CHECK_PROG(CC, cc, cc)
 
 AC_PROG_CC
 AC_PROG_CXX
+AC_PROG_F77
+AC_PROG_CPP
 AC_PROG_AWK
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
 AC_PROG_RANLIB
+AC_F77_LIBRARY_LDFLAGS
 
 AC_ARG_PROGRAM
 
@@ -234,6 +237,7 @@ AC_CHECK_HEADERS(fcntl.h limits.h malloc.h sgtty.h strings.h sys/file.h sys/ioct
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
 AC_C_INLINE
+AC_C_BIGENDIAN 
 AC_TYPE_OFF_T
 AC_TYPE_SIZE_T
 AC_HEADER_TIME
@@ -255,7 +259,7 @@ AC_CHECK_FUNCS(ftime gethostname gettimeofday getwd mkdir select strdup strtod s
 
 AC_C_BIGENDIAN
 
-AC_OUTPUT(mirdefs ../src/inc/maxdim.h ../src/inc/maxdimc.h Makefile)
+AC_OUTPUT(mirdefs ../src/inc/maxdim.h ../src/inc/maxdimc.h Makefile compile.generic)
 
 
 dnl It is beyond me why 'mirdefs' is not kept executable.... like mirdefs.in
