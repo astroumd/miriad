@@ -222,9 +222,12 @@ rehash
 echo mir.mkdirs $MIRTEMP
 mir.mkdirs $MIRTEMP >& /tmp/mir.mkdirs.$$.log
 
-if ($generic && -d $MIRTEMP/bin/localsys) then
-  echo "Warning: try out new compile.generic"
-  cp $install_dir/compile.generic $MIRTEMP/bin/localsys/compile.$hosttype
+if (-d $MIRTEMP/bin/localsys) then
+  cp $install_dir/compile.generic $MIRTEMP/bin/localsys
+  if ($generic) then
+    echo "Warning: try out new compile.generic"
+    cp $install_dir/compile.generic $MIRTEMP/bin/localsys/compile.$hosttype
+  endif
 endif
 
 set startcsh=$MIRTEMP/MIRRC.$hosttype
