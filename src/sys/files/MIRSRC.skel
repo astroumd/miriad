@@ -58,7 +58,7 @@ export PGPLOT_FONT=$MIRLIB/grfont.dat
 echo old: $PATH
 
 if [ `echo ":${PATH}:" | grep -c ":\.:"` = 1 ]; then
-  export PATH=`echo ":${PATH}:"|sed "s&:.:&.:${MIRBIN}:&"`
+  export PATH=`echo ":${PATH}:"|sed "s&:.:&:.:${MIRBIN}:&"`
 else
   export PATH=${MIRBIN}:$PATH
 fi
