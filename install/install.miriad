@@ -1,6 +1,6 @@
 #! /bin/csh -f
 #
-set version=16-mar-06
+set version=26-may-06
 #
 #  2-aug-99 Updated for Sebok's Mandrake setup
 #  1-aug-00 Updated to allow to build private PGPLOT version
@@ -35,19 +35,7 @@ set version=16-mar-06
 # 30-jan-06 fix typo for poor (ba)sh users
 # 10-jan-06 (JHZ) change g77_gcc.conf to mirg77_gcc.conf when copy over
 #           g77_gcc_64.conf (the pgplot config file for 64bits linux)
-#           
-#
-#   Simple single-architecture installation of MIRIAD
-#   (linux)
-#   On our current single CPU Pii-400 this takes: (july 1999)
-#	465.280u 81.630s 12:32.65 72.6% 0+0k 0+0io 1970021pf+0w
-#   Piii-600 (laptop) w/ gcc-2.95.3 (june 2001) [more features]
-#       482.280u 54.400s 12:04.94 74.0%	0+0k 0+0io 2924051pf+0w
-#       397.400u 30.110s 8:09.19 87.3%	0+0k 0+0io 1532623pf+0w
-#   Piii-800 (gaia) w/ gcc-2.96
-#       715.810u 94.320s 14:06.76 95.6% 0+0k 0+0io 3582351pf+0w
-#   Piv-1600 (nemo) w/ gcc-2.96
-#	208.110u 28.510s 4:14.09 93.1%	0+0k 0+0io 1659485pf+0w
+# 24-may-06 more configure options, optional compile.generic
 #
 #-----------------------------------------------------------------------
 
@@ -65,6 +53,9 @@ endif
 
 #  carma, wsrt, atnf, sma, bima, ....
 set telescope=carma
+
+#  try the new generic (autoconf) created compile directives file?
+set generic=0
 
 #   'newdir' is something that tags the date this version was made (e.g. 98jun08)
 #   later on this will also be stored again in the file $MIR/DATE, where the CVS miriad
@@ -110,9 +101,9 @@ else
   set mirxlib="/usr/X11R6/lib"
 endif
 
-# /sw/lib is for Fink (on MacOSX)
+# /sw/lib is for Fink, /opt/local/lib for DarwinPorts (on MacOSX)  
 # lib64's are for linux 64bit machines
-set searchlibs=(/lib64 /lib /usr/lib64 /usr/lib /usr/X11R6/lib64 usr/X11R6/lib /local/lib /usr/local/lib /sw/lib)
+set searchlibs=(/lib64 /lib /usr/lib64 /usr/lib /usr/X11R6/lib64 usr/X11R6/lib /local/lib /usr/local/lib /sw/lib /opt/local/lib)
 
 set log=/tmp/miriad.install.$$.log
 
@@ -132,7 +123,7 @@ set install_root=`pwd`
 
 #               turn on(1)/off(0) certain install options (command line)
 set official=0              #  also modify the system (c)shrc.MIRIAD?
-set shared=1                #  also build shared library libmir.so?
+set shared=1                #  also build shared library libmir.so? [not working on mac yet]
 set pgplot=1                #  include PGPLOT in $MIRLIB ? (you almost ALWAYS want this to be 1)
 set debug=0                 #  compile in debug (-g) mode ?
 set cvs=1                   #  use CVS archive to get miriad.tar.gz ?
@@ -141,8 +132,8 @@ set test=1                  #  mir.test  baseline test (batch oriented)
 set testx=0		    #  mir.testx testing X routines (interactive)
 set bench=0,512,1           #  mir.bench nchan,mapsize,cell  (nchan=0 will skip bench)
 set intel=0                 #  use intel compiler (ifc/icc) for linux?
-set g95=0                   #  use g95 as default gnu compiler, instead of g77
-set gfortran=0              #  use gfortran as default gnu compiler, instead of g77
+set g95=0                   #  use g95 as default gnu compiler, instead of g77 [linux only]
+set gfortran=0              #  use gfortran as default gnu compiler, instead of g77 [linux only]
 set man=1		    #  do manual pages
 set lfs=(-D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE) # LFS flags for uvio
 
@@ -230,6 +221,11 @@ set path = ( $MIRTEMP/src/sys/bin $path )
 rehash
 echo mir.mkdirs $MIRTEMP
 mir.mkdirs $MIRTEMP >& /tmp/mir.mkdirs.$$.log
+
+if ($generic && -d $MIRTEMP/bin/localsys) then
+  echo "Warning: try out new compile.generic"
+  cp $install_dir/compile.generic $MIRTEMP/bin/localsys/compile.$hosttype
+endif
 
 set startcsh=$MIRTEMP/MIRRC.$hosttype
 set startsh=$MIRTEMP/MIRSRC.$hosttype
