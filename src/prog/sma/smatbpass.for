@@ -76,6 +76,9 @@ c               to the cross-hand visibilities.
 c   jhz 13dec05 add initialization for the ppass array
 c               in sub tpolbpass and
 c                  sub t2ptbpass
+c   jhz 30may06 add restriction that the bpass files
+c               must have the same number of antennas
+c               in the bandpass solutions.
 c
 c  Bugs:
 c     not for dual pol case, must select one of pol in the case
@@ -98,7 +101,7 @@ c------------------------------------------------------------------------
         integer maxTimes,maxGains
         parameter(maxTimes=2*MAXCHAN*MAXANT)
         parameter(maxGains=2*MAXCHAN*MAXANT)
-        integer iostat,tin,tOut, nfeeds,nants,nchan
+        integer iostat,tin,tOut, nfeeds,nants,nchan,maxnants
         integer  i, j, k,nschann(maxspect),nsols,ntau
         character vis*64,bpfile*64,out*64,itoaf*3,ltype*16
         logical dopass,first
@@ -146,6 +149,7 @@ c        parameter(polxx=-5,polyy=-6,polrr=-1,polll=-2,poli=1)
           dopass  = .false.
           tupdate = .false.
           bpupdate = .false.
+          maxnants = 0
 c
 c  Get the user parameters.
 c
@@ -158,6 +162,7 @@ c
      *  call bug ('f', 'Number of bandpass files not given')
          call GetOpt(uvflags,ampsc,vecamp,relax,dopolfit,docross)
         call uvDatInp('vis',uvflags)
+         write(*,*) 'uvflags=', uvflags
         call selinput('select',sels,maxsels)
         call keyr('bptime', UTstep, 60.)
              UTstep=UTstep/24./60.
@@ -201,6 +206,12 @@ c load gains
          if(nsols.gt.1) call bug('f', 'number of time interval >1.')
 c load the bpass time
          bptime(lin) = times(1)
+c get the number of antennas from each files
+         
+         if(lin.eq.1) maxnants=nants
+         if((lin.gt.1).and.(maxnants.ne.nants)) 
+     * call bug('f', 
+     * 'The number of antennas differ in different files.')
          do i=1, nants
          do j=1, nfeeds
             pee(i) =j
@@ -218,6 +229,9 @@ c load the bpass time
           call hclose(tin)
           end do
           endif
+c           assign the number of antennas.
+            nants=maxnants
+            
 
 
 c 
@@ -309,7 +323,8 @@ c
              sfreqq(i) = freqs(k)
              enddo
 c
-c detemine the bpflag
+c detemine the bpflag, which were done in edge flagging
+c during smafcal or mfcal
 c
              do i=1,nread
              bpflags(i)=.true.
@@ -327,7 +342,7 @@ c
              bpflags(k+nschan(i)-j)=.false.
              enddo
              enddo
-           
+
           Tprev = preamble(4)
           Tmin = Tprev
           Tmax = Tmin
@@ -342,7 +357,6 @@ c
      *            nfeeds,ppass,tpass,bptime,UT)
         if(dopolfit) call tpolbpass(nterm,nants,nchan,nfiles,
      *            nfeeds,ppass,tpass,bptime,UT)
-
             write(*,500) 'applied bpass at UT=',
      * UT*24.
           UT=UT+UTstep
@@ -361,8 +375,7 @@ c for each of the antennas
      *            nfeeds,ppass,tpass,bptime,UT)
         if(.not.dopolfit) call t2ptbpass(nterm,nants,nchan,nfiles,
      *            nfeeds,ppass,tpass,bptime,UT)
-
-       write(*,500) 'applied bpass at UT=',
+        write(*,500) 'applied bpass at UT=',
      * UT*24.
            UT=UT+UTstep
                        endif
@@ -432,7 +445,7 @@ c
                 else
                 flags(k) = .false.
                 end if
-                 if(flags(k)) then
+                if(flags(k)) then
         if(abs(ppass(i1,i,1)).eq.0..and.abs(ppass(i1,i,2)).eq.0.) 
      *         ppass(i1,i,1) = ppass(i1,i,2)
        if(abs(ppass(i1,i,1)).eq.0) 
@@ -1055,6 +1068,7 @@ c
           l = l + 1
           uvflags(l:l) = 'e'
         endif
+        write(*,*) 'opt-uvflag=', uvflags
         end
 
 c************************************************************************
