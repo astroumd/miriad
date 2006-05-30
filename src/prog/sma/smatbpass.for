@@ -96,7 +96,7 @@ c------------------------------------------------------------------------
         parameter (DPI = 3.14159265358979323846)
         parameter (TWOPI = 2 * PI)
         parameter (DTWOPI = 2 * DPI)        
-        parameter(version='SmaTbpass: version 1.1 12-Dec-05')
+        parameter(version='SmaTbpass: version 1.2 30-Jun-06')
         include 'maxdim.h'
         integer maxTimes,maxGains
         parameter(maxTimes=2*MAXCHAN*MAXANT)
@@ -162,7 +162,6 @@ c
      *  call bug ('f', 'Number of bandpass files not given')
          call GetOpt(uvflags,ampsc,vecamp,relax,dopolfit,docross)
         call uvDatInp('vis',uvflags)
-         write(*,*) 'uvflags=', uvflags
         call selinput('select',sels,maxsels)
         call keyr('bptime', UTstep, 60.)
              UTstep=UTstep/24./60.
@@ -1068,7 +1067,6 @@ c
           l = l + 1
           uvflags(l:l) = 'e'
         endif
-        write(*,*) 'opt-uvflag=', uvflags
         end
 
 c************************************************************************
