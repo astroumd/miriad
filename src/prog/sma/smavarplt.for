@@ -88,13 +88,16 @@ c                 of y-axis variable so that the whole things
 c                 can be in one line.
 c                 cleaned up the old smamiriad stuff and
 c                 replace them with "mirconst.h".
+c    jhz  30may06 add logical variable blflag to do baseline flag if
+c                 all the channels in a baseline have been 
+c                 flagged.
 c  Bugs:
 c    ?? Perfect?
 c------------------------------------------------------------------------
         character version*(*)
         integer maxpnts
         parameter(maxpnts=100000)
-        parameter(version='SmaVarPlt: version 1.5 31-Mar-06')
+        parameter(version='SmaVarPlt: version 1.5 30-May-06')
         logical doplot,dolog,dotime,dounwrap
         character vis*64,device*64,logfile*64,xaxis*16,yaxis*16
         character xtype*1,ytype*1,xunit*16,yunit*16,calday*24
@@ -993,18 +996,20 @@ c------------------------------------------------------------------------
         integer nchan,i1,i2,nrecord,nants,nflagbl(maxant)
         character xt*1,yt*1, tt*1, souread*32
         common/sour/soupnt,source,nsource
-        logical tsysflag(maxant,maxinte)
+        logical tsysflag(maxant,maxinte),blflag
         double precision mytime(maxinte)
         common/tsysflag/tsysflag,mytime
 c
 c  Externals.
 c
         integer uvscan
+       
 c
 c initialize flfrun 1 -> good data
         do i=1,maxruns
         flgrun(i)=1.
         end do
+        blflag=.false.
         if(max(xdim,ydim).gt.maxruns)
      *    call bug('f','Too many variables to hold in buffer')
         npnts = 0
@@ -1051,7 +1056,13 @@ c nbls=nflagbl(i)(nflagbl(i)+1)/2, antenna i should be flagged.
              if(.not.tupd) nbls=nbls+1
              call basant(preamble(4),i1,i2)
 c             write(*,*) 'flag=',flags(1),flags(50)
-             if(.not.flags(1).and..not.tupd) then
+             do i=1, nchan
+             if (flags(i)) then 
+             blflag=.true.
+             goto 100
+             end if
+             end do
+100             if(.not.blflag.and..not.tupd) then
              nflagbl(i1)= nflagbl(i1)+1
              nflagbl(i2)= nflagbl(i2)+1
              end if
