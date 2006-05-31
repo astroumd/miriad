@@ -88,16 +88,19 @@ c                 of y-axis variable so that the whole things
 c                 can be in one line.
 c                 cleaned up the old smamiriad stuff and
 c                 replace them with "mirconst.h".
-c    jhz  30may06 add logical variable blflag to do baseline flag if
+c    jhz  30may06 add logical blflag to do baseline flag if
 c                 all the channels in a baseline have been 
 c                 flagged.
+c    jhz 31may06  added initialization and resuming of blflag
+c                 before and after parsing baseline based flagging
+c                 states.
 c  Bugs:
 c    ?? Perfect?
 c------------------------------------------------------------------------
         character version*(*)
         integer maxpnts
         parameter(maxpnts=100000)
-        parameter(version='SmaVarPlt: version 1.5 30-May-06')
+        parameter(version='SmaVarPlt: version 1.6 31-May-06')
         logical doplot,dolog,dotime,dounwrap
         character vis*64,device*64,logfile*64,xaxis*16,yaxis*16
         character xtype*1,ytype*1,xunit*16,yunit*16,calday*24
@@ -1032,10 +1035,18 @@ c
              call uvread(tin,preamble,data,flags,maxchan,nchan)
         if(nchan.le.0) call bug('f','No data found in the input.')
              call basant(preamble(4),i1,i2)
-             if(.not.flags(1)) then
+             do i=1, nchan
+             if (flags(i)) then
+             blflag=.true.
+             goto 10
+             end if
+             end do
+
+10             if(.not.blflag) then
                nflagbl(i1)= nflagbl(i1)+1
                nflagbl(i2)= nflagbl(i2)+1
              end if
+             blflag=.false.
              ctime=preamble(3)
              inhid=1
              mytime(1)= ctime
@@ -1055,7 +1066,6 @@ c nbls=nflagbl(i)(nflagbl(i)+1)/2, antenna i should be flagged.
 
              if(.not.tupd) nbls=nbls+1
              call basant(preamble(4),i1,i2)
-c             write(*,*) 'flag=',flags(1),flags(50)
              do i=1, nchan
              if (flags(i)) then 
              blflag=.true.
@@ -1066,6 +1076,8 @@ c             write(*,*) 'flag=',flags(1),flags(50)
              nflagbl(i1)= nflagbl(i1)+1
              nflagbl(i2)= nflagbl(i2)+1
              end if
+             blflag=.false.
+             
              if(tupd) call uvgetvri(tin, 'nants',nants, 1)
              if(tupd) then
                  do i=1, nants
