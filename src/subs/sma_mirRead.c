@@ -169,6 +169,9 @@
 // 2006-05-19 (JHZ) implemented feature to handle hybrid high spectral
 //                  resolution frequency configuration, allowing
 //                  presence of empty chunks.
+// 2006-06-08 (JHZ) fixed a bug in parsing the source id in the case
+//                  no source information given in the mir data
+//                  (an on-line bug) 
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -265,7 +268,7 @@ void rsmirread_c(char *datapath, char *jst[])
 { 
   int jstat;
   strcpy(pathname,datapath);
-  jstat=(int)*jst;
+  jstat= (int)*jst;
   jstat = rsmir_Read(pathname,jstat);
   *jst = (char *)jstat; 
 }
@@ -331,7 +334,7 @@ void rspokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1,
 	            int *dsb1, int *mcconfig1, int *nohighspr1)
 { 
   /* rspokeflshsma_c == pokeflsh */
-  int buffer, i,ii;
+  int buffer, i;
   /* initialize the external buffers */   
   strcpy(sname, " ");
   smabuffer.tno    = tno1;
@@ -407,6 +410,8 @@ void rspokeflshsma_c(char *kst[])
   char instrument[4];
   char observer[16];
   char version[16];
+// initialization:
+  eta_a=0.75;
   tno = smabuffer.tno;
   sb = smabuffer.sb; /* sb=0 for lsb; sb=1 for usb; sb=2 for both */
   rx = smabuffer.rxif;
@@ -674,7 +679,7 @@ int rsmir_Read(char *datapath, int jstat)
   int file,nfiles = 6;
   int headerbytes[6];
   smEng **smaEngdata;
-  int i,j,k,l,m,i0,ii;
+  int i,j,k,l,m,i0;
   int kk,iinset,lastinset,ireset,reset_id[10];
   long imax,bytepos,nbytes,datalength;
   long *data_start_pos;
@@ -688,11 +693,12 @@ int rsmir_Read(char *datapath, int jstat)
   short int *shortdata;
   double r,cost,sint,z0,tmp, rar, decr;
   double antpos[3*MAXANT+1];
-  int tno, ipnt;
+  int tno, ipnt, max_sourid;
   int kstat;
   char *kst[4];
   char target[6];
-  char unknown[6];
+  char unknown[7];
+  char skipped[8];
   int ntarget;
   time_t  startTime, endTime;
   float trueTime;
@@ -734,6 +740,8 @@ int rsmir_Read(char *datapath, int jstat)
   polpnt    = 1;
   blpnt     = 1;
   rxlod     = 0;
+  lastinset = 0;
+  ireset    = 0;
 //  
   strcpy(pathname,datapath);
   strcpy(filename[0],"in_read");
@@ -744,6 +752,7 @@ int rsmir_Read(char *datapath, int jstat)
   strcpy(filename[5],"sch_read");
   strcpy(target,"target");
   strcpy(unknown,"unknown");
+  strcpy(skipped,"skipped!");
   ntarget=0;
   
   /* number of bytes in each type of header. */
@@ -924,8 +933,8 @@ int rsmir_Read(char *datapath, int jstat)
 	exit(-1);
       }
     }
-
-         if(smabuffer.dsb!=1||smabuffer.dsb==1&&smabuffer.sb==0){
+// allocate memory for wts once in the case of do both sb
+         if(smabuffer.dsb!=1||(smabuffer.dsb==1&&smabuffer.sb==0)){
     wts = (struct wtt **) malloc(nsets[0]*sizeof( struct wtt *));
     for (set=0;set<nsets[0];set++) {
       wts[set] = (struct wtt *)malloc(sizeof(struct wtt ));
@@ -1393,11 +1402,12 @@ double xyzpos;
     }
     
     uvputvra_c(tno,"veltype", multisour[sourceID].veltyp);
-    // decode the source information 
+// decode the source information 
     for (set=0;set<nsets[3];set++){
-      if(cdh[set]->v_name[0]=='s'&&cdh[set]->v_name[1]=='o') {
-	sourceID++;
-	// parsing the source name and trim the junk tail
+    if(cdh[set]->v_name[0]=='s'&&cdh[set]->v_name[1]=='o') {
+//	sourceID++;
+        sourceID = cdh[set]->icode;
+// parsing the source name and trim the junk tail
 	for(i=0; i<9; i++) {
 	  sours[i]=cdh[set]->code[i];
 	  if(cdh[set]->code[i]==32||cdh[set]->code[i]==0||i==8)
@@ -1412,6 +1422,7 @@ double xyzpos;
           if(cdh[set]->code[i]==32||cdh[set]->code[i]==0||i==32)
             smasours[i]='\0';
                                }
+         
           oka=okb=okc=okd=0;
           for(i=2; i< sourceID; i++) {
           if(multisour[sourceID].name[7]=='a') oka=-1;
@@ -1435,13 +1446,13 @@ double xyzpos;
                             }
                            }
 
-          printf("Warning: The original name: '%s' is renamed to '%s'\n", 
-          smasours, multisour[sourceID].name);
+    printf("Warning: The original name: '%s' is renamed to '%s'\n", 
+    smasours, multisour[sourceID].name);
                                                        }
                                                  }
-	multisour[sourceID].sour_id = cdh[set]->icode;
+    multisour[sourceID].sour_id = cdh[set]->icode;
 	//         printf("cdh[set]->code=%s\n", cdh[set]->code);
-	inhset=0;
+    inhset=0;
 	while (inh[inhset]->souid!=multisour[sourceID].sour_id)
 	  inhset++;
 	//         printf("inh[inhset]->rar to c %s inhid=%d\n",
@@ -1622,7 +1633,6 @@ double spfreq[25];
 double spfreqo[25];
 int nchunk=0;
 int minspID=25;
-int fa,fb;
          for (i=1;i<SMIF+1;i++) {
          if (spn[smabuffer.scanskip]->fsky[i]>0.0) {
          nchunk++;
@@ -1641,9 +1651,8 @@ int fa,fb;
                            }
 goto dat2003; }
                 
-                 lastinset=lastinset-1;
-              ireset = 0;
-                reset_id[0]= smabuffer.scanskip;
+              lastinset=lastinset-1;
+              reset_id[0]= smabuffer.scanskip;
               for (iinset=smabuffer.scanskip;
                    iinset < lastinset;
                    iinset++) {
@@ -1883,13 +1892,19 @@ dat2003:
       }           
     }
 // print out sources observed
+    max_sourid=0;
     for (i=1; i< sourceID+1; i++) {
+      if(multisour[i].sour_id==0) 
+        strcpy(multisour[i].name, "skipped!");
       printf("source: %-21s id=%2d RA=%13s ", 
 	     multisour[i].name,
 	     multisour[i].sour_id, 
 	     (char *)rar2c(multisour[i].ra));
       printf("DEC=%13s\n", (char *)decr2c(multisour[i].dec));
+    if(multisour[i].sour_id>max_sourid) max_sourid=multisour[i].sour_id;
     }
+
+
     
 // now loading the smabuffer, parameters for headers
     
@@ -2051,6 +2066,7 @@ dat2003:
       inhset++;
       visSMAscan.blockID.ints = inh[inhset]->ints;
       visSMAscan.blockID.inhid = inh[inhset]->inhid;
+      
       visSMAscan.blockID.sourID = inh[inhset]->souid;
       visSMAscan.blockID.freqID = smaFreq[0].freqid;
       visSMAscan.time.UTCtime = jday+inh[inhset]->dhrs/24.000; /*hrs*/
@@ -2107,7 +2123,8 @@ dat2003:
         }
         
 // write source to uvfile 
-      if(((strncmp(multisour[sourceID].name,target,6)!=0)&&
+        if(strncmp(multisour[sourceID].name,skipped,8)!=0)
+        if(((strncmp(multisour[sourceID].name,target,6)!=0)&&
         (strncmp(multisour[sourceID].name,unknown,7)!=0))||
           smabuffer.noskip==1) {
 	char sour[9];
@@ -2544,6 +2561,9 @@ smabuffer.w[blpnt] = uvwbsln[inhset]->uvwID[j].w/smabuffer.basefreq*1000.;
 	kstat = -1;
 	*kst = (char *)&kstat;
         if(smabuffer.noskip!=1) {
+        if(strncmp(multisour[sourceID].name,skipped,8)==0)
+ printf("Warnning: one scan is skipped at %9.5f due to insufficient source information.\n",visSMAscan.time.UTCtime);
+        if(strncmp(multisour[sourceID].name,skipped,8)!=0)
         if((strncmp(multisour[sourceID].name,target,6)!=0)&&
            (strncmp(multisour[sourceID].name,unknown,7)!=0)) {
 	  rspokeflshsma_c(kst);
@@ -3669,6 +3689,7 @@ short ipolmap(short input_ipol) {
 short iPolmiriad;
 int   ipol;
       ipol=input_ipol;
+      iPolmiriad = 1;
 if(smabuffer.oldpol==1) {
             switch(ipol) {
             case 0: iPolmiriad = 1; break;
