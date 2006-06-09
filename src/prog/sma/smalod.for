@@ -289,11 +289,14 @@ c    jhz 06-mar-06 add a feature to handle 2003 data with incompleted
 c                  correlator.
 c    jhz 18-may-06 implemented hybrid high spectral resolution mode,
 c                  allowing presence of empty data chunks.
+c    jhz 09-jun-06 fixed a bug in sma_mirRead.c in parsing source if
+c                  in the case no source information is given in
+c                  mir data (an on-line bug)
 c------------------------------------------------------------------------
         integer maxfiles
         parameter(maxfiles=128)
         character version*(*)
-        parameter(version='SmaLod: version 1.26 18-may-06')
+        parameter(version='SmaLod: version 1.27 09-jun-06')
 c
         character in(maxfiles)*64,out*64,line*64, rxc*4
         integer tno, length, len1
