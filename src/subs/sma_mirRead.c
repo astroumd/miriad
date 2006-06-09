@@ -171,7 +171,10 @@
 //                  presence of empty chunks.
 // 2006-06-08 (JHZ) fixed a bug in parsing the source id in the case
 //                  no source information given in the mir data
-//                  (an on-line bug) 
+//                  (an on-line bug).
+// 2006-06-09 (JHZ) fixed two warning bugs seen from 32bits:
+//                  removed zero-length printf and added parathesis
+//                  for if-else around line 2534.
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -2534,7 +2537,6 @@ smabuffer.w[blpnt] = uvwbsln[inhset]->uvwID[j].w/smabuffer.basefreq*1000.;
 	    }
             free(shortdata);
 	    chunkskip:
-            printf("");
     if(smabuffer.highrspectra==1&&miriadsp[kk]==0) {
             smabuffer.data[ipnt].real=0.0001;
             smabuffer.data[ipnt].imag=0.;
@@ -2563,13 +2565,13 @@ smabuffer.w[blpnt] = uvwbsln[inhset]->uvwID[j].w/smabuffer.basefreq*1000.;
         if(smabuffer.noskip!=1) {
         if(strncmp(multisour[sourceID].name,skipped,8)==0)
  printf("Warnning: one scan is skipped at %9.5f due to insufficient source information.\n",visSMAscan.time.UTCtime);
-        if(strncmp(multisour[sourceID].name,skipped,8)!=0)
+        if(strncmp(multisour[sourceID].name,skipped,8)!=0) {
         if((strncmp(multisour[sourceID].name,target,6)!=0)&&
            (strncmp(multisour[sourceID].name,unknown,7)!=0)) {
 	  rspokeflshsma_c(kst);
 	                                    } else {
                                             ntarget++;
-	                                         }      
+	                                         }      }
 
                                 } else {
          rspokeflshsma_c(kst);
