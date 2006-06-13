@@ -24,6 +24,8 @@ c     The output mir file
 c--
 c  History:
 c     dnf 17-may-06 Initial version
+c     dnf 13-jun-06 Corrected tsys reading and changed the way a new 
+c                   integration is determined 
 c--
 c  Still to do:
 c   implement and check the project/obsblock file reading
@@ -73,8 +75,10 @@ c initialize the output MIR files
          call mirInit(out)
 c do the work
          call uvdatrd(preamble,visibility,flags,maxchan,nread)
+         call codeAddTime
          inte=0
          do while(nread .ne. 0)
+            newint=.false.
             inte=inte+1
             call inhdGet(tIo)
          enddo
@@ -106,8 +110,7 @@ c External
 c
       neg=.false.
       sys0=.false.
-      call uvprobvr(tIo,'nants',type,length,ok)
-      if(ok)call uvgetvri(tIo,'nants',nants,1)
+      call uvgetvri(tIo,'nants',nants,1)
 c AZ and EL, the average is calculated later and only includes the 
 c    antennas actually used
       call uvprobvr(tIo,'antaz',type,length,ok)
@@ -210,7 +213,8 @@ c velocity info
       call uvprobvr(tIo,'vsource',type,length,ok)
       if(ok)then
          call uvgetvrr(tIo,'vsource',vsrc,1)
-         call uvgetvra(tIo,'veltype',temp)
+         call uvprobvr(tIo,'veltype',type,length,ok1)
+         if(ok1)call uvgetvra(tIo,'veltype',temp)
          if(temp .eq. 'VELO-LSR')temp='vlsr'
          if(temp .eq. 'VELO-HEL')temp='vhel'
          match=.false.
@@ -311,19 +315,20 @@ c system temperature
          call uvgetvri(tIo,'nspect',nspect,1)
          call bandLabel
       endif
-      call uvprobvr(tIo,'systemp',type,length,ok)
-      if(ok)then
-         call uvgetvrr(tIo,'systemp',temptemp,nants*nspect)
-         do i=1,nants
+      if(.not.tsysPresent)
+     *    call uvprobvr(tIo,'systemp',type,length,tsysPresent)
+      if(tsysPresent)then
+         call uvgetvrr(tIo,'systemp',temptemp,15*nspect)
+         do i=1,15
             do j=1,nspect
-               tsys(i,j)=temptemp((i-1)*15 +j)*sqrt(2.)
+               tsys(i,j)=temptemp((i-1)*nspect +j)*sqrt(2.)
             enddo
          enddo
       endif
-      do i=1,nants
+      do i=1,15
          do j=1,nspect
             if(tsys(i,j) .eq. 0.)then
-               tsys(i,j)=1.     !!temporary fix until tsys is written
+               tsys(i,j)=1.     !!this is here in case tsys is not present
                sys0=.true.
             endif
          enddo
@@ -347,7 +352,7 @@ c itrans
             trans(num_trans)=temp
          endif
       endif
-      call codeAddTime
+c      call codeAddTime
       call antSet(nants)
       call blhdGet(tIo,nants,itr)
       az=real(daverage(tda,na))
@@ -356,6 +361,7 @@ c itrans
      *       iref_time,dhrs,vc,ivctype,sx,sy,sz,rinteg,proid,souid,
      *       isource,ipos,offx,offy,iofftype,ira,idec,rar,decr,epoch,
      *       sflux,size)
+c      call uvdatrd(preamble,visibility,flags,maxchan,nread)
       end
 c************************************************************************
       subroutine blhdGet(tIo,nants,itr)
@@ -371,8 +377,7 @@ c preamble is u,v,w,time,baselineid
       character*26 ct1,ct2,temp
       character type
 
-      nbl=(nants*(nants-1))/2
-      do i=1,nbl
+      do while((.not.newint) .and. (nread .ne. 0))
 c get basic info about number of bands and channels
          call uvprobvr(tIo,'nschan',type,length,ok)
          if(ok)call uvgetvri(tIo,'nschan',nschan,nspect)
@@ -548,6 +553,7 @@ c wideband average stuff
      *          bln,blu,soid)
          enddo
          call uvdatrd(preamble,visibility,flags,maxchan,nread)
+         call codeAddTime
       enddo
       end
 c************************************************************************
@@ -771,7 +777,6 @@ c------------------------------------------------------------------------
       offtype(1)='eq'
       ira=0
       idec=0
-      nbl=0
       dataoff=0
       blhid=0
       blsid=0
@@ -1041,6 +1046,7 @@ c insert ':' to the spaces between
          if(num_ut .gt. MAXINT)call bug('f','Too many ut time stamps'//
      *     ', increase the array size in mir.h')
          ut(num_ut)=fulldate
+         newint=.true.
       endif
       if(num_ref_time .eq. 0)then
          num_ref_time=1
