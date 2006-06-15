@@ -59,13 +59,14 @@ c  History:
 c    jhz  06-jun-06  started a version for converting miriad to UVFITS
 c                    using gildas convention for spectral line features 
 c                    based on rjs' fits: version 6-jan-05'
-c    jhz  15-jun-06 changed options nogildas to aips
+c    jhz  15-jun-06  changed options nogildas to aips.
+c                    corrected DELTAV units to m/s.
 c  Note:
 c        only for miriad-> gildas
 c        consider for gildas->miriad
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version='Gildas: version 0.2 15-jun-06')
+	parameter(version='Gildas: version 0.3 15-jun-06')
 	integer MAXBOXES
 	parameter(MAXBOXES=2048)
 	character in*128,out*128,uvdatop*12,linename*12
@@ -504,7 +505,8 @@ c    works for gildas
           call fitwrhdd(tOut,'RESTFREQ',restfreq)
           call fitwrhdr(tOut,'VLSR', 0.0)
 c determine velocity width per channel in optical definition
-          fwidth = -CKMS * df / restfreq
+c velocity width in gildas in units of m/s
+          fwidth = -CKMS * df / restfreq*1000.
           call fitwrhdd(tOut,'DELTAV',fwidth)
         endif
         endif
