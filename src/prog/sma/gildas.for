@@ -49,7 +49,7 @@ c	  nopass   Do not apply the bandpass table correctsions
 c	           to the data.
 c
 c	  nod2     Use the conventions of NOD2 UVFITS files.
-c         nogildas Output for AIPS UVFIT; default is for GILDAS. 
+c         aips     Output for AIPS UVFIT; default is for GILDAS. 
 c
 c--
 c
@@ -59,12 +59,13 @@ c  History:
 c    jhz  06-jun-06  started a version for converting miriad to UVFITS
 c                    using gildas convention for spectral line features 
 c                    based on rjs' fits: version 6-jan-05'
+c    jhz  15-jun-06 changed options nogildas to aips
 c  Note:
 c        only for miriad-> gildas
 c        consider for gildas->miriad
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version='Gildas: version 0.1 15-jun-06')
+	parameter(version='Gildas: version 0.2 15-jun-06')
 	integer MAXBOXES
 	parameter(MAXBOXES=2048)
 	character in*128,out*128,uvdatop*12,linename*12
@@ -126,7 +127,7 @@ c------------------------------------------------------------------------
       logical present(nopt),olddss
       data opts /'nocal   ','nopol   ','nopass  ','rawdss  ',
      *           'nod2    ','nochi   ','compress','lefty   ',
-     *           'varwt   ','dss     ','nogildas    '/
+     *           'varwt   ','dss     ','aips    '/
 
 c
       call options ('options', opts, present, nopt)
