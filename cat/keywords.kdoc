@@ -104,7 +104,15 @@ can handle only a single dataset at a time.
         processed. There are a number of subcommands, which may be
         abbreviated. Each may be prefixed with a plus or minus sign to
         indicate using or discarding the selected data. Many subcommands
-        can be given (separate them by commas). Subcommands include:
+        can be given (separate them by commas). 
+Examples:
+'select=time(03OCT30:05:42:08,03OCT30:05:43:09),ant(7)(2)'
+'select=-auto,-ant(7,8)'
+'select=-ant(7,8),vis(1,15),vis(31,45),vis(301,1000)'
+'select=-ant(7,8),-ant(1)(4,6),-ant(2)(4,5,6),-ant(3)(4,5),-ant(4)(5,6),-ant(5)(6)'
+
+
+Subcommands include:
 
           time(t1,t2)
         Select data between times t1 and t2 (UT). Times are in the format:
@@ -113,7 +121,7 @@ can handle only a single dataset at a time.
           yymmmdd:hh:mm:ss.s
         Various abbreviations are possible. If no date part is given, then
         the time matchs all data (regardless of its date) for the given
-        time of day.
+        time of day. e.g. time(03OCT30:05:41:08,03OCT30:05:43:09)
 
           antennae(a1,a2,...)(b1,b2...)
         Select all baselines pairs formed between first and second list of
