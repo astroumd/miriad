@@ -52,6 +52,7 @@ c    gmx  08apr04   Added xtsys and ytsys to the variables to be handled
 c                   when removing channels.
 c    jwr  16jun04   Fixed bug in calling uvVarUpd that relied on McCarthy
 c                   evaluation of logical expressions (ifort does not!)
+c    dnf  30jun06   increased size of output file name to 256 characters
 c  Bugs:
 c
 c= uvcat - Catenate and copy uv datasets; Apply gains file, Select windows.
@@ -105,7 +106,7 @@ c
 	logical first,init,new,more,dopol,PolVary,donenpol
 	logical nowide,nochan,dochan,dowide,docopy,doall,updated
 	logical nopass
-	character out*64,type*1,uvflags*8
+	character out*256,type*1,uvflags*8
 c
 c  Externals.
 c
