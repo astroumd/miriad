@@ -31,13 +31,16 @@ c@ log
 c	The output log file.  The default is the terminal.
 c@ cormode
 c	The mode determines the correlator configuration and number of
-c	spectral windows. 
+c	spectral windows. Default=3. The number of channels corresponds
+c	to Table 1 in CARMA memo 28. 
 c@ corf
-c   Correlator LO frequencies in MHz. Up to 4 values.
-c	Default corbw=1000,1500,2000,2500
+c   Correlator LO frequencies in MHz. 
+c	Three values. One for each frequency band.
+c	Default corbw=1000,1500,2000
 c@ corbw
-c	Correlator bandwidths in MHz. Up to 4 values.
-c	Default corbw=500,500,500,500
+c	Correlator bandwidths in MHz. Three values selected from the
+c	available bandwidths: 500, 62, 31, 8, or 2.
+c	Default corbw=500,500,500
 c@ birdie
 c	Number of birdies followed by a list of the birdie frequencies 
 c	in MHz. Up to 20 birdies are allowed. The default is 0 birdies.
@@ -89,12 +92,13 @@ c    mchw 02feb06  XFCOR CARMA version. channel numbers are not yet correct.
 c    mchw 16feb06  channel numbers for spectral windows in order band 1 2 3 LSB, 1 2 3 USB
 c    mchw 23feb06  Add routine cormode to calculate channel numbers.
 c    mchw 26feb06  Added corf and corbw keywords.
+c    mchw 11jul06  number of channels correspond to Table 1 CARMA memo 28.
 c----------------------------------------------------------------------
 c  Parameters.
 c
 	include 'maxdim.h'
 	character VERSION*(*)
- 	parameter (VERSION='Version 4.0 26-FEB-2006')
+ 	parameter (VERSION='Version 4.0 11-JUL-2006')
 	character PROG*(*)
 	parameter (PROG='XFCOR: ')
 	integer NMAX
@@ -257,8 +261,14 @@ c
      *  (mode,corf,bw,nbands,ischan,nschan,sfreq,sdf,nspect)
 c
 c  number of channels in each sideband of LO1
-	nchan = (ischan(nspect) + nschan(nspect) - 1)/2
-c	print *, nchan, ischan,nschan,sfreq,sdf,nspect
+        nchan = (ischan(nspect) + nschan(nspect) - 1)/2
+        print *, 'number of frequency bands: ',nbands
+        print *, 'number of spectral windows: ',nspect
+        print *, 'number of channels in each sideband of LO: ',nchan
+        print *, 'starting channel in each window: ', ischan
+        print *, 'number of channels in each window: ', nschan
+        print *, 'starting frequency in each window: ', sfreq
+        print *, 'channel width in each window: ', sfreq
        do j=1,nspect
          do i=1,numlines
            k = nint(dlineif(i)-sfreq(j))/sdf(j)
@@ -746,9 +756,9 @@ c
 	do i=1,4
 	  cbw(i) = Dtoaf(bw(i),form,nsf)
 	enddo
-	if(mode.le.3 .or. mode.eq.5) cbw(3) = '-'
-	if(mode.le.2) cbw(4) = '-'
-	if(mode.le.1) cbw(2) = '-'
+c	if(mode.le.3 .or. mode.eq.5) cbw(3) = '-'
+c	if(mode.le.2) cbw(4) = '-'
+c	if(mode.le.1) cbw(2) = '-'
 	msg = '     BW1, BW2, BW(3), BW(4): ' //
      *	        cbw(1)(1:Len1(cbw(1))) // ' ' //
      *          cbw(2)(1:Len1(cbw(2))) // ' ' //
@@ -822,18 +832,22 @@ c
 c  Input:  mode corf bw nbands
 c  Output: ischan,nschan,sfreq,sdf,nspect
 c
-       real sb
+       real sb, nchan
        integer i,j,k
 
-       if(mode.eq.3) then
          nspect = 2*nbands
          do i = 0,1
            sb =  2.*i -1.
            do j = 1,nbands
+             nchan=17
+             if(bw(j).eq.62) nchan=57
+             if(bw(j).eq.31) nchan=57
+             if(bw(j).eq.8) nchan=57
+             if(bw(j).eq.2) nchan=61
              k = j + i*nbands
-             sfreq(k) = sb * (corf(j) + bw(j)/16.)
-             sdf(k) = sb * bw(j)/16.
-             nschan(k) = 15
+             sfreq(k) = sb * (corf(j) + bw(j)/(nchan-1.))
+             sdf(k) = sb * bw(j)/(nchan-1.)
+             nschan(k) = nchan-2.
            enddo
          enddo
 c
@@ -841,6 +855,6 @@ c
          do i = 2,nspect
            ischan(i) = ischan(i-1) + nschan(i-1)
          enddo
-       endif
+ 
        end
 c********1*********2*********3*********4*********5*********6*********7**
