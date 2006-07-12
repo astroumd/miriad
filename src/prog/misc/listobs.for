@@ -61,6 +61,7 @@ c                        for other (old BIMA) data
 c                        changed in to vis to make listobs consistent with
 c                        other uv data tasks
 c          18-apr-06 pjt sourcename now allowed 16
+c          12-jul-06 pjt handle blank vis= correctly
 c-----------------------------------------------------------------------
 	include 'mirconst.h'
         include 'caldefs.h'
@@ -68,7 +69,7 @@ c-----------------------------------------------------------------------
         include 'listobs.h'
 c
 	character pversion*10
-	parameter (pversion = '18-apr-06')
+	parameter (pversion = '12-jul-06')
 c
         integer ipt,nfiles,uvflag,order(MAXP),nameidx(100),nnames
         integer isys(MAXANT),i,uvscan,j,ii,jj,ipicked,ifix
@@ -95,8 +96,8 @@ c    get data set name and output file name
 c
         call keyini
         call mkeyf('vis',dataset,MAXF,nfiles)
-        if(dataset(1) .eq. ' ')
-     *      call bug('f','Data set name must be specified')
+        if (nfiles.eq.0)
+     *      call bug('f','No data set name(s) given; use vis=')
 	call keya('time',ptime,'ut')
 	call keya('log',outlog,' ')
         call keyfin
