@@ -26,6 +26,7 @@ c  History:
 c     dnf 17-may-06 Initial version
 c     dnf 13-jun-06 Corrected tsys reading and changed the way a new 
 c                   integration is determined 
+c     dnf 14-jul-06 Corrected a logic error in vctype assignment
 c--
 c  Still to do:
 c   implement and check the project/obsblock file reading
@@ -214,24 +215,30 @@ c velocity info
       if(ok)then
          call uvgetvrr(tIo,'vsource',vsrc,1)
          call uvprobvr(tIo,'veltype',type,length,ok1)
-         if(ok1)call uvgetvra(tIo,'veltype',temp)
-         if(temp .eq. 'VELO-LSR')temp='vlsr'
-         if(temp .eq. 'VELO-HEL')temp='vhel'
-         match=.false.
-         do i=1,num_vc_type
-            if(vc_type(i) .eq. temp)then
-               ivctype=i-1
-               ivtype=i-1
-               match=.true.
+         if(ok1)then
+            call uvgetvra(tIo,'veltype',temp)
+            if((temp .eq. 'VELO-LSR') .or. (temp .eq. 'VELO- LSR'))
+     *           temp='vlsr'
+            if((temp .eq. 'VELO-HEL') .or. (temp .eq. 'VELO- HEL'))
+     *           temp='vhel'
+            if((temp .eq. 'VELO-OBS') .or. (temp .eq. 'VELO- OBS'))
+     *           temp='vobs'
+            match=.false.
+            do i=1,num_vc_type
+               if(vc_type(i) .eq. temp)then
+                  ivctype=i-1
+                  ivtype=i-1
+                  match=.true.
+               endif
+            enddo
+            if(.not.match)then
+               ivctype=num_vc_type
+               ivtype=num_vtype
+               num_vc_type=num_vc_type+1
+               num_vtype=num_vtype+1
+               vc_type(num_vc_type)=temp
+               vtype(num_vtype)=temp
             endif
-         enddo
-         if(.not.match)then
-            ivctype=num_vc_type
-            ivtype=num_vtype
-            num_vc_type=num_vc_type+1
-            num_vtype=num_vtype+1
-            vc_type(num_vc_type)=temp
-            vtype(num_vtype)=temp
          endif
       endif
       call uvprobvr(tIo,'veldop',type,length,ok)
@@ -1054,17 +1061,23 @@ c insert ':' to the spaces between
          iref_time=0
       endif
       call atoif(utc(1:2),tmp,ok)
-      h=dble(tmp)
-      if(ok)call atoif(utc(4:5),tmp,ok)
-      m=dble(tmp)
-      if(ok)call atoif(utc(7:8),tmp,ok)
-      s=dble(tmp)
-      if(.not.ok)call bug('f','Error translating time codes')
-      if(AP .eq. 'PM')h=h+12.d0
-      h=h+(m/60.d0)+(s/3600.d0)
-      if(date .ne. ref_time)h=h+24.d0
-      dhrs=h
-      avedhrs=dhrs  !these are always the same for MIRIAD data
+      if(ok)then
+         h=dble(tmp)
+         call atoif(utc(4:5),tmp,ok)
+         m=dble(tmp)
+         if(ok)then
+            call atoif(utc(7:8),tmp,ok)
+            s=dble(tmp)
+            if(AP .eq. 'PM')h=h+12.d0
+            h=h+(m/60.d0)+(s/3600.d0)
+            if(date .ne. ref_time)h=h+24.d0
+            dhrs=h
+            avedhrs=dhrs        !these are always the same for MIRIAD data
+         endif
+      else
+         call bug('f','Error translating time codes')
+      endif
+
       end
 c************************************************************************
       subroutine proExist(tIo)
@@ -1276,7 +1289,7 @@ c   using the refernce antenna
 c------------------------------------------------------------------------
          include 'mir.h'
          integer i,length
-         double precision xr,yr,zr,latitude,angle
+         double precision xr,yr,zr,angle
          logical ok
          character type
 

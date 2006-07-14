@@ -152,8 +152,9 @@ c
 c coordinates
 c      double precision lat,longe
       integer refant
+      double precision latitude
 
-      common/cds/refant
+      common/cds/latitude,refant
 c offset from last integration
 c end common
 
