@@ -293,11 +293,12 @@ c    jhz 09-jun-06 fixed a bug in sma_mirRead.c in parsing source if
 c                  in the case no source information is given in
 c                  mir data (an on-line bug)
 c    jhz 12-jun-06 updated version date
+c    jhz 09-aug-06 changed a typo in line 346
 c------------------------------------------------------------------------
         integer maxfiles
         parameter(maxfiles=128)
         character version*(*)
-        parameter(version='SmaLod: version 1.27 12-jun-06')
+        parameter(version='SmaLod: version 1.27 09-aug-06')
 c
         character in(maxfiles)*64,out*64,line*64, rxc*4
         integer tno, length, len1
@@ -343,7 +344,7 @@ c
              write(*,*) 'rxif = 0 -> 230 band'
              write(*,*) 'rxif = 1 -> 340 band'
              write(*,*) 'rxif = 2 -> 690 band'
-             call bug('f','No defualt for rxif!')
+             call bug('f','No default for rxif!')
              end if
          if(rxif.lt.-1.or.rxif.gt.2) 
      *   call bug('f','Invalid Receiver ID.')
