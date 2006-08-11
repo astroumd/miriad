@@ -117,10 +117,12 @@ c    29mar06 mchw  Antel in degrees.
 c    01apr06 mchw  Fitting phase versus elevation.
 c    06may06 jkoda Added constant phase offset and axis offset in summary
 c    16may06 mchw  Merged 06may with 2 previous changes in CVS.
+c    10aug06 dcb   Added comments and reformat GetGains.
+c    10aug06 dcb   GetGains common /savgains/ Ampl,Phi,foc,tpwr,antel,freq
 c-----------------------------------------------------------------------
 	include 'bee.h'
 	character version*(*),device*80,log*80,ans*20
-	parameter(version='(version 3.0 16-May-2006)')
+	parameter(version='(version 3.0 10-Aug-2006)')
 	integer length,tvis,tgains,iostat
 	logical doscale
 c
@@ -246,24 +248,30 @@ c    tvis	Handle of the visibility file.
 c    doscale	Rescale tpower.
 c-----------------------------------------------------------------------
 	include 'bee.h'
-	character line*80,ans*2
-	integer header(2),item,offset
-	double precision time
-	integer iostat,length,i,j,k,nvar
+
+c 06aug10 - dcb - order declarations by type for readability
+	integer nvar
 	parameter(nvar=13)
+
+	logical first,ok,updated
+	character line*80,ans*2
+	character variable(nvar)*8,name(MAXSOLS)*8
+	character source*9,telescop*9,type*1
+	integer iostat,length,i,j,k
+	integer header(2),item,offset
 	real SumAmp(MAXANTS),RmsAmp(MAXANTS),SumPhi(MAXANTS)
 	real SumWts(MAXANTS),AveAmp(MAXANTS),AvePhi(MAXANTS)
 	real RmsPhi(MAXANTS),Ampl(MAXANTS,MAXSOLS),Phi(MAXANTS,MAXSOLS)
+	real airtemp(MAXSOLS),tpwr(MAXANTS,MAXSOLS),foc(MAXANTS,MAXSOLS)
+	real tpmax(MAXANTS),tpmin(MAXANTS)
+	double precision time
 	double precision ra(MAXSOLS),decc(MAXSOLS)
 	double precision antel(MAXANTS,MAXSOLS)
-	real airtemp(MAXSOLS),tpwr(MAXANTS,MAXSOLS),foc(MAXANTS,MAXSOLS)
-	complex ref
 	double precision freq(MAXSOLS),longitude,latitude
 	double precision lst(MAXSOLS),obsdec(MAXSOLS),obsra(MAXSOLS)
-	character variable(nvar)*8,name(MAXSOLS)*8
-	logical first,ok,updated
-	character source*9,telescop*9,type*1
-	real tpmax(MAXANTS),tpmin(MAXANTS)
+	complex ref
+
+	common /savgains/ Ampl,Phi,foc,tpwr,antel,freq
 c
 c  Externals.
 c
@@ -283,270 +291,284 @@ c
 c
 c  Read some header information for the gains file.
 c
-	if(first)then
-	call rdhdd(tvis,'interval',interval,0.d0)
-	call rdhdi(tvis,'ngains',nants,0)
-	call rdhdi(tvis,'nsols',nSols,0)
-	call LogWrit('Number of gains: '//itoaf(nants))
-	call LogWrit('Number of solution intervals: '//itoaf(nSols))
-	if(nants.gt.MAXANTS) call bug('f','Too many antennas')
-	if(nSols.gt.MAXSOLS) call bug('f','Too many gains')
-	if(nants*nSols.eq.0) call bug('f','No gains to fit')
-	if(interval.eq.0.) call bug('f','Calibration interval is zero!')
+	if (first) then
+	  call rdhdd(tvis,'interval',interval,0.d0)
+	  call rdhdi(tvis,'ngains',nants,0)
+	  call rdhdi(tvis,'nsols',nSols,0)
+	  call LogWrit('Number of gains: '//itoaf(nants))
+	  call LogWrit('Number of solution intervals: '//itoaf(nSols))
+	  if(nants.gt.MAXANTS) call bug('f','Too many antennas')
+	  if(nSols.gt.MAXSOLS) call bug('f','Too many gains')
+	  if(nants*nSols.eq.0) call bug('f','No gains to fit')
+	  if (interval .eq. 0.0) 
+     *    call bug('f','Calibration interval is zero!')
 c
 c  Look for the gains item.
 c
-	call haccess(tvis,item,'gains','read',iostat)
-	if(iostat.ne.0)then
-	  call bug('w','Error opening gains item')
-	  call bugno('f',iostat)
-	endif
-	offset = 0
-	call hreadi(item,header,offset,8,iostat)
-	if(iostat.ne.0)then
-	  call bug('w','Error reading gains item')
-	  call bugno('f',iostat)
-	endif
-	offset = 8
+	  call haccess(tvis,item,'gains','read',iostat)
+	  if(iostat.ne.0)then
+	    call bug('w','Error opening gains item')
+	    call bugno('f',iostat)
+	  endif
+	  offset = 0
+	  call hreadi(item,header,offset,8,iostat)
+	  if(iostat.ne.0)then
+	    call bug('w','Error reading gains item')
+	    call bugno('f',iostat)
+	  endif
+	  offset = 8
 c
 c  Initialize some statistics.
 c
-	do j=1,nants
-	  SumAmp(j) = 0.
-	  RmsAmp(j) = 0.
-	  SumPhi(j) = 0.
-	  RmsPhi(j) = 0.
-	  SumWts(j) = 0.
-	enddo
+	  do j=1,nants
+	    SumAmp(j) = 0.
+	    RmsAmp(j) = 0.
+	    SumPhi(j) = 0.
+	    RmsPhi(j) = 0.
+	    SumWts(j) = 0.
+	  enddo
 c
 c  Read the gains.
 c
-	if(refant.lt.0.or.refant.gt.nants)refant=0
-	do k=1,nsols
-	  call hreadd(item,dtime(k),offset,8,iostat)
-	  offset = offset + 8
-	  if(iostat.eq.0) call hreadr(item,gains(1,k),offset,8*nants,
+	  if(refant.lt.0.or.refant.gt.nants)refant=0
+	  do k=1,nsols
+	    call hreadd(item,dtime(k),offset,8,iostat)
+	    offset = offset + 8
+	    if(iostat.eq.0) call hreadr(item,gains(1,k),offset,8*nants,
      *								iostat)
-	  if(iostat.ne.0)then
-	    call bug('w','I/O error while reading gains')
-	    call bugno('f',iostat)
-	  endif
+	    if(iostat.ne.0)then
+	      call bug('w','I/O error while reading gains')
+	      call bugno('f',iostat)
+	    endif
 c
 c  Store the phase relative to reference antenna.
 c
-	  if(refant.ne.0.and.cabs(gains(refant,k)).ne.0.)
+	    if(refant.ne.0.and.cabs(gains(refant,k)).ne.0.)
      *			 ref = gains(refant,k)/cabs(gains(refant,k))
-	  do j=1,nants
-	    if(refant.ne.0.and.cabs(gains(refant,k)).ne.0.) then
-	      gains(j,k) = gains(j,k)/ref
-	    endif
-	    call amphase(gains(j,k),ampl(j,k),phi(j,k))
+	    do j=1,nants
+	      if(refant.ne.0.and.cabs(gains(refant,k)).ne.0.) then
+	        gains(j,k) = gains(j,k)/ref
+	      endif
+	      call amphase(gains(j,k),Ampl(j,k),Phi(j,k))
 c
 c  Accumulate statistics.
 c
-	    SumAmp(j) = SumAmp(j) + ampl(j,k)
-	    SumPhi(j) = SumPhi(j) + phi(j,k)
-	    RmsAmp(j) = RmsAmp(j) + ampl(j,k)*ampl(j,k)
-	    RmsPhi(j) = RmsPhi(j) + phi(j,k)*phi(j,k)
-	    SumWts(j) = SumWts(j) + 1.
+	      SumAmp(j) = SumAmp(j) + Ampl(j,k)
+	      SumPhi(j) = SumPhi(j) + Phi(j,k)
+	      RmsAmp(j) = RmsAmp(j) + Ampl(j,k)*Ampl(j,k)
+	      RmsPhi(j) = RmsPhi(j) + Phi(j,k)*Phi(j,k)
+	      SumWts(j) = SumWts(j) + 1.
+	    enddo
+	    offset = offset + 8*nants
 	  enddo
-	  offset = offset + 8*nants
-    	enddo
 c
 c  Close gains item
 c
-	call hdaccess(item,iostat)
-	if(iostat.ne.0)then
-	  call bug('w','Error closing output gains item')
-	  call bugno('f',iostat)
-	endif
+	  call hdaccess(item,iostat)
+	  if(iostat.ne.0)then
+	    call bug('w','Error closing output gains item')
+	    call bugno('f',iostat)
+	  endif
 c
 c  Identify the variables to be updated.
 c
-	do i=1,nvar
-	  call uvtrack(tvis,variable(i),'u')
-	enddo
+	  do i=1,nvar
+	    call uvtrack(tvis,variable(i),'u')
+	  enddo
 c
 c  Loop through the uvdata file. Store variables for
 c  for times in the gains file.
 c
-	k = 1
-	do while(uvscan(tvis,'time').eq.0)
+	  k = 1
+	  do while(uvscan(tvis,'time').eq.0)
 c
 c  Get the telescope parameters
 c
-	  call uvrdvra(tvis,'telescop',telescop,'UNKNOWN')
-	  call obspar(telescop,'longitude',longitude,ok)
-	  call obspar(telescop,'latitude',latitude,ok)
+	    call uvrdvra(tvis,'telescop',telescop,'UNKNOWN')
+	    call obspar(telescop,'longitude',longitude,ok)
+	    call obspar(telescop,'latitude',latitude,ok)
 c
 c  Find value of variables corresponding to times of gains.
 c
-	  call uvgetvrd(tvis,'time',time,1)
-	  if(time.ge.dtime(1)-interval.and.
+	    call uvgetvrd(tvis,'time',time,1)
+	    if(time.ge.dtime(1)-interval.and.
      *			time.le.dtime(nSols)+interval)then
-	    if(time.lt.dtime(k)-interval) k = 1
-	    do while(time.gt.dtime(k)+interval)
-	      k = k + 1
-	    enddo
-	    if(abs(time-dtime(k)).le.interval)then
-	      call uvgetvrd(tvis,'antpos',antpos,3*nants)
-	      call uvrdvrd(tvis,'freq',freq(k),100.d0)
-	      call uvprobvr(tvis,'lst',type,length,updated)
-	      if(type.eq.'d')then
-	        call uvrdvrd(tvis,'lst',lst(k),dtime(k)-dtime(1))
-	      else
+	      if(time.lt.dtime(k)-interval) k = 1
+	      do while(time.gt.dtime(k)+interval)
+	        k = k + 1
+	      enddo
+	      if(abs(time-dtime(k)).le.interval)then
+	        call uvgetvrd(tvis,'antpos',antpos,3*nants)
+	        call uvrdvrd(tvis,'freq',freq(k),100.d0)
+	        call uvprobvr(tvis,'lst',type,length,updated)
+	        if(type.eq.'d')then
+	          call uvrdvrd(tvis,'lst',lst(k),dtime(k)-dtime(1))
+	        else
 c Get observatory longitude in radians
-            call uvrdvrd (tvis, 'longitu', longitude, 0.0d0)
+              call uvrdvrd (tvis, 'longitu', longitude, 0.0d0)
 c Get lst in radians
-            call jullst (dtime(k), longitude, lst(k))
-          endif
-	      call uvrdvrd(tvis,'obsra',obsra(k),0.d0)
-	      call uvrdvrd(tvis,'obsdec',obsdec(k),0.d0)
-	      call uvrdvrd(tvis,'ra',ra(k),0.d0)
-	      call uvrdvrd(tvis,'dec',decc(k),0.d0)
-	      call uvrdvra(tvis,'source',source,'UNKNOWN')
+              call jullst (dtime(k), longitude, lst(k))
+            endif
+	        call uvrdvrd(tvis,'obsra',obsra(k),0.d0)
+	        call uvrdvrd(tvis,'obsdec',obsdec(k),0.d0)
+	        call uvrdvrd(tvis,'ra',ra(k),0.d0)
+	        call uvrdvrd(tvis,'dec',decc(k),0.d0)
+	        call uvrdvra(tvis,'source',source,'UNKNOWN')
 	        name(k) = source(1:8)
-	      call uvprobvr(tvis,'airtemp',type,length,updated)
-	      if(type.eq.'r')then
-	        call uvgetvrr(tvis,'airtemp',airtemp(k),1)
-	      else
-	        airtemp(k) = 0.
-	      endif
-	      call uvprobvr(tvis,'focus',type,length,updated)
-	      if(type.eq.'r')then
-	        call uvgetvrr(tvis,'focus',foc(1,k),nants)
-	      else
-		do i=1,nants
-	          foc(i,k) = 0.
-		enddo
-	      endif
-	      call uvprobvr(tvis,'tpower',type,length,updated)
-	      if(type.eq.'r')then
-	        call uvgetvrr(tvis,'tpower',tpwr(1,k),nants)
-	      else
-		do i=1,nants
-	          tpwr(i,k) = 0.
-		enddo
-	      endif
-	      call uvprobvr(tvis,'antel',type,length,updated)
-	      if(type.eq.'d')then
-	        call uvgetvrd(tvis,'antel',antel(1,k),nants)
+	        call uvprobvr(tvis,'airtemp',type,length,updated)
+	        if(type.eq.'r')then
+	          call uvgetvrr(tvis,'airtemp',airtemp(k),1)
+	        else
+	          airtemp(k) = 0.
+	        endif
+	        call uvprobvr(tvis,'focus',type,length,updated)
+	        if(type.eq.'r')then
+	          call uvgetvrr(tvis,'focus',foc(1,k),nants)
+	        else
+		      do i=1,nants
+	            foc(i,k) = 0.
+		      enddo
+	        endif
+	        call uvprobvr(tvis,'tpower',type,length,updated)
+	        if(type.eq.'r')then
+	          call uvgetvrr(tvis,'tpower',tpwr(1,k),nants)
+	        else
+		      do i=1,nants
+	            tpwr(i,k) = 0.
+		      enddo
+	        endif
+	        call uvprobvr(tvis,'antel',type,length,updated)
+	        if(type.eq.'d')then
+	          call uvgetvrd(tvis,'antel',antel(1,k),nants)
 c		do i=1,nants
 c	          antel(i,k) =  180./pi * antel(i,k)
 c		enddo
-	      else
-	        sinel=sin(latitude)*sin(obsdec(k))
-     *		  +cos(latitude)*cos(obsdec(k))*cos(lst(k)-obsra(k))
-	        cosel=sqrt(1.-sinel*sinel)
-	        if(source.eq.'FLIP') cosel=-cosel
+	        else
+	          sinel=sin(latitude)*sin(obsdec(k))
+     *		    +cos(latitude)*cos(obsdec(k))*cos(lst(k)-obsra(k))
+	          cosel=sqrt(1.-sinel*sinel)
+	          if(source.eq.'FLIP') cosel=-cosel
 c	        if(obsdec(k).gt.rlat.or.source.eq.'FLIP') cosel=-cosel
-		do i=1,nants
-	          antel(i,k) =  180./pi * atan2(sinel,cosel)
-		enddo
-	      endif
-	    endif
-	  endif
-	enddo
+		      do i=1,nants
+	            antel(i,k) =  180./pi * atan2(sinel,cosel)
+		      enddo
+	        endif
+	      endif  !|time-dtime| <interval
+	    endif  !time, dtime, +/- interval
+	  enddo  !while time 0
 c	call uvclose(tvis)
 c
 c  Write out some statistics for the gains.
 c
-	do j=1,nants
-	  if(SumWts(j).ne.0.)then
-	    AveAmp(j) = SumAmp(j)/SumWts(j)
-	    AvePhi(j) = SumPhi(j)/SumWts(j)
-	    RmsAmp(j) = sqrt(max(RmsAmp(j)/SumWts(j)-AveAmp(j)**2,0.))
-	    RmsPhi(j) = sqrt(max(RmsPhi(j)/SumWts(j)-AvePhi(j)**2,0.))
-	  endif
-	enddo
+	  do j=1,nants
+	    if(SumWts(j).ne.0.)then
+	      AveAmp(j) = SumAmp(j)/SumWts(j)
+	      AvePhi(j) = SumPhi(j)/SumWts(j)
+	      RmsAmp(j) = sqrt(max(RmsAmp(j)/SumWts(j)-AveAmp(j)**2,0.))
+	      RmsPhi(j) = sqrt(max(RmsPhi(j)/SumWts(j)-AvePhi(j)**2,0.))
+	    endif
+	  enddo
 c
-	do j=1,nants,6
-	  k = min(j+5,nants)
-	  write(line,110) (AveAmp(i),nint(AvePhi(i)),i=j,k)
+	  do j=1,nants,6
+	    k = min(j+5,nants)
+	    write(line,110) (AveAmp(i),nint(AvePhi(i)),i=j,k)
 110  	  format(3x,'Average',3x,6(f7.3,i4))
-	  call LogWrit(line)
-	  write(line,120) (RmsAmp(i),nint(RmsPhi(i)),i=j,k)
+	    call LogWrit(line)
+	    write(line,120) (RmsAmp(i),nint(RmsPhi(i)),i=j,k)
 120  	  format(5x,'Rms',5x,6(f7.3,i4))
-	  call LogWrit(line)
-	enddo
+	    call LogWrit(line)
+	  enddo
 c
 c  Scale tpwr and take difference from refant.
 c
-	if(refant.ne.0)then
-	  do j=1,nants
-	    tpmin(j) = tpwr(j,ismin(nSols,tpwr(j,1),MAXANTS))
-	    tpmax(j) = tpwr(j,ismax(nSols,tpwr(j,1),MAXANTS))
-	    if(doscale)then
-	    if(tpmin(j).ne.tpmax(j))then
-	     do i=1,nSols
-	      tpwr(j,i) = (tpwr(j,i)-tpmin(j))/(tpmax(j)-tpmin(j))
+	  if(refant.ne.0)then
+	    do j=1,nants
+	      tpmin(j) = tpwr(j,ismin(nSols,tpwr(j,1),MAXANTS))
+	      tpmax(j) = tpwr(j,ismax(nSols,tpwr(j,1),MAXANTS))
+	      if(doscale)then
+	        if(tpmin(j).ne.tpmax(j))then
+	          do i=1,nSols
+	            tpwr(j,i) = (tpwr(j,i)-tpmin(j))/(tpmax(j)-tpmin(j))
      *	      			 *(tpmax(refant)-tpmin(refant))
-	     enddo
-	    endif
-	    endif
-	  enddo
-	  do j=1,nants
-	    if(j.ne.refant)then
-	      do i=1,nSols
-	        tpwr(j,i) = tpwr(j,i)-tpwr(refant,i)
-	      enddo
-	    endif
-	  enddo
-	endif
+	          enddo
+	        endif
+	      endif
+	    enddo
+	    do j=1,nants
+	      if(j.ne.refant)then
+	        do i=1,nSols
+	          tpwr(j,i) = tpwr(j,i)-tpwr(refant,i)
+	        enddo
+	      endif
+	    enddo
+	  endif
 c
 c  Initialize BEE common block
 c
-	phed=.false.
-	do i=1,6
-	  b(i)=0.
-	  bnew(i)=0.
-	  c(i)=0.
-	enddo
+	  phed=.false.
+	  do i=1,6
+	    b(i)=0.
+	    bnew(i)=0.
+	    c(i)=0.
+	  enddo
 c
 c  Copy original antenna positions into output ANTPOS file.
 c
-	do k=1,nants
-	  do i=1,3
-	    antfit(k,i) = antpos(k+nants*(i-1))
+	  do k=1,nants
+	    do i=1,3
+	      antfit(k,i) = antpos(k+nants*(i-1))
+	    enddo
 	  enddo
-	enddo
 c
 c  Initialize fitting status flags.
 c
-	do k=1,nants
-	  amdone(k) = 'N'
-	  phdone(k) = 'N'
-	  eddone(k) = 'N'
-	enddo
+	  do k=1,nants
+	    amdone(k) = 'N'
+	    phdone(k) = 'N'
+	    eddone(k) = 'N'
+	  enddo
 c
 c  Copy variables into BEE common block
 c
-	np = 0
-	do i=1,nSols
-	  if(freq(i).ne.0.d0)then
-	    np = np + 1
-	    call snow(name(i),ra(i),decc(i),is(np))
-	    ha(np) = lst(i)-obsra(i)+3.*pi
-	    ha(np) = mod(ha(np),tupi)-pi
-	    dec(np) = obsdec(i)
-	    tim(np) = dtime(i)-dtime(1)
-	    frq(np) = freq(i)
-	    tair(np) = airtemp(i)
-	  endif
-	enddo
-	print *,'Number of points=',np
-	line ='Telescope: '//telescop//' Longitude: '//rangle(longitude)
+	  np = 0
+	  do i=1,nSols
+	    if(freq(i).ne.0.d0)then
+	      np = np + 1
+	      call snow(name(i),ra(i),decc(i),is(np))
+	      ha(np) = lst(i)-obsra(i)+3.*pi
+	      ha(np) = mod(ha(np),tupi)-pi
+	      dec(np) = obsdec(i)
+	      tim(np) = dtime(i)-dtime(1)
+	      frq(np) = freq(i)
+c dcb - 06aug10: n.b., this tair was overwritten by lines below...
+	      tair(np) = airtemp(i)
+c dcb - 06aug10: move from below as these only needed once during init
+c replace tpower by tair (23 dec 94)
+c	      tpower(np) = tair(np)
+c replace by antenna dependent tair by tpower
+c	      tair(np) = tpwr(k,i)
+c replace by tair by tpower(refpwr)
+	      if(refpwr.ge.1.and.refpwr.le.nants)then
+	        tair(np) = tpwr(refpwr,i)
+	      endif
+	      phint(np) = 0.
+	      ampint(np) = 1.
+	    endif
+	  enddo
+	  print *,'Number of points=',np
+	  line ='Telescope: '//telescop//' Longitude: 
+     *      '//rangle(longitude)
      *		//' Latitude: '//rangle(latitude)
 c	write(line,'(a,a,a,f12.8,a,f12.8)') 'Telescope: ',telescop,
 c     *  ' Longitude: ',longitude,' Latitude: ',latitude
-	call LogWrit(line)
-	rlat = latitude
-	slat = sin(rlat)
-	clat = cos(rlat)
+	  call LogWrit(line)
+	  rlat = latitude
+	  slat = sin(rlat)
+	  clat = cos(rlat)
 c
 c  End of startup Loop
 c
-	first = .false.
+	  first = .false.
 	endif
 c
 c  Prompt for new antenna position; store data for this antenna.
@@ -573,24 +595,18 @@ c  Copy variables into BEE common block
 c
 	  np = 0
 	  do i=1,nSols
+c 06aug10 - dcb - note that this np counter is done twice: above in init and here
+c why is "bad solution" coded as "freq=0.0"?? Smells like bandaid!!
 	    if(freq(i).ne.0.d0)then
 	      np = np + 1
-	      amp(np) = ampl(k,i)
-	      pase(np) = phi(k,i)*pi/180.
+	      amp(np) = Ampl(k,i)
+c 06aug10 - dcb - would be useful to know why two versions are kept; think
+c  it is because edph is dynamic, pase static
+	      pase(np) = Phi(k,i)*pi/180.
 	      edph(np) = pase(np)
 	      focus(np) = foc(k,i)
 	      tpower(np) = tpwr(k,i)
-c replace tpower by tair (23 dec 94)
-c	      tpower(np) = tair(np)
-c replace by tair by tpower
-c	      tair(np) = tpwr(k,i)
-c replace by tair by tpower(refpwr)
-	      if(refpwr.ge.1.and.refpwr.le.nants)then
-	        tair(np) = tpwr(refpwr,i)
-	      endif
 	      elev(np) =  pi/180. * antel(k,i)
-	      phint(np) = 0.
-	      ampint(np) = 1.
 	    endif
 	  enddo
 	  print *,'Number of points=',np
