@@ -325,6 +325,7 @@ c    01mar02  mchw  changed epoch to 2000.
 c    08mar02  mchw  don't write pbfwhm if not set, so mosaicing uses telescop name.
 c    30jan03  mchw  format change for many records.
 c     3jun03  pjt/rjs Fixed bug in determining whether source is up or not. (non-CVS ATNF)
+c    14aug06  mchw  format change in history. Initialize unused user inputs.
 c
 c  Bugs/Shortcomings:
 c    * Frequency and time smearing is not simulated.
@@ -353,7 +354,7 @@ c	pbfwhm=76,137,-0.2 simulates a primary beam pattern between
 c	10m and 6m antennas at 100 GHz. 
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version = 'Uvgen: version 1.0 3-Jun-03')
+	parameter(version = 'Uvgen: version 1.0 14-Aug-2006')
 	integer ALTAZ,EQUATOR
 	parameter(ALTAZ=0,EQUATOR=1)
 	integer PolRR,PolLL,PolRL,PolLR,PolXX,PolYY,PolXY,PolYX
@@ -364,8 +365,8 @@ c
 	include 'maxdim.h'
 	include 'uvgen.h'
 c
-        real corfin(4),corbw(4),zeeman
-        complex vis,modI,oldI,gradI,gain(MAXANT),leak(2,MAXANT)
+	real corfin(4)/4*0./,corbw(4)/4*0./,zeeman
+	complex vis,modI,oldI,gradI,gain(MAXANT),leak(2,MAXANT)
 	complex wcorr(maxspect,maxpol),chan(MAXCHAN,maxpol)
 	real wsignal(maxspect),tpower(MAXANT),pnoise(MAXANT)
 	logical flags(MAXCHAN)
@@ -603,12 +604,14 @@ c
 c  Open the source components file.
 c
 	call hiswrite(unit,'UVGEN: Source specifications:')
-        write(line,'(a)')'     Flux     RA      DEC    Major  Minor  '//
+        write(line,'(a)')
+     *    '             Flux     RA      DEC    Major  Minor  '//
      *    '  Axis    Pol-I  Pol-PA  Pol-V'
 	call output(line(1:80))
         umsg = 'UVGEN: '//line(1:75)
 	call hiswrite(unit, umsg )
-        write(line,'(a)')'     (Jy)     (")     (")     (")    (")   '//
+        write(line,'(a)')
+     *    '             (Jy)     (")     (")     (")    (")   '//
      *    '  (deg)    (%)    (deg)   (%)'
 	call output(line(1:80))
         umsg = 'UVGEN: '//line(1:75)
@@ -633,7 +636,7 @@ c
 	  ns = ns + 1
 	  if(ns.gt.maxsrc)
      *	    call bug('f','Max number of source components read')
-          write(line,'(i2,f7.2,2f8.1,2f8.2,f8.1,f8.1,f8.2,f8.1)')
+          write(line,'(i5,f12.3,2f8.1,2f8.2,f8.1,f8.1,f8.2,f8.1)')
      *          ns,flux,dra,ddec,wmaj,wmin,wpa,poln,polpa,polvv
 	  call output(line)
           umsg = 'UVGEN: '//line
