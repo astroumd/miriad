@@ -867,6 +867,7 @@ c
           print *, 'Phase1 (file1, Y-axis)'
           print *, 'plot initial fit with a given slope.'
           pause
+       
                   if(device.ne.' ')
      *    call varplot(device,visfile,xaxis,yaxis,nx,ny,xx,yy,
      *    xrange,yrange,xvar,yvar,yrsd,nsols,nants,maxants,maxsols,
@@ -1611,7 +1612,8 @@ c
           if(dofit) call pgline(2,xlin,ylin)
             call  pgsci(3)
             call  pgsls(2)
-          if(douniscale) call pgline(2,xlin,uylin)
+          
+          if(douniscale.and.(phratio.gt.0.)) call pgline(2,xlin,uylin)
             call  pgsci(1)
             call  pgsls(1)
           end if
