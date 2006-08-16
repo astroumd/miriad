@@ -61,6 +61,16 @@ c       Phase ratio (phase2/phase1) for slope input from users, which is
 c       used for adding a line with an expected-phase-slope in phase-phase 
 c       linear regression plot when options=uniscale.
 c       Default is 0.
+c@ nsigma
+c       Number of sigmas specified by users to reject 'bad gains' (or
+c       uncorrelated gains between receiver 2 and receiver 1) in
+c       the linear regression between phase2 and phase1. The sigma here
+c       is the uncertainty in the mean of the residual phase which is
+c       the phase2 subtracted by the phase determined from the initial 
+c       fitting assuming the slope = freq2/freq1 in the linear regression 
+c       between phase2 and phase1. It must be positive.
+c       nsigma = 4 is recommended. Default is 0, which means that no data
+c       rejection is performed. 
 c@ options
 c         wrap         Do not unwrap phase.
 c	  xscale       Re-scale xaxis = slope * xaxis + offset, where slope
@@ -162,16 +172,21 @@ c                                      uniformly scaling the ph-ph plot
 c                                      for each antenna.
 c    16mar06 pjt   fix for npntf ??
 c    01apr06 mchw  use lspoly instead of quadratic fit.
+c    18aug06 jhz & an tao:
+c                  added a feature to reject 'bad gains' or
+c                  uncorrelated gains between rx2 and rx1 in
+c                  the linear regression between phase 2 and phase 1. 
 c                                            
 c-----------------------------------------------------------------------
 	character version*(*)
-	parameter(version='(version 1.2 01-Apr-06)')
+	parameter(version='(version 1.3 18-Aug-06)')
 	character device*80, log*80, vis*80, xaxis*40, yaxis*40
 	integer tvis, refant, refant2, nx, ny
 	logical dowrap, xsc,ysc, dostruct, doallan, doquad
         logical dophareg,dophatran,dotamb,dogflag, douniscale
         real xrange(2),yrange(2),phratio
-        integer lin, nfiles,i
+        integer lin, nfiles,i 
+        real nsigmareject
         logical uvdatopn
         character ops*9
 c
@@ -195,6 +210,7 @@ c	call keyf('vis',vis,' ')
 	call keyi('refant',refant,0)
 	call keyi('refant2',refant2,0)
         call keyr('phratio',phratio,0.)
+        call keyr('nsigma',nsigmareject,0.)
 	call GetOpt(dowrap,xsc,ysc,dostruct,doallan,doquad,
      *   dophareg,dophatran,dotamb,dogflag,douniscale)
             if(dophareg) then
@@ -226,6 +242,7 @@ c
 
 	if(vis.eq.' ') call bug('f','Input visibility file is missing')
 	call uvopen(tvis,vis,'old')
+        
 c
 c  Open the output log file.
 c
@@ -237,7 +254,8 @@ c  Read in data
 c
 	call varmint(tvis,vis,xaxis,yaxis,refant,refant2,device,
      *	nx,ny,xrange,yrange,dowrap,xsc,ysc,dostruct,doallan,doquad,
-     * dophareg,dophatran,dotamb,dogflag,douniscale,phratio,i)
+     * dophareg,dophatran,dotamb,dogflag,douniscale,phratio,i,
+     * nsigmareject)
 c
 c  Close up.
 c
@@ -249,9 +267,11 @@ c
 c********1*********2*********3*********4*********5*********6*********7*c
 	subroutine varmint(tvis,vis,xaxis,yaxis,refant,refant2,device,
      *	nx,ny,xrange,yrange,dowrap,xsc,ysc,dostruct,doallan,doquad,
-     *  dophareg,dophatran,dotamb,dogflag,douniscale,phratio,fileid)
+     *  dophareg,dophatran,dotamb,dogflag,douniscale,phratio,fileid,
+     *  nsigmareject)
 	implicit none
 	integer tvis, refant, refant2, nx, ny, fileid
+        real nsigmareject
         character*(*) xaxis, yaxis, device,vis
 	logical dowrap, xsc,ysc, dostruct, doallan, doquad,
      *  dophareg,dophatran,dotamb,dogflag,douniscale
@@ -302,33 +322,77 @@ c----------------------------------------------------------------------c
 	real xmax(MAXANTS),ymax(MAXANTS)
 	real xmin(MAXANTS),ymin(MAXANTS)
         real xmaxrange, ymaxrange
-	real a1,b1,c1,yyave,sigy,corr,sigy1,theta,xbuf
+	real a1,b1,c1,yyave,sigy,corr,sigy1,theta
         real mpha
          complex mgains(10,2,6145)
          integer len1, length1, length2, kfirst
          character uvfile1*30, uvfile2*30, visfile*70
          character rm_var*32
+         include 'maxdim.h'
+         integer nchan,nschan(maxchan),nspect
+         double precision freq0
+         real fratio
+         double precision preamble(4),sfreq(maxchan),sdf(maxchan)
+         complex data(maxchan)
+         logical flags(maxchan)
+
 c
 c tambient
 c
-        integer yr,mm,dd,nantid,antid,ii,ndata,ndummy,istart
+        integer yr,mm,dd,nantid,antid,ii,ndata,istart,vupd
         character cdummy
         real ut(1440,MAXANTS), tamb(1440,MAXANTS), uthr
 c
 c  Externals.
 c
 	character itoaf*8
-	character rangle*18, dotrans*1
+	character rangle*18
 	integer uvscan,ismax,ismin,pee(2)
          real aa1(MAXANTS), bb1(MAXANTS)
          real aa2(MAXANTS), bb2(MAXANTS)
+         real a0(MAXANTS), b0(MAXANTS),ave(MAXANTS),rms(MAXANTS)
+         real deltay(MAXANTS,MAXSOLS)
+         real xsum,ysum,ndat
          common AAmpl,PPhi,TTime,aa1,bb1
+
+c initialize
+c
+        xref = .true.
+        yref = .true. 
+        length1 = 0
+        length2 = 0
 c
 c  Read some header information for the gains file.
 c
-	call rdhdd(tvis,'interval',interval,0.d0)
-	call rdhdi(tvis,'ngains',nants,0)
-	call rdhdi(tvis,'nsols',nSols,0)
+        if(nsigmareject.gt.0.) then
+        call uvvarini(tvis,vupd)
+        call uvvarset(vupd,'sfreq')
+        call uvvarset(vupd,'sdf')
+        call uvvarset(vupd,'nschan')
+        call uvvarset(vupd,'nspect')
+        call uvread(tvis,preamble,data,flags,maxchan,nchan)
+        call uvrdvri(tvis,'nspect',nspect,0)
+        call uvgetvrd(tvis,'sfreq',sfreq,nspect)
+        call uvgetvrd(tvis,'sdf',sdf,nspect)
+        call uvgetvri(tvis,'nschan',nschan,nspect)
+        freq0 = 0
+        do i=1,nspect
+        freq0 = freq0 + nschan(i)*(sfreq(i)+0.5*(nschan(i)-1)*sdf(i))
+        end do
+        if(nchan.eq.0) call bug('f', 'No data are found.')
+        freq0 = freq0/nchan
+        if(fileid.eq.1)  fratio=freq0
+        if(fileid.eq.2) then
+        if((fratio.le.0.).or.(freq0.le.0.)) 
+     *     call bug('f', 'The values of frequnecy are corrupted.')
+        if(fileid.eq.2) fratio = freq0/fratio
+                        end if
+        call uvrewind(tvis)
+        end if
+        call rdhdd(tvis,'interval',interval,0.d0)
+        call rdhdi(tvis,'ngains',nants,0)
+        call rdhdi(tvis,'nsols',nSols,0)
+
 	call LogWrit('Number of antennas: '//itoaf(nants))
 	call LogWrit('Number of solution intervals: '//itoaf(nSols))
 	if(nants.gt.MAXANTS) call bug('f','Too many antennas')
@@ -773,9 +837,96 @@ c
      *    uvfile1
           print *,' '
           end if
-	  print *, 'yaxis = slope * xaxis + intercept'
-	  print *, 'ant   yaxis_ave   yaxis_rms   slope   intercept',
+          
+c
+c do initial fit with a
+c
+         if(nsigmareject.gt.0.) then
+         do ant=1,nants
+            
+           if(xmin(ant).ne.xmax(ant))then
+            ysum=0
+            xsum=0
+            ndat=0
+            a0(ant)=fratio
+            do i=1,nSols
+            
+            if(.not.gflag(ant,i)) then
+            ysum=ysum+yvar(ant,i)
+            xsum=xsum+xvar(ant,i)
+            ndat=ndat+1
+            end if
+            end do
+            if (ndat.eq.0) call bug('f', 'no relevant data.')
+            b0(ant) = (ysum - a0(ant)*xsum)/ndat
+            end if
+            write(*,*) ant, a0(ant),  b0(ant)
+          end do
+
+          print *, 'Phase2 (file2, Y-axis)'
+          print *, 'Phase1 (file1, Y-axis)'
+          print *, 'plot initial fit with a given slope.'
+          pause
+                  if(device.ne.' ')
+     *    call varplot(device,visfile,xaxis,yaxis,nx,ny,xx,yy,
+     *    xrange,yrange,xvar,yvar,yrsd,nsols,nants,maxants,maxsols,
+     *    fileid,a0,b0,gflag,dogflag,xmaxrange,ymaxrange,
+     *    douniscale,phratio)
+
+c   calculate the deviation of the data from the the fit
+           do ant=1,nants
+            do i=1,nSols
+            if(.not.gflag(ant,i)) then
+            deltay(ant,i) = yvar(ant,i) - (a0(ant)*xvar(ant,i) +b0(ant))
+            else
+            deltay(ant,i) = 0
+            end if
+            end do
+c
+c  calculate the residual mean and the rms of residual mean
+c
+            ave(ant) = 0.
+            rms(ant) = 0.
+            ndat=0
+            do i=1,nSols
+            if(.not.gflag(ant,i)) then
+            ave(ant) = ave(ant) + deltay(ant,i)
+            rms(ant) = rms(ant) + deltay(ant,i)*deltay(ant,i)
+            ndat=ndat+1
+            end if
+            end do
+            ave(ant) = ave(ant)/ndat
+            rms(ant) = rms(ant)/ndat - ave(ant)*ave(ant)
+c
+c  rms of the mean value
+c
+            rms(ant) = sqrt(rms(ant)/ndat)
+c            
+c reject any data greater than  nsigmareject*rms
+c
+            do i=1,nSols
+              if (abs(deltay(ant,i)/rms(ant)).gt.nsigmareject) 
+     *   gflag(ant,i) =.true.
+            end do
+            a0(ant) =0.
+            b0(ant) =0.
+            end do
+         print *, 'Phase2 residual: Phase2 - initial fit'
+         print *, 'plot the Phase2 residual (Y-axis) vs Phase1 (X-axis)'
+             pause            
+             if(device.ne.' ')
+     *    call varplot(device,visfile,xaxis,yaxis,nx,ny,xx,yy,
+     *    xrange,yrange,xvar,deltay,yrsd,nsols,nants,maxants,maxsols,
+     *    fileid,a0,b0,gflag,dogflag,xmaxrange,ymaxrange,
+     *    douniscale,0.)
+           
+          end if
+
+          print *, 'yaxis = slope * xaxis + intercept'
+          print *, 'ant   yaxis_ave   yaxis_rms   slope   intercept',
      *  '   rms-fit   correlation'
+
+
 	  do ant=1,nants
 	   if(xmin(ant).ne.xmax(ant))then
 	    do i=1,nSols
@@ -792,7 +943,7 @@ c
               aa1(ant) = a1
               bb1(ant) = b1
              do i=1,nSols
-          yrsd(ant,i) = yvar(ant,i)-a1*xvar(ant,i)-b1+yyave
+             yrsd(ant,i) = yvar(ant,i)-a1*xvar(ant,i)-b1+yyave
              enddo
             end if
             if(fileid.eq.3.and.a1.ne.0) then
@@ -876,9 +1027,9 @@ c
               endif
               if(fileid.eq.3.and.dophareg) then
        print*, ' '
-       print*, 'Plot: Phase2(file2) vs Phase1(file1)?'
+       print*, 'Plot: Phase2(file2,Y-axis) vs Phase1(file1,X-axis)?'
               endif
-                  pause
+              pause
 	if(device.ne.' ') 
      *	  call varplot(device,visfile,xaxis,yaxis,nx,ny,xx,yy,
      *	  xrange,yrange,xvar,yvar,yrsd,nsols,nants,maxants,maxsols,
@@ -1031,7 +1182,7 @@ c
 c
         integer tno,nants,nsoln,npol,pee(2)
         double precision time(nsoln),freq0
-        real tau(nants,nsoln)
+c        real tau(nants,nsoln)
         complex gains(10,2,6145)
         logical dodelay
 c
@@ -1404,12 +1555,13 @@ c
 	    xhi = xrange(2)
 	  endif
 
-
             if(fileid.eq.3) then
             ylin(1) = aa(j)*xlo+bb(j)
             ylin(2) = aa(j)*xhi+bb(j)
             xlin(1) = xlo
             xlin(2) = xhi
+            uylin(1) =0
+            uylin(2) =0
             if(phratio.ne.0.) then
             uylin(1) = ylin(1) 
             uylin(2) = phratio*(xhi-xlo)+ylin(1)
@@ -1576,7 +1728,7 @@ c
          subroutine GetSlope(
      *          tvis,slope,yoffset,nants)
         implicit none
-        integer tvis,nants,maxants,maxsols
+        integer tvis,nants,maxants
         parameter(MAXANTS=28)
         real slope(MAXANTS), yoffset(MAXANTS)
        
