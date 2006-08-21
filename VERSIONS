@@ -11,5 +11,6 @@
 4.x    n/a      MIR4 branch in CVS (LFS able to write 2GB+ files)
 4.0.1  03feb23	end of MIR4 as a branch
 4.0.2  03may14  merged MIR4 into the HEAD
-4.0.3  W.I.P.   adding MAXIANT, improving scaleability
+4.0.3  04dec16  adding MAXIANT, improving scaleability
 4.0.4  06aug21  CARMA; before ATNF code merging
+4.0.5  W.I.P.   (as trunk) MIR4 branch for bugfixes
