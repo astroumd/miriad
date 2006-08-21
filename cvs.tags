@@ -18,4 +18,4 @@ mir_4_0_3     before introducing SMA code  (Fri Dec 10 16:01:19 EST 2004)
 mir_4_0_4     before branching to MIR5     (Mon Aug 21 12:25:00 EDT 2006)
 
 
-MIR5	'cvs tag -b MIR5'	for the ATNF code merging
+MIR5	'cvs rtag -b MIR5'	for the ATNF code merging
