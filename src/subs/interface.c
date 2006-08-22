@@ -8,9 +8,14 @@
 /*    rjs  05dec95 Comment out a dirty trick in zterm that was screwing */
 /*		   up with some compilers!! 				*/
 /*    pjt  17jun02 MIR4 prototypes                                      */
+/*    pjt  22aug06 MIR5 merged from ATNF                                */
 /************************************************************************/
 
+#include <sys/types.h>
 #include <string.h>
+
+#define CIRBUFSIZE 2048
+
 
 void pad(char *string,int length)
 /*
@@ -26,7 +31,7 @@ void pad(char *string,int length)
   int len0,i;
   char *s;
 
-  len0 = strlen(string);
+  len0 = (int)strlen(string);
   s = string + len0;
   for(i=len0; i < length; i++) *s++ = ' ';
 }
@@ -50,7 +55,6 @@ char *zterm(char *string,int length)
     zterm	Pointer to null terminated string.
 ------------------------------------------------------------------------*/
 {
-#define CIRBUFSIZE 2048
   static char buffer[CIRBUFSIZE];
   static int offset=0;
 
@@ -67,8 +71,8 @@ char *zterm(char *string,int length)
 
   if(offset + length + 1 > CIRBUFSIZE) offset = 0;
   s = buffer + offset;
-  memcpy(s,string,length);
+  memcpy(s,string,(size_t)length);
   *(s+length) = 0;
   offset += length + 1;
-  return(s);
+  return s;
 }
