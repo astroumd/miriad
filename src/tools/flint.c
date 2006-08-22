@@ -53,17 +53,17 @@
    rjs   30sep94 Check ends of ENDDO, ENDIF, ELSE statements.
    rjs   25nov95 Fix EQUIVALENCE handling, better treatment of exclamations,
 		 do-loop variables. Flag VMS record structures.
+
    pjt   16jun04 add - to options list to trigger --help habituals
    pjt    7nov04 better headers for gcc 3.4.2 (e.g. linux/FC3)
+ 
+   rjs   22may06 Change to appease cygwin.
+   mrc   14jul06 Get it to compile with 'gcc -Wall' without warnings.
 
-
-TODO:
-
-   ansi-fy this code, it has lots of K&R style things
-
+   pjt   22aug06 MIR5 merged ATNF version
 ******************************************************************************/
 
-#define VERSION_ID "7-nov-2004"
+#define VERSION_ID "22-aug-2006"
 
 /*= flint - fortran source code verifier */
 /*& rjs pjt */
@@ -241,8 +241,8 @@ TODO:
 #define private static
 #include <ctype.h>
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
 /* Define all the flags. */
 
@@ -397,7 +397,6 @@ private int set_variable(),inquire_variable(),set_label();
 private SYMBOL *set_routine(),*inquire_routine();
 private int isfunction(),issubstring(),get_arg_intent();
 private void banish_hollerith(),set_block(),end_label(),end_block();
-/*char *malloc();*/
 
 #define issymbol(s) (isalnum(s) || (s) == '_' || (s) == '$' || (s) == '%')
 
@@ -496,7 +495,7 @@ int main(int argc,char *argv[])
         case 'u': unused = FALSE;		break;
         case 'x': extended  = TRUE;		break;
 	case '2': twopass = TRUE;		break;
-	case '-':
+        case '-':
 	case '?':
 	  printf("%s Version: %s\n",argv[0],VERSION_ID);
           printf("Usage: flint [-flags] files ... [-I incdir] [-l files] [-o outfile]\n");
