@@ -1,5 +1,5 @@
 /*= ratty FORTRAN preprocessor, so that same code works on more machines */
-/*& bpw */
+/*& pjt */
 /*: tools */
 /*+
 Ratty is a FORTRAN preprocessor for MIRIAD source code, intended to
@@ -104,6 +104,11 @@ vector processing capacities (compilers "unicos", "alliant" and "convex"):
 /*    rjs  15aug95 Added sgi		                                */
 /*    pjt  16mar03 MIR4 prototypes, -h                                  */
 /*									*/
+/*    rjs  22may06 Change to appease cygwin.				*/
+/*    mrc  14jul06 Get it to compile with 'gcc -Wall' without warnings. */
+/*									*/
+/*    pjt  22aug06 MIR5 ATNF Merged                                     */
+/*									*/
 /************************************************************************/
 /* ToDos/Shortcomings:                                                  */
 /*  The -u flag doesn't convert self-generated if/then/continue etc.    */
@@ -112,7 +117,7 @@ vector processing capacities (compilers "unicos", "alliant" and "convex"):
 /*  to be changed to:                                                   */
 /*      (uflag?textout("continue\n"):textout("CONTINUE\n"));            */
 /************************************************************************/
-#define VERSION_ID   "16-mar-03"
+#define VERSION_ID   "22-aug-06"
 
 #define max(a,b) ((a) > (b) ? (a) : (b) )
 #define min(a,b) ((a) < (b) ? (a) : (b) )
@@ -139,7 +144,7 @@ static char *getparm(char *line, char *token);
 static void cppline(char *line);
 static char *progtok(char *line, char *token, int *indent, int *lineno, int *bracketting);
 static char *skipexp(char *s, int *bracketting);
-static int getline(FILE *in, char *line);
+static int get_line(FILE *in, char *line);
 static int reformat(char *s);
 static struct link_list *add_list(struct link_list *list, char *name);
 static FILE *incopen(char *name);
@@ -198,15 +203,6 @@ static int dbslash,offlevel,level,sys,label,uselabel,depth,lines,routines,chars;
 static int comment,in_routine,gflag,lflag,uflag;
 static int loops[MAXDEPTH],dowhile[MAXDEPTH];
 struct link_list {char *name; struct link_list *fwd;} *defines,*incdir;
-
-#if 0
-private void process(),message(),textout(),labelout(),numout(),blankout(),lowercase(),
-	cppline(),get_labelnos(),usage();
-private struct link_list *add_list();
-private int getline(),reformat(),isdefine();
-private char *getparm(),*progtok(),*skipexp();
-private FILE *incopen();
-#endif
 
 private int continuation,quoted=FALSE;
 private int lower,increment;
@@ -345,7 +341,7 @@ char *infile;
 
   if(gflag)strcpy(gfile,infile);            /* init -g filename */
 
-  while( (type=getline(in,line)) ){
+  while( (type=get_line(in,line)) ){
     lines++;
     if(gflag){
         glines++;
@@ -395,7 +391,7 @@ char *infile;
 	    textout("if"); textout(s);
 	    while(bracketting){
 	      textout("\n");
-	      type = getline(in,line);
+	      type = get_line(in,line);
 	      if(type != '*'){
 		message("Bad DOWHILE statement");
 		bracketting = 0;
@@ -763,7 +759,7 @@ int *bracketting;
   return(s);
 }
 /************************************************************************/
-private int getline(in,line)
+private int get_line(in,line)
 FILE *in;
 char *line;
 /*
