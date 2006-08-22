@@ -37,20 +37,21 @@
        23-feb-03  pjt   merged MIR4
        22-jul-04  jwr	changed type of "size" in hexists_c() from int to size_t
        05-nov-04  jwr	changed file sizes from size_t to off_t
+
        01-jan-05  pjt   a few bug_c() -> bugv_c()
        03-jan-05  pjt/rjs   hreada/hwritea off_t -> size_t for length 
+
+       02-jan-05  rjs   Correct type of hreada/hwritea "length" parameter. Tidy.
+
+       22-aug-06  pjt   Merged w/ ATNF for MIR5
 */
+
 
 #include <stdlib.h>
 #include <string.h>
 
-#include "hio.h"
 #include "miriad.h"
-
-#define private static
-#if !defined(NULL)
-#  define NULL 0
-#endif
+#include "hio.h"
 
 #define MAXNAME 9
 #define CACHESIZE 64			/* Max size of items to cache. */
@@ -97,6 +98,8 @@ typedef struct tree {
   int handle,flags,rdwr,wriostat;
   ITEM *itemlist; 
 } TREE;
+
+#define private static
 
 static TREE foreign = {"",0,0,0,0,NULL};
 #define MAXITEM 1024
@@ -614,7 +617,7 @@ void haccess_c(int tno,int *ihandle,Const char *keyword,Const char *status,int *
 /* Check and set the read/write flags. */
 
   if(item->flags & ACCESS_MODE) 
-    bugv_c('f',"haccess_c: Multiple access to item %s",keyword);  
+    bugv_c('f',"haccess_c: Multiple access to item %s",keyword);
   item->flags |= mode;
 
 /* Open the file if necessary. */
@@ -1330,7 +1333,7 @@ private int hname_check(char *name)
     if((c < 'a' || c > 'z') && (c < '0' || c > '9') && (c != '-') && (c != '_'))
       return(-1);
   }
-  return 0 ;
+  return 0;
 }
 /************************************************************************/
 private void hdir_c(ITEM *item)
