@@ -22,12 +22,9 @@
 /*  rjs 29apr99   Get hdprobe to check for string buffer overflow.	*/
 /*  dpr 11may01   Descriptive error for hisopen_c                       */
 /*  pjt 22jun02   MIR4 prototypes and using int8 for long integers      */
-/*  pjt/rjs 1jan05 replaced shortcut rdhdd code with their own readers  */
-/*                 this fixes a serious bug in rdhdl for large values   */
-/*                Also adding in some bugv_c() called to replace bug_c  */
-/*  pjt 12jan05   Fixed up type conversion for int8's in rhhdl          */
-/*  pjt  6feb05   rdhdd_c() : no more type check (see comment in code)  */
-/*  pjt 17feb05   fixed bug in reading int8's from old MIR3 files       */
+/*  rjs 02jan05   Fix up bug in rdhdl. Tidy.				*/
+/*  rjs 26nov05   Better handling of logical values.			*/
+/*  pjt 22aug06   MIR5/atnf merged                                      */
 /************************************************************************/
 
 #include <stdlib.h>
@@ -245,10 +242,8 @@ void wrhdl_c(int thandle,Const char *keyword,int8 value)
 	character keyword*(*)
 	integer*8 value
 
-  Write an integer*8 valued header variable. This is only supported
-  on compilers that know how to handle integer*8 (e.g. gnu, intel).
-  Without this support, some files in miriad will be limited to
-  8 GB.
+  Write an integer*8 valued header variable. This always will write
+  an integer*4 if this is possible.
 
   Input:
     tno		The handle of the data set.
@@ -258,14 +253,21 @@ void wrhdl_c(int thandle,Const char *keyword,int8 value)
 /*----------------------------------------------------------------------*/
 {
   int item;
-  int iostat,offset;
+  int iostat,offset,temp;
 
-  /* Sault proposes to write an INT if below 2^31, else INT8 */
+/* Always try to write an integer if possible. */
 
   haccess_c(thandle,&item,keyword,"write",&iostat);		check(iostat);
-  hwriteb_c(item,int8_item,0,ITEM_HDR_SIZE,&iostat);		check(iostat);
-  offset = mroundup(ITEM_HDR_SIZE,H_INT8_SIZE);
-  hwritel_c(item,&value,offset,H_INT8_SIZE,&iostat);		check(iostat);
+  if(value > 0x7FFFFFFF){
+    hwriteb_c(item,int8_item,0,ITEM_HDR_SIZE,&iostat);		check(iostat);
+    offset = mroundup(ITEM_HDR_SIZE,H_INT8_SIZE);
+    hwritel_c(item,&value,offset,H_INT8_SIZE,&iostat);		check(iostat);
+  }else{
+    temp = value;
+    hwriteb_c(item,int_item,0,ITEM_HDR_SIZE,&iostat);		check(iostat);
+    offset = mroundup(ITEM_HDR_SIZE,H_INT_SIZE);
+    hwritei_c(item,&temp,offset,H_INT_SIZE,&iostat);		check(iostat);
+  }    
   hdaccess_c(item,&iostat);					check(iostat);
 }
 /************************************************************************/
@@ -389,7 +391,7 @@ void rdhdi_c(int thandle,Const char *keyword,int *value,int defval)
 }
 /************************************************************************/
 void rdhdl_c(int thandle,Const char *keyword,int8 *value,int8 defval)
-/** rdhdl -- Read an integer*8-valued header variable.			*/
+/** rdhdl -- Read an integer*8 valued header variable.			*/
 /*& mjs									*/
 /*: header-i/o								*/
 /*+ FORTRAN call sequence:
@@ -400,7 +402,7 @@ void rdhdl_c(int thandle,Const char *keyword,int8 *value,int8 defval)
 	integer*8 value,default
 
   Read an integer*8 valued header variable. Only supported on some
-  compilers. See comments in wrhdl
+  compilers. See comments in wrhdl 
 
   Input:
     tno		The file handle of the data set.
@@ -415,7 +417,10 @@ void rdhdl_c(int thandle,Const char *keyword,int8 *value,int8 defval)
 {
   int item;
   char s[ITEM_HDR_SIZE];
-  int iostat,length,offset,itemp;
+  int iostat;
+  off_t offset,length;
+  int itemp;
+  int8 ltemp;
 
 /* Firstly assume the variable is missing. Try to get it. If successful
    read it. */
@@ -429,24 +434,24 @@ void rdhdl_c(int thandle,Const char *keyword,int8 *value,int8 defval)
 
     hreadb_c(item,s,0,ITEM_HDR_SIZE,&iostat);		check(iostat);
     iostat = 0;
-    if(      !memcmp(s,int8_item, ITEM_HDR_SIZE)){
-      offset = mroundup(ITEM_HDR_SIZE, H_INT8_SIZE);
-      if(offset + H_INT8_SIZE == length)
-	hreadl_c(item,value,offset,H_INT8_SIZE,&iostat);
-    } else if ( !memcmp(s,int_item, ITEM_HDR_SIZE)){
-      /* this is to cover old style MIR3 files that were using int4's */
-      offset = mroundup(ITEM_HDR_SIZE, H_INT_SIZE);
-      if(offset + H_INT_SIZE == length) {
+    if(      !memcmp(s,int_item, ITEM_HDR_SIZE)){
+      offset = mroundup(ITEM_HDR_SIZE,H_INT_SIZE);
+      if(offset + H_INT_SIZE == length){
 	hreadi_c(item,&itemp,offset,H_INT_SIZE,&iostat);
-        *value = itemp;
+	*value = itemp;
       }
-    } else
-      bugv_c('f',"rdhdl_c: item %s not an int8 or small enough int4",keyword);
-      
+    } else if(!memcmp(s,int8_item,ITEM_HDR_SIZE)){
+      offset = mroundup(ITEM_HDR_SIZE,H_INT8_SIZE);
+      if(offset + H_INT8_SIZE == length){
+        hreadl_c(item,&ltemp,offset,H_INT8_SIZE,&iostat);
+        *value = ltemp;
+      }
+    } else {
+      bug_c('f',"Unrecognised type in rdhdl");
+    }
     check(iostat);
   }
   hdaccess_c(item,&iostat);				check(iostat);
-
 }
 /************************************************************************/
 void rdhdd_c(int thandle,Const char *keyword,double *value,double defval)
@@ -475,7 +480,8 @@ void rdhdd_c(int thandle,Const char *keyword,double *value,double defval)
 {
   int item;
   char s[ITEM_HDR_SIZE];
-  int iostat,length,itemp,offset;
+  int iostat,itemp;
+  off_t offset,length;
   float rtemp;
 
 /* Firstly assume the variable is missing. Try to get it. If successful
@@ -507,15 +513,9 @@ void rdhdd_c(int thandle,Const char *keyword,double *value,double defval)
       if(offset + H_DBLE_SIZE == length){
 	hreadd_c(item,value, offset,H_DBLE_SIZE,&iostat);
       }
-    } 
-#if 0
-    /* can't do this: some routines, e.g. imhead, actually depend
-     *  on it falling through. Sick, but true 
-     */
-    else
-      bugv_c('f',"rdhdd_c: keyword %s not covered here",keyword);
-#endif
-      
+    } else {
+      bug_c('f',"Unrecognised type in rdhdd");
+    }
     check(iostat);
   }
   hdaccess_c(item,&iostat);				check(iostat);
@@ -547,7 +547,8 @@ void rdhdc_c(int thandle,Const char *keyword,float *value,Const float *defval)
 {
   int item;
   char s[ITEM_HDR_SIZE];
-  int iostat,length,offset;
+  int iostat;
+  off_t offset,length;
 
 /* Firstly assume the variable is missing. Try to get it. If successful
    read it. */
@@ -594,11 +595,13 @@ void rdhda_c(int thandle,Const char *keyword,char *value,Const char *defval,int 
 {
   int item;
   char s[ITEM_HDR_SIZE];
-  int iostat,dodef,length=0;
+  int iostat,dodef;
+  off_t length;
 
 /* Firstly assume the variable is missing. Try to get it. If successful
    read it. */
 
+  length = 0;
   dodef = TRUE;
   haccess_c(thandle,&item,keyword,"read",&iostat);
   if(! iostat) {
@@ -640,7 +643,8 @@ void hdcopy_c(int tin,int tout,Const char *keyword)
 {
   char buf[MAXSIZE];
   int item_in,item_out;
-  int length,offset,iostat,size;
+  int iostat;
+  off_t offset,length,size;
 
   haccess_c(tin,&item_in,keyword,"read",&iostat);	if(iostat)return;
   haccess_c(tout,&item_out,keyword,"write",&iostat);	check(iostat);
@@ -675,8 +679,8 @@ int hdprsnt_c(int tno,Const char *keyword)
 /*--									*/
 /*----------------------------------------------------------------------*/
 {
-  if(hexists_c(tno,keyword))return(FORT_TRUE);
-  else			    return(FORT_FALSE);
+  if(hexists_c(tno,keyword))return FORT_TRUE;
+  else			    return FORT_FALSE;
 }
 /************************************************************************/
 void hdprobe_c(int tno,Const char *keyword,char *descr,size_t length,char *type,int *n)
@@ -718,16 +722,20 @@ void hdprobe_c(int tno,Const char *keyword,char *descr,size_t length,char *type,
   int item;
   char s[ITEM_HDR_SIZE],buf[MAXSIZE];
   float rtemp,ctemp[2];
-  int iostat,unknown,size,i,itemp,offset,bufit;
+  int iostat,unknown,i,itemp,bufit;
   double dtemp;
   int2 jtemp;
   int8 ltemp;
+  long long int ltemp2;
+  off_t offset,size,asize;
 
   haccess_c(tno,&item,keyword,"read",&iostat);
   *n = 0;
   bufit = 0;
   Strcpy(type,"nonexistent");				if(iostat)return;
   size = hsize_c(item);
+  asize = size;
+
   unknown = FALSE;
   if(size <= ITEM_HDR_SIZE){
     unknown = TRUE;
@@ -775,7 +783,8 @@ void hdprobe_c(int tno,Const char *keyword,char *descr,size_t length,char *type,
       if(size % H_INT8_SIZE) unknown = TRUE;
       else if(size == H_INT8_SIZE){
 	hreadl_c(item,&ltemp,offset,H_INT8_SIZE,&iostat);	check(iostat);
-	Sprintf(buf,"%lld",ltemp);
+	ltemp2 = ltemp;
+	Sprintf(buf,"%lld",ltemp2);
 	bufit = 1;
       }
     } else if(!memcmp(s,dble_item,ITEM_HDR_SIZE)){
@@ -822,10 +831,9 @@ void hdprobe_c(int tno,Const char *keyword,char *descr,size_t length,char *type,
   hdaccess_c(item,&iostat);					check(iostat);
   if(unknown){
     Strcpy(type,"unknown");
-    *n = size + ITEM_HDR_SIZE;
+    *n = asize;
   } else if(bufit){
-    if(strlen(buf) > length - 1)
-      bugv_c('f',"Descr buffer overflow in hdprobe for %s",keyword);
+    if(strlen(buf) > length - 1)bug_c('f',"Descr buffer overflow in hdprobe");
     strcpy(descr,buf);
   }
 }
