@@ -8,3 +8,27 @@ Notes on what was done to miriad for the MIR5 transition:
   in with the CARMA version.
 
 
+----
+
+MIRSUBS C-routines:
+
+interface.c		minor merge - DONE
+bug.c			some major work needed, nothing showstopping (remove VMS?)
+dirs.c			VMS only, keep it??
+headio.c		major work -- THIS IS WHERE the INT4/INT8 work is performed - DONE
+hio.c			minor work - DONE
+key.c			ATNF uses keyc.c !! work needed, but works 'as is'
+maskio.c		minor work needed - DONE
+scrio.c			minor work (int vs. off_t/size_t) - DONE
+xyio.c			minor work (added xydim) - DONE
+xyzio.c			minor work (added xyzdim) - DONE
+uvio.c			the ATNF version was taken, CARMA things merged in.
+
+TOOLS:
+
+intf2c.c		some work needed
+flint.c			minor merge - DONE
+ratty.c			minor merge - DONE
+doc_atnf.c		simple update (we have our own dogged doc.c) - DONE
+
+
