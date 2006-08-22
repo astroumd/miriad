@@ -89,14 +89,15 @@ c    rjs  20oct00 Print out number of points when giving stats.
 c    rjs  31jan01 Support other stokes types.
 c    rjs  08apr02 Allow negative values when taking cube roots.
 c    pjt  03dec02 use MAXANT2, since MAXANT is now big for ATA
+c    pjt  22aug06 stimulate Mel's eyesight (MAXPLOTS -> 455 for carma)
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	include 'mem.h'
 	integer MAXPNTS,MAXPLOTS,MAXTRIP
 	integer PolMin,PolMax,MAXPOL
 	character version*(*)
-	parameter(version='version 3-dec-02')
-	parameter(MAXPNTS=5000,MAXPLOTS=120)
+	parameter(version='version 22-aug-06')
+	parameter(MAXPNTS=5000,MAXPLOTS=455)
 	parameter(MAXTRIP=(MAXANT2*(MAXANT2-1)*(MAXANT2-2))/6)
 	parameter(PolMin=-8,PolMax=4,MAXPOL=2)
 c
