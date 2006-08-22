@@ -317,8 +317,8 @@ void bugv_c      (char s, Const char *m, ...);
 
 void scropen_c  (int *handle);
 void scrclose_c (int handle);
-void scrread_c  (int handle, float *buffer, int offset, int length);
-void scrwrite_c (int handle, Const float *buffer, int offset, int length);
+void scrread_c  (int handle, float *buffer, off_t offset, size_t length);
+void scrwrite_c (int handle, Const float *buffer, off_t offset, size_t length);
 
 /* key.c */
 
