@@ -2,13 +2,12 @@ Notes on what was done to miriad for the MIR5 transition:
 
    NOTE:: this revision will remain on a branch until deemed stable,
    after which the main trunk will become a MIR4 branch, and
-   MIR5 will become the trunk.
-
-- uvio.c and needed friends from the ATNF distribution will be merged
-  in with the CARMA version.
+   MIR5 will eventually become the trunk once this branch has been deemed
+	production.
 
 
-----
+status and work done on the merge:
+==================================
 
 MIRSUBS C-routines:
 
