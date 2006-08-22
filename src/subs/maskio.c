@@ -15,18 +15,19 @@
 /*    rjs  23dec93   Do not open in read/write mode unless necessary.	*/
 /*    rjs   6nov94   Change item handle to an integer.			*/
 /*    rjs  19apr97   Handle FORTRAN LOGICALs better. Some tidying.      */
+/*    rjs  03jan05   Tidying.						*/
+/*    pjt  22aug06   MIR5 merged                                        */
 /************************************************************************/
-
-#define BUG(sev,a)   bug_c(sev,a)
-#define ERROR(sev,a) bug_c(sev,((void)sprintf a,message))
-#define CHECK(x) if(x) bugno_c('f',x)
-#define private static
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "miriad.h"
+#include "io.h"
 
+#define BUG(sev,a)   bug_c(sev,a)
+#define ERROR(sev,a) bug_c(sev,((void)sprintf a,message))
+#define CHECK(x) if(x) bugno_c('f',x)
 
 static char message[128];
 
@@ -58,6 +59,7 @@ static int masks[BITS_PER_INT+1]={
 #define MK_RUNS 2
 #define BUFFERSIZE 128
 #define OFFSET (((ITEM_HDR_SIZE-1)/H_INT_SIZE + 1)*BITS_PER_INT)
+
 typedef struct {
   int item;
   int buf[BUFFERSIZE],offset,length,size,modified,rdonly,tno;
@@ -65,7 +67,7 @@ typedef struct {
 } MASK_INFO;
 
 
-private void mkfill(MASK_INFO *mask,int offset);
+static void mkfill(MASK_INFO *mask,int offset);
 
 /************************************************************************/
 char *mkopen_c(int tno,char *name,char *status)
@@ -86,6 +88,9 @@ char *mkopen_c(int tno,char *name,char *status)
   MASK_INFO *mask;
   int iostat;
   char s[ITEM_HDR_SIZE];
+
+  if (sizeof(int) != 4) 
+    bugv_c('f',"mask I/O: cannot deal with sizeof(int)=%d",sizeof(int));
 
   mask = (MASK_INFO *)malloc((unsigned int)sizeof(MASK_INFO));
 
@@ -230,7 +235,7 @@ int mkread_c(char *handle,int mode,int *flags,int offset,int n,int nsize)
   return(flags - flags0);
 }
 /************************************************************************/
-void mkwrite_c(char *handle,int mode,int *flags,int offset,int n,int nsize)
+void mkwrite_c(char *handle,int mode,Const int *flags,int offset,int n,int nsize)
 /*
 ------------------------------------------------------------------------*/
 {
@@ -373,7 +378,7 @@ void mkflush_c(char *handle)
   mask->modified = FALSE;
 }
 /************************************************************************/
-private void mkfill(MASK_INFO *mask,int offset)
+static void mkfill(MASK_INFO *mask,int offset)
 /*
   We have to fill in some bits in the current buffer.
 
