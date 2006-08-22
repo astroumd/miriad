@@ -158,8 +158,12 @@
 /*    rjs  27jul04 Handle uvinfo_variance Tsys table in a more elegant  */
 /*                 fashion to deal with many antennas. (MAXANT)         */
 /*    rjs  16aug04 Add selection based on LST, elevation and HA - but	*/
+/*		   only when the relevant uv variables are in the dataset*/
+/*  pjt  24oct05 TESTBED program can use checker table of uv variables  */
+/*  pjt  23nov05 Added new dazim, delev (scalar!) uv variables          */
 /*		  only when the relevant uv variables are in the dataset*/
 /*  pjt  25apr06 Add ATNF's new uvdim_c and match sourcenames w/o case  */
+/*  pjt  22aug06 merged versions; finish dazim/delev selection code     */
 /*----------------------------------------------------------------------*/
 /*									*/
 /*		Handle UV files.					*/
@@ -249,17 +253,18 @@
 /*		list to be formed for hashing.				*/
 /*									*/
 /*----------------------------------------------------------------------*/
-#define VERSION_ID "25-apr-06 pjt"
+#define VERSION_ID "22-aug-06 pjt"
 
 #define private static
 
 #define CKMS 299792.458
-#define PI 3.141592653589793
+#define PI   3.141592653589793
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <ctype.h>
 #include "io.h"
 #include "miriad.h"
 
@@ -407,6 +412,8 @@ typedef struct varhand{
 #define SEL_HA   17
 #define SEL_LST  18
 #define SEL_ELEV 19
+#define SEL_DAZIM 20
+#define SEL_DELEV 21
 
 typedef struct {
 	int type,discard;
@@ -464,11 +471,13 @@ typedef struct {
 	VARIABLE *coord,*corr,*time,*bl,*tscale,*nschan,*axisrms;
 	VARIABLE *sfreq,*sdf,*restfreq,*wcorr,*wfreq,*veldop,*vsource;
 	VARIABLE *plmaj,*plmin,*plangle,*dra,*ddec,*ra,*dec,*pol,*on;
+        VARIABLE *dazim, *delev;
 	VARIABLE *obsra,*obsdec,*lst,*elev,*antpos,*antdiam,*source,*bin;
 	VARIABLE *vhash[HASHSIZE],*prevar[MAXPRE];
 	VARIABLE variable[MAXVAR];
         LINE_INFO data_line,ref_line,actual_line;
 	int need_skyfreq,need_point,need_planet,need_dra,need_ddec,
+	    need_dazim, need_delev,
 	    need_ra,need_dec,need_pol,need_on,need_obsra,need_uvw,need_src,
 	    need_win,need_bin,need_lst,need_elev;
 	float ref_plmaj,ref_plmin,ref_plangle,plscale,pluu,pluv,plvu,plvv;
@@ -514,6 +523,9 @@ static char *M[] = {
   "JAN", "FEB", "MAR", "APR", "MAY", "JUN",
   "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"
 };
+
+static int checklist = 0;
+
 /*  The following compiles a main program to give exercise to some of the
  *  uvio routines. It is essentially a debugging device (both for bad
  *  files and bad behaviour of uvio!).
@@ -529,7 +541,7 @@ static char *M[] = {
  */
 main(int ac,char *av[])
 {
-    int tno;
+    int i,tno;
     char *fn;
 
     printf("%s Version %s\n",av[0],VERSION_ID);
@@ -545,12 +557,14 @@ main(int ac,char *av[])
         exit(0);
     }
 
-    fn = av[1];
-    if ((int)strlen(fn) > 4) {       /* see if vis= was used */
+    for (i=1; i<ac; i++) {         /* loop over command line arguments */
+      fn = av[i];
+      if ((int)strlen(fn) > 4) {       /* see if vis= was used */
         if (strncmp(fn,"vis=",4)==0)
-            fn += 4;                /* if so, increase pointer */
+	  fn += 4;                /* if so, increase pointer */
+      }
+      uvopen_c(&tno,fn,"old");
     }
-    uvopen_c(&tno,fn,"old");
     my_uvlist(tno,fn);
     uvclose_c(tno);
 }
@@ -807,8 +821,6 @@ void uvclose_c(int tno)
   UV *uv;
   int iostat;
 
-  void uvflush_c();
-
   uv = uvs[tno];
 
 /* Finished with the flagging information. */
@@ -1020,7 +1032,7 @@ private UV *uv_getuv(int tno)
   uv->need_src	   = uv->need_win   = uv->need_bin    = FALSE;
   uv->need_dra	   = uv->need_ddec  = uv->need_ra     = FALSE;
   uv->need_dec	   = uv->need_lst   = uv->need_elev   = FALSE;
-  uv->need_obsra   = FALSE;
+  uv->need_obsra   = uv->need_dazim = uv->need_delev  = FALSE;
   uv->uvw = NULL;
   uv->ref_plmaj = uv->ref_plmin = uv->ref_plangle = 0;
   uv->plscale = 1;
@@ -1920,7 +1932,9 @@ void uvwrite_c(int tno,Const double *preamble,Const float *data,
 	complex data(n)
 	logical flags(n)
 
-  Write a visibility record to the data file.
+  Write a visibility record to the data file.  Please note uvwrite()
+  closes the record. Any wideband data should have been written with
+  uvwwrite() before this call.
   Input:
     tno		Handle of the uv data set.
     n		Number of channels to be written.
@@ -2100,7 +2114,8 @@ void uvwwrite_c(int tno,Const float *data,Const int *flags,int n)
 	complex data(n)
 	logical flags(n)
 
-  Write a wide-band visibility record to the data file.
+  Write a wide-band visibility record to the data file. Make sure this
+  routine is called before uvwrite(), since that closes the record.
   Input:
     tno		Handle of the uv data set.
     n		Number of channels to be written.
@@ -2233,7 +2248,7 @@ void uvselect_c(int tno,Const char *object,double p1,double p2,int datasel)
     object	This can be one of "time","antennae","visibility",
 		"uvrange","pointing","amplitude","window","or","dra",
 		"ddec","uvnrange","increment","ra","dec","and", "clear",
-		"on","polarization","shadow","auto".
+		"on","polarization","shadow","auto","dazim","delev"
     p1,p2	Generally this is the range of values to select. For
 		"antennae", this is the two antennae pair to select.
 		For "antennae", a zero indicates "all antennae".
@@ -2306,6 +2321,17 @@ void uvselect_c(int tno,Const char *object,double p1,double p2,int datasel)
   } else if(!strcmp(object,"polarization")){
     uv_addopers(sel,SEL_POL,discard,p1,p1,(char *)NULL);
     uv->need_pol = TRUE;
+
+/* Offset parameters, dazim and delev. */
+
+  } else if(!strcmp(object,"dazim")){
+    if(p1 >= p2) BUG('f',"Min dazim is greater than or equal to max dazim, in UVSELECT.");
+    uv_addopers(sel,SEL_DAZIM,discard,p1,p2,(char *)NULL);
+    uv->need_dazim = TRUE;
+  } else if(!strcmp(object,"delev")){
+    if(p1 >= p2) BUG('f',"Min delev is greater than or equal to max delev, in UVSELECT.");
+    uv_addopers(sel,SEL_DELEV,discard,p1,p2,(char *)NULL);
+    uv->need_delev = TRUE;
 
 /* Subfield parameters, dra and ddec. */
 
@@ -2450,8 +2476,8 @@ void uvselect_c(int tno,Const char *object,double p1,double p2,int datasel)
     }
     i1 = max(p1, p2) + 0.5;
     i2 = min(p1, p2) + 0.5;
-    if(i1 < 0 || i1 > MAXANT) BUG('f',"Too many antennae");
-    if(i2 < 0 || i2 > MAXANT) BUG('f',"Too many antennae");
+    if(i1 < 0 || i1 > MAXANT) ERROR('f',(message,"bad antennae %d",i1));
+    if(i2 < 0 || i2 > MAXANT) ERROR('f',(message,"bad antennae %d",i2));
     if(i1 == 0){
       for(i=0; i < MAXANT*(MAXANT+1)/2; i++)sel->ants[i] = discard;
     } else if(i2 == 0){
@@ -3088,11 +3114,13 @@ private void uvread_updated_planet(UV *uv)
   uv->flags &= ~UVF_UPDATED_PLANET;
 }
 /************************************************************************/
+/* return 1 if record not selected, 0 if selected for output            */
 private int uvread_select(UV *uv)
 {
-  int i1,i2,bl,pol,n,nants,inc,selectit,selprev,discard,binlo,binhi,on;
+  int i,i1,i2,bl,pol,n,nants,inc,selectit,selprev,discard,binlo,binhi,on;
   float *point,pointerr,dra,ddec;
   double time,t0,uu,vv,uv2,uv2f,ra,dec,skyfreq,diameter;
+  double *dazim, *delev;
   double lst,ha;
   float elev;
   SELECT *sel;
@@ -3189,6 +3217,49 @@ private int uvread_select(UV *uv)
         if(op->loval <= pointerr && pointerr <= op->hival)
 	  discard = op->discard;
         op++; n++;
+      }
+      if(discard || n >= sel->noper) goto endloop;
+    }
+
+    /* ==PJT== */
+
+/* Apply delta AZIM selection. */
+
+    if(op->type == SEL_DAZIM){
+      discard = !op->discard;
+      if(uv->need_dazim) nants = uv->dazim->length / sizeof(double);
+      else nants=0;
+
+      if(!uv->need_dazim) dazim = 0;
+      else dazim = (double *)uv->dazim->buf;
+      while(n < sel->noper && op->type == SEL_DAZIM){
+	if (dazim==0) break;
+	for (i=0; i<nants; i++) {
+	  if(op->loval <= dazim[i] && dazim[i] <= op->hival) {
+	    discard = op->discard;
+	    /* printf("ant %d: %g  in-ranged %g %g  \n",i+1,dazim[i],op->loval,op->hival);  */
+	  } 
+	}
+        op++; n++;
+      }
+      if(discard || n >= sel->noper) goto endloop;
+    }
+
+/* Apply delta ELEV selection. */
+    if(op->type == SEL_DELEV){
+      discard = !op->discard;
+      if(uv->need_delev) nants = uv->delev->length / sizeof(double);
+      else nants=0;
+
+      if(!uv->need_delev) delev = 0;
+      else delev = (double *)uv->delev->buf;
+      while(n < sel->noper && op->type == SEL_DELEV){
+	if (delev==0) break;
+	for (i=0; i<nants; i++) {
+	  if(op->loval <= delev[i] && delev[i] <= op->hival)
+	    discard = op->discard;
+	}
+	op++; n++;
       }
       if(discard || n >= sel->noper) goto endloop;
     }
@@ -3418,15 +3489,15 @@ private int uvread_select(UV *uv)
 endloop:
     selectit = !discard;
     if(selectit){
-       if(uv->amp->select && sel->amp.select)
+      if(uv->amp->select && sel->amp.select)
 	BUG('f',"Multiple amplitude selection clauses are active");
       if( sel->amp.select ) uv->amp = &(sel->amp);
       if( uv->win->select && sel->win.select)
 	BUG('f',"Multiple window selection clauses are active");
       if( sel->win.select ) uv->win = &(sel->win);
-    }
+    } 
     selprev = selectit;
-  }
+  } /* for(sel) */
 
 /* Check the validity of the window selection. */
 
@@ -3434,8 +3505,7 @@ endloop:
     if(uv->win->first >= VARLEN(uv->nschan))
       BUG('f',"Invalid window selection, in UVREAD(select)");
   } 
-
-  return(!selprev);
+  return !selprev;
 }
 /************************************************************************/
 private int uvread_match(char *s1,char *s2, int length)
@@ -3787,6 +3857,13 @@ private void uvread_init(int tno)
   if(uv->need_ddec) uv->need_ddec = uv_locvar(tno,"ddec") != NULL;
   if(uv->need_ddec) uv->ddec = uv_checkvar(tno,"ddec",H_REAL);
 
+  if(uv->need_dazim) uv->need_dazim = uv_locvar(tno,"dazim") != NULL;
+  if(uv->need_dazim) uv->dazim = uv_checkvar(tno,"dazim",H_DBLE);
+
+  if(uv->need_delev) uv->need_delev = uv_locvar(tno,"delev") != NULL;
+  if(uv->need_delev) uv->delev = uv_checkvar(tno,"delev",H_DBLE);
+
+
 /* Get info for performing planet corrections. If the data are missing, do
    not perform planet corrections. */
 
@@ -3947,8 +4024,10 @@ private int uvread_line(UV *uv,LINE_INFO *line,float *data,
   step  = line->step;
   n = line->n;
   if(n <= 0) n = (nchan - start) / step;
-  if(n <= 0 || start < 0 || start + step * (n-1) + width > nchan)
+  if(n <= 0 || start < 0 || start + step * (n-1) + width > nchan) {
+    printf("n=%d start=%d step=%d width=%d nchan=%d\n",n,start,step,width,nchan);
     BUG('f',"Illegal channel range specified, in UVREAD");
+  }
   if(n > nsize)
     BUG('f',"Callers buffer too small for channel data, in UVREAD");
 
