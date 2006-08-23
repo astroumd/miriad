@@ -9,6 +9,7 @@
 /*   rjs  15may96   Moved roundup macro elsewhere.			*/
 /*   pjt  28may02   Added H_INT8                                        */
 /*   pjt  17jun02   different MIR4 structures?                          */
+/*   pjt  23aug06   merged  ATNF for MIR5 + static comments             */
 /************************************************************************/
 
 /* Binary items start with a sequence to allow routines to blindly determine
@@ -23,10 +24,11 @@
 
 #define ITEM_HDR_SIZE		4
 
-#if 1
-
-/*  MIRIAD3 and below data structures */
-
+/* careful: some linkers may only like one static version, 
+            others will have to be done via a 'extern' and 
+	    a single global version. 
+ */
+   
 
 static char 	binary_item[ITEM_HDR_SIZE]	= {0,0,0,0},
 		real_item[ITEM_HDR_SIZE]	= {0,0,0,H_REAL},
@@ -36,21 +38,5 @@ static char 	binary_item[ITEM_HDR_SIZE]	= {0,0,0,0},
 		char_item[ITEM_HDR_SIZE]	= {0,0,0,H_BYTE},
 		dble_item[ITEM_HDR_SIZE]	= {0,0,0,H_DBLE},
 		cmplx_item[ITEM_HDR_SIZE]	= {0,0,0,H_CMPLX};
-
-#else
-
-/*  MIRIAD4 data structures - not finalized on this though */
-
-static char 	binary_item[ITEM_HDR_SIZE]	= {1,0,0,0},
-		real_item[ITEM_HDR_SIZE]	= {1,0,0,H_REAL},
-		int_item[ITEM_HDR_SIZE]		= {1,0,0,H_INT},
-		int2_item[ITEM_HDR_SIZE]	= {1,0,0,H_INT2},
-		int8_item[ITEM_HDR_SIZE]	= {1,0,0,H_INT8},
-		char_item[ITEM_HDR_SIZE]	= {1,0,0,H_BYTE},
-		dble_item[ITEM_HDR_SIZE]	= {1,0,0,H_DBLE},
-		cmplx_item[ITEM_HDR_SIZE]	= {1,0,0,H_CMPLX};
-
-
-#endif
 
 #endif /* MIR_IO_H */

@@ -11,16 +11,10 @@
  *
  */
 
-#define H_BYTE		1
-#define H_INT		2
-#define H_INT2		3
-#define H_REAL		4
-#define H_DBLE		5
-#define H_TXT		6
-#define H_CMPLX		7
-#define H_INT8          8
-
 #define MAXTYPES       10
+
+#define MAXPATH		256
+#define MAXOPEN		26
 
 #define H_BYTE_SIZE	1
 #define H_INT_SIZE	4
@@ -31,16 +25,10 @@
 #define H_TXT_SIZE	1
 #define H_CMPLX_SIZE	8
 
-#define MAXPATH		256
-#define MAXOPEN		26
-
-
 /* prototypes are now in miriad.h (mostly) and sysdep.h (pack routines)  */
 
 /* Other handy definitions. */
 
-#define TRUE 			1
-#define FALSE			0
 #define max(a,b) 	((a)>(b)?(a):(b))
 #define min(a,b) 	((a)<(b)?(a):(b))
 #define mroundup(a,b)	((b)*(((a)+(b)-1)/(b)))

@@ -101,6 +101,7 @@ extern  "C" {
 #define H_DBLE          5
 #define H_TXT           6
 #define H_CMPLX         7
+#define H_INT8          8
 
 /* hio.c */
 
