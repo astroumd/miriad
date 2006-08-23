@@ -15,8 +15,7 @@ c    rjs  10sep92 Serious bug in memalloc, when calling mmAlloc.
 c    rjs  24dec92 Doc changes only, for jm.
 c    rjs  28jun93 Improvement to membuf routine, to bring it better in
 c		  line with the 27jul92 changes.
-c    pjt  25jun03 more verbose when running out of memory
-c    pjt  13aug05 more verbose in yet another case
+c   (rjs)   2005  some major rework
 c************************************************************************
 c* MemBuf -- Return suggested memory buffer size.
 c& rjs
@@ -40,8 +39,8 @@ c------------------------------------------------------------------------
 	integer Data(MAXBUF)
 	common Data
 c
-	integer align
-	common/MemCom/align
+	integer align,intsize
+	common/MemCom/align,intsize
 c
 c  Initialise the first time.
 c
@@ -58,7 +57,7 @@ c
 c
 c  If all the holes are small, return a reasonably sized hole.
 c
-	MemBuf = (MemBuf/align-1)*align
+	MemBuf = (MemBuf/(intsize*align)-1)*align
 	MemBuf = max(MemBuf,MAXBUF/3)
 	end
 c************************************************************************
@@ -70,12 +69,13 @@ c  An internal routine (not intended to be called by "the general public")
 c  which initialises the memory allocation routines.
 c------------------------------------------------------------------------
 	include 'maxdim.h'
+	integer t
 	logical First
 	integer Data(MAXBUF)
 	common Data
 	save First
-	integer align
-	common/MemCom/align
+	integer align,intsize
+	common/MemCom/align,intsize
 c
 c  Externals.
 c
@@ -84,13 +84,16 @@ c
 	data First/.true./
 c
 	if(.not.First)return
-	align = max(2, mmSize(ichar('i')),
-     *		       mmSize(ichar('l')),
+	intsize = mmSize(ichar('i'))
+	align = max(   mmSize(ichar('l')),
      *		       mmSize(ichar('r')),
      *		       mmSize(ichar('d')),
      *		       mmSize(ichar('c')))
+	align = (align-1)/(2*intsize) + 1
+	align = align*2*intsize
 	Data(1) = 0
-	Data(2) = MAXBUF
+	t = intsize*MAXBUF/align
+	Data(2) = align*t
 	First = .false.
 	end
 c************************************************************************
@@ -147,12 +150,12 @@ c		be an index into a double precision array.
 c--
 c------------------------------------------------------------------------
 	include 'maxdim.h'
-	integer p,q,nc,sized,pntd,elsize,size1
+	integer p,q,nc,sized,pntd,elsize
 	integer Data(MAXBUF)
 	common Data
 c
-	integer align
-	common/MemCom/align
+	integer align,intsize
+	common/MemCom/align,intsize
 c
 c  Externals.
 c
@@ -164,20 +167,13 @@ c
 c
 c  Find a block of memory that is big enough.
 c
-	if(size.lt.0) then
-	   write(*,*) '### MemAlloc: pnt,size=',pnt,size,' type= ',type
-	   call bug('f','Bad value for size, in MemAlloc')
-	else if (size.eq.0) then
-	   call bug('w','Trying to allocate 0, fixing up 1')
-	   size1 = 1
-	else
-	   size1 = size
-	endif
+	if(size.le.0)
+     *	  call bug('f','Bad value for size, in MemAlloc')
 	q = 1
 	p = 0
 	nc = align
 	elsize = mmSize(ichar(type))
-	sized = ( (size1*elsize-1)/align + 1 ) * align
+	sized = ( (size*elsize-1)/align + 1 ) * align
 c
 	dowhile(q.gt.0.and.Data(q+1).lt.sized+nc)
 	  nc = 0
@@ -188,28 +184,67 @@ c
 c  We do not have a chunk of memory big enough. Allocate it using mmalloc.
 c
 	if(q.eq.0)then
-	  pntd = mmAlloc(Data,sized)
-	  if(pntd.eq.0) then
-	    write(*,*) '### MemAlloc: sized=',sized
-	    call bug('f','Unable to allocate memory')
-	  endif
+	  q = mmAlloc(Data,sized)
+	  if(q.eq.0)call bug('f','Unable to allocate memory')
+	  pntd = (q-1)*intsize + 1
 c
 c  We have a big enough bit of memory.
 c
-	else if(Data(q+1).ge.sized+2)then
+	else if(Data(q+1).ge.sized+2*intsize)then
 	  Data(q+1) = Data(q+1) - sized
-	  pntd = q + Data(q+1)
+	  pntd = (q-1)*intsize + Data(q+1) + 1
 	else
-	  pntd = q
+	  pntd = (q-1)*intsize + 1
 	  Data(p) = Data(q)
 	endif
 c
-	pntd = pntd - 1
-	if(mod(pntd,elsize).ne.0)
+ 	if(mod(pntd-1,elsize).ne.0)
      *	  call bug('f','Alignment error in memAlloc')
-	pnt = pntd / elsize + 1
+	pnt = (pntd-1) / elsize + 1
 c
 	end
+c************************************************************************
+	subroutine memInfo
+c
+	implicit none
+c
+c  This is a debugging routine to give information on the current state
+c  of the memory pool.
+c
+c------------------------------------------------------------------------
+	include 'maxdim.h'
+	integer Data(MAXBUF)
+	common Data
+	character line*80
+	integer q
+	logical more
+c
+	integer align,intsize
+	common/MemCom/align,intsize
+c
+c  Externals.
+c
+	character itoaf*8,stcat*80
+c
+c  Initalise, if needed.
+c
+	call MemIni
+c
+	call output('---------------------------------------')
+	call output('Summary of the memory allocation system')
+	call output('Align='//itoaf(align))
+	call output('Intsize='//itoaf(intsize))
+c
+	q = 1
+	more = .true.
+	dowhile(more)
+	  line = stcat('Index='//itoaf(q),', Size='//itoaf(data(q+1)))
+	  call output(line)
+	  q = Data(q)
+	  more = q.ne.0
+	enddo
+	call output('---------------------------------------')
+	end	
 c************************************************************************
 c* MemFree -- Free allocated memory.
 c& rjs
@@ -236,12 +271,12 @@ c		  'c'	Complex.
 c--
 c------------------------------------------------------------------------
 	include 'maxdim.h'
-	integer p,q,sized,pntd,elsize
+	integer p,q,sized,pntd,elsize,qd
 	integer Data(MAXBUF)
 	common Data
 c
-	integer align
-	common/MemCom/align
+	integer align,intsize
+	common/MemCom/align,intsize
 c
 c  Externals.
 c
@@ -252,23 +287,24 @@ c
 	if(size.le.0)
      *	  call bug('f','Bad value for size, in MemFree')
 	elsize = mmSize(ichar(type))
-	pntd = (pnt-1)*elsize + 1
+	pntd = (pnt-1)*elsize
+	qd = pntd/intsize + 1
 	sized = ( (size*elsize-1)/align + 1 ) * align
 c
 c  Free memory which was obtained with mmalloc.
 c
-	if(pntd.le.0.or.pntd.gt.MAXBUF)then
-	  call mmfree(Data(pntd))
+	if(qd.le.0.or.qd.gt.MAXBUF)then
+	  call mmfree(Data(qd))
 c
 c  Frr memory which was obtained from the common block.
 c  Search the free list for the place to add this bit.
 c
 	else
-	  if(pntd+sized-1.gt.MAXBUF)
+	  if((qd-1)*intsize+sized-1.gt.intsize*MAXBUF)
      *	    call bug('f','Bad value for pnt or size, in MemFree')
 	  q = 1
 	  p = 0
-	  dowhile(q.lt.pntd.and.q.gt.0)
+	  dowhile(q.lt.qd.and.q.gt.0)
 	    p = q
 	    q = Data(q)
 	  enddo
@@ -276,29 +312,30 @@ c
 c  Various checks.
 c
 	  if(p.eq.0)call bug('f','Internal bug in MemFree')
-	  if(q.gt.0.and.pntd+sized.gt.q) call bug('f',
+	  if(q.gt.0.and.(qd-1)*intsize+sized.gt.(q-1)*intsize) 
+     *	    call bug('f',
      *	    'Deallocating a deallocated part of memory, in MemFree')
-	  if(p+Data(p+1).gt.pntd) call bug('f',
+	  if((p-1)*intsize+Data(p+1).gt.(qd-1)*intsize+1) call bug('f',
      *	    'Deallocating a deallocated part of memory, in MemFree')
 c
 c  Insert this bit into the free list.
 c
-	  Data(pntd) = q
-	  Data(pntd+1) = sized
-	  Data(p) = pntd
+	  Data(qd) = q
+	  Data(qd+1) = sized
+	  Data(p) = qd
 c
 c  Can we concatentate this bit with the following bit?
 c
-	  if(pntd+sized.eq.q)then
-	    Data(pntd) = Data(q)
-	    Data(pntd+1) = Data(pntd+1) + Data(q+1)
+	  if((qd-1)*intsize+sized.eq.(q-1)*intsize)then
+	    Data(qd) = Data(q)
+	    Data(qd+1) = Data(qd+1) + Data(q+1)
 	  endif
 c
 c  Can we concatenate this bit with the previous bit?
 c
-	  if(p+Data(p+1).eq.pntd)then
-	    Data(p) = Data(pntd)
-	    Data(p+1) = Data(p+1) + Data(pntd+1)
+	  if((p-1)*intsize+Data(p+1).eq.(qd-1)*intsize)then
+	    Data(p) = Data(qd)
+	    Data(p+1) = Data(p+1) + Data(qd+1)
 	  endif
 c
 	endif
