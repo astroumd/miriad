@@ -29,6 +29,7 @@
  *    pjt 24jun01 PPC/powerpc is a BIGENDIAN (linux) machine
  *    pjt 21jun02 MIR4
  *    pjt  4jan05 merged in the new ATNF HAS_STRERROR
+ *    pjt 23aug05 tidying up for MIR5
  */
 
 #if !defined(MIR_SYSDEP_H)
@@ -156,7 +157,6 @@ void unpack16_c(char *in, int *out, int n);
 
 #else
 
-#if 1
 void pack16_c(int *in, char *out, int n);
 void unpack16_c(char *in, int *out, int n);
 void pack32_c(int *in, char *out, int n);
@@ -167,7 +167,6 @@ void packr_c(float *in, char *out, int n);
 void unpackr_c(char *in, float *out, int n);
 void packd_c(double *in, char *out, int n);
 void unpackd_c(char *in, double *out, int n);
-#endif
 
 #endif
 #endif
