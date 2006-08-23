@@ -5,6 +5,12 @@ Notes on what was done to miriad for the MIR5 transition:
    MIR5 will eventually become the trunk once this branch has been deemed
 	production.
 
+   The following CVS commands were used to branch:
+
+	cvs rtag mir_4_0_4	
+	cvs rtag -b MIR5
+	<VERSION files modified to 4.0.5 in the main trunk>
+	<VERSION files modified to 5.0.0 in the MIR5 branch>
 
 status and work done on the merge:
 ==================================
@@ -12,7 +18,7 @@ status and work done on the merge:
 MIRSUBS C-routines:
 
 interface.c		minor merge - DONE
-bug.c			some major work needed, nothing showstopping (remove VMS?)
+bug.c			some work needed, nothing showstopping (remove VMS?) [atnf has older code mostly]
 dirs.c			VMS only, keep it??
 headio.c		major work -- THIS IS WHERE the INT4/INT8 work is performed - DONE
 hio.c			minor work - DONE
@@ -23,9 +29,18 @@ xyio.c			minor work (added xydim) - DONE
 xyzio.c			minor work (added xyzdim) - DONE
 uvio.c			the ATNF version was taken, CARMA things merged in.
 
+iface.f2c		new from ATNF
+mm.f2c			straight from ATNF
+packwrap.f2c		straight from ATNF
+tcpio.f2c		straight from ATNF
+wrap.f2c		straight from ATNF
+xyziowrap.f2c		straight from ATNF
+
+
+
 TOOLS:
 
-intf2c.c		some work needed
+intf2c.c		deals with the fortran integer/logical issues - DONE
 flint.c			minor merge - DONE
 ratty.c			minor merge - DONE
 doc_atnf.c		simple update (we have our own dogged doc.c) - DONE
