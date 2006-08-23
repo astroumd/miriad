@@ -160,6 +160,7 @@
 /*  pjt  13may03 MAXIANT usage to limit MAXANT                          */
 /*  rjs  02jan05 Partial merge of BIMA and ATNF versions.		*/
 /*  rjs  26nov05 Added function uvdim_c					*/
+/*  pjt  22aug06 merged for MIR5  (but not Sault's june 06 stuff)       */
 /*----------------------------------------------------------------------*/
 /*									*/
 /*		Handle UV files.					*/
