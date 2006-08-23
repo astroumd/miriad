@@ -27,6 +27,8 @@
 /*    pjt  14jun01   packALPHA.c now included in this source code       */
 /*                   and using the standard WORDS_BIGENDIAN macro       */
 /*    pjt  21jun02   MIR4 prototyping                                   */
+/*    pjt  23aug06   clarified WORDS_BIGENDIAN, !WORDS_BIGENDIAN, unicos*/
+/*                   work around over-efficient linux linkers           */
 /************************************************************************/
 
 #include "sysdep.h"
@@ -35,6 +37,11 @@
 #if defined(WORDS_BIGENDIAN)
 
 static int words_bigendian = 1; /* never used actually, but handy symbol to find via nm(1) */
+
+void    fake_silly(void) 
+{
+        words_bigendian++;
+}
 
 void	pack16_c(register int *from,char *to,int n)
 {
@@ -70,12 +77,18 @@ void	unpack64_c(char *from,register int *to,int n)
 	for (i=0; i < n; i++)	*to++ = *ffrom++;
 }
 
-#endif
+#endif /* WORDS_BIGENDIAN */
 
 
-#ifndef WORDS_BIGENDIAN 
-#ifndef unicos
+#if !defined(WORDS_BIGENDIAN)
+#if !defined(unicos)
 static int words_littleendian = 1; /* never used actually, but handy symbol to find via nm(1) */
+
+void    fake_silly(void) 
+{
+        words_littleendian++;
+}
+
 /************************************************************************/
 /*									*/
 /*  The pack routines -- these convert between the host format and	*/
@@ -290,8 +303,8 @@ void unpackd_c(char *in,double *out,int n)
     in += 8;
   }
 }
-#endif
-#endif
+#endif /* !unicos */
+#endif /* !WORDS_BIGENDIAN */
 
 
 #if defined(unicos)
@@ -636,4 +649,4 @@ void unpackd_c(char *in,double *out,int n)
   }
 }
 
-#endif
+#endif /* unicos */
