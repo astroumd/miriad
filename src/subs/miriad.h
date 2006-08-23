@@ -25,17 +25,14 @@
 // 30-aug-04 pjt removed deprecated ARGS() macro
 //  1-dec-05 pjt added bugv_c
 // 18-may-06 pjt/df  added mir.c prototypes for mir (the miriad->mir converter)
+// 23-aug-06 pjt MIR5
 */
 
 #if !defined(MIR_MIRIAD_H)
 #define MIR_MIRIAD_H
 
 
-/*  comment this out if you only handle data < 2GB and need to be compatible with old MIRIAD */
-/*  or simply define MIR3 through compile options                                            */
-#if !defined(MIR3)
-#define MIR4  
-#endif
+#define MIR5
 
 #include <sys/types.h>     /* provides off_t */
 #include <unistd.h>
