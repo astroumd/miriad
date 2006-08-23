@@ -31,6 +31,8 @@
 /*       3-jan-05  pjt ssize casting to appease the compiler            */
 /*                     use SSIZE_MAX to protect from bad casting ?      */
 /*       2-mar-05  pjt template->templat for C++, just in case          */
+/*      16-jun-06  rjs Add O_BINARY to make sure its OK on cygwin.      */
+/*      23-aug-06  pjt merged in the above rjs fix                      */
 /************************************************************************/
 
 #include <stddef.h>
@@ -174,6 +176,9 @@ void dopen_c(int *fd,char *name,char *status,off_t *size,int *iostat)
   } else bug_c('f',"dopen_c: Unrecognised status");
 #ifdef O_LARGEFILE
   flags |= O_LARGEFILE;
+#endif
+#ifdef O_BINARY
+  flags |= O_BINARY;
 #endif
   if((*fd = open(s,flags,0644)) < 0){*iostat = errno; return;}
   *size = Lseek(*fd,0,SEEK_END);
