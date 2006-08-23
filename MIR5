@@ -27,14 +27,14 @@ maskio.c		minor work needed - DONE
 scrio.c			minor work (int vs. off_t/size_t) - DONE
 xyio.c			minor work (added xydim) - DONE
 xyzio.c			minor work (added xyzdim) - DONE
-uvio.c			the ATNF version was taken, CARMA things merged in.
+uvio.c			the ATNF version was taken, CARMA things merged in. - DONE
 
-iface.f2c		new from ATNF
-mm.f2c			straight from ATNF
-packwrap.f2c		straight from ATNF
-tcpio.f2c		straight from ATNF
-wrap.f2c		straight from ATNF
-xyziowrap.f2c		straight from ATNF
+iface.f2c		new from ATNF - DONE
+mm.f2c			straight from ATNF - DONE
+packwrap.f2c		straight from ATNF - DONE
+tcpio.f2c		straight from ATNF - DONE
+wrap.f2c		straight from ATNF - DONE
+xyziowrap.f2c		straight from ATNF - DONE
 
 
 
@@ -46,3 +46,10 @@ ratty.c			minor merge - DONE
 doc_atnf.c		simple update (we have our own dogged doc.c) - DONE
 
 
+MIRSUBS FOR-routines:
+  we have 141 .for files, atnf has 121 files, all but 1 are extra in 'us'
+  but note atnf also stores them in architecture specific subdirectories
+
+keyf.for		ATNF has key.for (see key.c and keyc.c notes)
+
+uvdat.for		notice some merging needed
