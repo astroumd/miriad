@@ -29,10 +29,25 @@
 /*    pjt  21jun02   MIR4 prototyping                                   */
 /*    pjt  23aug06   clarified WORDS_BIGENDIAN, !WORDS_BIGENDIAN, unicos*/
 /*                   work around over-efficient linux linkers           */
+/*                   sanity checks for byte sized of what we assume     */
 /************************************************************************/
 
 #include "sysdep.h"
 #include "miriad.h"
+
+
+static int sanity_check = 1;
+
+static void pack_sanity_check(void)
+{
+  sanity_check = 0;
+  
+  if(sizeof(short int) != 2)     bugv_c('f',"Short Int not 2 bytes in pack.c: %d",sizeof(short int));
+  if(sizeof(int) != 4)           bugv_c('f',"Int not 4 bytes in pack.c: %d",sizeof(int));
+  if(sizeof(float) != 4)         bugv_c('f',"Float not 4 bytes in pack.c: %d",sizeof(float));
+  if(sizeof(double) != 8)        bugv_c('f',"Double not 8 bytes in pack.c: %d",sizeof(double));
+  if(sizeof(long long int) != 8) bugv_c('f',"long long int not 8 bytes in pack.c: %d",sizeof(long long int));
+}
 
 #if defined(WORDS_BIGENDIAN)
 
@@ -48,6 +63,7 @@ void	pack16_c(register int *from,char *to,int n)
 	register short int	*tto;
 	register int		i;
 
+	if (sanity_check) pack_sanity_check();
 	tto = (short int *)to;
 	for (i=0; i < n; i++)	*tto++ = *from++;
 }
@@ -56,6 +72,7 @@ void	unpack16_c(char *from,register int *to,int n)
 	register short int	*ffrom;
 	register int		i;
 
+	if (sanity_check) pack_sanity_check();
 	ffrom = (short int *)from;
 	for (i=0; i < n; i++)	*to++ = *ffrom++;
 }
@@ -65,6 +82,7 @@ void	pack64_c(register int *from,char *to,int n)
 	register short int	*tto;
 	register int		i;
 
+	if (sanity_check) pack_sanity_check();
 	tto = (short int *)to;
 	for (i=0; i < n; i++)	*tto++ = *from++;
 }
@@ -73,6 +91,7 @@ void	unpack64_c(char *from,register int *to,int n)
 	register short int	*ffrom;
 	register int		i;
 
+	if (sanity_check) pack_sanity_check();
 	ffrom = (short int *)from;
 	for (i=0; i < n; i++)	*to++ = *ffrom++;
 }
@@ -111,6 +130,7 @@ void pack16_c(int *in,char *out,int n)
   int i;
   char *s;
 
+  if (sanity_check) pack_sanity_check();
   s = (char *)in;
   for(i=0; i < n; i++){
     *out++ = *(s+1);
@@ -127,6 +147,7 @@ void unpack16_c(char *in,int *out,int n)
   int i;
   char *s;
 
+  if (sanity_check) pack_sanity_check();
   s = (char *)out;
   for(i=0; i < n; i++){
     *s++ = *(in+1);
@@ -150,6 +171,7 @@ void pack32_c(int *in,char *out,int n)
   int i;
   char *s;
 
+  if (sanity_check) pack_sanity_check();
   s = (char *)in;
   for(i = 0; i < n; i++){
     *out++ = *(s+3);
@@ -168,6 +190,7 @@ void unpack32_c(char *in,int *out,int n)
   int i;
   char *s;
 
+  if (sanity_check) pack_sanity_check();
   s = (char *)out;
   for(i = 0; i < n; i++){
     *s++ = *(in+3);
@@ -186,6 +209,7 @@ void pack64_c(int8 *in,char *out,int n)
   int i;
   char *s;
 
+  if (sanity_check) pack_sanity_check();
   s = (char *)in;
   for(i=0; i < n; i++){
     *out++ = *(s+7);
@@ -208,6 +232,7 @@ void unpack64_c(char *in,int8 *out,int n)
   int i;
   char *s;
 
+  if (sanity_check) pack_sanity_check();
   s = (char *)out;
   for(i=0; i < n; i++){
     *s++ = *(in+7);
@@ -230,6 +255,7 @@ void packr_c(float *in,char *out,int n)
   int i;
   char *s;
 
+  if (sanity_check) pack_sanity_check();
   s = (char *)in;
   for(i = 0; i < n; i++){
     *out++ = *(s+3);
@@ -248,6 +274,7 @@ void unpackr_c(char *in,float *out,int n)
   int i;
   char *s;
 
+  if (sanity_check) pack_sanity_check();
   s = (char *)out;
   for(i = 0; i < n; i++){
     *s++ = *(in+3);
@@ -267,6 +294,7 @@ void packd_c(double *in,char *out,int n)
   int i;
   char *s;
 
+  if (sanity_check) pack_sanity_check();
   s = (char *)in;
   for(i = 0; i < n; i++){
     *out++ = *(s+7);
@@ -290,6 +318,7 @@ void unpackd_c(char *in,double *out,int n)
   int i;
   char *s;
 
+  if (sanity_check) pack_sanity_check();
   s = (char *)out;
   for(i = 0; i < n; i++){
     *s++ = *(in+7);
@@ -518,6 +547,20 @@ void unpack32_c(char *in,int *out,int n)
     temp = (*ind >> 32) & LOLONG;
     *out++ = (temp < TWO31 ? temp : temp - TWO32);
   }
+}
+/************************************************************************/
+void pack64_c(int *in,int *out,int n)
+{
+  bug_c('f',"I am unsure of byte order of Crays");
+  if(sizeof(int) != 8)bug_c('f',"Integers not 8 bytes in pack64_c");
+  memcpy((char *)out,(char *)in,sizeof(int)*n);
+}
+/************************************************************************/
+void pack64_c(int *in,int *out,int n)
+{
+  bug_c('f',"I am unsure of byte order of Crays");
+  if(sizeof(int) != 8)bug_c('f',"Integers not 8 bytes in pack64_c");
+  memcpy((char *)out,(char *)in,sizeof(int)*n);
 }
 /************************************************************************/
 void packr_c(float *in,char *out,int n)
