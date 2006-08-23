@@ -161,6 +161,8 @@
 /*  rjs  02jan05 Partial merge of BIMA and ATNF versions.		*/
 /*  rjs  26nov05 Added function uvdim_c					*/
 /*  pjt  22aug06 merged for MIR5  (but not Sault's june 06 stuff)       */
+/* pjt/rjs 23aug merged RJS' 28aug06 code back in                       */
+/*               also added proto's and Const's to shut the compiler up */
 /*----------------------------------------------------------------------*/
 /*									*/
 /*		Handle UV files.					*/
@@ -250,7 +252,7 @@
 /*		list to be formed for hashing.				*/
 /*									*/
 /*----------------------------------------------------------------------*/
-#define VERSION_ID "22-aug-06 pjt"
+#define VERSION_ID "23-aug-06 pjt"
 
 #define private static
 
@@ -493,21 +495,41 @@ static WINDOW truewin;
 static AMP noamp;
 static int first=TRUE;
 
-private void uvinfo_chan(),uvinfo_variance(),uvbasant_c();
-private void uv_init(),uv_freeuv(),uv_free_select();
-private void uvread_defline(),uvread_init(),uvread_velocity(),uvread_flags();
-private void uvread_defvelline();
-private void uvread_updated_planet(),uvread_reference();
-private void uvread_updated_uvw(),uvread_preamble();
-private void uv_vartable_out(),uv_vartable_in();
-private void uvset_coord(),uvset_linetype(),uvset_planet();
-private void uvset_selection(),uvset_preamble();
-private void uv_addopers(),uv_override();
-private UV *uv_getuv();
-private VARIABLE *uv_mkvar(),*uv_locvar(),*uv_checkvar();
-private int uv_scan(),uvread_line(),uvread_select(),uvread_maxvis();
-private int uvread_shadowed(),uvread_match();
-private double uv_getskyfreq();
+static void uv_init(void);
+static void uv_freeuv(UV *uv);
+static void uv_free_select(SELECT *sel);
+static UV *uv_getuv(int tno);
+static void uv_vartable_out(UV *uv);
+static void uv_override(UV *uv);
+static void uv_vartable_in(UV *uv);
+static VARIABLE *uv_mkvar(int tno, const char *name, int type);
+static VARIABLE *uv_locvar(int tno, const char *name);
+static int uv_scan(UV *uv, VARIABLE *vt);
+static void uv_addopers(SELECT *sel, int type, int discard, double p1, double p2, Const char *ps);
+static void uvset_preamble(UV *uv, Const char *type);
+static void uvset_selection(UV *uv, Const char *type, int n);
+static void uvset_planet(UV *uv, double p1, double p2, double p3);
+static void uvset_coord(UV *uv, Const char *type);
+static void uvset_linetype(LINE_INFO *line, Const char *type, int n, double start, double width, double step);
+static void uvread_preamble(UV *uv, double *preamble);
+static void uvread_reference(UV *uv, float *data, int *flags, int n);
+static double uv_getskyfreq(UV *uv, WINDOW *win);
+static void uvread_updated_planet(UV *uv);
+static int uvread_select(UV *uv);
+static int uvread_match(char *s1, char *s2, int length);
+static int uvread_shadowed(UV *uv, double diameter);
+static void uvread_updated_uvw(UV *uv);
+static void uvread_defline(int tno);
+static void uvread_init(int tno);
+static int uvread_maxvis(SELECT *sel);
+static VARIABLE *uv_checkvar(int tno, char *varname, int type);
+static int uvread_line(UV *uv, LINE_INFO *line, float *data, int nsize, int *flags, LINE_INFO *actual);
+static void uvread_velocity(UV *uv, LINE_INFO *line, float *data, int *flags, int nsize, LINE_INFO *actual);
+static void uvread_defvelline(UV *uv, LINE_INFO *line, WINDOW *win);
+static void uvread_flags(UV *uv, VARIABLE *v, FLAGS *flag_info, int nchan);
+static void uvinfo_variance(UV *uv, double *data);
+static void uvinfo_chan(UV *uv, double *data, int mode);
+static void uvbasant_c(int baseline, int *i1, int *i2);
 
 /************************************************************************/
 #ifdef TESTBED
@@ -519,14 +541,14 @@ static char *M[] = {
  *  uvio routines. It is essentially a debugging device (both for bad
  *  files and bad behaviour of uvio!).
  *
- *  Call several uvio.c poutines, some of which are the secret ones,
+ *  Calls several uvio.c poutines, some of which are the secret ones,
  *  to get a 'human' readable listing of a miriad visibility data set `
  *  Because it needs some of these 'static' routines, the source code
  *  of uvio.c needs to be included here directly, as opposed to linking
  *  it with the library ($MIRLIB/libmir.a in Unix)
  *
  *  Note:  This program does not have the normal miriad user interface
- *	   and should hence not live in $MIRBIN
+ *         though accepts vis= if given :-)
  *
  *
  *
@@ -1144,7 +1166,7 @@ private void uv_vartable_in(UV *uv)
   uv->saved_nvar = uv->nvar;
 }
 /************************************************************************/
-private VARIABLE *uv_mkvar(int tno,char *name,int type)
+private VARIABLE *uv_mkvar(int tno,Const char *name,int type)
 /*
   Add an entry for a new variable.
 ------------------------------------------------------------------------*/
@@ -1181,14 +1203,14 @@ private VARIABLE *uv_mkvar(int tno,char *name,int type)
   return(v);
 }
 /************************************************************************/
-private VARIABLE *uv_locvar(int tno,char *name)
+private VARIABLE *uv_locvar(int tno,Const char *name)
 /*
   Locate a variable from the hash table.
 ------------------------------------------------------------------------*/
 {
   VARIABLE *v;
   int hashval;
-  char *s;
+  Const char *s;
 
   hashval = 0;
   for(s=name; *s; s++) hashval += *s;
@@ -1791,7 +1813,7 @@ private int uv_scan(UV *uv, VARIABLE *vt)
     vt		Structure describing variable to terminate scan when found.
 ------------------------------------------------------------------------*/
 {
-  int iostat,intsize,extsize,terminate,found,changed,i;
+  int iostat,intsize,extsize,terminate,found,changed,i,itemp;
   off_t offset;
   VARIABLE *v;
   char s[UV_HDR_SIZE],*b;
@@ -1811,7 +1833,8 @@ private int uv_scan(UV *uv, VARIABLE *vt)
 
     changed = FALSE;
     if(*(s+2) != VAR_EOR){
-      v = &uv->variable[*s];       /*  warning: array subscript has type `char' */
+      itemp = *s;
+      v = &uv->variable[itemp];
       intsize = internal_size[v->type];
       extsize = external_size[v->type];
     }
@@ -2436,7 +2459,7 @@ void uvselect_c(int tno,Const char *object,double p1,double p2,int datasel)
   }
 }
 /************************************************************************/
-private void uv_addopers(SELECT *sel,int type,int discard,double p1,double p2,char *ps)
+private void uv_addopers(SELECT *sel,int type,int discard,double p1,double p2,Const char *ps)
 {
   int n,i;
   OPERS *oper;
@@ -2541,7 +2564,7 @@ void uvset_c(int tno,Const char *object,Const char *type,
   }
 }
 /************************************************************************/
-private void uvset_preamble(UV *uv, char *type)
+private void uvset_preamble(UV *uv, Const char *type)
 /*
   Set the preamble that the user wants to use.
 ------------------------------------------------------------------------*/
@@ -2590,7 +2613,7 @@ private void uvset_preamble(UV *uv, char *type)
   }
 }
 /************************************************************************/
-private void uvset_selection(UV *uv, char *type, int n)
+private void uvset_selection(UV *uv, Const char *type, int n)
 /*
   Set the way the uvselect routine works.
 ------------------------------------------------------------------------*/
@@ -2615,7 +2638,7 @@ private void uvset_planet(UV *uv, double p1, double p2, double p3)
   uv->need_planet = TRUE;
 }
 /************************************************************************/
-private void uvset_coord(UV *uv, char *type)
+private void uvset_coord(UV *uv, Const char *type)
 /*
   Set the flags to do with the processing of uv coordinates.
 
@@ -2636,7 +2659,7 @@ private void uvset_coord(UV *uv, char *type)
   }
 }
 /************************************************************************/
-private void uvset_linetype(LINE_INFO *line, char *type, int n, 
+private void uvset_linetype(LINE_INFO *line, Const char *type, int n, 
 			    double start,double width,double step)
 /*
   Decode the line type.
@@ -2682,8 +2705,7 @@ private void uvset_linetype(LINE_INFO *line, char *type, int n,
   }
 }
 /************************************************************************/
-int uvdim_c(tno)
-int tno;
+int uvdim_c(int tno)
 /**uvdim - Number of channels.						*/
 /*&rjs                                                                  */
 /*:uv-i/o								*/
