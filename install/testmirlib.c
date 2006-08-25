@@ -9,7 +9,13 @@
  *  [prevents the  pgplot problem]
  *
  *  Note: for LFS you also need to add extra compile flags:
- *        -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE
+ *     set lfs=(-D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE)
+ *     gcc -g $lfs -I$MIRINC -I$MIRSUBS -o testmirlib testmirlib.c $MIRLIB/libmir.a -lm
+ *
+ * History:
+ *
+ *      
+ *      aug-2006:     some changes for MIR5
  */
 
 
@@ -28,9 +34,10 @@
 void test_hio(char *name1)
 {
   int t1, i1,iostat;
-  double pi = 3.141592;
+  double pi = 3.14159265358979323846;
   float g = 9.8;
   int d = 28;
+  int8 d8 = 28;
 
   fprintf(stderr,"test_hio: %s\n",name1);
 
@@ -43,11 +50,12 @@ void test_hio(char *name1)
 
   hopen_c(&t1, name1, "new", &iostat);                check(iostat);
 
-  wrhdd_c(t1,"pi",pi);
-  wrhdr_c(t1,"g",g);
-  wrhdi_c(t1,"d",d);
+  wrhdd_c(t1,"a_double",pi);
+  wrhdr_c(t1,"a_real",g);
+  wrhdi_c(t1,"a_int",d);
+  wrhdl_c(t1,"a_int8",d8);
 
-  haccess_c(t1,&i1,"a","write",&iostat);              check(iostat);
+  haccess_c(t1,&i1,"a_item","write",&iostat);         check(iostat);
   hdaccess_c(i1,&iostat);                             check(iostat);
 
 #if 0
