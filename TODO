@@ -1,5 +1,3 @@
-- MIR4 vs. MIR5: consider Sault's proposal to handle long integers.
-
 - mem.for and mm.f2c are most likely buggy on 64bit machines:
   (ifort -i8 solves some of these problems)
   (gfortran -fdefault-integer-8 might do the same
@@ -32,8 +30,6 @@
 - check if character*N variables (N some number) work ok with the 
   miriad f2c interface. Sault reverted the bug i found in uvdat.for.
 
-- SMA code integration (sma_Resample.o has been integrated and removed)
-
 - a conversion routine from MIR4 to MIR3 format (int8 -> int) if possible
   this program/script should check if all the int8 variables are short
   enough that they can be cut into an int4:
@@ -57,9 +53,15 @@
 - design a fftw interface to miriad's fft routines - should give an impressive
   speedup on intel hardware
 
-
 - miriad name collisions:
 	solaris:/usr/ucb/implot
 
-- pgplot:  gfortran cannot compile the GIF drivers
+- pgplot:  gfortran cannot compile the GIF drivers, some method (see e.g. NEMO)
+  needs to be employed to disable.....   For now , the patch would be to
+  disable the drivers in $MIRLIB/drivers.list, comment in
+	GIDRIV 
+  and issue:
+	mirboss
+	mir.install pgplot prog
+  to get a new working pgplot, plus recompiling all programs
 
