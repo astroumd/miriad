@@ -54,8 +54,9 @@ void test_hio(char *name1)
   int t1, i1,iostat;
   double pi_d = 3.14159265358979323846;
   float pi_f = 3.14159265358979323846;
-  int d = 28;
-  int8 d8 = 28;
+  int  d  = 258;          /* 0x01 0x02 */
+  int8 d4 = 258;
+  int8 d8 = 4294967298LL; /* 0x01 0x00 0x00 0x00 0x02 */
 
   fprintf(stderr,"test_hio: %s\n",name1);
 
@@ -72,7 +73,8 @@ void test_hio(char *name1)
   wrhdr_c(t1,"a_real_f",pi_f);
   wrhdr_c(t1,"a_real_d",pi_d);
   wrhdi_c(t1,"a_int",d);
-  wrhdl_c(t1,"a_int8",d8);
+  wrhdl_c(t1,"a_int8_4",d4);
+  wrhdl_c(t1,"a_int8_8",d8);
   wrhda_c(t1,"a_char","Hello");
 
   haccess_c(t1,&i1,"a_item","write",&iostat);         check(iostat);
