@@ -53,10 +53,14 @@ void test_hio(char *name1)
 {
   int t1, i1,iostat;
   double pi_d = 3.14159265358979323846;
-  float pi_f = 3.14159265358979323846;
+  float  pi_f = 3.14159265358979323846;
   int  d  = 258;          /* 0x01 0x02 */
-  int8 d4 = 258;
-  int8 d8 = 4294967298LL; /* 0x01 0x00 0x00 0x00 0x02 */
+  int8 d8_0 = 258;
+  int8 d8_1 = 2147483647LL; /*      0x0F 0xFF 0xFF 0xFF */
+  int8 d8_2 = 2147483648LL; /*      0x0F 0xFF 0xFF 0xFF */
+  int8 d8_3 = 4294967295LL; /* 0x01 0x00 0x00 0x00 0x02 */
+  int8 d8_4 = 4294967296LL; /* 0x01 0x00 0x00 0x00 0x02 */
+  int8 d8_5 = 4294967298LL; /* 0x01 0x00 0x00 0x00 0x02 */
 
   fprintf(stderr,"test_hio: %s\n",name1);
 
@@ -73,15 +77,20 @@ void test_hio(char *name1)
   wrhdr_c(t1,"a_real_f",pi_f);
   wrhdr_c(t1,"a_real_d",pi_d);
   wrhdi_c(t1,"a_int",d);
-  wrhdl_c(t1,"a_int8_4",d4);
-  wrhdl_c(t1,"a_int8_8",d8);
+  wrhdl_c(t1,"a_int8_0",d8_0);
+  wrhdl_c(t1,"a_int8_1",d8_1);
+  wrhdl_c(t1,"a_int8_2",d8_2);
+  wrhdl_c(t1,"a_int8_3",d8_3);
+  wrhdl_c(t1,"a_int8_4",d8_4);
+  wrhdl_c(t1,"a_int8_5",d8_5);
   wrhda_c(t1,"a_char","Hello");
+  wrhda_c(t1,"a_char_1","Hello World");
 
   haccess_c(t1,&i1,"a_item","write",&iostat);         check(iostat);
   hdaccess_c(i1,&iostat);                             check(iostat);
 
 #if 0
-  hdelete_c(t1,"a",&iostat);                          check(iostat);
+  hdelete_c(t1,"a_char",&iostat);                          check(iostat);
 #endif
   hclose_c(t1);
 
