@@ -11,6 +11,23 @@
  *  Note: for LFS you also need to add extra compile flags:
  *     set lfs=(-D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE)
  *     gcc -g $lfs -I$MIRINC -I$MIRSUBS -o testmirlib testmirlib.c $MIRLIB/libmir.a -lm
+
+          +0 +1 +2 +3 +4 +5 +6 +7 +8 +9 +A +B +C +D +E +F    0123456789ABCDEF
+
+ +00000000 61 5F 69 74 65 6D 00 00 00 00 00 00 00 00 00 00    a_item..........
+  00000010 61 5F 63 68 61 72 00 00 00 00 00 00 00 00 00 09    a_char..........
+  00000020 00 00 00 01 48 65 6C 6C 6F 00 00 00 00 00 00 00    ....Hello.......
+  00000030 61 5F 69 6E 74 38 00 00 00 00 00 00 00 00 00 08    a_int8..........
+  00000040 00 00 00 02 00 00 00 1C 00 00 00 00 00 00 00 00    ................
+  00000050 61 5F 69 6E 74 00 00 00 00 00 00 00 00 00 00 08    a_int...........
+  00000060 00 00 00 02 00 00 00 1C 00 00 00 00 00 00 00 00    ................
+  00000070 61 5F 72 65 61 6C 5F 64 00 00 00 00 00 00 00 08    a_real_d........
+  00000080 00 00 00 04 40 49 0F DB 00 00 00 00 00 00 00 00    ....@I..........
+  00000090 61 5F 72 65 61 6C 5F 66 00 00 00 00 00 00 00 08    a_real_f........
+  000000A0 00 00 00 04 40 49 0F DB 00 00 00 00 00 00 00 00    ....@I..........
+  000000B0 61 5F 64 6F 75 62 6C 65 00 00 00 00 00 00 00 10    a_double........
+  000000C0 00 00 00 05 58 01 C0 00 40 09 21 FB 54 44 2D 18    ....X...@.!.TD-.
+
  *
  * History:
  *
@@ -28,14 +45,15 @@
 #include "maxdimc.h"
 #include "miriad.h"
 
+
 #define check(iostat) if(iostat)bugno_c('f',iostat)
 
 
 void test_hio(char *name1)
 {
   int t1, i1,iostat;
-  double pi = 3.14159265358979323846;
-  float g = 9.8;
+  double pi_d = 3.14159265358979323846;
+  float pi_f = 3.14159265358979323846;
   int d = 28;
   int8 d8 = 28;
 
@@ -50,10 +68,12 @@ void test_hio(char *name1)
 
   hopen_c(&t1, name1, "new", &iostat);                check(iostat);
 
-  wrhdd_c(t1,"a_double",pi);
-  wrhdr_c(t1,"a_real",g);
+  wrhdd_c(t1,"a_double",pi_d);
+  wrhdr_c(t1,"a_real_f",pi_f);
+  wrhdr_c(t1,"a_real_d",pi_d);
   wrhdi_c(t1,"a_int",d);
   wrhdl_c(t1,"a_int8",d8);
+  wrhda_c(t1,"a_char","Hello");
 
   haccess_c(t1,&i1,"a_item","write",&iostat);         check(iostat);
   hdaccess_c(i1,&iostat);                             check(iostat);
