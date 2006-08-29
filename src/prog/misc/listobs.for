@@ -62,6 +62,8 @@ c                        changed in to vis to make listobs consistent with
 c                        other uv data tasks
 c          18-apr-06 pjt sourcename now allowed 16
 c          12-jul-06 pjt handle blank vis= correctly
+c          29-aug-06 dnf changed output format so that all active antennas
+c                        are listed with the system temperature listing
 c-----------------------------------------------------------------------
 	include 'mirconst.h'
         include 'caldefs.h'
@@ -69,7 +71,7 @@ c-----------------------------------------------------------------------
         include 'listobs.h'
 c
 	character pversion*10
-	parameter (pversion = '12-jul-06')
+	parameter (pversion = '29-aug-06')
 c
         integer ipt,nfiles,uvflag,order(MAXP),nameidx(100),nnames
         integer isys(MAXANT),i,uvscan,j,ii,jj,ipicked,ifix
@@ -315,8 +317,8 @@ c
      1	       ' Corr              Sys Temps (K)'
         endif
 	call LogWrite(text,more)
-        write(text(1:37),'(''                  hhmmss  min  deg '')')
-        write(text(38:98),'(''MHz    mode'',10(i2,3x))')
+        write(text(1:29),'(''          hhmmss  min  deg '')')
+        write(text(30:120),'(''MHz    mode'',15(i2,3x))')
      1        (hereidx(i),i=1,nhere)
 	call LogWrite(text,more)
  2110   format('               Chronology of Observations on ',A)
