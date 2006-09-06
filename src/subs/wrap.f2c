@@ -29,6 +29,7 @@
 /*		     casting int to char*.				*/
 /*    rjs  27feb96   Added xyflush.					*/
 /*    rjs  19mar97   Handle logical translation better. Tidying.	*/
+/*    pjt   6sep06   read integers via rdhdi                            */
 /************************************************************************/
 #include <string.h>
 #include <sys/types.h>
@@ -519,11 +520,11 @@ fortran subroutine rdhdr(integer tno,character keyword,
 fortran subroutine rdhdi(integer tno,character keyword,
 	integer value,integer defval)
 {
-  double dvalue,ddefval;
+  int ivalue,idefval;
 
-  ddefval = defval.val;
-  rdhdd_c(tno.val,keyword.zterm,&dvalue,ddefval);
-  *(value.addr) = dvalue;
+  idefval = defval.val;
+  rdhdi_c(tno.val,keyword.zterm,&ivalue,idefval);
+  *(value.addr) = ivalue;
 }
 /************************************************************************/
 fortran subroutine rdhdd(integer tno,character keyword,
