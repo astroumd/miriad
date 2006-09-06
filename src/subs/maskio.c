@@ -17,6 +17,8 @@
 /*    rjs  19apr97   Handle FORTRAN LOGICALs better. Some tidying.      */
 /*    rjs  03jan05   Tidying.						*/
 /*    pjt  22aug06   MIR5 merged                                        */
+/*                                                                      */
+ *  TODO:    cleanup mask->size etc. with size_t, off_t                 */
 /************************************************************************/
 
 #include <stdio.h>
