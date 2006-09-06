@@ -28,6 +28,7 @@
 /*  pjt 12jan05   Fixed up type conversion for int8's in rhhdl          */
 /*  pjt  6feb05   rdhdd_c() : no more type check (see comment in code)  */
 /*  pjt 17feb05   fixed bug in reading int8's from old MIR3 files       */
+/*  pjt  6sep06   read integers via rdhdi                               */
 /************************************************************************/
 
 #include <stdlib.h>
@@ -382,10 +383,13 @@ void rdhdi_c(int thandle,Const char *keyword,int *value,int defval)
 /*--									*/
 /*----------------------------------------------------------------------*/
 {
-  double dvalue,ddefval;
-  ddefval = defval;
-  rdhdd_c(thandle,keyword,&dvalue,ddefval);
-  *value = dvalue;
+  int8 lvalue,ldefval;
+  ldefval = defval;
+  rdhdl_c(thandle,keyword,&lvalue,ldefval);
+
+  if(lvalue > 0x7FFFFFFF)
+    bugv_c('f',"Item %s too large for rdhdi: %ld",keyword,lvalue);
+  *value = lvalue;
 }
 /************************************************************************/
 void rdhdl_c(int thandle,Const char *keyword,int8 *value,int8 defval)
