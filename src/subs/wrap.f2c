@@ -33,6 +33,7 @@
 /*    rjs  18sep05   Changes to handle FORTRAN and C ints differing.	*/
 /*    rjs  26nov05   Changes to handle FORTRAN and C logicals differing.*/
 /*    mrc  14jul06   Compile with 'gcc -Wall' without warnings.         */
+/*    pjt   6sep06   Using rdhdi_c() in rdhdi to safeguard < 2^31       */
 /************************************************************************/
 #include <limits.h>
 #include <unistd.h>
@@ -726,11 +727,11 @@ fortran subroutine rdhdr(integer tno,character keyword,
 fortran subroutine rdhdi(integer tno,character keyword,
 	integer value,integer defval)
 {
-  double dvalue,ddefval;
+  int ivalue,idefval;
 
-  ddefval = defval.val;
-  rdhdd_c(tno.val,keyword.zterm,&dvalue,ddefval);
-  *(value.addr) = dvalue;
+  idefval = defval.val;
+  rdhdi_c(tno.val,keyword.zterm,&ivalue,idefval);
+  *(value.addr) = ivalue;
 }
 /************************************************************************/
 fortran subroutine rdhdd(integer tno,character keyword,

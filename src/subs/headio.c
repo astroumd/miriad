@@ -25,6 +25,7 @@
 /*  rjs 02jan05   Fix up bug in rdhdl. Tidy.				*/
 /*  rjs 26nov05   Better handling of logical values.			*/
 /*  pjt 22aug06   MIR5/atnf merged                                      */
+/*  pjt  6sep06   use rdhdl for integers (also to be able to read MIR4) */
 /************************************************************************/
 
 #include <stdlib.h>
@@ -384,10 +385,13 @@ void rdhdi_c(int thandle,Const char *keyword,int *value,int defval)
 /*--									*/
 /*----------------------------------------------------------------------*/
 {
-  double dvalue,ddefval;
-  ddefval = defval;
-  rdhdd_c(thandle,keyword,&dvalue,ddefval);
-  *value = dvalue;
+  int8 lvalue,ldefval;
+  ldefval = defval;
+  rdhdl_c(thandle,keyword,&lvalue,ldefval);
+
+  if(lvalue > 0x7FFFFFFF)
+    bugv_c('f',"Item %s too large for rdhdi: %ld",keyword,lvalue);
+  *value = lvalue;
 }
 /************************************************************************/
 void rdhdl_c(int thandle,Const char *keyword,int8 *value,int8 defval)
@@ -447,7 +451,7 @@ void rdhdl_c(int thandle,Const char *keyword,int8 *value,int8 defval)
         *value = ltemp;
       }
     } else {
-      bug_c('f',"Unrecognised type in rdhdl");
+      bugv_c('f',"Unrecognised type for %s in rdhdl",keyword);
     }
     check(iostat);
   }
@@ -514,7 +518,7 @@ void rdhdd_c(int thandle,Const char *keyword,double *value,double defval)
 	hreadd_c(item,value, offset,H_DBLE_SIZE,&iostat);
       }
     } else {
-      bug_c('f',"Unrecognised type in rdhdd");
+      bugv_c('f',"Unrecognised type for %s in rdhdd",keyword);
     }
     check(iostat);
   }
