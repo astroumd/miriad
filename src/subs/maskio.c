@@ -17,8 +17,11 @@
 /*    rjs  19apr97   Handle FORTRAN LOGICALs better. Some tidying.      */
 /*    rjs  03jan05   Tidying.						*/
 /*    pjt  22aug06   MIR5 merged                                        */
+/*    pjt   6sep06   handle really large masking cubes                  */
 /*                                                                      */
- *  TODO:    cleanup mask->size etc. with size_t, off_t                 */
+/*  TODO:    cleanup mask->size etc. with size_t, off_t                 */
+/*           LFS doesn't apply until a cube hits around 64 Gpixel       */
+/*           or 4k x 4k x 4k cubes                                      */
 /************************************************************************/
 
 #include <stdio.h>
@@ -29,7 +32,7 @@
 
 #define BUG(sev,a)   bug_c(sev,a)
 #define ERROR(sev,a) bug_c(sev,((void)sprintf a,message))
-#define CHECK(x) if(x) bugno_c('f',x)
+#define CHECK(x)     if(x) bugno_c('f',x)
 
 static char message[128];
 
@@ -57,19 +60,21 @@ static int masks[BITS_PER_INT+1]={
 
 #include "io.h"
 
-#define MK_FLAGS 1
-#define MK_RUNS 2
+#define MK_FLAGS     1
+#define MK_RUNS      2
 #define BUFFERSIZE 128
-#define OFFSET (((ITEM_HDR_SIZE-1)/H_INT_SIZE + 1)*BITS_PER_INT)
+#define OFFSET     (((ITEM_HDR_SIZE-1)/H_INT_SIZE + 1)*BITS_PER_INT)
 
 typedef struct {
-  int item;
-  int buf[BUFFERSIZE],offset,length,size,modified,rdonly,tno;
-  char name[32];
+  int    item;
+  int    buf[BUFFERSIZE],modified,rdonly,tno;
+  off_t  offset;
+  size_t length,size;
+  char   name[32];      /* 32 should be ok, "mask" or "flags"  are used */
 } MASK_INFO;
 
 
-static void mkfill(MASK_INFO *mask,int offset);
+static void mkfill(MASK_INFO *mask, off_t offset);
 
 /************************************************************************/
 char *mkopen_c(int tno,char *name,char *status)
@@ -110,7 +115,7 @@ char *mkopen_c(int tno,char *name,char *status)
       ERROR('f',(message,"Mask file %s is not integer valued",name));
     mask->rdonly   = TRUE;
 
-/* The case of a new masl file. Create it and make it look nice. */
+/* The case of a new mask file. Create it and make it look nice. */
 
   } else if(!strcmp("new",status)) {
     haccess_c(tno,&(mask->item),name,"write",&iostat);		CHECK(iostat);
@@ -380,7 +385,7 @@ void mkflush_c(char *handle)
   mask->modified = FALSE;
 }
 /************************************************************************/
-static void mkfill(MASK_INFO *mask,int offset)
+static void mkfill(MASK_INFO *mask,off_t offset)
 /*
   We have to fill in some bits in the current buffer.
 
@@ -389,7 +394,9 @@ static void mkfill(MASK_INFO *mask,int offset)
     offset	The first location that we want to write at.
 ------------------------------------------------------------------------*/
 {
-  int off,len,t,*buf,iostat,i;
+  int t,*buf,iostat,i;
+  off_t off;
+  size_t  len;
 
   if(mask->offset+mask->length < mask->size) {
     buf = mask->buf + mask->length/BITS_PER_INT;
