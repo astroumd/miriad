@@ -19,11 +19,13 @@ MIRSUBS C-routines:
 
 interface.c		minor merge - DONE
 bug.c			some work needed, nothing showstopping (remove VMS?) [atnf has older code mostly]
+dio.c     		minor work - DONE
 dirs.c			VMS only, keep it??
 headio.c		major work -- THIS IS WHERE the INT4/INT8 work is performed - DONE
 hio.c			minor work - DONE
 key.c			ATNF uses keyc.c !! work needed, but works 'as is'
-maskio.c		minor work needed - DONE
+maskio.c		minor work needed - DONE  (except the size_t/off_t stuff)
+pack.c			we use the WORDS_BIGENDIAN symbol (if available) 
 scrio.c			minor work (int vs. off_t/size_t) - DONE
 xyio.c			minor work (added xydim) - DONE
 xyzio.c			minor work (added xyzdim) - DONE
@@ -53,3 +55,38 @@ MIRSUBS FOR-routines:
 keyf.for		ATNF has key.for (see key.c and keyc.c notes)
 
 uvdat.for		notice some merging needed
+
+
+Issues:
+=======
+
+
+1) integer items were previously read using rdhdd in wrap.f2c and rdhdi_c() [in headio.c]; 
+   these are now using rdhdi/rdhdl and an extra check if they don't exceed 2^31 if requested
+   back as integers in fortran
+	(hmm.... but what if integers in fortran are able to handle > 2^31.....)
+   For clarity, rdhdd() will also read and convert INT8's now
+
+   Once MIR4 has disappeared, this issue could be cleared up.
+
+
+
+*) the code seems to work on linux, but both solaris and mac surprisingly show via testmirlib 
+   that not all the int8 case actually work!!!
+
+
+Architectures supported/not-supported:
+======================================
+
+supported:
+LINUX:	  most linux distributions out of the box
+MacOSX:	  10.3 and 10.4 are known to work
+CygWin:	  supposed to work
+Solaris:  supposed to work
+
+not-so-well supported:
+SGI/IRIX: launched in 1988, in sep.2006 SGI announced end-of-life 
+VMS:
+Unicos:
+HP/UX:
+AIX:
