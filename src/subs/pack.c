@@ -30,6 +30,7 @@
 /*    pjt  23aug06   clarified WORDS_BIGENDIAN, !WORDS_BIGENDIAN, unicos*/
 /*                   work around over-efficient linux linkers           */
 /*                   sanity checks for byte sized of what we assume     */
+/*    pjt   7sep06   Add endian check to pack_sanity_check              */
 /************************************************************************/
 
 #include "sysdep.h"
@@ -38,8 +39,16 @@
 
 static int sanity_check = 1;
 
+/* 
+ *  this routine is only supposed to be called once....
+ *  if (sanity_check) pack_sanity_check()
+ */
 static void pack_sanity_check(void)
 {
+  static short int endian_check = 1;
+  char *ep = (char *)&endian_check;
+
+  if (sanity_check == 0) return;     /* shortcut those who were forgetful and did if() their call */
   sanity_check = 0;
   
   if(sizeof(short int) != 2)     bugv_c('f',"Short Int not 2 bytes in pack.c: %d",sizeof(short int));
@@ -47,6 +56,13 @@ static void pack_sanity_check(void)
   if(sizeof(float) != 4)         bugv_c('f',"Float not 4 bytes in pack.c: %d",sizeof(float));
   if(sizeof(double) != 8)        bugv_c('f',"Double not 8 bytes in pack.c: %d",sizeof(double));
   if(sizeof(long long int) != 8) bugv_c('f',"long long int not 8 bytes in pack.c: %d",sizeof(long long int));
+
+  /* the following check also depends on sizeof(short int) == 2 */
+#if defined(WORDS_BIGENDIAN)
+  if (ep[0] != 0x00 || ep[1] != 0x01) bugv_c('f',"BIG ENDIAN, but runtime does not look like it: 0x%x 0x%x",ep[0],ep[1]);
+#else
+  if (ep[0] != 0x01 || ep[1] != 0x00) bugv_c('f',"LITTLE ENDIAN, but runtime does not look like it: 0x%x 0x%x",ep[0],ep[1]);
+#endif
 }
 
 #if defined(WORDS_BIGENDIAN)
