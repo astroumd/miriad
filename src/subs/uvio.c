@@ -252,7 +252,7 @@
 /*		list to be formed for hashing.				*/
 /*									*/
 /*----------------------------------------------------------------------*/
-#define VERSION_ID "23-aug-06 pjt"
+#define VERSION_ID "6-sep-06 pjt"
 
 #define private static
 
@@ -502,8 +502,8 @@ static UV *uv_getuv(int tno);
 static void uv_vartable_out(UV *uv);
 static void uv_override(UV *uv);
 static void uv_vartable_in(UV *uv);
-static VARIABLE *uv_mkvar(int tno, const char *name, int type);
-static VARIABLE *uv_locvar(int tno, const char *name);
+static VARIABLE *uv_mkvar(int tno, Const char *name, int type);
+static VARIABLE *uv_locvar(int tno, Const char *name);
 static int uv_scan(UV *uv, VARIABLE *vt);
 static void uv_addopers(SELECT *sel, int type, int discard, double p1, double p2, Const char *ps);
 static void uvset_preamble(UV *uv, Const char *type);
@@ -2899,7 +2899,7 @@ void uvwread_c(int tno,float *data,int *flags,int n,int *nread)
 
   uv = uvs[tno];
 
-/* Determine the number of channels in the output, if none where given. */
+/* Determine the number of channels in the output, if none were given. */
 
   if(uv->wcorr == NULL){
     if(uv_locvar(tno,"wcorr") != NULL){
@@ -2996,7 +2996,7 @@ private double uv_getskyfreq(UV *uv,WINDOW *win)
   if(! (uv->flags & UVF_UPDATED_SKYFREQ) && start == uv->skyfreq_start)
     return(uv->skyfreq);
 
-/* We have to recompute. First indicate that we have doe that already */
+/* We have to recompute. First indicate that we have done that already */
 
   uv->skyfreq_start = start;
   uv->flags &= ~UVF_UPDATED_SKYFREQ;
