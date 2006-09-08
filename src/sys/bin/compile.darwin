@@ -1,5 +1,7 @@
 #-----------------------------------------------------------
 # source'd file compile.darwin, for mac os X
+# careful: this now assumes a powerpc (-DWORDS_BIGENDIAN)
+#          for intel it has to be removed!! or use compile.generic.in
 #-----------------------------------------------------------
 set mmir  = $MIR
 set mhost = $MIRHOST
