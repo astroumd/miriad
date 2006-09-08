@@ -852,17 +852,20 @@ void hio_c(int ihandle,int dowrite,int type,char *buf,
 	subroutine hreadb(itno,bbuf,offset,length,iostat)
 	subroutine hreadj(itno,jbuf,offset,length,iostat)
 	subroutine hreadi(itno,ibuf,offset,length,iostat)
+	subroutine hreadl(itno,lbuf,offset,length,iostat)
 	subroutine hreadr(itno,rbuf,offset,length,iostat)
 	subroutine hreadd(itno,dbuf,offset,length,iostat)
 	subroutine hwritea(itno,abuf,iostat)
 	subroutine hwriteb(itno,bbuf,offset,length,iostat)
 	subroutine hwritej(itno,jbuf,offset,length,iostat)
 	subroutine hwritei(itno,ibuf,offset,length,iostat)
+	subroutine hwritel(itno,lbuf,offset,length,iostat)
 	subroutine hwriter(itno,rbuf,offset,length,iostat)
 	subroutine hwrited(itno,dbuf,offset,length,iostat)
 	integer itno,offset,length,iostat
 	character abuf*(*),bbuf*(length)
 	integer jbuf(*),ibuf(*)
+	integer*8 lbuf(*)
 	real rbuf(*)
 	double precision dbuf(*)
 
@@ -872,6 +875,7 @@ void hio_c(int ihandle,int dowrite,int type,char *buf,
 	hreadb,hwriteb	I/O on ascii data.
 	hreadj,hwritej	I/O on data stored externally as 16 bit integers.
 	hreadi,hwritei	I/O on data stored externally as 32 bit integers.
+	hreadl,hwritel	I/O on data stored externally as 64 bit integers.
 	hreadr,hwriter	I/O on data stored externally as IEEE 32 bit reals.
 	hreadd,hwrited	I/O on data stored externally as IEEE 64 bit reals.
 
@@ -882,6 +886,7 @@ void hio_c(int ihandle,int dowrite,int type,char *buf,
       meaning to it. A fixed number of bytes are read, and the buffer is
       not blank padded.
    Hwritea and hwriteb differ in similar ways.
+  Also note that integer*8 may not be supported by your fortran compiler
 
   Inputs:
     itno	The handle of the item to perform I/O on.
