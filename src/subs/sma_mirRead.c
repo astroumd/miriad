@@ -3183,7 +3183,7 @@ float juliandate (struct codeh_def *refdate[])
   ccaldate[13]='\0';
   memcpy(ccaldate,refdate[0]->code, 12);
   sscanf(ccaldate, "%s%d%s%d", mc, &di,yc,&yi);
-  printf("Observing Date: %d %s %d\n", yi, mc, di);
+//  printf("Observing Date: %d %s %d\n", yi, mc, di);
   mi=0;
   for (i=1; i<13; i++){
     if (memcmp(mc,months[i], 3)==0) mi=i;
@@ -3201,6 +3201,8 @@ float juliandate (struct codeh_def *refdate[])
      printf("bad day   (MJD not computed).");
      exit(-1);
               }
+ printf("Observing Date: %d %s %d    Julian Date: %f\n", yi, mc, di, jdate);
+
   return jdate;
 }
 
