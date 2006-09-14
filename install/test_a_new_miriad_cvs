@@ -5,6 +5,7 @@
 #
 #   dark-ages    -- written                      Peter Teuben
 #   23-nov-05    added to CVS                    PJT
+#   14-sep-06    added compile.generic support, can also re-compile current tree	PJT
 #
 #----
 
@@ -15,20 +16,28 @@
 #   
 set rootdir=miriad
 
-#  all(miriad,wip,rad) or just miriad(all=0) -- not implemented
-set all=0
+#   use autoconf generated compile.generic file
+set generic=1
 
+#   reuse the current rootdir directory, instead of removing it
+set reuse=0
+
+#   options directly passed to install.miriad
 set opts=()
 #set opts=(intel=1 bench=32,512,1)
 #set opts=(intel=1)
 
-#   set a branch (-r <something>) or date (-D <something>)
+#   set a branch (-r <something>) or date (-D <something>)   [CVS only]
 set branch=()
 #set branch=(-r MIR3)
 #set branch=(-r mir_3_1_1)
 #set branch=(-D 12/25/04)
 
 set cvsroot=:pserver:anonymous@cvs.astro.umd.edu:/home/cvsroot
+
+foreach arg ($*)
+  set $arg
+end
 
 if ($?CVSROOT == 0) then
    echo No CVSROOT, trying out $cvsroot
@@ -49,24 +58,33 @@ if ($?MIR) then
   exit 1
 endif
 
-echo "Using cvs with CVSROOT=$CVSROOT"
-echo -n "Removing your local $rootdir in 2 seconds..." 
-sleep 2
-rm -rf $rootdir
-echo "...done".
-if (1) then
-  (cvs -Q co $branch -d $rootdir miriad; cd $rootdir/borrow; cvs -Q co wip; cvs -Q co rad)
+if ($reuse == 0) then
+  echo "Using cvs with CVSROOT=$CVSROOT"
+  echo -n "Removing your local $rootdir in 2 seconds..." 
+  sleep 2
+  rm -rf $rootdir
+  echo "...done".
+  if (1) then
+    (cvs -Q co $branch -d $rootdir miriad; cd $rootdir/borrow; cvs -Q co wip; cvs -Q co rad)
+  else
+    (cvs -Q co $branch -d $rootdir miriad)
+  endif
 else
-  (cvs -Q co $branch -d $rootdir miriad)
+  if (! -e $rootdir) then
+    echo No directory $rootdir
+    exit 1
+  else
+    echo Reusing $rootdir
+  endif
 endif
 
 if (-e  $rootdir/src/tools/ercmd.c) rm $rootdir/src/tools/ercmd.c
 
 if (0) then
- time $rootdir/install/install.miriad $opts
+ time $rootdir/install/install.miriad $opts generic=$generic
 else
  cd $rootdir/install
- time ./install.miriad $opts
+ time ./install.miriad $opts generic=$generic
 endif
 
 
