@@ -1,5 +1,7 @@
 #-----------------------------------------------------------
 # compile.generic.in - experimental to replace all of the compile.*
+#   this file will be processed to compile.generic and then copied
+#   to compile.$MIRHOST into $MIR/bin/localsys.
 # files that can be selected in $MIR/src/sys/bin
 #-----------------------------------------------------------
 set mmir  = $MIR
