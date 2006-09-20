@@ -47,7 +47,7 @@ c----------------------------------------------------------------------c
        complex data(MAXCHAN)
        logical flags(MAXCHAN)
        double precision preamble(4),oldtime
-       integer lIn,nchan,nread,nvis,ngrid,nchannel
+       integer lIn,nchan,nread,nvis,ngrid,nchannel,vmode
        real start,width,step
        character*128 vis,out,linetype,line
        character*10 xaxis,yaxis,zaxis,xunit,yunit,view
@@ -56,7 +56,7 @@ c----------------------------------------------------------------------c
        real rdata(MAXANT)
        double precision ddata(MAXANT)
        integer lout,nsize(3),i,j,k,l
-       real cell(2)
+       real cell(2),v
        integer MAXSIZE
        parameter(MAXSIZE=64)
        real array(MAXSIZE,MAXSIZE,MAXCHAN)
@@ -92,6 +92,19 @@ c
        write(line,'(a,a)')
      *	 'Mapping ', view
        call output(line)
+
+       if(index(view,'re').gt.0) then
+          vmode = 1
+       else if(index(view,'im').gt.0) then
+          vmode =2 
+       else if(index(view,'am').gt.0) then
+          vmode = 3
+       else if(index(view,'ph').gt.0) then
+          vmode = 4
+       else
+          call bug('f','Unknown view='//view)
+       endif
+
 c
 c  Open an old visibility file, and apply selection criteria.
 c
@@ -169,13 +182,27 @@ c
        k=1
        do l=1,nvis
           call uvread(lIn, preamble, data, flags, maxchan, nread)
-          if (l.eq.1) then
+          if (l.eq.1) oldtime = preamble(3)
+          if (preamble(3).ne.oldtime) then
              oldtime = preamble(3)
              j=1
              k=k+1
           endif
           do i=1,nread
-             array(i,j,k) = cabs(data(i))
+             if (flags(i)) then
+                if(vmode.eq.1) then
+                   v = real(data(i))
+                else if(vmode.eq.2) then
+                   v = aimag(data(i))
+                else if(vmode.eq.3) then
+                   v = cabs(data(i))
+                else if(vmode.eq.4) then
+                   v = 180./pi * atan2(aimag(data(i)),real(data(i)))
+                else
+                   call bug('f','Illegal view')
+                endif
+                array(i,j,k) = v
+             endif
           enddo
           j=j+1
        enddo
