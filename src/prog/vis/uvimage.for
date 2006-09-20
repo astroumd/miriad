@@ -40,7 +40,7 @@ c----------------------------------------------------------------------c
        include 'maxdim.h'
        include 'mirconst.h'
        character*(*) version
-       parameter(version='UVIMAGE: version 20-sep-2006 ** pjt test version **')
+       parameter(version='UVIMAGE: version 20-sep-2006 ** test **')
        integer MAXSELS
        parameter(MAXSELS=512)
        real sels(MAXSELS)
