@@ -6,12 +6,17 @@ c= UVIMAGE  Create a 3D image from uvdata
 c& pjt
 c: image conversion, analysis.
 c+
-c       UVIMAGE makes a Miriad image of uvdata of Channel - Baseline - Time.
+c       UVIMAGE makes a Miriad image datacube of the uvdata in a
+c       Channel - Baseline - Time order.
 c       Missing Baselines are replaced with 0s, 
 c       Missing channels cause a fatal error.
+c
+c
 c	Related tasks:
-c	  	TVFLAG
-c               VARMAP
+c	  	TVFLAG - good for inspection and flagging, but
+c                        only works in 8bit displays
+c               UVAVER - use this to cut down the number of times
+c               VARMAP - image maps of uv-variables
 c@ vis
 c       The input uv-dataset name. No default.
 c@ select
@@ -27,11 +32,13 @@ c       channels.
 c
 c@ view
 c	Visibility 'amplitude', 'phase', 'real', or 'imaginary'.
-c	Default zaxis=amplitude
 c	No calibration is applied by UVIMAGE.
+c	Default: amplitude
 c
 c@ out
 c	Output image. No default.
+c       Currently the image cube is poorly labeled as CHANNEL,
+c       BASELINE, TIME with no real meaningful coordinates.
 c
 c--
 c  History:
@@ -40,25 +47,23 @@ c----------------------------------------------------------------------c
        include 'maxdim.h'
        include 'mirconst.h'
        character*(*) version
-       parameter(version='UVIMAGE: version 21-sep-2006 ** test4 **')
+       parameter(version='UVIMAGE: version 21-sep-2006 ** test5 **')
        integer MAXSELS
        parameter(MAXSELS=512)
        integer MAXSIZE
-       parameter(MAXSIZE=128)
-       integer MAXTIME
-       parameter(MAXTIME=2048)
+       parameter(MAXSIZE=256*266*256)
 
        real sels(MAXSELS)
        complex data(MAXCHAN)
-       logical flags(MAXCHAN)
+       logical flags(MAXCHAN),qmnmx
        double precision preamble(4),oldtime
-       integer lIn,nchan,nread,nvis,nchannel,vmode
+       integer lIn,nchan,nread,nvis,nchannel,vmode,nbl
        real start,width,step
        character*128 vis,out,linetype,line
        character*10 view
        integer antsel(MAXANT),ant1,ant2,nant,ntime
        integer lout,nsize(3),i,j,k,l
-       real v,array(MAXSIZE,MAXSIZE,MAXTIME)
+       real v,array(MAXSIZE)
        real datamin,datamax
        character*1 type
        integer length
@@ -75,14 +80,11 @@ c
        call keya ('view',view,'amp')
        call keyfin
 c
-c  Check that the inputs are reasonable.
+c  Check that all the inputs are reasonable.
 c
        if (vis.eq.' ') call bug('f','Input name must be given')
        if (out.eq.' ') call bug('f','Output image missing')
-       if (nchan.gt.0) nchan = min (nchan,maxchan)
-       write(line,'(a,a)')
-     *	 'Mapping ', view
-       call output(line)
+       if (nchan.gt.0) nchan = MIN(nchan,MAXCHAN)
 
        if(index(view,'re').gt.0) then
           vmode = 1
@@ -95,6 +97,8 @@ c
        else
           call bug('f','Unknown view='//view)
        endif
+       write(line,'(a,a)') 'Mapping ', view
+       call output(line)
 
 c
 c  Open an old visibility file, and apply selection criteria.
@@ -110,7 +114,6 @@ c
        if(nread.le.0) call bug('f','No data found in the input.')
        nchannel = nread
        oldtime = preamble(3)
-       write(*,*) oldtime
        if(index(linetype,'wide').gt.0)then
           call uvprobvr(lIn,'wcorr',type,length,updated)
        else
@@ -143,36 +146,33 @@ c
        do i=1,MAXANT
           if (antsel(i).gt.0) nant=nant+1
        enddo
+       nbl = nvis/ntime
 
        write (*,*) 'Nvis=',nvis,' Nant=',nant
-       write (*,*) 'Nchan=',nchannel,' Nbl=',nvis/ntime,' Ntime=',ntime
+       write (*,*) 'Nchan=',nchannel,' Nbl=',nbl,' Ntime=',ntime,
+     *    ' Space used: ',nchannel*nbl*ntime,' / ',MAXSIZE,
+     *    ' = ',REAL(nchannel*nbl*ntime)/REAL(MAXSIZE)*100,'%'
+       if (MOD(nvis,ntime).NE.0) call bug('w','No regular baseline set')
 
        nsize(1) = nchannel
-       nsize(2) = nvis/ntime
+       nsize(2) = nbl
        nsize(3) = ntime
 
-       if (nsize(1) .GT. MAXCHAN) call bug('f','Too many channels')
-       if (nsize(2) .GT. MAXSIZE) call bug('f','Too many baselines')
-       if (nsize(3) .GT. MAXTIME) call bug('f','Too many times')
+       if (nsize(1)*nsize(2)*nsize(3) .GT. MAXSIZE) call bug('f',
+     *       'Too many data, use  uvaver, or select= to cut down')
 
 
        call xyopen(lOut,Out,'new',3,nsize)
        call maphead(lIn,lOut,nsize)
-       do k=1,nsize(3)
-          do j=1,nsize(2)
-             do i=1,nsize(1)
-                array(i,j,k) = 0.0
-             enddo
-          enddo
-       enddo
+       call azero(array,nsize(1),nsize(2),nsize(3))
 
 c
 c   Rewind vis file and now process the data
 c
        call uvrewind(lIn)
-       i=1
        j=1
        k=1
+       qmnmx = .false.
        do l=1,nvis
           call uvread(lIn, preamble, data, flags, maxchan, nread)
           if (l.eq.1) oldtime = preamble(3)
@@ -194,13 +194,14 @@ c
                 else
                    call bug('f','Illegal view')
                 endif
-                array(i,j,k) = v
-                if (l.gt.1) then
+                call aset(array,nsize(1),nsize(2),nsize(3),i,j,k,v)
+                if (qmnmx) then
                    datamin = MIN(datamin,v)
                    datamax = MAX(datamax,v)
                 else
                    datamin = v
                    datamax = v
+                   qmnmx = .true.
                 endif
              endif
           enddo
@@ -211,7 +212,7 @@ c
 c
 c  Write the image and it's header.
 c
-      call putimage(lOut,nsize,array,MAXSIZE,MAXSIZE,MAXTIME)
+      call putimage(lOut,array,nsize(1),nsize(2),nsize(3))
       call wrhdr(lOut,'datamin',datamin)
       call wrhdr(lOut,'datamax',datamax)
 c
@@ -232,6 +233,30 @@ c
       call xyclose(lOut)
 c
       end
+c********1*********2*********3*********4*********5*********6*********7**
+      subroutine azero(a,nx,ny,nz)
+      implicit none
+      integer nx,ny,nz
+      real a(nx,ny,nz)
+c
+      integer i,j,k
+      do k=1,nz
+         do j=1,ny
+            do i=1,nx
+               a(i,j,k) = 0.0
+            enddo
+         enddo
+      enddo
+      end
+c
+      subroutine aset(a,nx,ny,nz,ix,iy,iz,v)
+      implicit none
+      integer nx,ny,nz,ix,iy,iz
+      real a(nx,ny,nz),v
+c
+      a(ix,iy,iz) = v
+      end
+
 c********1*********2*********3*********4*********5*********6*********7**
       subroutine maphead(lIn,lOut,nsize)
       implicit none
@@ -275,20 +300,20 @@ c
 c
       end
 c********1*********2*********3*********4*********5*********6*********7**
-      subroutine putimage(lOut,nsize,array,maxx,maxy,maxz)
+      subroutine putimage(lOut,array,nx,ny,nz)
       implicit none
-      integer lOut,nsize(3),maxx,maxy,maxz
-      real array(maxx,maxy,maxz)
+      integer lOut,nx,ny,nz
+      real array(nx,ny,nz)
 c  Inputs:
 c    lOut	The handle of the output image.
-c    nsize	The output image size.
 c    array	image values.
+c    nx,ny,nz	The output image size.
 c-------------------------------------------------------------------------
-      integer i,j,k
+      integer j,k
 
-      do k=1,nsize(3)
+      do k=1,nz
          call xysetpl(lOut,1,k)
-	 do j=1,nsize(2)
+	 do j=1,ny
             call xywrite(lOut,j,array(1,j,k))
          enddo
       enddo
