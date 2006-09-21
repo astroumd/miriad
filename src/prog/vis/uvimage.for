@@ -39,15 +39,24 @@ c@ out
 c	Output image. No default.
 c       Currently the image cube is poorly labeled as CHANNEL,
 c       BASELINE, TIME with no real meaningful coordinates.
+c@ mode
+c       This controls in what order the cube is written
+c       1: CHANNEL-BASELINE-TIME (default)
+c       2: TIME-CHANNEL-BASELINE
 c
 c--
 c  History:
 c     pjt  20sep06  Initial version, cloned off varmap
+c     pjt  21sep06  Added mode keyword, more efficient memory usage
+c
+c  TODO
+c     - write plane by plane, but this will limit it to mode=1
+c       but handle much larger cubes
 c----------------------------------------------------------------------c
        include 'maxdim.h'
        include 'mirconst.h'
        character*(*) version
-       parameter(version='UVIMAGE: version 21-sep-2006 ** test5 **')
+       parameter(version='UVIMAGE: version 21-sep-2006 ** test6 **')
        integer MAXSELS
        parameter(MAXSELS=512)
        integer MAXSIZE
@@ -57,7 +66,7 @@ c----------------------------------------------------------------------c
        complex data(MAXCHAN)
        logical flags(MAXCHAN),qmnmx
        double precision preamble(4),oldtime
-       integer lIn,nchan,nread,nvis,nchannel,vmode,nbl
+       integer lIn,nchan,nread,nvis,nchannel,vmode,nbl,omode
        real start,width,step
        character*128 vis,out,linetype,line
        character*10 view
@@ -78,6 +87,7 @@ c
        call SelInput ('select',sels,maxsels)
        call keya ('out',out,' ')
        call keya ('view',view,'amp')
+       call keyi ('mode',omode,1)
        call keyfin
 c
 c  Check that all the inputs are reasonable.
@@ -154,16 +164,22 @@ c
      *    ' = ',REAL(nchannel*nbl*ntime)/REAL(MAXSIZE)*100,'%'
        if (MOD(nvis,ntime).NE.0) call bug('w','No regular baseline set')
 
-       nsize(1) = nchannel
-       nsize(2) = nbl
-       nsize(3) = ntime
+       if (omode.EQ.1) then
+          nsize(1) = nchannel
+          nsize(2) = nbl
+          nsize(3) = ntime
+       else
+          nsize(1) = ntime
+          nsize(2) = nchannel
+          nsize(3) = nbl
+       endif
 
        if (nsize(1)*nsize(2)*nsize(3) .GT. MAXSIZE) call bug('f',
      *       'Too many data, use  uvaver, or select= to cut down')
 
 
        call xyopen(lOut,Out,'new',3,nsize)
-       call maphead(lIn,lOut,nsize)
+       call maphead(lIn,lOut,nsize,omode)
        call azero(array,nsize(1),nsize(2),nsize(3))
 
 c
@@ -194,7 +210,11 @@ c
                 else
                    call bug('f','Illegal view')
                 endif
-                call aset(array,nsize(1),nsize(2),nsize(3),i,j,k,v)
+                if (omode.eq.1) then
+                   call aset(array,nsize(1),nsize(2),nsize(3),i,j,k,v)
+                else
+                   call aset(array,nsize(1),nsize(2),nsize(3),k,i,j,v)
+                endif
                 if (qmnmx) then
                    datamin = MIN(datamin,v)
                    datamax = MAX(datamax,v)
@@ -258,9 +278,9 @@ c
       end
 
 c********1*********2*********3*********4*********5*********6*********7**
-      subroutine maphead(lIn,lOut,nsize)
+      subroutine maphead(lIn,lOut,nsize,omode)
       implicit none
-      integer	lin,lout,nsize(3)
+      integer	lin,lout,nsize(3),omode
 c  Inputs:
 c    lIn	The handle of the autocorrelation data.
 c    lOut	The handle of the output image.
@@ -291,9 +311,15 @@ c
       call wrhdd(lOut,'crval1',0.0d0)
       call wrhdd(lOut,'crval2',0.0d0)
       call wrhdd(lOut,'crval3',0.0d0)
-      call wrhda(lOut,'ctype1','CHANNEL')
-      call wrhda(lOut,'ctype2','BASELINE')
-      call wrhda(lOut,'ctype3','TIME')
+      if (omode.eq.1) then
+         call wrhda(lOut,'ctype1','CHANNEL')
+         call wrhda(lOut,'ctype2','BASELINE')
+         call wrhda(lOut,'ctype3','TIME')
+      else
+         call wrhda(lOut,'ctype1','TIME')
+         call wrhda(lOut,'ctype2','CHANNEL')
+         call wrhda(lOut,'ctype3','BASELINE')
+      endif
       call wrhdr(lOut,'epoch',epoch)
       call wrhda(lOut,'object',source)
       call wrhda(lOut,'telescop',telescop)
