@@ -40,38 +40,29 @@ c----------------------------------------------------------------------c
        include 'maxdim.h'
        include 'mirconst.h'
        character*(*) version
-       parameter(version='UVIMAGE: version 20-sep-2006 ** test3 **')
+       parameter(version='UVIMAGE: version 21-sep-2006 ** test4 **')
        integer MAXSELS
        parameter(MAXSELS=512)
+       integer MAXSIZE
+       parameter(MAXSIZE=128)
+       integer MAXTIME
+       parameter(MAXTIME=2048)
+
        real sels(MAXSELS)
        complex data(MAXCHAN)
        logical flags(MAXCHAN)
        double precision preamble(4),oldtime
-       integer lIn,nchan,nread,nvis,ngrid,nchannel,vmode
+       integer lIn,nchan,nread,nvis,nchannel,vmode
        real start,width,step
        character*128 vis,out,linetype,line
-       character*10 xaxis,yaxis,zaxis,xunit,yunit,view
-       integer idata(MAXANT)
+       character*10 view
        integer antsel(MAXANT),ant1,ant2,nant,ntime
-       real rdata(MAXANT)
-       double precision ddata(MAXANT)
        integer lout,nsize(3),i,j,k,l
-       real cell(2),v
-       integer MAXSIZE
-       parameter(MAXSIZE=64)
-       real array(MAXSIZE,MAXSIZE,MAXCHAN)
-       real weight(MAXSIZE,MAXSIZE,MAXCHAN)
-       real x,y,z,datamin,datamax
-       character*1 xtype, ytype, type
-       integer length, xlength, ylength, xindex, yindex
-       logical updated,sum
-c
-       integer nout, nopt
-       parameter(nopt=8)
-       character opts(nopt)*10
-       data opts/'arcseconds','arcminutes','radians   ',
-     *        'degrees   ','hours     ','dms       ',
-     *        'hms       ','time      '/
+       real v,array(MAXSIZE,MAXSIZE,MAXTIME)
+       real datamin,datamax
+       character*1 type
+       integer length
+       logical updated
 c
 c  Get the input parameters.
 c
@@ -111,8 +102,6 @@ c
        call uvopen (lIn,vis,'old')
        if(linetype.ne.' ')
      *   call uvset (lIn,'data',linetype,nchan,start,width,step)
-       call uvset (lIn,'coord','nanosec',0, 0.0, 0.0, 0.0)
-       call uvset (lIn,'planet', ' ', 0, 0.0, 0.0, 0.0)
        call SelApply(lIn,sels,.true.)
 c
 c  Scan the visibilty file: open first record
@@ -135,7 +124,7 @@ c
        ntime = 1
 
 c
-c  Read through the uvdata
+c  Read through the uvdata a first time to gather how big the cube should be
 c
        do while(nread.gt.0)
           if(nread.ne.nchannel)
@@ -155,14 +144,20 @@ c
           if (antsel(i).gt.0) nant=nant+1
        enddo
 
-       write (*,*) 'Nvis=',nvis,' Nant=',nant,' Ntime=',ntime,
-     *             ' Nchan=',nchannel,' Nbl=',nvis/ntime
+       write (*,*) 'Nvis=',nvis,' Nant=',nant
+       write (*,*) 'Nchan=',nchannel,' Nbl=',nvis/ntime,' Ntime=',ntime
 
-       
        nsize(1) = nchannel
        nsize(2) = nvis/ntime
        nsize(3) = ntime
+
+       if (nsize(1) .GT. MAXCHAN) call bug('f','Too many channels')
+       if (nsize(2) .GT. MAXSIZE) call bug('f','Too many baselines')
+       if (nsize(3) .GT. MAXTIME) call bug('f','Too many times')
+
+
        call xyopen(lOut,Out,'new',3,nsize)
+       call maphead(lIn,lOut,nsize)
        do k=1,nsize(3)
           do j=1,nsize(2)
              do i=1,nsize(1)
@@ -171,7 +166,9 @@ c
           enddo
        enddo
 
-       call bug('i','Rewinding')
+c
+c   Rewind vis file and now process the data
+c
        call uvrewind(lIn)
        i=1
        j=1
@@ -198,6 +195,13 @@ c
                    call bug('f','Illegal view')
                 endif
                 array(i,j,k) = v
+                if (l.gt.1) then
+                   datamin = MIN(datamin,v)
+                   datamax = MAX(datamax,v)
+                else
+                   datamin = v
+                   datamax = v
+                endif
              endif
           enddo
           j=j+1
@@ -207,15 +211,13 @@ c
 c
 c  Write the image and it's header.
 c
-      call putimage(lOut,nsize,array)
+      call putimage(lOut,nsize,array,MAXSIZE,MAXSIZE,MAXTIME)
       call wrhdr(lOut,'datamin',datamin)
       call wrhdr(lOut,'datamax',datamax)
 c
 c  Write summary.
 c
       write(line,'(a,i6)') ' number of records read= ',nvis
-      call output(line)
-      write(line,'(a,i6)') ' number of records mapped= ',ngrid
       call output(line)
 c
 c  Write the history file.
@@ -231,162 +233,64 @@ c
 c
       end
 c********1*********2*********3*********4*********5*********6*********7**
-      subroutine maphead(lIn,lOut,nsize,cell,xaxis,yaxis,
-     *   xunit,yunit,linetype)
+      subroutine maphead(lIn,lOut,nsize)
       implicit none
       integer	lin,lout,nsize(3)
-      real cell(2)
-      character*(*) xaxis,yaxis,xunit,yunit,linetype
 c  Inputs:
 c    lIn	The handle of the autocorrelation data.
 c    lOut	The handle of the output image.
 c    nsize	The output image size.
-c    cell	The output image cell size.
-c    xaxis,yaxis  x- and y-axis
-c    xunit,yunit  x- and y-axis units
-c    linetype	linetype
 c-------------------------------------------------------------------------
       include 'maxdim.h'
       character source*16,telescop*16
-      double precision ra,dec,restfreq,wfreq,wwidth,velocity(MAXCHAN)
       real epoch
 c
 c  Get source parameters.
 c
       call uvrdvra(lIn,'source',source,' ')
-      call uvrdvrd(lIn,'ra',ra,0.d0)
-      call uvrdvrd(lIn,'dec',dec,0.d0)
-      call uvrdvrd(lIn,'restfreq',restfreq,0.d0)
       call uvrdvrr(lIn,'epoch',epoch,0.d0)
       call uvrdvra(lIn,'telescop',telescop,' ')
 c
 c  Write header values.
 c
-	call wrhdi(lOut,'naxis',3)
-	call wrhdi(lOut,'naxis1',nsize(1))
-	call wrhdi(lOut,'naxis2',nsize(2))
-	call wrhdi(lOut,'naxis3',nsize(3))
-	call wrhdd(lOut,'crpix1',dble(nsize(1)/2+1))
-	call wrhdd(lOut,'crpix2',dble(nsize(2)/2+1))
-	call wrhdd(lOut,'crpix3',1.0d0)
-	call wrhdd(lOut,'cdelt1',dble(-cell(1)))
-	call wrhdd(lOut,'cdelt2',dble(cell(2)))
-	call wrhda(lOut,'bunit','JY/BEAM')
-	call wrhdd(lOut,'crval1',ra)
-	call wrhdd(lOut,'crval2',dec)
-	call wrhdd(lOut,'restfreq',restfreq)
-	call wrhdr(lOut,'epoch',epoch)
-	call wrhda(lOut,'object',source)
-	call wrhda(lOut,'telescop',telescop)
+      call wrhdi(lOut,'naxis',3)
+      call wrhdi(lOut,'naxis1',nsize(1))
+      call wrhdi(lOut,'naxis2',nsize(2))
+      call wrhdi(lOut,'naxis3',nsize(3))
+      call wrhdd(lOut,'crpix1',1.0d0)
+      call wrhdd(lOut,'crpix2',1.0d0)
+      call wrhdd(lOut,'crpix3',1.0d0)
+      call wrhdd(lOut,'cdelt1',1.0d0)
+      call wrhdd(lOut,'cdelt2',1.0d0)
+      call wrhdd(lOut,'cdelt3',1.0d0)
+      call wrhdd(lOut,'crval1',0.0d0)
+      call wrhdd(lOut,'crval2',0.0d0)
+      call wrhdd(lOut,'crval3',0.0d0)
+      call wrhda(lOut,'ctype1','CHANNEL')
+      call wrhda(lOut,'ctype2','BASELINE')
+      call wrhda(lOut,'ctype3','TIME')
+      call wrhdr(lOut,'epoch',epoch)
+      call wrhda(lOut,'object',source)
+      call wrhda(lOut,'telescop',telescop)
 c
-c  Select axis values.
-c
-	if(xunit.eq.'arcseconds')then
-	  call wrhda(lOut,'ctype1','RA---SIN')
-	else
-	  call wrhda(lOut,'ctype1','ANGLE')
-	endif
-	if(yunit.eq.'arcseconds')then
-	  call wrhda(lOut,'ctype2','DEC--SIN')
-	else
-      call wrhda(lOut,'ctype2','ANGLE')
-	endif
-c
-	if(index(linetype,'wide').eq.0)then
-      call uvinfo(lIn,'velocity', velocity)
-	  call wrhda(lOut,'ctype3','VELO-LSR')
-	  call wrhdd(lOut,'crval3',velocity(1))
-	  call wrhdd(lOut,'cdelt3',velocity(2)-velocity(1))
-	else
-      call uvrdvrd(lIn,'wfreq',wfreq,0.d0)
-      call uvrdvrd(lIn,'wwidth',wwidth,1.d0)
-	  call wrhda(lOut,'ctype3','FREQUENCY')
-	  call wrhdd(lOut,'crval3',wfreq)
-	  call wrhdd(lOut,'cdelt3',wwidth)
-	endif
-c
-	end
+      end
 c********1*********2*********3*********4*********5*********6*********7**
-	subroutine putimage(lOut,nsize,array)
-	implicit none
-	integer lOut,nsize(3)
-	real array(64,64,256)
+      subroutine putimage(lOut,nsize,array,maxx,maxy,maxz)
+      implicit none
+      integer lOut,nsize(3),maxx,maxy,maxz
+      real array(maxx,maxy,maxz)
 c  Inputs:
 c    lOut	The handle of the output image.
 c    nsize	The output image size.
 c    array	image values.
 c-------------------------------------------------------------------------
-	include 'maxdim.h'
-	real row(MAXDIM)
-	integer i,j,imin,imax,jmin,jmax,ioff,joff,k
-c
-	imin = 1
-	imax = nsize(1)
-	ioff = 0
-	jmin = 1
-	jmax = nsize(2)
-	joff = 0
-c
-c  write out image.
-c
-	do k=1,nsize(3)
-	call xysetpl(lOut,1,k)
-	 do j=1,nsize(2)
-	  if((j .ge. jmin) .and. (j .le. jmax)) then
-	    do i=1,nsize(1)
-	      row(i)=array(i-ioff,j-joff,k)
-	    enddo
-	  endif
-	  call xywrite(lOut,j,row)
-	 enddo
-	enddo
-	end
-c********1*********2*********3*********4*********5*********6*********7**
-        subroutine GetOpt(sum)
-        implicit none
-        logical sum
-c
-c  Determine extra processing options.
-c
-c  Output:
-c    sum      Sum the data in each pixel. Default is to average.
-c------------------------------------------------------------------------
-        integer nopt
-        parameter(nopt=1)
-        character opts(nopt)*9
-        logical present(nopt)
-        data opts/'sum      '/ 
-c
-        call options('options',opts,present,nopt)
-        sum = present(1)
-c
-	end
-c********1*********2*********3*********4*********5*********6*********7**
-      SUBROUTINE units(d,unit)
-      implicit none
-      real d
-      character unit*(*)
-c
-c The following units are understood and converted to:
-c
-c   arcmin, arcsec, degrees, hours, radians
-c
-c------------------------------------------------------------------------
-      include 'mirconst.h'
-c
-      IF(unit.EQ.'radians'.OR.unit.eq.' ') THEN
-         continue
-      ELSE IF(unit.EQ.'arcminutes') THEN
-         d = d * DPI / (180d0 * 60d0)
-      ELSE IF(unit.EQ.'arcseconds') THEN
-         d = d * DPI / (180d0 * 3600d0)
-      ELSE IF(unit.EQ.'degrees') THEN
-         d = d * DPI / 180d0
-      ELSE IF(unit.EQ.'hours') THEN
-         d = d * DPI / 12.d0
-      ELSE
-         call bug('w','Unrecognised units, in UNITS')
-      ENDIF
+      integer i,j,k
 
-      END
+      do k=1,nsize(3)
+         call xysetpl(lOut,1,k)
+	 do j=1,nsize(2)
+            call xywrite(lOut,j,array(1,j,k))
+         enddo
+      enddo
+      end
 c********1*********2*********3*********4*********5*********6*********7**
