@@ -43,6 +43,7 @@ c@ mode
 c       This controls in what order the cube is written
 c       1: CHANNEL-BASELINE-TIME (default)
 c       2: TIME-CHANNEL-BASELINE
+c       3: TIME-BASELINE-CHANNEL
 c
 c--
 c  History:
@@ -56,7 +57,7 @@ c----------------------------------------------------------------------c
        include 'maxdim.h'
        include 'mirconst.h'
        character*(*) version
-       parameter(version='UVIMAGE: version 21-sep-2006 ** test6 **')
+       parameter(version='UVIMAGE: version 21-sep-2006 ** test7 **')
        integer MAXSELS
        parameter(MAXSELS=512)
        integer MAXSIZE
@@ -168,10 +169,14 @@ c
           nsize(1) = nchannel
           nsize(2) = nbl
           nsize(3) = ntime
-       else
+       else if (omode.EQ.2) then
           nsize(1) = ntime
           nsize(2) = nchannel
           nsize(3) = nbl
+       else
+          nsize(1) = ntime
+          nsize(2) = nbl
+          nsize(3) = nchannel
        endif
 
        if (nsize(1)*nsize(2)*nsize(3) .GT. MAXSIZE) call bug('f',
@@ -212,8 +217,10 @@ c
                 endif
                 if (omode.eq.1) then
                    call aset(array,nsize(1),nsize(2),nsize(3),i,j,k,v)
-                else
+                else if (omode.eq.2) then
                    call aset(array,nsize(1),nsize(2),nsize(3),k,i,j,v)
+                else
+                   call aset(array,nsize(1),nsize(2),nsize(3),k,j,i,v)
                 endif
                 if (qmnmx) then
                    datamin = MIN(datamin,v)
@@ -315,6 +322,10 @@ c
          call wrhda(lOut,'ctype1','CHANNEL')
          call wrhda(lOut,'ctype2','BASELINE')
          call wrhda(lOut,'ctype3','TIME')
+      else if (omode.eq.2) then
+         call wrhda(lOut,'ctype1','TIME')
+         call wrhda(lOut,'ctype2','BASELINE')
+         call wrhda(lOut,'ctype3','CHANNEL')
       else
          call wrhda(lOut,'ctype1','TIME')
          call wrhda(lOut,'ctype2','CHANNEL')
