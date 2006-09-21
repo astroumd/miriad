@@ -40,7 +40,7 @@ c----------------------------------------------------------------------c
        include 'maxdim.h'
        include 'mirconst.h'
        character*(*) version
-       parameter(version='UVIMAGE: version 20-sep-2006 ** test **')
+       parameter(version='UVIMAGE: version 20-sep-2006 ** test3 **')
        integer MAXSELS
        parameter(MAXSELS=512)
        real sels(MAXSELS)
@@ -123,9 +123,9 @@ c
        oldtime = preamble(3)
        write(*,*) oldtime
        if(index(linetype,'wide').gt.0)then
-         call uvprobvr(lIn,'wcorr',type,length,updated)
+          call uvprobvr(lIn,'wcorr',type,length,updated)
        else
-         call uvprobvr(lIn,'corr',type,length,updated)
+          call uvprobvr(lIn,'corr',type,length,updated)
        endif
        if(type.eq.'r') call bug('i','data is real')
        if(type.eq.'j'.or.type.eq.'c') call bug('i','data is complex')
@@ -137,20 +137,16 @@ c
 c
 c  Read through the uvdata
 c
-      do while(nread.gt.0)
-         if(nread.ne.nchannel)
+       do while(nread.gt.0)
+          if(nread.ne.nchannel)
      *		 call bug('w','Number of channels has changed.')
-         call basant(preamble(4),ant1,ant2)
-         antsel(ant1) = 1
-         antsel(ant2) = 1
-         if (preamble(3) .ne. oldtime) then
-            ntime = ntime + 1
-            oldtime = preamble(3)
-         endif
-         
-c
-c  Loop the loop (get next record)
-c
+          call basant(preamble(4),ant1,ant2)
+          antsel(ant1) = 1
+          antsel(ant2) = 1
+          if (preamble(3) .ne. oldtime) then
+             ntime = ntime + 1
+             oldtime = preamble(3)
+          endif
           call uvread(lIn, preamble, data, flags, maxchan, nread)
           nvis = nvis + 1
        enddo
@@ -206,7 +202,7 @@ c
           enddo
           j=j+1
        enddo
-
+       
 
 c
 c  Write the image and it's header.
