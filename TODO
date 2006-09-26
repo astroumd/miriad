@@ -25,6 +25,8 @@
 		ln -s /usr/lib64/libreadline.a $MIRLIB
 
           this is also mostly solved by pgm.wip now
+  Also on 64bit: gidriv.f, ppdriv.f and wddriv.f need to
+  edit an INTEGER to INTEGER*8 declaration where PIXMAP is declared.
 
 - no more maxdim.h and maxdimc.h in $MIRINC, since they are 
   generated via configure (planned for 4.0.4)
@@ -63,3 +65,6 @@
 
 - pgplot:  gfortran cannot compile the GIF drivers
 
+- CARMA specific fixes:
+
+  uvwide:  assumes HatCreek correlator, the CARMA correlator isn't built in
