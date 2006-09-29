@@ -143,6 +143,7 @@ c                 added the options of averrll for
 c                 taking vector average of rr and ll bandpass.
 c    jhz  22may06 increased  maxschan from 1024 to 4096 for
 c                 handling high spectral resolution data.
+c    jhz  29Sep06 fixed a bug in smoothing when edge flagging is present.
 c  Problems:
 c    * Should do simple spectral index fit.
 c------------------------------------------------------------------------
@@ -152,7 +153,7 @@ c------------------------------------------------------------------------
         parameter(maxpol=2)
 c
         character version*(*)
-        parameter(version='SmaMfCal: version 1.5 22-May-06')
+        parameter(version='SmaMfCal: version 1.6 29-Sept-06')
 c
         integer tno
         integer pwgains,pfreq,psource,ppass,pgains,ptau
@@ -1486,6 +1487,8 @@ c  chz:   vis data of channel zero
         real wwt,chzwt(maxwin,maxpol), chnwt(maxchan)
         complex chz(maxwin,maxpol)
         integer bchan, echan, numpol
+
+        if(dosmooth)  call output('Smoothing the spectral data ...') 
 c
 c  Is the size of the "state" array OK?
 c
@@ -1508,6 +1511,7 @@ c
         call uvselect(tno,'polarization',dble(polll),0.d0,.true.)
         call uvselect(tno,'polarization',dble(poli),0.d0,.true.)
 c
+        wwt=1.
         do p=polmin,polmax
           pols(p) = 0
         enddo
@@ -1563,7 +1567,7 @@ c  smooth the data
 c
           if(dosmooth) call smoothply(preamble,ndata,
      *    flags,nchan,nspect,
-     *    nschan,maxchan,dosmooth,donply,dowrap,wwt)
+     *    nschan,maxchan,dosmooth,donply,dowrap,wwt,edge)
           
          endif
          
@@ -1689,9 +1693,9 @@ c
 c
 c  smooth the data
 c
-              if(dosmooth) call smoothply(preamble,ndata,
+          if(dosmooth) call smoothply(preamble,ndata,
      *    flags,nchan,nspect,
-     *    nschan,maxchan,dosmooth,donply,dowrap,wwt)
+     *    nschan,maxchan,dosmooth,donply,dowrap,wwt,edge)
           end if
         enddo
 
@@ -1893,13 +1897,13 @@ c
 c************************************************************************
         subroutine avgchn(numpol,bchan,echan,data,flags,nchan,
      *  bpnspect,bpnschan,maxchan,chnwt,chz,chzwt,weight)
-        PARAMETER(maxwin=33, maxschan=4096, maxpol=2)
+        PARAMETER(maxwin=48, maxpol=2)
         integer nchan,bpnspect,maxchan,bpnschan(maxwin)
         integer i,j,numpol,bchan,echan, ipol
         integer bschan, eschan 
         complex data(maxchan)
-        logical flags(maxchan), nsflag(maxschan)
-        real ysr(maxschan), ysi(maxschan)
+        logical flags(maxchan), nsflag(maxchan)
+        real ysr(maxchan), ysi(maxchan)
 c
 c  calculate pseudo continuum vector
 c
@@ -1979,7 +1983,7 @@ c************************************************************************
         subroutine divchz(numpol,data,ndata,nchan,
      *  bpnspect,bpnschan,maxchan,chnwt,chz,chzwt,weight,
      *  edge)
-        PARAMETER(maxwin=33, maxschan=4096, maxpol=2)
+        PARAMETER(maxwin=48, maxpol=2)
         PARAMETER(pi=3.14159265358979323846)
         integer nchan,bpnspect,maxchan,bpnschan(maxwin)
         integer i,j,numpol, ipol
@@ -2034,34 +2038,34 @@ c
          end
 c************************************************************************
         subroutine smoothply(preamble,data,flags,nchan,bpnspect,
-     *    bpnschan,maxchan,dosmooth,donply,dowrap,wwt)
+     *    bpnschan,maxchan,dosmooth,donply,dowrap,wwt,edge)
 c
-        PARAMETER(maxwin=48, maxschan=4096)
-        integer nchan,bpnspect,maxchan,bpnschan(maxwin)
+        PARAMETER(maxwin=48)
+        integer nchan,bpnspect,maxchan,bpnschan(maxwin),nschan(maxwin)
         integer i,j,ntcount
         PARAMETER(MAXNR=20, pi=3.14159265358979323846)
         complex data(maxchan),smoothdat(maxchan)
         logical flags(maxchan)
         logical dosmooth,donply,dowrap,dev
-        double precision ETA(6200),CONETA(6200),A(21,MAXNR)
+        double precision ETA(12200),CONETA(12200),A(21,MAXNR)
         double precision ATA1(MAXNR,MAXNR),ATA1AT(MAXNR,21)
         double precision SCRAT(MAXNR,MAXNR)
-        double precision YR(maxschan), YI(maxschan)
-        real ysr(maxschan), ysi(maxschan)
-        double precision xchan(maxschan)
+        double precision YR(maxchan), YI(maxchan)
+        real ysr(maxchan), ysi(maxchan)
+        double precision xchan(maxchan)
         double precision preamble(4)
         integer K, L,  nply
-        real xply(maxschan)
+        real xply(maxchan)
         double precision P
         real smooth(3), pphase
         real wwt
         integer bnply(3)
+         integer edge(2)
         common/bsmooth/smooth,bnply
 c
 c  moving smooth the spectral data
 c
 c initialize the moving smooth parameters
-        K = 35
         L = 1 
         P = 0.9
         nply = 3 
@@ -2072,21 +2076,34 @@ c
          ntcount=0
          pphase=0
 c        
-c
+c         
            do j=1, bpnspect
-           do i=1, bpnschan(j)
+           nschan(j) = bpnschan(j) +edge(1)+edge(2)
+           end do
+
+          do j=1, bpnspect
+          do i=1, nschan(j)
+          ysr(i) = 10
+          ysi(i) = 0.
+          end do
+          end do
+ 
+           do j=1, bpnspect
+           do i=1, nschan(j)
             ntcount=ntcount+1
-            xchan(i)=i
-            xply(i)=i
+           if((i.gt.edge(1)).and.(i.le.(nschan(j)-edge(2)))) then
+            xchan(i-edge(1))=i-edge(1)
+            xply(i-edge(1))=i-edge(1)
 c   smooth the vis vector
             if(dosmooth) then
-            YR(i) = real(data(ntcount))
-            YI(i) = aimag(data(ntcount))
+            YR(i-edge(1)) = real(data(ntcount))
+            YI(i-edge(1)) = aimag(data(ntcount))
             end if 
+            end if
             end do
          CALL TIMSER(YR,bpnschan,K,L,P,ETA,CONETA,A,ATA1,ATA1AT,SCRAT)
          do i=1, bpnschan(j)
-           ysr(i) = ETA(i+K)
+          ysr(i+edge(1)) = ETA(i+K)
          end do
 c
            dev=.true.
@@ -2094,12 +2111,12 @@ c
 c
          CALL TIMSER(YI,bpnschan,K,L,P,ETA,CONETA,A,ATA1,ATA1AT,SCRAT)
          do i=1, bpnschan(j)
-           ysi(i) = ETA(i+K)
+           ysi(i+edge(1)) = ETA(i+K)
          end do
            dev=.false.
            if(bnply(3).eq.100) call pgplt(bpnschan,xply,YI,ysi,dev)
-         do i=1, bpnschan(j)
-         if(dosmooth) smoothdat((j-1)*bpnschan(j)+i) = 
+         do i=1, nschan(j)
+         if(dosmooth) smoothdat((j-1)*nschan(j)+i) = 
      *          cmplx(ysr(i),ysi(i))
 
          end do
@@ -2109,10 +2126,9 @@ c  transfer the smoothed data to output
 c
         ntcount=0
         do j=1, bpnspect
-           do i=1, bpnschan(j)
+           do i=1, nschan(j)
              ntcount = ntcount+1
              data(ntcount) = smoothdat(ntcount)
-c            write(*,*) smoothdat(ntcount)
            end do
         end do
         end                   
