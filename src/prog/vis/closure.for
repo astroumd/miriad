@@ -90,13 +90,14 @@ c    rjs  31jan01 Support other stokes types.
 c    rjs  08apr02 Allow negative values when taking cube roots.
 c    pjt  03dec02 use MAXANT2, since MAXANT is now big for ATA
 c    pjt  22aug06 stimulate Mel's eyesight (MAXPLOTS -> 455 for carma)
+c    pjt   6oct06 allow longer top label
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	include 'mem.h'
 	integer MAXPNTS,MAXPLOTS,MAXTRIP
 	integer PolMin,PolMax,MAXPOL
 	character version*(*)
-	parameter(version='version 22-aug-06')
+	parameter(version='version 6-oct-06')
 	parameter(MAXPNTS=5000,MAXPLOTS=455)
 	parameter(MAXTRIP=(MAXANT2*(MAXANT2-1)*(MAXANT2-2))/6)
 	parameter(PolMin=-8,PolMax=4,MAXPOL=2)
@@ -113,7 +114,7 @@ c
 c
 c  Plot buffers.
 c
-	character title(MAXPLOTS)*16
+	character title(MAXPLOTS)*24
 	real x(MAXPNTS*MAXPLOTS),y(MAXPNTS*MAXPLOTS)
 	real yerr(MAXPNTS*MAXPLOTS)
 	integer npnts(MAXPLOTS),nplots
