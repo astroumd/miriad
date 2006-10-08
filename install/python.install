@@ -1,6 +1,6 @@
 #! /bin/csh -f
 #
-#
+#  MIRIAD/install/python.install:
 #  A sample shell script to install python and some friends to 
 #  your choice of a prefix directory (prefix=)
 #
@@ -16,6 +16,10 @@
 #  Known Problems:
 #  - ppgplot and gfortran seem not to work together
 #  - scipy still missing numerous things (now solved with blas and lapack)
+#
+#  History:
+#     sometime-2006  Written for miriad                                          PJT
+#     oct-2006       updated some of the versions to current                     PJT
 
 #                         binaries
 set prefix=`pwd`/opt
@@ -42,15 +46,15 @@ set url_gnuplot=http://%s.dl.sourceforge.net/sourceforge/gnuplot-py/gnuplot-py-%
 set Python=2.4.2
 set ipython=0.7.1.fix1
 set Numeric=24.2
-set numarray=1.5.1
-set numpy=0.9.6
-set scipy=0.4.8
+set numarray=1.5.2
+set numpy=1.0rc1
+set scipy=0.5.1
 set ppgplot=1.3
 set pyfits=1.0
 set TableIO=0
 set blas=0
 set lapack=0
-set matplotlib=0.87.2
+set matplotlib=0.87.6
 set gnuplot=1.7
 
 #                         poor mans command line parser....
