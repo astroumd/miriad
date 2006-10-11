@@ -144,6 +144,8 @@ c                 taking vector average of rr and ll bandpass.
 c    jhz  22may06 increased  maxschan from 1024 to 4096 for
 c                 handling high spectral resolution data.
 c    jhz  29Sep06 fixed a bug in smoothing when edge flagging is present.
+c    jhz  11Oct06 took out inttime from rms weight; inttime has been
+c                 included in variance.
 c  Problems:
 c    * Should do simple spectral index fit.
 c------------------------------------------------------------------------
@@ -153,7 +155,7 @@ c------------------------------------------------------------------------
         parameter(maxpol=2)
 c
         character version*(*)
-        parameter(version='SmaMfCal: version 1.6 29-Sept-06')
+        parameter(version='SmaMfCal: version 1.7 11-Oct-06')
 c
         integer tno
         integer pwgains,pfreq,psource,ppass,pgains,ptau
@@ -1332,10 +1334,6 @@ c
      *                  vis(off)*source(chan)
             summm(bl,spect,p) = summm(bl,spect,p) +
      *                  wt(off)*source(chan)**2
-c             write(*,*) 'vis wt sou chan', 
-c     *      vis(off), wt(off), source(chan), chan
-c            write(*,*) 'vm mm', 
-c      *  sumvm(bl,spect,p), summm(bl,spect,p),spect, bl
           enddo
 c
 c  Solve for the gains for this interval.
@@ -1354,13 +1352,7 @@ c
      *    maxchan,weight,edge)
          integer tno,maxspect,nspect,nchan,maxchan,weight
          integer nschan(maxspect),i,j,edge(2)
-         real chnwt(maxchan), wwt,dt
-c
-c calculate rms weight if the weight parameter is in the range of
-c   0=<  weight < 3
-c      wwt = dt*BW/variance
-c else
-c      wwt = 1
+         real chnwt(maxchan), wwt
 c
 c initialize
           do i=1,nchan
@@ -1374,13 +1366,11 @@ c
 
          if(weight.ge.0.and.weight.lt.3) then
                  if(weight.le.2) call uvdatgtr('variance',wwt)
-                 if(weight.le.2) call uvrdvrr(tno,'inttime',dt,1.)
-c                   write(*,*) 'dt=', dt       
-                    if(wwt.le.0.or.dt.le.0.0) then
+c                 if(weight.le.2) call uvrdvrr(tno,'inttime',dt,1.)
+                    if(wwt.le.0) then
                     wwt = 0.0
                     else
-                    dt=dt/60.0
-                    wwt = dt/wwt
+                    wwt = 1./wwt
                     endif
          endif
 
@@ -1397,7 +1387,7 @@ c
             ichan=ichan+1
             if(nschan(j).gt.0) then
             chnwt(ichan) 
-     *      = wwt*512.0/(edge(1)+nschan(j)+edge(2))
+     *      = wwt*1024.0/(edge(1)+nschan(j)+edge(2))
             else
             chnwt(ichan) =0
             endif
