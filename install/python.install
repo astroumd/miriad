@@ -9,6 +9,11 @@
 #  build tree:  135 MB
 #  opt tree:     66 MB
 #
+#  Examples of usage:
+#    python.install  download=1
+#    python.install  Python=2.4.3 prefix=$ASTROMAKE/opt/python/2.4.3
+#    python.install  Python=2.4.3 download=1 sf=easynews
+#
 #  ToDo: 
 #  - should really do this script in python!!!
 #  - write a -help
