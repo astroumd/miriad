@@ -141,7 +141,11 @@ c           pjt     12feb02 lifted count and counts confusion for intel compiler
 c                           by using an EXTERNAL statement
 c	    tw	    26aug04 allow fractional edge flagging using edge<0
 c           pjt      5jan05 merged (yeah!!!!! CVS!!!!!) previous two versions
-c                           went back to the ATNF formatting style to minize diffs
+c                           went back to the ATNF formatting style to minize 
+c                           diffs
+c           jhz     13Oct06 fixed the problem in amplitude range flagging,
+c                           which was caused by the arbitrary array size
+c                           of sels 
 c************************************************************************
 c uvflag works as follows:
 c It reads the name of the first visibility file.
@@ -205,6 +209,7 @@ c tformat indicates the time format: 'H' or 'D'.
      *			      flagval, apply,ropt,tformat )
 
       character*(*)    vis
+      parameter(maxsels=256)
       real	       sels(*)
       integer	       nsels
       integer	       line(*)
@@ -695,7 +700,8 @@ c j=1 for channel linetype, j=2 for wide linetype
       integer	       counts(NCOUNTS,2), totcnts(NCOUNTS,2)
       save	       counts, totcnts
       data	       totcnts / NCOUNTS*0, NCOUNTS*0 /
-
+c initialize
+       j = 1
       if( type.eq.'channel' ) j = 1
       if( type.eq.'wide'    ) j = 2
 c Loop through flag arrays to get counts
@@ -721,6 +727,7 @@ c
       return
 
       entry count(nr,type)
+      j = 1
       if( type.eq.'channel' ) j = 1
       if( type.eq.'wide'    ) j = 2
       count = counts(nr,j)
@@ -1021,7 +1028,6 @@ c***********************************************************************
 c Type an overview and update history to finish off
 
       subroutine overview( unit,vis, type, flagval,apply,ropt )
-
       integer	    unit
       character*(*) vis
       character*(*) type
@@ -1039,7 +1045,9 @@ c  Externals.
 c
       character     itoaf*8
       integer	    len1
-
+c  Initialize
+      lt1=0
+      lt2=0
       if( ropt.eq.'none' ) return
 
       call lhwr( 'open', unit, apply )
