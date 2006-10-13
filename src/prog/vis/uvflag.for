@@ -1,5 +1,5 @@
       program uvflag
-
+      IMPLICIT NONE
 c= UVFLAG - Flags or unflags uv data
 c& bpw
 c: calibration, uv analysis
@@ -146,6 +146,7 @@ c                           diffs
 c           jhz     13Oct06 fixed the problem in amplitude range flagging,
 c                           which was caused by the arbitrary array size
 c                           of sels 
+c           pjt     13oct06 NSELS -> MAXSELS to clear the confusion 
 c************************************************************************
 c uvflag works as follows:
 c It reads the name of the first visibility file.
@@ -161,9 +162,9 @@ c again until the list is exhausted.
 
       character*64     vis
 
-      integer	       NSELS
-      parameter        ( NSELS = 25000 )
-      real	       sels(NSELS)
+      integer	       MAXSELS
+      parameter        ( MAXSELS = 25000 )
+      real	       sels(MAXSELS)
 
       integer	       line(7)
       character*16     type
@@ -181,10 +182,10 @@ c again until the list is exhausted.
       call output( version )
       call keyini
       call keyf( 'vis', vis, ' ' )
-      call inputs( vis, sels,nsels, line,type,
+      call inputs( vis, sels,maxsels, line,type,
      *			flagval, apply,ropt,tformat )
       do while( vis .ne. ' ' )
-	 call scanvis( vis, sels,nsels, line,type,usech,
+	 call scanvis( vis, sels, maxsels, line,type,usech,
      *			    flagval, apply,ropt,tformat )
 	 call keyf( 'vis', vis, ' ' )
       enddo
@@ -205,13 +206,13 @@ c apply is true by default and false if the 'noapply' option was given.
 c ropt gives the verbosity level.
 c tformat indicates the time format: 'H' or 'D'.
 
-      subroutine inputs( vis, sels,nsels, line,type,
+      subroutine inputs( vis, sels,maxsels, line,type,
      *			      flagval, apply,ropt,tformat )
 
+      IMPLICIT NONE
       character*(*)    vis
-      parameter(maxsels=256)
       real	       sels(*)
-      integer	       nsels
+      integer	       maxsels
       integer	       line(*)
       character*(*)    type
       logical	       flagval
@@ -244,7 +245,7 @@ c Open first dataset and position it to read other info.
       call uvinit( unit, vis, .false. )
 
 c Get user-defined selection criteria and transfer to uvio
-      call selinput( 'select', sels, nsels )
+      call selinput( 'select', sels, maxsels )
 
 c Get linetype and transfer it to uvio.c
 c Linetype velocity is not allowed because it is not possible to
@@ -356,6 +357,7 @@ c information can be read from it.
 c Also count the number of records if docount is true
 
       subroutine uvinit( unit, vis, docount )
+      IMPLICIT NONE
 
       integer	       unit
       character*(*)    vis
@@ -390,7 +392,7 @@ c set for each particular record. It uses work to set the flags and write
 c them to the file. This is done first for linetype channel, next for
 c linetype wide, or both if the line keyword was defaulted.
 c vis is the name of the visibility dataset.
-c sels,nsels contains the selection criteria for uvreading.
+c sels,maxsels contains the selection criteria for uvreading.
 c line and type contain the nchan,start,width,step part of the linetype.
 c usech is a mask for the selected channels.
 c flagval is the value to which the flags must be set.
@@ -398,12 +400,12 @@ c apply determines whether the changed flags are physically written.
 c ropt gives the verbosity level.
 c tformat is transfered to report.
 
-      subroutine scanvis( vis, sels,nsels, line,type,usech,
+      subroutine scanvis( vis, sels,maxsels, line,type,usech,
      *			       flagval, apply,ropt,tformat )
 
       character*(*)    vis
-      integer	       nsels
-      real	       sels(nsels)
+      integer	       maxsels
+      real	       sels(maxsels)
       integer	       line(*)
       character*(*)    type
       logical	       usech(*)
@@ -477,6 +479,7 @@ c***********************************************************************
 c reccount counts the number of records read
 
       subroutine reccount( i )
+      IMPLICIT NONE
       integer	       i, opt
       integer	       countsel, counttot
       save	       countsel, counttot
@@ -499,7 +502,7 @@ c setup sets/resets the uv-selection and channels to be used for each
 c new input datafile. It also opens it.
 
       subroutine setup( vis, sels, line,type, usech, unit )
-
+      IMPLICIT NONE
       character*(*)    vis
       real	       sels(*)
       integer	       line(*)
@@ -561,6 +564,7 @@ c***********************************************************************
 c have indicates the presence/absence of channel/wideband data.
 
       logical function have( unit, var )
+      IMPLICIT NONE
       integer	    unit
       character*(*) var
       character*1   type
@@ -581,6 +585,7 @@ c Do statistics and reporting.
      *		       flagval, ropt,tformat,line,
      *		       data,oldflags,newflags, usech, nchan )
 
+      IMPLICIT NONE
       integer	       unit
       double precision preamble(*)
       character*(*)    type
@@ -611,6 +616,7 @@ c data are in or out of range.
       subroutine flgset( unit, flagval, data,oldflags,newflags,
      *			 usech, nchan )
 
+      IMPLICIT NONE
       integer	       unit
       logical	       flagval
       complex	       data(*)
@@ -688,6 +694,7 @@ c counts(6,j) = number of flags changed from bad to good
 c j=1 for channel linetype, j=2 for wide linetype
 
       integer function counting( type, oldflags, newflags, nchan )
+      IMPLICIT NONE
       integer count, totcount, inittot
 
       character*(*)    type
@@ -750,7 +757,7 @@ c***********************************************************************
 c Type an overview of keyword values
 
       subroutine showinp( vis, line,type, flagval,apply,ropt )
-
+      IMPLICIT NONE
       character*(*) vis
       integer	    line(*)
       character*(*) type
@@ -831,6 +838,7 @@ c		the data.
       subroutine report( ropt, unit,preamble, tformat, line,type,
      *			 data, oldflags, newflags, usech, nchan )
 
+      IMPLICIT NONE
       character*(*)    ropt
       integer	       unit
       double precision preamble(*)
@@ -864,6 +872,7 @@ c Indicative and full: for each record report uv coord, time, ants,
 c number of good, bad and changed flags.
       subroutine wrsumm( unit, preamble, type, ropt, tformat )
 
+      IMPLICIT NONE
       integer	       unit
       double precision preamble(*)
       character*(*)    type
@@ -924,6 +933,7 @@ c Full report: report for each channel the datavalue, the old and the
 c new flag.
       subroutine wrdata( data,oldflags,newflags, usech,nchan,line,type )
 
+      IMPLICIT NONE
       complex	       data(*)
       logical	       oldflags(*), newflags(*)
       logical	       usech(*)
@@ -977,7 +987,7 @@ c Entry antuse produces an output line with the result.
 
       subroutine antusage( antcode )
 
-      implicit none
+      IMPLICIT NONE
       double precision antcode
 
       integer	       ant1, ant2
@@ -1028,6 +1038,7 @@ c***********************************************************************
 c Type an overview and update history to finish off
 
       subroutine overview( unit,vis, type, flagval,apply,ropt )
+      IMPLICIT NONE
       integer	    unit
       character*(*) vis
       character*(*) type
@@ -1138,6 +1149,7 @@ c	  call lhwr( outline, unit, apply )
 
 
       subroutine lhwr( outline, unit, apply )
+      IMPLICIT NONE
       character*(*) outline
       integer	    unit
       logical	    apply
