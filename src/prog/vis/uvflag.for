@@ -157,7 +157,7 @@ c Then it asks for the next visibility file and does the whole process
 c again until the list is exhausted.
 
       character*(*) version
-      parameter ( version = 'uvflag: 4-jan-05')
+      parameter ( version = 'uvflag: 13-Oct-06')
 
       character*64     vis
 
