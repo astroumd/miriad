@@ -31,17 +31,19 @@ c    UVPUTHD allows the user to change the values of uv variables in a
 c    uv dataset. All occurances of the variable are changed to the
 c    new value. If the variable is an array, all new values must be
 c    entered in sequential order. If the user desires to set all members 
-c    of an array to a single value, only one value need be entered.
+c    of an array to a single value, only one value needs to be entered.
 c    Values can also be inserted from a time ordered table.
 c    Note: PUTHD must be used to use the uv override principle, but
 c    can only be used for single items, i.e. uv variables which are
-c    not an array.
+c    not an array. 
 c@ vis	
 c    Name of the input MIRIAD dataset. Only one dataset is allowed.
 c    No default.
 c@ hdvar
 c    Name of header variable to be changed. Refer to user manual or
 c    run VARLIST to see the selection of allowed variable names.
+c    Although one is allowed to make up new uv variables, this is not 
+c    a recommended practice. 
 c    No default.
 c@ type
 c    Type of variable, either integer (i),real (r), double precision (d), 
@@ -77,7 +79,7 @@ c    Name of the output dataset. No default.
 c-----------------------------------------------------------------------
 	include 'uvputhd.h'
 	character VERSION*(*)
-	parameter(VERSION='(Version 16-jan-03 pjt)')
+	parameter(VERSION='(Version 24-oct-06)')
 	character varval(MAXVAL)*30,hdvar*10,time0*32
         character outfile*80,infile*80,tabfile*80
         character except(20)*10,newtype*1,line*256
