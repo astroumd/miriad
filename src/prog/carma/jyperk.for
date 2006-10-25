@@ -48,22 +48,23 @@ c
 	call output(version)
 	call keyini
 	call keya('vis',vis,' ')
-	call selInput('select',sels,MAXSELS)
 	call keya('out',out,' ')
+	call selInput('select',sels,MAXSELS)
 	call mkeyr('jyperka',jyperka,MAXANT,nanta)
 	call keyfin
 c
 c  Check the inputs.
 c
-	if(vis.eq.' ')call bug('f','An input must be given')
-	if(out.eq.' ')call bug('f','An output must be given')
+	if(vis.eq.' ')call bug('f','An input must be given: vis=')
+	if(out.eq.' ')call bug('f','An output must be given: out=')
 c
 c  Get ready to copy the data.
 c
 	call uvopen(lVis,vis,'old')
 	call SelApply(lVis,sels,.true.)
-	call uvset(lVis,'preamble','uvw/time/baseline/pol',0,0.,0.,0.)
+	call uvset(lVis,'preamble','uvw/time/baseline',0,0.,0.,0.)
 	call varInit(lVis,'channel')
+	call varWinit(lVis)
 c
 	call uvvarIni(lVis,vnif)
 c
