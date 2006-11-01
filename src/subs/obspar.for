@@ -37,6 +37,7 @@ c    gxm  27jan04 Added generic systemp for WSRT (to please wsrtfits).
 c    mchw 07jul04 Added SMA10 and SZA6 cross correlations for CARMA.
 c    pjt  24sep04 Final location of CARMA at Cedar Flats
 c    dm/jhz 23sep05 Corrected JyperK and MOUNT for SMA entries
+c    mchw 07jul04 updated CARMA longitude and latitude to station 32
 c************************************************************************
 c* ObsPrint -- Print list of known observatories.
 c: utility
@@ -226,10 +227,10 @@ c
 	call obsad('carma/antdiam',	8.0d0)
 	call obsad('carma/ellimit',	5.0*dpi/180.d0)
 	call obsad('carma/evector',	0.5*dpi)
-	call obsad('carma/height',	2200.0d0)
+	call obsad('carma/height',	2196.22d0)
 	call obsad('carma/jyperk',	80.d0)
-        call obsad('carma/latitude',    obsdms( 1, 37,16, 43.00))
-        call obsad('carma/longitude',   obsdms(-1,118, 8, 32.00))
+        call obsad('carma/latitude',    obsdms( 1, 37,16, 49.37285))
+        call obsad('carma/longitude',   obsdms(-1,118, 8, 29.92699))
 	call obsad('carma/mount',	ALTAZ)
 	call obsad('carma/nants',	15.d0)
 	call obsad('carma/systemp',	200.d0)
