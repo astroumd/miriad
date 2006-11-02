@@ -1,0 +1,161 @@
+  
+   ---  Mosaicing with ATA  -  hex7.csh model=casc.vla,  Tue Mar 21 13:28:00 PST 2006   
+ sd_ant  = hatcreek
+ sd_diam = 6.1
+ sd_rmsp = 0.01
+Using hex7 mosaic with 3600'' spacing
+Make single dish image and beam using telecop=hatcreek Tue Mar 21 13:28:00 PST 2006
+Single dish RMS noise = 7.320690 Jy, 0.01 of peak for casc.vla
+ MOSMEM Interferometer only with niters=200 flux=732.069 rmsfac=1.
+ata-98  30  -6,6,1  12                    
+  
+   ---  Mosaicing with ATA  -  default7.csh model=casc.vla,  Tue Mar 21 13:28:04 PST 2006   
+ sd_ant  = hatcreek
+ sd_diam = 6.1
+ sd_rmsp = 0.01
+MOSMEM with default single dish image; niters=200 rmsfac=1
+ata-98  30  -6,6,1  12                    
+  
+   ---  Mosaicing with ATA  -  joint7.csh model=casc.vla,  Tue Mar 21 13:28:04 PST 2006   
+ sd_ant  = hatcreek
+ sd_diam = 6.1
+ sd_rmsp = 0.01
+Joint deconvolution of interferometer and single dish data ; niters=200 rmsfac=1,1
+ata-98  30  -6,6,1  12                    
+  
+   ---  Mosaicing with ATA  -  hex7.csh model=casc.vla,  Tue Mar 21 13:28:05 PST 2006   
+ sd_ant  = ovro
+ sd_diam = 10.4
+ sd_rmsp = 0.01
+Using hex7 mosaic with 3600'' spacing
+Make single dish image and beam using telecop=ovro Tue Mar 21 13:28:05 PST 2006
+Single dish RMS noise = 7.320690 Jy, 0.01 of peak for casc.vla
+ MOSMEM Interferometer only with niters=200 flux=732.069 rmsfac=1.
+ata-98  30  -6,6,1  12                    
+  
+   ---  Mosaicing with ATA  -  default7.csh model=casc.vla,  Tue Mar 21 13:28:08 PST 2006   
+ sd_ant  = ovro
+ sd_diam = 10.4
+ sd_rmsp = 0.01
+MOSMEM with default single dish image; niters=200 rmsfac=1
+ata-98  30  -6,6,1  12                    
+  
+   ---  Mosaicing with ATA  -  joint7.csh model=casc.vla,  Tue Mar 21 13:28:09 PST 2006   
+ sd_ant  = ovro
+ sd_diam = 10.4
+ sd_rmsp = 0.01
+Joint deconvolution of interferometer and single dish data ; niters=200 rmsfac=1,1
+ata-98  30  -6,6,1  12                    
+  
+   ---  Mosaicing with ATA  -  hex7.csh model=casc.vla,  Tue Mar 21 13:43:15 PST 2006   
+ sd_ant  = hatcreek
+ sd_diam = 6.1
+ sd_rmsp = 0.01
+Using hex7 mosaic with 3600'' spacing
+Make single dish image and beam using telecop=hatcreek Tue Mar 21 13:43:37 PST 2006
+Single dish RMS noise = 7.320690 Jy, 0.01 of peak for casc.vla
+ MOSMEM Interferometer only with niters=200 flux=732.069 rmsfac=1.
+  
+   ---  Mosaicing with ATA  -  hex7.csh model=casc.vla,  Tue Mar 21 14:46:06 PST 2006   
+ sd_ant  = hatcreek
+ sd_diam = 6.1
+ sd_rmsp = 0.01
+Using hex7 mosaic with 3600'' spacing
+Make single dish image and beam using telecop=hatcreek Tue Mar 21 14:46:06 PST 2006
+Single dish RMS noise = 7.320690 Jy, 0.01 of peak for casc.vla
+ MOSMEM Interferometer only with niters=200 flux=732.069 rmsfac=1.
+ata-98  30  -6,6,1  12                    
+  
+   ---  Mosaicing with ATA  -  default7.csh model=casc.vla,  Tue Mar 21 14:46:10 PST 2006   
+ sd_ant  = hatcreek
+ sd_diam = 6.1
+ sd_rmsp = 0.01
+MOSMEM with default single dish image; niters=200 rmsfac=1
+ata-98  30  -6,6,1  12                    
+  
+   ---  Mosaicing with ATA  -  joint7.csh model=casc.vla,  Tue Mar 21 14:46:10 PST 2006   
+ sd_ant  = hatcreek
+ sd_diam = 6.1
+ sd_rmsp = 0.01
+Joint deconvolution of interferometer and single dish data ; niters=200 rmsfac=1,1
+ata-98  30  -6,6,1  12                    
+  
+   ---  Mosaicing with ATA  -  hex7.csh model=casc.vla,  Tue Mar 21 14:46:11 PST 2006   
+ sd_ant  = ovro
+ sd_diam = 10.4
+ sd_rmsp = 0.01
+Using hex7 mosaic with 3600'' spacing
+Make single dish image and beam using telecop=ovro Tue Mar 21 14:46:11 PST 2006
+Single dish RMS noise = 7.320690 Jy, 0.01 of peak for casc.vla
+ MOSMEM Interferometer only with niters=200 flux=732.069 rmsfac=1.
+ata-98  30  -6,6,1  12                    
+  
+   ---  Mosaicing with ATA  -  default7.csh model=casc.vla,  Tue Mar 21 14:46:14 PST 2006   
+ sd_ant  = ovro
+ sd_diam = 10.4
+ sd_rmsp = 0.01
+MOSMEM with default single dish image; niters=200 rmsfac=1
+ata-98  30  -6,6,1  12                    
+  
+   ---  Mosaicing with ATA  -  joint7.csh model=casc.vla,  Tue Mar 21 14:46:14 PST 2006   
+ sd_ant  = ovro
+ sd_diam = 10.4
+ sd_rmsp = 0.01
+Joint deconvolution of interferometer and single dish data ; niters=200 rmsfac=1,1
+ata-98  30  -6,6,1  12                    
+  
+   ---  Mosaicing with ATA  -  hex7.csh model=casc.vla,  Tue Mar 21 14:46:15 PST 2006   
+ sd_ant  = alma
+ sd_diam = 12.0
+ sd_rmsp = 0.01
+Using hex7 mosaic with 3600'' spacing
+Make single dish image and beam using telecop=alma Tue Mar 21 14:46:15 PST 2006
+Single dish RMS noise = 7.320690 Jy, 0.01 of peak for casc.vla
+  
+   ---  Mosaicing with ATA  -  hex7.csh model=casc.vla,  Tue Mar 21 14:46:22 PST 2006   
+ sd_ant  = hatcreek
+ sd_diam = 6.1
+ sd_rmsp = 0.01
+Using hex7 mosaic with 3600'' spacing
+Make single dish image and beam using telecop=hatcreek Tue Mar 21 14:46:22 PST 2006
+Single dish RMS noise = 7.320690 Jy, 0.01 of peak for casc.vla
+  
+   ---  Mosaicing with ATA  -  hex7.csh model=casc.vla,  Tue Mar 21 14:46:52 PST 2006   
+ sd_ant  = hatcreek
+ sd_diam = 6.1
+ sd_rmsp = 0.01
+Using hex7 mosaic with 3600'' spacing
+Make single dish image and beam using telecop=hatcreek Tue Mar 21 14:47:18 PST 2006
+Single dish RMS noise = 7.320690 Jy, 0.01 of peak for casc.vla
+ MOSMEM Interferometer only with niters=200 flux=732.069 rmsfac=1.
+ata-98  30  -6,6,1  12    123.95 74.19  731.776  0.523  746.324 0.523  0.001  0.008  -0.004  523
+  
+   ---  Mosaicing with ATA  -  default7.csh model=casc.vla,  Tue Mar 21 15:08:51 PST 2006   
+ sd_ant  = hatcreek
+ sd_diam = 6.1
+ sd_rmsp = 0.01
+MOSMEM with default single dish image; niters=200 rmsfac=1
+ata-98  30  -6,6,1  12    123.95 74.19  731.776  0.523  733.351 0.522  0.001  0.006  -0.005  522
+  
+   ---  Mosaicing with ATA  -  joint7.csh model=casc.vla,  Tue Mar 21 15:31:35 PST 2006   
+ sd_ant  = hatcreek
+ sd_diam = 6.1
+ sd_rmsp = 0.01
+Joint deconvolution of interferometer and single dish data ; niters=200 rmsfac=1,1
+ata-98  30  -6,6,1  12    123.95 74.19  731.776  0.523  733.599 0.523  0.001  0.004  -0.005  523
+  
+   ---  Mosaicing with ATA  -  hex7.csh model=casc.vla,  Tue Mar 21 16:06:46 PST 2006   
+ sd_ant  = ovro
+ sd_diam = 10.4
+ sd_rmsp = 0.01
+Using hex7 mosaic with 3600'' spacing
+Make single dish image and beam using telecop=ovro Tue Mar 21 16:07:10 PST 2006
+Single dish RMS noise = 7.320690 Jy, 0.01 of peak for casc.vla
+ MOSMEM Interferometer only with niters=200 flux=732.069 rmsfac=1.
+ata-98  30  -6,6,1  12    123.95 74.19  731.776  0.523  746.324 0.523  0.001  0.008  -0.004  523
+  
+   ---  Mosaicing with ATA  -  default7.csh model=casc.vla,  Tue Mar 21 16:28:39 PST 2006   
+ sd_ant  = ovro
+ sd_diam = 10.4
+ sd_rmsp = 0.01
+MOSMEM with default single dish image; niters=200 rmsfac=1

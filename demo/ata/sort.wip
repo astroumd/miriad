@@ -1,0 +1,39 @@
+data ata-206.sort.ant
+xcolumn 2
+ycolumn 1
+limits
+limits -200 200 -300 100
+limits -200 150 -300 50
+symbol 2
+points
+box
+mtext T 2.0 0.5 0.5 ATA-4-33-42b-42c-206 ---  09jun2005
+
+color 3
+data ata-33.sort.ant
+xcolumn 2
+ycolumn 1
+symbol 0
+points
+
+color 4
+data ata-42b.sort.ant
+xcolumn 2
+ycolumn 1
+symbol 16
+points
+
+color 5
+data ata-42c.sort.ant
+xcolumn 2
+ycolumn 1
+symbol 24
+points
+
+color 2
+data ata-4h.sort.ant
+xcolumn 2
+ycolumn 1
+symbol 19
+points
+box g g
