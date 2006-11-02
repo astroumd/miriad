@@ -1,0 +1,14 @@
+ 
+Increase image size to 257
+july 8
+ 
+ 
+Using hex7 mosaic with 15'' spacing
+ MOSMEM Interferometer only with niters=200 flux=732.063 rmsfac=200.
+DZ  -15  -2,2,.008     3.06 2.08    .05  731.610 11.694  802.478 11.725   0.102  0.373  -0.330  115
+MOSMEM with default single dish image; niters=200 rmsfac=200
+DZ  -15  -2,2,.016     3.06 2.08    .05  731.610 11.694  780.770 11.675   0.084  0.322  -0.359  139
+Joint deconvolution of interferometer and single dish data ; niters=200 rmsfac=200,1
+DZ  -15  -2,2,.016     3.06 2.08    .05  731.610 11.694  734.031 11.530   0.032  0.195  -0.160  360
+ 
+Using hex7 mosaic with 15'' spacing

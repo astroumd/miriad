@@ -1,0 +1,60 @@
+viewport .1 .9 .1 .9
+winadj 0 1 0 1
+
+
+# C config
+data C.ant
+xcolumn 2
+ycolumn 1
+limits
+color 2
+symbol 503
+points
+
+# D config
+
+data D.ant
+xcolumn 2
+ycolumn 1
+color 4
+symbol 504
+points
+
+# E config
+
+data E.ant
+xcolumn 2
+ycolumn 1
+color 5
+symbol 505
+points
+
+# A config
+
+color 1
+
+data A.ant
+xcolumn 2
+ycolumn 1
+symbol 501
+points
+box
+xlabel East [m] 1927 NAD, UTM Region 11S
+ylabel North [m]
+mtext T 1 .5 .5  Cedar Flat Configurations C, D and E  9 June 2004
+
+# B config
+
+data B.ant
+xcolumn 2
+ycolumn 1
+color 3
+symbol 502
+points
+
+data SZA.ant
+xcolumn 2
+ycolumn 1
+color 1
+symbol 526
+points

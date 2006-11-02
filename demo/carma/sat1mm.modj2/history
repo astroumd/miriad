@@ -1,0 +1,90 @@
+DATAMAX =      1.003097763E+02 /MAX PIXEL VALUE
+DATAMIN =      0.000000000E+00 /MIN PIXEL VALUE
+BTOA  / Image created by user  237 at 29-JUL-2003   09:26:03
+BTOA  OUTNAME='M602AD1     '   OUTCLASS='BTOA  '
+BTOA  OUTSEQ=    5   OUTDISK= 12
+BTOA   SOURCE = 'SATURN  '
+BTOA   CELLSIZE =   -0.10000   0.10000
+BTOA   OPCODE = 'KELV'
+BTOA   RELEASE = '31DEC99 '
+BTOA   /simcoord3: version 8/7/00
+BTOA   /Azimuth positive counterclockwise from north
+BTOA   /Asec/pix:  0.100  0.100
+BTOA   /Distance (AU):   8.407000; Reference radius (km):   60330.0
+BTOA   /Map center (pixels):  512.  513.; Minipixels/pixel side: 10
+BTOA   /Data t602aD1 suff:
+BTOA   / C1 C2 C3 B1 B2 CD A1
+BTOA   /Offset for zero valued pixels:      0.00
+BTOA   /Mask and model:t602aD1
+BTOA   /
+AIPS   IMNAME='M602AD1     ' IMCLASS='BTOA  ' IMSEQ=   5     /
+AIPS   USERNO=  237            /
+FITS: Miriad Fits: version 1.1 04-Oct-01
+FITS: Executed on: 03AUG12:11:37:44.0
+FITS: Command line inputs follow:
+FITS:   in=/vega/ddunn/research/SATURN/1MM03/D1MDLRING.FTS.HIRES
+FITS:   op=xyin
+FITS:   out=sat1mm.mod
+COPYHD: Miriad Copyhd, version 1.0 25-Apr-94
+COPYHD: Executed on: 03AUG12:11:37:45.0
+COPYHD: Command line inputs follow:
+COPYHD:   in=/falcon/wright/saturn/data/t649/c225.satur/02oct29/usb.mem
+COPYHD:   out=sat1mm.mod
+COPYHD:   items=crval1,crval2
+MATHS: Miriad Maths: version 1.0 17-Oct-00
+MATHS: Executed on: 03AUG12:11:37:45.0
+MATHS: Command line inputs follow:
+MATHS:   exp=sat1mm.mod*3.65586e-4
+MATHS:   out=sat1mm.modj
+MATHS: Bounding region is Blc=(1,1,1,1),Trc=(1024,1024,1,1)
+PUTHD: Miriad PutHd: Version 1.0 13-dec-96
+PUTHD: Executed on: 03AUG12:11:37:47.0
+PUTHD: Command line inputs follow:
+PUTHD:   in=sat1mm.modj2/llrot
+PUTHD:   value=0.000000001
+PUTHD: Miriad PutHd: Version 1.0 13-dec-96
+PUTHD: Executed on: 03AUG12:11:37:47.0
+PUTHD: Command line inputs follow:
+PUTHD:   in=sat1mm.modj2/bunit
+PUTHD:   value=JY/PIXEL
+IMSUB: Miriad Imsub: version 1.0 12-Oct-99
+IMSUB: Executed on: 03AUG13:12:26:12.0
+IMSUB: Command line inputs follow:
+IMSUB:   in=sat1mm.modj2
+IMSUB:   out=sat1mm.modj2.sub
+IMSUB:   region=relpix,box(301,301,-301,-301)
+PUTHD: Miriad PutHd: Version 1.0 13-dec-96
+PUTHD: Executed on: 04JUL08:10:55:35.0
+PUTHD: Command line inputs follow:
+PUTHD:   in=sat1mm.modj2.sub/crval1
+PUTHD:   value=23:23:25.803,hms
+PUTHD: Miriad PutHd: Version 1.0 13-dec-96
+PUTHD: Executed on: 04JUL08:10:55:51.0
+PUTHD: Command line inputs follow:
+PUTHD:   in=sat1mm.modj2.sub/crval2
+PUTHD:   value=30:00:00.00,dms
+PUTHD: Miriad PutHd: Version 1.0 13-dec-96
+PUTHD: Executed on: 04JUL08:12:44:12.0
+PUTHD: Command line inputs follow:
+PUTHD:   in=sat1mm.modj2.sub/crval3
+PUTHD:   value=225.0
+PUTHD: Miriad PutHd: Version 1.0 13-dec-96
+PUTHD: Executed on: 04JUL08:12:44:58.0
+PUTHD: Command line inputs follow:
+PUTHD:   in=sat1mm.modj2.sub/ctype3
+PUTHD:   value=FREQ
+PUTHD: Miriad PutHd: Version 1.0 13-dec-96
+PUTHD: Executed on: 04JUL08:12:45:15.0
+PUTHD: Command line inputs follow:
+PUTHD:   in=sat1mm.modj2.sub/ctype4
+PUTHD:   value=STOKES
+PUTHD: Miriad PutHd: Version 1.0 13-dec-96
+PUTHD: Executed on: 04JUL08:12:45:57.0
+PUTHD: Command line inputs follow:
+PUTHD:   in=sat1mm.modj2.sub/crval4
+PUTHD:   value=1
+PUTHD: Miriad PutHd: Version 1.0 13-dec-96
+PUTHD: Executed on: 04JUL08:12:47:22.0
+PUTHD: Command line inputs follow:
+PUTHD:   in=sat1mm.modj2.sub/cdelt4
+PUTHD:   value=1

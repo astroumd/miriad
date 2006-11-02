@@ -1,0 +1,27 @@
+   ---  Mosaicing with CARMA-23  -  hex7-23.csh model=sat1mm.modj2,  Tue Mar 21 13:55:41 PST 2006   
+Using hex7-23.csh mosaic with 15'' spacing
+ MOSMEM Interferometer only with niters=200 flux=1160.990 rmsfac=1.
+   ---  Mosaicing with CARMA-23  -  hex7-23.csh model=sat1mm.modj2,  Tue Mar 21 14:25:40 PST 2006   
+Using hex7-23.csh mosaic with 15'' spacing
+ MOSMEM Interferometer only with niters=200 flux=1160.990 rmsfac=1.
+   ---  Mosaicing with CARMA-23  -  default7-23.csh model=sat1mm.modj2,  Tue Mar 21 14:34:11 PST 2006   
+MOSMEM with default single dish image; niters=200 rmsfac=1
+DZ  30  -2,2,.008  .05    2.11 1.87  1160.700  64.938  1161.560 64.599  0.048  0.268  -0.272  1346  
+   ---  Mosaicing with CARMA-23  -  joint7-23.csh model=sat1mm.modj2,  Tue Mar 21 14:37:04 PST 2006   
+Joint deconvolution of interferometer and single dish data ; niters=200 rmsfac=1,1
+DZ  30  -2,2,.008  .05    2.11 1.87  1160.700  64.938  1161.460 64.596  0.048  0.267  -0.262  1346
+   ---  Mosaicing with CARMA-23  -  hex7-23.csh model=sat1mm.modj2,  Fri Jul  7 15:45:37 PDT 2006   
+Using hex7-23.csh mosaic with 15'' spacing
+ MOSMEM Interferometer only with niters=200 flux=1160.990 rmsfac=1.
+   ---  Mosaicing with CARMA-23  -  default7-23.csh model=sat1mm.modj2,  Fri Jul  7 15:48:22 PDT 2006   
+MOSMEM with default single dish image; niters=200 rmsfac=1
+DZ  30  -2,2,.008  .05    2.11 1.87  1160.700  64.938  1161.560 64.599  0.048  0.268  -0.272  1346  
+   ---  Mosaicing with CARMA-23  -  joint7-23.csh model=sat1mm.modj2,  Fri Jul  7 15:50:11 PDT 2006   
+Joint deconvolution of interferometer and single dish data ; niters=200 rmsfac=1,1
+DZ  30  -2,2,.008  .05    2.11 1.87  1160.700  64.938  1161.460 64.596  0.048  0.267  -0.262  1346
+   ---  Mosaicing with CARMA-23  -  hex7-23.csh model=sat1mm.modj2,  Fri Jul  7 15:55:30 PDT 2006   
+Using hex7-23.csh mosaic with 15'' spacing
+ MOSMEM Interferometer only with niters=200 flux=1160.990 rmsfac=1.
+   ---  Mosaicing with CARMA-23  -  hex7-23.csh model=sat1mm.modj2,  Fri Jul  7 16:05:06 PDT 2006   
+   ---  Mosaicing with CARMA-23  -  hex7-23.csh model=sat1mm.modj2,  Fri Jul  7 16:06:03 PDT 2006   
+DZ  30  -2,2,.008  .05    2.11 1.87  1160.700  64.938  1161.780 64.599  0.048  0.268  -0.262  1346
