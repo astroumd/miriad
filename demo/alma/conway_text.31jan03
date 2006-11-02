@@ -1,0 +1,55 @@
+1) The array design with the inner array scales so
+minimum spaing is 15.15m. It has 29 configurations
+config 2 is the NS extended compact for the rest 
+there are 4 moves between each configuration. I have 
+optimised the moves to minimise the low level 
+beam distortions - this helps reduce the effect of 
+the jump over the Eastern quebrada. Combining this
+with the effects of rewighting I don't think
+we need to adjust the pads to be placed in the 
+bottom of the eastern Quebrada. 
+
+
+2) levels.ps is a plot of whats Surveyors **Measured**
+for heights of the pads in the compact group
+during their visit too the site in November.
+
+The result is close to what is expected based 
+on the new DEM map  - perhaps I could 
+have placed the whole array a little further North to 
+avoid the rise to the South, but my main criteria 
+was minimising the height difference over the inner
+60 pads.
+
+3) height.m is the surveyors determined 
+heights entered into a table.
+
+4) shadowing behaviour for the N-S exntend compact 
+array taking into account pad heights.
+
+For the ALMA spec document  I wrote on ALMAEDM
+ALMA-90.02.00.00-001-C.SPE I gave a spec 
+for the heights of the pads 1-60 based on 
+looking at the shadowing problems (all pads
+in that group should be within 0.4m of plane
+of maximum gradient 2%).
+
+I believe Max Kraus and the site group are designing 
+the road layout for the compact array. pads accessed
+by the same road will probably be close to the same height
+so giving a 'terracing'. They havn't shown me what 
+they have  done.
+
+Obviously the slight rise to the South is a 
+worry for shadowing in the N-S array but 
+I have checked the shadowing, see my 4th attachment 
+above. 
+
+I am presently trying to finish a revised
+spec document ALMA-90.02.00.00-001-D.SPE
+including the  revised design with min seperation
+15.15m.
+
+   John
+
+

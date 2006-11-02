@@ -1,0 +1,34 @@
+Joint deconvolution of interferometer and single dish data ; niters=200 rmsfac=200,1
+config1  30  -1,1,.013          0.04               
+Joint deconvolution of interferometer and single dish data ; niters=200 rmsfac=200,1
+config1  0  -1,1,.013          0.05               
+Joint deconvolution of interferometer and single dish data ; niters=200 rmsfac=200,1
+config1  30  -1,1,.013          0.05               
+Joint deconvolution of interferometer and single dish data ; niters=200 rmsfac=200,1
+config1  0  -1,1,.013          0.05               
+Joint deconvolution of interferometer and single dish data ; niters=200 rmsfac=200,1
+config1  -30  -1,1,.013          0.05               
+Joint deconvolution of interferometer and single dish data ; niters=200 rmsfac=200,1
+config2  30  -1,1,.013          0.05               
+Joint deconvolution of interferometer and single dish data ; niters=200 rmsfac=200,1
+config2  0  -1,1,.013          0.05               
+Joint deconvolution of interferometer and single dish data ; niters=200 rmsfac=200,1
+config2  -30  -1,1,.013          0.05               
+Joint deconvolution of interferometer and single dish data ; niters=200 rmsfac=200,1
+config3  30  -1,1,.013          0.05               
+Joint deconvolution of interferometer and single dish data ; niters=200 rmsfac=200,1
+config3  0  -1,1,.013          0.05               
+Joint deconvolution of interferometer and single dish data ; niters=200 rmsfac=200,1
+config3  -30  -1,1,.013          0.05               
+Joint deconvolution of interferometer and single dish data ; niters=200 rmsfac=200,1
+config4  30  -1,1,.013          0.05               
+Joint deconvolution of interferometer and single dish data ; niters=200 rmsfac=200,1
+config4  0  -1,1,.013          0.05               
+Joint deconvolution of interferometer and single dish data ; niters=200 rmsfac=200,1
+config4  -30  -1,1,.013          0.05               
+Joint deconvolution of interferometer and single dish data ; niters=200 rmsfac=200,1
+config5  30  -1,1,.013          0.05               
+Joint deconvolution of interferometer and single dish data ; niters=200 rmsfac=200,1
+config5  0  -1,1,.013          0.05               
+Joint deconvolution of interferometer and single dish data ; niters=200 rmsfac=200,1
+config5  -30  -1,1,.013          0.05               

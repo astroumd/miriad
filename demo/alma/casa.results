@@ -1,0 +1,101 @@
+   ---  ALMA Mosaicing (Cas A model)   ---   
+ config  = config1
+ dec     = 30
+ scale   = 0.04
+ harange = -1,1,.013  hours
+ select  = -shadow(12)
+ freq    = 230
+ nchan   = 1
+ imsize  = 257
+ region  = arcsec,box(20.00,-20.00,-20.00,20.00)
+ 
+   ---  TIMING   ---   
+START: Fri Mar 4 12:41:43 PST 2005
+Generate uv-data. Tsys=40K, bandwidth=8 GHz 
+UVGEN: Fri Mar 4 12:41:46 PST 2005
+Scale model size. from pixel 0.4 to 0.04 arcsec
+Make model images for each pointing center
+Make model uv-data using VLA image of Cas A as a model (the model has the VLA primary beam)
+UVMODEL: Fri Mar 4 12:42:01 PST 2005 add the model to the noisy sampled uv-data
+INVERT: Fri Mar 4 12:42:02 PST 2005
+Make single dish image and beam Fri Mar 4 12:42:03 PST 2005
+Single dish FWHM = 24 arcsec at 230 GHz
+ MOSMEM Interferometer only
+MOSMEM: Fri Mar 4 12:43:22 PST 2005
+convolve the model by the beam and subtract from the deconvolved image
+regrid the convolved model to the deconvolved image template
+FINISH: Fri Mar 4 12:43:23 PST 2005
+ 
+   ---  RESULTS   ---   
+ Config  DEC  HA[hrs]    Beam[arcsec] scale Model_Flux,Peak  Image_Flux,Peak Residual:Rms,Max,Min[Jy] Fidelity
+Using hex7 mosaic with 12'' spacing
+ MOSMEM Interferometer only with niters=200 flux=732.063 rmsfac=200.
+config1  30  -1,1,.013     2.44 1.55    0.04  731.615 10.939  748.290 10.932   0.034  0.171  -0.139  322
+MOSMEM with default single dish image; niters=200 rmsfac=200
+config1  30  -1,1,.013     2.44 1.55    0.04  731.615 10.939  742.888 10.914   0.030  0.167  -0.116  364
+Joint deconvolution of interferometer and single dish data ; niters=200 rmsfac=200,1
+config1  30  -1,1,.013     2.44 1.55    0.04  731.615 10.939  732.458 10.873   0.025  0.161  -0.101  435
+Using hex19 mosaic with 12'' spacing
+ MOSMEM Interferometer only with niters=200 flux=732.063 rmsfac=200.
+config1  0  -1,1,.013     1.61 1.57    0.05  731.639 5.435  716.124 5.389   0.016  0.079  -0.065  337
+MOSMEM with default single dish image; niters=200 rmsfac=200
+config1  0  -1,1,.013     1.61 1.57    0.05  731.639 5.435  738.839 5.428   0.010  0.032  -0.032  543
+Joint deconvolution of interferometer and single dish data ; niters=200 rmsfac=200,1
+config1  0  -1,1,.013     1.61 1.57    0.05  731.639 5.435  726.846 5.404   0.006  0.036  -0.029  901
+Using hex19 mosaic with 12'' spacing
+ MOSMEM Interferometer only with niters=200 flux=732.063 rmsfac=200.
+config1  0  -1,1,.013     1.61 1.57    0.05  731.639 5.435  716.124 5.389   0.016  0.079  -0.065  337
+Using hex19 mosaic with 12'' spacing
+ MOSMEM Interferometer only with niters=200 flux=732.063 rmsfac=200.
+config1  0  -1,1,.013     1.61 1.57    0.05  731.639 5.435  716.124 5.389   0.016  0.079  -0.065  337
+Using hex19 mosaic with 12'' spacing
+ MOSMEM Interferometer only with niters=200 flux=732.063 rmsfac=200.
+config1  0  -1,1,.013     1.61 1.57    0.05  731.639 5.435  716.124 5.389   0.016  0.079  -0.065  337
+hex7.csh config1 30 0.04
+Using hex7 mosaic with 12'' spacing
+ MOSMEM Interferometer only with niters=200 flux=732.063 rmsfac=200.
+config1  30  -1,1,.013     2.44 1.55    0.04  731.615 10.939  748.290 10.932   0.034  0.171  -0.139  322
+MOSMEM with default single dish image; niters=200 rmsfac=200
+config1  30  -1,1,.013     2.44 1.55    0.04  731.615 10.939  742.888 10.914   0.030  0.167  -0.116  364
+Joint deconvolution of interferometer and single dish data ; niters=200 rmsfac=200,1
+config1  30  -1,1,.013     2.44 1.55    0.04  731.615 10.939  732.458 10.873   0.025  0.161  -0.101  435
+hex19.config1.30.-1,1,.013.1.257
+
+   ---  ALMA Mosaicing (Cas A model)   ---   
+ config  = config1
+ dec     = 30
+ scale   = 0.04
+ harange = -1,1,.013  hours
+ select  = -shadow(12)
+ freq    = 230
+ nchan   = 1
+ imsize  = 257
+ region  = arcsec,box(20.00,-20.00,-20.00,20.00)
+ 
+   ---  TIMING   ---   
+START: Fri Jun 30 15:28:58 PDT 2006
+Generate uv-data. Tsys=40K, bandwidth=8 GHz 
+UVGEN: Fri Jun 30 15:29:04 PDT 2006
+Scale model size. from pixel 0.4 to 0.04 arcsec
+Make model images for each pointing center
+Make model uv-data using VLA image of Cas A as a model (the model has the VLA primary beam)
+UVMODEL: Fri Jun 30 15:30:09 PDT 2006 add the model to the noisy sampled uv-data
+INVERT: Fri Jun 30 15:30:14 PDT 2006
+Make single dish image and beam Fri Jun 30 15:30:14 PDT 2006
+Single dish FWHM = 24 arcsec at 230 GHz
+ MOSMEM Interferometer only
+MOSMEM: Fri Jun 30 15:36:52 PDT 2006
+convolve the model by the beam and subtract from the deconvolved image
+regrid the convolved model to the deconvolved image template
+FINISH: Fri Jun 30 15:36:55 PDT 2006
+ 
+   ---  RESULTS   ---   
+ Config  DEC  HA[hrs]    Beam[arcsec] scale Model_Flux,Peak  Image_Flux,Peak Residual:Rms,Max,Min[Jy] Fidelity
+config1  30  -1,1,.013     2.47 1.54    0.04  731.614 10.969  736.218 10.932   0.012  0.050  -0.081  911
+Using hex19 mosaic with 12'' spacing
+ MOSMEM Interferometer only with niters=200 flux=732.063 rmsfac=200.
+config1  30  -1,1,.013     2.47 1.54    0.04  731.614 10.969  736.218 10.932   0.012  0.050  -0.081  911
+MOSMEM with default single dish image; niters=200 rmsfac=200
+config1  30  -1,1,.013     2.47 1.54    0.04  731.614 10.969  736.403 10.933   0.012  0.050  -0.081  911
+Joint deconvolution of interferometer and single dish data ; niters=200 rmsfac=200,1
+config1  30  -1,1,.013     2.47 1.54    0.04  731.614 10.969  729.591 10.906   0.010  0.052  -0.090  1091
