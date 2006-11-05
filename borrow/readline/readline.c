@@ -93,7 +93,7 @@ static char *xmalloc (), *xrealloc ();
 #endif
 
 #include <errno.h>
-extern int errno;
+/* extern int errno; defined in errno.h */
 
 #include <setjmp.h>
 #include <sys/stat.h>

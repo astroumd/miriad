@@ -37,6 +37,7 @@ static char *xmalloc (), *xrealloc ();
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <errno.h>
 
 #if defined (sun) && defined (SYSV)
 #define rindex(a,b)  strrchr((a),(b))
@@ -427,7 +428,7 @@ read_history_range (filename, from, to)
   char *input, *buffer = (char *)NULL;
   int file, current_line, done;
   struct stat finfo;
-  extern int errno;
+  /* extern int errno; */
 
   input = history_filename (filename);
   file = open (input, O_RDONLY, 0666);
@@ -562,7 +563,7 @@ history_do_write (filename, nelements, overwrite)
      char *filename;
      int nelements, overwrite;
 {
-  extern int errno;
+  /* extern int errno; */
   register int i;
   char *output = history_filename (filename);
   int file, mode;
