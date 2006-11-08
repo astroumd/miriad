@@ -72,6 +72,17 @@ c	Default is to self-scale (see also OPTIONS=XIND).
 c@ yrange
 c	Plot range in the y-direction as for the x axis.  The
 c	default is to self-scale (see also OPTIONS=YIND).
+c@ average
+c       The averaging time in minutes (unless OPTIONS=DAYS,HOURS,SECONDS).
+c       Averaging is reset at frequency, source, or pointing centre
+c       changes.  Individual baselines and polarizations are averaged
+c       separately (unless OPTIONS=AVALL).  If you have selected multiple
+c       channels and you also ask for time averaging, then all the
+c       selected channels are averaged together in the time interval.
+c       If you wish to use OPTIONS=AVALL to average everything on
+c       the one subplot (e.g. polarizations) but don't want temporal
+c       averaging, set AVERAGE to less than one integration.
+c       Default is no averaging.
 c@ hann
 c	Hanning smoothing length (an odd integer < 15).   Is applied
 c	after any time averaging and INC selection. Useful for amplitude
@@ -121,9 +132,11 @@ c		 they will be plotted as 179 and 181 deg.  NOTE:
 c		 Unwrapping noise can be VERY misleading.
 c
 c	 rms     Draw error bars (+/- 1 standard deviation) on the plot if
-c		 averaging is invoked.
+c		 averaging is invoked (not available yet for vector 
+c                averaging).
 c	 mrms    Draw error bars (+/- 1 standard deviation in the mean)
-c		 on the plot if averaging is invoked.
+c		 on the plot if averaging is invoked (not available yet 
+c                for vector averaging).
 c	 noerr   The automatically worked out min and max plot limits
 c	         will NOT include the ends of the error bars.
 c
@@ -326,6 +339,8 @@ c                  (Jin and Jenny).
 c    jhz  10may06  put back the include file: mirconst.h  
 c    jhz  10may06  added keyword filelabel to handle file
 c                  name labelling.
+c    jhz  08nov06  fixed bugs in the average function;
+c                  enabled the color-separation for sources.
 c To do:
 c
 c   Vector averaging rms not yet implemented
@@ -366,6 +381,7 @@ c       PL2DIM get ditched.  Note that even if there is no averaging
 c       we maintain the polarization identity in the plot buffer
 c       (unlike baselines) so that they can be plotted with a different
 c       symbol.
+c       no rms has been calculated yet for vector averaging.
 c
 c 3)   Files
 c       There is a parameter called MAXFILE which is the maximum number
@@ -451,6 +467,7 @@ c
 c Initialize
 c
       integer ifac1, ifac2, nsource, filelabel
+      integer start_sid, next_sid
       parameter (ifac1 = maxpol*maxbase*maxfile,
      *           ifac2 = maxbase)
       data false, bwarn /.false., .false., .false., .false./
@@ -459,7 +476,9 @@ c
       data plfidx, ifile, ofile /0, 0, 0/
       data npts, plpts, basmsk /ifac1*0, ifac1*0, ifac2*0/
       data polmsk /13*0/
-      limitnsource = maxsource 
+      limitnsource = maxsource
+      start_sid=0
+      next_sid=0 
 c-----------------------------------------------------------------------
       call output ('SmaUvPlt: version 1.3 10-May-06')
 c
@@ -536,14 +555,15 @@ c
         call uvdatgta ('name', in)
         call logwrite (' ', more)
         str = itoaf (ifile)
-        filen='File #'//str(1:len1(str))//' = '//in(1:len1(in))
-        write(*,*) filen
+c        filen='File #'//str(1:len1(str))//' = '//in(1:len1(in))
+c        write(*,*) filen
         call logwrite ('File # '//str//' = '//in, more)
 c
 c Read first visibility
 c
         call getdat (preamble, data, goodf, maxchan, nread,
      *               dofqav, doflag, doall)
+
 c
 c Make plot title when we get some data from a file
 c
@@ -587,7 +607,9 @@ c
 c Are we at the end of the averaging interval ?
 c
           if (doave) then
+            
             call endave (ivis, vupd, dayav, day, baseday, reset)
+            if(.not.reset) start_sid=sourid
             if (reset) then
 c
 c Averaging over; work out averaged quantities and dump to plot buffer
@@ -600,10 +622,11 @@ c
               call avdump (dorms, dovec, dobase, dodoub, doavall,
      *           nbases, npols, pl1dim, pl2dim, pl3dim, pl4dim,
      *           maxpnt, maxbase, maxpol, maxfile, buffer(ip),
+     *           soupnt(ip),
      *           npts, xo, yo, elo, eho, xaxis, xrtest, xmin, xmax,
      *           yaxis, yrtest, ymin, ymax, nsum, xsumr, xsumsqr, xsumi,
      *           xsumsqi, ysumr, ysumsqr, ysumi, ysumsqi, xave, yave,
-     *           xsig, ysig, plpts, inc, jfile)
+     *           xsig, ysig, plpts, inc, jfile,start_sid)
 c
 c Reinitialize accumulators for next averaging period
 c
@@ -663,11 +686,11 @@ c
             call getlst(lin, lst)
             call getlat(lin, lat)
             if(xaxis.eq.'parang'.or.yaxis.eq.'parang')
-     *        call parang(ra,dec,lst,lat,paran)
+     *      call parang(ra,dec,lst,lat,paran)
             if(xaxis.eq.'az'.or.yaxis.eq.'az'.or.
-     *         xaxis.eq.'el'.or.yaxis.eq.'el'.or.
-     *         xaxis.eq.'airmass'.or.yaxis.eq.'airmass')
-     *        call azel(ra,dec,lst,lat,az,el)
+     *      xaxis.eq.'el'.or.yaxis.eq.'el'.or.
+     *      xaxis.eq.'airmass'.or.yaxis.eq.'airmass')
+     *      call azel(ra,dec,lst,lat,az,el)
           endif
 c
           fday = day - dayoff
@@ -683,36 +706,36 @@ c
 c Set x and y values
 c
               call setval (xaxis, ha, u, v, uvdist, uvpa, fday,
-     *                     paran, lst, az, el,
-     *                     data(j), j, freq, xvalr, xgood)
+     *             paran, lst, az, el,
+     *             data(j), j, freq, xvalr, xgood)
               call setval (yaxis, ha, u, v, uvdist, uvpa, fday,
-     *                     paran, lst, az, el,
-     *                     data(j), j, freq, yvalr, ygood)
+     *             paran, lst, az, el,
+     *             data(j), j, freq, yvalr, ygood)
               if (xgood .and. ygood) then
                 if (doave) then
 c
 c Accumulate in averaging buffers
 c
-                  call accum (dovec, xvalr, yvalr, data(j),
-     *               xsumr(stbidx,pidx), xsumsqr(stbidx,pidx),
-     *               xsumi(stbidx,pidx), xsumsqi(stbidx,pidx),
-     *               ysumr(stbidx,pidx), ysumsqr(stbidx,pidx),
-     *               ysumi(stbidx,pidx), ysumsqi(stbidx,pidx),
+              call accum (dovec, xvalr, yvalr, data(j),
+     *         xsumr(stbidx,pidx), xsumsqr(stbidx,pidx),
+     *         xsumi(stbidx,pidx), xsumsqi(stbidx,pidx),
+     *        ysumr(stbidx,pidx), ysumsqr(stbidx,pidx),
+     *        ysumi(stbidx,pidx), ysumsqi(stbidx,pidx),
      *               nsum(stbidx,pidx))
                 else
 c
 c Put points into plot buffer
 c
                   if (npts(plbidx,pidx,plfidx).lt.maxpnt) then
-                    call bufput (false, pl1dim, pl2dim, pl3dim, pl4dim,
-     *                 maxbase, maxpol, maxfile, plbidx, pidx, plfidx,
-     *                 xrtest, yrtest, xmin, xmax, ymin, ymax, xvalr,
-     *                yvalr, 0.0, 0.0, npts, buffer(ip),soupnt(ip), xo, 
-     *                yo, elo, eho, plpts, inc)
+                call bufput (false, pl1dim, pl2dim, pl3dim, pl4dim,
+     *           maxbase, maxpol, maxfile, plbidx, pidx, plfidx,
+     *           xrtest, yrtest, xmin, xmax, ymin, ymax, xvalr,
+     *           yvalr, 0.0, 0.0, npts, buffer(ip),soupnt(ip), xo, 
+     *            yo, elo, eho, plpts, inc,sourid)
 c
 c Add -u and -v if requested
 c
-                    if (npts(plbidx,pidx,plfidx).lt.maxpnt .and.
+               if (npts(plbidx,pidx,plfidx).lt.maxpnt .and.
      *                  dodoub) then
                       if (xaxis.eq.'uc'.or.xaxis.eq.'vc')
      *                   xvalr = -xvalr
@@ -724,13 +747,14 @@ c
      *                   pidx, plfidx, xrtest, yrtest, xmin, xmax,
      *                   ymin, ymax, xvalr,yvalr, 0.0, 0.0, npts,
      *                   buffer(ip),soupnt(ip), xo, 
-     *                   yo, elo, eho, plpts, inc)
+     *                   yo, elo, eho, plpts, inc,sourid)
                     end if
                   end if
                 end if
               end if
             end if
           end do
+
 c
 c See if we have filled up ALL of the allocated plot buffer for this file
 c and go on to the next file if plotting files with different symbols
@@ -742,7 +766,10 @@ c Read next visibility
 c
 950       if (.not.allfull) call getdat (preamble, data, goodf,
      *        maxchan, nread, dofqav, doflag, doall)
+              
+
         end do
+
 c
 c Issue a message if any (but not all) of the baseline/polarization
 c plot buffers were filled up and close the current file
@@ -758,10 +785,11 @@ c
       if (doave .and. ifile.eq.nfiles .and. .not.allfull)
      *  call avdump (dorms, dovec, dobase, dodoub, doavall, nbases,
      *     npols, pl1dim, pl2dim, pl3dim, pl4dim, maxpnt, maxbase,
-     *     maxpol, maxfile, buffer(ip), npts, xo, yo, elo, eho,
+     *     maxpol,maxfile,buffer(ip),soupnt(ip),npts, xo, yo, elo, eho,
      *     xaxis, xrtest, xmin, xmax, yaxis, yrtest, ymin, ymax,
      *     nsum, xsumr, xsumsqr, xsumi, xsumsqi, ysumr, ysumsqr, ysumi,
-     *     ysumsqi, xave, yave, xsig, ysig, plpts, inc, plfidx)
+     *     ysumsqi, xave, yave, xsig, ysig, plpts, inc, plfidx,
+     *     start_sid)
 c
 c Tell user some numbers for each file if putting different files into
 c separate locations in plot buffer
@@ -917,12 +945,12 @@ c
       end
 c
 c
-      subroutine avdump (dorms, dovec, dobase, dodoub, doavall, nbases,
-     *   npols, pl1dim, pl2dim, pl3dim, pl4dim, maxpnt, maxbase,
-     *   maxpol, maxfile, buffer, npts, xo, yo, elo, eho, xaxis,
+      subroutine avdump (dorms, dovec, dobase, dodoub, doavall, 
+     *   nbases, npols, pl1dim, pl2dim, pl3dim, pl4dim, maxpnt, maxbase,
+     *   maxpol, maxfile, buffer,soupnt,npts, xo, yo, elo, eho, xaxis,
      *   xrtest, xmin, xmax, yaxis, yrtest, ymin, ymax, nsum, xsumr,
      *   xsumsqr, xsumi, xsumsqi, ysumr, ysumsqr, ysumi, ysumsqi,
-     *   xave, yave, xsig, ysig, plpts, inc, plfidx)
+     *   xave, yave, xsig, ysig, plpts, inc, plfidx, start_sid)
 c-----------------------------------------------------------------------
 c     The end of an averaging interval has been reached.  Work out
 c     the averaged qantities and dump them to the plot buffer.
@@ -972,18 +1000,20 @@ c  Input/output (work space):
 c    x,yave        Averaged quantities to plot
 c    x,ysig        Standard deviation on averaged point
 c    plpts         Used in picking out every INCth point from plot arrays
+c    start_sid     the source id for the current average interval
 c
 c-----------------------------------------------------------------------
 c
-      logical doavall, dorms(3), dovec(2), dobase, dodoub, yrtest,
+      implicit none
+c
+        logical doavall,dorms(3),dovec(2),dobase,dodoub,yrtest,
      *  xrtest
-      integer pl1dim, pl2dim, pl3dim, pl4dim, maxbase, maxpol,
+        integer pl1dim, pl2dim, pl3dim, pl4dim, maxbase, maxpol,
      *  maxfile, nbases, npols
 c
-      integer npts(maxbase,maxpol,maxfile),
+        integer npts(maxbase,maxpol,maxfile),
      *  plpts(maxbase,maxpol,maxfile), nsum(maxbase,maxpol)
-      integer soupnt(pl1dim,pl2dim,pl3dim,pl4dim)
-      real buffer(pl1dim,pl2dim,pl3dim,pl4dim),
+        real buffer(pl1dim,pl2dim,pl3dim,pl4dim),
      *  xsumr(maxbase,maxpol), ysumr(maxbase,maxpol),
      *  xsumi(maxbase,maxpol), ysumi(maxbase,maxpol),
      *  xsumsqr(maxbase,maxpol), ysumsqr(maxbase,maxpol),
@@ -996,10 +1026,12 @@ c
       character xaxis*(*), yaxis*(*)
 cc
       integer i, j, plbidx, nb, np
+      integer soupnt(pl1dim,pl2dim,pl3dim,pl4dim)
       integer maxsource,nsource,sourid
       parameter(maxsource=100)
-            character source(maxsource)*32
-        common/sour/source,nsource,sourid
+      character source(maxsource)*32
+      common/sour/source,nsource,sourid
+      integer start_sid
    
 c-------------------------------------------------------------------------
 c
@@ -1012,10 +1044,10 @@ c
       if (doavall) np = 1
 c
       do i = 1, np
-        call avquant(dorms(1), dorms(3), dovec(1), xaxis, nb, nsum(1,i),
+      call avquant(dorms(1), dorms(3), dovec(1), xaxis, nb, nsum(1,i),
      *     xsumr(1,i), xsumsqr(1,i), xsumi(1,i), xsumsqi(1,i),
      *     xave(1,i), xsig(1,i))
-        call avquant(dorms(2), dorms(3), dovec(2), yaxis, nb, nsum(1,i),
+      call avquant(dorms(2), dorms(3), dovec(2), yaxis, nb, nsum(1,i),
      *     ysumr(1,i), ysumsqr(1,i), ysumi(1,i), ysumsqi(1,i),
      *     yave(1,i), ysig(1,i))
       end do
@@ -1034,8 +1066,8 @@ c
      *           maxbase, maxpol, maxfile, plbidx, j, plfidx,
      *           xrtest, yrtest, xmin, xmax, ymin, ymax, xave(i,j),
      *           yave(i,j), xsig(i,j), ysig(i,j), npts, buffer,
-     *           soupnt, xo, yo, elo, eho, plpts, inc)
-c
+     *           soupnt, xo, yo, elo, eho, plpts, inc,start_sid)
+
 c User may want -u and/or -v as well.
 c
               if (npts(plbidx,j,plfidx).lt.maxpnt .and.
@@ -1049,7 +1081,7 @@ c
      *            maxbase, maxpol, maxfile, plbidx, j, plfidx,
      *            xrtest, yrtest, xmin, xmax, ymin, ymax, xave(i,j),
      *            yave(i,j), xsig(i,j), ysig(i,j), npts, buffer, 
-     *            soupnt, xo, yo, elo, eho, plpts, inc)
+     *            soupnt, xo, yo, elo, eho, plpts, inc, start_sid)
               end if
             end if
           end if
@@ -1321,7 +1353,7 @@ c
       subroutine bufput (dorms, pl1dim, pl2dim, pl3dim, pl4dim,
      *   maxbase, maxpol, maxfile, plbidx, plpidx, plfidx, xrtest,
      *   yrtest, xmin, xmax, ymin, ymax, x, y, xsig, ysig, npts,
-     *   buffer, soupnt, xo, yo, elo, eho, plpts, inc)
+     *   buffer, soupnt,xo,yo,elo,eho,plpts,inc,mysourid)
 c-----------------------------------------------------------------------
 c     Test the x,y coordinate for being in the user specified range,
 c     if there is one, and put it in the plot buffer if wanted.
@@ -1342,6 +1374,7 @@ c    x,yrtest      True if user specified X and Y plot ranges
 c    x,ymin,max    x and y plot extrema given by user
 c    x,y           x and y values for this datum
 c    x,ysig        standard deviation on averaged x and y points
+c    mysourid      the current source id
 c  Input/output
 c    npts          Number of points in each plot buffer
 c    buffer        Plot buffer
@@ -1362,7 +1395,7 @@ c
       character source(maxsource)*32
       common/sour/source,nsource,sourid
 cc
-      integer n
+      integer n,mysourid
 c-----------------------------------------------------------------------
 c
 c Make sure point in wanted X and Y range
@@ -1384,7 +1417,7 @@ c
 c
           buffer(xo+n,plbidx,plpidx,plfidx) = x
           buffer(yo+n,plbidx,plpidx,plfidx) = y
-          soupnt(xo+n,plbidx,plpidx,plfidx) = sourid
+          soupnt(xo+n,plbidx,plpidx,plfidx) = mysourid
 c
           if (dorms(1)) then
             buffer(elo(1)+n,plbidx,plpidx,plfidx) = x - xsig
@@ -1726,12 +1759,17 @@ c
       integer ivis, vupd
 cc
       double precision delday
+      integer maxsource,nsource,sourid
+      parameter(maxsource=100)
+      character source(maxsource)*32
+      common/sour/source,nsource,sourid
+
 c
 c External
 c
       logical uvvarupd, track
 c-----------------------------------------------------------------------
-      delday = day - baseday
+       delday = day - baseday
 c
 c Reset when end of averaging time reached, or when one of the
 c tracked variables change, or if time goes backwards
@@ -2879,13 +2917,13 @@ c Write averaging time
 c
       if (dayav.gt.0.0) then
         if (tunit.eq.1) then
-          str2 = '\ud\d'
+          str2 = 'd'
         else if (tunit.eq.24) then
-          str2 = '\uh\d'
+          str2 = 'h'
         else if (tunit.eq.24*60) then
-          str2 = '\um\d'
+          str2 = 'm'
         else if (tunit.eq.24*60*60) then
-          str2 = '\us\d'
+          str2 = 's'
         end if
         av = dayav * tunit
 c
@@ -3310,8 +3348,13 @@ c
      *                   soupnt(xo+1,kp,lp,jf),sym,fileid,lp,npol,
      *                   polstr)
                        else
-                    call pgpt (npts(kp,lp,jf),buffer(xo+1,kp,lp,jf),
-     *                            buffer(yo+1,kp,lp,jf), sym)
+                   call smapgpts (npts(kp,lp,jf),buffer(xo+1,kp,lp,jf),
+     *                   buffer(yo+1,kp,lp,jf),
+     *                   soupnt(xo+1,kp,lp,jf),sym,fileid,lp,npol,
+     *                   polstr)
+C THE OLD PGPT WITHOUT COLOR SEPARATION FOR SOURCE
+c                  call pgpt (npts(kp,lp,jf),buffer(xo+1,kp,lp,jf),
+c     *                            buffer(yo+1,kp,lp,jf), sym)
                        end if
                     if (dorms(1))
      *                call pgerrx (npts(kp,lp,jf),
@@ -3440,6 +3483,7 @@ C
       mindx=0
       do i=1, N
         indx=soupnt(i)
+         write(*,*) soupnt(i)
         if(indx.gt.mindx) mindx =indx
       end do
       maxdx =mindx
