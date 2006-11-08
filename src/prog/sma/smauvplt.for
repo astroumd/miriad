@@ -3483,7 +3483,6 @@ C
       mindx=0
       do i=1, N
         indx=soupnt(i)
-         write(*,*) soupnt(i)
         if(indx.gt.mindx) mindx =indx
       end do
       maxdx =mindx
