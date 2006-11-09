@@ -8,10 +8,11 @@ c	declarations before common to appease FLINT and PJT mchw 02dec93
 c	23dec94 mchw increase MAXSOLS to 2048
 c	02aug95 mchw added elev to common/base/
 c	01nov2006 mchw increase MAXANTS to 64
+c	08nov2006 mchw increase MAXSOLS to 4096
 c----------------------------------------------------------------------c
 c
         integer MAXANTS,MAXSOLS
-        parameter(MAXANTS=64,MAXSOLS=2048)
+        parameter(MAXANTS=64,MAXSOLS=4096)
 c
 c  Source list.
 c

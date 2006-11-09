@@ -119,10 +119,11 @@ c    06may06 jkoda Added constant phase offset and axis offset in summary
 c    16may06 mchw  Merged 06may with 2 previous changes in CVS.
 c    10aug06 dcb   Added comments and reformat GetGains.
 c    10aug06 dcb   GetGains common /savgains/ Ampl,Phi,foc,tpwr,antel,freq
+c    08nov06 mchw  Increase MAXANTS to 64 and MAXSOLS to 4096
 c-----------------------------------------------------------------------
 	include 'bee.h'
 	character version*(*),device*80,log*80,ans*20
-	parameter(version='(version 3.0 10-Aug-2006)')
+	parameter(version='(version 3.0 08-Nov-2006)')
 	integer length,tvis,tgains,iostat
 	logical doscale
 c
