@@ -176,10 +176,12 @@ c    18aug06 jhz & an tao:
 c                  added a feature to reject 'bad gains' or
 c                  uncorrelated gains between rx2 and rx1 in
 c                  the linear regression between phase 2 and phase 1. 
+c
+c    08nov mchw  increase MAXSOLS to 4096
 c                                            
 c-----------------------------------------------------------------------
 	character version*(*)
-	parameter(version='(version 1.3 18-Aug-06)')
+	parameter(version='(version 1.3 08-Nov-06)')
 	character device*80, log*80, vis*80, xaxis*40, yaxis*40
 	integer tvis, refant, refant2, nx, ny
 	logical dowrap, xsc,ysc, dostruct, doallan, doquad
@@ -296,7 +298,7 @@ c----------------------------------------------------------------------c
         parameter(MAXLEN=144)
 	double precision var(MAXLEN)
 	integer MAXANTS,MAXSOLS
-	parameter(MAXANTS=28,MAXSOLS=2048)
+	parameter(MAXANTS=28,MAXSOLS=4096)
 	integer nants,nsols, npol
 	double precision interval,dtime(MAXSOLS)
 	complex gains(MAXANTS,MAXSOLS)
