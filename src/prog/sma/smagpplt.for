@@ -148,6 +148,8 @@ c                the gain solutions.
 c    jhz 03may06 fixed a bug in time selection.
 c    jhz 04may06 added an input parameter (filelabel) for option
 c                to label the file name.
+c    jhz 20nov06 fixed a bug in the case gains flagging applied
+c                with gpedit
 c  Bugs:
 c------------------------------------------------------------------------
         integer maxsels
@@ -157,7 +159,7 @@ c------------------------------------------------------------------------
         parameter (DPI = 3.14159265358979323846)
         parameter (TWOPI = 2 * PI)
         parameter (DTWOPI = 2 * DPI)        
-        parameter(version='SmaGpPlt: version 1.8 04-May-06')
+        parameter(version='SmaGpPlt: version 1.8 20-Nov-06')
         include 'smagpplt.h'
         integer iostat,tin,nx,ny,nfeeds,nants,nsols,ierr,symbol,nchan
         integer ntau,length, i, j, k,nschann(maxspect)
@@ -1331,6 +1333,7 @@ c  Inputs:
 c	Similar to GainPlt, except ...
 c	GetVal	Routine used to convert to the desired quantity.
 c------------------------------------------------------------------------
+        
         include 'smagpplt.h'
         character line*80,title*48,label*20
         character uvfile*48
@@ -1702,7 +1705,6 @@ c
             x(i) = T(i)
             
          end do
-            nsols=N
          end if
 c
 c Orthogonal polynomial fit to the gains 
@@ -1716,9 +1718,9 @@ c
          end do
             end if
             nterm=gnply+1
-            call regpolfitg(nterm,xa,bp,nsols,x,ys)
+             call regpolfitg(nterm,xa,bp,N,x,ys)
             end if
-         do i=1,nsols 
+        do i=1,N 
         if(donply.or.dosmooth) then
         if(type.eq.'Amp') again(IANT, IFEED,i) = ys(i)
         if(type.eq.'Phase') then
@@ -1731,10 +1733,10 @@ c
          end if
         if(type.eq.'Real') rgain(IANT, IFEED,i) = ys(i)
         if(type.eq.'Imag') igain(IANT, IFEED,i) = ys(i)
-            x(i)=3600.*x(i)
+         x(i)=3600.*x(i)
          end do
         call pgsci(5)
-        call pgline (nsols, x, ys)
+        call pgline (N, x, ys)
         call pgsci(1)
         END
 c-----------------------------------------------------------
