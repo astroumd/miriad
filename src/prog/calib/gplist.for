@@ -107,7 +107,9 @@ c    smw     21nov03 Modified "force" option to enforce any value
 c    pjt     22nov05 Increased 12 to 15 for CARMA array, use MAXGANT
 c                    removed 'dbcor'
 c    pjt/smw  2may06 Fixed a cut&paste error in displaying median & rms
-c
+c    jhz      20nov06 Reformated the print-out gain list by dynamically
+c                    assigning the number of antenna gains for printout.
+c                    
 c  Bugs and Shortcomings:
 c    gplist is hardwired for 12 antennas!
 c    although we're using MAXGANT, there are format statements with
@@ -115,7 +117,7 @@ c    usage with 15 or 30 elements.
 c-----------------------------------------------------------------------
 	include 'gplist.h'
 	character version*(*)
-	parameter(version='GpList: version 2-may-06')
+	parameter(version='GpList: version 20-nov-06')
 	logical dovec,docomp,dophas,doall,dozero,domult,hexists,doamp
 	logical dolimit,doclip,dosigclip,doforce,dohist
 	real jyperk(MAXGANT) 
@@ -277,6 +279,7 @@ c------------------------------------------------------------------------
 	double precision time(MAXSOLS)
 	integer nsols,offset,pnt,i,tGains,iostat,ngains
 	character line*128,ctime*8,msg*128
+        integer igains
 c
 c  Externals.
 c
@@ -286,7 +289,6 @@ c
 c  Data 
 c
 	data doMed /.false./
-
 
 c
 c  Open the gains table and read them all in.
@@ -305,7 +307,7 @@ c
 	  call hreadd(tGains,time(i),offset,8,iostat)
 	  offset = offset + 8
 	  if(iostat.eq.0)call hreadr(tGains,Gains(pnt),offset,8*ngains,
-     *								 iostat)
+     *						 iostat)
 	  pnt = pnt + ngains
 	  offset = offset + 8*ngains
 	  if(iostat.ne.0)call Averbug(iostat,'Error reading gain table')
@@ -321,30 +323,48 @@ c
 
       if (docomp) then
          call output('The complex gains listed in the table are:')
+         if(ngains.gt. 8) then
          write(msg(1:37),94) '  Time     Ants 1/9     Ants 2/10     '
          write(msg(38:76),94) 'Ants 3/11    Ants 4/12    Ants 5/13  '
          write(msg(77:120),94)'Ants 6/14    Ants 7/15    Ant  8'
+          else
+         write(msg(1:37),94) '  Time     Ants 1       Ants 2        '
+         write(msg(38:76),94) 'Ants 3       Ants 4       Ants 5     '
+         write(msg(77:120),94)'Ants 6       Ants 7       Ant  8'
+          end if
          call output(msg)
          do i=1,nsols
             call JulDay(time(i),'H',line(1:18))
             ctime = line(9:16)
-            write(msg,95) ctime,Gains((i-1)*nants+1),
-     *                          Gains((i-1)*nants+2),
-     *                          Gains((i-1)*nants+3),
-     *                          Gains((i-1)*nants+4),
-     *                          Gains((i-1)*nants+5),
-     *                          Gains((i-1)*nants+6),
-     *                          Gains((i-1)*nants+7),
-     *                          Gains((i-1)*nants+8)
+
+        if(ngains.gt.8) then
+         write(msg,95) ctime, 
+     *                  (Gains((i-1)*nants+igains), igains=1,8)
+          else
+         write(msg,95) ctime,
+     *                  (Gains((i-1)*nants+igains), igains=1,ngains)
+         end if
+c                                Gains((i-1)*nants+1),
+c     *                          Gains((i-1)*nants+2),
+c     *                          Gains((i-1)*nants+3),
+c     *                          Gains((i-1)*nants+4),
+c     *                          Gains((i-1)*nants+5),
+c     *                          Gains((i-1)*nants+6),
+c     *                          Gains((i-1)*nants+7),
+c     *                          Gains((i-1)*nants+8)
             call output(msg)
-            write(msg,95) '   ',Gains((i-1)*nants+9),
-     *                          Gains((i-1)*nants+10),
-     *                          Gains((i-1)*nants+11),
-     *                          Gains((i-1)*nants+12),
-     *                          Gains((i-1)*nants+13),
-     *                          Gains((i-1)*nants+14),
-     *                          Gains((i-1)*nants+15)
+         if(ngains.gt.8) then   
+          write(msg,95) '   ', 
+      *  (Gains((i-1)*nants+igains), igains=9,ngains)
+c                                Gains((i-1)*nants+9),
+c     *                          Gains((i-1)*nants+10),
+c     *                          Gains((i-1)*nants+11),
+c     *                          Gains((i-1)*nants+12),
+c     *                          Gains((i-1)*nants+13),
+c     *                          Gains((i-1)*nants+14),
+c     *                          Gains((i-1)*nants+15)
             call output(msg)
+          end if
          enddo
       else if (doall) then
          call output('The complex gains listed in the table are:')
@@ -370,21 +390,24 @@ c
             ctime = line(9:16)
             k=(i-1)*nants
             write(msg,198) ctime,
-     *        int(radtodeg*atan2(AImag(Gains(k+1)),Real(Gains(k+1)))),
-     *        int(radtodeg*atan2(AImag(Gains(k+2)),Real(Gains(k+2)))),
-     *        int(radtodeg*atan2(AImag(Gains(k+3)),Real(Gains(k+3)))),
-     *        int(radtodeg*atan2(AImag(Gains(k+4)),Real(Gains(k+4)))),
-     *        int(radtodeg*atan2(AImag(Gains(k+5)),Real(Gains(k+5)))),
-     *        int(radtodeg*atan2(AImag(Gains(k+6)),Real(Gains(k+6)))),
-     *        int(radtodeg*atan2(AImag(Gains(k+7)),Real(Gains(k+7)))),
-     *        int(radtodeg*atan2(AImag(Gains(k+8)),Real(Gains(k+8)))),
-     *        int(radtodeg*atan2(AImag(Gains(k+9)),Real(Gains(k+9)))),
-     *        int(radtodeg*atan2(AImag(Gains(k+10)),Real(Gains(k+10)))),
-     *        int(radtodeg*atan2(AImag(Gains(k+11)),Real(Gains(k+11)))),
-     *        int(radtodeg*atan2(AImag(Gains(k+12)),Real(Gains(k+12)))),
-     *        int(radtodeg*atan2(AImag(Gains(k+13)),Real(Gains(k+13)))),
-     *        int(radtodeg*atan2(AImag(Gains(k+14)),Real(Gains(k+14)))),
-     *        int(radtodeg*atan2(AImag(Gains(k+15)),Real(Gains(k+15))))
+     *  (int(radtodeg*
+     *  atan2(AImag(Gains(k+igains)),
+     *  Real(Gains(k+igains)))),igains=1,ngains)
+c     *        int(radtodeg*atan2(AImag(Gains(k+1)),Real(Gains(k+1)))),
+c     *        int(radtodeg*atan2(AImag(Gains(k+2)),Real(Gains(k+2)))),
+c     *        int(radtodeg*atan2(AImag(Gains(k+3)),Real(Gains(k+3)))),
+c     *        int(radtodeg*atan2(AImag(Gains(k+4)),Real(Gains(k+4)))),
+c     *        int(radtodeg*atan2(AImag(Gains(k+5)),Real(Gains(k+5)))),
+c     *        int(radtodeg*atan2(AImag(Gains(k+6)),Real(Gains(k+6)))),
+c     *        int(radtodeg*atan2(AImag(Gains(k+7)),Real(Gains(k+7)))),
+c     *        int(radtodeg*atan2(AImag(Gains(k+8)),Real(Gains(k+8)))),
+c     *        int(radtodeg*atan2(AImag(Gains(k+9)),Real(Gains(k+9)))),
+c     *        int(radtodeg*atan2(AImag(Gains(k+10)),Real(Gains(k+10)))),
+c     *        int(radtodeg*atan2(AImag(Gains(k+11)),Real(Gains(k+11)))),
+c     *        int(radtodeg*atan2(AImag(Gains(k+12)),Real(Gains(k+12)))),
+c     *        int(radtodeg*atan2(AImag(Gains(k+13)),Real(Gains(k+13)))),
+c     *        int(radtodeg*atan2(AImag(Gains(k+14)),Real(Gains(k+14)))),
+c     *        int(radtodeg*atan2(AImag(Gains(k+15)),Real(Gains(k+15))))
             call output(msg)
          enddo
       else if (doamp) then
@@ -394,28 +417,30 @@ c
             jant(j)=0
          enddo
        call output('The amplitude gain values listed in the table are:')
-         write(msg(1:35),94) '  Time     Ant 1 Ant 2 Ant 3 Ant 4 '
-         write(msg(36:70),94) 'Ant 5 Ant 6 Ant 7 Ant 8 Ant 9 Ant10'
-         write(msg(71:100),94) ' Ant11 Ant12 Ant13 Ant14 Ant15'
-         call output(msg)
+       write(msg(1:35),94) '  Time     Ant 1 Ant 2 Ant 3 Ant 4 '
+       write(msg(36:70),94) 'Ant 5 Ant 6 Ant 7 Ant 8 Ant 9 Ant10'
+       write(msg(71:100),94) ' Ant11 Ant12 Ant13 Ant14 Ant15'
+        call output(msg)
          do i=1,nsols
             call JulDay(time(i),'H',line(1:18))
             ctime = line(9:16)
-            write(msg,199) ctime,abs(Gains((i-1)*nants+1)),
-     *                  abs(Gains((i-1)*nants+2)),
-     *                  abs(Gains((i-1)*nants+3)),
-     *                  abs(Gains((i-1)*nants+4)),
-     *                  abs(Gains((i-1)*nants+5)),
-     *                  abs(Gains((i-1)*nants+6)),
-     *                  abs(Gains((i-1)*nants+7)),
-     *                  abs(Gains((i-1)*nants+8)),
-     *                  abs(Gains((i-1)*nants+9)),
-     *                  abs(Gains((i-1)*nants+10)),
-     *                  abs(Gains((i-1)*nants+11)),
-     *                  abs(Gains((i-1)*nants+12)),
-     *                  abs(Gains((i-1)*nants+13)),
-     *                  abs(Gains((i-1)*nants+14)),
-     *                  abs(Gains((i-1)*nants+15))
+         
+            write(msg,199) ctime,
+      * (abs(Gains((i-1)*nants+igains)), igains=1,ngains)
+c     *                  abs(Gains((i-1)*nants+2)),
+c     *                  abs(Gains((i-1)*nants+3)),
+c     *                  abs(Gains((i-1)*nants+4)),
+c     *                  abs(Gains((i-1)*nants+5)),
+c     *                  abs(Gains((i-1)*nants+6)),
+c     *                  abs(Gains((i-1)*nants+7)),
+c     *                  abs(Gains((i-1)*nants+8)),
+c     *                  abs(Gains((i-1)*nants+9)),
+c     *                  abs(Gains((i-1)*nants+10)),
+c     *                  abs(Gains((i-1)*nants+11)),
+c     *                  abs(Gains((i-1)*nants+12)),
+c     *                  abs(Gains((i-1)*nants+13)),
+c     *                  abs(Gains((i-1)*nants+14)),
+c     *                  abs(Gains((i-1)*nants+15))
             call output(msg)
             do j=1,nants
                if (abs(Gains((i-1)*nants+j)).gt.0.0) then
@@ -444,24 +469,27 @@ c
       write(msg,197) '------------------------------------',
      &               '------------------------------------'
       call output(msg)
-      write(msg,199) 'Means:  ',MeanGain(1),MeanGain(2),MeanGain(3),
-     *                          MeanGain(4),MeanGain(5),MeanGain(6),
-     *              MeanGain(7),MeanGain(8),MeanGain(9),MeanGain(10),
-     *           MeanGain(11),MeanGain(12),MeanGain(13),MeanGain(14),
-     *                                                  MeanGain(15)
+      write(msg,199) 'Means:  ', (MeanGain(igains), igains=1,ngains)
+c MeanGain(1),MeanGain(2),MeanGain(3),
+c     *                          MeanGain(4),MeanGain(5),MeanGain(6),
+c     *              MeanGain(7),MeanGain(8),MeanGain(9),MeanGain(10),
+c     *           MeanGain(11),MeanGain(12),MeanGain(13),MeanGain(14),
+c     *                                                  MeanGain(15)
       call output(msg)
       if (doMed) then
-        write(msg,199) 'Medians:',MednGain(1),MednGain(2),MednGain(3),
-     *                            MednGain(4),MednGain(5),MednGain(6),
-     *                MednGain(7),MednGain(8),MednGain(9),MednGain(10),
-     *           MednGain(11),MednGain(12),MednGain(13),MednGain(14),
-     *                                                  MednGain(15)
+        write(msg,199) 'Medians:', (MednGain(igains), igains=1,ngains)
+c MednGain(1),MednGain(2),MednGain(3),
+c     *                            MednGain(4),MednGain(5),MednGain(6),
+c     *                MednGain(7),MednGain(8),MednGain(9),MednGain(10),
+c     *           MednGain(11),MednGain(12),MednGain(13),MednGain(14),
+c     *                                                  MednGain(15)
         call output(msg)
-        write(msg,199) 'Rms:    ',GainRms(1),GainRms(2),GainRms(3),
-     *                            GainRms(4),GainRms(5),GainRms(6),
-     *                GainRms(7),GainRms(8),GainRms(9),GainRms(10),
-     *             GainRms(11),GainRms(12),GainRms(13),GainRms(14),
-     *                                                 GainRms(15)
+        write(msg,199) 'Rms:    ', (GainRms(igains), igains=1,ngains)
+c GainRms(1),GainRms(2),GainRms(3),
+c     *                            GainRms(4),GainRms(5),GainRms(6),
+c     *                GainRms(7),GainRms(8),GainRms(9),GainRms(10),
+c     *             GainRms(11),GainRms(12),GainRms(13),GainRms(14),
+c     *                                                 GainRms(15)
         call output(msg)
       endif
       write(msg,197) '------------------------------------',
