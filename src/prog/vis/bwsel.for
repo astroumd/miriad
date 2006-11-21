@@ -24,29 +24,6 @@ c       ANDed. Default
 c@ slop
 c       Fraction of frequency within which the bandwith should be to be selected
 c       Default: 0.1
-c@ select
-c	The normal uv selection commands. One unusual aspect of this is that
-c	the "window" subcommand can be used to select which windows are
-c	copied to the output file (normally the "window" only has an
-c	effect for velocity line type). The default is to copy everything.
-c@ stokes
-c	If a value is given, uvcat converts the input into the required
-c	polarizations before writing to the output. Default is to copy
-c	across the polarizations present in the input files.
-c@ options
-c	This gives extra processing options. Several options can be given,
-c	each separated by commas. They may be abbreivated to the minimum
-c	needed to avoid ambiguity. Possible options are:
-c	   'nocal'       Do not apply the gains file. By default, UVCAT
-c	                 applies the gains file in copying the data.
-c	   'nopass'      Do not apply bandpass corrections. By default, UVCAT
-c	                 applies bandpass corrections if possible.
-c	   'nopol'       Do not apply polarization correction. By
-c	                 default UVCAT corrects polarizations, if possible.
-c	   'nowide'      Do not copy across wide-band channels.
-c	   'nochannel'   Do not copy across spectral channels.
-c	   'unflagged'   Copy only those records where there are some
-c	                 unflagged visibilites.
 c@ out
 c	The name of the output uv data set. If none supplied, input dataset
 c       is scanned.
@@ -57,16 +34,14 @@ c------------------------------------------------------------------------
 	parameter(version='BWsel: version 20-nov-06')
 c
 	integer nchan,vhand,lIn,lOut,i,j,nspect,nPol,Pol,SnPol,SPol
-	integer nschan(MAXWIN),ischan(MAXWIN),ioff,nwdata,length
-	integer lflags,nbw
+	integer nschan(MAXWIN),ischan(MAXWIN),nwdata,length,nbw
 	double precision preamble(5),bw(MAXWIN),slop
 	complex data(maxchan),wdata(maxchan)
 	logical flags(maxchan),wflags(maxchan)
-	logical nocal,nopol,window,wins(MAXWIN)
+	logical wins(MAXWIN)
 	logical first,init,new,more,dopol,PolVary,donenpol
-	logical nowide,nochan,dochan,dowide,docopy,doall,updated
-	logical nopass
-	character out*256,type*1,uvflags*8
+	logical dochan,dowide,docopy,updated
+	character out*256,type*1
 c
 c  Externals.
 c
@@ -74,26 +49,12 @@ c
 c
 	call output(version)
 	call keyini
-	call GetOpt(nocal,nopol,nopass,nowide,nochan,doall)
-	lflags = 2
-	uvflags(1:2) = 'ds'
-	if(.not.nocal)then
-	  lflags = lflags + 1
-	  uvflags(lflags:lflags) = 'c'
-	endif
-	if(.not.nopol)then
-	  lflags = lflags + 1
-	  uvflags(lflags:lflags) = 'e'
-	endif
-	if(.not.nopass)then
-	  lflags = lflags + 1
-	  uvflags(lflags:lflags) = 'f'
-	endif
-	call uvDatInp('vis',uvflags(1:lflags))
+	call uvDatInp('vis','2')
 	call keya('out',out,' ')
 	call mkeyd('bw',bw,MAXWIN,nbw)
 	call keyd('slop',slop,0.1)
 	call keyfin
+c	call GetOpt(nocal,nopol,nopass,nowide,nochan,doall)
 c
 c  Check user inputs, allow no output in scanning mode
 c
@@ -112,7 +73,6 @@ c
 c
 c  Other initialisation.
 c
-	window = .false.
 	first = .true.
 	init = .false.
 	new = .true.
@@ -125,9 +85,9 @@ c
 	more = uvDatOpn(lIn)
 	dowhile(more)
 	  if(new)then
-	    call SetUp(lIn,nochan,nowide,dochan,dowide,dopol,vhand)
-c	    if(dowide.and..not.dochan)
-c     *	      call uvset(lOut,'data','wide',0,1.,1.,1.)
+	    call SetUp(lIn,dochan,dowide,dopol,vhand)
+	    if(dowide.and..not.dochan)
+     *	      call uvset(lOut,'data','wide',0,1.,1.,1.)
 	    npol = 0
 	    donenpol = .false.
 	    new = .false.
@@ -172,20 +132,15 @@ c  Update the window parameters if needed.
 c
 	    if(dochan) then
 	      if (uvVarUpd(vhand)) call WindUpd(lIn,lOut,
-     *			  MAXWIN,wins,nspect,nschan,ischan,window)
+     *			  MAXWIN,wins,nspect,nschan,ischan,
+     *                    bw,nbw)
 	    endif
-c
-c  Move the data around, if we are eliminating spectra.
-c
-	    ioff = 1
-	    if(window)
-     *	      call WindIt(data,flags,nspect,nschan,ischan,ioff,nchan)
 c
 c  Check if this data is wanted.
 c
-	    docopy = doall.or.donenpol
+	    docopy = donenpol
 	    if(.not.docopy)then
-	      do i=ioff,ioff+nchan-1
+	      do i=1,nchan
 	        docopy = docopy .or. flags(i)
 	      enddo
 	    endif
@@ -211,7 +166,7 @@ c
 	        call uvDatWRd(wdata,wflags,maxchan,nwdata)
 	        call uvwwrite(lOut,wdata,wflags,nwdata)
 	      endif
-	      call uvwrite(lOut,preamble,data(ioff),flags(ioff),nchan)
+	      call uvwrite(lOut,preamble,data,flags,nchan)
 	    endif
 	    npol = npol - 1
 	  endif
@@ -230,16 +185,14 @@ c
 	call uvclose(lOut)
 	end
 c************************************************************************
-	subroutine SetUp(lIn,nochan,nowide,dochan,dowide,dopol,vhand)
+	subroutine SetUp(lIn,dochan,dowide,dopol,vhand)
 c
 	implicit none
-	logical dopol,nochan,nowide,dochan,dowide
+	logical dopol,dochan,dowide
 	integer lIn,vhand
 c
 c  Input:
 c    lIn	Handle of the uv dataset.
-c    nochan	True if the user does not want "corr" data.
-c    nowide	True if the user does not want "wcorr" data.
 c  Output:
 c    dochan	Copy "corr" data across.
 c    dowide	Copy "wcorr" data across.
@@ -261,10 +214,9 @@ c  Check if "wcorr" and "corr" are present, and determine which ones we
 c  want to write out.
 c
 	call uvprobvr(lIn,'wcorr',type,length,updated)
-	dowide = type.eq.'c'.and..not.nowide
+	dowide = type.eq.'c'
 	call uvprobvr(lIn,'corr',type,length,updated)
 	dochan = (type.eq.'r'.or.type.eq.'j'.or.type.eq.'c')
-     *		 .and..not.nochan
 c
 	if(.not.dochan.and..not.dowide)
      *	  call bug('f','No corr or wcorr data to copy')
@@ -290,16 +242,17 @@ c
 c
 c  Disable window-based selection, as that is done manually.
 c
-	call uvset(lIn,'selection','window',0,0.,0.,0.)
+c	call uvset(lIn,'selection','window',0,0.,0.,0.)
 c
 	end
 c************************************************************************
 	subroutine WindUpd(lIn,lOut,nwins,wins,nspectd,nschand,ischand,
-     *							        window)
+     *                     bw,nbw)
 c
 	implicit none
-	integer nwins,nspectd,nschand(nwins),ischand(nwins),lIn,lOut
-	logical wins(nwins),window
+	integer nwins,nspectd,nschand(nwins),ischand(nwins),lIn,lOut,nbw
+	logical wins(nwins)
+	double precision bw(nbw)
 c
 c  This updates uv variables that are affected if we remove channels.
 c  These variables are:
@@ -343,6 +296,7 @@ c  Get the dimensioning info.
 c
 	call uvgetvri(lIn,'nants',nants,1)
 	call uvprobvr(lIn,'nspect',type,length,unspect)
+	write(*,*) 'NSPECT=',nspect
 	call uvgetvri(lIn,'nspect',nspect,1)
 	if(nspect.le.0)
      *	  call bug('f','Bad value for uv variable nspect')
@@ -447,62 +401,7 @@ c
 	if(nytsys.ge.nspect*nants) nytsys = nout*nants
 	if(uytsys) call uvputvrr(lOut,'ytsys',ytsys,nytsys)
 	if(uxyph)call uvputvrr(lOut,'xyphase',xyphase,nxyph)
-c
-c  Determine the output parameters.
-c
-	window = nout.ne.nspect
-	if(window)then
-	  nspectd = 1
-	  do i=2,nout
-	    if(ischand(nspectd)+nschand(nspectd).eq.ischand(i))then
-	      nschand(nspectd) = nschand(nspectd) + nschand(i)
-	    else
-	      nspectd = nspectd + 1
-	      nschand(nspectd) = nschand(i)
-	      ischand(nspectd) = ischand(i)
-	    endif
-	  enddo
-	endif
-c
-	end
-c************************************************************************
-	subroutine WindIt(data,flags,nspect,nschan,ischan,ioff,nchan)
-c
-	implicit none
-	complex data(*)
-	logical flags(*)
-	integer nchan,nspect,ioff,nschan(nspect),ischan(nspect)
-c
-c  This extracts the data and the flags, for the desired windows, for a
-c  particular visibility data record.
-c
-c  Input:
-c    nspect	Number of windows selected.
-c    nschan	Number of channels in each window.
-c    ischan	The offset of the first channel in each window.
-c  Input/Output:
-c    data
-c    flags
-c  Output:
-c    ioff	Offset of first channel in output data.
-c    nchan	Number of output channels.
-c------------------------------------------------------------------------
-	integer i,j,l1,l2
-c
-c  Move the data around.
-c
-	ioff = ischan(1)
-	nchan = nschan(1)
-	do i=2,nspect
-	  l1 = ischan(i)
-	  l2 = ischan(i) + nschan(i) - 1
-	  do j=l1,l2
-	    data(ioff+nchan) = data(j)
-	    flags(ioff+nchan) = flags(j)
-	    nchan = nchan + 1
-	  enddo
-	enddo
-c
+
 	end
 c************************************************************************
 	subroutine GetOpt(nocal,nopol,nopass,nowide,nochan,doall)
@@ -520,17 +419,11 @@ c    nowide	True if wide channels are not to be copied across.
 c    nochan	True if spectral channels are not to be copied across.
 c    doall	True if all data (not just unflagged) is to be copied.
 c------------------------------------------------------------------------
-	integer nopt
-	parameter(nopt=6)
-	character opts(nopt)*9
-	logical present(nopt)
-	data opts/'nocal    ','nowide   ','nochannel','unflagged',
-     *		  'nopol    ','nopass   '/
-	call options('options',opts,present,nopt)
-	nocal = present(1)
-	nowide = present(2)
-	nochan = present(3)
-	doall = .not.present(4)
-	nopol  = present(5)
-	nopass = present(6)
+
+	nocal  = .TRUE.
+	nopol  = .TRUE.
+	nopass = .TRUE.
+	nowide = .FALSE.
+	nochan = .FALSE.
+	doall = .TRUE.
 	end
