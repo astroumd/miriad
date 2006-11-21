@@ -4,7 +4,7 @@ c************************************************************************
 c
 c
 c  History:
-c    pjt  20nov06   Cloned of uvcat
+c    pjt  20nov06   Cloned off uvcat
 c  Bugs:
 c
 c= bwsel - Select records based on their wideband bandwidth
@@ -31,21 +31,20 @@ c--
 c------------------------------------------------------------------------
         include 'maxdim.h'
 	character version*(*)
-	parameter(version='BWsel: version 20-nov-06')
+	parameter(version='BWsel: version 21-nov-06')
 c
-	integer nchan,vhand,lIn,lOut,i,j,nspect,nPol,Pol,SnPol,SPol
+	integer nchan,vhand,lIn,lOut,nspect,nPol,Pol,SnPol,SPol
 	integer nschan(MAXWIN),ischan(MAXWIN),nwdata,length,nbw
 	double precision preamble(5),bw(MAXWIN),slop
 	complex data(maxchan),wdata(maxchan)
 	logical flags(maxchan),wflags(maxchan)
-	logical wins(MAXWIN)
 	logical first,init,new,more,dopol,PolVary,donenpol
 	logical dochan,dowide,docopy,updated
 	character out*256,type*1
 c
 c  Externals.
 c
-        logical uvVarUpd,uvDatPrb,uvDatOpn
+        logical uvVarUpd,uvDatOpn
 c
 	call output(version)
 	call keyini
@@ -64,12 +63,6 @@ c
 	else
 	   call uvopen(lOut,out,'new')
 	endif
-c
-c  Determine which windows have possibly been selected.
-c
-	do j=1,MAXWIN
-	  wins(j) = uvDatPrb('window',dble(j))
-	enddo
 c
 c  Other initialisation.
 c
@@ -118,7 +111,7 @@ c
 	    new = .true.
 c
 c  Case of still more data. Copy across any variables that we want,
-c  eliminate undesired spectra, write out the data.
+c  and write out the data.
 c
 	  else
 	    if(npol.eq.0)then
@@ -132,18 +125,13 @@ c  Update the window parameters if needed.
 c
 	    if(dochan) then
 	      if (uvVarUpd(vhand)) call WindUpd(lIn,lOut,
-     *			  MAXWIN,wins,nspect,nschan,ischan,
+     *			  MAXWIN,nspect,nschan,ischan,
      *                    bw,nbw)
 	    endif
 c
 c  Check if this data is wanted.
 c
 	    docopy = donenpol
-	    if(.not.docopy)then
-	      do i=1,nchan
-	        docopy = docopy .or. flags(i)
-	      enddo
-	    endif
 c
 c  Copy the variables we are interested in.
 c
@@ -246,12 +234,11 @@ c	call uvset(lIn,'selection','window',0,0.,0.,0.)
 c
 	end
 c************************************************************************
-	subroutine WindUpd(lIn,lOut,nwins,wins,nspectd,nschand,ischand,
+	subroutine WindUpd(lIn,lOut,nwins,nspectd,nschand,ischand,
      *                     bw,nbw)
 c
 	implicit none
 	integer nwins,nspectd,nschand(nwins),ischand(nwins),lIn,lOut,nbw
-	logical wins(nwins)
 	double precision bw(nbw)
 c
 c  This updates uv variables that are affected if we remove channels.
@@ -273,7 +260,6 @@ c  Input:
 c    lIn	Handle of the input uv data file.
 c    lOut	Handle of the output uv data file.
 c    nwins	Size of the arrays.
-c    wins	If wins(i) is true, window "i" is selected.
 c  Output:
 c    nspectd	Number of windows selected.
 c    nschand	Number of channels in each window.
@@ -343,12 +329,11 @@ c
      *				nxyph.gt.0
 	if(uxyph)call uvgetvrr(lIn,'xyphase',xyphase,nxyph)
 c
-c  Trim them down to size.
+c  copy
 c
 	nout = 0
 	offset = 1
 	do i=1,nspect
-	  if(wins(i))then
 	    nout = nout + 1
 	    nschand(nout) = nschan(i)
 	    ischand(nout) = ischan(i)	    
@@ -382,7 +367,6 @@ c
 	        xyphase((nout-1)*nants+j) = xyphase((i-1)*nants+j)
 	      enddo
 	    endif
-	  endif
 	enddo
 c
 c  Write all the goodies out.
