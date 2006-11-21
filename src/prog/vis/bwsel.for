@@ -30,7 +30,7 @@ c--
 c------------------------------------------------------------------------
         include 'maxdim.h'
 	character version*(*)
-	parameter(version='BWsel: version 21-nov-06 **TEST6**')
+	parameter(version='BWsel: version 21-nov-06 **TEST7**')
 c
 	integer nchan,vhand,lIn,lOut,nPol,Pol,SnPol,SPol
 	integer nwdata,length,nbw,i
@@ -366,12 +366,10 @@ c
 	
 c
 c  The data is assumed to have an LSB and USB, with nspec/2 windows in each side
+c  Note: bw() values are in MHz, but sds() in GHz
 c
 	if (mod(nspect,2).ne.0) call bug('f',
      *       'Odd number of nspect, no USB/LSB?')
-	do i=nbw+1,nspect/2
-	   bw(i) = 0.0d0
-	enddo
 	dobw = .TRUE.
 	do i=1,nspect/2
 	   mbw(i) = abs(sdf(i)*nschan(i)*1000.0d0)
@@ -380,6 +378,11 @@ c
      *                          bw(i)*(1+slop).gt.mbw(i)
 	   endif
 	enddo
+
+c
+c  Save the old mbw()'s and report in scanning mode (lout<0) what those are,
+c  with a timestamp
+c
 
 	if (.not.mbwinit) then
 	   nspect0 = nspect
@@ -402,15 +405,17 @@ c
 	      mbwold(i) = mbw(i)
 	   enddo
 
-	   call julday(julian,'T',mesg)
-	   mlen = len1(mesg) + 1
-	   mesg(mlen:mlen) = ' '
-	   mlen = mlen + 1
-	   do i=1,nspect/2
-	      write(mesg(mlen:),'(1x,F7.1,1x)') mbw(i)
-	      mlen = len1(mesg)
-	   enddo
-	   call output(mesg)
+	   if (lout.lt.0) then
+	      call julday(julian,'T',mesg)
+	      mlen = len1(mesg) + 1
+	      mesg(mlen:mlen) = ' '
+	      mlen = mlen + 1
+	      do i=1,nspect/2
+		 write(mesg(mlen:),'(1x,F7.1,1x)') mbw(i)
+		 mlen = len1(mesg)
+	      enddo
+	      call output(mesg)
+	   endif
 	endif
 
 	end

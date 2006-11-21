@@ -1642,10 +1642,15 @@ c
       if ( delday.lt.0.0 .or. delday.gt.dayav .or. 
      +    (ivis.gt.1 .and. track) ) then
          reset = .true.
+         write(*,*) 'PJT endave reset: ',ivis,baseday,day,delday*1440,
+     *              dayav*1440,track
          baseday = day
 c
          if (delday.lt.0.0) call bug ('w', 
      +      'Data not in time order, accumulators reset')
+      else
+         write(*,*) 'PJT endave : ',ivis,baseday,day,delday*1440,
+     *              dayav*1440,track
       end if
 c
       end

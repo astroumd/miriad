@@ -19,6 +19,8 @@ c   pjt    10aug00    submitted, set default of blankf to be 0.033
 c   pjt    11mar01    retrofitted the ATNF's insistence of keyf->keya
 c                     they made on 08may00
 c   pjt    30jan02    attempt to create widebands on the fly
+c   pjt     6sep06    carma mode to to not deal with the first two wide's 
+c                     (global LSB/USB)
 c***********************************************************************
 c= uvwide - recompute wide band from narrow band
 c& pjt
@@ -27,7 +29,7 @@ c+
       PROGRAM uvwide
       IMPLICIT NONE
 c
-c     UVWIDE is a Hat Creek specific MIRIAD task which allows you to 
+c     UVWIDE is a CARMA specific MIRIAD task which allows you to 
 c     recompute the wide band data from the narrow band data. It is 
 c     assumed the first two wide band channels are the digital wide 
 c     band derived from the narrow band data (LSB and USB). The spectral
@@ -36,7 +38,10 @@ c
 c     It is also possible to reset the narrow band flags, based
 c     on the wide band flags, and vice versa.
 c
-c     Note: this program will be adopted for CARMA.
+c     Note: this program uysed to be HatCreek specific, where the first two
+c     widebands were the global LSB/USB averages, CARMA uses nwide=nspect.
+c
+c     UVCAL can also be used to make wideband channels, using options=avechan.
 c
 c@ vis
 c     The name of the input visibility dataset.  
@@ -91,7 +96,7 @@ c
       CHARACTER PROG*(*)
       PARAMETER (PROG = 'UVWIDE')
       CHARACTER VERSION*(*)
-      PARAMETER (VERSION = '30-jan-02')
+      PARAMETER (VERSION = '6-sep-06')
 
 c
 c  Internal variables.

@@ -53,11 +53,15 @@ c
 c  TODO
 c     - write plane by plane, but this will limit it to mode=1
 c       but handle much larger cubes
+c     - instead of array(MAXSIZE) should really use the perhaps not so
+c       portable dynamic memory allocation trick in miriad
 c----------------------------------------------------------------------c
+c  #define miralloc
+c
        include 'maxdim.h'
        include 'mirconst.h'
        character*(*) version
-       parameter(version='UVIMAGE: version 21-sep-2006 ** test7 **')
+       parameter(version='UVIMAGE: version 28-sep-2006 ** test8 **')
        integer MAXSELS
        parameter(MAXSELS=512)
        integer MAXSIZE
@@ -71,9 +75,15 @@ c----------------------------------------------------------------------c
        real start,width,step
        character*128 vis,out,linetype,line
        character*10 view
-       integer antsel(MAXANT),ant1,ant2,nant,ntime
+       integer antsel(MAXANT),ant1,ant2,nant,ntime,apnt
        integer lout,nsize(3),i,j,k,l
-       real v,array(MAXSIZE)
+       real v
+#ifdef miralloc
+       real array(MAXBUF)
+       common array
+#else
+       real array(MAXSIZE)
+#endif
        real datamin,datamax
        character*1 type
        integer length
@@ -185,7 +195,13 @@ c
 
        call xyopen(lOut,Out,'new',3,nsize)
        call maphead(lIn,lOut,nsize,omode)
-       call azero(array,nsize(1),nsize(2),nsize(3))
+
+#ifdef miralloc
+       call memalloc(apnt,nsize(1)*nsize(2)*nsize(3),'r')
+#else
+       apnt = 1
+#endif
+       call azero(array(apnt),nsize(1),nsize(2),nsize(3))
 
 c
 c   Rewind vis file and now process the data
