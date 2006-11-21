@@ -12,20 +12,23 @@ c& pjt
 c: uv analysis
 c+
 c	BWSEL is a MIRIAD task which copies and catenates multiple MIRIAD
-c	uv data sets. Only records are copied of which their bandwidth 
+c	uv data sets. Only records are copied of which their bandwidth
+c       matches a given set to a given accuracy.
+c       If data has changing number of spectral windows (nspect) or has
+c       no channel data, program will currently abort.
 c@ vis
 c	The names of the input uv data sets. Multiple names can be given,
 c	separated by commas. At least one name must be given.
 c@ bw  
 c       A set of bandwidths, in MHz, in order for a record to be copied.
 c       Use a 0 if no match is needed. Multiple non-zero values need to be
-c       all matched. Default
+c       all matched. Default: all records.
 c@ slop
 c       Fraction of frequency within which the bandwith should be to be selected.
 c       Default: 0.25
 c@ out
 c	The name of the output uv data set. If none supplied, input dataset
-c       is scanned.
+c       is scanned and reports bandwidths (in MHz) where the dataset changes.
 c--
 c------------------------------------------------------------------------
         include 'maxdim.h'
