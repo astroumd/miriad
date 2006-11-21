@@ -30,10 +30,10 @@ c--
 c------------------------------------------------------------------------
         include 'maxdim.h'
 	character version*(*)
-	parameter(version='BWsel: version 21-nov-06')
+	parameter(version='BWsel: version 21-nov-06 **TEST5**')
 c
-	integer nchan,vhand,lIn,lOut,nspect,nPol,Pol,SnPol,SPol
-	integer nschan(MAXWIN),ischan(MAXWIN),nwdata,length,nbw
+	integer nchan,vhand,lIn,lOut,nPol,Pol,SnPol,SPol
+	integer nwdata,length,nbw,i
 	integer nvis0, nvis1
 	double precision preamble(5),bw(MAXWIN),slop
 	complex data(maxchan),wdata(maxchan)
@@ -75,6 +75,9 @@ c
 	dobw = .false.
 	nvis1 = 0
 	nvis0 = 0
+	do i=nbw+1,MAXWIN
+	   bw(i) = 0.0
+	enddo
 c
 c  Loop the loop. Open a file, process it, copy it, etc.
 c
@@ -129,7 +132,6 @@ c
 	    if(dochan) then
 	       if (uvVarUpd(vhand)) then
 		  call WindUpd(lIn,lOut,
-     *                    MAXWIN,nspect,nschan,ischan,
      *                    bw,nbw,slop,dobw)
 		  nvis0 = nvis0 + 1
 		  if (dobw) nvis1 = nvis1 + 1
@@ -240,18 +242,13 @@ c
 c
 	call uvprobvr(lIn,'npol',type,length,updated)
 	dopol = type.eq.'i'
-c
-c  Disable window-based selection, as that is done manually.
-c
-c	call uvset(lIn,'selection','window',0,0.,0.,0.)
-c
+
 	end
 c************************************************************************
-	subroutine WindUpd(lIn,lOut,nwins,nspectd,nschand,ischand,
-     *                     bw,nbw,slop,dobw)
+	subroutine WindUpd(lIn,lOut,bw,nbw,slop,dobw)
 c
 	implicit none
-	integer nwins,nspectd,nschand(nwins),ischand(nwins),lIn,lOut,nbw
+	integer lIn,lOut,nbw
 	double precision bw(nbw),slop
 	logical dobw
 c
@@ -273,16 +270,15 @@ c
 c  Input:
 c    lIn	Handle of the input uv data file.
 c    lOut	Handle of the output uv data file.
-c    nwins	Size of the arrays.
+c    nbw        number of BW's given
+c    bw         array is BW's
+c    slop       slop value
 c  Output:
-c    nspectd	Number of windows selected.
-c    nschand	Number of channels in each window.
-c    ischand	The offset of the first channel in each window.
-c    window	This is false if all windows are selected.
+c    dobw       is this record good to copy?
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	integer nschan(MAXWIN),ischan(MAXWIN),nants
-	integer length,nspect,offset,nout,i,j,nsystemp,nxyph
+	integer length,nspect,nout,i,nsystemp,nxyph
 	integer nxtsys,nytsys
 	double precision sdf(MAXWIN),sfreq(MAXWIN),restfreq(MAXWIN)
 	double precision mbw(MAXWIN)
@@ -300,8 +296,6 @@ c
 	call uvgetvri(lIn,'nspect',nspect,1)
 	if(nspect.le.0)
      *	  call bug('f','Bad value for uv variable nspect')
-	if(nspect.gt.nwins)
-     *	  call bug('f','There are too many windows for me to handle')
 
 c
 c  Get all the goodies, noting whether they are being updated.
@@ -311,8 +305,8 @@ c
 	call uvprobvr(lIn,'ischan',type,length,uischan)
 	call uvgetvri(lIn,'ischan',ischan,nspect)
 	call uvprobvr(lIn,'sdf',type,length,usdf)
-	call uvgetvrd(lIn,'sdf',sdf,nspect)
-	call uvprobvr(lIn,'sfreq',type,length,usfreq)
+	call uvgetvrd(lIn,'sdf',sdf,nspect)	
+        call uvprobvr(lIn,'sfreq',type,length,usfreq)
 	call uvgetvrd(lIn,'sfreq',sfreq,nspect)
 	call uvprobvr(lIn,'restfreq',type,length,urest)
 	call uvgetvrd(lIn,'restfreq',restfreq,nspect)
@@ -343,67 +337,30 @@ c
 	uxyph = type.eq.'r'.and.nxyph.le.MAXANT*MAXWIN.and.
      *				nxyph.gt.0
 	if(uxyph)call uvgetvrr(lIn,'xyphase',xyphase,nxyph)
-c
-c  copy
-c
-	nout = 0
-	offset = 1
-	do i=1,nspect
-	    nout = nout + 1
-	    nschand(nout) = nschan(i)
-	    ischand(nout) = ischan(i)	    
-	    nschan(nout) = nschan(i)
-	    ischan(nout) = offset
-	    offset = offset + nschan(i)
-	    sdf(nout) = sdf(i)
-	    sfreq(nout) = sfreq(i)
-	    restfreq(nout) = restfreq(i)
-c
-	    if(usyst.and.nsystemp.ge.nspect*nants)then
-	      do j=1,nants
-	        systemp((nout-1)*nants+j) = systemp((i-1)*nants+j)
-	      enddo
-	    endif
 
-	    if(uxtsys.and.nxtsys.ge.nspect*nants)then
-	      do j=1,nants
-	        xtsys((nout-1)*nants+j) = xtsys((i-1)*nants+j)
-	      enddo
-	    endif
-
-	    if(uytsys.and.nytsys.ge.nspect*nants)then
-	      do j=1,nants
-	        ytsys((nout-1)*nants+j) = ytsys((i-1)*nants+j)
-	      enddo
-	    endif
-c
-	    if(uxyph.and.nxyph.ge.nspect*nants)then
-	      do j=1,nants
-	        xyphase((nout-1)*nants+j) = xyphase((i-1)*nants+j)
-	      enddo
-	    endif
-	enddo
+	nout = nspect
 c
 c  Write all the goodies out.
 c
-	if(nout.eq.0) call bug('f','No windows were selected')
-	call uvputvri(lOut,'nspect',nout,1)
-	call uvputvri(lOut,'nschan',nschan,nout)
-	call uvputvri(lOut,'ischan',ischan,nout)
-	call uvputvrd(lOut,'sdf',sdf,nout)
-	call uvputvrd(lOut,'sfreq',sfreq,nout)
-	call uvputvrd(lOut,'restfreq',restfreq,nout)
-	if(nsystemp.ge.nspect*nants)nsystemp = nout*nants
-	if(usyst)call uvputvrr(lOut,'systemp',systemp,nsystemp)
-	if(nxtsys.ge.nspect*nants) nxtsys = nout*nants
-	if(uxtsys) call uvputvrr(lOut,'xtsys',xtsys,nxtsys)
-	if(nytsys.ge.nspect*nants) nytsys = nout*nants
-	if(uytsys) call uvputvrr(lOut,'ytsys',ytsys,nytsys)
-	if(uxyph)call uvputvrr(lOut,'xyphase',xyphase,nxyph)
+	if (lout.gt.0) then
+	   call uvputvri(lOut,'nspect',nout,1)
+	   call uvputvri(lOut,'nschan',nschan,nout)
+	   call uvputvri(lOut,'ischan',ischan,nout)
+	   call uvputvrd(lOut,'sdf',sdf,nout)
+           call uvputvrd(lOut,'sfreq',sfreq,nspect)
+	   call uvputvrd(lOut,'restfreq',restfreq,nspect)
+	   if(nsystemp.ge.nspect*nants)nsystemp = nout*nants
+	   if(usyst)call uvputvrr(lOut,'systemp',systemp,nsystemp)
+	   if(nxtsys.ge.nspect*nants) nxtsys = nout*nants
+	   if(uxtsys) call uvputvrr(lOut,'xtsys',xtsys,nxtsys)
+	   if(nytsys.ge.nspect*nants) nytsys = nout*nants
+	   if(uytsys) call uvputvrr(lOut,'ytsys',ytsys,nytsys)
+	   if(uxyph)call uvputvrr(lOut,'xyphase',xyphase,nxyph)
+	endif
 
 	
 c
-c  The data is assumed to have a LSB and USB, with nspec/2 windows in each
+c  The data is assumed to have an LSB and USB, with nspec/2 windows in each side
 c
 	if (mod(nspect,2).ne.0) call bug('f',
      *       'Odd number of nspect, no USB/LSB?')
@@ -420,28 +377,4 @@ c
 	enddo
 	write(*,'(3F7.1)') mbw(1),mbw(2),mbw(3)
 
-	end
-c************************************************************************
-	subroutine GetOpt(nocal,nopol,nopass,nowide,nochan,doall)
-c
-	implicit none
-	logical nocal,nopol,nopass,nowide,nochan,doall
-c
-c  Determine extra processing options.
-c
-c  Output:
-c    nocal	If true, do not apply selfcal corrections.
-c    nopol	If true, do not apply polarisation corrections.
-c    nopass	If true, do not apply bandpass corrections.
-c    nowide	True if wide channels are not to be copied across.
-c    nochan	True if spectral channels are not to be copied across.
-c    doall	True if all data (not just unflagged) is to be copied.
-c------------------------------------------------------------------------
-
-	nocal  = .TRUE.
-	nopol  = .TRUE.
-	nopass = .TRUE.
-	nowide = .FALSE.
-	nochan = .FALSE.
-	doall = .TRUE.
 	end
