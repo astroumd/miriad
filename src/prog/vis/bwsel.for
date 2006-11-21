@@ -12,18 +12,17 @@ c& pjt
 c: uv analysis
 c+
 c	BWSEL is a MIRIAD task which copies and catenates multiple MIRIAD
-c	uv data sets. By default, UVCAT applies the gains file in copying the
-c	data. Only records are copied of which their bandwidth 
+c	uv data sets. Only records are copied of which their bandwidth 
 c@ vis
 c	The names of the input uv data sets. Multiple names can be given,
 c	separated by commas. At least one name must be given.
 c@ bw  
 c       A set of bandwidths, in MHz, in order for a record to be copied.
-c       Use a 0 if no match is needed. Multiple non-zero values are logically
-c       ANDed. Default
+c       Use a 0 if no match is needed. Multiple non-zero values need to be
+c       all matched. Default
 c@ slop
-c       Fraction of frequency within which the bandwith should be to be selected
-c       Default: 0.1
+c       Fraction of frequency within which the bandwith should be to be selected.
+c       Default: 0.25
 c@ out
 c	The name of the output uv data set. If none supplied, input dataset
 c       is scanned.
@@ -35,11 +34,12 @@ c------------------------------------------------------------------------
 c
 	integer nchan,vhand,lIn,lOut,nspect,nPol,Pol,SnPol,SPol
 	integer nschan(MAXWIN),ischan(MAXWIN),nwdata,length,nbw
+	integer nvis0, nvis1
 	double precision preamble(5),bw(MAXWIN),slop
 	complex data(maxchan),wdata(maxchan)
 	logical flags(maxchan),wflags(maxchan)
 	logical first,init,new,more,dopol,PolVary,donenpol
-	logical dochan,dowide,docopy,updated
+	logical dochan,dowide,docopy,updated,dobw
 	character out*256,type*1
 c
 c  Externals.
@@ -51,9 +51,9 @@ c
 	call uvDatInp('vis','2')
 	call keya('out',out,' ')
 	call mkeyd('bw',bw,MAXWIN,nbw)
-	call keyd('slop',slop,0.1)
+	call keyd('slop',slop,0.25d0)
 	call keyfin
-c	call GetOpt(nocal,nopol,nopass,nowide,nochan,doall)
+
 c
 c  Check user inputs, allow no output in scanning mode
 c
@@ -72,6 +72,9 @@ c
 	SnPol = 0
 	SPol = 0
 	PolVary = .false.
+	dobw = .false.
+	nvis1 = 0
+	nvis0 = 0
 c
 c  Loop the loop. Open a file, process it, copy it, etc.
 c
@@ -124,14 +127,21 @@ c
 c  Update the window parameters if needed.
 c
 	    if(dochan) then
-	      if (uvVarUpd(vhand)) call WindUpd(lIn,lOut,
-     *			  MAXWIN,nspect,nschan,ischan,
-     *                    bw,nbw)
+	       if (uvVarUpd(vhand)) then
+		  call WindUpd(lIn,lOut,
+     *                    MAXWIN,nspect,nschan,ischan,
+     *                    bw,nbw,slop,dobw)
+		  nvis0 = nvis0 + 1
+		  if (dobw) nvis1 = nvis1 + 1
+	       endif
+	    else
+	       call bug('f','no channel data??, code not ready')
 	    endif
 c
 c  Check if this data is wanted.
 c
 	    docopy = donenpol
+	    docopy = dobw
 c
 c  Copy the variables we are interested in.
 c
@@ -167,10 +177,13 @@ c
 c  Finish up the history, and close up shop.
 c
         call hisopen(lOut,'append')
-        call hiswrite(lOut,'UVCAT: Miriad '//version)
-	call hisinput(lOut,'UVCAT')
+        call hiswrite(lOut,'BWSEL: Miriad '//version)
+	call hisinput(lOut,'BWSEL')
         call hisclose (lOut)
 	call uvclose(lOut)
+
+	write(*,*) 'Copied ',nvis1,'/',nvis0,' records'
+
 	end
 c************************************************************************
 	subroutine SetUp(lIn,dochan,dowide,dopol,vhand)
@@ -235,11 +248,12 @@ c
 	end
 c************************************************************************
 	subroutine WindUpd(lIn,lOut,nwins,nspectd,nschand,ischand,
-     *                     bw,nbw)
+     *                     bw,nbw,slop,dobw)
 c
 	implicit none
 	integer nwins,nspectd,nschand(nwins),ischand(nwins),lIn,lOut,nbw
-	double precision bw(nbw)
+	double precision bw(nbw),slop
+	logical dobw
 c
 c  This updates uv variables that are affected if we remove channels.
 c  These variables are:
@@ -271,6 +285,7 @@ c------------------------------------------------------------------------
 	integer length,nspect,offset,nout,i,j,nsystemp,nxyph
 	integer nxtsys,nytsys
 	double precision sdf(MAXWIN),sfreq(MAXWIN),restfreq(MAXWIN)
+	double precision mbw(MAXWIN)
 	real systemp(MAXANT*MAXWIN),xyphase(MAXANT*MAXWIN)
 	real xtsys(MAXANT*MAXWIN),ytsys(MAXANT*MAXWIN)
 	character type*1
@@ -282,12 +297,12 @@ c  Get the dimensioning info.
 c
 	call uvgetvri(lIn,'nants',nants,1)
 	call uvprobvr(lIn,'nspect',type,length,unspect)
-	write(*,*) 'NSPECT=',nspect
 	call uvgetvri(lIn,'nspect',nspect,1)
 	if(nspect.le.0)
      *	  call bug('f','Bad value for uv variable nspect')
 	if(nspect.gt.nwins)
      *	  call bug('f','There are too many windows for me to handle')
+
 c
 c  Get all the goodies, noting whether they are being updated.
 c
@@ -385,6 +400,25 @@ c
 	if(nytsys.ge.nspect*nants) nytsys = nout*nants
 	if(uytsys) call uvputvrr(lOut,'ytsys',ytsys,nytsys)
 	if(uxyph)call uvputvrr(lOut,'xyphase',xyphase,nxyph)
+
+	
+c
+c  The data is assumed to have a LSB and USB, with nspec/2 windows in each
+c
+	if (mod(nspect,2).ne.0) call bug('f',
+     *       'Odd number of nspect, no USB/LSB?')
+	do i=nbw+1,nspect/2
+	   bw(i) = 0.0d0
+	enddo
+	dobw = .TRUE.
+	do i=1,nspect/2
+	   mbw(i) = abs(sdf(i)*nschan(i)*1000.0d0)
+	   if (bw(i).ne.0.0d0) then
+	      dobw = dobw .and. bw(i)*(1-slop).lt.mbw(i) .and.
+     *                          bw(i)*(1+slop).gt.mbw(i)
+	   endif
+	enddo
+	write(*,'(3F7.1)') mbw(1),mbw(2),mbw(3)
 
 	end
 c************************************************************************
