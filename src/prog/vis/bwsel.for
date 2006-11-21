@@ -30,7 +30,7 @@ c--
 c------------------------------------------------------------------------
         include 'maxdim.h'
 	character version*(*)
-	parameter(version='BWsel: version 21-nov-06 **TEST5**')
+	parameter(version='BWsel: version 21-nov-06 **TEST6**')
 c
 	integer nchan,vhand,lIn,lOut,nPol,Pol,SnPol,SPol
 	integer nwdata,length,nbw,i
@@ -48,7 +48,7 @@ c
 c
 	call output(version)
 	call keyini
-	call uvDatInp('vis','2')
+	call uvDatInp('vis','3')
 	call keya('out',out,' ')
 	call mkeyd('bw',bw,MAXWIN,nbw)
 	call keyd('slop',slop,0.25d0)
@@ -85,7 +85,7 @@ c
 	dowhile(more)
 	  if(new)then
 	    call SetUp(lIn,dochan,dowide,dopol,vhand)
-	    if(dowide.and..not.dochan)
+	    if(dowide.and..not.dochan.and.lout.gt.0)
      *	      call uvset(lOut,'data','wide',0,1.,1.,1.)
 	    npol = 0
 	    donenpol = .false.
@@ -96,12 +96,12 @@ c  Copy the history the first time, and set the form of the output
 c  correlations the first time we are to copy some.
 c
 	  if(first)then
-	    call hdcopy(lIn,lOut,'history')
+	    if(lout.gt.0)call hdcopy(lIn,lOut,'history')
 	    first = .false.
 	  endif
 	  if(.not.init.and.dochan)then
 	    call uvprobvr(lIn,'corr',type,length,updated)
-	    call uvset(lOut,'corr',type,0,0.,0.,0.)
+	    if(lout.gt.0)call uvset(lOut,'corr',type,0,0.,0.,0.)
 	    init = .true.
 	  endif
 c
@@ -132,12 +132,12 @@ c
 	    if(dochan) then
 	       if (uvVarUpd(vhand)) then
 		  call WindUpd(lIn,lOut,
-     *                    bw,nbw,slop,dobw)
+     *                    preamble(4),bw,nbw,slop,dobw)
 		  nvis0 = nvis0 + 1
 		  if (dobw) nvis1 = nvis1 + 1
 	       endif
 	    else
-	       call bug('f','no channel data??, code not ready')
+	       call bug('f','no channel data: code not ready for this')
 	    endif
 c
 c  Check if this data is wanted.
@@ -150,7 +150,7 @@ c
 	    if(docopy)then
 	      if(.not.donenpol)then
 	        if(nPol.ne.SnPol)then
-		  call uvputvri(lOut,'npol',nPol,1)
+		  if(lout.gt.0)call uvputvri(lOut,'npol',nPol,1)
 		  PolVary = SnPol.ne.0
 		  SnPol = nPol
 	        endif
@@ -158,15 +158,15 @@ c
 	      endif
 	      call uvDatGti('pol',Pol)
 	      if(Pol.ne.SPol)then
-		call uvputvri(lOut,'pol',Pol,1)
+		if(lout.gt.0)call uvputvri(lOut,'pol',Pol,1)
 		SPol = Pol
 	      endif
-	      call VarCopy(lIn,lOut)
+	      if(lout.gt.0)call VarCopy(lIn,lOut)
 	      if(dowide.and.dochan)then
 	        call uvDatWRd(wdata,wflags,maxchan,nwdata)
-	        call uvwwrite(lOut,wdata,wflags,nwdata)
+	        if(lout.gt.0)call uvwwrite(lOut,wdata,wflags,nwdata)
 	      endif
-	      call uvwrite(lOut,preamble,data,flags,nchan)
+	      if(lout.gt.0)call uvwrite(lOut,preamble,data,flags,nchan)
 	    endif
 	    npol = npol - 1
 	  endif
@@ -174,17 +174,20 @@ c
 c
 c  Write out the "npol" parameter, if it did not vary.
 c
-	if(.not.PolVary) call wrhdi(lOut,'npol',Snpol)
+	if(.not.PolVary .and. lout.gt.0) call wrhdi(lOut,'npol',Snpol)
 c
 c  Finish up the history, and close up shop.
 c
-        call hisopen(lOut,'append')
-        call hiswrite(lOut,'BWSEL: Miriad '//version)
-	call hisinput(lOut,'BWSEL')
-        call hisclose (lOut)
-	call uvclose(lOut)
-
-	write(*,*) 'Copied ',nvis1,'/',nvis0,' records'
+        if(lout.gt.0) then
+	   call hisopen(lOut,'append')
+	   call hiswrite(lOut,'BWSEL: Miriad '//version)
+	   call hisinput(lOut,'BWSEL')
+	   call hisclose (lOut)
+	   call uvclose(lOut)
+	   write(*,*) 'Copied ',nvis1,'/',nvis0,' records'
+	else
+	   write(*,*) 'Marking ',nvis1,'/',nvis0,' records for copy'
+	endif
 
 	end
 c************************************************************************
@@ -245,11 +248,11 @@ c
 
 	end
 c************************************************************************
-	subroutine WindUpd(lIn,lOut,bw,nbw,slop,dobw)
+	subroutine WindUpd(lIn,lOut,julian,bw,nbw,slop,dobw)
 c
 	implicit none
 	integer lIn,lOut,nbw
-	double precision bw(nbw),slop
+	double precision julian,bw(nbw),slop
 	logical dobw
 c
 c  This updates uv variables that are affected if we remove channels.
@@ -278,21 +281,24 @@ c    dobw       is this record good to copy?
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	integer nschan(MAXWIN),ischan(MAXWIN),nants
-	integer length,nspect,nout,i,nsystemp,nxyph
-	integer nxtsys,nytsys
+	integer length,nspect,i,nsystemp,nxyph,nspect0
+	integer nxtsys,nytsys,mlen
 	double precision sdf(MAXWIN),sfreq(MAXWIN),restfreq(MAXWIN)
-	double precision mbw(MAXWIN)
+	double precision mbw(MAXWIN),mbwold(MAXWIN)
 	real systemp(MAXANT*MAXWIN),xyphase(MAXANT*MAXWIN)
 	real xtsys(MAXANT*MAXWIN),ytsys(MAXANT*MAXWIN)
-	character type*1
-	logical unspect,unschan,uischan,usdf,usfreq,urest,usyst
-	logical uxtsys,uytsys
-	logical uxyph
+	character type*1,mesg*128
+	logical unschan,uischan,usdf,usfreq,urest,usyst
+	logical uxtsys,uytsys,uxyph,mbwinit,qout
+	integer len1
+	save mbwold,mbwinit,nspect0
+	data mbwinit/.FALSE./
+
+
 c
-c  Get the dimensioning info.
+c  Get important dimensioning info.
 c
 	call uvgetvri(lIn,'nants',nants,1)
-	call uvprobvr(lIn,'nspect',type,length,unspect)
 	call uvgetvri(lIn,'nspect',nspect,1)
 	if(nspect.le.0)
      *	  call bug('f','Bad value for uv variable nspect')
@@ -338,22 +344,21 @@ c
      *				nxyph.gt.0
 	if(uxyph)call uvgetvrr(lIn,'xyphase',xyphase,nxyph)
 
-	nout = nspect
 c
 c  Write all the goodies out.
 c
 	if (lout.gt.0) then
-	   call uvputvri(lOut,'nspect',nout,1)
-	   call uvputvri(lOut,'nschan',nschan,nout)
-	   call uvputvri(lOut,'ischan',ischan,nout)
-	   call uvputvrd(lOut,'sdf',sdf,nout)
+	   call uvputvri(lOut,'nspect',nspect,1)
+	   call uvputvri(lOut,'nschan',nschan,nspect)
+	   call uvputvri(lOut,'ischan',ischan,nspect)
+	   call uvputvrd(lOut,'sdf',sdf,nspect)
            call uvputvrd(lOut,'sfreq',sfreq,nspect)
 	   call uvputvrd(lOut,'restfreq',restfreq,nspect)
-	   if(nsystemp.ge.nspect*nants)nsystemp = nout*nants
+	   if(nsystemp.ge.nspect*nants)nsystemp = nspect*nants
 	   if(usyst)call uvputvrr(lOut,'systemp',systemp,nsystemp)
-	   if(nxtsys.ge.nspect*nants) nxtsys = nout*nants
+	   if(nxtsys.ge.nspect*nants) nxtsys = nspect*nants
 	   if(uxtsys) call uvputvrr(lOut,'xtsys',xtsys,nxtsys)
-	   if(nytsys.ge.nspect*nants) nytsys = nout*nants
+	   if(nytsys.ge.nspect*nants) nytsys = nspect*nants
 	   if(uytsys) call uvputvrr(lOut,'ytsys',ytsys,nytsys)
 	   if(uxyph)call uvputvrr(lOut,'xyphase',xyphase,nxyph)
 	endif
@@ -375,6 +380,37 @@ c
      *                          bw(i)*(1+slop).gt.mbw(i)
 	   endif
 	enddo
-	write(*,'(3F7.1)') mbw(1),mbw(2),mbw(3)
+
+	if (.not.mbwinit) then
+	   nspect0 = nspect
+	   qout = .TRUE.
+	   mbwinit = .TRUE.
+	else
+	   if (nspect.ne.nspect0) then
+	      call bug('f','Cannot deal with changing nspect')
+	   endif
+	   qout = .FALSE.
+	   do i=1,nspect/2
+	      if (mbw(i).NE.mbwold(i)) then
+		 qout = .TRUE.
+	      endif
+	   enddo
+	endif
+
+	if (qout) then
+	   do i=1,nspect/2
+	      mbwold(i) = mbw(i)
+	   enddo
+
+	   call julday(julian,'T',mesg)
+	   mlen = len1(mesg) + 1
+	   mesg(mlen:mlen) = ' '
+	   mlen = mlen + 1
+	   do i=1,nspect/2
+	      write(mesg(mlen:),'(1x,F7.1,1x)') mbw(i)
+	      mlen = len1(mesg)
+	   enddo
+	   call output(mesg)
+	endif
 
 	end
