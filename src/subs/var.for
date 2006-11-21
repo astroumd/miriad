@@ -42,6 +42,7 @@ c                 to that of systemp
 c    gmx  14may04 Added variable lefty (to indicate that y coordinate was 
 c                 flipped from the original WSRT UVfits file)
 c    pjt  30jan06 added dazim,delev (CARMA specific)
+c    pjt  21nov06 added tcorr (ATNF, but CARMA and SMA are also defining it)
 c
 c************************************************************************
 c*VarInit -- Initialise the copy routines.
@@ -99,7 +100,7 @@ c
 	integer i
 c
 	integer nvar,nline,nwide,nvelo
-	parameter(nvar=87,nline=10,nwide=3,nvelo=6)
+	parameter(nvar=88,nline=10,nwide=3,nvelo=6)
         character var(nvar)*8,line(nline)*8,wide(nwide)*8,velo(nvelo)*8
 c
 c  Variables to check for a change, for line=channel.
@@ -132,7 +133,8 @@ c
      *     'obsra   ','on      ','operator','pbfwhm  ','phaselo1',
      *	   'phaselo2','pntdec  ','pntra   ','phasem1 ','plangle ',
      *	   'plmaj   ','plmin   ','pltb    ','precipmm','pressmb ',
-     *	   'project ','ra      ','relhumid','source  ','telescop',
+     *	   'project ','ra      ','relhumid','source  ','tcorr   ',
+     *	   'telescop',
      *	   'temp    ','themt   ','tif2    ','tpower  ','tsis    ',
      *	   'ut      ','veldop  ','veltype ','version ','vsource ',
      *	   'winddir ','windmph ','delay   ','delay0  ',
