@@ -1,593 +1,570 @@
-      subroutine RPFITS_READ_TABLE(lun, m, ii, endhdr)
- 
-C     routine to read any  FITS tables right up to
-C     the end of the header
-C     On entry:
-C                lun is the lun of the RPFITS file
-C                m is the array of card images
-C                ii is the current line in the array m, or is set to -1
-C                    if only the flag table (at the end of the data) is
-C                    to be read
-C                endhdr will be set to true if the end of header is 
-C                    encountered
-C     RPN 29/9/88
-C     HM  11/5/90  Made mods necessary for compilation on SUNs
-C     HM  29/1/91  Reduced lines to 72 chars
-C     HM  15/5/92  Allow for up to source number up to 999 in IF, FG, SU
-C                  and CU tables. Also increased are if_simul in IF 
-C                  table and entry number in flag table.
-C     HM  26/8/92  Fix bug. Set i=1 not 0 after write.
-C     HM  23/6/93  Eliminate unused variables.
-C     HM  11/3/94  Changed format of MT table (i4 to i5)
-C-----------------------------------------------------------------------
+      subroutine RPFITS_READ_TABLE(lun, tcards, ii, endhdr)
+*-----------------------------------------------------------------------
+*     Read all RPFITS tables to the end of the header.
+*
+*     Given:
+*          LUN      int   Logical unit number of the RPFITS file.
+*          TCARDS(32)*80
+*                   char  Array of header cards containing tables.
+*          II       int   Current index in array TCARDS, or -1 if only
+*                         the flag table (at the end of the data) is to
+*                         be read.
+*
+*     Returned:
+*          ENDHDR   log   TRUE if the end of header was encountered.
+*
+*     Original: Ray Norris 1988/09/29
+*     $Id$
+*-----------------------------------------------------------------------
       logical   endhdr, fg_only
-      integer   lun, i, ii, status, AT_READ, ichr(640), j
-      character m(32)*80
- 
+      integer   AT_READ, idx, ierr, ii, ichr(640), j, lun
+      character keywrd*8, tcards(32)*80
+
       include 'rpfits.inc'
- 
-      i = ABS(ii)
+
+      idx = ABS(ii)
       fg_only = (ii.eq.-1)
       do while (.not. endhdr)
- 
          if (ncard.lt.0) then
-            card(-ncard) = m(i)
+            card(-ncard) = tcards(idx)
             ncard = ncard - 1
          end if
- 
-         if (m(i)(1:8).eq.'TABLE IF') then
-            call READIF (lun, m, i)
-         else if (m(i)(1:8).eq.'TABLE SU') then
-            call READSU (lun, m, i)
-         else if (m(i)(1:8).eq.'TABLE FG') then
-            call READFG (lun, m, i)
-         else if (m(i)(1:8).eq.'TABLE AN') then
-            call READAN (lun, m, i)
-         else if (m(i)(1:8).eq.'TABLE MT') then
-            call READMT (lun, m, i)
-         else if (m(i)(1:8).eq.'TABLE CU') then
-            call READCU (lun, m, i)
-         else if (m(i)(1:8).eq.'END     ') then
+
+         keywrd = tcards(idx)(1:8)
+         if (keywrd.eq.'TABLE IF') then
+            if_found = .true.
+            call READIF (lun, tcards, idx)
+         else if (keywrd.eq.'TABLE SU') then
+            su_found = .true.
+            call READSU (lun, tcards, idx)
+         else if (keywrd.eq.'TABLE FG') then
+            fg_found = .true.
+            call READFG (lun, tcards, idx)
+         else if (keywrd.eq.'TABLE AN') then
+            an_found = .true.
+            call READAN (lun, tcards, idx)
+         else if (keywrd.eq.'TABLE MT') then
+            mt_found = .true.
+            call READMT (lun, tcards, idx)
+         else if (keywrd.eq.'TABLE CU') then
+            cu_found = .true.
+            call READCU (lun, tcards, idx)
+         else if (keywrd.eq.'END     ') then
             endhdr = .true.
             return
          end if
- 
+
          if (fg_only) then
             endhdr = .false.
             return
          end if
- 
-         i = i + 1
-         if (i.gt.32) then
-            status = AT_READ (lun, ichr)
-            write (m, '(32(20a4,:,/))') (ichr(j),j=1,640)
-            i = 1
+
+         idx = idx + 1
+         if (idx.gt.32) then
+            ierr = AT_READ (lun, ichr)
+            write (tcards, '(32(20a4,:,/))') (ichr(j), j=1,640)
+            idx = 1
          end if
       end do
- 
+
       return
       end
- 
- 
- 
- 
- 
- 
-      subroutine READIF (lun, m, i)
- 
-C     routine to read an IF table from an RPFITS file 
-C
-C     RPN 29/9/88
-C     Modified 14/Dec/91 HM  Added if_simul and if_chain. Old data 
-C     without them is given if_simul=if_chain=1 in the IF table.
-C     Modified 14/May/92 HM  Allow for i3 if_num or if_simul.
-C-----------------------------------------------------------------------
-      integer   lun, i, j, k, l, status, AT_READ, ichr(640), ios
-      character m(32)*80, temp*5
- 
+
+
+
+      subroutine READIF (lun, tcards, idx)
+*-----------------------------------------------------------------------
+*     Read an IF (intermediate frequency, i.e. spectral window) table
+*     from an RPFITS file.
+*
+*     Original: Ray Norris 1988/09/29
+*-----------------------------------------------------------------------
+      integer   AT_READ, ichr(640), idx, ierr, j, jdx, l, lun
+      character keywrd*8, tcards(32)*80, temp*5
+
       include 'rpfits.inc'
 
       n_if = 0
       do while (.true.)
-         do j = i + 1,32
+         do jdx = idx+1, 32
             if (ncard.lt.0) then
-               card(-ncard) = m(j)
+               card(-ncard) = tcards(jdx)
                ncard = ncard - 1
             end if
- 
-            if (m(j)(1:8).eq.'ENDTABLE') then
-               i = j
-               goto 999
-            else if (m(j)(1:8).eq.'HEADER') then
-            else if (m(j)(1:8).eq.'COMMENT') then
+
+            keywrd = tcards(jdx)(1:8)
+            if (keywrd.eq.'ENDTABLE') then
+               idx = jdx
+               go to 999
+            else if (keywrd.eq.'HEADER') then
+            else if (keywrd.eq.'COMMENT') then
             else
-               k = n_if + 1
-               read(m(j),'(BN, i3, f16.3, 1x, i2, 1x, f16.3, i5, 1x,
-     +            i2, 1x, 4a2, 1x, i1, 1x, f6.1, 1x, a5)',iostat=ios)      
-     +            if_num(k), if_freq(k), if_invert(k),
-     +            if_bw(k), if_nfreq(k), if_nstok(k), 
-     +            (if_cstok(l,k),l = 1,4), if_sampl(k), 
-     +            if_ref(k), temp
-	       if(ios.ne.0) stop ' ERROR READING IF TABLE'
-               if (temp .eq. ' ') then
-                  if_simul(k) = 1
-                  if_chain(k) = 1
-               else
-                  read (temp,*,iostat=ios) if_simul(k), if_chain(k)
-                  if (if_simul(k) .eq. 0) if_simul(k) = 1
-                  if (if_chain(k) .eq. 0) if_chain(k) = 1
-	          if(ios.ne.0) stop ' ERROR 2 READING IF TABLE'
-               end if
                n_if = n_if + 1
+               if (n_if.gt.max_if) then
+                  stop ' IF TABLE CONTAINS TOO MANY ENTRIES'
+               end if
+
+               read (tcards(jdx), 100, iostat=ierr) if_num(n_if),
+     :            if_freq(n_if), if_invert(n_if), if_bw(n_if),
+     :            if_nfreq(n_if), if_nstok(n_if),
+     :            (if_cstok(l,n_if), l=1,4), if_sampl(n_if),
+     :            if_ref(n_if), temp
+ 100           format (bn,i3,f16.3,i3,f17.3,i5,i3,1x,4a2,i2,f7.1,1x,a5)
+               if (ierr.ne.0) stop ' ERROR READING IF TABLE'
+
+               if (temp.eq.' ') then
+                  if_simul(n_if) = 1
+                  if_chain(n_if) = 1
+               else
+                  read (temp, *, iostat=ierr) if_simul(n_if),
+     :               if_chain(n_if)
+                  if (ierr.ne.0) stop ' ERROR 2 READING IF TABLE'
+
+                  if (if_simul(n_if) .eq. 0) if_simul(n_if) = 1
+                  if (if_chain(n_if) .eq. 0) if_chain(n_if) = 1
+               end if
             end if
          end do
- 
-         status = AT_READ (lun, ichr)
-         write (m, '(32(20a4,:,/))') (ichr(j),j=1,640)
-         i = 0
+
+         ierr = AT_READ (lun, ichr)
+         write (tcards, '(32(20a4,:,/))') (ichr(j), j=1,640)
+         idx = 0
       end do
- 
-  999 if_found = .true.
-      return
+
+  999 return
       end
- 
- 
- 
- 
- 
-      subroutine WRITE_IF_TABLE (i, m)
- 
-C     routine to write an IF table to an RPFITS file 
-C
-C     RPN 29/9/88
-C     Modified 14/Dec/91 HM  Added if_simul and if_chain. Note that it 
-C                            are read with BZ to interpret the blanks in
-C                            old data as zero.
-C     Modified 14/May/92 HM  Write if_num as i3.
-C-----------------------------------------------------------------------
-      integer   i, k, l
-      character m(*)*80, header*80
+
+
+
+      subroutine WRITE_IF_TABLE (idx, tcards)
+*-----------------------------------------------------------------------
+*     Write an IF (intermediate frequency, i.e. spectral window) table
+*     from an RPFITS file.
+*
+*     Original: Ray Norris 1988/09/29
+*-----------------------------------------------------------------------
+      integer   idx, iif, l
+      character tcards(*)*80
       include 'rpfits.inc'
- 
-      header =
-     +   'HEADER     FREQ    INVERT   BW         '//
-     +   'NCHAN NSTOK TYPE SAM REF SIM CHAIN'
-      i = i+1
-      write (m(i),'(a)')  'TABLE IF'
-      i = i+1
-      write (m(i),'(a)')  header
- 
-      do k = 1, n_if
-         i = i+1
-         write (m(i),'(i3, f16.3, 1x, i2, 1x, f16.3, i5, 
-     +      1x, i2, 1x, 4a2, 1x, i1, 1x, f6.1, 1x, i2, 1x, i2)')
-     +      if_num(k), if_freq(k), if_invert(k),
-     +      if_bw(k), if_nfreq(k), if_nstok(k),
-     +      (if_cstok(l,k),l=1,4), if_sampl(k), 
-     +      if_ref(k), if_simul(k), if_chain(k)
+
+      idx = idx + 1
+      tcards(idx) = 'TABLE IF'
+      idx = idx + 1
+      tcards(idx) = 'HEADER     FREQ    INVERT   BW         NCHAN ' //
+     :              'NSTOK TYPE SAM REF SIM CHAIN'
+
+      do iif = 1, n_if
+         idx = idx + 1
+         write (tcards(idx), 100) if_num(iif), if_freq(iif),
+     :      if_invert(iif), if_bw(iif), if_nfreq(iif), if_nstok(iif),
+     :      (if_cstok(l,iif), l=1,4), if_sampl(iif), if_ref(iif),
+     :      if_simul(iif), if_chain(iif)
+ 100     format (i3,f16.3,i3,f17.3,i5,i3,1x,4a2,i2,f7.1,2i3)
       end do
- 
-      i = i+1
-      write (m(i),'(a)')  'ENDTABLE'
- 
+
+      idx = idx + 1
+      tcards(idx) = 'ENDTABLE'
+
       return
       end
- 
- 
- 
- 
- 
-      subroutine READSU(lun, m, i)
- 
-C     routine to read a SOURCE table from an RPFITS file 
-C
-C     RPN 8/11/88
-C     HM  15/5/92 Read old (i2) or new (i3) source number.
-C     MHW 3/1/2003 Fill pointing position
-C-----------------------------------------------------------------------
-      integer   lun, i, j, k, status, AT_READ, ichr(640), ios
-      character m(32)*80
+
+
+
+      subroutine READSU(lun, tcards, idx)
+*-----------------------------------------------------------------------
+*     Read an SU (source) table from an RPFITS file.
+*
+*     Original: Ray Norris 1988/11/08
+*-----------------------------------------------------------------------
+      integer   AT_READ, ichr(640), idx, ierr, j, jdx, k, lun
+      character keywrd*8, tcards(32)*80
       include 'rpfits.inc'
 
       n_su = 0
       do while (.true.)
-         do j = i + 1,32
+         do jdx = idx+1, 32
             if (ncard.lt.0) then
-               card(-ncard) = m(j)
+               card(-ncard) = tcards(jdx)
                ncard = ncard-1
             end if
- 
-            if (m(j)(1:8).eq.'ENDTABLE') then
-               i = j
-               goto 999
-            else if (m(j)(1:8).eq.'HEADER') then
-            else if (m(j)(1:8).eq.'COMMENT') then
+
+            keywrd = tcards(jdx)(1:8)
+            if (keywrd.eq.'ENDTABLE') then
+               idx = jdx
+               go to 999
+            else if (keywrd.eq.'HEADER') then
+            else if (keywrd.eq.'COMMENT') then
             else
-               k = n_su+1
-               read(m(j),'(BN,i3,a16,1x,f12.9, 1x, f12.9, 1x, a4, 
-     +            1x, f11.9, 1x, f11.9)',iostat=ios)
-     +            su_num(k), su_name(k), su_ra(k), su_dec(k), 
-     +            su_cal(k), su_rad(k), su_decd(k)
-               su_pra(k) = su_ra(k)
+               k = n_su + 1
+               if (k.gt.max_su) then
+                  stop ' SU TABLE CONTAINS TOO MANY ENTRIES'
+               end if
+
+               read (tcards(jdx), 100, iostat=ierr) su_num(k),
+     :            su_name(k), su_ra(k), su_dec(k), su_cal(k), su_rad(k),
+     :            su_decd(k)
+ 100           format (bn,i3,a16,2f13.9,1x,a4,2f12.9)
+               if (ierr.ne.0) stop ' ERROR READING SU TABLE'
+
+               su_pra(k)  = su_ra(k)
                su_pdec(k) = su_dec(k)
-               n_su = n_su+1
-	       if(ios.ne.0) stop ' ERROR READING SU TABLE'
+               n_su = n_su + 1
             end if
          end do
- 
-         status = AT_READ (lun, ichr)
-         write (m, '(32(20a4,:,/))') (ichr(j),j=1,640)
-         i = 0
+
+         ierr = AT_READ (lun, ichr)
+         write (tcards, '(32(20a4,:,/))') (ichr(j), j=1,640)
+         idx = 0
       end do
- 
-  999 su_found = .true.
+
+  999 return
+      end
+
+
+
+      subroutine WRITE_SU_TABLE (idx, tcards)
+*-----------------------------------------------------------------------
+*     Write an SU (source) table from an RPFITS file.
+*
+*     Original: Ray Norris 1988/11/08
+*-----------------------------------------------------------------------
+      integer   idx, isu
+      character tcards(*)*80
+      include 'rpfits.inc'
+
+      idx = idx + 1
+      tcards(idx) = 'TABLE SU'
+      idx = idx + 1
+      tcards(idx) = 'HEADER  NAME            RA2000   DEC2000' //
+     :              '  CALCODE  RA_DATE    DEC_DATE          '
+
+      do isu = 1, n_su
+         idx = idx + 1
+         write (tcards(idx), 100) su_num(isu), su_name(isu), su_ra(isu),
+     :      su_dec(isu), su_cal(isu), su_rad(isu), su_decd(isu)
+ 100     format (i3,a16,2f13.9,1x,a4,2f12.9)
+      end do
+
+      idx = idx + 1
+      tcards(idx) = 'ENDTABLE'
+
       return
       end
- 
- 
- 
- 
- 
-      subroutine WRITE_SU_TABLE (i, m)
- 
-C     routine to write a SOURCE table to an RPFITS file 
-C
-C     RPN 8/11/88
-C     HM 15/05/92 Modified to write su_num as i3.
-C-----------------------------------------------------------------------
-      integer i, k
-      character m(*)*80, header*80
+
+
+
+      subroutine READFG (lun, tcards, idx)
+*-----------------------------------------------------------------------
+*     Read a FG (flag) table from an RPFITS file.
+*
+*     Original: Ray Norris 1988/11/08
+*-----------------------------------------------------------------------
+      integer   AT_READ, ichr(640), idx, ierr, j, jdx, k, lun
+      character keywrd*8, tcards(32)*80
       include 'rpfits.inc'
-      data header(1:40)/
-     +   'HEADER  NAME            RA2000   DEC2000'/
-      data header(41:80)/
-     +   '  CALCODE  RA_DATE    DEC_DATE          '/
- 
-      i = i+1
-      write (m(i),'(a)')  'TABLE SU'
-      i = i+1
-      write (m(i),'(a)')  header
- 
-      do k = 1, n_su
-         i = i+1
-         write (m(i),'(i3,a16,1x,f12.9, 1x, f12.9, 1x, a4,
-     +      1x, f11.9, 1x, f11.9)')
-     +      su_num(k), su_name(k), su_ra(k), su_dec(k), su_cal(k),
-     +      su_rad(k), su_decd(k)
-      end do
- 
-      i = i+1
-      write (m(i),'(a)')  'ENDTABLE'
- 
-      return
-      end
- 
- 
- 
- 
- 
-      subroutine READFG (lun, m, i)
- 
-C     routine to read a FLAG table from an RPFITS file 
-C
-C     RPN 8/11/88
-C     Modified 15/5/92 HM Read old (i2) and new (i3) j and fg_if 
-C-----------------------------------------------------------------------
-      integer lun, i, j, k, status, AT_READ, ichr(640), ios
-      character m(32)*80
-      include 'rpfits.inc'
- 
+
       n_fg = 0
       do while (.true.)
-         do k = i + 1,32
+         do jdx = idx+1, 32
             if (ncard.lt.0) then
-               card(-ncard) = m(k)
+               card(-ncard) = tcards(jdx)
                ncard = ncard - 1
             end if
-            if (m(k)(1:8).eq.'ENDTABLE') then
-               i = k
-               goto 999
-            else if ( m(k)(1:8).eq.'HEADER' ) then
-            else if ( m(k)(1:8).eq.'COMMENT') then
+
+            keywrd = tcards(jdx)(1:8)
+            if (keywrd.eq.'ENDTABLE') then
+               idx = jdx
+               go to 999
+            else if (keywrd.eq.'HEADER' ) then
+            else if (keywrd.eq.'COMMENT') then
             else
-               read(m(k),'(BN, i3, i2, 1x, i2, 2(1x,f8.1), 1x, 2(i3),
-     +            i4, 1x, i4, 2(1x,i1), a24)',iostat=ios) j,
-     +            fg_ant(1,j), fg_ant(2,j), fg_ut(1,j), fg_ut(2,j),
-     +            fg_if(1,j), fg_if(2,j), fg_chan(1,j), fg_chan(2,j),
-     +            fg_stok(1,j), fg_stok(2,j), fg_reason
-               n_fg = n_fg+1
-	       if(ios.ne.0) stop ' ERROR READING FG TABLE'
+               read (tcards(jdx), 100, iostat=ierr) k, fg_ant(1,k),
+     :            fg_ant(2,k), fg_ut(1,k), fg_ut(2,k), fg_if(1,k),
+     :            fg_if(2,k), fg_chan(1,k), fg_chan(2,k), fg_stok(1,k),
+     :            fg_stok(2,k), fg_reason
+ 100           format (bn,i3,i2,i3,2f9.1,1x,2i3,i4,i5,2i2,a24)
+               if (ierr.ne.0) stop ' ERROR READING FG TABLE'
+
+               n_fg = n_fg + 1
             end if
          end do
- 
-         status = AT_READ (lun, ichr)
-         write (m, '(32(20a4,:,/))') (ichr(j),j=1,640)
-         i = 0
+
+         ierr = AT_READ (lun, ichr)
+         write (tcards, '(32(20a4,:,/))') (ichr(j), j=1,640)
+         idx = 0
       end do
- 
-  999 fg_found = .true.
+
+  999 return
+      end
+
+
+
+      subroutine WRITE_FG_TABLE (idx, tcards)
+*-----------------------------------------------------------------------
+*     Write a FG (flag) table to an RPFITS file.
+*
+*     Original: Ray Norris 1988/11/08
+*-----------------------------------------------------------------------
+      integer   idx, ifg
+      character tcards(*)*80
+      include 'rpfits.inc'
+
+      idx = idx + 1
+      tcards(idx) = 'TABLE FG'
+      idx = idx + 1
+      tcards(idx) = 'HEADER  ANT   UT    IF     CHAN     STOK       ' //
+     :              'REASON'
+
+      do ifg = 1, n_fg
+         idx = idx + 1
+         write (tcards(idx), 100) ifg, fg_ant(1,ifg), fg_ant(2,ifg),
+     :      fg_ut(1,ifg), fg_ut(2,ifg), fg_if(1,ifg), fg_if(2,ifg),
+     :      fg_chan(1,ifg), fg_chan(2,ifg), fg_stok(1,ifg),
+     :      fg_stok(2,ifg), fg_reason(ifg)
+ 100     format (i3,i2,i3,2f9.1,1x,2i3,i4,i5,2i2,a24)
+      end do
+
+      idx = idx + 1
+      tcards(idx) = 'ENDTABLE'
+
       return
       end
- 
- 
- 
- 
- 
-      subroutine WRITE_FG_TABLE (i, m)
- 
-C     routine to write a FLAG table to an RPFITS file 
-C
-C     RPN 8/11/88
-C     Modified 15/5/92 HM Write j and fg_if as i3.
-C-----------------------------------------------------------------------
-      integer i, j
-      character m(*)*80, header*80
+
+
+
+      subroutine READAN (lun, tcards, idx)
+*-----------------------------------------------------------------------
+*     Read an AN (antenna) table from an RPFITS file.
+*
+*     Original: Ray Norris 1989/07/17
+*-----------------------------------------------------------------------
+      integer   AT_READ, iaxis_offset, ichr(640), idx, ierr, j, jdx, lun
+      character keywrd*8, tcards(32)*80
       include 'rpfits.inc'
-      header =
-     +   'HEADER  ANT   UT    IF     CHAN     STOK       REASON'
-      i = i + 1
-      write (m(i),'(a)')  'TABLE FG'
-      i = i + 1
-      write (m(i),'(a)')  header
- 
-      do j = 1, n_fg
-         i = i + 1
-         write (m(i),'(i3, i2, 1x, i2, 2(1x,f8.1), 1x, i3, i3, 
-     +      i4, 1x, i4, 2(1x,i1), a24)') j,
-     +      fg_ant(1,j), fg_ant(2,j), fg_ut(1,j), fg_ut(2,j),
-     +      fg_if(1,j), fg_if(2,j), fg_chan(1,j), fg_chan(2,j),
-     +      fg_stok(1,j), fg_stok(2,j), fg_reason(j)
-      end do
- 
-      i = i + 1
-      write (m(i),'(a)')  'ENDTABLE'
- 
-      return
-      end
- 
- 
- 
- 
- 
-      subroutine READAN (lun, m, i)
- 
-C     routine to read an AN table from an RPFITS file 
-C
-C     RPN 27/7/89
-C     mod rpn 11/10/89 remove met info
-C     H.May 26/8/92  Change read to match write in write_an_table
-C-----------------------------------------------------------------------
-      integer lun, i, j, status, AT_READ, iaxis_offset, ios
-      integer ichr(640)
-      character m(32)*80
-      include 'rpfits.inc'
+
       nant = 0
- 
       do while (.true.)
-         do j = i + 1, 32
+         do jdx = idx+1, 32
             if (ncard.lt.0) then
-               card(-ncard) = m(j)
+               card(-ncard) = tcards(jdx)
                ncard = ncard - 1
             end if
-            if (m(j)(1:8).eq.'ENDTABLE') then
-               i = j
-               goto 999
-            else if (m(j)(1:8).eq.'HEADER' ) then
-            else if (m(j)(1:8).eq.'COMMENT') then
+
+            keywrd = tcards(jdx)(1:8)
+            if (keywrd.eq.'ENDTABLE') then
+               idx = jdx
+               go to 999
+            else if (keywrd.eq.'HEADER' ) then
+            else if (keywrd.eq.'COMMENT') then
             else
                nant = nant + 1
-               read(m(j),100,iostat=ios) ant_num(nant), sta(nant), 
-     +            ant_mount(nant), x(nant), y(nant), z(nant), 
-     +            Iaxis_offset
-                  if(ios.ne.0) stop 'ERROR READING AN TABLE'
+               if (nant.gt.ant_max) then
+                  stop ' AN TABLE CONTAINS TOO MANY ENTRIES'
+               end if
+
+               read (tcards(jdx), 100, iostat=ierr) ant_num(nant),
+     :            sta(nant), ant_mount(nant), x(nant), y(nant), z(nant),
+     :            iaxis_offset
+                  if (ierr.ne.0) stop 'ERROR READING AN TABLE'
+ 100           format (i2,1x,a8,i2,3f14.3,i5)
+
                axis_offset(nant) = iaxis_offset/1000.0
             end if
          end do
- 
-         status = AT_READ (lun, ichr)
-         write (m, '(32(20a4,:,/))') (ichr(j),j=1,640)
-         i = 0
+
+         ierr = AT_READ (lun, ichr)
+         write (tcards, '(32(20a4,:,/))') (ichr(j), j=1,640)
+         idx = 0
       end do
- 
-  100 format (i2,1x,a8,1x,i1,3(1x,f13.3),1x,i4)
-  999 an_found = .true.
- 
+
+ 999  return
+      end
+
+
+
+      subroutine WRITE_AN_TABLE (idx, tcards)
+*-----------------------------------------------------------------------
+*     Write an AN (antenna) table to an RPFITS file.
+*
+*     Original: Ray Norris 1989/09/29
+*-----------------------------------------------------------------------
+      integer   iant, idx
+      character tcards(*)*80
+      include 'rpfits.inc'
+
+      idx = idx + 1
+      tcards(idx) = 'TABLE AN'
+      idx = idx + 1
+      tcards(idx) = 'HEADER      M       X             ' //
+     :              'Y             Z       AXIS'
+
+      do iant = 1, nant
+         idx = idx + 1
+         write (tcards(idx),100) ant_num(iant), sta(iant),
+     :      ant_mount(iant), x(iant), y(iant), z(iant),
+     :      nint(axis_offset(iant)*1000.0)
+ 100     format (i2,1x,a8,i2,3f14.3,i5)
+      end do
+
+      idx = idx + 1
+      tcards(idx) = 'ENDTABLE'
+
       return
       end
- 
- 
- 
- 
- 
-      subroutine WRITE_AN_TABLE (i, m)
- 
-C     routine to write an AN table to an RPFITS file 
-C
-C     RPN 29/9/88
-C     mod rpn 11/10/89 remove met info
-C-----------------------------------------------------------------------
-      integer   i, k, iaxis_offset
-      character m(*)*80, header*80
+
+
+
+      subroutine READMT (lun, tcards, idx)
+*-----------------------------------------------------------------------
+*     Read an MT (meteorological) table to an RPFITS file.
+*
+*     Original: Ray Norris 1989/10/11
+*-----------------------------------------------------------------------
+      integer   AT_READ, ichr(640), idx, ierr, j, jdx, lun
+      character keywrd*8, tcards(32)*80
       include 'rpfits.inc'
-      header = 'HEADER      M       X             Y             '//
-     +   'Z       AXIS'
-      i = i + 1
-      write (m(i),'(a)')  'TABLE AN'
-      i = i + 1
-      write (m(i),'(a)')  header
- 
-      do k = 1, nant
-         i = i + 1
-         iaxis_offset  =  nint(axis_offset(k)*1000.0)
-         write (m(i),100) ant_num(k), sta(k), ant_mount(k), 
-     +      x(k), y(k), z(k), iaxis_offset
-      end do
- 
-      i = i + 1
-      write (m(i),'(a)')  'ENDTABLE'
-  100 format (i2,1x,a8,1x,i1,3(1x,f13.3),1x,i4)
- 
-      return
-      end
- 
- 
- 
- 
- 
-      subroutine READMT (lun, m, i)
- 
-C     routine to read a MT table from an RPFITS file 
-C
-C     RPN 11/10/89
-C-----------------------------------------------------------------------
-      integer   lun, i, j, status, AT_READ, ichr(640), ios
-      character m(32)*80
-      include 'rpfits.inc'
- 
+
       n_mt = 0
       do while (.true.)
-         do j = i+1, 32
+         do jdx = idx+1, 32
             if (ncard.lt.0) then
-               card(-ncard) = m(j)
+               card(-ncard) = tcards(jdx)
                ncard = ncard - 1
             end if
- 
-            if (m(j)(1:8).eq.'ENDTABLE') then
-               i = j
-               goto 999
-            else if (m(j)(1:8).eq.'HEADER' ) then
-            else if (m(j)(1:8).eq.'COMMENT') then
+
+            keywrd = tcards(jdx)(1:8)
+            if (keywrd.eq.'ENDTABLE') then
+               idx = jdx
+               go to 999
+            else if (keywrd.eq.'HEADER' ) then
+            else if (keywrd.eq.'COMMENT') then
             else
                n_mt = n_mt + 1
-               read(m(j),100,iostat=ios) mt_ant(n_mt), mt_ut(n_mt),
-     +            mt_press(n_mt), mt_temp(n_mt), mt_humid(n_mt)
-               if(ios.ne.0) stop ' ERROR READING MT TABLE'
+               if (n_mt.gt.max_mt) then
+                  stop ' MT TABLE CONTAINS TOO MANY ENTRIES'
+               end if
+
+               read (tcards(jdx), 100, iostat=ierr) mt_ant(n_mt),
+     :            mt_ut(n_mt), mt_press(n_mt), mt_temp(n_mt),
+     :            mt_humid(n_mt)
+ 100           format (i2,f9.1,f7.1,2f6.1)
+               if (ierr.ne.0) stop ' ERROR READING MT TABLE'
             end if
          end do
- 
-         status = AT_READ (lun, ichr)
-         write (m, '(32(20a4,:,/))') (ichr(j),j=1,640)
-         i = 0
+
+         ierr = AT_READ (lun, ichr)
+         write (tcards, '(32(20a4,:,/))') (ichr(j), j=1,640)
+         idx = 0
       end do
- 
-  100 format (i2,1x, f8.1, 1x,f6.1, 2(1x,f5.1))
-  999 mt_found = .true.
- 
+
+ 999  return
+      end
+
+
+
+      subroutine WRITE_MT_TABLE (idx, tcards)
+*-----------------------------------------------------------------------
+*     Write an MT (meteorological) table to an RPFITS file.
+*
+*     Original: Ray Norris 1989/10/11
+*-----------------------------------------------------------------------
+      integer idx, imt
+      character tcards(32)*80
+      include 'rpfits.inc'
+
+      idx = idx + 1
+      tcards(idx) = 'TABLE MT'
+      idx = idx + 1
+      tcards(idx) = 'HEADER UT PRESS  TEMP  HUMID'
+
+      do imt = 1, n_mt
+         idx = idx + 1
+         write (tcards(idx), 100) mt_ant(imt), mt_ut(imt),
+     :      mt_press(imt), mt_temp(imt), mt_humid(imt)
+ 100     format (i2,f9.1,f7.1,2f6.1)
+      end do
+
+      idx = idx + 1
+      tcards(idx) = 'ENDTABLE'
+
       return
       end
- 
- 
- 
- 
- 
-      subroutine WRITE_MT_TABLE (i, m)
- 
-C     routine to write an MT table to an RPFITS file 
-C
-C     RPN 11/10/89
-C-----------------------------------------------------------------------
-      integer i, k
-      character m(*)*80, header*80
+
+
+
+      subroutine READCU (lun, tcards, idx)
+*-----------------------------------------------------------------------
+*     Read a CU (uncalibration) table from an RPFITS file.
+*
+*     Original: Ray Norris 1990/03/22
+*-----------------------------------------------------------------------
+      integer AT_READ, ichr(640), idx, ierr, j, jdx, lun
+      character keywrd*8, tcards(32)*80
       include 'rpfits.inc'
- 
-      header = 'HEADER UT PRESS  TEMP  HUMID'
-      i = i + 1
-      write (m(i),'(a)')  'TABLE MT'
-      i = i + 1
-      write (m(i),'(a)')  header
- 
-      do k = 1, n_mt
-         i = i + 1
-         write (m(i),100) mt_ant(k), mt_ut(k), 
-     +      mt_press(k), mt_temp(k), mt_humid(k)
-      end do
- 
-      i = i + 1
-      write (m(i),'(a)')  'ENDTABLE'
-  100 format (i2,1x, f8.1, 1x,f6.1, 2(1x,f5.1))
- 
-      return
-      end
- 
- 
- 
- 
- 
-      subroutine READCU (lun, m, i)
- 
-C     routine to read a CU table from an RPFITS file 
-C
-C     RPN 22/03/90
-C     Modified: HM  15/05/92  Read old (i2) or new (i3) cu_if.
-C-----------------------------------------------------------------------
-      integer lun, i, j, status, AT_READ, ichr(640), ios
-      character m(32)*80
-      include 'rpfits.inc'
- 
+
       n_cu = 0
       do while (.true.)
-         do j = i + 1,32
+         do jdx = idx+1, 32
             if (ncard.lt.0) then
-               card(-ncard) = m(j)
+               card(-ncard) = tcards(jdx)
                ncard = ncard - 1
             end if
- 
-            if (m(j)(1:8).eq.'ENDTABLE') then
-               i = j
-               goto 999
-            else if (m(j)(1:8).eq.'HEADER' ) then
-            else if (m(j)(1:8).eq.'COMMENT') then
+
+            keywrd = tcards(jdx)(1:8)
+            if (keywrd.eq.'ENDTABLE') then
+               idx = jdx
+               go to 999
+            else if (keywrd.eq.'HEADER' ) then
+            else if (keywrd.eq.'COMMENT') then
             else
                n_cu = n_cu + 1
-               read(m(j),100,iostat=ios) 
-     +            cu_ut(n_cu), cu_ant(n_cu), cu_if(n_cu),
-     +            cu_cal1(n_cu), cu_cal2(n_cu), cu_ch1(n_cu), 
-     +            cu_ch2(n_cu)
-               if(ios.ne.0) stop ' ERROR READING CU TABLE'
+               if (n_cu.gt.max_cu) then
+                  stop ' CU TABLE CONTAINS TOO MANY ENTRIES'
+               end if
+
+               read (tcards(jdx), 100, iostat=ierr) cu_ut(n_cu),
+     :            cu_ant(n_cu), cu_if(n_cu), cu_cal1(n_cu),
+     :            cu_cal2(n_cu), cu_ch1(n_cu), cu_ch2(n_cu)
+ 100           format (bn,f8.1,i3,i4,f6.1,f7.1,2i5)
+               if (ierr.ne.0) stop ' ERROR READING CU TABLE'
             end if
          end do
- 
-         status = AT_READ(lun, ichr)
-         write (m, '(32(20a4,:,/))') (ichr(j),j=1,640)
-         i = 0
+
+         ierr = AT_READ (lun, ichr)
+         write (tcards, '(32(20a4,:,/))') (ichr(j), j=1,640)
+         idx = 0
       end do
- 
-  100 format (BN, f8.1,1x,i2,1x,i3,f6.1,1x,f6.1,2(1x,i4))
-  999 cu_found = .true.
- 
-      return
+
+ 999  return
       end
- 
- 
- 
- 
- 
-      subroutine WRITE_CU_TABLE (i, m)
- 
-C     routine to write a CU table to an RPFITS file 
-C
-C     RPN 11/10/89
-C     Modified HM 15/05/92 Write cu_if as i3.
-C-----------------------------------------------------------------------
-      integer i, k
-      character m(*)*80, header*80
+
+
+
+      subroutine WRITE_CU_TABLE (idx, tcards)
+*-----------------------------------------------------------------------
+*     Write a CU (uncalibration) table to an RPFITS file.
+*
+*     Original: Ray Norris 1989/10/11
+*-----------------------------------------------------------------------
+      integer icu, idx
+      character tcards(*)*80
       include 'rpfits.inc'
- 
-      header = 'HEADER  ANT IF CALSTART  CALSTOP   CH1  CH2'
-      i = i + 1
-      write (m(i),'(a)')  'TABLE CU'
-      i = i + 1
-      write (m(i),'(a)')  header
- 
-      do k = 1, n_cu
-         i = i + 1
-         write  (m(i),100) cu_ut(n_cu), cu_ant(n_cu), cu_if(n_cu),
-     +      cu_cal1(n_cu), cu_cal2(n_cu), cu_ch1(n_cu), cu_ch2(n_cu)
+
+      idx = idx + 1
+      tcards(idx) = 'TABLE CU'
+      idx = idx + 1
+      tcards(idx) = 'HEADER  ANT IF CALSTART  CALSTOP   CH1  CH2'
+
+      do icu = 1, n_cu
+         idx = idx + 1
+         write (tcards(idx), 100) cu_ut(n_cu), cu_ant(n_cu),
+     :      cu_if(n_cu), cu_cal1(n_cu), cu_cal2(n_cu), cu_ch1(n_cu),
+     :      cu_ch2(n_cu)
+ 100     format (f8.1,i3,i4,f6.1,f7.1,2i5)
       end do
- 
-      i = i + 1
-      write (m(i),'(a)')  'ENDTABLE'
-  100 format (f8.1,1x,i2,1x,i3,f6.1,1x,f6.1,2(1x,i4))
- 
+
+      idx = idx + 1
+      tcards(idx) = 'ENDTABLE'
+
       return
       end

@@ -12,7 +12,7 @@ C     $Id$
 C-----------------------------------------------------------------------
 
       subroutine RPFITSIN (jstat, vis, weight, baseline, ut, u, v, w,
-     +   flag, bin, if_no, sourceno)
+     :   flag, bin, if_no, sourceno)
 
       integer baseline, flag, bin, if_no, sourceno
       real    weight(*), ut, u, v, w
@@ -21,23 +21,24 @@ C-----------------------------------------------------------------------
 
       include 'rpfits.inc'
 
-      logical   async, endhdr, endscan, new_antenna, open, open_only,
-     +          starthdr
+      logical   async, endhdr, endscan, isopen, new_antenna, open_only,
+     :          starthdr
       integer   AT_CLOSE, AT_OPEN_READ, AT_READ, AT_SKIP_EOF, AT_UNREAD,
-     +          bufleft, bufleft3, bufptr, grplength, grpptr, i, i1, i2,
-     +          i3, i_buff(640), i_grphdr(11), icard, ichar, ierr,
-     +          illegal, j, jstat, k, lun, nchar, pcount, SIMPLE
+     :          bufleft, bufleft3, bufptr, grplength, grpptr, i, i1, i2,
+     :          i3, i_buff(640), i_grphdr(11), icard, ierr, illegal, j,
+     :          jstat, k, lun, pcount, SIMPLE
       real      buffer(640), crpix4, grphdr(11), r1, r2, revis,
-     +          sc_buf(max_sc*max_if*ant_max), velref, pra, pdec
-      character m(32)*80
+     :          sc_buf(max_sc*max_if*ant_max), velref, pra, pdec
+      character keyvalue*20, keyword*8, m(32)*80
 
       equivalence (i_buff(1), buffer(1))
       equivalence (i_grphdr(1), grphdr(1))
       equivalence (sc_buf(1), sc_cal(1,1,1))
 
       data illegal /32768/
-      data open /.false./
-      data async /.false./, new_antenna /.false./
+      data isopen  /.false./
+      data async   /.false./
+      data new_antenna /.false./
 
       save
 
@@ -52,13 +53,13 @@ C-------------------------- DECIDE ON ACTION ---------------------------
       if (jstat.eq.1) go to 5000
       if (jstat.eq.2) go to 6000
 
-      write (6, *) ' Error in READFITS: illegal value of jstat=',jstat
+      write (6, *) ' Error in READFITS: illegal value of jstat = ',jstat
       jstat = -1
       RETURN
 
 C--------------------------- OPEN FITS FILE ----------------------------
 
- 1000 if (open) then
+ 1000 if (isopen) then
          write (6, *) ' File is already open'
          jstat = -1
          RETURN
@@ -70,7 +71,7 @@ C--------------------------- OPEN FITS FILE ----------------------------
          jstat = -1
          RETURN
       end if
-      open = .true.
+      isopen = .true.
 
       if (open_only) then
          jstat = 0
@@ -79,7 +80,7 @@ C--------------------------- OPEN FITS FILE ----------------------------
 
 C----------------------------- READ HEADER -----------------------------
 
- 2000 if (.not.open) then
+ 2000 if (.not.isopen) then
          write (6, *) ' File is not open'
          jstat = -1
          RETURN
@@ -104,7 +105,7 @@ C----------------------------- READ HEADER -----------------------------
 C     Look for start of next header.
       do while (.not.starthdr)
          rp_iostat = AT_READ (lun, buffer)
-         write (m,'(32(20a4,:,/))') (buffer(j), j=1,640)
+         write (m,'(32(20a4,:,/))') (buffer(j),j=1,640)
 
          if (rp_iostat.ne.0) then
             if (rp_iostat.eq.-1) then
@@ -125,10 +126,10 @@ C     Look for start of next header.
       end do
 
 C     Scan through header, getting the interesting bits.
-      do 2400 while (.not.endhdr)
+      do 2500 while (.not.endhdr)
          if (.not.starthdr) then
             rp_iostat = AT_READ (lun, buffer)
-            write (m,'(32(20a4,:,/))') (buffer(j), j=1,640)
+            write (m,'(32(20a4,:,/))') (buffer(j),j=1,640)
             if (rp_iostat.ne.0) then
                if (rp_iostat.eq.-1) then
                   jstat = 3
@@ -142,103 +143,145 @@ C     Scan through header, getting the interesting bits.
 
          starthdr = .false.
          version = ' '
-         do 2200 i = 1, 32
-            if (m(i)(1:8).EQ.'VERSION ') then
-               read (m(i)(12:31),'(a20)') version
-            else if (m(i)(1:8).EQ.'RPFITS  ') then
-               read (m(i)(12:31),'(a20)') rpfitsversion
-            else if (m(i)(1:8).EQ.'NAXIS2') then
-               read (m(i)(11:30),'(i20)') data_format
-               write_wt = data_format.eq.3
-            else if (m(i)(1:8).EQ.'NAXIS3') then
-               read (m(i)(11:30),'(i20)') nstok
-            else if (m(i)(1:8).EQ.'NAXIS4') then
-               read (m(i)(11:30),'(i20)') nfreq
-            else if (m(i)(1:8).EQ.'NAXIS7') then
-C              Note fudge for intermediate format PTI data.
-               read (m(i)(11:30),'(i20)') nstok
-            else if (m(i)(1:8).EQ.'GCOUNT') then
-               read (m(i)(11:30),'(i20)') ncount
-            else if (m(i)(1:8).EQ.'PCOUNT') then
-               read (m(i)(11:30),'(i20)') pcount
-            else if (m(i)(1:8).EQ.'SCANS ') then
-               read (m(i)(11:30),'(i20)') nscan
-            else if (m(i)(1:8).EQ.'INTIME') then
-               read (m(i)(11:30),'(i20)') intime
-            else if (m(i)(1:8).EQ.'CRPIX4') then
-               read (m(i)(11:30),'(g20.12)') crpix4
-            else if (m(i)(1:8).EQ.'CRVAL4') then
-               read (m(i)(11:30),'(g20.12)') freq
-            else if (m(i)(1:8).EQ.'CDELT4') then
-               read (m(i)(11:30),'(g20.12)') dfreq
-            else if (m(i)(1:8).EQ.'CRVAL5') then
-               read (m(i)(11:30),'(g20.12)') ra
-            else if (m(i)(1:8).EQ.'CRVAL6') then
-               read (m(i)(11:30),'(g20.12)') dec
-            else if (m(i)(1:8).EQ.'RESTFREQ') then
-               read (m(i)(11:30),'(g20.12)') rfreq
-            else if (m(i)(1:8).EQ.'VELREF  ') then
-               read (m(i)(11:30),'(g20.12)') velref
-            else if (m(i)(1:8).EQ.'ALTRVAL ') then
-               read (m(i)(11:30),'(g20.12)') vel1
-            else if (m(i)(1:8).EQ.'OBJECT  ') then
-               read (m(i)(12:30),'(a16)') object
-            else if (m(i)(1:8).EQ.'INSTRUME') then
-               read (m(i)(12:30),'(a16)') instrument
-            else if (m(i)(1:8).EQ.'CAL     ') then
-               read (m(i)(12:30),'(a16)') cal
-            else if (m(i)(1:8).EQ.'OBSERVER') then
-               read (m(i)(12:30),'(a16)') rp_observer
-            else if (m(i)(1:8).EQ.'DATE-OBS') then
-C              Fix old-format dates.
-               call datfit(m(i)(12:21), datobs, ierr)
-               datsys = m(i)(35:36)
-               if (datsys.eq.'UT D') datsys = 'UT'
-            else if (m(i)(1:8).EQ.'DATE    ') then
-C              Fix old-format dates.
-               call datfit(m(i)(12:21), datwrit, ierr)
-            else if (m(i)(1:8).EQ.'EPOCH') then
-               read (m(i)(12:30),'(a8)')coord
-            else if (m(i)(1:5).EQ.'PRESS') then
-               read (m(i)(6:40),'(i2,4x,g20.12)') k, rp_pressure(k)
-            else if (m(i)(1:5).EQ.'TEMPE') then
-               read (m(i)(6:40),'(i2,4x,g20.12)') k, rp_temp(k)
-            else if (m(i)(1:5).EQ.'HUMID') then
-               read (m(i)(6:40),'(i2,4x,g20.12)') k, rp_humid(k)
-            else if (m(i)(1:5).EQ.'EPHEM') then
-               read (m(i)(6:40),'(i2,4x,g20.12)') k, rp_c(k)
-            else if (m(i)(1:8).EQ.'DEFEAT  ') then
-               read (m(i)(11:30),'(i20)') rp_defeat
-            else if (m(i)(1:8).EQ.'UTCMTAI ') then
-               read (m(i)(11:30),'(g20.12)') rp_utcmtai
-            else if (m(i)(1:8).EQ.'DJMREFP ') then
-               read (m(i)(11:30),'(g20.12)') rp_djmrefp
-            else if (m(i)(1:8).EQ.'DJMREFT ') then
-               read (m(i)(11:30),'(g20.12)') rp_djmreft
-            else if (m(i)(1:8).EQ.'PMRA    ') then
-               read (m(i)(11:30),'(g20.12)') pm_ra
-            else if (m(i)(1:8).EQ.'PMDEC   ') then
-               read (m(i)(11:30),'(g20.12)') pm_dec
-            else if (m(i)(1:8).EQ.'PMEPOCH ') then
-               read (m(i)(11:30),'(g20.12)') pm_epoch
-            else if (m(i)(1:8).EQ.'PNTCENTR') then
-               read (m(i)(11:35),'(g12.9,1x,g12.9)') pra,pdec
-            else if (m(i)(1:6).eq.'TABLE ') then
-C              Sort out tables.
-               call RPFITS_READ_TABLE (lun, m, i, endhdr)
-            else if (m(i)(1:8).eq.'END     ') then
-C              END card.
-               endhdr = .true.
+         do 2400 i = 1, 32
+C           Parse the PFITS keyword and keyvalue.
+            keyword  = m(i)(1:8)
+
+            if (m(i)(11:11).eq.'''') then
+C              Must be a character value.
+               keyvalue = m(i)(12:31)
+               do j = 1, 20
+                  if (keyvalue(j:j).eq.'''') then
+C                    Strip off the trailing apostrophe.
+                     keyvalue(j:) = ' '
+                  end if
+               end do
+            else
+               keyvalue = m(i)(11:30)
+            end if
+
+C           Lexical chop based on the first letter of the keyword name.
+            if (keyword(:1).le.'C') then
+C              Keyword names beginning with A to C.
+               if (keyword.eq.'ALTRVAL ') then
+                  read (keyvalue, '(g20.12)') vel1
+               else if (keyword.eq.'BUNIT') then
+                  bunit = keyvalue
+               else if (keyword.eq.'CAL') then
+                  cal = keyvalue
+               else if (keyword.eq.'CDELT4') then
+                  read (keyvalue, '(g20.12)') dfreq
+               else if (keyword.eq.'CRPIX4') then
+                  read (keyvalue, '(g20.12)') crpix4
+               else if (keyword.eq.'CRVAL4') then
+                  read (keyvalue, '(g20.12)') freq
+               else if (keyword.eq.'CRVAL5') then
+                  read (keyvalue, '(g20.12)') ra
+               else if (keyword.eq.'CRVAL6') then
+                  read (keyvalue, '(g20.12)') dec
+               end if
+
+            else if (keyword(:1).le.'E') then
+C              Keyword names beginning with D or E.
+               if (keyword.eq.'DATE') then
+C                 Fix old-format dates.
+                  call datfit(keyvalue(:10), datwrit, ierr)
+               else if (keyword.eq.'DATE-OBS') then
+C                 Fix old-format dates.
+                  call datfit(keyvalue(:10), datobs, ierr)
+                  datsys = m(i)(35:36)
+                  if (datsys.eq.'UT D') datsys = 'UT'
+               else if (keyword.eq.'DEFEAT  ') then
+                  read (keyvalue, '(i20)') rp_defeat
+               else if (keyword.eq.'DJMREFP ') then
+                  read (keyvalue, '(g20.12)') rp_djmrefp
+               else if (keyword.eq.'DJMREFT ') then
+                  read (keyvalue, '(g20.12)') rp_djmreft
+               else if (keyword.eq.'END') then
+C                 END card.
+                  endhdr = .true.
+               else if (keyword(1:5).eq.'EPHEM') then
+                  read (keyword(6:7), '(i2)') k
+                  read (keyvalue, '(g20.12)') rp_c(k)
+               else if (keyword.eq.'EPOCH') then
+                  coord = keyvalue
+               end if
+
+            else if (keyword(:1).le.'N') then
+C              Keyword names beginning with F to N.
+               if (keyword.eq.'GCOUNT') then
+                  read (keyvalue, '(i20)') ncount
+               else if (keyword(1:5).eq.'HUMID') then
+                  read (keyword(6:7), '(i2)') k
+                  read (keyvalue, '(g20.12)') rp_humid(k)
+               else if (keyword.eq.'INSTRUME') then
+                  instrument = keyvalue
+               else if (keyword.eq.'INTIME') then
+                  read (keyvalue, '(i20)') intime
+               else if (keyword.eq.'NAXIS2') then
+                  read (keyvalue, '(i20)') data_format
+                  write_wt = data_format.eq.3
+               else if (keyword.eq.'NAXIS3') then
+                  read (keyvalue, '(i20)') nstok
+               else if (keyword.eq.'NAXIS4') then
+                  read (keyvalue, '(i20)') nfreq
+               else if (keyword.eq.'NAXIS7') then
+C                 Note fudge for intermediate format PTI data.
+                  read (keyvalue, '(i20)') nstok
+               end if
+
+            else if (keyword(:1).le.'P') then
+C              Keyword names beginning with M to P.
+               if (keyword.eq.'OBJECT') then
+                  object = keyvalue
+               else if (keyword.eq.'OBSERVER') then
+                  rp_observer = keyvalue
+               else if (keyword.eq.'OBSTYPE') then
+                  obstype = keyvalue
+               else if (keyword.eq.'PCOUNT') then
+                  read (keyvalue, '(i20)') pcount
+               else if (keyword.eq.'PMDEC') then
+                  read (keyvalue, '(g20.12)') pm_dec
+               else if (keyword.eq.'PMEPOCH') then
+                  read (keyvalue, '(g20.12)') pm_epoch
+               else if (keyword.eq.'PMRA') then
+                  read (keyvalue, '(g20.12)') pm_ra
+               else if (keyword.eq.'PNTCENTR') then
+                  read (m(i)(11:35),'(g12.9,1x,g12.9)') pra,pdec
+               else if (keyword(1:5).eq.'PRESS') then
+                  read (keyword(6:7), '(i2)') k
+                  read (keyvalue, '(g20.12)') rp_pressure(k)
+               end if
+
+            else
+C              Keyword names beginning with Q to Z.
+               if (keyword.eq.'RESTFREQ') then
+                  read (keyvalue, '(g20.12)') rfreq
+               else if (keyword.eq.'RPFITS  ') then
+                  rpfitsversion = keyvalue
+               else if (keyword.eq.'SCANS ') then
+                  read (keyvalue, '(i20)') nscan
+               else if (keyword(1:6).eq.'TABLE ') then
+C                 Sort out tables.
+                  call RPFITS_READ_TABLE (lun, m, i, endhdr)
+               else if (keyword(1:5).eq.'TEMPE') then
+                  read (keyword(6:7), '(i2)') k
+                  read (keyvalue, '(g20.12)') rp_temp(k)
+               else if (keyword.eq.'UTCMTAI ') then
+                  read (keyvalue, '(g20.12)') rp_utcmtai
+               else if (keyword.eq.'VELREF  ') then
+                  read (keyvalue, '(g20.12)') velref
+               else if (keyword.eq.'VERSION ') then
+                  version = keyvalue
+               end if
             end if
 
 C           Write into "cards" array if necessary.
             if (ncard.gt.0) then
                do j = 1, ncard
-                  nchar = 0
-                  do ichar = 1, 12
-                     if (card(j)(ichar:ichar).ne.' ') nchar = ichar
-                  end do
-                  if (m(i)(1:nchar).eq.card(j)(1:nchar)) card(j)=m(i)
+                  if (keyword.eq.card(j)(1:8)) then
+                     card(j) = m(i)
+                  end if
                end do
             else if (ncard.lt.0) then
                if (icard.le.max_card .and. .not.endhdr) then
@@ -249,27 +292,27 @@ C           Write into "cards" array if necessary.
             end if
 
 C           Antenna parameters.
-            if (m(i)(1:7).eq.'ANTENNA') then
+            if (keyword(:7).eq.'ANTENNA') then
                if (.not.new_antenna) then
                   nant = 0
                   new_antenna = .true.
                end if
 
-               if (m(i)(1:8).eq.'ANTENNA ') then
-                  read (m(i)(11:80), 900) k, sta(k), x(k), y(k), z(k)
- 900              format (i1,1x,a3,3x,g17.10,3x,g17.10,3x,g17.10)
+               if (keyword.eq.'ANTENNA') then
+                  read (m(i)(11:80), 2200) k, sta(k), x(k), y(k), z(k)
+ 2200             format (i1,1x,a3,3x,g17.10,3x,g17.10,3x,g17.10)
                else
 C                 Old format ('ANTENNA:').
-                  read (m(i)(12:71), 910) k, x(k), y(k), z(k), sta(k)
- 910              format (i1,4x,g13.6,3x,g13.6,3x,g13.6,5x,a3)
+                  read (m(i)(12:71), 2300) k, x(k), y(k), z(k), sta(k)
+ 2300             format (i1,4x,g13.6,3x,g13.6,3x,g13.6,5x,a3)
                end if
 
                nant = nant + 1
             end if
 
-            if (ENDHDR) go to 2400
-2200     continue
-2400  continue
+            if (ENDHDR) go to 2500
+ 2400    continue
+ 2500 continue
       ncard = ABS(ncard)
 
 C     Set up for reading data.
@@ -330,7 +373,7 @@ C     Tidy up.
       RETURN
 
 C----------------------- READ DATA GROUP HEADER ------------------------
-3000  if (.not.open) then
+ 3000 if (.not.isopen) then
          write (6, *) ' File is not open'
          jstat = -1
          RETURN
@@ -387,7 +430,7 @@ C      param 8=if_no (if present)             sc_q
 C      param 9=sourceno (if present)          sc_srcno
 C      param 10=intbase (if present)          intbase (if present)
 
-3100  bufleft = 641 - bufptr
+ 3100 bufleft = 641 - bufptr
 
 C     End of scan?
       call VAXI4 (i_buff(bufptr), i1)
@@ -432,8 +475,8 @@ C     ------------NOW READ DATA -------------
 
 C        If it will all fit in current buffer, then things are easy.
          call GETPARM (jstat, buffer, i_buff, bufptr, bufptr, buffer,
-     +      pcount, u, v, w, baseline, lun, ut, flag, bin, if_no,
-     +      sourceno)
+     :      pcount, u, v, w, baseline, lun, ut, flag, bin, if_no,
+     :      sourceno)
          if (jstat.eq.-2) goto 3100
          if (jstat.ne.0) RETURN
          bufptr = bufptr+pcount
@@ -472,8 +515,8 @@ C        Extract bufptr items from the next buffer.
          end do
 
          call GETPARM (jstat, grphdr, i_grphdr, 1, bufptr, buffer,
-     +      pcount, u, v, w, baseline, lun, ut, flag, bin, if_no,
-     +      sourceno)
+     :      pcount, u, v, w, baseline, lun, ut, flag, bin, if_no,
+     :      sourceno)
          if (jstat.eq.-2) goto 3100
          if (jstat.ne.0) RETURN
 
@@ -510,7 +553,7 @@ C           3       Real(vis) Imag(vis)  Weight
          RETURN
       end if
 
-3500  bufleft = 641 - bufptr
+ 3500 bufleft = 641 - bufptr
          if (bufleft.ge.(data_format*(grplength-grpptr+1))) then
 C           Entire group can be filled from existing buffer.
             do i = grpptr, grplength
@@ -655,15 +698,14 @@ C        Go back to pick up the rest of the group.
 
 C--------------------------- CLOSE FITS FILE ---------------------------
 
-5000  continue
-      if (open) then
+ 5000 if (isopen) then
          rp_iostat = AT_CLOSE (lun)
          if (rp_iostat.ne.0) then
             write (6, *) ' Cannot close file'
             jstat = -1
             RETURN
          end if
-         open = .false.
+         isopen = .false.
       end if
 
       jstat = 0
@@ -671,7 +713,7 @@ C--------------------------- CLOSE FITS FILE ---------------------------
 
 C------------------------- SKIP TO END OF FILE -------------------------
 
- 6000 if (.not.open) then
+ 6000 if (.not.isopen) then
          write (6, *) ' File is not open'
          jstat = -1
          RETURN
@@ -706,7 +748,7 @@ C     Assume not.
       SIMPLE = 0
 
 C     Write first 8 characters from buffer into character string.
-      write (m(1)(1:8),'(2a4)') (buffer(j), j=1,2)
+      write (m(1)(1:8),'(2a4)') (buffer(j),j=1,2)
 
       if (m(1)(1:6).eq.'SIMPLE') then
 C        Start of header.
@@ -715,7 +757,7 @@ C        Start of header.
       else if (m(1)(1:8).eq.'FG TABLE') then
 C        Start of FG (flag) table.
          endhdr = .false.
-         write (m,'(32(20a4,:,/))') (buffer(j), j=1,640)
+         write (m,'(32(20a4,:,/))') (buffer(j),j=1,640)
          call RPFITS_READ_TABLE (lun, m, -1, endhdr)
          SIMPLE = 4
       end if
@@ -727,8 +769,8 @@ C        Start of FG (flag) table.
 C-----------------------------------------------------------------------
 
       subroutine GETPARM (jstat, grphdr, i_grphdr, grpptr, bufptr,
-     +                    buffer, pcount, u, v, w, baseline, lun, ut,
-     +                    flag, bin, if_no, sourceno)
+     :                    buffer, pcount, u, v, w, baseline, lun, ut,
+     :                    flag, bin, if_no, sourceno)
 
 C-----------------------------------------------------------------------
 C     Read group header parameters from grphdr and check validity.
@@ -743,7 +785,7 @@ C-----------------------------------------------------------------------
 
       logical   ILLPARM
       integer   baseline, bin, bufptr, flag, grpptr, i_grphdr(640),
-     +          iant, if_no, iif, iq, jstat, lun, pcount, sourceno
+     :          iant, if_no, iif, iq, jstat, lun, pcount, sourceno
       real      grphdr(640), buffer(640), rbase, u, v, w, ut
 
 C     First 5 parameters are always there - you hope!
@@ -824,7 +866,7 @@ C-----------------------------------------------------------------------
 
       logical   ILLPARM
       integer   AT_READ, AT_UNREAD, bufptr, i, iant, iif, iq, j, jstat,
-     +          lun, pcount, SIMPLE
+     :          lun, pcount, SIMPLE
       real      buffer(640), rbase, u, ut, v, w
 
       do 10 j = 1, 1000
@@ -833,12 +875,12 @@ C        contain anything useful (and at most one integration).
          rp_iostat = AT_READ (lun, buffer)
          if (rp_iostat.ne.0) then
             if (rp_iostat.eq.-1) then
-               jstat=3
+               jstat = 3
                RETURN
             end if
 
             write (6,*) ' Unable to read next block'
-            jstat=-1
+            jstat = -1
             RETURN
          end if
 
@@ -848,7 +890,7 @@ C        Check to see if it's a header block.
             rp_iostat = AT_UNREAD (lun, buffer)
             RETURN
          end if
-         bufptr=1
+         bufptr = 1
 
 C        Scan through the block looking for something legal.
          do i = 1, 640
@@ -902,6 +944,12 @@ C     Success!
 
       if (data_format.lt.1 .or. data_format.gt.3) then
 *        Invalid data format.
+         ILLPARM = .true.
+
+      else if (abs(u).gt.1e10 .or.
+     :         abs(v).gt.1e10 .or.
+     :         abs(w).gt.1e10) then
+*        Invalid visibility coordinate.
          ILLPARM = .true.
 
       else if (rbase.lt.-1.1 .or. rbase.gt.(257*nant+0.1)) then

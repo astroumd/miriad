@@ -1,15 +1,15 @@
-//----------------------------------------------------------------------------
-// RPFITS.h: Global enums and structs for RPFITS usage in C and C++.
-//----------------------------------------------------------------------------
-//
-//  The FORTRAN standard requires that CHARACTER variables not be mixed with
-//  other types in COMMON and hence they have a separate COMMON block.
-//
-//  DOUBLE PRECISION variables were also segregated into a separate COMMON
-//  block for reasons long forgotten.
-//
-// $Id$
-//----------------------------------------------------------------------------
+/*--------------------------------------------------------------------------*/
+/* RPFITS.h: Global enums and structs for RPFITS usage in C and C++.        */
+/*--------------------------------------------------------------------------*/
+/*                                                                          */
+/*  The FORTRAN standard requires that CHARACTER variables not be mixed     */
+/*  with other types in COMMON and hence they have a separate COMMON block. */
+/*                                                                          */
+/*  DOUBLE PRECISION variables were also segregated into a separate COMMON  */
+/*  block for reasons long forgotten.                                       */
+/*                                                                          */
+/* $Id$            */
+/*--------------------------------------------------------------------------*/
 
 #if !defined ATNF_RPFITS_H
 #define ATNF_RPFITS_H
@@ -17,7 +17,7 @@
 
 enum {MaxNChan=8193, MaxNPol=4};
 
-// Variables passed from subroutines
+/* Variables passed from subroutines. */
 int   jstat, baseline, flag, bin, if_no, sourceno;
 float ut, u, v, w;
 float vis[2*MaxNPol*MaxNChan];
@@ -29,12 +29,12 @@ extern "C" {
                 float *, float *, float *, int *, int *, int *, int *);
 }
 
-// Variables passed from COMMON blocks.
+/* Variables passed from COMMON blocks. */
 enum
 {
   ant_max  = 15,
   max_card = 650,
-  max_if   = 8,
+  max_if   = 16,
   pol_max  = 8,
   max_su   = 500,
   max_fg   = 32,
@@ -45,19 +45,19 @@ enum
 };
 
 
-// Error status value from ATIO I/O operation.
+/* Error status value from ATIO I/O operation. */
 extern struct {
   int rp_iostat;
-} index_;
+} iostat_;
 
 
-//    -------- Parameter values obtained from the RPFITS header --------
-//               (except intbase which is a random parameter)
-
-// Miscellaneous parameters from RPFITS header cards (ncount, nfreq, nstok,
-// freq, dfreq, ra, dec, and coord are defunct; use if_nfreq, if_nstok,
-// if_freq, if_bw, if_nfreq su_ra, and su_dec, instead and ignore ncount and
-// coord - now always J2000).
+/*    -------- Parameter values obtained from the RPFITS header --------    */
+/*               (except intbase which is a random parameter)               */
+/*                                                                          */
+/* Miscellaneous parameters from RPFITS header cards (ncount, nfreq, nstok, */
+/* freq, dfreq, ra, dec, and coord are defunct; use if_nfreq, if_nstok,     */
+/* if_freq, if_bw, if_nfreq su_ra, and su_dec, instead and ignore ncount    */
+/* and coord - now always J2000).                                           */
 extern struct {
   int nstok;
   int nfreq;
@@ -71,14 +71,14 @@ extern struct {
 } param_;
 
 
-// Ephemeris parameters from RPFITS header cards.
+/* Ephemeris parameters from RPFITS header cards. */
 extern struct
 {
   int rp_defeat;
 } ephem_;
 
 
-// Proper motion parameters from RPFITS header cards.
+/* Proper motion parameters from RPFITS header cards. */
 extern struct {
   double pm_ra;
   double pm_dec;
@@ -86,13 +86,13 @@ extern struct {
 } proper_;
 
 
-// Spectral line information from RPFITS header cards.
+/* Spectral line information from RPFITS header cards. */
 extern struct {
   int ivelref;
 } spect_;
 
 
-// Antenna table (embedded in the RPFITS header).
+/* Antenna table (embedded in the RPFITS header). */
 extern struct
 {
   int nant;
@@ -102,7 +102,7 @@ extern struct
 } anten_;
 
 
-// Uncalibration table (embedded in the RPFITS header).
+/* Uncalibration table (embedded in the RPFITS header). */
 extern struct
 {
   int n_cu;
@@ -114,7 +114,7 @@ extern struct
 } cu_;
 
 
-// Flag table (embedded in the RPFITS header).
+/* Flag table (embedded in the RPFITS header). */
 extern struct
 {
   int n_fg;
@@ -126,7 +126,7 @@ extern struct
 } fg_;
 
 
-// IF table (embedded in the RPFITS header).
+/* IF table (embedded in the RPFITS header). */
 extern struct {
   int n_if;
   int if_invert[max_if];
@@ -140,7 +140,7 @@ extern struct {
 } if_;
 
 
-// Meteorological table (embedded in the RPFITS header).
+/* Meteorological table (embedded in the RPFITS header). */
 extern struct {
   int n_mt;
   int mt_ant[max_mt];
@@ -148,7 +148,7 @@ extern struct {
 } mt_;
 
 
-// Index table (embedded in the RPFITS header).
+/* Index table (embedded in the RPFITS header). */
 extern struct {
   int n_nx;
   int nx_rec[max_nx];
@@ -156,7 +156,7 @@ extern struct {
 } nx_;
 
 
-// Source table (embedded in the RPFITS header).
+/* Source table (embedded in the RPFITS header). */
 extern struct {
   int n_su;
   int su_found;
@@ -166,75 +166,77 @@ extern struct {
 
 extern struct
 {
-  double axis_offset[ant_max];			// anten
-  double dec;					// param
-  double dfreq;					// param
-  double cu_cal1[max_cu];			// cu
-  double cu_cal2[max_cu];			// cu
-  double cu_ut[max_cu];				// cu
-  double feed_cal[ant_max*max_if*pol_max];	// anten
-  double feed_pa[2*ant_max];			// anten
-  double fg_ut[2*max_fg];			// fg
-  double freq;					// param
-  double if_bw[max_if];				// if
-  double if_ref[max_if];			// if
-  double if_freq[max_if];			// if
-  double mt_humid[max_mt];			// mt
-  double mt_press[max_mt];			// mt
-  double mt_temp[max_mt];			// mt
-  double mt_ut[max_mt];				// mt
-  double nx_ut[max_nx];				// nx
-  double ra;					// param
-  double rfreq;					// spect
-  double rp_c[12];				// ephem
-  double rp_djmrefp;				// ephem
-  double rp_djmreft;				// ephem
-  double rp_utcmtai;				// ephem
-  double su_dec[max_su];			// su
-  double su_ra[max_su];				// su
-  double su_rad[max_su];			// su
-  double su_decd[max_su];			// su
-  double su_pra[max_su];			// su
-  double su_pdec[max_su];			// su
-  double su_prad[max_su];			// su
-  double su_pdecd[max_su];			// su
-  double vel1;					// spect
-  double x[ant_max];				// anten
-  double x_array;				// anten
-  double y[ant_max];				// anten
-  double y_array;				// anten
-  double z[ant_max];				// anten
-  double z_array;				// anten
+  double axis_offset[ant_max];			/* anten */
+  double dec;					/* param */
+  double dfreq;					/* param */
+  double cu_cal1[max_cu];			/* cu    */
+  double cu_cal2[max_cu];			/* cu    */
+  double cu_ut[max_cu];				/* cu    */
+  double feed_cal[ant_max*max_if*pol_max];	/* anten */
+  double feed_pa[2*ant_max];			/* anten */
+  double fg_ut[2*max_fg];			/* fg    */
+  double freq;					/* param */
+  double if_bw[max_if];				/* if    */
+  double if_ref[max_if];			/* if    */
+  double if_freq[max_if];			/* if    */
+  double mt_humid[max_mt];			/* mt    */
+  double mt_press[max_mt];			/* mt    */
+  double mt_temp[max_mt];			/* mt    */
+  double mt_ut[max_mt];				/* mt    */
+  double nx_ut[max_nx];				/* nx    */
+  double ra;					/* param */
+  double rfreq;					/* spect */
+  double rp_c[12];				/* ephem */
+  double rp_djmrefp;				/* ephem */
+  double rp_djmreft;				/* ephem */
+  double rp_utcmtai;				/* ephem */
+  double su_dec[max_su];			/* su    */
+  double su_ra[max_su];				/* su    */
+  double su_rad[max_su];			/* su    */
+  double su_decd[max_su];			/* su    */
+  double su_pra[max_su];			/* su    */
+  double su_pdec[max_su];			/* su    */
+  double su_prad[max_su];			/* su    */
+  double su_pdecd[max_su];			/* su    */
+  double vel1;					/* spect */
+  double x[ant_max];				/* anten */
+  double x_array;				/* anten */
+  double y[ant_max];				/* anten */
+  double y_array;				/* anten */
+  double z[ant_max];				/* anten */
+  double z_array;				/* anten */
 } doubles_;
 
 
 extern struct {
-  char object[16];				// param
-  char instrument[16];				// param
-  char cal[16];					// param
-  char rp_observer[16];				// param
-  char datobs[12];				// param
-  char datwrit[12];				// param
-  char file[256];				// param
-  char datsys[8];				// param
-  char version[20];				// param
-  char coord[8];				// param
-  char sta[ant_max*8];				// anten
-  char feed_type[2*ant_max*2];			// anten
-  char card[max_card*80];			// param
-  char if_cstok[4*max_if*2];			// if
-  char su_name[max_su*16];			// su
-  char su_cal[max_su*4];			// su
-  char fg_reason[max_fg*24];			// fg
-  char nx_source[max_nx*16];			// nx
-  char nx_date[max_nx*12];			// nx
-  char rpfitsversion[20];			// param
+  char object[16];				/* param */
+  char instrument[16];				/* param */
+  char cal[16];					/* param */
+  char rp_observer[16];				/* param */
+  char datobs[12];				/* param */
+  char datwrit[12];				/* param */
+  char file[256];				/* param */
+  char datsys[8];				/* param */
+  char version[20];				/* param */
+  char coord[8];				/* param */
+  char sta[ant_max*8];				/* anten */
+  char feed_type[2*ant_max*2];			/* anten */
+  char card[max_card*80];			/* param */
+  char if_cstok[4*max_if*2];			/* if    */
+  char su_name[max_su*16];			/* su    */
+  char su_cal[max_su*4];			/* su    */
+  char fg_reason[max_fg*24];			/* fg    */
+  char nx_source[max_nx*16];			/* nx    */
+  char nx_date[max_nx*12];			/* nx    */
+  char rpfitsversion[20];			/* param */
+  char bunit[16];				/* param */
+  char obstype[16];				/* param */
 } names_;
 
 
-//     -------------- Values obtained from the RPFITS data --------------
-//
-// Syscal data.
+/*     -------------- Values obtained from the RPFITS data --------------   */
+/*                                                                          */
+/* Syscal data. */
 extern struct {
   float sc_ut;
   int sc_ant;

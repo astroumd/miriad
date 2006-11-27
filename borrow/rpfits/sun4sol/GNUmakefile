@@ -1,16 +1,27 @@
+# Sun Solaris Makefile for RPFITS.
+
 # The RPFITS root directory.
-RPFITSROOT := /nfs/atapplic/rpfits
- 
+RPFITSROOT := ..
+
 # Only used for locating architecture-specific code in ./code/$(ARCH).
 ARCH := sun4sol
 
-# C and FORTRAN compiler flags.
-CFLAGS := -O -xs
+# Sun Fortran and C compiler flags...
 FFLAGS := -O -u -xs
+CFLAGS := -O -xs
+
+# ...or if you have the GNU compilers installed and want to use them.
+# FC     := g77
+# FFLAGS := -g -O -fno-automatic -Wall -Wno-globals
+# CC     := gcc
+# CFLAGS := -g -O -Wall -Wno-parentheses
 
 RANLIB := ranlib
 
-LDFLAGS := -R.
+LDFLAGS :=
+
+# Where to install stuff.
+PREFIX := /usr/local
 
 #-----------------------------------------------------------------------------
 # Include generic RPFITS makefile.

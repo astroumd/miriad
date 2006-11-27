@@ -67,11 +67,11 @@ C-------------------TEMPLATE FOR FILE HEADERS---------------------------
       data length  /2560/
       data open    /.false./
       data pcount  /11/
-      data rpfitsversion /'2.2                 '/
+      data rpfitsversion /'2.11                '/
 
       data (m(i), i = 1,15) /
      + 'SIMPLE  =                    F  / NONCONFORMIST',
-     + 'FORMAT  =               RPFITS  / RPFITS',
+     + 'FORMAT  =             ''RPFITS''  / RPFITS',
      + 'SCANS   =                   -1  / No. of scans in file',
      + 'BITPIX  =                  -32  / Values are real',
      + 'NAXIS   =                    6  /',
@@ -81,13 +81,13 @@ C-------------------TEMPLATE FOR FILE HEADERS---------------------------
      + 'NAXIS4  =                    ?  / No. of frequencies',
      + 'NAXIS5  =                    1  / Right Ascension (EPOCH)',
      + 'NAXIS6  =                    1  / Declination (EPOCH)',
-     + 'RPFITS  = ''2.2                 '' / RPFITS version number',
+     + 'RPFITS  = ''0.0                 '' / RPFITS version number',
      + 'GROUPS  =                    T  / Data structured in groups',
      + 'PCOUNT  =                   11  / No. of random parameters',
      + 'GCOUNT  =                    ?  / No. of groups'/
 
       data (m(i), i = 16,25) /
-     + 'BUNIT   = ''JY''                  / Unit of flux',
+     + 'BUNIT   = ''JY                ''  / Unit of flux',
      + 'BLANK   =               -32768  / Value of blank pixel',
      + 'OBJECT  = ''                  ''  / Source Name',
      + 'INSTRUME= ''DUMMY             ''  / Instrument',
@@ -336,6 +336,9 @@ C---------------------WRITE FILE HEADER---------------------------------
                write (m(i)(11:30), '(i20)') ncount
             else if (key.EQ.'INTIME') then
                write (m(i)(11:30), '(i20)') intime
+            else if (key.EQ.'BUNIT   ') then
+               call LJUSTY(bunit)
+               write(m(i)(12:29),'(a16,2x)') bunit
             else if (key.EQ.'OBJECT  ') then
                call LJUSTY(object)
                write(m(i)(12:29),'(a8,10x)') object

@@ -195,7 +195,7 @@ C-----------------------------------------------------------------------
       end do
       reread = .false.
 
- 999  continue
+      continue
       return
       end
 

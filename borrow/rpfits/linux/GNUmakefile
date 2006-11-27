@@ -1,18 +1,26 @@
 # Linux Makefile for RPFITS.
 
 # The RPFITS root directory.
-RPFITSROOT := /nfs/atapplic/rpfits
- 
+RPFITSROOT := ..
+
 # Only used for locating architecture-specific code in ./code/$(ARCH).
 ARCH := linux
 
-# C and FORTRAN compiler flags.
-CFLAGS := -g -O -Wall
+# GNU Fortran and C compiler flags.
+FC     := g77
 FFLAGS := -g -O -fno-automatic -Wall -Wno-globals
-FC := g77
+CFLAGS := -g -O -Wall -Wno-parentheses
 RANLIB := ranlib
 
-LDFLAGS := -Xlinker -rpath .
+LDFLAGS :=
+
+# Use these definitions (in place of those above) to compile with gfortran.
+# FC      := gfortran
+# FFLAGS  := -g -O -fno-automatic -Wall
+# LDFLAGS := -lg2c
+
+# Where to install stuff.
+PREFIX := /usr/local
 
 #-----------------------------------------------------------------------------
 # Include generic RPFITS makefile.
