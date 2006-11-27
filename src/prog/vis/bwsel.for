@@ -11,9 +11,10 @@ c= bwsel - Select records based on their wideband bandwidth
 c& pjt 
 c: uv analysis
 c+
-c	BWSEL is a MIRIAD task which copies and catenates multiple MIRIAD
-c	uv data sets. Only records are copied of which their bandwidth
-c       matches a given set to a given accuracy.
+c	BWSEL is a MIRIAD task which selects data based on a requested
+c       bandwidth. Notice that if data is selected, ALL channel and wide
+c       band data are copy, not just the windows selected. Use UVCAT
+c       with select=win(N) instead.
 c       If data has changing number of spectral windows (nspect) or has
 c       no channel data, program will currently abort.
 c@ vis
@@ -33,7 +34,7 @@ c--
 c------------------------------------------------------------------------
         include 'maxdim.h'
 	character version*(*)
-	parameter(version='BWsel: version 21-nov-06 **TEST7**')
+	parameter(version='BWsel: version 21-nov-06 **TEST8**')
 c
 	integer nchan,vhand,lIn,lOut,nPol,Pol,SnPol,SPol
 	integer nwdata,length,nbw,i
@@ -51,7 +52,7 @@ c
 c
 	call output(version)
 	call keyini
-	call uvDatInp('vis','3')
+	call uvDatInp('vis','2')
 	call keya('out',out,' ')
 	call mkeyd('bw',bw,MAXWIN,nbw)
 	call keyd('slop',slop,0.25d0)
@@ -135,7 +136,7 @@ c
 	    if(dochan) then
 	       if (uvVarUpd(vhand)) then
 		  call WindUpd(lIn,lOut,
-     *                    preamble(4),bw,nbw,slop,dobw)
+     *                    preamble(3),bw,nbw,slop,dobw)
 		  nvis0 = nvis0 + 1
 		  if (dobw) nvis1 = nvis1 + 1
 	       endif
