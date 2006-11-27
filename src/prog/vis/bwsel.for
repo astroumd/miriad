@@ -34,7 +34,7 @@ c--
 c------------------------------------------------------------------------
         include 'maxdim.h'
 	character version*(*)
-	parameter(version='BWsel: version 21-nov-06 **TEST8**')
+	parameter(version='BWsel: version 27-nov-06 **TEST8**')
 c
 	integer nchan,vhand,lIn,lOut,nPol,Pol,SnPol,SPol
 	integer nwdata,length,nbw,i
