@@ -4,7 +4,8 @@ c************************************************************************
 c
 c
 c  History:
-c    pjt  20nov06   Cloned off uvcat
+c    pjt  20nov06   Cloned off uvcat, and testing for CARMA data
+c    pjt  28nov06   fixed format stmt, and made this the official version
 c  Bugs:
 c
 c= bwsel - Select records based on their wideband bandwidth
@@ -17,13 +18,14 @@ c       band data are copy, not just the windows selected. Use UVCAT
 c       with select=win(N) instead.
 c       If data has changing number of spectral windows (nspect) or has
 c       no channel data, program will currently abort.
-c@ vis
+c@ vis 
 c	The names of the input uv data sets. Multiple names can be given,
 c	separated by commas. At least one name must be given.
 c@ bw  
 c       A set of bandwidths, in MHz, in order for a record to be copied.
 c       Use a 0 if no match is needed. Multiple non-zero values need to be
-c       all matched. Default: all records.
+c       all matched, i.e. non-zero BW selections are logically ANDed.
+c       Default: all records.
 c@ slop
 c       Fraction of frequency within which the bandwith should be to be selected.
 c       Default: 0.25
@@ -34,7 +36,7 @@ c--
 c------------------------------------------------------------------------
         include 'maxdim.h'
 	character version*(*)
-	parameter(version='BWsel: version 27-nov-06 **TEST8**')
+	parameter(version='BWsel: version 28-nov-06')
 c
 	integer nchan,vhand,lIn,lOut,nPol,Pol,SnPol,SPol
 	integer nwdata,length,nbw,i
@@ -371,6 +373,7 @@ c
 c
 c  The data is assumed to have an LSB and USB, with nspec/2 windows in each side
 c  Note: bw() values are in MHz, but sds() in GHz
+c  This do loop will logically AND the non-zero bw() selections with the data
 c
 	if (mod(nspect,2).ne.0) call bug('f',
      *       'Odd number of nspect, no USB/LSB?')
@@ -416,7 +419,7 @@ c
 	      mlen = mlen + 1
 	      do i=1,nspect/2
 		 write(mesg(mlen:),'(1x,F7.1,1x)') mbw(i)
-		 mlen = len1(mesg)
+		 mlen = len1(mesg)+1
 	      enddo
 	      call output(mesg)
 	   endif
