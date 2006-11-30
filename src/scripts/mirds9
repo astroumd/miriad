@@ -5,6 +5,8 @@
 #  TODO:
 #    some grepping now done wrong on solaris, output of imhead issue
 #
+#  $Id$
+#
 set version="3.2 - 30-nov-06 PJT"
 
 if ($#argv == 0) then
@@ -90,6 +92,10 @@ endif
 
 set wcsmsg=""
 if (-d $name) then
+    if (-e $name/visdata) then
+       echo You cannot directly look at visdata, use uvimage to convert to an image
+       exit 1
+    endif
     set ndim=`itemize in=$name/naxis | tail -1 | awk '{print $3}'`
     set n1=`itemize in=$name/naxis1 | tail -1 | awk '{print $3}'`
     set n2=`itemize in=$name/naxis2 | tail -1 | awk '{print $3}'`
