@@ -1,5 +1,11 @@
 #! /bin/csh -f
 #
+#    send miriad data to ds9
+#
+#  TODO:
+#    some grepping now done wrong on solaris, output of imhead issue
+#
+set version="3.2 - 30-nov-06 PJT"
 
 if ($#argv == 0) then
     echo "Usage: $0 [-options] miriad_dataset [plane1] [plane2 ...]"
@@ -13,21 +19,30 @@ if ($#argv == 0) then
     echo "                  do not load WCS, even if it has one"
     echo "      -title <TITLE>"
     echo "                  use a matching ds9 as server (ds9 -title <TITLE>)"
+    echo "      -swap"
+    echo "                  force little endian data instead of big"
     echo ""
-    echo "  Version 3.1 - 29-jul-03 PJT"
+    echo "  Version $version"
     echo ""
     echo "  Be sure 'ds9' and the XPA routines are in your environment."
     echo "  You do need to start ds9 manually yourself."
     echo "  For XPA on machines that are not connected to the internet"
     echo "  you may need to use 'setenv XPA_METHOD local'"
+    echo 
     echo ""
     exit 0
+else
+    echo "mirds9 : Version $version"
 endif
+
+#   "tail +2" needs this in new Linux distributions
+setenv _POSIX2_VERSION 1
 
 set scalelims=0
 set movie=0
 set wcs=0
 set dowcs=1
+set arch=bigendian
 set title=ds9
 
 foreach dummy ($*)
@@ -45,6 +60,9 @@ foreach dummy ($*)
   else if ("$1" == "-wcs") then
     set dowcs=0
     shift argv
+  else if ("$1" == "-swap") then
+    set arch=littleendian
+    shift argv
   else
     break
   endif
@@ -52,22 +70,9 @@ end
 
 set name=$1
 set dir=`pwd`
-set sname=`uname -s`
-
-if (X-$sname == X-Linux) then
-  # NEMO has bswap
-  set pipe="bswap - - 4"
-  set pipes=(`which bswap`)
-  if ($#pipes > 1) then
-    echo "It does not look like you have bswap for $sname. You need it."
-    exit 0
-  endif
-else
-  set pipe=cat
-endif
 
 #   if the first char of the file is not / (absolute), make it absolute
-#   since we don't know if saotng had been started in the current directory
+#   since we don't know if ds9 had been started in the current directory
 if (`echo $name | cut -c1` != '/') then
   echo Assuming dir=$dir
   set name=$dir/$1
@@ -75,12 +80,11 @@ endif
 
 shift argv
 
-# saotng >& /dev/null  &
-
 set xpasets=(`which xpaset`)
 
 if ($#xpasets > 1) then
-  echo "It does not look like your environment has loaded in 'saord' yet"
+  echo 'It does not look like your $path knows about xpaset.'
+  echo 'You need the xpatools for this from SAO.'
   exit 0
 endif
 
@@ -184,7 +188,10 @@ foreach p ($planes)
 
     echo $name $n1 $n2 $n3 -32 $skip 
 
-    cat $name/image | $pipe | xpaset $title array  $name/image\[xdim=$n1,ydim=$n2,zdim=$n3,bitpix=-32,skip=$skip\]
+    # cat $name/image | $pipe | xpaset $title array  $name/image\[xdim=$n1,ydim=$n2,zdim=$n3,bitpix=-32,skip=$skip\]
+    # xpaset -p $title file array  $name/image\[xdim=$n1,ydim=$n2,zdim=$n3,bitpix=-32,skip=$skip,arch=$arch\]
+    cat $name/image | xpaset $title array  $name/image\[xdim=$n1,ydim=$n2,zdim=$n3,bitpix=-32,skip=$skip,arch=$arch\]
+
 
 #    echo array $name/image $n1 $n2 -32 $skip | $pipe | xpaset $title
 
