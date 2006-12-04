@@ -129,11 +129,12 @@ c                 baseline distances.
 c    18nov05 jhz  extended the size of source array to 100;
 c                 extended the max color index to 48.
 c    19may06 jhz  increased maxchan;
+c    5dec06  jhz  implemented band (chunk) based Tsys flagging.
 c------------------------------------------------------------------------
         include 'smablflag.h'
 	character version*(*)
         integer maxdat,maxplt,maxedit
-        parameter(version='SmaBlFlag: version 1.7 19-may-2006')
+        parameter(version='SmaBlFlag: version 1.8 5-dec-2006')
         parameter(maxdat=500000,maxplt=20000,maxedit=20000)
 c
         logical present(maxbase),nobase,selgen,noapply,rms,scalar
@@ -169,18 +170,26 @@ c
         parameter(maxsource=100)
         character source(maxsource)*32, polstr(13)*2
         integer nsource, sourid
+        integer maxsels
+        parameter(maxsels=256)
+        real sels(maxsels)
         common/sour/soupnt,source,nsource, sourid
+c        logical selprobe
 c
          dotsys=.false.
 c
 c  Get the input parameters.
 c
+        do i=1,maxsels
+        sels(i) =0.0
+        end do
         call output(version)
         call keyini
-        call keya('device',device,' ')
-        if(device.eq.' ')call bug('f','A PGPLOT device must be given')
+        call keya('device', device,' ')
+        if(device.eq.' ') call bug('f','A PGPLOT device must be given')
         call getaxis(xaxis,yaxis,dotsys)
         call getopt(nobase,selgen,noapply,rms,scalar,uvflags)
+        call selinput('select',sels,maxsels)
         call uvdatinp('vis',uvflags)
         call keyfin
 c
@@ -191,8 +200,13 @@ c        if(npol.eq.0)call uvdatset('stokes',0)
 c
 c  Open the input data.
 c
+       
         if(.not.uvdatopn(tno))call bug('f','Error opening input')
-         
+c
+c   apply the select to the relevant routines
+c
+        call SelApply(tno,sels,.true.)
+
 c
 c  Open the plot device.
 c
@@ -207,7 +221,8 @@ c
 c  Get the data.
 c
         call getdat(tno,rms,scalar,xaxis,yaxis,present,maxbase,
-     *          xdat,ydat,bldat,timedat,ndat,maxdat,dotsys,polst,polstr)
+     *          xdat,ydat,bldat,timedat,ndat,maxdat,dotsys,polst,polstr,
+     *  sels)
         if(ndat.eq.0)call bug('f','No points to flag')
 c
 c  Loop over the baselines.
@@ -946,7 +961,8 @@ c
         end
 c************************************************************************
         subroutine getdat(tno,rms,scalar,xaxis,yaxis,present,maxbase1,
-     *          xdat,ydat,bldat,timedat,ndat,maxdat,dotsys,polst,polstr)
+     *          xdat,ydat,bldat,timedat,ndat,maxdat,dotsys,polst,
+     *          polstr,sels)
 c
         integer tno,maxbase1,maxdat,ndat
         integer bldat(maxdat), polst(maxdat)
@@ -954,6 +970,7 @@ c
         double precision timedat(maxdat)
         real xdat(maxdat),ydat(maxdat)
         character xaxis*(*),yaxis*(*)
+        real sels(*)
 c------------------------------------------------------------------------
         include 'smablflag.h'
 	double precision ttol
@@ -965,21 +982,33 @@ c
         double precision preamble(4),time,time0,tprev,lst,ra
         real uvdist2(maxbase)
         integer i,n,bl,i1,i2,nants,npnt(maxbase),mbase,nchan
-        real tsys(maxant),tsys12(maxbase)
+        real tsys(maxant*maxwin),tsys12(maxbase)
         double precision antel(maxant), el
         integer soupnt(500000), is, npol, pols,maxsource,limitnsource
         parameter(maxsource=100)
         character source(maxsource)*32, souread*32,polstr(13)*2
-        integer nsource, sourid, iel
+        character telescop*10
+        integer nsource, sourid, iel, nspect, nwide, nselband
+        logical selwindow(maxwin)
+        integer ii, length
+        character type*1
+        real tsys1, tsys2
         common/sour/soupnt,source,nsource, sourid
+c   externals
+        logical selprobe
 c
 c  Miscellaneous initialisation.
 c
         limitnsource=maxsource
         mbase = min(maxbase,maxbase1)
         do i=1,maxbase
-          present(i) = .false.
+        present(i) = .false.
         enddo
+        do i=1,maxwin
+        selwindow(i) = .false.
+        enddo
+        tsys1 = 0.
+        tsys2 = 0.
 c
         do i=1,mbase
           npnt(i)    = 0
@@ -990,10 +1019,9 @@ c
           tsys12(i)  = 0
         enddo
 c
-        do i=1,maxant
-         tsys(i)     = 0
+        do i=1,maxant*maxwin
+        tsys(i)     = 0
         end do
-
         ndat = 0
 
 
@@ -1018,10 +1046,14 @@ c  Lets get going.
 c
         call output('Reading the data ...')
         call uvdatrd(preamble,data,flags,maxchan,nchan)
+c
+c get telescop name
+c
+        call uvprobvr (tno, 'telescop',type, length, ok)
+        call uvrdvra(tno,'telescop',telescop,' ')
            call uvdatgti ('npol',npol)
            call uvdatgti ('pol',pols)
 
-c           write(*,*) npol,pols, polstr(pols+9)
         if(nchan.eq.0)call bug('f','No visibility data found')
         call flagchk(tno)
         nants = 0
@@ -1030,10 +1062,15 @@ c           write(*,*) npol,pols, polstr(pols+9)
 c
 c get tsys
 c
-         
-         call uvrdvri(tno,'nants',nants,0.d0) 
+         call uvrdvri(tno,'nants',nants,0) 
          if(dotsys) then
-         call uvgetvrr(tno,'systemp',tsys,nants)
+         call uvrdvri(tno,'nspect',nspect,0)
+         call uvrdvri(tno,'nwide',nwide,0)
+         if (telescop.eq.'SMA') then
+           call uvgetvrr(tno,'systemp',tsys,nants)
+           else
+           call uvgetvrr(tno,'systemp',tsys,nants*nspect)
+         end if
          call uvgetvrd(tno,'antel',antel,nants)
               iel=0
               do i=1,nants
@@ -1050,9 +1087,9 @@ c  do source
 c
           sourid=0
           nsource=0
-        call uvgetvra(tno,'source',souread)
-                if (souread.ne.' '.and.sourid.eq.0) then
-          sourid=sourid+1
+          call uvgetvra(tno,'source',souread)
+          if (souread.ne.' '.and.sourid.eq.0) then
+          sourid=1
           nsource=nsource+1
           source(sourid)=souread
            else
@@ -1064,6 +1101,7 @@ c
                  if(is.eq.nsource) then
                       source(is+1)=souread
                       nsource=nsource+1
+                      sourid=is+1
                       goto 555
                   end if
                end do
@@ -1086,22 +1124,77 @@ c
      *     tsys12,uvdist2,corr,corr1,corr2,xaxis,yaxis,npnt,
      *     time0,present,mbase,xdat,ydat,timedat,bldat,ndat,maxdat,
      *     pols,polst)
-           nants = 0
            tprev = time
            call uvrdvrd(tno,'lst',lst,0.d0)
            endif
+c
+c   select the band
+c
+            do i=1,nspect
+	    selwindow(i) = selprobe(sels,'window',1.d0*i)
+            end do
+            nants=0
             n = 0
+c read the selected data and put then in data and flag
             do i=1,nchan
               if(flags(i))then
-                n = n + 1
-                npnt(bl) = npnt(bl) + 1
-                corr(bl) = corr(bl) + data(i)
-                corr1(bl) = corr1(bl) + abs(data(i))
-                corr2(bl) = corr2(bl) +
-     *                      cmplx(real(data(i))**2,aimag(data(i))**2)
-               if(dotsys) tsys12(bl) = sqrt(tsys(i1)*tsys(i2))
+              n = n + 1
+              npnt(bl) = npnt(bl) + 1
+              corr(bl) = corr(bl) + data(i)
+              corr1(bl) = corr1(bl) + abs(data(i))
+              corr2(bl) = corr2(bl) +
+     *        cmplx(real(data(i))**2,aimag(data(i))**2)
+c 
+c handling Tsys data
+c
+             if(dotsys) then
+c
+c for antenna-based Tsys
+c
+             if(telescop.eq.'SMA') then
+              tsys1 = tsys(i1)
+              tsys2 = tsys(i2)
+             end if
+c
+c for antenna and band based Tsys
+c
+             if(telescop.ne.'SMA') then
+             tsys1=0.
+             tsys2=0.
+             nselband =0
+             do ii=1,nspect       
+             if(selwindow(ii)) then
+             tsys1 = tsys1+tsys(i1+(ii-1))
+             tsys2 = tsys2+tsys(i2+(ii-1))
+             nselband = nselband + 1
+             end if
+             end do
+              if(nselband.gt.0) then
+              tsys1 = tsys1/nselband
+              tsys2 = tsys2/nselband
+              else
+              tsys1 = 0.
+              tsys2 = 0.
+              end if
+              end if
+              tsys12(bl) = sqrt(tsys1*tsys2)
+              end if
               endif
             enddo
+
+c
+c handling overflow
+c            if(corr1(bl).eq.complex(0.,0.)) then
+c               corr(bl) = complex(1.e30,1.e30)
+c               corr1(bl) = 1.e30
+c               corr2(bl) = complex(1.e30,1.e30)
+c            endif
+            if(abs(corr1(bl)).ge.1.e30) then
+               corr(bl) = complex(1.e30,1.e30)
+               corr1(bl) = 1.e30
+               corr2(bl) = complex(1.e30,1.e30)
+            endif
+
 c              n=1
             if(n.gt.0)then
               uvdist2(bl) = uvdist2(bl) +
@@ -1127,6 +1220,7 @@ c              n=1
 
                       source(is+1)=souread
                       nsource=nsource+1
+                      sourid=is+1
                       goto 556
                   end if
                end do
@@ -1144,10 +1238,16 @@ c              n=1
             if(pols.eq.-7) polstr(pols+9)='XY'
             if(pols.eq.-8) polstr(pols+9)='YX'
 
-          call uvrdvri(tno,'nants',nants,0.d0)
+          call uvrdvri(tno,'nants',nants,0)
 c get systemp
       if(dotsys) then
+          call uvrdvri(tno,'nspect',nspect,0)
+          call uvrdvri(tno,'nwide',nwide,0)
+          if (telescop.eq.'SMA') then
           call uvgetvrr(tno,'systemp',tsys,nants)
+          else
+          call uvgetvrr(tno,'systemp',tsys,nants*nspect)
+          end if
 c get elevation               
           call uvgetvrd(tno,'antel',antel,nants)
               iel=0
@@ -1166,6 +1266,7 @@ c
      *          tsys12, uvdist2,corr,corr1,corr2,xaxis,yaxis,npnt,
      *          time0,present,mbase,xdat,ydat,timedat,bldat,ndat,maxdat,
      *          pols,polst)
+
 c
         end
 c************************************************************************
