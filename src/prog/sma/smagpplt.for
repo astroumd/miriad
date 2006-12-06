@@ -69,9 +69,17 @@ c                      solutions if Keyword vis is given two input vis files.
 c                      The default is to compare the difference (bp2-bp1).
 c         merge        merge two gain tables associated with the two
 c                      visibility files respectively. Two input vis
-c                      file must be given. The merged gain table
+c                      files must be given. The merged gain table
 c                      will be placed in the second input vis file
 c                      by overwritting on the old gain table.
+c         xpass        transfers the bandpass solution from the 1st
+c                      input file to the 2nd input file by reversing
+c                      the channel sequence of the solutions while 
+c                      the frequency tables are kept unchanged.
+c                      vis must be given by two files containing
+c                      'bandpass' and 'freqs' produced from the
+c                      image bands (chunks) of the opposite
+c                      sidebands. 
 c
 c@ filelabel
 c       This gives an option to label the file name in the plot:
@@ -150,6 +158,8 @@ c    jhz 04may06 added an input parameter (filelabel) for option
 c                to label the file name.
 c    jhz 20nov06 fixed a bug in the case gains flagging applied
 c                with gpedit
+c    jhz 06dec06 implemented transfering bandpass solutions
+c                from the image chunks from the opposite sideband. 
 c  Bugs:
 c------------------------------------------------------------------------
         integer maxsels
@@ -159,7 +169,7 @@ c------------------------------------------------------------------------
         parameter (DPI = 3.14159265358979323846)
         parameter (TWOPI = 2 * PI)
         parameter (DTWOPI = 2 * DPI)        
-        parameter(version='SmaGpPlt: version 1.8 20-Nov-06')
+        parameter(version='SmaGpPlt: version 1.9 07-Dec-06')
         include 'smagpplt.h'
         integer iostat,tin,nx,ny,nfeeds,nants,nsols,ierr,symbol,nchan
         integer ntau,length, i, j, k,nschann(maxspect)
@@ -172,7 +182,7 @@ c------------------------------------------------------------------------
         real alpha(maxgains)
         real times(maxtimes),range(2)
         real freqs(maxtimes)
-        double precision jtime(6154)
+        double precision jtime(maxTimes)
         character feeds(3)*1
         real sels(maxsels)
 c
@@ -184,43 +194,57 @@ c linear feeds
 c        data feeds/'I','X','Y'/
 c circular feeds
         data feeds/'I','R','L'/
-        integer pee(2),nfiles,lin,offset,nnsols(10,2),gns
+        integer pee(2),nfiles,lin,offset,nnsols(maxant,2),gns
         character ops*9
         logical uvdatopn
-        complex pass(10,6145,2), gains(10,2,6145)
-        real smooth(3), rpass(10,6145,2), ipass(10,6145,2)
-        real apass(10,6145,2), ppass(10,6145,2)
-        real smoothg(3), rgain(10,2,6145), igain(10,2,6145)
+        complex pass(maxant,maxchan,2), gains(maxant,2,maxTimes)
+        complex xpass(maxant,maxchan,2)
+        real smooth(3), rpass(maxant,maxchan,2), ipass(maxant,maxchan,2)
+        real apass(maxant,maxchan,2), ppass(maxant,maxchan,2)
+        real smoothg(3),rgain(maxant,2,maxchan),igain(maxant,2,maxchan)
         integer nply(2), gnply, bnply, greport,breport, weight
         common/bsmooth/smooth,rpass,ipass,apass,ppass,bnply,breport
         common/gsmooth/smoothg,rgain,igain,gnply,greport,nnsols
-        integer nants1, nfeeds1, nsols1
+        integer nants1,nfeeds1,nsols1,nchan1
         integer nsols2,filelabel
         complex g2buf(maxgains),gbuf(maxgains)
         complex gf12(maxgains)
         real times1(maxtimes),times2(maxtimes)
+        real deltaf1,deltaf2
         double precision t01,t02
-        double precision jtime1(6154),jtime2(6154)
+        double precision jtime1(maxTimes),jtime2(maxTimes)
+        logical doxpass
 c
 c  Get the user parameters.
 c
-            nfile=0
+        nfile=0
+        pee(1) =0
+        pee(2) =0
+        nchan1=0
+        deltaf1=0.0
+        deltaf2=0.0
         call output(version)
         call keyini
 c       ops = 'sdlp'
         ops = ' '
         call uvdatinp ('vis', ops)
         if(vis.eq.' ')call bug('f','Input data-set must be given')
+c        call keya('device',device,' ')
+c        doplot = device.ne.' '
+c        call keya('log',logfile,' ')
+c        dolog = logfile.ne.' '
+c        if(.not.(dolog.or.doplot))
+c     *    call bug('f','One of the device and log must be given')
+        call getaxis(doamp,dophase,doreal,doimag)
+        call getopt(dogains,doxy,doxbyy,dopol,dodtime,dodots,
+     *    dodelay,dospec,dopass,dowrap,dosmooth,donply,doratio,
+     *    domerge,doxpass)
         call keya('device',device,' ')
         doplot = device.ne.' '
         call keya('log',logfile,' ')
         dolog = logfile.ne.' '
-        if(.not.(dolog.or.doplot))
+        if(.not.(dolog.or.doplot).and..not.doxpass)
      *    call bug('f','One of the device and log must be given')
-        call getaxis(doamp,dophase,doreal,doimag)
-        call getopt(dogains,doxy,doxbyy,dopol,dodtime,dodots,
-     *    dodelay,dospec,dopass,dowrap,dosmooth,donply,doratio,
-     *    domerge)
          if(dosmooth.and.dopass) then
               if(doamp) dophase=.true.
               if(dophase) doamp=.true.
@@ -301,11 +325,13 @@ c
 c
 c  Open up all the inputs.
 c
+        if(doxpass.and.(nfiles.ne.2)) 
+     *    call bug('f','Must be two input files')
         if(nfiles.ge.2) then
             do lin= 1, nfiles
             if(.not.uvdatopn(tin))call bug('f','Error opening inputs')
             call uvdatgta ('name', vis)
-            write(*,*) lin,':file', vis
+            write(*,*) lin,': ', vis
             call uvdatcls         
             call hopen(tin,vis,'old',iostat)
             if(iostat.ne.0)then
@@ -334,9 +360,29 @@ c
        if(dopass)then
           call bload(tin,times,g1,nfeeds,nants,nchan,sels,
      *          maxgains,maxtimes,nschann)
+          if(lin.eq.1) then
+            nants1 = nants
+            nchan1 = nchan
+            nfeeds1= nfeeds
+            deltaf1 = times(2)-times(1)
+          endif
+        if(lin.eq.2.and.(doratio.or.doxpass)) then
+            deltaf2 = times(2)-times(1)
+        if( (deltaf2/deltaf1).ge.0)
+     *  call bug('f',
+     *  'the two inputs must be from opposite sidebands.')
+        if(nants1.ne.nants) 
+     *  call bug('f','# of antennas are not matched.')
+        if(nchan1.ne.nchan) 
+     *  call bug('f','# of channels are not matched.')
+        if(nfeeds1.ne.nfeeds)
+     *  call bug('f','# of feeds are not matched.')
+          endif
+
             do i=1, nants
             do j=1, nfeeds
             peeds =j
+            pee(j) =j
             offset = (j-1) + (i-1)*nfeeds
             do k=1, nchan
             if(lin.eq.1) then 
@@ -347,13 +393,22 @@ c
             if(.not.doratio) g1(k+offset*nchan)= 
      *      g1(k+offset*nchan)-pass(i,k,j)
             if(doratio)
-     *   g1(k+offset*nchan)= pass(i,k,j)/g1(k+offset*nchan)             
+     *   g1(k+offset*nchan)= pass(i,k,j)/g1(k+offset*nchan)
+c
+c reverse the order of bandpass solutions
+c
+         if(doxpass) then
+         if(i.eq.1.and.k.eq.1) 
+     *   call output('Transfering bandpass from image sideband ... ')
+            xpass(i,nchan-(k-1),j) = pass(i,k,j)   
+               end if                      
 c           call bug('f','inconsistent frequency between the two files')
                  endif
             end do
             end do
             end do
-          if(lin.eq.2) 
+           
+          if((lin.eq.2).and.doratio) 
      *     call bpplt(vis,times,g1,nfeeds,nants,nchan,range,
      *          feeds(nfeeds),doamp,dophase,dowrap,doreal,doimag,
      *          doplot,dolog,symbol,nx*ny,nschann,donply,dosmooth,
@@ -389,34 +444,47 @@ c
      *  'The two gain tables do not match in the number of antennas.'); 
              
             nsols= nsols1+nsols2 
-            do ifeed=1,nfeeds
-            do j=1,nants
+              do ifeed=1,nfeeds
+               do j=1,nants
             offset = ifeed + (j-1)*nfeeds
 c handle lin=1
-            do i=1,nsols1
+                do i=1,nsols1
             gf12(i)  = g2buf(offset+(i-1)*nfeeds*nants)
             times(i) = times1(i)
             jtime(i) = jtime1(i)
-            end do
+                end do
 c handle lin=2 and merge g2 to g1
-            do i=1,nsols2
+                do i=1,nsols2
             gf12(i+nsols1) = g2(offset+(i-1)*nfeeds*nants)
             times(i+nsols1) = times2(i)
             jtime(i+nsols1) = jtime2(i)
-            end do
+                end do
 c sorting gbuf based on the order of ascending time 
             call xysortcd(nsols1+nsols2,times,gf12,jtime)
 c put back to gbuf
-            do i=1,nsols
+                do i=1,nsols
             gbuf(offset+(i-1)*nfeeds*nants) = gf12(i)
             rgain(j,ifeed,i)=real(gf12(i)) 
             igain(j,ifeed,i)=aimag(gf12(i))
-            end do
-            end do
-            end do 
+                end do
+               end do
+              end do 
             end if
             endif
           end do
+
+c
+c replace the bandpass in file2 with the reversed bandpass from file1
+c
+          if(doxpass) then
+          call output( 'handling the bandpass in '//vis)
+          call hdelete(tin,'bandpass',iostat)
+          call output( 'delete the old bandpass table')
+          call passtab(tin,nfeeds,nants,nchan,
+     *    pass,pee)
+          stop
+          end if
+
 c
 c plot the gains
 c
@@ -451,7 +519,7 @@ c          if((donply.or.dosmooth).and.dogains) then
             end do
             end do
           call hdelete(tin,'gains',iostat)
-          write(*,*) 'delete the old gains table'
+          call output ('delete the old gains table')
           call gaintab(tin,jtime,gains,nfeeds,nants,gns,
      *    pee)
           end if
@@ -536,7 +604,6 @@ c
         if(dogains.or.doxy.or.doxbyy.or.dodelay.or.dospec)then
           call gload(tin,t0,times,jtime, g1,nfeeds,ntau,nants,
      *      nsols,sels, maxgains,maxtimes)
-c         write(*,*) 'gload',nsols,nants,nfeeds
           if(.not.dodtime)call tscale(times,nsols)
           call julday(t0,'H',basetime)
           call output('The base time is '//basetime)
@@ -584,7 +651,7 @@ c           if (nnsols(i,j).gt.0)
             end do
             end do
           call hdelete(tin,'gains',iostat)
-          write(*,*) 'delete the old gains table'
+          call output ('delete the old gains table')
 c
           call gaintab(tin,jtime,gains,nfeeds,nants,gns,
      *    pee)          
@@ -635,7 +702,6 @@ c Apply the polynomial fit or smooth
 c
         if((donply.or.dosmooth).and.dopass) then
         do i=1, nants
-c              write(*,*)
            do j=1, nfeeds
             pee(i) =j
             do k=1, nchan
@@ -644,16 +710,16 @@ c              write(*,*)
             ipass(i,k,j)=apass(i,k,j)*sin(ppass(i,k,j)*pi/180.)
             end if
             pass(i,k,j) = cmplx(rpass(i,k,j),ipass(i,k,j))
-c               write(*,*) 'pass g', pass(i,k,j), g1(k+(i-1)*nchan)
               end do
            end do
         end do
           call hdelete(tin,'bandpass',iostat)
-          write(*,*) 'delete the old bandpass table'
+          call output('delete the old bandpass table')
          
           call passtab(tin,nfeeds,nants,nchan,
      *    pass,pee)
          end if
+          
 c        
 c  Do the polarization leakage term plots.
 c
@@ -677,7 +743,7 @@ c
         integer tin,nfeeds,nants,ntau,nsols,maxgains,maxtimes
         complex g(maxgains)
         real time(maxtimes),sels(*)
-        double precision t0, jtime(6145)
+        double precision t0, jtime(maxTimes)
 c
 c  Load the antenna gains.
 c
@@ -1591,12 +1657,13 @@ C 14-Mar-1997 - optimization: use GRDOT1 [TJP].
 C-----------------------------------------------------------------------
       LOGICAL PGNOTO
 c     for moving smooth
-      double precision Y(6145),ETA(6200),CONETA(6200),A(21,6)
+      include 'smagpplt.h'
+      double precision Y(maxchan),ETA(6200),CONETA(6200),A(21,6)
       double precision ATA1(6,6),ATA1AT(6,21),SCRAT(6,6),P
-      real x(6145), ys(6145)
+      real x(maxchan), ys(maxchan)
       integer K, L, i, bnply, breport
-      real smooth(3), rpass(10,6145,2),ipass(10,6145,2)
-      real apass(10,6145,2),ppass(10,6145,2)
+      real smooth(3), rpass(maxant,maxchan,2),ipass(maxant,maxchan,2)
+      real apass(maxant,maxchan,2),ppass(maxant,maxchan,2)
       common/bsmooth/smooth,rpass,ipass,apass,ppass,bnply,breport
 C
       call pgsci(2)
@@ -1651,6 +1718,7 @@ C
 C-----------------------------------------------------------------------
       LOGICAL PGNOTO
 c     for moving smooth
+      include 'smagpplt.h' 
       PARAMETER(MAXNR=20,MAXN=7681)
       double precision dpi
       parameter(dpi=3.14159265358979323846)
@@ -1660,9 +1728,9 @@ c     for moving smooth
       double precision XA(MAXNR),BP(MAXNR,MAXNR),AP(N,MAXNR)
       double precision CHI2(MAXNR),P
       real x(MAXN), ys(MAXN)
-      integer K, L, i, gnply, greport, nterm, nnsols(10,2)
-      real smoothg(3), rgain(10,2,6145),igain(10,2,6145)
-      real  again(10,2,6145),pgain(10,2,6145)
+      integer K, L, i, gnply, greport, nterm, nnsols(maxant,2)
+      real smoothg(3), rgain(maxant,2,maxchan),igain(maxant,2,maxchan)
+      real  again(maxant,2,maxchan),pgain(maxant,2,maxchan)
       common/gsmooth/smoothg,rgain,igain,gnply,greport,nnsols
 C
 c   load the nnsols
@@ -1742,11 +1810,10 @@ c
 c-----------------------------------------------------------
 c         subroutine gaintab(tno,time,gains,tau,npol,nants,nsoln,
 c     *                                          freq0,dodelay,pee)
-          subroutine gaintab(tno,time,gains,npol,nants,nsoln,pee)
+        subroutine gaintab(tno,time,gains,npol,nants,nsoln,pee)
 c
         integer tno,nants,nsoln,npol,pee(npol)
         double precision time(nsoln),freq0
-        complex gains(10,2,6145)
         logical dodelay
 c
 c  Write out the antenna gains and the delays.
@@ -1763,49 +1830,9 @@ c    dodelay    True if the delays are to be written out.
 c    pee        Mapping from internal polarisation number to the order
 c               that we write the gains out in.
 c------------------------------------------------------------------------
-c=======================================================================
-            include 'maxdim.h'
-c=======================================================================
-c=======================================================================
-c - mirconst.h  Include file for various fundamental physical constants.
-c
-c  History:
-c    jm  18dec90  Original code.  Constants taken from the paper
-c                 "The Fundamental Physical Constants" by E. Richard
-c                 Cohen and Barry N. Taylor (PHYICS TODAY, August 1989).
-c ----------------------------------------------------------------------
-c  Pi.
-      real pi, twopi
-      double precision dpi, dtwopi
-      parameter (pi = 3.14159265358979323846)
-      parameter (dpi = 3.14159265358979323846)
-      parameter (twopi = 2 * pi)
-      parameter (dtwopi = 2 * dpi)
-c ----------------------------------------------------------------------
-c  Speed of light (meters/second).
-      real cmks
-      double precision dcmks
-      parameter (cmks = 299792458.0)
-      parameter (dcmks = 299792458.0)
-c ----------------------------------------------------------------------
-c  Boltzmann constant (Joules/Kelvin).
-       real kmks
-      double precision dkmks
-      parameter (kmks = 1.380658e-23)
-      parameter (dkmks = 1.380658d-23)
-c ----------------------------------------------------------------------
-c  Planck constant (Joules-second).
-      real hmks
-      double precision dhmks
-      parameter (hmks = 6.6260755e-34)
-      parameter (dhmks = 6.6260755d-34)
-c ----------------------------------------------------------------------
-c  Planck constant divided by Boltzmann constant (Kelvin/GHz).
-      real hoverk
-      double precision dhoverk
-      parameter (hoverk = 0.04799216)
-      parameter (dhoverk = 0.04799216)
-c=======================================================================
+            include 'smagpplt.h'
+            complex gains(maxant,2,maxTimes)
+            include 'mirconst.h'
         integer iostat,off,item,i,j,p,pd,j1,ngains
         complex g(3*maxant)
 c
@@ -1823,8 +1850,9 @@ c
          call bug('w','Error writing header of amp/phase table')
           call bugno('f',iostat)
         endif
-        write(*,*) 
-     * 'create new gain table with smoothed or interpolated values.'
+c        call output( 
+c     * 'create new gain table with smoothed or interpolated values.'
+c     *    )
 c
 c  Write out all the gains.
 c
@@ -1884,6 +1912,7 @@ c************************************************************************
       INTEGER SYMBOL
       LOGICAL PGNOTO
       character type*(*)
+      include 'smagpplt.h'
 c     for movinf smooth
       PARAMETER(MAXNR=20,MAXN=7681,maxspect=49)
       double precision dpi
@@ -1899,8 +1928,8 @@ c     for movinf smooth
       character title*64
       integer K,L,i,nspects,schan,fsign,ll,bnply,nterm,breport 
       real smooth(3), ymean
-      real rpass(10,6145,2), ipass(10,6145,2)
-      real apass(10,6145,2), ppass(10,6145,2)
+      real rpass(maxant,maxchan,2), ipass(maxant,maxchan,2)
+      real apass(maxant,maxchan,2), ppass(maxant,maxchan,2)
       logical donply, dosmooth
       common/bsmooth/smooth,rpass,ipass,apass,ppass,bnply,breport
 C
@@ -2026,7 +2055,6 @@ c************************************************************************
      *           pass,pee)
 c
         integer tno,npol,nants,nchan,pee(npol)
-        complex pass(10,6145,2)
 c
 c  Write out the bandpass table and frequency description table (with a
 c  few other assorted parameters). This assumes that the parameters
@@ -2057,13 +2085,14 @@ c    sdf        Frequency increment for each observing band.
 c    sfreq      Start frequency for each observing band.
 c------------------------------------------------------------------------
         include 'maxdim.h'
+        complex pass(maxant,maxchan,2)
 	integer iostat,off,item,i,j,k,n,p,pd
         complex g(maxchan),temp
 c
 c  Fudge to create a "complex" table, then open it again.
 c
 c        call hdelete(tno,'bandpass',iostat)
-        write(*,*) 'create the new bandpass table'
+        call output('create the new bandpass table')
         n=0
         call wrhdc(tno,'bandpass',(0.,0.))
         call haccess(tno,item,'bandpass','append',iostat)
@@ -2118,51 +2147,7 @@ c  Finished writing the bandpass table.
 c
         call hdaccess(item,iostat)
         if(iostat.ne.0)call bugno('f',iostat)
-                    write(*,*) 'finish bp table'
-c
-c  Access the frequencies description table.
-c
-cc        call haccess(tno,item,'freqs','write',iostat)
-cc        if(iostat.ne.0)then
-cc          call bug('w','Error opening output frequency table.')
-cc          call bugno('f',iostat)
-cc        endif
-cc        call hwritei(item,0,0,4,iostat)
-cc        if(iostat.ne.0)then
-cc          call bug('w','Error writing header of frequency table')
-cc          call bugno('f',iostat)
-cc        endif
-c
-c  Write out all the frequencies.
-c
-cc        off = 8
-cc        do i=1,nspect
-cc          call hwritei(item,nschan(i),off,4,iostat)
-cc          off = off + 8
-cc          if(iostat.ne.0)then
-cc            call bug('w','Error writing nschan to freq table')
-cc            call bugno('f',iostat)
-cc          endif
-cc          freqs(1) = sfreq(i)
-cc          freqs(2) = sdf(i)
-cc          call hwrited(item,freqs,off,2*8,iostat)
-cc          off = off + 2*8
-cc          if(iostat.ne.0)then
-cc            call bug('w','Error writing freqs to freq table')
-cc            call bugno('f',iostat)
-cc c         endif
-cc        enddo
-c
-c  Finished writing the frequency table.
-c
-cc        call hdaccess(item,iostat)
-cc       if(iostat.ne.0)call bugno('f',iostat)
-c
-c  Now write out the other parameters that need to go along with this.
-c
-c        call wrhdi(tno,'nspect0',nspect)
-c        call wrhdi(tno,'nchan0',nchan)
-c
+c        call output('finish bp table')
         end
 
 c************************************************************************
@@ -2420,11 +2405,11 @@ c
 c************************************************************************
         subroutine getopt(dogains,doxy,doxbyy,dopol,dodtime,dodots,
      *     dodelay,dospec,dopass,dowrap,dosmooth,donply,doratio,
-     *     domerge)
+     *     domerge,doxpass)
 c
         logical dogains,dopol,dodtime,doxy,doxbyy,dodots,dodelay
         logical dospec,dopass,dowrap,dosmooth,donply,doratio
-        logical domerge
+        logical domerge,doxpass
 c
 c  Get extra processing options.
 c
@@ -2442,9 +2427,11 @@ c    dosmooth   If true, replace old gain curve with the smooth.
 c    donply     If true, replace old gain curve with the polynomial fit.
 c    doratio    If true, calculate bandpass ratio.
 c    domerge    If true, merge two gains tables.
+c    doxpass    If true, reverse  the order of bandpass  from file1
+c                        and copy it over to file2
 c------------------------------------------------------------------------
         integer nopt
-        parameter(nopt=14)
+        parameter(nopt=15)
         logical present(nopt)
         character opts(nopt)*12
 c
@@ -2452,7 +2439,7 @@ c
      *            'xygains     ','xbyygains   ','dots        ',
      *            'delays      ','bandpass    ','speccor     ',
      *            'wrap        ','msmooth     ','opolyfit    ',
-     *            'ratio       ','merge       '/
+     *            'ratio       ','merge       ','xpass'/
 c
         call options('options',opts,present,nopt)
         dogains = present(1)
@@ -2469,6 +2456,8 @@ c
         donply  = present(12)
         doratio = present(13)
         domerge = present(14)
+        doxpass = present(15)
+        if(doxpass) dopass  = .true.
         if(dosmooth.and.donply) then
            call  bug('f','choose either msmooth or opolyfit')
         end if
