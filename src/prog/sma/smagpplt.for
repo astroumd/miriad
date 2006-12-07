@@ -72,8 +72,9 @@ c                      visibility files respectively. Two input vis
 c                      files must be given. The merged gain table
 c                      will be placed in the second input vis file
 c                      by overwritting on the old gain table.
-c         xpass        transfers the bandpass solution from the 1st
-c                      input file to the 2nd input file by reversing
+c         xpass        transfers the bandpass solution from the image
+c                      side band (1st input file) to the target side
+c                      band (the 2nd input file) by reversing
 c                      the channel sequence of the solutions while 
 c                      the frequency tables are kept unchanged.
 c                      vis must be given by two files containing
@@ -158,8 +159,9 @@ c    jhz 04may06 added an input parameter (filelabel) for option
 c                to label the file name.
 c    jhz 20nov06 fixed a bug in the case gains flagging applied
 c                with gpedit
-c    jhz 06dec06 implemented transfering bandpass solutions
-c                from the image chunks from the opposite sideband. 
+c    jhz 06dec06 implemented options 'xpass'- transferring bandpass 
+c                solutions from the image chunks of the opposite 
+c                sideband. 
 c  Bugs:
 c------------------------------------------------------------------------
         integer maxsels
