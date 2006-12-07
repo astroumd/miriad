@@ -215,7 +215,7 @@ c circular feeds
         double precision jtime1(maxTimes),jtime2(maxTimes)
         logical doxpass
 c
-c  Get the user parameters.
+c  Initialization.
 c
         nfile=0
         pee(1) =0
@@ -223,18 +223,15 @@ c
         nchan1=0
         deltaf1=0.0
         deltaf2=0.0
+c
+c  Get the user parameters.
+c
         call output(version)
         call keyini
 c       ops = 'sdlp'
         ops = ' '
         call uvdatinp ('vis', ops)
         if(vis.eq.' ')call bug('f','Input data-set must be given')
-c        call keya('device',device,' ')
-c        doplot = device.ne.' '
-c        call keya('log',logfile,' ')
-c        dolog = logfile.ne.' '
-c        if(.not.(dolog.or.doplot))
-c     *    call bug('f','One of the device and log must be given')
         call getaxis(doamp,dophase,doreal,doimag)
         call getopt(dogains,doxy,doxbyy,dopol,dodtime,dodots,
      *    dodelay,dospec,dopass,dowrap,dosmooth,donply,doratio,
@@ -366,17 +363,19 @@ c
             nfeeds1= nfeeds
             deltaf1 = times(2)-times(1)
           endif
-        if(lin.eq.2.and.(doratio.or.doxpass)) then
+        if(lin.eq.2) then
             deltaf2 = times(2)-times(1)
-        if( (deltaf2/deltaf1).ge.0)
+        if( (deltaf2/deltaf1).ge.0.and.doxpass)
      *  call bug('f',
      *  'the two inputs must be from opposite sidebands.')
+        if(doratio.or.doxpass) then
         if(nants1.ne.nants) 
      *  call bug('f','# of antennas are not matched.')
         if(nchan1.ne.nchan) 
      *  call bug('f','# of channels are not matched.')
         if(nfeeds1.ne.nfeeds)
      *  call bug('f','# of feeds are not matched.')
+                               end if
           endif
 
             do i=1, nants
