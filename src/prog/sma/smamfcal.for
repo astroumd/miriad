@@ -146,6 +146,7 @@ c                 handling high spectral resolution data.
 c    jhz  29Sep06 fixed a bug in smoothing when edge flagging is present.
 c    jhz  11Oct06 took out inttime from rms weight; inttime has been
 c                 included in variance.
+c    jhz  07Dec06 pit mirconst.h back
 c  Problems:
 c    * Should do simple spectral index fit.
 c------------------------------------------------------------------------
@@ -155,7 +156,7 @@ c------------------------------------------------------------------------
         parameter(maxpol=2)
 c
         character version*(*)
-        parameter(version='SmaMfCal: version 1.7 11-Oct-06')
+        parameter(version='SmaMfCal: version 1.7 07-Dec-06')
 c
         integer tno
         integer pwgains,pfreq,psource,ppass,pgains,ptau
@@ -506,7 +507,7 @@ c
         end
 c************************************************************************
         subroutine gaintab(tno,time,gains,tau,npol,nants,nsoln,
-     *                                          freq0,dodelay,pee)
+     *  freq0,dodelay,pee)
 c
         integer tno,nants,nsoln,npol,pee(npol)
         double precision time(nsoln),freq0
@@ -530,45 +531,7 @@ c		that we write the gains out in.
 c------------------------------------------------------------------------
 c  
        include 'maxdim.h'
-c - mirconst.h  Include file for various fundamental physical constants.
-c
-c  History:
-c    jm  18dec90  Original code.  Constants taken from the paper
-c                 "The Fundamental Physical Constants" by E. Richard
-c                 Cohen and Barry N. Taylor (PHYICS TODAY, August 1989).
-c ----------------------------------------------------------------------
-c  Pi.
-      real pi, twopi
-      double precision dpi, dtwopi
-      parameter (pi = 3.14159265358979323846)
-      parameter (dpi = 3.14159265358979323846)
-      parameter (twopi = 2 * pi)
-      parameter (dtwopi = 2 * dpi)
-c ----------------------------------------------------------------------
-c  Speed of light (meters/second).
-      real cmks
-      double precision dcmks
-      parameter (cmks = 299792458.0)
-      parameter (dcmks = 299792458.0)
-c ----------------------------------------------------------------------
-c  Boltzmann constant (Joules/Kelvin).
-      real kmks
-      double precision dkmks
-      parameter (kmks = 1.380658e-23)
-      parameter (dkmks = 1.380658d-23)
-c ----------------------------------------------------------------------
-c  Planck constant (Joules-second).
-      real hmks
-      double precision dhmks
-      parameter (hmks = 6.6260755e-34)
-      parameter (dhmks = 6.6260755d-34)
-c ----------------------------------------------------------------------
-c  Planck constant divided by Boltzmann constant (Kelvin/GHz).
-      real hoverk
-      double precision dhoverk
-      parameter (hoverk = 0.04799216)
-      parameter (dhoverk = 0.04799216)
-c=======================================================================
+       include 'mirconst.h'
         integer iostat,off,item,i,j,p,pd,j1,ngains
         complex g(3*maxant)
 c
@@ -587,10 +550,8 @@ c  Write out all the gains.
 c
         ngains = npol*nants
         if(dodelay) ngains = (npol+1)*nants
-c
         off = 8
         do i=1,nsoln
-c           write(*,*) 'time', time(i)
           call hwrited(item,time(i),off,8,iostat)
           off = off + 8
           if(iostat.ne.0)then
@@ -747,7 +708,6 @@ c
           do p=1,npol
           pd = pee(p)
           do j=1,nchan,maxchan
-c               write(*,*) pass(i,j,p)
               n = min(maxchan,nchan-j+1)
           nsp=0
              pphase=0
@@ -775,17 +735,11 @@ c unwrap phase
             endif
               Rsp(k) = amp
               Isp(k) = phase
-c complex
-c             Rsp(k) =  real(pass(i,j+nsp+k-1,pd))
-c             Isp(k) = aimag(pass(i,j+nsp+k-1,pd))
           enddo
           CALL REGPOL(xchan,Rsp,DELY,nschan(l),MAXNR,XA,BP,AP,CHI2)
           call regpolfitg(nterm,xa,bp,nschan(l),rxchan,plamp)
           CALL REGPOL(xchan,Isp,DELY,nschan(l),MAXNR,XA,BP,AP,CHI2)
           call regpolfitg(nterm,xa,bp,nschan(l),rxchan,plpha)        
-c complex 
-c          call regpolfitg(nterm,xa,bp,nschan(l),rxchan,rRsp)
-c          call regpolfitg(nterm,xa,bp,nschan(l),rxchan,rIsp)
             dev=.true.
           if(bnply(3).eq.200) call pgplt(nschan(l),rxchan,Rsp,plamp,dev)
             dev=.false.
@@ -805,7 +759,6 @@ c          call regpolfitg(nterm,xa,bp,nschan(l),rxchan,rIsp)
           do p=1,npol
             pd = pee(p)
             do j=1,8
-c              write(*,*) 'ant=',i,pass(i,j,p) 
            end do
            end do
            end do
@@ -815,7 +768,6 @@ c              write(*,*) 'ant=',i,pass(i,j,p)
             pd = pee(p)
             do j=1,nchan,maxchan
               n = min(maxchan,nchan-j+1)
-c              write(*,*) 'n=', n
               do k=1,n
                 temp = pass(i,j+k-1,pd)
                 if(abs(real(temp))+abs(aimag(temp)).ne.0)then
@@ -911,46 +863,7 @@ c------------------------------------------------------------------------
         integer maxpol
         parameter(maxpol=2)
         include 'maxdim.h'
-c=======================================================================
-c - mirconst.h  Include file for various fundamental physical constants.
-c
-c  History:
-c    jm  18dec90  Original code.  Constants taken from the paper
-c                 "The Fundamental Physical Constants" by E. Richard
-c                 Cohen and Barry N. Taylor (PHYICS TODAY, August 1989).
-c ----------------------------------------------------------------------
-c  Pi.
-      real pi, twopi
-      double precision dpi, dtwopi
-      parameter (pi = 3.14159265358979323846)
-      parameter (dpi = 3.14159265358979323846)
-      parameter (twopi = 2 * pi)
-      parameter (dtwopi = 2 * dpi)
-c ----------------------------------------------------------------------
-c  Speed of light (meters/second).
-      real cmks
-      double precision dcmks
-      parameter (cmks = 299792458.0)
-      parameter (dcmks = 299792458.0)
-c ----------------------------------------------------------------------
-c  Boltzmann constant (Joules/Kelvin).
-      real kmks
-      double precision dkmks
-      parameter (kmks = 1.380658e-23)
-      parameter (dkmks = 1.380658d-23)
-c ----------------------------------------------------------------------
-c  Planck constant (Joules-second).
-      real hmks
-      double precision dhmks
-      parameter (hmks = 6.6260755e-34)
-      parameter (dhmks = 6.6260755d-34)
-c ----------------------------------------------------------------------
-c  Planck constant divided by Boltzmann constant (Kelvin/GHz).
-      real hoverk
-      double precision dhoverk
-      parameter (hoverk = 0.04799216)
-      parameter (dhoverk = 0.04799216)
-c=======================================================================
+        include 'mirconst.h'
         real sumtau(maxant),rmspass(maxant,maxpol),temp,theta
         integer i,j,p,npass(maxant,maxpol)
 c
@@ -1790,7 +1703,7 @@ c    p
 c    spect
 c    chan
 c------------------------------------------------------------------------
-         include 'maxdim.h'
+        include 'maxdim.h'
         integer maxpol
         parameter(maxpol=2)
         integer visid
@@ -1921,8 +1834,6 @@ c assuming numpol =1
             SUMIM = 0.0
           do i=1, bpnschan(j)
               ntcount=ntcount+1
-c              data(ntcount)=cmplx(5,-5)
-c              chnwt(ntcount)=1.
               ysr(i) = real(data(ntcount))
               ysi(i) = aimag(data(ntcount))
               nsflag(i) = flags(ntcount)
@@ -2095,10 +2006,8 @@ c   smooth the vis vector
          do i=1, bpnschan(j)
           ysr(i+edge(1)) = ETA(i+K)
          end do
-c
            dev=.true.
            if(bnply(3).eq.100) call pgplt(bpnschan,xply,YR,ysr,dev)
-c
          CALL TIMSER(YI,bpnschan,K,L,P,ETA,CONETA,A,ATA1,ATA1AT,SCRAT)
          do i=1, bpnschan(j)
            ysi(i+edge(1)) = ETA(i+K)
@@ -2195,7 +2104,6 @@ c
           ylo = ylo - delta
           yhi = yhi + delta
         endif
-c          write(*,*)  ylo,yhi
 c
         call pgpage
         call pgvstd
@@ -2479,14 +2387,12 @@ c
             state(3,i) = bdrop
           endif
         endif
-c
         i = i + 1
         if(i.gt.maxspect+2)
      *    call bug('f','Buffer overflow, in despect-2')
         state(1,i) = ispect
         state(2,i) = 1
         state(3,i) = nchan - bdrop - edrop
-c
         if(edrop.gt.0)then
           i = i + 1
           if(i.gt.maxspect+2)
@@ -2495,9 +2401,7 @@ c
           state(2,i) = 1
           state(3,i) = edrop
         endif
-c
         state(1,1) = i - 1
-c
         end
 c************************************************************************
         subroutine bpini(npol,nants,nchan,nsoln,nspect,nschan,wgains,
@@ -2528,10 +2432,8 @@ c    Gains	Estimate of the antenna gains.
 c    Tau	Estimate of the atmospheric delay.
 c------------------------------------------------------------------------
         include 'maxdim.h'
-c
         integer maxpol
         parameter(maxpol=2)
-c
         integer i,j,k,p
         complex g,wpass(maxant*maxwin*maxpol)
         logical more
@@ -2605,7 +2507,6 @@ c    Pass
 c------------------------------------------------------------------------
         integer i,j,k,p,chan
         complex temp
-c
         do p=1,npol
           chan = 0
           do k=1,nspect
@@ -2618,12 +2519,10 @@ c
             chan = chan + nschan(k)
           enddo
         enddo
-c
         end
 c************************************************************************
         subroutine gainest(nants,npol,nspect,nsoln,wgains,freq,
      *    wpass,gains,tau,dodelay,epsi)
-c
         integer nants,nspect,nsoln,npol
         real tau(nants,nsoln),epsi
         double precision freq(nspect)
@@ -2648,46 +2547,7 @@ c    Tau	Estimate of the atmospheric delay.
 c  Output:
 c    epsi	Fractional change in the gains.
 c------------------------------------------------------------------------
-c=======================================================================
-c - mirconst.h  Include file for various fundamental physical constants.
-c
-c  History:
-c    jm  18dec90  Original code.  Constants taken from the paper
-c                 "The Fundamental Physical Constants" by E. Richard
-c                 Cohen and Barry N. Taylor (PHYICS TODAY, August 1989).
-c ----------------------------------------------------------------------
-c  Pi.
-      real pi, twopi
-      double precision dpi, dtwopi
-      parameter (pi = 3.14159265358979323846)
-      parameter (dpi = 3.14159265358979323846)
-      parameter (twopi = 2 * pi)
-      parameter (dtwopi = 2 * dpi)
-c ----------------------------------------------------------------------
-c  Speed of light (meters/second).
-      real cmks
-      double precision dcmks
-      parameter (cmks = 299792458.0)
-      parameter (dcmks = 299792458.0)
-c ----------------------------------------------------------------------
-c  Boltzmann constant (Joules/Kelvin).
-      real kmks
-      double precision dkmks
-      parameter (kmks = 1.380658e-23)
-      parameter (dkmks = 1.380658d-23)
-c ----------------------------------------------------------------------
-c  Planck constant (Joules-second).
-      real hmks
-      double precision dhmks
-      parameter (hmks = 6.6260755e-34)
-      parameter (dhmks = 6.6260755d-34)
-c ----------------------------------------------------------------------
-c  Planck constant divided by Boltzmann constant (Kelvin/GHz).
-      real hoverk
-      double precision dhoverk
-      parameter (hoverk = 0.04799216)
-      parameter (dhoverk = 0.04799216)
-c=======================================================================
+        include 'mirconst.h'
         integer i,j,k,n,p
         real theta,summm,delta,sumf,sumt,sumtf,sumff
         real sumdt2,sumt2,sumdg2,sumg2,f
@@ -2800,46 +2660,8 @@ c    Tau	Estimate of the atmospheric delay.
 c  Output:
 c    WPass	Estimate of the band gains.
 c------------------------------------------------------------------------
-c=======================================================================
-c - mirconst.h  Include file for various fundamental physical constants.
-c
-c  History:
-c    jm  18dec90  Original code.  Constants taken from the paper
-c                 "The Fundamental Physical Constants" by E. Richard
-c                 Cohen and Barry N. Taylor (PHYICS TODAY, August 1989).
-c ----------------------------------------------------------------------
-c  Pi.
-      real pi, twopi
-      double precision dpi, dtwopi
-      parameter (pi = 3.14159265358979323846)
-      parameter (dpi = 3.14159265358979323846)
-      parameter (twopi = 2 * pi)
-      parameter (dtwopi = 2 * dpi)
-c ----------------------------------------------------------------------
-c  Speed of light (meters/second).
-      real cmks
-      double precision dcmks
-      parameter (cmks = 299792458.0)
-      parameter (dcmks = 299792458.0)
-c ----------------------------------------------------------------------
-c  Boltzmann constant (Joules/Kelvin).
-      real kmks
-      double precision dkmks
-      parameter (kmks = 1.380658e-23)
-      parameter (dkmks = 1.380658d-23)
-c ----------------------------------------------------------------------
-c  Planck constant (Joules-second).
-      real hmks
-      double precision dhmks
-      parameter (hmks = 6.6260755e-34)
-      parameter (dhmks = 6.6260755d-34)
-c ----------------------------------------------------------------------
-c  Planck constant divided by Boltzmann constant (Kelvin/GHz).
-      real hoverk
-      double precision dhoverk
-      parameter (hoverk = 0.04799216)
-      parameter (dhoverk = 0.04799216)
-         include 'maxdim.h'
+        include 'mirconst.h'
+        include 'maxdim.h'
         integer maxpol
         parameter(maxpol=2)
         integer i,j,k,p
@@ -2995,17 +2817,14 @@ c------------------------------------------------------------------------
         complex ref,g(maxant),svm(maxbase)
         real smm(maxbase)
         external scale
-c
         do i=1,nants
           idx(i) = 0
         enddo
-c
         if(init)then
           do i=1,nants
             gains(i) = 1
           enddo
         endif
-c
         nantsd = 0
         nbld = 0
         k = 0
@@ -3040,13 +2859,11 @@ c
             call scale(nantsd,nbld,svm,smm,b1,b2,g)
           endif
           call amphasol(nantsd,nbld,svm,smm,b1,b2,g,tol,epsi)
-c
           if(idx(refant).gt.0)then
             ref = conjg(g(idx(refant))) / abs(g(idx(refant)))
           else
             ref = 1
           endif
-c
           do i=1,nants
             if(idx(i).gt.0)then
               gains(i) = ref * g(idx(i))
@@ -3273,50 +3090,11 @@ c
 c
 c  Accumulate rubbish.
 c------------------------------------------------------------------------
-c=======================================================================
-c - mirconst.h  Include file for various fundamental physical constants.
-c
-c  History:
-c    jm  18dec90  Original code.  Constants taken from the paper
-c                 "The Fundamental Physical Constants" by E. Richard
-c                 Cohen and Barry N. Taylor (PHYICS TODAY, August 1989).
-c ----------------------------------------------------------------------
-c  Pi.
-      real pi, twopi
-      double precision dpi, dtwopi
-      parameter (pi = 3.14159265358979323846)
-      parameter (dpi = 3.14159265358979323846)
-      parameter (twopi = 2 * pi)
-      parameter (dtwopi = 2 * dpi)
-c ----------------------------------------------------------------------
-c  Speed of light (meters/second).
-      real cmks
-      double precision dcmks
-      parameter (cmks = 299792458.0)
-      parameter (dcmks = 299792458.0)
-c ----------------------------------------------------------------------
-c  Boltzmann constant (Joules/Kelvin).
-      real kmks
-      double precision dkmks
-      parameter (kmks = 1.380658e-23)
-      parameter (dkmks = 1.380658d-23)
-c ----------------------------------------------------------------------
-c  Planck constant (Joules-second).
-      real hmks
-      double precision dhmks
-      parameter (hmks = 6.6260755e-34)
-      parameter (dhmks = 6.6260755d-34)
-c ----------------------------------------------------------------------
-c  Planck constant divided by Boltzmann constant (Kelvin/GHz).
-      real hoverk
-      double precision dhoverk
-      parameter (hoverk = 0.04799216)
-      parameter (dhoverk = 0.04799216)
-c=======================================================================
+        include 'mirconst.h'
         integer i,j,bl,off,spect,chan,i1,i2,p
         real theta,w
         complex v,model
-         external unpack
+        external unpack
 c
         do p=1,npol
           do j=1,nchan
@@ -3421,47 +3199,7 @@ c
         common/mfcalcom/vis,model,angfreq,b1,b2,t1,t2,zerovar,nzero
         integer maxiter,maxvar
         parameter(maxiter=200,maxvar=(1+2*maxpol)*maxant)
-c=======================================================================
-c - mirconst.h  Include file for various fundamental physical constants.
-c
-c  History:
-c    jm  18dec90  Original code.  Constants taken from the paper
-c                 "The Fundamental Physical Constants" by E. Richard
-c                 Cohen and Barry N. Taylor (PHYICS TODAY, August 1989).
-c ----------------------------------------------------------------------
-c  Pi.
-      real pi, twopi
-      double precision dpi, dtwopi
-      parameter (pi = 3.14159265358979323846)
-      parameter (dpi = 3.14159265358979323846)
-      parameter (twopi = 2 * pi)
-      parameter (dtwopi = 2 * dpi)
-c ----------------------------------------------------------------------
-c  Speed of light (meters/second).
-      real cmks
-      double precision dcmks
-      parameter (cmks = 299792458.0)
-      parameter (dcmks = 299792458.0)
-c ----------------------------------------------------------------------
-c  Boltzmann constant (Joules/Kelvin).
-      real kmks
-      double precision dkmks
-      parameter (kmks = 1.380658e-23)
-      parameter (dkmks = 1.380658d-23)
-c ----------------------------------------------------------------------
-c  Planck constant (Joules-second).
-      real hmks
-      double precision dhmks
-      parameter (hmks = 6.6260755e-34)
-      parameter (dhmks = 6.6260755d-34)
-c ----------------------------------------------------------------------
-c  Planck constant divided by Boltzmann constant (Kelvin/GHz).
-      real hoverk
-      double precision dhoverk
-      parameter (hoverk = 0.04799216)
-      parameter (dhoverk = 0.04799216)
-c=======================================================================
-c
+        include 'mirconst.h'
         integer i,idx(maxant,maxpol),tidx(maxant),p
         integer ifail,spect,chan,i1,i2,nvar,neqn
 c
