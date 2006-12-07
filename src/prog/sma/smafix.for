@@ -167,11 +167,14 @@ c                 options=tsysswap
 c jhz: 2006-2-06  add fscal to re-scale the tsys from a good antenna
 c                 to those of bad antennas.
 c jhz: 2006-2-10  fixed a bug in tsys apply routine after the last modification.
+c jhz: 2006-12-7  add stokes ii,qq,uu,vv in Tsys correction routine.
+c                 corrected a bug in source-color coding.
+c                 put include 'mirconst.h' back in several subs.
 c------------------------------------------------------------------------
         character version*(*)
         integer maxpnts,maxfit
         parameter(maxpnts=100000,maxfit=48)
-        parameter(version='SmaFix: version 1.13 10-Feb-06')
+        parameter(version='SmaFix: version 1.15 07-Dec-06')
         logical doplot,dolog,dotime,dounwrap
         character vis*64,device*64,logfile*64,xaxis*16,yaxis*16
         character out*64
@@ -529,7 +532,6 @@ c------------------------------------------------------------------------
       logical dowrap
       integer n
       real phs(n)
-c
       real theta0
       integer i
 c------------------------------------------------------------------------
@@ -1656,7 +1658,6 @@ c nbls=nflagbl(i)(nflagbl(i)+1)/2, antenna i should be flagged.
 
              if(.not.tupd) nbls=nbls+1
              call basant(preamble(4),i1,i2)
-c             write(*,*) 'flag=',flags(1),flags(50)
              if(.not.flags(1).and..not.tupd) then
              nflagbl(i1)= nflagbl(i1)+1
              nflagbl(i2)= nflagbl(i2)+1
@@ -1665,10 +1666,8 @@ c             write(*,*) 'flag=',flags(1),flags(50)
              if(tupd) then
                  do i=1, nants
                   fbls=nflagbl(i)*(nflagbl(i)+1)/2
-c                  write(*,*) fbls,nbls
                   if(fbls.ge.nbls) then
                   if(doflag) tsysflag(i,inhid)=.true.
-c                  write(*,*) 'tsysflg=', tsysflag(i,inhid), i,inhid
                   end if
                   nflagbl(i)=0
                   end do
@@ -1690,13 +1689,11 @@ c                  write(*,*) 'tsysflg=', tsysflag(i,inhid), i,inhid
 c
 c check the last integration
 c
-                   nbls=nbls-1
+                  nbls=nbls-1
                   do i=1, nants
                   fbls=nflagbl(i)*(nflagbl(i)+1)/2
-c                  write(*,*) fbls,nbls, i
           if(fbls.ge.nbls) then
           if(doflag) tsysflag(i,inhid)=.true.
-c         write(*,*) 'tsysflg=', tsysflag(i,inhid), i,inhid,mytime(inhid)
                   end if
                   nflagbl(i)=0
                   end do
@@ -1725,6 +1722,7 @@ c         write(*,*) 'tsysflg=', tsysflag(i,inhid), i,inhid,mytime(inhid)
                  if(i.eq.nsource) then
                       source(i+1)=souread
                       nsource=nsource+1
+                      sourid=i+1
                  if(nsource.gt.maxsource)
      *    call bug('f','too many sources!')
                       goto 555
@@ -1789,7 +1787,6 @@ c
                     end if
                 
              end do
-c                write(*,*) xdrun(xpnt+6),yrrun(ypnt+6),flgrun(ypnt+6)
                xpnt = xpnt + xdim
                ypnt = ypnt + ydim
           endif
@@ -1810,11 +1807,6 @@ c
      *        xtype,xirun,xrrun,xdrun,xdim,xvals,xscale,xoff,
      *        ytype,yirun,yrrun,ydrun,ydim,yvals,yscale,yoff)
         endif
-c            write(*,*) npnts
-c          do i=0,npnts-1
-c        write(*,*) xvals(i*xdim+7),flagvar(i*ydim+7),yvals(i*ydim+7)
-c           enddo
-c          stop
         end
 c************************************************************************
         subroutine transf(k,npnts,flgrun,flagvar,
@@ -1923,46 +1915,7 @@ c    unit	Gives the units of the variable.
 c    scale,offset Conversion factors. User-val = scale*(raw-val - offset)
 c
 c------------------------------------------------------------------------
-c=======================================================================
-c - mirconst.h  Include file for various fundamental physical constants.
-c
-c  History:
-c    jm  18dec90  Original code.  Constants taken from the paper
-c                 "The Fundamental Physical Constants" by E. Richard
-c                 Cohen and Barry N. Taylor (PHYICS TODAY, August 1989).
-c ----------------------------------------------------------------------
-c  Pi.
-      real pi, twopi
-      double precision dpi, dtwopi
-      parameter (pi = 3.14159265358979323846)
-      parameter (dpi = 3.14159265358979323846)
-      parameter (twopi = 2 * pi)
-      parameter (dtwopi = 2 * dpi)
-c ----------------------------------------------------------------------
-c  Speed of light (meters/second).
-      real cmks
-      double precision dcmks
-      parameter (cmks = 299792458.0)
-      parameter (dcmks = 299792458.0)
-c ----------------------------------------------------------------------
-c  Boltzmann constant (Joules/Kelvin).
-      real kmks
-      double precision dkmks
-      parameter (kmks = 1.380658e-23)
-      parameter (dkmks = 1.380658d-23)
-c ----------------------------------------------------------------------
-c  Planck constant (Joules-second).
-      real hmks
-      double precision dhmks
-      parameter (hmks = 6.6260755e-34)
-      parameter (dhmks = 6.6260755d-34)
-c ----------------------------------------------------------------------
-c  Planck constant divided by Boltzmann constant (Kelvin/GHz).
-      real hoverk
-      double precision dhoverk
-      parameter (hoverk = 0.04799216)
-      parameter (dhoverk = 0.04799216)
-c=======================================================================
+        include 'mirconst.h'
         integer i,iostat
         logical update
 c
@@ -2148,38 +2101,7 @@ c************************************************************************
       logical dotsysfix
       character version*(*)
       include 'maxdim.h'
-c  Pi.
-      real pi, twopi
-      double precision dpi, dtwopi
-      parameter (pi = 3.14159265358979323846)
-      parameter (dpi = 3.14159265358979323846)
-      parameter (twopi = 2 * pi)
-      parameter (dtwopi = 2 * dpi)
-c ----------------------------------------------------------------------
-c  Speed of light (meters/second).
-      real cmks
-      double precision dcmks
-      parameter (cmks = 299792458.0)
-      parameter (dcmks = 299792458.0)
-c ----------------------------------------------------------------------
-c  Boltzmann constant (Joules/Kelvin).
-      real kmks
-      double precision dkmks
-      parameter (kmks = 1.380658e-23)
-      parameter (dkmks = 1.380658d-23)
-c ----------------------------------------------------------------------
-c  Planck constant (Joules-second).
-      real hmks
-      double precision dhmks
-      parameter (hmks = 6.6260755e-34)
-      parameter (dhmks = 6.6260755d-34)
-c ----------------------------------------------------------------------
-c  Planck constant divided by Boltzmann constant (Kelvin/GHz).
-      real hoverk
-      double precision dhoverk
-      parameter (hoverk = 0.04799216)
-      parameter (dhoverk = 0.04799216)
-c=======================================================================
+      include 'mirconst.h' 
         integer maxsels,atant
         parameter(maxsels=256,atant=6,maxinte=5000)
 c
@@ -2192,11 +2114,8 @@ c
         real tsys(maxant*maxwin), otsys(maxant*maxwin)
         real ftsys(maxant*maxwin)
         real  tscale
-c      logical dojpk
-c
         real freq0(maxwin),jyperk
         double precision ra,dec,lat
-c
         complex data(maxchan)
         logical flags(maxchan)
         double precision preamble(5),ptime,freq(maxchan)
@@ -2206,7 +2125,6 @@ c
         integer year, month, sday
         double precision day
         logical uvvarupd,hdprsnt
-c        real getjpk
         real rmsflag, antel, tsysv, timev,tsts(maxinte)
         integer dofit, antid, xaxisparm, nterms
         logical dotsys, tsysplt, dotime, dosour,dotswap
@@ -2242,7 +2160,6 @@ c
         otsys(i)=0.
         ftsys(i)=0.
          end do
-
 c count # of bad ant
         nbant=0
         do i=1,10
@@ -2592,6 +2509,7 @@ c
         integer vmet,nif,nschan(nif),lvis,nchan
         real freq0(nif)
         double precision ra,dec,lat,freq(nchan)
+c-----------------------------------------------------------------------
 c
 c  Input:
 c    vmet
@@ -2675,13 +2593,15 @@ c
 c
         integer nchan,nants,nif,nschan(nif),i1,i2,pol
         real xtsys(nants,nif),ytsys(nants,nif)
-c       only tsys dependence provided
         real tsys(nants),jyperk
         complex data(nchan)
 c
 c------------------------------------------------------------------------
-        integer xx,yy,xy,yx
+        integer xx,yy,xy,yx,rr,ll,rl,lr,uk,ii,qq,uu,vv
         parameter(xx=-5,yy=-6,xy=-7,yx=-8,rr=-1,ll=-2,rl=-3,lr=-4,uk=0)
+        parameter(ii=1,qq=2,uu=3,vv=4)
+        real ampscale
+        parameter(ampscale=200000.)
         integer i,j,k
          real rmsflag, t1t2
          integer dofit, antid, xaxisparm, nterms 
@@ -2717,20 +2637,28 @@ c
               t1t2 = tsys(i1)*tsys(i2)
             else if(pol.eq.lr)then
               t1t2 = tsys(i1)*tsys(i2)
+            else if(pol.eq.ii)then
+              t1t2 = tsys(i1)*tsys(i2)
+            else if(pol.eq.qq)then
+              t1t2 = tsys(i1)*tsys(i2)
+            else if(pol.eq.uu)then
+              t1t2 = tsys(i1)*tsys(i2)
+            else if(pol.eq.vv)then
+              t1t2 = tsys(i1)*tsys(i2)
             else if(pol.eq.uk)then
               t1t2 = tsys(i1)*tsys(i2)
             else
-        
               call bug('f','Invalid polarization code')
             endif
-          
+c          
 c        why 50 ? mean tsys=50 at ATCA?
 c            data(i) = data(i)*sqrt(t1t2)/50.0
-c        in the smalod we multiple the raw data by a constant factor of 1e6
-c            data(i) = data(i)*sqrt(t1t2)/200.0
+c        in the smalod we multiple the raw data by a constant factor 
+c            data(i) = data(i)*sqrt(t1t2)/ampscale
 c         after tsys correction the vis amplitude scale
 c         should be close to the actual Jy scale.
-          data(i) = data(i)*sqrt(t1t2)*jyperk/200000.
+c
+          data(i) = data(i)*sqrt(t1t2)*jyperk/ampscale
           enddo
         enddo
 c
