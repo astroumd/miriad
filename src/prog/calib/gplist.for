@@ -31,50 +31,51 @@ c
 c@ vis
 c     The input visibility file, containing the gain file to list/massage
 c@ options
-c	  amp      List the amplitude gains for 10 antennas: default option
-c	           The mean, median and rms (about the mean) are reported.
-c	  phase    List the phase corrections for 10 antennas.
-c	  complex  List complex gains for current 10 ants only (2 lines per soln)
-c	  all      List all complex gains (one line per antenna per solution
-c	           for all antennas; lots of output, better than
-c	           options=complex if you want to grep one one antenna.)
-c	  replace  Replace the amplitude gains with the list supplied 
-c	           Unless OPTIONS=FORCE is also set, only antennas with 
-c                  non-zero values in the list are affected
-c	           so if jyperk is not set, nothing happens. Phases are
-c	           preserved unless options=zerophas is also specified
-c	  force    if set, then all values in jyperk are enforced when
-c                  doing a replace, even if they (or the initial gains)
-c                  are zero
-c	  limit    impose an upper limit on the amplitude gains using the
-c	           list specified in jyperk
-c	  multiply Multiply existing sqrt(Jy/K) values in a gains table by
-c	           the list supplied in the jyperk variable. Only antennas
-c	           corresponding to nonzero jyperk elements are changed.
-c	           No effect on phases.
-c	  zerophas Zero all phase corrections (no antenna selection method)
-c         addphase Correct gains by antenna based phases supplied in the
-c                  jyperk array, units degrees. Note that these phases
-c                  are added to the existing phase gains, except when 
-c                  OPTIONS=ZEROPHAS is also used.
-c	  clip     Set to zero all gains outside range jyperk(1),jyperk(2)
-c                  Useful for pseudo-flagging of bad data, e.g.,
-c                  gplist vis=dummy options=clip jyperk=0.5,2.0
-c                  effectively flags data with gains outside 0.5-2 (default 
-c                  range). However, data are not really flagged. The next
-c                  option is an alternative "flagging" option.
-c	  sigclip  Set to zero all gains more than jyperk(1)*rms away from 
-c	           median on each antenna
-c         dynsize  Dynamically assign the array size in the printout of 
-c                  the gain list. The default is for Carma array. 
-c       
-c	  Use options=replace,zerophas with suitable jyperk list to 
-c	  both set amp scale and zero phases (the two steps are 
-c	  carried out sequentially with the amplitudes being set first)
+c     amp      List the amplitude gains: default option
+c              The mean, median and rms (about the mean) are reported.
+c     phase    List the phase corrections.
+c     complex  List complex gains for 10 antennas only (2 lines per soln)
+c     all      List all complex gains (one line per antenna per solution
+c              for all antennas; lots of output, better than
+c              options=complex if you want to grep one one antenna.)
+c     replace  Replace the amplitude gains with the list supplied 
+c              Unless OPTIONS=FORCE is also set, only antennas with 
+c              non-zero values in the list are affected
+c              so if jyperk is not set, nothing happens. Phases are
+c              preserved unless options=zerophas is also specified
+c     force    If set, then all values in jyperk are enforced when
+c              doing a replace, even if they (or the initial gains)
+c              are zero
+c     limit    Impose an upper limit on the amplitude gains using the
+c              list specified in jyperk
+c     multiply Multiply existing sqrt(Jy/K) values in a gains table by
+c              the list supplied in the jyperk variable. Only antennas
+c              corresponding to nonzero jyperk elements are changed.
+c              No effect on phases.
+c     zerophas Zero all phase corrections (no antenna selection method)
+c     addphase Correct gains by antenna based phases supplied in the
+c              jyperk array, units degrees. Note that these phases
+c              are added to the existing phase gains, except when 
+c              OPTIONS=ZEROPHAS is also used.
+c     clip     Set to zero all gains outside range jyperk(1),jyperk(2)
+c              Useful for pseudo-flagging of bad data, e.g.,
+c              gplist vis=dummy options=clip jyperk=0.5,2.0
+c              effectively flags data with gains outside 0.5-2 (default 
+c              range). However, data are not really flagged. The next
+c              option is an alternative "flagging" option.
+c     sigclip  Set to zero all gains more than jyperk(1)*rms away from 
+c              median on each antenna
+c              dynsize  Dynamically assign the array size in the printout of 
+c              the gain list. The default is for Carma array. 
+c     
+c     Use options=replace,zerophas with suitable jyperk list to 
+c     both set amp scale and zero phases (the two steps are 
+c     carried out sequentially with the amplitudes being set first)
 c
-c         Use options=addphase to add phases to the existing ones.
-c  
-c         Use options=addphase,force to replace phases.
+c     Use options=addphase to add phases to the existing ones.
+c 
+c     Use options=addphase,force to replace phases.
+c
 c@ jyperk 
 c     Array of 15 numbers (1 per antenna) giving the Jy-per-K values.
 c     Array elements default to zero so you don't have to give 15 numbers.
@@ -121,6 +122,7 @@ c    jhz     20nov06 Reformated the print-out of the gain list by dynamically
 c                    assigning the number of antenna gains.
 c                    Keep the default for the Carma array.
 c    pjt/smw 28nov06 Added new options=addphase
+c    smw/pjt  8dec06 Format fiddling
 c                    
 c  Bugs and Shortcomings:
 c    gplist is hardwired in some places to list 15 antennas! (check options=dyn...)
@@ -129,7 +131,7 @@ c    usage with 15 or 30 elements.
 c-----------------------------------------------------------------------
 	include 'gplist.h'
 	character version*(*)
-	parameter(version='GpList: version 28-nov-06')
+	parameter(version='GpList: version 8-dec-06')
 	logical dovec,docomp,dophas,doall,dozero,domult,hexists,doamp
 	logical dolimit,doclip,dosigclip,doforce,dohist,docarma,doaddph
 	real jyperk(MAXGANT) 
@@ -402,9 +404,9 @@ c
          enddo
       else if (dophas) then
          call output('The phase gain values listed in the table are:')
-         write(msg(1:35),94) '  Time     Ant 1 Ant 2 Ant 3 Ant 4 '
-         write(msg(36:70),94) 'Ant 5 Ant 6 Ant 7 Ant 8 Ant 9 Ant10'
-         write(msg(71:100),94) ' Ant11 Ant12 Ant13 Ant14 Ant15'
+         write(msg(1:28),94) 'Time  Anten 1    2    3    4'
+         write(msg(29:58),94) '    5    6    7    8    9   10'
+         write(msg(59:83),94) '   11   12   13   14   15'
          call output(msg)
          do i=1,nsols
             call JulDay(time(i),'H',line(1:18))
@@ -412,26 +414,26 @@ c
             k=(i-1)*nants
             if(.not.docarma) then
 	       write(msg,198) ctime,
-     *                (int(radtodeg*
+     *                (nint(radtodeg*
      *                atan2(AImag(Gains(k+igains)),
      *                Real(Gains(k+igains)))),igains=1,ngains)
             else
 	       write(msg,198) ctime,
-     *        int(radtodeg*atan2(AImag(Gains(k+1)),Real(Gains(k+1)))),
-     *        int(radtodeg*atan2(AImag(Gains(k+2)),Real(Gains(k+2)))),
-     *        int(radtodeg*atan2(AImag(Gains(k+3)),Real(Gains(k+3)))),
-     *        int(radtodeg*atan2(AImag(Gains(k+4)),Real(Gains(k+4)))),
-     *        int(radtodeg*atan2(AImag(Gains(k+5)),Real(Gains(k+5)))),
-     *        int(radtodeg*atan2(AImag(Gains(k+6)),Real(Gains(k+6)))),
-     *        int(radtodeg*atan2(AImag(Gains(k+7)),Real(Gains(k+7)))),
-     *        int(radtodeg*atan2(AImag(Gains(k+8)),Real(Gains(k+8)))),
-     *        int(radtodeg*atan2(AImag(Gains(k+9)),Real(Gains(k+9)))),
-     *        int(radtodeg*atan2(AImag(Gains(k+10)),Real(Gains(k+10)))),
-     *        int(radtodeg*atan2(AImag(Gains(k+11)),Real(Gains(k+11)))),
-     *        int(radtodeg*atan2(AImag(Gains(k+12)),Real(Gains(k+12)))),
-     *        int(radtodeg*atan2(AImag(Gains(k+13)),Real(Gains(k+13)))),
-     *        int(radtodeg*atan2(AImag(Gains(k+14)),Real(Gains(k+14)))),
-     *        int(radtodeg*atan2(AImag(Gains(k+15)),Real(Gains(k+15))))
+     *        nint(radtodeg*atan2(AImag(Gains(k+1)),Real(Gains(k+1)))),
+     *        nint(radtodeg*atan2(AImag(Gains(k+2)),Real(Gains(k+2)))),
+     *        nint(radtodeg*atan2(AImag(Gains(k+3)),Real(Gains(k+3)))),
+     *        nint(radtodeg*atan2(AImag(Gains(k+4)),Real(Gains(k+4)))),
+     *        nint(radtodeg*atan2(AImag(Gains(k+5)),Real(Gains(k+5)))),
+     *        nint(radtodeg*atan2(AImag(Gains(k+6)),Real(Gains(k+6)))),
+     *        nint(radtodeg*atan2(AImag(Gains(k+7)),Real(Gains(k+7)))),
+     *        nint(radtodeg*atan2(AImag(Gains(k+8)),Real(Gains(k+8)))),
+     *        nint(radtodeg*atan2(AImag(Gains(k+9)),Real(Gains(k+9)))),
+     *       nint(radtodeg*atan2(AImag(Gains(k+10)),Real(Gains(k+10)))),
+     *       nint(radtodeg*atan2(AImag(Gains(k+11)),Real(Gains(k+11)))),
+     *       nint(radtodeg*atan2(AImag(Gains(k+12)),Real(Gains(k+12)))),
+     *       nint(radtodeg*atan2(AImag(Gains(k+13)),Real(Gains(k+13)))),
+     *       nint(radtodeg*atan2(AImag(Gains(k+14)),Real(Gains(k+14)))),
+     *       nint(radtodeg*atan2(AImag(Gains(k+15)),Real(Gains(k+15))))
             end if
             call output(msg)
          enddo
@@ -630,7 +632,6 @@ c
       endif
 c
 c  Impose upper limit on amp gains using numbers supplied in jyperk
-c   todo: use fmt 198
 c
       if (dolimit) then
          dohist = .TRUE.
@@ -730,8 +731,8 @@ c
 	call hdaccess(tGains,iostat)
 	if(iostat.ne.0)call AverBug(iostat,'Error reclosing gain table')
 c
-199   format(a8,2x,15f6.3)
-198   format(a8,2x,15i6)
+199   format(a8,2x,15f6.2)
+198   format(a8,15i5)
 197   format(a36,a36)
 99    format(a8,2x,15(f5.2,1x))
 97    format(10x,a,i2,a,f9.3,f9.3)
