@@ -592,7 +592,7 @@ c
 	    msg='Replacing phase gains (0.0 means no change):'
          end if
 	 call output(msg)
-         write(msg,99) '        ',jyperk(1),jyperk(2),jyperk(3),
+         write(msg,299) '        ',jyperk(1),jyperk(2),jyperk(3),
      *     jyperk(4),jyperk(5),jyperk(6),jyperk(7),jyperk(8),
      *     jyperk(9),jyperk(10),jyperk(11),jyperk(12),jyperk(13),
      *     jyperk(14),jyperk(15)
@@ -734,6 +734,7 @@ c
 199   format(a8,2x,15f6.2)
 198   format(a8,15i5)
 197   format(a36,a36)
+299   format(a8,2x,15(f5.1,1x))
 99    format(a8,2x,15(f5.2,1x))
 97    format(10x,a,i2,a,f9.3,f9.3)
 96    format(a8,2x,a,i2,a,f9.3,f9.3)
