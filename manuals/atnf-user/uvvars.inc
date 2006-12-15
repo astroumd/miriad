@@ -51,7 +51,14 @@
 %  30-jan-06  pjt  documented the CARMA filler version (0.1.1 at this moment)
 %   8-mar-06  pjt  reminder how the channels and windows are laid out
 
-\newcommand{\uvversion}{March 8, 2006}
+%        20-feb-06  rjs  Added axismax, smonrms, refpnt, calcode, name
+
+%  30-aug-06  pjt  merged ATNF and CARMA versions of this file
+%
+%  nband - appears to be CARMA's Control.SpectralLineCorrelator.numBands (but it's 8, not 6=nspect)
+%  tcorr - for ATNF systemp calibration, ATNF used.
+
+\newcommand{\uvversion}{November 21, 2006}
 
 A \miriad\ uv dataset is composed of a collection of items and `\MM{u-v} variables'.
 The variables are parameters that are known at the time of the observation,
@@ -150,9 +157,13 @@ antel(nants)    \>D    \>deg.
 antpos(nants, 3) \>D    \>nanosec
 \>Antenna equatorial coordinates\\
 
-
 atten(nants)   \>I     \>dB
 \> Attenuator setting (Hat Ck)\\
+
+axismax(2,nants) \>R    \>arcsec
+\> Maximum tracking error in a cycle. \\
+\>\>\> axismax(1,?) is azimuth error, \\
+\>\>\> axismax(2,?) is the elevation error.\\
 
 axisrms(2,nants) \>R    \>arcsec
 \> RMS tracking error. \\
@@ -177,6 +188,9 @@ bin		\>I	\>-
 
 cable(nants)	\>D	\>nanosec
 \> measured length of IF cable (Hat Ck)\\
+
+calcode		\>A	\>-
+\> ATCA calcode flag\\
 
 chi		\>R	\>radians
 \>Position angle of the X feed relative to the sky. This is the \\
@@ -304,7 +318,7 @@ freqif		\>D	\>GHz
 \> ? (Hat Ck only?)\\
 
 inttime		\>R	\>seconds
-\>Integration time \\
+\>Integration time (but is it centered, start of end??? - see time)\\
 
 ischan(nspect)	\>I	\>-
 \> Starting channel of spectral window\\
@@ -346,6 +360,10 @@ mount		\>I	\>-
 \>\>\>\ \ 2: X-Y.\\
 \>\>\>\ \ 3: orbiting.\\
 \>\>\>\ \ 4: bizarre.\\
+
+name		\>A     \>-
+\> ATCA raw RPFITS file name.\\
+
 
 nants		\>I	\>-
 \> The number of antennas \\
@@ -496,6 +514,16 @@ ra		\>R or	\>radians
 		\>D	\>
 \>the definition of the coordinate system. See also {\tt obsra} \\
 
+rain	\>R	\>mm
+\>The current amount of water in the rain gauge. The rain gauge is emptied
+at 9:00 AEST (ATCA).\\
+
+refpnt(2,nants) \>R    \>arcsec
+\> Reference pointing offsets. \\
+\>\>\> refpnt(1,?) is azimuth offset, \\
+\>\>\> refpnt(2,?) is the elevation offset.\\
+
+
 relhumid	\>R     \>\%
 \>Relative Humidity at observatory\\
 
@@ -514,6 +542,9 @@ sdf(nspect)	\>D	\>GHz
 
 sfreq(nspect)	\>D	\>GHz
 \> Sky frequency of first channel in window\\
+
+smonrms		\>R	\>$\mu$m
+\> ATCA seeing monitor rms value\\
 
 source(*)	\>A	\>-	
 \>The name of the source \\
