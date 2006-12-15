@@ -1,0 +1,44 @@
+#!/bin/csh -f
+
+#  This is a shell script to build the CARMA cookbook.
+
+# Generate the title page
+
+Buildtitlepage
+
+# Generate the figures (from .fig files)
+
+Buildfigs
+
+# Run LaTeX three times to make sure we have the page numbering right.
+
+latex carmacookbook
+latex carmacookbook
+latex carmacookbook
+
+# Generate the index and the final dvi file.
+
+makeindex carmacookbook.idx
+latex carmacookbook
+
+# Generate the postscript file.
+
+dvips -o carmacookbook.ps carmacookbook
+cp carmacookbook.ps junk.ps
+compress junk.ps
+mv junk.ps.Z carmacookbook.ps.Z
+cp carmacookbook.ps junk.ps
+gzip -best junk.ps
+mv junk.ps.gz carmacookbook.ps.gz
+
+exit 0
+
+# the default for the carma version is already _US
+
+dvips -tletter -y940 -o carmacookbook_US.ps carmacookbook
+cp carmacookbook_US.ps junk.ps
+compress junk.ps
+mv junk.ps.Z carmacookbook_US.ps.Z
+cp carmacookbook_US.ps junk.ps
+gzip -best junk.ps
+mv junk.ps.gz carmacookbook_US.ps.gz
