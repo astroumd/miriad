@@ -24,21 +24,11 @@ latex carmacookbook
 # Generate the postscript file.
 
 dvips -o carmacookbook.ps carmacookbook
-cp carmacookbook.ps junk.ps
-compress junk.ps
-mv junk.ps.Z carmacookbook.ps.Z
-cp carmacookbook.ps junk.ps
-gzip -best junk.ps
-mv junk.ps.gz carmacookbook.ps.gz
+gzip carmacookbook.ps
 
 exit 0
 
 # the default for the carma version is already _US
 
 dvips -tletter -y940 -o carmacookbook_US.ps carmacookbook
-cp carmacookbook_US.ps junk.ps
-compress junk.ps
-mv junk.ps.Z carmacookbook_US.ps.Z
-cp carmacookbook_US.ps junk.ps
-gzip -best junk.ps
-mv junk.ps.gz carmacookbook_US.ps.gz
+gzip carmacookbook_US.ps
