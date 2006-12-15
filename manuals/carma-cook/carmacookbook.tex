@@ -1,0 +1,46 @@
+% LATEX document - also needs a 'makeindex' utility to generate the index
+%
+% HISTORY:
+%      dec-2006  pjt Original version
+
+\nonstopmode
+\input{latexdefs.inc}
+%\newcommand{\oneliner}[1]{\begin{flushleft}{\ \ \ #1}\end{flushleft}}
+\documentstyle[twoside,makeidx,html,epsf]{report}
+\makeindex
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{2.5mm}
+\setlength{\textheight}{245mm}
+\setlength{\textwidth}{160mm}
+\setlength{\oddsidemargin}{10mm}
+\setlength{\evensidemargin}{-10mm}
+\setlength{\topmargin}{-10mm}
+
+
+\pagenumbering{roman}
+\pagestyle{headings}
+\addcontentsline{toc}{chapter}{Table of Contents}
+
+\begin{document}
+\epsffile{titlepage.inc}
+\null\clearpage
+\null\clearpage
+\tableofcontents
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newchapter
+\input{intro.inc}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newchapter
+\appendix
+
+\input{uvvars.inc}
+
+\newchapter
+\setcounter{chapter}{9}
+\addcontentsline{toc}{chapter}{Index}
+\printindex
+
+\end{document}
