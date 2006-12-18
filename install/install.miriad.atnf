@@ -16,7 +16,14 @@
 #  ./install.miriad.atnf mirdir=atnf >& atnf.log
 
 # miriad tar ball from ATNF (WARNING: their miriad tar doesn't create the miriad root tree!!!)
-
+#
+# Fall 2006:   ATNF is switching over to RCS, 
+#
+# To import into CVS (assuming $CVSROOT is the directory in which CVSROOT lives)
+#    wget ftp://ftp.atnf.csiro.au/pub/software/miriad/miriad-rcs.tar.gz
+#    tar zxf miriad-rcs.tar.gz
+#    mv miriad/.rcs $CVSROOT/miriadau
+#
 
 set mirdir=miriad
 
@@ -74,3 +81,54 @@ exit 0
 
 # mir.bigbench    5392.064u 26.824s 1:34:09.40 95.9%      0+0k 0+0io 4pf+0w
 # crater:         2469.050u 10.460s 42:28.17 97.3%        0+0k 0+0io 1019pf+0w
+
+
+#   below this is the new ATNF version that is maintained in RCS
+#   it is only reproduced here to show what my nightly crontab does:
+new_rcs:
+
+
+#! /bin/csh -f
+#
+#  first time
+#
+#    setenv CVSROOT `pwd`/cvsroot       (or whereever)
+#    mkdir $CVSROOT
+#    cvs init
+#    wget ftp://ftp.atnf.csiro.au/pub/software/miriad/miriad-rcs.tar.gz
+#    tar zxf miriad-rcs.tar.gz
+#    mv miriad/.rcs $CVSROOT/miriadau
+#    cvs -Q co miriadau
+#
+#
+# after you have this miriadau directory, get a new rcs, update, and diff
+#
+
+set check=cvsroot/miriadau
+set tar=ftp://ftp.atnf.csiro.au/pub/software/miriad/miriad-rcs.tar.gz >& /dev/null
+
+if (-e $check) then
+  # big local assumption
+  setenv CVSROOT `pwd`/cvsroot
+  wget $tar >& wget.log
+  if ($status) then
+    echo Aborting after failed transfer $tar
+    cat wget.log
+    exit 1
+  endif
+
+  rm -rf $CVSROOT/miriadau.*
+  mv $CVSROOT/miriadau $CVSROOT/miriadau.prev
+
+  tar zxf miriad-rcs.tar.gz
+  mv miriad/.rcs $CVSROOT/miriadau
+  rm miriad-rcs.tar.gz
+  rm -rf miriad
+
+  cd miriadau
+  cvs -nq up
+  cvs up -dP
+
+else
+  echo Directory $check not found in `pwd`
+endif
