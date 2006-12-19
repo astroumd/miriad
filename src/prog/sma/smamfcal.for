@@ -54,30 +54,24 @@ c	interval is started when either the max times length is exceeded, or a
 c	gap larger than the max gap is encountered. The default max length is
 c	5 minutes, and the max gap size is the same as the max length.
 c@ weight
-c       This gives different ways to determine weights just before
+c       This gives different ways to determine weights (wt) prior to 
 c       solving for bandpass: 
-c        -1 -> wt = 1; the same weight method that is used in MFCAL.
-c         1 -> wt = 1/sigma**2; channel visibility is normalized by 
-c                   the average of channels specified by the inner 
-c                   75% of each "spectral chunk";
-c                   the effective weight is naturally proportional 
-c                   to amplitude**2/sigma**2, where
-c                   amplitude is the amplitude of the pseudo continuum.
-c         2 -> wt = 4th power of amplitude/sgima; channel visibility 
-c                   is normalized by the average of channels specified 
-c                   by the inner 75% of each "spectral chunk";
-c                   the effective weight is proportional to 
-c                   amplitude**4/sigma**4.
-c         3 -> wt = the same weighting but sigma=1.  
-c       Default is 2.   
+c        -1 -> wt = 1; the same weighting method as used in MFCAL.
+c         1 -> wt ~ amp0**2/var(i); for a normalized channel 
+c                   visibility, the reduced variance is proportional 
+c                   to amp0**2/var(i), where amp0 is the amplitude 
+c                   of the pseudo continuum and var(i) is the variance
+c                   of visibility for the ith channel.
+c         2 -> wt ~ amp0**4/var(i)**2; 
+c       Default is 2 for SMA and -1 for other telescopes.   
 c            if you have stable phase, use -1;
-c            if you have poor phase stability, use 1 or 2;
-c            for a large planet, 2 is recommended.
+c            if the phase stability is poor, use 1 or 2;
+c            for a larger planet, 2 is recommended.
 c
 c       For antenna gains' solver:
 c        -1 -> wt = 1; the same weight method that is used in MFCAL.
-c        >0 -> wt = 1/sigma**2.
-c       Defualt is 1/sigma**2.
+c        >0 -> wt = 1/var, where var is the visibility variance.
+c       Defualt is 1/var.
 c@ options
 c	Extra processing options. Several values can be given, separated by
 c	commas. Minimum match is used. Possible values are:
@@ -146,7 +140,25 @@ c                 handling high spectral resolution data.
 c    jhz  29Sep06 fixed a bug in smoothing when edge flagging is present.
 c    jhz  11Oct06 took out inttime from rms weight; inttime has been
 c                 included in variance.
-c    jhz  07Dec06 pit mirconst.h back
+c    jhz  07Dec06 put mirconst.h back
+c    jhz  11Dec06 corrected a bug in the case of weight=-1
+c    jhz  13Dec06 implemented a feature in smooth for
+c                 handling multiple bands with hybrid channel
+c                 resolutions.
+c    jhz  15Dec06 Updated MfCal algorithm (MfCal: version 11-feb-05)
+c    jhz  18Dec06 implemented band-dependent weighting (systemp(j)
+c                 sdf(j).
+c                 Treat SMA differently from other telescopes
+c                 in calculating bandpass:
+c                 For SMA, considering the fact that signals are 
+c                 weak but small phase jumps are between different 
+c                 bands due to on-line correction, all the band 
+c                 are used in calculating the pseudo continuum 
+c                 vis. Note SMA treats sideband separately.
+c                 For other lower frequency telescopes, signals
+c                 are stronger but there might be large phase jumps 
+c                 between bands. Only the first band data are used 
+c                 in calculating the pseudo continuum.
 c  Problems:
 c    * Should do simple spectral index fit.
 c------------------------------------------------------------------------
@@ -156,7 +168,7 @@ c------------------------------------------------------------------------
         parameter(maxpol=2)
 c
         character version*(*)
-        parameter(version='SmaMfCal: version 1.7 07-Dec-06')
+        parameter(version='SmaMfCal: version 2.0 18-Dec-06')
 c
         integer tno
         integer pwgains,pfreq,psource,ppass,pgains,ptau
@@ -173,7 +185,7 @@ c
         real wt(maxvis)
         character line*64,uvflags*16,source*64
         logical dodelay,dopass,defflux,interp,oldflux
-        logical dosmooth,donply,dowrap,doaverrll
+        logical dosmooth,donply,dowrap,doaverrll,defaultwt
 c
 c  Dynamic memory stuff.
 c
@@ -190,6 +202,10 @@ c
 c  Externals.
 c
         logical uvdatopn,keyprsnt
+c
+c  Some intialization
+c
+        defaultwt = .false.
 c
 c  Get inputs and check them.
 c
@@ -210,11 +226,17 @@ c
         call keyi('edge',edge(2),edge(1))
         call keyd('interval',interval(1),5.0d0)
         call keyd('interval',interval(2),interval(1))
-        call keyi('weight', weight, 2)
+        call keyi('weight', weight, 1000)
+            if (weight.eq.1000) then
+            defaultwt = .true.
+            weight = 2
+            endif
             if (weight.lt.0) weight=-1
             if (weight.eq.0) weight=1
-            if (weight.ge.3) weight=3
-              
+            if (weight.ge.3) then
+        call output('weight = 3 or greater ... ')
+        call bug('f', 'Sorry, we no longer support this weighting.')
+            end if      
         call keyr('smooth',smooth(1), 3.)
         call keyr('smooth',smooth(2), 1.)
         call keyr('smooth',smooth(3), 0.9)
@@ -265,7 +287,8 @@ c
         call datread(tno,maxvis,nvis,npol,vis,wt,vid,
      *       maxspect,nspect,sfreq,sdf,nschan,nants,
      *       maxsoln,nsoln,time,count,minant,refant,interval,
-     *    edge,source,polmap,dopass,dosmooth,donply,dowrap,weight)
+     *       edge,source,polmap,dopass,dosmooth,donply,dowrap,
+     *       weight,defaultwt)
 c
 c  Check that the polarisations present are commensurate.
 c
@@ -1262,9 +1285,11 @@ c
         end
 
         subroutine rmsweight(tno,chnwt,nchan,nspect,nschan,maxspect,
-     *    maxchan,weight,edge)
+     *    maxchan,weight,edge,tsys1,tsys2,sdf)
          integer tno,maxspect,nspect,nchan,maxchan,weight
          integer nschan(maxspect),i,j,edge(2)
+         double precision sdf(maxspect)
+         real tsys1(maxspect),tsys2(maxspect)
          real chnwt(maxchan), wwt
 c
 c initialize
@@ -1278,8 +1303,8 @@ c   multiple the channel width
 c
 
          if(weight.ge.0.and.weight.lt.3) then
+c   read the first variance of first channel
                  if(weight.le.2) call uvdatgtr('variance',wwt)
-c                 if(weight.le.2) call uvrdvrr(tno,'inttime',dt,1.)
                     if(wwt.le.0) then
                     wwt = 0.0
                     else
@@ -1291,25 +1316,37 @@ c                 if(weight.le.2) call uvrdvrr(tno,'inttime',dt,1.)
                wwt=1.
                endif
 c
-c   multiple the channel width which is inversely proportional to 
-c   channel number per window nschan
+c   correct for band dependent factor using Tsys and BW of each band 
 c
             ichan=0
             do j=1, nspect
             do i=1, edge(1)+nschan(j)+edge(2)
             ichan=ichan+1
             if(nschan(j).gt.0) then
-            chnwt(ichan) 
-     *      = wwt*1024.0/(edge(1)+nschan(j)+edge(2))
+            if(abs(sdf(1)).ne.0.d0) then
+            chnwt(ichan) = wwt*abs(sdf(j)/sdf(1))
+            else
+            chnwt(ichan) = wwt
+            end if
+            if(tsys1(j).ne.0.0) then
+            chnwt(ichan) = chnwt(ichan)*tsys1(1)/tsys1(j)
+            else
+            chnwt(ichan) = chnwt(ichan)
+            end if
+            if(tsys2(j).ne.0.0) then
+            chnwt(ichan) = chnwt(ichan)*tsys1(1)/tsys2(j)
+            else
+            chnwt(ichan) = chnwt(ichan)
+            end if
             else
             chnwt(ichan) =0
             endif
 c
 c  for uniform weight
 c
-               if(weight.ge.3.or.weight.lt.0) then
-               wwt=1.
-               endif
+            if(weight.ge.3.or.weight.lt.0) then
+            wwt=1.
+            endif
             enddo
             enddo
             end
@@ -1319,7 +1356,7 @@ c************************************************************************
      *          maxspect,nspect,sfreq,sdf,nschan,nants,
      *          maxsoln,nsoln,time,count,minant,refant,interval,
      *          edge,source,polmap,dopass,dosmooth,
-     *          donply,dowrap,weight)
+     *          donply,dowrap,weight,defaultwt)
 c
         integer tno,maxvis,nvis,maxspect,nspect,nants,maxsoln,nsoln
         integer minant,refant,npol
@@ -1330,6 +1367,7 @@ c
         real wt(maxvis)
         integer vid(maxvis),polmap(*)
         character source*(*)
+        logical defaultwt
 c
 c  Read the data, and return information on what we have read.
 c
@@ -1342,6 +1380,8 @@ c    minant
 c    refant
 c    interval
 c    edge
+c    weight     weighting method
+c    defaultwt  if ture, using the default method
 c  Output:
 c    nvis
 c    nspect
@@ -1377,6 +1417,9 @@ c
         integer hash(2,maxhash),vupd
         integer pols(polmin:polmax)
         integer weight 
+        real tsys(maxspect*maxant),tsys1(maxspect),tsys2(maxspect)
+        character telescop*10, type*1
+        integer length, sb(maxspect)
 c
 c  Externals.
 c
@@ -1390,8 +1433,20 @@ c  chz:   vis data of channel zero
         real wwt,chzwt(maxwin,maxpol), chnwt(maxchan)
         complex chz(maxwin,maxpol)
         integer bchan, echan, numpol
-
-        if(dosmooth)  call output('Smoothing the spectral data ...') 
+c
+c  initialization
+c
+           do i=1, maxchan
+           chnwt(i) =1.
+           end do
+           do i=1, maxspect
+           nschan(i) = 0
+           sfreq(i) = 0.0d0
+           sdf(i) = 0.0d0
+           end do
+        if(weight.eq.-1) 
+     *  call output('Using the same weighting as used in MFCAL...')
+        if(dosmooth) call output('Smoothing the spectral data ...') 
 c
 c  Is the size of the "state" array OK?
 c
@@ -1405,6 +1460,7 @@ c
         call uvvarset(vupd,'sfreq')
         call uvvarset(vupd,'sdf')
         call uvvarset(vupd,'nschan')
+        call uvvarset(vupd,'systemp')
         call uvvarset(vupd,'wfreq')
         call uvvarset(vupd,'wwidth')
         call uvselect(tno,'and',0.d0,0.d0,.true.)
@@ -1442,24 +1498,67 @@ c
 c  Loop over everything.
 c
         call uvdatrd(preamble,data,flags,maxchan,nchan)
-        updated =.true.
-       call despect(updated,tno,nchan,edge,chan,spect,
-     *          maxspect,nspect,sfreq,sdf,nschan,state)
 c
-c jhz: derive wt the current Tsys measurement and BW and integration time
+c get telescope name
+c
+       call uvprobvr (tno, 'telescop',type, length, ok)
+       call uvrdvra(tno,'telescop',telescop,' ')
+c
+c reset default weight for non-SMA telescope
+c for SMA
+c default weight = 2 for bandpass
+c         weight = 1 for gain
+c for Other telescope
+c default weight = -1 back to MFCAL
+c
+        if(defaultwt.and.(telescop.ne.'SMA')) then
+        weight=-1
+        end if
+        
+        if(defaultwt.and.(.not.dopass)) weight=1
+        
+       updated =.true.
+       call despect(updated,tno,nchan,edge,chan,spect,
+     * maxspect,nspect,sfreq,sdf,nschan,state)
+       call uvrdvra(tno,'source',source,' ')
+       call uvrdvri(tno,'nants',nants,0)
+        if(nants.le.0.or.nants.gt.maxant)
+     *    call bug('f','Bad value for nants, in DatRead')
+
+c
+c get system
+c
+            call uvprobvr(tno,'systemp',type,length,ok)
+            call uvgetvrr(tno,'systemp',tsys,length)
+            call basant(preamble(4),i1,i2)
+            do i=1, nspect
+             if (telescop.eq.'SMA') then
+             tsys1(i) =tsys(i1)
+             tsys2(i) =tsys(i2)
+              else
+             tsys1(i) =tsys(i1+(i-1)*nants)
+             tsys2(i) =tsys(i2+(i-1)*nants)
+             end if
+c determine sb: positive -> usb; negative -> lsb
+            sb(i) = int(sdf(i)/abs(sdf(i)))
+            end do
+
+c
+c jhz: derive wt from vis variance
 c
         call rmsweight(tno,chnwt,nchan,nspect,nschan,maxspect,
-     *    maxchan,weight,edge)
-             call basant(preamble(4),i1,i2)
+     *    maxchan,weight,edge,tsys1,tsys2,sdf)
          if(dopass) then
 c
 c  calculate pseudo continuum channels
 c         
+          if(weight.ge.1) then
           numpol = 1
           bchan  = 0
           echan  = 0
           call avgchn(numpol,bchan,echan,data,flags,nchan,
-     *    nspect,nschan,maxchan,chnwt,chz,chzwt,weight)
+     *    nspect,nschan,maxchan,chnwt,chz,chzwt,weight,sb,
+     *    telescop)
 c
 c  divide the spectral channel by the pseudo continuum
 c
@@ -1469,19 +1568,18 @@ c
 c  smooth the data
 c
           if(dosmooth) call smoothply(preamble,ndata,
-     *    flags,nchan,nspect,
+     *    flags,nchan,nspect,maxspect,
      *    nschan,maxchan,dosmooth,donply,dowrap,wwt,edge)
-          
-         endif
-         
-        call uvrdvra(tno,'source',source,' ')
-        call uvrdvri(tno,'nants',nants,0)
-        if(nants.le.0.or.nants.gt.maxant)
-     *    call bug('f','Bad value for nants, in DatRead')
+          endif
+          endif
+          if(weight.eq.-1) then
+          if(dosmooth) call smoothply(preamble,data,
+     *    flags,nchan,nspect,maxspect,
+     *    nschan,maxchan,dosmooth,donply,dowrap,wwt,edge)
+          end if
 
         dowhile(nchan.gt.0)
           updated = updated.or.uvvarupd(vupd)
-          call basant(preamble(4),i1,i2)
           call uvdatgti('pol',p)
           ok = i1.gt.0.and.i1.le.maxant.and.
      *         i2.gt.0.and.i2.le.maxant.and.
@@ -1499,7 +1597,7 @@ c
               if(nsoln.ne.0)then
                 time(nsoln) = (tfirst+tlast)/2
                 if(.not.accept(present,nants,npol,refant,minant,maxant)
-     *                                                             )then
+     *          )then
                   nvis = nvis - count(nsoln)
                   nreg = nreg + ninter
                   nsoln = nsoln - 1
@@ -1535,7 +1633,7 @@ c
 c
             tlast = max(tlast,preamble(3))
             call despect(updated,tno,nchan,edge,chan,spect,
-     *          maxspect,nspect,sfreq,sdf,nschan,state)
+     *      maxspect,nspect,sfreq,sdf,nschan,state)
 
 c edge: number of channels in each edge to be flagged
 c nchan: total number spectral channels
@@ -1555,15 +1653,28 @@ c spect(i): chunk id
 c
 c assign visid based on i1,i2,p, spect chan
 c
-                ninter = ninter + 1
-          if(dopass) call accum(hash,ndata(i),visid,
+             ninter = ninter + 1
+          if(dopass.and.(weight.ge.1)) 
+     *       call accumwt(hash,ndata(i),visid,
      *       nsoln,nvis,vis,wt,vid,count,chnwt(i))
-          if(.not.dopass) call accum(hash,data(i),visid,
+
+          if(dopass.and.(weight.eq.-1))  
+     *       call accum(hash,data(i),visid,
+     *       nsoln,nvis,vis,wt,vid,count)
+
+          if(.not.dopass) then
+          if(weight.ne.-1)
+     *       call accumwt(hash,data(i),visid,
      *       nsoln,nvis,vis,wt,vid,count,chnwt(i))
+          if(weight.eq.-1) 
+     *       call accum(hash,data(i),visid,
+     *       nsoln,nvis,vis,wt,vid,count)            
+           end if
+
           else
              nbad = nbad + 1
-             endif
-            enddo
+          endif
+          enddo
 c
           else
             nauto = nauto + 1
@@ -1571,22 +1682,39 @@ c
           call uvdatrd(preamble,data,flags,maxchan,nchan)
 
 c
+c get system
+c
+            call uvprobvr(tno,'systemp',type,length,ok)
+            call uvgetvrr(tno,'systemp',tsys,length)
+            call basant(preamble(4),i1,i2)
+            do i=1, nspect
+            if (telescop.eq.'SMA') then
+            tsys1(i) =tsys(i1)
+            tsys2(i) =tsys(i2)
+            else
+            tsys1(i) =tsys(i1+(i-1)*nants)
+            tsys2(i) =tsys(i2+(i-1)*nants)
+            end if
+            sb(i) = int(sdf(i)/abs(sdf(i)))
+            end do
+c
 c jhz: derive wt the current Tsys measurement and BW and integration time
 c
        call rmsweight(tno,chnwt,nchan,nspect,nschan,maxspect,
-     *    maxchan,weight,edge)
+     *    maxchan,weight,edge,tsys1,tsys2,sdf)
 
           if(dopass) then
 c
 c  calculate pseudo continuum 
 c
-c    for single
+          if(weight.ge.1) then 
           numpol = 1
           bchan  = 0
           echan  = 0
           call avgchn(numpol,bchan,echan,data,flags,nchan,
-     *    nspect,nschan,maxchan,chnwt,chz,chzwt,weight)
-c     *    edge)
+     *    nspect,nschan,maxchan,chnwt,chz,chzwt,weight,sb,
+     *    telescop)
+
 c
 c  divide the spectral channel by the pseudo continuum
 c
@@ -1597,8 +1725,16 @@ c
 c  smooth the data
 c
           if(dosmooth) call smoothply(preamble,ndata,
-     *    flags,nchan,nspect,
+     *    flags,nchan,nspect,maxspect,
      *    nschan,maxchan,dosmooth,donply,dowrap,wwt,edge)
+          end if
+          end if   
+          if(weight.eq.-1) then
+          if(dosmooth) then 
+          call smoothply(preamble,data,
+     *    flags,nchan,nspect,maxspect,
+     *    nschan,maxchan,dosmooth,donply,dowrap,wwt,edge)
+          end if
           end if
         enddo
 
@@ -1746,13 +1882,15 @@ c
         hash(1,1) = prime(maxhash-2)
         end
 c************************************************************************
-        subroutine accum(hash,data,visid,nsoln,nvis,vis,wt,
+        subroutine accumwt(hash,data,visid,nsoln,nvis,vis,wt,
      *                  vid,count, wwt)
 c
         integer visid,nsoln,nvis,vid(*),count(*)
         real wt(*), wwt
         integer hash(2,*)
         complex data,vis(*)
+c
+c  add a weight while accumulate vis 
 c
 c  Inputs:
 c    VisId	Identifier, giving channel, IF band, antennae and polarisation.
@@ -1799,14 +1937,15 @@ c
         end
 c************************************************************************
         subroutine avgchn(numpol,bchan,echan,data,flags,nchan,
-     *  bpnspect,bpnschan,maxchan,chnwt,chz,chzwt,weight)
-        PARAMETER(maxwin=48, maxpol=2)
-        integer nchan,bpnspect,maxchan,bpnschan(maxwin)
+     *  bpnspect,bpnschan,maxchan,chnwt,chz,chzwt,weight,sb,telescop)
+        PARAMETER(maxwin=49, maxpol=2)
+        integer nchan,bpnspect,maxchan,bpnschan(maxwin),sb(maxwin)
         integer i,j,numpol,bchan,echan, ipol
         integer bschan, eschan 
         complex data(maxchan)
         logical flags(maxchan), nsflag(maxchan)
         real ysr(maxchan), ysi(maxchan)
+        character telescop*10
 c
 c  calculate pseudo continuum vector
 c
@@ -1823,8 +1962,12 @@ c  chz:   vis data of channel zero
             ipol=1
          ntcount=0
 c assuming numpol =1
+           if(telescop.eq.'SMA') then
+c
+c
+c for SMA, take all chunk data (in one side band) to derive pseudo-continuum
+c
          do j=1, bpnspect
-             
              bschan=bchan
            if (bchan.eq.0) bschan = bpnschan(j)*0.125
              eschan=echan
@@ -1855,6 +1998,45 @@ c assuming numpol =1
          chzwt(j,ipol) = SUMWT
          chz(j,ipol) = cmplx(SUMRE*XNORM, SUMIM*XNORM) 
          enddo
+         else
+c
+c for a non-SMA telescope, only take the 1st band to derive pseudo-continuum
+c
+
+         bschan=bchan
+           j=1
+           if (bchan.eq.0) bschan = bpnschan(j)*0.125
+             eschan=echan
+           if (echan.eq.0) eschan = bpnschan(j)*0.875
+            SUMWT = 0.0
+            SUMRE = 0.0
+            SUMIM = 0.0
+          do i=1, bpnschan(j)
+              ntcount=ntcount+1
+              ysr(i) = real(data(ntcount))
+              ysi(i) = aimag(data(ntcount))
+              nsflag(i) = flags(ntcount)
+              if(i.ge.bschan.and.i.le.eschan) then
+              if(nsflag(i).and.chnwt(ntcount).gt.0.0) then
+                  SUMRE = SUMRE + ysr(i)*chnwt(ntcount)
+                  SUMIM = SUMIM + ysi(i)*chnwt(ntcount)
+                  SUMWT = SUMWT + chnwt(ntcount)
+                 endif 
+              endif
+           enddo
+            XNORM = 1.0
+         if(SUMWT.gt.1.0e-20) XNORM = 1.0 / SUMWT
+         if(XNORM.eq.1.) then
+            SUMWT =0.0
+            SUMRE =1.0
+            SUMIM =0.0
+           endif
+          do j=1, bpnspect
+          chzwt(j,ipol) = SUMWT
+          chz(j,ipol) = cmplx(SUMRE*XNORM, SUMIM*XNORM)
+          enddo
+          endif
+
          if(weight.ge.1) then
 c initialize
           cntnumreal = 0.0
@@ -1884,10 +2066,10 @@ c************************************************************************
         subroutine divchz(numpol,data,ndata,nchan,
      *  bpnspect,bpnschan,maxchan,chnwt,chz,chzwt,weight,
      *  edge)
-        PARAMETER(maxwin=48, maxpol=2)
+        PARAMETER(maxwin=49, maxpol=2)
         PARAMETER(pi=3.14159265358979323846)
         integer nchan,bpnspect,maxchan,bpnschan(maxwin)
-        integer i,j,numpol, ipol
+        integer i,j,numpol,ipol
         integer edge(2)
         complex data(maxchan),ndata(maxchan)
         real chnwt(maxchan), chwt
@@ -1901,8 +2083,9 @@ c  chzwt: weight of channel zero
 c  chz:   vis data of channel zero
         real chzwt(maxwin,maxpol)
         complex chz(maxwin,maxpol)
-        real DENOM, AMPD,ar,ai
+        real DENOM,AMPD,ar,ai
         integer weight
+c initialization
          ntcount=0
 c assuming numpol =1
          ipol=1
@@ -1922,12 +2105,12 @@ c
               end do
             else
               do i=1, edge(1)+bpnschan(j)+edge(2)
-              ntcount=ntcount+1
+               ntcount=ntcount+1
                vr = real(data(ntcount))
                vi = aimag(data(ntcount))
-              AMPD = vr**2 + vi**2
-                   chwt=chnwt(ntcount)
-         chnwt(ntcount)=DENOM*DENOM*chwt*chzwt(j,ipol)
+           AMPD = vr**2 + vi**2
+           chwt=chnwt(ntcount)
+           chnwt(ntcount)=DENOM*DENOM*chwt*chzwt(j,ipol)
      *   / (DENOM*chzwt(j,ipol)+AMPD*chwt)
               ar = (chzr*vr+chzi*vi)  / DENOM 
               ai = (chzr*vi-chzi*vr) / DENOM
@@ -1939,11 +2122,13 @@ c
          end
 c************************************************************************
         subroutine smoothply(preamble,data,flags,nchan,bpnspect,
-     *    bpnschan,maxchan,dosmooth,donply,dowrap,wwt,edge)
+     *  maxspect,bpnschan,maxchan,dosmooth,donply,dowrap,wwt,edge)
 c
-        PARAMETER(maxwin=48)
-        integer nchan,bpnspect,maxchan,bpnschan(maxwin),nschan(maxwin)
-        integer i,j,ntcount
+c        PARAMETER(maxwin=48)
+c        integer nchan,bpnspect,maxchan,bpnschan(maxwin),nschan(maxwin)
+        integer nchan,bpnspect,maxchan
+        integer bpnschan(maxspect),nschan(maxspect)
+        integer i,j,ntcount,nvisout
         PARAMETER(MAXNR=20, pi=3.14159265358979323846)
         complex data(maxchan),smoothdat(maxchan)
         logical flags(maxchan)
@@ -1952,17 +2137,22 @@ c
         double precision ATA1(MAXNR,MAXNR),ATA1AT(MAXNR,21)
         double precision SCRAT(MAXNR,MAXNR)
         double precision YR(maxchan), YI(maxchan)
+        real rYR(maxchan), rYI(maxchan) 
         real ysr(maxchan), ysi(maxchan)
         double precision xchan(maxchan)
         double precision preamble(4)
-        integer K, L,  nply
+        integer K, L, nply
         real xply(maxchan)
         double precision P
         real smooth(3), pphase
         real wwt
         integer bnply(3)
-         integer edge(2)
+        integer edge(2)
         common/bsmooth/smooth,bnply
+        logical dohann
+        integer maxco,hann
+        parameter (maxco=15)
+        real hc(maxco),hw(maxco)
 c
 c  moving smooth the spectral data
 c
@@ -1974,21 +2164,26 @@ c initialize the moving smooth parameters
         L=smooth(2)
         P=smooth(3)
 c
-         ntcount=0
-         pphase=0
+        pphase=0
+        nvisout=0
+        ntcount=0
+c shut off hanning smooth        
+        dohann=.false.
+        hann = K
+        call hcoeffs(hann,hc)
 c        
-c         
-           do j=1, bpnspect
-           nschan(j) = bpnschan(j) +edge(1)+edge(2)
-           end do
-
+c        
+          do j=1, bpnspect
+          nschan(j) = bpnschan(j) +edge(1)+edge(2)
+          end do
+c            
           do j=1, bpnspect
           do i=1, nschan(j)
-          ysr(i) = 10
+          ysr(i) = 1.
           ysi(i) = 0.
           end do
           end do
- 
+c
            do j=1, bpnspect
            do i=1, nschan(j)
             ntcount=ntcount+1
@@ -2002,26 +2197,46 @@ c   smooth the vis vector
             end if 
             end if
             end do
-         CALL TIMSER(YR,bpnschan,K,L,P,ETA,CONETA,A,ATA1,ATA1AT,SCRAT)
+         if(dohann) then
+c
+c hanning smooth
+c
+         do i=1, bpnschan(j)
+         rYR(i) = YR(i)
+         rYI(i) = YI(i)
+         end do        
+         call hannsm(hann,hc,bpnschan,rYR,hw)
+         call hannsm(hann,hc,bpnschan,rYI,hw)
+         do i=1, bpnschan(j)
+          ysr(i+edge(1)) = rYR(i)
+          ysi(i+edge(1)) = rYI(i)
+         end do
+        else
+c
+c moving smooth   
+c      
+        CALL TIMSER(YR,bpnschan(j),K,L,P,ETA,
+     *              CONETA,A,ATA1,ATA1AT,SCRAT)
          do i=1, bpnschan(j)
           ysr(i+edge(1)) = ETA(i+K)
          end do
            dev=.true.
            if(bnply(3).eq.100) call pgplt(bpnschan,xply,YR,ysr,dev)
-         CALL TIMSER(YI,bpnschan,K,L,P,ETA,CONETA,A,ATA1,ATA1AT,SCRAT)
+         CALL TIMSER(YI,bpnschan(j),K,L,P,ETA,
+     *              CONETA,A,ATA1,ATA1AT,SCRAT)
          do i=1, bpnschan(j)
            ysi(i+edge(1)) = ETA(i+K)
          end do
            dev=.false.
            if(bnply(3).eq.100) call pgplt(bpnschan,xply,YI,ysi,dev)
+        end if
          do i=1, nschan(j)
-         if(dosmooth) smoothdat((j-1)*nschan(j)+i) = 
+         nvisout = nvisout+1
+         if(dosmooth) smoothdat(nvisout) = 
      *          cmplx(ysr(i),ysi(i))
+         end do
+         end do
 
-         end do
-         end do
-c    
-c  transfer the smoothed data to output
 c
         ntcount=0
         do j=1, bpnspect
@@ -2193,7 +2408,8 @@ c
         end
 c************************************************************************
         subroutine despect(updated,tno,nchan,edge,chan,spect,
-     *                  maxspect,nspect,sfreq,sdf,nschan,state)
+     *                  maxspect,nspect,sfreq,sdf,nschan,
+     *                 state)
 c
         integer tno,nchan,chan(nchan),spect(nchan),edge(2)
         integer nspect,maxspect,nschan(maxspect),state(3,maxspect+2)
@@ -2221,7 +2437,7 @@ c    spect
 c------------------------------------------------------------------------
          include 'maxdim.h'
         integer channel,wide,mspect
-        parameter(channel=1,wide=2,mspect=32)
+        parameter(channel=1,wide=2,mspect=48)
         integer i,j,n,ispect,ltype,start,nschan0(mspect),nspect0,nwide
         integer chans,ibeg,iend,bdrop,edrop,nwidth,nstep
         double precision line(6),sfreq0(mspect),sdf0(mspect),f
@@ -2242,7 +2458,7 @@ c
           if(ltype.eq.channel)then
             call uvrdvri(tno,'nspect',nspect0,0)
             if(nspect0.le.0.or.nspect0.gt.mspect)
-     *        call bug('f','Bad value for nspect, in DESPECT')
+     *      call bug('f','Bad value for nspect, in DESPECT')
             call uvgetvrd(tno,'sfreq',sfreq0,nspect0)
             call uvgetvrd(tno,'sdf',sdf0,nspect0)
             call uvgetvri(tno,'nschan',nschan0,nspect0)
@@ -3158,37 +3374,38 @@ c
         enddo
         end
 c************************************************************************
-        subroutine solvegt1(refant,nants,nspect,nchan,npol,
-     *    pass,source,freq,dat,wt,vid,ischan,n,gains,tau,tol)
+                subroutine SolveGT1(refant,nants,nspect,nchan,npol,
+     *    Pass,Source,freq,Dat,Wt,VID,ischan,n,Gains,Tau,tol)
 c
+        implicit none
         integer nants,nchan,n,refant,nspect,npol
-        real tau(nants),source(nchan),tol
+        real Tau(nants),Source(nchan),tol
         double precision freq(nchan)
-        complex pass(nants,nchan,npol),gains(nants,npol)
-        complex dat(n)
-        real wt(n)
-        integer vid(n),ischan(nspect)
+        complex Pass(nants,nchan,npol),Gains(nants,npol)
+        complex Dat(n)
+        real Wt(n)
+        integer VID(n),ischan(nspect)
 c
 c  Solve for the antenna gains and the atmospheric delay.
 c
 c  Input:
-c    nants	Number of antennae.
+c    nants      Number of antennae.
 c    nspect
-c    nchan	Total number of channels.
-c    n		Number of data points.
-c    refant	The reference antenna.
-c    source	Source flux as a function of frequency.
-c    freq	Frequency of each channel.
-c    Pass	Passband gain.
-c    Dat	Visibility data.
-c    Wt		Weight for each data point.
-c    VID	Visibility antennae, polarisation, channel, band.
-c    tol	Convergence tolerance.
+c    nchan      Total number of channels.
+c    n          Number of data points.
+c    refant     The reference antenna.
+c    source     Source flux as a function of frequency.
+c    freq       Frequency of each channel.
+c    Pass       Passband gain.
+c    Dat        Visibility data.
+c    Wt         Weight for each data point.
+c    VID        Visibility antennae, polarisation, channel, band.
+c    tol        Convergence tolerance.
 c  Input/Output:
 c    Gains
 c    Tau
 c------------------------------------------------------------------------
-         include 'maxdim.h'
+        include 'maxdim.h'
         integer maxdata,maxpol
         parameter(maxdata=5000,maxpol=2)
 c
@@ -3197,37 +3414,38 @@ c
         integer zerovar(maxpol+1),nzero
         real angfreq(maxdata)
         common/mfcalcom/vis,model,angfreq,b1,b2,t1,t2,zerovar,nzero
-        integer maxiter,maxvar
-        parameter(maxiter=200,maxvar=(1+2*maxpol)*maxant)
+        integer MAXITER,MAXVAR
+        parameter(MAXITER=200,MAXVAR=(1+2*MAXPOL)*MAXANT)
         include 'mirconst.h'
-        integer i,idx(maxant,maxpol),tidx(maxant),p
+c
+        integer i,Idx(MAXANT,MAXPOL),TIdx(MAXANT),p
         integer ifail,spect,chan,i1,i2,nvar,neqn
 c
 c  Scratch arrays for the least squares solver.
 c
-        real x(maxvar),dx(maxvar),w
+        real x(MAXVAR),dx(MAXVAR),W
         integer dfdx,aa,f,fp
 c
 c  Dynamic memory commons.
 c
-        real ref(maxbuf)
+        real ref(MAXBUF)
         common ref
 c
 c  Externals.
 c
         character itoaf*4
-        external func,derive, unpack
+        external FUNC,DERIVE,UNPACK
 c
 c  Check we have enough space.
 c
-        if(n.gt.maxdata)call bug('f','Too many data points')
+        if(n.gt.MAXDATA)call bug('f','Too many data points')
 c
 c  Initialise the indices to keep track of things.
 c
         do p=1,npol
           do i=1,nants
-            idx(i,p) = 0
-            tidx(i) = 0
+            Idx(i,p) = 0
+            TIdx(i) = 0
           enddo
         enddo
 c
@@ -3235,33 +3453,33 @@ c  Copy the data across into common, determining the variable index as we go.
 c
         nvar = 0
         do i=1,n
-          call unpack(i1,i2,p,spect,chan,vid(i))
+          call unpack(i1,i2,p,spect,chan,VID(i))
           chan = chan + ischan(spect)
-          if(idx(i1,p).eq.0)then
-            idx(i1,p) = nvar + 1
+          if(Idx(i1,p).eq.0)then
+            Idx(i1,p) = nvar + 1
             nvar = nvar + 2
           endif
-          if(tidx(i1).eq.0)then
+          if(TIdx(i1).eq.0)then
             nvar = nvar + 1
-            tidx(i1) = nvar
+            TIdx(i1) = nvar
           endif
-          if(idx(i2,p).eq.0)then
-            idx(i2,p) = nvar + 1
+          if(Idx(i2,p).eq.0)then
+            Idx(i2,p) = nvar + 1
             nvar = nvar + 2
           endif
-          if(tidx(i2).eq.0)then
+          if(TIdx(i2).eq.0)then
             nvar = nvar + 1
-            tidx(i2) = nvar
+            TIdx(i2) = nvar
           endif
-          b1(i) = idx(i1,p)
-          b2(i) = idx(i2,p)
-          t1(i) = tidx(i1)
-          t2(i) = tidx(i2)
+          b1(i) = Idx(i1,p)
+          b2(i) = Idx(i2,p)
+          t1(i) = TIdx(i1)
+          t2(i) = TIdx(i2)
           angfreq(i) = 2*pi*freq(chan)
-          w = sqrt(wt(i))
-          model(i) = w * source(chan) *
-     *                  pass(i1,chan,p) * conjg(pass(i2,chan,p))
-          vis(i) = dat(i) / w
+          W = sqrt(Wt(i))
+          Model(i) = W * Source(chan) *
+     *                  Pass(i1,chan,p) * conjg(Pass(i2,chan,p))
+          Vis(i) = Dat(i) / W
         enddo
 c
 c  Make a list of the variables that are to be constrained to be zero. This
@@ -3270,11 +3488,11 @@ c  reference antenna, and the imaginary parts of the gains of the reference
 c  antenna.
 c
         nzero = 1
-        zerovar(nzero) = tidx(refant)
+        zerovar(nzero) = TIdx(refant)
         do p=1,npol
-          if(idx(refant,p).gt.0)then
+          if(Idx(refant,p).gt.0)then
             nzero = nzero + 1
-            zerovar(nzero) = idx(refant,p) + 1
+            zerovar(nzero) = Idx(refant,p) + 1
           endif
         enddo
         neqn = 2*n+nzero
@@ -3283,12 +3501,12 @@ c  Copy across the current estimate of the variables.
 c
         do i=1,nants
           do p=1,npol
-            if(idx(i,p).gt.0)then
-              x(idx(i,p))   = real(gains(i,p))
-              x(idx(i,p)+1) = aimag(gains(i,p))
+            if(Idx(i,p).gt.0)then
+              x(Idx(i,p))   = real(Gains(i,p))
+              x(Idx(i,p)+1) = aimag(Gains(i,p))
             endif
           enddo
-          if(tidx(i).gt.0) x(tidx(i)) = tau(i)
+          if(TIdx(i).gt.0) x(Tidx(i)) = Tau(i)
         enddo
 c
 c  Allocate memory for scratch arrays.
@@ -3300,8 +3518,8 @@ c
 c
 c  Call the solver at last.
 c
-        call nllsqu(nvar,neqn,x,x,maxiter,0.,tol,.true.,
-     *    ifail,func,derive,ref(f),ref(fp),dx,ref(dfdx),ref(aa))
+        call nllsqu(nvar,neqn,x,x,MAXITER,0.,tol,.true.,
+     *    ifail,FUNC,DERIVE,ref(f),ref(fp),dx,ref(dfdx),ref(aa))
         if(ifail.ne.0)call bug('w',
      *    'Solver failed to converge: ifail='//itoaf(ifail))
 c
@@ -3316,23 +3534,24 @@ c  Now unpack the solution.
 c
         do i=1,nants
           do p=1,npol
-            if(idx(i,p).gt.0)then
-              gains(i,p) = cmplx(x(idx(i,p)),x(idx(i,p)+1))
+            if(Idx(i,p).gt.0)then
+              Gains(i,p) = cmplx(x(Idx(i,p)),x(Idx(i,p)+1))
             else
-              gains(i,p) = 0
+              Gains(i,p) = 0
             endif
           enddo
-          if(tidx(i).gt.0)then
-            tau(i) = x(tidx(i))
+          if(TIdx(i).gt.0)then
+            Tau(i) = x(Tidx(i))
           else
-            tau(i) = 0
+            Tau(i) = 0
           endif
         enddo
 c
         end
-c************************************************************************
-        subroutine func(x,f,n,m)
+
+        subroutine FUNC(x,f,n,m)
 c
+        implicit none
         integer m,n
         real x(n),f(m)
 c------------------------------------------------------------------------
@@ -3344,6 +3563,7 @@ c
         integer zerovar(maxpol+1),nzero
         real angfreq(maxdata)
         common/mfcalcom/vis,model,angfreq,b1,b2,t1,t2,zerovar,nzero
+c
         integer i,i1,i2,j1,j2,off
         complex temp
         real theta
@@ -3363,26 +3583,27 @@ c
           j1 = t1(off)
           j2 = t2(off)
           theta = angfreq(off) * (x(j1)-x(j2))
-          temp = vis(off) - cmplx(x(i1),x(i1+1))*cmplx(x(i2),-x(i2+1))
-     *                     * cmplx(cos(theta),sin(theta)) * model(off)
+          temp = Vis(off) - cmplx(x(i1),x(i1+1))*cmplx(x(i2),-x(i2+1))
+     *                     * cmplx(cos(theta),sin(theta)) * Model(off)
           f(i)   = real(temp)
           f(i+1) = aimag(temp)
         enddo
         end
-c************************************************************************
-        subroutine derive(x,dfdx,n,m)
+
+        subroutine DERIVE(x,dfdx,n,m)
 c
+        implicit none
         integer m,n
         real x(n),dfdx(n,m)
 c------------------------------------------------------------------------
         integer maxdata,maxpol
         parameter(maxdata=5000,maxpol=2)
-c
         complex vis(maxdata),model(maxdata)
         integer b1(maxdata),b2(maxdata),t1(maxdata),t2(maxdata)
         integer zerovar(maxpol+1),nzero
         real angfreq(maxdata)
         common/mfcalcom/vis,model,angfreq,b1,b2,t1,t2,zerovar,nzero
+c
         integer i,j,i1,i2,j1,j2,off
         complex g1,g2,temp,w
         real theta
@@ -3414,25 +3635,26 @@ c
           g1 = cmplx(x(i1),x(i1+1))
           g2 = cmplx(x(i2),-x(i2+1))
 c
-          temp = g2*w*model(off)
+          temp = g2*w*Model(off)
           dfdx(i1,i)     = -real(temp)
           dfdx(i1+1,i)   =  aimag(temp)
           dfdx(i1,i+1)   = -aimag(temp)
           dfdx(i1+1,i+1) = -real(temp)
 c
-          temp = g1*w*model(off)
+          temp = g1*w*Model(off)
           dfdx(i2,i)     = -real(temp)
           dfdx(i2+1,i)   = -aimag(temp)
           dfdx(i2,i+1)   = -aimag(temp)
           dfdx(i2+1,i+1) =  real(temp)
 c
-          temp = angfreq(off) * g1*g2*w * model(off)
+          temp = angfreq(off) * g1*g2*w * Model(off)
           dfdx(j1,i)   =  aimag(temp)
           dfdx(j1,i+1) = -real(temp)
           dfdx(j2,i)   = -aimag(temp)
           dfdx(j2,i+1) =  real(temp)
         enddo
         end
+
 c************************************************************************
         subroutine solvegt2(refant,minant,nants,nspect,nchan,npol,
      *    pass,source,dat,wt,vid,ischan,n,gains,tol)
@@ -4099,3 +4321,57 @@ C renormalize and test for convergence
         GLNGAM=G
       END IF
       END
+
+c************************************************************************
+c Original from Bob Saults' MFCAL
+        subroutine Accum(Hash,Data,VisId,nsoln,nvis,Vis,Wt,
+     *                                          VID,Count)
+c
+        implicit none
+        integer VisId,nsoln,nvis,VID(*),Count(*)
+        real Wt(*)
+        integer Hash(2,*)
+        complex Data,Vis(*)
+c
+c  Inputs:
+c    VisId      Identifier, giving channel, IF band, antennae and polarisation.
+c------------------------------------------------------------------------
+        integer nHash,iHash,indx,i
+c
+c  Find this channel in the hash table.
+c
+        nHash = Hash(1,1)
+        iHash = VisId + 1
+        indx = mod(iHash,nHash) + 2
+        dowhile(Hash(1,indx).ne.0.and.Hash(1,indx).ne.iHash)
+          indx = indx + 1
+        enddo
+        if(indx.ge.nHash+2)then
+          indx = 2
+          dowhile(Hash(1,indx).ne.0.and.Hash(1,indx).ne.iHash)
+            indx = indx + 1
+          enddo
+          if(indx.ge.nHash+2)
+     *          call bug('f','Hash table overflow, in Accum')
+        endif
+c
+c  Is it a new slot?
+c
+        if(Hash(1,indx).eq.0)then
+          nvis = nvis + 1
+          Hash(1,indx) = iHash
+          Hash(2,indx) = nvis
+          i = nvis
+          Vis(i) = Data
+          Wt(i) = 1
+          VID(i) = VisId
+          Count(nsoln) = Count(nsoln) + 1
+        else
+          i = Hash(2,indx)
+          Vis(i) = Vis(i) + Data
+          Wt(i) = Wt(i) + 1
+        endif
+c
+        end
+
+
