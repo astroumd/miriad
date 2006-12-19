@@ -23,7 +23,16 @@
 #    wget ftp://ftp.atnf.csiro.au/pub/software/miriad/miriad-rcs.tar.gz
 #    tar zxf miriad-rcs.tar.gz
 #    mv miriad/.rcs $CVSROOT/miriadau
-#
+# To install a binary release:
+#    wget ftp://ftp.atnf.csiro.au/pub/software/miriad/miriad-linux.tar.gz
+#    wget ftp://ftp.atnf.csiro.au/pub/software/miriad/miriad-common.tar.gz
+#    wget ftp://ftp.atnf.csiro.au/pub/software/miriad/miriad-code.tar.gz
+#    tar zxf miriad-linux.tar.gz
+#    tar zxf miriad-common.tar.gz
+#    tar zxf miriad-code.tar.gz
+#    cd miriad
+#    setenv MIR `pwd`
+#    
 
 set mirdir=miriad
 
@@ -85,6 +94,7 @@ exit 0
 
 #   below this is the new ATNF version that is maintained in RCS
 #   it is only reproduced here to show what my nightly crontab does:
+
 new_rcs:
 
 
@@ -105,7 +115,8 @@ new_rcs:
 #
 
 set check=cvsroot/miriadau
-set tar=ftp://ftp.atnf.csiro.au/pub/software/miriad/miriad-rcs.tar.gz >& /dev/null
+set ftp=ftp://ftp.atnf.csiro.au/pub/software/miriad
+set tar=$ftp/miriad-rcs.tar.gz 
 
 if (-e $check) then
   # big local assumption
@@ -131,4 +142,24 @@ if (-e $check) then
 
 else
   echo Directory $check not found in `pwd`
+endif
+
+
+if (0) then
+
+  # for binary releases, choose one, or any actually
+  # set bins=(linux linux64 sun4sol darwin_ppc darwin_x86)
+  set bins=(linux)
+  foreach component (code common $bins)
+    set file=miriad-$component.tar.gz
+    rm -f $file
+    wget $ftp/$file
+    tar zxf $file
+  end
+
+  setenv MIR `pwd`
+  cd $MIR
+  sed -e "s,@MIRROOT@,$MIR," scripts/MIRRC.in > MIRRC
+  sed -e "s,@MIRROOT@,$MIR," scripts/MIRRC.sh.in > MIRRC.sh
+  
 endif
