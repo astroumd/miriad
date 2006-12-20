@@ -98,6 +98,12 @@ c	want to cut down on the number of plotted points.  Beware of
 c	increments that divide exactly into the number of baselines
 c	in time ordered data.
 c	Default is 1.
+c@ dotsize
+c       Allows users to choose a symbol (dot) size in a range between
+c       1-201. The actual plotted dot size depends on the device
+c       resolution. Other internal symbol selecting function 
+c       would be failed when this parameter is in use.
+c       Default is to disable this function.
 c@ options
 c	Task enrichment options. Minimum match is effective.
 c	 nocal   Do not apply the gain corrections
@@ -154,18 +160,20 @@ c	 xind    If the x-axis is self-scaled, then unless OPTIONS=NOBASE,
 c	         setting XIND will cause each sub-plot to have the x-axis
 c		 self-scaled independently.  The default is that the x-range
 c		 used is that which encompasses the ranges from all sub-plots.
-c	 yind    The equivalent for the y-axis
+c	 yind    The equivalent for the y-axis.
 c
 c	 equal   Plot x and y with equal scales.  Useful only for plots
 c	         like AXIS=UU,VV.  Does not mean the plot will necessarily
-c	         be square
-c	 zero    Plot the x=0 and y=0 lines
+c	         be square.
 c
-c	 symbols Each file is plotted with a different plot symbol
-c	 nocolour
-c	         Each file is plotted with the same colour (white). By
+c	 zero    Plot the x=0 and y=0 lines.
+c
+c	 symbols Each file is plotted with a different plot symbol.
+c
+c	 nocolor Each file is plotted with the same colour (white). By
 c		 default and when there is only one polarization, each
 c		 file has a separate colour.
+c
 c	 dots    If time averaging is invoked, plot the data with dots
 c	         rather than filled in circles.  These plot much faster
 c		 on hardcopy devices.
@@ -341,6 +349,14 @@ c    jhz  10may06  added keyword filelabel to handle file
 c                  name labelling.
 c    jhz  08nov06  fixed bugs in the average function;
 c                  enabled the color-separation for sources.
+c    jhz  20dec06  fixed a bug in handling more than 1 files.
+c                  fixed a bug in using options dots.
+c                  added a bug call when options symbols and dots
+c                        are used together.
+c                  added a function allow users to choose a
+c                        symbol size in plotting.
+c                  recovered 'include 'mirconst.h'' in a few subs.
+c                  added 'implicit none' to all the subs 
 c To do:
 c
 c   Vector averaging rms not yet implemented
@@ -467,7 +483,7 @@ c
 c Initialize
 c
       integer ifac1, ifac2, nsource, filelabel
-      integer start_sid, next_sid
+      integer start_sid, next_sid, dotsize
       parameter (ifac1 = maxpol*maxbase*maxfile,
      *           ifac2 = maxbase)
       data false, bwarn /.false., .false., .false., .false./
@@ -480,7 +496,7 @@ c
       start_sid=0
       next_sid=0 
 c-----------------------------------------------------------------------
-      call output ('SmaUvPlt: version 1.4 08-Nov-06')
+      call output ('SmaUvPlt: version 1.5 20-Dec-06')
 c
 c  Get the parameters given by the user and check them for blunders
 c
@@ -489,7 +505,7 @@ c
      *   dolog, dozero, doequal, donano, dosrc, doavall, doxind,
      *   doyind, dowrap, dosymb, dodots, docol, inc, nx, ny, pdev,
      *   logf, comment, size, hann, ops, twopass, dofqav, dotitle,
-     *   filelabel)
+     *   filelabel,dotsize)
       call chkinp (xaxis, yaxis, xmin, xmax, ymin, ymax, dayav,
      *   dodoub, dowave, doave, dovec, dorms, dointer, doperr,
      *   dowrap, hann, xrtest, yrtest)
@@ -826,14 +842,15 @@ c
 c
 c Plot the plots
 c
-      if (.not.none)
+      if ((.not.none).and.(ifile.eq.nfiles))
      *   call plotit (dointer, doave, dorms, dobase, dolog, dozero,
      *     doequal, donano, doxind, doyind, doperr, dowrap, dosymb,
      *     dodots, title, xaxis, yaxis, xmin, xmax, ymin, ymax, xxmin,
      *     xxmax, yymin, yymax, pdev, pl1dim, pl2dim, pl3dim, pl4dim,
      *     maxbase, maxpol, maxfile, nbases, npols, npts, buffer(ip),
      *     soupnt(ip), xo, yo, elo, eho, nx, ny, a1a2, order, size, 
-     *     polmsk, doavall, docol, dotitle,ifile,filen,filelabel)
+     *     polmsk, doavall, docol, dotitle,ifile,filen,filelabel,
+     *     dotsize)
          enddo
 c
       call logclose
@@ -861,6 +878,7 @@ c    nsum         Number of points accumulated so far this interval
 c
 c-----------------------------------------------------------------------
 c
+      implicit none
       logical dovec(2)
       integer nsum
       real xvalr, yvalr, xsumr, ysumr, xsumsqr, ysumsqr,
@@ -890,6 +908,7 @@ c    sumsqi    Imaginary sum of squares (vector)
 c
 c-----------------------------------------------------------------------
 c
+      implicit none
       logical dovec
       complex cval
       real rval, sumr, sumi, sumsqr, sumsqi
@@ -920,6 +939,7 @@ c       arr      Array of numbers
 c
 c-----------------------------------------------------------------------
 c
+       implicit none
       character*(*) aline
       integer ilen, n
       real arr(*)
@@ -1114,6 +1134,7 @@ c    sig       Standard deviation associated with averaged quantity
 c
 c-----------------------------------------------------------------------
 c
+      implicit none
       logical dorms, errmean, dovec
       character axis*(*)
       integer nbasst, nsum(nbasst)
@@ -1210,6 +1231,7 @@ c    skip     If true, then we ran out of room for more baselines
 c
 c-----------------------------------------------------------------------
 c
+      implicit none
       double precision baseln
       logical doave, doavall, dobase, skip, bwarn(2)
       integer maxbase, maxant, nbases, npols, plbidx, stbidx,
@@ -1383,6 +1405,7 @@ c    inc           Plot every INCth point after final data selection
 c
 c-----------------------------------------------------------------------
 c
+       implicit none
       logical xrtest, yrtest, dorms(2)
       integer pl1dim, pl2dim, pl3dim, pl4dim, maxbase, maxpol, maxfile,
      *  npts(maxbase,maxpol,maxfile), plpts(maxbase,maxpol,maxfile),
@@ -1468,6 +1491,7 @@ c                 are never going to be looked at
 c
 c-----------------------------------------------------------------------
 c
+       implicit none
       integer hann
       character*(*) xaxis, yaxis
       double precision dayav
@@ -1630,6 +1654,7 @@ c    elo,eho    Offsets in the first index of BUFFER for the
 c               Xlo, Xhi, Ylo and Yhi vectors
 c
 c-----------------------------------------------------------------------
+       implicit none
       integer maxbuf2, maxbase, maxbase2, maxpol, maxfile
       integer nfiles, npols, nbases, pl1dim, pl2dim, pl3dim, pl4dim,
      *maxpnt, xo, yo, elo(2), eho(2)
@@ -1754,6 +1779,7 @@ c    reset      True when the end of the averaging interval reached
 c
 c-----------------------------------------------------------------------
 c
+      implicit none
       double precision day, baseday, dayav
       logical reset
       integer ivis, vupd
@@ -1796,6 +1822,7 @@ c     Input/output:
 c       dmin,max    Minimum and maximum
 c
 c-----------------------------------------------------------------------
+       implicit none
       real dmin, dmax
 c-----------------------------------------------------------------------
       if (dmin.eq.dmax) then
@@ -1830,6 +1857,7 @@ c    allfull       True if no space left for this file
 c
 c-----------------------------------------------------------------------
 c
+      implicit none
       integer maxpnt, maxpol, pl2dim, pl3dim, pl4dim, plfidx, maxbase,
      *  npts(maxbase,maxpol)
       logical allfull
@@ -1879,6 +1907,7 @@ c    data	Correlation data.
 c    flags	Data flags.
 c    nread	Number of output channels (after freqency averaging).
 c------------------------------------------------------------------------
+       implicit none
       integer maxchan,nread
       double precision preamble(4)
       complex data(maxchan)
@@ -1932,6 +1961,7 @@ c     il         Length of PDEV
 c
 c-----------------------------------------------------------------------
 c
+      implicit none
       integer il, len1
       character*(*) pdev, devdef
 cc
@@ -1959,6 +1989,7 @@ c
 c************************************************************************
       subroutine getlst (lin, lst)
 c
+      implicit none
       integer lin
       double precision lst
 c
@@ -2005,6 +2036,7 @@ c    lin         Handle of file
 c  Output:
 c    longitude   Longitude in radians
 c-----------------------------------------------------------------------
+      implicit none
       integer lin
       double precision long
 c
@@ -2046,6 +2078,7 @@ c    lin         Handle of file
 c  Output:
 c    lat        Latitude in radians
 c-----------------------------------------------------------------------
+      implicit none
       integer lin
       double precision lat
 c
@@ -2118,6 +2151,7 @@ c     twopass   Make two passes through the data
 c     dofqav	Average channels before plotting.
 c-----------------------------------------------------------------------
 c
+        implicit none
       logical dorms(3), dovec(2), doall, doflag, dobase, dointer,
      *  doperr, dolog, dozero, doequal, donano, docal, dopol, dosrc,
      *  doday, dohour, dosec, doavall, doxind, doyind, dowrap,
@@ -2134,7 +2168,7 @@ c
      *           'nocal   ', 'source  ', 'nopol   ', 'days    ',
      *           'hours   ', 'avall   ', 'xind    ', 'yind    ',
      *           'unwrap  ', 'symbols ', 'dots    ', 'nopass  ',
-     *           'nocolour', '2pass   ', 'mrms    ', 'nofqav  ',
+     *           'nocolor ', '2pass   ', 'mrms    ', 'nofqav  ',
      *           'notitle '/
 c-----------------------------------------------------------------------
       call options ('options', opts, present, nopt)
@@ -2178,6 +2212,9 @@ c
       twopass  =      present(26)
       dofqav   = .not.present(28)
       dotitle  = .not.present(29)
+      if(dosymb.and.dodots) 
+     *  call bug('f', 
+     *  'Options symbols and dots cannot be used together.') 
 c
       end
 c
@@ -2193,7 +2230,7 @@ c  Output
 c    rmin,max Range in appropriate units
 c
 c-----------------------------------------------------------------------
-c-----------------------------------------------------------------------
+       implicit none
       character*(*) axis, keyw
       real rmin, rmax
 cc
@@ -2266,6 +2303,7 @@ c    ok       SUccess decoding of inputs
 c
 c-----------------------------------------------------------------------
 c-----------------------------------------------------------------------
+      implicit none 
       character axis*1, type*(*)
       real rlo, rhi, win(2)
       logical ok
@@ -2324,6 +2362,7 @@ c    ok      If false, failed to get integer
 c
 c-----------------------------------------------------------------------
 c
+      implicit none
       double precision val
       integer ilen, ib
       logical ok
@@ -2363,6 +2402,7 @@ c  Input/output:
 c    x1,x2,y1,y2        Previous and new plot window.
 c
 c-----------------------------------------------------------------------
+      implicit none
       real xlo, xhi, ylo, yhi
       character*(*) xaxis, yaxis
 cc
@@ -2397,6 +2437,7 @@ c
 c************************************************************************
       subroutine getwvl (donano, preamble, u, v, uvdist, uvpa)
 c
+       implicit none
       double precision preamble(2)
       real u, v, uvdist, uvpa
       logical donano
@@ -2412,47 +2453,7 @@ c    u,v          u and v in form selected by user (nsec or klambda)
 c    uvdist       sqrt(u**2 + v**2)
 c    uvpa         Position angle of u,v clockwise from v axis
 c-----------------------------------------------------------------------
-cc
-c=======================================================================
-c - mirconst.h  Include file for various fundamental physical constants.
-c
-c  History:
-c    jm  18dec90  Original code.  Constants taken from the paper
-c                 "The Fundamental Physical Constants" by E. Richard
-c                 Cohen and Barry N. Taylor (PHYICS TODAY, August 1989).
-c ----------------------------------------------------------------------
-c  Pi.
-      real pi, twopi
-      double precision dpi, dtwopi
-      parameter (pi = 3.14159265358979323846)
-      parameter (dpi = 3.14159265358979323846)
-      parameter (twopi = 2 * pi)
-      parameter (dtwopi = 2 * dpi)
-c ----------------------------------------------------------------------
-c  Speed of light (meters/second).
-      real cmks
-      double precision dcmks
-      parameter (cmks = 299792458.0)
-      parameter (dcmks = 299792458.0)
-c ----------------------------------------------------------------------
-c  Boltzmann constant (Joules/Kelvin).
-      real kmks
-      double precision dkmks
-      parameter (kmks = 1.380658e-23)
-      parameter (dkmks = 1.380658d-23)
-c ----------------------------------------------------------------------
-c  Planck constant (Joules-second).
-      real hmks
-      double precision dhmks
-      parameter (hmks = 6.6260755e-34)
-      parameter (dhmks = 6.6260755d-34)
-c ----------------------------------------------------------------------
-c  Planck constant divided by Boltzmann constant (Kelvin/GHz).
-      real hoverk
-      double precision dhoverk
-      parameter (hoverk = 0.04799216)
-      parameter (dhoverk = 0.04799216)
-c=======================================================================
+      include 'mirconst.h'
 c-----------------------------------------------------------------------
       u = preamble(1)
       v = preamble(2)
@@ -2484,6 +2485,7 @@ c    flags     Channel flags, true if unflagged
 c  Output
 c    keep      Number of visibilities to keep.
 c-----------------------------------------------------------------------
+      implicit none
       integer n, nkeep
       logical flags(n)
 cc
@@ -2517,6 +2519,7 @@ c   buffer         Plot buffer
 c
 c-----------------------------------------------------------------------
 c
+       implicit none
       integer pl1dim, pl2dim, pl3dim, pl4dim, maxbase, maxpol,
      *  maxfile, npts(maxbase,maxpol,maxfile), yo, hann,
      *  nbases, npols
@@ -2553,6 +2556,7 @@ c-----------------------------------------------------------------------
 c     Initialize accumulators
 c-----------------------------------------------------------------------
 c
+      implicit none
       integer maxbase, maxpol, nsum(maxbase,maxpol)
       real xsumr(maxbase,maxpol), ysumr(maxbase,maxpol),
      *  xsumsqr(maxbase,maxpol), ysumsqr(maxbase,maxpol),
@@ -2583,7 +2587,7 @@ c
      *    doperr, dolog, dozero, doequal, donano, dosrc, doavall,
      *    doxind, doyind, dowrap, dosymb, dodots, docol, inc, nx, ny,
      *    pdev, logf, comment, size, hann, ops, twopass, dofqav,
-     *    dotitle, filelabel)
+     *    dotitle, filelabel, dotsize)
 c-----------------------------------------------------------------------
 c     Get the user's inputs
 c
@@ -2630,8 +2634,10 @@ c    twopass      Make two passes through the data
 c    dofqav       Average frequency channels before plotting.
 c    dotitle      When false don't write plot title
 c    filelabel    File labelling handle
+c    dotsize      the symbol size selected by users in plotting. 
 c-----------------------------------------------------------------------
 c
+      implicit none
       character*(*) xaxis, yaxis, pdev, logf, comment
       double precision dayav
       real xmin, xmax, ymin, ymax, size(2)
@@ -2641,7 +2647,7 @@ c
      *  docol, twopass, dofqav, dotitle
       integer nx, ny, inc, hann, maxco, ilen, ilen2, tunit
 cc
-      integer i
+      integer i, dotsize
       character itoaf*3, str*3, word*50, ops*9, axis(2)*10
       logical doday, dohour, dosec
 c
@@ -2742,6 +2748,8 @@ c
         str = itoaf(maxco)
         call bug ('f', 'Hanning smoothing length must be <= '//str)
       end if
+      call keyi ('dotsize', dotsize, -1)
+      
 c
       call keyi ('inc', inc, 1)
       if (inc.le.0) inc = 1
@@ -2794,6 +2802,7 @@ c     Input/output:
 c       dmin,max    Minimum and maximum
 c
 c-----------------------------------------------------------------------
+      implicit none
       real dmin, dmax
 cc
       real absmax, delta
@@ -2822,6 +2831,7 @@ c    doflag   True if plotting only flagged points
 c
 c-----------------------------------------------------------------------
 c
+       implicit none
       character logf*(*), comment*(*)
       logical doave, dovec(2), doall, doflag
 cc
@@ -2877,6 +2887,7 @@ c     title   Title string
 c
 c-----------------------------------------------------------------------
 c
+       implicit none
       double precision dayav
       integer tunit, nfiles, nread, lin
       character*(*) title
@@ -2942,6 +2953,7 @@ c
 c-----------------------------------------------------------------------
 c     Set default number of sub-plots
 c-----------------------------------------------------------------------
+      implicit none
       integer nplot, nx, ny
 cc
       integer maxsub
@@ -2965,7 +2977,7 @@ c
      *   xxmax, yymin, yymax, pdev, pl1dim, pl2dim, pl3dim, pl4dim,
      *   maxbase, maxpol, maxfile, nbases, npols, npts, buffer, soupnt,
      *   xo,yo, elo, eho, nx, ny, a1a2, order, size, polmsk,
-     *   doavall, docol, dotitle, fileid, filen, filelabel)
+     *   doavall, docol, dotitle, fileid, filen, filelabel,dotsize)
 c-----------------------------------------------------------------------
 c     Draw the plot
 c
@@ -3008,12 +3020,14 @@ c   nbases         Number of baseline encountered in files
 c   npols          Number of poalrizations encountered in files
 c   filen          Input file name
 c   filelabel      File labelling handle.
+c   dotsize        symbol size choosed by users
 c
 c Input/output
 c   xx,yymin,max   Work array (automatically determined plot extrema)
 c   order          Work array
 c-----------------------------------------------------------------------
 c
+      implicit none
       integer pl1dim, pl2dim, pl3dim, pl4dim, maxbase, maxpol, maxfile,
      *  xo, yo, elo(2), eho(2), a1a2(maxbase,2), order(maxbase),
      *  npts(maxbase,maxpol,maxfile), nx, ny, polmsk(-8:4),
@@ -3039,7 +3053,7 @@ cc
       character*2 fmt(2), polstr(12)*2, hard*3
       logical new, more, redef, none, dosmaplt
 c
-      integer pgbeg, len1, fileid, filelabel
+      integer pgbeg, len1, fileid, filelabel,dotsize
       character polsc2p*2
 c
       double precision ddayav
@@ -3065,7 +3079,7 @@ c
 c Set initial plot symbol
 c
       sym = 1
-      if (doave .and. .not.dodots) sym = 17
+      if (doave .and. dodots) sym = 17
       if ( ((xaxis.eq.'uu' .or. xaxis.eq.'uc') .and.
      *      (yaxis.eq.'vv' .or. yaxis.eq.'vc'))   .or.
      *     ((xaxis.eq.'vv' .or. xaxis.eq.'vc') .and.
@@ -3346,12 +3360,12 @@ c
                     call smapgpts (npts(kp,lp,jf),buffer(xo+1,kp,lp,jf),
      *                   buffer(yo+1,kp,lp,jf), 
      *                   soupnt(xo+1,kp,lp,jf),sym,fileid,lp,npol,
-     *                   polstr)
+     *                   polstr,dotsize)
                        else
                    call smapgpts (npts(kp,lp,jf),buffer(xo+1,kp,lp,jf),
      *                   buffer(yo+1,kp,lp,jf),
      *                   soupnt(xo+1,kp,lp,jf),sym,fileid,lp,npol,
-     *                   polstr)
+     *                   polstr,dotsize)
 C THE OLD PGPT WITHOUT COLOR SEPARATION FOR SOURCE
 c                  call pgpt (npts(kp,lp,jf),buffer(xo+1,kp,lp,jf),
 c     *                            buffer(yo+1,kp,lp,jf), sym)
@@ -3433,11 +3447,12 @@ c
 
 
       SUBROUTINE smapgpts(N,XPTS,YPTS,soupnt,SYMBOL,fileid,lp,
-     * npol,polstr)
+     * npol,polstr,dotsize)
+      implicit none
       INTEGER N, NPNTS
       REAL XPTS(N), YPTS(N) 
       integer soupnt(N)
-      INTEGER SYMBOL, fileid, lp
+      INTEGER SYMBOL, fileid, lp, dotsize
       character polstr(12)*2
 C Primitive routine to draw Graph Markers (polymarker). The markers
 C are drawn using the current values of attributes color-index,
@@ -3473,8 +3488,10 @@ C-----------------------------------------------------------------------
       LOGICAL PGNOTO
       integer maxsource,limitdx
       parameter(maxsource=100, limitdx=48)
-        character source(maxsource)*32, title*64
-      integer  indx, mindx, cindx,maxdx
+      character source(maxsource)*32, title*64
+      integer  indx,mindx,cindx,maxdx
+      integer npol, j, l, len1
+      real xlen, ylen
       real xx(100), yy(100), yloc
       real  xfit(N),yfit(N)
       integer Npl,i,nsource,sourid
@@ -3551,6 +3568,10 @@ c
                NPL=NPL+1
                XFIT(NPL)=xx(1)
                YFIT(NPL)=yy(1)
+             if(dotsize.ge.1.and.dotsize.le.201) then
+             SYMBOL = -2
+             call pgslw(dotsize)
+             endif
       IF (SYMBOL.GE.0 .OR. SYMBOL.LE.-3) THEN
          CALL GRMKER(SYMBOL,.FALSE.,NPNTS,xx,yy)
       ELSE
@@ -3558,6 +3579,7 @@ c
       END IF
        end do
       CALL PGEBUF
+            call pgslw(1)
             
             yloc=1.0-(lp-1.)*1./25. +(npol-1)*1./25.
             do j=1, mindx
@@ -3638,6 +3660,7 @@ c       cols       COlours
 c       doavall    True if averaging everything on plot together
 c
 c-----------------------------------------------------------------------
+      implicit none
       integer npol, cols(*)
       character*2 polstr(*)
       character title*(*)
@@ -3704,6 +3727,7 @@ c                  of baseline, polarization and file
 c
 c-----------------------------------------------------------------------
 c
+       implicit none
       integer pl2dim, pl3dim, pl4dim, maxfile, maxpnt, maxbase,
      *  maxpol, ifile, npts(maxbase,maxpol,maxfile), a1a2(maxbase,2),
      *  plfidx
@@ -3767,6 +3791,7 @@ c  Output:
 c    label    Label
 c    opt      Axis options string for pgplot
 c-----------------------------------------------------------------------
+      implicit none
       character*(*) axis, label, xory*1, units*10, opt*(*)
       logical dozero
 cc
@@ -3827,6 +3852,7 @@ c************************************************************************
      *                   parang, lst, az, el,
      *                   data, ichan, freq, val, ok)
 c
+      implicit none
       complex data
       double precision fday, freq(*), ha, lst, az, el
       real val, u, v, uvdist, uvpa, parang
@@ -3856,46 +3882,7 @@ c    val      Value
 c    ok       True if value is a valid number to plot
 c
 c-----------------------------------------------------------------------
-c=======================================================================
-c - mirconst.h  Include file for various fundamental physical constants.
-c
-c  History:
-c    jm  18dec90  Original code.  Constants taken from the paper
-c                 "The Fundamental Physical Constants" by E. Richard
-c                 Cohen and Barry N. Taylor (PHYICS TODAY, August 1989).
-c ----------------------------------------------------------------------
-c  Pi.
-      real pi, twopi
-      double precision dpi, dtwopi
-      parameter (pi = 3.14159265358979323846)
-      parameter (dpi = 3.14159265358979323846)
-      parameter (twopi = 2 * pi)
-      parameter (dtwopi = 2 * dpi)
-c ----------------------------------------------------------------------
-c  Speed of light (meters/second).
-      real cmks
-      double precision dcmks
-      parameter (cmks = 299792458.0)
-      parameter (dcmks = 299792458.0)
-c ----------------------------------------------------------------------
-c  Boltzmann constant (Joules/Kelvin).
-      real kmks
-      double precision dkmks
-      parameter (kmks = 1.380658e-23)
-      parameter (dkmks = 1.380658d-23)
-c ----------------------------------------------------------------------
-c  Planck constant (Joules-second).
-      real hmks
-      double precision dhmks
-      parameter (hmks = 6.6260755e-34)
-      parameter (dhmks = 6.6260755d-34)
-c ----------------------------------------------------------------------
-c  Planck constant divided by Boltzmann constant (Kelvin/GHz).
-      real hoverk
-      double precision dhoverk
-      parameter (hoverk = 0.04799216)
-      parameter (dhoverk = 0.04799216)
-c=======================================================================
+        include 'mirconst.h'
       ok = .true.
       if(axis.eq.'uvdistance') then
         val = uvdist * freq(ichan) / freq(1)
@@ -3955,6 +3942,7 @@ c   val       axis value
 c
 c-----------------------------------------------------------------------
 c
+       implicit none
       character*(*) axis
       complex data
       real val, amp, phase
@@ -3978,6 +3966,7 @@ c     Write current axis range to screen for user's perusal
 c
 c------------------------------------------------------------------------
 c
+      implicit none
       character axis*1, type*(*)
       real rlo, rhi
 cc
@@ -4058,6 +4047,7 @@ c   Output
 c     order      Plot the baselines in the order ORDER(1:NPLOT)
 c
 c-----------------------------------------------------------------------
+      implicit none
       integer maxbase, nplot, a1a2(maxbase,2), order(maxbase)
 cc
       integer i, j
@@ -4097,6 +4087,7 @@ c   pl4dim   size of file dimension of BUFFER
 c
 c-----------------------------------------------------------------------
 c
+      implicit none
       integer ivis, ifile, maxbase, maxpol, npts(maxbase,maxpol),
      *  a1a2(maxbase,2), pl2dim, pl3dim, pl4dim
       logical dobase, none
@@ -4174,6 +4165,7 @@ c    ok        If false, decoding failed
 c
 c----------------------------------------------------------------------
 c
+       implicit none
       character*(*) aline
       real tlo, thi
       logical ok
@@ -4225,6 +4217,7 @@ c    ok        If false, decoding failed
 c
 c----------------------------------------------------------------------
 c
+       implicit none
       character*(*) aline
       real tlo, thi
       logical ok
@@ -4269,6 +4262,7 @@ c    vupd    "Variable handle" to track the needed variables.
 c
 c-------------------------------------------------------------------
 c
+      implicit none
       integer lin, vupd
 c--------------------------------------------------------------------
       call uvvarini (lin, vupd)
@@ -4287,6 +4281,7 @@ c-----------------------------------------------------------------------
 c     Unwrap phases
 c
 c------------------------------------------------------------------------
+       implicit none
       integer n
       real phs(n)
 cc
@@ -4322,6 +4317,7 @@ c    baseday   Reference day from first file
 c    dayoff    Offset to subtract from day to make fractional days
 c-----------------------------------------------------------------------
 c
+       implicit none
       double precision baseday
       integer maxchan, dayoff
       complex data(maxchan)
@@ -4436,6 +4432,7 @@ c    baseday   Reference day from first file
 c    dayoff    Offset to subtract from day to make fractional days
 c-----------------------------------------------------------------------
 c
+      implicit none
       double precision baseday
       integer nfiles, npols, nbases, dayoff
 cc
