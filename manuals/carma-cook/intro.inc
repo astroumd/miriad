@@ -13,3 +13,6 @@ This manual serves as a cook book for CARMA data using the
 \miriad\ package. It is assumed that the reader has some familiarity
 with the underlying operating system and \miriad\ itself. 
 
+We will cover continuum and spectral line calibration, as well
+as mosaicing in 3mm.
+
