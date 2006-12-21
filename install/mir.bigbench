@@ -20,6 +20,7 @@ echo hostname=`hostname`
 echo system=`uname -a`  
 echo date=`date`
 echo MIR=$MIR
+echo pwd=`pwd`
 echo 'Needs:  uvrandom uvcat'
 
 
