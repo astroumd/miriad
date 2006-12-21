@@ -1,6 +1,6 @@
 #! /bin/csh -f
 #
-#  mir.bench: see also http://bima.astro.umd.edu/memo/abstracts.html#81
+#  mir.bigbench: produce a 2GB+ file and also measure miriad's uvio
 #
 #
 set tmp=bench$$
@@ -8,50 +8,28 @@ mkdir $tmp
 cd $tmp
 
 #			default parameters  (gives 85MB)
-set nchan=32            # use nchan=1024 for 2GB test
-set dt=0.01		# use dt=0.007   for 2GB test
-set standalone=0
+set nchan=1024
+set npts=525000
 
 foreach a ($*)
   set $a
 end
 
-#			standalone version has attached bins + libs
-if ($standalone) then
-   #echo IFREDO: cp -a $MIRBIN/{uvgen,uvcat,invert,clean,restor} .
-   #echo IFREDO: cp -a $MIRLIB/libmir.so .
-   #echo IFREDO: cp -a /usr/lib/libpgplot.so* .
-   set path=(.. $path)
-   rehash
-   setenv  LD_LIBRARY_PATH ..
-endif	
-
-echo "MIRBIGBENCH: (2003-12-14) $tmp : nchan=$nchan dt=$dt"
+echo "MIRBIGBENCH: (2006-12-21) $tmp : nchan=$nchan npts=$npts"
 echo hostname=`hostname` 
 echo system=`uname -a`  
 echo date=`date`
 echo MIR=$MIR
-echo 'Needs:  uvgen'
-echo 'Also from $MIRCAT it needs: vla_a.ant'
+echo 'Needs:  uvrandom uvcat'
 
 
-echo "1,0,0,0,0,0,0,0,0" > point.source
-#set corr=0,1,100.0,1000.0 
-set corr=$nchan,1,100.0,1000.0
-set spectra=1.0,100.0,0.1
-set harange=-6,6,$dt
-set gnoise=0.1
-set pnoise=10,0,0,0
-set systemp=75,290,0.15
-set tpower=0,0
-set jyperk=150
-set ant=$MIRCAT/vla_a.ant
+time uvrandom out=vis1 nchan=$nchan npts=$npts  >& uvrandom.log
+time uvcat vis=vis1 out=vis2 >& uvcat.log
+time sum vis1/visdata >& sum1.log
+time sum vis2/visdata >& sum2.log
+time dd if=vis1/visdata of=/dev/null >& dd1.log
+time dd if=vis2/visdata of=/dev/null >& dd2.log
 
-# be careful, MIRIAD uses $TMPDIR, and better make sure this is a local disk
-# alternatively, you can set:
-# setenv TMPDIR /tmp
+exit 0
 
-time uvgen out=vis1 harange=$harange source=$MIRCAT/point.source \
- corr=$corr spectra=$spectra ant=$ant \
- gnoise=$gnoise pnoise=$pnoise systemp=$systemp tpower=$tpower jyperk=$jyperk \
- > uvgen1.log
+#
