@@ -10,7 +10,7 @@ c       UVIMAGE makes a Miriad image datacube of the uvdata in a
 c       Channel - Baseline - Time order.
 c       Missing Baselines are replaced with 0s, 
 c       Missing channels cause a fatal error.
-c
+c       Flagged data are shown as 0, even if underlying values are non-0
 c
 c	Related tasks:
 c	  	TVFLAG - good for inspection and flagging, but
@@ -45,23 +45,30 @@ c       1: CHANNEL-BASELINE-TIME (default)
 c       2: TIME-CHANNEL-BASELINE
 c       3: TIME-BASELINE-CHANNEL
 c
+c@ ignore
+c       Should flags be ignored?  If true, the underlying data values
+c       are shown, even if non-zero.
+c       Default: false
+c
 c--
 c  History:
 c     pjt  20sep06  Initial version, cloned off varmap
 c     pjt  21sep06  Added mode keyword, more efficient memory usage
+c     pjt  22dec06  Less terse, add ignore=
 c
 c  TODO
 c     - write plane by plane, but this will limit it to mode=1
 c       but handle much larger cubes
 c     - instead of array(MAXSIZE) should really use the perhaps not so
 c       portable dynamic memory allocation trick in miriad
+c     - consider copying the flags from the vis brick to the image brick
 c----------------------------------------------------------------------c
 c  #define miralloc
 c
        include 'maxdim.h'
        include 'mirconst.h'
        character*(*) version
-       parameter(version='UVIMAGE: version 28-sep-2006 ** test8 **')
+       parameter(version='UVIMAGE: version 22-dec-2006')
        integer MAXSELS
        parameter(MAXSELS=512)
        integer MAXSIZE
@@ -69,7 +76,7 @@ c
 
        real sels(MAXSELS)
        complex data(MAXCHAN)
-       logical flags(MAXCHAN),qmnmx
+       logical flags(MAXCHAN),qmnmx,ignore
        double precision preamble(4),oldtime
        integer lIn,nchan,nread,nvis,nchannel,vmode,nbl,omode
        real start,width,step
@@ -99,6 +106,7 @@ c
        call keya ('out',out,' ')
        call keya ('view',view,'amp')
        call keyi ('mode',omode,1)
+       call keyl ('ignore',ignore,.FALSE.)
        call keyfin
 c
 c  Check that all the inputs are reasonable.
@@ -140,8 +148,13 @@ c
        else
           call uvprobvr(lIn,'corr',type,length,updated)
        endif
-       if(type.eq.'r') call bug('i','data is real')
-       if(type.eq.'j'.or.type.eq.'c') call bug('i','data is complex')
+       if(type.eq.'r') then
+          call bug('i','Datatype is real')
+       else if(type.eq.'j'.or.type.eq.'c') then
+          call bug('i','Datatype is complex')
+       else
+          call bug('f','Unknown datatype')
+       endif
        do i=1,MAXANT
           antsel(i) = 0
        enddo
@@ -173,7 +186,9 @@ c
        write (*,*) 'Nchan=',nchannel,' Nbl=',nbl,' Ntime=',ntime,
      *    ' Space used: ',nchannel*nbl*ntime,' / ',MAXSIZE,
      *    ' = ',REAL(nchannel*nbl*ntime)/REAL(MAXSIZE)*100,'%'
-       if (MOD(nvis,ntime).NE.0) call bug('w','No regular baseline set')
+       if (MOD(nvis,ntime).NE.0) then
+          call bug('w','No regular baseline set, losing ants perhaps?')
+       endif
 
        if (omode.EQ.1) then
           nsize(1) = nchannel
@@ -219,7 +234,7 @@ c
              k=k+1
           endif
           do i=1,nread
-             if (flags(i)) then
+             if (flags(i) .or. ignore) then
                 if(vmode.eq.1) then
                    v = real(data(i))
                 else if(vmode.eq.2) then
