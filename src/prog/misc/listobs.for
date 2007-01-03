@@ -64,6 +64,7 @@ c          18-apr-06 pjt sourcename now allowed 16
 c          12-jul-06 pjt handle blank vis= correctly
 c          29-aug-06 dnf changed output format so that all active antennas
 c                        are listed with the system temperature listing
+c           2-jan-07 pjt list local (ENU) antenna positions as well as XYZ
 c-----------------------------------------------------------------------
 	include 'mirconst.h'
         include 'caldefs.h'
@@ -71,7 +72,7 @@ c-----------------------------------------------------------------------
         include 'listobs.h'
 c
 	character pversion*10
-	parameter (pversion = '30-aug-06')
+	parameter (pversion = '3-jan-07')
 c
         integer ipt,nfiles,uvflag,order(MAXP),nameidx(100),nnames
         integer isys(MAXANT),i,uvscan,j,ii,jj,ipicked,ifix
@@ -82,8 +83,9 @@ c
 	real diff,totint,tint,baseline(MAXBASE),focus(MAXANT,50)
 	real focnew(MAXANT),focold(MAXANT),focdiff,rlst
         real bl
-	double precision jdold,jdnow,antpos(3 * MAXANT),apos(3)
+	double precision jdold,jdnow,antpos(3 * MAXANT),apos(6)
 	double precision foclst(50),focjday(50),ftime
+        double precision lat,lon,sinlat,coslat,sinlon,coslon
 	logical more,fthere,anthere(MAXANT),updated
         data more /.true./
 c----------------------------------------------------------------------c
@@ -111,6 +113,10 @@ c    initialize array counter and focus counter
         do i=1,MAXANT
            anthere(i) = .false.
         enddo
+        sinlat = 1.0d0
+        coslat = 0.0d0
+        sinlon = 1.0d0
+        coslon = 0.0d0
 c-----------------------------------------------------------------------
 c    gather up all of the data from all files requested
 c
@@ -130,6 +136,12 @@ c --- check if focus is missing as it is in old data ----
 	   totint = tint
 	   if(i .eq. 1) then
 	      call uvgetvrd(tin,'antpos',antpos,nants*3)
+              call uvgetvrd(tin,'latitud',lat,1)
+              call uvgetvrd(tin,'longitu',lon,1)
+              sinlat = sin(lat)
+              coslat = cos(lat)
+              sinlon = sin(lon)
+              coslon = cos(lon)
 	   endif
 	   if(fthere) then
 	      nfocs = nfocs + 1
@@ -235,19 +247,29 @@ c   Write out antenna locations and baselines
 c
 	call LogWrite('         Antenna and Baseline Information',more)
 	call LogWrite('         --------------------------------',more)
-	call LogWrite('            Antenna Locations (in nsec)',more)
-        call LogWrite('                 X           Y           Z    '
-     1                   ,more)
+	call LogWrite('            Antenna Locations (in nsec)'//
+     1                '            Antenna Locations (in m)',more)
+        call LogWrite('                 X           Y           Z    '//
+     1                       '          E           N           U    '
+     2                   ,more)
 	do 160 j=1,nants
            if(anthere(j)) then
 	      do jj=1,3
 	         apos(jj) = antpos(j+nants*(jj-1))
               enddo
-	      write(text,2002) j,(apos(jj),jj=1,3)
+c                  apos(1..3) is XYZ    apos(4..6) is ENU
+              apos(4) =  apos(2)
+              apos(5) = -apos(1)*sinlat + apos(3)*coslat
+              apos(6) =  apos(1)*coslat + apos(3)*sinlat
+	      do jj=4,6
+	         apos(jj) = apos(jj) * DCMKS/1.0d9
+              enddo
+
+	      write(text,2002) j,(apos(jj),jj=1,6)
 	      call LogWrite(text,more)
            endif
   160	continue
- 2002	format('Antenna ',i2,': ',3(f10.4,2x))
+ 2002	format('Antenna ',i2,': ',3(f10.4,2x),2x,3(f10.3,2x))
         call LogWrite(dash,more)
 	call LogWrite('           Baselines in Wavelengths',more)
         call LogWrite('           ------------------------',more)
