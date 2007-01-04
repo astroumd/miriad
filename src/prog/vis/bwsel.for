@@ -6,6 +6,7 @@ c
 c  History:
 c    pjt  20nov06   Cloned off uvcat, and testing for CARMA data
 c    pjt  28nov06   fixed format stmt, and made this the official version
+c    pjt   4jan07   Skip data with different nspect
 c  Bugs:
 c
 c= bwsel - Select records based on their wideband bandwidth
@@ -14,10 +15,10 @@ c: uv analysis
 c+
 c	BWSEL is a MIRIAD task which selects data based on a requested
 c       bandwidth. Notice that if data is selected, ALL channel and wide
-c       band data are copy, not just the windows selected. Use UVCAT
-c       with select=win(N) instead.
+c       band data are copied, not just the windows selected. Use UVCAT
+c       with select=win(N) instead, if you need to select only certain windows.
 c       If data has changing number of spectral windows (nspect) or has
-c       no channel data, program will currently abort.
+c       no channel data, program will skip copying those data with a warning.
 c@ vis 
 c	The names of the input uv data sets. Multiple names can be given,
 c	separated by commas. At least one name must be given.
@@ -36,7 +37,7 @@ c--
 c------------------------------------------------------------------------
         include 'maxdim.h'
 	character version*(*)
-	parameter(version='BWsel: version 28-nov-06')
+	parameter(version='BWsel: version 4-jan-07')
 c
 	integer nchan,vhand,lIn,lOut,nPol,Pol,SnPol,SPol
 	integer nwdata,length,nbw,i
@@ -397,7 +398,9 @@ c
 	   mbwinit = .TRUE.
 	else
 	   if (nspect.ne.nspect0) then
-	      call bug('f','Cannot deal with changing nspect')
+	      call bug('w','skipping data: nspect changed')
+	      dobw=.FALSE.
+	      return
 	   endif
 	   qout = .FALSE.
 	   do i=1,nspect/2
