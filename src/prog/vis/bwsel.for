@@ -30,6 +30,11 @@ c       Default: all records.
 c@ slop
 c       Fraction of frequency within which the bandwith should be to be selected.
 c       Default: 0.25
+c@ nspect
+c       If set to non-zero, this will be forced to be the number of spectral
+c       windows required for copied records. This option was added to work
+c       around datasets where nspect was varying and the first record was
+c       wrong.
 c@ out
 c	The name of the output uv data set. If none supplied, input dataset
 c       is scanned and reports bandwidths (in MHz) where the dataset changes.
@@ -41,7 +46,7 @@ c------------------------------------------------------------------------
 c
 	integer nchan,vhand,lIn,lOut,nPol,Pol,SnPol,SPol
 	integer nwdata,length,nbw,i
-	integer nvis0, nvis1
+	integer nvis0, nvis1, nspect0
 	double precision preamble(5),bw(MAXWIN),slop
 	complex data(maxchan),wdata(maxchan)
 	logical flags(maxchan),wflags(maxchan)
@@ -59,6 +64,7 @@ c
 	call keya('out',out,' ')
 	call mkeyd('bw',bw,MAXWIN,nbw)
 	call keyd('slop',slop,0.25d0)
+	call keyi('nspect',nspect0,0)
 	call keyfin
 
 c
@@ -139,7 +145,7 @@ c
 	    if(dochan) then
 	       if (uvVarUpd(vhand)) then
 		  call WindUpd(lIn,lOut,
-     *                    preamble(3),bw,nbw,slop,dobw)
+     *                    preamble(3),bw,nbw,slop,dobw,nspect0)
 		  nvis0 = nvis0 + 1
 		  if (dobw) nvis1 = nvis1 + 1
 	       endif
@@ -255,10 +261,10 @@ c
 
 	end
 c************************************************************************
-	subroutine WindUpd(lIn,lOut,julian,bw,nbw,slop,dobw)
+	subroutine WindUpd(lIn,lOut,julian,bw,nbw,slop,dobw,nspect0)
 c
 	implicit none
-	integer lIn,lOut,nbw
+	integer lIn,lOut,nbw,nspect0
 	double precision julian,bw(nbw),slop
 	logical dobw
 c
@@ -283,12 +289,14 @@ c    lOut	Handle of the output uv data file.
 c    nbw        number of BW's given
 c    bw         array is BW's
 c    slop       slop value
+c    nspect0    0 or the requested value of nspect to match
 c  Output:
 c    dobw       is this record good to copy?
+c    nspect0    if initially 0, this will contain the first nspect
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	integer nschan(MAXWIN),ischan(MAXWIN),nants
-	integer length,nspect,i,nsystemp,nxyph,nspect0
+	integer length,nspect,i,nsystemp,nxyph
 	integer nxtsys,nytsys,mlen
 	double precision sdf(MAXWIN),sfreq(MAXWIN),restfreq(MAXWIN)
 	double precision mbw(MAXWIN),mbwold(MAXWIN)
@@ -296,10 +304,10 @@ c------------------------------------------------------------------------
 	real xtsys(MAXANT*MAXWIN),ytsys(MAXANT*MAXWIN)
 	character type*1,mesg*128
 	logical unschan,uischan,usdf,usfreq,urest,usyst
-	logical uxtsys,uytsys,uxyph,mbwinit,qout
+	logical uxtsys,uytsys,uxyph,mbwinit,qout,bwarn
 	integer len1
-	save mbwold,mbwinit,nspect0
-	data mbwinit/.FALSE./
+	save mbwold,mbwinit
+	data mbwinit/.FALSE./,bwarn/.TRUE./
 
 
 c
@@ -376,6 +384,8 @@ c  The data is assumed to have an LSB and USB, with nspec/2 windows in each side
 c  Note: bw() values are in MHz, but sds() in GHz
 c  This do loop will logically AND the non-zero bw() selections with the data
 c
+c  Note: if nspect is not nspect0, this is also a problem
+c
 	if (mod(nspect,2).ne.0) call bug('f',
      *       'Odd number of nspect, no USB/LSB?')
 	dobw = .TRUE.
@@ -393,12 +403,17 @@ c  with a timestamp
 c
 
 	if (.not.mbwinit) then
-	   nspect0 = nspect
+	   if (nspect0 .eq. 0) nspect0 = nspect
 	   qout = .TRUE.
 	   mbwinit = .TRUE.
 	else
 	   if (nspect.ne.nspect0) then
-	      call bug('w','skipping data: nspect changed')
+	      if (bwarn) then
+		 write(*,*) 'nspect=',nspect
+		 call bug('w',
+     *                'skipping data: nspect changed, use nspect=?')
+		 bwarn = .FALSE.
+	      endif
 	      dobw=.FALSE.
 	      return
 	   endif
