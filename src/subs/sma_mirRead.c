@@ -1,18 +1,18 @@
-// jhz - may2004 */
-// 2004-5    propose the development of SMA code unde miriad */
-// 2004-5    start to write the SMAmir2Miriad code (SMALOD) */
-// 2004-7-15 read/write out all vis data */
-// 2004-7-16 write lst */
-// 2004-7-17 correct for spectral order based on s sequence */
-// 2004-7-19 source information */
-// 2004-7-20 sideband separation */
-// 2004-7-22 fix coordinates for j2000 and apparent (observing) */
-// 2004-7-23 fix skip beginning and ending scans */
-// 2004-7-24 check and correct the flagging */
-// 2004-7-25 add a variable sourceid */
-// 2004-7-26 Tsys EL AZ information */
-// 2004-8-2  Instrument, telescope, observer version */
-// 2004-8-4  flip the phase for lsb */
+// jhz - may2004 
+// 2004-5    propose the development of SMA code unde miriad
+// 2004-5    start to write the SMAmir2Miriad code (SMALOD)
+// 2004-7-15 read/write out all vis data 
+// 2004-7-16 write lst 
+// 2004-7-17 correct for spectral order based on s sequence 
+// 2004-7-19 source information 
+// 2004-7-20 sideband separation 
+// 2004-7-22 fix coordinates for j2000 and apparent (observing) 
+// 2004-7-23 fix skip beginning and ending scans 
+// 2004-7-24 check and correct the flagging 
+// 2004-7-25 add a variable sourceid 
+// 2004-7-26 Tsys EL AZ information 
+// 2004-8-2  Instrument, telescope, observer version 
+// 2004-8-4  flip the phase for lsb 
 // 2004-11-30 added a function of retrieving daul rx/if.
 // 2004-12-10 rename header file for miriad 4.0.4 - pjt 
 // 2004-12-16 increased length of pathname from 36 to 64
@@ -175,6 +175,19 @@
 // 2006-06-09 (JHZ) fixed two warning bugs seen from 32bits:
 //                  removed zero-length printf and added parathesis
 //                  for if-else around line 2534.
+// 2006-08-02 (JHZ) changed bytepos from signed long to unsigned long:
+//                  double the limit of max bytes in a vis file
+//                  (sch_read in MIR)
+// 2006-09-19 (JHZ) added parsing sentences to filter out the
+//                  corrupted integrations (for bad baseline code
+//                  and bad integration time).
+// 2006-12-29 (JHZ) added a feature to handle 4 rx bands,
+//                  230,340,400,690 GHz
+//                  rx id convention has been changed 
+//                  since 2006 12 29 based on Taco
+// 2007-01-05 (JHZ) implemented a feature of handling
+//                  porjectInfo that contains observer's
+//                  name.
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -190,32 +203,33 @@
 #include "sma_data.h"
 #define OK         0
 // define SMA_LONG_MAX 
-# define SMA_LONG_MAX  2147483647L
+#  define SMA_LONG_MAX  2147483647L
 
-
-/* extern variable while read mir data */
+// extern variable while read mir data 
 char pathname[36];
-static FILE* fpin[6];
+char observer[16];
+static FILE* fpin[7];
 int nsets[6];
-double jday; /* julian day */
+double jday; // julian day 
 struct inh_def   **inh;
 struct blh_def   **blh;
-/*struct sph_def   **sph;*/
 struct codeh_def **cdh;
 struct ant_def   **enh;
 struct sch_def   **sch;
 
 
-/* declare the externals struct which is the same to
-   the common blocks, atlodd and atlodc */
+// declare the externals struct which is the same to
+// the common blocks, atlodd and atlodc 
 
 char sname[64];
 smlodd smabuffer;
 // initialize 
 
 struct vis { float real;
-  float imag;
-};
+             float imag;
+           };
+// DATE of using THE 400 RX 
+double rx400jday=2454097.0;
 
 unsigned long mfsize(FILE *);
 struct inh_int_def {
@@ -223,7 +237,7 @@ struct inh_int_def {
 };
 
 
-/* prototypes of everything used here */
+// prototypes of everything used here 
 
 void rsmirread_c(char *datapath, char *jst[]);
 void rsmiriadwrite_c(char *datapath, char *jst[]);
@@ -250,7 +264,7 @@ int sch_data_read(FILE *fpsch, long int datalength, short int *data);
 char *rar2c(double ra);
 char *decr2c(double dec);
 int spdecode(struct codeh_def *specCode[]);
-float juliandate(struct codeh_def *refdate[]);
+float juliandate(struct codeh_def *refdate[],int doprt);
 double slaCldj(int iy, int im, int id, int sj);
 void precess(double jday1, double ra1, double dec1, double jday2, double *ra2pt, double *dec2pt);
 void nutate(double jday, double rmean, double dmean, double *rtrueptr, double *dtrueptr);
@@ -266,40 +280,40 @@ struct vel *vsite(double phi, double st);
 void vsun(double *VEL);
 short ipolmap(short input_ipol);
 
-/* interface between fortran and c */
+// interface between fortran and c 
 void rsmirread_c(char *datapath, char *jst[])
 { 
   int jstat;
-  strcpy(pathname,datapath);
-  jstat= (int)*jst;
-  jstat = rsmir_Read(pathname,jstat);
+   strcpy(pathname,datapath);
+   jstat= (int)*jst;
+   jstat = rsmir_Read(pathname,jstat);
   *jst = (char *)jstat; 
 }
 
 void rsmiriadwrite_c(char *datapath, char *jst[])
 { 
   int jstat;
-  jstat=-1;
-  /* open mir files */
-  jstat = rsmir_Read(pathname,jstat);
+    jstat=-1;
+// open mir files 
+   jstat = rsmir_Read(pathname,jstat);
   *jst = (char *)jstat;
   /* then start to read and write data if the files are ok. */
   if (jstat==0) {
     jstat=0;
     jstat = rsmir_Read(pathname,jstat);
-  } else {
-    printf("file problem\n");
-  }
+         } else {
+    fprintf(stderr,"file problem\n");
+         }
 }
 
 void rssmaflush_c(int scanskip,int scanproc,int sb,int rxif,int dosporder,int doeng,int doflppha)
-{ /* flush mirdata*/
+{ 
+// flush mir-data
   char *kst[4];
   int kstat=-1;  
   int tno;
   char telescope[4];
   char instrument[4];
-  char observer[16];
   char version[16];
 
   tno = smabuffer.tno;
@@ -311,21 +325,20 @@ void rssmaflush_c(int scanskip,int scanproc,int sb,int rxif,int dosporder,int do
   smabuffer.doeng = doeng;
   smabuffer.doConjugate = doflppha;
   *kst = (char *)&kstat;
-  /*  read header  */
+//  read header  
     rspokeflshsma_c(kst);  
-  /*  write ante numbers */
+//  write ante numbers 
   if(smabuffer.nants!=0) {
-    //         uvputvri_c(tno,"nants",&(smabuffer.nants),1);
-    /*  write telescope name and other description parameters */
+//  write telescope name and other description parameters 
     sprintf(telescope,"SMA");
     sprintf(instrument,"SMA");
-    sprintf(observer,"SmaUser");
+//    sprintf(observer,"SmaUser");
     sprintf(version, "test");
     uvputvra_c(tno, "telescop", telescope);
     uvputvra_c(tno, "instrume", instrument);
     uvputvra_c(tno, "observer", observer);
     uvputvra_c(tno, "version", version);
-  }
+                         }
 }
 
 void rspokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1,
@@ -336,9 +349,8 @@ void rspokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1,
 		    double *antpos1, int readant1, int *noskip1, int *spskip1,
 	            int *dsb1, int *mcconfig1, int *nohighspr1)
 { 
-  /* rspokeflshsma_c == pokeflsh */
   int buffer, i;
-  /* initialize the external buffers */   
+// initialize the external buffers   
   strcpy(sname, " ");
   smabuffer.tno    = tno1;
   smabuffer.rsnchan= rsnchan1;
@@ -368,25 +380,24 @@ void rspokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1,
   smabuffer.spskip[1] = spskip1[1];
   smabuffer.mcconfig  = *mcconfig1;
   smabuffer.highrspectra = *nohighspr1;
-      printf("User's input vSource = %f km/s\n", smabuffer.vsource);
+      fprintf(stderr,"User's input vSource = %f km/s\n", smabuffer.vsource);
       if(rfreq1 > 0.00001 || rfreq1 < -0.00001) {
-             for (i=0; i<SMIF+1; i++) {
+             for (i=0; i<SMIF+1; i++)           {
              smabuffer.restfreq[i] = rfreq1;
-                                      }
+                                                 }
             smabuffer.dorfreq = -1;
-      printf("User's input RestFrequency = %f GHz\n", rfreq1);
-                    } else {
+      fprintf(stderr,"User's input RestFrequency = %f GHz\n", rfreq1);
+                                                 } else {
              smabuffer.dorfreq =  1;
-                                      }
+                                                 }
              smabuffer.antpos[0] = readant1;
              smabuffer.readant   = readant1;
-             for (i=1; i<readant1*3+1; i++) {
+             for (i=1; i<readant1*3+1; i++)     {
              smabuffer.antpos[i]=antpos1[i-1];
-                    }
+                                                }
   if(smabuffer.dowt>0) {
-    /* call lagwt(wts,2*smcont-2,0.04) */
-    /* process weights here. */ 
-  }
+// process weights here. 
+                       }
   smabuffer.newsc = FALSE;
   smabuffer.newfreq = FALSE;
   smabuffer.nants = 0;
@@ -395,10 +406,10 @@ void rspokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1,
   smabuffer.tcorr = 0;
   buffer=(int)*kst;
   *kst= OK;
-}
+  }
 
 void rspokeflshsma_c(char *kst[])
-{ /* rspokeflshsma_c== pokeflsh */
+{ 
   int tno;
   int i1, i2, ifs, p, bl, sb, rx, nchan, nspect;
   int npol,ipnt,ischan[SMIF];
@@ -411,48 +422,46 @@ void rspokeflshsma_c(char *kst[])
   struct pols *polcnt;
   char telescope[4];
   char instrument[4];
-  char observer[16];
   char version[16];
 // initialization:
   eta_a=0.75;
   tno = smabuffer.tno;
-  sb = smabuffer.sb; /* sb=0 for lsb; sb=1 for usb; sb=2 for both */
+  sb = smabuffer.sb; // sb=0 for lsb; sb=1 for usb; sb=2 for both 
   rx = smabuffer.rxif;
   if(smabuffer.nused==0) 
     return;
-  /* put ants to uvdata */
+// put ants to uvdata 
   if(smabuffer.nants!=0) {
     uvputvri_c(tno,"nants",&(smabuffer.nants),1);
-  /*  write telescope name and other description parameters */
+//  write telescope name and other description parameters 
     sprintf(telescope,"SMA");
     sprintf(instrument,"SMA");
-    sprintf(observer,"SmaUser");
+//  sprintf(observer,"SmaUser");
     sprintf(version, "test");
     uvputvra_c(tno, "telescop", telescope);
     uvputvra_c(tno, "instrume", instrument);
     uvputvra_c(tno, "observer", observer);
     uvputvra_c(tno, "version", version);
-  }
+                          }
 
   if(smabuffer.newfreq>0) {
-    if(smabuffer.doif>0) {
+     if(smabuffer.doif>0) {
       for (ifs=1; ifs < smabuffer.nifs; ifs++) {
 	if(smabuffer.nstoke[ifs-1]!=smabuffer.nstoke[0]) 
-	  bug_c( 'f', "Number of polarisations differ between IFs. Use options=noif.\n"); 
-	for (p=1; p< smabuffer.nstoke[ifs-1]; p++) {
+ bug_c('f',"Number of polarisations differ between IFs. Use options=noif.\n"); 
+    for (p=1; p< smabuffer.nstoke[ifs-1]; p++) {
 	  if(smabuffer.polcode[ifs-1][p-1][0]!=smabuffer.polcode[0][p-1][0]) 
-	    bug_c( 'f', "Polarisation types differ between IFs. Use options=noif.\n");
-	}
-      }
-    }
-  } else {
+ bug_c('f',"Polarisation types differ between IFs. Use options=noif.\n");
+                                        	}
+                                                }
+                          }
+                          } else {
     if(smabuffer.hires > 0) 
       for (ifs=1; ifs<smabuffer.nifs; ifs++){
 	if (smabuffer.nbin[ifs]!=smabuffer.nbin[0]) 
-	  bug_c( 'f', 
-		 "Number of bins in different IFs must agree for options=hires\n");
-      }
-  } 
+ bug_c('f', "Number of bins in different IFs must agree for options=hires\n");
+                                            }
+                                  } 
   tdash  = smabuffer.time;
   tbinhi = 1;
 // convert julian date to ut and store ut 
@@ -462,7 +471,7 @@ void rspokeflshsma_c(char *kst[])
      if(smabuffer.juldate < -1.) { 
      dummy =  (long int) (smabuffer.time);
      smabuffer.juldate = (double) dummy + 0.5;
-        }
+                                 }
 // convert juldate to ut in radians
      smabuffer.ut = smabuffer.time - smabuffer.juldate;
      smabuffer.ut = smabuffer.ut*DPI*2.0;
@@ -482,23 +491,43 @@ void rspokeflshsma_c(char *kst[])
 // at 690 GHz there have been no proper measurements yet
 // 0.4 would be number assumed.  07-jul-05
 //
+   if(smabuffer.juldate>rx400jday) {
   switch(smabuffer.rxif) {  
-  case 0: eta_a=0.75;     /* jyperk=139. assuming eta_a=0.7 d=6m */
+  case 0: eta_a=0.75;    // jyperk=139. assuming eta_a=0.7 d=6m
+                         // 230 
           break;
-  case 1: eta_a=0.5;     /* jyperk=194. assuming eta_a=0.5 d=6m */   
+  case 1: eta_a=0.6;     // jyperk=194. assuming eta_a=0.6 d=6m
+                         // 340    
           break;
-  case 2: eta_a=0.4;     /* jyperk=242. assuming eta_a=0.4 d=6m */  
+  case 2: eta_a=0.5;     // jyperk=???. assuming eta_a=??? d=6m
+                         // 400
           break;
-             }
+  case 3: eta_a=0.4;     // jyperk=242. assuming eta_a=0.4 d=6m 
+                         // 690  
+          break;
+                         }
+                         } else {
+  switch(smabuffer.rxif) {
+  case 0: eta_a=0.75;    // jyperk=139. assuming eta_a=0.7 d=6m
+                         // 230
+          break;
+  case 1: eta_a=0.6;     // jyperk=194. assuming eta_a=0.5 d=6m
+                         // 340
+          break;
+  case 2: eta_a=0.4;     // jyperk=242. assuming eta_a=0.4 d=6m
+                         // 690
+          break;
+                         }
+                         }
    eta_c = 0.88;
    eta   = eta_a*eta_c;
    pi    = (float) DPI;
 // calculate jyperk
    jyperk=2.* 1.38e3/pi/(eta*r_ant*r_ant);
-   uvputvrr_c(tno,"jyperk",&jyperk,1);
+   uvputvrr_c(tno,"jyperk", &jyperk,1);
 // Handle the case that we are writing the multiple 
 // IFs out as multiple records. 
-  if(smabuffer.doif!=1&&smabuffer.nifs>1) {
+    if(smabuffer.doif!=1&&smabuffer.nifs>1) {
     nspect =ischan[0]= 1;
     for(ifs=0; ifs < smabuffer.nifs; ifs++) {
       printf(" writing headers\n");
@@ -508,33 +537,29 @@ void rspokeflshsma_c(char *kst[])
       uvputvri_c(tno,"nschan",&(smabuffer.nfreq[ifs]),1);
       uvputvri_c(tno,"ischan",&ischan[0],1);
       uvputvrd_c(tno,"sfreq", &(smabuffer.sfreq[ifs]),1);
-      uvputvrd_c(tno,"sdf",  &(smabuffer.sdf[ifs]),  1);
+      uvputvrd_c(tno,"sdf",   &(smabuffer.sdf[ifs]),  1);
       uvputvrd_c(tno,"restfreq",&(smabuffer.restfreq[ifs]),1);
       bl=0;
-      for(i2=1; i2<smabuffer.nants+1; i2++){
-	for(i1=1; i1<i2+1; i2++){
+      for(i2=1; i2<smabuffer.nants+1; i2++) {
+	for(i1=1; i1<i2+1; i2++)            {
 	  preamble[0] = smabuffer.u[bl];
 	  preamble[1] = smabuffer.v[bl];
 	  preamble[2] = smabuffer.w[bl];
 	  preamble[3] = tdash;
 	  preamble[4] = 256*i1 + i2;
-	  for(p=0; p<smabuffer.nstoke[ifs]; p++){
+	  for(p=0; p<smabuffer.nstoke[ifs]; p++) {
           ipnt = smabuffer.pnt[ifs][p][bl][0][0];
           printf("ipnt=%d\n", ipnt);
 	  if(ipnt>0) 
 	  uvputvrr_c(tno,"inttime",&smabuffer.inttime[bl],1);
 	  if(smabuffer.opcorr==0) {
-/* call opapply(data(ipnt),nfreq(if),fac(if)) */
-/* bug_c('f',"This code section had a bug"); */
-/* next line had serious bug before may 23 */
-// uvwrite_c(tno,preamble,&smabuffer.data[ipnt],flags,smabuffer.nfreq[ifs]); 
-	    }
-	  }
+	                          }
+	                                           }
 	  bl++;
-	}
-      }
-    }
-  } else {
+	                                     }
+                                             }
+                                             }
+                                             } else {
 // Handle the case were we are writing the multiple IFs out as a single record.
 // This way is adopted to store SMA data in Miriad format.
     if(smabuffer.newfreq>0) {
@@ -542,8 +567,7 @@ void rspokeflshsma_c(char *kst[])
 // counting total number of spectral channels
       for (ifs = 1; ifs < smabuffer.nifs; ifs++) {
 	ischan[ifs] = ischan[ifs-1] + smabuffer.nfreq[ifs];
-//        printf("MMMMM %d", smabuffer.nfreq[ifs]);
-      }
+                                                 }
       uvputvri_c(tno,"nspect",&(smabuffer.nifs),1);
       uvputvri_c(tno,"ischan",&(ischan),smabuffer.nifs);
       uvputvri_c(tno,"nschan",&(smabuffer.nfreq),smabuffer.nifs);
@@ -551,7 +575,7 @@ void rspokeflshsma_c(char *kst[])
       uvputvrd_c(tno,"sdf",&(smabuffer.sdf),smabuffer.nifs);
       uvputvrd_c(tno,"restfreq",&(smabuffer.restfreq),smabuffer.nifs);
       uvputvrr_c(tno,"veldop",&(smabuffer.veldop),1);
-    }
+                            }
     uvputvri_c(tno,"tcorr",&(smabuffer.tcorr),1);
 // store system temperature 
     tsysStore(tno); 
@@ -577,30 +601,31 @@ void rspokeflshsma_c(char *kst[])
 	    uvwrite_c(tno,preamble, vis,flags,nchan);         
 	                }
 	                                                  }
-                        }               
+                   }               
 	bl++;
-            }
-          }
+                              }
+                                            }
         }
 // reset the frequency processing handle
   smabuffer.newfreq=-1;
 // re-initialize the pntr 
   for (ifs=0; ifs<SMIF; ifs++) {
-    for (p=0; p<SMPOL; p++) {
+    for (p=0; p<SMPOL; p++)     {
       for (bl=0; bl<SMBAS; bl++) {
 	for (sb=0; sb<SMSB; sb++) {
-	  for (rx=0; rx<SMRX; rx++) {
+	  for (rx=0; rx<SMRX; rx++){
 	    smabuffer.pnt[ifs][p][bl][sb][rx]=0;
             smabuffer.flag[ifs][p][bl][sb][rx]=-1;
-	  }
-	}
-      }
-    }
-  }
+                               	   }
+	                          }
+                                 }
+                                }
+                               }
 }
 
 int rsgetdata(float smavis[2*MAXCHAN], int smaflags[MAXCHAN], int *smanchan, int p, int bl, int sb, int rx)
-{ /* Construct a visibility record constructed from multiple IFs. */
+{  
+// Construct a visibility record constructed from multiple IFs. 
   int nifs=smabuffer.nifs;
   float fac[nifs];
   int n,ipnt,i,nchand, nchan; 
@@ -608,46 +633,45 @@ int rsgetdata(float smavis[2*MAXCHAN], int smaflags[MAXCHAN], int *smanchan, int
   nchand = 0;
   for (n=0; n<nifs; n++) {
     ipnt = smabuffer.pnt[n][p][bl][sb][rx]; 
-//      printf("n ipnt %d %d\n", n, ipnt);
-      if(ipnt>0) {
-      if(nchan<nchand) {
+      if(ipnt>0)       {
+      if(nchan<nchand)   {
 	for (i=nchan; i<nchand; i++) {
 	  smaflags[i] = -1;
 	  smavis[2*i] = 0;
 	  smavis[2*i+1] = 0;
-	}    
+	                             }     
 	nchan = nchand;
-      }
+                         }
       for (i=nchan; i< nchan+smabuffer.nfreq[n]; i++){
 	fac[n]=1000000.;
 
 	smavis[2*i]   =  fac[n]*smabuffer.data[ipnt].real;
 	smavis[2*i+1] =  fac[n]*smabuffer.data[ipnt].imag;
-//	  (float)pow((double)(-1),(double)(sb+1)); 
         smaflags[i] =  smabuffer.flag[n][p][bl][sb][rx];       
 	ipnt++;    
-      }
+                                                      }
       if(smabuffer.bchan[n]>=1&&smabuffer.bchan[n]<=smabuffer.nfreq[n])
 	smaflags[nchan+smabuffer.bchan[n]] = smabuffer.flag[n][p][bl][sb][rx]; 
         nchan = nchan + smabuffer.nfreq[n];
-    }
+                      }
     nchand = nchand + smabuffer.nfreq[n];
-  }
+                           }
   
   if(nchan<nchand&&nchan>0) {
     for(i=nchan+1; i< nchand+1; i++) {
       smaflags[i] = smabuffer.flag[n][p][bl][sb][rx]; 
       smavis[2*i] = 0;
       smavis[2*i+1] = 0;
-    }
+                                      }
     nchan = nchand;
-  }
+                            }
   *smanchan=nchan;
   return nchan;
 }
 
 struct pols *rscntstokes(int npol, int bl, int sb, int rx)
-{ /*Determine the number of valid Stokes records in this record.*/
+{ 
+// Determine the number of valid Stokes records in this record.
   int nifs = SMIF;
   int nstoke = SMPOL;
   short valid;
@@ -662,10 +686,10 @@ struct pols *rscntstokes(int npol, int bl, int sb, int rx)
     for ( ifs =0; ifs<nifs; ifs++) {
       valid = valid;
       if(smabuffer.pnt[ifs][p][bl][sb][rx] > 0) valid = 1;
-    }
+                                   }
     if(valid>0&&p1==-1) {p1=p; p2=p1;}
     if(valid>0) {npol++; if(p>p1) p2=p1+1;}
-  }
+                            }
   polcnts.npol=npol;
   polcnts.polstart=p1;
   polcnts.polend=p2;
@@ -674,9 +698,9 @@ struct pols *rscntstokes(int npol, int bl, int sb, int rx)
 
 int rsmir_Read(char *datapath, int jstat)
 {
-  char location[6][81];
+  char location[7][81];
   char pathname[64];
-  char filename[6][36];
+  char filename[7][36];
   char sours[9], smasours[33];
   int set, readSet;
   int file,nfiles = 6;
@@ -684,7 +708,7 @@ int rsmir_Read(char *datapath, int jstat)
   smEng **smaEngdata;
   int i,j,k,l,m,i0;
   int kk,iinset,lastinset,ireset,reset_id[10];
-  long imax,bytepos,nbytes,datalength;
+  unsigned long imax,bytepos,nbytes,datalength;
   long *data_start_pos;
   int firstbsl;
   int numberBaselines=0;
@@ -695,6 +719,7 @@ int rsmir_Read(char *datapath, int jstat)
   short int scale;
   short int *shortdata;
   double r,cost,sint,z0,tmp, rar, decr;
+
   double antpos[3*MAXANT+1];
   int tno, ipnt, max_sourid;
   int kstat;
@@ -719,10 +744,13 @@ int rsmir_Read(char *datapath, int jstat)
   int nnants, flush;
   int ifpnt, polpnt, blpnt, sbpnt, rxpnt, sblpnt;
   int avenchan,miriadsp[SMIF+1];
+  int utcd,utch,utcm,doprt;
+  float utcs;
+  int ch;
   int blid_intchng[MAXINT];  
-               /* the baseline id right after integration change */
-  int rxlod;   /* the rx to load rxlod=0 -> smabuffer.rx1        
-                                 rxlod=1 -> smabuffer.rx2        */
+               // the baseline id right after integration change 
+  int rxlod;   // the rx to load rxlod=0 -> smabuffer.rx1        
+               //                rxlod=1 -> smabuffer.rx2        
   float avereal, aveimag;
   extern struct inh_def   **inh;
   extern struct blh_def   **blh;
@@ -753,120 +781,153 @@ int rsmir_Read(char *datapath, int jstat)
   strcpy(filename[3],"codes_read");
   strcpy(filename[4],"eng_read");
   strcpy(filename[5],"sch_read");
+  strcpy(filename[6],"projectInfo");
   strcpy(target,"target");
   strcpy(unknown,"unknown");
   strcpy(skipped,"skipped!");
   ntarget=0;
   
-  /* number of bytes in each type of header. */
-  /* sch is variable number of bytes */
+// number of bytes in each type of header. 
+// sch is variable number of bytes 
   headerbytes[0] = 132;
   headerbytes[1] = 118;
   headerbytes[2] = 100;
   headerbytes[3] = 42;
   headerbytes[4] = 188;
   headerbytes[5] = 0;
-  
   switch(jstat) {
   case -3:
-    /* Open all the files */
-    for (file=0;file<nfiles;file++){
+// Open all the files 
+      for (file=0;file<nfiles;file++){
       strcpy(location[file],pathname); 
       strcat(location[file],filename[file]);
-      // open the mir files
+// open the mir files
       fpin[file] = fopen(location[file],"r");
-      if (fpin[file] == NULL) {
-	printf("Problem opening the file %s\n",location[file]);
+             if (fpin[file] == NULL) {
+	fprintf(stderr,"Problem opening the file %s\n",location[file]);
 	perror("file open problem");
 	exit(-1);
-      } else {
-	printf("Found file %s\n",location[file]);
-      }
-    }
-    // Get the size of each file and compute the number of headers 
-    for (file=0;file<nfiles;file++){
-      if(file < 5 ){
+                                     } else {
+	fprintf(stderr,"Found file %s\n",location[file]);
+                                            }
+                                      }
+// Get the size of each file and compute the number of headers 
+      for (file=0;file<nfiles;file++){
+        if(file < 5 ){
 	imax = mfsize(fpin[file]);
 	nsets[file] = imax / headerbytes[file];
-      }
-    }
-    break;
-  case 0:   /*read header & vis */
-    startTime = time(NULL);
-    /* Allocate memory to store all the headers */
-    inh = (struct inh_def **) malloc(nsets[0]*sizeof( struct inh_def *));
-    for (set=0;set<nsets[0];set++) {
+                     }
+                                     }
+      strcpy(location[6],pathname);
+      strcat(location[6],filename[6]);
+      fpin[6] = fopen(location[6],"r");
+             if (fpin[6] == NULL) {
+        fprintf(stderr,"Do not find %s\n",location[6]);
+                    sprintf(observer,"SmaUser\0"); 
+                    printf("Observer: %s\n",observer);
+                                     } else {
+        fprintf(stderr,"Found file %s\n",location[6]);
+              fread(&observer,sizeof(observer),1,fpin[6]);
+                 printf("Observer: %s",observer);
+                                            }
+  break;
+  case 0:   
+//read header & vis 
+       startTime = time(NULL);
+// Allocate memory to store all the headers 
+      inh = (struct inh_def **) malloc(nsets[0]*sizeof( struct inh_def *));
+      for (set=0;set<nsets[0];set++) {
       inh[set] = (struct inh_def *)malloc(sizeof(struct inh_def ));
       if (inh[set] == NULL ){
-	printf("ERROR: Memory allocation for inh failed trying to allocate %d bytes\n", nsets[0]*sizeof(struct inh_def));
+      fprintf(stderr,"ERROR: Memory allocation for inh failed trying to allocate %d bytes\n", nsets[0]*sizeof(struct inh_def));
 	exit(-1);
-      }
-    }
-    if (smabuffer.scanproc==0||smabuffer.scanproc<0)
+                            }
+                                      }
+      if (smabuffer.scanproc==0||smabuffer.scanproc<0)
       smabuffer.scanproc = nsets[0] - smabuffer.scanskip-2;
-    
-    blh = (struct blh_def **) malloc(nsets[1]*sizeof( struct blh_def *));
-    for (set=0;set<nsets[1];set++) {
+      blh = (struct blh_def **) malloc(nsets[1]*sizeof( struct blh_def *));
+      for (set=0;set<nsets[1];set++) {
       blh[set] = (struct blh_def *)malloc(sizeof(struct blh_def ));
-      if (blh[set] == NULL ){
-	printf("ERROR: Memory allocation for blh failed trying to allocate %d bytes\n", nsets[1]*sizeof(struct blh_def));
+      if (blh[set] == NULL )     {
+      fprintf(stderr,"ERROR: Memory allocation for blh failed trying to allocate %d bytes\n", nsets[1]*sizeof(struct blh_def));
 	exit(-1);
-      }
-    }
-    // new baseline buffer used for configuring spectra.
-    // the array length of bln is the same as the total number
-    // of integration sets in the mir file.
+                                 }
+                                      }
+// allocate memory for cdh
+    cdh = (struct codeh_def **) malloc(nsets[3]*sizeof( struct codeh_def *));
+    for (set=0;set<nsets[3];set++) {
+      cdh[set] = (struct codeh_def *)malloc(sizeof(struct codeh_def ));
+      if (cdh[set] == NULL ){
+      fprintf(stderr,"ERROR: Memory allocation for cdh failed for %d bytes.\n",
+             nsets[3]*sizeof(struct codeh_def));
+      exit(-1);
+                            }
+                                    }
+    for (set=0;set<nsets[3];set++){
+      *cdh[set] = *(cdh_read(fpin[3]));
+      if (SWAP_ENDIAN) {
+      cdh[set]=swap_cdh(cdh[set]);
+                       }
+// decode the julian date for from the observing date
+     if((cdh[set]->v_name[0]=='r'&&cdh[set]->v_name[1]=='e')&&
+         cdh[set]->v_name[2]=='f')           {
+         doprt=-1;
+         jday = juliandate(&cdh[set],doprt); }
+                                   } 
+// new baseline buffer used for configuring spectra.
+// the array length of bln is the same as the total number
+// of integration sets in the mir file.
     bln = (struct blh_config **) malloc(nsets[0]*sizeof( struct blh_config *));
     for (set=0;set<nsets[0];set++) {
       bln[set] = (struct blh_config *)malloc(sizeof(struct blh_config ));
       if (bln[set] == NULL ){
-	printf("ERROR: Memory allocation for blh failed trying to allocate %d bytes\n", nsets[0]*sizeof(struct blh_def));
+      fprintf(stderr,"ERROR: Memory allocation for blh failed trying to allocate %d bytes\n", nsets[0]*sizeof(struct blh_def));
 	exit(-1);
-      }
-    }
-    // baseline coordinate buffer.
+                            }
+                                   }
+// baseline coordinate buffer.
     uvwbsln = (struct uvwPack **) malloc(nsets[0]*sizeof( struct uvwPack));
     for (set=0;set<nsets[0];set++) {
       uvwbsln[set] = (struct uvwPack *)malloc(sizeof(struct uvwPack));
       if (uvwbsln[set] == NULL ){
-	printf("ERROR: Memory allocation for uvwbsln failed for %d bytes\n",nsets[0]*sizeof(struct uvwPack));
+      fprintf(stderr,"ERROR: Memory allocation for uvwbsln failed for %d bytes\n",nsets[0]*sizeof(struct uvwPack));
 	exit(-1);
-      }
-    }
+                                 }
+                                    }
     
-    /* Read the headers */
+// Read the headers 
     for (set=0;set<nsets[0];set++) {
       *inh[set] = *(inh_read(fpin[0])); 
       if (SWAP_ENDIAN) {
 	inh[set] =  swap_inh(inh[set]);
-	// reverse mapping the inhid wrt integration set number
-	//          inid[inh[set]->inhid]=set;
-      }
-    }
+// reverse mapping the inhid wrt integration set number
+//          inid[inh[set]->inhid]=set;
+                       } 
+                                   }
     if (SWAP_ENDIAN) {
       printf("FINISHED READING  IN HEADERS (endian-swapped)\n");
-    } else {
+                     } else {
       printf("FINISHED READING  IN HEADERS\n");
-    }
+                            }
     for (set=0;set<nsets[1];set++) {
       *blh[set] = *(blh_read(fpin[1]));
       if (SWAP_ENDIAN) {
 	blh[set] =  swap_blh(blh[set]);
-	// reverse mapping the blhid wrt bl set number
-	//          blid[blh[set]->blhid]=set;
-      }
-    }
-    // count sidebands
+// reverse mapping the blhid wrt bl set number
+//          blid[blh[set]->blhid]=set;
+                       }
+                                   }
+// count sidebands
     numberSidebands = 1;
     for (set=0; set<nsets[1]; set++) {
       if( blh[set]->inhid == inh[smabuffer.scanskip]->inhid
 	  &&  blh[set]->isb != blh[set+1]->isb) {
 	numberSidebands = 2;
 	break; 
-      }
-    }
-    printf("NUMBER OF SIDEBANDS =%d\n",numberSidebands);
-    // count receivers
+                                     }
+                                                }
+    fprintf(stderr,"NUMBER OF SIDEBANDS =%d\n",numberSidebands);
+// count receivers
     smaCorr.no_rxif = 1;
     for (set=0; set<nsets[1]; set++) {
       smabuffer.rx1=smabuffer.rx2=blh[set]->irec;
@@ -875,81 +936,105 @@ int rsmir_Read(char *datapath, int jstat)
         smabuffer.rx2=blh[set+1]->irec;
 	smaCorr.no_rxif = 2;
 	break;
-      }
-    }
-    printf("NUMBER OF RECEIVERS =%d \n",smaCorr.no_rxif);
-
-   switch(smabuffer.rx1) {
+                                                  }
+                                      }
+    fprintf(stderr,"NUMBER OF RECEIVERS =%d \n",smaCorr.no_rxif);
+    if(smabuffer.rxif==-1) smabuffer.rxif=smabuffer.rx1;
+    if(smaCorr.no_rxif==2&&smabuffer.rxif==-2) smabuffer.rxif=smabuffer.rx2;
+    if(smaCorr.no_rxif==1&&smabuffer.rxif==-2) {
+    fprintf(stderr,"ERROR: No 2nd receiver data are found.\n");
+     exit(-1);
+                                               }
+     
+   if (jday<rx400jday)          {
+   switch(smabuffer.rx1)        {
    case 0: printf("rx1->230\n"); break;
    case 1: printf("rx1->340\n"); break;
    case 2: printf("rx1->690\n"); break;
-                         }
-       
-   if(smaCorr.no_rxif == 2)
-   switch(smabuffer.rx2) {
+                                }
+                                } else {
+   switch(smabuffer.rx1)               {
+   case 0: printf("rx1->230\n"); break;
+   case 1: printf("rx1->340\n"); break;
+   case 2: printf("rx1->400\n"); break;
+   case 3: printf("rx1->690\n"); break;
+                                       }
+                                       }
+   if(smaCorr.no_rxif == 2){
+    if (jday<rx400jday)    {
+   switch(smabuffer.rx2)   {
    case 0: printf("rx2->230\n"); break;
    case 1: printf("rx2->340\n"); break;
    case 2: printf("rx2->690\n"); break;
-                         }    
-
-           if(smabuffer.sb==0) printf("Processing LSB\n");
-           if(smabuffer.sb==1) printf("Processing USB\n");
+                           } 
+                           }else{
+   switch(smabuffer.rx2)        {
+   case 0: printf("rx2->230\n"); break;
+   case 1: printf("rx2->340\n"); break;
+   case 2: printf("rx2->400\n"); break;
+   case 3: printf("rx2->690\n"); break;
+                                }
+                                }    
+                           }
+    if(smabuffer.sb==0) fprintf(stderr,"Processing LSB\n");
+    if(smabuffer.sb==1) fprintf(stderr,"Processing USB\n");
  
     numberRxif = smaCorr.no_rxif;
-    // check if the receiver  smabuffer.rxif==0 for all receivers
+// check if the receiver  smabuffer.rxif is there
     if(smabuffer.rxif==-1) goto foundTheRx;
-    for (set=0; set<nsets[1]; set++) {
+    for (set=0; set<nsets[1]; set++)    {
       if( blh[set]->inhid == inh[smabuffer.scanskip]->inhid
 	  &&  blh[set]->irec == smabuffer.rxif) 
-	goto foundTheRx;       } 
-    printf("ERROR: there is no receiver %d in this data set.\n",
+	  goto foundTheRx;              } 
+    fprintf(stderr,"ERROR: there is no receiver %d in this data set.\n",
 	   smabuffer.rxif);
     if(smaCorr.no_rxif == 1)
-    printf("       please try it again with rxif=%d\n", smabuffer.rx1);
+    fprintf(stderr,"       please try it again with rxif=%d\n", smabuffer.rx1);
      if(smaCorr.no_rxif == 2)
-     printf("       please try it again with rxif=%d or rxif=%d\n", 
-     smabuffer.rx1,  smabuffer.rx2);
+    fprintf(stderr,"       please try it again with rxif=%d or rxif=%d\n", 
+    smabuffer.rx1,  smabuffer.rx2);
     exit(-1);
-  foundTheRx:
+foundTheRx:
 // assign the rx id to load in the case of dual rx
-      if(smabuffer.rxif==-1||smaCorr.no_rxif==1) {rxlod=0;
-      } else {
+      if(smabuffer.rxif==-1||smaCorr.no_rxif==1) { rxlod=0;
+                                                 } else {
       if(smabuffer.rxif==smabuffer.rx1) rxlod=0;
       if(smabuffer.rxif==smabuffer.rx2) rxlod=1;
-            }
+                                                         }
 
     tsys = (struct bltsys **) malloc(nsets[1]*sizeof( struct bltsys *));
     for (set=0;set<nsets[1];set++) {
       tsys[set] = (struct bltsys *)malloc(sizeof(struct bltsys ));
-      if (tsys[set] == NULL ){
-	printf("ERROR: Memory allocation for tsys failed trying to allocate %d bytes\n",
+      if (tsys[set] == NULL )      {
+  fprintf(stderr,"ERROR: Memory allocation for tsys failed trying to allocate %d bytes\n",
 	       nsets[1]*sizeof(struct bltsys));
 	exit(-1);
-      }
-    }
+                                   }
+                                   }
     atsys = (struct anttsys **) malloc(nsets[0]*sizeof( struct anttsys *));
-    for (set=0;set<nsets[0];set++) {
+    for (set=0;set<nsets[0];set++)  {
       atsys[set] = (struct anttsys *)malloc(sizeof(struct anttsys ));
-      if (atsys[set] == NULL ){
-	printf("ERROR: Memory allocation for atsys failed trying to allocate %d bytes\n",
+      if (atsys[set] == NULL )      {
+	fprintf(stderr,"ERROR: Memory allocation for atsys failed trying to allocate %d bytes\n",
 	       nsets[0]*sizeof(struct anttsys));
 	exit(-1);
-      }
-    }
+                                    }
+                                    }
 // allocate memory for wts once in the case of do both sb
-         if(smabuffer.dsb!=1||(smabuffer.dsb==1&&smabuffer.sb==0)){
+//  if(smabuffer.dsb!=1||(smabuffer.dsb==1&&smabuffer.sb==0)){
     wts = (struct wtt **) malloc(nsets[0]*sizeof( struct wtt *));
-    for (set=0;set<nsets[0];set++) {
+    for (set=0;set<nsets[0];set++)  {
       wts[set] = (struct wtt *)malloc(sizeof(struct wtt ));
-      if (wts[set] == NULL ){
-        printf("ERROR: Memory allocation for wts failed trying to allocate %d bytes\n",
+      if (wts[set] == NULL )        {
+        fprintf(stderr,"ERROR: Memory allocation for wts failed trying to allocate %d bytes\n",
                nsets[0]*sizeof(struct wtt));
         exit(-1);
-      }
-    } }
+                                    }
+                                    }                            
+             //  }
 
 
-    /* loading baselines */
+// loading baselines 
     blhset =0;
     { 
       int blnset;
@@ -961,21 +1046,29 @@ int rsmir_Read(char *datapath, int jstat)
       blnset = 0;
       if (smabuffer.rxif!=-1) {
 
-
-   switch(smabuffer.rxif) {
+           if(jday<rx400jday) {
+       switch(smabuffer.rxif) {
    case 0: printf("to load rx->230 visdata\n"); break;
    case 1: printf("to load rx->340 visdata\n"); break;
    case 2: printf("to load rx->690 visdata\n"); break;
-                         }
-      } else {
-	printf("to load data for all receivers.\n");
-      }
-      //
-      // bln will be used in configuring spectra
-      //
+                              } 
+                              } else {
+   switch(smabuffer.rxif) {
+   case 0: printf("to load rx->230 visdata\n"); break;
+   case 1: printf("to load rx->340 visdata\n"); break;
+   case 2: printf("to load rx->400 visdata\n"); break;
+   case 3: printf("to load rx->690 visdata\n"); break;
+                          }
+                                     }
+                              } else {
+	fprintf(stderr,"to load data for all receivers.\n");
+                                     } 
+//
+// bln will be used in configuring spectra
+//
       set=0;
-      for (blset=0; blset < nsets[1]; blset++) { 
-	// loading baseline based structure
+      for (blset=0; blset < nsets[1]; blset++)      { 
+// loading baseline based structure
 	tsys[blset]->blhid=blh[blset]->blhid;
 	tsys[blset]->inhid=blh[blset]->inhid;
         tsys[blset]->blsid=blh[blset]->blsid;
@@ -985,12 +1078,12 @@ int rsmir_Read(char *datapath, int jstat)
 	tsys[blset]->itel1=blh[blset]->itel1;
 	tsys[blset]->itel2=blh[blset]->itel2;
 	
-	// assign baseline id handr
+// assign baseline id handr
 	if(blset==0) blhid_hdr = blset;
 	if(blh[blset]->inhid!=inh[set]->inhid) {
 	  set++;
 	  blhid_hdr = blset;  
-	}
+	                                       }
 // check if set exceeds nsets[0]
        if(set==nsets[0]) goto handling_blarray;        
 // select side band 
@@ -1000,18 +1093,9 @@ int rsmir_Read(char *datapath, int jstat)
         if(smaCorr.no_rxif==2&&blh[blset-1]->irec==smabuffer.rx1
        &&blh[blset]->irec==smabuffer.rx2) {
         blid_intchng[set] = blh[blset]->blhid;
-/*        printf("blid_intchng blh rx sb blh->inhid %d %d %d %d %d\n", 
-        blid_intchng[set],
-        blh[blset]->blhid, blh[blset]->irec, blh[blset]->isb,
-        blh[blset]->inhid);
-        printf("blid_intchng blh rx sb blh->inhid %d %d %d %d %d\n",
-        blid_intchng[set],
-        blh[blset-1]->blhid, blh[blset-1]->irec, blh[blset-1]->isb,
-        blh[blset-1]->inhid);
-*/
-        }}
+                                          }}
 // choose rx
-	  if(blh[blset]->irec==smabuffer.rxif||smabuffer.rxif==-1) {
+	if(blh[blset]->irec==smabuffer.rxif||smabuffer.rxif==-1) {
 // for the first set of integration, take the 1st baseline
 	    if(set==0&&blh[blset]->isb==smabuffer.sb) {
 	      bln[set]->inhid = blh[blset]->inhid;
@@ -1019,27 +1103,22 @@ int rsmir_Read(char *datapath, int jstat)
 	      bln[set]->isb   = blh[blset]->isb;
 	      bln[set]->irec  = blh[blset]->irec; 
 	      inhid_hdr       = blh[blset]->inhid;
-/* printf("bln[set]->blhid  bln[set]->irec bln[set]->isb %d %d %d \n",
- bln[set]->blhid,
-                 bln[set]->irec, bln[set]->isb); 
-*/
-
-	    }
-	    // for the successive integration set, take the 1st baseline
-	    // right after change of integration.
+	                                              }
+// for the successive integration set, take the 1st baseline
+// right after change of integration.
 	    if(blh[blset]->inhid>inhid_hdr&&blh[blset]->isb==smabuffer.sb){
 	      bln[set]->inhid = blh[blset]->inhid;
 	      bln[set]->blhid = blh[blset]->blhid;
 	      bln[set]->isb   = blh[blset]->isb;
 	      bln[set]->irec  = blh[blset]->irec;
 	      inhid_hdr       = blh[blset]->inhid;
-	    }
-	  }
+	                                                                 }
+	                                                              }
 
 
-	  // loading data to baseline coordinate structure
-	  // convert ovro sign convention to miriad convention
-	  // by multiplying a negative sign to uvw coordinates
+// loading data to baseline coordinate structure
+// convert ovro sign convention to miriad convention
+// by multiplying a negative sign to uvw coordinates
 	  uvwbsln[set]->uvwID[blset-blhid_hdr].u = -blh[blset]->u;
 	  uvwbsln[set]->uvwID[blset-blhid_hdr].v = -blh[blset]->v;
 	  uvwbsln[set]->uvwID[blset-blhid_hdr].w = -blh[blset]->w;
@@ -1051,30 +1130,30 @@ int rsmir_Read(char *datapath, int jstat)
 	  uvwbsln[set]->uvwID[blset-blhid_hdr].isb = blh[blset]->isb;
 	  uvwbsln[set]->uvwID[blset-blhid_hdr].irec = blh[blset]->irec;
 //	  uvwbsln[set]->uvwID[blset-blhid_hdr].ipol = blh[blset]->ipol;
-	  // polarization
+// polarization
         uvwbsln[set]->uvwID[blset-blhid_hdr].ipol = ipolmap(blh[blset]->ipol);
-	  // counting baseline for each integration set
+// counting baseline for each integration set
 	  uvwbsln[set]->n_bls++;
-	}
-	//     printf("set numberBaselines %d %d\n", set, numberBaselines);     
+	                                           }
+//     printf("set numberBaselines %d %d\n", set, numberBaselines);     
 	numberBaselines=uvwbsln[set]->n_bls;
-      } /* blset */
+                                                  } // blset 
     }
 handling_blarray:
-    /* set antennas */
-    {
+// set antennas 
+   {
       int bset;
 // initialize blarray
 
             for (i=0; i< MAXANT; i++) {
-             for (j=0; j< MAXANT; j++) {
+             for (j=0; j< MAXANT; j++)  {
           blarray[i][j].ee = 0.0;
            blarray[i][j].nn = 0.0;
             blarray[i][j].uu = 0.0;
              blarray[i][j].itel1 = 0;
               blarray[i][j].itel2 = 0;
                blarray[i][j].blid  = 0;
-              } }
+                                      } }
       bset = smabuffer.scanskip*numberBaselines;
       blarray[blh[bset]->itel1][blh[bset]->itel2].ee = blh[bset]->ble ;
       blarray[blh[bset]->itel1][blh[bset]->itel2].nn = blh[bset]->bln ;
@@ -1088,56 +1167,54 @@ handling_blarray:
 	  blarray[blh[set]->itel1][blh[set]->itel2].itel1 = blh[set]->itel1;
 	  blarray[blh[set]->itel1][blh[set]->itel2].itel2 = blh[set]->itel2;
 	  blarray[blh[set]->itel1][blh[set]->itel2].blid  = blh[set]->blsid;
-//          printf(" ant1 ant2 e n u %d %d %f %f %f\n", blh[set]->itel1,
-//          blh[set]->itel2,blh[set]->ble, blh[set]->bln, blh[set]->blu);
-	  smabuffer.nants++;       }
+	  smabuffer.nants++;                                               }
 	else
-	  {smabuffer.nants = (int)((1+sqrt(1.+8.*smabuffer.nants))/2);
+	    {smabuffer.nants = (int)((1+sqrt(1.+8.*smabuffer.nants))/2);
 	  printf("mirRead: number of antenna =%d are found.\n", smabuffer.nants);
-	  goto blload_done;}
-      } /* set */
+	  goto blload_done;            
+                  } 
+                                        } // set 
     }
   blload_done:
     free(blh);
     
     if (SWAP_ENDIAN) {
-      printf("FINISHED READING  BL HEADERS (endian-swapped)\n");
-    } else {
-      printf("FINISHED READING  BL HEADERS\n");
-    }
-    // assign memory to enh
+      fprintf(stderr,"FINISHED READING  BL HEADERS (endian-swapped)\n");
+                     } else {
+      fprintf(stderr,"FINISHED READING  BL HEADERS\n");
+                            }
+// assign memory to enh
     enh = (struct ant_def **) malloc(nsets[4]*sizeof( struct ant_def *));
     for (set=0;set<nsets[4];set++) {
       enh[set] = (struct ant_def *)malloc(sizeof(struct ant_def ));
-      if (enh[set] == NULL ){
-	printf("ERROR: Memory allocation for enh failed for %d bytes\n",
+      if (enh[set] == NULL )       {
+      fprintf(stderr,"ERROR: Memory allocation for enh failed for %d bytes\n",
 	       nsets[4]*sizeof(struct ant_def));
 	exit(-1);
-      }
-    }
-    // make sma engineer data buffer
+                                   }
+                                   }
+// make sma engineer data buffer
     smaEngdata = (struct smEng **) malloc(nsets[0]*sizeof( struct smEng *));
     for (set=0;set<nsets[0];set++) {
       smaEngdata[set] = (struct smEng *)malloc(sizeof(struct smEng ));
       if (smaEngdata[set] == NULL ){
-	printf("ERROR: Memory allocation for smaEngdata failed for %d bytes\n",
+     fprintf(stderr,"ERROR: Memory allocation for smaEngdata failed for %d bytes\n",
 	       nsets[0]*sizeof(struct smEng));
 	exit(-1);
-      }
-    }
-    // skip engineer data reading because the engineer
-    // file was problem for the two receivers case. 05-2-25
-    //printf("doeng = %d\n", smabuffer.doeng);
+                                   }
+                                   }
+// skip engineer data reading because the engineer
+// file was problem for the two receivers case. 05-2-25
     if (smabuffer.doeng!=1) {
       goto engskip;
-    } else {
-      // read engineer data
+                              } else      {
+// read engineer data
       for (set=0;set<nsets[4];set++) {
 	*enh[set] = *(enh_read(fpin[4]));
         if (SWAP_ENDIAN) {
 	  enh[set]=swap_enh(enh[set]);
-	}         } 
-      // store sma engineer data to smaEngdata 
+                         }           } 
+// store sma engineer data to smaEngdata 
       inhset=0;
       for (set=0;set<nsets[4];set++) {
         if(enh[set]->inhid!=inh[inhset]->inhid) inhset++;
@@ -1159,18 +1236,18 @@ handling_blarray:
 	    = enh[set]->tsys;
 	  smaEngdata[inhset]->tamb[enh[set]->antennaNumber]
 	    = enh[set]->ambient_load_temperature;
-	} 
-      }
-    }
+	                   } 
+                                     }
+                                                }
     if (SWAP_ENDIAN) {
-      printf("FINISHED READING EN HEADERS (endian-swapped)\n");
+     fprintf(stderr,"FINISHED READING EN HEADERS (endian-swapped)\n");
     } else {
-      printf("FINISHED READING EN HEADERS\n");
+     fprintf(stderr,"FINISHED READING EN HEADERS\n");
     }
   engskip:
-    //free(smaEngdata);
+//free(smaEngdata);
     free(enh);
-    // initialize the antenna positions
+// initialize the antenna positions
     smabuffer.nants=8;
     for (i=1; i < smabuffer.nants+1; i++) {
       antenna[i].x = 0.;
@@ -1182,15 +1259,15 @@ handling_blarray:
       antenna[i].axisoff_x = 0.;
       antenna[i].axisoff_y = 0.;
       antenna[i].axisoff_z = 0.;
-    }
+                                           }
     
-    // set up the reference antenna
+// set up the reference antenna
     antenna[smabuffer.refant].x = 0.;
     antenna[smabuffer.refant].y = 0.;
     antenna[smabuffer.refant].z = 0.;
     
-    // derive antenna position in local coordinate system
-    // mir stores the position in float
+// derive antenna position in local coordinate system
+// mir stores the position in float
     for (i=1; i < smabuffer.nants+1; i++) {
       if(i<smabuffer.refant) {
 	antenna[i].x = (double)blarray[i][smabuffer.refant].ee 
@@ -1199,20 +1276,11 @@ handling_blarray:
 	  - antenna[smabuffer.refant].y;
 	antenna[i].z = (double)blarray[i][smabuffer.refant].uu 
 	  - antenna[smabuffer.refant].z;
-//        printf(" ant ee nn uu %d %f %f %f\n",i,
-//            blarray[i][smabuffer.refant].ee,
-//            blarray[i][smabuffer.refant].nn,
-//            blarray[i][smabuffer.refant].uu);
-                         
-      } else {
+                             } else {
          if(i==smabuffer.refant) {
          antenna[smabuffer.refant].x = 0.;
          antenna[smabuffer.refant].y = 0.;
          antenna[smabuffer.refant].z = 0.;
-//            printf(" ant ee nn uu %d %f %f %f\n",i,
-//            blarray[smabuffer.refant][i].ee,
-//            blarray[smabuffer.refant][i].nn,
-//           blarray[smabuffer.refant][i].uu);
                                  } else {
 
 	
@@ -1225,17 +1293,13 @@ handling_blarray:
 	antenna[i].z = (double)blarray[smabuffer.refant][i].uu
 	  - antenna[smabuffer.refant].z;
 	antenna[i].z = - antenna[i].z;
-//            printf(" ant ee nn uu %d %f %f %f\n",i,
-//            blarray[smabuffer.refant][i].ee,
-//            blarray[smabuffer.refant][i].nn,
-//            blarray[smabuffer.refant][i].uu);
-                           }
-      }
-    }
+                                        }
+                                    }
+                                            }
     
     
-    // calculate the geocentric coordinates from local 
-    // coordinates
+// calculate the geocentric coordinates from local 
+// coordinates
     {
       struct xyz geocxyz[MAXANT];
       for (i=1; i < smabuffer.nants+1; i++) {
@@ -1244,18 +1308,17 @@ handling_blarray:
 	geocxyz[i].y = (antenna[i].x);
 	geocxyz[i].z = (antenna[i].z)*sin(smabuffer.lat)
 	  + (antenna[i].y)*cos(smabuffer.lat);
-// printf("ant x y z %d %f %f %f\n", i, antenna[i].x,antenna[i].y,antenna[i].z);
-      }
-      printf("NUMBER OF ANTENNAS =%d\n", smabuffer.nants);
-      //
-      // maximum antenna number for the array is 8 
-      //
+                                            }
+      fprintf(stderr,"NUMBER OF ANTENNAS =%d\n", smabuffer.nants);
+//
+// maximum antenna number for the array is 8 
+//
       smabuffer.nants = 8;   
       for (i=1; i < smabuffer.nants+1; i++) {
 	sprintf(antenna[i].name, "AN%d", i);
-      }     
-      // the positions of antennas need to check  
-      // antpos on 2005 feb 16
+                                            }     
+// the positions of antennas need to check  
+// antpos on 2005 feb 16
       antxyz[1].x = 4.4394950000000000e+00;
       antxyz[2].x = -5.7018977000000000e+00;
       antxyz[3].x = -5.0781509999999996e-01;
@@ -1292,130 +1355,113 @@ double xyzpos;
          geocxyz[i].z = smabuffer.antpos[3+(i-1)*3];
          xyzpos = geocxyz[i].x+geocxyz[i].y+geocxyz[i].z;
       if(xyzpos==0) smabuffer.refant = i;
-                                 }
-                  }
+                                               }
+                                }
 
 
 
-    printf("Geocentrical coordinates of antennas (m), reference antenna=%d\n",
-	     smabuffer.refant); 
+ fprintf(stderr,"Geocentrical coordinates of antennas (m), reference antenna=%d\n",smabuffer.refant); 
       for (i=1; i < smabuffer.nants+1; i++) {
        
-	printf("ANT x y z %s %11.4f %11.4f %11.4f\n",
+ fprintf(stderr,"ANT x y z %s %11.4f %11.4f %11.4f\n",
 	       antenna[i].name,
 	       geocxyz[i].x,
 	       geocxyz[i].y,
 	       geocxyz[i].z);
-      }
-      //
-      // convert geocentrical coordinates to equatorial coordinates
-      // of miriad system y is local East, z is parallel to pole
-      // Units are nanosecs. 
-      // write antenna dat to uv file 
-      //
-      printf("Miriad coordinates of antennas (nanosecs), reference antenna=%d\n",
-	     smabuffer.refant);
+                                          }
+//
+// convert geocentrical coordinates to equatorial coordinates
+// of miriad system y is local East, z is parallel to pole
+// Units are nanosecs. 
+// write antenna dat to uv file 
+//
+ fprintf(stderr,"Miriad coordinates of antennas (nanosecs), reference antenna=%d\n", smabuffer.refant);
       r = sqrt(pow(geocxyz[smabuffer.refant].x,2) + 
 	       pow(geocxyz[smabuffer.refant].y,2));
       if(r>0) {
 	cost = geocxyz[smabuffer.refant].x / r;
 	sint = geocxyz[smabuffer.refant].y / r;
 	z0   = geocxyz[smabuffer.refant].z; 
-      } else {
+              } else {
 	cost = 1;
 	sint = 0;
 	z0 = 0; 
-      }
+                     }
       
       for (i=1; i < smabuffer.nants+1; i++) {      
 	tmp  = ( geocxyz[i].x) * cost + (geocxyz[i].y)*sint - r;
 	antpos[i-1] 
 	  = (1e9/DCMKS) * tmp;
-	printf("ANT x y x %s %11.4f ", antenna[i].name, antpos[i-1]);
+ fprintf(stderr,"ANT x y x %s %11.4f ", antenna[i].name, antpos[i-1]);
 	tmp  = (-geocxyz[i].x) * sint + (geocxyz[i].y) * cost;
 	antpos[i-1+smabuffer.nants] 
 	  = (1e9/DCMKS) * tmp;
-	printf("%11.4f ", antpos[i-1 + smabuffer.nants]);
+ fprintf(stderr,"%11.4f ", antpos[i-1 + smabuffer.nants]);
 	antpos[i-1+2*smabuffer.nants] 
 	  = (1e9/DCMKS) * (geocxyz[i].z-z0);
-	printf("%11.4f\n", antpos[i-1+2*smabuffer.nants]);
-      }
+ fprintf(stderr,"%11.4f\n", antpos[i-1+2*smabuffer.nants]);
+                                             }
       
-    }
+                }
     
     tno  = smabuffer.tno;
     nnants = 3*smabuffer.nants;
     uvputvrd_c(tno,"antpos", antpos, nnants);
-    // setup source 
-    cdh = (struct codeh_def **) malloc(nsets[3]*sizeof( struct codeh_def *));
-    for (set=0;set<nsets[3];set++) {
-      cdh[set] = (struct codeh_def *)malloc(sizeof(struct codeh_def ));
-      if (cdh[set] == NULL ){
-	printf("ERROR: Memory allocation for cdh failed for %d bytes.\n",
-	       nsets[3]*sizeof(struct codeh_def));
-	exit(-1);
-      }
-    }
-    for (set=0;set<nsets[3];set++){
-      *cdh[set] = *(cdh_read(fpin[3]));
-      if (SWAP_ENDIAN) {
-	cdh[set]=swap_cdh(cdh[set]);
-      }
-    }
+// setup source 
     if (SWAP_ENDIAN) {
-      printf("FINISHED READING  CD HEADERS (endian-swapped)\n");
-    }else {
-      printf("FINISHED READING  CD HEADERS\n");
-    }
+      fprintf(stderr,"FINISHED READING  CD HEADERS (endian-swapped)\n");
+                     } else {
+      fprintf(stderr,"FINISHED READING  CD HEADERS\n");
+                            }
     sourceID = 0;
-    for (set=0;set<nsets[3];set++){
-      // decode the ids 
+    for (set=0;set<nsets[3];set++)   {
+// decode the ids 
       if((cdh[set]->v_name[0]=='b'&&cdh[set]->v_name[1]=='a')&&
-        cdh[set]->v_name[2]=='n'){
+        cdh[set]->v_name[2]=='n')   {
         if(smabuffer.spskip[0]==0) { 
 	spcode[cdh[set]->icode]=spdecode(&cdh[set]);
-          } else { 
+                                   } else { 
            if(cdh[set]->icode < smabuffer.spskip[0]) {
             spcode[cdh[set]->icode]=spdecode(&cdh[set]);
-              } else {
+                                                     } else {
         spcode[cdh[set]->icode]
         =spdecode(&cdh[set])-smabuffer.spskip[1];
-              }
-                }
-      }
-      // decode the julian date for from the observing date 
-      if((cdh[set]->v_name[0]=='r'&&cdh[set]->v_name[1]=='e')&&
+                                                            }
+                                           }
+                                    }
+// decode the julian date for from the observing date 
+     if((cdh[set]->v_name[0]=='r'&&cdh[set]->v_name[1]=='e')&&
 	 cdh[set]->v_name[2]=='f'){
-	jday = juliandate(&cdh[set]);      }
-    }
-    // decode velocity type 
-    // 2 CODE NAME vctype  STRING vlsr  icode 0 ncode 1
-    // 3 CODE NAME vctype  STRING cz    icode 1 ncode 1
-    // 4 CODE NAME vctype  STRING vhel  icode 2 ncode 1
-    // 5 CODE NAME vctype  STRING pla   icode 3 ncode 1
+        doprt=-1;
+	jday = juliandate(&cdh[set],doprt);      
+                                  }
+                                      }
+// decode velocity type 
+// 2 CODE NAME vctype  STRING vlsr  icode 0 ncode 1
+// 3 CODE NAME vctype  STRING cz    icode 1 ncode 1
+// 4 CODE NAME vctype  STRING vhel  icode 2 ncode 1
+// 5 CODE NAME vctype  STRING pla   icode 3 ncode 1
     
     if(inh[1]->ivctype==0)
       strcpy(multisour[sourceID].veltyp, "VELO-LSR");
     if(inh[1]->ivctype==2)
       strcpy(multisour[sourceID].veltyp, "VELO-HEL");
     if(inh[1]->ivctype!=0 && inh[1]->ivctype!=2) {
-      printf("ERROR: veltype ivctype=%d is not supported.\n",
+     fprintf(stderr,"ERROR: veltype ivctype=%d is not supported.\n",
 	     inh[1]->ivctype);
       exit(-1); 
-    }
-    
+                                                 }
     uvputvra_c(tno,"veltype", multisour[sourceID].veltyp);
 // decode the source information 
-    for (set=0;set<nsets[3];set++){
+    for (set=0;set<nsets[3];set++)  {
     if(cdh[set]->v_name[0]=='s'&&cdh[set]->v_name[1]=='o') {
-//	sourceID++;
         sourceID = cdh[set]->icode;
 // parsing the source name and trim the junk tail
 	for(i=0; i<9; i++) {
 	  sours[i]=cdh[set]->code[i];
 	  if(cdh[set]->code[i]==32||cdh[set]->code[i]==0||i==8)
 	    sours[i]='\0';
-	}
+	                   }
            sprintf(multisour[sourceID].name, "%s", sours);
           for(i=2; i< sourceID; i++) {
           if(strcmp(multisour[i].name, sours)==0) {
@@ -1424,7 +1470,7 @@ double xyzpos;
           smasours[i]=cdh[set]->code[i];
           if(cdh[set]->code[i]==32||cdh[set]->code[i]==0||i==32)
             smasours[i]='\0';
-                               }
+                              }
          
           oka=okb=okc=okd=0;
           for(i=2; i< sourceID; i++) {
@@ -1432,40 +1478,37 @@ double xyzpos;
           if(multisour[sourceID].name[7]=='b') okb=-1;
           if(multisour[sourceID].name[7]=='c') okc=-1;
           if(multisour[sourceID].name[7]=='d') okd=-1; 
-                      }
-          if(oka==0) {sours[7]='a';
+                                     }
+          if(oka==0) {  sours[7]='a';
           sprintf(multisour[sourceID].name, "%s", sours);
-                    } else {           
-          if(okb==0){sours[7]='b';
+                     } else {           
+          if(okb==0)   {sours[7]='b';
           sprintf(multisour[sourceID].name, "%s", sours);
-                     } else {
-          if(okc==0) {sours[7]='c';
+                       } else {
+          if(okc==0)  {sours[7]='c';
           sprintf(multisour[sourceID].name, "%s", sours);
                       } else {
           if(okd==0) {sours[7]='d';
-          sprintf(multisour[sourceID].name, "%s", sours); }
-                              
-                             }
-                            }
+          sprintf(multisour[sourceID].name, "%s", sours);              
+                              }
+                              }
                            }
+                                                   }
 
-    printf("Warning: The original name: '%s' is renamed to '%s'\n", 
+    fprintf(stderr,"Warning: The original name: '%s' is renamed to '%s'\n", 
     smasours, multisour[sourceID].name);
-                                                       }
+                                          }
                                                  }
     multisour[sourceID].sour_id = cdh[set]->icode;
-	//         printf("cdh[set]->code=%s\n", cdh[set]->code);
     inhset=0;
 	while (inh[inhset]->souid!=multisour[sourceID].sour_id)
 	  inhset++;
-	//         printf("inh[inhset]->rar to c %s inhid=%d\n",
-	//         (char *)rar2c(inh[inhset]->rar),inh[inhset]->inhid);
 	multisour[sourceID].ra = inh[inhset]->rar;
 	multisour[sourceID].dec = inh[inhset]->decr;
 	sprintf(multisour[sourceID].equinox, "%f", inh[inhset]->epoch);
 	multisour[sourceID].freqid =-1;
 	multisour[sourceID].inhid_1st=inh[inhset]->inhid;
-	// calculate the apparent position coordinates from j2000 coordinates 
+// calculate the apparent position coordinates from j2000 coordinates 
 	{ 
 	  double obsra,obsdec,r1,d1;
 	  double julian2000=2451544.5;
@@ -1480,10 +1523,9 @@ double xyzpos;
 	  multisour[sourceID].pmra     = 0.;
 	  multisour[sourceID].pmdec    = 0.;
 	  multisour[sourceID].parallax = 0.;
-  //         strcpy(multisour[sourceID].veltyp, "lsr");
 	  strcpy(multisour[sourceID].veldef, "radio");
 	  strcpy(multisour[sourceID].calcode, "c");
-	}
+	   }
       }
     }
 // setup correlator  
@@ -1495,7 +1537,7 @@ double xyzpos;
     for (set=0; set<nsets[0]; set++) {
       spn[set] = (struct sph_config *)malloc(sizeof(struct sph_config ));
       if (spn[set] == NULL ){
-	printf("ERROR: Memory allocation for sph_config failed for %d bytes\n",
+  fprintf(stderr,"ERROR: Memory allocation for sph_config failed for %d bytes\n",
 	       nsets[0]*sizeof(struct sph_config));
 	exit(-1);
       }
@@ -1509,7 +1551,7 @@ double xyzpos;
 //
     if(smabuffer.highrspectra==0&&jday>2453867) {
       smabuffer.highrspectra = 1;
-      } else { smabuffer.highrspectra =-1; }
+           } else { smabuffer.highrspectra =-1; }
     
     { 
       int inhid_hdr;
@@ -1526,73 +1568,67 @@ double xyzpos;
       firstsp   = -1;
       lastsp    = -1;
       numberSpectra = 0;
-      // define baseline id used in pursing the spectral
-      // configuration. 
-      // integration set = smabuffer.scanskip
-      // blhset=1 , the second baseline of the integration
+// define baseline id used in pursing the spectral
+// configuration. 
+// integration set = smabuffer.scanskip
+// blhset=1 , the second baseline of the integration
       blhset=1;
-      //      printf("smabuffer.scanskip=%d\n", smabuffer.scanskip);
       blhid = uvwbsln[smabuffer.scanskip]->uvwID[blhset].blhid;
       rewind(fpin[2]);
-      // spn starts from 0
+// spn starts from 0
       inset = smabuffer.scanskip;
       for (set=sphid_hdr;set<nsets[2]; set++) {
 	*sph1 = *(sph_read(fpin[2]));
 	if (SWAP_ENDIAN) {
 	  sph1 =  swap_sph(sph1);
-	}
+                  	}
 	if(sph1->blhid==blhid)
 	  numberSpectra++;
 	if(sph1->blhid==blhid&&numberSpectra==0) {
-	  // assume 25 chunks per baseline
+// assume 25 chunks per baseline
 	  numberSpectra=25;
 	  smabuffer.scanskip++;
 	  inset = smabuffer.scanskip;
-	}
+	                                          }
 // load baseline based tsys structure
-	if(sph1->blhid==tsys[0]->blhid) nspectra++;
-//      printf("nspectra = %d\n", nspectra);
-//      printf("sph1->inhid tsys[blset]->inhid sph1->blhid tsys[blset]->blhid blset %d %d %d %d %d\n",
-//        sph1->inhid,tsys[blset]->inhid,sph1->blhid,tsys[blset]->blhid,blset);
-	if(sph1->blhid==tsys[blset]->blhid&&sph1->inhid==tsys[blset]->inhid) {
-// printf("sphset blid iband tsys %d  %d  %d %f \n",set,sph1->blhid, sph1->iband,sph1->tssb);
+if(sph1->blhid==tsys[0]->blhid) nspectra++;
+if(sph1->blhid==tsys[blset]->blhid&&sph1->inhid==tsys[blset]->inhid) {
+            
  tsys[blset]->tssb[sph1->iband] = sph1->tssb;
 // loading online flagging information
-        if(tsys[blset]->ipol < -4||sph1->iband!=0) {
-       wts[inset]->wt[sph1->iband-1][-4-tsys[blset]->ipol][tsys[blset]->blsid][tsys[blset]->isb][tsys[blset]->irec] = sph1->wt; 
-                                     }
-          else {
+if(tsys[blset]->ipol < -4&&sph1->iband!=0) {
+     wts[inset]->wt[sph1->iband-1][-4-tsys[blset]->ipol][tsys[blset]->blsid][tsys[blset]->isb][tsys[blset]->irec] = sph1->wt; 
+          }else {
          if(sph1->iband!=0)
  wts[inset]->wt[sph1->iband-1][-tsys[blset]->ipol][tsys[blset]->blsid][tsys[blset]->isb][tsys[blset]->irec] = sph1->wt;
-           }   
+    }   
 	if(smabuffer.highrspectra !=1){  
         if(sph1->iband==nspectra-1) blset++;
-        } else {
+                                      } else {
         if(sph1->iband==24) blset++;
-        
-        }
-	}
-	// purse the spectral configuration
-	// check up inhid to work on the same set of integration 
+                                             }
+	                                                                      }
+// purse the spectral configuration
+// check up inhid to work on the same set of integration 
 	if(sph1->inhid>inh[inset]->inhid) inset++ ;
-	// check up inhid and blhid to work on the same integration set
-	//       and the baseline set with the sidebband and rx as
-	//       is desired.
+// check up inhid and blhid to work on the same integration set
+//       and the baseline set with the sidebband and rx as
+//       is desired.
 	
 	if(sph1->inhid==inh[inset]->inhid&&sph1->blhid==bln[inset]->blhid){
 	  spn[inset]->sphid                = sph1->sphid;
 	  spn[inset]->inhid                = sph1->inhid;
 	  spn[inset]->iband[sph1->iband]   = sph1->iband;
 	  
-	  // velocity with respect to the rest frame
-          // given by the SMA on-line system. This is 
-          // only meaningful to the line transition at the
-          // rest frequency 
+// velocity with respect to the rest frame
+// given by the SMA on-line system. This is 
+// only meaningful to the line transition at the
+// rest frequency 
 	  spn[inset]->vel[sph1->iband]     = sph1->vel;
 	  spn[inset]->vres[sph1->iband]    = sph1->vres;
 	  spn[inset]->ivtype               = sph1->ivtype;
-	  // sky frequency (corrected for a part of the Doppler
-          // velocity, the diurnal term and a part of the annual term) 
+// sky frequency (corrected for a part of the Doppler
+// velocity, the diurnal term and a part of the annual term) 
 	  spn[inset]->fsky[sph1->iband]    = sph1->fsky;
 	  spn[inset]->fres[sph1->iband]    = sph1->fres;
    if(smaCorr.no_rxif!=2) spn[inset]->nch[sph1->iband][0]  = sph1->nch;
@@ -1602,34 +1638,26 @@ double xyzpos;
 	  spn[inset]->irec                 = bln[inset]->irec;
 	  spn[inset]->souid                = inh[inset]->souid;
 	  if(sph1->iband==0) spn[inset]->basefreq = sph1->fsky;                
-	}
+	                                                               }
       if(smaCorr.no_rxif==2&&sph1->inhid==inh[inset]->inhid) {
       if(sph1->blhid==blid_intchng[inset])
         spn[inset]->nch[sph1->iband][1] = sph1->nch;    
         
       if(sph1->blhid==(blid_intchng[inset]-1))
         spn[inset]->nch[sph1->iband][0] = sph1->nch; 
-/*       if(sph1->blhid==blid_intchng[inset])     
-       printf("inset blhid nch[%d][0] nch[i][1]  %d %d %d %d \n",
-        sph1->iband,
-        inset,
-        sph1->blhid,
-        spn[inset]->nch[sph1->iband][0],  
-        spn[inset]->nch[sph1->iband][1]); 
-*/                             }
+                                                             }
           lastinset=inset;
 	if(inset==smabuffer.scanskip+smabuffer.scanproc) { 
 	  goto sphend; 
-	}
-      }
-    }
+	                                                  }
+                                                              }
+                            }
 sphend:
      if (smabuffer.scanskip+smabuffer.scanproc>nsets[0]) {
-printf("Hits the end of integration %d\n", nsets[0]);
-printf("Reset 'nscans=%d, ' and run it again.\n",smabuffer.scanskip);
+fprintf(stderr,"Hits the end of integration %d\n", nsets[0]);
+fprintf(stderr,"Reset 'nscans=%d, ' and run it again.\n",smabuffer.scanskip);
          exit(-1);
                   }
-
 // handling 2003 incompleted correlator data
 if (smabuffer.spskip[0]==-2003) {
 double spfreq[25];
@@ -1677,25 +1705,25 @@ goto dat2003; }
            if(smabuffer.mcconfig==0) {
            for (i=1;i<ireset+1;i++) {
            if(smabuffer.scanskip< reset_id[i]) {
-    printf("Suggesttion:\n");
-    printf("For a single correlator configuration per loading (recommended),\n");
-    printf("reset nscans=%d,%d for the set of the first configuration data;\n", smabuffer.scanskip, reset_id[i]-1);
-    printf("reset nscans=%d, for the set of the second configuration data.\n",  reset_id[i]);
-    printf("Or choose options=mcconfig for multiple correlator configurations per loading (not recommended).\n");
-    printf("Try it again.\n");
+    fprintf(stderr,"Suggesttion:\n");
+    fprintf(stderr,"For a single correlator configuration per loading (recommended),\n");
+    fprintf(stderr,"reset nscans=%d,%d for the set of the first configuration data;\n", smabuffer.scanskip, reset_id[i]-1);
+    fprintf(stderr,"reset nscans=%d, for the set of the second configuration data.\n",  reset_id[i]);
+    fprintf(stderr,"Or choose options=mcconfig for multiple correlator configurations per loading (not recommended).\n");
+    fprintf(stderr,"Try it again.\n");
          exit(-1);
         }
                                     }
                                      }
 dat2003:                                                                           
-    printf("\n");
-    printf("number of non-empty Spectra = %d\n", numberSpectra);
+    fprintf(stderr,"\n");
+    fprintf(stderr,"number of non-empty Spectra = %d\n", numberSpectra);
 // reset number of spectra
     if(smabuffer.highrspectra==1) numberSpectra=25;
     if (SWAP_ENDIAN) {
-      printf("FINISHED READING SP HEADERS (endian-swapped)\n");
+    fprintf(stderr,"FINISHED READING SP HEADERS (endian-swapped)\n");
     } else {
-      printf("FINISHED READING SP HEADERS\n");
+    fprintf(stderr,"FINISHED READING SP HEADERS\n");
     }
 // solve for tsys
     {
@@ -1780,17 +1808,9 @@ dat2003:
 	}
       }
     nnextnextnext:
-      //     for (set=0; set < nsets[0]; set++) {
-      //        printf("%d tsys %f  %f \n", set, atsys[set]->tssb[3],
-      //        atsys[set]->tssb[7]);
-      //     printf("%d entsys %f %f --- %f %f\n", set, atsys[set]->tssb[3], 
-      //          smaEngdata[set]->tsys[3], atsys[set]->tssb[7],
-      //          smaEngdata[set]->tsys[7]); 
-      //   printf("%d tsys %f %f \n", atsys[set]->tssb[3],atsys[set]->tssb[7]);
-      //}
-    printf("Decoded baseline-based Tsys\n");
+    fprintf(stderr,"Decoded baseline-based Tsys\n");
     }
-    // decode the doppler velocity
+// decode the doppler velocity
 
  if (jday <2453531.5 && smabuffer.circular == 1) {
       printf("Skip decoding the Doppler velocity\n");
@@ -1799,63 +1819,64 @@ dat2003:
       double fratio;
       for(set= smabuffer.scanskip; 
 	  set < smabuffer.scanskip+smabuffer.scanproc+1; set++){
-	// calculate doppler velocity from chunk 1; 
-	// the rest chunk give the same value.
-        // absolute velocity is based on form (2-229)
-        // Astrophysical Formulae by K. R. Lang (Springer-Verlag 1974)
-        // p194 
+// calculate doppler velocity from chunk 1; 
+// the rest chunk give the same value.
+// absolute velocity is based on form (2-229)
+// Astrophysical Formulae by K. R. Lang (Springer-Verlag 1974)
+// p194 
 	fratio = (spn[set]->fsky[12]/spn[set]->rfreq[12]);
 	vabsolute = (1. - fratio*fratio ) / (1. + fratio*fratio );
 	vabsolute = vabsolute*DCMKS/1000.;
-        // Derive the Doppler velocity from observer to the LSR
-        // by taking out the Radial velocity (at chunk 1) of the source 
-        // w.r.t. the LSR or HEL.
-        // Based on the information from Taco after the discussion with
-        // Dan Marrone and Jim Moran on 05aug26's meeting,
-        // There are two operation modes that we have supported:
-        // 1) non-planet source and 2) planet source;
-        // For mode 1) the chunk frequency recorded in the MIR data header
-        // is the sky frequency at the transit of the source being Doppler
-        // tracked, i.e., the recorded frequency is the true sky frequency 
-        // only corrected for the diurnal term due to the earth rotation.
-        // Then, Jun-Hui started to build a patch in UVREDO for handling
-        // this SMA specification and he found that additional amount
-        // correction for the part of annual term that has been made to 
-        // the sky frequency by the SMA online system. Then he tried to
-        // decode the reference time corresonding to a zero value that 
-        // the online system uses to take out the steady variation in 
-        // the sky frequnecy due to annual term. Jun-Hui further consulted 
-        // with Taco on 05Aug31. Taco commented that it should be the 
-        // time at the source transit but he could be
-        // wrong. Based on the observation on 2005Aug01 for the SgrB2 track,
-        // Jun-Hui tried to figure out the reference time using veldop calculated
-        // from UVREDO and the SMA veldop decoded from the MIR header.
-        // Apparently, using the reference time at the source transit,
-        // it gives large difference between result from Miriad and
-        // the value of the veldop decoded from the SMA data. There are other
-        // possible times for the reference: 1) the time at which 
-        // the DopplerTrack command issued by the operator (Mon Aug  1 04:06:14 2005 (brownd)
-        // for the SgrB2 observation; 2) the time at which the project command
-        // is issued by the operator. (in the SgrB2 observations, the project
-        // command was issued towice at Mon Aug  1 04:50:35 2005 (brownd)
-        // and at Mon Aug  1 05:35:48 2005 (brownd). Among the three possible time,
-        // the time 05:35:48 appears to be the closest to the reference time
-        // (which gives precision in velocity of 0.0015 km/s). Therefore 
-        // two approaches are used to implement the patch in uvredo to calculate
-        // the residual Doppler velocity: 
-        // a) Giving the reference time from which the offset in the annual 
-        // term that has been corrected to the chunk frequency;
-        // b) Using veldop decoded from the MIR header (the sky frequency/the 
-        // radial velocity at a channel and the corresponding rest frequency). 
-        // The value of decoded veldop is to be stored
-        // in the variable 'veldop' but it is not the Tracked Doppler velocity;
-        // In other document (users guide), it is called as residual Doppler
-        // velocity.
-        //  
-        // For mode 2) the chunk frequency recorded in the MIR data header
-        // is the sky frequency corrected for the radial velocity of the planet
-        // at the moment when the dopplerTrack command is issued.
-        //   
+// Derive the Doppler velocity from observer to the LSR
+// by taking out the Radial velocity (at chunk 1) of the source 
+// w.r.t. the LSR or HEL.
+// Based on the information from Taco after the discussion with
+// Dan Marrone and Jim Moran on 05aug26's meeting,
+// There are two operation modes that we have supported:
+// 1) non-planet source and 2) planet source;
+// For mode 1) the chunk frequency recorded in the MIR data header
+// is the sky frequency at the transit of the source being Doppler
+// tracked, i.e., the recorded frequency is the true sky frequency 
+// only corrected for the diurnal term due to the earth rotation.
+// Then, Jun-Hui started to build a patch in UVREDO for handling
+// this SMA specification and he found that additional amount
+// correction for the part of annual term that has been made to 
+// the sky frequency by the SMA online system. Then he tried to
+// decode the reference time corresonding to a zero value that 
+// the online system uses to take out the steady variation in 
+// the sky frequnecy due to annual term. Jun-Hui further consulted 
+// with Taco on 05Aug31. Taco commented that it should be the 
+// time at the source transit but he could be
+// wrong. Based on the observation on 2005Aug01 for the SgrB2 track,
+// Jun-Hui tried to figure out the reference time using veldop calculated
+// from UVREDO and the SMA veldop decoded from the MIR header.
+// Apparently, using the reference time at the source transit,
+// it gives large difference between result from Miriad and
+// the value of the veldop decoded from the SMA data. There are other
+// possible times for the reference: 1) the time at which 
+// the DopplerTrack command issued by the operator 
+// (Mon Aug  1 04:06:14 2005 (brownd)
+// for the SgrB2 observation; 2) the time at which the project command
+// is issued by the operator. (in the SgrB2 observations, the project
+// command was issued towice at Mon Aug  1 04:50:35 2005 (brownd)
+// and at Mon Aug  1 05:35:48 2005 (brownd). Among the three possible time,
+// the time 05:35:48 appears to be the closest to the reference time
+// (which gives precision in velocity of 0.0015 km/s). Therefore 
+// two approaches are used to implement the patch in uvredo to calculate
+// the residual Doppler velocity: 
+// a) Giving the reference time from which the offset in the annual 
+// term that has been corrected to the chunk frequency;
+// b) Using veldop decoded from the MIR header (the sky frequency/the 
+// radial velocity at a channel and the corresponding rest frequency). 
+// The value of decoded veldop is to be stored
+// in the variable 'veldop' but it is not the Tracked Doppler velocity;
+// In other document (users guide), it is called as residual Doppler
+// velocity.
+//  
+// For mode 2) the chunk frequency recorded in the MIR data header
+// is the sky frequency corrected for the radial velocity of the planet
+// at the moment when the dopplerTrack command is issued.
+//   
         spn[set]->veldop = vabsolute - spn[set]->vel[12];
 //
 // add back the radial velocity of the source
@@ -1863,16 +1884,15 @@ dat2003:
         spn[set]->veldop = spn[set]->veldop + smabuffer.vsource;
         spn[set]->smaveldop = vabsolute - spn[set]->vel[12]+ 
                  smabuffer.vsource;
-// printf("%d veldop=%f %f\n", set, spn[set]->veldop,spn[set]->vel[12]);
       }
-    printf("Decoded the Doppler velocity\n");
+    fprintf(stderr,"Decoded the Doppler velocity\n");
     }                   
 // rewind the data file
     rewind(fpin[5]);
 // start from the inhset = smabuffer.scanskip 
     inhset = smabuffer.scanskip;
     numberBaselines=  uvwbsln[inhset]->n_bls,
-    printf("here we are!\n");
+   fprintf(stderr,"here we are!\n");
 //
 // parsing to handle spectral chunk data assuming
 // 24 spectral chunks handled online regardless
@@ -1899,18 +1919,17 @@ dat2003:
     for (i=1; i< sourceID+1; i++) {
       if(multisour[i].sour_id==0) 
         strcpy(multisour[i].name, "skipped!");
-      printf("source: %-21s id=%2d RA=%13s ", 
+      fprintf(stderr,"source: %-21s id=%2d RA=%13s ", 
 	     multisour[i].name,
 	     multisour[i].sour_id, 
 	     (char *)rar2c(multisour[i].ra));
-      printf("DEC=%13s\n", (char *)decr2c(multisour[i].dec));
+      fprintf(stderr,"DEC=%12s\n", (char *)decr2c(multisour[i].dec));
     if(multisour[i].sour_id>max_sourid) max_sourid=multisour[i].sour_id;
     }
 
 
     
 // now loading the smabuffer, parameters for headers
-    
 // initialize Tsys
     for (i=1; i<smabuffer.nants+1; i++){
       smabuffer.tsys[i-1]=0;
@@ -1946,7 +1965,6 @@ dat2003:
       }
     }
 // assign actual number of spectral chunks to smabuffer  
-//   smabuffer.nifs = smaCorr.n_chunk;
      smabuffer.nifs = numberSpectra-1;
 // initialize pnt flags 
     for (i=1; i<SMIF+1; i++)  {
@@ -1997,11 +2015,22 @@ dat2003:
 // print the side band to be processed
     switch(smabuffer.sb) {
     case 0:
-      printf("LSB only\n");
+      fprintf(stderr,"LSB only\n");
       break;
     case 1:
-      printf("USB only\n");
+      fprintf(stderr,"USB only\n");
     }
+
+
+      fprintf(stderr,"\n");
+// print observing date
+    for (set=0;set<nsets[3];set++){
+    if((cdh[set]->v_name[0]=='r'&&cdh[set]->v_name[1]=='e')&&
+       cdh[set]->v_name[2]=='f'){
+       doprt=1;
+      jday = juliandate(&cdh[set],doprt);      }
+    }
+
 // initializing the number vis points to be read    
     smabuffer.nused=0;
     free(cdh);
@@ -2013,18 +2042,17 @@ dat2003:
     for (set=0; set<nsets[0];set++) {
       sch[set] = (struct sch_def *)malloc(sizeof(struct sch_def ));
       if (sch[set] == NULL ){
-	printf("ERROR: Memory allocation for sch failed for %d bytes\n",
+     fprintf(stderr,"ERROR: Memory allocation for sch failed for %d bytes\n",
 	       nsets[0]*sizeof(struct sch_def));
 	exit(-1);
       }
     }
-    
-    
 // Need an array to hold the starting byte for each integration of data 
 // allocate the memory for data_start_pos
     data_start_pos = (long int*)malloc(nsets[0]*sizeof(long int));
     inhset=smabuffer.scanskip;
     inhset=0;
+
     for (set=inhset;
       set<smabuffer.scanskip+smabuffer.scanproc; set++) {
       data_start_pos[set] = ftell(fpin[5]);
@@ -2045,18 +2073,18 @@ dat2003:
 //                          # of spectral windows,
 //                          # of sidebands,
 //                          # of receivers to be processed 
- printf("#Baselines=%d #Spectra=%d  #Sidebands=%d #Receivers=%d\n",
+ fprintf(stderr,"#Baselines=%d #Spectra=%d  #Sidebands=%d #Receivers=%d\n",
 	   numberBaselines/2, numberSpectra-1, numberSidebands, 
 	   numberRxif);
-    
-    if(smabuffer.dobary==1) printf("Compute radial velocity wrt barycenter\n");
-    if(smabuffer.dolsr==1) printf("Compute radial velocity wrt LSR\n");
+ fprintf(stderr,"start reading visibility data ...\n");
+
+    if(smabuffer.dobary==1) fprintf(stderr,"Compute radial velocity wrt barycenter\n");
+    if(smabuffer.dolsr==1) fprintf(stderr,"Compute radial velocity wrt LSR\n");
     sphSizeBuffer = numberSpectra*numberBaselines; 
 //sphSizeBuffer: a number of total spectral sets for usb and lsb together 
 //               in each of the integration sets
     firstsp = sphset;
     firstbsl= blhset;
-    printf("start to read vis data!!!\n");
 // initialize the vis point handle
     ipnt=1;
 // assign the start integration set to be processed
@@ -2073,6 +2101,14 @@ dat2003:
       visSMAscan.blockID.sourID = inh[inhset]->souid;
       visSMAscan.blockID.freqID = smaFreq[0].freqid;
       visSMAscan.time.UTCtime = jday+inh[inhset]->dhrs/24.000; /*hrs*/
+      utch = inh[inhset]->dhrs;
+      if(utch>24 || utch==24) {
+          utcd =1;
+            } else {
+          utcd =0;
+            }
+      utcm = (inh[inhset]->dhrs-utch)*60;
+      utcs = ((inh[inhset]->dhrs-utch)*60.0 - utcm)*60;
 // loading smabuffer 
       smabuffer.currentscan=inhset-smabuffer.scanskip;
       smabuffer.time = visSMAscan.time.UTCtime;
@@ -2083,29 +2119,6 @@ dat2003:
       smabuffer.ra = multisour[sourceID].ra;
       smabuffer.dec = multisour[sourceID].dec;
       {
-// the source information was used to be obtained 
-// from the engineer file.      
-//double HA;
-//double LST;
-//double ra_apparent;
-//double delLST;
-// HA = LST - ra_apparent
-// if(inh[inhset]->inhid==smaEngdata[inhset]->inhid) 
-// { smabuffer.lst = smaEngdata[inhset]->lst*DPI/12.0;
-// LST= (double) inh[inhset]->ha*DPI/12.0 + smabuffer.obsra;
-//  delLST=(smabuffer.lst-LST)*12.0/DPI*3600;
-// in unit of hr in mir format; in unit of radian in miriad format 
-// printf("%d lst engLst %f %f delLST=%f obsra=%f %f\n", 
-// inhset, smabuffer.lst, LST, delLST, smabuffer.obsra, smabuffer.ra);
-//  for (i=0; i<smabuffer.nants; i++) {
-//       smabuffer.el[i] = smaEngdata[inhset]->el[i+1];
-//       smabuffer.az[i] = smaEngdata[inhset]->az[i+1];
-//       smabuffer.tsys[i] = smaEngdata[inhset]->tsys[i+1];
-// printf("%d %f %f --- %f %f\n",i, smabuffer.el[i], inh[inhset]->el,
-//                              smabuffer.az[i], inh[inhset]->az);     
-//                                    }
-//}
-//
 // calculate lst
     if (smabuffer.doeng!=1) {
 	smabuffer.lst =(double) inh[inhset]->ha*DPI/12.0 + smabuffer.obsra;
@@ -2114,7 +2127,7 @@ dat2003:
       }
 //loading el az and tsys to smabuffer
       for (i=0; i<smabuffer.nants; i++) {
-// mir inh file gives the mean el and mane az
+//mir inh file gives the mean el and mane az
 	smabuffer.el[i] = inh[inhset]->el;
 	smabuffer.az[i] = inh[inhset]->az;
 	if (smabuffer.doeng!=1) {
@@ -2138,10 +2151,8 @@ dat2003:
 	uvputvrd_c(tno,"dec",&(smabuffer.dec),1);
 // store the true pointing position 
 	rar = inh[inhset]->rar;
-//	if (rar!=smabuffer.ra) 
 	  uvputvrd_c(tno,"pntra", &rar, 1);
 	decr = inh[inhset]->decr;
-//	if (decr!=smabuffer.dec)
         uvputvrd_c(tno,"pntdec",&decr,1);
 	uvputvrd_c(tno,"obsra",&(smabuffer.obsra),1);
 	uvputvrd_c(tno,"obsdec",&(smabuffer.obsdec),1);
@@ -2178,7 +2189,7 @@ smabuffer.veldop = (float)velrad(dolsr,time, raapp,decapp,raepo,decepo,lst,lat);
 // it is difficult to decode vsource from the MIR data
 // unless given enough information in the Doppler tracking
 // (sideband, chunk, and channel) from the users.  
-//         smabuffer.vsource = spn[inhset]->vel[12];
+// smabuffer.vsource = spn[inhset]->vel[12];
 // checkup skipped sp chunks
     for(i=1;i<SMIF+1;i++) {
         miriadsp[i]=0;
@@ -2195,7 +2206,6 @@ smabuffer.veldop = (float)velrad(dolsr,time, raapp,decapp,raepo,decepo,lst,lat);
 // each of the integration sets
 //
       for(i=1;i<smaCorr.n_chunk+1; i++) {
-//         for(i=1;i<20;i++) {
 // the reference channel is the first channel in each chunk in miriad
 // the reference channel is the center (nch/2+0.5) in each chunk in MIR
 // conversion => nch/2+0.5 - 1 = nch-0.5
@@ -2286,15 +2296,15 @@ smabuffer.veldop = (float)velrad(dolsr,time, raapp,decapp,raepo,decepo,lst,lat);
 // when only one skipping gap occured
 //
    if(spcode[i]!=spn[inhset]->iband[i]) {
- printf("\n");
+fprintf(stderr,"\n");
    if(smabuffer.spskip[0]==0) {
- printf("Spotted skipping in spectral chunks starting at spcode=%d iband=%d\n", spcode[i], spn[inhset]->iband[i]);
- printf("Try smalod with keyword spskip=%d,%d again.\n",
+fprintf(stderr,"Spotted skipping in spectral chunks starting at spcode=%d iband=%d\n", spcode[i], spn[inhset]->iband[i]);
+fprintf(stderr,"Try smalod with keyword spskip=%d,%d again.\n",
     spn[inhset]->iband[i], spcode[i]-spn[inhset]->iband[i]);
        } else {
- printf("The skipping parameter spskip =%d,%d is inconsistent with\n",
+fprintf(stderr,"The skipping parameter spskip =%d,%d is inconsistent with\n",
            spcode[i], spn[inhset]->iband[i]);
- printf("the spectral chunks skipped in the MIR data!\n");
+fprintf(stderr,"the spectral chunks skipped in the MIR data!\n");
         }
    bug_c( 'f', "spcode must match with iband!\n");
       }
@@ -2315,14 +2325,15 @@ smabuffer.veldop = (float)velrad(dolsr,time, raapp,decapp,raepo,decepo,lst,lat);
    spn[inhset]->basefreq+0.084*(spcode[i]-11.5)*pow(-1,smabuffer.sb+1);
    smabuffer.restfreq[spcode[i]-1]=spn[inhset]->basefreq;
    smabuffer.nfreq[spcode[i]-1]=1;
-                      }
-        }       
-
+                         }
+                                    }       
+         flush=1;
    for(j=0; j < numberBaselines; j++) {
 	{
 	  sblpnt=j;
 	  blhset++;
 	  visSMAscan.uvblnID = uvwbsln[inhset]->uvwID[j].blcode;
+          if(visSMAscan.uvblnID < 258) flush=-1;
 	  visSMAscan.blockID.sbid = uvwbsln[inhset]->uvwID[j].isb; 
 	  visSMAscan.blockID.polid = uvwbsln[inhset]->uvwID[j].ipol;
 	  sbpnt = visSMAscan.blockID.sbid;
@@ -2339,7 +2350,7 @@ smabuffer.veldop = (float)velrad(dolsr,time, raapp,decapp,raepo,decepo,lst,lat);
 smabuffer.u[blpnt] = uvwbsln[inhset]->uvwID[j].u/smabuffer.basefreq*1000.;
 smabuffer.v[blpnt] = uvwbsln[inhset]->uvwID[j].v/smabuffer.basefreq*1000.;
 smabuffer.w[blpnt] = uvwbsln[inhset]->uvwID[j].w/smabuffer.basefreq*1000.;
-	      }
+	                   }
       break;
       case 1: blpnt=uvwbsln[inhset]->uvwID[j].blsid;
       phaseSign= 1;
@@ -2347,11 +2358,11 @@ smabuffer.w[blpnt] = uvwbsln[inhset]->uvwID[j].w/smabuffer.basefreq*1000.;
    smabuffer.u[blpnt] = uvwbsln[inhset]->uvwID[j].u/smabuffer.basefreq*1000.;
    smabuffer.v[blpnt] = uvwbsln[inhset]->uvwID[j].v/smabuffer.basefreq*1000.;
    smabuffer.w[blpnt] = uvwbsln[inhset]->uvwID[j].w/smabuffer.basefreq*1000.;
-	      }
+	                  }
       break;
-	    }
-	  }
-      flush=1;
+        	    }
+       }
+//      flush=1;
       if(smabuffer.nopol==1) visSMAscan.blockID.polid=-5;
 	  switch(visSMAscan.blockID.polid)  {
 	  case  0: polpnt=0; break;
@@ -2363,30 +2374,33 @@ smabuffer.w[blpnt] = uvwbsln[inhset]->uvwID[j].w/smabuffer.basefreq*1000.;
 	  case -6: polpnt=2; break;
 	  case -7: polpnt=3; break;
 	  case -8: polpnt=4; break;         }
+// skip those vis with pol state=0
+      if(polpnt==0) {flush=-1;
+      printf("skip vis with illegal polarization.\n");
+                    }
 // loading smabuffer uvw
   smabuffer.blcode[blpnt] = (float) visSMAscan.uvblnID;
 // read sph for a complete spectral records assuming that the correlator
 // configuration is not changed during the observation 
   if(readSet<= 1&&j==0) { 
-    free(sph);
     sph = (struct sph_def **) malloc(sphSizeBuffer*sizeof( struct sph_def *));
     for (set=0; set < sphSizeBuffer; set++) {
     sph[set] = (struct sph_def *)malloc(sizeof(struct sph_def ));
     if (sph[set] == NULL ){
-      printf("ERROR: Memory allocation for sph failed for %d bytes\n",
+   fprintf(stderr,"ERROR: Memory allocation for sph failed for %d bytes\n",
       sphSizeBuffer*sizeof(struct sph_def));
       exit(-1);
-	      }
-	    }
+	                  }
+	                                    }
     for (set=0; set< sphSizeBuffer; set++) {
       *sph[set] = *(sph_read(fpin[2]));
       if (SWAP_ENDIAN) {
        sph[set] =  swap_sph(sph[set]);
-	      }
-	    }
+	               }
+	                                   }
 // set the dataoff for the first spectrum is 0	    
 	    sph[0]->dataoff = 0;
-               }
+                        }
 
 // for single rx case
             for (i=0;i<smaCorr.n_chunk+1;i++) 
@@ -2401,7 +2415,7 @@ smabuffer.w[blpnt] = uvwbsln[inhset]->uvwID[j].w/smabuffer.basefreq*1000.;
               sph[i]->nch = spn[inhset]->nch[i][0];
            if(rxpnt==smabuffer.rx2)
               sph[i]->nch = spn[inhset]->nch[i][1];
-                }
+                                            }
 
 // The data for this spectrum consists of a 5 short int record header 
 // and the data  which is a short for each real and a short for 
@@ -2421,12 +2435,17 @@ smabuffer.w[blpnt] = uvwbsln[inhset]->uvwID[j].w/smabuffer.basefreq*1000.;
 // skipping the first a few integration 
 	  if(j<1) fseek(fpin[5],bytepos,SEEK_SET);
 	  nbytes = sch_data_read(fpin[5],datalength,shortdata);
+//          printf("nbytes=%d shortdata[0]=%d\n",nbytes, shortdata[0]);
 	  if (SWAP_ENDIAN) {
 	    shortdata=swap_sch_data(shortdata, datalength);
-	  }
+	                   }
 // take a look at the record header 
 // intTime in sec, integration time
 	  visSMAscan.time.intTime = (double) (shortdata[0]/10.);
+   if(visSMAscan.time.intTime<0) flush=-1;
+//   printf("datalength=%u shortdata[0]=%d intTime=%f bytepos=%u \n", 
+//             datalength*sizeof(short int), shortdata[0],
+//             visSMAscan.time.intTime, bytepos);
 // loading smabuffer intTime 
 	  smabuffer.inttime[j]= visSMAscan.time.intTime;
 	  smabuffer.inttim = visSMAscan.time.intTime;
@@ -2477,14 +2496,11 @@ smabuffer.w[blpnt] = uvwbsln[inhset]->uvwID[j].w/smabuffer.basefreq*1000.;
                  smabuffer.polcode[ifpnt][polpnt][blpnt]=-4;
             if(visSMAscan.blockID.polid == -4)
                  smabuffer.polcode[ifpnt][polpnt][blpnt]=-3;
-               } else {
+                                                           } else {
 	    smabuffer.polcode[ifpnt][polpnt][blpnt]=visSMAscan.blockID.polid;
-                   }
-	    /* smabuffer.pnt[ifpnt][polpnt][blpnt][0] = ipnt;*/
+                                                                  }
 	    smabuffer.pnt[ifpnt][polpnt][blpnt][sbpnt][rxpnt] = ipnt;
-//         printf("kk spcode ifpnt smabuffer.pnt %d %d %d %d\n",kk,spcode[kk],
-//            ifpnt,smabuffer.pnt[ifpnt][polpnt][blpnt][sbpnt][rxpnt]);
-            if(wts[inhset]->wt[ifpnt][polpnt][blpnt][sbpnt][rxpnt] < 0.)
+        if(wts[inhset]->wt[ifpnt][polpnt][blpnt][sbpnt][rxpnt] < 0.)
             smabuffer.flag[ifpnt][polpnt][blpnt][sbpnt][rxpnt] = 0;
             if(smabuffer.highrspectra==1&&miriadsp[kk]==0)
             smabuffer.flag[ifpnt][polpnt][blpnt][sbpnt][rxpnt] = 0;
@@ -2494,29 +2510,29 @@ smabuffer.w[blpnt] = uvwbsln[inhset]->uvwID[j].w/smabuffer.basefreq*1000.;
           nbytes = sch_data_read(fpin[5],datalength,shortdata);
           if (SWAP_ENDIAN) {
             shortdata=swap_sch_data(shortdata, datalength);
-          }
+                           }
 
 // There is a different scale factor for each record (spectrum)
           scale = shortdata[4];
 
-	    /* Now the channel data.  */
-	    /* Make pseudo continuum */
+// Now the channel data.
+// Make pseudo continuum 
 	    avenchan = 0;
 	    avereal  = 0.;
 	    aveimag  = 0.;
 	    for(i=0;i<sph[kk]->nch;i++){
 	      if (smabuffer.rsnchan> 0) {
               if(sph[kk]->nch < smabuffer.rsnchan) {
- printf("Error: rsnchan=%d is greater than %d, the number of channels in a chunk,\n",
-            smabuffer.rsnchan, sph[kk]->nch);
-            printf("       redo it with a smaller rsnchan.\n");
-            exit(-1);
-                                                    }
+ fprintf(stderr, "Error: rsnchan=%d is greater than %d, the number of channels in a chunk,\n",
+              smabuffer.rsnchan, sph[kk]->nch);
+ fprintf(stderr, "       redo it with a smaller rsnchan.\n");
+              exit(-1);
+                                                  }
 // average the channel to the desired resolution 
   avereal = avereal+(float)pow(2.,(double)scale)*shortdata[5+2*i];
 // convert ovro sign convention to miriad
   aveimag = aveimag+(float)pow(2.,(double)scale)*(-shortdata[6+2*i]*phaseSign);
-	  avenchan++;
+	    avenchan++;
             if(avenchan==(sph[kk]->nch/smabuffer.rsnchan)) {
 		  avereal = avereal/avenchan;
 		  aveimag = aveimag/avenchan;
@@ -2526,15 +2542,15 @@ smabuffer.w[blpnt] = uvwbsln[inhset]->uvwID[j].w/smabuffer.basefreq*1000.;
 		  avenchan = 0;
                   avereal  = 0.;
                   aveimag  = 0.;
-		}
-	      } else {
-		/* loading the original vis with no average */
-		// convert ovro sign convention to miriad
+	                                                   }
+	                                            } else {
+// loading the original vis with no average 
+// convert ovro sign convention to miriad
 	smabuffer.data[ipnt].real=(float)pow(2.,(double)scale)*shortdata[5+2*i];
 	smabuffer.data[ipnt].imag=
 		  (float)pow(2.,(double)scale)*(-shortdata[6+2*i]*phaseSign);
-		ipnt++;    }
-	    }
+		ipnt++;                                    }
+	                                              }
             free(shortdata);
 	    chunkskip:
     if(smabuffer.highrspectra==1&&miriadsp[kk]==0) {
@@ -2542,23 +2558,29 @@ smabuffer.w[blpnt] = uvwbsln[inhset]->uvwID[j].w/smabuffer.basefreq*1000.;
             smabuffer.data[ipnt].imag=0.;
             ipnt++;  
                                                    }
-	    sphset++;  /* count for each spectral chunk */
-	  }
+	    sphset++;  // count for each spectral chunk 
+	                                        }
 	    firstsp = sphset;
-        }
-      }
+                                          }
+                                              }
       readSet++;
       smabuffer.nused=ipnt;
 // re-initialize vis point for next integration 
       ipnt=1;
       if(flush==1) {
       if (fmod((readSet-1), 100.)<0.5||(readSet-1)==1)
-  printf("set=%4d ints=%4d inhid=%4d time(JulianDay)=%9.5f int=% 4.1f \n",
-		 readSet-1,
-		 visSMAscan.blockID.ints,
-		 visSMAscan.blockID.inhid,
-		 visSMAscan.time.UTCtime,
-		 visSMAscan.time.intTime);
+//  printf("set=%4d ints=%4d inhid=%4d time(JulianDay)=%9.5f int=% 4.1f \n",
+//		 readSet-1,
+//		 visSMAscan.blockID.ints,
+//		 visSMAscan.blockID.inhid,
+//		 visSMAscan.time.UTCtime,
+//		 visSMAscan.time.intTime);
+ fprintf(stderr,"set=%4d ints=%4d inhid=%4d time(UTC)= %1dd%02d:%02d:%04.1f int= %04.1f \n",
+               readSet-1,
+               visSMAscan.blockID.ints,
+               visSMAscan.blockID.inhid,
+               utcd,utch,utcm,utcs,
+               visSMAscan.time.intTime);
 // call rspokeflshsma_c to store databuffer to uvfile 
 	kstat = -1;
 	*kst = (char *)&kstat;
@@ -2578,42 +2600,48 @@ smabuffer.w[blpnt] = uvwbsln[inhset]->uvwID[j].w/smabuffer.basefreq*1000.;
                       }
       }
     }
-    printf("set=%4d ints=%4d inhid=%4d time(JulianDay)=%9.5f int=% 4.1f \n",
-	   readSet-1, 
-	   visSMAscan.blockID.ints,
-	   visSMAscan.blockID.inhid,
-	   visSMAscan.time.UTCtime,
-	   visSMAscan.time.intTime);
-    printf("skipped %d integration scans on `target&unknown'\n",ntarget);
+//    printf("set=%4d ints=%4d inhid=%4d time(JulianDay)=%9.5f int=% 4.1f \n",
+//	   readSet-1, 
+//	   visSMAscan.blockID.ints,
+//	   visSMAscan.blockID.inhid,
+//	   visSMAscan.time.UTCtime,
+//	   visSMAscan.time.intTime);
+   fprintf(stderr,"set=%4d ints=%4d inhid=%4d time(UTC)= %1dd%02d:%02d:%04.1f int= %04.1f \n",
+               readSet-1,
+               visSMAscan.blockID.ints,
+               visSMAscan.blockID.inhid,
+               utcd,utch,utcm,utcs,
+               visSMAscan.time.intTime);
 
-    avenchan=smabuffer.rsnchan;
+   fprintf(stderr,"skipped %d integration scans on `target&unknown'\n",ntarget);
+   avenchan=smabuffer.rsnchan;
          for (i=0; i<ireset+1; i++) {
              if(i>0) smabuffer.scanskip = reset_id[i];
-    if (smabuffer.rsnchan>0) {
+   if (smabuffer.rsnchan>0) {
 int nnpadding;
-      printf("converted vis spectra from the original correlator configuration\n");
-      printf("to low and uniform resolution spectra:\n");
-      printf("(starting at integrations=%d)\n", smabuffer.scanskip);
-      printf("         input     output\n");
+   fprintf(stderr,"converted vis spectra from the original correlator configuration\n");
+   fprintf(stderr,"to low and uniform resolution spectra:\n");
+   fprintf(stderr,"(starting at integrations=%d)\n", smabuffer.scanskip);
+   fprintf(stderr,"         input     output\n");
       for (kk=1; kk<numberSpectra; kk++) {
  if(smabuffer.highrspectra==1&&spn[smabuffer.scanskip]->nch[kk][rxlod]==0)
 {
-       nnpadding = 1-avenchan;
-printf("warning: each of the empty chunks is padded with one flagged channel.\n");
+   nnpadding = 1-avenchan;
+   fprintf(stderr,"warning: each of the empty chunks is padded with one flagged channel.\n");
 
 } else {
        nnpadding = 0;
 }
 
         if(smabuffer.spskip[0]==0) {
-	printf("  s%02d     %4d  =>  s%02d %4d\n",kk, 
+fprintf(stderr,"  s%02d     %4d  =>  s%02d %4d\n",kk, 
         spn[smabuffer.scanskip]->nch[kk][rxlod], kk, avenchan+nnpadding);
           } else {
         if(kk < smabuffer.spskip[0]) {
-        printf("  s%02d     %4d  =>  s%02d %4d\n",kk,
+fprintf(stderr,"  s%02d     %4d  =>  s%02d %4d\n",kk,
         spn[smabuffer.scanskip]->nch[kk][rxlod], kk, avenchan+nnpadding);
           } else {
-        printf("  s%02d     %4d  =>  s%02d %4d\n",kk+smabuffer.spskip[1],
+fprintf(stderr,"  s%02d     %4d  =>  s%02d %4d\n",kk+smabuffer.spskip[1],
         spn[smabuffer.scanskip]->nch[kk][rxlod], kk, avenchan+nnpadding);
            }
            }
@@ -2626,53 +2654,68 @@ int npadding=0;
       printf("         input     output\n");
       for (kk=1; kk<numberSpectra; kk++) {
  if(smabuffer.highrspectra==1&&spn[smabuffer.scanskip]->nch[kk][rxlod]==0)
-{ 
+                     { 
        npadding = 1; 
-printf("warning: each of the empty chunks is padded with one flagged channel.\n")
-;
+printf("warning: each of the empty chunks is padded with one flagged channel.\n" );
 
-} else { 
+                      } else { 
        npadding = 0;
-}   
+                              }   
        if(smabuffer.spskip[0]==0) {
         printf("  s%02d     %4d  =>  s%02d %4d\n",kk, 
         spn[smabuffer.scanskip]->nch[kk][rxlod], kk, 
         spn[smabuffer.scanskip]->nch[kk][rxlod]+npadding);
-         } else {
+                                   } else {
         if(kk < smabuffer.spskip[0]) {
         printf("  s%02d     %4d  =>  s%02d %4d\n",kk,
         spn[smabuffer.scanskip]->nch[kk][rxlod], kk,
         spn[smabuffer.scanskip]->nch[kk][rxlod]+npadding); 
-        } else {
+                                     } else {
         printf("  s%02d     %4d  =>  s%02d %4d\n",
         kk+smabuffer.spskip[1],
         spn[smabuffer.scanskip]->nch[kk][rxlod], kk,
         spn[smabuffer.scanskip]->nch[kk][rxlod]+npadding);
-               }
-         }
-      }
-    }
+                                             }
+                                           }
+                                            } 
+                               }
      }
     if(smabuffer.spskip[0]!=-2003) {
     if(smabuffer.spskip[0]!=0&&smabuffer.spskip[0]!=-1)
      printf("The MIR s%02d - s%02d contain no data and are skipped!\n",
         smabuffer.spskip[0],
-        smabuffer.spskip[0]+smabuffer.spskip[1]-1);}
-     else {
+        smabuffer.spskip[0]+smabuffer.spskip[1]-1);
+                                   } else {
      printf("The MIR s%d contains incompleted-correlator data!\n",
        -smabuffer.spskip[0]);
-          } 
+                                   } 
     printf("Done with data conversion from mir to miriad!\n");
+    free(spn);
+    free(sph1);
+    free(tsys);
+    free(wts);
+    free(inh);
+    free(uvwbsln);
+    free(atsys);
+    free(smaEngdata);
+    free(sch);
+    free(data_start_pos);
   }
   /* ---------------------------------------------------------------------- */
   endTime = time(NULL);
   trueTime = difftime(endTime, startTime);
   if(jstat==0) fprintf(stderr,
 		       "Real time used =%f sec.\n",
-		       trueTime);
+	  	       trueTime);
+  rewind(fpin[1]);
+  rewind(fpin[2]);
+  rewind(fpin[3]);
+  rewind(fpin[4]);
+  rewind(fpin[5]);
   jstat=0;
   return jstat;
-} /* end of main */
+} 
+/* end of main */
 
 
 
@@ -2856,12 +2899,11 @@ struct blh_def *blh_read(FILE * fpblh)
 
 unsigned long mfsize(FILE *fp)
 {
-  /* Optimization stuff */
-  char temp[BUFSIZ];
-  static const long DATALENGTH_MAX=SMA_LONG_MAX%2!=0?SMA_LONG_MAX-1:SMA_LONG_MAX;
-  long datalength=DATALENGTH_MAX;
-  
-  unsigned long counter, fsize;
+/* Optimization stuff */
+ char temp[BUFSIZ];
+ static const long DATALENGTH_MAX=SMA_LONG_MAX%2!=0?SMA_LONG_MAX-1:SMA_LONG_MAX;
+ long datalength=DATALENGTH_MAX;
+ unsigned long counter, fsize;
   fsize = 0;
   
   if (fp==NULL) {
@@ -2873,32 +2915,26 @@ unsigned long mfsize(FILE *fp)
   for (fseek(fp, datalength-1, SEEK_SET); 
        datalength>0 && fread(temp, 1, 1, fp)==0; 
        fseek(fp, datalength-1, SEEK_SET)) datalength/=128;
-  
   fseek(fp, 0, SEEK_SET);
-  
   if (datalength==0 && fread(temp, 1, 1, fp)==0) {
-    return fsize;
+  return fsize;
   } else if (datalength==0)
     datalength=BUFSIZ;
 
   fseek(fp, datalength-1, SEEK_SET);
   /* fseek() doesn't signal EOF so i use fread() to detect the end of file */
   for(counter=0; fread(temp, 1, 1, fp)!=0; ++counter)
-    fseek(fp, datalength-1, SEEK_CUR);
-  
+  fseek(fp, datalength-1, SEEK_CUR);
   fseek(fp, 0, SEEK_SET);
-  
   for( ; counter>0; --counter) {
     fseek(fp, datalength, SEEK_CUR);
     fsize += datalength;
   }
 
   do {
-    fsize += datalength=fread(temp, 1, BUFSIZ, fp);
+  fsize += datalength=fread(temp, 1, BUFSIZ, fp);
   } while(datalength!=0);
-  
   fseek(fp, 0, SEEK_SET);
-  
   return fsize;
 }
 
@@ -3168,7 +3204,7 @@ int spdecode (struct codeh_def *specCode[])
   return spid;
 }
 
-float juliandate (struct codeh_def *refdate[])
+float juliandate (struct codeh_def *refdate[], int doprt)
 { 
   int i;
   int stat=0;   
@@ -3201,8 +3237,8 @@ float juliandate (struct codeh_def *refdate[])
      printf("bad day   (MJD not computed).");
      exit(-1);
               }
+     if(doprt==1)
  printf("Observing Date: %d %s %d    Julian Date: %f\n", yi, mc, di, jdate);
-
   return jdate;
 }
 
