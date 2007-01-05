@@ -17,11 +17,22 @@ c@ out
 c       Name of the output Miriad uv data-set. No default.
 c
 c@ rxif
-c       selete from dual receivers/IFs; 
+c       select data from one of the dual receivers/IFs: 
+c       rxif=-1 for the 1st rxif band;
+c       rxif=-2 for the 2nd rxif band.
+c
+c       select the data based on receiver id:
+c       for data taken after  2006-12-28 --
 c       rxif=0 for receiver id = 0 -> 230 GHz band;
 c       rxif=1 for receiver id = 1 -> 340 GHz band;
-c       rxif=2 for receiver id = 2 -> 690 GHz band;
-c       No default.
+c       rxif=2 for receiver id = 2 -> 400 GHz band;
+c       rxif=3 for receiver id = 3 -> 690 GHz band;
+c       for data taken before 2006-12-28 --
+c       rxif=0 for receiver id = 0 -> 230 GHz band;
+c       rxif=1 for receiver id = 1 -> 340 GHz band;
+c       rxif=2 for receiver id = 2 -> 690 GHz band.
+c
+c       The default is rxif=-1 or the 1st rxif band.
 c
 c@ restfreq
 c       The rest frequency, in GHz, for line observations.  By default,
@@ -294,11 +305,13 @@ c                  in the case no source information is given in
 c                  mir data (an on-line bug)
 c    jhz 12-jun-06 updated version date
 c    jhz 09-aug-06 changed a typo in line 346
+c    jhz 29-dec-06 implemented handling 400 rx
+c    jhz 04-jan-07 implemented reading projectInfo file
 c------------------------------------------------------------------------
         integer maxfiles
         parameter(maxfiles=128)
         character version*(*)
-        parameter(version='SmaLod: version 1.27 09-aug-06')
+        parameter(version='SmaLod: version 2.0 05-Jan-07')
 c
         character in(maxfiles)*64,out*64,line*64, rxc*4
         integer tno, length, len1
@@ -335,19 +348,31 @@ c
         call keya('out',out,' ')
         if(out.eq.' ')
      *    call bug('f','Output name must be given')
-         call keyi('rxif',rxif,-2)
+         call keyi('rxif',rxif,-1)
+            if(rxif==-2) rxc='_rx2'
+            if(rxif==-1) rxc='_rx1'
             if(rxif==0) rxc='_rx0'
             if(rxif==1) rxc='_rx1'
             if(rxif==2) rxc='_rx2'
+            if(rxif==3) rxc='_rx3'
 c
-        if(rxif==-2) then 
-             write(*,*) 'rxif = 0 -> 230 band'
-             write(*,*) 'rxif = 1 -> 340 band'
-             write(*,*) 'rxif = 2 -> 690 band'
-             call bug('f','No default for rxif!')
+         if(rxif.lt.-2.or.rxif.gt.3) then
+             call output('For data taken after 2006-12-28:')
+             call output('rxif = -2 -> 2nd rxif band')
+             call output('rxif = -1 -> 1st rxif band')
+             call output('rxif =  0 -> 230 band')
+             call output('rxif =  1 -> 340 band')
+             call output('rxif =  2 -> 400 band')
+             call output('rxif =  3 -> 690 band')
+             call output('For data taken before 2006-12-28:')
+             call output('rxif = -2 -> 1st rxif band')
+             call output('rxif = -1 -> 2nd rxif band')
+             call output('rxif = 0 -> 230 band')
+             call output('rxif = 1 -> 340 band')
+             call output('rxif = 2 -> 690 band')
+             call output(' ')
+             call bug('f','Invalid Receiver ID.')
              end if
-         if(rxif.lt.-1.or.rxif.gt.2) 
-     *   call bug('f','Invalid Receiver ID.')
 c        call mkeyd('restfreq',rfreq,2,nfreq)
         call keyd('restfreq',rfreq,0.0)
         call keyr('vsource', vsour,0.0)
@@ -410,6 +435,7 @@ c
              end do
         end if
 100        format(i2,5x,3(f12.6,2x))
+
 c
 c    do both side bands
 c
@@ -418,13 +444,9 @@ c
               dsb=.true.
               sb = 0
               end if
-555           if(rxif.eq.-1) then
-              if(sb.eq.0) out=out(1:length)//'.lsb'
-              if(sb.eq.1) out=out(1:length)//'.usb'
-              else
-              if(sb.eq.0) out=out(1:length)//rxc(1:4)//'.lsb'
+             
+555           if(sb.eq.0) out=out(1:length)//rxc(1:4)//'.lsb'
               if(sb.eq.1) out=out(1:length)//rxc(1:4)//'.usb'
-              end if
 
 c
 c  Open the output and initialise it.
@@ -436,6 +458,7 @@ c
         call hisopen(tno,'write')
         call hiswrite(tno,'SMALOD: Miriad '//version)
         call hisinput(tno,'SMALOD')
+        call output('Loading SMA data ...')
         ifile = 0
         iostat = 0
         dowhile(ifile.lt.fileskip+fileproc.and.iostat.eq.0)
@@ -443,7 +466,7 @@ c
           if(ifile.le.fileskip)then
             if(nfiles.eq.1)then
               call output('Skipping file '//itoaf(ifile))
-              call rpskip(in(1),iostat)
+              call smaskip(in(1),iostat)
             else
               call output('Ignoring file '//in(ifile))
               iostat = 0
@@ -474,7 +497,6 @@ c
           call bug('w',line)
           call bug('w','Prematurely finishing because of errors')
           call hiswrite(tno,'SMALOD: '//line)
-          
           call hiswrite(tno,
      *      'SMALOD: Prematurely finishing because of errors')
           else
@@ -484,31 +506,22 @@ c
         call hisclose(tno)
         call uvclose(tno)
         if(.not.dsb) then
-        if((sb.eq.0).and.(rxif.ne.-1)) write(*,*)
-     * 'output file =',out(1:length)//rxc(1:4)//'.lsb'
-        if((sb.eq.1).and.(rxif.ne.-1)) write(*,*)
-     * 'output file =',out(1:length)//rxc(1:4)//'.usb'
-        if((sb.eq.0).and.(rxif.eq.-1)) write(*,*)
-     * 'output file =',out(1:length)//'.lsb'
-        if((sb.eq.1).and.(rxif.eq.-1)) write(*,*)
-     * 'output file =',out(1:length)//'.usb'
-         goto 666
-         end if
+        line = 'output file = '//out
+        call output(line)
+        goto 666
+        end if
         if(sb.eq.0) then
         sb=1
+        line = 'output file = '//out
+        call output(line)
+        call output('Handling other side band data ...')
+        call output(' ')
         goto 555
         end if
-         if(dsb) then
-         if(rxif.ne.-1) write(*,*)
-     * 'output file for lsb =', out(1:length)//rxc(1:4)//'.lsb'
-         if(rxif.eq.-1) write(*,*)
-     * 'output file for lsb =', out(1:length)//'.lsb'
-         if(rxif.ne.-1) write(*,*)
-     * 'output file for usb =', out(1:length)//rxc(1:4)//'.usb'
-         if(rxif.eq.-1) write(*,*)
-     * 'output file for usb =', out(1:length)//'.usb'
-         end if
-
+        if(dsb) then
+        line = 'output file = '//out
+        call output(line)
+        end if
 666     stop
         end
 c************************************************************************
@@ -628,7 +641,6 @@ c------------------------------------------------------------------------
         integer mount
         logical ok
         call uvputvrr(tno,'epoch',2000.,1)
-c        call uvputvrr(tno,'vsource',0.,1)
         call obspar('SMA','latitude',latitude,ok)
         if(ok)call obspar('SMA','longitude',longitud,ok)
         if(ok)call obspar('SMA','evector',dtemp,ok)
@@ -684,7 +696,7 @@ cc jhz
         if(.not.ok)call bug('f','Could not get SMA latitude')
         call obspar('SMA','longitude',long,ok)
           long1=long
-c        if(.not.ok)call bug('f','Could not get SMA longitude')
+        if(.not.ok)call bug('f','Could not get SMA longitude')
 c
         call rspokeinisma(kstat,tno1,dosam1,doxyp1,doop1,
      *  dohann1,birdie1,dowt1,dopmps1,dobary1,doif1,hires1,
@@ -767,7 +779,7 @@ c        call uvputvra(tno,'name',in(i1:i2))
         end
 c************************************************************************
 c************************************************************************
-        subroutine rpskip(in,iostat)
+        subroutine smaskip(in,iostat)
 c
         character in*(*)
         integer iostat
@@ -817,6 +829,7 @@ c  Open the SMA_MIR file.
 c
          call smaopen(in,iostat)
          if(iostat.ne.0)return
+         
 c
 c  Initialize.
 c
@@ -833,7 +846,7 @@ c
          
         call rspokeflshsma(kstat);
 c
-         jstat =-1;
+        jstat =-1;
         call rsmiriadwrite(in,jstat)
         end
 c************************************************************************
@@ -857,8 +870,6 @@ c************************************************************************
         character*(*) function smaerr(jstat)
         integer jstat
 c
-c  Translate an RPFITSIN jstat value into something a bit more
-c  meaningful.
 c------------------------------------------------------------------------
         character itoaf*8
         integer nmess
@@ -875,7 +886,7 @@ c
         if(jstat.ge.-1.and.jstat.le.5)then
           smaerr = mess(jstat+2)
         else
-          smaerr = 'RPFITS error: jstat='//itoaf(jstat)
+          smaerr = 'SMA mir Data error: jstat='//itoaf(jstat)
         endif
 c
         end
@@ -885,16 +896,16 @@ c************************************************************************
         character*80 file
         integer jstat
 c
-c  External.
+c External.
 c
         character smaerr*32
         file = in
-c   jstat=-3 -> open the input data file 
+c jstat=-3 -> open the input data file 
         jstat = -3
-c jhz test
+c jhz 
         call rsmirread(in, jstat)
         if(jstat.ne.0) call bug('w',
-     *      'Error opening SMA MIR file: '//smaerr(jstat))
+     *  'Error opening SMA MIR file: '//smaerr(jstat))
         if(jstat.ne.0)return
         end
 c************************************************************************
