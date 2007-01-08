@@ -12,6 +12,7 @@
 //                high spectral resolution mode, allowing 
 //                empty chunks.
 // jhz 2006-5-18: change MAXCHAN from 7681 to 8217
+// jhz 2007-1-08: add chi2 to smlodd structure
 #include "miriad.h"
 
 
@@ -534,7 +535,8 @@ struct smlodd {
         float xtsys[SMIF+1][SMANT+1];
         float ytsys[SMIF+1][SMANT+1];
         float tsys[SMANT+1];        
-        float chi;
+        float chi[SMANT+1];
+        float chi2[SMANT+1];
         float xyphase[SMIF+1][ SMANT+1]; 
         float xyamp[SMIF+1][SMANT+1]; 
         float xsampler[3][SMIF+1][SMANT+1];
