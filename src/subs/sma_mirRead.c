@@ -188,6 +188,7 @@
 // 2007-01-05 (JHZ) implemented a feature of handling
 //                  porjectInfo that contains observer's
 //                  name.
+// 2007-01-08 (JHZ) store chi and chi2
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -272,7 +273,7 @@ void nuts(double jday, double *dpsiptr, double *depsptr);
 double mobliq(double jday);
 void aberrate(double jday, double ra, double dec, double *rappptr, double *dappptr);
 void vearth(double jday, double pos[3], double vel[3]);
-void elaz(int tno);
+void elazchi(int tno);
 void tsysStore(int tno);
 double velrad(short dolsr, double time, double raapp, double decapp, double raepo, double decepo, double lst, double lat);
 struct lmn *sph2lmn(double ra, double dec);
@@ -479,8 +480,8 @@ void rspokeflshsma_c(char *kst[])
      uvputvrd_c(tno,"ut",&(smabuffer.ut),1);
 // store apparent LST 
      uvputvrd_c(tno,"lst",&(smabuffer.lst),1);
-// store elaz data 
-     elaz(tno);
+// store elaz and chi data 
+     elazchi(tno);
 // store radial velocity of the observatory w.r.t. the rest frame 
   uvputvrr_c(tno,"veldop",&(smabuffer.veldop),1);
 // store the source velocity w.r.t. the rest frame
@@ -1502,7 +1503,7 @@ double xyzpos;
     multisour[sourceID].sour_id = cdh[set]->icode;
     inhset=0;
 	while (inh[inhset]->souid!=multisour[sourceID].sour_id)
-	  inhset++;
+	inhset++;
 	multisour[sourceID].ra = inh[inhset]->rar;
 	multisour[sourceID].dec = inh[inhset]->decr;
 	sprintf(multisour[sourceID].equinox, "%f", inh[inhset]->epoch);
@@ -2569,12 +2570,6 @@ smabuffer.w[blpnt] = uvwbsln[inhset]->uvwID[j].w/smabuffer.basefreq*1000.;
       ipnt=1;
       if(flush==1) {
       if (fmod((readSet-1), 100.)<0.5||(readSet-1)==1)
-//  printf("set=%4d ints=%4d inhid=%4d time(JulianDay)=%9.5f int=% 4.1f \n",
-//		 readSet-1,
-//		 visSMAscan.blockID.ints,
-//		 visSMAscan.blockID.inhid,
-//		 visSMAscan.time.UTCtime,
-//		 visSMAscan.time.intTime);
  fprintf(stderr,"set=%4d ints=%4d inhid=%4d time(UTC)= %1dd%02d:%02d:%04.1f int= %04.1f \n",
                readSet-1,
                visSMAscan.blockID.ints,
@@ -2600,12 +2595,6 @@ smabuffer.w[blpnt] = uvwbsln[inhset]->uvwID[j].w/smabuffer.basefreq*1000.;
                       }
       }
     }
-//    printf("set=%4d ints=%4d inhid=%4d time(JulianDay)=%9.5f int=% 4.1f \n",
-//	   readSet-1, 
-//	   visSMAscan.blockID.ints,
-//	   visSMAscan.blockID.inhid,
-//	   visSMAscan.time.UTCtime,
-//	   visSMAscan.time.intTime);
    fprintf(stderr,"set=%4d ints=%4d inhid=%4d time(UTC)= %1dd%02d:%02d:%04.1f int= %04.1f \n",
                readSet-1,
                visSMAscan.blockID.ints,
@@ -2645,7 +2634,6 @@ fprintf(stderr,"  s%02d     %4d  =>  s%02d %4d\n",kk+smabuffer.spskip[1],
         spn[smabuffer.scanskip]->nch[kk][rxlod], kk, avenchan+nnpadding);
            }
            }
-
       }
     } else {
 int npadding=0;
@@ -3540,10 +3528,12 @@ void vearth (double jday, double pos[3], double vel[3])
   vel[2] = aukm * W2*SINEPS;
 }
 
-void elaz(int tno) {
+void elazchi(int tno) {
   /* calculate and store mean az and el into uv data */
   int i;
   double mel, maz;
+  double sinq,cosq,ha;
+  float chi, chi2;
   mel=0;
   maz=0;
 
@@ -3560,7 +3550,32 @@ void elaz(int tno) {
     // bee.for require store antaz and antel for each antenna
     uvputvrd_c(tno,"antaz",&smabuffer.az,smabuffer.nants);
     uvputvrd_c(tno,"antel",&smabuffer.el,smabuffer.nants);
-  }
+    // required by Bob Sault to store chi and chi2 for pol calibration
+    // input:
+    // smabuffer.obsra: Apparent RA and DEC of the source of interest (radians)
+    // smabuffer.obsdec: 
+    // smabuffer.lat:   Observatory geodetic latitude (radians)
+    // smabuffer.lst:   Local sidereal time (radians)
+    // output:
+    // chi:             Parallatic angle (radians)
+    // chi2:            chi2=-el
+    // smabuffer.chi = evec + chi + chi2
+    // evec = 0 for sma; smabuffer.chi = chi + chi2 = chi - el
+        ha = smabuffer.lst - smabuffer.obsra;
+        sinq = cos(smabuffer.lat)*sin(ha);
+        cosq = sin(smabuffer.lat)*cos(smabuffer.obsdec) - 
+               cos(smabuffer.lat)*sin(smabuffer.obsdec)*cos(ha);
+        chi  = (float) atan2(sinq,cosq);
+        for (i=0; i<smabuffer.nants; i++) {
+        chi2 = (float) smabuffer.el[i];
+        smabuffer.chi2[i] = -chi2;
+        smabuffer.chi[i] = chi-chi2;
+        }
+    uvputvrr_c(tno,"chi",&smabuffer.chi,smabuffer.nants);
+    uvputvrr_c(tno,"chi2",&smabuffer.chi2,smabuffer.nants);
+    } else {
+     fprintf(stderr,"WARNING: nants=0; skip this scan. \n"); 
+    }
 }
 
 void tsysStore(int tno) {
