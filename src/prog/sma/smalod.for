@@ -306,12 +306,13 @@ c                  mir data (an on-line bug)
 c    jhz 12-jun-06 updated version date
 c    jhz 09-aug-06 changed a typo in line 346
 c    jhz 29-dec-06 implemented handling 400 rx
-c    jhz 04-jan-07 implemented reading projectInfo file
+c    jhz 04-jan-07 implemented reading projectInfo fil
+c    jhz 08-jan-07 store chi and chi2
 c------------------------------------------------------------------------
         integer maxfiles
         parameter(maxfiles=128)
         character version*(*)
-        parameter(version='SmaLod: version 2.0 05-Jan-07')
+        parameter(version='SmaLod: version 2.1 08-Jan-07')
 c
         character in(maxfiles)*64,out*64,line*64, rxc*4
         integer tno, length, len1
