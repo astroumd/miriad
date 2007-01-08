@@ -426,18 +426,16 @@ c Reference:  Todd Hunter  Log#7242
         call obsad('sma/ellimit',      14.0*dpi/180.d0)
         call obsad('sma/evector',      0.25*dpi)
         call obsad('sma/ew',           1.d0)
-
 	call obsad('sma/height',	4080.0d0)
 c frequency dependent - but clearly one of these two is the better one
         call obsad('sma/jyperk',        130.d0)
-c older value from Ram?
-c	call obsad('sma/latitude',	obsdms( 1, 19,49,33.8))
-c	call obsad('sma/longitude',	obsdms(-1,155,28,46.4))
 c reference: from Taco Young
         call obsad('sma/latitude',      obsdms(1, 19, 49, 27.1389))
         call obsad('sma/longitude',     obsdms( 1, 204, 31, 22.79606))
+c SMA has ALTAZ mount; NASMYTH is distinct from ALTAZ because
+c the polarization undergoes an extra rotation through the elevation
+c axis.
 	call obsad('sma/mount',	        NASMYTH)
-c        call obsad('sma/mount',         altaz)
 	call obsad('sma/nants',	        8.0d0)
         call obsad('sma/subdiam',      2.8d0)
         call obsad('sma/systemp',      200.d0)
