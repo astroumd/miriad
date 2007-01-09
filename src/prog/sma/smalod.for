@@ -308,11 +308,12 @@ c    jhz 09-aug-06 changed a typo in line 346
 c    jhz 29-dec-06 implemented handling 400 rx
 c    jhz 04-jan-07 implemented reading projectInfo fil
 c    jhz 08-jan-07 store chi and chi2
+c    jhz 08-jan-07 remove mount=0; back to mount=4
 c------------------------------------------------------------------------
         integer maxfiles
         parameter(maxfiles=128)
         character version*(*)
-        parameter(version='SmaLod: version 2.1 08-Jan-07')
+        parameter(version='SmaLod: version 2.2 08-Jan-07')
 c
         character in(maxfiles)*64,out*64,line*64, rxc*4
         integer tno, length, len1
@@ -655,9 +656,12 @@ c------------------------------------------------------------------------
           call uvputvrd(tno,'longitu',longitud,1)
           call uvputvrr(tno,'evector',chioff,1)
 c
-c Alt-Az mount=0 SMA project book
+c ALTAZ=0.d0,EQUATOR=1.d0,NASMYTH=4.d0,XYEW=3.d0
+c Alt-Az mount=0 based on SMA project book
+c but the polarization goes extra rotation through the 
+c elevation axis
+c so sma/mount = NASMYTH or mount=4.d0
 c
-          mount =0
           call uvputvri(tno,'mount',mount,1)
         endif
         end
