@@ -47,10 +47,12 @@ c  jhz    2005-07-28 add options of circular for flagging/unflagging
 c                    non-circular polarization data.
 c                    separate the output message between flag and unflag
 c  jhz    2005-07-28 add back the keyword log
+c  jhz    2007-01-10 check basline code before call
+c                     basant. 
 c----------------------------------------------------------------------c
 	include 'maxdim.h'
 	character*(*) version
-	parameter(version='SmaCheck: version 1.1 28-July-2005')
+	parameter(version='SmaCheck: version 1.2 10-Jan-2007')
 	integer maxsels, ochan, nbugs, nflag, nwflag
 	parameter(MAXSELS=512)
 	real sels(MAXSELS)
@@ -211,6 +213,7 @@ c
 c
 c flag any baseline pairs associated with the bad antennas
 c
+           if(preamble(5) > 256) then
            call basant(preamble(5),ant1,ant2)
             do i=1, nants
                  if(bant(i).and.(i.eq.ant1.or.i.eq.ant2)) then
@@ -220,6 +223,8 @@ c
 c                write(*,*) 'flag ants', ant1,ant2
                  end if
              end do
+           end if
+           
 	  endif
 c
 c  Loop the loop (get next record)
