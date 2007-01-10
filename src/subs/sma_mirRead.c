@@ -189,6 +189,7 @@
 //                  porjectInfo that contains observer's
 //                  name.
 // 2007-01-08 (JHZ) store chi and chi2
+// 2007-01-10 (JHZ) change wtt from float to short
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -1598,11 +1599,11 @@ if(sph1->blhid==tsys[blset]->blhid&&sph1->inhid==tsys[blset]->inhid) {
  tsys[blset]->tssb[sph1->iband] = sph1->tssb;
 // loading online flagging information
 if(tsys[blset]->ipol < -4&&sph1->iband!=0) {
-     wts[inset]->wt[sph1->iband-1][-4-tsys[blset]->ipol][tsys[blset]->blsid][tsys[blset]->isb][tsys[blset]->irec] = sph1->wt; 
+     wts[inset]->wt[sph1->iband-1][-4-tsys[blset]->ipol][tsys[blset]->blsid][tsys[blset]->isb][tsys[blset]->irec] = (short) (sph1->wt/fabs(sph1->wt)); 
           }else {
          if(sph1->iband!=0)
- wts[inset]->wt[sph1->iband-1][-tsys[blset]->ipol][tsys[blset]->blsid][tsys[blset]->isb][tsys[blset]->irec] = sph1->wt;
-    }   
+ wts[inset]->wt[sph1->iband-1][-tsys[blset]->ipol][tsys[blset]->blsid][tsys[blset]->isb][tsys[blset]->irec] = (short) (sph1->wt/fabs(sph1->wt));
+    }  
 	if(smabuffer.highrspectra !=1){  
         if(sph1->iband==nspectra-1) blset++;
                                       } else {
@@ -2501,7 +2502,7 @@ smabuffer.w[blpnt] = uvwbsln[inhset]->uvwID[j].w/smabuffer.basefreq*1000.;
 	    smabuffer.polcode[ifpnt][polpnt][blpnt]=visSMAscan.blockID.polid;
                                                                   }
 	    smabuffer.pnt[ifpnt][polpnt][blpnt][sbpnt][rxpnt] = ipnt;
-        if(wts[inhset]->wt[ifpnt][polpnt][blpnt][sbpnt][rxpnt] < 0.)
+        if(wts[inhset]->wt[ifpnt][polpnt][blpnt][sbpnt][rxpnt] < 0)
             smabuffer.flag[ifpnt][polpnt][blpnt][sbpnt][rxpnt] = 0;
             if(smabuffer.highrspectra==1&&miriadsp[kk]==0)
             smabuffer.flag[ifpnt][polpnt][blpnt][sbpnt][rxpnt] = 0;
@@ -2679,6 +2680,7 @@ printf("warning: each of the empty chunks is padded with one flagged channel.\n"
                                    } 
     printf("Done with data conversion from mir to miriad!\n");
     free(spn);
+    free(bln);
     free(sph1);
     free(tsys);
     free(wts);
