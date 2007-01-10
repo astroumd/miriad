@@ -13,6 +13,10 @@
 //                empty chunks.
 // jhz 2006-5-18: change MAXCHAN from 7681 to 8217
 // jhz 2007-1-08: add chi2 to smlodd structure
+// jhz 2007-1-10: change wtt from float to short;
+//                change SMRX from 5 to 2;
+//                rx-id array 0(230), 1(340), 2(400), 3(690), 4(??)
+//                assume two rxs in simultaneous observation.
 #include "miriad.h"
 
 
@@ -310,14 +314,14 @@ struct anttsys {
 
 #define MAXSOURCE 50
 #define SMIF 24
-#define SMRX  5     /* number of rx per track operattion */ 
+#define SMRX  2     /* number of rx per track operattion */ 
 #define SMANT 10
 #define SMPOL 5 
 #define SMBAS 90   /* smant*(smant-1) */
 #define SMBIN 1
 #define SMSB  2    /* number of size bands */
 #define SMCONT 33
-#define CONTCH 16 /* number of continuum chan per chaunk */
+#define CONTCH 16 /* number of continuum chan per chunk */
 #define SMADATA 8294400 /* 24*maxchan*smbase */
 
 /* WORDS_BIGENDIAN comes from miriad's sysdep.h */
@@ -329,7 +333,7 @@ struct anttsys {
 #endif
 
 struct wtt {
-        float wt[SMIF][SMPOL][MAXBAS][SMSB][SMRX];
+        short wt[SMIF][SMPOL][MAXBAS][SMSB][SMRX];
             };
                                                                                               
 
