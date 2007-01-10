@@ -14,9 +14,8 @@
 // jhz 2006-5-18: change MAXCHAN from 7681 to 8217
 // jhz 2007-1-08: add chi2 to smlodd structure
 // jhz 2007-1-10: change wtt from float to short;
-//                change SMRX from 5 to 2;
+//                change SMRX from 5 to 4;
 //                rx-id array 0(230), 1(340), 2(400), 3(690), 4(??)
-//                assume two rxs in simultaneous observation.
 #include "miriad.h"
 
 
@@ -314,7 +313,7 @@ struct anttsys {
 
 #define MAXSOURCE 50
 #define SMIF 24
-#define SMRX  2     /* number of rx per track operattion */ 
+#define SMRX  4     /* number of rx per track operattion */ 
 #define SMANT 10
 #define SMPOL 5 
 #define SMBAS 90   /* smant*(smant-1) */
