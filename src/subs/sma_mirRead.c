@@ -1599,11 +1599,20 @@ if(sph1->blhid==tsys[blset]->blhid&&sph1->inhid==tsys[blset]->inhid) {
  tsys[blset]->tssb[sph1->iband] = sph1->tssb;
 // loading online flagging information
 if(tsys[blset]->ipol < -4&&sph1->iband!=0) {
+     if(fabs(sph1->wt) > 0)     {
      wts[inset]->wt[sph1->iband-1][-4-tsys[blset]->ipol][tsys[blset]->blsid][tsys[blset]->isb][tsys[blset]->irec] = (short) (sph1->wt/fabs(sph1->wt)); 
-          }else {
-         if(sph1->iband!=0)
+                      }else{
+        wts[inset]->wt[sph1->iband-1][-4-tsys[blset]->ipol][tsys[blset]->blsid][tsys[blset]->isb][tsys[blset]->irec] = -1;
+                         }
+         }else {
+         if(sph1->iband!=0) {
+        if(fabs(sph1->wt) > 0) {
  wts[inset]->wt[sph1->iband-1][-tsys[blset]->ipol][tsys[blset]->blsid][tsys[blset]->isb][tsys[blset]->irec] = (short) (sph1->wt/fabs(sph1->wt));
-    }  
+                               }else{
+        wts[inset]->wt[sph1->iband-1][-tsys[blset]->ipol][tsys[blset]->blsid][tsys[blset]->isb][tsys[blset]->irec] = -1;
+                       }
+                  }
+    }   
 	if(smabuffer.highrspectra !=1){  
         if(sph1->iband==nspectra-1) blset++;
                                       } else {
@@ -2340,6 +2349,7 @@ fprintf(stderr,"the spectral chunks skipped in the MIR data!\n");
 	  visSMAscan.blockID.polid = uvwbsln[inhset]->uvwID[j].ipol;
 	  sbpnt = visSMAscan.blockID.sbid;
 	  rxpnt = uvwbsln[inhset]->uvwID[j].irec;
+
    if(smabuffer.rxif==uvwbsln[inhset]->uvwID[j].irec||smabuffer.rxif==-1) 
         {
    switch(sbpnt) {
