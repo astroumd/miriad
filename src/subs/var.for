@@ -43,7 +43,7 @@ c    gmx  14may04 Added variable lefty (to indicate that y coordinate was
 c                 flipped from the original WSRT UVfits file)
 c    pjt  30jan06 added dazim,delev (CARMA specific)
 c    pjt  21nov06 added tcorr (ATNF, but CARMA and SMA are also defining it)
-c
+c    jhz  11jan07 added chi2 to the var list.
 c************************************************************************
 c*VarInit -- Initialise the copy routines.
 c:uv-data
@@ -100,7 +100,7 @@ c
 	integer i
 c
 	integer nvar,nline,nwide,nvelo
-	parameter(nvar=88,nline=10,nwide=3,nvelo=6)
+	parameter(nvar=89,nline=10,nwide=3,nvelo=6)
         character var(nvar)*8,line(nline)*8,wide(nwide)*8,velo(nvelo)*8
 c
 c  Variables to check for a change, for line=channel.
@@ -123,7 +123,7 @@ c
 	data var/     'airtemp ','antaz   ','antdiam ','antel   ',
      *	   'antpos  ','atten   ','axisrms ','bin     ','cable   ',
      *	   'chi     ','corbit  ','corbw   ','corfin  ','cormode ',
-     *	   'coropt  ','cortaper','dazim   ',
+     *	   'chi2    ','coropt  ','cortaper','dazim   ',
      *     'ddec    ','dec     ','deldec  ','delev'   ,
      *	   'delra   ','dewpoint','dra     ','epoch   ','evector ',
      *	   'focus   ','freq    ','freqif  ','inttime ','ivalued ',
