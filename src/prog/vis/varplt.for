@@ -68,6 +68,7 @@ c    rjs  10may05 Increase buffer size.
 c    rjs  26may05 Add pntra,pntdec to list of know variables.
 c    rjs  19jun05 More spaces in log file.
 c    rjs  01jan06 Added definition of ref pointing solution.
+c    jhz  11jan07 Added chi2 to the VarChar data array.
 c
 c  Bugs:
 c    ?? Perfect?
@@ -75,7 +76,7 @@ c------------------------------------------------------------------------
 	character version*(*)
 	integer MAXPNTS
 	parameter(MAXPNTS=1000000)
-	parameter(version='VarPlt: version 1.1 01-Jan-06')
+	parameter(version='VarPlt: version 1.1 11-Jan-06')
 	logical doplot,dolog,dotime,dounwrap
 	character vis*64,device*64,logfile*64,xaxis*16,yaxis*16
 	character xtype*1,ytype*1,xunit*16,yunit*16,calday*24
@@ -885,7 +886,7 @@ c  in the table.
 c
 	integer nvars
 	double precision rad2deg,rad2arc,rad2hr
-	parameter(nvars=65)
+	parameter(nvars=66)
 	parameter(rad2deg=180.d0/pi,rad2arc=3600.d0*rad2deg)
 	parameter(rad2hr=12.d0/pi)
 c
@@ -905,7 +906,7 @@ c
 	data cdim2s/'nants   ','nspect  ','ntemp   ','ntpower ',
      *	  'nwide   '/
 c
-	data (names(i),units(i),dim2s(i),scales(i),i=1,17)/
+	data (names(i),units(i),dim2s(i),scales(i),i=1,18)/
      *	  'airtemp ','Celsius ',	1, 1.d0,
      *	  'antdiam ','meters  ',	1, 1.d0,
      *	  'antpos  ','nanosec ',	3, 1.d0,
@@ -913,6 +914,7 @@ c
      *	  'axismax ','arcsec  ',    NANTS, 1.d0,
      *	  'axisrms ','arcsec  ',    NANTS, 1.d0,
      *	  'chi     ','degrees ',	1, rad2deg,
+     *    'chi2    ','degrees ',        1, rad2deg,
      *	  'coord   ','nanosec ',	1, 1.d0,
      *	  'corbw   ','GHz     ',	1, 1.d0,
      *	  'corfin  ','GHz     ',	1, 1.d0,
@@ -923,7 +925,7 @@ c
      *	  'epoch   ','years   ',	1, 1.d0,
      *	  'evector ','degrees ',	1, rad2deg,
      *	  'focus   ','volts   ',	1, 1.d0/
-	data (names(i),units(i),dim2s(i),scales(i),i=18,34)/	
+	data (names(i),units(i),dim2s(i),scales(i),i=19,35)/	
      *	  'freq    ','GHz     ',	1, 1.d0,
      *	  'freqif  ','GHz     ',	1, 1.d0,
      *	  'inttime ','seconds ',	1, 1.d0,
@@ -941,7 +943,7 @@ c
      *	  'phasem1 ','degrees ',	1, rad2deg,
      *	  'plangle ','degrees ',	1, 1.d0,
      *	  'plmaj   ','arcsec  ',	1, 1.d0/
-	data (names(i),units(i),dim2s(i),scales(i),i=35,53)/
+	data (names(i),units(i),dim2s(i),scales(i),i=36,54)/
      *	  'plmin   ','arcsec  ',	1, 1.d0,
      *	  'pltb    ','Kelvin  ',	1, 1.d0,
      *	  'pntdec  ','degrees ',	1, rad2deg,
@@ -961,7 +963,7 @@ c
      *	  'ut      ','hours   ',	1, rad2hr,
      *	  'veldop  ','km/sec  ',	1, 1.d0,
      *	  'vsource ','km/sec  ',	1, 1.d0/
-	data (names(i),units(i),dim2s(i),scales(i),i=54,nvars)/
+	data (names(i),units(i),dim2s(i),scales(i),i=55,nvars)/
      *	  'wfreq   ','GHz     ',	1, 1.d0,
      *	  'wind    ','km/h    ',        1, 1.d0,
      *    'winddir ','degrees ',        1, 1.d0,
