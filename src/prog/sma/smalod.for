@@ -308,12 +308,14 @@ c    jhz 09-aug-06 changed a typo in line 346
 c    jhz 29-dec-06 implemented handling 400 rx
 c    jhz 04-jan-07 implemented reading projectInfo fil
 c    jhz 08-jan-07 store chi and chi2
-c    jhz 08-jan-07 remove mount=0; back to mount=4
+c    jhz 08-jan-07 remove mount=0; back to mount=4 or
+c                  sma/mount =  NASMYTH
+c    jhz 10-jan-07 add evector
 c------------------------------------------------------------------------
         integer maxfiles
         parameter(maxfiles=128)
         character version*(*)
-        parameter(version='SmaLod: version 2.2 08-Jan-07')
+        parameter(version='SmaLod: version 2.2 10-Jan-07')
 c
         character in(maxfiles)*64,out*64,line*64, rxc*4
         integer tno, length, len1
@@ -691,21 +693,25 @@ cc jhz 2004-6-7: change at -> sm for the parameter
 cc smif = 48
 cc smant = 8
 
-        double precision lat,long
-        double precision lat1, long1
-        logical ok
+        double precision dtemp
+        double precision lat1,long1,evec1
+        logicAl ok
 cc jhz
         kstat=1;
-        call obspar('SMA','latitude', lat, ok)
-          lat1=lat
+        call obspar('SMA','latitude', dtemp, ok)
+        lat1=dtemp
         if(.not.ok)call bug('f','Could not get SMA latitude')
-        call obspar('SMA','longitude',long,ok)
-          long1=long
+        call obspar('SMA','longitude',dtemp,ok)
+        long1=dtemp
         if(.not.ok)call bug('f','Could not get SMA longitude')
+        call obspar('SMA','evector',dtemp,ok)
+        evec1 = dtemp
+        if(.not.ok)call bug('f','Could not get SMA evector')
+
 c
         call rspokeinisma(kstat,tno1,dosam1,doxyp1,doop1,
      *  dohann1,birdie1,dowt1,dopmps1,dobary1,doif1,hires1,
-     *  nopol1,circular1,linear1,oldpol1,lat1,long1,rsnchan1,
+     *  nopol1,circular1,linear1,oldpol1,lat1,long1,evec1,rsnchan1,
      *  refant1,dolsr1,rfreq1,vsour1,antpos1,readant1,noskip1,
      *  spskip1,dsb1,mcconfig1,nohighspr1)
         end
