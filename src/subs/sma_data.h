@@ -16,6 +16,7 @@
 // jhz 2007-1-10: change wtt from float to short;
 //                change SMRX from 5 to 4;
 //                rx-id array 0(230), 1(340), 2(400), 3(690), 4(??)
+// jhz 2007-1-11: add evec to smlodd structure.
 #include "miriad.h"
 
 
@@ -526,6 +527,7 @@ struct smlodd {
         double obsdec;
         double lat;
         double longi;
+        double evec;
         double ra;
         double dec;
         double el[SMANT+1];
