@@ -190,6 +190,7 @@
 //                  name.
 // 2007-01-08 (JHZ) store chi and chi2
 // 2007-01-10 (JHZ) change wtt from float to short
+// 2007-01-11 (JHZ) add evector to smabuffer.
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -243,16 +244,23 @@ struct inh_int_def {
 
 void rsmirread_c(char *datapath, char *jst[]);
 void rsmiriadwrite_c(char *datapath, char *jst[]);
-void rssmaflush_c(int scanskip, int scanproc, int sb, int rxif, int dosporder, int doeng, int doflppha);
-void rspokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1, int *doop1, int *dohann1, 
-int *birdie1, int *dowt1, int *dopmps1, int *dobary1, int *doif1, int *hires1, int *nopol1, 
-int *circular1, int *linear1, int *oldpol1, double lat1, double long1, int rsnchan1, 
-int refant1, int *dolsr1, double rfreq1, float *vsour1, double *antpos1, int readant1, 
-int *noskip1, int *spskip1, int *dsb1, int*mcconfig1, int*nohighspr);
+void rssmaflush_c(int scanskip, int scanproc, int sb, int rxif, 
+    int dosporder, int doeng, int doflppha);
+void rspokeinisma_c(char *kst[], int tno1, 
+    int *dosam1, int *doxyp1, int *doop1, int *dohann1, 
+    int *birdie1, int *dowt1, int *dopmps1, 
+    int *dobary1, int *doif1, int *hires1, int *nopol1, 
+    int *circular1, int *linear1, int *oldpol1, 
+    double lat1, double long1, double evec1, int rsnchan1, 
+    int refant1, int *dolsr1, double rfreq1, float *vsour1, 
+    double *antpos1, int readant1, int *noskip1, int *spskip1, 
+    int *dsb1, int*mcconfig1, int*nohighspr);
 void rspokeflshsma_c(char *kst[]);
 
 
-int rsgetdata(float smavis[2*7681], int smaflags[7681], int *smanchan, int p, int bl, int sb, int rx);
+int rsgetdata(float smavis[2*7681], 
+    int smaflags[7681], int *smanchan, 
+    int p, int bl, int sb, int rx);
 struct pols *rscntstokes(int npol, int bl, int sb, int rx);
 int rsmir_Read(char *datapath, int jstat);
 struct inh_def *inh_read(FILE *fpinh);
@@ -268,15 +276,19 @@ char *decr2c(double dec);
 int spdecode(struct codeh_def *specCode[]);
 float juliandate(struct codeh_def *refdate[],int doprt);
 double slaCldj(int iy, int im, int id, int sj);
-void precess(double jday1, double ra1, double dec1, double jday2, double *ra2pt, double *dec2pt);
-void nutate(double jday, double rmean, double dmean, double *rtrueptr, double *dtrueptr);
+void precess(double jday1, double ra1, double dec1, 
+     double jday2, double *ra2pt, double *dec2pt);
+void nutate(double jday, double rmean, double dmean, 
+     double *rtrueptr, double *dtrueptr);
 void nuts(double jday, double *dpsiptr, double *depsptr);
 double mobliq(double jday);
-void aberrate(double jday, double ra, double dec, double *rappptr, double *dappptr);
+void aberrate(double jday, double ra, double dec, 
+     double *rappptr, double *dappptr);
 void vearth(double jday, double pos[3], double vel[3]);
 void elazchi(int tno);
 void tsysStore(int tno);
-double velrad(short dolsr, double time, double raapp, double decapp, double raepo, double decepo, double lst, double lat);
+double velrad(short dolsr, double time, double raapp, 
+     double decapp, double raepo, double decepo, double lst, double lat);
 struct lmn *sph2lmn(double ra, double dec);
 struct vel *vsite(double phi, double st);
 void vsun(double *VEL);
@@ -344,9 +356,12 @@ void rssmaflush_c(int scanskip,int scanproc,int sb,int rxif,int dosporder,int do
 }
 
 void rspokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1,
-		    int *doop1, int *dohann1, int *birdie1, int *dowt1, int *dopmps1,
-		    int *dobary1, int *doif1, int *hires1, int *nopol1, int *circular1,
-		    int *linear1, int *oldpol1, double lat1, double long1, int rsnchan1, 
+		    int *doop1, int *dohann1, 
+                    int *birdie1, int *dowt1, int *dopmps1,
+		    int *dobary1, int *doif1, int *hires1, 
+                    int *nopol1, int *circular1,
+		    int *linear1, int *oldpol1, double lat1, 
+                    double long1, double evec1, int rsnchan1, 
 		    int refant1, int *dolsr1, double rfreq1, float *vsour1,
 		    double *antpos1, int readant1, int *noskip1, int *spskip1,
 	            int *dsb1, int *mcconfig1, int *nohighspr1)
@@ -372,6 +387,7 @@ void rspokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1,
   smabuffer.oldpol = *oldpol1;
   smabuffer.lat    = lat1;
   smabuffer.longi  = long1;
+  smabuffer.evec   = evec1;
   smabuffer.refant = refant1;
   smabuffer.dolsr  = *dolsr1;
   smabuffer.noskip = *noskip1;
@@ -3545,7 +3561,8 @@ void elazchi(int tno) {
   int i;
   double mel, maz;
   double sinq,cosq,ha;
-  float chi, chi2;
+  double sinha,cosha,sind,cosd,sinl,cosl,elev;
+  float chi, chi2, evec;
   mel=0;
   maz=0;
 
@@ -3572,19 +3589,32 @@ void elazchi(int tno) {
     // chi:             Parallatic angle (radians)
     // chi2:            chi2=-el
     // smabuffer.chi = evec + chi + chi2
-    // evec = 0 for sma; smabuffer.chi = chi + chi2 = chi - el
-        ha = smabuffer.lst - smabuffer.obsra;
+    // evec = 0? for sma; smabuffer.chi = chi + chi2 = chi - el
+//        printf("lst=%f obsra=%f lat=%f obsdec=%f el=%f\n", 
+//        smabuffer.lst,
+//        smabuffer.obsra,
+//        smabuffer.lat,
+//        smabuffer.obsdec,
+//        smabuffer.el[1]);
+        evec = (float) smabuffer.evec;
+          ha = smabuffer.lst - smabuffer.obsra;
         sinq = cos(smabuffer.lat)*sin(ha);
         cosq = sin(smabuffer.lat)*cos(smabuffer.obsdec) - 
                cos(smabuffer.lat)*sin(smabuffer.obsdec)*cos(ha);
         chi  = (float) atan2(sinq,cosq);
-        for (i=0; i<smabuffer.nants; i++) {
-        chi2 = (float) smabuffer.el[i];
-        smabuffer.chi2[i] = -chi2;
-        smabuffer.chi[i] = chi-chi2;
-        }
-    uvputvrr_c(tno,"chi",&smabuffer.chi,smabuffer.nants);
-    uvputvrr_c(tno,"chi2",&smabuffer.chi2,smabuffer.nants);
+// uvredo: for Nasmyth SMA Needs to be modified by elev
+// uncertainty in elev is 0.0001 radians.
+       sinha = sin(ha);
+       cosha = cos(ha);
+        sind = sin(smabuffer.obsdec);
+        cosd = cos(smabuffer.obsdec);
+        sinl = sin(smabuffer.lat);
+        cosl = cos(smabuffer.lat);
+        elev = asin(sinl*sind+cosl*cosd*cosha);
+          chi  = evec + chi - (float) elev;
+          chi2 =      (float) (-elev);
+      uvputvrr_c(tno,"chi", &chi,1);
+      uvputvrr_c(tno,"chi2",&chi2,1);
     } else {
      fprintf(stderr,"WARNING: nants=0; skip this scan. \n"); 
     }
