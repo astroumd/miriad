@@ -5,6 +5,7 @@
 /*                          rspokeinisma                                */
 /*   03-feb-2006   jhz      added dsb1 to  rspokeinisma_c               */
 /*   18-may-2006   jhz      added nohighspr1 to rspokeinisma_c          */
+/*   10-jan-2007   jhz      added evec to rspokeinisma_c                */
 /************************************************************************/
 #include <string.h>
 #include "miriad.h"
@@ -56,7 +57,8 @@ fortran subroutine rspokeinisma(integer tbd, integer tno1,
  logical dohann1, logical birdie1, logical dowt1,
  logical dopmps1, logical dobary1, logical doif1,
  logical hires1, logical nopol1, logical circular1, 
- logical linear1, logical oldpol1, double lat1, double long1, 
+ logical linear1, logical oldpol1, 
+ double lat1, double long1, double evec1,
  integer rsnchan1, integer refant1, logical dolsr1, 
  double rfreq1, real vsour1, double antpos1, integer readant1,
  logical noskip1, integer spskip1, logical dsb1, logical mcconfig1,
@@ -66,7 +68,8 @@ fortran subroutine rspokeinisma(integer tbd, integer tno1,
           dosam1.addr, doxyp1.addr, doop1.addr, dohann1.addr,
           birdie1.addr, dowt1.addr, dopmps1.addr, dobary1.addr,
           doif1.addr, hires1.addr, nopol1.addr, circular1.addr,
-          linear1.addr, oldpol1.addr, lat1.val, long1.val, rsnchan1.val,
+          linear1.addr, oldpol1.addr, lat1.val, long1.val, 
+          evec1.val, rsnchan1.val,
           refant1.val, dolsr1.addr, rfreq1.val, vsour1.addr,
 	  antpos1.addr, readant1.val, noskip1.addr, spskip1.addr,
 	  dsb1.addr, mcconfig1.addr, nohighspr1.addr);
