@@ -38,6 +38,8 @@ c    mchw 07jul04 Added SMA10 and SZA6 cross correlations for CARMA.
 c    pjt  24sep04 Final location of CARMA at Cedar Flats
 c    dm/jhz 23sep05 Corrected JyperK and MOUNT for SMA entries
 c    mchw 07jul04 updated CARMA longitude and latitude to station 32
+c    jhz  12jan07 deleted sma/ew entry; corrected the value of 
+c                 sub-reflector dismeter.
 c************************************************************************
 c* ObsPrint -- Print list of known observatories.
 c: utility
@@ -102,7 +104,7 @@ c						 1   equitorial
 c                                                3   xy-ew
 c                                                4   nasmyth
 c		 'antdiam'	Antenna diameter, in meters.
-c		 'subdiam'	Subreflector diameter.
+c		 'subdiam'	Subreflector diameter, in meters.
 c		 'height'	Height above sea level, in meters
 c		 'ew'		Positive if the telescope is an E-W array.
 c	         'nants'        Number of antennas normally in the array.
@@ -425,7 +427,6 @@ c
 c Reference:  Todd Hunter  Log#7242
         call obsad('sma/ellimit',      14.0*dpi/180.d0)
         call obsad('sma/evector',      0.25*dpi)
-        call obsad('sma/ew',           1.d0)
 	call obsad('sma/height',	4080.0d0)
 c frequency dependent - but clearly one of these two is the better one
         call obsad('sma/jyperk',        130.d0)
@@ -437,7 +438,7 @@ c the polarization undergoes an extra rotation through the elevation
 c axis.
 	call obsad('sma/mount',	        NASMYTH)
 	call obsad('sma/nants',	        8.0d0)
-        call obsad('sma/subdiam',      2.8d0)
+        call obsad('sma/subdiam',      0.35d0)
         call obsad('sma/systemp',      200.d0)
 
 c
