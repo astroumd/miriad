@@ -76,7 +76,7 @@ c------------------------------------------------------------------------
 	character version*(*)
 	integer MAXPNTS
 	parameter(MAXPNTS=1000000)
-	parameter(version='VarPlt: version 1.1 11-Jan-06')
+	parameter(version='VarPlt: version 1.1 11-Jan-07')
 	logical doplot,dolog,dotime,dounwrap
 	character vis*64,device*64,logfile*64,xaxis*16,yaxis*16
 	character xtype*1,ytype*1,xunit*16,yunit*16,calday*24
