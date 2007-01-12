@@ -24,8 +24,8 @@ c    26jun97 rjs  Correct channel numbering when there are multiple
 c		  windows and bandpass averaging taking place.
 c    10dec97 rjs  Check gain table size is correct.
 c    24feb97 rjs  Make "bandpass calibration" work for wide-only files.
-c    21feb02 mchw Fix uvGnFac for > 256 antennas.
-c     4jan05 pjt  Merged in RJS's grms code for uvdat
+c    01jan05 rjs  Double precision baselines and use basant.
+c    08jan07 rjs  Use MAXWIN more rigorously.
 c************************************************************************
 	subroutine uvGnIni(tno1,dogains1,dopass1)
 	implicit none
@@ -230,8 +230,8 @@ c
 	integer nread
 	complex data(nread)
 	logical flags(nread),dowide
-	double precision time, dbaseline
-	real baseline,grms
+	double precision time,baseline
+	real grms
 	integer pol
 c
 c  Determine the gain factor for a particular visibility.
@@ -285,8 +285,7 @@ c
 c
 c  Determine the gain indices based on antenna numbers.
 c
-	dbaseline = baseline
-	call basant(dbaseline,ant1,ant2)
+	call basant(baseline,ant1,ant2)
 	if(ant1.lt.1.or.ant1.gt.nants.or.ant2.lt.1.or.ant2.gt.nants)
      *	  goto 100
 c
@@ -892,8 +891,9 @@ c    pDat,nDat
 c    pFlags
 c    pFreq,nFreq
 c------------------------------------------------------------------------
+	include 'maxdim.h'
 	integer MAXSPECT
-	parameter(MAXSPECT=32)
+	parameter(MAXSPECT=MAXWIN)
 	integer nspect0,nschan0(MAXSPECT)
 	double precision sfreq0(MAXSPECT),sdf0(MAXSPECT)
 	double precision swidth0(MAXSPECT)
@@ -901,7 +901,6 @@ c------------------------------------------------------------------------
 c
 c  Dynamic memory commons.
 c
-	include 'maxdim.h'
 	logical lref(MAXBUF)
 	double precision dref(MAXBUF/2)
 	complex cref(MAXBUF/2)
@@ -1006,6 +1005,7 @@ c    sdf	Frequency increment between each output channel.
 c    swidth	Bandwidth of each output channel.
 c    nschan	Number of channels in each window.
 c------------------------------------------------------------------------
+	include 'maxdim.h'
 	integer LINE,WIDE,VELO
 	parameter(LINE=1,WIDE=2,VELO=3)
 	integer TYPE,COUNT,START,WIDTH,STEP
@@ -1014,7 +1014,7 @@ c------------------------------------------------------------------------
 	double precision data(6)
 c
 	integer MSPECT1
-	parameter(MSPECT1=32)
+	parameter(MSPECT1=MAXWIN)
 	double precision sfreq0(MSPECT1),sdf0(MSPECT1)
 	real wfreq(MSPECT1),wwidth(MSPECT1)
 	integer nschan0(MSPECT1),nspect0,maxspect
@@ -1118,8 +1118,9 @@ c
 c  Match up the data with the measured bandpass functions.
 c
 c------------------------------------------------------------------------
+	include 'maxdim.h'
 	integer MAXSPECT
-	parameter(MAXSPECT=32)
+	parameter(MAXSPECT=MAXWIN)
 	integer i,j,k,l,ibeg,iend,n,win(MAXSPECT),ischan(MAXSPECT),off
 	integer i0
 	double precision startt,endt,startd,endd,width
