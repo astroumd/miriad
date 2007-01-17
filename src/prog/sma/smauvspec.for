@@ -200,6 +200,7 @@ c    jhz 16nov05  fixed a bug in spectral channel pointer in the pghline
 c                 when hybrid spectral channel numbers used in the spectral 
 c                 windows.
 c    pjt 16mar06  intel compiler fix, use mirconst.h, use 'implicit none'
+c    jhz 17jan07  fixed a bug in ylabel in the case of bothA&B.
 c  Bugs:
 c------------------------------------------------------------------------
         include 'maxdim.h'
@@ -213,7 +214,7 @@ c
         character mname*8000, moln*16
         integer mtag(maxmline), nmline, j, jp, js, je, iline
         character version*(*)
-        parameter(version='SmaUvSpec: version 1.13 16-mar-06')
+        parameter(version='SmaUvSpec: version 1.14 17-jan-07')
         character uvflags*8,device*64,xaxis*12,yaxis*12,logf*64
         character xtitle*64,ytitle*64, veldef*8
         character xtitlebuf*64
@@ -343,13 +344,6 @@ c
               molname(iline)=moln
            end do
            nmol= nmline
-c     
-c  check
-c
-c               do i=1, nmol
-c               write(*,*) 'moltag', moltag(i),' molname   ', molname(i) 
-c               end do
-c               write(*,*) 'nmol=', nmol
         end if
 c
 c  Check the input parameters.
@@ -814,7 +808,6 @@ c
         doreal  = ytitle.eq.'Real'
         doimag  = ytitle.eq.'Imaginary'
         doboth  = ytitle.eq.'BothA&P'
-c        if(doboth) ytitle=''
 c
 c  Determine the number of good baselines.
 c
@@ -1372,9 +1365,6 @@ c
          if(doboth) yranged(1) = yranged(1)-0.5*pscale
          call pgswin(xrange(1),xrange(2),yranged(1),yranged(2))
          if(doboth) yranged(1) = yranged(1)+0.5*pscale
-cc          yrange(2)=yranged(2)
-cc          yrange(1)=yranged(1)
-          
       else
          pscale= (yrange(2)-yrange(1))
          pline = yrange(1)
@@ -1407,7 +1397,6 @@ c   rescale the phase for plotting both
          end do
           
          call  pgsci(i)
-c        call pgsci(mod(i-1,ncol)+1)
          if(dopoint)then
             call pgpts(plot(i+1)-plot(i),xp(plot(i)),yp(plot(i)),symbol,
      *           sppntr)
@@ -1486,11 +1475,20 @@ c
       l = len1(title)
       xl = len1(xtitle)
       yl = len1(ytitle)
-c     
+c    
+          write(*,*) ytitle(1:yl) 
       if(npol.eq.1)then
+         if(ytitle(1:yl)=='BothA&P') then
+         call pglab(xtitle(1:xl),' ',title(1:l))
+                                    else
          call pglab(xtitle(1:xl),ytitle(1:yl),title(1:l))
+         end if
       else
-         call pglab(xtitle(1:xl),ytitle(1:yl),' ')
+          if(ytitle(1:yl)=='BothA&P') then
+          call pglab(xtitle(1:xl),' ',' ')
+                                       else
+          call pglab(xtitle(1:xl),ytitle(1:yl),' ')
+          end if
          call pglen(5,title(1:l),xlen,ylen)
          xloc = 0.5 - 0.5*xlen
 c     
@@ -1643,7 +1641,6 @@ c
         symbol=2
         yloc=0.95
         call pgbbuf
-c        start = 1+(startchunk-1)*nspect
           start=1
           if (startchunk.gt.1) then
           do i=1, startchunk
@@ -1753,7 +1750,6 @@ c          plot phase
           if(docat) then
       fmn  = minf
       fmx  = maxf
-c      strl = -500
           call  pgsci(2)
        if(abs(lsrvel).lt.1000) then
        if(veltype(6:6).eq.'L') 
