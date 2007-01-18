@@ -1476,7 +1476,6 @@ c
       xl = len1(xtitle)
       yl = len1(ytitle)
 c    
-          write(*,*) ytitle(1:yl) 
       if(npol.eq.1)then
          if(ytitle(1:yl)=='BothA&P') then
          call pglab(xtitle(1:xl),' ',title(1:l))
