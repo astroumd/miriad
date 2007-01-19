@@ -18,6 +18,7 @@ set src=mirlib                #  local subdirectory name in which mirlib is buil
 set lib=/dev/null
 set inc=/dev/null
 set bin=/dev/null
+set suffix=""
 
 # poor mans command line parser
 foreach _a ($*)
@@ -66,20 +67,30 @@ if ($tar) then
   tar zcf $src.tar.gz $src
   rm -rf $src
 else
+  # set library file name stem
+  set libmirstem="libmir${suffix}"
+
+  # compile
   echo Compiling in $src
   foreach f ($subs)
     $cc $cflags -c $f
   end
-  ar ruv libmir.a *.o
+
+  # create static library
+  echo Creating ${libmirstem}.a
+  ar ruv ${libmirstem}.a *.o
+
+  # create shared library
+  echo Creating ${libmirstem}.so
   #  ld -shared -o libmir.so --whole-archive libmir.a
   # $cc -shared -o libmir.so --whole-archive libmir.a
-  $cc -shared -o libmir.so *.o
-  $cc $cflags -DTESTBED -o uvio uvio.c libmir.a -lm
+  $cc -shared -o ${libmirstem}.so *.o
+  $cc $cflags -DTESTBED -o uvio uvio.c ${libmirstem}.a -lm
 
   #  install
   set null=/dev/null
   if ($bin != $null) cp uvio     $bin
-  if ($lib != $null) cp libmir.a $lib
+  if ($lib != $null) cp libmir.a libmir.so $lib
   if ($inc != $null) cp miriad.h sysdep.h $inc
 endif
 
