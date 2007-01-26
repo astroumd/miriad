@@ -58,7 +58,7 @@ c------------------------------------------------------------------------
 	integer MAXVIS,MAXPOL
 	parameter(MAXVIS=1000000,MAXPOL=4)
 	character version*(*)
-	parameter(version='tmcvt: version 1.0 08-Jan-07')
+	parameter(version='tmcvt: version 1.0 26-Jan-07')
 c
 	integer npol,pols(MAXPOL)
 	logical dopol,docal,dopass
@@ -396,7 +396,7 @@ c
 c
 c------------------------------------------------------------------------
 	integer RR,LL,RL,LR,XX,YY,XY,YX
-	parameter(RR=1,LL=2,RL=3,LR=4,XX=1,YY=1,XY=3,YX=4)
+	parameter(RR=1,LL=2,RL=3,LR=4,XX=1,YY=2,XY=3,YX=4)
 	integer StokesI,StokesQ,StokesU,StokesV
 	parameter(StokesI=1,StokesQ=2,StokesU=3,StokesV=4)
 	include 'tmcvt.h'
