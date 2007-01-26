@@ -7,6 +7,7 @@ c& mchw
 c: calibration
 c+
 c	Gpedit is a MIRIAD task which modifies calibration tables.
+c       See also:  GPLIST
 c@ vis
 c	The input visibility file, containing the gain file to modify.
 c	No default.
