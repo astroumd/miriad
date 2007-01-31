@@ -58,7 +58,7 @@
 %  nband - appears to be CARMA's Control.SpectralLineCorrelator.numBands (but it's 8, not 6=nspect)
 %  tcorr - for ATNF systemp calibration, ATNF used.
 
-\newcommand{\uvversion}{November 21, 2006}
+\newcommand{\uvversion}{January 31, 2007}
 
 A \miriad\ uv dataset is composed of a collection of items and `\MM{u-v} variables'.
 The variables are parameters that are known at the time of the observation,
@@ -81,7 +81,7 @@ vartable    & text    & lookup table for all uv variables (do not edit!) \\
 visdata     & mixed   & data stream of uv variables \\ \hline
 flags       & integer & optional flags for narrowband data \\
 wflags      & integer & optional flags for wideband data \\ \hline
-gains       & mixed   & antenna gain table \\
+gains       & mixed   & antenna gain table (delete this item to disable gain table)\\
 nfeeds	    & integer & number of feeds on each antenna \\
 ntau	    & integer & Number of delay/spectral index terms per antenna\\
 	    &	      & in `gains' \\
@@ -155,7 +155,7 @@ antel(nants)    \>D    \>deg.
 \> elevation of antennas\\
 
 antpos(nants, 3) \>D    \>nanosec
-\>Antenna equatorial coordinates\\
+\>Antenna equatorial coordinates, in a local, not greenwhich based, system \\
 
 atten(nants)   \>I     \>dB
 \> Attenuator setting (Hat Ck)\\
@@ -351,6 +351,10 @@ longitu		\>D	\>radians
 lst		\>D     \>radians
 \> Local apparent sidereal time.\\
 
+modedesc         \>A     \>-
+\> Correlator mode description (CARMA only) \\
+\>\>\>\ Example: 500-32-8-X-X-X-X-X \\
+
 mount		\>I	\>-
 \> The type of antenna mounts. \\
 \ or mount(nants)\>\>\>If only one value is given, all antennas\\
@@ -535,7 +539,7 @@ rmspath		\>R     \>\%
 \>RMS path variation (Hat Ck)\\
 
 sctype	\>A	\>-
-\> Scan type (ATNF?)\\
+\> Scan type (ATCA?)\\
 
 sdf(nspect)	\>D	\>GHz	
 \> Change in frequency per channel\\
@@ -628,7 +632,7 @@ wfreq(nwide)	\>R	\>GHz
 \> Wideband correlation average frequencies\\
 
 wind		\>R     \>km/h
-\> Wind speed in km/h (ATNF)\\
+\> Wind speed in km/h (ATCA)\\
 
 winddir		\>R     \>deg
 \>Wind direction\\
