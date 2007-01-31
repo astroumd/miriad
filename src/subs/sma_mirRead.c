@@ -191,6 +191,8 @@
 // 2007-01-08 (JHZ) store chi and chi2
 // 2007-01-10 (JHZ) change wtt from float to short
 // 2007-01-11 (JHZ) add evector to smabuffer.
+// 2007-01-31 (JHZ) changed source length limit from
+//                  8 characters to 16.
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -724,7 +726,7 @@ int rsmir_Read(char *datapath, int jstat)
   int file,nfiles = 6;
   int headerbytes[6];
   smEng **smaEngdata;
-  int i,j,k,l,m,i0;
+  int i,j,k,l,m,i0,i1;
   int kk,iinset,lastinset,ireset,reset_id[10];
   unsigned long imax,bytepos,nbytes,datalength;
   long *data_start_pos;
@@ -1475,43 +1477,46 @@ double xyzpos;
     if(cdh[set]->v_name[0]=='s'&&cdh[set]->v_name[1]=='o') {
         sourceID = cdh[set]->icode;
 // parsing the source name and trim the junk tail
-	for(i=0; i<9; i++) {
+	for(i=0; i<17; i++) {
 	  sours[i]=cdh[set]->code[i];
-	  if(cdh[set]->code[i]==32||cdh[set]->code[i]==0||i==8)
+	  if(cdh[set]->code[i]==32||cdh[set]->code[i]==0||i==16)
 	    sours[i]='\0';
-	                   }
-           sprintf(multisour[sourceID].name, "%s", sours);
+                  }
+// copy source name to the multiple source array with source ID
+// as the array argument 
+          sprintf(multisour[sourceID].name, "%s", sours);
+// now check up if the new sours name has been used in the
+// multiple source array
           for(i=2; i< sourceID; i++) {
           if(strcmp(multisour[i].name, sours)==0) {
+// if the name has been used then the last character need to be changed
 // copy the original source name to smasours
-          for(i=0; i<33; i++) {
-          smasours[i]=cdh[set]->code[i];
-          if(cdh[set]->code[i]==32||cdh[set]->code[i]==0||i==32)
+          for(i1=0; i1<33; i1++) {
+          smasours[i1]=cdh[set]->code[i1];
+          if(cdh[set]->code[i1]==32||cdh[set]->code[i1]==0||i1==32)
             smasours[i]='\0';
                               }
          
           oka=okb=okc=okd=0;
-          for(i=2; i< sourceID; i++) {
-          if(multisour[sourceID].name[7]=='a') oka=-1;
-          if(multisour[sourceID].name[7]=='b') okb=-1;
-          if(multisour[sourceID].name[7]=='c') okc=-1;
-          if(multisour[sourceID].name[7]=='d') okd=-1; 
-                                     }
-          if(oka==0) {  sours[7]='a';
+          if(multisour[sourceID].name[15]=='a') oka=-1;
+          if(multisour[sourceID].name[15]=='b') okb=-1;
+          if(multisour[sourceID].name[15]=='c') okc=-1;
+          if(multisour[sourceID].name[15]=='d') okd=-1; 
+          if(oka==0) {  sours[15]='a';
           sprintf(multisour[sourceID].name, "%s", sours);
                      } else {           
-          if(okb==0)   {sours[7]='b';
+          if(okb==0)   {sours[15]='b';
           sprintf(multisour[sourceID].name, "%s", sours);
                        } else {
-          if(okc==0)  {sours[7]='c';
+          if(okc==0)  {sours[15]='c';
           sprintf(multisour[sourceID].name, "%s", sours);
                       } else {
-          if(okd==0) {sours[7]='d';
+          if(okd==0) {sours[15]='d';
           sprintf(multisour[sourceID].name, "%s", sours);              
-                              }
-                              }
-                           }
-                                                   }
+                     }
+                             }
+                               }
+                             }
 
     fprintf(stderr,"Warning: The original name: '%s' is renamed to '%s'\n", 
     smasours, multisour[sourceID].name);
@@ -2170,8 +2175,9 @@ dat2003:
         if(((strncmp(multisour[sourceID].name,target,6)!=0)&&
         (strncmp(multisour[sourceID].name,unknown,7)!=0))||
           smabuffer.noskip==1) {
-	char sour[9];
-	strncpy(sour, multisour[sourceID].name, 9);
+// jhz source
+	char sour[17];
+	strncpy(sour, multisour[sourceID].name, 17);
 // uvputvra_c(tno,"source",multisour[sourceID].name);
         uvputvra_c(tno,"source", sour);
 	uvputvrd_c(tno,"ra",&(smabuffer.ra),1);
