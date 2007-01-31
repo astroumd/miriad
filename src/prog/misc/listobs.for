@@ -16,6 +16,7 @@ c	observed is compiled.  The primary use of this program is to
 c	create a summary of the instrument setup and all observations
 c	made during a track.  Use wild cards or an include file to specify
 c	all files relevent for your observations.
+c       Scans are reported where source name, tsys, focus were changed.
 c< vis
 c< time
 c	Takes value "ut" or "lst" to print time as UT or LST (default: ut)
@@ -65,6 +66,8 @@ c          12-jul-06 pjt handle blank vis= correctly
 c          29-aug-06 dnf changed output format so that all active antennas
 c                        are listed with the system temperature listing
 c           2-jan-07 pjt list local (ENU) antenna positions as well as XYZ
+c          31-jan-07 pjt one more HatCreek dependancy removed (lat) - Elev now correct
+
 c-----------------------------------------------------------------------
 	include 'mirconst.h'
         include 'caldefs.h'
@@ -72,7 +75,7 @@ c-----------------------------------------------------------------------
         include 'listobs.h'
 c
 	character pversion*10
-	parameter (pversion = '3-jan-07')
+	parameter (pversion = '31-jan-07')
 c
         integer ipt,nfiles,uvflag,order(MAXP),nameidx(100),nnames
         integer isys(MAXANT),i,uvscan,j,ii,jj,ipicked,ifix
@@ -462,7 +465,7 @@ c
         include 'listobs.h'
 
 	integer tin,ipt,iants,j,i,length
-	double precision utdouble,dlst,dlinef,dlo1,dif,draobs,
+	double precision utdouble,dlst,dlinef,dlo1,dif,lat,draobs,
      1                   ddecobs
 	real cbw(MAXSPECT/2),systemps(MAXSPECT*MAXANT)
         real cfreq(MAXSPECT/2),haobs,decobs,sum
@@ -531,6 +534,7 @@ c  the following was changed to accomodate CARMA data
 	call uvrdvrd(tin,'freqif',dif,0.d0)
 	call uvrdvrd(tin,'obsra',draobs,0.d0)
 	call uvrdvrd(tin,'obsdec',ddecobs,0.d0)
+        call uvrdvrd(tin,'latitud',lat,0.0d0)
 
 c
 c   Process the variables that need it
@@ -564,7 +568,7 @@ c
 	flo(ipt)      = dlo1
 	haobs = dlst - draobs
 	decobs = ddecobs
-	call CalElev(haobs,decobs,el(ipt))
+	call CalElev(haobs,decobs,el(ipt),REAL(lat))
 	el(ipt) = 57.29578 * el(ipt)
 	return
 	end
@@ -587,17 +591,14 @@ c
 	return
 	end
 c-----------------------------------------------------------------------
-	subroutine CalElev(ha,decl,elev)
+	subroutine CalElev(ha,decl,elev,lat)
 c
 c    Calculates the source Elevation from the source hour angle (HA)
 c    and declination (DECL) assuming the latitude of Hat Creek.
 c    HA, DECL, and ELEV are all in radians.
 c
 	real ha,decl,elev,lat,dummy
-c
-c    Assuming Hat Creek Latitude = 40 deg
-	parameter (lat = 0.6981)
-c
+
 	dummy = sin(decl)*sin(lat) + 
      1          cos(decl)*cos(ha)*cos(lat)
 	elev  = asin(dummy)
