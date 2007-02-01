@@ -44,6 +44,7 @@ c                 flipped from the original WSRT UVfits file)
 c    pjt  30jan06 added dazim,delev (CARMA specific)
 c    pjt  21nov06 added tcorr (ATNF, but CARMA and SMA are also defining it)
 c    jhz  11jan07 added chi2 to the var list.
+c    pjt  31jan07 added modedesc to the var list
 c************************************************************************
 c*VarInit -- Initialise the copy routines.
 c:uv-data
@@ -100,7 +101,7 @@ c
 	integer i
 c
 	integer nvar,nline,nwide,nvelo
-	parameter(nvar=89,nline=10,nwide=3,nvelo=6)
+	parameter(nvar=90,nline=10,nwide=3,nvelo=6)
         character var(nvar)*8,line(nline)*8,wide(nwide)*8,velo(nvelo)*8
 c
 c  Variables to check for a change, for line=channel.
@@ -139,7 +140,7 @@ c
      *	   'ut      ','veldop  ','veltype ','version ','vsource ',
      *	   'winddir ','windmph ','delay   ','delay0  ',
      *	   'xsampler','ysampler','xyamp   ','pbtype  ',
-     *     'tau230  ','rmspath ','lefty'/
+     *     'tau230  ','rmspath ','lefty   ','modedesc'/
 c------------------------------------------------------------------------
 	avall = .false.
 c
