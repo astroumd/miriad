@@ -213,11 +213,12 @@ c    mchw 05aug05  seeing correction for atmospheric coherence
 c    mchw 28jan06  update options=avechan.
 c    mchw 25feb06  update holography options=holo.
 c    mchw 05mar06  options=slope: fit phase slope for each spectral window. 
+c    mchw 07jan07  get lst from JulLst(time,longitude,lst) in subroutine pcenter.
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	integer maxbad
 	character version*(*)
-	parameter(version='UVCAL: version 3.0 06-mar-2006')
+	parameter(version='UVCAL: version 3.0 07-January-2007')
 	parameter(maxbad=20)
 	real PI
 	parameter(PI=3.1415926)
@@ -1158,7 +1159,7 @@ c------------------------------------------------------------------------
        include 'mirconst.h'
        integer i,j,k,ant1,ant2,nants,nwide
        double precision sfreq(MAXWIN),sdf(MAXWIN),freq,u,v,w,lst
-       double precision bxx,byy,bzz,antpos(3*MAXANT)
+       double precision bxx,byy,bzz,antpos(3*MAXANT),longitude
        integer nspect,ischan(MAXWIN),nschan(MAXWIN)
        real wfreq(MAXCHAN),phase,HA,sinha,cosha,sind,cosd
 c
@@ -1189,7 +1190,8 @@ c calculate new u,v,w
 c
       call uvgetvri(lIn,'nants',nants,1)
       call uvgetvrd(lIn,'antpos',antpos,3*nants)
-      call uvgetvrd(lIn,'lst',lst,1)
+      call uvgetvrd(lIn,'longitu',longitude,1)
+      call JulLst(preamble(4),longitude,lst)
       HA = lst - obsra
       sinha = sin(HA)
       cosha = cos(HA)
