@@ -214,11 +214,12 @@ c    mchw 28jan06  update options=avechan.
 c    mchw 25feb06  update holography options=holo.
 c    mchw 05mar06  options=slope: fit phase slope for each spectral window. 
 c    mchw 07jan07  get lst from JulLst(time,longitude,lst) in subroutine pcenter.
+c    pjt   5feb07  fix array dimensioning in fxcal()
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	integer maxbad
 	character version*(*)
-	parameter(version='UVCAL: version 3.0 07-January-2007')
+	parameter(version='UVCAL: version 3.0 7-Feb-2007')
 	parameter(maxbad=20)
 	real PI
 	parameter(PI=3.1415926)
@@ -1486,8 +1487,7 @@ c  In/out:
 c    data	Channel or wideband data
 c------------------------------------------------------------------------
 	include 'maxdim.h'
-	real auto(4,1024),sq
-c	real auto(MAXANT2,MAXCHAN),sq
+	real auto(MAXANT2,MAXCHAN),sq
 	save auto
 
 	integer ant1,ant2,k
