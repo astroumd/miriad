@@ -138,7 +138,7 @@ typedef long long int int8;
 # if defined (sun) || defined (convex) || defined (mips) || defined(sgi) || defined(hpux)
 #  define WORDS_BIGENDIAN
 # endif
-# if defined(PPC) || defined(powerpc)
+# if defined(PPC) || defined(powerpc) || defined(darwin_ppc)
 #  define WORDS_BIGENDIAN
 # endif
 #endif
