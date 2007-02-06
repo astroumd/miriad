@@ -79,6 +79,9 @@ c                  sub t2ptbpass
 c   jhz 30may06 add restriction that the bpass files
 c               must have the same number of antennas
 c               in the bandpass solutions.
+c   jhz 06feb07 fixed a bug in the case of the channels having
+c               no bandpass-solutions. added a better warning
+c               message
 c
 c  Bugs:
 c     not for dual pol case, must select one of pol in the case
@@ -92,18 +95,16 @@ c------------------------------------------------------------------------
         integer maxsels
         character version*(*)
         parameter(maxsels=256, maxspect=49)
-        parameter (PI = 3.14159265358979323846)
-        parameter (DPI = 3.14159265358979323846)
-        parameter (TWOPI = 2 * PI)
-        parameter (DTWOPI = 2 * DPI)        
-        parameter(version='SmaTbpass: version 1.2 30-Jun-06')
+        parameter(version='SmaTbpass: version 1.3 06-Feb-07')
+        include 'mirconst.h'
         include 'maxdim.h'
         integer maxTimes,maxGains
         parameter(maxTimes=2*MAXCHAN*MAXANT)
         parameter(maxGains=2*MAXCHAN*MAXANT)
         integer iostat,tin,tOut, nfeeds,nants,nchan,maxnants
         integer  i, j, k,nschann(maxspect),nsols,ntau
-        character vis*64,bpfile*64,out*64,itoaf*3,ltype*16
+        character vis*64,bpfile*64,out*64,itoaf*5,ltype*16
+        character afil*64
         logical dopass,first
         logical doratio,docross
         complex g1(maxgains),g2(maxgains)
@@ -137,11 +138,12 @@ c        parameter(polxx=-5,polyy=-6,polrr=-1,polll=-2,poli=1)
          integer maxnpoly, nterm
          parameter(maxnpoly=10)
          complex ppass(maxant,maxchan,2)
-           integer polxx,polyy,polrr,polll,poli
-        parameter(polxx=-5,polyy=-6,polrr=-1,polll=-2,poli=1)
-           integer polmin,polmax
-            parameter(polmin=-6,polmax=1)
-           integer pols(polmin:polmax)
+         integer polxx,polyy,polrr,polll,poli
+         parameter(polxx=-5,polyy=-6,polrr=-1,polll=-2,poli=1)
+         integer polmin,polmax
+         parameter(polmin=-6,polmax=1)
+         integer pols(polmin:polmax)
+         character cant*6,cfeed*6,cchan*13
 
           first   = .true.
           doratio = .true.
@@ -217,11 +219,20 @@ c get the number of antennas from each files
             offset = (j-1) + (i-1)*nfeeds
          do k=1, nchan
             tpass(i,k,j,lin) = g1(k+offset*nchan)
-        
+            if(abs(tpass(i,k,j,lin)).eq.0) then
+            tpass(i,k,j,lin) = cmplx(1.0,0.0)
+            call bug('w', 'Bandpass has no solutions at')
+             cant='ant='//itoaf(i)
+            cfeed='feed='//itoaf(j)
+            cchan='channel='//itoaf(k)
+            afil = bpfile(1:len1(bpfile))//'_'//itoaf(lin)
+            write(*,155) cant,cfeed,cchan,afil
+            endif
          end do
          end do
          end do
-         write(*,500) 'load bandpass at UT=',
+155     format(4(a,1x))
+        write(*,500) 'load bandpass at UT=',
      * bptime(lin)*24.
 
           endif
@@ -445,10 +456,6 @@ c
                 flags(k) = .false.
                 end if
                 if(flags(k)) then
-        if(abs(ppass(i1,i,1)).eq.0..and.abs(ppass(i1,i,2)).eq.0.) 
-     *         ppass(i1,i,1) = ppass(i1,i,2)
-       if(abs(ppass(i1,i,1)).eq.0) 
-     * write(*,*) ppass(i1,i,1),i1,i, UT*24
         data(k)  = 
      *  data(k)/(ppass(i1,i,1)*conjg(ppass(i2,i,1)))
                  endif
