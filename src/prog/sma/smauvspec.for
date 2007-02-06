@@ -201,6 +201,9 @@ c                 when hybrid spectral channel numbers used in the spectral
 c                 windows.
 c    pjt 16mar06  intel compiler fix, use mirconst.h, use 'implicit none'
 c    jhz 17jan07  fixed a bug in ylabel in the case of bothA&B.
+c    jhz 25jan07  cleaned a few things for solaris compiling
+c    jhz 06feb07  implemented lag plot
+c    jhz 06feb07  added xrange
 c  Bugs:
 c------------------------------------------------------------------------
         include 'maxdim.h'
@@ -214,7 +217,7 @@ c
         character mname*8000, moln*16
         integer mtag(maxmline), nmline, j, jp, js, je, iline
         character version*(*)
-        parameter(version='SmaUvSpec: version 1.14 17-jan-07')
+        parameter(version='SmaUvSpec: version 1.15 06-feb-07')
         character uvflags*8,device*64,xaxis*12,yaxis*12,logf*64
         character xtitle*64,ytitle*64, veldef*8
         character xtitlebuf*64
@@ -224,6 +227,7 @@ c
         integer tin,vupd
         integer nxy(2),nchan,nread,nplot
         real yrange(2),inttime, lsrvel, veldop
+        real xrange(2)
         double precision x(2*maxchan-2)
         complex data(maxchan)
         logical flags(maxchan)
@@ -296,6 +300,8 @@ c     &  call bug('f','has not fully implemented yet for jpl catalog.')
         call keyi('nxy',nxy(2),0)
         call keyd('offset',shift(1),0.d0)
         call keyd('offset',shift(2),0.d0)
+        call keyr('xrange',xrange(1),0.)
+        call keyr('xrange',xrange(2),0.)
         call keyr('yrange',yrange(1),0.)
         call keyr('yrange',yrange(2),yrange(1)-1)
         call keya('log',logf,' ')
@@ -394,7 +400,6 @@ c  Loop over the data.
 c
           
            call uvdatrd(preamble,data,flags,maxchan,nread)
-c          write(*,*) nread, nchan0 
 c          if((nread.lt.nchan0).and.docolor) docolor = .false.
            nplot = nread
            if(dolag)nplot = nextpow2(2*(nread-1))
@@ -426,7 +431,8 @@ c
               if(doflush)then
                  call bufflush(source,ampsc,rms,nobase,dodots,hann,hc,
      *                hw,first,
-     *                device,x,nplot,xtitle,ytitle,nxy,yrange,logf,
+     *                device,x,nplot,xtitle,ytitle,nxy,
+     *                xrange,yrange,logf,
      *                docat,dorestfreq,veldef,lsrvel,veldop)
                  t0 = preamble(3)
                  t1 = t0
@@ -472,7 +478,8 @@ c
            if(buffered)then
               call bufflush(source,ampsc,rms,nobase,dodots,hann,hc,
      *             hw,first,
-     *             device,x,nplot,xtitle,ytitle,nxy,yrange,logf,
+     *             device,x,nplot,xtitle,ytitle,nxy,
+     *             xrange,yrange,logf,
      *             docat,dorestfreq,veldef,lsrvel,veldop)
               buffered = .false.
            endif
@@ -732,7 +739,8 @@ c       parameter(maxaver=276525,maxpol=4)
         end
 c************************************************************************
         subroutine bufflush(source,ampsc,rms,nobase,dodots,hann,hc,hw,
-     *          first,device,x,n,xtitle,ytitle,nxy,yrange,logf,
+     *          first,device,x,n,xtitle,ytitle,nxy,
+     *          xrange,yrange,logf,
      *          docat,dorestfreq,veldef,lsrvel,veldop)
         implicit none
         logical docat,dorestfreq
@@ -826,7 +834,8 @@ c
 c
 c  Autoscale the X axis.
 c
-        call setaxisd(x,n,xrange)
+        if(xrange(1).eq.0..and.xrange(2).eq.0.)
+     *    call setaxisd(x,n,xrange)
         if(docat.and.dorestfreq) then
            if(veldef.eq."radio") then
               do i=1,2
@@ -880,8 +889,9 @@ c
                  p = pnt(i,j)
                  if(cntp(i,j).ge.1)then
                     if(dolag)then
-                       call lagext(x,buf(p),count(p),nchan(i,j),n,
-     *                      xp,yp,maxpnt,npnts)
+                       call lagext(x,buf(p),count(p),nchan(i,j),
+     *                      chnkpntr(p),n,
+     *                      xp,yp,maxpnt,npnts,sppntr)
                     else
                        call visext(x,buf(p),buf2(p),bufr(p),count(p),
      *                      nchan(i,j),chnkpntr(p),
@@ -889,6 +899,7 @@ c
      *                      doboth,xp,yp,ypp,maxpnt,npnts,sppntr)
                     endif
                  endif
+
             
 c
 c  Did we find another plot.
@@ -902,10 +913,10 @@ c
                  endif
               enddo
               if(.not.nobase.and.npnts.gt.0)then
-                 call plotit(source,npnts,xp,yp,ypp,xrange,yrange,
-     *                dodots,plot,nplts,
-     *                xtitle,ytitle,j,time/ntime,inttime/nplts,pol,npol,
-     *                dopoint,hann,hc,hw,logf,doboth,sppntr)
+            call plotit(source,npnts,xp,yp,ypp,xrange,yrange,
+     *           dodots,plot,nplts,
+     *           xtitle,ytitle,j,time/ntime,inttime/nplts,pol,npol,
+     *           dopoint,hann,hc,hw,logf,doboth,sppntr,dolag)
 c     
                  npol = 0
                  do i=polmin,polmax
@@ -925,7 +936,7 @@ c
         if(npnts.gt.0) call plotit(source,npnts,xp,yp,ypp,
      *       xrange,yrange,dodots,
      *       plot,nplts,xtitle,ytitle,0,time/ntime,inttime/nplts,
-     *       pol,npol,dopoint,hann,hc,hw,logf,doboth,sppntr)
+     *       pol,npol,dopoint,hann,hc,hw,logf,doboth,sppntr,dolag)
 c
 c  Reset the counters.
 c
@@ -1003,13 +1014,14 @@ c    phas
         enddo
         end
 c************************************************************************
-        subroutine lagext(x,buf,count,nchan,n,
-     *              xp,yp,maxpnt,npnts)
+        subroutine lagext(x,buf,count,nchan,chnkpntr,n,
+     *              xp,yp,maxpnt,npnts,sppntr)
         implicit none
 c
         integer nchan,n,npnts,maxpnt,count(nchan)
         double precision x(n)
         real xp(maxpnt),yp(maxpnt)
+        integer sppntr(maxpnt),chnkpntr(nchan)
         complex buf(nchan)
 c------------------------------------------------------------------------
         include 'maxdim.h' 
@@ -1030,7 +1042,8 @@ c
           cbuf(k) = 0
         enddo
 c
-        call fftcr(cbuf,rbuf,-1,n)
+cccc        call fftcr(cbuf,rbuf,-1,n)
+            call smafftcr(cbuf,rbuf,-1,n)
 c
         k0 = n/2
         do k=1,n
@@ -1041,6 +1054,7 @@ c
      *          'Buffer overflow: Too many points to plot')
           xp(npnts) = x(k)
           yp(npnts) = rbuf(k0)
+          sppntr(npnts) = chnkpntr(k)
         enddo
 c
         end
@@ -1324,14 +1338,14 @@ c
 c************************************************************************
       subroutine plotit(source,npnts,xp,yp,ypp,xrange,yrange,dodots,
      *     plot,nplts,xtitle,ytitle,bl,time,inttime,
-     *     pol,npol,dopoint,hann,hc,hw,logf,doboth,sppntr)
+     *     pol,npol,dopoint,hann,hc,hw,logf,doboth,sppntr,dolag)
       implicit none
 c
       integer npnts,bl,nplts,plot(nplts+1),npol,pol(npol),hann
       double precision time
       real xp(npnts),yp(npnts),xrange(2),yrange(2),inttime,hc(*),hw(*)
       real ypp(npnts)
-      logical dopoint,dodots, doboth
+      logical dopoint,dodots, doboth,dolag
       character xtitle*(*),ytitle*(*),logf*(*)
       integer sppntr(npnts)
 c     
@@ -1398,16 +1412,24 @@ c   rescale the phase for plotting both
           
          call  pgsci(i)
          if(dopoint)then
-            call pgpts(plot(i+1)-plot(i),xp(plot(i)),yp(plot(i)),symbol,
+            if(dolag) then
+         call pgpt(plot(i+1)-plot(i),xp(plot(i)),yp(plot(i)),symbol)
+                else
+         call smapgpts(plot(i+1)-plot(i),xp(plot(i)),yp(plot(i)),symbol,
      *           sppntr)
+                  endif
          else
             if (hann.gt.1) call hannsm(hann,hc,plot(i+1)-plot(i),
      *           yp(plot(i)),hw)
             if (hann.gt.1) call hannsm(hann,hc,plot(i+1)-plot(i),
      *           ypp(plot(i)),hw)
-            call pghline(plot(i+1)-plot(i),xp(plot(i)),yp(plot(i)),
+          if(dolag) then
+          call pghline(plot(i+1)-plot(i),xp(plot(i)),yp(plot(i)),2.0)
+            else
+            call smapghline(plot(i+1)-plot(i),xp(plot(i)),yp(plot(i)),
      *           ypp(plot(i)),2.0,doboth, yranged(2), sppntr, 
      *           pline,xrange)
+            endif
          endif
          if (logf.ne.' ') then
             do j = 1, plot(i+1)-plot(i)
@@ -1517,7 +1539,7 @@ c PgHline -- Histogram line plot for pgplot.
 c mchw:
 c plotting,uv-data
 c
-      subroutine pghline(npts,x,y,yp,gapfac,doboth,maxstr,sppntr,
+      subroutine smapghline(npts,x,y,yp,gapfac,doboth,maxstr,sppntr,
      *     pline,xrange)
       implicit none
       integer maxsline
@@ -1574,7 +1596,6 @@ c
      *       veltype,veldef,veldop,strl
         logical selwins(maxwin)
         common/windows/selwins
-
         startchunk=0
         endchunk=0
         do i=1,nspect 
@@ -1618,7 +1639,6 @@ c
         enddo
         j=sppntr(1)
         do i=1, npts
-c           write(*,*) sppntr(i),i, j
          if(sppntr(i).eq.j) then
            fnschan(j)=fnschan(j)+1
            else
@@ -1629,6 +1649,7 @@ c window and the channel pointer needs to be initialized to 1
            fnschan(j)=1
          endif
         enddo
+
 c
         maxf=0.
         minf=1000.
@@ -1838,7 +1859,7 @@ c
 CPGPT -- draw several graph markers
 Cvoid cpgpt(int n, const float *xpts, const float *ypts, int symbol);
 C
-      SUBROUTINE PGPTS (N, XPTS, YPTS, SYMBOL,sppntr)
+      SUBROUTINE SMAPGPTS (N, XPTS, YPTS, SYMBOL,sppntr)
       implicit none
       INTEGER N
       REAL XPTS(*), YPTS(*)
@@ -2595,3 +2616,244 @@ C
 C
       CALL PGEBUF
       END
+c************************************************************************
+c* PgHline -- Histogram line plot for pgplot.
+c& mchw
+c: plotting,uv-data
+c+
+	subroutine PgHline(npts,x,y,gapfac)
+c
+	implicit none
+	integer npts
+	real x(npts), y(npts), gapfac
+c
+c  Histogram style line plot of y-array versus x-array. Points are not
+c  connected over gaps or reversals in the x-array.
+c
+c  Inputs:
+c    npts	number of points
+c    x		x-array to be plotted
+c    y		y-array to be plotted
+c    gapfac	factor to define a gap in x-array. E.g. 2= 2*(x(i+1)-x(i)) 
+c
+c--
+c History
+c    02nov89	mchw	original version
+c    02apr94    nebk    add pgbbuf/pgebuf calls
+c    24may94    mjs     reinserted Meli''s docs
+c-------------------------------------------------------------------------
+	integer start,end,i
+	logical gap,reverse
+        reverse = .false.
+c
+c  Look for gaps or reversals in x-array
+c
+        call pgbbuf
+	start = 1
+	end = 2
+	do while(end.le.npts)
+	 if(npts.gt.2 .and. end.lt.npts) then
+	  gap = abs(x(end+1)-x(end)).gt.abs(gapfac*(x(end)-x(end-1)))
+	  reverse = sign(1.,x(end+1)-x(end)).ne.sign(1.,x(end)-x(end-1))
+	 else
+	  gap = .true.
+	 endif
+          
+c
+c  Connect sequences of points between gaps and reversals
+c
+	 if(gap.or.reverse) then
+	   call pgmove(x(start),y(start))
+	   do i=start,end-1
+              call pgsci(2)
+	     call pgdraw (0.5*(x(i+1)+x(i)), y(i))
+	     call pgdraw (0.5*(x(i+1)+x(i)), y(i+1))
+	   enddo
+           
+	   call pgdraw(x(end),y(end))
+	   start = end + 1
+	   end = end + 2
+	 else
+	   end = end + 1
+	 endif
+ 	enddo
+        call pgebuf
+	end
+C************************************************************************
+c* Fftcr -- Complex to real 1D FFT routine.
+c: fourier-transform,FFT
+c& rjs
+c+
+        subroutine smafftcr(in,out,isn,n)
+c
+        implicit none
+        integer n,isn
+        real in(n+2),out(n)
+C
+c  This performs a 1D Fourier transform of a complex sequence (with
+c  conjugate symmetry), to produce a real output. There is no
+c  1/N scaling, and the "phase center" of the transform is the first
+c  element of the input array.
+c
+c  Input:
+c    in         The input complex array. This will normally be dimensioned
+c               as N/2+1 complex elements. Because the sequence is assumed
+c               to have conjugate symmetry, only half the input array is
+c               needed. The first element corresponds to the "DC" term.
+c               This array could also be declared to be a real array of
+c               size N+2 elements.
+c    isn        The sign of the exponent in the transform, This can be
+c               either 1 or -1.
+
+c    n          The number of elements to transform. This must be a power
+c               of 2.
+c  Output:
+c    out        The output real array.
+c--
+C------------------------------------------------------------------------
+        real pi
+        parameter(pi=3.141592653589793)
+        real wr0,wi0,wr,wi,tr1,ti1,tr2,ti2,tr,ti,theta,t
+        integer i,j
+c
+c  Copy the vector across. If ISN is negative, conjugate the data on the
+c  way (as fft842x can only handle positive ISN).
+c
+        if(isn.gt.0)then
+          do i=1,n
+            out(i) = in(i)
+          enddo
+        else
+          do i=1,n,2
+            out(i) = in(i)
+            out(i+1) = -in(i+1)
+          enddo
+        endif
+        out(2) = in(n+1)
+c
+        theta = 2*pi/n
+        wr0 = sin(theta/2)
+        wr0 = -2*wr0*wr0
+        wi0 = sin(theta)
+c
+        wr = 1 + wr0
+        wi = wi0
+c
+        j = n-1
+c#ivdep
+        do i=3,n/2,2
+          tr1 = (out(i)   + out(j))
+          ti1 = (out(i+1) - out(j+1))
+          tr2 = (out(i+1) + out(j+1))
+          ti2 =-(out(i)   - out(j))
+          tr = wr*tr2 - wi*ti2
+          ti = wi*tr2 + wr*ti2
+          out(i)   = tr1 + tr
+          out(i+1) = ti1 + ti
+          out(j)   = tr1 - tr
+          out(j+1) =-ti1 + ti
+          t = wr
+          wr = t*wr0  - wi*wi0 + t
+          wi = wi*wr0 + t*wi0  + wi
+          j = j - 2
+        enddo
+c
+c  Fiddle the end elements, and do the FFT.
+c
+        t = out(1)
+        out(1) =  (t + out(2))
+        out(2) = -(t - out(2))
+        out(n/2+1) = 2*out(n/2+1)
+        out(n/2+2) = 2*out(n/2+2)
+c
+        call fft842x(out,n/2)
+c
+c  Reconjugate the data (always!).
+c
+        do i=2,n,2
+          out(i) = -out(i)
+        enddo
+c
+        end
+
+
+c***********************************************************************
+        subroutine fft842x(data,n)
+c
+        implicit none
+        integer n
+        complex data(n)
+c
+c Fast fourier transform for n=2**m, for complex input sequence.
+c
+c This routine replaces the vector data by its  finite
+c discrete, complex fourier transform. It performs as many base
+c 8 iterations as possible and then finishes with a base 4 iteration
+c or a base 2 iteration if needed.
+c
+
+c
+c Tables are used to store twiddle factors and bit-reverse permutation.
+c
+c------------------------------------------------------------------------
+        INTEGER   MAXDIM
+        PARAMETER(MAXDIM=8192)
+        integer lengt, nxtlt, i
+        complex temp
+c
+        integer nsave,m,ni,i1(maxdim/2),i2(maxdim/2)
+        complex twiddle(maxdim)
+        save nsave,m,ni,i1,i2,twiddle
+        data nsave/0/
+c
+c
+c  Check if we have to initialise the arrays containing info for the
+c  transformation.
+c
+        if(n.gt.maxdim)then
+                write(*,*) 'Grunt grunt N,maxdim=',n,MAXDIM
+                call bug('f','N too large in FFT routine')
+        endif
+        if(n.ne.nsave)call fftini(n,m,ni,i1,i2,twiddle)
+        nsave = n
+C
+C Radix 8 passes,if any.
+C
+        nxtlt = n/8
+        lengt = n
+        do i=1,m/3
+c#ifdef vector
+          if(n .ge. lengt*nxtlt)then
+c#endif
+            call r8tyx(nxtlt, n, lengt, twiddle, data(1), data(nxtlt+1),
+     *        data(2*nxtlt+1), data(3*nxtlt+1), data(4*nxtlt+1),
+     *        data(5*nxtlt+1), data(6*nxtlt+1), data(7*nxtlt+1) )
+c#ifdef vector
+          else
+            call r8txy(nxtlt, n, lengt, twiddle, data(1), data(nxtlt+1),
+     *        data(2*nxtlt+1), data(3*nxtlt+1), data(4*nxtlt+1),
+     *        data(5*nxtlt+1), data(6*nxtlt+1), data(7*nxtlt+1) )
+          endif
+c#endif
+          lengt = nxtlt
+          nxtlt = nxtlt / 8
+        enddo
+C
+C Do the remaining radix-4 or radix-2 stage, if required.
+C
+        if(mod(m,3).eq.2)then
+          call r4txx(n, data(1), data(2), data(3), data(4) )
+        else if(mod(m,3).eq.1)then
+          call r2txx(n, data(1), data(2) )
+        endif
+C
+C
+C  Perform bit reversal.
+C
+c# ivdep
+        do i=1,ni
+          temp = data(i1(i))
+          data(i1(i)) = data(i2(i))
+          data(i2(i)) = temp
+        enddo
+        end
