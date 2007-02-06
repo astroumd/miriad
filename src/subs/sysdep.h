@@ -29,6 +29,7 @@
  *    pjt 24jun01 PPC/powerpc is a BIGENDIAN (linux) machine
  *    pjt 21jun02 MIR4
  *    pjt  4jan05 merged in the new ATNF HAS_STRERROR
+ *    pjt  6feb07 kludge for darwin_intel
  */
 
 #if !defined(MIR_SYSDEP_H)
@@ -141,6 +142,10 @@ typedef long long int int8;
 # if defined(PPC) || defined(powerpc) || defined(darwin_ppc)
 #  define WORDS_BIGENDIAN
 # endif
+#endif
+
+#if defined(i386)
+#undef WORDS_BIGENDIAN
 #endif
 
 #ifdef WORDS_BIGENDIAN 
