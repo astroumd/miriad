@@ -82,6 +82,7 @@ c               in the bandpass solutions.
 c   jhz 06feb07 fixed a bug in the case of the channels having
 c               no bandpass-solutions. added a better warning
 c               message
+c   jhz 07feb07 cleaned up the confusing warning message.
 c
 c  Bugs:
 c     not for dual pol case, must select one of pol in the case
@@ -95,7 +96,7 @@ c------------------------------------------------------------------------
         integer maxsels
         character version*(*)
         parameter(maxsels=256, maxspect=49)
-        parameter(version='SmaTbpass: version 1.3 06-Feb-07')
+        parameter(version='SmaTbpass: version 1.3 07-Feb-07')
         include 'mirconst.h'
         include 'maxdim.h'
         integer maxTimes,maxGains
@@ -132,7 +133,7 @@ c
 c        data feeds/'I','X','Y'/
 c        parameter(polxx=-5,polyy=-6,polrr=-1,polll=-2,poli=1)
          integer pee(2),nfiles,lin,offset,i1,i2
-         integer nflgbegin, nflgend
+         integer nflgbegin, nflgend, iflg
          parameter(maxnBpass=20)
          complex tpass(maxant,maxchan,2,maxnBpass)
          integer maxnpoly, nterm
@@ -145,6 +146,16 @@ c        parameter(polxx=-5,polyy=-6,polrr=-1,polll=-2,poli=1)
          integer pols(polmin:polmax)
          character cant*6,cfeed*6,cchan*13
 
+c
+c  Initialization
+c
+          do i=1,maxant
+          do k=1,maxchan
+          do j=1,2
+          ppass(i,k,j) = cmplx(1.0,0.0)
+          end do
+          end do
+          end do
           first   = .true.
           doratio = .true.
           dopass  = .true.
@@ -208,7 +219,6 @@ c load gains
 c load the bpass time
          bptime(lin) = times(1)
 c get the number of antennas from each files
-         
          if(lin.eq.1) maxnants=nants
          if((lin.gt.1).and.(maxnants.ne.nants)) 
      * call bug('f', 
@@ -219,22 +229,21 @@ c get the number of antennas from each files
             offset = (j-1) + (i-1)*nfeeds
          do k=1, nchan
             tpass(i,k,j,lin) = g1(k+offset*nchan)
-            if(abs(tpass(i,k,j,lin)).eq.0) then
+         if(abs(tpass(i,k,j,lin)).eq.0) then
             tpass(i,k,j,lin) = cmplx(1.0,0.0)
-            call bug('w', 'Bandpass has no solutions at')
-             cant='ant='//itoaf(i)
+c           call bug('w', 'Bandpass has no solutions at')
+            cant='ant='//itoaf(i)
             cfeed='feed='//itoaf(j)
             cchan='channel='//itoaf(k)
             afil = bpfile(1:len1(bpfile))//'_'//itoaf(lin)
-            write(*,155) cant,cfeed,cchan,afil
-            endif
+c           write(*,155) cant,cfeed,cchan,afil
+         endif
          end do
          end do
          end do
-155     format(4(a,1x))
+c155     format(4(a,1x))
         write(*,500) 'load bandpass at UT=',
      * bptime(lin)*24.
-
           endif
           call hclose(tin)
           end do
@@ -320,8 +329,7 @@ c copy things to output file
 c
 c  Loop over the data.
 c
-          call uvDatRd(preamble,data,flags,maxchan,nread)
-
+            call uvDatRd(preamble,data,flags,maxchan,nread)
             call uvrdvri(tin,'nspect',nspect,0)
             call uvgetvrd(tin,'sfreq',sfreq,nspect)
             call uvgetvrd(tin,'sdf',sdf,nspect)
@@ -352,7 +360,6 @@ c
              bpflags(k+nschan(i)-j)=.false.
              enddo
              enddo
-
           Tprev = preamble(4)
           Tmin = Tprev
           Tmax = Tmin
@@ -449,18 +456,23 @@ c    only 1 pol
 c
           call basant(preamble(5),i1,i2)
                 i=0
+                iflg=0
+c handling the edge flagged channels in bandpass solutions
                 do k=1,nread
                 if(bpflags(k)) then 
                 i=i+1
                 else
                 flags(k) = .false.
+                iflg=iflg+1 
                 end if
                 if(flags(k)) then
         data(k)  = 
      *  data(k)/(ppass(i1,i,1)*conjg(ppass(i2,i,1)))
-                 endif
+                endif
                 enddo
-                     
+        if(nread.ne.(i+iflg)) 
+     *  call bug('f',
+     * 'The bandpass solutions do not align with the visibility data!')
                 call uvwrite(tOut,preamble,data,flags,nread)
                 call uvputvri(tOut,'nschan',nschan,nspect)
                 donenpol = npol.gt.1
