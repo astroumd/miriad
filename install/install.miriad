@@ -1,6 +1,6 @@
 #! /bin/csh -f
 #
-set version=26-may-06
+set version=7-feb-07
 #
 #  2-aug-99 Updated for Sebok's Mandrake setup
 #  1-aug-00 Updated to allow to build private PGPLOT version
@@ -314,18 +314,22 @@ source $MIRTEMP/MIRRC.$hosttype
 
 
 # kludge the fortran compiler, this is where configure would shine brighter
-if ($intel) then
+if ($hosttype == linux) then
+ if ($intel) then
   echo "Using intel compiler for linux"
   cp $MIR/src/sys/bin/compile.linux_intel $MIR/bin/localsys/compile.linux
-else if ($g95) then
+ else if ($g95) then
   echo "Using g95 compiler for linux"
   cp $MIR/src/sys/bin/compile.linux_g95   $MIR/bin/localsys/compile.linux
-else if ($gfortran) then
+ else if ($gfortran) then
   echo "Using gfortran compiler for linux"
   cp $MIR/src/sys/bin/compile.linux_gfortran   $MIR/bin/localsys/compile.linux
-else
+ else
   echo "Using g77 compiler for linux"
   cp $MIR/src/sys/bin/compile.linux   $MIR/bin/localsys/compile.linux
+ endif
+else
+  cp $MIR/src/sys/bin/compile.$hosttype $MIR/bin/localsys
 endif
 
 cd $MIR
