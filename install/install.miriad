@@ -36,6 +36,7 @@ set version=7-feb-07
 # 10-jan-06 (JHZ) change g77_gcc.conf to mirg77_gcc.conf when copy over
 #           g77_gcc_64.conf (the pgplot config file for 64bits linux)
 # 24-may-06 more configure options, optional compile.generic
+#  7-feb-08 fixes for non-linux
 #
 #-----------------------------------------------------------------------
 
@@ -52,6 +53,7 @@ if (! -e ../VERSION) then
 endif
 
 #  carma, wsrt, atnf, sma, bima, ....
+#  there is no good support here for combined (e.g. MAX(carma,sma)) arrays
 set telescope=carma
 
 #  try the new generic (autoconf) created compile directives file?
@@ -287,14 +289,14 @@ echo 'export WIPHELP=$MIR/borrow/wip/wiphelp.dat'             >> $startsh
 set start1=miriad_start.csh
 echo "# source this file to set MIR env"  > $start1
 echo "setenv MIR $MIRTEMP"               >> $start1
-echo "source $MIRTEMP/MIRRC.$hosttype"   >> $start1
+echo 'source $MIR/MIRRC'."$hosttype"     >> $start1
 echo "# this script was created by $0"   >> $start1
 cp $start1 ..
 
 set start2=miriad_start.sh
 echo "# source this file to set MIR env"  > $start2
 echo "export MIR=$MIRTEMP"               >> $start2
-echo "source $MIRTEMP/MIRSRC.$hosttype"  >> $start2
+echo 'source $MIR/MIRSRC'."$hosttype"    >> $start2
 echo "# this script was created by $0"   >> $start2
 cp $start2 ..
 
@@ -329,6 +331,8 @@ if ($hosttype == linux) then
   cp $MIR/src/sys/bin/compile.linux   $MIR/bin/localsys/compile.linux
  endif
 else
+  echo "Using default compile.$hosttype"
+  # actually don't have to copy, but this way easy to make modifications outside of CVS
   cp $MIR/src/sys/bin/compile.$hosttype $MIR/bin/localsys
 endif
 
