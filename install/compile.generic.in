@@ -11,6 +11,7 @@ set mlsys = $mmir/bin/localsys
 #  also of possible use:   
 # -finit-local-zero              if you debug code and need initialized data
 # -mcpu=i686 -march=i686 -malign-double -ffast-math         architecture opt
+#  on darwin you may need to add -lSystemStubs for missing things like _printf$LDBLStub
 #
 # Here are some 'configure' variables of possible use :
 # FLIBS=@FLIBS@
