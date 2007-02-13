@@ -54,12 +54,15 @@
 %        20-feb-06  rjs  Added axismax, smonrms, refpnt, calcode, name
 
 %  30-aug-06  pjt  merged ATNF and CARMA versions of this file
+%  13-feb-07  pjt  CARMA additions,but in MIR5 branch for the carma-cook 
+%                  [i know this is bad, but it will go back to the official location as such]
 %
 %  nband - appears to be CARMA's Control.SpectralLineCorrelator.numBands (but it's 8, not 6=nspect)
 %  tcorr - for ATNF systemp calibration, ATNF used.
-%  13-feb-07 jhz   added in chi2.
 
-\newcommand{\uvversion}{February, 2007}
+\section{UV Dataset}
+
+\newcommand{\uvversion}{February 13, 2007}
 
 A \miriad\ uv dataset is composed of a collection of items and `\MM{u-v} variables'.
 The variables are parameters that are known at the time of the observation,
@@ -82,7 +85,7 @@ vartable    & text    & lookup table for all uv variables (do not edit!) \\
 visdata     & mixed   & data stream of uv variables \\ \hline
 flags       & integer & optional flags for narrowband data \\
 wflags      & integer & optional flags for wideband data \\ \hline
-gains       & mixed   & antenna gain table \\
+gains       & mixed   & antenna gain table (delhd this item to disable gain table)\\
 nfeeds	    & integer & number of feeds on each antenna \\
 ntau	    & integer & Number of delay/spectral index terms per antenna\\
 	    &	      & in `gains' \\
@@ -92,7 +95,7 @@ interval    & double  & gain interpolation time tolerance (days)\\
 leakage	    & complex & polarization leakage parameters\\
 freq0	    & double  & reference frequency for delay terms\\
 freqs	    & mixed   & frequency set up description table for `bandpass'\\
-bandpass    & complex & bandpass function gains \\
+bandpass    & complex & bandpass function gains (delhd this item to disable passband corrections) \\
 nspect0     & integer & number of windows in the bandpass function\\
 nchan0      & integer & total number of channels in the bandpass function\\
 \hline\end{tabular}
@@ -156,7 +159,7 @@ antel(nants)    \>D    \>deg.
 \> elevation of antennas\\
 
 antpos(nants, 3) \>D    \>nanosec
-\>Antenna equatorial coordinates\\
+\>Antenna equatorial coordinates, in a local, not greenwhich based, system \\
 
 atten(nants)   \>I     \>dB
 \> Attenuator setting (Hat Ck)\\
@@ -201,7 +204,7 @@ chi		\>R	\>radians
 \>\>\>assumed to have identical values.\\
 
 chi2            \>R     \>radians
-\>The second feed angle variaition. \\
+\>Second feed angle variation (SMA) \\
 
 coord(*)        \>D     \>nanosec
 \> uv(w) baseline coordinates ?? what epoch ??\\
@@ -343,8 +346,8 @@ latitud		\>D	\>radians
 \> Geodetic latitude of the observatory.\\
 
 lo1		\>D	\>GHz
-\> First local oscillator (Hat Ck)\\
-\>\>\> {\tt lo1} is in the range 70 GHz - 115 GHz.\\
+\> First local oscillator (Hat Ck/CARMA)\\
+\>\>\> {\tt lo1} is in the range 70 GHz - 115 GHz for 3mm.\\
 
 lo2		\>D	\>GHz	
 \> Second local oscillator (Hat Ck)\\
@@ -354,6 +357,10 @@ longitu		\>D	\>radians
 
 lst		\>D     \>radians
 \> Local apparent sidereal time.\\
+
+modedesc         \>A     \>-
+\> Correlator mode description (CARMA only) \\
+\>\>\>\ Example: 500-32-8-X-X-X-X-X \\
 
 mount		\>I	\>-
 \> The type of antenna mounts. \\
@@ -457,13 +464,13 @@ pbtype(*)	\>A     \>-
 \>Primary beam type to be used in imaging.\\
 
 phaselo1(nants)	\>R	\>radians
-\> Antenna phase offset (Hat Ck)\\
+\> Antenna phase offset (Hat Ck/CARMA)\\
 
 phaselo2(nants)	\>R	\>radians
-\> Second LO phase offset (Hat Ck)\\
+\> Second LO phase offset (Hat Ck/CARMA)\\
 
 phasem1(nants)	\>R	\>radians
-\> IF cable phase (Hat Ck)\\
+\> IF cable phase (Hat Ck/CARMA)\\
 
 plangle		\>R     \>degrees
 \>Planet angle\\
@@ -536,10 +543,10 @@ restfreq(nspect) \>D	\>GHz
 \>\>\>  This may be zero for continuum observations.\\
 
 rmspath		\>R     \>\%
-\>RMS path variation (Hat Ck)\\
+\>RMS path variation (Hat Ck/CARMA)\\
 
 sctype	\>A	\>-
-\> Scan type (ATNF?)\\
+\> Scan type (ATCA?)\\
 
 sdf(nspect)	\>D	\>GHz	
 \> Change in frequency per channel\\
@@ -562,7 +569,11 @@ systemp		\>R	\>Kelvin
 \ \ or systemp(nants,nspect)\\
 
 tau230		\>R	\>-
-\> Optical depth at 230 GHz, as measured with the ... system (Hat Ck) \\
+\> Optical depth at 230 GHz, as measured with the ... system (Hat Ck/CARMA) \\
+
+tcorr		\>I	\>-
+\> HasTsys correction has been applied (0:none, 1:applied) (CARMA) \\
+
 
 telescop(*)	\>A	\>-
 \>The telescope name. Some standard values are:\\
@@ -632,7 +643,7 @@ wfreq(nwide)	\>R	\>GHz
 \> Wideband correlation average frequencies\\
 
 wind		\>R     \>km/h
-\> Wind speed in km/h (ATNF)\\
+\> Wind speed in km/h (ATCA)\\
 
 winddir		\>R     \>deg
 \>Wind direction\\
@@ -673,6 +684,80 @@ ytsys(nants,nspect)		\>R	\>Kelvin
 \end{tabbing}\normalsize
 \end{latexonly}
 
+\section{Telescope specific notes}
+
+A reminder on some telescope specific variables
+
+\subsection{ATCA}
+
+\footnotesize\begin{verbatim}
+  calcode
+  name
+  rain
+  sctype
+  smonrms
+  wind
+  xsampler(3,nants,nspect)
+  xtsys(nants,nspect)
+  xyamp(nants,nspect)
+  xyphase(nants,nspect)
+  ysampler(3,nants,nspect)
+  ytsys(nants,nspect)
+\end{verbatim}\normalsize
+
+\subsection{CARMA}
+
+\footnotesize\begin{verbatim}
+  dazim(nants)
+  delev(nants)
+  modedesc
+  tcorr                     CHECK WITH SAME NAME ATCA NAME!!!
+\end{verbatim}\normalsize
+
+\subsection{SMA}
+
+\footnotesize\begin{verbatim}
+  chi2
+\end{verbatim}\normalsize
+
+\subsection{BIMA/Hat Creek}
+
+Although the telescope name is for historic reasons called {\tt HATCREEK}, they
+are really the 6m {\tt BIMA} antennae, but while this array was operational
+at the Hat Creek site in Northern California. The following UV variables were
+specificially used for this array, although some of them moved to CARMA as well:
+
+\footnotesize\begin{verbatim}
+atten(nants)
+cable(nants)
+corbit
+corbw(2)
+corfin(4)
+cormode
+coropt
+cortaper
+delay(nants)                    carma
+delay0(nants)
+dewpoint
+focus(nants)
+freqif
+ivalued(nants)
+lo1                             carma
+lo2
+phaselo1(nants)                 carma
+phaselo2(nants)                 carma
+phasem1(nants)                  carma
+rmspath                         carma
+srv2k(nants)
+tau230                          carma
+temp(nants, ntemp
+themt(nants)
+tif2(nants)
+tpower(nants, ntpower)
+tsis(nants)
+\end{verbatim}\normalsize
+
+\section{Examples}
 
 \footnotesize\begin{verbatim}
 
