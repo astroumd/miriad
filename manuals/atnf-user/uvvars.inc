@@ -57,8 +57,9 @@
 %
 %  nband - appears to be CARMA's Control.SpectralLineCorrelator.numBands (but it's 8, not 6=nspect)
 %  tcorr - for ATNF systemp calibration, ATNF used.
+%  13-feb-07 jhz   added in chi2.
 
-\newcommand{\uvversion}{November 21, 2006}
+\newcommand{\uvversion}{February, 2007}
 
 A \miriad\ uv dataset is composed of a collection of items and `\MM{u-v} variables'.
 The variables are parameters that are known at the time of the observation,
@@ -198,6 +199,9 @@ chi		\>R	\>radians
 \>\>\>sum of the parallactic angle and the {\tt evector} variable. \\
 \>\>\>If only one value is present, all antennas are \\
 \>\>\>assumed to have identical values.\\
+
+chi2            \>R     \>radians
+\>The second feed angle variaition. \\
 
 coord(*)        \>D     \>nanosec
 \> uv(w) baseline coordinates ?? what epoch ??\\
