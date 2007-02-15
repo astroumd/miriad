@@ -7,7 +7,8 @@
 #            antennas used in the observations
 #         2. Array configuration (optional - C is default)
 #
-# v1.0 agg 11/25/03 Basic funcitonality
+# v1.0 agg 11/25/03 Basic functionality
+#      pjt  2/14/07 Made it work for CARMA, and fixed to use new ENU from listobs
 #
 #
 
@@ -35,10 +36,10 @@ else if ($#argv == 2) then
 endif
 
 # Get antenna positions from listobs
-listobs in=$1 > /tmp/listobs.tmp
+listobs vis=$1 > /tmp/listobs.tmp
 
 cat /tmp/listobs.tmp | grep Antenna | grep -vi "in" | \
-        awk '{print $2 " " $3 " " $4}' | \
+        awk '{print $2 " " $7 " " $6}' | \
         sed s/":"/" "/g  > /tmp/anten.tmp
 
 set date=`grep Chron /tmp/listobs.tmp | awk '{print $5}'`
@@ -46,15 +47,15 @@ set freq=`grep "Rest Freq" /tmp/listobs.tmp | awk '{print $6}'`
 
 # Generate wip macro
 if ($ary == "A") then
-    echo "winadj -850 2300 50 -3400" > /tmp/prtan.wip
+    echo "winadj -3000 3000 -3000 3000" > /tmp/prtan.wip
 else if ($ary == "A+") then
-    echo "winadj -2900 2300 50 -3400" > /tmp/prtan.wip
+    echo "winadj -3000 3000 -3000 3000" > /tmp/prtan.wip
 else if ($ary == "B") then
-    echo "winadj -475 500 10 -610" > /tmp/prtan.wip
+    echo "winadj -600 600 -600 600" > /tmp/prtan.wip
 else if ($ary == "C") then
-    echo "winadj -200 200 10 -180" > /tmp/prtan.wip
+    echo "winadj -240 240 -240 240" > /tmp/prtan.wip
 else if ($ary == "D") then
-    echo "winadj -100 20 10 -110" > /tmp/prtan.wip
+    echo "winadj -100 100 -100 100" > /tmp/prtan.wip
 endif
 #echo "box bcnts bcnts" >> /tmp/prtan.wip
 echo "xlabel E-W distance (ns) " >> /tmp/prtan.wip
@@ -83,25 +84,25 @@ foreach j (`cat /tmp/anten.tmp | awk '{print $1}'`)
     echo "label " $j >> /tmp/prtan.wip
 end
 if ($ary == "A") then
-    echo "limits -850 2300 -50 3400" >> /tmp/prtan.wip
+    echo "limits -3000 3000 -3000 3000" >> /tmp/prtan.wip
 else if ($ary == "A+") then
-    echo "limits -2900 2300 -50 3400" >> /tmp/prtan.wip
+    echo "limits -3000 3000 -3000 3000" >> /tmp/prtan.wip
 else if ($ary == "B") then
-    echo "limits -475 500 -10 610" >> /tmp/prtan.wip
+    echo "limits -600 600 -600 600" >> /tmp/prtan.wip
 else if ($ary == "C") then
-    echo "limits -200 200 -10 180" >> /tmp/prtan.wip
+    echo "limits -240 240 -240 240" >> /tmp/prtan.wip
 else if ($ary == "D") then
-    echo "limits -100 20 -10 110" >> /tmp/prtan.wip
+    echo "limits -100 100 -100 100" >> /tmp/prtan.wip
 endif
 echo "box bcnts bcnts" >> /tmp/prtan.wip
 
-echo "mtext t 3.0 0.5 0.5 BIMA antenna positions for "$ary" Array " >> /tmp/prtan.wip
+echo "mtext t 3.0 0.5 0.5 CARMA antenna positions for "$ary" Array " >> /tmp/prtan.wip
 echo "mtext t 1.25 0.25 0.5 Date of observation:" $date >> /tmp/prtan.wip
 echo "mtext t 1.25 0.75 0.5 Frequency:" $freq "GHz" >> /tmp/prtan.wip
 
 echo " " >> /tmp/prtan.wip
 # Generate plot
-wip -x /tmp/prtan.wip
+wip -x /tmp/prtan.wip -d 1/xs
 
 # Ask if hardcopy required
 echo "Hardcopy? (y/n, default=n)"
