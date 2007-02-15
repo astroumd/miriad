@@ -60,7 +60,7 @@
 %  nband - appears to be CARMA's Control.SpectralLineCorrelator.numBands (but it's 8, not 6=nspect)
 %  tcorr - for ATNF systemp calibration, ATNF used.
 
-\section{
+\section{UV Dataset}
 
 \newcommand{\uvversion}{February 13, 2007}
 
@@ -708,7 +708,7 @@ A reminder on some telescope specific variables
 \subsection{CARMA}
 
 \footnotesize\begin{verbatim}
-  dazim(nants}
+  dazim(nants)
   delev(nants)
   modedesc
   tcorr                     CHECK WITH SAME NAME ATCA NAME!!!
