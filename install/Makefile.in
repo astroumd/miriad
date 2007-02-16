@@ -38,9 +38,10 @@
 #	27-jul-99  add linux fix to remake shared library
 #       23-jan-04  MIR4
 #       16-mar-06  hack/fix slib for different architectures, switch to Makefile.in
+#       15-feb-07  add uvio target
 
 # For station identification:
-VERSION = Makefile.linux    16-mar-06
+VERSION = Makefile.linux    15-feb-07
 MESG = Default Makefile for MIRIAD tasks in `pwd`
 
 #       Misc settings
@@ -155,6 +156,11 @@ cleanup:
 	rm -f core flint.log *.o *.f *.doc $(BINS) $(PROG)
 
 all:	$(BINS)
+
+# special hack for uvio
+LFS = -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE
+uvio:
+	(cd $(MIRSUBS); $(CC) $(CFLAGS) $(LFS) -DTESTBED -I$(MIRINC) -o $(MIRBIN)/uvio uvio.c $(MIRLIB)/libmir.a -lm)
 
 ############################################################################
 # special projects and their dependencies follow here
