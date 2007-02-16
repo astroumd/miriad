@@ -58,7 +58,7 @@
 %                  [i know this is bad, but it will go back to the official location as such]
 %
 %  nband - appears to be CARMA's Control.SpectralLineCorrelator.numBands (but it's 8, not 6=nspect)
-%  tcorr - for ATNF systemp calibration, ATNF used.
+%  later removed again
 
 \section{UV Dataset}
 
@@ -572,7 +572,7 @@ tau230		\>R	\>-
 \> Optical depth at 230 GHz, as measured with the ... system (Hat Ck/CARMA) \\
 
 tcorr		\>I	\>-
-\> HasTsys correction has been applied (0:none, 1:applied) (CARMA) \\
+\> HasTsys correction has been applied (0:none, 1:applied) (CARMA, ATNF) \\
 
 
 telescop(*)	\>A	\>-
@@ -711,7 +711,6 @@ A reminder on some telescope specific variables
   dazim(nants)
   delev(nants)
   modedesc
-  tcorr                     CHECK WITH SAME NAME ATCA NAME!!!
 \end{verbatim}\normalsize
 
 \subsection{SMA}
