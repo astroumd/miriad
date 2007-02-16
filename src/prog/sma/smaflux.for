@@ -57,10 +57,12 @@ c                                      "Found solar system object"
 c    pjb/jhz 2005-11-25
 c                      Extended smadir from 82 chars to 256.
 c                      Added  call mgetenv(mirhome,'MIR')
+c    jhz  2007-02-17   Added a message in case the Julian date
+c                      in the data exceeds the limit of catalog.
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='SmaFlux: version 1.1 25-Nov-05')
+	parameter(version='SmaFlux: version 1.1 17-02-07')
 	integer MAXVIS
 	parameter(MAXVIS=32)
 c
@@ -7135,6 +7137,10 @@ c  assign  the value of planet oblate
         enddo
 c  convert Julian date to mjd
         mjd=jday-2400000.5
+        if(mjd.gt.55562.0) then
+        write(*,*) 'MJD=', mjd
+        call bug('f', 'the Julian date has exceeded the limit.')
+        end if
 c  read the ephemeris data
          open(unit=10, file=
      *  smadir(1:len1(smadir))//planet(1:len1(planet))//'.ephem.dat',
