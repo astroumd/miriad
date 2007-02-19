@@ -14,7 +14,7 @@ This also contains information on retrieving and installing \miriad.
 
 This manual serves as a cook book for CARMA data using the
 \miriad\ package. It is assumed that the reader has some familiarity
-with the underlying {\bf Unix} operating system (be it Linux or Darwin} 
+with the underlying {\bf Unix} operating system (be it Linux or Darwin)
 and \miriad\ itself. 
 
 
@@ -46,7 +46,7 @@ Our {\bf bugzilla} has an module for miriad as well, though again, this is proba
 only useful for developers (though the developers should maintain a list of active
 bugs on a more user friendly webpage).
 \bigskip
-A Wiki page has also been set up at {\tt http://bima.astro.umd.edu/wiki/index.php/Miriad_Party}.
+A Wiki page has also been set up at {\tt http://bima.astro.umd.edu/wiki/index.php/Miriad\_Party}.
 
 \section*{Acknowledgements}
 

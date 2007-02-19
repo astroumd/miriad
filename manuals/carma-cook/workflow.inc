@@ -16,7 +16,8 @@ where each source was stored in a separate dataset.
 
 \subsection{At Carma}
 
-At OVRO or Carma data should probably be retrieved via cedarflat's machines on
+At Carma there is limited bandwith to the outside world, 
+and Carma data should probably be directly retrieved via {\tt cedarflat} machines on
 {\tt  /misc/sdp/sciencedata/}, or in case of older data, 
 {\tt  /misc/sdp/archive\_sciencedata/}.
 
