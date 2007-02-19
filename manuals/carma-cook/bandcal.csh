@@ -34,18 +34,21 @@ set cal = 3C279                      # passband calibrator
 set viscal = 1153+495                # visibility calibrator
 set source = M51MOS                  # source
 set nb_array = ( 4 5 6 )             # spectral line bands to calibrate
-set wide_array = ( 5 6 5 )           # hybrid band with wide setup
+set wide_array = ( 5 6 5  )          # hybrid band with wide setup
+				     # For each element in nb_array, the
+				     # corresponding element in wide_array
+                                     # should be the hybrid band that is wideband
 set superwidewin = "2,3,5,6"         # windows to use for super-wideband
 set superwidechan = "1,1,60"         # Channels for superwide
 set bw = 64                          # Spectral Line bandwidth
 set wideline = "1,3,11,11"           # line type for 500 MHz
 set narrowline = "1,3,58,58"         # line type for narrow band
 set sideband = "usb"                 # Sideband (used for noise conjugation)
-set calint = 0.1                     # passband calibration interval (minutes)
+set calint = 0.2                     # passband calibration interval (minutes)
 set vcalint = 42                     # visibility calibrator cal interval
 set order = 1                        # polynomial order for smamfcal fit
 set edge = 3                         # # of edge channels to discard in smamfcal
-set badants = "2,3,5"                # bad antennas to flag
+set badants = "2,3,5"                    # bad antennas to flag
                                      # Do heavy uvflagging prior to script
 set badchan1 = "6,61,1,1"            # bad overlap channels between 1st 2 bands
 set badchan2 = "6,124,1,1"           # bad overlap channels between 2nd 2 bands
@@ -55,7 +58,7 @@ set restfreq = 115.271203            # rest frequency of line
 
 uvflag vis=$vis select=anten'('$badants')' flagval=flag
 
-rm -rf all.wide all.nb all.hyb 
+rm -rf all.wide all.nb  
 rm -rf $cal.wide* $cal.nb* $cal.hyb* 
 
 # Select all-wideband and all-narrowband data
@@ -71,7 +74,7 @@ uvcat vis=all.wide out=$viscal.v.wide.0 \
 
 # mfcal passband on superwideband 
 # Don't bother using noise source for superwideband
-mfcal vis=$cal.wide.0 interval=0.1 refant=$refant
+mfcal vis=$cal.wide.0 interval=$calint refant=$refant
 echo "**** Plot super-wideband passband on $cal.wide.0 "
 gpplt vis=$cal.wide.0 options=bandpass yaxis=phase nxy=4,4 yrange=-360,360 device=bp$cal.wide.0.ps/ps
 gv bp$cal.wide.0.ps
@@ -94,28 +97,57 @@ uvcat vis=$viscal.v.wide out=$viscal.v.wide.sw select='win('$superwidewin')'
 selfcal vis=$viscal.v.wide.sw line=channel,$superwidechan \
      interval=$vcalint options=phase refant=$refant
 echo "**** Phases on the superwideband visibility calibrator $viscal.v.wide.sw"
-gpplt vis=$viscal.v.wide.sw device=p$viscal.v.wide.ps/ps yaxis=phase yrange=-360,360 nxy=4,4 
+gpplt vis=$viscal.v.wide.sw device=p$viscal.v.wide.sw.ps/ps yaxis=phase yrange=-360,360 nxy=4,4 
 gv p$viscal.v.wide.sw.ps
 
 # LOOP OVER EACH NARROW BAND
 
-foreach i ( 1 2 3 )
+set nblength = $#nb_array
+if $nblength == 1 set list = 1
+if $nblength == 2 set list = ( 1 2 )
+if $nblength == 3 set list = ( 1 2 3 )
+
+foreach i  ( $list )
 
 set nb = $nb_array[$i]
 set wide = $wide_array[$i]
-
 rm -r all.hyb
+
 # Select hybrid data 
 # NB:  assumes only 1 band is in wideband mode; if two bands are in wideband
 #      mode, change hybrid selection to select on nb and modify bw=
-if ( $wide == 1 || $wide == 4 ) \
-    bwsel vis=$vis nspect=6 bw=500,$bw,$bw out=all.hyb
-if ( $wide == 2 || $wide == 5 ) \
-    bwsel vis=$vis nspect=6 bw=$bw,500,$bw out=all.hyb
-if ( $wide == 3 || $wide == 6 ) \
-    bwsel vis=$vis nspect=6 bw=$bw,$bw,500 out=all.hyb
+if ( $wide == 1 || $wide == 4 ) then 
+    if ($nb == 2 || $nb == 5) then
+      bwsel vis=$vis nspect=6 bw=500,$bw,0 out=all.hyb
+    else
+      bwsel vis=$vis nspect=6 bw=500,0,$bw out=all.hyb      
+    endif
+    endif
+if ( $wide == 2 || $wide == 5 ) then
+    if ($nb == 1 || $nb == 4) then
+      bwsel vis=$vis nspect=6 bw=$bw,500,0 out=all.hyb
+    else
+      bwsel vis=$vis nspect=6 bw=0,500,$bw out=all.hyb      
+    endif
+    endif    
+if ( $wide == 3 || $wide == 6 ) then
+    if ($nb == 1 || $nb == 4) then
+      bwsel vis=$vis nspect=6 bw=$bw,0,500 out=all.hyb
+    else
+      bwsel vis=$vis nspect=6 bw=0,$bw,500 out=all.hyb      
+    endif    
+    endif
+set test = `uvio vis=all.hyb | grep -i source | awk '{if (NR==1) print $4}'`
+if ($test == "") then
+  echo
+  echo "FATAL!  There appears to be no valid data in all.hyb"
+  echo "This is likely to be because wide_array[$i] = $wide is not valid"
+  echo "(i.e. band $wide is not really wideband), or one of the other "
+  echo "bands is not really narrowband.  Use uvindex to sort this out"
+  exit
+endif
 
-echo "**** Be sure that one band is found by inspecting uvlist output!"
+echo "**** Be sure that bands are found by inspecting uvlist output!"
 echo "**** If no frequency info is found, that bwsel parameters are wrong"
 uvlist vis=all.hyb options=spectra
 
@@ -170,7 +202,7 @@ endif
 mfcal vis=noise.nb.win$nb.00 refant=$refant
 echo "**** Passband cal using noise source"
 gpplt vis=noise.nb.win$nb.00 device=bpnoise.nb.win$nb.00.ps/ps options=bandpass yaxis=phase nxy=4,4 \
-        yrange=-360,360
+        yrange=-90,90
 gv bpnoise.nb.win$nb.00.ps
 
 # Copy noise passband to astronomical all-narrowband and hybrid narrowbands, 
@@ -185,7 +217,7 @@ uvcat vis=$cal.hyb.win$nb.00 out=$cal.hyb.win$nb.0 options=nocal
 smamfcal vis=$cal.hyb.win$nb.0 interval=$calint refant=$refant edge=$edge options=opolyfit \
           polyfit=$order
 echo "**** Hybrid narrowband passband on $cal.hyb.win$nb.0 "
-gpplt vis=$cal.hyb.win$nb.0 options=bandpass yaxis=phase nxy=4,4 yrange=-360,360 \
+gpplt vis=$cal.hyb.win$nb.0 options=bandpass yaxis=phase nxy=4,4 yrange=-90,90 \
     device=bp$cal.hyb.win$nb.0.ps/ps
 gv bp$cal.hyb.win$nb.0.ps
 
@@ -197,9 +229,9 @@ rm -r test.pass
 uvcat vis=$cal.nb.win$nb.0 out=test.pass
 mfcal vis=test.pass refant=$refant
 echo "**** Narrowband passband (should be flat!)  on $cal.hyb.win$nb.0 "
-gpplt vis=test.pass options=bandpass yaxis=phase nxy=4,4 yrange=-180,180 \
+gpplt vis=test.pass options=bandpass yaxis=phase nxy=4,4 yrange=-90,90 \
       device=bptest.ps/ps
-gvplt bptest.ps
+gv bptest.ps
 
 # Apply astronomical narrowband passband to hybrid and all-narrowband
 uvcat vis=$cal.hyb.win$nb.0    out=$cal.hyb.win$nb     options=nocal
@@ -270,13 +302,26 @@ uvcat vis=$source.win$nb out=$source.win_$i
 end
 
 # glue together 3 bands
-set cfile=$source.$nb_array[1]$nb_array[2]$nb_array[3]
-rm -r $cfile
-smachunkglue vis=$source.win nfiles=3 out=$cfile
+set nblength = $#nb_array
 
-# flag bad overlap channels
-uvflag vis=$cfile line=channel,$badchan1 flagval=flag
-uvflag vis=$cfile line=channel,$badchan2 flagval=flag
+
+if ($nblength == 2) then
+  set cfile=$source.$nb_array[1]$nb_array[2]
+  rm -r $cfile
+  smachunkglue vis=$source.win nfiles=$nblength out=$cfile
+  uvflag vis=$cfile line=channel,$badchan1 flagval=flag
+else if ($nblength == 3) then
+  set cfile=$source.$nb_array[1]$nb_array[2]$nb_array[3]
+  rm -r $cfile
+  smachunkglue vis=$source.win nfiles=$nblength out=$cfile
+  # flag bad overlap channels
+  uvflag vis=$cfile line=channel,$badchan1 flagval=flag
+  uvflag vis=$cfile line=channel,$badchan2 flagval=flag
+else
+  set cfile=$source.$nb_array[1]
+  rm -r $cfile  
+  uvcat vis=$source.win out=$cfile
+endif
 
 # put in restfreq
 puthd in=$cfile/restfreq type=double value=$restfreq
@@ -284,3 +329,4 @@ puthd in=$cfile/restfreq type=double value=$restfreq
 # copy super-wideband gains to source
 copyhd in=$viscal.v.wide.sw out=$cfile items=gains,ngains,nsols,interval
 
+echo "Calibrated source file: $cfile
