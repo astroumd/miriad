@@ -3,23 +3,26 @@
 
 \chapter{Work Flow}
 
-\section{Carma Data}
+
+
+
+
+\section{Carma Data Retrieval}
 
 Carma data are normally multi-source datasets, where all data from a  single track (a typical
 ``8'' hour observation) are in a single Miriad dataset, unlike its predecessor BIMA
 where each source was stored in a separate dataset.
 
 
-
-
-\section{Data Retrieval}
+Note you will need the {\tt carma*} username and password to get access to Carma data!
 
 \subsection{At Carma}
 
-At Carma there is limited bandwith to the outside world, 
-and Carma data should probably be directly retrieved via {\tt cedarflat} machines on
-{\tt  /misc/sdp/sciencedata/}, or in case of older data, 
-{\tt  /misc/sdp/archive\_sciencedata/}.
+At Carma (or OVRO) there is limited bandwith to the outside world, 
+and Carma data should probably be directly retrieved via one of the
+{\tt cedarflat} machines on
+{\tt  /misc/sdp/sciencedata/}, or in case of older data, the directory
+{\tt  /misc/sdp/archive\_sciencedata/} should contain data older than about a month.
 
 
 \subsection{Not at Carma}
@@ -35,9 +38,9 @@ and click the download link at the top or bottom
 of that long page. A Java Web Start
 (jsp) application will now be launced (you may have to teach your
 browser where {\tt javaws} is located) and once the
-list of datasets have been displayed in {\tt DaRT}, click on 
+list of datasets has been displayed in {\tt DaRT}, click on 
 the Download button in that java application to start the transfer. 
-Notice that these file are tar files, and need to be untarred 
+Notice that these file are compressed tar files, and need to be un-tarred 
 to become a real miriad dataset.   
 
 \footnotesize
@@ -60,7 +63,7 @@ Itemize: Version 22-jun-02
 
 % \footnotesize\normalsize
 
-The drawback of this scheme is that you need twice the diskspace, you can also
+The drawback of this download scheme is that you initially need twice the diskspace, you can also
 use the streaming capabilities of programs like {\tt wget} or {\tt curl} to transfer 
 and un-tar on the fly, if you know how to construct the URL from the dataset names
 you saw on that Data Archive page:
@@ -77,10 +80,16 @@ or
 
 \section{Data Inspection}
 
+There are several ways to get a nice summary of what is in your Carma multi-source dataset.
+Programs {\tt listobs}, {\tt uvindex} and {\tt uvlist} all have options to deal with this.
+Although {\tt listobs} was very BIMA specific, it handles CARMA data now, but no doubt will
+need some more modifications to rid the output of some obvious BIMA-isms. Nonetheless,
+the output is a useful summary.
+
 \footnotesize
 \begin{verbatim}
   # this dataset happens to have a bad value for the latitude, so we fix it before listobs
-  # otherwise bad values for E,N,U would be visible
+  # otherwise bad values for E,N,U would be obvious
   % puthd in=cx012.SS433.2006sep07.1.miriad/latitud value=0.6506654009 type=double
 
 
@@ -261,15 +270,29 @@ The input data contain the following AzEl offsets
 
 \subsection{Data Archive}
 
-The (Illinois) data archive will typically re-fill data from its basic
+The (Illinois) Data Archive will typically re-fill data from its basic
 constituents (the {\it visbrick} and the {\it monitor points}) whenever
 there is a need. This means the data as used by the Quality Script could
 be different from that obtained from the Data Archive.
 
+In case of doubt, save a checksum of your data and/or use the version of
+the data that is stored inside the visibility data:
+
+\footnotesize
+\begin{verbatim}
+  % uvlist vis=cx012.SS433.2006sep07.1.miriad options=var,full | grep version
+  UVLIST: version  4-may-06
+  version :0.1.2                                  
+\end{verbatim}
+\normalsize
+
 
 \subsection{Axis offset correction}
 
-Normally never needed. 
+Normally never needed. After moving antennae to a new configuration and 
+re-establishing baselines and pointing, sometimes axis offset corrections
+will need to be applied. This is normally done for observers, but in the
+time shortly after a move this may have to be done manually.
 
 % \footnotesize\normalsize
 \footnotesize
@@ -278,19 +301,25 @@ Normally never needed.
 \end{verbatim}
 \normalsize
 
-Notice the source code is currently not stored in MIRIAD.
+Notice the source code is currently not even stored in MIRIAD.
 
 
 \subsection{Baseline correction}
 
+Again this is normally not needed, but in the first few days/weeks
+time after a move baselines can settle and may need to be re-applied
+from the newly computed ones. Normally these are stored in a small
+ascii table with equatorial values in nanoseconds.
+({\it cf}. {\tt uvgen baseunit=1)
+
 % \footnotesize\normalsize
 \footnotesize
 \begin{verbatim}
-  uvedit vis=xxx.mir apfile=antpos.?????? out=yyy.mir
+  uvedit vis=xxx.mir out=yyy.mir apfile=antpos.070115 
 \end{verbatim}
 \normalsize
 
-Datafiles can be found at CARMA on {\tt /array/rt/baselineSolutions/}.
+Datafiles can be found at CARMA on {\tt /array/rt/baselineSolutions/antpos.YYMMDD}.
 
 \subsection{Rest Frequency}
 
@@ -347,8 +376,9 @@ where the main one in observing was had some corrupted data.
 TODO:  check on the uvedit problem with missing LO2.
 
 
-\subsection{Data Editing}
+\subsection{Data Flagging and Editing}
 
+See also Chapter 10 in the Miriad Users Guide.
 
 % \footnotesize\normalsize
 \footnotesize
@@ -406,6 +436,27 @@ but the current values in the 65 and 145.3 for OVRO and BIMA antennaea resp.
 
 See also bugzilla bug \# 339.
 
+
+\subsection{Flagging based on tracking errors (bugzilla xxx)}
+
+The {\tt axisrms} UV variable holds the tracking error (in arcsec, in Az and El) 
+for each antenna in the array. It can be useful to automatically flag data when the
+tracking is above a certain error, or even antennae based (e.g.
+allow OVRO to have a smaller tolerance than the BIMA antennae). In older data
+the axisrms was not written properly, and could even be negative. It is currently
+written $\sqrt{2}$ times what it really should be. But check your plots!
+
+\footnotesize
+\begin{verbatim}
+
+  % varplt vis=c0048.umon.1.miriad device=/xs yaxis=axisrms options=overlay yrange=-4,4
+
+  % uvflag vis=c0048.umon.1.miriad 'select=pointing(0,4)' flagval=flag options=noapply 
+
+\end{verbatim}
+\normalsize
+
+
 \section{Calibration}
 
 \subsection{Noise Source}
@@ -422,10 +473,10 @@ See also bugzilla bug \# 339.
 
 CARMA is a heterogeneous array, currently with 2 different types of antennae
 (10m and 6m), and as such will contribute 3 different types of baselines with
-an ovro-ovro, bima-bima and ovro-bima baseline. The latter is currently
+an Ovro-Ovro, Bima-Bima and Ovro-Bima baseline. The latter is currently
 labeled in the visibility data as a {\tt CARMA} (nominally 8m) antennae, 
-the first two simply being {\tt OVRO} (10m) and {\tt HATCREEK} (6m)
-\footnote{The future array with the additional SZA antennae will thus
+the first two simply being ``pure'' {\tt OVRO} (10m) and {\tt HATCREEK} (6m)
+\footnote{The future array with the additional SZA 8 antennae will thus
 have 6 different baseline types that contribute to a different primary
 beam}.
 

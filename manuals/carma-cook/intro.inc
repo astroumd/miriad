@@ -9,12 +9,12 @@ Wide Web at
 \begin{verse}
 {\verb+http://bima.astro.umd.edu/miriad+.}
 \end{verse}
-This also contains information on retrieving and installing \miriad.
+% This also contains information on retrieving and installing \miriad.
 \end{latexonly}
 
 This manual serves as a cook book for CARMA data using the
 \miriad\ package. It is assumed that the reader has some familiarity
-with the underlying {\bf Unix} operating system (be it Linux or Darwin)
+with the underlying {\bf Unix} operating system (be it Linux, Solaris or Darwin)
 and \miriad\ itself. 
 
 
@@ -23,10 +23,10 @@ and \miriad\ itself.
 \subsection{Miriad Users Guide}
 
 It is assumed the reader is familiar with the MIRIAD Users Guide, in particular
-chapters 2 (the Miriad shell), 3 (plotting and the device= keyword), 4 (what miriad datasets
+chapters 2 (the Miriad shell), 3 (plotting and the {\tt device=} keyword), 4 (what miriad datasets
 really are). Chapter 5 on visibility data is in particular important, if deals with
-the different types of {\it calibration tables}, and the select= keyword. Chapter 6
-on image data is much shorter but also important to see. Chapter 10 on flagging
+the different types of {\it calibration tables}, and the {\tt select=} keyword. Chapter 6
+on image data is much shorter but also important to read. Chapter 10 on flagging
 is also important.
 
 \subsection{SMA Users Guide}

@@ -62,7 +62,7 @@
 
 \section{UV Dataset}
 
-\newcommand{\uvversion}{February 13, 2007}
+\newcommand{\uvversion}{February 19, 2007}
 
 A \miriad\ uv dataset is composed of a collection of items and `\MM{u-v} variables'.
 The variables are parameters that are known at the time of the observation,
@@ -87,8 +87,7 @@ flags       & integer & optional flags for narrowband data \\
 wflags      & integer & optional flags for wideband data \\ \hline
 gains       & mixed   & antenna gain table (delhd this item to disable gain table)\\
 nfeeds	    & integer & number of feeds on each antenna \\
-ntau	    & integer & Number of delay/spectral index terms per antenna\\
-	    &	      & in `gains' \\
+ntau	    & integer & Number of delay/spectral index terms per antenna in `gains' \\
 nsols       & integer & number of records in `gains' \\
 ngains      & integer & number of antenna gains in each record of `gains'\\
 interval    & double  & gain interpolation time tolerance (days)\\
@@ -127,6 +126,7 @@ The storage {\bf types} (2nd column) in the table below are:
     C -- complex (2 * 32 bit IEEE)
     I -- integer (32 bit twos complement)
     J -- short (16 bit twos complement)
+    K -- long (64 bit  twos complement) *** not currently used in visdata ***
 \end{verbatim}
 \normalsize
 
@@ -711,6 +711,9 @@ A reminder on some telescope specific variables
   dazim(nants)
   delev(nants)
   modedesc
+  axisrms       "skyErr"  -- temporary sqrt(2) issue
+  lo1 changes, phaselo1=0
+  lo2 still absent
 \end{verbatim}\normalsize
 
 \subsection{SMA}

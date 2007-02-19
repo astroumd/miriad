@@ -14,7 +14,7 @@ of an array. These can be specified in either an equatorial system
 or a local (topocentric) system. The conversion between the two
 is controlled as followed.
 A miriad dataset records the antennae positions in the {\tt antpos}
-UV variable, which records them in nanoseconds in an equatorial
+UV variable, which records them in nanoseconds in a local equatorial
 coordinate system with the X axis pointing outwards from the
 local meridian.
 The conversion of these to a local topocentric

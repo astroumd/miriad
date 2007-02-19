@@ -329,4 +329,4 @@ puthd in=$cfile/restfreq type=double value=$restfreq
 # copy super-wideband gains to source
 copyhd in=$viscal.v.wide.sw out=$cfile items=gains,ngains,nsols,interval
 
-echo "Calibrated source file: $cfile
+echo "Calibrated source file: $cfile"
