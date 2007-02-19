@@ -1,3 +1,4 @@
+% -*- TeX -*-
 %
 % Setting Up Your Account
 %
@@ -14,6 +15,9 @@ Typically you will need to know where MIRIAD is stored, and then
 \begin{verbatim}
    source /somewhere/miriad/miriad_start.csh
 \end{verbatim}
+
+If you have installed a binary release, and have not edited the two {\tt miriad\_start.*}
+files, please do so.
 
 \section{OVRO valley}
 
