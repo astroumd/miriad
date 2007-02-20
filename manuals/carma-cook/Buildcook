@@ -24,7 +24,8 @@ latex carmacookbook
 # Generate the postscript file.
 
 dvips -o carmacookbook.ps carmacookbook
-gzip carmacookbook.ps
+# gzip carmacookbook.ps
+ps2pdf carmacookbook.ps 
 
 exit 0
 

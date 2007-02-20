@@ -20,10 +20,14 @@ and \miriad\ itself.
 
 \section{Users Guide}
 
+All general information, and many procedures also relevant for Carma, can be obtained
+from two existing Users Guide's:
+
 \subsection{Miriad Users Guide}
 
-It is assumed the reader is familiar with the MIRIAD Users Guide, in particular
-chapters 2 (the Miriad shell), 3 (plotting and the {\tt device=} keyword), 4 (what miriad datasets
+Throughout the cookbook  the reader is assumed to be
+familiar with the MIRIAD Users Guide, in particular
+Chapters 2 (the Miriad shell), 3 (plotting and the {\tt device=} keyword), 4 (what miriad datasets
 really are). Chapter 5 on visibility data is in particular important, if deals with
 the different types of {\it calibration tables}, and the {\tt select=} keyword. Chapter 6
 on image data is much shorter but also important to read. Chapter 10 on flagging
@@ -50,7 +54,8 @@ A Wiki page has also been set up at {\tt http://bima.astro.umd.edu/wiki/index.ph
 
 \section*{Acknowledgements}
 
-Stuart Vogel, Stephen White etc..  And the fine crew of the first Miriad ``Party'' where
+Stuart Vogel, Stephen White, Jin Koda, Joanna Brown  etc..  
+And the fine crew of the first Miriad ``Party'' where
 much of this material was first fine tuned.
 
 

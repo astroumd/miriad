@@ -7,7 +7,7 @@
 
 Setting up your account to use \miriad\ 
 of course varies from system to system.
-If in doubt, ask a local! We will assume you are using the \verb+csh+
+If in doubt, ask a local miriad user. We will assume you are using the \verb+csh+
 shell. For {\tt bash}, just replace {\tt .csh} with {\tt .sh}.
 
 Typically you will need to know where MIRIAD is stored, and then
@@ -19,11 +19,11 @@ Typically you will need to know where MIRIAD is stored, and then
 If you have installed a binary release, and have not edited the two {\tt miriad\_start.*}
 files, please do so.
 
-\section{Site dependant setup}
+\section{Site dependent setup}
 \subsection{OVRO valley}
 
 \begin{verbatim}
-   source /sw/miriad/cvs/MIRRC.linux    (should use miriad_start.csh !!)
+   source /sw/miriad/cvs/miriad_start.csh
 \end{verbatim}
 
 \subsection{OVRO cedar flat}
@@ -76,7 +76,7 @@ Example:
 
 \section{Installation}
 
-Both binary and source based installs are available. For a binary release you will
+Both binary and source based installs are available for Miriad. For a binary release you will
 need to adjust the path to {\tt MIR} in the two {\tt miriad\_start.*} files. There
 is a risk of shared library conflicts, in which case you will have to relink
 and/or recompile the code. The Miriad website provided more details and instructions

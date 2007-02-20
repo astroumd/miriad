@@ -251,12 +251,35 @@ The input data contain the following AzEl offsets
    shows again C3 and C11 are not online. Autoscaling showed C2 has a bad point. But overall something
    bad happened around 5h UT. See Figure 2.1
 
- % uvlist vis=cal.vis options=spectra
+ % uvlist vis=cx012.SS433.2006sep07.1.miriad options=spectra
+  rest frequency     :  92.46875  92.46875  92.46875  92.46875  92.46875  92.46875
+  starting channel   :         1        16        31        46        61        76
+  number of channels :        15        15        15        15        15        15
+  starting frequency :  92.46875  93.46875  92.96875  97.53125  96.53125  97.03125
+  frequency interval :  -0.03125  -0.03125  -0.03125   0.03125   0.03125   0.03125
+  starting velocity  :     0.000 -3242.095 -1621.047-16413.105-13171.010-14792.058
+  ending velocity    :  1418.416 -1823.678  -202.631-17831.522-14589.427-16210.474
+  velocity interval  :   101.315   101.315   101.315  -101.315  -101.315  -101.315
 
- % uvflag vis=xxx.mir options=noapply flagval=flag
+ % uvflag vis=cx012.SS433.2006sep07.1.miriad options=noapply flagval=flag
+ Total number of records selected: 95628; out of 95628 records
+ Antennas used: 1,2,4,5,6,7,8,9,10,12,13,14,15
+ Counts of correlations within selected channels
+ channel   Originally  Currently
+ Good:        5894250          0    Changed to bad:    5894250
+ Bad:         2712270    8606520
+ wide      Originally  Currently
+ Good:         392950          0    Changed to bad:     392950
+ Bad:          180818     573768
+
+
 
 \end{verbatim}
 \normalsize
+
+Probably the most important thing to remember is at various stages of your calibration: data inspection.
+Check your phases and/or amplitudes are now flat as function of frequency and/or time. Use {\tt uvflag}
+and friends where needed.
 
 \begin{figure}[ht]
 \begin{center}
@@ -383,9 +406,15 @@ See also Chapter 10 in the Miriad Users Guide.
 % \footnotesize\normalsize
 \footnotesize
 \begin{verbatim}
-  % uvimage out=vis/visbrick
-  % ds9 vis/visbrick
-  % uvflag flagval=flag options=noapply
+  % uvimage vis=cx012.SS433.2006sep07.1.miriad out=visbrick1
+  UVIMAGE: version 22-dec-2006
+  Mapping amp
+  ### Informational:  Datatype is complex
+   Nvis= 95628 Nant= 13
+   Nchan= 90 Nbl= 78 Ntime= 1226 Space used:  8606520 /  17432576 =   49.370327%
+   number of records read=  95628
+
+  % ds9 visbrick1
 \end{verbatim}
 \normalsize
 
@@ -395,7 +424,7 @@ See also Chapter 10 in the Miriad Users Guide.
 
 \subsection{Autocorrelation}
 
-Auto-correlations are stored in the datastream as of January xx, 2007. They
+Auto-correlations are stored in the datastream as of January 2007. They
 are stored as baselines with the same antenna pair, and show up before
 the cross-correlations. Some programs assume this, in order to scale that
 data for calibration purposes:
@@ -403,17 +432,45 @@ data for calibration purposes:
 % \footnotesize\normalsize
 \footnotesize
 \begin{verbatim}
+  % uvlist vis=c0048.umon.1.miriad recnum=20 line=wide,3
+  ...
+ Vis #    Time      Ant    Pol U(kLam)  V(kLam)   Amp  Phase   Amp  Phase   Amp  Phase
+     1 05:02:30.7   1-   1 RR     0.00     0.00  104.786    0   105.167    0   106.508    0
+     2 05:02:30.7   2-   2 RR     0.00     0.00  105.545    0   106.359    0   107.692    0
+     3 05:02:30.7   4-   4 RR     0.00     0.00  105.542    0   106.023    0   107.893    0
+     4 05:02:30.7   5-   5 RR     0.00     0.00  105.701    0   106.202    0   107.423    0
+     5 05:02:30.7   6-   6 RR     0.00     0.00  105.488    0   106.199    0     0.000    0*
+     6 05:02:30.7   7-   7 RR     0.00     0.00  105.109    0   106.522    0   106.212    0
+     7 05:02:30.7   8-   8 RR     0.00     0.00  105.385    0   106.768    0   108.186    0
+     8 05:02:30.7   9-   9 RR     0.00     0.00  104.877    0   105.551    0   106.094    0
+     9 05:02:30.7  10-  10 RR     0.00     0.00  105.596    0   106.564    0   107.019    0
+    10 05:02:30.7  11-  11 RR     0.00     0.00  105.007    0   106.135    0   105.887    0
+    11 05:02:30.7  12-  12 RR     0.00     0.00  105.801    0   107.429    0   108.338    0
+    12 05:02:30.7  13-  13 RR     0.00     0.00  105.425    0   106.137    0   106.857    0
+    13 05:02:30.7  14-  14 RR     0.00     0.00  105.174    0   106.178    0   107.693    0
+    14 05:02:30.7  15-  15 RR     0.00     0.00  104.073    0   105.818    0   107.511    0
+    15 05:02:30.7   1-   2 RR     0.00     0.00   98.883   34    97.093   46   100.276   59
+    16 05:02:30.7   1-   4 RR     0.00     0.00   98.703   24    96.451   20    99.647   59
+    17 05:02:30.7   1-   5 RR     0.00     0.00   95.242   22    95.096   12    99.095   37
+    18 05:02:30.7   1-   6 RR     0.00     0.00   93.422   19    95.104   48     0.000    0*
+    19 05:02:30.7   1-   7 RR     0.00     0.00   96.518   26    97.571   19    97.919   29
+    20 05:02:30.7   1-   8 RR     0.00     0.00   96.409   41    97.700   56    98.455   28
+
   % uvcal vis=xxx.mir out=yyy.mir options=fxcal
   % uvnorm vis=xxx.mir out=yyy.mir 
 \end{verbatim}
 \normalsize
 
+Calibration is done by normalization of each cross-correllation $V_{ij}$ with $\sqrt{V_{ii} V_{jj}}$.
+
 
 
 \section{Historic Data Correction}
 
-Here's a section on some historic data corrections that were needed,
-mostly irrelevant if the data has been refilled properly.
+In past times certain data corrections were needed that have since then
+been moved into the data filler or at the telescope monitor point level. 
+The latter type can normally not be solved by refilling the data.
+
 
 \subsection{jyperk (bugzilla 339)}
 
@@ -437,7 +494,7 @@ but the current values in the 65 and 145.3 for OVRO and BIMA antennaea resp.
 See also bugzilla bug \# 339.
 
 
-\subsection{Flagging based on tracking errors (bugzilla xxx)}
+\subsection{Flagging based on tracking errors (bugzilla 376)}
 
 The {\tt axisrms} UV variable holds the tracking error (in arcsec, in Az and El) 
 for each antenna in the array. It can be useful to automatically flag data when the
@@ -459,14 +516,130 @@ written $\sqrt{2}$ times what it really should be. But check your plots!
 
 \section{Calibration}
 
-\subsection{Noise Source}
 
-\subsection{Simply single calibrator}
+\subsection{Simple single calibrator}
+
+When a calibrator is strong enough in the same window as the source is observed, we 
+can simply determine a selfcal solution\footnote{cf. also the gmakes/gfiddle/gapply
+approach for BIMA data} for the calibrator and apply this to the source:
+
+Here is an annoted section of C-shell code exemplifying this:
+
+\footnotesize
+\begin{verbatim}
+set vis=cx011.abaur_co.2006nov21.1.miriad 
+
+# check phase in W2 (narrow) and W3 (wide)
+smauvplt vis=$vis device=/xs axis=time,phase line=wide,1,3 "select=-source(abaur)"
+smauvplt vis=$vis device=/xs axis=time,amp   line=wide,1,3 "select=-source(abaur)"
+
+# check bandpass
+uvspec vis=$vis device=/xs "select=-auto,source(3c111)" axis=chan,amp interval=999
+uvspec vis=$vis device=/xs "select=-auto,source(3c111)" axis=chan,pha interval=999
+
+uvspec vis=$vis device=/xs "select=-auto,source(0530+135)" axis=chan,amp interval=999
+uvspec vis=$vis device=/xs "select=-auto,source(0530+135)" axis=chan,pha interval=999
+
+# use W5 , the narrow band in this case
+rm -rf 0530+135
+uvcat vis=$vis "select=-auto,source(0530+135)"  out=0530+135
+selfcal vis=0530+135 refant=5 interval=5 line=wide,1,5,1 options=amp,apriori,noscale flux=4.6
+gpplt vis=0530+135 device=1/xs yaxis=amp nxy=5,3 yrange=0,3
+gpplt vis=0530+135 device=2/xs yaxis=pha nxy=5,3 yrange=-180,180
+
+rm -rf abaur
+uvcat vis=$vis "select=-auto,source(abaur),win(5)"  out=abaur
+puthd in=abaur/restfreq type=double value=115.271203
+gpcopy vis=0530+135 out=abaur
+# copyhd in=0530+135 out=abaur items=gains,ngains,nsols,interval
+
+rm -rf abaur.{mp,bm,m0,b0,b1}
+#
+invert vis=abaur map=abaur.m0 beam=abaur.b0 sup=0 options=systemp imsize=128,128 cell=1,1  line=chan,1
+invert vis=abaur map=abaur.mp beam=abaur.bm sup=0 options=systemp,double,mosaic imsize=129,129 cell=1,1 line=chan,20,2,3,3
+mospsf beam=abaur.bm out=abaur.b1
+#  b0 is already quite an ok estimate, but b1 is technically better
+imfit in=abaur.b0 object=beam
+imfit in=abaur.b1 object=beam
+
+rm -rf abaur.{cc,cm}
+mossdi map=abaur.mp beam=abaur.bm out=abaur.cc niters=1000
+restor map=abaur.mp beam=abaur.bm model=abaur.cc out=abaur.cm fwhm=5.5,3.7 pa=40
+
+
+\end{verbatim}
+\normalsize
+
+
+\subsection{Noise Source Passband Calibration}
+
+The noise source is only present in the LSB and can be used to bandpass calibrate narrow
+calibrator modes. Only for data since early December has the signal of the Noise Source 
+been sufficiently amplified to be useful for this calibration mode. 
+
+
+
+
+The following procedure uses the phases of a wide band signal (in Window 2) and applies them to a narrow
+band signal, in order to check phase transfer:
+
+\footnotesize
+\begin{verbatim}
+
+  # bwsel can select out pieces of a track with the same BW settings
+
+  % selfcal vis=ct010.500_500_500.2006dec01.1.miriad select='source(3c279),win(2)' refant=9 interval=20
+  % uvcat   vis=ct010.500_8_500.2006dec01.1.miriad   out=3c279.8mhz.1dec select='source(3C279)'
+  % gpcopy  vis=ct010.500_500_500.2006dec01.1.miriad out=3c279.8mhz.1dec options=nopass
+
+\end{verbatim}
+\normalsize
+
+This phases in the {\tt 3c279.8mhz.1dec} data can now be compared to that of the noise source,
+and will still show offsets compared to that of the noise source.
+
+The amplified noise source can effectively remove any passband variations. For example, by applying an mfcal solution
+on the narrow band of the noise source (skipping the first channel):
+
+\footnotesize
+\begin{verbatim}
+
+  % mfcal vis=ct010.500_31_500.2006dec01.1.miriad interval=999 line=channel,62,2,1,1 refant=9 tol=0.001 select='source(noise),win(2)'
+  
+
+\end{verbatim}
+\normalsize
+
+If the signal of interest is in the USB, where there is no noise source, the data will have to conjugation into the USB
+and headers faked in order for mfcal to apply the correction, after a slight manual copying of important header
+variables:
+
+\footnotesize
+\begin{verbatim}
+
+  % uvcat vis=ct010.500_31_500.2006dec01.1.miriad out=noise.lsb select='source(noise),win(2)
+  % uvcat vis=ct010.500_31_500.2006dec01.1.miriad out=source.usb select='source(3C279),win(5)'
+  % uvcal vis=noise.lsb options=conjugate  out=noise.usb
+  
+  # look at the parameters for the spectra in USB and LSB
+  % uvlist vis=source.usb options=spec
+  % uvlist vis=noise.lsb options=spec
+
+  # cheat and copy two important variables accross
+  # note sfreq varies with time, sdf does not
+  # see bandcal.csh for more automated methods
+  % uvputhd vis=noise.usb hdvar=sfreq varval=96.99336 out=noise2.usb
+  % rm -rf noise.usb
+  % uvputhd vis=noise2.usb hdvar=sdf varval=0.00049 out=noise.usb
+
+  # now calibrate USB
+  % mfcal vis=noise.usb interval=9999 line=channel,62,2,1,1 refant=9 tol=0.001 
+  % gpcopy vis=noise.usb out=source.usb options=nocal
+
+\end{verbatim}
+\normalsize
 
 \subsection{Phase Transfer}
-
-
-\subsection{Passband Calibration}
 
 
 \section{Mapping and Deconvolution}
@@ -481,3 +654,21 @@ have 6 different baseline types that contribute to a different primary
 beam}.
 
 \subsection{Mosaicing}
+
+{\tt mospsf} needs to estimate the ``average'' beam appropriate for restoring.
+
+
+\footnotesize
+\begin{verbatim}
+  % invert ... beam=xxx.bm options=systemp,double,mosaic imsize=129,129 cell=1,1 
+  % imfit in=xxx.bm object=beam
+
+  % mossdi ...
+or
+  % mosmem ...
+
+  % restor ... fwhm=8,6 pa=40
+
+
+\end{verbatim}
+\normalsize
