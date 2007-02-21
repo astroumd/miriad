@@ -204,6 +204,7 @@ c    jhz 17jan07  fixed a bug in ylabel in the case of bothA&B.
 c    jhz 25jan07  cleaned a few things for solaris compiling
 c    jhz 06feb07  implemented lag plot
 c    jhz 06feb07  added xrange
+c    pjt 20feb07  use a private name for fft842x (intel mac linker complains otherwise)
 c  Bugs:
 c------------------------------------------------------------------------
         include 'maxdim.h'
@@ -217,7 +218,7 @@ c
         character mname*8000, moln*16
         integer mtag(maxmline), nmline, j, jp, js, je, iline
         character version*(*)
-        parameter(version='SmaUvSpec: version 1.15 06-feb-07')
+        parameter(version='SmaUvSpec: version 1.15 20-feb-07')
         character uvflags*8,device*64,xaxis*12,yaxis*12,logf*64
         character xtitle*64,ytitle*64, veldef*8
         character xtitlebuf*64
@@ -2766,7 +2767,7 @@ c
         out(n/2+1) = 2*out(n/2+1)
         out(n/2+2) = 2*out(n/2+2)
 c
-        call fft842x(out,n/2)
+        call smafft842x(out,n/2)
 c
 c  Reconjugate the data (always!).
 c
@@ -2778,7 +2779,7 @@ c
 
 
 c***********************************************************************
-        subroutine fft842x(data,n)
+        subroutine smafft842x(data,n)
 c
         implicit none
         integer n
