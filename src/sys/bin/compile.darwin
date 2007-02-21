@@ -1,5 +1,5 @@
 #-----------------------------------------------------------
-# source'd file compile.darwin, for mac os X
+# source'd file compile.darwin, for mac os X ppc
 #-----------------------------------------------------------
 set mmir  = $MIR
 set mhost = $MIRHOST
@@ -9,6 +9,8 @@ set mlsys = $mmir/bin/localsys
 # -finit-local-zero              if you debug code and need initialized data
 # -mcpu=i686 -march=i686 -malign-double -ffast-math         architecture opt
 #  on darwin you might need this -lSystemStubs library, if you have missing _printf$LDBLStub cases
+#  on darwin you sometimes might need -lcc_dynamic if you don't have -lSystemStubs
+#  which seems to happen if you did not install Xcode
 #
 setenv Fcompile  "g77"
 setenv Foptions  "-O -fno-globals -fno-common"
