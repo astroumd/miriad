@@ -653,6 +653,9 @@ the first two simply being ``pure'' {\tt OVRO} (10m) and {\tt HATCREEK} (6m)
 have 6 different baseline types that contribute to a different primary
 beam}.
 
+If you want to map anything but a point source, you MUST map your source
+in mosaic'd mode, even if you have a single pointing.
+
 \subsection{Mosaicing}
 
 {\tt mospsf} needs to estimate the ``average'' beam appropriate for restoring.
@@ -672,3 +675,23 @@ or
 
 \end{verbatim}
 \normalsize
+
+Even for a single pointing observation, your beam (dataset {\tt xxx.bm} in the example) will
+currently contain 3 maps (i.e. an image cube). The first plane is probably the Ovro-Ovro
+beam, followed by the Ovro-Beam beam, and finally the Bima=Bima beam.
+
+\section{Flux Calibration}
+
+Although one can rely on known fluxes of strong calibrators such as 
+3C273 and 3C111, their actual flux varies with time and you will need
+to depend on what Carma, or other observatories, have supplied for you.
+The best method is to add a planet for bootstrapping your the flux 
+of your flux calibrator, at least if a planet in available during 
+your observation.
+A alternative way is to use a planet, if available, in your observation
+and bootstrap its flux to scale the flux of your phase or amplitude
+calibrator. 
+\footnote{http://www.astro.uiuc.edu/\~wkwon/CARMA/fluxcal}
+
+It maintains a list of 11 ``secondary flux calibrators'', and publishes their
+fluxes as function of time.

@@ -33,10 +33,20 @@ allow OVRO to have a smaller tolerance than the BIMA antennae).
 \subsection{Bandpass calibration}
 
 The script below, {\tt bandcal.csh}, is a working example how Jin Koda's M51 data
-can be passband calibrated.
+can be passband calibrated. Courtesy Stuart Vogel.
 
 \footnotesize
 \verbatimlisting{bandcal.csh}
 \normalsize
 
-\subsection{Mosaiced Mapping}
+\subsection{Mosaiced Mapping and Deconvolution}
+
+Just make sure you have a good set of CPUs!
+
+
+% \subsection{carmadata}
+% ok, this is a cheat...
+% \footnotesize
+% \verbatimlisting{carmadata}
+% \normalsize
+

@@ -27,6 +27,8 @@ data.
 \item
 2006/12/01:  noise source sufficiently amplified for narrow band passbandcalibration 
 \item
+2006/12/xx:  correlator now handling all windows on all baselines
+\item
 2007/01/xx:  auto-correllations added {\bf [refill]}
 \item
 2007/01/xx:  fixed cross-talk other subarrays that stored some uv variables as 0 (bugzilla \#376?)

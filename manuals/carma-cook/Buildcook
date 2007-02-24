@@ -25,7 +25,7 @@ latex carmacookbook
 
 dvips -o carmacookbook.ps carmacookbook
 # gzip carmacookbook.ps
-ps2pdf carmacookbook.ps 
+# ps2pdf carmacookbook.ps 
 
 exit 0
 
