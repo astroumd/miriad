@@ -313,11 +313,14 @@ c                  sma/mount =  NASMYTH
 c    jhz 10-jan-07 add evector
 c    jhz 31-jan-07 changed source name length limit from 
 c                  8 characters to 16.
+c    jhz 07-mar-07 removed redundnt call of juliandate
+c                  added percent of file reading in the prompt
+c                  message.
 c------------------------------------------------------------------------
         integer maxfiles
         parameter(maxfiles=128)
         character version*(*)
-        parameter(version='SmaLod: version 2.3 31-Jan-07')
+        parameter(version='SmaLod: version 2.4 07-Mar-07')
 c
         character in(maxfiles)*64,out*64,line*64, rxc*4
         integer tno, length, len1
