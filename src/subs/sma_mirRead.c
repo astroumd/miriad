@@ -193,6 +193,8 @@
 // 2007-01-11 (JHZ) add evector to smabuffer.
 // 2007-01-31 (JHZ) changed source length limit from
 //                  8 characters to 16.
+// 2007-03-06 (JHZ) delete redundant juliandate calls.
+//                  add percentage of file reading. 
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -1453,7 +1455,7 @@ double xyzpos;
      if((cdh[set]->v_name[0]=='r'&&cdh[set]->v_name[1]=='e')&&
 	 cdh[set]->v_name[2]=='f'){
         doprt=-1;
-	jday = juliandate(&cdh[set],doprt);      
+//	jday = juliandate(&cdh[set],doprt);      
                                   }
                                       }
 // decode velocity type 
@@ -2054,14 +2056,14 @@ dat2003:
     }
 
 
-      fprintf(stderr,"\n");
+//      fprintf(stderr,"\n");
 // print observing date
-    for (set=0;set<nsets[3];set++){
-    if((cdh[set]->v_name[0]=='r'&&cdh[set]->v_name[1]=='e')&&
-       cdh[set]->v_name[2]=='f'){
-       doprt=1;
-      jday = juliandate(&cdh[set],doprt);      }
-    }
+//    for (set=0;set<nsets[3];set++){
+//    if((cdh[set]->v_name[0]=='r'&&cdh[set]->v_name[1]=='e')&&
+//       cdh[set]->v_name[2]=='f'){
+//       doprt=1;
+//      jday = juliandate(&cdh[set],doprt);      }
+//    }
 
 // initializing the number vis points to be read    
     smabuffer.nused=0;
@@ -2603,12 +2605,12 @@ smabuffer.w[blpnt] = uvwbsln[inhset]->uvwID[j].w/smabuffer.basefreq*1000.;
       ipnt=1;
       if(flush==1) {
       if (fmod((readSet-1), 100.)<0.5||(readSet-1)==1)
- fprintf(stderr,"set=%4d ints=%4d inhid=%4d time(UTC)= %1dd%02d:%02d:%04.1f int= %04.1f \n",
+ fprintf(stderr,"set=%4d ints=%4d inhid=%4d time(UTC)= %1dd%02d:%02d:%04.1f int= %04.1f percent=%03d \n",
                readSet-1,
                visSMAscan.blockID.ints,
                visSMAscan.blockID.inhid,
                utcd,utch,utcm,utcs,
-               visSMAscan.time.intTime);
+               visSMAscan.time.intTime,(int)(readSet*100.0/nsets[0]));
 // call rspokeflshsma_c to store databuffer to uvfile 
 	kstat = -1;
 	*kst = (char *)&kstat;
@@ -2628,12 +2630,12 @@ smabuffer.w[blpnt] = uvwbsln[inhset]->uvwID[j].w/smabuffer.basefreq*1000.;
                       }
       }
     }
-   fprintf(stderr,"set=%4d ints=%4d inhid=%4d time(UTC)= %1dd%02d:%02d:%04.1f int= %04.1f \n",
+   fprintf(stderr,"set=%4d ints=%4d inhid=%4d time(UTC)= %1dd%02d:%02d:%04.1f int= %04.1f percent=%03d  \n",
                readSet-1,
                visSMAscan.blockID.ints,
                visSMAscan.blockID.inhid,
                utcd,utch,utcm,utcs,
-               visSMAscan.time.intTime);
+               visSMAscan.time.intTime,(int)(readSet/nsets[0]*100.0));
 
    fprintf(stderr,"skipped %d integration scans on `target&unknown'\n",ntarget);
    avenchan=smabuffer.rsnchan;
@@ -3234,14 +3236,20 @@ float juliandate (struct codeh_def *refdate[], int doprt)
   char  ccaldate[13];
   static char *months[] = {"ill", "Jan","Feb","Mar","Apr","May","Jun","Jul", 
           "Aug","Sep","Oct","Nov","Dec"};
-  char yc[4];
+//  char yc[4];
+  char yc[2];
   char mc[3];
   int yi,mi,di;
 
-  ccaldate[13]='\0';
   memcpy(ccaldate,refdate[0]->code, 12);
-  sscanf(ccaldate, "%s%d%s%d", mc, &di,yc,&yi);
-//  printf("Observing Date: %d %s %d\n", yi, mc, di);
+  ccaldate[13]='\0';
+//  printf("ccaldate %s\n",ccaldate);
+    sscanf(&ccaldate[0], "%s", mc);
+    sscanf(&ccaldate[4], "%2d", &di);
+    sscanf(&ccaldate[8], "%4d", &yi);
+  printf("*******************************\n");
+  printf("* Observing Date: %d %s %d *\n", yi, mc, di);
+  printf("*******************************\n");
   mi=0;
   for (i=1; i<13; i++){
     if (memcmp(mc,months[i], 3)==0) mi=i;
