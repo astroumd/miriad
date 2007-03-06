@@ -170,11 +170,13 @@ c jhz: 2006-2-10  fixed a bug in tsys apply routine after the last modification.
 c jhz: 2006-12-7  add stokes ii,qq,uu,vv in Tsys correction routine.
 c                 corrected a bug in source-color coding.
 c                 put include 'mirconst.h' back in several subs.
+c jhz: 2007-3-7   changed maxfit to 24 to reduce the memory requirements
+c                 in polynomial fitting to the el-tsys curves. 
 c------------------------------------------------------------------------
         character version*(*)
         integer maxpnts,maxfit
-        parameter(maxpnts=100000,maxfit=48)
-        parameter(version='SmaFix: version 1.15 07-Dec-06')
+        parameter(maxpnts=100000,maxfit=24)
+        parameter(version='SmaFix: version 1.15 07-Mar-07')
         logical doplot,dolog,dotime,dounwrap
         character vis*64,device*64,logfile*64,xaxis*16,yaxis*16
         character out*64
@@ -762,7 +764,7 @@ C-----------------------------------------------------------------------
         double precision XA(MAXNR),BP(MAXNR,MAXNR),AP(N,MAXNR)
         double precision CHI2(MAXNR)
         integer maxsource,maxfit
-        parameter(maxsource=100, maxfit=48)
+        parameter(maxsource=100, maxfit=24)
         character source(maxsource)*32, title*64
         integer soupnt(10000*10), indx, mindx
         real xx(100), yy(100),  yloc
@@ -1455,7 +1457,7 @@ c------------------------------------------------------------------------
         integer n,nsize(2),lints,lunits,laxis
         character ints*24
         integer antid, nterms, maxfit
-        parameter(maxfit=48)
+        parameter(maxfit=24)
         real apl(10,maxfit,10)
         double precision  xapl(10,maxfit,10),bppl(10,maxfit,10,10)
         common/cpolfit/apl,xapl,bppl,antid, nterms
@@ -2129,9 +2131,9 @@ c
         integer dofit, antid, xaxisparm, nterms
         logical dotsys, tsysplt, dotime, dosour,dotswap
         integer maxfit
-        parameter(maxfit=48)
-        real apl(10,48,10)
-        double precision xapl(10,48,10),bppl(10,48,10,10) 
+        parameter(maxfit=24)
+        real apl(10,maxfit,10)
+        double precision xapl(10,maxfit,10),bppl(10,maxfit,10,10) 
         double precision XA(10), BP(10,10) 
         common/smfix/rmsflag,dofit,dotsys,dotswap,
      *               tsysplt,xaxisparm,dosour
@@ -2607,7 +2609,7 @@ c------------------------------------------------------------------------
          integer dofit, antid, xaxisparm, nterms 
          logical dotsys,tsysplt,dosour
          integer maxfit
-         parameter(maxfit=48)
+         parameter(maxfit=24)
          real apl(10,maxfit,10)
          double precision  xapl(10,maxfit,10),bppl(10,maxfit,10,10)
          common/smfix/rmsflag,dofit,dotsys,dotswap,
