@@ -1,6 +1,6 @@
 #! /bin/csh -f
 #
-set version=7-feb-07
+set version=5-mar-07
 #
 #  2-aug-99 Updated for Sebok's Mandrake setup
 #  1-aug-00 Updated to allow to build private PGPLOT version
@@ -36,7 +36,9 @@ set version=7-feb-07
 # 10-jan-06 (JHZ) change g77_gcc.conf to mirg77_gcc.conf when copy over
 #           g77_gcc_64.conf (the pgplot config file for 64bits linux)
 # 24-may-06 more configure options, optional compile.generic
-#  7-feb-08 fixes for non-linux
+#  7-feb-07 fixes for non-linux
+#  5-mar-07 using new make_miriad_starts
+#
 #
 #-----------------------------------------------------------------------
 
@@ -286,19 +288,7 @@ echo 'export WIPHELP=$MIR/borrow/wip/wiphelp.dat'             >> $startsh
 # in preparation for single $MIR/bin and $MIR/lib directories
 # we're going to instroduce the new miriad_start.$shell scripts:
 
-set start1=miriad_start.csh
-echo "# source this file to set MIR env"  > $start1
-echo "setenv MIR $MIRTEMP"               >> $start1
-echo 'source $MIR/MIRRC'."$hosttype"     >> $start1
-echo "# this script was created by $0"   >> $start1
-cp $start1 ..
-
-set start2=miriad_start.sh
-echo "# source this file to set MIR env"  > $start2
-echo "export MIR=$MIRTEMP"               >> $start2
-echo 'source $MIR/MIRSRC'."$hosttype"    >> $start2
-echo "# this script was created by $0"   >> $start2
-cp $start2 ..
+./make_miriad_starts $MIRTEMP $hosttype
 
 # astromake: only do this if you want to make THIS version miriad's 
 # official one.
