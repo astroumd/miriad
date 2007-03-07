@@ -194,7 +194,10 @@
 // 2007-01-31 (JHZ) changed source length limit from
 //                  8 characters to 16.
 // 2007-03-06 (JHZ) delete redundant juliandate calls.
-//                  add percentage of file reading. 
+//                  add percentage of the file that has been
+//                  read.
+// 2007-03-07 (JHZ) suppress the debugging msg when multiple
+//                  correlator configs are allowed.
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -765,6 +768,7 @@ int rsmir_Read(char *datapath, int jstat)
   int sphSizeBuffer;
   int nnants, flush;
   int ifpnt, polpnt, blpnt, sbpnt, rxpnt, sblpnt;
+  int nomsg;
   int avenchan,miriadsp[SMIF+1];
   int utcd,utch,utcm,doprt;
   float utcs;
@@ -817,6 +821,7 @@ int rsmir_Read(char *datapath, int jstat)
   headerbytes[3] = 42;
   headerbytes[4] = 188;
   headerbytes[5] = 0;
+  if(smabuffer.mcconfig>0) nomsg=1; // suppress the debugging msg
   switch(jstat) {
   case -3:
 // Open all the files 
@@ -1724,13 +1729,13 @@ goto dat2003; }
               for (i=0;i<SMIF+1;i++) {
               if (spn[iinset]->nch[i][0]
                !=spn[iinset+1]->nch[i][0]) {
-         printf("Warning: The correlator was reconfigured at integrations=%d\n",
+      if(nomsg>1)  printf("Warning: The correlator was reconfigured at integrations=%d\n",
                    iinset+1);
                           ireset++;
                     reset_id[ireset] = iinset+1;
-         printf("From    -> To\n");
+      if(nomsg>1)   printf("From    -> To\n");
                     for (i=1;i<SMIF+1;i++) {
-         printf("s%2d:%3d -> :%3d\n", i, spn[iinset]->nch[i][0],
+      if(nomsg>1)   printf("s%2d:%3d -> :%3d\n", i, spn[iinset]->nch[i][0],
                  spn[iinset+1]->nch[i][0]);
                                        }
                                            }
