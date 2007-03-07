@@ -66,14 +66,6 @@ c      dBValue -d hal9000-newdds -v dsm_dds_hal_z_v11_d -t "2004-11-16 00:00:00"
 c      If the reference antenna is not the default value 6, one may need
 c      to give the reference antenna here.
 c
-c@ readant
-c      Gives the number of antennas for reading the antenna positions 
-c      from the ASCII file of 'antennas' under the input MIR file directory 
-c      if readant=8 or larger; readant must be the same as the number 
-c      of rows in the file of 'antennas'.
-c      Default is to decode antenna positions from the baseline
-c      vectors.
-c
 c@ options
 c       'bary'     Compute the radial velocities of the observatory, in the 
 c                  direction of a source, w.r.t. the barycenter. 
@@ -316,11 +308,14 @@ c                  8 characters to 16.
 c    jhz 07-mar-07 removed redundnt call of juliandate
 c                  added percent of file reading in the prompt
 c                  message.
+c    jhz 07-mar-07 robustly handling antennas file.
+c                  obsolete readant in the keyword input. 
 c------------------------------------------------------------------------
+        include 'maxdim.h'
         integer maxfiles
         parameter(maxfiles=128)
         character version*(*)
-        parameter(version='SmaLod: version 2.4 07-Mar-07')
+        parameter(version='SmaLod: version 2.5 07-Mar-07')
 c
         character in(maxfiles)*64,out*64,line*64, rxc*4
         integer tno, length, len1
@@ -332,9 +327,10 @@ c
      *          dospc,doengrd,doconjug,dolsr,noskip,mcconfig,nohighspr
         integer fileskip,fileproc,scanskip,scanproc,sb, dosporder
         integer doeng, spskip(2)
-	integer rsNCHAN, refant, readant, antid
+	integer rsNCHAN, refant, readant, antid, lIn
         double precision antpos(10*3),xyz(3)
         real vsour
+        character fname*64
 c
 c  Externals.
 c
@@ -386,8 +382,6 @@ c        call mkeyd('restfreq',rfreq,2,nfreq)
         call keyd('restfreq',rfreq,0.0)
         call keyr('vsource', vsour,0.0)
         call keyi('refant',refant,6)
-        call keyi('readant',readant,0)
-        if(readant.lt.8.and.readant.gt.0) readant=8
         call getopt(doauto,docross,docomp,dosam,doxyp,doop,relax,
      *    sing,unflag,dohann,birdie,dobary,doif,dowt,dopmps,polflag,
      *    hires,nopol,circular,linear,oldpol,dospc,doengrd,doconjug,
@@ -428,21 +422,35 @@ c
 c alternatively reading the antenna positions from
 c the ASCII file antennas
 c
-        if(readant.ge.8) then
-        call bug('w',
+       call bug('w',
      *   'Reading antenna positions from ASCII file antennas:')
-        open(16,file=in(1)(1:len1(in(1)))//'antennas',status='unknown')
-             do i=1,readant
-             read(16,*) antid,xyz(1),xyz(2),xyz(3)
-             antpos(1+(antid-1)*3) = xyz(1)
-             antpos(2+(antid-1)*3) = xyz(2)
-             antpos(3+(antid-1)*3) = xyz(3)
-             end do
-             do i=1,readant
-             write(*,100) i,antpos(1+(i-1)*3),
+            fname = in(1)(1:len1(in(1)))//'antennas'
+            call txtopen(lIn,fname,'old',iostat)
+            if(iostat==0) then
+            do i=1,MAXIANT 
+            call txtread(lIn,line,length,iostat)
+            if(iostat==-1) goto 211
+            end do
+211         readant=i-1
+            call txtclose(lIn)         
+       open(16,file=in(1)(1:len1(in(1)))//'antennas',status='unknown')
+            do i=1,readant
+            read(16,*) antid,xyz(1),xyz(2),xyz(3)
+            antpos(1+(antid-1)*3) = xyz(1)
+            antpos(2+(antid-1)*3) = xyz(2)
+            antpos(3+(antid-1)*3) = xyz(3)
+            end do
+            close(16)
+            readant=i-1
+            do i=1,readant
+            write(*,100) i,antpos(1+(i-1)*3),
      *             antpos(2+(i-1)*3),antpos(3+(i-1)*3)
              end do
-        end if
+             else
+        call bug('w',
+     * 'found no antennas file; try solving antpos from bl vectors...')
+         readant =0
+             end if
 100        format(i2,5x,3(f12.6,2x))
 
 c
