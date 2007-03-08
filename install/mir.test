@@ -15,7 +15,7 @@
 #-----------------------------------------------------------------------
 
 #  we're using tail +N
-export _POSIX2_VERSION  1
+export _POSIX2_VERSION=1
 
 usage() {
   (
