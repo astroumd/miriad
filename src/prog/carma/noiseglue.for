@@ -17,6 +17,8 @@ c     Each data set must have the same number of windows (nwin) and the
 c     output will have nwin*2 windows. The header info that is window
 c     specific is copied from the reference dataset.
 c
+c     See also related programs:  UVGLUE and SMACHUNKGLUE
+c
 c@ vis
 c       Visibility file names. 2 Must be given. No default.
 c       NOTE: any calibration tables present in the input datasets are NOT
