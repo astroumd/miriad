@@ -18,15 +18,15 @@ c     output will have nwin*2 windows. The header info that is window
 c     specific is copied from the reference dataset.
 c
 c@ vis
-c	Root name of input visibility files.   Files must be named
-c	vis_i for the ith file.  No default. NOTE: any calibration
-c	tables present in the input datasets are NOT applied in
-c	forming the output.
+c       Visibility file names. 2 Must be given. No default.
+c       NOTE: any calibration tables present in the input datasets are NOT
+c       applied in forming the output.
 c@ reference
 c       Dataset used for header reference (sfreq, restfreq, sdf), since
 c       using uvcal to conjugate the data will not get these values correct
-c       If not present it will default to vis_2. This dataset MUST match
-c       vis_2 except for header values, no consistency checking is done.
+c       If not present it will default to the second vis file.
+c       This dataset MUST match vis(2) except for header values, no
+c        consistency checking is done.
 c@ out
 c	Output file name. No default
 c
@@ -69,7 +69,7 @@ c
       call keya ('vis', in(1), ' ')
       call keya ('vis', in(2), ' ')
       if (in(1) .eq. ' ' .or. in(2) .eq. ' ') 
-     *      call bug ('f', 'Input root file name not given')
+     *      call bug('f', 'Input file names not given, 2 are required')
       call keya('reference',reference,in(2))
       call keya ('out', out, ' ')
       if (out.eq.' ') call bug ('f', 'Output file name not given')
