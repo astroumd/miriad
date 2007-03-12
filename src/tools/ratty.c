@@ -114,7 +114,7 @@ vector processing capacities (compilers "unicos", "alliant" and "convex"):
 /*      (uflag?textout("continue\n"):textout("CONTINUE\n"));            */
 /*  comment lines like "c#define foo bar" still define !!!              */
 /************************************************************************/
-#define VERSION_ID   "17-mar-07"
+#define VERSION_ID   "12-mar-07"
 
 #define max(a,b) ((a) > (b) ? (a) : (b) )
 #define min(a,b) ((a) < (b) ? (a) : (b) )
