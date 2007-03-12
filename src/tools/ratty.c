@@ -9,8 +9,7 @@ for these machines.
 
 Usage:
 
- ratty [-s system] [-I incdir] [-D symbol] [-bglu [-n start inc] [in] [out]
-       [-h]
+ ratty [-h] [-s system] [-I incdir] [-D symbol] [-bglu [-n start inc] [in] [out]
 
     system:  One of "f77" (generic unix compiler), "unicos" (Cray FORTRAN
              compiler), "vms" (VMS FORTRAN), "alliant" (alliant unix
@@ -37,6 +36,8 @@ Usage:
              [in] file, instead of your [out] file. Note that standard
              input cannot be used with this option.
 
+    -h:      give some help and exit
+
     -n:      This gives the start and increment for line numbers generated
              by ratty. The default is 90000 1.
 
@@ -45,8 +46,6 @@ Usage:
     -u:      Convert all variables, etc, to upper case.
              (some of the system generated if/then/else/endif/continue
               are not converted to upper case)
-
-    -h:      some help and exit
 
     in:      Input file name. If omitted, standard input is assumed
              and output must be the standard output.
@@ -102,7 +101,9 @@ vector processing capacities (compilers "unicos", "alliant" and "convex"):
 /*    rjs  20nov94 Added alpha.						*/
 /*    pjt   3jan95 Added f2c (used on linux)                            */
 /*    rjs  15aug95 Added sgi		                                */
-/*    pjt  16mar03 MIR4 prototypes, -h                                  */
+/*    rjs  22may06 Change to appease cygwin.				*/
+/*    mrc  14jul06 Get it to compile with 'gcc -Wall' without warnings. */
+/*    pjt  12mar07 merged MIR4 and atnf versions; re-added -h           */
 /*									*/
 /************************************************************************/
 /* ToDos/Shortcomings:                                                  */
@@ -111,8 +112,9 @@ vector processing capacities (compilers "unicos", "alliant" and "convex"):
 /*      textout("continue\n");                                          */
 /*  to be changed to:                                                   */
 /*      (uflag?textout("continue\n"):textout("CONTINUE\n"));            */
+/*  comment lines like "c#define foo bar" still define !!!              */
 /************************************************************************/
-#define VERSION_ID   "16-mar-03"
+#define VERSION_ID   "17-mar-07"
 
 #define max(a,b) ((a) > (b) ? (a) : (b) )
 #define min(a,b) ((a) < (b) ? (a) : (b) )
@@ -121,8 +123,8 @@ vector processing capacities (compilers "unicos", "alliant" and "convex"):
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
+#include <unistd.h>
 
 #define TRUE 1
 #define FALSE 0
@@ -139,18 +141,20 @@ static char *getparm(char *line, char *token);
 static void cppline(char *line);
 static char *progtok(char *line, char *token, int *indent, int *lineno, int *bracketting);
 static char *skipexp(char *s, int *bracketting);
-static int getline(FILE *in, char *line);
+static int get_line(FILE *in, char *line);
 static int reformat(char *s);
 static struct link_list *add_list(struct link_list *list, char *name);
-static FILE *incopen(char *name);
+static FILE *incopen(char *name, char *pathname);
 static int isdefine(char *name);
 static void usage(void);
 
+/* A few things to stop lint complaining. */
 #define Strcpy (void)strcpy
 #define Strcat (void)strcat
 #define Fclose (void)fclose
 #define Fputc  (void)fputc
 #define Malloc(a) malloc((unsigned int)(a))
+
 /*
  * Define capacities of the various compilers. These are:
  *  doloop	is true if the compiler handles the VAX do/dowhile/enddo
@@ -199,19 +203,10 @@ static int comment,in_routine,gflag,lflag,uflag;
 static int loops[MAXDEPTH],dowhile[MAXDEPTH];
 struct link_list {char *name; struct link_list *fwd;} *defines,*incdir;
 
-#if 0
-private void process(),message(),textout(),labelout(),numout(),blankout(),lowercase(),
-	cppline(),get_labelnos(),usage();
-private struct link_list *add_list();
-private int getline(),reformat(),isdefine();
-private char *getparm(),*progtok(),*skipexp();
-private FILE *incopen();
-#endif
-
 private int continuation,quoted=FALSE;
 private int lower,increment;
 /************************************************************************/
-int main(int argc, char *argv[])
+int main(int argc,char *argv[])
 {
   char *s,*infile,*outfile,*sysname;
   int i;
@@ -339,13 +334,13 @@ char *infile;
 ------------------------------------------------------------------------*/
 {
   int type,lineno,lineno1,indent,bracketting, glines=0, oldglines;
-  char *s,*s0,line[MAXLINE],token[MAXLINE],msg[MAXLINE];
+  char *s,*s0,line[MAXLINE],pathname[MAXLINE],token[MAXLINE],msg[MAXLINE];
   char gfile[MAXLINE];
   FILE *in2;
 
   if(gflag)strcpy(gfile,infile);            /* init -g filename */
 
-  while( (type=getline(in,line)) ){
+  while((type = get_line(in,line))){
     lines++;
     if(gflag){
         glines++;
@@ -395,7 +390,7 @@ char *infile;
 	    textout("if"); textout(s);
 	    while(bracketting){
 	      textout("\n");
-	      type = getline(in,line);
+	      type = get_line(in,line);
 	      if(type != '*'){
 		message("Bad DOWHILE statement");
 		bracketting = 0;
@@ -433,7 +428,7 @@ char *infile;
 	s0 = token;
 	while(*s && *s != '\'')*s0++ = *s++;
 	*s0 = 0;
-	in2 = incopen(token);
+	in2 = incopen(token,pathname);
 	if(in2 == NULL){
 	  sprintf(msg,"Error opening include file %s",token);
 	  message(msg);
@@ -443,7 +438,11 @@ char *infile;
 	    labelout(lineno); blankout(indent-5); textout("continue\n");
 	  }
           oldglines = glines;
+	  sprintf(msg,"c >>> %s\n",pathname);
+	  textout(msg);
 	  process(in2,token);
+	  sprintf(msg,"c <<< %s\n",pathname);
+	  textout(msg);
 	  Fclose(in2);
           glines = oldglines;
 	}
@@ -763,7 +762,7 @@ int *bracketting;
   return(s);
 }
 /************************************************************************/
-private int getline(in,line)
+private int get_line(in,line)
 FILE *in;
 char *line;
 /*
@@ -839,7 +838,7 @@ char *s;
   type = ' ';
   first = TRUE;
   t = line;
-  while( (c = *t++) ){
+  while((c = *t++)){
     if(c == ' ') *s++ = ' ';
     else if(c == '\t'){
       pad = 8 * ( (s - s0)/8 + 1 ) - (s - s0);
@@ -895,29 +894,34 @@ char *name;
   return(list);
 }
 /************************************************************************/
-private FILE *incopen(name)
-char *name;
+private FILE *incopen(name,pathname)
+char *name,*pathname;
 /*
   Attempt to open an include file.
 ------------------------------------------------------------------------*/
 {
   FILE *fd;
-  char *s,c,line[MAXLINE];
+  char c,*s;
   struct link_list *t;
 
 /* Try the plain, unadulterated name. */
 
-  if((fd = fopen(name,"r")) != NULL) return(fd);
+  if((fd = fopen(name,"r")) != NULL) {
+    getcwd(pathname,MAXLINE);
+    strcat(pathname,"/");
+    strcat(pathname,name);
+    return(fd);
+  }
 
 /* Otherwise try appending it to the list of include file directories. */
 
   for(t = incdir; t != NULL; t = t->fwd){
     s = t->name;
-    Strcpy(line,s);
+    Strcpy(pathname,s);
     c = *(s + strlen(s) - 1);
-    if(isalnum(c))Strcat(line,"/");
-    strcat(line,name);
-    if((fd = fopen(line,"r")) != NULL) break;
+    if(isalnum(c))Strcat(pathname,"/");
+    strcat(pathname,name);
+    if((fd = fopen(pathname,"r")) != NULL) break;
   }
   return(fd);
 }
@@ -952,6 +956,8 @@ private void usage()
    fprintf(stderr,"-g           include # references for dbx\n");
    fprintf(stderr,"-l           convert program text to lower case\n");
    fprintf(stderr,"-u           convert program text to upper case\n");
-   fprintf(stderr,"-?,h         help (this list)\n");
+   fprintf(stderr,"-h           help (this list)\n");
+   fprintf(stderr,"-?           help (this list)\n");
    exit(0);
 }
+
