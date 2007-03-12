@@ -1,0 +1,38 @@
+#! /bin/csh -f
+#
+#  This script install a binary version of ATNF miriad.
+#  You should run this from a clean directory. In addition
+#  it will add the CARMA peculiar miriad_start scripts.
+#  
+#
+#  Typical example of install:
+#  cd $ASTROMAKE/opt/miriad
+#  wget ftp://ftp.atnf.csiro.au/pub/software/miriad/miriad-common.tar.gz
+#  wget ftp://ftp.atnf.csiro.au/pub/software/miriad/miriad-linux.tar.gz
+
+set ftp=ftp://ftp.atnf.csiro.au/pub/software/miriad/
+set root=.
+set arch=linux
+
+if (-d $root/miriad) then
+  echo Cannot install over an old version of miriad in $root
+  exit 1
+endif
+
+#  get the files on the fly, or if they exist, use them
+foreach file (miriad-common.tar.gz miriad-$arch.tar.gz)
+  if (-e $file) then
+     tar -C $root -zxf $file
+  else
+     wget -O - $ftp/$file | tar -C $root zxf -
+  endif
+end
+
+
+
+cd miriad
+setenv MIR `pwd`
+sed -e "s,@MIRROOT@,$MIR," scripts/MIRRC.in > MIRRC
+sed -e "s,@MIRROOT@,$MIR," scripts/MIRRC.sh.in > MIRRC.sh
+chmod 644 MIRRC*
+
