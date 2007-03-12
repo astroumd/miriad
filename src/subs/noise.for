@@ -16,6 +16,8 @@ c    rjs  24oct99  Added "save" statement in "ran" function.
 c    rjs  04jul00  Use double precision arithmetic in "ran" to avoid some
 c		   machine rounding biases.
 c    rjs  18oct00  Setting the seedon "vms-style" machines was not working.
+c    pjt  12mar07  Made default for linux unix style,and allow inc_ran 
+c                  as well, though it crashes for linux/g77
 c************************************************************************
 c
 c  Choose which random number style we are to use. We have three choices:
@@ -36,8 +38,7 @@ c
 #  define defined
 #endif
 #ifdef linux
-#  define vms_style
-#  define inc_ran
+#  define unix_style
 #  define defined
 #endif
 #ifdef unicos
@@ -64,6 +65,7 @@ c  Input:
 c    seed	Some "random" integer value, which is the seed to be
 c		used.
 c--
+c gfortran supports rand(), though they claim ran() is an alias available
 c------------------------------------------------------------------------`
 #ifdef sgi_style
 	call srand(seed)
@@ -136,10 +138,17 @@ c
 	enddo
 #endif
 #ifdef unix_style
+#ifdef inc_ran
+	real ran
+	do i=1,n
+	  data(i) = ran(0)
+	enddo
+#else
 	real rand
 	do i=1,n
 	  data(i) = rand(0)
 	enddo
+#endif
 #endif
 	end
 #ifdef vms_style
@@ -192,6 +201,8 @@ c
 c  Output:
 c    data	An array of gaussian noise.
 c--
+c  TODO:  what about the Box-Mueller (polar) method 
+c         see Knuth, vol. 2, p. 104.
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	integer i,j,l,ltot
