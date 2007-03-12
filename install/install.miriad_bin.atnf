@@ -11,8 +11,10 @@
 #  wget ftp://ftp.atnf.csiro.au/pub/software/miriad/miriad-linux.tar.gz
 
 set ftp=ftp://ftp.atnf.csiro.au/pub/software/miriad/
+
 set root=.
 set arch=linux
+set mir=miriad
 
 if (-d $root/miriad) then
   echo Cannot install over an old version of miriad in $root
@@ -28,9 +30,13 @@ foreach file (miriad-common.tar.gz miriad-$arch.tar.gz)
   endif
 end
 
+cd $root
 
+if ($mir != miriad) then
+  mv miriad $mir
+endif
 
-cd miriad
+cd $mir
 setenv MIR `pwd`
 sed -e "s,@MIRROOT@,$MIR," scripts/MIRRC.in > MIRRC
 sed -e "s,@MIRROOT@,$MIR," scripts/MIRRC.sh.in > MIRRC.sh
