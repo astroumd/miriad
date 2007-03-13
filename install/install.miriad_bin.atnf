@@ -21,7 +21,7 @@ foreach arg ($*)
 end
 
 echo root=$root
-echo arch=$arch
+echo "arch=$arch  (possible options:  linux  linux64  sun4sol  darwin_ppc  darwin_x86)"
 echo mir=$mir
 sleep 5
 
@@ -35,7 +35,8 @@ foreach file (miriad-common.tar.gz miriad-$arch.tar.gz)
   if (-e $file) then
      tar -C $root -zxf $file
   else
-     wget -O - $ftp/$file | tar -C $root -zxf -
+     #wget -O - $ftp/$file | tar -C $root -zxf -
+     curl $ftp/$file | tar -C $root -zxf -
   endif
 end
 
