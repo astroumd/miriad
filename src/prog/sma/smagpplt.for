@@ -133,6 +133,12 @@ c	gpplt autoscales. If the ``yrange'' parameter is given, then this
 c	range is used on ALL plots. So it may not make much sense to
 c	plot different sorts of quantities (e.g. amplitude and phases)
 c	when explicitly giving the plot range.
+c@ dotsize
+c       Allows users to choose a symbol (dot) size in a range between
+c       1-201. The actual plotted dot size depends on the device
+c       resolution. Other internal symbol selecting function
+c       would be failed when this parameter is in use.
+c       Default is to disable this function.
 c--
 c  History:
 c    JHZ  ----> cloned from calib/gpplt.for
@@ -177,6 +183,7 @@ c                in channel.
 c                added nofit to options for not displaying the
 c                polynomial fitting curve or moving smooth curve on
 c                the solution plots.
+c    jhz 15mar07 added Keyword dotsize
 c  Bugs:
 c------------------------------------------------------------------------
         integer maxsels
@@ -186,7 +193,7 @@ c------------------------------------------------------------------------
         parameter (DPI = 3.14159265358979323846)
         parameter (TWOPI = 2 * PI)
         parameter (DTWOPI = 2 * DPI)        
-        parameter(version='SmaGpPlt: version 1.10 18-Dec-06')
+        parameter(version='SmaGpPlt: version 1.11 18-Mar-07')
         include 'smagpplt.h'
         integer iostat,tin,nx,ny,nfeeds,nants,nsols,ierr,symbol,nchan
         integer ntau,length, i, j, k,nschann(maxspect)
@@ -223,7 +230,7 @@ c circular feeds
         common/bsmooth/smooth,rpass,ipass,apass,ppass,bnply,breport
         common/gsmooth/smoothg,rgain,igain,gnply,greport,nnsols
         integer nants1,nfeeds1,nsols1,nchan1
-        integer nsols2,filelabel
+        integer nsols2,filelabel,dotsize
         complex g2buf(maxgains),gbuf(maxgains)
         complex gf12(maxgains)
         real times1(maxtimes),times2(maxtimes)
@@ -315,6 +322,7 @@ c
         call selinput('select',sels,maxsels)
         call keyr('yrange',range(1),0.)
         call keyr('yrange',range(2),range(1)-1.)
+        call keyi ('dotsize', dotsize, -1)
         call keyfin
             call uvdatgti ('nfiles', nfiles)
             if(nfiles.gt.2)
@@ -428,7 +436,7 @@ c           call bug('f','inconsistent frequency between the two files')
      *     call bpplt(vis,times,g1,nfeeds,nants,nchan,range,
      *          feeds(nfeeds),doamp,dophase,dowrap,doreal,doimag,
      *          doplot,dolog,symbol,nx*ny,nschann,donply,dosmooth,
-     *          filelabel,dochan,dofit)
+     *          filelabel,dochan,dofit,dotsize)
          endif
              
         if(dolog.and.(lin.eq.2).and.domerge)
@@ -508,7 +516,7 @@ c
      *       call gainplt(vis,times,gbuf,nfeeds,nants,nsols,range,
      *       feeds(nfeeds),doamp,dophase,dowrap,doreal,doimag,
      *       doplot,dolog,dodtime,donply,dosmooth,dofit,
-     *       symbol,nx*ny,weight,filelabel)
+     *       symbol,nx*ny,weight,filelabel,dotsize)
           if(dolog) call logclose
 
 c assign the nsols (maximun nsols for each set of ant/feed)
@@ -630,7 +638,7 @@ c
          call gainplt(vis,times,g2,nfeeds,nants,nsols,range,
      *       feeds(nfeeds),doamp,dophase,dowrap,doreal,doimag,
      *       doplot,dolog,dodtime,donply,dosmooth,dofit,
-     *       symbol,nx*ny,weight,filelabel)           
+     *       symbol,nx*ny,weight,filelabel,dotsize)           
           endif
 c
 c the memory of nsols appears to be changed
@@ -679,26 +687,26 @@ c
             call gainplt(vis,times,g2,1,nants,nsols,range,
      *          'XY',doamp,dophase,dowrap,doreal,doimag,
      *          doplot,dolog,dodtime,donply,dosmooth,dofit,
-     *          symbol,nx*ny,weight,filelabel)
+     *          symbol,nx*ny,weight,filelabel,dotsize)
           endif
           if(doxbyy)then
             call xycvt(g1,g2,nfeeds,ntau,nants*nsols,.false.)
             call gainplt(vis,times,g2,1,nants,nsols,range,
      *          'X*Y',doamp,dophase,dowrap,doreal,doimag,
      *          doplot,dolog,dodtime,donply,dosmooth,dofit,
-     *          symbol,nx*ny,weight,filelabel)
+     *          symbol,nx*ny,weight,filelabel,dotsize)
           endif
           if(dodelay)then
             call alphacvt(g1,alpha,nfeeds,ntau,nants*nsols,.true.)
             call alphaplt(vis,times,alpha,nants,nsols,range,
      *          'Delay (nsec)',
-     *          doplot,dolog,dodtime,symbol,nx*ny)
+     *          doplot,dolog,dodtime,symbol,nx*ny,dotsize)
           endif
           if(dospec)then
             call alphacvt(g1,alpha,nfeeds,ntau,nants*nsols,.false.)
             call alphaplt(vis,times,alpha,nants,nsols,range,
      *          'Spectral Correction',
-     *          doplot,dolog,dodtime,symbol,nx*ny)
+     *          doplot,dolog,dodtime,symbol,nx*ny,dotsize)
           endif
         endif
 c
@@ -710,7 +718,7 @@ c
           call bpplt(vis,times,g1,nfeeds,nants,nchan,range,
      *          feeds(nfeeds),doamp,dophase,dowrap,doreal,doimag,
      *          doplot,dolog,symbol,nx*ny,nschann,
-     *          donply,dosmooth,filelabel,dochan,dofit)
+     *          donply,dosmooth,filelabel,dochan,dofit,dotsize)
         endif
             
 c
@@ -1111,9 +1119,9 @@ c
 c************************************************************************
         subroutine alphaplt(vis,time,alpha,nants,nsols,range,
      *                  ylabel,
-     *                  doplot,dolog,dodtime,symbol,ppp)
+     *                  doplot,dolog,dodtime,symbol,ppp,dotsize)
 c
-        integer nants,nsols,symbol,ppp
+        integer nants,nsols,symbol,ppp,dotsize
         real time(nsols),range(2)
         real alpha(nants*nsols)
         character ylabel*(*),vis*(*)
@@ -1140,7 +1148,7 @@ c
           do j=1,nants
             call alpick(alpha(j),nants,nsols,y)
             call setpg(time(1),time(nsols),y,nsols,range,dodtime)
-            call pgpts(nsols,time,y,symbol)
+            call pgpts(nsols,time,y,symbol,dotsize)
             title = 'Antenna '//itoaf(j)//'File='//vis
             length = len1(title)
             call pglab('Time',ylabel,title(1:length))
@@ -1227,9 +1235,10 @@ c
 c************************************************************************
         subroutine gainplt(vis,time,g,nfeeds,nants,nsols,range,
      *    feeds,doamp,dophase,dowrap,doreal,doimag,doplot,dolog,
-     *    dodtime,donply,dosmooth,dofit,symbol,ppp,weight,filelabel)
+     *    dodtime,donply,dosmooth,dofit,symbol,ppp,weight,filelabel,
+     *    dotsize)
 c
-        integer nfeeds,nants,nsols,ppp,symbol,filelabel
+        integer nfeeds,nants,nsols,ppp,symbol,filelabel,dotsize
         complex g(nfeeds*nants*nsols)
         real time(nsols),range(2)
         logical doamp,dophase,dowrap,doreal,doimag,doplot,dolog,dodtime
@@ -1254,6 +1263,7 @@ c    symbol	Plotting symbol.
 c    dodtime	Give time in fractions of a day.
 c    ppp	Plots per page.
 c    vis	File name.
+c    dotsize    size of plot dots
 c------------------------------------------------------------------------
 c
 c  Externals.
@@ -1264,34 +1274,34 @@ c
 c
        if(doamp) call gainplt2(vis,time,g,nfeeds,nants,nsols,range,
      *   'Amp',feeds,doplot,dolog,dodtime,donply,dosmooth,dofit, 
-     *   symbol,getamp,ppp,weight,filelabel)
+     *   symbol,getamp,ppp,weight,filelabel,dotsize)
         if(dophase)then
         if(dowrap)then
             call gainplt2(vis,time,g,nfeeds,nants,nsols,range,
      *  'Phase',feeds,doplot,dolog,dodtime,donply,dosmooth,dofit,
-     *   symbol,getphasw,ppp,weight,filelabel)
+     *   symbol,getphasw,ppp,weight,filelabel,dotsize)
           else
             call gainplt2(vis,time,g,nfeeds,nants,nsols,range,
      *  'Phase',feeds,doplot,dolog,dodtime,donply,dosmooth,dofit,
-     *   symbol,getphase,ppp,weight,filelabel)
+     *   symbol,getphase,ppp,weight,filelabel,dotsize)
           endif
         endif
        if(doreal) call gainplt2(vis,time,g,nfeeds,nants,nsols,range,
      *  'Real',feeds,doplot,dolog,dodtime,donply,dosmooth,dofit,
-     *   symbol,getreal,ppp,weight,filelabel)
+     *   symbol,getreal,ppp,weight,filelabel,dotsize)
         if(doimag) call gainplt2(vis,time,g,nfeeds,nants,nsols,range,
      *  'Imag',feeds,doplot,dolog,dodtime,donply,dosmooth,dofit,
-     *  symbol,getimag,ppp,weight,filelabel)
+     *  symbol,getimag,ppp,weight,filelabel,dotsize)
         end
 c************************************************************************
         subroutine bpplt(vis,freq,g,nfeeds,nants,nchan,range,
      *    feeds,doamp,dophase,dowrap,doreal,doimag,doplot,dolog,
      *    symbol,ppp,nschann,donply,dosmooth,filelabel,dochan,
-     *    dofit)
+     *    dofit,dotsize)
 c
         parameter(maspect=49)
         integer nfeeds,nants,nchan,ppp,symbol,nschann(49)
-        integer filelabel
+        integer filelabel,dotsize
         complex g(nchan*nfeeds*nants)
         real freq(nchan),range(2)
         logical doamp,dophase,dowrap,doreal,doimag,doplot,dolog
@@ -1315,6 +1325,7 @@ c    doplot,dolog If true, do a plot or write the table.
 c    symbol	Plotting symbol.
 c    ppp	Plots per page.
 c    dochan     Plots X-axis in channel
+c    dotsize    size of dots
 c------------------------------------------------------------------------
 c
 c  Externals.
@@ -1324,24 +1335,24 @@ c
 c
         if(doamp)  call bpplt2(vis,freq,g,nfeeds,nants,nchan,range,
      *    'Amp',feeds,doplot,dolog,symbol,getamp,ppp,nschann,
-     *     donply,dosmooth,filelabel,dochan,dofit)
+     *     donply,dosmooth,filelabel,dochan,dofit,dotsize)
         if(dophase)then
           if(dowrap)then
             call bpplt2(vis,freq,g,nfeeds,nants,nchan,range,
      *    'Phase',feeds,doplot,dolog,symbol,getphasw,ppp,nschann,
-     *     donply,dosmooth,filelabel,dochan,dofit)
+     *     donply,dosmooth,filelabel,dochan,dofit,dotsize)
           else
             call bpplt2(vis,freq,g,nfeeds,nants,nchan,range,
      *    'Phase',feeds,doplot,dolog,symbol,getphase,ppp,nschann,
-     *     donply,dosmooth,filelabel,dochan,dofit)
+     *     donply,dosmooth,filelabel,dochan,dofit,dotsize)
           endif
         endif
         if(doreal) call bpplt2(vis,freq,g,nfeeds,nants,nchan,range,
      *    'Real',feeds,doplot,dolog,symbol,getreal,ppp,nschann,
-     *     donply,dosmooth,filelabel,dochan,dofit)
+     *     donply,dosmooth,filelabel,dochan,dofit,dotsize)
         if(doimag) call bpplt2(vis,freq,g,nfeeds,nants,nchan,range,
      *    'Imag',feeds,doplot,dolog,symbol,getimag,ppp,nschann,
-     *     donply,dosmooth,filelabel,dochan,dofit)
+     *     donply,dosmooth,filelabel,dochan,dofit,dotsize)
         end
 c************************************************************************
         subroutine polplt2(leaks,nfeeds,nants,range,type,feeds,
@@ -1401,9 +1412,9 @@ c
 c************************************************************************
         subroutine gainplt2(vis,time,g,nfeeds,nants,nsols,range,
      *  type,feeds,doplot,dolog,dodtime,donply,dosmooth,dofit,
-     *  symbol,getval,ppp,weight,filelabel)
+     *  symbol,getval,ppp,weight,filelabel,dotsize)
 c
-        integer nfeeds,nants,nsols,ppp,symbol
+        integer nfeeds,nants,nsols,ppp,symbol,dotsize
         real time(nsols),range(2)
         complex g(nfeeds*nants*nsols)
         logical doplot,dolog,dodtime,donply,dosmooth,dofit
@@ -1459,7 +1470,7 @@ c
               if(ng.gt.0) then
            call setpg(time(1),time(nsols),y,ng,range,dodtime)
            call pgptsgain(ng,x,y,symbol,iant,ifeed,type,wt,
-     *  weight,xpntr,time,nsols,donply,dosmooth,dofit)
+     *  weight,xpntr,time,nsols,donply,dosmooth,dofit,dotsize)
             if(filelabel.gt.-1) then
             if((filelabel.eq.1).and.(iant.eq.1)) 
      *      call pgmtxt('LV',-1.,0.9,.0,uvfile(1:lfile))
@@ -1522,11 +1533,12 @@ c
 c************************************************************************
         subroutine bpplt2(vis,freq,g,nfeeds,nants,nchan,range,
      *    type,feeds,doplot,dolog,symbol,getval,ppp,nschann,
-     *    donply,dosmooth,filelabel,dochan,dofit)
+     *    donply,dosmooth,filelabel,dochan,dofit,dotsize)
 c
         parameter(maxspect=49)
         integer nfeeds,nants,nchan,ppp,symbol,nschann(maxspect)
         real freq(nchan),range(2)
+        integer dotsize
         complex g(nchan*nfeeds*nants)
         logical doplot,dolog,dochan
         character feeds(nfeeds)*(*),type*(*),vis*(*)
@@ -1596,8 +1608,7 @@ c
                 call setpg(freqmin,freqmax,y,ng,range,.true.)
 c        write(*,*) 'ifeed iant type nfeed',ifeed,iant,type,nfeeds
           call pgptbpass(ng,x,y,symbol,ifeed,iant,type,
-     *    nschann,donply,dosmooth,dofit)
-
+     *    nschann,donply,dosmooth,dofit,dotsize)
             if(filelabel.gt.-1) then
             if((filelabel.eq.1).and.(iant.eq.1))
      *      call pgmtxt('LV',-1.,0.9,.0,uvfile(1:lfile))
@@ -1653,10 +1664,10 @@ c
         endif
         end
 
-      SUBROUTINE PGPTS (N, XPTS, YPTS, SYMBOL)
+      SUBROUTINE PGPTS (N, XPTS, YPTS, SYMBOL,dotsize)
       INTEGER N
       REAL XPTS(*), YPTS(*)
-      INTEGER SYMBOL
+      INTEGER SYMBOL,dotsize
 C
 C Primitive routine to draw Graph Markers (polymarker). The markers
 C are drawn using the current values of attributes color-index,
@@ -1705,12 +1716,17 @@ C
       IF (PGNOTO('PGPT')) RETURN
 C
       CALL PGBBUF
+       if(dotsize.ge.1.and.dotsize.le.201) then
+             SYMBOL = -2
+             call pgslw(dotsize)
+             endif
       IF (SYMBOL.GE.0 .OR. SYMBOL.LE.-3) THEN
           CALL GRMKER(SYMBOL,.FALSE.,N,XPTS,YPTS)
       ELSE
           CALL GRDOT1(N,XPTS,YPTS)
       END IF
       CALL PGEBUF
+       call pgslw(1)
        do i=1, N
         x(i) = XPTS(i)
         y(i) = YPTS(i)
@@ -1741,8 +1757,9 @@ c
       END
 
       SUBROUTINE PGPTSGAIN(N,XPTS,YPTS,SYMBOL,IANT,IFEED,
-     *  type,WT,weight,xpntr,time,nsols,donply,dosmooth,dofit)
-      INTEGER N,IANT,IFEED
+     *  type,WT,weight,xpntr,time,nsols,donply,dosmooth,
+     *  dofit,dotsize)
+      INTEGER N,IANT,IFEED,dotsize
       REAL XPTS(*), YPTS(*),WT(*)
       INTEGER SYMBOL,weight
       character type*(*)
@@ -1776,6 +1793,13 @@ c
            ys(i) = 0. 
           end do
       call pgsci(2)
+
+      SYMBOL=1
+      if(dotsize.ge.1.and.dotsize.le.201) then
+             SYMBOL = -2
+             call pgslw(dotsize)
+             endif
+
       IF (N.LT.1) RETURN
       IF (PGNOTO('PGPT')) RETURN
 C
@@ -1786,6 +1810,7 @@ C
           CALL GRDOT1(N,XPTS,YPTS)
       END IF
       CALL PGEBUF
+           call pgslw(1)
         do i=1, N
         T(i) = XPTS(i)/3600.
         Y(i) = YPTS(i)
@@ -1940,10 +1965,10 @@ c
 
 c************************************************************************
       SUBROUTINE PGPTBPASS (N,XPTS,YPTS,SYMBOL,IFEED,
-     *   IANT,type,nschann,donply,dosmooth,dofit)
+     *   IANT,type,nschann,donply,dosmooth,dofit,dotsize)
       INTEGER N, IFEED, IANT
       REAL XPTS(*), YPTS(*)
-      INTEGER SYMBOL
+      INTEGER SYMBOL,dotsize
       LOGICAL PGNOTO
       character type*(*)
       include 'smagpplt.h'
@@ -2018,10 +2043,18 @@ c         if(nspects.gt.12) call pgsci(nspects-12)
          call pgsci(nspects)
             
          CALL PGBBUF
-          
+         if(dotsize.ge.1.and.dotsize.le.201) then
+             SYMBOL = -2
+             call pgslw(dotsize)
+             endif
+         IF (SYMBOL.GE.0 .OR. SYMBOL.LE.-3) THEN
          CALL GRMKER(SYMBOL,.FALSE.,schan,x,ys)
-         CALL PGEBUF
+         ELSE
+         CALL GRDOT1(schan,x,ys)
+         END IF
 
+         CALL PGEBUF
+         call pgslw(1)
        write(title,'(a,i2)') 's', nspects
        ll = len1(title)
                call pglen(5,title(1:ll),xlen,ylen)
