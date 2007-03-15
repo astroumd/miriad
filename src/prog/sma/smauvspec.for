@@ -121,6 +121,14 @@ c             yrange to the variable amplitude. The phase is plotted below
 c             the amplitude in the bottom panel with the range from -180 to 
 c             180 degree. 
 c
+c@ dotsize
+c       Allows users to choose a symbol (dot) size in a range between
+c       1-201. The actual plotted dot size depends on the device
+c       resolution. Other internal symbol selecting function
+c       would be failed when this parameter is in use.
+c       Default is to disable this function.
+c
+c
 c@ device
 c	PGPLOT plot device/type. No default.
 c
@@ -205,6 +213,7 @@ c    jhz 25jan07  cleaned a few things for solaris compiling
 c    jhz 06feb07  implemented lag plot
 c    jhz 06feb07  added xrange
 c    pjt 20feb07  use a private name for fft842x (intel mac linker complains otherwise)
+c    jhz 15mar07  added keyword dotsize
 c  Bugs:
 c------------------------------------------------------------------------
         include 'maxdim.h'
@@ -218,7 +227,7 @@ c
         character mname*8000, moln*16
         integer mtag(maxmline), nmline, j, jp, js, je, iline
         character version*(*)
-        parameter(version='SmaUvSpec: version 1.15 20-feb-07')
+        parameter(version='SmaUvSpec: version 1.16 15-mar-07')
         character uvflags*8,device*64,xaxis*12,yaxis*12,logf*64
         character xtitle*64,ytitle*64, veldef*8
         character xtitlebuf*64
@@ -253,7 +262,7 @@ c
         logical docolor,dorestfreq
         integer nspect, nschan(maxwin),nchan0
         common/spectrum/nspect,nschan,nchan0,docolor,dorestfreq
-        integer maxsels,nin,i
+        integer maxsels,nin,i,dotsize
         parameter(maxsels=256)
         real sels(maxsels)
         logical SelProbe, selwins(MAXWIN),winsel
@@ -305,6 +314,7 @@ c     &  call bug('f','has not fully implemented yet for jpl catalog.')
         call keyr('xrange',xrange(2),0.)
         call keyr('yrange',yrange(1),0.)
         call keyr('yrange',yrange(2),yrange(1)-1)
+        call keyi ('dotsize', dotsize, -1)
         call keya('log',logf,' ')
         call keyfin
         winsel = SelProbe(sels,'window?',0.d0)
@@ -434,7 +444,8 @@ c
      *                hw,first,
      *                device,x,nplot,xtitle,ytitle,nxy,
      *                xrange,yrange,logf,
-     *                docat,dorestfreq,veldef,lsrvel,veldop)
+     *                docat,dorestfreq,veldef,lsrvel,veldop,
+     *                dotsize)
                  t0 = preamble(3)
                  t1 = t0
                  buffered = .false.
@@ -481,7 +492,8 @@ c
      *             hw,first,
      *             device,x,nplot,xtitle,ytitle,nxy,
      *             xrange,yrange,logf,
-     *             docat,dorestfreq,veldef,lsrvel,veldop)
+     *             docat,dorestfreq,veldef,lsrvel,veldop,
+     *             dotsize)
               buffered = .false.
            endif
            call uvdatcls
@@ -742,7 +754,7 @@ c************************************************************************
         subroutine bufflush(source,ampsc,rms,nobase,dodots,hann,hc,hw,
      *          first,device,x,n,xtitle,ytitle,nxy,
      *          xrange,yrange,logf,
-     *          docat,dorestfreq,veldef,lsrvel,veldop)
+     *          docat,dorestfreq,veldef,lsrvel,veldop,dotsize)
         implicit none
         logical docat,dorestfreq
         real lsrvel,veldop
@@ -802,7 +814,7 @@ c  chnkpntr     The spectral chunk pntr.
         integer i,j,ngood,ng,ntime,npnts,nplts,nprev,p
         logical doamp,doampsc,dorms,dophase,doreal,doimag,dopoint,dolag
         logical doboth,hit(polmin:polmax)
-        integer npol,pol(maxpol)
+        integer npol,pol(maxpol),dotsize
 c
 c  Determine the conversion of the data.
 c
@@ -917,7 +929,7 @@ c
             call plotit(source,npnts,xp,yp,ypp,xrange,yrange,
      *           dodots,plot,nplts,
      *           xtitle,ytitle,j,time/ntime,inttime/nplts,pol,npol,
-     *           dopoint,hann,hc,hw,logf,doboth,sppntr,dolag)
+     *           dopoint,hann,hc,hw,logf,doboth,sppntr,dolag,dotsize)
 c     
                  npol = 0
                  do i=polmin,polmax
@@ -937,7 +949,8 @@ c
         if(npnts.gt.0) call plotit(source,npnts,xp,yp,ypp,
      *       xrange,yrange,dodots,
      *       plot,nplts,xtitle,ytitle,0,time/ntime,inttime/nplts,
-     *       pol,npol,dopoint,hann,hc,hw,logf,doboth,sppntr,dolag)
+     *       pol,npol,dopoint,hann,hc,hw,logf,doboth,sppntr,dolag,
+     *       dotsize)
 c
 c  Reset the counters.
 c
@@ -1339,7 +1352,8 @@ c
 c************************************************************************
       subroutine plotit(source,npnts,xp,yp,ypp,xrange,yrange,dodots,
      *     plot,nplts,xtitle,ytitle,bl,time,inttime,
-     *     pol,npol,dopoint,hann,hc,hw,logf,doboth,sppntr,dolag)
+     *     pol,npol,dopoint,hann,hc,hw,logf,doboth,
+     *     sppntr,dolag,dotsize)
       implicit none
 c
       integer npnts,bl,nplts,plot(nplts+1),npol,pol(npol),hann
@@ -1360,7 +1374,7 @@ c------------------------------------------------------------------------
       double precision t0
       real yranged(2), ypranged(2)
       real xlen,ylen,xloc, pscale, pline
-      integer k1,k2, k
+      integer k1,k2,k,dotsize
 c
 c  Externals.
 c
@@ -1417,7 +1431,7 @@ c   rescale the phase for plotting both
          call pgpt(plot(i+1)-plot(i),xp(plot(i)),yp(plot(i)),symbol)
                 else
          call smapgpts(plot(i+1)-plot(i),xp(plot(i)),yp(plot(i)),symbol,
-     *           sppntr)
+     *           sppntr,dotsize)
                   endif
          else
             if (hann.gt.1) call hannsm(hann,hc,plot(i+1)-plot(i),
@@ -1425,11 +1439,12 @@ c   rescale the phase for plotting both
             if (hann.gt.1) call hannsm(hann,hc,plot(i+1)-plot(i),
      *           ypp(plot(i)),hw)
           if(dolag) then
-          call pghline(plot(i+1)-plot(i),xp(plot(i)),yp(plot(i)),2.0)
+            call pghline(plot(i+1)-plot(i),
+     *           xp(plot(i)),yp(plot(i)),2.0,dotsize)
             else
             call smapghline(plot(i+1)-plot(i),xp(plot(i)),yp(plot(i)),
-     *           ypp(plot(i)),2.0,doboth, yranged(2), sppntr, 
-     *           pline,xrange)
+     *           ypp(plot(i)),2.0,doboth,yranged(2),sppntr, 
+     *           pline,xrange,dotsize)
             endif
          endif
          if (logf.ne.' ') then
@@ -1541,9 +1556,9 @@ c mchw:
 c plotting,uv-data
 c
       subroutine smapghline(npts,x,y,yp,gapfac,doboth,maxstr,sppntr,
-     *     pline,xrange)
+     *     pline,xrange,dotsize)
       implicit none
-      integer maxsline
+      integer maxsline,dotsize
       parameter(maxsline=10000)
       include 'mirconst.h'
       real fmx,fmn,strl
@@ -1662,6 +1677,7 @@ c
         symbol=2
         yloc=0.95
         call pgbbuf
+
           start=1
           if (startchunk.gt.1) then
           do i=1, startchunk
@@ -1677,6 +1693,10 @@ c
             do j=startchunk,endchunk
             startpntr=startpntr+fnschan(j)
             ci=j
+            if(dotsize.ge.1.and.dotsize.le.201) then
+             call pgslw(dotsize)
+             endif
+
         if(j.gt.12) then
             if(ci.eq.13) call pgscr(ci, 1.0, 1.0, 0.5)
             if(ci.eq.14) call pgscr(ci, 1.0, 1.0, 0.0)
@@ -1742,6 +1762,7 @@ c
              end=i
               if(startpntr.gt.0) call pgdraw(x(end),y(end))
              start=end+1
+             call pgslw(1)
              if(docolor) then
              write(title,'(a,i2)') 's',j
                l = len1(title)
@@ -1754,8 +1775,13 @@ c
 c          plot phase
            if(doboth) then
            call  pgsci(1)
+           call pgslw(1)
            call pgline(2,xrange,apline)
            call  pgsci(2)
+           if(dotsize.ge.1.and.dotsize.le.201) then
+             SYMBOL = -2
+             call pgslw(dotsize)
+             endif
            IF (SYMBOL.GE.0 .OR. SYMBOL.LE.-3) THEN
           CALL GRMKER(SYMBOL,.FALSE.,N,XPTS,YPTS)
             
@@ -1764,6 +1790,7 @@ c          plot phase
            END IF
            CALL PGEBUF
            endif
+           call pgslw(1)
            if(end.eq.npts) goto 556
            enddo        
 556        continue 
@@ -1860,9 +1887,9 @@ c
 CPGPT -- draw several graph markers
 Cvoid cpgpt(int n, const float *xpts, const float *ypts, int symbol);
 C
-      SUBROUTINE SMAPGPTS (N, XPTS, YPTS, SYMBOL,sppntr)
+      SUBROUTINE SMAPGPTS (N, XPTS, YPTS, SYMBOL,sppntr,dotsize)
       implicit none
-      INTEGER N
+      INTEGER N, dotsize
       REAL XPTS(*), YPTS(*)
       INTEGER SYMBOL, sppntr(N)
 c jhz modified to PGPT with color codes for spectra.
@@ -1981,13 +2008,19 @@ C
          call pgmtxt('RV',1.0,yloc,0.,title(1:l))
          
          CALL PGBBUF
+         if(dotsize.ge.1.and.dotsize.le.201) then
+             SYMBOL = -2
+             call pgslw(dotsize)
+             endif
          IF (SYMBOL.GE.0 .OR. SYMBOL.LE.-3) THEN
             CALL GRMKER(SYMBOL,.FALSE.,N,XPTS,YPTS)
          ELSE
             CALL GRDOT1(N,XPTS,YPTS)
          END IF
          CALL PGEBUF
+          call pgslw(1)
       enddo
+            
  555  continue
       
       END
@@ -2618,14 +2651,10 @@ C
       CALL PGEBUF
       END
 c************************************************************************
-c* PgHline -- Histogram line plot for pgplot.
-c& mchw
-c: plotting,uv-data
-c+
-	subroutine PgHline(npts,x,y,gapfac)
+	subroutine PgHline(npts,x,y,gapfac,dotsize)
 c
 	implicit none
-	integer npts
+	integer npts,dotsize
 	real x(npts), y(npts), gapfac
 c
 c  Histogram style line plot of y-array versus x-array. Points are not
@@ -2663,28 +2692,27 @@ c
 c
 c  Connect sequences of points between gaps and reversals
 c
+         if(dotsize.ge.1.and.dotsize.le.201) then
+             call pgslw(dotsize)
+             endif
 	 if(gap.or.reverse) then
 	   call pgmove(x(start),y(start))
 	   do i=start,end-1
-              call pgsci(2)
+             call pgsci(2)
 	     call pgdraw (0.5*(x(i+1)+x(i)), y(i))
 	     call pgdraw (0.5*(x(i+1)+x(i)), y(i+1))
 	   enddo
-           
 	   call pgdraw(x(end),y(end))
 	   start = end + 1
 	   end = end + 2
 	 else
 	   end = end + 1
 	 endif
+          call pgslw(1)
  	enddo
         call pgebuf
 	end
 C************************************************************************
-c* Fftcr -- Complex to real 1D FFT routine.
-c: fourier-transform,FFT
-c& rjs
-c+
         subroutine smafftcr(in,out,isn,n)
 c
         implicit none
