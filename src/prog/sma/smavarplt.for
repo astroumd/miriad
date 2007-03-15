@@ -35,6 +35,14 @@ c@ yrange
 c	The min and max range along the y axis of the plots. The default
 c	is to autoscale. Note that for "time" should be given in normal Miriad
 c	time format (either absolute time or time-of-day).
+c
+c@ dotsize
+c       Allows users to choose a symbol (dot) size in a range between
+c       1-201. The actual plotted dot size depends on the device
+c       resolution. Other internal symbol selecting function
+c       would be failed when this parameter is in use.
+c       Default is to disable this function.
+c
 c@ options
 c	Extra processing options. Several can be given, separated by
 c	commas. Minimum match is used.
@@ -95,13 +103,14 @@ c    jhz 31may06  added initialization and resuming of blflag
 c                 before and after parsing baseline based flagging
 c                 states.
 c    jhz 11jan07  added chi2 to VarChar data list.
+c    jhz 15mar07  added Keyword dotsize.
 c  Bugs:
 c    ?? Perfect?
 c------------------------------------------------------------------------
         character version*(*)
         integer maxpnts
         parameter(maxpnts=100000)
-        parameter(version='SmaVarPlt: version 1.7 12-Jan-07')
+        parameter(version='SmaVarPlt: version 1.8 15-Mar-07')
         logical doplot,dolog,dotime,dounwrap
         character vis*64,device*64,logfile*64,xaxis*16,yaxis*16
         character xtype*1,ytype*1,xunit*16,yunit*16,calday*24
@@ -112,7 +121,7 @@ c------------------------------------------------------------------------
         logical xaver,yaver,compress,dtime,overlay,more,equal,doflag
         real flagvar(maxpnts)
         real rmsflag
-        integer dofit, ylen
+        integer dofit, ylen, dotsize
         common/smfix/rmsflag, dofit
 c
 c  Externals.
@@ -159,6 +168,7 @@ c
           call keyr('yrange',yrange(2),yrange(1)-1.)
         endif
             dofit=0
+          call keyi ('dotsize', dotsize, -1)
         call keyfin
 c
 c  Open up all the inputs.
@@ -247,7 +257,8 @@ c
           call plotit(npnts,dotime,equal,overlay,vis,
      *      flagvar,doflag,
      *      xvals,xdim1,xdim2,xaxis,xrange,xunit,
-     *      yvals,ydim1,ydim2,yaxis,yrange,yunit)
+     *      yvals,ydim1,ydim2,yaxis,yrange,yunit,
+     *      dotsize)
           call pgend
         endif
 c
@@ -516,7 +527,8 @@ c************************************************************************
         subroutine plotit(npnts,dotime,equal,overlay,vis,
      *      flagvar,doflag,
      *      xvals,xdim1,xdim2,xaxis,xrange,xunit,
-     *      yvals,ydim1,ydim2,yaxis,yrange,yunit)
+     *      yvals,ydim1,ydim2,yaxis,yrange,yunit,
+     *      dotsize)
 c
         integer npnts,xdim1,xdim2,ydim1,ydim2
         real xrange(2),yrange(2)
@@ -528,7 +540,7 @@ c------------------------------------------------------------------------
         integer x1,x2,y1,y2,xoff,yoff,kx,ky
         logical xext,yext,xr,yr
         real xlo,xhi,ylo,yhi
-        integer maxsource
+        integer maxsource, dotsize
         parameter(maxsource=100)
         character source(maxsource)*32
         integer soupnt(10000*10), nsource
@@ -584,15 +596,15 @@ c
      *            xaxis,xunit,xlo,xhi,x1,xdim1,x2,xdim2,
      *            yaxis,yunit,ylo,yhi,y1,ydim1,y2,ydim2)
       call pgpts (npnts,xvals(xoff),yvals(yoff),flagvar(yoff),
-     * doflag,1)
+     * doflag,dotsize)
               enddo
             enddo
           enddo
         enddo
         end
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-      SUBROUTINE pgpts (N, XPTS, YPTS, YFLAG,DOFLAG,SYMBOL)
-      INTEGER N, NPNTS
+      SUBROUTINE pgpts (N, XPTS, YPTS, YFLAG,DOFLAG,dotsize)
+      INTEGER N, NPNTS,dotsize
       REAL XPTS(N), YPTS(N), YFLAG(N)
       INTEGER FPTS(N)
       INTEGER SYMBOL
@@ -724,6 +736,11 @@ c
                XFIT(NPL)=xx(1)
                YFIT(NPL)=yy(1) 
            end if
+      SYMBOL=1
+      if(dotsize.ge.1.and.dotsize.le.201) then
+             SYMBOL = -2
+             call pgslw(dotsize)
+             endif
       IF (SYMBOL.GE.0 .OR. SYMBOL.LE.-3) THEN
       if(FLAG(i)) CALL GRMKER(SYMBOL,.FALSE.,NPNTS,xx,yy)
       ELSE
@@ -731,6 +748,7 @@ c
       END IF
        end do
       CALL PGEBUF
+           call pgslw(1)
           if (nsource.le.48) then 
           yloc=1.0
             do j=1, mindx
