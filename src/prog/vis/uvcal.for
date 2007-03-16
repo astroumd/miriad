@@ -60,6 +60,11 @@ c	             to the lsb data. The complex conjugate is applied
 c	             to the usb. This corrects for time variable IF
 c	             passband errors. The uv-data must contain the same
 c	             spectral windows in both sidebands of LO1.
+c	'noisecal'   Copy conjugate of LSB spectral windows into USB.
+c                Can be used to copy the CARMA noise data into the USB.
+c                MFCAL can then fit the IF bandpass in both sidebands.
+c                This option assumes that the data contain the same 
+c                spectral windows in LSB and USB.
 c	 'uvrotate'  Rotate uv-coordinates from current to standard epoch.
 c	             The standard epoch, ra, dec can be changed using PUTHD.
 c	 'avechan'   Average unflagged spectral channels. Make new wideband.
@@ -215,11 +220,12 @@ c    mchw 25feb06  update holography options=holo.
 c    mchw 05mar06  options=slope: fit phase slope for each spectral window. 
 c    mchw 07jan07  get lst from JulLst(time,longitude,lst) in subroutine pcenter.
 c    pjt   5feb07  fix array dimensioning in fxcal()
+c    mchw 14mar07  added option noisecal to copy conj of LSB into USB.
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	integer maxbad
 	character version*(*)
-	parameter(version='UVCAL: version 3.0 7-Feb-2007')
+	parameter(version='UVCAL: version 3.0 14MAR07')
 	parameter(maxbad=20)
 	real PI
 	parameter(PI=3.1415926)
@@ -231,9 +237,10 @@ c
 	logical flags(MAXCHAN),wflags(MAXCHAN)
 	logical first,init,new,more,dopol,PolVary
 	logical dochan,dowide,docopy,updated,doscale,dopolcal,domodel
+	logical dooffset,doseeing
 	logical nocal,nopol,nopass,nowide,nochan,doall,dopass,
      *       dohann,docont,doconj,dophase,holo,dopower,avechan,slope,
-     *       linecal,uvrot,doparang,dooffset,dofxcal,doseeing
+     *       linecal,uvrot,doparang,dofxcal,doconjlsb
 	character out*64,type*1,uvflags*8
 	real mask(MAXCHAN),sigma
 	integer polcode,nants,ant1,ant2
@@ -255,12 +262,13 @@ c
 	call bug('i','28jan06 options=avechan. Make new wideband')
 	call bug('i','25feb06 options=holo: pointing and holography')
 	call bug('i','05mar06 options=slope: phase slope and baseline')
+	call bug('i','14mar07 options=noisecal: copy conj LSB into USB')
 c********1*********2*********3*********4*********5*********6*********7*c
 c
 	call keyini
 	call GetOpt(nocal,nopol,nopass,nowide,nochan,doall,dopass,
      *       dohann,docont,doconj,dophase,holo,dopower,avechan,slope,
-     *       linecal,uvrot,doparang,dofxcal)
+     *       linecal,uvrot,doparang,dofxcal,doconjlsb)
 	lflags = 3
 	uvflags(1:3) = 'ds3'
 	if(.not.nocal)then
@@ -517,6 +525,9 @@ c
 	      if(slope)
      *	          call fitslope(lIn,data,flags,nchan,wdata,wflags,nwide,
      *					dowide,lOut,endchan,mask,sigma)
+          if(doconjlsb)
+     *            call ConjLSB(lIn,data,flags,nchan,
+     *							endchan,nave)
 c
 c  Process the wideband data separately if doing both wide and channel data.
 c
@@ -639,12 +650,12 @@ c
 c********1*********2*********3*********4*********5*********6*********7*c
 	subroutine GetOpt(nocal,nopol,nopass,nowide,nochan,doall,dopass,
      *       dohann,docont,doconj,dophase,holo,dopower,avechan,slope,
-     *       linecal,uvrot,doparang,dofxcal)
+     *       linecal,uvrot,doparang,dofxcal,doconjlsb)
 c
 	implicit none
 	logical nocal,nopol,nopass,nowide,nochan,doall,dopass,
      *       dohann,docont,doconj,dophase,holo,dopower,avechan,slope,
-     *       linecal,uvrot,doparang,dofxcal
+     *       linecal,uvrot,doparang,dofxcal,doconjlsb
 c
 c  Determine extra processing options.
 c
@@ -668,16 +679,17 @@ c    slope     Fit phase slope and store in wideband.
 c    linecal   Correct phase slope due to line length change.
 c    uvrot     Rotate uv-coordinates from current to standard epoch.
 c    doparang  Multiply LR by expi(2*chi) and RL by expi(-2*chi)
+c	 doconjlsb Copy conjugate of LSB spectral windows into USB.
 c------------------------------------------------------------------------
 	integer nopt
-	parameter(nopt=17)
+	parameter(nopt=18)
 	character opts(nopt)*9
 	logical present(nopt)
-	data opts/'nocal    ','nowide   ','nochannel','unflagged',
-     *		  'passband ','hanning  ','nopol    ','contsub  ',
+	data opts/    'nocal    ','nowide   ','nochannel','unflagged',
+     *		      'passband ','hanning  ','nopol    ','contsub  ',
      *            'conjugate','nopass   ','holo     ',
      *            'avechan  ','slope    ','linecal  ',
-     *            'uvrotate ','parang   ','fxcal    '/
+     *            'uvrotate ','parang   ','fxcal    ','noisecal '/
 
 	call options('options',opts,present,nopt)
 	nocal   = present(1)
@@ -697,6 +709,7 @@ c------------------------------------------------------------------------
 	uvrot   = present(15)
 	doparang= present(16)
 	dofxcal = present(17)
+	doconjlsb = present(18)
 c
 c  Check for imcompatible options
 c
@@ -789,6 +802,50 @@ c
 	  do j=ischan(i), ischan(i)+nschan(i)-1
 	    data(j) = anorm * data(j) / pass(j)
 	    data(j+nchan/2) = anorm * data(j+nchan/2) / conjg(pass(j))
+	  enddo
+	enddo
+c
+c  Return with the corrected data.
+c
+	end
+c********1*********2*********3*********4*********5*********6*********7*c
+      subroutine ConjLSB(lIn,data,flags,nchan,
+     *							endchan,nave)
+c
+	implicit none
+	integer lIn,nchan,nave,endchan
+	complex data(nchan)
+	logical flags(nchan)
+c
+c  Copy conjugate of LSB spectral windows into USB .
+c  This assumes that the data contain the same spectral windows in lsb and usb.
+c
+c  Input:
+c    lIn	Handle of input uv-data.
+c    nchan	Number of channels.
+c    nave	Number of channels to average.
+c    endchan	Number of end channels to drop.
+c  Input/Output:
+c    data
+c    flags
+c------------------------------------------------------------------------
+	include 'maxdim.h'
+	integer nspect,ischan(MAXWIN),nschan(MAXWIN)
+	integer i,j
+c
+c  Get the dimensioning info.
+c
+	  call uvgetvri(lIn,'nspect',nspect,1)
+	  if(nspect.le.0)
+     *	    call bug('f','Bad value for uv variable nspect')
+	  call uvgetvri(lIn,'ischan',ischan,nspect)
+	  call uvgetvri(lIn,'nschan',nschan,nspect)
+c
+c  Copy conjugate of LSB spectral windows into USB .
+c
+	do i=1,nspect/2
+	  do j=ischan(i), ischan(i)+nschan(i)-1
+	    data(j+nchan/2) = conjg(data(j))
 	  enddo
 	enddo
 c
