@@ -9,6 +9,7 @@ c+
 c	IMSTORE is a Miriad task which dumps or tabulates a region of
 c       an image in a format suitable for other programs.
 c       Different output modes can be selected.
+c       See also IMLIST and IMTAB for similar functionality.
 c@ in
 c     The input file name. No default.
 c@ region
@@ -76,7 +77,7 @@ c
       PARAMETER(MAXBOXES=2048)
       PARAMETER(MAXRUNS=3*MAXDIM,NBUF=8)
       PARAMETER(RAD2SEC=3600.0*180.0/PI)
-      PARAMETER(PVERSION='Version 1.0 19-Jun-00')
+      PARAMETER(PVERSION='Version 1.0 19-mar-07')
 c
       CHARACTER file*132,line*256,mode*20,logfile*132, 
      *          ctype1*10, ctype2*10, format*30, units*20

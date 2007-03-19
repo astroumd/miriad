@@ -9,6 +9,7 @@ c+
 c       IMLIST lists a Miriad image. It will list the header, statistics,
 c       selected regions of the data, the mosaic table (if present) and the
 c	history.
+c       See also IMTAB and IMSTORE for some similar functionality.
 c@ in
 c	Input image name. No default.
 c@ options
@@ -76,7 +77,7 @@ c    Data format still needs work to prevent format overflow.
 c    Doesn't handle pixel blanking outside region of interest.
 c----------------------------------------------------------------------c
 	character version*(*)
-	parameter(version='version 19-jun-2005')
+	parameter(version='version 19-mar-2007')
 	include 'maxdim.h'
 	integer maxboxes,maxnax
 	parameter(maxboxes=2048,maxnax=3)

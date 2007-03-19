@@ -19,6 +19,7 @@ c
 c	The NEMO format outputs, in (3g16.9) format:
 c           DRA, DDEC, FLUX
 c
+c       See also IMSTORE and IMLIST for simular functionality.
 c@ in
 c     The input file name. No default.
 c@ region
@@ -67,7 +68,7 @@ c
       PARAMETER(MAXBOXES=2048)
       PARAMETER(MAXRUNS=3*MAXDIM)
       PARAMETER(RAD2SEC=206264.8062)
-      PARAMETER(PVERSION='Version 9-jun-94')
+      PARAMETER(PVERSION='Version 19-mar-07')
 c
       CHARACTER file*132,line*256,mode*20,logfile*132, 
      *          ctype1*10, ctype2*10, format*30, units*20
