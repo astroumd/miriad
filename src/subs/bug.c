@@ -14,6 +14,7 @@
 /*    pjt/ram  5dec03 using strerror() for unix                         */
 /*    pjt      1jan05 bugv_c: finally, a real stdargs version!!!        */
 /*                    though cannot be exported to Fortran              */
+/*    pjt     26mar07 bugmessage_c: retrieve last fatal bug message     */
 /************************************************************************/
 
 #include <stdio.h>
@@ -23,6 +24,7 @@
 #include "miriad.h"
 
 static char *errmsg_c(int n);
+static void handle_bug_cleanup(Const char *m);
 
 char *Name = NULL;
 int reentrant=0;
@@ -31,6 +33,32 @@ int reentrant=0;
 
 typedef void (*proc)(void);  /* helper definition for function pointers */
 static proc bug_cleanup=NULL;
+static char *bug_message=0; 
+
+/************************************************************************/
+char *bugmessage_c(void)
+/** bugmessage_c -- return last fatal error message string              */
+/*& pjt                                                                 */
+/*: error-handling                                                      */
+/*+                                                                    
+    This routine does not have a FORTRAN counterpart, as it is normally 
+    only called by C clients who have set their own error handler if
+    for some reason they don't like the MIRIAD one (e.g. C++ or java
+    exceptions, or NEMO's error handler. This way the bugrecover handler
+    can call this routine to retrieve the last fatal error message. 
+
+    bugrecover_c(my_handler);
+    
+    void my_handler(void) {
+       char *m = bugmessage_c();
+       printf("RECOVERED: %s\n",m);
+    }
+    ..                                                                  */
+/*--                                                                    */
+/*----------------------------------------------------------------------*/
+{
+  return bug_message;
+}
 
 /************************************************************************/
 void bugrecover_c(void (*cl)(void))
@@ -56,6 +84,8 @@ void bugrecover_c(void (*cl)(void))
 /*----------------------------------------------------------------------*/
 {
     bug_cleanup = cl;
+    if (bug_message) free(bug_message);
+    bug_message = strdup("no bug_message has been set yet");
 }
 
 /************************************************************************/
@@ -118,13 +148,7 @@ void bug_c(char s,Const char *m)
 # include ssdef
     lib$stop(SS$_ABORT);
 #else
-/*    fprintf(stderr,"### Program exiting with return code = 1 ###\n"); */
-    if (bug_cleanup) {
-        (*bug_cleanup)();       /* call it */
-        fprintf(stderr,"### bug_cleanup: code should not come here, goodbye\n");
-        /* and not it will fall through and exit the bug way */
-    }
-    exit (1);
+    handle_bug_cleanup(m);
 #endif
   }
 }
@@ -168,12 +192,7 @@ void bugv_c(char s,Const char *m, ...)
   if(doabort){
     reentrant = !reentrant;
     if(reentrant)habort_c();
-    if (bug_cleanup) {
-        (*bug_cleanup)();       /* call it */
-        fprintf(stderr,"### bug_cleanup: code should not come here, goodbye\n");
-        /* and not it will fall through and exit the bug way */
-    }
-    exit (1);
+    handle_bug_cleanup(m);
   }
 }
 
@@ -221,4 +240,20 @@ static char *errmsg_c(int n)
 #else
   return strerror(n);
 #endif
+}
+/************************************************************************/
+static void handle_bug_cleanup(Const char *m)
+/*
+  Handle cleaning up a bug 
+------------------------------------------------------------------------*/
+{
+  if (bug_cleanup) {
+    if (bug_message) free(bug_message);
+    bug_message = strdup(m);
+    (*bug_cleanup)();       /* call it */
+    fprintf(stderr,"### bug_cleanup: code should not come here, goodbye\n");
+    /* atexit() could also be called */
+    /* and not it will fall through and exit the bug way */
+  }
+  exit (1);
 }

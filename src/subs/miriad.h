@@ -303,6 +303,7 @@ void xyzplnwr_c (int tno, int planenr, Const float *data, Const int *mask, Const
 
 /* bug.c */
 
+char *bugmessage_c(void);
 void bugrecover_c(void (*cl)(void));
 void buglabel_c  (Const char *name);
 void bugno_c     (char s, int n);
