@@ -15,6 +15,8 @@
 /*    pjt      1jan05 bugv_c: finally, a real stdargs version!!!        */
 /*                    though cannot be exported to Fortran              */
 /*    pjt     26mar07 bugmessage_c: retrieve last fatal bug message     */
+/*    pjt     27mar07 bugseverity_c: also overhauled bug recovery       */
+/*                    and removed VMS specific code                     */
 /************************************************************************/
 
 #include <stdio.h>
@@ -24,16 +26,21 @@
 #include "miriad.h"
 
 static char *errmsg_c(int n);
-static void handle_bug_cleanup(Const char *m);
+static int  handle_bug_cleanup(int d, char s, Const char *m);
 
-char *Name = NULL;
-int reentrant=0;
-
-/*  HPUX cannot handle the (void) thing */
+char *Name = NULL;            /* a slot to store the program name       */
+int reentrant=0;              /* keep track of state                    */
 
 typedef void (*proc)(void);  /* helper definition for function pointers */
-static proc bug_cleanup=NULL;
-static char *bug_message=0; 
+
+static proc bug_cleanup=NULL; /* external bug handler, if any           */
+static char *bug_message=0;   /* last message                           */ 
+static char bug_severity=0;   /* last severity level (i,w,e or f)       */
+
+
+#define MAXMSG 256
+static char msg[MAXMSG];      /* formatted message for bugv_c()         */
+
 
 /************************************************************************/
 char *bugmessage_c(void)
@@ -58,6 +65,33 @@ char *bugmessage_c(void)
 /*----------------------------------------------------------------------*/
 {
   return bug_message;
+}
+
+/************************************************************************/
+char bugseverity_c(void)
+/** bugseverity_c -- return last severity level                         */
+/*& pjt                                                                 */
+/*: error-handling                                                      */
+/*+                                                                    
+    This routine does not have a FORTRAN counterpart, as it is normally 
+    only called by C clients who have set their own error handler if
+    for some reason they don't like the MIRIAD one (e.g. C++ or java
+    exceptions, or NEMO's error handler. This way the bugrecover handler
+    can call this routine to retrieve the last severity level 
+
+    bugrecover_c(my_handler);
+    
+    void my_handler(void) {
+       char  s = bugseverity_c();
+       char *m = bugmessage_c();
+       printf("RECOVERED: (%c) %s\n",s,m);
+       if (s=='f') exit(1);
+    }
+    ..                                                                  */
+/*--                                                                    */
+/*----------------------------------------------------------------------*/
+{
+  return bug_severity;
 }
 
 /************************************************************************/
@@ -99,7 +133,8 @@ void buglabel_c(Const char *name)
 	implicit none
 	character name*(*)
 
-  Give the name that is to be used as a label in error messages.
+  Give the name that is to be used as a label in error messages. Usually
+  this is the program name and should be set by the user interface.
 
   Input:
     name	The name to be given as a label in error messages.	*/
@@ -140,17 +175,17 @@ void bug_c(char s,Const char *m)
   else if (s == 'e' || s == 'E') p = "Error";
   else {doabort = 1;		 p = "Fatal Error"; }
 
-  fprintf(stderr,"### %s:  %s\n",p,m);
+  if (!bug_cleanup)
+    fprintf(stderr,"### %s:  %s\n",p,m);
+
   if(doabort){
     reentrant = !reentrant;
     if(reentrant)habort_c();
-#ifdef vms
-# include ssdef
-    lib$stop(SS$_ABORT);
-#else
-    handle_bug_cleanup(m);
-#endif
-  }
+    if (!handle_bug_cleanup(doabort,s,m))
+      exit(1);
+  } else
+    handle_bug_cleanup(doabort,s,m);
+    
 }
 /************************************************************************/
 void bugv_c(char s,Const char *m, ...)
@@ -161,6 +196,7 @@ void bugv_c(char s,Const char *m, ...)
 	bugv_c(severity,message,....)
 
   Output the error message given by the caller, and abort if needed.
+  Note this routine has no counterpart in FORTRAN.
 
   Input:
     severity	Error severity character. 
@@ -174,7 +210,7 @@ void bugv_c(char s,Const char *m, ...)
 {
   va_list ap;
   char *p;
-  int doabort;
+  int doabort,len;
 
   doabort = 0;
   if      (s == 'i' || s == 'I') p = "Informational";
@@ -183,17 +219,21 @@ void bugv_c(char s,Const char *m, ...)
   else {doabort = 1;		 p = "Fatal Error"; }
 
   va_start(ap,m);
-  fprintf(stderr,"### %s: ",p);
-  vfprintf(stderr,m,ap);
-  fprintf(stderr,"\n");     /* should *we* really supply the newline ? */
-  fflush(stderr);
+  snprintf(msg,MAXMSG,"### %s: ",p);         len = strlen(msg);
+  vsnprintf(&msg[len],MAXMSG-len,m,ap);
   va_end(ap);
+
+  if (!bug_cleanup)
+    fprintf(stderr,"%s\n",msg);
 
   if(doabort){
     reentrant = !reentrant;
     if(reentrant)habort_c();
-    handle_bug_cleanup(m);
-  }
+    if (!handle_bug_cleanup(doabort,s,&msg[len]))
+      exit(1);
+  } else
+    handle_bug_cleanup(doabort,s,&msg[len]);
+  
 }
 
 /************************************************************************/
@@ -226,34 +266,36 @@ static char *errmsg_c(int n)
   Return the error message associated with some error number.
 ------------------------------------------------------------------------*/
 {
-#ifdef vms
-#include <descrip.h>
-  $DESCRIPTOR(string_descriptor,string);
-  static char string[128];
-  short int len0;
-  int one;
-
-  one = 1;
-  lib$sys_getmsg(&n,&len0,&string_descriptor,&one);
-  string[len0] = 0;
-  return(string);
-#else
+#ifdef HAS_STRERROR
+  /* new POSIX.1 style */
   return strerror(n);
+#else
+  /* old style code */
+#  if !defined(linux) && !defined(darwin_ppc) && !defined(darwin_x86)
+  extern int sys_nerr;
+  extern char *sys_errlist[];
+#  endif
+  if(n > 0 && n <= sys_nerr)return((char *)sys_errlist[n]);
+  else {
+    sprintf(msg,"Unknown error with number %d detected.",n);
+    return msg;
+  }
 #endif
 }
 /************************************************************************/
-static void handle_bug_cleanup(Const char *m)
+static int handle_bug_cleanup(int doabort, char s, Const char *m)
 /*
   Handle cleaning up a bug 
 ------------------------------------------------------------------------*/
 {
   if (bug_cleanup) {
     if (bug_message) free(bug_message);
-    bug_message = strdup(m);
-    (*bug_cleanup)();       /* call it */
-    fprintf(stderr,"### bug_cleanup: code should not come here, goodbye\n");
-    /* atexit() could also be called */
-    /* and not it will fall through and exit the bug way */
+    bug_message = strdup(m);      /* save last message */
+    bug_severity = s;             /* save last severity */
+    (*bug_cleanup)();             /* call handler ; this may exit */
+    if (doabort)                  /* if it got here, handler didn't exit */
+      fprintf(stderr,"### handle_bug_cleanup: WARNING: code should not come here\n");
+    return 1;
   }
-  exit (1);
+  return 0;
 }
