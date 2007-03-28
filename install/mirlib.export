@@ -6,6 +6,12 @@
 #  things for MIR3
 #
 #  TODO:     Some linux dependant commands/options in here in the build/compile
+#
+#  typical procedure:
+#  - get a clean miriad install (e.g. using test_a_new_miriad_cvs)
+#  - miriad_start this version, so we have a $MIR
+#  - edit the VERSION file if it needs an extra tag (e.g. 4.0.5b)
+#  - run:  'mirlib.export tar=1' to get the version named tar ball for CARMA_PKG
 
 if ($?MIR == 0) then
   echo MIR is not defined, you need to have a running MIRIAD to clone the mirlib library
