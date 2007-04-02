@@ -271,7 +271,7 @@ static char *errmsg_c(int n)
   return strerror(n);
 #else
   /* old style code */
-#  if !defined(linux) && !defined(darwin_ppc) && !defined(darwin_x86)
+#  if !defined(linux) && !defined(darwin_ppc) && !defined(darwin_x86) && !defined(darwin)
   extern int sys_nerr;
   extern char *sys_errlist[];
 #  endif
