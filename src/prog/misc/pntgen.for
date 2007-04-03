@@ -36,6 +36,8 @@ c    15mar95 pjt   fixed statement orders, call uniform instead of rand()
 c    23aug95 mchw  Update pointing format.
 c    22mar99 pjt   fixed ,x, -> ,1x, in format stmt (linux)
 c    02nov05 mchw  write data in CARMA 12sep05 ddmmmyy before the UT format 
+c
+C TODO: fix some ANSI violations udate*, print * 
 c----------------------------------------------------------------------c
 	character version*(*)
 	parameter(version='(version 1.0 02-nov-05)')
