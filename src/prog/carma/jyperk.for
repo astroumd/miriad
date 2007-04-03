@@ -27,12 +27,13 @@ c
 c--
 c  History:
 c    25oct06 pjt  Written, for CARMA
+c    22feb07 pjt  warning added
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	include 'mirconst.h'
 	character version*(*)
 	integer MAXSELS
-	parameter(version='jyperk: version 25-oct-06')
+	parameter(version='jyperk: version 22-feb-07')
 	parameter(MAXSELS=256)
 c
 	real sels(MAXSELS),jyperk
@@ -46,6 +47,8 @@ c
 	real jyperka(MAXANT) 
 c
 	call output(version)
+	call bug('i','This program is not needed anymore for CARMA ' //
+     *    'data filled after 2007-01-31')
 	call keyini
 	call keya('vis',vis,' ')
 	call keya('out',out,' ')
