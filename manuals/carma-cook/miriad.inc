@@ -4,8 +4,17 @@
 \chapter{Miriad cheatsheet}
 
 \begin{itemize}
+
+\item miriad-101:
+  \begin{itemize}
+  \item the Miriad Package is a set of Unix commands, with a set of {\it keyword=value} 
+command line parameters  to control the program.
+  \item The Miriad Program (called {\tt miriad}) 
+is a special (miriad) unix program that acts like the AIPS shell and is an
+alternative method to invoke Miriad programs.
+  \end{itemize}
 \item source names are stored in UPPER case in visibility files, and are normally converted
-to upper case before any comparision. Hence the following examples two are synonymous:
+to upper case before any comparision. Hence the following two examples are synonymous:
 \begin{verbatim}
     select=source(mars)
     select=source(MARS)
@@ -13,7 +22,15 @@ to upper case before any comparision. Hence the following examples two are synon
 
 \end{itemize}
 
+\subsection{device=}
+
+Graphics output is all done via PGPLOT, and the command line
+parameter {\tt device=} is commonly used for this. Examples:
+{\tt /ps, fig1.ps/vps, /xs, 2/xs, fig2.cps/cps}.
+
 \subsection{select=}
+
+
 
 The {\tt select=} keyword that many (but not all!) miriad programs use has a very rich
 set of commands to select from a visibility data stream. Detailed in the Users Guide,
@@ -31,11 +48,11 @@ The {\tt mirhelp select} command also provides more details.
   dec(d1,d2)
   dra(p1,p2)
   ddec(p1,p2)
-  pointing(p1,p2)
+  pointing(p1,p2)               uses MAX(az,el) error
   pol(p1,p2,p3,...)
   source(NAME1,NAME2,...)
   freq(f1,f2)                   sky freq must be in range f1..f2 (GHz)
-  amp(amplo,amphi)
+  amp(amplo,amphi)              one number means amp(amplo)
   shadow(d)
   bin(b1,b2)
   on

@@ -14,16 +14,19 @@ Carma data are normally multi-source datasets, where all data from a  single tra
 where each source was stored in a separate dataset.
 
 
-Note you will need the {\tt carma*} username and password to get access to Carma data!
+Note you will need the {\tt carma-web} username and password to get access to Carma data!
 
 \subsection{At Carma}
 
 At Carma (or OVRO) there is limited bandwith to the outside world, 
-and Carma data should probably be directly retrieved via one of the
+and Carma data should probably be directly copied via one of the
 {\tt cedarflat} machines on
 {\tt  /misc/sdp/sciencedata/}, or in case of older data, the directory
 {\tt  /misc/sdp/archive\_sciencedata/} should contain data older than about a month.
 
+\smallskip
+Notice one subtle naming convention: the site uses {\tt .mir} names, where the
+data archive uses {\tt .miriad}!
 
 \subsection{Not at Carma}
 
@@ -32,7 +35,7 @@ A temporary website at
 provides a large list of (miriad) data that has been taken since integration
 started sometime in 2006. A new interface will be forthcoming soon.
 
-In the mean time, use the browser (control-F mostly) to find your
+In the mean time, use the browser (control-F) to find your
 dataset, check the box next to it,
 and click the download link at the top or bottom
 of that long page. A Java Web Start
@@ -80,7 +83,7 @@ or
 
 \section{Data Inspection}
 
-There are several ways to get a nice summary of what is in your Carma multi-source dataset.
+There are several ways to get a useful summary of what is in your Carma multi-source dataset.
 Programs {\tt listobs}, {\tt uvindex} and {\tt uvlist} all have options to deal with this.
 Although {\tt listobs} was very BIMA specific, it handles CARMA data now, but no doubt will
 need some more modifications to rid the output of some obvious BIMA-isms. Nonetheless,
@@ -342,7 +345,9 @@ ascii table with equatorial values in nanoseconds.
 \end{verbatim}
 \normalsize
 
-Datafiles can be found at CARMA on {\tt /array/rt/baselineSolutions/antpos.YYMMDD}.
+Datafiles can be found at CARMA on {\tt /array/rt/baselineSolutions/antpos.YYMMDD}. 
+and/or {\tt http://www.astro.caltech.edu/~koda/carma/bl/index.html} 
+and/or {\tt http://cedarflat.mmarray.org/observing/baseline/} (preferred)
 
 \subsection{Rest Frequency}
 
@@ -694,4 +699,27 @@ calibrator.
 \footnote{http://www.astro.uiuc.edu/\~wkwon/CARMA/fluxcal}
 
 It maintains a list of 11 ``secondary flux calibrators'', and publishes their
-fluxes as function of time.
+fluxes as function of time. Fluxes are maintained in Miriad in a database that
+you can consult using the {\tt calflux} program:
+
+
+\footnotesize
+\begin{verbatim}
+  % calflux source=3c84
+  ...
+Flux of: 3C84      03FEB13.00 at  86.2 GHz:  4.30 Jy; rms: 0.20 Jy
+Flux of: 3C84      03MAR28.00 at  86.2 GHz:  4.30 Jy; rms: 0.20 Jy
+Flux of: 3C84      03APR17.00 at  86.2 GHz:  4.20 Jy; rms: 0.30 Jy
+Flux of: 3C84      03AUG17.00 at  86.2 GHz:  4.00 Jy; rms: 0.30 Jy
+Flux of: 3C84      03AUG18.00 at  86.2 GHz:  4.10 Jy; rms: 0.30 Jy
+Flux of: 3C84      03SEP25.00 at  86.2 GHz:  4.50 Jy; rms: 0.20 Jy
+Flux of: 3C84      06DEC12.00 at  93.3 GHz:  6.57 Jy; rms: 0.99 Jy
+
+\end{verbatim}
+\normalsize
+
+Notice the gap between 2003 and 2006 where BIMA was shutdown to prepare
+for the move to CARMA. 
+
+Another source of information is the flux data maintained by
+ATCA and SMA....

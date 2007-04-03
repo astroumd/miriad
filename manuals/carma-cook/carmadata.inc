@@ -36,6 +36,8 @@ data.
 2007/01/31:  jyperk now correctly made baseline dependant  for proper {\tt invert} weighting (bugzilla \#339) {\bf [refill]}
 \item
 2007/02/08:  (VERSION 1.0.1) new convention of storing {\tt skyErr} monitor point in {\tt axisrms} {\bf [refill]}
+\item
+2007/03/23:  baselines updated. All data between Jan 8 and March 23 should be patched manually using {\tt uvedit}.
 
 \end{itemize}
 

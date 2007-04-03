@@ -81,3 +81,34 @@ need to adjust the path to {\tt MIR} in the two {\tt miriad\_start.*} files. The
 is a risk of shared library conflicts, in which case you will have to relink
 and/or recompile the code. The Miriad website provided more details and instructions
 how to do this.
+
+\subsection{Source Installation}
+
+
+Example of a two liner installation:
+\begin{verbatim}
+  1% curl ftp://ftp.astro.umd.edu/progs/bima/miriad.tar.gz | tar zxf -
+or:
+  1% wget -O - ftp://ftp.astro.umd.edu/progs/bima/miriad.tar.gz | tar zxf -
+
+  2% miriad_cvs/install/install.miriad
+\end{verbatim}
+
+and a few lines of usage to certify the installation seems ok:
+
+\begin{verbatim}
+  3% source miriad_cvs/miriad_start.csh
+
+  4% imgen out=map0
+  5% itemize in=map0
+  6% cgdisp in=map0 device=/xs
+\end{verbatim}
+
+Note that this version of MIRIAD is the development version, and contain CVS administrative
+files to allow you to easily update and get the latest fixes.
+
+
+\subsection{Binary Installation}
+
+We expect to make available binary releases for Linux (32bit and 64bit), MacOSX (ppc and intel)
+and Solaris (sol10 w/ gcc, sol10 w/ sunstudio12?). Details will be on the miriad website.

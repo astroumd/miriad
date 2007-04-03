@@ -50,7 +50,6 @@
 %  22-nov-05  pjt  Merged in the above 2 changes, and marked some CARMA proposed uvvars
 %  30-jan-06  pjt  documented the CARMA filler version (0.1.1 at this moment)
 %   8-mar-06  pjt  reminder how the channels and windows are laid out
-
 %        20-feb-06  rjs  Added axismax, smonrms, refpnt, calcode, name
 
 %  30-aug-06  pjt  merged ATNF and CARMA versions of this file
@@ -62,7 +61,7 @@
 
 \section{UV Dataset}
 
-\newcommand{\uvversion}{February 19, 2007}
+\newcommand{\uvversion}{April 2, 2007}
 
 A \miriad\ uv dataset is composed of a collection of items and `\MM{u-v} variables'.
 The variables are parameters that are known at the time of the observation,
@@ -140,6 +139,8 @@ notation.
 NB: The formal version of this document is recorded as ``{\it \uvversion}''.
 \newpage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% for CARMA, consult $CARMA/carma/sdp/XMLKeywords.cc
+
 \small\begin{tabbing}
 \label{t:uvvars}
 NameXXXXXXXXX  \=Tyxxxxxxx  \=unitsxxxx   \=Comments\kill
@@ -162,12 +163,15 @@ antpos(nants, 3) \>D    \>nanosec
 \>Antenna equatorial coordinates, in a local, not greenwhich based, system \\
 
 atten(nants)   \>I     \>dB
-\> Attenuator setting (Hat Ck)\\
+\> Attenuator setting (Hat Ck/CARMA) datatype R ???\\
 
 axismax(2,nants) \>R    \>arcsec
 \> Maximum tracking error in a cycle. \\
 \>\>\> axismax(1,?) is azimuth error, \\
 \>\>\> axismax(2,?) is the elevation error.\\
+
+axisoff(nants) \>R    \>nanosec
+\> Horizontal offset between azimuth and elevation axes (CARMA) \\
 
 axisrms(2,nants) \>R    \>arcsec
 \> RMS tracking error. \\
@@ -520,6 +524,10 @@ pressmb		\>R     \>millibar
 project(*)	\>A	\>-
 \>The name of the current project\\
 
+purpose(*)	\>A	\>-
+\>Scientific intent or purpose\\
+\>\>\>\  e.g. ....\\
+
 ra		\>R or	\>radians
 \>Right ascension of the phase center/tangent point. See {\tt epoch} for\\
 		\>D	\>
@@ -602,12 +610,18 @@ tpower		\>R	\>volts
 \> Total power measurements (Hat Ck)\\
 \ \ (nants, ntpower) \\
 
+trans		\>R	\>K
+\> CARMA \\
+
 tscale		\>R	\>-
 \> Optional correlation scale factor \\
 \>\>\> Used only when {\tt corr} is stored as J (16 bits).\\
 
 tsis(nants)	\>R	\>Kelvin
 \> temperature of the SIS mixers (Hat Ck)\\
+
+tsky		\>R	\>-
+\> CARMA \\
 
 ut			\>D	\>radians
 \> The time since midnight Universal time (nominally UT1).\\
@@ -667,6 +681,9 @@ xsampler			\>R	\>percent
 xtsys(nants,nspect)		\>R	\>Kelvin
 \> System temperature of the X feed (ATCA).\\
 
+xtsysm(nants,nspect)		\>R	\>Kelvin
+\> ??? \\
+
 xyamp(nants,nspect)		\>R	\>Jy
 \> On-line \MM{XY} amplitude measurements (ATCA). \\
 
@@ -680,6 +697,10 @@ ysampler			\>R	\>percent
 
 ytsys(nants,nspect)		\>R	\>Kelvin
 \> System temperature of the Y feed (ATCA).\\
+
+ytsysm(nants,nspect)		\>R	\>Kelvin
+\> ??? \\
+
 
 \end{tabbing}\normalsize
 \end{latexonly}
@@ -712,8 +733,10 @@ A reminder on some telescope specific variables
   delev(nants)
   modedesc
   axisrms       "skyErr"  -- temporary sqrt(2) issue
+  axisoff
   lo1 changes, phaselo1=0
   lo2 still absent
+  purpose
 \end{verbatim}\normalsize
 
 \subsection{SMA}

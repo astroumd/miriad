@@ -7,7 +7,7 @@
 This manual is also available, in hypertext form, on the World
 Wide Web at 
 \begin{verse}
-{\verb+http://bima.astro.umd.edu/miriad+.}
+{\verb+http://bima.astro.umd.edu/miriad+}
 \end{verse}
 % This also contains information on retrieving and installing \miriad.
 \end{latexonly}
