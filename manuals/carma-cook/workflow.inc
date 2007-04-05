@@ -18,11 +18,12 @@ Note you will need the {\tt carma-web} username and password to get access to Ca
 
 \subsection{At Carma}
 
-At Carma (or OVRO) there is limited bandwith to the outside world, 
+At Carma (and OVRO) there is limited bandwith to the outside world, 
 and Carma data should probably be directly copied via one of the
 {\tt cedarflat} machines on
 {\tt  /misc/sdp/sciencedata/}, or in case of older data, the directory
 {\tt  /misc/sdp/archive\_sciencedata/} should contain data older than about a month.
+Eventually those data will disappear and can only be retrieved via the Data Archive.
 
 \smallskip
 Notice one subtle naming convention: the site uses {\tt .mir} names, where the
@@ -48,7 +49,7 @@ to become a real miriad dataset.
 
 \footnotesize
 \begin{verbatim}
-  % tar xf cx012.SS433.2006sep07.1.miriad.tar.gz
+  % tar zxf cx012.SS433.2006sep07.1.miriad.tar.gz
   % itemize in=cx012.SS433.2006sep07.1.miriad
 Itemize: Version 22-jun-02
   obstype  = crosscorrelation
@@ -66,7 +67,8 @@ Itemize: Version 22-jun-02
 
 % \footnotesize\normalsize
 
-The drawback of this download scheme is that you initially need twice the diskspace, you can also
+The drawback of this download scheme is that you initially need about 
+twice the diskspace. You can also
 use the streaming capabilities of programs like {\tt wget} or {\tt curl} to transfer 
 and un-tar on the fly, if you know how to construct the URL from the dataset names
 you saw on that Data Archive page:
@@ -85,6 +87,10 @@ or
 
 There are several ways to get a useful summary of what is in your Carma multi-source dataset.
 Programs {\tt listobs}, {\tt uvindex} and {\tt uvlist} all have options to deal with this.
+
+
+\subsection{listobs}
+
 Although {\tt listobs} was very BIMA specific, it handles CARMA data now, but no doubt will
 need some more modifications to rid the output of some obvious BIMA-isms. Nonetheless,
 the output is a useful summary.
@@ -170,7 +176,13 @@ SS433             073207  6.7  31.   0.   0. 0  380  437  349  345  389  581  62
               Record of Focus Values
 No focus values in file
 
+\end{verbatim}
+\normalsize
 
+\subsection{listobs}
+
+\footnotesize
+\begin{verbatim}
 
   % uvindex vis=cx012.SS433.2006aug25.1.miriad
 UVINDEX: version 14-apr-06
@@ -246,13 +258,23 @@ The input data contain the following AzEl offsets
 06AUG25:23:26:45.5      1   1  0.00  0.00
 ------------------------------------------------
 
-  uvimage
-  mirds9
+ % uvimage
+ % mirds9
 
  % varplt vis=cx012.SS433.2006sep07.1.miriad device=/xs yaxis=systemp nxy=5,3 yrange=0,2000 options=compress
 
    shows again C3 and C11 are not online. Autoscaling showed C2 has a bad point. But overall something
    bad happened around 5h UT. See Figure 2.1
+
+\end{verbatim}
+\normalsize
+
+\subsection{uvlist}
+
+\footnotesize
+\begin{verbatim}
+
+
 
  % uvlist vis=cx012.SS433.2006sep07.1.miriad options=spectra
   rest frequency     :  92.46875  92.46875  92.46875  92.46875  92.46875  92.46875
@@ -263,6 +285,18 @@ The input data contain the following AzEl offsets
   starting velocity  :     0.000 -3242.095 -1621.047-16413.105-13171.010-14792.058
   ending velocity    :  1418.416 -1823.678  -202.631-17831.522-14589.427-16210.474
   velocity interval  :   101.315   101.315   101.315  -101.315  -101.315  -101.315
+
+\end{verbatim}
+\normalsize
+
+\subsection{uvflag}
+
+You should inspect how much data was flagged by the system.
+
+\footnotesize
+\begin{verbatim}
+
+
 
  % uvflag vis=cx012.SS433.2006sep07.1.miriad options=noapply flagval=flag
  Total number of records selected: 95628; out of 95628 records
@@ -308,7 +342,10 @@ the data that is stored inside the visibility data:
 \begin{verbatim}
   % uvlist vis=cx012.SS433.2006sep07.1.miriad options=var,full | grep version
   UVLIST: version  4-may-06
-  version :0.1.2                                  
+  version :0.1.2      
+
+  % mdsum cx012.SS433.2006sep07.1.miriad  
+  518864276e75f081e68156fbf3ac12a3  cx012.SS433.2006sep07.1.miriad.tar.gz
 \end{verbatim}
 \normalsize
 
@@ -327,8 +364,7 @@ time shortly after a move this may have to be done manually.
 \end{verbatim}
 \normalsize
 
-Notice the source code is currently not even stored in MIRIAD.
-
+Only data before January 5, 2007 currently need this correction.
 
 \subsection{Baseline correction}
 
@@ -345,9 +381,13 @@ ascii table with equatorial values in nanoseconds.
 \end{verbatim}
 \normalsize
 
-Datafiles can be found at CARMA on {\tt /array/rt/baselineSolutions/antpos.YYMMDD}. 
-and/or {\tt http://www.astro.caltech.edu/~koda/carma/bl/index.html} 
-and/or {\tt http://cedarflat.mmarray.org/observing/baseline/} (preferred)
+Datafiles can be found at CARMA on
+\newline
+ {\tt /array/rt/baselineSolutions/antpos.YYMMDD} and/or
+\newline 
+{\tt http://www.astro.caltech.edu/~koda/carma/bl/index.html} and/or 
+\newline 
+{\tt http://cedarflat.mmarray.org/observing/baseline/} (preferred)
 
 \subsection{Rest Frequency}
 
@@ -382,6 +422,10 @@ To fix this, you can set the {\tt restfreq} variable to the
   % uvputhd in=xxx.mir hdvar=restfreq varval=115.271203 out=yyy.mir 
 \end{verbatim}
 \normalsize
+
+The drawback of this procedure is that the uv variable is now ``promoted'' to a
+(miriad) header variable, and in the process loosing any potential time variability
+as well as (in this case 6) dimensionality.
 
 \subsection{Other UV variables}
 
@@ -494,7 +538,7 @@ use the {\tt jyperk} program:
 \normalsize
 
 One can optionally supply an array of Jy/K values for the 15 antennae,
-but the current values in the 65 and 145.3 for OVRO and BIMA antennaea resp.
+but the current values in the 65 and 145.3 for OVRO and BIMA antennas resp.
 
 See also bugzilla bug \# 339.
 
@@ -600,7 +644,7 @@ band signal, in order to check phase transfer:
 \end{verbatim}
 \normalsize
 
-This phases in the {\tt 3c279.8mhz.1dec} data can now be compared to that of the noise source,
+The phases in the {\tt 3c279.8mhz.1dec} data can now be compared to that of the noise source,
 and will still show offsets compared to that of the noise source.
 
 The amplified noise source can effectively remove any passband variations. For example, by applying an mfcal solution
@@ -693,10 +737,10 @@ to depend on what Carma, or other observatories, have supplied for you.
 The best method is to add a planet for bootstrapping your the flux 
 of your flux calibrator, at least if a planet in available during 
 your observation.
-A alternative way is to use a planet, if available, in your observation
+An alternative way is to use a planet, if available, in your observation
 and bootstrap its flux to scale the flux of your phase or amplitude
 calibrator. 
-\footnote{http://www.astro.uiuc.edu/\~wkwon/CARMA/fluxcal}
+\footnote{http://www.astro.uiuc.edu/$^\sim$wkwon/CARMA/fluxcal}
 
 It maintains a list of 11 ``secondary flux calibrators'', and publishes their
 fluxes as function of time. Fluxes are maintained in Miriad in a database that
@@ -723,3 +767,6 @@ for the move to CARMA.
 
 Another source of information is the flux data maintained by
 ATCA and SMA....
+
+{\tt xplore} is a tool outside of miriad that also contains time-flux
+tables for each source based on the same table.

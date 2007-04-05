@@ -28,7 +28,7 @@ from two existing Users Guide's:
 Throughout the cookbook  the reader is assumed to be
 familiar with the MIRIAD Users Guide, in particular
 Chapters 2 (the Miriad shell), 3 (plotting and the {\tt device=} keyword), 4 (what miriad datasets
-really are). Chapter 5 on visibility data is in particular important, if deals with
+really are). Chapter 5 on visibility data is in particular important, it deals with
 the different types of {\it calibration tables}, and the {\tt select=} keyword. Chapter 6
 on image data is much shorter but also important to read. Chapter 10 on flagging
 is also important.
@@ -41,7 +41,7 @@ the Miriad Users Guide.
 
 \section{Future}
 
-This cookbook is a currently a live document, it will change radidly over the coming
+This cookbook is a currently a live document, it will change rapidly over the coming
 months. Also be sure to be subscribed to the relevant mailing lists:
 {\tt miriad-dev} for Miriad development issues, {\tt carma-obs} for Carma observatory.
 Miriad data versions (the filler changes from time to time). Developments around

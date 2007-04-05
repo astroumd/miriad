@@ -14,8 +14,9 @@ set cal = $ans
 set lower = 1
 set upper = $half
 while($lower < $half)
-    uvcat vis=$cal select=win'('$lower')',win'('$upper')' out=$cal.$lower
-    uvcat vis=$src select=win'('$lower')',win'('$upper')' out=$src.$lower
+    uvcat vis=$cal select=win'('$lower')',win'('$upper')' out=$cal.$lower options=nowide
+    uvcat vis=$src select=win'('$lower')',win'('$upper')' out=$src.$lower options=nowide
+
     set lower = `calc -i "($lower+1)"`
     set upper = `calc -i "($upper+1)"`
 end
@@ -31,9 +32,12 @@ set flux = $ans
 
 set lower = 1
 set upper = $half
+set stop = `calc -i "($size/2)"`
 while($lower < $half)
-    gmakes vis=$cal.$lower line=wide,2,1 refant=$ant interval=$int fluxes=$pcal,$flux \
-           options=apriori,amp,noscale out=gmake.$lower
+    uvlist vis=$cal.$lower options=spec log=log
+    set nchan=`gawk '{if ($1 == "number") print $5}' log`
+    gmakes vis=$cal.$lower line=channel,2,1,$nchan,$nchan refant=$ant interval=$int fluxes=$pcal,$flux options=apriori,amp,noscale out=gmake.$lower
+
     gfiddle vis=gmake.$lower device=/xw out=gfiddle.$lower
     gapply vis=$cal.$lower gvis=gfiddle.$lower out=$cal.caled.$lower
     gapply vis=$src.$lower gvis=gfiddle.$lower out=$src.caled.$lower
@@ -41,35 +45,13 @@ while($lower < $half)
     uvcat vis=$src.caled.$lower select=win'('2')' out=$src.w$upper
     uvcat vis=$cal.caled.$lower select=win'('1')' out=$cal.w$lower
     uvcat vis=$cal.caled.$lower select=win'('2')' out=$cal.w$upper
-    if($lower == "1")then
-        set vis = "$cal.caled.1"
-    else
-        set vis = "$vis,$cal.caled.$lower"
-    endif
     set lower = `calc -i "($lower+1)"`
     set upper = `calc -i "($upper+1)"`
 end
 
-echo ""
-echo "Plotting uvdistance vs amplitude for LSB"
-echo " "
-uvplt vis=$vis device=/xw line=wide,1,1 axis=uvd,amp options=nobase
-echo ""
-echo "Plotting uvdistance vs phase for LSB"
-echo " "
-uvplt vis=$vis device=/xw line=wide,1,1 axis=uvd,phase options=nobase
-echo ""
-echo "Plotting uvdistance vs amplitude for USB"
-echo " "
-uvplt vis=$vis device=/xw line=wide,1,2 axis=uvd,amp options=nobase
-echo ""
-echo "Plotting uvdistance vs phase for USB"
-echo " "
-uvplt vis=$vis device=/xw line=wide,1,2 axis=uvd,phase options=nobase
-
 cleanup:
 set lower = 1
-rm -rf gmake.* gfiddle.* *.caled.*
+rm -rf *.caled.* log
 while($lower < $half)
     rm -rf $cal.$lower $src.$lower
     set lower = `calc -i "($lower+1)"`
