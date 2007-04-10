@@ -263,14 +263,6 @@ The input data contain the following AzEl offsets
 06AUG25:23:26:45.5      1   1  0.00  0.00
 ------------------------------------------------
 
- % uvimage
- % mirds9
-
- % varplt vis=cx012.SS433.2006sep07.1.miriad device=/xs yaxis=systemp nxy=5,3 yrange=0,2000 options=compress
-
-   shows again C3 and C11 are not online. Autoscaling showed C2 has a bad point. But overall something
-   bad happened around 5h UT. See Figure 2.1
-
 \end{verbatim}
 \normalsize
 
@@ -323,6 +315,22 @@ Probably the most important thing to remember is at various stages of your calib
 Check your phases and/or amplitudes are now flat as function of frequency and/or time. Use {\tt uvflag}
 and friends where needed.
 
+
+\footnotesize
+\begin{verbatim}
+
+ % uvimage vis=... out=...
+ % mirds9
+
+ % varplt vis=cx012.SS433.2006sep07.1.miriad device=/xs yaxis=systemp nxy=5,3 yrange=0,2000 options=compress
+\end{verbatim}
+\normalsize
+
+   shows again C3 and C11 are not online. Autoscaling showed C2 has a bad point. But overall something
+   bad happened around 5h UT. See Figure 2.1
+
+
+
 \begin{figure}[ht]
 \begin{center}
 \epsfxsize=12cm\leavevmode\epsffile{fig-systemp.ps}
@@ -357,7 +365,7 @@ the data that is stored inside the visibility data:
 Appendix E lists the various problems that could have occured with your
 data at different stages of the commissioning of CARMA.  For example,
 if you are re-calibrating your data after some new insight, it makes sense
-to check if you should re-fetch the data.
+to check if you should re-fetch the data.\index{mdsum}
 
 \subsection{Baseline correction}
 
@@ -367,7 +375,7 @@ Although your data may come with initially pretty decent ones, often
 after a few weeks improved ones are available. In the first few days/weeks
 time after a move baselines can settle and may need to be re-applied
 from the newly computed ones. Normally these are stored in a small
-ascii table with equatorial values in nanoseconds.
+ascii table with equatorial values in nanoseconds.\index{baseline correction}
 ({\it cf}. {\tt uvgen baseunit=1)
 
 % \footnotesize\normalsize
@@ -380,7 +388,7 @@ ascii table with equatorial values in nanoseconds.
 Notice that data taken during a move (which can take several days and 
 the array will be in some hybrid configuration) an antpos file will be
 available for each day. Please check the time validity carefully,
-either by filename, or comments in the file.
+either by filename, or comments in the file.\index{uvedit}
 
 \bigskip
 Datafiles can be found\footnote{At CARMA, also {\tt /array/rt/baselineSolutions/antpos.YYMMDD}}
@@ -400,7 +408,7 @@ applied to your data.
 Certainly during the initial campaigns, CARMA data were written with 
 a rest frequency equal to the starting frequency in the first windows
 of the LSB. This is most likely wrong for your data. Look at the output of
-uvlist:
+{\tt uvlist}:
 
 % \footnotesize\normalsize
 \footnotesize
@@ -547,7 +555,7 @@ gpcopy vis=0530+135 out=abaur
 Auto-correlations are stored in the datastream as of January 2007. They
 are stored as baselines with the same antenna pair, and show up before
 the cross-correlations. Some programs assume this, in order to scale that
-data for calibration purposes:
+data for calibration purposes:\index{autocorrelation}
 
 % \footnotesize\normalsize
 \footnotesize
@@ -590,7 +598,7 @@ Calibration is done by normalization of each cross-correllation $V_{ij}$ with $\
 
 The noise source is only present in the LSB and can be used to bandpass calibrate narrow
 calibrator modes. Only for data since early December 2006 has the signal of the Noise Source 
-been sufficiently amplified to be useful for this calibration mode. 
+been sufficiently amplified to be useful for this calibration mode. \index{noise source}
 
 
 
@@ -619,7 +627,8 @@ on the narrow band of the noise source (skipping the first channel):
 \footnotesize
 \begin{verbatim}
 
-  % mfcal vis=ct010.500_31_500.2006dec01.1.miriad interval=999 line=channel,62,2,1,1 refant=9 tol=0.001 select='source(noise),win(2)'
+  % mfcal vis=ct010.500_31_500.2006dec01.1.miriad interval=999 line=channel,62,2,1,1 refant=9 tol=0.001 \
+    select='source(noise),win(2)'
   
 
 \end{verbatim}
@@ -693,11 +702,12 @@ Notice the gap between 2003 and 2006 where BIMA was shutdown to prepare
 for the move to CARMA. 
 
 Another source of information is the flux data maintained by
-ATCA and SMA....
+ATCA and SMA.... ADD url's here...
 
 {\tt xplore} is a tool outside of miriad that also contains time-flux
 tables for each source based on the same table.
 
+{\tt bootflux}... example
 
 
 \section{Mapping and Deconvolution}

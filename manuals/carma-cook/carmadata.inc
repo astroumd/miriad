@@ -101,9 +101,12 @@ written $\sqrt{2}$ times what it really should be. But check your plots!
 
   % varplt vis=c0048.umon.1.miriad device=/xs yaxis=axisrms options=overlay yrange=-4,4
 
-  % uvflag vis=c0048.umon.1.miriad 'select=pointing(0,4)' flagval=flag options=noapply 
+  % uvflag vis=c0048.umon.1.miriad 'select=-pointing(0,4)' flagval=flag options=noapply 
 
 \end{verbatim}
 \normalsize
+
+this last example shows the number of visibilities that would be flagged if their
+RMS pointing was off by more than 4 arcsec.
 
 
