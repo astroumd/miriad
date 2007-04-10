@@ -52,12 +52,9 @@ The latter type can normally not be solved by refilling the data.
 
 \subsection{Axis offset correction}
 
-An axis offset correction is
-normally never needed. 
-After moving antennae to a new configuration and 
-re-establishing baselines and pointing, sometimes axis offset corrections
-will need to be applied. This is normally done for observers, but in the
-time shortly after a move this may have to be done manually.
+An axis offset correction is\index{axis offset}\index{axcor}
+normally never needed. Only early engineering data (before January 5, 2007) need 
+this axis offset correction. Example of usage:
 
 % \footnotesize\normalsize
 \footnotesize
@@ -66,18 +63,15 @@ time shortly after a move this may have to be done manually.
 \end{verbatim}
 \normalsize
 
-Only data before January 5, 2007 currently need this correction.
-
-
 
 
 \subsection{jyperk (bugzilla 339)}
 
-Data before 'xxx' confused the scalar {\tt jyperk} with the
+Data before 'xxx' confused the scalar {\tt jyperk} with the\index{bugzilla,339}
 deprecated array {\tt jyperka} antenna based array. In order
 to correct this data, such that programs like {\tt invert} will
 correctly compute the noise characteristics of the resulting image,
-use the {\tt jyperk} program:
+use the {\tt jyperk} program:\index{jyperk}
 
 
 % \footnotesize\normalsize
@@ -95,7 +89,7 @@ See also bugzilla bug \# 339.
 
 \subsection{Flagging based on tracking errors (bugzilla 376)}
 
-The {\tt axisrms} UV variable holds the tracking error (in arcsec, in Az and El) 
+The {\tt axisrms} UV variable holds the tracking error (in arcsec, in Az and El) \index{bugzilla,376}
 for each antenna in the array. It can be useful to automatically flag data when the
 tracking is above a certain error, or even antennae based (e.g.
 allow OVRO to have a smaller tolerance than the BIMA antennae). In older data

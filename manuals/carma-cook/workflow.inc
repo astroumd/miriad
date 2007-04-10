@@ -14,7 +14,7 @@ CARMA data are normally multi-source datasets, where all data from a  single tra
 
 Note that you will need use the {\tt carma-web} username and get a password to gain
 access to Carma data! The website {\tt http://cedarflat.mmarray.org/observing}
-gives instructions where to get this password.
+gives instructions where to get this password.\index{Data Archive}
 
 \subsection{At CARMA}
 
@@ -71,7 +71,7 @@ The drawback of this download scheme is that you initially need about
 twice the diskspace. You can also
 use the streaming capabilities of programs like {\tt wget} or {\tt curl} to transfer 
 and un-tar on the fly, if you know how to construct the URL from the dataset names
-you saw on that Data Archive page:
+you saw on that Data Archive page:\index{wget}\index{curl}
 
 \footnotesize
 \begin{verbatim}
@@ -96,7 +96,7 @@ Programs {\tt listobs}, {\tt uvindex} and {\tt uvlist} all have options to deal 
 
 Although {\tt listobs} was very BIMA specific, it handles CARMA data now, but no doubt will
 need some more modifications to rid the output of some obvious BIMA-isms. Nonetheless,
-the output is a useful summary.
+the output is a useful summary.\index{listobs}
 
 \footnotesize
 \begin{verbatim}
@@ -179,6 +179,12 @@ No focus values in file
 \normalsize
 
 \subsection{uvindex}
+
+Apart from its useful output, the output of {\tt uvindex} should be
+compared with the log sent by e-amil and the actual data length. Sometimes the database
+fails in filling the data properly. 
+
+\index{uvindex}
 
 \footnotesize
 \begin{verbatim}
@@ -371,19 +377,23 @@ ascii table with equatorial values in nanoseconds.
 \end{verbatim}
 \normalsize
 
-TODO?: For data taken in hybrid arrays, i.e. days in which some of the antennas were
-in one array, and some in the other, applying the correct antpos can be tricky
-unless we carefully keep antpos files for each day during a move. What is the
-notation for day. Does that apply from midnight on?
-
+Notice that data taken during a move (which can take several days and 
+the array will be in some hybrid configuration) an antpos file will be
+available for each day. Please check the time validity carefully,
+either by filename, or comments in the file.
 
 \bigskip
 Datafiles can be found\footnote{At CARMA, also {\tt /array/rt/baselineSolutions/antpos.YYMMDD}}
 on the web at
 \newline 
-{\tt http://www.astro.caltech.edu/~koda/carma/bl/index.html} and/or 
-\newline 
-{\tt http://cedarflat.mmarray.org/observing/baseline/} (preferred)
+{\tt http://cedarflat.mmarray.org/observing/baseline/}.
+\newline
+In rare cases, a new and better solution is found a month or so after your data were
+taken. Check the status of the baseline solution in the above web page. It is a good
+idea to apply an appropriate solution if you are not sure which solution has been
+applied to your data.
+
+% OLD: {\tt http://www.astro.caltech.edu/~koda/carma/bl/index.html} and/or 
 
 \subsection{Rest Frequency}
 
