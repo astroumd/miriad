@@ -14,7 +14,8 @@ Carma data are normally multi-source datasets, where all data from a  single tra
 where each source was stored in a separate dataset.
 
 
-Note you will need the {\tt carma-web} username and password to get access to Carma data!
+Note you will need the {\tt carma-web} username and password to get access to Carma data! The website 
+{\tt http://cedarflat.mmarray.org/observing}
 
 \subsection{At Carma}
 
@@ -83,6 +84,9 @@ or
 \end{verbatim}
 \normalsize
 
+Note that this procedure is not guarenteed to remain working after the Data Archive
+has been overhauled at some point in the near future.
+
 \section{Data Inspection}
 
 There are several ways to get a useful summary of what is in your Carma multi-source dataset.
@@ -100,6 +104,8 @@ the output is a useful summary.
   # this dataset happens to have a bad value for the latitude, so we fix it before listobs
   # otherwise bad values for E,N,U would be obvious
   % puthd in=cx012.SS433.2006sep07.1.miriad/latitud value=0.6506654009 type=double
+
+  **TODO**    this will get another example where the puthd is not needed
 
 
   % listobs vis=cx012.SS433.2006aug25.1.miriad
@@ -179,7 +185,7 @@ No focus values in file
 \end{verbatim}
 \normalsize
 
-\subsection{listobs}
+\subsection{uvindex}
 
 \footnotesize
 \begin{verbatim}
@@ -350,25 +356,11 @@ the data that is stored inside the visibility data:
 \normalsize
 
 
-\subsection{Axis offset correction}
-
-Normally never needed. After moving antennae to a new configuration and 
-re-establishing baselines and pointing, sometimes axis offset corrections
-will need to be applied. This is normally done for observers, but in the
-time shortly after a move this may have to be done manually.
-
-% \footnotesize\normalsize
-\footnotesize
-\begin{verbatim}
-  axcor vis=xxx.mir axoff=@axoff.comb.070101 out=yyy.mir
-\end{verbatim}
-\normalsize
-
-Only data before January 5, 2007 currently need this correction.
-
 \subsection{Baseline correction}
 
-Again this is normally not needed, but in the first few days/weeks
+You should always check if you need to apply baseline corrections.
+Although your data may come with initially pretty decent ones, often
+after a few weeks improved ones are available. In the first few days/weeks
 time after a move baselines can settle and may need to be re-applied
 from the newly computed ones. Normally these are stored in a small
 ascii table with equatorial values in nanoseconds.
@@ -450,7 +442,8 @@ TODO:  check on the uvedit problem with missing LO2.
 
 \subsection{Data Flagging and Editing}
 
-See also Chapter 10 in the Miriad Users Guide.
+See also Chapter 10 in the Miriad Users Guide.  
+
 
 % \footnotesize\normalsize
 \footnotesize
@@ -467,8 +460,72 @@ See also Chapter 10 in the Miriad Users Guide.
 \end{verbatim}
 \normalsize
 
-\subsection{Passband Correction}
+TODO: this needs more explanation.
 
+
+
+
+\section{Calibration}
+
+
+\subsection{Passband Calibration}
+
+
+\subsection{Simple single calibrator}
+
+When a calibrator is strong enough in the same window as the source is observed, we 
+can simply determine a selfcal solution\footnote{cf. also the gmakes/gfiddle/gapply
+approach for BIMA data} for the calibrator and apply this to the source:
+
+Here is an annoted section of C-shell code exemplifying this:
+
+\footnotesize
+\begin{verbatim}
+set vis=cx011.abaur_co.2006nov21.1.miriad 
+
+# check phase in W2 (narrow) and W3 (wide)
+# TODO: lingo wwong here: W2/W3 vs. p,A 
+smauvplt vis=$vis device=/xs axis=time,phase line=wide,1,3 "select=-source(abaur)"
+smauvplt vis=$vis device=/xs axis=time,amp   line=wide,1,3 "select=-source(abaur)"
+
+# check bandpass
+uvspec vis=$vis device=/xs "select=-auto,source(3c111)" axis=chan,amp interval=999
+uvspec vis=$vis device=/xs "select=-auto,source(3c111)" axis=chan,pha interval=999
+
+uvspec vis=$vis device=/xs "select=-auto,source(0530+135)" axis=chan,amp interval=999
+uvspec vis=$vis device=/xs "select=-auto,source(0530+135)" axis=chan,pha interval=999
+
+# use W5 , the narrow band in this case
+rm -rf 0530+135
+uvcat vis=$vis "select=-auto,source(0530+135)"  out=0530+135
+selfcal vis=0530+135 refant=5 interval=5 line=wide,1,5,1 options=amp,apriori,noscale flux=4.6
+gpplt vis=0530+135 device=1/xs yaxis=amp nxy=5,3 yrange=0,3
+gpplt vis=0530+135 device=2/xs yaxis=pha nxy=5,3 yrange=-180,180
+
+rm -rf abaur
+uvcat vis=$vis "select=-auto,source(abaur),win(5)"  out=abaur
+puthd in=abaur/restfreq type=double value=115.271203
+gpcopy vis=0530+135 out=abaur
+# copyhd in=0530+135 out=abaur items=gains,ngains,nsols,interval
+
+
+\end{verbatim}
+\normalsize
+
+% 
+% #
+% rm -rf abaur.{mp,bm,m0,b0,b1}
+% #
+% invert vis=abaur map=abaur.m0 beam=abaur.b0 sup=0 options=systemp imsize=128,128 cell=1,1  line=chan,1
+% invert vis=abaur map=abaur.mp beam=abaur.bm sup=0 options=systemp,double,mosaic imsize=129,129 cell=1,1 line=chan,20,2,3,3
+% mospsf beam=abaur.bm out=abaur.b1
+% #  b0 is already quite an ok estimate, but b1 is technically better
+% imfit in=abaur.b0 object=beam
+% imfit in=abaur.b1 object=beam
+% 
+% rm -rf abaur.{cc,cm}
+% mossdi map=abaur.mp beam=abaur.bm out=abaur.cc niters=1000
+% restor map=abaur.mp beam=abaur.bm model=abaur.cc out=abaur.cm fwhm=5.5,3.7 pa=40
 
 
 \subsection{Autocorrelation}
@@ -514,116 +571,11 @@ Calibration is done by normalization of each cross-correllation $V_{ij}$ with $\
 
 
 
-\section{Historic Data Correction}
-
-In past times certain data corrections were needed that have since then
-been moved into the data filler or at the telescope monitor point level. 
-The latter type can normally not be solved by refilling the data.
-
-
-\subsection{jyperk (bugzilla 339)}
-
-Data before 'xxx' confused the scalar {\tt jyperk} with the
-deprecated array {\tt jyperka} antenna based array. In order
-to correct this data, such that programs like {\tt invert} will
-correctly compute the noise characteristics of the resulting image,
-use the {\tt jyperk} program:
-
-
-% \footnotesize\normalsize
-\footnotesize
-\begin{verbatim}
-  jyperk vis=xxx.mir out=yyy.mir
-\end{verbatim}
-\normalsize
-
-One can optionally supply an array of Jy/K values for the 15 antennae,
-but the current values in the 65 and 145.3 for OVRO and BIMA antennas resp.
-
-See also bugzilla bug \# 339.
-
-
-\subsection{Flagging based on tracking errors (bugzilla 376)}
-
-The {\tt axisrms} UV variable holds the tracking error (in arcsec, in Az and El) 
-for each antenna in the array. It can be useful to automatically flag data when the
-tracking is above a certain error, or even antennae based (e.g.
-allow OVRO to have a smaller tolerance than the BIMA antennae). In older data
-the axisrms was not written properly, and could even be negative. It is currently
-written $\sqrt{2}$ times what it really should be. But check your plots!
-
-\footnotesize
-\begin{verbatim}
-
-  % varplt vis=c0048.umon.1.miriad device=/xs yaxis=axisrms options=overlay yrange=-4,4
-
-  % uvflag vis=c0048.umon.1.miriad 'select=pointing(0,4)' flagval=flag options=noapply 
-
-\end{verbatim}
-\normalsize
-
-
-\section{Calibration}
-
-
-\subsection{Simple single calibrator}
-
-When a calibrator is strong enough in the same window as the source is observed, we 
-can simply determine a selfcal solution\footnote{cf. also the gmakes/gfiddle/gapply
-approach for BIMA data} for the calibrator and apply this to the source:
-
-Here is an annoted section of C-shell code exemplifying this:
-
-\footnotesize
-\begin{verbatim}
-set vis=cx011.abaur_co.2006nov21.1.miriad 
-
-# check phase in W2 (narrow) and W3 (wide)
-smauvplt vis=$vis device=/xs axis=time,phase line=wide,1,3 "select=-source(abaur)"
-smauvplt vis=$vis device=/xs axis=time,amp   line=wide,1,3 "select=-source(abaur)"
-
-# check bandpass
-uvspec vis=$vis device=/xs "select=-auto,source(3c111)" axis=chan,amp interval=999
-uvspec vis=$vis device=/xs "select=-auto,source(3c111)" axis=chan,pha interval=999
-
-uvspec vis=$vis device=/xs "select=-auto,source(0530+135)" axis=chan,amp interval=999
-uvspec vis=$vis device=/xs "select=-auto,source(0530+135)" axis=chan,pha interval=999
-
-# use W5 , the narrow band in this case
-rm -rf 0530+135
-uvcat vis=$vis "select=-auto,source(0530+135)"  out=0530+135
-selfcal vis=0530+135 refant=5 interval=5 line=wide,1,5,1 options=amp,apriori,noscale flux=4.6
-gpplt vis=0530+135 device=1/xs yaxis=amp nxy=5,3 yrange=0,3
-gpplt vis=0530+135 device=2/xs yaxis=pha nxy=5,3 yrange=-180,180
-
-rm -rf abaur
-uvcat vis=$vis "select=-auto,source(abaur),win(5)"  out=abaur
-puthd in=abaur/restfreq type=double value=115.271203
-gpcopy vis=0530+135 out=abaur
-# copyhd in=0530+135 out=abaur items=gains,ngains,nsols,interval
-
-rm -rf abaur.{mp,bm,m0,b0,b1}
-#
-invert vis=abaur map=abaur.m0 beam=abaur.b0 sup=0 options=systemp imsize=128,128 cell=1,1  line=chan,1
-invert vis=abaur map=abaur.mp beam=abaur.bm sup=0 options=systemp,double,mosaic imsize=129,129 cell=1,1 line=chan,20,2,3,3
-mospsf beam=abaur.bm out=abaur.b1
-#  b0 is already quite an ok estimate, but b1 is technically better
-imfit in=abaur.b0 object=beam
-imfit in=abaur.b1 object=beam
-
-rm -rf abaur.{cc,cm}
-mossdi map=abaur.mp beam=abaur.bm out=abaur.cc niters=1000
-restor map=abaur.mp beam=abaur.bm model=abaur.cc out=abaur.cm fwhm=5.5,3.7 pa=40
-
-
-\end{verbatim}
-\normalsize
-
 
 \subsection{Noise Source Passband Calibration}
 
 The noise source is only present in the LSB and can be used to bandpass calibrate narrow
-calibrator modes. Only for data since early December has the signal of the Noise Source 
+calibrator modes. Only for data since early December 2006 has the signal of the Noise Source 
 been sufficiently amplified to be useful for this calibration mode. 
 
 
@@ -690,46 +642,7 @@ variables:
 
 \subsection{Phase Transfer}
 
-
-\section{Mapping and Deconvolution}
-
-CARMA is a heterogeneous array, currently with 2 different types of antennae
-(10m and 6m), and as such will contribute 3 different types of baselines with
-an Ovro-Ovro, Bima-Bima and Ovro-Bima baseline. The latter is currently
-labeled in the visibility data as a {\tt CARMA} (nominally 8m) antennae, 
-the first two simply being ``pure'' {\tt OVRO} (10m) and {\tt HATCREEK} (6m)
-\footnote{The future array with the additional SZA 8 antennae will thus
-have 6 different baseline types that contribute to a different primary
-beam}.
-
-If you want to map anything but a point source, you MUST map your source
-in mosaic'd mode, even if you have a single pointing.
-
-\subsection{Mosaicing}
-
-{\tt mospsf} needs to estimate the ``average'' beam appropriate for restoring.
-
-
-\footnotesize
-\begin{verbatim}
-  % invert ... beam=xxx.bm options=systemp,double,mosaic imsize=129,129 cell=1,1 
-  % imfit in=xxx.bm object=beam
-
-  % mossdi ...
-or
-  % mosmem ...
-
-  % restor ... fwhm=8,6 pa=40
-
-
-\end{verbatim}
-\normalsize
-
-Even for a single pointing observation, your beam (dataset {\tt xxx.bm} in the example) will
-currently contain 3 maps (i.e. an image cube). The first plane is probably the Ovro-Ovro
-beam, followed by the Ovro-Beam beam, and finally the Bima=Bima beam.
-
-\section{Flux Calibration}
+\subsection{Absolute Flux Calibration}
 
 Although one can rely on known fluxes of strong calibrators such as 
 3C273 and 3C111, their actual flux varies with time and you will need
@@ -770,3 +683,46 @@ ATCA and SMA....
 
 {\tt xplore} is a tool outside of miriad that also contains time-flux
 tables for each source based on the same table.
+
+
+
+\section{Mapping and Deconvolution}
+
+CARMA is a heterogeneous array, currently with 2 different types of antennae
+(10m and 6m), and as such will contribute 3 different types of baselines with
+an Ovro-Ovro, Bima-Bima and Ovro-Bima baseline. The latter is currently
+labeled in the visibility data as a {\tt CARMA} (nominally 8m) antennae, 
+the first two simply being ``pure'' {\tt OVRO} (10m) and {\tt HATCREEK} (6m)
+\footnote{The future array with the additional SZA 8 antennae will thus
+have 6 different baseline types that contribute to a different primary
+beam}.
+
+If you want to map anything but a point source, you MUST map your source
+in mosaic'd mode, even if you have a single pointing.
+
+\subsection{Mosaicing}
+
+{\tt mospsf} needs to estimate the ``average'' beam appropriate for restoring.
+
+
+\footnotesize
+\begin{verbatim}
+  % invert ... beam=xxx.bm options=systemp,double,mosaic imsize=129,129 cell=1,1 
+  % imfit in=xxx.bm object=beam
+
+  % mossdi ...
+or
+  % mosmem ...
+
+  % restor ... fwhm=8,6 pa=40
+
+
+TODO: needs more explanation
+
+\end{verbatim}
+\normalsize
+
+Even for a single pointing observation, your beam (dataset {\tt xxx.bm} in the example) will
+currently contain 3 maps (i.e. an image cube). The first plane is probably the Ovro-Ovro
+beam, followed by the Ovro-Beam beam, and finally the Bima=Bima beam.
+

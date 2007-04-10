@@ -43,3 +43,73 @@ data.
 
 \end{itemize}
 
+
+\section{Historic Data Correction}
+
+In past times certain data corrections were needed that have since then
+been moved into the data filler or at the telescope monitor point level. 
+The latter type can normally not be solved by refilling the data.
+
+\subsection{Axis offset correction}
+
+An axis offset correction is
+normally never needed. 
+After moving antennae to a new configuration and 
+re-establishing baselines and pointing, sometimes axis offset corrections
+will need to be applied. This is normally done for observers, but in the
+time shortly after a move this may have to be done manually.
+
+% \footnotesize\normalsize
+\footnotesize
+\begin{verbatim}
+  axcor vis=xxx.mir axoff=@axoff.comb.070101 out=yyy.mir
+\end{verbatim}
+\normalsize
+
+Only data before January 5, 2007 currently need this correction.
+
+
+
+
+\subsection{jyperk (bugzilla 339)}
+
+Data before 'xxx' confused the scalar {\tt jyperk} with the
+deprecated array {\tt jyperka} antenna based array. In order
+to correct this data, such that programs like {\tt invert} will
+correctly compute the noise characteristics of the resulting image,
+use the {\tt jyperk} program:
+
+
+% \footnotesize\normalsize
+\footnotesize
+\begin{verbatim}
+  jyperk vis=xxx.mir out=yyy.mir
+\end{verbatim}
+\normalsize
+
+One can optionally supply an array of Jy/K values for the 15 antennae,
+but the current values in the 65 and 145.3 for OVRO and BIMA antennas resp.
+
+See also bugzilla bug \# 339.
+
+
+\subsection{Flagging based on tracking errors (bugzilla 376)}
+
+The {\tt axisrms} UV variable holds the tracking error (in arcsec, in Az and El) 
+for each antenna in the array. It can be useful to automatically flag data when the
+tracking is above a certain error, or even antennae based (e.g.
+allow OVRO to have a smaller tolerance than the BIMA antennae). In older data
+the axisrms was not written properly, and could even be negative. It is currently
+written $\sqrt{2}$ times what it really should be. But check your plots!
+
+\footnotesize
+\begin{verbatim}
+
+  % varplt vis=c0048.umon.1.miriad device=/xs yaxis=axisrms options=overlay yrange=-4,4
+
+  % uvflag vis=c0048.umon.1.miriad 'select=pointing(0,4)' flagval=flag options=noapply 
+
+\end{verbatim}
+\normalsize
+
+
