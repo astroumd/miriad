@@ -4,9 +4,9 @@
 \chapter{Carma Data Version}
 
 Sometimes it is useful to know at what stage your Carma data has been taken,
-and at what stage the data was (re)filled.  A uv variable {\tt version} is used
-to label the formal data 
-version:\footnote{carma/sdp/AstroHeaderWriter.cc:  astroHdrMap\_p.putString("version", "1.0.1", 1);}
+and at what stage the data was (re)filled by the Data Archive.
+A special  uv variable {\tt version} is used to label this formal data 
+version:\footnote{see also: carma/sdp/AstroHeaderWriter.cc:  astroHdrMap\_p.putString("version", "1.0.1", 1);}
 
 \footnotesize
 \begin{verbatim}
@@ -16,10 +16,10 @@ version:\footnote{carma/sdp/AstroHeaderWriter.cc:  astroHdrMap\_p.putString("ver
 \end{verbatim}
 \normalsize
 
-\subsection{version}
+\section{version}
 
 Here is the log of data versions. Those annotated with {\bf [refill]} should be refilled in order to see the corrected
-data.
+data. The various stages of baseline corrections are not maintained here, see Section~\ref{s:baseline}.
 
 \begin{itemize}
 \item

@@ -7,20 +7,19 @@
 
 
 
-\section{Carma Data Retrieval}
+\section{CARMA Data Retrieval}
 
-Carma data are normally multi-source datasets, where all data from a  single track (a typical
-``8'' hour observation) are in a single Miriad dataset, unlike its predecessor BIMA
-where each source was stored in a separate dataset.
+CARMA data are normally multi-source datasets, where all data from a  single track (a typical
+``8'' hour observation) are in a single Miriad dataset.
 
+Note that you will need use the {\tt carma-web} username and get a password to gain
+access to Carma data! The website {\tt http://cedarflat.mmarray.org/observing}
+gives instructions where to get this password.
 
-Note you will need the {\tt carma-web} username and password to get access to Carma data! The website 
-{\tt http://cedarflat.mmarray.org/observing}
+\subsection{At CARMA}
 
-\subsection{At Carma}
-
-At Carma (and OVRO) there is limited bandwith to the outside world, 
-and Carma data should probably be directly copied via one of the
+At CARMA (and OVRO) there is limited bandwith to the outside world, 
+and CARMA data should probably be directly copied via one of the
 {\tt cedarflat} machines on
 {\tt  /misc/sdp/sciencedata/}, or in case of older data, the directory
 {\tt  /misc/sdp/archive\_sciencedata/} should contain data older than about a month.
@@ -30,7 +29,7 @@ Eventually those data will disappear and can only be retrieved via the Data Arch
 Notice one subtle naming convention: the site uses {\tt .mir} names, where the
 data archive uses {\tt .miriad}!
 
-\subsection{Not at Carma}
+\subsection{Not at CARMA}
 
 A temporary website at 
 {\tt http://carma-server.ncsa.uiuc.edu:8080/sciarch/list.jsp}
@@ -89,7 +88,7 @@ has been overhauled at some point in the near future.
 
 \section{Data Inspection}
 
-There are several ways to get a useful summary of what is in your Carma multi-source dataset.
+There are several ways to get a useful summary of what is in your CARMA multi-source dataset.
 Programs {\tt listobs}, {\tt uvindex} and {\tt uvlist} all have options to deal with this.
 
 
@@ -101,12 +100,6 @@ the output is a useful summary.
 
 \footnotesize
 \begin{verbatim}
-  # this dataset happens to have a bad value for the latitude, so we fix it before listobs
-  # otherwise bad values for E,N,U would be obvious
-  % puthd in=cx012.SS433.2006sep07.1.miriad/latitud value=0.6506654009 type=double
-
-  **TODO**    this will get another example where the puthd is not needed
-
 
   % listobs vis=cx012.SS433.2006aug25.1.miriad
 Opening File: cx012.SS433.2006sep07.1.miriad
@@ -297,12 +290,12 @@ The input data contain the following AzEl offsets
 
 \subsection{uvflag}
 
-You should inspect how much data was flagged by the system.
+You should inspect how much data was flagged by the system. As of March 2007, blanking has
+been enabled at CARMA, and depending on conditions and a threshold setting, one can easily
+wind up with too much flagged data. Unflagging should of course be done with caution.
 
 \footnotesize
 \begin{verbatim}
-
-
 
  % uvflag vis=cx012.SS433.2006sep07.1.miriad options=noapply flagval=flag
  Total number of records selected: 95628; out of 95628 records
@@ -315,10 +308,10 @@ You should inspect how much data was flagged by the system.
  Good:         392950          0    Changed to bad:     392950
  Bad:          180818     573768
 
-
-
 \end{verbatim}
 \normalsize
+
+\subsection{other}
 
 Probably the most important thing to remember is at various stages of your calibration: data inspection.
 Check your phases and/or amplitudes are now flat as function of frequency and/or time. Use {\tt uvflag}
@@ -334,7 +327,7 @@ and friends where needed.
 
 \section{Initial Data Correction}
 
-\subsection{Data Archive}
+\subsection{Archive correction}
 
 The (Illinois) Data Archive will typically re-fill data from its basic
 constituents (the {\it visbrick} and the {\it monitor points}) whenever
@@ -355,10 +348,15 @@ the data that is stored inside the visibility data:
 \end{verbatim}
 \normalsize
 
+Appendix E lists the various problems that could have occured with your
+data at different stages of the commissioning of CARMA.  For example,
+if you are re-calibrating your data after some new insight, it makes sense
+to check if you should re-fetch the data.
 
 \subsection{Baseline correction}
 
-You should always check if you need to apply baseline corrections.
+\label{s:baseline}
+You should always check if you need to (re)apply baseline corrections.
 Although your data may come with initially pretty decent ones, often
 after a few weeks improved ones are available. In the first few days/weeks
 time after a move baselines can settle and may need to be re-applied
@@ -373,9 +371,15 @@ ascii table with equatorial values in nanoseconds.
 \end{verbatim}
 \normalsize
 
-Datafiles can be found at CARMA on
-\newline
- {\tt /array/rt/baselineSolutions/antpos.YYMMDD} and/or
+TODO?: For data taken in hybrid arrays, i.e. days in which some of the antennas were
+in one array, and some in the other, applying the correct antpos can be tricky
+unless we carefully keep antpos files for each day during a move. What is the
+notation for day. Does that apply from midnight on?
+
+
+\bigskip
+Datafiles can be found\footnote{At CARMA, also {\tt /array/rt/baselineSolutions/antpos.YYMMDD}}
+on the web at
 \newline 
 {\tt http://www.astro.caltech.edu/~koda/carma/bl/index.html} and/or 
 \newline 
@@ -646,7 +650,7 @@ variables:
 
 Although one can rely on known fluxes of strong calibrators such as 
 3C273 and 3C111, their actual flux varies with time and you will need
-to depend on what Carma, or other observatories, have supplied for you.
+to depend on what CARMA, or other observatories, have supplied for you.
 The best method is to add a planet for bootstrapping your the flux 
 of your flux calibrator, at least if a planet in available during 
 your observation.
@@ -690,15 +694,15 @@ tables for each source based on the same table.
 
 CARMA is a heterogeneous array, currently with 2 different types of antennae
 (10m and 6m), and as such will contribute 3 different types of baselines with
-an Ovro-Ovro, Bima-Bima and Ovro-Bima baseline. The latter is currently
+an OVRO-OVRO, BIMA-BIMA and OVRO-BIMA baseline. The latter is currently
 labeled in the visibility data as a {\tt CARMA} (nominally 8m) antennae, 
 the first two simply being ``pure'' {\tt OVRO} (10m) and {\tt HATCREEK} (6m)
 \footnote{The future array with the additional SZA 8 antennae will thus
 have 6 different baseline types that contribute to a different primary
 beam}.
 
-If you want to map anything but a point source, you MUST map your source
-in mosaic'd mode, even if you have a single pointing.
+If you want to map anything but a point source in the phase center, 
+you MUST map your source in mosaic'd mode, even if you have a single pointing.
 
 \subsection{Mosaicing}
 
