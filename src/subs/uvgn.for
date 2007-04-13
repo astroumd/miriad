@@ -26,6 +26,7 @@ c    10dec97 rjs  Check gain table size is correct.
 c    24feb97 rjs  Make "bandpass calibration" work for wide-only files.
 c    01jan05 rjs  Double precision baselines and use basant.
 c    08jan07 rjs  Use MAXWIN more rigorously.
+c    13feb07 pjt  Fix sign of swidth for LSB wide bands
 c************************************************************************
 	subroutine uvGnIni(tno1,dogains1,dopass1)
 	implicit none
@@ -1095,6 +1096,7 @@ c
 	    sfreq(j) = sfreq(j) / swidth(j)
 	    sdf(j) = swidth(j)
 	    nschan(j) = 1
+	    swidth(j) = abs(swidth(j))
 	  enddo
 c
 c  Something else, which I cannot handle.
@@ -1131,7 +1133,7 @@ c
 	do j=2,nspect
 	  ischan(j) = ischan(j-1) + nschan(j-1)
 	enddo
-c
+c                         ensure that start < end
 	do j=1,nspect0
 	  if(sdf0(j).gt.0)then
 	    startd = sfreq0(j) - 0.5*swidth0(j)
