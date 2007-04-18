@@ -46,6 +46,8 @@ c    jm    04oct95    Fixed long standing date>0 problem in tabflux.
 c    jm    21dec95    Fixed calget because fix above broke it.
 c    jm    25aug97    Changed call from mgetenv() to fullname() for 
 c                     the environment variable $MIRFLUXTAB in tabflux.
+c   pjt    17apr07    Also allow to parse CARMA style tables (# instead of !
+c                     and ccyy-mmm-dd.d instead of yymmmdd.d format)
 c
 c***********************************************************************
 c* calget -- Routine to retrieve an interpolated calibrator flux.
@@ -422,9 +424,14 @@ c  This routine reads a calibration file loading sources, observation
 c  dates, frequencies, fluxes, and rms values into the table arrays.
 c  THIS ROUTINE IS VERY FORMAT SPECIFIC IN THAT THE FIRST CHARACTER MUST
 c  BE THE CHARACTER "!" IF THE LINE IS TO BE IGNORED.  ALL other lines
-c  MUST have the following form:
+c  MUST have the following form (BIMA style)
 c     'Source'  DATE.UT  FREQ(GHz)  FLUX(Jy)  rms(Jy)
+c  or if the comment character is '#' it must be (CARMA style)
+c      Source   yyyy-mmm-dd.ut     FREQ(GHz)  FLUX(Jy)  rms(Jy)
 c  with each field separated by at least one space or TAB character.
+c  E.g.
+c 'W3OH'          06DEC17.0         93.3            3.36           0.50   CARMA14
+c  W3OH         2006-DEC-17.0       93.3            3.36           0.50   CARMA14
 c
 c Input:
 c   name     The name of the flux calibrator file.
@@ -436,8 +443,9 @@ c
 c-----------------------------------------------------------------------
 c  Internal variables.
 c
-      integer lu, length, nentry
+      integer lu, length, nentry, n1
       character*132 string
+      character com1*1, com2*2
 c
       integer Len1
 c
@@ -460,16 +468,37 @@ c  spaces and the first name is used as the anchor.  Otherwise, the
 c  string is parsed as a source entry and the entry counter is
 c  incremented.
 c
+c  in order to differentiate between bima (!) and carma (#) style,
+c  the first character on the first line MUST contain that comment character
+c
       nentry = 0
+      n1 = 0
       call addalias('resetall', ' ')
 c
       call TxtRead(lu, string, length, iostat)
       do while (iostat .eq. 0)
+        if (n1.eq.0) then
+           n1 = 1
+           if (string(1:1).eq.'!') then
+              call bug('i','Reading BIMA style flux table')
+              com1 = '!'
+              com2 = '!!'
+           else if (string(1:1).eq.'#') then
+              call bug('i','Reading CARMA style flux table')
+              com1 = '#'
+              com2 = '##'
+           else
+              call bug('f','tabload: cannot handle first line')
+           endif
+        endif
         length = Len1(string)
         if (length .gt. 0) then
-          if (string(1:1) .ne. '!') then
+          if (string(1:1) .ne. com1) then
+            if (com1.eq.'#') then
+               call car2bim(string)
+            endif
             call TabParse(string, length, source, nentry)
-          else if (string(1:2) .eq. '!!') then
+          else if (string(1:2) .eq. com2) then
             call NamParse(string(3:), length-2)
           endif
         endif
@@ -490,6 +519,51 @@ c
         iostat = -3
       endif
       return
+      end
+c***********************************************************************
+      subroutine car2bim(string)
+      implicit none
+      character string*(*)
+c
+c
+c   1) add quotes around the source name    **actually not needed**
+c   2) change 2006-DEC-17.0 to 
+c                 06DEC17.0
+c
+c   Once dayjul can be made to understand the "ccyy-mmm-dd.d" format
+c   this routine can be removed. For now, we are patching it for the
+c   CARMA format with a few extra precautions.
+c
+      integer ipos1
+c
+      if (string(1:1).eq.'''') call bug('f','No CARMA fluxtab format?')
+      ipos1 = 1
+      do while (string(ipos1:ipos1).ne.' ')
+         ipos1 = ipos1 + 1
+      enddo
+      do while (string(ipos1:ipos1).eq.' ')
+         ipos1 = ipos1 + 1
+      enddo
+      if (string(ipos1:ipos1).ne.'1' .and. 
+     *    string(ipos1:ipos1).ne.'2') 
+     *    call bug('f','Unexpected year in CARMA fluxtab format?')
+      if (string(ipos1+4:ipos1+4).ne.'-') 
+     *    call bug('f','Unexpected year format in CARMA fluxtab')
+      if (string(ipos1+8:ipos1+8).ne.'-') 
+     *    call bug('f','Unexpected year format in CARMA fluxtab')
+
+c
+c     shift over the month and last two year digits over to right
+c     replace first part with spaces, e.g.
+c           2006-DEC-17.0  ->   06DEC17.0
+c
+
+      string(ipos1+8:ipos1+8) = string(ipos1+7:ipos1+7) 
+      string(ipos1+7:ipos1+7) = string(ipos1+6:ipos1+6) 
+      string(ipos1+6:ipos1+6) = string(ipos1+5:ipos1+5) 
+      string(ipos1+5:ipos1+5) = string(ipos1+3:ipos1+3) 
+      string(ipos1+4:ipos1+4) = string(ipos1+2:ipos1+2) 
+      string(ipos1+0:ipos1+3) = '    '
       end
 c***********************************************************************
       subroutine tabfind(source, freq, deltnu, day, deltime, flux,
