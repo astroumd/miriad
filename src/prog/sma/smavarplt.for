@@ -104,12 +104,13 @@ c                 before and after parsing baseline based flagging
 c                 states.
 c    jhz 11jan07  added chi2 to VarChar data list.
 c    jhz 15mar07  added Keyword dotsize.
+c    pjt 18apr08  Increased maxpnts a bit for a typical 11hr carma track (see varplt)
 c  Bugs:
 c    ?? Perfect?
 c------------------------------------------------------------------------
         character version*(*)
         integer maxpnts
-        parameter(maxpnts=100000)
+        parameter(maxpnts=1000000)
         parameter(version='SmaVarPlt: version 1.8 15-Mar-07')
         logical doplot,dolog,dotime,dounwrap
         character vis*64,device*64,logfile*64,xaxis*16,yaxis*16
