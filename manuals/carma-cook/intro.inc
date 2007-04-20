@@ -6,7 +6,7 @@
 \begin{latexonly}
 This manual, and other relevant information, is also available on 
 \begin{verse}
-{\verb+http://bima.astro.umd.edu/miriad+}
+{\verb+http://carma.astro.umd.edu/miriad+}
 \end{verse}
 % This also contains information on retrieving and installing \miriad.
 \end{latexonly}
@@ -39,6 +39,13 @@ The recently written SMA Users Guide contains lots of useful information as well
 in a cookbook style, which can be complementary to the current CARMA cookbook and
 the ATNF \miriad\ Users Guide.
 
+\subsection{CARMA cookbook}
+
+Procedures specific to CARMA will be addressed in this cookbook. Most notably, 
+the UV variables (Appendix~\ref{app:uvvars}) in this version of the manual 
+should be considered the appropriate one for CARMA.
+
+
 \section{Future}
 
 This cookbook is a currently a live document, it will change rapidly over the coming
@@ -52,7 +59,7 @@ bugs on a more user friendly webpage).
 
 \section{Links}
 
-A Wiki page has also been set up at {\tt http://bima.astro.umd.edu/wiki/index.php/Miriad\_Party}.
+A Wiki page has also been set up at {\tt http://carma.astro.umd.edu/wiki/index.php/Miriad}.
 
 \section*{Acknowledgements}
 

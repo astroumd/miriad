@@ -27,7 +27,8 @@ Eventually those data will disappear and can only be retrieved via the Data Arch
 
 \smallskip
 Notice one subtle naming convention: the site uses {\tt .mir} names, where the
-data archive uses {\tt .miriad}!
+data archive uses {\tt .miriad}! The data archive returns gzip compressed 
+tar files, whereas the site only uses miriad data (i.e. directories).
 
 \subsection{Not at CARMA}
 
@@ -40,12 +41,12 @@ In the mean time, use the browser (control-F) to find your
 dataset, check the box next to it,
 and click the download link at the top or bottom
 of that long page. A Java Web Start
-(jsp) application will now be launced (you may have to teach your
+(jsp) application will now be launched (you may have to teach your
 browser where {\tt javaws} is located) and once the
 list of datasets has been displayed in {\tt DaRT}, click on 
 the Download button in that java application to start the transfer. 
 Notice that these file are compressed tar files, and need to be un-tarred 
-to become a real miriad dataset.   
+to become a real miriad dataset (i.e. a directory)
 
 \footnotesize
 \begin{verbatim}
@@ -182,7 +183,8 @@ No focus values in file
 
 Apart from its useful output, the output of {\tt uvindex} should be
 compared with the log sent by e-amil and the actual data length. Sometimes the database
-fails in filling the data properly. 
+fails in filling the data properly, and the data archive center should be 
+contacted\footnote{currently: Lisa Xu}
 
 \index{uvindex}
 
@@ -461,7 +463,6 @@ where the main one in observing was had some corrupted data.
 \bigskip
 TODO:  check on the uvedit problem with missing LO2.
 
-
 \subsection{Data Flagging and Editing}
 
 See also Chapter 10 in the Miriad Users Guide.  
@@ -483,6 +484,27 @@ See also Chapter 10 in the Miriad Users Guide.
 \normalsize
 
 TODO: this needs more explanation.
+
+
+\subsection{Flagging based on tracking errors}
+
+The {\tt axisrms} UV variable holds the tracking error (in arcsec, in Az and El) 
+for each antenna in the array. It can be useful to automatically flag data when the
+tracking is above a certain error, or even antennae based (e.g.
+allow OVRO to have a smaller tolerance than the BIMA antennae).
+
+\footnotesize
+\begin{verbatim}
+
+  % varplt vis=c0048.umon.1.miriad device=/xs yaxis=axisrms options=overlay yrange=0,100
+
+  % uvflag vis=c0048.umon.1.miriad 'select=-pointing(0,5)' flagval=flag options=noapply 
+
+\end{verbatim}
+\normalsize
+
+The exact amount (5 arcsec in this example) is left to your own judgement, and 
+you should base this on 
 
 
 

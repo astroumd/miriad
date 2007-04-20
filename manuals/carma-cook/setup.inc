@@ -7,48 +7,76 @@
 
 Setting up your account to use \miriad\ 
 of course varies from system to system.
-If in doubt, ask a local miriad user. We will assume you are using the \verb+csh+
+If in doubt, ask a local Miriad user. We will assume you are using the \verb+csh+
 shell. For {\tt bash}, just replace {\tt .csh} with {\tt .sh}.
+
+% miriad 4
 
 Typically you will need to know where MIRIAD is stored, and then
 
+\footnotesize
 \begin{verbatim}
    source /somewhere/miriad/miriad_start.csh
 \end{verbatim}
+\normalsize
 
 If you have installed a binary release, and have not edited the two {\tt miriad\_start.*}
-files, please do so.
+files, please do so. You may also want to check your version of Miriad:
+
+\footnotesize
+\begin{verbatim}
+   cat $MIR/VERSION
+\end{verbatim} %$
+\normalsize
+
+it should be version 4.0.5 as of this writing (April 2007).
 
 \section{Site dependent setup}
-\subsection{OVRO valley}
 
+Each of the CARMA sites will have a maintained version of Miriad. 
+
+\subsection{OVRO}
+
+Only a linux version is maintained. There are two versions, 
+depending if you are in the valley
+
+\footnotesize
 \begin{verbatim}
    source /sw/miriad/cvs/miriad_start.csh
 \end{verbatim}
+\normalsize
 
-\subsection{OVRO cedar flat}
+or up at Cedar Flat:
 
+\footnotesize
 \begin{verbatim}
    source /array/miriad/cvs/miriad_start.csh
 \end{verbatim}
+\normalsize
 
 \subsection{Berkeley}
 
+Only a linux version is maintained:
+
+\footnotesize
 \begin{verbatim}
-   source ...
+   source /indirect/hp/wright/miriad/mir4/MIRRC.linux
 \end{verbatim}
+\normalsize
 
 \subsection{Caltech}
 
-\begin{verbatim}
+Maintains Linux, Solaris and MacOSX ?
+
+\footnotesize\begin{verbatim}
    source ...
-\end{verbatim}
+\end{verbatim}\normalsize
 
 \subsection{Illinois}
 
-\begin{verbatim}
+\footnotesize\begin{verbatim}
    source ...
-\end{verbatim}
+\end{verbatim\normalsize}
 
 \subsection{Maryland}
 
@@ -67,11 +95,13 @@ and loading multiple versions of miriad can make commands from
 the older version to peek through  the new one and cause unexpected
 result. Use with caution.
 Example:
-\begin{verbatim}
+\footnotesize\begin{verbatim}
    % source /n/astromake2/astromake_start
-   % astroload -v daily miriad
    % astroload ds9
-\end{verbatim}
+   % astroload miriad
+or:
+   % astroload -v daily miriad
+\end{verbatim}\normalsize
 
 
 \section{Installation}
@@ -86,23 +116,23 @@ how to do this.
 
 
 Example of a two liner installation:
-\begin{verbatim}
+\footnotesize\begin{verbatim}
   1% curl ftp://ftp.astro.umd.edu/progs/bima/miriad.tar.gz | tar zxf -
 or:
   1% wget -O - ftp://ftp.astro.umd.edu/progs/bima/miriad.tar.gz | tar zxf -
 
   2% miriad_cvs/install/install.miriad
-\end{verbatim}
+\end{verbatim}\normalsize
 
 and a few lines of usage to certify the installation seems ok:
 
-\begin{verbatim}
+\footnotesize\begin{verbatim}
   3% source miriad_cvs/miriad_start.csh
 
   4% imgen out=map0
   5% itemize in=map0
   6% cgdisp in=map0 device=/xs
-\end{verbatim}
+\end{verbatim}\normalsize
 
 Note that this version of MIRIAD is the development version, and contain CVS administrative
 files to allow you to easily update and get the latest fixes.
