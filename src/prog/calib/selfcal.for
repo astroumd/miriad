@@ -169,6 +169,7 @@ c    rjs  16apr96 Increase select routine arrays.
 c    rjs  28aug96 Minor change to get around gcc-related bug. Change care
 c		  Dave Rayner.
 c    pjt   5aug99 Increased MaxMod a bit
+c    mchw 27apr07 Check for auto instead of not cross. i.e. allow mixed.   
 c
 c  Bugs/Shortcomings:
 c   * Selfcal should check that the user is not mixing different
@@ -177,7 +178,7 @@ c   * It would be desirable to apply bandpasses, and merge gain tables,
 c     apply polarisation calibration, etc.
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version='Selfcal: version 1.0 5-Aug-99')
+	parameter(version='Selfcal: version 1.0 27-April-2007')
 	integer MaxMod,maxsels,nhead
 	parameter(MaxMod=64,maxsels=1024,nhead=3)
 c
@@ -250,8 +251,10 @@ c  the line type if necessary.
 c
 	call uvopen(tvis,vis,'old')
 	call rdhda(tvis,'obstype',obstype,'crosscorrelation')
-	if(obstype(1:5).ne.'cross')
+	if(obstype(1:4).eq.'auto')
      *	  call bug('f','The vis file is not cross correlation data')
+	if(obstype(1:5).eq.'mixed')
+     *	  call bug('w','vis file is mixed. use select=-auto')
 	if(doline)call uvset(tvis,'data',ltype,nchan,lstart,lwidth,
      *								lstep)
 c
