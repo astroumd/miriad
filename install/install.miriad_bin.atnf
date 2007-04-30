@@ -35,7 +35,7 @@ foreach file (miriad-common.tar.gz miriad-$arch.tar.gz)
   if (-e $file) then
      tar -C $root -zxf $file
   else
-     #wget -O - $ftp/$file | tar -C $root -zxf -
+      #wget -O - $ftp/$file | tar -C $root -zxf -
      curl $ftp/$file | tar -C $root -zxf -
   endif
 end
