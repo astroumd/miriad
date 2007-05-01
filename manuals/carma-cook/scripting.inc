@@ -17,7 +17,7 @@ Shell (csh/sh/bash) programming vs. python (pyramid)
 
 Here is an example of a mosaic script, using {\tt pyramid} procedures.
 
-
 \footnotesize
 \verbatimlisting{mosaic.py}
 \normalsize
+

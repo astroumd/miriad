@@ -12,23 +12,10 @@
 CARMA data are normally multi-source datasets, where all data from a  single track (a typical
 ``8'' hour observation) are in a single Miriad dataset.
 
-Note that you will need use the {\tt carma-web} username and get a password to gain
+Note that you will need use the {\tt carmaweb} username and get a password to gain
 access to Carma data! The website {\tt http://cedarflat.mmarray.org/observing}
 gives instructions where to get this password.\index{Data Archive}
 
-\subsection{At CARMA}
-
-At CARMA (and OVRO) there is limited bandwith to the outside world, 
-and CARMA data should probably be directly copied via one of the
-{\tt cedarflat} machines on
-{\tt  /misc/sdp/sciencedata/}, or in case of older data, the directory
-{\tt  /misc/sdp/archive\_sciencedata/} should contain data older than about a month.
-Eventually those data will disappear and can only be retrieved via the Data Archive.
-
-\smallskip
-Notice one subtle naming convention: the site uses {\tt .mir} names, where the
-data archive uses {\tt .miriad}! The data archive returns gzip compressed 
-tar files, whereas the site only uses miriad data (i.e. directories).
 
 \subsection{Not at CARMA}
 
@@ -87,10 +74,45 @@ or
 Note that this procedure is not guarenteed to remain working after the Data Archive
 has been overhauled at some point in the near future.
 
+\subsection{At CARMA}
+
+At CARMA (and OVRO) there is limited bandwith to the outside world, 
+and CARMA data should probably be directly copied via one of the
+{\tt cedarflat} machines on
+{\tt  /misc/sdp/sciencedata/}, or in case of older data, the directory
+{\tt  /misc/sdp/archive\_sciencedata/} should contain data older than about a month.
+Eventually those data will disappear and can only be retrieved via the Data Archive.
+
+\smallskip
+Notice one subtle naming convention: currently the site uses {\tt .mir} names, where the
+data archive uses {\tt .miriad}! The data archive returns gzip compressed 
+tar files, whereas the site only uses miriad data (i.e. directories).
+
+\section{Quality Check}
+
+After your data has been taken a {\it quality} script has been inspecting your
+data and attempted to give it a passing grade. The output of {\tt quality}
+has normally also been inspected by the resident observer(s). Once you have downloaded
+this same data from the archive, it is important for you to first check that
+all the data that {\tt quality} has reported, is actually also present in your dataset
+(most notably check the full timerange and all the sources reported).
+A few Miriad programs are available for this, described in the next section, though 
+in theory you could also run {\tt quality} yourself.
+
+You should be able to find your quality output from the CARMA 
+webpage\footnote{direct link: {\tt http://cedarflat.mmarray.org/observing/quality/}}
+by going to ``Observing with CARMA'' and following ``Obtaining and reducing your data'' to
+``Quality output''.
+
+% see /opt/rt/scripts/quality, but right now only works at carma
+
+
 \section{Data Inspection}
 
 There are several ways to get a useful summary of what is in your CARMA multi-source dataset.
 Programs {\tt listobs}, {\tt uvindex} and {\tt uvlist} all have options to deal with this.
+
+
 
 
 \subsection{listobs}
@@ -395,9 +417,7 @@ either by filename, or comments in the file.\index{uvedit}
 \bigskip
 Datafiles can be found\footnote{At CARMA, also {\tt /array/rt/baselineSolutions/antpos.YYMMDD}}
 on the web at
-\newline 
 {\tt http://cedarflat.mmarray.org/observing/baseline/}.
-\newline
 In rare cases, a new and better solution is found a month or so after your data were
 taken. Check the status of the baseline solution in the above web page. It is a good
 idea to apply an appropriate solution if you are not sure which solution has been
@@ -405,9 +425,9 @@ applied to your data.
 
 % OLD: {\tt http://www.astro.caltech.edu/~koda/carma/bl/index.html} and/or 
 
-\subsection{Rest Frequency}
+\subsection{Rest Frequency (bugzilla 409)}
 
-Certainly during the initial campaigns, CARMA data were written with 
+Certainly during the initial campaigns, CARMA data were written with \index{bugzilla, 409}
 a rest frequency equal to the starting frequency in the first windows
 of the LSB. This is most likely wrong for your data. Look at the output of
 {\tt uvlist}:
@@ -574,7 +594,8 @@ gpcopy vis=0530+135 out=abaur
 
 \subsection{Autocorrelation}
 
-Auto-correlations are stored in the datastream as of January 2007. They
+Auto-correlations are handled by the fillerof January 31, 2007 (see also
+Appendix E). They
 are stored as baselines with the same antenna pair, and show up before
 the cross-correlations. Some programs assume this, in order to scale that
 data for calibration purposes:\index{autocorrelation}
@@ -720,11 +741,14 @@ Flux of: 3C84      06DEC12.00 at  93.3 GHz:  6.57 Jy; rms: 0.99 Jy
 \end{verbatim}
 \normalsize
 
-Notice the gap between 2003 and 2006 where BIMA was shutdown to prepare
-for the move to CARMA. 
+This calibration list is essentially the old BIMA flux calibrator history
+now appended with new CARMA value, so there is a gap between 2004 and 2006
+when the BIMA dishes were moved from Hat Creek to Cedar Flat to the merged
+CARMA array.
 
 Another source of information is the flux data maintained by
-ATCA and SMA.... ADD url's here...
+ATCA\footnote{{\tt http://www.narrabri.atnf.csiro.au/calibrators/}}  and 
+SMA\footnote{{\tt http://sma1.sma.hawaii.edu/callist.html}}.
 
 {\tt xplore} is a tool outside of miriad that also contains time-flux
 tables for each source based on the same table.

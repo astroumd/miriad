@@ -36,8 +36,11 @@ The script below, {\tt bandcal.csh}, is a working example how Jin Koda's M51 dat
 can be passband calibrated. Courtesy Stuart Vogel.
 
 \footnotesize
-% \verbatimlisting{bandcal.csh}
+\verbatimlisting{bandcal.csh}
 \normalsize
+
+% misty reminds me that if amp's need to be copied in the last copyhd, it is
+% better to use gpcopy + uvcat !!!
 
 \section{Flux Calibration}
 
@@ -53,6 +56,7 @@ variance of the gains.
 
 First a few handy definitions so we can shorten the examples:
 
+% note earlier version misty goofed  on lsbfluxchan and usbfluxchan, needs to be 1
 \footnotesize
 \begin{verbatim}
 set fluxcal = 3C84                   # flux calibrator  (also the miriad dataset name)
@@ -66,12 +70,13 @@ set vcalint = 25                     # visibility calibrator scan interval
 set fcalint = 1                      # flux calibrator interval
 set superwidewin  = "1,2,4,5"        # windows to use for superwide
 set superwidechan = "1,1,60"         # channels for superwide
-set lsbfluxchan   = "30,1,1,1"       # channels for calc lsb flux
-set usbfluxchan   = "30,30,1,1"      # channels for calc usb flux
+set lsbfluxchan   = "1,1,30,30"      # channels for calc lsb flux
+set usbfluxchan   = "1,31,30,30"     # channels for calc usb flux
 
 
 \end{verbatim}
 \normalsize
+
 
 A note on setting the flux here. In the example below we do not use {\tt options=apriori} in
 {\tt selfcal} but instead set the flux value explicitly. Either way should work, but flux calibration
@@ -536,7 +541,7 @@ in the selfcal if an amplitude selfcal was done:
 
   uvplt vis=$CAL.pb device=$device line=$WIDE axis=time,amp
 
-\end{verbatim} 
+\end{verbatim} %$
 \normalsize
 
 In the actual example script it now continues mapping the calibrator,

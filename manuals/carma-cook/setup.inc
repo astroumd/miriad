@@ -76,7 +76,7 @@ Maintains Linux, Solaris and MacOSX ?
 
 \footnotesize\begin{verbatim}
    source ...
-\end{verbatim\normalsize}
+\end{verbatim}\normalsize
 
 \subsection{Maryland}
 
@@ -124,7 +124,7 @@ or:
   2% miriad_cvs/install/install.miriad
 \end{verbatim}\normalsize
 
-and a few lines of usage to certify the installation seems ok:
+and a few lines of usage to certify the installation was ok and you probably have a working version:
 
 \footnotesize\begin{verbatim}
   3% source miriad_cvs/miriad_start.csh
@@ -134,11 +134,13 @@ and a few lines of usage to certify the installation seems ok:
   6% cgdisp in=map0 device=/xs
 \end{verbatim}\normalsize
 
-Note that this version of MIRIAD is the development version, and contain CVS administrative
-files to allow you to easily update and get the latest fixes.
+Note that this version of MIRIAD is a development version, and contain CVS administrative
+files to allow you to easily update and get the latest fixes directly via CVS. This
+is much preferred to downloading a tar file each time and install that.
 
 
 \subsection{Binary Installation}
 
 We expect to make available binary releases for Linux (32bit and 64bit), MacOSX (ppc and intel)
 and Solaris (sol10 w/ gcc, sol10 w/ sunstudio12?). Details will be on the Miriad website.
+

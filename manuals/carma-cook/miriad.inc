@@ -3,6 +3,8 @@
 
 \chapter{Miriad cheatsheet}
 
+\section{Reminders}
+
 \begin{itemize}
 
 \item miriad-101:
@@ -20,13 +22,27 @@ to upper case before any comparision. Hence the following two examples are synon
     select=source(MARS)
 \end{verbatim}
 
+\item Autocorrelations and a noise source are present in the data, so often you will wind up
+having to select them out
+\begin{verbatim}
+    select=-auto,-source(NOISE)
+\end{verbatim}
+A notable exception where {\tt select=-auto} does not work is {\tt selfcal} and {\tt mfcal}. This
+is a bug being worked on.% not even in bugzilla...
+
+
 \end{itemize}
+
+\section{Common Miriad Keywords}
+
+A number of keywords are often used with the same meaning. You can use the {\tt mirhelp} command
+on them to get current help, but here are some reminders to the most important ones:
 
 \subsection{device=}
 
 Graphics output is all done via PGPLOT, and the command line
-parameter {\tt device=} is commonly used for this. Examples:
-{\tt /ps, fig1.ps/vps, /xs, 2/xs, fig2.cps/cps}.
+parameter {\tt device=} is commonly used to select the device. Examples:
+{\tt /ps, fig1.ps/vps, /xs, 2/xs, fig2.cps/vcps}.
 
 \subsection{select=}
 

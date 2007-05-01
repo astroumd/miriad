@@ -57,7 +57,7 @@ RM LM sub (Peter Teuben) stringwidth pop sub
 RM LM sub ($date) stringwidth pop sub
 2 div 100 moveto
 ($date) show
-RM LM sub (See http://bima.astro.umd.edu/miriad)
+RM LM sub (See http://carma.astro.umd.edu/miriad)
 stringwidth pop sub 2 div 20 sub 50 moveto
-(See http://bima.astro.umd.edu/miriad) show
+(See http://carma.astro.umd.edu/miriad) show
 END-OF-FILE
