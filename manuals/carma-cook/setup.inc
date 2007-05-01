@@ -141,4 +141,4 @@ files to allow you to easily update and get the latest fixes.
 \subsection{Binary Installation}
 
 We expect to make available binary releases for Linux (32bit and 64bit), MacOSX (ppc and intel)
-and Solaris (sol10 w/ gcc, sol10 w/ sunstudio12?). Details will be on the miriad website.
+and Solaris (sol10 w/ gcc, sol10 w/ sunstudio12?). Details will be on the Miriad website.

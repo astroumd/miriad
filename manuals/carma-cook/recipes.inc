@@ -25,7 +25,7 @@ Douglas Friedel wrote a script to split a dataset and runs
 using the old BIMA g-routines. This will be looked into
 
 \footnotesize
-\verbatimlisting{gcal.csh}
+% \verbatimlisting{gcal.csh}
 \normalsize
 
 
@@ -36,7 +36,7 @@ The script below, {\tt bandcal.csh}, is a working example how Jin Koda's M51 dat
 can be passband calibrated. Courtesy Stuart Vogel.
 
 \footnotesize
-\verbatimlisting{bandcal.csh}
+% \verbatimlisting{bandcal.csh}
 \normalsize
 
 \section{Flux Calibration}
@@ -218,18 +218,25 @@ Finally, checking the time variance of the phase calibrator
           options=noscale,amplitude flux=$visflux
   gplist vis=$viscal.wide.gain options=zeropha,amp > $viscal.gains
 
+  Time     Ant 1 Ant 2 Ant 3 Ant 4 Ant 5 Ant 6 Ant 7 Ant 8 Ant 9 Ant10 Ant11 Ant12 Ant13 Ant14 Ant15
+19:11:10    1.33  0.99  1.01  1.07  0.00  1.07  1.10  1.34  1.19  1.39  1.48  1.06  1.28  1.37  1.24
+19:13:34    1.34  0.98  1.05  1.06  0.00  1.06  1.09  1.36  1.21  1.40  1.48  1.06  1.28  1.35  1.28
+19:40:47    1.41  1.01  1.01  1.12  0.00  1.07  1.10  1.45  1.23  1.40  1.53  1.08  1.32  1.45  1.31
+20:09:41    1.36  0.98  1.05  1.12  0.00  1.12  1.19  1.58  1.28  1.44  1.68  1.09  1.38  1.47  1.39
+20:42:34    1.44  0.98  1.05  1.19  0.00  1.12  1.11  1.66  1.31  1.53  1.75  1.14  1.44  1.51  1.42
+20:53:42    1.50  0.95  1.03  1.14  0.00  1.09  1.07  1.63  1.29  1.56  1.78  1.15  1.42  1.54  1.41
+21:22:06    1.38  1.01  1.05  1.15  0.00  1.07  1.16  1.67  1.32  1.63  1.75  1.16  1.37  1.54  1.40
+21:51:16    1.41  0.99  1.05  1.10  0.00  1.06  1.11  1.67  1.39  1.60  1.74  1.14  1.37  1.50  1.43
+22:21:57    1.45  1.04  1.09  1.15  0.00  1.09  1.14  1.71  1.51  1.64  1.76  1.16  1.40  1.57  1.50
+22:34:31    1.54  1.05  1.07  1.14  0.00  1.07  1.10  1.70  1.48  1.56  1.65  1.15  1.39  1.55  1.47
+23:02:50    1.47  1.04  1.06  1.08  0.00  1.05  1.14  1.85  1.61  1.64  1.74  0.00  1.46  1.57  1.55
+23:31:26    1.56  1.10  1.07  1.17  0.00  1.09  1.22  2.21  1.72  1.70  1.90  1.25  1.52  1.65  1.64
+00:00:10    1.50  1.09  1.03  1.13  0.00  1.06  1.41  4.50  1.86  1.72  1.91  1.28  1.55  1.61  1.60
 ------------------------------------------------------------------------
 Means:      1.44  1.02  1.05  1.13  0.00  1.08  1.15  1.87  1.42  1.55  1.70  1.14  1.40  1.51  1.43
 Medians:    1.41  0.99  1.05  1.12  0.00  1.07  1.11  1.66  1.31  1.56  1.74  1.14  1.38  1.51  1.41
 Rms:        0.07  0.05  0.02  0.04  0.00  0.02  0.09  0.82  0.21  0.11  0.14  0.07  0.08  0.09  0.12
 ------------------------------------------------------------------------
-
-\end{verbatim}
-\normalsize
-
-
-\footnotesize
-\begin{verbatim}
 
 \end{verbatim}
 \normalsize
@@ -256,7 +263,8 @@ Just make sure you have a good set of CPUs!
 
 
 \footnotesize
-\verbatimlisting{red.csh}
+hello
+% \verbatimlisting{red.csh}
 \normalsize
 
 
@@ -272,8 +280,7 @@ First we define some convenient variables, so we can re-use them in the script. 
 should be any number, or certainly multiply occuring text, should be used in a (shell) variable.
 That rules is not quite followed in the current example:
 
-\footnotesize
-\begin{verbatim}
+\footnotesize\begin{verbatim}
 
   set FILE="c0001.n604_coC.1.miriad"
   set SRC="NGC604"
@@ -290,8 +297,7 @@ That rules is not quite followed in the current example:
   set RESTFREQ="115.271202"
   set REFA=9
 
-\end{verbatim}
-\normalsize
+\end{verbatim}\normalsize
 
 
 Some of variables may be quite obvious, others less. For example, the 
