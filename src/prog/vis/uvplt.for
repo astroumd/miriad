@@ -301,6 +301,7 @@ c    pjt  12oct97  Push MAXBASE2 upto 45 for Hat Creek.  Does not affect ATCA
 c    mchw 14feb02  Changes to accomodate more antennas.
 c    pjt  11dec02  subroutine IZERO to bypass big DATA statement that makes big binaries
 c    mchw 14aug03  replace varmint.
+c    pjt   9may07  doc + debug cleanup
 c
 c To do:
 c
@@ -431,7 +432,7 @@ c
 c      data npts, plpts, basmsk /ifac1*0, ifac1*0, ifac2*0/ -- see izero
       data polmsk /13*0/
 c-----------------------------------------------------------------------
-      call output ('UvPlt: version 30-apr-07')
+      call output ('UvPlt: version 9-may-07')
       call output ('New frequency behaviour '//
      *	'(see parameters line and options=nofqav)')
       call output (' ')
@@ -1645,15 +1646,9 @@ c
       if ( delday.lt.0.0 .or. delday.gt.dayav .or. 
      +    (ivis.gt.1 .and. track) ) then
          reset = .true.
-         write(*,*) 'PJT endave reset: ',ivis,baseday,day,delday*1440,
-     *              dayav*1440,track
          baseday = day
-c
          if (delday.lt.0.0) call bug ('w', 
      +      'Data not in time order, accumulators reset')
-      else
-         write(*,*) 'PJT endave : ',ivis,baseday,day,delday*1440,
-     *              dayav*1440,track
       end if
 c
       end
