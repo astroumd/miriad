@@ -74,8 +74,8 @@ def_maxdim2=8192
 def_maxiant=256
 def_maxant=64		##
 def_maxant2=28
-def_maxbase=500		#
-def_maxbase2=500
+def_maxbase=1058	#
+def_maxbase2=1058
 def_maxchan=4096	# 
 def_maxwin=16		# 
 def_maxwide=18		# 
@@ -83,7 +83,7 @@ def_maxnax=7
 def_maxbuf=4194304	##
 
 case $TELESCOPE in
-     "ata")  echo "Selecting ATA-500 array"
+     "ata")  echo "Selecting ATA-350 array"
         def_maxiant=2048
 	continue;;
      "atnf")  echo "Selecting ATNF array"
