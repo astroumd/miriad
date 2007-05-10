@@ -120,10 +120,11 @@ c    16may06 mchw  Merged 06may with 2 previous changes in CVS.
 c    10aug06 dcb   Added comments and reformat GetGains.
 c    10aug06 dcb   GetGains common /savgains/ Ampl,Phi,foc,tpwr,antel,freq
 c    08nov06 mchw  Increase MAXANTS to 64 and MAXSOLS to 4096
+c    10may07 mchw  Added topocentric coordinates in meters to summary.
 c-----------------------------------------------------------------------
 	include 'bee.h'
 	character version*(*),device*80,log*80,ans*20
-	parameter(version='(version 3.0 08-Nov-2006)')
+	parameter(version='(version 3.0 10-May-2007)')
 	integer length,tvis,tgains,iostat
 	logical doscale
 c
@@ -3313,6 +3314,7 @@ c----------------------------------------------------------------------c
 	include 'bee.h'
 	character*1 line*80
 	integer i,k
+	real mpns/0.2997926/
 c
 	call LogWrit(' ')
 	call LogWrit('--------------------------------------')
@@ -3337,7 +3339,7 @@ c        b3 =  x * cosl + z * sinl
 c
 	call LogWrit(' ')
 	write(line,'(a)')
-     *	  'Convert to topocentric coordinates.'
+     *	  'Convert to topocentric coordinates in nanosec.'
 	call LogWrit(line)
 	write(line,'(a,7x,a,19x,a,10x,a)')
      *	  'Ant','Original antenna positions','Changes','AM PH ED'
@@ -3352,6 +3354,27 @@ c
      *   antfit(k,2)-antpos(k+nants),
      *   (antfit(k,1)-antpos(k))*clat + 
      *                      (antfit(k,3)-antpos(k+nants*2))*slat,
+     *   amdone(k),phdone(k),eddone(k)
+	  call LogWrit(line)
+	enddo
+	call LogWrit(' ')
+	write(line,'(a)')
+c
+     *	  'Convert to topocentric coordinates in meters.'
+	call LogWrit(line)
+	write(line,'(a,7x,a,19x,a,10x,a)')
+     *	  'Ant','Original antenna positions','Changes','AM PH ED'
+	call LogWrit(line)
+	do k=1,nants
+	  write(line,'(i3,2x,3f11.4,5x,3f9.4,3x,a,2x,a,2x,a)')
+     *	 k,(-antpos(k)*slat+antpos(k+nants*2)*clat)*mpns,
+     *	 antpos(k+nants)*mpns,
+     *	 (antpos(k)*clat+antpos(k+nants*2)*slat)*mpns,
+     *   -(antfit(k,1)-antpos(k))*slat*mpns + 
+     *               (antfit(k,3)-antpos(k+nants*2))*clat*mpns,
+     *   (antfit(k,2)-antpos(k+nants))*mpns,
+     *   (antfit(k,1)-antpos(k))*clat*mpns + 
+     *               (antfit(k,3)-antpos(k+nants*2))*slat*mpns,
      *   amdone(k),phdone(k),eddone(k)
 	  call LogWrit(line)
 	enddo
