@@ -17,6 +17,7 @@
 /*    pjt     26mar07 bugmessage_c: retrieve last fatal bug message     */
 /*    pjt     27mar07 bugseverity_c: also overhauled bug recovery       */
 /*                    and removed VMS specific code                     */
+/*    pjt     17may07 removed old-non ANSI declaration                  */
 /************************************************************************/
 
 #include <stdio.h>
@@ -270,8 +271,8 @@ static char *errmsg_c(int n)
   /* new POSIX.1 style */
   return strerror(n);
 #else
-  /* old style code */
-#  if !defined(linux) && !defined(darwin_ppc) && !defined(darwin_x86) && !defined(darwin)
+  /* very old style code -- stdio.h is supposed to supply this */
+#  if 0
   extern int sys_nerr;
   extern char *sys_errlist[];
 #  endif
