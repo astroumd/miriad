@@ -38,6 +38,7 @@ set version=5-mar-07
 # 24-may-06 more configure options, optional compile.generic
 #  7-feb-07 fixes for non-linux
 #  5-mar-07 using new make_miriad_starts
+# 17-may-07 use $CC, $F77 and $CXX in $MIRBIN, if present
 #
 #
 #-----------------------------------------------------------------------
@@ -133,6 +134,7 @@ set debug=0                 #  compile in debug (-g) mode ?
 set cvs=1                   #  use CVS archive to get miriad.tar.gz ?
 set internal=1              #  internal sourcecode build; overrides cvs, mirroot and newdir
 set test=1                  #  mir.test  baseline test (batch oriented)
+set tests=1		    #  mir.tests sanity tests (batch oriented)
 set testx=0		    #  mir.testx testing X routines (interactive)
 set bench=0,512,1           #  mir.bench nchan,mapsize,cell  (nchan=0 will skip bench)
 set intel=0                 #  use intel compiler (ifc/icc) for linux?
@@ -225,6 +227,14 @@ set path = ( $MIRTEMP/src/sys/bin $path )
 rehash
 echo mir.mkdirs $MIRTEMP
 mir.mkdirs $MIRTEMP >& /tmp/mir.mkdirs.$$.log
+
+if ($?CC && $?F77 && $?CXX) then
+  echo Using symlinks to your compiler in MIRBIN
+  echo CC=$CC
+  echo F77=$F77
+  echo CXX=$CXX
+
+endif
 
 if (-d $MIRTEMP/bin/localsys) then
   cp $install_dir/compile.generic $MIRTEMP/bin/localsys
@@ -321,9 +331,11 @@ if ($hosttype == linux) then
   cp $MIR/src/sys/bin/compile.linux   $MIR/bin/localsys/compile.linux
  endif
 else
-  echo "Using default compile.$hosttype"
-  # actually don't have to copy, but this way easy to make modifications outside of CVS
-  cp $MIR/src/sys/bin/compile.$hosttype $MIR/bin/localsys
+  if ($generic == 0) then
+    echo "Using default compile.$hosttype"
+    # actually don't have to copy, but this way easy to make modifications outside of CVS
+    cp $MIR/src/sys/bin/compile.$hosttype $MIR/bin/localsys
+  endif
 endif
 
 cd $MIR
@@ -514,6 +526,13 @@ if (-e checklist) then
   if ($bad > 0) then
     if ($bad > 5) then
 	echo Found $bad / $all binaries missing, check $badlist
+        if ($bad > 100) then
+	  echo Most likely you have a compiler issue and/or linking
+	  echo Try sourcing the miriad_start.csh file
+	  echo then use the mirboss command and recompile a program, e.g.
+	  echo mir.prog itemize
+	  echo to see what linking errors you have.
+	endif
     else
 	echo Found $bad / $all binaries missing:
 	cat $badlist
@@ -527,9 +546,12 @@ if ($test) then
     ./mir.test
 endif
 
-chmod +x mir.testx
 if ($testx) then
-   mir.testx
+   ./mir.testx
+endif
+
+if ($tests) then
+   ./mir.tests
 endif
 
 set benchpars=(`echo $bench | awk -F, '{print $1,$2,$3}'`)
