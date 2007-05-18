@@ -33,6 +33,12 @@ set branch=()
 #set branch=(-r mir_3_1_1)
 #set branch=(-D 12/25/04)
 
+# set these if you don't want the system to try and figure it out
+# for now CXX is not used, but for good measure, use it
+# setenv CC  /usr/bin/gcc
+# setenv CXX /usr/bin/g++
+# setenv F77 /usr/bin/g77
+
 set cvsroot=:pserver:anonymous@cvs.astro.umd.edu:/home/cvsroot
 
 foreach arg ($*)
