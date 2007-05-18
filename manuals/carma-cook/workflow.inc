@@ -33,7 +33,7 @@ browser where {\tt javaws} is located) and once the
 list of datasets has been displayed in {\tt DaRT}, click on 
 the Download button in that java application to start the transfer. 
 Notice that these file are compressed tar files, and need to be un-tarred 
-to become a real miriad dataset (i.e. a directory)
+to become a real miriad dataset (i.e. a directory):
 
 \footnotesize
 \begin{verbatim}
@@ -111,6 +111,8 @@ by going to ``Observing with CARMA'' and following ``Obtaining and reducing your
 
 There are several ways to get a useful summary of what is in your CARMA multi-source dataset.
 Programs {\tt listobs}, {\tt uvindex} and {\tt uvlist} all have options to deal with this.
+As stressed before, it is a good way to double check if your dataset matches the one
+that your quality report saw.
 
 
 
@@ -312,9 +314,12 @@ The input data contain the following AzEl offsets
 
 \subsection{uvflag}
 
-You should inspect how much data was flagged by the system. As of March 2007, blanking has
+You should inspect how much data was flagged by the online system. As of March 2007, blanking has
 been enabled at CARMA, and depending on conditions and a threshold setting, one can easily
-wind up with too much flagged data. Unflagging should of course be done with caution.
+wind up with too much flagged data. Unflagging should of course be done with caution. Currently
+the default threshold is 20\%, i.e. if more than 20\% of the (0.5 second) frames of an integration
+are blanked, the integration is flagged.
+
 
 \footnotesize
 \begin{verbatim}
@@ -365,15 +370,16 @@ and friends where needed.
 
 \section{Initial Data Correction}
 
-\subsection{Archive correction}
+\subsection{Archive based corrections}
 
 The (Illinois) Data Archive will typically re-fill data from its basic
 constituents (the {\it visbrick} and the {\it monitor points}) whenever
-there is a need. This means the data as used by the Quality Script could
+there is a need. This could also mean that the data  used by the {\tt quality} script
 be different from that obtained from the Data Archive.
 
-In case of doubt, save a checksum of your data and/or use the version of
-the data that is stored inside the visibility data:
+You can save a checksum of your data and/or use the version of
+the data that is stored inside the visibility data. That way you will
+be able to decide if your data pipeline will have to be redone.
 
 \footnotesize
 \begin{verbatim}
@@ -396,7 +402,8 @@ to check if you should re-fetch the data.\index{mdsum}
 \label{s:baseline}
 You should always check if you need to (re)apply baseline corrections.
 Although your data may come with initially pretty decent ones, often
-after a few weeks improved ones are available. In the first few days/weeks
+after a few weeks in a new array configuration
+improved ones are available. In the first few days/weeks
 time after a move baselines can settle and may need to be re-applied
 from the newly computed ones. Normally these are stored in a small
 ascii table with equatorial values in nanoseconds.\index{baseline correction}
@@ -415,11 +422,11 @@ available for each day. Please check the time validity carefully,
 either by filename, or comments in the file.\index{uvedit}
 
 \bigskip
-Datafiles can be found\footnote{At CARMA, also {\tt /array/rt/baselineSolutions/antpos.YYMMDD}}
-on the web at
-{\tt http://cedarflat.mmarray.org/observing/baseline/}.
+Antpos datafiles
+can be found\footnote{At CARMA, also {\tt /array/rt/baselineSolutions/antpos.YYMMDD}}
+at {\tt http://cedarflat.mmarray.org/observing/baseline/}.
 In rare cases, a new and better solution is found a month or so after your data were
-taken. Check the status of the baseline solution in the above web page. It is a good
+taken. Check the status of the baseline solution on the above mentioned web page. It is a good
 idea to apply an appropriate solution if you are not sure which solution has been
 applied to your data.
 
@@ -428,8 +435,8 @@ applied to your data.
 \subsection{Rest Frequency (bugzilla 409)}
 
 Certainly during the initial campaigns, CARMA data were written with \index{bugzilla, 409}
-a rest frequency equal to the starting frequency in the first windows
-of the LSB. This is most likely wrong for your data. Look at the output of
+a rest frequency equal to the starting frequency in the first window
+of the LSB. This is most likely wrong for your data. Look again at the output of
 {\tt uvlist}:
 
 % \footnotesize\normalsize
@@ -463,6 +470,9 @@ The drawback of this procedure is that the uv variable is now ``promoted'' to a
 (miriad) header variable, and in the process loosing any potential time variability
 as well as (in this case 6) dimensionality.
 
+\bigskip
+TODO:explain difference between puthd and uvputhd
+
 \subsection{Other UV variables}
 
 Some data bugs (e.g. latitude=0) cannot be fixed by refilling the data. In this case
@@ -470,7 +480,6 @@ programs such as puthd will work fine for variables that do not depend on time.
 In the first example we saw how to fix the latitude (stored as 0 in the SS443 dataset)
 such that the ENU coordinates were printed correctly:
 
-% \footnotesize\normalsize
 \footnotesize
 \begin{verbatim}
   % puthd in=cx012.SS433.2006sep07.1.miriad/latitud value=0.6506654009 type=double
@@ -485,7 +494,19 @@ TODO:  check on the uvedit problem with missing LO2.
 
 \subsection{Data Flagging and Editing}
 
-See also Chapter 10 in the Miriad Users Guide.  
+See also Chapter 10 in the Miriad Users Guide.  The two important programs that allow
+you to interactively flag are {\tt uvflag} and {\tt blflag}. The {\tt tvflag} program
+has become unfashionable, since it relies on 8bit X windows displays. There is luckily 
+a fairly simple procedure to get those to work in Linux.
+
+Programs such as {\tt uvplt} and {\tt varplt} can be used to inspect data and decide
+what baselines, antennae, time-ranges etc. be flagged. Another potentially useful
+way, simular to the interactive output of {\tt tvflag} is a relatively new program
+{\tt uvimage} which creates a Miriad image out of a visibility dataset. This 3 dimensional
+dataset can be viewed with programs like {\tt ds9} or {\tt karma}, and guide you how
+to flag the data using {\tt uvflag}. It is possible to come up with a procedure
+that ties keystrokes in ds9 to the creation of a batch script that runs {\tt uvflag}
+afterwards.
 
 
 % \footnotesize\normalsize
@@ -499,7 +520,7 @@ See also Chapter 10 in the Miriad Users Guide.
    Nchan= 90 Nbl= 78 Ntime= 1226 Space used:  8606520 /  17432576 =   49.370327%
    number of records read=  95628
 
-  % ds9 visbrick1
+  % mirds9 visbrick1
 \end{verbatim}
 \normalsize
 
@@ -524,7 +545,8 @@ allow OVRO to have a smaller tolerance than the BIMA antennae).
 \normalsize
 
 The exact amount (5 arcsec in this example) is left to your own judgement, and 
-you should base this on 
+you should probably also base this on the inspection of the graphical output
+of {\tt varplt}.
 
 
 
@@ -594,7 +616,7 @@ gpcopy vis=0530+135 out=abaur
 
 \subsection{Autocorrelation}
 
-Auto-correlations are handled by the fillerof January 31, 2007 (see also
+Auto-correlations are handled by the filler of January 31, 2007 (see also
 Appendix E). They
 are stored as baselines with the same antenna pair, and show up before
 the cross-correlations. Some programs assume this, in order to scale that
@@ -628,9 +650,11 @@ data for calibration purposes:\index{autocorrelation}
     20 05:02:30.7   1-   8 RR     0.00     0.00   96.409   41    97.700   56    98.455   28
 
   % uvcal vis=xxx.mir out=yyy.mir options=fxcal
-  % uvnorm vis=xxx.mir out=yyy.mir 
+
 \end{verbatim}
 \normalsize
+
+% uvnorm vis=xxx.mir out=yyy.mir   <--- never submitted, since uvcal can do it.
 
 Calibration is done by normalization of each cross-correllation $V_{ij}$ with $\sqrt{V_{ii} V_{jj}}$.
 

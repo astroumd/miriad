@@ -42,7 +42,8 @@ on them to get current help, but here are some reminders to the most important o
 
 Graphics output is all done via PGPLOT, and the command line
 parameter {\tt device=} is commonly used to select the device. Examples:
-{\tt /ps, fig1.ps/vps, /xs, 2/xs, fig2.cps/vcps}.
+{\tt /ps, fig1.ps/vps, /xs, 2/xs, fig2.cps/vcps, plot1.gif/gif}. The 
+{\tt mirhelp device} command will also explain.
 
 \subsection{select=}
 
@@ -67,6 +68,7 @@ The {\tt mirhelp select} command also provides more details.
   pointing(p1,p2)               uses MAX(az,el) error
   pol(p1,p2,p3,...)
   source(NAME1,NAME2,...)
+  purpose(LIST[,option])        Select on purpose (BFGPSO).
   freq(f1,f2)                   sky freq must be in range f1..f2 (GHz)
   amp(amplo,amphi)              one number means amp(amplo)
   shadow(d)

@@ -31,6 +31,8 @@ data. The various stages of baseline corrections are not maintained here, see Se
 \item
 2007/01/xx:  auto-correllations added {\bf [refill]}
 \item
+2007/01/11:  intent (uv variable {\tt purpose} added) ** miriad select= does not recognize this yet **
+\item
 2007/01/xx:  fixed cross-talk other subarrays that stored some uv variables as 0 (bugzilla \#376?)
 \item
 2007/01/31:  jyperk now correctly made baseline dependant  for proper {\tt invert} weighting (bugzilla \#339) {\bf [refill]}

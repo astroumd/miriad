@@ -11,7 +11,7 @@ This manual, and other relevant information, is also available on
 % This also contains information on retrieving and installing \miriad.
 \end{latexonly}
 
-and serves as a cook book for CARMA data using the
+and serves as a cookbook for CARMA data using the
 \miriad\ package. It is assumed that the reader has some familiarity
 with the underlying {\bf Unix} operating system (be it Linux, Solaris or Darwin)
 and \miriad\ itself. 
@@ -61,13 +61,20 @@ bugs on a more user friendly webpage).
 
 \section{Links}
 
-A Wiki page has also been set up at {\tt http://carma.astro.umd.edu/wiki/index.php/Miriad}.
+\begin{itemize}
+\item
+A Wiki page has also been set up at {\tt http://carma.astro.umd.edu/wiki/index.php/Miriad}
+\item
+Miriad bugzilla (part of CARMA bugzilla) at {\tt http://www.mmarray.org/bugzilla}
+\item
+\end{itemize}
 
 \section{Revision History}
 
 \begin{itemize}
 \item 20-apr-2007:   first draft posted
-\item 1-may-2007:    claarify quality logs, fix a fluxcal example, language cleanup 
+\item 1-may-2007:    clarify quality logs, fix a fluxcal example, language cleanup 
+\item 3-may-2007:    3.5.1 was left out accidentally, cleanup more lingo
 
 \end{itemize}
 

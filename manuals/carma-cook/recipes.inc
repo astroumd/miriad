@@ -268,8 +268,7 @@ Just make sure you have a good set of CPUs!
 
 
 \footnotesize
-hello
-% \verbatimlisting{red.csh}
+\verbatimlisting{red.csh}
 \normalsize
 
 
