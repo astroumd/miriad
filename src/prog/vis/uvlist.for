@@ -30,7 +30,7 @@ c	  "variables" uv variables.
 c	  "stat"      max, ave, rms and high channels for each record.
 c	  "birds      frequencies for high channels in each record.
 c	  "spectra"   information about the spectral windows.
-c         "baseline"  baseline export format (the Scoville table)
+c	  "baseline"  baseline export format (the Scoville table)
 c	If no options are given, uvlist uses options=brief,data.
 c@ select
 c	This selects the data to be processed, using the standard uvselect
@@ -136,10 +136,11 @@ c                  this was somewhat involved and hopefully i dind't break the l
 c   30jan06 pjt/sw - output in listdat/longdat now using 'time', not 'ut'
 c    8mar06 pjt  - added dazim/delev for ant1/2 in option=baseline (units: arcmin)
 c    4may06 sw   - added integration time to header
+c   17may07 mchw - cleaned up options=list and options=baseline.
 c-----------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='UVLIST: version  4-may-06')
+	parameter(version='UVLIST: version  17-May-07')
 	real rtoh,rtod,pi
 	integer maxsels
 	parameter(pi=3.141592653589793,rtoh=12/pi,rtod=180/pi)
@@ -191,7 +192,7 @@ c-----------------------------------------------------------------------
      *     dobase)then
 	  if(linetype.ne.' ')
      *	    call uvset(unit,'data',linetype,numchan,start,width,step)
-	  if (dobase) then
+	  if (dolist.or.dobase) then
 	     call uvset(unit,'preamble','uvw/time/baseline',0,0.,0.,0.)
 	     call uvset(unit,'coord','nanosec',0,0.,0.,0.)
 	  else
@@ -204,7 +205,7 @@ c
 c  Read through the file, listing what we have to.
 c
 	num=0
-	if (dobase)then
+	if (dolist.or.dobase)then
 	   call uvread(unit,preamble,data,flags,maxchan,numchan)
 	   uin = preamble(1)
 	   vin = preamble(2)
@@ -291,7 +292,7 @@ c
 c
 c  Loop the loop.
 c
-	  if (dobase) then
+	  if (dolist.or.dobase) then
 	   call uvread(unit,preamble,data,flags,maxchan,numchan)
 	   uin = preamble(1)
 	   vin = preamble(2)
@@ -759,39 +760,42 @@ c------------------------------------------------------------------------
 	integer mchan
 	parameter(rtoh=12/PI,rtod=180/PI)
 	parameter(MCHAN=5,rts=3600.*180./PI)
-	character line*256,cflag(MCHAN)*1, telescop*20, pol*2,src*9
+	character line*256,cflag(MCHAN)*1, telescop*20,pol*2,src*9
+	character type*1
 	real amp(MCHAN),phas(MCHAN),ha,elev,sinaz,cosaz,azim
 	real sinha,cosha,sind,cosd,sinl,cosl,chi,inttime
 	double precision obsra,obsdec,latitude,dra,ddec,freq,ntm
-	double precision dazim(MAXANT), delev(MAXANT)
+	double precision dazim(MAXANT)/MAXANT*0.0d0/
+	double precision delev(MAXANT)/MAXANT*0.0d0/
 	logical more,ok
-	integer i,j,ant1,ant2,nchan,nants
+	integer i,j,ant1,ant2,nchan,nants,length
 c
 c  Externals.
 c
 	character PolsC2P*2
 c
-	if(needhd)then
-	  call LogWrite(' ',more)
-	  if (dobase) then
-	     if (needhd) then
+	  if(needhd)then
+	    call LogWrite(' ',more)
 		call uvgetvrd(unit,'freq',freq,1)
-            call uvgetvrr(unit,'inttime',inttime,1)
+	    call uvgetvrr(unit,'inttime',inttime,1)
 		write(line,'(''freq='',f16.10,'' Ghz  inttime='',f7.3)') 
-     *            freq,inttime
+     *        freq,inttime
 		call LogWrite(line,more)
-	     endif
+c
+	  if(dobase) then
 	     line =' Vis # Source      UT(hrs)  LST(hrs)   HA(hrs)'
      *           //'   Dec(deg)  Ant     u(m)      v(m)      w(m)  '
      *           //' Azim  Elev(deg)   Amp/Phas '
      *           //'  daz1   del1   daz2   del2'
 	  else
-	     line =' Vis #   UT(hrs)  LST(hrs)   Ant    Pol  u(kLam)'
-     *	         //'  v(kLam)  Azim  Elev(deg)  Chi  dra(")  ddec(")'
+	     line =' Vis # Source      UT(hrs)  LST(hrs)   HA(hrs)'
+     *           //'   Dec(deg)  Ant     u(m)      v(m)      w(m)  '
+     *           //' Azim  Elev(deg)   Amp/Phas '
+     *           //'  Chi    dra(")  ddec(")'
+	  endif
+	  call LogWrite(line,more)
 	  endif
 c********1*********2*********3*********4*********5*********6*********7**
-	  call LogWrite(line,more)
-	endif
 c
 c  Calculate the elevation and paralactic angle.
 c
@@ -820,20 +824,19 @@ c
 	cosaz = (sin(elev)*sinl-sind)/cos(elev)/cosl
 	azim  = atan2(sinaz,cosaz)
 	call parang(obsra,obsdec,lst,latitude,chi)
-c
-c  Give the preamble.
-c
-        call basant(basein,ant1,ant2)
 	pol = ' '
 	if(p.ne.0) pol = PolsC2P(p)
-
-	if (dobase) then
-	   call uvrdvra(unit,'source',src,'unknown')
-	   call uvrdvri(unit,'nants',nants,0)
-	   call uvgetvrd(unit,'dazim',dazim,nants)
-	   call uvgetvrd(unit,'delev',delev,nants)
-	   call amphase(data(1),amp(1),phas(1))
+       call basant(basein,ant1,ant2)
 	   ntm =CMKS/1d9 
+	   call uvrdvra(unit,'source',src,'unknown')
+	   call amphase(data(1),amp(1),phas(1))
+
+	if(dobase) then
+	   call uvrdvri(unit,'nants',nants,0)
+       call uvprobvr (unit, 'dazim', type, length, ok)
+       if(type.eq.'d') call uvgetvrd(unit,'dazim',dazim,nants)
+       call uvprobvr (unit, 'delev', type, length, ok)
+	   if(type.eq.'d') call uvgetvrd(unit,'delev',delev,nants)
 	   write(line,
      *    '(i6,1x,a,4f10.4,1x,i2,1x,i2,3f10.4,2f8.2,f7.3,1x,i4,4f7.2)')
      *	  mod(Visno,1000000),src,ut*rtoh,lst*rtoh,ha*rtoh,obsdec*rtod,
@@ -846,9 +849,10 @@ c
 
 	else
 	   write(line,
-     *    '(i6,2f10.4,1x,i4,''-'',i4,1x,a,2f9.2,3f8.2,2x,2f6.0)')
-     *	  mod(Visno,1000000),ut*rtoh,lst*rtoh,ant1,ant2,pol,
-     *	  0.001*uin,0.001*vin,azim*rtod,elev*rtod,
+     *    '(i6,1x,a,4f10.4,1x,i3,1x,i3,3f10.4,2f8.2,f7.3,1x,i4,3f7.2)')
+     *	  mod(Visno,1000000),src,ut*rtoh,lst*rtoh,ha*rtoh,obsdec*rtod,
+     *	  ant1,ant2,uin*ntm,vin*ntm,win*ntm,azim*rtod,elev*rtod,
+     *    amp(1),nint(phas(1)),
      *    chi*rtod,dra*rts,ddec*rts
 	endif
 c********1*********2*********3*********4*********5*********6*********7**
