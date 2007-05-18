@@ -61,7 +61,7 @@
 
 \section{UV Dataset}
 
-\newcommand{\uvversion}{April 2, 2007}
+\newcommand{\uvversion}{May 18, 2007}
 
 A \miriad\ uv dataset is composed of a collection of items and `\MM{u-v} variables'.
 The variables are parameters that are known at the time of the observation,
@@ -526,7 +526,9 @@ project(*)	\>A	\>-
 
 purpose(*)	\>A	\>-
 \>Scientific intent or purpose\\
-\>\>\>\  e.g. ....\\
+\>\>\>\  For CARMA: B=bandpass, F=flux, G=gain (phase/amp) \\
+\>\>\>\  P=polarization, S=science target, O=other\\
+
 
 ra		\>R or	\>radians
 \>Right ascension of the phase center/tangent point. See {\tt epoch} for\\
