@@ -180,6 +180,12 @@ Subcommands include:
         can be given. An asterisk in the source name is treated as a
         wildcard. Note that the sourcename match is done IGNORING CASE. 
 
+	  purpose(LIST[,option])
+	Select based on the intent/purpose of the observation. Introduced in CARMA,
+	where the letters B (bandpass), F (fluxcal), G (gaincal), P (polarization),
+	S (science) and O (other) are used.
+	Current options are EXACT and any match.
+
           frequency(f1,f2)
         Select correlations, where the sky frequency of the first correlation
         is in the range f1 to f2 (in GHz). If only a single frequency is
@@ -393,16 +399,17 @@ Subcommands include:
         type are:
 
           xs    X-windows output. This window is resizeable and
-                persistent. 
+                persistent. Prepending a number allows you to use multiple
+	        windows, e.g. 1/xs, 2/xs etc.
           xd    X-windows output. A transient window that disappears
                 when your task exists.
           ps    Postscript (landscape mode).
           vps   Postscript (portrait mode).
-          cps   Colour postscript (landscape mode).
-          vcps  Colour postscript (portrait mode).
+          cps   Color postscript (landscape mode).
+	  gif   gif files. Only supported with g77, not gfortran.
+          vcps  Color postscript (portrait mode).
           tek   Tektronix 4010 or equivalent.
-          xterm Xterm window (better for simple plots over
-                slow X links).
+          xterm Xterm window (better for simple plots over slow X links).
 
         A `?' as device name generates a complete list of the recognized
         types (which will most likely vary from system to system).
