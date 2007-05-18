@@ -164,6 +164,7 @@
 /*		  only when the relevant uv variables are in the dataset*/
 /*  pjt  25apr06 Add ATNF's new uvdim_c and match sourcenames w/o case  */
 /*  pjt  22aug06 merged versions; finish dazim/delev selection code     */
+/*  pjt  17mar08 added code to select on purpose variable               */
 /*----------------------------------------------------------------------*/
 /*									*/
 /*		Handle UV files.					*/
@@ -253,7 +254,7 @@
 /*		list to be formed for hashing.				*/
 /*									*/
 /*----------------------------------------------------------------------*/
-#define VERSION_ID "22-aug-06 pjt"
+#define VERSION_ID "17-may-07 pjt"
 
 #define private static
 
@@ -414,6 +415,7 @@ typedef struct varhand{
 #define SEL_ELEV 19
 #define SEL_DAZIM 20
 #define SEL_DELEV 21
+#define SEL_PURP  22
 
 typedef struct {
 	int type,discard;
@@ -471,13 +473,13 @@ typedef struct {
 	VARIABLE *coord,*corr,*time,*bl,*tscale,*nschan,*axisrms;
 	VARIABLE *sfreq,*sdf,*restfreq,*wcorr,*wfreq,*veldop,*vsource;
 	VARIABLE *plmaj,*plmin,*plangle,*dra,*ddec,*ra,*dec,*pol,*on;
-        VARIABLE *dazim, *delev;
+        VARIABLE *dazim, *delev, *purpose;
 	VARIABLE *obsra,*obsdec,*lst,*elev,*antpos,*antdiam,*source,*bin;
 	VARIABLE *vhash[HASHSIZE],*prevar[MAXPRE];
 	VARIABLE variable[MAXVAR];
         LINE_INFO data_line,ref_line,actual_line;
 	int need_skyfreq,need_point,need_planet,need_dra,need_ddec,
-	    need_dazim, need_delev,
+   	    need_dazim, need_delev,need_purp,
 	    need_ra,need_dec,need_pol,need_on,need_obsra,need_uvw,need_src,
 	    need_win,need_bin,need_lst,need_elev;
 	float ref_plmaj,ref_plmin,ref_plangle,plscale,pluu,pluv,plvu,plvv;
@@ -514,7 +516,7 @@ private void uv_addopers(),uv_override();
 private UV *uv_getuv();
 private VARIABLE *uv_mkvar(),*uv_locvar(),*uv_checkvar();
 private int uv_scan(),uvread_line(),uvread_select(),uvread_maxvis();
-private int uvread_shadowed(),uvread_match();
+private int uvread_shadowed(),uvread_match(),uvread_pmatch();
 private double uv_getskyfreq();
 
 /************************************************************************/
@@ -530,7 +532,7 @@ static int checklist = 0;
  *  uvio routines. It is essentially a debugging device (both for bad
  *  files and bad behaviour of uvio!).
  *
- *  Call several uvio.c poutines, some of which are the secret ones,
+ *  Call several uvio.c routines, some of which are the non-public ones,
  *  to get a 'human' readable listing of a miriad visibility data set `
  *  Because it needs some of these 'static' routines, the source code
  *  of uvio.c needs to be included here directly, as opposed to linking
@@ -539,7 +541,7 @@ static int checklist = 0;
  *  Note:  This program does not have the normal miriad user interface
  *
  */
-main(int ac,char *av[])
+int main(int ac,char *av[])
 {
     int i,tno;
     char *fn;
@@ -553,7 +555,6 @@ main(int ac,char *av[])
 #else
         printf("MIR3 mode **probably will not work in MIR4**\n");
 #endif
-	
         exit(0);
     }
 
@@ -567,6 +568,7 @@ main(int ac,char *av[])
     }
     my_uvlist(tno,fn);
     uvclose_c(tno);
+    return 0;
 }
 
 
@@ -1033,6 +1035,7 @@ private UV *uv_getuv(int tno)
   uv->need_dra	   = uv->need_ddec  = uv->need_ra     = FALSE;
   uv->need_dec	   = uv->need_lst   = uv->need_elev   = FALSE;
   uv->need_obsra   = uv->need_dazim = uv->need_delev  = FALSE;
+  uv->need_purp    = FALSE;
   uv->uvw = NULL;
   uv->ref_plmaj = uv->ref_plmin = uv->ref_plangle = 0;
   uv->plscale = 1;
@@ -2212,11 +2215,15 @@ void uvsela_c(int tno,Const char *object,Const char *string,int datasel)
     uv->select = sel;
   }
 
-/* Selection by source. */
+/* Selection by source or purpose. */
 
   if(!strcmp(object,"source")){
     uv_addopers(sel,SEL_SRC,discard,0.0,0.0,string);
     uv->need_src = TRUE;
+
+  } else if (!strcmp(object,"purpose")) {
+    uv_addopers(sel,SEL_PURP,discard,0.0,0.0,string);
+    uv->need_purp = TRUE;
 
 /* Some unknown form of selection. */
 
@@ -2248,7 +2255,8 @@ void uvselect_c(int tno,Const char *object,double p1,double p2,int datasel)
     object	This can be one of "time","antennae","visibility",
 		"uvrange","pointing","amplitude","window","or","dra",
 		"ddec","uvnrange","increment","ra","dec","and", "clear",
-		"on","polarization","shadow","auto","dazim","delev"
+		"on","polarization","shadow","auto","dazim","delev",
+                "purpose"
     p1,p2	Generally this is the range of values to select. For
 		"antennae", this is the two antennae pair to select.
 		For "antennae", a zero indicates "all antennae".
@@ -3221,48 +3229,7 @@ private int uvread_select(UV *uv)
       if(discard || n >= sel->noper) goto endloop;
     }
 
-    /* ==PJT== */
-
-/* Apply delta AZIM selection. */
-
-    if(op->type == SEL_DAZIM){
-      discard = !op->discard;
-      if(uv->need_dazim) nants = uv->dazim->length / sizeof(double);
-      else nants=0;
-
-      if(!uv->need_dazim) dazim = 0;
-      else dazim = (double *)uv->dazim->buf;
-      while(n < sel->noper && op->type == SEL_DAZIM){
-	if (dazim==0) break;
-	for (i=0; i<nants; i++) {
-	  if(op->loval <= dazim[i] && dazim[i] <= op->hival) {
-	    discard = op->discard;
-	    /* printf("ant %d: %g  in-ranged %g %g  \n",i+1,dazim[i],op->loval,op->hival);  */
-	  } 
-	}
-        op++; n++;
-      }
-      if(discard || n >= sel->noper) goto endloop;
-    }
-
-/* Apply delta ELEV selection. */
-    if(op->type == SEL_DELEV){
-      discard = !op->discard;
-      if(uv->need_delev) nants = uv->delev->length / sizeof(double);
-      else nants=0;
-
-      if(!uv->need_delev) delev = 0;
-      else delev = (double *)uv->delev->buf;
-      while(n < sel->noper && op->type == SEL_DELEV){
-	if (delev==0) break;
-	for (i=0; i<nants; i++) {
-	  if(op->loval <= delev[i] && delev[i] <= op->hival)
-	    discard = op->discard;
-	}
-	op++; n++;
-      }
-      if(discard || n >= sel->noper) goto endloop;
-    }
+    /* ==PJT== TODO: bleh, this could be in the wrong order .... */
 
 /* Apply delta RA selection. */
 
@@ -3482,6 +3449,60 @@ private int uvread_select(UV *uv)
       if(discard || n >= sel->noper) goto endloop;
     }
 
+/* Apply delta AZIM selection. */
+
+    if(op->type == SEL_DAZIM){
+      discard = !op->discard;
+      if(uv->need_dazim) nants = uv->dazim->length / sizeof(double);
+      else nants=0;
+
+      if(!uv->need_dazim) dazim = 0;
+      else dazim = (double *)uv->dazim->buf;
+      while(n < sel->noper && op->type == SEL_DAZIM){
+	if (dazim==0) break;
+	for (i=0; i<nants; i++) {
+	  if(op->loval <= dazim[i] && dazim[i] <= op->hival) {
+	    discard = op->discard;
+	    /* printf("ant %d: %g  in-ranged %g %g  \n",i+1,dazim[i],op->loval,op->hival);  */
+	  } 
+	}
+        op++; n++;
+      }
+      if(discard || n >= sel->noper) goto endloop;
+    }
+
+/* Apply delta ELEV selection. */
+
+    if(op->type == SEL_DELEV){
+      discard = !op->discard;
+      if(uv->need_delev) nants = uv->delev->length / sizeof(double);
+      else nants=0;
+
+      if(!uv->need_delev) delev = 0;
+      else delev = (double *)uv->delev->buf;
+      while(n < sel->noper && op->type == SEL_DELEV){
+	if (delev==0) break;
+	for (i=0; i<nants; i++) {
+	  if(op->loval <= delev[i] && delev[i] <= op->hival)
+	    discard = op->discard;
+	}
+	op++; n++;
+      }
+      if(discard || n >= sel->noper) goto endloop;
+    }
+
+/* Apply purpose PURP selection. */
+
+    if(op->type == SEL_PURP){
+      discard = !op->discard;
+      while(n < sel->noper && op->type == SEL_PURP){
+	if(uvread_pmatch(op->stval,uv->purpose->buf,uv->purpose->length))
+	  discard = op->discard;
+	op++; n++;
+      }
+      if(discard || n >= sel->noper) goto endloop;
+    }
+
 /* We have processed this selection clause. Now determine whether the
    overall selection criteria is to select or discard. Note that we cannot
    get here if sel->and == TRUE and selprev == FALSE. 		*/
@@ -3542,6 +3563,27 @@ private int uvread_match(char *s1,char *s2, int length)
 #endif
       length--;
     }
+  }
+  return *s1 == 0 && length == 0;
+}
+/************************************************************************/
+private int uvread_pmatch(char *s1,char *s2, int length)
+/*
+    This matches two purposes.   The first name is what we want to match
+    The second string is not zero terminated.
+
+  Input:
+    s1		The first string. No wildcards. Zero terminated.
+    s2		The second string. No wildcards. Not zero terminated.
+    length	Length of the second string.
+  Output:
+    uvread_pmatch True if the two strings match.
+------------------------------------------------------------------------*/
+{
+  while(*s1 && length > 0){
+    /* here we match ignoring case */
+    if(toupper(*s1++) != toupper(*s2++)) return 0;
+    length--;
   }
   return *s1 == 0 && length == 0;
 }
@@ -3757,6 +3799,7 @@ private void uvread_init(int tno)
   if(uv->need_pol)   uv->need_pol= uv_locvar(tno,"pol") != NULL;
   if(uv->need_pol)   uv->pol     = uv_checkvar(tno,"pol",H_INT);
   if(uv->need_on)    uv->on      = uv_checkvar(tno,"on",H_INT);
+  if(uv->need_purp)  uv->purpose = uv_checkvar(tno,"purpose",H_BYTE);
   if(uv->need_src)   uv->source  = uv_checkvar(tno,"source",H_BYTE);
   if(uv->need_bin)   uv->bin	 = uv_checkvar(tno,"bin",H_INT);
   if(uv->need_lst)   uv->lst     = uv_checkvar(tno,"lst",H_DBLE);

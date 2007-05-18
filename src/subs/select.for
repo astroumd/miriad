@@ -37,6 +37,7 @@ c    rjs  16jun00 Check for bad antenna numbers.
 c    rjs  28jul00 Correct bug introduced in the above.
 c    rjs  27oct00 Handle change in baseline numbering convention.
 c    rjs  16aug04 Handle elevation and HA selection.
+c    pjt  17may07 Handle purpose selection
 c
 c  Routines are:
 c    subroutine SelInput(key,sels,maxsels)
@@ -90,6 +91,7 @@ c    bin(lo,hi)		Select pulsar bin
 c    ha(hstart,hend)    Select on hour angle (values in decimal hours or hh:mm:ss)
 c    lst(lst1,lst2)     Select on LST (value as above).
 c    elevation(el1,el2) Select on elevation (angles in degrees).
+c    purpose(type(s))   Select on purpose uv variable string BFGPSO
 c
 c  The input command would look something like:
 c    select=time(t1,t2),uv(uv1,uv2),...
@@ -150,6 +152,7 @@ c		  'bin'			Select on bin number.
 c		  'ha'			Select on hour angle.
 c		  'lst'			Select on LST.
 c		  'elevation'		Select on elevation.
+c                 'purpose'             Select on purpose
 c		Note that this does not support all objects to uvselect.
 c		The object name may have a suffix of '?' (e.g. 'window?')
 c		in which case the "value" argument is ignored, and SelProbe
@@ -461,6 +464,32 @@ c
 	    sels(offset+NSIZE) = 5
 	    offset = offset + 5
 	    nsels = nsels + 1
+
+c
+c  Handle  "PURPOSE" selection.
+c
+          else if(seltype.eq.PURPOSE)then
+	    if(k1+2.gt.k2)
+     *		call SelBug(spec,'Bad purpose list')
+	    if(spec(k1:k1).ne.'('.or.spec(k2:k2).ne.')')
+     *		call SelBug(spec,'Bad purpose list')
+	    length = 0
+	    do j=k1+1,k2
+	      if(spec(j:j).eq.','.or.j.eq.k2)then
+		if(length.eq.0)
+     *		  call SelBug(spec,'Zero length purpose list')
+		sels(offset+ITYPE) = sgn*seltype
+		sels(offset+NSIZE) = length + 2
+		offset = offset + length + 2
+		nsels = nsels + 1
+		length = 0
+	      else
+		length = length + 1
+		if(offset+length+1.gt.maxsels)
+     *		  call SelBug(spec,'Selection expression too complex')
+		sels(offset+length+1) = ichar(spec(j:j))
+	      endif
+	    enddo
 c
 c  Handle  "SOURCE" selection.
 c
@@ -786,9 +815,9 @@ c
      *		0.0d0,flag)
 	    enddo
 c
-c  Source names.
+c  Source or purpose names.
 c
-	  else if(type.eq.SOURCE)then
+	  else if(type.eq.SOURCE .or. type.eq.PURPOSE)then
 	    if(n.gt.len(string))
      *		call bug('f','String buffer overflow, in SelApply')
 	    do j=1,n
