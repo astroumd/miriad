@@ -6,7 +6,11 @@ echo few SANITY TESTS:
 imgen out=map0
 hexdump -C map0/header > map0.hexdump 
 tail -2 map0.hexdump | grep -q "00 00 00 02 00 00 00 02"
-if ($status) echo "*** Fatal error: endianism not correct"
+if ($status) then
+  echo "*** Fatal error: endianism not correct"
+else
+  echo Endianism correct.
+endif
 
 implot in=map0 device=/null
 implot in=map0 device=/ps
