@@ -164,7 +164,7 @@
 /*		  only when the relevant uv variables are in the dataset*/
 /*  pjt  25apr06 Add ATNF's new uvdim_c and match sourcenames w/o case  */
 /*  pjt  22aug06 merged versions; finish dazim/delev selection code     */
-/*  pjt  17mar08 added code to select on purpose variable               */
+/*  pjt  22mar08 added code to select on purpose variable               */
 /*----------------------------------------------------------------------*/
 /*									*/
 /*		Handle UV files.					*/
@@ -254,7 +254,7 @@
 /*		list to be formed for hashing.				*/
 /*									*/
 /*----------------------------------------------------------------------*/
-#define VERSION_ID "17-may-07 pjt"
+#define VERSION_ID "22-may-07 pjt"
 
 #define private static
 
@@ -516,7 +516,7 @@ private void uv_addopers(),uv_override();
 private UV *uv_getuv();
 private VARIABLE *uv_mkvar(),*uv_locvar(),*uv_checkvar();
 private int uv_scan(),uvread_line(),uvread_select(),uvread_maxvis();
-private int uvread_shadowed(),uvread_match(),uvread_pmatch();
+private int uvread_shadowed(),uvread_match();
 private double uv_getskyfreq();
 
 /************************************************************************/
@@ -3496,7 +3496,7 @@ private int uvread_select(UV *uv)
     if(op->type == SEL_PURP){
       discard = !op->discard;
       while(n < sel->noper && op->type == SEL_PURP){
-	if(uvread_pmatch(op->stval,uv->purpose->buf,uv->purpose->length))
+	if(uvread_match(op->stval,uv->purpose->buf,uv->purpose->length))
 	  discard = op->discard;
 	op++; n++;
       }
@@ -3563,27 +3563,6 @@ private int uvread_match(char *s1,char *s2, int length)
 #endif
       length--;
     }
-  }
-  return *s1 == 0 && length == 0;
-}
-/************************************************************************/
-private int uvread_pmatch(char *s1,char *s2, int length)
-/*
-    This matches two purposes.   The first name is what we want to match
-    The second string is not zero terminated.
-
-  Input:
-    s1		The first string. No wildcards. Zero terminated.
-    s2		The second string. No wildcards. Not zero terminated.
-    length	Length of the second string.
-  Output:
-    uvread_pmatch True if the two strings match.
-------------------------------------------------------------------------*/
-{
-  while(*s1 && length > 0){
-    /* here we match ignoring case */
-    if(toupper(*s1++) != toupper(*s2++)) return 0;
-    length--;
   }
   return *s1 == 0 && length == 0;
 }
