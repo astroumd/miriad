@@ -170,6 +170,8 @@ c    rjs  28aug96 Minor change to get around gcc-related bug. Change care
 c		  Dave Rayner.
 c    pjt   5aug99 Increased MaxMod a bit
 c    mchw 27apr07 Check for auto instead of not cross. i.e. allow mixed.   
+c    mchw 23may07 if (nants.gt.MAXANT) call bug('f', 'number of antennas > MAXANT in currently installed task')
+
 c
 c  Bugs/Shortcomings:
 c   * Selfcal should check that the user is not mixing different
@@ -178,7 +180,7 @@ c   * It would be desirable to apply bandpasses, and merge gain tables,
 c     apply polarisation calibration, etc.
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version='Selfcal: version 1.0 27-April-2007')
+	parameter(version='Selfcal: version 1.0 23-May-2007')
 	integer MaxMod,maxsels,nhead
 	parameter(MaxMod=64,maxsels=1024,nhead=3)
 c
@@ -418,9 +420,11 @@ c
 	if(first)then
 	  call uvrdvri(tvis,'nants',nants,0)
 	  if(nants.le.0)call bug('f',
-     *	    'The data file does not contain the number of antennae')
+     *	    'The data file does not contain the number of antennas')
 	  if(nants.lt.MinAnts)call bug('f',
-     *	    'Fewer than the minimum number of antennae are present')
+     *	    'Fewer than the minimum number of antennas are present')
+	  if (nants.gt.MAXANT) call bug('f', 
+     *    'number of antennas > MAXANT in currently installed task')
 	  time0 = int(preamble(4)) + 0.5
 	  nbad = 0
 	  first = .false.

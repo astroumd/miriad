@@ -106,6 +106,7 @@ c		  and gains is single polarisation.
 c    rjs  15jan06 Improve weighting.
 c    rjs  08jan07 Use MAXWIN more rigorously.
 c    jhz  16jan07 set external unpack, pack, scale
+c    mchw 23may07 if(nant.gt.MAXANT)call bug('f','Too many antennas')
 c
 c  Problems:
 c    * Should do simple spectral index fit.
@@ -118,7 +119,7 @@ c------------------------------------------------------------------------
 	parameter(MAXSOLN=1024,MAXPOL=2)
 c
 	character version*(*)
-	parameter(version='MfCal: version 1.0 08-Jan-07')
+	parameter(version='MfCal: version 1.0 23-May-07')
 c
 	integer tno
 	integer pWGains,pFreq,pSource,pPass,pGains,pTau
@@ -211,6 +212,10 @@ c
      *		     MAXSPECT,nspect,sfreq,sdf,nschan,nants,
      *		     MAXSOLN,nsoln,time,Count,minant,refant,interval,
      *		     edge,Source,PolMap)
+c
+c  Check number of antennas
+c
+	if(nants.gt.MAXANT)call bug('f','Too many antennas')
 c
 c  Check that the polarisations present are commensurate.
 c
