@@ -184,6 +184,8 @@ c                added nofit to options for not displaying the
 c                polynomial fitting curve or moving smooth curve on
 c                the solution plots.
 c    jhz 15mar07 added Keyword dotsize
+c    jhz 22may07 fixed a bug in the case of present flagged chunk
+c                when apply the opolyfit curve.
 c  Bugs:
 c------------------------------------------------------------------------
         integer maxsels
@@ -193,7 +195,7 @@ c------------------------------------------------------------------------
         parameter (DPI = 3.14159265358979323846)
         parameter (TWOPI = 2 * PI)
         parameter (DTWOPI = 2 * DPI)        
-        parameter(version='SmaGpPlt: version 1.11 15-Mar-07')
+        parameter(version='SmaGpPlt: version 1.12 22-May-07')
         include 'smagpplt.h'
         integer iostat,tin,nx,ny,nfeeds,nants,nsols,ierr,symbol,nchan
         integer ntau,length, i, j, k,nschann(maxspect)
@@ -1554,7 +1556,7 @@ c------------------------------------------------------------------------
         include 'smagpplt.h'
         character line*80,label*20,title*12
         character uvfile*48
-        logical more,donply,dosmooth,dofit
+        logical more,donply,dosmooth,dofit, gflag(maxtimes)
         real x(maxtimes),y(maxtimes),freqmin,freqmax
         real value(2*maxant)
         complex gain
@@ -1594,20 +1596,22 @@ c
               value(offset+1) = 0
               do ichan=1,nchan
                 gain = g(ichan + nchan*offset)
-                if(abs(real(gain))+abs(aimag(gain)).gt.0)then
+c                if(abs(real(gain))+abs(aimag(gain)).gt.0)then
                   ng = ng + 1
+                  gflag(ng)=.true.
+         if(abs(real(gain))+abs(aimag(gain)).gt.0) gflag(ng)=.false.
                   if(.not.dochan) then
                   x(ng) = freq(ichan)
                   else
                   x(ng) = ichan
                   end if
                   y(ng) = getval(gain,value(offset+1))
-                endif
+c                endif
               enddo
               if(ng.gt.0)then
                 call setpg(freqmin,freqmax,y,ng,range,.true.)
 c        write(*,*) 'ifeed iant type nfeed',ifeed,iant,type,nfeeds
-          call pgptbpass(ng,x,y,symbol,ifeed,iant,type,
+          call pgptbpass(ng,x,y,gflag,symbol,ifeed,iant,type,
      *    nschann,donply,dosmooth,dofit,dotsize)
             if(filelabel.gt.-1) then
             if((filelabel.eq.1).and.(iant.eq.1))
@@ -1964,10 +1968,11 @@ c
         end
 
 c************************************************************************
-      SUBROUTINE PGPTBPASS (N,XPTS,YPTS,SYMBOL,IFEED,
+      SUBROUTINE PGPTBPASS (N,XPTS,YPTS,gflag,SYMBOL,IFEED,
      *   IANT,type,nschann,donply,dosmooth,dofit,dotsize)
       INTEGER N, IFEED, IANT
       REAL XPTS(*), YPTS(*)
+      LOGICAL gflag(*) 
       INTEGER SYMBOL,dotsize
       LOGICAL PGNOTO
       character type*(*)
@@ -2007,8 +2012,6 @@ C
         fsign=-1
         if((XPTS(1)/XPTS(2)).ge.1) fsign=1
         do i=1, N
-         
-
         if((schan+1).lt.nschann(nspects+1)) then
         schan  = schan+1
         x(schan)  = XPTS(i)
@@ -2018,10 +2021,10 @@ C
         y(schan) = YPTS(i)
          DELTAY(schan) = 1.D0
           else
-           schan  = schan+1
-           x(schan)  = XPTS(i)
-           T(schan)  = schan
-           xchan(schan)  = schan
+          schan  = schan+1
+       x(schan)  = XPTS(i)
+       T(schan)  = schan
+       xchan(schan)  = schan
            ys(schan) = YPTS(i)
            y(schan) = YPTS(i)
            DELTAY(schan) = 1.D0
@@ -2047,11 +2050,13 @@ c         if(nspects.gt.12) call pgsci(nspects-12)
              SYMBOL = -2
              call pgslw(dotsize)
              endif
+          if(.not.gflag(i)) then
          IF (SYMBOL.GE.0 .OR. SYMBOL.LE.-3) THEN
          CALL GRMKER(SYMBOL,.FALSE.,schan,x,ys)
          ELSE
          CALL GRDOT1(schan,x,ys)
          END IF
+          end if
 
          CALL PGEBUF
          call pgslw(1)
@@ -2095,10 +2100,10 @@ c
         if(type.eq.'Real') rpass(IANT, i-schan+ii, IFEED) = ys(ii)
         if(type.eq.'Imag') ipass(IANT, i-schan+ii, IFEED) = ys(ii)
         if(type.eq.'Amp')  apass(IANT,i-schan+ii, IFEED) = ys(ii)
-         if(type.eq.'Phase') ppass(IANT, i-schan+ii, IFEED) = ys(ii)
+        if(type.eq.'Phase') ppass(IANT, i-schan+ii, IFEED) = ys(ii)
         end do
        call pgsci(1)
-       if(dofit) call pgline (schan, x, ys)
+       if(dofit.and.(.not.gflag(i))) call pgline (schan, x, ys)
        call pgsci(1)
        schan=0
        end if
