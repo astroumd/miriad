@@ -86,12 +86,15 @@ endif
 
 if (-e  $rootdir/src/tools/ercmd.c) rm $rootdir/src/tools/ercmd.c
 
-if (0) then
- time $rootdir/install/install.miriad $opts generic=$generic
-else
- cd $rootdir/install
- time ./install.miriad $opts generic=$generic
-endif
+
+#    patch the VERSION
+set version=(`cat $rootdir/VERSION`)
+echo "$version - [automated build `date`]" > $rootdir/VERSION
+
+#    big install
+cd $rootdir/install
+time ./install.miriad $opts generic=$generic
+
 
 
 
