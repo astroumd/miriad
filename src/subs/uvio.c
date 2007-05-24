@@ -164,7 +164,7 @@
 /*		  only when the relevant uv variables are in the dataset*/
 /*  pjt  25apr06 Add ATNF's new uvdim_c and match sourcenames w/o case  */
 /*  pjt  22aug06 merged versions; finish dazim/delev selection code     */
-/*  pjt  22mar08 added code to select on purpose variable               */
+/*  pjt  22mar08 added code for purpose, fixed uvread_match()           */
 /*----------------------------------------------------------------------*/
 /*									*/
 /*		Handle UV files.					*/
@@ -254,7 +254,7 @@
 /*		list to be formed for hashing.				*/
 /*									*/
 /*----------------------------------------------------------------------*/
-#define VERSION_ID "22-may-07 pjt"
+#define VERSION_ID "23-may-07 pjt"
 
 #define private static
 
@@ -3531,16 +3531,16 @@ endloop:
 /************************************************************************/
 private int uvread_match(char *s1,char *s2, int length)
 /*
-    This matches two source names. The first name may contain wildcards
-    (just asterisks, not the full blown UNIX thingos). The second string
-    is not zero terminated.
+    This matches two (source) names in upper case. The first name may contain 
+    wildcards (just asterisks, not the full blown UNIX regex). The second string
+    is not zero terminated. Used by select=source() and purpose()
 
   Input:
     s1		The first string. Can contain wildcards. Zero terminated.
     s2		The second string. No wildcards. Not zero terminated.
     length	Length of the second string.
   Output:
-    uvread_match True if the two strings match.
+    uvread_match True (1) if the two strings match.
 ------------------------------------------------------------------------*/
 {
   while(*s1 && length > 0){
@@ -3554,16 +3554,17 @@ private int uvread_match(char *s1,char *s2, int length)
       }
       return 0;
     } else {
-#if 0
-      /* before april 2006 we did a direct match */
-      if(*s1++ != *s2++) return 0;
-#else
-      /* here we match ignoring case */
+      /* here we match ignoring case, before april 2006
+       * we didn't do toupper() and ignored case
+       */
       if(toupper(*s1++) != toupper(*s2++)) return 0;
-#endif
       length--;
     }
   }
+  /* in order to match s=NAME* with s2=NAME we need to do one more test */
+  if (*s1 == '*' && *(s1+1) == 0 && length == 0)
+    return 1;
+
   return *s1 == 0 && length == 0;
 }
 /************************************************************************/
