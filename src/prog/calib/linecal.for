@@ -25,9 +25,10 @@ c--
 c  History:
 c    01aug96 mchw Better way of handling linecal.
 c    08mar99 mchw Patch for single linecal measure.
+c    mchw 24may07 Check for auto instead of not cross. i.e. allow mixed.
 c------------------------------------------------------------------------
 	character version*(*),vis*80,out*80
-	parameter(version='(version 1.0 08-Mar-99)')
+	parameter(version='(version 1.0 24-May-2007)')
 	include	'maxdim.h'
 	integer length,item
 	complex gains(MAXANT)
@@ -57,7 +58,7 @@ c
 	call uvopen(tvis,vis,'old')
 	if(vis.eq.' ') call bug('f','Input visibility file is missing')
 	call rdhda(tvis,'obstype',obstype,'crosscorrelation')
-	if(obstype(1:5).ne.'cross')
+	if(obstype(1:5).eq.'auto')
      *	  call bug('f','The vis file is not cross correlation data')
 c
 c  Check that needed uv-variables are present.
