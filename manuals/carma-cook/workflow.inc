@@ -473,6 +473,79 @@ as well as (in this case 6) dimensionality.
 \bigskip
 TODO:explain difference between puthd and uvputhd
 
+\subsection{Line Length Correction}
+
+Phase corrections from the line length system are stored in the Miriad uv variables {\tt phasem1},
+which is an antenna based variable.
+
+The linelength system monitors changes in the delays through the
+optical fibers to the antennas.  The delays vary as the fibers
+change temperature.  The delay variations are small, typically less
+than 0.05 nsec on time scales of hours, but they are enough to
+cause significant phase drifts of the local oscillators on the
+receivers.  By correcting for the linelength changes, it should be
+possible to observe phase calibrators less often.
+
+To apply the linelength corrections, use the Miriad program {\tt linecal}, which
+write a calibration table in the dataset that can be applied (much like
+{\tt selfcal} does.
+However, don't expect perfection - the linelength
+system cannot correct for differences in the thermal expansion of
+the antennas (particularly BIMA vs OVRO) or for changes in the
+temperature of the phaselock electronics.
+
+\footnotesize
+\begin{verbatim}
+  % BASIC EXAMPLE:
+
+  uvcat vis=$rawdata out=$data select='-auto'
+      # this step is unnecessary with latest version of linecal!
+      # earlier versions can't handle autocorrelation data
+
+  linecal vis=$data
+      # insert linelength corrections into gains file
+
+  uvcat vis=$data out=$data.lc
+      # copy the data to apply the linelength corrections
+
+  selfcal vis=$data.lc ....
+      # now selfcal on calibrators, make maps in usual way
+
+
+
+LONGER EXAMPLE WITH REAL DATA (plots attached):
+
+  #!/bin/csh
+  set data = c0034.w3oh.1.miriad
+
+  linecal vis=$data
+      # new version of linecal ignores autocorrelation data
+
+  gpplt vis=$data yaxis=phase nxy=5,3 device=/xs options=wrap
+      # examine linelength phase correction; you see many wraps, but
+      # remember it is only the DIFFERENCES that matter
+
+  gpplt vis=$data yaxis=phase select='ant(5),time(18:00,19:00)' \
+    device=C5_LINEPHASE.ps/ps options=wrap
+      # examine 1 hr of linephase data from C5; ripples
+      # are caused by air conditioner in the teepee
+
+  uvplt vis=$data line=channel,1,1,15 axis=time,phase \
+    select='ant(1,5,11)(2,14,15),-auto,-source(noise)' \
+    nxy=3,3 device=RAW.ps/ps yrange=-180,180 options=nocal average=0.2
+      # examine raw phases before linelength correction
+
+  uvplt vis=$data line=channel,1,1,15 axis=time,phase \
+    select='ant(1,5,11)(2,14,15),-auto,-source(noise)' \
+    nxy=3,3 device=CORRECTED.ps/ps yrange=-180,180 average=0.2
+      # phases with linelength correction applied
+
+
+\end{verbatim}  % $
+\normalsize
+
+
+
 \subsection{Other UV variables}
 
 Some data bugs (e.g. latitude=0) cannot be fixed by refilling the data. In this case

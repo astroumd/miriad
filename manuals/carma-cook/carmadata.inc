@@ -42,6 +42,8 @@ data. The various stages of baseline corrections are not maintained here, see Se
 2007/03/23:  baselines updated. All data between Jan 8 and March 23 should be patched manually using {\tt uvedit}.
 \item
 2007/03/??:  blanking activated
+\item
+2007/05/24:  line-length corrections activated 
 
 \end{itemize}
 
