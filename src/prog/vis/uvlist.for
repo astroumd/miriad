@@ -1709,7 +1709,7 @@ c  Output:
 c    flux       Flux of the calibrator.
 c------------------------------------------------------------------------
 	logical update,isplanet
-	double precision day,dfreq,delta
+	double precision day/0.0d0/,dfreq,delta
 	integer iostat,length
         character source*16,source1*16,line*80,type*1
 	real freq,level
