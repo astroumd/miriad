@@ -37,10 +37,11 @@ c    mjs   04aug91 Replaced local maxant with maxdim.h MAXANT
 c    mchw  31mar93 Fixed format for more than 6 antennas.
 c    mjs   02jul93 Commented out unused fmt stmt to elim compiler warn.
 c    mchw  28apr06 Format change.
+c    mchw  30may07 Better Format for plotting.
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*),vis*120,log*120,line*100
-	parameter(version='version 1.0 28-Apr-06')
+	parameter(version='version 1.0 30-May-07')
 	integer tgains,header(2),nants,nsols,item,offset
 	double precision interval,dtime
 	integer refant,iostat,i,j,k
@@ -157,6 +158,8 @@ c
 c
 c  Write out some statistics for the gains.
 c
+c********1*********2*********3*********4*********5*********6*********7*c
+        print *, 'Ant    AveAmp       RmsAmp       AvePhi       RmsPhi'   
 	do j=1,nants
 	  if(SumWts(j).ne.0.)then
 	    AveAmp(j) = SumAmp(j)/SumWts(j)
@@ -164,6 +167,7 @@ c
 	    RmsAmp(j) = sqrt(max(RmsAmp(j)/SumWts(j)-AveAmp(j)**2,0.))
 	    RmsPhi(j) = sqrt(max(RmsPhi(j)/SumWts(j)-AvePhi(j)**2,0.))
 	  endif
+	  print *, j, AveAmp(j),RmsAmp(j),AvePhi(j),RmsPhi(j)   
 	enddo
 c
 	do j=1,nants,6
