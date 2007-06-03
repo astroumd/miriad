@@ -26,32 +26,34 @@ c  History:
 c  jhz 22sept05 made an initiative versioni, requested by dan marrone.
 c  jhz 26sept05 purged irrelevant lines and notes.
 c  pjt 18apr06  moved sortd to sort.for and cleaned up some indentation
+c  jhz 03jun07  incorporated peter williams modification
 c  Bugs:
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='UvSort: version 1.0 18-apr-06')
-	character uvflags*12,ltype*16,out*120
-	integer npol,Snpol,pol,tIn,tOut,vupd,nread,nrec,i
+	parameter(version='UvSort: version 1.1 03-jun-07')
+	character uvflags*12,ltype*16,out*120,line*120
+	integer npol,pol,tIn,tOut,vupd,nread,nrec
+	integer i,nuniq,written,nthistime,nrewind
 	real jyperk
-	logical dotaver,doflush,buffered,PolVary,first
-	logical ok,donenpol
-	double precision preamble(5),Tprev,interval
-        double precision time0
+	logical futureskipped
+	double precision preamble(5),Tprev,nextprog
 	complex data(MAXCHAN)
 	logical flags(MAXCHAN)
 c
-        integer MAXREC, blid,totalrec,idone
+        integer MAXREC
         parameter(MAXREC=1008000)
         integer irec,isrec
         double precision sortedtime(MAXREC)
+	integer npertime(MAXREC)
 c
 c  Externals.
 c
 	logical uvDatOpn
 c   initialize the time array
         do i=1, MAXREC
-        sortedtime(i)=0.0d0
+	   sortedtime(i) = 0.0d0
+	   npertime(i) = 0 
         end do
 c
 c  Get the input parameters.
@@ -61,7 +63,6 @@ c
 	call GetOpt(uvflags)
 	call uvDatInp('vis',uvflags)
               
-	call keyd('interval',interval,0.d0)
 	call keya('out',out,' ')
 	call keyfin
 c
@@ -71,24 +72,17 @@ c
 c
 c  Various initialisation.
 c
-	interval = interval/(24.*60.)
-	    npol = 0
-	   Snpol = 0
-           first = .true.
-	 PolVary = .false.
-	 doflush = .false.
-	buffered = .false.
-	donenpol = .false.
-         dotaver = .false.
-	    nrec = 0
+	npol = 0
+	nrec = 0
 c
 c making time sorted array: loop through the input data
 c and just read the times
 c
+	call output( 'First pass: reading timestamps and sorting')
+
         if(.not.uvDatOpn(tIn)) call bug('f', 
      *            'Cannot open the input file.') 
 	call uvDatRd(preamble,data,flags,maxchan,nread)
-	time0 = preamble(4)
 	do while(nread.gt.0)
 	   nrec = nrec + 1
 	   sortedtime(nrec) = preamble(4) 
@@ -97,17 +91,37 @@ c
 	call uvDatCls
 	call sortd (sortedtime,nrec)
 
+c XXX Begin modifications by PKGW
 c
-c
+c Cut down the list to only unique times
+
+	nuniq = 0
+	Tprev = 0.0d0
+
+        do i=1, nrec
+	   if (sortedtime(i).ne.Tprev) then
+	      nuniq = nuniq + 1
+	      sortedtime(nuniq) = sortedtime(i)
+	      Tprev = sortedtime(i)
+	   end if
+
+	   npertime(nuniq) = npertime(nuniq) + 1
+        end do
+
+	write(line,112) nuniq,nrec 
+        call output(line)
+112     format(5x,i6,' unique UV timestamps, ',i6,' UV records.')
+
 c  Open the input again, and the output file.
-c
-        write(*,*) 'Sorting uvdata into a time order.'
+
+        call output ('Second pass: copying data')
+
         call keyini
         call uvDatInp('vis',uvflags)
         call keya('out',out,' ')
         call keyfin
 	if(.not.uvDatOpn(tIn)) 
-      *   write(*,*) 'cannot open input uv file'
+      *   call bug('f', 'cannot open input uv file')
 	call uvDatGta('ltype',ltype)
 	call VarInit(tIn,ltype)
 	call uvVarIni(tIn,vupd)
@@ -116,105 +130,104 @@ c
 	call uvVarSet(vupd,'source')
 	call uvVarSet(vupd,'on')
                   
-c
-c Special processing the first time around.
-c       
-	if(first)then
-	   call uvopen(tOut,out,'new')
-	   call uvset(tOut,'preamble','uvw/time/baseline',0,0.,0.,0.)
-	   call hdcopy(tIn,tOut,'history')
-	   call hisopen(tOut,'append')
-	   call hiswrite(tOut,'UVSORT: Miriad '//version)
-	   call hisinput(tOut,'UVSORT')
-	   call hisclose(tOut)
-	   first = .false.
-	endif
+	call uvopen(tOut,out,'new')
+	call uvset(tOut,'preamble','uvw/time/baseline',0,0.,0.,0.)
+	call hdcopy(tIn,tOut,'history')
+	call hisopen(tOut,'append')
+	call hiswrite(tOut,'UVSORT: Miriad '//version)
+	call hisinput(tOut,'UVSORT')
+	call hisclose(tOut)
 	  
 	call VarOnit(tIn,tOut,ltype)
 
+	isrec = 1
+	written = 0
+	nrewind = 0
+	nextprog = 0.1d0
 
-c
-c  Loop over the data.
-c
-	isrec=1
-	blid=0
-	totalrec=0
-	idone=0
-	Tprev=0.0d0
-	ok = .false.
-12345	call uvDatRd(preamble,data,flags,maxchan,nread)
-	irec=0
-	do while(nread.gt.0)
-c
-c  Count the number of records read.
-c
-	   irec = irec + 1
-	   if(sortedtime(isrec).eq.preamble(4)) ok = .true.
-	   if(ok) then
-	      call uvDatGti('npol',npol)
-	      call uvputvri(tOut,'npol',npol,1)
-	      call uvDatGti('pol',pol)
-	      call uvputvri(tOut,'pol',pol,1)
-	      call VarCopy(tIn,tOut)
-	      call uvDatGtr('jyperk',jyperk)
-	      call uvputvrr(tOut,'jyperk',jyperk,1)
-	      call uvwrite(tOut,preamble,data,flags,nread)
-	      blid=blid+1
-	      totalrec=totalrec+1
-	      isrec=isrec+1
-	      Tprev = preamble(4)
-	   end if
+	do while(isrec.le.nuniq)
+	   futureskipped = .false.
+	   nthistime = 0
+	   irec = 0
+
 	   call uvDatRd(preamble,data,flags,maxchan,nread)
-	   if((preamble(4).ne.Tprev).and.ok) then
-	      call uvrewind(tIn)
-	      nread=-1
-	      ok=.false.
-	      if((isrec*100/nrec).eq.10.and.idone.lt.10) then
-		 write(*,*) isrec*100/nrec, '% completed.'
-		 idone=10
-	      else if ((isrec*100/nrec).eq.20.and.idone.lt.20) then
-		 write(*,*) isrec*100/nrec, '% completed.'
-		 idone=20
-	      else if ((isrec*100/nrec).eq.30.and.idone.lt.30) then
-		 write(*,*) isrec*100/nrec, '% completed.'
-		 idone=30
-	      else if ((isrec*100/nrec).eq.40.and.idone.lt.40) then
-		 write(*,*) isrec*100/nrec, '% completed.'
-		 idone=40
-	      else if ((isrec*100/nrec).eq.50.and.idone.lt.50) then
-		 write(*,*) isrec*100/nrec, '% completed.'
-		 idone=50
-	      else if ((isrec*100/nrec).eq.60.and.idone.lt.60) then
-		 write(*,*) isrec*100/nrec, '% completed.'
-		 idone=60
-	      else if ((isrec*100/nrec).eq.70.and.idone.lt.70) then
-		 write(*,*) isrec*100/nrec, '% completed.'
-		 idone=70
-	      else if ((isrec*100/nrec).eq.80.and.idone.lt.80) then
-		 write(*,*) isrec*100/nrec, '% completed.'
-		 idone=80
-	      else if ((isrec*100/nrec).eq.90.and.idone.lt.90) then
-		 write(*,*) isrec*100/nrec, '% completed.'
-		 idone=90
-	      end if
-c             write(*,*) preamble(4)- sortedtime(isrec-1),irec,
-c     *    Tprev-sortedtime(isrec-1),isrec-1,preamble(5),blid,'e',
-c     *    totalrec
-	      blid=0
-	   end if
-	enddo
-	if(isrec.lt.nrec) goto 12345
-	if(isrec.eq.nrec) goto 54321
-               
 
-c       enddo
-54321	write(*,*) isrec*100/nrec, '% completed.'
+c       Check again for isrec < nuniq since our short-circuit
+c       inside the loop will have advanced us past the end for
+c       the chronologically final record.
+
+	   do while(nread.gt.0.and.isrec.le.nuniq)
+	      irec = irec + 1
+
+	      if (preamble(4).gt.sortedtime(isrec)) then
+		 futureskipped = .true.
+	      else if(preamble(4).eq.sortedtime(isrec)) then
+		 call uvDatGti('npol',npol)
+		 call uvputvri(tOut,'npol',npol,1)
+		 call uvDatGti('pol',pol)
+		 call uvputvri(tOut,'pol',pol,1)
+		 call VarCopy(tIn,tOut)
+		 call uvDatGtr('jyperk',jyperk)
+		 call uvputvrr(tOut,'jyperk',jyperk,1)
+		 call uvwrite(tOut,preamble,data,flags,nread)
+
+		 written = written + 1
+		 nthistime = nthistime + 1
+
+c       If we haven't skipped any records from the future, and we know that
+c       we've written all the records for the current isrec, we can move on
+c       to the next isrec without rewinding, safe in the knowledge that
+c       all the necessary records lie ahead of us in the file.
+
+		 if ((.not.futureskipped).and.
+		 * (nthistime.eq.npertime(isrec))) then
+		    isrec = isrec + 1
+		    nthistime = 0
+		 end if
+
+c       Report progress
+
+		 if ((1.0d0 * written / nrec).ge.nextprog) then
+		    write(line,116)  written, nrec 
+		    call output(line) 
+                    nextprog = nextprog + 0.1
+		 end if
+	      end if
+
+	      call uvDatRd(preamble,data,flags,maxchan,nread)
+	   enddo
+
+c       Completed one pass through the file. We should have found every
+c       record for the current sorted time. Rewind and start looking for
+c       records matching the next time in our sorted list.
+
+	   if (nthistime.ne.npertime(isrec)) then
+	      write(*,*) 'Bug: nthis ', nthistime
+	      write(*,*) 'Bug: nper ', npertime(isrec)
+	      call bug ('f', 'Algorithm bug! (1)')
+	   end if
+
+	   nrewind = nrewind + 1
+	   call uvrewind(tIn)
+	   isrec = isrec + 1
+	enddo
+
+c       Done with all times. Check sanity and clean up.
+
+	if (isrec.le.nuniq) call bug ('f', 'Algorithm bug! (2)')
+	if (written.ne.nrec) call bug ('f', 'Algorithm bug! (3)')
+
+        write(line,115) nrewind 
+115     format('Done sorting. Had to rewind ',i6, ' times.')
+116     format(5x,i6,' of ', i6, ' UV records written.')
+        call output(line)
+
 	call uvDatCls
-c
-c  Update the history and close up files.
-c
 	call uvclose(tOut)
+
 	end
+
+
 c************************************************************************
 	subroutine GetOpt(uvflags)
 c
