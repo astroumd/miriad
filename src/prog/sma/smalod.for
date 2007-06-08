@@ -6,12 +6,11 @@ c= smalod - Convert an Sma archive data (Caltech MIR) into Miriad uv format
 c& jhz 
 c: data transfer
 c+
-c       SMALOD is a MIRIAD task, which converts a uv data-set from the MIR
+c       SMALOD is a MIRIAD task, which converts the standard SMA data 
 c       format to Miriad format.
 c
-c@ in   Name of the input MIR files. Several names (not yet) can be given
-c       -- wildcar expansion is supported. In this case, see the NFILES
-c       keyword below. There is no default.
+c@ in   Name of the input MIR file.
+c       There is no default.
 c
 c@ out
 c       Name of the output Miriad uv data-set. No default.
@@ -310,14 +309,18 @@ c                  added percent of file reading in the prompt
 c                  message.
 c    jhz 07-mar-07 robustly handling antennas file.
 c                  obsolete readant in the keyword input. 
+c    jhz 06-jun-07 added a bug report message accoding to
+c                  the new limits set by SMA hardware.
 c------------------------------------------------------------------------
         include 'maxdim.h'
         integer maxfiles
         parameter(maxfiles=128)
         character version*(*)
-        parameter(version='SmaLod: version 2.5 07-Mar-07')
+        parameter(version='SmaLod: version 2.6 06-June-07')
 c
         character in(maxfiles)*64,out*64,line*64, rxc*4
+        character msg*64
+        parameter(msg='Loading standard SMA data ...')
         integer tno, length, len1
         integer ifile,rxif,nfreq,iostat,nfiles,i
         double precision rfreq
@@ -433,7 +436,11 @@ c
             end do
 211         readant=i-1
             call txtclose(lIn)         
-       open(16,file=in(1)(1:len1(in(1)))//'antennas',status='unknown')
+           if(readant.gt.8) then
+           call bug('w', 'Number of antennas exceeded the limit 8.')
+           call bug('w', 'eSMA has not been implemented yet.')
+           end if
+      open(16,file=in(1)(1:len1(in(1)))//'antennas',status='unknown')
             do i=1,readant
             read(16,*) antid,xyz(1),xyz(2),xyz(3)
             antpos(1+(antid-1)*3) = xyz(1)
@@ -475,7 +482,9 @@ c
         call hisopen(tno,'write')
         call hiswrite(tno,'SMALOD: Miriad '//version)
         call hisinput(tno,'SMALOD')
-        call output('Loading SMA data ...')
+        call output('  ')
+        call output(msg)
+        call output('  ')
         ifile = 0
         iostat = 0
         dowhile(ifile.lt.fileskip+fileproc.and.iostat.eq.0)
