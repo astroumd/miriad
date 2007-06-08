@@ -7364,7 +7364,9 @@ case $TELESCOPE in
         def_maxdim=4096
 	def_maxant=30
 	def_maxbase=435
-	def_maxchan=12288
+#updated by jhz (2007-5-5) based on the new hardware limits discussed
+#with Bob Wilson, Ken (Taco) Young
+	def_maxchan=24576
 	def_maxwin=48
 	def_maxwide=50
 	continue;;
