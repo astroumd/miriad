@@ -17,6 +17,11 @@
 //                change SMRX from 5 to 4;
 //                rx-id array 0(230), 1(340), 2(400), 3(690), 4(??)
 // jhz 2007-1-11: add evec to smlodd structure.
+// jhz 2007-6-05: change the MAXBAS to 112 for 8 antennas
+//                2 sbs and 2 rxs.
+// jhz 2007-6-06: updated the software limit based on the
+//                SMA hardware limits discussed with Bob W.
+//                Taco
 #include "miriad.h"
 
 
@@ -306,28 +311,28 @@ struct anttsys {
  * Of course your real maxdimc.h better have at least as large as
  * these or else i will not be able to process the subsequent data
  */
-#define MAXINT 5000  /* maximum number of integration */
-#define MAXANT 10
-#define MAXCHAN 8217 /* 7681 8193+24=8217*/
-
-#define MAXBAS 90    /* maxant*(maxant-1)/2*2sb */
-
-#define MAXSOURCE 50
+#define MAXINT 10000  /* maximum number of integration */
+#define MAXANT 8 
+#define MAXCHAN 24576 /* from Taco June 5, 2007
+                         max channels per sb, bl, rx, 1pol 
+                        */
+#define MAXBAS 112    /* maxant*(maxant-1)/2*2sb*2rx for maxant=8*/
+#define MAXSOURCE 100
 #define SMIF 24
 #define SMRX  4     /* number of rx per track operattion */ 
-#define SMANT 10
+#define SMANT 8 
 #define SMPOL 5 
-#define SMBAS 90   /* smant*(smant-1) */
+#define SMBAS 56   /* smant*(smant-1) */
 #define SMBIN 1
 #define SMSB  2    /* number of size bands */
 #define SMCONT 33
 #define CONTCH 16 /* number of continuum chan per chunk */
-#define SMADATA 8294400 /* 24*maxchan*smbase */
-
+//#define SMADATA 2752512 /* MAXCHAN*MAXBAS*1(POL)  */
+#define SMADATA 11010048 /* MAXCHAN*MAXBAS*4(POL)  */
 /* WORDS_BIGENDIAN comes from miriad's sysdep.h */
 /* SWAP_ENDIAN is what SMA code originally used  */
 #if defined(WORDS_BIGENDIAN)
-# define SWAP_ENDIAN     0 /* for big endian computers  (e/g. sparc, ppc) */
+# define SWAP_ENDIAN     0 /* for big endian computers  (e.g. sparc, ppc) */
 #else
 # define SWAP_ENDIAN     1 /* for little endian computers (e.g. intel) */
 #endif
@@ -335,8 +340,6 @@ struct anttsys {
 struct wtt {
         short wt[SMIF][SMPOL][MAXBAS][SMSB][SMRX];
             };
-                                                                                              
-
 struct uvw {
         double u;
         double v;

@@ -198,6 +198,8 @@
 //                  read.
 // 2007-03-07 (JHZ) suppress the debugging msg when multiple
 //                  correlator configs are allowed.
+// 2007-06-6  (JHZ) added several check points based on
+//                  new software limits set by the SMA hardware.
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -738,6 +740,7 @@ int rsmir_Read(char *datapath, int jstat)
   int firstbsl;
   int numberBaselines=0;
   int numberSpectra,numberSidebands,numberRxif;
+  int numberChannels;
   int blhid,firstsp,lastsp;
   int inhset,blhset,sphset,inhset1st;
   int spcode[25], frcode[25];
@@ -772,7 +775,6 @@ int rsmir_Read(char *datapath, int jstat)
   int avenchan,miriadsp[SMIF+1];
   int utcd,utch,utcm,doprt;
   float utcs;
-  int ch;
   int blid_intchng[MAXINT];  
                // the baseline id right after integration change 
   int rxlod;   // the rx to load rxlod=0 -> smabuffer.rx1        
@@ -861,6 +863,10 @@ int rsmir_Read(char *datapath, int jstat)
   case 0:   
 //read header & vis 
        startTime = time(NULL);
+       if(nsets[0]>MAXINT) {
+       fprintf(stderr,"ERROR: Number of integration scans exceeded the limit %d.\n", MAXINT);
+         exit(-1);
+         }
 // Allocate memory to store all the headers 
       inh = (struct inh_def **) malloc(nsets[0]*sizeof( struct inh_def *));
       for (set=0;set<nsets[0];set++) {
@@ -1053,7 +1059,7 @@ foundTheRx:
     for (set=0;set<nsets[0];set++)  {
       wts[set] = (struct wtt *)malloc(sizeof(struct wtt ));
       if (wts[set] == NULL )        {
-        fprintf(stderr,"ERROR: Memory allocation for wts failed trying to allocate %d bytes\n",
+        fprintf(stderr,"ERROR: Memory allocation for wts failed trying to allocate %d bytes. Try 64bits.\n",
                nsets[0]*sizeof(struct wtt));
         exit(-1);
                                     }
@@ -1094,6 +1100,7 @@ foundTheRx:
 // bln will be used in configuring spectra
 //
       set=0;
+//      printf("nsets[1] = %d \n",  nsets[1]);
       for (blset=0; blset < nsets[1]; blset++)      { 
 // loading baseline based structure
 	tsys[blset]->blhid=blh[blset]->blhid;
@@ -1101,7 +1108,7 @@ foundTheRx:
         tsys[blset]->blsid=blh[blset]->blsid;
 	tsys[blset]->isb  =blh[blset]->isb;
 	tsys[blset]->irec =blh[blset]->irec;
-        tsys[blset]->ipol = ipolmap(blh[blset]->ipol);
+        tsys[blset]->ipol =ipolmap(blh[blset]->ipol);
 	tsys[blset]->itel1=blh[blset]->itel1;
 	tsys[blset]->itel2=blh[blset]->itel2;
 	
@@ -1164,6 +1171,11 @@ foundTheRx:
 	                                           }
 //     printf("set numberBaselines %d %d\n", set, numberBaselines);     
 	numberBaselines=uvwbsln[set]->n_bls;
+     if(numberBaselines>MAXBAS) {
+      fprintf(stderr,"ERROR: Number of baselines exceeded the limit %d .\n", MAXBAS);
+      exit(-1);
+                            }
+
                                                   } // blset 
     }
 handling_blarray:
@@ -1385,9 +1397,9 @@ double xyzpos;
                                                }
                                 }
 
-
-
- fprintf(stderr,"Geocentrical coordinates of antennas (m), reference antenna=%d\n",smabuffer.refant); 
+ fprintf(stderr,
+     "Geocentrical coordinates of antennas (m), reference antenna=%d\n",
+          smabuffer.refant); 
       for (i=1; i < smabuffer.nants+1; i++) {
        
  fprintf(stderr,"ANT x y z %s %11.4f %11.4f %11.4f\n",
@@ -1395,7 +1407,14 @@ double xyzpos;
 	       geocxyz[i].x,
 	       geocxyz[i].y,
 	       geocxyz[i].z);
-                                          }
+      if(jday > 2453736.5) {
+      if( abs(geocxyz[i].x-58.9) < 1.&&abs(geocxyz[i].y-212.3) < 1.&&abs(geocxyz[i].z+186.5) < 1.) {
+         fprintf(stderr,"ERROR: non-SMA antenna detected.\n");
+            exit(-1);}
+      if(abs(geocxyz[i].x-56.9)<1.&&abs(geocxyz[i].y-54.4) < 1.&&abs(geocxyz[i].z+143.2) < 1.) {
+         fprintf(stderr,"ERROR: non-SMA antenna detected.\n"); 
+            exit(-1);
+                      } } }
 //
 // convert geocentrical coordinates to equatorial coordinates
 // of miriad system y is local East, z is parallel to pole
@@ -1558,6 +1577,10 @@ double xyzpos;
 	   }
       }
     }
+             if(sourceID> MAXSOURCE) {
+       fprintf(stderr,"ERROR: Number of sources exceeded the limit %d\n", MAXSOURCE);
+             exit(-1);
+                                     }
 // setup correlator  
 // sph1 is a single set of spectra, assign memory to it.    
     sph1 = (struct sph_def *) malloc(sizeof( struct sph_def ));
@@ -2115,8 +2138,6 @@ dat2003:
  fprintf(stderr,"#Baselines=%d #Spectra=%d  #Sidebands=%d #Receivers=%d\n",
 	   numberBaselines/2, numberSpectra-1, numberSidebands, 
 	   numberRxif);
- fprintf(stderr,"start reading visibility data ...\n");
-
     if(smabuffer.dobary==1) fprintf(stderr,"Compute radial velocity wrt barycenter\n");
     if(smabuffer.dolsr==1) fprintf(stderr,"Compute radial velocity wrt LSR\n");
     sphSizeBuffer = numberSpectra*numberBaselines; 
@@ -2403,7 +2424,7 @@ smabuffer.w[blpnt] = uvwbsln[inhset]->uvwID[j].w/smabuffer.basefreq*1000.;
       break;
         	    }
        }
-//      flush=1;
+// flush=1;
       if(smabuffer.nopol==1) visSMAscan.blockID.polid=-5;
 	  switch(visSMAscan.blockID.polid)  {
 	  case  0: polpnt=0; break;
@@ -2444,11 +2465,17 @@ smabuffer.w[blpnt] = uvwbsln[inhset]->uvwID[j].w/smabuffer.basefreq*1000.;
                         }
 
 // for single rx case
+            numberChannels = 0;
             for (i=0;i<smaCorr.n_chunk+1;i++) 
             {
             sph[i]->nch = spn[inhset]->nch[i][0];
+            numberChannels = numberChannels + sph[i]->nch;
             }
-
+            if(numberChannels>MAXCHAN+1) {
+            fprintf(stderr,"ERROR: Number of channels exceeded the limit %d.\n", MAXCHAN);
+            exit(-1);
+                                         }
+            numberChannels = 0;
 // separate frequency configuration for rx1 and rx2 in dual rx case
           if(smaCorr.no_rxif==2)
           for (i=0;i<smaCorr.n_chunk+1;i++) {
@@ -2456,8 +2483,13 @@ smabuffer.w[blpnt] = uvwbsln[inhset]->uvwID[j].w/smabuffer.basefreq*1000.;
               sph[i]->nch = spn[inhset]->nch[i][0];
            if(rxpnt==smabuffer.rx2)
               sph[i]->nch = spn[inhset]->nch[i][1];
+              numberChannels = numberChannels + sph[i]->nch;
                                             }
+            if(numberChannels>MAXCHAN+1) {
+            fprintf(stderr,"ERROR: Number of channels exceeded the limit %d.\n", MAXCHAN);
+            exit(-1);
 
+                               }
 // The data for this spectrum consists of a 5 short int record header 
 // and the data  which is a short for each real and a short for 
 // each imag vis 
@@ -3242,7 +3274,7 @@ float juliandate (struct codeh_def *refdate[], int doprt)
   static char *months[] = {"ill", "Jan","Feb","Mar","Apr","May","Jun","Jul", 
           "Aug","Sep","Oct","Nov","Dec"};
 //  char yc[4];
-  char yc[2];
+//  char yc[2];
   char mc[3];
   int yi,mi,di;
 
