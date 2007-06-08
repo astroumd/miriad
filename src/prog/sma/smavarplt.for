@@ -104,14 +104,15 @@ c                 before and after parsing baseline based flagging
 c                 states.
 c    jhz 11jan07  added chi2 to VarChar data list.
 c    jhz 15mar07  added Keyword dotsize.
-c    pjt 18apr08  Increased maxpnts a bit for a typical 11hr carma track (see varplt)
+c    pjt 18apr07  Increased maxpnts a bit for a typical 11hr carma track (see varplt)
+c    jhz 07jun07  cleaned a few lines.
 c  Bugs:
 c    ?? Perfect?
 c------------------------------------------------------------------------
         character version*(*)
         integer maxpnts
         parameter(maxpnts=1000000)
-        parameter(version='SmaVarPlt: version 1.8 1-may-07')
+        parameter(version='SmaVarPlt: version 1.9 07-June-07')
         logical doplot,dolog,dotime,dounwrap
         character vis*128,device*64,logfile*128,xaxis*16,yaxis*16
         character xtype*1,ytype*1,xunit*16,yunit*16,calday*24
@@ -141,25 +142,25 @@ c
         call keya('log',logfile,' ')
         dolog = logfile.ne.' '
         if(.not.(dolog.or.doplot))
-     *    call bug('f','One of the device and log must be given')
+     *  call bug('f','One of the device and log must be given')
         call keyi('ylen',ylen,0)
         if(ylen.gt.12) 
-     *    call bug('f','ylen must be less or equal to 12')
+     *  call bug('f','ylen must be less or equal to 12')
         call keyi('nxy',nx,0)
         call keyi('nxy',ny,nx)
         call keya('xaxis',xaxis,'time')
         if(xaxis.eq.' ')
-     *    call bug('f','Bad Xaxis value')
+     *  call bug('f','Bad Xaxis value')
         call keya('yaxis',yaxis,' ')
         if(yaxis.eq.' ')
-     *    call bug('f','Yaxis variable name must be given')
+     *  call bug('f','Yaxis variable name must be given')
         call getopt(compress,dtime,overlay,dounwrap,equal,doflag)
         if(xaxis.eq.'time')then
-          call keyt('xrange',xtime1,'time',0.d0)
-          call keyt('xrange',xtime2,'time',0.d0)
+        call keyt('xrange',xtime1,'time',0.d0)
+        call keyt('xrange',xtime2,'time',0.d0)
         else
-          call keyr('xrange',xrange(1),0.)
-          call keyr('xrange',xrange(2),xrange(1)-1.)
+        call keyr('xrange',xrange(1),0.)
+        call keyr('xrange',xrange(2),xrange(1)-1.)
         endif
         if(yaxis.eq.'time')then
           call keyt('yrange',ytime1,'time',0.d0)
@@ -234,9 +235,6 @@ c
           ydim2 = 1
         endif
          
-c         do i=1, 8*npnts
-c         write(*,*) 'npnts i xvals yvals', npnts, i, xvals(i), yvals(i)
-c         end do
 c  
 c  Plot the data, if needed.
 c
@@ -1102,10 +1100,8 @@ c nbls=nflagbl(i)(nflagbl(i)+1)/2, antenna i should be flagged.
              if(tupd) then
                  do i=1, nants
                   fbls=nflagbl(i)*(nflagbl(i)+1)/2
-c                  write(*,*) fbls,nbls
                   if(fbls.ge.nbls) then
                   if(doflag) tsysflag(i,inhid)=.true.
-c                  write(*,*) 'tsysflg=', tsysflag(i,inhid), i,inhid
                   end if
                   nflagbl(i)=0
                   end do
@@ -1130,10 +1126,8 @@ c
                    nbls=nbls-1
                   do i=1, nants
                   fbls=nflagbl(i)*(nflagbl(i)+1)/2
-c                  write(*,*) fbls,nbls, i
           if(fbls.ge.nbls) then
           if(doflag) tsysflag(i,inhid)=.true.
-c         write(*,*) 'tsysflg=', tsysflag(i,inhid), i,inhid,mytime(inhid)
                   end if
                   nflagbl(i)=0
                   end do
@@ -1218,7 +1212,6 @@ c
                flgrun(ypnt+i) =1
                     end if
              end do
-c                write(*,*) xdrun(xpnt+6),yrrun(ypnt+6),flgrun(ypnt+6)
                xpnt = xpnt + xdim
                ypnt = ypnt + ydim
           endif
@@ -1687,7 +1680,6 @@ c
 c               subtract row k from lower rows to get diagonal matrix
 c
   41       determ = determ * array (k, k)
-c           write(*,*) 'determ=', determ, norder
        if (k - norder) 43, 50, 50
   43        k1 = k +1
             do i = k1, norder
@@ -1710,8 +1702,6 @@ c  Externals.
 c
         integer i
 c
-c        loval = vals(ismin(npnts,vals,1))
-c        hival = vals(ismax(npnts,vals,1))
          loval =10000.
          hival =-10000.
          do i=1, npnts
