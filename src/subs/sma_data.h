@@ -21,7 +21,7 @@
 //                2 sbs and 2 rxs.
 // jhz 2007-6-06: updated the software limit based on the
 //                SMA hardware limits discussed with Bob W.
-//                Taco
+//                and Taco
 #include "miriad.h"
 
 
@@ -312,22 +312,19 @@ struct anttsys {
  * these or else i will not be able to process the subsequent data
  */
 #define MAXINT 10000  /* maximum number of integration */
-#define MAXANT 8 
-#define MAXCHAN 24576 /* from Taco June 5, 2007
-                         max channels per sb, bl, rx, 1pol 
-                        */
+#define MAXANT 8      /* maximum antenna numbers for the standard SMA*/
+#define MAXCHAN 24576 /* maximum channels per sb, bl, rx, 1pol */
 #define MAXBAS 112    /* maxant*(maxant-1)/2*2sb*2rx for maxant=8*/
-#define MAXSOURCE 100
-#define SMIF 24
-#define SMRX  4     /* number of rx per track operattion */ 
-#define SMANT 8 
-#define SMPOL 5 
-#define SMBAS 56   /* smant*(smant-1) */
-#define SMBIN 1
-#define SMSB  2    /* number of size bands */
-#define SMCONT 33
-#define CONTCH 16 /* number of continuum chan per chunk */
-//#define SMADATA 2752512 /* MAXCHAN*MAXBAS*1(POL)  */
+#define MAXSOURCE 100 /* maximum source number per track */
+#define SMIF 24       /* maximum number of spectral chunks per sb */
+#define SMRX  4       /* number of rx in operation */ 
+#define SMANT 8       /* =MAXANT */
+#define SMPOL 5       /* maximum number pol + 1 */
+#define SMBAS 56      /* smant*(smant-1) */
+#define SMBIN 1       /* number of time bin */
+#define SMSB  2       /* number of size bands */
+#define SMCONT 33     /* continuum channels not used */
+#define CONTCH 16     /* number of continuum chan per chunk */
 #define SMADATA 11010048 /* MAXCHAN*MAXBAS*4(POL)  */
 /* WORDS_BIGENDIAN comes from miriad's sysdep.h */
 /* SWAP_ENDIAN is what SMA code originally used  */
@@ -559,7 +556,6 @@ struct smlodd {
         float mdata[5];
         float axisrms[SMANT+1];
         float axismax[SMANT+1];
-/*        int pnt[SMIF+1][SMPOL+1][SMBAS+1][SMBIN+1];*/
         int pnt[SMIF+1][SMPOL+1][SMBAS+1][SMSB][SMRX];
         int nbin[SMIF+1];
         int nused;
@@ -575,7 +571,6 @@ struct smlodd {
         int edge[SMIF+1];
         int bchan[SMIF+1];
         int tcorr;
-/*        int flag[SMIF+1][SMPOL+1][SMBAS+1][SMBIN+1];*/
         int flag[SMIF+1][SMPOL+1][SMBAS+1][SMSB][SMRX];   
         int dosw[SMBAS+1];
         int dosam;
