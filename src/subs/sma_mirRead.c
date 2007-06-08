@@ -1409,10 +1409,10 @@ double xyzpos;
 	       geocxyz[i].z);
       if(jday > 2453736.5) {
       if( abs(geocxyz[i].x-58.9) < 1.&&abs(geocxyz[i].y-212.3) < 1.&&abs(geocxyz[i].z+186.5) < 1.) {
-         fprintf(stderr,"ERROR: non-SMA antenna detected.\n");
+//         fprintf(stderr,"ERROR: non-SMA antenna detected.\n");
             exit(-1);}
       if(abs(geocxyz[i].x-56.9)<1.&&abs(geocxyz[i].y-54.4) < 1.&&abs(geocxyz[i].z+143.2) < 1.) {
-         fprintf(stderr,"ERROR: non-SMA antenna detected.\n"); 
+//         fprintf(stderr,"ERROR: non-SMA antenna detected.\n"); 
             exit(-1);
                       } } }
 //
