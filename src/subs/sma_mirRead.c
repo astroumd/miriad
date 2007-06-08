@@ -2472,7 +2472,7 @@ smabuffer.w[blpnt] = uvwbsln[inhset]->uvwID[j].w/smabuffer.basefreq*1000.;
             numberChannels = numberChannels + sph[i]->nch;
             }
             if(numberChannels>MAXCHAN+1) {
-            fprintf(stderr,"ERROR: Number of channels exceeded the limit %d.\n", MAXCHAN);
+            fprintf(stderr,"ERROR: Number of channels %d exceeded the limit %d.\n", numberChannels, MAXCHAN);
             exit(-1);
                                          }
             numberChannels = 0;
@@ -2486,7 +2486,7 @@ smabuffer.w[blpnt] = uvwbsln[inhset]->uvwID[j].w/smabuffer.basefreq*1000.;
               numberChannels = numberChannels + sph[i]->nch;
                                             }
             if(numberChannels>MAXCHAN+1) {
-            fprintf(stderr,"ERROR: Number of channels exceeded the limit %d.\n", MAXCHAN);
+            fprintf(stderr,"ERROR: Number of channels %d exceeded the limit %d.\n", numberChannels, MAXCHAN);
             exit(-1);
 
                                }
