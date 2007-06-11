@@ -200,6 +200,8 @@
 //                  correlator configs are allowed.
 // 2007-06-6  (JHZ) added several check points based on
 //                  new software limits set by the SMA hardware.
+// 2007-06-11 (JHZ) added a check points for excluding corrupted
+//                  frequency header.
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -1605,6 +1607,7 @@ double xyzpos;
     if(smabuffer.highrspectra==0&&jday>2453867) {
       smabuffer.highrspectra = 1;
            } else { smabuffer.highrspectra =-1; }
+
     
     { 
       int inhid_hdr;
@@ -2136,8 +2139,8 @@ dat2003:
 //                          # of sidebands,
 //                          # of receivers to be processed 
  fprintf(stderr,"#Baselines=%d #Spectra=%d  #Sidebands=%d #Receivers=%d\n",
-	   numberBaselines/2, numberSpectra-1, numberSidebands, 
-	   numberRxif);
+   numberBaselines/2, numberSpectra-1, numberSidebands, 
+   numberRxif);
     if(smabuffer.dobary==1) fprintf(stderr,"Compute radial velocity wrt barycenter\n");
     if(smabuffer.dolsr==1) fprintf(stderr,"Compute radial velocity wrt LSR\n");
     sphSizeBuffer = numberSpectra*numberBaselines; 
@@ -2154,6 +2157,7 @@ dat2003:
 // start the processing loop
     while(inhset<(nsets[0]-1)) {
 // progressing the integration set
+      
       inhset++;
       visSMAscan.blockID.ints = inh[inhset]->ints;
       visSMAscan.blockID.inhid = inh[inhset]->inhid;
@@ -2266,6 +2270,7 @@ smabuffer.veldop = (float)velrad(dolsr,time, raapp,decapp,raepo,decepo,lst,lat);
 // now handle the frequency configuration for
 // each of the integration sets
 //
+       numberChannels=0;
       for(i=1;i<smaCorr.n_chunk+1; i++) {
 // the reference channel is the first channel in each chunk in miriad
 // the reference channel is the center (nch/2+0.5) in each chunk in MIR
@@ -2348,6 +2353,13 @@ smabuffer.veldop = (float)velrad(dolsr,time, raapp,decapp,raepo,decepo,lst,lat);
 	smabuffer.nstoke[spcode[i]-1]=4;
 	smabuffer.edge[spcode[i]-1]=0;
 	smabuffer.nbin[spcode[i]-1]=1;
+      numberChannels = numberChannels + spn[inhset]->nch[i][rxlod];
+      if(numberChannels>MAXCHAN+1) {
+  fprintf(stderr,"ERROR: Number of channels %d exceeded the limit %d.\n", numberChannels, MAXCHAN);
+        exit(-1); }
+      if(spn[inhset]->nch[i][rxlod] < 0) {
+  fprintf(stderr,"ERROR: Corrupted frequency header. Try larger nscans[1].\n");
+        exit(-1); }
 // if 2003 data skip the spcode examination
         if(smabuffer.spskip[0]!=-2003)  
 // check the spectral window skipping in MIR data
