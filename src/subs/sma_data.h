@@ -22,6 +22,10 @@
 // jhz 2007-6-06: updated the software limit based on the
 //                SMA hardware limits discussed with Bob W.
 //                and Taco
+// jhz 2007-6-11: using the exact maximum number of data points
+//                that can be produced by the SMA correlator for
+//                the limit of MAXDATA
+
 #include "miriad.h"
 
 
@@ -325,7 +329,8 @@ struct anttsys {
 #define SMSB  2       /* number of size bands */
 #define SMCONT 33     /* continuum channels not used */
 #define CONTCH 16     /* number of continuum chan per chunk */
-#define SMADATA 11010048 /* MAXCHAN*MAXBAS*4(POL)  */
+#define SMADATA 368640 /* maximum number of data SMA can generated
+                          in one integration */
 /* WORDS_BIGENDIAN comes from miriad's sysdep.h */
 /* SWAP_ENDIAN is what SMA code originally used  */
 #if defined(WORDS_BIGENDIAN)
