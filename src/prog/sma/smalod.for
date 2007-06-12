@@ -126,8 +126,7 @@ c                  no phase flip for the data observed after 2005-04-28.
 c       'noskip'   not to skip any data; the default is to skip
 c                  data with source name "target" and/or "unknown".
 c       'mcconfig' to handle multiple correlator configurations.
-c                  The default is to handle a single correlator configuration 
-c                  per loading.
+c                  The default is to handle multiple correlator configuration. 
 c       'nohspr'   to turn off the high spectral resolution mode.
 c                  For data taken after 2006-5-12, the default 
 c                  will properly handle the hybrid high spectral 
@@ -311,12 +310,14 @@ c    jhz 07-mar-07 robustly handling antennas file.
 c                  obsolete readant in the keyword input. 
 c    jhz 06-jun-07 added a bug report message accoding to
 c                  the new limits set by SMA hardware.
+c    jhz 11-jun-07 fixed a bug in passing the values of nscans array.
+c    jhz 12-jun-07 obsoleted single corr config loading mode. 
 c------------------------------------------------------------------------
         include 'maxdim.h'
         integer maxfiles
         parameter(maxfiles=128)
         character version*(*)
-        parameter(version='SmaLod: version 2.6 06-June-07')
+        parameter(version='SmaLod: version 2.7 12-June-07')
 c
         character in(maxfiles)*64,out*64,line*64, rxc*4
         character msg*64
@@ -438,7 +439,6 @@ c
             call txtclose(lIn)         
            if(readant.gt.8) then
            call bug('w', 'Number of antennas exceeded the limit 8.')
-           call bug('w', 'eSMA has not been implemented yet.')
            end if
       open(16,file=in(1)(1:len1(in(1)))//'antennas',status='unknown')
             do i=1,readant
@@ -636,7 +636,7 @@ c       mmrelax = present(17)
         doconjug= present(25)
         dolsr   = present(26)
         noskip  = present(27)
-        mcconfig= present(28)
+        mcconfig= .not.present(28)
         nohighspr = present(29)
 c  oldpol obsoleted
         if(oldpol) 
@@ -827,6 +827,7 @@ c************************************************************************
 c
         character in*(*)
         integer scanskip,scanproc,rxif,nuser,sb,iostat,dosporder,doeng
+        integer scanskip1,scanproc1
         double precision userfreq(*)
         logical doauto,docross,relax,unflag,polflag,sing,doconjug
         integer doflppha
@@ -860,20 +861,21 @@ c
 c
 c  Open the SMA_MIR file.
 c
+         scanskip1=scanskip
+         scanproc1=scanproc
+
          call smaopen(in,iostat)
          if(iostat.ne.0)return
-         
 c
 c  Initialize.
 c
         call pokename(in)
-
         if(doconjug) then
            doflppha = -1
            else
            doflppha = 1
            end if
-        call rssmaflush(scanskip, scanproc, sb, rxif, 
+        call rssmaflush(scanskip1, scanproc1, sb, rxif, 
      *       dosporder, doeng, doflppha)
              kstat= 666
          
