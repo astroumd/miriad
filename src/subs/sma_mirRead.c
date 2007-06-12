@@ -202,6 +202,7 @@
 //                  new software limits set by the SMA hardware.
 // 2007-06-11 (JHZ) added a check points for excluding corrupted
 //                  frequency header.
+// 2007-06-12 (JHZ) obsolete the single corr config loading mode.
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -322,7 +323,7 @@ void rsmiriadwrite_c(char *datapath, char *jst[])
 // open mir files 
    jstat = rsmir_Read(pathname,jstat);
   *jst = (char *)jstat;
-  /* then start to read and write data if the files are ok. */
+// then start to read and write data if the files are ok.
   if (jstat==0) {
     jstat=0;
     jstat = rsmir_Read(pathname,jstat);
@@ -352,12 +353,12 @@ void rssmaflush_c(int scanskip,int scanproc,int sb,int rxif,int dosporder,int do
   *kst = (char *)&kstat;
 //  read header  
     rspokeflshsma_c(kst);  
-//  write ante numbers 
+//  write antenna numbers 
   if(smabuffer.nants!=0) {
 //  write telescope name and other description parameters 
     sprintf(telescope,"SMA");
     sprintf(instrument,"SMA");
-//    sprintf(observer,"SmaUser");
+//  sprintf(observer,"SmaUser");
     sprintf(version, "test");
     uvputvra_c(tno, "telescop", telescope);
     uvputvra_c(tno, "instrume", instrument);
@@ -408,6 +409,7 @@ void rspokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1,
   smabuffer.spskip[0] = spskip1[0];
   smabuffer.spskip[1] = spskip1[1];
   smabuffer.mcconfig  = *mcconfig1;
+  smabuffer.mcconfig  = 1;
   smabuffer.highrspectra = *nohighspr1;
       fprintf(stderr,"User's input vSource = %f km/s\n", smabuffer.vsource);
       if(rfreq1 > 0.00001 || rfreq1 < -0.00001) {
@@ -554,8 +556,8 @@ void rspokeflshsma_c(char *kst[])
 // calculate jyperk
    jyperk=2.* 1.38e3/pi/(eta*r_ant*r_ant);
    uvputvrr_c(tno,"jyperk", &jyperk,1);
-// Handle the case that we are writing the multiple 
-// IFs out as multiple records. 
+// Handle the case of writing the multiple 
+// IFs (chunks) out as multiple records (not implemented yet). 
     if(smabuffer.doif!=1&&smabuffer.nifs>1) {
     nspect =ischan[0]= 1;
     for(ifs=0; ifs < smabuffer.nifs; ifs++) {
@@ -589,7 +591,7 @@ void rspokeflshsma_c(char *kst[])
                                              }
                                              }
                                              } else {
-// Handle the case were we are writing the multiple IFs out as a single record.
+// Handle the case of writing the multiple IFs (chunks) out as a single record.
 // This way is adopted to store SMA data in Miriad format.
     if(smabuffer.newfreq>0) {
       ischan[0] = 1;
@@ -654,7 +656,7 @@ void rspokeflshsma_c(char *kst[])
 
 int rsgetdata(float smavis[2*MAXCHAN], int smaflags[MAXCHAN], int *smanchan, int p, int bl, int sb, int rx)
 {  
-// Construct a visibility record constructed from multiple IFs. 
+// Construct a visibility record buffer from multiple IFs (chunks). 
   int nifs=smabuffer.nifs;
   float fac[nifs];
   int n,ipnt,i,nchand, nchan; 
@@ -869,7 +871,7 @@ int rsmir_Read(char *datapath, int jstat)
        fprintf(stderr,"ERROR: Number of integration scans exceeded the limit %d.\n", MAXINT);
          exit(-1);
          }
-// Allocate memory to store all the headers 
+// Allocate memory to store  the headers 
       inh = (struct inh_def **) malloc(nsets[0]*sizeof( struct inh_def *));
       for (set=0;set<nsets[0];set++) {
       inh[set] = (struct inh_def *)malloc(sizeof(struct inh_def ));
@@ -935,8 +937,6 @@ int rsmir_Read(char *datapath, int jstat)
       *inh[set] = *(inh_read(fpin[0])); 
       if (SWAP_ENDIAN) {
 	inh[set] =  swap_inh(inh[set]);
-// reverse mapping the inhid wrt integration set number
-//          inid[inh[set]->inhid]=set;
                        } 
                                    }
     if (SWAP_ENDIAN) {
@@ -948,8 +948,6 @@ int rsmir_Read(char *datapath, int jstat)
       *blh[set] = *(blh_read(fpin[1]));
       if (SWAP_ENDIAN) {
 	blh[set] =  swap_blh(blh[set]);
-// reverse mapping the blhid wrt bl set number
-//          blid[blh[set]->blhid]=set;
                        }
                                    }
 // count sidebands
@@ -1102,7 +1100,6 @@ foundTheRx:
 // bln will be used in configuring spectra
 //
       set=0;
-//      printf("nsets[1] = %d \n",  nsets[1]);
       for (blset=0; blset < nsets[1]; blset++)      { 
 // loading baseline based structure
 	tsys[blset]->blhid=blh[blset]->blhid;
@@ -1165,13 +1162,11 @@ foundTheRx:
 	    blh[blset]->itel1*256+blh[blset]->itel2;
 	  uvwbsln[set]->uvwID[blset-blhid_hdr].isb = blh[blset]->isb;
 	  uvwbsln[set]->uvwID[blset-blhid_hdr].irec = blh[blset]->irec;
-//	  uvwbsln[set]->uvwID[blset-blhid_hdr].ipol = blh[blset]->ipol;
 // polarization
         uvwbsln[set]->uvwID[blset-blhid_hdr].ipol = ipolmap(blh[blset]->ipol);
 // counting baseline for each integration set
 	  uvwbsln[set]->n_bls++;
 	                                           }
-//     printf("set numberBaselines %d %d\n", set, numberBaselines);     
 	numberBaselines=uvwbsln[set]->n_bls;
      if(numberBaselines>MAXBAS) {
       fprintf(stderr,"ERROR: Number of baselines exceeded the limit %d .\n", MAXBAS);
@@ -1286,7 +1281,7 @@ handling_blarray:
      fprintf(stderr,"FINISHED READING EN HEADERS\n");
     }
   engskip:
-//free(smaEngdata);
+// free(smaEngdata);
     free(enh);
 // initialize the antenna positions
     smabuffer.nants=8;
@@ -1409,14 +1404,7 @@ double xyzpos;
 	       geocxyz[i].x,
 	       geocxyz[i].y,
 	       geocxyz[i].z);
-      if(jday > 2453736.5) {
-      if( abs(geocxyz[i].x-58.9) < 1.&&abs(geocxyz[i].y-212.3) < 1.&&abs(geocxyz[i].z+186.5) < 1.) {
-//         fprintf(stderr,"ERROR: non-SMA antenna detected.\n");
-            exit(-1);}
-      if(abs(geocxyz[i].x-56.9)<1.&&abs(geocxyz[i].y-54.4) < 1.&&abs(geocxyz[i].z+143.2) < 1.) {
-//         fprintf(stderr,"ERROR: non-SMA antenna detected.\n"); 
-            exit(-1);
-                      } } }
+                             }
 //
 // convert geocentrical coordinates to equatorial coordinates
 // of miriad system y is local East, z is parallel to pole
@@ -1580,19 +1568,19 @@ double xyzpos;
       }
     }
              if(sourceID> MAXSOURCE) {
-       fprintf(stderr,"ERROR: Number of sources exceeded the limit %d\n", MAXSOURCE);
+ fprintf(stderr,"ERROR: Number of sources exceeded the limit %d\n", MAXSOURCE);
              exit(-1);
                                      }
 // setup correlator  
 // sph1 is a single set of spectra, assign memory to it.    
-    sph1 = (struct sph_def *) malloc(sizeof( struct sph_def ));
+   sph1 = (struct sph_def *) malloc(sizeof( struct sph_def ));
 // spn is a buffer for configuring spectra with an array length
 // of the total number of integration sets.
-    spn  = (struct sph_config **) malloc(nsets[0]*sizeof( struct sph_config *));
+   spn  = (struct sph_config **) malloc(nsets[0]*sizeof( struct sph_config *));
     for (set=0; set<nsets[0]; set++) {
-      spn[set] = (struct sph_config *)malloc(sizeof(struct sph_config ));
+   spn[set] = (struct sph_config *)malloc(sizeof(struct sph_config ));
       if (spn[set] == NULL ){
-  fprintf(stderr,"ERROR: Memory allocation for sph_config failed for %d bytes\n",
+ fprintf(stderr,"ERROR: Memory allocation for sph_config failed for %d bytes\n",
 	       nsets[0]*sizeof(struct sph_config));
 	exit(-1);
       }
@@ -1627,7 +1615,7 @@ double xyzpos;
 // define baseline id used in pursing the spectral
 // configuration. 
 // integration set = smabuffer.scanskip
-// blhset=1 , the second baseline of the integration
+// blhset=1, the second baseline of the integration
       blhset=1;
       blhid = uvwbsln[smabuffer.scanskip]->uvwID[blhset].blhid;
       rewind(fpin[2]);
@@ -1692,7 +1680,7 @@ if(tsys[blset]->ipol < -4&&sph1->iband!=0) {
 	  spn[inset]->vel[sph1->iband]     = sph1->vel;
 	  spn[inset]->vres[sph1->iband]    = sph1->vres;
 	  spn[inset]->ivtype               = sph1->ivtype;
-// sky frequency (corrected for a part of the Doppler
+// sky frequency (which has been corrected for a part of the Doppler
 // velocity, the diurnal term and a part of the annual term) 
 	  spn[inset]->fsky[sph1->iband]    = sph1->fsky;
 	  spn[inset]->fres[sph1->iband]    = sph1->fres;
@@ -1767,19 +1755,20 @@ goto dat2003; }
                                            }
                                  }
                               }
-           if(smabuffer.mcconfig==0) {
-           for (i=1;i<ireset+1;i++) {
-           if(smabuffer.scanskip< reset_id[i]) {
-    fprintf(stderr,"Suggesttion:\n");
-    fprintf(stderr,"For a single correlator configuration per loading (recommended),\n");
-    fprintf(stderr,"reset nscans=%d,%d for the set of the first configuration data;\n", smabuffer.scanskip, reset_id[i]-1);
-    fprintf(stderr,"reset nscans=%d, for the set of the second configuration data.\n",  reset_id[i]);
-    fprintf(stderr,"Or choose options=mcconfig for multiple correlator configurations per loading (not recommended).\n");
-    fprintf(stderr,"Try it again.\n");
-         exit(-1);
-        }
-                                    }
-                                     }
+
+//           if(smabuffer.mcconfig==0) {
+//           for (i=1;i<ireset+1;i++) {
+//           if(smabuffer.scanskip< reset_id[i]) {
+//    fprintf(stderr,"Suggesttion:\n");
+//    fprintf(stderr,"For a single correlator configuration per loading (recommended),\n");
+//    fprintf(stderr,"reset nscans=%d,%d for the set of the first configuration data;\n", smabuffer.scanskip, reset_id[i]-1);
+//    fprintf(stderr,"reset nscans=%d, for the set of the second configuration data.\n",  reset_id[i]);
+//    fprintf(stderr,"Or choose options=mcconfig for multiple correlator configurations per loading (not recommended).\n");
+//    fprintf(stderr,"Try it again.\n");
+//         exit(-1);
+//        }
+//                                    }
+//                                     }
 dat2003:                                                                           
     fprintf(stderr,"\n");
     fprintf(stderr,"number of non-empty Spectra = %d\n", numberSpectra);
@@ -1907,9 +1896,9 @@ dat2003:
 // this SMA specification and he found that additional amount
 // correction for the part of annual term that has been made to 
 // the sky frequency by the SMA online system. Then he tried to
-// decode the reference time corresonding to a zero value that 
+// decode the reference time corresponding to a zero value that 
 // the online system uses to take out the steady variation in 
-// the sky frequnecy due to annual term. Jun-Hui further consulted 
+// the sky frequnecy due to the annual term. Jun-Hui further consulted 
 // with Taco on 05Aug31. Taco commented that it should be the 
 // time at the source transit but he could be
 // wrong. Based on the observation on 2005Aug01 for the SgrB2 track,
@@ -2085,16 +2074,6 @@ dat2003:
     case 1:
       fprintf(stderr,"USB only\n");
     }
-
-
-//      fprintf(stderr,"\n");
-// print observing date
-//    for (set=0;set<nsets[3];set++){
-//    if((cdh[set]->v_name[0]=='r'&&cdh[set]->v_name[1]=='e')&&
-//       cdh[set]->v_name[2]=='f'){
-//       doprt=1;
-//      jday = juliandate(&cdh[set],doprt);      }
-//    }
 
 // initializing the number vis points to be read    
     smabuffer.nused=0;
@@ -2355,18 +2334,20 @@ smabuffer.veldop = (float)velrad(dolsr,time, raapp,decapp,raepo,decepo,lst,lat);
 	smabuffer.nbin[spcode[i]-1]=1;
       numberChannels = numberChannels + spn[inhset]->nch[i][rxlod];
       if(numberChannels>MAXCHAN+1) {
-  fprintf(stderr,"ERROR: Number of channels %d exceeded the limit %d.\n", numberChannels, MAXCHAN);
-        exit(-1); }
+  fprintf(stderr,"ERROR: Number of channels %d exceeded the limit %d. Try larger nscans[1].\n", numberChannels, MAXCHAN);
+          exit(-1); 
+           }
       if(spn[inhset]->nch[i][rxlod] < 0) {
   fprintf(stderr,"ERROR: Corrupted frequency header. Try larger nscans[1].\n");
-        exit(-1); }
+        exit(-1); 
+           }
 // if 2003 data skip the spcode examination
         if(smabuffer.spskip[0]!=-2003)  
 // check the spectral window skipping in MIR data
         if(smabuffer.highrspectra!=1) {
         if(smabuffer.spskip[0]!=-1) {
 //
-// when only one skipping gap occured
+// when only one skipping gap occurred
 //
    if(spcode[i]!=spn[inhset]->iband[i]) {
 fprintf(stderr,"\n");
@@ -3684,16 +3665,14 @@ void elazchi(int tno) {
 }
 
 void tsysStore(int tno) {
-  /* store Tsys to uvdata */
+  // store Tsys to uvdata 
   int cnt, j;
   float tsysbuf[SMANT*SMIF];
 
   cnt =0;
-  /* only one  if */
+  // only one per antenna 
   for (j=0; j< smabuffer.nants; j++) {
     tsysbuf[cnt]= smabuffer.tsys[j];
-    /*      if(smabuffer.tsys[j]<0.) tsysbuf[cnt]=0.;
-     */
     cnt++;
   }
   uvputvrr_c(tno,"systemp",&tsysbuf,cnt);
@@ -3730,15 +3709,6 @@ double velrad( short dolsr,
   double  vel;
   
   // computer barycentric velocity
-  //      printf("velrad:\n");
-  //      printf("dolsri %d \n", dolsr);
-  //      printf("time %f \n", time);
-  //      printf("raapp %f \n", raapp);
-  //      printf("decapp %f \n", decapp);
-  //      printf("raapp %f \n", raepo);
-  //      printf("decapp %f \n", decepo);
-  //      printf("lst %f \n", lst);
-  //      printf("lat %f \n", lat);
   
   inlmn = sph2lmn(raapp,decapp);
   lmnapp[0] = inlmn->lmn1;
