@@ -159,6 +159,8 @@ c                 For other lower frequency telescopes, signals
 c                 are stronger but there might be large phase jumps 
 c                 between bands. Only the first band data are used 
 c                 in calculating the pseudo continuum.
+c   jhz  15Jun07  added instructive msg for handling SMA
+c                 hybrid spectral resolution data.
 c  Problems:
 c    * Should do simple spectral index fit.
 c------------------------------------------------------------------------
@@ -168,7 +170,7 @@ c------------------------------------------------------------------------
         parameter(maxpol=2)
 c
         character version*(*)
-        parameter(version='SmaMfCal: version 2.0 18-Dec-06')
+        parameter(version='SmaMfCal: version 2.1 15-Jun-07')
 c
         integer tno
         integer pwgains,pfreq,psource,ppass,pgains,ptau
@@ -1418,8 +1420,9 @@ c
         integer pols(polmin:polmax)
         integer weight 
         real tsys(maxspect*maxant),tsys1(maxspect),tsys2(maxspect)
-        character telescop*10, type*1
+        character telescop*10, type*1, msg*80
         integer length, sb(maxspect)
+        logical hsrmode
 c
 c  Externals.
 c
@@ -1436,6 +1439,7 @@ c  chz:   vis data of channel zero
 c
 c  initialization
 c
+           hsrmode=.false.
            do i=1, maxchan
            chnwt(i) =1.
            end do
@@ -1520,6 +1524,29 @@ c
        updated =.true.
        call despect(updated,tno,nchan,edge,chan,spect,
      * maxspect,nspect,sfreq,sdf,nschan,state)
+c if SMA data check up if this is a hybrid spectral resolution data set
+             if(telescop.eq.'SMA') then
+             do i=1, nspect-1
+             if(nschan(i).ne.nschan(i+1)) hsrmode=.true.
+             end do
+             
+             if(hsrmode) then
+             call bug('w', 'hybrid spectral resolution detected:')
+             do i=1, nspect
+             write(msg,9876) i, nschan(i)
+             call output('s'//msg)
+             end do
+          call output(' ')
+          call bug('w',
+     *    'Read Users Guide for handling hybrid spectral resolution')
+          msg(1:49)='http://sma-www.cfa.harvard.edu/miriadWWW/manuals/'
+          call output(msg(1:49)//'SMAuguide/smauserhtml/index.html')
+          call output(' ')
+             end if
+             end if
+9876    format(i2,' =',i5)
+
+
        call uvrdvra(tno,'source',source,' ')
        call uvrdvri(tno,'nants',nants,0)
         if(nants.le.0.or.nants.gt.maxant)
@@ -2530,7 +2557,7 @@ c
             enddo
           endif
         enddo
-c
+c                 
         end
 c************************************************************************
         subroutine setstate(state,f,df,nchan,
