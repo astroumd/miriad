@@ -203,6 +203,7 @@
 // 2007-06-11 (JHZ) added a check points for excluding corrupted
 //                  frequency header.
 // 2007-06-12 (JHZ) obsolete the single corr config loading mode.
+// 2007-06-15 (JHZ) added instruction message in case of corruped ending
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -3183,7 +3184,9 @@ struct sch_def * sch_head_read(FILE * fpsch)
  
   nobj += fread(&sch.inhid,sizeof(sch.inhid),1,fpsch);
   if (nobj == 0) {
-    printf("Unexpected end of file sch_head_read\n");
+    fprintf(stderr,"Unexpected end of file sch_head_read\n");
+    fprintf(stderr,"nscans[2]=%d, try a smaller number.\n", 
+             smabuffer.scanproc);
     exit(-1);
   }
   nbytes += sizeof(sch.inhid);
