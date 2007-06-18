@@ -95,6 +95,7 @@ c     shape.
 c------------------------------------------------------------------------
         integer maxsels
         character version*(*)
+        integer maxspect
         parameter(maxsels=256, maxspect=49)
         parameter(version='SmaTbpass: version 1.3 07-Feb-07')
         include 'mirconst.h'
@@ -116,7 +117,7 @@ c------------------------------------------------------------------------
         double precision t0,jtime(6154)
         logical relax, ok,donenpol
         integer npol,Snpol,pol,vupd,nread,nrec
-        integer nschan(maxspect), maxspect, nspectt
+        integer nschan(maxspect), nspectt
         real inttime,jyperk
         double precision preamble(5),Tmin,Tmax,Tprev,interval
         double precision TTprev,sfreq(maxspect),sdf(maxspect)
