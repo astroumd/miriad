@@ -350,7 +350,7 @@ c
 c
 c  inititialize the buffer data to unused unit gains etc.
 c
-      CALL clearvis(nslot,2,nbl,buf(pVis1),buf(pFlg1))
+      CALL clearvisgapply(nslot,2,nbl,buf(pVis1),buf(pFlg1))
 c
 c  rewind the vis file, and read the data again, now plugging it into
 c  the 'allocated' arrays in memory
@@ -370,9 +370,9 @@ c
                islot = islot + 1
             ENDIF
             t1 = t2
-            CALL setvis(nslot,2,nbl,buf(pVis1),buf(pFlg1),
+            CALL setvisgapply(nslot,2,nbl,buf(pVis1),buf(pFlg1),
      *         islot,1,b,data(1),flag(1))
-            CALL setvis(nslot,2,nbl,buf(pVis1),buf(pFlg1),
+            CALL setvisgapply(nslot,2,nbl,buf(pVis1),buf(pFlg1),
      *         islot,2,b,data(2),flag(2))
          ENDIF
       ENDDO
@@ -385,7 +385,7 @@ c
 
       END
 c***********************************************************************
-      SUBROUTINE ClearVis(nslot,nwide,nbl,vis,flg)
+      SUBROUTINE ClearVisGApply(nslot,nwide,nbl,vis,flg)
 c
       IMPLICIT NONE
       INTEGER nslot,nwide,nbl
@@ -412,7 +412,7 @@ c
 
       END
 c***********************************************************************
-      SUBROUTINE SetVis(nslot,nwide,nbl,vis,flg,
+      SUBROUTINE SetVisGApply(nslot,nwide,nbl,vis,flg,
      *                  i,j,k,data,flag)
 c
       IMPLICIT NONE
@@ -433,7 +433,7 @@ c-----------------------------------------------------------------------
 
       END
 c***********************************************************************
-      SUBROUTINE GetVis(nslot,nwide,nbl,vis,flg,
+      SUBROUTINE getvisgapply(nslot,nwide,nbl,vis,flg,
      *                  i,j,k,data,flag,ok)
 c
       IMPLICIT NONE
@@ -514,17 +514,17 @@ c        write(*,*) time,dtime,b1,b2,islot,frac,ok
 c-debug
 
       DO i=1,nwide
-         CALL getvis(nslot,2,nbl,buf(pVis1),buf(pFlg1),
+         CALL getvisgapply(nslot,2,nbl,buf(pVis1),buf(pFlg1),
      *         islot,  i,b1,d1,flag,ok)
-         CALL getvis(nslot,2,nbl,buf(pVis1),buf(pFlg1),
+         CALL getvisgapply(nslot,2,nbl,buf(pVis1),buf(pFlg1),
      *         islot+1,i,b1,d2,flag,ok)
          gains(i) = (1.0-frac)*d1 + frac*d2
       ENDDO
       IF(b2.GT.1)THEN
          DO i=1,nwide
-            CALL getvis(nslot,2,nbl,buf(pVis1),buf(pFlg1),
+            CALL getvisgapply(nslot,2,nbl,buf(pVis1),buf(pFlg1),
      *         islot,  i,b2,d1,flag,ok)
-            CALL getvis(nslot,2,nbl,buf(pVis1),buf(pFlg1),
+            CALL getvisgapply(nslot,2,nbl,buf(pVis1),buf(pFlg1),
      *         islot+1,i,b2,d2,flag,ok)
             gains(i)=gains(i) * CONJG( (1.0-frac)*d1 + frac*d2 )
          ENDDO
