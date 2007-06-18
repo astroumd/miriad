@@ -2263,7 +2263,11 @@ c               solaris compiler says: Warning: Subroutine "date" is not safe af
 c               linux gnu compiler: Intrinsic `DATE', invoked at (^), known to be non-Y2K-compliant
 	subroutine mfdate(dat)
 	character*(*) dat
+#ifdef g77
         call date(dat)
+#else
+        call date_and_time(dat)
+#endif
 	end
 c********1*********2*********3*********4*********5*********6*********7*c
 	subroutine ptcol
