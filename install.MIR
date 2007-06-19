@@ -15,9 +15,8 @@ conflict with the method below.
 
 The basic procedure is:
 
-	automake		(only if you have have the virgin CVS tree)
-	   or:
-	autoreconf
+	setenv LIBTOOLIZE glibtoolize    (only on mac)
+	autoreconf -if
 
 	configure		(start here if you got the distribition tar file)
 	make 
@@ -25,3 +24,5 @@ The basic procedure is:
 
 
 
+
+(right now pgplot and wip don't have their respective auto* files yet)
