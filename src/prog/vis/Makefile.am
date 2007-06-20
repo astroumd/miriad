@@ -11,8 +11,7 @@ bin_PROGRAMS = antpol atmerge atxy blflag bootflux bwsel calred closure conterr 
 
 AM_CFLAGS = @x_cflags@
 AM_FFLAGS = @no_globals@
-AM_LDFLAGS = -L../../subs -L../../../borrow/linpack
-LDADD = -lmir_uvio -lmir_linpack -lmir $(PGPLOT_LIB) @x_libs@
+LDADD = $(prog_libs)
 
 BUILT_SOURCES = antpol.f atmerge.f atxy.f blflag.f bootflux.f bwsel.f calred.f closure.f conterr.f contsen.f csflag.f early.f fgflag.f im2uv.f mfflat.f mosgen.f offaxis.f offpol.f opcal.f paraplot.f qvack.f sfunc.f sinpoly.f transfix.f uvaflag.f uvamp.f uvarchdd.f uvaver.f uvcal.f uvcal2.f uvcat.f uvcheck.f uvclip.f uvcover.f uvdecor.f uvdiff.f uvedit.f uvfft.f uvfit.f uvfix.f uvflag.f uvflux.f uvfstats.f uvgains.f uvgen.f uvgenmodel.f uvglue.f uvimage.f uvindex.f uvlin.f uvlist.f uvmodel.f uvphase.f uvplanet.f uvplot.f uvplt.f uvpnt.f uvputhd.f uvrandom.f uvratio.f uvredo.f uvsector.f uvspec.f uvspect.f uvsplit.f uvstat.f uvsub.f uvswap.f uvtcor.f uvtplt.f uvtrack.f uvtriple.f uvtsub.f uvwide.f varfit.f varlist.f varmap.f varplot.f varplt.f
 

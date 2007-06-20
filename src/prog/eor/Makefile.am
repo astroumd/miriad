@@ -8,8 +8,7 @@ bin_PROGRAMS = c2m uvcaldb
 
 AM_CFLAGS = @x_cflags@
 AM_FFLAGS = @no_globals@
-AM_LDFLAGS = -L../../subs -L../../../borrow/linpack
-LDADD = -lmir_uvio -lmir_linpack -lmir $(PGPLOT_LIB) @x_libs@
+LDADD = $(prog_libs)
 
 BUILT_SOURCES = c2m.f
 

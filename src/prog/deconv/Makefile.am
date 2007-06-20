@@ -8,8 +8,7 @@ bin_PROGRAMS = mirclean maxen mfclean mosmem mospsf mossdi mossdi2 mostess pmosm
 
 AM_CFLAGS = @x_cflags@
 AM_FFLAGS = @no_globals@
-AM_LDFLAGS = -L../../subs -L../../../borrow/linpack
-LDADD = -lmir_uvio -lmir_linpack -lmir $(PGPLOT_LIB) @x_libs@
+LDADD = $(prog_libs)
 
 BUILT_SOURCES = clean.f maxen.f mfclean.f mosmem.f mospsf.f mossdi.f mossdi2.f mostess.f pmosmem.f restor.f tvcln.f
 

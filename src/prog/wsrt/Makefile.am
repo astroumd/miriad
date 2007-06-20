@@ -8,8 +8,7 @@ bin_PROGRAMS = tsysmed wsrtfits wsrtuvmodel
 
 AM_CFLAGS = @x_cflags@
 AM_FFLAGS = @no_globals@
-AM_LDFLAGS = -L../../subs -L../../../borrow/linpack
-LDADD = -lmir_uvio -lmir_linpack -lmir $(PGPLOT_LIB) @x_libs@
+LDADD = $(prog_libs)
 
 BUILT_SOURCES = tsysmed.f wsrtfits.f wsrtuvmodel.f
 

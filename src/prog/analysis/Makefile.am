@@ -7,8 +7,7 @@ include $(top_srcdir)/mircommon.mak
 ##ANALYSIS_LD_ADD = ../../subs/libmir_uvio.la ../../subs/libmir.la
 ##ANALYSIS_LD_FLAGS = 
 AM_CFLAGS = @x_cflags@
-AM_LDFLAGS = -L../../subs -L../../../borrow/linpack
-LDADD = -lmir_uvio -lmir_linpack -lmir $(PGPLOT_LIB) @x_libs@
+LDADD = $(prog_libs)
 
 bin_PROGRAMS = avmaths boxspec boxtest clfind clplot \
   clstats colden contsub convol demos \

@@ -9,8 +9,7 @@ bin_PROGRAMS = antconv attsys bee blcal calapply calboot calfit \
 
 AM_CFLAGS = @x_cflags@
 AM_FFLAGS = @no_globals@
-AM_LDFLAGS = -L../../subs -L../../../borrow/linpack
-LDADD = -lmir_uvio -lmir_linpack -lmir $(PGPLOT_LIB) @x_libs@
+LDADD = $(prog_libs)
 
 BUILT_SOURCES = antconv.f attsys.f bee.f blcal.f calapply.f calboot.f \
   calfit.f calflag.f calflux.f calib.f callist.f calmake.f calplot.f \
