@@ -2,10 +2,7 @@
 ## $Id$
 ##
 
-RATTY=../../tools/ratty
-
-.for.f:
-	$(RATTY) -I ../../inc $< $@
+include $(top_srcdir)/mircommon.mak
 
 bin_PROGRAMS = mirclean maxen mfclean mosmem mospsf mossdi mossdi2 mostess pmosmem restor tvcln
 

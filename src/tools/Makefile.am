@@ -7,7 +7,7 @@
 bin_PROGRAMS = detab doc doc_atnf docfmt docman flint ratty intf2c \
   miriad miriad_er tpcp trim xpanel
 
-AM_CFLAGS = $(CFLAGS) -I../subs
+AM_CFLAGS = -I$(top_srcdir)/src/subs
 
 ## dist_tools_DATA = xpanel.icon
 EXTRA_DIST = xpanel.icon

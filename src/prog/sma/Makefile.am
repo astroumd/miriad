@@ -2,14 +2,11 @@
 ## $Id$
 ##
 
-RATTY=../../tools/ratty
-
-.for.f:
-	$(RATTY) -I ../../inc $< $@
+include $(top_srcdir)/mircommon.mak
 
 bin_PROGRAMS = gildas phatrans schedobs smablflag smablsrc smacheck smachunkglue smafix smaflux smagpplt smalod smamfcal smarewt smatbpass smauvamp smauvplt smauvspec smavarfit smavarplt uvsort vel2fel
 
-AM_CFLAGS = $CFLAGS @x_cflags@
+AM_CFLAGS = @x_cflags@
 AM_FFLAGS = @no_globals@
 AM_LDFLAGS = -L../../subs -L../../../borrow/linpack
 LDADD = -lmir_uvio -lmir_linpack -lmir $(PGPLOT_LIB) @x_libs@

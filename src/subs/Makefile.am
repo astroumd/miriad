@@ -1,6 +1,13 @@
+include $(top_srcdir)/mircommon.mak
+
+## Deliberately excluding the following, because they don't
+## even compile in the old miriad install...
+## args.for ivfiddle.f ivmenu.f ivofm.f ivtext.f
 
 ## Note, dirs.c removed from list, deprecated, no more VMS
 ## support..
+
+includes = -I$(top_srcdir)/src/inc -I$(srcdir)
 
 lib_LTLIBRARIES = \
   libmir_uvio.la \
@@ -9,21 +16,9 @@ lib_LTLIBRARIES = \
 libmir_uvio_la_SOURCES = bug.c dio.c headio.c hio.c \
   interface.c jplread.c key.c maskio.c mir_io.c pack.c     \
   scrio.c sma_csub.c sma_mirRead.c uvio.c xyio.c xyzio.c
-libmir_uvio_la_CFLAGS = -I../inc @single_module@
+libmir_uvio_la_CFLAGS = $(includes) @single_module@
 
-RATTY=../tools/ratty
-.for.f:
-	$(RATTY) -I ../inc $< $@
-
-F2C=../tools/intf2c
-.f2c.c:
-	$(F2C) -s f2c $< $@
-
-## Deliberately excluding the following, because they don't
-## even compile in the old miriad install...
-## args.for ivfiddle.f ivmenu.f ivofm.f ivtext.f
-
-libmir_la_CFLAGS = -I../inc
+libmir_la_CFLAGS = $(includes)
 libmir_la_LDFLAGS = -dynamic @single_module@
 
 AM_FFLAGS = @no_globals@
@@ -57,7 +52,7 @@ nodist_libmir_la_SOURCES = \
   win.f wpfit.f zed.f zeebin.f \
   bugwrap.c keywrap.c mirwrap.c mm.c oscalls.c \
   packwrap.c smawrap.c tcpio.c wrap.c xyziowrap.c
- 
+
 dist_libmir_la_SOURCES = \
   boxes.h co.h ctrl.h fitsio.h hdtab.h hio.h intpio.h io.h \
   log.h mapper.h mc.h miriad.h model.h modp.h mostab.h \

@@ -2,17 +2,14 @@
 ## $Id$
 ##
 
-RATTY=../../tools/ratty
-
-.for.f:
-	$(RATTY) -I ../../inc $< $@
+include $(top_srcdir)/mircommon.mak
 
 ## keeping hatmap out of this, doesn't seem to build
 ## CGK 12june2007
-	
+
 bin_PROGRAMS = fits mir ppmtomir
 
-AM_CFLAGS = $CFLAGS @x_cflags@
+AM_CFLAGS = @x_cflags@
 AM_FFLAGS = @no_globals@
 AM_LDFLAGS = -L../../subs -L../../../borrow/linpack
 LDADD = -lmir_uvio -lmir_linpack -lmir $(PGPLOT_LIB) @x_libs@

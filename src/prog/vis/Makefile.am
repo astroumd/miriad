@@ -2,17 +2,14 @@
 ## $Id$
 ##
 
-RATTY=../../tools/ratty
-
-.for.f:
-	$(RATTY) -I ../../inc $< $@
+include $(top_srcdir)/mircommon.mak
 
 ## Removed mbanal, doesn't build in regular miriad anyway...
 ## CGK 12jun2007
 
 bin_PROGRAMS = antpol atmerge atxy blflag bootflux bwsel calred closure conterr contsen csflag early fgflag im2uv mfflat mosgen offaxis offpol opcal paraplot qvack sfunc sinpoly transfix uvaflag uvamp uvarchdd uvaver uvcal uvcal2 uvcat uvcheck uvclip uvcover uvdecor uvdiff uvedit uvfft uvfit uvfix uvflag uvflux uvfstats uvgains uvgen uvgenmodel uvglue uvimage uvindex uvlin uvlist uvmodel uvphase uvplanet uvplot uvplt uvpnt uvputhd uvrandom uvratio uvredo uvsector uvspec uvspect uvsplit uvstat uvsub uvswap uvtcor uvtplt uvtrack uvtriple uvtsub uvwide varfit varlist varmap varplot varplt
 
-AM_CFLAGS = $CFLAGS @x_cflags@
+AM_CFLAGS = @x_cflags@
 AM_FFLAGS = @no_globals@
 AM_LDFLAGS = -L../../subs -L../../../borrow/linpack
 LDADD = -lmir_uvio -lmir_linpack -lmir $(PGPLOT_LIB) @x_libs@

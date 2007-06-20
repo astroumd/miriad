@@ -1,8 +1,4 @@
-
-RATTY=../../tools/ratty
-
-.for.f:
-	$(RATTY) -I ../../inc $< $@
+include $(top_srcdir)/mircommon.mak
 
 bin_PROGRAMS = antconv attsys bee blcal calapply calboot calfit \
   calflag calflux calib callist calmake calplot fitgains gapply \
@@ -11,7 +7,7 @@ bin_PROGRAMS = antconv attsys bee blcal calapply calboot calfit \
   mfcal mselfcal passfit passmake pcal selfcal tgains tmcal \
   tmcvt tmgen tpgains uvpflag wvcal xyphase
 
-AM_CFLAGS = $CFLAGS @x_cflags@
+AM_CFLAGS = @x_cflags@
 AM_FFLAGS = @no_globals@
 AM_LDFLAGS = -L../../subs -L../../../borrow/linpack
 LDADD = -lmir_uvio -lmir_linpack -lmir $(PGPLOT_LIB) @x_libs@

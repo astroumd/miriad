@@ -19,6 +19,8 @@ SUBDIRS = \
   src/prog/vis \
   src/prog/wsrt 
 
+EXTRA_DIST = mircommon.mak
+
 ## Not used??
 ##  src/prog/eor
 

@@ -2,12 +2,7 @@
 ## $Id$
 ##
 
-##### This section should be copied/included from somewhere else..
-RATTY=../../tools/ratty
-
-.for.f:
-	$(RATTY) -I ../../inc $< $@
-#####
+include $(top_srcdir)/mircommon.mak
 
 ##ANALYSIS_LD_ADD = ../../subs/libmir_uvio.la ../../subs/libmir.la
 ##ANALYSIS_LD_FLAGS = 
