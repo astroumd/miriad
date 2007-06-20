@@ -11,8 +11,8 @@ bin_PROGRAMS = addhis atmosph calc copyhd corset cotra delhd design dwell gethd 
 
 AM_CFLAGS = $CFLAGS @x_cflags@
 AM_FFLAGS = @no_globals@
-AM_LDFLAGS = -L../../subs -L@pgplot_prefix@/lib -L../../../borrow/linpack
-LDADD = -lmir_uvio -lmir_linpack -lmir -lpgplot @x_libs@
+AM_LDFLAGS = -L../../subs -L../../../borrow/linpack
+LDADD = -lmir_uvio -lmir_linpack -lmir $(PGPLOT_LIB) @x_libs@
 
 BUILT_SOURCES = addhis.f atmosph.f calc.f copyhd.f corset.f cotra.f delhd.f design.f dwell.f gethd.f hex.f itemize.f j2000.f julian.f listobs.f mathd.f mfplan.f moslst.f obsrms.f obstau.f planets.f pnt.f pntgen.f prthd.f prthis.f puthd.f remove.f rmdata.f rmsfit.f sinbad.f sinpoly.f solar.f tac.f taco.f telepar.f warpfit.f xcorr.f xfcor.f
 

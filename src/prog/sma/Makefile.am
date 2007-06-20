@@ -11,8 +11,8 @@ bin_PROGRAMS = gildas phatrans schedobs smablflag smablsrc smacheck smachunkglue
 
 AM_CFLAGS = $CFLAGS @x_cflags@
 AM_FFLAGS = @no_globals@
-AM_LDFLAGS = -L../../subs -L@pgplot_prefix@/lib -L../../../borrow/linpack
-LDADD = -lmir_uvio -lmir_linpack -lmir -lpgplot @x_libs@
+AM_LDFLAGS = -L../../subs -L../../../borrow/linpack
+LDADD = -lmir_uvio -lmir_linpack -lmir $(PGPLOT_LIB) @x_libs@
 
 BUILT_SOURCES = gildas.f phatrans.f schedobs.f smablflag.f smablsrc.f smacheck.f smachunkglue.f smafix.f smaflux.f smagpplt.f smalod.f smamfcal.f smarewt.f smatbpass.f smauvamp.f smauvplt.f smauvspec.f smavarfit.f smavarplt.f uvsort.f vel2fel.f
 

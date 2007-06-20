@@ -28,6 +28,7 @@ c  mchw 01nov02  Changed format for ATA.
 c----------------------------------------------------------------------c
         character version*(*)
         parameter(version='version 01nov02')
+        character fmtstr*16
 	real x, y, cell
 	integer n,k,row
 c
@@ -37,11 +38,13 @@ c
         call keyr('cell',cell,60.)
         call keyfin
 c
+        fmtstr = '(f9.2,a,f9.2)'
+c
 	do row=-(n-1),(n-1),1
 	  y =row*cell*0.8660254
 	  do k = -(2*n-abs(row)-2),(2*n-abs(row)-2),2
 	    x =k*cell*0.5
-	    print('(f9.2,a,f9.2)'), x, ',', y
+	    print(fmtstr), x, ',', y
 	  enddo
 	enddo
 	end

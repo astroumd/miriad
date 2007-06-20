@@ -3,6 +3,7 @@
 ##
 
 SUBDIRS = \
+  borrow/pgplot \
   src/tools \
   src/subs \
   borrow/linpack \

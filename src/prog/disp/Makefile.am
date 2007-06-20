@@ -11,8 +11,8 @@ bin_PROGRAMS = cgcurs cgdisp cginit cgrego cgslice cgspec sfind tvall tvclip tvc
 
 AM_CFLAGS = $CFLAGS @x_cflags@
 AM_FFLAGS = @no_globals@
-AM_LDFLAGS = -L../../subs -L@pgplot_prefix@/lib -L../../../borrow/linpack
-LDADD = -lmir_uvio -lmir_linpack -lmir -lpgplot @x_libs@
+AM_LDFLAGS = -L../../subs -L../../../borrow/linpack
+LDADD = -lmir_uvio -lmir_linpack -lmir $(PGPLOT_LIB) @x_libs@
 
 BUILT_SOURCES = cgcurs.f cgdisp.f cginit.f cgrego.f cgslice.f cgspec.f sfind.f tvall.f tvclip.f tvcycle.f tvdisp.f tvflag.f tvinit.f tvset.f views.f
 
