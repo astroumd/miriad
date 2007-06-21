@@ -1,12 +1,12 @@
 c***********************************************************************
-	program uvcal
+	program uvcal2
 	implicit none
 c
 c= uvcal - Apply special processing options to uv-data.
 c& mchw
 c: uv analysis
 c+
-c	UVCAL is a MIRIAD task which applies special processing options
+c	UVCAL2 is a MIRIAD task which applies special processing options
 c	to uv-data. By default, UVCAL applies the calibration files 
 c	before it processes the uv-data into the output file.
 c
@@ -22,8 +22,8 @@ c
 c@ radec
 c   Source right ascension and declination. These can be given in
 c   hh:mm:ss,dd:mm:ss format, or as decimal hours and decimal
-c   degrees. Setting RA and DEC will change the phase center to
-c   the RA and DEC specified. The default leaves the data unchanged.
+c   degrees. Setting RA and DEC recalculates (u,v,w) obsra, obsdec for
+c   the RA and DEC specified. UVCAL2 leaves the data unchanged.
 c
 c@ options
 c	This gives extra processing options. Several options can be given,
@@ -225,7 +225,7 @@ c------------------------------------------------------------------------
 	include 'maxdim.h'
 	integer maxbad
 	character version*(*)
-	parameter(version='UVCAL: version 3.0 14MAR07')
+	parameter(version='UVCAL2: version 3.0 21Jun07')
 	parameter(maxbad=20)
 	real PI
 	parameter(PI=3.1415926)
@@ -258,11 +258,9 @@ c
 	complex expi
 c
 	call output(version)
-	call bug('i','05aug05 seeing correction for coherence')
-	call bug('i','28jan06 options=avechan. Make new wideband')
-	call bug('i','25feb06 options=holo: pointing and holography')
-	call bug('i','05mar06 options=slope: phase slope and baseline')
-	call bug('i','14mar07 options=noisecal: copy conj LSB into USB')
+        call bug('i','Setting RA and DEC recalculates (u,v,w), obsra, 
+     * and obsdec for the RA and DEC specified.')
+	call bug('i','21jun07 UVCAL2 radec leaves the data unchanged')
 c********1*********2*********3*********4*********5*********6*********7*c
 c
 	call keyini
@@ -1241,7 +1239,7 @@ c
      *      call bug('f','Bad value for uv-variable nwide')
           call uvgetvrr(lIn,'wfreq',wfreq,nwide)
        else
-         call bug('w','Will NOT change phase of data')
+c         call bug('w','Will NOT change phase of data')
 c         call bug('f','Invalid line in subroutine radec1')
        endif
 c
