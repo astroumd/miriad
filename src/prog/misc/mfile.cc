@@ -74,6 +74,41 @@ void printhelp ( char *progname )
 bool mfile_verbose = false;
 bool human_readable = false;
 
+char *getMiriadDataType( int mirfd )
+{
+
+  char *mirt;
+
+  if ( mfile_verbose )
+    fprintf( stderr, " hdprsnt_c(%d,'image')\n", mirfd );
+  if ( hdprsnt_c( mirfd, "image" ) != 0 )
+    mirt = "image";
+
+  if ( mfile_verbose )
+    fprintf( stderr, " hdprsnt_c(%d,'visdata')\n", mirfd );
+  if ( hdprsnt_c( mirfd, "visdata" ) != 0 )
+    mirt = "visdata";
+
+  if ( mfile_verbose )
+    fprintf( stderr, " hdprsnt_c(%d,'rdata')\n", mirfd );
+  if ( hdprsnt_c( mirfd, "rdata" ) != 0 )
+    mirt = "rdata";
+
+  // Can lead to mem leaks
+  return strdup(mirt);
+}
+
+void printMirInfoDesc( mirInfoDesc *desc )
+{
+  printf( "name: '%s'\n", desc->fileName );
+  printf( "dataType: '%s'\n", desc->type );
+
+}
+
+void printCSVMirInfoDesc( mirInfoDesc *desc )
+{
+  printf( "\"%s\",\"%s\"\n", desc->fileName, desc->type );
+}
 int main ( int argc, char **argv )
 {
   char *fullPathInFileName = NULL;
@@ -99,7 +134,6 @@ int main ( int argc, char **argv )
         break;
       case 'v':
         mfile_verbose = true;
-        puts( " verbose output requested!" );
         break;
       default:
         printf( " getopt switch got unknown switch: %d\n", c );
