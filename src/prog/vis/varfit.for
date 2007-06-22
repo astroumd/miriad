@@ -178,10 +178,11 @@ c                  uncorrelated gains between rx2 and rx1 in
 c                  the linear regression between phase 2 and phase 1. 
 c
 c    08nov mchw  increase MAXSOLS to 4096
+c    22jun07 mchw  increase MAXANTS to 64
 c                                            
 c-----------------------------------------------------------------------
 	character version*(*)
-	parameter(version='(version 1.3 08-Nov-06)')
+	parameter(version='(version 1.3 22-Jun-2007)')
 	character device*80, log*80, vis*80, xaxis*40, yaxis*40
 	integer tvis, refant, refant2, nx, ny
 	logical dowrap, xsc,ysc, dostruct, doallan, doquad
@@ -298,7 +299,7 @@ c----------------------------------------------------------------------c
         parameter(MAXLEN=144)
 	double precision var(MAXLEN)
 	integer MAXANTS,MAXSOLS
-	parameter(MAXANTS=28,MAXSOLS=4096)
+	parameter(MAXANTS=64,MAXSOLS=4096)
 	integer nants,nsols, npol
 	double precision interval,dtime(MAXSOLS)
 	complex gains(MAXANTS,MAXSOLS)
@@ -1140,7 +1141,7 @@ c         print*,j,k,mgains(j,1,k),aampl(j,k,2),pphi(j,k,2)
 	implicit none
 c        include 'maxdim.h'
         integer MAXANTS
-        parameter(MAXANTS=28)
+        parameter(MAXANTS=64)
         integer tno,nants
         real slope(MAXANTS), yoffset(MAXANTS)
         integer iostat,off,item,i
@@ -1733,7 +1734,7 @@ c
      *          tvis,slope,yoffset,nants)
         implicit none
         integer tvis,nants,maxants
-        parameter(MAXANTS=28)
+        parameter(MAXANTS=64)
         real slope(MAXANTS), yoffset(MAXANTS)
        
 c
