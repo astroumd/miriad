@@ -44,15 +44,16 @@ c    rjs 28nov97 - Increase max number of boxes.
 c    rjs 29jan99 - Correct user message only.
 c    gmx 07mar04 - Changed optimum gain determination to handle
 c                   negative components
+c    pjt 22jun07 - Larger MAXRUN/MAXBOXES 
 c
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version='MosSDI: version 1.0 07-Apr-04')
+	parameter(version='MosSDI: version 1.0 22-jun-07')
 	include 'maxdim.h'
 	include 'maxnax.h'
 	include 'mem.h'
 	integer MAXRUN,MAXBOXES
-	parameter(MAXRUN=3*maxdim,MAXBOXES=3076)
+	parameter(MAXRUN=40*maxdim,MAXBOXES=30760)
 c
 	character MapNam*64,BeamNam*64,ModelNam*64,OutNam*64,line*64
 	integer Boxes(MAXBOXES),Run(3,MAXRUN),nRun,blc(3),trc(3),nAlloc

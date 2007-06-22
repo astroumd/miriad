@@ -62,15 +62,16 @@ c    pjt/snv jan02 - keyword
 c    pjt 12feb02 - submitted to miriad
 c    gmx  07mar04 - Changed optimum gain determination to handle
 c                   negative components
+c    pjt  22jun07 - Larger MAXRUN/MAXBOXES
 c
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version='MosSDI2: version 1.0 07-Apr-04')
+	parameter(version='MosSDI2: version 1.0 22-jun-07')
 	include 'maxdim.h'
 	include 'maxnax.h'
 	include 'mem.h'
 	integer MAXRUN,MAXBOXES
-	parameter(MAXRUN=3*maxdim,MAXBOXES=1024)
+	parameter(MAXRUN=40*maxdim,MAXBOXES=30760)
 c
 	character MapNam*80,BeamNam*80,ModelNam*80,OutNam*80,line*80
 	character LogFile*80
