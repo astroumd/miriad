@@ -7,6 +7,8 @@
 
 #include "miriad.h"
 
+#include "mfilelib.h"
+
 // TODO
 // Error for now on these conditions until
 // we have more robust ways of working through these...
@@ -55,22 +57,25 @@ static struct option long_options[] =
   {0, 0, 0, 0}
 };
 
+
 void printhelp ( char *progname )
 {
   puts("");
   printf( "usage: %s <miriad dataset>\n", progname );
   printf( "\t-h,--help\t\tThis help message\n");
+  printf( "\t-r,--readable\t\tPrint an easier to read format\n");
   printf( "\t-v,--verbose\t\tBe very chatty\n");
   puts("");
+  printf( " Send bug reports to: %s\n", PACKAGE_BUGREPORT );
+  puts("");
+
 }
 
-static bool verbose = false;
-static int exitcode;
+bool mfile_verbose = false;
+bool human_readable = false;
 
 int main ( int argc, char **argv )
 {
-  printf( "%s: %s $Revision$\n", PACKAGE_STRING, argv[0] );
-
   char *fullPathInFileName = NULL;
 
   while (1)
@@ -78,7 +83,7 @@ int main ( int argc, char **argv )
     int c;
     int option_index = 0;
 
-    c = getopt_long(argc, argv, "hi:v", long_options, &option_index );
+    c = getopt_long(argc, argv, "hrv", long_options, &option_index );
 
     if ( c == -1 )
       break;
@@ -87,30 +92,34 @@ int main ( int argc, char **argv )
     {
       case 'h':
         printhelp(argv[0]);
-        exitcode = EXIT_SUCCESS;
+        return( EXIT_SUCCESS );
+        break;
+      case 'r':
+        human_readable = true;
         break;
       case 'v':
-        verbose = true;
+        mfile_verbose = true;
+        puts( " verbose output requested!" );
         break;
       default:
         printf( " getopt switch got unknown switch: %d\n", c );
         printhelp(argv[0]);
-        exitcode = EXIT_FAILURE;
         break;
     }
   }
 
+  if ( mfile_verbose )
+    printf( "%s: %s $Revision$ $Date$ \n", PACKAGE_STRING, argv[0] );
+
   if ( optind < argc )
   {
     fullPathInFileName = strdup(argv[optind++]);
-
   }
   else
   {
     puts("");
     puts( "Expected miriad data set as option!" );
     printhelp(argv[0]);
-    exitcode = EXIT_FAILURE;
   }
 
   if ( optind < argc )
@@ -122,16 +131,45 @@ int main ( int argc, char **argv )
     }
   }
 
-  if ( verbose )
+  if ( mfile_verbose )
   {
     if ( fullPathInFileName != NULL )
-      fprintf( stderr, " stat('%s',...)\n", fullPathInFileName );
+      fprintf( stderr, " hopen_c(...,'%s',...)\n", fullPathInFileName );
+    else
+    {
+      fprintf( stderr, " fullPathInFileName is NULL!\n" );
+      return( EXIT_FAILURE );
+    }
   }
 
+  mirInfoDesc mid;
 
+  mid.fileName = fullPathInFileName;
+  int mirfd, iostat;
+  hopen_c( &mirfd, mid.fileName, "old", &iostat );
+  if ( iostat )
+  {
+    bugno_c('f', iostat);
+    return( EXIT_FAILURE );
+  }
 
+  if ( mfile_verbose )
+    fprintf( stderr, " getMirType(%d)\n", mirfd );
+  mid.type = getMiriadDataType( mirfd );
 
-  return( exitcode );
+  if ( human_readable )
+  {
+	  printMirInfoDesc( &mid );
+  }
+  else
+  {
+    // default to CSV format
+    printCSVMirInfoDesc( &mid );
+  }
+
+  
+  return( EXIT_SUCCESS );
+
 }
 
 // vim: set expandtab sw=2 ts=2 cindent

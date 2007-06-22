@@ -74,3 +74,8 @@ void printMirInfoDesc( mirInfoDesc *desc )
   printf( "dataType: '%s'\n", desc->type );
 
 }
+
+void printCSVMirInfoDesc( mirInfoDesc *desc )
+{
+  printf( "\"%s\",\"%s\"\n", desc->fileName, desc->type );
+}
