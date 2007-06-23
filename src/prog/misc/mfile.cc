@@ -107,8 +107,56 @@ void printMirInfoDesc( mirInfoDesc *desc )
 
 void printCSVMirInfoDesc( mirInfoDesc *desc )
 {
-  printf( "\"%s\",\"%s\"\n", desc->fileName, desc->type );
+  printf( "\"%s\",\"%s\",", desc->fileName, desc->type );
+  printf( "\"%s\",\"%s\",", desc->instrument, desc->telescope );
+  printf( "\"%s\",\"%s\",", desc->source, desc->observer );
+  printf( "\"%s\",\"%s\"\n", desc->start_str, desc->end_str );
 }
+
+void julianDayToStr ( double julianDay, char *str, int len )
+{
+  // This algorithm for converting from julianday to
+  // string swiped from my_uvlist in uvio.c
+  // TODO: move this into a C library as part of
+  // libmir_uvio?
+  int z,a,b,c,d,e,alpha,month,year,day,hr,minute,sec;
+  int dsec,nchar;
+  char string[100];
+  double f;
+
+  static char *M[] = {
+    "JAN", "FEB", "MAR", "APR", "MAY", "JUN",
+    "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"
+  };
+
+  z = (int)(julianDay + 0.5 + (1.0/1728000.0));
+  f = julianDay + 0.5 + (1.0/1728000.0) - z;
+  if ( z < 2299161 )
+  { 
+    a=z;
+  }
+  else
+  {
+    alpha = (int)(((z - 1867216.25) / 36524.25));
+    a = (int)(z + 1 + alpha - (int)(0.25 * alpha));
+  }
+  b = a + 1524;
+  c = (int)((b - 122.1) / 365.25);
+  d = (int)(365.25 * c);
+  e = (int)((b - d) / 30.6001);
+  f += (int)((b - d - (int)(30.6001 * e)));
+  day = (int)(f);         
+  hr = (int)(24 * (f - day));
+  minute = (int)(60 * (24 * (f - day) - hr));
+  sec = (int)(600 * (60 * (24 * (f - day) - hr) - minute));
+  dsec = sec % 10; sec /= 10;
+  month = (e<=13) ? e - 1 : e - 13;
+  year = (month>2) ? c - 4716 : c - 4715;
+  year %= 100;
+  snprintf( str, len, "%2.2d %s %2.2d %2.2d:%2.2d:%2.2d.%1d",
+      year,M[month-1],day,hr,minute,sec,dsec);
+}
+
 int main ( int argc, char **argv )
 {
   char *fullPathInFileName = NULL;
@@ -191,9 +239,45 @@ int main ( int argc, char **argv )
     fprintf( stderr, " getMirType(%d)\n", mirfd );
   mid.type = getMiriadDataType( mirfd );
 
+  if ( strcmp( mid.type, "visdata" ) == 0 )
+  {
+
+    if ( mfile_verbose )
+      fprintf( stderr, " gathering visdata\n" );
+
+    int uvfd;
+    if ( mfile_verbose )
+      fprintf( stderr, " uvopen_c(...,'%s',...)\n", mid.fileName );
+    uvopen_c( &uvfd, mid.fileName, "old" );
+
+    if ( mfile_verbose )
+      fprintf( stderr, " uvnext_c(%d)\n", uvfd );
+    uvnext_c( uvfd );
+
+    mid.instrument = new char[80];
+    mid.telescope = new char[80];
+    mid.source = new char[80];
+    mid.observer = new char[80];
+
+    uvrdvra_c( uvfd, "instrume", mid.instrument, "N/A", 79);
+    uvrdvra_c( uvfd, "telescop", mid.telescope, "N/A", 79);
+    uvrdvra_c( uvfd, "source", mid.source, "N/A", 79);
+    uvrdvra_c( uvfd, "observer", mid.observer, "N/A", 79);
+
+    mid.start_str = new char[80];
+    mid.end_str = new char[80];
+    char *julianStartBytes = new char[sizeof(double)];
+    uvrdvrd_c( uvfd, "time", julianStartBytes, "0.0");
+    double julianDay;
+    memcpy(&julianDay, julianStartBytes, sizeof(double));
+    julianDayToStr( julianDay, mid.start_str, 79 );
+
+
+  }
+
   if ( human_readable )
   {
-	  printMirInfoDesc( &mid );
+    printMirInfoDesc( &mid );
   }
   else
   {
@@ -201,7 +285,8 @@ int main ( int argc, char **argv )
     printCSVMirInfoDesc( &mid );
   }
 
-  
+
+
   return( EXIT_SUCCESS );
 
 }
