@@ -83,6 +83,8 @@ History:
   pjt 12jun01 Increased N_PGMR, made a static in lognam()
       15jun01 and defensed agains future increments for N_PGMR
   pjt 28aug05 uninitialized variables in gcc4 with -O  ; removed vaxc code
+  pkgw 22jun07 Fix a segfault caused by buffer over-use in untab() ;
+               exposed by running doc on imhist.for on my machine.
 
 TODO:
   - spaces before slash-star commands are not understood 
@@ -2598,12 +2600,13 @@ void remove_trailing_spaces(s) char *s; { char *start; start=s;
 /************************************************************************/
 /* replace tabs by the appropriate number of spaces                     */
 void untab(s,start) char *s; int start; { int i,pad; char *t;
+    char tmp[STRINGLEN];
     i=0; t=s; pad=8-start;
     while( *t ) {
-        if( *t != '\t' ) { scrline[i++] = *t; pad--; }
-        else             { while( pad-- > 0 ) scrline[i++] = ' '; }
+        if( *t != '\t' ) { tmp[i++] = *t; pad--; }
+        else             { while( pad-- > 0 ) tmp[i++] = ' '; }
         t++; if( pad <= 0 ) pad=8;
-    } scrline[i]='\0'; strcpy( s, scrline ); }
+    } tmp[i]='\0'; strcpy( s, tmp ); }
 /************************************************************************/
 /* check if string f could be a filename                                */
 logical isfilename(f) char *f; {
