@@ -17,7 +17,8 @@ SUBDIRS = \
   src/prog/misc \
   src/prog/sma \
   src/prog/vis \
-  src/prog/wsrt 
+  src/prog/wsrt \
+  src
 
 EXTRA_DIST = mircommon.mak
 

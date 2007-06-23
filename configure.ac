@@ -351,6 +351,7 @@ AC_CONFIG_FILES([
     src/prog/sma/Makefile
     src/prog/vis/Makefile
     src/prog/wsrt/Makefile
+    src/Makefile
     src/../install/mirdefs
     src/inc/maxdim.h
     src/inc/maxdimc.h
@@ -386,6 +387,3 @@ echo "MAXWIN       : $MAXWIN"
 echo "MAXWIDE      : $MAXWIDE"
 echo "MAXNAX       : $MAXNAX"
 echo "MAXBUF       : $MAXBUF"
-
-
-
