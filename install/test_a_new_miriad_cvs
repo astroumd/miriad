@@ -92,9 +92,10 @@ if (-e  $rootdir/src/tools/ercmd.c) rm $rootdir/src/tools/ercmd.c
 if ($auto) then
  cd $rootdir
  ./autogen.sh
- ./configure --prefix=$rootdir/build
+ ./configure --prefix=`pwd`/build
  make
  make install
+ 
 else
  cd $rootdir/install
  time ./install.miriad $opts generic=$generic
