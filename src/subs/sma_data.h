@@ -25,7 +25,12 @@
 // jhz 2007-6-11: using the exact maximum number of data points
 //                that can be produced by the SMA correlator for
 //                the limit of MAXDATA
-
+// jhz 2007-6-26: correct a note for MAXCHAN.
+//                the standard MAXCHAN is 24*256 = 6144 for 8 antennas
+//                The limit here is 4 times 24*256 in case of people
+//                requiring super high resolution by trading off the
+//                number of baselines: 060512_18:10:36 
+//                3*2048+16*128+5*1 = 8197
 #include "miriad.h"
 
 
@@ -317,7 +322,7 @@ struct anttsys {
  */
 #define MAXINT 10000  /* maximum number of integration */
 #define MAXANT 8      /* maximum antenna numbers for the standard SMA*/
-#define MAXCHAN 24576 /* maximum channels per sb, bl, rx, 1pol */
+#define MAXCHAN 24576 /* 4 * maximum channels per sb, bl, rx, 1pol */
 #define MAXBAS 112    /* maxant*(maxant-1)/2*2sb*2rx for maxant=8*/
 #define MAXSOURCE 100 /* maximum source number per track */
 #define SMIF 24       /* maximum number of spectral chunks per sb */
