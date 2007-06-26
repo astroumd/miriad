@@ -16,13 +16,17 @@ conflict with the method below.
 The basic procedure is:
 
 	setenv LIBTOOLIZE glibtoolize    (only on mac)
-	autoreconf -if
 
-	configure		(start here if you got the distribition tar file)
+        ./autogen.sh
+
+	configure --prefix=`pwd`/build
 	make 
 	make install
+	
+	build/share/pgplot-miriad-remix/*   -> PGPLOT_DIR
+	build/libexec/*                     -> PGPLOT_DIR
+
+the old-style MIRRC.<hosttype> file knows about the $MIR/build
+tree and will use that if it is present.
 
 
-
-
-(right now pgplot and wip don't have their respective auto* files yet)
