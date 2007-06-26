@@ -33,16 +33,28 @@
 if ($?MIR == 0) then
   setenv MIR      "/mir_rootdir"
 endif
+if (-e $MIR/build) then
+  set auto=1
+  echo Warning: using new build system
+else
+  set auto=0
+endif
 setenv MIRHOST  "mir_hosttype"
 setenv MIRXINC  "/usr/openwin/include"
 setenv MIRXLIB  "/usr/local/lib/X11"
 setenv AIPSTV   "XASIN"
-setenv MIRBIN   $MIR/bin/$MIRHOST
+if ($auto) then
+  setenv MIRBIN   $MIR/build/bin
+  setenv MIRLIB   $MIR/build/lib
+else
+  setenv MIRBIN   $MIR/bin/$MIRHOST
+  setenv MIRLIB   $MIR/lib/$MIRHOST
+endif
 setenv MIRCAT   $MIR/cat
 setenv MIRDEF   .
 setenv MIRDOC   $MIR/doc
 setenv MIRINC   $MIR/src/inc
-setenv MIRLIB   $MIR/lib/$MIRHOST
+
 setenv MIRNEWS  $MIR/news
 setenv MIRPAGER "doc"
 setenv MIRPDOC  $MIR/doc/prog
@@ -52,7 +64,13 @@ setenv MIRSRC   $MIR/src
 setenv MIRSUBS  $MIR/src/subs
 setenv MIRTEL   MIRTEL:unknown
 
-setenv PGPLOT_FONT $MIRLIB/grfont.dat
+if ($auto) then
+ setenv PGPLOT_FONT $MIR/build/share/pgplot-miriad-remix/grfont.dat
+ setenv PGPLOT_DIR  $MIR/build/share/pgplot-miriad-remix/grfont.dat
+else
+  setenv PGPLOT_FONT $MIRLIB/grfont.dat
+  setenv PGPLOT_DIR  $MIRLIB
+endif
 
 if (`echo ":${PATH}:" | grep -c ":\.:"` > 0) then
    set path = (`echo ":${PATH}:"|sed "s&:.:&:.:${MIRBIN}:&"|sed 's/:/ /g'`)
@@ -72,7 +90,7 @@ alias   mirfeedback     mir.bug.csh feedback
 if (-e $MIR/MIRRC.local) then
   source $MIR/MIRRC.local
 endif
-#
+# 
 #  If the user's file $HOME/.mirrc exists, execute it now.
 #
 if (-e $HOME/.mirrc) then

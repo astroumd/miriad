@@ -38,15 +38,17 @@ export MIRHOST="mir_hosttype"
 export MIRXINC="/usr/openwin/include"
 export MIRXLIB="/usr/local/lib/X11"
 export AIPSTV="XASIN"
-export MIRBIN=$MIR/bin/$MIRHOST
+if test -d $MIR/build; then
+  export MIRBIN=$MIR/bin/$MIRHOST
+  export MIRLIB=$MIR/lib/$MIRHOST
+else
+  export MIRBIN=$MIR/bin/$MIRHOST
+  export MIRLIB=$MIR/lib/$MIRHOST
+fi
 export MIRCAT=$MIR/cat
 export MIRDEF=.
 export MIRDOC=$MIR/doc
 export MIRINC=$MIR/src/inc
-export MIRLIB=$MIR/lib/$MIRHOST
-export MIRNEWS=$MIR/news
-export MIRPAGER="doc"
-export MIRPDOC=$MIR/doc/prog
 export MIRPROG=$MIR/src/prog
 export MIRSDOC=$MIR/doc/subs
 export MIRSRC=$MIR/src
