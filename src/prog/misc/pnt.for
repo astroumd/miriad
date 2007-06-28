@@ -196,11 +196,12 @@ c    02sep05 pjt   merged web version with cvs version (grrrr)
 c    03sep05 mchw  added keyword telescop; revised CARMA data format.
 c    06sep05 pjt   slight mod to  CARMA format, changed ant/equ as integer
 c    12sep05 pjt   added ddmmmyy before the UT format.
-c    11apr06 save fits in /pntfit/ for printing summary
+c    11apr06       save fits in /pntfit/ for printing summary
+c     5feb07 pjt   query device for cursor if
 c----------------------------------------------------------------------c
 	include 'pnt.h'
 	character version*(*)
-	parameter(version='(version 3.1  11-apr-2006)')
+	parameter(version='(version 3.1  5-feb-2007)')
 c
 	integer i,iant,kans
 	character ans*20,options*1,log*80,buffer*80, telescope*20
@@ -753,6 +754,12 @@ c
 	integer i,iblck,numb,iorder
 	character*60 buffer,input
 	integer kinput, len1
+c
+	call pgqinf('CURSOR',input,kinput)
+	if (input.eq.'NO') then
+	   key = 'E'
+	   return
+	endif
 c
 	call pgmtxt('T',3.,.5,.5,
 	1	' OPTIONS: Left,Right,Top,Bottom,Vanish,Appear,'
