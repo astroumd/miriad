@@ -24,6 +24,8 @@ c		     as bad
 c    pjt  27dec01    Option to enforce single channel (LSB) usage for all channels
 c                    which is useful for single sideband OVRO data
 c    pjt   3dec02    Using MAXBASE2 now
+c    pjt  28jun07    rearranged subroutines to work around odd mac/intel g77 issue
+c                    (can also "fix" it with -fno-globals)
 c
 c= gapply - apply gains of one dataset to another
 c& pjt
@@ -71,7 +73,7 @@ c-----------------------------------------------------------------------
 c  Constants
       INTEGER MAXFILE, MAXSELS
       CHARACTER VERSION*(*)
-      PARAMETER(VERSION='GAPPLY: Version 3-dec-02 PJT')
+      PARAMETER(VERSION='GAPPLY: Version 28-jun-07')
       PARAMETER(MAXFILE=64, MAXSELS = 100)
 c  Local variables
       CHARACTER in(MAXFILE)*80, viso*80, gvis*80, line*100, linetype*20
@@ -385,76 +387,6 @@ c
 
       END
 c***********************************************************************
-      SUBROUTINE ClearVisGApply(nslot,nwide,nbl,vis,flg)
-c
-      IMPLICIT NONE
-      INTEGER nslot,nwide,nbl
-      INTEGER flg(nslot,nwide,nbl)
-      COMPLEX vis(nslot,nwide,nbl)
-c-----------------------------------------------------------------------
-c  Reset all VIS and FLG values to unused.
-c
-c  legal flg values:
-c        -1    unused slot
-c         0    flagged as bad 
-c         1    flagged as good
-c-----------------------------------------------------------------------
-      INTEGER i,j,k
-c
-      DO k=1,nbl
-         DO j=1,nwide
-            DO i=1,nslot
-               vis(i,j,k) = (0.0,0.0)
-               flg(i,j,k) = -1
-            ENDDO
-         ENDDO
-      ENDDO
-
-      END
-c***********************************************************************
-      SUBROUTINE SetVisGApply(nslot,nwide,nbl,vis,flg,
-     *                  i,j,k,data,flag)
-c
-      IMPLICIT NONE
-      INTEGER nslot,nwide,nbl, i,j,k
-      INTEGER flg(nslot,nwide,nbl)
-      COMPLEX vis(nslot,nwide,nbl), data
-      LOGICAL flag
-c
-c  Set the flg and vis values of a particular item
-c
-c-----------------------------------------------------------------------
-      vis(i,j,k) = data
-      IF(flag) THEN
-         flg(i,j,k) = 1
-      ELSE
-         flg(i,j,k) = 0
-      ENDIF
-
-      END
-c***********************************************************************
-      SUBROUTINE getvisgapply(nslot,nwide,nbl,vis,flg,
-     *                  i,j,k,data,flag,ok)
-c
-      IMPLICIT NONE
-      INTEGER nslot,nwide,nbl, i,j,k
-      INTEGER flg(nslot,nwide,nbl)
-      COMPLEX vis(nslot,nwide,nbl), data
-      LOGICAL flag, ok
-c
-c  Get the flg and vis values of a particular item, if they were 
-c  ever initialized.
-c
-c-----------------------------------------------------------------------
-      IF(flg(i,j,k).GE.0) ok = ok .AND. .TRUE.
-
-      IF (ok) THEN
-         data = vis(i,j,k)
-         flag = flg(i,j,k) .NE. 0
-      ENDIF
-
-      END
-c***********************************************************************
       SUBROUTINE IpolVis(time, b1, b2, nwide, gains, ok)
 c
       IMPLICIT NONE
@@ -528,6 +460,76 @@ c-debug
      *         islot+1,i,b2,d2,flag,ok)
             gains(i)=gains(i) * CONJG( (1.0-frac)*d1 + frac*d2 )
          ENDDO
+      ENDIF
+
+      END
+c***********************************************************************
+      SUBROUTINE ClearVisGApply(nslot,nwide,nbl,vis,flg)
+c
+      IMPLICIT NONE
+      INTEGER nslot,nwide,nbl
+      INTEGER flg(nslot,nwide,nbl)
+      COMPLEX vis(nslot,nwide,nbl)
+c-----------------------------------------------------------------------
+c  Reset all VIS and FLG values to unused.
+c
+c  legal flg values:
+c        -1    unused slot
+c         0    flagged as bad 
+c         1    flagged as good
+c-----------------------------------------------------------------------
+      INTEGER i,j,k
+c
+      DO k=1,nbl
+         DO j=1,nwide
+            DO i=1,nslot
+               vis(i,j,k) = (0.0,0.0)
+               flg(i,j,k) = -1
+            ENDDO
+         ENDDO
+      ENDDO
+
+      END
+c***********************************************************************
+      SUBROUTINE SetVisGApply(nslot,nwide,nbl,vis,flg,
+     *                  i,j,k,data,flag)
+c
+      IMPLICIT NONE
+      INTEGER nslot,nwide,nbl, i,j,k
+      INTEGER flg(nslot,nwide,nbl)
+      COMPLEX vis(nslot,nwide,nbl), data
+      LOGICAL flag
+c
+c  Set the flg and vis values of a particular item
+c
+c-----------------------------------------------------------------------
+      vis(i,j,k) = data
+      IF(flag) THEN
+         flg(i,j,k) = 1
+      ELSE
+         flg(i,j,k) = 0
+      ENDIF
+
+      END
+c***********************************************************************
+      SUBROUTINE getvisgapply(nslot,nwide,nbl,vis,flg,
+     *                  i,j,k,data,flag,ok)
+c
+      IMPLICIT NONE
+      INTEGER nslot,nwide,nbl, i,j,k
+      INTEGER flg(nslot,nwide,nbl)
+      COMPLEX vis(nslot,nwide,nbl), data
+      LOGICAL flag, ok
+c
+c  Get the flg and vis values of a particular item, if they were 
+c  ever initialized.
+c
+c-----------------------------------------------------------------------
+      IF(flg(i,j,k).GE.0) ok = ok .AND. .TRUE.
+
+      IF (ok) THEN
+         data = vis(i,j,k)
+         flag = flg(i,j,k) .NE. 0
       ENDIF
 
       END
