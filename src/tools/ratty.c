@@ -104,6 +104,7 @@ vector processing capacities (compilers "unicos", "alliant" and "convex"):
 /*    rjs  22may06 Change to appease cygwin.				*/
 /*    mrc  14jul06 Get it to compile with 'gcc -Wall' without warnings. */
 /*    pjt  12mar07 merged MIR4 and atnf versions; re-added -h           */
+/*    pkgw 19jun07 Exit with an error if we fail to find an include.    */
 /*									*/
 /************************************************************************/
 /* ToDos/Shortcomings:                                                  */
@@ -433,6 +434,7 @@ char *infile;
 	  sprintf(msg,"Error opening include file %s",token);
 	  message(msg);
 	  textout(line); textout("\n");
+	  exit(2);
 	} else {
 	  if(lineno != 0){
 	    labelout(lineno); blankout(indent-5); textout("continue\n");
