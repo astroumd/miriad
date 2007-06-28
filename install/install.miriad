@@ -524,7 +524,7 @@ if (-e checklist) then
     endif
   end
   if ($bad > 0) then
-    if ($bad > 5) then
+    if ($bad > 10) then
 	echo Found $bad / $all binaries missing, check $badlist
         if ($bad > 100) then
 	  echo Most likely you have a compiler issue and/or linking
