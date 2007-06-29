@@ -2,10 +2,12 @@
 ## $Id$
 ##
 
+## Build tools first to get the doc program ASAP.
+
 SUBDIRS = \
+  src/tools \
   cat \
   borrow/pgplot \
-  src/tools \
   src/subs \
   src/scripts \
   borrow/linpack \
