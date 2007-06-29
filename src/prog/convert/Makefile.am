@@ -22,3 +22,6 @@ EXTRA_DIST = fits.for mir.for ppmtomir.for
 nodist_fits_SOURCES = fits.f
 nodist_mir_SOURCES = mir.f
 nodist_ppmtomir_SOURCES = ppmtomir.f
+
+DOCINPUTS = $(EXTRA_DIST)
+include $(top_srcdir)/mirdoc.mak

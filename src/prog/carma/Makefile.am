@@ -12,3 +12,6 @@ nodist_ax_SOURCES = ax.f
 nodist_axcor_SOURCES = axcor.f
 nodist_jyperk_SOURCES = jyperk.f
 nodist_noiseglue_SOURCES = noiseglue.f
+
+DOCINPUTS = $(EXTRA_DIST)
+include $(top_srcdir)/mirdoc.mak

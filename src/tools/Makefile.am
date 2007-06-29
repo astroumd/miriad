@@ -2,6 +2,8 @@
 ## $Id$
 ##
 
+include $(top_srcdir)/mircommon.mak
+
 ## leaving mirnewer out, new build system obsoletes its use
 
 bin_PROGRAMS = detab doc doc_atnf docfmt docman flint ratty intf2c \
@@ -29,3 +31,5 @@ xpanel_SOURCES = xpanel.c
 xpanel_CFLAGS = @x_cflags@ 
 xpanel_LDADD = @x_libs@ -lXt
 
+DOCINPUTS = $(bin_PROGRAMS:=.c)
+include $(top_srcdir)/mirdoc.mak

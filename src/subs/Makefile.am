@@ -99,7 +99,12 @@ noinst_HEADERS = \
   ../inc/mirconst.h ../inc/size.h ../inc/tmpdim.h \
   ../inc/maxdim.h.in ../inc/maxdimc.h.in
 
+pkginclude_HEADERS = miriad.h sysdep.h
+
 ## The inc files should probably end up in the top-level Makefile.am
 ## because they're part of the overall package/sortof API
 ## But since this is the primary library and it's built early on, they're
 ## here for now.
+
+DOCINPUTS = $(EXTRA_DIST) $(libmir_uvio_la_SOURCES)
+include $(top_srcdir)/mirdoc.mak

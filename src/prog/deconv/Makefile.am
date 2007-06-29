@@ -27,3 +27,6 @@ nodist_mostess_SOURCES = mostess.f
 nodist_pmosmem_SOURCES = pmosmem.f
 nodist_restor_SOURCES = restor.f
 nodist_tvcln_SOURCES = tvcln.f
+
+DOCINPUTS = $(EXTRA_DIST)
+include $(top_srcdir)/mirdoc.mak

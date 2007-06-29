@@ -19,3 +19,6 @@ EXTRA_DIST = tsysmed.for wsrtfits.for wsrtuvmodel.for
 nodist_tsysmed_SOURCES = tsysmed.f
 nodist_wsrtfits_SOURCES = wsrtfits.f
 nodist_wsrtuvmodel_SOURCES = wsrtuvmodel.f
+
+DOCINPUTS = $(EXTRA_DIST)
+include $(top_srcdir)/mirdoc.mak

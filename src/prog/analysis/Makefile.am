@@ -71,7 +71,6 @@ EXTRA_DIST = avmaths.for boxspec.for boxtest.for clfind.for clplot.for \
   velmodel.for velplot.for velsw.for xpeak.for zapchan.for \
   zeeeta.for zeefake.for zeemap.for zeesim.for zeestat.for
 
-
 nodist_avmaths_SOURCES = avmaths.f
 nodist_boxspec_SOURCES = boxspec.f
 nodist_boxtest_SOURCES = boxtest.f
@@ -165,3 +164,5 @@ nodist_zeemap_SOURCES = zeemap.f
 nodist_zeesim_SOURCES = zeesim.f
 nodist_zeestat_SOURCES = zeestat.f
 
+DOCINPUTS = $(EXTRA_DIST)
+include $(top_srcdir)/mirdoc.mak

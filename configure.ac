@@ -337,8 +337,10 @@ LINPACK_PREFIX=$with_linpack
 AC_CONFIG_HEADER(config.h)
 AC_CONFIG_FILES([
     Makefile
+    cat/Makefile
     src/tools/Makefile
     src/subs/Makefile
+    src/scripts/Makefile
     borrow/linpack/Makefile
     src/prog/analysis/Makefile
     src/prog/calib/Makefile

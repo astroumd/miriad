@@ -31,8 +31,6 @@ EXTRA_DIST = antconv.for attsys.for bee.for blcal.for calapply.for \
   pcal.for selfcal.for tgains.for tmcal.for tmcvt.for tmgen.for \
   tpgains.for uvpflag.for wvcal.for xyphase.for
 
-
-
 nodist_antconv_SOURCES = antconv.f
 nodist_attsys_SOURCES = attsys.f
 nodist_bee_SOURCES = bee.f
@@ -78,3 +76,6 @@ nodist_tpgains_SOURCES = tpgains.f
 nodist_uvpflag_SOURCES = uvpflag.f
 nodist_wvcal_SOURCES = wvcal.f
 nodist_xyphase_SOURCES = xyphase.f
+
+DOCINPUTS = $(EXTRA_DIST)
+include $(top_srcdir)/mirdoc.mak

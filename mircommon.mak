@@ -1,3 +1,5 @@
+# -*- makefile-automake -*-
+
 RATTY=$(top_builddir)/src/tools/ratty
 
 .for.f:
@@ -7,6 +9,19 @@ F2C=$(top_builddir)/src/tools/intf2c
 
 .f2c.c:
 	$(F2C) -s f2c $< $@
+
+# Documentation variables.
+
+doc_catsrc = $(top_srcdir)/cat
+doc_prog = $(top_builddir)/src/tools/doc
+DOC = MIRCAT=$(doc_catsrc) $(doc_prog)
+
+mirdocdir = $(pkgdatadir)/doc
+pdocdir = $(mirdocdir)/prog
+sdocdir = $(mirdocdir)/subs
+# mdocdir = $(docdir)/misc : This seems to be basically unused.
+
+# Utility.
 
 prog_libs = \
   $(top_builddir)/src/subs/libmir.la \

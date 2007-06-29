@@ -31,3 +31,6 @@ nodist_tvflag_SOURCES = tvflag.f
 nodist_tvinit_SOURCES = tvinit.f
 nodist_tvset_SOURCES = tvset.f
 nodist_views_SOURCES = views.f
+
+DOCINPUTS = $(EXTRA_DIST)
+include $(top_srcdir)/mirdoc.mak

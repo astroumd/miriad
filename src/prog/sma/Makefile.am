@@ -37,3 +37,6 @@ nodist_smavarfit_SOURCES = smavarfit.f
 nodist_smavarplt_SOURCES = smavarplt.f
 nodist_uvsort_SOURCES = uvsort.f
 nodist_vel2fel_SOURCES = vel2fel.f
+
+DOCINPUTS = $(EXTRA_DIST)
+include $(top_srcdir)/mirdoc.mak

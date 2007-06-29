@@ -57,3 +57,6 @@ nodist_telepar_SOURCES = telepar.f
 nodist_warpfit_SOURCES = warpfit.f
 nodist_xcorr_SOURCES = xcorr.f
 nodist_xfcor_SOURCES = xfcor.f
+
+DOCINPUTS = $(EXTRA_DIST)
+include $(top_srcdir)/mirdoc.mak

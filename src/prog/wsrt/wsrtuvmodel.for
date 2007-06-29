@@ -2,7 +2,7 @@ c************************************************************************
 	program wsrtuvmodel
 	implicit none
 
-c= uvmodel - Add, subtract, etc, a model from a uv data set.
+c= wsrtuvmodel - Add, subtract, etc, a model from a uv data set.
 c& rjs
 c: uv analysis
 c+

@@ -98,3 +98,6 @@ nodist_varlist_SOURCES = varlist.f
 nodist_varmap_SOURCES = varmap.f
 nodist_varplot_SOURCES = varplot.f
 nodist_varplt_SOURCES = varplt.f
+
+DOCINPUTS = $(EXTRA_DIST)
+include $(top_srcdir)/mirdoc.mak

@@ -3,9 +3,11 @@
 ##
 
 SUBDIRS = \
+  cat \
   borrow/pgplot \
   src/tools \
   src/subs \
+  src/scripts \
   borrow/linpack \
   src/prog/analysis \
   src/prog/calib \
@@ -20,7 +22,7 @@ SUBDIRS = \
   src/prog/wsrt \
   src
 
-EXTRA_DIST = mircommon.mak
+EXTRA_DIST = mircommon.mak mirdoc.mak
 
 ## Not used??
 ##  src/prog/eor
