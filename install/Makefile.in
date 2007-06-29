@@ -39,6 +39,7 @@
 #       23-jan-04  MIR4
 #       16-mar-06  hack/fix slib for different architectures, switch to Makefile.in
 #       15-feb-07  add uvio target
+#       28-jun-07  add linux4 for gcc4's that need gcc to make shared libs....
 
 # For station identification:
 VERSION = Makefile.linux    15-feb-07
@@ -126,7 +127,15 @@ slib_mac:
 slib_solaris:
 	(cd $(MIRLIB); mkdir -p tmp; cd tmp; \
 	   ar xv ../libmir.a; \
-	   CC -G -o ../libmir.so *.o)
+	   CC -G -o ../libmir.so *.o; \
+	   rm -f *.o)
+
+slib_linux_gcc4:
+	(cd $(MIRLIB); mkdir -p tmp; cd tmp; \
+           ar xv ../libmir.a; \
+           gcc -shared -o ../libmir.so *.o; \
+           rm -f *.o)
+
 
 slib_linux:
 	(cd $(MIRLIB); \
