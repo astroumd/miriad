@@ -23,6 +23,13 @@ EXTRA_DIST = 0.122.ant 0.122b.ant 0.375.ant 0.75a.ant 0.75b.ant \
   uvgen.def.at.mfs uvgen.def.vla uvgen.source vla_a.ant \
   vla_b.ant vla_c.ant vla_d.ant walpol.9ant wishlist
 
+# 'doc' wants this file. We should probably really install all of the
+# above files for reference -- in the automake model, you should be able
+# to 'make install' then blow away the source directory and not be missing
+# anything.
+
+pkgdata_DATA = miriad.pgmrs
+
 # Generate and install the keyword documentation files.
 
 pdoc_DATA = device.kdoc in.kdoc line.kdoc options.kdoc out.kdoc \
@@ -34,4 +41,3 @@ $(pdoc_DATA): keyword-doc.stamp
 keyword-doc.stamp: keywords.kdoc
 	$(DOC) -p $<
 	touch $@
-
