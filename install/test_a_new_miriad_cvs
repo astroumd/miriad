@@ -91,11 +91,12 @@ if (-e  $rootdir/src/tools/ercmd.c) rm $rootdir/src/tools/ercmd.c
 
 if ($auto) then
  cd $rootdir
+ # on the mac....
+ if (-e /Applications) setenv LIBTOOLIZE glibtoolize
  ./autogen.sh
  ./configure --prefix=`pwd`/build
  make
  make install
- 
 else
  cd $rootdir/install
  time ./install.miriad $opts generic=$generic
