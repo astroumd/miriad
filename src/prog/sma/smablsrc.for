@@ -45,11 +45,12 @@ c                fluctuating around the phase center with the
 c                amplitude unchanged.
 c                cleaned up unused options and keywords.
 c                added an options: avechunk-for calculating chunk
-c                amplitude level offsets.                     
+c                amplitude level offsets. 
+c  pjt 2007-7-2  hannsm conflict with library (for mac's)                    
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='SmaBlSrc: version 1.1 3-2-06')
+	parameter(version='SmaBlSrc: version 1.1 7-2-07')
 	character uvflags*12,ltype*16,out*64
 	integer npol,Snpol,pol,tIn,tOut,vupd,nread,nrec,i,nbin
 	real inttime,jyperk
@@ -193,7 +194,7 @@ c
           call divchz(numpol,data,ndata,nchan,
      *    nspect,nschan,maxchan,chnwt,chz,chzwt,weight,
      *    edge,dochunk)
-          if(hann.gt.1) call hannsm(hann,hc,nchan,ndata)
+          if(hann.gt.1) call hannsm2(hann,hc,nchan,ndata)
 
 	  Tprev = preamble(4)
 	  Tmin = Tprev
@@ -295,7 +296,7 @@ c
           call divchz(numpol,data,ndata,nchan,
      *    nspect,nschan,maxchan,chnwt,chz,chzwt,weight,
      *    edge,dochunk)
-             if(hann.gt.1) call hannsm(hann,hc,nchan,ndata)
+             if(hann.gt.1) call hannsm2(hann,hc,nchan,ndata)
            end if
 	  enddo
 c
@@ -1043,8 +1044,12 @@ c
             enddo
             enddo
             end
-                                                                                
-       subroutine hannsm (nsmth, coeffs, npts,arr)
+                         
+c
+c  hannsm2 is a clone of hann.for::hannsm()
+c
+                                                       
+       subroutine hannsm2 (nsmth, coeffs, npts,arr)
         implicit none
         integer npts, nsmth
         complex arr(npts), coeffs(nsmth)
