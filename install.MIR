@@ -19,7 +19,7 @@ The basic procedure is:
 
         ./autogen.sh
 
-	configure --prefix=`pwd`/build
+	configure --prefix=`pwd`/build        (prefix is just an example)
 	make 
 	make install
 	
@@ -27,6 +27,8 @@ The basic procedure is:
 	build/libexec/*                     -> PGPLOT_DIR
 
 the old-style MIRRC.<hosttype> file knows about the $MIR/build
-tree and will use that if it is present.
+tree and will use that if it is present. 
+
+The new automiriad.csh files ....<description to follow>
 
 
