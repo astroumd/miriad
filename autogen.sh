@@ -1,9 +1,16 @@
-#! /bin/sh
+#!/bin/sh 
+
+export LIBTOOLIZE=libtoolize
+
+# Determine if this is Mac OS X and react appropriately...
+if test -x /usr/bin/glibtoolize; then
+  export LIBTOOLIZE=glibtoolize
+fi
 
 echo "Initializing build scripts ..."
 aclocal
 autoheader
-libtoolize --force --copy
+$LIBTOOLIZE --force --copy
 automake --force --copy --add-missing
 autoconf
 
