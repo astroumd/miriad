@@ -49,6 +49,7 @@ export MIRCAT=$MIR/cat
 export MIRDEF=.
 export MIRDOC=$MIR/doc
 export MIRINC=$MIR/src/inc
+export MIRPDOC=$MIR/doc/prog
 export MIRPROG=$MIR/src/prog
 export MIRSDOC=$MIR/doc/subs
 export MIRSRC=$MIR/src
