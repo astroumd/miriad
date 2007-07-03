@@ -1,0 +1,64 @@
+# -*- shell-script -*-
+# Script to set up a C shell environment to use a
+# Miriad installation created with the autotools build
+# system. A separate script is necessary because the 
+# directory structure of an autotoolized Miriad install
+# is fairly different from that of a binary tree
+# built with the classic build system.
+#
+# Most of the definitions here have just been copied from the 
+# MIRRC.linux file. I wouldn't be surprised if many of
+# them were no longer necessary or useful. (PKGW 07/02/07)
+#
+# Note: in the automake model of package installation, there
+# really is no one directory equivalent to $MIR, so we don't
+# define that.
+
+# Get the pgplot definitions.
+
+source "%libdir%/pgplot-miriad-remix/pgplot-config.csh"
+
+# Definitions we need. I don't know about AIPSTV and MIRPAGER;
+# the rest are needed for mirhelp at the minimum. mirhelp also
+# wants MIRPROG and MIRSUBS for some functionality, but those
+# variables are supposed to point to the source code to the tasks,
+# which we don't have access to in the automake model of package
+# installation. If we leave them undefined, at least the script
+# errors out.
+
+setenv AIPSTV "XASIN"
+setenv MIRPAGER "doc"
+
+setenv MIRBIN "%bindir%"
+setenv MIRCAT "%pkgdatadir%"
+setenv MIRPDOC "%pkgdatadir%/doc/prog"
+setenv MIRSDOC "%pkgdatadir%/doc/subs"
+
+# FIXME? Haven't copied the code to try to add bindir to the path
+# after '.' if the latter is in it.
+
+set path = ("%bindir%" $path)
+
+alias mirfind mir.find
+alias mirhelp mir.help
+alias mirindex mir.index
+alias mirbug 'mir.bug.csh bug'
+alias mirfeedback 'mir.bug.csh feedback'
+
+# FIXME: we may want to export WIPHELP
+
+# Import site-specific customizations. We use
+# a different filename than MIRSRC.local, because
+# the structure of an autotoolized Miriad install
+# is fairly different from that of a binary tree
+# built with the classic build system.
+
+if ( -e "%pkglibdir%/automiriad-local.csh" ) then
+    source "%pkglibdir%/automiriad-local.csh"
+endif
+
+# Import user customizations. Same rationale as above.
+
+if ( -e "$HOME/.automirsrc" ) then
+    source "$HOME/.automirsrc"
+endif

@@ -24,13 +24,25 @@ SUBDIRS = \
   src/prog/wsrt \
   src
 
-EXTRA_DIST = mircommon.mak mirdoc.mak
+EXTRA_DIST = mircommon.mak mirdoc.mak \
+  automiriad.csh.in automiriad.sh.in 
+
+pkglib_SCRIPTS = automiriad.csh automiriad.sh
+
+automiriad.csh: automiriad.csh.in
+	sed -e "s,%pkgdatadir%,$(pkgdatadir)," \
+	    -e "s,%pkglibdir%,$(pkglibdir)," \
+	    -e "s,%bindir%,$(bindir)," \
+	    -e "s,%libdir%,$(libdir)," <$< >$@
+
+automiriad.sh: automiriad.sh.in
+	sed -e "s,%pkgdatadir%,$(pkgdatadir)," \
+	    -e "s,%pkglibdir%,$(pkglibdir)," \
+	    -e "s,%bindir%,$(bindir)," \
+	    -e "s,%libdir%,$(libdir)," <$< >$@
 
 ## Not used??
 ##  src/prog/eor
-
-
-
 
 # SUBDIRS = src
 # SUBDIRS = src/inc

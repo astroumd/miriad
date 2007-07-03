@@ -1,0 +1,36 @@
+# -*- shell-script -*-
+# Script to set up a Bourne shell environment to use a
+# Miriad installation created with the autotools build
+# system. A separate script is necessary because the 
+# directory structure of an autotoolized Miriad install
+# is fairly different from that of a binary tree
+# built with the classic build system.
+#
+# For comments on the definitions in this file, see 
+# automiriad.csh.
+
+. "%libdir%/pgplot-miriad-remix/pgplot-config.sh"
+
+export AIPSTV="XASIN"
+export MIRPAGER="doc"
+
+export MIRBIN="%bindir%"
+export MIRCAT="%pkgdatadir%"
+export MIRPDOC="%pkgdatadir%/doc/prog"
+export MIRSDOC="%pkgdatadir%/doc/subs"
+
+export PATH="%bindir%:$PATH"
+
+alias mirfind=mir.find
+alias mirhelp=mir.help
+alias mirindex=mir.index
+alias mirbug='mir.bug.csh bug'
+alias mirfeedback='mir.bug.csh feedback'
+
+if [ -f "%pkglibdir%/automiriad-local.sh" ]; then
+    . "%pkglibdir%/automiriad-local.sh"
+fi
+
+if [ -f "$HOME/.automirsrc" ] ; then
+    . "$HOME/.automirsrc"
+fi
