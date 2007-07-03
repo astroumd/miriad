@@ -32,7 +32,7 @@ EXTRA_DIST = addhis.for atmosph.for calc.for copyhd.for corset.for \
   sinbad.for sinpoly.for solar.for tac.for taco.for telepar.for \
   warpfit.for xcorr.for xfcor.for
 
-mfile_SOURCES = mfile.cc
+mfile_SOURCES = mfile.cc mfilelib.h
 
 nodist_addhis_SOURCES = addhis.f
 nodist_atmosph_SOURCES = atmosph.f

@@ -2,6 +2,10 @@
 ## $Id$
 ##
 
+## For pdocdir / sdocdir.
+
+include $(top_srcdir)/mircommon.mak
+
 ## Build tools first to get the doc program ASAP.
 
 SUBDIRS = \
@@ -40,6 +44,14 @@ automiriad.sh: automiriad.sh.in
 	    -e "s,%pkglibdir%,$(pkglibdir)," \
 	    -e "s,%bindir%,$(bindir)," \
 	    -e "s,%libdir%,$(libdir)," <$< >$@
+
+CLEANFILES = automiriad.csh automiriad.sh
+
+# Clean up the docs on uninstall.
+
+uninstall-hook:
+	rm -f $(DESTDIR)$(pdocdir)/*
+	rm -f $(DESTDIR)$(sdocdir)/*
 
 ## Not used??
 ##  src/prog/eor

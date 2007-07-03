@@ -41,3 +41,5 @@ $(pdoc_DATA): keyword-doc.stamp
 keyword-doc.stamp: keywords.kdoc
 	$(DOC) -p $<
 	touch $@
+
+CLEANFILES = keyword-doc.stamp $(pdoc_DATA)
