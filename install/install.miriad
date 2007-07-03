@@ -514,6 +514,8 @@ pushd $install_root >& /dev/null
 
 if (-e checklist) then
   echo Checking binaries:
+  set numbins=`ls $MIRBIN|wc -l`
+  echo Found $numbins entries in MIRBIN
   set bad=0
   set badlist=$MIR/tmp/checklist.$$.bad
   set all=`wc -l checklist | awk '{print $1}'`
@@ -525,7 +527,7 @@ if (-e checklist) then
   end
   if ($bad > 0) then
     if ($bad > 10) then
-	echo Found $bad / $all binaries missing, check $badlist
+	echo Found $bad / $all binaries missing, check $badlist 
         if ($bad > 100) then
 	  echo Most likely you have a compiler issue and/or linking
 	  echo Try sourcing the miriad_start.csh file
