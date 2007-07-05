@@ -56,7 +56,8 @@ c	used in the antenna file, and nanoseconds. The default value is +1,
 c	which means that the antenna file gives the antenna position in an
 c	equatorial system measured in nanoseconds.
 c	E.g. 	baseunit=-1 for topocentric coordinates in nanosecs, 
-c		baseunit=3.33564 for geocentric coordinates in meters.
+c			baseunit=-3.33564 for topocentric coordinates in meters, 
+c			baseunit=3.33564 for geocentric coordinates in meters.
 c@ telescop
 c	This parameter determine the feed angle variation (i.e. the parallactic
 c	angle plus the feed offset angle - evector). It is also
