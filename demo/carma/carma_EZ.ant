@@ -1,0 +1,27 @@
+# carma_EZ.ant configuration
+# topocentric coordinates in meters.
+# baseunit=-3.33564 to convert to equatorial system measured in nanoseconds.
+# north    east      zenith     station
+  10.500   -0.850    0.000       61
+  13.230    8.580    0.000       62
+   3.050   -7.750    0.000       63
+   4.460    7.150    0.000       64
+   0.000    0.000    0.000       65
+   3.620   19.700    0.000       66
+  -0.370  -20.020    0.000       67
+  -7.310  -11.540    0.000       68
+  -9.060   12.000    0.000       69
+ -16.880   -2.270    0.000       70
+  25.170   24.000    0.000       71
+  33.420    6.800    0.000       72
+  36.070  -18.600    0.000       73
+  15.730  -29.230    0.000       74
+ -22.370   12.620    0.000       75
+  -30.00      0.00  0.000  SZA1 
+  -32.47     -5.81  0.000  SZA2 
+  -27.94     -5.67  0.000  SZA3 
+  -24.67      1.61  0.000  SZA4 
+  -35.98      0.50  0.000  SZA5 
+  -30.20      4.96  0.000  SZA6 
+   25.95    -21.21  0.000  SZA7 
+  -12.95     38.79  0.000  SZA8  moved 12m south to avoid shadowing station 52 in CARMA D-configuration
