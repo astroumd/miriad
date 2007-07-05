@@ -13,7 +13,7 @@ if ($#argv == 0) then
     echo "      -wcs"
     echo "                  do not load WCS, even if it has one"
     echo ""
-    echo "  Version 1.8 - 1-mar-99 PJT"
+    echo "  Version 1.8a - 5-jul-07 PJT"
     echo ""
     echo "  Be sure 'saord' is in your environment. MIRIAD users can use the"
     echo "  command  'saord'  to load the SAO RD environment which contains"
@@ -85,7 +85,7 @@ if (-d $name) then
     set ndim=`itemize in=$name/naxis | tail -1 | awk '{print $3}'`
     set n1=`itemize in=$name/naxis1 | tail -1 | awk '{print $3}'`
     set n2=`itemize in=$name/naxis2 | tail -1 | awk '{print $3}'`
-    set dims=(`itemize in=$name | grep naxis | tail +2 | awk '{print $3}'`)
+    set dims=(`itemize in=$name | grep naxis | tail -n +2 | awk '{print $3}'`)
     echo "Found $ndim-dim cube, ($dims) : maps $n1 x $n2"
     if ($dowcs) then
         set wcs=/tmp/saotng$$.wcs
