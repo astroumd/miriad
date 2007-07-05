@@ -1,3 +1,7 @@
+# carma_EZ.ant configuration
+# topocentric coordinates in meters.
+# baseunit=-3.33564 to convert to equatorial system measured in nanoseconds.
+# north    east      zenith     station
   10.500   -0.850    0.000       61
   13.230    8.580    0.000       62
    3.050   -7.750    0.000       63

@@ -1,3 +1,6 @@
+# carma_C.ant configuration
+# topocentric coordinates in meters.
+# baseunit=-3.33564 to convert to equatorial system measured in nanoseconds.
  -17.820  -19.560    0.000       31
    0.000    0.000    0.000       32
    0.740  -53.610    0.000       33

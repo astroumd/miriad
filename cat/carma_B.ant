@@ -1,3 +1,7 @@
+# carma_B.ant configuration
+# topocentric coordinates in meters.
+# baseunit=-3.33564 to convert to equatorial system measured in nanoseconds.
+# north    east      zenith     antenna
  300.570  206.540    0.000       16
 -267.560  109.270    0.000       17
 -166.820 -222.940    0.000       18
