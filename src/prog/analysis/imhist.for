@@ -88,13 +88,14 @@ c    30sep93   jm  Corrected pgplot calling sequence.
 c    12nov97  rjs  Added 's' flag to boxset call.
 c     4jun98  bpw  Added upper cutoff
 c    12jun98  bpw  Add 'cutoutliers' option
+c    11jul07   tw  Fixed a segfault with gfortran
 c
 c------------------------------------------------------------------------
 
       program imhist
 
       character*40     version
-      parameter        ( version = 'version 2.1 12-Jun-98' )
+      parameter        ( version = 'version 2.1 11-Jul-07' )
 
       integer          tinp
       real             cut(3)
@@ -755,13 +756,13 @@ c     call assertl( npoints.gt.1,'Histogramming 1 datapoint will fail' )
 
       write( line, '( ''Maximum is '',1pe14.7,'' at ('' )' )
      *                histvar(MAXV)
-      call mitoaf( posmax, naxis, line(len1(line)+1:), i )
+      call mitoaf( posmax(1:naxis), naxis, line(len1(line)+1:), i )
       line(len1(line)+1:) = ') (absolute coordinates)'
       call logwrit( line )
 
       write( line, '( ''Minimum is '',1pe14.7,'' at ('' )' )
      *                histvar(MINV)
-      call mitoaf( posmin, naxis, line(len1(line)+1:), i )
+      call mitoaf( posmin(1:naxis), naxis, line(len1(line)+1:), i )
       line(len1(line)+1:) = ') (absolute coordinates)'
       call logwrit( line )
 
