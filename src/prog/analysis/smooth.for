@@ -14,6 +14,9 @@ c       By default, SMOOTH will mask pixels in the output image if
 c       there are more masked pixels than unmaked pixels in the 
 c       Gaussian convolution area. This means that pixels which were
 c       maked in the input may be unmasked in the output.
+c
+c       See also CONVOL for the fft based method that is generally faster.
+c       HANNING is a program that only smoothes along the velocity axis.
 c@ in 
 c	The input image.  Wild card expansion is supported, no default.
 c@ out
