@@ -151,12 +151,13 @@ c    pjt    3dec02  using MAXDIM again, MAXDIM1 retired; MAXDIM2 is new
 c    pjt   30jan03  merged MIR4 into current release
 c    pjt   23feb03  officially merged MIR4
 c    pjt   19jun05  fix for g95 **(-0.5)
+c    pjt   11jul07  add some dummy but reasonable header items for 3D cubes
 c---
 c ToDo: 
 c    write good headers if 3D cubes written
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version='Imgen: version 19-jun-05')
+	parameter(version='Imgen: version 11-jul-07')
 	include 'mirconst.h'
 	include 'maxdim.h'
 	include 'maxnax.h'
@@ -333,7 +334,9 @@ c
 c  Now open the output, and add a header to it.
 c
 	call xyopen(lOut,Out,'new',naxis,nsize)
-	call header(lIn,lOut,crpix1,crpix2,crval1,crval2,cdelt1,cdelt2,
+	call header(lIn,lOut,naxis,
+     *    crpix1,crpix2,crval1,
+     *    crval2,cdelt1,cdelt2,
      *	  bmaj,bmin,bpa,version)
 c
 c  Convert to units that we want, namely x and y in grid coordinates
@@ -453,11 +456,11 @@ c
 c
 	end
 c*******************************************************************
-	subroutine header(lIn,lOut,crpix1,crpix2,crval1,crval2,
+	subroutine header(lIn,lOut,naxis,crpix1,crpix2,crval1,crval2,
      *	  cdelt1,cdelt2,bmaj,bmin,bpa,version)
 c
 	implicit none
-	integer lIn,lOut
+	integer lIn,lOut,naxis
         double precision crpix1,crpix2,cdelt1,cdelt2,crval1,crval2
 	real bmaj,bmin,bpa
 	character version*(*)
@@ -492,6 +495,12 @@ c
 	  call wrhdd(lOut,'crval2',crval2)
 	  call wrhda(lOut,'ctype1','RA---SIN')
 	  call wrhda(lOut,'ctype2','DEC--SIN')
+	  if (naxis.eq.3) then
+	     call wrhdd(lOut,'crpix3',1.0d0)
+	     call wrhdd(lOut,'cdelt3',1.0d0)
+	     call wrhdd(lOut,'crval3',0.0d0)
+	     call wrhda(lOut,'ctype3','VELO-LSR')
+	  endif
 	  if(bmaj*bmin.gt.0)then
 	    call wrhda(lOut,'bunit','JY/BEAM')
 	    call wrhdr(lOut,'bmaj',bmaj)
