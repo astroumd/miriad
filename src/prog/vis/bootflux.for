@@ -80,9 +80,12 @@ c    pjt 26feb03 also using MAXANT3, since this is only for BIMA
 c    dnf 09dec05 Added average and median fluxs to output
 c    dnf 23may05 Changed MAXANT3 and MAXBASE3 to work with CARMA data
 c                also included workaround in the case tsys is not in the data
+c    pjt 11jul07 fixed format statement for CARMA when bigant=15 
 c  Bugs:
-
-c   Polarization mode not tested.
+c
+c   - Polarization mode not tested.
+c   - format statements that depend on bigant should be made variable
+c     we need a service routine for this, happens a lot in MIRIAD
 c------------------------------------------------------------------------
       include 'maxdim.h'
       include 'mirconst.h'
@@ -90,7 +93,7 @@ c------------------------------------------------------------------------
       character version*(*),defdir*(*)
       parameter(MAXPOL=4,MAXSRC=512,MAXANT3=MAXANT,MAXBASE3=MAXBASE,
      *          PolMin=-9,PolMax=4)
-      parameter(version='BootFlux: version 26-feb-03')
+      parameter(version='BootFlux: version 11-jul-07')
       parameter(defdir=
 c     *         '/home/bima2/data/flux/measured_fluxes/')
 c     *          '/lma/mirth/programmers/lgm/measured_fluxes/')
@@ -595,7 +598,8 @@ c
             write(line,'(20x,''in units of 1000*Janskys'')')
             call logwrite(line,more)
           endif
-          write(line,'('' ANTS '',12(3x,i2,3x))') (i,i=1,bigant)
+c                     TODO: this format stmt depends on a variable
+          write(line,'('' ANTS '',15(3x,i2,3x))') (i,i=1,bigant)
           call logwrite(line,more)
           do i=1,bigant
             write(line(1:5),'(i3,''  '')') i
