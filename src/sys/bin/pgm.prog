@@ -32,8 +32,7 @@ set spec  = (`ls $srcdir/spec`)
 set theDirs = (tools        prog/analysis prog/calib \
 	       prog/convert prog/deconv   prog/disp  \
 	       prog/map     prog/misc     prog/vis \
-	       prog/atnf    prog/carma    prog/wsrt    prog/sma \
-	       subs)
+	       prog/atnf    prog/carma    prog/wsrt    prog/sma)
 #
 if (! -e $bindir/doc   ) $prog_c $srcdir/tools/doc
 if (! -e $bindir/ratty ) $prog_c $srcdir/tools/ratty
@@ -80,6 +79,8 @@ if ($#argv == 0) then
       (cd $docdir; $bindir/doc -p $srcdir/spec/${j}.for)
       echo "Finished processing miriad task ${j}"
    end
+   echo "Processing special miriad task uvio"
+   (setenv Coptions "-DTESTBED $Coptions"; $prog_c $srcdir/subs/uvio.c)
    exit 0
 endif
 # --------------------------------------------------------------
@@ -88,7 +89,7 @@ foreach i ($argv)
    set in = ${in:r}
    echo ""
    echo "Processing miriad task ${i:t}"
-   foreach j ($theDirs)
+   foreach j ($theDirs subs )
       pushd $srcdir/$j >& /dev/null
       if (-e ${in}.for && ($in == hatmap || $in == hatfft)) then
 	 echo "$srcdir/$j/${in}.for is VMS-only:  ignored."
