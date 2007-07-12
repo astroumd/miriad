@@ -94,7 +94,7 @@ foreach i ($argv)
 	 echo "$srcdir/$j/${in}.for is VMS-only:  ignored."
       else if (-e $srcdir/$j/${in}.c  ) then
          if ($in == uvio) then
-	 
+	    (setenv Coptions "-DTESTBED $Coptions"; $prog_c   $srcdir/subs/${in}.c)
 	 else
 	    $prog_c   $srcdir/$j/${in}.c
 	    (cd $docdir; doc -p $srcdir/$j/${in}.c)
