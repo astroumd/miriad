@@ -23,6 +23,7 @@
  *                 arithmetic is required.  Also made failure of wildcard
  *		   expansion fatal (it would crash later if only a warning
  *		   is given)
+ *    pjt  13jul07 make unique messages in different pieces of code
  ***********************************************************************
  */
 
@@ -278,7 +279,7 @@ void keyput_c(Const char *task, char *string)
     }
 
     if (((s = skipLeading(string)) == (char *)NULL) || (*s == Null)) {
-      (void)sprintf(errmsg, "Badly formed parameter: [%s].", string);
+      (void)sprintf(errmsg, "Badly formed parameter-1: [%s].", string);
       (void)bug_c('w', errmsg);
       return;
     } else if (*s == '#') {        /* Quietly return on comment lines. */
@@ -289,7 +290,7 @@ void keyput_c(Const char *task, char *string)
     while ((*s != Null) && (isalnum(*s) || (*s == '$')))
       s++;
     if (*s == Null) {
-      (void)sprintf(errmsg, "Badly formed parameter: [%s].", string);
+      (void)sprintf(errmsg, "Badly formed parameter-2: [%s].", string);
       (void)bug_c('w', errmsg);
       return;
     }
@@ -313,7 +314,7 @@ void keyput_c(Const char *task, char *string)
       key = s;                  /* Now, get the real [local] key name. */
       while ((*s != Null) && (isalnum(*s) || (*s == '$'))) s++;
       if (*s == Null) {
-        (void)sprintf(errmsg, "Badly formed parameter: [%s].", string);
+        (void)sprintf(errmsg, "Badly formed parameter-3: [%s].", string);
         (void)bug_c('w', errmsg);
         return;
       }
@@ -324,7 +325,7 @@ void keyput_c(Const char *task, char *string)
     while ((*s != Null) && (isspace(*s) || (*s == '=')))
       s++;
     if ((*s == Null) || (strlen(s) < (size_t)1)) {
-      (void)sprintf(errmsg, "Badly formed parameter: [%s=%s].", key, string);
+      (void)sprintf(errmsg, "Badly formed parameter-4: [%s=%s].", key, string);
       (void)bug_c('w', errmsg);
       return;
     }
