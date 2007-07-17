@@ -7,7 +7,8 @@
 # mchw 26sep02 - decrease Nyquist sample interval for 2 km configuration.
 # mchw 17dec02 - print uvrange in results summary.
 # mchw 21mar03 - clean up.
-# mchw 02mar2005 Modified hetero.csh to also evaluate subarrays
+# mchw 02mar05 - Modified hetero.csh to also evaluate subarrays
+# mchw 17jul07 - added harange.
 
 # Nyquist sample time = 12 x (dish_diam/2)/(pi*baseline)
 # calc '12*(10.4/2)/(pi*2000)' = 0.01 hours = 36 sec.
@@ -21,7 +22,7 @@ goto start
 start:
 
 # check inputs
-  if($#argv<2) then
+  if($#argv<3) then
     echo " Usage:  $0 array declination "
     echo "   e.g.  $0 config1 30"
     echo " Inputs :"
@@ -30,6 +31,8 @@ start:
     echo "            e.g. config1 . No default."
     echo "   declination"
     echo "          Source declination in degrees. No default."
+    echo "   harange"
+    echo "          HA range: start,stop,interval in hours. No default."
     echo " "
     exit 1
   endif
@@ -37,7 +40,7 @@ start:
 # set parameters
 set config  = $1
 set dec     = $2
-set harange = -2,2,.01
+set harange = $3
 set ellim   = 10
 set select = '-shadow(10.4)'
 set select = '-shadow(6.1)'
