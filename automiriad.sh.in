@@ -9,17 +9,38 @@
 # For comments on the definitions in this file, see 
 # automiriad.csh.
 
+# Get the pgplot definitions.
+
 . "%libdir%/pgplot-miriad-remix/pgplot-config.sh"
+
+# Constants
 
 export AIPSTV="XASIN"
 export MIRPAGER="doc"
+export MIRDEF=.
+
+# Things that come directly from the source tree
+
+export MIR="%abs_srcdir%"
+export MIRCAT="$MIR/cat"
+export MIRNEWS="$MIR/news"
+export MIRPROG="$MIR/src/prog"
+export MIRSRC="$MIR/src"
+export MIRSUBS="$MIR/src/subs"
+
+# Things that are built by the build system. MIRINC must
+# go here because of the maxdim headers.
 
 export MIRBIN="%bindir%"
-export MIRCAT="%pkgdatadir%"
-export MIRPDOC="%pkgdatadir%/doc/prog"
-export MIRSDOC="%pkgdatadir%/doc/subs"
+export MIRLIB="%libdir%"
+export MIRINC="%fincludedir%"
+export MIRDOC="%pkgdatadir%/doc"
+export MIRPDOC="$MIRDOC/prog"
+export MIRSDOC="$MIRDOC/subs"
 
-export PATH="%bindir%:$PATH"
+# Misc.
+
+export PATH="$MIRBIN:$PATH"
 
 alias mirfind=mir.find
 alias mirhelp=mir.help
@@ -27,10 +48,12 @@ alias mirindex=mir.index
 alias mirbug='mir.bug.csh bug'
 alias mirfeedback='mir.bug.csh feedback'
 
-if [ -f "%pkglibdir%/automiriad-local.sh" ]; then
-    . "%pkglibdir%/automiriad-local.sh"
+# Customizations.
+
+if [ -f "$MIR/MIRSRC.local" ]; then
+    . "$MIR/MIRSRC.local"
 fi
 
-if [ -f "$HOME/.automirsrc" ] ; then
-    . "$HOME/.automirsrc"
+if [ -f "$HOME/.mirsrc" ] ; then
+    . "$HOME/.mirsrc"
 fi

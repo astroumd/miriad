@@ -92,14 +92,7 @@ EXTRA_DIST = \
   sma_data.h sysdep.h tabflux.h tin.h trnio.h tv.h uvdat.h \
   uvgn.h win.h 
 
-noinst_HEADERS = \
-  ../inc/calapply.h ../inc/caldata.h ../inc/caldefs.h ../inc/calfit.h \
-  ../inc/calio.h ../inc/calpass.h ../inc/calpoly.h ../inc/calsubs.h \
-  ../inc/maxdim.h ../inc/maxdimc.h ../inc/maxnax.h ../inc/mem.h \
-  ../inc/mirconst.h ../inc/size.h ../inc/tmpdim.h \
-  ../inc/maxdim.h.in ../inc/maxdimc.h.in
-
-pkginclude_HEADERS = miriad.h sysdep.h
+cinclude_HEADERS = miriad.h sysdep.h
 
 ## The inc files should probably end up in the top-level Makefile.am
 ## because they're part of the overall package/sortof API

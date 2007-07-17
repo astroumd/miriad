@@ -338,6 +338,7 @@ AC_CONFIG_HEADER(config.h)
 AC_CONFIG_FILES([
     Makefile
     cat/Makefile
+    src/inc/Makefile
     src/tools/Makefile
     src/subs/Makefile
     src/scripts/Makefile

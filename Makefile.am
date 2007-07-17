@@ -9,6 +9,7 @@ include $(top_srcdir)/mircommon.mak
 ## Build tools first to get the doc program ASAP.
 
 SUBDIRS = \
+  src/inc \
   src/tools \
   cat \
   borrow/pgplot \
@@ -31,17 +32,27 @@ SUBDIRS = \
 EXTRA_DIST = mircommon.mak mirdoc.mak \
   automiriad.csh.in automiriad.sh.in 
 
+# configure has an abs_srcdir substitution that we could use, but it
+# can look like /path/to/srcdir/buildsubdir/.., so CD and PWD to
+# get a pretty-looking absolute path to top_srcdir.
+
 pkglib_SCRIPTS = automiriad.csh automiriad.sh
 
 automiriad.csh: automiriad.csh.in
-	sed -e "s,%pkgdatadir%,$(pkgdatadir)," \
-	    -e "s,%pkglibdir%,$(pkglibdir)," \
+	abssrc=`cd $(top_srcdir) && pwd` ; \
+	sed -e "s,%abs_srcdir%,$$abssrc," \
+	    -e "s,%prefix%,$(prefix)," \
+	    -e "s,%pkgdatadir%,$(pkgdatadir)," \
+	    -e "s,%fincludedir%,$(fincludedir)," \
 	    -e "s,%bindir%,$(bindir)," \
 	    -e "s,%libdir%,$(libdir)," <$< >$@
 
 automiriad.sh: automiriad.sh.in
-	sed -e "s,%pkgdatadir%,$(pkgdatadir)," \
-	    -e "s,%pkglibdir%,$(pkglibdir)," \
+	abssrc=`cd $(top_srcdir) && pwd` ; \
+	sed -e "s,%abs_srcdir%,$$abssrc," \
+	    -e "s,%prefix%,$(prefix)," \
+	    -e "s,%pkgdatadir%,$(pkgdatadir)," \
+	    -e "s,%fincludedir%,$(fincludedir)," \
 	    -e "s,%bindir%,$(bindir)," \
 	    -e "s,%libdir%,$(libdir)," <$< >$@
 

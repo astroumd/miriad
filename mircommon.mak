@@ -10,6 +10,11 @@ F2C=$(top_builddir)/src/tools/intf2c
 .f2c.c:
 	$(F2C) -s f2c $< $@
 
+# Include directories.
+
+fincludedir = $(includedir)/miriad-f
+cincludedir = $(includedir)/miriad-c
+
 # Documentation variables.
 
 doc_catsrc = $(top_srcdir)/cat
