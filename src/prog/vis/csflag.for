@@ -122,9 +122,12 @@ c
 	call hisinput(lVis,'CSFLAG')
         call hisclose (lVis)
 	call uvclose(lVis)
-        write(*,*) 'Processed ',ntot, ' records, flagged ',nflag
         if (carma) then
-           write(*,*) 'ovro/hatcreek/carma ',ntoto,ntoth,ntotc
+           write(*,*) 'Processed ',ntot, ' records, flagged ',
+     *                 nflag, ' O/H/C: ',ntoto,ntoth,ntotc
+        else
+           write(*,*) 'Processed ',ntot, ' records, flagged ',
+     *                 nflag
         endif
 c
 	end
