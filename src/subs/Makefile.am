@@ -92,7 +92,7 @@ EXTRA_DIST = \
   sma_data.h sysdep.h tabflux.h tin.h trnio.h tv.h uvdat.h \
   uvgn.h win.h 
 
-cinclude_HEADERS = miriad.h sysdep.h
+cinclude_HEADERS = hio.h io.h miriad.h sma_data.h sysdep.h
 
 ## The inc files should probably end up in the top-level Makefile.am
 ## because they're part of the overall package/sortof API
