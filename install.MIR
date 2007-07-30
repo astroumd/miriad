@@ -11,24 +11,326 @@ development, which will be based on the GNU 'autoconf' toolkit.
 This method will be deprecated some time in the future when it starts to
 conflict with the method below.
 
-2) The new style will use the GNU auto tools and libtool. 
+2) The new style uses the GNU auto tools and libtool.
 
-The basic procedure is:
+Quick summary. On the first compile:
 
 	setenv LIBTOOLIZE glibtoolize    (only on mac)
+        ./autogen.sh
+	./configure --prefix=`pwd`/build  (prefix is just an example)
+	make
+	make install
 
+If you have just updated the source code, you can skip the first
+several steps:
+
+	make (will recompile only those tasks that have changed)
+	make install
+
+To set up your shell to run Miriad tasks:
+
+	source build/lib/miriad/automiriad.csh (if using a C shell)
+	source build/lib/miriad/automiriad.sh (if using a Bourne shell)
+
+It is recommended that you read the detailed instructions below.
+
+==================================================
+Detailed instructions for the new build system
+==================================================
+
+If you are getting Miriad directly from CVS, you will first need to
+create the build scripts. (If a file called 'configure' exists in this
+directory, you can skip this step.) Run:
+
+	setenv LIBTOOLIZE glibtoolize    (only on mac)
         ./autogen.sh
 
-	configure --prefix=`pwd`/build        (prefix is just an example)
-	make 
+This requires the GNU "auto tools": libtool, autoconf, and
+automake. If 'autogen.sh' fails, the output will likely be hard to
+interpret; see the section "Handling Auto Tools Errors" at the bottom
+of this file for suggestions.
+
+Once the build scripts are created, you run the 'configure' script to
+probe your system's capabilities and generate the build instructions
+for your particular machine:
+
+	./configure --prefix=`pwd`/build  (prefix is just an example)
+
+The configure script takes several options that you may wish to use:
+
+	--prefix : Controls where the Miriad executables are
+          installed. Defaults to /usr/local. The above example will
+          install the executables in a directory called 'build' within
+          the Miriad source tree.
+
+	--with-telescope=NAME : Specifies which telescope's data
+          Miriad is expected to reduce. Sets the various MAX*
+          variables to values appropriate to the given
+          telescope. Possible values for NAME are: ata, atnf, bima,
+          carma, lofar, fasr, gmrt, sma, and wrst.
+
+	--help : Shows other options that 'configure' accepts.
+
+Configure may exit with an error message if it doesn't know how to
+handle your system, but will know about virtually all modern computer
+hardware. Sometimes errors encountered in running the 'autogen.sh'
+script won't manifest themselves until you run 'configure'; if you get
+a mysterious error message, you should probably ask for help as
+suggested in the "Handling Auto Tools Errors" section at the end of
+this file. Once the configure script has been run successfully, use
+the 'make' program to compile Miriad:
+
+	make		(generates executables and support files)
+	make install	(places the files inside the prefix directory)
+
+(The compile system should work with several vendor's implementations
+of make, but GNU make is recommended; it may be called 'gmake' on your
+system.)
+
+IMPORTANT: If you are using Miriad from CVS and update the sources,
+you only need to rerun 'make' and 'make install' to update your Miriad
+programs. You do NOT need to rerun 'autogen.sh' or 'configure'. Make
+will recompile as few files as possible while ensuring that the whole
+suite is up-to-date, saving time when there are small, incremental
+updates to the source code.
+
+Once Miriad is installed, you can set up a shell's environment to run
+Miriad tasks by sourcing one of the following files:
+
+	source <prefix>/lib/miriad/automiriad.csh (if using a C shell)
+	source <prefix>/lib/miriad/automiriad.sh  (if using a Bourne shell)
+
+where <prefix> is the value of the --prefix option to
+'configure'. (These files are equivalent to MIRRC.<hosttype> or
+MIRSRC.<hosttype> from the old-style build system.) The script will add the
+directory containing the Miriad binaries to your shell's path,
+allowing you to run the Miriad tasks. It will also set the following
+environment variables:
+
+	MIR : the location of the Miriad source code tree.
+
+	MIRCAT : the location of some support Miriad data files.
+
+	MIRPROG : the directory inside which all of the Miriad
+	  task source code is stored.
+
+	MIRSRC : the directory inside which all Miriad source code is
+	  stored.
+
+	MIRSUBS : the directory inside which the source code of the
+	  Miriad subroutine library is stored.
+
+	MIRBIN : the directory in which the Miriad task binaries are
+	  installed.
+
+	MIRLIB : the directory in which the Miriad library files are
+	  installed.
+
+	MIRINC : the directory in which the Miriad include files are
+	  installed.
+
+	MIRDOC : the directory in which the Miriad documentation files
+	  are installed.
+
+	MIRPDOC : the directory containing the Miriad task
+	  documentation files in particular.
+
+	MIRSDOC : the directory containing the Miriad subroutine 
+	  documentation files in particular.
+
+	MIRNEWS : $MIR/news, a nonexistant file. (Defined for
+	  compatibility with MIRRC.local.)
+
+	PGPLOT_DIR : the directory containing the 'pgxwin_server'
+	  executable used by the PGPLOT plotting package. This is a
+	  slight abuse of the PGPLOT_DIR environment variable.
+
+	PGPLOT_FONT : the location of the 'grfont.dat' resource file
+	  used by the PGPLOT plotting package.
+
+	PGPLOT_RGB : the location of the 'rgb.txt' resource file used
+	  by the PGPLOT plotting package.
+
+The 'automiriad' scripts also source the scripts $MIR/MIRRC.local (or
+$MIR/MIRSRC.local) and $HOME/.mirrc (or $HOME/.mirsrc) if they
+exist. This allows you to personalize your Miriad environment if you
+so desire.
+
+==================================================
+Tips for the new build system
+==================================================
+
+1) Shortcuts to automiriad
+
+To save typing you may want to put something like the following alias
+into your shell's initialization scripts:
+
+	alias mirenv="source <prefix>/lib/miriad/automiriad.CSH"
+
+Then you can just type 'mirenv' to set up your shell to run Miriad
+tasks.
+
+2) Separate build directories
+
+If you wish to compile different versions of Miriad, or merely wish to
+keep the Miriad source directories clean of built files, you can
+create a separate "build directory" and run 'configure' from that
+directory:
+
+	mkdir $HOME/miriad-build
+	cd $HOME/miriad-build
+	/path/to/miriad/source/configure --prefix=/opt/miriad4.1
+	make
 	make install
-	
-	build/share/pgplot-miriad-remix/*   -> PGPLOT_DIR
-	build/libexec/*                     -> PGPLOT_DIR
 
-the old-style MIRRC.<hosttype> file knows about the $MIR/build
-tree and will use that if it is present. 
+In this example, all of the built files will go in $HOME/miriad-build,
+while the build system will be smart enough to find the source code in
+the directory containing the configure script that you ran. If you
+wish to update your Miriad installation, you can run 'cvs up' in the
+Miriad source code directory, then run 'make' and 'make install' in
+the build directory.
 
-The new automiriad.csh files ....<description to follow>
+One very useful aspect of this capability is that you can use one copy
+of Miriad source code to build several different versions of Miriad.
+For instance, you could compile Miriad for two different telescopes:
 
+	mkdir $HOME/miriad-build-carma
+	cd $HOME/miriad-build-carma
+	/path/to/miriad/source/configure --with-telescope=carma \
+	  --prefix=/opt/miriad-carma
+	make install
 
+	mkdir $HOME/miriad-build-ata
+	cd $HOME/miriad-build-ata
+	/path/to/miriad/source/configure --with-telescope=ata \
+	  --prefix=/opt/miriad-ata
+	make install
+
+3) Installation directories
+
+The autotools-based Miriad install uses directory names that will not
+pollute the <prefix> directory in unexpected ways. That is, you can
+configure Miriad with a prefix of /usr or /usr/local and not worry
+about overwriting standard system files. The installation directories
+that Miriad uses are:
+
+	<prefix>/bin : Miriad task binaries.
+
+	<prefix>/lib : Miriad support shared libraries.
+
+	<prefix>/lib/miriad : System-specific Miriad support files
+	  that are not shared libraries.
+
+	<prefix>/lib/pgplot-miriad-remix : System-specific PGPLOT
+	  support files that are not shared libraries.
+
+	<prefix>/libexec : Support executables for Miriad not 
+	  intended to be run directly by the user.
+
+	<prefix>/include/miriad-f : Miriad Fortran include files.
+
+	<prefix>/include/miriad-c : Miriad C include files.
+
+	<prefix>/share/miriad : System-independent Miriad support
+	  files.
+
+	<prefix>/share/pgplot-miriad-remix : System-independent PGPLOT 
+	  support files.
+
+That being said, because Miriad installs so many files into
+<prefix>/bin, it is suggested that you install it into its own prefix,
+such as $MIR/build or /opt/miriad.
+
+4) Traditional PGPLOT_DIR
+
+A consequence of the above directory structure is that the PGPLOT data
+files are installed in locations different than what a traditional
+PGPLOT installation uses. The 'automiriad' scripts account for this,
+but if you would rather have the traditional single PGPLOT_DIR, you
+can just copy the appropriate files into that directory manually:
+
+	cd <PGPLOT_DIR of your choice>
+	cp <prefix>/share/pgplot-miriad-remix/* .
+	cp <prefix>/libexec/* .
+
+You'll then want to create a $MIR/MIRRC.local or a $HOME/.mirrc to
+override the PGPLOT environment variable settings that the
+'automiriad' scripts create.
+
+5) Preserving the source directory
+
+If you are used to compiling software with the usual trio of
+'configure ; make ; make install', you may be used to being able to
+delete the source code once your software has been installed. Miriad
+will still function if you delete its source code, but it's
+recommended that you keep the source tree around. It contains a lot of
+uninstalled data files that useful and, more importantly, the source
+code to all of the tasks, which you will probably find very useful in
+understanding what Miriad is doing or tweaking existing tasks to fit
+your particular needs.
+
+6) Orthogonality with old-style build system
+
+You should currently be able to compile Miriad using both the
+old-style and new-style build systems at the same time. The new-style
+build system will put the compiled files in different places than the
+old-style one, and the files needed to make the new-style system work
+don't overwrite the old-style build system files.
+
+However, once the new-style Miriad is installed, the two versions
+should be functionally identical, except for the name of the shell
+script that you source: MIRRC.<hosttype> in the old style,
+automiriad.csh in the new style. All of the environment variables
+defined by MIRRC are exported by the new script and have the same
+semantics, so long as you don't delete the Miriad source code. (See
+item (5) in this section).
+
+[FIXME: the new-style build system installs the 'clean' task as
+'mirclean', so as not to conflict with the 'make clean' target. We can
+and should work around this with an install-hook command.]
+
+To be extra sure that old-style and new-style builds aren't
+interfering with each other, try using a separate build directory as
+described in item (2) in this section.
+
+7) Other 'make' targets
+
+Because Miriad's Makefiles are generated by 'automake', the standard
+GNU makefile targets are supported:
+
+	clean : Delete most built files.
+
+	dist : Generate a gzipped TAR file of the source code
+	  tree. (Not guaranteed to include all necessary files, since
+	  the main method of distributing Miriad is CVS.)
+
+and so on.
+
+==================================================
+Handling Auto Tools Errors
+==================================================
+
+The GNU auto tools are very good at providing portability to a large
+number of systems, but they are notorious for their fragility and the
+impenetrable errors messages they can generate.
+
+If the 'autogen.sh' or 'configure' script fails and gives you an error
+message that you don't immediately know how to handle, the most
+efficient course of action is probably to consult to consult with your
+local system administrator or a knowledgeable Linux
+programmer. Fortunately, someone familiar with the auto tools can
+resolve most of the problems they cause without specific knowledge of
+the program being compiled.
+
+When asking for help, it is vital that your provide the COMPLETE and
+EXACT output of a fresh run of both the 'autogen.sh' and 'configure'
+scripts, as well as the EXACT command lines that you used. It will
+often be helpful to provide the COMPLETE 'config.log' file that
+'configure' generates. If the person you're asking is not familiar
+with building Miriad, you might suggest that they read this file to
+get an overview of Miriad's build system.
+
+Even if you give your helper the most complete possible information,
+you will probably have to iterate a couple of times to make sure that
+the problem is solved. Please be considerate of your helper's time and
+other priorities as they work through the problem with you.
