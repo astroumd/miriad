@@ -21,6 +21,7 @@ c                     they made on 08may00
 c   pjt    30jan02    attempt to create widebands on the fly
 c   pjt     6sep06    carma mode to to not deal with the first two wide's 
 c                     (global LSB/USB)
+c   pjt    30jul07    complete overhaul for CARMA (and thus more general)
 c***********************************************************************
 c= uvwide - recompute wide band from narrow band
 c& pjt
@@ -29,19 +30,19 @@ c+
       PROGRAM uvwide
       IMPLICIT NONE
 c
-c     UVWIDE is a CARMA specific MIRIAD task which allows you to 
-c     recompute the wide band data from the narrow band data. It is 
-c     assumed the first two wide band channels are the digital wide 
-c     band derived from the narrow band data (LSB and USB). The spectral
-c     window averages will not be updated.
+c     UVWIDE is a MIRIAD task which allows you to 
+c     recompute the wide band data from the narrow band data. 
 c
 c     It is also possible to reset the narrow band flags, based
 c     on the wide band flags, and vice versa.
 c
-c     Note: this program uysed to be HatCreek specific, where the first two
-c     widebands were the global LSB/USB averages, CARMA uses nwide=nspect.
+c     Note: this program used to be BIMA specific, where the first two
+c     widebands were the global LSB/USB averages, CARMA uses nwide=nspect
+c     and thus the program is now generally usable.
 c
 c     UVCAL can also be used to make wideband channels, using options=avechan.
+c
+c     NOTE: ** a few BIMA specific sections of code need to cleaned up **
 c
 c@ vis
 c     The name of the input visibility dataset.  
@@ -69,9 +70,8 @@ c     windows.
 c     Default: 0
 c@ blankf
 c     If given, discard this fraction of each edge from a spectral window.
-c     This is the method currently employed at HatCreek, where the fraction
-c     is 0.033.
-c     Default: 0.033 
+c     At BIMA this fraction was 0.033.
+c     Default: 0.0
 c@ nwide
 c     If used, and allowed, this will be the number of wide band channels
 c     created when none are present in the input file. The channels used to
@@ -96,17 +96,17 @@ c
       CHARACTER PROG*(*)
       PARAMETER (PROG = 'UVWIDE')
       CHARACTER VERSION*(*)
-      PARAMETER (VERSION = '6-sep-06')
+      PARAMETER (VERSION = '30-jul-07')
 
 c
 c  Internal variables.
 c
       CHARACTER Infile*132, Outfile*132, type*1
       CHARACTER*11 except(15)
-      INTEGER i, k, k1, m, lin, lout
+      INTEGER i, k, m, lin, lout
       INTEGER nread, nwread, lastchn, nexcept, skip
       INTEGER nschan(MAXCHAN), ischan(MAXCHAN), nspect, nwide, edge
-      REAL wfreq(MAXCHAN), wwidth(MAXCHAN), wt, wtup, wtdn, blankf
+      REAL wfreq(MAXCHAN), wwidth(MAXCHAN), blankf, wt
       DOUBLE PRECISION sdf(MAXCHAN), sfreq(MAXCHAN), preamble(4), lo1
       COMPLEX data(MAXCHAN), wdata(MAXCHAN)
       LOGICAL dowide, docorr, updated, reset, donarrow, doflag
@@ -129,7 +129,7 @@ c
       CALL keyl('reset',reset,.TRUE.)
       CALL keyl('narrow',donarrow,.FALSE.)
       CALL keyi('edge',edge,0)
-      CALL keyr('blankf',blankf,0.033)
+      CALL keyr('blankf',blankf,0.0)
       CALL keyi('nwide',nwide,0)
       CALL keyfin
 
@@ -273,6 +273,7 @@ c
             nwread = nwide
             DO i=1,nwide
                wflags(i) = .TRUE.
+               wdata(i) = cmplx(0.0, 0.0)
             ENDDO
          ELSE
             CALL uvwread(lin, wdata, wflags, MAXCHAN, nwread)
@@ -286,15 +287,14 @@ c  sums for the upper and lower sidebands.  Only include data that is
 c  previously flagged as "good" in the narrow bands.  Also omit the
 c  first and last ENDCHN channels in each window.
 c
-         wtup = 0.0
-         wtdn = 0.0
          IF (reset) THEN
-            wflags(1) = .TRUE.
-            wflags(2) = .TRUE.
-            wdata(1) = cmplx(0.0, 0.0)
-            wdata(2) = cmplx(0.0, 0.0)
+            DO i=1,nwide
+               wflags(i) = .TRUE.
+               wdata(i) = cmplx(0.0, 0.0)
+            ENDDO
          ENDIF
          IF (donarrow) THEN
+            CALL bug('f',"Still in old code not converted for CARMA")
             LastChn=nread/2
             IF (.NOT.wflags(1)) THEN
                DO m=1,LastChn
@@ -308,45 +308,26 @@ c
             ENDIF
          ELSE
             DO k = 1, nspect
-               IF (sfreq(k) .LT. lo1 .OR. lo1.LT.0.0) THEN
-                  k1=1
+               IF (blankf .GT. 0.0) THEN
+                  skip = nschan(k)*blankf
                ELSE
-                  k1=2
+                  skip = edge
                ENDIF
-               IF (wflags(k1)) then
-                  wt = ABS(sdf(k))
-                  IF (blankf .GT. 0.0) THEN
-                     skip = nschan(k)*blankf
-                  ELSE
-                     skip = edge
+               IF (skip.LT.0) CALL bug('f','Negative edge???')
+               LastChn = ischan(k) + nschan(k) - 1 - skip
+               wt = 0.0
+               DO m = ischan(k) + skip , LastChn
+                  IF (flags(m)) then
+                     wdata(k) = wdata(k) + data(m) 
+                     wt = wt + 1.0
                   ENDIF
-                  IF (skip.LT.0) CALL bug('f','Negative edge???')
-                  LastChn = ischan(k) + nschan(k) - 1 - skip
-                  DO m = ischan(k) + skip , LastChn
-                     IF (flags(m)) then
-                        IF (k1.EQ.2) then
-                           wdata(2) = wdata(2) + (data(m) * wt)
-                           wtup = wtup + wt
-                        ELSE IF (k1.EQ.1) THEN
-                           wdata(1) = wdata(1) + (data(m) * wt)
-                           wtdn = wtdn + wt
-                        ELSE
-                           CALL bug('f','Impossible sideband')
-                        ENDIF
-                     ENDIF
-                  ENDDO
+               ENDDO
+               IF (wt.GT.0.0) THEN
+                  wdata(k) = wdata(k)/wt
+               ELSE
+                  wflags(k) = .FALSE.
                ENDIF
             ENDDO
-            IF (wtdn .gt. 0.0) THEN
-               wdata(1) = wdata(1) / wtdn
-            ELSE
-               wflags(1) = .FALSE.
-            ENDIF
-            IF (wtup .gt. 0.0) THEN
-               wdata(2) = wdata(2) / wtup
-            ELSE
-               wflags(2) = .FALSE.
-            ENDIF
          ENDIF
          IF (doflag) THEN
             CALL uvwflgwr(lin,wflags)
