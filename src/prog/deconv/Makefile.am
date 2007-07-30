@@ -32,7 +32,7 @@ nodist_tvcln_SOURCES = tvcln.f
 # target; fix this up upon install.
 
 install-exec-hook:
-	cd $(DESTDIR)$(bindir) && $(LN_S) mirclean clean
+	cd $(DESTDIR)$(bindir) && rm -f clean && $(LN_S) mirclean clean
 
 uninstall-hook:
 	rm -f $(DESTDIR)$(bindir)/clean
