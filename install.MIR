@@ -283,11 +283,7 @@ script that you source: MIRRC.<hosttype> in the old style,
 automiriad.csh in the new style. All of the environment variables
 defined by MIRRC are exported by the new script and have the same
 semantics, so long as you don't delete the Miriad source code. (See
-item (5) in this section).
-
-[FIXME: the new-style build system installs the 'clean' task as
-'mirclean', so as not to conflict with the 'make clean' target. We can
-and should work around this with an install-hook command.]
+item (5) in this section.)
 
 To be extra sure that old-style and new-style builds aren't
 interfering with each other, try using a separate build directory as
@@ -305,6 +301,20 @@ GNU makefile targets are supported:
 	  the main method of distributing Miriad is CVS.)
 
 and so on.
+
+8) Building subsets of Miriad
+
+If you only want to compile a subset of the Miriad tasks, you can run
+'make' and 'make install' inside the directory containing the source
+code for those tasks. For instance, if you've change the source code
+only of the 'clean' task, you can save some time by running:
+
+	cd $MIRPROG
+     	cd deconv
+     	make
+	make install
+
+as opposed to running 'make' from $MIR.
 
 ==================================================
 Handling Auto Tools Errors

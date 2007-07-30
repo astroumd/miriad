@@ -28,5 +28,14 @@ nodist_pmosmem_SOURCES = pmosmem.f
 nodist_restor_SOURCES = restor.f
 nodist_tvcln_SOURCES = tvcln.f
 
+# We name the executable 'mirclean' so as not to conflict with the 'make clean'
+# target; fix this up upon install.
+
+install-exec-hook:
+	cd $(DESTDIR)$(bindir) && $(LN_S) mirclean clean
+
+uninstall-hook:
+	rm -f $(DESTDIR)$(bindir)/clean
+
 DOCINPUTS = $(EXTRA_DIST)
 include $(top_srcdir)/mirdoc.mak
