@@ -161,6 +161,7 @@ c     tw  06nov98 new default behaviour for estim
 c     tw  23aug99 Fixed bug with 'unit' (needed to compile in linux)
 c     tw  24aug99 Now write out parameters on axis 3 instead of axis 4.
 c     pjt 13jul07 added as GAUFIT2 to miriad
+c     pjt 14jul07 fixed up programming error  using crpix as integer?
 
 c************************************************************************
 
@@ -200,7 +201,7 @@ c limlist:     ranges for amp/int,ctr,fwhm/disp
       program gaufit2
 
       character*50 version
-      parameter    ( version = 'gaufit2: version 13-jul-07 pjt' )
+      parameter    ( version = 'gaufit2: version 14-jul-07 pjt' )
 
       include      'maxdim.h'
 
@@ -1018,7 +1019,7 @@ c   to     integral or amplitude, center, dispersion or fwhm
       integer          i, j, np
       real             sqrt8ln2, scale
       character*8      ctype
-      double precision crval, cdelt
+      double precision crval, cdelt, crpixd
       integer          crpix
       integer          xoff
       save             crval, cdelt, crpix, xoff
@@ -1090,9 +1091,10 @@ c convert pixel to physical coordinate
 
       entry setconv( unit, prfinf )
 
-      call rdhdd( unit, keyw('crval',prfinf(3)), crval, 0.d0 )
-      call rdhdi( unit, keyw('crpix',prfinf(3)), crpix, 0    )
-      call rdhdd( unit, keyw('cdelt',prfinf(3)), cdelt, 0.d0 )
+      call rdhdd( unit, keyw('crval',prfinf(3)), crval,  0.d0 )
+      call rdhdd( unit, keyw('crpix',prfinf(3)), crpixd, 0.d0    )
+      crpix = crpixd
+      call rdhdd( unit, keyw('cdelt',prfinf(3)), cdelt,  0.d0 )
       call rdhda( unit, keyw('ctype',prfinf(3)), ctype, ' '  )
 c if options=arcsec, arcmin, deg
       if( ctype(1:2).eq.'RA' .or. ctype(1:3).eq.'DEC' ) then
@@ -1294,12 +1296,16 @@ c***********************************************************************
       integer      LABLEN
       parameter    ( LABLEN = 11 )
       integer      crpix3, n
+      double precision crpixd
       character*8  keyw, key
       character*(LABLEN) dataunit, profunit, lab
 
-      call rdhdi( unit, keyw('crpix',1), crpix1, 0 )
-      call rdhdi( unit, keyw('crpix',2), crpix2, 0 )
-      call rdhdi( unit, keyw('crpix',3), crpix3, 0 )
+      call rdhdd( unit, keyw('crpix',1), crpixd, 0.d0 )
+      crpix1 = crpixd
+      call rdhdd( unit, keyw('crpix',2), crpixd, 0.d0 )
+      crpix2 = crpixd
+      call rdhdd( unit, keyw('crpix',3), crpixd, 0.d0 )
+      crpix3 = crpixd
       if( fitax.eq.1 ) crpix1 = crpix2
       if( fitax.eq.1 ) crpix2 = crpix3
       if( fitax.eq.2 ) crpix2 = crpix3
