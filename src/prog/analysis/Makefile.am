@@ -11,7 +11,7 @@ LDADD = $(prog_libs)
 
 bin_PROGRAMS = avmaths boxspec boxtest clfind clplot \
   clstats colden contsub convol demos \
-  deproject ellint ellplt fft gaufit \
+  deproject ellint ellplt fft gaufit gaufit2 \
   hanning hatfft hermes histo imbin \
   imblob imblr imcat imcfn imcmp imcomb \
   imcorr imdiff imfit imframe imgen \
@@ -31,7 +31,7 @@ bin_PROGRAMS = avmaths boxspec boxtest clfind clplot \
 
 BUILT_SOURCES = avmaths.f boxspec.f boxtest.f clfind.f clplot.f \
   clstats.f colden.f contsub.f convol.f demos.f \
-  deproject.f ellint.f ellplt.f fft.f gaufit.f \
+  deproject.f ellint.f ellplt.f fft.f gaufit.f gaufit2.f \
   hanning.f hatfft.f hermes.f histo.f imbin.f \
   imblob.f imblr.f imcat.f imcfn.f imcmp.f imcomb.f \
   imcorr.f imdiff.f imfit.f imframe.f imgen.f \
@@ -54,7 +54,7 @@ noinst_HEADERS = clfind.h clpars.h clplot.h clstats.h hermes.h \
 
 EXTRA_DIST = avmaths.for boxspec.for boxtest.for clfind.for clplot.for \
   clstats.for colden.for contsub.for convol.for demos.for \
-  deproject.for ellint.for ellplt.for fft.for gaufit.for \
+  deproject.for ellint.for ellplt.for fft.for gaufit.for gaufit2.for \
   hanning.for hatfft.for hermes.for histo.for imbin.for \
   imblob.for imblr.for imcat.for imcfn.for imcmp.for imcomb.for \
   imcorr.for imdiff.for imfit.for imframe.for imgen.for \
@@ -86,6 +86,7 @@ nodist_ellint_SOURCES = ellint.f
 nodist_ellplt_SOURCES = ellplt.f
 nodist_fft_SOURCES = fft.f
 nodist_gaufit_SOURCES = gaufit.f
+nodist_gaufit2_SOURCES = gaufit2.f
 nodist_hanning_SOURCES = hanning.f
 nodist_hatfft_SOURCES = hatfft.f
 nodist_hermes_SOURCES = hermes.f
