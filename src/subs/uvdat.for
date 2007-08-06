@@ -1214,7 +1214,8 @@ c
 c  Input:
 c    object	This is a string describing the information to return.
 c		Possible values are:
-c		 'variance'Returns variance of the data.
+c		 'variance' Returns variance of the data.
+c                'jyperk'   Returns Jy/K of the data.
 c  Output:
 c    rval	Real valued output.
 c--
