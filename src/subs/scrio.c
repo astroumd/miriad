@@ -8,6 +8,7 @@
 /*   rjs  26oct95  Better messages on errors.				*/
 /*   pjt  19jun02  MIR4 prototypes                                      */
 /*   jwr  05nov04  Change file offsets to type off_t			*/
+/*   pjt  16feb07  Minor doc improvements                               */
 /************************************************************************/
 
 #include <stdio.h>
@@ -26,6 +27,9 @@ void scropen_c(int *handle)
 	integer tno
 
   This opens a scratch file, and readies it for use.
+  Scratch files will be removed when they are closed, multiple scratch
+  files are allowed, and they always live in the current directory.
+
   Output:
     tno		The handle of the scratch file.				*/
 /*--									*/
