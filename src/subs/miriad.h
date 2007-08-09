@@ -289,6 +289,7 @@ void mkflush_c (char *handle);
 void xyzopen_c  (int *tno, Const char *name, Const char *status, int *naxis, int axlen[]);
 void xyzclose_c (int tno);
 void xyzflush_c (int tno);
+void xyzmkbuf_c (void);
 void xyzsetup_c (int tno, Const char *subcube, Const int blc[], Const int trc[], int viraxlen[], int vircubesize[]);
 void xyzs2c_c   (int tno, int subcubenr, int coords[]);
 void xyzc2s_c   (int tno, Const int coords[], int *subcubenr);
@@ -300,6 +301,7 @@ void xyzwrite_c (int tno, Const int coords[], Const float *data, Const int *mask
 void xyzpixwr_c (int tno, int pixelnr, Const float *data, Const int *mask);
 void xyzprfwr_c (int tno, int profilenr, Const float *data, Const int *mask, Const int *ndata);
 void xyzplnwr_c (int tno, int planenr, Const float *data, Const int *mask, Const int *ndata);
+
 
 /* bug.c */
 
