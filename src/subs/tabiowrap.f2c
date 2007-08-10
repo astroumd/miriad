@@ -1,0 +1,51 @@
+/******************************************************************************/
+/*                                                                            */
+/* Conversion for the tabio routine from FORTRAN to C                         */
+/*                                                                            */
+/*  History:                                                                  */
+/*    pjt   9aug07 Original version.                                          */
+/******************************************************************************/
+
+#include "miriad.h"
+
+/************************************************************************/
+fortran subroutine tabopen(integer tno,character name,character status,
+	integer ncol,integer nrow)
+{
+  tabopen_c( tno.addr, name.zterm, status.zterm, ncol.addr, nrow.addr );
+}
+/************************************************************************/
+fortran subroutine tabclose( integer tno )
+{
+  tabclose_c(tno.val);
+}
+/************************************************************************/
+fortran subroutine tabsetr( integer tno, integer row)
+{
+  tabsetr_c(tno.val, row.val);
+}
+/************************************************************************/
+fortran subroutine tabfmtc( integer tno, integer col, character fmt)
+{
+  tabfmtc_c(tno.val, col.val, fmt.zterm);
+}
+/************************************************************************/
+fortran subroutine tabwcr( integer tno, integer col, real value)
+{
+  tabwcr_c(tno.val,col.val,value.val);
+}
+/************************************************************************/
+fortran subroutine tabwcd( integer tno, integer col, double value)
+{
+  tabwcd_c(tno.val,col.val,value.val);
+}
+/************************************************************************/
+fortran subroutine tabwci( integer tno, integer col, integer value)
+{
+  tabwci_c(tno.val,col.val,value.val);
+}
+/************************************************************************/
+fortran subroutine tabwca( integer tno, integer col, character value)
+{
+  tabwca_c(tno.val,col.val,value.zterm);
+}
