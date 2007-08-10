@@ -36,12 +36,8 @@
 
 static char message[132];
 
-typedef struct datarow {
-  char **row;
-  struct  datarow *next;
-} datarow;
-
 static struct { 
+  int mode;            /* 0=fully static   1=row wise (OK)   2=col wise (not OK yet) */
   int nrow, ncol;      /* as initialize with */
   int maxrow, maxcol;  /* global count */
   int row;             /* current row being operated on */
@@ -49,11 +45,14 @@ static struct {
   int *ncols;          /* if we need to keep track of # rows/column -- not used */
   int *nrows;          /* if we need to keep track of # cols/row    -- not used */
   char **fmt;          /* format per column -- not used */
-  char ***data;        /* memory image of the table:  data[col][row] */
+  char ***data;        /* memory image of the table:  data[row][col] */
+  char **datarow;      /* memory image of a single row datarow[col] */
   
 } tables[MAXOPEN];
 
-#define Strcpy (void)strcpy
+static void tab_checkcol(int thandle, int col);
+static void tab_checkrow(int thandle, int row);
+
 
 /************************************************************************/
 void tabopen_c(int *thandle,Const char *name,Const char *status,int *ncol, int *nrow)
@@ -72,14 +71,15 @@ void tabopen_c(int *thandle,Const char *name,Const char *status,int *ncol, int *
     status	Either 'old', 'new' or 'append'.
 
   Input or Output:
-    ncol	The number of columns. Can be 0 if done dynamically.
-    nrow	The number of rows. Can be 0 if done dynamically.
+    ncol	The number of columns. No dynamic columns allowed.
+    nrow	The number of rows. Can be 0 if done dynamically
+                but data must be written row wise
 
   Output:
     tno		The handle of the output file.				*/
 /*----------------------------------------------------------------------*/
 {
-  int iostat,length,access,tno,i;
+  int iostat,access,tno,i;
   char *stat,*mode;
 
   if(!strcmp("old",status))	   { access = OLD; mode = "read";  stat = "old";}
@@ -88,7 +88,7 @@ void tabopen_c(int *thandle,Const char *name,Const char *status,int *ncol, int *
   else
    ERROR('f',(message,"Unrecognised status when opening %s, in XYOPEN",name));
 
-  /* Access the image data. */
+  /* Access the table data. */
 
   hopen_c(&tno,name,stat,&iostat);
   CHECK(iostat,(message,"Error opening %s, in XYOPEN",name));
@@ -102,14 +102,30 @@ void tabopen_c(int *thandle,Const char *name,Const char *status,int *ncol, int *
 
   tables[tno].nrow = *nrow;
   tables[tno].ncol = *ncol;
-  tables[tno].row  = 1;
+  tables[tno].maxrow = 0;
+  tables[tno].maxcol = 0;
+  tables[tno].row  = 0;
+  tables[tno].mode = 0;
 
-  if (*ncol == 0)  bug_c('f',"Table I/O cannot deal with dynamic column setting");
-  if (*nrow == 0)  bug_c('f',"Table I/O cannot deal with dynamic row setting");
+  if (*ncol == 0)  {
+    bug_c('f',"Table I/O cannot deal with dynamic column setting");
+    tables[tno].mode = 2;
+  }
+  if (*nrow == 0)  {
+    tables[tno].mode = 1;
+  }
 
-  tables[tno].data = (char ***) calloc( *nrow , sizeof(char ***));
-  for (i=0; i< (*nrow); i++) {
-    tables[tno].data[i] = (char **) calloc( *ncol , sizeof(char **));
+  if (tables[tno].mode == 0) {    
+    /* allocate a full table for random access */
+    tables[tno].data = (char ***) calloc( *nrow , sizeof(char ***));
+    for (i=0; i< (*nrow); i++) {
+      tables[tno].data[i] = (char **) calloc( *ncol , sizeof(char **));
+    }
+  } else if (tables[tno].mode == 1) {
+    /* allocate a single row, for row wise access */
+    tables[tno].datarow = (char **) calloc( *ncol , sizeof(char **));
+  } else {
+    /* not implemented */
   }
 
   tables[tno].fmt = (char **) calloc( *ncol , sizeof(char **));
@@ -125,15 +141,60 @@ void tabsetr_c(int thandle, int row)
 	subroutine tabsetr(tno,row)
 	implicit none
 
-This flushes any changes to an image to disk.
+This sets the current row number. It not usesd, the row number might be
+0 and illegal.
 
   Input:
     tno		The handle of the table file.				
-    row		The active row (1=first)                                */
+    row		The active row (1=first). Use 0 to auto-increment       
+                if you don't know the row number                        */
 /*----------------------------------------------------------------------*/
 {
-  tables[thandle].row = row;
+  int iostat,i,j;
+  char *p;
+  char *space = " ";
+  char *newline = "\n";
+
+  if (row != 0) tab_checkrow(thandle,row);
+
+  if (tables[thandle].mode == 0) {
+    if (row == 0) 
+      tables[thandle].row = tables[thandle].row + 1;
+    else
+      tables[thandle].row = row;
+  } else if (tables[thandle].mode == 1) {
+
+    if (tables[thandle].datarow[0] == 0) return;   /* first time no data? */
+
+    if (row == 0)
+      tables[thandle].row = tables[thandle].row + 1;
+    i = tables[thandle].row;
+
+    for (j=0; j<tables[thandle].ncol; j++) {
+	p = tables[thandle].datarow[j];
+	if (p==0) bugv_c('f',"TableRow missing value row %d col %d",i,j+1);
+	hwritea_c(tables[thandle].table,p,strlen(p),&iostat);   
+	check(iostat);
+	hwritea_c(tables[thandle].table,space,strlen(space),&iostat);   
+	check(iostat);
+    }
+    hwritea_c(tables[thandle].table,newline,strlen(newline),&iostat);   
+    check(iostat);
+  }
 }
+
+static void tab_checkrow(int thandle, int row)
+{
+  if (row < 1) bugv_c('f',"tabio: row=%d illegal",row);
+  if (row > tables[thandle].maxrow) tables[thandle].maxrow = row;
+}
+
+static void tab_checkcol(int thandle, int col)
+{
+  if (col < 1) bugv_c('f',"tabio: col=%d illegal",col);
+  if (col > tables[thandle].maxcol) tables[thandle].maxcol = col;
+}
+
 
 /************************************************************************/
 void tabfmtc_c(int thandle, int col, char *fmt)
@@ -144,7 +205,7 @@ void tabfmtc_c(int thandle, int col, char *fmt)
 	subroutine tabfmtc(tno,col,fmt)
 	implicit none
 
-This flushes any changes to an image to disk.
+This sets the format for a particular column
 
   Input:
     tno		The handle of the table file.				
@@ -165,7 +226,7 @@ void tabclose_c(int thandle)
 	subroutine tablose(tno)
 	integer tno
 
-  This closes an image file.
+  This closes a table file.
 
   Input:
     tno		The handle of the table file.				*/
@@ -178,37 +239,44 @@ void tabclose_c(int thandle)
 
   /* write table */
 
-  sprintf(message,"# miriad table\n");
-  hwritea_c(tables[thandle].table,message,strlen(message),&iostat);   
-  check(iostat);
+  if (tables[thandle].mode == 0) {
 
-  for (i=0; i<tables[thandle].nrow; i++) {
-    for (j=0; j<tables[thandle].ncol; j++) {
-      p = tables[thandle].data[i][j];
-      if (p==0) bugv_c('f',"Table missing value row %d col %d",i+1,j+1);
-      hwritea_c(tables[thandle].table,p,strlen(p),&iostat);   
-      check(iostat);
-      hwritea_c(tables[thandle].table,space,strlen(space),&iostat);   
+    for (i=0; i<tables[thandle].nrow; i++) {
+      for (j=0; j<tables[thandle].ncol; j++) {
+	p = tables[thandle].data[i][j];
+	if (p==0) bugv_c('f',"Table missing value row %d col %d",i+1,j+1);
+	hwritea_c(tables[thandle].table,p,strlen(p),&iostat);   
+	check(iostat);
+	hwritea_c(tables[thandle].table,space,strlen(space),&iostat);   
+	check(iostat);
+      }
+      hwritea_c(tables[thandle].table,newline,strlen(newline),&iostat);   
       check(iostat);
     }
-    hwritea_c(tables[thandle].table,newline,strlen(newline),&iostat);   
-    check(iostat);
-  }
 
-  /* free table */
+    /* free table */
 
-  for (i=0; i<tables[thandle].nrow; i++) {
+    for (i=0; i<tables[thandle].nrow; i++) {
+      for (j=0; j<tables[thandle].ncol; j++)
+	free(tables[thandle].data[i][j]);
+      free(tables[thandle].data[i]); 
+    }
+    free(tables[thandle].data);
+
+  } else if (tables[thandle].mode == 1) {
+
+    /* check if the last row needed to written */
+    tabsetr_c(thandle,0);
+
     for (j=0; j<tables[thandle].ncol; j++)
-      free(tables[thandle].data[i][j]);
-    free(tables[thandle].data[i]); 
+      free(tables[thandle].datarow[j]);   
+    free(tables[thandle].datarow);     
   }
-  free(tables[thandle].data);
-    
+
   hdaccess_c(tables[thandle].table,&iostat);			check(iostat);
   hclose_c(thandle);
-
-
 }
+
 /************************************************************************/
 void tabwcr_c(int thandle,int col,float value)
 /**xyread -- Write a real value to a column in a table             	*/
@@ -223,43 +291,76 @@ void tabwcr_c(int thandle,int col,float value)
   TABSETR to set the row (1=first)_
 
   Input:
-    tno		The image file handle, returned by tabopen.
+    tno		The table file handle, returned by tabopen.
     col   	The column to write  (1=first)
     value       The real value                                          */
 /*----------------------------------------------------------------------*/
 {
   char temp[64];
 
+  tab_checkcol(thandle,col);
+
   if (tables[thandle].fmt[col-1])
     sprintf(temp,tables[thandle].fmt[col-1],value);
   else
     sprintf(temp,"%g",value);
-  tables[thandle].data[tables[thandle].row - 1][col-1] = strdup(temp);
+  if (tables[thandle].mode == 0)
+    tables[thandle].data[tables[thandle].row - 1][col-1] = strdup(temp);
+  else if (tables[thandle].mode == 1)
+    tables[thandle].datarow[col-1] = strdup(temp);
 }
 
 void tabwcd_c(int thandle,int col,double value)
 {
   char temp[64];
 
+  tab_checkcol(thandle,col);
+
   if (tables[thandle].fmt[col-1])
     sprintf(temp,tables[thandle].fmt[col-1],value);
   else
     sprintf(temp,"%g",value);
-  tables[thandle].data[tables[thandle].row - 1][col-1] = strdup(temp);
+  if (tables[thandle].mode == 0)
+    tables[thandle].data[tables[thandle].row - 1][col-1] = strdup(temp);
+  else if (tables[thandle].mode == 1)
+    tables[thandle].datarow[col-1] = strdup(temp);
 }
 
 void tabwci_c(int thandle,int col,int value)
 {
   char temp[64];
 
+  tab_checkcol(thandle,col);
+
   if (tables[thandle].fmt[col-1])
     sprintf(temp,tables[thandle].fmt[col-1],value);
   else
     sprintf(temp,"%d",value);
-  tables[thandle].data[tables[thandle].row - 1][col-1] = strdup(temp);
+  if (tables[thandle].mode == 0)
+    tables[thandle].data[tables[thandle].row - 1][col-1] = strdup(temp);
+  else if (tables[thandle].mode == 1)
+    tables[thandle].datarow[col-1] = strdup(temp);
 }
 
 void tabwca_c(int thandle,int col,char *value)
 {
-  tables[thandle].data[tables[thandle].row - 1][col-1] = strdup(value);
+  if (tables[thandle].mode == 0)
+    tables[thandle].data[tables[thandle].row - 1][col-1] = strdup(value);
+  else if (tables[thandle].mode == 1)
+    tables[thandle].datarow[col-1] = strdup(value);
+}
+
+
+void tabcmt_c(int thandle,char *comment)
+{
+  int iostat;
+  char *cmt="#";
+  char *nwl="\n";
+
+  hwritea_c(tables[thandle].table,cmt,strlen(cmt),&iostat);   
+  check(iostat);
+  hwritea_c(tables[thandle].table,comment,strlen(comment),&iostat);   
+  check(iostat);
+  hwritea_c(tables[thandle].table,nwl,strlen(nwl),&iostat);   
+  check(iostat);
 }

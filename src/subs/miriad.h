@@ -327,6 +327,7 @@ void tabopen_c  (int *tno, Const char *name, Const char *status, int *ncol, int 
 void tabclose_c (int tno);
 void tabsetr_c  (int tno, int row);
 void tabfmtc_c  (int tno, int col, char *fmt);
+void tabcmt_c   (int tno, char *comment);
 void tabwcr_c   (int tno, int col, float value);
 void tabwcd_c   (int tno, int col, double value);
 void tabwci_c   (int tno, int col, int value);

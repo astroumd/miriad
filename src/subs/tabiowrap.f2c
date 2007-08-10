@@ -30,6 +30,11 @@ fortran subroutine tabfmtc( integer tno, integer col, character fmt)
   tabfmtc_c(tno.val, col.val, fmt.zterm);
 }
 /************************************************************************/
+fortran subroutine tabcmt( integer tno, character comment)
+{
+  tabcmt_c(tno.val,comment.zterm);
+}
+/************************************************************************/
 fortran subroutine tabwcr( integer tno, integer col, real value)
 {
   tabwcr_c(tno.val,col.val,value.val);
