@@ -28,10 +28,11 @@
 #define MK_FLAGS 1
 #define MK_RUNS  2
 #define check(x) if(x)bugno_c('f',x)
-#define CHECK(x,a) if(x) { bug_c('w',((void)sprintf a,message));	\
-			   bugno_c('f',x);				\
-			 }
+#define CHECK(x,a) if(x) { bug_c('w',((void)sprintf a,message));        \
+                           bugno_c('f',x);                              \
+                         }
 #define ERROR(sev,a) bug_c(sev,((void)sprintf a,message))
+
 
 static char message[132];
 
@@ -48,7 +49,7 @@ static struct {
   int *ncols;          /* if we need to keep track of # rows/column -- not used */
   int *nrows;          /* if we need to keep track of # cols/row    -- not used */
   char **fmt;          /* format per column -- not used */
-  char ***data;        /* memory image */
+  char ***data;        /* memory image of the table:  data[col][row] */
   
 } tables[MAXOPEN];
 
@@ -177,6 +178,10 @@ void tabclose_c(int thandle)
 
   /* write table */
 
+  sprintf(message,"# miriad table\n");
+  hwritea_c(tables[thandle].table,message,strlen(message),&iostat);   
+  check(iostat);
+
   for (i=0; i<tables[thandle].nrow; i++) {
     for (j=0; j<tables[thandle].ncol; j++) {
       p = tables[thandle].data[i][j];
@@ -224,7 +229,6 @@ void tabwcr_c(int thandle,int col,float value)
 /*----------------------------------------------------------------------*/
 {
   char temp[64];
-  int iostat;
 
   if (tables[thandle].fmt[col-1])
     sprintf(temp,tables[thandle].fmt[col-1],value);
@@ -236,26 +240,26 @@ void tabwcr_c(int thandle,int col,float value)
 void tabwcd_c(int thandle,int col,double value)
 {
   char temp[64];
-  int iostat;
 
-  sprintf(temp,"%g",value);
+  if (tables[thandle].fmt[col-1])
+    sprintf(temp,tables[thandle].fmt[col-1],value);
+  else
+    sprintf(temp,"%g",value);
   tables[thandle].data[tables[thandle].row - 1][col-1] = strdup(temp);
 }
 
 void tabwci_c(int thandle,int col,int value)
 {
   char temp[64];
-  int iostat;
 
-  sprintf(temp,"%d",value);
+  if (tables[thandle].fmt[col-1])
+    sprintf(temp,tables[thandle].fmt[col-1],value);
+  else
+    sprintf(temp,"%d",value);
   tables[thandle].data[tables[thandle].row - 1][col-1] = strdup(temp);
 }
 
 void tabwca_c(int thandle,int col,char *value)
 {
-  char temp[64];
-  int iostat;
-
-  sprintf(temp,"%s",value);
-  tables[thandle].data[tables[thandle].row - 1][col-1] = strdup(temp);
+  tables[thandle].data[tables[thandle].row - 1][col-1] = strdup(value);
 }
