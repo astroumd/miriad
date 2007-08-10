@@ -320,6 +320,19 @@ void scrclose_c (int handle);
 void scrread_c  (int handle, float *buffer, int offset, int length);
 void scrwrite_c (int handle, Const float *buffer, int offset, int length);
 
+
+/* tabio.c */
+
+void tabopen_c  (int *tno, Const char *name, Const char *status, int *ncol, int *nrow);
+void tabclose_c (int tno);
+void tabsetr_c  (int tno, int row);
+void tabfmtc_c  (int tno, int col, char *fmt);
+void tabwcr_c   (int tno, int col, float value);
+void tabwcd_c   (int tno, int col, double value);
+void tabwci_c   (int tno, int col, int value);
+void tabwca_c   (int tno, int col, char *value);
+
+
 /* key.c */
 
 void keyinit_c (Const char *task);
