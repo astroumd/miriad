@@ -13,18 +13,26 @@ c       Although UVFLAG can also be used, the current visibility format
 c       does not easily allow for variable sized antennae shadowing 
 c       calculations.
 c
+c       CAVEAT: the shadowing algorithm assumes the whole array is
+c       observing the same object and ignores any flags that might
+c       designate if an antennae was flagged.
+c
 c@ vis
 c	The input visibility file to be flagged. No default.
-c@ carma
-c       Boolean, if set to true, the default CARMA array is loaded
-c       in the antdiam array. Also it is then assumed the first 6
-c       are OVRO dishes (assumed 10.4m), the remaining BIMA 
-c       (assumed 6.1m).
-c       The default is true.
 c@ antdiam
 c       Array of diameters (in m) for each antenna. By default
 c       all antenna are the same, and equal the antdiam found in
-c       the dataset. 
+c       the dataset. No default. See also carma=
+c@ carma
+c       Boolean, if set to true, the default CARMA array is loaded
+c       in the antdiam array. Also it is then assumed the first 6
+c       are OVRO dishes (assumed 10.4m), the remaining 9 are BIMA 
+c       (assumed 6.1m).
+c       The default is true.
+c@ cfraction
+c       Special CARMA option to multiply the antdiam array for
+c       OVRO and BIMA dishes by. Two numbers are expected here: the
+c       fraction for OVRO and that for BIMA. Default: 1,1
 c
 c--
 c
@@ -33,17 +41,22 @@ c     pjt/th    02jul03 original program, uvio not smart enough yet
 c     pjt       19jun07 added carma=t to preload default antdiam's
 c     pjt       12jul07 counted ntot one too many
 c     pjt       25jul07 count different styles of carma shadowing
+c     pjt       13aug07 Added cfraction=
+c
+c  Todo:
+c     should re-read antdiam when new ones available 
+c  
 c---------------------------------------------------------------------------
 	implicit none
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='csflag: version 25-jul-07')
+	parameter(version='csflag: version 13-aug-07')
 c
 	complex data(MAXCHAN)
 	double precision preamble(5), antpos(3*MAXANT)
 	integer lVis,vVis,ntot,ngood,nflag,i,npol,nt,nv,nants,na
-        integer i0,i1,i2,ntoto,ntoth,ntotc
-        real antdiam(MAXANT)
+        integer i0,i1,i2,ntoto,ntoth,ntotc,ncf
+        real antdiam(MAXANT),cfraction(2)
 	character in*80,line*64
 	logical flags(MAXCHAN),shadow,carma
         external shadow
@@ -58,6 +71,7 @@ c
 	if(in.eq.' ')call bug('f','Visibility file name not given')
         call mkeyr('antdiam',antdiam,MAXANT,na)
         call keyl('carma',carma,.TRUE.)
+        call mkeyr('cfraction',cfraction,2,ncf)
 	call keyfin
 
 
@@ -73,6 +87,13 @@ c
            do i=7,15
               antdiam(i) = 6.1
            enddo
+        endif
+
+        if (ncf.eq.0) then
+           cfraction(1) = 1.0
+           cfraction(2) = 1.0
+        else if (ncf.ne.2) then
+           call bug('f','cfraction= needs two values')
         endif
 c
 c Open files
@@ -102,6 +123,16 @@ c
            enddo
            write(*,*) antdiam(1)
            call bug('i','Extracting antdiam from the data')
+        endif
+        if (carma) then
+           if (nants.ne.15) call bug('f','CARMA nants.ne.15 ???')
+           write(*,*) 'new cfraction option: ',cfraction
+           do i=1,6
+              antdiam(i) = antdiam(i) * cfraction(1)
+           enddo
+           do i=7,15
+              antdiam(i) = antdiam(i) * cfraction(2)
+           enddo
         endif
         call uvgetvrd(lVis,'antpos',antpos,3*nants)
 
@@ -185,13 +216,11 @@ c        write(*,*) u(i1)-u(i2),v(i1)-v(i2),w(i1)-w(i2)
 c
 c  j-loop over both i1 shadowing i2, or vice versa.
 c
+        shadow = .FALSE.
         do j=1,2
             if (j.eq.1) i0=i1
             if (j.eq.2) i0=i2
-            if (i1.eq.i2 .and. j.eq.2) then
-                shadow = .FALSE.
-                return
-            endif
+            if (i1.eq.i2 .and. j.eq.2) return
             do i=1,nants
                 if (i.ne.i0) then
                     limit = (antdiam(i)+antdiam(i0))/2
@@ -217,6 +246,4 @@ c                       write(*,*) 'SHADOW CS ',pjt,uu,vv,ww,sqrt(limit)
             enddo
         enddo
 
-        shadow = .FALSE.
-        return
         end
