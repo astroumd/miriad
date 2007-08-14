@@ -41,7 +41,7 @@ c     pjt/th    02jul03 original program, uvio not smart enough yet
 c     pjt       19jun07 added carma=t to preload default antdiam's
 c     pjt       12jul07 counted ntot one too many
 c     pjt       25jul07 count different styles of carma shadowing
-c     pjt       13aug07 Added cfraction=
+c     pjt       14aug07 Added cfraction=
 c
 c  Todo:
 c     should re-read antdiam when new ones available 
@@ -50,7 +50,7 @@ c---------------------------------------------------------------------------
 	implicit none
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='csflag: version 13-aug-07')
+	parameter(version='csflag: version 14-aug-07')
 c
 	complex data(MAXCHAN)
 	double precision preamble(5), antpos(3*MAXANT)
@@ -92,6 +92,8 @@ c
         if (ncf.eq.0) then
            cfraction(1) = 1.0
            cfraction(2) = 1.0
+        else if (ncf.eq.1) then
+           cfraction(2) = cfraction(1)
         else if (ncf.ne.2) then
            call bug('f','cfraction= needs two values')
         endif
