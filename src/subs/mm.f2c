@@ -12,11 +12,15 @@
 /*    23dec92 rjs  Use intf2c, to make it more system independent.	*/
 /*     5nov94 rjs  Try to be a bit more pedantic.			*/
 /*    20jun02 pjt  even more pedantic yet                               */
+/*    15aug07 pjt  fix for 64bit linux                                  */ 
 /*                                                                      */
 /************************************************************************/
 
 #include <stddef.h>
 #include <stdlib.h>
+#if defined(linux)
+#include <malloc.h>
+#endif
 #include "miriad.h"
 
 /************************************************************************/
@@ -92,11 +96,16 @@ c
   int t;
   int *s;
 
+#if defined(linux)
+  if (sizeof(void *) > sizeof(int)) mallopt(M_MMAP_MAX,0);
+#endif
   s = (int *)malloc( (size_t)(size.val * sizeof(int)) );
   if(s == (int *)NULL) return 0;
   offset = s - data.addr;
   t = (int)offset;
-  if(t != offset)bug_c('f',"Some odd form of rounding problem, in mmAlloc");
+  if(t != offset) {
+    bugv_c('f',"Some odd form of rounding problem f=%p, offset=%p in mmAlloc",t,(int)offset);
+}
 
   return t + 1;
 }
