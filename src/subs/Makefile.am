@@ -50,7 +50,7 @@ nodist_libmir_la_SOURCES = \
   tv.f tvsubs.f txtio.f utilities.f uvdat.f uvfitsubs.f \
   uvgetbl.f uvgn.f uvsubs.f var.f varmint.f velocity.f \
   win.f wpfit.f zed.f zeebin.f \
-  bugwrap.c keywrap.c mirwrap.c mm.c oscalls.c \
+  bugwrap.c iface.c keywrap.c mirwrap.c mm.c oscalls.c \
   packwrap.c smawrap.c tcpio.c wrap.c xyziowrap.c
 
 dist_libmir_la_SOURCES = \
@@ -84,7 +84,7 @@ EXTRA_DIST = \
   tv.for tvsubs.for txtio.for utilities.for uvdat.for uvfitsubs.for \
   uvgetbl.for uvgn.for uvsubs.for var.for varmint.for velocity.for \
   win.for wpfit.for zed.for zeebin.for \
-  bugwrap.f2c keywrap.f2c mirwrap.f2c mm.f2c oscalls.f2c \
+  bugwrap.f2c iface.f2c keywrap.f2c mirwrap.f2c mm.f2c oscalls.f2c \
   packwrap.f2c smawrap.f2c tcpio.f2c wrap.f2c xyziowrap.f2c \
   boxes.h co.h ctrl.h fitsio.h hdtab.h hio.h intpio.h io.h \
   log.h mapper.h mc.h miriad.h model.h modp.h mostab.h \
