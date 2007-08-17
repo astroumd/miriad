@@ -186,6 +186,10 @@ c                the solution plots.
 c    jhz 15mar07 added Keyword dotsize
 c    jhz 22may07 fixed a bug in the case of present flagged chunk
 c                when apply the opolyfit curve.
+c    jhz 17aug07 added two counters for non-zero gain channels per
+c                chunk and all channels per chunk.
+c                change the gain flag states to true for good, false
+c                for bad.
 c  Bugs:
 c------------------------------------------------------------------------
         integer maxsels
@@ -195,7 +199,7 @@ c------------------------------------------------------------------------
         parameter (DPI = 3.14159265358979323846)
         parameter (TWOPI = 2 * PI)
         parameter (DTWOPI = 2 * DPI)        
-        parameter(version='SmaGpPlt: version 1.12 22-May-07')
+        parameter(version='SmaGpPlt: version 1.13 17-Aug-07')
         include 'smagpplt.h'
         integer iostat,tin,nx,ny,nfeeds,nants,nsols,ierr,symbol,nchan
         integer ntau,length, i, j, k,nschann(maxspect)
@@ -1595,23 +1599,20 @@ c
               ng = 0
               value(offset+1) = 0
               do ichan=1,nchan
-                gain = g(ichan + nchan*offset)
-c                if(abs(real(gain))+abs(aimag(gain)).gt.0)then
+                  gain = g(ichan + nchan*offset)
                   ng = ng + 1
-                  gflag(ng)=.true.
-         if(abs(real(gain))+abs(aimag(gain)).gt.0) gflag(ng)=.false.
+                  gflag(ng)=.false.
+         if(abs(real(gain))+abs(aimag(gain)).gt.0) gflag(ng)=.true.
                   if(.not.dochan) then
                   x(ng) = freq(ichan)
                   else
                   x(ng) = ichan
                   end if
                   y(ng) = getval(gain,value(offset+1))
-c                endif
               enddo
               if(ng.gt.0)then
-                call setpg(freqmin,freqmax,y,ng,range,.true.)
-c        write(*,*) 'ifeed iant type nfeed',ifeed,iant,type,nfeeds
-          call pgptbpass(ng,x,y,gflag,symbol,ifeed,iant,type,
+            call setpg(freqmin,freqmax,y,ng,range,.true.)
+            call pgptbpass(ng,x,y,gflag,symbol,ifeed,iant,type,
      *    nschann,donply,dosmooth,dofit,dotsize)
             if(filelabel.gt.-1) then
             if((filelabel.eq.1).and.(iant.eq.1))
@@ -1977,7 +1978,7 @@ c************************************************************************
       LOGICAL PGNOTO
       character type*(*)
       include 'smagpplt.h'
-c     for movinf smooth
+c     for moving smooth
       PARAMETER(MAXNR=20,MAXN=7681,maxspect=49)
       double precision dpi
       parameter(dpi=3.14159265358979323846)
@@ -1990,7 +1991,8 @@ c     for movinf smooth
       real x(N), xchan(N), ys(N)
       real xlen,ylen,xloc
       character title*64
-      integer K,L,i,nspects,schan,fsign,ll,bnply,nterm,breport 
+      integer K,L,i,nspects,schan,fsign,ll,bnply,nterm,breport
+      integer nschanc 
       real smooth(3), ymean
       real rpass(maxant,maxchan,2), ipass(maxant,maxchan,2)
       real apass(maxant,maxchan,2), ppass(maxant,maxchan,2)
@@ -2001,62 +2003,70 @@ C
       IF (N.LT.1) RETURN
       IF (PGNOTO('PGPT')) RETURN
 C
-       yloc=0.95
-       schan=0
-       nspects=0
-       ymean=0.0
-       do i=1, N
-       ymean=ymean+YPTS(i)
-       enddo
-       ymean=ymean/N
+        yloc=0.95
+c
+c schan:   counter for non-zero gain channels per spectral window
+c nschanc: counter for all channehls per spectral window
+c
+        schan=0
+        nschanc=0
+        nspects=0
+        ymean=0.0
+        do i=1, N
+        ymean=ymean+YPTS(i)
+        enddo
+        ymean=ymean/N
         fsign=-1
         if((XPTS(1)/XPTS(2)).ge.1) fsign=1
         do i=1, N
-        if((schan+1).lt.nschann(nspects+1)) then
-        schan  = schan+1
-        x(schan)  = XPTS(i)
-        T(schan)  = schan
-        xchan(schan)  = schan
-        ys(schan) = YPTS(i)
-        y(schan) = YPTS(i)
-         DELTAY(schan) = 1.D0
-          else
+        if((nschanc+1).lt.nschann(nspects+1)) then
+        nschanc = nschanc+1
+         if(gflag(i)) then
           schan  = schan+1
-       x(schan)  = XPTS(i)
-       T(schan)  = schan
-       xchan(schan)  = schan
-           ys(schan) = YPTS(i)
-           y(schan) = YPTS(i)
-           DELTAY(schan) = 1.D0
-           nspects  = nspects+1
-         if(nspects.le.12) call pgsci(nspects)
-c         if(nspects.gt.12) call pgsci(nspects-12)
-         if(nspects.eq.13) call pgscr(nspects, 1.0, 1.0, 0.5)
-         if(nspects.eq.14) call pgscr(nspects, 1.0, 1.0, 0.0)
-         if(nspects.eq.15) call pgscr(nspects, 1.0, 0.5, 0.5)
-         if(nspects.eq.16) call pgscr(nspects, 1.0, 0.5, 0.2)
-         if(nspects.eq.17) call pgscr(nspects, 1.0, 0.0, 0.5)
-         if(nspects.eq.18) call pgscr(nspects, 1.0, 0.2, 0.2)
-         if(nspects.eq.19) call pgscr(nspects, 0.5, 1.0, 0.5)
-         if(nspects.eq.20) call pgscr(nspects, 0.7, 0.70, 0.70)
-         if(nspects.eq.21) call pgscr(nspects, 0.7, 0.5, 0.5)
-         if(nspects.eq.22) call pgscr(nspects, 0.7, 0.5, 0.9)
-         if(nspects.eq.23) call pgscr(nspects, 0.5, 0.0, 0.5)
-         if(nspects.eq.24) call pgscr(nspects, 0.75, 0.2, 0.3)
+          x(schan)  = XPTS(i)
+          T(schan)  = schan
+          xchan(schan)  = schan
+          ys(schan) = YPTS(i)
+          y(schan) = YPTS(i)
+          DELTAY(schan) = 1.D0
+          end if
+        else
+        nschanc = nschanc+1
+          if(gflag(i)) then
+          schan  = schan+1
+          x(schan)  = XPTS(i)
+          T(schan)  = schan
+          xchan(schan)  = schan
+          ys(schan) = YPTS(i)
+          y(schan) = YPTS(i)
+          DELTAY(schan) = 1.D0
+          end if
+        nspects  = nspects+1
+          if(nspects.le.12) call pgsci(nspects)
+          if(nspects.eq.13) call pgscr(nspects, 1.0, 1.0, 0.5)
+          if(nspects.eq.14) call pgscr(nspects, 1.0, 1.0, 0.0)
+          if(nspects.eq.15) call pgscr(nspects, 1.0, 0.5, 0.5)
+          if(nspects.eq.16) call pgscr(nspects, 1.0, 0.5, 0.2)
+          if(nspects.eq.17) call pgscr(nspects, 1.0, 0.0, 0.5)
+          if(nspects.eq.18) call pgscr(nspects, 1.0, 0.2, 0.2)
+          if(nspects.eq.19) call pgscr(nspects, 0.5, 1.0, 0.5)
+          if(nspects.eq.20) call pgscr(nspects, 0.7, 0.7, 0.7)
+          if(nspects.eq.21) call pgscr(nspects, 0.7, 0.5, 0.5)
+          if(nspects.eq.22) call pgscr(nspects, 0.7, 0.5, 0.9)
+          if(nspects.eq.23) call pgscr(nspects, 0.5, 0.0, 0.5)
+          if(nspects.eq.24) call pgscr(nspects, 0.75,0.2, 0.3)
          call pgsci(nspects)
             
          CALL PGBBUF
-         if(dotsize.ge.1.and.dotsize.le.201) then
+          if(dotsize.ge.1.and.dotsize.le.201) then
              SYMBOL = -2
              call pgslw(dotsize)
              endif
-          if(.not.gflag(i)) then
-         IF (SYMBOL.GE.0 .OR. SYMBOL.LE.-3) THEN
-         CALL GRMKER(SYMBOL,.FALSE.,schan,x,ys)
-         ELSE
-         CALL GRDOT1(schan,x,ys)
-         END IF
-          end if
+           IF (SYMBOL.GE.0 .OR. SYMBOL.LE.-3) THEN
+           CALL GRMKER(SYMBOL,.FALSE.,schan,x,ys)
+           ELSE
+           CALL GRDOT1(schan,x,ys)
+           END IF
 
          CALL PGEBUF
          call pgslw(1)
@@ -2073,7 +2083,7 @@ c
          K= smooth(1)
          L= smooth(2)
          P= smooth(3)
-        if(bnply.eq.0) then
+            if(bnply.eq.0) then
 c
 c timer is to do moving smooth, the code/algorithm is from
 c "Data Analysis" by Siegmund Brandt
@@ -2082,20 +2092,20 @@ c
         do ii=1, schan
         ys(ii) = ETA(ii+K)
         end do
-              else
+           else
 c
 c Orthogonal polynomial fit to the bpass
 c
          CALL REGPOL(T,Y,DELTAY,schan,MAXNR,XA,BP,AP,CHI2)
-         if(breport>0) then
+           if(breport>0) then
          write(*,*) 'Order  Chi2  for Ant',IANT, '-- Sp',nspects
          do ii=1, MAXNR
          write(*,'(i2xxf8.1)') ii-1, CHI2(ii)
          end do
-         end if
+           end if
         nterm=bnply+1
         call regpolfitg(nterm,xa,bp,schan,xchan,ys)
-        end if
+          end if
         do ii=1, schan
         if(type.eq.'Real') rpass(IANT, i-schan+ii, IFEED) = ys(ii)
         if(type.eq.'Imag') ipass(IANT, i-schan+ii, IFEED) = ys(ii)
@@ -2103,9 +2113,11 @@ c
         if(type.eq.'Phase') ppass(IANT, i-schan+ii, IFEED) = ys(ii)
         end do
        call pgsci(1)
-       if(dofit.and.(.not.gflag(i))) call pgline (schan, x, ys)
+         if(dofit) call pgline (schan, x, ys)
        call pgsci(1)
+c reinitialize the channel counters
        schan=0
+       nschanc=0
        end if
        end do
        END
