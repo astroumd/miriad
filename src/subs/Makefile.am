@@ -14,8 +14,9 @@ lib_LTLIBRARIES = \
   libmir.la
 
 libmir_uvio_la_SOURCES = bug.c dio.c headio.c hio.c \
-  interface.c jplread.c key.c maskio.c mir_io.c pack.c     \
-  scrio.c sma_csub.c sma_mirRead.c uvio.c xyio.c xyzio.c
+  interface.c jplread.c key.c maskio.c mir_io.c pack.c \
+  scrio.c sma_csub.c sma_mirRead.c tabio.c uvio.c xyio.c \
+  xyzio.c
 libmir_uvio_la_CFLAGS = $(includes) @single_module@
 
 libmir_la_CFLAGS = $(includes)
@@ -51,7 +52,7 @@ nodist_libmir_la_SOURCES = \
   uvgetbl.f uvgn.f uvsubs.f var.f varmint.f velocity.f \
   win.f wpfit.f zed.f zeebin.f \
   bugwrap.c iface.c keywrap.c mirwrap.c mm.c oscalls.c \
-  packwrap.c smawrap.c tcpio.c wrap.c xyziowrap.c
+  packwrap.c smawrap.c tabiowrap.c tcpio.c wrap.c xyziowrap.c
 
 dist_libmir_la_SOURCES = \
   boxes.h co.h ctrl.h fitsio.h hdtab.h hio.h intpio.h io.h \
