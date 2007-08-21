@@ -7,15 +7,16 @@ c: flagging
 c+
 c	CSFLAG is a MIRIAD task which flags correlations where an array
 c       of variable sized antennae could shadow each other.
-c       An array of antenna diameters must be given, the number of ants
+c       An array of antenna diameters must be given, the number of antenna
 c       must be exactly equal that in the dataset.
 c       Although UVFLAG can also be used, the current visibility format
 c       does not easily allow for variable sized antennae shadowing 
-c       calculations.
+c       calculations, and although this program was designed for CARMA,
+c       it should work for any heterogenous array.
 c
-c       CAVEAT: the shadowing algorithm assumes the whole array is
-c       observing the same object and ignores any flags that might
-c       designate if an antennae was flagged.
+c       Note that this program only SETS flags, never unsets. Multiple
+c       runs of csflag with decreasing values of cfraction= will thus 
+c       NOT have the effect you think it might have.
 c
 c@ vis
 c	The input visibility file to be flagged. No default.
@@ -28,6 +29,8 @@ c       Boolean, if set to true, the default CARMA array is loaded
 c       in the antdiam array. Also it is then assumed the first 6
 c       are OVRO dishes (assumed 10.4m), the remaining 9 are BIMA 
 c       (assumed 6.1m).
+c       If selected, it will also print out the number of records
+c       flagged for O-O, B-B and O-B (labeled O/H/C).
 c       The default is true.
 c@ cfraction
 c       Special CARMA option to multiply the antdiam array for
@@ -42,23 +45,31 @@ c     pjt       19jun07 added carma=t to preload default antdiam's
 c     pjt       12jul07 counted ntot one too many
 c     pjt       25jul07 count different styles of carma shadowing
 c     pjt       14aug07 Added cfraction=
+c     pjt       21aug07 fix for Wide and Narrow  data
 c
 c  Todo:
-c     should re-read antdiam when new ones available 
+c     - options=noapply ???
+c     - should re-read antdiam when new ones available 
+c     - hardcoded for data that has wide and narrow line data
+c     - maybe implement this reset= keyword?
+c       @ reset
+c       If set, it will reset the flags of all records to be good.
+c       Default: false.
+c
 c  
 c---------------------------------------------------------------------------
 	implicit none
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='csflag: version 14-aug-07')
+	parameter(version='csflag: version 21-aug-07')
 c
 	complex data(MAXCHAN)
 	double precision preamble(5), antpos(3*MAXANT)
-	integer lVis,vVis,ntot,ngood,nflag,i,npol,nt,nv,nants,na
-        integer i0,i1,i2,ntoto,ntoth,ntotc,ncf
+	integer lVis,ntot,nflag,i,nv,nants,na
+        integer ntoto,ntoth,ntotc,ncf
         real antdiam(MAXANT),cfraction(2)
-	character in*80,line*64
-	logical flags(MAXCHAN),shadow,carma
+	character in*80
+	logical flags(MAXCHAN),shadow,carma,reset,doshadow
         external shadow
 
         common /antpos/antpos,ntoto,ntoth,ntotc
@@ -72,14 +83,17 @@ c
         call mkeyr('antdiam',antdiam,MAXANT,na)
         call keyl('carma',carma,.TRUE.)
         call mkeyr('cfraction',cfraction,2,ncf)
+        call keyl('reset',reset,.FALSE.)
 	call keyfin
+
+        if (reset) call bug('w','reset not implemented yet')
 
 
 c
 c Handle default CARMA
 c
         if (carma .and. na.EQ.0) then
-           call bug('i','Preloading CARMA-15 antdiam array')
+           call bug('i','Preloading CARMA-15 antdiam (10.4,6.1) array')
            na = 15
            do i=1,6
               antdiam(i) = 10.4
@@ -139,13 +153,21 @@ c
         call uvgetvrd(lVis,'antpos',antpos,3*nants)
 
         do while(nv.gt.0)
-           if (shadow(lVis,preamble,nants,antdiam)) then
+           doshadow = shadow(lVis,preamble,nants,antdiam)
+           if (doshadow) then
               nflag = nflag + 1
               do i=1,nv
                  flags(i) = .FALSE.
               enddo
+              call uvflgwr(lVis,flags)
+              call uvwread(lVis,data,flags,MAXCHAN,nv)
+              if (nv.gt.0) then
+                 do i=1,nv
+                    flags(i) = .FALSE.
+                 enddo
+                 call uvwflgwr(lVis,flags)
+              endif
            endif
-           call uvflgwr(lVis,flags)
            ntot = ntot + 1
            call uvread(lVis,preamble,data,flags,MAXCHAN,nv)
         enddo
