@@ -24,9 +24,9 @@ echo " "
 
 # Nyquist sample time = 12 x (dish_diam/2)/(pi*baseline)/Npointings
 calc '12*(10.4/2)/(pi*2000)' ;# = 0.01 hours = 36 sec/Npointings
-calc '12*(6.1/2)/(pi*1150)'  ;#= 0.01 hours = 36 sec/Npointings
+calc '12*(6.1/2)/(pi*1150)'  ;# = 0.01 hours = 36 sec/Npointings
 # Nyquist sample rate for each pointing. Using max baseline 250m.
-calc '12*(10.4/2)/(pi*250)'  ;#= 0.08 hours or 0.01 hours for 7 pointings.
+calc '12*(10.4/2)/(pi*250)'  ;# = 0.08 hours or 0.01 hours for 7 pointings.
 
 
 goto start
