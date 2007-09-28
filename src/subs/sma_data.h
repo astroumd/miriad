@@ -625,6 +625,7 @@ struct smlodd {
                                            number of spectral chunks
                                            to be determined by the 
                                            program. */
+        int debug;
     };
 typedef struct smlodd smlodd;
 
