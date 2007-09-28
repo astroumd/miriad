@@ -121,7 +121,8 @@ c			24 24
 c       'doengrd'  to read the engineer file for Tsys and LST.
 c       'conjugat' to phase conjugate for lsb data.
 c                  Default: 
-c                  conjugate the phase of the lsb data observed before 2005-04-28;
+c                  conjugate the phase of the lsb data observed before 
+c                  2005-04-28;
 c                  no phase flip for the data observed after 2005-04-28.
 c       'noskip'   not to skip any data; the default is to skip
 c                  data with source name "target" and/or "unknown".
@@ -132,6 +133,10 @@ c                  For data taken after 2006-5-12, the default
 c                  will properly handle the hybrid high spectral 
 c                  resolution mode, allowing presence of empty 
 c                  spectral windows (chunks).
+c       'debug'    To print out the warning messages indicating
+c                  what have been fixed or skipped for the header
+c                  problems. ERRreport.log is created in reporting
+c                  the detailed errors. Default mutes these messages.
 c
 c       No extra processing options have been given yet. The default
 c       works.
@@ -312,12 +317,14 @@ c    jhz 06-jun-07 added a bug report message accoding to
 c                  the new limits set by SMA hardware.
 c    jhz 11-jun-07 fixed a bug in passing the values of nscans array.
 c    jhz 12-jun-07 obsoleted single corr config loading mode. 
+c    jhz 07-sep-07 added the 'debug' in options.
+c    jhz 27-sep-07 fixed initialization problem in sma_mirRead.c
 c------------------------------------------------------------------------
         include 'maxdim.h'
         integer maxfiles
         parameter(maxfiles=128)
         character version*(*)
-        parameter(version='SmaLod: version 2.7 12-June-07')
+        parameter(version='SmaLod: version 2.8 27-Sept-07')
 c
         character in(maxfiles)*64,out*64,line*64, rxc*4
         character msg*64
@@ -328,7 +335,8 @@ c
         logical doauto,docross,docomp,dosam,relax,unflag,dohann
         logical dobary,doif,birdie,dowt,dopmps,doxyp,doop
         logical polflag,hires,nopol,sing,circular,linear,oldpol,dsb,
-     *          dospc,doengrd,doconjug,dolsr,noskip,mcconfig,nohighspr
+     *          dospc,doengrd,doconjug,dolsr,noskip,mcconfig,nohighspr,
+     *          dodebug
         integer fileskip,fileproc,scanskip,scanproc,sb, dosporder
         integer doeng, spskip(2)
 	integer rsNCHAN, refant, readant, antid, lIn
@@ -389,7 +397,7 @@ c        call mkeyd('restfreq',rfreq,2,nfreq)
         call getopt(doauto,docross,docomp,dosam,doxyp,doop,relax,
      *    sing,unflag,dohann,birdie,dobary,doif,dowt,dopmps,polflag,
      *    hires,nopol,circular,linear,oldpol,dospc,doengrd,doconjug,
-     *    dolsr,noskip,mcconfig,nohighspr)
+     *    dolsr,noskip,mcconfig,nohighspr,dodebug)
             dosporder=-1
             if(dospc) dosporder=1
             doeng =-1
@@ -502,7 +510,7 @@ c
             call pokeini(tno,dosam,doxyp,doop,dohann,birdie,dowt,
      *      dopmps,dobary,doif,hires,nopol,circular,linear,oldpol,
      *      rsnchan,refant,dolsr,rfreq,vsour,antpos,readant,noskip,
-     *      spskip,dsb,mcconfig,nohighspr)
+     *      spskip,dsb,mcconfig,nohighspr,dodebug)
             if(nfiles.eq.1)then
               i = 1
             else
@@ -554,12 +562,12 @@ c************************************************************************
         subroutine getopt(doauto,docross,docomp,dosam,doxyp,doop,
      *    relax,sing,unflag,dohann,birdie,dobary,doif,dowt,dopmps,
      *    polflag,hires,nopol,circular,linear,oldpol,dospc,doengrd,
-     *    doconjug,dolsr,noskip,mcconfig,nohighspr)
+     *    doconjug,dolsr,noskip,mcconfig,nohighspr,dodebug)
 c
         logical doauto,docross,dosam,relax,unflag,dohann,dobary,doop
         logical docomp,doif,birdie,dowt,dopmps,doxyp,polflag,hires,sing
         logical nopol,circular,linear,oldpol,dospc,doengrd,doconjug
-        logical dolsr,noskip,mcconfig,nohighspr
+        logical dolsr,noskip,mcconfig,nohighspr,dodebug
 c
 c  Get the user options.
 c
@@ -592,9 +600,11 @@ c    dolsr      Compute LSR radial velocities.
 c    noskip     Do not skip any adta.
 c    mcconfig   do multiple correlator configurations.
 c    nohighspr  no high spectral resolution mode.
+c    debug      to print out the messages indicating what have been
+c               done to fix the header problems.
 c------------------------------------------------------------------------
         integer nopt
-        parameter(nopt=29)
+        parameter(nopt=30)
         character opts(nopt)*8
         logical present(nopt)
         data opts/'noauto  ','nocross ','compress','relax   ',
@@ -604,7 +614,7 @@ c------------------------------------------------------------------------
      *            'mmrelax ','single  ','nopol   ','circular',
      *            'linear  ','oldpol  ','dospc   ','doengrd ',
      *            'conjugat','lsr     ','noskip  ','mcconfig',
-     *            'nohspr  '/
+     *            'nohspr  ','debug   '/
         call options('options',opts,present,nopt)
         doauto  = .not.present(1)
         docross = .not.present(2)
@@ -638,6 +648,7 @@ c       mmrelax = present(17)
         noskip  = present(27)
         mcconfig= .not.present(28)
         nohighspr = present(29)
+        dodebug = present(30)
 c  oldpol obsoleted
         if(oldpol) 
      *  call bug('w', 'Hey, options=oldpol has been obsoleted!')
@@ -696,12 +707,12 @@ c************************************************************************
      *          doif1,hires1,nopol1,circular1,linear1,oldpol1,
      *	        rsnchan1,refant1,dolsr1,rfreq1,vsour1,antpos1,
      *          readant1,noskip1,spskip1,dsb1,mcconfig1,
-     *          nohighspr1)
+     *          nohighspr1,dodebug1)
 c
         integer tno1,rsnchan1,refant1,readant1,spskip1(2)
         logical dosam1,doxyp1,dohann1,doif1,dobary1,birdie1,dowt1
         logical dopmps1,hires1,doop1,nopol1,circular1,linear1,oldpol1
-        logical dolsr1,noskip1,dsb1,mcconfig1,nohighspr1
+        logical dolsr1,noskip1,dsb1,mcconfig1,nohighspr1,dodebug1
         double precision rfreq1,antpos1(10*3)
         real vsour1
 c
@@ -735,7 +746,7 @@ c
      *  dohann1,birdie1,dowt1,dopmps1,dobary1,doif1,hires1,
      *  nopol1,circular1,linear1,oldpol1,lat1,long1,evec1,rsnchan1,
      *  refant1,dolsr1,rfreq1,vsour1,antpos1,readant1,noskip1,
-     *  spskip1,dsb1,mcconfig1,nohighspr1)
+     *  spskip1,dsb1,mcconfig1,nohighspr1,dodebug1)
         end
 c************************************************************************
         subroutine liner(string)
