@@ -204,6 +204,15 @@
 //                  frequency header.
 // 2007-06-12 (JHZ) obsolete the single corr config loading mode.
 // 2007-06-15 (JHZ) added instruction message in case of corruped ending
+// 2007-09-07 (JHZ) added function to skip the corrupted-header integrations
+//                  in the beginning of a fill and added options debugs
+//                  for printing out the message indicating what have been
+//                  done by this program.
+// 2007-09-10 (JHZ) added function to create ERRreport.log file.
+// 2007-09-11 (JHZ) claimed static variable array for blid_intchng
+//                  to solve the initialization problem.
+// 2007-09-12 (JHZ) added initialization to spn->nch
+//                  short search set range by 1.
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -224,6 +233,9 @@
 // extern variable while read mir data 
 char pathname[36];
 char observer[16];
+char logfile[20];
+char logstr[80];
+static FILE *logout; 
 static FILE* fpin[7];
 int nsets[6];
 double jday; // julian day 
@@ -267,7 +279,7 @@ void rspokeinisma_c(char *kst[], int tno1,
     double lat1, double long1, double evec1, int rsnchan1, 
     int refant1, int *dolsr1, double rfreq1, float *vsour1, 
     double *antpos1, int readant1, int *noskip1, int *spskip1, 
-    int *dsb1, int*mcconfig1, int*nohighspr);
+    int *dsb1, int*mcconfig1, int*nohighspr, int*dodebug1);
 void rspokeflshsma_c(char *kst[]);
 
 
@@ -276,10 +288,10 @@ int rsgetdata(float smavis[2*7681],
     int p, int bl, int sb, int rx);
 struct pols *rscntstokes(int npol, int bl, int sb, int rx);
 int rsmir_Read(char *datapath, int jstat);
-struct inh_def *inh_read(FILE *fpinh);
-struct blh_def *blh_read(FILE *fpblh);
+struct inh_def inh_read(FILE *fpinh);
+struct blh_def blh_read(FILE *fpblh);
 unsigned long mfsize(FILE *fp);
-struct sph_def *sph_read(FILE *fpsph);
+struct sph_def sph_read(FILE *fpsph);
 struct codeh_def *cdh_read(FILE *fpcodeh);
 struct ant_def *enh_read(FILE *fpeng);
 struct sch_def *sch_head_read(FILE *fpsch);
@@ -377,7 +389,8 @@ void rspokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1,
                     double long1, double evec1, int rsnchan1, 
 		    int refant1, int *dolsr1, double rfreq1, float *vsour1,
 		    double *antpos1, int readant1, int *noskip1, int *spskip1,
-	            int *dsb1, int *mcconfig1, int *nohighspr1)
+	            int *dsb1, int *mcconfig1, int *nohighspr1,
+                    int *dodebug1)
 { 
   int buffer, i;
 // initialize the external buffers   
@@ -412,6 +425,15 @@ void rspokeinisma_c(char *kst[], int tno1, int *dosam1, int *doxyp1,
   smabuffer.mcconfig  = *mcconfig1;
   smabuffer.mcconfig  = 1;
   smabuffer.highrspectra = *nohighspr1;
+  smabuffer.debug = *dodebug1;
+  if(SMIF>25) bug_c('f',"SMIF>25 ....");
+        if(dodebug1>0) {
+//
+// create ACSII file for error reporting
+//
+            strncpy (logfile, "ERRreport.log", 13);
+            logout = fopen(logfile,"w");
+                       }
       fprintf(stderr,"User's input vSource = %f km/s\n", smabuffer.vsource);
       if(rfreq1 > 0.00001 || rfreq1 < -0.00001) {
              for (i=0; i<SMIF+1; i++)           {
@@ -462,7 +484,7 @@ void rspokeflshsma_c(char *kst[])
   rx = smabuffer.rxif;
   if(smabuffer.nused==0) 
     return;
-// put ants to uvdata 
+//  put ants to uvdata 
   if(smabuffer.nants!=0) {
     uvputvri_c(tno,"nants",&(smabuffer.nants),1);
 //  write telescope name and other description parameters 
@@ -640,7 +662,8 @@ void rspokeflshsma_c(char *kst[])
         }
 // reset the frequency processing handle
   smabuffer.newfreq=-1;
-// re-initialize the pntr 
+// re-initialize the pntr
+       if(SMIF>25) bug_c('f',"SMIF>25 ...."); 
   for (ifs=0; ifs<SMIF; ifs++) {
     for (p=0; p<SMPOL; p++)     {
       for (bl=0; bl<SMBAS; bl++) {
@@ -780,7 +803,7 @@ int rsmir_Read(char *datapath, int jstat)
   int avenchan,miriadsp[SMIF+1];
   int utcd,utch,utcm,doprt;
   float utcs;
-  int blid_intchng[MAXINT];  
+  static int blid_intchng[MAXINT];  
                // the baseline id right after integration change 
   int rxlod;   // the rx to load rxlod=0 -> smabuffer.rx1        
                //                rxlod=1 -> smabuffer.rx2        
@@ -935,9 +958,10 @@ int rsmir_Read(char *datapath, int jstat)
     
 // Read the headers 
     for (set=0;set<nsets[0];set++) {
-      *inh[set] = *(inh_read(fpin[0])); 
+//   *inh[set] = *(inh_read(fpin[0]));
+        *inh[set] = (inh_read(fpin[0])); 
       if (SWAP_ENDIAN) {
-	inh[set] =  swap_inh(inh[set]);
+	inh[set] = swap_inh(inh[set]);
                        } 
                                    }
     if (SWAP_ENDIAN) {
@@ -946,14 +970,14 @@ int rsmir_Read(char *datapath, int jstat)
       printf("FINISHED READING  IN HEADERS\n");
                             }
     for (set=0;set<nsets[1];set++) {
-      *blh[set] = *(blh_read(fpin[1]));
+      *blh[set] = (blh_read(fpin[1]));
       if (SWAP_ENDIAN) {
 	blh[set] =  swap_blh(blh[set]);
                        }
                                    }
 // count sidebands
     numberSidebands = 1;
-    for (set=0; set<nsets[1]; set++) {
+    for (set=0; set<nsets[1]-1; set++) {
       if( blh[set]->inhid == inh[smabuffer.scanskip]->inhid
 	  &&  blh[set]->isb != blh[set+1]->isb) {
 	numberSidebands = 2;
@@ -963,7 +987,7 @@ int rsmir_Read(char *datapath, int jstat)
     fprintf(stderr,"NUMBER OF SIDEBANDS =%d\n",numberSidebands);
 // count receivers
     smaCorr.no_rxif = 1;
-    for (set=0; set<nsets[1]; set++) {
+    for (set=0; set<nsets[1]-1; set++) {
       smabuffer.rx1=smabuffer.rx2=blh[set]->irec;
       if( blh[set]->inhid == inh[smabuffer.scanskip]->inhid
 	  &&  blh[set]->irec != blh[set+1]->irec) {
@@ -1054,7 +1078,7 @@ foundTheRx:
 	exit(-1);
                                     }
                                     }
-// allocate memory for wts once in the case of do both sb
+//  allocate memory for wts once in the case of do both sb
 //  if(smabuffer.dsb!=1||(smabuffer.dsb==1&&smabuffer.sb==0)){
     wts = (struct wtt **) malloc(nsets[0]*sizeof( struct wtt *));
     for (set=0;set<nsets[0];set++)  {
@@ -1115,23 +1139,28 @@ foundTheRx:
 // assign baseline id handr
 	if(blset==0) blhid_hdr = blset;
 	if(blh[blset]->inhid!=inh[set]->inhid) {
-	  set++;
-	  blhid_hdr = blset;  
+	set++;
+	blhid_hdr = blset;  
 	                                       }
 // check if set exceeds nsets[0]
-       if(set==nsets[0]) goto handling_blarray;        
+        if(set==nsets[0]) goto handling_blarray;        
 // select side band 
 	if(blh[blset]->inhid==inh[set]->inhid) {
-// get the baseline id for the first bl in the new integration
+// get the baseline id for the first bl after rx changes in the new integration
         if(blh[blset]->inhid>blh[0]->inhid){
         if(smaCorr.no_rxif==2&&blh[blset-1]->irec==smabuffer.rx1
-       &&blh[blset]->irec==smabuffer.rx2) {
+        &&blh[blset]->irec==smabuffer.rx2) {
         blid_intchng[set] = blh[blset]->blhid;
+//        sprintf(logstr,"blid_intchng=%d blh[blset]->blhid=%d set=%d blset=%d rx1=%d rx2=%d\n",
+//        blid_intchng[set],
+//        blh[blset]->blhid,
+//        set, blset, smabuffer.rx1, smabuffer.rx2);
+//fputs(logstr, logout);
                                           }}
 // choose rx
 	if(blh[blset]->irec==smabuffer.rxif||smabuffer.rxif==-1) {
 // for the first set of integration, take the 1st baseline
-	    if(set==0&&blh[blset]->isb==smabuffer.sb) {
+        if(set==0&&blh[blset]->isb==smabuffer.sb) {
 	      bln[set]->inhid = blh[blset]->inhid;
 	      bln[set]->blhid = blh[blset]->blhid;
 	      bln[set]->isb   = blh[blset]->isb;
@@ -1333,10 +1362,10 @@ handling_blarray:
                                         }
                                     }
                                             }
-    
-    
+//    
 // calculate the geocentric coordinates from local 
 // coordinates
+//
     {
       struct xyz geocxyz[MAXANT];
       for (i=1; i < smabuffer.nants+1; i++) {
@@ -1605,6 +1634,7 @@ double xyzpos;
       int blset;
       int inset;
       int nspectra;
+      int end_iband;
       nspectra=0;
       blset     =  0;
       sphid_hdr =  0;
@@ -1613,32 +1643,58 @@ double xyzpos;
       firstsp   = -1;
       lastsp    = -1;
       numberSpectra = 0;
+//
+// initialize spn->nch
+//
+         for (set=0; set<nsets[0]; set++) {
+         for (i=0; i< 25; i++) {
+         spn[set]->nch[i][0] =0;
+         spn[set]->nch[i][1] =0;
+                               }
+                                          }
 // define baseline id used in pursing the spectral
 // configuration. 
 // integration set = smabuffer.scanskip
 // blhset=1, the second baseline of the integration
       blhset=1;
       blhid = uvwbsln[smabuffer.scanskip]->uvwID[blhset].blhid;
+// spn starts from 0; rewind the file to the begining,
+// counting the number of spectra from the second baseline
       rewind(fpin[2]);
-// spn starts from 0
       inset = smabuffer.scanskip;
+      for (set=0; set<nsets[2]; set++) {
+         *sph1 = (sph_read(fpin[2]));
+      if (SWAP_ENDIAN) {
+         sph1 =  swap_sph(sph1);
+                        }
+      if(sph1->blhid==uvwbsln[smabuffer.scanskip]->uvwID[blhset].blhid) 
+         {numberSpectra++;
+          end_iband=sph1->iband;
+          }
+      if(sph1->blhid>uvwbsln[smabuffer.scanskip]->uvwID[blhset].blhid){
+      if(numberSpectra>0) 
+                 {
+           goto foundsphid_hdr;}
+            else {
+           //numberSpectra=25;
+           smabuffer.scanskip++;
+           inset = smabuffer.scanskip;
+                               }}
+                             }  
+foundsphid_hdr:
+      fprintf(stderr,"Actual numberSpectra=%d end_iband=%d\n", numberSpectra,end_iband);
+        if(numberSpectra >25) bug_c ('f', "numberSpectra >25 ....");
+// rewind sph file 
+       rewind(fpin[2]);
+// start from sphid_hdr=0 
       for (set=sphid_hdr;set<nsets[2]; set++) {
-	*sph1 = *(sph_read(fpin[2]));
+	*sph1 = (sph_read(fpin[2]));
 	if (SWAP_ENDIAN) {
 	  sph1 =  swap_sph(sph1);
                   	}
-	if(sph1->blhid==blhid)
-	  numberSpectra++;
-	if(sph1->blhid==blhid&&numberSpectra==0) {
-// assume 25 chunks per baseline
-	  numberSpectra=25;
-	  smabuffer.scanskip++;
-	  inset = smabuffer.scanskip;
-	                                          }
-// load baseline based tsys structure
+// load baseline-based tsys values to the tsys structure
 if(sph1->blhid==tsys[0]->blhid) nspectra++;
 if(sph1->blhid==tsys[blset]->blhid&&sph1->inhid==tsys[blset]->inhid) {
-            
  tsys[blset]->tssb[sph1->iband] = sph1->tssb;
 // loading online flagging information
 if(tsys[blset]->ipol < -4&&sph1->iband!=0) {
@@ -1655,51 +1711,78 @@ if(tsys[blset]->ipol < -4&&sph1->iband!=0) {
         wts[inset]->wt[sph1->iband-1][-tsys[blset]->ipol][tsys[blset]->blsid][tsys[blset]->isb][tsys[blset]->irec] = -1;
                        }
                   }
-    }   
-	if(smabuffer.highrspectra !=1){  
+    }  
+// end of tsys and wt loading
+//
+// increment of the baseline cursor based on spectral modes
+// 
+	if(smabuffer.highrspectra!=1){  
         if(sph1->iband==nspectra-1) blset++;
                                       } else {
-        if(sph1->iband==24) blset++;
+        if(sph1->iband==end_iband) blset++;
                                              }
 	                                                                      }
 // purse the spectral configuration
-// check up inhid to work on the same set of integration 
-	if(sph1->inhid>inh[inset]->inhid) inset++ ;
-// check up inhid and blhid to work on the same integration set
-//       and the baseline set with the sidebband and rx as
-//       is desired.
-	
-	if(sph1->inhid==inh[inset]->inhid&&sph1->blhid==bln[inset]->blhid){
+// check up inhid making sure to work on the same set of integration 
+// increment of the integration cursor
+//
+   if(sph1->inhid>inh[inset]->inhid) inset++ ;
+//
+// check up inhid and blhid assuring to work on the same integration set
+// and the baseline set with the sidebband and rx as
+// is desired.
+//	
+   if(sph1->inhid==inh[inset]->inhid&&sph1->blhid==bln[inset]->blhid){
 	  spn[inset]->sphid                = sph1->sphid;
 	  spn[inset]->inhid                = sph1->inhid;
 	  spn[inset]->iband[sph1->iband]   = sph1->iband;
-	  
+//	  
 // velocity with respect to the rest frame
 // given by the SMA on-line system. This is 
 // only meaningful to the line transition at the
-// rest frequency 
+// rest frequency
+// 
 	  spn[inset]->vel[sph1->iband]     = sph1->vel;
 	  spn[inset]->vres[sph1->iband]    = sph1->vres;
 	  spn[inset]->ivtype               = sph1->ivtype;
+//
 // sky frequency (which has been corrected for a part of the Doppler
 // velocity, the diurnal term and a part of the annual term) 
-	  spn[inset]->fsky[sph1->iband]    = sph1->fsky;
+//	 
+          spn[inset]->fsky[sph1->iband]    = sph1->fsky;
 	  spn[inset]->fres[sph1->iband]    = sph1->fres;
-   if(smaCorr.no_rxif!=2) spn[inset]->nch[sph1->iband][0]  = sph1->nch;
+//
+// single rx case, assign the channel number for each spectral chunk
+//
+      if(smaCorr.no_rxif!=2) spn[inset]->nch[sph1->iband][0] = sph1->nch;
+
 	  spn[inset]->dataoff              = sph1->dataoff;
 	  spn[inset]->rfreq[sph1->iband]   = sph1->rfreq;
 	  spn[inset]->isb                  = bln[inset]->isb;
 	  spn[inset]->irec                 = bln[inset]->irec;
 	  spn[inset]->souid                = inh[inset]->souid;
-	  if(sph1->iband==0) spn[inset]->basefreq = sph1->fsky;                
-	                                                               }
+//
+// assign the base frequency
+//
+      if(sph1->iband==0) spn[inset]->basefreq = sph1->fsky;
+            }
+//
+// assign the channel number in the case of 2 rx involved.
+//                
+// assuring to work on the same integration
       if(smaCorr.no_rxif==2&&sph1->inhid==inh[inset]->inhid) {
-      if(sph1->blhid==blid_intchng[inset])
+//
+// locate the baseline id where the rx2 starts
+      if(sph1->blhid==(blid_intchng[inset]))
         spn[inset]->nch[sph1->iband][1] = sph1->nch;    
-        
+//
+// locate the baseline id where the rx1 starts        
       if(sph1->blhid==(blid_intchng[inset]-1))
         spn[inset]->nch[sph1->iband][0] = sph1->nch; 
                                                              }
+//  sprintf(logstr,"inset=%d nchan=%d chunk=%d inhid=%d rx=%d sph1->blhid=%d blid_intchng[inset]=%d \n",inset, spn[inset]->nch[sph1->iband][0],
+//              sph1->iband, inset, rxlod,sph1->blhid,blid_intchng[inset]);
+//           fputs(logstr, logout);
           lastinset=inset;
 	if(inset==smabuffer.scanskip+smabuffer.scanproc) { 
 	  goto sphend; 
@@ -2137,7 +2220,7 @@ dat2003:
 // start the processing loop
     while(inhset<(nsets[0]-1)) {
 // progressing the integration set
-      
+  SkipOneIntegration:      
       inhset++;
       visSMAscan.blockID.ints = inh[inhset]->ints;
       visSMAscan.blockID.inhid = inh[inhset]->inhid;
@@ -2171,7 +2254,7 @@ dat2003:
       }
 //loading el az and tsys to smabuffer
       for (i=0; i<smabuffer.nants; i++) {
-//mir inh file gives the mean el and mane az
+//mir inh file gives the mean el and mean az
 	smabuffer.el[i] = inh[inhset]->el;
 	smabuffer.az[i] = inh[inhset]->az;
 	if (smabuffer.doeng!=1) {
@@ -2230,12 +2313,14 @@ smabuffer.veldop=(float)velrad(dolsr,time, raapp,decapp,raepo,decepo,lst,lat);
 smabuffer.veldop = (float)velrad(dolsr,time, raapp,decapp,raepo,decepo,lst,lat);
 	}
         }
+//
 // get vsource which is source radial velocity w.r.t the LSR
 // it is difficult to decode vsource from the MIR data
 // unless given enough information in the Doppler tracking
 // (sideband, chunk, and channel) from the users.  
 // smabuffer.vsource = spn[inhset]->vel[12];
 // checkup skipped sp chunks
+//
     for(i=1;i<SMIF+1;i++) {
         miriadsp[i]=0;
                       }
@@ -2334,13 +2419,33 @@ smabuffer.veldop = (float)velrad(dolsr,time, raapp,decapp,raepo,decepo,lst,lat);
 	smabuffer.edge[spcode[i]-1]=0;
 	smabuffer.nbin[spcode[i]-1]=1;
       numberChannels = numberChannels + spn[inhset]->nch[i][rxlod];
+//
+//sprintf(logstr,"nchan=%d chunk=%d inhid=%d rx=%d\n",spn[inhset]->nch[i][rxlod],
+//              i, inhset, rxlod);
+//fputs(logstr, logout);
+
       if(numberChannels>MAXCHAN+1) {
-  fprintf(stderr,"ERROR: Number of channels %d exceeded the limit %d. Try larger nscans[1].\n", numberChannels, MAXCHAN);
-          exit(-1); 
+      if(smabuffer.debug) {
+fprintf(stderr,"ERROR: Number of channels %d exceeded the limit %d. Try larger nscans[1].\n", numberChannels, MAXCHAN);
+fprintf(stderr,"Number of integration skipped %d\n", inhset);
+sprintf(logstr,"ERROR: Number of channels %d exceeded the limit %d.\n", numberChannels, MAXCHAN);
+fputs(logstr, logout);
+sprintf(logstr,"Number of integration skipped %d\n", inhset);
+fputs(logstr, logout);
+      }
+           goto SkipOneIntegration;
            }
       if(spn[inhset]->nch[i][rxlod] < 0) {
-  fprintf(stderr,"ERROR: Corrupted frequency header. Try larger nscans[1].\n");
-        exit(-1); 
+      if(smabuffer.debug) {
+fprintf(stderr,"ERROR: Corrupted frequency header. Try larger nscans[1]\n");
+fprintf(stderr,"Number of integration skipped %d\n", inhset);
+sprintf(logstr,"ERROR: Corrupted frequency header: nchan < 0 at chunk=%d inhid=%d rx=%d\n", 
+              i, inhset, rxlod);
+fputs(logstr, logout);
+sprintf(logstr,"Number of integration skipped %d\n", inhset);
+fputs(logstr, logout);
+                          }
+           goto SkipOneIntegration;
            }
 // if 2003 data skip the spcode examination
         if(smabuffer.spskip[0]!=-2003)  
@@ -2449,7 +2554,7 @@ smabuffer.w[blpnt] = uvwbsln[inhset]->uvwID[j].w/smabuffer.basefreq*1000.;
 	                  }
 	                                    }
     for (set=0; set< sphSizeBuffer; set++) {
-      *sph[set] = *(sph_read(fpin[2]));
+      *sph[set] = (sph_read(fpin[2]));
       if (SWAP_ENDIAN) {
        sph[set] =  swap_sph(sph[set]);
 	               }
@@ -2466,7 +2571,7 @@ smabuffer.w[blpnt] = uvwbsln[inhset]->uvwID[j].w/smabuffer.basefreq*1000.;
             numberChannels = numberChannels + sph[i]->nch;
             }
             if(numberChannels>MAXCHAN+1) {
-            fprintf(stderr,"ERROR: Number of channels %d exceeded the limit %d.\n", numberChannels, MAXCHAN);
+    fprintf(stderr,"ERROR: Number of channels %d exceeded the limit %d.\n", numberChannels, MAXCHAN);
             exit(-1);
                                          }
             numberChannels = 0;
@@ -2775,7 +2880,7 @@ printf("warning: each of the empty chunks is padded with one flagged channel.\n"
 
 
 /* This function reads the integration header */
-struct inh_def *inh_read(FILE * fpinh)
+struct inh_def inh_read(FILE * fpinh)
 {
   int nbytes;   /* counts number of bytes written */
   int nobj;     /* the number of objects written by each write */
@@ -2856,14 +2961,15 @@ struct inh_def *inh_read(FILE * fpinh)
   nbytes += sizeof(inh.sflux);
   nobj += fread(&inh.size,sizeof(inh.size),1,fpinh);
   nbytes += sizeof(inh.size);
-  inhptr = &inh;
-  return inhptr;
+//  inhptr = &inh;
+//  return inhptr;
+   return  inh;
   
 } /* end of function inh_read */
 
 
 /* This function reads one baseline header */
-struct blh_def *blh_read(FILE * fpblh)
+struct blh_def blh_read(FILE * fpblh)
 {
   int nbytes;   /* counts number of bytes written */
   int nobj;     /* the number of objects written by each write */
@@ -2946,8 +3052,9 @@ struct blh_def *blh_read(FILE * fpblh)
   nbytes += sizeof(blh.blu);
   nobj += fread(&blh.soid,sizeof(blh.soid),1,fpblh);
   nbytes += sizeof(blh.soid);
-  blhptr = &blh;
-  return blhptr;
+//  blhptr = &blh;
+//  return blhptr;
+    return  blh;
   
 } /* end of blh_read  */
 
@@ -2994,7 +3101,7 @@ unsigned long mfsize(FILE *fp)
 }
 
 
-struct sph_def *sph_read(FILE * fpsph)
+struct sph_def sph_read(FILE * fpsph)
 {
   int nbytes;   /* counts number of bytes written */
   int nobj;     /* the number of objects written by each write */
@@ -3066,8 +3173,9 @@ struct sph_def *sph_read(FILE * fpsph)
   nbytes += sizeof(sph.flcid);
   nobj += fread(&sph.atmid,sizeof(sph.atmid),1,fpsph);
   nbytes += sizeof(sph.atmid);
-  sphptr = &sph;
-  return sphptr;
+//  sphptr = &sph;
+//  return sphptr;
+    return sph;
   
 } /* end of sph_write */
 
