@@ -86,7 +86,7 @@ EXTRA_DIST = \
   uvgetbl.for uvgn.for uvsubs.for var.for varmint.for velocity.for \
   win.for wpfit.for zed.for zeebin.for \
   bugwrap.f2c iface.f2c keywrap.f2c mirwrap.f2c mm.f2c oscalls.f2c \
-  packwrap.f2c smawrap.f2c tcpio.f2c wrap.f2c xyziowrap.f2c \
+  packwrap.f2c smawrap.f2c tabiowrap.f2c tcpio.f2c wrap.f2c xyziowrap.f2c \
   boxes.h co.h ctrl.h fitsio.h hdtab.h hio.h intpio.h io.h \
   log.h mapper.h mc.h miriad.h model.h modp.h mostab.h \
   obspar.h ofm.h pb.h pcvt.h plproc.h rest.h select.h \
