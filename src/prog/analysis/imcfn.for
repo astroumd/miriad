@@ -103,6 +103,7 @@ c  History:
 c    nebk 13sep95 Original version
 c    rjs   2jul98 Increase ize of pbtype variable.
 c    rjs  08may00 Change incorrect call to keyf to keya.
+c    pjt  30sep07 ANSI fortran (DO loop must have integers) for gfortran/g95
 c------------------------------------------------------------------------
       implicit none
 c
@@ -112,7 +113,7 @@ c
       include 'mem.h'
       character version*(*) 
       integer maxpc, maxpts
-      parameter (version = 'ImCFN: version 1.0 2-Jul-98', maxpc = 6,
+      parameter (version = 'ImCFN: version 1.0 30-sep-07', maxpc = 6,
      +           maxpts = 10000)
 cc
       real xx(maxpts), yy(maxpts), yy2(maxpts), ymin, ymax, xmin, xmax,
@@ -121,7 +122,7 @@ cc
 c
       double precision crpixi(maxnax), crpixo(maxnax), cdelti(maxnax), 
      +  smin, smax, sb, a, b, c(maxpc), sum, s1, s2, s3, ds, n0(2), 
-     +  sold, s, nn, n, dlogs, ss, sJy
+     +  sold, s, nn, n, dlogs, sJy
       integer naxisi, sizei(maxnax), sizeo(maxnax), li, lo, ipi, ipo, 
      +  ip, i, j, nc
       character in*132, out*132, str*1, itoaf*1, device*80, line*80,
@@ -171,7 +172,8 @@ c
       sold = s1
       i = 1
 c
-      do s = s1+dlogs, s2, dlogs
+      s = s1+dlogs
+      do while (s .le. s2)
         sjy = 10**s
 c
         if (s.le.s3) then
@@ -213,6 +215,8 @@ c
 c
         i = i + 1
         sold = sjy
+
+        s = s + dlogs
       end do
 c
       write (line,10) sum
