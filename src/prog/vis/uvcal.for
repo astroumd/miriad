@@ -107,11 +107,11 @@ c@ nave
 c	Number of channels to average in options=passband. Default=1.
 c
 c@ sigma
-c	Rms noise level used to flag data in options=contsub. All channels
-c	are flagged if the rms noise level per channel is greater than sigma
-c	after subtracting the continuum. Endchan and badchan are not included
-c	in computing the rms. The default is sigma=0. which does not flag
-c	any data.
+c	Rms noise level used to flag data in options=contsub and options=slope.
+c	All channels are flagged if the rms noise level per channel is greater
+c	than sigma after subtracting the continuum or slope.
+c	Endchan and badchan are not included in computing the rms.
+c	The default is sigma=0. which does not flag	any data.
 c
 c@ scale
 c	Multiply the data and wideband by cmplx(scale1,scale2). Two values.
@@ -130,6 +130,20 @@ c	for a radial power law:
 c		model = flux * (uvdist/scale) ** index
 c	The model visibility is subtracted from the uv-data.
 c	Default model=0,0,0. i.e. no model is subtracted.
+c
+c@ onsource
+c	Set the uvvariable "on" for each baseline to be true if both ant1
+c	and ant2 have abs(dazim).LE.delta_az .AND. abs(delev).LE.delta_el, 
+c	else set the uvvariable "on" = false.  The data are unchanged.
+c	Antenna delta_az and delta_el used to designate an "on source"
+c	observation. Two values given as dd:mm:ss, or as decimal degrees.
+c	This enables other MIRIAD tasks to analyze interferometer pointing
+c	or single dish data by designating "on" and "off" observations 
+c	which can be selected using select=on.
+c	Default onsource=0,0. Use non-zero values to process onsource.
+c	options=holo (see above) allows us to use the standard grid-invert
+c	imaging on planets, after we have done the calibration using 
+c	delta_az and delta_el to select the "on source" calibrations.
 c
 c@ polcal
 c	Subtract the source polarization from the uv-data. Two values
@@ -221,11 +235,12 @@ c    mchw 05mar06  options=slope: fit phase slope for each spectral window.
 c    mchw 07jan07  get lst from JulLst(time,longitude,lst) in subroutine pcenter.
 c    pjt   5feb07  fix array dimensioning in fxcal()
 c    mchw 14mar07  added option noisecal to copy conj of LSB into USB.
+c    mchw 01oct07  added keywork onsource to set uvvariable "on"
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	integer maxbad
 	character version*(*)
-	parameter(version='UVCAL: version 3.0 14MAR07')
+	parameter(version='UVCAL: version 3.0 01-OCT-2007')
 	parameter(maxbad=20)
 	real PI
 	parameter(PI=3.1415926)
@@ -243,12 +258,13 @@ c
      *       linecal,uvrot,doparang,dofxcal,doconjlsb
 	character out*64,type*1,uvflags*8
 	real mask(MAXCHAN),sigma
-	integer polcode,nants,ant1,ant2
+	integer polcode,nants,ant1,ant2,on
 	real parot,sinpa,cospa
 	real scale(2),polcal(2),model(3),offset(2)
 	complex coffset
 	double precision obsra,obsdec,dazim(MAXANT),delev(MAXANT)
 	double precision ra,dec,uu,vv,epoch,jepoch,theta,costh,sinth,jd
+	double precision delta_az,delta_el
 	real seeing, fwhms, uvsig, gauss
 c
 c  Externals.
@@ -263,6 +279,7 @@ c
 	call bug('i','25feb06 options=holo: pointing and holography')
 	call bug('i','05mar06 options=slope: phase slope and baseline')
 	call bug('i','14mar07 options=noisecal: copy conj LSB into USB')
+	call bug('i','01oct07 keyword onsource to set uvvariable on')
 c********1*********2*********3*********4*********5*********6*********7*c
 c
 	call keyini
@@ -303,11 +320,14 @@ c
 	call keyr('model',model(1),0.)
 	call keyr('model',model(2),0.)
 	call keyr('model',model(3),0.)
+	call keyt('onsource',delta_az,'dms',0.d0)
+	call keyt('onsource',delta_el,'dms',0.d0)
 	call keyr('polcal',polcal(1),0.)
 	call keyr('polcal',polcal(2),0.)
 	call keyi('polcode',polcode,0)
 	call keyr('parot',parot,0.)
 	call keyr('seeing',seeing,0.)
+	call keyr('sigma',sigma,0.)
 	call keyfin
 c
 c  Check user inputs.
@@ -488,16 +508,9 @@ c  Make Holographic data.
 c
 	      if(holo)then
 	        call uvgetvri(lIn,'nants',nants,1)
-c            print *, ' nants=',nants
 	        call uvgetvrd(lIn,'dazim',dazim,nants)
-c            print *, ' dazim=',(2.062648062d05*dazim(i),i=1,nants)
 	        call uvgetvrd(lIn,'delev',delev,nants)
-c            print *, ' delev=',(2.062648062d05*delev(i),i=1,nants)
-c
             call basant(preamble(5),ant1,ant2)
-c              print *, ant1,dazim(ant1),delev(ant1)
-c              print *, ant2,dazim(ant2),delev(ant2)
-c          print *, 'ant2,dazim,delev=',ant2,2.062648062d05*dazim(ant(2)
 c voltage pattern for ant2
             if(dazim(ant1).eq.0..and.delev(ant1).eq.0.) then
               preamble(1) = 2.062648062d05*dazim(ant2)
@@ -507,6 +520,29 @@ c voltage pattern for ant1
               preamble(1) = 2.062648062d05*dazim(ant1)
               preamble(2) = 2.062648062d05*delev(ant1)
 	        endif
+	      endif
+c
+c  onsource data.
+c
+	      if(delta_az.ne.0..and.delta_el.ne.0.)then
+	        call uvgetvri(lIn,'nants',nants,1)
+c            print *, ' nants=',nants
+	        call uvgetvrd(lIn,'dazim',dazim,nants)
+c            print *, ' dazim=',(2.062648062d05*dazim(i),i=1,nants)
+	        call uvgetvrd(lIn,'delev',delev,nants)
+c            print *, ' delev=',(2.062648062d05*delev(i),i=1,nants)
+            call basant(preamble(5),ant1,ant2)
+            if( abs(dazim(ant1)).le.delta_az
+     *   .and.  abs(delev(ant1)).le.delta_el
+     *   .and.  abs(dazim(ant2)).le.delta_az
+     *   .and.  abs(delev(ant2)).le.delta_el ) then
+c              print *, ant1,"-",ant2,dazim(ant1),delev(ant1),
+c     *            dazim(ant2),delev(ant2)
+              on = 1
+            else
+              on = 0
+	        endif
+            call uvputvri(lOut,'on',on,1)
 	      endif
 c
 c  Processing options
