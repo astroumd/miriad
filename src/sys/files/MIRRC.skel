@@ -26,9 +26,8 @@
 #                 linker to search first /usr/local/lib/X11 and then
 #                 /usr/tmp/lib/X11 to resolve external references.
 #  -------------------------------------------------------------
-#  The example shown below is for a sun4sol (solaris) installation.
-#  Modification for a convex or sun3 installation is
-#  straightforward.
+#  The example shown below is a skeleton file.
+#  The install.miriad script will patch this file and place it in $MIR
 #  -------------------------------------------------------------
 if ($?MIR == 0) then
   setenv MIR      "/mir_rootdir"
@@ -65,10 +64,8 @@ setenv MIRSUBS  $MIR/src/subs
 setenv MIRTEL   MIRTEL:unknown
 
 if ($auto) then
- setenv PGPLOT_FONT $MIR/build/share/pgplot-miriad-remix/grfont.dat
- setenv PGPLOT_DIR  $MIR/build/share/pgplot-miriad-remix/grfont.dat
+ source $MIRLIB/pgplot-miriad-remix/pgplot-config.csh
 else
-  setenv PGPLOT_FONT $MIRLIB/grfont.dat
   setenv PGPLOT_DIR  $MIRLIB
 endif
 

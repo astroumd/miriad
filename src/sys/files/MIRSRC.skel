@@ -27,9 +27,8 @@
 #                 linker to search first /usr/X11R6/lib and then
 #                 /usr/tmp/lib/X11 to resolve external references.
 #  -------------------------------------------------------------
-#  The example shown below is for a linux (solaris) installation.
-#  Modification for a convex or sun3 installation is
-#  straightforward.
+#  The example shown below is a skeleton file.
+#  The install.miriad script will patch this file and place it in $MIR
 #  -------------------------------------------------------------
 if test -z "$MIR"; then
   export MIR="/mir_rootdir"
@@ -39,11 +38,13 @@ export MIRXINC="/usr/openwin/include"
 export MIRXLIB="/usr/local/lib/X11"
 export AIPSTV="XASIN"
 if test -d $MIR/build; then
-  export MIRBIN=$MIR/bin/$MIRHOST
-  export MIRLIB=$MIR/lib/$MIRHOST
+  export MIRBIN=$MIR/build/bin
+  export MIRLIB=$MIR/build/lib
+  source $MIRLIB/pgplot-miriad-remix/pgplot-config.sh
 else
   export MIRBIN=$MIR/bin/$MIRHOST
   export MIRLIB=$MIR/lib/$MIRHOST
+  export PGPLOT_DIR=$MIRLIB
 fi
 export MIRCAT=$MIR/cat
 export MIRDEF=.
@@ -56,7 +57,7 @@ export MIRSRC=$MIR/src
 export MIRSUBS=$MIR/src/subs
 export MIRTEL=MIRTEL:unknown
 
-export PGPLOT_FONT=$MIRLIB/grfont.dat
+
 
 echo old: $PATH
 
