@@ -28,7 +28,8 @@ void scropen_c(int *handle)
 
   This opens a scratch file, and readies it for use.
   Scratch files will be removed when they are closed, multiple scratch
-  files are allowed, and they always live in the current directory.
+  files are allowed, and they always live in the current directory, unless
+  the $TMPDIR environment variable points to another directory.
 
   Output:
     tno		The handle of the scratch file.				*/

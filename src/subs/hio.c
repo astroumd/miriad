@@ -557,6 +557,7 @@ void haccess_c(int tno,int *ihandle,Const char *keyword,Const char *status,int *
     tno		The handle of the data set.
     keyword	The name of the item.
     status	This can be 'read', 'write', 'append' or 'scratch'.
+                'scratch' files are using $TMPDIR, if present, else current.
   Output:
     itno	The handle of the opened item. Note that item handles are
 		quite distinct from data-set handles.

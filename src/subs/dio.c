@@ -146,6 +146,7 @@ void dopen_c(int *fd,char *name,char *status,off_t *size,int *iostat)
   Input:
     name	Name of file to create (in host format).
     status	Either "read", "write", "append" or "scratch".
+                "scratch" files are using $TMPDIR, if present, else current.
 
   Output:
     fd		File descriptor.
