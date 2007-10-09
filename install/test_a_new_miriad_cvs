@@ -2,12 +2,21 @@
 #
 #   Example of a script that assembles miriad from scratch and compiles
 #   could be part of a nightly script.
+#   Note this script gets miriad, with wip and rad as well.
+#
+#   Examples of use:
+#
+#   ./test_a_new_miriad_cvs                            install old-style
+#   ./test_a_new_miriad_cvs auto=1 reuse=1             install new-style inside old
+#   ./test_a_new_miriad_cvs auto=1                     install new-style
 #
 #   dark-ages    -- written                      Peter Teuben
 #   23-nov-05    added to CVS                    PJT
 #   14-sep-06    added compile.generic support, can also re-compile current tree	PJT
 #   23-jun-07    autotools based option to install                                      PJT
+#    8-oct-07    fixed minor VERSION reporing bug
 #
+#  
 #----
 
 
@@ -74,8 +83,10 @@ if ($reuse == 0) then
   rm -rf $rootdir
   echo "...done".
   if (1) then
+    echo "getting miriad,wip and rad via cvs....".
     (cvs -Q co $branch -d $rootdir miriad; cd $rootdir/borrow; cvs -Q co wip; cvs -Q co rad)
   else
+    echo "getting miriad only cvs....".
     (cvs -Q co $branch -d $rootdir miriad)
   endif
 else
@@ -98,13 +109,13 @@ if ($auto) then
  make
  make install
 else
- cd $rootdir/install
- time ./install.miriad $opts generic=$generic
+ cd $rootdir
+ time install/install.miriad $opts generic=$generic
 endif
 
 #    patch the VERSION
-set version=(`cat $rootdir/VERSION`)
-echo "$version - [automated build `date`]" > $rootdir/VERSION
+set version=(`cat VERSION`)
+echo "$version - [automated build `date`]" > VERSION
 
 
 
