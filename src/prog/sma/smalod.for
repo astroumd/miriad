@@ -319,12 +319,14 @@ c    jhz 11-jun-07 fixed a bug in passing the values of nscans array.
 c    jhz 12-jun-07 obsoleted single corr config loading mode. 
 c    jhz 07-sep-07 added the 'debug' in options.
 c    jhz 27-sep-07 fixed initialization problem in sma_mirRead.c
+c    jhz 30-oct-07 added a checkup routine to assure that the
+c                  reference chunk is not empty.
 c------------------------------------------------------------------------
         include 'maxdim.h'
         integer maxfiles
         parameter(maxfiles=128)
         character version*(*)
-        parameter(version='SmaLod: version 2.8 27-Sept-07')
+        parameter(version='SmaLod: version 2.8 30-Oct-07')
 c
         character in(maxfiles)*64,out*64,line*64, rxc*4
         character msg*64
