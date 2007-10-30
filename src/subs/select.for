@@ -38,6 +38,7 @@ c    rjs  28jul00 Correct bug introduced in the above.
 c    rjs  27oct00 Handle change in baseline numbering convention.
 c    rjs  16aug04 Handle elevation and HA selection.
 c    pjt  17may07 Handle purpose selection
+c    pjt  30oct08 Integrated ATCA's seeing selection (mhw/pjt)
 c
 c  Routines are:
 c    subroutine SelInput(key,sels,maxsels)
@@ -71,9 +72,9 @@ c			limits. Both limits must be given.
 c    ddec(p1,p2)	Data with "ddec" parameter (in arcsec) between two
 c			limits. Both limits must be given.
 c    dazim(p1,p2)	Data with "dazim" parameter (in arcsec) between two
-c			limits. Both limits must be given.
+c			limits. Both limits must be given. [CARMA]
 c    delev(p1,p2)	Data with "delev" parameter (in arcsec) between two
-c			limits. Both limits must be given.
+c			limits. Both limits must be given. [CARMA]
 c    increment(n)	Every nth visibility is selected.
 c    on(n)		Those records when the appropriate value of "on"
 c    polarization(x)	Select records of a particular polarisation,
@@ -91,7 +92,8 @@ c    bin(lo,hi)		Select pulsar bin
 c    ha(hstart,hend)    Select on hour angle (values in decimal hours or hh:mm:ss)
 c    lst(lst1,lst2)     Select on LST (value as above).
 c    elevation(el1,el2) Select on elevation (angles in degrees).
-c    purpose(type(s))   Select on purpose uv variable string BFGPSO
+c    purpose(type(s))   Select on purpose uv variable string BFGPSO [CARMA]
+c    seeing(r1,r2)      Select on seeing monitor rms path lenght (in microns) [ATCA/CARMA]
 c
 c  The input command would look something like:
 c    select=time(t1,t2),uv(uv1,uv2),...
@@ -136,8 +138,8 @@ c		  'uvnrange'		Nanoseconds.
 c		  'visibility'		Visibility number (1 relative).
 c		  'dra'			Radians.
 c		  'ddec'		Radians.
-c		  'dazim'		Radians.
-c		  'delev'		Radians.
+c		  'dazim'		Radians. [CARMA]
+c		  'delev'		Radians. [CARMA]
 c		  'pointing'		Arcseconds.
 c		  'amplitude'		Same as correlation data.
 c		  'window'		Window Number.
@@ -152,7 +154,8 @@ c		  'bin'			Select on bin number.
 c		  'ha'			Select on hour angle.
 c		  'lst'			Select on LST.
 c		  'elevation'		Select on elevation.
-c                 'purpose'             Select on purpose
+c                 'purpose'             Select on purpose [CARMA]
+c                 'seeing'              Select on seeing (micrometers) [ATCA/CARMA]
 c		Note that this does not support all objects to uvselect.
 c		The object name may have a suffix of '?' (e.g. 'window?')
 c		in which case the "value" argument is ignored, and SelProbe
@@ -386,7 +389,8 @@ c
      *		seltype.eq.DRA.or.seltype.eq.DDEC.or.
      *		seltype.eq.DAZIM.or.seltype.eq.DELEV.or.
      *		seltype.eq.SHADOW.or.seltype.eq.FREQ.or.
-     *		seltype.eq.ELEV.or.seltype.eq.HA)then
+     *		seltype.eq.ELEV.or.seltype.eq.HA.or.
+     *          seltype.eq.SEEING)then
 	    call SelDcde(spec,k1,k2,vals,n,2,'real')
 c
 c  Expand to two parameters, using some default mechanism.
