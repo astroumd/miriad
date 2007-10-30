@@ -54,6 +54,7 @@ c		  for phases of a point source.
 c    rjs   9mar95 Turn off geometry correction for "imhead" option.
 c    mhw  05jan96 Add zero option for Model and ModMap
 c    pjt  27may99 Return and bug out when no visibities accumulated
+c    pjt   3oct07 Report fluxes found if no planets
 c************************************************************************
 c*ModelIni -- Ready the uv data file for processing by the Model routine.
 c&rjs
@@ -1206,7 +1207,7 @@ c------------------------------------------------------------------------
 c
 c  Externals.
 c
-	integer binsrcha
+	integer binsrcha,len1
 	real ModPlant
 c
 c  Get the current source name, and check if we already have information
@@ -1249,6 +1250,12 @@ c
 	      write(line,'(a,f8.3,a)') 'Setting flux to ',level,' Jy'
 	      call output(line)
 	      flux = level
+            else
+	       write(line,'(a,a,a,f10.2,a,f7.2,a,f7.2)') 'CalGet: ',
+     *               source1(1:len1(source1)),
+     *               ' Jday= ',day,
+     *               ' Freq=',freq,' Flux=',flux
+	       call output(line)
 	    endif
 	  endif
 c
