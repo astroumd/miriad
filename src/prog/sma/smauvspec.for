@@ -214,6 +214,8 @@ c    jhz 06feb07  implemented lag plot
 c    jhz 06feb07  added xrange
 c    pjt 20feb07  use a private name for fft842x (intel mac linker complains otherwise)
 c    jhz 15mar07  added keyword dotsize
+c    jhz 30oct07  added a bug report in case that the velocity
+c                 information in the data is screwed up.
 c  Bugs:
 c------------------------------------------------------------------------
         include 'maxdim.h'
@@ -227,7 +229,7 @@ c
         character mname*8000, moln*16
         integer mtag(maxmline), nmline, j, jp, js, je, iline
         character version*(*)
-        parameter(version='SmaUvSpec: version 1.16 15-mar-07')
+        parameter(version='SmaUvSpec: version 1.17 30-oct-07')
         character uvflags*8,device*64,xaxis*12,yaxis*12,logf*64
         character xtitle*64,ytitle*64, veldef*8
         character xtitlebuf*64
@@ -581,6 +583,10 @@ c
            call velsys(tin,vel,'radio')
            xtitle = 'Velocity('//vel(1:len1(vel))//') (km/s)'
            call uvinfo(tin,'velocity',x)
+           do i=1,nchan
+           if(abs(int(x(i))).ge.2**30) 
+     *     call bug('f','Velocity information is screwed up.')
+           end do 
         else if(xaxis.eq.'felocity')then
            call velsys(tin,vel,'optical')
            xtitle = 'Velocity('//vel(1:len1(vel))//') (km/s)'
