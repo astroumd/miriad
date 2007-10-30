@@ -213,6 +213,8 @@
 //                  to solve the initialization problem.
 // 2007-09-12 (JHZ) added initialization to spn->nch
 //                  short search set range by 1.
+// 2007-10-30 (JHZ) added a checkup to assure that the reference
+//                  chunk for calculating doppler velocity is not empty. 
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -778,7 +780,7 @@ int rsmir_Read(char *datapath, int jstat)
 
   double antpos[3*MAXANT+1];
   int tno, ipnt, max_sourid;
-  int kstat;
+  int kstat, dopvelRefChunk=12;
   char *kst[4];
   char target[6];
   char unknown[7];
@@ -1955,14 +1957,21 @@ dat2003:
      } else {
       double vabsolute;
       double fratio;
+//  assure the reference channel for doppler velocity calculation
+//  does not correspond to the empty chunk.
       for(set= smabuffer.scanskip; 
 	  set < smabuffer.scanskip+smabuffer.scanproc+1; set++){
+        if(spn[set]->nch[dopvelRefChunk][rxlod]==0) {
+          for (i=1;i<SMIF;i++) {
+             if(spn[set]->nch[i][rxlod]!=0) dopvelRefChunk = i;
+                    }
+                        }  
 // calculate doppler velocity from chunk 1; 
 // the rest chunk give the same value.
 // absolute velocity is based on form (2-229)
 // Astrophysical Formulae by K. R. Lang (Springer-Verlag 1974)
 // p194 
-	fratio = (spn[set]->fsky[12]/spn[set]->rfreq[12]);
+	fratio = (spn[set]->fsky[dopvelRefChunk]/spn[set]->rfreq[dopvelRefChunk]);
 	vabsolute = (1. - fratio*fratio ) / (1. + fratio*fratio );
 	vabsolute = vabsolute*DCMKS/1000.;
 // Derive the Doppler velocity from observer to the LSR
@@ -2015,12 +2024,12 @@ dat2003:
 // is the sky frequency corrected for the radial velocity of the planet
 // at the moment when the dopplerTrack command is issued.
 //   
-        spn[set]->veldop = vabsolute - spn[set]->vel[12];
+        spn[set]->veldop = vabsolute - spn[set]->vel[dopvelRefChunk];
 //
 // add back the radial velocity of the source
 //
         spn[set]->veldop = spn[set]->veldop + smabuffer.vsource;
-        spn[set]->smaveldop = vabsolute - spn[set]->vel[12]+ 
+        spn[set]->smaveldop = vabsolute - spn[set]->vel[dopvelRefChunk]+ 
                  smabuffer.vsource;
       }
     fprintf(stderr,"Decoded the Doppler velocity\n");
