@@ -49,7 +49,7 @@ nodist_libmir_la_SOURCES = \
   sma_fsubs.f sort.f sortidx.f spaxsw.f spline.f strf.f \
   string.f tabflux.f tangle.f tin.f title.f trans.f trnio.f \
   tv.f tvsubs.f txtio.f utilities.f uvdat.f uvfitsubs.f \
-  uvgetbl.f uvgn.f uvsubs.f var.f varmint.f velocity.f \
+  uvgetbl.f uvgn.f uvsubs.f var.f varmint.f velocity.f versan.f \
   win.f wpfit.f zed.f zeebin.f \
   bugwrap.c iface.c keywrap.c mirwrap.c mm.c oscalls.c \
   packwrap.c smawrap.c tabiowrap.c tcpio.c wrap.c xyziowrap.c
@@ -83,7 +83,7 @@ EXTRA_DIST = \
   sma_fsubs.for sort.for sortidx.for spaxsw.for spline.for strf.for \
   string.for tabflux.for tangle.for tin.for title.for trans.for trnio.for \
   tv.for tvsubs.for txtio.for utilities.for uvdat.for uvfitsubs.for \
-  uvgetbl.for uvgn.for uvsubs.for var.for varmint.for velocity.for \
+  uvgetbl.for uvgn.for uvsubs.for var.for varmint.for velocity.for versan.for \
   win.for wpfit.for zed.for zeebin.for \
   bugwrap.f2c iface.f2c keywrap.f2c mirwrap.f2c mm.f2c oscalls.f2c \
   packwrap.f2c smawrap.f2c tabiowrap.f2c tcpio.f2c wrap.f2c xyziowrap.f2c \
