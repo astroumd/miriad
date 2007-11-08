@@ -23,12 +23,10 @@ start:
 
 # check inputs
   if($#argv<3) then
-    echo " Usage:  $0 array declination "
-    echo "   e.g.  $0 config1 30"
-    echo " Inputs :"
-    echo "   array"
-    echo "          Antenna array used by uvgen task."
-    echo "            e.g. config1 . No default."
+    echo " Usage: $0  config  declination  harange  nchan"
+    echo "   config"
+    echo "          Antenna configuration. "
+    echo "            e.g. config1.ant. Omit the .ant. No default."
     echo "   declination"
     echo "          Source declination in degrees. No default."
     echo "   harange"
