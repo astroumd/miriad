@@ -476,7 +476,7 @@ TODO:explain difference between puthd and uvputhd
 \subsection{Line Length Correction}
 
 Phase corrections from the line length system are stored in the Miriad uv variables {\tt phasem1},
-which is an antenna based variable.
+which is an antenna based variable.\index{phasem1}\index{linelength correction}
 
 The linelength system monitors changes in the delays through the
 optical fibers to the antennas.  The delays vary as the fibers

@@ -160,7 +160,7 @@ antel(nants)    \>D    \>deg.
 \> elevation of antennas\\
 
 antpos(nants, 3) \>D    \>nanosec
-\>Antenna equatorial coordinates, in a local, not greenwhich based, system \\
+\>Antenna equatorial coordinates, with X along the local meridian (not Greenwich) \\
 
 atten(nants)   \>I     \>dB
 \> Attenuator setting (Hat Ck/CARMA) datatype R ???\\
@@ -527,7 +527,7 @@ project(*)	\>A	\>-
 purpose(*)	\>A	\>-
 \>Scientific intent or purpose\\
 \>\>\>\  For CARMA: B=bandpass, F=flux, G=gain (phase/amp) \\
-\>\>\>\  P=polarization, S=science target, O=other\\
+\>\>\>\  P=polarization, R=radio pointing, S=science target, O=other\\
 
 
 ra		\>R or	\>radians
@@ -552,8 +552,8 @@ restfreq(nspect) \>D	\>GHz
 \>  Rest frequency for each spectral window.\\
 \>\>\>  This may be zero for continuum observations.\\
 
-rmspath		\>R     \>\%
-\>RMS path variation (Hat Ck/CARMA)\\
+rmspath		\>R     \>microns
+\>RMS path variation (CARMA, for HatCrk units were \%)\\
 
 sctype	\>A	\>-
 \> Scan type (ATCA?)\\

@@ -68,7 +68,7 @@ The {\tt mirhelp select} command also provides more details.
   pointing(p1,p2)               uses MAX(az,el) error
   pol(p1,p2,p3,...)
   source(NAME1,NAME2,...)
-  purpose(LIST[,option])        Select on purpose (BFGPSO).
+  purpose(LIST[,option])        Select on purpose (BFGPRSO). CARMA guarentees them to be alphabetical.
   freq(f1,f2)                   sky freq must be in range f1..f2 (GHz)
   amp(amplo,amphi)              one number means amp(amplo)
   shadow(d)

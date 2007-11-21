@@ -75,6 +75,7 @@ Miriad bugzilla (part of CARMA bugzilla) at {\tt http://www.mmarray.org/bugzilla
 \item 20-apr-2007:   first draft posted
 \item 1-may-2007:    clarify quality logs, fix a fluxcal example, language cleanup 
 \item 3-may-2007:    3.5.1 was left out accidentally, cleanup more lingo
+\item 28-may-2007:   added a section on linelength correction
 
 \end{itemize}
 
