@@ -47,6 +47,7 @@ c	Scale factor applied to the amplitudes before printing them.
 c	Default: 1
 c@ recnum   
 c	The number of output records. This is used to cut off long outputs.
+c       Use 0 if you want everything.
 c	The default is 1.
 c@ log
 c	The list output file name. The default is the terminal.
@@ -137,10 +138,11 @@ c   30jan06 pjt/sw - output in listdat/longdat now using 'time', not 'ut'
 c    8mar06 pjt  - added dazim/delev for ant1/2 in option=baseline (units: arcmin)
 c    4may06 sw   - added integration time to header
 c   17may07 mchw - cleaned up options=list and options=baseline.
+c   25nov07 pjt  - implement recnum=0
 c-----------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='UVLIST: version  17-May-07')
+	parameter(version='UVLIST: version  25-Nov-07')
 	real rtoh,rtod,pi
 	integer maxsels
 	parameter(pi=3.141592653589793,rtoh=12/pi,rtod=180/pi)
@@ -154,7 +156,7 @@ c
 	logical dohead,dodata,dospect,dohist,dobrief,dolist,dostat
 	logical eof,more,ltemp,doallan,doave,doflux,dobird,dobase
 	double precision ut,lst,visno
-	integer unit,numrec,numchan,num,time0,p,i
+	integer unit,recnum,numchan,num,time0,p,i
 	double precision uin,vin,win,timein,basein,preamble(5)
 	common/preamb/uin,vin,timein,basein
 c
@@ -173,7 +175,7 @@ c
      *              dobase)
 	call SelInput('select',sels,maxsels)
 	call keyline(linetype,numchan,start,width,step)
-	call keyi('recnum',numrec,1)
+	call keyi('recnum',recnum,1)
  	call keya('log',out,' ')
         call keyr('scale',scale,1.0)
 	call keyfin
@@ -226,7 +228,7 @@ c
      *	  dohist,dolist,dobrief,dostat,doallan,doave,doflux,dobird,
      *                  dobase,scale)
 	last = ' '
-	dowhile ( numchan.gt.0 .and. num.lt.numrec)
+	dowhile ( numchan.gt.0 .and. (num.lt.recnum .or. recnum.eq.0))
 	  num = num + 1
 c
 c  List the header, if required.
