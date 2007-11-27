@@ -215,6 +215,14 @@
 //                  short search set range by 1.
 // 2007-10-30 (JHZ) added a checkup to assure that the reference
 //                  chunk for calculating doppler velocity is not empty. 
+// 2007-11-14 (JHZ) added a feature to skip the problematic integration in
+//                  parsing the source parameter header.
+// 2007-11-27 (JHZ) reset the source id array from id=1 to higher number
+//                  and check the inhset is smaller than nsets[0]-1
+//                  in parsing the source information.
+// 2007-11-27 (JHZ) added a patch to fix the frequency labelling problem
+//                  in the old SMA data (before 2007-11-26) with the recipe
+//                  described in the SMA operation log # 14505
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -236,7 +244,7 @@
 char pathname[36];
 char observer[16];
 char logfile[20];
-char logstr[80];
+char logstr[88];
 static FILE *logout; 
 static FILE* fpin[7];
 int nsets[6];
@@ -777,7 +785,7 @@ int rsmir_Read(char *datapath, int jstat)
   short int scale;
   short int *shortdata;
   double r,cost,sint,z0,tmp, rar, decr;
-
+   double sfoff[SMIF+1];
   double antpos[3*MAXANT+1];
   int tno, ipnt, max_sourid;
   int kstat, dopvelRefChunk=12;
@@ -1572,10 +1580,77 @@ double xyzpos;
                                                  }
     multisour[sourceID].sour_id = cdh[set]->icode;
     inhset=0;
-	while (inh[inhset]->souid!=multisour[sourceID].sour_id)
-	inhset++;
-	multisour[sourceID].ra = inh[inhset]->rar;
+// looking for the 1st inhset corresponding to  sour_id 
+    while (inh[inhset]->souid!=multisour[sourceID].sour_id)
+	inhset++;   
+	multisour[sourceID].ra  = inh[inhset]->rar;
 	multisour[sourceID].dec = inh[inhset]->decr;
+// check source id and coordinates
+        if(strncmp(multisour[sourceID].name,target,6)!=0) { 
+        smabuffer.skipsrc=-1;
+        for (i=1; i<sourceID+1; i++) {
+        if(inh[inhset]->souid!=multisour[i].sour_id&&
+        (multisour[i].ra==inh[inhset]->rar&&
+         multisour[i].dec==inh[inhset]->decr)){
+sprintf(logstr,
+"Warning: %s has the source id (%d) different from that (%d) of %s \n", 
+multisour[sourceID].name,multisour[sourceID].sour_id,
+multisour[i].sour_id,multisour[i].name);
+fputs(logstr, logout);
+
+sprintf(logstr,
+"but their coordinates are the same:\n RA=%13s", 
+(char *)rar2c(multisour[sourceID].ra));
+fputs(logstr, logout);
+
+sprintf(logstr,"  Dec=%14s\n",
+(char *)decr2c(multisour[sourceID].dec));
+fputs(logstr, logout);
+//repeat the warning on screen:
+fprintf(stderr, "Warning: %s has the source id (%d) different from that (%d) of %s \n",
+multisour[sourceID].name,multisour[sourceID].sour_id,
+multisour[i].sour_id,multisour[i].name);
+fprintf(stderr,
+"but their coordinates are the same:\n RA=%13s",
+(char *)rar2c(multisour[sourceID].ra));
+fprintf(stderr,"  Dec=%12s\n", (char *)decr2c(multisour[sourceID].dec));
+        if(inhset< (nsets[0]-1)) { inhset++; smabuffer.skipsrc=1;} }
+                                   }
+        if(smabuffer.skipsrc==1)  {
+        while (inh[inhset]->souid!=multisour[sourceID].sour_id) 
+        inhset++;
+sprintf(logstr, "Warning: found the next integration for %s of id=%d at inhset=%d ",
+multisour[sourceID].name, inh[inhset]->souid, inhset);
+fputs(logstr, logout);
+
+        multisour[sourceID].ra  = inh[inhset]->rar;
+        multisour[sourceID].dec = inh[inhset]->decr;
+sprintf(logstr,
+"with coordinates:\n RA=%13s",
+(char *)rar2c(multisour[sourceID].ra));
+fputs(logstr, logout);
+
+sprintf(logstr,"  Dec=%14s\n",
+(char *)decr2c(multisour[sourceID].dec));
+fputs(logstr, logout);
+
+sprintf(logstr, "Update the coordinates for %s of id=%d\n",
+multisour[sourceID].name, inh[inhset]->souid);
+fputs(logstr, logout);
+//
+// repeat the warning message on the screen
+//
+fprintf(stderr, "Warning: found the next integration for %s of id=%d at inhset=%d ",
+multisour[sourceID].name, inh[inhset]->souid, inhset);
+fprintf(stderr,
+"with coordinates:\n RA=%13s",
+(char *)rar2c(multisour[sourceID].ra));
+fprintf(stderr," Dec=%14s\n",
+(char *)decr2c(multisour[sourceID].dec));
+fprintf(stderr, "Update the coordinates for %s of id=%d\n\n",
+multisour[sourceID].name, inh[inhset]->souid);
+                                   }   
+               } 
 	sprintf(multisour[sourceID].equinox, "%f", inh[inhset]->epoch);
 	multisour[sourceID].freqid =-1;
 	multisour[sourceID].inhid_1st=inh[inhset]->inhid;
@@ -2340,6 +2415,50 @@ smabuffer.veldop = (float)velrad(dolsr,time, raapp,decapp,raepo,decepo,lst,lat);
 // is empty, miriadsp[i]=0, otherwise miriadsp[i]=i. 
         miriadsp[i]= i;
           } }
+
+// 07-11-27 add a patch to fix the frequency labelling problem in the SMA
+// data before 07-11-26 (JDay 2454430.500000)
+// Mark has worked out a sequence of MIR commands which will
+// correct the labelling problem in old data sets:
+// select,/p,/re,band=['s01','s02','s05','s06','s09',
+//         's10','s13','s14','s17','s18','s21','s22']
+// sp[psf].fsky = sp[psf].fsky + 5.e-4*sp[psf].fres
+// sp[psf].vel = sp[psf].vel + 5.e-1*sp[psf].vres
+// select,/p,/re,band=['s03','s04','s07','s08','s11',
+//         's12','s15','s16','s19','s20','s23','s24']
+// sp[psf].fsky = sp[psf].fsky - 5.e-4*sp[psf].fres
+// sp[psf].vel = sp[psf].vel - 5.e-1*sp[psf].vres
+           if (jday < 2454430.500000 ) {
+              sfoff[1] =  0.5e-3*spn[inhset]->fres[1];
+              sfoff[2] =  0.5e-3*spn[inhset]->fres[2];
+              sfoff[5] =  0.5e-3*spn[inhset]->fres[5];
+              sfoff[6] =  0.5e-3*spn[inhset]->fres[6];
+              sfoff[9] =  0.5e-3*spn[inhset]->fres[9];
+             sfoff[10] =  0.5e-3*spn[inhset]->fres[10];
+             sfoff[13] =  0.5e-3*spn[inhset]->fres[13];
+             sfoff[14] =  0.5e-3*spn[inhset]->fres[14];
+             sfoff[17] =  0.5e-3*spn[inhset]->fres[17];
+             sfoff[18] =  0.5e-3*spn[inhset]->fres[18];
+             sfoff[21] =  0.5e-3*spn[inhset]->fres[21];
+             sfoff[22] =  0.5e-3*spn[inhset]->fres[22];
+              sfoff[3] = -0.5e-3*spn[inhset]->fres[3];
+              sfoff[4] = -0.5e-3*spn[inhset]->fres[4];
+              sfoff[7] = -0.5e-3*spn[inhset]->fres[7];
+              sfoff[8] = -0.5e-3*spn[inhset]->fres[8];
+             sfoff[11] = -0.5e-3*spn[inhset]->fres[11];
+             sfoff[12] = -0.5e-3*spn[inhset]->fres[12];
+             sfoff[15] = -0.5e-3*spn[inhset]->fres[15];
+             sfoff[16] = -0.5e-3*spn[inhset]->fres[16];
+             sfoff[19] = -0.5e-3*spn[inhset]->fres[19];
+             sfoff[20] = -0.5e-3*spn[inhset]->fres[20];
+             sfoff[23] = -0.5e-3*spn[inhset]->fres[23];
+             sfoff[24] = -0.5e-3*spn[inhset]->fres[24];
+               } else {
+
+                for(i=1;i<smaCorr.n_chunk+1; i++) {
+                 sfoff[i] = 0.0; 
+                      } }
+
 //
 // now handle the frequency configuration for
 // each of the integration sets
@@ -2349,6 +2468,8 @@ smabuffer.veldop = (float)velrad(dolsr,time, raapp,decapp,raepo,decepo,lst,lat);
 // the reference channel is the first channel in each chunk in miriad
 // the reference channel is the center (nch/2+0.5) in each chunk in MIR
 // conversion => nch/2+0.5 - 1 = nch-0.5
+
+
          if(smabuffer.spskip[0]!=-1) {
          if(smabuffer.doChunkOrder==1) {
 //
@@ -2362,11 +2483,11 @@ smabuffer.veldop = (float)velrad(dolsr,time, raapp,decapp,raepo,decepo,lst,lat);
 //
 	  smabuffer.sfreq[frcode[i]-1] = spn[inhset]->fsky[i]
       - spn[inhset]->fres[i]/1000.0*
-	    (spn[inhset]->nch[i][rxlod]/2-0.5);
+	    (spn[inhset]->nch[i][rxlod]/2-0.5) + sfoff[i];
    	                                } else {
 	  smabuffer.sfreq[spcode[i]-1] = spn[inhset]->fsky[i]
       - spn[inhset]->fres[i]/1000.0*
-	    (spn[inhset]->nch[i][rxlod]/2-0.5);
+	    (spn[inhset]->nch[i][rxlod]/2-0.5) + sfoff[i];
 	                                       }
 //
 // handle rest frequency
@@ -2400,11 +2521,11 @@ smabuffer.veldop = (float)velrad(dolsr,time, raapp,decapp,raepo,decepo,lst,lat);
 // reversing the chunk order
           smabuffer.sfreq[frcode[i]-1] = spn[inhset1st]->fsky[i]
             - spn[inhset1st]->fres[i]/1000.0*
-            (spn[inhset1st]->nch[i][rxlod]/2-0.5);
+            (spn[inhset1st]->nch[i][rxlod]/2-0.5) + sfoff[i];
         } else {
           smabuffer.sfreq[spcode[i]-1] = spn[inhset1st]->fsky[i]
             - spn[inhset1st]->fres[i]/1000.0*
-          (spn[inhset1st]->nch[i][rxlod]/2-0.5);
+          (spn[inhset1st]->nch[i][rxlod]/2-0.5) + sfoff[i];
         }
 // processing the rest frequency
         if(smabuffer.dorfreq==1)
@@ -3987,3 +4108,4 @@ if(smabuffer.linear==1)
 
      return iPolmiriad;
 }
+
