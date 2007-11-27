@@ -6,19 +6,24 @@ c
 c  Bugs:
 c
 c= uvdecor - apply decorrelation correction to visibility file
-c& mwr
+c& pjt
 c: uv analysis
 c+
 c  UVDECOR acts similarly to UVCAT but applies a correction factor 
 c  (>1) to the visibility amplitudes to account for the amplitude loss
 c  due to decorrelation.  The integration time is divided by the
 c  square of the correction factor to reflect the increased noise.
-c  The correction factor is derived from the BIMA phase monitor data,
-c  which is scaled to the appropriate frequency, baseline, and elevation
+c  The correction factor is normally derived from the CARMAphase monitor 
+c  data, which is scaled to the appropriate frequency, baseline, and elevation
 c  using a simple prescription for 3D Kolmogorov turbulence.  This task
 c  should be used with caution, as the correction is only valid over
 c  long (>10 min) averaging intervals, and the assumption of 3D
 c  turbulence is unlikely to apply on long (>100m) baselines.
+c
+c  Another optional correction factor should be derived, again with caution,
+c  for CARMA data preceding 26-aug-2007 where decorrelation was present
+c  down to about 8000 ns in the fiberlength difference between two
+c  antennas.
 c
 c@ vis
 c	The names of the input uv data sets. Multiple names can be given,
@@ -41,6 +46,12 @@ c@ stokes
 c	If a value is given, uvdecor converts the input into the required
 c	polarizations before writing to the output. Default is to copy
 c	across the polarizations present in the input files.
+c@ fiberdecor
+c       If used, this will be the fiber difference length (in nanosecs) at 
+c       which the decorrellation would have been 0. 
+c       If 0 is set, this option is not used.
+c       A good value for CARMA data prior to 26-nov-2007 is about 8000 (TBA).
+c       
 c@ options
 c	This gives extra processing options. Several options can be given,
 c	each separated by commas. They may be abbreivated to the minimum
@@ -62,10 +73,12 @@ c  History:
 c       26aug00  tw  added rmpmax keyword.
 c       18sep00  tw  added cormax keyword.
 c	21oct00  tw  initiliaze rmpold.
+c       27nov07  pjt added fiberdecor=, fixed bug updating wcorr's
+c                  
 c------------------------------------------------------------------------
         include 'maxdim.h'
 	character version*(*)
-	parameter(version='UvDecor: version 1.7 21-oct-00')
+	parameter(version='UvDecor: version 1.7 26-nov-07')
 c
 	integer nchan,vhand,lIn,lOut,i,j,nspect,nPol,Pol,SnPol,SPol
 	integer nschan(MAXWIN),ischan(MAXWIN),ioff,nwdata,length
@@ -82,10 +95,12 @@ c
 	real medcorfac,avgcorfac,sumcorfac,lambda,pi
 	real corfacarray(1000000)
 	real maxcorfac,rmpmax,minbadrmp,cormax
-	integer count,badrmp,baduvd,badfac
+	real fiber, fiberdecor
+	double precision cable(MAXANT)
+	integer count,badrmp,baduvd,badfac,nants,ant1,ant2
 	double precision draobs,ddecobs,dlst,u,v,uvdist,freq
 	real lat,dummy,elev,obsha
-	character out*64,type*1,uvflags*8,replace*8
+	character out*256,type*1,uvflags*8,replace*8
 c
 c  Externals.
 c
@@ -118,6 +133,9 @@ c
           call keya('rmpmax',replace,'zero')
         endif
 	call keyr('cormax',cormax,100.)
+	call keyr('fiberdecor',fiberdecor,0.0)
+	if (fiberdecor.gt.0) call bug('i',
+     *     'NEW EXPERIMENTAL OPTION: scale amp up based on fibers')
 	call keyfin
 c
 c  Check user inputs.
@@ -178,6 +196,11 @@ c
 c  Read in the data.
 c
 	  call uvDatRd(preamble,data,flags,maxchan,nchan)
+	  if (fiberdecor.gt.0) then
+	     call uvgetvri(lIn,'nants',nants,1)
+	     call uvgetvrd(lIn,'cable',cable,nants)
+	     call basant(preamble(4),ant1,ant2)
+	  endif
 c
 c  Case of end-of-file. Close the old file, and open the new.
 c
@@ -296,7 +319,16 @@ c The correction is just e**((rms**2)/2) where rms is in radians.
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 	      lambda = 300./freq
 	      pi = 3.14159
-	      corfac = exp(((2*pi*rmpscale/(1000.*lambda))**2.)/2.0)
+	      if (fiberdecor.gt.0.0) then
+		 fiber = ABS(cable(ant1)-cable(ant2))
+		 corfac = fiberdecor/(fiberdecor-fiber)
+		 if (fiber.gt.fiberdecor) then
+		    call bug('f','fiber too long for UVDECOR')
+		 endif
+	      else
+		 corfac = exp(((2*pi*rmpscale/(1000.*lambda))**2.)/2.0)
+	      endif
+
 c	 write (*,*)corfac,rmspath,dummy,elev,uvdist,ddecobs,obsha
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c Don't apply correction if corfac if too large.
@@ -312,11 +344,12 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 	      corfacarray(count)=corfac
 c	      type *,rmspath,corfac
 c             type *,rmspath,uvdist,corfac,freq(1)
-	      if(dowide.and.dochan)then
+
+	      if(dowide.or.dochan)then
 	        call uvDatWRd(wdata,wflags,maxchan,nwdata)
 		if (corfac .ge. 1.01)then
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-c Change the integration time to reflect the descreased sensitivty caused
+c Change the integration time to reflect the descreased sensitivity caused
 c by scaling up the amplitudes. Since we scale up the amplitudes by the
 c correction factor we have to decrease the integration time by the
 c square of the correction factor.
@@ -329,8 +362,10 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c Scale the wideband and channel amplitudes by the correction factor.
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 		   do k=1,nchan
-		      wdata(k)=wdata(k)*corfac
 		      data(k)=data(k)*corfac
+		   enddo
+		   do k=1,nwdata
+		      wdata(k)=wdata(k)*corfac
 		   enddo
 		endif
 	        call uvwwrite(lOut,wdata,wflags,nwdata)
@@ -347,14 +382,16 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c  Output warning messages if problems encountered
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-	if (baduvd.gt.0) then
-	   write(line,*) baduvd, 'records with uvdist > 200 m'
-	   call bug('w',line)
-	endif
-	if (badrmp.gt.0) then
-	   write(line,66) badrmp, rmpmax
- 66	   format(i6,' records had rmspath exceeding ',f6.0)
-	   call bug('w',line)
+	if (fiberdecor.eq.0) then
+	  if (baduvd.gt.0) then
+	    write(line,*) baduvd, ' records with uvdist > 200 m'
+	    call bug('w',line)
+	  endif
+	  if (badrmp.gt.0) then
+	    write(line,66) badrmp, rmpmax
+ 66	    format(i6,' records had rmspath exceeding ',f6.0)
+	    call bug('w',line)
+	  endif
 	endif
 	if (badfac.gt.0) then
 	   write(line,67) badfac, cormax
