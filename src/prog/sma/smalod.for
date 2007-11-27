@@ -321,12 +321,18 @@ c    jhz 07-sep-07 added the 'debug' in options.
 c    jhz 27-sep-07 fixed initialization problem in sma_mirRead.c
 c    jhz 08-nov-07 change the extension of the output file name
 c                  in the rx selection of a negative value.
+c    jhz 14-nov-07 added a feature to fix the source coordinate
+c                  problem in the MIR data
+c    jhz 27-nov-07 added a patch to fix the frequency labelling problem
+c                  in the old SMA data (before 2007-11-26) with the recipe
+c                  described in the SMA operation log # 14505
+
 c------------------------------------------------------------------------
         include 'maxdim.h'
         integer maxfiles
         parameter(maxfiles=128)
         character version*(*)
-        parameter(version='SmaLod: version 2.8 08-Nov-07')
+        parameter(version='SmaLod: version 2.10 27-Nov-07')
 c
         character in(maxfiles)*64,out*64,line*64, rxc*4
         character msg*64
