@@ -31,6 +31,7 @@
 //                requiring super high resolution by trading off the
 //                number of baselines: 060512_18:10:36 
 //                3*2048+16*128+5*1 = 8197
+// jhz 2007-11-14: add a integer skipsrc in the smlodd structure. 
 #include "miriad.h"
 
 
@@ -626,6 +627,7 @@ struct smlodd {
                                            to be determined by the 
                                            program. */
         int debug;
+        int skipsrc;
     };
 typedef struct smlodd smlodd;
 
