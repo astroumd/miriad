@@ -78,7 +78,7 @@ c
 c------------------------------------------------------------------------
         include 'maxdim.h'
 	character version*(*)
-	parameter(version='UvDecor: version 1.7 26-nov-07')
+	parameter(version='UvDecor: Version 27-nov-07')
 c
 	integer nchan,vhand,lIn,lOut,i,j,nspect,nPol,Pol,SnPol,SPol
 	integer nschan(MAXWIN),ischan(MAXWIN),ioff,nwdata,length
@@ -97,7 +97,7 @@ c
 	real maxcorfac,rmpmax,minbadrmp,cormax
 	real fiber, fiberdecor
 	double precision cable(MAXANT)
-	integer count,badrmp,baduvd,badfac,nants,ant1,ant2
+	integer count,badrmp,baduvd,badfac,nants,ant1,ant2,badfib
 	double precision draobs,ddecobs,dlst,u,v,uvdist,freq
 	real lat,dummy,elev,obsha
 	character out*256,type*1,uvflags*8,replace*8
@@ -163,6 +163,7 @@ c
 	PolVary = .false.
 	badrmp = 0
 	baduvd = 0
+	badfib = 0
 	badfac = 0
         rmpold = 0.
 	minbadrmp = 10000.
@@ -323,7 +324,8 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 		 fiber = ABS(cable(ant1)-cable(ant2))
 		 corfac = fiberdecor/(fiberdecor-fiber)
 		 if (fiber.gt.fiberdecor) then
-		    call bug('f','fiber too long for UVDECOR')
+		    corfac = 1.0
+		    badfib = badfib + 1
 		 endif
 	      else
 		 corfac = exp(((2*pi*rmpscale/(1000.*lambda))**2.)/2.0)
@@ -368,7 +370,9 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 		      wdata(k)=wdata(k)*corfac
 		   enddo
 		endif
-	        call uvwwrite(lOut,wdata,wflags,nwdata)
+		if (nwdata.gt.0) then
+		   call uvwwrite(lOut,wdata,wflags,nwdata)
+		endif
 	      endif
 	      call uvwrite(lOut,preamble,data(ioff),flags(ioff),nchan)
               if (corfac .ge. 1.01)then
@@ -393,7 +397,7 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 	    call bug('w',line)
 	  endif
 	endif
-	if (badfac.gt.0) then
+	if (badfac.gt.0  .and. fiberdecor.eq.0) then
 	   write(line,67) badfac, cormax
  67	   format(i6,' records had corfac exceeding ',f5.1)
 	   call bug('w',line)
@@ -401,6 +405,12 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
  68	   format('Min. rmspath that led to excessive corfac: ',f5.0)
 	   call bug('w',line)
 	endif
+	if (badfib.gt.0) then
+	   write(line,69) badfib, fiberdecor
+ 69	   format(i6,' records had fiber diff. length exceeding ',f9.1)
+	   call bug('w',line)
+	endif
+
 c
 c  Write out the "npol" parameter, if it did not vary.
 c
@@ -439,6 +449,13 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
      *     badrmp
 	call hiswrite(lOut,line)
 	call output(line)
+	write(line,'(a,i7)')
+     *    'UVDECOR: Number of records with bad fiberdiff values:' ,
+     *     badfib
+	call hiswrite(lOut,line)
+	call output(line)
+
+
         call hisclose (lOut)
 	call uvclose(lOut)
 
