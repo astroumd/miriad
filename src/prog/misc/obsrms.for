@@ -54,7 +54,6 @@ c  mchw 15aug96  Format change for smaller inttime.
 c  mchw 25sep96  Calculate deltav from bw if input; format 0.1" theta 
 c  mchw 25mar97  Change format and units for consistency and for VLBI.
 c  mchw 28sep07  Change format to handle low freq.
-c  pkgw 27nov07  Bugfix: was reading antdiam keyword for anteta.
 c
 c Possible development:
 c
@@ -76,7 +75,7 @@ c
 	call keyr('tsys',tsys,300.)
 	call keyr('jyperk',jyperk,150.)
 	call keyr('antdiam',antdiam,0.)
-	call keyr('anteta',anteta,0.6)
+	call keyr('antdiam',anteta,0.6)
 	call keyr('lambda',lambda,3.)
 	call keyr('freq',freq,0.)
 	call keyr('theta',theta(1),1.)
