@@ -16,7 +16,7 @@ c     The output contains the corrected sky frequency label and all other
 c     data from the input file.
 c
 c@ vis
-c	Root name of input visibility file. No default  
+c	Name of input visibility file. No default  
 c@ out
 c	Output file name. No default
 c
@@ -39,7 +39,7 @@ c
      *  sdf(maxspect)
       integer nschan(maxspect), ischan(maxspect)
       character version*(*)
-      parameter (version='SMAsfreq: Version 28-Nov-07')
+      parameter (version='SMAsfreq: Version 1.0 28-Nov-07')
       integer len1, nspecti, nspect, vupd, pol, npol
       logical uvVarUpd
 c-----------------------------------------------------------------------
