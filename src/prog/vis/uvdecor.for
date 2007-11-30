@@ -22,7 +22,7 @@ c  turbulence is unlikely to apply on long (>100m) baselines.
 c
 c  Another optional correction factor should be derived, again with caution,
 c  for CARMA data preceding 26-aug-2007 where decorrelation was present
-c  down to about 8000 ns in the fiberlength difference between two
+c  down to about 8000 ns in the delaylength difference between two
 c  antennas.
 c
 c@ vis
@@ -46,11 +46,11 @@ c@ stokes
 c	If a value is given, uvdecor converts the input into the required
 c	polarizations before writing to the output. Default is to copy
 c	across the polarizations present in the input files.
-c@ fiberdecor
-c       If used, this will be the fiber difference length (in nanosecs) at 
+c@ delaymax
+c       If used, this will be the delay difference length (in nanosecs) at 
 c       which the decorrellation would have been 0. 
 c       If 0 is set, this option is not used.
-c       A good value for CARMA data prior to 26-nov-2007 is about 8000 (TBA).
+c       A good value for CARMA data prior to 26-nov-2007 is about 8500 (TBA).
 c       
 c@ options
 c	This gives extra processing options. Several options can be given,
@@ -73,12 +73,12 @@ c  History:
 c       26aug00  tw  added rmpmax keyword.
 c       18sep00  tw  added cormax keyword.
 c	21oct00  tw  initiliaze rmpold.
-c       27nov07  pjt added fiberdecor=, fixed bug updating wcorr's
+c       30nov07  pjt added delaymaxdecor=, fixed old bugs updating wcorr's
 c                  
 c------------------------------------------------------------------------
         include 'maxdim.h'
 	character version*(*)
-	parameter(version='UvDecor: Version 27-nov-07')
+	parameter(version='UvDecor: Version 30-nov-07')
 c
 	integer nchan,vhand,lIn,lOut,i,j,nspect,nPol,Pol,SnPol,SPol
 	integer nschan(MAXWIN),ischan(MAXWIN),ioff,nwdata,length
@@ -95,9 +95,9 @@ c
 	real medcorfac,avgcorfac,sumcorfac,lambda,pi
 	real corfacarray(1000000)
 	real maxcorfac,rmpmax,minbadrmp,cormax
-	real fiber, fiberdecor
-	double precision cable(MAXANT)
-	integer count,badrmp,baduvd,badfac,nants,ant1,ant2,badfib
+	real delaymax,delayd
+	double precision delay(MAXANT)
+	integer count,badrmp,baduvd,badfac,nants,ant1,ant2,baddel
 	double precision draobs,ddecobs,dlst,u,v,uvdist,freq
 	real lat,dummy,elev,obsha
 	character out*256,type*1,uvflags*8,replace*8
@@ -133,9 +133,9 @@ c
           call keya('rmpmax',replace,'zero')
         endif
 	call keyr('cormax',cormax,100.)
-	call keyr('fiberdecor',fiberdecor,0.0)
-	if (fiberdecor.gt.0) call bug('i',
-     *     'NEW EXPERIMENTAL OPTION: scale amp up based on fibers')
+	call keyr('delaymax',delaymax,0.0)
+	if (delaymax.gt.0) call bug('i',
+     *     'NEW OPTION: scale amp up based on delay differences')
 	call keyfin
 c
 c  Check user inputs.
@@ -163,7 +163,7 @@ c
 	PolVary = .false.
 	badrmp = 0
 	baduvd = 0
-	badfib = 0
+	baddel = 0
 	badfac = 0
         rmpold = 0.
 	minbadrmp = 10000.
@@ -197,9 +197,9 @@ c
 c  Read in the data.
 c
 	  call uvDatRd(preamble,data,flags,maxchan,nchan)
-	  if (fiberdecor.gt.0) then
+	  if (delaymax.gt.0) then
 	     call uvgetvri(lIn,'nants',nants,1)
-	     call uvgetvrd(lIn,'cable',cable,nants)
+	     call uvgetvrd(lIn,'delay',delay,nants)
 	     call basant(preamble(4),ant1,ant2)
 	  endif
 c
@@ -320,13 +320,14 @@ c The correction is just e**((rms**2)/2) where rms is in radians.
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 	      lambda = 300./freq
 	      pi = 3.14159
-	      if (fiberdecor.gt.0.0) then
-		 fiber = ABS(cable(ant1)-cable(ant2))
-		 corfac = fiberdecor/(fiberdecor-fiber)
-		 if (fiber.gt.fiberdecor) then
+	      if (delaymax.gt.0.0) then
+		 delayd = ABS(delay(ant1)-delay(ant2))
+		 corfac = delaymax/(delaymax-delayd)
+		 if (delayd.gt.delaymax) then
 		    corfac = 1.0
-		    badfib = badfib + 1
+		    baddel = baddel + 1
 		 endif
+c		 write(*,*) ant1,ant2,delayd,corfac
 	      else
 		 corfac = exp(((2*pi*rmpscale/(1000.*lambda))**2.)/2.0)
 	      endif
@@ -386,7 +387,7 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c  Output warning messages if problems encountered
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-	if (fiberdecor.eq.0) then
+	if (delaymax.eq.0) then
 	  if (baduvd.gt.0) then
 	    write(line,*) baduvd, ' records with uvdist > 200 m'
 	    call bug('w',line)
@@ -397,7 +398,7 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 	    call bug('w',line)
 	  endif
 	endif
-	if (badfac.gt.0  .and. fiberdecor.eq.0) then
+	if (badfac.gt.0  .and. delaymax.eq.0) then
 	   write(line,67) badfac, cormax
  67	   format(i6,' records had corfac exceeding ',f5.1)
 	   call bug('w',line)
@@ -405,9 +406,9 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
  68	   format('Min. rmspath that led to excessive corfac: ',f5.0)
 	   call bug('w',line)
 	endif
-	if (badfib.gt.0) then
-	   write(line,69) badfib, fiberdecor
- 69	   format(i6,' records had fiber diff. length exceeding ',f9.1)
+	if (baddel.gt.0) then
+	   write(line,69) baddel, delaymax
+ 69	   format(i6,' records had delay diff. length exceeding ',f9.1)
 	   call bug('w',line)
 	endif
 
@@ -450,8 +451,8 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 	call hiswrite(lOut,line)
 	call output(line)
 	write(line,'(a,i7)')
-     *    'UVDECOR: Number of records with bad fiberdiff values:' ,
-     *     badfib
+     *    'UVDECOR: Number of records with bad delaydiff values:' ,
+     *     baddel
 	call hiswrite(lOut,line)
 	call output(line)
 
