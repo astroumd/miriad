@@ -65,6 +65,8 @@ c   10may02   rjs    Add model for OVRO.
 c   13oct03   rjs    Added Ravi's 12mm model.  
 c**
 c    4jan05   pjt    merged in the two RJS changes, wonderful this CVS....
+c   03dec07   mchw   Add BIMA and ATA.  
+c                    The old HATCREEK antennas are now the BIMA antennas at CARMA.
 c************************************************************************
 c* pbList -- List known primary beam types.
 c& rjs
@@ -729,6 +731,13 @@ c  The Hat Ck primary beam is a gaussian of size is 191.67 arcmin.GHz
 c  according to "John L"
 c
 	call pbAdd('HATCREEK',24.0,270.0,   191.67, 0.05, GAUS,0,0.,
+     *				   'Truncated Gaussian')
+c
+c	Add BIMA and ATA. The old HATCREEK antennas are now the BIMA antennas at CARMA.
+c
+	call pbAdd('BIMA',24.0,270.0,   191.67, 0.05, GAUS,0,0.,
+     *				   'Truncated Gaussian')
+	call pbAdd('ATA',0.5,12.0,   191.67, 0.05, GAUS,0,0.,
      *				   'Truncated Gaussian')
 c
 c  The following values for the WSRT are derived from the NEWSTAR
