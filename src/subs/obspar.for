@@ -40,6 +40,7 @@ c    dm/jhz 23sep05 Corrected JyperK and MOUNT for SMA entries
 c    mchw 07jul04 updated CARMA longitude and latitude to station 32
 c    jhz  12jan07 deleted sma/ew entry; corrected the value of 
 c                 sub-reflector dismeter.
+c    mchw 03dec07 Added ATA at hatcreek and BIMA at the Carma site.
 c************************************************************************
 c* ObsPrint -- Print list of known observatories.
 c: utility
@@ -205,6 +206,18 @@ c
 	call obsad('alma/nants',	64.d0)
 	call obsad('alma/systemp',	40.d0)
 c
+c  The Allen Telescope array ay hatcreek.
+c
+	call obsad('ata/antdiam',	6.1d0)
+	call obsad('ata/evector',	0.0d0)
+	call obsad('ata/height',	1043.d0)
+	call obsad('ata/jyperk',	120.d0)
+	call obsad('ata/latitude', obsdms( 1, 40,49, 2.50))
+	call obsad('ata/longitude',obsdms(-1,121,28,18.49))
+	call obsad('ata/mount',	ALTAZ)
+	call obsad('ata/nants',    42.d0)
+	call obsad('ata/subdiam',	0.61d0)
+	call obsad('ata/systemp',	40.d0)
 c
 c  The Australia Telescope Compact Array (ATNF).
 c  Latitude, longitude and height refer to station 35. Info from
@@ -223,6 +236,20 @@ c
 	call obsad('atca/subdiam',	2.8d0)
 	call obsad('atca/systemp',	50.d0)
 c
+c  The BIMA 6m antennas at the CARMA site.
+c  Jyperk and systemp given by Wright, from 3mm vlbi.
+c
+	call obsad('bima/antdiam',	6.1d0)
+	call obsad('bima/evector',	0.0d0)
+	call obsad('bima/height',	2196.22d0)
+	call obsad('bima/jyperk',	120.d0)
+	call obsad('bima/latitude',    obsdms( 1, 37,16, 49.37285))
+ 	call obsad('bima/longitude',   obsdms(-1,118, 8, 29.92699))
+	call obsad('bima/mount',	ALTAZ)
+	call obsad('bima/nants',    9.d0)
+	call obsad('bima/subdiam',	0.61d0)
+	call obsad('bima/systemp',	300.d0)
+c
 c  CARMA (Combined California Array  - geometric mean of 10.4 and 6.1m)
 c  this is the final Cedar Flats location (double check with Petitpas)
 c
@@ -231,8 +258,8 @@ c
 	call obsad('carma/evector',	0.5*dpi)
 	call obsad('carma/height',	2196.22d0)
 	call obsad('carma/jyperk',	80.d0)
-        call obsad('carma/latitude',    obsdms( 1, 37,16, 49.37285))
-        call obsad('carma/longitude',   obsdms(-1,118, 8, 29.92699))
+ 	call obsad('carma/latitude',    obsdms( 1, 37,16, 49.37285))
+ 	call obsad('carma/longitude',   obsdms(-1,118, 8, 29.92699))
 	call obsad('carma/mount',	ALTAZ)
 	call obsad('carma/nants',	15.d0)
 	call obsad('carma/systemp',	200.d0)
