@@ -81,7 +81,7 @@ c
         integer isys(MAXANT),i,uvscan,j,ii,jj,ipicked,ifix
         integer tin,k,nfocs,length,nhere,hereidx(MAXANT)
 	character dataset(MAXF)*60,outlog*60,text*128,dash*80
-	character radec*24,uthms*6,lsthms*6,oldsou*17,newsou*17
+	character radec*24,uthms*8,lsthms*8,oldsou*17,newsou*17
 	character type*1, sftime*30, ptime*4
 	real diff,totint,tint,baseline(MAXBASE),focus(MAXANT,50)
 	real focnew(MAXANT),focold(MAXANT),focdiff,rlst
@@ -578,16 +578,21 @@ c
 c   Converts time in radians to time in hh:mm:ss.s in a character
 c   string
 c
-	character*6 charHms
+	character*8 CharHms
 	real RadTime,secs,time,float
-	integer ihour,imin,isec,ifix
+	integer ihour,imin,ifix
 	time  = 3.8197186 * RadTime
 	ihour = ifix(time+0.0001)
 	imin  = ifix(60.0*(time-float(ihour)) + 0.0001)
 	secs  = 60.0 * (60.0 * (time-float(ihour)) - float(imin))
-	isec  = ifix(secs + 0.49)
-	write(CharHms,2001) ihour,imin,isec
- 2001	format(i2.2,i2.2,i2.2)
+	if(secs .gt. 10.0) then
+	    write(CharHms,2001) ihour,imin,secs
+	else
+	    write(CharHms,2002) ihour,imin,secs
+        endif
+c        print 2002, secs
+ 2001	format(i2.2,i2.2,f4.1)
+ 2002	format(i2.2,i2.2,'0',f3.1)
 	return
 	end
 c-----------------------------------------------------------------------
