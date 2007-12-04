@@ -67,7 +67,11 @@ c          29-aug-06 dnf changed output format so that all active antennas
 c                        are listed with the system temperature listing
 c           2-jan-07 pjt list local (ENU) antenna positions as well as XYZ
 c          31-jan-07 pjt one more HatCreek dependancy removed (lat) - Elev now correct
-
+c           4-dec-07 mwp/pjt  time with extra digit, no more focus reporting for CARMA
+c
+c
+c TODO:
+c      - remove old corr column - check with Doug Friedel
 c-----------------------------------------------------------------------
 	include 'mirconst.h'
         include 'caldefs.h'
@@ -75,12 +79,12 @@ c-----------------------------------------------------------------------
         include 'listobs.h'
 c
 	character pversion*10
-	parameter (pversion = '31-jan-07')
+	parameter (pversion = '4-dec-07')
 c
         integer ipt,nfiles,uvflag,order(MAXP),nameidx(100),nnames
         integer isys(MAXANT),i,uvscan,j,ii,jj,ipicked,ifix
         integer tin,k,nfocs,length,nhere,hereidx(MAXANT)
-	character dataset(MAXF)*60,outlog*60,text*128,dash*80
+	character dataset(MAXF)*60,outlog*60,text*256,dash*80
 	character radec*24,uthms*8,lsthms*8,oldsou*17,newsou*17
 	character type*1, sftime*30, ptime*4
 	real diff,totint,tint,baseline(MAXBASE),focus(MAXANT,50)
@@ -335,15 +339,15 @@ c
         write(text,2110) sftime(1:7)
 	call LogWrite(text,more)
         if(ptime .eq. 'ut') then
-	  text = 'Source              UT    Dur  Elev  BW(1,2)' //
+	  text = 'Source              UT      Dur  Elev  BW(1,2)' //
      1	       ' Corr              Sys Temps (K)'
 	else
-	  text = 'Source             LST    Dur  Elev  BW(1,2)' //
+	  text = 'Source             LST      Dur  Elev  BW(1,2)' //
      1	       ' Corr              Sys Temps (K)'
         endif
 	call LogWrite(text,more)
-        write(text(1:37),'(''                  hhmmss  min  deg '')')
-        write(text(38:128),'(''MHz    mode'',15(i2,3x))')
+        write(text(1:39),'(''                  hhmmss    min  deg '')')
+        write(text(40:132),'(''MHz    mode '',15(i2,3x))')
      1        (hereidx(i),i=1,nhere)
 	call LogWrite(text,more)
  2110   format('               Chronology of Observations on ',A)
@@ -362,7 +366,7 @@ c
         else
 	  write(text,2202) objs(ii),lsthms,dur(ii),el(ii),
      1        (corbw(ii,j),j=1,2),cmode(ii),(isys(hereidx(j)),j=1,nhere)
- 2202	  format(a,1x,a,1x,f4.1,1x,f5.1,1x,f4.0,1x,f4.0,1x,
+ 2202	  format(a,1x,a,1x,f4.1,1x,f4.0,1x,f4.0,1x,f4.0,1x,
      1         i1,1x,15(i4,1x))
         endif
 	call LogWrite(text,more)
@@ -373,10 +377,10 @@ c    changes with time
 c
 	call sortidxd(nfocs,focjday,order)
 	call LogWrite(dash,more)
-	write(text,2301)
  2301	format('              Record of Focus Values')
-	call LogWrite(text,more)
 	if(nfocs .gt. 0) then
+           write(text,2301)
+           call LogWrite(text,more)
 	   rlst = foclst(order(1))
 	   call rad2hms(rlst,lsthms)
 	   write(text,2305) lsthms,
@@ -399,8 +403,6 @@ c
               endif
 	   enddo
 	   call LogWrite('Focus constant to end of file',more)
-	else
-	   call LogWrite('No focus values in file',more)
 	endif
 
 	call LogClose
