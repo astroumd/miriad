@@ -43,7 +43,7 @@ the ATNF \miriad\ Users Guide.
 
 Procedures specific to CARMA will be addressed in this cookbook. Most notably, 
 the UV variables (Appendix~\ref{app:uvvars}) in this version of the manual 
-should be considered the appropriate one for CARMA and other version may show
+should be considered the appropriate one for CARMA and other versions may show
 missing or conflicting information for the moment.
 
 
@@ -76,6 +76,7 @@ Miriad bugzilla (part of CARMA bugzilla) at {\tt http://www.mmarray.org/bugzilla
 \item 1-may-2007:    clarify quality logs, fix a fluxcal example, language cleanup 
 \item 3-may-2007:    3.5.1 was left out accidentally, cleanup more lingo
 \item 28-may-2007:   added a section on linelength correction
+\item 1-dec-2007:    Draft for version 2 of this document
 
 \end{itemize}
 

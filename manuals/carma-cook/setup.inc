@@ -6,9 +6,13 @@
 \label{app:setup}
 
 Setting up your account to use \miriad\ 
-of course varies from system to system.
+of course varies a little from system to system, mostly where the package was installed.
 If in doubt, ask a local Miriad user. We will assume you are using the \verb+csh+
-shell. For {\tt bash}, just replace {\tt .csh} with {\tt .sh}.
+shell. The environment variable {\tt \$SHELL} \index{SHELL, environment}
+will display what login shell you are using.\footnote{For MacOSX an additional surprise will
+be that the two terminals, Terminal and xterm, have subtle differences how to set your default
+shell, and for Miriad you should almost always want to use the xterm}
+For {\tt bash}, just replace {\tt .csh} with {\tt .sh} in the examples below.
 
 % miriad 4
 
@@ -29,7 +33,7 @@ files, please do so. You may also want to check your version of Miriad:
 \end{verbatim} %$
 \normalsize
 
-it should be version 4.0.5 as of this writing (April 2007).
+it should be version 4.0.5 as of this writing (April 2007), {\it and 4.0.6 for January 2008.}
 
 \section{Site dependent setup}
 
@@ -37,8 +41,8 @@ Each of the CARMA sites will have a maintained version of Miriad.
 
 \subsection{OVRO}
 
-Only a linux version is maintained. There are two versions, 
-depending if you are in the valley
+There are two linux versions are maintained
+depending if you are at OVRO in the valley
 
 \footnotesize
 \begin{verbatim}
@@ -46,7 +50,7 @@ depending if you are in the valley
 \end{verbatim}
 \normalsize
 
-or up at Cedar Flat:
+or up at CARMA on Cedar Flat:
 
 \footnotesize
 \begin{verbatim}
@@ -93,7 +97,7 @@ obvious flexibility, the danger is that loading packages in
 a certain order could render your interactive shell useless,
 and loading multiple versions of miriad can make commands from
 the older version to peek through  the new one and cause unexpected
-result. Use with caution.
+results. Use with caution.
 Example:
 \footnotesize\begin{verbatim}
    % source /n/astromake2/astromake_start
@@ -142,5 +146,6 @@ is much preferred to downloading a tar file each time and install that.
 \subsection{Binary Installation}
 
 We expect to make available binary releases for Linux (32bit and 64bit), MacOSX (ppc and intel)
-and Solaris (sol10 w/ gcc, sol10 w/ sunstudio12?). Details will be on the Miriad website.
+and perhaps Solaris (sol10 w/ gcc, sol10 w/ sunstudio12?). Details will be on the Miriad website through
+the WIKI pages.
 

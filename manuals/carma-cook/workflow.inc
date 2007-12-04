@@ -4,7 +4,14 @@
 \chapter{Work Flow}
 
 
+% \section{CARMA track finished}
 
+After your CARMA data have been taken,
+the PI will normally have received an email with a ``{\tt CARMA track finished}'' subject line.
+Apart from attaching the observing script and the logfile maintained during observing,
+it will instruct you to download the data from the CARMA archive. This chapter guides you
+through the steps of getting your data, inspecting the data quality, and calibrating it.
+Mapping and Deconvolution are standard procedures in Miriad and are covered elsewhere.
 
 
 \section{CARMA Data Retrieval}
@@ -13,16 +20,18 @@ CARMA data are normally multi-source datasets, where all data from a  single tra
 ``8'' hour observation) are in a single Miriad dataset.
 
 Note that you will need use the {\tt carmaweb} username and get a password to gain
-access to Carma data! The website {\tt http://cedarflat.mmarray.org/observing}
-gives instructions where to get this password.\index{Data Archive}
+access to Carma data! The website {\tt http://cedarflat.mmarray.org/observing}~~ gives 
+instructions where to get this password.\index{Data Archive}
 
 
 \subsection{Not at CARMA}
 
+%CHECK the current URL
 A temporary website at 
 {\tt http://carma-server.ncsa.uiuc.edu:8080/sciarch/list.jsp}
 provides a large list of (miriad) data that has been taken since integration
-started sometime in 2006. A new interface will be forthcoming soon.
+started sometime in 2006. A new more user friendly interface is available
+on {\tt http://carma-server.ncsa.uiuc.edu:8181/}.
 
 In the mean time, use the browser (control-F) to find your
 dataset, check the box next to it,
@@ -206,9 +215,10 @@ No focus values in file
 \subsection{uvindex}
 
 Apart from its useful output, the output of {\tt uvindex} should be
-compared with the log sent by e-amil and the actual data length. Sometimes the database
+compared with the log sent by e-mail and the actual data length. Sometimes the database
 fails in filling the data properly, and the data archive center should be 
-contacted\footnote{currently: Lisa Xu}
+contacted\footnote{currently: Lisa Xu} 
+%CHECK the current contact
 
 \index{uvindex}
 
@@ -321,6 +331,7 @@ the default threshold is 20\%, i.e. if more than 20\% of the (0.5 second) frames
 are blanked, the integration is flagged.
 
 
+
 \footnotesize
 \begin{verbatim}
 
@@ -372,7 +383,7 @@ and friends where needed.
 
 \subsection{Archive based corrections}
 
-The (Illinois) Data Archive will typically re-fill data from its basic
+The CARMA Data Archive will typically re-fill data from its basic
 constituents (the {\it visbrick} and the {\it monitor points}) whenever
 there is a need. This could also mean that the data  used by the {\tt quality} script
 be different from that obtained from the Data Archive.
@@ -472,6 +483,35 @@ as well as (in this case 6) dimensionality.
 
 \bigskip
 TODO:explain difference between puthd and uvputhd
+
+\subsection{Amplitude Decorrelation}
+
+\label{uvdecor}
+
+All data taken before November 25, 2007, are subject to a small amount of amplitude 
+decorrelation dependent on the difference in delay length between the two antennas in a 
+baseline. \index{decorrelation, amplitude}
+The program {\tt uvdecor}\index{uvdecor} attempts to correct for this:
+
+
+\footnotesize
+\begin{verbatim}
+  % uvdecor vis=xxx.mir out=yyy.mir delaymax=8550
+\end{verbatim}
+\normalsize
+
+Note that the integration times (now baseline based) are adjusted (decreased) to account
+for the increased noise on baselines with longer antenna delay differences. The value of
+{\tt delaymax=8550} (nanoseconds) 
+was emperically determined from good fringetest data in the 2007 B array, in which the
+amplitudes dropped linearly with delay differences. The {\tt delaymax} value is where the
+amplitude would have dropped to 0!
+
+
+It is highly recommended to play with this option for B-array data (with delays up to 6000 ns,
+decorrelation up to 70\%)
+but even in C-array data (delays up to 2000 ns, decorrelations up to  25\%) it should be
+considered.
 
 \subsection{Line Length Correction}
 

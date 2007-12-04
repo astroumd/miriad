@@ -44,6 +44,10 @@ data. The various stages of baseline corrections are not maintained here, see Se
 2007/03/??:  blanking activated
 \item
 2007/05/24:  line-length corrections activated 
+\item
+2007/11/26:  amplitude decorrelation fixed; use uvdecor {see \ref{uvdecor}) to fix
+\item
+2007/12/04:  source name confusion (bugzilla \#364/5} fixed
 
 \end{itemize}
 
@@ -67,7 +71,7 @@ this axis offset correction. Example of usage:
 \end{verbatim}
 \normalsize
 
-
+Also note the {\tt axcor} program may not be installed with your version of Miriad.
 
 \subsection{jyperk (bugzilla 339)}
 
@@ -113,4 +117,13 @@ written $\sqrt{2}$ times what it really should be. But check your plots!
 this last example shows the number of visibilities that would be flagged if their
 RMS pointing was off by more than 4 arcsec.
 
+\subsection{Incorrect source name in miriad file (bugzilla 364)}
 
+
+Should be obvious looking at the output of {\tt listobs}. oct/nov 2007. still looking into this.
+Fixed Dec 3, 2007. Always been present, but never showed up until the last few months. Load on
+{\tt acc} seems to have triggered this bug in MAW data avering.
+
+\subsection{Amplitude Decorrelation}
+
+See \ref{uvdecor}. Section will be placed out of main body here.

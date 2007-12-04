@@ -61,7 +61,7 @@
 
 \section{UV Dataset}
 
-\newcommand{\uvversion}{May 18, 2007}
+\newcommand{\uvversion}{December 3, 2007}
 
 A \miriad\ uv dataset is composed of a collection of items and `\MM{u-v} variables'.
 The variables are parameters that are known at the time of the observation,
@@ -329,7 +329,7 @@ freqif		\>D	\>GHz
 \> ? (Hat Ck only?)\\
 
 inttime		\>R	\>seconds
-\>Integration time (but is it centered, start of end??? - see time)\\
+\>Integration time (see also time) \\
 
 ischan(nspect)	\>I	\>-
 \> Starting channel of spectral window\\
@@ -536,8 +536,8 @@ ra		\>R or	\>radians
 \>the definition of the coordinate system. See also {\tt obsra} \\
 
 rain	\>R	\>mm
-\>The current amount of water in the rain gauge. The rain gauge is emptied
-at 9:00 AEST (ATCA).\\
+\>The current amount of water in the rain gauge. \\
+\>\>\> The rain gauge is emptied at 9:00 AEST (ATCA).\\
 
 refpnt(2,nants) \>R    \>arcsec
 \> Reference pointing offsets. \\
@@ -554,6 +554,7 @@ restfreq(nspect) \>D	\>GHz
 
 rmspath		\>R     \>microns
 \>RMS path variation (CARMA, for HatCrk units were \%)\\
+\>\>\> see also smonrms\\
 
 sctype	\>A	\>-
 \> Scan type (ATCA?)\\
@@ -565,7 +566,7 @@ sfreq(nspect)	\>D	\>GHz
 \> Sky frequency of first channel in window\\
 
 smonrms		\>R	\>$\mu$m
-\> ATCA seeing monitor rms value\\
+\> ATCA seeing monitor rms value (see also rmspath)\\
 
 source(*)	\>A	\>-	
 \>The name of the source \\
@@ -607,6 +608,7 @@ time			\>D     \>days
 \>\>\> For example, noon on Jan 1, 1980 is 2,444,240.0! \\
 \>\>\> {\tt time} is also known as {\tt preamble(3)} or {\tt preamble(4)}\\
 \>\>\> depending if you have uv or uvw data resp.\\
+\>\>\> time is the beginning of an integration with length inttime\\
 
 tpower		\>R	\>volts
 \> Total power measurements (Hat Ck)\\
