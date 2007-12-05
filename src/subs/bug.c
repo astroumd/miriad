@@ -18,6 +18,7 @@
 /*    pjt     27mar07 bugseverity_c: also overhauled bug recovery       */
 /*                    and removed VMS specific code                     */
 /*    pjt     17may07 removed old-non ANSI declaration                  */
+/*    pjt      5dec07 add Name to bug output - why took us so long?     */
 /************************************************************************/
 
 #include <stdio.h>
@@ -177,7 +178,7 @@ void bug_c(char s,Const char *m)
   else {doabort = 1;		 p = "Fatal Error"; }
 
   if (!bug_cleanup)
-    fprintf(stderr,"### %s:  %s\n",p,m);
+    fprintf(stderr,"### %s [%s]:  %s\n",p,Name,m);
 
   if(doabort){
     reentrant = !reentrant;
@@ -220,7 +221,7 @@ void bugv_c(char s,Const char *m, ...)
   else {doabort = 1;		 p = "Fatal Error"; }
 
   va_start(ap,m);
-  snprintf(msg,MAXMSG,"### %s: ",p);         len = strlen(msg);
+  snprintf(msg,MAXMSG,"### %s [%s]: ",p,Name);          len = strlen(msg);
   vsnprintf(&msg[len],MAXMSG-len,m,ap);
   va_end(ap);
 
