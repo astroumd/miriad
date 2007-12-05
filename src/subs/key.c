@@ -38,6 +38,7 @@
 #define Null '\0'
 #endif
 
+/* if you change MAXSTRING, also do keyf.for */
 #define KEYTRUE        1
 #define KEYFALSE       0
 #define MAXSTRING   4096
