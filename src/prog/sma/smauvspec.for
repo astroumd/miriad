@@ -127,8 +127,15 @@ c       1-201. The actual plotted dot size depends on the device
 c       resolution. Other internal symbol selecting function
 c       would be failed when this parameter is in use.
 c       Default is to disable this function.
-c
-c
+c@ title
+c       Allow users to choose single title content with two characters:
+c       title = BL    ->     Baseline label;
+c             = PO    ->     Polarization label;
+c             = TI    ->     Time label;
+c             = IN    ->     Time interval.
+c       And the font size for the title and the axis labelling would be
+c       enlarged by a factor of 1.5.
+c       Default is for labelling all the information above.
 c@ device
 c	PGPLOT plot device/type. No default.
 c
@@ -212,14 +219,20 @@ c    jhz 17jan07  fixed a bug in ylabel in the case of bothA&B.
 c    jhz 25jan07  cleaned a few things for solaris compiling
 c    jhz 06feb07  implemented lag plot
 c    jhz 06feb07  added xrange
-c    pjt 20feb07  use a private name for fft842x (intel mac linker complains otherwise)
+c    pjt 20feb07  use a private name for fft842x (intel mac linker 
+c                 complains otherwise)
 c    jhz 15mar07  added keyword dotsize
 c    jhz 30oct07  added a bug report in case that the velocity
 c                 information in the data is screwed up.
+c    jhz 06Dec07  re-arrange the subplot of the baseline pair to 
+c                 the conventional order, which is consistent with that 
+c                 in uvplt and smauvplt;
+c                 added keyword for selecting title content.
 c  Bugs:
 c------------------------------------------------------------------------
         include 'maxdim.h'
         include 'mirconst.h'
+        
         integer maxco,maxmline
         parameter (maxco=15)
 c
@@ -229,10 +242,10 @@ c
         character mname*8000, moln*16
         integer mtag(maxmline), nmline, j, jp, js, je, iline
         character version*(*)
-        parameter(version='SmaUvSpec: version 1.17 30-oct-07')
+        parameter(version='SmaUvSpec: version 1.18 06-nov-07')
         character uvflags*8,device*64,xaxis*12,yaxis*12,logf*64
         character xtitle*64,ytitle*64, veldef*8
-        character xtitlebuf*64
+        character xtitlebuf*64, line*64
         logical ampsc,rms,nobase,avall,first,buffered,doflush,dodots
         logical doshift,doflag,doall,dolag,docat
         double precision interval,t0,t1,preamble(4),shift(2),shft(2)
@@ -258,7 +271,7 @@ c
         real strl 
         integer nmol, moltag(maxmline)
         character molname(maxmline)*16, jplpath*80 
-        character veltyp*8, veltype*32 
+        character veltyp*8, veltype*32, titlepnt*2 
         common/jplcat/nmol,moltag,molname,docat,lsrvel,
      *  veltype,veldef,veldop,strl
         logical docolor,dorestfreq
@@ -316,7 +329,15 @@ c     &  call bug('f','has not fully implemented yet for jpl catalog.')
         call keyr('xrange',xrange(2),0.)
         call keyr('yrange',yrange(1),0.)
         call keyr('yrange',yrange(2),yrange(1)-1)
-        call keyi ('dotsize', dotsize, -1)
+        call keyi('dotsize', dotsize, -1)
+        call keya('title', titlepnt, 'NO')
+        if((titlepnt.ne.'BL').and.(titlepnt.ne.'TI').and.
+    * (titlepnt.ne.'PO').and.(titlepnt.ne.'IN')) then
+          line = 'The title code "'//titlepnt//'" is not supported.'
+        call bug('w', line)
+        call bug('w', 'Using the default.')
+          titlepnt='NO'
+        end if
         call keya('log',logf,' ')
         call keyfin
         winsel = SelProbe(sels,'window?',0.d0)
@@ -447,7 +468,7 @@ c
      *                device,x,nplot,xtitle,ytitle,nxy,
      *                xrange,yrange,logf,
      *                docat,dorestfreq,veldef,lsrvel,veldop,
-     *                dotsize)
+     *                dotsize,titlepnt)
                  t0 = preamble(3)
                  t1 = t0
                  buffered = .false.
@@ -495,7 +516,7 @@ c
      *             device,x,nplot,xtitle,ytitle,nxy,
      *             xrange,yrange,logf,
      *             docat,dorestfreq,veldef,lsrvel,veldop,
-     *             dotsize)
+     *             dotsize,titlepnt)
               buffered = .false.
            endif
            call uvdatcls
@@ -741,16 +762,18 @@ c  preamble	The accumulated preambles.
 c  cnt		The number of things accumulated into the preambles.
 c
         include 'maxdim.h'
+        integer maxblpnt
+        parameter(maxblpnt=maxbase*256 + maxbase-1)
         integer maxaver,maxpol
         parameter(maxaver=276525,maxpol=4)
 c       parameter(maxaver=276525,maxpol=4)
         complex buf(maxaver)
         real    bufr(maxaver),buf2(maxaver)
         integer count(maxaver),chnkpntr(maxaver)
-        integer pnt(maxpol,maxbase),nchan(maxpol,maxbase),free,mbase
-        integer npols(maxbase),pols(maxpol,maxbase),cnt(maxbase)
-        integer cntp(maxpol,maxbase)
-        double precision preamble(5,maxbase)
+        integer pnt(maxpol,maxblpnt),nchan(maxpol,maxblpnt),free,mbase
+        integer npols(maxblpnt),pols(maxpol,maxblpnt),cnt(maxblpnt)
+        integer cntp(maxpol,maxblpnt)
+        double precision preamble(5,maxblpnt)
         common/uvavcom/preamble,buf,bufr,buf2,count,pnt,nchan,npols,
      *    pols,cnt,cntp,free,mbase,chnkpntr
         free = 1
@@ -760,7 +783,8 @@ c************************************************************************
         subroutine bufflush(source,ampsc,rms,nobase,dodots,hann,hc,hw,
      *          first,device,x,n,xtitle,ytitle,nxy,
      *          xrange,yrange,logf,
-     *          docat,dorestfreq,veldef,lsrvel,veldop,dotsize)
+     *          docat,dorestfreq,veldef,lsrvel,veldop,dotsize,
+     *          titlepnt)
         implicit none
         logical docat,dorestfreq
         real lsrvel,veldop
@@ -768,7 +792,7 @@ c************************************************************************
         include 'mirconst.h'
 
 c
-        character source*32
+        character source*32, titlepnt*2
         logical ampsc,rms,nobase,first,dodots
         character device*(*),xtitle*(*),ytitle*(*),logf*(*)
         integer n,nxy(2),hann
@@ -800,13 +824,15 @@ c  chnkpntr     The spectral chunk pntr.
         include 'maxdim.h'
         integer maxaver,maxpol
         parameter(maxaver=276525,maxpol=4)
+        integer maxblpnt
+        parameter(maxblpnt=maxbase*256 + maxbase-1)
         complex buf(maxaver)
         real    bufr(maxaver),buf2(maxaver)
         integer count(maxaver),chnkpntr(maxaver)
-        integer pnt(maxpol,maxbase),nchan(maxpol,maxbase),free,mbase
-        integer npols(maxbase),pols(maxpol,maxbase),cnt(maxbase)
-        integer cntp(maxpol,maxbase)
-        double precision preamble(5,maxbase)
+        integer pnt(maxpol,maxblpnt),nchan(maxpol,maxblpnt),free,mbase
+        integer npols(maxblpnt),pols(maxpol,maxblpnt),cnt(maxblpnt)
+        integer cntp(maxpol,maxblpnt)
+        double precision preamble(5,maxblpnt)
         common/uvavcom/preamble,buf,bufr,buf2,count,pnt,nchan,npols,
      *    pols,cnt,cntp,free,mbase,chnkpntr
         integer polmin,polmax
@@ -848,7 +874,7 @@ c  Initialise the plot device, if this is the first time through.
 c
         ng = ngood
         if(nobase) ng = 1
-        if(first)call pltini(device,ng,nxy)
+        if(first)call pltini(device,ng,nxy,titlepnt)
         first = .false.
 c
 c  Autoscale the X axis.
@@ -935,7 +961,8 @@ c
             call plotit(source,npnts,xp,yp,ypp,xrange,yrange,
      *           dodots,plot,nplts,
      *           xtitle,ytitle,j,time/ntime,inttime/nplts,pol,npol,
-     *           dopoint,hann,hc,hw,logf,doboth,sppntr,dolag,dotsize)
+     *           dopoint,hann,hc,hw,logf,doboth,sppntr,dolag,
+     *           dotsize,nxy,titlepnt)
 c     
                  npol = 0
                  do i=polmin,polmax
@@ -956,7 +983,7 @@ c
      *       xrange,yrange,dodots,
      *       plot,nplts,xtitle,ytitle,0,time/ntime,inttime/nplts,
      *       pol,npol,dopoint,hann,hc,hw,logf,doboth,sppntr,dolag,
-     *       dotsize)
+     *       dotsize,nxy,titlepnt)
 c
 c  Reset the counters.
 c
@@ -1120,13 +1147,15 @@ c
         include 'maxdim.h'
         integer maxaver,maxpol
         parameter(maxaver=276525,maxpol=4)
+        integer maxblpnt
+        parameter(maxblpnt=maxbase*256 + maxbase-1)
         complex buf(maxaver)
         real    bufr(maxaver),buf2(maxaver)
         integer count(maxaver), chnkpntr(maxaver)
-        integer pnt(maxpol,maxbase),nchan(maxpol,maxbase),free,mbase
-        integer npols(maxbase),pols(maxpol,maxbase),cnt(maxbase)
-        integer cntp(maxpol,maxbase)
-        double precision preamble(5,maxbase)
+        integer pnt(maxpol,maxblpnt),nchan(maxpol,maxblpnt),free,mbase
+        integer npols(maxblpnt),pols(maxpol,maxblpnt),cnt(maxblpnt)
+        integer cntp(maxpol,maxblpnt)
+        double precision preamble(5,maxblpnt)
         common/uvavcom/preamble,buf,bufr,buf2,count,pnt,nchan,npols,
      *    pols,cnt,cntp,free,mbase,chnkpntr
         integer i,j,k,i1,i2,p,bl,pol
@@ -1150,7 +1179,8 @@ c
 c  Determine the baseline number.
 c
         call basant(preambl(4),i1,i2)
-        bl = (i2*(i2-1))/2 + i1
+c        bl = (i2*(i2-1))/2 + i1
+         bl = preambl(4)
 c
 c  Zero up to, and including, this baseline.
 c
@@ -1258,10 +1288,10 @@ c
 c
         end
 c************************************************************************
-        subroutine pltini(device,ngood,nxy)
+        subroutine pltini(device,ngood,nxy,titlepnt)
         implicit none
 c
-        character device*(*)
+        character device*(*), titlepnt*2
         integer ngood,nxy(2)
 c
 c  Initialise the plot device.
@@ -1285,11 +1315,14 @@ c
           ny = 2
           if(mod(ngood,9).eq.0)ny = 2
         endif
+        nxy(1)=nx
+        nxy(2)=ny
         if(pgbeg(0,device,nx,ny).ne.1)then
           call pgldev
           call bug('f','Error opening graphics device')
         endif
-        call pgsch(real(max(nx,ny))**0.4)
+        if(titlepnt.eq.'NO') call pgsch(real(max(nx,ny))**0.4)
+        if(titlepnt.ne.'NO') call pgsch(real(max(nx,ny))**0.6)
         call pgqinf('hardcopy',hard,hlen)
         if(hard.eq.'YES')call pgscf(2)
         end
@@ -1359,7 +1392,7 @@ c************************************************************************
       subroutine plotit(source,npnts,xp,yp,ypp,xrange,yrange,dodots,
      *     plot,nplts,xtitle,ytitle,bl,time,inttime,
      *     pol,npol,dopoint,hann,hc,hw,logf,doboth,
-     *     sppntr,dolag,dotsize)
+     *     sppntr,dolag,dotsize,nxy,titlepnt)
       implicit none
 c
       integer npnts,bl,nplts,plot(nplts+1),npol,pol(npol),hann
@@ -1368,7 +1401,7 @@ c
       real ypp(npnts)
       logical dopoint,dodots, doboth,dolag
       character xtitle*(*),ytitle*(*),logf*(*)
-      integer sppntr(npnts)
+      integer sppntr(npnts),nxy(2),nx,ny
 c     
 c  Draw a plot
 c------------------------------------------------------------------------
@@ -1376,8 +1409,8 @@ c------------------------------------------------------------------------
       parameter(ncol=12)
       integer hr,mins,sec,b1,b2,l,i,j,xl,yl,symbol,lp,lt
       character title*64,baseline*12,tau*16,line*80
-      character pollab*32, source*32
-      double precision t0
+      character pollab*32, source*32, titlepnt*2
+      double precision t0, dbl
       real yranged(2), ypranged(2)
       real xlen,ylen,xloc, pscale, pline
       integer k1,k2,k,dotsize
@@ -1390,6 +1423,8 @@ c
 c
       symbol = 17
       if (dodots) symbol = 1
+      nx=nxy(1)
+      ny=nxy(2)
 c
       call pgpage
       call pgvstd
@@ -1499,22 +1534,24 @@ c
 c
 c  Decode baseline number into antenna numbers.
 c     
-         b2 = 1
-         l = 1
-         do while(bl.ge.l+b2)
-            l = l + b2
-            b2 = b2 + 1
-         enddo
-         b1 = bl - l + 1
+         dbl = bl
+         call basant(dbl,b1,b2)         
 c     
          baseline = itoaf(b1)
          l = len1(baseline)
          baseline(l+1:) = '-'//itoaf(b2)
          l = len1(baseline)
 c     
-         write(title,'(a,i2.2,a,i2.2,a,i2.2)')
+       if(titlepnt.eq.'NO') write(title,'(a,i2.2,a,i2.2,a,i2.2)')
      *        pollab(1:lp)//' \gt='//tau(lt:)//' min, Bl='//
      *        baseline(1:l)//', T=',hr,':',mins,':',sec
+       if(titlepnt.eq.'BL') write(title,'(a)') 'Bl='//baseline(1:l)
+       if(titlepnt.eq.'PO') write(title,'(a)') 
+     *                                  'POL='//pollab(1:lp-1)
+       if(titlepnt.eq.'TI') write(title,'(a,i2.2,a,i2.2,a,i2.2)') 
+     *                                  'Time=',hr,':',mins,':',sec 
+       if(titlepnt.eq.'IN') write(title,'(a)') 
+     *                                   '\gt='//tau(lt:)//' min'
       endif
       l = len1(title)
       xl = len1(xtitle)
@@ -1529,7 +1566,7 @@ c
       else
           if(ytitle(1:yl)=='BothA&P') then
           call pglab(xtitle(1:xl),' ',' ')
-                                       else
+      else
           call pglab(xtitle(1:xl),ytitle(1:yl),' ')
           end if
          call pglen(5,title(1:l),xlen,ylen)
@@ -1549,9 +1586,8 @@ c
          k2 = l
          call pgmtxt('T',2.0,xloc,0.,title(k1:k2))
       endif
-c     call uvgetvra(lvis,'source',source)
       call pgsci(2)
-      call pgmtxt('LV',0.0, 1.025, 0., source(1:32))
+      call pgmtxt('LV',0.0, 1.0+ny/50.0+nx/100., 0.0, source(1:32))
       call pgsci(1)
 c
       end
@@ -2617,9 +2653,9 @@ C
   180     CONTINUE
       END IF
                  ylpmax=2./3.
-                 call pgmtext('L',3.*YNDSP,ylpmax,0.5, 'Amplitude (Jy)')
+                 call pgmtext('L',3.*YNDSP,ylpmax,0.5, 'Amp (Jy)')
                  ylpmin=1./6.
-                 call pgmtext('L',3.*YNDSP,ylpmin,0.5, 'Phase (Degree)')
+                 call pgmtext('L',3.*YNDSP,ylpmin,0.5, 'Pha (Deg)')
 
 C
 C Extra Y labels for log axes.
