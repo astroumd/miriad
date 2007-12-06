@@ -192,6 +192,16 @@ c	 log     Write the values and errors (if averaging) that are
 c		 plotted into the log file.  No attempt to separate
 c		 baselines is made, except that automatically obtained
 c		 by not setting OPTIONS=NOBASE
+c@ title
+c       Allow users to choose single title content with two characters:
+c       title = BL    ->     Baseline label;
+c             = PO    ->     Polarization label;
+c             = FR    ->     Frequency label;
+c             = AV    ->     Averaging time.
+c       And the font size for the title and the axis labelling would be
+c       enlarged by a factor of 1.5 in comparison with that in default.
+c       Keyword size(1) is disabled.
+c       Default is for labelling all the information above.
 c@ device
 c	PGPLOT plot device/type. No default.
 c@ nxy
@@ -202,7 +212,8 @@ c@ size
 c	PGPLOT character sizes, in units of the default size (i.e., 1)
 c	First value is for the labels, the second is for the symbol size
 c	Defaults depend upon the number of sub-plots. The second value
-c	defaults to the first.
+c	defaults to the first. Non-default value of size will disable
+c       the source labelling.
 c@ filelabel
 c       This gives an option to label the file name in the plot:
 c        filelabel = -1, not to label the file name, the default;
@@ -357,6 +368,8 @@ c                  added a function allow users to choose a
 c                        symbol size in plotting.
 c                  recovered 'include 'mirconst.h'' in a few subs.
 c                  added 'implicit none' to all the subs 
+c    jhz 08dec07   added keyword title and disable source labelling
+c                  for non-default size selection.
 c To do:
 c
 c   Vector averaging rms not yet implemented
@@ -429,7 +442,7 @@ c
       integer sourid
       integer maxsource, limitnsource
       parameter(maxsource=100)
-      character source(maxsource)*32, souread*32
+      character source(maxsource)*32, souread*32,titlepnt*2
       common/sour/source,nsource,sourid
 c
 c These arrays for averaging
@@ -496,7 +509,7 @@ c
       start_sid=0
       next_sid=0 
 c-----------------------------------------------------------------------
-      call output ('SmaUvPlt: version 1.5 20-Dec-06')
+      call output ('SmaUvPlt: version 1.6 08-Dec-07')
 c
 c  Get the parameters given by the user and check them for blunders
 c
@@ -505,7 +518,7 @@ c
      *   dolog, dozero, doequal, donano, dosrc, doavall, doxind,
      *   doyind, dowrap, dosymb, dodots, docol, inc, nx, ny, pdev,
      *   logf, comment, size, hann, ops, twopass, dofqav, dotitle,
-     *   filelabel,dotsize)
+     *   filelabel,dotsize,titlepnt)
       call chkinp (xaxis, yaxis, xmin, xmax, ymin, ymax, dayav,
      *   dodoub, dowave, doave, dovec, dorms, dointer, doperr,
      *   dowrap, hann, xrtest, yrtest)
@@ -571,8 +584,6 @@ c
         call uvdatgta ('name', in)
         call logwrite (' ', more)
         str = itoaf (ifile)
-c        filen='File #'//str(1:len1(str))//' = '//in(1:len1(in))
-c        write(*,*) filen
         call logwrite ('File # '//str//' = '//in, more)
 c
 c Read first visibility
@@ -584,7 +595,8 @@ c
 c Make plot title when we get some data from a file
 c
         if (title.eq.' ' .and. nread.ne.0)
-     *    call mtitle (lin, nread, dosrc, dayav, tunit, nfiles, title)
+     *    call mtitle (lin, nread, dosrc, dayav, tunit, nfiles, title,
+     *    titlepnt)
 c
         sourid=0
         nsource=0
@@ -850,7 +862,7 @@ c
      *     maxbase, maxpol, maxfile, nbases, npols, npts, buffer(ip),
      *     soupnt(ip), xo, yo, elo, eho, nx, ny, a1a2, order, size, 
      *     polmsk, doavall, docol, dotitle,ifile,filen,filelabel,
-     *     dotsize)
+     *     dotsize,titlepnt)
          enddo
 c
       call logclose
@@ -2587,7 +2599,7 @@ c
      *    doperr, dolog, dozero, doequal, donano, dosrc, doavall,
      *    doxind, doyind, dowrap, dosymb, dodots, docol, inc, nx, ny,
      *    pdev, logf, comment, size, hann, ops, twopass, dofqav,
-     *    dotitle, filelabel, dotsize)
+     *    dotitle, filelabel, dotsize, titlepnt)
 c-----------------------------------------------------------------------
 c     Get the user's inputs
 c
@@ -2635,6 +2647,7 @@ c    dofqav       Average frequency channels before plotting.
 c    dotitle      When false don't write plot title
 c    filelabel    File labelling handle
 c    dotsize      the symbol size selected by users in plotting. 
+c    titlepnt     content of the title selected by users
 c-----------------------------------------------------------------------
 c
       implicit none
@@ -2648,7 +2661,7 @@ c
       integer nx, ny, inc, hann, maxco, ilen, ilen2, tunit
 cc
       integer i, dotsize
-      character itoaf*3, str*3, word*50, ops*9, axis(2)*10
+      character itoaf*3, str*3, word*50, ops*9, axis(2)*10,titlepnt*2
       logical doday, dohour, dosec
 c
       integer len1, filelabel
@@ -2658,7 +2671,7 @@ c Types of axes allowed
 c
       integer naxmax, nax
       parameter (naxmax = 19)
-      character axtyp(naxmax)*10
+      character axtyp(naxmax)*10, line*64
       data axtyp /  'time      ','dtime     ','uvdistance','uu        ',
      * 'vv        ','uc        ','vc        ','uvangle   ','amplitude ',
      * 'phase     ','real      ','imag      ','hangle    ','dhangle   ',
@@ -2788,6 +2801,15 @@ c
         comment(ilen+1:) = word(1:ilen2)//' '
         ilen = ilen + ilen2 + 1
       enddo
+              call keya('title', titlepnt, 'NO')
+        if((titlepnt.ne.'BL').and.(titlepnt.ne.'FR').and.
+    * (titlepnt.ne.'PO').and.(titlepnt.ne.'AV')) then
+          line = 'The title code "'//titlepnt//'" is not supported.'
+        call bug('w', line)
+        call bug('w', 'Using the default.')
+          titlepnt='NO'
+      end if
+
 c
       call keyfin
 c
@@ -2870,7 +2892,7 @@ c
 c
 c
       subroutine mtitle (lin, nread, dosrc, dayav, tunit,
-     *                   nfiles, title)
+     *                   nfiles, title, titlepnt)
 c-----------------------------------------------------------------------
 c     Make a title for the plot
 c
@@ -2884,6 +2906,7 @@ c             avearing time
 c     nfiles  Number of files to plot
 c   Output
 c     title   Title string
+c     titlepnt title content selected by users
 c
 c-----------------------------------------------------------------------
 c
@@ -2897,7 +2920,8 @@ cc
       double precision data(maxchan)
       logical more
       real av
-      character source*9, str*40, str2*10, str3*30
+      character source*9, str*40, str2*10, str3*30, titlepnt*2
+      character strfrq*40
 c     character  name*30
       integer len1, il1, il2, il3
 c-----------------------------------------------------------------------
@@ -2907,20 +2931,16 @@ c
 c Write central frequency
 c
       call strfd ((data(1)+data(nread))/2.0d0, '(f8.4)', str, il1)
+      strfrq = str(1:len1(str))
 c
 c Write source name
 c
       if (dosrc) then
         write(title, 100) source(1:len1(source)), str(1:il1)
       else
-c        if (nfiles.eq.1) then
-c          call uvdatgta ('name', name)
-c          write(title,100) name(1:len1(name)), str(1:il1)
 100       format (a, 1x, a,' GHz')
-c        else
           write(title,200) str(1:il1)
 200       format (a, ' GHz')
-c        end if
       end if
       il1 = len1(title)
 c
@@ -2942,7 +2962,14 @@ c
         str = str3(1:il3)//str2
         il2 = len1(str)
         title(il1+2:) = str(1:il2)
+        if(titlepnt.eq.'AV') then
+           title(1:) = '\gt='//str(1:il2)
+                             end if
+      else
+      if(titlepnt.eq.'AV')  title(1:) = 'no average'
       end if
+      if(titlepnt.eq.'PO') title = ' '
+      if(titlepnt.eq.'FR') title='Freq='//strfrq(1:len1(strfrq))//' GHz'
 c
       call logwrite (title(1:len1(title)), more)
 c
@@ -2977,7 +3004,8 @@ c
      *   xxmax, yymin, yymax, pdev, pl1dim, pl2dim, pl3dim, pl4dim,
      *   maxbase, maxpol, maxfile, nbases, npols, npts, buffer, soupnt,
      *   xo,yo, elo, eho, nx, ny, a1a2, order, size, polmsk,
-     *   doavall, docol, dotitle, fileid, filen, filelabel,dotsize)
+     *   doavall, docol, dotitle, fileid, filen, filelabel,dotsize,
+     *   titlepnt)
 c-----------------------------------------------------------------------
 c     Draw the plot
 c
@@ -3021,6 +3049,7 @@ c   npols          Number of poalrizations encountered in files
 c   filen          Input file name
 c   filelabel      File labelling handle.
 c   dotsize        symbol size choosed by users
+c   titlepnt       title content selected by users
 c
 c Input/output
 c   xx,yymin,max   Work array (automatically determined plot extrema)
@@ -3037,7 +3066,7 @@ c
      *  buffer(pl1dim,pl2dim,pl3dim,pl4dim)
       integer soupnt(pl1dim,pl2dim,pl3dim,pl4dim)
       character title*(*), xaxis*(*), yaxis*(*), pdev*(*), xopt*10,
-     *  yopt*10, filen*(*)
+     *  yopt*10, filen*(*), titlepnt*2
       logical doave, dorms(2), dobase, dointer, dolog, dozero, doequal,
      *  donano, doxind, doyind, dowrap, doperr, dosymb, dodots, doavall,
      *  docol, dotitle
@@ -3052,6 +3081,7 @@ cc
      *  str*80, units*10
       character*2 fmt(2), polstr(12)*2, hard*3
       logical new, more, redef, none, dosmaplt
+      logical srcoff
 c
       integer pgbeg, len1, fileid, filelabel,dotsize
       character polsc2p*2
@@ -3107,6 +3137,8 @@ c
 c
 c Set default sizes
 c
+      srcoff=.false.
+      if(size(2).gt.0.0) srcoff=.true.
       if(size(1).le.0) size(1) = real(max(nx,ny))**0.4
       if(size(2).le.0) size(2) = size(1)
 c
@@ -3261,6 +3293,7 @@ c Set standard viewport
 c
             call pgscf (2)
             call pgsch(size(1))
+            if(titlepnt.ne.'NO') call pgsch(real(max(nx,ny))**0.6)
             call pgvstd
 c
 c DOn't use yellow for hardcopy
@@ -3306,14 +3339,24 @@ c
               if (dobase) then
                 ipl1 = int(log10(real(a1a2(kp,1)))) + 1
                 ipl2 = int(log10(real(a1a2(kp,2)))) + 1
-                write (title(il1+3:),
+            if(titlepnt.eq.'NO')   then 
+                     write (title(il1+3:),
      *            '('//fmt(ipl1)//'''-'''//fmt(ipl2)//')')
      *            a1a2(kp,1), a1a2(kp,2)
+                   else
+                if(titlepnt.eq.'BL') then
+                      title(1:3) = 'BL='
+                      write (title(4:),
+     *            '('//fmt(ipl1)//'''-'''//fmt(ipl2)//')')
+     *            a1a2(kp,1), a1a2(kp,2)
+                      end if
+                     end if
               end if
 c
 c  Set window on view surface
 c
               call pgsch(size(1))
+            if(titlepnt.ne.'NO') call pgsch(real(max(nx,ny))**0.6)
               if (doequal) then
                 call pgwnad (xlo, xhi, ylo, yhi)
               else
@@ -3329,13 +3372,13 @@ c label the file name
 c
               if(filelabel.gt.-1) then
               if((filelabel.eq.1).and.(ip.eq.1))
-     *    call pgmtxt('LV',-.0,1.03,.0,filen(1:len1(filen)))
+     *  call pgmtxt('LV',-.0,1.03,.0,filen(1:len1(filen)))
               if(filelabel.eq.0)
-     *    call pgmtxt('LV',-.0,1.03,.0,filen(1:len1(filen)))
+     *  call pgmtxt('LV',-.0,1.03,.0,filen(1:len1(filen)))
               end if  
               call pglab (xlabel, ylabel, ' ')
               if (dotitle) then
-              call pltitle (npol, polstr, title, cols, doavall,dosmaplt)
+        call pltitle (npol,polstr,title,cols,doavall,dosmaplt,titlepnt)
               end if
 c
 c  Plot points and errors
@@ -3360,12 +3403,12 @@ c
                     call smapgpts (npts(kp,lp,jf),buffer(xo+1,kp,lp,jf),
      *                   buffer(yo+1,kp,lp,jf), 
      *                   soupnt(xo+1,kp,lp,jf),sym,fileid,lp,npol,
-     *                   polstr,dotsize)
+     *                   polstr,dotsize,srcoff)
                        else
                    call smapgpts (npts(kp,lp,jf),buffer(xo+1,kp,lp,jf),
      *                   buffer(yo+1,kp,lp,jf),
      *                   soupnt(xo+1,kp,lp,jf),sym,fileid,lp,npol,
-     *                   polstr,dotsize)
+     *                   polstr,dotsize,srcoff)
 C THE OLD PGPT WITHOUT COLOR SEPARATION FOR SOURCE
 c                  call pgpt (npts(kp,lp,jf),buffer(xo+1,kp,lp,jf),
 c     *                            buffer(yo+1,kp,lp,jf), sym)
@@ -3447,9 +3490,10 @@ c
 
 
       SUBROUTINE smapgpts(N,XPTS,YPTS,soupnt,SYMBOL,fileid,lp,
-     * npol,polstr,dotsize)
+     * npol,polstr,dotsize,srcoff)
       implicit none
       INTEGER N, NPNTS
+      logical srcoff
       REAL XPTS(N), YPTS(N) 
       integer soupnt(N)
       INTEGER SYMBOL, fileid, lp, dotsize
@@ -3633,11 +3677,14 @@ c
               call pglen(5,title(1:l),xlen,ylen)
               if(cindx.eq.25) yloc=1.0-(lp-1.)*1./25. +(npol-1)*1./25.
                yloc = yloc-1./25.*npol
+               if(.not.srcoff) then
                if(yloc.gt.0.0) then
+            
           if(cindx.gt.24) call pgmtxt('RV',-8.5,yloc,0.,title(1:l))
           if(cindx.le.24) call pgmtxt('LV',-1.0,yloc,0.,title(1:l))
                else 
-               call bug('w','too many sources to be labelled.')
+          call bug('w','too many sources to be labelled.')
+               end if
                end if
                end if
           call pgebuf
@@ -3647,7 +3694,8 @@ c
 
 c
 c
-      subroutine pltitle (npol,polstr,title,cols,doavall,dosmaplt)
+      subroutine pltitle (npol,polstr,title,cols,doavall,
+     *   dosmaplt,titlepnt)
 c-----------------------------------------------------------------------
 c     Write the plot title, with polarizations in different
 c     colours reflecting the colours they are plotted in.
@@ -3663,7 +3711,7 @@ c-----------------------------------------------------------------------
       implicit none
       integer npol, cols(*)
       character*2 polstr(*)
-      character title*(*)
+      character title*(*), titlepnt*2
       logical doavall,dosmaplt
 cc
       integer i, len1, i1
@@ -3692,7 +3740,8 @@ c
         i1 = len1(polstr(i))
         if (.not.doavall) call pgsci (cols(i))
         if (dosmaplt) call pgsci(1)
-        call pgmtxt ('T', 2.0, xloc, 0.0, polstr(i)(1:i1))
+        if((titlepnt.eq.'PO').or.(titlepnt.eq.'NO'))
+     *   call pgmtxt ('T', 2.0, xloc, 0.0, polstr(i)(1:i1))
 c
         call pglen (5, polstr(i)(1:i1), xlen, ylen)
         xloc = xloc + 1.2*xlen
@@ -3702,6 +3751,7 @@ c
 c Write rest of title
 c
       call pgsci (1)
+      if(titlepnt.eq.'PO') title(1:) = ' '
       call pgmtxt ('T', 2.0, xloc, 0.0, title)
       end
 c
