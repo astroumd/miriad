@@ -2803,7 +2803,8 @@ c
       enddo
               call keya('title', titlepnt, 'NO')
         if((titlepnt.ne.'BL').and.(titlepnt.ne.'FR').and.
-    * (titlepnt.ne.'PO').and.(titlepnt.ne.'AV')) then
+    * (titlepnt.ne.'PO').and.(titlepnt.ne.'AV').and.
+    * (titlepnt.ne.'NO')) then
           line = 'The title code "'//titlepnt//'" is not supported.'
         call bug('w', line)
         call bug('w', 'Using the default.')
