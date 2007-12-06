@@ -332,7 +332,8 @@ c     &  call bug('f','has not fully implemented yet for jpl catalog.')
         call keyi('dotsize', dotsize, -1)
         call keya('title', titlepnt, 'NO')
         if((titlepnt.ne.'BL').and.(titlepnt.ne.'TI').and.
-    * (titlepnt.ne.'PO').and.(titlepnt.ne.'IN')) then
+    * (titlepnt.ne.'PO').and.(titlepnt.ne.'IN')
+    *  .and.(titlepnt.ne.'NO')) then
           line = 'The title code "'//titlepnt//'" is not supported.'
         call bug('w', line)
         call bug('w', 'Using the default.')
