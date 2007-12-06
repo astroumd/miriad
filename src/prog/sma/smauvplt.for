@@ -509,7 +509,7 @@ c
       start_sid=0
       next_sid=0 
 c-----------------------------------------------------------------------
-      call output ('SmaUvPlt: version 1.6 08-Dec-07')
+      call output ('SmaUvPlt: version 1.6 06-Dec-07')
 c
 c  Get the parameters given by the user and check them for blunders
 c
