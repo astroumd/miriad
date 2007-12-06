@@ -108,6 +108,8 @@ c    rjs  19aug97 Added axis=lag
 c    rjs  31oct97 Use colours in the label.
 c    rjs   3dec97 Replace part of label that dropped off in above change.
 c    rjs  13sep99 Added Doppler corrected freq to possibilities to plot.
+c    jhz  06dec07 Changed the baseline order for the subplots to that
+c                 used in uvplt. 
 c  Bugs:
 c------------------------------------------------------------------------
 	include 'mirconst.h'
@@ -116,7 +118,7 @@ c------------------------------------------------------------------------
         parameter (maxco=15)
 c
 	character version*(*)
-	parameter(version='UvSpec: version 1.0 13-Sep-99')
+	parameter(version='UvSpec: version 1.0 06-dec-07')
 	character uvflags*8,device*64,xaxis*12,yaxis*12,logf*64
 	character xtitle*64,ytitle*64
 	logical ampsc,rms,nobase,avall,first,buffered,doflush,dodots
@@ -631,6 +633,7 @@ c------------------------------------------------------------------------
 	real temp
 	complex ctemp
 c
+        temp = 0.0
 	do k=1,nchan
 	  if(count(k).gt.0)then
 	    if(doamp)then
@@ -741,7 +744,7 @@ c
 c  Determine the baseline number.
 c
 	call BasAnt(preambl(4),i1,i2)
-	bl = (i2*(i2-1))/2 + i1
+        bl = preambl(4)
 c
 c  Zero up to, and including, this baseline.
 c
@@ -946,7 +949,7 @@ c------------------------------------------------------------------------
 	integer hr,mins,sec,b1,b2,l,i,j,xl,yl,symbol,lp,lt
 	character title*64,baseline*12,tau*16,line*80
 	character pollab*32
-	double precision T0
+	double precision T0, dbl
 	real yranged(2)
 	real xlen,ylen,xloc
 	integer k1,k2
@@ -1032,6 +1035,8 @@ c
 	    b2 = b2 + 1
 	  enddo
 	  b1 = bl - l + 1
+             dbl=bl
+          call BasAnt (dbl, b1, b2)
 c
 	  baseline = itoaf(b1)
 	  l = len1(baseline)
