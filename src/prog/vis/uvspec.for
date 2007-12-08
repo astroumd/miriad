@@ -118,7 +118,7 @@ c------------------------------------------------------------------------
         parameter (maxco=15)
 c
 	character version*(*)
-	parameter(version='UvSpec: version 1.0 06-dec-07')
+	parameter(version='UvSpec: version 1.0 08-dec-07')
 	character uvflags*8,device*64,xaxis*12,yaxis*12,logf*64
 	character xtitle*64,ytitle*64
 	logical ampsc,rms,nobase,avall,first,buffered,doflush,dodots
@@ -744,7 +744,7 @@ c
 c  Determine the baseline number.
 c
 	call BasAnt(preambl(4),i1,i2)
-        bl = preambl(4)
+        bl = int(preambl(4))
 c
 c  Zero up to, and including, this baseline.
 c

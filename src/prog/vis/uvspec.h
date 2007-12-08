@@ -19,12 +19,14 @@ c
 	include 'maxdim.h'
 	integer MAXAVER,MAXPOL
 	parameter(MAXAVER=81920,MAXPOL=4)
+        integer maxblpnt
+        parameter(maxblpnt=MAXBASE*256 + MAXBASE-1)
 	complex buf(MAXAVER)
         real    bufr(MAXAVER),buf2(MAXAVER)
 	integer count(MAXAVER)
-	integer pnt(MAXPOL,MAXBASE),nchan(MAXPOL,MAXBASE),free,mbase
-	integer npols(MAXBASE),pols(MAXPOL,MAXBASE),cnt(MAXBASE)
-	integer cntp(MAXPOL,MAXBASE)
-	double precision preamble(5,MAXBASE)
+	integer pnt(MAXPOL,maxblpnt),nchan(MAXPOL,maxblpnt),free,mbase
+	integer npols(maxblpnt),pols(MAXPOL,maxblpnt),cnt(maxblpnt)
+	integer cntp(MAXPOL,maxblpnt)
+	double precision preamble(5,maxblpnt)
 	common/uvavcom/preamble,buf,bufr,buf2,count,pnt,nchan,npols,
      *    pols,cnt,cntp,free,mbase

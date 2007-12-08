@@ -242,7 +242,7 @@ c
         character mname*8000, moln*16
         integer mtag(maxmline), nmline, j, jp, js, je, iline
         character version*(*)
-        parameter(version='SmaUvSpec: version 1.18 06-nov-07')
+        parameter(version='SmaUvSpec: version 1.18 08-nov-07')
         character uvflags*8,device*64,xaxis*12,yaxis*12,logf*64
         character xtitle*64,ytitle*64, veldef*8
         character xtitlebuf*64, line*64
@@ -1181,7 +1181,7 @@ c  Determine the baseline number.
 c
         call basant(preambl(4),i1,i2)
 c        bl = (i2*(i2-1))/2 + i1
-         bl = preambl(4)
+         bl = int(preambl(4))
 c
 c  Zero up to, and including, this baseline.
 c
