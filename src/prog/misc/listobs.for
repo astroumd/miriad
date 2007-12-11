@@ -1,12 +1,12 @@
 c***********************************************************************
         program listobs
 c
-c  Makes a listing of time ordered inforamtion about the observations in
+c  Makes a listing of time ordered information about the observations in
 c  modest detail. If multiple files or wildcards are used as input the 
 c  resulting listing is time ordered.
 c
 c= Listobs - Makes a summary of a set of observations.
-c& lgm
+c& pjt
 c: utility
 c+
 c	LISTOBS makes a summary of a set of observations.  Parameters of
@@ -16,13 +16,19 @@ c	observed is compiled.  The primary use of this program is to
 c	create a summary of the instrument setup and all observations
 c	made during a track.  Use wild cards or an include file to specify
 c	all files relevent for your observations.
-c       Scans are reported where source name, tsys, focus were changed.
+c       Scans are reported where source name, tsys, were changed.
+c       For more details on the correlator setup, use
+c       uvlist options=spectra vis=...
+c       or
+c       uvindex vis=...
 c< vis
-c< time
-c	Takes value "ut" or "lst" to print time as UT or LST (default: ut)
 c@ log 
 c	Output device. (default is standard user output)
 c--
+c
+c< time
+c	Takes value "ut" or "lst" to print time as UT or LST (default: ut)
+c
 c  History:
 c          04-dec-89 initial writing begun by lgm
 c             dec-89 first working version - lgm
@@ -68,6 +74,7 @@ c                        are listed with the system temperature listing
 c           2-jan-07 pjt list local (ENU) antenna positions as well as XYZ
 c          31-jan-07 pjt one more HatCreek dependancy removed (lat) - Elev now correct
 c           4-dec-07 mwp/pjt  time with extra digit, no more focus reporting for CARMA
+c          11-dec-07 pjt removed BW/cormode, printing both ut and lst
 c
 c
 c TODO:
@@ -79,14 +86,14 @@ c-----------------------------------------------------------------------
         include 'listobs.h'
 c
 	character pversion*10
-	parameter (pversion = '4-dec-07')
+	parameter (pversion = '11-dec-07')
 c
         integer ipt,nfiles,uvflag,order(MAXP),nameidx(100),nnames
         integer isys(MAXANT),i,uvscan,j,ii,jj,ipicked,ifix
         integer tin,k,nfocs,length,nhere,hereidx(MAXANT)
 	character dataset(MAXF)*60,outlog*60,text*256,dash*80
 	character radec*24,uthms*8,lsthms*8,oldsou*17,newsou*17
-	character type*1, sftime*30, ptime*4
+	character type*1, sftime*30
 	real diff,totint,tint,baseline(MAXBASE),focus(MAXANT,50)
 	real focnew(MAXANT),focold(MAXANT),focdiff,rlst
         real bl
@@ -94,6 +101,7 @@ c
 	double precision foclst(50),focjday(50),ftime
         double precision lat,lon,sinlat,coslat,sinlon,coslon
 	logical more,fthere,anthere(MAXANT),updated
+        integer len1,tlen1
         data more /.true./
 c----------------------------------------------------------------------c
 
@@ -109,7 +117,6 @@ c
         call mkeyf('vis',dataset,MAXF,nfiles)
         if (nfiles.eq.0)
      *      call bug('f','No data set name(s) given; use vis=')
-	call keya('time',ptime,'ut')
 	call keya('log',outlog,' ')
         call keyfin
 c
@@ -338,16 +345,12 @@ c
 	call LogWrite(dash,more)
         write(text,2110) sftime(1:7)
 	call LogWrite(text,more)
-        if(ptime .eq. 'ut') then
-	  text = 'Source              UT      Dur  Elev  BW(1,2)' //
-     1	       ' Corr              Sys Temps (K)'
-	else
-	  text = 'Source             LST      Dur  Elev  BW(1,2)' //
-     1	       ' Corr              Sys Temps (K)'
-        endif
+        text = 'Source              UT      LST     Dur Elev  ' //
+     1         '     Sys Temps (K)'
 	call LogWrite(text,more)
-        write(text(1:39),'(''                  hhmmss    min  deg '')')
-        write(text(40:132),'(''MHz    mode '',15(i2,3x))')
+        write(text,'(''                  hhmmss   hhmmss'')')
+        tlen1 = len1(text)
+        write(text(tlen1+1:),'(''    min deg    '',15(i2,3x))')
      1        (hereidx(i),i=1,nhere)
 	call LogWrite(text,more)
  2110   format('               Chronology of Observations on ',A)
@@ -358,17 +361,10 @@ c
 	do 250 j=1,nants
 	   isys(j) = ifix(syst(ii,j)+0.0001)
   250	continue
-        if(ptime .eq. 'ut') then
-	  write(text,2201) objs(ii),uthms,dur(ii),el(ii),
-     1        (corbw(ii,j),j=1,2),cmode(ii),(isys(hereidx(j)),j=1,nhere)
- 2201	  format(a,1x,a,1x,f4.1,1x,f4.0,1x,f4.0,1x,f4.0,1x,
-     1         i1,1x,15(i4,1x))
-        else
-	  write(text,2202) objs(ii),lsthms,dur(ii),el(ii),
-     1        (corbw(ii,j),j=1,2),cmode(ii),(isys(hereidx(j)),j=1,nhere)
- 2202	  format(a,1x,a,1x,f4.1,1x,f4.0,1x,f4.0,1x,f4.0,1x,
-     1         i1,1x,15(i4,1x))
-        endif
+        write(text,2201) objs(ii),uthms,lsthms,dur(ii),el(ii),
+     1        (isys(hereidx(j)),j=1,nhere)
+ 2201	format(a,1x,a,1x,a,1x,f4.1,1x,f4.0,1x,  
+     1         15(i4,1x))
 	call LogWrite(text,more)
   300	continue
 c
@@ -469,7 +465,7 @@ c
 	integer tin,ipt,iants,j,i,length
 	double precision utdouble,dlst,dlinef,dlo1,dif,lat,draobs,
      1                   ddecobs
-	real cbw(MAXSPECT/2),systemps(MAXSPECT*MAXANT)
+	real systemps(MAXSPECT*MAXANT)
         real cfreq(MAXSPECT/2),haobs,decobs,sum
         character vtype*4
         logical vupd,systhere
@@ -487,13 +483,6 @@ c	call uvgetvrd(tin,'dec',dec(ipt),1)
 	call uvgetvrr(tin,'vsource',vel(ipt),1)
 	call uvgetvri(tin,'nants',iants,1)
 	call uvrdvri(tin,'nspect',nspec,0)
-c the following was changed to accomodate CARMA data
-        call uvprobvr(tin,'cormode',vtype,length,vupd)
-        if(length.ne.0)then
-           call uvgetvri(tin,'cormode',cmode(ipt),1)
-        else
-           cmode(ipt)=0
-        endif
 	if(nspec.ne.0)then
 	  call uvgetvri(tin,'nchan',nchan,1)
 c the following was changed to accomodate CARMA data
@@ -513,20 +502,6 @@ c the following was changed to accomodate CARMA data
      *		call uvgetvrr(tin,'wsystemp',systemps,iants*nspec)
 
 	endif
-c  the following was changed to accomodate CARMA data
-        call uvprobvr(tin,'corbw',vtype,ncorbw,vupd)
-        if(ncorbw.ne.0)then
-           if (vtype(1:1).eq.'r') then
-              if (ncorbw.gt.4) call bug('f','corbw array too large')
-              call uvgetvrr(tin,'corbw',cbw,ncorbw)
-           else
-              call bug('f','Unexpected type for corbw: ' // vtype)
-           endif
-        else
-           ncorbw=2
-           cbw(1)=0
-           cbw(2)=0
-        endif
 
 	call uvgetvrd(tin,'lst',dlst,1)
 	call uvrdvrd(tin,'freq',dlinef,0.d0)
@@ -543,16 +518,7 @@ c   Process the variables that need it
 c
         utst(ipt) = utdouble
 	lst(ipt)  = dlst
-        if (ncorbw.eq.2) then
-	   corbw(ipt,1) = 1000.0*cbw(1)
-	   corbw(ipt,2) = 1000.0*cbw(2)
-        else if (ncorbw.eq.4) then
-	   corbw(ipt,1) = 1000.0*cbw(1)
-	   corbw(ipt,2) = 1000.0*cbw(3)
-        else
-           write(*,*) 'ncorbw = ',ncorbw
-           call bug('f','Cannot handle this corbw length')
-        endif
+
 	do 200 i=1,iants
 	   sum = 0.0
 	   do 100 j=1,nspec
