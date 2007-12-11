@@ -9,6 +9,7 @@
 /*   pjt  19jun02  MIR4 prototypes                                      */
 /*   jwr  05nov04  Change file offsets to type off_t			*/
 /*   pjt  16feb07  Minor doc improvements                               */
+/*   pjt  11dec07  More helpful message when scratch files fail         */
 /************************************************************************/
 
 #include <stdio.h>
@@ -42,7 +43,7 @@ void scropen_c(int *handle)
   (void)sprintf(name,"scratch%d",number++);
   haccess_c(0,handle,name,"scratch",&iostat);
   if(iostat){
-    bug_c(  'w',"Error opening scratch file");
+    bug_c(  'w',"Error opening scratch file; check your $TMPDIR");
     bugno_c('f',iostat);
   }
 }
@@ -66,7 +67,7 @@ void scrclose_c(int handle)
 
   hdaccess_c(handle,&iostat);
   if(iostat){
-    bug_c(  'w',"Error closing scratch file");
+    bug_c(  'w',"Error closing scratch file; check your $TMPDIR");
     bugno_c('f',iostat);
   }
 }
@@ -96,7 +97,7 @@ void scrread_c(int handle,float *buffer,int offset,int length)
   hreadb_c(handle,(char *)buffer,
     (off_t)sizeof(float)*offset,sizeof(float)*length,&iostat);
   if(iostat){
-    bug_c(  'w',"Error reading from scratch file");
+    bug_c(  'w',"Error reading from scratch file; check your $TMPDIR");
     bugno_c('f',iostat);
   }
 }
@@ -125,7 +126,7 @@ void scrwrite_c(int handle,Const float *buffer,int offset,int length)
   hwriteb_c(handle,(char *)buffer,
     (off_t)sizeof(float)*offset,sizeof(float)*length,&iostat);
   if(iostat){
-    bug_c(  'w',"Error writing to scratch file");
+    bug_c(  'w',"Error writing to scratch file; check your $TMPDIR");
     bugno_c('f',iostat);
   }
 }
