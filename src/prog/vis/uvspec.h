@@ -18,7 +18,7 @@ c  cnt		The number of things accumulated into the preambles.
 c  
 	include 'maxdim.h'
 	integer MAXAVER,MAXPOL
-	parameter(MAXAVER=81920,MAXPOL=4)
+	parameter(MAXAVER=245760,MAXPOL=4)
         integer maxblpnt
         parameter(maxblpnt=MAXBASE*256 + MAXBASE-1)
 	complex buf(MAXAVER)
