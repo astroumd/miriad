@@ -8,7 +8,7 @@
 
 After your CARMA data have been taken,
 the PI will normally have received an email with a ``{\tt CARMA track finished}'' subject line.
-Apart from attaching the observing script and the logfile maintained during observing,
+Apart from attaching the observing script and logfile,
 it will instruct you to download the data from the CARMA archive. This chapter guides you
 through the steps of getting your data, inspecting the data quality, and calibrating it.
 Mapping and Deconvolution are standard procedures in Miriad and are covered elsewhere.
@@ -16,12 +16,13 @@ Mapping and Deconvolution are standard procedures in Miriad and are covered else
 
 \section{CARMA Data Retrieval}
 
-CARMA data are normally multi-source datasets, where all data from a  single track (a typical
+CARMA visibility data are normally multi-source MIRIAD
+datasets, where all data from a  single track (a typical
 ``8'' hour observation) are in a single Miriad dataset.
 
 Note that you will need use the {\tt carmaweb} username and get a password to gain
 access to Carma data! The website {\tt http://cedarflat.mmarray.org/observing}~~ gives 
-instructions where to get this password.\index{Data Archive}
+instructions how to get this password.\index{Data Archive}
 
 
 \subsection{Not at CARMA}
@@ -72,7 +73,7 @@ you saw on that Data Archive page:\index{wget}\index{curl}
 
 \footnotesize
 \begin{verbatim}
-  % set base=http://carma-server.ncsa.uiuc.edu:8080/sciarch/data/
+  % set base=http://carma-server.ncsa.uiuc.edu:8181/data/
   % set data=cx012.SS433.2006sep07.1.miriad.tar.gz 
   % wget -O - $base/$data | tar zxf -
 or
@@ -81,7 +82,8 @@ or
 \normalsize
 
 Note that this procedure is not guarenteed to remain working after the Data Archive
-has been overhauled at some point in the near future.
+has been overhauled at some point in the near future. And this will only work for
+recent data that are in the cache.
 
 \subsection{At CARMA}
 
@@ -215,9 +217,9 @@ No focus values in file
 \subsection{uvindex}
 
 Apart from its useful output, the output of {\tt uvindex} should be
-compared with the log sent by e-mail and the actual data length. Sometimes the database
-fails in filling the data properly, and the data archive center should be 
-contacted\footnote{currently: Lisa Xu} 
+compared with the log sent by e-mail and the actual data length. Sometimes there
+is a failure in filling the data properly, and the data archive center should be 
+contacted\footnote{currently: Lisa Xu}. 
 %CHECK the current contact
 
 \index{uvindex}
@@ -304,6 +306,9 @@ The input data contain the following AzEl offsets
 
 \subsection{uvlist}
 
+A useful listing of the spectral windows can be listed with {\tt uvlist}\index{uvlist}
+\index{spectral windows}
+
 \footnotesize
 \begin{verbatim}
 
@@ -321,6 +326,10 @@ The input data contain the following AzEl offsets
 
 \end{verbatim}
 \normalsize
+
+where you can see the 3 lower sideband windows and 3 upper sideband windows. Notice
+the rest frequency in this example appear a little odd, see also Section\ref{ss:restfreq} for
+a discussion on this.
 
 \subsection{uvflag}
 
@@ -352,7 +361,7 @@ are blanked, the integration is flagged.
 \subsection{other}
 
 Probably the most important thing to remember is at various stages of your calibration: data inspection.
-Check your phases and/or amplitudes are now flat as function of frequency and/or time. Use {\tt uvflag}
+Check if your phases and/or amplitudes are now flat as function of frequency and/or time. Use {\tt uvflag}
 and friends where needed.
 
 
@@ -404,7 +413,7 @@ be able to decide if your data pipeline will have to be redone.
 \normalsize
 
 Appendix E lists the various problems that could have occured with your
-data at different stages of the commissioning of CARMA.  For example,
+data at different stages of the commissioning of CARMA i 2006/7.  For example,
 if you are re-calibrating your data after some new insight, it makes sense
 to check if you should re-fetch the data.\index{mdsum}
 
@@ -445,6 +454,7 @@ applied to your data.
 
 \subsection{Rest Frequency (bugzilla 409)}
 
+\label{ss:restfreq}
 Certainly during the initial campaigns, CARMA data were written with \index{bugzilla, 409}
 a rest frequency equal to the starting frequency in the first window
 of the LSB. This is most likely wrong for your data. Look again at the output of
@@ -484,39 +494,7 @@ as well as (in this case 6) dimensionality.
 \bigskip
 TODO:explain difference between puthd and uvputhd
 
-\subsection{Amplitude Decorrelation}
-
-\label{uvdecor}
-
-All data taken before November 25, 2007, are subject to a small amount of amplitude 
-decorrelation dependent on the difference in delay length between the two antennas in a 
-baseline. \index{decorrelation, amplitude}
-The program {\tt uvdecor}\index{uvdecor} attempts to correct for this:
-
-
-\footnotesize
-\begin{verbatim}
-  % uvdecor vis=xxx.mir out=yyy.mir delaymax=8550
-\end{verbatim}
-\normalsize
-
-Note that the integration times (now baseline based) are adjusted (decreased) to account
-for the increased noise on baselines with longer antenna delay differences. The value of
-{\tt delaymax=8550} (nanoseconds) 
-was emperically determined from good fringetest data in the 2007 B array, in which the
-amplitudes dropped linearly with delay differences. The {\tt delaymax} value is where the
-amplitude would have dropped to 0!
-
-
-It is highly recommended to play with this option for B-array data (with delays up to 6000 ns,
-decorrelation up to 70\%)
-but even in C-array data (delays up to 2000 ns, decorrelations up to  25\%) it should be
-considered.
-
 \subsection{Line Length Correction}
-
-Phase corrections from the line length system are stored in the Miriad uv variables {\tt phasem1},
-which is an antenna based variable.\index{phasem1}\index{linelength correction}
 
 The linelength system monitors changes in the delays through the
 optical fibers to the antennas.  The delays vary as the fibers
@@ -526,9 +504,14 @@ cause significant phase drifts of the local oscillators on the
 receivers.  By correcting for the linelength changes, it should be
 possible to observe phase calibrators less often.
 
+Phase corrections from the line length system are stored in the Miriad uv variables {\tt phasem1},
+which is an antenna based variable.\index{phasem1}\index{linelength correction}
+
+
 To apply the linelength corrections, use the Miriad program {\tt linecal}, which
-write a calibration table in the dataset that can be applied (much like
-{\tt selfcal} does.
+write an antenna based
+calibration table in the dataset that can be applied (much like
+{\tt selfcal} does).
 However, don't expect perfection - the linelength
 system cannot correct for differences in the thermal expansion of
 the antennas (particularly BIMA vs OVRO) or for changes in the
@@ -662,6 +645,8 @@ you should probably also base this on the inspection of the graphical output
 of {\tt varplt}.
 
 
+%% show correlation axisrms vs. windwspeed?
+
 
 
 \section{Calibration}
@@ -769,14 +754,15 @@ data for calibration purposes:\index{autocorrelation}
 
 % uvnorm vis=xxx.mir out=yyy.mir   <--- never submitted, since uvcal can do it.
 
-Calibration is done by normalization of each cross-correllation $V_{ij}$ with $\sqrt{V_{ii} V_{jj}}$.
+This kind of bandpass 
+calibration is done by normalizing each cross-correllation $V_{ij}$ with $\sqrt{V_{ii} V_{jj}}$.
 
 
 
 
 \subsection{Noise Source Passband Calibration}
 
-The noise source is only present in the LSB and can be used to bandpass calibrate narrow
+The noise source is only present in the LSB and can also be used to bandpass calibrate narrow
 calibrator modes. Only for data since early December 2006 has the signal of the Noise Source 
 been sufficiently amplified to be useful for this calibration mode. \index{noise source}
 
@@ -850,7 +836,7 @@ variables:
 Although one can rely on known fluxes of strong calibrators such as 
 3C273 and 3C111, their actual flux varies with time and you will need
 to depend on what CARMA, or other observatories, have supplied for you.
-The best method is to add a planet for bootstrapping your the flux 
+The best method is to add a planet for bootstrapping the flux 
 of your flux calibrator, at least if a planet in available during 
 your observation.
 An alternative way is to use a planet, if available, in your observation
@@ -874,18 +860,24 @@ Flux of: 3C84      03AUG17.00 at  86.2 GHz:  4.00 Jy; rms: 0.30 Jy
 Flux of: 3C84      03AUG18.00 at  86.2 GHz:  4.10 Jy; rms: 0.30 Jy
 Flux of: 3C84      03SEP25.00 at  86.2 GHz:  4.50 Jy; rms: 0.20 Jy
 Flux of: 3C84      06DEC12.00 at  93.3 GHz:  6.57 Jy; rms: 0.99 Jy
-
+...
+Flux of: 3C84      07OCT03.00 at 224.0 GHz:  4.53 Jy; rms: 0.68 Jy
+Flux of: 3C84      07OCT10.00 at  93.4 GHz:  7.41 Jy; rms: 1.11 Jy
+Flux of: 3C84      07OCT10.00 at 224.0 GHz:  3.57 Jy; rms: 0.54 Jy
+Flux of: 3C84      07OCT12.00 at  95.0 GHz:  6.60 Jy; rms: 0.10 Jy
+Flux of: 3C84      07OCT12.00 at  90.7 GHz:  6.80 Jy; rms: 0.10 Jy
+....
 \end{verbatim}
 \normalsize
 
 This calibration list is essentially the old BIMA flux calibrator history
-now appended with new CARMA value, so there is a gap between 2004 and 2006
+now appended with new CARMA values, so there is a gap between 2004 and 2006
 when the BIMA dishes were moved from Hat Creek to Cedar Flat to the merged
 CARMA array.
 
 Another source of information is the flux data maintained by
 ATCA\footnote{{\tt http://www.narrabri.atnf.csiro.au/calibrators/}}  and 
-SMA\footnote{{\tt http://sma1.sma.hawaii.edu/callist.html}}.
+SMA\footnote{{\tt http://sma1.sma.hawaii.edu/callist/callist.html}}.
 
 {\tt xplore} is a tool outside of miriad that also contains time-flux
 tables for each source based on the same table.
@@ -897,15 +889,15 @@ tables for each source based on the same table.
 
 CARMA is a heterogeneous array, currently with 2 different types of antennae
 (10m and 6m), and as such will contribute 3 different types of baselines with
-an OVRO-OVRO, BIMA-BIMA and OVRO-BIMA baseline. The latter is currently
-labeled in the visibility data as a {\tt CARMA} (nominally 8m) antennae, 
+OVRO-OVRO, BIMA-BIMA and OVRO-BIMA baselines. The latter is currently
+labeled in the visibility data as a {\tt CARMA} (nominally about 8m) antennae, 
 the first two simply being ``pure'' {\tt OVRO} (10m) and {\tt HATCREEK} (6m)
-\footnote{The future array with the additional SZA 8 antennae will thus
+\footnote{The future CARMA array with the additional SZA 8 antennae will thus
 have 6 different baseline types that contribute to a different primary
 beam}.
 
 If you want to map anything but a point source in the phase center, 
-you MUST map your source in mosaic'd mode, even if you have a single pointing.
+you MUST map your source in mosaic'd mode, even if you have a single pointing!
 
 \subsection{Mosaicing}
 
@@ -930,6 +922,10 @@ TODO: needs more explanation
 \normalsize
 
 Even for a single pointing observation, your beam (dataset {\tt xxx.bm} in the example) will
-currently contain 3 maps (i.e. an image cube). The first plane is probably the Ovro-Ovro
-beam, followed by the Ovro-Beam beam, and finally the Bima=Bima beam.
+currently contain 3 maps (i.e. an image cube). The first plane is probably the OVRO-OVRO
+beam, followed by the OVRO-BIMA beam, and finally the BIMA=BIMA beam.
 
+
+It is also important to set the area to be cleaned carefully. Use a mosaic sensitivity map and use
+something like a 1.5$\sigma$ cutoff. The mask thus generated can be copied into the cube to be
+cleaned. 

@@ -1,9 +1,9 @@
 % -*- TeX -*-
 
 
-\chapter{Carma Data Version}
+\chapter{CARMA Data Version}
 
-Sometimes it is useful to know at what stage your Carma data has been taken,
+Sometimes it is useful to know at what stage your CARMA data has been taken,
 and at what stage the data was (re)filled by the Data Archive.
 A special  uv variable {\tt version} is used to label this formal data 
 version:\footnote{see also: carma/sdp/AstroHeaderWriter.cc:  astroHdrMap\_p.putString("version", "1.0.1", 1);}
@@ -25,7 +25,7 @@ data. The various stages of baseline corrections are not maintained here, see Se
 \item
 2006/02/01:  (VERSION 0.1.2)
 \item
-2006/12/01:  noise source sufficiently amplified for narrow band passbandcalibration 
+2006/12/01:  noise source sufficiently amplified for narrow band passband calibration 
 \item
 2006/12/xx:  correlator now handling all windows on all baselines
 \item
@@ -37,7 +37,7 @@ data. The various stages of baseline corrections are not maintained here, see Se
 \item
 2007/01/31:  jyperk now correctly made baseline dependant  for proper {\tt invert} weighting (bugzilla \#339) {\bf [refill]}
 \item
-2007/02/08:  (VERSION 1.0.1) new convention of storing {\tt skyErr} monitor point in {\tt axisrms} {\bf [refill]}
+2007/02/08:  (VERSION 1.0.1) new convention of storing {\tt skyErr} monitor point in {\tt axisrms} {\bf [refill]} (CVS 1.80)
 \item
 2007/03/23:  baselines updated. All data between Jan 8 and March 23 should be patched manually using {\tt uvedit}.
 \item
@@ -47,7 +47,7 @@ data. The various stages of baseline corrections are not maintained here, see Se
 \item
 2007/11/26:  amplitude decorrelation fixed; use uvdecor {see \ref{uvdecor}) to fix
 \item
-2007/12/04:  source name confusion (bugzilla \#364/5} fixed
+2007/12/04:  source name confusion (bugzilla \#564} fixed (btw, we're at data version 1.0.3!!)
 
 \end{itemize}
 
@@ -117,13 +117,45 @@ written $\sqrt{2}$ times what it really should be. But check your plots!
 this last example shows the number of visibilities that would be flagged if their
 RMS pointing was off by more than 4 arcsec.
 
-\subsection{Incorrect source name in miriad file (bugzilla 364)}
+\subsection{Incorrect source name in miriad file (bugzilla 564)}
 
 
 Should be obvious looking at the output of {\tt listobs}. oct/nov 2007. still looking into this.
 Fixed Dec 3, 2007. Always been present, but never showed up until the last few months. Load on
-{\tt acc} seems to have triggered this bug in MAW data avering.
+{\tt acc} seems to have triggered this bug in MAW data avering. If your data is mislabeled,
+a careful uvcat, puthd the source name could fix it. But for mosaic'd observations the pointing
+center would probably be mis-averaged, and although the visibility data seem to be ok, the
+data processing would be affected. The advice is to flag the time range of the mislabeled source,
+since they are small portions of your track, but if you want to get the most out of the data,
+are careful uvcat/puthd combination may get you there.
+
 
 \subsection{Amplitude Decorrelation}
+\label{uvdecor}
 
-See \ref{uvdecor}. Section will be placed out of main body here.
+All data taken before November 26, 2007, are subject to a small amount of amplitude 
+decorrelation dependent on the difference in delay length between the two antennas in a 
+baseline. \index{decorrelation, amplitude}
+The program {\tt uvdecor}\index{uvdecor} attempts to correct for this:
+
+
+\footnotesize
+\begin{verbatim}
+  % uvdecor vis=xxx.mir out=yyy.mir delaymax=8550
+\end{verbatim}
+\normalsize
+
+Note that the integration times (now baseline based) are adjusted (decreased) to account
+for the increased noise on baselines with longer antenna delay differences. The value of
+{\tt delaymax=8550} (nanoseconds) 
+was emperically determined from good fringetest data in the 2007 B array, in which the
+amplitudes dropped linearly with delay differences. The {\tt delaymax} value is where the
+amplitude would have dropped to 0!
+
+
+Especially if your source is extended,
+it is highly recommended to play with this option for B-array data (with delays up to 6000 ns,
+decorrelation up to 70\%)
+but even in C-array data (delays up to 2000 ns, decorrelations up to  25\%) it should be
+considered.
+

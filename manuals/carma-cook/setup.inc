@@ -33,7 +33,7 @@ files, please do so. You may also want to check your version of Miriad:
 \end{verbatim} %$
 \normalsize
 
-it should be version 4.0.5 as of this writing (April 2007), {\it and 4.0.6 for January 2008.}
+it should be version 4.0.5 as of this writing (April 2007), {\it and 4.0.6 for December 2007.}
 
 \section{Site dependent setup}
 
@@ -42,7 +42,7 @@ Each of the CARMA sites will have a maintained version of Miriad.
 \subsection{OVRO}
 
 There are two linux versions are maintained
-depending if you are at OVRO in the valley
+depending if you are down at OVRO in the Owens Valley
 
 \footnotesize
 \begin{verbatim}
@@ -84,7 +84,8 @@ Maintains Linux, Solaris and MacOSX ?
 
 \subsection{Maryland}
 
-Maryland uses mostly Mandrake Linux (10.1  as of this writing) on IA-32
+Maryland uses mostly Mandrake Linux (10.1  as of this writing, but switching
+to Centos 5.1 as we speak) on IA-32
 as well as IA-64 type machines. A few
 Solaris machines are still present, but Miriad is not actively maintained
 on them (though available upon request).
@@ -100,7 +101,7 @@ the older version to peek through  the new one and cause unexpected
 results. Use with caution.
 Example:
 \footnotesize\begin{verbatim}
-   % source /n/astromake2/astromake_start
+   % source /n/astromake/astromake_start
    % astroload ds9
    % astroload miriad
 or:

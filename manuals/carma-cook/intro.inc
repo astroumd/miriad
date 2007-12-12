@@ -4,7 +4,7 @@
 \chapter{Introduction}
 
 \begin{latexonly}
-This manual, and other relevant information, is also available on 
+This manual, and other relevant information, is also available on the \miriad\ home page
 \begin{verse}
 {\verb+http://carma.astro.umd.edu/miriad+}
 \end{verse}
@@ -14,7 +14,12 @@ This manual, and other relevant information, is also available on
 and serves as a cookbook for CARMA data using the
 \miriad\ package. It is assumed that the reader has some familiarity
 with the underlying {\bf Unix} operating system (be it Linux, Solaris or Darwin)
-and \miriad\ itself. 
+and \miriad\ itself.  A {\it wiki} page 
+\begin{verse}
+{\verb+http://carma.astro.umd.edu/wiki/index.php/CARMA_Cookbook+}
+\end{verse}
+maintains links and other useful information for the cookbook. 
+
 
 
 \section{Users Guide}

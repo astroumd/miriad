@@ -22,7 +22,7 @@ Switch correlator setup, with phase transfer.
 
 Douglas Friedel wrote a script to split a dataset and runs
 {\tt gmakes/gfiddle} on its parts. There are currently some issues with
-using the old BIMA g-routines. This will be looked into
+using these old BIMA g-routines. This will be looked into
 
 \footnotesize
 % \verbatimlisting{gcal.csh}
