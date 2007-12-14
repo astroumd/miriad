@@ -190,6 +190,8 @@ c    jhz 17aug07 added two counters for non-zero gain channels per
 c                chunk and all channels per chunk.
 c                change the gain flag states to true for good, false
 c                for bad.
+c   pkgw 14dec07 Don't plot bandpass data for antennas in which all
+c                of the gains are 0,0.
 c  Bugs:
 c------------------------------------------------------------------------
         integer maxsels
@@ -1564,7 +1566,7 @@ c------------------------------------------------------------------------
         real x(maxtimes),y(maxtimes),freqmin,freqmax
         real value(2*maxant)
         complex gain
-        integer ichan,ifeed,iant,offset,j,j1,j2,nres,ng
+        integer ichan,ifeed,iant,offset,j,j1,j2,nres,ng,ngood
         integer filelabel,lfile
 c
 c  Externals.
@@ -1597,12 +1599,16 @@ c
             do iant=1,nants
               offset = (ifeed-1) + (iant-1)*nfeeds
               ng = 0
+              ngood = 0
               value(offset+1) = 0
               do ichan=1,nchan
                   gain = g(ichan + nchan*offset)
                   ng = ng + 1
                   gflag(ng)=.false.
-         if(abs(real(gain))+abs(aimag(gain)).gt.0) gflag(ng)=.true.
+                  if(abs(real(gain))+abs(aimag(gain)).gt.0) then
+                     gflag(ng)=.true.
+                     ngood = ngood + 1
+                  end if
                   if(.not.dochan) then
                   x(ng) = freq(ichan)
                   else
@@ -1610,7 +1616,7 @@ c
                   end if
                   y(ng) = getval(gain,value(offset+1))
               enddo
-              if(ng.gt.0)then
+              if(ng.gt.0.and.ngood.gt.0)then
             call setpg(freqmin,freqmax,y,ng,range,.true.)
             call pgptbpass(ng,x,y,gflag,symbol,ifeed,iant,type,
      *    nschann,donply,dosmooth,dofit,dotsize)
