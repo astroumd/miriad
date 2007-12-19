@@ -121,10 +121,11 @@ c    10aug06 dcb   Added comments and reformat GetGains.
 c    10aug06 dcb   GetGains common /savgains/ Ampl,Phi,foc,tpwr,antel,freq
 c    08nov06 mchw  Increase MAXANTS to 64 and MAXSOLS to 4096
 c    10may07 mchw  Added topocentric coordinates in meters to summary.
+c    19dec07 jkoda Added 'XY' option
 c-----------------------------------------------------------------------
 	include 'bee.h'
 	character version*(*),device*80,log*80,ans*20
-	parameter(version='(version 3.0 10-May-2007)')
+	parameter(version='(version 3.0 19-Dec-2007)')
 	integer length,tvis,tgains,iostat
 	logical doscale
 c
@@ -188,6 +189,7 @@ c
 	call output('ED   Edit to new baseline etc.')
 	call output('EX   Exit BEE and write antpos file')
 	call output('FI   Seach for best fit baseline')
+	call output('XY   Fit x,y terms.')
 	call output('GR   Plot vs. HA, sin(DEC), elevation, or focus')
 	call output('IN   Get the Gains for another antenna')
 	call output('LI   List antenna positions and current fit.')
@@ -198,7 +200,6 @@ c
 	call output('TP   Plot tpower versus phase and fit slope.')
 	call output('WA   Write ANTPOS file.')
 	call output('WG   Write gains into the output gains file.')
-
 c
 2	call prompt(ans,length,'command=')
 	if (length.eq.0) goto 1
@@ -214,6 +215,7 @@ c
  	if (ans(1:2) .eq. 'CS') call becs
 	if (ans(1:2) .eq. 'ED') call beedr 
 	if (ans(1:2) .eq. 'FI') call befit
+	if (ans(1:2) .eq. 'XY') call bexy
 	if (ans(1:2) .eq. 'GR') call begr(device)
 	if (ans(1:2) .eq. 'IN') call GetGains(tvis,doscale)
 	if (ans(1:2) .eq. 'LI') call belist
@@ -224,6 +226,7 @@ c
 	if (ans(1:2) .eq. 'TP') call beplot(9,device)
 	if (ans(1:2) .eq. 'WA') call Antfile
 	if (ans(1:2) .eq. 'WG') call PutGains(tgains)
+
 	goto 2
 c
 c  Close up.
@@ -2275,6 +2278,106 @@ c
 	call LogWrit('correlation matrix')
 	do j=1,3
 	  write (line,'(3f15.5)') (m(i,j),i=1,3)
+	  call output(line)
+	  call LogWrit(line)
+	enddo
+	end 
+c********1*********2*********3*********4*********5*********6*********7*c
+	subroutine bexy
+	implicit none
+c  3-parameter fit to antenna positions [x,y-terms] and phase offset.
+c----------------------------------------------------------------------c  
+	include 'bee.h'
+	real x,y,r1,r2,xn,sig,resid,calc
+	real m(3,3),v(3),row(3)
+	real ans(3) / 3*0.0 /
+	real relat(6) / 6*0.0 /     
+	integer numb,i,j,k
+	character line*56
+c
+	r1(x,y)=cos(x)*cos(y)   
+	r2(x,y)=-sin(x)*cos(y)  
+c
+	call output('4-PARAMETER FIT')
+	call output('Fit antenna positions and constant phase offset')
+	call LogWrit('4-PARAMETER FIT')
+c
+c  Select sources.
+c
+	call beincl(numb)
+	if(numb .eq. 0) return
+c
+c  Zero arrays.
+c
+	do 1 i=1,3
+	  v(i)=0.       
+	do 1 j=1,3    
+1	  m(i,j)=0.     
+	xn = 0.
+c
+c  Fill matrix.
+c
+	do 2 j=1,np  
+	  if(is(j).le.0) goto 2
+	  if(.not.stf(is(j))) goto 2
+	  xn = xn + 1.
+	  row(1)=r1(ha(j),dec(j)) 
+	  row(2)=r2(ha(j),dec(j)) 
+	  row(3)=1.     
+	  do 6 i=1,3
+	    v(i)=v(i)+edph(j)*row(i)
+	  do 6 k=1,3    
+6	    m(i,k)=m(i,k)+row(i)*row(k)       
+2 	continue
+
+	if( xn.lt.3.) then
+	  call output('too few points to fit')
+	  return
+	endif
+
+	call invert(3,m,v,ans,relat)      
+c
+c  Scale from radians to nanosecs
+c
+	do i=1,3
+	  ans(i)=ans(i)/(tupi*frq(1))
+	  relat(i)=relat(i)/(tupi*frq(1))
+	enddo
+	sig=0.
+	xn=0.
+	do 10 j=1,np  
+	  if (is(j).le.0) goto 10
+	  if (.not.stf(is(j))) goto 10
+	  xn=xn+1.
+ 	  calc = tupi*frq(j)*(r1(ha(j),dec(j))*ans(1)
+     *		+ r2(ha(j),dec(j))*ans(2) + ans(3))
+	  resid = amod((edph(j)-calc + 3.*pi),tupi) - pi
+	  sig = sig + resid**2     
+10	continue
+
+	if(xn.gt.3.) sig = sqrt( sig / (xn-3) ) 
+
+	do i=1,2
+	  bnew(i) = ans(i)     
+	  relat(i) = relat(i)
+	enddo
+	bnew(4) = ans(3)
+	relat(4) = relat(3)
+	bnew(3) = 0.
+	relat(3) = 0.
+	bnew(5) = 0.
+	bnew(6) = 0.
+	call title(3,sig,relat)
+	do 70 i=1,3
+70	v(i) = sqrt(m(i,i))
+	do 80 i=1,3
+	do 80 j=1,3
+80	m(i,j) = m(i,j)/v(i)/v(j)
+c
+	call output('correlation matrix')
+	call LogWrit('correlation matrix')
+	do j=1,3
+	  write (line,'(3f14.4)') (m(i,j),i=1,3)
 	  call output(line)
 	  call LogWrit(line)
 	enddo
