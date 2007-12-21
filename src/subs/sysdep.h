@@ -30,7 +30,12 @@
  *    pjt 21jun02 MIR4
  *    pjt  4jan05 merged in the new ATNF HAS_STRERROR
  *    pjt  6feb07 kludge for darwin_intel
+ *    cgk 20dec07 make HAS_STRERROR be HAVE_STRERROR per configure.ac
  */
+
+#if defined(HAVE_CONFIG_H) && HAVE_CONFIG_H
+#include "../../config.h"
+#endif
 
 #if !defined(MIR_SYSDEP_H)
 #define MIR_SYSDEP_H
@@ -119,9 +124,14 @@ typedef long long int int8;
 /* Some machines have the "strerror" routine. Linux whinges significantly
    if you use the "old" way of doing effectively what strerror does. */
 
-#if defined(linux)
-#  define HAS_STRERROR
-#endif
+/* strerror is POSIX and should be supported under any POSIX system */
+/* Moving check for strerror into configure steps to define HAVE_STRERROR */
+
+/*
+  if defined(linux)
+    define HAS_STRERROR
+  endif
+*/
 
 
 /*  Short cut routines when no conversion is necessary. These are
