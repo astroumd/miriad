@@ -268,7 +268,7 @@ static char *errmsg_c(int n)
   Return the error message associated with some error number.
 ------------------------------------------------------------------------*/
 {
-#ifdef HAS_STRERROR
+#if defined(HAVE_STRERROR) && HAVE_STRERROR
   /* new POSIX.1 style */
   return strerror(n);
 #else
