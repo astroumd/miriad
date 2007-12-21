@@ -268,8 +268,12 @@ static char *errmsg_c(int n)
   Return the error message associated with some error number.
 ------------------------------------------------------------------------*/
 {
-#if defined(HAVE_STRERROR) && HAVE_STRERROR
-  /* new POSIX.1 style */
+/* check for linux leaves this compat with old style build
+ * this should be removed in favor of HAVE_STRERROR once
+ * is only supported using autotools/configure
+ */
+#if defined(linux) || (defined(HAVE_STRERROR) && HAVE_STRERROR)
+  /* new POSIX.1 style, 20 years old now... (1988) */
   return strerror(n);
 #else
   /* very old style code -- stdio.h is supposed to supply this */

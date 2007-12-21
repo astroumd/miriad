@@ -124,14 +124,9 @@ typedef long long int int8;
 /* Some machines have the "strerror" routine. Linux whinges significantly
    if you use the "old" way of doing effectively what strerror does. */
 
-/* strerror is POSIX and should be supported under any POSIX system */
+/* strerror is POSIX and should be supported under any POSIX.1 system */
 /* Moving check for strerror into configure steps to define HAVE_STRERROR */
-
-/*
-  if defined(linux)
-    define HAS_STRERROR
-  endif
-*/
+/* left old style build compatible check in bug.c */
 
 
 /*  Short cut routines when no conversion is necessary. These are
