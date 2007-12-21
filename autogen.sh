@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 if test "x$LIBTOOLIZE" = x; then
   export LIBTOOLIZE=libtoolize
