@@ -8,7 +8,7 @@ set url=http://hea-www.harvard.edu/saord/download/ds9/
 
 if ($#argv == 0) then
   echo $0 arch v_ds9 v_xpa
-  echo "arch  = linux linux64 macosxppc macosxintel ..."
+  echo "arch  = linux linux64 darwinppc darwinintel ..."
   echo "v_ds9 = 5.0 5.1 ..."
   echo "v_xpa = 2.1.8 2.1.9 ..."
   exit 0
@@ -21,4 +21,10 @@ set v2=$3
 
 set u1=`printf $url/%s/ds9.%s.%s.tar.gz $arch $arch $v1`
 set u2=`printf $url/%s/xpa.%s.%s.tar.gz $arch $arch $v2`
+
+echo $u1
+echo $u2
+
+wget $u1
+wget $u2
 
