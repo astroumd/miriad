@@ -25,6 +25,11 @@ set u2=`printf $url/%s/xpa.%s.%s.tar.gz $arch $arch $v2`
 echo $u1
 echo $u2
 
-wget $u1
-wget $u2
+if (0) then
+  wget $u1
+  wget $u2
+else
+  curl $u1 > $u1:t
+  curl $u2 > $u2:t
+endif
 
