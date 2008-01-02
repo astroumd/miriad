@@ -39,7 +39,7 @@ cd $srcdir
 switch ($out)
      case miriad_er:
      case miriad:
-		  if (-e $libdir/libreadline.a || -e $libdir/libreadline.so) then
+		  if (-e $libdir/libreadline.a || -e $libdir/libreadline.so || -e /usr/lib/libreadline.dylib) then
 		     set options = "$options -DREADLINE"
 		     set linklib = "-lreadline -ltermcap -lm"
 		  endif
