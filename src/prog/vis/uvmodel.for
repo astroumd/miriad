@@ -76,10 +76,12 @@ c	  mfs       This is used if there is a single plane in the input
 c	            model, which is assumed to represent the data at all
 c	            frequencies. This should also be used if the model has
 c	            been derived using MFCLEAN.
-c         zero      Use the value zero for the model if it cannot be 
+c	  zero      Use the value zero for the model if it cannot be 
 c	            calculated. This can be used to avoid flagging the 
 c	            data in the outer parts of the u-v-plane when subtracting
 c	            a low resolution model.
+c	  imag      Process imaginary part of the model. 
+c	            (multiply (0+j)*(real_fft+j*imag_fft)
 c	The operations add, subtract, multiply, divide, replace and flag are
 c	mutually exclusive. The operations flag and unflag are also mutually
 c	exclusive.
@@ -160,19 +162,20 @@ c    mchw 20may97 Swap p,q in  options=polcal.
 c    mchw 22may97 copy across telescop and not pbfwhm in options=imhead.
 c    mchw 05nov97 Add options=poleak.
 c    pjt  17mar01 documented the change Mel made with increased maxsels in 98
+c    mchw 09jan08 Add options=imaginary to handle imaginary image.
 c  Bugs:
 c    * Polarisation processing is pretty crude.
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='version 1.0 17-mar-01')
+	parameter(version='version 1.0 09-jan-2008')
 	integer maxsels,nhead,nbuf
 	parameter(maxsels=1024,nhead=1,nbuf=5*maxchan+nhead)
 c
 	character vis*64,modl*64,out*64,oper*8,ltype*32,type*1
 	character flag1*8,flag2*8
 	logical unflag,autoscal,apriori,updated,imhead,defline
-	logical mfs,doPol,selradec,doclip,zero
+	logical mfs,doPol,selradec,doclip,zero,doimag
 	real sels(maxsels),offset(2),flux,clip,sigma,lstart,lstep,lwidth
 	integer nsize(3),nchan,nread,nvis,length,i
 	integer tvis,tmod,tscr,tout,vcopy,pol
@@ -199,7 +202,7 @@ c
 	call keya('vis',vis,' ')
 	call SelInput('select',sels,maxsels)
 	call GetOpt(oper,unflag,autoscal,apriori,imhead,mfs,doPol,
-     *		selradec,zero)
+     *		selradec,zero,doimag)
 	call keya('model',modl,' ')
 	doclip = keyprsnt('clip')
 	call keyr('clip',clip,0.)
@@ -319,7 +322,7 @@ c
      *	    'No. channels  unexpectedly changed, when rereading data')
 	  call scrread(tscr,buffer,(i-1)*length,length)
 	  call process(oper,buffer(1)*sigma,buffer(nhead+1),
-     *			data,flags,nchan,tvis,preamble(5),maxant,polcor)
+     *		data,flags,nchan,tvis,preamble(5),maxant,polcor,doimag)
 	  if(imhead)then
 	    if(i.eq.1) call ImHed1st(tmod,tout,nchan)
 	    call uvVarCpy(vcopy,tout)
@@ -445,14 +448,14 @@ c
 	end
 c************************************************************************
 	subroutine process(oper,rms,buffer,
-     *			data,flags,nchan,tvis,preamble,maxant,polcor)
+     *		data,flags,nchan,tvis,preamble,maxant,polcor,doimag)
 c
 	implicit none
 	integer nchan,tvis,maxant
 	character oper*(*)
-	real rms,buffer(5,nchan)
+	real rms,buffer(5,nchan),real_fft,imag_fft
 	complex data(nchan)
-	logical flags(nchan)
+	logical flags(nchan),doimag
 	double precision preamble
 	complex polcor(2,MAXANT)
 c
@@ -467,6 +470,7 @@ c		model subroutine.
 c    tvis	Handle of the visibility file.
 c    preamble	Preamble returned by uvread.
 c    polcor 	The instrumental polarization for LR and RL data.
+c    doimag  process imaginary part of the model.
 c  Input/Output:
 c       On input, these are the original values. On output, these are the values
 c       after doing whatever operation is called for.
@@ -476,6 +480,17 @@ c------------------------------------------------------------------------
 	integer i,ant1,ant2,pol,p,q,PolRL,PolLR,PolLL,PolRR
 	parameter(PolRR=-1,PolLL=-2,PolRL=-3,PolLR=-4)
 	real temp,rms2
+c
+c process imaginary part of the model. (multiply (0+j)*(real_fft+j*imag_fft)
+c
+      if(doimag)then
+        do i=1,nchan
+          real_fft = buffer(3,i)
+          imag_fft = buffer(4,i)
+          buffer(3,i) = -imag_fft
+          buffer(4,i) =  real_fft
+        enddo
+      endif
 c
 c  Do a replace operation.
 c
@@ -569,11 +584,12 @@ c
 	end
 c************************************************************************
 	subroutine GetOpt(oper,unflag,autoscal,apriori,imhead,mfs,doPol,
-     *	  selradec,zero)
+     *	  selradec,zero,doimag)
 c
 	implicit none
 	character oper*(*)
 	logical unflag,autoscal,apriori,imhead,mfs,doPol,selradec,zero
+	logical doimag
 c
 c  Get the various processing options.
 c
@@ -589,16 +605,18 @@ c    selradec	Input uv file contains multiple pointings or multiple
 c		sources.
 c    zero       Use zero if the model cannot be calculated (instead of 
 c               flagging the data)
+c    doimag  process imaginary part of the model.
 c------------------------------------------------------------------------
 	integer i,j
 	integer nopt
-	parameter(nopt=16)
+	parameter(nopt=17)
 	character opts(nopt)*9
 	logical present(nopt)
 	data opts/    'add      ','divide   ','flag     ','multiply ',
      *	  'replace  ','subtract ','polcal   ','poleak   ',
      *    'autoscale','unflag   ','apriori  ',
-     *	  'imhead   ','mfs      ','polarized','selradec ','zero     '/
+     *	  'imhead   ','mfs      ','polarized','selradec ','zero     ',
+     *	  'imag     '/
 	call options('options',opts,present,nopt)
 c
 	j = 0
@@ -614,13 +632,14 @@ c
 	oper = opts(j)
 c	
 	autoscal = present(9)
-	unflag = present(10)
-	apriori = present(11)
-	imhead = present(12)
-	mfs = present(13)
-	doPol = present(14)
+	unflag   = present(10)
+	apriori  = present(11)
+	imhead   = present(12)
+	mfs      = present(13)
+	doPol    = present(14)
 	selradec = present(15)
-	zero = present(16)
+	zero     = present(16)
+	doimag   = present(17)
 	if(oper.eq.'flag'.and.unflag)
      *	  call bug('f','You cannot use options=flag,unflag')
 	if(selradec.and.imhead)then
