@@ -17,7 +17,10 @@ require some changes to the lower level Miriad code.
 More detailed primary beam models for OVRO and BIMA for improved mosaicing. Currently
 only simple gaussians are used. Again something needed in Miriad.
 \item 
-Iterative Selfcal (cf. BIMA Song scripts)
+Iterative Selfcal (cf. BIMA Song scripts)\
+\item
+% http://setiathome.berkeley.edu/~aparsons/aipy/index.html
+support for python (see e.g. AIPY)
 \end{itemize}
 
 

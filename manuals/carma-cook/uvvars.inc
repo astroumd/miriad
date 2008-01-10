@@ -55,13 +55,14 @@
 %  30-aug-06  pjt  merged ATNF and CARMA versions of this file
 %  13-feb-07  pjt  CARMA additions,but in MIR5 branch for the carma-cook 
 %                  [i know this is bad, but it will go back to the official location as such]
+%   3-jan-08  pjt  clarify center of channel for frequency calculations
 %
 %  nband - appears to be CARMA's Control.SpectralLineCorrelator.numBands (but it's 8, not 6=nspect)
 %  later removed again
 
 \section{UV Dataset}
 
-\newcommand{\uvversion}{December 3, 2007}
+\newcommand{\uvversion}{January 3, 2008}
 
 A \miriad\ uv dataset is composed of a collection of items and `\MM{u-v} variables'.
 The variables are parameters that are known at the time of the observation,
@@ -563,7 +564,7 @@ sdf(nspect)	\>D	\>GHz
 \> Change in frequency per channel\\
 
 sfreq(nspect)	\>D	\>GHz
-\> Sky frequency of first channel in window\\
+\> Sky frequency of (center of) first channel in window \\
 
 smonrms		\>R	\>$\mu$m
 \> ATCA seeing monitor rms value (see also rmspath)\\
@@ -658,7 +659,7 @@ wcorr(nwide)		\>C     \>-
 \>\>\>  wcorr(3:4) are the analog LSB and USB.\\
 
 wfreq(nwide)	\>R	\>GHz
-\> Wideband correlation average frequencies\\
+\> Wideband correlation average frequencies (center?)\\
 
 wind		\>R     \>km/h
 \> Wind speed in km/h (ATCA)\\

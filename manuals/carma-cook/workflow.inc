@@ -4,12 +4,23 @@
 \chapter{Work Flow}
 
 
+This Chapter guides you through the following basic steps of reducing your CARMA data. 
+Each step has a seperate Section devoted to it. 
+
+\begin{enumerate}
+\item Get your data from the CARMA Data Archive
+\item Organize your working directory tree
+\item Inspect data logs and quality
+\item Correct data for obvious errors (flagging, baselines, etc.)
+\item Calibrate phases and amplitudes
+\item Mapping and Deconvolution
+\end{enumerate}
+
 % \section{CARMA track finished}
 
-After your CARMA data have been taken,
-the PI will normally have received an email with a ``{\tt CARMA track finished}'' subject line.
+The PI will normally have received an email with a ``{\tt CARMA track finished}'' subject line.
 Apart from attaching the observing script and logfile,
-it will instruct you to download the data from the CARMA archive. This chapter guides you
+it will instruct you to download the data from the CARMA data archive. This chapter guides you
 through the steps of getting your data, inspecting the data quality, and calibrating it.
 Mapping and Deconvolution are standard procedures in Miriad and are covered elsewhere.
 
@@ -27,21 +38,19 @@ instructions how to get this password.\index{Data Archive}
 
 \subsection{Not at CARMA}
 
-%CHECK the current URL
-A temporary website at 
-{\tt http://carma-server.ncsa.uiuc.edu:8080/sciarch/list.jsp}
-provides a large list of (miriad) data that has been taken since integration
-started sometime in 2006. A new more user friendly interface is available
-on {\tt http://carma-server.ncsa.uiuc.edu:8181/}.
-
-In the mean time, use the browser (control-F) to find your
-dataset, check the box next to it,
-and click the download link at the top or bottom
-of that long page. A Java Web Start
+The CARMA data archive at 
+{\tt http://carma-server.ncsa.uiuc.edu:8181/} provides the interface to 
+retrieve your data. Once you have located your data, there are two ways to
+do this.
+A Java Web Start
 (jsp) application will now be launched (you may have to teach your
-browser where {\tt javaws} is located) and once the
+browser where {\tt javaws}\footnote{javaws is part of the Java Development Kit (JDK)
+and if not present, you may have to instal it}
+is located) and once the
 list of datasets has been displayed in {\tt DaRT}, click on 
 the Download button in that java application to start the transfer. 
+The second method would be to right click on the dataset names and
+use your browser to download the data.
 Notice that these file are compressed tar files, and need to be un-tarred 
 to become a real miriad dataset (i.e. a directory):
 
@@ -98,6 +107,47 @@ Eventually those data will disappear and can only be retrieved via the Data Arch
 Notice one subtle naming convention: currently the site uses {\tt .mir} names, where the
 data archive uses {\tt .miriad}! The data archive returns gzip compressed 
 tar files, whereas the site only uses miriad data (i.e. directories).
+
+\section{Organizing your CARMA Data Tree}
+
+Once you start downloading your data, the question immediately arises
+where to put these data
+and how to organize your data. Recall each observation results in a single
+multi-source MIRIAD  
+dataset containing all your sources and calibrators.
+We recommend that you place each of these in a separate directory,
+since your data reduction scripts likely will look very similar and this 
+can result in a more efficient way to name your reduced files.
+
+
+\footnotesize
+\begin{verbatim}
+    MyProject - Day1 / cx002...1/visdata
+              |                  ...
+              |
+              \ Day2 / cx002...2/visdata
+              |                  ...
+              |
+              ...
+\end{verbatim}
+\normalsize
+
+These ``Day'' directories are also a good place to put your 
+observing script and logfile, as it was emailed back to you after the track
+was finished. With this scheme, after calibration is done in each ``Day'' directory, 
+you might wind up
+with a script that combines all these data in the following way:
+
+\footnotesize
+\begin{verbatim}
+    % invert vis=Day1/n1234c,Day2/n1234c,Day3/n1234c map=n1234.mp beam=n1234.bm
+    ...
+\end{verbatim}
+\normalsize
+
+and notice that in each ``Day'' directory, we always wind up with the same
+cleaned and calibrated MIRIAD dataset named {\tt n1234c}.
+
 
 \section{Quality Check}
 
@@ -186,30 +236,24 @@ noise              19 11 49.56 4 58 57.60      0.00E+00     0.0
 Line Code: unknown    Rest Freq:   92.4688 GHz     IF Freq:     0.000 MHz
 Velo Code: VELO-LSR   Anten Vel:      0.00 km/s   First LO:   95.0000 GHz
 --------------------------------------------------------------------------------
-               Chronology of Observations on 06SEP07
-Source              UT    Dur  Elev  BW(1,2) Corr              Sys Temps (K)
-                  hhmmss  min  deg   MHz    mode 1    2    4    5    6    7    8    9   10   12   13   14   15
-MARS              232853 10.0  38.   0.   0. 0  340  384  295  295  339  490  543  531  339  446  256  352  627
-3C273             233938 10.0  41.   0.   0. 0  332  376  290  289  331  473  541  520  323  434  247  339  611
-1830+063          235255  2.0  35.   0.   0. 0  374  432  346  342  394  539  556  591  370  484  292  393  694
-SS433             235551  6.7  26.   0.   0. 0  437  491  406  394  450  615  689  674  458  581  361  470  776
-noise             000242  0.0  28.   0.   0. 0  427  482  390  383  443  641  695  696  446  590  381  489  808
-1830+063          000350  2.0  37.   0.   0. 0  392  430  353  351  404  542  557  596  386  495  297  398  716
-SS433             000644  6.7  29.   0.   0. 0  432  486  413  395  454  621  655  653  439  558  351  459  800
-noise             001335  0.0  30.   0.   0. 0  396  448  358  353  408  601  647  649  410  559  351  458  774
-1830+063          001439  2.0  39.   0.   0. 0  339  385  298  295  340  500  562  539  335  453  260  356  637
-SS433             001732  6.7  31.   0.   0. 0  377  428  347  335  385  549  594  600  380  499  301  402  700
-noise             002423  0.0  32.   0.   0. 0  340  391  300  301  346  533  581  585  355  493  296  394  695
+Source              UT      LST     Dur Elev       Sys Temps (K)
+                  hhmmss   hhmmss    min deg     1    2    4    5    6    7    8    9   10   12   13   14   15
+MARS              232853.5 144355.2 10.0  49.  340  384  295  295  339  490  543  531  339  446  256  352  627
+3C273             233938.0 145441.5 10.0  54.  332  376  290  289  331  473  541  520  323  434  247  339  611
+1830+063          235255.5 150801.2  2.0  39.  374  432  346  342  394  539  556  591  370  484  292  393  694
+SS433             235551.0 151057.1  6.7  30.  437  491  406  394  450  615  689  674  458  581  361  470  776
+noise             000242.0 151749.3  0.0  31.  427  482  390  383  443  641  695  696  446  590  381  489  808
+1830+063          000350.0 151857.5  2.0  42.  392  430  353  351  404  542  557  596  386  495  297  398  716
+SS433             000644.5 152152.4  6.7  32.  432  486  413  395  454  621  655  653  439  558  351  459  800
+noise             001335.5 152844.6  0.0  34.  396  448  358  353  408  601  647  649  410  559  351  458  774
+1830+063          001439.5 152948.7  2.0  44.  339  385  298  295  340  500  562  539  335  453  260  356  637
 ...
-1830+063          071828  2.0  27.   0.   0. 0  404  461  372  366  419  602  663  657  423  553  332  437  745
-SS433             072119  6.7  33.   0.   0. 0  368  418  327  329  370  560  613  599  376  505  294  396  721
-noise             072810  0.0  32.   0.   0. 0  365  421  321  329  374  593  645  631  387  545  326  429  730
-1830+063          072914  2.0  25.   0.   0. 0  427  488  400  387  444  635  690  676  442  582  359  463  792
-SS433             073207  6.7  31.   0.   0. 0  380  437  349  345  389  581  624  620  397  524  310  415  713
-1830+063          073938  2.0  23.   0.   0. 0  460  517  428  414  465  662  728  728  476  608  382  494  832
+
+1830+063          072914.5 224535.1  2.0  26.  427  488  400  387  444  635  690  676  442  582  359  463  792
+SS433             073207.0 224828.1  6.7  36.  380  437  349  345  389  581  624  620  397  524  310  415  713
+1830+063          073938.5 225600.8  2.0  23.  460  517  428  414  465  662  728  728  476  608  382  494  832
 --------------------------------------------------------------------------------
               Record of Focus Values
-No focus values in file
 
 \end{verbatim}
 \normalsize
@@ -329,7 +373,9 @@ A useful listing of the spectral windows can be listed with {\tt uvlist}\index{u
 
 where you can see the 3 lower sideband windows and 3 upper sideband windows. Notice
 the rest frequency in this example appear a little odd, see also Section\ref{ss:restfreq} for
-a discussion on this.
+a discussion on this. Note that {\tt uvlist} only displays the first selected
+frequency setting. If your source and calibrator would have a different setup, use 
+{\tt select=source()} to look at the appropriate setting.
 
 \subsection{uvflag}
 
@@ -337,7 +383,7 @@ You should inspect how much data was flagged by the online system. As of March 2
 been enabled at CARMA, and depending on conditions and a threshold setting, one can easily
 wind up with too much flagged data. Unflagging should of course be done with caution. Currently
 the default threshold is 20\%, i.e. if more than 20\% of the (0.5 second) frames of an integration
-are blanked, the integration is flagged.
+are blanked, the integration is flagged.\index{birdies, uvflag}
 
 
 
@@ -355,8 +401,24 @@ are blanked, the integration is flagged.
  Good:         392950          0    Changed to bad:     392950
  Bad:          180818     573768
 
+
+#Birdies
+ uvflag vis=$cfile "select=ant(1)" line=chan,1,32,1,1 flagval=flag
+ uvflag vis=$cfile "select=ant(1)" line=chan,1,95,1,1 flagval=flag
+ uvflag vis=$cfile "select=ant(1)" line=chan,1,158,1,1 flagval=flag
+ uvflag vis=$cfile "select=ant(7)" line=chan,5,4,1,1 flagval=flag
+
+#End channels
+ uvflag vis=$cfile  line=chan,1,4,1,1 flagval=flag
+ uvflag vis=$cfile  line=chan,1,186,1,1 flagval=flag
+
+
+
 \end{verbatim}
 \normalsize
+
+After this you should recompute the wide band averages using {\tt uvwide}.\index{uvwide}
+
 
 \subsection{other}
 
@@ -368,15 +430,27 @@ and friends where needed.
 \footnotesize
 \begin{verbatim}
 
- % uvimage vis=... out=...
- % mirds9
+ % ds9 &
+ % uvimage vis=cx012.SS433.2006sep07.1.miriad out=cube1 select="-source(noise),-auto"
+ % histo in=cube1
+ % mirds9 cube1
 
- % varplt vis=cx012.SS433.2006sep07.1.miriad device=/xs yaxis=systemp nxy=5,3 yrange=0,2000 options=compress
 \end{verbatim}
 \normalsize
 
-   shows again C3 and C11 are not online. Autoscaling showed C2 has a bad point. But overall something
-   bad happened around 5h UT. See Figure 2.1
+and to inspect almost arbitrary uv variables use {\tt varplt}:
+\footnotesize
+\begin{verbatim}
+
+ % varplt vis=cx012.SS433.2006sep07.1.miriad device=/xs yaxis=systemp nxy=5,3 yrange=0,2000 options=compress
+
+\end{verbatim}
+\normalsize
+
+
+
+shows again C3 and C11 are not online. Autoscaling showed C2 has a bad point. But overall something
+bad happened around 5h UT. See Figure 2.1
 
 
 
@@ -413,7 +487,7 @@ be able to decide if your data pipeline will have to be redone.
 \normalsize
 
 Appendix E lists the various problems that could have occured with your
-data at different stages of the commissioning of CARMA i 2006/7.  For example,
+data at different stages of the commissioning of CARMA in 2006/7.  For example,
 if you are re-calibrating your data after some new insight, it makes sense
 to check if you should re-fetch the data.\index{mdsum}
 
@@ -515,28 +589,20 @@ calibration table in the dataset that can be applied (much like
 However, don't expect perfection - the linelength
 system cannot correct for differences in the thermal expansion of
 the antennas (particularly BIMA vs OVRO) or for changes in the
-temperature of the phaselock electronics.
+temperature of the phaselock electronics. Schematically we will do:
 
 \footnotesize
 \begin{verbatim}
-  % BASIC EXAMPLE:
+  linecal  vis=$data
+  uvcat    vis=$data    out=$data.lc
+  selfcal  vis=$data.lc ....
+\end{verbatim}  % $
+\normalsize
 
-  uvcat vis=$rawdata out=$data select='-auto'
-      # this step is unnecessary with latest version of linecal!
-      # earlier versions can't handle autocorrelation data
+Here is a longer actual example:
 
-  linecal vis=$data
-      # insert linelength corrections into gains file
-
-  uvcat vis=$data out=$data.lc
-      # copy the data to apply the linelength corrections
-
-  selfcal vis=$data.lc ....
-      # now selfcal on calibrators, make maps in usual way
-
-
-
-LONGER EXAMPLE WITH REAL DATA (plots attached):
+\footnotesize
+\begin{verbatim}
 
   #!/bin/csh
   set data = c0034.w3oh.1.miriad
