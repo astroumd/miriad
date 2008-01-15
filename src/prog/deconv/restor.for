@@ -95,7 +95,7 @@ c    rjs  28jun01  Doc change only.
 c    mchw 07feb02  Change beamwidth format to handle ATA and ALMA.
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version='Restor: version 1.3 07- Feb-2002')
+	parameter(version='Restor: version 1.3 07-Feb-2002')
 c
 	include 'maxdim.h'
 	include 'mem.h'
