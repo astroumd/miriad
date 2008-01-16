@@ -75,6 +75,7 @@ c           2-jan-07 pjt list local (ENU) antenna positions as well as XYZ
 c          31-jan-07 pjt one more HatCreek dependancy removed (lat) - Elev now correct
 c           4-dec-07 mwp/pjt  time with extra digit, no more focus reporting for CARMA
 c          11-dec-07 pjt removed BW/cormode, printing both ut and lst
+c          16-jan-08 pjt Added uv distance to the baseline-UVW output section
 c
 c
 c TODO:
@@ -86,7 +87,7 @@ c-----------------------------------------------------------------------
         include 'listobs.h'
 c
 	character pversion*10
-	parameter (pversion = '11-dec-07')
+	parameter (pversion = '16-jan-08')
 c
         integer ipt,nfiles,uvflag,order(MAXP),nameidx(100),nnames
         integer isys(MAXANT),i,uvscan,j,ii,jj,ipicked,ifix
@@ -95,7 +96,7 @@ c
 	character radec*24,uthms*8,lsthms*8,oldsou*17,newsou*17
 	character type*1, sftime*30
 	real diff,totint,tint,baseline(MAXBASE),focus(MAXANT,50)
-	real focnew(MAXANT),focold(MAXANT),focdiff,rlst
+	real focnew(MAXANT),focold(MAXANT),focdiff,rlst,uvd
         real bl
 	double precision jdold,jdnow,antpos(3 * MAXANT),apos(6)
 	double precision foclst(50),focjday(50),ftime
@@ -288,8 +289,9 @@ c                  apos(1..3) is XYZ    apos(4..6) is ENU
 	call LogWrite('           Baselines in Wavelengths',more)
         call LogWrite('           ------------------------',more)
 	call LogWrite('      for Decl = 0 deg. Source at Transit',more)
-	call LogWrite('                 U           V           W    '
-     1                   ,more)
+	call LogWrite('                 U           V           W'//
+     1                '           UVdistance',more)
+
 	do 175 j=1,nants-1
 	   do 170 k=j+1,nants
               if(anthere(j) .and. anthere(k)) then
@@ -297,13 +299,14 @@ c                  apos(1..3) is XYZ    apos(4..6) is ENU
 	 	    baseline(jj) = linefreq(1)*(antpos(j+nants*(jj-1)) -
      1			       antpos(k+nants*(jj-1)))
                  enddo
+                 uvd = sqrt(baseline(2)**2 + baseline(3)**2)
 	         write(text,2003) j,k,baseline(2),baseline(3),
-     1                         baseline(1)
+     1                         baseline(1),uvd
 	         call LogWrite(text,more)
               endif
   170      continue
   175   continue
- 2003	format('Bsln  ',i2,'-',i2,': ',3(f10.2,2x))
+ 2003	format('Bsln  ',i2,'-',i2,': ',4(f10.2,2x))
 c
 c   Write out section showing source names, coordinates, and corr freqs
 c
