@@ -1,0 +1,21 @@
+#! /bin/csh -f
+#
+set base=http://cedarflat.mmarray.org/observing/baseline/antpos/
+set wget=1
+set localdir=/array/rt/baselineSolutions/
+
+if (-d $localdir) then
+  echo NOTE: local repository $localdir is also present
+endif
+
+foreach file ($*)
+  if (! -e $file) then
+    if ($wget) then
+      wget $base/$file
+    else
+      curl $base/$file > $file
+    endif
+  else
+    echo $file already present
+  endif
+end

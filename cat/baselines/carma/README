@@ -1,0 +1,23 @@
+Given the appropriate antpos file, data should be corrected as
+follows:
+
+   uvedit vis=xxx.mir out=yyy.mir apfile=antpos.YYMMDD
+
+It is safe to apply these (absolute) corrections again. In doubt,
+check the xxx.mir/history file.
+
+
+Contents:
+  README		this file
+  antpos.YYMMDD         various antpos files for uvedit
+  get1                  shell script to easily get another one
+
+
+See also:
+
+The official carma baseline page:
+   http://cedarflat.mmarray.org/observing/baseline/
+
+Jin Koda's development page:
+   http://www.astro.caltech.edu/~koda/carma/bl/index.html
+
