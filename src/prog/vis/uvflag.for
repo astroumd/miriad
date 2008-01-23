@@ -147,6 +147,7 @@ c           jhz     13Oct06 fixed the problem in amplitude range flagging,
 c                           which was caused by the arbitrary array size
 c                           of sels 
 c           pjt     13oct06 NSELS -> MAXSELS to clear the confusion 
+c           pjt     23jan08 simplified message when options=noapply
 c************************************************************************
 c uvflag works as follows:
 c It reads the name of the first visibility file.
@@ -158,7 +159,7 @@ c Then it asks for the next visibility file and does the whole process
 c again until the list is exhausted.
 
       character*(*) version
-      parameter ( version = 'uvflag: 13-Oct-06')
+      parameter ( version = 'uvflag: 23-jan-08')
 
       character*64     vis
 
@@ -1051,6 +1052,7 @@ c Type an overview and update history to finish off
       integer	    reccount, treccnt
       integer	    totcount, totcnt(6), i, l
       character     outline*256
+      logical       simpler
 c
 c  Externals.
 c
@@ -1060,6 +1062,8 @@ c  Initialize
       lt1=0
       lt2=0
       if( ropt.eq.'none' ) return
+
+      simpler = .NOT.apply .AND. .not.flagval
 
       call lhwr( 'open', unit, apply )
 
@@ -1100,23 +1104,36 @@ c  Initialize
 
 	 if( lt.eq.1 ) ltype = 'channel'
 	 if( lt.eq.2 ) ltype = 'wide'
-	 write( outline, '( a8,''  Originally  Currently'')') ltype
+
+         if (simpler) then
+	   write( outline, '( a8 )') ltype
+         else
+	   write( outline, '( a8,''  Originally  Currently'')') ltype
+         endif
 	 call lhwr( outline, unit, apply )
 
 	 do i = 1, 6
 	    totcnt(i) = totcount(i,lt)
 	 enddo
-	 write( outline, '( ''Good:  '', 3x, i10, 1x, i10 )' )
-     *	       totcnt(1), totcnt(3)
-	 if( .not.flagval ) write( outline( len1(outline)+1 : ), '('//
-     *	       '4x, ''Changed to bad: '', i10 )' ) totcnt(5)
-	 call lhwr( outline, unit, apply )
 
-	 write( outline, '( ''Bad:   '', 3x, i10, 1x, i10 )' )
+         if (simpler) then
+	   write( outline, '( ''Good:  '', 3x, i10 )' ) totcnt(1)
+	   call lhwr( outline, unit, apply )
+	   write( outline, '( ''Bad:   '', 3x, i10 )' ) totcnt(2)
+	   call lhwr( outline, unit, apply )
+         else
+	   write( outline, '( ''Good:  '', 3x, i10, 1x, i10 )' )
+     *	       totcnt(1), totcnt(3)
+	   if( .not.flagval ) write( outline( len1(outline)+1 : ), '('//
+     *	       '4x, ''Changed to bad: '', i10 )' ) totcnt(5)
+	   call lhwr( outline, unit, apply )
+
+	   write( outline, '( ''Bad:   '', 3x, i10, 1x, i10 )' )
      *		totcnt(2), totcnt(4)
-	 if(	  flagval ) write( outline( len1(outline)+1 : ), '('//
+	   if(	  flagval ) write( outline( len1(outline)+1 : ), '('//
      *		'4x, ''Changed to good: '',i10 )' ) totcnt(6)
-	 call lhwr( outline, unit, apply )
+	   call lhwr( outline, unit, apply )
+        endif
 
        enddo
 c	  write( outline, '(
