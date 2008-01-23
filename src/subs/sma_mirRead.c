@@ -223,6 +223,8 @@
 // 2007-11-27 (JHZ) added a patch to fix the frequency labelling problem
 //                  in the old SMA data (before 2007-11-26) with the recipe
 //                  described in the SMA operation log # 14505
+// 2008-01-23 (JHZ) set static variable to target and unknown
+//                  updated rar2c and decr2c array size                  
 //***********************************************************
 #include <math.h>
 #include <rpc/rpc.h>
@@ -790,8 +792,8 @@ int rsmir_Read(char *datapath, int jstat)
   int tno, ipnt, max_sourid;
   int kstat, dopvelRefChunk=12;
   char *kst[4];
-  char target[6];
-  char unknown[7];
+  static char target[7];
+  static char unknown[8];
   char skipped[8];
   int ntarget;
   time_t  startTime, endTime;
@@ -848,8 +850,8 @@ int rsmir_Read(char *datapath, int jstat)
   strcpy(filename[4],"eng_read");
   strcpy(filename[5],"sch_read");
   strcpy(filename[6],"projectInfo");
-  strcpy(target,"target");
-  strcpy(unknown,"unknown");
+  strcpy(target,"target\0");
+  strcpy(unknown,"unknown\0");
   strcpy(skipped,"skipped!");
   ntarget=0;
   
@@ -1542,7 +1544,7 @@ double xyzpos;
 // as the array argument 
           sprintf(multisour[sourceID].name, "%s", sours);
 // now check up if the new sours name has been used in the
-// multiple source array
+// multiple source array          
           for(i=2; i< sourceID; i++) {
           if(strcmp(multisour[i].name, sours)==0) {
 // if the name has been used then the last character need to be changed
@@ -1597,12 +1599,10 @@ sprintf(logstr,
 multisour[sourceID].name,multisour[sourceID].sour_id,
 multisour[i].sour_id,multisour[i].name);
 fputs(logstr, logout);
-
 sprintf(logstr,
 "but their coordinates are the same:\n RA=%13s", 
 (char *)rar2c(multisour[sourceID].ra));
 fputs(logstr, logout);
-
 sprintf(logstr,"  Dec=%14s\n",
 (char *)decr2c(multisour[sourceID].dec));
 fputs(logstr, logout);
@@ -1613,7 +1613,7 @@ multisour[i].sour_id,multisour[i].name);
 fprintf(stderr,
 "but their coordinates are the same:\n RA=%13s",
 (char *)rar2c(multisour[sourceID].ra));
-fprintf(stderr,"  Dec=%12s\n", (char *)decr2c(multisour[sourceID].dec));
+fprintf(stderr,"  Dec=%14s\n", (char *)decr2c(multisour[sourceID].dec));
         if(inhset< (nsets[0]-1)) { inhset++; smabuffer.skipsrc=1;} }
                                    }
         if(smabuffer.skipsrc==1)  {
@@ -3460,7 +3460,7 @@ int sch_data_read(FILE * fpsch, long int datalength, short int * data)
 
 char *rar2c(double ra)
 { 
-  static char rac[13];
+  static char rac[14];
   int hh, mm;
   float ss;
   hh = (int) (12.0/DPI*ra);
@@ -3468,14 +3468,14 @@ char *rar2c(double ra)
   ss = (float) (((12.0/DPI*ra-hh)*60.0-mm)*60.0);
   sprintf(rac,"%02d:%02d:%07.4f", hh,mm,ss);
   rac[13]='\0';
-  /*    printf("ra=%s\n", rac);
-   */
+  //printf("inside ra=%s\n", rac);
+  
   return &rac[0];      
 }
 
 char *decr2c(double dec)
 {
-  static char decc[15];
+  static char decc[16];
   int dd, am;
   float as;
   dd = (int)(180./DPI*dec);
