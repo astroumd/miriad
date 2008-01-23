@@ -326,13 +326,13 @@ c                  problem in the MIR data
 c    jhz 27-nov-07 added a patch to fix the frequency labelling problem
 c                  in the old SMA data (before 2007-11-26) with the recipe
 c                  described in the SMA operation log # 14505
-
+c    jhz 23-jan-08 fixed a bug in rar2c and decr2c in c program
 c------------------------------------------------------------------------
         include 'maxdim.h'
         integer maxfiles
         parameter(maxfiles=128)
         character version*(*)
-        parameter(version='SmaLod: version 2.10 27-Nov-07')
+        parameter(version='SmaLod: version 2.11 23-Jan-08')
 c
         character in(maxfiles)*64,out*64,line*64, rxc*4
         character msg*64
