@@ -63,7 +63,7 @@ c	                 default is to plot only unflagged data.
 c	   'all'         Plot both flagged and unflagged data.
 c          'jplcat'      Plot JPL catalog lines. The xaxis and yaxis are
 c                        then forced to be frequency and ampltiude.
-c          'restfreq'    plot the frequency in the rest frame chosen
+c          'restfreq'    plot the frequency in the source rest frame 
 c                        when using the JPL catalog (options=jplcat is chosen.)
 c                        Default is to plot the sky frequency.
 c
@@ -80,7 +80,7 @@ c       in veltype. Positive velocity is away from observer.
 c       Default is zero.
 c
 c@ veltype  
-c       This gives the rest frame. Either the LSR or the BARY 
+c       This gives the reference frame. Either the LSR or the BARY 
 c       (barycenter) is supported. The default is the one defined 
 c       in the uv data. 
 c
@@ -228,11 +228,13 @@ c    jhz 06Dec07  re-arrange the subplot of the baseline pair to
 c                 the conventional order, which is consistent with that 
 c                 in uvplt and smauvplt;
 c                 added keyword for selecting title content.
+c    jhz 23Jan08  added reading 'vsource' and take out it from users input 
+c                 lsrvel. The velocity vsource has been used in the 
+c                 on-line doppler tracking for SMA from users input 'lsrvel'.
 c  Bugs:
 c------------------------------------------------------------------------
         include 'maxdim.h'
-        include 'mirconst.h'
-        
+        include 'mirconst.h'        
         integer maxco,maxmline
         parameter (maxco=15)
 c
@@ -242,7 +244,7 @@ c
         character mname*8000, moln*16
         integer mtag(maxmline), nmline, j, jp, js, je, iline
         character version*(*)
-        parameter(version='SmaUvSpec: version 1.18 06-nov-07')
+        parameter(version='SmaUvSpec: version 1.18 23-Jan-08')
         character uvflags*8,device*64,xaxis*12,yaxis*12,logf*64
         character xtitle*64,ytitle*64, veldef*8
         character xtitlebuf*64, line*64
@@ -268,12 +270,12 @@ c
 c
 c common jpl
 c
-        real strl 
+        real strl,vsource 
         integer nmol, moltag(maxmline)
         character molname(maxmline)*16, jplpath*80 
         character veltyp*8, veltype*32, titlepnt*2 
         common/jplcat/nmol,moltag,molname,docat,lsrvel,
-     *  veltype,veldef,veldop,strl
+     *  veltype,veldef,veldop,strl,vsource
         logical docolor,dorestfreq
         integer nspect, nschan(maxwin),nchan0
         common/spectrum/nspect,nschan,nchan0,docolor,dorestfreq
@@ -282,8 +284,6 @@ c
         real sels(maxsels)
         logical SelProbe, selwins(MAXWIN),winsel
         common/windows/selwins
-
-
 c
 c  Get the input parameters.
 c
@@ -496,6 +496,8 @@ c  Keep on going. Read in another record.
 c
               call uvgetvra(tin,'source',source)
               call uvgetvrr(tin,'veldop',veldop,1)
+              call uvgetvrr(tin,'vsource',vsource,1)
+            if(lsrvel.ne.0.0)  lsrvel=lsrvel-vsource   
 c
 c  Pursing the velocity type
 c
@@ -1649,10 +1651,10 @@ c
         integer nmol, moltag(maxmline), len1
         integer endchunk, startchunk, istart
         character molname(maxmline)*16, veldef*8,veltype*32
-        real lsrvel,veldop,z,yloc
+        real lsrvel,veldop,z,yloc,vsource
         logical docat
         common/jplcat/nmol,moltag,molname,docat,lsrvel,
-     *       veltype,veldef,veldop,strl
+     *       veltype,veldef,veldop,strl,vsource
         logical selwins(maxwin)
         common/windows/selwins
         startchunk=0
@@ -2081,7 +2083,7 @@ c------------------------------------------------------------------------
       integer nants,tno
       double precision sdf(maxwin),sfreq(maxwin),restfreq(maxwin)
       double precision time
-      real veldop
+      real veldop,vsource
       logical updated, docolor, dorestfreq
       common/spectrum/nspect,nschan,nchan0,docolor,dorestfreq
 c
@@ -2115,6 +2117,8 @@ c
         call uvgetvrd(tno,'sdf',sdf,nspect)
         call uvgetvrd(tno,'restfreq',restfreq,nspect)
         call uvgetvrr(tno,'veldop', veldop, 1)
+        call uvgetvrr(tno,'vsource', vsource,1)
+c        write(*,*) 'vsource=', vsource
 c        write(*,*) 'veldop=', veldop
         endif
 	if(nspect.eq.1) docolor=.false.
