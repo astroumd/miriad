@@ -45,7 +45,7 @@ do this.
 A Java Web Start
 (jsp) application will now be launched (you may have to teach your
 browser where {\tt javaws}\footnote{javaws is part of the Java Development Kit (JDK)
-and if not present, you may have to instal it}
+and if not present, you may have to install it}
 is located) and once the
 list of datasets has been displayed in {\tt DaRT}, click on 
 the Download button in that java application to start the transfer. 
@@ -90,7 +90,7 @@ or
 \end{verbatim}
 \normalsize
 
-Note that this procedure is not guarenteed to remain working after the Data Archive
+Note that this procedure is not guaranteed to remain working after the Data Archive
 has been overhauled at some point in the near future. And this will only work for
 recent data that are in the cache.
 
@@ -115,9 +115,9 @@ where to put these data
 and how to organize your data. Recall each observation results in a single
 multi-source MIRIAD  
 dataset containing all your sources and calibrators.
-We recommend that you place each of these in a separate directory,
+We recommend that you place each of these datasets in a separate directory,
 since your data reduction scripts likely will look very similar and this 
-can result in a more efficient way to name your reduced files.
+can result in a more efficient way to organize your reduced files.
 
 
 \footnotesize
@@ -145,25 +145,26 @@ with a script that combines all these data in the following way:
 \end{verbatim}
 \normalsize
 
-and notice that in each ``Day'' directory, we always wind up with the same
+where each ``Day'' directory is assumed to have its
 cleaned and calibrated MIRIAD dataset named {\tt n1234c}.
 
 
 \section{Quality Check}
 
-After your data has been taken a {\it quality} script has been inspecting your
-data and attempted to give it a passing grade. The output of {\tt quality}
-has normally also been inspected by the resident observer(s). Once you have downloaded
-this same data from the archive, it is important for you to first check that
+After your data was taken, a {\it quality} script  ran at the observatory
+inspecting your
+data and giving it a grade. The output of {\tt quality}
+is normally also  inspected by the resident observer(s). Once you have downloaded
+your data from the archive, it is important for you to first check that
 all the data that {\tt quality} has reported, is actually also present in your dataset
 (most notably check the full timerange and all the sources reported).
 A few Miriad programs are available for this, described in the next section, though 
 in theory you could also run {\tt quality} yourself.
 
 You should be able to find your quality output from the CARMA 
-webpage\footnote{direct link: {\tt http://cedarflat.mmarray.org/observing/quality/}}
+webpage\footnote{See: {\tt http://cedarflat.mmarray.org/observing/quality/}}
 by going to ``Observing with CARMA'' and following ``Obtaining and reducing your data'' to
-``Quality output''.
+``Quality output''.  Copy it into your directory and have first a look at it.
 
 % see /opt/rt/scripts/quality, but right now only works at carma
 
@@ -180,14 +181,16 @@ that your quality report saw.
 
 \subsection{listobs}
 
-Although {\tt listobs} was very BIMA specific, it handles CARMA data now, but no doubt will
-need some more modifications to rid the output of some obvious BIMA-isms. Nonetheless,
-the output is a useful summary.\index{listobs}
+
+
+{\tt listobs} gives an overall summary of the data: antenna positions, baselines,
+sources observed, frequency setup, and chronology of the observation. An example
+follows:\index{listobs}
 
 \footnotesize
 \begin{verbatim}
 
-  % listobs vis=cx012.SS433.2006aug25.1.miriad
+  % listobs vis=cx012.SS433.2006sep07.1.miriad
 Opening File: cx012.SS433.2006sep07.1.miriad
                 SUMMARY OF OBSERVATIONS
 --------------------------------------------------------------------------------
@@ -215,13 +218,13 @@ Antenna 15:     3.0289    142.9872     -5.0120        42.866      -1.746      -0
            Baselines in Wavelengths
            ------------------------
       for Decl = 0 deg. Source at Transit
-                 U           V           W
-Bsln   1- 2:  -19941.18    -1738.59     1433.51
-Bsln   1- 4:  -11048.97    -4439.77     3398.88
-Bsln   1- 5:    4745.37    -7336.03     5332.09
+                 U           V           W           UVdistance
+Bsln   1- 2:  -19941.18    -1738.59     1433.51    20016.82
+Bsln   1- 4:  -11048.97    -4439.77     3398.88    11907.61
+Bsln   1- 5:    4745.37    -7336.03     5332.09     8737.04
 ...
-Bsln  13-15:   -9496.48    -1757.84     1303.60
-Bsln  14-15:   -7148.05     1383.23    -1047.63
+Bsln  13-15:   -9496.48    -1757.84     1303.60     9657.80
+Bsln  14-15:   -7148.05     1383.23    -1047.63     7280.65
 --------------------------------------------------------------------------------
             Observed Sources Coordinates and Corr Freqs
 Source         RA         Decl         Vlsr            Corfs in MHz
@@ -253,7 +256,7 @@ noise             001335.5 152844.6  0.0  34.  396  448  358  353  408  601  647
 SS433             073207.0 224828.1  6.7  36.  380  437  349  345  389  581  624  620  397  524  310  415  713
 1830+063          073938.5 225600.8  2.0  23.  460  517  428  414  465  662  728  728  476  608  382  494  832
 --------------------------------------------------------------------------------
-              Record of Focus Values
+
 
 \end{verbatim}
 \normalsize
@@ -265,8 +268,8 @@ compared with the log sent by e-mail and the actual data length. Sometimes there
 is a failure in filling the data properly, and the data archive center should be 
 contacted\footnote{currently: Lisa Xu}. 
 %CHECK the current contact
+An example output of {\tt uvindex} follows:\index{uvindex}
 
-\index{uvindex}
 
 \footnotesize
 \begin{verbatim}
@@ -350,7 +353,7 @@ The input data contain the following AzEl offsets
 
 \subsection{uvlist}
 
-A useful listing of the spectral windows can be listed with {\tt uvlist}\index{uvlist}
+A useful listing of the spectral windows can be obtained with {\tt uvlist}\index{uvlist}
 \index{spectral windows}
 
 \footnotesize
@@ -375,9 +378,9 @@ where you can see the 3 lower sideband windows and 3 upper sideband windows. Not
 the rest frequency in this example appear a little odd, see also Section\ref{ss:restfreq} for
 a discussion on this. Note that {\tt uvlist} only displays the first selected
 frequency setting. If your source and calibrator would have a different setup, use 
-{\tt select=source()} to look at the appropriate setting.
+{\tt select=source()} to look at the appropriate setting for each object.
 
-\subsection{uvflag}
+\subsection{uvflag - initial check of flagged data}
 
 You should inspect how much data was flagged by the online system. As of March 2007, blanking has
 been enabled at CARMA, and depending on conditions and a threshold setting, one can easily
@@ -391,34 +394,21 @@ are blanked, the integration is flagged.\index{birdies, uvflag}
 \begin{verbatim}
 
  % uvflag vis=cx012.SS433.2006sep07.1.miriad options=noapply flagval=flag
+ ...
  Total number of records selected: 95628; out of 95628 records
  Antennas used: 1,2,4,5,6,7,8,9,10,12,13,14,15
  Counts of correlations within selected channels
- channel   Originally  Currently
- Good:        5894250          0    Changed to bad:    5894250
- Bad:         2712270    8606520
- wide      Originally  Currently
- Good:         392950          0    Changed to bad:     392950
- Bad:          180818     573768
-
-
-#Birdies
- uvflag vis=$cfile "select=ant(1)" line=chan,1,32,1,1 flagval=flag
- uvflag vis=$cfile "select=ant(1)" line=chan,1,95,1,1 flagval=flag
- uvflag vis=$cfile "select=ant(1)" line=chan,1,158,1,1 flagval=flag
- uvflag vis=$cfile "select=ant(7)" line=chan,5,4,1,1 flagval=flag
-
-#End channels
- uvflag vis=$cfile  line=chan,1,4,1,1 flagval=flag
- uvflag vis=$cfile  line=chan,1,186,1,1 flagval=flag
-
-
-
+ channel   
+ Good:        5894250
+ Bad:         2712270
+ wide 
+ Good:         392950
+ Bad:          180818
 \end{verbatim}
 \normalsize
 
-After this you should recompute the wide band averages using {\tt uvwide}.\index{uvwide}
-
+Just for the record, this is a {\it very} high fraction of flagged data.  
+Normally you might see 0.1\%.
 
 \subsection{other}
 
@@ -449,8 +439,25 @@ and to inspect almost arbitrary uv variables use {\tt varplt}:
 
 
 
+
+
 shows again C3 and C11 are not online. Autoscaling showed C2 has a bad point. But overall something
 bad happened around 5h UT. See Figure 2.1
+
+
+
+For the calibrator(s), inspect the run of phase and amplitude as function
+\footnotesize
+\begin{verbatim}
+
+ % smauvplt  vis=cx012.SS433.2006sep07.1.miriad select="source(3c273)" axis=time,phase interval=3
+ % smauvplt  vis=cx012.SS433.2006sep07.1.miriad select="source(3c273)" axis=time,amp   interval=3
+
+ % smauvspec vis=cx012.SS433.2006sep07.1.miriad select="source(3c273)" axis=chan,phase interval=999
+ % smauvspec vis=cx012.SS433.2006sep07.1.miriad select="source(3c273)" axis=chan,amp   interval=999
+
+\end{verbatim}
+\normalsize
 
 
 
@@ -468,12 +475,12 @@ bad happened around 5h UT. See Figure 2.1
 
 The CARMA Data Archive will typically re-fill data from its basic
 constituents (the {\it visbrick} and the {\it monitor points}) whenever
-there is a need. This could also mean that the data  used by the {\tt quality} script
+the data is requested. This could mean that the data  used by the {\tt quality} script
 be different from that obtained from the Data Archive.
 
 You can save a checksum of your data and/or use the version of
 the data that is stored inside the visibility data. That way you will
-be able to decide if your data pipeline will have to be redone.
+be able to decide if your data reduction will have to be redone.
 
 \footnotesize
 \begin{verbatim}
@@ -494,21 +501,35 @@ to check if you should re-fetch the data.\index{mdsum}
 \subsection{Baseline correction}
 
 \label{s:baseline}
-You should always check if you need to (re)apply baseline corrections.
+You should always check if you need to (re)apply baseline 
+corrections\footnote{all data prior to 22-jan-2008 should}
 Although your data may come with initially pretty decent ones, often
 after a few weeks in a new array configuration
-improved ones are available. In the first few days/weeks
+improved baselines are available. In the first few days/weeks
 time after a move baselines can settle and may need to be re-applied
 from the newly computed ones. Normally these are stored in a small
 ascii table with equatorial values in nanoseconds.\index{baseline correction}
-({\it cf}. {\tt uvgen baseunit=1)
+({\it cf}. {\tt uvgen baseunit=1}.
+Antpos datafiles
+can be found\footnote{At CARMA, also {\tt /array/rt/baselineSolutions/antpos.YYMMDD}}
+at {\tt http://cedarflat.mmarray.org/observing/baseline/}, as well in your
+local MIRIAD distribution in {\tt \$MIRCAT/baselines/carma}..
+\smallskip
+To apply a new baseline, apply the program {\tt uvedit} to your multisource data set.
+Be sure to apply the new baseline to all sources:
 
 % \footnotesize\normalsize
 \footnotesize
 \begin{verbatim}
-  uvedit vis=xxx.mir out=yyy.mir apfile=antpos.070115 
+  uvedit vis=xxx.mir out=yyy.mir apfile=$MIRCAT/baselines/carma/antpos.070115 
 \end{verbatim}
 \normalsize
+
+In rare cases, a new and better solution is found a month or so after your data were
+taken. Check the status of the baseline solution on the above mentioned web page. It is a good
+idea to apply an appropriate solution if you are not sure which solution has been
+applied to your data.
+
 
 Notice that data taken during a move (which can take several days and 
 the array will be in some hybrid configuration) an antpos file will be
@@ -516,13 +537,6 @@ available for each day. Please check the time validity carefully,
 either by filename, or comments in the file.\index{uvedit}
 
 \bigskip
-Antpos datafiles
-can be found\footnote{At CARMA, also {\tt /array/rt/baselineSolutions/antpos.YYMMDD}}
-at {\tt http://cedarflat.mmarray.org/observing/baseline/}.
-In rare cases, a new and better solution is found a month or so after your data were
-taken. Check the status of the baseline solution on the above mentioned web page. It is a good
-idea to apply an appropriate solution if you are not sure which solution has been
-applied to your data.
 
 % OLD: {\tt http://www.astro.caltech.edu/~koda/carma/bl/index.html} and/or 
 
@@ -575,8 +589,10 @@ optical fibers to the antennas.  The delays vary as the fibers
 change temperature.  The delay variations are small, typically less
 than 0.05 nsec on time scales of hours, but they are enough to
 cause significant phase drifts of the local oscillators on the
-receivers.  By correcting for the linelength changes, it should be
-possible to observe phase calibrators less often.
+receivers.  
+% By correcting for the linelength changes, it should be possible to observe phase calibrators less often.
+Since these changes are measured accurately by the linelength system, the corrections
+should be applied.
 
 Phase corrections from the line length system are stored in the Miriad uv variables {\tt phasem1},
 which is an antenna based variable.\index{phasem1}\index{linelength correction}
@@ -584,8 +600,7 @@ which is an antenna based variable.\index{phasem1}\index{linelength correction}
 
 To apply the linelength corrections, use the Miriad program {\tt linecal}, which
 write an antenna based
-calibration table in the dataset that can be applied (much like
-{\tt selfcal} does).
+calibration table in the dataset that can be applied.
 However, don't expect perfection - the linelength
 system cannot correct for differences in the thermal expansion of
 the antennas (particularly BIMA vs OVRO) or for changes in the
@@ -594,46 +609,14 @@ temperature of the phaselock electronics. Schematically we will do:
 \footnotesize
 \begin{verbatim}
   linecal  vis=$data
+  gpplt    vis=$data  yaxis=phase nxy=5,3 device=/xs options=wrap
   uvcat    vis=$data    out=$data.lc
-  selfcal  vis=$data.lc ....
 \end{verbatim}  % $
 \normalsize
 
-Here is a longer actual example:
-
-\footnotesize
-\begin{verbatim}
-
-  #!/bin/csh
-  set data = c0034.w3oh.1.miriad
-
-  linecal vis=$data
-      # new version of linecal ignores autocorrelation data
-
-  gpplt vis=$data yaxis=phase nxy=5,3 device=/xs options=wrap
-      # examine linelength phase correction; you see many wraps, but
-      # remember it is only the DIFFERENCES that matter
-
-  gpplt vis=$data yaxis=phase select='ant(5),time(18:00,19:00)' \
-    device=C5_LINEPHASE.ps/ps options=wrap
-      # examine 1 hr of linephase data from C5; ripples
-      # are caused by air conditioner in the teepee
-
-  uvplt vis=$data line=channel,1,1,15 axis=time,phase \
-    select='ant(1,5,11)(2,14,15),-auto,-source(noise)' \
-    nxy=3,3 device=RAW.ps/ps yrange=-180,180 options=nocal average=0.2
-      # examine raw phases before linelength correction
-
-  uvplt vis=$data line=channel,1,1,15 axis=time,phase \
-    select='ant(1,5,11)(2,14,15),-auto,-source(noise)' \
-    nxy=3,3 device=CORRECTED.ps/ps yrange=-180,180 average=0.2
-      # phases with linelength correction applied
-
-
-\end{verbatim}  % $
-\normalsize
-
-
+Here the {\tt gpplt} commands displays the actual phase corrections
+that are going to applied in {\tt uvcat}. You might see many wraps,
+but remember it is only the  differences that matter.
 
 \subsection{Other UV variables}
 
@@ -656,18 +639,24 @@ TODO:  check on the uvedit problem with missing LO2.
 
 \subsection{Data Flagging and Editing}
 
-See also Chapter 10 in the Miriad Users Guide.  The two important programs that allow
-you to interactively flag are {\tt uvflag} and {\tt blflag}. The {\tt tvflag} program
-has become unfashionable, since it relies on 8bit X windows displays. There is luckily 
-a fairly simple procedure to get those to work in Linux.
+Chapter 10 in the Miriad Users Guide has an extensive discussion on flagging your
+visibility data.
+The two important programs that allow
+you to interactively flag are {\tt uvflag} and {\tt blflag}. 
+
+% The {\tt tvflag} program
+% has become unfashionable, since it relies on 8bit X windows displays. There is luckily 
+% a fairly simple procedure to get those to work in Linux.
 
 Programs such as {\tt uvplt} and {\tt varplt} can be used to inspect data and decide
-what baselines, antennae, time-ranges etc. be flagged. Another potentially useful
-way, simular to the interactive output of {\tt tvflag} is a relatively new program
-{\tt uvimage} which creates a Miriad image out of a visibility dataset. This 3 dimensional
-dataset can be viewed with programs like {\tt ds9} or {\tt karma}, and guide you how
-to flag the data using {\tt uvflag}. It is possible to come up with a procedure
-that ties keystrokes in ds9 to the creation of a batch script that runs {\tt uvflag}
+what baselines, antennae, time-ranges etc. need to be flagged. Another potentially useful
+way
+% simular to the interactive output of {\tt tvflag} 
+is a relatively new program
+{\tt uvimage} which creates a Miriad image cube out of a visibility dataset. This 3 dimensional
+dataset can be viewed with programs like {\tt ds9} or {\tt karma}'s {\tt kvis}, 
+and guide you how to flag the data using {\tt uvflag}. It is possible to come up with a procedure
+that ties keystrokes in {\tt ds9} to the creation of a batch script that runs {\tt uvflag}
 afterwards.
 
 
@@ -686,7 +675,37 @@ afterwards.
 \end{verbatim}
 \normalsize
 
-TODO: this needs more explanation.
+The most useful output mode is amplitudes (the default) where it will channels in the X,
+baselines in Y and time in Z (represented by different planes in {\tt ds9}). As you
+move the {\it Data Cube} slider you will see different channel-baseline images of
+the visibility amplitudes at different times. Look for a change in noise, regions of
+pure 0s, vertical spikes (a.k.a. birdies), horizontal spikes (bad baselines or antennae).
+These will potentially all have to be flagged.
+
+
+\subsection{Flagging birdies and end channels}
+
+\footnotesize
+\begin{verbatim}
+
+#Birdies
+ uvflag vis=$cfile "select=ant(1)" line=chan,1,32,1,1 flagval=flag
+ uvflag vis=$cfile "select=ant(1)" line=chan,1,95,1,1 flagval=flag
+ uvflag vis=$cfile "select=ant(1)" line=chan,1,158,1,1 flagval=flag
+ uvflag vis=$cfile "select=ant(7)" line=chan,5,4,1,1 flagval=flag
+
+#End channels
+ uvflag vis=$cfile  line=chan,1,4,1,1 flagval=flag
+ uvflag vis=$cfile  line=chan,1,186,1,1 flagval=flag
+
+
+
+\end{verbatim}
+\normalsize
+
+After this you should recompute the wide band averages using {\tt uvwide}.\index{uvwide}
+
+
 
 
 \subsection{Flagging based on tracking errors}
@@ -709,6 +728,9 @@ allow OVRO to have a smaller tolerance than the BIMA antennae).
 The exact amount (5 arcsec in this example) is left to your own judgement, and 
 you should probably also base this on the inspection of the graphical output
 of {\tt varplt}.
+
+
+{\it The recommendation for a novice is ...}
 
 
 %% show correlation axisrms vs. windwspeed?
@@ -783,7 +805,7 @@ gpcopy vis=0530+135 out=abaur
 Auto-correlations are handled by the filler of January 31, 2007 (see also
 Appendix E). They
 are stored as baselines with the same antenna pair, and show up before
-the cross-correlations. Some programs assume this, in order to scale that
+the cross-correlations. Some programs assume use these data in order to scale that
 data for calibration purposes:\index{autocorrelation}
 
 % \footnotesize\normalsize
@@ -795,23 +817,11 @@ data for calibration purposes:\index{autocorrelation}
      1 05:02:30.7   1-   1 RR     0.00     0.00  104.786    0   105.167    0   106.508    0
      2 05:02:30.7   2-   2 RR     0.00     0.00  105.545    0   106.359    0   107.692    0
      3 05:02:30.7   4-   4 RR     0.00     0.00  105.542    0   106.023    0   107.893    0
-     4 05:02:30.7   5-   5 RR     0.00     0.00  105.701    0   106.202    0   107.423    0
-     5 05:02:30.7   6-   6 RR     0.00     0.00  105.488    0   106.199    0     0.000    0*
-     6 05:02:30.7   7-   7 RR     0.00     0.00  105.109    0   106.522    0   106.212    0
-     7 05:02:30.7   8-   8 RR     0.00     0.00  105.385    0   106.768    0   108.186    0
-     8 05:02:30.7   9-   9 RR     0.00     0.00  104.877    0   105.551    0   106.094    0
-     9 05:02:30.7  10-  10 RR     0.00     0.00  105.596    0   106.564    0   107.019    0
-    10 05:02:30.7  11-  11 RR     0.00     0.00  105.007    0   106.135    0   105.887    0
-    11 05:02:30.7  12-  12 RR     0.00     0.00  105.801    0   107.429    0   108.338    0
-    12 05:02:30.7  13-  13 RR     0.00     0.00  105.425    0   106.137    0   106.857    0
-    13 05:02:30.7  14-  14 RR     0.00     0.00  105.174    0   106.178    0   107.693    0
+ ...
     14 05:02:30.7  15-  15 RR     0.00     0.00  104.073    0   105.818    0   107.511    0
     15 05:02:30.7   1-   2 RR     0.00     0.00   98.883   34    97.093   46   100.276   59
     16 05:02:30.7   1-   4 RR     0.00     0.00   98.703   24    96.451   20    99.647   59
-    17 05:02:30.7   1-   5 RR     0.00     0.00   95.242   22    95.096   12    99.095   37
-    18 05:02:30.7   1-   6 RR     0.00     0.00   93.422   19    95.104   48     0.000    0*
-    19 05:02:30.7   1-   7 RR     0.00     0.00   96.518   26    97.571   19    97.919   29
-    20 05:02:30.7   1-   8 RR     0.00     0.00   96.409   41    97.700   56    98.455   28
+...
 
   % uvcal vis=xxx.mir out=yyy.mir options=fxcal
 

@@ -48,6 +48,8 @@ data. The various stages of baseline corrections are not maintained here, see Se
 2007/11/26:  amplitude decorrelation fixed; use uvdecor {see \ref{uvdecor}) to fix
 \item
 2007/12/04:  source name confusion (bugzilla \#564} fixed (btw, we're at data version 1.0.3!!)
+\item
+2008/01/23:  fixed minor antenna pad correction rotation; data before this ALWAYS need baseline corrections applied
 
 \end{itemize}
 
@@ -159,3 +161,8 @@ decorrelation up to 70\%)
 but even in C-array data (delays up to 2000 ns, decorrelations up to  25\%) it should be
 considered.
 
+\subsection{Baseline Correction}
+\label{uvedit}
+
+All data prior to January 23, 2008, should have their baseline corrected. See also
+Section~\label{s:baseline}. Use {\tt uvedit} and the appropriate baseline file

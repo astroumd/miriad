@@ -8,9 +8,60 @@
 
 \subsection{Calibration-1}
 
-Simple calibration with the same correlator setting. The one-shot-mfcal approach,
+Simple calibration with a single correlator setting through all sources. A passband and
+phase (amplitude) calibrator is used in addition to the source of interest.
 useful for continuum and simple line observations in e.g. a 32 MHz window.
-Also no need for NOISE source.
+There is also no need for NOISE source.
+
+\footnotesize
+\begin{verbatim}
+   set vis=ct002blabla    # the observed multi-source dataset from CARMA archive
+   set bcal=3c273         # bandpass calibrator
+   set pcal=3c454         # phase calibrator
+   set src=ngc1234        # your source 
+
+   # create and inspect an (antenna based) bandpass solution
+   mfcal vis=$vis select="source($bcal)"
+   gpplt vis=$vis ....
+
+   # apply, take out autocorrelations, selfcal does not handle them
+   uvcat vis=$vis out=$vis.bp select=-auto
+
+   # create and inspect phase and amp calibrator, assuming we trust the flux
+   selfcal vis=$vis.bp select="source($pcal)" options=amp,apriori,noscale
+   gpplt vis=$vis.bp ....
+
+   # map and deconvolve the source
+   invert vis=$vis.bp select="source($src)" map=map0 beam=beam0 options=mosaic
+   ...
+
+
+\end{verbatim}
+\normalsize
+
+One can even imagine a more compact form, of combining the bandpass and phase
+calibrator:
+
+
+\footnotesize
+\begin{verbatim}
+   set vis=ct002blabla    # the observed multi-source dataset from CARMA archive
+   set cal=3c273          # bandpass and phase calibrator
+   set src=ngc1234        # your source 
+
+   # create and inspect an (antenna based) bandpass solution
+   mfcal vis=$vis select="-auto,source($cal)" interval=5
+   gpplt vis=$vis ....
+   gpplt vis=$vis ....
+   gpplt vis=$vis ....
+
+   # map and deconvolve the source
+   invert vis=$vis select="source($src)" map=map0 beam=beam0 options=mosaic
+   ...
+
+
+\end{verbatim}
+\normalsize
 
 \subsection{Calibration-2}
 
