@@ -2,6 +2,7 @@
 
 
 \chapter{CARMA Data Version}
+\label{a:carmadata}
 
 Sometimes it is useful to know at what stage your CARMA data has been taken,
 and at what stage the data was (re)filled by the Data Archive.

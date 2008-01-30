@@ -58,6 +58,8 @@ or up at CARMA on Cedar Flat:
 \end{verbatim}
 \normalsize
 
+Local MIRIAD maintainer: Peter Teuben.
+
 \subsection{Berkeley}
 
 Only a linux version is maintained:
@@ -68,9 +70,13 @@ Only a linux version is maintained:
 \end{verbatim}
 \normalsize
 
+Local MIRIAD maintainer: Mel Wright.
+
 \subsection{Caltech}
 
 Maintains Linux, Solaris and MacOSX ?
+
+Local MIRIAD maintainer: ???
 
 \footnotesize\begin{verbatim}
    source ...
@@ -81,6 +87,8 @@ Maintains Linux, Solaris and MacOSX ?
 \footnotesize\begin{verbatim}
    source ...
 \end{verbatim}\normalsize
+
+Local MIRIAD maintainer: Douglas Friedel.
 
 \subsection{Maryland}
 
@@ -108,6 +116,7 @@ or:
    % astroload -v daily miriad
 \end{verbatim}\normalsize
 
+Local MIRIAD maintainer: Peter Teuben.
 
 \section{Installation}
 

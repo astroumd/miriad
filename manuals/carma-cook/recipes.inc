@@ -610,13 +610,15 @@ This example originates from Misty Lavigne and Stuart Vogel and uses
 a dataset taken in hybrid passband mode in order to calibrate the phase
 offsets between the different bands. This is often the case
 when a single ``narrow band'' is not able
-to catch the frequency range of the object of interest.
+to catch the velocity range of the object of interest, in the current correlator
+galaxies appear to be the primary victim of this.
+
 It assumes that a relatively bright 
 quasar has been observed in the following modes:
 \begin{enumerate}
-\item Three 500/500/500 MHz wide bands
+\item Three 500/500/500 MHz wide bands, currently 15 channels each.
 \item Three nb/nb/nb narrowband (BW depends on what you need for your object to
-fill the spectral range)
+fill the spectral range), currently 63 channels each.
 \item Two bands in narrowband and the other in 500. Aka "hybrid" mode. The procedure
 below can be easily modified if one band is narrow, and the others 500.
 \end{enumerate}

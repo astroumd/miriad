@@ -20,7 +20,8 @@ Each step has a seperate Section devoted to it.
 
 The PI will normally have received an email with a ``{\tt CARMA track finished}'' subject line.
 Apart from attaching the observing script and logfile,
-it will instruct you to download the data from the CARMA data archive. This chapter guides you
+it will instruct you how 
+to download the data from the CARMA data archive. This chapter guides you
 through the steps of getting your data, inspecting the data quality, and calibrating it.
 Mapping and Deconvolution are standard procedures in Miriad and are covered elsewhere.
 
@@ -90,9 +91,7 @@ or
 \end{verbatim}
 \normalsize
 
-Note that this procedure is not guaranteed to remain working after the Data Archive
-has been overhauled at some point in the near future. And this will only work for
-recent data that are in the cache.
+This procedure will only work for recent data that are in the cache.
 
 \subsection{At CARMA}
 
@@ -101,7 +100,8 @@ and CARMA data should probably be directly copied via one of the
 {\tt cedarflat} machines on
 {\tt  /misc/sdp/sciencedata/}, or in case of older data, the directory
 {\tt  /misc/sdp/archive\_sciencedata/} should contain data older than about a month.
-Eventually those data will disappear and can only be retrieved via the Data Archive.
+Eventually those data will also disappear and can then
+only be retrieved via the Data Archive.
 
 \smallskip
 Notice one subtle naming convention: currently the site uses {\tt .mir} names, where the
@@ -122,12 +122,13 @@ can result in a more efficient way to organize your reduced files.
 
 \footnotesize
 \begin{verbatim}
-    MyProject - Day1 / cx002...1/visdata
-              |                  ...
-              |
-              \ Day2 / cx002...2/visdata
-              |                  ...
-              |
+    MyProject / Day1 / cx002.foo.1/visdata
+                                  flags
+                                  ...
+               
+              / Day2 / cx002.foo.2/visdata
+                                  ...
+              
               ...
 \end{verbatim}
 \normalsize
@@ -164,7 +165,7 @@ in theory you could also run {\tt quality} yourself.
 You should be able to find your quality output from the CARMA 
 webpage\footnote{See: {\tt http://cedarflat.mmarray.org/observing/quality/}}
 by going to ``Observing with CARMA'' and following ``Obtaining and reducing your data'' to
-``Quality output''.  Copy it into your directory and have first a look at it.
+``Quality output''.  Copy it into your directory and inspect it.
 
 % see /opt/rt/scripts/quality, but right now only works at carma
 
@@ -172,7 +173,7 @@ by going to ``Observing with CARMA'' and following ``Obtaining and reducing your
 \section{Data Inspection}
 
 There are several ways to get a useful summary of what is in your CARMA multi-source dataset.
-Programs {\tt listobs}, {\tt uvindex} and {\tt uvlist} all have options to deal with this.
+MIRIAD Programs {\tt listobs}, {\tt uvindex} and {\tt uvlist} all have options to deal with this.
 As stressed before, it is a good way to double check if your dataset matches the one
 that your quality report saw.
 
@@ -375,18 +376,19 @@ A useful listing of the spectral windows can be obtained with {\tt uvlist}\index
 \normalsize
 
 where you can see the 3 lower sideband windows and 3 upper sideband windows. Notice
-the rest frequency in this example appear a little odd, see also Section\ref{ss:restfreq} for
-a discussion on this. Note that {\tt uvlist} only displays the first selected
-frequency setting. If your source and calibrator would have a different setup, use 
-{\tt select=source()} to look at the appropriate setting for each object.
+the rest frequency in this example appear a little odd, see also Section~\ref{ss:restfreq} 
+for a discussion on this. Note that {\tt uvlist} only displays the first selected
+frequency setting. If your source and calibrator have a different setup, use 
+{\tt select=\"source()\"} to look at the appropriate setting for each object.
 
 \subsection{uvflag - initial check of flagged data}
 
 You should inspect how much data was flagged by the online system. As of March 2007, blanking has
 been enabled at CARMA, and depending on conditions and a threshold setting, one can easily
 wind up with too much flagged data. Unflagging should of course be done with caution. Currently
-the default threshold is 20\%, i.e. if more than 20\% of the (0.5 second) frames of an integration
-are blanked, the integration is flagged.\index{birdies, uvflag}
+the default threshold is 20\%, 
+i.e. if more than 20\% of the (0.5 second) frames of an integration
+are blanked, that integration itself is flagged.\index{birdies, uvflag}
 
 
 
@@ -408,9 +410,9 @@ are blanked, the integration is flagged.\index{birdies, uvflag}
 \normalsize
 
 Just for the record, this is a {\it very} high fraction of flagged data.  
-Normally you might see 0.1\%.
+Normally you might see 0.1-1\%.
 
-\subsection{other}
+\subsection{Visual: uvplt, uvspec, varplt, uvimage}
 
 Probably the most important thing to remember is at various stages of your calibration: data inspection.
 Check if your phases and/or amplitudes are now flat as function of frequency and/or time. Use {\tt uvflag}
@@ -618,6 +620,8 @@ Here the {\tt gpplt} commands displays the actual phase corrections
 that are going to applied in {\tt uvcat}. You might see many wraps,
 but remember it is only the  differences that matter.
 
+TODO: careful with select=-source(noise)
+
 \subsection{Other UV variables}
 
 Some data bugs (e.g. latitude=0) cannot be fixed by refilling the data. In this case
@@ -683,7 +687,7 @@ pure 0s, vertical spikes (a.k.a. birdies), horizontal spikes (bad baselines or a
 These will potentially all have to be flagged.
 
 
-\subsection{Flagging birdies and end channels}
+\subsection{Flagging Birdies and End Channels}
 
 \footnotesize
 \begin{verbatim}
@@ -703,7 +707,8 @@ These will potentially all have to be flagged.
 \end{verbatim}
 \normalsize
 
-After this you should recompute the wide band averages using {\tt uvwide}.\index{uvwide}
+After this you should recompute the wide band averages using {\tt uvwide}.\index{uvwide},
+if you plan to use them.
 
 
 
@@ -803,11 +808,9 @@ gpcopy vis=0530+135 out=abaur
 \subsection{Autocorrelation}
 
 Auto-correlations are handled by the filler of January 31, 2007 (see also
-Appendix E). They
+Appendix~\ref{a:carmadata}). They
 are stored as baselines with the same antenna pair, and show up before
-the cross-correlations. Some programs assume use these data in order to scale that
-data for calibration purposes:\index{autocorrelation}
-
+the cross-correlations. 
 % \footnotesize\normalsize
 \footnotesize
 \begin{verbatim}
@@ -822,6 +825,20 @@ data for calibration purposes:\index{autocorrelation}
     15 05:02:30.7   1-   2 RR     0.00     0.00   98.883   34    97.093   46   100.276   59
     16 05:02:30.7   1-   4 RR     0.00     0.00   98.703   24    96.451   20    99.647   59
 ...
+\end{verbatim}
+\normalsize
+
+
+
+Some programs use these data for 
+calibration purposes\index{autocorrelation}. For example
+{\tt uvcal} has an option to normalize the cross-correllation 
+data $V_{ij}$ by the preceding auto-correlation data 
+with $\sqrt{V_{ii} V_{jj}}$. This is a different method to (amplitude)
+bandpass calibrate.
+
+\footnotesize
+\begin{verbatim}
 
   % uvcal vis=xxx.mir out=yyy.mir options=fxcal
 
@@ -829,11 +846,6 @@ data for calibration purposes:\index{autocorrelation}
 \normalsize
 
 % uvnorm vis=xxx.mir out=yyy.mir   <--- never submitted, since uvcal can do it.
-
-This kind of bandpass 
-calibration is done by normalizing each cross-correllation $V_{ij}$ with $\sqrt{V_{ii} V_{jj}}$.
-
-
 
 
 \subsection{Noise Source Passband Calibration}
