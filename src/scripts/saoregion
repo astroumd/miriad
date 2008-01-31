@@ -1,0 +1,13 @@
+#! /bin/awk -f
+#  helper script for saomask
+#  it should check (and run sed) on each region type from PROS
+#  and return a valid miriad descriptor, sans channel
+#  miriad will need to append "($plane)" to each of them.
+# Currently supported:
+#  Polygon(x1,y1,x2,y2,....)
+# Currently unsupported, but we should I guess:
+#  box()   -- since they use a different syntax, corner & size
+#  
+{
+print $1;
+}
