@@ -24,6 +24,13 @@ c       uvindex vis=...
 c< vis
 c@ log 
 c	Output device. (default is standard user output)
+c@ options
+c       This gives extra processing options. Several options can be given,
+c       each separated by commas. They may be abbreivated to the minimum
+c       needed to avoid ambiguity.
+c         'nobase'      Do not list baselines. Useful for big arrays such
+c                       as ATA. By default baselines and uvdistance are
+c                       listed.
 c--
 c
 c< time
@@ -76,6 +83,7 @@ c          31-jan-07 pjt one more HatCreek dependancy removed (lat) - Elev now c
 c           4-dec-07 mwp/pjt  time with extra digit, no more focus reporting for CARMA
 c          11-dec-07 pjt removed BW/cormode, printing both ut and lst
 c          16-jan-08 pjt Added uv distance to the baseline-UVW output section
+c          30-jan-08 pjt options=nobase to stop the N^2 baselines output
 c
 c
 c TODO:
@@ -87,7 +95,7 @@ c-----------------------------------------------------------------------
         include 'listobs.h'
 c
 	character pversion*10
-	parameter (pversion = '16-jan-08')
+	parameter (pversion = '30-jan-08')
 c
         integer ipt,nfiles,uvflag,order(MAXP),nameidx(100),nnames
         integer isys(MAXANT),i,uvscan,j,ii,jj,ipicked,ifix
@@ -101,7 +109,7 @@ c
 	double precision jdold,jdnow,antpos(3 * MAXANT),apos(6)
 	double precision foclst(50),focjday(50),ftime
         double precision lat,lon,sinlat,coslat,sinlon,coslon
-	logical more,fthere,anthere(MAXANT),updated
+	logical more,fthere,anthere(MAXANT),updated,nobase
         integer len1,tlen1
         data more /.true./
 c----------------------------------------------------------------------c
@@ -119,6 +127,7 @@ c
         if (nfiles.eq.0)
      *      call bug('f','No data set name(s) given; use vis=')
 	call keya('log',outlog,' ')
+        call getopt(nobase)
         call keyfin
 c
 c-----------------------------------------------------------------------
@@ -285,15 +294,17 @@ c                  apos(1..3) is XYZ    apos(4..6) is ENU
            endif
   160	continue
  2002	format('Antenna ',i2,': ',3(f10.4,2x),2x,3(f10.3,2x))
-        call LogWrite(dash,more)
-	call LogWrite('           Baselines in Wavelengths',more)
-        call LogWrite('           ------------------------',more)
-	call LogWrite('      for Decl = 0 deg. Source at Transit',more)
-	call LogWrite('                 U           V           W'//
-     1                '           UVdistance',more)
+        if (.not.nobase) then
+          call LogWrite(dash,more)
+	  call LogWrite('           Baselines in Wavelengths',more)
+          call LogWrite('           ------------------------',more)
+	  call LogWrite('      for Decl = 0 deg. Source at Transit',
+     1                  more)
+	  call LogWrite('                 U           V           W'//
+     1                  '           UVdistance',more)
 
-	do 175 j=1,nants-1
-	   do 170 k=j+1,nants
+	  do j=1,nants-1
+	   do k=j+1,nants
               if(anthere(j) .and. anthere(k)) then
 	         do jj=1,3
 	 	    baseline(jj) = linefreq(1)*(antpos(j+nants*(jj-1)) -
@@ -304,8 +315,9 @@ c                  apos(1..3) is XYZ    apos(4..6) is ENU
      1                         baseline(1),uvd
 	         call LogWrite(text,more)
               endif
-  170      continue
-  175   continue
+           enddo
+          enddo
+        endif
  2003	format('Bsln  ',i2,'-',i2,': ',4(f10.2,2x))
 c
 c   Write out section showing source names, coordinates, and corr freqs
@@ -580,4 +592,17 @@ c
 	elev  = asin(dummy)
 	return
 	end
+c-----------------------------------------------------------------------
+        subroutine getopt(nobase)
+        implicit none
+        logical nobase
 c
+        integer nopt
+        parameter(nopt=1)
+        character opts(nopt)*9
+        logical present(nopt)
+        data opts/'nobase   '/
+        call options('options',opts,present,nopt)
+        nobase = present(1)
+        end
+
