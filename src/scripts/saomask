@@ -1,0 +1,55 @@
+#! /bin/csh -f
+#
+#  mask (or) in PROS region descriptors into a miriad dataset
+#  15-jul-1992    Original version                Peter Teuben
+#  17-jan-2001    small changes for the 'cubemask' script conventions
+#
+set version="SAOMASK: Version 17-jan-01"
+
+echo $version
+
+if ($#argv != 2) then
+  echo "Usage: $0 image region_basename"
+  echo " image = miriad image dataset"
+  echo " region = base filename of region descriptors (in PROS format)"
+  echo "          that have been created with SAOIMAGE"
+  echo "          Note they must have numeric filename extensions, "
+  echo "          corresponding to its image plane".
+  exit 1
+endif
+
+set image=$1
+set base=$2
+if (! -d $image) then
+  echo $image does not seem like a miriad image
+  exit 1
+endif
+set boxes=($image/$base/saoregion.[0-9]*)
+if ($#boxes == 0) then
+  echo No valid regions found with basename $base
+  exit 1
+endif
+
+
+
+# first flag all data as bad
+  immask in=$image flag=false logic=and
+
+# loop over all regions; the extension being the image plane
+# don't write any history at this stage
+foreach b ($boxes)
+    echo "${0}: Working on $b"
+    set p=$b:e
+    foreach r (`saoregion $b`)
+      immask in=$image "region=$r($p)" logic=or history=false
+      if ($status != 0) goto error
+    end
+    # echo "`saoregion $b`($p)" >> $tmp
+end
+ addhis in=$image comment="SAOMASK $base"
+if (-e $image/mask) \cp $image/mask $image/mask.$base
+
+exit 0
+
+error:
+  echo "SAOMASK: some error occured"

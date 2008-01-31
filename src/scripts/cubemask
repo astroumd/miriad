@@ -1,0 +1,112 @@
+#! /bin/csh -f
+#
+#  mask a miriad datacube manually using external programs that supply regions
+#
+set version="CUBEMASK: Version 17-jan-01"
+
+echo $version
+
+if ($#argv < 2) then
+  echo "Usage: $0 image region [firstplane [lastplane]]"
+  echo " image = miriad image dataset"
+  echo " region = directory name with region descriptors (in SAOIMAGE/PROS format)"
+  echo "          inside the miriad image cube directory"
+  echo " firstplane = first plane in Z to look at"
+  echo " lastplane = last plane in Z to look at (can be less than firstplane)"
+  exit 1
+endif
+
+set image=$1
+set base=$2
+shift argv
+shift argv
+if (! -d $image) then
+  echo $image does not seem like a miriad image
+  exit 1
+endif
+
+if (! -e $image/$base) then
+  echo Creating $image/$base
+  mkdir $image/$base
+  touch $image/$base/header
+  if (-e $image/mask) then
+    echo Making backup of mask
+    cp $image/mask $image/$base/mask
+  endif
+endif
+
+
+
+set naxis1=(`itemize in=$image/naxis1|tail -1`)
+set naxis2=(`itemize in=$image/naxis2|tail -1`)
+set naxis3=(`itemize in=$image/naxis3|tail -1`)
+set ctype1=(`itemize in=$image/ctype1|tail -1`)
+set ctype2=(`itemize in=$image/ctype2|tail -1`)
+set ctype3=(`itemize in=$image/ctype3|tail -1`)
+if ($naxis3[1] == "naxis3") then
+  set nz=$naxis3[3]
+  echo "Found $nz $ctype3[3] planes in $image $naxis1[3] $naxis2[3] $naxis3[3]"
+else
+  echo $image does not seem like a datacube: $naxis3
+  goto error
+endif
+
+if ($#argv > 0) then
+  set n1=$1
+  shift argv
+  if ($#argv > 0) then
+    set n2=$1
+  else
+    set n2=$nz
+  endif
+else
+   set n1=1
+endif
+
+echo "We will now display planes $n1 through $n2 and you need a lot of patience.... "
+echo "Some tips:"
+echo '  - tear off the Region pulldown menu from ds9'
+echo '  - make sure the "Region Format" is "saoimage"'
+echo '  - make sure there are no entries in "List Regions"'
+
+xpaset -p ds9 regions format saoimage
+
+set region=$image/$base/ds9.reg
+set plane=$n1
+#-----------------------------------------------------------------------
+plane_loop:
+  mirds9 $image $plane >& /tmp/mirds9$$.log
+
+  set saoregion=$image/$base/saoregion.$plane
+  if (-e $saoregion) then
+    echo "### Warning: A region file $saoregion already exists, "
+    echo "your can load it through $region"
+    cp $saoregion $region
+    cat $region | xpaset ds9 regions
+  endif
+
+  echo -n "Hit return when done with plane $plane ..."; set ans=$<
+  echo "Make sure you save your region file in $region"
+  if (-e $region) then
+    cp $region $saoregion
+  else 
+    echo "### Warning: no $region file found, continuing with next plane"
+  endif
+  if ($n2 > $n1) then
+    echo Incrementing plane
+    @ plane++
+    if ($plane <= $n2) goto plane_loop
+  else if ($n2 < $n1) then
+    echo Decrementing plane
+    @ plane--
+    if ($plane >= $n2) goto plane_loop
+  else
+    echo All done, only one plane 
+    exit 0
+  endif
+#-----------------------------------------------------------------------
+exit 0
+
+error:
+  echo "CUBEMASK: some error occured"
+  exit 1
