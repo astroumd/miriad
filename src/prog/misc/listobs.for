@@ -84,6 +84,7 @@ c           4-dec-07 mwp/pjt  time with extra digit, no more focus reporting for
 c          11-dec-07 pjt removed BW/cormode, printing both ut and lst
 c          16-jan-08 pjt Added uv distance to the baseline-UVW output section
 c          30-jan-08 pjt options=nobase to stop the N^2 baselines output
+c          04-feb-08 dnf Added object purpose to source listing output
 c
 c
 c TODO:
@@ -110,6 +111,7 @@ c
 	double precision foclst(50),focjday(50),ftime
         double precision lat,lon,sinlat,coslat,sinlon,coslon
 	logical more,fthere,anthere(MAXANT),updated,nobase
+        logical pthere
         integer len1,tlen1
         data more /.true./
 c----------------------------------------------------------------------c
@@ -152,9 +154,11 @@ c
            call uvgetvra(tin,'source',oldsou)
 c --- check if focus is missing as it is in old data ----
 	   call uvprobvr(tin,'focus',type,length,fthere)
+c --- check source purpose
+           call uvprobvr(tin,'purpose',type,length,pthere)
            ipt = ipt + 1
 	   if(ipt.gt.MAXP)CALL bug('f','Too many points')
-	   call getall(tin,ipt)
+	   call getall(tin,ipt,pthere)
 	   jdold = jday(ipt)
 	   call uvgetvrr(tin,'inttime',tint,1)
 	   totint = tint
@@ -194,7 +198,7 @@ c --- check if focus is missing as it is in old data ----
 		    dur(ipt) = totint/60.0
 		    ipt      = ipt + 1
 	            if(ipt.gt.MAXP)CALL bug('f','Too many points')
-		    call getall(tin,ipt)
+		    call getall(tin,ipt,pthere)
 		    totint   = 8.640e4 * tint
                     oldsou = newsou
                  else
@@ -326,17 +330,18 @@ c
 	text = '            Observed Sources Coordinates and Corr Freqs'
 	call LogWrite(text,more)
 	write(text,2004)
- 2004	format('Source         RA         Decl         Vlsr',
+ 2004	format('Source         Purpose    RA         Decl         Vlsr',
      1         '            Corfs in MHz')
 	call LogWrite(text,more)
 	do 200 j=1,nnames
 	   call DegHms(ra(nameidx(j))*180.0d0/DPI,
      1                 dec(nameidx(j))*180.0d0/DPI,radec)
-	   write(text,2005) objs(nameidx(j)),radec,vel(nameidx(j)),
+	   write(text,2005) objs(nameidx(j)),purpose(nameidx(j)),radec,
+     1                   vel(nameidx(j)),
      1                   (corfs(nameidx(j),i),i=1,ncorfin)
 	   call LogWrite(text,more)
   200	continue
- 2005   format(a,2x,a,3x,1pe9.2,3x,4(0pf5.1,1x))
+ 2005   format(a,2x,a,2x,a,3x,1pe9.2,3x,4(0pf5.1,1x))
 c
 c   Write out section showing frequency set-up
 c
@@ -469,7 +474,7 @@ c
 	return
 	end
 c-----------------------------------------------------------------------
-	subroutine getall(tin,ipt)
+	subroutine getall(tin,ipt,pthere)
 c
 c   gets all the header information that will be later printed
 c
@@ -483,13 +488,18 @@ c
 	real systemps(MAXSPECT*MAXANT)
         real cfreq(MAXSPECT/2),haobs,decobs,sum
         character vtype*4
-        logical vupd,systhere
+        logical vupd,systhere,pthere
 c
 c   get all of the desired uv variables from header
 c
 	call uvgetvrd(tin,'time',jday(ipt),1)
 	call uvgetvrd(tin,'ut',utdouble,1)
 	call uvgetvra(tin,'source',objs(ipt))
+        if(pthere)then
+           call uvgetvra(tin,'purpose',purpose(ipt))
+        else
+           purpose(ipt) = " "
+        endif
 c	call uvgetvrd(tin,'ra',ra(ipt),1)
 c	call uvgetvrd(tin,'dec',dec(ipt),1)
 	call uvrdvrd(tin,'ra',ra(ipt),0.0d0)

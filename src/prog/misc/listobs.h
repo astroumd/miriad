@@ -20,9 +20,10 @@ C
         real lst(MAXP),linefreq(MAXP),veldop(MAXP),flo(MAXP),
      1       iffreq(MAXP)
         character objs(MAXP)*17,linname(MAXP)*8,veltype(MAXP)*10
+        character purpose(MAXP)*5
         double precision jday(MAXP), ra(MAXP),dec(MAXP)
         common /prarra_i/ nspec,nchan,cmode,nants,ncorbw,ncorfin,corbw
         common /prarra_r/ utst,dur,el,vel,flo,iffreq,
      1                      syst,corfs,lst,linefreq,veldop
-        common /prarra_c/ objs,linname,veltype
+        common /prarra_c/ objs,linname,veltype,purpose
         common /prarra_d/ jday, ra, dec
