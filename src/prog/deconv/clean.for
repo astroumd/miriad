@@ -145,6 +145,8 @@ c   rjs  28aug00 - Increase max complexity of region-of-interest.
 c   dpr  06mar01 - Doc change only.
 c   gmx  07mar04 - Changed optimum gain determination to handle
 c                   negative components
+c   pjt  04feb08 - Fix initializing flag for fft's (see also ATNF version)
+c                  in anticipation for the large reformatting they did?
 c
 c  Important Constants:
 c    MaxDim	The max linear dimension of an input (or output) image.
@@ -162,7 +164,7 @@ c		to write.
 c
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version='Clean: version 1.0 07-Apr-04')
+	parameter(version='Clean: version 4-Feb-08')
 	include 'maxdim.h'
 	integer MaxBeam,maxCmp1,maxCmp2,MaxBox,MaxRun,MaxP
 	parameter(maxCmp1=66000,MaxCmp2=32000,MaxP=257)
@@ -313,7 +315,7 @@ c
 	    if((moded.ne.'hogbom'.or.ModelNam.ne.' ')
      *					.and..not.FFTIni)then
 	      FFTIni = .true.
-	      flags(1:1) = 'p'
+	      flags = 'p'
 	      if(.not.asym) flags(2:2) = 's'
 	      if(pad)       flags(3:3) = 'e'
 	      call CnvlIniF(pBem,lBeam,n1,n2,icentre,jcentre,PHat,flags)
