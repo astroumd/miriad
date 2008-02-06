@@ -164,7 +164,9 @@
 /*		  only when the relevant uv variables are in the dataset*/
 /*  pjt  25apr06 Add ATNF's new uvdim_c and match sourcenames w/o case  */
 /*  pjt  22aug06 merged versions; finish dazim/delev selection code     */
-/*  pjt  22mar08 added code for purpose, fixed uvread_match()           */
+/*  pjt  22may07 added code for purpose, fixed uvread_match()           */
+/*  pjt  06feb08 allow seeing() selection on smonrms and rmspath        */
+/*               cf. 08oct07 addition to ATNF version of uvio.c         */
 /*----------------------------------------------------------------------*/
 /*									*/
 /*		Handle UV files.					*/
@@ -234,7 +236,8 @@
 /*	vsource		plmaj		plmin		plangle		*/
 /*	ra		dec		pol		on		*/
 /*	obsra		obsdec		lst		antpos		*/
-/*	antdiam		source		pol				*/
+/*	antdiam		source		pol		smonrms		*/
+/*	rmspath 							*/
 /*									*/
 /* The VARIABLE structure						*/
 /* ======================						*/
@@ -254,7 +257,7 @@
 /*		list to be formed for hashing.				*/
 /*									*/
 /*----------------------------------------------------------------------*/
-#define VERSION_ID "23-may-07 pjt"
+#define VERSION_ID "6-feb-08 pjt"
 
 #define private static
 
@@ -269,9 +272,9 @@
 #include "io.h"
 #include "miriad.h"
 
-#define UVF_COPY	0x01	/* Set if this variable is to be copied by
-				   the uvcopy routine. */
-#define UVF_UPDATED	0x02	/* Set if noting updates to this variable. */
+#define UVF_COPY	    0x01 /* Set if this variable is to be copied by
+				    the uvcopy routine. */
+#define UVF_UPDATED   	    0x02 /* Set if noting updates to this variable. */
 #define UVF_UPDATED_PLANET  0x04 /* Set if planet things have changed. */
 #define UVF_UPDATED_SKYFREQ 0x08 /* Set if sky freq things have changed. */
 #define UVF_NEW		0x10	/* Set if its a new uv data set being made. */
@@ -394,28 +397,29 @@ typedef struct varhand{
 
 #include "maxdimc.h"
 
-#define SEL_VIS   1
-#define SEL_TIME  2
-#define SEL_UVN   3
-#define SEL_POINT 4
-#define SEL_DRA	  5
-#define SEL_DDEC  6
-#define SEL_INC	  7
-#define SEL_RA	  8
-#define SEL_DEC	  9
-#define SEL_POL  10
-#define SEL_ON   11
-#define SEL_SRC  12
-#define SEL_UV   13
-#define SEL_FREQ 14
+#define SEL_VIS     1
+#define SEL_TIME    2
+#define SEL_UVN     3
+#define SEL_POINT   4
+#define SEL_DRA	    5
+#define SEL_DDEC    6
+#define SEL_INC	    7
+#define SEL_RA	    8
+#define SEL_DEC	    9
+#define SEL_POL    10
+#define SEL_ON     11
+#define SEL_SRC    12
+#define SEL_UV     13
+#define SEL_FREQ   14
 #define SEL_SHADOW 15
-#define SEL_BIN  16
-#define SEL_HA   17
-#define SEL_LST  18
-#define SEL_ELEV 19
-#define SEL_DAZIM 20
-#define SEL_DELEV 21
-#define SEL_PURP  22
+#define SEL_BIN    16
+#define SEL_HA     17
+#define SEL_LST    18
+#define SEL_ELEV   19
+#define SEL_DAZIM  20
+#define SEL_DELEV  21
+#define SEL_PURP   22
+#define SEL_SEEING 23
 
 typedef struct {
 	int type,discard;
@@ -470,7 +474,7 @@ typedef struct {
         off_t offset, max_offset;
 	int presize,gflag;
 	FLAGS corr_flags,wcorr_flags;
-	VARIABLE *coord,*corr,*time,*bl,*tscale,*nschan,*axisrms;
+  VARIABLE *coord,*corr,*time,*bl,*tscale,*nschan,*axisrms,*seeing;
 	VARIABLE *sfreq,*sdf,*restfreq,*wcorr,*wfreq,*veldop,*vsource;
 	VARIABLE *plmaj,*plmin,*plangle,*dra,*ddec,*ra,*dec,*pol,*on;
         VARIABLE *dazim, *delev, *purpose;
@@ -481,7 +485,7 @@ typedef struct {
 	int need_skyfreq,need_point,need_planet,need_dra,need_ddec,
    	    need_dazim, need_delev,need_purp,
 	    need_ra,need_dec,need_pol,need_on,need_obsra,need_uvw,need_src,
-	    need_win,need_bin,need_lst,need_elev;
+	    need_win,need_bin,need_lst,need_elev,need_seeing;
 	float ref_plmaj,ref_plmin,ref_plangle,plscale,pluu,pluv,plvu,plvv;
 	double skyfreq;
         int skyfreq_start;
@@ -1035,7 +1039,7 @@ private UV *uv_getuv(int tno)
   uv->need_dra	   = uv->need_ddec  = uv->need_ra     = FALSE;
   uv->need_dec	   = uv->need_lst   = uv->need_elev   = FALSE;
   uv->need_obsra   = uv->need_dazim = uv->need_delev  = FALSE;
-  uv->need_purp    = FALSE;
+  uv->need_purp    = uv->need_seeing= FALSE;
   uv->uvw = NULL;
   uv->ref_plmaj = uv->ref_plmin = uv->ref_plangle = 0;
   uv->plscale = 1;
@@ -2256,7 +2260,7 @@ void uvselect_c(int tno,Const char *object,double p1,double p2,int datasel)
 		"uvrange","pointing","amplitude","window","or","dra",
 		"ddec","uvnrange","increment","ra","dec","and", "clear",
 		"on","polarization","shadow","auto","dazim","delev",
-                "purpose"
+                "purpose","seeing"
     p1,p2	Generally this is the range of values to select. For
 		"antennae", this is the two antennae pair to select.
 		For "antennae", a zero indicates "all antennae".
@@ -2408,6 +2412,14 @@ void uvselect_c(int tno,Const char *object,double p1,double p2,int datasel)
     if(p1 < 0)   BUG('f',"Min pointing is negative, in UVSELECT");
     uv_addopers(sel,SEL_POINT,discard,p1,p2,(char *)NULL);
     uv->need_point = TRUE;
+
+/* Selection by seeing parameter. */
+
+  } else if(!strcmp(object,"seeing")){
+    if(p1 >= p2) BUG('f',"Min seeing is greater than or equal to max seeing, in UVSELECT");
+    if(p1 < 0)   BUG('f',"Min seeing is negative, in UVSELECT");
+    uv_addopers(sel,SEL_SEEING,discard,p1,p2,(char *)NULL);
+    uv->need_seeing = TRUE;
 
 /* Selection by visibility number. */
 
@@ -3126,7 +3138,7 @@ private void uvread_updated_planet(UV *uv)
 private int uvread_select(UV *uv)
 {
   int i,i1,i2,bl,pol,n,nants,inc,selectit,selprev,discard,binlo,binhi,on;
-  float *point,pointerr,dra,ddec;
+  float *point,pointerr,dra,ddec,seeing;
   double time,t0,uu,vv,uv2,uv2f,ra,dec,skyfreq,diameter;
   double *dazim, *delev;
   double lst,ha;
@@ -3228,6 +3240,22 @@ private int uvread_select(UV *uv)
       }
       if(discard || n >= sel->noper) goto endloop;
     }
+
+/* Apply seeing monitor selection. */
+
+    if(op->type == SEL_SEEING){
+      discard = !op->discard;
+      if(!uv->need_seeing) seeing = 0;
+      else seeing = *(float *)(uv->seeing->buf);
+    
+      while(n < sel->noper && op->type == SEL_SEEING){
+        if(op->loval <= seeing && seeing <= op->hival)
+	  discard = op->discard;
+        op++; n++;
+      }
+      if(discard || n >= sel->noper) goto endloop;
+    }
+
 
     /* ==PJT== TODO: bleh, this could be in the wrong order .... */
 
@@ -3776,6 +3804,12 @@ private void uvread_init(int tno)
 /* Get variables needed for selection. */
 
   if(uv->need_point) uv->axisrms = uv_checkvar(tno,"axisrms",H_REAL);
+  /* uv_checkvar can only handle existing variables */
+#if 1
+  if(uv->need_seeing)uv->seeing  = uv_checkvar(tno,"rmspath",H_REAL);     /* CARMA */
+#else
+  if(uv->need_seeing)uv->seeing  = uv_checkvar(tno,"smonrms",H_REAL);     /* ATCA */
+#endif
   if(uv->need_pol)   uv->need_pol= uv_locvar(tno,"pol") != NULL;
   if(uv->need_pol)   uv->pol     = uv_checkvar(tno,"pol",H_INT);
   if(uv->need_on)    uv->on      = uv_checkvar(tno,"on",H_INT);
