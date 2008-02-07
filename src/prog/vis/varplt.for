@@ -69,6 +69,7 @@ c    rjs  26may05 Add pntra,pntdec to list of know variables.
 c    rjs  19jun05 More spaces in log file.
 c    rjs  01jan06 Added definition of ref pointing solution.
 c    jhz  11jan07 Added chi2 to the VarChar data array.
+c    dhem 07jan08 Declare itoaf to be 4 characters long (was 2) in Logit
 c
 c  Bugs:
 c    ?? Perfect?
@@ -387,7 +388,7 @@ c------------------------------------------------------------------------
 c
 c  Externals.
 c
-	character itoaf*2
+	character itoaf*4
 c
 c  Some preamble lines to the log file.
 c
