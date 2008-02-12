@@ -236,11 +236,12 @@ c    mchw 07jan07  get lst from JulLst(time,longitude,lst) in subroutine pcenter
 c    pjt   5feb07  fix array dimensioning in fxcal()
 c    mchw 14mar07  added option noisecal to copy conj of LSB into USB.
 c    mchw 01oct07  added keywork onsource to set uvvariable "on"
+c    mchw 12feb08  change MAXANT2 to MAXANT in fxcal.
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	integer maxbad
 	character version*(*)
-	parameter(version='UVCAL: version 3.0 01-OCT-2007')
+	parameter(version='UVCAL: version 3.0 12-FEB-2008')
 	parameter(maxbad=20)
 	real PI
 	parameter(PI=3.1415926)
@@ -1580,7 +1581,7 @@ c  In/out:
 c    data	Channel or wideband data
 c------------------------------------------------------------------------
 	include 'maxdim.h'
-	real auto(MAXANT2,MAXCHAN),sq
+	real auto(MAXANT,MAXCHAN),sq
 	save auto
 
 	integer ant1,ant2,k
