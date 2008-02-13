@@ -710,6 +710,32 @@ These will potentially all have to be flagged.
 After this you should recompute the wide band averages using {\tt uvwide}.\index{uvwide},
 if you plan to use them.
 
+\subsection{Flagging using tvflag}
+
+The interactive flagging program {\tt tvflag} must be run on an 8-bit display, or PseudoColor display. Most modern desktops are so color rich, they cannot be effectively run on an 8-bit display,
+though {\tt twm} and {\tt fvwm} can. For example, on Linux you can start a second
+X session from another console (e.g. ctrl-alt-F2):
+
+\footnotesize
+\begin{verbatim}
+  % startx -- -depth 8 :1
+\end{verbatim}
+\normalsize
+or use VNC:
+\footnotesize
+\begin{verbatim}
+  % vncserver :1 -depth 8 -cc 3 -geometry 1024x768
+  % vncpasswd
+  % vncviewer :1
+
+  % xmtv &
+  % tvinit server=xmtv@localhost
+  % tvflag vis=vis0 server=xmtv@localhost
+
+  % vncserver -kill :1
+\end{verbatim}
+\normalsize
+
 
 
 

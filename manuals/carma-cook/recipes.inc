@@ -606,7 +606,8 @@ It can be found in the examples directory as {\tt example-blabla.csh}.
 
 \subsection{Hybrid Mode Calibration - III}
 
-This example originates from Misty Lavigne and Stuart Vogel and uses
+This example\footnote{See also CARMA memo ``CARMA Hybrid mode'' (Lisa Wei, in prep)}
+originates from Misty Lavigne and Stuart Vogel and uses
 a dataset taken in hybrid passband mode in order to calibrate the phase
 offsets between the different bands. This is often the case
 when a single ``narrow band'' is not able
@@ -641,7 +642,7 @@ Some further comments:
 \end{enumerate}
 
 There are various other assumptions in the procedure below that almost never
-apply to your data. We thus assume that the data have been properly flagged and
+apply exactly to your data. We also assume that the data have been properly flagged and
 that self cal solutions are good, and that the reference antenna is a proper
 choice. The script also assumes only one visibility calibrator.
 
@@ -654,36 +655,36 @@ correlator mode that was choosen.
 \begin{verbatim}
 
 
-set vis = alldata.vis                # visibility file
-set refant = 10                      # reference antenna
-set cal = 3C273                      # passband calibrator
-set viscal = 1058+015                # visibility (phase) calibrator
-set fluxcal = 3C273                  # flux calibrator
-set source = N3627                   # source
-set nb_array = ( 4 5 6 )             # spectral line bands to calibrate
-set wide_array = ( 5 4 5  )          # hybrid band with wide setup
+set vis           = alldata.vis      # visibility file
+set refant        = 10               # reference antenna
+set cal           = 3C273            # passband calibrator
+set viscal        = 1058+015         # visibility (phase) calibrator
+set fluxcal       = 3C273            # flux calibrator
+set source        = N3627            # source
+set nb_array      = ( 4 5 6 )        # spectral line bands to calibrate
+set wide_array    = ( 5 4 5  )       # hybrid band with wide setup
 				     # For each element in nb_array, the
 				     # corresponding element in wide_array
                                      # should be the hybrid band that is wideband
-set superwidewin = "4,5"             # windows to use for super-wideband
-set superwidechan = "1,1,30"         # Channels for superwide
-set bw = 64                          # Spectral Line bandwidth
-set wideline = "1,3,11,11"           # line type for 500 MHz
-set narrowline = "1,3,58,58"         # line type for narrow band
-set sideband = "usb"                 # Sideband (used for noise conjugation)
-set calint = 0.2                     # passband calibration interval (minutes)
-set vcalint = 30                     # visibility calibrator cal interval
-set fcalint = 30                     # flux calibrator interval
-set ampcalint = 30                   # selfcal amplitude interval
-set flux = 18                        # flux of flux calibrator (SMA or Woojin)
-set visflux = 5.1                    # flux of vlisibility calibrator, calculated from fluxcal.csh
-set order = 1                        # polynomial order for smamfcal fit
-set edge = 3                         # of edge channels to discard in smamfcal
-set badants = "2,15"                 # bad antennas to flag
+set superwidewin  = 4,5              # windows to use for super-wideband
+set superwidechan = 1,1,30           # Channels for superwide
+set bw            = 64               # Spectral Line bandwidth
+set wideline      = 1,3,11,11        # line type for 500 MHz
+set narrowline    = 1,3,58,58        # line type for narrow band
+set sideband      = usb              # Sideband (used for noise conjugation)
+set calint        = 0.2              # passband calibration interval (minutes)
+set vcalint       = 30               # visibility calibrator cal interval
+set fcalint       = 30               # flux calibrator interval
+set ampcalint     = 30               # selfcal amplitude interval
+set flux          = 18               # flux of flux calibrator (SMA or Woojin)
+set visflux       = 5.1              # flux of vlisibility calibrator, calculated from fluxcal.csh
+set order         = 1                # polynomial order for smamfcal fit
+set edge          = 3                # of edge channels to discard in smamfcal
+set badants       = 2,15             # bad antennas to flag 
                                      # Do heavy uvflagging prior to script
-set badchan1 = "6,61,1,1"            # bad overlap channels between 1st 2 bands
-set badchan2 = "6,124,1,1"           # bad overlap channels between 2nd 2 bands
-set restfreq = 115.271203            # rest frequency of line
+set badchan1      = 6,61,1,1         # bad overlap channels between 1st 2 bands
+set badchan2      = 6,124,1,1        # bad overlap channels between 2nd 2 bands
+set restfreq      = 115.271203       # rest frequency of line
 
 set gv=ghostview                     # your postscript viewer 
 

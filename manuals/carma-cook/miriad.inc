@@ -71,11 +71,12 @@ The {\tt mirhelp select} command also provides more details.
   purpose(LIST[,option])        Select on purpose (BFGPRSO). CARMA guarentees them to be alphabetical.
   freq(f1,f2)                   sky freq must be in range f1..f2 (GHz)
   amp(amplo,amphi)              one number means amp(amplo)
-  shadow(d)
+  shadow(d)                     shadowing less than 'd' (meter)
   bin(b1,b2)
   on
-  auto
-  window(w1,w2,...)
+  auto                          auto correlations
+  window(w1,w2,...)             spectral window number (1..maxspect)
+  seeing(s1,s2)                 select when rms path variations is between s1..s2 (microns)   
 \end{verbatim}
 
 \subsection{line=}
