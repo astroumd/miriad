@@ -12,15 +12,18 @@ c  pols		The polarisation codes.
 c  preamble	The accumulated preambles.
 c  cnt		The number of things accumulated into the preambles.
 c  
+c    mchw 13feb08 Increase buffer from (MAXAVER=81920) to (MAXAVER=655360)
+c    mchw 13feb08 change MAXBASE2 back to MAXBASE to accomodate MAXANTS=64.
+c-------------------------------------------------------------------------
 	include 'maxdim.h'
 	integer MAXAVER,MAXPOL
-	parameter(MAXAVER=81920,MAXPOL=4)
+	parameter(MAXAVER=655360,MAXPOL=4)
 	complex buf(MAXAVER)
 	integer count(MAXAVER)
-	integer pnt(MAXPOL,MAXBASE2),nchan(MAXPOL,MAXBASE2),free,mbase
-	integer npols(MAXBASE2),pols(MAXPOL,MAXBASE2),cnt(MAXBASE2)
-	integer cntp(MAXPOL,MAXBASE2)
-	double precision preamble(4,MAXBASE2)
+	integer pnt(MAXPOL,MAXBASE),nchan(MAXPOL,MAXBASE),free,mbase
+	integer npols(MAXBASE2),pols(MAXPOL,MAXBASE),cnt(MAXBASE)
+	integer cntp(MAXPOL,MAXBASE)
+	double precision preamble(4,MAXBASE)
 	common/uvavcom/preamble,buf,count,pnt,nchan,npols,pols,cnt,
      *	  cntp,free,mbase
 c-----------------------------------------------------------------------

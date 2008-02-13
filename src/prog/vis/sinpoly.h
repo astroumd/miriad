@@ -12,9 +12,12 @@ c  pols		The polarisation codes.
 c  preamble	The accumulated preambles.
 c  cnt		The number of things accumulated into the preambles.
 c  
+c  History:
+c    mchw 13feb08 Increase buffer from (MAXAVER=81920) to (MAXAVER=655360)
+c------------------------------------------------------------------------
 	include 'maxdim.h'
 	integer MAXAVER,MAXPOL
-	parameter(MAXAVER=81920,MAXPOL=4)
+	parameter(MAXAVER=655360,MAXPOL=4)
 	complex buf(MAXAVER)
 	integer count(MAXAVER)
 	integer pnt(MAXPOL,MAXBASE),nchan(MAXPOL,MAXBASE),free,mbase

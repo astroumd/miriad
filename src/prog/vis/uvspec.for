@@ -110,15 +110,15 @@ c    rjs   3dec97 Replace part of label that dropped off in above change.
 c    rjs  13sep99 Added Doppler corrected freq to possibilities to plot.
 c    jhz  06dec07 Changed the baseline order for the subplots to that
 c                 used in uvplt. 
-c  Bugs:
-c------------------------------------------------------------------------
+c    mchw 13feb08 Increase buffer from (MAXAVER=245760) to (MAXAVER=655360)
+c--------------------------------------------------------------------------
 	include 'mirconst.h'
 	include 'maxdim.h'
         integer maxco
         parameter (maxco=15)
 c
 	character version*(*)
-	parameter(version='UvSpec: version 1.0 08-dec-07')
+	parameter(version='UvSpec: version 1.0 13-Feb-2008')
 	character uvflags*8,device*64,xaxis*12,yaxis*12,logf*64
 	character xtitle*64,ytitle*64
 	logical ampsc,rms,nobase,avall,first,buffered,doflush,dodots

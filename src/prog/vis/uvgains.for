@@ -170,6 +170,8 @@ c    rjs  29mar96 Handle autocorrelation data.
 c    mchw 29dec96 Options=noamp.
 c		  The default now makes unit amplitude on all baselines.
 c    pjt   3dec02 changed to use MAXBASE2
+c    mchw 13feb08 Increase buffer from (MAXAVER=81920) to (MAXAVER=655360)
+c    mchw 13feb08 change MAXBASE2 back to MAXBASE to accomodate MAXANTS=64.
 c  Bugs:
 c    * This can write out either massaged channels, or massaged wides,
 c      but not both simultaneously.
@@ -177,7 +179,7 @@ c    * Too much of this code worries about polarisations.
 c-----------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='uvgains: version 3-dec-02')
+	parameter(version='uvgains: version 13-Feb-2008')
 	character uvflags*8,ltype*16,out*64,device*40
 	real inttime
 	integer npol,Snpol,pol,tIn,tOut,vupd,nread
@@ -641,7 +643,7 @@ c    noamp      Re-normalize the gains to the average amplitude for
 c                       each baseline. i.e. no amplitude closure.
 c------------------------------------------------------------------------
 	integer i,j,k,p,iostat,item,offset,ngains,b1,b2
-	complex gains(MAXCHAN*MAXBASE2),temp
+	complex gains(MAXCHAN*MAXBASE),temp
         real x(MAXCHAN),yamp(MAXCHAN),yphase(MAXCHAN)
 	integer endchan,maxbad
 	integer nbad,badchan(maxbad)
@@ -811,7 +813,7 @@ c    gains = 1. / polynomial fit evaluated at channel
 c------------------------------------------------------------------------
 	real pi
 	parameter (pi=3.1415926)
-	complex gains(MAXCHAN*MAXBASE2)
+	complex gains(MAXCHAN*MAXBASE)
         real x(MAXCHAN),yamp(MAXCHAN),yphase(MAXCHAN)
         real w(MAXCHAN),zamp(MAXCHAN),zphase(MAXCHAN)
 	logical flags(MAXCHAN)

@@ -14,9 +14,11 @@ c  pols		The pointing codes.
 c  preamble	The accumulated preambles.
 c  cnt		The number of things accumulated into the preambles.
 c  
+c    mchw 13feb08 Increase buffer from (MAXAVER=32768) to (MAXAVER=655360)
+c-------------------------------------------------------------------------
 	include 'maxdim.h'
 	integer MAXAVER,MAXPOL
-	parameter(MAXAVER=32768,MAXPOL=40)
+	parameter(MAXAVER=655360,MAXPOL=40)
 	complex buf(MAXAVER)
         real    bufr(MAXAVER)
 	integer count(MAXAVER)

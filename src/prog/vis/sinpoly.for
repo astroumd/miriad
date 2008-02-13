@@ -87,10 +87,11 @@ c    mchw 03feb97 program sinpoly - subtract polynomial from real data.
 c    mchw 05feb97 Write same type of correlation data as input file.
 c    mchw 11feb97 Remove unused code.
 c    pjt  28dec97 Fixed DATA
-c-----------------------------------------------------------------------
+c    mchw 13feb08 Increase buffer from (MAXAVER=81920) to (MAXAVER=655360)
+c-------------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='SINPOLY: version 1.0 28-dec-97')
+	parameter(version='SINPOLY: version 1.0 13-Feb-2008')
 	character uvflags*8,ltype*16,out*64,device*40
 	real inttime
 	integer npol,Snpol,tIn,tOut,vupd,nread

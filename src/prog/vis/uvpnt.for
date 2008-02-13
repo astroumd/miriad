@@ -51,6 +51,7 @@ c	The name of the output uv data set. No default.
 c--
 c  History:
 c    mchw 15sep94 Edited from uvaver.
+c    mchw 13feb08 Increase buffer from (MAXAVER=32768) to (MAXAVER=655360)
 c
 c  Bugs:
 c    * Not many checks on validity of data.
@@ -59,7 +60,7 @@ c    * Data Scaling in FT ?
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='UVPNT: version 1.0 15-Sep-94')
+	parameter(version='UVPNT: version 1.0 13-Feb-2008')
 	character uvflags*8,ltype*16,out*64
 	integer tIn,tOut,vupd,nread,nrec,nuv(2)
 	real inttime
