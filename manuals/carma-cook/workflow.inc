@@ -21,9 +21,11 @@ Each step has a seperate Section devoted to it.
 The PI will normally have received an email with a ``{\tt CARMA track finished}'' subject line.
 Apart from attaching the observing script and logfile,
 it will instruct you how 
-to download the data from the CARMA data archive. This chapter guides you
-through the steps of getting your data, inspecting the data quality, and calibrating it.
-Mapping and Deconvolution are standard procedures in Miriad and are covered elsewhere.
+to download the data from the CARMA data archive. This Chapter guides you
+through the steps of getting your data, inspecting the data quality, and 
+calibration of the data.
+Mapping and Deconvolution are standard procedures in Miriad and are covered in depth
+elsewhere.
 
 
 \section{CARMA Data Retrieval}
@@ -32,19 +34,19 @@ CARMA visibility data are normally multi-source MIRIAD
 datasets, where all data from a  single track (a typical
 ``8'' hour observation) are in a single Miriad dataset.
 
-Note that you will need use the {\tt carmaweb} username and get a password to gain
-access to Carma data! The website {\tt http://cedarflat.mmarray.org/observing}~~ gives 
-instructions how to get this password.\index{Data Archive}
+Note that you will use the {\tt carmaweb} username and need to get a password to gain
+access to CARMA data! The website {\tt http://cedarflat.mmarray.org/observing}~~ gives 
+instructions on how to get this password.\index{Data Archive}
 
 
 \subsection{Not at CARMA}
 
 The CARMA data archive at 
 {\tt http://carma-server.ncsa.uiuc.edu:8181/} provides the interface to 
-retrieve your data. Once you have located your data, there are two ways to
-do this.
-A Java Web Start
-(jsp) application will now be launched (you may have to teach your
+retrieve your data. Once you have located your data, there are two primary ways to
+download the data to your personal computer.
+The first is through a Java Web Start
+(jsp) application. Once launched (you may have to teach your
 browser where {\tt javaws}\footnote{javaws is part of the Java Development Kit (JDK)
 and if not present, you may have to install it}
 is located) and once the
@@ -52,8 +54,8 @@ list of datasets has been displayed in {\tt DaRT}, click on
 the Download button in that java application to start the transfer. 
 The second method would be to right click on the dataset names and
 use your browser to download the data.
-Notice that these file are compressed tar files, and need to be un-tarred 
-to become a real miriad dataset (i.e. a directory):
+Notice that these file are gnuzip compressed tar files, and need to be un-tarred 
+to become a real \miriad\ dataset (i.e. a directory):
 
 \footnotesize
 \begin{verbatim}
@@ -160,12 +162,13 @@ your data from the archive, it is important for you to first check that
 all the data that {\tt quality} has reported, is actually also present in your dataset
 (most notably check the full timerange and all the sources reported).
 A few Miriad programs are available for this, described in the next section, though 
-in theory you could also run {\tt quality} yourself.
+in theory you could also run {\tt quality} yourself. Directions for running
+quality are located in the Observer Help Pages.
 
 You should be able to find your quality output from the CARMA 
 webpage\footnote{See: {\tt http://cedarflat.mmarray.org/observing/quality/}}
 by going to ``Observing with CARMA'' and following ``Obtaining and reducing your data'' to
-``Quality output''.  Copy it into your directory and inspect it.
+``Quality output''.  Copy the output into your directory and inspect it.
 
 % see /opt/rt/scripts/quality, but right now only works at carma
 
@@ -174,8 +177,9 @@ by going to ``Observing with CARMA'' and following ``Obtaining and reducing your
 
 There are several ways to get a useful summary of what is in your CARMA multi-source dataset.
 MIRIAD Programs {\tt listobs}, {\tt uvindex} and {\tt uvlist} all have options to deal with this.
-As stressed before, it is a good way to double check if your dataset matches the one
-that your quality report saw.
+As stressed before, it is a good idea to double check if your dataset matches the one
+that your quality report saw.\footnote{On occasion a glitch in the data transfer process
+has resulted in incomplete datasets, for example}
 
 
 
@@ -184,7 +188,8 @@ that your quality report saw.
 
 
 
-{\tt listobs} gives an overall summary of the data: antenna positions, baselines,
+{\tt listobs} gives an overall summary of the data: antenna positions w.r.t. the center of
+the array, baselines,
 sources observed, frequency setup, and chronology of the observation. An example
 follows:\index{listobs}
 
@@ -264,11 +269,12 @@ SS433             073207.0 224828.1  6.7  36.  380  437  349  345  389  581  624
 
 \subsection{uvindex}
 
-Apart from its useful output, the output of {\tt uvindex} should be
+{\tt uvindex} provides a useful display showing the track length, LO settings, etc.
+The output of {\tt uvindex} should be
 compared with the log sent by e-mail and the actual data length. Sometimes there
 is a failure in filling the data properly, and the data archive center should be 
-contacted\footnote{currently: Lisa Xu}. 
-%CHECK the current contact
+contacted.
+\footnote{currently: Lisa Xu, lisaxu@ncsa.uiuc.edu}    %% 2007,2008
 An example output of {\tt uvindex} follows:\index{uvindex}
 
 
@@ -376,7 +382,8 @@ A useful listing of the spectral windows can be obtained with {\tt uvlist}\index
 \normalsize
 
 where you can see the 3 lower sideband windows and 3 upper sideband windows. Notice
-the rest frequency in this example appear a little odd, see also Section~\ref{ss:restfreq} 
+the rest frequency in this example appear a little odd, being identical in all
+windows. See also Section~\ref{ss:restfreq} 
 for a discussion on this. Note that {\tt uvlist} only displays the first selected
 frequency setting. If your source and calibrator have a different setup, use 
 {\tt select=\"source()\"} to look at the appropriate setting for each object.
@@ -384,13 +391,13 @@ frequency setting. If your source and calibrator have a different setup, use
 \subsection{uvflag - initial check of flagged data}
 
 You should inspect how much data was flagged by the online system. As of March 2007, blanking has
-been enabled at CARMA, and depending on conditions and a threshold setting, one can easily
+been enabled at CARMA, and depending on conditions and the threshold setting chosen
+in the observing script user-defined parameters, one can easily
 wind up with too much flagged data. Unflagging should of course be done with caution. Currently
 the default threshold is 20\%, 
 i.e. if more than 20\% of the (0.5 second) frames of an integration
 are blanked, that integration itself is flagged.\index{birdies, uvflag}
-
-
+%% TODO: more on blanking
 
 \footnotesize
 \begin{verbatim}
@@ -411,14 +418,20 @@ are blanked, that integration itself is flagged.\index{birdies, uvflag}
 
 Just for the record, this is a {\it very} high fraction of flagged data.  
 Normally you might see 0.1-1\%.
+If you have a high percentage of flagged data, you might want to look 
+through the Nightly Report or Observing Logs to discover the cause - antenna
+out-of-array, Rx problem, etc.   If you discover serious data problems not
+accounted for, you should inform the observers - {\tt obs@mmarray.org} -  who
+can investigate.
 
 \subsection{Visual: uvplt, uvspec, varplt, uvimage}
 
-Probably the most important thing to remember is at various stages of your calibration: data inspection.
+Probably the most important thing to remember at various stages of your calibration
+is careful and consistent data inspection.
 Check if your phases and/or amplitudes are now flat as function of frequency and/or time. Use {\tt uvflag}
 and friends where needed.
 
-
+To inspect
 \footnotesize
 \begin{verbatim}
 
@@ -430,7 +443,8 @@ and friends where needed.
 \end{verbatim}
 \normalsize
 
-and to inspect almost arbitrary uv variables use {\tt varplt}:
+and to inspect a wide range of uv variables use {\tt varplt} (a list can be found 
+in Appendix~\ref{app:uvvars}):
 \footnotesize
 \begin{verbatim}
 
@@ -448,7 +462,7 @@ bad happened around 5h UT. See Figure 2.1
 
 
 
-For the calibrator(s), inspect the run of phase and amplitude as function
+For the calibrator(s), inspect the run of phase and amplitude as a function of time and channel:
 \footnotesize
 \begin{verbatim}
 
@@ -460,6 +474,8 @@ For the calibrator(s), inspect the run of phase and amplitude as function
 
 \end{verbatim}
 \normalsize
+
+Recall that {\tt mirhelp \<task\>} will give you a full description of other options.
 
 
 
@@ -478,7 +494,7 @@ For the calibrator(s), inspect the run of phase and amplitude as function
 The CARMA Data Archive will typically re-fill data from its basic
 constituents (the {\it visbrick} and the {\it monitor points}) whenever
 the data is requested. This could mean that the data  used by the {\tt quality} script
-be different from that obtained from the Data Archive.
+might be different from that obtained from the Data Archive.
 
 You can save a checksum of your data and/or use the version of
 the data that is stored inside the visibility data. That way you will
@@ -505,10 +521,10 @@ to check if you should re-fetch the data.\index{mdsum}
 \label{s:baseline}
 You should always check if you need to (re)apply baseline 
 corrections\footnote{all data prior to 22-jan-2008 should}
-Although your data may come with initially pretty decent ones, often
-after a few weeks in a new array configuration
-improved baselines are available. In the first few days/weeks
-time after a move baselines can settle and may need to be re-applied
+Although your data may come with initially pretty decent baseline solutions,
+often after a few weeks in a new array configuration
+improved baselines are available. In the first few days up to several weeks
+after a move, baselines can settle and may need to be re-applied
 from the newly computed ones. Normally these are stored in a small
 ascii table with equatorial values in nanoseconds.\index{baseline correction}
 ({\it cf}. {\tt uvgen baseunit=1}.
@@ -530,13 +546,16 @@ Be sure to apply the new baseline to all sources:
 In rare cases, a new and better solution is found a month or so after your data were
 taken. Check the status of the baseline solution on the above mentioned web page. It is a good
 idea to apply an appropriate solution if you are not sure which solution has been
-applied to your data.
+applied to your data. No harm is done if you apply a solution that has already
+been applied.
 
 
-Notice that data taken during a move (which can take several days and 
+Notice that for data taken during a move (which can take several days and 
 the array will be in some hybrid configuration) an antpos file will be
 available for each day. Please check the time validity carefully,
 either by filename, or comments in the file.\index{uvedit}
+
+Errors due to baselines can be seen as slopes in phase vs. time. See Figure ...
 
 \bigskip
 
@@ -584,7 +603,9 @@ as well as (in this case 6) dimensionality.
 \bigskip
 TODO:explain difference between puthd and uvputhd
 
-\subsection{Line Length Correction}
+\subsection{Linelength Correction}
+
+% is it spelled 'line length' or 'linelength'
 
 The linelength system monitors changes in the delays through the
 optical fibers to the antennas.  The delays vary as the fibers
@@ -596,12 +617,12 @@ receivers.
 Since these changes are measured accurately by the linelength system, the corrections
 should be applied.
 
-Phase corrections from the line length system are stored in the Miriad uv variables {\tt phasem1},
+Phase corrections from the linelength system are stored in the Miriad uv variable {\tt phasem1},
 which is an antenna based variable.\index{phasem1}\index{linelength correction}
 
 
 To apply the linelength corrections, use the Miriad program {\tt linecal}, which
-write an antenna based
+writes an antenna based
 calibration table in the dataset that can be applied.
 However, don't expect perfection - the linelength
 system cannot correct for differences in the thermal expansion of
@@ -618,15 +639,18 @@ temperature of the phaselock electronics. Schematically we will do:
 
 Here the {\tt gpplt} commands displays the actual phase corrections
 that are going to applied in {\tt uvcat}. You might see many wraps,
-but remember it is only the  differences that matter.
+but remember it is only the  differences in phases that matter, these
+are antenna based phases.
 
 TODO: careful with select=-source(noise)
 
 \subsection{Other UV variables}
 
-Some data bugs (e.g. latitude=0) cannot be fixed by refilling the data. In this case
-programs such as puthd will work fine for variables that do not depend on time.
-In the first example we saw how to fix the latitude (stored as 0 in the SS443 dataset)
+Some data bugs cannot be fixed by refilling the data from the archive. For example
+at some point in the past the latitude was erroneously set to 0 ( latitude=0)
+In this case
+programs such as {\tt puthd} will work fine for variables that do not depend on time.
+In the first example we see how to fix the latitude (stored as 0 in the SS443 dataset)
 such that the ENU coordinates were printed correctly:
 
 \footnotesize
@@ -635,8 +659,10 @@ such that the ENU coordinates were printed correctly:
 \end{verbatim}
 \normalsize
 
-There is a bugzilla on this, related to the side-effect of working on another sub-array
-where the main one in observing was had some corrupted data.
+Developers and observers
+typically file these problems as bugs in our bugzilla. This particular
+bug was filed as bug \# xxx and was caused by using multiple sub-arrays and
+one subarray polluting the data in another.
 
 \bigskip
 TODO:  check on the uvedit problem with missing LO2.
@@ -661,7 +687,7 @@ is a relatively new program
 dataset can be viewed with programs like {\tt ds9} or {\tt karma}'s {\tt kvis}, 
 and guide you how to flag the data using {\tt uvflag}. It is possible to come up with a procedure
 that ties keystrokes in {\tt ds9} to the creation of a batch script that runs {\tt uvflag}
-afterwards.
+afterwards, and this is a likely change in upcoming versions of MIRIAD.
 
 
 % \footnotesize\normalsize
@@ -679,27 +705,33 @@ afterwards.
 \end{verbatim}
 \normalsize
 
-The most useful output mode is amplitudes (the default) where it will channels in the X,
-baselines in Y and time in Z (represented by different planes in {\tt ds9}). As you
+The most useful output mode is amplitudes (the default) where the cube
+will be constructed with channels along the X axis,
+baselines along Y and time along Z. The X axis is represented in {\tt ds9}
+by different planes in {\tt ds9}). As you
 move the {\it Data Cube} slider you will see different channel-baseline images of
 the visibility amplitudes at different times. Look for a change in noise, regions of
 pure 0s, vertical spikes (a.k.a. birdies), horizontal spikes (bad baselines or antennae).
-These will potentially all have to be flagged.
+These will potentially all have to be flagged. Overall noise increase that is the result
+of a higher system temperature will be accounted for though (see {\tt invert}).
 
 
 \subsection{Flagging Birdies and End Channels}
+
+An example of a birdie (often a antenna based single channel with high amplitudes) can be 
+flagged easily with {\tt uvflag} using {\tt line=chan,}{\it n,start,width,step}:
 
 \footnotesize
 \begin{verbatim}
 
 #Birdies
- uvflag vis=$cfile "select=ant(1)" line=chan,1,32,1,1 flagval=flag
- uvflag vis=$cfile "select=ant(1)" line=chan,1,95,1,1 flagval=flag
+ uvflag vis=$cfile "select=ant(1)" line=chan,1,32,1,1  flagval=flag
+ uvflag vis=$cfile "select=ant(1)" line=chan,1,95,1,1  flagval=flag
  uvflag vis=$cfile "select=ant(1)" line=chan,1,158,1,1 flagval=flag
- uvflag vis=$cfile "select=ant(7)" line=chan,5,4,1,1 flagval=flag
+ uvflag vis=$cfile "select=ant(7)" line=chan,5,4,1,1   flagval=flag
 
 #End channels
- uvflag vis=$cfile  line=chan,1,4,1,1 flagval=flag
+ uvflag vis=$cfile  line=chan,1,4,1,1   flagval=flag
  uvflag vis=$cfile  line=chan,1,186,1,1 flagval=flag
 
 
@@ -708,7 +740,7 @@ These will potentially all have to be flagged.
 \normalsize
 
 After this you should recompute the wide band averages using {\tt uvwide}.\index{uvwide},
-if you plan to use them.
+if you plan to use them. 
 
 \subsection{Flagging using tvflag}
 
@@ -758,10 +790,8 @@ allow OVRO to have a smaller tolerance than the BIMA antennae).
 
 The exact amount (5 arcsec in this example) is left to your own judgement, and 
 you should probably also base this on the inspection of the graphical output
-of {\tt varplt}.
+of {\tt varplt}. But in case you were wondering, the recommended value is 5.
 
-
-{\it The recommendation for a novice is ...}
 
 
 %% show correlation axisrms vs. windwspeed?
@@ -833,8 +863,8 @@ gpcopy vis=0530+135 out=abaur
 
 \subsection{Autocorrelation}
 
-Auto-correlations are handled by the filler of January 31, 2007 (see also
-Appendix~\ref{a:carmadata}). They
+Auto-correlations are handled by the datafiller as of January 31, 2007 (see also
+Appendix~\ref{a:carmadata}). Visibility data auto-correlations
 are stored as baselines with the same antenna pair, and show up before
 the cross-correlations. 
 % \footnotesize\normalsize
