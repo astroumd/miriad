@@ -122,10 +122,11 @@ c    10aug06 dcb   GetGains common /savgains/ Ampl,Phi,foc,tpwr,antel,freq
 c    08nov06 mchw  Increase MAXANTS to 64 and MAXSOLS to 4096
 c    10may07 mchw  Added topocentric coordinates in meters to summary.
 c    19dec07 jkoda Added 'XY' option
+c    14feb08 mchw  Added refraction correction in beedr.
 c-----------------------------------------------------------------------
 	include 'bee.h'
 	character version*(*),device*80,log*80,ans*20
-	parameter(version='(version 3.0 19-Dec-2007)')
+	parameter(version='(version 3.0 14-Feb-2008)')
 	integer length,tvis,tgains,iostat
 	logical doscale
 c
@@ -1278,9 +1279,10 @@ c********1*********2*********3*********4*********5*********6*********7*c
 c  Edit data for baseline, clock, axis offsets etc.
 c----------------------------------------------------------------------c  
 	include 'bee.h'
-	character*1 ans,line*128,refract
+	character*1 ans,line*128,refract,height
 	real value,dra,ddec,drar,ddecr,sinh,cosh
-	real sind,cosd,dbx,dby,dbz,dphi,base,u,v
+	real sind,cosd,dbx,dby,dbz,dphi,base,u,v,phi
+	real secz,L0,r0,del_L
 	integer length,i
 	real pressmb,kelvin,relhumid,pwv,refraction,tau
 c
@@ -1375,12 +1377,22 @@ c
 	  ddecr = 0.
 	endif
 c
-c  Refraction correction or elevation correction.
+c  Antenna height correction.
 c
-	call prompt(refract,length,'Antenna height correction ?')
+	call prompt(height,length,'Antenna height correction ?')
+	call ucase(height)
+	if(height.eq.'Y')then
+	  write(line,'(a)') 'Antenna height correction'
+	  call output(line)
+	  call LogWrit(line(1:len1(line)))
+	endif
+c
+c  Refraction correction 
+c
+	call prompt(refract,length,'Refraction correction ?')
 	call ucase(refract)
 	if(refract.eq.'Y')then
-	  write(line,'(a)') 'Antenna height correction (December 1994)'
+	  write(line,'(a)') 'Refraction correction'
 	  call output(line)
 	  call LogWrit(line(1:len1(line)))
 	endif
@@ -1422,10 +1434,9 @@ c
 c
 c  Refraction correction - 29 December 1994
 c
-	  if(refract.eq.'Y')then
+	  if(refract.eq.'Y'.or.height.eq.'Y')then
 	    sinel = slat*sind + clat*cosd*cosh
 	    if (sinel .eq. 0.) sinel = 0.1
-c compute refractivity  minus  correction applied on-line in delay.c
 	    pressmb = 910.
 	    kelvin = tair(i) + 273.2
 	    relhumid = 100.
@@ -1437,29 +1448,53 @@ c	/* Smith-Weintraub Equation from Thompson, Moran & Swenson p.407 */
 	    refraction = 1.e-6 *
      *	      ((77.6 *pressmb/kelvin) + (3.776e5 *pwv /(kelvin*kelvin)))
 c********1*********2*********3*********4*********5*********6*********7*c
-c	/* old code changed 29dec94 
-c	    refraction_old = 1.e-6 / 6.28318530718 *
-c     *		((.53*pressmb/kelvin) + (915. *pwv /(kelvin*kelvin)))
-c	    tau = -( (b(1)*cosh - b(2)*sinh)*cosd + b(3)*sind )
-c	    tau = tau * (refraction-refraction_old) / sinel / sinel
-c********1*********2*********3*********4*********5*********6*********7*c
 c
 c  Correction for height of antenna.
 c
+       if(height.eq.'Y')then
 	    tau = -( b(1)*clat + b(3)*slat ) / sinel
-	    dphi = dphi + tupi * refraction * tau * frq(i)
+	    phi = tupi * refraction * tau * frq(i)
+        dphi = dphi + phi
 	    if(i.eq.1) print *,
-     *		' npt    Kelvin    PWV    Refraction    tau    dphi'
+     *      ' npt    Kelvin    PWV    Refraction    tau    phi(radians)'
 	    if(mod(i,10).eq.1.or.i.eq.np)
-     *		    print *, i, kelvin, pwv, refraction, tau, dphi
+     *		    print *, i, kelvin, pwv, refraction, tau, phi
 	    if(i.eq.np) print *,
-     *		' npt    Kelvin    PWV    Refraction    tau    dphi'
-	  endif
+     *      ' npt    Kelvin    PWV    Refraction    tau    phi(radians)'
+	   endif
 c
-c  Used to be in BEE:
-c	    tau = (b(1)*cosh - b(2)*sinh)*cosd + b(3)*sind
-c	    dphi = dphi + 2.1e-6 * tau * frq(i) / sinel / sinel
-c	  endif
+c  Refraction correction. (TMS equation 13.41 incl wet and dry atm)
+c
+c	    L = 0.228*P0*secz*(1-0.0013*(1-secz**2)) 
+c     *        + 7.5e4 * pv0*secz/T**2 *(1-0.0003*(1-secz**2))
+c
+c        P0 = pressmb
+c        T  = kelvin 
+c        pv0 = pwv
+c
+       if(refract.eq.'Y')then
+        secz = 1./sinel
+c   L0 = excess path in zenith direction = 230 cm.
+        L0 =230.
+c   L0 = 0.228*P0 + 6.3*w  cm. ----------(13.20)
+c   where P0 in millibar and w = precip H20 in cm.
+c   r0 = earth radius = 6370 km = 6370.e5 cm
+        r0 = 6370.e5
+c   tau = geometric delay (nanosec)
+       tau = (b(1)*cosh - b(2)*sinh)*cosd + b(3)*sind
+c   differerence in excess paths = tau * L0/r0 * secz**2
+        del_L = tau * L0/r0 * secz**2
+        phi = tupi * del_L * frq(i) 
+        dphi = dphi + phi
+	    if(i.eq.1) print *,
+     *      ' npt    tau(ns)    secz    excess_path(ns)   phi(radians)'
+	    if(mod(i,10).eq.1.or.i.eq.np)
+     *		    print *, i, tau, secz, del_L, phi
+	    if(i.eq.np) print *,
+     *      ' npt    tau(ns)    secz    excess_path(ns)   phi(radians)'
+	   endif
+	  endif
+c********1*********2*********3*********4*********5*********6*********7*c
 c
 c  Code from delay.c follows:
 c	TAU[i] = -(ANTPOS[0][i]*COSD*COSH - ANTPOS[1][i]*COSD*SINH 
