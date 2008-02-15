@@ -107,6 +107,7 @@ c    rjs  15jan06 Improve weighting.
 c    rjs  08jan07 Use MAXWIN more rigorously.
 c    jhz  16jan07 set external unpack, pack, scale
 c    mchw 23may07 if(nant.gt.MAXANT)call bug('f','Too many antennas')
+c    mchw 15feb08 increase MAXDATA form 5000 to 20000.
 c
 c  Problems:
 c    * Should do simple spectral index fit.
@@ -119,7 +120,7 @@ c------------------------------------------------------------------------
 	parameter(MAXSOLN=1024,MAXPOL=2)
 c
 	character version*(*)
-	parameter(version='MfCal: version 1.0 23-May-07')
+	parameter(version='MfCal: version 1.0 15-Feb-2008')
 c
 	integer tno
 	integer pWGains,pFreq,pSource,pPass,pGains,pTau
