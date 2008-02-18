@@ -18,7 +18,8 @@ and \miriad\ itself.  A {\it wiki} page
 \begin{verse}
 {\verb+http://carma.astro.umd.edu/wiki/index.php/CARMA_Cookbook+}
 \end{verse}
-maintains links and other useful information for the cookbook. 
+maintains links and other useful information for the cookbook. You will be able to
+download example scripts from there as well. 
 
 
 
@@ -71,7 +72,7 @@ bugs on a more user friendly webpage).
 
 \begin{itemize}
 \item
-A Wiki page has also been set up at {\tt http://carma.astro.umd.edu/wiki/index.php/Miriad}
+Wiki page for Miriad and CARMA Cookbook: {\tt http://carma.astro.umd.edu/wiki/index.php/Miriad}
 \item
 Miriad bugzilla (part of CARMA bugzilla) at {\tt http://www.mmarray.org/bugzilla}
 \item
@@ -80,11 +81,8 @@ Miriad bugzilla (part of CARMA bugzilla) at {\tt http://www.mmarray.org/bugzilla
 \section{Revision History}
 
 \begin{itemize}
-\item 20-apr-2007:   first draft posted
-\item 1-may-2007:    clarify quality logs, fix a fluxcal example, language cleanup 
-\item 3-may-2007:    3.5.1 was left out accidentally, cleanup more lingo
-\item 28-may-2007:   added a section on linelength correction
-\item 1-feb-2008:    Draft for version 2 of this document
+\item 20-apr-2007:   first draft 
+\item 15-feb-2008:   Draft for version 2 of this document
 
 \end{itemize}
 

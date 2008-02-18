@@ -19,13 +19,12 @@ Each step has a seperate Section devoted to it.
 % \section{CARMA track finished}
 
 The PI will normally have received an email with a ``{\tt CARMA track finished}'' subject line.
-Apart from attaching the observing script and logfile,
-it will instruct you how 
-to download the data from the CARMA data archive. This Chapter guides you
+It will have attached the observing script and logfile, and 
+it will remind you how to download the data from the CARMA data archive. This Chapter guides you
 through the steps of getting your data, inspecting the data quality, and 
-calibration of the data.
-Mapping and Deconvolution are standard procedures in Miriad and are covered in depth
-elsewhere.
+calibration of the data. Some comments on 
+mapping and Deconvolution (standard procedures in Miriad and covered in depth
+elsewhere) are in place as well.
 
 
 \section{CARMA Data Retrieval}
@@ -42,7 +41,7 @@ instructions on how to get this password.\index{Data Archive}
 \subsection{Not at CARMA}
 
 The CARMA data archive at 
-{\tt http://carma-server.ncsa.uiuc.edu:8181/} provides the interface to 
+{\tt http://carma-server.ncsa.uiuc.edu:8181/} provides a web interface to 
 retrieve your data. Once you have located your data, there are two primary ways to
 download the data to your personal computer.
 The first is through a Java Web Start
@@ -93,7 +92,9 @@ or
 \end{verbatim}
 \normalsize
 
-This procedure will only work for recent data that are in the cache.
+This procedure will only work for recent data that are in the cache, for example all the 
+``Tracks Transferred within The Last Two Days'' listed on the Quick Searches page fall
+under this category.
 
 \subsection{At CARMA}
 
@@ -176,10 +177,10 @@ by going to ``Observing with CARMA'' and following ``Obtaining and reducing your
 \section{Data Inspection}
 
 There are several ways to get a useful summary of what is in your CARMA multi-source dataset.
-MIRIAD Programs {\tt listobs}, {\tt uvindex} and {\tt uvlist} all have options to deal with this.
+MIRIAD programs {\tt listobs}, {\tt uvindex} and {\tt uvlist} all have options to deal with this.
 As stressed before, it is a good idea to double check if your dataset matches the one
 that your quality report saw.\footnote{On occasion a glitch in the data transfer process
-has resulted in incomplete datasets, for example}
+has resulted in incomplete datasets}
 
 
 
@@ -266,6 +267,11 @@ SS433             073207.0 224828.1  6.7  36.  380  437  349  345  389  581  624
 
 \end{verbatim}
 \normalsize
+
+Here, inspect if the antenna positions are indeed the ones obtained from those from the
+latest baseline solutions. See also Section~\ref{s:baseline}. Also pay attention to the
+system temperatures, near rising and setting you might see some increased values, 
+and some antennas are better than others, but there should be no outliers.
 
 \subsection{uvindex}
 
@@ -428,41 +434,12 @@ can investigate.
 
 Probably the most important thing to remember at various stages of your calibration
 is careful and consistent data inspection.
-Check if your phases and/or amplitudes are now flat as function of frequency and/or time. Use {\tt uvflag}
-and friends where needed.
+After all calibration is done, your phases and/or amplitudes should be flat as
+function of frequency and/or time. Use {\tt uvflag} and friends where needed to
+edit out discrepant data that could throw of calibration routines.
 
-To inspect
-\footnotesize
-\begin{verbatim}
-
- % ds9 &
- % uvimage vis=cx012.SS433.2006sep07.1.miriad out=cube1 select="-source(noise),-auto"
- % histo in=cube1
- % mirds9 cube1
-
-\end{verbatim}
-\normalsize
-
-and to inspect a wide range of uv variables use {\tt varplt} (a list can be found 
-in Appendix~\ref{app:uvvars}):
-\footnotesize
-\begin{verbatim}
-
- % varplt vis=cx012.SS433.2006sep07.1.miriad device=/xs yaxis=systemp nxy=5,3 yrange=0,2000 options=compress
-
-\end{verbatim}
-\normalsize
-
-
-
-
-
-shows again C3 and C11 are not online. Autoscaling showed C2 has a bad point. But overall something
-bad happened around 5h UT. See Figure 2.1
-
-
-
-For the calibrator(s), inspect the run of phase and amplitude as a function of time and channel:
+For the calibrator(s), inspect the run of phase and amplitude as a function of time and channel. In this
+example we are using the ``sma'' flavor of {\tt uvplt} and {\tt uvspec}:
 \footnotesize
 \begin{verbatim}
 
@@ -475,7 +452,42 @@ For the calibrator(s), inspect the run of phase and amplitude as a function of t
 \end{verbatim}
 \normalsize
 
-Recall that {\tt mirhelp \<task\>} will give you a full description of other options.
+Recall that ``{\tt mirhelp taskname}'' will give you a full description of other options.
+
+
+
+To inspect the amplitudes in a different manner, construct a 3D cube from the visibility
+data and view this with any of the FITS or MIRIAD image viewers that are available. Here
+is an example using {\tt ds9}:
+\footnotesize
+\begin{verbatim}
+
+ % ds9 &
+ % uvimage vis=cx012.SS433.2006sep07.1.miriad out=cube1 select="-source(noise),-auto"
+ % histo in=cube1
+ % mirds9 cube1
+
+\end{verbatim}
+\normalsize
+
+
+
+
+To inspect a wide range of uv variables use {\tt varplt} (a list can be found 
+in Appendix~\ref{app:uvvars}):
+\footnotesize
+\begin{verbatim}
+
+ % varplt vis=cx012.SS433.2006sep07.1.miriad device=/xs yaxis=systemp nxy=5,3 yrange=0,2000 options=compress
+
+\end{verbatim}
+\normalsize
+
+
+shows C3 and C11 are not online. Autoscaling showed C2 has a bad point. But overall something
+bad happened around 5h UT. See Figure 2.1
+
+
 
 
 
@@ -483,7 +495,7 @@ Recall that {\tt mirhelp \<task\>} will give you a full description of other opt
 \begin{center}
 \epsfxsize=12cm\leavevmode\epsffile{fig-systemp.ps}
 \end{center}
-\caption{System temperature plot, cx012.SS433.2006sep07.1.miriad}
+\caption{System temperature plot for 3C273 made with {\tt varplt}, {\tt cx012.SS433.2006sep07.1.miriad}}
 \label{fig:systemp}
 \end{figure}
 
@@ -511,8 +523,9 @@ be able to decide if your data reduction will have to be redone.
 \end{verbatim}
 \normalsize
 
-Appendix E lists the various problems that could have occured with your
-data at different stages of the commissioning of CARMA in 2006/7.  For example,
+Appendix~\ref{a:carmadata}
+lists the various problems that could have occured with your
+data at different stages of the commissioning of CARMA in 2006/7.  Especially 
 if you are re-calibrating your data after some new insight, it makes sense
 to check if you should re-fetch the data.\index{mdsum}
 
@@ -520,7 +533,7 @@ to check if you should re-fetch the data.\index{mdsum}
 
 \label{s:baseline}
 You should always check if you need to (re)apply baseline 
-corrections\footnote{all data prior to 22-jan-2008 should}
+corrections\footnote{all data prior to 22-jan-2008 should always be corrected}
 Although your data may come with initially pretty decent baseline solutions,
 often after a few weeks in a new array configuration
 improved baselines are available. In the first few days up to several weeks
