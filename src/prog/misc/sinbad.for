@@ -23,38 +23,40 @@ c       The default is all channels.
 c	The output consists of spectral channels only.
 c@ out
 c       The name of the output uv data set. No default.
+c@ tsys
+c       Value for flat tsys spectrum if none is present
 c--
 c
 c  History:
-c    mchw 29jan97  New task for Marc.
-c    mchw 05feb97  write same type of correlation data as input file.
+c    mchw    29jan97  New task for Marc.
+c    mchw    05feb97  write same type of correlation data as input file.
+c    pjt/mwp 19feb08  safeguard off before on, tsys=1 if not present
 c------------------------------------------------------------------------
 	include 'maxdim.h'
-	character version*(*)
-	parameter(version='SINBAD: version  05-FEB-97')
+	character version*80,versan*80
 	integer maxsels
 	parameter(maxsels=1024)
 c
 	real sels(maxsels)
-	real start,step,width
+	real start,step,width,tsys1
 	character linetype*20,vis*80,out*80
 	complex data(maxchan)
 	logical flags(maxchan)
         logical first,new,dopol,PolVary,doon
-	integer lIn,lOut,nchan,npol,pol,SnPol,SPol,on,i,ant
+	integer lIn,lOut,nchan,npol,pol,SnPol,SPol,on,i,j,ant
         character type*1
         integer length 
         logical updated
 	double precision uin,vin,timein,basein
 	common/preamb/uin,vin,timein,basein
 	real off(MAXCHAN,MAXANT),tsys(MAXCHAN,MAXANT)
-c	data off/MAXCHAN*MAXANT*0./, tsys/MAXCHAN*MAXANT*1./
-	integer num,non,noff,ntsys
-	data num/0/,non/0/,noff/0/,ntsys/0/
+	integer num,   non,   noff,   ntsys
+	data    num/0/,non/0/,noff/0/,ntsys/0/
 c
 c  Read the inputs.
 c
-	call output(version)
+        version = versan('sinbad',
+     *  '$Id$')
  	call keyini
 	call keyf('vis',vis,' ')
 	call SelInput('select',sels,maxsels)
@@ -64,6 +66,7 @@ c
 	call keyr('line',width,1.)
 	call keyr('line',step,width)
  	call keya('out',out,' ')
+        call keyr('tsys',tsys1,1.0)
 	call keyfin
 c
 c  Check user inputs.
@@ -83,6 +86,11 @@ c
 	  if(linetype.ne.' ')
      *	    call uvset(lIn,'data',linetype,nchan,start,width,step)
           call VarInit(lIn,'channel')
+        do j=1,MAXANT
+           do i=1,MAXCHAN
+              tsys(i,j) = tsys1
+           enddo
+        enddo
 c
 c  Read through the file, listing what we have to.
 c
@@ -150,6 +158,7 @@ c
 		  tsys(i,ant) = data(i)
 		enddo
 	      else if(on.eq.1)then
+                if (noff.eq.0) call bug('f','No off before on found')
 		non = non + 1
 		do i=1,nchan
 		  data(i) = (data(i)-off(i,ant))/off(i,ant)*tsys(i,ant)
@@ -168,6 +177,7 @@ c
 	print *,'records read: ',num
 	print *,'records read: on:',non,'  off:',noff,'  tsys:',ntsys
 	print *,'records written: (on-off)/off*tsys:',non
+        if (ntsys.eq.0) call bug('w','No Tsys data found, use default')
 c
 c  Close up shop.
 c
