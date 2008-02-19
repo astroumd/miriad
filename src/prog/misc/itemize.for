@@ -82,8 +82,11 @@ c
       CHARACTER fname(MAXFILES)*128
       LOGICAL   rmode
       INTEGER   len1
+      CHARACTER version*80, versan*80
 
-      CALL output( 'Itemize: Version 22-jun-02' )
+      version = versan('itemize',
+     * '$Id$')
+
 c
 c  Get the input parameters.
 c
