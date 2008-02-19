@@ -95,8 +95,7 @@ c-----------------------------------------------------------------------
         include 'calapply.h'
         include 'listobs.h'
 c
-	character pversion*10
-	parameter (pversion = '30-jan-08')
+	character pversion*80, versan*80
 c
         integer ipt,nfiles,uvflag,order(MAXP),nameidx(100),nnames
         integer isys(MAXANT),i,uvscan,j,ii,jj,ipicked,ifix
@@ -116,7 +115,8 @@ c
         data more /.true./
 c----------------------------------------------------------------------c
 
-        call output( 'Listobs: '//pversion )
+        pversion=versan('listobs','$Id $')
+        call output( pversion )
 
 	dash = '----------------------------------------' //
      1	       '----------------------------------------' 
