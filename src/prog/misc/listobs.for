@@ -115,7 +115,7 @@ c
         data more /.true./
 c----------------------------------------------------------------------c
 
-        pversion=versan('listobs','$Id $')
+        pversion=versan('listobs','$Id$')
         call output( pversion )
 
 	dash = '----------------------------------------' //

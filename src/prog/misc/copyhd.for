@@ -8,6 +8,9 @@ c: utility
 c+
 c	COPYHD is a Miriad task which copies items from one Miriad data-set
 c	to another. There is no interpretation of the items at all.
+c       See also GPCOPY for a specialized version of this program for gain
+c       tables. An example of copying a WCS image header could be:
+c       items=crval1,crpix1,cdelt1,ctype1,crval2,crpix2,cdelt2,ctype2,crval3,crpix3,cdelt3,ctype3
 c@ in
 c	Name of the input data set. No default.
 c@ out
@@ -22,7 +25,7 @@ c    rjs  25apr94  Corrected call sequence to hclose.
 c------------------------------------------------------------------------
 	character version*(*)
 	integer maxitems
-	parameter(version='version 1.0 25-Apr-94')
+	parameter(version='version 1.0 17-jul-07')
 	parameter(maxitems=32)
 c
 	character items(maxitems)*16,in*64,out*64

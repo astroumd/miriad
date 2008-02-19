@@ -6,6 +6,12 @@ c= PRTHD -- Print a summary about the contents of a data-set.
 c& rjs
 c: miscellaneous
 c	PRTHD is a Miriad task which gives a summary about a Miriad data-set.
+c
+c       A caveat when using visibilty files:
+c       Some of the uv-variables printed will give the first value encountered.
+c       For multi-source/telescope/frequency... datasets this may look confusing.
+c       Programs like UVINDEX are more suitable to find out about these time varying
+c       variables.
 c@ in
 c	Name of the input data-set. No default. This may be either a uv
 c	or image data-set. Several names can be given. Names can include
@@ -45,13 +51,14 @@ c    rjs  31jul97 Use MAXWIN for number of spectra.
 c    rjs  01aug97 Better format for beam size.
 c    rjs  24feb98 Use MAXWIDE rather than MAXWIN for number of wide channels.
 c    rjs  25nov98 Print out sky rotation.
+c    pjt  11jul07 Minor warning/caveat on using vis files
 c
 c  Bugs and Shortcomings:
 c    * Descriptions in brief mode could be a bit more verbose!
 c------------------------------------------------------------------------
 	character version*(*)
 	integer MAXIN
-	parameter(version='Prthd: version 25-Nov-98')
+	parameter(version='Prthd: version 11-jul-07')
 	parameter(MAXIN=256)
 	integer tno,i,iostat,nin
 	character in(MAXIN)*64,logf*64,line*80
