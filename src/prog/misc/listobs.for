@@ -85,6 +85,7 @@ c          11-dec-07 pjt removed BW/cormode, printing both ut and lst
 c          16-jan-08 pjt Added uv distance to the baseline-UVW output section
 c          30-jan-08 pjt options=nobase to stop the N^2 baselines output
 c          04-feb-08 dnf Added object purpose to source listing output
+c          19-fen-08 pjt Added versan() version loggin
 c
 c
 c TODO:
@@ -116,8 +117,8 @@ c
 c----------------------------------------------------------------------c
 
         pversion=versan('listobs',
-     *    '$Id$')
-        call output( pversion )
+     *  '$Id$')
+c-----------------------------------------------------------------------
 
 	dash = '----------------------------------------' //
      1	       '----------------------------------------' 
