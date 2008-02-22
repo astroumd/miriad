@@ -30,7 +30,7 @@ c tout:  file handle for the output dataset; used by GHisWrit()
 c
       INTEGER   MAXSRC
       PARAMETER(MAXSRC=32)
-      CHARACTER cname(MAXSRC)*10
+      CHARACTER cname(MAXSRC)*17
       INTEGER   ncal, tout
       REAL      cflux(MAXSRC)
       LOGICAL   antused(MAXANT)
@@ -45,7 +45,7 @@ c
       INTEGER nsources, nsrcidx, srcidx(MAXSLOT), solidx(MAXSLOT),
      *        srcsol(MAXSOL)
       REAL focidx(MAXSLOT), focsol(MAXSOL), maxfoc
-      CHARACTER sources(MAXSRC)*10
+      CHARACTER sources(MAXSRC)*17
 
       COMMON/gmake3/nsources
       COMMON/gmake4/sources
