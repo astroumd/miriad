@@ -178,7 +178,11 @@ void bug_c(char s,Const char *m)
   else {doabort = 1;		 p = "Fatal Error"; }
 
   if (!bug_cleanup)
+  {
+    if ( Name == NULL )
+      buglabel_c("(NOT SET)");
     fprintf(stderr,"### %s [%s]:  %s\n",p,Name,m);
+  }
 
   if(doabort){
     reentrant = !reentrant;
@@ -221,7 +225,12 @@ void bugv_c(char s,Const char *m, ...)
   else {doabort = 1;		 p = "Fatal Error"; }
 
   va_start(ap,m);
-  snprintf(msg,MAXMSG,"### %s [%s]: ",p,Name);          len = strlen(msg);
+
+  if ( Name == NULL )
+    buglabel_c("(NOT SET)");
+
+  snprintf(msg,MAXMSG,"### %s [%s]: ",p,Name);
+  len = strlen(msg);
   vsnprintf(&msg[len],MAXMSG-len,m,ap);
   va_end(ap);
 
