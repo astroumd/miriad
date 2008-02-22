@@ -164,6 +164,7 @@ c@ focus
 c   Maximum (sum of) focus change allowed (in volts) to force a break point
 c   and hence start of a new averaging interval. Note: a new uv variable,
 c   sfocus, is copied to the output gain visibility dataset.
+c   NOTE: CARMA has no focus values (yet)
 c   Default: 0.1 (volts)
 c
 c@ out
