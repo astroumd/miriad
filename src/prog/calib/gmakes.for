@@ -1,5 +1,5 @@
 c************************************************************************
-      PROGRAM gmake
+      PROGRAM gmakes
       IMPLICIT NONE
 c-----------------------------------------------------------------------
 c  History:
@@ -33,20 +33,20 @@ c    pjt   may97  add error bars
 c   mwr/pjt aug99 applied last scan bug in the old version
 c                 (last visibility was always alone in a time interval)
 c    pjt  31jul00 default options=amp,noscale,apriori wasn't done so
-c    pjt  28sep05 renamed to GMAKES to avoid conflict with gnu make
+c    pjt  28sep05 renamed to GMAKES to avoid conflict with gnu gmake 
 c
-c= gmake - Convert a visibility dataset into a gain visibility dataset
+c= gmakes - Convert a visibility dataset into a gain visibility dataset
 c& pjt
 c: calibration
 c+
-c   GMAKE creates a gain calibration dataset (which in actuality
+c   GMAKES creates a gain calibration dataset (which in actuality
 c   is a regular visibility dataset) from a single visibility dataset 
 c   assuming a model for the observed source (point source or planet)
 c
 c     ** In antenna based mode the visibilities are written as if 
 c        the data is an autocorrelation dataset
 c
-c   NOTE: this is the new GMAKE, with new keyword focus=
+c   NOTE: this is the new GMAKES, with new keyword focus=
 c     
 c@ vis
 c     Name of input visibility dataset. Only one dataset can be given;
@@ -55,7 +55,7 @@ c     up I/O in this program.
 c     No default.
 c@ select
 c     Standard uv data selection criteria. Generally this should not include
-c     a "dra" and "ddec" selection, as GMAKE automatically matches data
+c     a "dra" and "ddec" selection, as GMAKES automatically matches data
 c     with the appropriate pointing center.
 c@ model
 c     Name of the input models. Several models can be given, which can
@@ -94,7 +94,7 @@ c	             model, which is assumed to represent the image at all
 c	             frequencies. This should also be used if the model has
 c	             been derived from MFCLEAN.
 c	  relax      Relax the convergence criteria. This is useful when
-c	             GMAKE'ing with a very poor model.
+c	             GMAKES'ing with a very poor model.
 c	  apriori    This is used if there is no input model, and the
 c	             source in the visibility data is either a planet,
 c	             or a standard calibrator. This causes the model data
@@ -103,14 +103,14 @@ c	             planet, this flux will be a function of baseline. If
 c	             the source is a point source, the ``apriori'' option
 c	             is only useful if the ``amplitude'' and ``noscale''
 c	             option are being used. For a planet, this option
-c	             should also be used for a phase gmake, to get the
+c	             should also be used for a phase GMAKES, to get the
 c	             correct weighting of the different baselines in the
 c	             solution.
 c	  noscale    Do not scale the model. Normally the model is scaled
 c	             so that the flux in the model visibilities and the
 c	             observed visibilities are the same. Generally this
 c	             option should be used with at least the apriori option.
-c	             It must be used if gmake is being used to determine
+c	             It must be used if GMAKES is being used to determine
 c	             Jy/K, and should also be used if the model is believed
 c	             to have the correct scale.
 c
@@ -193,7 +193,7 @@ c
 
 c-----------------------------------------------------------------------
       CHARACTER VERSION*(*)
-      PARAMETER(VERSION='GMAKES: Version 28-sep-05')
+      PARAMETER(VERSION='GMAKES: Version 21-feb-08')
       INTEGER   MAXMOD,   MAXSELS,    NHEAD
       PARAMETER(MAXMOD=32,MAXSELS=256,NHEAD=3)
 c
@@ -215,7 +215,7 @@ c  Announce
       CALL output(version)
 c+debug
 c      CALL output('***************************************************')
-c      CALL output('*** GMAKE : new version with:                     *')
+c      CALL output('*** GMAKES : new version with:                    *')
 c      CALL output('*** - multiple sources, but NOT mulitple vis=     *')
 c      CALL output('*** - time averaging breaks at focus/source change*')
 c      CALL output('*** - new keyword focus=                          *')
@@ -308,8 +308,8 @@ c
       CALL GHisSet(tno)
       CALL HisOpen(tno,'append')
       CALL HisAppn(tno,visi,.FALSE.)
-      CALL HisWrite(tno,'GMAKE: Miriad '//version)
-      CALL HisInput(tno,'GMAKE')
+      CALL HisWrite(tno,'GMAKES: Miriad '//version)
+      CALL HisInput(tno,'GMAKES')
 c
 c  Determine the flags to the MODELINI and MODEL routines.
 c
@@ -336,7 +336,7 @@ c
 	  call SelfAcc(tscr,nchan,nvis,interval)
 	  call scrclose(tscr)
       ELSE
-          CALL bug('f','GMAKE: generic models not implemented')
+          CALL bug('f','GMAKES: generic models not implemented')
 	  do i=1,nModel
 	    call output('Calculating the model for '//Models(i))
 	    call SelfSet(i.eq.1,MinAnts,.true.)
@@ -453,7 +453,7 @@ c------------------------------------------------------------------------
       REAL newfocus(MAXANT),voltage
       INTEGER i1,i2,i,nfocs
       DOUBLE PRECISION dbw,epsi,rms
-      CHARACTER source*10, tfocs*1
+      CHARACTER source*17, tfocs*1
       LOGICAL qfocs
 
       SAVE voltage
@@ -475,7 +475,8 @@ c------------------------------------------------------------------------
 	  IF(epsi.gt.0.1*dbw) CALL bug('w',
      *	    'Channel bandwidths differ by greater than 10%')
 	  bw = 1.0e9 * dbw
-	  IF(bw.le.0) CALL bug('f','Channels have zero bandwidth')
+          write(*,*) 'dbw = ',dbw,epsi
+	  IF(bw.le.0) CALL bug('w','Channels have zero bandwidth')
 	  calcbw = .FALSE.
       ENDIF
 c
@@ -514,7 +515,7 @@ c-debug
           ENDIF
 c
 c--- uvinfo ??
-c Carefull : systemp vs. wsystemp
+c Careful : systemp vs. wsystemp
 c
 c		get current source name, add to list if new one...
           CALL uvrdvra(tvis,'source',source,' ')
@@ -526,7 +527,7 @@ c		get current source name, add to list if new one...
          nbad = nbad + 1
       ENDIF
       END
-c subroutines common to gmake and gmake0
+c subroutines common to gmakes and gmake0
 c************************************************************************
       SUBROUTINE SelfSet(firstd,MinAntsd,calcbwd)
 c
@@ -760,7 +761,7 @@ c      time
 c      estimated sigma**2
 c
 c  The Lookup Table (replacing the old hash table)
-c    Although SELFCAL uses a hash table, for GMAKE, where multiple sources
+c    Although SELFCAL uses a hash table, for GMAKES, where multiple sources
 c    and focus changes (all which cause an interval average to be broken)
 c    can occur, this was not a viable solution. Instead, an array of times
 c    (DTIME0) is created (see ADDSRC) during reading in of the data.
@@ -870,10 +871,10 @@ c
 	if(nbad.ne.0) call bug('w',
      *	  'No. visibilities with bad baseline numbers = '//itoaf(nbad))
 	line = 'Total number of visibilities processed: '//itoaf(TotVis)
-	call HisWrite(tno,'GMAKE: '//line)
+	call HisWrite(tno,'GMAKES: '//line)
 	call output(line)
 	line = 'Total number of solution intervals: '//itoaf(nSols)
-	call HisWrite(tno,'GMAKE: '//line)
+	call HisWrite(tno,'GMAKES: '//line)
 	call output(line)
 c
 c  Determine all the gain solutions.
@@ -1053,14 +1054,14 @@ c        ENDDO
 	Sigma = sqrt(max(SumChi2/SumExp,0.))
 	write(line,'(a,f6.1)')'Rms phase change (degrees):',phi
 	call output(line)
-	call HisWrite(tno,'GMAKE: '//line)
+	call HisWrite(tno,'GMAKES: '//line)
 	write(line,'(a,1pg10.3)')'Rms deviation of gain from 1:',amp
 	call output(line)
-	call HisWrite(tno,'GMAKE: '//line)
+	call HisWrite(tno,'GMAKES: '//line)
 	write(line,'(a,1pg10.3)')
      *	  'Ratio of Observed to Theoretical noise:',Sigma
 	call output(line)
-	call HisWrite(tno,'GMAKE: '//line)
+	call HisWrite(tno,'GMAKES: '//line)
 c
 	END
 c************************************************************************
@@ -1535,7 +1536,7 @@ c
      *      source,' Flux ',flux,
      *      ' Jy at ',freq,' Ghz on ',ctime0
       ENDIF
-      CALL GHisWrit('GMAKE: '//msg)
+      CALL GHisWrit('GMAKES: '//msg)
       CALL output(msg)
       END
 c***********************************************************************
@@ -1659,6 +1660,7 @@ c-debug
 
       END
 c***********************************************************************
+c not used anymore
       SUBROUTINE getsname(i, sname)
       INTEGER i
       CHARACTER sname*(*)
