@@ -238,11 +238,10 @@ c    mchw 14mar07  added option noisecal to copy conj of LSB into USB.
 c    mchw 01oct07  added keywork onsource to set uvvariable "on"
 c    mchw 12feb08  change MAXANT2 to MAXANT in fxcal.
 c------------------------------------------------------------------------
-c $Id$ $Revision$ $Date$ $Author$
 	include 'maxdim.h'
 	integer maxbad
 	character version*(*)
-	parameter(version='UVCAL: version 3.0 12-FEB-2008')
+	parameter(version='UVCAL: $Revision$ $Date$')
 	parameter(maxbad=20)
 	real PI
 	parameter(PI=3.1415926)
@@ -276,6 +275,7 @@ c
 	complex expi
 c
 	call output(version)
+        call buglabel('uvcal')
 	call bug('i','05aug05 seeing correction for coherence')
 	call bug('i','28jan06 options=avechan. Make new wideband')
 	call bug('i','25feb06 options=holo: pointing and holography')
