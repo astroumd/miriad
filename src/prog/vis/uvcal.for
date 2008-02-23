@@ -238,6 +238,7 @@ c    mchw 14mar07  added option noisecal to copy conj of LSB into USB.
 c    mchw 01oct07  added keywork onsource to set uvvariable "on"
 c    mchw 12feb08  change MAXANT2 to MAXANT in fxcal.
 c------------------------------------------------------------------------
+c $Id$ $revision$ $date$ $author$
 	include 'maxdim.h'
 	integer maxbad
 	character version*(*)
