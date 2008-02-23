@@ -241,7 +241,7 @@ c------------------------------------------------------------------------
 	include 'maxdim.h'
 	integer maxbad
 	character version*(*)
-	parameter(version='UVCAL: $Date$ ' )
+	parameter(version='UVCAL: version 3.1 22-FEB-2008' )
 	parameter(maxbad=20)
 	real PI
 	parameter(PI=3.1415926)
