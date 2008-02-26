@@ -10,6 +10,8 @@ c       SINBAD is a MIRIAD task to calculate (ON-OFF)/OFF*TSYS for
 c       autocorrelation data. The preceeding OFF and TSYS record
 c	for each antenna is used. Flags on the OFF scans are ignored.
 c	Flags on the ON scans are copied to the output file.
+c       Missing TSYS can be replaced via the tsys= keyword as a last
+c       resort, or the spectral window based systemp() UV variable.
 c@ vis
 c       The name of the input autocorrelation data set.
 c       Only one name must be given.
@@ -24,13 +26,15 @@ c	The output consists of spectral channels only.
 c@ out
 c       The name of the output uv data set. No default.
 c@ tsys
-c       Value for flat tsys spectrum if none is present
+c       Value for flat tsys spectrum if neither band average systemp 
+c       nor full spectrum is available.
 c--
 c
 c  History:
 c    mchw    29jan97  New task for Marc.
 c    mchw    05feb97  write same type of correlation data as input file.
 c    pjt/mwp 19feb08  safeguard off before on, tsys=1 if not present
+c    pjt     25feb08  use window based systemp array if tsys not available.
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*80,versan*80
@@ -66,13 +70,13 @@ c
 	call keyr('line',width,1.)
 	call keyr('line',step,width)
  	call keya('out',out,' ')
-        call keyr('tsys',tsys1,1.0)
+        call keyr('tsys',tsys1,-1.0)
 	call keyfin
 c
 c  Check user inputs.
 c
-	if(vis.eq.' ')call bug('f','Input file must be given (vis=)')
-        if(out.eq.' ')call bug('f','Output file name is missing')
+	if(vis.eq.' ')call bug('f','Input file name (vis=) missing')
+        if(out.eq.' ')call bug('f','Output file name (out=) missing')
 c
 c  Open the output file.
 c
@@ -113,6 +117,8 @@ c
         call uvprobvr(lIn,'on',type,length,updated)
         doon = type.eq.'i'
 	if(.not.doon) call bug('w', '"on" variable is missing')
+        if (tsys1.lt.0.0) call getwtsys(lIn,tsys,MAXCHAN,MAXANT)
+
 c
 c  Loop thro' the data, writing (ON-OFF)/OFF*TSYS
 c
@@ -159,6 +165,8 @@ c
 		enddo
 	      else if(on.eq.1)then
                 if (noff.eq.0) call bug('f','No off before on found')
+                if (ntsys.eq.0 .and. tsys1.lt.0.0)
+     *              call getwtsys(lIn,tsys,MAXCHAN,MAXANT) 
 		non = non + 1
 		do i=1,nchan
 		  data(i) = (data(i)-off(i,ant))/off(i,ant)*tsys(i,ant)
@@ -177,7 +185,14 @@ c
 	print *,'records read: ',num
 	print *,'records read: on:',non,'  off:',noff,'  tsys:',ntsys
 	print *,'records written: (on-off)/off*tsys:',non
-        if (ntsys.eq.0) call bug('w','No Tsys data found, use default')
+        if (ntsys.eq.0) then
+          if (tsys1.lt.0.0) then
+            call bug('w','No Tsys data on=-1 found, used systemp')
+          else
+            call bug('w','No Tsys data on=-1 found, used default tsys=')
+          endif
+        endif
+
 c
 c  Close up shop.
 c
@@ -192,3 +207,34 @@ c
         call uvclose(lOut)
         end
 c********1*********2*********3*********4*********5*********6*********7**
+        subroutine getwtsys(lIn,tsys,mchan,mant)
+        implicit none
+        integer lIn, mchan, mant
+        real tsys(mchan,mant)
+c
+        logical updated
+        integer length,nants,nchan,nspect,i,j,i2
+        integer nschan(100),ischan(100)
+        real systemp(1024)
+        character type*1
+        
+        call uvprobvr(lIn,'systemp',type,length,updated)
+        if (updated .and. length.gt.0) then
+           call uvgetvri(lIn,'nants',nants,1)
+           call uvgetvri(lIn,'nspect',nspect,1)
+           call uvgetvri(lIn,'nchan',nchan,1)
+           call uvgetvri(lIn,'nschan',nschan,nspect)
+           call uvgetvri(lIn,'ischan',ischan,nspect)
+           call uvgetvrr(lIn,'systemp',systemp,nants*nspect)
+           do i=1,nspect
+              do i2=ischan(i),ischan(i)+nschan(i)-1
+                 do j=1,nants
+                    tsys(i2,j) = systemp(j+(i-1)*nants)
+                 enddo
+c                 write(*,*) i2,' :t: ',(tsys(i2,j),j=1,nants)
+              enddo
+           enddo
+           
+        endif
+
+        end
