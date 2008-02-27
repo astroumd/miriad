@@ -1,6 +1,6 @@
 #! /bin/csh -f
 #
-set version=5-mar-07
+set version=27-feb-08
 #
 #  2-aug-99 Updated for Sebok's Mandrake setup
 #  1-aug-00 Updated to allow to build private PGPLOT version
@@ -41,6 +41,8 @@ set version=5-mar-07
 # 17-may-07 use $CC, $F77 and $CXX in $MIRBIN, if present
 #
 #
+# if SELINUX is enabled:
+#    chcon -t texrel_shlib_t $MIR/lib/linux/*.so
 #-----------------------------------------------------------------------
 
 # sanity check: find out from the way it was called where the script lives
@@ -99,7 +101,7 @@ else if ($hosttype == sun4sol) then
   set mirxinc="/usr/include/X11"
   set mirxlib="/usr/X/lib"
 else if ($hosttype == darwin) then
-  set mirxinc="/usr/X11R6/include"
+  set mirxinc="/usr/X11R6/include/X11"
   set mirxlib="/usr/X11R6/lib"
 else
   set mirxinc="/usr/include/X11"
