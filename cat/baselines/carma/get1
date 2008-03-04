@@ -2,7 +2,7 @@
 #
 set base=http://cedarflat.mmarray.org/observing/baseline/antpos/
 set wget=1
-set localdir=/array/rt/baselineSolutions/
+set localdir=~obs/web_pages/observing/baseline/antpos/
 
 if (-d $localdir) then
   echo NOTE: local repository $localdir is also present
