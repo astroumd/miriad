@@ -19,6 +19,7 @@
 /*                    and removed VMS specific code                     */
 /*    pjt     17may07 removed old-non ANSI declaration                  */
 /*    pjt      5dec07 add Name to bug output - why took us so long?     */
+/*    pkgw     6mar08 declare Name as static to prevent symbol clashes  */
 /************************************************************************/
 
 #include <stdio.h>
@@ -30,7 +31,7 @@
 static char *errmsg_c(int n);
 static int  handle_bug_cleanup(int d, char s, Const char *m);
 
-char *Name = NULL;            /* a slot to store the program name       */
+static char *Name = NULL;     /* a slot to store the program name       */
 int reentrant=0;              /* keep track of state                    */
 
 typedef void (*proc)(void);  /* helper definition for function pointers */
