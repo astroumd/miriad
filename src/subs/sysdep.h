@@ -34,7 +34,7 @@
  */
 
 #if defined(HAVE_CONFIG_H) && HAVE_CONFIG_H
-#include "../../config.h"
+#include "config.h"
 #endif
 
 #if !defined(MIR_SYSDEP_H)
