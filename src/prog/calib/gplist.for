@@ -123,6 +123,7 @@ c                    assigning the number of antenna gains.
 c                    Keep the default for the Carma array.
 c    pjt/smw 28nov06 Added new options=addphase
 c    smw/pjt  8dec06 Format fiddling
+c    dnf     14feb08 More format fiddling to assure spaces between columns
 c                    
 c  Bugs and Shortcomings:
 c    gplist is hardwired in some places to list 15 antennas! (check options=dyn...)
@@ -131,7 +132,7 @@ c    usage with 15 or 30 elements.
 c-----------------------------------------------------------------------
 	include 'gplist.h'
 	character version*(*)
-	parameter(version='GpList: version 8-dec-06')
+	parameter(version='GpList: version 14-feb-08')
 	logical dovec,docomp,dophas,doall,dozero,domult,hexists,doamp
 	logical dolimit,doclip,dosigclip,doforce,dohist,docarma,doaddph
 	real jyperk(MAXGANT) 
@@ -445,9 +446,9 @@ c
          enddo
 	 call output('The amplitude gain values listed '//
      *               'in the table are:')
-	 write(msg(1:35),94) '  Time     Ant 1 Ant 2 Ant 3 Ant 4 '
-	 write(msg(36:70),94) 'Ant 5 Ant 6 Ant 7 Ant 8 Ant 9 Ant10'
-	 write(msg(71:100),94) ' Ant11 Ant12 Ant13 Ant14 Ant15'
+	 write(msg(1:37),94) '  Time    Ant 1  Ant 2  Ant 3  Ant 4 '
+	 write(msg(38:78),94)' Ant 5  Ant 6  Ant 7  Ant 8  Ant 9  Ant10'
+	 write(msg(79:113),94) '  Ant11  Ant12  Ant13  Ant14  Ant15'
 	 call output(msg)
 	 do i=1,nsols
 	    call JulDay(time(i),'H',line(1:18))
@@ -731,7 +732,7 @@ c
 	call hdaccess(tGains,iostat)
 	if(iostat.ne.0)call AverBug(iostat,'Error reclosing gain table')
 c
-199   format(a8,2x,15f6.2)
+199   format(a8,15(1x,f6.2))
 198   format(a8,15i5)
 197   format(a36,a36)
 299   format(a8,2x,15(f5.1,1x))
