@@ -5,7 +5,7 @@
 include $(top_srcdir)/mircommon.mak
 
 bin_PROGRAMS = addhis atmosph calc copyhd corset cotra delhd \
-  design dwell gethd hex itemize j2000 julian listobs mathd \
+  design dwell gethd hex hexc itemize j2000 julian listobs mathd \
   mfplan moslst obsrms obstau planets pnt pntgen prthd prthis \
   puthd remove rmdata rmsfit sinbad sinpoly solar tacos taco \
   telepar warpfit xcorr xfcor mfile
