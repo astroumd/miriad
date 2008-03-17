@@ -370,6 +370,8 @@ c                  recovered 'include 'mirconst.h'' in a few subs.
 c                  added 'implicit none' to all the subs 
 c    jhz 08dec07   added keyword title and disable source labelling
 c                  for non-default size selection.
+c    jhz 08mar17   fixed bug in color index for multiple input
+c                  files.
 c To do:
 c
 c   Vector averaging rms not yet implemented
@@ -509,7 +511,7 @@ c
       start_sid=0
       next_sid=0 
 c-----------------------------------------------------------------------
-      call output ('SmaUvPlt: version 1.6 06-Dec-07')
+      call output ('SmaUvPlt: version 1.7 17-Mar-08')
 c
 c  Get the parameters given by the user and check them for blunders
 c
@@ -598,8 +600,10 @@ c
      *    call mtitle (lin, nread, dosrc, dayav, tunit, nfiles, title,
      *    titlepnt)
 c
+        if(ifile.eq.1) then
         sourid=0
         nsource=0
+        end if
         do while (nread.ne.0 .and. .not.allfull)
         call uvgetvra(lin,'source',souread)
         if (souread.ne.' '.and.sourid.eq.0) then
@@ -894,7 +898,7 @@ c
       logical dovec(2)
       integer nsum
       real xvalr, yvalr, xsumr, ysumr, xsumsqr, ysumsqr,
-     *xsumi, ysumi, xsumsqi, ysumsqi
+     * xsumi, ysumi, xsumsqi, ysumsqi
       complex cval
 c-----------------------------------------------------------------------
       nsum = nsum + 1
@@ -2502,6 +2506,8 @@ c-----------------------------------------------------------------------
       logical flags(n)
 cc
       integer i
+c jhz
+      include 'mirconst.h'
 c-----------------------------------------------------------------------
       nkeep = 0
 c
@@ -2539,6 +2545,8 @@ c
      *  work(hann)
 cc
       integer i, j, k, nb, np
+c jhz 
+      include 'mirconst.h'
 c----------------------------------------------------------------------
       call hcoeffs (hann, coeffs)
 c
@@ -2749,8 +2757,8 @@ c
         dayav = dayav / tunit
       else
         if (doavall) then
-          call bug ('w', 'OPTIONS=AVALL only useful if time averaging')
-          doavall = .false.
+        call bug ('w', 'OPTIONS=AVALL only useful if time averaging')
+        doavall = .false.
         end if
       end if
 c
@@ -2759,7 +2767,7 @@ c
         hann = 1
       else if (hann.gt.maxco) then
         str = itoaf(maxco)
-        call bug ('f', 'Hanning smoothing length must be <= '//str)
+       call bug ('f', 'Hanning smoothing length must be <= '//str)
       end if
       call keyi ('dotsize', dotsize, -1)
       
@@ -2802,10 +2810,10 @@ c
         ilen = ilen + ilen2 + 1
       enddo
               call keya('title', titlepnt, 'NO')
-        if((titlepnt.ne.'BL').and.(titlepnt.ne.'FR').and.
-    * (titlepnt.ne.'PO').and.(titlepnt.ne.'AV').and.
-    * (titlepnt.ne.'NO')) then
-          line = 'The title code "'//titlepnt//'" is not supported.'
+      if((titlepnt.ne.'BL').and.(titlepnt.ne.'FR').and.
+    & (titlepnt.ne.'PO').and.(titlepnt.ne.'AV').and.
+    & (titlepnt.ne.'NO')) then
+        line = 'The title code "'//titlepnt//'" is not supported.'
         call bug('w', line)
         call bug('w', 'Using the default.')
           titlepnt='NO'
@@ -3490,7 +3498,7 @@ c
       end
 
 
-      SUBROUTINE smapgpts(N,XPTS,YPTS,soupnt,SYMBOL,fileid,lp,
+      subroutine smapgpts(N,XPTS,YPTS,soupnt,SYMBOL,fileid,lp,
      * npol,polstr,dotsize,srcoff)
       implicit none
       INTEGER N, NPNTS
