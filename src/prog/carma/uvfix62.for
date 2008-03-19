@@ -28,7 +28,8 @@ c@ mode62
 c     Mode of fixing the 62MHz problem
 c     0=do nothing 
 c     1=fix the 62MHz padding problem
-c     2=output lags
+c     2=(test)output lags
+c     3=(test)output fft of lags, should be original
 c
 c     This option is during testing and might disappear.
 c
