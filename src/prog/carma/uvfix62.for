@@ -59,9 +59,7 @@ c-----------------------------------------------------------------------
 c  Announce program.
       
       version = versan(PROG,
-     * '$Id: ')
-
-c
+     * '$Id$')
 
 c-----------------------------------------------------------------------
 c  Use the key routines to get the user input parameters and check the
