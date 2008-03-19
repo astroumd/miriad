@@ -38,8 +38,6 @@ c
       INCLUDE 'mirconst.h'
       CHARACTER PROG*(*)
       PARAMETER (PROG = 'UVFIX62')
-      CHARACTER VERSION*(*)
-      PARAMETER (VERSION = '19-mar-08 PJT')
 c
 c  Internal variables.
 c
@@ -54,15 +52,16 @@ c
       LOGICAL dowide, docorr, updated
       LOGICAL first
       LOGICAL flags(MAXCHAN), wflags(MAXCHAN)
+      CHARACTER version*80, versan*80
 c
 c  End declarations.
 c-----------------------------------------------------------------------
 c  Announce program.
-c
-      CALL output(PROG // ': ' // VERSION)
+      
+      version = versan(PROG,
+     * '$Id: ')
 
 c
-      CALL bug('w','This program is being tested as we speak')
 
 c-----------------------------------------------------------------------
 c  Use the key routines to get the user input parameters and check the
@@ -70,6 +69,8 @@ c  input parameters for incorrect entries.
 c
 
       CALL keyini
+      CALL bug('w','This program is being tested as we speak')
+
 c
       CALL keyf('vis', infile, ' ')
       CALL keya('out', outfile, ' ')
@@ -139,7 +140,7 @@ c  additional history entries to the new file.
 c
       CALL hdcopy(lin, lout, 'history')
       CALL hisopen(lout, 'append')
-      CALL hiswrite(lout, PROG // ': ' // VERSION)
+      CALL hiswrite(lout, PROG // ': ' // version)
       CALL hisinput(lout, PROG)
 c     
 c  Begin editing the input file. 
