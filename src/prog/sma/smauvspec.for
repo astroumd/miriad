@@ -230,7 +230,9 @@ c                 in uvplt and smauvplt;
 c                 added keyword for selecting title content.
 c    jhz 23Jan08  added reading 'vsource' and take out it from users input 
 c                 lsrvel. The velocity vsource has been used in the 
-c                 on-line doppler tracking for SMA from users input 'lsrvel'.
+c                 on-line doppler tracking for SMA from users input 
+c                 'lsrvel'.
+c    jhz 19mar08  enable handling multiple input files. 
 c  Bugs:
 c------------------------------------------------------------------------
         include 'maxdim.h'
@@ -244,7 +246,7 @@ c
         character mname*8000, moln*16
         integer mtag(maxmline), nmline, j, jp, js, je, iline
         character version*(*)
-        parameter(version='SmaUvSpec: version 1.18 23-Jan-08')
+        parameter(version='SmaUvSpec: version 1.19 19-Mar-08')
         character uvflags*8,device*64,xaxis*12,yaxis*12,logf*64
         character xtitle*64,ytitle*64, veldef*8
         character xtitlebuf*64, line*64
@@ -290,7 +292,7 @@ c
         call output(version)
         docolor=.true.
         call keyini
-        call mkeyf('vis',in,1, nin)
+        call mkeyf('vis',in,100, nin)
         call vishd(in)
         call SelInput('select',sels,maxsels)
         call keyini
@@ -314,8 +316,6 @@ c
         end if
         call keyr('strngl', strl, -500.)
         call getaxis(xaxis,yaxis)
-c       if(docat) 
-c     &  call bug('f','has not fully implemented yet for jpl catalog.')
         dolag = xaxis.eq.'lag'
         call uvdatinp('vis',uvflags)
         call keyd('interval',interval,0.d0)
