@@ -24,8 +24,12 @@ c     No default.
 c@ out
 c     The name of the recomputed output visibility dataset. 
 c     No default.
-c@ mode
-c     Fix mode. 0=do nothing 1=do it.
+c@ mode62
+c     Mode of fixing the 62MHz problem
+c     0=do nothing 
+c     1=fix the 62MHz padding problem
+c     2=output lags
+c
 c     This option is during testing and might disappear.
 c
 c--
@@ -44,9 +48,9 @@ c
       CHARACTER Infile*132, Outfile*132, type*1
       CHARACTER*11 except(15)
       INTEGER i, k, m, lin, lout, mode62
-      INTEGER nread, nwread, lastchn, nexcept, skip
+      INTEGER nread, nwread, lastchn, nexcept
       INTEGER nschan(MAXCHAN), ischan(MAXCHAN), nspect, nwide
-      REAL wfreq(MAXCHAN), wwidth(MAXCHAN), wt
+      REAL wfreq(MAXCHAN), wt
       DOUBLE PRECISION sdf(MAXCHAN), sfreq(MAXCHAN), preamble(4), lo1
       COMPLEX data(MAXCHAN), wdata(MAXCHAN)
       LOGICAL dowide, docorr, updated
@@ -72,7 +76,7 @@ c
 c
       CALL keyf('vis', infile, ' ')
       CALL keya('out', outfile, ' ')
-      CALL keyi('mode', mode62, 1)
+      CALL keyi('mode62', mode62, 1)
       CALL keyfin
 
       CALL assertl(infile.NE.' ',
@@ -175,7 +179,7 @@ c  CARMA correlator status March 2008
 c
          DO k=1,nspect
             IF (nschan(k).EQ.63 .AND. mode62.GT.0) THEN
-               if (first) write(*,*) 'Working on window ',k
+               if (first) write(*,*) 'Window=',k,' fix mode62=',mode62
                CALL fix62(data(ischan(k)),nschan(k),mode62)
             ENDIF
          ENDDO
@@ -396,14 +400,8 @@ c
       endif
       return
       end
+c***********************************************************************
 c
-c withouth fft
-c 4.413u 0.730s 0:07.08 72.5%     0+0k 0+473480io 
-c 4.453u 0.682s 0:06.61 77.6%     0+0k 16+473480io
-c
-c with fft
-c 6.282u 0.734s 0:07.04 99.5%     0+0k 0+473480io
-c 6.510u 0.680s 0:07.25 99.1%     0+0k 0+473480io 
 c
       SUBROUTINE fix62(data,n,mode62)
       IMPLICIT NONE
@@ -413,40 +411,58 @@ c
 c
       include 'maxdim.h'
       COMPLEX data1(MAXCHAN), data2(MAXCHAN)
-      INTEGER i, n1
+      REAL    data3(MAXCHAN)
+      INTEGER i, n1, n2
 
       IF (mode62.EQ.0) RETURN
 
       IF (n.NE.63) call bug('f','fix62: not a 63 channel spectrum')
       n1 = n+1
-      
+            
 
-c 1) pad exta 0 at end      
+c 1) copy array, and pad extra 0 at end
       DO i=1,n
          data1(i) =  data(i)
       ENDDO
-      data1(n1) = 0
-c 2) conjugate symmetrize, so the after fft becomes real
+      data1(n1)   = 0
+      data1(n1+1) = 0
 
-c 3) fft
-      CALL fftcc(data1,data2, 1,n1)
+c 1a) special modes for testing
+c     2 = make a complex lag and return
+c     3 = FFT and iFFT, should return identical spectrum
 
-      IF (mode62.EQ.2) THEN
-         DO i=1,n
-            data(i) = data2(i)
-         ENDDO
+      IF (mode62.EQ.2 .OR. mode62.EQ.3) THEN
+         CALL fftcc(data1,data2,1,64)
+         IF (mode62.EQ.2) THEN
+            DO i=1,63
+               data(i) = data2(i)
+            ENDDO
+         ELSE IF (mode62.EQ.3) THEN
+            CALL fftcc(data2,data1,-1,64)
+            DO i=1,63
+               data(i) = data1(i)/64.0
+            ENDDO
+         ENDIF
          RETURN
       ENDIF
 
-c 4) taper/pad with 0s at the edges
+c 2) fft to lag space, a real spectrum of 128
 
-c 5) fft back
-      CALL fftcc(data2,data1,-1,n1)
+      CALL fftcr(data1,data3, 1,128)
 
-c 6) extract what we need
-      DO i=1,n
-         data(i) = data1(i)
+
+c 3) blank the tail end (notice data3(1) is the zero lag)
+      DO i=121,128
+         data3(i) = 0.0
       ENDDO
 
+c 4) fft back
+      CALL fftrc(data3,data2,-1,128)
+         
+
+c 5) copy array and return; 0-lag is in first array element
+      DO i=1,63
+         data(i) = data2(i)/64.0
+      ENDDO
 
       END
