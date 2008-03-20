@@ -2,7 +2,7 @@ c***********************************************************************
 c  Fix CARMA 62MHz windows before March 18 2008 where the CARMA pipeline
 c  didn't properly pad/fft the data
 c
-c   pjt    18mar08   Cloned off uvwide
+c   pjt    18/19-mar08   Cloned off uvwide
 c
 c***********************************************************************
 c= uvfix62 - fix CARMA 62MHz spectral windows 
@@ -421,11 +421,11 @@ c
       n1 = n+1
             
 
-c 1) copy array, and pad extra 0 at end
+c 1) copy array, and pad an extra 0 at both ends, we have 65 channels now
       DO i=1,n
-         data1(i) =  data(i)
+         data1(i+1) =  data(i)
       ENDDO
-      data1(n1)   = 0
+      data1(1)    = 0
       data1(n1+1) = 0
 
 c 1a) special modes for testing
@@ -451,10 +451,27 @@ c 2) fft to lag space, a real spectrum of 128
 
       CALL fftcr(data1,data3, 1,128)
 
+      IF (mode62.EQ.11) THEN
+         DO i=1,63
+            data(i) = data3(i)
+         ENDDO
+         RETURN
+      ENDIF
+      IF (mode62.EQ.12) THEN
+         DO i=1,63
+            data(i) = data3(i+65)
+         ENDDO
+         RETURN
+      ENDIF
+
 
 c 3) blank the tail end (notice data3(1) is the zero lag)
-      DO i=121,128
-         data3(i) = 0.0
+c method1, around the 
+c Note that if you turn off the zero'ing, you indeed get
+c back the original spectrum, within rounding (1e-5)
+
+      DO i=1,8
+         data3(64+i) = 0.0
       ENDDO
 
 c 4) fft back
@@ -463,7 +480,7 @@ c 4) fft back
 
 c 5) copy array and return; 0-lag is in first array element
       DO i=1,63
-         data(i) = data2(i)/64.0
+         data(i) = data2(i+1)/64.0
       ENDDO
 
       END
