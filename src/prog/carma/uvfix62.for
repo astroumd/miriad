@@ -30,6 +30,9 @@ c     0=do nothing
 c     1=fix the 62MHz padding problem
 c     2=(test)output lags
 c     3=(test)output fft of lags, should be original
+c     11 first 63 lags
+c     12 last  63 lags
+c     13 no zeroing of lags
 c
 c     This option is during testing and might disappear.
 c
@@ -470,9 +473,11 @@ c method1, around the
 c Note that if you turn off the zero'ing, you indeed get
 c back the original spectrum, within rounding (1e-5)
 
-      DO i=1,8
-         data3(60+i) = 0.0
-      ENDDO
+      IF (mode62.NE.13) THEN
+         DO i=1,8
+            data3(60+i) = 0.0
+         ENDDO
+      ENDIF
 
 c 4) fft back
       CALL fftrc(data3,data2,-1,128)
