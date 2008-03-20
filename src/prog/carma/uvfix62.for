@@ -476,7 +476,7 @@ c 4) fft back
 
 c 5) copy array and return; 0-lag is in first array element
       DO i=1,63
-         data(i) = data2(i+1)/64.0
+         data(i) = data2(i+1)/128.0
       ENDDO
 
       END
