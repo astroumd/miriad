@@ -17,7 +17,7 @@ c     UVFIX62 recomputes CARMA's 62MHz windows. These are 63 channel
 c     windows (or 65 if the end-channels were preserved) that have
 c     a wrong padding/fft problem in pipeline for data prior to
 c     about March 18, 2008.
-c
+c     
 c@ vis
 c     The name of the input visibility dataset.  
 c     No default.
@@ -55,7 +55,7 @@ c
       INTEGER nread, nwread, lastchn, nexcept
       INTEGER nschan(MAXCHAN), ischan(MAXCHAN), nspect, nwide
       REAL wfreq(MAXCHAN), wt
-      DOUBLE PRECISION sdf(MAXCHAN), sfreq(MAXCHAN), preamble(4), lo1
+      DOUBLE PRECISION sdf(MAXCHAN), sfreq(MAXCHAN), preamble(4), width
       COMPLEX data(MAXCHAN), wdata(MAXCHAN)
       LOGICAL dowide, docorr, updated
       LOGICAL first
@@ -127,12 +127,6 @@ c
       dowide = (type .eq. 'c')
       IF (.NOT. dowide) THEN
          CALL bug('f','No wide band channels present')
-
-
-         CALL bug('w', 
-     *      'No wide band data present in ' // infile)
-         CALL uvprobvr(lin, 'lo1', type, k, updated)
-         IF(.NOT.updated) lo1 = -1.0
       ENDIF
       first = .TRUE.
 c
@@ -167,13 +161,6 @@ c
          CALL getcoor(lin, MAXCHAN, nspect, nschan, ischan, 
      *           sdf, sfreq)
 c
-c  Get lo1 to figure out which spectral windows are USB and LSB
-c
-         CALL uvprobvr(lin, 'lo1', type, k, updated)
-         IF (updated) CALL uvgetvrd(Lin, 'lo1', lo1, 1)
-c
-c
-c
          CALL uvwread(lin, wdata, wflags, MAXCHAN, nwread)
          IF (nwread .LE. 0) CALL bug('f',PROG // ' No wide band data?')
 
@@ -183,8 +170,12 @@ c  CARMA correlator status March 2008
 c
          DO k=1,nspect
             IF (nschan(k).EQ.63 .AND. mode62.GT.0) THEN
-               if (first) write(*,*) 'Window=',k,' fix mode62=',mode62
-               CALL fix62(data(ischan(k)),nschan(k),mode62)
+               width = nschan(k) * ABS(sdf(k)) * 1000.0
+               IF (width.GT.60 .AND. width.LT.64) THEN
+                  IF (first) write(*,*) 'Window=',k,' fix mode62=',
+     *              mode62,' width=',width
+                  CALL fix62(data(ischan(k)),nschan(k),mode62)
+               ENDIF
             ENDIF
          ENDDO
          first = .FALSE.
