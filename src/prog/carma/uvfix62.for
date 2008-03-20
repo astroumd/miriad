@@ -471,7 +471,7 @@ c Note that if you turn off the zero'ing, you indeed get
 c back the original spectrum, within rounding (1e-5)
 
       DO i=1,8
-         data3(64+i) = 0.0
+         data3(60+i) = 0.0
       ENDDO
 
 c 4) fft back
