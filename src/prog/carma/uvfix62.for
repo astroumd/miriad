@@ -55,7 +55,7 @@ c
       INTEGER nread, nwread, lastchn, nexcept
       INTEGER nschan(MAXCHAN), ischan(MAXCHAN), nspect, nwide
       REAL wfreq(MAXCHAN), wt
-      DOUBLE PRECISION sdf(MAXCHAN), sfreq(MAXCHAN), preamble(4), width
+      DOUBLE PRECISION sdf(MAXCHAN), sfreq(MAXCHAN), preamble(5), width
       COMPLEX data(MAXCHAN), wdata(MAXCHAN)
       LOGICAL dowide, docorr, updated
       LOGICAL first
