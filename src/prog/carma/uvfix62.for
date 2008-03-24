@@ -17,25 +17,28 @@ c     UVFIX62 recomputes CARMA's 62MHz windows. These are 63 channel
 c     windows (or 65 if the end-channels were preserved) that have
 c     a wrong padding/fft problem in pipeline for data prior to
 c     about March 18, 2008.
+c     Wide-band data are also recomputed from scratch and written to
+c     the output file.
 c     
 c@ vis
 c     The name of the input visibility dataset.  
 c     No default.
 c@ out
 c     The name of the recomputed output visibility dataset. 
+c     In addition to fixed 62MHz windows, all widebands will have been
+c     recomputed.
 c     No default.
 c@ mode62
-c     Mode of fixing the 62MHz problem
-c     0=do nothing 
-c     1=fix the 62MHz padding problem
+c     Optional mode of fixing the 62MHz problem.
+c
+c     0=do nothing (though widebands are still recomputed)
+c     1=fix the 62MHz padding problem    [the default]
 c     2=(test)output lags
 c     3=(test)output fft of lags, should be original
-c     11 first 63 lags
-c     12 last  63 lags
-c     13 no zeroing of lags
-c
-c     This option is during testing and might disappear.
-c
+c     11=(test) first 63 lags
+c     12=(test) last  63 lags
+c     13=(test) no zeroing of lags
+c     14=(test) zero lags as in option 1, and then subtract mean of them
 c--
 c
 c-----------------------------------------------------------------------
@@ -75,9 +78,6 @@ c  input parameters for incorrect entries.
 c
 
       CALL keyini
-      CALL bug('w','This program is being tested as we speak')
-
-c
       CALL keyf('vis', infile, ' ')
       CALL keya('out', outfile, ' ')
       CALL keyi('mode62', mode62, 1)
@@ -118,17 +118,13 @@ c
       CALL uvprobvr(lin, 'corr', type, k, updated)
       CALL lcase(type)
       docorr = ((type .eq. 'r') .or. (type .eq. 'j'))
-      IF (.NOT. docorr) THEN
-         CALL bug('f', 
+      IF (.NOT. docorr) CALL bug('f', 
      *      'No narrow band data present in ' // infile)
-      ENDIF
       CALL uvprobvr(lin, 'wcorr', type, k, updated)
       CALL lcase(type)
       dowide = (type .eq. 'c')
-      IF (.NOT. dowide) THEN
-         CALL bug('f','No wide band channels present')
-      ENDIF
-      first = .TRUE.
+      IF (.NOT. dowide) CALL bug('f',
+     *      'No wide band channels present')
 c
 c  Open the output visibility file.
 c
@@ -148,6 +144,7 @@ c  First rewind input since we probed corr and wcorr before
 c
       CALL uvrewind(lin)
       CALL uvread(lin, preamble, data, flags, MAXCHAN, nread)
+      first = .TRUE.
       DO WHILE (nread.GT.0)
 c
 c  Copy unchanged variables to the output data set.
@@ -406,8 +403,8 @@ c
 c
       include 'maxdim.h'
       COMPLEX data1(MAXCHAN), data2(MAXCHAN)
-      REAL    data3(MAXCHAN)
-      INTEGER i, n1, n2
+      REAL    data3(MAXCHAN), aver
+      INTEGER i, n1
 
       IF (mode62.EQ.0) RETURN
 
@@ -463,6 +460,17 @@ c 3) blank the tail end (notice data3(1) is the zero lag)
 c method1, around the 
 c Note that if you turn off the zero'ing, you indeed get
 c back the original spectrum, within rounding (1e-5)
+
+      IF (mode62.EQ.14) THEN
+         aver = 0.0
+         DO i=1,8
+            aver = aver + data3(60+i)
+         ENDDO
+         aver = aver / 8.0
+         DO i=1,128
+            data3(i) = data3(i) - aver
+         ENDDO
+      ENDIF
 
       IF (mode62.NE.13) THEN
          DO i=1,8
