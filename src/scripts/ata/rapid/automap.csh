@@ -1,5 +1,6 @@
 #! /usr/bin/tcsh -f
 # simple mapping script 			september 06 - jrf
+# example
 #
 # $Id$
 #
