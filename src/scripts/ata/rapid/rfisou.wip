@@ -1,0 +1,22 @@
+#
+# $Id$
+#
+
+device /xs
+data rfi.total
+xcol 1
+ycol 2
+lim
+box
+conn
+
+mtext t 1 .5 .5 RFI Charts
+mtext l 2.5 .5 .5 RFI Count
+mtext b 2.5 .5 .5 Channel Number
+
+#data rfi.count2
+#xcol 1
+#ycol 2
+#color 2
+#poi
+end
