@@ -15,6 +15,7 @@ SUBDIRS = \
   borrow/pgplot \
   src/subs \
   src/scripts \
+  src/scripts/ata/rapid \
   borrow/linpack \
   src/prog/analysis \
   src/prog/calib \

@@ -342,6 +342,7 @@ AC_CONFIG_FILES([
     src/tools/Makefile
     src/subs/Makefile
     src/scripts/Makefile
+    src/scripts/ata/rapid/Makefile
     borrow/linpack/Makefile
     src/prog/analysis/Makefile
     src/prog/calib/Makefile
