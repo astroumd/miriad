@@ -16,7 +16,7 @@ set maphflux = $8
 set plim = 45
 set clim = 30
 set int = .25
-set flux = `grep -i $cal ~/bin/cals.list | awk '{print $6}'`
+set flux = `grep -i $cal $MIRCAT/ata/cals.list | awk '{print $6}'`
 rm -f $cal.calrpt
 if (`echo $flux | wc -w` == 0) set flux = 1
 
@@ -28,7 +28,10 @@ set uflux = `echo $flux 2 | awk '{print $1*$2}'`
 echo $flux $uflux $hflux $lflux $maxflux $minflux
 
 set ofilelist = `du $pfx*$sfx | awk '{print $2}'`
+
+# It's okay if this throws an error on an offsite install of MIRIAD
 cp ~/bin/olays/$olay$cal.olay olay
+
 #if (-e rfi.totallog) goto norfi
 
 #rfi.obscheck $freq

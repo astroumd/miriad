@@ -5,6 +5,8 @@
 
 
 if (-e rfi.list) goto flag
+
+# It's okay if this throws an error on an offsite install of MIRIAD
 cp ~/bin/karto/rfi.list .
 
 flag:

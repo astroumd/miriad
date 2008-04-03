@@ -3,7 +3,9 @@
 # $Id$
 #
 
+# It's okay if this throws an error on an offsite install of MIRIAD
 cp ~/bin/olays/olay olay
+
 set cal = $1
 set vis = $2
 set marker = $3
@@ -15,7 +17,7 @@ set maphflux = $8
 set mapfflux = $9
 set autocmd = $10
 
-set flux = `grep -i $vis ~/bin/cals.list | awk '{print $6}'`
+set flux = `grep -i $vis $MIRCAT/cat/ata/cals.list | awk '{print $6}'`
 set flux = "unknown"
 set uflux = 1000
 set hflux = 500
@@ -31,6 +33,7 @@ goto finish
 
 beenthere:
 
+# It's okay if this throws an error on an offsite install of MIRIAD
 cp ~/bin/olays/olay .
 
 set calfilelist = `du *$cal*/visdata | grep $marker | tr "/" " " | awk '{print $2}'`

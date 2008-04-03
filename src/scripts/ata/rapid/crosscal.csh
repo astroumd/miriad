@@ -3,7 +3,9 @@
 # $Id$
 #
 
+# It's okay if this throws an error on an offsite install of MIRIAD
 cp ~/bin/olays/olay olay
+
 set pfx = $1
 set sfx = $2
 set cal = $3
@@ -16,7 +18,7 @@ set maphflux = $9
 set autocmd = $10
 if ($pfx == "none") set pfx
 if ($sfx == "none") set sfx
-set flux = `grep -i $vis ~/bin/cals.list | awk '{print $6}'`
+set flux = `grep -i $vis $MIRCAT/cat/ata/cals.list | awk '{print $6}'`
 if (`echo $flux | wc -w` != 0) then
 set lflux = `echo $flux .1 | awk '{print $1*$2}'`
 set hflux = `echo $flux 1.9 | awk '{print $1*$2}'`
@@ -41,7 +43,11 @@ beenthere:
 #if (-e tot-$vis$sfx) goto donethat
 #calcal.csh $pfx $vis$sfx $vis $freq gamma skip
 #donethat:
+
+# It's okay if this throws an error on an offsite install of MIRIAD
 cp ~/bin/olays/olay .
+
+# It's okay if this throws an error on an offsite install of MIRIAD
 if (`echo $olay | wc -w` != 0) cp ~/bin/olays/$olay$vis.olay olay 
 
 set calfilelist = `du $pfx*$cal*$sfx | awk '{print $2}'`
