@@ -29,6 +29,10 @@ quickrfi.csh.clone: quickrfi.csh
 	$(LN_S) $< $@
 rfisweep.csh.clone: rfisweep.csh
 	$(LN_S) $< $@
+rfi.csh.clone: rfi.csh
+	$(LN_S) $< $@
+rfi32.csh.clone: rfi32.csh
+	$(LN_S) $< $@
 rfisweep.wip.clone: rfisweep.wip
 	$(LN_S) $< $@
 rfi.wip.clone: rfi.wip
