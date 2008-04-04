@@ -11,6 +11,11 @@ c   BootFlux is a MIRIAD task which can be used to determine the fluxes
 c   of secondary standards from primary standards. Both vector and scalar 
 c   averages are formed. It also prints out the rms scatter around the 
 c   vector mean, and the RMS variation in the amplitude.
+c   For primary fluxes  from the source catalog a search of 40 GHz
+c   and 100 days around the observing day/frequency is used and interpolated
+c   for the assumed flux. This is output and using programs such as 
+c   calflux more intelligent determinations of their flux could be
+c   attempted.
 c
 c@ vis
 c   The name of the input visibility datasets. You MUST include the datasets
@@ -81,6 +86,7 @@ c    dnf 09dec05 Added average and median fluxs to output
 c    dnf 23may05 Changed MAXANT3 and MAXBASE3 to work with CARMA data
 c                also included workaround in the case tsys is not in the data
 c    pjt 11jul07 fixed format statement for CARMA when bigant=15 
+c    pjt/mwp 4apr08  fixed default day for calget(), document behavior
 c  Bugs:
 c
 c   - Polarization mode not tested.
@@ -942,7 +948,6 @@ c
             if(pltb .gt. 0.01) then
               flux = pltb
             else
-c              day = 0.0d0
               call uvrdvrd(tvis,'time',day,0.0d0)
               call calget(' ',source,freq,40.,day,200.,flux,iostat)
               if(iostat.lt.0) flux = 1.0
