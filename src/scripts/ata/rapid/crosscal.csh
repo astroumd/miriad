@@ -3,9 +3,6 @@
 # $Id$
 #
 
-# It's okay if this throws an error on an offsite install of MIRIAD
-cp ~/bin/olays/olay olay
-
 set pfx = $1
 set sfx = $2
 set cal = $3
@@ -16,9 +13,10 @@ set mapskip = $7
 set maplflux = $8
 set maphflux = $9
 set autocmd = $10
+set sflag = $11
 if ($pfx == "none") set pfx
 if ($sfx == "none") set sfx
-set flux = `grep -i $vis $MIRCAT/cat/ata/cals.list | awk '{print $6}'`
+set flux = `grep -i $vis ${MIRCAT}/ata/cals.list | awk '{print $6}'`
 if (`echo $flux | wc -w` != 0) then
 set lflux = `echo $flux .1 | awk '{print $1*$2}'`
 set hflux = `echo $flux 1.9 | awk '{print $1*$2}'`
@@ -40,15 +38,27 @@ if (-e tot-$cal$sfx) goto beenthere
 calcal.csh $pfx $cal$sfx $cal $freq gamma skip
 beenthere:
 
+cat $cal.calrpt | grep " --- " | grep "spectra preserved (0%)" | awk '{print $1}' | grep X | tr 'X-' ' ' | awk '{print "ant("$1")("$2"),pol(xx)"}' > badbase
+
+cat $cal.calrpt | grep " --- " | grep "spectra preserved (0%)" | awk '{print $1}' | grep Y | tr 'Y-' ' ' | awk '{print "ant("$1")("$2"),pol(yy)"}' >> badbase
+
+echo "Flagging bad baselines!"
+foreach baseline (`cat badbase`)
+echo "Flagging $baseline"
+uvflag vis=$pfx'*'$vis$sfx flagval=f options=none select=$baseline
+end
+
+rm badbase
+
 #if (-e tot-$vis$sfx) goto donethat
 #calcal.csh $pfx $vis$sfx $vis $freq gamma skip
 #donethat:
 
-# It's okay if this throws an error on an offsite install of MIRIAD
 cp ~/bin/olays/olay .
 
-# It's okay if this throws an error on an offsite install of MIRIAD
-if (`echo $olay | wc -w` != 0) cp ~/bin/olays/$olay$vis.olay olay 
+if (`echo $olay` != "none" ) then
+if (-e ~/bin/olays/$olay$vis.olay) cp ~/bin/olays/$olay$vis.olay olay
+endif 
 
 set calfilelist = `du $pfx*$cal*$sfx | awk '{print $2}'`
 set visfilelist = `du $pfx*$vis*$sfx | awk '{print $2}'`
@@ -60,7 +70,7 @@ foreach file (`echo $visfilelist`)
 cp $file/bandpass visgains/$file.bandpass
 cp $file/gains visgains/$file.gains
 
-uvaver vis=$file out=$file.temp select='window(1),-auto' options=nocal,nopol,nopass interval=.5 line=chan,824,100
+uvaver vis=$file out=$file.temp select='window(1),-auto' options=nocal,nopol,nopass interval=.5
 
 uvplt vis=$file.temp device=/null select='pol(xx),window(1),-auto' options=nocal,nopass,nopol | grep Baseline | tr "-" " " | awk '{print " "$2"X-"$3"X",$5}' >> crosscalbasei
 
@@ -124,7 +134,7 @@ cat lamps hamps | awk '{print "R",NR,$1}' > amps
     set ulim = `calc -i 100+$ulim`
     end
 
-automap.csh $catfile $mapskip $maplflux $maphflux $autocmd
+automap.csh $catfile $mapskip $maplflux $maphflux $autocmd $sflag
 echo "(Note - flux for $vis is $flux)" >> $catfile.imgrpt
 
 
@@ -187,6 +197,6 @@ echo "Baselines report now available under $catfile.baserpt"
 finish:
 rm -rf visgains
 #rm -rf $catfile
-rm -rf $catfile.map $catfile.beam $catfile.rs rpt.temp crosscal* temp
+rm -rf rpt.temp crosscal* temp
 
 exit 0

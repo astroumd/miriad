@@ -1,9 +1,7 @@
 include $(top_srcdir)/mircommon.mak
 
 bin_SCRIPTS = automap.csh calcal.csh crosscal.csh crossmap.csh \
-	eprms.csh quickrfi.csh rfisweep.csh
-
-EXTRA_DIST = $(bin_SCRIPTS) rfi.wip rfisou.wip
+	eprms.csh quickrfi.csh rfisweep.csh rfisweep.wip rfi.wip rfisou.wip
 
 # Documentation. We do some gross stuff here because portable make
 # pattern matching rules are constrained to files with extensions in
@@ -30,4 +28,10 @@ eprms.csh.clone: eprms.csh
 quickrfi.csh.clone: quickrfi.csh
 	$(LN_S) $< $@
 rfisweep.csh.clone: rfisweep.csh
+	$(LN_S) $< $@
+rfisweep.wip.clone: rfisweep.wip
+	$(LN_S) $< $@
+rfi.wip.clone: rfi.wip
+	$(LN_S) $< $@
+rfisou.wip.clone: rfisou.wip
 	$(LN_S) $< $@

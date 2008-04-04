@@ -19,7 +19,7 @@ set int = .25
 
 if ($mapskip == "") set mapskip = skip
 
-set flux = `grep -i $cal ~/bin/cals.list | awk '{print $6}'`
+set flux = `grep -i $cal ${MIRCAT}/ata/cals.list | awk '{print $6}'`
 rm -f $cal.calrpt
 if (`echo $flux | wc -w` == 0) set flux = 1
 

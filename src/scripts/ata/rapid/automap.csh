@@ -1,20 +1,19 @@
 #! /usr/bin/tcsh -f
 # simple mapping script 			september 06 - jrf
-# example
 #
 # $Id$
 #
 
 if ($#argv < 1) then
     echo 'Enter vis'
-    set vcp = ($<)
-    set vis = $vcp[1]
+    set vis = $<
 else
     set vis = $1
     set skip = $2
     set lflux = $3
     set uflux = $4
     set autocmd = $5
+    set sflag = $6
 endif
 set sfx = "_1430"
 set contplt = /xs
@@ -23,13 +22,13 @@ set psci = 0
 set asci = 0
 set flct = 0
 
-set levs1 = "levs1=2,8,32"
+set levs1 = "levs1=15,30,45"
 if ($autocmd == "noscale") set levs1 = "levs1=15,30,45,60,75"
 if ($autocmd == "noamps") set levs1 = "levs1=15,30,45,60,75"  
 
 set fidx = 0
 set sidx = 0
-set iopt = 'options=mfs'
+set iopt = 'options=mfs,double'
 set arc = 4000		# fov of displayed plot in arcsec
 if (`echo $uflux | wc -w` == 0) set uflux = 500 
 if (`echo $lflux | wc -w` == 0) set lflux = 0 
@@ -38,19 +37,17 @@ set object = $vis
 rm -f amplog; touch amplog
 echo "Imaging report for $vis" > $vis.imgrpt
 
+rm -f mixolay
+
 set refant = 0
 
 set noflct = `uvplt vis=$vis device=/null options=2pass,nobase | grep Plot | awk '{print $2}'`
 
-# give one argument to start =  ave, flag, cal, invert, plot, selfcal
 #
 #
 set int=10		# selfcal inel is a point source at the observing centerReadterval (min)
 set scopt=pha		# option = pha or amp (phase+amp)
 set sup=0		# natural = 0 (high sensitivity - bigger beam)
-set cline=chan,2,100,400,24	# cont line - channel range for phase calibration
-set line=$cline	# extract line - channels to keep from source dataset
-set mline=chan,1,1,2	# map line - 60-90 covers HI line in m31
 
 set imsize=512		# number of cells in image
 set cell=30		# cell size in arcsec orig 30
@@ -67,6 +64,7 @@ alias hit 'echo Hit return to continue; set yn = $<'
     set sel="-shadow(7.5)"
 uvaver vis=$object out=tempmap options=nocal,nopol,nopass
 gpcopy vis=$object out=tempmap
+
 # grid and transform visibilities into brightness map
 invert:
 
@@ -77,7 +75,16 @@ foreach type (map beam clean cm rs)
 end
 invert vis=$vis map=$object.map beam=$object.beam cell=$cell \
 	imsize=$imsize sup=$sup select=$sel $iopt
-clean map=$object.map beam=$object.beam out=$object.clean 
+if ($skip == "auto") then
+set cleanlim = `sfind in=$object.map options=oldsfind,auto rmsbox=100 xrms=3 labtyp=arcsec | grep "confirmed" | awk '{print 4*$5}'`
+echo "$cleanlim sources found in dirty map. Using quad-clean model (assumes no extended structure!)."
+if ($cleanlim == 0) set cleanlim = 250
+echo "Setting clean niters to 250"
+else
+set cleanlim = 250
+endif
+
+clean map=$object.map beam=$object.beam out=$object.clean niters=$cleanlim
 restor map=$object.map beam=$object.beam model=$object.clean out=$object.cm \
     #fwhm=100
 restor map=$object.map beam=$object.beam model=$object.clean out=$object.rs \
@@ -85,38 +92,32 @@ restor map=$object.map beam=$object.beam model=$object.clean out=$object.rs \
 
 rm -f sfind.log
 sfind in=$object.cm options=oldsfind,auto rmsbox=100 xrms=4 labtyp=arcsec
+
+grep -v "#" sfind.log | tr ":" " " | awk '{if ($11 < 3000) print "star hms dms","sfind"NR,"no",$1,$2,$3,$4,$5,$6,$11,$11; else print "star hms dms","sfind"NR,"no",$1,$2,$3,$4,$5,$6,3000,3000}' > sfindolay
+
 set peak = `less sfind.log | grep : | sort -rnk7 | head -n 1 | awk '{print $7}'`
 set rmsrange = `imstat in=$object.rs region=relcenter,arcsec,box"($arc,$arc,-$arc,-$arc)" | grep E- | awk '{print $5}'`
 set rmsnoise = `echo $rmsrange | awk '{print $1}'`
 set range = `echo $peak $rmsnoise | awk '{print .001*$1/$2}'`
-#set range = `imfit in=$object.$map region=relcenter,arcsec,box"($arc,$arc,-$arc,-$arc)" object=point | grep Peak | awk '{print $3/rmsnoise}' rmsnoise=$rmsnoise`
-
-#if ($autocmd == "noscale") set range = `imfit in=$object.$map region=relcenter,arcsec,box"(1800,300,2400,-900)" object=point | grep Peak | awk '{print $3/rmsnoise}' rmsnoise=$rmsnoise`
-
-#echo "Displaying Results"
-#cgdisp slev=p,1 in=$object.$map,$object.$map \
-#   device=$contplt region=relcenter,arcsec,box"(4500,-4500,-4500,4500)" \
-#   labtyp=arcmin options=beambl,wedge,3value,mirr,full csize=0.6,1 olay=$olay \
-#   type=contour,pix slev=p,1 $levs1\
-#    range=0,0,lin,2 #device=$object.ps/cps 
-
 
 if ($skip == "auto") goto auto
 
 plot:			# display map
+
+cat olay sfindolay > mixolay
+
 echo "Writing PS document"
 cgdisp slev=p,1 in=$object.$map,$object.$map \
    region=relcenter,arcsec,box"(4500,-4500,-4500,4500)" device=$vis.ps/cps \
-   labtyp=arcmin options=beambl,wedge,3value,mirr,full csize=0.6,1 olay=$olay \
+   labtyp=arcmin options=beambl,wedge,3value,mirr,full csize=0.6,1 olay=mixolay \
    type=contour,pix slev=p,1 $levs1 \
    range=0,0,lin,2 #device=$object.ps/cps
 
 echo "Displaying Results"
 cgdisp slev=p,1 in=$object.$map,$object.$map \
    device=$contplt region=relcenter,arcsec,box"(4500,-4500,-4500,4500)" \
-   labtyp=arcmin options=beambl,wedge,3value,mirr,full csize=0.6,1 olay=$olay \
-   type=contour,pix slev=p,1 $levs1\
-    range=0,0,lin,2 #device=$object.ps/cps 
+   labtyp=arcmin options=beambl,wedge,3value,mirr,full csize=0.6,1 olay=mixolay \
+   type=contour,pix slev=p,1 $levs1 range=0,0,lin,2 #device=$object.ps/cps 
 
 set orc = 1000
 imfit in=$object.$map region=relcenter,arcsec,box"($orc,$orc,-$orc,-$orc)" object=point
@@ -147,8 +148,7 @@ set clip = `echo 10 $rmsnoise[1] | awk '{print $1*$2}'`
   if ($ans != "") set clip = $clip
 
   selfcal vis=$vis model=$object.clean interval=$scint select=$sel \
-	minants=4 options=noscale,$scopt clip=$clip refant=$refant \
-	line=chan,1,1,824
+	minants=4 options=noscale,$scopt clip=$clip refant=$refant
 #refant=$refant \
   #gpplt vis=$vis device=/xw yaxis=pha nxy=2,4; echo "show amp? [n]"
   #if ($< == y)  gpplt vis=$vis device=/xw nxy=2,4
@@ -178,8 +178,17 @@ auto:
 if ($autocmd == "noflag") goto autocal
 
 autoflag:
+if ($sidx == 2) then
+if (`echo $oldrange $range | awk '{if (($2/$1) <= 1.025) print "stop"}'` == stop) goto autocal
+endif
 
 echo "Beginning automated amp flagging"
+
+if ($sflag != "") then
+set asel = "amp($sflag)"
+uvflag vis=$vis select=$asel options=none flagval=f
+endif
+
 set fidx = 0
 uvaver vis=$vis out=$vis.temp options=relax
 uvlist vis=$vis.temp options=stat recnum=0 | grep -v CHAN | grep ":" | grep -v "e" | awk '{if ($7>uflux) print $1}' uflux=$uflux | awk '{print "R",NR,$1}' > hamps
@@ -191,7 +200,7 @@ if (`cat amps| wc -w` == 0) echo "No flagging neccessary"
 if (`cat amps| wc -w` == 0) goto autocal
 cat amps >> amplog
 set llim=0
-set ulim=101
+set ulim=51
 set lim = `cat amps | wc -l`
 echo "$lim amp records to flag."
 set flct = `echo $flct $lim | awk '{print $1+$2}'`
@@ -199,8 +208,8 @@ set flct = `echo $flct $lim | awk '{print $1+$2}'`
     set flags = `awk '{if ($2>llim) print $0}' llim=$llim amps | awk '{if ($2<ulim) printf "%s","vis("$3"),"}' ulim=$ulim`
     uvflag vis=$vis flagval=f options=none select=$flags
     if (`grep "R $ulim " amps | wc -l ` == 0) set fidx = 2
-    set llim = `calc -i 100+$llim`
-    set ulim = `calc -i 100+$ulim`
+    set llim = `calc -i 50+$llim`
+    set ulim = `calc -i 50+$ulim`
     end
 
 autocal:
@@ -209,14 +218,13 @@ if ($autocmd == "nocal") goto invert
 echo $range $oldrange $sidx
 if ($scopt == "pha") @ psci++
 if ($scopt == "amp") @ asci++
-set clip = `echo 10 $rmsnoise[1] | awk '{print $1*$2}'`
+set clip = `echo 5 $rmsnoise[1] | awk '{print $1*$2}'`
 
 if (`echo $range $oldrange | awk '{if ($1 > 1.025*$2) print "go"}'` == go) then
 gpcopy vis=$object out=tempmap
 set sidx = 0
   selfcal vis=$vis model=$object.clean interval=$scint select=$sel \
-	minants=4 options=noscale,$scopt clip=$clip refant=$refant \
-	line=chan,1,1,824
+	minants=4 options=noscale,$scopt clip=$clip refant=$refant
 set oldrange = $range
 goto invert
 endif
@@ -227,21 +235,20 @@ if (`echo $oldrange $range | awk '{if ((($2/$1)-.975)^2 <= .0025) print "stop"}'
     if (`echo $scopt$fidx` == "tamp2") goto invert
 set oldrange = $range
     if (`echo $scopt$fidx` == "tamp0") echo "Maximum range reached."
-    if (`echo $scopt$fidx` == "tamp0") goto plot
+    if (`echo $scopt$fidx` == "tamp0") set skip = "skip"
+    if (`echo $scopt$fidx` == "tamp0") goto invert
     set scopt = amp
     echo
 gpcopy vis=$object out=tempmap
     set sidx = 0
   selfcal vis=$vis model=$object.clean interval=$scint select=$sel \
 	minants=4 options=noscale,$scopt clip=$clip refant=$refant \
-	line=chan,1,1,824
 goto invert
 endif
 @ sidx++
-if ($sidx < 3) then 
+if ($sidx < 2) then 
   selfcal vis=$vis model=$object.clean interval=$scint select=$sel \
-	minants=4 options=noscale,$scopt clip=$clip refant=$refant \
-	line=chan,1,1,824
+	minants=4 options=noscale,$scopt clip=$clip refant=$refant
 goto invert
 endif
 

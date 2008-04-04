@@ -1,0 +1,25 @@
+#
+# $Id$
+#
+
+device 1/xs
+data full.rficount
+xcol 1
+ycol 2
+log y
+lim
+box cbnst cbnstl
+conn
+
+mtext t 1 .5 .5 RFI counts
+mtext l 2.5 .5 .5 RFI Count
+mtext b 2.5 .5 .5 Channel Number
+
+data full.rfilogtemp
+xcol 1
+ycol 2
+color 2
+log y
+poi
+
+end

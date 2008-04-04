@@ -10,11 +10,10 @@
 onintr finish
 
 #    set fixed parameters
-set plim = 20                 # rms phase limit for select (deg)
+set plim = 30                 # rms phase limit for select (deg)
 set clim = 10                 # closure phase limit for report (deg))
-set line=chan,8,1,103,103       # 800 channel average
 set int=.5                     # selfcal interval (min)
-set dev=/null                 # plot device (use /xs for plots)
+set dev=/null               # plot device (use /xs for plots)
 set rep=report.prms
 
 alias rep "tee -ia $rep"
@@ -30,7 +29,8 @@ start:
 #    log phase vs time for given scan and pol for all baselines
 set log = log.$vis
 uvplt vis=$vis device=$dev nxy=7,5 axis=time,pha yrange=-180,180 \
-        options=log,nofqav,2pass log=$log line=$line select='window(1),-auto'
+        options=log,nofqav,2pass log=$log select='window(1),-auto'\
+	line=chan,4,101,103,103
 
 #    get phase vs time data from uvplt log file
 grep E+ $log > data

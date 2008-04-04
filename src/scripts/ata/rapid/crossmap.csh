@@ -3,9 +3,7 @@
 # $Id$
 #
 
-# It's okay if this throws an error on an offsite install of MIRIAD
 cp ~/bin/olays/olay olay
-
 set cal = $1
 set vis = $2
 set marker = $3
@@ -16,8 +14,9 @@ set maplflux = $7
 set maphflux = $8
 set mapfflux = $9
 set autocmd = $10
+set sflag = $11
 
-set flux = `grep -i $vis $MIRCAT/cat/ata/cals.list | awk '{print $6}'`
+set flux = `grep -i $vis ${MIRCAT}/ata/cals.list | awk '{print $6}'`
 set flux = "unknown"
 set uflux = 1000
 set hflux = 500
@@ -33,7 +32,18 @@ goto finish
 
 beenthere:
 
-# It's okay if this throws an error on an offsite install of MIRIAD
+cat $cal.calrpt | grep " --- " | grep "spectra preserved (0%)" | awk '{print $1}' | grep X | tr 'X-' ' ' | awk '{print "ant("$1")("$2"),pol(xx)"}' > badbase
+
+cat $cal.calrpt | grep " --- " | grep "spectra preserved (0%)" | awk '{print $1}' | grep Y | tr 'Y-' ' ' | awk '{print "ant("$1")("$2"),pol(yy)"}' >> badbase
+
+echo "Flagging bad baselines!"
+foreach baseline (`cat badbase`)
+echo "Flagging $baseline"
+uvflag vis=$pfx'*'$vis$sfx flagval=f options=none select=$baseline
+end
+
+rm badbase
+
 cp ~/bin/olays/olay .
 
 set calfilelist = `du *$cal*/visdata | grep $marker | tr "/" " " | awk '{print $2}'`
@@ -44,8 +54,8 @@ foreach file (`echo $visfilelist`)
 
 cp $file/bandpass visgains/$file.bandpass
 cp $file/gains visgains/$file.gains
-uvflag vis=$file flagval=u options=none line=chan,80,380
-uvaver vis=$file out=$file.temp select='window(1),-auto' options=nocal,nopol,nopass interval=.5 line=chan,824,100
+#uvflag vis=$file flagval=u options=none line=chan,80,380
+uvaver vis=$file out=$file.temp select='window(1),-auto' options=nocal,nopol,nopass interval=.5
 
 end
 
@@ -97,12 +107,14 @@ cat lamps hamps | awk '{print "R",NR,$1}' > amps
 uvflag vis=$catfile flagval=f options=none line=$line
 set fsel = "amp($mapfflux)"
 uvflag vis=$catfile flagval=f options=none select=$fsel 
-automap.csh $catfile $mapskip $maplflux $maphflux $autocmd
+automap.csh $catfile $mapskip $maplflux $maphflux $autocmd $sflag
 uvflag vis=$catfile flagval=u options=none line=$line
 rm -rf $catfile-spec*
 set fsel = "amp($mapfflux)"
 uvaver vis=$catfile out=$catfile-spec options=relax,nocal,nopol,nopass
 gpcopy vis=$catfile out=$catfile-spec
+
+uvflag vis=$catfile flagval=f options=none line=$line
 
 if (`cat amplog | wc -w` == 0) echo "No flagging neccessary"
 if (`cat amplog | wc -w` == 0) goto noflag
