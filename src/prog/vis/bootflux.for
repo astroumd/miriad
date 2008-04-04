@@ -93,7 +93,7 @@ c------------------------------------------------------------------------
       character version*(*),defdir*(*)
       parameter(MAXPOL=4,MAXSRC=512,MAXANT3=MAXANT,MAXBASE3=MAXBASE,
      *          PolMin=-9,PolMax=4)
-      parameter(version='BootFlux: version 11-jul-07')
+      parameter(version='BootFlux: version 4-apr-08')
       parameter(defdir=
 c     *         '/home/bima2/data/flux/measured_fluxes/')
 c     *          '/lma/mirth/programmers/lgm/measured_fluxes/')
@@ -942,7 +942,8 @@ c
             if(pltb .gt. 0.01) then
               flux = pltb
             else
-              day = 0.0d0
+c              day = 0.0d0
+              call uvrdvrd(tvis,'time',day,0.0d0)
               call calget(' ',source,freq,40.,day,200.,flux,iostat)
               if(iostat.lt.0) flux = 1.0
             endif
