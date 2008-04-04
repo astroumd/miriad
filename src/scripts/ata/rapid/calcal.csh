@@ -4,7 +4,6 @@
 # $Id$
 #
 
-
 set pfx = $1
 set sfx = $2
 set cal = $3
@@ -13,25 +12,36 @@ set olay = $5
 set mapskip = $6
 set maplflux = $7
 set maphflux = $8
+set mapopt = $9
 set plim = 45
-set clim = 30
+set clim = 20
 set int = .25
-set flux = `grep -i $cal $MIRCAT/ata/cals.list | awk '{print $6}'`
+
+if ($mapskip == "") set mapskip = skip
+
+set flux = `grep -i $cal ~/bin/cals.list | awk '{print $6}'`
 rm -f $cal.calrpt
 if (`echo $flux | wc -w` == 0) set flux = 1
 
-set minflux = `echo $flux .666 | awk '{print $1*$2}'`
-set maxflux = `echo $flux 1.333 | awk '{print $1*$2}'`
-set lflux = `echo $flux .5 | awk '{print $1*$2}'`
-set hflux = `echo $flux 1.5 | awk '{print $1*$2}'`
-set uflux = `echo $flux 2 | awk '{print $1*$2}'`
+
+set minflux = `echo $flux .666 | awk '{print $1*$2-5}'`
+set maxflux = `echo $flux 1.333 | awk '{print $1*$2+5}'`
+set lflux = `echo $flux .5 | awk '{print $1*$2-5}'`
+set hflux = `echo $flux 1.5 | awk '{print $1*$2+5}'`
+set uflux = `echo $flux 2 | awk '{print $1*$2+5}'`
 echo $flux $uflux $hflux $lflux $maxflux $minflux
 
+if ($freq != 1430) then
+set minflux = 0
+set lflux = 0
+set uflux = 4
+set hflux = 3
+set lflux = 2
+set flux = 1
+endif
+
 set ofilelist = `du $pfx*$sfx | awk '{print $2}'`
-
-# It's okay if this throws an error on an offsite install of MIRIAD
 cp ~/bin/olays/$olay$cal.olay olay
-
 #if (-e rfi.totallog) goto norfi
 
 #rfi.obscheck $freq
@@ -45,7 +55,7 @@ set fbcount
 set fccount
 
 foreach file (`echo $ofilelist`)
-uvaver vis=$file select='window(1),pol(xx,yy),-auto' line=chan,824,100 interval=$int out=$file.temp options=nocal,nopass,nopol
+uvaver vis=$file select='window(1),pol(xx,yy),-auto' interval=$int out=$file.temp options=nocal,nopass,nopol
 set count = `uvlist vis=$file.temp recnum=0 select='window(1),-auto' | grep -v CHAN | grep ":" | grep -v "e" | wc -l| awk '{print $1}'`
 set rcount = `calc $rcount+$count`
 set iccount = ($iccount $count)
@@ -75,13 +85,13 @@ else
 set refant = `mselfcal vis=$file options=amp,noscale flux=$flux interval=30 refant=0 | grep Antenna | grep 0.00 | awk -F a '{print $2}'| awk '{print $1}'`
 endif
 
-if (`echo $refant| wc -w` != 0) mfcal vis=$file refant=$refant options=interpolate minants=4 flux=$flux,1.420,0 interval=30
+if (`echo $refant| wc -w` != 0) mfcal vis=$file refant=$refant options=interpolate minants=4 flux=$flux,1.420,0 interval=2
 
 uvaver vis=$file out=cal.temp options=relax
 
 uvlist vis=cal.temp options=stat recnum=0 | grep -v CHAN | grep ":" | grep -v "e" | awk '{if ($7>uflux) print $1}' uflux=$uflux| awk '{print "R",NR,$1}' > amps
 
-if (`cat amps| wc -w` == 0) then
+if (`cat amps| wc -w` < 10) then
 
 uvlist vis=cal.temp options=stat recnum=0 | grep -v CHAN | grep ":" | grep -v "e" | awk '{if ($7>hflux) print $1}' hflux=$hflux| awk '{print $1}' > lamps
 uvlist vis=cal.temp options=stat recnum=0 | grep -v CHAN | grep ":" | grep -v "e" | awk '{if ($7<lflux) print $1}' lflux=$lflux| awk '{print $1}' > hamps
@@ -105,6 +115,9 @@ endif
     set ulim = `calc -i 100+$ulim`
     end
 rm -r cal.temp
+
+if (`cat amps| wc -w` < 10) set idx = 1
+
 if ($idx == 2) then
 uvaver vis=$file options=nocal,nopass,nopol out=cal.temp > dump
 gpcopy vis=$file out=cal.temp > dump
@@ -178,7 +191,7 @@ cat lamps hamps | awk '{print "R",NR,$1}' > amps
     set ulim = `calc -i 100+$ulim`
     end
 
-    automap.csh tot$sfx $mapskip $maplflux $maphflux
+    automap.csh tot$sfx $mapskip $maplflux $maphflux $mapopt
 echo "Cal is $cal - flux is $flux" >> tot$sfx.imgrpt
 rm -rf *.temp
 rm -f amps
