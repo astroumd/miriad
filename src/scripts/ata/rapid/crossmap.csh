@@ -32,18 +32,6 @@ goto finish
 
 beenthere:
 
-cat $cal.calrpt | grep " --- " | grep "spectra preserved (0%)" | awk '{print $1}' | grep X | tr 'X-' ' ' | awk '{print "ant("$1")("$2"),pol(xx)"}' > badbase
-
-cat $cal.calrpt | grep " --- " | grep "spectra preserved (0%)" | awk '{print $1}' | grep Y | tr 'Y-' ' ' | awk '{print "ant("$1")("$2"),pol(yy)"}' >> badbase
-
-echo "Flagging bad baselines!"
-foreach baseline (`cat badbase`)
-echo "Flagging $baseline"
-uvflag vis=$pfx'*'$vis$sfx flagval=f options=none select=$baseline
-end
-
-rm badbase
-
 cp ~/bin/olays/olay .
 
 set calfilelist = `du *$cal*/visdata | grep $marker | tr "/" " " | awk '{print $2}'`
@@ -51,6 +39,19 @@ set visfilelist = `du *$vis*/visdata | grep $marker | tr "/" " " | awk '{print $
 
 rm -rf temp 
 foreach file (`echo $visfilelist`)
+
+
+cat $cal.calrpt | grep " --- " | grep "spectra preserved (0%)" | awk '{print $1}' | grep X | tr 'X-' ' ' | awk '{print "ant("$1")("$2"),pol(xx)"}' > badbase
+
+cat $cal.calrpt | grep " --- " | grep "spectra preserved (0%)" | awk '{print $1}' | grep Y | tr 'Y-' ' ' | awk '{print "ant("$1")("$2"),pol(yy)"}' >> badbase
+
+echo "Flagging bad baselines!"
+foreach baseline (`cat badbase`)
+echo "Flagging $baseline"
+uvflag vis=$file flagval=f options=none select=$baseline
+end
+
+rm badbase
 
 cp $file/bandpass visgains/$file.bandpass
 cp $file/gains visgains/$file.gains
