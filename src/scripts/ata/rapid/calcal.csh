@@ -85,7 +85,7 @@ else
 set refant = `mselfcal vis=$file options=amp,noscale flux=$flux interval=30 refant=0 | grep Antenna | grep 0.00 | awk -F a '{print $2}'| awk '{print $1}'`
 endif
 
-if (`echo $refant| wc -w` != 0) mfcal vis=$file refant=$refant options=interpolate minants=4 flux=$flux,1.420,0 interval=2
+if (`echo $refant| wc -w` != 0) mfcal vis=$file refant=$refant options=interpolate minants=4 flux=$flux,1.420,0 interval=30
 
 uvaver vis=$file out=cal.temp options=relax
 
