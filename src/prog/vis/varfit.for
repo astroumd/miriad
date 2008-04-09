@@ -179,10 +179,11 @@ c                  the linear regression between phase 2 and phase 1.
 c
 c    08nov mchw  increase MAXSOLS to 4096
 c    22jun07 mchw  increase MAXANTS to 64
+c    09apr08 mchw  protect divide by zero in structure function.
 c                                            
 c-----------------------------------------------------------------------
 	character version*(*)
-	parameter(version='(version 1.3 22-Jun-2007)')
+	parameter(version='(version 1.3 09-Apr-2008)')
 	character device*80, log*80, vis*80, xaxis*40, yaxis*40
 	integer tvis, refant, refant2, nx, ny
 	logical dowrap, xsc,ysc, dostruct, doallan, doquad
@@ -743,7 +744,7 @@ c
               sf(k) = sf(k) + 
      *		(yvar(ant,i+2*k)-2*yvar(ant,i+k)+yvar(ant,i))**2
             enddo
-	    sf(k) = sf(k)/(nSols-k)
+	        if(sf(k).ne.0.) sf(k) = sf(k)/(nSols-k)
           enddo
 	  do k=1,nSols/2-1
 	   if(yvar(ant,k).ne.0.)then
@@ -769,7 +770,7 @@ c
             do i=1,nSols-k
               sf(k) = sf(k) + (yvar(ant,i+k)-yvar(ant,i))**2
             enddo
-	    sf(k) = sf(k)/(nSols-k)
+	        if(sf(k).ne.0.) sf(k) = sf(k)/(nSols-k)
           enddo
 	  do k=1,nSols-1
 	   if(yvar(ant,k).ne.0.)then
@@ -869,7 +870,7 @@ c
           print *, 'Phase2 (file2, Y-axis)'
           print *, 'Phase1 (file1, Y-axis)'
           print *, 'plot initial fit with a given slope.'
-          pause
+c          pause
        
                   if(device.ne.' ')
      *    call varplot(device,visfile,xaxis,yaxis,nx,ny,xx,yy,
