@@ -1,7 +1,8 @@
 include $(top_srcdir)/mircommon.mak
 
 bin_SCRIPTS = automap.csh calcal.csh crosscal.csh crossmap.csh \
-	eprms.csh quickrfi.csh rfisweep.csh rfisweep.wip rfi.wip rfisou.wip
+	eprms.csh quickrfi.csh rfisweep.csh rfi32.csh rfi.csh \
+        rfisweep.wip rfi.wip rfisou.wip
 
 # Documentation. We do some gross stuff here because portable make
 # pattern matching rules are constrained to files with extensions in
