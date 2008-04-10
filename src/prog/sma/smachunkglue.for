@@ -31,6 +31,7 @@ c	Output file name. No default
 c
 c--
 c     jhz  13may05 made the first version for SMA bade on uvglue
+c     pjt   4apr08 made it work for unequally sized chunks
 c---------------------------------------------------------------------------
       implicit none
 c
@@ -39,18 +40,19 @@ c
       double precision preamble(5)
       integer nchani, nchano, lin, lins, lout, nread, irec, ichan,
      +  offset, ioff, npol, pol, nfiles, i, j, k, ifile
-      logical gflags(maxchan), first
-      complex data(maxchan)
-      real scratch(maxchan*3)
-      integer maxspect
-      parameter(maxspect=48)
-      double precision sfreqi(maxspect),
-     *  sdfi(maxspect),restfreqi(maxspect)
+      logical gflags(MAXCHAN), first
+      complex data(MAXCHAN)
+      real scratch(MAXCHAN*3)
+      integer MAXSPECT
+      parameter(MAXSPECT=48)
+      double precision sfreqi(MAXSPECT),
+     *  sdfi(MAXSPECT),restfreqi(MAXSPECT)
       double precision sfreq(maxspect),
-     *  sdf(maxspect),restfreq(maxspect)
-      integer nschan(maxspect), ischan(maxspect)
+     *  sdf(MAXSPECT),restfreq(MAXSPECT)
+      integer nschan(MAXSPECT), ischan(MAXSPECT)
+      integer nschani(MAXSPECT), ischani(MAXSPECT), ischan0, nread0
       character version*(*)
-      parameter (version='SMAChunkGlue: Version 13-May-05')
+      parameter (version='SMAChunkGlue: Version 9-apr-08')
       integer len1, nspecti, nspect, vupd
       character itoaf*3
       data first /.true./
@@ -81,9 +83,9 @@ c
 c Loop over number of input files to 
 c get the header information
 c
-      irec = 0
       nspect=0
       nchano=0
+      ischan0=0
       do ifile= 1, nfiles
         name = in(1:len1(in))//'_'//itoaf(ifile)
         call uvopen (lin, name, 'old')
@@ -97,58 +99,42 @@ c Read first record
 c
         call uvread (lin, preamble, data, gflags, maxchan, nread)
         call uvrdvri(lin,'nspect',nspecti,0)
-        call uvgetvri(lin,'ischan',ischan,nspecti)
-        call uvgetvri(lin,'nschan',nschan,nspecti)
+        call uvgetvri(lin,'ischan',ischani,nspecti)
+        call uvgetvri(lin,'nschan',nschani,nspecti)
         call uvgetvrd(lin,'sfreq',sfreqi,nspecti)
         call uvgetvrd(lin,'sdf',sdfi,nspecti)
         call uvgetvrd(lin,'restfreq',restfreqi,nspecti)
         nchano=nchano+nread        
-          do i=1, nspecti
+        do i=1, nspecti
              sfreq(i+nspect) = sfreqi(i)
                sdf(i+nspect) = sdfi(i)
           restfreq(i+nspect) = restfreqi(i)
-            nschan(i+nspect) = nschan(i)
-           if(ifile.eq.1) then
-            ischan(i+nspect) = ischan(i)
-                          else
-            ischan(i+nspect) = ischan(i+nspect-1)+nschan(i)
-            end if
-          end do
-          write(*,*) ischan
-          write(*,*) nschan
-          nspect =  nspect + nspecti
-          call uvclose (lin)
+            nschan(i+nspect) = nschani(i)
+          if(ifile.eq.1) then
+            ischan(i+nspect) = ischani(i)
+          else
+            ischan(i+nspect) = ischan0+1
+          end if
+          ischan0 = ischan0 + nschani(i)
+        end do
+        write(*,*) 'ischan: ',ischan
+        write(*,*) 'nschan: ',nschan
+        nspect =  nspect + nspecti
+        call uvclose (lin)
       end do
 c
 c loop over the input data
 c
+      nchani = 0
       do ifile= 1, nfiles
+        irec = 0
         name = in(1:len1(in))//'_'//itoaf(ifile)
         call uvopen (lin, name, 'old')
 c
 c Read first record
 c
         call uvread (lin, preamble, data, gflags, maxchan, nread)
-        if (nread.eq.0) then
-          call bug ('f', 'No data in file '//name)
-        else
-          if (first) then
-            nchani = nread
-            nchano = nchano 
-c
-            write (line,'(a,i5)') 'Number of input  channels = ', nchani
-            call output (' ')
-            call output (line)
-            write (line,'(a,i5)') 'Number of output channels = ', nchano
-            call output (line)
-            call output (' ')
-            first = .false.
-          else
-            if (nchani.ne.nread) 
-     +         call bug ('f','Number of channels has changed')
-          end if
-        end if
-c
+        if (nread.eq.0) call bug ('f', 'No data in file '//name)
         call output ('Processing input file '//name)
         do while (nread.gt.0)
           irec = irec + 1
@@ -156,7 +142,7 @@ c
 c Load visibility into scratch buffer
 c
           k = 1
-          do j = 1, 3*nchani, 3
+          do j = 1, 3*nread, 3
             scratch(j) = real(data(k))
             scratch(j+1) = aimag(data(k))
             scratch(j+2) = -1
@@ -166,10 +152,15 @@ c
 c
 c Write scratch file
 c
-          offset = (irec-1)*nchano*3 + (ifile-1)*nchani*3
-          call scrwrite (lins, scratch, offset, nchani*3)
+          offset = (irec-1)*nchano*3 + nchani*3
+          call scrwrite (lins, scratch, offset, nread*3)
 c
-          call uvread (lin, preamble, data, gflags, maxchan, nread)
+          call uvread (lin, preamble, data, gflags, maxchan, nread0)
+          if (nread0.eq.0) then
+             nchani = nchani + nread
+             write(*,*) 'EOF rec=',irec
+          endif
+          nread = nread0
         end do
 
         call uvclose (lin)
@@ -213,6 +204,7 @@ c Fish out spectrum from scratch file
 c
         irec = irec + 1
         offset = (irec-1)*nchano*3
+        
         call scrread (lins, scratch, offset, nchano*3)
         do ichan = 1, nchano
           ioff = (ichan-1)*3
@@ -236,8 +228,8 @@ c
         call uvputvri(lout,'nchan', nchano,1)
         call uvputvri(lout,'nschan', nschan,nspect)
         call uvputvri(lout,'ischan', ischan,nspect)
-        call uvputvri (lout,'npol', npol, 1)
-        call uvputvri (lout,'pol', pol, 1)
+        call uvputvri(lout,'npol', npol, 1)
+        call uvputvri(lout,'pol', pol, 1)
 c
 c Write data
 c
