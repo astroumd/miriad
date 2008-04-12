@@ -1,0 +1,40 @@
+# -*- makefile -*-
+#
+# This makefile compiles a single standalone executable as
+# a Miriad task. It is used by the 'mirmake' script to allow
+# for easy modification of tasks. It is expected that the variable
+# $(PROG) will be set to the basename of the program to compile.
+#
+# We have to substitute variables in two steps because of autoconf's
+# much-beloved definition of install directories as shell expansions.
+
+libdir = %libdir%
+bindir = %bindir%
+fincludedir = %fincludedir%
+
+x_libs = @x_libs@
+F77 = @F77@
+FFLAGS = @FFLAGS@
+LDFLAGS = @LDFLAGS@
+EXEEXT = @EXEEXT@
+
+RATTY = $(bindir)/ratty
+LIBTOOL = $(libdir)/miriad/libtool
+
+LINK = $(LIBTOOL) --tag=F77 --mode=link $(F77) $(FFLAGS) \
+  $(x_libs) $(LDFLAGS)
+
+LIBS = $(libdir)/libmir.la $(libdir)/libmir_uvio.la \
+  $(libdir)/libmir_linpack.la $(libdir)/libpgplot.la \
+
+all: $(PROG)$(EXEEXT)
+
+$(PROG)$(EXEEXT): $(PROG).f
+	$(LINK) -o $@ $< $(LIBS)
+
+# Cause GNU make to delete the .f file if ratty bails.
+.DELETE_ON_ERROR:
+
+$(PROG).f: $(PROG).for
+	$(RATTY) -I $(fincludedir) -I . $< $@
+

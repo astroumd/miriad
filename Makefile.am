@@ -28,6 +28,7 @@ SUBDIRS = \
   src/prog/sma \
   src/prog/vis \
   src/prog/wsrt \
+  src/sys/auto \
   src
 
 EXTRA_DIST = mircommon.mak mirdoc.mak \
@@ -37,7 +38,7 @@ EXTRA_DIST = mircommon.mak mirdoc.mak \
 # can look like /path/to/srcdir/buildsubdir/.., so CD and PWD to
 # get a pretty-looking absolute path to top_srcdir.
 
-pkglib_SCRIPTS = automiriad.csh automiriad.sh
+pkglib_SCRIPTS = automiriad.csh automiriad.sh libtool
 
 automiriad.csh: automiriad.csh.in
 	abssrc=`cd $(top_srcdir) && pwd` ; \

@@ -355,6 +355,8 @@ AC_CONFIG_FILES([
     src/prog/sma/Makefile
     src/prog/vis/Makefile
     src/prog/wsrt/Makefile
+    src/sys/auto/Makefile
+    src/sys/auto/Makefile.standalone.tmpl
     src/Makefile
     src/../install/mirdefs
     src/inc/maxdim.h

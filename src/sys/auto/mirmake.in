@@ -1,0 +1,51 @@
+#! /bin/csh -f
+# -*- shell-script -*-
+#
+#* mirmake - Compile a standalone version of a task
+#& pkgw
+#: programmer tool
+#+
+#  MIRMAKE is a script that uses the build configuration of
+#  your MIRIAD installation to compile a task whose Fortran
+#  source is located in the current directory.
+#
+#  If you are using the task UVFIT, for instance, and decide
+#  that you wish to customize it, you could do the following:
+#
+#    cp $MIRPROG/vis/uvfit.* .
+#    mirmake uvfit
+#    ./uvfit vis=....
+#
+#  (Note that many tasks have corresponding .h files that will
+#  also need to be copied into the current directory for them
+#  to compile successfully.)
+#
+#  MIRMAKE invokes the standard Unix tool 'make' with a 
+#  Makefile generated when MIRIAD was compiled.
+#
+#  Inputs:
+#    P1 Base name of the task to compile (e.g., 'uvcal')
+#
+#  Outputs:
+#    An executable file named P1
+#--
+#  History:
+#    pkgw 31jul07  Initial version.
+#........................................
+
+set libdir="%libdir%"
+
+if ($#argv != 1) then
+    echo " "
+    echo "Usage: mirmake taskname"
+    echo " "
+    echo "  taskname   The name of the task to compile."
+    exit 1
+endif
+
+if (! (-e "$1".for)) then
+    echo "Error: Can't find input file $1.for"
+    exit 1
+endif
+
+exec make -f $libdir/miriad/Makefile.standalone PROG="$1"
