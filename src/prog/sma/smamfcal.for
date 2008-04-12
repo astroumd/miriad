@@ -161,6 +161,8 @@ c                 between bands. Only the first band data are used
 c                 in calculating the pseudo continuum.
 c   jhz  15Jun07  added instructive msg for handling SMA
 c                 hybrid spectral resolution data.
+c  pkgw  11Apr08  When fitting polynomials, give flagged channels
+c                 virtually no weight.
 c  Problems:
 c    * Should do simple spectral index fit.
 c------------------------------------------------------------------------
@@ -749,6 +751,7 @@ c fit amp and phase
             if(abs(revis)+
      *      abs(imvis).eq.0) then
             phase=0
+            DELY(K)=1.0D20
             else
             phase = 180.0/pi *
      *      atan2(imvis,revis)
