@@ -32,6 +32,11 @@ c       (assumed 6.1m).
 c       If selected, it will also print out the number of records
 c       flagged for O-O, B-B and O-B (labeled O/H/C).
 c       The default is true.
+c@ sza
+c       Boolean, if set to to true, the default CARMA+SZA array is
+c       loaded in the antdiam array. The last 8 antennas are 3.5m
+c       SZA antennas. If given, if will override the carma setting.
+c       The default is false.   
 c@ cfraction
 c       Special CARMA option to multiply the antdiam array for
 c       OVRO and BIMA dishes by. Two numbers are expected here: the
@@ -46,6 +51,7 @@ c     pjt       12jul07 counted ntot one too many
 c     pjt       25jul07 count different styles of carma shadowing
 c     pjt       14aug07 Added cfraction=
 c     pjt       21aug07 fix for Wide and Narrow  data
+c     pjt       12apr08 Add option to include SZA array with 8 3.5m ants
 c
 c  Todo:
 c     - options=noapply ???
@@ -61,7 +67,7 @@ c---------------------------------------------------------------------------
 	implicit none
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='csflag: version 21-aug-07')
+	parameter(version='csflag: version 12-apr-08')
 c
 	complex data(MAXCHAN)
 	double precision preamble(5), antpos(3*MAXANT)
@@ -69,7 +75,7 @@ c
         integer ntoto,ntoth,ntotc,ncf
         real antdiam(MAXANT),cfraction(2)
 	character in*80
-	logical flags(MAXCHAN),shadow,carma,reset,doshadow
+	logical flags(MAXCHAN),shadow,carma,sza,reset,doshadow
         external shadow
 
         common /antpos/antpos,ntoto,ntoth,ntotc
@@ -82,6 +88,7 @@ c
 	if(in.eq.' ')call bug('f','Visibility file name not given')
         call mkeyr('antdiam',antdiam,MAXANT,na)
         call keyl('carma',carma,.TRUE.)
+        call keyl('sza',sza,.FALSE.)
         call mkeyr('cfraction',cfraction,2,ncf)
         call keyl('reset',reset,.FALSE.)
 	call keyfin
@@ -90,9 +97,22 @@ c
 
 
 c
-c Handle default CARMA
+c Handle default CARMA or SZA
 c
-        if (carma .and. na.EQ.0) then
+        if (sza .and. na.EQ.0) then
+           call bug('i',
+     *          'Preloading CARMA+SZA-23 antdiam (10.4,6.1,3.5) array')           
+           na = 23
+           do i=1,6
+              antdiam(i) = 10.4
+           enddo
+           do i=7,15
+              antdiam(i) = 6.1
+           enddo
+           do i=16,23
+              antdiam(i) = 3.5
+           enddo
+        else if (carma .and. na.EQ.0) then
            call bug('i','Preloading CARMA-15 antdiam (10.4,6.1) array')
            na = 15
            do i=1,6
@@ -130,8 +150,8 @@ c
         
         call uvgetvri(lVis,'nants',nants,1)
         if (na.gt.0 .and. na.ne.nants) then
-           write(*,*) nants,na
-           call bug('f','Wrong number of antdiam')
+           write(*,*) 'Vis file has: ',nants,' You gave: ',na
+           call bug('f','Wrong number of ants given')
         else if (na.eq.0) then
            call uvgetvrr(lVis,'antdiam',antdiam(1),1)
            do i=2,nants
