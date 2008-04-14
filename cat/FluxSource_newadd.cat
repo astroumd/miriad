@@ -1,0 +1,33 @@
+# HISTORY (DO NOT DELETE THIS LINE)
+# Enter history for new data here (BEGIN WITH HASH), for example:
+#
+# 08MAR31 - weekly updates of catalogs began - wk (14)
+#
+# REFERENCES (DO NOT DELETE THIS LINE)
+# Enter reference for new data here (BEGIN WITH HASH), for example:
+#
+# 14 (Weekly automatic update) CARMA flux calibrator data; primary mainly Uranus
+#
+# SOURCES (DO NOT DELETE THIS LINE)
+# Enter new data here (1st 6 columns required, BEGIN WITH NO HASH), for example:
+# Source   Day.UT          Freq(GHz)  Flux(Jy)  RMS(Jy) Reference PrimaryCal PrimCalFlux(Jy)
+#
+3C111      2008-MAR-24.0   224.0       2.3       0.4    CARMA10   MARS
+1058+015   2008-MAR-27.0   108.7       3.5       0.5    CARMA8    MARS
+3C273      2008-MAR-27.0   224.0       8.07      1.21   CARMA12   MWC349     1.83
+3C273      2008-MAR-27.0    93.4      19.16      2.87   CARMA12   MWC349     1.16
+3C84       2008-MAR-29.0   224.0       3.79      0.57   CARMA12   URANUS
+MWC349     2008-MAR-29.0    93.4       1.16      0.17   CARMA12   URANUS
+3C84       2008-MAR-29.0    93.4       7.78      1.17   CARMA12   URANUS
+3C111      2008-MAR-29.0   104.6       4.1       0.6    CARMA8    MARS
+0818+423   2008-MAR-29.0   104.6       0.9       0.1    CARMA8    MARS
+3C111      2008-MAR-30.0   104.6       4.2       0.6    CARMA8    MARS
+0818+423   2008-MAR-30.0   104.6       0.9       0.1    CARMA8    MARS
+0927+390   2008-MAR-30.0   108.8       4.7       0.7    CARMA8    MARS
+1058+015   2008-MAR-30.0   108.8       3.2       0.5    CARMA8    MARS
+3C454.3    2008-MAR-30.0   102.4      18.6       2.8    CARMA8    URANUS
+0019+734   2008-MAR-30.0   102.4       1.0       0.1    CARMA8    URANUS
+3C84       2008-MAR-31.0   226.2       4.3       0.6    CARMA8    MARS
+0530+135   2008-MAR-31.0   226.2       2.6       0.4    CARMA8    MARS
+3C454.3    2008-MAR-31.0   224.5      15.4       2.3    CARMA8    URANUS
+1801+440   2008-MAR-31.0   224.5       0.8       0.1    CARMA8    URANUS
