@@ -1,4 +1,17 @@
-Given the appropriate antpos file, data should be corrected as
+This directory contains a historic record of all the best fitted
+(using a set of quasars accross the sky) baseline positions in
+the various configurations of CARMA from May 2007 onwards.
+The first 3 columns are the equatorial X,Y,Z positions (in nanosec)
+of the antennae. By convention, ants 1-6 are the OVRO dishes,
+7-15 the BIMA dishes, and 16-23 the SZA dishes for later data.
+
+You can also generate simulated data using UVGEN, with the following
+important settings:
+
+   uvgen ant=antpos.YYMMDD baseunit=1
+
+
+Given the appropriate antpos file, CARMA data should be corrected as
 follows:
 
    uvedit vis=xxx.mir out=yyy.mir apfile=antpos.YYMMDD
