@@ -3,6 +3,9 @@ dnl TODO:
 dnl   - this file should be called configure.ac
 dnl ------------------------------------------------------------------------------------
 
+AC_PREREQ([2.59])
+AC_REVISION([$Revision$])
+
 AC_MSG_CHECKING([MIRIAD4 config])
 
 AC_INIT([MIRIAD], [4.1.0], [miriad-dev-bugs@astro.berkeley.edu])
@@ -32,7 +35,7 @@ AC_ARG_ENABLE(warnings,  [  --enable-all-warnings            verbose compiler/li
     allwarnings=yes, allwarningsok=no)
 
 AC_HEADER_STDC
-AC_CHECK_FUNCS([strchr memcpy])
+AC_CHECK_FUNCS([strchr memcpy bcopy])
 
 dnl AC_PROG_CPP
 
