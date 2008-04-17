@@ -1,6 +1,5 @@
 #!/bin/bash
 #
-# FIXME: check for correct versions of autotools
 
 if test "x$LIBTOOLIZE" = x; then
   export LIBTOOLIZE=libtoolize

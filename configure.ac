@@ -10,7 +10,7 @@ AC_MSG_CHECKING([MIRIAD4 config])
 
 AC_INIT([MIRIAD], [4.1.0], [miriad-dev-bugs@astro.berkeley.edu])
 AC_CONFIG_SRCDIR
-AM_INIT_AUTOMAKE([-Wall -Werror foreign])
+AM_INIT_AUTOMAKE([--warnings=obsolete  --warnings=gnu --warnings=unsupported --warnings=no-syntax --warnings=no-portability foreign])
 
 
 dnl -- checks for programs
