@@ -56,10 +56,9 @@ c
 	complex SSdm
 	integer isrc,nsrc,iplanet,tno,vsource,pnt1,pnt2,pnt3
 c
-	real Smm(MAXDAT,MAXSRC),Sms(MAXDAT,MAXSRC),Sdd(MAXDAT,MAXSRC)
-	complex Sdm(MAXDAT,MAXSRC)
-	integer npnt(MAXDAT,MAXSRC)
-	integer indx(MAXDAT,MAXPOL)
+	real, pointer, dimension (:,:) :: Smm, Sms, Sdd
+	complex, pointer, dimension (:,:) :: Sdm
+	integer, pointer, dimension (:,:) :: npnt, indx
 c
 	integer nread,i,j
 	integer npol,polcvt(PolMin:PolMax),p,ant1,ant2,nants,bl,ndat
@@ -82,6 +81,14 @@ c
 c
 c Lets go! Get user inputs.
 c
+
+        ALLOCATE( Smm(MAXDAT,MAXSRC) )
+        ALLOCATE( Sms(MAXDAT,MAXSRC) )
+        ALLOCATE( Sdd(MAXDAT,MAXSRC) )
+        ALLOCATE( Sdm(MAXDAT,MAXSRC) )
+        ALLOCATE( npnt(MAXDAT,MAXSRC) )
+        ALLOCATE( indx(MAXDAT,MAXPOL) )
+
 	call output('Calred: '//version)
 	call keyini
 	call GetOpt(dotrip,uvflags)
