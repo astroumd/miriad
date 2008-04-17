@@ -23,7 +23,7 @@ main()
 	char tring[128];
 
 	fprintf(stdout,"Enter grid spacing in arcsec :");
-	gets(tring);
+	fgets(tring, 127, stdin);
 	grid = atof(tring);
 	printf("%s \n",tring);
 
