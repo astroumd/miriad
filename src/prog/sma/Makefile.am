@@ -5,16 +5,17 @@
 include $(top_srcdir)/mircommon.mak
 
 bin_PROGRAMS = gildas phatrans schedobs smablflag smablsrc smacheck smachunkglue smafix smaflux smagpplt smalod smamfcal smarewt smatbpass smauvamp smauvplt smauvspec smavarfit smavarplt uvsort vel2fel
+#bin_PROGRAMS = gildas phatrans schedobs smablflag smablsrc smacheck smachunkglue smafix smaflux smalod smamfcal smarewt smatbpass smauvamp smauvplt smauvspec smavarfit smavarplt uvsort vel2fel
 
 AM_CFLAGS = @x_cflags@
 AM_FFLAGS = @no_globals@
 LDADD = $(prog_libs)
 
-BUILT_SOURCES = gildas.f phatrans.f schedobs.f smablflag.f smablsrc.f smacheck.f smachunkglue.f smafix.f smaflux.f smagpplt.f smalod.f smamfcal.f smarewt.f smatbpass.f smauvamp.f smauvplt.f smauvspec.f smavarfit.f smavarplt.f uvsort.f vel2fel.f
-
 noinst_HEADERS = gildas.h smablflag.h smablsrc.h smagpplt.h smatbpass.h smauvspec.h uvsort.h
 
 EXTRA_DIST = gildas.for phatrans.for schedobs.for smablflag.for smablsrc.for smacheck.for smachunkglue.for smafix.for smaflux.for smagpplt.for smalod.for smamfcal.for smarewt.for smatbpass.for smauvamp.for smauvplt.for smauvspec.for smavarfit.for smavarplt.for uvsort.for vel2fel.for
+
+BUILT_SOURCES = $(EXTRA_DIST:.for=.f)
 
 nodist_gildas_SOURCES = gildas.f
 nodist_phatrans_SOURCES = phatrans.f
