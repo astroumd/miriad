@@ -362,12 +362,12 @@ c
         if (Len1(filename) .gt. 0) then
           newname = fullname(filename)
         else
-          newname = fullname('$MIRFLUXTAB')
-c TODO:      should use mgetenv() with smarter controls
-c          call mgetenv(newname,'MIRFLUXTAB')
-c          write (*,*) 'MIXFLUXTAB: ',newname
-          if ((Len1(newname) .lt. 1) .or.
+          call mgetenv(newname,'MIRFLUXTAB')
+          if ((Len1(newname) .gt. 0) .and.
      *        (.not. hexists(0, newname))) then
+             call bug('f',
+     *            'TABFLUX: did not find MIRFLUXTAB='//newname)
+          else if (Len1(newname) .lt. 1) then
             tmpname = DEFFILE
             icolon = index(tmpname, ':') + 1
             newname = tmpname(icolon:)
@@ -375,7 +375,7 @@ c          write (*,*) 'MIXFLUXTAB: ',newname
               newname = fullname(DEFFILE)
               if (.not. hexists(0, newname)) then
                 call bug('f',
-     *            'TABFLUX: Error finding calibrator flux table file.')
+     *            'TABFLUX: Error finding flux table: '//newname)
               endif
             endif
           endif
