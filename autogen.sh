@@ -12,7 +12,7 @@ echo "Initializing build scripts ..."
 aclocal
 autoheader
 $LIBTOOLIZE --force --copy
-automake --force --copy --add-missing --warnings=obsolete  --warnings=gnu --warnings=unsupported --warnings=no-syntax --warnings=no-portability
+automake --force --copy --add-missing
 autoconf
 
 (cd borrow/pgplot && ./autogen.sh)
