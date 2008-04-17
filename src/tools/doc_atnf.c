@@ -27,7 +27,13 @@
      6feb00  rjs  Support for Perl.
 ************************************************************************/
 
-#define VERSION "Doc: version 1.0 6-feb-00"
+#include "config.h"
+
+#ifdef HAVE_STDLIB_H
+#include <stdlib.h>
+#endif
+
+#define DOCATNFVERSION "Doc: version 1.0 6-feb-00"
 #define private static
 #include <stdio.h>
 #include <string.h>
@@ -65,7 +71,7 @@ char *argv[];
     if(*s == '-'){
       argv[i] = NULL;
       while(*++s)switch(*s){
-	case '?': usage(); exit(0);
+	case '?': usage(); return(0);
 	case 'p': break;
 	case 'x': doex = 0;  break;
 	case 'f': redir = 1; break;
@@ -95,7 +101,7 @@ char *argv[];
   if(redir){
     if(outfile == NULL) outfd = stdout;
     else outfd = fopen(outfile,"w");
-    if( outfd == NULL) {fprintf(stderr,"### Error redirecting output to %s\n",outfile);exit(1); }
+    if( outfd == NULL) {fprintf(stderr,"### Error redirecting output to %s\n",outfile);return(1); }
   } else outfd = NULL;
 
 /* Process each of the input files. */
@@ -104,17 +110,17 @@ char *argv[];
     for(i=1; i<argc; i++) if(argv[i] != NULL){
       getmodes(argv[i],&c1,&c2,&infile);
       infd = fopen(argv[i],"r");
-      if(infd == NULL) { fprintf(stderr,"### Error opening %s\n",argv[i]); exit(1); }
+      if(infd == NULL) { fprintf(stderr,"### Error opening %s\n",argv[i]); return(1); }
       process(infd,outfd,c1,c2,infile,outdir,doex);
       fclose(infd);
     }
   }
-  exit(0);
+  return(0);
 }
 /**********************************************************************/
 private void usage()
 {
-  printf("%s\n",VERSION);
+  printf("%s\n",DOCATNFVERSION);
   printf("This strips preamble comments from Miriad source files.\n\n");
   printf("Usage:\n");
   printf("doc [-?] [-f] [-O outdir] infile > outfile\n");

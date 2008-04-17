@@ -26,13 +26,13 @@ char *argv[];
   else in = fopen(infile,"r");
   if(in==NULL){
     fprintf(stderr,"### Failed to open input file\n");
-    exit(2);
+    return(2);
   }
   if(outfile == NULL) out = stdout;
   else out = fopen(outfile,"w");
   if(out==NULL){
     fprintf(stderr,"### Failed to open output file\n");
-    exit(2);
+    return(2);
   }
 
 /*

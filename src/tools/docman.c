@@ -29,7 +29,11 @@
     
 ************************************************************************/
 
-#define VERSION "Docman: version 1.3 26-jul-93"
+/* changed to DOCMANVERSION, otherwise, name collision with config.h */
+/* - colby */
+#define DOCMANVERSION "Docman: version 1.3 26-jul-93"
+
+#include "config.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -59,7 +63,7 @@ char *argv[];
     if(*s == '-'){		            /* Flags and switches. */
       argv[i] = NULL;
       while(*++s)switch(*s){
-	case '?': usage(); exit(0);
+	case '?': usage(); return(0); /* following GNU portability recommendations */
 	case '0': 
 	case '1': 
 	case '2': 
@@ -70,7 +74,7 @@ char *argv[];
 	case '7':
 	case '8':
 	case '9': section = s; break;
-        default: fprintf(stderr,"Unrecognised flag %c\n",*s); usage(); exit(1);
+        default: fprintf(stderr,"Unrecognised flag %c\n",*s); usage(); return(1);
       }
     } else if(*s == '>') {                      /* An output file */
       argv[i++] = NULL;
@@ -85,12 +89,12 @@ char *argv[];
 
   if(outfile == NULL) outfd = stdout;/* Open output file, if req. */
   else outfd = fopen(outfile,"w");
-  if( outfd == NULL) { perror("open out"); exit(1); }
+  if( outfd == NULL) { perror("open out"); return(1); }
 
   if(nin > 0){                /* Process each of the input files. */
     for(i=1; i<argc; i++) if(argv[i] != NULL){
       infd = fopen(argv[i],"r");
-      if(infd == NULL) { perror("open in"); exit(1); }
+      if(infd == NULL) { perror("open in"); return(1); }
       process(infd,outfd,keyword,section);
       fclose(infd);
     }
@@ -102,7 +106,7 @@ char *argv[];
 /**********************************************************************/
 private void usage()
 {
-  fprintf(stderr,"%s\n",VERSION);
+  fprintf(stderr,"%s\n",DOCMANVERSION);
   fprintf(stderr,"This formats a Miriad .doc file into a man page\n\n");
   fprintf(stderr,"Usage:\n");
   fprintf(stderr,"docman [-?] [-section] infile > outfile\n");
@@ -132,9 +136,9 @@ char *section;
  * Process the input file.
  */
 
-  files[0] = 0;
+  files[0] = (char)NULL;
   while(fgets(line,MAXLINE,fin) != NULL) {
-    line[strlen(line)-1] = NULL;    /* patch the newline, we will newline */
+    line[strlen(line)-1] = (char)NULL;    /* patch the newline, we will newline */
 
 /* 
  * If the line does not start with a percent, just write it out. Otherwise
@@ -155,7 +159,7 @@ char *section;
 	    *has_file++ = 0;        /* patch the string locally */
             if (*has_file != 'F') { /* but check next character */
                 fprintf(stderr,"### Warning: %%%c on %%N line?\n",*has_file);
-                files[0] = 0;
+                files[0] = (char)NULL;
             } else {
                 has_file++;
                 strcpy(files,has_file);

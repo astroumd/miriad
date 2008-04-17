@@ -46,7 +46,7 @@ char *argv[];
     if(*s == '-'){
       argv[i] = NULL;
       while(*++s)switch(*s){
-	case '?': usage(); exit(0);
+	case '?': usage(); return(0);
 	case 'k': if(i < argc-1){
 		    keyword = argv[++i];
 		    argv[i] = NULL;
@@ -75,21 +75,21 @@ char *argv[];
 
   if(outfile == NULL) outfd = stdout;
   else outfd = fopen(outfile,"w");
-  if( outfd == NULL) { perror("open out"); exit(1); }
+  if( outfd == NULL) { perror("open out"); return(1); }
 
 /* Process each of the input files. */
 
   if(nin > 0){
     for(i=1; i<argc; i++) if(argv[i] != NULL){
       infd = fopen(argv[i],"r");
-      if(infd == NULL) { perror("open in"); exit(1); }
+      if(infd == NULL) { perror("open in"); return(1); }
       process(infd,outfd,keyword);
       fclose(infd);
     }
   } else {
     process(stdin,outfd,keyword);
   }
-  exit(0);
+  return(0);
 }
 /**********************************************************************/
 private void usage()

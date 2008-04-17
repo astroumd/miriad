@@ -59,7 +59,7 @@ char *argv[];
 
   if(outfile == NULL) outfd = stdout;
   else outfd = fopen(outfile,"w");
-  if( outfd == NULL) { perror("open out"); exit(0); }
+  if( outfd == NULL) { perror("open out"); return(0); }
 
 /* Process each of the input files. */
 
@@ -100,8 +100,8 @@ int fort,blank;
 
     t = line;
     for(s=line; *s; s++){
-      if(*s == '\b' || *s == '\177' ){ if(t > line) t--; }
-      else if((*s < ' ' && *s != '\t') || (*s > '\177'));
+      if((char)*s == '\b' || (char)*s == '\177' ){ if(t > line) t--; }
+      else if(((char)*s < ' ' && (char)*s != '\t') || ((char)*s < '\0'));
       else *t++ = *s;
     }
     *t = 0;
