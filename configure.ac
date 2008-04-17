@@ -150,6 +150,12 @@ case $TELESCOPE in
 	continue;;
      "wsrt")  echo "Selecting WSRT array"
 	continue;;
+     "ral512") echo "Selecting RAL simulation 512-array"
+        def_maxiant=2048
+        def_maxant=512
+        def_maxant2=512
+        def_maxbase=4096
+	continue;;
      *) echo "Not a valid array"
 esac
 
