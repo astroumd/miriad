@@ -48,10 +48,11 @@ c    jm    25aug97    Changed call from mgetenv() to fullname() for
 c                     the environment variable $MIRFLUXTAB in tabflux.
 c   pjt    17apr07    Also allow to parse CARMA style tables (# instead of !
 c                     and ccyy-mmm-dd.d instead of yymmmdd.d format)
+c   pjt    17apr08    Changed default name to FluxSource.cat
 c
 c***********************************************************************
 c* calget -- Routine to retrieve an interpolated calibrator flux.
-c& jm
+c& pjt
 c: calibration, flux
 c+
       subroutine calget(filename, source, freq, delfreq, day, deldate,
@@ -67,8 +68,9 @@ c Input:
 c   filename The name of the flux calibrator file.  If this is a
 c            blank string, then it defaults first to the file
 c            pointed to by the environment variable $MIRFLUXTAB;
-c            second to the file ./cals.fluxes; and, finally, to
-c            $MIRCAT/cals.fluxes.
+c            second to the file ./FluxSource.cat; and, finally, to
+c            $MIRCAT/FluxSource.cat.   The old style cals.fluxes
+c            is still recognized, but deprecated since Miriad 4.1.0
 c   source   The name of the calibrator source to match.  No default.
 c   freq     The observation frequency (GHz) (default of 0.0 means
 c            that a match occurs at any frequency).
@@ -261,7 +263,7 @@ c
 c
 c***********************************************************************
 c* tabflux -- Return the flux of a calibrator source at an input freq.
-c& jm
+c& pjt
 c: calibration, flux, frequency
 c+
       subroutine tabflux(filename, source, freq, delfreq, day, delday,
@@ -277,8 +279,10 @@ c Input:
 c   filename The name of the flux calibrator file.  If this is a
 c            blank string, then it defaults first to the file
 c            pointed to by the environment variable $MIRFLUXTAB;
-c            second to the file ./cals.fluxes; and, finally, to
-c            $MIRCAT/cals.fluxes.
+c            second to the file ./FluxSource.cat; and, finally, to
+c            $MIRCAT/FluxSource.cat.
+c            The old style cals.fluxes format is still recognized,
+c            but deprecated as of Miriad 4.1.0
 c   delfreq  The frequency width (real: GHz) around the parameter
 c            ``freq'' in which to include a frequency match.
 c   delday   The date width (real: Julian days) around the parameter
@@ -317,7 +321,7 @@ c-----------------------------------------------------------------------
 c  Internal variables.
 c
       character DEFFILE*(*)
-      parameter (DEFFILE='MIRCAT:cals.fluxes')
+      parameter (DEFFILE='MIRCAT:FluxSource.cat')
 c
       character oldname*132, tmpname*132, newname*132
       character oldsrc*80
@@ -359,6 +363,9 @@ c
           newname = fullname(filename)
         else
           newname = fullname('$MIRFLUXTAB')
+c TODO:      should use mgetenv() with smarter controls
+c          call mgetenv(newname,'MIRFLUXTAB')
+c          write (*,*) 'MIXFLUXTAB: ',newname
           if ((Len1(newname) .lt. 1) .or.
      *        (.not. hexists(0, newname))) then
             tmpname = DEFFILE
