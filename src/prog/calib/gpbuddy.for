@@ -2,19 +2,26 @@ c************************************************************************
 	program gpbuddy
 	implicit none
 c
-c= GpBuddy -- Inherit gains from a nearby buddy
+c= GpBuddy -- Inherit gains from a nearby (buddy) antenna
 c& pjt
 c: calibration
 c+
 c	GpBuddy is a MIRIAD task which modifies a gain table to inherit
-c       gains of antennae that were flagged or not used from a nearby
-c       (in E-W position on the earth) position.
+c       gains of antennae that were flagged from the nearest position.
 c
 c@ vis
 c	The input visibility file, containing the gain file to modify.
+c       The gain table in this file will be re-written.
 c	No default.
 c@ ants
-c       TBD
+c       TBD - not used at the moment. Perhaps we could allow
+c       multiple runs of gpbuddy. By selecting a subset of antennae
+c       here, one would be able to inherit buddies from antennae that
+c       used to be flagged.
+c@ show
+c       Show the East-North layout (in meters) in tabular format.
+c       LISTOBS will also print these out by default.
+c       Default: false
 c
 c	Example:
 c	  gpbuddy vis=cyga [ants=]
@@ -38,7 +45,7 @@ c
 	double precision lat,lon,sinlat,coslat,sinlon,coslon
 	integer ants(MAXANT),feeds(MAXFEED)
 	complex gains(2*MAXANT*MAXSOLN),data(MAXCHAN)
-	logical mask(2*MAXANT),flags(MAXCHAN)
+	logical mask(2*MAXANT),flags(MAXCHAN),show
 	real xy(2,MAXANT)
 c
 c  Externals.
@@ -53,6 +60,7 @@ c
 	call keyini
 	call keya('vis',vis,' ')
 	call mkeyi('ants',ants,MAXANT,numant)
+	call keyl('show',show,.FALSE.)
 	call keyfin
 	if(vis.eq.' ')call bug('f','No input vis data-set given')
 
@@ -129,6 +137,7 @@ c
 	   apos(3) = antpos(i+nants*2) * DCMKS/1.0d9
 	   xy(1,i) =  apos(2)
 	   xy(2,i) = -apos(1)*sinlat + apos(3)*coslat
+	   if (show) write(*,*) i,xy(1,i),xy(2,i)
 	enddo
 
 c  Open the gains file. Mode=='append' so that we can overwrite it.
@@ -255,7 +264,8 @@ c
 		    endif
 		 endif
 	      enddo
-	      write(*,*) 'Ant ',i,' nearest to ',jmin,' @ ',sqrt(d),' m'
+	      dmin = sqrt(dmin)
+	      write(*,*) 'Ant ',i,' nearest to ',jmin,' @ ',dmin,' m'
 	      do k=1,nsols
 		 gains(i,k) = gains(jmin,k)
 	      enddo
