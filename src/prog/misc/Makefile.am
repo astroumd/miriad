@@ -5,7 +5,7 @@
 include $(top_srcdir)/mircommon.mak
 
 bin_PROGRAMS = addhis atmosph calc copyhd corset cotra delhd \
-  design dwell gethd hex hexc itemize j2000 julian listobs mathd \
+  design dwell gethd hex hexc itemize j2000 julian listobs marstb mathd \
   mfplan moslst obsrms obstau planets pnt pntgen prthd prthis \
   puthd remove rmdata rmsfit sinbad sinpoly solar tacos taco \
   telepar warpfit xcorr xfcor mfile
@@ -17,7 +17,7 @@ LDADD = $(prog_libs)
 
 BUILT_SOURCES = addhis.f atmosph.f calc.f copyhd.f corset.f \
   cotra.f delhd.f design.f dwell.f gethd.f hex.f itemize.f \
-  j2000.f julian.f listobs.f mathd.f mfplan.f moslst.f obsrms.f \
+  j2000.f julian.f listobs.f marstb.f mathd.f mfplan.f moslst.f obsrms.f \
   obstau.f planets.f pnt.f pntgen.f prthd.f prthis.f puthd.f \
   remove.f rmdata.f rmsfit.f sinbad.f sinpoly.f solar.f tacos.f \
   taco.f telepar.f warpfit.f xcorr.f xfcor.f
@@ -26,7 +26,7 @@ noinst_HEADERS = atmosph.h calc.h design.h listobs.h mathd.h pnt.h sinpoly.h
 
 EXTRA_DIST = addhis.for atmosph.for calc.for copyhd.for corset.for \
   cotra.for delhd.for design.for dwell.for gethd.for hex.for \
-  itemize.for j2000.for julian.for listobs.for mathd.for mfplan.for \
+  itemize.for j2000.for julian.for listobs.for marstb.for mathd.for mfplan.for \
   moslst.for obsrms.for obstau.for planets.for pnt.for pntgen.for \
   prthd.for prthis.for puthd.for remove.for rmdata.for rmsfit.for \
   sinbad.for sinpoly.for solar.for tacos.for taco.for telepar.for \
@@ -49,6 +49,7 @@ nodist_itemize_SOURCES = itemize.f
 nodist_j2000_SOURCES = j2000.f
 nodist_julian_SOURCES = julian.f
 nodist_listobs_SOURCES = listobs.f
+nodist_marstd_SOURCES = marstd.f
 nodist_mathd_SOURCES = mathd.f
 nodist_mfplan_SOURCES = mfplan.f
 nodist_moslst_SOURCES = moslst.f
