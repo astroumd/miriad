@@ -1,4 +1,4 @@
-c***********************************************************************
+cd -c***********************************************************************
         program listobs
 c
 c  Makes a listing of time ordered information about the observations in
@@ -85,7 +85,7 @@ c          11-dec-07 pjt removed BW/cormode, printing both ut and lst
 c          16-jan-08 pjt Added uv distance to the baseline-UVW output section
 c          30-jan-08 pjt options=nobase to stop the N^2 baselines output
 c          04-feb-08 dnf Added object purpose to source listing output
-c          19-fen-08 pjt Added versan() version loggin
+c          19-feb-08 pjt Added versan() version loggin
 c
 c
 c TODO:
@@ -573,17 +573,23 @@ c
 c   Converts time in radians to time in hh:mm:ss.s in a character
 c   string
 c
+        include 'mirconst.h'
+
 	character*8 CharHms
 	real RadTime,secs,time,float
 	integer ihour,imin,ifix
-	time  = 3.8197186 * RadTime
+	time  = 12.0*RadTime/PI
 	ihour = ifix(time+0.0001)
 	imin  = ifix(60.0*(time-float(ihour)) + 0.0001)
 	secs  = 60.0 * (60.0 * (time-float(ihour)) - float(imin))
-	if(secs .gt. 10.0) then
+	if(secs .ge. 9.95) then
 	    write(CharHms,2001) ihour,imin,secs
 	else
 	    write(CharHms,2002) ihour,imin,secs
+        endif
+        if (CharHms(8:8) .eq. '*') then
+           write(*,*) radtime,time,ihour,imin,secs,' =>',charhms
+           call bug('f','bad rad2hms conversion')
         endif
 c        print 2002, secs
  2001	format(i2.2,i2.2,f4.1)
