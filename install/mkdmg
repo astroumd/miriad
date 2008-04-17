@@ -8,9 +8,14 @@
 # number of the volume and <srcdir> is where the contents to put on the dmg are.
 #
 # The result will be a file called <volname>-<vers>.dmg
+#
+# History:
+#      2006    -  this used to work on PPC 10.3, 
+#   feb-2008   -  tried on intel 10.4 : no go
 
 if [ $# != 3 ]; then
  echo "usage: mkdmg.sh volname vers srcdir"
+ echo "Will create a 'volname-vers.dmg' file"
  exit 0
 fi
 
