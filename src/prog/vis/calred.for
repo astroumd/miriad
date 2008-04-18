@@ -56,9 +56,16 @@ c
 	complex SSdm
 	integer isrc,nsrc,iplanet,tno,vsource,pnt1,pnt2,pnt3
 c
+#ifdef NOF90
+       real Smm(MAXDAT,MAXSRC),Sms(MAXDAT,MAXSRC),Sdd(MAXDAT,MAXSRC)
+       complex Sdm(MAXDAT,MAXSRC)
+       integer npnt(MAXDAT,MAXSRC)
+       integer indx(MAXDAT,MAXPOL)
+#else
 	real, pointer, dimension (:,:) :: Smm, Sms, Sdd
 	complex, pointer, dimension (:,:) :: Sdm
 	integer, pointer, dimension (:,:) :: npnt, indx
+#endif
 c
 	integer nread,i,j
 	integer npol,polcvt(PolMin:PolMax),p,ant1,ant2,nants,bl,ndat
@@ -82,12 +89,15 @@ c
 c Lets go! Get user inputs.
 c
 
+#ifdef NOF90
+#else
         ALLOCATE( Smm(MAXDAT,MAXSRC) )
         ALLOCATE( Sms(MAXDAT,MAXSRC) )
         ALLOCATE( Sdd(MAXDAT,MAXSRC) )
         ALLOCATE( Sdm(MAXDAT,MAXSRC) )
         ALLOCATE( npnt(MAXDAT,MAXSRC) )
         ALLOCATE( indx(MAXDAT,MAXPOL) )
+#endif
 
 	call output('Calred: '//version)
 	call keyini
