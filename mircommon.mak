@@ -3,7 +3,7 @@
 RATTY=$(top_builddir)/src/tools/ratty
 
 .for.f:
-	$(RATTY) -I $(top_builddir)/src/inc -I $(top_srcdir)/src/inc -I $(srcdir) $< $@
+	$(RATTY) $(no_f90) -I $(top_builddir)/src/inc -I $(top_srcdir)/src/inc -I $(srcdir) $< $@
 
 F2C=$(top_builddir)/src/tools/intf2c
 
