@@ -371,7 +371,10 @@ c-
           hp=xa(i+m)-x
           w=c(i+1)-d(i)
           den=ho-hp
-          if(den.eq.0.D0)pause 'failure in polint'
+          if(den.eq.0.D0) then
+            write(*,*) 'failure in polint'
+            read(*,*)
+          endif
           den=w/den
           d(i)=hp*den
           c(i)=ho*den
