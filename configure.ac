@@ -59,6 +59,15 @@ else
   no_globals=""
 fi
 
+if test x"$F77" = xg77 -o x"$F77" = xf77; then
+  no_f90="-D NOF90"
+else
+  no_f90=""
+fi
+
+AC_SUBST(no_f90)
+
+
 dnl Turn off all warnings (by default)
 dnl The warnings are primarily useful for developers
 
