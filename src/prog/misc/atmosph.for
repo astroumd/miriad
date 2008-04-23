@@ -86,17 +86,19 @@ c   30jan02 mchw  Format change for Tair < -10 K !
 c    7feb02 pjt   few more ANSI 'x' to '1x' in format stmt's
 c   12feb02 pjt   intel compiler fix
 c    4jan05 pjt   renamed to atmosph
+c   11apr08 mchw - Use keyline to uniformly handle linetype.
+c   23apr08 mchw - print rmspath and tau230 in PSF table.
 c------------------------------------------------------------------------
 	include 'atmosph.h'
 	character version*(*)
-	parameter(version='atmosph: version 4-jan-05')
+	parameter(version='atmosph: version 23-Apr-2008')
 	integer maxsels
 	parameter(maxsels=1024)
 	real sels(maxsels)
 	real start,step,width
 	real xlo,xhi,ylo,yhi
 	character*132 linetype,vis,log,device
-	character source*10,oldsource*10
+	character source*16,oldsource*16
 	complex data(MAXCHAN)
 	logical flags(MAXCHAN)
 	logical domm,doallan,dowrap,dotopo,dospect
@@ -120,11 +122,7 @@ c
 	call keyf('vis',vis,' ')
 	if(vis.eq.' ')call bug('f','Input file must be given')
 	call SelInput('select',sels,maxsels)
-	call keya('line',linetype,' ')
-	call keyi('line',numchan,0)
-	call keyr('line',start,1.)
-	call keyr('line',width,1.)
-	call keyr('line',step,width)
+	call keyline(linetype,numchan,start,width,step)
 	call keyd('interval',interval,1.d0)
 	call keyd('interval',sample,interval)
 	call keyd('base',base,100.d0)
@@ -300,7 +298,7 @@ c------------------------------------------------------------------------
 	parameter(MCHAN=4,MAXAVE=MCHAN*MAXBASE)
 	integer nchan,j,length,ant1,ant2,bl
 	logical more
-	character line*128,source*10
+	character line*128,source*16/'               '/
 	real amp(MCHAN),arg(MCHAN)
 	character cflag(MCHAN)*1
 	logical doave(MAXBASE)
@@ -316,7 +314,7 @@ c------------------------------------------------------------------------
 	double precision xm(MAXBASE),ym(MAXBASE),zm(MAXBASE)
 	double precision delz(MAXBASE),an(6),rms,day,freq
 	double precision sfreq(MAXCHAN),variance(MAXCHAN)
-	real airtemp,precipmm,relhumid,windmph,sigma,aveamp,elev
+	real airtemp,tau230,rmspath,windmph,sigma,aveamp,elev
 	real pi
 	parameter (pi=3.1415926)
 	save nchan
@@ -340,10 +338,11 @@ c
 	  call uvinfo(unit,'sfreq',sfreq)
 	  call uvinfo(unit,'variance',variance)
 	  call uvrdvra(unit,'source',source,' ')
+	print *,'source=',source
 	  call uvrdvrr(unit,'airtemp',airtemp,0.)
 	  call uvrdvrr(unit,'windmph',windmph,0.)
-	  call uvrdvrr(unit,'relhumid',relhumid,0.)
-	  call uvrdvrr(unit,'precipmm',precipmm,0.)
+	  call uvrdvrr(unit,'rmspath',rmspath,0.)
+	  call uvrdvrr(unit,'tau230',tau230,0.)
 	  freq = sfreq(1)
 	  sigma = sqrt(variance(1))
 	  newave = .FALSE.
@@ -449,18 +448,19 @@ c
 c
 c  Fit psf
 c
+	print *,'source=',source
       call psf_fit(npts,xm,ym,zm,delz,an,rms)
 	write(line,'(a,a,a)')
      *          '#PSF  day     rms   slope  d/elev  const',
      *		' rmsfit  aveamp  sigma elev',
-     *		' npts freq mmH2O Tair humid wind source'
+     *		' npts freq tau230 Tair rmspath wind source'
 	call output(line)
 	if(aveamp.gt.5*sigma .and. rms.gt.0.001 .and. an(1).gt.-1
      *	.and.an(1).lt.2 .and. an(2).gt.-1.and.an(2).lt.3 )then
 	write(line,'
-     *		(a,f8.3,5f7.2,2f8.3,i4,i4,f8.3,2f5.1,f6.1,f5.1,1x,a)')
-     *    'psf', day, (an(i),i=1,4),rms,aveamp,sigma,nint(elev),
-     *	  npts,freq,precipmm,airtemp,min(relhumid,99.9),windmph,source
+     * (a,f8.3,5f7.2,f9.2,f7.2,i4,i4,f8.3,2f5.1,f6.1,f5.1,1x,a)')
+     * 'psf', day, (an(i),i=1,4),rms,aveamp,sigma,nint(elev),
+     * npts,freq,tau230,airtemp,rmspath,windmph,source
 	  call output(line)
 	endif
 	if(device.ne.' ') call psf_plot(npts,xm,zm)
@@ -862,6 +862,12 @@ c
 	guess(4) = 0.0d0
 	guess(5) = 0.0d0
 	guess(6) = 0.0d0
+	an(1) = 0.0d0
+	an(2) = 0.0d0
+	an(3) = 0.0d0
+	an(4) = 0.0d0
+	an(5) = 0.0d0
+	an(6) = 0.0d0
 	opt = 1
 	print *,'npts= ',npts
 
