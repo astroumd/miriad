@@ -105,14 +105,17 @@ can handle only a single dataset at a time.
         abbreviated. Each may be prefixed with a plus or minus sign to
         indicate using or discarding the selected data. Many subcommands
         can be given (separate them by commas). 
-Examples:
-'select=time(03OCT30:05:42:08,03OCT30:05:43:09),ant(7)(2)'
-'select=-auto,-ant(7,8)'
-'select=-ant(7,8),vis(1,15),vis(31,45),vis(301,1000)'
-'select=-ant(7,8),-ant(1)(4,6),-ant(2)(4,5,6),-ant(3)(4,5),-ant(4)(5,6),-ant(5)(6)'
+	Examples:
+	'select=time(03OCT30:05:42:08,03OCT30:05:43:09),ant(7)(2)'
+	'select=-auto,-ant(7,8)'
+	'select=-ant(7,8),vis(1,15),vis(31,45),vis(301,1000)'
+	'select=-ant(7,8),-ant(1)(4,6),-ant(2)(4,5,6),-ant(3)(4,5),-ant(4)(5,6),-ant(5)(6)'
+
+	See also documentation for subroutine selprobe(), which may very well differ
+	slightly from this document.
 
 
-Subcommands include:
+	Subcommands include:
 
           time(t1,t2)
         Select data between times t1 and t2 (UT). Times are in the format:
@@ -157,6 +160,15 @@ Subcommands include:
           dd.ddd
         Various abbreviations are possible.
 
+	  ha(h1,h2)
+	Selects on hour angle (values in decimal hours or hh:mm:ss)
+
+	  lst(lst1,lst2)
+	Selects on LST (values in decimal hours or hh:mm:ss)
+
+	  elevation(el1,el2)
+	Selects on elevation (values in degrees)
+
           dra(p1,p2)
         Select visibilities for which the RA of the pointing center is offset
         from the main pointing center by between p1 and p2 arcseconds.
@@ -164,6 +176,12 @@ Subcommands include:
           ddec(p1,p2)
         Select visibilities for which the DEC of the pointing center is offset
         from the main pointing center by between p1 and p2 arcseconds.
+
+	  dazim(p1,p2)
+	Select visibilities for which the DAZIM offset is between p1 and p2 arcseconds.
+
+	  delev(p1,p2)
+	Select visibilities for which the DELEV offset is between p1 and p2 arcseconds.
 
           pointing(p1,p2)
         Select visibilities with the rms pointing error in the range p1 to p2
@@ -185,6 +203,10 @@ Subcommands include:
 	where the letters B (bandpass), F (fluxcal), G (gaincal), P (polarization),
 	S (science) and O (other) are used.
 	Current options are EXACT and any match.
+
+	  seeing(r1,r2)
+	Select on seeing monitor rms path length (in microns). The UV variable used
+	is smonrms for ATCA, rmspath for CARMA
 
           frequency(f1,f2)
         Select correlations, where the sky frequency of the first correlation
@@ -210,9 +232,9 @@ Subcommands include:
         b1 to b2 inclusive. If b2 is omitted, just pulsar bin b1 is
         selected.
 
-          on
+          on(n)
         This is used with single dish observations, anbd selects based
-        whether the "on" variable in the data is on!
+        whether the "on" variable in the data is on (1) or off (0).
 
           auto
         This is used with files that contain a mix of autocorrelations and
@@ -292,7 +314,7 @@ Subcommands include:
 
 %N region
 >Standard region keyword. See section "Image region of interest" in
->the userguide.
+	the userguide.
         This selects a subregion of an image. Multiple subregions can be
         selected, which are "ored" together. The following subcommands are
         recognized (each of which can be abbreviated to uniqueness).
