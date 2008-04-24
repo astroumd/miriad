@@ -36,8 +36,8 @@ c	  time                     [time in DD HH MM SS.S format]
 c	  dtime                    [time in decimal days format]
 c	  amplitude, real, imag    [natural units; Jy]
 c	  phase                    [degrees]
-c	  uu, vv                   [u & v in klambda]
-c	  uc, vc                   [u,& v, -u & -v in klambda]
+c	  uu, vv, ww               [u, v & w in klambda]
+c	  uc, vc, wc               [u, v & w, -u, -v & -w in klambda]
 c	  uvdistance               [sqrt(u**2+v**2)]
 c	  uvangle                  [uv pos'n angle clockwise from v axis]
 c	  hangle                   [hour angle in HH MM SS.S]
@@ -372,6 +372,7 @@ c    jhz 08dec07   added keyword title and disable source labelling
 c                  for non-default size selection.
 c    jhz 08mar17   fixed bug in color index for multiple input
 c                  files.
+c    jhz 08apr23   added ww(wc)=delay in both xaxis and yaxis.
 c To do:
 c
 c   Vector averaging rms not yet implemented
@@ -469,16 +470,20 @@ c
       integer nfiles, npols, nbases, pl1dim, pl2dim, pl3dim,
      *  pl4dim, maxpnt, xo, yo, elo(2), eho(2), plfidx, pidx,
      *  plbidx, stbidx
+      integer ia1,ia2
 c
 c Plot counters
 c
       integer npts(maxbase,maxpol,maxfile), order(maxbase),
-     *  plpts(maxbase,maxpol,maxfile), a1a2(maxbase,2)
+     *  plpts(maxbase,maxpol,maxfile), a1a2(maxbase,2),
+     *  length
 c
       double precision preamble(4), fday, dayav, baseday, day,
-     *  ha, ra, dec, lst, lat, az, el, dtemp
+     *  ha, ra, dec, lst, lat, az, el, dtemp,
+     *  BX, BY, BZ, sinh, cosh, sind, cosd
+      double precision dummy(3*MAXANT), antpos(MAXANT, 3)
       real size(2), xmin, xmax, ymin, ymax, u, v, uvdist, uvpa, xvalr,
-     *  yvalr, paran
+     *  yvalr, paran, ww
       integer lin, ivis, nread, dayoff, j,  nx, ny, inc, hann, tunit,
      *  ofile, ifile, jfile, vupd, ip, nkeep, npnts
       character in*64, xaxis*10, yaxis*10, pdev*80, comment*80,
@@ -487,13 +492,14 @@ c
      *  dovec(2), dorms(3), doall, doflag, dobase, doperr, dointer,
      *  dolog, dozero, doequal, donano, dosrc, doavall, bwarn(2),
      *  skip, xgood, ygood, doxind, doyind, dowrap, none, dosymb,
-     *  dodots, false(2), allfull, docol, twopass, dofqav, dotitle
+     *  dodots, false(2), allfull, docol, twopass, dofqav, dotitle,
+     *  updated
 c
 c Externals
 c
       integer membuf
       logical uvdatopn
-      character itoaf*2, filen*48
+      character itoaf*2, filen*48, type*1
 c
 c Initialize
 c
@@ -511,7 +517,7 @@ c
       start_sid=0
       next_sid=0 
 c-----------------------------------------------------------------------
-      call output ('SmaUvPlt: version 1.7 17-Mar-08')
+      call output ('SmaUvPlt: version 1.8 23-Apr-08')
 c
 c  Get the parameters given by the user and check them for blunders
 c
@@ -582,7 +588,7 @@ c
         if (dosymb .or. docol) plfidx = ifile
 c
 c Now loop around processing the visibilities in this file
-c
+
         call uvdatgta ('name', in)
         call logwrite (' ', more)
         str = itoaf (ifile)
@@ -592,7 +598,6 @@ c Read first visibility
 c
         call getdat (preamble, data, goodf, maxchan, nread,
      *               dofqav, doflag, doall)
-
 c
 c Make plot title when we get some data from a file
 c
@@ -697,9 +702,9 @@ c
             call getlst(lin,lst)
             ha = (lst - ra)
             if (ha.gt.dpi) then
-              ha = ha - 2.0d0*dpi
+            ha = ha - 2.0d0*dpi
             else if (ha.lt.-dpi) then
-              ha = ha + 2.0*dpi
+            ha = ha + 2.0*dpi
             end if
             ha = ha * 12.0d0*3600.0d0/dpi
           endif
@@ -724,7 +729,36 @@ c
      *      xaxis.eq.'airmass'.or.yaxis.eq.'airmass')
      *      call azel(ra,dec,lst,lat,az,el)
           endif
-c
+cc calculate ww=delay=( bx cosh -by sinh) cosd + bz sind
+            if(xaxis.eq.'ww'.or. xaxis.eq.'wc') then
+              call UvProbvr(Lin, 'antpos', type, length, updated)
+              if (updated) then
+                    call uvrdvri(Lin, 'nants', Nant, 0)
+                    call UvGetvrd(Lin, 'antpos', dummy, Nant * 3)
+                    do k = 1, Nant
+                      antpos(k, 1) = dummy(k)
+                      antpos(k, 2) = dummy(k + Nant)
+                      antpos(k, 3) = dummy(k + Nant + Nant)
+                    enddo
+              endif
+            call uvrdvrd(lin,'ra',dtemp,0.d0)
+            call uvrdvrd (lin, 'obsra', ra, dtemp)
+            call uvrdvrd(lin,'dec',dtemp,0.d0)
+            call uvrdvrd(lin, 'obsdec',dec,dtemp)
+            call getlst(lin, lst)
+            call getlat(lin, lat)
+              call azel(ra,dec,lst,lat,az,el)
+              ha   = (lst - ra)
+              cosh = cos(ha)
+              sinh = sin(ha)
+              cosd = cos(dec)
+              sind = sin(dec)
+              call BasAnt(preamble(4), ia1, ia2)
+              BX = antpos(ia2, 1) - antpos(ia1, 1)
+              BY = antpos(ia2, 2) - antpos(ia1, 2)
+              BZ = antpos(ia2, 3) - antpos(ia1, 3)
+              ww = (BX*cosh -BY*sinh)*cosd + BZ*sind
+            end if
           fday = day - dayoff
 c
 c Loop over channels for this visibility, accumulating, or
@@ -734,23 +768,29 @@ c
           do while (j.lt.nread)
             j = j + 1
             if ( goodf(j)) then
+cc set ww value for different units
+               if(donano) then
+              ww = ww 
+                   else 
+              ww = ww*freq(j)/1000.
+               end if
 c
 c Set x and y values
 c
               call setval (xaxis, ha, u, v, uvdist, uvpa, fday,
      *             paran, lst, az, el,
-     *             data(j), j, freq, xvalr, xgood)
+     *             data(j),j,freq,xvalr,xgood,ww)
               call setval (yaxis, ha, u, v, uvdist, uvpa, fday,
-     *             paran, lst, az, el,
-     *             data(j), j, freq, yvalr, ygood)
+     *             paran,lst,az,el,
+     *             data(j),j,freq,yvalr,ygood,ww)
               if (xgood .and. ygood) then
                 if (doave) then
 c
 c Accumulate in averaging buffers
 c
               call accum (dovec, xvalr, yvalr, data(j),
-     *         xsumr(stbidx,pidx), xsumsqr(stbidx,pidx),
-     *         xsumi(stbidx,pidx), xsumsqi(stbidx,pidx),
+     *        xsumr(stbidx,pidx), xsumsqr(stbidx,pidx),
+     *        xsumi(stbidx,pidx), xsumsqi(stbidx,pidx),
      *        ysumr(stbidx,pidx), ysumsqr(stbidx,pidx),
      *        ysumi(stbidx,pidx), ysumsqi(stbidx,pidx),
      *               nsum(stbidx,pidx))
@@ -762,16 +802,16 @@ c
                 call bufput (false, pl1dim, pl2dim, pl3dim, pl4dim,
      *           maxbase, maxpol, maxfile, plbidx, pidx, plfidx,
      *           xrtest, yrtest, xmin, xmax, ymin, ymax, xvalr,
-     *           yvalr, 0.0, 0.0, npts, buffer(ip),soupnt(ip), xo, 
-     *            yo, elo, eho, plpts, inc,sourid)
+     *           yvalr,0.0,0.0,npts,buffer(ip),soupnt(ip), xo, 
+     *           yo,elo,eho,plpts, inc,sourid)
 c
 c Add -u and -v if requested
 c
                if (npts(plbidx,pidx,plfidx).lt.maxpnt .and.
      *                  dodoub) then
-                      if (xaxis.eq.'uc'.or.xaxis.eq.'vc')
+               if (xaxis.eq.'uc'.or.xaxis.eq.'vc'.or.xaxis.eq.'wc')
      *                   xvalr = -xvalr
-                      if (yaxis.eq.'uc'.or.yaxis.eq.'vc')
+               if (yaxis.eq.'uc'.or.yaxis.eq.'vc'.or.yaxis.eq.'wc')
      *                   yvalr = -yvalr
 c
                       call bufput (false, pl1dim, pl2dim, pl3dim,
@@ -796,8 +836,8 @@ c
 c
 c Read next visibility
 c
-950       if (.not.allfull) call getdat (preamble, data, goodf,
-     *        maxchan, nread, dofqav, doflag, doall)
+950       if (.not.allfull) call getdat (preamble,data,goodf,
+     *    maxchan,nread,dofqav,doflag,doall)
               
 
         end do
@@ -807,8 +847,8 @@ c Issue a message if any (but not all) of the baseline/polarization
 c plot buffers were filled up and close the current file
 c
         if (.not.allfull)
-     *    call pntful (dobase, pl2dim, pl3dim, pl4dim, maxpnt, maxbase,
-     *       maxpol, maxfile, ifile, plfidx, a1a2, npts)
+     *  call pntful (dobase, pl2dim, pl3dim, pl4dim, maxpnt, maxbase,
+     *  maxpol,maxfile,ifile,plfidx,a1a2,npts)
         call uvdatcls
 c
 c Flush accumulators to plot buffers for last file; do it here
@@ -816,10 +856,10 @@ c so can get correct numbers for TELLUSE
 c
       if (doave .and. ifile.eq.nfiles .and. .not.allfull)
      *  call avdump (dorms, dovec, dobase, dodoub, doavall, nbases,
-     *     npols, pl1dim, pl2dim, pl3dim, pl4dim, maxpnt, maxbase,
-     *     maxpol,maxfile,buffer(ip),soupnt(ip),npts, xo, yo, elo, eho,
+     *     npols,pl1dim,pl2dim,pl3dim,pl4dim,maxpnt,maxbase,
+     *     maxpol,maxfile,buffer(ip),soupnt(ip),npts,xo,yo,elo,eho,
      *     xaxis, xrtest, xmin, xmax, yaxis, yrtest, ymin, ymax,
-     *     nsum, xsumr, xsumsqr, xsumi, xsumsqi, ysumr, ysumsqr, ysumi,
+     *     nsum,xsumr,xsumsqr,xsumi,xsumsqi,ysumr,ysumsqr,ysumi,
      *     ysumsqi, xave, yave, xsig, ysig, plpts, inc, plfidx,
      *     start_sid)
 c
@@ -828,10 +868,9 @@ c separate locations in plot buffer
 c
         if (pl4dim.gt.1) then
           call telluse (ivis, plfidx, dobase, maxbase, maxpol,
-     *      pl2dim, pl3dim, pl4dim, npts(1,1,plfidx), a1a2, none)
+     *    pl2dim, pl3dim, pl4dim, npts(1,1,plfidx), a1a2, none)
           allfull = .false.
         end if
-c
         ofile = ifile
 c      end do
 c
@@ -875,7 +914,7 @@ c
       end
 c
 c
-      subroutine accum  (dovec, xvalr, yvalr, cval, xsumr, xsumsqr,
+      subroutine accum(dovec, xvalr, yvalr, cval, xsumr, xsumsqr,
      *   xsumi, xsumsqi, ysumr, ysumsqr, ysumi, ysumsqi, nsum)
 c-----------------------------------------------------------------------
 c     Accumulate sums when averaging over a time interval
@@ -1526,8 +1565,8 @@ c
 c
 c Signify may want -u and/or -v as well
 c
-      dodoub = xaxis.eq.'uc' .or. xaxis.eq.'vc' .or.
-     *         yaxis.eq.'uc' .or. yaxis.eq.'vc'
+      dodoub =xaxis.eq.'uc'.or.xaxis.eq.'vc'.or.xaxis.eq.'wc'
+     * .or.yaxis.eq.'uc' .or. yaxis.eq.'vc'.or. yaxis.eq.'wc'
 c
 c Switch to compute u and v related variables if needed
 c
@@ -1536,9 +1575,11 @@ c
      *    xaxis.eq.'vv' .or. xaxis.eq.'uvdistance' .or.
      *    xaxis.eq.'uvangle' .or. xaxis.eq.'hangle' .or.
      *    xaxis.eq.'dhangle' .or. yaxis.eq.'uc' .or. yaxis.eq.'vc' .or.
+     *    xaxis.eq.'ww' .or. xaxis.eq.'wc'.or.
      *    yaxis.eq.'uu' .or. yaxis.eq.'vv' .or.
      *    yaxis.eq.'uvdistance' .or. yaxis.eq.'uvangle' .or.
-     *    yaxis.eq.'hangle' .or. yaxis.eq.'dhangle') dowave = .true.
+     *    yaxis.eq.'hangle' .or. yaxis.eq.'dhangle'.or.
+     *    yaxis.eq.'ww'.or. yaxis.eq.'wc') dowave = .true. 
 c
 c Check averaging switches
 c
@@ -1932,6 +1973,7 @@ c------------------------------------------------------------------------
       complex sum
 c-----------------------------------------------------------------------
       call uvdatrd(preamble,data,flags,maxchan,nread)
+       
 c
 c  Fudge the flags so the user gets what he or she wants!
 c
@@ -2249,7 +2291,6 @@ c-----------------------------------------------------------------------
        implicit none
       character*(*) axis, keyw
       real rmin, rmax
-cc
       real trange(8)
       integer il, len1, nt, s
 c-----------------------------------------------------------------------
@@ -2678,12 +2719,13 @@ c
 c Types of axes allowed
 c
       integer naxmax, nax
-      parameter (naxmax = 19)
+      parameter (naxmax = 21)
       character axtyp(naxmax)*10, line*64
       data axtyp /  'time      ','dtime     ','uvdistance','uu        ',
      * 'vv        ','uc        ','vc        ','uvangle   ','amplitude ',
      * 'phase     ','real      ','imag      ','hangle    ','dhangle   ',
-     * 'parang    ','lst       ','az        ','el        ','airmass   '/
+     * 'parang    ','lst       ','az        ','el        ','airmass   ',
+     * 'ww        ','wc        '/
           
         double precision ddayav
         common/average/ddayav
@@ -2809,16 +2851,15 @@ c
         comment(ilen+1:) = word(1:ilen2)//' '
         ilen = ilen + ilen2 + 1
       enddo
-              call keya('title', titlepnt, 'NO')
+        call keya('title', titlepnt, 'NO')
       if((titlepnt.ne.'BL').and.(titlepnt.ne.'FR').and.
     & (titlepnt.ne.'PO').and.(titlepnt.ne.'AV').and.
     & (titlepnt.ne.'NO')) then
         line = 'The title code "'//titlepnt//'" is not supported.'
         call bug('w', line)
         call bug('w', 'Using the default.')
-          titlepnt='NO'
+        titlepnt='NO'
       end if
-
 c
       call keyfin
 c
@@ -3880,6 +3921,8 @@ c-----------------------------------------------------------------------
         label = 'u'//units
       else if (axis.eq.'vv' .or. axis.eq.'vc') then
         label = 'v'//units
+      else if (axis.eq.'ww' .or. axis.eq.'wc') then
+        label = 'w'//units  
       else if (axis.eq.'uvangle') then
         label = 'uv p.a. (degrees)'
       else if (axis.eq.'amplitude') then
@@ -3909,12 +3952,12 @@ c
 c************************************************************************
       subroutine setval (axis, ha, u, v, uvdist, uvpa, fday,
      *                   parang, lst, az, el,
-     *                   data, ichan, freq, val, ok)
+     *                   data, ichan, freq, val, ok, ww)
 c
       implicit none
       complex data
-      double precision fday, freq(*), ha, lst, az, el
-      real val, u, v, uvdist, uvpa, parang
+      double precision fday,freq(*),ha,lst,az,el
+      real val, u, v, uvdist, uvpa, parang, ww
       character axis*(*)
       integer ichan
       logical ok
@@ -3943,6 +3986,7 @@ c
 c-----------------------------------------------------------------------
         include 'mirconst.h'
       ok = .true.
+
       if(axis.eq.'uvdistance') then
         val = uvdist * freq(ichan) / freq(1)
       else if (axis.eq.'uu' .or. axis.eq.'uc') then
@@ -3982,6 +4026,8 @@ c
 c Fractional hours
 c
         val = ha / 3600.0
+      else if (axis.eq.'ww'.or.axis.eq.'wc') then
+        val = ww
       else
         call setvl2 (axis, data, val)
       end if
@@ -4405,7 +4451,7 @@ c
 c Read first visbility (making variables available)
 c
         call getdat (preamble, data, goodf, maxchan, nread,
-     *                                  dofqav, doflag, doall)
+     *      dofqav, doflag, doall)
 c
         if (i.eq.1) then
 c
@@ -4455,7 +4501,7 @@ c
 c Read another visibility
 c
           call getdat (preamble, data, goodf, maxchan, nread,
-     *                                  dofqav, doflag, doall)
+     *         dofqav, doflag, doall)
         end do
         call uvdatcls
       end do
