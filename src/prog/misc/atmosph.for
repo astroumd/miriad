@@ -130,10 +130,10 @@ c
  	call keya('log',log,' ')
 	call GetOpt(domm,doallan,dowrap,dotopo,dospect)
 	call keya('device', device, ' ')
-	call keyr('xrange', xlo, -3.)
-	call keyr('xrange', xhi, 3.)
-	call keyr('yrange', ylo, -4.)
-	call keyr('yrange', yhi, 2.)
+	call keyr('xrange', xlo, -1.3)
+	call keyr('xrange', xhi, 1.3)
+	call keyr('yrange', ylo, -1.7)
+	call keyr('yrange', yhi, 1.2)
 	call keyfin
 c
 c  Check the inputs.
@@ -852,8 +852,8 @@ c External
 c	integer ismin, ismax
 c
 	do j=1,npts
-	  x(j)=log(xm(j))
-	  y(j)=log(zm(j))
+	  x(j)=log10(xm(j))
+	  y(j)=log10(zm(j))
 	enddo
 c	xlo = x(ismin(npts,x,1)) - 1.
 c	xhi = x(ismax(npts,x,1)) + 1.
