@@ -88,10 +88,11 @@ c   12feb02 pjt   intel compiler fix
 c    4jan05 pjt   renamed to atmosph
 c   11apr08 mchw - Use keyline to uniformly handle linetype.
 c   23apr08 mchw - print rmspath and tau230 in PSF table.
+c   24apr08 mchw - Better format in PSF table.
 c------------------------------------------------------------------------
 	include 'atmosph.h'
 	character version*(*)
-	parameter(version='atmosph: version 23-Apr-2008')
+	parameter(version='atmosph: version 24-Apr-2008')
 	integer maxsels
 	parameter(maxsels=1024)
 	real sels(maxsels)
@@ -338,7 +339,7 @@ c
 	  call uvinfo(unit,'sfreq',sfreq)
 	  call uvinfo(unit,'variance',variance)
 	  call uvrdvra(unit,'source',source,' ')
-	print *,'source=',source
+c     print *,'source=',source
 	  call uvrdvrr(unit,'airtemp',airtemp,0.)
 	  call uvrdvrr(unit,'windmph',windmph,0.)
 	  call uvrdvrr(unit,'rmspath',rmspath,0.)
@@ -448,7 +449,7 @@ c
 c
 c  Fit psf
 c
-	print *,'source=',source
+c     print *,'source=',source
       call psf_fit(npts,xm,ym,zm,delz,an,rms)
 	write(line,'(a,a,a)')
      *          '#PSF  day     rms   slope  d/elev  const',
@@ -458,7 +459,7 @@ c
 	if(aveamp.gt.5*sigma .and. rms.gt.0.001 .and. an(1).gt.-1
      *	.and.an(1).lt.2 .and. an(2).gt.-1.and.an(2).lt.3 )then
 	write(line,'
-     * (a,f8.3,5f7.2,f9.2,f7.2,i4,i4,f8.3,2f5.1,f6.1,f5.1,1x,a)')
+     * (a,f8.3,5f7.2,f9.2,f7.2,i4,i4,2f7.2,f5.1,f6.0,f5.1,1x,a)')
      * 'psf', day, (an(i),i=1,4),rms,aveamp,sigma,nint(elev),
      * npts,freq,tau230,airtemp,rmspath,windmph,source
 	  call output(line)
