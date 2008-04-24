@@ -88,7 +88,7 @@ c   12feb02 pjt   intel compiler fix
 c    4jan05 pjt   renamed to atmosph
 c   11apr08 mchw - Use keyline to uniformly handle linetype.
 c   23apr08 mchw - print rmspath and tau230 in PSF table.
-c   24apr08 mchw - Better format in PSF table.
+c   24apr08 mchw - Better format in PSF table, and log-log plot.
 c------------------------------------------------------------------------
 	include 'atmosph.h'
 	character version*(*)
@@ -130,9 +130,9 @@ c
  	call keya('log',log,' ')
 	call GetOpt(domm,doallan,dowrap,dotopo,dospect)
 	call keya('device', device, ' ')
-	call keyr('xrange', xlo, 0.)
-	call keyr('xrange', xhi, 2.)
-	call keyr('yrange', ylo, 0.)
+	call keyr('xrange', xlo, -3.)
+	call keyr('xrange', xhi, 3.)
+	call keyr('yrange', ylo, -4.)
 	call keyr('yrange', yhi, 2.)
 	call keyfin
 c
@@ -310,7 +310,7 @@ c------------------------------------------------------------------------
 	double precision uave(MAXBASE),timeave(MAXBASE)
 	double precision baseave(MAXBASE),avel(MAXBASE)
 	real theta(MCHAN,MAXBASE)
-	logical first(MCHAN,MAXBASE),newave
+	logical first(MCHAN,MAXBASE),newave,title/.true./
 	integer npts,i
 	double precision xm(MAXBASE),ym(MAXBASE),zm(MAXBASE)
 	double precision delz(MAXBASE),an(6),rms,day,freq
@@ -331,6 +331,7 @@ c
 	data uave,timeave/MAXBASE*0.d0,MAXBASE*0.d0/
 	data baseave/MAXBASE*0.d0/,avel/MAXBASE*0.d0/
 	data first/MAXAVE*.TRUE./,newave/.TRUE./
+	data elev/0./
 c
 c  Accumulate the average and rms.
 c
@@ -456,10 +457,18 @@ c     print *,'source=',source
      *		' rmsfit  aveamp  sigma elev',
      *		' npts freq tau230 Tair rmspath wind source'
 	call output(line)
+	if(title)then
+	  write(line,'(a,a,a)')
+     *          '#psf  day     rms   slope  d/elev  const',
+     *		' rmsfit  aveamp  sigma elev',
+     *		' npts freq tau230 Tair rmspath wind source'
+	  call output(line)
+	  title=.false.
+	endif
 	if(aveamp.gt.5*sigma .and. rms.gt.0.001 .and. an(1).gt.-1
      *	.and.an(1).lt.2 .and. an(2).gt.-1.and.an(2).lt.3 )then
 	write(line,'
-     * (a,f8.3,5f7.2,f9.2,f7.2,i4,i4,2f7.2,f5.1,f6.0,f5.1,1x,a)')
+     * (a,f8.3,5f7.2,f9.2,f7.2,i4,i4,2f7.2,f6.1,f6.0,f5.1,1x,a)')
      * 'psf', day, (an(i),i=1,4),rms,aveamp,sigma,nint(elev),
      * npts,freq,tau230,airtemp,rmspath,windmph,source
 	  call output(line)
@@ -837,12 +846,21 @@ c********1*********2*********3*********4*********5*********6*********7**
         double precision xm(npts),zm(npts)
 c
 	real x(256),y(256)
+c	real xlo,xhi,ylo,yhi
 	integer j
+c External
+c	integer ismin, ismax
 c
 	do j=1,npts
-	  x(j)=xm(j)
-	  y(j)=zm(j)
+	  x(j)=log(xm(j))
+	  y(j)=log(zm(j))
 	enddo
+c	xlo = x(ismin(npts,x,1)) - 1.
+c	xhi = x(ismax(npts,x,1)) + 1.
+c	ylo = y(ismin(npts,x,1)) - 1.
+c	yhi = y(ismax(npts,x,1)) + 1.
+c         call pgswin(xlo, xhi, ylo, yhi)
+c          call pgbox('BCNST', 0., 0, 'BCNSTV', 0., 0)
         call pgpt(npts, x, y, 16)
 	end
 c********1*********2*********3*********4*********5*********6*********7**
