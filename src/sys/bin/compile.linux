@@ -28,7 +28,7 @@ setenv Clinkdir  "-L`echo $mmir/lib/$mhost $MIRXLIB | sed 's/ / -L/g'`"
 setenv Clinklib  "-lmir -llinpack -lpgplot -lX11 -lf2c -lm"
 setenv Cinclude  "-I`echo $mmir/src/inc $mmir/src/subs | sed 's/ / -I/g'`"
 #
-setenv Ratty 	 "$mmir/bin/$mhost/ratty -s f2c -b -D linux"
+setenv Ratty 	 "$mmir/bin/$mhost/ratty -s f2c -b -D linux -D NOF90"
 setenv Intf2c 	 "$mmir/bin/$mhost/intf2c -s f2c"
 #
 #-----------------------------------------------------------
