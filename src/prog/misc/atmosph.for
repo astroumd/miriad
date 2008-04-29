@@ -6,9 +6,17 @@ c= atmosph - analyse phase statistics from a uv dataset
 c& mchw
 c: uv analysis
 c+
-c	PSF computes phase statistics from a uv dataset. Either
-c	structure function, Allan deviation, or Spectra can be calculated.
-c	Each baseline and time interval is averaged independently.
+c	ATMOSPH computes phase statistics from a uv dataset. Either
+c	Structure function, Allan deviation, or Spectra can be calculated.
+c
+c	ATMOSPH does not apply gains, bandpass or polarization corrections.
+c	Known instrumental phase fluctuations should be removed,
+c	but slow instrumental phase drifts do not make much difference to
+c	the fitted phase fluctuations.
+c	ATMOSPH code does remove the average, but no other phase variations
+c	which may be part of atmospheric fluctuations.
+c
+c	Each baseline and time interval are averaged independently.
 c	  The default calculates the structure function, the output lists:
 c	number of records averaged, time(days), antenna pair, uvdist
 c	elevation(radians), [phase_rms*sqrt(sin(elevation)),
@@ -89,10 +97,11 @@ c    4jan05 pjt   renamed to atmosph
 c   11apr08 mchw - Use keyline to uniformly handle linetype.
 c   23apr08 mchw - print rmspath and tau230 in PSF table.
 c   24apr08 mchw - Better format in PSF table, and log-log plot.
+c   29apr08 mchw - More doc.
 c------------------------------------------------------------------------
 	include 'atmosph.h'
 	character version*(*)
-	parameter(version='atmosph: version 24-Apr-2008')
+	parameter(version='atmosph: version 29-Apr-2008')
 	integer maxsels
 	parameter(maxsels=1024)
 	real sels(maxsels)
@@ -157,6 +166,7 @@ c
           call pgbbuf
           call pgswin(xlo, xhi, ylo, yhi)
           call pgbox('BCNST', 0., 0, 'BCNSTV', 0., 0)
+c          call pgenv(xlo,xhi,ylo,yhi,0,30)
 	endif
 c
 c  Open the data file, apply selection, do linetype initialisation.
@@ -490,6 +500,7 @@ c
 	  numave(j,bl) = 0.
 	  ampave(j,bl) = 0.
 	  phiave(j,bl) = 0.
+
 	  amprms(j,bl) = 0.
 	  phirms(j,bl) = 0.
 	enddo
