@@ -3,12 +3,12 @@ dnl TODO:
 dnl   - this file should be called configure.ac
 dnl ------------------------------------------------------------------------------------
 
-AC_PREREQ([2.59])
+AC_PREREQ(2.59)
+AC_INIT([MIRIAD],[4.1.0],[miriad-dev-bugs@astro.berkeley.edu])
 AC_REVISION([$Revision$])
 
 AC_MSG_CHECKING([MIRIAD4 config])
 
-AC_INIT([MIRIAD], [4.1.0], [miriad-dev-bugs@astro.berkeley.edu])
 AC_CONFIG_SRCDIR
 AM_INIT_AUTOMAKE([--warnings=obsolete  --warnings=gnu --warnings=unsupported --warnings=no-syntax --warnings=no-portability foreign])
 
