@@ -1,5 +1,8 @@
-! MIRCAT:Calibrator.fluxes
-!
+! $MIRCAT/cals.fluxes  a.k.a. $MIRFLUXTAB
+!   NOTE:   as of April 2008 this (BIMA style) file is not maintained.
+!           The new format is in $MIRCAT/FluxSource.dat (CARMA style)
+!           You can still transparently use the BIMA style by setting
+!           the environment variable MIRFLUXTAB to point to a fluxtable.
 ! HISTORY
 ! 85JUN06.0 - 87JUN20.0 from Bill Dent 30 Mar 1988.
 ! 87JAN30.0 mm VLBI measured at QBBN and reconciled with HCRO values - MCHW.
