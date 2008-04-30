@@ -107,9 +107,9 @@
 # first record from:   atmosph.B.30.uv.interval=60.options=mm.output
 # from CARMA data, obtained by Mel Wright, April 2008.
 # Can also run with:
-# miriad::    rmsfit      in=atmosph.tab par=1,0.7,-0.7,0 nfit=2 npts=105
+# miriad::    rmsfit      in=atmosph1.tab par=1,0.7,-0.7,0 nfit=2 npts=105
 #             0.306289137857239       7.845079143710815E-002
-# nemo::      tabnllsqfit in=atmosph.tab par=1,0.7,-0.7,0 free=1,1,0,0 fit=psf xcol=5,6 ycol=8 
+# nemo::      tabnllsqfit in=atmosph1.tab par=1,0.7,-0.7,0 free=1,1,0,0 fit=psf xcol=5,6 ycol=8 
 #             0.30629 (0.0055875)     0.078449 (0.0147004)
 # atmosph: version 29-Apr-2008
 #  starting new average for B.30.uv          at day   365.833788
