@@ -188,7 +188,7 @@ c	Antenna based phase noise, in degrees. This gives the phase
 c	noise, specified by the rms phase noise to be added to each
 c	antenna. Up to 4 values can be given to compute the phase noise
 c	  pnoise(1) + pnoise(2)*(baseline)**pnoise(3)*sinel**pnoise(4)
-c	where ``baseline'' is the baseline length in km. Typical values
+c	where ``baseline'' is baseline length in 100m units. Typical values
 c	for pnoise(2) are 1mm rms pathlength (e.g. 2 radians at 100 GHz),
 c	For Kolmogorov turbulence pnoise(3)=5/6 for baseline < 100m
 c	and 0.33 for baseline > 100m (outer scale of turbulence).
@@ -327,6 +327,8 @@ c    08mar02  mchw  don't write pbfwhm if not set, so mosaicing uses telescop na
 c    30jan03  mchw  format change for many records.
 c     3jun03  pjt/rjs Fixed bug in determining whether source is up or not. (non-CVS ATNF)
 c    14aug06  mchw  format change in history. Initialize unused user inputs.
+c    30jan08  mchw  Fixed case of only one offset pointing center.
+c    02may08  mchw  baseline in 100m units for atmospheric phase index.
 c
 c  Bugs/Shortcomings:
 c    * Frequency and time smearing is not simulated.
@@ -355,7 +357,7 @@ c	pbfwhm=76,137,-0.2 simulates a primary beam pattern between
 c	10m and 6m antennas at 100 GHz. 
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version = 'Uvgen: version 1.0 14-Aug-2006')
+	parameter(version = 'Uvgen: version 1.0 02-May-2008')
 	integer ALTAZ,EQUATOR
 	parameter(ALTAZ=0,EQUATOR=1)
 	integer PolRR,PolLL,PolRL,PolLR,PolXX,PolYY,PolXY,PolYX
@@ -510,6 +512,7 @@ c
 	  center(2,1) = 0
 	else
 	  do i=1,npnt
+c	print *, ' npnt=',npnt
 	    center(1,i) = center(1,i) * pi/180/3600
 	    center(2,i) = center(2,i) * pi/180/3600
 	  enddo
@@ -871,7 +874,7 @@ c
 c  Initialise the effective source parameters, to account for pointing
 c  center and 
 c
-	dopoint = npnt.gt.1
+	dopoint = npnt.gt.0
 	if(.not.dopoint)call GetSrc(pbfwhm,sra,sdec,center(1,1),
      *	    ns,ta,smaj,smin,spa,sx,sy,tad,smajd,smind,sxd,syd,szd)
 c
@@ -922,6 +925,7 @@ c  Compute effective source parameters when mosaicing.
 c
 	  ipnt = mod(ipnt,npnt) + 1
 	  if(dopoint)then
+c	print *, ' npnt=',npnt,' dopoint=',dopoint
 	    call uvputvrr(unit,'dra',center(1,ipnt),1)
 	    call uvputvrr(unit,'ddec',center(2,ipnt),1)
 	    call GetSrc(pbfwhm,sra,sdec,center(1,ipnt),
@@ -993,7 +997,8 @@ c
 	        preamble(1) = bxy
 	        preamble(2) =  byx*sind + bzz*cosd
 		preamble(3) = -byx*cosd + bzz*sind
-		baseline = 3.e-4 * sqrt(bxx*bxx + byy*byy + bzz*bzz)
+c  baseline length in 100m units to compute power law for atmospheric phase
+		baseline = 3.e-3 * sqrt(bxx*bxx + byy*byy + bzz*bzz)
 c
 c  Find the polcode for the polarization switching cycle.
 c
