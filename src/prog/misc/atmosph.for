@@ -43,7 +43,7 @@ c	where type can be `channel' (default), `wide' or `velocity'.
 c	The default is channel data, a maximum of 4 channels will be used.
 c@ interval
 c	Two values giving the averaging time, and the maximum time interval
-c	between samples in minutes. Default averaging time = 1 min.
+c	between samples in minutes. Default averaging time = 10 min.
 c	The default maximum interval between samples is the averaging time.
 c@ base
 c	Units and reference baseline for uvdist in meters. Default=100m.
@@ -51,7 +51,7 @@ c@ options
 c	This gives extra processing options. Several options can be given,
 c	each separated by commas. They may be abbreviated to the minimum
 c	needed to avoid ambiguity. Possible options are:
-c	   'psf'	Compute the rms phase for each time interval.
+c	   'psf'	Compute the rmspath for each time interval.
 c	   'allan'	Compute Allan deviation for each time interval.
 c			    sqrt{<[a(i-k)-2a(i)+a(i+k)]**2>}
 c			where k is the sampling interval. Minimum 10 records.
@@ -59,7 +59,6 @@ c	   'spect'	Compute spectra of phase for each time interval.
 c	   'topo'	Use the topographic baseline length for uvdist.
 c			Default is to use the projected baseline. 
 c	   'unwrap'	Attempt to extend phases beyond -180 to 180 degrees
-c	   'mm'		Scale phase to path length in mm. Default is degrees.
 c
 c	Only one of 'psf' 'allan' and spect' can be chosen.
 c	The default is the phase structure function 'psf'. 
@@ -98,10 +97,11 @@ c   11apr08 mchw - Use keyline to uniformly handle linetype.
 c   23apr08 mchw - print rmspath and tau230 in PSF table.
 c   24apr08 mchw - Better format in PSF table, and log-log plot.
 c   29apr08 mchw - More doc.
+c   02may08 mchw - change default to interval=10 min and options=mm,psf.
 c------------------------------------------------------------------------
 	include 'atmosph.h'
 	character version*(*)
-	parameter(version='atmosph: version 29-Apr-2008')
+	parameter(version='atmosph: version 02-May-2008')
 	integer maxsels
 	parameter(maxsels=1024)
 	real sels(maxsels)
@@ -111,7 +111,7 @@ c------------------------------------------------------------------------
 	character source*16,oldsource*16
 	complex data(MAXCHAN)
 	logical flags(MAXCHAN)
-	logical domm,doallan,dowrap,dotopo,dospect
+	logical doallan,dowrap,dotopo,dospect
 	integer unit,numchan,nants,ant1,ant2
 	double precision antel,avetime,deltime,startime,interval
 	double precision antpos(3*MAXANT),sample
@@ -133,11 +133,11 @@ c
 	if(vis.eq.' ')call bug('f','Input file must be given')
 	call SelInput('select',sels,maxsels)
 	call keyline(linetype,numchan,start,width,step)
-	call keyd('interval',interval,1.d0)
+	call keyd('interval',interval,10.d0)
 	call keyd('interval',sample,interval)
 	call keyd('base',base,100.d0)
  	call keya('log',log,' ')
-	call GetOpt(domm,doallan,dowrap,dotopo,dospect)
+	call GetOpt(doallan,dowrap,dotopo,dospect)
 	call keya('device', device, ' ')
 	call keyr('xrange', xlo, -1.3)
 	call keyr('xrange', xhi, 1.3)
@@ -234,7 +234,7 @@ c
             call spect(uin,timein,basein,1,avetime,
      *                                      data,flags,numchan,dowrap)
 	  else
-	    call psf(uin,timein,basein,1,antel,domm,unit,device,
+	    call psf(uin,timein,basein,1,antel,unit,device,
      *					    data,flags,numchan,dowrap)
 	  endif
 c
@@ -257,7 +257,7 @@ c
 	    call spect(uin,timein,basein,-1,avetime,
      *					    data,flags,numchan,dowrap)
 	else
-	    call psf(uin,timein,basein,-1,antel,domm,unit,device,
+	    call psf(uin,timein,basein,-1,antel,unit,device,
      *					    data,flags,numchan,dowrap)
 	endif
 c
@@ -272,19 +272,20 @@ c
 c 
 c  Close the plot device 
 c 
-        if(device.ne.' ') then 
-	  call pglab('Baseline','Path Rms','Phase Structure Function')
+	if(device.ne.' ') then 
+	  call pglab('log(Baseline/100m)','log(PathRms/1mm)',
+     *             'Phase Structure Function')
           call pgebuf
           call pgend
 	endif
 	end
 c********1*********2*********3*********4*********5*********6*********7*c
-	subroutine psf(uin,timein,basein,VisNo,antel,domm,unit,device,
+	subroutine psf(uin,timein,basein,VisNo,antel,unit,device,
      *					    data,flags,numchan,dowrap)
 	implicit none
 	integer numchan,VisNo,unit
 	logical flags(numchan)
-	logical dowrap,domm
+	logical dowrap
 	complex data(numchan)
 	double precision uin,timein,basein
 	double precision antel
@@ -301,7 +302,6 @@ c    data	The correlation data.
 c    flags	The data flags.
 c    numchan	The number of channels.
 c    dowrap	extend phase beyond -180 to 180 degrees.
-c    domm       Scale phase to path length in mm. Default is degrees.
 c    unit	Handle of uv-data file.
 c------------------------------------------------------------------------
 	include 'atmosph.h'
@@ -389,13 +389,11 @@ c
 	  enddo
  	endif
 c
-c  Scale phase to path length in mm. Default is degrees.
+c  Scale phase to path length in mm. 
 c
-	if(domm) then
-          do j=1,nchan
-	    arg(j) = arg(j)/360. * 299.792458/sfreq(j)
-          enddo
-	endif
+	do j=1,nchan
+	  arg(j) = arg(j)/360. * 299.792458/sfreq(j)
+	enddo
 c
 c  Accumulate the averages.
 c
@@ -513,33 +511,30 @@ c
 c
       end
 c********1*********2*********3*********4*********5*********6*********7*c
-	subroutine GetOpt(domm,doallan,dowrap,dotopo,dospect)
+	subroutine GetOpt(doallan,dowrap,dotopo,dospect)
 c
 	implicit none
-	logical domm,doallan,dowrap,dotopo,dospect
+	logical doallan,dowrap,dotopo,dospect
 c
 c  Determine the flags to pass to the uvdat routines, and other options.
 c
 c  Output:
 c    doallan	Compute Allan deviation for each time interval.
-c    domm	Scale phase to path length in mm. Default is degrees.
 c    dotopo	Use the topographic baseline length for uvdist.
 c    dowrap	Attempt to extend phase beyond -180 to 180 degrees.
 c    dospect	Compute spectra of phase for each time interval.
 c------------------------------------------------------------------------
 	integer nopts
-	parameter(nopts=6)
+	parameter(nopts=4)
 	character opts(nopts)*8
 	logical present(nopts)
-	data opts /'allan   ','unwrap  ','topo    ','spect   ',
-     *  'psf     ','mm      '/
+	data opts /'allan   ','unwrap  ','topo    ','spect   '/
 c
 	call options('options',opts,present,nopts)
 	doallan = present(1)
 	dowrap = present(2)
 	dotopo = present(3)
 	dospect = present(4)
-	domm    = present(6)
 	end
 c********1*********2*********3*********4*********5*********6*********7*c
 	subroutine Allan(uin,timein,basein,VisNo,avetime,
