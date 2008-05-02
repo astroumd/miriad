@@ -136,6 +136,7 @@ c   rjs  23jul97 - Added pbtype.
 c   rjs  14aug00 - Added log file output.
 c   gmx  07apr04 - Removed positivity tests and abs() for ResMax
 c                  since it is defined as abs(R0) in GetPk.
+c   pjt   2may08 - Read crpix as real, and use NINT 
 c
 c  Bugs and Shortcomings:
 c     * The way it does convolutions is rather inefficent, partially
@@ -157,7 +158,7 @@ c		to write.
 c
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version='MfClean: version 1.0 24-Jun-97')
+	parameter(version='MfClean: version 1.0 2-May-08')
 	include 'maxdim.h'
 	integer maxBeam,maxCmp1,maxCmp2,maxBox,maxRun,maxP
 	parameter(maxCmp1=66000,maxCmp2=32000,maxP=257)
@@ -183,7 +184,7 @@ c
 	integer lMap,lBeam,lModel,lOut
 	integer nMap(3),nBeam(3),nModel(3),nOut(4)
 	real EstASum
-	real ResMin,ResMax,ResAMax,ResRms
+	real ResMin,ResMax,ResAMax,ResRms,icr,jcr
 c
 	real dat(maxBuf)
 	common dat
@@ -218,8 +219,10 @@ c  Fiddle the min and max patch sizes.
 c
 	maxPatch = min(maxP,2*((min(n1,n2)-1)/2) + 1)
 	if(maxPatch.le.0) call bug('f','Bad patch size')
-	call rdhdi(lBeam,'crpix1',ic,n1/2+1)
-	call rdhdi(lBeam,'crpix2',jc,n2/2+1)
+	call rdhdr(lBeam,'crpix1',icr,n1/2+1.0)
+	call rdhdr(lBeam,'crpix2',jcr,n2/2+1.0)
+	ic = NINT(icr)
+	jc = NINT(jcr)
 	maxPatch = min(maxPatch,
      *		    2*min(ic-1,n1-ic,jc-1,n2-jc)+1)
 	if(minPatch.gt.maxPatch)then
