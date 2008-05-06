@@ -22,6 +22,7 @@ c   pjt    30jan02    attempt to create widebands on the fly
 c   pjt     6sep06    carma mode to to not deal with the first two wide's 
 c                     (global LSB/USB)
 c   pjt    30jul07    complete overhaul for CARMA (and thus more general)
+c   pjt     6may08    Fix computing the (center) new wfreq values for nwide=
 c***********************************************************************
 c= uvwide - recompute wide band from narrow band
 c& pjt
@@ -41,8 +42,6 @@ c     widebands were the global LSB/USB averages, CARMA uses nwide=nspect
 c     and thus the program is now generally usable.
 c
 c     UVCAL can also be used to make wideband channels, using options=avechan.
-c
-c     NOTE: ** a few BIMA specific sections of code need to cleaned up **
 c
 c@ vis
 c     The name of the input visibility dataset.  
@@ -96,7 +95,7 @@ c
       CHARACTER PROG*(*)
       PARAMETER (PROG = 'UVWIDE')
       CHARACTER VERSION*(*)
-      PARAMETER (VERSION = '30-jul-07')
+      PARAMETER (VERSION = '6-may-08')
 
 c
 c  Internal variables.
@@ -140,8 +139,10 @@ c
       IF (reset .AND. donarrow) reset = .FALSE.
 
       IF(edge.GT.0 .AND. blankf.GT.0.0) THEN
-        blankf = -1.0
-        CALL bug('i','Using edge value, ignoring blankf')
+        blankf = 0.0
+        CALL bug('i','Using edge= value, ignoring a non-zero blankf=')
+      ELSE IF (edge.EQ.0 .AND. blankf.EQ.0.0) THEN
+        CALL bug('i','No edge= or blankf= flagging, relying on flags')
       ENDIF
 c
 c report which mode program runs in....
@@ -245,7 +246,7 @@ c
             CALL getcoor(lin, MAXCHAN, nspect, nschan, ischan, 
      *           sdf, sfreq)
             DO i=1,nwide
-               wfreq(i)  = sfreq(i)
+               wfreq(i)  = sfreq(i) + 0.5*(nschan(i)-1.0)*sdf(i)
                wwidth(i) = sdf(i) * nschan(i)
             ENDDO
             CALL uvputvrr(lout,'wfreq',wfreq,nwide)
