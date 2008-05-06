@@ -17,7 +17,12 @@ if ($#argv == 0) then
       echo Found MIR=$m hosttype=$ht
       set MIR=$m
       set hosttype=$ht
-    else
+    else if (-e automiriad.csh) then
+      echo Current directory looks like a new-style tree
+      cp automiriad.csh miriad_start.csh
+      cp automiriad.sh  miriad_start.sh
+      exit 0
+    else 
       echo Current directory does not look like a MIR4 root directory
       exit 1
     endif
