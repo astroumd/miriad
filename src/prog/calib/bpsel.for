@@ -24,9 +24,9 @@ c------------------------------------------------------------------------
         integer maxGains
         parameter(maxGains=2*MAXCHAN*MAXANT)
         character version*(*)
-        parameter(version='BPSEL: version 2008-May-04')
+        parameter(version='BPSEL: version 2008-May-06')
         character vis*80,line*80
-        integer tIn,nschan,nspect,iostat,item,off,i,j
+        integer tIn,nschan,nspect,iostat,item,off,i,j,ifeed,iant
         integer ispect,nchan2,nchan,ntau,nfeeds,ngains,nants
         integer nschan_save(MAXWIN),newch(maxGains)
         double precision freqs(2),fmhz
