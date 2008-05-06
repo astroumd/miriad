@@ -10,6 +10,8 @@ set mlsys = $mmir/bin/localsys
 # -mcpu=i686 -march=i686 -malign-double -ffast-math         architecture opt
 #  on darwin you might need this -lSystemStubs library, if you have missing _printf$LDBLStub cases
 #  on darwin you sometimes might need -lcc_dynamic if you don't have -lSystemStubs
+#  You need cc_dynamic if you like an FSF versions of g77 with apple's gcc
+#  when you link FSF versions of gcc and g77, should be ok.
 #  which seems to happen if you did not install Xcode
 #
 setenv Fcompile  "g77"

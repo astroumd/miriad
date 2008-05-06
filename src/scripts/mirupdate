@@ -17,7 +17,9 @@ if (! -e $MIR/CVS) then
 endif
 
 cd $MIR
+echo -n "Checking CVS status...."
 cvs -q update > $tmp.cvs
+echo "done."
 
 set nc=(`grep ^C $tmp.cvs | wc -l`)
 set nu=(`grep ^U $tmp.cvs | wc -l`)
@@ -39,6 +41,7 @@ endif
 set path=($MIR/src/sys/bin $path); rehash
 
 # brute force do all the subs and prog 
+echo "Brute force re-installing subs and prog"
 mir.install subs prog
 
 
