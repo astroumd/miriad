@@ -132,7 +132,7 @@ c    usage with 15 or 30 elements.
 c-----------------------------------------------------------------------
 	include 'gplist.h'
 	character version*(*)
-	parameter(version='GpList: version 14-feb-08')
+	parameter(version='GpList: version 8-may-08')
 	logical dovec,docomp,dophas,doall,dozero,domult,hexists,doamp
 	logical dolimit,doclip,dosigclip,doforce,dohist,docarma,doaddph
 	real jyperk(MAXGANT) 
@@ -294,6 +294,8 @@ c
 c
 c  Read and write the gains, and list gains and replace amplitudes
 c
+c  Gains are stored as Gains(ant,time)
+c
 c------------------------------------------------------------------------
         complex Gains(MAXGAINS), g
 	double precision time(MAXSOLS)
@@ -346,13 +348,13 @@ c
       if (docomp) then
          call output('The complex gains listed in the table are:')
          if((ngains.gt. 8).or.docarma) then
-	    write(msg(1:37),94) '  Time     Ants 1/9     Ants 2/10     '
-	    write(msg(38:76),94) 'Ants 3/11    Ants 4/12    Ants 5/13  '
-	    write(msg(77:120),94)'Ants 6/14    Ants 7/15    Ant  8'
+     	    msg = '  Time     Ants 1/9     Ants 2/10     ' //
+     *	          'Ants 3/11    Ants 4/12    Ants 5/13  '  //
+     *	          'Ants 6/14    Ants 7/15    Ant  8'
 	 else
-	    write(msg(1:37),94) '  Time     Ants 1       Ants 2        '
-	    write(msg(38:76),94) 'Ants 3       Ants 4       Ants 5     '
-	    write(msg(77:120),94)'Ants 6       Ants 7       Ant  8'
+	    msg = '  Time     Ants 1       Ants 2        ' //
+     *	          'Ants 3       Ants 4       Ants 5     ' //
+     *	          'Ants 6       Ants 7       Ant  8'
 	 end if
          call output(msg)
          do i=1,nsols
@@ -405,9 +407,9 @@ c
          enddo
       else if (dophas) then
          call output('The phase gain values listed in the table are:')
-         write(msg(1:28),94) 'Time  Anten 1    2    3    4'
-         write(msg(29:58),94) '    5    6    7    8    9   10'
-         write(msg(59:83),94) '   11   12   13   14   15'
+         msg =  'Time  Anten 1    2    3    4' //
+     *          '    5    6    7    8    9   10' //
+     *          '   11   12   13   14   15'
          call output(msg)
          do i=1,nsols
             call JulDay(time(i),'H',line(1:18))
@@ -446,9 +448,9 @@ c
          enddo
 	 call output('The amplitude gain values listed '//
      *               'in the table are:')
-	 write(msg(1:37),94) '  Time    Ant 1  Ant 2  Ant 3  Ant 4 '
-	 write(msg(38:78),94)' Ant 5  Ant 6  Ant 7  Ant 8  Ant 9  Ant10'
-	 write(msg(79:113),94) '  Ant11  Ant12  Ant13  Ant14  Ant15'
+	 msg = '  Time    Ant 1  Ant 2  Ant 3  Ant 4 ' //
+     *         ' Ant 5  Ant 6  Ant 7  Ant 8  Ant 9  Ant10' //
+     *         '  Ant11  Ant12  Ant13  Ant14  Ant15 '
 	 call output(msg)
 	 do i=1,nsols
 	    call JulDay(time(i),'H',line(1:18))
@@ -740,7 +742,6 @@ c
 97    format(10x,a,i2,a,f9.3,f9.3)
 96    format(a8,2x,a,i2,a,f9.3,f9.3)
 95    format(a8,1x,8(f5.2,1x,f5.2,2x))
-94    format(a)
 93    format(a30,1x,f5.2,1x,f5.2)
 92    format(a9,1x,i4,a25)
 91    format(a30,1x,f5.2,1x,a6)
