@@ -12,10 +12,15 @@ c       data-set. No default.
 c@ fmhz
 c       Required frequency resolution of bandpass soln in MHz.  Only 
 c       windows that match this criterion are kept.
+c       To recall, for CARMA the resolutions are 
+c       31.25 0.99, 0.49, 0.xx and 0.xx MHz for spectral windows with
+c       500, 64, 32, 8 and 2 MHz bandwidth resp.
 c@ tol
 c       Fractional tolerance for a frequency resolution match.
 c       Default is 0.25, so frequency resolution ranging from 75% to
 c       125% of fmhz is allowed.
+c@ show
+c       Only show the matched selection, but don't apply.
 c--
 c  History:
 c  Bugs:
@@ -33,6 +38,7 @@ c------------------------------------------------------------------------
         double precision freq1_save(MAXWIN),freq2_save(MAXWIN)
         real tol
         complex Gains(maxGains),Gains2(maxGains)
+        logical show
 c
 c  Get the user parameters.
 c
@@ -42,6 +48,7 @@ c
         if(vis.eq.' ')call bug('f','Input data-set must be given')
         call keyd('fmhz',fmhz,0.d0)
         call keyr('tol',tol,0.25)
+        call keyl('show',show,.FALSE.)
         call keyfin
 c
 c  Open up the input.
@@ -129,11 +136,14 @@ c
 c
         off = 8
         call hreadr(item,Gains,off,8*nants*nfeeds*nchan,iostat)
-C        do i = 1, nchan
-C            do j = 1, nants
-C                write(46,*) i,j,Gains(i+(j-1)*nchan)
-C            enddo
-C        enddo
+c       nfeeds needs to be 1 here
+        if (show) then
+           do i = 1, nchan
+              do j = 1, nants
+                 write(46,*) i,j,Gains(i+(j-1)*nchan)
+              enddo
+           enddo
+        endif
         if(iostat.ne.0)then
           call bug('w','Error reading the bandpass table')
           call bugno('f',iostat)
@@ -143,6 +153,11 @@ c  Close the bandpass table.
 c
         call hdaccess(item,iostat)
         if(iostat.ne.0)call bugno('f',iostat)
+
+        if (show) then
+           call bug('f','Done!')
+           stop
+        endif
 c
 c  Delete the old tables.
 c
