@@ -165,8 +165,9 @@
 /*  pjt  25apr06 Add ATNF's new uvdim_c and match sourcenames w/o case  */
 /*  pjt  22aug06 merged versions; finish dazim/delev selection code     */
 /*  pjt  22may07 added code for purpose, fixed uvread_match()           */
-/*  pjt  06feb08 allow seeing() selection on smonrms and rmspath        */
+/*  pjt  06feb08 allow seeing() selection on smonrms or rmspath         */
 /*               cf. 08oct07 addition to ATNF version of uvio.c         */
+/*  pjt   8may08 wrap HA back into -12..12 from -24..24..               */
 /*----------------------------------------------------------------------*/
 /*									*/
 /*		Handle UV files.					*/
@@ -257,7 +258,7 @@
 /*		list to be formed for hashing.				*/
 /*									*/
 /*----------------------------------------------------------------------*/
-#define VERSION_ID "6-feb-08 pjt"
+#define VERSION_ID "8-may-08 pjt"
 
 #define private static
 
@@ -2260,7 +2261,7 @@ void uvselect_c(int tno,Const char *object,double p1,double p2,int datasel)
 		"uvrange","pointing","amplitude","window","or","dra",
 		"ddec","uvnrange","increment","ra","dec","and", "clear",
 		"on","polarization","shadow","auto","dazim","delev",
-                "purpose","seeing"
+                "purpose","seeing" (should be 28?)
     p1,p2	Generally this is the range of values to select. For
 		"antennae", this is the two antennae pair to select.
 		For "antennae", a zero indicates "all antennae".
@@ -3438,6 +3439,9 @@ private int uvread_select(UV *uv)
     if(op->type == SEL_HA){
       discard = !op->discard;
       ha = *(double *)uv->lst->buf - *(double *)uv->obsra->buf;
+      /* ha can be -24..24 so needs to be back to -12..12 */
+      if (ha < PI) ha += 2*PI;
+      if (ha > PI) ha -= 2*PI;
       while(n < sel->noper && op->type == SEL_HA){
         if(op->loval <= ha && ha <= op->hival)
 	  discard = op->discard;
