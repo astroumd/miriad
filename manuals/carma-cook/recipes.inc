@@ -51,9 +51,11 @@ calibrator:
 
    # create and inspect an (antenna based) bandpass solution
    mfcal vis=$vis select="-auto,source($cal)" interval=5
-   gpplt vis=$vis ....
-   gpplt vis=$vis ....
-   gpplt vis=$vis ....
+   gpplt vis=$vis .... options=bandpass
+
+   # inspect
+   uvplot ...
+   uvspec ...
 
    # map and deconvolve the source
    invert vis=$vis select="source($src)" map=map0 beam=beam0 options=mosaic
@@ -67,6 +69,213 @@ calibrator:
 
 Narrow band  (line) calibration in 2 or 8 MHz, with the NOISE source.
 
+
+
+
+\footnotesize
+\begin{verbatim}
+
+
+
+set archive=c0117.1B_225Arp220.1.miriad
+
+set vis=vis2
+set cal=cal1
+set win=4,5
+set refant=11
+set flag=1
+set linecal=1
+set baseline=1
+set show=0
+set mosaic=1
+set cont=0
+set bpinterval=0.1
+set cell=0.1
+
+
+
+
+foreach cmdlinearg ($*)
+   set $cmdlinearg
+end
+
+# select out the sources; from listobs' output we also get their purpose
+#Source         Purpose    RA         Decl         
+#NOISE              B      12 29 06.70 2 03 08.60      0.00E+00     0.0
+#3C273              B      12 29 06.70 2 03 08.60      0.00E+00     0.0
+#3C345              G      16 42 58.81 39 48 36.99     0.00E+00     0.0
+#ARP220             S      15 34 57.34 23 30 05.50     0.00E+00     0.0
+
+
+
+
+if (! -d $archive) then
+  carmadata -x $archive
+endif
+
+
+# get data from archive
+rm -rf vis0
+cp -a $archive vis0
+
+# patch the frequency, but note it's a funny co(2-1) that makes the galaxy at VLSR=0
+# puthd 
+# or
+# uvputhd vis= out= hdvar=restfreq varval=226.42200
+
+puthd in=vis0/restfreq value=226.42200 type=double
+
+
+
+
+
+# flag data
+if ($flag) then
+  # C8 has terrible systemps (it's actually never present in the sky data :-)
+  uvflag vis=vis0 select="ant(8)" flagval=flag
+  # flag all ants after 1720
+  uvflag vis=vis0 select="time(17:20,19:00)" flagval=flag
+  # ant9 is really bad after 16:00 already
+  uvflag vis=vis0 select="ant(9),time(16:00,19:00)" flagval=flag
+endif
+
+
+
+
+
+
+
+
+
+
+# linelength calibration
+rm -r vis1
+if ($linecal) then
+  linecal vis=vis0
+  uvcat vis=vis0 out=vis1
+else
+  uvcat vis=vis0 out=vis1
+endif
+  
+
+# baseline corrections
+rm -r vis2
+if ($baseline) then
+  uvedit vis=vis1 out=vis2 apfile=$MIRCAT/baselines/carma/antpos.071121
+else
+  uvcat vis=vis1 out=vis2
+endif
+
+
+
+
+rm -rf noise cal1 cal2 src 
+uvcat vis=$vis select="-auto,source(noise)"    out=noise
+uvcat vis=$vis select="-auto,source(3C273)"    out=cal1
+uvcat vis=$vis select="-auto,source(3C345)"    out=cal2
+uvcat vis=$vis select="-auto,source(ARP220)"   out=src
+
+# inspect passband calibrator
+uvspec vis=cal1 device=1/xs interval=999 nxy=5,3 axis=channel,phase
+uvspec vis=cal1 device=1/xs interval=999 nxy=5,3 axis=channel,amp
+# and in vel space... notice with uvlist-spectra, do we need to patch?
+uvspec vis=cal1 device=1/xs interval=999 nxy=5,3 axis=velocity,amp "select=win(4,5,6)"
+
+# inspect phase calibrator
+uvplt vis=cal2 device=/xs axis=time,phase "select=win($win)"
+uvplt vis=cal2 device=/xs axis=time,amp   "select=win($win)"
+
+
+
+# inspect amps of source, didn't see any bad points
+uvplt vis=src  device=/xs axis=time,amp   "select=win($win)"
+
+# make passband; use short interval, especially for 1mm (default is 5min)
+# can even go as low as 10sec if you have enough signal
+mfcal vis=cal1 "select=win($win)" refant=$refant interval=$bpinterval
+# and inspect
+gpplt vis=cal1 device=/xs yaxis=amp nxy=5,3 options=band yrange=0,2
+gpplt vis=cal1 device=/xs yaxis=phase nxy=5,3 options=band
+
+# stuff it in the phase cal
+gpcopy vis=cal1 out=cal2 options=nopol,nocal
+uvcat vis=cal2 out=cal3
+rm -rf cal2
+mv cal3 cal2
+
+
+
+
+
+
+# make gain calibrator
+selfcal vis=cal2 options=amp,apriori,noscale "select=win($win)"  refant=$refant
+# and inspect
+gpplt vis=cal2 device=/xs yaxis=phase nxy=5,3
+gpplt vis=cal2 device=/xs yaxis=amp   nxy=5,3
+
+# copy gain tables to the source
+gpcopy vis=cal1 out=src options=nopol,nocal
+gpcopy vis=cal2 out=src options=nopol,nopass
+
+# map the source
+rm -rf map0 beam0 beam0psf cc0 cm0
+
+  invert vis=src map=map0 beam=beam0 select="win($win)" options=mosaic,double,systemp imsize=513 cell=$cell
+  mossdi map=map0 beam=beam0 out=cc0  region=@arp220-clean.reg > mossdi.log
+  mospsf beam=beam0 out=beam0psf 
+  imfit in=beam0psf object=beam region=quarter > imfit.log
+  set bmaj = `grep Major    imfit.log | tail -1 | awk '{print $4}'`
+  set bmin = `grep Minor    imfit.log | tail -1 | awk '{print $4}'`
+  set bpa  = `grep Position imfit.log | tail -1 | awk '{print $4}'`
+  restor map=map0 beam=beam0 model=cc0  out=cm0 fwhm=$bmaj,$bmin pa=$bpa
+
+\end{verbatim}
+\normalsize
+
+
+After this the 
+
+
+
+
+\footnotesize
+\begin{verbatim}
+
+#
+if ($cont) then
+  # called with win=1,2 cont=1
+  rm -rf cont
+  moment in=cm0 out=cont mom=-1
+else
+  # called with win=4,5 cont=0
+  echo CONTSUBS cannot do this yet
+  rm -rf cm0cont cm0line
+  replicate in=cont template=cm0 out=cm0cont
+  maths exp=cm0-cm0cont out=cm0line 
+  #
+  cgdisp type=c in=cm0line  "region=arcsec,box(-5,0,5,10)" nxy=6,6 slev=p,1 levs1=10,20,30
+endif
+
+
+
+\end{verbatim}
+\normalsize
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 \subsection{Calibration-3}
 
 Switch correlator setup, with phase transfer.
@@ -79,6 +288,28 @@ using these old BIMA g-routines. This will be looked into
 
 \footnotesize
 % \verbatimlisting{gcal.csh}
+\normalsize
+
+The basic procedure is to get a dataset with two sidebands. Depending on
+your correllator setting you can use the {\tt line=} and {\tt select=} keywords
+in {\tt gmakes} to get those:
+\footnotesize
+\begin{verbatim}
+  gmakes  vis=cal1  out=gvis1 line=wide,2,1,3,3
+  gfiddle vis=gvis1 out=gvis2 device=/xs nxy=5 fit=poly,0,2 clip=10
+  gapply  vis=cal1  out=gcal1 gvis=gvis2
+\end{verbatim}
+\normalsize
+
+after which you can check the gain and phase corrected calibrator for any
+more problems.
+
+Now these gains can be applied to the source, after which it can be mapped.
+
+\footnotesize
+\begin{verbatim}
+  gapply  vis=src   out=gsrc  gvis=gvis2
+\end{verbatim}
 \normalsize
 
 

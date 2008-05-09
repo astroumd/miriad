@@ -430,7 +430,7 @@ out-of-array, Rx problem, etc.   If you discover serious data problems not
 accounted for, you should inform the observers - {\tt obs@mmarray.org} -  who
 can investigate.
 
-\subsection{Visual: uvplt, uvspec, varplt, uvimage}
+\subsection{Visual: uvplt, uvspec, varplt, uvimage, closure}
 
 Probably the most important thing to remember at various stages of your calibration
 is careful and consistent data inspection.
@@ -469,6 +469,20 @@ is an example using {\tt ds9}:
 
 \end{verbatim}
 \normalsize
+
+
+Another useful program 
+
+\footnotesize
+\begin{verbatim}
+
+ % 
+ % closure vis=cx012.SS433.2006sep07.1.miriad select="source(3c273),-auto" device=/xs
+
+\end{verbatim}
+\normalsize
+
+
 
 
 
@@ -1041,6 +1055,55 @@ tables for each source based on the same table.
 
 {\tt bootflux}... example
 
+\subsection{Absolute Flux Calibration: MARS}
+
+A special case has been reserved for the planet Mars, since it
+offers an option to
+fine-tune your calibration.  The Miriad task {\tt marstb} \index{marstb} 
+will interpolate a table of calculated values to a given frequency and date
+in the range 1999-2014, used as follows:
+
+To find the model value:
+\footnotesize
+\begin{verbatim}
+   marstb epoch=08mar02 freq=95.0
+Brightness temperature at  95.0 GHz: 187.675
+\end{verbatim}
+\normalsize
+
+to find the value of brightness temperature used in your data, read the
+variable PLTB using either the varplt log option or uvio if it is in your
+distribution, e.g.
+\footnotesize
+\begin{verbatim}
+   varplt vis=ct007.mars_88GHz.2006nov12.1.mir yaxis=pltb log=tblog
+   more tblog
+\end{verbatim}
+\normalsize
+or
+\footnotesize
+\begin{verbatim}
+   uvlist vis=ct007.mars_88GHz.2006nov12.1.mir options=var,full | grep pltb
+          pltb      206.6920013
+\end{verbatim}
+\normalsize
+
+To change the value of PLTB in your file, use uvputhd (makes new file):
+\footnotesize
+\begin{verbatim}
+   uvputhd vis=ct007.2008mar02_3mm.mars.1.mir hdvar=pltb varval=187.675 \
+           type=r out=ct007.2008mar02_3mm.mars.1.mir_fixed
+\end{verbatim}
+\normalsize       %%%   figure this out, puthd should work as well???
+
+The model values are disk-averaged Planck brightness temperatures from the
+Caltech Thermal Model. As Mel noted, Mars isn't always a disk and dust
+storms can't be accomodated in this model, but the Caltech model values
+should be more reliable than CARMA's previous model (10\% different in the
+example above from a month ago).
+
+
+
 
 \section{Mapping and Deconvolution}
 
@@ -1086,3 +1149,18 @@ beam, followed by the OVRO-BIMA beam, and finally the BIMA=BIMA beam.
 It is also important to set the area to be cleaned carefully. Use a mosaic sensitivity map and use
 something like a 1.5$\sigma$ cutoff. The mask thus generated can be copied into the cube to be
 cleaned. 
+
+
+\section{Tips and Tricks}
+
+\begin{itemize}
+
+\item In selfcal style applications (selfcal, mfcal, gmake) the reference
+antenna {\tt refant=} should be choosen somewhat centrally in the array. 
+
+\item In the selection of a pgplot graphics device for X11 it is recommended
+to use the persistent driver ({\tt device=1/xs}, {\tt device=2/xs}, ....},
+which allows for as screens as you want or your screen can handle.
+
+
+\end{itemize}

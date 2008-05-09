@@ -1,8 +1,35 @@
 % -*- TeX -*-
 
 
-\chapter{CARMA Data Version}
+\chapter{CARMA Data}
 \label{a:carmadata}
+
+As a reminder, here we summarize some of the peculiarities of CARMA MIRIAD visibility 
+data if you have been used to BIMA, SMA, WSRT or ATNF data.
+
+\section{Oddities}
+
+\begin{enumerate}
+
+\item All CARMA data have auto-correlations preceding the cross-correlations. Some calibration
+programs, most notably {\tt selfcal} and {\tt mfcal}, cannot handle this?   File bugzilla ?
+{\tt \"select=-auto\"} to filter them out.
+
+\item Some of the correlator setting has half edge channels and should always be flagged.
+
+\item Most CARMA data have a noise source added, which can be used for bandpass calibration.
+However, be sure not to apply linelength or baseline corrections to these data. Use
+{\tt \"select=-source(noise)\"} to filter them out.
+
+% noise source should not be baseline corrected
+% noise source should not be linelength corrected
+
+
+\end{enumerate}
+
+
+\section{Data Versions}
+
 
 Sometimes it is useful to know at what stage your CARMA data has been taken,
 and at what stage the data was (re)filled by the Data Archive.
@@ -32,7 +59,7 @@ data. The various stages of baseline corrections are not maintained here, see Se
 \item
 2007/01/xx:  auto-correllations added {\bf [refill]}
 \item
-2007/01/11:  intent (uv variable {\tt purpose} added) ** miriad select= does not recognize this yet **
+2007/01/11:  intent (uv variable {\tt purpose} added), e.g. select=purpos(b)
 \item
 2007/01/xx:  fixed cross-talk other subarrays that stored some uv variables as 0 (bugzilla \#376?)
 \item
@@ -51,6 +78,13 @@ data. The various stages of baseline corrections are not maintained here, see Se
 2007/12/04:  source name confusion (bugzilla \#564} fixed (btw, we're at data version 1.0.3!!)
 \item
 2008/01/23:  fixed minor antenna pad correction rotation; data before this ALWAYS need baseline corrections applied
+\item
+2008/03/31:  frequent semi-automated updates of flux calibrator lists (FluxSource.cat in both CARMA and MIRIAD)
+\item
+2008/04/20:  better models for mars brightness temperature (see also miriad's {\tt marstb}\index{marstb} program)
+
+% on=0,1 for on and off source for single dish
+
 
 \end{itemize}
 

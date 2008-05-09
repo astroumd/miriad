@@ -455,7 +455,7 @@ obsra		\>D	\>radians
 \>\>\> at time of observation. See also {\tt ra} \\
 
 on		\>I	\>-
-\>Either 0 or 1, for on and off pointing,\\
+\>Either 1, 0 or -1, for on, off pointing, and Tsys spectrum resp.\\
 \>\>\>for auto-correlation data.\\
 
 operator(*)	\>A	\>-
