@@ -92,6 +92,26 @@ AC_PROG_MAKE_SET
 ## RANLIB not needed when using libtool
 ## AC_PROG_RANLIB
 
+dnl Check for latex and makeindex, needed to build the documentation
+
+AC_PATH_PROG(LATEX, latex, none)
+AC_PATH_PROG(MAKEINDEX, makeindex, none)
+
+if test x"$LATEX" = xnone ; then
+  BUILD_DOCS=false
+  docswhy="no ; 'latex' not found in PATH"
+elif test x"$MAKEINDEX" = xnone ; then
+  BUILD_DOCS=false
+  docswhy="no ; 'makeindex' not found in PATH"
+else
+  BUILD_DOCS=true
+  docswhy="yes"
+fi
+
+AC_SUBST(LATEX)
+AC_SUBST(MAKEINDEX)
+AM_CONDITIONAL(BUILD_DOCS,$BUILD_DOCS)
+
 ## 
 ## AC_ARG_PROGRAM is unneeded after automake 0.20, removing CGK - 08jun07
 
@@ -356,6 +376,8 @@ AC_CONFIG_HEADER(config.h)
 AC_CONFIG_FILES([
     Makefile
     cat/Makefile
+    manuals/Makefile
+    manuals/atnf-prog/Makefile
     src/inc/Makefile
     src/tools/Makefile
     src/subs/Makefile
@@ -411,3 +433,5 @@ echo "MAXWIN       : $MAXWIN"
 echo "MAXWIDE      : $MAXWIDE"
 echo "MAXNAX       : $MAXNAX"
 echo "MAXBUF       : $MAXBUF"
+echo
+echo "Building docs: $docswhy"

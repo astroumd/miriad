@@ -31,6 +31,10 @@ SUBDIRS = \
   src/sys/auto \
   src
 
+if BUILD_DOCS
+SUBDIRS += manuals
+endif
+
 EXTRA_DIST = mircommon.mak mirdoc.mak \
   automiriad.csh.in automiriad.sh.in 
 

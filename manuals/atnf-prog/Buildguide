@@ -13,12 +13,12 @@ echo "\end{verbatim}}"			>> install.inc
 
 # Get the appendices on uvvariables and image items.
 
-cp ../user/latexdefs.inc defs.inc
-cp ../user/{uvvars,image}.inc .
+cp ../atnf-user/latexdefs.inc defs.inc
+cp ../atnf-user/{uvvars,image}.inc .
 
 # Run Latex a few times to get the page numbers right.
 
-Buildtitlepage
+./Buildtitlepage
 latex progguide
 latex progguide
 latex progguide
@@ -49,4 +49,4 @@ mv junk.ps.gz progguide_US.ps.gz
 # Delete the things we get from elsewhere, so we are not tempted to modify
 # them
 
-rm install.inc uvvars.inc image.inc README defs.inc
+#rm install.inc uvvars.inc image.inc README defs.inc
