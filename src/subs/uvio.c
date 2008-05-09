@@ -3440,7 +3440,7 @@ private int uvread_select(UV *uv)
       discard = !op->discard;
       ha = *(double *)uv->lst->buf - *(double *)uv->obsra->buf;
       /* ha can be -24..24 so needs to be back to -12..12 */
-      if (ha < PI) ha += 2*PI;
+      if (ha < -PI) ha += 2*PI;
       if (ha > PI) ha -= 2*PI;
       while(n < sel->noper && op->type == SEL_HA){
         if(op->loval <= ha && ha <= op->hival)
