@@ -12,7 +12,10 @@ else
   echo Endianism correct.
 endif
 
+echo "=== testing pgplot/null:"
 implot in=map0 device=/null
+echo "=== testing pgplot/ps:"
 implot in=map0 device=/ps
+echo "=== testing pgplot/gif:"
 implot in=map0 device=/gif
 
