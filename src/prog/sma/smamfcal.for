@@ -171,8 +171,7 @@ c------------------------------------------------------------------------
         parameter(maxspect=49,maxvis=7000000,maxiter=30,maxsoln=1024)
         parameter(maxpol=2)
 c
-        character version*(*)
-        parameter(version='SmaMfCal: version 2.1 15-Jun-07')
+        character version*80, versan*80
 c
         integer tno
         integer pwgains,pfreq,psource,ppass,pgains,ptau
@@ -213,7 +212,8 @@ c
 c
 c  Get inputs and check them.
 c
-        call output(version)
+        version = versan('smamfcal',
+     * '$Id$')
         call keyini
         call getopt(dodelay,dopass,interp,oldflux,
      *              dosmooth,donply,dowrap,doaverrll)
