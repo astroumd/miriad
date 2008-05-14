@@ -83,6 +83,7 @@ c   jhz 06feb07 fixed a bug in the case of the channels having
 c               no bandpass-solutions. added a better warning
 c               message
 c   jhz 07feb07 cleaned up the confusing warning message.
+c   pjt 13may08 complex() -> cmplx() for more strict ansi intel compiler
 c
 c  Bugs:
 c     not for dual pol case, must select one of pol in the case
@@ -97,7 +98,7 @@ c------------------------------------------------------------------------
         character version*(*)
         integer maxspect
         parameter(maxsels=256, maxspect=49)
-        parameter(version='SmaTbpass: version 1.3 07-Feb-07')
+        parameter(version='SmaTbpass: version 1.3 13-may-08')
         include 'mirconst.h'
         include 'maxdim.h'
         integer maxTimes,maxGains
@@ -557,7 +558,7 @@ c        initialize the ppass array
           do ant=1,maxant
           do   k=1,maxchan
           do   j=1,nfeeds
-          ppass(ant,k,j) = complex(1.0,0.0)
+          ppass(ant,k,j) = cmplx(1.0,0.0)
           enddo
           enddo
           enddo
@@ -594,7 +595,7 @@ c
 c feed back the fit to the ppass
 c
               
-              ppass(ant,k,j) = complex(rfitBP,ifitBP)
+              ppass(ant,k,j) = cmplx(rfitBP,ifitBP)
          if(j.eq.2) ppass(ant,k,1)=(ppass(ant,k,1)+ppass(ant,k,2))/2.
               end do
               end do
@@ -634,7 +635,7 @@ c        initialize the ppass array
              do ant=1, maxant
              do   k=1, maxchan
              do   j=1,nfeeds
-             ppass(ant,k,j) =complex(1.0,0.0)
+             ppass(ant,k,j) =cmplx(1.0,0.0)
              enddo
              enddo
              enddo  
@@ -694,7 +695,7 @@ c
 c
 c feed back the fit to the ppass
 c
-              ppass(ant,k,j) = complex(rfitBP,ifitBP)
+              ppass(ant,k,j) = cmplx(rfitBP,ifitBP)
         if(j.eq.2) ppass(ant,k,1)=(ppass(ant,k,1)+ppass(ant,k,2))/2.
               end do
               end do
