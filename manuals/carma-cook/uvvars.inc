@@ -665,7 +665,7 @@ wind		\>R     \>km/h
 \> Wind speed in km/h (ATCA)\\
 
 winddir		\>R     \>deg
-\>Wind direction\\
+\>Wind direction (where the wind is blowing from)\\
 \>\>\> (note: originally encoded as `N', `SE', `W', etc.)\\
 
 windmph		\>R     \>mph
