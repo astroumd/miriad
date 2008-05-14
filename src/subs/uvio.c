@@ -168,6 +168,7 @@
 /*  pjt  06feb08 allow seeing() selection on smonrms or rmspath         */
 /*               cf. 08oct07 addition to ATNF version of uvio.c         */
 /*  pjt   8may08 wrap HA back into -12..12 from -24..24..               */
+/*  dhem 13may08 Change uvputvr_c to always update var's buffer         */
 /*----------------------------------------------------------------------*/
 /*									*/
 /*		Handle UV files.					*/
@@ -1741,10 +1742,9 @@ void uvputvr_c(int tno,int type,Const char *var,Const char *data,int n)
     uv->offset = mroundup( uv->offset+v->length, UV_ALIGN);
     if(v->callno++ > CHECK_THRESH) {
       v->flags |= UVF_NOCHECK;
-    } else if(!(v->flags & UVF_NOCHECK)){
-      length = internal_size[type] * n;
-      memcpy(v->buf,data,length);
-    } 
+    }
+    length = internal_size[type] * n;
+    memcpy(v->buf,data,length);
   } else {
     v->callno = 0;
   }
