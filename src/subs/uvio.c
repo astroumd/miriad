@@ -169,6 +169,7 @@
 /*               cf. 08oct07 addition to ATNF version of uvio.c         */
 /*  pjt   8may08 wrap HA back into -12..12 from -24..24..               */
 /*  dhem 13may08 Change uvputvr_c to always update var's buffer         */
+/*  dhem 14may08 uvputvr_c always reallocs var's buffer on size change  */
 /*----------------------------------------------------------------------*/
 /*									*/
 /*		Handle UV files.					*/
@@ -1712,8 +1713,7 @@ void uvputvr_c(int tno,int type,Const char *var,Const char *data,int n)
     hwritei_c(uv->item,&v->length,uv->offset+UV_HDR_SIZE,H_INT_SIZE,&iostat);
     CHECK(iostat,(message,"Error writing variable-length for %s, in UVPUTVR",var));
     uv->offset += UV_ALIGN;
-    if( !(v->flags & UVF_NOCHECK) )
-      v->buf = Realloc(v->buf,n*internal_size[type]);
+    v->buf = Realloc(v->buf,n*internal_size[type]);
   }
 
 /* Check if this variable has really changed.  */
@@ -1744,6 +1744,9 @@ void uvputvr_c(int tno,int type,Const char *var,Const char *data,int n)
       v->flags |= UVF_NOCHECK;
     }
     length = internal_size[type] * n;
+    if(!v->buf) {
+      ERROR('f',(message,"Buffer for variable '%s' is NULL in UVPUTVR",var));
+    }
     memcpy(v->buf,data,length);
   } else {
     v->callno = 0;
