@@ -110,7 +110,8 @@ xyio() {
   run imgen out=map2 imsize=128 object=level spar=1
   echo 0000000 0000 0400 803f 0000 803f 0000 803f 0000 > endian.lit
   echo 0000000 0000 0004 3f80 0000 3f80 0000 3f80 0000 > endian.big
-  od -x map2/image | head -1 > endian.this
+  # Use echo to compress extra whitepsace that some od's output
+  echo `od -x map2/image | head -1` > endian.this
   cmp -s endian.lit endian.this
   if [ $? = 0 ] ; then	    
     echo this machine is LITTLE_ENDIAN
