@@ -2,7 +2,7 @@ c***********************************************************************
         program sinbad
         implicit none
 c
-c= sinbad - Calculate (on-off)/off* Tsys for autocorrelation data.
+c= sinbad - Calculate Tsys*(on-off)/off*  for autocorrelation data.
 c& mchw
 c: uv analysis
 c+
@@ -28,6 +28,12 @@ c       The name of the output uv data set. No default.
 c@ tsys
 c       Value for flat tsys spectrum if neither band average systemp 
 c       nor full spectrum is available.
+c@ options 
+c       Different computational output options (mainly for debugging).
+c       Exclusively one of the following (minimum match):
+c         'spectrum'     Compute Tsys*(on-off/off).  This is the default
+c         'difference'   Compute (on-off)
+c         'ratio'        Compute on/off
 c--
 c
 c  History:
@@ -35,6 +41,7 @@ c    mchw    29jan97  New task for Marc.
 c    mchw    05feb97  write same type of correlation data as input file.
 c    pjt/mwp 19feb08  safeguard off before on, tsys=1 if not present
 c    pjt     25feb08  use window based systemp array if tsys not available.
+c    mwp     16may08  added options for spectrum, difference, ratio
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*80,versan*80
@@ -56,12 +63,14 @@ c
 	real off(MAXCHAN,MAXANT),tsys(MAXCHAN,MAXANT)
 	integer num,   non,   noff,   ntsys
 	data    num/0/,non/0/,noff/0/,ntsys/0/
+        logical spectrum, diffrnce, ratio
 c
 c  Read the inputs.
 c
         version = versan('sinbad',
      *  '$Id$')
  	call keyini
+        call getopt(spectrum,diffrnce,ratio)
 	call keyf('vis',vis,' ')
 	call SelInput('select',sels,maxsels)
 	call keya('line',linetype,' ')
@@ -77,6 +86,17 @@ c  Check user inputs.
 c
 	if(vis.eq.' ')call bug('f','Input file name (vis=) missing')
         if(out.eq.' ')call bug('f','Output file name (out=) missing')
+c
+c default is spectrum, so set it if nothing specified on 
+c command line.  Note I could do this in getopt() like
+c  spectrum = present(spectrum) || ( !present(diffrnce) && !present(ratio) )
+c but this is a little more obvious
+c
+        if( ( spectrum .eqv. .false. ) .and.
+     *      ( diffrnce .eqv. .false. ) .and.
+     *      ( ratio    .eqv. .false. ) ) then
+            spectrum = .true.
+        endif
 c
 c  Open the output file.
 c
@@ -120,7 +140,7 @@ c
         if (tsys1.lt.0.0) call getwtsys(lIn,tsys,MAXCHAN,MAXANT)
 
 c
-c  Loop thro' the data, writing (ON-OFF)/OFF*TSYS
+c  Loop through the data, writing (ON-OFF)/OFF*TSYS
 c
 	dowhile (nchan.gt.0)
 	  num = num + 1
@@ -168,9 +188,20 @@ c
                 if (ntsys.eq.0 .and. tsys1.lt.0.0)
      *              call getwtsys(lIn,tsys,MAXCHAN,MAXANT) 
 		non = non + 1
-		do i=1,nchan
-		  data(i) = (data(i)-off(i,ant))/off(i,ant)*tsys(i,ant)
-		enddo
+                if(spectrum) then
+c********1*********2*********3*********4*********5*********6*********7**
+		  do i=1,nchan
+		   data(i) = (data(i)-off(i,ant))/off(i,ant)*tsys(i,ant)
+		  enddo
+                else if(diffrnce) then
+		  do i=1,nchan
+		    data(i) = data(i)-off(i,ant)
+		  enddo
+                else if(ratio) then
+		  do i=1,nchan
+		     data(i) = data(i)/off(i,ant)
+		  enddo
+                endif
                 call uvwrite(lOut,uin,data,flags,nchan)
 	      else
 		call bug('w','value of on not 1, 0 or -1')
@@ -184,7 +215,16 @@ c
 c
 	print *,'records read: ',num
 	print *,'records read: on:',non,'  off:',noff,'  tsys:',ntsys
-	print *,'records written: (on-off)/off*tsys:',non
+        if (spectrum) then 
+	  print *,'records written: (on-off)/off*tsys:',non
+        endif
+        if (diffrnce) then 
+	  print *,'records written: (on-off)',non
+        endif
+        if (ratio) then 
+	  print *,'records written: (on/off)',non
+        endif
+
         if (ntsys.eq.0) then
           if (tsys1.lt.0.0) then
             call bug('w','No Tsys data on=-1 found, used systemp')
@@ -238,3 +278,21 @@ c                 write(*,*) i2,' :t: ',(tsys(i2,j),j=1,nants)
         endif
 
         end
+c
+c********1*********2*********3*********4*********5*********6*********7**
+cc Get the various (exclusive) options
+        subroutine getopt(spectrum,diffrnce,ratio)
+        implicit none
+        logical spectrum, diffrnce, ratio
+c
+        integer nopt
+        parameter(nopt=3)
+        character opts(nopt)*10
+        logical present(nopt)
+        data opts/'spectrum  ','difference','ratio    '/
+        call options('options',opts,present,nopt)
+        spectrum = present(1)
+        diffrnce = present(2)
+        ratio      = present(3)
+        end
+
