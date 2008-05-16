@@ -42,7 +42,8 @@ c    mchw    05feb97  write same type of correlation data as input file.
 c    pjt/mwp 19feb08  safeguard off before on, tsys=1 if not present
 c    pjt     25feb08  use window based systemp array if tsys not available.
 c    mwp     16may08  added options for spectrum, difference, ratio
-c------------------------------------------------------------------------
+c    mwp     16may08-2  off() must be complex!!! very funny behavior if not.
+c---------------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*80,versan*80
 	integer maxsels
@@ -60,7 +61,8 @@ c
         logical updated
 	double precision uin,vin,timein,basein
 	common/preamb/uin,vin,timein,basein
-	real off(MAXCHAN,MAXANT),tsys(MAXCHAN,MAXANT)
+	complex off(MAXCHAN,MAXANT)
+        real    tsys(MAXCHAN,MAXANT)
 	integer num,   non,   noff,   ntsys
 	data    num/0/,non/0/,noff/0/,ntsys/0/
         logical spectrum, diffrnce, ratio
@@ -191,7 +193,7 @@ c
                 if(spectrum) then
 c********1*********2*********3*********4*********5*********6*********7**
 		  do i=1,nchan
-		   data(i) = (data(i)-off(i,ant))/off(i,ant)*tsys(i,ant)
+		   data(i) = tsys(i,ant)*(data(i)/off(i,ant)) - 1.0
 		  enddo
                 else if(diffrnce) then
 		  do i=1,nchan
