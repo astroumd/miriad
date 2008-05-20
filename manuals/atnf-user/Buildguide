@@ -25,15 +25,10 @@ latex userguide
 
 dvips -o userguide.ps userguide
 cp userguide.ps junk.ps
-compress junk.ps
-mv junk.ps.Z userguide.ps.Z
-cp userguide.ps junk.ps
-gzip -best junk.ps
+gzip junk.ps
 mv junk.ps.gz userguide.ps.gz
+
 dvips -tletter -y940 -o userguide_US.ps userguide
 cp userguide_US.ps junk.ps
-compress junk.ps
-mv junk.ps.Z userguide_US.ps.Z
-cp userguide_US.ps junk.ps
-gzip -best junk.ps
+gzip junk.ps
 mv junk.ps.gz userguide_US.ps.gz
