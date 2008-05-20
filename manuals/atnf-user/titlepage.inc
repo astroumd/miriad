@@ -44,9 +44,9 @@ RM LM sub (Users Guide) stringwidth pop sub
 RM LM sub (Bob Sault and Neil Killeen) stringwidth pop sub
 2 div 130 moveto
 (Bob Sault and Neil Killeen) show
-RM LM sub (19 Mar 1999) stringwidth pop sub
+RM LM sub (20 May 2008) stringwidth pop sub
 2 div 100 moveto
-(19 Mar 1999) show
+(20 May 2008) show
 RM LM sub (See http://www.atnf.csiro.au/computing/software/miriad)
 stringwidth pop sub 2 div 20 sub 50 moveto
 (See http://www.atnf.csiro.au/computing/software/miriad) show

@@ -20,7 +20,7 @@ time limit.
 \end{itemize}
 
 \section{High time resolution bin-mode observations}\label{s:hires}
-\miriad's \task{atlod} task has an option, \verb+options+hires+ which
+\miriad's \task{atlod} task has an option, \verb+options=hires+ which
 converts a RPFITS file observed in high time resolution bin-mode into
 an apparently normal dataset with fine time resolution. You should note
 the following caveats:

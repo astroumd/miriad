@@ -29,22 +29,76 @@ with the \miriad\ package, we recommend that you read through Chapters
 For those interested, an overview of some of the history and design
 decisions of \miriad, the `standard reference' is: Sault R.J., Teuben P.J.,
 Wright M.C.H., 1995, \htmladdnormallink{``A retrospective view of Miriad''}
-{http://www.stsci.edu/stsci/meetings/adassIV/saultr.html}
-in \htmladdnormallink{{\it Astronomical Data Analysis Software and
-Systems IV}}{http://www.stsci.edu/stsci/meetings/adassIV},
+{http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1995ASPC...77..433S}
+in {\it Astronomical Data Analysis Software and
+Systems IV},
 ed. R. Shaw, H.E. Payne, J.J.E. Hayes, ASP Conf. Ser., {\bf 77}, 433-436.
 
 Please send any comments or suggestions to\\
 \htmladdnormallink{\verb+miriad@atnf.csiro.au+}{mailto:miriad@atnf.csiro.au}.
 
+\section*{Recommended Reading}
+The following books tend to concentrate on the techniques of
+radio astronomy, and particularly radio interferometry.
+
+\begin{itemize}
+\item Synthesis Imaging in Radio Astronomy II, G.B Taylor, C.L. Carilli, \& R.A. Perley eds,
+Astronomical Society of the Pacific Conference Series Volume 180.
+
+\item The Fourier Transform and its Applications, R.N. Bracewell.
+
+\item Interferometry and Synthesis in Radio Astronomy, A.R. Thompson,
+J.M. Moran \& G.W. Swenson.
+
+\item Radio Astronomy, J.D. Kraus.
+
+\item Radiotelescopes, W.N. Christiansen \& J.A. H\"ogbom.
+
+\item Tools of Radio Astronomy, K. Rohlfs \& T.L. Wilson.
+
+\end{itemize}
+
+A general description of the science that can be done with
+radio telescopes is given in the following books.
+\begin{itemize}
+
+\item Galactic and Extragalactic Radio Astronomy, G.L. Verschuur
+\& K.I. Kellermann eds.
+
+\item An Introduction to Radio Astronomy, B.F. Burke \& F. Graham-Smith.
+
+\end{itemize}
+
+The following are more specific to the ATCA and the practicalities 
+of observing and data reduction.
+
+\begin{itemize}
+\item  
+\htmladdnormallink{
+Journal of Electrical and Electronics Engineering, Australia: Special
+Issue}{http://www.narrabri.atnf.csiro.au/observing/iree.pdf}
+-- The Australia Telescope, Volume 12, Number 2, June 1992.
+
+\item Australia Telescope Compact Array User's Guide \\
+\htmladdnormallink{
+http://www.narrabri.atnf.csiro.au/observing/users\_guide/html/atug.html}
+{http://www.narrabri.atnf.csiro.au/observing/users_guide/html/atug.html}
+
+\end{itemize}
+A large amount of can be found on the ATNF web sites
+\begin{verse}
+  \htmladdnormallink{http://www.atnf.csiro.au}{http://www.atnf.csiro.au}\\
+  \htmladdnormallink{http://www.narrabri.atnf.csiro.au}{http://www.narrabri.atnf.csiro.au}
+\end{verse}
+
 \section*{Acknowledgements}
 Most of this manual was written by 
-Bob Sault (\htmladdnormallink{rsault@atnf.csiro.au}{mailto:rsault@atnf.csiro.au}) and
-Neil Killeen (\htmladdnormallink{nkilleen@atnf.csiro.au}{mailto:nkilleen@atnf.csiro.au}).
+Bob Sault (\htmladdnormallink{rsault@atnf.csiro.au}{mailto:bob.sault@csiro.au}) and
+Neil Killeen (\htmladdnormallink{nkilleen@atnf.csiro.au}{mailto:neil.killeen@csiro.au}).
 Other parts of this manual were written by 
 Peter Teuben (\htmladdnormallink{teuben@astro.umd.edu}{mailto:teuben@astro.umd.edu}
 -- University of Maryland),
-Keith Jones (\htmladdnormallink{ones@galaxy.physics.uq.oz.au}{mailto:jones@galaxy.physics.uq.oz.au}
+Keith Jones (\htmladdnormallink{jones@galaxy.physics.uq.oz.au}{mailto:jones@galaxy.physics.uq.oz.au}
  -- University of Queensland) and 
 Tom Oosterloo (\htmladdnormallink{oosterloo@nfra.nl}{mailto:oosterloo@nfra.nl} 
 -- Netherlands Foundation for Research in Astronomy).
@@ -186,7 +240,7 @@ operating system will allow.
 The help command is generally used to get information about a task.
 The general format of the command is:
 \begin{verse}
-{{\tt miriad\%\ help }{\it taskname }{\tt -k }{\it keyword}}
+{{\tt miriad\%\ help }[{\tt -w}] {\it taskname } [{\tt -k }{\it keyword}]}
 \end{verse}
 which will give you information about the keyword of the given task.
 If the \verb+-k+~{\it keyword} is omitted, information is given about all
@@ -197,14 +251,23 @@ about the current task. For example:
 \end{verbatim}
 will give you help information about the histogramming task, {\tt histo}.
 
+The \verb+-w+ flag causes output to be directed to the {\tt netscape}
+web browser.
+
 In addition to tasks, {\tt help} will give you information about a few
 other select topics. These include information on tasks in general
 ({\tt help tasks}), on {\tt miriad} itself ({\tt help miriad}) as well as a
 number of commonly used keywords ({\tt device, line, options, region, select,
 server, stokes}).
 
-Help filters its output through the pager indicated by the {\bf PAGER}
-environment variable, which defaults to {\tt more}.
+By default, help information is sent to your terminal. However you can
+direct it to a web browser by setting the {\bf MIRPAGER} environment
+variable to either \verb+netscape+ or \verb+lynx+. You can also set
+{\bf MIRPAGER}
+(or environment variable {\bf PAGER})
+to your favourite text paging program (the default is
+{\tt more}, but you may prefer {\tt less}). Note that the web version of
+the documentation usually contains extra links to other relevant material.
 
 \subsection*{EXIT and QUIT}
 
@@ -382,6 +445,7 @@ view    &  view [taskname]      & edit task parameters in a keyfile\\ \hline
 Environment Variable & Comments \\ \hline
 VISUAL    & Editor for editing keyword files and bug reports.\\
 EDITOR    & Editor for editing keyword files and bug reports.\\
+MIRPAGER  & Web browser or pager for reading help documents\\
 PAGER     & Pager for reading documents\\
 MIRDEF    & Directory for keyword files \\
 TMPDIR    & Directory for scratch files (see Section~~\ref{s:scratch-files}).
@@ -411,8 +475,7 @@ Here {\it taskname} is the task in question. Use the name
 The \verb+mirbug+ command places you in an editor (given by the \verb+EDITOR+
 environment variable), with a template of a bug report, which includes
 the parameters most recently used for that task. After you finish
-editing the template, \verb+mirbug+ mails the report to the appropriate
-people (generally the tasks author plus some others).
+editing the template, \verb+mirbug+ mails the report.
 
 \section{Indirect Parameter Input}
 \label{s:atfile}

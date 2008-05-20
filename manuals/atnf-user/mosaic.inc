@@ -17,7 +17,7 @@ Currently these models assume the primary beam is circularly symmetric and time
 independent. The task \task{pbplot} produces some information and can
 make a plot of the primary beam models. The model of the ATCA primary
 beam is described in \htmladdnormallink{Mark Wieringa \& Mike Kesteven's memo}
-{ftp://ftp.atnf.csiro.au/pubs/people/rsault/docs/pb.pdf}.
+{http://www.atnf.csiro.au/observers/memos/d97f7b\~{}1.pdf} (AT Memo 39.3/024).
 
 If you wish to override \miriad's model, or if \miriad\ does not have a
 model of the telescope of interest, you may set the primary beam
@@ -84,7 +84,7 @@ and  \htmladdnormallink{Cornwell, Holdaway \& Uson (1993)}
 {http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1993A\%26A...271..697C}
 (A\&A, 271, 697).
 \htmladdnormallink{Sault, Staveley-Smith and Brouw (1996)}
-{ftp://ftp.atnf.csiro.au/pub/people/rsault/papers/mosaic.ps.gz}
+{http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1996A\%26AS..120..375S}
 (A\&AS, 120, 376) describe some of the algorithms used by \miriad.
 
 \section{Mosaicing Observing Strategies}\label{s:mosobs}\index{mosaicing, observing strategies}
@@ -169,7 +169,8 @@ Ideally you will want to sample twice as frequently as this, i.e. for
 \MM{N} pointings, a dwell
 time of $\tau/2N$ would be best. You may, however,
 decide to suffer tangential holes in the \MM{u-v} coverage.
-\item Field Naming Convention: When preparing the observe files for an
+
+\item Field Naming Convention:\label{s:fnc} When preparing the observe files for an
 ATCA  mosaic experiment, you
 will create a `mosaic file'. This gives a field
 offset, integration time and field name for each pointing centre. To
@@ -455,8 +456,9 @@ be made of the changing noise level across the dirty image.
 The two mosaic deconvolution tasks are \task{mosmem}, which implements a
 maximum-entropy-based deconvolution algorithm, and task \task{mossdi}, which
 uses a Steer, Dewdney \& Ito (SDI) CLEAN algorithm. Generally \task{mosmem}
-is superior. Task \task{mossdi} can be very slow for all but very extended
-emission, and its results can be poor. Note that, although you can
+is superior, although \task{mossdi} can be better for images containing
+point sources.
+Note that, although you can
 make mosaiced, multi-frequency synthesis images with \task{invert} (and, indeed,
 produce a mosaiced, spectral dirty beam), there is no
 mosaic equivalent to \task{mfclean}. In deconvolving a mosaiced,
@@ -507,8 +509,7 @@ options=doflux	& use \verb+doflux+ to enforce the flux constraint.\\
 \end{center}
 
 The inputs and use of \task{mossdi} should be equally simple
-for someone familiar with \task{clean}. Given that the task is
-not recommended, it will not be discussed further.
+for someone familiar with \task{clean}.
 
 Having produced a model, we generally want to convolve this
 with a Gaussian CLEAN beam and add in the deconvolution
@@ -690,6 +691,12 @@ value=0.1		& Set the tolerance to 2.4 hours (0.1 days).\\
 \subsection*{Some Additional Tools}\label{s:mostools}
 We briefly describe some other useful tools.
 \begin{itemize}
+\item {Mosaic Coverage -- MOSLST:}\index{moslst}
+In doing a mosaic observation, you will want to good Fourier sampling (coverage)
+as well as even sampling of the different pointing centres. Task \task{moslst}
+produces a simple plot of LST vs point number for mosaiced visibility
+files. In doing this, it required that you follow the {\em field naming
+convention} mentioned earlier (see Section~\ref{s:fnc}).
 \item {Listing Mosaic Tables -- IMLIST:}\index{imlist}
 Task \task{invert} stores information concerning its linear mosaic
 operation in the item \verb+mostable+ (stored in both the \verb+map+
@@ -713,6 +720,16 @@ primary beam attenuation given a mosaiced image.
 identical to the \aips\ \task{VTESS} program. It is more cumbersome
 to use, and produces results which are no better than \task{mosmem}. Its
 use is not recommended.
+\item {PMOSMEM:} \task{pmosmem} can be used to do a joint deconvolution
+of a polarimetric mosaic. The ``joint'' in this case applies to both
+jointly processing the multiple Stokes parameters as well as
+processing the different pointings. With polarised emission being potentially
+positive and negative valued, the entropy measure for this is different
+from a simple total intensity deconvolution. See
+\htmladdnormallink{Sault et al. (1999)}
+{http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1999A\%26AS..139..387S}
+(A\&A 139, 387) for more background on joint polarimetric deconvolution.
+
 \end{itemize}
 
 \section{The Individual Approach}\index{mosaicing, individual approach}
@@ -860,6 +877,13 @@ see the help file on using the \verb+options+ keyword for these.
 
 \section{Combining Mosaics and Single Dish Data}\index{single dish, combining with mosaics}
 \index{mosaicing, combining single dish data}
+For a good discussion of the theory and practice of combining single
+dish and mosaic data, see the 
+\htmladdnormallink{paper by Snezana Stanimirovic}
+{http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=2002sdra.conf..375S}
+(ASP Conf. Series, vol 278, p 375).
+
+
 One of the benefits of mosaicing is that it partially recovers
 spacings shorter than the shortest projected interferometer spacing. In principle,
 the shortest spacing present in a mosaic can be the projected interferometer
@@ -937,6 +961,10 @@ the input onto the grid of the template.
 In doing so, it correctly handles different projection geometries,
 equatorial/galactic coordinate conversion, equinox conversion and different
 velocity definitions.
+
+Note you should not regrid the mosaiced image. In regridding, the information
+that describes the mosaicing process is lost, which will make life difficult
+for you.
 
 Typical inputs to \task{regrid} would be
 \begin{center}
@@ -1312,7 +1340,11 @@ the steps to implement them are more hands-on. For example, if needed, you
 will want to correct the flux calibration factor manually before using either
 of these (e.g. \task{immerge} can do this for you).
 Some examples of using these approaches are given
-in a paper by Snezana Stanimirovic et al. (to be submitted to MNRAS)
+in the
+\htmladdnormallink{paper by Snezana Stanimirovic}
+{http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=2002sdra.conf..375S}
+(ASP Conf. Series, vol. 278, p. 375).
+
 \begin{itemize}
 \item An alternative combination technique using \task{mosmem} is to
 use the single-dish image as the default image ({\tt default} keyword)
@@ -1340,13 +1372,8 @@ Before adding the mosaic and single-dish images, you should apply
 the residual primary beam attenuation present in the mosaic
 to the single-dish data. Task \task{mossen} will generate an
 image of the residual primary beam attenuation (set the {\tt gain}
-parameter). This is all that is required for a continuum observation, but a
-spectral line observation is somewhat more
-complicated -- you will want to generate a cube of ``residual primary beam
-attenuation'' images. To do this you can use \task{mossen} repeatedly
-to generate a residual primary beam attenuation image at each plane, and
-then use \task{imcat} to concatenate these images into a cube. This
-messy business is left as an exercise for the user. Having generated a 
+parameter).
+Having generated a 
 the residual primary beam attenuation, you can then apply this to
 the single-dish image using \task{maths}.
 

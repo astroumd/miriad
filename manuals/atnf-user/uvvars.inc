@@ -50,19 +50,19 @@
 %  22-nov-05  pjt  Merged in the above 2 changes, and marked some CARMA proposed uvvars
 %  30-jan-06  pjt  documented the CARMA filler version (0.1.1 at this moment)
 %   8-mar-06  pjt  reminder how the channels and windows are laid out
-
 %        20-feb-06  rjs  Added axismax, smonrms, refpnt, calcode, name
 
 %  30-aug-06  pjt  merged ATNF and CARMA versions of this file
 %  13-feb-07  pjt  CARMA additions,but in MIR5 branch for the carma-cook 
 %                  [i know this is bad, but it will go back to the official location as such]
+%   3-jan-08  pjt  clarify center of channel for frequency calculations
 %
 %  nband - appears to be CARMA's Control.SpectralLineCorrelator.numBands (but it's 8, not 6=nspect)
 %  later removed again
 
 \section{UV Dataset}
 
-\newcommand{\uvversion}{February 13, 2007}
+\newcommand{\uvversion}{January 3, 2008}
 
 A \miriad\ uv dataset is composed of a collection of items and `\MM{u-v} variables'.
 The variables are parameters that are known at the time of the observation,
@@ -87,8 +87,7 @@ flags       & integer & optional flags for narrowband data \\
 wflags      & integer & optional flags for wideband data \\ \hline
 gains       & mixed   & antenna gain table (delhd this item to disable gain table)\\
 nfeeds	    & integer & number of feeds on each antenna \\
-ntau	    & integer & Number of delay/spectral index terms per antenna\\
-	    &	      & in `gains' \\
+ntau	    & integer & Number of delay/spectral index terms per antenna in `gains' \\
 nsols       & integer & number of records in `gains' \\
 ngains      & integer & number of antenna gains in each record of `gains'\\
 interval    & double  & gain interpolation time tolerance (days)\\
@@ -127,6 +126,7 @@ The storage {\bf types} (2nd column) in the table below are:
     C -- complex (2 * 32 bit IEEE)
     I -- integer (32 bit twos complement)
     J -- short (16 bit twos complement)
+    K -- long (64 bit  twos complement) *** not currently used in visdata ***
 \end{verbatim}
 \normalsize
 
@@ -140,6 +140,8 @@ notation.
 NB: The formal version of this document is recorded as ``{\it \uvversion}''.
 \newpage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% for CARMA, consult $CARMA/carma/sdp/XMLKeywords.cc
+
 \small\begin{tabbing}
 \label{t:uvvars}
 NameXXXXXXXXX  \=Tyxxxxxxx  \=unitsxxxx   \=Comments\kill
@@ -159,15 +161,18 @@ antel(nants)    \>D    \>deg.
 \> elevation of antennas\\
 
 antpos(nants, 3) \>D    \>nanosec
-\>Antenna equatorial coordinates, in a local, not greenwhich based, system \\
+\>Antenna equatorial coordinates, with X along the local meridian (not Greenwich) \\
 
 atten(nants)   \>I     \>dB
-\> Attenuator setting (Hat Ck)\\
+\> Attenuator setting (Hat Ck/CARMA) datatype R ???\\
 
 axismax(2,nants) \>R    \>arcsec
 \> Maximum tracking error in a cycle. \\
 \>\>\> axismax(1,?) is azimuth error, \\
 \>\>\> axismax(2,?) is the elevation error.\\
+
+axisoff(nants) \>R    \>nanosec
+\> Horizontal offset between azimuth and elevation axes (CARMA) \\
 
 axisrms(2,nants) \>R    \>arcsec
 \> RMS tracking error. \\
@@ -325,7 +330,7 @@ freqif		\>D	\>GHz
 \> ? (Hat Ck only?)\\
 
 inttime		\>R	\>seconds
-\>Integration time (but is it centered, start of end??? - see time)\\
+\>Integration time (see also time) \\
 
 ischan(nspect)	\>I	\>-
 \> Starting channel of spectral window\\
@@ -450,7 +455,7 @@ obsra		\>D	\>radians
 \>\>\> at time of observation. See also {\tt ra} \\
 
 on		\>I	\>-
-\>Either 0 or 1, for on and off pointing,\\
+\>Either 1, 0 or -1, for on, off pointing, and Tsys spectrum resp.\\
 \>\>\>for auto-correlation data.\\
 
 operator(*)	\>A	\>-
@@ -520,14 +525,20 @@ pressmb		\>R     \>millibar
 project(*)	\>A	\>-
 \>The name of the current project\\
 
+purpose(*)	\>A	\>-
+\>Scientific intent or purpose\\
+\>\>\>\  For CARMA: B=bandpass, F=flux, G=gain (phase/amp) \\
+\>\>\>\  P=polarization, R=radio pointing, S=science target, O=other\\
+
+
 ra		\>R or	\>radians
 \>Right ascension of the phase center/tangent point. See {\tt epoch} for\\
 		\>D	\>
 \>the definition of the coordinate system. See also {\tt obsra} \\
 
 rain	\>R	\>mm
-\>The current amount of water in the rain gauge. The rain gauge is emptied
-at 9:00 AEST (ATCA).\\
+\>The current amount of water in the rain gauge. \\
+\>\>\> The rain gauge is emptied at 9:00 AEST (ATCA).\\
 
 refpnt(2,nants) \>R    \>arcsec
 \> Reference pointing offsets. \\
@@ -542,8 +553,9 @@ restfreq(nspect) \>D	\>GHz
 \>  Rest frequency for each spectral window.\\
 \>\>\>  This may be zero for continuum observations.\\
 
-rmspath		\>R     \>\%
-\>RMS path variation (Hat Ck/CARMA)\\
+rmspath		\>R     \>microns
+\>RMS path variation (CARMA, for HatCrk units were \%)\\
+\>\>\> see also smonrms\\
 
 sctype	\>A	\>-
 \> Scan type (ATCA?)\\
@@ -552,10 +564,10 @@ sdf(nspect)	\>D	\>GHz
 \> Change in frequency per channel\\
 
 sfreq(nspect)	\>D	\>GHz
-\> Sky frequency of first channel in window\\
+\> Sky frequency of (center of) first channel in window \\
 
 smonrms		\>R	\>$\mu$m
-\> ATCA seeing monitor rms value\\
+\> ATCA seeing monitor rms value (see also rmspath)\\
 
 source(*)	\>A	\>-	
 \>The name of the source \\
@@ -597,10 +609,14 @@ time			\>D     \>days
 \>\>\> For example, noon on Jan 1, 1980 is 2,444,240.0! \\
 \>\>\> {\tt time} is also known as {\tt preamble(3)} or {\tt preamble(4)}\\
 \>\>\> depending if you have uv or uvw data resp.\\
+\>\>\> time is the beginning of an integration with length inttime\\
 
 tpower		\>R	\>volts
 \> Total power measurements (Hat Ck)\\
 \ \ (nants, ntpower) \\
+
+trans		\>R	\>K
+\> CARMA \\
 
 tscale		\>R	\>-
 \> Optional correlation scale factor \\
@@ -608,6 +624,9 @@ tscale		\>R	\>-
 
 tsis(nants)	\>R	\>Kelvin
 \> temperature of the SIS mixers (Hat Ck)\\
+
+tsky		\>R	\>-
+\> CARMA \\
 
 ut			\>D	\>radians
 \> The time since midnight Universal time (nominally UT1).\\
@@ -640,13 +659,13 @@ wcorr(nwide)		\>C     \>-
 \>\>\>  wcorr(3:4) are the analog LSB and USB.\\
 
 wfreq(nwide)	\>R	\>GHz
-\> Wideband correlation average frequencies\\
+\> Wideband correlation average frequencies (center?)\\
 
 wind		\>R     \>km/h
 \> Wind speed in km/h (ATCA)\\
 
 winddir		\>R     \>deg
-\>Wind direction\\
+\>Wind direction (where the wind is blowing from)\\
 \>\>\> (note: originally encoded as `N', `SE', `W', etc.)\\
 
 windmph		\>R     \>mph
@@ -667,6 +686,9 @@ xsampler			\>R	\>percent
 xtsys(nants,nspect)		\>R	\>Kelvin
 \> System temperature of the X feed (ATCA).\\
 
+xtsysm(nants,nspect)		\>R	\>Kelvin
+\> ??? \\
+
 xyamp(nants,nspect)		\>R	\>Jy
 \> On-line \MM{XY} amplitude measurements (ATCA). \\
 
@@ -680,6 +702,10 @@ ysampler			\>R	\>percent
 
 ytsys(nants,nspect)		\>R	\>Kelvin
 \> System temperature of the Y feed (ATCA).\\
+
+ytsysm(nants,nspect)		\>R	\>Kelvin
+\> ??? \\
+
 
 \end{tabbing}\normalsize
 \end{latexonly}
@@ -711,6 +737,11 @@ A reminder on some telescope specific variables
   dazim(nants)
   delev(nants)
   modedesc
+  axisrms       "skyErr"  -- temporary sqrt(2) issue
+  axisoff
+  lo1 changes, phaselo1=0
+  lo2 still absent
+  purpose
 \end{verbatim}\normalsize
 
 \subsection{SMA}
