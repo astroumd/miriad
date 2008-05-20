@@ -392,7 +392,7 @@ the rest frequency in this example appear a little odd, being identical in all
 windows. See also Section~\ref{ss:restfreq} 
 for a discussion on this. Note that {\tt uvlist} only displays the first selected
 frequency setting. If your source and calibrator have a different setup, use 
-{\tt select=\"source()\"} to look at the appropriate setting for each object.
+{\tt select=source()} to look at the appropriate setting for each object.
 
 \subsection{uvflag - initial check of flagged data}
 
@@ -1159,7 +1159,7 @@ cleaned.
 antenna {\tt refant=} should be choosen somewhat centrally in the array. 
 
 \item In the selection of a pgplot graphics device for X11 it is recommended
-to use the persistent driver ({\tt device=1/xs}, {\tt device=2/xs}, ....},
+to use the persistent driver ({\tt device=1/xs}, {\tt device=2/xs}, ....),
 which allows for as screens as you want or your screen can handle.
 
 

@@ -13,13 +13,13 @@ data if you have been used to BIMA, SMA, WSRT or ATNF data.
 
 \item All CARMA data have auto-correlations preceding the cross-correlations. Some calibration
 programs, most notably {\tt selfcal} and {\tt mfcal}, cannot handle this?   File bugzilla ?
-{\tt \"select=-auto\"} to filter them out.
+{\tt select=-auto} to filter them out.
 
 \item Some of the correlator setting has half edge channels and should always be flagged.
 
 \item Most CARMA data have a noise source added, which can be used for bandpass calibration.
 However, be sure not to apply linelength or baseline corrections to these data. Use
-{\tt \"select=-source(noise)\"} to filter them out.
+{\tt select=-source(noise)} to filter them out.
 
 % noise source should not be baseline corrected
 % noise source should not be linelength corrected

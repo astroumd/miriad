@@ -480,7 +480,7 @@ by replacing the amplitudes, and keeping the phases from the just determined sel
 A special program, {\tt uvflux}, can now be used to gather some statistics on this phase
 calibrator. Since the calibrator is assumed to be a point source, all amplitudes should be 
 the same (you could check this with e.g. {\tt uvplt axis=uvd,amp}), and thus report the
-flux (6.18 Jy $\pm$ 2.59 for both LSB and USB in this example}
+flux (6.18 Jy $\pm$ 2.59 for both LSB and USB in this example).
 
 \footnotesize
 \begin{verbatim}
