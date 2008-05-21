@@ -9,13 +9,16 @@
 
 \item miriad-101:
   \begin{itemize}
-  \item the Miriad Package is a set of Unix commands, with a set of {\it keyword=value} 
-command line parameters  to control the program.
+  \item the Miriad Package is a set of Unix commands, often called ``tasks'',
+    with a set of {\it keyword=value} command line parameters  to control the program.
   \item The Miriad Program (called {\tt miriad}) 
 is a special (miriad) unix program that acts like the AIPS shell and is an
-alternative method to invoke Miriad programs.
+alternative method to invoke Miriad programs. Usseful for newbies, as a way
+of learning individual tasks.
   \item Miriad data are directories, with items (normally files, but see below) inside.
   \end{itemize}
+\item To get help on a task, {\tt mirhelp <taskname>},     e.g. {\tt mirhelp invert}
+
 \item source names are stored in UPPER case in visibility files, and are normally converted
 to upper case before any comparision. Hence the following two examples are synonymous:
 \begin{verbatim}
@@ -24,12 +27,18 @@ to upper case before any comparision. Hence the following two examples are synon
 \end{verbatim}
 
 \item Autocorrelations and a noise source are present in the data, so often you will wind up
-having to select them out
+having to select them out, the minus sign creates an exclusion selection:
 \begin{verbatim}
     select=-auto,-source(NOISE)
 \end{verbatim}
 A notable exception where {\tt select=-auto} does not work is {\tt selfcal} and {\tt mfcal}. This
 is a bug being worked on.% not even in bugzilla...
+
+\item When invoking a task from the Unix shell, use quotes for keywords that use unix meta
+characters, such as parenthesis. Example
+\begin{verbatim}
+    % uvspec select='win(3)
+\end{verbatim}
 
 
 \end{itemize}
@@ -52,6 +61,7 @@ visibility data and image cubes, described in a bit more detail below:
 
 \subsection{Visibility data}
 
+Bla bla, and 
 See Appendix~\ref{app:uvvars} for more information.
 
 Apart from direct observatory data, 
@@ -66,9 +76,11 @@ will list them on the screen, and {\tt gpplt options=gains} or
 {\tt gpplt options=bandpass} will plot them. Programs such as {\tt uvcat} and
 {\tt uvcal} will selectively apply these complex gains as they copy the data.
 
+% relevant item:  gains, bandpass
+
 \subsection{Image data}
 
-Much like fits images, miriad images...
+Much like FITS images, miriad images...
 Although {\tt invert} creates images, you can also create images from scratch
 with {\tt imgen} and {\tt maths}, and convert them from other packages using
 the {\tt fits} program.
@@ -136,14 +148,23 @@ The {\tt mirhelp select} command also provides more details (look for select.kdo
   seeing(s1,s2)                 select when rms path variations is between s1..s2 (microns)   
 \end{verbatim}
 
+These may be combined (logical AND) with comma separation, e.g. {\tt select=ant(1),win(5)}.
+
 \subsection{line=}
 
 
 \begin{verbatim}
-  line=wide,NUMBER,START,STEP,WIDTH         (integers)
-  line=channel,NUMBER,START,STEP,WIDTH      (integers)
-  line=velocity,NUMBER,START,STEP,WIDTH     (km/s)
+  line=channel,NUMBER,START,WIDTH,STEP      (integers)
+  line=velocity,NUMBER,START,WIDTH,STEP     (km/s)
+  line=wide,NUMBER,START,WIDTH,STEP         (integers)
 \end{verbatim}
+
+\begin{itemize}
+\item[NUMBER] = number of channels to output
+\item[START] = starting channel number
+\item[WIDTH] = number of channels to average together
+\item[STEP] = channel increment
+\end{itemize}
 
 The {\tt mirhelp line} command also provides more details (look for line.kdoc)
 
@@ -170,3 +191,21 @@ The {\tt mirhelp region} command also provides more details.
   kms
 
 \end{verbatim}
+
+\subsection{options=}
+
+This is a catch-all keyword many programs use to refine the operations of 
+a program. They are normally used as a comma separated list of (minimum matched)
+options, e.g.
+
+\begin{verbatim}
+  % uvplt vis=3c273 options=nocal,flagged,nobase,dots
+\end{verbatim}
+
+Many programs share common options.
+
+
+\subsection{vis=, in=}
+
+Used for input for visibility data (vis=; some programs, such as {\tt invert}, accept
+multiple files separated by a comma) and images (in=).
