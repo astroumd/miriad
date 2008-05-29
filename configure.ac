@@ -96,6 +96,8 @@ dnl Check for latex and makeindex, needed to build the documentation
 
 AC_PATH_PROG(LATEX, latex, none)
 AC_PATH_PROG(MAKEINDEX, makeindex, none)
+AC_PATH_PROG(FIG2DEV, fig2dev, none)
+AC_PATH_PROG(GNUPLOT, gnuplot, none)
 
 if test x"$LATEX" = xnone ; then
   BUILD_DOCS=false
@@ -103,6 +105,12 @@ if test x"$LATEX" = xnone ; then
 elif test x"$MAKEINDEX" = xnone ; then
   BUILD_DOCS=false
   docswhy="no ; 'makeindex' not found in PATH"
+elif test x"$FIG2DEV" = xnone ; then
+  BUILD_DOCS=false
+  docswhy="no ; 'fig2dev' not found in PATH"
+elif test x"$GNUPLOT" = xnone ; then
+  BUILD_DOCS=false
+  docswhy="no ; 'gnuplot' not found in PATH"
 else
   BUILD_DOCS=true
   docswhy="yes"
@@ -378,6 +386,7 @@ AC_CONFIG_FILES([
     cat/Makefile
     manuals/Makefile
     manuals/atnf-prog/Makefile
+    manuals/atnf-user/Makefile
     src/inc/Makefile
     src/tools/Makefile
     src/subs/Makefile

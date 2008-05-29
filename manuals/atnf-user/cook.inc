@@ -549,7 +549,7 @@ If only one value is given, then {\it uvmin} is
 taken as zero. The units of {\it uvmin} and {\it uvmax} are kilowavelengths.
 \item[{\tt uvnrange({\it uvmin,uvmax})}] This is the same as the {\tt uvrange} subcommand, 
 except that the units are nanoseconds.
-\item[{\tt ha(\it h1,h2})}] This selected data based on the hour angle of 
+\item[{\tt ha({\it h1,h2})}] This selected data based on the hour angle of 
 the data. {\it h1} and {\it h2} are the hour angle (in decimal hours).
 \item[{\tt elevation({\it e1,e2})}] This selects data based on the elevation
 at which the data were observed. {\it e1} and {\it e2} give the elevation

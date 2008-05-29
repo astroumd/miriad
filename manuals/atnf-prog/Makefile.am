@@ -16,20 +16,20 @@ CLEANFILES = $(doc_DATA) $(includes) \
   $(texname).out \
   $(texname).toc
 
-LATEX_ARGS = -interaction scrollmode
+LATEX_ARGS = -interaction scrollmode -halt-on-error
+INPUT_ENV = TEXINPUTS=$(srcdir)$${TEXINPUTS:+:}$$TEXINPUTS 
 
-$(texname).dvi $(texname).idx: $(texname).tex $(includes)
+$(texname).dvi $(texname).idx: $(texname).tex titlepage.inc.in $(includes)
 	sed -e "s,%date%,`date +"%d %h %Y"`,g" <$(srcdir)/titlepage.inc.in >titlepage.inc
-	$(LATEX) $(LATEX_ARGS) $(srcdir)/$(texname)
-	$(LATEX) $(LATEX_ARGS) $(srcdir)/$(texname)
-	$(LATEX) $(LATEX_ARGS) $(srcdir)/$(texname)
+	$(INPUT_ENV) $(LATEX) $(LATEX_ARGS) $(srcdir)/$(texname)
+	$(INPUT_ENV) $(LATEX) $(LATEX_ARGS) $(srcdir)/$(texname)
+	$(INPUT_ENV) $(LATEX) $(LATEX_ARGS) $(srcdir)/$(texname)
 	$(MAKEINDEX) $(texname).idx
-	$(LATEX) $(LATEX_ARGS) $(srcdir)/$(texname)
-	rm -f titlepage.inc
+	$(INPUT_ENV) $(LATEX) $(LATEX_ARGS) $(srcdir)/$(texname)
 
 $(texname)_US.ps.gz: $(texname).dvi
-	dvips -tletter -y940 -o $(texname)_US.ps $(texname)
-	gzip --best $(texname)_US.ps
+	$(INPUT_ENV) dvips -tletter -y940 -o $(texname)_US.ps $(texname)
+	gzip -f --best $(texname)_US.ps
 	rm -f $(texname)_US.ps
 
 # Generating all the various include files. Should do something more
