@@ -387,6 +387,7 @@ AC_CONFIG_FILES([
     manuals/Makefile
     manuals/atnf-prog/Makefile
     manuals/atnf-user/Makefile
+    manuals/carma/Makefile
     src/inc/Makefile
     src/tools/Makefile
     src/subs/Makefile
