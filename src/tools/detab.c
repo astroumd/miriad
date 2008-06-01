@@ -59,4 +59,5 @@ char *argv[];
 
   (void)fclose(in);
   (void)fclose(out);
+  return 0;
 }
