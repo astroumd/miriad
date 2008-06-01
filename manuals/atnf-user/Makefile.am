@@ -56,7 +56,7 @@ CLEANFILES = $(doc_DATA) $(psfigs) $(gfigs) \
   $(texname).toc
 
 LATEX_ARGS = -interaction scrollmode -halt-on-error
-INPUT_ENV = TEXINPUTS=$(srcdir)$${TEXINPUTS:+:}$$TEXINPUTS 
+INPUT_ENV = TEXINPUTS=:$(srcdir)$${TEXINPUTS:+:}$$TEXINPUTS 
 
 $(texname).dvi $(texname).idx: $(texname).tex titlepage.eps.in $(includes) $(psfigs) $(gfigs)
 	sed -e "s,%date%,`date +"%d %h %Y"`,g" <$(srcdir)/titlepage.eps.in >titlepage.eps

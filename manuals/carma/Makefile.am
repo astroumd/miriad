@@ -16,7 +16,7 @@ CLEANFILES = $(doc_DATA) \
   $(texname).toc
 
 LATEX_ARGS = -interaction scrollmode -halt-on-error
-INPUT_ENV = TEXINPUTS=$(srcdir)$${TEXINPUTS:+:}$$TEXINPUTS 
+INPUT_ENV = TEXINPUTS=:$(srcdir)$${TEXINPUTS:+:}$$TEXINPUTS 
 
 $(texname).dvi $(texname).idx: $(texname).tex
 	$(INPUT_ENV) $(LATEX) $(LATEX_ARGS) $(srcdir)/$(texname)

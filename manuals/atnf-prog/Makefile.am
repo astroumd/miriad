@@ -17,7 +17,7 @@ CLEANFILES = $(doc_DATA) $(includes) \
   $(texname).toc
 
 LATEX_ARGS = -interaction scrollmode -halt-on-error
-INPUT_ENV = TEXINPUTS=$(srcdir)$${TEXINPUTS:+:}$$TEXINPUTS 
+INPUT_ENV = TEXINPUTS=:$(srcdir)$${TEXINPUTS:+:}$$TEXINPUTS 
 
 $(texname).dvi $(texname).idx: $(texname).tex titlepage.inc.in $(includes)
 	sed -e "s,%date%,`date +"%d %h %Y"`,g" <$(srcdir)/titlepage.inc.in >titlepage.inc
