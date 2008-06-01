@@ -32,16 +32,11 @@ latex progguide
 
 dvips -o progguide.ps progguide
 cp progguide.ps junk.ps
-compress junk.ps
-mv junk.ps.Z progguide.ps.Z
-cp progguide.ps junk.ps
 gzip -best junk.ps
 mv junk.ps.gz progguide.ps.gz
 
 dvips -tletter -y940 -o progguide_US.ps progguide
 cp progguide_US.ps junk.ps
-compress junk.ps
-mv junk.ps.Z progguide_US.ps.Z
 cp progguide_US.ps junk.ps
 gzip -best junk.ps
 mv junk.ps.gz progguide_US.ps.gz
