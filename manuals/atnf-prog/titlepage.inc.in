@@ -39,7 +39,7 @@ RM LM sub (Image Analysis and Display) stringwidth pop sub
 /Times-Roman findfont 50 scalefont setfont
 RM LM sub (Programmers Guide) stringwidth pop sub
 2 div 360 moveto
-(Users Guide)show
+(Programmers Guide)show
 /Times-Roman findfont 20 scalefont setfont
 RM LM sub (Bob Sault and Neil Killeen) stringwidth pop sub
 2 div 130 moveto
