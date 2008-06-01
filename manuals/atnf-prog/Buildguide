@@ -32,13 +32,13 @@ latex progguide
 
 dvips -o progguide.ps progguide
 cp progguide.ps junk.ps
-gzip -best junk.ps
+gzip junk.ps
 mv junk.ps.gz progguide.ps.gz
 
 dvips -tletter -y940 -o progguide_US.ps progguide
 cp progguide_US.ps junk.ps
 cp progguide_US.ps junk.ps
-gzip -best junk.ps
+gzip junk.ps
 mv junk.ps.gz progguide_US.ps.gz
 
 # Delete the things we get from elsewhere, so we are not tempted to modify
