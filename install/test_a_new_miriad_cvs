@@ -21,8 +21,9 @@
 #----
 
 
-#   new auto tools based?
+#   new auto tools based? And if so, should a distribution tar ball be created?
 set auto=0
+set dist=0
 
 #   this should be a local directory, it will fail now if you
 #   give an absolute address
@@ -118,6 +119,10 @@ if ($auto) then
  # on the mac....
  if (-e /Applications) setenv LIBTOOLIZE glibtoolize
  if (! -e configure) ./autogen.sh
+ if ($dist) then
+    echo Creating $rootdir.tar.gz
+    (cd ..; tar zcf  $rootdir.tar.gz  $rootdir)
+ endif
  ./configure --prefix=`pwd`/build
  make
  make install
