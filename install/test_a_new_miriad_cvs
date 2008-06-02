@@ -15,6 +15,7 @@
 #   14-sep-06    added compile.generic support, can also re-compile current tree	PJT
 #   23-jun-07    autotools based option to install                                      PJT
 #    8-oct-07    fixed minor VERSION reporing bug
+#    2-jun-08    optionally work from tar file with reuse=2
 #
 #  
 #----
@@ -31,8 +32,11 @@ set rootdir=miriad
 #   use autoconf generated compile.generic file
 set generic=1
 
-#   reuse the current rootdir directory, instead of removing it
+#   reuse the current rootdir directory, instead of removing it (0=cvs, 1=reuse the rootdir, 2=tar)
 set reuse=0
+
+#   tar file to grab from ftp (rootdir)
+set ftp=ftp://ftp.astro.umd.edu/progs/bima/miriad.tar.gz
 
 #   options directly passed to install.miriad
 set opts=()
@@ -88,6 +92,15 @@ if ($reuse == 0) then
   else
     echo "getting miriad only cvs....".
     (cvs -Q co $branch -d $rootdir miriad)
+  endif
+else if ($reuse == 2) then
+  if (-d miriad) then
+    echo ERROR: miriad exists, cannot overwrite from tar file
+    exit 1
+  endif
+  wget -O - $ftp | tar zxf  -
+  if ($rootdir != miriad) then
+    mv miriad $rootdir
   endif
 else
   if (! -e $rootdir) then
