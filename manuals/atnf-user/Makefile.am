@@ -55,7 +55,8 @@ CLEANFILES = $(doc_DATA) $(psfigs) $(gfigs) \
   $(texname).out \
   $(texname).toc
 
-LATEX_ARGS = -interaction scrollmode -halt-on-error
+# -halt-on-error is useful but not supported by all flavors of LaTeX
+LATEX_ARGS = -interaction scrollmode
 INPUT_ENV = TEXINPUTS=:$(srcdir)$${TEXINPUTS:+:}$$TEXINPUTS 
 
 $(texname).dvi $(texname).idx: $(texname).tex titlepage.eps.in $(includes) $(psfigs) $(gfigs)
