@@ -15,7 +15,7 @@
 #   14-sep-06    added compile.generic support, can also re-compile current tree	PJT
 #   23-jun-07    autotools based option to install                                      PJT
 #    8-oct-07    fixed minor VERSION reporing bug
-#    2-jun-08    optionally work from tar file with reuse=2
+#    3-jun-08    optionally work from tar file with reuse=2
 #
 #  
 #----
@@ -24,6 +24,7 @@
 #   new auto tools based? And if so, should a distribution tar ball be created?
 set auto=0
 set dist=0
+set build=build
 
 #   this should be a local directory, it will fail now if you
 #   give an absolute address
@@ -62,26 +63,27 @@ foreach arg ($*)
   set $arg
 end
 
-if ($?CVSROOT == 0) then
-   echo No CVSROOT, trying out $cvsroot
-   setenv CVSROOT $cvsroot
-   grep -q `echo $cvsroot | awk -F: '{print $3}'` ~/.cvspass
-   if ($status) then
+if ($?MIR) then
+  echo Cannot test if a MIR environment has been set 
+  echo MIR=$MIR
+  exit 1
+endif
+
+if ($reuse == 0) then
+  if ($?CVSROOT == 0) then
+    echo No CVSROOT, using $cvsroot
+    setenv CVSROOT $cvsroot
+    grep -q `echo $cvsroot | awk -F: '{print $3}'` ~/.cvspass
+    if ($status) then
       echo 'Oops, no $CVSROOT was present, '
       echo '  and this appears to be the first time you install miriad'
       echo '  so, we have to initialize your anonymous cvs account for'
       echo "  cvsroot=$cvsroot"
       echo '  anonymous cvsroot should use a blank password, just hit <RETURN>:'
       cvs login
-   endif
-endif
+    endif
+  endif
 
-if ($?MIR) then
-  echo Cannot test if MIR=$MIR is present already
-  exit 1
-endif
-
-if ($reuse == 0) then
   echo "Using cvs with CVSROOT=$CVSROOT"
   echo -n "Removing your local $rootdir in 2 seconds..." 
   sleep 2
@@ -123,7 +125,7 @@ if ($auto) then
     echo Creating $rootdir.tar.gz
     (cd ..; tar zcf  $rootdir.tar.gz  $rootdir)
  endif
- ./configure --prefix=`pwd`/build
+ ./configure --prefix=`pwd`/$build
  make
  make install
 else
