@@ -1,0 +1,59 @@
+#-----------------------------------------------------------
+# source'd file compile.darwin_gfortran, for mac os X ppc
+#-----------------------------------------------------------
+set mmir  = $MIR
+set mhost = $MIRHOST
+set mlsys = $mmir/bin/localsys
+#
+#  also of possible use:   
+# -finit-local-zero              if you debug code and need initialized data
+# -mcpu=i686 -march=i686 -malign-double -ffast-math         architecture opt
+#  on darwin you might need this -lSystemStubs library, if you have missing _printf$LDBLStub cases
+#  on darwin you sometimes might need -lcc_dynamic if you don't have -lSystemStubs
+#  You need cc_dynamic if you like an FSF versions of g77 with apple's gcc
+#  when you link FSF versions of gcc and g77, should be ok.
+#  which seems to happen if you did not install Xcode
+#
+setenv Fcompile  "gfortran"
+setenv Foptions  "-O"
+setenv FoptionsN ""
+setenv Flinkdir  "-L`echo $mmir/lib/$mhost $MIRXLIB | sed 's/ / -L/g'`"
+setenv Flinklib  "-lmir -llinpack -lpgplot -lX11 -lSystemStubs -lm"
+setenv Finclude  "-I`echo $mmir/src/inc $MIRXINC | sed 's/ / -I/g'`"
+# the gnu compiler actually adds -Dlinux, so we don't need it here
+setenv Ccompile  "gcc"
+setenv Coptions  "-O -fno-common -DWORDS_BIGENDIAN -Ddarwin"
+setenv CoptionsN "-DWORDS_BIGENDIAN -Ddarwin"
+setenv Clinkdir  "-L`echo $mmir/lib/$mhost $MIRXLIB | sed 's/ / -L/g'`"
+setenv Clinklib  "-lmir -llinpack -lpgplot -lX11 -lgfortran -lm"
+setenv Cinclude  "-I`echo $mmir/src/inc $mmir/src/subs | sed 's/ / -I/g'`"
+#
+setenv Ratty 	 "$mmir/bin/$mhost/ratty -s f2c -b -D linux"
+setenv Intf2c 	 "$mmir/bin/$mhost/intf2c -s f2c"
+#
+#-----------------------------------------------------------
+if ($?MIRDEBUG)   then
+   setenv Coptions  "$Coptions  -g"
+   setenv CoptionsN "$CoptionsN -g"
+   setenv Foptions  "$Foptions  -g"
+   setenv FoptionsN "$FoptionsN -g"
+endif
+if ($?MIRTESTBED) then
+   setenv Coptions  "$Coptions  -DTESTBED"
+   setenv CoptionsN "$CoptionsN -DTESTBED"
+   setenv Foptions  "$Foptions  -DTESTBED"
+   setenv FoptionsN "$FoptionsN -DTESTBED"
+   setenv Ratty     "$Ratty -D TESTBED"
+endif
+#-----------------------------------------------------------
+if  (-e $mlsys/compile.darwin && ! $?local_compile ) then
+  echo $mlsys/compile.darwin exists =======================
+  setenv local_compile
+  source $mlsys/compile.darwin
+endif
+#-----------------------------------------------------------
+unset mmir
+unset mhost
+unset mlsys
+unsetenv local_compile
+#-----------------------------------------------------------
