@@ -55,7 +55,7 @@ c----------------------------------------------------------------------c
 	character version*(*),infile*132,outfile*132,line*132,dat*24
 	character device*80
 	integer nx,ny
-	parameter(version='(version 12-Sep-02)')
+	parameter(version='(version 4-jun-08)')
 	integer MAXROW,MAXCOL
 	parameter(MAXROW=4096,MAXCOL=16)
 	real data(MAXROW,MAXCOL),maxamp/0./
@@ -254,7 +254,7 @@ c
 	if(outfile.ne.' ')then
 	  open (unit=2, file=outfile, form='formatted', status='new')
 	  do i=1,nrow
-	    write(2,'(i,1x,12f10.2)') i,(data(i,j),j=1,ncol)
+	    write(2,'(i4,1x,12f10.2)') i,(data(i,j),j=1,ncol)
 	  enddo
 	endif
 c
