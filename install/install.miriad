@@ -1,6 +1,6 @@
 #! /bin/csh -f
 #
-set version=27-feb-08
+set version=3-jun-08
 #
 #  2-aug-99 Updated for Sebok's Mandrake setup
 #  1-aug-00 Updated to allow to build private PGPLOT version
@@ -336,6 +336,9 @@ if ($hosttype == linux) then
   echo "Using g77 compiler for linux"
   cp $MIR/src/sys/bin/compile.linux   $MIR/bin/localsys/compile.linux
  endif
+else if ($hosttype == darwin && $gfortran) then
+  echo "Using gfortran compiler for darwin"
+  cp $MIR/src/sys/bin/compile.darwin_gfortran   $MIR/bin/localsys/compile.darwin
 else
   if ($generic == 0) then
     echo "Using default compile.$hosttype"
