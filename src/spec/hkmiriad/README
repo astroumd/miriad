@@ -1,0 +1,7 @@
+These are Jin Koda's miriad routines.
+
+See also http://www.astro.caltech.edu/~koda/hkmiriad/
+
+They need the small ZENO library, which takes care of the
+user interface. You can find this in $MIR/borrow/zeno.
+
