@@ -3,6 +3,7 @@
 # Copyright (c) 1999 by Joshua E. Barnes, Tokyo, JAPAN.                #
 #    revised for SPH calculation by Jin Koda, Tokyo, JAPAN. 2000       #
 #    abbreviated and added to MIR/borrow/zeno by Peter Teuben. 2008    #
+#    see also:  http://www.astro.caltech.edu/~koda/hkmiriad/           #
 ########################################################################
 
 
