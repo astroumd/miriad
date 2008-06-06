@@ -7,6 +7,8 @@ include $(top_srcdir)/mircommon.mak
 ## Note, dirs.c removed from list, deprecated, no more VMS
 ## support..
 
+finclude_HEADERS = model.h
+
 includes = -I$(top_srcdir)/src/inc -I$(srcdir)
 
 lib_LTLIBRARIES = \
