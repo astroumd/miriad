@@ -62,9 +62,10 @@ export MIRTEL=MIRTEL:unknown
 echo old: $PATH
 
 if [ `echo ":${PATH}:" | grep -c ":\.:"` = 1 ]; then
-  export PATH=`echo ":${PATH}:"|sed "s&:.:&:.:${MIRBIN}:&"`
+ export PATH=`echo ":${PATH}:" | sed -e "s&:.:&:.:${MIRBIN}:&"`
+ export PATH=`echo $PATH | sed -e 's/^://' -e 's/:$//'`
 else
-  export PATH=${MIRBIN}:$PATH
+ export PATH=${MIRBIN}:$PATH
 fi
 
 echo new: $PATH
