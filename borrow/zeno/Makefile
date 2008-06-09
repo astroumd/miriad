@@ -58,5 +58,7 @@ mathfns.o: mathfns.c stdinc.h mathfns.h
 
 clean:;	rm -f *.o libZeno.a
 
+install_miriad: miriad_install
+
 miriad_install: libZeno.a
 	cp libZeno.a $(MIRLIB)
