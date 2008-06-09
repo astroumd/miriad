@@ -1,5 +1,5 @@
 #
-# this isn't working yet.
+# this is working with GFORTRAN on linux
 #
 
 CC     = gcc
@@ -10,15 +10,18 @@ INCS = -I$(MIR)/borrow/zeno -I$(MIRINC) -I$(MIRSUBS) -I$(MIRLIB)
 LIBS = $(MIRLIB)/libmir.a $(MIRLIB)/libZeno.a -lm
 
 PGLIBS_G77      = -L$(MIRLIB) -lcpgplot -lpgplot -lg2c      -lX11 -lpng
-PGLIBS_GFORTRAN = -L$(MIRLIB) -lcpgplot -lpgplot -lgfortran -lX11 -lpng -lgcc_s
+PGLIBS_GFORTRAN = -L$(MIRLIB) -lcpgplot -lpgplot -lgfortran -lX11 -lpng 
 PGLIBS_F2C      = -L$(MIRLIB) -lcpgplot -lpgplot -lf2c      -lX11 
 
 # pick one
-PGLIBS = $(PGLIBS_G77)
+PGLIBS = $(PGLIBS_GFORTRAN)
 
 hkimgen:
 	$(CC) $(CFLAGS) $(INCS) -o hkimgen hkimgen.c $(LIBS)
 
 hkuvplt:
 	$(CC) $(CFLAGS) $(INCS) -o hkuvplt hkuvplt.c $(LIBS) $(PGLIBS)
+
+clean:
+	rm -f *.o hkimgen hkuvplt
 

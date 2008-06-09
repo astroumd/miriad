@@ -3,5 +3,8 @@ These are Jin Koda's miriad routines.
 See also http://www.astro.caltech.edu/~koda/hkmiriad/
 
 They need the small ZENO library, which takes care of the
-user interface. You can find this in $MIR/borrow/zeno.
+user interface. You can find this in $MIR/borrow/zeno, and
+you should be able to issue:
+	make install_miriad
+to get it installed (it need libZeno.a in $MIRLIB)
 
