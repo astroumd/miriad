@@ -31,8 +31,8 @@ typedef struct _record {
     double time;            /* time [Julian date] */
     int bl;                 /* baseline: bl = 256A1+A2 */ 
     int souid;              /* source id */
-    float re;               /* real part of visibility */
-    float im;               /* imaginary part of visibility */
+    float amp;              /* real part of visibility */
+    float pha;              /* imaginary part of visibility */
     bool flag;              /* flag */
     struct _record *next;   /* pointer to next record */
 } record, *recordptr;
@@ -42,8 +42,8 @@ typedef struct _record {
 #define Time(x)   (((recordptr) (x))->time)
 #define Bl(x)     (((recordptr) (x))->bl)
 #define Souid(x)  (((recordptr) (x))->souid)
-#define Re(x)     (((recordptr) (x))->re)
-#define Im(x)     (((recordptr) (x))->im)
+#define Amp(x)    (((recordptr) (x))->amp)
+#define Pha(x)    (((recordptr) (x))->pha)
 #define Next(x)   (((recordptr) (x))->next)
 #define Flag(x)   (((recordptr) (x))->flag)
 
