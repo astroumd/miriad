@@ -5,6 +5,7 @@
 
 #include "stdinc.h"
 #include "getparam.h"
+#include "mathfns.h"
 #include "maxdimc.h"
 #include "miriad.h"
 

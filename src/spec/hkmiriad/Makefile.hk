@@ -1,0 +1,24 @@
+#
+# this isn't working yet.
+#
+
+CC     = gcc
+LFS    = -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -Wall
+CFLAGS = -O3 -g $(LFS)
+
+INCS = -I$(MIR)/borrow/zeno -I$(MIRINC) -I$(MIRSUBS) -I$(MIRLIB)
+LIBS = $(MIRLIB)/libmir.a $(MIRLIB)/libZeno.a -lm
+
+PGLIBS_G77      = -L$(MIRLIB) -lcpgplot -lpgplot -lg2c      -lX11 -lpng
+PGLIBS_GFORTRAN = -L$(MIRLIB) -lcpgplot -lpgplot -lgfortran -lX11 -lpng -lgcc_s
+PGLIBS_F2C      = -L$(MIRLIB) -lcpgplot -lpgplot -lf2c      -lX11 
+
+# pick one
+PGLIBS = $(PGLIBS_G77)
+
+hkimgen:
+	$(CC) $(CFLAGS) $(INCS) -o hkimgen hkimgen.c $(LIBS)
+
+hkuvplt:
+	$(CC) $(CFLAGS) $(INCS) -o hkuvplt hkuvplt.c $(LIBS) $(PGLIBS)
+
