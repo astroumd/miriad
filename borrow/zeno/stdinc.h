@@ -34,8 +34,10 @@
 typedef short int bool;
 
 #if !defined(TRUE)
-#define TRUE  ((bool) 1)
-#define FALSE ((bool) 0)
+/*#define TRUE  ((bool) 1)*/
+/*#define FALSE ((bool) 0)*/
+#define TRUE          1
+#define FALSE         0
 #endif
 
 /*
