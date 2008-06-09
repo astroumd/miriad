@@ -1,6 +1,7 @@
 #
-# this is working with GFORTRAN on linux
-#
+# this is working with GFORTRAN on linux,
+# only works with old style build
+# new style build uses libmir_uvio.a instead of libmir.a
 
 CC     = gcc
 LFS    = -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -Wall
@@ -16,12 +17,30 @@ PGLIBS_F2C      = -L$(MIRLIB) -lcpgplot -lpgplot -lf2c      -lX11
 # pick one
 PGLIBS = $(PGLIBS_GFORTRAN)
 
+BINS = hkimgen hkuvplt hkconvol hkdemos hkuvrandom
+
+
+all:   $(BINS)
+
+# -----------------------------------------------------------------------
+
 hkimgen:
 	$(CC) $(CFLAGS) $(INCS) -o hkimgen hkimgen.c $(LIBS)
 
 hkuvplt:
 	$(CC) $(CFLAGS) $(INCS) -o hkuvplt hkuvplt.c $(LIBS) $(PGLIBS)
 
-clean:
-	rm -f *.o hkimgen hkuvplt
+hkconvol:
+	$(MIRBIN)/debug hkconvol
 
+hkdemos:
+	$(MIRBIN)/debug hkdemos
+
+hkuvrandom:
+	$(MIRBIN)/debug hkuvrandom
+
+clean:
+	rm -f *.o $(BINS)
+
+install_miriad: $(BINS)
+	cp $(BINS) $(MIRBIN)
