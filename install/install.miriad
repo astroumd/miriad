@@ -39,6 +39,7 @@ set version=3-jun-08
 #  7-feb-07 fixes for non-linux
 #  5-mar-07 using new make_miriad_starts
 # 17-may-07 use $CC, $F77 and $CXX in $MIRBIN, if present
+# 16-jun-08 add zeno/hkmiriad
 #
 #
 # if SELINUX is enabled:
@@ -147,6 +148,7 @@ set intel=0                 #  use intel compiler (ifc/icc) for linux?
 set g95=0                   #  use g95 as default gnu compiler, instead of g77 [linux only]
 set gfortran=0              #  use gfortran as default gnu compiler, instead of g77 [linux only]
 set man=1		    #  do manual pages
+set zeno=1                  #  add zeno and hkmiriad?
 set lfs=(-D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE) # LFS flags for uvio
 
 
@@ -551,6 +553,12 @@ if (-e checklist) then
   else
     echo "Wow, they all compiled"
   endif
+endif
+
+if ($zeno && -e $MIR/borrow/zeno) then
+  echo Adding zeno and hkmiriad
+  (cd $MIR/borrow/zeno;                                    make install_miriad)
+  (cd $MIR/src/spec/hkmiriad/;  cp Makefile.hk  Makefile ; make install_miriad)
 endif
 
 if ($test) then
