@@ -31,9 +31,11 @@
 
 /* changed to DOCMANVERSION, otherwise, name collision with config.h */
 /* - colby */
-#define DOCMANVERSION "Docman: version 1.3 26-jul-93"
+#define DOCMANVERSION "Docman: version 1.3 16-jun-08"
 
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
 
 #include <stdio.h>
 #include <string.h>

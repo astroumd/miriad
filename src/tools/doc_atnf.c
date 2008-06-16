@@ -27,13 +27,15 @@
      6feb00  rjs  Support for Perl.
 ************************************************************************/
 
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
 
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>
 #endif
 
-#define DOCATNFVERSION "Doc: version 1.0 6-feb-00"
+#define DOCATNFVERSION "Doc: version 1.0 16-jun-08"
 #define private static
 #include <stdio.h>
 #include <string.h>
