@@ -32,6 +32,8 @@ The official carma baseline page:
    http://cedarflat.mmarray.org/observing/baseline/
 which should be on Cedar Flat in the directory:
    ~obs/web_pages/observing/baseline/antpos/
+You can also obtain them directory as in this example:
+   wget http://cedarflat.mmarray.org/observing/baseline/antpos/antpos.080606
 
 
 Jin Koda's development page:
