@@ -3,6 +3,12 @@
 # only works with old style build
 # new style build uses libmir_uvio.a instead of libmir.a
 
+
+#     include global Makefile, but don't complain if it's not there
+#     we need it now for FLIBS
+-include $(MIRLIB)/Makefile
+
+
 CC     = gcc
 LFS    = -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -Wall
 CFLAGS = -O3 -g $(LFS)
@@ -25,10 +31,10 @@ all:   $(BINS)
 # -----------------------------------------------------------------------
 
 hkimgen:
-	$(CC) $(CFLAGS) $(INCS) -o hkimgen hkimgen.c $(LIBS)
+	$(CC) $(CFLAGS) $(INCS) -o hkimgen hkimgen.c $(LIBS) $(FLIBS)
 
 hkuvplt:
-	$(CC) $(CFLAGS) $(INCS) -o hkuvplt hkuvplt.c $(LIBS) $(PGLIBS)
+	$(CC) $(CFLAGS) $(INCS) -o hkuvplt hkuvplt.c $(LIBS) $(PGLIBS) $(FLIBS)
 
 hkconvol:
 	$(MIRBIN)/debug hkconvol
