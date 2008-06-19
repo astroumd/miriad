@@ -58,6 +58,7 @@ CC = cc
 FC = f77
 MIRLIBS=`mirlibs`
 EL = 
+FLIBS = @FLIBS@
 #	Default library, and make it precious just in case...
 L = $(MIRLIB)/libmir.a
 .PRECIOUS: $(L)
