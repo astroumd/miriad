@@ -131,9 +131,9 @@ how to do this.
 
 Example of a two liner installation:
 \footnotesize\begin{verbatim}
-  1% curl ftp://ftp.astro.umd.edu/progs/bima/miriad.tar.gz | tar zxf -
+  1% curl ftp://ftp.astro.umd.edu/progs/carma/miriad.tar.gz | tar zxf -
 or:
-  1% wget -O - ftp://ftp.astro.umd.edu/progs/bima/miriad.tar.gz | tar zxf -
+  1% wget -O - ftp://ftp.astro.umd.edu/progs/carma/miriad.tar.gz | tar zxf -
 
   2% miriad_cvs/install/install.miriad
 \end{verbatim}\normalsize
@@ -159,3 +159,52 @@ We expect to make available binary releases for Linux (32bit and 64bit), MacOSX 
 and perhaps Solaris (sol10 w/ gcc, sol10 w/ sunstudio12?). Details will be on the Miriad website through
 the WIKI pages.
 
+
+\subsection{Keeping your version up to date}
+
+Various files in MIRIAD will be updated from time to time. Even if the source code does not change,
+there will be updated Flux Catalog and CARMA Baseline data. This is where CVS will come in very
+handy, so make sure this is installed on your computer.  The very first time you want to use 
+{\tt cvs} you may not the ``login'' and store the anonymous password.
+
+\footnotesize\begin{verbatim}
+  1% cd $MIR
+  2% cvs login
+  Logging in to :pserver:anonymous@cvs.astro.umd.edu:2401/home/cvsroot
+  CVS password:
+  3% cvs -nq update
+  ...
+  M src/inc/maxdim.h
+  M src/inc/maxdimc.h
+  ...
+  U src/subs/fitsio.for
+  U src/prog/misc/itemize.for
+  ...
+\end{verbatim}\normalsize
+
+Lines that start with {\tt ``U''} need to be updated:
+
+\footnotesize\begin{verbatim}
+  4% cvs update
+\end{verbatim}\normalsize
+
+after which subroutine can be added to the library, and programs can be re-installed:
+
+\footnotesize\begin{verbatim}
+  5% mirboss
+  6% mir.subs fitsio
+  7% mir.prog itemize
+\end{verbatim}\normalsize
+
+\subsubsection{New and Old Build System}
+
+At the moment MIRIAD is undergoing a transition from an old build system (the {\tt mir.subs}
+and the {\tt mir.prog} are part of this) to a new ``autoconf'' based system that uses a 
+{\tt Makefile}.   In the new build system {\bf any} update {\bf should} work as follows:
+
+
+\footnotesize\begin{verbatim}
+  1% cd $MIR
+  2% cvs update
+  3% make install
+\end{verbatim}\normalsize

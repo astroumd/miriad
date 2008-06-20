@@ -830,6 +830,38 @@ of {\tt varplt}. But in case you were wondering, the recommended value is 5.
 
 \subsection{Passband Calibration}
 
+When a strong passband calibrator is available it can be used using {\tt mfcal} to
+correct the passband of your others sources (not just the target source, but 
+also for example the phase and amplitude calibrator). Choose a small interval to
+construct the antenna based passband, and inspected the solutions with {\tt gpplt}:
+
+\footnotesize
+\begin{verbatim}
+
+  % mfcal vis=pbcal.mir interval=0.5 refant=9 
+
+  % gpplt vis=pbcal.mir device=/xs options=passband  yaxis=amp    nxy=5,3
+  % gpplt vis=pbcal.mir device=/xs options=passband  yaxis=phase  nxy=5,3
+  % gpplt vis=pbcal.mir device=/xs options=gains
+
+\end{verbatim}
+\normalsize
+
+The passband gains can then be copied to your other sources, for subsequent
+calibration and/or mapping:
+
+
+\footnotesize
+\begin{verbatim}
+
+  % gpcopy vis=pbcal.mir   out=phasecal.mir options=nocal
+  % gpcopy vis=source1.mir out=source2.mir  options=nocal
+
+\end{verbatim}
+\normalsize
+
+
+
 
 \subsection{Simple single calibrator}
 
@@ -971,8 +1003,10 @@ on the narrow band of the noise source (skipping the first channel):
 \end{verbatim}
 \normalsize
 
-If the signal of interest is in the USB, where there is no noise source, the data will have to conjugation into the USB
-and headers faked in order for mfcal to apply the correction, after a slight manual copying of important header
+If the signal of interest is in the USB, where there is no noise source, the data will have to
+be conjugated into the USB
+and headers faked in order for {\tt mfcal}
+to apply the correction, after a slight manual copying of important header
 variables:
 
 \footnotesize

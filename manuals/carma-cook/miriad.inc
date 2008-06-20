@@ -11,6 +11,8 @@
   \begin{itemize}
   \item the Miriad Package is a set of Unix commands, often called ``tasks'',
     with a set of {\it keyword=value} command line parameters  to control the program.
+    Typicallly you source a script (e.g. {\tt miriad\_start.csh}) to change your
+    Unix environment to have this package included.
   \item The Miriad Program (called {\tt miriad}) 
 is a special (miriad) unix program that acts like the AIPS shell and is an
 alternative method to invoke Miriad programs. Usseful for newbies, as a way
@@ -87,7 +89,7 @@ the {\tt fits} program.
 
 \subsubsection{Mosaic Tables}
 
-Not unlike for visibility data, image data can also contain ancillary tables to
+Not unlike visibility data, image data can also contain ancillary tables to
 aid the organization of the image data. One example is mosaiced data, where
 a table of the pointing centers of a mosaiced field ({\tt invert options=mosaic,....})
 is contained. To get a listing of these centers, use {\tt imlist options=mosaic}.
