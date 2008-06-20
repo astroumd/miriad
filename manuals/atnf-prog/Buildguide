@@ -31,12 +31,13 @@ latex progguide
 # Generate the postscript file.
 
 dvips -o progguide.ps progguide
+ps2pdf progguide.ps
 cp progguide.ps junk.ps
 gzip junk.ps
 mv junk.ps.gz progguide.ps.gz
 
 dvips -tletter -y940 -o progguide_US.ps progguide
-cp progguide_US.ps junk.ps
+ps2pdf progguide_US.ps
 cp progguide_US.ps junk.ps
 gzip junk.ps
 mv junk.ps.gz progguide_US.ps.gz
