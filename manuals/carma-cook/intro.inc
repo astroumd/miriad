@@ -83,6 +83,7 @@ Miriad bugzilla (part of CARMA bugzilla) at {\tt http://www.mmarray.org/bugzilla
 \begin{itemize}
 \item 20-apr-2007:   first draft 
 \item 15-feb-2008:   Draft for version 2 of this document
+\item 21-jun-2008:   Summerschool 2008 version
 
 \end{itemize}
 
@@ -90,6 +91,6 @@ Miriad bugzilla (part of CARMA bugzilla) at {\tt http://www.mmarray.org/bugzilla
 
 Stuart Vogel, Stephen White, Jin Koda, Joanna Brown  etc..  
 And the fine crew of the first Miriad ``Party'' where
-much of this material was first fine tuned.
+much of this material was first fine tuned. 
 
 
