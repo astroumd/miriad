@@ -19,14 +19,14 @@ CFLAGS = -O3 -g $(LFS)
 INCS = -I$(MIR)/borrow/zeno -I$(MIRINC) -I$(MIRSUBS) -I$(MIRLIB)
 LIBS = $(MIRLIB)/libmir.a $(MIRLIB)/libZeno.a -lm
 
-LIBX11    =  -L/usr/X11/lib -lX11
+LIBX11    =  -L/usr/X11R6/lib -lX11
 
 PGLIBS_G77      = -L$(MIRLIB) -lcpgplot -lpgplot -lg2c     
 PGLIBS_GFORTRAN = -L$(MIRLIB) -lcpgplot -lpgplot -lgfortran
 PGLIBS_F2C      = -L$(MIRLIB) -lcpgplot -lpgplot -lf2c     
 
 # pick one, but also need LIBX11
-PGLIBS = $(PGLIBS_GFORTRAN) $(LIBX11)
+PGLIBS = $(PGLIBS_G77) $(LIBX11)
 
 BINS = hkimgen hkuvplt hkconvol hkdemos hkuvrandom
 
