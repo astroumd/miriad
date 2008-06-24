@@ -1,7 +1,10 @@
 #
-# this is working with GFORTRAN on linux,
-# only works with old style build
-# new style build uses libmir_uvio.a instead of libmir.a
+# This is an example how to build your own C and Fortran based miriad programs
+# The install is a bit of a hack:
+# copy this Makefile.hk to Makefile and edit it to suit your needs: 
+# - pick with fortran compiler you use 
+# - only works with old style build
+#   new style build uses libmir_uvio.a instead of libmir.a
 
 
 #     include global Makefile, but don't complain if it's not there
@@ -16,12 +19,14 @@ CFLAGS = -O3 -g $(LFS)
 INCS = -I$(MIR)/borrow/zeno -I$(MIRINC) -I$(MIRSUBS) -I$(MIRLIB)
 LIBS = $(MIRLIB)/libmir.a $(MIRLIB)/libZeno.a -lm
 
-PGLIBS_G77      = -L$(MIRLIB) -lcpgplot -lpgplot -lg2c      -lX11 -lpng
-PGLIBS_GFORTRAN = -L$(MIRLIB) -lcpgplot -lpgplot -lgfortran -lX11 -lpng 
-PGLIBS_F2C      = -L$(MIRLIB) -lcpgplot -lpgplot -lf2c      -lX11 
+LIBX11    =  -L/usr/X11/lib -lX11
 
-# pick one
-PGLIBS = $(PGLIBS_GFORTRAN)
+PGLIBS_G77      = -L$(MIRLIB) -lcpgplot -lpgplot -lg2c     
+PGLIBS_GFORTRAN = -L$(MIRLIB) -lcpgplot -lpgplot -lgfortran
+PGLIBS_F2C      = -L$(MIRLIB) -lcpgplot -lpgplot -lf2c     
+
+# pick one, but also need LIBX11
+PGLIBS = $(PGLIBS_GFORTRAN) $(LIBX11)
 
 BINS = hkimgen hkuvplt hkconvol hkdemos hkuvrandom
 
