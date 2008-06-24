@@ -163,6 +163,8 @@ c   jhz  15Jun07  added instructive msg for handling SMA
 c                 hybrid spectral resolution data.
 c  pkgw  11Apr08  When fitting polynomials, give flagged channels
 c                 virtually no weight.
+c   jhz  24Jun08  added description on the working buffers in
+c                 passtab.
 c  Problems:
 c    * Should do simple spectral index fit.
 c------------------------------------------------------------------------
@@ -681,6 +683,15 @@ c------------------------------------------------------------------------
         integer bnply(3)
         common/bsmooth/smooth,bnply
         real wt(2)
+c
+c working buffer
+c Rsp           real part of the spectrum
+c Isp           imaginary part of the spectrum
+c xchan         channel number
+c DELY          uncertainty of the solutions
+c               DELY=1 for solutions derived from BP solver
+c               DELY=1D20 for failure in getting solution from BP solver
+c
         n=0
 c
 c average rr and ll
@@ -748,6 +759,7 @@ c fit amp and phase
             imvis= aimag(pass(i,j+nsp+k-1,pd))
             amp = revis**2+imvis**2
             amp = sqrt(amp)
+c check up if the solutions failed
             if(abs(revis)+
      *      abs(imvis).eq.0) then
             phase=0
