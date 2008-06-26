@@ -307,7 +307,7 @@ c------------------------------------------------------------------------
 	include 'mem.h'
 c
 	character version*(*)
-	parameter(version='Invert: version 1.0 25-apr-03')
+	parameter(version='Invert: version 1.0 26-jun-08')
 	integer MAXPOL,MAXRUNS
 	parameter(MAXPOL=4,MAXRUNS=4*MAXDIM)
 c
@@ -508,7 +508,7 @@ c
 	  lmn(3) = 1
 	  if(max(mnx,mny).gt.MAXDIM) then
 	    write(*,*) 'mnx,mny,MAXDIM=',mnx,mny,MAXDIM
-     	    call bug('f','Mosaiced image is too big for me')
+     	    call bug('f','Mosaiced image too big: select=source()?')
 	  endif
 	else
 	  mnx = nx
