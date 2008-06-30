@@ -21,7 +21,7 @@ set badcal
 set psci = 0
 set asci = 0
 set flct = 0
-
+set freq = `uvlist vis=$vis options=var | grep freq | awk '{print 1000*$3}'`
 set levs1 = "levs1=15,30,45"
 if ($autocmd == "noscale") set levs1 = "levs1=15,30,45,60,75"
 if ($autocmd == "noamps") set levs1 = "levs1=15,30,45,60,75"  
@@ -29,7 +29,7 @@ if ($autocmd == "noamps") set levs1 = "levs1=15,30,45,60,75"
 set fidx = 0
 set sidx = 0
 set iopt = 'options=mfs,double'
-set arc = 4000		# fov of displayed plot in arcsec
+set arc = `echo 5000 | awk '{print $1*1430/freq}' freq=$freq`     # fov of displayed plot in arcsec
 if (`echo $uflux | wc -w` == 0) set uflux = 500 
 if (`echo $lflux | wc -w` == 0) set lflux = 0 
 onintr enderr
@@ -50,7 +50,7 @@ set scopt=pha		# option = pha or amp (phase+amp)
 set sup=0		# natural = 0 (high sensitivity - bigger beam)
 
 set imsize=512		# number of cells in image
-set cell=30		# cell size in arcsec orig 30
+set cell = `echo 30 | awk '{print $1*1430/freq}' freq=$freq` # cell size in arcsec orig 30
 set map=cm		# plot the cleaned map (source.cm)
 set scint=$int		# selfcal interval 
 set clip=0.05		# clip out negative amplitudes 
@@ -148,7 +148,7 @@ set clip = `echo 10 $rmsnoise[1] | awk '{print $1*$2}'`
   if ($ans != "") set clip = $clip
 
   selfcal vis=$vis model=$object.clean interval=$scint select=$sel \
-	minants=4 options=noscale,$scopt clip=$clip refant=$refant
+	minants=4 options=noscale,mfs,$scopt clip=$clip refant=$refant
 #refant=$refant \
   #gpplt vis=$vis device=/xw yaxis=pha nxy=2,4; echo "show amp? [n]"
   #if ($< == y)  gpplt vis=$vis device=/xw nxy=2,4
@@ -224,7 +224,7 @@ if (`echo $range $oldrange | awk '{if ($1 > 1.025*$2) print "go"}'` == go) then
 gpcopy vis=$object out=tempmap
 set sidx = 0
   selfcal vis=$vis model=$object.clean interval=$scint select=$sel \
-	minants=4 options=noscale,$scopt clip=$clip refant=$refant
+	minants=4 options=noscale,mfs,$scopt clip=$clip refant=$refant
 set oldrange = $range
 goto invert
 endif
