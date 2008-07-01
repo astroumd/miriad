@@ -840,8 +840,8 @@ construct the antenna based passband, and inspected the solutions with {\tt gppl
 
   % mfcal vis=pbcal.mir interval=0.5 refant=9 
 
-  % gpplt vis=pbcal.mir device=/xs options=passband  yaxis=amp    nxy=5,3
-  % gpplt vis=pbcal.mir device=/xs options=passband  yaxis=phase  nxy=5,3
+  % gpplt vis=pbcal.mir device=/xs options=bandpass  yaxis=amp    nxy=5,3
+  % gpplt vis=pbcal.mir device=/xs options=bandpass  yaxis=phase  nxy=5,3
   % gpplt vis=pbcal.mir device=/xs options=gains
 
 \end{verbatim}
