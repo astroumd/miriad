@@ -578,7 +578,7 @@ void haccess_c(int tno,int *ihandle,Const char *keyword,Const char *status,int *
   else if(!strcmp("write",status))  mode = ITEM_WRITE;
   else if(!strcmp("scratch",status))mode = ITEM_SCRATCH;
   else if(!strcmp("append",status)) mode = ITEM_APPEND;
-  else bugv_c('f',"haccess_c: unrecognised STATUS=%d",status);
+  else bugv_c('f',"haccess_c: unrecognised STATUS=%s",status);
 
   if(!strcmp("header",keyword) || !strcmp(".",keyword) ||
      !strcmp("history",keyword)|| tno == 0 	       ||
