@@ -310,7 +310,7 @@ c------------------------------------------------------------------------
 	include 'mem.h'
 c
 	character version*(*)
-	parameter(version='Invert: version 1.0 26-jun-08')
+	parameter(version='Invert: version 1.0 28-Oct-04')
 	integer MAXPOL,MAXRUNS
 	parameter(MAXPOL=4,MAXRUNS=4*MAXDIM)
 c
@@ -328,9 +328,11 @@ c
 c
 	integer tno,tvis
 	integer nUWts,nMMap
-	integer UWts,Map,MMap
+	ptrdiff_t UWts,Map,MMap
 c
 	integer nRuns,Runs(3,MAXRUNS)
+c  prevent compiler from allocating Runs on stack
+c$	save Runs
 c
 	integer NSLOP
 	parameter(NSLOP=2)
@@ -511,7 +513,7 @@ c
 	  lmn(3) = 1
 	  if(max(mnx,mny).gt.MAXDIM) then
 	    write(*,*) 'mnx,mny,MAXDIM=',mnx,mny,MAXDIM
-     	    call bug('f','Mosaiced image too big: select=source()?')
+     	    call bug('f','Mosaiced image is too big for me')
 	  endif
 	else
 	  mnx = nx
@@ -850,7 +852,7 @@ c------------------------------------------------------------------------
 	parameter(InFreq=5,InData=8)
 	integer Maxrun
 	parameter(Maxrun=2048)
-	integer i,id,j,VispBuf, VisSize,u,v,k,ktot,l,ltot,ipnt
+	integer i,id,j,VispBuf, VisSize,u,v,k,l,ltot,ipnt
 	real Visibs(Maxrun)
 c
 c  Determine the number of visibilities perr buffer.
@@ -871,9 +873,8 @@ c
 c  Accumulate the weight function.
 c
 	k = 0
-	ktot = nvis
-	dowhile(k.lt.ktot)
-	  ltot = min(VispBuf,ktot-k)
+	dowhile(k.lt.nvis)
+	  ltot = min(VispBuf,nvis-k)
 	  call scrread(tvis,Visibs,k*VisSize,(ltot-1)*VisSize+InData)
 	  do l=1,ltot*VisSize,VisSize
 	    if(Visibs(l+InU).lt.0)then
@@ -1053,14 +1054,14 @@ c
 	end
 c************************************************************************
 	subroutine Wter(tscr,Natural,UWts,wdu,wdv,wnu,wnv,npnt,Tu,Tv,
-     *	  nvis,npol,nchan,mosaic,idb,sdb,doamp,dophase,freq0,Rms2,
+     *	  nvis,npol,nchan,mosaic,idb,sdb,doamp,dophase,freq0,Rms,
      *	  Slop,lmn,umax,vmax,cellx,celly)
 c
 	implicit none
 	integer tscr,wnu,wnv,nvis,npol,nchan,npnt
 	logical Natural,sdb,idb,mosaic,doamp,dophase
 	real Tu,Tv,wdu,wdv,UWts(wnv,wnu/2+1,npnt),cellx,celly
-	real Rms2,freq0,umax,vmax,Slop(npol*nchan)
+	real Rms,freq0,umax,vmax,Slop(npol*nchan)
 	double precision lmn(3)
 c
 c  Apply weights and calculate RMS noise for each pointing.
@@ -1086,7 +1087,7 @@ c    lmn	Direction cosines of place to shift to.
 c    doamp	True if amplitude-only imaging.
 c    dophase	True if phase-only imaging.
 c  Output:
-c    Rms2	An estimate of the rms noise in the output map.
+c    Rms	An estimate of the rms noise in the output map.
 c    umax,vmax	Maximum u and v values.
 c------------------------------------------------------------------------
 	integer InU,InV,InW,InPnt,InRms,InFreq,InWt,InData
@@ -1095,7 +1096,8 @@ c------------------------------------------------------------------------
 	integer maxrun
 	parameter(maxrun=8192)
 c
-	real Wts(maxrun/(InData+2)),Vis(maxrun),logFreq0,Wt,SumWt,t
+	real Wts(maxrun/(InData+2)),Vis(maxrun),logFreq0,Wt,t
+	double precision RMS2,SumWt
 	integer i,j,k,l,size,step,n,u,v,offcorr,nbeam,ncorr,ipnt
 	logical doshift
 c
@@ -1125,6 +1127,7 @@ c
 c  Do the real work.
 c
 	do l=1,nvis,step
+!	do l=((nvis-1)/step)*step+1,1,-step
 	  n = min(nvis-l+1,step)
 	  call scrread(tscr,Vis,(l-1)*size,n*size)
 c
@@ -1261,9 +1264,9 @@ c
 c  Finish up the RMS noise estimates.
 c
 	if(SumWt.gt.0)then
-	  RMS2 = sqrt(RMS2 / SumWt/SumWt )
+	  rms = sqrt(RMS2 / SumWt/SumWt )
 	else
-	  RMS2 = 0
+	  rms = 0
 	endif
 c
 	end
