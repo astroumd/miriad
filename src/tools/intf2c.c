@@ -1,7 +1,7 @@
 /************************************************************************/
 /*									*/
 /*= intf2c -- A C preprocessor, to aid calling C from FORTRAN.		*/
-/*& rjs									*/
+/*& pjt									*/
 /*: tools								*/
 /*+
 Intf2c is a C preprocessor for MIRIAD source code, intended to aid the
@@ -105,9 +105,16 @@ fortran subroutine fstrcpy(character out,character in)
 /*    rjs    sep05 deal with fortran/c integers                         */
 /*    mrc  14jul06 Get it to compile with 'gcc -Wall' without warnings. */
 /*    pjt  15aug07 merged CARMA and ATNF versions                       */
+/*    pjt  10jul08 Merge in jwr's WSRT mods to handle 32/64 bit         */
+/*   (jwr  28feb04 fixed prototype)                                     */
+/*   (jwr   8jul04 added ptrdiff_t support)                             */
+/************************************************************************/
+/* ToDos/Shortcomings:                                                  */
+/*  Get_Token() advancing of s++ is subtle different in WSRT version    */
 /************************************************************************/
 
-#define VERSION_ID "version 3.1 15-aug-07"
+
+#define VERSION_ID "version 4.0 10-jul-08"
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -177,6 +184,7 @@ SYSTEM systems[] = {
 #define TYPE_DOUBLE	0x10
 #define TYPE_CMPLX	0x20
 #define TYPE_VOID	0x40
+#define TYPE_PTRDIFF_T	0x80
 
 #define MAXHASH 257
 typedef struct arg { char *name;
@@ -275,6 +283,7 @@ void usage()
 {
   int i;
   printf("intf2c: %s\n",VERSION_ID);
+  printf("CVSID: $Id$\n");
   printf("Usage:\n\n   intf2c [-x] [-y] [-z] [-c] -s system [input] [output]\n\n");
   printf("where system can be one of:");
   for(i=0; i < NSYSTEMS; i++)printf(" %s",systems[i].name);
@@ -307,6 +316,7 @@ SYSTEM *sys_type;
   (*(sys_type->init))();
 /*  printf("#define FORTRAN_TRUE  %s\n",sys_type->fortran_true);
   printf("#define FORTRAN_FALSE %s\n\n",sys_type->fortran_false); */
+  /* printf("#include <stddef.h>\n"); --> WSRT */
   if(cvtint)printf("#define FORTRAN_CVT_INT 1\n");
   else printf("#define FORTRAN_CVT_INT 0\n");
   if(cvtlog)printf("#define FORTRAN_CVT_LOG 1\n");
@@ -371,6 +381,7 @@ INTERFACE *rout;
   else if(!strcmp(s,"real"))       rout->routine.type = TYPE_REAL;
   else if(!strcmp(s,"logical"))    rout->routine.type = TYPE_LOGICAL;
   else if(!strcmp(s,"double"))	   rout->routine.type = TYPE_DOUBLE;
+  else if(!strcmp(s,"ptrdiff_t"))  rout->routine.type = TYPE_PTRDIFF_T;
   else if(!strcmp(s,"subroutine")) rout->routine.type = TYPE_VOID;
   else {
     fprintf(stderr,"Line %d: fortran not followed by function or routine definition\n",lineno);
@@ -415,6 +426,7 @@ INTERFACE *rout;
     else if(!strcmp("double",s))   type = TYPE_DOUBLE;
     else if(!strcmp("complex",s))  type = TYPE_CMPLX;
     else if(!strcmp("character",s))type = TYPE_CHAR;
+    else if(!strcmp("ptrdiff_t",s))type = TYPE_PTRDIFF_T;
     else break;
 
     s = Get_Token(buf);
@@ -549,6 +561,7 @@ int type;
     case TYPE_LOGICAL:	s = "fort_logical";	break;
     case TYPE_CMPLX:	s = "fort_real";	break;
     case TYPE_VOID:	s = "void";		break;
+    case TYPE_PTRDIFF_T:s = "ptrdiff_t";	break;
     default:
       fprintf(stderr,"### Unrecognised type code (%d) in type_label\n",type);
       exit(1);
@@ -609,6 +622,8 @@ char *buf;
   #, ", ', { or } characters -- return an empty string in preference.
 
   The global variables lineno and last_char are updated.
+  TODO: the WSRT version advances (s++) a little different, delayed
+        check this out
 ------------------------------------------------------------------------*/
 {
   char *s;

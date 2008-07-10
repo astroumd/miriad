@@ -1,5 +1,5 @@
 /*= ratty FORTRAN preprocessor, so that same code works on more machines */
-/*& bpw */
+/*& pjt */
 /*: tools */
 /*+
 Ratty is a FORTRAN preprocessor for MIRIAD source code, intended to
@@ -46,6 +46,8 @@ Usage:
     -u:      Convert all variables, etc, to upper case.
              (some of the system generated if/then/else/endif/continue
               are not converted to upper case)
+
+    -v:      Some verbose output of the setting of ratty
 
     in:      Input file name. If omitted, standard input is assumed
              and output must be the standard output.
@@ -105,6 +107,8 @@ vector processing capacities (compilers "unicos", "alliant" and "convex"):
 /*    mrc  14jul06 Get it to compile with 'gcc -Wall' without warnings. */
 /*    pjt  12mar07 merged MIR4 and atnf versions; re-added -h           */
 /*    pkgw 19jun07 Exit with an error if we fail to find an include.    */
+/*    pjt   9jul08 Merge in jwr's WSRT mods to handle 32/64 bit         */
+/*   (jwr  08jul04 Substitutes ptrdiff_t for appropriate integer*X)     */
 /*									*/
 /************************************************************************/
 /* ToDos/Shortcomings:                                                  */
@@ -114,8 +118,9 @@ vector processing capacities (compilers "unicos", "alliant" and "convex"):
 /*  to be changed to:                                                   */
 /*      (uflag?textout("continue\n"):textout("CONTINUE\n"));            */
 /*  comment lines like "c#define foo bar" still define !!!              */
+/*  ptrdiff_t should have option to become INTEGER, not *4 or *8  ??    */
 /************************************************************************/
-#define VERSION_ID   "12-mar-07"
+#define VERSION_ID   "10-jul-08"
 
 #define max(a,b) ((a) > (b) ? (a) : (b) )
 #define min(a,b) ((a) < (b) ? (a) : (b) )
@@ -123,6 +128,7 @@ vector processing capacities (compilers "unicos", "alliant" and "convex"):
 #define private static
 #include <ctype.h>
 #include <stdio.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -200,7 +206,7 @@ struct system {char *name;int doloop,prog,vector,bslash;} systems[] = {
 
 static FILE *out;
 static int dbslash,offlevel,level,sys,label,uselabel,depth,lines,routines,chars;
-static int comment,in_routine,gflag,lflag,uflag;
+static int comment,in_routine,gflag,lflag,uflag,vflag;
 static int loops[MAXDEPTH],dowhile[MAXDEPTH];
 struct link_list {char *name; struct link_list *fwd;} *defines,*incdir;
 
@@ -216,7 +222,7 @@ int main(int argc,char *argv[])
 /* Initalize everything in sight. */
 
   incdir = defines = NULL;
-  in_routine = dbslash = comment = gflag = lflag = uflag = FALSE;
+  in_routine = dbslash = comment = gflag = lflag = uflag = vflag = FALSE;
   offlevel = level = uselabel = depth = lines = routines = chars= 0;
   lower = LOWER;
   increment = 1;
@@ -242,6 +248,7 @@ int main(int argc,char *argv[])
 	case 'g': gflag=TRUE; 					break;
         case 'l': lflag = TRUE;                                 break;
 	case 'u': uflag = TRUE;                                 break;
+	case 'v': vflag = TRUE;                                 break;
         case 'h':
 	case '?': usage();		/* will also exit */
 	default:  fprintf(stderr,"### Ignored unrecognized flag %c\n",*(s-1));
@@ -468,6 +475,18 @@ char *infile;
 	} else if(sys == SYS_F77){
 	  blankout(indent); textout("implicit undefined (a-z)\n");
 	}
+/* ptrdiff_t declaration */
+      } else if (!strncmp(token,"ptrdiff_t", 9)) {
+	char type[16];
+	blankout(indent);
+	/* note INTEGER*4 or INTEGER*8 is actually not ANSI
+	   and online INTEGER is official. But for now we will
+	   let this slip 
+	*/
+	sprintf(type,"integer*%d", (int) sizeof(ptrdiff_t));
+	textout(type); textout(getparm(line, token)); textout("\n");
+
+
 
 /* Some other line. */
       } else {
@@ -649,6 +668,7 @@ int *indent,*lineno,*bracketting;
     end
     include
     implicit none
+    ptrdiff_t
     DEC continuation format
 
   Some checks are also made for "standard" format of comments and
@@ -718,6 +738,11 @@ int *indent,*lineno,*bracketting;
       if(*skipexp(s+1,bracketting) != ',') *token = 0;
       else token[2] = 0;
     }
+
+/* Check ptrdiff_t */
+
+  } else if (!strncmp(token,"ptrdiff_t", 9)) {
+
 
 /* Make a few checks to see if its one of the other ANSI statements. */    
 
@@ -946,6 +971,7 @@ private void usage()
    int i;
 
    fprintf(stderr,"RATTY: Version %s\n",VERSION_ID);
+   fprintf(stderr"CVSID: $Id$\n");
    fprintf(stderr,"Usage: \n");
    fprintf(stderr,"ratty [-s system] [-I incdir] [-D symbol] [-bglu] [-n start inc] [in] [out]\n");
    fprintf(stderr,"-s system    compile for system (");
