@@ -3,20 +3,21 @@ c************************************************************************
 	implicit none
 
 c= wsrtuvmodel - Add, subtract, etc, a model from a uv data set.
-c& rjs
+c& wsrt
 c: uv analysis
 c+
-c	UVMODEL is a MIRIAD task which modifies a visibility dataset by a model.
+c	WSRTUVMODEL is a MIRIAD task which modifies a visibility dataset by a model.
+c       It was derived from the task UVMODEL.
 c	Allowed operations are adding, subtracting, multiplying, dividing and
 c	replacing. The model is specified in the image domain, so that its
 c	Fourier transform is first computed before application to the
 c	visibilities. The model may be either an image (e.g., a CLEAN
-c	component image) or a point source.
+c	component image) or a point source.WSRT
 c
-c	An example is as follows. UVMODEL could be used to remove CLEAN
+c	An example is as follows. WSRTUVMODEL could be used to remove CLEAN
 c	components from a visibility data file.  The residual data base could
 c	then be examined for anomalous points, which could in turn be clipped.
-c	UVMODEL could then be reapplied to add the CLEAN components back into
+c	WSRTUVMODEL could then be reapplied to add the CLEAN components back into
 c	the visibility data base for re-imaging. 
 c@ vis
 c	Input visibility data file. No default
@@ -43,7 +44,7 @@ c	  flag      Form: out = vis, but flag data where the difference
 c	            between vis and model is greater than "sigma" sigmas.
 c	  unflag    Unflag any flagged data in the output.
 c
-c	  mosaic    This causes UVMODEL to select only those visibilities
+c	  mosaic    This causes WSRTUVMODEL to select only those visibilities
 c	            whose observing center is within plus or minus three
 c	            pixels of the model reference pixel. This is needed
 c	            if there are multiple pointings or multiple sources in
@@ -86,7 +87,7 @@ c	model, the default is all channels. If you wish to override these
 c	defaults, or if the info is not present in the header, this parameter
 c	can be useful.
 c@ sigma
-c	For options=flag, UVMODEL flags those points in the output that
+c	For options=flag, WSRTUVMODEL flags those points in the output that
 c	differ by more than "sigma" sigmas. The default is 100.
 c@ out
 c	Output visibility data file name. No default. The output file will
@@ -138,7 +139,7 @@ c                 processing.
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='version 1.0 26-Sep-97')
+	parameter(version='version 10-jul-08')
 	integer maxsels,nhead,nbuf
 	parameter(maxsels=64,nhead=1,nbuf=5*maxchan+nhead)
 c
@@ -166,7 +167,7 @@ c
 c
 c  Get the input parameters.
 c
-	call output('Uvmodel: '//version)
+	call output('WSRTUvmodel: '//version)
 	call keyini
 	call keya('vis',vis,' ')
 	call SelInput('select',sels,maxsels)
@@ -202,7 +203,8 @@ c
 	call uvopen(tvis,vis,'old')
 	if(hdprsnt(tvis,'gains').or.hdprsnt(tvis,'leakage').or.
      *	   hdprsnt(tvis,'bandpass'))then
-	  call bug('w','UVMODEL does not apply any calibration tables')
+	  call bug('w',
+     *             'WSRTUVMODEL does not apply any calibration tables')
 	  if(hdprsnt(tvis,'gains'))call bug('w',
      *	    'Antenna gain calibration not applied')
 	  if(hdprsnt(tvis,'leakage'))call bug('w',
@@ -307,8 +309,8 @@ c  Make the history of the output and close up shop.
 c
 	call hdcopy(tvis,tOut,'history')
 	call hisOpen(tOut,'append')
-	call hisWrite(tOut,'UVMODEL: Miriad UvModel '//version)
-	call hisInput(tOut,'UVMODEL')
+	call hisWrite(tOut,'WSRTUVMODEL: Miriad UvModel '//version)
+	call hisInput(tOut,'WSRTUVMODEL')
 	call hisClose(tOut)
 	if(Modl.ne.' ') call xyclose(tmod)
 	call uvClose(tvis)
