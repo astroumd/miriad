@@ -971,7 +971,7 @@ private void usage()
    int i;
 
    fprintf(stderr,"RATTY: Version %s\n",VERSION_ID);
-   fprintf(stderr"CVSID: $Id$\n");
+   fprintf(stderr,"CVSID: $Id$\n");
    fprintf(stderr,"Usage: \n");
    fprintf(stderr,"ratty [-s system] [-I incdir] [-D symbol] [-bglu] [-n start inc] [in] [out]\n");
    fprintf(stderr,"-s system    compile for system (");
