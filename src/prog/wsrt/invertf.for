@@ -3,10 +3,10 @@ c************************************************************************
 	implicit none
 c
 c= invertf - Transform multi-pointing visibility data into a map
-c& pjt
+c& wsrt
 c: map making
 c+
-c	INVERTF is a MIRIAD task which forms images from visibilities
+c	INVERTF is a MIRIAD task which forms images from visibilities.
 c	INVERTF can form continuum images or spectral line cubes. It
 c	can generate images/cubes for several polarisations, as well
 c	as handling multi-frequency synthesis and mosaicing observations.
@@ -188,120 +188,8 @@ c	channels. See the Users Guide for the merits and evils of the two
 c	approaches. The default is `zero'.
 c--
 c  History
-c    rjs        89  Initial version
-c    nebk  29apr89  Added option to shift map centre from phase centre.
-c    nebk  31may89  Change IMSIZE to two dimensions and
-c                   put third dimension of image into LINE.
-c    rjs   27jun89  Protected the case of cdelt3 being left as zero.
-c    nebk  27jul89  Fixed bug which confused fwhmx and fwhmy.
-c    rjs   16aug89  Improved some formatting.
-c    rjs   18oct89  Support of uv selection. Added needed changes to support
-c		    the new calling sequence for planet rotation/scaling.
-c    rjs    7nov89  Increased line buffer size in HISTORY.
-c    rjs   13nov89  Multiple input files, systemp weighting, better history
-c		    comments.
-c    rjs   14feb90  Handle multi-pointing files. More checking that source,
-c		    channel velocity, ra and dec remain constant. Corrected pi!
-c		    Replaced velocalc with uvfit. More statistics.
-c    rjs   22feb90  Corrected bug which did not discard out of range
-c		    visibilities. Cosmetic changes.
-c    rjs   23mar90  Changes to support applying calibration on the fly.
-c		    Version number.
-c    rjs   28mar90  Changed the default of JyperK.
-c    rjs   29mar90  Corrected spelling mistake "sytemp" in the options list.
-c    pjt    2may90  included maxdim.h in getvis for maxchan
-c    mchw  21may90  Better error messages.
-c    mchw  10Jul90  Worked on documentation.
-c    rjs   16oct90  Checks that the data is cross-correlation data.
-c    mchw  09Nov90  Added pbfwhm to map header.
-c    mchw  20dec90  Added theoretical rms noise to history.
-c			Minor docs and dots in AppWts.
-c    rjs   10jan91  An extra check for zero visibilities to map.
-c    rjs    5feb91  New call sequence to the uvdat routines. Able to
-c		    map one stokes parameter. "sloppy" option.
-c    rjs   15mar91  Grid beam the same time as the maps. Multiple
-c		    pols/stokes at a time. Bandwidth synthesis.
-c    rjs   18apr91  Fixed documentation comment. Changed a common block.
-c		    Corrected call sequence of hclose.
-c    rjs   23apr91  Reverted default line-type to 1 channel only.
-c    rjs    1may91  Doc improvements (??) and an extra user message.
-c    rjs   11jun91  More doc improvements (??) and extra user messages.
-c    rjs   28jun91  Flag to perform polarisation leakage correction.
-c    rjs    3jul91  Changes to checking for data in files, to appease
-c		    Lauren. Changed crval1,crval2 to double to appease pjt.
-c    rjs   28aug91  An extra check of the input parameters.
-c    nebk  30aug91  Improve documentation for options=mfs
-c    rjs   12sep91  Slight change for systemp weighting.
-c    rjs   19sep91  Check if the output files already exit.
-c    rjs   18feb92  Documentation enhancement to appease lgm.
-c    rjs   18mar92  Better memory allocation.
-c    rjs    3apr92  Calls to MemBuf.
-c    nebk  05may92  Tell user when finished
-c    rjs   26may92  Write btype keyword. Change spectral index sign convention
-c		    for mfs beams.
-c    mchw  09jun92  Check RA & DEC change lt 1% of cdelt's. Improve doc shift.
-c    rjs   11jun92  More doc changes.
-c    rjs   25jun92  Single channel gets labelled with frequency.
-c    rjs    1jul92  Doc changes only.
-c    rjs   27jul92  Fiddles with the velocity/frequency labelling, and on
-c		    where the linetype is retrieved from.
-c    mchw  14aug92  Changed systemp weighting to include JyperK.
-c    rjs   26aug92  Add nopass option.
-c    rjs   29aug92  Add "slow" and "vslow" options.
-c    rjs   25sep92  Recalculate the bandwidth often. Better description
-c		    of systemp weighting.
-c    mchw  11feb93  Read uvvariables ra, dec as double precision.
-c    rjs   29mar93  Use uvinfo(...,'variance'...) to get rms. Fix erroneous
-c		    calls to uvrdvrd.
-c    rjs   29jun93  Tell user whats going wrong when uvinfo fails to
-c		    determine variance, when systemp weighting used.
-c    mchw  39jun93  Option to make imaginary image for non Hermitian data.
-c    rjs    1jul93  Doc changes and merge of mchw/rjs versions.
-c    rjs   21jul93  Get rid of calls to uvinfo(..,'frequency'...). Better
-c		    error messages (suggested by Lauren Likkel). Noise
-c		    fiddle (use uvDatGtr(..'variance'..).
-c    rjs   23jul93  Only write pbfwhm parameter if its valid.
-c    rjs   24aug93  Change "shift" to "offset", to be consistent.
-c    rjs   31aug93  vsloppy option.
-c    rjs   24sep93  Long time bug dealing with insufficient space in the
-c		    weight array under certain conditions.
-c    rjs    8oct93  Increase buffer size.
-c    rjs   15nov93  Image sizes do not need to be powers of 2. Double option.
-c    rjs   13jan93  Use double precision to avoid roundoff error, when
-c		    beam scale factor.
-c    rjs    9aug94  Remember if its an E-W array. Also minor change to
-c		    usage of dra, to bring it into line with whats written
-c		    in the uv var "bible".
-c    rjs   11aug94  Better scaling for sloppy and vsloppy options. Also
-c		    describe this in the help.
-c    rjs   17aug94  Slightly better determination of the offset.
-c    rjs   16sep94  Doc only.
-c    rjs   16sep94  Started rewrite -- to support mosaicing, and to generally
-c		    tidy it up.
-c    rjs   27oct94  First released version. with mosaicing.
-c    rjs   18nov94  Eliminate rounding error problem in calculating freq0.
-c	            Better messages for natural weighting. ref linetype.
-c    rjs   28nov94  Determine the weights in a pointing-dependent manner.
-c    rjs    3dec94  Some changes to make it work nicerer with single pointing
-c		    mosaics.
-c    rjs   19dec94  Restore amplitude and phase options.
-c    rjs    4feb95  Changed subroutine name only.
-c    rjs   18aug95  Check a beam is being made with options=sdb.
-c		    Beam axis order for options=sdb,mfs,mosaic for npnt=1.
-c		    Interpolate mode with the slop factor.
-c		    Robust parameter.
-c    nebk  29sep95  Fix typo for irked user; "unform -> uniform"
-c    rjs   30oct95  slop=xxx,interp was not workin g as advertised.
-c    rjs    1nov95  Default value for imsize. Better default cell and sup.
-c		    Sub-uniform weighting.
-c    rjs   12nov95  Check imsize somewhat better.
-c    rjs   13dec95  Eliminate min image size.
-c    rjs   29feb96  Call xyflush after each plane.
-c    rjs   12jul96  Be fore forgiving if beam too big -- just make it smaller.
-c    rjs   20jun97  Correct handling of multiple stokes in slopintp.
-c    rjs   07jul97  Change coaxdesc to coaxget.
-c    rjs   01jul99  Changes in call sequence to hdfiddle.
-c    pjt   25apr03  verbose error when images too big
+c    jwr   23nov04  SumWt and rms2 now in double precision
+c    pjt   10jul08  Merged in the WSRT changes and renamed to INVERTF
 c  Bugs:
 c
 c------------------------------------------------------------------------
@@ -310,12 +198,12 @@ c------------------------------------------------------------------------
 	include 'mem.h'
 c
 	character version*(*)
-	parameter(version='Invert: version 1.0 28-Oct-04')
+	parameter(version='Invert: version 10-jul-08')
 	integer MAXPOL,MAXRUNS
 	parameter(MAXPOL=4,MAXRUNS=4*MAXDIM)
 c
-	real cellx,celly,fwhmx,fwhmy,freq0,slop,supx,supy
-	real umax,vmax,wdu,wdv,tu,tv,rms,robust
+	real cellx,celly,fwhmx,fwhmy,freq0,slop,supx,supy,rms
+	real umax,vmax,wdu,wdv,tu,tv,robust
 	real ChanWt(MAXPOL*MAXCHAN)
 	character maps(MAXPOL)*64,beam*64,uvflags*16,mode*16,vis*64
 	character proj*3,line*64
@@ -327,7 +215,7 @@ c
 	logical double,doamp,dophase
 c
 	integer tno,tvis
-	integer nUWts,nMMap
+	integer nUWts
 	ptrdiff_t UWts,Map,MMap
 c
 	integer nRuns,Runs(3,MAXRUNS)
@@ -441,9 +329,8 @@ c
 	call output('Reading the visibility data ...')
 	if(mosaic)call MosCIni
 	call HdInit(mfs,mosaic)
-	call scropen(tscr)
-	call GetVis(doimag,systemp,mosaic,mfs,npol,tscr,slop,slopmode,
-     *		vis,nvis,nchan,umax,vmax,ChanWt,MAXCHAN,freq0)
+	call ScanUV(doimag,systemp,mosaic,mfs,npol,slop,slopmode,
+     *		vis,nvis,nchan,umax,vmax,ChanWt,freq0)
 c
 c  Set appropriate values for cellx and celly if needed. Try to make
 c  the pixels square if the X and Y resolutions are approx the same.
@@ -535,12 +422,12 @@ c
 	  call output('Calculating the weights ...')
 	  nUWts = (wnu/2+1) * wnv * npnt
 	  call Memalloc(UWts,nUWts,'r')
-	  call WtCalc(tscr,memr(UWts),wdu,wdv,wnu,wnv,npnt,
-     *						nvis,npol*nchan)
+	  call WtCalc(memr(UWts),wdu,wdv,wnu,wnv,npnt,
+     *	    npol*nchan,npol,mosaic,systemp,doimag,mfs,umax,vmax,
+     *	    slop,slopmode)
 	  if(robust.gt.-4)
      *	    call WtRobust(robust,memr(UWts),wnu,wnv,npnt)
 	else
-	   UWts = 1
 	   nUWts = 0
 	endif
 c
@@ -552,21 +439,23 @@ c
 	else
 	  call output('Applying the weights ...')
 	endif
-	call Wter(tscr,Natural,memr(UWts),wdu,wdv,wnu,wnv,npnt,Tu,Tv,
-     *	  nvis,npol,nchan,mosaic,idb,sdb,doamp,dophase,freq0,Rms,
-     *	  ChanWt,lmn,umax,vmax,cellx,celly)
+	call scropen(tscr)
+	call Wter(tscr,Natural,memr(UWts),wdu,wdv,wnu,wnv,npnt,
+     *	  Tu,Tv,npol,nchan,mosaic,idb,sdb,doamp,dophase,freq0,
+     *	  rms,lmn,umax,vmax,cellx,celly,systemp,doimag,mfs,ChanWt,
+     *	  slop,slopmode)
 c
-	if(nUWts.gt.0)call MemFree(UWts,nUWts,'r')
+	if(.not.Natural)call MemFree(UWts,nUWts,'r')
 	if(mosaic)call mosGFin
 c
 c  Tell the user about the noise level in the output images.
 c
 	write(line,'(a,1pg10.3)')'Theoretical rms noise:',
-     *					Rms*sqrt(real(npnt))
+     *					rms*sqrt(real(npnt))
 	call output(line)
 	if(npnt.gt.1)then
 	  call output(' ... assuming pointings do not overlap')
-	  Rms = 0
+	  rms = 0
 	endif
 c
 c  Reopen the first visibility dataset, to extract history from.
@@ -603,12 +492,7 @@ c
 c
 c  Create space for the mosaiced image, if needed.
 c
-	if(mosaic)then
-	  nMMap = mnx*mny
-	  call MemAlloc(MMap,nMMap,'r')
-	else
-	  nMMap = 0
-	endif
+	if(mosaic)call MemAlloc(MMap,mnx*mny,'r')
 c
 c  Make the appropriate beams.
 c
@@ -620,8 +504,8 @@ c
 	  call output('Determining normalisation factor ...')
 	endif
 c
+        call MapScale(1)
 	do i=1,nbeam
-	  if(i.eq.1)call MapScale(i)
 	  if(i.gt.ndiscard)then
 	    call Mapper(i,Map)
 	    call BmWrite(tno,i-ndiscard,memr(Map),bnx,bny,npnt,mosaic)
@@ -662,7 +546,7 @@ c
 c
 c  All said and done. Tidy up and exit.
 c
-	if(nMMap.gt.0)call MemFree(MMap,nMMap,'r')
+	if(mosaic)call MemFree(MMap,mnx*mny,'r')
 	call MapFin
 	call uvclose(tvis)
 	call scrclose(tscr)
@@ -827,16 +711,18 @@ c
 c
 	end
 c************************************************************************
-	subroutine WtCalc(tvis,Wts,wdu,wdv,wnu,wnv,npnt,nvis,nchan)
+	subroutine WtCalc(Wts,wdu,wdv,wnu,wnv,npnt,nchan,npol,
+     *	  mosaic,systemp,doimag,mfs,umax,vmax,slop,slopmode)
 c
 	implicit none
-	integer tvis,wnu,wnv,nvis,nchan,npnt
-	real Wts(wnv,wnu/2+1,npnt),wdu,wdv
+	integer wnu,wnv,nchan,npnt,npol
+	real Wts(wnv,wnu/2+1,npnt),wdu,wdv,umax,vmax,slop
+	logical mosaic,systemp,doimag,mfs
+	character slopmode*(*)
 c
 c  Calculate the weight to be applied to each visibility.
 c
 c  Input:
-c    tvis	Handle of the visibility scratch file.
 c    wnu,wnv	Full size of the weights array.
 c    wdu,wdv	Cell increments (wavelengths).
 c    nvis	Number of visibilities.
@@ -847,18 +733,22 @@ c  Output:
 c    Wts	Array containing the visibility weights.
 c
 c------------------------------------------------------------------------
+	include 'maxdim.h'
 	integer InU,InV,InW,InWt,InPnt,InRms2,InFreq,InData
 	parameter(InU=0,InV=1,InW=2,InPnt=3,InWt=6,InRms2=4)
 	parameter(InFreq=5,InData=8)
-	integer Maxrun
-	parameter(Maxrun=2048)
-	integer i,id,j,VispBuf, VisSize,u,v,k,l,ltot,ipnt
-	real Visibs(Maxrun)
+	integer i,id,j,VisSize,u,v,l,ipnt,nread,tno
+	double precision uvw(5),SumWt,dfreq0
+	integer MAXPOL,MAXLEN
+	parameter(MAXPOL=4,MAXLEN=(4+MAXPOL)*MAXCHAN)
+	complex data(MAXCHAN,MAXPOL)
+	logical flags(MAXCHAN,MAXPOL)
+	real tumax,tvmax,ChanWt(npol*MAXCHAN),Vis(2*MAXLEN)
+	integer nvis,nbad,nrec
 c
 c  Determine the number of visibilities perr buffer.
 c
 	VisSize = InData + 2*nchan
-	VispBuf = (Maxrun-InData)/VisSize + 1
 c
 c  Zero out the array.
 c
@@ -872,22 +762,40 @@ c
 c
 c  Accumulate the weight function.
 c
-	k = 0
-	dowhile(k.lt.nvis)
-	  ltot = min(VispBuf,nvis-k)
-	  call scrread(tvis,Visibs,k*VisSize,(ltot-1)*VisSize+InData)
-	  do l=1,ltot*VisSize,VisSize
-	    if(Visibs(l+InU).lt.0)then
-	      u = nint(-Visibs(l+InU)/wdu) + 1
-	      v = nint(-Visibs(l+InV)/wdv) + wnv/2 + 1
-	    else
-	      u = nint(Visibs(l+InU)/wdu) + 1
-	      v = nint(Visibs(l+InV)/wdv) + wnv/2 + 1
-	    endif
-	    ipnt = nint(Visibs(l+InPnt))
-	    Wts(v,u,ipnt) = Wts(v,u,ipnt) + Visibs(l+InWt)
-	  enddo
-	  k = k + ltot
+	do i=1,nchan*npol
+	  ChanWt(i)=0
+	enddo
+
+	nvis = 0
+	nbad = 0
+	tumax = 0
+	tvmax = 0
+	SumWt = 0
+	dfreq0 = 0
+	tno = 0
+	call uvDatRew
+	if(mosaic)call MosCIni
+	call GetRec(tno,uvw,data,flags,npol,nread)
+
+	dowhile(nread.eq.nchan.or.(mfs.and.nread.gt.0))
+	  call ProcRec(tno,uvw,mosaic,mfs,systemp,doimag,npol,nread,
+     *	    nvis,nbad,Vis,data,flags,nrec,umax,vmax,tumax,
+     *	    tvmax,SumWt,dfreq0,ChanWt,slop,slopmode)
+
+	  if(nrec.gt.0)then
+	    do l=1,nrec*VisSize,VisSize
+	      if(Vis(l+InU).lt.0)then
+		u = nint(-Vis(l+InU)/wdu) + 1
+		v = nint(-Vis(l+InV)/wdv) + wnv/2 + 1
+	      else
+		u = nint(Vis(l+InU)/wdu) + 1
+		v = nint(Vis(l+InV)/wdv) + wnv/2 + 1
+	      endif
+	      ipnt = nint(Vis(l+InPnt))
+	      Wts(v,u,ipnt) = Wts(v,u,ipnt) + Vis(l+InWt)
+	    enddo
+	  endif
+	  call GetRec(tno,uvw,data,flags,npol,nread)
 	enddo
 c
 c  Correct the first row.
@@ -1053,20 +961,24 @@ c
 c
 	end
 c************************************************************************
-	subroutine Wter(tscr,Natural,UWts,wdu,wdv,wnu,wnv,npnt,Tu,Tv,
-     *	  nvis,npol,nchan,mosaic,idb,sdb,doamp,dophase,freq0,Rms,
-     *	  Slop,lmn,umax,vmax,cellx,celly)
+	subroutine Wter(tscr,Natural,UWts,wdu,wdv,wnu,wnv,npnt,
+     *	  Tu,Tv,npol,nchan,mosaic,idb,sdb,doamp,dophase,freq0,
+     *	  rms,lmn,umax,vmax,cellx,celly,systemp,doimag,mfs,ChanWt,
+     *	  slop,slopmode)
 c
 	implicit none
-	integer tscr,wnu,wnv,nvis,npol,nchan,npnt
-	logical Natural,sdb,idb,mosaic,doamp,dophase
+	integer tscr,wnu,wnv,npol,nchan,npnt
+	logical Natural,sdb,idb,mosaic,doamp,dophase,systemp,doimag
+	logical mfs
 	real Tu,Tv,wdu,wdv,UWts(wnv,wnu/2+1,npnt),cellx,celly
-	real Rms,freq0,umax,vmax,Slop(npol*nchan)
-	double precision lmn(3)
+	real freq0,umax,vmax,ChanWt(npol*nchan),slop,rms
+	character slopmode*(*)
+	double precision lmn(3),rms2
 c
 c  Apply weights and calculate RMS noise for each pointing.
 c
 c  Input:
+c    tno	File handle of the input data
 c    tscr	Scratch file of the visibility data.
 c    Natural	True if natural weighting is to be used.
 c    Tu,Tv	Scale factors for determining taper.
@@ -1075,38 +987,46 @@ c		uniform weight information.
 c    wnu,wnv	Weight array size.
 c    npnt	Number of pointings.
 c    wdu,wdv	Weight cell size.
-c    nvis	Number of visibilities.
 c    npol	Number of polarisations.
 c    nchan	Number of channels.
 c    mosaic	True if we are mosaicing.
 c    sdb	True if a spectral dirty beam is to be created.
 c    idb	True if an imaginary dirty beam is to be created.
 c    freq0	Reference frequency, when calculating spectral dirty beam.
-c    slop	Slop scale factors.
+c    ChanWt	Slop scale factors.
 c    lmn	Direction cosines of place to shift to.
-c    doamp	True if amplitude-only imaging.
-c    dophase	True if phase-only imaging.
+c    doamp	True if amplitude-only imaging.  c    dophase	True if phase-only imaging.
 c  Output:
-c    Rms	An estimate of the rms noise in the output map.
+c    rms	An estimate of the rms noise in the output map.
 c    umax,vmax	Maximum u and v values.
 c------------------------------------------------------------------------
+	include 'maxdim.h'
 	integer InU,InV,InW,InPnt,InRms,InFreq,InWt,InData
 	parameter(InU=0,InV=1,InW=2,InPnt=3,InRms=4,InFreq=5,InWt=6,
      *		  InData=8)
-	integer maxrun
-	parameter(maxrun=8192)
+	integer MAXPOL,MAXLEN
+	parameter(MAXPOL=4,MAXLEN=(4+MAXPOL)*MAXCHAN)
 c
-	real Wts(maxrun/(InData+2)),Vis(maxrun),logFreq0,Wt,t
-	double precision RMS2,SumWt
-	integer i,j,k,l,size,step,n,u,v,offcorr,nbeam,ncorr,ipnt
+	double precision uvw(5),SumWt,tSumWt,dfreq0
+	real Wts(MAXCHAN*MAXPOL),Vis(2*MAXLEN),logFreq0,t
+	integer i,j,k,l,size,u,v,offcorr,nbeam,ipnt
 	logical doshift
+	complex data(MAXCHAN,MAXPOL)
+	logical flags(MAXCHAN,MAXPOL)
+	integer tno,nread,nvis,nbad,nrec,ncorr
+	real uumax,vvmax,tumax,tvmax,Wt,tChanWt(npol*MAXCHAN)
 c
 c  Miscellaneous initialisation.
 c
-	RMS2 = 0
+	rms2 = 0
 	SumWt = 0
+	tSumWt = 0
 	doshift = abs(lmn(1)) + abs(lmn(2)).gt.0
 c
+	tumax = 0
+	tvmax = 0
+	uumax = umax
+	vvmax = vmax
 	umax = 0
 	vmax = 0
 	if(sdb) logFreq0 = log(Freq0)
@@ -1120,151 +1040,165 @@ c
 	ncorr = nbeam + npol*nchan
 c
 	size = 2*npol*nchan + InData
-	step = maxrun/size
-	if(step.le.0)
-     *	  call bug('f','Too many channels for buffer in AppWts')
 c
 c  Do the real work.
+	nvis = 0
+	nbad = 0
+	dfreq0 = 0
+
+	do i=1,nchan*npol
+	  tChanWt(i)=0
+	enddo
 c
-	do l=1,nvis,step
-!	do l=((nvis-1)/step)*step+1,1,-step
-	  n = min(nvis-l+1,step)
-	  call scrread(tscr,Vis,(l-1)*size,n*size)
+	tno = 0
+	l = 0
+	call uvDatRew
+	if(mosaic)call MosCIni
+        call GetRec(tno,uvw,data,flags,npol,nread)
+
+	dowhile(nread.eq.nchan.or.(mfs.and.nread.gt.0))
+	  call ProcRec(tno,uvw,mosaic,mfs,systemp,doimag,npol,nread,
+     *	    nvis,nbad,Vis,data,flags,nrec,uumax,vvmax,tumax,
+     *	    tvmax,tSumWt,dfreq0,tChanWt,slop,slopmode)
 c
 c  Calculate the basic weight, either natural or pseudo-uniform.
 c
-	  if(Natural)then
-	    k = 1
-	    do i=1,n
-	      Wts(i) = Vis(k+InWt)
-	      Vis(k+InWt) = 1
-	      k = k + size
-	    enddo
-	  else
-	    k = 1
-	    do i=1,n
-	      if(Vis(k+InU).gt.0)then
-	        u = nint(Vis(k+InU)/wdu)         + 1
-	        v = nint(Vis(k+InV)/wdv) + wnv/2 + 1
-	      else
-	        u = nint(-Vis(k+InU)/wdu)         + 1
-	        v = nint(-Vis(k+InV)/wdv) + wnv/2 + 1
-	      endif
-	      ipnt = nint(Vis(k+InPnt))
-	      Wts(i) = Vis(k+InWt) / UWts(v,u,ipnt)
-	      Vis(k+InWt) = 1
-	      k = k + size
-	    enddo
-	  endif
+	  if(nrec.gt.0)then
+	    if(Natural)then
+	      k = 1
+	      do i=1,nrec
+		Wts(i) = Vis(k+InWt)
+		Vis(k+InWt) = 1
+		k = k + size
+	      enddo
+	    else
+	      k = 1
+	      do i=1,nrec
+		if(Vis(k+InU).gt.0)then
+		  u = nint(Vis(k+InU)/wdu)         + 1
+		  v = nint(Vis(k+InV)/wdv) + wnv/2 + 1
+		else
+		  u = nint(-Vis(k+InU)/wdu)         + 1
+		  v = nint(-Vis(k+InV)/wdv) + wnv/2 + 1
+		endif
+		ipnt = nint(Vis(k+InPnt))
+		Wts(i) = Vis(k+InWt) / UWts(v,u,ipnt)
+		Vis(k+InWt) = 1
+		k = k + size
+	      enddo
+	    endif
 c
 c  Include a taper in the weights, if necessary.
 c
-	  if(abs(Tu)+abs(Tv).gt.0)then
-	    k = 1
-	    do i=1,n
-	      Wts(i) = Wts(i) * exp( Tu*Vis(k+InU)*Vis(k+InU) +
-     *				     Tv*Vis(k+InV)*Vis(k+InV))
-	      k = k + size
-	    enddo
-	  endif
+	    if(abs(Tu)+abs(Tv).gt.0)then
+	      k = 1
+	      do i=1,nrec
+		Wts(i) = Wts(i) * exp( Tu*Vis(k+InU)*Vis(k+InU) +
+       *				     Tv*Vis(k+InV)*Vis(k+InV))
+		k = k + size
+	      enddo
+	    endif
 c
 c  Apply geometry and shift corrections.
 c
-	  if(mosaic)then
-	    call MosGeom(size/2,n,nchan,npol,Vis,Wts)
-	  else if(doshift)then
-	    call WtShift(size/2,n,nchan*npol,Vis,lmn)
-	  endif
+	    if(mosaic)then
+	      call MosGeom(size/2,nrec,nchan,npol,Vis,Wts)
+	    else if(doshift)then
+	      call WtShift(size/2,nrec,nchan*npol,Vis,lmn)
+	    endif
 c
 c  Normalise the uv coordinates, and determine the rms noise (for
 c  a mosaicing observation, this is the mean over all fields).
 c
-	  k = 1
-	  do i=1,n
-	    Vis(k+InU) = Vis(k+InU) * cellx
-	    Vis(k+InV) = Vis(k+InV) * celly
-	    umax = max( umax, abs(Vis(k+InU)) )
-	    vmax = max( vmax, abs(Vis(k+InV)) )
-	    SumWt = SumWt + Wts(i)
-	    RMS2 = RMS2 + Wts(i)*Wts(i)*Vis(k+InRms)
-	    k = k + Size
-	  enddo
+	    k = 1
+	    do i=1,nrec
+	      Vis(k+InU) = Vis(k+InU) * cellx
+	      Vis(k+InV) = Vis(k+InV) * celly
+	      umax = max( umax, abs(Vis(k+InU)) )
+	      vmax = max( vmax, abs(Vis(k+InV)) )
+	      SumWt = SumWt + Wts(i)
+	      rms2 = rms2 + Wts(i)*Wts(i)*Vis(k+InRms)
+	      k = k + Size
+	    enddo
 c
 c  Do amplitude and phase processing, if needed.
 c
-	  if(doamp)then
-	    do i=1,n
-	      k = (i-1)*size + InData + 1
-	      do j=1,npol*nchan
-		Vis(k) = sqrt(Vis(k)**2+Vis(k+1)**2)
-		Vis(k+1) = 0
-		k = k + 2
+	    if(doamp)then
+	      do i=1,nrec
+		k = (i-1)*size + InData + 1
+		do j=1,npol*nchan
+		  Vis(k) = sqrt(Vis(k)**2+Vis(k+1)**2)
+		  Vis(k+1) = 0
+		  k = k + 2
+		enddo
 	      enddo
-	    enddo
-	  endif
-	  if(dophase)then
-	    do i=1,n
-	      k = (i-1)*size + InData + 1
-	      do j=1,npol*nchan
-		t = sqrt(Vis(k)**2+Vis(k+1)**2)
-		if(t.gt.0)then
-		  Vis(k)   = Vis(k)/t
-		  Vis(k+1) = Vis(k+1)/t
-		endif
-		k = k + 2
+	    endif
+	    if(dophase)then
+	      do i=1,nrec
+		k = (i-1)*size + InData + 1
+		do j=1,npol*nchan
+		  t = sqrt(Vis(k)**2+Vis(k+1)**2)
+		  if(t.gt.0)then
+		    Vis(k)   = Vis(k)/t
+		    Vis(k+1) = Vis(k+1)/t
+		  endif
+		  k = k + 2
+		enddo
 	      enddo
-	    enddo
-	  endif
+	    endif
 c
 c  Generate the "correlations" needed for the spectral dirty beam
 c  and the imaginary dirty beam, if needed. Note that we reverse the
 c  normal beam and the special beams.
 c
-	  if(sdb)then
-	    k = 1
-	    do i=1,n
-	      Vis(k+InData-2) = Vis(k+InFreq) - logfreq0
-	      Vis(k+InData-1) = 0
-	      Vis(k+InData-4) = 1
-	      Vis(k+InData-3) = 0
-	      k = k + size
-	    enddo
-	  else if(idb)then
-	    k = 1
-	    do i=1,n
-	      Vis(k+InData-4) = 1
-	      Vis(k+InData-3) = 0
-	      Vis(k+InData-2) = 0
-	      Vis(k+InData-1) = 1
-	      k = k + size
-	    enddo
-	  endif
+	    if(sdb)then
+	      k = 1
+	      do i=1,nrec
+		Vis(k+InData-2) = Vis(k+InFreq) - logfreq0
+		Vis(k+InData-1) = 0
+		Vis(k+InData-4) = 1
+		Vis(k+InData-3) = 0
+		k = k + size
+	      enddo
+	    else if(idb)then
+	      k = 1
+	      do i=1,nrec
+		Vis(k+InData-4) = 1
+		Vis(k+InData-3) = 0
+		Vis(k+InData-2) = 0
+		Vis(k+InData-1) = 1
+		k = k + size
+	      enddo
+	    endif
 c
 c  Apply the weights to the data.
 c
-	  do j=1,ncorr
-	    k = 2*(j-1) + offcorr
-	    if(j.le.nbeam)then
-	      Wt = 1
-	    else
-	      Wt = Slop(j-nbeam)
-	    endif
-	    do i=1,n
-	      Vis(k)   = Wt*Wts(i)*Vis(k)
-	      Vis(k+1) = Wt*Wts(i)*Vis(k+1)
-	      k = k + size
+	    do j=1,ncorr
+	      k = 2*(j-1) + offcorr
+	      if(j.le.nbeam)then
+		Wt = 1
+	      else
+		Wt = ChanWt(j-nbeam)
+	      endif
+	      do i=1,nrec
+		Vis(k)   = Wt*Wts(i)*Vis(k)
+		Vis(k+1) = Wt*Wts(i)*Vis(k+1)
+		k = k + size
+	      enddo
 	    enddo
-	  enddo
 c
 c  All done. Write out the results.
 c
-	  call scrwrite(tscr,Vis,(l-1)*size,n*size)
+	    call scrwrite(tscr,Vis,l*size,nrec*size)
+	    l = l+nrec
+	  endif
+          call GetRec(tno,uvw,data,flags,npol,nread)
 	enddo
 c
 c  Finish up the RMS noise estimates.
 c
 	if(SumWt.gt.0)then
-	  rms = sqrt(RMS2 / SumWt/SumWt )
+	  rms = sqrt(rms2)/SumWt
 	else
 	  rms = 0
 	endif
@@ -1373,18 +1307,20 @@ c
 c	if(.not.mfs)	   uvflags(12:12) = '1'
 	end
 c************************************************************************
-	subroutine GetVis(doimag,systemp,mosaic,mfs,npol,tscr,slop,
-     *		slopmode,vis,nvis,nchan,umax,vmax,ChanWt,mchan,freq0)
+	subroutine ScanUV(doimag,systemp,mosaic,mfs,npol,slop,
+     *		slopmode,visname,nvis,nchan,umax,vmax,ChanWt,freq0)
 c
 	implicit none
+	include 'maxdim.h'
 	logical doimag,systemp,mosaic,mfs
-	integer npol,tscr,nvis,nchan,mchan
-	real umax,vmax,freq0,slop,ChanWt(npol*mchan)
-	character vis*(*),slopmode*(*)
+	integer npol,nvis,nchan
+	real umax,vmax,freq0,slop,ChanWt(npol*MAXCHAN)
+	character visname*(*),slopmode*(*)
 c
-c  Get the data to be processed imaged. This writes out a scratch file
-c  with records.
-c    u,v,w,pointing,rms**2,log(freq),wt,0,r1,i1,r2,i2,...
+c   First scan of the UV data
+!c  Get the data to be processed imaged. This writes out a scratch file
+!c  with records.
+!c    u,v,w,pointing,rms**2,log(freq),wt,0,r1,i1,r2,i2,...
 c
 c
 c  Input:
@@ -1395,8 +1331,7 @@ c    mfs	Multi-frequency synthesis option.
 c    slop	Slop factor.
 c    slopmode	Slop mode.
 c    npol	Number of polarisations.
-c    mchan	Max number of channels to handle.
-c    tscr	Handle of the scratch file.
+c    visname
 c  Input/Output:
 c    umax,vmax	Max u,v spacing.
 c  Output:
@@ -1405,14 +1340,13 @@ c    nvis	The number of visibilities read.
 c    ChanWt	Extra weighting factor for each channel.
 c    freq0	MFS reference frequency.
 c------------------------------------------------------------------------
-	include 'maxdim.h'
 	integer MAXPOL,MAXLEN
-	parameter(MAXPOL=4,MAXLEN=4+MAXPOL*MAXCHAN)
-	integer tno,pnt,nzero,nread,i,j,offset,nbad,nrec,ncorr,nlen
-	complex data(MAXCHAN,MAXPOL),out(MAXLEN),ctemp
-	logical flags(MAXCHAN,MAXPOL),more
-	real uumax,vvmax,rms2,Wt,SumWt
-	double precision uvw(5),dSumWt,dfreq0
+	parameter(MAXPOL=4,MAXLEN=(4+MAXPOL)*MAXCHAN)
+	integer tno,nzero,nread,i,offset,nbad,nrec
+	complex data(MAXCHAN,MAXPOL),Vis(MAXLEN)
+	logical flags(MAXCHAN,MAXPOL)
+	real uumax,vvmax
+	double precision uvw(5),SumWt,dfreq0
 	character num*8
 c
 c  Externals.
@@ -1423,7 +1357,7 @@ c
 c  Get the first record.
 c
 	tno = 0
-	call GetRec(tno,uvw,data,flags,npol,MAXCHAN,nchan)
+	call GetRec(tno,uvw,data,flags,npol,nchan)
 c
 	if(mfs)then
 	  call output('Making MFS images')
@@ -1436,11 +1370,10 @@ c
 	endif
 c
 	nread = nchan
-	more = nchan.gt.0
-	if(.not.mfs.and.nchan.gt.mchan)
+	if(.not.mfs.and.nchan.gt.MAXCHAN)
      *	  call bug('f','Too many channels for me to cope with')
 	if(nread.eq.0)call bug('f','No data to process')
-	call uvDatGta('name',vis)
+	call uvDatGta('name',visname)
 c
 c  Initialise everything.
 c
@@ -1448,7 +1381,6 @@ c
 	  ChanWt(i) = 0
 	enddo
 	SumWt = 0
-	dSumWt = 0
 c
 	offset = 0
 	nvis = 0
@@ -1460,71 +1392,12 @@ c
 	dfreq0 = 0
 c
 c  Loop over all the data.
-c  Determine whether to accept this record, and copy it to the output
-c  buffer. Then write it out if needed.
 c
-	dowhile(more)
-c
-	  call uvDatGtr('variance',rms2)
-	  if(systemp)then
-	    if(rms2.gt.0)then
-	      Wt = 1/rms2
-	    else
-	      Wt = 0
-	    endif
-	  else
-	    call uvrdvrr(tno,'inttime',Wt,0.0)
-	  endif
-c
-c  Multiply by sqrt(-1) if needed.
-c
-	  if(doimag)then
-	    do j=1,npol
-	      do i=1,nchan
-	        ctemp = data(i,j)
-	        data(i,j) = cmplx(-aimag(ctemp),real(ctemp))
-	      enddo
-	    enddo
-	  endif
-c
-c  Process it all.
-c
-	  if(mfs)then
-	    call ProcMFS (tno,uvw,Wt,rms2,data,flags,
-     *		npol,MAXCHAN,nread,nvis,nbad,out,MAXLEN,nrec,ncorr,
-     *		uumax,vvmax,umax,vmax,dSumWt,dfreq0)
-	  else
-	    call ProcSpec(tno,uvw,Wt,rms2,data,flags,
-     *		npol,MAXCHAN,nread,nvis,nbad,out,MAXLEN,nrec,ncorr,
-     *		uumax,vvmax,umax,vmax,SumWt,ChanWt,slop,slopmode)
-	  endif
-c
-c  Process an accepted record.
-c
-	  if(nrec.gt.0)then
-	    call HdChk(tno)
-	    if(mosaic)then
-	      call MosChk(tno,pnt)
-	    else
-	      pnt = 1
-	    endif
-c
-c  Correct the pointing centre if needed.
-c
-	    if(pnt.ne.1)then
-	      j = 2
-	      do i=1,nrec
-		Out(j) = cmplx(real(Out(j)),real(pnt))
-		j = j + ncorr + 4
-	      enddo
-	    endif
-c
-	    nlen = 2*nrec * ( ncorr + 4)
-	    call scrwrite(tscr,Out,offset,nlen)
-	    offset = offset + nlen
-	  endif
-	  call GetRec(tno,uvw,data,flags,npol,MAXCHAN,nread)
-	  more = nread.eq.nchan.or.(mfs.and.nread.gt.0)
+	dowhile(nread.eq.nchan.or.(mfs.and.nread.gt.0))
+	  call ProcRec(tno,uvw,mosaic,mfs,systemp,doimag,npol,nchan,
+     *	    nvis,nbad,Vis,data,flags,nrec,uumax,vvmax,umax,vmax,
+     *	    SumWt,dfreq0,ChanWt,slop,slopmode)
+	  call GetRec(tno,uvw,data,flags,npol,nread)
 	enddo
 c
 c  Say how many records were rejected.
@@ -1538,7 +1411,7 @@ c  Fiddle slop gain factor. Get MFS mean frequency.
 c
 	if(mfs)then
 	  nchan = 1
-	  freq0 = exp(dfreq0/dSumWt)
+	  freq0 = exp(dfreq0/SumWt)
 	  do i=1,npol
 	    ChanWt(i) = 1
 	  enddo
@@ -1558,16 +1431,19 @@ c
 	end
 c************************************************************************
 	subroutine ProcMFS(tno,uvw,Wt,rms2,data,flags,
-     *		npol,mchan,nchan,nvis,nbad,out,MAXLEN,nrec,ncorr,
+     *		npol,nchan,nvis,nbad,Vis,nrec,ncorr,
      *		uumax,vvmax,umax,vmax,SumWt,freq0)
 c
 	implicit none
-	integer tno,nchan,npol,mchan,nvis,nbad,MAXLEN,nrec,ncorr
+	include 'maxdim.h'
+	integer MAXPOL,MAXLEN
+	parameter(MAXPOL=4,MAXLEN=(4+MAXPOL)*MAXCHAN)
+	integer tno,nchan,npol,nvis,nbad,nrec,ncorr
 	double precision uvw(3)
 	real rms2,uumax,vvmax,umax,vmax,Wt
 	double precision freq0,SumWt
-	complex data(mchan,npol),out(MAXLEN)
-	logical flags(mchan,npol)
+	complex data(MAXCHAN,MAXPOL),Vis(MAXLEN)
+	logical flags(MAXCHAN,MAXPOL)
 c
 c  Process a visibility spectrum in MFS mode.
 c
@@ -1575,7 +1451,6 @@ c  Input:
 c    tno	Handle of the input dataset.
 c    nchan	Number of channels.
 c    npol	Number of polarisations.
-c    mchan	First dim of data and flags.
 c    Data	Visibility data.
 c    flags	Flags associated with the visibility data.
 c    Wt		Basic weight.
@@ -1587,25 +1462,21 @@ c    umax,vmax	Max value for abs(u),abs(v).
 c    nvis	Number of good visibilities.
 c    nbad	Number of bad visibilities.
 c  Output:
-c    out	A record consisting of
+c    Vis	A record consisting of
 c		u,v,w,pointing,rms**2,log(freq),wt,0,r1,i1,r2,i2,...
 c    nrec	Number of records.
 c    ncorr	Number of correlations in each record.
 c------------------------------------------------------------------------
-	include 'maxdim.h'
 	integer i,j,nlen
-	logical ok
 	real u,v,uu,vv,ww,f,t
 	double precision sfreq(MAXCHAN)
 c
-c  Check whether the weight is positive.
-c
-	ok = Wt.gt.0
 	nlen = 0
 c
-c  Collapse all the polarisation flags into one flag vector.
+c  If weight is positive, collapse all the polarisation flags into one
+c  flag vector.
 c
-	if(ok)then
+	if(Wt.gt.0)then
 	  do j=2,npol
 	    do i=1,nchan
 	      flags(i,1) = flags(i,1).and.flags(i,j)
@@ -1625,14 +1496,14 @@ c
 	    f = sfreq(i)
 	    u = abs(uu * f)
 	    v = abs(vv * f)
-	    if(flags(i,1).and.u.lt.uumax.and.v.lt.vvmax)then
-	      if(nlen+4+npol.gt.MAXLEN)call bug('f',
-     *			'Buffer overflow, in ProcMFS')
+	    if(flags(i,1).and.u.le.uumax.and.v.le.vvmax)then
+!	      if(nlen+4+npol.gt.MAXLEN)call bug('f',
+!     *			'Buffer overflow, in ProcMFS')
 	      t = log(f)
-	      out(nlen+1) = cmplx(uu*f,vv*f)
-	      out(nlen+2) = cmplx(ww*f,1.0)
-	      out(nlen+3) = cmplx(rms2,t)
-	      out(nlen+4) = Wt
+	      Vis(nlen+1) = cmplx(uu*f,vv*f)
+	      Vis(nlen+2) = cmplx(ww*f,1.0)
+	      Vis(nlen+3) = cmplx(rms2,t)
+	      Vis(nlen+4) = Wt
 	      freq0 = freq0 + Wt * t
 	      SumWt = SumWt + Wt
 	      umax = max(u,umax)
@@ -1641,7 +1512,7 @@ c
 	      nlen = nlen + 4
 	      do j=1,npol
 		nlen = nlen + 1
-		out(nlen) = data(i,j)
+		Vis(nlen) = data(i,j)
 	      enddo
 	      nvis = nvis + 1
 	    else
@@ -1657,22 +1528,24 @@ c
 c
 	end
 c************************************************************************
-	subroutine ProcSpec(tno,uvw,Wt,rms2,data,flags,
-     *		npol,MAXCHAN,nchan,nvis,nbad,out,MAXLEN,nrec,ncorr,
+	subroutine ProcSpec(uvw,Wt,rms2,data,flags,
+     *		npol,nchan,nvis,nbad,Vis,nrec,ncorr,
      *		uumax,vvmax,umax,vmax,SumWt,ChanWt,slop,slopmode)
 c
 	implicit none
-	integer tno,nchan,npol,MAXCHAN,nvis,nbad,MAXLEN,nrec,ncorr
-	double precision uvw(3)
-	real rms2,umax,vmax,uumax,vvmax,ChanWt(npol*nchan),slop,Wt,SumWt
-	complex data(MAXCHAN,npol),out(MAXLEN)
-	logical flags(MAXCHAN,npol)
+	include 'maxdim.h'
+	integer MAXPOL,MAXLEN
+	parameter(MAXPOL=4,MAXLEN=(4+MAXPOL)*MAXCHAN)
+	integer nchan,npol,nvis,nbad,nrec,ncorr
+	double precision uvw(3),SumWt
+	real rms2,umax,vmax,uumax,vvmax,ChanWt(npol*nchan),slop,Wt
+	complex data(MAXCHAN,MAXPOL),Vis(MAXLEN)
+	logical flags(MAXCHAN,MAXPOL)
 	character slopmode*(*)
 c
 c  Process a visibility spectrum.
 c
 c  Input:
-c    tno	Handle of the input dataset.
 c    nchan	Number of channels.
 c    npol	Number of polarisations.
 c    Data	Visibility data.
@@ -1689,7 +1562,7 @@ c    umax,vmax	Max value for u,v.
 c    nvis	Number of good visibilities.
 c    nbad	Number of bad visibilities.
 c  Output:
-c    out	A record consisting of
+c    Vis	A record consisting of
 c		u,v,w,pointing,rms**2,0,wt,0,r1,i1,r2,i2,...
 c------------------------------------------------------------------------
 	integer i,j,badcorr,nlen,pnt
@@ -1723,14 +1596,14 @@ c  If we are to accept it, then zero out any bad correlations.
 c
 	u = abs(uvw(1))
 	v = abs(uvw(2))
-	if(ok.and.u.lt.uumax.and.v.lt.vvmax)then
+	if(ok.and.u.le.uumax.and.v.le.vvmax)then
 	  nlen = 4 + npol*nchan
-	  if(nlen.gt.MAXLEN)call bug('f',
-     *					'Buffer overflow, in ProcSpec')
-	  out(1) = cmplx(real(uvw(1)),real(uvw(2)))
-	  out(2) = cmplx(real(uvw(3)),1.0)
-	  out(3) = rms2
-	  out(4) = wt
+!	  if(nlen.gt.MAXLEN)call bug('f',
+!     *					'Buffer overflow, in ProcSpec')
+	  Vis(1) = cmplx(real(uvw(1)),real(uvw(2)))
+	  Vis(2) = cmplx(real(uvw(3)),1.0)
+	  Vis(3) = rms2
+	  Vis(4) = wt
 	  umax = max(u,umax)
 	  vmax = max(v,vmax)
 	  SumWt = SumWt + Wt
@@ -1739,9 +1612,9 @@ c
 	    do i=1,nchan
 	      if(flags(i,j))then
 		ChanWt(pnt) = ChanWt(pnt) + Wt
-		out(pnt+4) = Data(i,j)
+		Vis(pnt+4) = Data(i,j)
 	      else
-		out(pnt+4) = 0
+		Vis(pnt+4) = 0
 	      endif
 	      pnt = pnt + 1
 	    enddo
@@ -1816,60 +1689,148 @@ c
 c
 	end
 c************************************************************************
-	subroutine GetRec(tno,uvw,data,flags,npol,MAXCHAN,nchan)
+	subroutine GetRec(tno,uvw,data,flags,npol,nread)
 c
 	implicit none
-	integer npol,MAXCHAN,nchan,tno
+	include 'maxdim.h'
+	integer npol,nread,tno
 	double precision uvw(5)
 	complex data(MAXCHAN,npol)
 	logical flags(MAXCHAN,npol)
 c
 c  Get a record from the input dataset.
 c------------------------------------------------------------------------
-	integer nread,i
-	logical more,first
+	integer nchan,i
+	logical first
 c
 c  Externals.
 c
 	logical uvDatOpn
 c
 	nread = 0
-	more = .true.
 	first = .false.
 c
-	dowhile(nread.eq.0.and.more)
-	  if(tno.ne.0)then
-	    call uvDatRd(uvw,data,flags,MAXCHAN,nread)
-	    if(nread.eq.0)then
-	      call uvDatCls
-	      call MosCDone(tno)
-	      call HdDone(tno)
-	    else
-	      more = .false.
-	    endif
-	  else
-	    nread = 0
+	dowhile(.true.)
+	  if(tno.eq.0)then
+	    if(.not.uvDatOpn(tno))return
+	    first = .true.
 	  endif
-c
-	  if(nread.eq.0)then
-	    more = uvDatOpn(tno)
-	    first = more
+
+	  call uvDatRd(uvw,data,flags,MAXCHAN,nread)
+
+	  if(nread.gt.0)then
+	    do i=2,npol
+	      call uvDatRd(uvw,data(1,i),flags(1,i),nread,nchan)
+	      if(nread.ne.nchan)call bug('f',
+      *	 	  'Number of channels differ between polarisations')
+	    enddo
+	    if(first)call VarChk(tno)
+	    return
+	  else
+	    call uvDatCls
+	    call MosCDone(tno)
+	    call HdDone(tno)
+	    tno = 0
 	  endif
 	enddo
 c
-c  Read the rest of the polarisation records.
+	end
+c************************************************************************
+	subroutine ProcRec(tno,uvw,mosaic,mfs,systemp,doimag,npol,nchan,
+     *	  nvis,nbad,vis,data,flags,nrec,uumax,vvmax,umax,vmax,
+     *	  SumWt,dfreq0,ChanWt,slop,slopmode)
 c
-	if(nread.gt.0)then
-	  do i=2,npol
-	    call uvDatRd(uvw,data(1,i),flags(1,i),nread,nchan)
-	    if(nread.ne.nchan)call bug('f',
-     *		'Number of channels differ between polarisations')
+	implicit none
+	include 'maxdim.h'
+	integer MAXPOL,MAXLEN
+	parameter(MAXPOL=4,MAXLEN=(4+MAXPOL)*MAXCHAN)
+	integer tno,npol,nchan,nvis,nbad,nrec
+	logical mosaic,mfs,systemp,doimag,flags(MAXCHAN,MAXPOL)
+	real vis(2*MAXLEN),uumax,vvmax,umax,vmax,slop,ChanWt(npol*nchan)
+	double precision uvw(5),SumWt,dfreq0
+	complex data(MAXCHAN,MAXPOL)
+	character slopmode*(*)
+c
+c  Process record
+c
+c  Input:
+c    tno
+c    uvw
+c    mosaic
+c    mfs
+c    systemp
+c    doimag
+c    npol
+c    nchan
+c    data
+c    flags
+c    uumax,vvmax u,v limits.
+c    slop
+c    slopmode
+c  Input/Output:
+c    nvis
+c    nbad
+c    umax,vmax	Max value for abs(u),abs(v).
+c    SumWt	Sum of all the weights.
+c    ChanWt     Channel "slop" normalisation.
+c  Output:
+c    Vis
+c    nrec	Number of records.
+c    dfreq0
+c------------------------------------------------------------------------
+	integer i,j,pnt,ncorr
+	real rms2,Wt
+c
+	call uvDatGtr('variance',rms2)
+
+	if(systemp)then
+	  if(rms2.gt.0)then
+	    Wt = 1/rms2
+	  else
+	    Wt = 0
+	  endif
+	else
+	  call uvrdvrr(tno,'inttime',Wt,0.0)
+	endif
+c
+c  Multiply by sqrt(-1) if needed.
+c
+	if(doimag)then
+	  do j=1,npol
+	    do i=1,nchan
+	      data(i,j) = cmplx(-aimag(data(i,j)),real(data(i,j)))
+	    enddo
 	  enddo
 	endif
 c
-	nchan = nread
-	if(first)call VarChk(tno)
+	if(mfs)then
+	  call ProcMFS (tno,uvw,Wt,rms2,data,flags,
+     *		npol,nchan,nvis,nbad,vis,nrec,ncorr,
+     *		uumax,vvmax,umax,vmax,SumWt,dfreq0)
+	else
+	  call ProcSpec(uvw,Wt,rms2,data,flags,
+     *		npol,nchan,nvis,nbad,vis,nrec,ncorr,
+     *		uumax,vvmax,umax,vmax,SumWt,ChanWt,slop,slopmode)
+	endif
 c
+c  Process an accepted record.
+c
+	if(nrec.gt.0)then
+	  call HdChk(tno)
+	  if(mosaic)then
+	    call MosChk(tno,pnt)
+c
+c  Correct the pointing centre if needed.
+c
+	    if(pnt.ne.1)then
+	      j = 2
+	      do i=1,nrec
+		Vis(2*j) = pnt
+		j = j+ncorr+4
+	      enddo
+	    endif
+	  endif
+	endif
 	end
 c************************************************************************
 	subroutine VarChk(tno)
