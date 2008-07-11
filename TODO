@@ -5,6 +5,7 @@
   (gfortran -fdefault-integer-8 might do the same
   This affects all memory allocated above MAXBUF, as it will use 
   somewhat system dependant techniques to use malloc() via mm.f2c.
+  	   ** done **
 
 - integer*8 support; ratty flag to go back to the old situation if
   the fortran compiler does not support integer*8
@@ -27,9 +28,14 @@
           this is also mostly solved by pgm.wip now
   Also on 64bit: gidriv.f, ppdriv.f and wddriv.f need to
   edit an INTEGER to INTEGER*8 declaration where PIXMAP is declared.
+  Use the fix64bit.csh script in borrow/pgplot/drivers and re-install
+  pgplot
+
+- borrow/readline does not seem to work on macosx. the default system
+  version
 
 - no more maxdim.h and maxdimc.h in $MIRINC, since they are 
-  generated via configure (planned for 4.0.4)
+  generated via configure (planned for 4.1.x?)
 
 - check if character*N variables (N some number) work ok with the 
   miriad f2c interface. Sault reverted the bug i found in uvdat.for.
@@ -65,6 +71,13 @@
 
 - pgplot:  gfortran cannot compile the GIF drivers
 
+- gfortran has some issues with noise.for : it won't give new
+  	   **solved??
+
 - CARMA specific fixes:
 
   uvwide:  assumes HatCreek correlator, the CARMA correlator isn't built in
+
+  	   **fixed??
+- darwin:
+  some don't seem to see -D on darwin, darwin_x86 ??  removed from bug.c
