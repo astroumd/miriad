@@ -1,3 +1,9 @@
+- WSRT code merge:
+  - ratty and intf2c to handle the new PTRDIFF_T type in for/f2c files
+  - fftw (CUDA)
+  - memory based scratch files
+  - OpenMP 
+
 - MIR4 vs. MIR5: consider Sault's proposal to handle long integers.
 
 - mem.for and mm.f2c are most likely buggy on 64bit machines:
@@ -40,8 +46,6 @@
 - check if character*N variables (N some number) work ok with the 
   miriad f2c interface. Sault reverted the bug i found in uvdat.for.
 
-- SMA code integration (sma_Resample.o has been integrated and removed)
-
 - a conversion routine from MIR4 to MIR3 format (int8 -> int) if possible
   this program/script should check if all the int8 variables are short
   enough that they can be cut into an int4:
@@ -54,6 +58,7 @@
 
 - programs that read ascii files, tables and such should *as a rule*
   skip lines that start with the (universal unix) comment symbol (#)
+	** partially done, see tabio.c **
 
 - mir-config that can spit out the cflags, libs etc...
   for example , in the current release uvio  is not linked with LFS,
@@ -62,14 +67,11 @@
 - use scropen8,scrclose8,scread8,scrwrite8 in addition to scropen stuff
   since we 
 
-- design a fftw interface to miriad's fft routines - should give an impressive
-  speedup on intel hardware
-
-
 - miriad name collisions:
 	solaris:/usr/ucb/implot
 
-- pgplot:  gfortran cannot compile the GIF drivers
+- pgplot:  gfortran cannot compile the GIF drivers for earlier versions
+	   of gfortran (4.0 and 4.1 series). ok now.
 
 - gfortran has some issues with noise.for : it won't give new
   	   **solved??
@@ -77,7 +79,7 @@
 - CARMA specific fixes:
 
   uvwide:  assumes HatCreek correlator, the CARMA correlator isn't built in
-
   	   **fixed??
+
 - darwin:
   some don't seem to see -D on darwin, darwin_x86 ??  removed from bug.c
