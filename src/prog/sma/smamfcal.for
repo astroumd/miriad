@@ -163,6 +163,7 @@ c   jhz  15Jun07  added instructive msg for handling SMA
 c                 hybrid spectral resolution data.
 c  pkgw  11Apr08  When fitting polynomials, give flagged channels
 c                 virtually no weight.
+c  pkgw  23Jun08  When fitting polynomials, obey the interpolate option.
 c   jhz  24Jun08  added description on the working buffers in
 c                 passtab.
 c  Problems:
@@ -420,7 +421,7 @@ c
      *    nschan,cref(ppass))
         if(dopass)call passtab(tno,npol,nants,nchan,
      *    nspect,sfreq,sdf,nschan,cref(ppass),pee,
-     *    donply,dowrap,doaverrll)
+     *    donply,interp,dowrap,doaverrll)
 c
 c  Free up all the memory, and close down shop.
 c
@@ -634,7 +635,7 @@ c
 c************************************************************************
         subroutine passtab(tno,npol,nants,nchan,
      *  nspect,sfreq,sdf,nschan,pass,pee,
-     *  donply,dowrap,doaverrll)
+     *  donply,interp,dowrap,doaverrll)
 c
         integer tno,npol,nants,nchan,nspect,nschan(nspect),pee(npol)
         complex pass(nants,nchan,npol)
@@ -678,7 +679,7 @@ c------------------------------------------------------------------------
         double precision AP(nchan,MAXNR),CHI2(MAXNR)
         real rxchan(nchan),rRsp(nchan),rIsp(nchan)
         real amp,phase,pphase,revis,imvis,plamp(nchan),plpha(nchan)
-        logical dev, donply, dowrap,doaverrll
+        logical dev, donply, interp, dowrap,doaverrll
         real smooth(3)
         integer bnply(3)
         common/bsmooth/smooth,bnply
@@ -785,9 +786,13 @@ c unwrap phase
             dev=.false.
           if(bnply(3).eq.200) call pgplt(nschan(l),rxchan,Isp,plpha,dev)
           do k=1, nschan(l)
+             if(DELY(k).eq.1.0D20.and..not.interp) then
+              pass(i,j+nsp+k-1,pd)=0.0D0
+            else
             rRsp(k)=plamp(k)*cos(plpha(k)*pi/180.)
             rIsp(k)=plamp(k)*sin(plpha(k)*pi/180.)
             pass(i,j+nsp+k-1,pd)=cmplx(rRsp(k),rIsp(k))
+            endif
           enddo
           nsp=nsp+nschan(l)
           enddo
