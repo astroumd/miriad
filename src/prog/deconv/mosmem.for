@@ -162,7 +162,7 @@ c                  spits out as it goes
 c    pjt   4jan05  merged the above two changed, yuraaah, long live CVS
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version='MosMem: version 4-jan-2005')
+	parameter(version='MosMem: version 24-jul-2008')
 	include 'maxdim.h'
 	include 'maxnax.h'
 	include 'mem.h'
@@ -653,9 +653,9 @@ c
      *		' Rms     =',1p2e12.3)
   23	  format('  StLim =',1pe12.3,' StLen1 =',1pe12.3,
      *		' StLen2  =',1pe12.3)
-  24	  format(' Iter =',i3,' RmsFac =',1pe10.3,' Flux =',1pe10.3,
+  24	  format(' Iter =',i4,' RmsFac =',1pe10.3,' Flux =',1pe10.3,
      *		' NormGrd =',0pf6.3)
-  25	  format(' Iter=',i3,' RmsFac=',1pe10.2,1x,1pe10.2,
+  25	  format(' Iter=',i4,' RmsFac=',1pe10.2,1x,1pe10.2,
      *    ' Factor=',1pe9.3, ' Flux=',1pe9.3,' NormGrd=',0pf5.3)
 c
 c  Check for convergence.
