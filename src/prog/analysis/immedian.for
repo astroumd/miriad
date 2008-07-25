@@ -5,6 +5,7 @@ c  History:
 c     17jan03 pjt   cloned off IMSHARP, Q&D for Stuart Vogel
 c     23jan03 pjt   finalized
 c     21feb03 pjt   removed the local (duplicated/old wrong) copy of sortr
+c     25jul08 pjt   bigger default size
 c
 c  TODO:
 c     - implement looping over all planes in the cube
@@ -38,9 +39,9 @@ c
       INCLUDE 'maxnax.h'
 c
       CHARACTER  PVERSION*(*)
-      PARAMETER (PVERSION='Version 1.0 21-feb-03')
+      PARAMETER (PVERSION='Version 1.0 25-jul-08')
       INTEGER   MAXDIM3
-      PARAMETER (MAXDIM3=1024)
+      PARAMETER (MAXDIM3=2048)
       INTEGER   MAXBOX
       PARAMETER (MAXBOX=64)
 
@@ -77,7 +78,8 @@ c
      *          'No out= dataset specified')
 c
       CALL xyopen(lun,file,'old',MAXNAX,nsize)
-      IF(nsize(1).GT.MAXDIM3)call bug('f','Image too big [MAXDIM3]')
+      IF(nsize(1).GT.MAXDIM3)call bug('f','Image 1 too big [MAXDIM3]')
+      IF(nsize(2).GT.MAXDIM3)call bug('f','Image 2 too big [MAXDIM3]')
       CALL rdhdi(lun,'naxis',naxis,0)
       CALL xyopen(lout,outfile,'new',naxis,nsize)
       write(*,*) 'Median filter boxsize will be ',size2,' pixels.'
