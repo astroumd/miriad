@@ -4,7 +4,7 @@ c  common stat variables
 c-------------------------------------------------------------
       include 'clpars.h'
       integer ncl
-      parameter (ncl=300)
+      parameter (ncl=500)
 
 
       integer nmin

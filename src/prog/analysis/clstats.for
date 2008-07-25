@@ -83,9 +83,10 @@ c                and removed that awkward case checking code
 c  14mar00  ks/pjt format and output changes
 c  20nov01  pjt  minor output format change
 c  12aug05  pjt  using clpars.h
+c  24jul08  pjt  upgraded for bigger cubes and fix parsing bug in history
 c-------------------------------------------------------------------------
       character version*(*)
-      parameter(version='version 12-aug-05' )
+      parameter(version='version 24-jul-08' )
       include 'clstats.h'
 
       integer lenline,imax,ncmax
@@ -413,13 +414,12 @@ c-----------------------------------------------------------------------
       integer lenline,nwords
       real rad2asec
       real refx,fluxmin,msens
-      character xtension*3,words(10)*80
+      character xtension*3,words(100)*80
       character*80 filecf,line
       logical eof,pos
 
       data eof/.false./
       rad2asec=206264.806
-
 
 c.....In MIRIAD format, angular variables are in radians 
 c.....first, convert to arcseconds
@@ -432,6 +432,7 @@ c.....first, convert to arcseconds
       bmin=real(bmin*rad2asec)
       bpa=real(bpa)
 
+
       if(bmaj .lt. 0.0001 .or. bmin .lt. 0.0001) 
      *	call bug('f','Beam parameters incorrectly read from header')
       if(abs(bpa) .le. 45.0) then
@@ -442,10 +443,12 @@ c.....first, convert to arcseconds
         beamy = bmin
       endif
 
+
 c.....Open the clump assignment file
       xtension='.cf'
       filecf=file(1:lenline(file))//xtension
       call xyopen(lin2,filecf,'old',3,nsize)
+
       call hisopen(lin2,'read')
       do while (.not.eof)
 c.......read in the clumpfind parameters: start,deltaT,naxis
@@ -458,6 +461,7 @@ c.......naxis  = connection criterion (generally=3)
         if(words(2)(1:5) .eq. 'START') read(words(3),*) start
         if(words(2)(1:5) .eq. 'NAXIS') read(words(3),*) naxis
       enddo
+
 c.....defaults --->
       if(start.eq.0) start=1
       if(dt.eq.0)
