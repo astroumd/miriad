@@ -10,6 +10,8 @@ c	MOMENT calculates the nth moment of a Miriad image. Currently only
 c	the moment of axis 1 or axis 3 is calculated for 3 dimensional images.
 c	To obtain the moments for other axes use the task REORDER to reorder
 c	the axes.
+c       Although by default MOMENT has a somewhat user centric notion of the
+c       moment= keyword, raw moments can be computed in raw mode.
 c@ in
 c	The input image. No default.
 c@ region
@@ -39,6 +41,14 @@ c@ rngmsk
 c       Mask pixels as bad when the 1st moment gives a 1st moment out of
 c       range of that of the axis. This option can only be activated for
 c       mom=1. Default: false
+c@ raw   
+c       By default, moment is user oriented, i.e. mom=1 computes the velocity.
+c       By setting raw=true, you will get the raw sum(I*v**mom) and will have to use
+c       MATHS to compute back the various maps. 
+c       Currently only supported for axis=3.
+c       If the velocity scale is very large and/or mom is large, a rescale 
+c       using PUTHD on crval3/cdelt3 may be needed.
+c       Default: false
 c--
 c   Other things to be improved in this code:
 c	
@@ -76,10 +86,11 @@ c    15feb01 dpr   Truncate rangemask key to rngmsk - doh!
 c    16feb01 pjt   Added mom=-3 for velocity of peak fit to poly=2
 c    18jan02 pjt   Turned rngmask typo into rngmsk (duh)
 c     4mar02 pjt   documented FWHM/sigma, fixed units of mom=2 map
+c    27jul08 pjt   Added raw=; keep Stuartt Corder finishing his thesis in time
 c------------------------------------------------------------------------
 	include 'maxdim.h'
  	character version*(*)
-	parameter(version='version 1.0 4-nov-03')
+	parameter(version='version 27-jul-08')
 	integer maxnax,maxboxes,maxruns,naxis
 	parameter(maxnax=3,maxboxes=2048)
 	parameter(maxruns=3*maxdim)
@@ -89,7 +100,7 @@ c------------------------------------------------------------------------
 	real blo,bhi,clip(2)
 	character in*64, out*64
 	character line*72
-	logical Qmask
+	logical Qmask, Qraw
 	integer mom
 c
 c  External
@@ -99,8 +110,6 @@ c
 c Get inputs.
 c
 	call output('Moment: '//version)
-	call bug('i','Units for the 0th order moment have been changed')
-	call bug('i','new mom=-2,-3 option available for peak flux map')
 	call keyini
 	call keya('in',in,' ')
 	call BoxInput('region',in,boxes,maxboxes)
@@ -114,16 +123,20 @@ c
 	  clip(2) = abs(clip(1))
 	  clip(1) = -clip(2)
 	endif
-cpjt
 	call keyl('rngmsk',Qmask,.FALSE.)
+	call keyl('raw',Qraw,.FALSE.)
 	call keyfin
 c
 c Check inputs.
 c
 	if(in .eq. ' ') call bug('f','No input specified. (in=)')
 	if(out .eq. ' ') call bug('f','No output specified. (out=)')
-	if(mom.lt.-3 .or. mom.gt.2)
+	if(.not.Qraw .and. (mom.lt.-3 .or. mom.gt.2))
      *	   call bug('f','moment must be between -3 and 2')
+	if (Qraw .and. mom.lt.0)
+     *	   call bug('f','moment must be non-negative for raw mode')
+	if (Qraw .and. axis.ne.3)
+     *	   call bug('f','raw mode only supported for axis=3')
 	if(clip(2).lt.clip(1)) call bug('f','clip range out of order')
 	call xyopen(lin,in,'old',maxnax,nsize)
 	call rdhdi(lin,'naxis',naxis,0)
@@ -167,7 +180,7 @@ c
 c
 c  Calculate moment.
 c
-	call makemom(lIn,lOut,naxis,blc,trc,mom,axis,clip,qmask)
+	call makemom(lIn,lOut,naxis,blc,trc,mom,axis,clip,qmask,qraw)
 c
 c  Update history and close files.
 c
@@ -291,11 +304,12 @@ c
 	call wrhda(lout,'ctype3', ctype)
 	end
 c********1*********2*********3*********4*********5*********6*********7*c
-	subroutine makemom(lIn,lOut,naxis,blc,trc,mom,axis,clip,qmask)
+	subroutine makemom(lIn,lOut,naxis,blc,trc,mom,axis,clip,
+     *                     qmask,qraw)
 	implicit none
 	integer lin,lOut,naxis,blc(naxis),trc(naxis),mom,axis
 	real clip(2)
-	logical qmask
+	logical qmask,qraw
 c
 c  Calculate the scale factor and channel offset for moments.
 c
@@ -307,6 +321,7 @@ c    mom	The moment to be calculated. Default = 0.
 c    axis	The axis for which the moment is calculated.
 c    clip	Pixel values in range clip(1) to clip(2) are excluded.
 c    qmask      Also set pixels flagged if mom=1 and outside axis range
+c    qraw       Raw moments, no special processing (partially implemented)
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	include 'mirconst.h'
@@ -370,7 +385,7 @@ c
 	  call memalloc(pFlags,n1*n2,'l')
 	  call memalloc(pTemps,n1*n2,'r')
 	  call moment3(lIn,lOut,naxis,blc,trc,mom,scale,offset,clip,
-     *	    memr(pSum),meml(pFlags),n1,n2,memr(pTemps),qmask)
+     *	    memr(pSum),meml(pFlags),n1,n2,memr(pTemps),qmask, qraw)
 	  call memfree(pFlags,n1*n2,'l')
 	  call memfree(pSum,3*n1*n2,'r')
 	  call memfree(pTemps,n1*n2,'r')
@@ -486,14 +501,14 @@ c
 	end
 c********1*********2*********3*********4*********5*********6*********7*c
 	subroutine moment3(lIn,lOut,naxis,blc,trc,mom,scale,offset,clip,
-     *	  sum,outflag,n1,n2,pTemps,qmask)
+     *	  sum,outflag,n1,n2,pTemps,qmask,qraw)
 c
 	implicit none
 	integer lIn,lOut,naxis,blc(naxis),trc(naxis),mom,n1,n2
-	real scale,offset,clip(2),sum(n1,n2,3)
+	real scale,offset,clip(2),sum(n1,n2,3),rawfac
 	logical outflag(n1,n2)
 	real pTemps(n1,n2)
-	logical qmask
+	logical qmask,qraw
 c
 c  Calculate the moments for axis 3.
 c
@@ -506,6 +521,7 @@ c    scale	Scale factor to convert from channels to km/s
 c    offset	Offset in channels.
 c    clip	Pixels with value in range clip(1),clip(2) are excluded.
 c    qmask      Also set pixels flagged if mom=1 and outside axis range
+c    qraw       if true, raw moment, no special processing
 c  Scratch:
 c    sum	Used to accumulate the moments.
 c    outflag	Flagging info for the output array.
@@ -522,7 +538,7 @@ c
 	if(trc(2)-blc(2)+1.ne.n2.or.
      *	   trc(1)-blc(1)+1.ne.n1)call bug('f',
      *	  'Dimension inconsistency in MOMENT3')
-	if (mom.eq.-3) call bug('f',
+	if (.not.Qraw .and. mom.eq.-3) call bug('f',
      *    'mom=-3 not yet available for axis=3; ' //
      *    'try: reorder in= out= mode=312')
 c
@@ -556,6 +572,11 @@ c
 	  call xysetpl(lIn,1,k)
 	  chan = (k-offset)*scale
 	  chan2 = chan*chan
+	  if (mom.eq.0) then
+	     rawfac = 1.0
+	  else
+	     rawfac = chan**mom
+	  endif
 c
 c  Accumulate the moments, one row at a time
 c
@@ -567,16 +588,21 @@ c
 	    do i = blc(1),trc(1)
 	      good=flags(i).and.(buf(i).le.clip(1).or.buf(i).ge.clip(2))
 	      if(good) then
-		if(mom.eq.-2) then 
-			if(buf(i).gt.pTemps(i,j)) then
-				pTemps(i,j)=buf(i) 
-				sum(i0,j0,1) = pTemps(i,j)
-			endif
+		if (qraw) then
+		   sum(i0,j0,1) = sum(i0,j0,1) + buf(i)*rawfac
+		   sum(i0,j0,2) = sum(i0,j0,2) + 1.0
 		else
-			     sum(i0,j0,1) = sum(i0,j0,1) + buf(i)
+		   if(mom.eq.-2) then 
+		      if(buf(i).gt.pTemps(i,j)) then
+			 pTemps(i,j)=buf(i) 
+			 sum(i0,j0,1) = pTemps(i,j)
+		      endif
+		   else
+		      sum(i0,j0,1) = sum(i0,j0,1) + buf(i)
+		   endif
+	          if(mom.ge.1) sum(i0,j0,2) = sum(i0,j0,2) + buf(i)*chan
+		  if(mom.ge.2) sum(i0,j0,3) = sum(i0,j0,3) + buf(i)*chan2
 		endif
-	        if(mom.ge.1) sum(i0,j0,2) = sum(i0,j0,2) + buf(i)*chan
-		if(mom.ge.2) sum(i0,j0,3) = sum(i0,j0,3) + buf(i)*chan2
 	      endif
 	      i0 = i0 + 1
 	    enddo
@@ -586,7 +612,8 @@ c
 c
 c  Normalize and scale the moments.
 c
-	do j = 1,n2
+	if (.not.qraw) then
+	  do j = 1,n2
 	  do i = 1,n1
 	    flux = sum(i,j,1)
 	    if(flux.ne.0.) then
@@ -619,15 +646,24 @@ c
 	      outflag(i,j) = .false.
 	    endif
 	  enddo
-	enddo
+	  enddo
+	endif
 c
 c  Now write out the moment map.
 c
-	k = max(mom+1,1)
+	if (qraw) then
+	   k = 1
+	else
+	   k = max(mom+1,1)
+	endif
 	do j = 1,n2
 	  do i = 1,n1
 	    buf(i) = sum(i,j,k)
-	    flags(i) = outflag(i,j)
+	    if (Qraw) then
+	       flags(i) = sum(i,j,2).gt.0.0
+	    else
+	       flags(i) = outflag(i,j)
+	    endif
 	  enddo
 
 	  call xywrite(lOut,j,buf)
