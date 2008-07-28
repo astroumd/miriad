@@ -118,7 +118,7 @@ c    rjs  17mar98  Added single dish support, "factor" parameter and
 c		   options=dofactor.
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version='PMosMem: version 1.0 17-Mar-98')
+	parameter(version='PMosMem: version 1.0 28-jul-08')
 	include 'maxdim.h'
 	include 'maxnax.h'
 	include 'mem.h'
@@ -621,9 +621,9 @@ c
   22	  format('  Flux  =',1pe12.3,' NormGrd=',1pe12.3)
   23	  format('  StLim =',1pe12.3,' StLen1 =',1pe12.3,
      *		' StLen2  =',1pe12.3)
-  24	  format(' Iter =',i3,' RmsFac =',1p2e10.3,' Flux =',1pe10.3,
+  24	  format(' Iter =',i4,' RmsFac =',1p2e10.3,' Flux =',1pe10.3,
      *		' NormGrd =',0pf6.3)
-  25	  format(' Iter=',i3,' RmsFac=',f6.2,2f7.2,
+  25	  format(' Iter=',i4,' RmsFac=',f6.2,2f7.2,
      *		' Flux=',1pe9.3,' NormGrd=',0pf5.3)
   26	  format('  Q     =  ',1p2e10.3)
   27	  format('  RMS   =  ',1p3e10.3)
