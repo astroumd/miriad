@@ -14,7 +14,7 @@ c    sels	The selection specification to pass to SelApply.
 c    line,nchan,lstart,lwidth,lstep	The data linetype specification.
 c    ref,rstart,rwidth		The reference linetype specification.
 c    plmaj,plmin,plangle	Planet parameters.
-c    InBuf(k1(i):k2(i))		The name of the i'th input file.
+c    InBuf(k1(i):k2(i))		The name of the i'th input file.'
 c    doplanet			True if planet processing is to be performed.
 c    plinit			True if the planet parameters have been
 c				initialised.
@@ -54,7 +54,7 @@ c    idxT			Index of "time" in the preamble.
 c    idxBL			Index of "baseline" in the preamble.
 c
 	integer maxsels,maxNam,maxIn
-	parameter(maxsels=1024,maxNam=20000,maxIn=400)
+	parameter(maxsels=1024,maxNam=20000,maxIn=4000)
 	real sels(maxsels),lstart,lwidth,lstep,lflag,rstart,rwidth,rstep
 	real plmaj,plmin,plangle
 	logical doplanet,dowave,doref,dodata,docal,dosels,doleak,dopass
