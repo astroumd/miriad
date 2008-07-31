@@ -54,7 +54,7 @@ c    idxT			Index of "time" in the preamble.
 c    idxBL			Index of "baseline" in the preamble.
 c
 	integer maxsels,maxNam,maxIn
-	parameter(maxsels=1024,maxNam=20000,maxIn=4000)
+	parameter(maxsels=1024,maxNam=200000,maxIn=4000)
 	real sels(maxsels),lstart,lwidth,lstep,lflag,rstart,rwidth,rstep
 	real plmaj,plmin,plangle
 	logical doplanet,dowave,doref,dodata,docal,dosels,doleak,dopass
