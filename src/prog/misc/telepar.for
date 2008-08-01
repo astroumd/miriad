@@ -20,10 +20,11 @@ c    rjs  06dec96 Print altitude.
 c    rjs  09jun97 Standardize keyword.
 c    dpr  22may01 Add XY-EW
 c    mchw 26aug03 Add Nasmyth
+c    pjt   1aug08 keyword reminder
 c------------------------------------------------------------------------
 	character version*(*)
 	integer MAXOBS
-	parameter(version='Telepar: version 3.0 26-AUG-03')
+	parameter(version='Telepar: version 3.0 1-aug-08')
 	parameter(MAXOBS=16)
 	include 'mirconst.h'
 	character string*20,line*64,observs(MAXOBS)*12,observ*12
@@ -40,6 +41,7 @@ c
 c
 	if(nobs.eq.0)then
 	  call obsPrint
+	  call output('Use telescop= to select observatories')
 	endif
 c
 	do i=1,nobs
