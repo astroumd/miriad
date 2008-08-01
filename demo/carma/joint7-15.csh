@@ -68,6 +68,7 @@ set select = '-shadow(6.1)'
 set freq    = 230
 set nchan   = 1
 set imsize  = 129
+set imsize  = 257
 set region  = 'arcsec,box(25,-25,-25,25)'
 if($model == casc.vla)then
   set region = `calc "$cell*500" | awk '{printf("arcsec,box(%.2f,-%.2f,-%.2f,%.2f)",$1,$1,$1,$1)}'`
@@ -159,25 +160,6 @@ uvcat vis="carma.$dec.$model.$cell.uv*" out=carma.$dec.$model.$cell.uv
 uvcat vis="ovro.$dec.$model.$cell.uv*"  out=ovro.$dec.$model.$cell.uv
 uvcat vis="hatcreek.$dec.$model.$cell.uv*" out=hatcreek.$dec.$model.$cell.uv
 
-# generate single dish data
-single:
-echo "Make single dish image and beam"  `date` >> timing
-set pbfwhm = `pbplot telescop=ovro freq=$freq | grep FWHM | awk '{print 60*$3}'`
-echo "Single dish FWHM = $pbfwhm arcsec at $freq GHz" >> timing
-
-rm -r single.$dec.$model.$cell.bigger
-imframe in=single.$dec.$model.$cell frame=-1024,1024,-1024,1024 out=single.$dec.$model.$cell.bigger
-rm -r single.$dec.$model.$cell.bigger.map
-convol map=single.$dec.$model.$cell.bigger fwhm=$pbfwhm,$pbfwhm out=single.$dec.$model.$cell.bigger.map
-rm -r single.$dec.$model.$cell.map
-regrid  in=single.$dec.$model.$cell.bigger.map tin=$config.$dec.$model.$cell.mp out=single.$dec.$model.$cell.map axes=1,2
-rm -r single.$dec.$model.$cell.beam
-imgen in=single.$dec.$model.$cell.map factor=0 object=gaussian spar=1,0,0,$pbfwhm,$pbfwhm,0 out=single.$dec.$model.$cell.beam
-implot in=single.$dec.$model.$cell.map units=s device=/xs conflag=l conargs=2
-
-# set rms for single dish data
-puthd in=single.$dec.$model.$cell.map/rms value=$sd_rms
-
 echo "Generate gains file for amplitude and phase noise"
 # Add gain noise to the sampled uv-data. Multiply gains to scale pointing errors.
 rm -r gains.uv
@@ -203,6 +185,25 @@ invert vis=carma.$dec.$model.$cell.uv,ovro.$dec.$model.$cell.uv,hatcreek.$dec.$m
 echo INVERT: `date` >> timing
 implot in=$config.$dec.$model.$cell.mp device=/xs units=s region=$region
 imlist in=$config.$dec.$model.$cell.mp options=mosaic
+
+# generate single dish data
+single:
+echo "Make single dish image and beam"  `date` >> timing
+set pbfwhm = `pbplot telescop=ovro freq=$freq | grep FWHM | awk '{print 60*$3}'`
+echo "Single dish FWHM = $pbfwhm arcsec at $freq GHz" >> timing
+
+rm -r single.$dec.$model.$cell.bigger
+imframe in=single.$dec.$model.$cell frame=-1024,1024,-1024,1024 out=single.$dec.$model.$cell.bigger
+rm -r single.$dec.$model.$cell.bigger.map
+convol map=single.$dec.$model.$cell.bigger fwhm=$pbfwhm,$pbfwhm out=single.$dec.$model.$cell.bigger.map
+rm -r single.$dec.$model.$cell.map
+regrid  in=single.$dec.$model.$cell.bigger.map tin=$config.$dec.$model.$cell.mp out=single.$dec.$model.$cell.map axes=1,2
+rm -r single.$dec.$model.$cell.beam
+imgen in=single.$dec.$model.$cell.map factor=0 object=gaussian spar=1,0,0,$pbfwhm,$pbfwhm,0 out=single.$dec.$model.$cell.beam
+implot in=single.$dec.$model.$cell.map units=s device=/xs conflag=l conargs=2
+
+# set rms for single dish data
+puthd in=single.$dec.$model.$cell.map/rms value=$sd_rms
 
 goto mosmem
 
