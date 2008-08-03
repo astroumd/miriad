@@ -23,8 +23,8 @@ help = """
        """
 
 keyval = {
-    "nring"  : "3",           # number of rings (including the center point)
-    "grid"   : "5"            # grid separation
+    "nring"  : "3\n    number of rings (including the center point)",
+    "grid"   : "5\n    grid separation"
     }
 
 
