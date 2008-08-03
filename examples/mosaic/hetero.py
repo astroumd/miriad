@@ -35,11 +35,11 @@ print "   This script assumes that the first 4 antennas are ALMA 12m and the nex
 
 # command line arguments that can be changed...
 keyval = {
-  "config"  : "config1",           # antenna config file (without the .ant extension)
-  "dec"     : "-30",               # declination (can be a real number)
-  "dt"      : "0.01",              # integration time step in hours (range is fixed -4 .. 4)
-  "plot"    : "1",                 # 1=make plots   0=no plots
-  "VERSION" : "1.0 mchw"           # VERSION id for the user interface
+  "config"  : "config1\n    antenna config file (without the .ant extension)",
+  "dec"     : "-30.0\n      declination (can be a real number)",
+  "dt"      : "0.01\n       integration time step in hours (range is fixed -4 .. 4)",
+  "plot"    : "1\n,         1=make plots   0=no plots",
+  "VERSION" : "1.1 mchw\n   VERSION id for the user interface"
   }
 
 help = """
