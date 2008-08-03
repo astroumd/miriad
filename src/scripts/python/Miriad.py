@@ -86,7 +86,7 @@ def miriad(command,log=0,fatal=1):
     else:
         mycmd = cmd(command) + _logger;
     # debug
-    print "MIRIAD% ",mycmd
+    print "MIRIAD% ",cmd(command)
     retval = os.system(mycmd)
     if retval:
         print "###: Error %d from %s" % (retval,command[0])
@@ -103,7 +103,7 @@ def setlogger(log,append=0):
 
 
 
-def keyini(keyval,show=0,gui=0,usage=None):
+def keyini(keyval,usage,show=0,gui=0):
     """Initialize the values of all keywords, and check to see that
        all required keywords are present.  Also, it user specifies
        help, it calls the show_keyval function
