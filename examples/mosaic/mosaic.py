@@ -38,7 +38,7 @@ The minimum amount of information you need to run this task is:
    an antenna configuration file (<config>.ant) for uvgen
 """
 
-keyini(keyval,help,0)
+keyini(keyval,help)
 #                                report current defaults, exit if --help given
 setlogger('mosaic.log')
 #

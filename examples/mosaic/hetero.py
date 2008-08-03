@@ -46,7 +46,7 @@ help = """
    this script does heterogeneous array simulations. Mel will at some point
    describe this more in a Memo.
 """
-keyini(keyval,help,0)
+keyini(keyval,help)
 setlogger('hetero.log')
 
 
