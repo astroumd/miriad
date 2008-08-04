@@ -5,6 +5,7 @@
 #  History:
 #  25-jul-08  pjt   Merged ideas from hex7-15.csh, mosaic.py and hetero.py for carma+sza simulations
 #   3-aug-08  pjt   added as hemosi.py to miriad's examples - but lots to clean up
+#   4-aug-08  pjt   keywords changed names and more consistent usage; change into run directory??
 #
 #
 #
@@ -12,26 +13,29 @@
 #   0) Miriad and Miriad.py python frontend
 #   1) a miriad image (e.g. casc.vla)
 #   2) an antenna configuration file (e.g. CZ.ant)
-#
+# CARMA-15:  
+#     pb=ovro,6,hatcreek,9,carma
+#     jyperk=43,126,73
 
 import sys, os, time, string, math
 from Miriad import *
 
-version='200-08-04'
+version='2008-08-04'
 
 print "   ---  CARMA Heterogenous Mosaicing simulations  ---   "
 
 # command line arguments that can be changed...
 keyval = {
     "dir"       : "run1\n                                         Run directory in which all datasets written",
-    "config"    : "CZ\n                                           antenna config file",
-    "ants"      : "ovro,6,hatcreek,9,sza,8,carma,sza10,sza6\n     Antennae types, numbers, cross types names",
+    "ant"       : "CZ.ant\n                                       Antenna config file (NEU in meters)",
+    "pb"        : "ovro,6,hatcreek,9,sza,8,carma,sza10,sza6\n     Antennae types, numbers, cross types names",
     "jyperk"    : "43,126,383,73,128,220\n                        Jy/K scaling for all antenna types",
-    "tsys"      : "80,290,0.26\n                                  Systemp temperature for UVGEN",
+    "systemp"   : "80,290,0.26\n                                  Systemp temperature for UVGEN",
     "dec"       : "30.0\n         declination where object should be placed",
     "freq"      : "115.0\n        observing frequency [GHz]",
     "image"     : "casc.vla\n     model image to test ",
-    "cell"      : "0.04\n         scaling cell size of model in arcsec",
+    "cell"      : "0.5\n          scaling cell size of model in arcsec",
+    "factor"    : "1\n            scaling factor for model",
     "size"      : "50.0\n         size of cleaning and plotting region (-size..size) [arcsec]",
     "nchan"     : "1\n            number of channels to use from model image",
     "method"    : "mosmem\n       mossdi, mossdi2, mosmem, joint, or default",
@@ -53,7 +57,7 @@ The minimum amount of information you need to run this task is:
    The idea is that you can combine multiple configurations
 
    CARMA_SZA example:
-       ants=ovro,6,hatcreek,9,sza,8,carma,sza10,sza6
+       pb=ovro,6,hatcreek,9,sza,8,carma,sza10,sza6
        jyperk=....
 """
 
@@ -68,12 +72,13 @@ keyini(keyval,help)
 #
 
 rundir  = keya('dir')
-config  = keya('config')
-ants    = keyl('ants')
+ant     = keya('ant')
+pb      = keyl('pb')
 jyperk  = keyl('jyperk')
-tsys    = keya('tsys')
+systemp = keya('systemp')
 dec     = keyr('dec')
 cell    = keyr('cell')
+factor  = keyr('factor')
 size    = keyr('size')
 nchan   = keyi('nchan')
 method  = keya('method')
@@ -158,9 +163,13 @@ def itemize(data,item):
     return v[2]
 
 #   copy a file from source (s) to destination (d)
+#   care with symlinks !!!
 def copy_data(s,d):
     zap(d)
     os.system("cp -r %s %s" % (s,d))
+
+def copy_file(s,d):
+    os.system("cp %s %s" % (s,d))
 
 
 #  should this be
@@ -289,7 +298,6 @@ def mosmem(map,beam,out,region,niters=100,flux=0,default=0):
         'beam=%s' % beam,
         'out=%s' % out,
         'region=%s' % region,
-#        'rmsfac=200,1',
         'niters=%d' % niters
         ]
     if flux != 0:
@@ -375,7 +383,7 @@ def imframe(map,out):
     zap(out)
     return cmd
 
-def uvgen(ant,dec,harange,freq,nchan,out,center,telescop,jyperk,tsys):
+def uvgen(ant,dec,harange,freq,nchan,out,center,telescop,jyperk,systemp):
     cmd = [
         'uvgen',
         'ant=%s' % ant,
@@ -387,7 +395,7 @@ def uvgen(ant,dec,harange,freq,nchan,out,center,telescop,jyperk,tsys):
         'source=$MIRCAT/no.source',
         'telescop=%s' % telescop,
         'jyperk=%g' % jyperk,
-        'systemp=%s' % tsys,
+        'systemp=%s' % systemp,
         'freq=%g' % freq,
         'corr=%d,1,0,8000' % nchan,
         'out=%s' % out,
@@ -396,7 +404,7 @@ def uvgen(ant,dec,harange,freq,nchan,out,center,telescop,jyperk,tsys):
     zap(out)                                     # need to remove it, otherwise uvgen will append
     return cmd
 
-def uvgen_point(ant,dec,harange,freq,nchan,out,telescop,jyperk,tsys,gnoise=0):
+def uvgen_point(ant,dec,harange,freq,nchan,out,telescop,jyperk,systemp,gnoise=0):
     cmd = [
         'uvgen',
         'ant=%s' % ant,
@@ -408,7 +416,7 @@ def uvgen_point(ant,dec,harange,freq,nchan,out,telescop,jyperk,tsys,gnoise=0):
         'source=$MIRCAT/point.source',
         'telescop=%s' % telescop,
         'jyperk=%g' % jyperk,
-        'systemp=%s' % tsys,
+        'systemp=%s' % systemp,
         'freq=%g' % freq,
         'corr=%d,1,0,8000' % nchan,
         'out=%s' % out,
@@ -492,21 +500,20 @@ def antspecs(nants):
 #region = "arcsec,box\(%.2f,-%.2f,-%.2f,%.2f\)" % (cells,cells,cells,cells)
 region = "arcsec,box\(%.2f,-%.2f,-%.2f,%.2f\)" % (size,size,size,size)
 
-ant    = config + '.ant'                   # antenna file for uvgen
 print 'Found %s antenna in %s' % (check_config(ant),ant)
 
+config = ant.split('.')[0].split('/')[-1]
 
 uv     = "%s/uv"       % rundir 
-demos1 = "%s/%s.demos"  % (rundir,config)
-base1  = "%s/%s"        % (rundir,config)
-base2  = "%s/single"    % (rundir)
+base1  = "%s/xy"       % rundir
+base2  = "%s/single"   % rundir
 
 map1   = base1 + ".mp"
 beam1  = base1 + ".bm"
 psf1   = base1 + ".psf"
 map2   = base2 + ".map"
 beam2  = base2 + ".beam"
-mem    = base1 + ".mem"     # used for both sdi and mem
+cc     = base1 + ".cc" 
 cm     = base1 + ".cm"
 mp     = base1 + '.mp'
 res    = base1 + '.resid'
@@ -514,9 +521,9 @@ conv   = base1 + '.conv'
 
 
 # supporting the following 3 configurations (T=antenna type, N=number of ants in this type)
-#   ants=T1[,N1]                                      (use N1 if you want to use first N1)
-#   ants=T1,N1,T2,N2,T12
-#   ants=T1,N1,T2,N2,T3,N3,T12,T13,T23                (called m1 entries below)
+#   pb=T1[,N1]                                      (use N1 if you want to use first N1)
+#   pb=T1,N1,T2,N2,T12
+#   pb=T1,N1,T2,N2,T3,N3,T12,T13,T23                (called m1 entries below)
 # Following these
 #   jyperk=
 # needs N*(N+1)/2 values (N= #types [1,2, or 3])      (called k1 entries below)
@@ -524,7 +531,7 @@ conv   = base1 + '.conv'
 telescopes = []
 nants      = [0]
 
-m1 = len(ants)
+m1 = len(pb)
 
 if m1 == 1 or m1 == 2:
     ntypes = 1
@@ -536,24 +543,24 @@ elif m1 == 9:
     ntypes = 3
     k1     = 6
 else:
-    error("error ants= (%d); can handle up to 3 different types T1,N1,T2,N2,T3,N3,T12,T13,T23 " % m1)
+    error("error pb= (%d); can handle up to 3 different PB types T1,N1,T2,N2,T3,N3,T12,T13,T23 " % m1)
 
 
-telescopes.append(ants[0])
+telescopes.append(pb[0])
 if m1 == 1:
     nants[0] = check_config(ant)
 else:
-    nants[0] = int(ants[1])
+    nants[0] = int(pb[1])
 if m1>2:
-    telescopes.append(ants[2])
-    nants.append(int(ants[3]))
-    telescopes.append(ants[4])
+    telescopes.append(pb[2])
+    nants.append(int(pb[3]))
+    telescopes.append(pb[4])
     if m1>5:
-        nants.append(int(ants[5]))
-        telescopes.append(ants[6])
-        telescopes.append(ants[7])
-        telescopes.append(ants[8])
-telescope = ants[0]
+        nants.append(int(pb[5]))
+        telescopes.append(pb[6])
+        telescopes.append(pb[7])
+        telescopes.append(pb[8])
+telescope = pb[0]
 print 'Telescopes: ',telescopes
 
 
@@ -587,10 +594,11 @@ else:
 
 print "   ---  CARMA Mosaicing (Cas A model)   ---   "
 
-print " config  = %s" % config
-print " ants    = %s" % ants
+print " ant     = %s" % ant
+print " pb      = %s" % pb
 print " dec     = %g" % dec
-print " scale   = %g" % cell
+print " cell    = %g" % cell
+print " factor  = %g" % factor
 print " harange = %s  hours" % harange
 print " select  = %s" % select
 print " freq    = %g" % freq
@@ -629,9 +637,11 @@ if method == "mosmem":
 
     print "Generate uv-data. Tsys=40K, bandwidth=8 GHz " 
 
+    copy_file(ant,rundir)
+
 
     for k in range(0,k1):
-        miriad(uvgen(ant,dec,harange,freq,nchan,uv_k[k],center,telescopes[k],jyperk[k],tsys))
+        miriad(uvgen(ant,dec,harange,freq,nchan,uv_k[k],center,telescopes[k],jyperk[k],systemp))
         miriad(uvindex(uv_k[k]))
     
     print "Scale model size from pixel 0.4 to %g arcsec" % cell
@@ -658,7 +668,7 @@ if method == "mosmem":
     fp = open("%s/vis.all" % rundir, "w")
     for k in range(0,k1):
         for i in range(1,npoint+1):
-            if plot: miriad(cgdisp(demos1+"%d"%i))    ###fix name
+            # if plot: miriad(cgdisp(demos1+"%d"%i))    ###fix name
             vis_i = "%s_%d_%d"% (uv,i,k)
             demos_i = demos_k[k]+"%d"%i
             miriad(uvmodel(uv_k[k],demos_i,vis_i,antselect_k[k]))
@@ -677,7 +687,7 @@ if method == "mosmem":
         print "Adding pointing errors: gnoise=%g" % gnoise
         visgain = 'gains.uv'
         for k in range(0,k1):
-            miriad(uvgen_point(ant,dec,harange,freq,nchan,visgain,telescopes[k],jyperk[k],tsys,gnoise))
+            miriad(uvgen_point(ant,dec,harange,freq,nchan,visgain,telescopes[k],jyperk[k],systemp,gnoise))
             miriad(selfcal(visgain))
             for i in range(1,npoint+1):
                 vis_i = "%s_%d_%d"% (uv,i,k)
@@ -715,19 +725,19 @@ if method == "mosmem":
         
 if method=='mosmem':
     print "MOSMEM Interferometer only - no flux given" 
-    miriad(mosmem(map1,beam1,mem,region,niters=niters))
+    miriad(mosmem(map1,beam1,cc,region,niters=niters))
 elif method=='joint':
     print "Joint deconvolution of interferometer and single dish data"
     print "Joint deconvolution of interferometer and single dish data ; niters=200 rmsfac=200,1"
-    miriad(mosmem(map1+','+map2,beam1+','+beam2,mem,region,niters=niters))
+    miriad(mosmem(map1+','+map2,beam1+','+beam2,cc,region,niters=niters))
 elif method=='default':
     print "MOSMEM with default single dish image" 
     print "MOSMEM with default single dish image; niters=200 rmsfac=200" 
-    miriad(mosmem(map1,beam1,mem,region,niters=niters))
+    miriad(mosmem(map1,beam1,cc,region,niters=niters))
 elif method=='mossdi':
-    miriad(mossdi(map1,beam1,mem,region,niters=niters))
+    miriad(mossdi(map1,beam1,cc,region,niters=niters))
 elif method=='mossdi2':
-    miriad(mossdi2(map1,beam1,mem,region,niters=niters))
+    miriad(mossdi2(map1,beam1,cc,region,niters=niters))
 else:
     print "Unknown method " + method
     sys.exit(1)
@@ -740,7 +750,7 @@ bmin = string.atof(grepcmd('imfit in=%s object=beam' % psf1, 'Minor axis (arcsec
 bpa  = string.atof(grepcmd('imfit in=%s object=beam' % psf1, '  Position angle',    3)) 
 print 'MOSPSF: Beam = %g x %g arcsec PA = %g degrees' % (bmaj,bmin,bpa)
 
-miriad(restor(map1,beam1,mem,cm))
+miriad(restor(map1,beam1,cc,cm))
 if plot: miriad(implot(map1,region=region))
 
 print "convolve the model by the beam and subtract from the deconvolved image"
