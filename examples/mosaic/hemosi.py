@@ -17,7 +17,7 @@
 import sys, os, time, string, math
 from Miriad import *
 
-version='200-08-03'
+version='200-08-04'
 
 print "   ---  CARMA Heterogenous Mosaicing simulations  ---   "
 
@@ -26,8 +26,8 @@ keyval = {
     "dir"       : "run1\n                                         Run directory in which all datasets written",
     "config"    : "CZ\n                                           antenna config file",
     "ants"      : "ovro,6,hatcreek,9,sza,8,carma,sza10,sza6\n     Antennae types, numbers, cross types names",
-    "jyperk"    : "43,126,73,383,128,220\n                        Jy/K scaling for all antenna types",
-    "tsys"      : "80,290,0.26\n                                  Systemp temperatures",
+    "jyperk"    : "43,126,383,73,128,220\n                        Jy/K scaling for all antenna types",
+    "tsys"      : "80,290,0.26\n                                  Systemp temperature for UVGEN",
     "dec"       : "30.0\n         declination where object should be placed",
     "freq"      : "115.0\n        observing frequency [GHz]",
     "image"     : "casc.vla\n     model image to test ",
@@ -170,15 +170,17 @@ def copy_data(s,d):
 #    else:
 #        bla
 
-def puthd(map,item,value,units=0):
+def puthd(map,item,value,units=0,type=0):
     cmd = [
         'puthd',
         'in=%s/%s' % (map,item),
         ]
-    if (units == 0):
+    if units == 0:
         cmd.append("value=%s" % value)
     else:
         cmd.append("value=%s,%s" % (value,units))
+    if type != 0:
+        cmd.append("type=%s" % type)
     return cmd
 
 def demos(map,vis,out):
@@ -200,7 +202,7 @@ def invert(vis,map,beam,imsize,select):
         'imsize=%d' % imsize,
         'select=%s' % select,
         'sup=0',
-        'options=mosaic,double',
+        'options=mosaic,double,systemp',
         ]
     zap(map)
     zap(beam)
@@ -653,16 +655,22 @@ if method == "mosmem":
 
     print "Make model uv-data using %s as a model" % image
     vis_all = ""
+    fp = open("%s/vis.all" % rundir, "w")
     for k in range(0,k1):
         for i in range(1,npoint+1):
             if plot: miriad(cgdisp(demos1+"%d"%i))    ###fix name
             vis_i = "%s_%d_%d"% (uv,i,k)
             demos_i = demos_k[k]+"%d"%i
             miriad(uvmodel(uv_k[k],demos_i,vis_i,antselect_k[k]))
+            # big hack: put a new systemp in to fool invert with options=systemp
+            # also, we're putting in jyperk, should be scaled to retain it for the first primary beam
+            miriad(puthd(vis_i,'systemp',2.0*jyperk[k],type='real'))
             if len(vis_all)==0:
                 vis_all=vis_i
             else:
                 vis_all=vis_all + ',' + vis_i
+            fp.write("%s\n" % vis_i)
+    fp.close()
     print "UVMODEL: add the model to the noisy sampled uv-data"
 
     if gnoise > 0:
@@ -677,6 +685,7 @@ if method == "mosmem":
     else:
         print "Skipping adding pointing noise (gnoise)"
             
+    vis_all = "@%s/vis.all" % rundir
     miriad(invert(vis_all, base1+".mp", base1+".bm", imsize, select))
             
     print "INVERT: "
