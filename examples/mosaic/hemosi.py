@@ -20,21 +20,21 @@
 import sys, os, time, string, math
 from Miriad import *
 
-version='2008-08-04'
+version='2008-08-06'
 
-print "   ---  CARMA Heterogenous Mosaicing simulations  ---   "
+print "   ---  HEMOSI: HEterogenous MOsaicing SImulations  ---   "
 
 # command line arguments that can be changed...
 keyval = {
     "dir"       : "run1\n                                         Run directory in which all datasets written",
     "ant"       : "CZ.ant\n                                       Antenna config file (NEU in meters)",
     "pb"        : "ovro,6,hatcreek,9,sza,8,carma,sza10,sza6\n     Antennae types, numbers, cross types names",
-    "jyperk"    : "43,126,383,73,128,220\n                        Jy/K scaling for all antenna types",
     "systemp"   : "80,290,0.26\n                                  Systemp temperature for UVGEN",
+    "jyperk"    : "43,126,383,73,128,220\n                        Jy/K scaling for all antenna types",
     "dec"       : "30.0\n         declination where object should be placed",
     "freq"      : "115.0\n        observing frequency [GHz]",
     "image"     : "casc.vla\n     model image to test ",
-    "cell"      : "0.5\n          scaling cell size of model in arcsec",
+    "cell"      : "1.0\n          scaling cell size of model in arcsec",
     "factor"    : "1\n            scaling factor for model",
     "size"      : "50.0\n         size of cleaning and plotting region (-size..size) [arcsec]",
     "nchan"     : "1\n            number of channels to use from model image",
@@ -46,6 +46,7 @@ keyval = {
     "grid"      : "20.0\n         gridsize (in arcsec) for the mosaic",
     "center"    : "\n             optional center file that overrides (nring,grid)",
     "plot"      : "f\n            Show plots?",
+    "log"       : "f\n            Show miriad.log?",
     "VERSION"   : "2.0 pjt\n      VERSION id for the user interface"
     }
 
@@ -61,11 +62,9 @@ The minimum amount of information you need to run this task is:
        jyperk=....
 """
 
+
 keyini(keyval,help)
-#                                report current defaults, exit if --help given
-#setlogger('mosaic.log')
-#
-# -----------------------------------------------------------------------------
+
 
 #
 # define all variables, now in their proper type, for this script
@@ -88,7 +87,8 @@ flux    = keyr('flux')
 image   = keya('image')
 nring   = keyi('nring')
 grid    = keyr('grid')
-plot    = keyb('plot')
+Qplot   = keyb('plot')
+Qlog    = keyb('log')
 freq    = keyr('freq')
 gnoise  = keyr('gnoise')
 
@@ -279,6 +279,9 @@ def imlist(map):
 
 
 def imgen(map,out,pbfwhm):
+    """
+    inherit a map and place a circular gaussian at the center
+    """
     cmd = [
         'imgen',
         'in=%s' % map,
@@ -286,6 +289,22 @@ def imgen(map,out,pbfwhm):
         'object=gaussian',
         'factor=0',
         'spar=1,0,0,%g,%g' % (pbfwhm,pbfwhm)
+        ]
+    zap(out)
+    return cmd
+
+
+def imgen0(map,out,factor=1):
+    """
+    scale intensity of a map by a given factor
+    """
+    cmd = [
+        'imgen',
+        'in=%s' % map,
+        'out=%s' % out,
+        'factor=%g' % factor,
+        'object=point',
+        'spar=0' 
         ]
     zap(out)
     return cmd
@@ -331,7 +350,7 @@ def mossdi2(map,beam,out,region,niters=100):
     zap(out)
     return cmd
 
-def restor(map,beam,model,out):
+def restor(map,beam,model,out,fwhm=None,pa=None):
     cmd = [
         'restor',
         'model=%s' %  model,
@@ -339,6 +358,10 @@ def restor(map,beam,model,out):
         'beam=%s' % beam, 
         'out=%s' % out
         ]
+    if fwhm != None:
+        cmd.append('fwhm=%g,%g' % (fwhm[0],fwhm[1]))
+    if pa != None:
+        cmd.append('pa=%g' % pa)
     zap(out)
     return cmd
 
@@ -384,12 +407,15 @@ def imframe(map,out):
     return cmd
 
 def uvgen(ant,dec,harange,freq,nchan,out,center,telescop,jyperk,systemp):
+    """
+    uvgen for initial noise-only visibilities for given PB (antenna) type 
+    """
     cmd = [
         'uvgen',
         'ant=%s' % ant,
         'baseunit=-3.33564',
         'radec=%s,%g' % (ra,dec),
-        'lat=37.28',                            # fix observatory at CARMA....
+        'lat=37.28',                            # fix the observatory at CARMA....
         'ellim=10',
         'harange=%s' % harange,
         'source=$MIRCAT/no.source',
@@ -405,12 +431,15 @@ def uvgen(ant,dec,harange,freq,nchan,out,center,telescop,jyperk,systemp):
     return cmd
 
 def uvgen_point(ant,dec,harange,freq,nchan,out,telescop,jyperk,systemp,gnoise=0):
+    """
+    uvgen a point source for pointing errors 
+    """
     cmd = [
         'uvgen',
         'ant=%s' % ant,
         'baseunit=-3.33564',
         'radec=%s,%g' % (ra,dec),
-        'lat=37.28',                            # fix observatory at CARMA....
+        'lat=37.28',                            # fix the observatory at CARMA....
         'ellim=10',
         'harange=%s' % harange,
         'source=$MIRCAT/point.source',
@@ -592,8 +621,6 @@ else:
     center=string.replace(center,'\n',',')
     print "MOSAIC FIELD, using center file %s (%d pointings) " % (centerfile,npoint)
 
-print "   ---  CARMA Mosaicing (Cas A model)   ---   "
-
 print " ant     = %s" % ant
 print " pb      = %s" % pb
 print " dec     = %g" % dec
@@ -606,8 +633,6 @@ print " nchan   = %d" % nchan
 print " imsize  = %d" % imsize
 print " region  = %s" % region
 print " method  = %s" % method
-print " " 
-print "   ---  TIMING   ---   "  
 
 
 #   might need to fix this to the real RA ?
@@ -621,35 +646,34 @@ for k in range(0,k1):
     demos_k.append('%s_%d_demos' %  (uv,k))
 
 
-#================================================================================
+#===============================================================================================
 
 # start of code
 
-os.system('mkdir -p %s' %  rundir)              # create the run directory
+os.system('mkdir -p %s' %  rundir)              # create the run directory if it did not exist
 
 setlogger(rundir+'/miriad.log',1)               # output in logfile in run directory (append)
 
+if Qlog: 
+  cmd = 'xterm -T %s -e tail -f %s &' %  (rundir+'/miriad.log',rundir+'/miriad.log')
+  print 'CMD=',cmd
+  os.system(cmd)
 
 if method == "mosmem":
     print "Generate mosaic grid"
     #  lambda/2*antdiam (arcsec)
     print "NYQUIST: ",300/freq/2/12e3*2e5
 
-    print "Generate uv-data. Tsys=40K, bandwidth=8 GHz " 
+    copy_file(ant,rundir)                       # copy ant file in run directory
 
-    copy_file(ant,rundir)
-
+    print "Generate uv-data" 
 
     for k in range(0,k1):
         miriad(uvgen(ant,dec,harange,freq,nchan,uv_k[k],center,telescopes[k],jyperk[k],systemp))
         miriad(uvindex(uv_k[k]))
     
-    print "Scale model size from pixel 0.4 to %g arcsec" % cell
-    # with 0.4 arcsec pixel size Cas A is about 320 arcsec diameter; image size 1024 == 409.6 arcsec
-    # scale model size. eg. cell=0.1 arcsec -> 80 arcsec cell=.01 -> 8 arcsec diameter
-
-    copy_data(image,base2)
-
+    print "Copy model, scale it by factor=%g and set cell=%g" % (factor,cell)
+    miriad(imgen0(image,base2,factor))
     miriad(puthd(base2,'crval1',ra,units='hms'))
     miriad(puthd(base2,'crval2',dec,units='dms'))
     miriad(puthd(base2,'crval3',freq))
@@ -657,7 +681,7 @@ if method == "mosmem":
     miriad(puthd(base2,'cdelt2',cell,units='arcsec'))
 
     flux = string.atof(grepcmd('histo in=%s' % base2, 'Flux', 5))
-    print 'Flux=',flux
+    print 'Model has flux=',flux
 
     print "Make model images for each pointing center for each antenna type"
     for k in range(0,k1):
@@ -668,8 +692,8 @@ if method == "mosmem":
     fp = open("%s/vis.all" % rundir, "w")
     for k in range(0,k1):
         for i in range(1,npoint+1):
-            # if plot: miriad(cgdisp(demos1+"%d"%i))    ###fix name
-            vis_i = "%s_%d_%d"% (uv,i,k)
+            # if Qplot: miriad(cgdisp(demos1+"%d"%i))    ###fix name
+            vis_i = "%s_%d_%d"% (uv,k,i)
             demos_i = demos_k[k]+"%d"%i
             miriad(uvmodel(uv_k[k],demos_i,vis_i,antselect_k[k]))
             # big hack: put a new systemp in to fool invert with options=systemp
@@ -690,7 +714,7 @@ if method == "mosmem":
             miriad(uvgen_point(ant,dec,harange,freq,nchan,visgain,telescopes[k],jyperk[k],systemp,gnoise))
             miriad(selfcal(visgain))
             for i in range(1,npoint+1):
-                vis_i = "%s_%d_%d"% (uv,i,k)
+                vis_i = "%s_%d_%d"% (uv,k,i)
                 miriad(gpcopy(visgain,vis_i))
     else:
         print "Skipping adding pointing noise (gnoise)"
@@ -700,7 +724,7 @@ if method == "mosmem":
             
     print "INVERT: "
         
-    if plot: miriad(implot(base1+'.mp',region=region))
+    if Qplot: miriad(implot(base1+'.mp',region=region))
     miriad(imlist(base1+'.mp'))
             
     print "Make single dish image and beam"
@@ -750,8 +774,8 @@ bmin = string.atof(grepcmd('imfit in=%s object=beam' % psf1, 'Minor axis (arcsec
 bpa  = string.atof(grepcmd('imfit in=%s object=beam' % psf1, '  Position angle',    3)) 
 print 'MOSPSF: Beam = %g x %g arcsec PA = %g degrees' % (bmaj,bmin,bpa)
 
-miriad(restor(map1,beam1,cc,cm))
-if plot: miriad(implot(map1,region=region))
+miriad(restor(map1,beam1,cc,cm,[bmaj,bmin],bpa))
+if Qplot: miriad(implot(map1,region=region))
 
 print "convolve the model by the beam and subtract from the deconvolved image"
 b1 = string.atof(grepcmd('prthd in=%s' % cm, 'Beam', 2))
@@ -759,17 +783,17 @@ b2 = string.atof(grepcmd('prthd in=%s' % cm, 'Beam', 4))
 b3 = string.atof(grepcmd('prthd in=%s' % cm, 'Position', 2)) 
 
 miriad(convol(base2,base1+'.conv',b1,b2,b3))
-if plot: miriad(implot(base1+'.conv',region=region))
+if Qplot: miriad(implot(base1+'.conv',region=region))
 
 print "regrid the convolved model to the deconvolved image template"
 
 miriad(regrid(base1+".conv",base1+".cm",base1+'.regrid'))
-if plot: miriad(implot(base1+'.regrid',region=region))
+if Qplot: miriad(implot(base1+'.regrid',region=region))
 
 #  skipping cgdisp /gif production
 
 miriad(imdiff(base1+'.cm',base1+'.regrid',base1+'.resid'))
-if plot: miriad(implot(base1+'.resid',region=region))
+if Qplot: miriad(implot(base1+'.resid',region=region))
 miriad(histo(base1+'.resid',region=region))
 
 # ================================================================================
