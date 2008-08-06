@@ -35,15 +35,16 @@
 ##    a = Miriad.keya('key1')
 
 ##
-import sys, os, string
+import sys, os, string, time
 
 #   some global variables (private to Miriad.py)
-_version    = "2.0 (28-jul-2008)"
+_version    = "2.1 (6-aug-2008)"
 _quit       = 0
 _mkeyval    = {}
 _help       = {}
 _debuglevel = 0
 _logger     = ""
+_argv       = ""
 
 def run(command,log,fatal):
     """an alias for miriad()"""
@@ -95,11 +96,19 @@ def miriad(command,log=0,fatal=1):
 
 def setlogger(log,append=0):
     """ set the logfile for the miriad() function. By default any old logfile is removed"""
-    global _logger
+    global _logger, _argv
     print "setlogger: default logfile now " + log
     _logger = '>> %s 2>&1' % log
     if append==0:
         zap(log)
+    if len(_argv) > 0:
+        fp = open(log,"a")
+        fp.write("SETLOGGER%% %s\n" % _argv)
+        fp.write("SETLOGGER%% %s\n" % time.ctime())
+        fp.close()
+        _argv = ""
+    else:
+        print "WARNING: no argv???"
 
 
 
@@ -114,8 +123,9 @@ def keyini(keyval,usage,show=0,gui=0):
        @param gui    If 1, ignores required keywords (???)
 
        @return None"""
-    global _quit, _mkeyval, _help, _debuglevel
+    global _quit, _mkeyval, _help, _debuglevel, _argv
 
+    print "%s: PYRAMID Version %s" % (sys.argv[0],_version)
     _help = keyval.copy()
     for key in _help.keys():  # Parse for help comments if any
        idx = _help[key].find('\n')
@@ -133,7 +143,9 @@ def keyini(keyval,usage,show=0,gui=0):
     
     # Set default debug level to 0
     _debuglevel = 0
+    _argv = sys.argv[0]
     for arg in sys.argv[1:]:
+        _argv = _argv + " " + arg
         i=arg.find("=")
         if arg in ["--help","-h","help"]:
             _quit=1
