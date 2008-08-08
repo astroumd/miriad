@@ -20,6 +20,7 @@
 ##                 the same as keyr.
 ##   28-jul-2008   merged map2's miriad.py in miriad'd Miriad.py      PJT
 ##   30-jul-2008   moved back old useful functions for Miriad         PJT
+##     8-8-8       added PGPLOTDeviceName class                       PJT
 ##
 ##  Example usage:
 ##    help = """
@@ -38,7 +39,7 @@
 import sys, os, string, time
 
 #   some global variables (private to Miriad.py)
-_version    = "2.1 (6-aug-2008)"
+_version    = "2.1 (8-aug-2008)"
 _quit       = 0
 _mkeyval    = {}
 _help       = {}
@@ -395,6 +396,29 @@ def greplog(log,word,index=0):
             return sa[index]
     print 'No match on' + word
     return "no-match"
+
+class PGPLOTDeviceName(object):
+    """a class to generate a new unique name for those
+       output devices that can handle it.
+       Examples:
+          pgplot_%03d.ps/ps
+          %d/xs
+    """
+    def __init__(self,dev='pgplot_%03d.ps/ps'):
+        self.n = 0
+        self.device = dev
+        self.findp = dev.find('%')
+    def setn(self,n):
+        self.n = n
+    def getn(self):
+        return self.n
+    def next(self):
+        self.n = self.n + 1
+        if self.findp >= 0:
+            dev = self.device % self.n
+        else:
+            dev = self.device
+        return dev
 
 class Timer:
     """a class to help you compute CPU times the script takes
