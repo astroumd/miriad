@@ -6,6 +6,7 @@
 #  25-jul-08  pjt   Merged ideas from hex7-15.csh, mosaic.py and hetero.py for carma+sza simulations
 #   3-aug-08  pjt   added as hemosi.py to miriad's examples - but lots to clean up
 #   4-aug-08  pjt   keywords changed names and more consistent usage; change into run directory??
+#    8-8-8    pjt   device= implemented (no more plot=)
 #
 #
 #
@@ -20,7 +21,7 @@
 import sys, os, time, string, math
 from Miriad import *
 
-version='2008-08-06'
+version='2008-08-08'
 
 print "   ---  HEMOSI: HEterogenous MOsaicing SImulations  ---   "
 
@@ -31,23 +32,23 @@ keyval = {
     "pb"        : "ovro,6,hatcreek,9,sza,8,carma,sza10,sza6\n     Antennae types, numbers, cross types names",
     "systemp"   : "80,290,0.26\n                                  Systemp temperature for UVGEN",
     "jyperk"    : "43,126,383,73,128,220\n                        Jy/K scaling for all antenna types",
-    "dec"       : "30.0\n         declination where object should be placed",
-    "freq"      : "115.0\n        observing frequency [GHz]",
-    "image"     : "casc.vla\n     model image to test ",
-    "cell"      : "1.0\n          scaling cell size of model in arcsec",
-    "factor"    : "1\n            scaling factor for model",
-    "size"      : "50.0\n         size of cleaning and plotting region (-size..size) [arcsec]",
-    "nchan"     : "1\n            number of channels to use from model image",
-    "method"    : "mosmem\n       mossdi, mossdi2, mosmem, joint, or default",
-    "niters"    : "200\n          number of iterations in mossdi/mosmem/....",
-    "flux"      : "0\n            expected flux in the image (for mosmem)",
-    "gnoise"    : "0\n            Noise (percentage)",
-    "nring"     : "2\n            number of rings in the mosaic",
-    "grid"      : "20.0\n         gridsize (in arcsec) for the mosaic",
-    "center"    : "\n             optional center file that overrides (nring,grid)",
-    "plot"      : "f\n            Show plots?",
-    "log"       : "f\n            Show miriad.log?",
-    "VERSION"   : "2.0 pjt\n      VERSION id for the user interface"
+    "dec"       : "30.0\n            declination where object should be placed",
+    "freq"      : "115.0\n           observing frequency [GHz]",
+    "image"     : "casc.vla\n        model image to test ",
+    "cell"      : "1.0\n             scaling cell size of model in arcsec",
+    "factor"    : "1\n               scaling factor for model",
+    "size"      : "50.0\n            size of cleaning and plotting region (-size..size) [arcsec]",
+    "nchan"     : "1\n               number of channels to use from model image",
+    "method"    : "mosmem\n          mossdi, mossdi2, mosmem, joint, or default",
+    "niters"    : "200\n             number of iterations in mossdi/mosmem/....",
+    "flux"      : "0\n               expected flux in the image (for mosmem)",
+    "gnoise"    : "0\n               Noise (percentage)",
+    "nring"     : "2\n               number of rings in the mosaic",
+    "grid"      : "20.0\n            gridsize (in arcsec) for the mosaic",
+    "center"    : "\n                optional center file that overrides (nring,grid)",
+    "device"    : "/null\n           PGPLOT device name",
+    "log"       : "f\n               Show miriad.log?",
+    "VERSION"   : "2.1 pjt\n         VERSION id for the user interface"
     }
 
 help = """
@@ -87,7 +88,7 @@ flux    = keyr('flux')
 image   = keya('image')
 nring   = keyi('nring')
 grid    = keyr('grid')
-Qplot   = keyb('plot')
+device  = keya('device')
 Qlog    = keyb('log')
 freq    = keyr('freq')
 gnoise  = keyr('gnoise')
@@ -234,11 +235,11 @@ def gpcopy(vis,out):
     return cmd
 
 
-def cgdisp(map):
+def cgdisp(map,device='/xs'):
     cmd = [
         'cgdisp',
         'in=%s' % map,
-        'device=/xs',
+        'device=%s' % device,
         'labtyp=arcsec',
         'nxy=6,6',
         'range=0,0,lin,8'
@@ -257,11 +258,11 @@ def uvmodel(vis,model,out,select):
     zap(out)
     return cmd;
 
-def implot(map,region='quarter'):
+def implot(map,region='quarter',device='/xs'):
     cmd = [
         'implot',
         'in=' + map,
-        'device=/xs',
+        'device=%s' % device,
         'units=s',
         'conflag=l',
         'conargs=1.4',
@@ -648,11 +649,16 @@ for k in range(0,k1):
 
 #===============================================================================================
 
-# start of code
+# start of actual code
+#
+# TODO:    the run directory is a bit awkward
+#          it would be a lot easier to assume we're in the run directory
+#          but this complicates copying the ant file and the model image (for now)
 
 os.system('mkdir -p %s' %  rundir)              # create the run directory if it did not exist
 
 setlogger(rundir+'/miriad.log',1)               # output in logfile in run directory (append)
+dev=PGPLOTDeviceName(device)                    # make an object that can increment itself
 
 if Qlog: 
   cmd = 'xterm -T %s -e tail -f %s &' %  (rundir+'/miriad.log',rundir+'/miriad.log')
@@ -692,9 +698,9 @@ if method == "mosmem":
     fp = open("%s/vis.all" % rundir, "w")
     for k in range(0,k1):
         for i in range(1,npoint+1):
-            # if Qplot: miriad(cgdisp(demos1+"%d"%i))    ###fix name
             vis_i = "%s_%d_%d"% (uv,k,i)
             demos_i = demos_k[k]+"%d"%i
+            miriad(cgdisp(demos_i,device=dev.next()))
             miriad(uvmodel(uv_k[k],demos_i,vis_i,antselect_k[k]))
             # big hack: put a new systemp in to fool invert with options=systemp
             # also, we're putting in jyperk, should be scaled to retain it for the first primary beam
@@ -709,7 +715,7 @@ if method == "mosmem":
 
     if gnoise > 0:
         print "Adding pointing errors: gnoise=%g" % gnoise
-        visgain = 'gains.uv'
+        visgain = '%s/uv_gains' % rundir
         for k in range(0,k1):
             miriad(uvgen_point(ant,dec,harange,freq,nchan,visgain,telescopes[k],jyperk[k],systemp,gnoise))
             miriad(selfcal(visgain))
@@ -724,7 +730,7 @@ if method == "mosmem":
             
     print "INVERT: "
         
-    if Qplot: miriad(implot(base1+'.mp',region=region))
+    miriad(implot(base1+'.mp',region=region,device=dev.next()))
     miriad(imlist(base1+'.mp'))
             
     print "Make single dish image and beam"
@@ -739,8 +745,8 @@ if method == "mosmem":
     miriad(regrid(base2+".bigger.map",base1+'.mp',base2+".map"))
     miriad(imgen(base2+".map",base2+".beam",pbfwhm))
     
-    # odd, for cube this one was all blank
-    #miriad(implot(base2+".map"))
+    # odd, for cube this one was all blank, some bug to be figured out
+    miriad(implot(base2+".map",device=dev.next()))
 
 
     #miriad(puthd(base2+".map",'rms','7.32'))            #  is that 1/100 of the flux ???
@@ -775,7 +781,7 @@ bpa  = string.atof(grepcmd('imfit in=%s object=beam' % psf1, '  Position angle',
 print 'MOSPSF: Beam = %g x %g arcsec PA = %g degrees' % (bmaj,bmin,bpa)
 
 miriad(restor(map1,beam1,cc,cm,[bmaj,bmin],bpa))
-if Qplot: miriad(implot(map1,region=region))
+miriad(implot(map1,region=region,device=dev.next()))
 
 print "convolve the model by the beam and subtract from the deconvolved image"
 b1 = string.atof(grepcmd('prthd in=%s' % cm, 'Beam', 2))
@@ -783,21 +789,22 @@ b2 = string.atof(grepcmd('prthd in=%s' % cm, 'Beam', 4))
 b3 = string.atof(grepcmd('prthd in=%s' % cm, 'Position', 2)) 
 
 miriad(convol(base2,base1+'.conv',b1,b2,b3))
-if Qplot: miriad(implot(base1+'.conv',region=region))
+miriad(implot(base1+'.conv',region=region,device=dev.next()))
 
 print "regrid the convolved model to the deconvolved image template"
 
 miriad(regrid(base1+".conv",base1+".cm",base1+'.regrid'))
-if Qplot: miriad(implot(base1+'.regrid',region=region))
+miriad(implot(base1+'.regrid',region=region,device=dev.next()))
 
 #  skipping cgdisp /gif production
 
 miriad(imdiff(base1+'.cm',base1+'.regrid',base1+'.resid'))
-if Qplot: miriad(implot(base1+'.resid',region=region))
+miriad(implot(base1+'.resid',region=region,device=dev.next()))
 miriad(histo(base1+'.resid',region=region))
 
 # ================================================================================
 
+print "All done. Also created %d plots" % dev.getn()
 print "print out results - summarize rms and beam sidelobe levels"
 print "   ---  RESULTS   ---   "
 
@@ -806,56 +813,19 @@ print "   ---  RESULTS   ---   "
 #   BUG: doesn't look like 'mp' has rms???
 #rms    = string.atof(itemize(mp,'rms')) * 1000
 rms = -1
-srms   = string.atof(grepcmd('histo in=%s' % res, 'Rms', 3)) 
-smax   = string.atof(grepcmd('histo in=%s' % res, 'Maximum', 2))
-smin   = string.atof(grepcmd('histo in=%s' % res, 'Minimum', 2))
+srms       = string.atof(grepcmd('histo in=%s' % res, 'Rms', 3)) 
+smax       = string.atof(grepcmd('histo in=%s' % res, 'Maximum', 2))
+smin       = string.atof(grepcmd('histo in=%s' % res, 'Minimum', 2))
 Model_Flux = string.atof(grepcmd('histo in=%s region=%s' % (conv,region),'Flux',5))
 Model_Peak = string.atof(grepcmd('histo in=%s region=%s' % (conv,region),'Maximum',2))
 Flux       = string.atof(grepcmd('histo in=%s region=%s' % (cm,region),'Flux',5))
 Peak       = string.atof(grepcmd('histo in=%s region=%s' % (cm,region),'Maximum',2))
 Fidelity   = Peak/srms 
 
+
 print " Config  DEC  HA[hrs]    Beam[arcsec] scale Model_Flux,Peak  Image_Flux,Peak Residual:Rms,Max,Min[Jy] Fidelity"
 print " %s %g %s %.3f %g %g %g %.3f %.3f %.3f %.3f %.3f %.3f %.3f %.3f" % (config,dec,harange,rms,b1,b2,
                                                               cell,Model_Flux,Model_Peak,Flux,Peak,srms,smax,smin,Fidelity)
 
 sys.exit(0)
-
-#mv timing hex19.$config.$dec.$harange.$nchan.$imsize
-#cat $config.$dec.$harange.$nchan.$imsize
-#cat casa.results
-#enscript -r casa.results
-
-#print "DEBUGGING"
-#string.atof(itemize(mp,'rms'))
-#!/usr/bin/env python
-#
-###import sys, os, time, string, math
-###from Miriad import *
-
-# mchw 12jun02 - Single Field Imaging
-# mchw 09aug02 - version for CARMA
-# mchw 14aug02 - reduce size of region in imfit which was including sidelobes in relpix +/- 10
-# mchw 20aug02 - hetero.csh This script assumes that the first 6 antennas are OVRO and the next 9 are hatcreek
-# mchw 26sep02 - decrease Nyquist sample interval for 2 km configuration.
-# mchw 25feb03 - version for ACA with 4 12m and 12 7m antennas.
-# pjt  17mar03 - pyramized
-
-# Nyquist sample time = 12 x (dish_diam/2)/(pi*baseline)
-# calc '12*(12/2)/(pi*2000)' = 0.01 hours = 36 sec.
-# calc '12*(7/2)/(pi*1150)'  = 0.01 hours = 36 sec.
-
-
-# IDEAS to expand:  in uvgen: systemp, jyperk(3), lat(itude), telescop(2)
-#   I cheat since 12/10.4 m == 7/6.1 m == 230/200 GHz
-#   (telescop name is used in pb to get primary beam type.
-#   It should be possible to use gauss(pbfwhm) as pbtype,
-# in uvcat: selectant(3)
-
-# output should look as follows in default (config1,-30) run:
-# Config  DEC  HA[hrs]  Rms[\muJy]  Beam[arcsec]  Tb_rms[\muK]  Sidelobe[%]:Rms,Max,Min  Nvis[%] uvrange[m]
-
-# CSH config1   -30   -4,4,.1   14  1.88 x 1.57  110  0.6  4.4  -2.4  100 129114 9 159
-# PY  config1   -30   -4,4,0.1  14  1.88 x 1.57  108  1    4.4  -2.4  100 129114 9 159
-
 
