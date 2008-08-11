@@ -17,11 +17,22 @@
 # CARMA-15:  
 #     pb=ovro,6,hatcreek,9,carma
 #     jyperk=43,126,73
+#
+
+# The script contains 4 sections
+# 1) import modules and define the keyval/help/version user interface using keyini
+# 2) auxillary helper functions for the main script
+# 3) get command line parameters and construct other useful variables
+# 4) the actual code
+
+
+#------------------------------------------------------------------------------------------------------------------------
+# Section 1:  import modules and define keyval/help/version user interface using keyini 
 
 import sys, os, time, string, math
 from Miriad import *
 
-version='2008-08-08'
+version='2008-08-11'
 
 print "   ---  HEMOSI: HEterogenous MOsaicing SImulations  ---   "
 
@@ -32,23 +43,23 @@ keyval = {
     "pb"        : "ovro,6,hatcreek,9,sza,8,carma,sza10,sza6\n     Antennae types, numbers, cross types names",
     "systemp"   : "80,290,0.26\n                                  Systemp temperature for UVGEN",
     "jyperk"    : "43,126,383,73,128,220\n                        Jy/K scaling for all antenna types",
-    "dec"       : "30.0\n            declination where object should be placed",
-    "freq"      : "115.0\n           observing frequency [GHz]",
-    "image"     : "casc.vla\n        model image to test ",
-    "cell"      : "1.0\n             scaling cell size of model in arcsec",
-    "factor"    : "1\n               scaling factor for model",
-    "size"      : "50.0\n            size of cleaning and plotting region (-size..size) [arcsec]",
-    "nchan"     : "1\n               number of channels to use from model image",
-    "method"    : "mosmem\n          mossdi, mossdi2, mosmem, joint, or default",
-    "niters"    : "200\n             number of iterations in mossdi/mosmem/....",
-    "flux"      : "0\n               expected flux in the image (for mosmem)",
-    "gnoise"    : "0\n               Noise (percentage)",
-    "nring"     : "2\n               number of rings in the mosaic",
-    "grid"      : "20.0\n            gridsize (in arcsec) for the mosaic",
-    "center"    : "\n                optional center file that overrides (nring,grid)",
-    "device"    : "/null\n           PGPLOT device name",
-    "log"       : "f\n               Show miriad.log?",
-    "VERSION"   : "2.1 pjt\n         VERSION id for the user interface"
+    "dec"       : "30.0\n                                         declination where object should be placed",
+    "freq"      : "115.0\n                                        observing frequency [GHz]",
+    "image"     : "casc.vla\n                                     model image to test ",
+    "cell"      : "1.0\n                                          scaling cell size of model in arcsec",
+    "factor"    : "1\n                                            scaling factor for model",
+    "size"      : "50.0\n                                         size of cleaning and plotting region (-size..size) [arcsec]",
+    "nchan"     : "1\n                                            number of channels to use from model image",
+    "method"    : "mosmem\n                                       mossdi, mossdi2, mosmem, joint, or default",
+    "niters"    : "200\n                                          number of iterations in mossdi/mosmem/....",
+    "flux"      : "0\n                                            expected flux in the image (for mosmem)",
+    "gnoise"    : "0\n                                            Noise (percentage)",
+    "nring"     : "2\n                                            number of rings in the mosaic",
+    "grid"      : "20.0\n                                         gridsize (in arcsec) for the mosaic",
+    "center"    : "\n                                             optional center file that overrides (nring,grid)",
+    "device"    : "/null\n                                        PGPLOT device name",
+    "log"       : "f\n                                            Show miriad.log?",
+    "VERSION"   : "2.1 pjt\n                                      VERSION id for the user interface"
     }
 
 help = """
@@ -63,43 +74,33 @@ The minimum amount of information you need to run this task is:
        jyperk=....
 """
 
+#>   OFILE dir=run1
+#>   IFILE ant=CZ.ant
+#>   ENTRY pb=ovro,6,hatcreek,9,sza,8,carma,sza10,sza6
+#>   ENTRY systemp=80,290,0.26
+#>   ENTRY jyperk=43,126,383,73,128,220
+#>   SCALE dec=30                                -90:90:0.5
+#>   SCALE freq=115.0                             1:300:1
+#>   IFILE image=casc.vla
+#>   ENTRY cell=1.0
+#>   ENTRY factor=1
+#>   ENTRY size=50.0
+#>   ENTRY nchan=1
+#>   RADIO method=mosmem                          mossdi,mossdi2,mosmem,joint,default
+#>   ENTRY niters=200
+#>   ENTRY flux=0
+#>   ENTRY gnoise=0
+#>   SCALE nring=2                                1:10:1
+#>   SCALE grid=20                                1:100:1
+#>   IFILE center=
+#>   ENTRY device=/null
+#>   RADIO log=f                                  t,f
 
 keyini(keyval,help)
 
 
-#
-# define all variables, now in their proper type, for this script
-#
-
-rundir  = keya('dir')
-ant     = keya('ant')
-pb      = keyl('pb')
-jyperk  = keyl('jyperk')
-systemp = keya('systemp')
-dec     = keyr('dec')
-cell    = keyr('cell')
-factor  = keyr('factor')
-size    = keyr('size')
-nchan   = keyi('nchan')
-method  = keya('method')
-niters  = keyi('niters')
-center  = keya('center')
-flux    = keyr('flux')
-image   = keya('image')
-nring   = keyi('nring')
-grid    = keyr('grid')
-device  = keya('device')
-Qlog    = keyb('log')
-freq    = keyr('freq')
-gnoise  = keyr('gnoise')
-
-
-harange = '-2,2,0.013'
-select  = '-shadow\(3.5\)'
-imsize  = 257                    # avoid 2**N, image size 2**N + 1 is good.  [or calculate from image]
-
-mir = os.environ['MIR']
-
+#------------------------------------------------------------------------------------------------------------------------
+# Section 2:  define helpful functions 
 
 def sanitize0(s):
     return s
@@ -118,8 +119,6 @@ def sanitize(s):
         s0 = s0 + s[i]
     return s0
 
-
-# -----------------------------------------------------------------------------
 
 #   returns a list of strings that are the ascii centers as uvgen wants them
 #   (in a file) via the center= keyword
@@ -519,11 +518,42 @@ def antspecs(nants):
 
     return bb
 
-
-# ================================================================================
+#------------------------------------------------------------------------------------------------------------------------
+# Section 3:  grab command line variables and construct other helpful variables
 #
-#   start of the actual script
-# -----------------------------------------------------------------------------
+#
+
+rundir  = keya('dir')
+ant     = keya('ant')
+pb      = keyl('pb')
+jyperk  = keyl('jyperk')
+systemp = keya('systemp')
+dec     = keyr('dec')
+cell    = keyr('cell')
+factor  = keyr('factor')
+size    = keyr('size')
+nchan   = keyi('nchan')
+method  = keya('method')
+niters  = keyi('niters')
+center  = keya('center')
+flux    = keyr('flux')
+image   = keya('image')
+nring   = keyi('nring')
+grid    = keyr('grid')
+device  = keya('device')
+Qlog    = keyb('log')
+freq    = keyr('freq')
+gnoise  = keyr('gnoise')
+
+
+harange = '-2,2,0.013'
+select  = '-shadow\(3.5\)'
+imsize  = 257                    # avoid 2**N, image size 2**N + 1 is good.  [or calculate from image]
+
+mir = os.environ['MIR']
+
+
+
 # Nyquist sample rate for each pointing.
 # calc '6/(pi*250)*12'
 #cells  = 500*cell
@@ -647,9 +677,9 @@ for k in range(0,k1):
     demos_k.append('%s_%d_demos' %  (uv,k))
 
 
-#===============================================================================================
-
-# start of actual code
+#------------------------------------------------------------------------------------------------------------------------
+# Section 4: start of actual code
+# 
 #
 # TODO:    the run directory is a bit awkward
 #          it would be a lot easier to assume we're in the run directory
@@ -813,9 +843,9 @@ print "   ---  RESULTS   ---   "
 #   BUG: doesn't look like 'mp' has rms???
 #rms    = string.atof(itemize(mp,'rms')) * 1000
 rms = -1
-srms       = string.atof(grepcmd('histo in=%s' % res, 'Rms', 3)) 
-smax       = string.atof(grepcmd('histo in=%s' % res, 'Maximum', 2))
-smin       = string.atof(grepcmd('histo in=%s' % res, 'Minimum', 2))
+srms       = string.atof(grepcmd('histo in=%s'           % res, 'Rms', 3)) 
+smax       = string.atof(grepcmd('histo in=%s'           % res, 'Maximum', 2))
+smin       = string.atof(grepcmd('histo in=%s'           % res, 'Minimum', 2))
 Model_Flux = string.atof(grepcmd('histo in=%s region=%s' % (conv,region),'Flux',5))
 Model_Peak = string.atof(grepcmd('histo in=%s region=%s' % (conv,region),'Maximum',2))
 Flux       = string.atof(grepcmd('histo in=%s region=%s' % (cm,region),'Flux',5))
@@ -823,9 +853,9 @@ Peak       = string.atof(grepcmd('histo in=%s region=%s' % (cm,region),'Maximum'
 Fidelity   = Peak/srms 
 
 
-print " Config  DEC  HA[hrs]    Beam[arcsec] scale Model_Flux,Peak  Image_Flux,Peak Residual:Rms,Max,Min[Jy] Fidelity"
+print " Config DEC HA[hrs] rms  Beam[arcsec] cell Model:Flux,Peak  Image:Flux,Peak Residual:Rms,Min,Max[Jy] Fidelity"
 print " %s %g %s %.3f %g %g %g %.3f %.3f %.3f %.3f %.3f %.3f %.3f %.3f" % (config,dec,harange,rms,b1,b2,
-                                                              cell,Model_Flux,Model_Peak,Flux,Peak,srms,smax,smin,Fidelity)
+                                                              cell,Model_Flux,Model_Peak,Flux,Peak,srms,smin,smax,Fidelity)
 
 sys.exit(0)
 
