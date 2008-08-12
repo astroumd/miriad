@@ -42,9 +42,10 @@ c  mchw 22jul96  Add trx and compute systemp.
 c  mchw 17jan97  compute airmass from elevation.
 c  pjt  25jun98  removed double decl (linux/g77)
 c   12may99 rp change scale height to 1.6 km
+c  mchw 120808  RP trx = 35 K (DSB) for 3mm; trx = 50 K (DSB) for 1mm.
 c----------------------------------------------------------------------c
 	character version*(*)
-	parameter(version='version 12-MAY-99')
+	parameter(version='version 12-AUG-08')
         include 'mirconst.h'
 	character telescop*20,line*100
 	real altitude,freq,relhumid,airtemp,mmh2o,airmass,trx,
@@ -62,8 +63,8 @@ c
 	call keyr('airtemp',airtemp,0.)
 	call keyr('airmass',airmass,1.)
 	call keyr('elev',elev,0.)
-	call keyr('trx',trx,40.)
-	if(freq.gt.120) trx=80.
+	call keyr('trx',trx,35.)
+	if(freq.gt.120) trx=55.
 	call keyfin
 c
 c  compute airmass from elevation
