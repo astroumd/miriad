@@ -4,7 +4,7 @@ dnl   - this file should be called configure.ac
 dnl ------------------------------------------------------------------------------------
 
 AC_PREREQ(2.59)
-AC_INIT([MIRIAD],[4.1.0],[miriad-dev-bugs@astro.berkeley.edu])
+AC_INIT([MIRIAD],[4.1.1],[miriad-dev-bugs@astro.berkeley.edu])
 AC_REVISION([$Revision$])
 
 AC_MSG_CHECKING([MIRIAD4 config])
