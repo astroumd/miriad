@@ -1,6 +1,6 @@
 include $(top_srcdir)/mircommon.mak
 
-bin_PROGRAMS = antconv attsys bee blcal calapply calboot calfit \
+bin_PROGRAMS = antconv bee blcal calapply calboot calfit \
   calflag calflux calib callist calmake calplot fitgains gapply \
   gfiddle gmakes gpaver gpboot gpbreak gpcal gpcopy gpedit \
   gperror gplist gpnorm gpplt gpscal gpshift linecal listpol \
@@ -11,7 +11,7 @@ AM_CFLAGS = @x_cflags@
 AM_FFLAGS = @no_globals@
 LDADD = $(prog_libs)
 
-BUILT_SOURCES = antconv.f attsys.f bee.f blcal.f calapply.f calboot.f \
+BUILT_SOURCES = antconv.f bee.f blcal.f calapply.f calboot.f \
   calfit.f calflag.f calflux.f calib.f callist.f calmake.f calplot.f \
   fitgains.f gapply.f gfiddle.f gmakes.f gpaver.f gpboot.f gpbreak.f \
   gpcal.f gpcopy.f gpedit.f gperror.f gplist.f gpnorm.f gpplt.f gpscal.f \
@@ -22,7 +22,7 @@ BUILT_SOURCES = antconv.f attsys.f bee.f blcal.f calapply.f calboot.f \
 noinst_HEADERS = bee.h blcal.h gfiddle.h gmakes.h gpcal.h gplist.h \
   gpplt.h gpscal.h mfcal.h mselfcal.h selfcal.h tmcvt.h
 
-EXTRA_DIST = antconv.for attsys.for bee.for blcal.for calapply.for \
+EXTRA_DIST = antconv.for bee.for blcal.for calapply.for \
   calboot.for calfit.for calflag.for calflux.for calib.for callist.for \
   calmake.for calplot.for fitgains.for gapply.for gfiddle.for gmakes.for \
   gpaver.for gpboot.for gpbreak.for gpcal.for gpcopy.for gpedit.for \
@@ -32,7 +32,6 @@ EXTRA_DIST = antconv.for attsys.for bee.for blcal.for calapply.for \
   tpgains.for uvpflag.for wvcal.for xyphase.for
 
 nodist_antconv_SOURCES = antconv.f
-nodist_attsys_SOURCES = attsys.f
 nodist_bee_SOURCES = bee.f
 nodist_blcal_SOURCES = blcal.f
 nodist_calapply_SOURCES = calapply.f
