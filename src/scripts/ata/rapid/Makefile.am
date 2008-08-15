@@ -16,6 +16,8 @@ DOCFLAGS = -e
 
 include $(top_srcdir)/mirdoc.mak
 
+EXTRA_DIST = $(bin_SCRIPTS)
+
 automap.csh.clone: automap.csh
 	$(LN_S) $< $@
 calcal.csh.clone: calcal.csh
