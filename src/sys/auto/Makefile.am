@@ -4,6 +4,8 @@ include $(top_srcdir)/mircommon.mak
 
 bin_SCRIPTS = mirmake
 
+EXTRA_DIST = mirmake.in
+
 mirmake: mirmake.in
 	sed -e 's,%libdir%,$(libdir),' <$< >$@
 
