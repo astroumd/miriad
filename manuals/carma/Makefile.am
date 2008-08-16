@@ -2,7 +2,7 @@ texname = miriad4
 
 doc_DATA = $(texname)_US.ps.gz
 
-EXTRA_DIST = $(texname).tex
+EXTRA_DIST = $(texname).tex aaspp4.sty
 
 CLEANFILES = $(doc_DATA) \
   $(texname).aux \
