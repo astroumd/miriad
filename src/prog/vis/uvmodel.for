@@ -163,12 +163,14 @@ c    mchw 22may97 copy across telescop and not pbfwhm in options=imhead.
 c    mchw 05nov97 Add options=poleak.
 c    pjt  17mar01 documented the change Mel made with increased maxsels in 98
 c    mchw 09jan08 Add options=imaginary to handle imaginary image.
+c    mchw 20aug08  include 'mem.h'
 c  Bugs:
 c    * Polarisation processing is pretty crude.
 c------------------------------------------------------------------------
 	include 'maxdim.h'
+	include 'mem.h'
 	character version*(*)
-	parameter(version='version 1.0 09-jan-2008')
+	parameter(version='version 1.0 20-aug-2008')
 	integer maxsels,nhead,nbuf
 	parameter(maxsels=1024,nhead=1,nbuf=5*maxchan+nhead)
 c
