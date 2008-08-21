@@ -14,6 +14,7 @@
 /*    20jun02 pjt  even more pedantic yet                               */
 /*    15aug07 pjt  fix for 64bit linux                                  */ 
 /*    14jul08 pjt  merged in ATNF style                                 */
+/*    21aug08 pjt  fixed linux 64bit alloc bug from shared libs + debug */
 /*                                                                      */
 /************************************************************************/
 
@@ -103,16 +104,33 @@ c
   ptrdiff_t offset;
   fort_integer t;
   fort_integer *s;
+  static int mm_checked = 0;
+  static int mm_debug = 0;
 
 #if defined(linux)
-  if(sizeof(void *)> sizeof(fort_integer))mallopt(M_MMAP_MAX,0);
+  if (!mm_checked) {
+    mm_checked = 1;
+    if(sizeof(void *)> sizeof(fort_integer)) {
+	/* check for potential large location of data w.r.t. malloc() data */
+	/* first allocate a small piece of memory and see where it landed  */
+	s = (fort_integer *)malloc( (size_t)(base_unit) );
+	if(s == (fort_integer *)NULL) return 0;
+	offset = s-data.addr;
+	t = (fort_integer)offset;
+	if (t == offset) mallopt(M_MMAP_MAX,0);
+	if (mm_debug) bugv_c('i',"mmAlloc(4) tst: d,s %p %p   o,t %p %p",data.addr,s,offset,t); 
+    }
+  }
 #endif
   s = (fort_integer *)malloc( (size_t)(size.val * base_unit) );
   if(s == (fort_integer *)NULL) return 0;
   offset = s - data.addr;
   t = (fort_integer)offset;
-  if(t != offset) bugv_c('f',
-    "mmAlloc: odd form of rounding: f=%p, offset=%p in mmAlloc",t,offset);
+  if (mm_debug) bugv_c('i',"mmAlloc(%d) run: d,s %p %p   o,t %p %p",size.val,data.addr,s,offset,t); 
+  if(t != offset) bugv_c('f',"mmAlloc: odd form of rounding: f=%p, offset=%p in mmAlloc   s,d=%p,%p",t,offset,s,data.addr);
+
+  struct mallinfo mi = mallinfo();
+  if (mm_debug) bugv_c('i',"mallinfo: hblks(d):%d %d   %d %d %d %d %d",mi.hblks,mi.hblkhd,mi.uordblks,mi.fordblks,mi.keepcost,mi.arena,mi.ordblks);
 
   return t + 1;
 }
