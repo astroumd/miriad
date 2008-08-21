@@ -1,3 +1,19 @@
+- serious issue on 64bit mmalloc() ?  [aug 2008]
+  this occurs when you use shared libraries  in lnux and 
+  mem.h is not in the main program, s-data.addr is then < 0
+  
+  Proposed solution(s):
+  - increase MAXBUF so that we don't need mmalloc()
+  - ensure we use static libraries
+  - put mem.h in the program main (horrible, but works)
+  - compile miriad with 8byte integers (gfortran now supports that,
+        but g77 is unlikely to ever support it)
+
+  the last step has not been well tested, but i'll give that a shot          
+  shortly. For this 'intf2c' needs the -x flag and maybe the -c flag.
+  gfortran uses the -fdefault-integer-8 flag.
+
+
 - WSRT code merge:
   - ratty and intf2c to handle the new PTRDIFF_T type in for/f2c files
   - fftw (CUDA)
