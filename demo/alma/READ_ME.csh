@@ -12,7 +12,7 @@ goto 0
 echo make single channel maps and beams for all 29 configurations for dec=-30
 set dec = -30
 foreach i ( 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 )
-  mfs.csh config$i $dec 1
+  mfs.csh config$i $dec -1,1,.1 1
 end
 
 echo plot central beam patch for all 29 configurations for dec=-30
@@ -26,7 +26,7 @@ end
 
 1:
 echo 4km configuration MFS imaging
-mfs.csh config29 -30 10
+mfs.csh config29 -30 -1,1,.1 10
 
 
 2:

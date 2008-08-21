@@ -35,15 +35,15 @@ awk '{if($33==1) printf("%.2f  %.2f  0.0  %d\n", $3, $2, $4)}' conway.configs > 
 
 echo "Make single field images and plot beams for DEC 30"
 foreach i (1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 )
-  mfs.csh config$i 30 1
+  mfs.csh config$i 30 -1,1,.1 1
 end
 
 echo "Make single field images and plot beams for DEC 0"
 foreach i (1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 )
-  mfs.csh config$i 0 1
+  mfs.csh config$i 0 -1,1,.1 1
 end
 
 echo "Make single field images and plot beams for DEC -30"
 foreach i (1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 )
-  mfs.csh config$i -30 1
+  mfs.csh config$i -30 -1,1,.1 1
 end

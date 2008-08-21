@@ -18,7 +18,7 @@ start:
 set dec = -30
 set nchan = 1
 foreach i (`echo $start $end | awk '{for (i=$1; i<=$2; i++) print i}'`)
-  mfs.csh random$i $dec $nchan
+  mfs.csh random$i $dec -1,1,.1 $nchan
 end
 rm $tmp
 

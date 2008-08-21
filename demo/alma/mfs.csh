@@ -1,12 +1,11 @@
 #!/bin/csh -f
 
-echo "Performance tests for mfs imaging"
-#echo "Performance tests for multichannel imaging"
+echo "Performance tests for ALMA imaging"
 
 # mchw 27jun02
-
-# 23sep02 increase image size and decrease Nyquist sample interval for config > 20
-# 19nov03 calculated Nyquist sample time in table.
+# 18apr03 added uvrange.
+# 22mar05 added harange.
+# 09may05 add more parameters to title.
 
 
 # Nyquist sample time = 12 x 3600 s x (dish_diam/2)/(pi*baseline)
@@ -26,13 +25,15 @@ goto start
 start:
 
 # check inputs
-  if($#argv<3) then
-    echo " Usage: $0.csh   config   declination nchan" 
+  if($#argv<4) then
+    echo " Usage: $0.csh   config   declination  harange  nchan" 
     echo "   config"
     echo "          Antenna configuration. "
     echo "            e.g. config1.ant. Omit the .ant. No default."
     echo "   declination"
     echo "          Source declination in degrees. No default."
+    echo "   harange"
+    echo "          HA range: start,stop,interval in hours. No default."
     echo "   nchan"                                                                 
     echo "          Number of spectral channels. No default."
     echo " "
@@ -41,8 +42,8 @@ start:
 
 set config  = $1
 set dec     = $2
-set nchan   = $3
-set harange = -1,1,0.0057
+set harange = $3
+set nchan   = $4
 set select  = '-shadow(12)'
 set antdiam = 12
 set freq    = 230
@@ -50,6 +51,11 @@ set imsize  = 1024
 set imsize  = 256
 set imsize  = 0
 # imsize = 0 lets invert choose the image size with ~ 1.5 x Nyquist sampling.
+set systemp    = 40
+set jyperk     = 40
+set bandwidth  = 8000
+set weighting  = 'robust=0.5'
+set weighting  = 'sup=0'
 
 
 # echo "   ---  ALMA Single Field Multichannel Imaging    ---   " > timing
@@ -70,7 +76,7 @@ continue:
 
 echo generate uv-data
 rm -r $config.$dec.uv
-uvgen ant=$config.ant baseunit=-3.33564 radec=23:23:25.803,$dec lat=-23.02 harange=$harange source=$MIRCAT/point.source telescop=alma systemp=40 jyperk=40 freq=$freq corr=$nchan,1,1,8000 out=$config.$dec.uv
+uvgen ant=$config.ant baseunit=-3.33564 radec=23:23:25.803,$dec lat=-23.02 harange=$harange source=$MIRCAT/point.source telescop=alma systemp=$systemp jyperk=$jyperk freq=$freq corr=$nchan,1,1,$bandwidth out=$config.$dec.uv
 # pnoise=30
 echo UVGEN: `date` >> timing
 
@@ -83,9 +89,8 @@ uvplt vis=$config.$dec.uv device=/xs axis=uc,vc options=nobase,equal
 
 echo image
 rm -r $config.$dec.bm $config.$dec.mp
-set nvis = `invert options=mfs vis=$config.$dec.uv map=$config.$dec.mp beam=$config.$dec.bm imsize=$imsize sup=0 select=$select | grep Visibilities | awk '{print $3}'`
-# capture nvis from standard output stream. The alternative line below is for multichannel imaging.
-#set nvis = `invert vis=$config.$dec.uv map=$config.$dec.mp beam=$config.$dec.bm imsize=$imsize sup=0 select=$select | grep Visibilities | awk '{print $3}'`
+set nvis = `invert options=mfs vis=$config.$dec.uv map=$config.$dec.mp beam=$config.$dec.bm imsize=$imsize $weighting select=$select | grep Visibilities | awk '{print $3}'`
+# capture nvis from standard output stream. 
 echo INVERT: `date` >> timing
 
 echo plotting
@@ -129,10 +134,10 @@ set uvrange = `uvcheck vis="$config.$dec.uv" | awk '{if(NR==6)print 0.3*$6, 0.3*
 set baseline = `echo $uvrange | awk '{print $2}'`
 set Nyquist = `calc "12*3600*($antdiam/2)/(pi*$baseline)" | awk '{printf("%.1f\n",$1)}'`
 echo " " >> timing
-echo " Config  DEC  Nchan HA[hrs]  Rms[\muJy]  Beam[arcsec] Tb_rms[\muK] Sidelobe[%]:Rms,Max,Min Nvis[%] uvrange[m] Nyquist[s]" >> timing
-echo  "$config  $dec  $nchan  $harange  $RMS   $BMAJ $BMIN    $TBRMS   $SRMS  $SMAX  $SMIN  $nvis $uvrange $Nyquist" >> timing
+echo " Config  DEC  HA[hrs]  Nchan  Rms[\muJy]  Beam[arcsec] Tb_rms[\muK] Sidelobe[%]:Rms,Max,Min Nvis[%] uvrange[m] weighting" >> timing
+echo  "$config  $dec  $harange  $nchan  $RMS   $BMAJ $BMIN    $TBRMS   $SRMS  $SMAX  $SMIN  $Nvis  $nvis $uvrange $weighting" >> timing
 echo " "
-echo  "$config  $dec  $nchan  $harange   $RMS   $BMAJ x $BMIN   $TBRMS   $SRMS   $SMAX   $SMIN   $Nvis $uvrange $Nyquist" >> beams.results
+echo  "$config  $dec  $harange  $nchan  $RMS  $BMAJ x $BMIN   $TBRMS   $SRMS  $SMAX  $SMIN  $Nvis  $nvis $uvrange $weighting" >> beams.results
 mv timing $config.$dec.$harange.$nchan.$imsize.$nvis
 cat $config.$dec.$harange.$nchan.$imsize.$nvis
 
