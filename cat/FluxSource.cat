@@ -1769,7 +1769,7 @@ NRA150       1992-MAY-20.0    87.0     1.80     0.20
 3C111        2008-APR-30.0   224.5     1.40     0.21   CARMA8       MARS
 3C111        2008-MAY-06.0   110.0     3.70     0.70   CARMA8       URANUS
 3C111        2008-MAY-09.0   110.0     4.10     0.60   CARMA9       URANUS
-3C111        2008-MAY-29.      0.0    90.00     3.70   0.6          CARMA8       NEPTUNE
+3C111        2008-MAY-29.0    90.0     3.70     0.60   CARMA8       NEPTUNE
 3C111        2008-JUN-06.0    86.2     4.10     0.60   CARMA8       URANUS
 3C111        2008-JUN-08.0    86.2     3.80     0.60   CARMA8       MARS
 3C111        2008-JUN-13.0   226.3     1.50     0.30   CARMA8       URANUS
@@ -7976,7 +7976,7 @@ BLLAC        2008-JUL-27.0    93.9     2.07     0.31   CARMA13      3C84        
 3C454.3      2008-MAY-13.0    86.4    17.10     2.60   CARMA8       URANUS
 3C454.3      2008-MAY-20.0   111.9    16.50     2.50   CARMA8       URANUS
 3C454.3      2008-MAY-28.0   111.9    21.00     3.10   CARMA8       URANUS
-3C454.3      2008-MAY-29.      0.0    90.00     ****   3.1          CARMA8       NEPTUNE
+3C454.3      2008-MAY-29.0    90.0    21.00     3.10   CARMA8       NEPTUNE
 3C454.3      2008-MAY-30.0   111.7    21.20     3.20   CARMA8       URANUS
 3C454.3      2008-JUN-01.0   106.3    20.30     3.00   CARMA8       URANUS
 3C454.3      2008-JUN-01.0   111.9    20.90     3.10   CARMA8       URANUS
