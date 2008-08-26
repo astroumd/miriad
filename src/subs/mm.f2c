@@ -129,8 +129,10 @@ c
   if (mm_debug) bugv_c('i',"mmAlloc(%d) run: d,s %p %p   o,t %p %p",size.val,data.addr,s,offset,t); 
   if(t != offset) bugv_c('f',"mmAlloc: odd form of rounding: f=%p, offset=%p in mmAlloc   s,d=%p,%p",t,offset,s,data.addr);
 
+#if defined(linux)
   struct mallinfo mi = mallinfo();
   if (mm_debug) bugv_c('i',"mallinfo: hblks(d):%d %d   %d %d %d %d %d",mi.hblks,mi.hblkhd,mi.uordblks,mi.fordblks,mi.keepcost,mi.arena,mi.ordblks);
+#endif
 
   return t + 1;
 }
