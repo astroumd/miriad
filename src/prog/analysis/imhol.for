@@ -86,12 +86,13 @@ c    mchw 15apr98 Fix both doc and code in a few places.
 c    mchw 05aug04 Change default image axes to wavelengths, and default antenna size 6.1m.
 c    mchw 27feb06 CARMA holography. Use restfreq if frequency axis is missing.
 c    mchw 28mar06 set default subreflector diameter = antdiam/10.
+c    mchw 02sep08 mult cdelt(1) * 206264.8 for carma images
 c------------------------------------------------------------------------
       implicit none
       include 'maxdim.h'
       include 'maxnax.h'
       character version*40
-      parameter (version = 'IMHOL: version 28-MAR-2006')
+      parameter (version = 'IMHOL: version 02-SEP-2008-MAR-2006')
 c
       real qepoch, uepoch, qcrpix(maxnax),ucrpix(maxnax), sigma,
      *		snclip, paclip
@@ -636,6 +637,7 @@ c
         subdiam = antdiam / 2. / 0.3 /10.
         call output('Unknown subreflector; setting to antdiam/10')
       endif
+c	print *, 'subdiam,antdiam', subdiam,antdiam
 c
 c  Find frequency axis.
 c
@@ -681,7 +683,7 @@ c
         if(frqax.ne.0)then
           freq = (k-crpix(frqax))*cdelt(frqax) + crval(frqax)
         endif
-        antdiam = antdiam * freq
+c        antdiam = antdiam * freq
         if(microns)then
           fac = 0.5 / (2*pi) * cmks/freq * 1e-3
           ustr = 'microns'
@@ -784,12 +786,14 @@ c  Fit focus and pointing offsets to aperture E-field maps.
 c  Fit linear and quadratic terms to phase across aperture
 c  phase(x,y)=a+bx+cy+d(x*x+y*y)
 c
-	    x  = (i-crpix(1))*cdelt(1)
-	    y  = (j-crpix(2))*cdelt(2)
+	    x  = (i-crpix(1))*cdelt(1) * 206264.8
+	    y  = (j-crpix(2))*cdelt(2) * 206264.8
 	    r2 = (x*x+y*y)
+c	print *, 'x,y,r2', x,y,r2
 c
 c  Mask amplitude and phase outside of illuminated aperture surface.
 c
+c	print *, subdiam,antdiam
 	    if(r2.gt.antdiam**2 .or. r2.lt.subdiam**2)then
               pflags(i)   = .false.
 	      paflags(i) = .false.
@@ -854,6 +858,7 @@ c
           write(aline,'(a,i6)')
      *	  'Number of points in phase fit =',int(sum)
           call output(aline)
+	print *, sumxx, sumyy, sumr2, sum, sumz, dd
           b   = sumzx/sumxx
           c   = sumzy/sumyy
           det = sumr2*sumr2 - sum*sumr4
