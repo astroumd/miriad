@@ -20,6 +20,7 @@
 
 string defv[] = {               ";HKUVPLT: hkuvplt test ",
     "vis=xxx.mir",              ";Input uv data",
+    "mode=amp",                 ";Output mode: amp, uvd",
     "VERSION=1.0",              ";Peter Teuben   Sep 2008",
     NULL,
 };
@@ -48,6 +49,11 @@ local int getbaseid(int);        /* get baseline id */
 local void printflag(flag,stream); /* print flag in miriad select format */
 
 
+
+int mode = -1;
+string amode;
+
+
 /*
  * MAIN: toplevel routine
  */
@@ -55,7 +61,7 @@ local void printflag(flag,stream); /* print flag in miriad select format */
 int main(int argc, string argv[])
 {
     int nit,*it,nb,*bl,i;
-    char line[256],mode,type,dum;
+    char line[256],type,dum;
     float x1,y1,x2,y2;
 
     recordptr r;
@@ -66,13 +72,13 @@ int main(int argc, string argv[])
     loaddefv();                                  /* parm from command line   */
     loaddata();                                  /* load data in hk struct.  */
 
-    listdata();
 
     showinfo();                                  /* show track information   */
     linkbrec();                                  /* link baseline and record */
 
+    listdata();
+
     nflags = 0;                                  /* initialize flags         */
-    mode = 'd';                                  /* start with default       */
     nit = 0; it = (int *) NULL;                  /* init. items              */
     sprintf(line,"t,%d",tra.ant[0]);             /* pick first antenna       */
     it = sepitems(line,it,&nit,&type);           /* separate items           */
@@ -223,8 +229,17 @@ local int *sepsour(string line,int *nitem, char *type)
 
 local void loaddefv(void)
 {
-    vis = getparam("vis");                       /* get file names          */
-    files = splitline(vis,',',&nfiles);          /* split file names        */
+  vis = getparam("vis");                       /* get file names          */
+  files = splitline(vis,',',&nfiles);          /* split file names        */
+  amode = getparam("mode");
+
+  if (*amode == 'a') 
+    mode = 0;
+  else if (*amode == 'u')
+    mode = 1;
+  else
+    mode = 0;
+    
 }
 
 
@@ -293,7 +308,6 @@ local void loaddata(void)
     char s[MAXNAME],sour[MAXSOU][MAXNAME];
     recordptr r;
     int f,i,j,k,n,c,nbad;
-    int all=1;
 
     nr = 0;                                      /* initialize record, chan */
     nc = 0;                                      /* source, and bl counters */
@@ -373,6 +387,7 @@ local void loaddata(void)
                     c++;
                 }
 	    r = rec + j;
+	    
             if (c > 0) {
 	      re /= (double) c;
 	      im /= (double) c;
@@ -382,6 +397,8 @@ local void loaddata(void)
 	      (*r).amp = -1.0;
 	      (*r).pha = 0.0;
 	    }
+	    if (mode==1) /* uv distance */
+	      (*r).amp = sqrt(pre[0]*pre[0]+pre[1]*pre[1]);
 	    (*r).ut  = (float) (pre[2] - floor(tmin-0.5) -0.5)*24.0;
                                              /* calc ut from julian date*/
 	    (*r).bl  = pre[3];               /* baseline number         */

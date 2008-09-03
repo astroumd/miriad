@@ -28,7 +28,7 @@ PGLIBS_F2C      = -L$(MIRLIB) -lcpgplot -lpgplot -lf2c
 # pick one, but also need LIBX11
 PGLIBS = $(PGLIBS_G77) $(LIBX11)
 
-BINS = hkimgen hkuvplt hkconvol hkdemos hkuvrandom hkuvlist
+BINS = hkimgen hkuvplt hkconvol hkdemos hkuvrandom hkuvlist hkdoflg
 
 
 all:   $(BINS)
@@ -43,6 +43,9 @@ hkuvplt:
 
 hkuvlist:
 	$(CC) $(CFLAGS) $(INCS) -o hkuvlist hkuvlist.c $(LIBS) $(PGLIBS) $(FLIBS)
+
+hkdoflg:
+	$(CC) $(CFLAGS) $(INCS) -o hkdoflg hkdoflg.c $(LIBS) $(PGLIBS) $(FLIBS)
 
 hkconvol:
 	$(MIRBIN)/debug hkconvol
