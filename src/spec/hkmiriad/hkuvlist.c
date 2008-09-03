@@ -30,6 +30,7 @@ string defv[] = {               ";HKUVPLT: hkuvplt test ",
 
 local void loaddefv(void);       /* load input params from command line */
 local void loaddata(void);       /* load miriad data to hkmiriad structures */
+local void listdata(void);       /* list data baseline based - very wide - */
 
 local void showinfo(void);       /* show track information */
 
@@ -43,28 +44,8 @@ local int *sepsour(string,int *,char *); /* separate sources in line */
 local char **splitline(string,char,int *); /* split line to items */
 local int getantid(int);         /* get antenna id */
 local int getbaseid(int);        /* get baseline id */
-local int getrange(float *,float *,char); /* get range in wc */
-local int getwcinp(float *, float *, char *); /* get wld coord in panel */
 
-local void applyflg(flag);       /* apply flags */
-local void outflags(void);       /* output 'select' for uvflag */
 local void printflag(flag,stream); /* print flag in miriad select format */
-
-track tra;                       /* track parameters */
-recordptr toprec[MAXANT][MAXANT];/* pointer to top record for baseline */
-recordptr rec;                   /* record data */
-int nfiles;                      /* number of input miriad data */
-char **files;                    /* input miriad data */
-int npan;                        /* number of panels */
-
-int nflags;                      /* maximum num. of flags */
-flag flags[MAXFLAG];             /* flags */
-prange pldef;                    /* default plot range */
-prange plrng;                    /* plot range to use */
-string headline;                 /* headline */
-string yaxis;                    /* y-axis parameter [pha/amp] */
-string vis;                      /* parameter for input visibility files */
-string outfile;                  /* output file name */
 
 
 /*
@@ -84,6 +65,8 @@ int main(int argc, string argv[])
     headline = defv[0] + 1;                      /* headline                 */
     loaddefv();                                  /* parm from command line   */
     loaddata();                                  /* load data in hk struct.  */
+
+    listdata();
 
     showinfo();                                  /* show track information   */
     linkbrec();                                  /* link baseline and record */
@@ -246,49 +229,6 @@ local void loaddefv(void)
 
 
 /*
- * GETRANGE: get range in world coordinate with some checks
- */
-
-local int getrange(float *val1,float *val2,char ax)
-{
-    float x1,x2,y1,y2;
-    char ch,buf[32];
-
-    printf("\tClick the left/bottom  [manual edit: 'e' on window]\n");
-    if (getwcinp(&x1,&y1,&ch) == 0) {
-        if (ch == 'e') {
-            printf("\t\tInput value: ");
-            scanf("%s",buf);
-            x1 = (float) atof(buf);
-            y1 = x1;
-        }
-        printf("\tClick the right/top    [manual edit: 'e' on window]\n");
-        if (getwcinp(&x2,&y2,&ch) == 0) {
-            if (ch == 'e') {
-                printf("\t\tInput value: ");
-                scanf("%s",buf);
-                x2 = (float) atof(buf);
-                y2 = x2;
-            }
-            if (ax == 'x') {
-                *val1 = MIN(x1,x2);
-                *val2 = MAX(x1,x2);
-            } else {
-                *val1 = MIN(y1,y2);
-                *val2 = MAX(y1,y2);
-            }
-            return(0);
-        } else {
-            printf("\tClick inside panels\n");
-            return(-1);
-        }
-    } else {
-        printf("\tClick inside panels\n");
-        return(-1);
-    }
-}
-
-/*
  * PRINGFLAG: pring flag in miriad/select format
  */
 
@@ -352,24 +292,27 @@ local void loaddata(void)
     int nr,nc,ns,nb,na,b,bl[MAXBASE],a1,a2,an[MAXANT],nbytes;
     char s[MAXNAME],sour[MAXSOU][MAXNAME];
     recordptr r;
-    int f,i,j,k,n,c;
+    int f,i,j,k,n,c,nbad;
+    int all=1;
 
     nr = 0;                                      /* initialize record, chan */
     nc = 0;                                      /* source, and bl counters */
     ns = 0;
     nb = 0;
+    nbad = 0;
     tmin = 1.0e30;
 
     for (f=0; f<nfiles; f++) {                   /* read over all files     */
         uvopen_c(&unit,files[f],"old");          /* open miriad data        */
         n = 1;                                   /* initialize for loop     */
-        while (n > 0) {                          /* loop over records       */
+        while (1) {                              /* loop over records       */
             uvread_c(unit,pre,data,flg,MAXCHAN,&n); /* read data            */
+	    if (n==0) break;
             c = 0;
             for (i=0; i<n; i++)
                 if (flg[i] == 1) c++;            /* if not flagged,count it */
 
-            if (c>0) {
+            if (1) {                             /* (c>0) -> (1)            */
                 nr++;                            /* update record counter   */
                 nc = MAX(nc,n);                  /* find max for chan count */
                 tmin = MIN(tmin,pre[2]);         /* min time                */
@@ -387,10 +330,12 @@ local void loaddata(void)
                     strcpy(sour[ns],s);
                     ns++;
                 }
-            }
+            } else 
+	      nbad++;
         }
         uvclose_c(unit);                         /* close miriad data       */
-    }
+    } /* loop all files */
+    if (nbad) printf("Found %d records w/ fully flagged spectra\n",nbad);
     na = 0;                                      /* make ant list from bl   */
     for (i=0; i<nb; i++) {                       /* loop over baselines     */
         a1 = bl[i] / 256;                        /* antennas in this bl     */
@@ -411,6 +356,7 @@ local void loaddata(void)
     nbytes = nr * sizeof(record);
     printf("Need %d bytes of memory to read data\n",nbytes);
     rec = (recordptr) allocate(nbytes);          /* mem for records     */
+    nbad = 0;
     j = 0;
     for (f=0; f<nfiles; f++) {                   /* read over all files     */
         uvopen_c(&unit,files[f],"old");          /* open miriad data        */
@@ -426,26 +372,31 @@ local void loaddata(void)
                     im += data[2*i+1];
                     c++;
                 }
+	    r = rec + j;
             if (c > 0) {
-                r = rec + j;
-                re /= (double) c;
-                im /= (double) c;
-                (*r).amp = sqrt(re*re + im*im);
-                (*r).pha = atan2(re,im) * 180.0/PI;
-                (*r).ut  = (float) (pre[2] - floor(tmin-0.5) -0.5)*24.0;
-                                                 /* calc ut from julian date*/
-                (*r).bl  = pre[3];               /* baseline number         */
-                (*r).next= NULL;                 /* init next pointer       */
-                uvgetvra_c(unit,"source",s,sizeof(s)); /* find source id    */
-                k = 0;
-                while (k<ns && !streq(sour[k],s) ) k++;
-                (*r).souid = k;
-                (*r).flag = NONE;                /* initialize flag         */
-                j++;
-            }
+	      re /= (double) c;
+	      im /= (double) c;
+	      (*r).amp = sqrt(re*re + im*im);
+	      (*r).pha = atan2(re,im) * 180.0/PI;
+	    } else {
+	      (*r).amp = -1.0;
+	      (*r).pha = 0.0;
+	    }
+	    (*r).ut  = (float) (pre[2] - floor(tmin-0.5) -0.5)*24.0;
+                                             /* calc ut from julian date*/
+	    (*r).bl  = pre[3];               /* baseline number         */
+	    (*r).next= NULL;                 /* init next pointer       */
+	    uvgetvra_c(unit,"source",s,sizeof(s)); /* find source id    */
+	    k = 0;
+	    while (k<ns && !streq(sour[k],s) ) k++;
+	    (*r).souid = k;
+	    (*r).flag = NONE;                /* initialize flag         */
+	    j++;
         }
         uvclose_c(unit);                         /* close miriad data       */
-    }
+    } /* loop all files */
+    if (nbad) printf("Found %d records w/ fully flagged spectra\n",nbad);
+    
     tra.nrec  = nr;                              /* set par common in track */
     tra.nchan = nc;
     tra.nsour = ns;
@@ -455,6 +406,45 @@ local void loaddata(void)
     tra.nant = na;
     for (i=0; i<na;  i++) tra.ant[i] = an[i];
 
+}
+
+local void listdata(void) 
+{
+  int bl,a1,a2,i,j,nb,na,nr;
+  recordptr r,bp[MAXANT][MAXANT];
+    
+
+  nb = tra.nbase;
+  na = tra.nant;
+  nr = tra.nrec;
+  if (nr % nb) {
+    fprintf(stderr,"Cannot handle a partially filled dataset yet: %d/%d\n",nr,nb);
+    exit(1);
+  }
+
+  printf("#BL: ");                         /* print baselines in header */
+  for (i=0;i<tra.nbase;i++) {
+    a1 = tra.base[i] / 256;
+    a2 = tra.base[i] - 256*a1;
+    printf("%d-%d ",a1,a2);
+  }
+  printf("\n");
+
+  j = 0;
+  for (r=rec; r<rec+nr; r++) {                /* loop over records        */
+    bl = (*r).bl;                           /* find baseline number, and*/
+    a1 = bl / 256;                          /* antenna numbers          */
+    a2 = bl - 256*a1;
+    if (j==0) {
+      printf("%g : ",(*r).ut);
+    }
+    printf("%g ",(*r).amp);
+    j++;
+    if (j==nb) {
+      printf("\n");
+      j=0;
+    }
+  }
 }
 
 /*
@@ -485,6 +475,11 @@ local void showinfo(void)
     printf("\tNum of sources   = %d\n\t\t",tra.nsour);
     for (i=0;i<tra.nsour;i++)
         printf("%s ",tra.sour[i]);
+    printf("\n");
+
+    printf("\tNum of records   = %d\n",tra.nrec);
+    printf("\tNum of times     = %d\n",tra.nrec/tra.nbase);
+
     printf("\n");
 
     printf("\tNum of flags = %d\n",nflags);
@@ -638,7 +633,7 @@ local int *listbase(char type, int *a, int na, int *nb)
 }
 
 /*
- * LINKBREC: link baselines and recoreds
+ * LINKBREC: link baselines and records
  */
 
 local void linkbrec(void)
