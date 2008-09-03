@@ -41,6 +41,9 @@ hkimgen:
 hkuvplt:
 	$(CC) $(CFLAGS) $(INCS) -o hkuvplt hkuvplt.c $(LIBS) $(PGLIBS) $(FLIBS)
 
+hkuvlist:
+	$(CC) $(CFLAGS) $(INCS) -o hkuvlist hkuvlist.c $(LIBS) $(PGLIBS) $(FLIBS)
+
 hkconvol:
 	$(MIRBIN)/debug hkconvol
 
