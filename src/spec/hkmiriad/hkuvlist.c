@@ -20,7 +20,8 @@
 
 string defv[] = {               ";HKUVPLT: hkuvplt test ",
     "vis=xxx.mir",              ";Input uv data",
-    "mode=amp",                 ";Output mode: amp, uvd",
+    "mode=info",                ";Output mode: info, amp, uvdistance",
+    "format=%g",                ";Output format used",
     "VERSION=1.0",              ";Peter Teuben   Sep 2008",
     NULL,
 };
@@ -49,7 +50,8 @@ local int getbaseid(int);        /* get baseline id */
 
 int mode = -1;
 string amode;
-
+string  fmt;
+int nbad = 0;
 
 /*
  * MAIN: toplevel routine
@@ -69,11 +71,13 @@ int main(int argc, string argv[])
     loaddefv();                                  /* parm from command line   */
     loaddata();                                  /* load data in hk struct.  */
 
+    if (mode<0) {
+      showinfo();                                  /* show track information   */
+      return;
+    }
 
-    showinfo();                                  /* show track information   */
     linkbrec();                                  /* link baseline and record */
-
-    listdata();
+    listdata();                                  /* list data */
 
     nit = 0; it = (int *) NULL;                  /* init. items              */
     sprintf(line,"t,%d",tra.ant[0]);             /* pick first antenna       */
@@ -231,8 +235,13 @@ local void loaddefv(void)
     mode = 0;
   else if (*amode == 'u')
     mode = 1;
-  else
+  else if (*amode == 'i')
+    mode = -1;
+  else {
+    /* should give warning message */
     mode = 0;
+  }
+  fmt = getparam("format");
     
 }
 
@@ -253,7 +262,7 @@ local void loaddata(void)
     int nr,nc,ns,nb,na,b,bl[MAXBASE],a1,a2,an[MAXANT],nbytes;
     char s[MAXNAME],sour[MAXSOU][MAXNAME];
     recordptr r;
-    int f,i,j,k,n,c,nbad;
+    int f,i,j,k,n,c;
 
     nr = 0;                                      /* initialize record, chan */
     nc = 0;                                      /* source, and bl counters */
@@ -271,9 +280,10 @@ local void loaddata(void)
             c = 0;
             for (i=0; i<n; i++)
                 if (flg[i] == 1) c++;            /* if not flagged,count it */
+	    if (c==0) nbad++;
 
-            if (1) {                             /* (c>0) -> (1)            */
-                nr++;                            /* update record counter   */
+	    if (1) {
+	        nr++;                            /* update record counter   */
                 nc = MAX(nc,n);                  /* find max for chan count */
                 tmin = MIN(tmin,pre[2]);         /* min time                */
                 b = (int) pre[3];                /* get baseline number     */
@@ -290,12 +300,10 @@ local void loaddata(void)
                     strcpy(sour[ns],s);
                     ns++;
                 }
-            } else 
-	      nbad++;
+	    }
         }
         uvclose_c(unit);                         /* close miriad data       */
     } /* loop all files */
-    if (nbad) printf("Found %d records w/ fully flagged spectra\n",nbad);
     na = 0;                                      /* make ant list from bl   */
     for (i=0; i<nb; i++) {                       /* loop over baselines     */
         a1 = bl[i] / 256;                        /* antennas in this bl     */
@@ -314,9 +322,7 @@ local void loaddata(void)
         }
     }
     nbytes = nr * sizeof(record);
-    printf("Need %d bytes of memory to read data\n",nbytes);
     rec = (recordptr) allocate(nbytes);          /* mem for records     */
-    nbad = 0;
     j = 0;
     for (f=0; f<nfiles; f++) {                   /* read over all files     */
         uvopen_c(&unit,files[f],"old");          /* open miriad data        */
@@ -358,7 +364,6 @@ local void loaddata(void)
         }
         uvclose_c(unit);                         /* close miriad data       */
     } /* loop all files */
-    if (nbad) printf("Found %d records w/ fully flagged spectra\n",nbad);
     
     tra.nrec  = nr;                              /* set par common in track */
     tra.nchan = nc;
@@ -385,6 +390,7 @@ local void listdata(void)
     exit(1);
   }
 
+  printf("# mode=%s\n",amode);
   printf("#BL: ");                         /* print baselines in header */
   for (i=0;i<tra.nbase;i++) {
     a1 = tra.base[i] / 256;
@@ -399,9 +405,11 @@ local void listdata(void)
     a1 = bl / 256;                          /* antenna numbers          */
     a2 = bl - 256*a1;
     if (j==0) {
-      printf("%g : ",(*r).ut);
+      printf(fmt,(*r).ut);
+      printf(" ");
     }
-    printf("%g ",(*r).amp);
+    printf(fmt,(*r).amp);
+    printf(" ");
     j++;
     if (j==nb) {
       printf("\n");
@@ -419,14 +427,14 @@ local void showinfo(void)
     int i,a1,a2;
     char line[256];
 
-    printf("\n\tNum of antennas  = %d",tra.nant);
+    printf("\n\tNum of antennas    = %d",tra.nant);
     for (i=0;i<tra.nant;i++) {
         if (i % 15 == 0) printf("\n\t\t");
         printf("%d ",tra.ant[i]);
     }
     printf("\n");
 
-    printf("\tNum of baselines = %d",tra.nbase);
+    printf("\tNum of baselines   = %d",tra.nbase);
     for (i=0;i<tra.nbase;i++) {
         if (i % 8 == 0) printf("\n\t\t");
         a1 = tra.base[i] / 256;
@@ -435,13 +443,14 @@ local void showinfo(void)
     }
     printf("\n");
 
-    printf("\tNum of sources   = %d\n\t\t",tra.nsour);
+    printf("\tNum of sources     = %d\n\t\t",tra.nsour);
     for (i=0;i<tra.nsour;i++)
         printf("%s ",tra.sour[i]);
     printf("\n");
 
-    printf("\tNum of records   = %d\n",tra.nrec);
-    printf("\tNum of times     = %d\n",tra.nrec/tra.nbase);
+    printf("\tNum of records     = %d\n",tra.nrec);
+    printf("\tNum of bad records = %d\n",nbad);
+    printf("\tNum of times       = %d\n",tra.nrec/tra.nbase);
 
     printf("\n");
 
