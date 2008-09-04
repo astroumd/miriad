@@ -46,9 +46,6 @@ local char **splitline(string,char,int *); /* split line to items */
 local int getantid(int);         /* get antenna id */
 local int getbaseid(int);        /* get baseline id */
 
-local void printflag(flag,stream); /* print flag in miriad select format */
-
-
 
 int mode = -1;
 string amode;
@@ -78,15 +75,12 @@ int main(int argc, string argv[])
 
     listdata();
 
-    nflags = 0;                                  /* initialize flags         */
     nit = 0; it = (int *) NULL;                  /* init. items              */
     sprintf(line,"t,%d",tra.ant[0]);             /* pick first antenna       */
     it = sepitems(line,it,&nit,&type);           /* separate items           */
     bl = listbase(type,it,nit,&nb);              /* itialize lists of bl,    */
 
 
-
-    for (i=0;i<nflags;i++) free(flags[i].item);
     free(it);
     free(bl);
     free(pan);
@@ -242,54 +236,6 @@ local void loaddefv(void)
     
 }
 
-
-/*
- * PRINGFLAG: pring flag in miriad/select format
- */
-
-local void printflag(flag flg, stream unit)
-{
-    int j,a1,a2,bl,h,m,s;
-    float t;
-    char utstart[9],utend[9],line[256];
-    FILE *outstr;
-
-    t = flg.tstart;
-    if (t <  0.0) t += 24.0;
-    if (t > 24.0) t -= 24.0;
-    h = floor(t);
-    m = floor((t - h) * 60.0);
-    s = floor((((t - h) * 60.0) - m)*60);
-    sprintf(utstart,"%02d:%02d:%02d",h,m,s);
-
-    t = flg.tend;
-    if (t <  0.0) t += 24.0;
-    if (t > 24.0) t -= 24.0;
-    h = floor(t);
-    m = floor((t - h) * 60.0);
-    s = floor((((t - h) * 60.0) - m)*60);
-    sprintf(utend,"%02d:%02d:%02d",h,m,s);
-
-    if (flg.type == 'a') {
-        sprintf(line,"select=time(%s,%s)",utstart,utend);
-	if (unit == stdout) fprintf(unit,"\t\t");
-	fprintf(unit,"%s\n",line);
-    } else if (flg.type == 't') {
-        for (j=0; j<flg.nitem; j++) {
-	    sprintf(line,"select=ant(%d),time(%s,%s)",flg.item[j],utstart,utend);
-	    if (unit == stdout) fprintf(unit,"\t\t");
-	    fprintf(unit,"%s\n",line);
-	}
-    } else if (flg.type == 'b') {
-        for (j=0; j<flg.nitem; j++) {
-	  a1 = flg.item[j] / 256;
-	  a2 = flg.item[j] - 256*a1;
-	  sprintf(line,"select=ant(%d)(%d),time(%s,%s)",a1,a2,utstart,utend);
-	  if (unit == stdout) fprintf(unit,"\t\t");
-	  fprintf(unit,"%s\n",line);
-	}
-    }
-}
 
 /*
  * LOADDATA: load data from miriad dataset to hkmiriad structures.
@@ -497,12 +443,6 @@ local void showinfo(void)
     printf("\tNum of records   = %d\n",tra.nrec);
     printf("\tNum of times     = %d\n",tra.nrec/tra.nbase);
 
-    printf("\n");
-
-    printf("\tNum of flags = %d\n",nflags);
-    for (i=0;i<nflags;i++) {
-        printflag(flags[i],stdout);
-    }
     printf("\n");
 
 }
