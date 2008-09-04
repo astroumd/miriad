@@ -21,12 +21,19 @@ LIBS = $(MIRLIB)/libmir.a $(MIRLIB)/libZeno.a -lm
 
 LIBX11    =  -L/usr/X11R6/lib -lX11
 
+# see $MIR/install/Makefile and look for the FLIBS=
+# if you have installed a binary release , you may have
+# to run 'configure' in that directory and get the updated
+# value for FLIBS
+FLIBS = -lg2c
+
+PGLIBS_GEN      = -L$(MIRLIB) -lcpgplot -lpgplot $(FLIBS)
 PGLIBS_G77      = -L$(MIRLIB) -lcpgplot -lpgplot -lg2c     
 PGLIBS_GFORTRAN = -L$(MIRLIB) -lcpgplot -lpgplot -lgfortran
 PGLIBS_F2C      = -L$(MIRLIB) -lcpgplot -lpgplot -lf2c     
 
-# pick one, but also need LIBX11
-PGLIBS = $(PGLIBS_G77) $(LIBX11)
+# pick one from the above, but also need LIBX11
+PGLIBS = $(PGLIBS_GEN) $(LIBX11)
 
 BINS = hkimgen hkuvplt hkconvol hkdemos hkuvrandom hkuvlist hkdoflg
 
@@ -35,25 +42,25 @@ all:   $(BINS)
 
 # -----------------------------------------------------------------------
 
-hkimgen:
+hkimgen: hkimgen.c
 	$(CC) $(CFLAGS) $(INCS) -o hkimgen hkimgen.c $(LIBS) $(FLIBS)
 
-hkuvplt:
+hkuvplt: hkuvplt.c
 	$(CC) $(CFLAGS) $(INCS) -o hkuvplt hkuvplt.c $(LIBS) $(PGLIBS) $(FLIBS)
 
-hkuvlist:
+hkuvlist: hkuvlist.c
 	$(CC) $(CFLAGS) $(INCS) -o hkuvlist hkuvlist.c $(LIBS) $(PGLIBS) $(FLIBS)
 
-hkdoflg:
+hkdoflg: hkdoflg.c
 	$(CC) $(CFLAGS) $(INCS) -o hkdoflg hkdoflg.c $(LIBS) $(PGLIBS) $(FLIBS)
 
-hkconvol:
+hkconvol: hkconvol.for
 	$(MIRBIN)/debug hkconvol
 
-hkdemos:
+hkdemos: hkdemos.for
 	$(MIRBIN)/debug hkdemos
 
-hkuvrandom:
+hkuvrandom: hkuvrandom.for
 	$(MIRBIN)/debug hkuvrandom
 
 clean:
