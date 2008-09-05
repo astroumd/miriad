@@ -106,6 +106,8 @@ local void loaddefv(void)
     mode = 1;
   else if (*amode == 'b')
     mode = 2;
+  else if (*amode == 'f')
+    mode = 3;
   else if (*amode == 'i')
     mode = -1;
   else {
@@ -212,7 +214,7 @@ local void loaddata(void)
     tra.nant = na;
     for (i=0; i<na;  i++) tra.ant[i] = an[i];
 
-    nbytes = (nr) * sizeof(record);  
+    nbytes = nr * sizeof(record);  
     rec = (recordptr) allocate(nbytes);          /* mem for records         */
     j = 0;
     told =  1.0e30;
@@ -225,14 +227,16 @@ local void loaddata(void)
 	    if (told != pre[2]) {
 	      told = pre[2];
 	      nt++;
-	      /* printf("new %d: t=%g\n", nt,(float) (pre[2] - floor(tmin-0.5) -0.5)*24.0); */
-	      for (r=rec+(nt-1)*nb, i=0; i<nb; i++, r++)  /* mark all as none   */
-		(*r).ut  = (float) (pre[2] - floor(tmin-0.5) -0.5)*24.0;
-		(*r).bl    = -1;
+	      for (r=rec+(nt-1)*nb, i=0; i<nb; i++, r++) { /* mark all as none   */
+		/* some data needs to be sensible though */
+		(*r).ut    = (float) (pre[2] - floor(tmin-0.5) -0.5)*24.0;
+                (*r).bl    = bl[i];
 		(*r).souid = -1;
 		(*r).amp   = -1;
 		(*r).pha   = -1;
 		(*r).next  = NULL;
+		(*r).flag  = -1;
+	      }
 	    }
             c = 0;
             re = 0.0;
@@ -256,10 +260,6 @@ local void loaddata(void)
 	      (*r).amp = -1.0;
 	      (*r).pha = 0.0;
 	    }
-	    if (mode==1) /* uv distance */
-	      (*r).amp = sqrt(pre[0]*pre[0]+pre[1]*pre[1]);
-	    if (mode==2) /* bl */
-	      (*r).amp = pre[3];
 	    (*r).ut  = (float) (pre[2] - floor(tmin-0.5) -0.5)*24.0;
                                              /* calc ut from julian date*/
 	    (*r).bl  = pre[3];               /* baseline number         */
@@ -268,8 +268,17 @@ local void loaddata(void)
 	    k = 0;
 	    while (k<ns && !streq(sour[k],s) ) k++;
 	    (*r).souid = k;
-	    (*r).flag = NONE;                /* initialize flag         */
 	    j++;
+	    (*r).flag = j;
+
+	    if (mode) {
+	      if (mode==1) /* uv distance */
+		(*r).amp = sqrt(pre[0]*pre[0]+pre[1]*pre[1]);
+	      else if (mode==2) /* bl */
+		(*r).amp = pre[3];
+	      else if (mode==3) /* flag */
+		(*r).amp = j;
+	    }
         }
         uvclose_c(unit);                         /* close miriad data       */
     } /* loop all files */
@@ -299,6 +308,7 @@ local void listdata(void)
   }
   printf("\n");
 
+#if 1
   j = 0;
   for (r=rec; r<rec+nr; r++) {              /* loop over records        */
     bl = (*r).bl;                           /* find baseline number, and*/
@@ -309,18 +319,26 @@ local void listdata(void)
       printf(fmt,(*r).ut);
       printf(" ");
     }
-#if 1
     printf(fmt,(*r).amp);
     printf(" ");
-#else
-    printf("%d ",bl);
-#endif
     j++;
     if (j==nb) {
       printf("\n");
       j=0;
     }
   }
+#else
+  /* DEBUG - one line at a time */
+  j = 0;
+  for (r=rec; r<rec+nr; r++) {              /* loop over records        */
+    bl = (*r).bl;                           /* find baseline number, and*/
+    idx = getbaseid(bl);
+    a1 = bl / 256;                          /* antenna numbers          */
+    a2 = bl - 256*a1;
+    j++;
+    printf("%d 0x%x %d %d   %g %g\n",j,r,a1,a2,  (*r).ut, (*r).amp);
+  }
+#endif
 }
 
 /*
