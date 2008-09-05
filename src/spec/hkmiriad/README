@@ -14,3 +14,26 @@ and work with it. It is possible you need to modify the
 variuous LIBS and flags at the top a bit.
 
 
+
+
+Portability issues:
+-------------------
+
+
+* some of the code are translations of corresponding fortran routines,
+  this is not marked where they are from, and therefore fixes/updates
+  in those are not easily tracked here
+
+* the baseline <-> antennae pair ("256*a1+a2") is hardcoded!!! also
+  for the baseline an 'unsigned short' is used.
+  1) MAXIANT in maxdim.h allows to use large arrays where bl > 65k
+  2) 'short int' is 16 bits, and will only count to 65k and handles
+     array up to 256 ants.
+  There is example code in uvio.c that handles different MAXIANT (256
+  in this case is hardcoded), but there may be some issue where CARMA
+  and ATNF versions of miriad differ:  caution!
+  
+* installation issues:
+  the FLIBS= macro can be stolen from the $MIR/install/Makefile one,
+  that usually will fix it if the current default (-lg2c for the g77
+  compiler) does not work.  See also wiki for updates
