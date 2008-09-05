@@ -1,6 +1,6 @@
 /*
  * HKUVLIST.C: hack miriad UV listing
- #
+ *
  * gcc -g -I$MIRINC -I$MIRSUBS -o hkuvplt hkuvplt.c $MIRLIB/libmir.a -lm libZeno.a -L/usr/local/pgplot -lcpgplot -lpgplot -lg2c -lX11 -lpng
  */
 
@@ -73,8 +73,9 @@ int main(int argc, string argv[])
       showinfo();                                  /* show track information   */
       return;
     }
-
+#if 0
     linkbrec();                                  /* link baseline and record */
+#endif
     listdata();                                  /* list data */
 
     nit = 0; it = (int *) NULL;                  /* init. items              */
@@ -103,6 +104,8 @@ local void loaddefv(void)
     mode = 0;
   else if (*amode == 'u')
     mode = 1;
+  else if (*amode == 'b')
+    mode = 2;
   else if (*amode == 'i')
     mode = -1;
   else {
@@ -130,7 +133,7 @@ local void loaddata(void)
     int nr,nc,ns,nb,na,nt,b,bl[MAXBASE],a1,a2,an[MAXANT],nbytes;
     char s[MAXNAME],sour[MAXSOU][MAXNAME];
     recordptr r;
-    int f,i,j,k,n,c;
+    int f,i,j,k,n,c,idx;
 
     nr = 0;                                      /* initialize record, chan */
     nc = 0;                                      /* source, and bl counters */
@@ -177,6 +180,7 @@ local void loaddata(void)
         }
         uvclose_c(unit);                         /* close miriad data       */
     } /* loop all files */
+
     na = 0;                                      /* make ant list from bl   */
     for (i=0; i<nb; i++) {                       /* loop over baselines     */
         a1 = bl[i] / 256;                        /* antennas in this bl     */
@@ -194,19 +198,40 @@ local void loaddata(void)
             na++;
         }
     }
-    if (nr % nb) {
-      printf("fixing up needed: nt=%d  nr/nb=%g\n",nt,(float)nr/(float)nb);
-    } else {
-      if (nr/nb != nt) printf("bad assumptions about data compositions\n");
-    }
-    nbytes = nr * sizeof(record);
-    rec = (recordptr) allocate(nbytes);          /* mem for records     */
+
+    /* printf("nr=%d nt=%d nt*nb=%d nt*nb-nr=%d\n", nr,nt,nt*nb,nt*nb-nr); */
+    nr = nt * nb;            /* always fill all max baselines for all times */
+
+
+    tra.nrec  = nr;                              /* set par common in track */
+    tra.nchan = nc;
+    tra.nsour = ns;
+    for (i=0; i<ns; i++) strcpy(tra.sour[i],sour[i]);
+    tra.nbase = nb;
+    for (i=0; i<nb; i++) tra.base[i] = bl[i];
+    tra.nant = na;
+    for (i=0; i<na;  i++) tra.ant[i] = an[i];
+
+    nbytes = (nr) * sizeof(record);  
+    rec = (recordptr) allocate(nbytes);          /* mem for records         */
     j = 0;
+    told =  1.0e30;
+    nt = 0;                                      /* count them again        */
     for (f=0; f<nfiles; f++) {                   /* read over all files     */
         uvopen_c(&unit,files[f],"old");          /* open miriad data        */
         n = 1;                                   /* initialize for loop     */
         while (n > 0) {                          /* loop over records       */
             uvread_c(unit,pre,data,flg,MAXCHAN,&n); /* read data            */
+	    if (told != pre[2]) {
+	      told = pre[2];
+	      nt++;
+	      /* printf("new %d: t=%g\n", nt,(float) (pre[2] - floor(tmin-0.5) -0.5)*24.0); */
+	      for (r=rec+(nt-1)*nb, i=0; i<nb; i++, r++)  /* mark all as none   */
+		(*r).ut  = (float) (pre[2] - floor(tmin-0.5) -0.5)*24.0;
+		(*r).bl   = -1;
+		(*r).amp  = -1;
+		(*r).next = NULL;
+	    }
             c = 0;
             re = 0.0;
             im = 0.0;
@@ -216,7 +241,9 @@ local void loaddata(void)
                     im += data[2*i+1];
                     c++;
                 }
-	    r = rec + j;
+	    idx = getbaseid( (int)pre[3] );
+
+	    r = rec + (nt-1)*nb + idx;
 	    
             if (c > 0) {
 	      re /= (double) c;
@@ -229,6 +256,8 @@ local void loaddata(void)
 	    }
 	    if (mode==1) /* uv distance */
 	      (*r).amp = sqrt(pre[0]*pre[0]+pre[1]*pre[1]);
+	    if (mode==2) /* bl */
+	      (*r).amp = pre[3];
 	    (*r).ut  = (float) (pre[2] - floor(tmin-0.5) -0.5)*24.0;
                                              /* calc ut from julian date*/
 	    (*r).bl  = pre[3];               /* baseline number         */
@@ -242,21 +271,12 @@ local void loaddata(void)
         }
         uvclose_c(unit);                         /* close miriad data       */
     } /* loop all files */
-    
-    tra.nrec  = nr;                              /* set par common in track */
-    tra.nchan = nc;
-    tra.nsour = ns;
-    for (i=0; i<ns; i++) strcpy(tra.sour[i],sour[i]);
-    tra.nbase = nb;
-    for (i=0; i<nb; i++) tra.base[i] = bl[i];
-    tra.nant = na;
-    for (i=0; i<na;  i++) tra.ant[i] = an[i];
-
+    /* printf("All done, nt=%d\n",nt); */
 }
 
 local void listdata(void) 
 {
-  int bl,a1,a2,i,j,nb,na,nr;
+  int bl,a1,a2,i,j,nb,na,nr,idx;
   recordptr r,bp[MAXANT][MAXANT];
     
 
@@ -278,16 +298,21 @@ local void listdata(void)
   printf("\n");
 
   j = 0;
-  for (r=rec; r<rec+nr; r++) {                /* loop over records        */
+  for (r=rec; r<rec+nr; r++) {              /* loop over records        */
     bl = (*r).bl;                           /* find baseline number, and*/
+    idx = getbaseid(bl);
     a1 = bl / 256;                          /* antenna numbers          */
     a2 = bl - 256*a1;
     if (j==0) {
       printf(fmt,(*r).ut);
       printf(" ");
     }
+#if 1
     printf(fmt,(*r).amp);
     printf(" ");
+#else
+    printf("%d ",bl);
+#endif
     j++;
     if (j==nb) {
       printf("\n");
