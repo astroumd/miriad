@@ -1,7 +1,11 @@
 /*
  * HKUVLIST.C: hack miriad UV listing
  *
- * gcc -g -I$MIRINC -I$MIRSUBS -o hkuvplt hkuvplt.c $MIRLIB/libmir.a -lm libZeno.a -L/usr/local/pgplot -lcpgplot -lpgplot -lg2c -lX11 -lpng
+ *
+ *  note the code uses a different algorithm to stuff the data in the records,
+ *  a fill matrix 'ntimes * nbaselines' is created and missing baselines
+ *  (and flagged records) will just get -1 printed.
+ *  
  */
 
 #include "maxdimc.h"
@@ -33,11 +37,8 @@ string defv[] = {               ";HKUVPLT: hkuvplt test ",
 local void loaddefv(void);       /* load input params from command line */
 local void loaddata(void);       /* load miriad data to hkmiriad structures */
 local void listdata(void);       /* list data baseline based - very wide - */
-
 local void showinfo(void);       /* show track information */
-
 local void linkbrec(void);       /* link baselines and records */
-
 local int *sepitems(string,int *,int *,char *);
                                  /* get items in line from terminal */
 local int *listbase(char,int *,int, int *);/* list baseline numbers */
@@ -73,20 +74,7 @@ int main(int argc, string argv[])
       showinfo();                                  /* show track information   */
       return;
     }
-#if 0
-    linkbrec();                                  /* link baseline and record */
-#endif
     listdata();                                  /* list data */
-
-    nit = 0; it = (int *) NULL;                  /* init. items              */
-    sprintf(line,"t,%d",tra.ant[0]);             /* pick first antenna       */
-    it = sepitems(line,it,&nit,&type);           /* separate items           */
-    bl = listbase(type,it,nit,&nb);              /* itialize lists of bl,    */
-
-
-    free(it);
-    free(bl);
-    free(pan);
 }
 
 
@@ -112,7 +100,7 @@ local void loaddefv(void)
     mode = -1;
   else {
     /* should give warning message */
-    mode = 0;
+    mode = -1;
   }
   fmt = getparam("format");
     
@@ -526,6 +514,9 @@ local int *listbase(char type, int *a, int na, int *nb)
 
 /*
  * LINKBREC: link baselines and records
+ *     -- this code is from hkuvplt, and will probably break for 
+ *        the different style of filling rec as a matrix with
+ *        empty slots for missing baselines
  */
 
 local void linkbrec(void)
