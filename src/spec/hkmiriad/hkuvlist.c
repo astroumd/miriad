@@ -22,7 +22,7 @@ string defv[] = {               ";HKUVPLT: hkuvplt test ",
     "vis=xxx.mir",              ";Input uv data",
     "mode=info",                ";Output mode: info, amp, uvdistance",
     "format=%g",                ";Output format used",
-    "VERSION=1.0",              ";Peter Teuben   Sep 2008",
+    "VERSION=1.0",              ";Peter Teuben   $Date$",
     NULL,
 };
 
@@ -228,9 +228,11 @@ local void loaddata(void)
 	      /* printf("new %d: t=%g\n", nt,(float) (pre[2] - floor(tmin-0.5) -0.5)*24.0); */
 	      for (r=rec+(nt-1)*nb, i=0; i<nb; i++, r++)  /* mark all as none   */
 		(*r).ut  = (float) (pre[2] - floor(tmin-0.5) -0.5)*24.0;
-		(*r).bl   = -1;
-		(*r).amp  = -1;
-		(*r).next = NULL;
+		(*r).bl    = -1;
+		(*r).souid = -1;
+		(*r).amp   = -1;
+		(*r).pha   = -1;
+		(*r).next  = NULL;
 	    }
             c = 0;
             re = 0.0;
