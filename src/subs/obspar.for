@@ -34,7 +34,7 @@ c    mchw 03jan02 Added SZA
 c    mchw 09jul02 Added ALMA
 c    mchw 26aug03 Added SMA
 c    gxm  27jan04 Added generic systemp for WSRT (to please wsrtfits).
-c    mchw 07jul04 Added SMA10 and SZA6 cross correlations for CARMA.
+c    mchw 07jul04 Added SZA10 and SZA6 cross correlations for CARMA.
 c    pjt  24sep04 Final location of CARMA at Cedar Flats
 c    dm/jhz 23sep05 Corrected JyperK and MOUNT for SMA entries
 c    mchw 07jul04 updated CARMA longitude and latitude to station 32
@@ -284,12 +284,13 @@ c
 	call obsad('cso/latitude',	obsdms( 1, 19,49,33.8))
 	call obsad('cso/longitude',	obsdms(-1,155,28,46.4))
 	call obsad('cso/mount',	        ALTAZ)
-	call obsad('cso/nants',	        2.d0)
+	call obsad('cso/nants',	        6.d0)
 	call obsad('cso/systemp',	500.d0)
 c
 c  GMRT.
 c
 	call obsad('gmrt/antdiam',	45.d0)
+	call obsad('gmrt/mount',	ALTAZ)
 c
 c  The HATCREEK mm array (BIMA).
 c  Jyperk and systemp given by Wright, from 3mm vlbi.
