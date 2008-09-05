@@ -41,8 +41,6 @@ local void linkbrec(void);       /* link baselines and records */
 local int *sepitems(string,int *,int *,char *);
                                  /* get items in line from terminal */
 local int *listbase(char,int *,int, int *);/* list baseline numbers */
-local void selsour(void);        /* select sources */
-local int *sepsour(string,int *,char *); /* separate sources in line */
 local char **splitline(string,char,int *); /* split line to items */
 local int getantid(int);         /* get antenna id */
 local int getbaseid(int);        /* get baseline id */
@@ -90,136 +88,6 @@ int main(int argc, string argv[])
     free(pan);
 }
 
-/*
- * SELSOUR: select sources (mask others)
- */
-
-local void selsour(void)
-{
-    int nm,*ma,i,k;
-    char code,line[256];
-    recordptr r;
-
-    printf("\tSources:\n");
-    for (i=0;i<tra.nsour;i++)
-        printf("\t\t%2d: %s\n",i,tra.sour[i]);
-    printf("\n");
-    printf("Select sources: [A]ll/[S]elect/[M]ask/[U]nmask (e.g. \"a\",\"s,1,2\",\"m,2\",\"u,1,3\") =\n");
-    scanf("%s",line);
-
-    ma  = sepsour(line,&nm,&code);       /* separate items           */
-    if (code == 'a') {
-        for (r=rec; r<rec+tra.nrec; r++)
-            (*r).flag &= ~MASK;          /* set maskbit to unmask    */
-    } else if (code == 's') {
-        for (r=rec; r<rec+tra.nrec; r++) {
-            k = 0;
-            for (i=0; i<nm; i++)
-                if ((*r).souid == ma[i]) k++;
-            if (k>0) {
-                (*r).flag &= ~MASK;      /* set maskbit to unmask    */
-            } else {
-                (*r).flag |= MASK;       /* set maskbit to mask      */
-            }
-        }
-    } else if (code == 'm') {
-        for (r=rec; r<rec+tra.nrec; r++) {
-            for (i=0; i<nm; i++) {
-                if ((*r).souid == ma[i])
-                    (*r).flag |= MASK;   /* set maskbit to mask      */
-            }
-        }
-    } else if (code == 'u') {
-        for (r=rec; r<rec+tra.nrec; r++) {
-            for (i=0; i<nm; i++) {
-                if ((*r).souid == ma[i])
-                    (*r).flag &= ~MASK;  /* set maskbit to unmask    */
-            }
-        }
-    }
-    if (ma != (int *) NULL) free(ma);
-}
-
-
-/*
- * SEPSOUR: separate sources from line, check their presenses
- */
-
-local int *sepsour(string line,int *nitem, char *type)
-{
-    int nelem,nit,*it;
-    char **elem,**a;
-    int i,j,k,n,b,a1,a2,s;
-
-    elem = splitline(line,',',&nelem);          /* split line               */
-
-    if (line[0] == 'a') {                       /* selected all             */
-
-        *type = 'a';
-        nit = 0;
-        it = (int *) NULL;
-
-    } else if (line[0] == 's') {
-
-        *type = 's';
-        nit = 0;
-        for (i=1; i<nelem; i++) {
-            s = atoi(elem[i]);                  /* count num of ant in line */
-            if (s >= 0 && s < tra.nsour) nit++; /* if sour exists, count it */
-        }
-        it = (int *)allocate(nit * sizeof(int));/* alloc memory             */
-        k = 0;
-        for (i=1; i<nelem; i++) {
-            s = atoi(elem[i]);                  /* this source              */
-            if (s >= 0 && s < tra.nsour) { /* if exists in this track  */
-                it[k] = s;
-                k++;
-            }
-        }
-    } else if (line[0] == 'm') {
-
-        *type = 'm';
-        nit = 0;
-        for (i=1; i<nelem; i++) {
-            s = atoi(elem[i]);                  /* count num of ant in line */
-            if (s >= 0 && s < tra.nsour) nit++; /* if sour exists, count it */
-        }
-        it = (int *)allocate(nit * sizeof(int));/* alloc memory             */
-        k = 0;
-        for (i=1; i<nelem; i++) {
-            s = atoi(elem[i]);                  /* this source              */
-            if (s >= 0 && s < tra.nsour) { /* if exists in this track  */
-                it[k] = s;
-                k++;
-            }
-        }
-    } else if (line[0] == 'u') {
-
-        *type = 'u';
-        nit = 0;
-        for (i=1; i<nelem; i++) {
-            s = atoi(elem[i]);                  /* count num of ant in line */
-            if (s >= 0 && s < tra.nsour) nit++; /* if sour exists, count it */
-        }
-        it = (int *)allocate(nit * sizeof(int));/* alloc memory             */
-        k = 0;
-        for (i=1; i<nelem; i++) {
-            s = atoi(elem[i]);                  /* this source              */
-            if (s >= 0 && s < tra.nsour) { /* if exists in this track  */
-                it[k] = s;
-                k++;
-            }
-        }
-
-    } else {
-        it = (int *) NULL;
-    } 
-
-    free(elem);
-    *nitem = nit;
-
-    return(it);
-}
 
 /*
  * LOADDEFV: load variables defined in defv or command line
@@ -258,8 +126,8 @@ local void loaddata(void)
     int unit;
     int flg[MAXCHAN];
     float data[2*MAXCHAN];
-    double pre[5],re,im,tmin;
-    int nr,nc,ns,nb,na,b,bl[MAXBASE],a1,a2,an[MAXANT],nbytes;
+    double pre[5],re,im,tmin,told;
+    int nr,nc,ns,nb,na,nt,b,bl[MAXBASE],a1,a2,an[MAXANT],nbytes;
     char s[MAXNAME],sour[MAXSOU][MAXNAME];
     recordptr r;
     int f,i,j,k,n,c;
@@ -268,15 +136,16 @@ local void loaddata(void)
     nc = 0;                                      /* source, and bl counters */
     ns = 0;
     nb = 0;
+    nt = 0;
     nbad = 0;
-    tmin = 1.0e30;
+    tmin = told = 1.0e30;
 
     for (f=0; f<nfiles; f++) {                   /* read over all files     */
         uvopen_c(&unit,files[f],"old");          /* open miriad data        */
         n = 1;                                   /* initialize for loop     */
         while (1) {                              /* loop over records       */
             uvread_c(unit,pre,data,flg,MAXCHAN,&n); /* read data            */
-	    if (n==0) break;
+	    if (n==0) break;                        /* done reading data    */
             c = 0;
             for (i=0; i<n; i++)
                 if (flg[i] == 1) c++;            /* if not flagged,count it */
@@ -286,6 +155,10 @@ local void loaddata(void)
 	        nr++;                            /* update record counter   */
                 nc = MAX(nc,n);                  /* find max for chan count */
                 tmin = MIN(tmin,pre[2]);         /* min time                */
+		if (told != pre[2]) {            /* count timeslot          */
+		  nt++;                          /* could fail if ill       */
+		  told = pre[2];                 /* ordered data            */
+		}
                 b = (int) pre[3];                /* get baseline number     */
                 i = 0;                           /* search through bl list  */
                 while (i<nb && bl[i] != b) i++;
@@ -320,6 +193,11 @@ local void loaddata(void)
             an[na] = a2;
             na++;
         }
+    }
+    if (nr % nb) {
+      printf("fixing up needed: nt=%d  nr/nb=%g\n",nt,(float)nr/(float)nb);
+    } else {
+      if (nr/nb != nt) printf("bad assumptions about data compositions\n");
     }
     nbytes = nr * sizeof(record);
     rec = (recordptr) allocate(nbytes);          /* mem for records     */
@@ -452,6 +330,9 @@ local void showinfo(void)
     printf("\tNum of bad records = %d\n",nbad);
     printf("\tNum of times       = %d\n",tra.nrec/tra.nbase);
 
+    if (tra.nrec % tra.nbase)
+      printf("\tWarning:  not integral number of baselines in records\n");
+
     printf("\n");
 
 }
@@ -542,7 +423,7 @@ local int *sepitems(string line,int *item, int *nitem, char *type)
 
     *nitem = nit;
     *type = t;
-    return(it);
+    return it;
 
 }
 
@@ -659,33 +540,33 @@ local char **splitline(string line, char ch, int *nn)
     arr[ni] = 0;
     free(str);
     *nn = ni;
-    return(arr);
+    return arr;
 }
 
 /*
- * GETANTID: get antenna id
+ * GETANTID: get antenna id (0..nant-1)
  */
 
 local int getantid(int an)
 {
-    int i,k;
+  int k;
 
-    i = -1;
-    for (k=0; k<tra.nant; k++)
-        if (tra.ant[k] == an) i = k;
-    return(i);
+  for (k=0; k<tra.nant; k++)
+    if (tra.ant[k] == an) return k;
+  return -1;
 }
 
 /*
- * GETBASEID: get baseline id
+ * GETBASEID: get baseline id (0..nbase-1)
+ *     from the array of baselines (1-2, 1-3, 1-4, ....   14-15)
+ *     and given baseline, return the index into this array
  */
 
 local int getbaseid(int bl)
 {
-    int i,k;
+  int k;
 
-    i = -1;
-    for (k=0; k<tra.nbase; k++)
-        if (tra.base[k] == bl) i = k;
-    return(i);
+  for (k=0; k<tra.nbase; k++)
+    if (tra.base[k] == bl) return k;
+  return -1;
 }
