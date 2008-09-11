@@ -1,13 +1,28 @@
 #! /bin/csh -f
 #
-#    send miriad data to ds9
+#    send miriad (and fits) data to ds9
 #
 #  TODO:
 #    some grepping now done wrong on solaris, output of imhead issue
 #
+#  You will need to have ds9 and the XPA tools in your searchpath.
+#  Example URLs for Linux and Max from http://hea-www.harvard.edu/RD/ds9/
+#  for ds9 version 4.12 and  xpa version 2.1.7b2 (as in april 2007)
+# http://hea-www.harvard.edu/saord/download/ds9/linux/ds9.linux.4.12.tar.gz
+# http://hea-www.harvard.edu/saord/download/ds9/linux64/ds9.linux64.4.12.tar.gz
+# http://hea-www.harvard.edu/saord/download/ds9/macosxppc/ds9.macosxppc.4.12.tar.gz
+# http://hea-www.harvard.edu/saord/download/ds9/macosxintel/ds9.macosxintel.4.12.tar.gz
+# and
+# http://hea-www.harvard.edu/saord/download/ds9/linux/xpa.linux.2.1.7b2.tar.gz  
+# http://hea-www.harvard.edu/saord/download/ds9/linux64/xpa.linux64.2.1.7b2.tar.gz  
+# http://hea-www.harvard.edu/saord/download/ds9/darwinppc/xpa.darwinppc.2.1.7b2.tar.gz  
+# http://hea-www.harvard.edu/saord/download/ds9/darwinintel/xpa.darwinintel.2.1.7b2.tar.gz  
+# 
+# 
+#
 #  $Id$
 #
-set version="3.2 - 30-nov-06 PJT"
+set version="3.4 - 11-sep-08 PJT"
 
 if ($#argv == 0) then
     echo "Usage: $0 [-options] miriad_dataset [plane1] [plane2 ...]"
@@ -191,12 +206,13 @@ foreach p ($planes)
     @ iplane++
 
     set skip=`echo " $n1 $n2 $p " | awk '{printf("%d",($1*$2*($3-1)*4)+4)}'`
+    set n3s=`expr $n3 + 1 - $p`
 
-    echo $name $n1 $n2 $n3 -32 $skip 
+    echo $name $n1 $n2 $n3s -32 $skip 
 
     # cat $name/image | $pipe | xpaset $title array  $name/image\[xdim=$n1,ydim=$n2,zdim=$n3,bitpix=-32,skip=$skip\]
     # xpaset -p $title file array  $name/image\[xdim=$n1,ydim=$n2,zdim=$n3,bitpix=-32,skip=$skip,arch=$arch\]
-    cat $name/image | xpaset $title array  $name/image\[xdim=$n1,ydim=$n2,zdim=$n3,bitpix=-32,skip=$skip,arch=$arch\]
+    cat $name/image | xpaset $title array  $name/image\[xdim=$n1,ydim=$n2,zdim=$n3s,bitpix=-32,skip=$skip,arch=$arch\]
 
 
 #    echo array $name/image $n1 $n2 -32 $skip | $pipe | xpaset $title
