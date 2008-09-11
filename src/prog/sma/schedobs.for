@@ -91,6 +91,8 @@ c jhz  05nove22 fixed a bug for decode character coordinates
 c               for planets.
 c pjb/jhz 05nove22 extdended smadir from 82 chars to 256
 c               add mgetenv(mirhome,'MIR')
+c jhz  08sep11 added a warning message in the case of no relevant
+c               coordinates to be found for the input source.
 c-----------------------------------------------------------------------   
       include 'maxdim.h'
 c ----------------------------------------------------------------------
@@ -160,7 +162,7 @@ c
       data polmsk /13*0/
       character obsday*32,sfile*32,aline*300
       character cra*12,cdec*12,radec*60
-      character hh*2,mm*2,ss*6
+      character hh*2,mm*2,ss*6,msgline*60
       character dd*3,amm*2,ass*5
       double precision dpra,dpdec
       integer hdr,iostat,ilen,blen,elen, iplanet
@@ -225,6 +227,7 @@ c
           iplanetp = 0
           iplanet = 0
           do while(iostat.ne.-1)
+c initialize
           aline = ' '
           call txtread (hdr, aline, ilen, iostat)
           sourid=sourid+1
@@ -280,34 +283,31 @@ c
                  ass(1:5)=radec(19:23)
               end if
           end if
-       
          cra=hh(1:2)//':'//mm(1:2)//':'//ss(1:6)
          cdec=dd(1:3)//':'//amm(1:2)//':'//ass(1:5)//'0'
-       write(*,*) source1,' ', cra,' ',cdec, ' '
+          write(*,*) source1, ' ',cra,' ',cdec 
           end if
           if(iostat.ne.-1.and.iplanet.eq.0) then
          write(*,*) aline(1:len1(aline))
-
-
           blen=elen+2
           elen=blen+11
           cra=aline(blen:elen)
           sourra(sourid) = getra(cra)*2.0*dpi/24.
-c          write(*,*) cra,sourra(sourid)          
           blen=elen+2
           elen=blen+11
           cdec=aline(blen:elen)
           sourdec(sourid) = getdec(cdec)*2.0*dpi/360.
+       msgline='no coordinates were found for source: '//aline(1:8)
+          if(sourra(sourid).eq.sourdec(sourid)) call bug('w', msgline)  
           else
             sourra(sourid) = getra(cra)*2.0*dpi/24.
-             sourdec(sourid) = getdec(cdec)*2.0*dpi/360.
+            sourdec(sourid) = getdec(cdec)*2.0*dpi/360.
           end if
-c           write(*,*) cdec,sourdec(sourid)
           iplanet = 0 
           end do
           nsource=sourid-1
 c start time input from jtime0
-                jtime=jtime0
+            jtime=jtime0
 c
 c initialize
 c
@@ -327,8 +327,7 @@ c
 c
 c Fish out the lst if required.
 c
-          do i=1,nsource
-          
+          do i=1,nsource          
           sourid=i
           jtime=jtime+60./24./3600.
           if (xaxis.eq.'lst'.or.yaxis.eq.'lst')then
