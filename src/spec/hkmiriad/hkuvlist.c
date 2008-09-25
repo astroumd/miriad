@@ -8,6 +8,21 @@
  *  
  */
 
+/*= hkuvlist - uv listing, another way
+/*& jk
+/*: vis
+/*+
+    List visibilities
+
+/*@ vis
+    Input file
+/*@ mode
+    Output mode: info, amp, uvdistance
+/*@ format
+    Output format used
+/*--
+ */
+
 #include "maxdimc.h"
 #include "miriad.h"
 #include "stdinc.h"

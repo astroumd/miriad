@@ -2,6 +2,24 @@
  * gcc -g -I$MIRINC -I$MIRSUBS -o hkimgen hkimgen.c $MIRLIB/libmir.a -lm libZeno.a
  */
 
+/*= hkimgen - generate images
+/*& jk
+/*: image analysis
+/*+
+    Much like IMGEN, 
+
+/*@ out
+    Output file
+/*@ sdgsize
+    Grid size of single-dish map
+/*@ imsize
+    Number of pixels
+/*@ cell
+    Grid size [arcsec]
+/*@ object=
+    Object function [BG: Bessel-Gauss, SP: Spheroidal]
+/*--
+ */
 
 #include "stdinc.h"
 #include "getparam.h"

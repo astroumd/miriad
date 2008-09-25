@@ -1,8 +1,8 @@
 c************************************************************************
 	program convol
 	implicit none
-c= convol - Convolve a cube with a "beam function"
-c& rjs mchw
+c= hkconvol - Convolve a cube with a "beam function"
+c& jk
 c: map manipulation, map analysis
 c	CONVOL is a MIRIAD task which convolves a map or model with a "beam".
 c       WARNING: Convol does not do a very good job with masked images. 

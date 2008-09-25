@@ -2,8 +2,8 @@ c************************************************************************
 	program demos
 	implicit none
 c
-c= demos - Inverse mosaicing operation
-c& rjs
+c= hkdemos - Inverse mosaicing operation
+c& jk
 c: map manipulation
 c+
 c	DEMOS (de-mosaic) is a MIRIAD task which takes a model of the sky

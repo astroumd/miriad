@@ -5,6 +5,20 @@
  * gcc -g -I$MIRINC -I$MIRSUBS -o hkdoflg hkdoflg.c $MIRLIB/libmir.a -lm -I$MIR/borrow/zeno $MIR/borrow/zeno/libZeno.a -lg2c
  */
 
+/*= hkdoflg - hack miriad automated basic flagging routine
+/*& jk
+/*: vis
+/*+
+    Automated program to flag visibilties in way uvflag cannot. For example
+    based on system temperatures.
+
+/*@ vis
+    Input file
+/*@ tsyscut
+    Cut-off Tsys for flagging
+/*--
+ */
+
 #include "maxdimc.h"
 #include "miriad.h"
 #include "stdinc.h"

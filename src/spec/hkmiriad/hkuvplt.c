@@ -5,6 +5,22 @@
  * gcc -g -I$MIRINC -I$MIRSUBS -o hkuvplt hkuvplt.c $MIRLIB/libmir.a -lm libZeno.a -L/usr/local/pgplot -lcpgplot -lpgplot -lg2c -lX11 -lpng
  */
 
+/*= hkuvplt - plot and flag visibility data 
+/*& jk
+/*: vis
+/*+
+    Interactive program
+
+/*@ vis
+    Input file
+/*@ out
+    Optional output file
+/*@ yaxis
+    Select amp or pha for the Y-axis
+/*--
+ */
+
+
 #include "maxdimc.h"
 #include "miriad.h"
 #include "stdinc.h"

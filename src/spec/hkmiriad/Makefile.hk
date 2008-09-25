@@ -25,7 +25,7 @@ LIBX11    =  -L/usr/X11R6/lib -lX11
 # if you have installed a binary release , you may have
 # to run 'configure' in that directory and get the updated
 # value for FLIBS
-FLIBS = -lg2c
+FLIBS = -L/usr/lib/gcc/i386-redhat-linux/3.4.6 -L/usr/lib/gcc/i386-redhat-linux/3.4.6/../../.. -lfrtbegin -lg2c -lm -lgcc_s
 
 PGLIBS_GEN      = -L$(MIRLIB) -lcpgplot -lpgplot $(FLIBS)
 PGLIBS_G77      = -L$(MIRLIB) -lcpgplot -lpgplot -lg2c     
@@ -35,8 +35,11 @@ PGLIBS_F2C      = -L$(MIRLIB) -lcpgplot -lpgplot -lf2c
 # pick one from the above, but also need LIBX11
 PGLIBS = $(PGLIBS_GEN) $(LIBX11)
 
-BINS = hkimgen hkuvplt hkconvol hkdemos hkuvrandom hkuvlist hkdoflg
+SRC1 = hkimgen.c hkuvplt.c hkuvlist.c hkdoflg.c
+SRC2 = hkconvol.for hkdemos.for hkuvrandom.for 
 
+BINS = $(SRC1:.c=) $(SRC2:.for=)
+DOCS = $(SRC1:.c=.doc) $(SRC2:.for=.doc)
 
 all:   $(BINS)
 
@@ -44,27 +47,39 @@ all:   $(BINS)
 
 hkimgen: hkimgen.c
 	$(CC) $(CFLAGS) $(INCS) -o hkimgen hkimgen.c $(LIBS) $(FLIBS)
+	doc -p hkimgen.c
 
 hkuvplt: hkuvplt.c
 	$(CC) $(CFLAGS) $(INCS) -o hkuvplt hkuvplt.c $(LIBS) $(PGLIBS) $(FLIBS)
+	doc -p hkuvplt.c
 
 hkuvlist: hkuvlist.c
 	$(CC) $(CFLAGS) $(INCS) -o hkuvlist hkuvlist.c $(LIBS) $(PGLIBS) $(FLIBS)
+	doc -p hkuvlist.c
 
 hkdoflg: hkdoflg.c
 	$(CC) $(CFLAGS) $(INCS) -o hkdoflg hkdoflg.c $(LIBS) $(PGLIBS) $(FLIBS)
+	doc -p hkdoflg.c
 
 hkconvol: hkconvol.for
 	$(MIRBIN)/debug hkconvol
+	doc -p hkconvol.for
 
 hkdemos: hkdemos.for
 	$(MIRBIN)/debug hkdemos
+	doc -p hkdemos.for
 
 hkuvrandom: hkuvrandom.for
 	$(MIRBIN)/debug hkuvrandom
+	doc -p hkuvrandom.for
+
+docs:
+	-@for s in $(SRC1) $(SRC2); do\
+	 doc -p $$s; done
 
 clean:
-	rm -f *.o $(BINS)
+	rm -f *.o $(BINS) $(DOCS)
 
 install_miriad: $(BINS)
 	cp $(BINS) $(MIRBIN)
+	cp $(DOCS) $(MIRPDOC)

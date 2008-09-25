@@ -1,8 +1,8 @@
 c**********************************************************************c
 	program uvrandom
 	implicit none
-c= uvrandom - Generate random sampled uv points.
-c& mchw
+c= hkuvrandom - Generate random sampled uv points.
+c& jk
 c: uv analysis
 c+
 c	Generate random sampled uv points from uniform sample between
