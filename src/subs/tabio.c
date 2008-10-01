@@ -7,6 +7,7 @@
 /*									*/
 /*  History:								*/
 /*    pjt   9aug07   Original version, only writes tables               */
+/*    pjt   1oct08   Allow bypassing all I/O if tabname blank           */
 /*									*/
 /*  TODO:						        	*/
 /*    reading?						        	*/
@@ -68,6 +69,7 @@ void tabopen_c(int *thandle,Const char *name,Const char *status,int *ncol, int *
 
   Input:
     name	The name of the file to be opened.
+                If blank, no I/O is done.
     status	Either 'old', 'new' or 'append'.
 
   Input or Output:
@@ -76,11 +78,17 @@ void tabopen_c(int *thandle,Const char *name,Const char *status,int *ncol, int *
                 but data must be written row wise
 
   Output:
-    tno		The handle of the output file.				*/
+    tno		The handle of the output file.				
+                A negative number is passed if file is blank, no I/O done */
 /*----------------------------------------------------------------------*/
 {
   int iostat,access,tno,i;
   char *stat,*mode;
+
+  if (strlen(name) == 0 || !strcmp(name," ")){
+    *thandle = -1;
+    return;
+  }
 
   if(!strcmp("old",status))	   { access = OLD; mode = "read";  stat = "old";}
   else if(!strcmp("append",status)){ access = OLD; mode = "append";stat = "old";}
@@ -155,6 +163,8 @@ This sets the current row number. It not usesd, the row number might be
   char *space = " ";
   char *newline = "\n";
 
+  if (thandle<0) return;
+
   if (row != 0) tab_checkrow(thandle,row);
 
   if (tables[thandle].mode == 0) {
@@ -185,12 +195,14 @@ This sets the current row number. It not usesd, the row number might be
 
 static void tab_checkrow(int thandle, int row)
 {
+  if (thandle<0) return;
   if (row < 1) bugv_c('f',"tabio: row=%d illegal",row);
   if (row > tables[thandle].maxrow) tables[thandle].maxrow = row;
 }
 
 static void tab_checkcol(int thandle, int col)
 {
+  if (thandle<0) return;
   if (col < 1) bugv_c('f',"tabio: col=%d illegal",col);
   if (col > tables[thandle].maxcol) tables[thandle].maxcol = col;
 }
@@ -213,6 +225,7 @@ This sets the format for a particular column
     fmt		C-style formatting directive                            */
 /*----------------------------------------------------------------------*/
 {
+  if (thandle<0) return;
   tables[thandle].fmt[col-1] = strdup(fmt);
 }
 
@@ -236,6 +249,8 @@ void tabclose_c(int thandle)
   char *p;
   char *space = " ";
   char *newline = "\n";
+
+  if (thandle<0) return;
 
   /* write table */
 
@@ -297,6 +312,7 @@ void tabwcr_c(int thandle,int col,float value)
 /*----------------------------------------------------------------------*/
 {
   char temp[64];
+  if (thandle<0) return;
 
   tab_checkcol(thandle,col);
 
@@ -304,6 +320,7 @@ void tabwcr_c(int thandle,int col,float value)
     sprintf(temp,tables[thandle].fmt[col-1],value);
   else
     sprintf(temp,"%g",value);
+
   if (tables[thandle].mode == 0)
     tables[thandle].data[tables[thandle].row - 1][col-1] = strdup(temp);
   else if (tables[thandle].mode == 1)
@@ -313,6 +330,7 @@ void tabwcr_c(int thandle,int col,float value)
 void tabwcd_c(int thandle,int col,double value)
 {
   char temp[64];
+  if (thandle<0) return;
 
   tab_checkcol(thandle,col);
 
@@ -329,6 +347,7 @@ void tabwcd_c(int thandle,int col,double value)
 void tabwci_c(int thandle,int col,int value)
 {
   char temp[64];
+  if (thandle<0) return;
 
   tab_checkcol(thandle,col);
 
@@ -344,6 +363,8 @@ void tabwci_c(int thandle,int col,int value)
 
 void tabwca_c(int thandle,int col,char *value)
 {
+  if (thandle<0) return;
+
   if (tables[thandle].mode == 0)
     tables[thandle].data[tables[thandle].row - 1][col-1] = strdup(value);
   else if (tables[thandle].mode == 1)
@@ -356,6 +377,7 @@ void tabcmt_c(int thandle,char *comment)
   int iostat;
   char *cmt="#";
   char *nwl="\n";
+  if (thandle<0) return;
 
   hwritea_c(tables[thandle].table,cmt,strlen(cmt),&iostat);   
   check(iostat);
