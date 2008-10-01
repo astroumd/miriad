@@ -42,7 +42,7 @@ c--
 c------------------------------------------------------------------------
         include 'maxdim.h'
 	character version*(*)
-	parameter(version='BWsel: version 4-jan-07')
+	parameter(version='BWsel: version 1-oct-08')
 c
 	integer nchan,vhand,lIn,lOut,nPol,Pol,SnPol,SPol
 	integer nwdata,length,nbw,i
@@ -200,6 +200,7 @@ c
 	   write(*,*) 'Copied ',nvis1,'/',nvis0,' records'
 	else
 	   write(*,*) 'Marking ',nvis1,'/',nvis0,' records for copy'
+	   write(*,*) 'Example:  bwsel vis=... out=... bw=500,64,64'
 	endif
 
 	end
