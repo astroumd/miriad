@@ -69,6 +69,7 @@ c    rjs  26may05 Add pntra,pntdec to list of know variables.
 c    rjs  19jun05 More spaces in log file.
 c    rjs  01jan06 Added definition of ref pointing solution.
 c    jhz  11jan07 Added chi2 to the VarChar data array.
+c    pjt  25nov07 One more digit for time to comply with uvlist
 c    dhem 07jan08 Declare itoaf to be 4 characters long (was 2) in Logit
 c
 c  Bugs:
@@ -77,7 +78,7 @@ c------------------------------------------------------------------------
 	character version*(*)
 	integer MAXPNTS
 	parameter(MAXPNTS=1000000)
-	parameter(version='VarPlt: version 1.1 11-Jan-07')
+	parameter(version='VarPlt: version 1.1 1-oct-08')
 	logical doplot,dolog,dotime,dounwrap
 	character vis*64,device*64,logfile*64,xaxis*16,yaxis*16
 	character xtype*1,ytype*1,xunit*16,yunit*16,calday*24
