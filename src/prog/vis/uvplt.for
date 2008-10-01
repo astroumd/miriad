@@ -192,6 +192,10 @@ c	Defaults depend upon the number of sub-plots. The second value
 c	defaults to the first.
 c@ log
 c	The output logfile name. The default is the terminal.
+c@ tab
+c       Special tabular output of the plotted data. Default none. 
+c       Currently the raw X and Y values are written out. 
+c       Example units: Time in seconds. Phases in degrees.
 c@ comment
 c	A one line comment which is written into the logfile.
 c--
@@ -302,6 +306,7 @@ c    mchw 14feb02  Changes to accomodate more antennas.
 c    pjt  11dec02  subroutine IZERO to bypass big DATA statement that makes big binaries
 c    mchw 14aug03  replace varmint.
 c    pjt   9may07  doc + debug cleanup
+c    pjt   1oct08  experiment with tabio and tab= keyword
 c
 c To do:
 c
@@ -405,9 +410,9 @@ c
       real size(2), xmin, xmax, ymin, ymax, u, v, uvdist, uvpa, xvalr,
      +  yvalr, parang, evec
       integer lin, ivis, nread, dayoff, j,  nx, ny, inc, hann, tunit,
-     +  ofile, ifile, jfile, vupd, ip
+     +  ofile, ifile, jfile, vupd, ip, tno
       character in*64, xaxis*10, yaxis*10, pdev*80, comment*80, 
-     +  logf*80, str*2, title*100, ops*9
+     +  logf*80, tabf*80, str*2, title*100, ops*9
       logical xrtest, yrtest, more, dodoub, reset, doave, dowave,
      +  dovec(2), dorms(3), doall, doflag, dobase, doperr, dointer,
      +  dolog, dozero, doequal, donano, dosrc, doavall, bwarn(2), 
@@ -432,7 +437,7 @@ c
 c      data npts, plpts, basmsk /ifac1*0, ifac1*0, ifac2*0/ -- see izero
       data polmsk /13*0/
 c-----------------------------------------------------------------------
-      call output ('UvPlt: version 9-may-07')
+      call output ('UvPlt: version 1-oct-08')
       call output ('New frequency behaviour '//
      *	'(see parameters line and options=nofqav)')
       call output (' ')
@@ -447,7 +452,7 @@ c
      +   tunit, dorms, dovec, doflag, doall, dobase, dointer, doperr,
      +   dolog, dozero, doequal, donano, dosrc, doavall, doxind, 
      +   doyind, dowrap, dosymb, dodots, docol, inc, nx, ny, pdev, 
-     +   logf, comment, size, hann, ops, twopass, dofqav)
+     +   logf, tabf, comment, size, hann, ops, twopass, dofqav)
       call chkinp (xaxis, yaxis, xmin, xmax, ymin, ymax, dayav,
      +   dodoub, dowave, doave, dovec, dorms, dointer, doperr,
      +   dowrap, hann, xrtest, yrtest)
@@ -455,6 +460,10 @@ c
 c  Open the log file and write some messages
 c
       call logfop (logf, comment, doave, dovec, doall, doflag)
+c
+c  Open the table (if tabf blank, tno<0 and no I/O done)
+c
+      call tabopen(tno,tabf,'new',2,0)
 c
 c Read through data set accumulating descriptive information or use
 c variables of first integration to guess at what's in the file
@@ -713,9 +722,10 @@ c
      +     xxmax, yymin, yymax, pdev, pl1dim, pl2dim, pl3dim, pl4dim,
      +     maxbase, maxpol, maxfile, nbases, npols, npts, buffer(ip), 
      +     xo, yo, elo, eho, nx, ny, a1a2, order, size, polmsk, 
-     +     doavall, docol)
+     +     doavall, docol, tno)
 c
       call logclose
+      call tabclose(tno)
       call memfree (ip, maxbuf2, 'r')
 c
       end
@@ -2372,7 +2382,7 @@ c
      +    dayav, tunit, dorms, dovec, doflag, doall, dobase, dointer,
      +    doperr, dolog, dozero, doequal, donano, dosrc, doavall, 
      +    doxind, doyind, dowrap, dosymb, dodots, docol, inc, nx, ny, 
-     +    pdev, logf, comment, size, hann, ops, twopass, dofqav )
+     +    pdev, logf, tabf, comment, size, hann, ops, twopass, dofqav )
 c-----------------------------------------------------------------------
 c     Get the user's inputs 
 c
@@ -2411,6 +2421,7 @@ c    inc          Plot every INCth point after selection
 c    nx,ny        Number of plots in x and y directions on page
 c    pdev         PGPLOT device.  Blank means prompt user
 c    logf         Logfile
+c    tabf         table file
 c    comment      COmment to put in log file
 c    size         PGPLOT character sizes for the labels and symbols
 c    hann         Hanning smoothing length
@@ -2419,7 +2430,7 @@ c    dofqav       Average frequency channels before plotting.
 c-----------------------------------------------------------------------
       implicit none
 c
-      character*(*) xaxis, yaxis, pdev, logf, comment
+      character*(*) xaxis, yaxis, pdev, logf, tabf, comment
       double precision dayav
       real xmin, xmax, ymin, ymax, size(2)
       logical dorms(3), dovec(2), doflag, doall, dobase, dointer, 
@@ -2551,6 +2562,7 @@ c
       call keyr ('size', size(2), size(1))
 c
       call keya ('log', logf, ' ')
+      call keya ('tab', tabf, ' ')
 c
       ilen = 0
       comment = ' '
@@ -2748,7 +2760,7 @@ c
      +   xxmax, yymin, yymax, pdev, pl1dim, pl2dim, pl3dim, pl4dim, 
      +   maxbase, maxpol, maxfile, nbases, npols, npts, buffer, xo, 
      +   yo, elo, eho, nx, ny, a1a2, order, size, polmsk, 
-     +   doavall, docol)
+     +   doavall, docol,tno)
 c-----------------------------------------------------------------------
 c     Draw the plot
 c
@@ -2788,6 +2800,7 @@ c   doavall        True if averaging everything on the sub-plot
 c                  together
 c   nbases         Number of baseline encountered in files
 c   npols          Number of poalrizations encountered in files
+c   tno            table I/O (if > 0)
 c
 c Input/output
 c   xx,yymin,max   Work array (automatically determined plot extrema)
@@ -2798,7 +2811,7 @@ c
       integer pl1dim, pl2dim, pl3dim, pl4dim, maxbase, maxpol, maxfile,
      +  xo, yo, elo(2), eho(2), a1a2(maxbase,2), order(maxbase),
      +  npts(maxbase,maxpol,maxfile), nx, ny, polmsk(-8:4),
-     +  nbases, npols
+     +  nbases, npols, tno
       real xmin, xmax, ymin, ymax, size(2), xxmin(maxbase), 
      +  xxmax(maxbase), yymin(maxbase), yymax(maxbase),
      +  buffer(pl1dim,pl2dim,pl3dim,pl4dim)
@@ -2811,7 +2824,7 @@ cc
       real xmnall, xmxall, ymnall, ymxall, xlo, xhi, ylo, yhi
       integer ierr, il1, il2, sym, ip, jf, lp, kp, k, ii,
      +  ipl1, ipl2, npol, i, j, cols1(12), cols2(12), cols(12), nb, np, 
-     +  ipt, il, ilen
+     +  ipt, il, ilen, tabrowcnt
       character xlabel*100, ylabel*100, ans*1, devdef*80, 
      +  str*80, units*10
       character*2 fmt(2), polstr(12)*2, hard*3
@@ -3000,6 +3013,7 @@ c
       devdef = '/xd'
       new = .true.
       redef = .false.
+      tabrowcnt = 0
       do while (new)
         ierr = 0
         new = .false.
@@ -3107,6 +3121,9 @@ c
                     call pgsch(size(2))
                     call pgpt (npts(kp,lp,jf),buffer(xo+1,kp,lp,jf), 
      +                            buffer(yo+1,kp,lp,jf), sym)
+                    call tabmore(npts(kp,lp,jf),buffer(xo+1,kp,lp,jf), 
+     +                            buffer(yo+1,kp,lp,jf), 
+     *                            tno, tabrowcnt)
                     if (dorms(1))
      +                call pgerrx (npts(kp,lp,jf), 
      +                             buffer(elo(1)+1,kp,lp,jf), 
@@ -3118,7 +3135,7 @@ c
      +                             buffer(elo(2)+1,kp,lp,jf), 
      +                             buffer(eho(2)+1,kp,lp,jf), 1.0)
 c
-c  Write log file; save x, y, xer, yerr
+c  Write log file; save x, y, xer, yerr  -- does not work?
 c
                     if (dolog) then
                       do ii = 1, npts(kp,lp,jf)
@@ -4028,10 +4045,26 @@ c
       end
 c-----------------------------------------------------------------------
       subroutine izero(n, iarr)
+      implicit none
       integer n, iarr(n)
       integer i
+      if (n.le.0) return
       do i=1,n
          iarr(i) = 0
       enddo
       end
 c-----------------------------------------------------------------------
+      subroutine tabmore(n,x,y,tno,row)
+      implicit none
+      integer n,tno,row
+      real x(n),y(n)
+      integer i
+      if (tno.le.0) return
+      do i=1,n
+         row = row + 1
+         call tabsetr(tno,row)
+         call tabwcr(tno,1,x(i))
+         call tabwcr(tno,2,y(i))
+      enddo
+      return
+      end
