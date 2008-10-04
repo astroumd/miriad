@@ -40,6 +40,8 @@ if ($#argv != 1) then
     echo "Usage: mirmake taskname"
     echo " "
     echo "  taskname   The name of the task to compile."
+    echo " "
+    echo "See 'mirhelp mirmake' for more information."
     exit 1
 endif
 
