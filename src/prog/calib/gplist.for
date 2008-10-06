@@ -65,7 +65,7 @@ c              range). However, data are not really flagged. The next
 c              option is an alternative "flagging" option.
 c     sigclip  Set to zero all gains more than jyperk(1)*rms away from 
 c              median on each antenna
-c              dynsize  Dynamically assign the array size in the printout of 
+c     dynsize  Dynamically assign the array size in the printout of 
 c              the gain list. The default is for Carma array. 
 c     
 c     Use options=replace,zerophas with suitable jyperk list to 
