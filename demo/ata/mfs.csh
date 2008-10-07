@@ -6,6 +6,7 @@ echo "Performance tests for ATA imaging"
 # 18apr03 added uvrange. 
 # 22mar05 added harange. 
 # 09may05 add more parameters to title.
+# 07oct08 better values for baseunit=-3.335668 lat=40:49:02.50 in uvgen
 
 
 # Nyquist sample time = 12 x 3600 s x (dish_diam/2)/(pi*baseline)
@@ -40,7 +41,7 @@ set freq       = 1.42
 set imsize     = 256 
 set systemp    = 40 
 set jyperk     = 150 
-set bandwidth  = 6.25 
+set bandwidth  = 100 
 set weighting  = 'robust=0.5' 
 set weighting  = 'sup=0' 
 
@@ -66,7 +67,7 @@ continue:
 
 echo generate uv-data
 rm -r $config.$dec.uv
-uvgen ant=$config.ant baseunit=-3.33564 radec=23:23:25.803,$dec harange=$harange source=$MIRCAT/point.source telescop=hatcreek systemp=$systemp jyperk=$jyperk freq=$freq corr=$nchan,1,1,$bandwidth out=$config.$dec.uv
+uvgen ant=$config.ant baseunit=-3.335668 lat=40:49:02.50 radec=23:23:25.803,$dec harange=$harange source=$MIRCAT/point.source telescop=hatcreek systemp=$systemp jyperk=$jyperk freq=$freq corr=$nchan,1,1,$bandwidth out=$config.$dec.uv
 # pnoise=30
 echo UVGEN: `date` >> timing
 
