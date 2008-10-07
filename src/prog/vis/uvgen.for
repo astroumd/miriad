@@ -360,7 +360,7 @@ c	pbfwhm=76,137,-0.2 simulates a primary beam pattern between
 c	10m and 6m antennas at 100 GHz. 
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version = 'Uvgen: version 1.0 02-Oct-2008')
+	parameter(version = 'Uvgen: version 1.0 7-Oct-2008')
 	integer ALTAZ,EQUATOR
 	parameter(ALTAZ=0,EQUATOR=1)
 	integer PolRR,PolLL,PolRL,PolLR,PolXX,PolYY,PolXY,PolYX
@@ -398,7 +398,7 @@ c
 c
 c  Parameters from the user.
 c
-	character sfile*64,antfile*64,outfile*64
+	character sfile*256,antfile*256,outfile*256
 	real hbeg, hend, hint, arms, prms, utns
 	real tsys,tsky,tau,trms,tatm,cycleon,cycleoff
 	double precision alat,along,sdec,sra,elev
