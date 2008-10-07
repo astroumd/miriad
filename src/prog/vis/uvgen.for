@@ -56,8 +56,8 @@ c	used in the antenna file, and nanoseconds. The default value is +1,
 c	which means that the antenna file gives the antenna position in an
 c	equatorial system measured in nanoseconds.
 c	E.g. 	baseunit=-1 for topocentric coordinates in nanosecs, 
-c			baseunit=-3.33564 for topocentric coordinates in meters, 
-c			baseunit=3.33564 for geocentric coordinates in meters.
+c			baseunit=-3.335668 for topocentric coordinates in meters, 
+c			baseunit=3.335668 for geocentric coordinates in meters.
 c@ telescop
 c	This parameter determine the feed angle variation (i.e. the parallactic
 c	angle plus the feed offset angle - evector). It is also
@@ -148,7 +148,9 @@ c          B = line of sight field, and Z = Zeeman splitting term.
 c	This generates a circular polarization for a spectral line.
 c       Default = 0.
 c@ lat
-c	Latitude of observatory, in degrees. Default is 40 degrees.
+c	Latitude of observatory. This can be given in
+c   hh:mm:ss,dd:mm:ss format, e.g lat=40:49:02.50, or as decimal
+c   degrees. The default is 40 degrees. 
 c@ cycle
 c	This gives two values, being the time on-source, and the time
 c	off-source cycle times, both in hours. This allows simulation of
@@ -329,6 +331,7 @@ c     3jun03  pjt/rjs Fixed bug in determining whether source is up or not. (non
 c    14aug06  mchw  format change in history. Initialize unused user inputs.
 c    30jan08  mchw  Fixed case of only one offset pointing center.
 c    02may08  mchw  baseline in 100m units for atmospheric phase index.
+c    07oct08  mchw  better values for baseunit=-3.335668 lat=40:49:02.50 in uvgen
 c
 c  Bugs/Shortcomings:
 c    * Frequency and time smearing is not simulated.
@@ -357,7 +360,7 @@ c	pbfwhm=76,137,-0.2 simulates a primary beam pattern between
 c	10m and 6m antennas at 100 GHz. 
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version = 'Uvgen: version 1.0 02-May-2008')
+	parameter(version = 'Uvgen: version 1.0 02-Oct-2008')
 	integer ALTAZ,EQUATOR
 	parameter(ALTAZ=0,EQUATOR=1)
 	integer PolRR,PolLL,PolRL,PolLR,PolXX,PolYY,PolXY,PolYX
