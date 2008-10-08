@@ -144,6 +144,9 @@ void test_uvio(char *fname, int nc, int nw, int nr)
     uvopen_c(&t1, fname, "new");
   }
 
+  uvset_c(t1, "data",     "channel", 0, 1.0, 1.0, 1.0);
+  uvset_c(t1, "preamble", "uvw/time/baseline", 0, 0.0, 0.0, 0.0);
+
   for (i=0; i<nr; i++) {
 
     uvputvr_c(t1,H_BYTE,"abyte",(char *)data, 1);
