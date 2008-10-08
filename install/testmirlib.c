@@ -153,8 +153,8 @@ void test_uvio(char *fname, int nc, int nw, int nr)
     uvputvr_c(t1,H_DBLE,"adble",(char *)data, 1);
     uvputvr_c(t1,H_CMPLX,"acmplx",(char *)data, 1);
     
-    uvwrite_c(t1,preamble,data,flags,nc);
     uvwwrite_c(t1,data,flags,nw);
+    uvwrite_c(t1,preamble,data,flags,nc);
   }
   uvclose_c(t1);
 }
