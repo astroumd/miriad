@@ -9,7 +9,31 @@
  *  [prevents the  pgplot problem]
  *
  *  Note: for LFS you also need to add extra compile flags:
- *        -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE
+ *     set lfs=(-D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE)
+ *     gcc -g $lfs -I$MIRINC -I$MIRSUBS -o testmirlib testmirlib.c $MIRLIB/libmir.a -lm
+
+          +0 +1 +2 +3 +4 +5 +6 +7 +8 +9 +A +B +C +D +E +F    0123456789ABCDEF
+
+ +00000000 61 5F 69 74 65 6D 00 00 00 00 00 00 00 00 00 00    a_item..........
+  00000010 61 5F 63 68 61 72 00 00 00 00 00 00 00 00 00 09    a_char..........
+  00000020 00 00 00 01 48 65 6C 6C 6F 00 00 00 00 00 00 00    ....Hello.......
+  00000030 61 5F 69 6E 74 38 00 00 00 00 00 00 00 00 00 08    a_int8..........
+  00000040 00 00 00 02 00 00 00 1C 00 00 00 00 00 00 00 00    ................
+  00000050 61 5F 69 6E 74 00 00 00 00 00 00 00 00 00 00 08    a_int...........
+  00000060 00 00 00 02 00 00 00 1C 00 00 00 00 00 00 00 00    ................
+  00000070 61 5F 72 65 61 6C 5F 64 00 00 00 00 00 00 00 08    a_real_d........
+  00000080 00 00 00 04 40 49 0F DB 00 00 00 00 00 00 00 00    ....@I..........
+  00000090 61 5F 72 65 61 6C 5F 66 00 00 00 00 00 00 00 08    a_real_f........
+  000000A0 00 00 00 04 40 49 0F DB 00 00 00 00 00 00 00 00    ....@I..........
+  000000B0 61 5F 64 6F 75 62 6C 65 00 00 00 00 00 00 00 10    a_double........
+  000000C0 00 00 00 05 58 01 C0 00 40 09 21 FB 54 44 2D 18    ....X...@.!.TD-.
+
+ *
+ * History:
+ *
+ *      
+ *      aug-2006:     some changes for MIR5
+ *      oct-2008      append option
  */
 
 
@@ -22,15 +46,22 @@
 #include "maxdimc.h"
 #include "miriad.h"
 
+
 #define check(iostat) if(iostat)bugno_c('f',iostat)
 
 
 void test_hio(char *name1)
 {
   int t1, i1,iostat;
-  double pi = 3.141592;
-  float g = 9.8;
-  int d = 28;
+  double pi_d = 3.14159265358979323846;
+  float  pi_f = 3.14159265358979323846;
+  int  d  = 258;          /* 0x01 0x02 */
+  int8 d8_0 = 258;
+  int8 d8_1 = 2147483647LL; /*      0x0F 0xFF 0xFF 0xFF */
+  int8 d8_2 = 2147483648LL; /*      0x0F 0xFF 0xFF 0xFF */
+  int8 d8_3 = 4294967295LL; /* 0x01 0x00 0x00 0x00 0x02 */
+  int8 d8_4 = 4294967296LL; /* 0x01 0x00 0x00 0x00 0x02 */
+  int8 d8_5 = 4294967298LL; /* 0x01 0x00 0x00 0x00 0x02 */
 
   fprintf(stderr,"test_hio: %s\n",name1);
 
@@ -43,15 +74,24 @@ void test_hio(char *name1)
 
   hopen_c(&t1, name1, "new", &iostat);                check(iostat);
 
-  wrhdd_c(t1,"pi",pi);
-  wrhdr_c(t1,"g",g);
-  wrhdi_c(t1,"d",d);
+  wrhdd_c(t1,"a_double",pi_d);
+  wrhdr_c(t1,"a_real_f",pi_f);
+  wrhdr_c(t1,"a_real_d",pi_d);
+  wrhdi_c(t1,"a_int",d);
+  wrhdl_c(t1,"a_int8_0",d8_0);
+  wrhdl_c(t1,"a_int8_1",d8_1);
+  wrhdl_c(t1,"a_int8_2",d8_2);
+  wrhdl_c(t1,"a_int8_3",d8_3);
+  wrhdl_c(t1,"a_int8_4",d8_4);
+  wrhdl_c(t1,"a_int8_5",d8_5);
+  wrhda_c(t1,"a_char","Hello");
+  wrhda_c(t1,"a_char_1","Hello World");
 
-  haccess_c(t1,&i1,"a","write",&iostat);              check(iostat);
+  haccess_c(t1,&i1,"a_item","write",&iostat);         check(iostat);
   hdaccess_c(i1,&iostat);                             check(iostat);
 
 #if 0
-  hdelete_c(t1,"a",&iostat);                          check(iostat);
+  hdelete_c(t1,"a_char",&iostat);                          check(iostat);
 #endif
   hclose_c(t1);
 
@@ -95,9 +135,17 @@ void test_uvio(char *fname, int nc, int nw, int nr)
 
   /* delete old one , if exists */
   hopen_c(&t1, fname, "old", &iostat);
-  if (iostat==0) hrm_c(t1);
 
-  uvopen_c(&t1, fname, "new");
+  if (iostat==0)  {
+    fprintf(stderr,"  appending to %s\n",fname);
+    uvopen_c(&t1, fname, "append");
+  } else {
+    fprintf(stderr,"  new dataset %s\n",fname);
+    uvopen_c(&t1, fname, "new");
+  }
+
+  uvset_c(t1, "data",     "channel", 0, 1.0, 1.0, 1.0);
+  uvset_c(t1, "preamble", "uvw/time/baseline", 0, 0.0, 0.0, 0.0);
 
   for (i=0; i<nr; i++) {
 
@@ -108,8 +156,8 @@ void test_uvio(char *fname, int nc, int nw, int nr)
     uvputvr_c(t1,H_DBLE,"adble",(char *)data, 1);
     uvputvr_c(t1,H_CMPLX,"acmplx",(char *)data, 1);
     
-    uvwrite_c(t1,preamble,data,flags,nc);
     uvwwrite_c(t1,data,flags,nw);
+    uvwrite_c(t1,preamble,data,flags,nc);
   }
   uvclose_c(t1);
 }
