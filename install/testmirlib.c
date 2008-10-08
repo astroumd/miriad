@@ -33,6 +33,7 @@
  *
  *      
  *      aug-2006:     some changes for MIR5
+ *      oct-2008      append option
  */
 
 
@@ -134,9 +135,14 @@ void test_uvio(char *fname, int nc, int nw, int nr)
 
   /* delete old one , if exists */
   hopen_c(&t1, fname, "old", &iostat);
-  if (iostat==0) hrm_c(t1);
 
-  uvopen_c(&t1, fname, "new");
+  if (iostat==0)  {
+    fprintf(stderr,"  appending to %s\n",fname);
+    uvopen_c(&t1, fname, "append");
+  } else {
+    fprintf(stderr,"  new dataset %s\n",fname);
+    uvopen_c(&t1, fname, "new");
+  }
 
   for (i=0; i<nr; i++) {
 
