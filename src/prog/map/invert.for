@@ -43,7 +43,8 @@ c	When mosaicing, this gives the sky coordinate (RA and DEC) of the
 c	reference pixel in the imaging process. The value can be given in the
 c	form hh:mm:ss,dd:mm:ss, or as decimal hours and degrees. INVERT
 c	applies appropriate shifts to make this location fall on a pixel.
-c	The default is a central observing center.
+c	The default is a central observing center (which may or may not be
+c       at the center of your object of interest).
 c@ fwhm
 c	This determines a gaussian taper to apply to the visibility data.
 c	It specifies the FWHM of an image-domain gaussian -- tapering the
@@ -307,7 +308,7 @@ c------------------------------------------------------------------------
 	include 'mem.h'
 c
 	character version*(*)
-	parameter(version='Invert: version 1.0 26-jun-08')
+	parameter(version='Invert: version 1.0 14-oct-08')
 	integer MAXPOL,MAXRUNS
 	parameter(MAXPOL=4,MAXRUNS=4*MAXDIM)
 c
