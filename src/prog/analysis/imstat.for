@@ -300,6 +300,8 @@ c    23mar99  bpw  Merged bpw updates and rjs updates
 c    23mar99  rjs  Fix bug in determining region of interest
 c    07apr99  rjs  Merge bpw and rjs versions.
 c    27oct99  rjs  Correct labelling of unrecognised axes.
+c    15oct08  pkgw Fully initialize subcube to prevent intermittent cocvt
+c                  errors (seen with gfortran 4.1.2)
 c------------------------------------------------------------------------
 
 c Main program of imstat and imspec. Puts out the identification, where
@@ -723,6 +725,9 @@ c Sort the axes found, to insure most efficient reading of image.
 c Set subcube variable for xyzsetup to the selected axes list.
       do n = 1, dim
          subcube(n:n) = axnames( axnum(axind(n)):axnum(axind(n)) )
+      enddo
+      do n = dim + 1, MAXNAX
+         subcube(n:n) = ' '
       enddo
 
 c Now read the naxis, ctype, crval, crpix and cdelt for all axes. But
