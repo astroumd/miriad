@@ -1,0 +1,365 @@
+<html>
+<head>
+<title>CARMA baseline solutions</title>
+<!-- Changed by: Carma Observer, 27-Aug-2008 -->
+</head>
+
+<center>
+<h1><U>CARMA Baseline Solutions</U></h1>
+</center>
+
+<hr>
+<h2>Applying Baseline</h2>
+
+<UL>
+
+<li>Baseline correction:
+  <ul>
+    <li> Find the date your data were taken, and download a baseline solution from the list below.
+    <li> Apply the solution "antpos.xxx" to the data "xxx.mir", and obtain the corrected data "yyy.mir".
+      <pre>
+         uvedit vis=xxx.mir apfile=antpos.xxx out=yyy.mir
+      </pre>
+    <li> It's safe to apply baseline correction if you don't know what solution has been applied to your data.
+  </ul>
+
+</br>
+<li>Axis offset correction:
+
+  <ul>
+    <li> Early tracks (before Jan 5, 2007) need axis offset correction (don't forget @).
+      <pre>
+         axcor vis=yyy.miriad axoff=@axoff.xxx out=zzz.miriad
+      </pre>
+    </li>
+  </ul>
+ 
+</UL>
+
+<hr>
+<h2>Baseline Solutions</h2>
+
+<table border="1" cellspacing="2" cellpadding="5">
+  <tr>
+    <th>configuration</th>
+    <th>solution</th>
+    <th>period (PST)</th>
+    <th>status</th>
+    <th>note</th>
+  </tr>
+  <tr>
+    <td>C</td>
+    <td><a href="./antpos/antpos.081012"> antpos.081012</a></td>
+    <td> Oct. 11 2008 -- .. </td>
+    <td> First C-array solution (based on 2 baseline tracks)</td>
+    <td> C1, C4 out; C8 used as reference antenna. New solutions will be derived in ~2 weeks.</a></td>
+  </tr>
+
+<tr>
+    <td>E</td>
+    <td><a href="./antpos/antpos.081008"> antpos.081008</a></td>
+    <td> Oct. 08 2008 -- end of E-array </td>
+    <td> Second E-array solution </td>
+    <td> All antennas present; C10 used as reference antenna. These solutions confirm the previous E-array solutions; no major changes. The x,y,z position changes, compared to previous solutions (antpos.080912), can be seen <a href="antpos/compare_081008_080912.png">here</a></td>
+  </tr>
+
+ <tr>
+    <td>E</td>
+    <td><a href="./antpos/antpos.080912"> antpos.080912</a></td>
+    <td> Sep. 12 2008 -- Oct. 08 2008 </td>
+    <td> Use for E-array tracks; > Sep/12/2008 </td>
+    <td> </td>
+  </tr>
+
+
+ <tr>
+    <td>D</td>
+    <td><a href="./antpos/antpos.080827"> antpos.080827</a></td>
+    <td> Aug. 27 2008 -- Sep. 12 2008 </td>
+    <td> No major (>0.4mm) changes compared to Jul. 23 solutions. Use for tracks run after Aug/26/2008 </td>
+    <td> C3 was out of the array, C13 did not lock, refant=C11. Maximum position change (compared to antpos.080723) is 0.3 mm (C12), median position change of all antennas is ~0.03 mm with a 1 sigma spread of 0.1 mm. </td>
+  </tr>
+
+ <tr>
+    <td>D</td>
+    <td><a href="./antpos/antpos.080723"> antpos.080723</a></td>
+    <td> Jul. 23 2008 -- Aug. 26 2008 </td>
+    <td> No major changes compared to Jun. 06 solutions. Use for tracks run after July/22/2008 </td>
+    <td>  </td>
+  </tr>
+
+ <tr>
+    <td>D</td>
+    <td><a href="./antpos/antpos.080606"> antpos.080606</a></td>
+    <td>Jun. 06, 2008 -- Jul. 22 2008 </td>
+    <td> Final for the move to D-array; use for tracks run after June/05/2008 </td>
+    <td>  </td>
+  </tr>
+
+
+ <tr>
+    <td>C</td>
+    <td><a href="./antpos/antpos.080518"> antpos.080518</a></td>
+    <td>May. 18 -- Jun. 05, 2008</td>
+    <td> Final </td>
+    <td>  </td>
+  </tr>
+
+
+
+  <tr>
+    <td>C</td>
+    <td><a href="./antpos/antpos.080414">antpos.080414</a></td>
+    <td>Apr. 14 -- May. 17, 2008</td>
+    <td> Final </td>
+    <td>  </td>
+  </tr>
+
+
+
+  <tr>
+    <td>D</td>
+    <td><a href="./antpos/antpos.080313">antpos.080313</a></td>
+    <td>Mar. 9 -- Apr. 13, 2008</td>
+    <td></td>
+    <td>C1 moved a bit.</td>
+  </tr>
+
+  <tr>
+    <td>D</td>
+    <td><a href="./antpos/antpos.080228">antpos.080228</a></td>
+    <td>Feb. 22, 2008- Mar. 8, 2008</td>
+    <td>Final</td>
+    <td>Good solution after move</td>
+  </tr>
+
+  <tr>
+    <td>B</td>
+    <td><a href="./antpos/antpos.080218">antpos.080218</a></td>
+    <td>Feb. 1, 2008-Feb. 17, 2008</td>
+    <td>Final</td>
+    <td></td>
+  </tr>
+
+  <tr>
+    <td>B</td>
+    <td><a href="./antpos/antpos.080115">antpos.080115</a></td>
+    <td>Jan. 5, 2008-Feb. 1, 2008</td>
+    <td>Final</td>
+    <td>Pads moved after snow (Jan.4-5).</td>
+  </tr>
+
+  <tr>
+    <td>B</td>
+    <td><a href="./antpos/antpos.071121">antpos.071121</a></td>
+    <td>Nov. 15, 2007- Jan. 5, 2008</td>
+    <td>Final</td>
+    <td></td>
+  </tr>
+
+  <tr>
+    <td>C</td>
+    <td><a href="./antpos/antpos.071109">antpos.071109</a></td>
+    <td>Oct. 26, 2007-Nov. 12, 2007</td>
+    <td>Final</td>
+    <td>Good solution with error ~0.2mm.</td>
+  </tr>
+
+  <tr>
+    <td>C</td>
+    <td><a href="./antpos/antpos.071014">antpos.071014</a></td>
+    <td>Oct. 07, 2007-Oct. 25, 2007</td>
+    <td>Final</td>
+    <td>Small changes from previous solution. C1&6 have largest errors.</td>
+  </tr>
+
+  <tr>
+    <td>C</td>
+    <td><a href="./antpos/antpos.070916">antpos.070916</a></td>
+    <td>Sep. 08, 2007-Oct. 07, 2007</td>
+    <td>Final</td>
+    <td>Solution after move</td>
+  </tr>
+
+  <tr>
+    <td>E</td>
+    <td><a href="./antpos/antpos.070908">antpos.070908</a></td>
+    <td>Aug. 25, 2007-Sep. 11, 2007</td>
+    <td>Final</td>
+    <td>C5,10,12,13,14,15 moved by 0.2-0.3mm from previous sol.</td>
+  </tr>
+
+  <tr>
+    <td>E</td>
+    <td><a href="./antpos/antpos.070808">antpos.070808</a></td>
+    <td>Aug. 9, 2007-Aug. 24, 2007</td>
+    <td>Final</td>
+    <td>Good solution after move</td>
+  </tr>
+
+  <tr>
+    <td>D</td>
+    <td><a href="./antpos/antpos.070625">antpos.070625</a></td>
+    <td>Jun. 25, 2007-Aug. 9, 2007</td>
+    <td>Final</td>
+    <td></td>
+  </tr>
+
+  <tr>
+    <td>D</td>
+    <td><a href="./antpos/antpos.070613">antpos.070613</a></td>
+    <td>Jun. 13 (noon), 2007-Jun. 25, 2007</td>
+    <td>Final</td>
+    <td>C8 moved slightly (~0.3mm)</td>
+  </tr>
+
+  <tr>
+    <td>D</td>
+    <td><a href="./antpos/antpos.070509">antpos.070509</a></td>
+    <td>Apr. 30 (noon), 2007-Jun. 13 (noon), 2007</td>
+    <td>Final</td>
+    <td></td>
+  </tr>
+
+  <tr>
+    <td>D</td>
+    <td><a href="./antpos/antpos.070411">antpos.070411</a></td>
+    <td>Apr. 9 (noon), 2007-Apr. 30 (noon), 2007</td>
+    <td>Final</td>
+    <td>C4,11 moved</td>
+  </tr>
+
+  <tr>
+    <td>C->D</td>
+    <td><a href="./antpos/antpos.070406">antpos.070406</a></td>
+    <td>Apr. 6-9 (noon), 2007</td>
+    <td>Final</td>
+    <td>C1,2,5,15 moved</td>
+  </tr>
+
+  <tr>  
+    <td>C->D</td>
+    <td><a href="./antpos/antpos.070405">antpos.070405</a></td>
+    <td>Apr. 5-6 (noon), 2007</td>
+    <td>Final</td>
+    <td>C7,8,13,14 moved</td>
+  </tr>
+
+  <tr>
+    <td>C</td>
+    <td><a href="./antpos/antpos.070322">antpos.070322</a></td>
+    <td>Mar. 5- Apr. 5, 2007</td>
+    <td>Final</td>
+    <td>Good solution</td>
+  </tr>
+
+  <tr>
+    <td>C</td>
+    <td><a href="./antpos/antpos.070220">antpos.070220</a></td>
+    <td>Feb. 15, 2007 - Mar. 5, 2007</td>
+    <td>Final</td>
+    <td>antpos.070115 is still ok, but C11 shifted slightly</td>
+  </tr>
+
+  <tr>
+    <td>C</td>
+    <td><a href="./antpos/antpos.070115">antpos.070115</a></td>
+    <td>Jan. 9, 2007 - Feb. 15, 2007</td>
+    <td>Final</td>
+    <td>C2, 4, 5 moved</td>
+  </tr>
+
+  <tr>
+    <td>ENG->C</td>
+    <td><a href="./antpos/antpos.070108">antpos.070108</a></td>
+    <td>Jan. 8-9, 2007</td>
+    <td>Final</td>
+    <td>C14 moved</td>
+  </tr>
+
+  <tr>
+    <td>ENG->C</td>
+    <td><a href="./antpos/antpos.070105">antpos.070105</a></td>
+    <td>Jan. 5-8, 2007</td>
+    <td>Final</td>
+    <td>C15 moved</td>
+  </tr>
+
+  <tr>
+    <td>ENG->C</td>
+    <td>
+       <a href="./antpos/antpos.070104">antpos.070104</a></br>
+       <a href="./antpos/axoff.comb.060914.minus">axoff.comb.060914.minus</a></br>
+       <a href="./antpos/axoff.comb.070101">axoff.comb.070101</a>
+    </td>
+    <td>Jan. 4-5, 2007</td>
+    <td>Final</td>
+    <td>
+       C8, 11 moved</br>
+       Apply both axoff.comb.060914.minus and axoff.comb.070101
+    </td>
+  </tr>
+
+  <tr>
+    <td>ENG->C</td>
+    <td><a href="./antpos/antpos.070103">antpos.070103</a></br>
+       <a href="./antpos/axoff.comb.060914.minus">axoff.comb.060914.minus</a></br>
+       <a href="./antpos/axoff.comb.070101">axoff.comb.070101</a>
+    </td>
+    <td>Jan. 3-4, 2007</td>
+    <td>Final</td>
+    <td>
+       C7 moved</br>
+       Apply both axoff.comb.060914.minus and axoff.comb.070101
+    </td>
+  </tr>
+
+  <tr>
+    <td>ENG</td>
+    <td>
+       <a href="./antpos/antpos.061220">antpos.061220</a></br>
+       <a href="./antpos/axoff.comb.060914.minus">axoff.comb.060914.minus</a></br>
+       <a href="./antpos/axoff.comb.070101">axoff.comb.070101</a>
+    </td>
+    <td>Dec. 20, 2006 - Jan. 3, 2007</td>
+    <td>Final</td>
+    <td>
+       C1 moved</br>
+       Remove C5 for Dec. 12-25</br>
+       Apply both axoff.comb.060914.minus and axoff.comb.070101
+    </td>
+  </tr>
+
+  <tr>
+    <td>ENG</td>
+    <td>
+       <a href="./antpos/antpos.061012">antpos.061012</a><br>
+       <a href="./antpos/axoff.comb.060914.minus">axoff.comb.060914.minus</a></br>
+       <a href="./antpos/axoff.comb.070101">axoff.comb.070101</a>
+    </td>
+    <td> Nov. 11, 2006 - Dec. 20, 2006</td>
+    <td>Final</td>
+    <td>
+       Remove C5 for Dec. 12-25</br>
+       Apply both axoff.comb.060914.minus and axoff.comb.070101
+    </td>
+  </tr>
+
+  <tr>
+    <td>ENG</td>
+    <td>
+       <a href="./antpos/antpos.061012">antpos.061012</a><br>
+       <a href="./antpos/axoff.comb.070101">axoff.comb.070101</a>
+    </td>
+    <td> - Nov. 10, 2006</td>
+    <td>Final</td>
+    <td></td>
+  </tr>
+
+</table>
+
+
+<hr>
+Jin Koda "koda @ astro.caltech.edu"
+
+</html>
