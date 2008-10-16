@@ -14,6 +14,8 @@ c       The statistics for a selected uv-variable can
 c	be printed. uv-data can be flagged if the uv-variable,
 c	the amplitude of a reference channel, the geometric delay, 
 c	or the fringe frequency is outside a specified  range.
+c	uvcheck does not handle systemp correctly unless you select 
+c	uvdata by antenna and line.
 c@ vis
 c	The input visibility file. No default.
 c@ select
@@ -31,7 +33,8 @@ c	Allowed values are:
 c	    channel,start,width
 c           wide,start,width
 c	Default: no reference line.
-c@ refamp
+c@ 
+c	refamp
 c       Minimum and maximum values for the reference line amplitude.
 c	Flag the uv-data when the reference amplitude
 c	is OUTSIDE the selected range.
@@ -101,10 +104,11 @@ c    mchw 05sep01  Added fringe frequency as a special variable.
 c    mchw 17dec02  Make Check for known problems a debug option so output format is constant.
 c    mchw 07mar03  Added 1 to bin in histo plot.
 c    mchw 21mar03  Add cummulative sum in histo plot.
+c    mchw 16oct08  change doc only on var=systemp.
 c----------------------------------------------------------------------c
 	include 'maxdim.h'
 	character*(*) version
-	parameter(version='UVCHECK: version 3.0 21-Mar-2003')
+	parameter(version='UVCHECK: version 16-Oct-2008')
 	integer maxsels, ochan, nbugs, nflag, nwflag
 	parameter(MAXSELS=512)
 	real sels(MAXSELS)
