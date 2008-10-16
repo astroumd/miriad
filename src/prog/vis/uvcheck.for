@@ -287,7 +287,7 @@ c
           if (doflag) then
 	     call uvxflag(lIn, data, flags, nread, dowide,
      *              refline, refstart, refwidth, reflo, refhi, newflag,
-     *              varflag, nflag, nwflag)
+     *              varflag, nflag, nwflag, debug)
 	  endif
 c
 c  check if cable delay difference is outside the range specified.
@@ -561,11 +561,11 @@ c
 c********1*********2*********3*********4*********5*********6*********7*c
         subroutine uvxflag(lIn, data, flags, nread, dowide,
      *              refline, refstart, refwidth, reflo, refhi, newflag,
-     *              varflag, nflag, nwflag)
+     *              varflag, nflag, nwflag, debug)
 	implicit none
         integer lIn, nread, nflag, nwflag
         complex data(nread)
-        logical flags(nread), varflag, newflag, dowide
+        logical flags(nread), varflag, newflag, dowide, debug
         character refline*(*)
         real refstart, refwidth, reflo, refhi
 c
@@ -593,7 +593,9 @@ c--
 c
         if (varflag .or. ampflag) then
 c+debug
-c      write(*,*) '### Flagging record',varflag,ampflag,newflag,dowide
+        if(debug) then
+      write(*,*) '### Flagging record',varflag,ampflag,newflag,dowide
+        endif
            do i=1,nread
               flags(i) = newflag
            enddo
