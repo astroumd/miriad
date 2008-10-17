@@ -36,6 +36,7 @@ c	   jet        Jet model with power law brightness.
 c	   shell      2D projection of an optically-thin spherical shell
 c	   comet      2D projection of a parent molecule in comet.
 c	   cluster    standard isothermal 2D projection for cluster gas.
+c       The default is a gaussian.
 c@ spar
 c	Parameters which give the characteristics of the object. The
 c	parameters are given as a sequence of values, with one to six
@@ -157,7 +158,7 @@ c ToDo:
 c    write good headers if 3D cubes written
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version='Imgen: version 11-jul-07')
+	parameter(version='Imgen: version 6-aug-08')
 	include 'mirconst.h'
 	include 'maxdim.h'
 	include 'maxnax.h'
@@ -206,7 +207,7 @@ c
 	  objs(1) = 'gaussian'
 	  nobjs = 1
 	endif
-	if(keyprsnt('object'))call bug('f','Too many object for me!')
+	if(keyprsnt('object'))call bug('f','Too many objects for me!')
 c
 c  Get the source parameters.
 c
@@ -723,11 +724,11 @@ c
 	  i = nint(x)
 	  j = nint(y)
 	  if(j.eq.j0.and.i.ge.1.and.i.le.n1)
-     *		Data(i) = Data(i) + Amp
+     *		data(i) = data(i) + Amp
 c
 c  Should never get here.
 c
 	else
-	  call bug('f','Unknown object type')
+	  call bug('f','Unknown object type (object=)')
 	endif
 	end
