@@ -33,7 +33,7 @@
  *
  *      
  *      aug-2006:     some changes for MIR5
- *      oct-2008      append option
+ *      oct-2008      append option, added more to 's' to show things
  */
 
 
@@ -130,10 +130,11 @@ void test_uvio(char *fname, int nc, int nw, int nr)
   double preamble[5];
   float data[2*MAXCHAN];
   int  flags[MAXCHAN];
+  int nschan  = 1;
 
   fprintf(stderr,"test_uvio: %s nc,nw,nr=%d %d %d\n",fname,nc,nw,nr);
 
-  /* delete old one , if exists */
+  /* check if old one , if exists, add data in append mode */
   hopen_c(&t1, fname, "old", &iostat);
 
   if (iostat==0)  {
@@ -148,15 +149,15 @@ void test_uvio(char *fname, int nc, int nw, int nr)
   uvset_c(t1, "preamble", "uvw/time/baseline", 0, 0.0, 0.0, 0.0);
 
   for (i=0; i<nr; i++) {
-
+    /* garbage uv variables */
     uvputvr_c(t1,H_BYTE,"abyte",(char *)data, 1);
     uvputvr_c(t1,H_INT2,"aint2",(char *)data, 1);
     uvputvr_c(t1,H_INT, "aint4",(char *)data, 1);
     uvputvr_c(t1,H_REAL,"areal",(char *)data, 1);
     uvputvr_c(t1,H_DBLE,"adble",(char *)data, 1);
     uvputvr_c(t1,H_CMPLX,"acmplx",(char *)data, 1);
-    
-    uvwwrite_c(t1,data,flags,nw);
+    /* some data */
+    if (nw)  uvwwrite_c(t1,data,flags,nw);
     uvwrite_c(t1,preamble,data,flags,nc);
   }
   uvclose_c(t1);
@@ -172,6 +173,15 @@ void test_sizes(void)
   printf("sizeof(size_t)    = %d\n",sizeof(size_t));
   printf("sizeof(off_t)     = %d\n",sizeof(off_t));
   printf("sizeof(void *)    = %d\n",sizeof(void *));
+
+  printf("MIRTEL            = %s\n",MIRTEL);
+  printf("MAXIANT           = %d\n",MAXIANT);
+  printf("MAXANT            = %d\n",MAXANT);
+  printf("MAXBASE           = %d\n",MAXBASE);
+  printf("MAXDIM            = %d\n",MAXDIM);
+  printf("MAXCHAN           = %d\n",MAXCHAN);
+  printf("MAXWIN            = %d\n",MAXWIN);
+  
 }
 
 int main(int argc, char *argv[])
@@ -185,6 +195,7 @@ int main(int argc, char *argv[])
     fprintf(stderr," x [nx ny nz]                   xyio write test on test1.xy\n");
     fprintf(stderr," u [nc nw nr]                   uvio write test on test1.uv\n");
     fprintf(stderr," m                              malloc loop until full memory [sic]\n");
+    fprintf(stderr," s                              show sizeof() and MAX... of things\n");
     return 1;
   }
 
@@ -230,5 +241,3 @@ int main(int argc, char *argv[])
   }
   return 0;
 }
-
-
