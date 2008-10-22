@@ -3,7 +3,7 @@
 # This contains a postscript program to generate the front page
 # of the Miriad manual.
 
-set date = (`date +"%d %h %Y"`)
+set date = (`date +"%d %h %Y"` -- CARMA version)
 echo Title page date is $date
 cat << END-OF-FILE > titlepage.inc
 %!PS
@@ -47,7 +47,7 @@ RM LM sub (Image Analysis and Display) stringwidth pop sub
 /Times-Roman findfont 50 scalefont setfont
 RM LM sub (Programmers Guide) stringwidth pop sub
 2 div 360 moveto
-(Users Guide)show
+(Programmers Guide)show
 /Times-Roman findfont 20 scalefont setfont
 RM LM sub (Bob Sault and Neil Killeen) stringwidth pop sub
 2 div 130 moveto
@@ -55,7 +55,7 @@ RM LM sub (Bob Sault and Neil Killeen) stringwidth pop sub
 RM LM sub ($date) stringwidth pop sub
 2 div 100 moveto
 ($date) show
-RM LM sub (See http://www.atnf.csiro.au/computing/software/miriad)
+RM LM sub (See http://carma.astro.umd.edu/miriad/)
 stringwidth pop sub 2 div 20 sub 50 moveto
-(See http://www.atnf.csiro.au/computing/software/miriad) show
+(See http://carma.astro.umd.edu/miriad/) show
 END-OF-FILE
