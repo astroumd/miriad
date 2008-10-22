@@ -24,11 +24,13 @@ latex userguide
 # Generate the postscript file.
 
 dvips -o userguide.ps userguide
+ps2pdf userguide.ps 
 cp userguide.ps junk.ps
 gzip junk.ps
 mv junk.ps.gz userguide.ps.gz
 
 dvips -tletter -y940 -o userguide_US.ps userguide
+ps2pdf userguide_US.ps 
 cp userguide_US.ps junk.ps
 gzip junk.ps
 mv junk.ps.gz userguide_US.ps.gz
