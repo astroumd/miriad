@@ -3,7 +3,7 @@
 # This contains a postscript program to generate the front page
 # of the Miriad manual.
 
-set date = (`date +"%d %h %Y"`)
+set date = (`date +"%d %h %Y"` -- CARMA version --)
 echo Title page date is $date
 cat << END-OF-FILE > titlepage.inc
 %!PS
