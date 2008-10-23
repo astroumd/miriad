@@ -3,6 +3,7 @@ c************************************************************************
 	implicit none
 c
 c= GpBuddy -- Inherit gains from a nearby (buddy) antenna
+c             (i.e. for use with the CARMA paired antenna system)
 c& pjt
 c: calibration
 c+
@@ -13,6 +14,14 @@ c@ vis
 c	The input visibility file, containing the gain file to modify.
 c       The gain table in this file will be re-written.
 c	No default.
+c@ vis2
+c       TBD - not used at the moment.
+c       The 2nd input visibility file, containing a gain file from 
+c       which gains will be applied to antennas in the primary 
+c       dataset (the gain table of the input visibility file).
+c       Default is to leave this blank, which will simply copy 
+c       gains internally from the primary visibility dataset.
+c
 c@ ants
 c       TBD - not used at the moment. Perhaps we could allow
 c       multiple runs of gpbuddy. By selecting a subset of antennae
@@ -22,12 +31,18 @@ c@ show
 c       Show the East-North layout (in meters) in tabular format.
 c       LISTOBS will also print these out by default.
 c       Default: false
+c@ list1
+c       The list of primary antennas
+c@ list2
+c       The 2nd list of paired antennas to apply gains to primary
 c
 c	Example:
-c	  gpbuddy vis=cyga [ants=]
+c	  gpbuddy vis=cyga [ants=] list1=1,2,3 list2=4,5,6
+c         applies gains from ant4 to ant1, ant5 to ant2, etc.
 c--
 c  History:
 c    pjt     25mar08 Created
+c    baz     23oct08 Added two list functionality, backwards compatible
 c
 c  Bugs and Shortcomings:
 c
@@ -47,6 +62,9 @@ c
 	complex gains(2*MAXANT*MAXSOLN),data(MAXCHAN)
 	logical mask(2*MAXANT),flags(MAXCHAN),show
 	real xy(2,MAXANT)
+        integer list1(MAXANT)
+        integer list2(MAXANT)
+        integer n1,n2
 c
 c  Externals.
 c
@@ -59,10 +77,15 @@ c
      
 	call keyini
 	call keya('vis',vis,' ')
+        call mkeyi('list1',list1,MAXANT,n1)
+        call mkeyi('list2',list2,MAXANT,n2)
 	call mkeyi('ants',ants,MAXANT,numant)
 	call keyl('show',show,.FALSE.)
 	call keyfin
 	if(vis.eq.' ')call bug('f','No input vis data-set given')
+        if(n1.ne.n2) call bug('f','Need ant lists same length')
+        if(n1.eq.0) write(*,*) 
+     *'No antenna list given. Routine will calculate closest pair'
 
 c
 c  Open the input file. We need full uvopen, since we also need
@@ -101,6 +124,12 @@ c
 c  Check the given antenna numbers, and set the default antenna numbers
 c  if needed.
 c
+        write(*,*) 'This is gpbuddy test version modified by BAZ'
+c        write(*,*) list1
+c        write(*,*) list2
+c       write(*,*) nants
+c       write(*,*) ants
+c
 	if(numant.gt.0)then
 	  call bug('f','ants= not allowed for the moment')
 	  do i=1,numant
@@ -113,12 +142,15 @@ c
 	  enddo
 	  numant = nants
 	endif
+c        write(*,*) ants
 c
 c  Set the feed numbers
 c
+c       write(*,*) nfeeds
 	do i=1,nfeeds
 	   feeds(i) = i
 	enddo
+c       write(*,*) nfeeds
 c
 c
 c  Get the antennae positions and convert to an XY (east-north) grid
@@ -138,6 +170,7 @@ c
 	   xy(1,i) =  apos(2)
 	   xy(2,i) = -apos(1)*sinlat + apos(3)*coslat
 	   if (show) write(*,*) i,xy(1,i),xy(2,i)
+c           write(*,*) i,xy(1,i),xy(2,i)
 	enddo
 
 c  Open the gains file. Mode=='append' so that we can overwrite it.
@@ -152,7 +185,8 @@ c
 c
 c  Copy the gains.
 c
-	call GainCpy(nsols,nsols,nants*nfeeds,times,Gains,mask,xy)
+	call GainCpy(nsols,nsols,nants*nfeeds,times,Gains,mask,xy,
+     *list1,list2,n1,n2)
 c
 c  Write out the gains.
 c
@@ -223,7 +257,13 @@ c
 
 	end
 c************************************************************************
-	subroutine GainCpy(maxsols,nsols,nants,times,Gains,mask,xy)
+	subroutine GainCpy(maxsols,nsols,nants,times,Gains,mask,xy, 
+     *list1,list2,n1,n2)
+c
+c   BAZ - this is the subroutine to change - giving extra input for 
+c          the ability to scale the gains and apply an offset, as well
+c           as to choose the antenna pair.
+c
 c
 	implicit none
 	integer maxsols,nsols,nants
@@ -231,6 +271,8 @@ c
 	double precision times(maxsols)
 	logical mask(nants)
 	real xy(2,nants)
+        integer n1,n2
+        integer list1(n1),list2(n2)
 c
 c  Copy the gains. For this any flagged ants that did not have a gain,
 c  will look through the list of originally  unflagged gains and see
@@ -248,12 +290,17 @@ c    nsols	Number of solutions.
 c    times	The read times.
 c    gains	The gains.
 c------------------------------------------------------------------------
-
 	integer i,j,k, jmin
+        integer pairs
 	real d, dmin
-c
-	do i=1,nants
-	   if (.not.mask(i)) then
+        write(*,*) ' '
+       
+c       The following loop is for backwards compatibility. Program will
+c       Calculate minimum distance pairs from all antennas if an 
+c       antenna list is not provided.
+c       
+        if (n1.eq.0) then
+	   do i=1,nants
 	      jmin = -1
 	      do j=1,nants
 		 if (mask(j) .and. i.ne.j) then
@@ -265,14 +312,33 @@ c
 		 endif
 	      enddo
 	      dmin = sqrt(dmin)
-	      write(*,*) 'Ant ',i,' nearest to ',jmin,' @ ',dmin,' m'
-	      do k=1,nsols
-		 gains(i,k) = gains(jmin,k)
-	      enddo
-	   endif
-	enddo
+              write(*,*) 'Ant ',i,' nearest to ',jmin,' @ ',dmin,' m'
+              do k=1,nsols
+                 gains(i,k)=gains(jmin,k)
+              enddo
+           enddo
+        endif
 
-	end
+c        For use if an antenna list is given.
+         if (n1.ge.1) then
+              do j=1,n1
+                 write(*,*) 'Ant',list1(j),' given Ant',list2(j),
+     *                ' gains'
+                 d = (xy(1,list1(j))-xy(1,list2(j)))**2 + 
+     *               (xy(2,list1(j))-xy(2,list2(j)))**2
+                 dmin=sqrt(d)
+                 write(*,*) 'Distance between antennas: ',dmin,' m'
+                 write(*,*) '------------'
+                 do k=1,nsols
+                   gains(list1(j),k)=gains(list2(j),k)
+                 enddo
+	      enddo
+         endif
+c          endif
+c	enddo
+ 	end
+c
+c
 c************************************************************************
 	subroutine GainWr(itGain,nsols,nants,nfeeds,times,Gains)
 c
@@ -315,4 +381,3 @@ c------------------------------------------------------------------------
         call bug('w',message)
         call bugno('f',iostat)
         end
-
