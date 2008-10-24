@@ -12,6 +12,7 @@ c			added MAXWIN from 8 (hardcoded) to 16
 c	15-apr-94	MAXWIN is now in maxdim.h		PJT/mchw
 c       19-dec-95       increase MAXANTHC from 6 to 9 !!!       pjt
 c        9-Feb-99       increase MAXANTHC from 9 to 10 !       mchw
+c       25-Apr-06       Increase MAXANTHC from 10 to 15 for CARMA ! mh 
 c=======================================================================
       INCLUDE 'maxdim.h'
 c=======================================================================
@@ -28,9 +29,12 @@ c
 c
 c MAXANTHC -- special Hat Creek MAXANT, to keep it small for us....
 c MAXBASHC -- derived from MAXANTHC = max. number of baselines
-c
+c 
+c Now changed the number from Hat-Creek (10) to Cedar-Flat (15) 
+c although the name is the same.
+
       INTEGER MAXANTHC, MAXBASHC
-      PARAMETER (MAXANTHC=10, MAXBASHC=((MAXANTHC*(MAXANTHC-1))/2))
+      PARAMETER (MAXANTHC=15, MAXBASHC=((MAXANTHC*(MAXANTHC-1))/2))
 c
 c MAXUVPNT -- maximum number of UV points in time per track
 c

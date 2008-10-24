@@ -36,7 +36,7 @@ c       int    rflag(UL,nbl,rcount)      flagged bad? (0=false, 1=true)
 c   sindex
 c       int    sindex(rcount)            source index number
 c   sname
-c       char*8 sname(scount)             list of sources
+c       char*16 sname(scount)             list of sources
 c   
 
 c
@@ -51,7 +51,7 @@ c  Sxxxx -- index for multiple source calibration format
 c           (plstuff was added later and is not quite needed??)
 c
       INTEGER   scount
-      CHARACTER sname(MAXSRC)*8
+      CHARACTER sname(MAXSRC)*16
       INTEGER   sindex(MAXUVPNT), sflag(MAXUVPNT)
       REAL      plstuff(4,MAXSRC)
 c
@@ -60,7 +60,7 @@ c
       REAL      btime(MAXBREAK, 2, MAXBASHC)
       INTEGER   bcount(2, MAXBASHC)
 c
-c  Xxxxx - odds and ends, shouldn't really have to exist
+c  Xxxxx - odds and ends, should not really have to exist
 c          are merely there for planets
 c
       REAL      volts(MAXUVPNT)
@@ -73,7 +73,7 @@ c
 c  the common blocks with all the data
 c
       COMMON /caldatr/ rcount, scount, rtime, rdata, rflag,
-     -                   sindex, btime, bcount, sflag, plstuff,volts
+     -                 sindex, btime, bcount, sflag, plstuff,volts
       COMMON /caldatc/ sname
       COMMON /caldatp/ calbflux
 c--
