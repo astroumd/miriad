@@ -42,6 +42,7 @@ c    pjt 17jan91  fixed language construct - messing with '+' and '-'
 c			cursor options - not done in CALIB though
 c        15apr92  assertl now - formalized pgbeg+pgldev
 c    mjs 13mar93  pgplot subr names have less than 7 chars.
+c    pjt 23oct08  initial zoom in X to be true.... for CARMA's 105 baselines
 c
 c------ Inline doc (retrieved with doc to a .doc file) ----------------c
 c= calflag - Display raw calibration data with user interaction
@@ -132,7 +133,7 @@ c Include Files (parameters and common blocks)
 c Other Fixed Parameters
 c		PVERSION -- identification
 	CHARACTER PVERSION*(*)
-	PARAMETER (PVERSION='Version 15-apr-92')
+	PARAMETER (PVERSION='Version 23-oct-08')
 c  		NPLOT -- number of plots per baseline
 	INTEGER     NPLOT
 	PARAMETER ( NPLOT = ULRI)
@@ -363,10 +364,10 @@ c open pgplot and start bugging user for input
 	ENDIF
 c set some defaults before entering the loop
 	blo = 1
-	bhi = nbl
+	bhi = 1
 	plo = 1
 	phi = plots
-	xzoom = .FALSE.
+	xzoom = .TRUE.
 	yzoom = .FALSE.
 c infinite loop, jump to label 120 when done
 c goto 1000 when to redraw screen
