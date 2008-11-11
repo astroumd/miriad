@@ -1,0 +1,7 @@
+These are routines specific to the ATCA.
+Specifically it should also be noted that some of 
+their programs share the name with ours, and have
+been renamed with 'at' prepended:
+
+
+uvplt	->	atuvplt		(in addition we also have smauvplt)
