@@ -52,6 +52,7 @@ c                     additional checking.
 c    pjt    5aug99    Increased cmdline arg to 1024 from 512 (also key.c !!!)
 c    pjt    6mar01    Increased cmdline arg to 2048
 c    mchw   15mar02   Increased cmdline arg to 4096
+c    pjt     5nov08   Remind user which are valid flags
 c************************************************************************
 c* KeyIni -- Initialise the `key' routines.
 c& pjt
@@ -128,8 +129,10 @@ c
 c
 c  If -? give help.
 c
-	  else if(arg.eq.'-?')then
-	    call command('mirhelp '//task)
+	  else if(arg.eq.'-?' .or. 
+     *            arg.eq.'-h' .or.
+     *            arg.eq.'--help')then
+	    call command('mir.help '//task)
 	    stop
 c
 c  If '-k' give listing of keywords for this program via the doc program
@@ -142,6 +145,7 @@ c  Other flags are not understood yet
 c
           else if(arg(1:1) .eq. '-') then
             call bug('w','Flag '//arg(1:len1(arg))//' not understood')
+            call bug('w','Valid:  -f <parfile>,  -k,  -?, -h, --help')
 c
 c  Otherwise the argument is a parameter
 c
