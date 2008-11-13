@@ -116,8 +116,8 @@ c------------------------------------------------------------------------
 	parameter(PolXX=-5,PolYY=-6,PolRR=-1,PolLL=-2,PolI=1)
 	include 'maxdim.h'
 	integer MAXSPECT,MAXVIS,MAXSOLN,MAXITER,MAXPOL
-	parameter(MAXSPECT=3*MAXWIN,MAXVIS=7000000,MAXITER=30)
-	parameter(MAXSOLN=1024,MAXPOL=2)
+	parameter(MAXSPECT=3*MAXWIN,MAXVIS=30000000,MAXITER=30)
+	parameter(MAXSOLN=5000,MAXPOL=2)
 c
 	character version*(*)
 	parameter(version='MfCal: version 1.0 15-Feb-2008')
@@ -488,7 +488,7 @@ c
 c------------------------------------------------------------------------
 	pee(1) = 1
 	if(npol.eq.1)return
-	if(npol.gt.2)call bug('f','Something is screwy')
+	if(npol.gt.2)call bug('f','Something is screwy, npol>2')
 	if(abs(PolMap(1)-PolMap(2)).ne.1)call bug('f',
      *	    'Incommensurate polarisations selected')
 	if(PolMap(2).gt.PolMap(1))then
@@ -1347,7 +1347,7 @@ c
 	      endif
 	      nsoln = nsoln + 1
 	      if(nsoln.gt.maxsoln)
-     *		call bug('f','Too many solution intervals')
+     *		call bug('f','Too many solution intervals [MAXSOLN]')
 	      tfirst = preamble(3)
 	      tlast  = tfirst
 	      ninter = 0
@@ -1362,14 +1362,15 @@ c
 	    if(pols(p).eq.0)then
 	      npol = npol + 1
 	      if(npol.gt.MAXPOL)
-     *		call bug('f','Too many different polarisations')
+     *        call bug('f','Too many different polarisations [MAXPOL]')
 	      pols(p) = npol
 	      PolMap(npol) = p
 	    endif
 	    p = pols(p)
 c
 	    if(nchan+nvis.gt.maxvis)
-     *	      call bug('f','Buffer overflow: set interval larger')
+     *	      call bug('f',
+     *           'Buffer [MAXVIS] overflow: or set interval larger')
 c
 	    tlast = max(tlast,preamble(3))
 c
@@ -2665,7 +2666,7 @@ c
 c
 c  Check we have enough space.
 c
-	if(n.gt.MAXDATA)call bug('f','Too many data points')
+	if(n.gt.MAXDATA)call bug('f','Too many data points [MAXDATA]')
 c
 c  Initialise the indices to keep track of things.
 c
