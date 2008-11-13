@@ -53,6 +53,7 @@ c    pjt    5aug99    Increased cmdline arg to 1024 from 512 (also key.c !!!)
 c    pjt    6mar01    Increased cmdline arg to 2048
 c    mchw   15mar02   Increased cmdline arg to 4096
 c    pjt     5nov08   Remind user which are valid flags
+c    pjt    11nov08   Add -kw flag
 c************************************************************************
 c* KeyIni -- Initialise the `key' routines.
 c& pjt
@@ -136,9 +137,14 @@ c
 	    stop
 c
 c  If '-k' give listing of keywords for this program via the doc program
+c  '-kw' gives a shorter listing of only the keywords
 c
           else if(arg .eq. '-k') then
 	    call command('doc '//task)
+            stop
+
+          else if(arg .eq. '-kw') then
+	    call command('doc '//task//' | grep ^Keyword')
             stop
 c
 c  Other flags are not understood yet
