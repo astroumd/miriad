@@ -6,6 +6,8 @@ c    jm  18dec90  Original code.  Constants taken from the paper
 c                 "The Fundamental Physical Constants" by E. Richard
 c                 Cohen and Barry N. Taylor (PHYICS TODAY, August 1989).
 c   pjt  13aug08  Aligned with ATNF
+c   pjt  14nov08  updated from latest NIST values
+c                 http://physics.nist.gov/cuu/Constants/index.html
 c
 c $Id$
 c ----------------------------------------------------------------------
@@ -44,14 +46,14 @@ c  Speed of light (meter/second).
 c ----------------------------------------------------------------------
 c  Boltzmann constant (Joule/Kelvin).
       double precision DKMKS
-      parameter (DKMKS = 1.380658D-23)
+      parameter (DKMKS = 1.3806504D-23)
 
       real KMKS
       parameter (KMKS = DKMKS)
 c ----------------------------------------------------------------------
 c  Planck constant (Joule-second).
       double precision DHMKS
-      parameter (DHMKS = 6.6260755D-34)
+      parameter (DHMKS = 6.62606896D-34)
 
       real HMKS
       parameter (HMKS = DHMKS)
