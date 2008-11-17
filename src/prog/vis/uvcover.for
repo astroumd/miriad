@@ -31,13 +31,14 @@ c    bpw  11feb91  add standard keyword documentation
 c    mjs  13mar93  pgplot subr names have less than 7 chars.
 c    pjt  28mar95  added needed support for UVW coordinates 
 c    pjt   7apr95  fixed broken UV when doing UVW (previous 'fix')
-c                  add deprecation message in favor of UVPLOT
+c                  add deprecation message in favor of UVPLT
+c    pjt  17nov08  fix deprecation message 
 c------------------------------------------------------------------------
 c
 c  MAXPNTS -- maximum UV points
 c
 	INTEGER MAXPNTS
-	PARAMETER( MAXPNTS = 100000 )
+	PARAMETER( MAXPNTS = 50000000 )
 c
 c  MAXSETS -- maximum number of data sets
 c
@@ -55,9 +56,9 @@ c
       LOGICAL          more, cupd
 
 
-      CALL output('Uvcover: version 1.0 7-apr-95' )
+      CALL output('Uvcover: version 1.0 17-nov-08' )
       CALL bug('i','UVCOVER is deprecated, please use UVPLT instead:')
-      CALL bug('i','uvplt axis=uv,vc options=equal,nobase,nanosec ...')
+      CALL bug('i','uvplt axis=uc,vc options=equal,nobase,nanosec ...')
 c
 c  Get the dataset names
 c
