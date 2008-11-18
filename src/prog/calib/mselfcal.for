@@ -183,6 +183,7 @@ c    rjs  16apr96 Increase select routine arrays.
 c    rjs  28aug96 Minor change to get around gcc-related bug. Change care
 c		  Dave Rayner.
 c    mwr  05aug99 Renamed it mselfcal and increased maxmod to 64 from 32.
+c    pjt  20apr07 Warn about apriori/flux
 c  Bugs/Shortcomings:
 c   * Selfcal should check that the user is not mixing different
 c     polarisations and pointings.
@@ -190,7 +191,7 @@ c   * It would be desirable to apply bandpasses, and merge gain tables,
 c     apply polarisation calibration, etc.
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version='MSelfcal: version 1.0 5-Aug-99 MWR')
+	parameter(version='MSelfcal: version 1.0 20-apr-07')
 	integer MaxMod,maxsels,nhead
 	parameter(MaxMod=64,maxsels=1024,nhead=3)
 c
@@ -201,7 +202,7 @@ c
 	real sels(maxsels),clip,interval,offset(2),lstart,lwidth,lstep
 	logical phase,amp,smooth,doline,apriori,noscale,relax,doPol,mfs
 	real flux
-	logical selradec
+	logical selradec, keyprsnt
 	logical verbose
 c	character lines(3)*8
 
@@ -228,6 +229,8 @@ c
 	doline = ltype.ne.' '
 	call GetOpt(phase,amp,smooth,apriori,noscale,relax,doPol,mfs,
      *		selradec,verbose)
+	if (keyprsnt('flux') .and. apriori) call bug('w',
+     *     'options=apriori is used with a flux=, which may be ignored')
 	call keya('out',out,' ')
 	call keyfin
 c
