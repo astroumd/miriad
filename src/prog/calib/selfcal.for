@@ -104,7 +104,8 @@ c	greatest weight.
 c@ flux
 c	If MODEL is blank, then the flux (Jy) of a point source model can
 c	be specified here. Also used as the default flux for the apriori
-c	option. The default is 1 (assuming the model parameter is not given)
+c	option. ** WARNING does not appear right, as the catalog is used **
+c       The default is 1 (assuming the model parameter is not given)
 c@ offset
 c	This gives the offset in arcseconds of a point source model (the
 c	offset is positive to the north and to the east). This parameter is
@@ -169,6 +170,7 @@ c    rjs  16apr96 Increase select routine arrays.
 c    rjs  28aug96 Minor change to get around gcc-related bug. Change care
 c		  Dave Rayner.
 c    pjt   5aug99 Increased MaxMod a bit
+c    pjt  20apr07 Warn about apriori/flux
 c    mchw 27apr07 Check for auto instead of not cross. i.e. allow mixed.   
 c    mchw 23may07 if (nants.gt.MAXANT) call bug('f', 'number of antennas > MAXANT in currently installed task')
 
@@ -191,7 +193,7 @@ c
 	real sels(maxsels),clip,interval,offset(2),lstart,lwidth,lstep
 	logical phase,amp,smooth,doline,apriori,noscale,relax,doPol,mfs
 	real flux
-	logical selradec
+	logical selradec, keyprsnt
 c
 c  Externals.
 c
@@ -215,6 +217,8 @@ c
 	doline = ltype.ne.' '
 	call GetOpt(phase,amp,smooth,apriori,noscale,relax,doPol,mfs,
      *		selradec)
+	if (keyprsnt('flux') .and. apriori) call bug('w',
+     *     'options=apriori is used with a flux=, which may be ignored')
 	call keya('out',out,' ')
 	call keyfin
 c
