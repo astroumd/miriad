@@ -116,11 +116,11 @@ c------------------------------------------------------------------------
 	parameter(PolXX=-5,PolYY=-6,PolRR=-1,PolLL=-2,PolI=1)
 	include 'maxdim.h'
 	integer MAXSPECT,MAXVIS,MAXSOLN,MAXITER,MAXPOL
-	parameter(MAXSPECT=3*MAXWIN,MAXVIS=30000000,MAXITER=30)
-	parameter(MAXSOLN=5000,MAXPOL=2)
+	parameter(MAXSPECT=3*MAXWIN,MAXVIS=100000000,MAXITER=30)
+	parameter(MAXSOLN=10000,MAXPOL=2)
 c
 	character version*(*)
-	parameter(version='MfCal: version 1.0 13-Nov-2008')
+	parameter(version='MfCal: version 1.0 19-Nov-2008')
 c
 	integer tno
 	integer pWGains,pFreq,pSource,pPass,pGains,pTau
