@@ -182,7 +182,7 @@ c   * It would be desirable to apply bandpasses, and merge gain tables,
 c     apply polarisation calibration, etc.
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version='Selfcal: version 1.0 23-May-2007')
+	parameter(version='Selfcal: version 1.0 21-Nov-2008')
 	integer MaxMod,maxsels,nhead
 	parameter(MaxMod=64,maxsels=1024,nhead=3)
 c
