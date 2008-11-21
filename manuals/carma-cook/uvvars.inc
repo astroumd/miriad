@@ -81,11 +81,11 @@ Table~\ref{t:vis-items} gives a list of the items that are used to build up a
 Item name   & Type  &  Description \\ \hline
 obstype     & ascii   & value: `{\tt cross}', `{\tt auto}' or `{\tt mixed}' \\
 history     & text    & history text file (in principle editable) \\
-vartable    & text    & lookup table for all uv variables (do not edit!) \\
+vartable    & text    & lookup table for all uv variables (never edit!) \\
 visdata     & mixed   & data stream of uv variables \\ \hline
 flags       & integer & optional flags for narrowband data \\
 wflags      & integer & optional flags for wideband data \\ \hline
-gains       & mixed   & antenna gain table (delhd this item to disable gain table)\\
+gains       & mixed   & antenna gain table; {\bf delhd} (or {\bf rm}) this item to disable gain table\\
 nfeeds	    & integer & number of feeds on each antenna \\
 ntau	    & integer & Number of delay/spectral index terms per antenna in `gains' \\
 nsols       & integer & number of records in `gains' \\
@@ -94,7 +94,7 @@ interval    & double  & gain interpolation time tolerance (days)\\
 leakage	    & complex & polarization leakage parameters\\
 freq0	    & double  & reference frequency for delay terms\\
 freqs	    & mixed   & frequency set up description table for `bandpass'\\
-bandpass    & complex & bandpass function gains (delhd this item to disable passband corrections) \\
+bandpass    & complex & bandpass function gains; {\bf delhd} (or {\bf rm}) this item to disable passband corrections \\
 nspect0     & integer & number of windows in the bandpass function\\
 nchan0      & integer & total number of channels in the bandpass function\\
 \hline\end{tabular}
@@ -475,7 +475,7 @@ phaselo2(nants)	\>R	\>radians
 \> Second LO phase offset (Hat Ck/CARMA)\\
 
 phasem1(nants)	\>R	\>radians
-\> IF cable phase (Hat Ck/CARMA)\\
+\> IF cable phase for linelength measurements (Hat Ck/CARMA)\\
 
 plangle		\>R     \>degrees
 \>Planet angle\\
@@ -554,7 +554,7 @@ restfreq(nspect) \>D	\>GHz
 \>\>\>  This may be zero for continuum observations.\\
 
 rmspath		\>R     \>microns
-\>RMS path variation (CARMA, for HatCrk units were \%)\\
+\>RMS path variation (CARMA, for Hat Ck units were \%)\\
 \>\>\> see also smonrms\\
 
 sctype	\>A	\>-
