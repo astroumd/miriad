@@ -23,6 +23,7 @@ c   pjt     6sep06    carma mode to to not deal with the first two wide's
 c                     (global LSB/USB)
 c   pjt    30jul07    complete overhaul for CARMA (and thus more general)
 c   pjt     6may08    Fix computing the (center) new wfreq values for nwide=
+c   pjt    25nov08    Fix computing narrow flags from wide flags 
 c***********************************************************************
 c= uvwide - recompute wide band from narrow band
 c& pjt
@@ -32,7 +33,7 @@ c+
       IMPLICIT NONE
 c
 c     UVWIDE is a MIRIAD task which allows you to 
-c     recompute the wide band data from the narrow band data. 
+c     recompute the wide band data from the narrow band data.
 c
 c     It is also possible to reset the narrow band flags, based
 c     on the wide band flags, and vice versa.
@@ -42,6 +43,10 @@ c     widebands were the global LSB/USB averages, CARMA uses nwide=nspect
 c     and thus the program is now generally usable.
 c
 c     UVCAL can also be used to make wideband channels, using options=avechan.
+c
+c     WARNING: this program does not work on old BIMA data anymore where the
+c     number of wide band channels was 2 more than the number of spectral
+c     windows. 
 c
 c@ vis
 c     The name of the input visibility dataset.  
@@ -95,7 +100,7 @@ c
       CHARACTER PROG*(*)
       PARAMETER (PROG = 'UVWIDE')
       CHARACTER VERSION*(*)
-      PARAMETER (VERSION = '6-may-08')
+      PARAMETER (VERSION = '25-nov-08')
 
 c
 c  Internal variables.
@@ -148,9 +153,11 @@ c
 c report which mode program runs in....
 c
       IF (doflag) THEN
-         CALL output('Computing new wide band flags from narrow band')
-      ELSE IF (donarrow) THEN
-         CALL output('Flagging narrow band based on wide band flags')
+         IF (donarrow) THEN
+            CALL output('Flagging narrow band based on wide band flags')
+         ELSE
+            CALL output('Flagging wide band based on narrow band flags')
+         ENDIF
       ELSE
          IF (reset) THEN
             CALL output('Reconstructing all wide band data')
@@ -209,15 +216,12 @@ c
       hasnone = .FALSE.
 
 c
-c  Open the output visibility file.
+c  Open the output visibility file, if not in flagging mode
+c  else append history to input file
 c
       IF (.NOT.doflag) THEN
          CALL uvopen(lout, outfile, 'new')
          CALL output(PROG//': Writing visibilities to: '// Outfile)
-c
-c  Copy the old history entries to the new file and then add a few
-c  additional history entries to the new file.
-c
          CALL hdcopy(lin, lout, 'history')
          CALL hisopen(lout, 'append')
          CALL hiswrite(lout, PROG // ': ' // VERSION)
@@ -270,7 +274,7 @@ c
 c
 c
 c
-         if (newide) THEN
+         IF (newide) THEN
             nwread = nwide
             DO i=1,nwide
                wflags(i) = .TRUE.
@@ -282,7 +286,7 @@ c
          IF (nwread .LE. 0) CALL bug('f',PROG // ' No wide band data?')
                   
 c
-c  Reconstruct the digital wide band data.  
+c  Reconstruct the wide band data.  
 c  Weight the sums by the square of the bandwidth and keep different
 c  sums for the upper and lower sidebands.  Only include data that is
 c  previously flagged as "good" in the narrow bands.  Also omit the
@@ -295,18 +299,11 @@ c
             ENDDO
          ENDIF
          IF (donarrow) THEN
-            CALL bug('f',"Still in old code not converted for CARMA")
-            LastChn=nread/2
-            IF (.NOT.wflags(1)) THEN
-               DO m=1,LastChn
-                  flags(m) = .FALSE.
+            DO k=1,nspect
+               DO m=ischan(k),ischan(k)+nschan(k)-1
+                  flags(m) = wflags(k)
                ENDDO
-            ENDIF
-            IF (.NOT.wflags(2)) THEN
-               DO m=LastChn+1,nread
-                  flags(m) = .FALSE.
-               ENDDO
-            ENDIF
+            ENDDO
          ELSE
             DO k = 1, nspect
                IF (blankf .GT. 0.0) THEN
@@ -331,7 +328,11 @@ c
             ENDDO
          ENDIF
          IF (doflag) THEN
-            CALL uvwflgwr(lin,wflags)
+            if (donarrow) THEN
+               CALL uvflgwr(lin,flags)
+            ELSE
+               CALL uvwflgwr(lin,wflags)
+            ENDIF
          ELSE
             CALL uvwwrite(lout, wdata, wflags, nwread)
             CALL uvwrite(lout, preamble, data, flags, nread)
