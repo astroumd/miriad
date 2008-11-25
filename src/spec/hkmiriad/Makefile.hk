@@ -25,7 +25,14 @@ LIBX11    =  -L/usr/X11R6/lib -lX11
 # if you have installed a binary release , you may have
 # to run 'configure' in that directory and get the updated
 # value for FLIBS
+# For Mac there is sometims a crt2.o reference, you may have
+# to remove that manually.
 FLIBS = -L/usr/lib/gcc/i386-redhat-linux/3.4.6 -L/usr/lib/gcc/i386-redhat-linux/3.4.6/../../.. -lfrtbegin -lg2c -lm -lgcc_s
+
+
+# warning: you might wind up stealing (c)pgpplot from another package
+# (e.g. on macports from /scisoft/lib). In that case, hardcode the library
+# using those via the $(MIRLIB)/libFOO.a style.
 
 PGLIBS_GEN      = -L$(MIRLIB) -lcpgplot -lpgplot $(FLIBS)
 PGLIBS_G77      = -L$(MIRLIB) -lcpgplot -lpgplot -lg2c     
