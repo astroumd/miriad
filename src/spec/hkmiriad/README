@@ -11,7 +11,9 @@ to get it installed (it need libZeno.a in $MIRLIB)
 The installation of the tools here is still a little shaky.
 Use the supplies Makefile.hk, copy it to Makefile and try
 and work with it. It is possible you need to modify the
-variuous LIBS and flags at the top a bit.
+various LIBS and flags at the top a bit.
+
+Most notably, it will only work with the old build system.
 
 
 
