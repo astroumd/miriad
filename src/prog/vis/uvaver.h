@@ -17,7 +17,7 @@ c
 	include 'maxdim.h'
 	integer MAXAVER,MAXPOL
 c	parameter(MAXAVER=163840,MAXPOL=4) increased to 656360, 05feb2008 mchw
-	parameter(MAXAVER=656360,MAXPOL=4) increased to 2000000 17nov2008 mchw
+c	parameter(MAXAVER=656360,MAXPOL=4) increased to 2000000 17nov2008 mchw
 	parameter(MAXAVER=2000000,MAXPOL=4)
 	complex buf(MAXAVER)
         real    bufr(MAXAVER)
