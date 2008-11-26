@@ -65,8 +65,6 @@ c              range). However, data are not really flagged. The next
 c              option is an alternative "flagging" option.
 c     sigclip  Set to zero all gains more than jyperk(1)*rms away from 
 c              median on each antenna
-c     dynsize  Dynamically assign the array size in the printout of 
-c              the gain list. The default is for Carma array. 
 c     
 c     Use options=replace,zerophas with suitable jyperk list to 
 c     both set amp scale and zero phases (the two steps are 
@@ -124,19 +122,18 @@ c                    Keep the default for the Carma array.
 c    pjt/smw 28nov06 Added new options=addphase
 c    smw/pjt  8dec06 Format fiddling
 c    dnf     14feb08 More format fiddling to assure spaces between columns
+c    pjt     24nov08 Fix dyn mode for > 15 ants, remove options=dyn (now default)
 c                    
 c  Bugs and Shortcomings:
-c    gplist is hardwired in some places to list 15 antennas! (check options=dyn...)
-c    although we're using MAXGANT, there are format statements with
-c    usage with 15 or 30 elements. 
+c    fix options=complex for > 8 ants
 c-----------------------------------------------------------------------
 	include 'gplist.h'
 	character version*(*)
-	parameter(version='GpList: version 8-may-08')
+	parameter(version='GpList: version 25-nov-08')
 	logical dovec,docomp,dophas,doall,dozero,domult,hexists,doamp
-	logical dolimit,doclip,dosigclip,doforce,dohist,docarma,doaddph
+	logical dolimit,doclip,dosigclip,doforce,dohist,doaddph
 	real jyperk(MAXGANT) 
-	character vis*80,msg*80
+	character vis*80,msg*256
 	integer ngains,nfeeds,ntau,nants,iostat,njyperk
 	integer tVis
 	data jyperk /MAXGANT * 0.0/
@@ -148,7 +145,7 @@ c
 	call keya('vis',vis,' ')
 	call mkeyr('jyperk',jyperk,MAXGANT,njyperk)
 	call GetOpt(doamp,dovec,docomp,dophas,doall,dozero,domult,
-     *            dolimit,doclip,dosigclip,doforce,docarma,doaddph)
+     *            dolimit,doclip,dosigclip,doforce,doaddph)
 	call keyfin
 	if(vis.eq.' ')call bug('f','An input file must be given')
 c
@@ -195,7 +192,7 @@ c  List/Replace the gains now.
 c
 	call ReplGain(tVis,dohist,
      *        doamp,dovec,docomp,dophas,doall,dozero,domult,dolimit,
-     *        doclip,dosigclip,doforce,nfeeds,ntau,nants,jyperk,docarma,
+     *        doclip,dosigclip,doforce,nfeeds,ntau,nants,jyperk,
      *        doaddph)
 c
 c  Write out some history now.
@@ -213,11 +210,11 @@ c
 	end
 c***********************************************************************
        subroutine GetOpt(doamp,dovec,docomp,dophas,doall,dozero,
-     &          domult,dolimit,doclip,dosigclip,doforce,docarma,doaddph)
+     &          domult,dolimit,doclip,dosigclip,doforce,doaddph)
 c
 	implicit none
 	logical doamp,dovec,docomp,dophas,doall,dozero,domult,
-     &        dolimit,doclip,dosigclip,doforce,docarma,doaddph
+     &        dolimit,doclip,dosigclip,doforce,doaddph
 c
 c  Get "Task Enrichment Parameters".
 c
@@ -232,17 +229,16 @@ c    dolimit Impose upper limit on gains
 c    doclip Set amp gain to zero if outside absolute "normal" range
 c    dosigclip Set amp gain to zero if outside relative "normal" range
 c    doforce Force use of zeroes in jyperk array.
-c    docarma if not true, dynamically assigns the array size in the printout.
 c    doaddph if true, add/replace phases instead of amps
 c-----------------------------------------------------------------------
 	integer nopts
-	parameter(nopts=13)
+	parameter(nopts=12)
 	logical present(nopts)
 	character opts(nopts)*8
       data opts
      &/'amp     ','complex ','replace ','zerophas','all     ',
      & 'phase   ','multiply','limit   ','clip    ','sigclip ',
-     & 'force   ','dynsize ','addphase'/
+     & 'force   ','addphase'/
 c
 	call options('options',opts,present,nopts)
       docomp = present(2)
@@ -255,11 +251,10 @@ c
       doclip = present(9)
       dosigclip = present(10)
       doforce = present(11)
-      docarma = .not.present(12)
       doamp = present(1).or.present(10).or.(.not.
      &(docomp.or.dovec.or.dophas.or.doall.or.dozero.or.domult.
      &        or.dolimit.or.doclip))
-      doaddph = present(13)
+      doaddph = present(12)
 c
 	end
 c************************************************************************
@@ -277,7 +272,7 @@ c------------------------------------------------------------------------
 c***********************************************************************
       subroutine ReplGain(tVis,dohist,doamp,dovec,docomp,dophas,doall,
      *              dozero,domult,dolimit,doclip,dosigclip,doforce,
-     *              nfeeds,ntau,nants,jyperk,docarma,doaddph)
+     *              nfeeds,ntau,nants,jyperk,doaddph)
 c
       implicit none
       include 'gplist.h'
@@ -290,7 +285,7 @@ c
      *     GainArr(MAXGANT,3600),
      *     MednGain(MAXGANT), MedArr(3600), GainRms(MAXGANT), 
      *     mingain, maxgain
-      logical doMed, docarma
+      logical doMed
 c
 c  Read and write the gains, and list gains and replace amplitudes
 c
@@ -300,7 +295,8 @@ c------------------------------------------------------------------------
         complex Gains(MAXGAINS), g
 	double precision time(MAXSOLS)
 	integer nsols,offset,pnt,i,tGains,iostat,ngains
-	character line*128,ctime*8,msg*128
+	character line*256,ctime*8,msg*256,word*32
+	character*32 fmt99,fmt198, fmt199, fmt299
         integer igains
 c
 c  Externals.
@@ -341,57 +337,32 @@ c  Close up.
 c
 	call hdaccess(tGains,iostat)
 	if(iostat.ne.0)call AverBug(iostat,'Error closing gain table')
+
+c
+c  Set the dynamic format statements
+c
+	write(fmt99, '(a,i2,a)') '(a8,2x,',ngains,'(f5.2,1x))'
+	write(fmt299,'(a,i2,a)') '(a8,2x,',ngains,'(f5.1,1x))'
+	write(fmt198,'(a,i2,a)') '(a8,',ngains,'i5)'
+	write(fmt199,'(a,i2,a)') '(a8,',ngains,'(1x,f6.2))'
 c  
 c  Now list the values read
 c
-
       if (docomp) then
          call output('The complex gains listed in the table are:')
-         if((ngains.gt. 8).or.docarma) then
-     	    msg = '  Time     Ants 1/9     Ants 2/10     ' //
-     *	          'Ants 3/11    Ants 4/12    Ants 5/13  '  //
-     *	          'Ants 6/14    Ants 7/15    Ant  8'
-	 else
-	    msg = '  Time     Ants 1       Ants 2        ' //
-     *	          'Ants 3       Ants 4       Ants 5     ' //
-     *	          'Ants 6       Ants 7       Ant  8'
-	 end if
+	 msg = '  Time     Ants 1/9     Ants 2/10     ' //
+     *	       'Ants 3/11    Ants 4/12    Ants 5/13  '  //
+     *	       'Ants 6/14    Ants 7/15    Ant  8'
          call output(msg)
+c         *** TODO:  this needs some major work for dynamic ngains values
+c          
+	 if (ngains.gt.8) call bug('w','Better use options=all')
          do i=1,nsols
             call JulDay(time(i),'H',line(1:18))
             ctime = line(9:16)
-	    if(.not.docarma) then
-	       if(ngains.gt.8) then
-		  write(msg,95) ctime, 
-     *                  (Gains((i-1)*nants+igains), igains=1,8)
-	       else
-		  write(msg,95) ctime,
-     *                  (Gains((i-1)*nants+igains), igains=1,ngains)
-	       end if
-	       call output(msg)
-	       if(ngains.gt.8) then
-		  write(msg,95) '   ',
-     *               (Gains((i-1)*nants+igains), igains=9,ngains)
-	       end if
-	    else
-	       write(msg,95) ctime,  Gains((i-1)*nants+1),
-     *                          Gains((i-1)*nants+2),
-     *                          Gains((i-1)*nants+3),
-     *                          Gains((i-1)*nants+4),
-     *                          Gains((i-1)*nants+5),
-     *                          Gains((i-1)*nants+6),
-     *                          Gains((i-1)*nants+7),
-     *                          Gains((i-1)*nants+8)
-	       call output(msg)
-	       write(msg,95) '   ',  Gains((i-1)*nants+9),
-     *                          Gains((i-1)*nants+10),
-     *                          Gains((i-1)*nants+11),
-     *                          Gains((i-1)*nants+12),
-     *                          Gains((i-1)*nants+13),
-     *                          Gains((i-1)*nants+14),
-     *                          Gains((i-1)*nants+15)
-	       call output(msg)
-	    end if
+	    write(msg,95) ctime,
+     *                    (Gains((i-1)*nants+igains), igains=1,ngains)
+	    call output(msg)
          enddo
       else if (doall) then
          call output('The complex gains listed in the table are:')
@@ -407,6 +378,11 @@ c
          enddo
       else if (dophas) then
          call output('The phase gain values listed in the table are:')
+	 msg =  'Time  Anten '
+c	 do i=1,ngains
+c	    write(word,'(i2,3x)') i
+c	    msg = msg(1:len1(msg)) + word
+c	 enddo
          msg =  'Time  Anten 1    2    3    4' //
      *          '    5    6    7    8    9   10' //
      *          '   11   12   13   14   15'
@@ -415,29 +391,10 @@ c
             call JulDay(time(i),'H',line(1:18))
             ctime = line(9:16)
             k=(i-1)*nants
-            if(.not.docarma) then
-	       write(msg,198) ctime,
+	    write(msg,fmt198) ctime,
      *                (nint(radtodeg*
      *                atan2(AImag(Gains(k+igains)),
      *                Real(Gains(k+igains)))),igains=1,ngains)
-            else
-	       write(msg,198) ctime,
-     *        nint(radtodeg*atan2(AImag(Gains(k+1)),Real(Gains(k+1)))),
-     *        nint(radtodeg*atan2(AImag(Gains(k+2)),Real(Gains(k+2)))),
-     *        nint(radtodeg*atan2(AImag(Gains(k+3)),Real(Gains(k+3)))),
-     *        nint(radtodeg*atan2(AImag(Gains(k+4)),Real(Gains(k+4)))),
-     *        nint(radtodeg*atan2(AImag(Gains(k+5)),Real(Gains(k+5)))),
-     *        nint(radtodeg*atan2(AImag(Gains(k+6)),Real(Gains(k+6)))),
-     *        nint(radtodeg*atan2(AImag(Gains(k+7)),Real(Gains(k+7)))),
-     *        nint(radtodeg*atan2(AImag(Gains(k+8)),Real(Gains(k+8)))),
-     *        nint(radtodeg*atan2(AImag(Gains(k+9)),Real(Gains(k+9)))),
-     *       nint(radtodeg*atan2(AImag(Gains(k+10)),Real(Gains(k+10)))),
-     *       nint(radtodeg*atan2(AImag(Gains(k+11)),Real(Gains(k+11)))),
-     *       nint(radtodeg*atan2(AImag(Gains(k+12)),Real(Gains(k+12)))),
-     *       nint(radtodeg*atan2(AImag(Gains(k+13)),Real(Gains(k+13)))),
-     *       nint(radtodeg*atan2(AImag(Gains(k+14)),Real(Gains(k+14)))),
-     *       nint(radtodeg*atan2(AImag(Gains(k+15)),Real(Gains(k+15))))
-            end if
             call output(msg)
          enddo
       else if (doamp) then
@@ -452,29 +409,12 @@ c
      *         ' Ant 5  Ant 6  Ant 7  Ant 8  Ant 9  Ant10' //
      *         '  Ant11  Ant12  Ant13  Ant14  Ant15 '
 	 call output(msg)
+
 	 do i=1,nsols
 	    call JulDay(time(i),'H',line(1:18))
 	    ctime = line(9:16)
-	    if(.not.docarma) then 
-	       write(msg,199) ctime,
-     *                (abs(Gains((i-1)*nants+igains)), igains=1,ngains)
-	    else
-	       write(msg,199) ctime, abs(Gains((i-1)*nants+1)),
-     *                  abs(Gains((i-1)*nants+2)),
-     *                  abs(Gains((i-1)*nants+3)),
-     *                  abs(Gains((i-1)*nants+4)),
-     *                  abs(Gains((i-1)*nants+5)),
-     *                  abs(Gains((i-1)*nants+6)),
-     *                  abs(Gains((i-1)*nants+7)),
-     *                  abs(Gains((i-1)*nants+8)),
-     *                  abs(Gains((i-1)*nants+9)),
-     *                  abs(Gains((i-1)*nants+10)),
-     *                  abs(Gains((i-1)*nants+11)),
-     *                  abs(Gains((i-1)*nants+12)),
-     *                  abs(Gains((i-1)*nants+13)),
-     *                  abs(Gains((i-1)*nants+14)),
-     *                  abs(Gains((i-1)*nants+15))
-	    end if
+	    write(msg,fmt199) ctime,
+     *             (abs(Gains((i-1)*nants+igains)), igains=1,ngains)
 	    call output(msg)
 	    do j=1,nants
 	       if (abs(Gains((i-1)*nants+j)).gt.0.0) then
@@ -503,38 +443,15 @@ c
 	 write(msg,197) '------------------------------------',
      &               '------------------------------------'
 	 call output(msg)
-         if(.not.docarma) then
-	    write(msg,199) 'Means:  ',(MeanGain(igains),igains=1,ngains)
-	 else
-	    write(msg,199) 'Means:  ',MeanGain(1),MeanGain(2),
-     *              MeanGain(3),MeanGain(4),MeanGain(5),MeanGain(6),
-     *              MeanGain(7),MeanGain(8),MeanGain(9),MeanGain(10),
-     *           MeanGain(11),MeanGain(12),MeanGain(13),MeanGain(14),
-     *                                                  MeanGain(15)
-	 end if
+         write(msg,fmt199) 'Means:  ',
+     *                        (MeanGain(igains),igains=1,ngains)
 	 call output(msg)
 	 if (doMed) then
-	    if(.not.docarma) then
-	       write(msg,199) 'Medians:',(MednGain(igains),
+	    write(msg,fmt199) 'Medians:',(MednGain(igains),
      *                                      igains=1,ngains)
-	    else
-	       write(msg,199) 'Medians:',MednGain(1),MednGain(2),
-     *                MednGain(3),MednGain(4),MednGain(5),MednGain(6),
-     *                MednGain(7),MednGain(8),MednGain(9),MednGain(10),
-     *           MednGain(11),MednGain(12),MednGain(13),MednGain(14),
-     *                                                  MednGain(15)
-	    end if
 	    call output(msg)
-	    if(.not.docarma) then
-	       write(msg,199) 'Rms:    ', (GainRms(igains), 
+            write(msg,fmt199) 'Rms:    ', (GainRms(igains), 
      *                                      igains=1,ngains)
-	    else
-	       write(msg,199) 'Rms:    ', GainRms(1),GainRms(2),
-     *                GainRms(3),GainRms(4),GainRms(5),GainRms(6),
-     *                GainRms(7),GainRms(8),GainRms(9),GainRms(10),
-     *             GainRms(11),GainRms(12),GainRms(13),GainRms(14),
-     *                                                 GainRms(15)
-	    end if
 	    call output(msg)
 	 endif
 	 write(msg,197) '------------------------------------',
