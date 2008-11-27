@@ -48,12 +48,13 @@ c    mjs   02jul93 Commented out unused fmt stmt to elim compiler warn.
 c    mchw  28apr06 Format change.
 c    mchw  30may07 Better Format for plotting.
 c    mchw  30sep08 GPMAP plot antenna gains versus antenna position.
+c    mchw  26nov08 print 23 columns; subtract dtime0.
 c------------------------------------------------------------------------
 	include 'maxdim.h'
-	character version*(*),vis*120,log*120,line*100
-	parameter(version='version 1.0 30-Sep-08')
+	character version*(*),vis*120,log*120,line*200
+	parameter(version='version 1.0 26-Nov-2008')
 	integer tgains,header(2),nants,nsols,item,offset,length,nsol1
-	double precision interval,dtime
+	double precision interval,dtime,dtime0
 	integer refant,iostat,i,j,k,nread
 	complex gains(MAXANT),ref
 	real SumAmp(MAXANT),AveAmp(MAXANT),RmsAmp(MAXANT),SumPhi(MAXANT)
@@ -168,6 +169,10 @@ c subtract initial ( good) value.
         phi(j) = phi(j) - alpha(j)
 c unwrap phases
         if(k.eq.nsol1) theta(j)=phi(j)
+        if(k.eq.nsol1) then
+          dtime0=dtime
+          print *, 'start time, dtime0=',dtime
+        endif
         phi(j) = phi(j) - 360.*nint((phi(j)-theta(j))/360.)
         theta(j)= 0.5*(phi(j)+ theta(j))
 	    SumAmp(j) = SumAmp(j) + amp(j)
@@ -176,9 +181,9 @@ c unwrap phases
 	    RmsPhi(j) = RmsPhi(j) + phi(j)*phi(j)
 	    SumWts(j) = SumWts(j) + 1.
 	  enddo
-	  write(line,100) dtime-2444239.5d0,(nint(phi(i)),
+	  write(line,100) dtime-dtime0,(nint(phi(i)),
      *							i=1,nants)
-100   format(f13.7,' ',15i5)
+100   format(f13.7,' ',23i5)
 	  length = 13 + 1 + nants*5
 	  call LogWrit(line(1:length))
 	  offset = offset + 8*nants
