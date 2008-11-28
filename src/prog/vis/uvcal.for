@@ -50,6 +50,10 @@ c	             changes. This option also corrects the phase difference
 c	             between the wide channels due to line length.
 c	             options=linecal,avechan remakes the wideband from
 c	             the channel data after the phase slope is removed.	
+c	'atmcal'     ATM phase monitoring testing - work in progress
+c                    It will normalize on freqatm, and if missing will attempt
+c                    to use lo1. Use puthd to fake a new freqatm variable.
+c
 c	'parang'     Multiply LR by expi(2*chi) and RL by expi(-2*chi)
 c	             where chi is the parallactic angle for Alt-Az antennas.
 c	'passband'   Fit passband to lsb and correct the uv-data.
@@ -237,11 +241,12 @@ c    pjt   5feb07  fix array dimensioning in fxcal()
 c    mchw 14mar07  added option noisecal to copy conj of LSB into USB.
 c    mchw 01oct07  added keywork onsource to set uvvariable "on"
 c    mchw 12feb08  change MAXANT2 to MAXANT in fxcal.
+c    pjt  20nov08  added atmcal option
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	integer maxbad
 	character version*(*)
-	parameter(version='UVCAL: version 3.1 22-FEB-2008' )
+	parameter(version='UVCAL: version 28-nov-2008')
 	parameter(maxbad=20)
 	real PI
 	parameter(PI=3.1415926)
@@ -256,7 +261,7 @@ c
 	logical dooffset,doseeing
 	logical nocal,nopol,nopass,nowide,nochan,doall,dopass,
      *       dohann,docont,doconj,dophase,holo,dopower,avechan,slope,
-     *       linecal,uvrot,doparang,dofxcal,doconjlsb
+     *       linecal,atmcal,uvrot,doparang,dofxcal,doconjlsb
 	character out*64,type*1,uvflags*8
 	real mask(MAXCHAN),sigma
 	integer polcode,nants,ant1,ant2,on
@@ -282,12 +287,13 @@ c
 	call bug('i','05mar06 options=slope: phase slope and baseline')
 	call bug('i','14mar07 options=noisecal: copy conj LSB into USB')
 	call bug('i','01oct07 keyword onsource to set uvvariable on')
+	call bug('i','20nov08 options=atmcal available')
 c********1*********2*********3*********4*********5*********6*********7*c
 c
 	call keyini
 	call GetOpt(nocal,nopol,nopass,nowide,nochan,doall,dopass,
      *       dohann,docont,doconj,dophase,holo,dopower,avechan,slope,
-     *       linecal,uvrot,doparang,dofxcal,doconjlsb)
+     *       linecal,atmcal,uvrot,doparang,dofxcal,doconjlsb)
 	lflags = 3
 	uvflags(1:3) = 'ds3'
 	if(.not.nocal)then
@@ -557,6 +563,11 @@ c
 	      if(linecal)
      *		  call linecal1(lIn,data,flags,nchan,wdata,wflags,nwide,
      *					dowide,dochan,preamble)
+
+	      if(atmcal)
+     *		  call atmcal1(lIn,data,flags,nchan,wdata,wflags,nwide,
+     *					dowide,dochan,preamble)
+
 	      if(avechan)
      *	          call makewide(lIn,data,flags,nchan,wdata,wflags,nwide,
      *					dowide,lOut,endchan,mask)
@@ -688,12 +699,12 @@ c
 c********1*********2*********3*********4*********5*********6*********7*c
 	subroutine GetOpt(nocal,nopol,nopass,nowide,nochan,doall,dopass,
      *       dohann,docont,doconj,dophase,holo,dopower,avechan,slope,
-     *       linecal,uvrot,doparang,dofxcal,doconjlsb)
+     *       linecal,atmcal,uvrot,doparang,dofxcal,doconjlsb)
 c
 	implicit none
 	logical nocal,nopol,nopass,nowide,nochan,doall,dopass,
      *       dohann,docont,doconj,dophase,holo,dopower,avechan,slope,
-     *       linecal,uvrot,doparang,dofxcal,doconjlsb
+     *       linecal,atmcal,uvrot,doparang,dofxcal,doconjlsb
 c
 c  Determine extra processing options.
 c
@@ -715,18 +726,19 @@ c    holo      Replace u,v with dra,ddec for holography.
 c    avechan   Average unflagged spectral channels into wideband.
 c    slope     Fit phase slope and store in wideband.
 c    linecal   Correct phase slope due to line length change.
+c    atmcal    Correct phase slope due to ATM testing
 c    uvrot     Rotate uv-coordinates from current to standard epoch.
 c    doparang  Multiply LR by expi(2*chi) and RL by expi(-2*chi)
 c	 doconjlsb Copy conjugate of LSB spectral windows into USB.
 c------------------------------------------------------------------------
 	integer nopt
-	parameter(nopt=18)
+	parameter(nopt=19)
 	character opts(nopt)*9
 	logical present(nopt)
 	data opts/    'nocal    ','nowide   ','nochannel','unflagged',
      *		      'passband ','hanning  ','nopol    ','contsub  ',
      *            'conjugate','nopass   ','holo     ',
-     *            'avechan  ','slope    ','linecal  ',
+     *            'avechan  ','slope    ','linecal  ','atmcal   ',
      *            'uvrotate ','parang   ','fxcal    ','noisecal '/
 
 	call options('options',opts,present,nopt)
@@ -744,10 +756,11 @@ c------------------------------------------------------------------------
 	avechan = present(12)
 	slope   = present(13)
 	linecal = present(14)
-	uvrot   = present(15)
-	doparang= present(16)
-	dofxcal = present(17)
-	doconjlsb = present(18)
+	atmcal  = present(15)
+	uvrot   = present(16)
+	doparang= present(17)
+	dofxcal = present(18)
+	doconjlsb = present(19)
 c
 c  Check for imcompatible options
 c
@@ -999,6 +1012,73 @@ c
 	call uvinfo(lIn,'sfreq',sfreq)
 	do i=1,nchan
 	  phase = sfreq(i) / lo1 * phaselo1
+	  data(i) = data(i) * expi(phase)
+	enddo
+	end
+c********1*********2*********3*********4*********5*********6*********7*c
+	subroutine atmcal1(lIn,data,flags,nchan,wdata,wflags,nwide,
+     *					dowide,dochan,preamble)
+	implicit none
+	integer lIn,nchan,nwide
+	complex data(nchan),wdata(nchan)
+	logical flags(nchan),wflags(nchan),dowide,dochan
+	double precision preamble(5)
+c
+c  Remove phase variations due to weather conditions picked up via
+c  the buddy system
+c
+c  In:
+c    lIn	Handle of input uv-data.
+c    nchan	Number of channels.
+c    dowide	do wide data.
+c    dochan	do channel data.
+c    preamble
+c  In/out:
+c    data	Channel data
+c    flags	Channel flags
+c  Out:
+c    wdata	wide data
+c    wflags	wide flags
+c    nwide	number of wide data.
+c------------------------------------------------------------------------
+	include 'maxdim.h'
+	integer i,ant1,ant2,nants
+	real phasem(MAXANT),phased,wfreq(MAXWIN),phase
+	double precision sfreq(MAXCHAN),freq0
+c
+c  Externals.
+c
+	complex expi
+c
+c  Get the atm phase for an assumed freqatm (or lo1)
+c
+	call uvrdvrd(lIn,'freqatm',freq0,0.d0)
+	if(freq0.eq.0.d0) then
+	   call uvrdvrd(lIn,'lo1',freq0,0.d0)
+	   if(freq0.eq.0.d0) call bug('f',
+     *         'lo1 missing, try puthd freqatm')
+	endif
+	call uvgetvri(lIn,'nants',nants,1)
+	call uvgetvrr(lIn,'phaseatm',phasem,nants)
+	call basant(preamble(5),ant1,ant2)
+	phased = phasem(ant1)-phasem(ant2)
+c
+c  Handle the wideband if channel data also present.
+c
+	if(dowide.and.dochan) then
+     	  call uvDatWRd(wdata,wflags,MAXCHAN,nwide)
+	  call uvgetvrr(lIn,'wfreq',wfreq,nwide)
+	  do i=1,nwide
+	    phase = wfreq(i) / freq0 * phased
+	    wdata(i) = wdata(i) * expi(phase)
+	  enddo
+	endif
+c
+c  Handle the selected data.
+c
+	call uvinfo(lIn,'sfreq',sfreq)
+	do i=1,nchan
+	  phase = sfreq(i) / freq0 * phased
 	  data(i) = data(i) * expi(phase)
 	enddo
 	end
