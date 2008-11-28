@@ -1,4 +1,4 @@
-c************************************************************************
+c***********************************************************************
 	program gpbuddy
 	implicit none
 c
@@ -7,57 +7,78 @@ c& pjt
 c: calibration
 c+
 c	GpBuddy is a MIRIAD task which modifies a gain table to inherit
-c       gains of antennae that were flagged from the nearest position.
+c       some of the antenna gains from that of a buddy antenna.
+c
+c       It is also possible not to modify the gains, but write out
+c       an unwrapped phaseatm UV variable, which can later be applied
+c       using UVCAL's new options=atmcal.
+c
+c   NOTE:
+c       This program is currently under rapid development, make sure you
+c       communicate with the authors about the latest version and its
+c       capabilities and assumptions.
 c
 c@ vis
-c	The input visibility file, containing the gain file to modify.
-c       The gain table in this file will be re-written.
+c	The input visibility file, containing the gain file to be modified.
+c       The gain table in this file will be re-written if mode=gain.
 c	No default.
+c@ out
+c       Output file for vis, if selected. This file will contain the phaseatm
+c       variable derived from the gains (and/or inherited from a buddy).
 c@ vis2
-c       TBD - not used at the moment.
 c       The 2nd input visibility file, containing a gain file from 
 c       which gains will be applied to antennas in the primary 
 c       dataset (the gain table of the input visibility file).
 c       Default is to leave this blank, which will simply copy 
 c       gains internally from the primary visibility dataset.
-c
-c@ ants
-c       TBD - not used at the moment. Perhaps we could allow
-c       multiple runs of gpbuddy. By selecting a subset of antennae
-c       here, one would be able to inherit buddies from antennae that
-c       used to be flagged.
+c@ out2
+c       Output file for vis2, if selected. Will again contain phaseatm
+c       variable derived from the gains.
 c@ show
 c       Show the East-North layout (in meters) in tabular format.
 c       LISTOBS will also print these out by default.
 c       Default: false
 c@ list1
-c       The list of primary antennas
+c       The list of primary antennas to receive new gains
 c@ list2
 c       The 2nd list of paired antennas to apply gains to primary
 c
 c	Example:
 c	  gpbuddy vis=cyga [ants=] list1=1,2,3 list2=4,5,6
-c         applies gains from ant4 to ant1, ant5 to ant2, etc.
+c             applies gains from ant4 to ant1, ant5 to ant2, etc.
+C         gpbuddy vis=carma vis2=sza 
+C                list1=2,4,5,6,8,9,13,15 
+C                list2=21,23,20,18,19,22,16,17
+C       
 c@ options
-c       phase = only phase info. is transferred
+c       phase = only phase info. is transferred   **default**
+c@ mode
+c       gains or phaseatm. 
+c       For gains the gains of the input file(s) are overwritten,
+c       For phaseatm you will need to supply (an) output file(s).
+c       Default: phaseatm
 c
-c
-c
-c
+c--
+c@ ants
+c       TBD - not used at the moment. Perhaps we could allow
+c       multiple runs of gpbuddy. By selecting a subset of antennae
+c       here, one would be able to inherit buddies from antennae that
+c       used to be flagged.
 c--
 c  History:
 c    pjt     25mar08 Created
 c    baz     23oct08 Added two list functionality, backwards compatible
 c    mchw    08nov08 minor fixes.
 c    baz/pjt 19nov08 implemented 2nd list processing
+c    pjt     28nov08 morphed gains into new (phase)atm UV variable
 c
 c  Bugs and Shortcomings:
 c
-c------------------------------------------------------------------------
+c-----------------------------------------------------------------------
 	include 'maxdim.h'
 	include 'mirconst.h'
 	integer MAXFEED,MAXTIME,MAXSOLN
-	parameter(MAXFEED=2,MAXTIME=64,MAXSOLN=4096)
+	parameter(MAXFEED=2,MAXTIME=64,MAXSOLN=10000)
 c----------------------------------------------------
 c       To read 2nd visibility file added:
 c          character vis2*80
@@ -68,7 +89,8 @@ c          antpos2
 c          apos2, preamble2
 c          gains2, data2, mask2, flags2, xy2, n2
 c----------------------------------------------------
-	character vis*80, vis2*80, version*80
+	character vis*256, vis2*256, visout*256, vis2out*256
+	character version*80,mode*32
 	integer iostat,tVis,itGain,nants,nfeeds,nsols,i
         integer tVis2, itGain2, nants2, nfeeds2, nsols2, i2
 	integer numant,ntau,nread
@@ -83,7 +105,8 @@ c----------------------------------------------------
         integer ants2(MAXANT),feeds2(MAXFEED)
 	complex gains(2*MAXANT*MAXSOLN),data(MAXCHAN)
         complex gains2(2*MAXANT*MAXSOLN),data2(MAXCHAN)
-	logical mask(2*MAXANT),flags(MAXCHAN),show
+	real atm(MAXANT*MAXSOLN), atm2(MAXANT*MAXSOLN)
+	logical mask(2*MAXANT),flags(MAXCHAN),show,dogain
         logical mask2(2*MAXANT),flags2(MAXCHAN)
 	real xy(2,MAXANT)
         real xy2(2,MAXANT)
@@ -102,12 +125,16 @@ c
      
 	call keyini
 	call keya('vis',vis,' ')
+	call keya('out',visout,' ')
         call mkeyi('list1',list1,MAXANT,n1)
         call mkeyi('list2',list2,MAXANT,n2)
-	call mkeyi('ants',ants,MAXANT,numant)
         call keya('vis2',vis2,' ')   
-	call mkeyi('ants2',ants2,MAXANT,numant2)
+        call keya('out2',vis2out,' ')   
 	call keyl('show',show,.FALSE.)
+	call keya('mode',mode,'phaseatm')
+c       not used !!
+	call mkeyi('ants',ants,MAXANT,numant)
+	call mkeyi('ants2',ants2,MAXANT,numant2)
 	call keyfin
 c 
 c  Various options, vis only, vis+antenna lists or 2 vis files
@@ -117,7 +144,11 @@ c
      *'Only one visibility file.  Pairs found w/in this dataset'
         if(n1.ne.n2) call bug('f','Need ant lists same length')
         if(n1.eq.0) write(*,*) 
-     *'No antenna list given. Routine will calculate closest pair'
+     *'No antenna list given. Routine will calculate closest pairs'
+
+	dogain = mode(1:1).eq.'g'
+
+	if (dogain) write(*,*) 'Also modyfying gains'
 
 c
 c  Open the input file. We need full uvopen, since we also need
@@ -127,15 +158,13 @@ c
 	call uvopen(tVis,vis,'old')
         call uvread(tVis,preamble,data,flags,MAXCHAN,nread)
 	if (nread.eq.0) call bug('f','No visibilities?')
-        write(*,*) 'Finished uvopen on vis1'
 c-------------------------------------------
-c        Reading the second visibility file
+c        Reading the second visibility file, if needed
         if(vis2.ne.' ') then
           call uvopen(tVis2,vis2,'old')
           call uvread(tVis2,preamble2,data2,flags2,MAXCHAN,nread2)
           if (nread2.eq.0) call bug('f','No visibilities in vis2?')
         endif
-        write(*,*) 'Finished uvopen on vis2'
 c-------------------------------------------
 
 c
@@ -145,17 +174,15 @@ c
 	call rdhdi(tVis,'nfeeds',nfeeds,1)
 	if(nfeeds.le.0.or.nfeeds.gt.2.or.nants.lt.nfeeds.or.
      *	    mod(nants,nfeeds).ne.0)
-     *	  call bug('f','Bad number of gains or feeds in '//vis)
+     *	  call bug('w','Bad number of gains or feeds in '//vis)
 
 	if (nfeeds.ne.1) call bug('f','Code not certified for nfeeds>1')
 	call rdhdi(tVis,'ntau',ntau,0)
-	if(ntau.ne.0)call bug('f',
-     *	  'Cannot deal with files with delays')
+	if(ntau.ne.0)call bug('f','Cannot deal with files with delays')
 	nants = nants / nfeeds
 	call rdhdi(tVis,'nsols',nsols,0)
 	if(nsols.le.0)
      *	  call bug('f','Bad number of solutions')
-        write(*,*) 'End of Vis1 feed/gain check'
 
         if(vis2.ne.' ') then
 	  call rdhdi(tVis2,'ngains',nants2,0)
@@ -168,21 +195,19 @@ c
      *        'Code not certified for nfeeds>1')
 	  call rdhdi(tVis2,'ntau',ntau2,0)
 	  if(ntau2.ne.0)call bug('f',
-     *	    'Cannot deal with files with delays')
+     *	      'Cannot deal with files with delays')
 	  nants2 = nants2 / nfeeds2
 	  call rdhdi(tVis2,'nsols',nsols2,0)
 	  if(nsols2.le.0)
      *	     call bug('f','Bad number of solutions')
         endif
-        write(*,*) 'End of Vis2 feed/gain check.'
 
 c
 c  See if we have enough space.
 c
-	if(nants.gt.MAXANT)
-     *	  call bug('f','Too many antennae for me to cope with')
-	if(nsols.gt.MAXSOLN)
-     *	  call bug('f','Too many solution intervals for my small brain')
+	if(nants*nsols .gt. MAXANT*MAXSOLN) then
+	  call bug('f','Not enough space, MAXANT*MAXSOLN too small')
+	endif
 c
 c  Check the given antenna numbers, and set the default antenna numbers
 c  if needed.
@@ -199,9 +224,9 @@ c
 	  enddo
 	  numant = nants
 	endif
-c        write(*,*) ants
+
 c
-c  Set the feed numbers
+c  Set the feed numbers (even though we are not supporting nfeed > 1)
 c
 	do i=1,nfeeds
 	   feeds(i) = i
@@ -223,6 +248,7 @@ c
 	coslat = cos(lat)
 	sinlon = sin(lon)
 	coslon = cos(lon)
+	write(*,*) 'VIS=',vis
 	do i=1,nants
 	   apos(1) = antpos(i)         * DCMKS/1.0d9
 	   apos(2) = antpos(i+nants)   * DCMKS/1.0d9
@@ -230,10 +256,11 @@ c
 	   xy(1,i) =  apos(2)
 	   xy(2,i) = -apos(1)*sinlat + apos(3)*coslat
 	   if (show) write(*,*) i,xy(1,i),xy(2,i)
-           write(*,*) i,xy(1,i),xy(2,i)
+           write(*,*) 'antpos: EN(',i,') = ',xy(1,i),xy(2,i)
 	enddo
 
         if(vis2.ne.' ') then
+	   write(*,*) 'VIS2=',vis2
 	  call uvgetvrd(tVis2,'antpos',antpos2,nants2*3)
           call uvgetvrd(tVis2,'latitud',lat2,1)
 	  call uvgetvrd(tVis2,'longitu',lon2,1)
@@ -247,16 +274,19 @@ c
 	    apos2(3) = antpos2(i+nants2*2) * DCMKS/1.0d9
 	    xy2(1,i) =  apos2(2)
 	    xy2(2,i) = -apos2(1)*sinlat2 + apos2(3)*coslat2
-	    if (show) write(*,*) i,xy(1,i),xy(2,i)
-            write(*,*) 'inside vis2 loop for antpos.'
-            write(*,*) i,xy2(1,i),xy2(2,i)
+	    if (show) write(*,*)            i,xy2(1,i),xy2(2,i)
+            write(*,*) 'antpos: EN(',i,') = ',xy2(1,i),xy2(2,i)
 	  enddo
         endif
 
 
 c  Open the gains file. Mode=='append' so that we can overwrite it.
 c
-	call haccess(tVis,itGain,'gains','append',iostat)
+	if (dogain) then
+	   call haccess(tVis,itGain,'gains','append',iostat)
+	else
+	   call haccess(tVis,itGain,'gains','read',iostat)
+	endif
 	if(iostat.ne.0)call MyBug(iostat,'Error accessing gains')
         if(vis2.ne.' ') then
           call haccess(tVis2,itGain2,'gains','append',iostat)
@@ -264,61 +294,198 @@ c
         endif
 
 c
-c  Read the gains.
+c  Read the gains, and also transform them to phaseatm's
 c
 	call GainRd(itGain,nsols,nants,nfeeds,times,Gains,mask)
+	call GainATM(nsols,nants,nfeeds,times,Gains,mask,atm)
         if(vis2.ne.' ') then
-          call GainRd(itGain2,nsols2,nants2,nfeeds2,
-     *      times2,Gains2,mask2)
+          call GainRd(itGain2,nsols2,nants2,nfeeds2,times2,Gains2,mask2)
+          call GainATM(nsols2,nants2,nfeeds2,times2,Gains2,mask2,atm2)
         endif
+
+
 c
 c
-c  Copy the gains.
+c  Copy the gains/atm appropriately
 c
         if(vis2.eq.' ') then
-	 call GainCpy(nsols,nsols,nants*nfeeds,times,Gains,mask,xy,
-     *list1,list2,n1,n2)
-        endif
-        if(vis2.ne.' ') then
-         call GainCpy2(nsols,nsols,nsols2,nants*nfeeds,
-     *    nants2*nfeeds2,times,times2,Gains,Gains2,mask,mask2,
-     *    xy,xy2,list1,list2,n1,n2)
-        endif
-
-c  Write out the gains.
-c
-	call wrhdi(tVis,'nsols',nsols)
-	call GainWr(itGain,nsols,nants,nfeeds,times,Gains)
-        if(vis2.ne.' ') then
-          call wrhdi(tVis2,'nsols',nsols2)
-          call GainWr(itGain2,nsols2,nants2,nfeeds2,
-     *      times2,Gains2)
+	 call GainCpy(nsols,nsols,nants*nfeeds,
+     *                times,Gains,mask,atm,
+     *                xy,list1,list2,n1,n2)
+	else
+         call GainCpy2(nsols,nsols,nsols2,nants*nfeeds,nants2*nfeeds2,
+     *                 times,times2,Gains,Gains2,mask,mask2,atm,atm2,
+     *                 xy,xy2,list1,list2,n1,n2)
         endif
 
+
 c
-c  Write out some history now.
+c  Write out the gains, and update the history
 c
-	call hisopen(tVis,'append')
-	call hiswrite(tVis,'GPBUDDY: Miriad '//version)
-	call hisinput(tVis,'GPBUDDY')
-	call hisclose(tVis)
-        if(vis2.ne.' ') then
-  	  call hisopen(tVis2,'append')
-	  call hiswrite(tVis2,'GPBUDDY: Miriad '//version)
-	  call hisinput(tVis2,'GPBUDDY')
-	  call hisclose(tVis2)
-        endif        
+
+	if (dogain) then
+	   call wrhdi(tVis,'nsols',nsols)
+	   call GainWr(itGain,nsols,nants,nfeeds,times,Gains)
+	   if(vis2.ne.' ') then
+	      call wrhdi(tVis2,'nsols',nsols2)
+	      call GainWr(itGain2,nsols2,nants2,nfeeds2,
+     *                    times2,Gains2)
+	   endif
+
+	   call hisopen(tVis,'append')
+	   call hiswrite(tVis,'GPBUDDY: Miriad '//version)
+	   call hisinput(tVis,'GPBUDDY')
+	   call hisclose(tVis)
+	   if(vis2.ne.' ') then
+	      call hisopen(tVis2,'append')
+	      call hiswrite(tVis2,'GPBUDDY: Miriad '//version)
+	      call hisinput(tVis2,'GPBUDDY')
+	      call hisclose(tVis2)
+	   endif        
+	endif
 c
-c  Close up everything.
+c  Close up input files
 c
 	call hdaccess(itGain,iostat)
 	call uvclose(tVis)
         if(vis2.ne.' ') then
           call hdaccess(itGain2,iostat)
-          calluvclose(tVis2)
+          call uvclose(tVis2)
         endif
+
+c
+c  Process output files
+c
+
+	if (visout .ne. ' ') call CopyVis(vis,visout,
+     *              nsols,nants,nfeeds,times,Gains,mask,atm)    
+	if (vis2out .ne. ' ') call CopyVis(vis2,vis2out,
+     *              nsols2,nants2,nfeeds2,times2,Gains2,mask2,atm2)
+
 	end
-c************************************************************************
+c***********************************************************************
+	SUBROUTINE CopyVis(vis,visout,
+     *                     nsols,nants,nfeeds,times,gains,mask,atm)
+	implicit none
+	include 'maxdim.h'
+c
+	character vis*(*), visout*(*)
+	integer nsols,nants,nfeeds
+	complex Gains(nfeeds*nants,nsols)
+	double precision times(nsols)
+	logical mask(nfeeds*nants)
+	real atm(nfeeds*nants,nsols)
+c
+	INTEGER tVis,tOut,length,nchan,nwide,idx,idx0,nearest
+	LOGICAL dowide,doline,doboth,updated
+	DOUBLE PRECISION preamble(4),time0,time1
+	COMPLEX wcorr(MAXWIDE), corr(MAXCHAN)
+	LOGICAL wflags(MAXWIDE), flags(MAXCHAN)
+	CHARACTER type*1
+c
+	EXTERNAL nearest
+
+	write (*,*) 'Writing new visibility dataset: ',visout
+	IF (nfeeds.NE.1) call bug('f','nfeeds > 1 not supported')
+
+c       open files, no selections (line=, select=) allowed, we copy it all
+c       but without any gain tables
+
+	CALL uvopen(tVis,vis,'old')
+	CALL uvopen(tOut,visout,'new')
+
+c       probe what kind of data we have 
+
+        CALL uvprobvr(tVis,'wcorr',type,length,updated)
+	dowide = type.EQ.'c'
+	CALL uvprobvr(tVis,'corr',type,length,updated)
+	doline = (type.EQ.'r'.OR.type.EQ.'j'.OR.type.EQ.'c')
+	doboth = dowide.AND.doline
+	IF(dowide .AND. .NOT.doline) THEN
+	   WRITE(*,*) 'wide only data'
+	   CALL  uvset(tVis,'data','wide',0,1.,1.,1.)
+	   CALL  uvset(tOut,'data','wide',0,1.,1.,1.)
+	ENDIF
+	CALL trackall(tVis)
+	CALL hdcopy(tVis,tOut,'history')
+
+	nchan = 1
+	nwide = 0
+	idx = 1
+	idx0 = 0
+	time0 = -1.0d0
+
+	write(*,'(A,2F20.6)') 'Range in phaseatm table:',
+     *                        times(1),times(nsols)
+	write(*,*) '              vis time            gain time'
+
+	DO WHILE (nchan.GT.0)
+	   CALL uvread(tVis,preamble,corr,flags,MAXCHAN,nchan)
+	   IF (nchan.GT.0) THEN
+	      IF(doboth) CALL uvwread(tVis,wcorr,wflags,MAXWIDE,nwide)
+	      IF(time0.LT.0d0) time0 = preamble(3)
+	      time1 = preamble(3)
+	      CALL uvcopyvr(tVis,tOut)
+	      idx = nearest(nsols,times,time1)
+	      if (.false.) then
+		 if (idx.NE.idx0) write(*,'(I5,I5,2F20.6)') idx,idx0,
+     *                         time1,times(idx)
+	      endif
+	      CALL uvputvrr(tout,'phaseatm',atm(1,idx),nants)
+	      IF(doboth)CALL uvwwrite(tout,wcorr,wflags,nwide)
+	      CALL uvwrite(tout,preamble,corr,flags,nchan)
+	      idx0 = idx
+	   ENDIF
+	ENDDO
+	write(*,'(A,2F20.6)') 'Range in vis file:      ',
+     *                        time0,time1
+
+	CALL uvclose(tVis)
+
+	CALL hisopen(tOut,'append')
+	CALL hiswrite(tOut,'GPBUDDY....')
+	CALL hisinput(tOut,'GPBUDDY')
+	CALL hisclose(tOut)
+
+	CALL uvclose(tOut)
+
+	END
+C***********************************************************************
+      SUBROUTINE trackall(inset)
+      INTEGER inset
+c
+c   Marks all variable in input data set for copying to output
+c   data set. Assumes that the dataset is already open and at
+c   begining.
+c
+      INCLUDE 'maxdim.h'
+      COMPLEX data(MAXCHAN)
+      LOGICAL flags(MAXCHAN), eof
+      DOUBLE PRECISION preamble(4)
+      INTEGER item,iostat, nread
+      CHARACTER varname*11
+
+      CALL uvread(inset,preamble,data,flags,MAXCHAN,nread)
+      CALL haccess(inset,item,'vartable','read',iostat)
+      IF(iostat.NE.0) CALL bug('f','Error opening vartable')
+
+      eof = .FALSE.
+      DOWHILE(.NOT.eof)
+         CALL hreada(item,varname,eof)
+         IF(.NOT.eof) THEN
+            IF(varname(3:6).NE.'corr' .AND. 
+     *         varname(3:7).NE.'wcorr') THEN
+               CALL uvtrack(inset,varname(3:10),'c')
+            ENDIF
+         ENDIF
+      ENDDO
+      CALL hdaccess(item,iostat)
+      IF(iostat.NE.0) CALL bug('f','Error closing vartable')
+      CALL uvrewind(inset)
+
+      END
+
+c***********************************************************************
 	subroutine GainRd(itGain,nsols,nants,nfeeds,times,Gains,mask)
 c
 	implicit none
@@ -370,8 +537,69 @@ c
 
 	end
 c************************************************************************
-	subroutine GainCpy(maxsols,nsols,nants,times,Gains,mask,xy, 
-     *list1,list2,n1,n2)
+	subroutine GainATM(nsols,nants,nfeeds,times,Gains,mask,atm)
+c
+	implicit none
+	include 'mirconst.h'
+c
+	integer nsols,nants,nfeeds
+	complex Gains(nfeeds*nants,nsols)
+	double precision times(nsols)
+	logical mask(nfeeds*nants)
+	real atm(nfeeds*nants,nsols)
+
+c
+	integer i,k
+	real atm0
+	logical unwrap
+	character fmt1*32
+	
+c
+c       it is assumed the phases vary slowly, so we can use a very
+c       simple algorithm to unwrap the ATM phases, only remembering
+c       the previous value.
+c       We always want to unwrap phases
+c
+	unwrap = .TRUE.
+c
+	DO k=1,nsols
+	   DO i=1,nfeeds*nants
+	      atm(i,k) = atan2(AImag(Gains(i,k)),Real(Gains(i,k)))
+	   ENDDO
+c	   write(*,*) 'ATM ',k,(atm(i,k),i=1,nfeeds*nants)
+	ENDDO
+
+
+	IF (unwrap) THEN
+	  write(*,*) 'unwrapping'
+	  DO i=1,nfeeds*nants
+	    atm0 = 0.0
+	    DO k=1,nsols
+	      atm(i,k) = atm(i,k) - TWOPI*nint((atm(i,k)-atm0)/TWOPI)
+	      atm0 = 0.5*(atm(i,k)+atm0)
+	    ENDDO
+c	    write(*,*) 'i,atm0=',i,atm0
+	  ENDDO
+        ELSE
+	   write(*,*) 'wrapped phases - use only for testing'
+	ENDIF
+
+	write(fmt1,'(A,I2,A)') '(A,I4,F7.3,',nfeeds*nants,'F7.3)'
+
+	IF (.FALSE.) THEN
+	   write(*,*) 'PHASEATM: '
+
+	   DO k=1,nsols
+	      write(*,fmt1) 'ATM ',k,times(k)-2454779.0,
+     *                (atm(i,k),i=1,nfeeds*nants)
+	   ENDDO
+	ENDIF
+
+
+	end
+c************************************************************************
+	subroutine GainCpy(maxsols,nsols,nants,times,Gains,mask,atm,xy, 
+     *                     list1,list2,n1,n2)
 c
 c   BAZ - this is the subroutine to change - giving extra input for 
 c          the ability to scale the gains and apply an offset, as well
@@ -381,6 +609,7 @@ c
 	implicit none
 	integer maxsols,nsols,nants
 	complex Gains(nants,maxsols)
+	real atm(nants,maxsols)
 	double precision times(maxsols)
 	logical mask(nants)
 	real xy(2,nants)
@@ -407,7 +636,8 @@ c------------------------------------------------------------------------
         integer pairs
 	real d, dmin
         write(*,*) ' '
-       
+
+c       
 c       The following loop is for backwards compatibility. Program will
 c       Calculate minimum distance pairs from all antennas if an 
 c       antenna list is not provided.
@@ -428,28 +658,26 @@ c
               write(*,*) 'Ant ',i,' nearest to ',jmin,' @ ',dmin,' m'
               do k=1,nsols
                  gains(i,k)=gains(jmin,k)
+		 atm(i,k)=atm(jmin,k)
               enddo
            enddo
-        endif
-
-c        For use if an antenna list is given.
-c         if (2.ge.1) then
-           if (n1.ge.1) then
-              do j=1,n1
-                 write(*,*) 'Ant',list1(j),' given Ant',list2(j),
+	else
+	   do j=1,n1
+	      write(*,*) 'Ant',list1(j),' given Ant',list2(j),
      *                ' gains'
-                 d = (xy(1,list1(j))-xy(1,list2(j)))**2 + 
-     *               (xy(2,list1(j))-xy(2,list2(j)))**2
-                 dmin=sqrt(d)
-                 write(*,*) 'Distance between antennas: ',dmin,' m'
-                 write(*,*) '------------'
-                 do k=1,nsols
-                   gains(list1(j),k)=(gains(list2(j),k)/
+	      d = (xy(1,list1(j))-xy(1,list2(j)))**2 + 
+     *            (xy(2,list1(j))-xy(2,list2(j)))**2
+	      dmin=sqrt(d)
+	      write(*,*) 'Distance between antennas: ',dmin,' m'
+	      write(*,*) '------------'
+	      do k=1,nsols
+		 gains(list1(j),k)=(gains(list2(j),k)/
      *                ABS(gains(list2(j),k)))*ABS(gains(list1(j),k))
-                 enddo
+		 atm(list1(j),k)=atm(list2(j),k)
 	      enddo
-           endif
-c         endif
+	   enddo
+	endif
+
  	end
 c
 c
@@ -483,7 +711,7 @@ c
 	  offset = offset + 8*nfeeds*nants
 	enddo
 	end
-c************************************************************************
+c***********************************************************************
         subroutine MyBug(iostat,message)
 c
         implicit none
@@ -491,14 +719,14 @@ c
         character message*(*)
 c
 c  Give an error message, and bugger off.
-c------------------------------------------------------------------------
+c-----------------------------------------------------------------------
         call bug('w',message)
         call bugno('f',iostat)
         end
 
-c************************************************************************
+c***********************************************************************
 	subroutine GainCpy2(maxsols,nsols,nsols2,nants,nants2,times,
-     *times2,Gains,Gains2,mask,mask2,xy,xy2,list1,list2,n1,n2) 
+     * times2,Gains,Gains2,mask,mask2,atm,atm2,xy,xy2,list1,list2,n1,n2) 
 c
 c   BAZ - this is the subroutine to change - giving extra input for 
 c   
@@ -508,6 +736,73 @@ c
 	implicit none
 	integer maxsols,nsols,nsols2,nants,nants2
 	complex Gains(nants,maxsols),Gains2(nants2,maxsols)
+	real atm(nants,maxsols),atm2(nants2,maxsols)
+	double precision times(maxsols)
+        double precision times2(maxsols)
+	logical mask(nants), mask2(nants2)
+	real xy(2,nants), xy2(2,nants2)
+        integer n1,n2,idx,nearest,nbad
+        integer list1(n1),list2(n2)
+c
+	external nearest
+c
+c  Copy the gains. For this any flagged ants that did not have a gain,
+c  will look through the list of originally  unflagged gains and see
+c  which antenna is closest and copy the gain of this ant.
+c
+c  Input:
+c    maxsols	Max number of solutions.
+c    nants	Number of antennae times the number of feeds.
+c    ants	Ants to apply the breakpoint to.
+c    numant	Number of antennae.
+c    feeds	Feeds to apply the breakpoints to.
+c    numfeed	Number of feeds.
+c  Input/Output:
+c    nsols	Number of solutions.
+c    times	The read times.
+c    gains	The gains.
+c------------------------------------------------------------------------
+	integer i,j,k, jmin
+        integer pairs
+	real d, dmin, timediff,slop
+        write(*,*) ' '
+
+c       Slop time is given in minutes. .4 min is 24 secs.  
+        slop=2.0/1440.0
+	nbad = 0
+
+         if (n1.ge.1) then
+	    do k=1,nsols
+	       idx = nearest(nsols2,times2,times(k))
+	       timediff = ABS(times(k) - times2(idx))
+	       if (timediff.gt.slop) nbad = nbad+1
+	       do j=1,n1
+		  gains(list1(j),k)=gains2(list2(j),idx)/
+     *                ABS(gains2(list2(j),idx))*ABS(gains(list1(j),idx))
+		  atm(list1(j),k)=atm2(list2(j),idx)
+	       enddo
+	    enddo
+	 else
+	    call bug('f',
+     *        'Minimum distance for vis,vis2 mode not supported yet')
+         endif
+
+	 if (nbad.gt.0) then
+	    write(*,*) 'warning: ',nbad,'/',nsols,' intervals bad slop'
+	 endif
+	 end
+c***********************************************************************
+      subroutine ATMCpy2(maxsols,nsols,nsols2,nants,nants2,times,
+     *         times2,atm,atm2,mask,mask2,xy,xy2,list1,list2,n1,n2) 
+c
+c   BAZ - this is the subroutine to change - giving extra input for 
+c   
+c          
+c
+c
+	implicit none
+	integer maxsols,nsols,nsols2,nants,nants2
+	real atm(nants,maxsols),atm2(nants2,maxsols)
 	double precision times(maxsols)
         double precision times2(maxsols)
 	logical mask(nants), mask2(nants2)
@@ -583,8 +878,7 @@ c                    write(*,*) 'times vs times2',times(k),times2(i)
                      if(timediff.lt.slop) then
                          write(*,*) 'Time diff: ', timediff, ' min'
                          write(*,*) 'Gains copied'
-                         gains(list1(j),k)=gains2(list2(j),i)/
-     *                    ABS(gains2(list2(j),i))*ABS(gains(list1(j),i))
+                         atm(list1(j),k)=atm2(list2(j),i)
                      else
 c                         Need to zero out gain for time stamp
 c                          not matched????????????
@@ -599,3 +893,26 @@ c          endif
 c	enddo
  	end
 
+c-----------------------------------------------------------------------
+	INTEGER FUNCTION nearest(n,times,time)
+	IMPLICIT NONE
+	INTEGER n
+	DOUBLE PRECISION times(n),time
+c
+
+        DOUBLE PRECISION dt,dtmin
+	INTEGER i
+
+	nearest = 1
+	dtmin = ABS(times(1)-time)
+	DO i=2,n
+	   dt = ABS(times(i)-time)
+	   IF (dt .LT. dtmin) THEN
+	      nearest = i
+	      dtmin = dt
+	   ENDIF
+	ENDDO
+
+	END
+
+	
