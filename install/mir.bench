@@ -13,6 +13,7 @@ set mapsize=1024
 set cell=0.5
 set standalone=0
 set clean=0
+set fidelity=0
 
 foreach a ($*)
   set $a
@@ -74,5 +75,13 @@ time invert vis=vis map=map1 beam=beam1 imsize=$mapsize cell=$cell > invert.log
 time clean map=map1 beam=beam1 out=clean1 > clean.log
 time restor model=clean1 beam=beam1 map=map1 out=cmap1 > restor.log
 echo The mirstones can now be obtained to divide 5 minutes by the total elapsed time:
+
+if ($fidelity) then
+   time restor model=clean1 beam=beam1 map=map1 out=res1 mode=residual > restor2.log
+   set rms=(`histo in=res1  | grep Rms | awk '{print $4}'`)
+   set max=(`histo in=cmap1 | grep Max | awk '{print $3}'`)
+   echo Fidelity: `calc $max/$rms`
+endif
+
 
 if ($clean) rm -rf $tmp.*
