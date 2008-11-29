@@ -49,6 +49,13 @@ c             applies gains from ant4 to ant1, ant5 to ant2, etc.
 C         gpbuddy vis=carma vis2=sza 
 C                list1=2,4,5,6,8,9,13,15 
 C                list2=21,23,20,18,19,22,16,17
+C@ scale
+c       Override frequency scale factor for phaseatm between vis2 and vis. 
+c       This is usually a number larger than 1 and can normally be
+c       computed from the effective frequencies at which the two
+c       gain solutions were derived. I.e. selfcal.
+c       Currently no default allowed, since we have not properly
+c       obtained these effective frequencies.
 C       
 c@ options
 c       phase = only phase info. is transferred   **default**
@@ -71,6 +78,7 @@ c    baz     23oct08 Added two list functionality, backwards compatible
 c    mchw    08nov08 minor fixes.
 c    baz/pjt 19nov08 implemented 2nd list processing
 c    pjt     28nov08 morphed gains into new (phase)atm UV variable
+c    pjt     28nov08 added scale=
 c
 c  Bugs and Shortcomings:
 c
@@ -100,7 +108,7 @@ c----------------------------------------------------
         double precision preamble2(5),antpos2(3*MAXANT),apos2(3)
 	double precision preamble(5),antpos(3*MAXANT),apos(3)
         double precision lat2,lon2,sinlat2,coslat2,sinlon2,coslon2
-	double precision lat,lon,sinlat,coslat,sinlon,coslon
+	double precision lat,lon,sinlat,coslat,sinlon,coslon,lo1
 	integer ants(MAXANT),feeds(MAXFEED)
         integer ants2(MAXANT),feeds2(MAXFEED)
 	complex gains(2*MAXANT*MAXSOLN),data(MAXCHAN)
@@ -110,6 +118,7 @@ c----------------------------------------------------
         logical mask2(2*MAXANT),flags2(MAXCHAN)
 	real xy(2,MAXANT)
         real xy2(2,MAXANT)
+	real scale
         integer list1(MAXANT)
         integer list2(MAXANT)
         integer n1,n2
@@ -132,6 +141,7 @@ c
         call keya('out2',vis2out,' ')   
 	call keyl('show',show,.FALSE.)
 	call keya('mode',mode,'phaseatm')
+	call keyr('scale',scale,-1.0)
 c       not used !!
 	call mkeyi('ants',ants,MAXANT,numant)
 	call mkeyi('ants2',ants2,MAXANT,numant2)
@@ -150,6 +160,11 @@ c
 
 	if (dogain) write(*,*) 'Also modyfying gains'
 
+	if (scale .lt. 0.0) then
+	   call bug('w',
+     *              'Currently still need to set scale= for phaseatm')
+	endif
+
 c
 c  Open the input file. We need full uvopen, since we also need
 c  to get the antennae positions
@@ -158,6 +173,15 @@ c
 	call uvopen(tVis,vis,'old')
         call uvread(tVis,preamble,data,flags,MAXCHAN,nread)
 	if (nread.eq.0) call bug('f','No visibilities?')
+	call uvrdvrd(tVis,'lo1',lo1,0.d0)
+	if(lo1.eq.0.d0 .and. scale.lt.0.0) then
+	   call bug('f','Cannot determine scale from missing lo1')
+	else if (scale.lt.0.0) then
+	   scale = lo1/30.0
+	   write(*,*) '### Warning: assuming SZA=30GHz, scale=',scale
+	else
+	   write(*,*) '### Warning: using hardcoded scale=',scale
+	endif
 c-------------------------------------------
 c        Reading the second visibility file, if needed
         if(vis2.ne.' ') then
@@ -315,7 +339,7 @@ c
 	else
          call GainCpy2(nsols,nsols,nsols2,nants*nfeeds,nants2*nfeeds2,
      *                 times,times2,Gains,Gains2,mask,mask2,atm,atm2,
-     *                 xy,xy2,list1,list2,n1,n2)
+     *                 xy,xy2,list1,list2,n1,n2,scale)
         endif
 
 
@@ -637,12 +661,9 @@ c------------------------------------------------------------------------
 	real d, dmin
         write(*,*) ' '
 
-c       
-c       The following loop is for backwards compatibility. Program will
-c       Calculate minimum distance pairs from all antennas if an 
-c       antenna list is not provided.
-c       
         if (n1.eq.0) then
+c          Calculate minimum distance pairs from all antennas since
+c          antenna list is not provided here
 	   do i=1,nants
 	      jmin = -1
 	      do j=1,nants
@@ -662,6 +683,7 @@ c
               enddo
            enddo
 	else
+c          Transfer based on hardcoded list1/list2
 	   do j=1,n1
 	      write(*,*) 'Ant',list1(j),' given Ant',list2(j),
      *                ' gains'
@@ -726,7 +748,8 @@ c-----------------------------------------------------------------------
 
 c***********************************************************************
 	subroutine GainCpy2(maxsols,nsols,nsols2,nants,nants2,times,
-     * times2,Gains,Gains2,mask,mask2,atm,atm2,xy,xy2,list1,list2,n1,n2) 
+     * times2,Gains,Gains2,mask,mask2,atm,atm2,xy,xy2,list1,list2,n1,n2,
+     * scale)
 c
 c   BAZ - this is the subroutine to change - giving extra input for 
 c   
@@ -740,7 +763,7 @@ c
 	double precision times(maxsols)
         double precision times2(maxsols)
 	logical mask(nants), mask2(nants2)
-	real xy(2,nants), xy2(2,nants2)
+	real xy(2,nants), xy2(2,nants2),scale
         integer n1,n2,idx,nearest,nbad
         integer list1(n1),list2(n2)
 c
@@ -767,132 +790,30 @@ c------------------------------------------------------------------------
 	real d, dmin, timediff,slop
         write(*,*) ' '
 
-c       Slop time is given in minutes. .4 min is 24 secs.  
-        slop=2.0/1440.0
+c       Slop time is given in minutes 1min = 1/1440 day)
+        slop=1.0/1440.0
 	nbad = 0
 
-         if (n1.ge.1) then
-	    do k=1,nsols
-	       idx = nearest(nsols2,times2,times(k))
-	       timediff = ABS(times(k) - times2(idx))
-	       if (timediff.gt.slop) nbad = nbad+1
-	       do j=1,n1
-		  gains(list1(j),k)=gains2(list2(j),idx)/
+	if (n1.ge.1) then
+	   do k=1,nsols
+	      idx = nearest(nsols2,times2,times(k))
+	      timediff = ABS(times(k) - times2(idx))
+	      if (timediff.gt.slop) nbad = nbad + 1
+	      do j=1,n1
+		 gains(list1(j),k)=gains2(list2(j),idx)/
      *                ABS(gains2(list2(j),idx))*ABS(gains(list1(j),idx))
-		  atm(list1(j),k)=atm2(list2(j),idx)
-	       enddo
-	    enddo
-	 else
-	    call bug('f',
-     *        'Minimum distance for vis,vis2 mode not supported yet')
-         endif
-
-	 if (nbad.gt.0) then
-	    write(*,*) 'warning: ',nbad,'/',nsols,' intervals bad slop'
-	 endif
-	 end
-c***********************************************************************
-      subroutine ATMCpy2(maxsols,nsols,nsols2,nants,nants2,times,
-     *         times2,atm,atm2,mask,mask2,xy,xy2,list1,list2,n1,n2) 
-c
-c   BAZ - this is the subroutine to change - giving extra input for 
-c   
-c          
-c
-c
-	implicit none
-	integer maxsols,nsols,nsols2,nants,nants2
-	real atm(nants,maxsols),atm2(nants2,maxsols)
-	double precision times(maxsols)
-        double precision times2(maxsols)
-	logical mask(nants), mask2(nants2)
-	real xy(2,nants), xy2(2,nants2)
-        integer n1,n2
-        integer list1(n1),list2(n2)
-c
-c  Copy the gains. For this any flagged ants that did not have a gain,
-c  will look through the list of originally  unflagged gains and see
-c  which antenna is closest and copy the gain of this ant.
-c
-c  Input:
-c    maxsols	Max number of solutions.
-c    nants	Number of antennae times the number of feeds.
-c    ants	Ants to apply the breakpoint to.
-c    numant	Number of antennae.
-c    feeds	Feeds to apply the breakpoints to.
-c    numfeed	Number of feeds.
-c  Input/Output:
-c    nsols	Number of solutions.
-c    times	The read times.
-c    gains	The gains.
-c------------------------------------------------------------------------
-	integer i,j,k, jmin
-        integer pairs
-	real d, dmin, timediff,slop
-        write(*,*) ' '
-c       Slop time is given in minutes. .4 min is 24 secs.  
-        slop=0.0002
-
-c       The following loop is for backwards compatibility. Program will
-c       Calculate minimum distance pairs from all antennas if an 
-c       antenna list is not provided.
-c       
-c        if (n1.eq.0) then
-c	   do i=1,nants
-c	      jmin = -1
-c	      do j=1,nants
-c		 if (mask(j) .and. i.ne.j) then
-c		    d = (xy(1,j)-xy(1,i))**2 + (xy(2,j)-xy(2,i))**2
-c		    if (d.lt.dmin .or. jmin.lt.0) then
-c		       jmin = j
-c		       dmin = d
-c		    endif
-c		 endif
-c	      enddo
-c	      dmin = sqrt(dmin)
-c              write(*,*) 'Ant ',i,' nearest to ',jmin,' @ ',dmin,' m'
-c              do k=1,nsols
-c                 gains(i,k)=gains(jmin,k)
-c              enddo
-c           enddo
-c        endif
-
-c------------------------------------------------------------------------
-c        For use if an antenna list is given.
-         if (n1.ge.1) then
-              do j=1,n1
-                 write(*,*) 'Ant',list1(j),' given Ant',list2(j),
-     *                ' gains'
-                 d = (xy(1,list1(j))-xy2(1,list2(j)))**2 + 
-     *               (xy(2,list1(j))-xy2(2,list2(j)))**2
-                 dmin=sqrt(d)
-                 write(*,*) 'Distance between antennas: ',dmin,' m'
-c                 write(*,*) 'times',times
-c                 write(*,*) 'times2',times2
-                 write(*,*) '------------'
-                 do k=1,nsols
-                   do i=1,nsols2
-c                    write(*,*) 'times vs times2',times(k),times2(i)
-                     timediff = (times2(i)-times(k))*1440.0
-                     timediff= ABS(timediff)
-                     if(timediff.lt.slop) then
-                         write(*,*) 'Time diff: ', timediff, ' min'
-                         write(*,*) 'Gains copied'
-                         atm(list1(j),k)=atm2(list2(j),i)
-                     else
-c                         Need to zero out gain for time stamp
-c                          not matched????????????
-c                         write(*,*) 'Times dont match w/in ',slop, 'min'
-c                         write(*,*) 'Gains not copied'
-                     endif
-                   enddo 
-                 enddo
+		 atm(list1(j),k)=atm2(list2(j),idx)*scale
 	      enddo
-         endif
-c          endif
-c	enddo
- 	end
+	   enddo
+	else
+	   call bug('f',
+     *        'Minimum distance for vis,vis2 mode not supported yet')
+	endif
 
+	if (nbad.gt.0) then
+	   write(*,*) 'warning: ',nbad,'/',nsols,' intervals bad slop'
+	endif
+	end
 c-----------------------------------------------------------------------
 	INTEGER FUNCTION nearest(n,times,time)
 	IMPLICIT NONE
@@ -914,5 +835,5 @@ c
 	ENDDO
 
 	END
-
+c-----------------------------------------------------------------------
 	
