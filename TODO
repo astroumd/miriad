@@ -12,22 +12,20 @@
   the last step has not been well tested, but i'll give that a shot          
   shortly. For this 'intf2c' needs the -x flag and maybe the -c flag.
   gfortran uses the -fdefault-integer-8 flag.
+   
+  also check:  intel compilerL  ifort -i8 
+               gfortran -fdefault-integer-8
 
 
 - WSRT code merge:
   - ratty and intf2c to handle the new PTRDIFF_T type in for/f2c files
+    and auto-detect *4 vs. *8
   - fftw (CUDA)
   - memory based scratch files
   - OpenMP 
 
 - MIR4 vs. MIR5: consider Sault's proposal to handle long integers.
-
-- mem.for and mm.f2c are most likely buggy on 64bit machines:
-  (ifort -i8 solves some of these problems)
-  (gfortran -fdefault-integer-8 might do the same
-  This affects all memory allocated above MAXBUF, as it will use 
-  somewhat system dependant techniques to use malloc() via mm.f2c.
-  	   ** done **
+  **mostly implemented **
 
 - integer*8 support; ratty flag to go back to the old situation if
   the fortran compiler does not support integer*8
@@ -99,3 +97,8 @@
 
 - darwin:
   some don't seem to see -D on darwin, darwin_x86 ??  removed from bug.c
+
+- macosx: linking errors restFP/saveFP
+	http://nxg.me.uk/note/2004/restFP/
+  or
+	http://purl.org/nxg/note/restfp
