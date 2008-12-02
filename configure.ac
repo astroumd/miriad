@@ -155,7 +155,7 @@ def_maxchan=4096	#
 def_maxwin=16		# 
 def_maxwide=18		# 
 def_maxnax=7
-def_maxbuf=4194304	##
+def_maxbuf=10000000     ##
 
 case $TELESCOPE in
      "ata")  echo "Selecting ATA-350 array"
