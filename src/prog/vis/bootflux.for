@@ -87,6 +87,7 @@ c    dnf 23may05 Changed MAXANT3 and MAXBASE3 to work with CARMA data
 c                also included workaround in the case tsys is not in the data
 c    pjt 11jul07 fixed format statement for CARMA when bigant=15 
 c    pjt/mwp 4apr08  fixed default day for calget(), document behavior
+c    pjt     2dec08  fixed UV vs. UVW files  coord(2) or (3)
 c  Bugs:
 c
 c   - Polarization mode not tested.
@@ -99,7 +100,7 @@ c------------------------------------------------------------------------
       character version*(*),defdir*(*)
       parameter(MAXPOL=4,MAXSRC=512,MAXANT3=MAXANT,MAXBASE3=MAXBASE,
      *          PolMin=-9,PolMax=4)
-      parameter(version='BootFlux: version 4-apr-08')
+      parameter(version='BootFlux: version 2-dec-08')
       parameter(defdir=
 c     *         '/home/bima2/data/flux/measured_fluxes/')
 c     *          '/lma/mirth/programmers/lgm/measured_fluxes/')
@@ -885,12 +886,13 @@ c------------------------------------------------------------------------
         real pi,h,c,k
         parameter(pi=3.141592653589793,h=6.6252e-34,c=2.99792458e8)
         parameter(k=1.38045e-23)
-        double precision coord(2)
+        double precision coord(3)
         double precision day
 c        real delday,rms,
-        integer iostat
+        integer iostat,length
         real plmaj,plmin,plangle,u,v,cosi,sini,beta,omega
-        character source*16
+        character source*16, type*4
+	logical ok
 c
 c  Externals.
 c
@@ -902,7 +904,8 @@ c    u,v -- nanosec.
 c    plmaj,plmin -- arcsec.
 c    plangle -- degrees
 c    pltb -- Kelvin
-        call uvgetvrd(tvis,'coord',coord,2)
+	call uvprobvr(tvis,'coord',type,length,ok)
+        call uvgetvrd(tvis,'coord',coord,length)
         u = coord(1)
         v = coord(2)
         call uvgetvrr(tvis,'plmaj',plmaj,1)
