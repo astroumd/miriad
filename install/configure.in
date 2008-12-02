@@ -50,6 +50,8 @@ AC_F77_LIBRARY_LDFLAGS
 
 AC_ARG_PROGRAM
 
+_STAR_RESTFP_FIX
+
 AC_ARG_ENABLE(lfs,  [  --enable-lfs            large-file-size], ok=$enableval, ok=yes)
 if test "$ok" = "yes"; then
   CFLAGS="$CFLAGS -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE"
@@ -82,7 +84,7 @@ def_maxchan=4096	#
 def_maxwin=16		# 
 def_maxwide=18		# 
 def_maxnax=7
-def_maxbuf=4194304	##
+def_maxbuf=10000000     ##
 
 case $TELESCOPE in
      "ata")  echo "Selecting ATA-350 array"
