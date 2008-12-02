@@ -332,6 +332,7 @@ c    14aug06  mchw  format change in history. Initialize unused user inputs.
 c    30jan08  mchw  Fixed case of only one offset pointing center.
 c    02may08  mchw  baseline in 100m units for atmospheric phase index.
 c    07oct08  mchw  better values for baseunit=-3.335668 lat=40:49:02.50 in uvgen
+c    02dec08  mchw  increase line(512) to accomodate longer filenames.
 c
 c  Bugs/Shortcomings:
 c    * Frequency and time smearing is not simulated.
@@ -360,7 +361,7 @@ c	pbfwhm=76,137,-0.2 simulates a primary beam pattern between
 c	10m and 6m antennas at 100 GHz. 
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version = 'Uvgen: version 1.0 7-Oct-2008')
+	parameter(version = 'Uvgen: version 1.0 2-Dec-2008')
 	integer ALTAZ,EQUATOR
 	parameter(ALTAZ=0,EQUATOR=1)
 	integer PolRR,PolLL,PolRL,PolLR,PolXX,PolYY,PolXY,PolYX
@@ -391,7 +392,7 @@ c
 	double precision restfreq(maxspect),lst
 	double precision antpos(3*MAXANT),ra,dec
 	integer item, unit, newiost
-	character line*132, umsg*80
+	character line*512, umsg*80
 	complex gatm
 	real baseline,patm,pslope,pelev,xx,xxamp
 	logical doatm,dopolar,doellim,ok
@@ -1117,10 +1118,10 @@ c  All done. Summarize, tidy up and exit.
 c
         if(newiost.eq.0) then
 	  write(line,'(i10,a,a)')
-     *	  Item,' records appended to file: ',outfile
+     *	  item,' records appended to file: ',outfile
         else
 	   write(line,'(i10,a,a)')
-     *	  Item,' records written to file: ',outfile
+     *	  item,' records written to file: ',outfile
 	endif
 	call output(line)
 	umsg = 'UVGEN: '//line
