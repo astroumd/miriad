@@ -71,6 +71,7 @@ c    rjs  01jan06 Added definition of ref pointing solution.
 c    jhz  11jan07 Added chi2 to the VarChar data array.
 c    pjt  25nov07 One more digit for time to comply with uvlist
 c    dhem 07jan08 Declare itoaf to be 4 characters long (was 2) in Logit
+c    pjt   4dec08 Added phaseatm
 c
 c  Bugs:
 c    ?? Perfect?
@@ -78,7 +79,7 @@ c------------------------------------------------------------------------
 	character version*(*)
 	integer MAXPNTS
 	parameter(MAXPNTS=1000000)
-	parameter(version='VarPlt: version 1.1 1-oct-08')
+	parameter(version='VarPlt: version 1.1 4-dec-08')
 	logical doplot,dolog,dotime,dounwrap
 	character vis*64,device*64,logfile*64,xaxis*16,yaxis*16
 	character xtype*1,ytype*1,xunit*16,yunit*16,calday*24
@@ -888,7 +889,7 @@ c  in the table.
 c
 	integer nvars
 	double precision rad2deg,rad2arc,rad2hr
-	parameter(nvars=66)
+	parameter(nvars=67)
 	parameter(rad2deg=180.d0/pi,rad2arc=3600.d0*rad2deg)
 	parameter(rad2hr=12.d0/pi)
 c
@@ -927,7 +928,7 @@ c
      *	  'epoch   ','years   ',	1, 1.d0,
      *	  'evector ','degrees ',	1, rad2deg,
      *	  'focus   ','volts   ',	1, 1.d0/
-	data (names(i),units(i),dim2s(i),scales(i),i=19,35)/	
+	data (names(i),units(i),dim2s(i),scales(i),i=19,36)/	
      *	  'freq    ','GHz     ',	1, 1.d0,
      *	  'freqif  ','GHz     ',	1, 1.d0,
      *	  'inttime ','seconds ',	1, 1.d0,
@@ -940,12 +941,13 @@ c
      *	  'obsdec  ','degrees ',	1, rad2deg,
      *	  'obsra   ','hours   ',	1, rad2hr,
      *	  'pbfwhm  ','arcsec  ',	1, 1.d0,
+     *    'phaseatm','degrees ',        1, rad2deg,
      *	  'phaselo1','degrees ',	1, rad2deg,
      *	  'phaselo2','degrees ',	1, rad2deg,
      *	  'phasem1 ','degrees ',	1, rad2deg,
      *	  'plangle ','degrees ',	1, 1.d0,
      *	  'plmaj   ','arcsec  ',	1, 1.d0/
-	data (names(i),units(i),dim2s(i),scales(i),i=36,54)/
+	data (names(i),units(i),dim2s(i),scales(i),i=37,55)/
      *	  'plmin   ','arcsec  ',	1, 1.d0,
      *	  'pltb    ','Kelvin  ',	1, 1.d0,
      *	  'pntdec  ','degrees ',	1, rad2deg,
@@ -965,7 +967,7 @@ c
      *	  'ut      ','hours   ',	1, rad2hr,
      *	  'veldop  ','km/sec  ',	1, 1.d0,
      *	  'vsource ','km/sec  ',	1, 1.d0/
-	data (names(i),units(i),dim2s(i),scales(i),i=55,nvars)/
+	data (names(i),units(i),dim2s(i),scales(i),i=56,nvars)/
      *	  'wfreq   ','GHz     ',	1, 1.d0,
      *	  'wind    ','km/h    ',        1, 1.d0,
      *    'winddir ','degrees ',        1, 1.d0,
