@@ -21,6 +21,9 @@ c
       include 'mem.h'
 c
       CHARACTER version*80, versan*80
+      INTEGER membuf,size
+
+      EXTERNAL membuf
 
       version = versan('maxdim',
      * '$Id$')
@@ -32,10 +35,16 @@ c
       CALL keyini
       CALL keyfin
 
+      CALL output('$MIR/VERSION:')
+      CALL system('cat $MIR/VERSION')
+
+
 
 c  There are some variables that are only present in maxdim.h (fortran)
 c  and not in maxdimc.h (C): MAXWIDE
 c  and some not in maxdim.h but in maxdimc.h:   MAXNAX
+
+      CALL output('$MIRINC/maxdim.h parameter:')
 
       WRITE(*,*) 'MIRTEL       = ',MIRTEL
       WRITE(*,*) 'MAXBUF       = ',MAXBUF
@@ -50,6 +59,12 @@ c  and some not in maxdim.h but in maxdimc.h:   MAXNAX
       WRITE(*,*) 'MAXWIN       = ',MAXWIN
       WRITE(*,*) 'MAXWIDE      = ',MAXWIDE
 c     WRITE(*,*) 'MAXNAX       = ',MAXNAX
+
+
+      CALL output('static membuf (maxbuf) usage:')
+      size = membuf()
+      WRITE(*,*) 'membuf()     = ',size
+      
 
 
       END
