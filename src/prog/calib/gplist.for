@@ -74,6 +74,11 @@ c     Use options=addphase to add phases to the existing ones.
 c 
 c     Use options=addphase,force to replace phases.
 c
+c@ ants=
+c     If given, this is the list of ants you want to see displayed.
+c     Useful if you want a less wide screen display.
+c     By default all are displayed, within limits.
+c
 c@ jyperk 
 c     Array of 15 numbers (1 per antenna) giving the Jy-per-K values.
 c     Array elements default to zero so you don't have to give 15 numbers.
@@ -123,19 +128,20 @@ c    pjt/smw 28nov06 Added new options=addphase
 c    smw/pjt  8dec06 Format fiddling
 c    dnf     14feb08 More format fiddling to assure spaces between columns
 c    pjt     24nov08 Fix dyn mode for > 15 ants, remove options=dyn (now default)
+c    pjt      5dec09 Add ants= keyword to limit the width of output
 c                    
 c  Bugs and Shortcomings:
 c    fix options=complex for > 8 ants
 c-----------------------------------------------------------------------
 	include 'gplist.h'
 	character version*(*)
-	parameter(version='GpList: version 25-nov-08')
+	parameter(version='GpList: version 5-dec-08')
 	logical dovec,docomp,dophas,doall,dozero,domult,hexists,doamp
 	logical dolimit,doclip,dosigclip,doforce,dohist,doaddph
 	real jyperk(MAXGANT) 
 	character vis*80,msg*256
-	integer ngains,nfeeds,ntau,nants,iostat,njyperk
-	integer tVis
+	integer ngains,nfeeds,ntau,nants,iostat,njyperk,i
+	integer tVis,nantsd,antsd(MAXGANT)
 	data jyperk /MAXGANT * 0.0/
 c
 c  Get the input parameters.
@@ -144,6 +150,7 @@ c
 	call keyini
 	call keya('vis',vis,' ')
 	call mkeyr('jyperk',jyperk,MAXGANT,njyperk)
+	call mkeyi('ants',antsd,MAXGANT,nantsd)
 	call GetOpt(doamp,dovec,docomp,dophas,doall,dozero,domult,
      *            dolimit,doclip,dosigclip,doforce,doaddph)
 	call keyfin
@@ -179,20 +186,27 @@ c
 c
 c  Determine the number of feeds in the gain table.
 c
-	call rdhdi(tVis,'ngains',ngains,0)
-	call rdhdi(tVis,'nfeeds',nfeeds,1)
-	call rdhdi(tVis,'ntau',  ntau,  0)
-	if(nfeeds.le.0.or.nfeeds.gt.2.or.mod(ngains,nfeeds+ntau).ne.0
+      call rdhdi(tVis,'ngains',ngains,0)
+      call rdhdi(tVis,'nfeeds',nfeeds,1)
+      call rdhdi(tVis,'ntau',  ntau,  0)
+      if(nfeeds.le.0.or.nfeeds.gt.2.or.mod(ngains,nfeeds+ntau).ne.0
      *	  .or.ntau.gt.1.or.ntau.lt.0)
      *	  call bug('f','Bad number of gains or feeds in '//vis)
 	nants = ngains / (nfeeds + ntau)
       write(6,*) "Found gain entries for ",nants," antennas."
+      if (nantsd.EQ.0) then
+	nantsd = nants
+	do i=1,nants
+	  antsd(i) = i
+	enddo
+      endif
 c
 c  List/Replace the gains now.
 c
-	call ReplGain(tVis,dohist,
+      call ReplGain(tVis,dohist,
      *        doamp,dovec,docomp,dophas,doall,dozero,domult,dolimit,
-     *        doclip,dosigclip,doforce,nfeeds,ntau,nants,jyperk,
+     *        doclip,dosigclip,doforce,
+     *        nfeeds,ntau,nants,jyperk,nantsd,antsd,
      *        doaddph)
 c
 c  Write out some history now.
@@ -272,7 +286,7 @@ c------------------------------------------------------------------------
 c***********************************************************************
       subroutine ReplGain(tVis,dohist,doamp,dovec,docomp,dophas,doall,
      *              dozero,domult,dolimit,doclip,dosigclip,doforce,
-     *              nfeeds,ntau,nants,jyperk,doaddph)
+     *              nfeeds,ntau,nants,jyperk,nantsd,antsd,doaddph)
 c
       implicit none
       include 'gplist.h'
@@ -281,6 +295,7 @@ c
       logical doamp,dovec,docomp,dophas,doall,dozero,domult,dolimit,
      *        doclip,dosigclip,doforce,dohist,doaddph
       integer nfeeds,ntau,nants,tVis,j,jant(MAXGANT),k,jind(3600)
+      integer nantsd,antsd(MAXGANT)
       real jyperk(MAXGANT),MeanGain(MAXGANT),radtodeg,
      *     GainArr(MAXGANT,3600),
      *     MednGain(MAXGANT), MedArr(3600), GainRms(MAXGANT), 
@@ -294,7 +309,7 @@ c
 c------------------------------------------------------------------------
         complex Gains(MAXGAINS), g
 	double precision time(MAXSOLS)
-	integer nsols,offset,pnt,i,tGains,iostat,ngains
+	integer nsols,offset,pnt,i,m,tGains,iostat,ngains
 	character line*256,ctime*8,msg*256,word*32
 	character*32 fmt99,fmt198, fmt199, fmt299
         integer igains
@@ -341,10 +356,10 @@ c
 c
 c  Set the dynamic format statements
 c
-	write(fmt99, '(a,i2,a)') '(a8,2x,',ngains,'(f5.2,1x))'
-	write(fmt299,'(a,i2,a)') '(a8,2x,',ngains,'(f5.1,1x))'
-	write(fmt198,'(a,i2,a)') '(a8,',ngains,'i5)'
-	write(fmt199,'(a,i2,a)') '(a8,',ngains,'(1x,f6.2))'
+	write(fmt99, '(a,i2,a)') '(a8,2x,',nantsd,'(f5.2,1x))'
+	write(fmt299,'(a,i2,a)') '(a8,2x,',nantsd,'(f5.1,1x))'
+	write(fmt198,'(a,i2,a)') '(a8,',nantsd,'i5)'
+	write(fmt199,'(a,i2,a)') '(a8,',nantsd,'(1x,f6.2))'
 c  
 c  Now list the values read
 c
@@ -393,8 +408,8 @@ c	 enddo
             k=(i-1)*nants
 	    write(msg,fmt198) ctime,
      *                (nint(radtodeg*
-     *                atan2(AImag(Gains(k+igains)),
-     *                Real(Gains(k+igains)))),igains=1,ngains)
+     *                atan2(AImag(Gains(k+antsd(m))),
+     *                Real(Gains(k+antsd(m))))),m=1,nantsd)
             call output(msg)
          enddo
       else if (doamp) then
@@ -414,7 +429,7 @@ c	 enddo
 	    call JulDay(time(i),'H',line(1:18))
 	    ctime = line(9:16)
 	    write(msg,fmt199) ctime,
-     *             (abs(Gains((i-1)*nants+igains)), igains=1,ngains)
+     *             (abs(Gains((i-1)*nants+antsd(m))), m=1,nantsd)
 	    call output(msg)
 	    do j=1,nants
 	       if (abs(Gains((i-1)*nants+j)).gt.0.0) then
@@ -444,14 +459,14 @@ c	 enddo
      &               '------------------------------------'
 	 call output(msg)
          write(msg,fmt199) 'Means:  ',
-     *                        (MeanGain(igains),igains=1,ngains)
+     *                        (MeanGain(antsd(m)),m=1,nantsd)
 	 call output(msg)
 	 if (doMed) then
-	    write(msg,fmt199) 'Medians:',(MednGain(igains),
-     *                                      igains=1,ngains)
+	    write(msg,fmt199) 'Medians:',(MednGain(antsd(m)),
+     *                                      m=1,nantsd)
 	    call output(msg)
-            write(msg,fmt199) 'Rms:    ', (GainRms(igains), 
-     *                                      igains=1,ngains)
+            write(msg,fmt199) 'Rms:    ', (GainRms(antsd(m)),
+     *                                      m=1,nantsd)
 	    call output(msg)
 	 endif
 	 write(msg,197) '------------------------------------',
