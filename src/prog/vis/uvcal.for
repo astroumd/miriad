@@ -242,11 +242,12 @@ c    mchw 14mar07  added option noisecal to copy conj of LSB into USB.
 c    mchw 01oct07  added keywork onsource to set uvvariable "on"
 c    mchw 12feb08  change MAXANT2 to MAXANT in fxcal.
 c    pjt  20nov08  added atmcal option
+c    pjt   4dec08  fix wides for atmcal option
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	integer maxbad
 	character version*(*)
-	parameter(version='UVCAL: version 28-nov-2008')
+	parameter(version='UVCAL: version 4-dec-2008')
 	parameter(maxbad=20)
 	real PI
 	parameter(PI=3.1415926)
@@ -581,7 +582,7 @@ c
 c  Process the wideband data separately if doing both wide and channel data.
 c
 	      if(dowide.and.dochan)then
-                if(.not.(slope.or.avechan.or.linecal))
+                if(.not.(slope.or.avechan.or.linecal.or.atmcal))
      *                    call uvDatWRd(wdata,wflags,maxchan,nwide)
             if(dooffset)then
               do i=1,nwide
@@ -1025,7 +1026,8 @@ c********1*********2*********3*********4*********5*********6*********7*c
 	double precision preamble(5)
 c
 c  Remove phase variations due to weather conditions picked up via
-c  the buddy system
+c  the buddy system, as obtained from the phaseatm variable.
+c  See gpbuddy how these are computed.
 c
 c  In:
 c    lIn	Handle of input uv-data.
@@ -1081,6 +1083,7 @@ c
 	  phase = sfreq(i) / freq0 * phased
 	  data(i) = data(i) * expi(phase)
 	enddo
+
 	end
 c********1*********2*********3*********4*********5*********6*********7*c
 	subroutine makewide(lIn,data,flags,nchan,wdata,wflags,nwide,
