@@ -7,7 +7,7 @@ c& pjt
 c: calibration
 c+
 c	GpBuddy is a MIRIAD task which modifies a gain table to inherit
-c       some of the antenna gains from that of a buddy antenna.
+c       (some of) the antenna gains from that of a buddy antenna.
 c
 c       It is also possible not to modify the gains, but write out
 c       an unwrapped phaseatm UV variable, which can later be applied
@@ -25,6 +25,8 @@ c	No default.
 c@ out
 c       Output file for vis, if selected. This file will contain the phaseatm
 c       variable derived from the gains (and/or inherited from a buddy).
+c       NOTE: if out2= is given as well, your scale= is probably wrong for
+c       one of the output.
 c@ vis2
 c       The 2nd input visibility file, containing a gain file from 
 c       which gains will be applied to antennas in the primary 
@@ -34,21 +36,24 @@ c       gains internally from the primary visibility dataset.
 c@ out2
 c       Output file for vis2, if selected. Will again contain phaseatm
 c       variable derived from the gains.
+c       NOTE: if out= is given as well, your scale= is probably wrong for one
+c       of them.
 c@ show
 c       Show the East-North layout (in meters) in tabular format.
 c       LISTOBS will also print these out by default.
 c       Default: false
 c@ list1
-c       The list of primary antennas to receive new gains
+c       The list of primary antennas to receive new gains.
 c@ list2
 c       The 2nd list of paired antennas to apply gains to primary
 c
 c	Example:
-c	  gpbuddy vis=cyga [ants=] list1=1,2,3 list2=4,5,6
-c             applies gains from ant4 to ant1, ant5 to ant2, etc.
+c	  gpbuddy vis=cyga list1=1,2,3 list2=4,5,6
+c             applies gains from ant-4 to ant-1, ant-5 to ant-2, etc.
 C         gpbuddy vis=carma vis2=sza 
 C                list1=2,4,5,6,8,9,13,15 
 C                list2=21,23,20,18,19,22,16,17
+C       
 C@ scale
 c       Override frequency scale factor for phaseatm between vis2 and vis. 
 c       This is usually a number larger than 1 and can normally be
@@ -56,9 +61,15 @@ c       computed from the effective frequencies at which the two
 c       gain solutions were derived. I.e. selfcal.
 c       Currently no default allowed, since we have not properly
 c       obtained these effective frequencies.
+c       WARNING: if vis= and vis2= are obseved at different frequencies
+c       you probably should not be using both out= and out2=
 C       
 c@ options
-c       phase = only phase info. is transferred   **default**
+c
+c@ reset
+c       Reset the gains to (1,0) and phaseatm to 0.0 when no buddy antenna
+c       given.
+c
 c@ mode
 c       gains or phaseatm. 
 c       For gains the gains of the input file(s) are overwritten,
@@ -79,8 +90,11 @@ c    mchw    08nov08 minor fixes.
 c    baz/pjt 19nov08 implemented 2nd list processing
 c    pjt     28nov08 morphed gains into new (phase)atm UV variable
 c    pjt     28nov08 added scale=
+c    pjt      4dec08 scale of gain phases
 c
 c  Bugs and Shortcomings:
+c     phaseatm:  interpolate on an interval, don't take nearest neighbor
+c     missing:   set missing gains to (1,0) and phaseatm=0 in recipient
 c
 c-----------------------------------------------------------------------
 	include 'maxdim.h'
@@ -114,7 +128,7 @@ c----------------------------------------------------
 	complex gains(2*MAXANT*MAXSOLN),data(MAXCHAN)
         complex gains2(2*MAXANT*MAXSOLN),data2(MAXCHAN)
 	real atm(MAXANT*MAXSOLN), atm2(MAXANT*MAXSOLN)
-	logical mask(2*MAXANT),flags(MAXCHAN),show,dogain
+	logical mask(2*MAXANT),flags(MAXCHAN),show,dogain,doreset
         logical mask2(2*MAXANT),flags2(MAXCHAN)
 	real xy(2,MAXANT)
         real xy2(2,MAXANT)
@@ -140,6 +154,7 @@ c
         call keya('vis2',vis2,' ')   
         call keya('out2',vis2out,' ')   
 	call keyl('show',show,.FALSE.)
+	call keyl('reset',doreset,.FALSE.)
 	call keya('mode',mode,'phaseatm')
 	call keyr('scale',scale,-1.0)
 c       not used !!
@@ -149,15 +164,19 @@ c       not used !!
 c 
 c  Various options, vis only, vis+antenna lists or 2 vis files
 c
-	if(vis.eq.' ')call bug('f','No input vis data-set given')
-        if(vis2.eq.' ') write(*,*)
-     *'Only one visibility file.  Pairs found w/in this dataset'
-        if(n1.ne.n2) call bug('f','Need ant lists same length')
-        if(n1.eq.0) write(*,*) 
-     *'No antenna list given. Routine will calculate closest pairs'
+c-----------------------------------------------------------------------
+	if(vis.eq.' ')call bug('f',
+     *    'No input vis= data-set given')
+        if(vis2.eq.' ') call bug('i',
+     *    'Only one visibility file.  Pairs found w/in this dataset')
+        if(n1.ne.n2) call bug('f',
+     *     'list1= and list2= need to contain same number of ants')
+        if(n1.eq.0) call bug('i',
+     *    'No antenna list given. Will calculate closest pairs')
 
+
+c       select between 'gain' and 'phaseatm' mode
 	dogain = mode(1:1).eq.'g'
-
 	if (dogain) write(*,*) 'Also modyfying gains'
 
 	if (scale .lt. 0.0) then
@@ -192,40 +211,12 @@ c        Reading the second visibility file, if needed
 c-------------------------------------------
 
 c
-c  Determine the number of things in the gain table.
+c  Determine size dependant number of things in the gain table.
 c
-	call rdhdi(tVis,'ngains',nants,0)
-	call rdhdi(tVis,'nfeeds',nfeeds,1)
-	if(nfeeds.le.0.or.nfeeds.gt.2.or.nants.lt.nfeeds.or.
-     *	    mod(nants,nfeeds).ne.0)
-     *	  call bug('w','Bad number of gains or feeds in '//vis)
-
-	if (nfeeds.ne.1) call bug('f','Code not certified for nfeeds>1')
-	call rdhdi(tVis,'ntau',ntau,0)
-	if(ntau.ne.0)call bug('f','Cannot deal with files with delays')
-	nants = nants / nfeeds
-	call rdhdi(tVis,'nsols',nsols,0)
-	if(nsols.le.0)
-     *	  call bug('f','Bad number of solutions')
-
-        if(vis2.ne.' ') then
-	  call rdhdi(tVis2,'ngains',nants2,0)
-	  call rdhdi(tVis2,'nfeeds',nfeeds2,1)
-	  if(nfeeds2.le.0.or.nfeeds2.gt.2.or.nants2.lt.nfeeds2.or.
-     *	    mod(nants2,nfeeds2).ne.0)
-     *	  call bug('f','Bad number of gains2 or feeds2 in '//vis2)
-c
-	  if (nfeeds2.ne.1) call bug('f',
-     *        'Code not certified for nfeeds>1')
-	  call rdhdi(tVis2,'ntau',ntau2,0)
-	  if(ntau2.ne.0)call bug('f',
-     *	      'Cannot deal with files with delays')
-	  nants2 = nants2 / nfeeds2
-	  call rdhdi(tVis2,'nsols',nsols2,0)
-	  if(nsols2.le.0)
-     *	     call bug('f','Bad number of solutions')
-        endif
-
+     	call gheader(vis,tvis,nants,nfeeds,ntau,nsols)
+	if(vis2.ne.' ')
+     *       call gheader(vis2,tvis2,nants2,nfeeds2,ntau2,nsols2)
+    
 c
 c  See if we have enough space.
 c
@@ -339,7 +330,7 @@ c
 	else
          call GainCpy2(nsols,nsols,nsols2,nants*nfeeds,nants2*nfeeds2,
      *                 times,times2,Gains,Gains2,mask,mask2,atm,atm2,
-     *                 xy,xy2,list1,list2,n1,n2,scale)
+     *                 xy,xy2,list1,list2,n1,n2,scale,doreset)
         endif
 
 
@@ -385,6 +376,40 @@ c
      *              nsols,nants,nfeeds,times,Gains,mask,atm)    
 	if (vis2out .ne. ' ') call CopyVis(vis2,vis2out,
      *              nsols2,nants2,nfeeds2,times2,Gains2,mask2,atm2)
+
+	end
+c***********************************************************************
+	subroutine gheader(vis,tvis,nants,nfeeds,ntau,nsols)
+	implicit none
+c
+c  get some important header variables for the gain tables
+c  currently limited to 1 feed and no delays
+c
+c
+	character vis*(*)
+	integer tvis,nants,nfeeds,ntau,nsols
+
+	character*256 file
+	integer len1
+	external len1
+
+	file = vis(1:len1(file))
+
+	call rdhdi(tVis,'ngains',nants,0)
+	if(nants.eq.0) call bug('f',
+     *      'No gaintable in '//file)
+
+	call rdhdi(tVis,'nfeeds',nfeeds,1)
+	if (nfeeds.ne.1) call bug('f',
+     *      'Code not certified for nfeeds>1 in '//file)
+
+	call rdhdi(tVis,'ntau',ntau,0)
+	if(ntau.ne.0) call bug('f',
+     *      'Cannot deal with files with delays in '//file)
+
+	call rdhdi(tVis,'nsols',nsols,0)
+	if(nsols.le.0) call bug('f',
+     *      'Bad number of solutions in '//file)
 
 	end
 c***********************************************************************
@@ -749,7 +774,7 @@ c-----------------------------------------------------------------------
 c***********************************************************************
 	subroutine GainCpy2(maxsols,nsols,nsols2,nants,nants2,times,
      * times2,Gains,Gains2,mask,mask2,atm,atm2,xy,xy2,list1,list2,n1,n2,
-     * scale)
+     * scale,doreset)
 c
 c   BAZ - this is the subroutine to change - giving extra input for 
 c   
@@ -762,7 +787,7 @@ c
 	real atm(nants,maxsols),atm2(nants2,maxsols)
 	double precision times(maxsols)
         double precision times2(maxsols)
-	logical mask(nants), mask2(nants2)
+	logical mask(nants), mask2(nants2),doreset
 	real xy(2,nants), xy2(2,nants2),scale
         integer n1,n2,idx,nearest,nbad
         integer list1(n1),list2(n2)
@@ -799,6 +824,12 @@ c       Slop time is given in minutes 1min = 1/1440 day)
 	      idx = nearest(nsols2,times2,times(k))
 	      timediff = ABS(times(k) - times2(idx))
 	      if (timediff.gt.slop) nbad = nbad + 1
+	      if (doreset) then
+		 do j=1,nants
+		    gains(j,k) = CMPLX(1.0,0.0)
+		    atm(j,k)   = 0.0
+		 enddo
+	      endif
 	      do j=1,n1
 		 gains(list1(j),k)=gains2(list2(j),idx)/
      *                ABS(gains2(list2(j),idx))*ABS(gains(list1(j),idx))
