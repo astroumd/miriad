@@ -12,6 +12,8 @@ c       Missing Baselines are replaced with 0s,
 c       Missing channels cause a fatal error.
 c       Flagged data are shown as 0, even if underlying values are non-0
 c
+c       This program expects the data to be homogeneous.
+c
 c	Related tasks:
 c	  	TVFLAG - good for inspection and flagging, but
 c                        only works in 8bit displays
@@ -36,9 +38,13 @@ c	No calibration is applied by UVIMAGE.
 c	Default: amplitude
 c
 c@ out
-c	Output image. No default.
-c       Currently the image cube is poorly labeled as CHANNEL,
-c       BASELINE, TIME with no real meaningful coordinates.
+c	Output image. If no output image give, the visibility
+c       data will be scanned and a summary is given if there
+c       are integrations with missing (or extra) baselines
+c       and missing (or extra) channels.
+c       Currently the image cube is poorly labeled as 
+c       CHANNEL, BASELINE, TIME with no real meaningful coordinates.
+c       See mode= below for other orderings of axes.
 c@ mode
 c       This controls in what order the cube is written
 c       1: CHANNEL-BASELINE-TIME (default)
@@ -55,6 +61,7 @@ c  History:
 c     pjt  20sep06  Initial version, cloned off varmap
 c     pjt  21sep06  Added mode keyword, more efficient memory usage
 c     pjt  22dec06  Less terse, add ignore=
+c     pjt   8dec08  Allow scanning mode if out= absent
 c
 c  TODO
 c     - write plane by plane, but this will limit it to mode=1
@@ -62,13 +69,15 @@ c       but handle much larger cubes
 c     - instead of array(MAXSIZE) should really use the perhaps not so
 c       portable dynamic memory allocation trick in miriad
 c     - consider copying the flags from the vis brick to the image brick
+c     - MAXSIZE is 64MB right now.
+c     - if no out= present, scan it, and report irregular behavior
 c----------------------------------------------------------------------c
-c  #define miralloc
+c #define miralloc
 c
        include 'maxdim.h'
        include 'mirconst.h'
        character*(*) version
-       parameter(version='UVIMAGE: version 22-dec-2006')
+       parameter(version='UVIMAGE: version 8-dec-2008')
        integer MAXSELS
        parameter(MAXSELS=512)
        integer MAXSIZE
@@ -76,7 +85,7 @@ c
 
        real sels(MAXSELS)
        complex data(MAXCHAN)
-       logical flags(MAXCHAN),qmnmx,ignore
+       logical flags(MAXCHAN),qmnmx,ignore,cube
        double precision preamble(4),oldtime
        integer lIn,nchan,nread,nvis,nchannel,vmode,nbl,omode
        real start,width,step
@@ -99,6 +108,12 @@ c
 c  Get the input parameters.
 c
        call output(version)
+#ifdef miralloc
+       call output('using miralloc')
+#else
+       call output('using MAZSIZE')
+#endif
+
        call keyini
        call keyf ('vis',vis,' ')
        call keyline(linetype,nchan,start,width,step)
@@ -112,7 +127,10 @@ c
 c  Check that all the inputs are reasonable.
 c
        if (vis.eq.' ') call bug('f','Input name must be given')
-       if (out.eq.' ') call bug('f','Output image missing')
+       cube = (out.ne.' ')
+       if (.not.cube) then
+          call bug('i','scanning mode -  error if visbrick not regular')
+       endif
        if (nchan.gt.0) nchan = MIN(nchan,MAXCHAN)
 
        if(index(view,'re').gt.0) then
@@ -126,7 +144,7 @@ c
        else
           call bug('f','Unknown view='//view)
        endif
-       write(line,'(a,a)') 'Mapping ', view
+       write(line,'(a,a)') 'Mapping view=', view
        call output(line)
 
 c
@@ -137,7 +155,7 @@ c
      *   call uvset (lIn,'data',linetype,nchan,start,width,step)
        call SelApply(lIn,sels,.true.)
 c
-c  Scan the visibilty file: open first record
+c  Scan the visibilty file: open first record so we remember #channels
 c
        call uvread (lIn, preamble, data, flags, maxchan, nread)
        if(nread.le.0) call bug('f','No data found in the input.')
@@ -149,11 +167,11 @@ c
           call uvprobvr(lIn,'corr',type,length,updated)
        endif
        if(type.eq.'r') then
-          call bug('i','Datatype is real')
+          call bug('i','Visibility datatype is real (r)')
        else if(type.eq.'j'.or.type.eq.'c') then
-          call bug('i','Datatype is complex')
+          call bug('i','Visibility datatype is complex (j or c)')
        else
-          call bug('f','Unknown datatype')
+          call bug('f','Visibilities with unknown datatype')
        endif
        do i=1,MAXANT
           antsel(i) = 0
@@ -161,7 +179,8 @@ c
        ntime = 1
 
 c
-c  Read through the uvdata a first time to gather how big the cube should be
+c  Continue to read through the uvdata a first time to gather
+c  how big the cube should be
 c
        do while(nread.gt.0)
           if(nread.ne.nchannel)
@@ -204,19 +223,22 @@ c
           nsize(3) = nchannel
        endif
 
-       if (nsize(1)*nsize(2)*nsize(3) .GT. MAXSIZE) call bug('f',
+
+       if (cube) then
+          if (nsize(1)*nsize(2)*nsize(3) .GT. MAXSIZE) call bug('f',
      *       'Too many data, use  uvaver, or select= to cut down')
 
 
-       call xyopen(lOut,Out,'new',3,nsize)
-       call maphead(lIn,lOut,nsize,omode)
+          call xyopen(lOut,Out,'new',3,nsize)
+          call maphead(lIn,lOut,nsize,omode)
 
 #ifdef miralloc
-       call memalloc(apnt,nsize(1)*nsize(2)*nsize(3),'r')
+          call memalloc(apnt,nsize(1)*nsize(2)*nsize(3),'r')
 #else
-       apnt = 1
+          apnt = 1
 #endif
-       call azero(array(apnt),nsize(1),nsize(2),nsize(3))
+          call azero(array(apnt),nsize(1),nsize(2),nsize(3))
+       endif
 
 c
 c   Rewind vis file and now process the data
@@ -246,12 +268,14 @@ c
                 else
                    call bug('f','Illegal view')
                 endif
-                if (omode.eq.1) then
-                   call aset(array,nsize(1),nsize(2),nsize(3),i,j,k,v)
-                else if (omode.eq.2) then
-                   call aset(array,nsize(1),nsize(2),nsize(3),k,i,j,v)
-                else
-                   call aset(array,nsize(1),nsize(2),nsize(3),k,j,i,v)
+                if (cube) then
+                   if (omode.eq.1) then
+                     call aset(array,nsize(1),nsize(2),nsize(3),i,j,k,v)
+                   else if (omode.eq.2) then
+                     call aset(array,nsize(1),nsize(2),nsize(3),k,i,j,v)
+                   else
+                     call aset(array,nsize(1),nsize(2),nsize(3),k,j,i,v)
+                   endif
                 endif
                 if (qmnmx) then
                    datamin = MIN(datamin,v)
@@ -270,25 +294,26 @@ c
 c
 c  Write the image and it's header.
 c
-      call putimage(lOut,array,nsize(1),nsize(2),nsize(3))
-      call wrhdr(lOut,'datamin',datamin)
-      call wrhdr(lOut,'datamax',datamax)
-c
+       if (cube) then
+          call putimage(lOut,array,nsize(1),nsize(2),nsize(3))
+          call wrhdr(lOut,'datamin',datamin)
+          call wrhdr(lOut,'datamax',datamax)
+       endif
+c     
 c  Write summary.
 c
       write(line,'(a,i6)') ' number of records read= ',nvis
       call output(line)
 c
-c  Write the history file.
+c  Write the history file, and close the file
 c
-      call hisopen(lOut,'append')
-      call hiswrite(lOut, 'UVIMAGE '//version)
-      call hisinput(lOut, 'UVIMAGE')
-      call hisclose(lOut)
-c
-c  Close the files after writing history
-c
-      call xyclose(lOut)
+      if (cube) then
+         call hisopen(lOut,'append')
+         call hiswrite(lOut, 'UVIMAGE '//version)
+         call hisinput(lOut, 'UVIMAGE')
+         call hisclose(lOut)
+         call xyclose(lOut)
+      endif
 c
       end
 c********1*********2*********3*********4*********5*********6*********7**
