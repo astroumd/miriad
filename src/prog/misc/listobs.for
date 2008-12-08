@@ -85,15 +85,20 @@ c          11-dec-07 pjt removed BW/cormode, printing both ut and lst
 c          16-jan-08 pjt Added uv distance to the baseline-UVW output section
 c          30-jan-08 pjt options=nobase to stop the N^2 baselines output
 c          04-feb-08 dnf Added object purpose to source listing output
-c          19-feb-08 pjt Added versan() version loggin
+c          19-feb-08 pjt Added versan() version login
+c           8-dec-08 pjt make it work for SZA data as well
+c          
 c
 c
 c TODO:
 c      - remove old corr column - check with Doug Friedel
+c      - there is a strange bug (causing segfault) is the cal*h are replaced with maxdim.h
+c        suggesting somebody is writing over it's boundaries.
 c-----------------------------------------------------------------------
 	include 'mirconst.h'
         include 'caldefs.h'
         include 'calapply.h'
+c        include 'maxdim.h'
         include 'listobs.h'
 c
 	character pversion*80, versan*80
@@ -482,11 +487,12 @@ c   gets all the header information that will be later printed
 c
 
         include 'caldefs.h'
+c        include 'maxdim.h'
         include 'listobs.h'
 
 	integer tin,ipt,iants,j,i,length
 	double precision utdouble,dlst,dlinef,dlo1,dif,lat,draobs,
-     1                   ddecobs
+     1                   ddecobs,sfreq(MAXSPECT)
 	real systemps(MAXSPECT*MAXANT)
         real cfreq(MAXSPECT/2),haobs,decobs,sum
         character vtype*4
@@ -512,7 +518,7 @@ c	call uvgetvrd(tin,'dec',dec(ipt),1)
 	call uvrdvri(tin,'nspect',nspec,0)
 	if(nspec.ne.0)then
 	  call uvgetvri(tin,'nchan',nchan,1)
-c the following was changed to accomodate CARMA data
+c the following was changed to accomodate CARMA data (doesn't use corfin)
           call uvprobvr(tin,'corfin',vtype,ncorfin,vupd)
           if(ncorfin.ne.0)then
              call uvgetvrr(tin,'corfin',cfreq,ncorfin)
@@ -532,6 +538,11 @@ c the following was changed to accomodate CARMA data
 
 	call uvgetvrd(tin,'lst',dlst,1)
 	call uvrdvrd(tin,'freq',dlinef,0.d0)
+c handle SZA that doesn't store freq, grab the middle sfreq
+        if (dlinef.eq.0d0) then
+           call uvgetvrd(tin,'sfreq',sfreq,nspec)
+           dlinef = sfreq(nspec/2)
+        endif
 	call uvgetvra(tin,'veltype',veltype(ipt))
 	call uvrdvrr(tin,'veldop',veldop(ipt),0.)
 	call uvrdvrd(tin,'lo1',dlo1,0.d0)

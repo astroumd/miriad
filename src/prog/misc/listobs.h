@@ -8,9 +8,9 @@ C   MAXF =
 C   MAXSPECT = spectral windows (6 for CARMA old correlator)
 C
         integer MAXP,MAXF,MAXSPECT
-        parameter (MAXP = 5000 )
+        parameter (MAXP = 10000 )
         parameter (MAXF = 50 )
-        parameter (MAXSPECT = 6)
+        parameter (MAXSPECT = 16)
  
         integer nspec,nchan,nants,ncorbw,ncorfin
         real utst(MAXP),dur(MAXP),el(MAXP)
