@@ -108,11 +108,6 @@ c
 c  Get the input parameters.
 c
        call output(version)
-#ifdef miralloc
-       call output('using miralloc')
-#else
-       call output('using MAZSIZE')
-#endif
 
        call keyini
        call keyf ('vis',vis,' ')
