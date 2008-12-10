@@ -157,7 +157,7 @@ c        call keya('out2',vis2out,' ')
 	call keyl('show',show,.FALSE.)
 	call keyl('reset',doreset,.TRUE.)
 	call keya('mode',mode,'phaseatm')
-	call keyr('scale',scale,-1.0)
+	call keyr('scale',scale,0.0)
 	call keyfin
 c 
 c  Various options, vis only, vis+antenna lists or 2 vis files
@@ -177,7 +177,7 @@ c       select between 'gain' and 'phaseatm' mode
 	dogain = mode(1:1).eq.'g'
 	if (dogain) write(*,*) 'Also modifying gains'
 
-	if (scale .lt. 0.0) then
+	if (scale .eq. 0.0) then
 	   call bug('w',
      *              'Currently still need to set scale= for phaseatm')
 	endif
@@ -191,9 +191,9 @@ c
         call uvread(tVis,preamble,data,flags,MAXCHAN,nread)
 	if (nread.eq.0) call bug('f','No visibilities?')
 	call uvrdvrd(tVis,'lo1',lo1,0.d0)
-	if(lo1.eq.0.d0 .and. scale.lt.0.0) then
+	if(lo1.eq.0.d0 .and. scale.eq.0.0) then
 	   call bug('f','Cannot determine scale from missing lo1')
-	else if (scale.lt.0.0) then
+	else if (scale.eq.0.0) then
 	   scale = lo1/30.0
 	   write(*,*) '### Warning: assuming SZA=30GHz, scale=',scale
 	else
