@@ -138,11 +138,11 @@ c   30jan06 pjt/sw - output in listdat/longdat now using 'time', not 'ut'
 c    8mar06 pjt  - added dazim/delev for ant1/2 in option=baseline (units: arcmin)
 c    4may06 sw   - added integration time to header
 c   17may07 mchw - cleaned up options=list and options=baseline.
-c   25nov07 pjt  - implement recnum=0
+c   25nov08 pjt  - implement recnum=0
 c-----------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='UVLIST: version  25-Nov-07')
+	parameter(version='UVLIST: version  10-dec-08')
 	real rtoh,rtod,pi
 	integer maxsels
 	parameter(pi=3.141592653589793,rtoh=12/pi,rtod=180/pi)
@@ -408,7 +408,7 @@ c
 	  call cat(line,length,
      *	   '  #pts  k     Time      Ant    Pol U(kLam)  V(kLam)')
 	  do j=1,nchan
-	    call cat(line,length,'   Amp  Phase')
+	    call cat(line,length,'    Amp   phase')
 	  enddo
 	  call LogWrite(line(1:length),more)
 	  length = 0
@@ -576,7 +576,7 @@ c
 	  call cat(line,length,
      *	   ' # Vis    Time      Ant    Pol U(kLam)  V(kLam)')
 	  do j=1,nchan
-	    call cat(line,length,'   Amp  Phase')
+	    call cat(line,length,'   Amp   phase')
 	  enddo
 	  call LogWrite(line(1:length),more)
 	  length = 0
@@ -703,7 +703,7 @@ c
 	  call cat(line,length,
      *	   ' Vis #    Time      Ant    Pol U(kLam)  V(kLam)')
 	  do j=1,nchan
-	    call cat(line,length,'   Amp  Phase')
+	    call cat(line,length,'    Amp   Phase')
 	  enddo
 	  call LogWrite(line(1:length),more)
 	endif
@@ -1038,6 +1038,7 @@ c  Determine the linetype.
 c
 	call uvinfo(unit,'line',datline)
 	type = nint(datline(1))
+	linetype = 'unknown'
 	if(type.eq.CHANNEL)  linetype = 'channel'
 	if(type.eq.WIDE)     linetype = 'wide'
 	if(type.eq.VELOCITY) linetype = 'velocity'
