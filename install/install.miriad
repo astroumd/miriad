@@ -40,6 +40,7 @@ set version=3-jun-08
 #  5-mar-07 using new make_miriad_starts
 # 17-may-07 use $CC, $F77 and $CXX in $MIRBIN, if present
 # 16-jun-08 add zeno/hkmiriad
+# 10-dec-08 pgplot64 fix
 #
 #
 # if SELINUX is enabled:
@@ -86,6 +87,7 @@ echo MIRIAD installation $version, for $hosttype
 
 #	try and be intelligent about X  (the mirdefs script may help here if you need to modify)
 #       AMD64 may use /usr/X11R6/lib64 here !!!
+set pgplot64 = 0
 if ($hosttype == linux) then
   set mirxinc="/usr/include/X11"
   if (-e /usr/X11R6/lib64) then
@@ -93,6 +95,7 @@ if ($hosttype == linux) then
     if (-e ../borrow/pgplot/sys_linux/g77_gcc_64.conf) then
       echo Patching your PGPLOT for 64bit
       cp ../borrow/pgplot/sys_linux/g77_gcc_64.conf ../borrow/pgplot/sys_linux/mirg77_gcc.conf
+      set pgplot64 = 1
     endif
   else
     set mirxlib="/usr/X11R6/lib"
@@ -250,6 +253,11 @@ if (-d $MIRTEMP/bin/localsys) then
     echo "Warning: try out new compile.generic"
     cp $install_dir/compile.generic $MIRTEMP/bin/localsys/compile.$hosttype
   endif
+endif
+
+if ($pgplot64) then
+  # this script can be safely run multiple times
+  (cd $MIRTEMP/borrow/pgplot/drivers; ./fix64bit.csh)
 endif
 
 set startcsh=$MIRTEMP/MIRRC.$hosttype
