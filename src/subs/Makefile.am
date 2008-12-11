@@ -9,7 +9,7 @@ include $(top_srcdir)/mircommon.mak
 
 finclude_HEADERS = model.h
 
-includes = -I$(top_srcdir)/src/inc -I$(srcdir)
+includes = -I$(top_builddir)/src/inc -I$(top_srcdir)/src/inc -I$(srcdir)
 
 lib_LTLIBRARIES = \
   libmir_uvio.la \
