@@ -1,6 +1,6 @@
 #! /bin/csh -f
 #
-set version=3-jun-08
+set version=10-dec-08
 #
 #  2-aug-99 Updated for Sebok's Mandrake setup
 #  1-aug-00 Updated to allow to build private PGPLOT version
@@ -90,6 +90,9 @@ echo MIRIAD installation $version, for $hosttype
 set pgplot64 = 0
 if ($hosttype == linux) then
   set mirxinc="/usr/include/X11"
+  set arch=`uname -m`
+  if ($arch == x86_64) set pgplot64=1
+  # TODO: fix this, this is not always the right way to check for 64bit
   if (-e /usr/X11R6/lib64) then
     set mirxlib="/usr/X11R6/lib64"
     if (-e ../borrow/pgplot/sys_linux/g77_gcc_64.conf) then
