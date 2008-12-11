@@ -20,7 +20,7 @@ BUILT_SOURCES = antconv.f bee.f blcal.f bldelay.f calapply.f calboot.f \
   wvcal.f xyphase.f
 
 noinst_HEADERS = bee.h blcal.h gfiddle.h gmakes.h gpcal.h gplist.h \
-  gpplt.h gpscal.h mfcal.h mselfcal.h selfcal.h tmcvt.h
+  gpplt.h gpscal.h mfcal.h mselfcal.h panda.h selfcal.h tmcvt.h
 
 EXTRA_DIST = antconv.for bee.for blcal.for bldelay.for calapply.for \
   calboot.for calfit.for calflag.for calflux.for calib.for callist.for \
