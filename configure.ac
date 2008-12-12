@@ -408,7 +408,6 @@ AC_CONFIG_FILES([
     src/sys/auto/Makefile
     src/sys/auto/Makefile.standalone.tmpl
     src/Makefile
-    src/../install/mirdefs
     src/inc/maxdim.h
     src/inc/maxdimc.h
 ])
@@ -418,11 +417,6 @@ dnl Not used??
 dnl    src/prog/eor/Makefile
 
 AC_OUTPUT
-
-
-dnl It is beyond me why 'mirdefs' is not kept executable.... like mirdefs.in
-
-chmod +x install/mirdefs
 
 
 dnl 'maxdim' report:
