@@ -87,6 +87,7 @@ c          30-jan-08 pjt options=nobase to stop the N^2 baselines output
 c          04-feb-08 dnf Added object purpose to source listing output
 c          19-feb-08 pjt Added versan() version login
 c           8-dec-08 pjt make it work for SZA data as well
+c          12-dec-08 pjt deal with version 1.1 SZA data (wsystemp instead of systemp)
 c          
 c
 c
@@ -519,6 +520,7 @@ c	call uvgetvrd(tin,'dec',dec(ipt),1)
 	if(nspec.ne.0)then
 	  call uvgetvri(tin,'nchan',nchan,1)
 c the following was changed to accomodate CARMA data (doesn't use corfin)
+c and SZA data (in version 1.1 system has wrong dimension)
           call uvprobvr(tin,'corfin',vtype,ncorfin,vupd)
           if(ncorfin.ne.0)then
              call uvgetvrr(tin,'corfin',cfreq,ncorfin)
@@ -527,8 +529,13 @@ c the following was changed to accomodate CARMA data (doesn't use corfin)
              cfreq(1)=0
           endif
 	  call uvprobvr(tin,'systemp',vtype,length,systhere)
-	  if(systhere)
-     *	  	call uvgetvrr(tin,'systemp',systemps,iants*nspec)
+	  if(systhere) then
+             if (length.eq.iants*nspec) then
+     	  	call uvgetvrr(tin,'systemp',systemps,iants*nspec)
+             else
+     	  	call uvgetvrr(tin,'wsystemp',systemps,iants*nspec)
+             endif
+          endif
 	else
 	  call uvrdvri(tin,'nwide',nspec,0)
 	  if(nspec.ne.0)
