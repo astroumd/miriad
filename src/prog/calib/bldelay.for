@@ -36,7 +36,7 @@ c     default is 3 (to search +/- 3*pi)
 c
 c--
 c  History:
-c     jwl  08dec08  Added tracking of delay between time steps
+c     jwl  13dec08  Changed mean delay estimate
 c     jwl  15nov08  Initial version.
 c----------------------------------------------------------------------c
       include 'mirconst.h'
@@ -44,7 +44,7 @@ c----------------------------------------------------------------------c
       character*(*) version
       integer MAXSPECT
       parameter(MAXSPECT = MAXWIDE)
-      parameter(version = 'BLDELAY: version 08-Dec-08')
+      parameter(version = 'BLDELAY: version 13-Dec-08')
       integer maxsels
       parameter(maxsels = 1024)
 c
@@ -156,8 +156,8 @@ c
           call basant(basein, i1, i2)
           bl = ((i2 - 1) * i2) / 2 + i1
           ld = lastdelay(bl)
-          call Delays(timein, basein, int(VisNo), data, flags,
-     *                numchan, freqs, maxWrap, doslope, dotrack, ld)
+          call Delays(timein, basein, data, flags, numchan, freqs,
+     *                maxWrap, doslope, dotrack, ld)
           lastdelay(bl) = ld
 c
 c  Loop the loop.
@@ -239,13 +239,13 @@ c
       dotrack = present(3)
       end
 c********1*********2*********3*********4*********5*********6*********7**
-      subroutine Delays(timein, basein, VisNo, data, flags, numchan,
-     *                  freqs, maxWrap, doslope, dotrack, lastdelay)
+      subroutine Delays(timein, basein, data, flags, numchan, freqs,
+     *                  maxWrap, doslope, dotrack, lastdelay)
       implicit none
 c
       include 'mirconst.h'
       include 'maxdim.h'
-      integer lIn, visNo, numchan, maxWrap
+      integer numchan, maxWrap
       logical flags(numchan), doslope, dotrack
       complex data(numchan)
       double precision timein, basein
@@ -269,16 +269,17 @@ c-----------------------------------------------------------------------
       real phas(MAXCHAN), chfreq(MAXCHAN)
       integer i, ich
       character line*256
-      real freq0, delay, b0
+      real freq0, delay
       integer nWrap, ant1, ant2
       logical more
+      intrinsic atan2, imag, real
 c
 c  Extract the phases from the complex visibility data.
 c
       ich = 0
       freq0 = 0.0
       do i = 1, numchan
-          if (flags(i)) then
+          if (flags(i) .and. (freqs(i) .ne. 0.0)) then
               ich = ich + 1
               phas(ich) = atan2(imag(data(i)), real(data(i)))
               chfreq(ich) = freqs(i)
@@ -289,7 +290,6 @@ c
 c
 c  Do not extract autocorrelations or bad data
 c
-      b0 = 0.0
       call basant(basein,ant1,ant2)
       if ((ich .ne. 0) .and. (ant1 .ne. ant2)) then
           if (doslope) then
@@ -345,7 +345,7 @@ c
       resid0 = 1.0e10
       delay = 0
 c
-      if (dotrack .and. (lastdelay < 1.0e10)) then
+      if (dotrack .and. (lastdelay .lt. 1.0e10)) then
 c
 c  Use the last delay as the starting estimate for the current one,
 c  to resolve wraps
@@ -353,14 +353,10 @@ c
          delayN = lastdelay
          sum = 0.0
          do j = 1, nchan
-              phasej = wrap(phase(j) - TWOPI * freqs(j) * delayN)
-              sum = sum + phasej
-         enddo
-         delay0 = sum / (nchan * TWOPI * freq0)
-         do j = 1, nchan
              phasej = wrap(phase(j) - TWOPI * freqs(j) * delayN)
-             resid = resid + wrap((phasej - TWOPI*freqs(j)*delay0))**2
+             sum = sum + phasej / (TWOPI * freqs(j))
          enddo
+         delay0 = sum / nchan
          delay = delay0 + delayN
          nWrap = int(delay / (2.0 * freq0))
       else
@@ -371,10 +367,10 @@ c
          delayN = float(i) / (2.0 * freq0)
          sum = 0.0
          do j = 1, nchan
-              phasej = wrap(phase(j) - TWOPI * freqs(j) * delayN)
-              sum = sum + phasej
+             phasej = wrap(phase(j) - TWOPI * freqs(j) * delayN)
+             sum = sum + phasej / (TWOPI * freqs(j))
          enddo
-         delay0 = sum / (nchan * TWOPI * freq0)
+         delay0 = sum / nchan
          resid = 0.0
          do j = 1, nchan
              phasej = wrap(phase(j) - TWOPI * freqs(j) * delayN)
@@ -419,19 +415,18 @@ c
       real float
 c
       integer i, j
-      real wphase(MAXCHAN), phase j, resid0, resid, delay0, delayN
-      real sum, a, b
+      real wphase(MAXCHAN), phasej, resid0, resid, delay0, delayN
+      real a, b
 c
       resid0 = 10.0e10
       delay = 0
 c
-      if (dotrack .and. (lastdelay < 1.0e10)) then
+      if (dotrack .and. (lastdelay .lt. 1.0e10)) then
 c
 c  Use the last delay as the starting estimate for the current one,
 c  to resolve wraps
 c
          delayN = lastdelay
-         sum = 0.0
          do j = 1, nchan
               wphase(j) = wrap(phase(j) - TWOPI * freqs(j) * delayN)
          enddo
@@ -439,7 +434,6 @@ c
          delay0 = a / TWOPI
          do j = 1, nchan
              phasej = wrap(phase(j) - TWOPI * freqs(j) * delayN)
-             resid = resid + wrap((phasej - TWOPI*freqs(j)*delay0))**2
          enddo
          delay = delay0 + delayN
          nWrap = int(delay / (2.0 * freq0))
@@ -449,7 +443,6 @@ c  Try to determine wrap from phases
 c
       do i = -maxWrap, maxWrap, 1
          delayN = float(i) / (2.0 * freq0)
-         sum = 0.0
          do j = 1, nchan
               wphase(j) = wrap(phase(j) - TWOPI * freqs(j) * delayN)
          enddo
@@ -524,15 +517,18 @@ c    theta    Phase to wrap (deg)
 c
 c-----------------------------------------------------------------------
 c
-      if (theta .ge. 0.0) then
-         theta = mod(theta + PI, TWOPI) - PI
+      real angle
+c
+      angle = theta
+      if (angle .ge. 0.0) then
+         angle = mod(angle + PI, TWOPI) - PI
       else
-         theta = -mod( -theta + PI, TWOPI) + PI
+         angle = -mod(-angle + PI, TWOPI) + PI
       endif
-      if (theta .eq. -PI) then
-         theta = PI
+      if (angle .eq. -PI) then
+         angle = PI
       endif
-      wrap = theta
+      wrap = angle
       return
       end
 c
