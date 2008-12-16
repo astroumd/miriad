@@ -1,0 +1,50 @@
+#!/bin/bash
+
+echo " "
+echo "**************************************************************"
+echo "               $0    version: 16dec2008"
+echo "**************************************************************"
+echo " Copy a MIRIAD dataset to user directory"
+echo " with a link to the visdata to save space."
+echo " User can work on the data without modifying the original uvdata"
+echo " Use uvcal to make a hard copy of the edited, calibrated data"
+echo " for further analysis. "
+echo " "
+echo " History:"
+echo " 16dec2008 David MacMahon"
+echo " "
+echo " Usage $0 filename"
+
+src=$1
+
+if [ ! -e $src/visdata ]
+then
+  echo "ERROR: $src is not a miriad dataset" >&2
+  exit 1
+fi
+
+dst=`basename $src`
+
+if [ -e $dst ]
+then
+  echo "ERROR: $dst already exists" >&2
+  exit 1
+fi
+
+if ! mkdir $dst
+then
+  echo "ERROR: could not create directory $dst" >&2
+  exit 1
+fi
+
+for f in $src/*
+do
+  if [ `basename $f` == 'visdata' ]
+  then
+    ln -s $f $dst
+  else
+    # CAUTION: -a could be GNU extension
+    # TODO Use a more portable recursive copy
+    cp -a $f $dst
+  fi
+done
