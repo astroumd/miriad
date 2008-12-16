@@ -75,6 +75,16 @@ c       For phaseatm you will need to supply (an) output file(s).
 c       DO NOT USE.
 c       Default: phaseatm
 c
+c@ param
+c       Parameter for the weighting function
+c       For power-law: negative of the power index
+c       For gaussian: Gaussian FWHM in nanoseconds
+c
+c@ antipol
+c       Compute antenna phases for non-paired antennas by interpolating
+c       over paired antennas using a user-selectable weighting function
+c       specified by wscheme.
+c       Default: true
 c--
 c@ ants
 c       TBD - not used at the moment. Perhaps we could allow
@@ -91,6 +101,7 @@ c    pjt     28nov08 morphed gains into new (phase)atm UV variable
 c    pjt     28nov08 added scale=
 c    pjt      4dec08 scale of gain phases
 c    pjt      8dec08 no more out2=, no reset=, no need for gain in vis=
+c    adb/pjt 15dec08 added antipol,param. Changed defaults for reset.
 c
 c  Bugs and Shortcomings:
 c     phaseatm:  interpolate on an interval, don't take nearest neighbor
@@ -137,10 +148,17 @@ c----------------------------------------------------
         integer list1(MAXANT)
         integer list2(MAXANT)
         integer n1,n2
+	logical antipol
+	real param
+	real wscheme1
+c	real www
 c
 c  Externals.
 c
 	character itoaf*8,versan*80
+c	external wscheme,wscheme1
+	external wscheme1
+c	external www
 c
 c  Get the input parameters.
 c
@@ -155,9 +173,12 @@ c
         call keya('vis2',vis2,' ')   
 c        call keya('out2',vis2out,' ')   
 	call keyl('show',show,.FALSE.)
-	call keyl('reset',doreset,.TRUE.)
+	call keyl('reset',doreset,.FALSE.)
 	call keya('mode',mode,'phaseatm')
 	call keyr('scale',scale,0.0)
+	call keyr('param',param,2.0)
+	call keyl('antipol',antipol,.TRUE.)
+c	www=wscheme1
 	call keyfin
 c 
 c  Various options, vis only, vis+antenna lists or 2 vis files
@@ -360,7 +381,8 @@ c
 	if (visout .ne. ' ') then
 	   write(*,*) (mask(i),i=1,nants)
 	   write(*,*) (mask2(i),i=1,nants2)
-           call CopyVis(vis,visout,nsols,nants,times,Gains,mask,atm)    
+           call CopyVis(vis,visout,nsols,nants,times,Gains,mask,atm,
+     *                  wscheme1,param,antipol)    
 	endif
 
 	end
@@ -404,7 +426,8 @@ c
 
 	end
 c***********************************************************************
-	SUBROUTINE CopyVis(vis,visout,nsols,nants,times,gains,mask,atm)
+	SUBROUTINE CopyVis(vis,visout,nsols,nants,times,gains,mask,atm,
+     *                     wscheme,param,antipol)
 c
 	implicit none
 	include 'maxdim.h'
@@ -415,16 +438,19 @@ c
 	double precision times(nsols)
 	logical mask(nants)
 	real atm(nants,nsols)
+        logical antipol
+	real wscheme,param
 c
 	INTEGER tVis,tOut,length,nchan,nwide,idx,idx0,nearest,nbad,nvis
-	INTEGER ant1,ant2,i
+	INTEGER ant1,ant2,i,j
 	LOGICAL dowide,doline,doboth,updated
 	DOUBLE PRECISION preamble(4),time0,time1
 	COMPLEX wcorr(MAXWIDE), corr(MAXCHAN)
 	LOGICAL wflags(MAXWIDE), flags(MAXCHAN)
 	CHARACTER type*1
+	REAL bweight(MAXANT,MAXANT),suma,sumw
 c
-	EXTERNAL nearest
+	EXTERNAL nearest,wscheme
 
 	write (*,*) 'COPYVIS: Writing new visibility dataset: ',visout
 
@@ -457,10 +483,78 @@ c       probe what kind of data we have
 	time0 = -1.0d0
 	nvis = 0
 	nbad = 0
+	DO i=1,nants
+	   DO j=1,nants
+	      bweight(i,j)=0.0
+	   ENDDO
+	ENDDO
 
 	write(*,'(A,2F20.6)') 'Range in phaseatm table:',
      *                        times(1),times(nsols)
 
+	DO WHILE (nchan.GE.0)
+	   CALL uvread(tVis,preamble,corr,flags,MAXCHAN,nchan)
+	   IF (nchan.GE.0) THEN
+	      IF (nchan.NE.0) THEN
+		 call basant(preamble(4),ant1,ant2)
+		 nvis = nvis + 1
+		 IF(doboth) CALL uvwread(tVis,wcorr,wflags,MAXWIDE,
+     *                                   nwide)
+		 IF(time0.LT.0d0) time0 = preamble(3)
+		 time1 = preamble(3)
+	      ELSE
+		 nchan=-1
+	      ENDIF
+	      IF ((nchan.LT.0).OR.(time1.NE.time0)) THEN
+		 idx = nearest(nsols,times,time0)
+		 DO i=1,nants
+		    IF (.NOT.mask(i)) THEN
+		       suma=0.0
+		       sumw=0.0
+		       DO j=1,nants
+			  IF (mask(j)) THEN
+			     IF (i.lt.j) THEN
+				suma=suma+bweight(i,j)*atm(j,idx)
+				sumw=sumw+bweight(i,j)
+			     ELSE
+				suma=suma+bweight(j,i)*atm(j,idx)
+				sumw=sumw+bweight(j,i)
+			     ENDIF
+			  ENDIF
+		       ENDDO
+		       atm(i,idx)=suma/sumw
+c		       WRITE(*,*) 'COPYVIS:',i,idx,atm(i,idx),time0
+		    ENDIF
+		 ENDDO
+		 DO i=1,nants
+		    DO j=1,nants
+		       bweight(i,j)=0.0
+		    ENDDO
+		 ENDDO
+		 time0=time1
+	      ELSE
+		 IF (nchan.GT.0) THEN
+		    bweight(ant1,ant2)=wscheme(preamble(1),preamble(2),
+     *                                         param)
+		 ENDIF
+	      ENDIF
+	   ENDIF
+	ENDDO
+
+c     second pass for Peter
+  
+	nchan = 1
+	nwide = 0
+	idx = 1
+	idx0 = 0
+	time0 = -1.0d0
+	nvis = 0
+	nbad = 0
+
+	write(*,'(A,2F20.6)') 'Range in phaseatm table:',
+     *                        times(1),times(nsols)
+
+	CALL uvrewind(tVis)
 	DO WHILE (nchan.GT.0)
 	   CALL uvread(tVis,preamble,corr,flags,MAXCHAN,nchan)
 	   IF (nchan.GT.0) THEN
@@ -471,23 +565,20 @@ c       probe what kind of data we have
 	      time1 = preamble(3)
 	      CALL uvcopyvr(tVis,tOut)
 	      idx = nearest(nsols,times,time1)
-	      if (.false.) then
-		 if (idx.NE.idx0) write(*,'(I5,I5,2F20.6)') idx,idx0,
-     *                         time1,times(idx)
-	      endif
 	      CALL uvputvrr(tout,'phaseatm',atm(1,idx),nants)
-	      IF(.NOT.mask(ant1) .OR. .NOT.mask(ant2)) THEN
-		 nbad = nbad + 1
-		 DO i=1,nchan
-		    flags(i) = .FALSE.
-		 ENDDO
-		 DO i=1,nwide
-		    wflags(i) = .FALSE.
-		 ENDDO
+	      IF (.NOT.antipol) THEN
+		 IF(.NOT.mask(ant1) .OR. .NOT.mask(ant2)) THEN
+		    nbad = nbad + 1
+		    DO i=1,nchan
+		       flags(i) = .FALSE.
+		    ENDDO
+		    DO i=1,nwide
+		       wflags(i) = .FALSE.
+		    ENDDO
+		 ENDIF
 	      ENDIF
 	      IF(doboth)CALL uvwwrite(tout,wcorr,wflags,nwide)
 	      CALL uvwrite(tout,preamble,corr,flags,nchan)
-	      idx0 = idx
 	   ENDIF
 	ENDDO
 	write(*,'(A,2F20.6)') 'Range in vis file:      ',
@@ -507,7 +598,22 @@ c       probe what kind of data we have
 
 	END
 C***********************************************************************
+      REAL FUNCTION wscheme1(u,v,p)
+c
+c     Inverse distance to some power (p) weighting
+c
+      IMPLICIT NONE
+      DOUBLE PRECISION u,v
+      REAL p
+
+      wscheme1=(u**2+v**2)**(-p/2.0)
+c      WRITE(*,*) 'WSCHEME1:',u,v,p,wscheme1
+      RETURN
+      END
+
+C***********************************************************************
       SUBROUTINE trackall(inset)
+      IMPLICIT NONE
       INTEGER inset
 c
 c   Marks all variable in input data set for copying to output
