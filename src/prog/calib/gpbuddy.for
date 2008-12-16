@@ -75,10 +75,20 @@ c       For phaseatm you will need to supply (an) output file(s).
 c       DO NOT USE.
 c       Default: phaseatm
 c
+c@ method
+c       Method by which antenna phased of non-paired antennas are
+c       deduced. 
+c       Currently implemented are:
+c       power:     an inverse power law weighted average
+c       gaussian:  an gaussian weighted average
+c
+c       Default: power
+c
 c@ param
-c       Parameter for the weighting function
+c       Parameter for the weighting function method.
 c       For power-law: negative of the power index
-c       For gaussian: Gaussian FWHM in nanoseconds
+c       For gaussian: Gaussian FWHM (in nanoseconds)
+c       Default: 2
 c
 c@ antipol
 c       Compute antenna phases for non-paired antennas by interpolating
@@ -102,6 +112,7 @@ c    pjt     28nov08 added scale=
 c    pjt      4dec08 scale of gain phases
 c    pjt      8dec08 no more out2=, no reset=, no need for gain in vis=
 c    adb/pjt 15dec08 added antipol,param. Changed defaults for reset.
+c    pjt     16dec08 added method=
 c
 c  Bugs and Shortcomings:
 c     phaseatm:  interpolate on an interval, don't take nearest neighbor
@@ -113,22 +124,13 @@ c-----------------------------------------------------------------------
 	include 'mirconst.h'
 	integer MAXFEED,MAXTIME,MAXSOLN
 	parameter(MAXFEED=2,MAXTIME=64,MAXSOLN=10000)
-c----------------------------------------------------
-c       To read 2nd visibility file added:
-c          character vis2*80
-c          tVis2, itGain2, nants2, nfeeds2, nsols2, i2
-c          numant2, ntau2, nread2
-c          times2
-c          antpos2
-c          apos2, preamble2
-c          gains2, data2, mask2, flags2, xy2, n2
-c----------------------------------------------------
+
 	character vis*256, vis2*256, visout*256
 	character version*80,mode*32
 	integer iostat,tVis,itGain,nants,nfeeds,nsols,i
         integer tVis2, itGain2, nants2, nfeeds2, nsols2, i2
 	integer ntau,nread
-        integer ntau2,nread2
+        integer ntau2,nread2,imethod
 	double precision times(MAXSOLN)
         double precision times2(MAXSOLN)
         double precision preamble2(5),antpos2(3*MAXANT),apos2(3)
@@ -150,14 +152,14 @@ c----------------------------------------------------
         integer n1,n2
 	logical antipol
 	real param
-	real wscheme1
+	real wscheme1,wscheme2
 c	real www
 c
 c  Externals.
 c
 	character itoaf*8,versan*80
 c	external wscheme,wscheme1
-	external wscheme1
+	external wscheme1,wscheme2
 c	external www
 c
 c  Get the input parameters.
@@ -171,12 +173,12 @@ c
         call mkeyi('list1',list1,MAXANT,n1)
         call mkeyi('list2',list2,MAXANT,n2)
         call keya('vis2',vis2,' ')   
-c        call keya('out2',vis2out,' ')   
 	call keyl('show',show,.FALSE.)
 	call keyl('reset',doreset,.FALSE.)
 	call keya('mode',mode,'phaseatm')
 	call keyr('scale',scale,0.0)
 	call keyr('param',param,2.0)
+	call getMethod('method','power',imethod)
 	call keyl('antipol',antipol,.TRUE.)
 c	www=wscheme1
 	call keyfin
@@ -202,6 +204,9 @@ c       select between 'gain' and 'phaseatm' mode
 	   call bug('w',
      *              'Currently still need to set scale= for phaseatm')
 	endif
+
+c       figure out which method to use for interpolations
+
 
 c
 c  Open the input file. We need full uvopen, since we also need
@@ -381,11 +386,52 @@ c
 	if (visout .ne. ' ') then
 	   write(*,*) (mask(i),i=1,nants)
 	   write(*,*) (mask2(i),i=1,nants2)
-           call CopyVis(vis,visout,nsols,nants,times,Gains,mask,atm,
+	   if (imethod.eq.1) then
+	      call CopyVis(vis,visout,nsols,nants,times,Gains,mask,atm,
      *                  wscheme1,param,antipol)    
+	   else if (imethod.eq.2) then
+	      call CopyVis(vis,visout,nsols,nants,times,Gains,mask,atm,
+     *                  wscheme2,param,antipol)    
+	   else
+	      call bug('w','No valid method')
+	   endif
+
 	endif
 
 	end
+c***********************************************************************
+	subroutine getMethod(key,default,imethod)
+	implicit none
+c	
+	character key*(*), default*(*)
+	integer imethod
+c
+	integer NM,found
+	parameter (NM=2)
+	logical present(NM)
+	character methods(NM)*8
+	data methods/'power   ','gaussian'/
+	
+c
+	call options(key,methods,present,NM)
+	found = 0
+	DO imethod=1,NM
+	   if (present(imethod)) found=found+1
+	ENDDO
+	IF (found.EQ.0) THEN
+	   DO imethod=1,NM
+	      IF(methods(imethod).EQ.default) RETURN
+	   ENDDO
+	   CALL bug('w','method not recognized')
+	   write(*,*) (methods(imethod),imethod=1,NM)
+	   CALL bug('f','No valid default method given')
+	ENDIF
+	IF (found.GT.1) CALL bug('f','Only one method allowed')
+	DO imethod=1,NM
+	   if (present(imethod)) RETURN
+	ENDDO
+	RETURN
+	END
 c***********************************************************************
 	subroutine gheader(vis,tvis,nants,nfeeds,ntau,nsols)
 	implicit none
@@ -607,7 +653,19 @@ c
       REAL p
 
       wscheme1=(u**2+v**2)**(-p/2.0)
-c      WRITE(*,*) 'WSCHEME1:',u,v,p,wscheme1
+      RETURN
+      END
+
+C***********************************************************************
+      REAL FUNCTION wscheme2(u,v,p)
+c
+c     Gaussian
+c
+      IMPLICIT NONE
+      DOUBLE PRECISION u,v
+      REAL p
+
+      wscheme2=exp(-(u**2+v**2)/(2*p*p))
       RETURN
       END
 
