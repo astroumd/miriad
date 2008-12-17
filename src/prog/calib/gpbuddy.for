@@ -79,15 +79,18 @@ c@ method
 c       Method by which antenna phased of non-paired antennas are
 c       deduced. 
 c       Currently implemented are:
-c       power:     an inverse power law weighted average
-c       gaussian:  an gaussian weighted average
-c
+c       power:     inverse power law weighted average on projected distance
+c       gaussian:  Gaussian weighted average on projected distance
+c       tophat:    equal weights within a projected radius
+c       parabol:   inverse projected distance square within a radius
 c       Default: power
 c
 c@ param
 c       Parameter for the weighting function method.
 c       For power-law: negative of the power index
 c       For gaussian: Gaussian FWHM (in nanoseconds)
+c       For tophat: radius (in nanoseconds)
+c       For parabol: raidus (in nanoseconds)
 c       Default: 2
 c
 c@ antipol
@@ -113,6 +116,8 @@ c    pjt      4dec08 scale of gain phases
 c    pjt      8dec08 no more out2=, no reset=, no need for gain in vis=
 c    adb/pjt 15dec08 added antipol,param. Changed defaults for reset.
 c    pjt     16dec08 added method=
+c    adb     16dec08 added tophat,parabol. Vis are flagged if no antenna
+c                    is within range of interpolation
 c
 c  Bugs and Shortcomings:
 c     phaseatm:  interpolate on an interval, don't take nearest neighbor
@@ -148,19 +153,17 @@ c-----------------------------------------------------------------------
         real xy2(2,MAXANT)
 	real scale
         integer list1(MAXANT)
-        integer list2(MAXANT)
+        integer list2(MAXANT) 
         integer n1,n2
 	logical antipol
 	real param
-	real wscheme1,wscheme2
+	real wscheme1,wscheme2,wscheme3,wscheme4
 c	real www
 c
 c  Externals.
 c
 	character itoaf*8,versan*80
-c	external wscheme,wscheme1
-	external wscheme1,wscheme2
-c	external www
+	external wscheme1,wscheme2,wscheme3,wscheme4
 c
 c  Get the input parameters.
 c
@@ -180,7 +183,6 @@ c
 	call keyr('param',param,2.0)
 	call getMethod('method','power',imethod)
 	call keyl('antipol',antipol,.TRUE.)
-c	www=wscheme1
 	call keyfin
 c 
 c  Various options, vis only, vis+antenna lists or 2 vis files
@@ -392,6 +394,12 @@ c
 	   else if (imethod.eq.2) then
 	      call CopyVis(vis,visout,nsols,nants,times,Gains,mask,atm,
      *                  wscheme2,param,antipol)    
+	   else if (imethod.eq.3) then
+	      call CopyVis(vis,visout,nsols,nants,times,Gains,mask,atm,
+     *                  wscheme3,param,antipol)    
+	   else if (imethod.eq.4) then
+	      call CopyVis(vis,visout,nsols,nants,times,Gains,mask,atm,
+     *                  wscheme4,param,antipol)    
 	   else
 	      call bug('w','No valid method')
 	   endif
@@ -407,10 +415,10 @@ c
 	integer imethod
 c
 	integer NM,found
-	parameter (NM=2)
+	parameter (NM=4)
 	logical present(NM)
 	character methods(NM)*8
-	data methods/'power   ','gaussian'/
+	data methods/'power   ','gaussian','tophat  ','parabol '/
 	
 c
 	call options(key,methods,present,NM)
@@ -568,7 +576,11 @@ c       probe what kind of data we have
 			     ENDIF
 			  ENDIF
 		       ENDDO
-		       atm(i,idx)=suma/sumw
+		       IF (sumw.EQ.0.0) THEN
+			  atm(i,idx)=-1000.0
+		       ELSE
+			  atm(i,idx)=suma/sumw
+		       ENDIF
 c		       WRITE(*,*) 'COPYVIS:',i,idx,atm(i,idx),time0
 		    ENDIF
 		 ENDDO
@@ -622,6 +634,18 @@ c     second pass for Peter
 		       wflags(i) = .FALSE.
 		    ENDDO
 		 ENDIF
+	      ELSE
+c      flag bad if no antennas contribute to interpolation
+		 IF ((atm(ant1,idx).EQ.-1000.0).OR.
+     *               (atm(ant2,idx).EQ.-1000.0)) THEN
+		    nbad = nbad + 1
+		    DO i=1,nchan
+		       flags(i) = .FALSE.
+		    ENDDO
+		    DO i=1,nwide
+		       wflags(i) = .FALSE.
+		    ENDDO
+		 ENDIF
 	      ENDIF
 	      IF(doboth)CALL uvwwrite(tout,wcorr,wflags,nwide)
 	      CALL uvwrite(tout,preamble,corr,flags,nchan)
@@ -665,7 +689,41 @@ c
       DOUBLE PRECISION u,v
       REAL p
 
-      wscheme2=exp(-(u**2+v**2)/(2*p*p))
+      wscheme2=exp(-(u**2+v**2)/(2*p*p/5.5452))
+      RETURN
+      END
+
+C***********************************************************************
+      REAL FUNCTION wscheme3(u,v,p)
+c
+c     Tophat
+c
+      IMPLICIT NONE
+      DOUBLE PRECISION u,v
+      REAL p
+
+      IF (dsqrt(u**2+v**2).LE.p) THEN
+	 wscheme3=1.0
+      ELSE
+	 wscheme3=0.0
+      ENDIF   
+      RETURN
+      END
+
+C***********************************************************************
+      REAL FUNCTION wscheme4(u,v,p)
+c
+c     Parabol
+c
+      IMPLICIT NONE
+      DOUBLE PRECISION u,v
+      REAL p
+
+      IF (dsqrt(u**2+v**2).LE.p) THEN
+	 wscheme4=1.0/(u**2+v**2)
+      ELSE
+	 wscheme4=0.0
+      ENDIF   
       RETURN
       END
 
