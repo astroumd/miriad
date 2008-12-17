@@ -4,7 +4,7 @@ bin_SCRIPTS = antpat autocal beam beamcheck beamgen beamgen2 \
   debug mir.bug.csh mir-config mirds9 mir.find mir.help \
   mir.index mirpgmr mirprogd mirsao mir.sndex mirsubsd mirtng \
   mirupdate mosaical mrc passcal pbcorr plot_swflux.py polcal \
-  replicate robust.csh smoothtobm
+  replicate robust.csh smoothtobm uvshadow
 
 EXTRA_DIST = $(bin_SCRIPTS) beamgen2.wip
 
@@ -76,5 +76,9 @@ replicate.clone: replicate
 	$(LN_S) $< $@
 robust.csh.clone: robust.csh
 	$(LN_S) $< $@
+uvshadow.clone: uvshadow
+	$(LN_S) $< $@
 smoothtobm.clone: smoothtobm
+	$(LN_S) $< $@
+uvshadow.clone: uvshadow
 	$(LN_S) $< $@
