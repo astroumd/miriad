@@ -25,7 +25,7 @@ c	  "allan"     Allan standard deviation.
 c	  "history"   the history file.
 c	  "flux"      flux visibility, uvdistance and Jy/AveAmp.
 c	  "full"      The opposite of "brief".
-c	  "list"      ut,lst,ant,u,v, AZ, EL, paralactic angle, dra, ddec.
+c	  "list"      ut,lst,ant,pol,u,v,AZ,EL,paralactic angle,dra, ddec.
 c	  "variables" uv variables.
 c	  "stat"      max, ave, rms and high channels for each record.
 c	  "birds      frequencies for high channels in each record.
@@ -139,10 +139,11 @@ c    8mar06 pjt  - added dazim/delev for ant1/2 in option=baseline (units: arcmi
 c    4may06 sw   - added integration time to header
 c   17may07 mchw - cleaned up options=list and options=baseline.
 c   25nov08 pjt  - implement recnum=0
+c   19dec08 mchw - restored  Pol code in options=list.
 c-----------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='UVLIST: version  10-dec-08')
+	parameter(version='UVLIST: version  19-dec-08')
 	real rtoh,rtod,pi
 	integer maxsels
 	parameter(pi=3.141592653589793,rtoh=12/pi,rtod=180/pi)
@@ -789,9 +790,10 @@ c
      *           //'   Dec(deg)  Ant     u(m)      v(m)      w(m)  '
      *           //' Azim  Elev(deg)   Amp/Phas '
      *           //'  daz1   del1   daz2   del2'
+c********1*********2*********3*********4*********5*********6*********7**
 	  else
 	     line =' Vis # Source      UT(hrs)  LST(hrs)   HA(hrs)'
-     *           //'   Dec(deg)  Ant     u(m)      v(m)      w(m)  '
+     *          //'   Dec(deg)  Ant  Pol    u(m)      v(m)      w(m)  '
      *           //' Azim  Elev(deg)   Amp/Phas '
      *           //'  Chi    dra(")  ddec(")'
 	  endif
@@ -840,7 +842,8 @@ c
        call uvprobvr (unit, 'delev', type, length, ok)
 	   if(type.eq.'d') call uvgetvrd(unit,'delev',delev,nants)
 	   write(line,
-     *    '(i6,1x,a,4f10.4,1x,i2,1x,i2,3f10.4,2f8.2,f7.3,1x,i4,4f7.2)')
+c********1*********2*********3*********4*********5*********6*********7**
+     * '(i6,1x,a,4f10.4,1x,i2,1x,i2,3f10.4,2f8.2,f7.3,1x,i4,4f7.2)')
      *	  mod(Visno,1000000),src,ut*rtoh,lst*rtoh,ha*rtoh,obsdec*rtod,
      *	  ant1,ant2,uin*ntm,vin*ntm,win*ntm,azim*rtod,elev*rtod,
      *    amp(1),nint(phas(1)),
@@ -850,10 +853,13 @@ c
      *    delev(ant2)*rtod*60
 
 	else
-	   write(line,
-     *    '(i6,1x,a,4f10.4,1x,i3,1x,i3,3f10.4,2f8.2,f7.3,1x,i4,3f7.2)')
+       pol = ' '
+       if(p.ne.0) pol = PolsC2P(p)
+	   write(line, '(i6,1x,a,4f10.4,1x,i3,1x,i3,1x,a,1x,
+c********1*********2*********3*********4*********5*********6*********7**
+     *    3f10.4,2f8.2,f7.3,1x,i4,3f7.2)')
      *	  mod(Visno,1000000),src,ut*rtoh,lst*rtoh,ha*rtoh,obsdec*rtod,
-     *	  ant1,ant2,uin*ntm,vin*ntm,win*ntm,azim*rtod,elev*rtod,
+     *	  ant1,ant2,pol,uin*ntm,vin*ntm,win*ntm,azim*rtod,elev*rtod,
      *    amp(1),nint(phas(1)),
      *    chi*rtod,dra*rts,ddec*rts
 	endif
