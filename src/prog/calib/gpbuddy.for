@@ -52,14 +52,13 @@ C
 C@ scale
 c       Override frequency scale factor for phaseatm between vis2 and vis. 
 c       This is usually a number larger than 1 and can normally be
-c       computed from the effective frequencies at which the two
+c       computed from the ratio of the effective frequencies at which the two
 c       gain solutions were derived. I.e. selfcal.
 c       Currently no default allowed, since we have not properly
 c       obtained these effective frequencies.
-c       WARNING: if vis= and vis2= are obseved at different frequencies
-c       you probably should not be using both out= and out2=
 C       
 c@ options
+c       ** not used at the moment **
 c
 c@ reset
 c       Normally for non-paired antennas the phaseatm are set to 0,
@@ -68,12 +67,21 @@ c       are not flagged. By setting reset=false you will then force these
 c       baselines to be flagged.
 c       Default: false
 c
+c       **WARNING**    this keyword will disappear and absorbed into method=
 c@ mode
 c       gains or phaseatm. 
 c       For gains the gains of the input file(s) are overwritten,
 c       For phaseatm you will need to supply (an) output file(s).
 c       DO NOT USE.
 c       Default: phaseatm
+c
+c@ nearest
+c       Use nearest neighbor for time interpolation? If not, linear
+c       interpolation is needed.
+c       Default: true.
+c
+c       Will become false, since nearest doesn't know how to flag
+c       when nothing in the interval.
 c
 c@ method
 c       Method by which antenna phased of non-paired antennas are
@@ -83,6 +91,7 @@ c       power:     inverse power law weighted average on projected distance
 c       gaussian:  Gaussian weighted average on projected distance
 c       tophat:    equal weights within a projected radius
 c       parabol:   inverse projected distance square within a radius
+c       none:      none, the phase corrections for non-buddies are 0 
 c       Default: power
 c
 c@ param
@@ -96,7 +105,7 @@ c
 c@ antipol
 c       Compute antenna phases for non-paired antennas by interpolating
 c       over paired antennas using a user-selectable weighting function
-c       specified by wscheme.
+c       specified by wscheme and param
 c       Default: true
 c--
 c@ ants
@@ -118,6 +127,8 @@ c    adb/pjt 15dec08 added antipol,param. Changed defaults for reset.
 c    pjt     16dec08 added method=
 c    adb     16dec08 added tophat,parabol. Vis are flagged if no antenna
 c                    is within range of interpolation
+c    pjt     17dec08 continuing our daily hack,this adds interpolation
+c                    in time.
 c
 c  Bugs and Shortcomings:
 c     phaseatm:  interpolate on an interval, don't take nearest neighbor
@@ -148,7 +159,7 @@ c-----------------------------------------------------------------------
         complex gains2(2*MAXANT*MAXSOLN),data2(MAXCHAN)
 	real atm(MAXANT*MAXSOLN), atm2(MAXANT*MAXSOLN)
 	logical mask(2*MAXANT),flags(MAXCHAN),show,dogain,doreset
-        logical mask2(2*MAXANT),flags2(MAXCHAN)
+        logical mask2(2*MAXANT),flags2(MAXCHAN),donear
 	real xy(2,MAXANT)
         real xy2(2,MAXANT)
 	real scale
@@ -157,13 +168,13 @@ c-----------------------------------------------------------------------
         integer n1,n2
 	logical antipol
 	real param
-	real wscheme1,wscheme2,wscheme3,wscheme4
+	real wscheme1,wscheme2,wscheme3,wscheme4,wscheme5
 c	real www
 c
 c  Externals.
 c
 	character itoaf*8,versan*80
-	external wscheme1,wscheme2,wscheme3,wscheme4
+	external wscheme1,wscheme2,wscheme3,wscheme4,wscheme5
 c
 c  Get the input parameters.
 c
@@ -183,6 +194,7 @@ c
 	call keyr('param',param,2.0)
 	call getMethod('method','power',imethod)
 	call keyl('antipol',antipol,.TRUE.)
+	call keyl('nearest',donear,.TRUE.)
 	call keyfin
 c 
 c  Various options, vis only, vis+antenna lists or 2 vis files
@@ -244,9 +256,11 @@ c
 
 	if(vis2.eq.' ') then
 	   call gheader(vis,tvis,nants,nfeeds,ntau,nsols)
+	   if (nants.eq.0) call bug('f','No gains in vis= dataset')
 	   nants2 = 0
 	else
 	   call gheader(vis2,tvis2,nants2,nfeeds2,ntau2,nsols2)
+	   if (nants2.eq.0) call bug('f','No gains in vis2= dataset')
 	   call uvgetvri(tVis,'nants',nants,1)
 	   nsols = nsols2
 	endif
@@ -390,16 +404,19 @@ c
 	   write(*,*) (mask2(i),i=1,nants2)
 	   if (imethod.eq.1) then
 	      call CopyVis(vis,visout,nsols,nants,times,Gains,mask,atm,
-     *                  wscheme1,param,antipol)    
+     *                  wscheme1,param,antipol,donear)
 	   else if (imethod.eq.2) then
 	      call CopyVis(vis,visout,nsols,nants,times,Gains,mask,atm,
-     *                  wscheme2,param,antipol)    
+     *                  wscheme2,param,antipol,donear)
 	   else if (imethod.eq.3) then
 	      call CopyVis(vis,visout,nsols,nants,times,Gains,mask,atm,
-     *                  wscheme3,param,antipol)    
+     *                  wscheme3,param,antipol,donear)
 	   else if (imethod.eq.4) then
 	      call CopyVis(vis,visout,nsols,nants,times,Gains,mask,atm,
-     *                  wscheme4,param,antipol)    
+     *                  wscheme4,param,antipol,donear)
+	   else if (imethod.eq.5) then
+	      call CopyVis(vis,visout,nsols,nants,times,Gains,mask,atm,
+     *                  wscheme5,param,antipol,donear)
 	   else
 	      call bug('w','No valid method')
 	   endif
@@ -415,10 +432,11 @@ c
 	integer imethod
 c
 	integer NM,found
-	parameter (NM=4)
+	parameter (NM=5)
 	logical present(NM)
 	character methods(NM)*8
-	data methods/'power   ','gaussian','tophat  ','parabol '/
+	data methods/'power   ','gaussian','tophat  ','parabol ',
+     *               'none    '/
 	
 c
 	call options(key,methods,present,NM)
@@ -481,7 +499,7 @@ c
 	end
 c***********************************************************************
 	SUBROUTINE CopyVis(vis,visout,nsols,nants,times,gains,mask,atm,
-     *                     wscheme,param,antipol)
+     *                     wscheme,param,antipol,donear)
 c
 	implicit none
 	include 'maxdim.h'
@@ -492,17 +510,18 @@ c
 	double precision times(nsols)
 	logical mask(nants)
 	real atm(nants,nsols)
-        logical antipol
+        logical antipol,donear
 	real wscheme,param
 c
 	INTEGER tVis,tOut,length,nchan,nwide,idx,idx0,nearest,nbad,nvis
-	INTEGER ant1,ant2,i,j
+	INTEGER ant1,ant2,i,j,nintpol
 	LOGICAL dowide,doline,doboth,updated
 	DOUBLE PRECISION preamble(4),time0,time1
 	COMPLEX wcorr(MAXWIDE), corr(MAXCHAN)
 	LOGICAL wflags(MAXWIDE), flags(MAXCHAN)
 	CHARACTER type*1
-	REAL bweight(MAXANT,MAXANT),suma,sumw
+	REAL phaseatm(MAXANT), bweight(MAXANT,MAXANT),suma,sumw
+	
 c
 	EXTERNAL nearest,wscheme
 
@@ -545,6 +564,16 @@ c       probe what kind of data we have
 
 	write(*,'(A,2F20.6)') 'Range in phaseatm table:',
      *                        times(1),times(nsols)
+
+c
+c  A first pass through the data is needed to accumulate the buddy phases (in atm())
+c  and depending on the weighting scheme (wscheme) compute phased for the non-buddy
+c  antennas. This will then fill the whole atm() array with 'non-zero' phases
+c  and in the second pass these are applied
+c
+c  CAVEAT:  although the data does not need to be time sorted, the do need
+c           to clump together all baselines, so when the time changes
+c           all valid baselines must have been seen for accumulation
 
 	DO WHILE (nchan.GE.0)
 	   CALL uvread(tVis,preamble,corr,flags,MAXCHAN,nchan)
@@ -599,7 +628,7 @@ c		       WRITE(*,*) 'COPYVIS:',i,idx,atm(i,idx),time0
 	   ENDIF
 	ENDDO
 
-c     second pass for Peter
+c     second pass to interpolate atm's for output
   
 	nchan = 1
 	nwide = 0
@@ -613,6 +642,13 @@ c     second pass for Peter
      *                        times(1),times(nsols)
 
 	CALL uvrewind(tVis)
+	nintpol = 0
+	IF (donear) THEN
+	   CALL bug('i','Using nearest neighbors')
+	ELSE
+	   CALL bug('i','Linear interpolation of phases in time')
+	ENDIF
+	   
 	DO WHILE (nchan.GT.0)
 	   CALL uvread(tVis,preamble,corr,flags,MAXCHAN,nchan)
 	   IF (nchan.GT.0) THEN
@@ -623,7 +659,15 @@ c     second pass for Peter
 	      time1 = preamble(3)
 	      CALL uvcopyvr(tVis,tOut)
 	      idx = nearest(nsols,times,time1)
-	      CALL uvputvrr(tout,'phaseatm',atm(1,idx),nants)
+	      IF (donear .OR. time1.eq.times(idx)) THEN
+		 DO i=1,nants
+		    phaseatm(i) = atm(i,idx)
+		 ENDDO
+	      ELSE
+		 nintpol = nintpol + 1
+		 call intpol(nsols,nants,times,atm,idx,time1,phaseatm)
+	      ENDIF
+	      CALL uvputvrr(tout,'phaseatm',phaseatm,nants)
 	      IF (.NOT.antipol) THEN
 		 IF(.NOT.mask(ant1) .OR. .NOT.mask(ant2)) THEN
 		    nbad = nbad + 1
@@ -656,6 +700,8 @@ c      flag bad if no antennas contribute to interpolation
 	IF (nbad.GT.0) THEN
 	   write(*,*) nbad,' out of ', nvis, ' records flagged'
 	ENDIF
+
+	WRITE(*,*) 'nintpol/nvis=',nintpol,nvis
 
 	CALL uvclose(tVis)
 
@@ -724,6 +770,18 @@ c
       ELSE
 	 wscheme4=0.0
       ENDIF   
+      RETURN
+      END
+C***********************************************************************
+      REAL FUNCTION wscheme5(u,v,p)
+c
+c     Parabol
+c
+      IMPLICIT NONE
+      DOUBLE PRECISION u,v
+      REAL p
+
+      wscheme5 = 1.0
       RETURN
       END
 
@@ -1189,4 +1247,41 @@ c
 
 	END
 c-----------------------------------------------------------------------
-	
+	SUBROUTINE intpol(nt,na,times,a,idx,time,anew)
+	IMPLICIT NONE
+	INTEGER nt,na,idx
+        DOUBLE PRECISION times(nt),time
+	REAL a(na,nt),anew(na)
+c
+	REAL f0,f1
+	INTEGER i,i0,i1
+
+c	
+c  figure out which two points to use in the linear interpolation
+c
+	IF (idx.EQ.1) THEN
+	   i0 = idx
+	   i1 = idx+1
+	ELSE IF (idx.EQ.nt) THEN
+	   i0 = idx-1
+	   i1 = idx
+	ELSE IF (time.LT.times(idx)) THEN
+	   i0 = idx-1
+	   i1 = idx
+	ELSE IF (time.GT.times(idx)) THEN
+	   i0 = idx
+	   i1 = idx+1
+	ELSE
+	   CALL bug('f','intpol: bad idx or time')
+	ENDIF
+
+
+	f0 = (times(i1)-time)/(times(i1)-times(i0))
+	f1 = 1.0-f0
+
+	DO i=1,na
+	   anew(i) = f0*a(i,i0) + f1*a(i,i1)
+	ENDDO
+
+	RETURN
+	END
