@@ -6,18 +6,30 @@ c= GpBuddy -- Inherit gains from a nearby (buddy) antenna
 c& pjt
 c: calibration
 c+
-c	GpBuddy is a MIRIAD task which prepares a CARMA dataset
-c       to accept unwrapped phases from a gaintable present in
-c       an SZA dataset.
-c       Each CARMA antennas needs to be paired with an SZA antenna
-c       (its buddy). Unpaired antennas are currently flagged bad, 
-c       although an option exist to leave them alone and not change 
-c       their phases.
+c	GPBUDDY is a MIRIAD task that copies the gain table of a selected
+c       number of antennas into a second set of antennas in another dataset. 
+c       It is intended to be used in conjunction with UVCAL,to perform 
+c       antenna-based atmospheric phase correction.
+c       All non-selected antennas have the option of having their gains 
+c       interpolated from paired antennas using different methods.
 c
-c   NOTE:
-c       This program is currently under rapid development, make sure you
-c       communicate with the authors about the latest version and its
-c       capabilities and assumptions.
+c       GPBUDDY will take the gains corresponding to the antennas in list2 
+c       from the dataset specified by vis2, then set their amplitudes to one 
+c       and multiply the phases by a given scale factor, then unwrap them and write 
+c       them into the antenna-based phaseatm uv variable in the vis dataset for
+c       the antennas in list1. Antennas present in vis but not listed in list1
+c       will get a phaseatm value that is obtained from the application of
+c       the specified method. Antennas for which the method produce no solution will 
+c       be flagged during that time interval. UVCAL options=atmcal will interpret 
+c       these phaseatm tables at phases at the LO1 frequency and correctly compute 
+c       and apply the atmospheric delays.   
+c
+c	Example: phase correction for 3mm
+C         gpbuddy vis=carma vis2=sza 
+C                list1=2,4,5,6,8,9,13,15 
+C                list2=21,23,20,18,19,22,16,17
+c                factor=3.09
+c         uvcal vis=carma out=carma.atm options=atmcal
 c
 c@ vis
 c	The input visibility file, containing the visibility data
@@ -42,32 +54,18 @@ c       The list of primary antennas to receive new gains.
 c@ list2
 c       The 2nd list of paired antennas to apply gains to primary
 c
-c	Example:
-c	  gpbuddy vis=cyga list1=1,2,3 list2=4,5,6
-c             applies gains from ant-4 to ant-1, ant-5 to ant-2, etc.
-C         gpbuddy vis=carma vis2=sza 
-C                list1=2,4,5,6,8,9,13,15 
-C                list2=21,23,20,18,19,22,16,17
 C       
 C@ scale
-c       Override frequency scale factor for phaseatm between vis2 and vis. 
 c       This is usually a number larger than 1 and can normally be
 c       computed from the ratio of the effective frequencies at which the two
-c       gain solutions were derived. I.e. selfcal.
+c       gain solutions were derived. 
 c       Currently no default allowed, since we have not properly
-c       obtained these effective frequencies.
+c       obtained these effective frequencies. The usual numbers are 3.09 for
+c       3mm and 7.4 for 1mm.
 C       
 c@ options
 c       ** not used at the moment **
 c
-c@ reset
-c       Normally for non-paired antennas the phaseatm are set to 0,
-c       to prevent any changes to those antennae. However, these baselines
-c       are not flagged. By setting reset=false you will then force these
-c       baselines to be flagged.
-c       Default: false
-c
-c       **WARNING**    this keyword will disappear and absorbed into method=
 c@ mode
 c       gains or phaseatm. 
 c       For gains the gains of the input file(s) are overwritten,
@@ -76,8 +74,8 @@ c       DO NOT USE.
 c       Default: phaseatm
 c
 c@ nearest
-c       Use nearest neighbor for time interpolation? If not, linear
-c       interpolation is needed.
+c       Use nearest neighbor for time interpolation. If not, linear
+c       interpolation is used.
 c       Default: true.
 c
 c       Will become false, since nearest doesn't know how to flag
@@ -91,7 +89,7 @@ c       power:     inverse power law weighted average on projected distance
 c       gaussian:  Gaussian weighted average on projected distance
 c       tophat:    equal weights within a projected radius
 c       parabol:   inverse projected distance square within a radius
-c       none:      none, the phase corrections for non-buddies are 0 
+c       none:      none, the phase corrections for non-buddies are 0 (not implemented) 
 c       Default: power
 c
 c@ param
@@ -99,7 +97,7 @@ c       Parameter for the weighting function method.
 c       For power-law: negative of the power index
 c       For gaussian: Gaussian FWHM (in nanoseconds)
 c       For tophat: radius (in nanoseconds)
-c       For parabol: raidus (in nanoseconds)
+c       For parabol: radius (in nanoseconds)
 c       Default: 2
 c
 c@ antipol
@@ -107,12 +105,15 @@ c       Compute antenna phases for non-paired antennas by interpolating
 c       over paired antennas using a user-selectable weighting function
 c       specified by wscheme and param
 c       Default: true
+c@ reset
+c       Normally for non-paired antennas the phaseatm are set to 0,
+c       to prevent any changes to those antennae. However, these baselines
+c       are not flagged. By setting reset=false you will then force these
+c       baselines to be flagged.
+c       Default: false
+c
+c       **WARNING**    this keyword will disappear and absorbed into method=
 c--
-c@ ants
-c       TBD - not used at the moment. Perhaps we could allow
-c       multiple runs of gpbuddy. By selecting a subset of antennae
-c       here, one would be able to inherit buddies from antennae that
-c       used to be flagged.
 c--
 c  History:
 c    pjt     25mar08 Created
@@ -122,7 +123,7 @@ c    baz/pjt 19nov08 implemented 2nd list processing
 c    pjt     28nov08 morphed gains into new (phase)atm UV variable
 c    pjt     28nov08 added scale=
 c    pjt      4dec08 scale of gain phases
-c    pjt      8dec08 no more out2=, no reset=, no need for gain in vis=
+c    pjt      8dec08 no more out2=, no reset, no need for gain in vis=
 c    adb/pjt 15dec08 added antipol,param. Changed defaults for reset.
 c    pjt     16dec08 added method=
 c    adb     16dec08 added tophat,parabol. Vis are flagged if no antenna
@@ -281,6 +282,7 @@ c
 c  Get the antennae positions and convert to an XY (east-north) grid
 c  Code taken from listobs. antpos is in nsec, xy() in meters.
 c
+	write(*,*) 'antpos1:',nants
 	call uvgetvrd(tVis,'antpos',antpos,nants*3)
         call uvgetvrd(tVis,'latitud',lat,1)
 	call uvgetvrd(tVis,'longitu',lon,1)
@@ -301,6 +303,7 @@ c
 
         if(vis2.ne.' ') then
 	   write(*,*) 'VIS2=',vis2
+		write(*,*) 'antpos2:',nants2
 	  call uvgetvrd(tVis2,'antpos',antpos2,nants2*3)
           call uvgetvrd(tVis2,'latitud',lat2,1)
 	  call uvgetvrd(tVis2,'longitu',lon2,1)
@@ -775,7 +778,7 @@ c
 C***********************************************************************
       REAL FUNCTION wscheme5(u,v,p)
 c
-c     Parabol
+c     None
 c
       IMPLICIT NONE
       DOUBLE PRECISION u,v
@@ -1144,86 +1147,11 @@ c
 	   endif
 	   times(k) = times2(k)
 	   do j=1,n1
-	      gains(list1(j),k)=gains2(list2(j),k)
+c	      gains(list1(j),k)=gains2(list2(j),k)
 	      atm(list1(j),k)=atm2(list2(j),k)*scale
 	   enddo
 	enddo
 
-	end
-c-----------------------------------------------------------------------
-	subroutine GainCpy3(maxsols,nsols,nsols2,nants,nants2,times,
-     * times2,Gains,Gains2,mask,mask2,atm,atm2,xy,xy2,list1,list2,n1,n2,
-     * scale,doreset)
-c
-c   BAZ - this is the subroutine to change - giving extra input for 
-c   
-c          
-c
-c
-	implicit none
-	integer maxsols,nsols,nsols2,nants,nants2
-	complex Gains(nants,maxsols),Gains2(nants2,maxsols)
-	real atm(nants,maxsols),atm2(nants2,maxsols)
-	double precision times(maxsols)
-        double precision times2(maxsols)
-	logical mask(nants), mask2(nants2),doreset
-	real xy(2,nants), xy2(2,nants2),scale
-        integer n1,n2,idx,nearest,nbad
-        integer list1(n1),list2(n2)
-c
-	external nearest
-c
-c  Copy the gains. For this any flagged ants that did not have a gain,
-c  will look through the list of originally  unflagged gains and see
-c  which antenna is closest and copy the gain of this ant.
-c
-c  Input:
-c    maxsols	Max number of solutions.
-c    nants	Number of antennae times the number of feeds.
-c    ants	Ants to apply the breakpoint to.
-c    numant	Number of antennae.
-c    feeds	Feeds to apply the breakpoints to.
-c    numfeed	Number of feeds.
-c  Input/Output:
-c    nsols	Number of solutions.
-c    times	The read times.
-c    gains	The gains.
-c------------------------------------------------------------------------
-	integer i,j,k, jmin
-        integer pairs
-	real d, dmin, timediff,slop
-
-        write(*,*) 'GainCpy3: ',nants,nsols,nants2,nsols2
-
-c       Slop time is given in minutes 1min = 1/1440 day)
-        slop=1.0/1440.0
-	nbad = 0
-
-	if (n1.ge.1) then
-	   do k=1,nsols
-	      idx = nearest(nsols2,times2,times(k))
-	      timediff = ABS(times(k) - times2(idx))
-	      if (timediff.gt.slop) nbad = nbad + 1
-	      if (doreset) then
-		 do j=1,nants
-		    gains(j,k) = CMPLX(1.0,0.0)
-		    atm(j,k)   = 0.0
-		 enddo
-	      endif
-	      do j=1,n1
-		 gains(list1(j),k)=gains2(list2(j),idx)/
-     *                ABS(gains2(list2(j),idx))*ABS(gains(list1(j),idx))
-		 atm(list1(j),k)=atm2(list2(j),idx)*scale
-	      enddo
-	   enddo
-	else
-	   call bug('f',
-     *        'Minimum distance for vis,vis2 mode not supported yet')
-	endif
-
-	if (nbad.gt.0) then
-	   write(*,*) 'warning: ',nbad,'/',nsols,' intervals bad slop'
-	endif
 	end
 c-----------------------------------------------------------------------
 	INTEGER FUNCTION nearest(n,times,time)
