@@ -59,10 +59,11 @@ c    20jan94 jpw   Copied from MIRIAD program velplot
 c    13jul98 pjt   linux/g77 cleanup
 c    26aug98 pjt   fixed bug with long words in history file of .cf file
 c    12aug05 pjt   use new clpars.h
+c     5jan09 pjt   cleaned up few ancient PAUSE's
 c----------------------------------------------------------------------c
 	include 'clplot.h'
 	character*(*) version
-	parameter(version='(version 1.0 12-aug-05)')
+	parameter(version='(version 1.0 5-jan-09)')
 c
 	integer maxnax,maxboxes
 	parameter(maxnax=3,maxboxes=maxdim)
@@ -1662,7 +1663,7 @@ c--------------------------------------------------------------------------
                   ICOL=K
                 ENDIF
               ELSE IF (IPIV(K).GT.1) THEN
-                PAUSE 'Singular matrix'
+                CALL bug('f','GAUSSJ:Singular matrix 2')
               ENDIF
 12          CONTINUE
           ENDIF
@@ -1682,7 +1683,7 @@ c--------------------------------------------------------------------------
         ENDIF
         INDXR(I)=IROW
         INDXC(I)=ICOL
-        IF (A(ICOL,ICOL).EQ.0.) PAUSE 'Singular matrix.'
+        IF (A(ICOL,ICOL).EQ.0.) CALL bug('f','GAUSSJ:Singular matrix 2')
         PIVINV=1./A(ICOL,ICOL)
         A(ICOL,ICOL)=1.
         DO 16 L=1,N
@@ -1761,10 +1762,11 @@ c
             LISTA(KK)=J
             KK=KK+1
           ELSE IF (IHIT.GT.1) THEN
-            PAUSE 'Improper permutation in LISTA'
+            CALL bug('f','MRQMIN: Improper permutation in LISTA @1')
           ENDIF
 12      CONTINUE
-        IF (KK.NE.(MA+1)) PAUSE 'Improper permutation in LISTA'
+        IF (KK.NE.(MA+1)) CALL bug('f',
+     *                   'MRQMIN: Improper permutation in LISTA @2')
         ALAMDA=0.001
         CALL MRQCOF(X,Y,SIG,NDATA,A,MA,LISTA,MFIT,ALPHA,BETA,NCA,CHISQ,
      *       FUNCS)
