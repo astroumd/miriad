@@ -31,6 +31,7 @@ c    D.Mitchell 01Jun89	 Initial version.
 c	        23sep90  Revised revision.
 c		10dec90	 Miriad version.
 c    nebk       26nov92  Add btype
+c    pjt         5jan09  PAUSE -> bug('f'
 c------------------------------------------------------------------------
 	include 'hermes.h'
 	include 'maxdim.h'
@@ -247,7 +248,7 @@ c
 			write(line,50)
 50			format(' HERMESN: cant get Mercury time ')
 			call LogWrit(line(1:32))
-			pause
+			call bug('f','mercury')
 		endif
 	else
 		time = -time
@@ -447,7 +448,7 @@ c
       GOTO 1
       ENDIF
       H=XA(KHI)-XA(KLO)
-      IF (H.EQ.0.) PAUSE 'Bad XA input.'
+      IF (H.EQ.0.) call bug('f','Bad XA input.')
       A=(XA(KHI)-X)/H
       B=(X-XA(KLO))/H
       Y=A*YA(KLO)+B*YA(KHI)+
@@ -816,7 +817,7 @@ c
 			write(line,30)
 30			format(' CRANKN: P-C loop not converging ')
 			call LogWrit(line(1:33))
-			pause
+			call bug('f','not converging')
 		endif
 c
 		if(cerr*cerr .gt. tol2) then
@@ -990,13 +991,13 @@ c
 c
       PARAMETER (NMAX=50)
       DIMENSION GAM(0:NMAX),A(0:N),B(0:N),C(0:N),R(0:N),U(0:N)
-      IF(B(0).EQ.0.)PAUSE
+      IF(B(0).EQ.0.) call bug('f','b0=0')
       BET=B(0)
       U(0)=R(0)/BET
       DO 11 J=1,N
         GAM(J)=C(J-1)/BET
         BET=B(J)-A(J)*GAM(J)
-        IF(BET.EQ.0.)PAUSE
+        IF(BET.EQ.0.) call bug('f','bet=0')
         U(J)=(R(J)-A(J)*U(J-1))/BET
 11    CONTINUE
       DO 12 J=N-1,0,-1
@@ -1143,7 +1144,7 @@ c
 			write(line,20)
 20			format(' ORBIT: convergence error ')
 			call LogWrit(line(1:26))
-			pause
+			call bug('f','convergence')
 		endif
 		go to 10
 	endif
@@ -1168,7 +1169,7 @@ c
       REAL FACTOR,F1,F2,FUNC3,ABS
 c
       PARAMETER (FACTOR=1.2,NTRY=6)
-      IF(X1.EQ.X2)PAUSE 'You have to guess an initial range'
+      IF(X1.EQ.X2)call bug('f','You have to guess an initial range')
       F1=FUNC3(X1)
       F2=FUNC3(X2)
       SUCCES=.TRUE.
@@ -1202,7 +1203,8 @@ c
       PARAMETER (JMAX=40)
       FMID=FUNC3(X2)
       F=FUNC3(X1)
-      IF(F*FMID.GE.0.) PAUSE 'Root must be bracketed for bisection.'
+      IF(F*FMID.GE.0.) call bug('f',
+     *                         'Root must be bracketed for bisection.')
       IF(F.LT.0.)THEN
         RTBIS=X1
         DX=X2-X1
@@ -1217,7 +1219,7 @@ c
         IF(FMID.LE.0.)RTBIS=XMID
         IF(ABS(DX).LT.XACC .OR. FMID.EQ.0.) RETURN
 11    CONTINUE
-      PAUSE 'too many bisections'
+      CALL BUG('f','too many bisections')
       END
 c---------------------------------------------------------------
 	real function func3(t)
@@ -1374,7 +1376,7 @@ c
         S(J+1)=S(J)
         H(J+1)=0.25*H(J)
 11    CONTINUE
-      PAUSE 'Too many steps.'
+      CALL bug('f','Too many steps.')
       END
 c---------------------------------------------------
       SUBROUTINE TRAPZD(A,B,S,N)
@@ -1445,7 +1447,7 @@ c
           HP=XA(I+M)-X
           W=C(I+1)-D(I)
           DEN=HO-HP
-          IF(DEN.EQ.0.)PAUSE
+          IF(DEN.EQ.0.)CALL BUG('f','den=0')
           DEN=W/DEN
           D(I)=HP*DEN
           C(I)=HO*DEN
