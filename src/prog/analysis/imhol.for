@@ -87,12 +87,13 @@ c    mchw 05aug04 Change default image axes to wavelengths, and default antenna 
 c    mchw 27feb06 CARMA holography. Use restfreq if frequency axis is missing.
 c    mchw 28mar06 set default subreflector diameter = antdiam/10.
 c    mchw 02sep08 mult cdelt(1) * 206264.8 for carma images
+c    mchw 07jan09 subdiam=0 for ATA in bmproc.
 c------------------------------------------------------------------------
       implicit none
       include 'maxdim.h'
       include 'maxnax.h'
       character version*40
-      parameter (version = 'IMHOL: version 02-SEP-2008-MAR-2006')
+      parameter (version = 'IMHOL: version 07-Jan-2009')
 c
       real qepoch, uepoch, qcrpix(maxnax),ucrpix(maxnax), sigma,
      *		snclip, paclip
@@ -633,11 +634,16 @@ c
       call obspar(telescop,'subdiam',subdiam,ok)
       if(ok)then
         subdiam = subdiam / 2. / 0.3
+	print *, ' OK - subdiam,antdiam', subdiam,antdiam
       else
-        subdiam = antdiam / 2. / 0.3 /10.
+        subdiam = antdiam /10.
         call output('Unknown subreflector; setting to antdiam/10')
       endif
-c	print *, 'subdiam,antdiam', subdiam,antdiam
+      if(telescop(1:3).eq.'ATA') then
+        subdiam = 0.d0
+      print *, 'telescop=',telescop(1:3), ', subdiam blockage=',subdiam
+      endif
+	print *, 'subdiam,antdiam', subdiam,antdiam, ' nanosecs'
 c
 c  Find frequency axis.
 c
@@ -683,7 +689,8 @@ c
         if(frqax.ne.0)then
           freq = (k-crpix(frqax))*cdelt(frqax) + crval(frqax)
         endif
-c        antdiam = antdiam * freq
+        antdiam = antdiam * freq
+        subdiam = subdiam * freq
         if(microns)then
           fac = 0.5 / (2*pi) * cmks/freq * 1e-3
           ustr = 'microns'
@@ -691,6 +698,9 @@ c        antdiam = antdiam * freq
         sigsq = sigma * sigma
         snclipsq = snclip * snclip
         paclip = fac * paclip
+c
+        print *, 'freq =', freq,' GHz'
+        print *, ' antdiam =', antdiam, ' subdiam =', subdiam,' lambda'
 c
 c  If(bmfit) then go thro' this loop twice:
 c  1st pass to accumulate the sums and 2nd pass to correct the data.
@@ -727,13 +737,19 @@ c
             call allblnk (pline(i), pflags(i), epline(i), 
      *         epflags(i), paline(i), paflags(i), epaline(i),
      *         epaflags(i))
-            if (zero) pflags(i) = .true.
+c            if (zero) pflags(i) = .true.
+c            pflags(i) = .true.
+c            paflags(i) = .true.
+cdebug      if(i.lt.10)print *, 'i, pass1, pflags(i), paflags(i)', 
+c     *                 i, pass1, pflags(i), paflags(i)
 c
             if ( (uline(i).eq.0.0 .and. qline(i).eq.0.0) .or.
      *           (.not.qflags(i) .or. .not.uflags(i)) ) then
 c
 c Undefined, so don't allow the "zero" blanking option
 c
+cdebug       if(i.lt.10)print *, 'i, pass1, qflags(i), uflags(i)', 
+c     *                 i, pass1, qflags(i), uflags(i)
               pflags(i)   = .false.
             else if (snr.gt.snclipsq) then
 c
@@ -750,6 +766,8 @@ c
               epaflags(i) = .true.
 c
               if (paclip.gt.0.0 .and. epaline(i).gt.paclip) then
+C
+cdebug       if(i.lt.10)print *, 'i, paclip, epaline(i)', i, paclip, epaline(i) 
 c
 c Failed the phase error blanking test.   Don't allow "zero"
 c blanking here. Blank both amplitude and phase.
@@ -781,15 +799,17 @@ c
                 endif
               endif
             endif
+cdebug       if(i.lt.10)print *, 'i, pass1, pflags(i), paflags(i)', 
+c     *                 i, pass1, pflags(i), paflags(i)
 c
 c  Fit focus and pointing offsets to aperture E-field maps.
 c  Fit linear and quadratic terms to phase across aperture
 c  phase(x,y)=a+bx+cy+d(x*x+y*y)
 c
-	    x  = (i-crpix(1))*cdelt(1) * 206264.8
-	    y  = (j-crpix(2))*cdelt(2) * 206264.8
+	    x  = (i-crpix(1))*cdelt(1)
+	    y  = (j-crpix(2))*cdelt(2)
 	    r2 = (x*x+y*y)
-c	print *, 'x,y,r2', x,y,r2
+c	if(i.lt.10) print *, 'x,y,r2', x,y,r2
 c
 c  Mask amplitude and phase outside of illuminated aperture surface.
 c
@@ -801,6 +821,10 @@ c	print *, subdiam,antdiam
 c
 c  Accumulate the sums.
 c
+c             if(i.lt.10)print *, 'i, pass1, pflags(i), paflags(i)', 
+c     *                 i, pass1, pflags(i), paflags(i)
+c             pflags(i) = .true.
+c             paflags(i) = .true.
 	    if(pass1.and.paflags(i))then 
 	      sum    = sum    + 1.
 	      sumz   = sumz   + paline(i)
@@ -858,7 +882,8 @@ c
           write(aline,'(a,i6)')
      *	  'Number of points in phase fit =',int(sum)
           call output(aline)
-	print *, sumxx, sumyy, sumr2, sum, sumz, dd
+	print *, 'sumxx, sumyy, sumr2, sum, sumz, dd', 
+     *                  sumxx, sumyy, sumr2, sum, sumz, dd
           b   = sumzx/sumxx
           c   = sumzy/sumyy
           det = sumr2*sumr2 - sum*sumr4
