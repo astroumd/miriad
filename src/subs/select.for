@@ -334,12 +334,12 @@ c------------------------------------------------------------------------
 	include 'maxdim.h'
 	include 'mirconst.h'
 	integer MAXVALS
-	parameter(MAXVALS=32)
+	parameter(MAXVALS=64)
 	integer offset,sgn,k1,k2,n,n1,n2,i,j,i1,i2,seltype,length,nsels
 	double precision ant1(MAXANT),ant2(MAXANT)
 	double precision vals(MAXVALS)
 	real time0
-	character spec*80,type*12
+	character spec*256,type*12
 	logical more
 c
 c  Externals.
@@ -430,7 +430,7 @@ c
 c  Store away the bacon.
 c
 	    if(offset+4.gt.MAXSELS)
-     *		call Selbug(spec,'Selection too complex')
+     *		call Selbug(spec,'Selection too complex-1')
 	    sels(offset+LOVAL) = vals(1)
 	    sels(offset+HIVAL) = vals(2)
 	    sels(offset+ITYPE) = sgn*seltype
@@ -443,7 +443,7 @@ c
 	  else if(seltype.eq.LST)then
 	    call SelDcde(spec,k1,k2,vals,n,2,'ra') 
 	    if(offset+4.gt.MAXSELS)
-     *		call Selbug(spec,'Selection too complex')
+     *		call Selbug(spec,'Selection too complex-2')
 	    sels(offset+LOVAL) = vals(1)
 	    sels(offset+HIVAL) = vals(2)
 	    sels(offset+ITYPE) = sgn*seltype
@@ -463,7 +463,7 @@ c
 	    call SelFudge(sels(offset+LOVAL),vals(1)-sels(offset+MDVAL))
 	    call SelFudge(sels(offset+HIVAL),vals(2)-sels(offset+MDVAL))
 	    if(offset+5.gt.MAXSELS)
-     *		call Selbug(spec,'Selection too complex')
+     *		call Selbug(spec,'Selection too complex-3')
 	    sels(offset+ITYPE) = sgn*seltype
 	    sels(offset+NSIZE) = 5
 	    offset = offset + 5
@@ -594,8 +594,8 @@ c
 c
 	    do i1=1,n1
 	      do i2=1,n2
-		if(offset+3.gt.maxsels)
-     *		    call SelBug(spec,'Buffer overflow-2')
+		if(offset+3.gt.maxsels) 
+     * 		    call SelBug(spec,'Buffer overflow-2')
 		sels(offset+ITYPE) = sgn*seltype
 		sels(offset+LOVAL) = nint(ant1(i1))
 		sels(offset+HIVAL) = nint(ant2(i2))
