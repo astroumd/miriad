@@ -170,6 +170,7 @@
 /*  pjt   8may08 wrap HA back into -12..12 from -24..24..               */
 /*  dhem 13may08 Change uvputvr_c to always update var's buffer         */
 /*  dhem 14may08 uvputvr_c always reallocs var's buffer on size change  */
+/*  pjt  13aug08 handle systemp uv selection                            */
 /*----------------------------------------------------------------------*/
 /*									*/
 /*		Handle UV files.					*/
@@ -260,7 +261,7 @@
 /*		list to be formed for hashing.				*/
 /*									*/
 /*----------------------------------------------------------------------*/
-#define VERSION_ID "8-may-08 pjt"
+#define VERSION_ID "15-aug-08 pjt"
 
 #define private static
 
@@ -423,6 +424,7 @@ typedef struct varhand{
 #define SEL_DELEV  21
 #define SEL_PURP   22
 #define SEL_SEEING 23
+#define SEL_TSYS   24
 
 typedef struct {
 	int type,discard;
@@ -477,10 +479,10 @@ typedef struct {
         off_t offset, max_offset;
 	int presize,gflag;
 	FLAGS corr_flags,wcorr_flags;
-  VARIABLE *coord,*corr,*time,*bl,*tscale,*nschan,*axisrms,*seeing;
+        VARIABLE *coord,*corr,*time,*bl,*tscale,*nschan,*axisrms,*seeing;
 	VARIABLE *sfreq,*sdf,*restfreq,*wcorr,*wfreq,*veldop,*vsource;
 	VARIABLE *plmaj,*plmin,*plangle,*dra,*ddec,*ra,*dec,*pol,*on;
-        VARIABLE *dazim, *delev, *purpose;
+        VARIABLE *dazim, *delev, *purpose, *tsys;
 	VARIABLE *obsra,*obsdec,*lst,*elev,*antpos,*antdiam,*source,*bin;
 	VARIABLE *vhash[HASHSIZE],*prevar[MAXPRE];
 	VARIABLE variable[MAXVAR];
@@ -488,7 +490,7 @@ typedef struct {
 	int need_skyfreq,need_point,need_planet,need_dra,need_ddec,
    	    need_dazim, need_delev,need_purp,
 	    need_ra,need_dec,need_pol,need_on,need_obsra,need_uvw,need_src,
-	    need_win,need_bin,need_lst,need_elev,need_seeing;
+	    need_win,need_bin,need_lst,need_elev,need_seeing,need_tsys;
 	float ref_plmaj,ref_plmin,ref_plangle,plscale,pluu,pluv,plvu,plvv;
 	double skyfreq;
         int skyfreq_start;
@@ -594,9 +596,9 @@ my_uvlist(int tno,char *fname)
     uv = uvs[tno];          /* get pointer to UV structure */
 
     offset = uv->offset;    /* should be 0 at start */
-    printf("0x%8x FILE: %s\n",offset,fname);
+    printf("0x%08x FILE: %s\n",offset,fname);
     while(offset < uv->max_offset) {
-	printf("0x%8x ",offset);
+	printf("0x%08x ",offset);
         hreadb_c(uv->item,s,offset,UV_HDR_SIZE,&iostat);   /* get header */ 
         if (iostat == -1) return(iostat);   /* End Of File */
 
@@ -1042,7 +1044,7 @@ private UV *uv_getuv(int tno)
   uv->need_dra	   = uv->need_ddec  = uv->need_ra     = FALSE;
   uv->need_dec	   = uv->need_lst   = uv->need_elev   = FALSE;
   uv->need_obsra   = uv->need_dazim = uv->need_delev  = FALSE;
-  uv->need_purp    = uv->need_seeing= FALSE;
+  uv->need_purp    = uv->need_seeing= uv->need_tsys   = FALSE;
   uv->uvw = NULL;
   uv->ref_plmaj = uv->ref_plmin = uv->ref_plangle = 0;
   uv->plscale = 1;
@@ -2264,7 +2266,7 @@ void uvselect_c(int tno,Const char *object,double p1,double p2,int datasel)
 		"uvrange","pointing","amplitude","window","or","dra",
 		"ddec","uvnrange","increment","ra","dec","and", "clear",
 		"on","polarization","shadow","auto","dazim","delev",
-                "purpose","seeing" (should be 28?)
+                "purpose","seeing","tsys"
     p1,p2	Generally this is the range of values to select. For
 		"antennae", this is the two antennae pair to select.
 		For "antennae", a zero indicates "all antennae".
@@ -2424,6 +2426,14 @@ void uvselect_c(int tno,Const char *object,double p1,double p2,int datasel)
     if(p1 < 0)   BUG('f',"Min seeing is negative, in UVSELECT");
     uv_addopers(sel,SEL_SEEING,discard,p1,p2,(char *)NULL);
     uv->need_seeing = TRUE;
+
+/* Selection by systemp */
+
+  } else if(!strcmp(object,"systemp")){
+    if(p1 >= p2) BUG('f',"Min systemp is greater than or equal to max systemp, in UVSELECT");
+    if(p1 < 0)   BUG('f',"Min systemp is negative, in UVSELECT");
+    uv_addopers(sel,SEL_TSYS,discard,p1,p2,(char *)NULL);
+    uv->need_tsys = TRUE;
 
 /* Selection by visibility number. */
 
@@ -2879,6 +2889,9 @@ void uvread_c(int tno,double *preamble,float *data,int *flags,int n,int *nread)
 
   uvread_preamble(uv,preamble);
 
+  /*  printf("UVREAD_C: %g %g\n",preamble[0],preamble[1]); */
+
+
 /* Divide by the reference line if there is one. */
 
   if(uv->ref_line.linetype != LINE_NONE) uvread_reference(uv,data,flags,*nread);
@@ -2892,6 +2905,7 @@ private void uvread_preamble(UV *uv, double *preamble)
   VARIABLE *v;
   double scale,uu,vv,ww,*coord;
   int bl,i1,i2,i;
+  double tmp1,tmp2;
 
 
   for(i=0; i < uv->presize; i++){
@@ -2911,8 +2925,11 @@ private void uvread_preamble(UV *uv, double *preamble)
 	ww = (VARLEN(uv->coord) >= 3 ? coord[2] : 0.0);
       }
       scale = (uv->flags & UVF_WAVELENGTH ? uv_getskyfreq(uv,uv->win) : 1.0);
-      *preamble++ = scale * ( uv->pluu * uu + uv->pluv * vv );
-      *preamble++ = scale * ( uv->plvu * uu + uv->plvv * vv );
+      tmp1 = scale * ( uv->pluu * uu + uv->pluv * vv );
+      tmp2 = scale * ( uv->plvu * uu + uv->plvv * vv );
+      printf("PREAMBLE: %g %g [%g %g %g %g]\n",tmp1,tmp2,uv->pluu,uv->pluv,uv->plvu,uv->plvv);
+      *preamble++ = tmp1;
+      *preamble++ = tmp2;
       if(uv->flags & UVF_DOW ) *preamble++ = scale * ww;
     } else if(v->type == H_DBLE){
       *preamble++ = *(double *)(v->buf);
@@ -3245,23 +3262,6 @@ private int uvread_select(UV *uv)
       if(discard || n >= sel->noper) goto endloop;
     }
 
-/* Apply seeing monitor selection. */
-
-    if(op->type == SEL_SEEING){
-      discard = !op->discard;
-      if(!uv->need_seeing) seeing = 0;
-      else seeing = *(float *)(uv->seeing->buf);
-    
-      while(n < sel->noper && op->type == SEL_SEEING){
-        if(op->loval <= seeing && seeing <= op->hival)
-	  discard = op->discard;
-        op++; n++;
-      }
-      if(discard || n >= sel->noper) goto endloop;
-    }
-
-
-    /* ==PJT== TODO: bleh, this could be in the wrong order .... */
 
 /* Apply delta RA selection. */
 
@@ -3537,6 +3537,29 @@ private int uvread_select(UV *uv)
       }
       if(discard || n >= sel->noper) goto endloop;
     }
+
+/* Apply seeing monitor selection. */
+
+    if(op->type == SEL_SEEING){
+      discard = !op->discard;
+      if(!uv->need_seeing) seeing = 0;
+      else seeing = *(float *)(uv->seeing->buf);
+    
+      while(n < sel->noper && op->type == SEL_SEEING){
+        if(op->loval <= seeing && seeing <= op->hival)
+	  discard = op->discard;
+        op++; n++;
+      }
+      if(discard || n >= sel->noper) goto endloop;
+    }
+
+
+/* Apply seeing monitor selection. */
+
+    if(op->type == SEL_TSYS){
+      printf("SEL_TSYS: not yet implemented: %d\n",VARLEN(uv->tsys));
+    }
+
 
 /* We have processed this selection clause. Now determine whether the
    overall selection criteria is to select or discard. Note that we cannot
@@ -3817,6 +3840,7 @@ private void uvread_init(int tno)
 #else
   if(uv->need_seeing)uv->seeing  = uv_checkvar(tno,"smonrms",H_REAL);     /* ATCA */
 #endif
+  if(uv->need_tsys)  uv->tsys    = uv_checkvar(tno,"systemp",H_REAL);  /* check array */
   if(uv->need_pol)   uv->need_pol= uv_locvar(tno,"pol") != NULL;
   if(uv->need_pol)   uv->pol     = uv_checkvar(tno,"pol",H_INT);
   if(uv->need_on)    uv->on      = uv_checkvar(tno,"on",H_INT);
