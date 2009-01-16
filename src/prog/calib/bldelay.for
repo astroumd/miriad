@@ -36,6 +36,7 @@ c     default is 3 (to search +/- 3*pi)
 c
 c--
 c  History:
+c     jwl  16dec08  Subtract starting phases from subsequent ones
 c     jwl  13dec08  Changed mean delay estimate
 c     jwl  15nov08  Initial version.
 c----------------------------------------------------------------------c
@@ -44,7 +45,7 @@ c----------------------------------------------------------------------c
       character*(*) version
       integer MAXSPECT
       parameter(MAXSPECT = MAXWIDE)
-      parameter(version = 'BLDELAY: version 13-Dec-08')
+      parameter(version = 'BLDELAY: version 16-Dec-08')
       integer maxsels
       parameter(maxsels = 1024)
 c
@@ -63,7 +64,7 @@ c
       double precision VisNo
       integer maxWrap, i1, i2, bl
       character line*120
-      real lastdelay(MAXBASE), ld
+      real lastdelay(MAXBASE), phase0(MAXBASE)
 c
       complex data(MAXCHAN)
       logical flags(MAXCHAN)
@@ -106,7 +107,7 @@ c
           write(line, '(a)') 'Will track phases in time'
           call output(line)
       endif
-      call InitDelay(lastdelay, MAXBASE)
+      call InitDelay(lastdelay, phase0, MAXBASE)
 c
 c  Open an existing visibility file, and apply selection criteria.
 c
@@ -155,10 +156,9 @@ c
           basein = preamble(2)
           call basant(basein, i1, i2)
           bl = ((i2 - 1) * i2) / 2 + i1
-          ld = lastdelay(bl)
           call Delays(timein, basein, data, flags, numchan, freqs,
-     *                maxWrap, doslope, dotrack, ld)
-          lastdelay(bl) = ld
+     *                maxWrap, doslope, dotrack, lastdelay(bl),
+     *                phase0(bl))
 c
 c  Loop the loop.
 c
@@ -240,7 +240,8 @@ c
       end
 c********1*********2*********3*********4*********5*********6*********7**
       subroutine Delays(timein, basein, data, flags, numchan, freqs,
-     *                  maxWrap, doslope, dotrack, lastdelay)
+     *                  maxWrap, doslope, dotrack, lastdelay,
+     *                  phase0)
       implicit none
 c
       include 'mirconst.h'
@@ -249,7 +250,7 @@ c
       logical flags(numchan), doslope, dotrack
       complex data(numchan)
       double precision timein, basein
-      real freqs(*), lastdelay
+      real freqs(*), lastdelay, phase0
 c
 c  Estimate delays based on mean phase.
 c
@@ -294,10 +295,10 @@ c
       if ((ich .ne. 0) .and. (ant1 .ne. ant2)) then
           if (doslope) then
               call delay2(phas, chfreq, freq0, ich, maxWrap, delay,
-     *                                    nWrap, dotrack, lastdelay)
+     *                        nWrap, dotrack, lastdelay, phase0)
           else
               call delay1(phas, chfreq, freq0, ich, maxWrap, delay,
-     *                                    nWrap, dotrack, lastdelay)
+     *                        nWrap, dotrack, lastdelay, phase0)
           endif
 c
           write(line, '(d19.13, i5, f10.5, i4)')
@@ -311,11 +312,11 @@ c
 c
 c********1*********2*********3*********4*********5*********6*********7**
       subroutine delay1(phase, freqs, freq0, nchan, maxWrap, delay,
-     *                  nWrap, dotrack, lastdelay)
+     *                  nWrap, dotrack, lastdelay, phase0)
       implicit none
       include 'mirconst.h'
 c
-      real phase(*), freqs(*), freq0, delay, lastdelay
+      real phase(*), freqs(*), freq0, delay, lastdelay, phase0
       integer nchan, maxWrap, nWrap
       logical dotrack
 c
@@ -345,6 +346,17 @@ c
       resid0 = 1.0e10
       delay = 0
 c
+c  Remove any phase offset from the beginning of the track
+c
+      if (phase0 .gt. 1.0e10) then
+          call unwrap(phase, nchan)
+          phase0 = 0.0
+          do i = 1, nchan
+              phase0 = phase0 + phase(i)
+          enddo
+          phase0 = wrap(phase0 / nchan)
+      endif
+c
       if (dotrack .and. (lastdelay .lt. 1.0e10)) then
 c
 c  Use the last delay as the starting estimate for the current one,
@@ -353,12 +365,17 @@ c
          delayN = lastdelay
          sum = 0.0
          do j = 1, nchan
-             phasej = wrap(phase(j) - TWOPI * freqs(j) * delayN)
+             phasej = phase(j) - phase0
+             phasej = wrap(phasej - TWOPI * freqs(j) * delayN)
              sum = sum + phasej / (TWOPI * freqs(j))
          enddo
          delay0 = sum / nchan
          delay = delay0 + delayN
          nWrap = int(delay / (2.0 * freq0))
+         if (abs(lastdelay - delay) .gt. 0.005) then
+             print *, nchan, lastdelay, delay
+             print *, (freqs(j), j = 1, nchan)
+         endif
       else
 c
 c  Try to determine wrap from phases
@@ -368,7 +385,7 @@ c
          sum = 0.0
          do j = 1, nchan
              phasej = wrap(phase(j) - TWOPI * freqs(j) * delayN)
-             sum = sum + phasej / (TWOPI * freqs(j))
+             sum = sum + (phasej - phase0)/ (TWOPI * freqs(j))
          enddo
          delay0 = sum / nchan
          resid = 0.0
@@ -388,12 +405,12 @@ c
 c
 c********1*********2*********3*********4*********5*********6*********7**
       subroutine delay2(phase, freqs, freq0, nchan, maxWrap, delay,
-     *                  nWrap, dotrack, lastdelay)
+     *                  nWrap, dotrack, lastdelay, phase0)
       implicit none
       include 'mirconst.h'
       include 'maxdim.h'
 c
-      real phase(*), freqs(*), freq0, delay, lastdelay
+      real phase(*), freqs(*), freq0, delay, lastdelay, phase0
       integer nchan, maxWrap, nWrap
       logical dotrack
 c
@@ -421,6 +438,17 @@ c
       resid0 = 10.0e10
       delay = 0
 c
+c  Remove any phase offset from the beginning of the track
+c
+      if (phase0 .gt. 1.0e10) then
+          call unwrap(phase, nchan)
+          phase0 = 0.0
+          do i = 1, nchan
+              phase0 = phase0 + phase(i)
+          enddo
+          phase0 = wrap(phase0 / nchan)
+      endif
+c
       if (dotrack .and. (lastdelay .lt. 1.0e10)) then
 c
 c  Use the last delay as the starting estimate for the current one,
@@ -428,13 +456,11 @@ c  to resolve wraps
 c
          delayN = lastdelay
          do j = 1, nchan
-              wphase(j) = wrap(phase(j) - TWOPI * freqs(j) * delayN)
+              phasej = phase(j) - phase0
+              wphase(j) = wrap(phasej - TWOPI * freqs(j) * delayN)
          enddo
          call linfit(freqs, wphase, nchan, a, b)
          delay0 = a / TWOPI
-         do j = 1, nchan
-             phasej = wrap(phase(j) - TWOPI * freqs(j) * delayN)
-         enddo
          delay = delay0 + delayN
          nWrap = int(delay / (2.0 * freq0))
       else
@@ -444,14 +470,16 @@ c
       do i = -maxWrap, maxWrap, 1
          delayN = float(i) / (2.0 * freq0)
          do j = 1, nchan
-              wphase(j) = wrap(phase(j) - TWOPI * freqs(j) * delayN)
+              phasej = phase(j)
+              wphase(j) = wrap(phasej - TWOPI * freqs(j) * delayN)
          enddo
          call linfit(freqs, wphase, nchan, a, b)
          delay0 = a / TWOPI
          resid = 0.0
          do j = 1, nchan
-             phasej = wrap(phase(j) - TWOPI * freqs(j) * delayN)
-             resid = resid + wrap((phasej - TWOPI*freqs(j)*delay0))**2
+              phasej = phase(j) - phase0
+              phasej = wrap(phasej - TWOPI * freqs(j) * delayN)
+              resid = resid + wrap((phasej - TWOPI*freqs(j)*delay0))**2
          enddo
          if (resid .lt. resid0) then
              resid0 = resid
@@ -513,7 +541,7 @@ c
 c     Function to wrap a phase into the range -pi to +pi
 c
 c  Input:
-c    theta    Phase to wrap (deg)
+c    theta    Phase to wrap (rad)
 c
 c-----------------------------------------------------------------------
 c
@@ -529,6 +557,34 @@ c
          angle = PI
       endif
       wrap = angle
+      return
+      end
+c
+c********1*********2*********3*********4*********5*********6*********7**
+      subroutine unwrap(theta, count)
+      include 'mirconst.h'
+c
+      real theta(*)
+      integer count
+c
+c     Function to unwrap a series of phases
+c
+c  Input:
+c    theta    Phases to unwrap (rad)
+c    count    Number of phases
+c
+c-----------------------------------------------------------------------
+c
+      integer i
+c
+      do i = 2, count
+          do while((theta(i) - theta(i - 1)) .gt. PI)
+              theta(i) = theta(i) - TWOPI
+          enddo
+          do while((theta(i - 1) - theta(i)) .gt. PI)
+              theta(i) = theta(i) + TWOPI
+          enddo
+      enddo
       return
       end
 c
@@ -588,10 +644,10 @@ c
       call output(line)
       end
 c********1*********2*********3*********4*********5*********6*********7**
-      subroutine InitDelay(lastdelay, count)
+      subroutine InitDelay(lastdelay, phase0, count)
 c
       implicit none
-      real lastdelay(*)
+      real lastdelay(*), phase0(*)
       integer count
 c
 c  Set the last delay value to an impossibly large number to force
@@ -601,6 +657,7 @@ c-----------------------------------------------------------------------
 c
       do i = 1, count
           lastdelay(i) = 1.0e15
+          phase0(i) = 1.0e15
       enddo
       end
 c********1*********2*********3*********4*********5*********6*********7**
