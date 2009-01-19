@@ -5,3 +5,4 @@ docwork
 Makefile.standalone
 Makefile.standalone.tmpl
 mirmake
+*.clone

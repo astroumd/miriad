@@ -2,3 +2,4 @@ Makefile
 Makefile.in
 *_ds
 docwork
+*.clone

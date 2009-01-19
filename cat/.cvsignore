@@ -6,6 +6,7 @@ line.kdoc
 options.kdoc
 out.kdoc
 region.kdoc
+select.kdoc
 server.kdoc
 stokes.kdoc
 vis.kdoc
