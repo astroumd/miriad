@@ -1,0 +1,16 @@
+Makefile
+Makefile.in
+progguide.aux
+progguide.dvi
+progguide.idx
+progguide.ilg
+progguide.ind
+progguide.log
+progguide.lot
+progguide.toc
+defs.inc
+image.inc
+install.inc
+titlepage.inc
+uvvars.inc
+progguide_US.ps.gz

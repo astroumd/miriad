@@ -1,0 +1,8 @@
+Makefile
+Makefile.in
+*.lo
+.deps
+.libs
+_deps
+_libs
+libmir_linpack.la

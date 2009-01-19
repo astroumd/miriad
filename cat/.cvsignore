@@ -1,0 +1,13 @@
+Makefile
+Makefile.in
+device.kdoc
+in.kdoc
+line.kdoc
+options.kdoc
+out.kdoc
+region.kdoc
+server.kdoc
+stokes.kdoc
+vis.kdoc
+window.kdoc
+keyword-doc.stamp

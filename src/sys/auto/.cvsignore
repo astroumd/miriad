@@ -1,0 +1,7 @@
+Makefile
+Makefile.in
+*_ds
+docwork
+Makefile.standalone
+Makefile.standalone.tmpl
+mirmake

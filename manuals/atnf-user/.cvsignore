@@ -1,0 +1,13 @@
+Makefile
+Makefile.in
+userguide.aux
+userguide.dvi
+userguide.idx
+userguide.ilg
+userguide.ind
+userguide.log
+userguide.lot
+userguide.toc
+*.ps
+userguide_US.ps.gz
+titlepage.eps

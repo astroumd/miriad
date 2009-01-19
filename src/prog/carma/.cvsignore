@@ -1,0 +1,13 @@
+Makefile
+Makefile.in
+.deps
+.libs
+_deps
+_libs
+*_ds
+docwork
+*.f
+ax
+axcor
+jyperk
+noiseglue
