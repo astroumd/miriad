@@ -5,7 +5,7 @@ EXTRA_DIST = $(texname).tex titlepage.inc.in
 
 includes = defs.inc image.inc install.inc uvvars.inc titlepage.inc.in
 
-CLEANFILES = $(doc_DATA) $(includes) \
+CLEANFILES = $(doc_DATA) $(includes) titlepage.inc \
   $(texname).aux \
   $(texname).dvi \
   $(texname).idx \

@@ -12,6 +12,8 @@ LDADD = $(prog_libs)
 
 BUILT_SOURCES = cgcurs.f cgdisp.f cginit.f cgrego.f cgslice.f cgspec.f sfind.f tvall.f tvclip.f tvcycle.f tvdisp.f tvflag.f tvinit.f tvset.f views.f
 
+CLEANFILES = $(BUILT_SOURCES)
+
 noinst_HEADERS = sfind.h tvclip.h tvflag.h
 
 EXTRA_DIST = cgcurs.for cgdisp.for cginit.for cgrego.for cgslice.for cgspec.for sfind.for tvall.for tvclip.for tvcycle.for tvdisp.for tvflag.for tvinit.for tvset.for views.for

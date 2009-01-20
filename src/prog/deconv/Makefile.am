@@ -12,6 +12,8 @@ LDADD = $(prog_libs)
 
 BUILT_SOURCES = clean.f maxen.f mfclean.f mosmem.f mospsf.f mossdi.f mossdi2.f mostess.f pmosmem.f restor.f tvcln.f
 
+CLEANFILES = $(BUILT_SOURCES)
+
 noinst_HEADERS = restor.h tvcln.h
 
 EXTRA_DIST = clean.for maxen.for mfclean.for mosmem.for mospsf.for mossdi.for mossdi2.for mostess.for pmosmem.for restor.for tvcln.for

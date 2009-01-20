@@ -48,6 +48,8 @@ BUILT_SOURCES = avmaths.f boxspec.f boxtest.f clfind.f clplot.f \
   velmodel.f velplot.f velsw.f xpeak.f zapchan.f \
   zeeeta.f zeefake.f zeemap.f zeesim.f zeestat.f
 
+CLEANFILES = $(BUILT_SOURCES)
+
 noinst_HEADERS = clfind.h clpars.h clplot.h clstats.h hermes.h \
   imblob.h imdiff.h imfit.h imhist.h imsad.h imsad2.h imspec.h \
   imstat.h maths.h mfspin.h psrfix.h regrid.h velplot.h 

@@ -16,6 +16,7 @@ noinst_HEADERS = gildas.h smablflag.h smablsrc.h smagpplt.h smatbpass.h smauvspe
 EXTRA_DIST = gildas.for phatrans.for schedobs.for smablflag.for smablsrc.for smacheck.for smachunkglue.for smafix.for smaflux.for smagpplt.for smalod.for smamfcal.for smarewt.for smatbpass.for smauvamp.for smauvplt.for smauvspec.for smavarfit.for smavarplt.for uvsort.for vel2fel.for
 
 BUILT_SOURCES = $(EXTRA_DIST:.for=.f)
+CLEANFILES = $(BUILT_SOURCES)
 
 nodist_gildas_SOURCES = gildas.f
 nodist_phatrans_SOURCES = phatrans.f

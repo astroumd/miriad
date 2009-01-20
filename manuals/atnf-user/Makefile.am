@@ -42,9 +42,10 @@ gnuplots = immerge.g
 psfigs = $(figs:.fig=.ps)
 gfigs = $(gnuplots:.g=.ps)
 
-EXTRA_DIST = $(texname).tex $(includes) $(figs) $(gnuplots) titlepage.eps.in
+EXTRA_DIST = $(texname).tex $(includes) $(figs) $(gnuplots) \
+  titlepage.eps.in colours.eps
 
-CLEANFILES = $(doc_DATA) $(psfigs) $(gfigs) \
+CLEANFILES = $(doc_DATA) $(psfigs) $(gfigs) titlepage.eps \
   $(texname).aux \
   $(texname).dvi \
   $(texname).idx \

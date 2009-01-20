@@ -11,6 +11,7 @@ AM_FFLAGS = @no_globals@
 LDADD = $(prog_libs)
 
 BUILT_SOURCES = tsysmed.f wsrtfits.f wsrtuvmodel.f
+CLEANFILES = $(BUILT_SOURCES)
 
 noinst_HEADERS = wsrtfits.h
 

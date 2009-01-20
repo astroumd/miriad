@@ -19,6 +19,8 @@ BUILT_SOURCES = antconv.f bee.f blcal.f bldelay.f calapply.f calboot.f \
   pcal.f selfcal.f tgains.f tmcal.f tmcvt.f tmgen.f tpgains.f uvpflag.f \
   wvcal.f xyphase.f
 
+CLEANFILES = $(BUILT_SOURCES)
+
 noinst_HEADERS = bee.h blcal.h gfiddle.h gmakes.h gpcal.h gplist.h \
   gpplt.h gpscal.h mfcal.h mselfcal.h panda.h selfcal.h tmcvt.h
 

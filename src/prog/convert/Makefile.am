@@ -14,6 +14,7 @@ AM_FFLAGS = @no_globals@
 LDADD = $(prog_libs)
 
 BUILT_SOURCES = fits.f mir.f ppmtomir.f
+CLEANFILES = $(BUILT_SOURCES)
 
 noinst_HEADERS = fits.h mir.h
 

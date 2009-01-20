@@ -22,6 +22,8 @@ BUILT_SOURCES = addhis.f atmosph.f calc.f copyhd.f corset.f \
   remove.f rmdata.f rmsfit.f sinbad.f sinpoly.f solar.f tacos.f \
   taco.f telepar.f warpfit.f xcorr.f xfcor.f
 
+CLEANFILES = $(BUILT_SOURCES)
+
 noinst_HEADERS = atmosph.h calc.h design.h listobs.h mathd.h pnt.h sinpoly.h
 
 EXTRA_DIST = addhis.for atmosph.for calc.for copyhd.for corset.for \

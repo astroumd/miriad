@@ -5,6 +5,7 @@ include $(top_srcdir)/mircommon.mak
 bin_SCRIPTS = mirmake
 
 EXTRA_DIST = mirmake.in
+CLEANFILES = mirmake Makefile.standalone
 
 mirmake: mirmake.in
 	sed -e 's,%libdir%,$(libdir),' <$< >$@
@@ -16,6 +17,7 @@ Makefile.standalone: Makefile.standalone.tmpl
 	    -e 's,%fincludedir%,$(fincludedir),' <$< >$@
 
 DOCINPUTS = mirmake.clone
+CLEANFILES += $(DOCINPUTS)
 DOCFLAGS = -e
 
 mirmake.clone: mirmake

@@ -6,6 +6,7 @@ AM_CFLAGS = @x_cflags@
 LDADD = $(prog_libs)
 
 BUILT_SOURCES = ax.f axcor.f jyperk.f noiseglue.f
+CLEANFILES = $(BUILT_SOURCES)
 EXTRA_DIST = ax.for axcor.for jyperk.for noiseglue.for
 
 nodist_ax_SOURCES = ax.f
