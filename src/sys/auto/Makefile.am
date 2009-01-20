@@ -16,6 +16,10 @@ Makefile.standalone: Makefile.standalone.tmpl
 	sed -e 's,%libdir%,$(libdir),' -e 's,%bindir%,$(bindir),' \
 	    -e 's,%fincludedir%,$(fincludedir),' <$< >$@
 
+# Some miscellaneous utilities for checking the correctness
+# of the interaction between CVS and the autotools build.
+EXTRA_DIST = check_clobber.py check_overignore.py suggest_ignore.py
+
 DOCINPUTS = mirmake.clone
 CLEANFILES += $(DOCINPUTS)
 DOCFLAGS = -e
