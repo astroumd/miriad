@@ -99,6 +99,14 @@ cinclude_HEADERS = hio.h io.h miriad.h sma_data.h sysdep.h
 
 CLEANFILES = $(nodist_libmir_la_SOURCES)
 
+# The low-level uvio testbed program
+
+bin_PROGRAMS = uvio
+
+uvio_SOURCES = uvio.c
+uvio_CFLAGS = -DTESTBED $(includes)
+uvio_LDADD = libmir_uvio.la
+
 ## The inc files should probably end up in the top-level Makefile.am
 ## because they're part of the overall package/sortof API
 ## But since this is the primary library and it's built early on, they're
