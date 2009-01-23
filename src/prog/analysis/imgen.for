@@ -36,7 +36,9 @@ c	   jet        Jet model with power law brightness.
 c	   shell      2D projection of an optically-thin spherical shell
 c	   comet      2D projection of a parent molecule in comet.
 c	   cluster    standard isothermal 2D projection for cluster gas.
-c       The default is a gaussian.
+c          powerlaw   standard power-law model
+c          j0         J0 Bessel function for holography work
+c
 c@ spar
 c	Parameters which give the characteristics of the object. The
 c	parameters are given as a sequence of values, with one to six
@@ -57,6 +59,8 @@ c	   jet                    amp,x,y,bmaj,bmin,pa
 c	   shell                  amp,x,y,bmaj
 c	   comet                  amp,x,y,scalelength
 c	   cluster                amp,x,y,core radius 
+c          powerlaw               amp,x,y,r_1,index1
+c          j0                     amp,x,y,r_1
 c
 c       Here "offset" is the offset level, "rms" is the rms value of
 c       the noise, "amp" is the normally peak value of the object (but
@@ -69,9 +73,13 @@ c       in the 3rd dimension. The position angle is measured from north
 c       towards east. 
 c	The default is an object of unit amplitude, at the reference 
 c	pixel, with a FWHM of 5 arcsec in x and y and 5 pixels in z. 
+c       For powerlaw the scale length defaults to 5 arcsec as well
+c       and the power-law index defaults to 1.  For j0, the default
+c       scale length is 5 arcseconds although significant image manipulation
+c       after-the-fact is necessary to make this object useful for holography.
 c	Comet scalelength, and cluster core radius are in arcsec units.
 c	Jet model has brightness with power law index bmaj and bmin along
-c	major and minor axes.
+c	major and minor axes. 
 c@ imsize
 c	If not input image is given, then this determines the size, in
 c	pixels, of the output image. Either one or two numbers can be
@@ -153,12 +161,13 @@ c    pjt   30jan03  merged MIR4 into current release
 c    pjt   23feb03  officially merged MIR4
 c    pjt   19jun05  fix for g95 **(-0.5)
 c    pjt   11jul07  add some dummy but reasonable header items for 3D cubes
+c    sac   20jan09  added power law model and j0 for holography study
 c---
 c ToDo: 
 c    write good headers if 3D cubes written
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version='Imgen: version 6-aug-08')
+	parameter(version='Imgen: version 27-oct-08')
 	include 'mirconst.h'
 	include 'maxdim.h'
 	include 'maxnax.h'
@@ -175,14 +184,14 @@ c
 	integer MAXOBJS
 	parameter(MAXOBJS=3000)
 	real fwhm1(MAXOBJS),fwhm2(MAXOBJS),posang(MAXOBJS)
-	real fwhm3(MAXOBJS)
+	real fwhm3(MAXOBJS),index1(MAXOBJS),index2(MAXOBJS)
 	real amp(MAXOBJS),x(MAXOBJS),y(MAXOBJS),z(MAXOBJS)
 	real fwhm1d(MAXOBJS),fwhm2d(MAXOBJS),posangd(MAXOBJS)
-	real xd(MAXOBJS),yd(MAXOBJS)
+	real xd(MAXOBJS),yd(MAXOBJS),index1d(MAXOBJS),index2d(MAXOBJS)
 	character objs(MAXOBJS)*8
 c
 	integer NOBJECTS
-	parameter(NOBJECTS=11)
+	parameter(NOBJECTS=13)
 	integer nobjs
 	character objects(NOBJECTS)*8
 c
@@ -193,7 +202,8 @@ c
 	data objects/'level   ','noise   ','point   ',
      *		     'gaussian','disk    ','j1x     ',
      *               'shell   ','comet   ','cluster ',
-     *               'gauss3  ','jet     '/
+     *               'gauss3  ','jet     ','powerlaw',
+     *               'j0      '/
 c
 c  Get the parameters from the user.
 c
@@ -201,13 +211,13 @@ c
 	call keyini
 	call keya('in',In,' ')
 	call keya('out',Out,' ')
-	call keyr('factor',Factor,1.)
+	call keyr('factor',Factor,1.)        
 	call keymatch('object',NOBJECTS,objects,MAXOBJS,objs,nobjs)
 	if(nobjs.eq.0)then
 	  objs(1) = 'gaussian'
 	  nobjs = 1
 	endif
-	if(keyprsnt('object'))call bug('f','Too many objects for me!')
+	if(keyprsnt('object'))call bug('f','Too many object for me!')
 c
 c  Get the source parameters.
 c
@@ -236,6 +246,24 @@ c
 	    endif
 	    posang(i) = posang(i) * pi/180.
 	    if(objs(i).eq.'gauss3') call keyr('spar',fwhm3(i),5.)
+            index1(i) = 0
+            index2(i) = 0
+          elseif(objs(i).eq.'powerlaw')then
+             call keyr('spar',fwhm1(i),5.)
+             fwhm1(i) = fwhm1(i) / 3600. * pi/180.
+             fwhm2(i) = fwhm1(i)
+             call keyr('spar',index1(i),1.)
+             index2(i) = 0.0
+c             call keyr('spar',posang(i),0.)
+c             posang(i) = posang(i)*pi/180.
+             posang(i) = 0.0
+          elseif(objs(i).eq.'j0')then
+             call keyr('spar',fwhm1(i),5.)
+             fwhm1(i) = fwhm1(i) / 3600. * pi/180.
+             fwhm2(i) = fwhm1(i)
+             posang(i) = 0
+             index1(i) = 0
+             index2(i) = 0
 	  elseif(objs(i).eq.'shell'.or.objs(i).eq.'comet') then
             call keyr('spar',fwhm1(i),5.)
 	    fwhm1(i) = fwhm1(i) / 3600. * pi/180.
@@ -243,15 +271,21 @@ c
      *	      call bug('f','BMAJ and BMIN parameters must be positive')
 	    fwhm2(i) = fwhm1(i)
 	    posang(i) = 0
+            index1(i) = 0
+            index2(i) = 0
 	  elseif(objs(i).eq.'cluster') then
 	    call keyr('spar',fwhm1(i),50.)
 	    fwhm1(i) = fwhm1(i) / 3600. * pi/180.
 	    fwhm2(i) = fwhm1(i)
 	    posang(i) = 0
+            index1(i) = 0
+            index2(i) = 0
 	  else
 	    fwhm1(i) = 0
 	    fwhm2(i) = 0
 	    posang(i) = 0
+            index1(i) = 0
+            index2(i) = 0
 	  endif
 	enddo
 c
@@ -321,7 +355,7 @@ c
      *		totflux.and.abs(bmaj*bmin).eq.0)then
 	  if(fwhm1(1).gt.fwhm2(1))then
 	    bmaj = fwhm1(1)
-	    bmin = fwhm2(1)
+            bmin = fwhm2(1)
 	    bpa  = 180/pi * posang(1)
 	  else
 	    bmaj = fwhm2(1)
@@ -370,6 +404,8 @@ c
 	      fwhm1d(i) = 0
 	      fwhm2d(i) = 0
 	      posangd(i) = 0
+              index1d(i) = index1(i)
+              index2d(i) = index2(i)
 	     endif
 	    else
 	      fwhm1d(i) = fwhm1(i)
@@ -403,7 +439,8 @@ c
 		fac3=1.0
 	      endif
 	      call DoMod(j,objs(i),Buff,n1,fac3*amp(i),fwhm1d(i),
-     *                    fwhm2d(i),posangd(i),xd(i),yd(i),fac)
+     *                   fwhm2d(i),posangd(i),xd(i),yd(i),fac,
+     *                   index1(i),index2(i))
 	    enddo
 	    call xywrite(lOut,j,Buff)
 	  enddo
@@ -527,13 +564,13 @@ c
 	end
 c************************************************************************
 	subroutine DoMod(j0,object,Data,n1,amp,fwhm1,fwhm2,posang,x,y,
-     *								fac)
+     *	        	 fac,index1,index2)
 c
 	implicit none
 	integer n1,j0
 	character object*(*)
 	real Data(n1)
-        real amp,fwhm1,fwhm2,posang,x,y,fac
+        real amp,fwhm1,fwhm2,posang,x,y,fac,index1,index2
 c
 c  Add the contribution of a particular component.
 c
@@ -544,11 +581,12 @@ c------------------------------------------------------------------------
 	include 'mirconst.h'
 	integer i,j,ymin,ymax,xmin,xmax,maxit,it
 	real xx,yy,xp,yp,scale,cospa,sinpa,t,a,log2,limit,p,theta,sum
-	real Buff(MAXDIM)
+	real Buff(MAXDIM),ta,tb
 c
 c  Externals.
 c
 	real j1xbyx
+        double precision bessj0,valj0
 c
 c  Add the new contribution.First the gaussian. Work out the region
 c  where the exponential greater than exp(-25), and don't bother
@@ -582,6 +620,58 @@ c
 	    enddo
 	  endif
 c
+c Do a powerlaw model, doesn't do flux conservation yet....
+c easy to do, will do when I know it is all working
+c have to figure out flux scaling relations here
+c
+        else if(object.eq.'powerlaw')then
+          a = amp
+c          cospa = cos(posang)
+c          sinpa = sin(posang)
+          yy = (j0-y)           
+          do i=1,n1
+              xx = i-x
+c              yp =  yy*cospa+xx*sinpa
+c              xp = -yy*sinpa+xx*cospa
+              t  = (yy*yy+xx*xx)**0.5
+              if(t.eq.0.0)then 
+                  t = (2*pi*a*(fwhm1**(-index1))*(0.56**(2+index1))/
+     *                 (2+index1))/(pi*0.56**2.0)
+              else 
+                  t = a*(t/fwhm1)**index1
+              endif
+              data(i) = data(i)+t
+          enddo
+c
+c  Handle a jet model with power law brightness.
+c
+	else if(object.eq.'jet')then
+	  cospa = cos(posang)
+	  sinpa = sin(posang)
+	  yy =  (j0-y)
+	  do i=1,n1
+	    xx = (i-x)
+            yp =  yy*cospa + xx*sinpa
+            xp = -yy*sinpa + xx*cospa
+	    if(xp.ne.0.and.yp.ne.0)then
+              a = amp * abs(yp)**fwhm1 * abs(xp)**fwhm2
+    	      data(i) = data(i) + a 
+	    endif
+	  enddo
+c
+c Handle a simple J0 funciton
+c
+        else if(object.eq.'j0')then
+           a = amp
+           yy = (j0-y)
+           do i=1,n1
+              xx = (i-x)
+              t = xx*xx+yy*yy
+              t = sqrt(t)/fwhm1
+              valj0 = t
+              data(i) = data(i)+a*bessj0(valj0)
+           enddo
+c
 c  Handle a J1(x)/x function.
 c
 	else if(object.eq.'j1x')then
@@ -600,22 +690,6 @@ c
             xp = -yy*sinpa + xx*cospa
             t = (xp*xp)/(fwhm2*fwhm2) + (yp*yp)/(fwhm1*fwhm1)
 	    data(i) = data(i) + 2 * a * j1xbyx(sqrt(t))
-	  enddo
-c
-c  Handle a jet model with power law brightness.
-c
-	else if(object.eq.'jet')then
-	  cospa = cos(posang)
-	  sinpa = sin(posang)
-	  yy =  (j0-y)
-	  do i=1,n1
-	    xx = (i-x)
-            yp =  yy*cospa + xx*sinpa
-            xp = -yy*sinpa + xx*cospa
-	    if(xp.ne.0.and.yp.ne.0)then
-              a = amp * abs(yp)**fwhm1 * abs(xp)**fwhm2
-    	      data(i) = data(i) + a 
-	    endif
 	  enddo
 c
 c  Handle a comet.
@@ -724,11 +798,11 @@ c
 	  i = nint(x)
 	  j = nint(y)
 	  if(j.eq.j0.and.i.ge.1.and.i.le.n1)
-     *		data(i) = data(i) + Amp
+     *		Data(i) = Data(i) + Amp
 c
 c  Should never get here.
 c
 	else
-	  call bug('f','Unknown object type (object=)')
+	  call bug('f','Unknown object type')
 	endif
 	end
