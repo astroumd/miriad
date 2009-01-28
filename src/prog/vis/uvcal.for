@@ -243,11 +243,12 @@ c    mchw 01oct07  added keywork onsource to set uvvariable "on"
 c    mchw 12feb08  change MAXANT2 to MAXANT in fxcal.
 c    pjt  20nov08  added atmcal option
 c    pjt   4dec08  fix wides for atmcal option
+c    mchw 29jan09  exclude flagged data in options=slope
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	integer maxbad
 	character version*(*)
-	parameter(version='UVCAL: version 4-dec-2008')
+	parameter(version='UVCAL: version 29-jan-2009')
 	parameter(maxbad=20)
 	real PI
 	parameter(PI=3.1415926)
@@ -1241,7 +1242,7 @@ c
 c
 c unwrap phase
 c
-c	      if(flags(j).and.mask(j).ne.0)then
+	      if(flags(j).and.mask(j).ne.0)then
             n = n + 1
             if(n.eq.1) theta = phi(j)
             x(n) = mask(j) * (sfreq(i) + sdf(i) * (j-ischan(i)))
@@ -1249,7 +1250,7 @@ c	      if(flags(j).and.mask(j).ne.0)then
             theta = 0.5*(phi(j) + theta)
             y(n) = mask(j) * phi(j)
             w(n) = mask(j)
-c          endif
+          endif
         enddo
 c
         call linfit(x,y,w,n,a,b)
@@ -1259,7 +1260,7 @@ c
         j1=ischan(i)+endchan
         j2=ischan(i)+nschan(i)-1-endchan
         do j=j1,j2
-c        if(flags(j).and.mask(j).ne.0)then
+        if(flags(j).and.mask(j).ne.0)then
           x1 = sfreq(i) + sdf(i) * (j-ischan(i))
           y1 = phi(j) - a*x1 - b
 c remake original as a test
@@ -1269,7 +1270,7 @@ c         data(j) = amp(j) * expi(phi(j)*pi/180.)
           wfreq(i) = wfreq(i) + x1
           wwidth(i) = wwidth(i) + sdf(i)
           wgt(i) = wgt(i) + 1.
-c        endif
+        endif
         enddo
 c
 c  average wideband. phase is slope in radians/GHz
