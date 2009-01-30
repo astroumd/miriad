@@ -67,6 +67,7 @@ c**
 c    4jan05   pjt    merged in the two RJS changes, wonderful this CVS....
 c   03dec07   mchw   Add BIMA and ATA.  
 c                    The old HATCREEK antennas are now the BIMA antennas at CARMA.
+c   30jan09   mchw   Change ATA to 222 arcmin  (3.70) deg at 1 GHz.
 c************************************************************************
 c* pbList -- List known primary beam types.
 c& rjs
@@ -737,7 +738,10 @@ c	Add BIMA and ATA. The old HATCREEK antennas are now the BIMA antennas at CARMA
 c
 	call pbAdd('BIMA',24.0,270.0,   191.67, 0.05, GAUS,0,0.,
      *				   'Truncated Gaussian')
-	call pbAdd('ATA',0.5,12.0,   191.67, 0.05, GAUS,0,0.,
+c
+c   ATA  FWHM = 3.70 degrees  = 222 arcmin at 1 GHz.
+c   ATA antenna pattern measurements (Gerry Harp 30 Jan 2009)
+	call pbAdd('ATA',0.5,12.0,   222., 0.05, GAUS,0,0.,
      *				   'Truncated Gaussian')
 c
 c  The following values for the WSRT are derived from the NEWSTAR
