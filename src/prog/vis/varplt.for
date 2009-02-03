@@ -73,6 +73,7 @@ c    pjt  25nov07 One more digit for time to comply with uvlist
 c    dhem 07jan08 Declare itoaf to be 4 characters long (was 2) in Logit
 c    pjt   4dec08 Added phaseatm
 c    mchw 08dec08 increased parameter(MAXPNTS=10000000) 
+c    mchw 03feb09 increased parameter(MAXPNTS=40000000) 
 c
 c  Bugs:
 c    ?? Perfect?
@@ -80,7 +81,7 @@ c------------------------------------------------------------------------
 	character version*(*)
 	integer MAXPNTS
 	parameter(MAXPNTS=10000000)
-	parameter(version='VarPlt: version 1.1 08-dec-08')
+	parameter(version='VarPlt: version 1.1 03-Feb-09')
 	logical doplot,dolog,dotime,dounwrap
 	character vis*64,device*64,logfile*64,xaxis*16,yaxis*16
 	character xtype*1,ytype*1,xunit*16,yunit*16,calday*24
