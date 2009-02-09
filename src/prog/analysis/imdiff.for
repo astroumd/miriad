@@ -116,6 +116,7 @@ c    rjs  16jul93   Doc changes.
 c    rjs  05aug93   Fix various formating botches. NEBK does a sloppy job.
 c    nebk 19sep94   Fix typo in options=expand in subroutien getopt
 c    rjs  07dec99   Fix writing of history for "adjust" image.
+c    mchw 09feb09   Format change for ATA.
 c
 c  Bugs and Shortcomings:
 c   * This should really be part of "shifty".
@@ -124,7 +125,7 @@ c     This is hangover from Werong days.
 c
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version='version 7-Dec-99')
+	parameter(version='version 09-Feb-09')
 	include 'maxdim.h'
 	include 'maxnax.h'
 	include 'imdiff.h'
@@ -315,7 +316,7 @@ c
 100	  format(a,1pe13.6)
 	  call output(aline)
 	  write(aline,200)   'Minimum located at X-Shift:     ',xshift
-200	  format(a,f6.3)
+200	  format(a,f12.3)
 	  call output(aline)
 	  write(aline,200)   '                   Y-Shift:     ',yshift
 	  call output(aline)
