@@ -2,6 +2,8 @@
 ## $Id$
 ##
 
+ACLOCAL_AMFLAGS = -I .
+
 ## For pdocdir / sdocdir.
 
 include $(top_srcdir)/mircommon.mak

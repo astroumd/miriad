@@ -10,6 +10,7 @@ AC_REVISION([$Revision$])
 AC_MSG_CHECKING([MIRIAD4 config])
 
 AC_CONFIG_SRCDIR
+AC_CONFIG_MACRO_DIR([.])
 AM_INIT_AUTOMAKE([--warnings=obsolete  --warnings=gnu --warnings=unsupported --warnings=no-syntax --warnings=no-portability foreign])
 
 
