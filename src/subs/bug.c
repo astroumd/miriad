@@ -20,6 +20,8 @@
 /*    pjt     17may07 removed old-non ANSI declaration                  */
 /*    pjt      5dec07 add Name to bug output - why took us so long?     */
 /*    pkgw     6mar08 declare Name as static to prevent symbol clashes  */
+/*    dhem    12feb09 added hooks to allow alien clients to completely  */
+/*                    override the default bug handler                  */
 /************************************************************************/
 
 #include <stdio.h>
@@ -34,9 +36,20 @@ static int  handle_bug_cleanup(int d, char s, Const char *m);
 static char *Name = NULL;     /* a slot to store the program name       */
 int reentrant=0;              /* keep track of state                    */
 
-typedef void (*proc)(void);  /* helper definition for function pointers */
+/* helper definitions for function pointers */
+typedef void (*bug_cleanup_proc)(void);
+typedef void (*bug_handler_proc)(char s, Const char *m);
 
-static proc bug_cleanup=NULL; /* external bug handler, if any           */
+/* external bug cleanup handler, if any */
+/* only used by internal bug handler    */
+static bug_cleanup_proc bug_cleanup=NULL;
+
+/* bug handler function pointer */
+static bug_handler_proc bug_handler=NULL;
+
+/* forward declaration */
+static void default_bug_handler_c(char s,Const char *m);
+
 static char *bug_message=0;   /* last message                           */ 
 static char bug_severity=0;   /* last severity level (i,w,e or f)       */
 
@@ -98,6 +111,48 @@ char bugseverity_c(void)
 }
 
 /************************************************************************/
+void bughandler_c(bug_handler_proc new_bug_handler)
+/** bughandler_c -- specify the bug handler callback function           */
+/*& dhem                                                                */
+/*: error-handling                                                      */
+/*+                                                                    
+    This routine does not have a FORTRAN counterpart, as it is normally 
+    only called by C clients who need to set their own error handler if
+    for some reason they don't like the MIRIAD one (e.g. C++ or java
+    exceptions, or NEMO's error handler, or scripting languages such as
+    Ruby and Python that provide their own exception handling
+    capabilities).
+    
+    Absolutely nothing is done before or after the bug handler is
+    called.  This is even more of an override than bugrecover_c
+    provides because on fatal errors, habort_c is called before the bug
+    cleanup routine installed by bugrecover_c is called.  Another
+    difference is that bug_message and bug_severity are not set;
+    instead the severity and message are passed as parameters to the
+    bug handler callback function..
+
+    If NULL is passed as the new_bug_handler parameter, the default bug
+    handler will be reinstated.
+
+    Example of usage:
+
+    void my_bug_handler(char s, onst char *m) {
+        ....
+    }
+
+
+    ..
+    bughandler_c(my_bug_handler);
+    ..                                                                  */
+/*--                                                                    */
+/*----------------------------------------------------------------------*/
+{
+    bug_handler = new_bug_handler;
+    if (bug_message) free(bug_message);
+    bug_message = strdup("no bug_message has been set yet");
+}
+
+/************************************************************************/
 void bugrecover_c(void (*cl)(void))
 /** bugrecover_c -- bypass fatal bug calls for alien clients            */
 /*& pjt                                                                 */
@@ -109,13 +164,13 @@ void bugrecover_c(void (*cl)(void))
     exceptions, or NEMO's error handler 
     Example of usage:
 
-    void my_handler(void) {
+    void my_bug_cleanup(void) {
         ....
     }
 
 
     ..
-    bugrecover_c(my_handler);
+    bugrecover_c(my_bug_cleanup);
     ..                                                                  */
 /*--                                                                    */
 /*----------------------------------------------------------------------*/
@@ -169,6 +224,18 @@ void bug_c(char s,Const char *m)
 /*--									*/
 /*----------------------------------------------------------------------*/
 {
+  if(bug_handler == NULL) {
+    bug_handler = default_bug_handler_c;
+  }
+
+  bug_handler(s, m);
+}
+/************************************************************************/
+static void default_bug_handler_c(char s, Const char *m)
+/*
+  Default bug handler.
+------------------------------------------------------------------------*/
+{
   char *p;
   int doabort;
 
@@ -192,7 +259,6 @@ void bug_c(char s,Const char *m)
       exit(1);
   } else
     handle_bug_cleanup(doabort,s,m);
-    
 }
 /************************************************************************/
 void bugv_c(char s,Const char *m, ...)
@@ -216,36 +282,13 @@ void bugv_c(char s,Const char *m, ...)
 /*----------------------------------------------------------------------*/
 {
   va_list ap;
-  char *p;
-  int doabort,len;
-
-  doabort = 0;
-  if      (s == 'i' || s == 'I') p = "Informational";
-  else if (s == 'w' || s == 'W') p = "Warning";
-  else if (s == 'e' || s == 'E') p = "Error";
-  else {doabort = 1;		 p = "Fatal Error"; }
 
   va_start(ap,m);
-
-  if ( Name == NULL )
-    buglabel_c("(NOT SET)");
-
-  snprintf(msg,MAXMSG,"### %s [%s]: ",p,Name);
-  len = strlen(msg);
-  vsnprintf(&msg[len],MAXMSG-len,m,ap);
+  vsnprintf(msg,MAXMSG,m,ap);
+  msg[MAXMSG-1] = '\0'; /* backstop */
   va_end(ap);
 
-  if (!bug_cleanup)
-    fprintf(stderr,"%s\n",msg);
-
-  if(doabort){
-    reentrant = !reentrant;
-    if(reentrant)habort_c();
-    if (!handle_bug_cleanup(doabort,s,&msg[len]))
-      exit(1);
-  } else
-    handle_bug_cleanup(doabort,s,&msg[len]);
-  
+  bug_c(s, msg);
 }
 
 /************************************************************************/

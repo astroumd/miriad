@@ -25,6 +25,7 @@
 // 30-aug-04 pjt removed deprecated ARGS() macro
 //  1-dec-05 pjt added bugv_c
 // 18-may-06 pjt/df  added mir.c prototypes for mir (the miriad->mir converter)
+// 12-feb-09 dhem added bughandler_c prototype (new function in bug.c)
 */
 
 #if !defined(MIR_MIRIAD_H)
@@ -307,6 +308,7 @@ void xyzplnwr_c (int tno, int planenr, Const float *data, Const int *mask, Const
 
 char bugseverity_c(void);
 char *bugmessage_c(void);
+void bughandler_c(void (*handler)(char s, Const char *m));
 void bugrecover_c(void (*cl)(void));
 void buglabel_c  (Const char *name);
 void bugno_c     (char s, int n);
