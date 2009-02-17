@@ -95,11 +95,12 @@ c    09nov98 rjs  Added "hangle" axis type.
 c    12jan99 rjs  Doc change only.
 c    09apr99 rjs  Add an extra error check only.
 c    05oct99 rjs  Added options=scalar
+c    17feb09 pjt  Fixed bug when MAXBASE is not MAXANT*(MAXANT-1)/2
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
 	integer MAXDAT,MAXPLT,MAXEDIT
-	parameter(version='BlFlag: version 05-Oct-99')
+	parameter(version='BlFlag: version 17-Feb-09')
 	parameter(MAXDAT=500000,MAXPLT=20000,MAXEDIT=20000)
 c
 	logical present(MAXBASE),nobase,selgen,noapply,rms,scalar
@@ -180,7 +181,7 @@ c
 	  do j=1,MAXANT
 	    do i=1,j
 	      k = k + 1
-	      if(present(k))then
+	      if(k.lt.MAXBASE.and.present(k))then
 	        title = 'Baseline '//itoaf(i)
 	        length = len1(title)
 		title(length+1:) = '-'//itoaf(j)
