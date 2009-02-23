@@ -84,6 +84,10 @@ data. The various stages of baseline corrections are not maintained here, see Se
 2008/04/20:  better models for mars brightness temperature (see also miriad's {\tt marstb}\index{marstb} program)
 \item
 2008/11/xx:  PACS (SZA) data now routinely available. Usually place a 'z' in front of your ct or cx file but these are not integrated into the Illinois archive.
+\item
+2008/12/31:  all data on this day have a leapsecond error: {\tt uvedit time=-1} to fix.
+\item
+2008/02/01:  PACS (SZA) data now available via NCSA archive
 
 % PACS data also comes in versions, elaborate on that?
 

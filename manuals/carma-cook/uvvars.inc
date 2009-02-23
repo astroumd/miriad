@@ -56,13 +56,14 @@
 %  13-feb-07  pjt  CARMA additions,but in MIR5 branch for the carma-cook 
 %                  [i know this is bad, but it will go back to the official location as such]
 %   3-jan-08  pjt  clarify center of channel for frequency calculations
+%  21-nov-08  pjt  clarify items, add bandpass calibration items
 %
 %  nband - appears to be CARMA's Control.SpectralLineCorrelator.numBands (but it's 8, not 6=nspect)
 %  later removed again
 
 \section{UV Dataset}
 
-\newcommand{\uvversion}{January 3, 2008}
+\newcommand{\uvversion}{November 21, 2008}
 
 A \miriad\ uv dataset is composed of a collection of items and `\MM{u-v} variables'.
 The variables are parameters that are known at the time of the observation,
@@ -83,20 +84,29 @@ obstype     & ascii   & value: `{\tt cross}', `{\tt auto}' or `{\tt mixed}' \\
 history     & text    & history text file (in principle editable) \\
 vartable    & text    & lookup table for all uv variables (never edit!) \\
 visdata     & mixed   & data stream of uv variables \\ \hline
+
 flags       & integer & optional flags for narrowband data \\
 wflags      & integer & optional flags for wideband data \\ \hline
+
 gains       & mixed   & antenna gain table; {\bf delhd} (or {\bf rm}) this item to disable gain table\\
+bandpass    & complex & bandpass function gains; {\bf delhd} (or {\bf rm}) this item to disable passband corrections \\
+freqs	    & mixed   & frequency set up description table for `bandpass'\\
+nspect0     & integer & number of windows in the bandpass function\\
+nchan0      & integer & total number of channels in the bandpass function\\
 nfeeds	    & integer & number of feeds on each antenna \\
 ntau	    & integer & Number of delay/spectral index terms per antenna in `gains' \\
 nsols       & integer & number of records in `gains' \\
-ngains      & integer & number of antenna gains in each record of `gains'\\
+ngains      & integer & number of antenna gains in each record of `gains'\\ 
 interval    & double  & gain interpolation time tolerance (days)\\
-leakage	    & complex & polarization leakage parameters\\
 freq0	    & double  & reference frequency for delay terms\\
-freqs	    & mixed   & frequency set up description table for `bandpass'\\
-bandpass    & complex & bandpass function gains; {\bf delhd} (or {\bf rm}) this item to disable passband corrections \\
-nspect0     & integer & number of windows in the bandpass function\\
-nchan0      & integer & total number of channels in the bandpass function\\
+leakage	    & complex & polarization leakage parameters\\ \hline
+
+cgains      & complex & baseline based channel gains \\
+ncgains     & integer & \\
+ncbase      & integer & \\
+wgains      & complex & baseline based wideband gains \\
+nwgains     & integer & \\
+nwbase      & integer & \\
 \hline\end{tabular}
 \end{center}
 \end{table}
@@ -743,6 +753,11 @@ A reminder on some telescope specific variables
   lo2 still absent
   purpose
 \end{verbatim}\normalsize
+
+\subsection{SZA}
+
+TBA
+
 
 \subsection{SMA}
 
