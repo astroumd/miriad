@@ -27,6 +27,7 @@ c    12may04 rjs  Make jullst more robust - again.
 c     1dec05 pjt  Added leapsec (the last?) for the coming newyear
 c    14feb06 pjt  oops, that's 2006, not 2005!!!! (Dan Marrone)
 c     9sep08 pjt  another leap second coming up after all
+c    22feb09 dhem fixed precision problem in epo2jul and jul2epo
 c
 c  General Reference:
 c    Explanatory Supplement to the Astronomical Almanac. 1993.
@@ -409,9 +410,9 @@ c
 	endif
 c
 	if(julian)then
-	  epo2jul = 365.25       *(epoch-2000) + 2451545d0
+	  epo2jul = 365.25d0       *(epoch-2000) + 2451545d0
 	else
-	  epo2jul = 365.242198781*(epoch-1900) + 2415020.31352d0
+	  epo2jul = 365.242198781d0*(epoch-1900) + 2415020.31352d0
 	endif
 	end
 c************************************************************************
@@ -443,9 +444,9 @@ c
 	endif
 c
 	if(julian)then
-	  jul2epo = (jday-2451545d0)/365.25 + 2000
+	  jul2epo = (jday-2451545d0)/365.25d0 + 2000
 	else
-	  jul2epo = (jday-2415020.31352d0)/365.242198781 + 1900
+	  jul2epo = (jday-2415020.31352d0)/365.242198781d0 + 1900
 	endif
 	end
 c************************************************************************
