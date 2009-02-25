@@ -409,8 +409,8 @@ AC_CONFIG_FILES([
     src/sys/auto/Makefile
     src/sys/auto/Makefile.standalone.tmpl
     src/Makefile
-    src/inc/maxdim.h
-    src/inc/maxdimc.h
+    src/inc/cfg_maxdim.h:src/inc/maxdim.h.in
+    src/inc/cfg_maxdimc.h:src/inc/maxdimc.h.in
 ])
 
 
