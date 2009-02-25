@@ -1,27 +1,10 @@
-
-dnl TODO:    
-dnl   - this file should be called configure.ac
-dnl ------------------------------------------------------------------------------------
-
 AC_PREREQ(2.59)
 AC_INIT([MIRIAD],[4.1.1],[miriad-dev-bugs@astro.berkeley.edu])
 AC_REVISION([$Revision$])
 
-AC_MSG_CHECKING([MIRIAD4 config])
-
 AC_CONFIG_SRCDIR
 AC_CONFIG_MACRO_DIR([.])
 AM_INIT_AUTOMAKE([--warnings=obsolete  --warnings=gnu --warnings=unsupported --warnings=no-syntax --warnings=no-portability foreign])
-
-
-dnl -- checks for programs
-dnl -- checks for libraries
-dnl -- checks for header files
-dnl -- checks for typedefs
-dnl -- checks for structures
-dnl -- checks for compiler characteristics
-dnl -- checks for library functions
-dnl -- checks for system services
 
 
 dnl ---                 sizeof various data types
@@ -32,13 +15,8 @@ AC_CHECK_SIZEOF([long])
 AC_CHECK_SIZEOF([long long])
 
 
-AC_ARG_ENABLE(warnings,  [  --enable-all-warnings            verbose compiler/link warnings],
-    allwarnings=yes, allwarningsok=no)
-
 AC_HEADER_STDC
 AC_CHECK_FUNCS([strchr memcpy bcopy])
-
-dnl AC_PROG_CPP
 
 # Use native cc if present
 AC_MSG_CHECKING([for vendor's cc to be used instead of gcc])
@@ -47,7 +25,6 @@ AC_CHECK_PROG(CC, cc, cc)
 AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_CPP
-
 AC_PROG_F77
 
 dnl This keeps g77 from returning an error code when 
@@ -72,6 +49,11 @@ AC_SUBST(no_f90)
 dnl Turn off all warnings (by default)
 dnl The warnings are primarily useful for developers
 
+AC_ARG_ENABLE([warnings],
+    [AS_HELP_STRING([--enable-all-warnings],
+        [show verbose compiler/link warnings (default no)])],
+    allwarnings=$enableval, allwarningsok=no)
+
 if test x"$allwarningsok" = xno; then
   no_globals="$no_globals -w -fno-backslash"
 fi
@@ -90,8 +72,6 @@ AC_PROG_AWK
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
-## RANLIB not needed when using libtool
-## AC_PROG_RANLIB
 
 dnl Check for latex and makeindex, needed to build the documentation
 
@@ -124,7 +104,16 @@ AM_CONDITIONAL(BUILD_DOCS,$BUILD_DOCS)
 ## 
 ## AC_ARG_PROGRAM is unneeded after automake 0.20, removing CGK - 08jun07
 
-AC_ARG_ENABLE(lfs,  [  --enable-lfs            large-file-size], ok=$enableval, ok=yes)
+dnl Large file support. AC_SYS_LARGEFILE introduces the option
+dnl --disable-largefile ... I don't know if our custom code is
+dnl necessary at all, given AC_SYS_LARGEFILE. If it is, we should
+dnl ditch our own --enable flag and key off of $enable_largefile, but
+dnl I don't want to make that change right now.
+
+AC_ARG_ENABLE(lfs,
+    [AS_HELP_STRING(--enable-lfs,[support large file sizes])],
+    ok=$enableval, ok=yes)
+
 if test x"$ok" = xyes; then
   CFLAGS="$CFLAGS -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE"
   echo "LFS selected, note that some filesystems may not support Large File anyways"
@@ -132,19 +121,27 @@ else
   echo "LFS not selected, be aware the largest filesize may be just 2GB"
 fi
 
-AC_ARG_ENABLE(i8,  [  --enable-i8             use large-integers, if compiler supported], ok=$enableval, ok=no)
+AC_SYS_LARGEFILE
+
+AC_ARG_ENABLE(i8,
+    [AS_HELP_STRING(--enable-i8,[use large integers, if compiler supported])],
+    ok=$enableval, ok=no)
+
 if test x"$ok" = xyes; then 
   integer_size=8
 else
   integer_size=4
 fi
+
+
 dnl -- pick your default telescope, in the case statement below some default size
 dnl -- parameters are changed for certain telescopes.
-AC_ARG_WITH(telescope,  [  --with-telescope=MIRTEL    Default telescope (for maxdim)],
-		    with_telescope=$withval, with_telescope="carma")
-TELESCOPE=$with_telescope
+AC_ARG_WITH(telescope,
+    [AS_HELP_STRING([--with-telescope=MIRTEL],[Telescope for maxdim selection])],
+    TELESCOPE=$withval, TELESCOPE=carma)
 
-dnl - reminder: the '2' and '3' versions are to be used in 2-dim and 3-dim arrays with other size parameters
+dnl - reminder: the '2' and '3' versions are to be used in 2-dim and 3-dim arrays
+dnl    with other size parameters
 def_maxdim=65536	##
 def_maxdim2=8192
 def_maxiant=256
@@ -200,8 +197,6 @@ case $TELESCOPE in
      *) echo "Not a valid array"
 esac
 
-echo "DEBUG: def_maxdim=$def_maxdim"
-
 dnl ---------------------------------------------------------------------
 dnl All the MAXDIM related stuff
 
@@ -219,57 +214,56 @@ AC_SUBST(MAXWIDE)
 AC_SUBST(MAXNAX)
 AC_SUBST(MAXBUF)
 
-AC_ARG_WITH(maxdim,  [  --with-maxdim=MAXDIM       1D access to images],
-		    with_maxdim=$withval, with_maxdim="$def_maxdim")
-MAXDIM=$with_maxdim
+AC_ARG_WITH(maxdim,
+    [AS_HELP_STRING([--with-maxdim=MAXDIM],[1D access to images])],
+    MAXDIM=$withval, MAXDIM="$def_maxdim")
 
-AC_ARG_WITH(maxdim2, [  --with-maxdim2=MAXDIM2     2D access to images],
-		    with_maxdim2=$withval, with_maxdim2="$def_maxdim2")
-MAXDIM2=$with_maxdim2
+AC_ARG_WITH(maxdim2,
+    [AS_HELP_STRING([--with-maxdim2=MAXDIM2],[2D access to images])],
+    MAXDIM2=$withval, MAXDIM2="$def_maxdim2")
 
-AC_ARG_WITH(maxiant, [  --with-maxiant=MAXIANT     MAXIANT],
-		    with_maxiant=$withval, with_maxiant="$def_maxiant")
-MAXIANT=$with_maxiant
+AC_ARG_WITH(maxiant,
+    [AS_HELP_STRING([--with-maxiant=MAXIANT],[MAXIANT])],
+    MAXIANT=$withval, MAXIANT="$def_maxiant")
 
-AC_ARG_WITH(maxant,  [  --with-maxant=MAXANT       1D access to antenna based arrays],
-		    with_maxant=$withval, with_maxant="$def_maxant")
-MAXANT=$with_maxant
+AC_ARG_WITH(maxant,
+    [AS_HELP_STRING([--with-maxant=MAXANT],[1D access to antenna based arrays])],
+    MAXANT=$withval, MAXANT="$def_maxant")
 
-AC_ARG_WITH(maxant2, [  --with-maxant2=MAXANT2     2D access to antenna based arrays],
-		    with_maxant2=$withval, with_maxant2="$def_maxant2")
-MAXANT2=$with_maxant2
+AC_ARG_WITH(maxant2,
+    [AS_HELP_STRING([--with-maxant2=MAXANT2],[2D access to antenna based arrays])],
+    MAXANT2=$withval, MAXANT2="$def_maxant2")
 
-AC_ARG_WITH(maxbase, [  --with-maxbase=MAXBASE     MAXBASE],
-		    with_maxbase=$withval, with_maxbase="$def_maxbase")
-MAXBASE=$with_maxbase
+AC_ARG_WITH(maxbase,
+    [AS_HELP_STRING([--with-maxbase=MAXBASE],[MAXBASE])],
+    MAXBASE=$withval, MAXBASE="$def_maxbase")
 
-AC_ARG_WITH(maxbase2,[  --with-maxbase2=MAXBASE2   MAXBASE2],
-		    with_maxbase2=$withval, with_maxbase2="$def_maxbase2")
-MAXBASE2=$with_maxbase2
+AC_ARG_WITH(maxbase2,
+    [AS_HELP_STRING([--with-maxbase2=MAXBASE2],[MAXBASE2])],
+    MAXBASE2=$withval, MAXBASE2="$def_maxbase2")
 
-AC_ARG_WITH(maxchan, [  --with-maxchan=MAXCHAN     Maximum number of spectral channels],
-		    with_maxchan=$withval, with_maxchan="$def_maxchan")
-MAXCHAN=$with_maxchan
+AC_ARG_WITH(maxchan,
+    [AS_HELP_STRING([--with-maxchan=MAXCHAN],[Maximum number of spectral channels])],
+    MAXCHAN=$withval, MAXCHAN="$def_maxchan")
 
-AC_ARG_WITH(maxwin,  [  --with-maxwin=MAXWIN       Maximum number of spectral windows (BIMA)],
-		    with_maxwin=$withval, with_maxwin="$def_maxwin")
-MAXWIN=$with_maxwin
+AC_ARG_WITH(maxwin,
+    [AS_HELP_STRING([--with-maxwin=MAXWIN],
+       [Maximum number of spectral windows (BIMA)])],
+    MAXWIN=$withval, MAXWIN="$def_maxwin")
 
-AC_ARG_WITH(maxwide, [  --with-maxwide=MAXWIDE     Maximum number of wideband channels],
-		    with_maxwide=$withval, with_maxwide="$def_maxwide")
-MAXWIDE=$with_maxwide
+AC_ARG_WITH(maxwide,
+    [AS_HELP_STRING([--with-maxwide=MAXWIDE],[Maximum number of wideband channels])],
+    MAXWIDE=$withval, MAXWIDE="$def_maxwide")
 
-AC_ARG_WITH(maxnax,  [  --with-maxnax=MAXNAX       Maximum number of axis in images],
-		    with_maxnax=$withval, with_maxnax="$def_maxnax")
-MAXNAX=$with_maxnax
+AC_ARG_WITH(maxnax,
+    [AS_HELP_STRING([--with-maxnax=MAXNAX],[Maximum number of axis in images])],
+    MAXNAX=$withval, MAXNAX="$def_maxnax")
 
-AC_ARG_WITH(maxbuf,  [  --with-maxbuf=MAXBUF       Maximum size, in words, of blank common buffer],
-		    with_maxbuf=$withval, with_maxbuf="$def_maxbuf")
-MAXBUF=$with_maxbuf
+AC_ARG_WITH(maxbuf,
+    [AS_HELP_STRING([--with-maxbuf=MAXBUF],
+       [Maximum size, in words, of blank common buffer])],
+    MAXBUF=$withval, MAXBUF="$def_maxbuf")
 
-
-dnl --
-dnl 
 
 AC_SUBST(WARNING)
 WARNING="Warning: do not edit this file, it has been generated by configure"
@@ -314,7 +308,7 @@ AC_PATH_XTRA
 
 if test x"$no_x" = xyes; then
   AC_MSG_WARN([Could not find X11 Window System Headers or Libraries!])
-  if test x"$(SLIB)" = xmac; then
+  if test x"$SLIB" = xmac; then
     AC_MSG_WARN([On Mac OS X, you must first install the X11 SDK])
   fi 
   AC_MSG_ERROR([Cannot proceed with build])
@@ -344,7 +338,8 @@ dnl Checks for header files.
 AC_HEADER_DIRENT
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
-AC_CHECK_HEADERS(fcntl.h limits.h malloc.h sgtty.h strings.h sys/file.h sys/ioctl.h sys/time.h unistd.h)
+AC_CHECK_HEADERS([fcntl.h limits.h malloc.h sgtty.h strings.h sys/file.h])
+AC_CHECK_HEADERS([sys/ioctl.h sys/time.h unistd.h])
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
@@ -356,8 +351,6 @@ AC_HEADER_TIME
 AC_STRUCT_TM
 
 AC_SYS_LONG_FILE_NAMES
-dnl  next one can disable with --disable-largefile
-AC_SYS_LARGEFILE
 
 dnl Checks for library functions.
 AC_TYPE_GETGROUPS
@@ -367,19 +360,18 @@ AC_FUNC_MMAP
 AC_TYPE_SIGNAL
 AC_FUNC_VFORK
 AC_FUNC_VPRINTF
-AC_CHECK_FUNCS(ftime gethostname gettimeofday getwd mkdir select strdup strtod strtol strtoul dprintf strerror)
+AC_CHECK_FUNCS([ftime gethostname gettimeofday getwd mkdir select])
+AC_CHECK_FUNCS([strdup strtod strtol strtoul dprintf strerror])
 
 dnl Initialize PGPLOT
 AC_CONFIG_SUBDIRS(borrow/pgplot)
 PGPLOT_LIB='$(top_builddir)/borrow/pgplot/libpgplot.la'
 AC_SUBST(PGPLOT_LIB)
 
-AC_ARG_ENABLE(lfs,  [  --enable-lfs            large-file-size], ok=$enableval, ok=yes)
-
 AC_SUBST(LINPACK_PREFIX)
-AC_ARG_WITH(linpack, [  --with-linpack=DIR  If not specified, uses internal linpack],
-    with_linpack=$withval, with_linpack=borrow/linpack)
-LINPACK_PREFIX=$with_linpack
+AC_ARG_WITH(linpack,
+    [AS_HELP_STRING([--with-linpack=DIR],[If not specified, uses internal linpack])],
+    LINPACK_PREFIX=$withval, LINPACK_PREFIX=borrow/linpack)
 
 AC_CONFIG_HEADER(config.h)
 AC_CONFIG_FILES([
@@ -420,7 +412,7 @@ dnl    src/prog/eor/Makefile
 AC_OUTPUT
 
 
-dnl 'maxdim' report:
+dnl Summarize important configuration settings.
 
 echo ""
 echo "TELESCOPE    : $TELESCOPE"
