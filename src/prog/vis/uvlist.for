@@ -140,10 +140,11 @@ c    4may06 sw   - added integration time to header
 c   17may07 mchw - cleaned up options=list and options=baseline.
 c   25nov08 pjt  - implement recnum=0
 c   19dec08 mchw - restored  Pol code in options=list.
+c   27feb09 mchw - used azel function in options=list.
 c-----------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='UVLIST: version  19-dec-08')
+	parameter(version='UVLIST: version  27-FEB-09')
 	real rtoh,rtod,pi
 	integer maxsels
 	parameter(pi=3.141592653589793,rtoh=12/pi,rtod=180/pi)
@@ -765,9 +766,9 @@ c------------------------------------------------------------------------
 	parameter(MCHAN=5,rts=3600.*180./PI)
 	character line*256,cflag(MCHAN)*1, telescop*20,pol*2,src*9
 	character type*1
-	real amp(MCHAN),phas(MCHAN),ha,elev,sinaz,cosaz,azim
-	real sinha,cosha,sind,cosd,sinl,cosl,chi,inttime
+	real amp(MCHAN),phas(MCHAN),ha, chi,inttime
 	double precision obsra,obsdec,latitude,dra,ddec,freq,ntm
+	double precision azim,elev
 	double precision dazim(MAXANT)/MAXANT*0.0d0/
 	double precision delev(MAXANT)/MAXANT*0.0d0/
 	logical more,ok
@@ -817,16 +818,7 @@ c
 	  endif
 	endif
 	ha = lst-obsra
-	sinha = sin(ha)
-	cosha = cos(ha)
-	sind = sin(obsdec)
-	cosd = cos(obsdec)
-	sinl = sin(latitude)
-	cosl = cos(latitude)
-	elev = asin(sinl*sind+cosl*cosd*cosha)
-	sinaz = -sinha*cosd/cos(elev)
-	cosaz = (sin(elev)*sinl-sind)/cos(elev)/cosl
-	azim  = atan2(sinaz,cosaz)
+	call azel(obsra,obsdec,lst,latitude,azim,elev)
 	call parang(obsra,obsdec,lst,latitude,chi)
 	pol = ' '
 	if(p.ne.0) pol = PolsC2P(p)
