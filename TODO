@@ -85,15 +85,8 @@
 	solaris:/usr/ucb/implot
 
 - pgplot:  gfortran cannot compile the GIF drivers for earlier versions
-	   of gfortran (4.0 and 4.1 series). ok now.
-
-- gfortran has some issues with noise.for : it won't give new
-  	   **solved??
-
-- CARMA specific fixes:
-
-  uvwide:  assumes HatCreek correlator, the CARMA correlator isn't built in
-  	   **fixed??
+	   of gfortran (4.0 and 4.1 series). For 4.2 and up this is ok
+	   and the default in $MIR/src/sys/bin/lib.pgplot is to enable gif
 
 - darwin:
   some don't seem to see -D on darwin, darwin_x86 ??  removed from bug.c
