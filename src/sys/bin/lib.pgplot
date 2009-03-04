@@ -96,7 +96,8 @@ if (! -e $driverfile) then
      exit 1
    endif
 #  Do some sed magic to turn on (select) the ps/tt/xw/gi/pp drivers...
-   if ($f77name == g95 || $f77name == gfortran) then
+#  as of v4.2 gfortran can handle gif drivers
+   if ($f77name == g95 || $f77name == gfortran_ok) then
 	sed -e '/^\! PSDRIV/s/^\!/ /' $srcdir/drivers.list  | \
 	sed -e '/^\! TTDRIV/s/^\!/ /' | \
 	sed -e '/^\! XWDRIV/s/^\!/ /' > $driverfile
