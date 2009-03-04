@@ -249,13 +249,14 @@ c    rjs  14jan06 Be relaxed about missing met data scans when applying
 c                 opacity correction.
 c    mhw  19oct07 Cope with new 3mm receiver on ca02 which has xyphase
 c    rjs  06nov08 Corrected CA02 xyphase handling and some minor tidying.
+c    pjt  04mar09 Fix for gfortran
 c
 c $Id$
 c-----------------------------------------------------------------------
         integer MAXFILES,MAXTIMES
         parameter(MAXFILES=128,MAXTIMES=32)
 c
-        character in(MAXFILES)*128,line*64,out*64,t1*18,t2*18,version*80
+        character in(MAXFILES)*128,line*80,out*64,t1*18,t2*18,version*80
         integer tno,ntimes
         integer ifile,ifsel,nfreq,iostat,nfiles,i
         double precision rfreq(2),times(2,MAXTIMES)
