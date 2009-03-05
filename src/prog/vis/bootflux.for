@@ -83,11 +83,13 @@ c    pjt 20jun98 fixed 0 -> .FALSE. for flags(i) assignment
 c    pjt  3dec02 using MAXBASE3
 c    pjt 26feb03 also using MAXANT3, since this is only for BIMA
 c    dnf 09dec05 Added average and median fluxs to output
-c    dnf 23may05 Changed MAXANT3 and MAXBASE3 to work with CARMA data
+c    dnf 23may06 Changed MAXANT3 and MAXBASE3 to work with CARMA data
 c                also included workaround in the case tsys is not in the data
 c    pjt 11jul07 fixed format statement for CARMA when bigant=15 
 c    pjt/mwp 4apr08  fixed default day for calget(), document behavior
 c    pjt     2dec08  fixed UV vs. UVW files  coord(2) or (3)
+c    dnf 04mar09 fixed latitude problem, now the latitude is obtained from 
+c                the data rather than hard coded
 c  Bugs:
 c
 c   - Polarization mode not tested.
@@ -100,7 +102,7 @@ c------------------------------------------------------------------------
       character version*(*),defdir*(*)
       parameter(MAXPOL=4,MAXSRC=512,MAXANT3=MAXANT,MAXBASE3=MAXBASE,
      *          PolMin=-9,PolMax=4)
-      parameter(version='BootFlux: version 2-dec-08')
+      parameter(version='BootFlux: version 05-mar-09')
       parameter(defdir=
 c     *         '/home/bima2/data/flux/measured_fluxes/')
 c     *          '/lma/mirth/programmers/lgm/measured_fluxes/')
@@ -291,7 +293,7 @@ c
             call uvgetvrd(tno,'obsdec',ddecobs,1)
             decobs = ddecobs
             haobs = dlst - draobs
-            call CalElev(haobs,decobs,antel(nsrc))
+            call CalElev(haobs,decobs,antel(nsrc),tno)
             antel(nsrc) = 180.0 * antel(nsrc)/3.1415926
             call uvgetvri(tno,'nants',nants,1)
             call uvgetvri(tno,'nspect',nspec,1)
@@ -960,6 +962,7 @@ c
         end
 c************************************************************************
        subroutine rad2hms(time,chartime)
+       implicit none
 c
 c  Converts input time in radians to character hh:mm:ss representation
 c
@@ -975,17 +978,21 @@ c
        return
        end 
 c-----------------------------------------------------------------------
-        subroutine CalElev(ha,decl,elev)
+       subroutine CalElev(ha,decl,elev,tno)
+       implicit none
 c
 c    Calculates the source Elevation from the source hour angle (HA)
 c    and declination (DECL) assuming the latitude of Hat Creek.
 c    HA, DECL, and ELEV are all in radians.
 c
         real ha,decl,elev,lat,dummy
+	double precision dlat
+	integer tno
 c
-c    Assuming Hat Creek Latitude = 40 deg
-        parameter (lat = 0.6981)
+c Get the latitude
+	call uvgetvrd(tno,"latitud",dlat,1)
 c
+	lat = real(dlat)
         dummy = sin(decl)*sin(lat) +
      1          cos(decl)*cos(ha)*cos(lat)
         elev  = asin(dummy)
