@@ -73,28 +73,61 @@ AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
 
-dnl Check for latex and makeindex, needed to build the documentation
+dnl Documentation checks
 
-AC_PATH_PROG(LATEX, latex, none)
-AC_PATH_PROG(MAKEINDEX, makeindex, none)
-AC_PATH_PROG(FIG2DEV, fig2dev, none)
-AC_PATH_PROG(GNUPLOT, gnuplot, none)
+AC_ARG_ENABLE([docs],
+    [AS_HELP_STRING([--disable-docs],
+        [disable building of documentation])],
+    wantdocs=$enableval, wantdocs=detect)
 
-if test x"$LATEX" = xnone ; then
-  BUILD_DOCS=false
-  docswhy="no ; 'latex' not found in PATH"
-elif test x"$MAKEINDEX" = xnone ; then
-  BUILD_DOCS=false
-  docswhy="no ; 'makeindex' not found in PATH"
-elif test x"$FIG2DEV" = xnone ; then
-  BUILD_DOCS=false
-  docswhy="no ; 'fig2dev' not found in PATH"
-elif test x"$GNUPLOT" = xnone ; then
-  BUILD_DOCS=false
-  docswhy="no ; 'gnuplot' not found in PATH"
+if test x"$wantdocs" = xno ; then
+    LATEX=notchecked
+    MAKEINDEX=notchecked
+    FIG2DEV=notchecked
+    GNUPLOT=notchecked
+    BUILD_DOCS=false
+    docswhy="no ; disabled via --disable-docs"
 else
-  BUILD_DOCS=true
-  docswhy="yes"
+    dnl We need these tools:
+
+    AC_PATH_PROG(LATEX, latex, notfound)
+    AC_PATH_PROG(MAKEINDEX, makeindex, notfound)
+    AC_PATH_PROG(FIG2DEV, fig2dev, notfound)
+    AC_PATH_PROG(GNUPLOT, gnuplot, notfound)
+
+    dnl If --enable-docs is explicitly given and we can't build
+    dnl docs, treat that as an error.
+    dnl If neither --enable-docs nor --disable-docs is given,
+    dnl just go with whatever result we get.
+
+    if test x"$LATEX" = xnotfound ; then
+      BUILD_DOCS=false
+      docswhy="'latex' not found in PATH"
+    elif test x"$MAKEINDEX" = xnotfound ; then
+      BUILD_DOCS=false
+      docswhy="'makeindex' not found in PATH"
+    elif test x"$FIG2DEV" = xnotfound ; then
+      BUILD_DOCS=false
+      docswhy="'fig2dev' not found in PATH"
+    elif test x"$GNUPLOT" = xnotfound ; then
+      BUILD_DOCS=false
+      docswhy="'gnuplot' not found in PATH"
+    else
+      BUILD_DOCS=true
+      docswhy="yes"
+    fi
+
+    if test x"$BUILD_DOCS" = xtrue -a x"$wantdocs" = xdetect ; then
+        docswhy="yes (autodetected; disable with --disable-docs)"
+    fi
+
+    if test x"$BUILD_DOCS" = xfalse ; then
+        if test x"$wantdocs" = xyes ; then
+            AC_MSG_ERROR([docs explicitly requested but $docswhy])
+	else
+	    docswhy="no ; $docswhy"
+	fi
+    fi
 fi
 
 AC_SUBST(LATEX)
