@@ -135,7 +135,7 @@ c    fix options=complex for > 8 ants
 c-----------------------------------------------------------------------
 	include 'gplist.h'
 	character version*(*)
-	parameter(version='GpList: version 5-dec-08')
+	parameter(version='GpList: version 18-mar-09')
 	logical dovec,docomp,dophas,doall,dozero,domult,hexists,doamp
 	logical dolimit,doclip,dosigclip,doforce,dohist,doaddph
 	real jyperk(MAXGANT) 
@@ -357,9 +357,9 @@ c
 c  Set the dynamic format statements
 c
 	write(fmt99, '(a,i2,a)') '(a8,2x,',nantsd,'(f5.2,1x))'
-	write(fmt299,'(a,i2,a)') '(a8,2x,',nantsd,'(f5.1,1x))'
-	write(fmt198,'(a,i2,a)') '(a8,',nantsd,'i5)'
-	write(fmt199,'(a,i2,a)') '(a8,',nantsd,'(1x,f6.2))'
+	write(fmt299,'(a,i2,a)') '(a10,2x,',nantsd,'(f5.1,1x))'
+	write(fmt198,'(a,i2,a)') '(a10,',nantsd,'i5)'
+	write(fmt199,'(a,i2,a)') '(a10,',nantsd,'(1x,f6.2))'
 c  
 c  Now list the values read
 c
@@ -374,7 +374,7 @@ c
 	 if (ngains.gt.8) call bug('w','Better use options=all')
          do i=1,nsols
             call JulDay(time(i),'H',line(1:18))
-            ctime = line(9:16)
+            ctime = line(9:18)
 	    write(msg,95) ctime,
      *                    (Gains((i-1)*nants+igains), igains=1,ngains)
 	    call output(msg)
@@ -383,7 +383,7 @@ c
          call output('The complex gains listed in the table are:')
          do i=1,nsols
             call JulDay(time(i),'H',line(1:18))
-            ctime = line(9:16)
+            ctime = line(9:18)
          write(msg,96) ctime,'Ant  ',1,'   gain = ',Gains((i-1)*nants+1)
             call output(msg)
             do j=2,nants
@@ -404,7 +404,7 @@ c	 enddo
          call output(msg)
          do i=1,nsols
             call JulDay(time(i),'H',line(1:18))
-            ctime = line(9:16)
+            ctime = line(9:18)
             k=(i-1)*nants
 	    write(msg,fmt198) ctime,
      *                (nint(radtodeg*
@@ -427,7 +427,7 @@ c	 enddo
 
 	 do i=1,nsols
 	    call JulDay(time(i),'H',line(1:18))
-	    ctime = line(9:16)
+	    ctime = line(9:18)
 	    write(msg,fmt199) ctime,
      *             (abs(Gains((i-1)*nants+antsd(m))), m=1,nantsd)
 	    call output(msg)
@@ -458,14 +458,14 @@ c	 enddo
 	 write(msg,197) '------------------------------------',
      &               '------------------------------------'
 	 call output(msg)
-         write(msg,fmt199) 'Means:  ',
+         write(msg,fmt199) 'Means:    ',
      *                        (MeanGain(antsd(m)),m=1,nantsd)
 	 call output(msg)
 	 if (doMed) then
-	    write(msg,fmt199) 'Medians:',(MednGain(antsd(m)),
+	    write(msg,fmt199) 'Medians:  ',(MednGain(antsd(m)),
      *                                      m=1,nantsd)
 	    call output(msg)
-            write(msg,fmt199) 'Rms:    ', (GainRms(antsd(m)),
+            write(msg,fmt199) 'Rms:      ', (GainRms(antsd(m)),
      *                                      m=1,nantsd)
 	    call output(msg)
 	 endif
@@ -485,7 +485,7 @@ c
          msg='Replacing amplitude gains with (0.0 means no change):'
          call output(msg)
          end if
-         write(msg,99) '        ',jyperk(1),jyperk(2),jyperk(3),
+         write(msg,99) '          ',jyperk(1),jyperk(2),jyperk(3),
      *     jyperk(4),jyperk(5),jyperk(6),jyperk(7),jyperk(8),
      *     jyperk(9),jyperk(10),jyperk(11),jyperk(12),jyperk(13),
      *     jyperk(14),jyperk(15)
@@ -527,7 +527,7 @@ c
 	    msg='Replacing phase gains (0.0 means no change):'
          end if
 	 call output(msg)
-         write(msg,299) '        ',jyperk(1),jyperk(2),jyperk(3),
+         write(msg,299) '          ',jyperk(1),jyperk(2),jyperk(3),
      *     jyperk(4),jyperk(5),jyperk(6),jyperk(7),jyperk(8),
      *     jyperk(9),jyperk(10),jyperk(11),jyperk(12),jyperk(13),
      *     jyperk(14),jyperk(15)
@@ -669,11 +669,11 @@ c
 199   format(a8,15(1x,f6.2))
 198   format(a8,15i5)
 197   format(a36,a36)
-299   format(a8,2x,15(f5.1,1x))
+299   format(a10,2x,15(f5.1,1x))
 99    format(a8,2x,15(f5.2,1x))
 97    format(10x,a,i2,a,f9.3,f9.3)
 96    format(a8,2x,a,i2,a,f9.3,f9.3)
-95    format(a8,1x,8(f5.2,1x,f5.2,2x))
+95    format(a10,1x,8(f5.2,1x,f5.2,2x))
 93    format(a30,1x,f5.2,1x,f5.2)
 92    format(a9,1x,i4,a25)
 91    format(a30,1x,f5.2,1x,a6)
