@@ -425,8 +425,6 @@ c	 enddo
      *         '  Ant11  Ant12  Ant13  Ant14  Ant15 '
 	 call output(msg)
 
-	 write(*,*) 'TEUBEN'
-
 	 do i=1,nsols
 	    call JulDay(time(i),'H',line(1:18))
 	    ctime = line(9:18)
