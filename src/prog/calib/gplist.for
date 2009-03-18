@@ -310,7 +310,7 @@ c------------------------------------------------------------------------
         complex Gains(MAXGAINS), g
 	double precision time(MAXSOLS)
 	integer nsols,offset,pnt,i,m,tGains,iostat,ngains
-	character line*256,ctime*8,msg*256,word*32
+	character line*256,ctime*10,msg*256,word*32
 	character*32 fmt99,fmt198, fmt199, fmt299
         integer igains
 c
@@ -420,10 +420,12 @@ c	 enddo
          enddo
 	 call output('The amplitude gain values listed '//
      *               'in the table are:')
-	 msg = '  Time    Ant 1  Ant 2  Ant 3  Ant 4 ' //
+	 msg = '  Time      Ant 1  Ant 2  Ant 3  Ant 4 ' //
      *         ' Ant 5  Ant 6  Ant 7  Ant 8  Ant 9  Ant10' //
      *         '  Ant11  Ant12  Ant13  Ant14  Ant15 '
 	 call output(msg)
+
+	 write(*,*) 'TEUBEN'
 
 	 do i=1,nsols
 	    call JulDay(time(i),'H',line(1:18))
