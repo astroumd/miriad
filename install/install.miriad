@@ -1,6 +1,6 @@
 #! /bin/csh -f
 #
-set version=10-dec-08
+set version=17-mar-09
 #
 #  2-aug-99 Updated for Sebok's Mandrake setup
 #  1-aug-00 Updated to allow to build private PGPLOT version
@@ -41,6 +41,7 @@ set version=10-dec-08
 # 17-may-07 use $CC, $F77 and $CXX in $MIRBIN, if present
 # 16-jun-08 add zeno/hkmiriad
 # 10-dec-08 pgplot64 fix
+# 17-mar-09 force darwin no shared libs
 #
 #
 # if SELINUX is enabled:
@@ -165,6 +166,10 @@ set install_dir=`pwd`
 foreach a ($*)
   set $a
 end
+
+#       a few special overrides
+if ($hosttype == darwin) set shared=0
+
 
 echo Running configure, telescope=$telescope, logfile in configure.LOG:
 ./configure --with-telescope=$telescope >& configure.LOG
