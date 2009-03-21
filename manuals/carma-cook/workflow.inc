@@ -570,19 +570,21 @@ Be sure to apply the new baseline to all sources:
 \end{verbatim}
 \normalsize
 
-In rare cases, a new and better solution is found a month or so after your data were
-taken. Check the status of the baseline solution on the above mentioned web page. It is a good
-idea to apply an appropriate solution if you are not sure which solution has been
-applied to your data. No harm is done if you apply a solution that has already
-been applied.
+In rare cases, a new and better solution is found a month or so after
+your data were taken. Check the status of the baseline solution on the
+above mentioned web page. It is a good idea to apply an appropriate
+solution if you are not sure which solution has been applied to your
+data. No harm is done if you apply a solution that has already been
+applied.
 
 
-Notice that for data taken during a move (which can take several days and 
-the array will be in some hybrid configuration) an antpos file will be
-available for each day. Please check the time validity carefully,
-either by filename, or comments in the file.\index{uvedit}
+Notice that for data taken during a move (which can take several days
+and the array will be in some hybrid configuration) an antpos file
+will be available for each day. Please check the time validity
+carefully, either by filename, or comments in the file.\index{uvedit}
 
-Errors due to baselines can be seen as slopes in phase vs. time. See Figure ...
+Errors due to baselines can be seen as slopes in phase vs. time. See
+Figure ...
 
 \bigskip
 
@@ -591,10 +593,10 @@ Errors due to baselines can be seen as slopes in phase vs. time. See Figure ...
 \subsection{Rest Frequency (bugzilla 409)}
 
 \label{ss:restfreq}
-Certainly during the initial campaigns, CARMA data were written with \index{bugzilla, 409}
-a rest frequency equal to the starting frequency in the first window
-of the LSB. This is most likely wrong for your data. Look again at the output of
-{\tt uvlist}:
+Certainly during the initial campaigns, CARMA data were written with
+\index{bugzilla, 409} a rest frequency equal to the starting frequency
+in the first window of the LSB. This is most likely wrong for your
+data. Look again at the output of {\tt uvlist}:
 
 % \footnotesize\normalsize
 \footnotesize
@@ -613,8 +615,8 @@ velocity interval  :    93.432    93.432    93.432   -93.432   -93.432   -93.432
 \end{verbatim}
 \normalsize
 
-To fix this, you can set the {\tt restfreq} variable to the 
-(in this case CO 1-0) line you are interested in:
+To fix this, you can set the {\tt restfreq} variable to the (in this
+case CO 1-0) line you are interested in:
 
 % \footnotesize\normalsize
 \footnotesize
@@ -623,9 +625,10 @@ To fix this, you can set the {\tt restfreq} variable to the
 \end{verbatim}
 \normalsize
 
-The drawback of this procedure is that the uv variable is now ``promoted'' to a
-(miriad) header variable, and in the process loosing any potential time variability
-as well as (in this case 6) dimensionality.
+The drawback of this procedure is that the uv variable is now
+``promoted'' to a (miriad) header variable, and in the process loosing
+any potential time variability as well as (in this case 6)
+dimensionality.
 
 \bigskip
 TODO:explain difference between puthd and uvputhd
@@ -635,26 +638,25 @@ TODO:explain difference between puthd and uvputhd
 % is it spelled 'line length' or 'linelength'
 
 The linelength system monitors changes in the delays through the
-optical fibers to the antennas.  The delays vary as the fibers
-change temperature.  The delay variations are small, typically less
-than 0.05 nsec on time scales of hours, but they are enough to
-cause significant phase drifts of the local oscillators on the
-receivers.  
+optical fibers to the antennas.  The delays vary as the fibers change
+temperature.  The delay variations are small, typically less than 0.05
+nsec on time scales of hours, but they are enough to cause significant
+phase drifts of the local oscillators on the receivers.
 % By correcting for the linelength changes, it should be possible to observe phase calibrators less often.
-Since these changes are measured accurately by the linelength system, the corrections
-should be applied.
+Since these changes are measured accurately by the linelength system,
+the corrections should be applied.
 
-Phase corrections from the linelength system are stored in the Miriad uv variable {\tt phasem1},
-which is an antenna based variable.\index{phasem1}\index{linelength correction}
+Phase corrections from the linelength system are stored in the Miriad
+uv variable {\tt phasem1}, which is an antenna based
+variable.\index{phasem1}\index{linelength correction}
 
-
-To apply the linelength corrections, use the Miriad program {\tt linecal}, which
-writes an antenna based
-calibration table in the dataset that can be applied.
-However, don't expect perfection - the linelength
-system cannot correct for differences in the thermal expansion of
-the antennas (particularly BIMA vs OVRO) or for changes in the
-temperature of the phaselock electronics. Schematically we will do:
+To apply the linelength corrections, use the Miriad program {\tt
+linecal}, which writes an antenna based calibration table in the
+dataset that can be applied.  However, don't expect perfection - the
+linelength system cannot correct for differences in the thermal
+expansion of the antennas (particularly BIMA vs OVRO) or for changes
+in the temperature of the phaselock electronics. Schematically we will
+do:
 
 \footnotesize
 \begin{verbatim}
@@ -673,12 +675,12 @@ TODO: careful with select=-source(noise)
 
 \subsection{Other UV variables}
 
-Some data bugs cannot be fixed by refilling the data from the archive. For example
-at some point in the past the latitude was erroneously set to 0 ( latitude=0)
-In this case
-programs such as {\tt puthd} will work fine for variables that do not depend on time.
-In the first example we see how to fix the latitude (stored as 0 in the SS443 dataset)
-such that the ENU coordinates were printed correctly:
+Some data bugs cannot be fixed by refilling the data from the
+archive. For example at some point in the past the latitude was
+erroneously set to 0 ( latitude=0) In this case programs such as {\tt
+puthd} will work fine for variables that do not depend on time.  In
+the first example we see how to fix the latitude (stored as 0 in the
+SS443 dataset) such that the ENU coordinates were printed correctly:
 
 \footnotesize
 \begin{verbatim}
@@ -686,35 +688,35 @@ such that the ENU coordinates were printed correctly:
 \end{verbatim}
 \normalsize
 
-Developers and observers
-typically file these problems as bugs in our bugzilla. This particular
-bug was filed as bug \# xxx and was caused by using multiple sub-arrays and
-one subarray polluting the data in another.
+Developers and observers typically file these problems as bugs in our
+bugzilla. This particular bug was filed as bug \# xxx and was caused
+by using multiple sub-arrays and one subarray polluting the data in
+another.
 
 \bigskip
 TODO:  check on the uvedit problem with missing LO2.
 
 \subsection{Data Flagging and Editing}
 
-Chapter 10 in the Miriad Users Guide has an extensive discussion on flagging your
-visibility data.
-The two important programs that allow
-you to interactively flag are {\tt uvflag} and {\tt blflag}. 
+Chapter 10 in the Miriad Users Guide has an extensive discussion on
+flagging your visibility data.  The two important programs that allow
+you to interactively flag are {\tt uvflag} and {\tt blflag}.
 
 % The {\tt tvflag} program
 % has become unfashionable, since it relies on 8bit X windows displays. There is luckily 
 % a fairly simple procedure to get those to work in Linux.
 
-Programs such as {\tt uvplt} and {\tt varplt} can be used to inspect data and decide
-what baselines, antennae, time-ranges etc. need to be flagged. Another potentially useful
-way
+Programs such as {\tt uvplt} and {\tt varplt} can be used to inspect
+data and decide what baselines, antennae, time-ranges etc. need to be
+flagged. Another potentially useful way
 % simular to the interactive output of {\tt tvflag} 
-is a relatively new program
-{\tt uvimage} which creates a Miriad image cube out of a visibility dataset. This 3 dimensional
-dataset can be viewed with programs like {\tt ds9} or {\tt karma}'s {\tt kvis}, 
-and guide you how to flag the data using {\tt uvflag}. It is possible to come up with a procedure
-that ties keystrokes in {\tt ds9} to the creation of a batch script that runs {\tt uvflag}
-afterwards, and this is a likely change in upcoming versions of MIRIAD.
+is a relatively new program {\tt uvimage} which creates a Miriad image
+cube out of a visibility dataset. This 3 dimensional dataset can be
+viewed with programs like {\tt ds9} or {\tt karma}'s {\tt kvis}, and
+guide you how to flag the data using {\tt uvflag}. It is possible to
+come up with a procedure that ties keystrokes in {\tt ds9} to the
+creation of a batch script that runs {\tt uvflag} afterwards, and this
+is a likely change in upcoming versions of MIRIAD.
 
 
 % \footnotesize\normalsize
@@ -733,20 +735,21 @@ afterwards, and this is a likely change in upcoming versions of MIRIAD.
 \normalsize
 
 The most useful output mode is amplitudes (the default) where the cube
-will be constructed with channels along the X axis,
-baselines along Y and time along Z. The X axis is represented in {\tt ds9}
-by different planes in {\tt ds9}). As you
-move the {\it Data Cube} slider you will see different channel-baseline images of
-the visibility amplitudes at different times. Look for a change in noise, regions of
-pure 0s, vertical spikes (a.k.a. birdies), horizontal spikes (bad baselines or antennae).
-These will potentially all have to be flagged. Overall noise increase that is the result
-of a higher system temperature will be accounted for though (see {\tt invert}).
-
+will be constructed with channels along the X axis, baselines along Y
+and time along Z. The X axis is represented in {\tt ds9} by different
+planes in {\tt ds9}). As you move the {\it Data Cube} slider you will
+see different channel-baseline images of the visibility amplitudes at
+different times. Look for a change in noise, regions of pure 0s,
+vertical spikes (a.k.a. birdies), horizontal spikes (bad baselines or
+antennae).  These will potentially all have to be flagged. Overall
+noise increase that is the result of a higher system temperature will
+be accounted for though (see {\tt invert}).
 
 \subsection{Flagging Birdies and End Channels}
 
-An example of a birdie (often a antenna based single channel with high amplitudes) can be 
-flagged easily with {\tt uvflag} using {\tt line=chan,}{\it n,start,width,step}:
+An example of a birdie (often a antenna based single channel with high
+amplitudes) can be flagged easily with {\tt uvflag} using {\tt
+line=chan,}{\it n,start,width,step}:
 
 \footnotesize
 \begin{verbatim}
@@ -766,13 +769,15 @@ flagged easily with {\tt uvflag} using {\tt line=chan,}{\it n,start,width,step}:
 \end{verbatim}
 \normalsize
 
-After this you should recompute the wide band averages using {\tt uvwide}.\index{uvwide},
-if you plan to use them. 
+After this you should recompute the wide band averages using {\tt
+uvwide}.\index{uvwide}, if you plan to use them.
 
 \subsection{Flagging using tvflag}
 
-The interactive flagging program {\tt tvflag} must be run on an 8-bit display, or PseudoColor display. Most modern desktops are so color rich, they cannot be effectively run on an 8-bit display,
-though {\tt twm} and {\tt fvwm} can. For example, on Linux you can start a second
+The interactive flagging program {\tt tvflag} must be run on an 8-bit
+display, or PseudoColor display. Most modern desktops are so color
+rich, they cannot be effectively run on an 8-bit display, though {\tt
+twm} and {\tt fvwm} can. For example, on Linux you can start a second
 X session from another console (e.g. ctrl-alt-F2):
 
 \footnotesize
@@ -800,10 +805,11 @@ or use VNC:
 
 \subsection{Flagging based on tracking errors}
 
-The {\tt axisrms} UV variable holds the tracking error (in arcsec, in Az and El) 
-for each antenna in the array. It can be useful to automatically flag data when the
-tracking is above a certain error, or even antennae based (e.g.
-allow OVRO to have a smaller tolerance than the BIMA antennae).
+The {\tt axisrms} UV variable holds the tracking error (in arcsec, in
+Az and El) for each antenna in the array. It can be useful to
+automatically flag data when the tracking is above a certain error, or
+even antennae based (e.g.  allow OVRO to have a smaller tolerance than
+the BIMA antennae).
 
 \footnotesize
 \begin{verbatim}
@@ -815,9 +821,10 @@ allow OVRO to have a smaller tolerance than the BIMA antennae).
 \end{verbatim}
 \normalsize
 
-The exact amount (5 arcsec in this example) is left to your own judgement, and 
-you should probably also base this on the inspection of the graphical output
-of {\tt varplt}. But in case you were wondering, the recommended value is 5.
+The exact amount (5 arcsec in this example) is left to your own
+judgement, and you should probably also base this on the inspection of
+the graphical output of {\tt varplt}. But in case you were wondering,
+the recommended value is 5.
 
 
 
@@ -830,10 +837,11 @@ of {\tt varplt}. But in case you were wondering, the recommended value is 5.
 
 \subsection{Passband Calibration}
 
-When a strong passband calibrator is available it can be used using {\tt mfcal} to
-correct the passband of your others sources (not just the target source, but 
-also for example the phase and amplitude calibrator). Choose a small interval to
-construct the antenna based passband, and inspected the solutions with {\tt gpplt}:
+When a strong passband calibrator is available it can be used using
+{\tt mfcal} to correct the passband of your others sources (not just
+the target source, but also for example the phase and amplitude
+calibrator). Choose a small interval to construct the antenna based
+passband, and inspected the solutions with {\tt gpplt}:
 
 \footnotesize
 \begin{verbatim}
@@ -847,8 +855,8 @@ construct the antenna based passband, and inspected the solutions with {\tt gppl
 \end{verbatim}
 \normalsize
 
-The passband gains can then be copied to your other sources, for subsequent
-calibration and/or mapping:
+The passband gains can then be copied to your other sources, for
+subsequent calibration and/or mapping:
 
 
 \footnotesize
@@ -865,9 +873,10 @@ calibration and/or mapping:
 
 \subsection{Simple single calibrator}
 
-When a calibrator is strong enough in the same window as the source is observed, we 
-can simply determine a selfcal solution\footnote{cf. also the gmakes/gfiddle/gapply
-approach for BIMA data} for the calibrator and apply this to the source:
+When a calibrator is strong enough in the same window as the source is
+observed, we can simply determine a selfcal solution\footnote{cf. also
+the gmakes/gfiddle/gapply approach for BIMA data} for the calibrator
+and apply this to the source:
 
 Here is an annoted section of C-shell code exemplifying this:
 
@@ -945,12 +954,11 @@ the cross-correlations.
 
 
 
-Some programs use these data for 
-calibration purposes\index{autocorrelation}. For example
-{\tt uvcal} has an option to normalize the cross-correllation 
-data $V_{ij}$ by the preceding auto-correlation data 
-with $\sqrt{V_{ii} V_{jj}}$. This is a different method to (amplitude)
-bandpass calibrate.
+Some programs use these data for calibration
+purposes\index{autocorrelation}. For example {\tt uvcal} has an option
+to normalize the cross-correllation data $V_{ij}$ by the preceding
+auto-correlation data with $\sqrt{V_{ii} V_{jj}}$. This is a different
+method to (amplitude) bandpass calibrate.
 
 \footnotesize
 \begin{verbatim}
@@ -965,15 +973,17 @@ bandpass calibrate.
 
 \subsection{Noise Source Passband Calibration}
 
-The noise source is only present in the LSB and can also be used to bandpass calibrate narrow
-calibrator modes. Only for data since early December 2006 has the signal of the Noise Source 
-been sufficiently amplified to be useful for this calibration mode. \index{noise source}
+The noise source is only present in the LSB and can also be used to
+bandpass calibrate narrow calibrator modes. Only for data since early
+December 2006 has the signal of the Noise Source been sufficiently
+amplified to be useful for this calibration mode. \index{noise source}
 
 
 
 
-The following procedure uses the phases of a wide band signal (in Window 2) and applies them to a narrow
-band signal, in order to check phase transfer:
+The following procedure uses the phases of a wide band signal (in
+Window 2) and applies them to a narrow band signal, in order to check
+phase transfer:
 
 \footnotesize
 \begin{verbatim}
@@ -987,11 +997,13 @@ band signal, in order to check phase transfer:
 \end{verbatim}
 \normalsize
 
-The phases in the {\tt 3c279.8mhz.1dec} data can now be compared to that of the noise source,
-and will still show offsets compared to that of the noise source.
+The phases in the {\tt 3c279.8mhz.1dec} data can now be compared to
+that of the noise source, and will still show offsets compared to that
+of the noise source.
 
-The amplified noise source can effectively remove any passband variations. For example, by applying an mfcal solution
-on the narrow band of the noise source (skipping the first channel):
+The amplified noise source can effectively remove any passband
+variations. For example, by applying an mfcal solution on the narrow
+band of the noise source (skipping the first channel):
 
 \footnotesize
 \begin{verbatim}
@@ -1003,11 +1015,10 @@ on the narrow band of the noise source (skipping the first channel):
 \end{verbatim}
 \normalsize
 
-If the signal of interest is in the USB, where there is no noise source, the data will have to
-be conjugated into the USB
-and headers faked in order for {\tt mfcal}
-to apply the correction, after a slight manual copying of important header
-variables:
+If the signal of interest is in the USB, where there is no noise
+source, the data will have to be conjugated into the USB and headers
+faked in order for {\tt mfcal} to apply the correction, after a slight
+manual copying of important header variables:
 
 \footnotesize
 \begin{verbatim}
@@ -1036,22 +1047,132 @@ variables:
 
 \subsection{Phase Transfer}
 
+After the passband solution has been derived and copied to the other
+sources in your track (e.g. phase calibrator, flux calibrator, science
+targets), you will want to calibrate the phase (and possibly
+amplitude) as it changes with time over the course of your
+observations.  This is accomplished by self-calibrating on your gain
+calibrator, which was observed periodically over the course of your
+observations, and then using this solution for your science target(s).
+The necessary assumption is that the atmospheric variations are the
+same for the science target as for the gain calibrator, which of
+course depends on the angular distance between the two.
+
+Here is an example of how phase transfer is accomplished:
+
+\footnotesize
+\begin{verbatim}
+
+1: set VIS = c0001.example.passband.miriad 
+2: uvcat vis=$VIS select="source(3C273),win(1),-auto" out=3C273.w1.passband.miriad
+3: uvcat vis=$VIS select="source(science),win(1),-auto" out=science.w1.passband.miriad
+4: selfcal vis=3C273.w1.passband.miriad refant=8 interval=5 options=phase
+5: gpcopy vis=3C273.w1.passband.miriad out=science.w1.passband.miriad
+
+\end{verbatim}
+\normalsize
+
+In line 1, the passband calibrated data is defined as
+"c0001.example.passband.miriad".
+
+In line 2, UVCAT is used to select the first window (the lower
+sideband of band 1) of the gain calibrator (3C273) and write out just
+this data in a file called "3C273.w1.passband.miriad".
+
+In line 3, UVCAT is used to select the first window (the lower
+sideband of band 1) of the science target (science) and write out just
+this data in a file called "science.w1.passband.miriad".
+
+In line 4, SELFCAL is used to derive the phase solution as a function
+of time using the gain calibrator.  The reference antenna is defined
+as C8 (refant=8), which was chosen because it was in the center of the
+array and didn't have to be flagged earlier on in the data reduction
+process.  The interval was set to five minutes (interval=5) because
+that is the amount of time spent on the gain calibrator in each
+calibrator-science target cycle.  Finally, SELFCAL was only used to
+find the variation of phase with time, and not amplidtude with time,
+by setting options=phase.  Amplitude calibration will be discussed in
+a later section.
+
+In line 5, the phase/time solution derived in line 4 is copied from
+3C273 data to the science target.
+
+The above example only calibrates one window of the calibrator and
+copies that solution to the same window of the science target.  Of
+course, you will want to calibrate every window.  For continuum
+observations, each window has 500 MHz bandwidth, and the easiest way
+to calibrate the data will be to derive a solution for each window of
+the gain calibrator and copy the solution to the same window of the
+science target.  For most line observations, usually one or two bands
+will have narrow bandwidth (62 MHz or less) and the remaining band(s)
+will have 500 MHz bandwidth.  In this case, it is probably best to
+derive the SELFCAL solution on the gain calibrator for the 500 MHz
+window and copy that to the other windows in the same sideband.
+
+Here is an example of how to derive the phase/time solution for a
+narrow band dataset in which band 1 has 500 MHz bandwidth and bands 2
+and 3 have 8 MHz bandwidth:
+
+\footnotesize
+\begin{verbatim}
+
+ 1: set VIS = c0001.example.passband.miriad 
+ 2: uvcat vis=$VIS select="source(3C273),win(1),-auto" out=3C273.w1_500.passband.miriad
+ 3: uvcat vis=$VIS select="source(3C273),win(2),-auto" out=3C273.w2_8.passband.miriad
+ 4: uvcat vis=$VIS select="source(3C273),win(3),-auto" out=3C273.w3_8.passband.miriad
+ 5: uvcat vis=$VIS select="source(3C273),win(4),-auto" out=3C273.w4_500.passband.miriad
+ 6: uvcat vis=$VIS select="source(3C273),win(5),-auto" out=3C273.w5_8.passband.miriad
+ 7: uvcat vis=$VIS select="source(3C273),win(6),-auto" out=3C273.w6_8.passband.miriad
+ 8: uvcat vis=$VIS select="source(science),win(1),-auto" out=science.w1_500.passband.miriad
+ 9: uvcat vis=$VIS select="source(science),win(2),-auto" out=science.w2_8.passband.miriad
+10: uvcat vis=$VIS select="source(science),win(3),-auto" out=science.w3_8.passband.miriad
+11: uvcat vis=$VIS select="source(science),win(4),-auto" out=science.w4_500.passband.miriad
+12: uvcat vis=$VIS select="source(science),win(5),-auto" out=science.w5_8.passband.miriad
+13: uvcat vis=$VIS select="source(science),win(6),-auto" out=science.w6_8.passband.miriad
+14: selfcal vis=3C273.w1.passband.miriad refant=8 interval=5 options=phase
+15: selfcal vis=3C273.w4.passband.miriad refant=8 interval=5 options=phase
+16: gpcopy vis=3C273.w1.passband.miriad out=science.w1_500.passband.miriad
+17: gpcopy vis=3C273.w1.passband.miriad out=science.w2_8.passband.miriad
+18: gpcopy vis=3C273.w1.passband.miriad out=science.w3_8.passband.miriad
+19: gpcopy vis=3C273.w4.passband.miriad out=science.w4_500.passband.miriad
+20: gpcopy vis=3C273.w4.passband.miriad out=science.w5_8.passband.miriad
+21: gpcopy vis=3C273.w4.passband.miriad out=science.w6_8.passband.miriad
+22: gpcopy vis=3C273.w1.passband.miriad out=3C273.w2_8.passband.miriad
+23: gpcopy vis=3C273.w1.passband.miriad out=3C273.w3_8.passband.miriad
+24: gpcopy vis=3C273.w4.passband.miriad out=3C273.w5_8.passband.miriad
+25: gpcopy vis=3C273.w4.passband.miriad out=3C273.w6_8.passband.miriad
+
+\end{verbatim}
+\normalsize
+
+In lines 2-13 we split the passband calibrated data into 12 files, one
+for each source (the gain calibrator and the science target) and
+window (windows 1-6).  In lines 14+15 we derive the phase/time
+solution for the gain calibrator (3C273) in the two wide (500 MHz)
+windows.  In lines 16-18 we copy the solution from window 1 of the
+gain calibrator to windows 1-3 (the lower sideband windows) of the
+science target.  In lines 19-21 we copy the solution from window 4 of
+the gain calibrator to windows 4-6 (the upper sideband windows) of the
+science target.  Finally, in lines 22-25 we copy the solution from the
+wide bands of the gain calibrator to the narrow bands of the gain
+calibrator.
+
 \subsection{Absolute Flux Calibration}
 
-Although one can rely on known fluxes of strong calibrators such as 
+Although one can rely on known fluxes of strong calibrators such as
 3C273 and 3C111, their actual flux varies with time and you will need
-to depend on what CARMA, or other observatories, have supplied for you.
-The best method is to add a planet for bootstrapping the flux 
-of your flux calibrator, at least if a planet in available during 
-your observation.
-An alternative way is to use a planet, if available, in your observation
-and bootstrap its flux to scale the flux of your phase or amplitude
-calibrator. 
+to depend on what CARMA, or other observatories, have supplied for
+you.  The best method is to add a planet for bootstrapping the flux of
+your flux calibrator, at least if a planet in available during your
+observation.  An alternative way is to use a planet, if available, in
+your observation and bootstrap its flux to scale the flux of your
+phase or amplitude calibrator.
 \footnote{http://www.astro.uiuc.edu/$^\sim$wkwon/CARMA/fluxcal}
 
-It maintains a list of 11 ``secondary flux calibrators'', and publishes their
-fluxes as function of time. Fluxes are maintained in Miriad in a database that
-you can consult using the {\tt calflux} program:
+It maintains a list of 11 ``secondary flux calibrators'', and
+publishes their fluxes as function of time. Fluxes are maintained in
+Miriad in a database that you can consult using the {\tt calflux}
+program:
 
 
 \footnotesize
