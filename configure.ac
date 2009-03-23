@@ -346,6 +346,24 @@ if test x"$no_x" = xyes; then
   AC_MSG_ERROR([Cannot proceed with build])
 fi
 
+dnl Check for Xaw: library and headers. For xpanel.
+
+dnl Must set action-if-found to nonempty to avoid
+dnl the default action of adding -lXaw to LIBS and
+dnl defining HAVE_LIBXAW.
+AC_CHECK_LIB([Xaw], [XawScrollbarSetThumb], [true],
+dnl the previous line of output will indicate what was not
+dnl found, so there is some context for this message:
+[AC_MSG_ERROR([you need to install the Xaw library])],
+[$X_PRE_LIBS $X_LIBS -lX11 $X_EXTRA_LIBS])
+
+save_CPPFLAGS="$CPPFLAGS"
+CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+AC_CHECK_HEADER([X11/Xaw/Box.h], [],
+dnl there is similarly context for this message.
+[AC_MSG_ERROR([you need to install Xaw development files])],)
+CPPFLAGS="$save_CPPFLAGS"
+
 x_libs="$X_PRE_LIBS $X_LIBS -lX11 -lXaw $X_EXTRA_LIBS"
 x_cflags="$X_CFLAGS"
 
