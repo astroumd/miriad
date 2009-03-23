@@ -336,7 +336,6 @@ dnl ---------------------------------------------------------------------
 
 dnl ---------------------------------------------------------------------
 dnl             Check for basic X windows stuff
-AC_PATH_X
 AC_PATH_XTRA
 
 if test x"$no_x" = xyes; then
@@ -347,8 +346,8 @@ if test x"$no_x" = xyes; then
   AC_MSG_ERROR([Cannot proceed with build])
 fi
 
-x_libs="-L$x_libraries $X_PRE_LIBS $X_EXTRA_LIBS -lX11 -lXaw"
-x_cflags="-I$x_includes $X_CFLAGS"
+x_libs="$X_PRE_LIBS $X_LIBS -lX11 -lXaw $X_EXTRA_LIBS"
+x_cflags="$X_CFLAGS"
 
 ## if test x"$SLIB" = xmac; then
 ## else
