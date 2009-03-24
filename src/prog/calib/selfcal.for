@@ -173,6 +173,7 @@ c    pjt   5aug99 Increased MaxMod a bit
 c    pjt  20apr07 Warn about apriori/flux
 c    mchw 27apr07 Check for auto instead of not cross. i.e. allow mixed.   
 c    mchw 23may07 if (nants.gt.MAXANT) call bug('f', 'number of antennas > MAXANT in currently installed task')
+c    pjt  19mar09 fix timestamp accuracy due to roundoff errors
 
 c
 c  Bugs/Shortcomings:
@@ -182,7 +183,7 @@ c   * It would be desirable to apply bandpasses, and merge gain tables,
 c     apply polarisation calibration, etc.
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version='Selfcal: version 1.0 21-Nov-2008')
+	parameter(version='Selfcal: version 1.0 19-mar-2009')
 	integer MaxMod,maxsels,nhead
 	parameter(MaxMod=64,maxsels=1024,nhead=3)
 c
@@ -494,9 +495,9 @@ c
 	call MemAlloc(pSumVV,maxSol*nBl,'r')
 	call MemAlloc(pSumMM,maxSol,'r')
 	call MemAlloc(pWeight,maxSol*nBl,'r')
-	call MemAlloc(pCount,maxSol,'r')
+	call MemAlloc(pCount,maxSol,'d')
 	call MemAlloc(pGains,maxSol*nants,'c')
-	call MemAlloc(prTime,maxSol,'r')
+	call MemAlloc(prTime,maxSol,'d')
 c
 	end
 c************************************************************************
@@ -512,9 +513,9 @@ c------------------------------------------------------------------------
 	call MemFree(pSumVV,maxSol*nBl,'r')
 	call MemFree(pSumMM,maxSol,'r')
 	call MemFree(pWeight,maxSol*nBl,'r')
-	call MemFree(pCount,maxSol,'r')
+	call MemFree(pCount,maxSol,'d')
 	call MemFree(pGains,maxSol*nants,'c')
-	call MemFree(prTime,maxSol,'r')
+	call MemFree(prTime,maxSol,'d')
 	end
 c************************************************************************
 	subroutine SelfAcc(tscr,nchan,nvis,interval)
@@ -539,7 +540,7 @@ c
 	call SelfAcc1(tscr,nchan,nvis,nBl,maxSol,nSols,
      *	  nhash,Hash,Indx,interval,Time,
      *	  Memc(pSumVM),Memr(pSumVV),Memr(pSumMM),
-     *	  Memr(pWeight),Memr(pCount),Memr(prTime))
+     *	  Memr(pWeight),Memd(pCount),Memd(prTime))
 	end
 c************************************************************************
 	subroutine SelfAcc1(tscr,nchan,nvis,nBl,maxSol,nSols,
@@ -553,7 +554,7 @@ c
 	real interval
 	complex SumVM(nBl,maxSol)
 	real SumVV(nBl,maxSol),SumMM(maxSol),Weight(nBl,maxSol)
-	real Count(maxSol),rTime(maxSol)
+	double precision Count(maxSol),rTime(maxSol)
 
 	include 'maxdim.h'
 c
@@ -703,7 +704,7 @@ c
 	call Solve1(tgains,nSols,nBl,nants,phase,smooth,relax,noscale,
      *	  minants,refant, Time0,interval,Time,Indx,
      *	  Memc(pSumVM),Memr(pSumVV),Memr(pSumMM),Memc(pGains),
-     *	  Memr(pWeight),Memr(pCount),memr(prTime))
+     *	  Memr(pWeight),Memd(pCount),memd(prTime))
 	end
 c************************************************************************
 	subroutine Solve1(tgains,nSols,nBl,nants,phase,smooth,relax,
@@ -717,8 +718,8 @@ c
 	integer Time(nSols),TIndx(nSols)
 	complex SumVM(nBl,nSols),Gains(nants,nSols)
 	real SumVV(nBl,nSols),SumMM(nSols),Weight(nBl,nSols)
-	real Count(nSols),rTime(nSols),interval
-	double precision Time0
+	real interval
+	double precision Time0,Count(nSols),rTime(nSols)
 c
 c  This runs through all the accumulated data, and calculates the
 c  selfcal solutions.
@@ -897,7 +898,7 @@ c
 	integer nSols,nBl,Time(nSols),TIndx(nSols)
 	complex SumVM(nBl,nSols)
 	real SumVV(nBl,nSols),SumMM(nSols),Weight(nBl,nSols)
-	real Count(nSols),rTime(nSols)
+	double precision Count(nSols),rTime(nSols)
 c
 c  This adds in a contribution, to the statistics (needed for determining
 c  self-cal solutions), from adjacent time intervals.
@@ -1130,7 +1131,7 @@ c
 	integer nsols,nbl,nants
 	complex SumVM(nbl,nsols),Gains(nants,nsols)
 	real SumMM(nsols),SumVV(nbl,nsols),Weight(nbl,nsols)
-	real Count(nsols)
+	double precision Count(nsols)
 c
 c  Accumulate the various statistics.
 c

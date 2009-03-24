@@ -184,6 +184,8 @@ c    rjs  28aug96 Minor change to get around gcc-related bug. Change care
 c		  Dave Rayner.
 c    mwr  05aug99 Renamed it mselfcal and increased maxmod to 64 from 32.
 c    pjt  20apr07 Warn about apriori/flux
+c    pjt  23mar09 Fix roudoff error in timestamp (see selfcal)
+c
 c  Bugs/Shortcomings:
 c   * Selfcal should check that the user is not mixing different
 c     polarisations and pointings.
@@ -191,7 +193,7 @@ c   * It would be desirable to apply bandpasses, and merge gain tables,
 c     apply polarisation calibration, etc.
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version='MSelfcal: version 1.0 20-apr-07')
+	parameter(version='MSelfcal: version 1.0 19-mar-09')
 	integer MaxMod,maxsels,nhead
 	parameter(MaxMod=64,maxsels=1024,nhead=3)
 c
@@ -343,8 +345,8 @@ c
 	  endif
 	  call HisOpen(tgains,'write')
 	endif
-	call HisWrite(tgains,'SELFCAL: Miriad '//version)
-	call HisInput(tgains,'SELFCAL')
+	call HisWrite(tgains,'MSELFCAL: Miriad '//version)
+	call HisInput(tgains,'MSELFCAL')
 c
 c  Calculate the self-cal gains.
 c
@@ -513,9 +515,9 @@ c
 	call MemAlloc(pSumVV,maxSol*nBl,'r')
 	call MemAlloc(pSumMM,maxSol,'r')
 	call MemAlloc(pWeight,maxSol*nBl,'r')
-	call MemAlloc(pCount,maxSol,'r')
+	call MemAlloc(pCount,maxSol,'d')
 	call MemAlloc(pGains,maxSol*nants,'c')
-	call MemAlloc(prTime,maxSol,'r')
+	call MemAlloc(prTime,maxSol,'d')
 	call MemAlloc(pstptim,maxSol,'r')
 	call MemAlloc(pstrtim,maxSol,'r')
 c
@@ -533,9 +535,9 @@ c------------------------------------------------------------------------
 	call MemFree(pSumVV,maxSol*nBl,'r')
 	call MemFree(pSumMM,maxSol,'r')
 	call MemFree(pWeight,maxSol*nBl,'r')
-	call MemFree(pCount,maxSol,'r')
+	call MemFree(pCount,maxSol,'d')
 	call MemFree(pGains,maxSol*nants,'c')
-	call MemFree(prTime,maxSol,'r')
+	call MemFree(prTime,maxSol,'d')
 	call MemFree(pstpTim,maxSol,'r')
 	call MemFree(pstrTim,maxSol,'r')
 	end
@@ -563,7 +565,7 @@ c
 	call SelfAcc1(tscr,nchan,nvis,nBl,maxSol,nSols,
      *	  nhash,Hash,Indx,interval,Time,
      *	  Memc(pSumVM),Memr(pSumVV),Memr(pSumMM),
-     *	  Memr(pWeight),Memr(pCount),Memr(prTime),Memr(pstpTim),
+     *	  Memr(pWeight),Memd(pCount),Memd(prTime),Memr(pstpTim),
      *	  Memr(pstrTim),timeonly)
 	end
 c************************************************************************
@@ -579,8 +581,8 @@ c
 	real interval
 	complex SumVM(nBl,maxSol)
 	real SumVV(nBl,maxSol),SumMM(maxSol),Weight(nBl,maxSol)
-	real Count(maxSol),rTime(maxSol),StpTime(maxSol)
-	real StrTime(maxSol)
+	double precision Count(maxSol),rTime(maxSol)
+	real StrTime(maxSol),StpTime(maxSol)
 	logical timeonly
 	include 'maxdim.h'
 c
@@ -727,7 +729,7 @@ c
 	call Solve1(tgains,nSols,nBl,nants,phase,smooth,relax,noscale,
      *	  minants,refant, Time0,interval,Time,Indx,
      *	  Memc(pSumVM),Memr(pSumVV),Memr(pSumMM),Memc(pGains),
-     *	  Memr(pWeight),Memr(pCount),memr(prTime),verbose)
+     *	  Memr(pWeight),Memd(pCount),memd(prTime),verbose)
 	end
 c************************************************************************
 	subroutine Solve1(tgains,nSols,nBl,nants,phase,smooth,relax,
@@ -741,8 +743,8 @@ c
 	integer Time(nSols),TIndx(nSols)
 	complex SumVM(nBl,nSols),Gains(nants,nSols)
 	real SumVV(nBl,nSols),SumMM(nSols),Weight(nBl,nSols)
-	real Count(nSols),rTime(nSols),interval
-	double precision Time0
+	real interval
+	double precision Time0,Count(nSols),rTime(nSols)
 c
 c  This runs through all the accumulated data, and calculates the
 c  selfcal solutions.
@@ -925,7 +927,7 @@ c
 	integer nSols,nBl,Time(nSols),TIndx(nSols)
 	complex SumVM(nBl,nSols)
 	real SumVV(nBl,nSols),SumMM(nSols),Weight(nBl,nSols)
-	real Count(nSols),rTime(nSols)
+	double precision Count(nSols),rTime(nSols)
 c
 c  This adds in a contribution, to the statistics (needed for determining
 c  self-cal solutions), from adjacent time intervals.
@@ -1176,7 +1178,7 @@ c
 	logical verbose
 	complex SumVM(nbl,nsols),Gains(nants,nsols)
 	real SumMM(nsols),SumVV(nbl,nsols),Weight(nbl,nsols)
-	real Count(nsols)
+	double precision Count(nsols)
 c
 c  Accumulate the various statistics.
 c
