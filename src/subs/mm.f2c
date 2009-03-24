@@ -15,6 +15,7 @@
 /*    15aug07 pjt  fix for 64bit linux                                  */ 
 /*    14jul08 pjt  merged in ATNF style                                 */
 /*    21aug08 pjt  fixed linux 64bit alloc bug from shared libs + debug */
+/*    24mar09 pjt  moved debug flags to static global scope             */
 /*                                                                      */
 /************************************************************************/
 
@@ -24,6 +25,11 @@
 #include <malloc.h>
 #endif
 #include "miriad.h"
+
+/* debugging */
+static int mm_checked = 0;
+static int mm_debug   = 0;
+
 
 /* The size of all data items should be a multiple of the base unit.
    The base unit is preferably larger than 1 byte to help access
@@ -104,8 +110,6 @@ c
   ptrdiff_t offset;
   fort_integer t;
   fort_integer *s;
-  static int mm_checked = 0;
-  static int mm_debug = 0;
 
 #if defined(linux)
   if (!mm_checked) {
@@ -154,5 +158,6 @@ fortran subroutine mmfree(integer data)
 /*--                                                                    */
 /*----------------------------------------------------------------------*/
 {
+  if (mm_debug) bugv_c('i',"mmfree: 0x%x\n",data.addr);
   free((char *)(data.addr));
 }
