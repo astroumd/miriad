@@ -165,16 +165,19 @@ fi
 
 AC_SYS_LARGEFILE
 
-AC_ARG_ENABLE(i8,
-    [AS_HELP_STRING(--enable-i8,[use large integers, if compiler supported])],
-    ok=$enableval, ok=no)
-
-if test x"$ok" = xyes; then 
-  integer_size=8
-else
-  integer_size=4
-fi
-
+dnl This option is not currently hooked up to anything.
+dnl The gfortran compiler has a '-fdefault-integer-8' option
+dnl that may be of interest in implementing this.
+dnl
+dnl AC_ARG_ENABLE(i8,
+dnl    [AS_HELP_STRING(--enable-i8,[use large integers, if compiler supported])],
+dnl    ok=$enableval, ok=no)
+dnl
+dnl if test x"$ok" = xyes; then 
+dnl   integer_size=8
+dnl else
+dnl   integer_size=4
+dnl fi
 
 dnl -- pick your default telescope, in the case statement below some default size
 dnl -- parameters are changed for certain telescopes.
