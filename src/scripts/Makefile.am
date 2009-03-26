@@ -76,8 +76,6 @@ replicate.clone: replicate
 	$(LN_S) $< $@
 robust.csh.clone: robust.csh
 	$(LN_S) $< $@
-uvshadow.clone: uvshadow
-	$(LN_S) $< $@
 smoothtobm.clone: smoothtobm
 	$(LN_S) $< $@
 uvshadow.clone: uvshadow
