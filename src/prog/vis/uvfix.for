@@ -202,7 +202,6 @@ c
 	real scale(2),polcal(2),model(3),offset(2)
 	complex coffset
 	double precision obsra,obsdec
-       double precision obsra_calc,obsdec_calc,arcsec/4.8481370E-06/
 	double precision ra,dec,uu,vv,epoch,jepoch,theta,costh,sinth,jd
 c
 c  Externals.
