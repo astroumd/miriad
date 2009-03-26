@@ -57,12 +57,14 @@ dnl Turn off all warnings (by default)
 dnl The warnings are primarily useful for developers
 
 AC_ARG_ENABLE([warnings],
-    [AS_HELP_STRING([--enable-all-warnings],
+    [AS_HELP_STRING([--enable-warnings],
         [show verbose compiler/link warnings (default no)])],
-    allwarnings=$enableval, allwarningsok=no)
+    allwarningsok=$enableval, allwarningsok=no)
 
 if test x"$allwarningsok" = xno; then
   no_globals="$no_globals -w -fno-backslash"
+else
+  no_globals="$no_globals -Wall"
 fi
 
 AC_SUBST(no_globals)
@@ -489,3 +491,4 @@ echo "MAXNAX       : $MAXNAX"
 echo "MAXBUF       : $MAXBUF"
 echo
 echo "Building docs: $docswhy"
+echo "F77 Warnings : $allwarningsok (change with --(en|dis)able-warnings)"
