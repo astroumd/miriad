@@ -37,12 +37,18 @@ AC_PROG_F77
 dnl This keeps g77 from returning an error code when 
 dnl there are disagreements between subroutine parameter types and the
 dnl subroutine call.  Warnings are still printed.
+dnl FIXME: this test and the one below do not catch the case where
+dnl the compiler is actually g77 but it is known under another name;
+dnl e.g. /absolute/path/to/g77 or g77-x.y.z or cpu-os-mach-g77.
 
 if test x"$F77" = xg77; then
   no_globals="-fno-globals"
 else
   no_globals=""
 fi
+
+dnl No F90 constructs allowed if an F77-only compiler. A better test
+dnl would be to do just see whether $F77 accepts F90 constructs.
 
 if test x"$F77" = xg77 -o x"$F77" = xf77; then
   no_f90="-D NOF90"
@@ -52,6 +58,13 @@ fi
 
 AC_SUBST(no_f90)
 
+dnl If using a GNU Fortran compiler (g77 or gfortran), give
+dnl -fno-backslash to interpret our backslashed strings
+dnl correctly.
+
+if test x"$G77 = xyes; then
+   no_globals="$no_globals -fno-backslash"
+fi
 
 dnl Turn off all warnings (by default)
 dnl The warnings are primarily useful for developers
@@ -62,7 +75,7 @@ AC_ARG_ENABLE([warnings],
     allwarningsok=$enableval, allwarningsok=no)
 
 if test x"$allwarningsok" = xno; then
-  no_globals="$no_globals -w -fno-backslash"
+  no_globals="$no_globals -w"
 else
   no_globals="$no_globals -Wall"
 fi
