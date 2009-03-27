@@ -246,8 +246,11 @@ c
         ratio = (date - dates(1)) / (dates(2) - dates(1))
         outflux = fluxes(1) + ((fluxes(2) - fluxes(1)) * ratio)
 c       freq = freqlast(1) + ((freqlast(2) - freqlast(1)) * ratio)
-        freq = 0.0
-        if (freqlast(1) .eq. freqlast(2)) freq = freqlast(1)
+        if (freqlast(1) .eq. freqlast(2)) then
+           freq = freqlast(1)
+        else
+           freq = 0.0
+        endif
       endif
 c
       oldfreq = freq
