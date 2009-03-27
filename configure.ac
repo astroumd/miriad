@@ -62,7 +62,7 @@ dnl If using a GNU Fortran compiler (g77 or gfortran), give
 dnl -fno-backslash to interpret our backslashed strings
 dnl correctly.
 
-if test x"$G77 = xyes; then
+if test x"$G77" = xyes; then
    no_globals="$no_globals -fno-backslash"
 fi
 
