@@ -126,7 +126,7 @@ c    14feb08 mchw  Added refraction correction in beedr.
 c-----------------------------------------------------------------------
 	include 'bee.h'
 	character version*(*),device*80,log*80,ans*20
-	parameter(version='(version 3.0 14-Feb-2008)')
+	parameter(version='(version 3.0 29-mar-2009)')
 	integer length,tvis,tgains,iostat
 	logical doscale
 c
