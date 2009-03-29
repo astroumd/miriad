@@ -253,12 +253,12 @@ c
 	real parot,sinpa,cospa
 	real scale(2),polcal(2),model(3),offset(2)
         integer naxoff
-        real axoff(MAXANT) / MAXANT*0.0 /
+        real axoff(MAXANT)
 	integer nfcoff
-	real fcoff(MAXANT) / MAXANT*0.0 /
+	real fcoff(MAXANT)
 	integer nvs
-	real mlamp(MAXANT) / MAXANT*0.0 /
-	real mlpha(MAXANT) / MAXANT*0.0 /
+	real mlamp(MAXANT)
+	real mlpha(MAXANT)
 	complex coffset
 	double precision obsra,obsdec,dazim(MAXANT),delev(MAXANT)
 	double precision ra,dec,uu,vv,epoch,jepoch,theta,costh,sinth,jd
@@ -269,6 +269,9 @@ c
 	logical uvDatOpn, uvDatPrb
 	double precision epo2jul
 	complex expi
+c
+	data axoff / MAXANT*0.0 /, fcoff / MAXANT*0.0 /
+	data mlamp / MAXANT*0.0 /, mlpha / MAXANT*0.0 /
 c
 	call output(version)
 	call bug('i','05aug05 seeing correction for coherence')

@@ -808,9 +808,11 @@ c    interval   Scheduling interval
 c    histo	Make histogram plot
 c-----------------------------------------------------------------------
         character line*132
-	real run/0./,runave/0./,runrms/0./,runs/0./
-	integer jj/0/
+	real run, runave, runrms, runs
+	integer jj
 	save jj
+	data run/0./,runave/0./,runrms/0./,runs/0./
+	data jj/0/
 c
 	integer NBIN
 	parameter (NBIN=12)

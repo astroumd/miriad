@@ -58,7 +58,7 @@ c----------------------------------------------------------------------c
 	parameter(version='(version 4-jun-08)')
 	integer MAXROW,MAXCOL
 	parameter(MAXROW=4096,MAXCOL=16)
-	real data(MAXROW,MAXCOL),maxamp/0./
+	real data(MAXROW,MAXCOL),maxamp
 	complex out(MAXROW,MAXCOL)
 	complex temp(MAXROW)
 	integer i,j,nrow,ncol,refcol,k,maxcorr
@@ -66,6 +66,7 @@ c----------------------------------------------------------------------c
         real xx(MAXROW), yy(MAXROW), wt(MAXROW), slope, offset
         real xrange(2),yrange(2)
 	logical dofit
+	data maxamp/0./
 c
 c  External functions
 c

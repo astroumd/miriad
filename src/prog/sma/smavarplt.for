@@ -1552,6 +1552,7 @@ c
          dimension x(npts), y(npts),sigmay(npts),yerr(npts), A(npts)
          dimension sumx(39), sumy(20), array(20,20)
          integer mode, npts, nterms
+         double precision determ
 c
 c   accumulate weighted sums
 c

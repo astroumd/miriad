@@ -1190,9 +1190,9 @@ c               corr1(bl) = 1.e30
 c               corr2(bl) = complex(1.e30,1.e30)
 c            endif
             if(abs(corr1(bl)).ge.1.e30) then
-               corr(bl) = complex(1.e30,1.e30)
+               corr(bl) = cmplx(1.e30,1.e30)
                corr1(bl) = 1.e30
-               corr2(bl) = complex(1.e30,1.e30)
+               corr2(bl) = cmplx(1.e30,1.e30)
             endif
 
 c              n=1

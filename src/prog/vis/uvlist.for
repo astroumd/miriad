@@ -769,10 +769,12 @@ c------------------------------------------------------------------------
 	real amp(MCHAN),phas(MCHAN),ha, chi,inttime
 	double precision obsra,obsdec,latitude,dra,ddec,freq,ntm
 	double precision azim,elev
-	double precision dazim(MAXANT)/MAXANT*0.0d0/
-	double precision delev(MAXANT)/MAXANT*0.0d0/
+	double precision dazim(MAXANT)
+	double precision delev(MAXANT)
 	logical more,ok
 	integer i,j,ant1,ant2,nchan,nants,length
+c
+	data dazim/MAXANT*0.0d0/, delev/MAXANT*0.0d0/
 c
 c  Externals.
 c
@@ -1710,10 +1712,12 @@ c  Output:
 c    flux       Flux of the calibrator.
 c------------------------------------------------------------------------
 	logical update,isplanet
-	double precision day/0.0d0/,dfreq,delta
+	double precision day,dfreq,delta
 	integer iostat,length
         character source*16,source1*16,line*80,type*1
 	real freq,level
+c
+	data day/0.0d0/
 c
 c  Externals.
 c

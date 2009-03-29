@@ -105,7 +105,7 @@ c------------------------------------------------------------------------
         parameter(maxTimes=2*MAXCHAN*MAXANT)
         parameter(maxGains=2*MAXCHAN*MAXANT)
         integer iostat,tin,tOut, nfeeds,nants,nchan,maxnants
-        integer  i, j, k,nschann(maxspect),nsols,ntau
+        integer  i, j, k,nschann(maxspect),nsols,ntau, p
         character vis*64,bpfile*64,out*64,itoaf*5,ltype*16
         character afil*64
         logical dopass,first

@@ -309,7 +309,7 @@ c------------------------------------------------------------------------
 	parameter(MCHAN=4,MAXAVE=MCHAN*MAXBASE)
 	integer nchan,j,length,ant1,ant2,bl
 	logical more
-	character line*128,source*16/'               '/
+	character line*128,source*16
 	real amp(MCHAN),arg(MCHAN)
 	character cflag(MCHAN)*1
 	logical doave(MAXBASE)
@@ -320,7 +320,7 @@ c------------------------------------------------------------------------
 	double precision uave(MAXBASE),timeave(MAXBASE)
 	double precision baseave(MAXBASE),avel(MAXBASE)
 	real theta(MCHAN,MAXBASE)
-	logical first(MCHAN,MAXBASE),newave,title/.true./
+	logical first(MCHAN,MAXBASE),newave,title
 	integer npts,i
 	double precision xm(MAXBASE),ym(MAXBASE),zm(MAXBASE)
 	double precision delz(MAXBASE),an(6),rms,day,freq
@@ -334,6 +334,8 @@ c  Externals.
 c
 	integer len1
 c
+	data source/'               '/
+	data title/.true./
 	data doave/MAXBASE*.false./
 	data numave/MAXAVE*0./,recave/MAXBASE*0./
 	data ampave,phiave/MAXAVE*0.,MAXAVE*0./
@@ -651,7 +653,7 @@ c set initial shift to get at least k0 points in the average
 	   amp(j) = 0.
 	   arg(j) = 0.
 	   count = 0.
-	   do i=1+k,num(bl)-k
+	   do i=1+k,int(num(bl))-k
 	     amp(j) = amp(j) + (amps(i-k,j,bl)
      *		 -2.* amps(i,j,bl) + amps(i+k,j,bl) )**2
 	     arg(j) = arg(j) + (args(i-k,j,bl)
@@ -802,11 +804,11 @@ c
 	  if(num(bl).gt.0.)then
 	   n = log(num(bl))/log(2.) + 1
 	   size = min(MAXSIZE,2**n)
-	   do i=1,num(bl)
+	   do i=1,int(num(bl))
 	     in(i) = args(i,j,bl)
 c debug	     in(i) = (1.,0.)
 	   enddo
-	   do i=num(bl)+1,size
+	   do i=int(num(bl))+1,size
 	     in(i) = (0.,0.)
 	   enddo
 	   call fftcc(in,out,-1,size)

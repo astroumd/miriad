@@ -634,7 +634,7 @@ c set initial shift to get at least k0 points in the average
 	   amp(j) = 0.
 	   arg(j) = 0.
 	   count = 0.
-	   do i=1+k,num(bl)-k
+	   do i=1+k,int(num(bl))-k
 	     amp(j) = amp(j) + (amps(i-k,j,bl)
      *		 -2.* amps(i,j,bl) + amps(i+k,j,bl) )**2
 	     arg(j) = arg(j) + (args(i-k,j,bl)
@@ -785,11 +785,11 @@ c
 	  if(num(bl).gt.0.)then
 	   n = log(num(bl))/log(2.) + 1
 	   size = min(MAXSIZE,2**n)
-	   do i=1,num(bl)
+	   do i=1,int(num(bl))
 	     in(i) = args(i,j,bl)
 c debug	     in(i) = (1.,0.)
 	   enddo
-	   do i=num(bl)+1,size
+	   do i=int(num(bl))+1,size
 	     in(i) = (0.,0.)
 	   enddo
 	   call fftcc(in,out,-1,size)

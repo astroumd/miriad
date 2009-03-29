@@ -138,7 +138,8 @@ c
 	skytemp = 0.0
 	tauzenith = 0.0
 	tau = 0.
-	do elev = altitude, 60., dkm
+        elev = altitude
+	dowhile (elev .le. 60.)
 c  get atmospheric properties at mean elevation in layer
 	  call atmo1((elev+dkm/2.),ghum,altitude,t,p,rho)
 c  opacity of this layer for 1 airmass
@@ -148,6 +149,7 @@ c  opacity of this layer for 1 airmass
 	  dtau = dtau * airmass
 	  skytemp = skytemp + dtau * t * exp(-tau)
 	  tau = tau + dtau
+          elev = elev + dkm
 	enddo
 	end
 c********1*********2*********3*********4*********5*********6*********7*c
@@ -259,7 +261,8 @@ C  OUTPUT: TT = TEMP IN KELVIN
 C          PP = PRESSURE IN MILLIBARS
 C          RHO = WATER VAPOR DENSITY IN GRAMS/CUBIC METER
 c----------------------------------------------------------------------c
-	real schgt,i,fact
+	real schgt,fact
+        integer I
       REAL H(32),P(32),T(32)
       DATA SCHGT/2./		! scale height for water vapor
        DATA H /0.,1.,2.,3.,4.,5.,6.,7.,8.,9.,10.,11.,12.,13.,

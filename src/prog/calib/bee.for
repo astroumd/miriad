@@ -1587,7 +1587,8 @@ c	used for baseline and position fittting
 c----------------------------------------------------------------------c
 	integer i,j,k
 	double precision pivot,same
-	double precision work(7,7) / 49*0.0 /
+	double precision work(7,7)
+	data work / 49*0.0 /
 c
 c  Fill in work area with matrix and vector
 c
@@ -1630,10 +1631,12 @@ c----------------------------------------------------------------------c
 	include 'bee.h'
 	real xn,sig,resid,calc
 	real m(2,2),v(2),row(2)
-	real ans(5) / 5*0.0 /
-	real relat(6) / 6*0.0 /     
+	real ans(5)
+	real relat(6)
 	integer numb,i,j,k
 	character line*80
+c
+	data ans / 5*0.0 /, relat / 6*0.0 /
 c
 	call output('1-PARAMETER FIT')
 	call output('Fit axis offset')
@@ -1726,10 +1729,12 @@ c  revised for 3 baselines to pass delta baseline as bnew mchw mar 85
 c----------------------------------------------------------------------c  
 	include 'bee.h'
 	real m(3,3),v(3),row(3)
-	real ans(3) / 3*0.0 /
-	real relat(6) / 6*0.0 /  
+	real ans(3)
+	real relat(6)
 	real points,xn,sig,calc,resid
 	integer numb,i,j,k
+c
+	data ans / 3*0.0 /, relat / 6*0.0 /
 c
 	call output('2-PARAMETER FIT')
 	call output('Fit (x,y) antenna position for one declination')
@@ -1811,10 +1816,13 @@ c----------------------------------------------------------------------c
 	character*80 line
 	integer i,j,k,iadd,ii,j1,icount,numb
 	real m(3,3),v(3),row(3),row1(3)
-	real ans(3) / 3*0.0 /
-	real relat(6) / 6*0.0 /
+	real ans(3)
+	real relat(6)
 	real x,y,deltim,delh,calc,calc1,resid,sig
 	real r1,r2,r3
+c
+	data ans / 3*0.0 /, relat / 6*0.0 /
+c
 	r1(x,y)=cos(x)*cos(y)   
 	r2(x,y)=-sin(x)*cos(y)  
 	r3(y)=sin(y)
@@ -1929,10 +1937,12 @@ c----------------------------------------------------------------------c
 	include 'bee.h'
 	real x,y,r1,r2,r3,xn,sig,resid,calc
 	real m(4,4),v(4),row(4)
-	real ans(4) / 4*0.0 /
-	real relat(6) / 6*0.0 /     
+	real ans(4)
+	real relat(6)
 	integer numb,i,j,k
 	character line*56
+c
+	data ans / 4*0.0 /, relat / 6*0.0 /
 c
 	r1(x,y)=cos(x)*cos(y)   
 	r2(x,y)=-sin(x)*cos(y)  
@@ -2027,10 +2037,12 @@ c----------------------------------------------------------------------c
 	include 'bee.h'
 	real x,y,r1,r2,r3,xn,sig,resid,calc
 	real m(5,5),v(5),row(5)
-	real ans(5) / 5*0.0 /
-	real relat(6) / 6*0.0 /     
+	real ans(5)
+	real relat(6)
 	integer numb,i,j,k
 	character line*80
+c
+	data ans / 5*0.0 /, relat / 6*0.0 /
 c
 	r1(x,y)=cos(x)*cos(y)   
 	r2(x,y)=-sin(x)*cos(y)  
@@ -2128,10 +2140,12 @@ c----------------------------------------------------------------------c
 	include 'bee.h'
 	real x,y,r1,r2,r3,xn,sig,resid,calc
 	real m(6,6),v(6),row(6)
-	real ans(6) / 6*0.0 /
-	real relat(6) / 6*0.0 /
+	real ans(6)
+	real relat(6)
 	integer numb,i,j,k
 	character line*128
+c
+	data ans / 6*0.0 /, relat / 6*0.0 /
 c
 	r1(x,y)=cos(x)*cos(y)   
 	r2(x,y)=-sin(x)*cos(y)  
@@ -2325,10 +2339,12 @@ c----------------------------------------------------------------------c
 	include 'bee.h'
 	real x,y,r1,r2,xn,sig,resid,calc
 	real m(3,3),v(3),row(3)
-	real ans(3) / 3*0.0 /
-	real relat(6) / 6*0.0 /     
+	real ans(3)
+	real relat(6)
 	integer numb,i,j,k
 	character line*56
+c
+	data ans / 3*0.0 /, relat / 6*0.0 /
 c
 	r1(x,y)=cos(x)*cos(y)   
 	r2(x,y)=-sin(x)*cos(y)  
@@ -3452,7 +3468,9 @@ c----------------------------------------------------------------------c
 	include 'bee.h'
 	character*1 line*80
 	integer i,k
-	real mpns/0.2997926/
+	real mpns
+c
+	data mpns/0.2997926/
 c
 	call LogWrit(' ')
 	call LogWrit('--------------------------------------')

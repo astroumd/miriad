@@ -782,7 +782,7 @@ C-----------------------------------------------------------------------
         integer nsource
         common/sour/soupnt,source,nsource
         real rmsflag
-        integer dofit, antid, xaxisparm
+        integer dofit, antid, xaxisparm, sourid
         logical dotsys, tsysplt, dosour, dotswap
         real apl(10,maxfit,10)
         double precision xapl(10,maxfit,10),bppl(10,maxfit,10,10)

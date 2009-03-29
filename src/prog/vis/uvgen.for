@@ -372,7 +372,7 @@ c
 	include 'maxdim.h'
 	include 'uvgen.h'
 c
-	real corfin(4)/4*0./,corbw(4)/4*0./,zeeman
+	real corfin(4), corbw(4), zeeman
 	complex vis,modI,oldI,gradI,gain(MAXANT),leak(2,MAXANT)
 	complex wcorr(maxspect,maxpol),chan(MAXCHAN,maxpol)
 	real wsignal(maxspect),tpower(MAXANT),pnoise(MAXANT)
@@ -431,6 +431,7 @@ c
 c  Data initialisation.
 c
 	data flags /MAXCHAN*.true./
+	data corfin/4*0./, corbw/4*0./
 c
 c  Get command line arguments.
 c

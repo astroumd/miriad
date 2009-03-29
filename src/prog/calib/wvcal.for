@@ -67,12 +67,13 @@ c------------------------------------------------------------------------
 	double precision time,interval,inttime,freq,timeoff
 	integer refant,tvis,tgains,nants,nsols,iostat,offset,header(2),i
 	character obstype*32,type*1,calday*18
-	logical updated,first/.true./
+	logical updated,first
 	logical docal,doscale,dosub
 	real yave,sigy,a1,b1,sigy1,corr,ref_gain,sum,count
 	real airmin,airmax,pathmin,pathmax
 	real pi
 	parameter(pi=3.141592654)
+	data first/.true./
 c
 c  Externals.
 c
@@ -575,11 +576,12 @@ c********1*********2*********3*********4*********5*********6*********7**
         real wdata(MAXSOLS),airmass(MAXSOLS)
         real airmin,airmax,pathmin,pathmax
 c
-	logical first/.true./
+	logical first
 	save first
 	real xlo, xhi, ylo, yhi
 
 	integer ismax,ismin
+	data first/.true./
 
 	if(first)then
 c

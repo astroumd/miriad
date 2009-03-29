@@ -168,6 +168,7 @@ c
       integer hdr,iostat,ilen,blen,elen, iplanet
       real UTtime(3), obshrs, pra,pdec
       logical dout,dohst
+      double precision getra, getdec
       common/tlable/dout,dohst
 c-----------------------------------------------------------------------
       call output ('SchedObs: version 1.3 25-Nov-05')
