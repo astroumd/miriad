@@ -55,7 +55,7 @@ c    24jul00 mchw fit mmpath versus airmass. reject bad data.
 c    27jul00 mchw filter, scale and subtract options.
 c------------------------------------------------------------------------
 	character version*(*)
- 	parameter(version='(version 1.0 27-Jul-00)')
+ 	parameter(version='(version 1.0 29-mar-09)')
 	include	'maxdim.h'
         character*512 vis, out, wfile, line, device
 	integer MAXSOLS
