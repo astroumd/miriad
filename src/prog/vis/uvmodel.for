@@ -164,13 +164,14 @@ c    mchw 05nov97 Add options=poleak.
 c    pjt  17mar01 documented the change Mel made with increased maxsels in 98
 c    mchw 09jan08 Add options=imaginary to handle imaginary image.
 c    mchw 20aug08  include 'mem.h'
+c    mchw 03apr09 out(1) = sqrt(abs(sigma2)) in subroutine header.
 c  Bugs:
 c    * Polarisation processing is pretty crude.
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	include 'mem.h'
 	character version*(*)
-	parameter(version='version 1.0 20-aug-2008')
+	parameter(version='version 1.0 03-apr-2009')
 	integer maxsels,nhead,nbuf
 	parameter(maxsels=1024,nhead=1,nbuf=5*maxchan+nhead)
 c
@@ -441,7 +442,9 @@ c  Determine the rms error, if needed.
 c
 	if(calcrms)then
 	  call uvinfo(tvis,'variance',sigma2)
-	  out(1) = sigma2
+      out(1) = sqrt(abs(sigma2))
+c      print *, 'variance',sigma2, 'rms= ',out(1)
+c 03apr2009:  out(1) = sigma2 replaced by out(1) = sqrt(abs(sigma2))
 	  accept = sigma2.gt.0
 	else
 	  Out(1) = 0.
