@@ -39,6 +39,12 @@ c   Inner and outer radii and step size in radius in which G(r) is computed
 c   and output to a log file.
 c@ gravc
 c   Gravitational constant. Default: 1
+c@ distance
+c   Distance to the object in Mpc. If the distance is used, the units of
+c   softening length and scale height now must be given in parsecs rather than
+c   pixels. The program output will remind the user how many pc one pixels will
+c   with this assumed distance (4.848*pixel[arcsec] pc, per Mpc distance).
+c   Default: not used.
 c@ log
 c   Output log file. Default is terminal.
 c
@@ -60,6 +66,7 @@ c   peter    9aug02 forgot to scale sech() with h
 c   peter   23feb03 merged MIR4
 c   peter   28feb03 clarifications in the doc, potential made negative now,
 c                   added gravc=
+c   peter    6apr09 added distance= keyword
 c Todo:
 c   scaleheight should be allowed to vary
 c
@@ -72,12 +79,13 @@ c
       INTEGER INVPARM
       PARAMETER(INVPARM=1)
       CHARACTER VERSION*(*)
-      PARAMETER (VERSION='Version 28-feb-03')
+      PARAMETER (VERSION='Version 6-apr-09')
 c
       CHARACTER in*128,out*128,outg*128
       INTEGER nin(MAXNAX),nout(MAXNAX),npadin(MAXNAX)
       INTEGER naxis,lin,lout,nn,i,j,k,loutg
       REAL softe,h,xsq,ysq,tmp,crpix1,crpix2,gravc
+      REAL distance, sfactor, cdelt1, cdelt2
       REAL data(8*MAXDIM*MAXDIM),datacon(8*MAXDIM*MAXDIM)
       REAL rhopot(MAXDIM,MAXDIM)
 c
@@ -103,6 +111,7 @@ c
       CALL keyr('eps',softe,1.0)
       CALL keyr('h',h,0.0)
       CALL keyr('gravc',gravc,1.0)
+      CALL keyr('distance',distance,-1.0)
       IF(in.EQ.' ')
      *  CALL bug('f','Input name (in=) required')
       IF(out.EQ.' '.AND.outg.EQ.' ')
@@ -110,6 +119,7 @@ c
       CALL keyfin
 
       IF (softe.LE.0.0) CALL bug('f','Need positive value for eps=')
+
 c
 c   Opening the input image and defining the axes for the input and
 c   output images:
@@ -131,6 +141,24 @@ c     *   CALL bug('f','The image is too big')
          nout(i) = nin(i)
          npadin(i) = 2*nin(i)
       ENDDO
+      IF (distance.LT.0) THEN
+         sfactor = 1.0
+      ELSE
+         CALL rdhdr(lin,'cdelt1',cdelt1,1.0)
+         CALL rdhdr(lin,'cdelt2',cdelt2,1.0)
+         IF (abs(cdelt1).NE.abs(cdelt2)) THEN
+            CALL bug('w','Pixel size not square') 
+         ENDIF
+         sfactor = 1e-6/(abs(cdelt2)*distance)
+         write(*,*) 'Distance    =',distance,' Mpc'
+         write(*,*) 'pixel size  =',cdelt2*206264.8062,' arcsec'
+         write(*,*) 'pixel size  =',1.0/sfactor,' pc'
+         h     = h * sfactor
+         softe = softe * sfactor
+         write(*,*) 'h           =',h,' pixels'
+         write(*,*) 'eps         =',softe, ' pixels'
+      ENDIF
+
       IF(outg.ne.' ') then
          CALL bug('i','Also computing the GREEN function')
          CALL xyopen(loutg,outg,'new',naxis,nout)
