@@ -54,6 +54,17 @@ c	channels.
 c	This also works for multiple input visibility files, even
 c	if these have different correlator modes.
 c	[0,0,0]
+c@ tsys
+c       Flag based on system teperature. Two values can be given:
+c       a lower and an upper limit. If only one value is given then
+c       the upper limit is assumed to be infinite.
+c       Any system temperatures inside
+c       this range are flagged. Note that tsys flagging is exclusive
+c       of amplitude selection, but all other selection criteria will work.
+c       Tsys cannot be combined with linetype 'wide'. If tsys is
+c	used, the linetype defaults to channel,0,1,1,1, i.e. all
+c	channels.
+c       Default tsys is 100000,100000.
 c@ flagval
 c	Either 'flag' or 'unflag', which tells whether the flags for
 c	the correlations selected by 'select', 'line' and 'edge'
@@ -148,6 +159,7 @@ c                           which was caused by the arbitrary array size
 c                           of sels 
 c           pjt     13oct06 NSELS -> MAXSELS to clear the confusion 
 c           pjt     23jan08 simplified message when options=noapply
+c           dnf     08apr09 added system temperature flagging
 c************************************************************************
 c uvflag works as follows:
 c It reads the name of the first visibility file.
@@ -159,7 +171,7 @@ c Then it asks for the next visibility file and does the whole process
 c again until the list is exhausted.
 
       character*(*) version
-      parameter ( version = 'uvflag: 23-jan-08')
+      parameter ( version = 'uvflag: 08-apr-09')
 
       character*64     vis
 
@@ -167,12 +179,13 @@ c again until the list is exhausted.
       parameter        ( MAXSELS = 25000 )
       real	       sels(MAXSELS)
 
-      integer	       line(7)
+      integer	       line(7),tsyslim(2)
       character*16     type
       include	       'maxdim.h'
       logical	       usech(MAXCHAN)
 
       logical	       flagval
+      logical          dotsys
 
       logical	       apply
       character*10     ropt
@@ -184,10 +197,10 @@ c again until the list is exhausted.
       call keyini
       call keyf( 'vis', vis, ' ' )
       call inputs( vis, sels,maxsels, line,type,
-     *			flagval, apply,ropt,tformat )
+     *			flagval, apply,ropt,tformat,tsyslim,dotsys )
       do while( vis .ne. ' ' )
 	 call scanvis( vis, sels, maxsels, line,type,usech,
-     *			    flagval, apply,ropt,tformat )
+     *			    flagval, apply,ropt,tformat,tsyslim,dotsys)
 	 call keyf( 'vis', vis, ' ' )
       enddo
       call keyfin
@@ -208,7 +221,8 @@ c ropt gives the verbosity level.
 c tformat indicates the time format: 'H' or 'D'.
 
       subroutine inputs( vis, sels,maxsels, line,type,
-     *			      flagval, apply,ropt,tformat )
+     *			      flagval, apply,ropt,tformat,tsyslim,
+     *                        dotsys)
 
       IMPLICIT NONE
       character*(*)    vis
@@ -220,6 +234,8 @@ c tformat indicates the time format: 'H' or 'D'.
       logical	       apply
       character*(*)    ropt
       character*(*)    tformat
+      integer          tsyslim(*)
+      logical          dotsys
 
       integer	       unit
       integer	       nchan
@@ -310,6 +326,25 @@ c If not, the program quits.
       if( optprsnt(1) ) flagval = .false.
       if( optprsnt(2) ) flagval = .true.
 
+      call keyi('tsys',tsyslim(1),100000)
+      call keyi('tsys',tsyslim(2),100000)
+      if(tsyslim(1) .ne. 100000 .or. tsyslim(2) .ne. 100000)
+     *then
+         if(tsyslim(1) > tsyslim(2))then
+            call bug('f',
+     *      "The second tsys value must be greater than the first.")
+         endif
+         dotsys = .true.
+         call uvrdvri( unit, 'nchan', nchan, -1 )
+	 call assertl( nchan .ne. -1,
+     *	      'No channel data in visibility file' )
+         call assertl( type.ne.'wide',
+     *	      'tsys= is invalid if linetype wide was selected' )
+         line(1) = 0
+         line(2) = 1
+         line(3) = 1
+         line(4) = 1
+      endif
 c Interpret options keyword.
 c First parse the input line and return whether options are or are not
 c present.
@@ -402,7 +437,8 @@ c ropt gives the verbosity level.
 c tformat is transfered to report.
 
       subroutine scanvis( vis, sels,maxsels, line,type,usech,
-     *			       flagval, apply,ropt,tformat )
+     *			       flagval, apply,ropt,tformat,tsyslim,
+     *                         dotsys )
 
       character*(*)    vis
       integer	       maxsels
@@ -414,6 +450,8 @@ c tformat is transfered to report.
       logical	       apply
       character*(*)    ropt
       character*(*)    tformat
+      integer          tsyslim(*)
+      logical          dotsys
 
       integer	       unit
       double precision preamble(4)
@@ -437,7 +475,8 @@ c tformat is transfered to report.
 	    if( have(unit,'nchan') .and. nchan.ne.0 )then
 	      call work(   unit, preamble, 'channel',
      *			 flagval, ropt,tformat,line,
-     *			 data,oldflags,newflags, usech, nchan )
+     *			 data,oldflags,newflags, usech, nchan,tsyslim,
+     *                   dotsys)
 	      if( apply ) call uvflgwr( unit,newflags )
 	    endif
 
@@ -446,7 +485,8 @@ c tformat is transfered to report.
 	      if(nwchan.gt.0)then
 		call work(   unit, preamble, 'wide',
      *			 flagval, ropt,tformat,line,
-     *			 data,oldflags,newflags, usech, nwchan )
+     *			 data,oldflags,newflags, usech, nwchan,tsyslim,
+     *                   dotsys )
 		if( apply ) call uvwflgwr( unit,newflags )
 	      endif
 	    endif
@@ -462,7 +502,8 @@ c tformat is transfered to report.
      *								)then
 	      call work(   unit, preamble, type,
      *			 flagval, ropt,tformat,line,
-     *			 data,oldflags,newflags, usech, nchan )
+     *			 data,oldflags,newflags, usech, nchan,tsyslim,
+     *                   dotsys )
 	      if( apply ) call uvflgwr( unit,newflags )
 	    endif
 	 endif
@@ -584,7 +625,8 @@ c Write flags to dataset,
 c Do statistics and reporting.
       subroutine work( unit, preamble, type,
      *		       flagval, ropt,tformat,line,
-     *		       data,oldflags,newflags, usech, nchan )
+     *		       data,oldflags,newflags, usech, nchan,tsyslim,
+     *                 dotsys )
 
       IMPLICIT NONE
       integer	       unit
@@ -597,6 +639,8 @@ c Do statistics and reporting.
       logical	       oldflags(*), newflags(*)
       logical	       usech(*)
       integer	       nchan
+      integer          tsyslim(*)
+      logical          dotsys
 c------------------------------------------------------------------------
       integer itemp
 c
@@ -604,7 +648,8 @@ c  Externals.
 c
       integer counting
 c
-      call flgset( unit, flagval, data,oldflags,newflags, usech, nchan )
+      call flgset( unit, flagval, data,oldflags,newflags, usech, nchan,
+     *             tsyslim,dotsys,preamble)
       itemp = counting( type, oldflags,newflags, nchan )
       call report( ropt, unit,preamble,tformat,line,type,
      *		   data,oldflags,newflags, usech, nchan )
@@ -615,7 +660,7 @@ c Depending on the value of amprange(1) a check will be made whether the
 c data are in or out of range.
 
       subroutine flgset( unit, flagval, data,oldflags,newflags,
-     *			 usech, nchan )
+     *			 usech, nchan,tsyslim,dotsys,preamble )
 
       IMPLICIT NONE
       integer	       unit
@@ -624,15 +669,24 @@ c data are in or out of range.
       logical	       oldflags(*), newflags(*)
       logical	       usech(*)
       integer	       nchan
+      integer          tsyslim(*)
+      logical          dotsys
+      double precision preamble(*)
+      include	       'maxdim.h'
 
       double precision amp2
-      integer	       i
+      integer	       i,j
 
       double precision amprange(3)
       integer	       ampflag
       double precision amplo2, amphi2
       save	       ampflag, amplo2, amphi2
-
+      integer          nants,nspect,ischan(MAXWIN),nschan(MAXWIN)
+      real             systemp(MAXANT*MAXWIN)
+      character        type*1
+      logical          update
+      integer          length
+      integer          ant1,ant2
 c get amplitude info.
       amprange(2) = 0.d0
       amprange(3) = 0.d0
@@ -640,50 +694,73 @@ c get amplitude info.
       ampflag = nint(amprange(1))
       amplo2  = amprange(2) ** 2
       amphi2  = amprange(3) ** 2
-
 c keep old flags before setting some or all of the new flags.
       do i = 1, nchan
 	 newflags(i) = oldflags(i)
       enddo
 
+      if(dotsys)then
+         call uvgetvri(unit,"nants",nants,1)
+         call uvrdvri(unit,"nspect",nspect,0)
+         call uvgetvri(unit,"ischan",ischan,nspect)
+         call uvgetvri(unit,"nschan",nschan,nspect)
+         call uvprobvr(unit,"systemp",type,length,update)
+         call basant( preamble(4), ant1, ant2 )
+         if(type .eq. ' ')then
+            call bug('f',"No system temperatures found")
+         endif
+         call uvgetvrr(unit,"systemp",systemp,nants*nspect)
+c do the system temperature flagging
+         do i = 1,nspect
+            if((systemp(nants*(i-1)+ant1) > tsyslim(1) .and.
+     *         systemp(nants*(i-1)+ant1) < tsyslim(2)) .or.
+     *         (systemp(nants*(i-1)+ant2) > tsyslim(1) .and.
+     *         systemp(nants*(i-1)+ant2) < tsyslim(2))) then
+               do j = ischan(i),ischan(i)+nschan(i)-1
+                  if(usech(i)) newflags(j) = flagval
+               enddo
+            endif
+         enddo
+      else
 c amprange(1)= 0: no amplitude selection requested by 'select' keyword
 c then uvinfo returned the default value of 0.
 c so: set all flags in the record
-      if(     ampflag.eq.0 )
-     *then
-	 do i = 1, nchan
-	    if( usech(i) ) newflags(i) = flagval
-	 enddo
+         if(     ampflag.eq.0 )
+     *        then
+            do i = 1, nchan
+               if( usech(i) ) newflags(i) = flagval
+            enddo
 c amprange(1) = 1: positive amplitude selection specified. Only when
 c data is inside range are the flags changed.
-      elseif( ampflag.eq.1 )
-     *then
-	 do i = 1, nchan
-	    if( usech(i) )
-     *	    then
-	       amp2 = real(data(i))**2 + aimag(data(i))**2
-	       if( amplo2.le.amp2 .and. amp2.le.amphi2 )
-     *	       newflags(i) = flagval
-	    endif
-	 enddo
+         elseif( ampflag.eq.1 )
+     *           then
+            do i = 1, nchan
+               if( usech(i) )
+     *              then
+                  amp2 = real(data(i))**2 + aimag(data(i))**2
+                  if( amplo2.le.amp2 .and. amp2.le.amphi2 )
+     *                 newflags(i) = flagval
+               endif
+            enddo
 c amprange(1) = -1: negative amplitude selection specified. Only when
 c data is not inside range are the flags changed.
-      elseif( ampflag.eq.-1 )
-     *then
-	 do i = 1, nchan
-	    if( usech(i) )
-     *	    then
-	       amp2 = real(data(i))**2 + aimag(data(i))**2
-	       if( amp2.lt.amplo2 .or. amp2.gt.amphi2 )
-     *	       newflags(i) = flagval
-	    endif
-	 enddo
+         elseif( ampflag.eq.-1 )
+     *           then
+            do i = 1, nchan
+               if( usech(i) )
+     *              then
+                  amp2 = real(data(i))**2 + aimag(data(i))**2
+                  if( amp2.lt.amplo2 .or. amp2.gt.amphi2 )
+     *                 newflags(i) = flagval
+               endif
+            enddo
+         endif
       endif
       return
-
+         
       end
-
-
+      
+      
 c***********************************************************************
 c Accumulates a few interesting counts.
 c counts(1,j) = number of originally good flags
