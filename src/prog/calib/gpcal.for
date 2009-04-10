@@ -202,6 +202,8 @@ c    rjs     12oct99 Attempts to perform absolute flux calibration.
 c    pjt      7jul03 MAXANT,MAXBASE -> MAXANT2,MAXBASE2
 c    pjt     10dec04 cleanup of old conflict
 c    mchw    29nov07 MAXANT2,MAXBASE2 -> MAXANT,MAXBASE
+c    mchw    10apr09 Bryan Gaensler: only dump leakages for antennas that actually have solutions.
+c    mchw    10apr09 Bryan Gaensler: print an extra decimal place in the calculated leakages. 
 c
 c  Bugs:
 c    * Polarisation solutions when using noamp are wrong! The equations it
@@ -213,7 +215,7 @@ c------------------------------------------------------------------------
 	integer MAXITER
 	character version*(*)
 	parameter(MAXITER=30)
-	parameter(version='Gpcal: version 1.0 29-Nov-07')
+	parameter(version='Gpcal: version 1.0 10-Apr-2009')
 c
 	integer tIn
 	double precision interval(2), freq
@@ -479,10 +481,11 @@ c
 	if(polsol.or.polref)then
 	  call writeo(tIn,'Leakage terms:')
 	  do j=1,nants
-	    write(line,'(1x,a,i2,a,f6.3,a,f6.3,a,f6.3,a,f6.3,a)')
+	    write(line,'(1x,a,i2,a,f7.4,a,f7.4,a,f7.4,a,f7.4,a)')
      *	      'Ant',j,':Dx,Dy = (',real(D(1,j)),',',aimag(D(1,j)),'),(',
      *				   real(D(2,j)),',',aimag(D(2,j)),')'
-	    call writeo(tIn,line)
+          if (D(1,j).ne.0..and.D(2,j).ne.0.)
+     *          call writeo(tIn,line)
 	  enddo
 	  call LeakTab(tIn,D,nants)
 	endif
@@ -2659,7 +2662,7 @@ c
 	  call bug('w','Using post-Aug94 ATCA flux scale for 1934-638')
 	endif
       endif
-      ierr = 2
+c      ierr = 2
       if(src.ne.' ')call calstoke(src,'i',freq,flux(1),1,ierr)
       if(ierr.ne.2)then
 	defflux = .false.
