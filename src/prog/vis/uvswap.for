@@ -1,12 +1,13 @@
 	program uvswap
 	implicit none
 
-c= uvswap - Relabel correlations RL as LR and LR as RL
+c= uvswap - Relabel correlations RL as LR, LR as RL, YX as XY, XY as YX
 c& nebk
 c: uv analysis
 c+
 c	UVSWAP relabels RL correlations as LR and LR correlations as RL.
-c	RR and LL are left unchanged.  The data are copied in their 
+c	XY are relabeled YX and YX correlations as XY.
+c	RR, LL, XX and YY  are left unchanged.  The data are copied in their 
 c	raw form only, gain, polarization and bandpass tables are 
 c	neither applied nor copied.
 c
@@ -18,11 +19,12 @@ c--
 c
 c  History:
 c    nebk 28sep92 Original version cloned from UVMODEL
+c    mchw 10apr09 Added XY and YX swap.
 c
 c------------------------------------------------------------------------
       include 'maxdim.h'
       character version*(*)
-      parameter(version='version 28-Sep-92')
+      parameter(version='version 10-Apr-2009')
 c
       character vis*64, out*64
       integer nread, npols, pol, tvis, tout
@@ -59,11 +61,23 @@ c
         call uvgetvri (tvis, 'pol', pol, 1)
 c 
         call varcopy (tvis, tout)
+c
+c swap RL LR
+c
+        if (pol.eq.-7) then
+          pol = -8
+        else if (pol.eq.-8) then
+          pol = -7
+        endif 
+c
+c swap XY YX
+c
         if (pol.eq.-3) then
           pol = -4
         else if (pol.eq.-4) then
           pol = -3
-        end if 
+        endif 
+c
         call uvputvri (tout, 'npol', npols, 1)
         call uvputvri (tout, 'pol', pol, 1)
         call uvwrite (tout, preamble, data, flags, nread)
