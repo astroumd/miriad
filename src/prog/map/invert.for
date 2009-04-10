@@ -300,6 +300,7 @@ c    rjs   20jun97  Correct handling of multiple stokes in slopintp.
 c    rjs   07jul97  Change coaxdesc to coaxget.
 c    rjs   01jul99  Changes in call sequence to hdfiddle.
 c    pjt   25apr03  verbose error when images too big
+c    pkgw  10apr09  Correctly echo to user nvis when it is >=10**8
 c  Bugs:
 c
 c------------------------------------------------------------------------
@@ -308,7 +309,7 @@ c------------------------------------------------------------------------
 	include 'mem.h'
 c
 	character version*(*)
-	parameter(version='Invert: version 1.0 14-oct-08')
+	parameter(version='Invert: version 1.0 10-apr-09')
 	integer MAXPOL,MAXRUNS
 	parameter(MAXPOL=4,MAXRUNS=4*MAXDIM)
 c
@@ -1412,7 +1413,7 @@ c------------------------------------------------------------------------
 c
 c  Externals.
 c
-	character itoaf*8
+	character itoaf*12
 	integer len1
 c
 c  Get the first record.
