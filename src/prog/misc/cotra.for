@@ -37,6 +37,16 @@ c	Epoch (in standard Miriad time format) of the coordinate. Note
 c	that this is distinct from the equinox of the coordinate as given
 c	above. Varying epoch changes the coordinate values by less than an
 c	arcsecond. The default is b1950.
+c@ uvw
+c       Standard Solar motion in right handed UVW coordinate system.
+c       The classic value of 20 km/s toward RA,DEC=18h,30d corresponds to
+c       uvw=10.3,15.3,7.7 but is using too high a value
+c       for V. A bettter, Hipparchos based, value would be
+c       uvw=10.0,5.2,7.2
+c       Default:   9,12,7
+c@ theta0
+c       LSR speed in km/s. Default: 220
+c       The GSR motion (-62,40,-35) is currently hardcoded.
 c----------------------------------------------------------------------
 c todo:
 c vLSR = vBSR + 9 cos(l) cos(b) + 12 sin(l) cos(b) + 7 sin(b) 
@@ -45,10 +55,10 @@ c vLGSR = vGSR − 62 cos(l) cos(b) + 40 sin(l) cos(b) − 35 sin(b)
 c
 	INCLUDE 'mirconst.h'
 	CHARACTER  VERSION*(*)
-	PARAMETER (VERSION='Version 4-apr-08')
+	PARAMETER (VERSION='Version 16-apr-09')
 c
 	double precision lon,lat,blon,blat,dra,ddec,epoch
-        double precision dvlsr, dvgsr, dvlgsr
+        double precision dvlsr, dvgsr, dvlgsr,uvw(3),theta0
 	character line*64
 c
 	integer NTYPES
@@ -76,6 +86,10 @@ c
 	endif
 	call keyt('radec',blat,'dms',0.d0)
 	call keyt('epoch',epoch,'atime',epo2jul(1950.0d0,'B'))
+        call keyd('uvw',uvw(1),9d0)
+        call keyd('uvw',uvw(2),12d0)
+        call keyd('uvw',uvw(3),7d0)
+        call keyd('theta0',theta0,220d0)
 	CALL keyfin
 c
 c  Convert to b1950 coordinates.
@@ -104,8 +118,10 @@ c
 	lon = blon
 	lat = blat
 	call dsfetra(lon,lat,.false.,1)
-        dvlsr = 9*cos(lon)*cos(lat) + 12*sin(lon)*cos(lat) + 7*sin(lat)
-        dvgsr = 220*sin(lon)*cos(lat) 
+        dvlsr = (uvw(1)*cos(lon) + uvw(2)*sin(lon))*cos(lat) 
+     *                                     + uvw(3)*sin(lat)
+
+        dvgsr = theta0*sin(lon)*cos(lat) 
         dvlgsr= -62*cos(lon)*cos(lat)+40*sin(lon)*cos(lat)-35*sin(lat)
 	write(line,'(a,2f14.6)')'Galactic:      ',
      *					180/DPI*lon,180/DPI*lat
