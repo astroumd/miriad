@@ -26,6 +26,7 @@
 //  1-dec-05 pjt added bugv_c
 // 18-may-06 pjt/df  added mir.c prototypes for mir (the miriad->mir converter)
 // 12-feb-09 dhem added bughandler_c prototype (new function in bug.c)
+// 01-apr-09 rjs Add additional interface to scrRecSz
 */
 
 #if !defined(MIR_MIRIAD_H)
@@ -321,7 +322,7 @@ void scropen_c  (int *handle);
 void scrclose_c (int handle);
 void scrread_c  (int handle, float *buffer, int offset, int length);
 void scrwrite_c (int handle, Const float *buffer, int offset, int length);
-
+void scrrecsz_c (int handle, size_t recsize);
 
 /* tabio.c */
 

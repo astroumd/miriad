@@ -30,6 +30,7 @@
 /*    rjs  27feb96   Added xyflush.					*/
 /*    rjs  19mar97   Handle logical translation better. Tidying.	*/
 /*    pjt   6sep06   read integers via rdhdi                            */
+/*    rjs  01apr09   Add scrRecSz routine.				*/
 /************************************************************************/
 #include <string.h>
 #include <sys/types.h>
@@ -55,16 +56,21 @@ fortran subroutine scrclose(integer handle)
   scrclose_c(handle.val);
 }
 /************************************************************************/
+fortran subroutine scrrecsz(integer handle, integer recsize)
+{
+  scrrecsz_c(handle.val,recsize.val);
+}
+/************************************************************************/
 fortran subroutine scrread(integer handle,real buffer,
 	integer offset,integer length)
 {
-  scrread_c(handle.val,buffer.addr,offset.val,length.val);
+  scrread_c(handle.val,buffer.addr,(off_t)offset.val,(size_t)length.val);
 }
 /************************************************************************/
 fortran subroutine scrwrite(integer handle,real buffer,
 	integer offset,integer length)
 {
-  scrwrite_c(handle.val,buffer.addr,offset.val,length.val);
+  scrwrite_c(handle.val,buffer.addr,(off_t)offset.val,(size_t)length.val);
 }
 /************************************************************************/
 fortran subroutine uvopen(integer tno,character name,character status)

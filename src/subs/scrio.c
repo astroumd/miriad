@@ -10,6 +10,7 @@
 /*   jwr  05nov04  Change file offsets to type off_t			*/
 /*   pjt  16feb07  Minor doc improvements                               */
 /*   pjt  11dec07  More helpful message when scratch files fail         */
+/*   rjs  01apr09  Add scrRecSz routine and associated work             */
 /************************************************************************/
 
 #include <stdio.h>
@@ -17,7 +18,11 @@
 #include "miriad.h"
 
 
+#define MAXITEMS 100
 static int number=0;
+static int items[MAXITEMS],first;
+size_t recsiz[MAXITEMS];
+
 /************************************************************************/
 void scropen_c(int *handle)
 /**scropen -- Open a scratch file.					*/
@@ -37,15 +42,35 @@ void scropen_c(int *handle)
 /*--									*/
 /*----------------------------------------------------------------------*/
 {
-  int iostat;
+  int iostat,temp,i;
   char name[32];
 
+/* Initialise the first time through. */
+
+  if(number == 0){
+    for(i=0;i<MAXITEMS-1;i++){
+      items[i] = i+1;
+    }
+    items[MAXITEMS-1] = -1;
+    first = 0;
+  }
+
+/* Get a handle. */
+
+  if(first < 0)bug_c('w',"Exhausted the number of open scratch files");
+  *handle = first;
+  first = items[first];
+
+/* Open the scratch file. */
+
   (void)sprintf(name,"scratch%d",number++);
-  haccess_c(0,handle,name,"scratch",&iostat);
+  haccess_c(0,&temp,name,"scratch",&iostat);
   if(iostat){
     bug_c(  'w',"Error opening scratch file; check your $TMPDIR");
     bugno_c('f',iostat);
   }
+  items[*handle] = temp;
+  recsiz[*handle] = sizeof(float);
 }
 /************************************************************************/
 void scrclose_c(int handle)
@@ -65,11 +90,32 @@ void scrclose_c(int handle)
 {
   int iostat;
 
-  hdaccess_c(handle,&iostat);
+  hdaccess_c(items[handle],&iostat);
+  items[handle] = first;
+  first = handle;
   if(iostat){
     bug_c(  'w',"Error closing scratch file; check your $TMPDIR");
     bugno_c('f',iostat);
   }
+}
+/************************************************************************/
+void scrrecsz_c(int handle,size_t recsize)
+/**scrrecsz -- Set record size to be used.				*/
+/*:scratch-i/o								*/
+/*+  FORTRAN call sequence:
+
+	subroutine scrrecsz(tno,recsize)
+	integer tno,recsize
+
+  This sets the record size to be used in future access operations.
+  Input:
+    tno		The handle of the scratch file.
+    recsize	The record size (measured in reals).			*/
+/*--									*/
+/*----------------------------------------------------------------------*/
+{
+  if(recsize <= 0)bug_c('f',"Invalid record size, in scrrecsz");
+  recsiz[handle] = recsize*sizeof(float);
 }
 /************************************************************************/
 void scrread_c(int handle,float *buffer,int offset,int length)
@@ -93,9 +139,15 @@ void scrread_c(int handle,float *buffer,int offset,int length)
 /*----------------------------------------------------------------------*/
 {
   int iostat;
+  int myhandle;
+  off_t myoff;
+  size_t mylen;
 
-  hreadb_c(handle,(char *)buffer,
-    (off_t)sizeof(float)*offset,sizeof(float)*length,&iostat);
+  myhandle = items[handle];
+  mylen    = recsiz[handle]*length;
+  myoff    = recsiz[handle]*offset;
+
+  hreadb_c(myhandle,(char *)buffer,myoff,mylen,&iostat);
   if(iostat){
     bug_c(  'w',"Error reading from scratch file; check your $TMPDIR");
     bugno_c('f',iostat);
@@ -122,9 +174,15 @@ void scrwrite_c(int handle,Const float *buffer,int offset,int length)
 /*----------------------------------------------------------------------*/
 {
   int iostat;
+  int myhandle;
+  off_t myoff;
+  size_t mylen;
 
-  hwriteb_c(handle,(char *)buffer,
-    (off_t)sizeof(float)*offset,sizeof(float)*length,&iostat);
+  myhandle = items[handle];
+  mylen    = recsiz[handle]*length;
+  myoff    = recsiz[handle]*offset;
+
+  hwriteb_c(myhandle,(char *)buffer,myoff,mylen,&iostat);
   if(iostat){
     bug_c(  'w',"Error writing to scratch file; check your $TMPDIR");
     bugno_c('f',iostat);
