@@ -193,6 +193,8 @@ c again until the list is exhausted.
 
       data	       usech / MAXCHAN * .true. /
 
+      dotsys = .false.
+
       call output( version )
       call keyini
       call keyf( 'vis', vis, ' ' )
