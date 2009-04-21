@@ -8,6 +8,9 @@ c     Given the center, major axis, and inclination of a galaxy,
 c     create a deprojected image. Two optional parameters are provided
 c     to allow for the output image's size and the galaxy's central 
 c     coordinate to be fixed.
+c     Intensities are multiplied by cos(inc) to correct the surface
+c     brightness, assuming we have a plane parallel optically thin
+c     medium. See iflag= to control this behavior.
 c
 c     Caveat: image needs to have square pixels
 c@ in
@@ -18,6 +21,8 @@ c@ center
 c     Center of the polar coordinate system, in pixels where
 c     (1,1) is the lower left point in a map.
 c     By default the mapcenter will be taken.
+c     By default the output map will preserve this as the reference
+c     pixel, but see also ocenter= below.
 c@ pa
 c     major axis position angle (degrees)
 c@ inc
@@ -37,7 +42,6 @@ c     flag to invert the deprojection transformation
 c                   (i.e. project image)
 c                   [Integer: 0 >= Deproject image (default)
 c                            -1  = inverse transfomation (project image)]
-c
 c--
 cc     NOTE: As of 8/21/92, position angles are defined in the 
 cc            correct astronomical sense (degrees clockwise of up)
@@ -94,7 +98,7 @@ c
       integer   MAXNAX
       parameter (MAXNAX=3)
       character VERSION*(*)
-      parameter (VERSION='10-dec-2004')
+      parameter (VERSION='19-sep-2008')
 c
       character infile*128, oufile*128, rmode*10, ctype1*10,ctype2*10
       integer   iflux,iout,ivert,ix,ixpt,iy,iypt,iz,mode,nx,ny,nz,
