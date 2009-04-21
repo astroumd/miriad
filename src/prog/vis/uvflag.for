@@ -160,6 +160,7 @@ c                           of sels
 c           pjt     13oct06 NSELS -> MAXSELS to clear the confusion 
 c           pjt     23jan08 simplified message when options=noapply
 c           dnf     08apr09 added system temperature flagging
+c           dnf     21apr09 forgotten initialization 
 c************************************************************************
 c uvflag works as follows:
 c It reads the name of the first visibility file.
@@ -171,7 +172,7 @@ c Then it asks for the next visibility file and does the whole process
 c again until the list is exhausted.
 
       character*(*) version
-      parameter ( version = 'uvflag: 08-apr-09')
+      parameter ( version = 'uvflag: 21-apr-09')
 
       character*64     vis
 
@@ -324,7 +325,7 @@ c If not, the program quits.
       call assertl( .not.( optprsnt(1) .and. optprsnt(2) ),
      *		    'Flag and unflag can not be combined' )
       call assertl( optprsnt(1) .or. optprsnt(2),
-     *		    'Flagval must be flag or unflag' )
+     *		    'Flagval must be flag or unflag; options=noapply' )
       if( optprsnt(1) ) flagval = .false.
       if( optprsnt(2) ) flagval = .true.
 
