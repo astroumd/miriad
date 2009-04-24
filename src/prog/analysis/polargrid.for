@@ -27,10 +27,11 @@ c     Default: 0.0
 c@ radius
 c     Starting, ending and step value in radial grid. 
 c     Optionally these three numbers can be followed by the 
-c     coordinate type (a string). Currently supported are 'linear' and
-c     'logarithmic'. The units of the radii are in the units of that
+c     coordinate type (a string). Currently supported are 'linear',
+c     'logarithmic' and 'ln' (natural logarithmic).
+c     The units of the radii are in the units of that
 c     coordinate system.
-c     Example: -1,2,0.01 is a logarithmic axis from 0.1" to 100"
+c     Example: -1,2,0.01,log is a logarithmic axis from 0.1" to 100"
 c     By default the all pixels will fit in the output map, with a
 c     linear grid and stepsize of 1 pixel.
 c@ angle
@@ -55,6 +56,7 @@ c      6-aug-02 pjt  doc
 c     16-dec-03 pjt  long forgotten MAXDIM2 conversion
 c     01-jun-04 snv  implemented 3d
 c     06-jul-04 pjt  did 3d ever work?
+c     24-apr-09 pjt  allow natural log (ln)
 c***********************************************************************
 c
       include   'maxdim.h'
@@ -62,7 +64,7 @@ c
       integer   MAXNAX
       parameter (MAXNAX=3)
       character VERSION*(*)
-      parameter (VERSION='6-jul-2004')
+      parameter (VERSION='24-apr-2009')
 c
       character infile*128, oufile*128, rmode*10, ctype1*10,ctype2*10
       character ctype3*10
@@ -74,9 +76,9 @@ c
       real      agrid0,agrid1,astep,apt,phase,rget,rgrid0,rgrid1,
      #          rpt,rstep,xcen,xpt,ycen,ypt,dx,dy,sum
       real      crval1,crpix1,cdelt1,crval2,crpix2,cdelt2
-      real      crval3,crpix3,cdelt3
-      logical   lin, lcen, lrad, logflag, flags(MAXDIM2,MAXDIM2),
-     #          ouflg(MAXDIM2)
+      real      crval3,crpix3,cdelt3,e
+      logical   lin, lcen, lrad, logflag, lnflag, 
+     #          flags(MAXDIM2,MAXDIM2),ouflg(MAXDIM2)
 c
       logical   keyprsnt
 c
@@ -149,9 +151,14 @@ c
          ctype2 = 'linrad'
       else if (rmode(1:2).eq.'lo') then
          logflag = .TRUE.
+         lnflag = .FALSE.
          ctype2 = 'lograd'
+      else if (rmode(1:2).eq.'ln') then
+         logflag = .TRUE.
+         lnflag = .TRUE.
+         ctype2 = 'lnrad'
       else
-         call bug('f','Illegal radial mode'//rmode)
+         call bug('f','Illegal radial mode: '//rmode)
       endif
       ctype1 = 'angle'
       crval1 = agrid0
@@ -179,6 +186,8 @@ c
       endif
 
       crpix2 = outny
+
+      e = exp(1.0)
 
 c
 c     Open output file
@@ -236,7 +245,11 @@ c
       do iy=1,outny
         do ix=1,outnx
           if (logflag) then
-             rpt=10**(rgrid1-rstep*(iy-1))
+             if (lnflag) then
+                rpt=e**(rgrid1-rstep*(iy-1))
+             else
+                rpt=10**(rgrid1-rstep*(iy-1))
+             endif
           else
              rpt=rgrid1-rstep*(iy-1)
 	  endif
