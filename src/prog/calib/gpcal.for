@@ -213,7 +213,7 @@ c------------------------------------------------------------------------
 	integer MAXITER
 	character version*(*)
 	parameter(MAXITER=30)
-	parameter(version='Gpcal: version 1.0 7-Oct-04')
+	parameter(version='Gpcal: version 1.0 24-Apr-2009')
 c
 	integer tIn
 	double precision interval(2), freq
