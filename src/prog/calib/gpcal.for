@@ -39,9 +39,9 @@ c	conventions, past sign errors and how they affect you, see the
 c	memo ``The Sign of Stokes-V, etc'' by Bob Sault.
 c
 c@ vis
-c	Input visibility data file. The data must contain raw linear
-c	polarisations. No default. The visibility data must be in time
-c	order.
+c	Input visibility data file. The data should be either raw linear
+c	or raw circular polarisations. No default. The visibility data
+c	must be in time	order.
 c@ select
 c	Standard uv selection. Default is all data.
 c@ line
@@ -199,11 +199,9 @@ c    rjs     22may98 Turn off xyref on early iterations of weakly polarised
 c		     source.
 c    rjs     19aug98 Changes in ampsolxy and ampsol to avoid an SGI compiler bug.
 c    rjs     12oct99 Attempts to perform absolute flux calibration.
-c    pjt      7jul03 MAXANT,MAXBASE -> MAXANT2,MAXBASE2
-c    pjt     10dec04 cleanup of old conflict
-c    mchw    29nov07 MAXANT2,MAXBASE2 -> MAXANT,MAXBASE
-c    mchw    10apr09 Bryan Gaensler: only dump leakages for antennas that actually have solutions.
-c    mchw    10apr09 Bryan Gaensler: print an extra decimal place in the calculated leakages. 
+c    rjs      7oct04 Set senmodel parameter.
+c    rjs     27nov06 Doc correction only.
+c    rjs     24apr09 xyphase array was being ignored in some instances.
 c
 c  Bugs:
 c    * Polarisation solutions when using noamp are wrong! The equations it
@@ -215,7 +213,7 @@ c------------------------------------------------------------------------
 	integer MAXITER
 	character version*(*)
 	parameter(MAXITER=30)
-	parameter(version='Gpcal: version 1.0 10-Apr-2009')
+	parameter(version='Gpcal: version 1.0 7-Oct-04')
 c
 	integer tIn
 	double precision interval(2), freq
@@ -481,11 +479,10 @@ c
 	if(polsol.or.polref)then
 	  call writeo(tIn,'Leakage terms:')
 	  do j=1,nants
-	    write(line,'(1x,a,i2,a,f7.4,a,f7.4,a,f7.4,a,f7.4,a)')
+	    write(line,'(1x,a,i2,a,f6.3,a,f6.3,a,f6.3,a,f6.3,a)')
      *	      'Ant',j,':Dx,Dy = (',real(D(1,j)),',',aimag(D(1,j)),'),(',
      *				   real(D(2,j)),',',aimag(D(2,j)),')'
-          if (D(1,j).ne.0..and.D(2,j).ne.0.)
-     *          call writeo(tIn,line)
+	    call writeo(tIn,line)
 	  enddo
 	  call LeakTab(tIn,D,nants)
 	endif
@@ -685,8 +682,6 @@ c    Gains	The current estimates of the antenna gains. It is assumed
 c		that the Y phases are equal to the X phases plus the XY phases.
 c  Output:
 c    epsi	Fractional change in the solutions.
-c 
-c NOTE: dec 2002: this routine was changed from MAXabc to MAXabc2
 c------------------------------------------------------------------------
 	include 'gpcal.h'
 	complex Gx(MAXANT),Gy(MAXANT),SVM(4,MAXBASE),TempX,TempY
@@ -1999,6 +1994,7 @@ c  Get the source and frequency of the first data.
 c
 	call uvrdvra(tIn,'source',source,' ')
 	call uvfit1(tIn,'frequency',nchan,freq,epsi)
+	call defsmodl(tIn)
 c
 c  Get the data. Read the remaining correlations for this record.
 c
@@ -2332,7 +2328,7 @@ c
 	  count(i) = 0
 	enddo
 	do i=1,nants
-	  if(i.lt.nxyphase)then
+	  if(i.le.nxyphase)then
 	    theta = pi/180 * xyphase(i)
 	    xyp(i) = cmplx(cos(theta),sin(theta))
 	  else if(count(i).gt.0)then
@@ -2662,7 +2658,7 @@ c
 	  call bug('w','Using post-Aug94 ATCA flux scale for 1934-638')
 	endif
       endif
-c      ierr = 2
+      ierr = 2
       if(src.ne.' ')call calstoke(src,'i',freq,flux(1),1,ierr)
       if(ierr.ne.2)then
 	defflux = .false.
