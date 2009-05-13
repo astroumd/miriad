@@ -64,13 +64,13 @@ fortran subroutine scrrecsz(integer handle, integer recsize)
 fortran subroutine scrread(integer handle,real buffer,
 	integer offset,integer length)
 {
-  scrread_c(handle.val,buffer.addr,(off_t)offset.val,(size_t)length.val);
+  scrread_c(handle.val,buffer.addr,offset.val,length.val);
 }
 /************************************************************************/
 fortran subroutine scrwrite(integer handle,real buffer,
 	integer offset,integer length)
 {
-  scrwrite_c(handle.val,buffer.addr,(off_t)offset.val,(size_t)length.val);
+  scrwrite_c(handle.val,buffer.addr,offset.val,length.val);
 }
 /************************************************************************/
 fortran subroutine uvopen(integer tno,character name,character status)
