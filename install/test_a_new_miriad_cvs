@@ -16,6 +16,7 @@
 #   23-jun-07    autotools based option to install                                      PJT
 #    8-oct-07    fixed minor VERSION reporing bug
 #    3-jun-08    optionally work from tar file with reuse=2
+#   15-may-09    only remove old rootdir when present
 #
 #  
 #----
@@ -85,10 +86,12 @@ if ($reuse == 0) then
   endif
 
   echo "Using cvs with CVSROOT=$CVSROOT"
-  echo -n "Removing your local $rootdir in 2 seconds..." 
-  sleep 2
-  rm -rf $rootdir
-  echo "...done".
+  if (-d $rootdir) then
+    echo -n "Removing your local $rootdir in 2 seconds..." 
+    sleep 2
+    rm -rf $rootdir
+    echo "...done".
+  endif
   if (1) then
     echo "getting miriad,wip and rad via cvs....".
     (cvs -Q co $branch -d $rootdir miriad; cd $rootdir/borrow; cvs -Q co wip; cvs -Q co rad)
