@@ -433,8 +433,8 @@ c-----------------------------------------------------------------------
       include 'maxdim.h'
       include 'mirconst.h'
 c
-      integer maxbase2, maxco, maxpol, maxfile
-      parameter (maxbase2 = 91, maxco = 7, maxpol = 4, maxfile = 30)
+      integer maxco, maxpol, maxfile
+      parameter (maxco = 7, maxpol = 4, maxfile = 30)
 c
       complex data(maxchan)
       double precision freq(maxchan)
