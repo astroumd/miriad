@@ -148,9 +148,9 @@ make -f ./makefile clean
 rm -fr grexec.f makefile pgbind
 rm -fr cpgdemo pg*demo*
 # -------------------------------------------------------------------
-#  Now, if any servers exist, move them to the bin directory.
+#  Now, if any servers exist, move them to the lib directory. ($PGPLOT_DIR)
 if ($#servers > 0) then
-  mv $servers $bindir
+  mv $servers $libdir
 endif
 # -------------------------------------------------------------------
 if (! -e $bindir/doc) mir.prog doc
