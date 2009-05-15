@@ -10,6 +10,7 @@
 /*   jwr  05nov04  Change file offsets to type off_t			*/
 /*   pjt  16feb07  Minor doc improvements                               */
 /*   pjt  11dec07  More helpful message when scratch files fail         */
+/*   pjt  11jul08  Merged in WSRT code to optionally use memory         */
 /*   rjs  01apr09  Add scrRecSz routine and associated work.		*/
 /*   rjs  13may09  Make returned handle always positive (some tasks have*/
 /*		   relied on this).					*/
