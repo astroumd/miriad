@@ -574,8 +574,9 @@ endif
 
 if ($zeno && -e $MIR/borrow/zeno) then
   echo Adding zeno and hkmiriad
-  (cd $MIR/borrow/zeno;                                    make install_miriad)
-  (cd $MIR/src/spec/hkmiriad/;  cp Makefile.hk  Makefile ; make install_miriad)
+  (cd $MIR/borrow/zeno;                                    make install_miriad)  >& hkmiriad.log
+  (cd $MIR/src/spec/hkmiriad/;  cp Makefile.hk  Makefile ; make install_miriad) >>& hkmiriad.log
+  if ($status) echo Warning: hkmiriad.log seems to indicate some compile issues with hkmiriad
 endif
 
 if ($test) then
