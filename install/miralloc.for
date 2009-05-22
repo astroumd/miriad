@@ -1,4 +1,5 @@
       PROGRAM miralloc
+      IMPLICIT none
 c
 c   allocate memory, miriad style
 c 
@@ -11,13 +12,19 @@ c
       include 'maxdim.h'
       include 'mem.h'
 
-      PTRDIFF_T pData,nx1,ny1,nz1,ntot
-      INTEGER nx,ny,nz
+      INTEGER MAXP
+      PARAMETER(MAXP=10)
+
+      PTRDIFF_T nx1,ny1,nz1,ntot,p(MAXP)
+      INTEGER nx,ny,nz,n,i
+      CHARACTER type*10
 
       CALL keyini
       CALL keyi('nx',nx,4)
       CALL keyi('ny',ny,4)
       CALL keyi('nz',nz,4)
+      CALL keyi('n',n,1)
+      CALL keya('type',type,'r')
       CALL keyfin
       nx1 = nx
       ny1 = ny
@@ -26,18 +33,29 @@ c
 
 	write(*,*) 'nx*ny*nz=',nx*ny*nz
 	write(*,*) 'ntot    =',ntot
+        write(*,*) 'n       =',n
 	write(*,*) 'MAXBUF  =',MAXBUF
 
 
-      CALL MemAlloc(pData, nx*ny*nz, 'r')
+      DO i=1,n
+        IF (type(1:1).eq.'r') CALL MemAlloc(p(i), nx*ny*nz, 'r')
+        IF (type(1:1).eq.'d') CALL MemAlloc(p(i), nx*ny*nz, 'd')
+	write(*,*) 'pData(i)   =',i,p(i)
+      ENDDO
 
-	write(*,*) 'pData   =',pData
+      DO i=1,n
+         IF (type(1:1).eq.'r') CALL myWorkR(memr(p(i)),nx,ny,nz)
+         IF (type(1:1).eq.'d') CALL myWorkD(memd(p(i)),nx,ny,nz)
+      ENDDO
 
-      CALL myWork(memr(pData),nx,ny,nz)
+      DO i=1,n
+         IF (type(1:1).eq.'r') CALL MemFree(p(i), nx*ny*nz, 'r')
+         IF (type(1:1).eq.'d') CALL MemFree(p(i), nx*ny*nz, 'd')
+      ENDDO
 
       END
 c-----------------------------------------------------------------------
-      SUBROUTINE myWork(data,nx,ny,nz)
+      SUBROUTINE myWorkR(data,nx,ny,nz)
       INTEGER nx,ny,nz
       REAL data(nx,ny,nz)
 c
@@ -47,6 +65,22 @@ c
         DO iy=1,ny
           DO ix=1,nx
             data(ix,iy,iz) = 1.0
+          ENDDO
+        ENDDO
+      ENDDO
+
+      END
+c-----------------------------------------------------------------------
+      SUBROUTINE myWorkD(data,nx,ny,nz)
+      INTEGER nx,ny,nz
+      DOUBLE PRECISION data(nx,ny,nz)
+c
+      INTEGER ix,iy,iz
+
+      DO iz=1,nz
+        DO iy=1,ny
+          DO ix=1,nx
+            data(ix,iy,iz) = 1.0d0
           ENDDO
         ENDDO
       ENDDO
