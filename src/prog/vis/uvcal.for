@@ -178,6 +178,22 @@ c	the FWHM in arcsec, of a circular Gaussian fit to
 c	the phase calibrator(s) for the target source.
 c	Use uvfit object=gauss fix=xyc....
 c	Default seeing=0. is no amplitude correction.
+c@ fringe
+c	Correct data for wrong on-line fringe rate calculation.
+c	Apply a phase correction
+c	7.29115e-5 * preamble(1) * freq * cos(obsdec) * fringe * (time - time0)
+c	for each frequency channel,
+c	where fringe is the fraction of the fringe rate calculated
+c	from the values of preamble(1), freq, obsdec, and time in the uvdata.
+c	time0 is an optional start time, given in the standard Miriad form 
+c	and is converted to Julian date. 
+c	time0 should be the same for all the target sources and 
+c	phase calibrators to avoid phase offsets between targets and calibrators.
+c	default: fringe=0,09MAY21:13:27:04.0.  i.e. no fringe rate correction
+c	09MAY21:13:27:04.0 is Julian Day 2454973.060463
+c	e.g. 
+c	i) if fringe rate has not been applied on line, then set fringe=1
+c	ii) data at 3040 MHz that has been fringe rotated for 3140, fringe=-(3140-3040)/3040
 c
 c@ out
 c	The name of the output uv data set. No default.
@@ -244,11 +260,12 @@ c    mchw 12feb08  change MAXANT2 to MAXANT in fxcal.
 c    pjt  20nov08  added atmcal option
 c    pjt   4dec08  fix wides for atmcal option
 c    mchw 29jan09  exclude flagged data in options=slope
+c    mchw 21may09  fringe rate correction.
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	integer maxbad
 	character version*(*)
-	parameter(version='UVCAL: version 29-jan-2009')
+	parameter(version='UVCAL: version 21-may-2009')
 	parameter(maxbad=20)
 	real PI
 	parameter(PI=3.1415926)
@@ -273,6 +290,8 @@ c
 	double precision obsra,obsdec,dazim(MAXANT),delev(MAXANT)
 	double precision ra,dec,uu,vv,epoch,jepoch,theta,costh,sinth,jd
 	double precision delta_az,delta_el
+	double precision fringe, time0
+	character start_time*64
 	real seeing, fwhms, uvsig, gauss
 c
 c  Externals.
@@ -338,6 +357,8 @@ c
 	call keyr('parot',parot,0.)
 	call keyr('seeing',seeing,0.)
 	call keyr('sigma',sigma,0.)
+	call keyd('fringe',fringe,0.d0)
+	call keya('fringe',start_time,'09MAY21:13:27:04.0')
 	call keyfin
 c
 c  Check user inputs.
@@ -353,6 +374,16 @@ c
 	dopolcal = polcal(1).ne.0.
 	if(dopolcal) polcal(2) = polcal(2)*PI/180.
 	doseeing = seeing.ne.0.
+       if(doseeing)then
+           print *,'Correct amplitude for atmospheric phase coherence'
+       endif
+c
+       if(fringe.ne.0.d0)then
+	     print *,'doing fringe rate correction with factor= ',fringe)
+         call dayjul(start_time, time0)
+c        print *,'c   09MAY21:13:27:04.0 is Julian Day 2454973.060463'
+         print *, 'start_time: ',start_time, '  is Julian Day ', time0
+       endif
 c
 c  Open the output.
 c
@@ -482,6 +513,12 @@ c  Get apparent RA and DEC of phase center at time of observation.
          call uvputvrd(lout,'dec',dec,1)
          call uvputvrd(lout,'obsra',obsra,1)
          call uvputvrd(lout,'obsdec',obsdec,1)
+       endif
+c
+c  Correct data for wrong on-line fringe rate.
+c
+       if(fringe.ne.0.d0)then
+         call fringe_corr(lIn,preamble,data,nchan,fringe,time0,'chan')
        endif
 
 c      'uvrotate'   Rotate uv-coordinates from current to standard epoch.
@@ -1413,6 +1450,91 @@ c
       preamble(1) = u
       preamble(2) = v
       preamble(3) = w
+      end
+c********1*********2*********3*********4*********5*********6*********7*c
+       subroutine fringe_corr(lIn,preamble,data,nchan,fringe,time0,line)
+       implicit none
+       integer lIn,nchan
+       complex data(nchan)
+       double precision preamble(5),fringe,time0
+       character*4 line
+c
+c   Correct data for wrong on-line fringe rate calculation.
+c   Apply a phase correction
+c   7.29115e-5 * preamble(1) * freq * cos(obsdec) * fringe * (time - time0)
+c   for each frequency channel,
+c   where fringe is the fraction of the fringe rate calculated
+c   from the values of preamble(1), freq, obsdec, and time in the uvdata.
+c   time0 is start time. 
+c
+c  In:
+c    lIn	Handle of input uv-data.
+c    data	data
+c    nchan	Number of input channel or wideband data.
+c    line	'wide' or 'chan' data
+c    preamble(5),fringe,time0
+c  Out:
+c    data,wdata
+c------------------------------------------------------------------------
+       include 'maxdim.h'
+       include 'mirconst.h'
+       integer i,j,k,ant1,ant2,nants,nwide
+       double precision sfreq(MAXWIN),sdf(MAXWIN),freq
+       double precision obsdec
+       integer nspect,ischan(MAXWIN),nschan(MAXWIN)
+       real wfreq(MAXCHAN),phase
+c
+c  Externals.
+c
+       complex expi
+c
+c  Get the dimensioning info.
+c
+       if(line.eq.'chan')then
+         call uvgetvri(lIn,'nspect',nspect,1)
+	     if(nspect.le.0)
+     *	    call bug('f','Bad value for uv-variable nspect')
+         call uvgetvri(lIn,'ischan',ischan,nspect)
+         call uvgetvri(lIn,'nschan',nschan,nspect)
+         call uvgetvrd(lIn,'sdf',sdf,nspect)
+         call uvgetvrd(lIn,'sfreq',sfreq,nspect)
+       else if(line.eq.'wide')then
+          call uvgetvri(lIn,'nwide',nwide,1)
+          if(nwide.le.0)
+     *      call bug('f','Bad value for uv-variable nwide')
+          call uvgetvrr(lIn,'wfreq',wfreq,nwide)
+       else
+         call bug('f','Invalid line in subroutine fringe_corr')
+       endif
+c
+c  Get metadata for fringe rate calculation.
+c
+      call uvgetvrd(lIn,'obsdec',obsdec,1)
+c
+c  correct the phase to the new phase center.
+c
+	if(line.eq.'chan')then
+	  k = 0
+	  do i=1,nspect
+	    do j=ischan(i),ischan(i)+nschan(i)-1
+	      freq = sfreq(i) + sdf(i) * (j-ischan(i))
+          phase = twopi * 7.29115e-5 * preamble(1) * freq * 
+     *      cos(obsdec) * fringe * (preamble(4) - time0) * 24. * 3600.
+		  phase = mod(phase,twopi)
+	      k = k + 1
+		  data(k) = data(k) * expi(phase)
+	    enddo
+	  enddo
+
+	else if(line.eq.'wide')then
+	  do i=1,nwide
+	      freq = wfreq(i)
+          phase = twopi * 7.29115e-5 * preamble(1) * freq * 
+     *      cos(obsdec) * fringe * (preamble(4) - time0) * 24. * 3600.
+		  phase = mod(phase,twopi)
+		  data(i) = data(i) * expi(phase)
+	  enddo
+	endif
       end
 c********1*********2*********3*********4*********5*********6*********7*c
 	subroutine contsub(lIn,data,flags,nchan,
