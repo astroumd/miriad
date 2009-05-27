@@ -7,6 +7,7 @@ echo "Performance tests for ATA imaging"
 # 22mar05 added harange. 
 # 09may05 add more parameters to title.
 # 07oct08 better values for baseunit=-3.335668 lat=40:49:02.50 in uvgen
+# 27may09 added weighting options to input parameters.
 
 
 # Nyquist sample time = 12 x 3600 s x (dish_diam/2)/(pi*baseline)
@@ -17,7 +18,7 @@ goto start
 start:
 
 # check inputs
-  if($#argv<4) then
+  if($#argv<5) then
     echo " Usage: $0  config  declination  harange  nchan" 
     echo "   config"
     echo "          Antenna configuration. "
@@ -28,6 +29,8 @@ start:
     echo "          HA range: start,stop,interval in hours. No default."
     echo "   nchan"                                                                 
     echo "          Number of spectral channels. No default."
+    echo "   weighting"                                                                 
+    echo "          weighting options: 'sup=0',  'robust=0.5', uniform. No default."
     echo " "
     exit 1
   endif
@@ -44,6 +47,7 @@ set jyperk     = 150
 set bandwidth  = 100 
 set weighting  = 'robust=0.5' 
 set weighting  = 'sup=0' 
+set weighting  = $5
 
 
 echo "   ---  ATA Single Field MFS Imaging    ---   " > timing
