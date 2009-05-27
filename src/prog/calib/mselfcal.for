@@ -185,6 +185,7 @@ c		  Dave Rayner.
 c    mwr  05aug99 Renamed it mselfcal and increased maxmod to 64 from 32.
 c    pjt  20apr07 Warn about apriori/flux
 c    pjt  23mar09 Fix roudoff error in timestamp (see selfcal)
+c    pjt  27may09 Fix initialization bug in selfacc1
 c
 c  Bugs/Shortcomings:
 c   * Selfcal should check that the user is not mixing different
@@ -193,7 +194,7 @@ c   * It would be desirable to apply bandpasses, and merge gain tables,
 c     apply polarisation calibration, etc.
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version='MSelfcal: version 1.0 19-mar-09')
+	parameter(version='MSelfcal: version 1.0 27-may-09')
 	integer MaxMod,maxsels,nhead
 	parameter(MaxMod=64,maxsels=1024,nhead=3)
 c
@@ -631,6 +632,8 @@ c    particular time.
 c
 c    The last entry in the hash table (element nHash+1) is always zero, so the
 c    check for the end of the buffer can be placed outside the main loop.
+c
+c  For mselfcal the hash table is abused, and simply used as a linear array
 c------------------------------------------------------------------------
 	integer maxlen,nhead
 	parameter(nhead=3,maxlen=5*maxchan+nhead)
@@ -657,8 +660,9 @@ c  It was not in the hash table. Add a new entry.
 c
 	  if(i.eq.0)then
 	    nSols = nSols + 1
-	    if(nSols.ge.maxSol) call bug('f','Hash table overflow')
-	    Hash(nsols) = nsols
+	    if(nSols.ge.maxSol) call bug('f',
+     *           'Hash table overflow, pick bigger interval?')
+	    Hash(nsols) = nSols
 	    Indx(nsols) = nSols
 	    Time(nSols) = itime
 	    do k=1,nBl
@@ -671,12 +675,14 @@ c
 	    rTime(nSols) = 0
 	    StpTime(nSols) = Out(2)+interval
 	    StrTime(nSols) = Out(2)
+	    i = nSols
+	 else
+	    i = Indx(i)
 	 endif
 c
 c  We have found the slot containing the info. Accumulate in the
 c  info about this visibility record.
 c
-	  i = Indx(i)
 	  wt = 0.5/Out(3)
 	  call basant(dble(out(1)),i1,i2)
 	  bl = (i2-1)*(i2-2)/2 + i1
