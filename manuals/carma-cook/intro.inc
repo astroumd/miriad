@@ -68,14 +68,80 @@ Our {\bf bugzilla} has a module for Miriad as well, though again, this is probab
 only useful for developers (though the developers should maintain a list of active
 bugs on a more user friendly webpage).
 
+\section{STYLE}
+
+There are two possible styles for code examples. One is based on Unix command line, i.e. how
+you would issue the command from your shell, as well as how they would appear in your
+shell script:
+
+\begin{verbatim}
+ % uvlist vis=cx012.SS433.2006sep07.1.miriad options=spectra
+\end{verbatim}
+
+
+
+and the other employs the {\tt miriad} shell, an AIPS like program in which you set variables
+and run the task, one by one:
+
+\begin{verbatim}
+Task:   uvlist
+  vis      = cx012.SS433.2006sep07.1.miriad
+  options  = spectra
+  select   =  
+  line     =  
+  scale    =  
+  recnum   =  
+  log      =  
+\end{verbatim}
+
+The drawback of the latter style is that 1) it cannot be easily cut and paste, and 2) this does not
+reflect verbatim what the user would type. However, it scales better in terms of long commands,
+but conversely, wastes a lot of paper/screen.
+
+The ``2008'' CARMA cookbook uses the former style. The SMA and ATNF guides prefer the latter.
+
+\begin{figure}
+\begin{center}
+\epsfxsize=11cm\leavevmode\epsfbox{fig1.ps}
+\end{center}
+\caption{
+This plot shows the system temperature as function of time for antenna C-1.
+{\bf miriad command:} {\tt varplt vis=cx012.SS433.2006sep07.1.miriad device=/xs yaxis=systemp nxy=5,3 yrange=0,2000 options=compress}
+}
+\end{figure}
+
+Data links can also be provided via latex2html, for example
+                     \htmladdnormallink{fringe.3C273.2008jun18.4.miriad.tar.gz}
+{ftp://ftp.astro.umd.edu/pub/carma/data/fringe.3C273.2008jun18.4.miriad.tar.gz}
+
+\begin{htmlonly}
+\section{HTMLONLY}
+
+this is for HTML only
+\end{htmlonly}
+
+\begin{latexonly}
+\section{LATEXONLY}
+
+this is for LATEX only
+\end{latexonly}
+
+
+
 \section{Links}
 
 \begin{itemize}
+
 \item
-Wiki page for Miriad and CARMA Cookbook: {\tt http://carma.astro.umd.edu/wiki/index.php/Miriad}
+Wiki page for Miriad and CARMA Cookbook: 
+\htmladdnormallink{http://carma.astro.umd.edu/wiki/index.php/Miriad}
+{http://carma.astro.umd.edu/wiki/index.php/Miriad}
+
 \item
-Miriad bugzilla (part of CARMA bugzilla) at {\tt http://www.mmarray.org/bugzilla}
-\item
+Miriad bugzilla (part of CARMA bugzilla) at 
+\htmladdnormallink{http://www.mmarray.org/bugzilla}
+{http://www.mmarray.org/bugzilla}
+
 \end{itemize}
 
 \section{Revision History}
@@ -84,6 +150,7 @@ Miriad bugzilla (part of CARMA bugzilla) at {\tt http://www.mmarray.org/bugzilla
 \item 20-apr-2007:   first draft 
 \item 15-feb-2008:   Draft for version 2 of this document
 \item 21-jun-2008:   Summerschool 2008 version
+\item xx-jun-2009:   Largely Revised Summerschool 2009 version 
 
 \end{itemize}
 
@@ -91,6 +158,6 @@ Miriad bugzilla (part of CARMA bugzilla) at {\tt http://www.mmarray.org/bugzilla
 
 Stuart Vogel, Stephen White, Jin Koda, Joanna Brown  etc..  
 And the fine crew of the first Miriad ``Party'' where
-much of this material was first fine tuned. 
+much of this material was first written. Fine tuning
 
 
