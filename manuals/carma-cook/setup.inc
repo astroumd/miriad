@@ -2,8 +2,11 @@
 %
 % Setting Up Your Account
 %
-\chapter{Setting Up Your Account with Miriad}
+% \chapter{Setting Up Your Account with Miriad}
+\chapter{Installing Miriad}
 \label{app:setup}
+
+\section{Setting up your account}
 
 Setting up your account to use \miriad\ 
 of course varies a little from system to system, mostly where the package was installed.
@@ -44,19 +47,15 @@ Each of the CARMA sites will have a maintained version of Miriad.
 There are two linux versions are maintained
 depending if you are down at OVRO in the Owens Valley
 
-\footnotesize
-\begin{verbatim}
+\footnotesize\begin{verbatim}
    source /sw/miriad/cvs/miriad_start.csh
-\end{verbatim}
-\normalsize
+\end{verbatim}\normalsize
 
 or up at CARMA on Cedar Flat:
 
-\footnotesize
-\begin{verbatim}
+\footnotesize\begin{verbatim}
    source /array/miriad/cvs/miriad_start.csh
-\end{verbatim}
-\normalsize
+\end{verbatim}\normalsize
 
 Local MIRIAD maintainer: Peter Teuben.
 
@@ -64,11 +63,9 @@ Local MIRIAD maintainer: Peter Teuben.
 
 Only a linux version is maintained:
 
-\footnotesize
-\begin{verbatim}
+\footnotesize\begin{verbatim}
    source /indirect/hp/wright/miriad/mir4/MIRRC.linux
-\end{verbatim}
-\normalsize
+\end{verbatim}\normalsize
 
 Local MIRIAD maintainer: Mel Wright.
 
@@ -114,7 +111,8 @@ Example:
    % astroload miriad
 or:
    % astroload -v daily miriad
-\end{verbatim}\normalsize
+   % astroload -v 64 miriad
+\end{verbatim}\normalsize %
 
 Local MIRIAD maintainer: Peter Teuben.
 
