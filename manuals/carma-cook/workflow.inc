@@ -47,7 +47,7 @@ download the data to your personal computer.
 The first is through a Java Web Start
 (jsp) application. Once launched (you may have to teach your
 browser where {\tt javaws}\footnote{javaws is part of the Java Development Kit (JDK)
-and if not present, you may have to install it}
+and if not present, you may have to install it. javaws should be in the installation bin directory }
 is located) and once the
 list of datasets has been displayed in {\tt DaRT}, click on 
 the Download button in that java application to start the transfer. 
