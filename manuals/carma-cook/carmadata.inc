@@ -88,6 +88,9 @@ data. The various stages of baseline corrections are not maintained here, see Se
 2008/12/31:  all data on this day have a leapsecond error: {\tt uvedit time=-1} to fix.
 \item
 2008/02/01:  PACS (SZA) data now available via NCSA archive
+\item
+2009/03/xx:  tau230 was changed from CARMA's Weather.tau225 to OpacityMonitor.tau225
+
 
 % PACS data also comes in versions, elaborate on that?
 
