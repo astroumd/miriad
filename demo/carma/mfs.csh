@@ -7,6 +7,7 @@ echo "Performance tests for CARMA imaging"
 # 22mar05 added harange. 
 # 09may05 add more parameters to title.
 # 20mar06 CARMA version.
+# 27may09 added weighting options to input parameters.
 
 
 # Nyquist sample time = 12 x 3600 s x (dish_diam/2)/(pi*baseline)
@@ -17,7 +18,7 @@ goto start
 start:
 
 # check inputs
-  if($#argv<4) then
+  if($#argv<5) then
     echo " Usage: $0  config  declination  harange  nchan" 
     echo "   config"
     echo "          Antenna configuration. "
@@ -28,6 +29,8 @@ start:
     echo "          HA range: start,stop,interval in hours. No default."
     echo "   nchan"                                                                 
     echo "          Number of spectral channels. No default."
+    echo "   weighting"
+    echo "          weighting options: 'sup=0',  'robust=0.5', uniform. No default."
     echo " "
     exit 1
   endif
@@ -42,9 +45,10 @@ set freq       = 230
 set imsize     = 256 
 set systemp    = 80,290,0.26 
 set jyperk     = 73 
-set bandwidth  = 4000
+set bandwidth  = 500
 set weighting  = 'sup=0' 
 set weighting  = 'robust=0.5' 
+set weighting  = $5
 set region  =  'relpix,box(-30,-30,30,30)'
 
 
@@ -69,7 +73,7 @@ continue:
 
 echo generate uv-data
 rm -r $config.$dec.uv
-uvgen ant=$config.ant baseunit=-3.33564 radec=23:23:25.803,$dec lat=37.233 harange=$harange source=$MIRCAT/point.source systemp=$systemp jyperk=$jyperk freq=$freq corr=$nchan,1,1,$bandwidth out=$config.$dec.uv
+uvgen ant=$config.ant baseunit=-3.33564 radec=23:23:25.803,$dec lat=37.233 harange=$harange source=$MIRCAT/point.source systemp=$systemp jyperk=$jyperk freq=$freq corr=$nchan,1,1,$bandwidth out=$config.$dec.uv ellim=10
 # pnoise=30
 echo UVGEN: `date` >> timing
 
@@ -121,9 +125,10 @@ set records = `grep records $config.$dec.uv/history | awk '{print $2}'`
 set Nvis = `calc "100*$nvis/$records/$nchan" | awk '{printf("%.0f\n",$1)}'`
 set uvrange = `uvcheck vis=$config.$dec.uv    | awk '{if(NR==6)print 0.3*$6, 0.3*$7}'`
 echo " " >> timing
-echo "Config  DEC  HA[hrs]  Nchan  Rms[mJy]  Beam[arcsec]  Tb_rms[mK]  Sidelobe[%]:Rms,Max,Min  Nvis[%] uvrange[m]  weighting" >> timing
-echo  "$config  $dec  $harange  $nchan  $RMS  $BMAJ  $BMIN   $TBRMS  $SRMS  $SMAX  $SMIN  $Nvis  $nvis  $uvrange"  $weighting >> timing
+echo "Config  DEC    HA  Nchan   Rms     Beam       Tb_rms     Sidelobe[%]    Nvis   uvrange  weighting"  >> timing
+echo "        deg.   hrs.       [mJy]    [arcsec]     [mK]     Rms,Max,Min   %     #    [m]" >> timing
+echo  "$config  $dec  $harange  $nchan    $RMS    $BMAJ  $BMIN   $TBRMS  $SRMS  $SMAX  $SMIN  $Nvis  $nvis  $uvrange"  $weighting >> timing
 echo " "
-echo  "$config  $dec  $harange  $nchan  $RMS  $BMAJ x $BMIN  $TBRMS  $SRMS  $SMAX  $SMIN  $Nvis  $nvis  $uvrange"  $weighting >> beams.results
+echo  "$config  $dec  $harange  $nchan    $RMS    $BMAJ x $BMIN  $TBRMS    $SRMS  $SMAX  $SMIN  $Nvis  $nvis  $uvrange"  $weighting >> beams.results
 mv timing $config.$dec.$harange.$nchan.$imsize.$nvis
 cat $config.$dec.$harange.$nchan.$imsize.$nvis
