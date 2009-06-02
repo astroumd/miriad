@@ -45,8 +45,6 @@ set imsize     = 256
 set systemp    = 40 
 set jyperk     = 150 
 set bandwidth  = 100 
-set weighting  = 'robust=0.5' 
-set weighting  = 'sup=0' 
 set weighting  = $5
 
 
@@ -124,9 +122,11 @@ set records = `grep records $config.$dec.uv/history | awk '{print $2}'`
 set Nvis = `calc "100*$nvis/$records/$nchan" | awk '{printf("%.0f\n",$1)}'`
 set uvrange = `uvcheck vis=$config.$dec.uv    | awk '{if(NR==6)print 0.3*$6, 0.3*$7}'`
 echo " " >> timing
-echo "Config  DEC  HA[hrs]  Nchan  Rms[mJy]  Beam[arcsec]  Tb_rms[mK]  Sidelobe[%]:Rms,Max,Min  Nvis[%] uvrange[m]  weighting" >> timing
-echo  "$config  $dec  $harange  $nchan  $RMS  $BMAJ  $BMIN   $TBRMS  $SRMS  $SMAX  $SMIN  $Nvis  $nvis  $uvrange"  $weighting >> timing
+echo "Config  DEC    HA  Nchan   Rms     Beam       Tb_rms     Sidelobe[%]    Nvis   uvrange  weighting"  >> timing
+echo "        deg.   hrs.       [mJy]    [arcsec]     [mK]     Rms,Max,Min   %     #    [m]" >> timing
+echo  "$config  $dec  $harange  $nchan    $RMS    $BMAJ  $BMIN   $TBRMS  $SRMS  $SMAX  $SMIN  $Nvis  $nvis  $uvrange"  $weighting >> timing
 echo " "
-echo  "$config  $dec  $harange  $nchan  $RMS  $BMAJ x $BMIN  $TBRMS  $SRMS  $SMAX  $SMIN  $Nvis  $nvis  $uvrange"  $weighting >> beams.results
+echo  "$config  $dec  $harange  $nchan    $RMS    $BMAJ x $BMIN  $TBRMS    $SRMS  $SMAX  $SMIN  $Nvis  $nvis  $uvrange"  $weighting >> beams.results
+echo " "
 mv timing $config.$dec.$harange.$nchan.$imsize.$nvis
 cat $config.$dec.$harange.$nchan.$imsize.$nvis

@@ -46,8 +46,6 @@ set imsize     = 256
 set systemp    = 80,290,0.26 
 set jyperk     = 73 
 set bandwidth  = 500
-set weighting  = 'sup=0' 
-set weighting  = 'robust=0.5' 
 set weighting  = $5
 set region  =  'relpix,box(-30,-30,30,30)'
 

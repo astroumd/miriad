@@ -6,6 +6,7 @@ echo "Performance tests for ALMA imaging"
 # 18apr03 added uvrange.
 # 22mar05 added harange.
 # 09may05 add more parameters to title.
+# 27may09 added weighting options to input parameters.
 
 
 # Nyquist sample time = 12 x 3600 s x (dish_diam/2)/(pi*baseline)
@@ -25,7 +26,7 @@ goto start
 start:
 
 # check inputs
-  if($#argv<4) then
+  if($#argv<5) then
     echo " Usage: $0.csh   config   declination  harange  nchan" 
     echo "   config"
     echo "          Antenna configuration. "
@@ -36,6 +37,8 @@ start:
     echo "          HA range: start,stop,interval in hours. No default."
     echo "   nchan"                                                                 
     echo "          Number of spectral channels. No default."
+    echo "   weighting"
+    echo "          weighting options: 'sup=0',  'robust=0.5', uniform. No default."
     echo " "
     exit 1
   endif
@@ -54,8 +57,7 @@ set imsize  = 0
 set systemp    = 40
 set jyperk     = 40
 set bandwidth  = 8000
-set weighting  = 'robust=0.5'
-set weighting  = 'sup=0'
+set weighting  = $5
 
 
 # echo "   ---  ALMA Single Field Multichannel Imaging    ---   " > timing
@@ -134,10 +136,11 @@ set uvrange = `uvcheck vis="$config.$dec.uv" | awk '{if(NR==6)print 0.3*$6, 0.3*
 set baseline = `echo $uvrange | awk '{print $2}'`
 set Nyquist = `calc "12*3600*($antdiam/2)/(pi*$baseline)" | awk '{printf("%.1f\n",$1)}'`
 echo " " >> timing
-echo " Config  DEC  HA[hrs]  Nchan  Rms[\muJy]  Beam[arcsec] Tb_rms[\muK] Sidelobe[%]:Rms,Max,Min Nvis[%] uvrange[m] weighting" >> timing
-echo  "$config  $dec  $harange  $nchan  $RMS   $BMAJ $BMIN    $TBRMS   $SRMS  $SMAX  $SMIN  $Nvis  $nvis $uvrange $weighting" >> timing
+echo "Config  DEC    HA  Nchan   Rms     Beam       Tb_rms     Sidelobe[%]    Nvis   uvrange  weighting"  >> timing
+echo "        deg.   hrs.      [\muJy]    [arcsec]   [\muK]     Rms,Max,Min   %     #    [m]" >> timing
+echo  "$config  $dec  $harange  $nchan    $RMS    $BMAJ  $BMIN   $TBRMS  $SRMS  $SMAX  $SMIN  $Nvis  $nvis  $uvrange"  $weighting >> timing
 echo " "
-echo  "$config  $dec  $harange  $nchan  $RMS  $BMAJ x $BMIN   $TBRMS   $SRMS  $SMAX  $SMIN  $Nvis  $nvis $uvrange $weighting" >> beams.results
+echo  "$config  $dec  $harange  $nchan    $RMS    $BMAJ x $BMIN  $TBRMS    $SRMS  $SMAX  $SMIN  $Nvis  $nvis  $uvrange"  $weighting >> beams.results
 mv timing $config.$dec.$harange.$nchan.$imsize.$nvis
 cat $config.$dec.$harange.$nchan.$imsize.$nvis
 
