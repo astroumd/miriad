@@ -17,6 +17,7 @@
 /*		  Added -x flag.					*/
 /*    rjs  4jan93 Support .f2c files.					*/
 /*    rjs  5oct95 -i flag.						*/
+/*    pjt  4jun07 default to posix style of compiling                   */
 /*									*/
 /*  Compiling:								*/
 /*    You must specify one (and only one) of the following "defines"	*/
@@ -26,6 +27,7 @@
 /*      sysv		Old System V (without opendir, etc).		*/
 /*      bsd		Old BSD -- not the posix directory setup.	*/
 /*      vms		Vms-style routines.				*/
+/*    We now pick posix as the default if none are set                  */
 /*----------------------------------------------------------------------*/
 
 #define TRUE 1
@@ -34,6 +36,19 @@
 #define MAXDIRS 128
 #include <stdio.h>
 #include <ctype.h>
+
+
+/* if none of the expected def's are set, choose the most reasonable */
+
+#ifndef vms
+# ifndef bsd
+#  ifndef sysv
+#   ifndef posix
+#    define posix 1
+#   endif
+#  endif
+# endif
+#endif
 
 /* Some definitions, etc, to help make BSD, VAX-C and System-V look alike. */
 
