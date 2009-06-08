@@ -36,8 +36,19 @@ c
 c	An options menu provides a choice of display style, contour levels,
 c	and units. Further interactive help is available within the task.
 c
-c       For an interactive X windows interface, see VELPLOTC
-c       (limited distribution)
+c	e.g. to write a position-velocity image.
+c	Position velocity cuts can be created
+c	with the cursor whilst displaying a velocity-averaged map, and/or
+c	by editing a list in Position-velocity from the MAIN MENU.
+c	To write a position-velocity image, first plot the P-V  image 
+c	that you want, then in the MAIN MENU, select the OPTIONS MENU
+c	and type "W" -- Write map to file [Y/N]..... N
+c	exit the OPTIONS MENU
+c	select Position-velocity from the MAIN MENU,
+c	and do the PV plot again.  This time it will ask for a file name
+c	and write it as a Miriad image.
+c	Then go back to options and type W to go back to plot mode.
+c
 c@ in
 c	Input image name. No default.
 c@ device
@@ -129,11 +140,12 @@ c    19sep00 pjt   increased filenames
 c    27jan01 pjt   fixed bug due to above
 c    22mar02 mchw  better logarithmic contour levels.
 c    26jun02 mchw  fixed bug due to longer filenames. (cf. 19sep00)
+c    08jun09 mchw  added example to doc.
 c----------------------------------------------------------------------c
 	include 'velplot.h'
 	include 'mem.h'
 	character*(*) version
-	parameter(version='(version 3.0 26-jun-2002)')
+	parameter(version='(version 3.0 08-June-2009)')
 	integer maxnax,maxboxes
 	parameter(maxnax=3,maxboxes=128)
 	integer boxes(maxboxes),nsize(maxnax),blc(maxnax),trc(maxnax)
