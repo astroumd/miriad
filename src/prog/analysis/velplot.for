@@ -140,7 +140,8 @@ c    19sep00 pjt   increased filenames
 c    27jan01 pjt   fixed bug due to above
 c    22mar02 mchw  better logarithmic contour levels.
 c    26jun02 mchw  fixed bug due to longer filenames. (cf. 19sep00)
-c    08jun09 mchw  added example to doc.
+c    08jun09 mchw  added example to doc. 
+c    08jun09 mchw  fixed old bug: save vmax,vmin in subroutine velmap
 c----------------------------------------------------------------------c
 	include 'velplot.h'
 	include 'mem.h'
@@ -2285,6 +2286,7 @@ c----------------------------------------------------------------------c
 	include 'mem.h'
 	integer vmom1,vmom2,vmom3,vmom4
 	real vmax(128),vmin(128),xmin,xmax,ymin,ymax,vmean,vwidth
+	save vmax,vmin
 	integer imaps,nmaps,i,j,k,nmom,length
 	integer windx,windy,sym,lwidth
         real cf,tr(6)
