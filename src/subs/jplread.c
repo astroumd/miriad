@@ -962,7 +962,9 @@ char *s, c;
   return -1;
 }
 
-int getline(s, n, f)
+/* package  glibc-headers-2.10.1-2.i586 on Fedora-11 now defines a getline() */
+/* but currently getline is not used in this routine anyways                 */
+int my_getline(s, n, f)
 char *s;
 int n;
 FILE *f;
