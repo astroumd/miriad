@@ -1,0 +1,10 @@
+# Minimum Redundancy Arrays.
+# topocentric coordinates in meters.
+# baseunit=-3.33564 to convert to equatorial system measured in nanoseconds.
+# north    east      zenith     station   antenna
+   0.000    0.000    0.000                  6m
+   0.000   10.000    0.000                  6m
+   0.000   60.000    0.000                  6m
+   0.000   90.000    0.000                  6m
+   0.000  110.000    0.000                  6m
+   0.000  130.000    0.000                  6m
