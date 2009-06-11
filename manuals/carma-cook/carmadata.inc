@@ -75,7 +75,7 @@ data. The various stages of baseline corrections are not maintained here, see Se
 \item
 2007/11/26:  amplitude decorrelation fixed; use uvdecor {see \ref{uvdecor}) to fix
 \item
-2007/12/04:  source name confusion (bugzilla \#564} fixed (btw, we're at data version 1.0.3!!)
+2007/12/04:  source name confusion (bugzilla \#564) fixed (btw, we're at data version 1.0.3!!)
 \item
 2008/01/23:  fixed minor antenna pad correction rotation; data before this ALWAYS need baseline corrections applied
 \item
@@ -84,6 +84,8 @@ data. The various stages of baseline corrections are not maintained here, see Se
 2008/04/20:  better models for mars brightness temperature (see also miriad's {\tt marstb}\index{marstb} program)
 \item
 2008/11/xx:  PACS (SZA) data now routinely available. Usually place a 'z' in front of your ct or cx file but these are not integrated into the Illinois archive.
+\item
+2008/12/22:  planet data properly tagged in the first 10-20 sec after a switch from NOISE source  (bugzilla \#695).
 \item
 2008/12/31:  all data on this day have a leapsecond error: {\tt uvedit time=-1} to fix.
 \item
