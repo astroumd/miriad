@@ -35,7 +35,7 @@ which should be on Cedar Flat in the directory:
 You can also obtain them directory as in this example:
    wget http://cedarflat.mmarray.org/observing/baseline/antpos/antpos.080606
 
-
-Jin Koda's development page:
-   http://www.astro.caltech.edu/~koda/carma/bl/index.html
+The index.html file should be:
+   wget http://cedarflat.mmarray.org/observing/baseline/index.html
+    
 
