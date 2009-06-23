@@ -40,6 +40,7 @@ c	  2polarization Plot/list the second leakages vs antenna number.
 c	  delays       Plot/list the delays vs time.
 c	  speccor      Plot/list the spectral correction vs time.
 c	  bandpass     Plot/list the bandpass shape vs frequency.
+c	               print mean and rms.
 c	  dots         Plot things as dots (rather than chunky circles).
 c	  dtime	       Give time in days and fractions of a day. This is more
 c	               useful for listing files which are to be passed into
@@ -102,12 +103,13 @@ c    rjs  09mar98 Trim the device name before passing it through to PGPLOT.
 c    rjs  13mar98 Change format statement.
 c    nebk 13jul04 More sig figs for leakages
 c    rjs  23jan07 Handle second leakage table.
+c    mchw 23jun09 Print mean and rms value on plots.
 c  Bugs:
 c------------------------------------------------------------------------
 	integer MAXSELS
 	character version*(*)
 	parameter(MAXSELS=256)
-	parameter(version='GpPlt: version 23-Jan-07')
+	parameter(version='GpPlt: version 23-Jun-09')
 	include 'gpplt.h'
 	integer iostat,tIn,nx,ny,nfeeds,nants,nsols,ierr,symbol,nchan
 	integer ntau,length
@@ -1088,7 +1090,7 @@ c------------------------------------------------------------------------
 	character line*80,Label*20,Title*12
 	logical more
 	real x(maxTimes),y(maxTimes),freqmin,freqmax
-	real Value(2*MAXANT)
+	real Value(2*MAXANT),ave,rms
 	complex Gain
 	integer ichan,ifeed,iant,offset,j,j1,j2,nres,ng
 c
@@ -1115,12 +1117,16 @@ c
 	      offset = (ifeed-1) + (iant-1)*nfeeds
 	      ng = 0
 	      Value(offset+1) = 0
+          ave = 0.
+          rms = 0.
 	      do ichan=1,nchan
 		Gain = G(ichan + nchan*offset)
 		if(abs(real(Gain))+abs(aimag(Gain)).gt.0)then
 		  ng = ng + 1
 		  x(ng) = freq(ichan)
 		  y(ng) = GetVal(Gain,Value(offset+1))
+          ave = ave + y(ng)
+          rms = rms + y(ng)*y(ng)
 		endif
 	      enddo
 	      if(ng.gt.0)then
@@ -1130,6 +1136,9 @@ c
 	        Title = 'Antenna '//itoaf(iant)
 	        call pglab('Frequency (GHz)',Label,Title)
 		nres = nres + 1
+            ave = ave/ng
+            rms = sqrt(rms/ng - ave*ave)
+            print *, Title, Label, 'ave, rms=', ave, rms
 	      endif
 	    enddo
 	    call subfill(nres,ppp)
