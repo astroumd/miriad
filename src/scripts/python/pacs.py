@@ -124,3 +124,6 @@ def example2(file):
     #
     plt.show()
 
+
+if __name__ == '__main__':
+    print "No __main__ yet, if ever...."
