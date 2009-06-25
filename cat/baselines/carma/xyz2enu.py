@@ -9,6 +9,7 @@
 import math,sys
 
 def read_antpos(file):
+    """read an antpot file, usually from $CARMA/baselines/carma"""
     fp = open(file)
     lines = fp.readlines()
     fp.close()
@@ -22,7 +23,8 @@ def read_antpos(file):
         xyz.append( (x,y,z) )
     return xyz
 
-def xyz2enu(xyz,lat):
+def xyz2enu(xyz,lat=37.2804):
+    """ CARMA latitude is the default"""
     sinl=math.sin(lat*math.pi/180.0)
     cosl=math.cos(lat*math.pi/180.0)
     enu=[]
@@ -35,6 +37,7 @@ def xyz2enu(xyz,lat):
     return enu
 
 def range_enu(enu):
+    """find the range (min/max) in baselines"""
     bl = 0
     dmin =  999999
     dmax = -999999
