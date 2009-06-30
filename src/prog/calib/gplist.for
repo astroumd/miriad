@@ -129,13 +129,14 @@ c    smw/pjt  8dec06 Format fiddling
 c    dnf     14feb08 More format fiddling to assure spaces between columns
 c    pjt     24nov08 Fix dyn mode for > 15 ants, remove options=dyn (now default)
 c    pjt      5dec09 Add ants= keyword to limit the width of output
+c    pjt     30jun09 Add antenna numbers (to get SZA data to work: 16..230
 c                    
 c  Bugs and Shortcomings:
 c    fix options=complex for > 8 ants
 c-----------------------------------------------------------------------
 	include 'gplist.h'
 	character version*(*)
-	parameter(version='GpList: version 18-mar-09')
+	parameter(version='GpList: version 30-jun-09')
 	logical dovec,docomp,dophas,doall,dozero,domult,hexists,doamp
 	logical dolimit,doclip,dosigclip,doforce,dohist,doaddph
 	real jyperk(MAXGANT) 
@@ -316,7 +317,7 @@ c------------------------------------------------------------------------
 c
 c  Externals.
 c
-	integer hsize
+	integer hsize, len1
 
 c
 c  Data 
@@ -365,9 +366,9 @@ c  Now list the values read
 c
       if (docomp) then
          call output('The complex gains listed in the table are:')
-	 msg = '  Time     Ants 1/9     Ants 2/10     ' //
+	 msg = '  Time     AntN 1/9     Ants 2/10     ' //
      *	       'Ants 3/11    Ants 4/12    Ants 5/13  '  //
-     *	       'Ants 6/14    Ants 7/15    Ant  8'
+     *	       'Ants 6/14    Ants 7/15    Ant  8/16'
          call output(msg)
 c         *** TODO:  this needs some major work for dynamic ngains values
 c          
@@ -393,15 +394,12 @@ c
          enddo
       else if (dophas) then
          call output('The phase gain values listed in the table are:')
-	 msg =  'Time  Anten '
-c	 do i=1,ngains
-c	    write(word,'(i2,3x)') i
-c	    msg = msg(1:len1(msg)) + word
-c	 enddo
-         msg =  'Time  Anten 1    2    3    4' //
-     *          '    5    6    7    8    9   10' //
-     *          '   11   12   13   14   15'
-         call output(msg)
+	 msg =  'Time  AntN '
+	 do i=1,ngains
+	    write(word,'(3x,i2)') i
+	    msg = msg(1:len1(msg)) // word
+	 enddo
+	 call output(msg)
          do i=1,nsols
             call JulDay(time(i),'H',line(1:18))
             ctime = line(9:18)
@@ -420,9 +418,11 @@ c	 enddo
          enddo
 	 call output('The amplitude gain values listed '//
      *               'in the table are:')
-	 msg = '  Time      Ant 1  Ant 2  Ant 3  Ant 4 ' //
-     *         ' Ant 5  Ant 6  Ant 7  Ant 8  Ant 9  Ant10' //
-     *         '  Ant11  Ant12  Ant13  Ant14  Ant15 '
+	 msg =  'Time  AntN '
+	 do i=1,ngains
+	    write(word,'(5x,i2)') i
+	    msg = msg(1:len1(msg)) // word
+	 enddo
 	 call output(msg)
 
 	 do i=1,nsols
