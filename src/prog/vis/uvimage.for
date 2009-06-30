@@ -62,6 +62,7 @@ c     pjt  20sep06  Initial version, cloned off varmap
 c     pjt  21sep06  Added mode keyword, more efficient memory usage
 c     pjt  22dec06  Less terse, add ignore=
 c     pjt   8dec08  Allow scanning mode if out= absent
+c     pjt  30jun09  fixed labeling bug in output cube
 c
 c  TODO
 c     - write plane by plane, but this will limit it to mode=1
@@ -77,7 +78,7 @@ c
        include 'maxdim.h'
        include 'mirconst.h'
        character*(*) version
-       parameter(version='UVIMAGE: version 8-dec-2008')
+       parameter(version='UVIMAGE: version 30-jun-2009')
        integer MAXSELS
        parameter(MAXSELS=512)
        integer MAXSIZE
@@ -205,17 +206,22 @@ c
        endif
 
        if (omode.EQ.1) then
+          write(*,*) 'C-B-T cube' 
           nsize(1) = nchannel
           nsize(2) = nbl
           nsize(3) = ntime
        else if (omode.EQ.2) then
+          write(*,*) 'T-C-B cube' 
           nsize(1) = ntime
           nsize(2) = nchannel
           nsize(3) = nbl
-       else
+       else if (omode.EQ.3) then
+          write(*,*) 'T-B-C bcube' 
           nsize(1) = ntime
           nsize(2) = nbl
           nsize(3) = nchannel
+       else
+          call bug('f','Bad cube ordering mode')
        endif
 
 
@@ -375,12 +381,14 @@ c
          call wrhda(lOut,'ctype3','TIME')
       else if (omode.eq.2) then
          call wrhda(lOut,'ctype1','TIME')
+         call wrhda(lOut,'ctype2','CHANNEL')
+         call wrhda(lOut,'ctype3','BASELINE')
+      else if (omode.eq.3) then
+         call wrhda(lOut,'ctype1','TIME')
          call wrhda(lOut,'ctype2','BASELINE')
          call wrhda(lOut,'ctype3','CHANNEL')
       else
-         call wrhda(lOut,'ctype1','TIME')
-         call wrhda(lOut,'ctype2','CHANNEL')
-         call wrhda(lOut,'ctype3','BASELINE')
+         call bug('w','Illegal output mode - bad axis labels')
       endif
       call wrhdr(lOut,'epoch',epoch)
       call wrhda(lOut,'object',source)
