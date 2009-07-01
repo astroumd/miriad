@@ -9,10 +9,17 @@
 import numpy             as np
 #import matplotlib.pyplot as plt
 import matplotlib.pylab  as plt
+#
+from scipy.interpolate  import spline
+import pylab
 
 
 __version__ = "PACS data reduction script helper functions: $Id$"
 
+
+#   the buddy pairs in the different campains; note these are 1-based antenna numbers!!!
+buddy_b09 = [(2,21),(4,23),(5,20),(6,18),(8,19),(9,22),(13,16),(15,17)]
+buddy_a09 = [ ]
 
 def sexa2dec(dms):
     """
@@ -29,6 +36,7 @@ def sexa2dec(dms):
         return 0.0
 
 def avector(a):
+    """convert ascii list into float list"""
     v = []
     for x in a:
         v.append(float(x))
@@ -89,7 +97,37 @@ def rglist(file):
             r.append( avector(w[1:]) )
     return (nants,np.array(t), np.array(r).transpose())
             
-            
+ 
+def pplot(t,p,s='ro-'):
+    """add an unwrapped phase plot"""
+    plt.plot(t,unwrap(p),s)
+
+def fit1(pair,t1,p1,t2,p2):
+    """for given buddy pair (1..8) grab the data for phase corr fit"""
+    # get 0 based ant number for carma and sza ant
+    c_an = buddy_b09[pair-1][0] - 1
+    s_an = buddy_b09[pair-1][1] - 1
+    #  get the phases for the CARMA and SZA buddy pair
+    c_p = unwrap(p1[c_an])
+    s_p = unwrap(p2[s_an])
+    # reinterpolate the sza data on times of carma
+    #c_p1 = interp(t1, t2,s_p)
+    s_p2 = spline(t2,s_p, t1)
+    # fit
+    p=pylab.polyfit(s_p2,c_p,1)
+    # plot
+    plt.title('Antenna pair %d %d' % tuple(buddy_b09[pair-1]))
+    plt.plot(s_p2,c_p,'ro',label='a=%.2f b=%.2f' % tuple(p))
+    plt.plot(s_p2,pylab.polyval(p,s_p2),'-',label='Linear regression')
+    plt.legend(loc='best')
+    plt.xlabel('phase SZA %d' % (s_an+1))
+    plt.ylabel('phase CARMA %d' % (c_an+1))
+    print p
+
+def figure():
+    plt.figure()
+    plt.show()
+
 def example1(file):
     (nants,t,r) = rglist(file)
     plt.plot(t,r[4],'ro-')
@@ -97,6 +135,7 @@ def example1(file):
     plt.axis([0,24,-180,180])
     plt.savefig('example1.ps')
     plt.show()
+
 
 
 def example2(file):
@@ -123,6 +162,18 @@ def example2(file):
     plt.title('Ant-5')
     #
     plt.show()
+
+def example3(file,ant,doit=True):
+    (nants,t,r) = rglist(file)
+    plt.plot(t,r[ant-1],'ro-')
+    plt.show()
+
+def example4(file1,file2):
+    """feed it a CARMA and SZA dataset"""
+    (n1,t1,p1) = rglist(file1)
+    (n2,t2,p2) = rglist(file2)
+    fit1(1,t1,p1,t2,p2)
+    
 
 
 if __name__ == '__main__':
