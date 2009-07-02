@@ -333,6 +333,7 @@ c    30jan08  mchw  Fixed case of only one offset pointing center.
 c    02may08  mchw  baseline in 100m units for atmospheric phase index.
 c    07oct08  mchw  better values for baseunit=-3.335668 lat=40:49:02.50 in uvgen
 c    02dec08  mchw  increase line(512) to accomodate longer filenames.
+c     2jul09  pjt   add veltype to make listobs work
 c
 c  Bugs/Shortcomings:
 c    * Frequency and time smearing is not simulated.
@@ -361,7 +362,7 @@ c	pbfwhm=76,137,-0.2 simulates a primary beam pattern between
 c	10m and 6m antennas at 100 GHz. 
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version = 'Uvgen: version 1.0 2-Dec-2008')
+	parameter(version = 'Uvgen: version 1.0 2-jul-2009')
 	integer ALTAZ,EQUATOR
 	parameter(ALTAZ=0,EQUATOR=1)
 	integer PolRR,PolLL,PolRL,PolLR,PolXX,PolYY,PolXY,PolYX
@@ -755,6 +756,7 @@ c
 	call uvputvra(unit,'source',outfile)
 	call uvputvra(unit,'operator','uvgen')
 	call uvputvra(unit,'version',version)
+	call uvputvra(unit,'veltype','VELO-LSR')
 c
 	call uvputvrd(unit,'ra',sra,1)
 	call uvputvrd(unit,'obsra',sra,1)
