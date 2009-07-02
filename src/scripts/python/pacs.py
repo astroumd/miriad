@@ -124,6 +124,35 @@ def fit1(pair,t1,p1,t2,p2):
     plt.ylabel('phase CARMA %d' % (c_an+1))
     print p
 
+def fit4(pair,t1,p1,t2,p2):
+    """for given buddy pair (1..8) grab the data for phase corr fit"""
+    # get 0 based ant number for carma and sza ant
+    c_an = buddy_b09[pair-1][0] - 1
+    s_an = buddy_b09[pair-1][1] - 1
+    #  get the phases for the CARMA and SZA buddy pair
+    c_p = unwrap(p1[c_an])
+    s_p = unwrap(p2[s_an])
+    # reinterpolate the sza data on times of carma
+    #c_p1 = interp(t1, t2,s_p)
+    s_p2 = spline(t2,s_p, t1)
+    # fit
+    p=pylab.polyfit(s_p2,c_p,1)
+    # plot
+    plt.figure()
+    plt.subplot(2,1,1)
+    plt.title('Antenna pair %d %d' % tuple(buddy_b09[pair-1]))
+    plt.plot(s_p2,c_p,'ro',label='a=%.2f b=%.2f' % tuple(p))
+    plt.plot(s_p2,pylab.polyval(p,s_p2),'-',label='Linear regression')
+    plt.legend(loc='best')
+    plt.xlabel('phase SZA %d' % (s_an+1))
+    plt.ylabel('phase CARMA %d' % (c_an+1))
+    plt.subplot(2,1,2)
+    plt.plot(t1,c_p,'ro',label='CARMA')
+    plt.plot(t2,s_p,'bo',label='SZA')
+    plt.legend(loc='best')
+    plt.xlabel('time')
+    plt.ylabel('phase')
+
 def figure():
     plt.figure()
     plt.show()
@@ -172,7 +201,7 @@ def example4(file1,file2):
     """feed it a CARMA and SZA dataset"""
     (n1,t1,p1) = rglist(file1)
     (n2,t2,p2) = rglist(file2)
-    fit1(1,t1,p1,t2,p2)
+    fit4(1,t1,p1,t2,p2)
     
 
 
