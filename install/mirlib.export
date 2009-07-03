@@ -2,6 +2,7 @@
 #
 #  Generate files for subsystems like:  CARMA_TOOLS and $AIPS++/code/aips/mirlib
 #  (though note as of this writing, summer 2004, AIPS++ still the old MIR3)
+#  for CASA: CASACORE/mirlib
 #  We assume here the new MIR4 version, this script produces unpredictable
 #  things for MIR3
 #
