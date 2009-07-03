@@ -14,7 +14,7 @@ else
 endif
 
 echo Attempting to install karma in $dest
-
+echo Note $dest needs to be an absolute directory reference
 
 if (! -e $dest) then
   echo No $dest
