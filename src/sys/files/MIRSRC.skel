@@ -76,6 +76,12 @@ alias   mirindex=mir.index
 alias   mirbug='mir.bug.csh bug'
 alias   mirfeedback='mir.bug.csh feedback'
 #  -------------------------------------------------------------
+#  Karma, if present
+
+if [ -f $MIR/borrow/karma/.karmarc ]; then
+  . $MIR/borrow/karma/.karmarc
+fi
+
 #
 #  If the file $MIR/MIRRC.local exists, execute it now.
 #

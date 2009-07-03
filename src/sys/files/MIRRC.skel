@@ -81,6 +81,12 @@ alias   mirindex        mir.index
 alias   mirbug          mir.bug.csh bug
 alias   mirfeedback     mir.bug.csh feedback
 #  -------------------------------------------------------------
+#  Karma, if present
+if (-e $MIR/borrow/karma/.login) then
+  echo Loading karma tools
+  source $MIR/borrow/karma/.login
+endif
+
 #
 #  If the file $MIR/MIRRC.local exists, execute it now.
 #
