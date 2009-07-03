@@ -84,7 +84,15 @@ alias   mirfeedback     mir.bug.csh feedback
 #  Karma, if present
 if (-e $MIR/borrow/karma/.login) then
   echo Loading karma tools
-  source $MIR/borrow/karma/.login
+  setenv KARMABASE $MIR/borrow/karma/
+  source $KARMABASE/.login
+  if ($MIRHOST == "darwin") then
+    if ($?DYLD_LIBRARY_PATH) then
+      setenv DYLD_LIBRARY_PATH $KARMABASE/lib:$DYLD_LIBRARY_PATH
+    else
+      setenv DYLD_LIBRARY_PATH $KARMABASE/lib
+    endif
+  endif
 endif
 
 #
