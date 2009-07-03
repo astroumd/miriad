@@ -7,12 +7,20 @@
 # note: $MIR needs to be present, it will install karma in $MIR/borrow
 
 
+if ($#argv == 1) then
+  set dest=$1
+else
+  set dest=$MIR/borrow
+endif
 
-if (! -e $MIR/borrow) then
-  echo No $MIR/borrow
+echo Attempting to install karma in $dest
+
+
+if (! -e $dest) then
+  echo No $dest
   exit 1
 endif
- 
 
-rsync -a rsync.science-software.net::karma/common/ $MIR/borrow/karma
-$MIR/borrow/karma/csh_script/install-karma         $MIR/borrow/karma
+
+rsync -a rsync.science-software.net::karma/common/ $dest/karma
+$dest/karma/csh_script/install-karma               $dest/karma
