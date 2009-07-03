@@ -1,0 +1,18 @@
+#! /bin/csh -f
+
+# this script is just a useful reminder how karma can be installed
+# inside of MIRIAD, useful for automagically building tar balls
+# for summerschool etc.
+
+# note: $MIR needs to be present, it will install karma in $MIR/borrow
+
+
+
+if (! -e $MIR/borrow) then
+  echo No $MIR/borrow
+  exit 1
+endif
+ 
+
+rsync -a rsync.science-software.net::karma/common/ $MIR/borrow/karma
+$MIR/borrow/karma/csh_script/install-karma         $MIR/borrow/karma
