@@ -2,10 +2,12 @@
 #
 #  this script will generate new miriad_start.{csh,sh} files
 #  it will detect if it is 
-#      MIR4, the Miriad V4
+#      MIR4, the Miriad V4 (both old and new install methods)
 #      ATNF-MIRIAD, the RCS based binary weekly builds
 #
 #  See also install.miriad_bin.atnf
+#
+# TODO:   optional argument to select old or new for MIR4 
 
 if ($#argv == 0) then
   # try and discover, if the current directory looks like a miriad one
