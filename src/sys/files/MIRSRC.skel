@@ -79,9 +79,9 @@ alias   mirfeedback='mir.bug.csh feedback'
 #  Karma, if present
 
 if [ -f $MIR/borrow/karma/.karmarc ]; then
-  export KARMABASE $MIR/borrow/karma/
+  export KARMABASE=$MIR/borrow/karma/
   . $KARMABASE/.karmarc
-  if $MIRHOST = "darwin"; then
+  if test $MIRHOST = "darwin"; then
     if test -z "$DYLD_LIBRARY_PATH"; then
       export DYLD_LIBRARY_PATH=${KARMABASE}/lib:${DYLD_LIBRARY_PATH}
     else
