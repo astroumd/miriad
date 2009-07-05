@@ -775,7 +775,7 @@ uvwide}.\index{uvwide}, if you plan to use them.
 \subsection{Flagging using tvflag}
 
 The interactive flagging program {\tt tvflag} must be run on an 8-bit
-display, or PseudoColor display. Most modern desktops are so color
+(a.k.a. PseudoColor) display. Most modern desktops are so color
 rich, they cannot be effectively run on an 8-bit display, though {\tt
 twm} and {\tt fvwm} can. For example, on Linux you can start a second
 X session from another console (e.g. ctrl-alt-F2):

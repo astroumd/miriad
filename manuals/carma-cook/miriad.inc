@@ -2,6 +2,7 @@
 
 
 \chapter{Miriad cheatsheet}
+\label{a:miriad}
 
 \section{Reminders}
 
@@ -211,3 +212,141 @@ Many programs share common options.
 
 Used for input for visibility data (vis=; some programs, such as {\tt invert}, accept
 multiple files separated by a comma) and images (in=).
+
+\section{Gridding time/frequency/Keeping track of time in MIRIAD}
+
+Observations such as the one in CARMA are tagging by time, and map portions of the sky
+at a number of frequencies. As such the concept of understanding gridding coordinates 
+sometimes becomes important how ``pixels'' are labeled. Are they using the center,
+or are they using the start of a interval/pixel/voxel... This section will clarify the
+conventions in MIRIAD.   In FITS, an astronomy standard to exchange data, the 
+convention is always the center of the pixel/interval, as long as the FITS keyswords
+{\tt NAXISn, CRVALn, CDELTn, CRPIXn, CTYPEn} are involved.
+
+\subsection{time: uvgen, CARMA, uvaver}
+
+Time (UV variable {\tt time}, in JD) is
+recorded at the start of an integration interval (UV variable {\tt inttime}, in sec).
+For example, for {\tt uvgen time=09jul01:10:00:00 harange=0,1,0.1} you will see
+times:
+
+\footnotesize 
+\begin{verbatim}
+09JUL01:10:00:00.0
+09JUL01:10:05:59.0
+09JUL01:10:11:58.0
+09JUL01:10:17:57.1
+09JUL01:10:23:56.1
+09JUL01:10:29:55.1
+09JUL01:10:35:54.1
+09JUL01:10:41:53.1
+09JUL01:10:47:52.1
+09JUL01:10:53:51.2
+
+\end{verbatim}
+\normalsize
+
+Programs such {\tt selfcal} and {\tt mselfcal} extract and average times from these 
+observations and again record the nominal starting time of their interval in the gain
+tables. {\tt uvaver} can also average in time, and as researching the recorded time
+stamps some small issues became apparent that if used under circumstances of large
+phase drifts, there could be issues resulting from slighly offset times.
+
+\subsection{frequency: uvaver}
+
+Programs dealing with frequencies and velocities in multi-channel data follow
+the normal FITS convention where the center of the interval/pixel
+
+\subsection{position: invert}
+
+
+
+
+
+
+\section{Programming in MIRIAD}
+
+MIRIAD was written with the intent that ``anybody'' should be able to re-program it.
+Most MIRIAD programs are implemented as a Fortran PROGRAM, calling a suite of 
+subroutines from our MIRIAD library. Graphics is all done via the publicly available
+PGPLOT library, which comes with MIRIAD. A small part of the library is actually written
+in C, which implements all the lower level routines that read and write MIRIAD files.
+However, most of the ``astronomy'' is implemented in Fortran.
+
+The most common scenario is when a program needs a small modification, for example, a
+write statement needs more digits, or an extra column.
+
+\subsection{Old-style build}
+
+The old-style build uses a set of shell scripts, whereas a configuration file contains
+the compiler flags and such. 
+You can recognize the old-style build because {\tt \$MIR/bin} and {\tt \$MIR/lib}
+exist and has a few
+subdirectories. The new-style build works the other way around and places those
+normally inside a single {\tt \$MIR/build} directory.
+
+
+
+\footnotesize
+\begin{verbatim}
+  % edit $MIRPROG/calib/mfcal.for
+  % mirboss
+  % mir.prog mfcal
+\end{verbatim}
+\normalsize
+
+If you want to change a subroutine, it will depend if your Unix version uses shared libraries
+if you need to recompile the relevant programs as well. Currently the answer is : Linux uses
+a shared library ({\tt \$MIRLIB/libmir.so), whereas Mac does not.
+
+
+\footnotesize
+\begin{verbatim}
+  % edit $MIRSUBS/uvdat.for
+  % mirboss
+  % mir.subs uvdat
+\end{verbatim}
+\normalsize
+
+Another common scenario is that code has been updated by the MIRIAD developers. In that case the
+procedure would be the conservative approach and recompile everything:
+
+\footnotesize
+\begin{verbatim}
+  % cd $MIR
+  % cvs update
+  % mirboss
+  % mir.install subs prog
+\end{verbatim}
+\normalsize
+
+Check the recent logfiles in {\tt \$MIR/tmp} for compilation or linking errors.
+
+
+\subsection{New-Style build}
+
+The new style build uses the well known  {\tt configure} script
+(via the {\tt autoconf} procedure) a {\tt Makefile}.
+You can recognize it because there will be a single {\tt \$MIR/build} directory within which we
+keep the usual {\tt bin, lib, etc...} directories.
+
+Although this method aims to be more portable (the old method often required editing compiler
+options in files that were hard to figure out for a newcomer), the drawback compared to the 
+old-style is that you need to be in the MIRIAD home directory, and the chain of dependancies
+could mean a long (several minutes) build for what takes 0.5 sec in the old-style build.
+Example:
+
+ 
+
+\footnotesize
+\begin{verbatim}
+   % edit $MIRPROG/calib/mfcal.for
+   % cd $MIR
+   % make install
+   % cd -
+\end{verbatim}
+\normalsize
+
+Unlike the previous examples in the old-style build, this recipe should work for any style
+of change to the MIRIAD source code .
+

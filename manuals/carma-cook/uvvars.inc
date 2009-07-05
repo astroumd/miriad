@@ -540,6 +540,11 @@ purpose(*)	\>A	\>-
 \>\>\>\  For CARMA: B=bandpass, F=flux, G=gain (phase/amp) \\
 \>\>\>\  P=polarization, R=radio pointing, S=science target, O=other\\
 
+% CODE column in AIPS: 
+% 'A' if for flux calibrater, 
+% 'C' for phase calibrater and 
+% 'B' for bandpass calibrater.
+% see also http://www.vla.nrao.edu/astro/calib/manual/key.html
 
 ra		\>R or	\>radians
 \>Right ascension of the phase center/tangent point. See {\tt epoch} for\\

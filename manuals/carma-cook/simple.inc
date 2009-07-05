@@ -4,15 +4,20 @@
 \chapter{A Simple Example}
 
 Before we bury ourselves into the details of a more typical CARMA data reduction, let us look at a
-very simple continuum observation and go over the essentials to calibrate, map and make astronomical images.
+very simple continuum observation and go over the essentials to calibrate visibility data
+and make astronomical images. While this is perhaps a silent introduction to MIRIAD, we will
+then cover a little more what MIRIAD is all about in later chapters.
+
+\section{CARMA Continuum data}
+
 The dataset
 \htmladdnormallink{ftp://ftp.astro.umd.edu/pub/carma/data/fringe.3C273.2008jun18.4.miriad.tar.gz}
                   {ftp://ftp.astro.umd.edu/pub/carma/data/fringe.3C273.2008jun18.4.miriad.tar.gz}
-can be used for this. 
+can be used for this. \footnote{Windows 1 and 4 from c0319.1D_86GCRing.5.mir, observed on 
 %% to be fixed
 {\it  to be fixed, although this data is present, this is not the one to be used}
 
-The commands you see below are Unix shell commands calling individual MIRIAD programs.
+The commands you see below are all Unix shell commands, most of the are MIRIAD programs.
 This is one of at least three ways to reduce your data using MIRIAD. It is the most compact form
 and probably the one most people will be familiar with.
 
@@ -77,7 +82,8 @@ and will expand and contract during the day.
 
 \footnotesize
 \begin{verbatim}
-  linecal vis=all.vis out=all_1.vis
+  linecal vis=all.vis 
+  uvcat   vis=all.vis out=all_1.vis
 \end{verbatim}
 \normalsize
 
@@ -177,9 +183,37 @@ a point source, this is essential.
 
 
 
-A last note before you might get your fingers wet: these commands are tedious to type, and prone to
+A last note before you might get your fingers wet: these commands are obviuosly
+tedious to type, and prone to
 typing errors. Of course in real life we use scripts (e.g. C-shell or python scripts), in such a way 
-that you repeat your data reduction finetuning the various calibration schemes you apply.
+that you repeat your data reduction script, finetuning the various calibration schemes you apply.
+
+\section{A little more on MIRIAD}
+
+As you have seen above, MIRIAD programs are just standard programs that you can run on
+your computer, normally from an interactive shell, or through a shell script. The other thing
+to realize is that most MIRIAD datasets are implemted as a set of files organized in a
+directory. You refer to a MIRIAD dataset by the directory name, you can use the tools on
+your computer to copy, rename, remove, archive etc. them.
+
+If you need help on a MIRIAD command, there are some shell commands. For example for {\tt uvcat} you
+would type:
+
+\footnotesize
+\begin{verbatim}
+
+  mirhelp uvcat
+  uvcat -k
+  uvcat -kw
+
+\end{verbatim}
+\normalsize
+
+
+Appendix~\ref{a:miriad} contains another quick summary of MIRIAD and some of the options you 
+will frequently use. Appendix~\ref{a:carmadata} lists the peculiarities of the  MIRIAD data
+dialect that the CARMA telescopes write, which can be useful for those familiar with MIRIAD
+data from other telescopes.
 
 
 \chapter{Description of necessary steps}
@@ -196,9 +230,9 @@ that you repeat your data reduction finetuning the various calibration schemes y
 
               - passband calibration
 
-              - gain calibration
-
               - flux calibration
+
+              - gain calibration
 
               - making images
 
@@ -217,6 +251,10 @@ that you repeat your data reduction finetuning the various calibration schemes y
          d) bad correlator band
 
          e) missing data for antenna
+         
+         f) bad channels
+
+         g) bad pointing/tracking
 
          ...
 
