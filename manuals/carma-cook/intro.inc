@@ -53,6 +53,7 @@ the UV variables (Appendix~\ref{app:uvvars}) in this version of the manual
 should be considered the appropriate ones for CARMA and other versions may show
 missing or conflicting information for the moment.
 
+% laura suggest tomaybe note here which tasks are CARMA specific
 
 
 \section{Future}
@@ -80,7 +81,7 @@ shell script:
 
 
 and the other employs the {\tt miriad} shell, an AIPS like program in which you set variables
-and run the task, one by one:
+and run the task, one by one. 
 
 \begin{verbatim}
 Task:   uvlist
@@ -93,43 +94,19 @@ Task:   uvlist
   log      =  
 \end{verbatim}
 
-The drawback of the latter style is that 1) it cannot be easily cut and paste, and 2) this does not
-reflect verbatim what the user would type. However, it scales better in terms of long commands,
-but conversely, wastes a lot of paper/screen.
-
-The ``2008'' CARMA cookbook uses the former style. The SMA and ATNF guides prefer the latter.
-
-\begin{figure}
-\begin{center}
-\epsfxsize=11cm\leavevmode\epsfbox{fig1.ps}
-\end{center}
-\caption{
-This plot shows the system temperature as function of time for antenna C-1.
-{\bf miriad command:} {\tt varplt vis=cx012.SS433.2006sep07.1.miriad device=/xs yaxis=systemp nxy=5,3 yrange=0,2000 options=compress}
-}
-\end{figure}
-
-Data links can also be provided via latex2html, for example
-                     \htmladdnormallink{fringe.3C273.2008jun18.4.miriad.tar.gz}
-{ftp://ftp.astro.umd.edu/pub/carma/data/fringe.3C273.2008jun18.4.miriad.tar.gz}
-
-\begin{htmlonly}
-\section{HTMLONLY}
-
-this is for HTML only
-\end{htmlonly}
-
-\begin{latexonly}
-\section{LATEXONLY}
-
-this is for LATEX only
-\end{latexonly}
+The parameters are global though, when you switch a taskname, the same {\tt vis=} would appear in
+this list if the new task also has this parameter.
 
 
 
 \section{Links}
 
 \begin{itemize}
+
+\item
+MIRIAD main webpage:
+\htmladdnormallink{http://carma.astro.umd.edu/miriad}
+{http://carma.astro.umd.edu/miriad}
 
 \item
 Wiki page for Miriad and CARMA Cookbook: 
@@ -141,6 +118,11 @@ Miriad bugzilla (part of CARMA bugzilla) at
 \htmladdnormallink{http://www.mmarray.org/bugzilla}
 {http://www.mmarray.org/bugzilla}
 
+\item
+Google mailing list for MIRIAD users, at 
+\htmladdnormallink{http://groups.google.com/group/miriad?hl=en}
+{http://groups.google.com/group/miriad?hl=en}
+
 \end{itemize}
 
 \section{Revision History}
@@ -149,7 +131,7 @@ Miriad bugzilla (part of CARMA bugzilla) at
 \item 20-apr-2007:   first draft 
 \item 15-feb-2008:   Draft for version 2 of this document
 \item 21-jun-2008:   Summerschool 2008 version
-\item xx-jun-2009:   Largely Revised Summerschool 2009 version 
+\item 10-jul-2009:   Largely Revised Summerschool 2009 version 
 
 \end{itemize}
 
@@ -157,6 +139,7 @@ Miriad bugzilla (part of CARMA bugzilla) at
 
 Stuart Vogel, Stephen White, Jin Koda, Joanna Brown  etc..  
 And the fine crew of the first Miriad ``Party'' where
-much of this material was first written. Fine tuning
+much of this material was first written. Not to mention
+all those convincing me to keep adding more.
 
 
