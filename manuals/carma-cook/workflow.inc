@@ -586,6 +586,10 @@ carefully, either by filename, or comments in the file.\index{uvedit}
 Errors due to baselines can be seen as slopes in phase vs. time. See
 Figure ...
 
+You can also visually check how much the baselines changed from what is
+available in your visibility dataset, by comparing  the X-Y-Z values (in nsec)
+in the {\tt antpos} file with what {\tt listobs} produced.
+
 \bigskip
 
 % OLD: {\tt http://www.astro.caltech.edu/~koda/carma/bl/index.html} and/or 

@@ -122,7 +122,7 @@ we merely provide a short cheat sheet here.
 The {\tt mirhelp select} command also provides more details (look for select.kdoc)
 
 \begin{verbatim}
-  time(t1,t2)                   in UT, accepts yymmmdd.fff or yymmmdd:hh:mm:ss.s format
+  time(t1,t2)                   in UT, accepts yymmmdd.fff or yymmmdd:hh:mm:ss.s format [t1,t2)
   ant(a1,a2,...)(b1,b2,..)      select baselines from the a's and b's . b's optional
   uvrange(uvmin,uvmax)          (in kLambda)
   uvnrange(uvmin,uvmax)         (in nanosecs)

@@ -13,7 +13,7 @@ This manual, and other relevant information, is also available on the \miriad\ h
 
 and serves as a cookbook for reduction and analysis of CARMA data using the
 \miriad\ package. It is assumed that the reader has some familiarity
-with the underlying {\bf Unix} operating system (be it Linux, Solaris or Darwin)
+with the underlying {\bf Unix} operating system (Linux, Solaris, Darwin, ...)
 and \miriad\ itself.  A {\it wiki} page 
 \begin{verse}
 {\verb+http://carma.astro.umd.edu/wiki/index.php/CARMA_Cookbook+}
@@ -30,9 +30,8 @@ be obtained from two existing Users Guides:
 
 \subsection{Miriad Users Guide}
 
-Throughout the cookbook  the reader is assumed to be
-familiar with the (ATNF) \miriad\ Users Guide, in particular
-Chapters 2 (the {\tt miriad} shell), 3 (plotting and the {\tt device=} keyword), 4 
+Ideally the cookbook  assumes familiarity with the (ATNF) \miriad\ Users Guide, in 
+particular Chapters 2 (the {\tt miriad} shell), 3 (plotting and the {\tt device=} keyword), 4 
 (what \miriad\ datasets
 really are). Chapter 5 on visibility data is in particular important, it deals with
 the different types of {\it calibration tables}, and the {\tt select=} keyword. Chapter 6
