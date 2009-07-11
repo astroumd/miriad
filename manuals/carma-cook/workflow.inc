@@ -48,17 +48,25 @@ The first is through a Java Web Start
 (jsp) application. Once launched (you may have to teach your
 browser where {\tt javaws}\footnote{javaws is part of the Java Development Kit (JDK)
 and if not present, you may have to install it. javaws should be in the installation bin directory }
-is located) and once the
-list of datasets has been displayed in {\tt DaRT}, click on 
+is located) and before the list of datasets has been displayed in {\tt DaRT}, click on 
 the Download button in that java application to start the transfer. 
 The second method would be to right click on the dataset names and
 use your browser to download the data.
-Notice that these file are gnuzip compressed tar files, and need to be un-tarred 
+Notice that these file are gzip compressed tar files, and need to be un-tarred 
 to become a real \miriad\ dataset (i.e. a directory):
 
 \footnotesize
 \begin{verbatim}
   % tar zxf cx012.SS433.2006sep07.1.miriad.tar.gz
+\end{verbatim}
+\normalsize
+
+this creates a directory {\tt cx012.SS433.2006sep07.1.miriad} which we refer to as a miriad
+dataset. The MIRIAD program {\tt itemize} lists the items in this dataset. It is also
+a good sanity check if your dataset appears intact. 
+
+\footnotesize
+\begin{verbatim}
   % itemize in=cx012.SS433.2006sep07.1.miriad
 Itemize: Version 22-jun-02
   obstype  = crosscorrelation
@@ -73,6 +81,7 @@ Itemize: Version 22-jun-02
 
 \end{verbatim}
 \normalsize
+
 
 % \footnotesize\normalsize
 
@@ -109,7 +118,9 @@ only be retrieved via the Data Archive.
 \smallskip
 Notice one subtle naming convention: currently the site uses {\tt .mir} names, where the
 data archive uses {\tt .miriad}! The data archive returns gzip compressed 
-tar files, whereas the site only uses miriad data (i.e. directories).
+tar files, whereas the site only uses miriad data (i.e. directories). The
+{\tt  /misc/sdp/archive\_sciencedata/} are gzip compressed tar files again, but
+with the site specific  {\tt .mir} convention.
 
 \section{Organizing your CARMA Data Tree}
 
@@ -434,7 +445,8 @@ can investigate.
 
 Probably the most important thing to remember at various stages of your calibration
 is careful and consistent data inspection.
-After all calibration is done, your phases and/or amplitudes should be flat as
+The end-goal of calibration is to create flat phases and/or flat amplitudes 
+for the calibrators as function 
 function of frequency and/or time. Use {\tt uvflag} and friends where needed to
 edit out discrepant data that could throw of calibration routines.
 
@@ -471,12 +483,12 @@ is an example using {\tt ds9}:
 \normalsize
 
 
-Another useful program 
+Another useful (but busy) program for checking your data quality is the closure phase, which
+we expect to be zero on average:
 
 \footnotesize
 \begin{verbatim}
 
- % 
  % closure vis=cx012.SS433.2006sep07.1.miriad select="source(3c273),-auto" device=/xs
 
 \end{verbatim}
@@ -497,6 +509,8 @@ in Appendix~\ref{app:uvvars}):
 \end{verbatim}
 \normalsize
 
+
+%% PJT: need some plots here
 
 shows C3 and C11 are not online. Autoscaling showed C2 has a bad point. But overall something
 bad happened around 5h UT. See Figure 2.1
@@ -547,21 +561,22 @@ to check if you should re-fetch the data.\index{mdsum}
 
 \label{s:baseline}
 You should always check if you need to (re)apply baseline 
-corrections\footnote{all data prior to 22-jan-2008 should always be corrected}
+corrections\footnote{any data prior to 22-jan-2008 should always be corrected}
 Although your data may come with initially pretty decent baseline solutions,
-often after a few weeks in a new array configuration
+often after a few weeks into a new array configuration
 improved baselines are available. In the first few days up to several weeks
 after a move, baselines can settle and may need to be re-applied
 from the newly computed ones. Normally these are stored in a small
 ascii table with equatorial values in nanoseconds.\index{baseline correction}
-({\it cf}. {\tt uvgen baseunit=1}.
+({\it cf}. {\tt uvgen baseunit=1}).
 Antpos datafiles
-can be found\footnote{At CARMA, also {\tt /array/rt/baselineSolutions/antpos.YYMMDD}}
+can be found\footnote{At CARMA, {\tt /array/rt/baselineSolutions/antpos.YYMMDD}
+is the official repository}
 at {\tt http://cedarflat.mmarray.org/observing/baseline/}, as well in your
 local MIRIAD distribution in {\tt \$MIRCAT/baselines/carma}..
 \smallskip
 To apply a new baseline, apply the program {\tt uvedit} to your multisource data set.
-Be sure to apply the new baseline to all sources:
+Be sure to apply the new baseline to all sources (but not the NOISE source):
 
 % \footnotesize\normalsize
 \footnotesize
@@ -595,6 +610,8 @@ in the {\tt antpos} file with what {\tt listobs} produced.
 % OLD: {\tt http://www.astro.caltech.edu/~koda/carma/bl/index.html} and/or 
 
 \subsection{Rest Frequency (bugzilla 409)}
+
+% PJT: is this still a bug ???
 
 \label{ss:restfreq}
 Certainly during the initial campaigns, CARMA data were written with
@@ -630,12 +647,19 @@ case CO 1-0) line you are interested in:
 \normalsize
 
 The drawback of this procedure is that the uv variable is now
-``promoted'' to a (miriad) header variable, and in the process loosing
+``promoted'' to a (miriad) header variable, and in the process losing
 any potential time variability as well as (in this case 6)
 dimensionality.
 
 \bigskip
-TODO:explain difference between puthd and uvputhd
+At this stage it is perhaps useful to remind users to the difference
+between a UV variable, which are the time dependant variables in a
+UV dataset. The program {\tt uvputhd} can operate on them. Technically
+they live in the {\tt DATASET/visdata} item. On the other hand,
+scalar items can be manipulated with {\tt puthd}.  If you create
+an item with the same name as a UV variable, that UV variable has
+now been made time-independent.
+
 
 \subsection{Linelength Correction}
 
@@ -774,13 +798,13 @@ line=chan,}{\it n,start,width,step}:
 \normalsize
 
 After this you should recompute the wide band averages using {\tt
-uvwide}.\index{uvwide}, if you plan to use them.
+uvwide}.\index{uvwide}, if you plan to use the wide band explicitly.
 
 \subsection{Flagging using tvflag}
 
 The interactive flagging program {\tt tvflag} must be run on an 8-bit
 (a.k.a. PseudoColor) display. Most modern desktops are so color
-rich, they cannot be effectively run on an 8-bit display, though {\tt
+rich, they cannot be effectively run in an 8-bit display, though {\tt
 twm} and {\tt fvwm} can. For example, on Linux you can start a second
 X session from another console (e.g. ctrl-alt-F2):
 
@@ -842,10 +866,10 @@ the recommended value is 5.
 \subsection{Passband Calibration}
 
 When a strong passband calibrator is available it can be used using
-{\tt mfcal} to correct the passband of your others sources (not just
+{\tt mfcal} to correct the passband of your other sources (not just
 the target source, but also for example the phase and amplitude
 calibrator). Choose a small interval to construct the antenna based
-passband, and inspected the solutions with {\tt gpplt}:
+passband, and inspect the solutions with {\tt gpplt}:
 
 \footnotesize
 \begin{verbatim}
@@ -1006,7 +1030,7 @@ that of the noise source, and will still show offsets compared to that
 of the noise source.
 
 The amplified noise source can effectively remove any passband
-variations. For example, by applying an mfcal solution on the narrow
+variations. For example, to apply an mfcal solution on the narrow
 band of the noise source (skipping the first channel):
 
 \footnotesize
@@ -1094,7 +1118,7 @@ array and didn't have to be flagged earlier on in the data reduction
 process.  The interval was set to five minutes (interval=5) because
 that is the amount of time spent on the gain calibrator in each
 calibrator-science target cycle.  Finally, SELFCAL was only used to
-find the variation of phase with time, and not amplidtude with time,
+find the variation of phase with time, and not amplitude with time,
 by setting options=phase.  Amplitude calibration will be discussed in
 a later section.
 

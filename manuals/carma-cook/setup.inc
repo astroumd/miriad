@@ -36,7 +36,8 @@ files, please do so. You may also want to check your version of Miriad:
 \end{verbatim} %$
 \normalsize
 
-it should be version 4.0.5 as of this writing (April 2007), {\it and 4.0.6 for December 2007.}
+% it should be version 4.0.5 as of this writing (April 2007), {\it and 4.0.6 for December 2007.}
+it should be version 4.1.1 as of this writing (July 2009).
 
 \section{Site dependent setup}
 

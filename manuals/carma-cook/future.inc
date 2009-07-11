@@ -1,6 +1,6 @@
 % -*- TeX -*-
 
-\section{Future}
+\chapter{Future}
 
 As we get to know CARMA and refine calibration strategies,
 a number of new techniques will undoubtedly

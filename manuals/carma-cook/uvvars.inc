@@ -1,3 +1,5 @@
+% -*- TeX -*-
+
 \chapter{UV Variables}
 \label{app:uvvars}
 % History:
@@ -63,7 +65,7 @@
 
 \section{UV Dataset}
 
-\newcommand{\uvversion}{November 21, 2008}
+\newcommand{\uvversion}{July 4, 2009}
 
 A \miriad\ uv dataset is composed of a collection of items and `\MM{u-v} variables'.
 The variables are parameters that are known at the time of the observation,
@@ -111,6 +113,12 @@ nwbase      & integer & \\
 \end{center}
 \end{table}
 
+\begin{htmlonly}
+{\bf SADLY, the latex2html converter does not deal with this table very well, 
+please consult the online PDF version for this table}
+\end{htmlonly}
+
+
 \begin{latexonly}
 The {\em Programmers Guide} contains more detailed 
 information on how a visibility
@@ -127,9 +135,11 @@ A list of all the uv variables can be obtained with the \miriad\ program
 \task{uvlist}\index{uvlist} or 
 \task{uvio}\index{uvio} for the brave of heart.
 
+
 The storage {\bf types} (2nd column) in the table below are:
 
-\footnotesize\begin{verbatim}
+\footnotesize
+\begin{verbatim}
     A -- ascii (NULL terminated)
     R -- real (32 bit IEEE)
     D -- double (64 bit IEEE)
@@ -809,105 +819,78 @@ tsis(nants)
 
 \section{Examples}
 
+Quite technical, but if you ever need to go into the guts of a MIRIAD
+dataset, these references on our standard CARMA fringe dataset
+may be helpful:
+
+
 \footnotesize\begin{verbatim}
 
-% ls -l 3c273/
-total 1808
--rw-r--r--    1 teuben   teuben      49952 Oct 12  1998 flags
--rw-r--r--    1 teuben   teuben        136 Jul 24  1998 header
--rw-r--r--    1 teuben   teuben      48700 Oct 12  1998 history
--rw-r--r--    1 teuben   teuben        671 Jul 24  1998 vartable
--rw-r--r--    1 teuben   teuben    1725300 Jul 24  1998 visdata
--rw-r--r--    1 teuben   teuben       1760 Jul 30  1998 wflags
+% ls -l fringe.3C273.2008jun18.4.miriad
+total 568
+-rw-r--r-- 1 teuben teuben  12688 2008-06-19 11:27 flags
+-rw-r--r-- 1 teuben teuben    132 2008-06-19 11:27 header
+-rw-r--r-- 1 teuben teuben      0 2008-06-19 11:27 history
+-rw-r--r-- 1 teuben teuben    646 2008-06-19 11:27 vartable
+-rw-r--r-- 1 teuben teuben 545228 2008-06-19 11:27 visdata
+-rw-r--r-- 1 teuben teuben    852 2008-06-19 11:27 wflags
 
-% itemize in=3c273
-Itemize: Version 31-JUL-97
-  nwcorr   = 13608
-  ncorr    = 387072
-  vislen   = 1725304
-  obstype  = crosscorrelation
-  history    (text data, 48704 elements)
-  visdata    (binary data, 1725300 elements)
-  vartable   (text data, 675 elements)
-  flags      (integer data, 12487 elements)
-  wflags     (integer data, 439 elements)
+% itemize in=fringe.3C273.2008jun18.4.miriad
 
-% uvio 3c273 
-uvio Version 16-jan-01 rjs
-0x       0 FILE: 3c273
-0x       0 SIZE: project   Count=12,Type=a
-0x       8 DATA: project   n196d028.cal
-0x      18 SIZE: source    Count=5,Type=a
-0x      20 DATA: source    3C273   
-0x      30 SIZE: ra        Count=1,Type=d
-0x      38 DATA: ra                  3.26861624
-0x      48 SIZE: dec       Count=1,Type=d
-0x      50 DATA: dec              0.03582093395
-0x      60 SIZE: vsource   Count=1,Type=r
-0x      68 DATA: vsource                      0
-0x      70 SIZE: plmaj     Count=1,Type=r
-0x      78 DATA: plmaj                        0
-0x      80 SIZE: plmin     Count=1,Type=r
-.....
-0x    12b0 DATA: tif2               34.60030746
-0x    12e8 SIZE: pol       Count=1,Type=i
-0x    12f0 DATA: pol       -6
-0x    12f8 SIZE: wcorr     Count=18,Type=c
-0x    1300 DATA: wcorr             0.1456700563        -0.1822117269
-0x    1398 SIZE: tscale    Count=1,Type=r
-0x    13a0 DATA: tscale         0.0009044817416
-0x    13a8 SIZE: corr      Count=1024,Type=j
-0x    13b0 DATA: corr      0
-0x    1bb8 SIZE: coord     Count=2,Type=d
-0x    1bc0 DATA: coord             -96.06886361
-0x    1bd8 SIZE: time      Count=1,Type=d
-0x    1be0 DATA: time               2450671.342   97AUG10:20:12:01.1
-0x    1bf0 SIZE: baseline  Count=1,Type=r
-0x    1bf8 DATA: baseline                   260
-0x    1c00 ========== EOR (1) ========
-0x    1c08 DATA: wcorr             0.1115201488         0.1867246479
-0x    1ca0 DATA: tscale          0.001088747638
-0x    1ca8 DATA: corr      0
-0x    24b0 DATA: coord              19.81238265
-0x    24c8 DATA: baseline                   516
-0x    24d0 ========== EOR (2) ========
-0x    24d8 DATA: wcorr              0.106826134        -0.0437762402
-0x    2570 DATA: tscale         0.0009396394016
-0x    2578 DATA: corr      0
-0x    2d80 DATA: coord             -8.372860208
-0x    2d98 DATA: baseline                   261
-0x    2da0 ========== EOR (3) ========
+itemize: Version 1.4, 2008/02/19 20:06:29 UTC
+
+  obstype  = mixed-auto-cross
+  nwcorr   = 6552
+  ncorr    = 98280
+  vislen   = 545232
+  visdata    (binary data, 545228 elements)
+  history    (unknown data, 0 elements)
+  wflags     (integer data, 212 elements)
+  vartable   (text data, 650 elements)
+  flags      (integer data, 3171 elements)
+
+% uvio fringe.3C273.2008jun18.4.miriad
+
+uvio Version 14-jan-09 pjt
+0x00000000 FILE: (null)
+0x00000000 SIZE: airtemp   Count=1,Type=r
+0x00000008 DATA: airtemp            25.66670036
+0x00000010 SIZE: antaz     Count=15,Type=d
+0x00000018 DATA: antaz              125.0117534
+0x00000098 SIZE: antel     Count=15,Type=d
+0x000000a0 DATA: antel              39.66323054
+0x00000120 SIZE: antpos    Count=45,Type=d
+0x00000128 DATA: antpos             17.69928734
+0x00000298 SIZE: axisoff   Count=15,Type=r
+0x000002a0 DATA: axisoff         0.002540719928
+0x000002e0 SIZE: axisrms   Count=30,Type=r
+0x000002e8 DATA: axisrms            1.447669983
+0x00000368 SIZE: cable     Count=15,Type=d
+0x00000370 DATA: cable              1555.279097
 ...
-0x   15068 DATA: baseline                  2314
-0x   15070 ========== EOR (36) ========
-0x   15078 DATA: obsra              3.268015211
-0x   15088 DATA: obsdec           0.03609215511
-0x   15098 DATA: chi              -0.7118714452
-0x   150a0 DATA: tpower             19.17340851
-0x   150d8 DATA: ut                 5.289289984
-0x   150e8 DATA: lst                2.459578844
-0x   150f8 DATA: axisrms           0.2067008913
-0x   15160 DATA: focus              7.899638176
-0x   15198 DATA: delay              289.0346413
-0x   15200 DATA: antaz              1.040362579
-0x   15268 DATA: antel             0.5775128425
-0x   152d0 DATA: themt                      475
-0x   15308 DATA: tif2               34.53898239
-0x   15340 DATA: wcorr            0.02284911089        -0.1492281109
-0x   153d8 DATA: tscale         0.0009604850202
-0x   153e0 DATA: corr      0
-0x   15be8 DATA: coord             -95.98970399
-0x   15c00 DATA: time               2450671.342   97AUG10:20:12:13.0
-0x   15c10 DATA: baseline                   260
-0x   15c18 ========== EOR (37) ========
-0x   15c20 DATA: wcorr             0.2651385069        0.05663052946
-0x   15cb8 DATA: tscale         0.0009315458592
-0x   15cc0 DATA: corr      0
-0x   164c8 DATA: coord              19.82889086
-0x   164e0 DATA: baseline                   516
-0x   164e8 ========== EOR (38) ========
-0x   164f0 DATA: wcorr             0.2428172529         0.1108904481
-.....
+0x000010b8 SIZE: time      Count=1,Type=d
+0x000010c0 DATA: time               2454636.497   08JUN18:23:55:16.0
+0x000010d0 SIZE: baseline  Count=1,Type=r
+0x000010d8 DATA: baseline                   257
+0x000010e0 ========== EOR (1) ========
+0x000010e8 DATA: wcorr              1.041832447                    0
+0x00001120 DATA: tscale         4.079189966e-05
+0x00001128 DATA: corr      13059
+0x00001298 DATA: baseline                   514
+0x000012a0 ========== EOR (2) ========
+0x000012a8 DATA: wcorr              1.045531988                    0
+...
+0x00084fe0 DATA: baseline                  3343
+0x00084fe8 ========== EOR (1091) ========
+0x00084ff0 DATA: wcorr              12.95456219          12.70519161
+0x00085028 DATA: tscale         0.0007510706782
+0x00085030 DATA: corr      9063
+0x000851a0 DATA: coord              46.79749408
+0x000851c0 DATA: baseline                  3599
+0x000851c8 ========== EOR (1092) ========
+
+
+(7114 lines)
 
 \end{verbatim}\normalsize
 

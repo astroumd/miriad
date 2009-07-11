@@ -13,7 +13,7 @@ data if you have been used to BIMA, SMA, WSRT or ATNF data.
 
 \item All CARMA data have auto-correlations preceding the cross-correlations. Some calibration
 programs, most notably {\tt selfcal} and {\tt mfcal}, cannot handle this?   File bugzilla ?
-{\tt select=-auto} to filter them out.
+Use the {\tt select=-auto} keyword to filter them out.
 
 \item Some of the correlator setting has half edge channels and should always be flagged.
 

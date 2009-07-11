@@ -16,11 +16,12 @@
     Unix environment to have this package included.
   \item The Miriad Program (called {\tt miriad}) 
 is a special (miriad) unix program that acts like the AIPS shell and is an
-alternative method to invoke Miriad programs. Usseful for newbies, as a way
+alternative method to invoke Miriad programs. Useful for newbies, as a way
 of learning individual tasks.
   \item Miriad data are directories, with items (normally files, but see below) inside.
   \end{itemize}
-\item To get help on a task, {\tt mirhelp <taskname>},     e.g. {\tt mirhelp invert}
+\item To get help on a task, {\tt mirhelp <taskname>},     e.g. {\tt mirhelp invert}.
+Another quick way to get help is {\tt invert -k} or {\tt invert -kw}.
 
 \item source names are stored in UPPER case in visibility files, and are normally converted
 to upper case before any comparision. Hence the following two examples are synonymous:
@@ -35,13 +36,15 @@ having to select them out, the minus sign creates an exclusion selection:
     select=-auto,-source(NOISE)
 \end{verbatim}
 A notable exception where {\tt select=-auto} does not work is {\tt selfcal} and {\tt mfcal}. This
-is a bug being worked on.% not even in bugzilla...
+is a bug being worked on. % not even yet in bugzilla...
 
-\item When invoking a task from the Unix shell, use quotes for keywords that use unix meta
+\item When invoking a task from the Unix shell, use quotes for keywords that use Unix meta
 characters, such as parenthesis. Example
 \begin{verbatim}
-    % uvspec select='win(3)
+    % uvspec select='win(3)'
+    % uvspec select="win(3)"
 \end{verbatim}
+If you are in the MIRIAD shell, these quotes are not needed.
 
 
 \end{itemize}
