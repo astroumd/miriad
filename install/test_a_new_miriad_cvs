@@ -9,6 +9,8 @@
 #   ./test_a_new_miriad_cvs                            install old-style
 #   ./test_a_new_miriad_cvs auto=1 reuse=1             install new-style inside old
 #   ./test_a_new_miriad_cvs auto=1                     install new-style
+#   ./test_a_new_miriad_cvs reuse=2                    install old-style wget
+#   ./test_a_new_miriad_cvs reuse=3                    install old-style local
 #
 #   dark-ages    -- written                      Peter Teuben
 #   23-nov-05    added to CVS                    PJT
@@ -17,6 +19,7 @@
 #    8-oct-07    fixed minor VERSION reporing bug
 #    3-jun-08    optionally work from tar file with reuse=2
 #   15-may-09    only remove old rootdir when present
+#   11-jul-09    optionally grab a (local) file, optionally intel/gfortran
 #
 #  
 #----
@@ -37,6 +40,10 @@ set generic=1
 
 #   reuse the current rootdir directory, instead of removing it (0=cvs, 1=reuse the rootdir, 2=tar)
 set reuse=0
+
+# optionally pick one
+set gfortran=0
+set intel=0
 
 #   tar file to grab from ftp (rootdir)
 set ftp=ftp://ftp.astro.umd.edu/progs/bima/miriad.tar.gz
@@ -63,6 +70,9 @@ set cvsroot=:pserver:anonymous@cvs.astro.umd.edu:/home/cvsroot
 foreach arg ($*)
   set $arg
 end
+
+if ($gfortran) set opts=(gfortran=1 $opts)
+if ($intel)    set opts=(intel=1    $opts)
 
 if ($?MIR) then
   echo Cannot test if a MIR environment has been set 
@@ -105,6 +115,19 @@ else if ($reuse == 2) then
     exit 1
   endif
   wget -O - $ftp | tar zxf  -
+  if ($rootdir != miriad) then
+    mv miriad $rootdir
+  endif
+else if ($reuse == 3) then
+  if (-d miriad) then
+    echo ERROR: miriad exists, cannot overwrite from tar file
+    exit 1
+  endif
+  if (! -e $ftp:t) then
+    echo ERROR: ftp=$ftp:t not found
+    exit 1
+  endif
+  tar zxf $ftp:t
   if ($rootdir != miriad) then
     mv miriad $rootdir
   endif
