@@ -1,0 +1,7 @@
+Here are some scripts that came out of the BIMASONG survey.
+Most will need some editing, and be careful about some 
+privately used routines (e.g. gaufit in moment.csh) that
+have not been back-ported to the MIRIAD release.
+
+
+moment.csh	Tony Wong adapted this SONG script recently for CARMA
