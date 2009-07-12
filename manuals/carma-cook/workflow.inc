@@ -290,8 +290,7 @@ and some antennas are better than others, but there should be no outliers.
 The output of {\tt uvindex} should be
 compared with the log sent by e-mail and the actual data length. Sometimes there
 is a failure in filling the data properly, and the data archive center should be 
-contacted.
-\footnote{currently: Lisa Xu, lisaxu@ncsa.uiuc.edu}    %% 2007,2008
+contacted.\footnote{currently: Lisa Xu, lisaxu@ncsa.uiuc.edu}    %% 2007,2008
 An example output of {\tt uvindex} follows:\index{uvindex}
 
 
@@ -402,7 +401,7 @@ where you can see the 3 lower sideband windows and 3 upper sideband windows. Not
 the rest frequency in this example appear a little odd, being identical in all
 windows. See also Section~\ref{ss:restfreq} 
 for a discussion on this. Note that {\tt uvlist} only displays the first selected
-frequency setting. If your source and calibrator have a different setup, use 
+frequency setting. If your source and calibrator have a different setup, add
 {\tt select=source()} to look at the appropriate setting for each object.
 
 \subsection{uvflag - initial check of flagged data}
@@ -439,7 +438,8 @@ If you have a high percentage of flagged data, you might want to look
 through the Nightly Report or Observing Logs to discover the cause - antenna
 out-of-array, Rx problem, etc.   If you discover serious data problems not
 accounted for, you should inform the observers - {\tt obs@mmarray.org} -  who
-can investigate.
+can investigate. Since observers change twice a week, this is a good reason
+to check on your data quality within a few days.
 
 \subsection{Visual: uvplt, uvspec, varplt, uvimage, closure}
 
@@ -464,11 +464,11 @@ example we are using the ``sma'' flavor of {\tt uvplt} and {\tt uvspec}:
 \end{verbatim}
 \normalsize
 
-Recall that ``{\tt mirhelp taskname}'' will give you a full description of other options.
+Recall that ``{\tt taskname -k}'' will give you a full description of all the program parameters.
 
 
 
-To inspect the amplitudes in a different manner, construct a 3D cube from the visibility
+To inspect the amplitudes in a totally different manner, construct a 3D cube from the visibility
 data and view this with any of the FITS or MIRIAD image viewers that are available. Here
 is an example using {\tt ds9}:
 \footnotesize
@@ -521,7 +521,7 @@ bad happened around 5h UT. See Figure 2.1
 
 \begin{figure}[ht]
 \begin{center}
-\epsfxsize=12cm\leavevmode\epsffile{fig-systemp.ps}
+\epsfxsize=10cm\leavevmode\epsffile{fig-systemp.ps}
 \end{center}
 \caption{System temperature plot for 3C273 made with {\tt varplt}, {\tt cx012.SS433.2006sep07.1.miriad}}
 \label{fig:systemp}
@@ -533,7 +533,7 @@ bad happened around 5h UT. See Figure 2.1
 
 The CARMA Data Archive will typically re-fill data from its basic
 constituents (the {\it visbrick} and the {\it monitor points}) whenever
-the data is requested. This could mean that the data  used by the {\tt quality} script
+the data is requested. This could thus mean that the data  used by the {\tt quality} script
 might be different from that obtained from the Data Archive.
 
 You can save a checksum of your data and/or use the version of
@@ -561,10 +561,10 @@ to check if you should re-fetch the data.\index{mdsum}
 
 \label{s:baseline}
 You should always check if you need to (re)apply baseline 
-corrections\footnote{any data prior to 22-jan-2008 should always be corrected}
-Although your data may come with initially pretty decent baseline solutions,
-often after a few weeks into a new array configuration
-improved baselines are available. In the first few days up to several weeks
+corrections\footnote{any data prior to 22-jan-2008 should always be corrected}.
+Although your data may come with a pretty decent baseline solution,
+often a few weeks into a new array configuration
+improved baselines will become available. In the first few days up to several weeks
 after a move, baselines can settle and may need to be re-applied
 from the newly computed ones. Normally these are stored in a small
 ascii table with equatorial values in nanoseconds.\index{baseline correction}
@@ -573,7 +573,8 @@ Antpos datafiles
 can be found\footnote{At CARMA, {\tt /array/rt/baselineSolutions/antpos.YYMMDD}
 is the official repository}
 at {\tt http://cedarflat.mmarray.org/observing/baseline/}, as well in your
-local MIRIAD distribution in {\tt \$MIRCAT/baselines/carma}..
+local MIRIAD distribution in {\tt \$MIRCAT/baselines/carma}\footnote{use {\tt cvs update}
+to get any updated baselines}
 \smallskip
 To apply a new baseline, apply the program {\tt uvedit} to your multisource data set.
 Be sure to apply the new baseline to all sources (but not the NOISE source):
@@ -652,13 +653,16 @@ any potential time variability as well as (in this case 6)
 dimensionality.
 
 \bigskip
-At this stage it is perhaps useful to remind users to the difference
-between a UV variable, which are the time dependant variables in a
-UV dataset. The program {\tt uvputhd} can operate on them. Technically
+At this stage it is perhaps useful to remind you of the difference
+between a UV variable, which can be viewed as possibly 
+time dependant variables, and a header item. Both are
+present in UV datasets.
+The program {\tt uvputhd} can operate on UV variables. Technically
 they live in the {\tt DATASET/visdata} item. On the other hand,
 scalar items can be manipulated with {\tt puthd}.  If you create
 an item with the same name as a UV variable, that UV variable has
-now been made time-independent.
+now been made time-independent and is hidden from view until
+you remove the item with {\tt delhd}.
 
 
 \subsection{Linelength Correction}
@@ -682,7 +686,7 @@ To apply the linelength corrections, use the Miriad program {\tt
 linecal}, which writes an antenna based calibration table in the
 dataset that can be applied.  However, don't expect perfection - the
 linelength system cannot correct for differences in the thermal
-expansion of the antennas (particularly BIMA vs OVRO) or for changes
+expansion of the antenna structure (particularly BIMA vs OVRO) or for changes
 in the temperature of the phaselock electronics. Schematically we will
 do:
 
@@ -717,7 +721,7 @@ SS443 dataset) such that the ENU coordinates were printed correctly:
 \normalsize
 
 Developers and observers typically file these problems as bugs in our
-bugzilla. This particular bug was filed as bug \# xxx and was caused
+bugzilla database. This particular bug was filed as bug \# xxx and was caused
 by using multiple sub-arrays and one subarray polluting the data in
 another.
 
@@ -798,7 +802,7 @@ line=chan,}{\it n,start,width,step}:
 \normalsize
 
 After this you should recompute the wide band averages using {\tt
-uvwide}.\index{uvwide}, if you plan to use the wide band explicitly.
+uvwide}\index{uvwide}, if you plan to use the wide band explicitly.
 
 \subsection{Flagging using tvflag}
 
@@ -829,6 +833,21 @@ or use VNC:
 \normalsize
 
 
+\subsection{Flagging based system temperatures}
+
+Although the mapping program {\tt invert} has an option to weigh your
+data by the system termperatures ({\tt options=systemp}, it may also
+be advantageous to throw away data with large system temperatures.
+
+For example:
+
+\footnotesize
+\begin{verbatim}
+  % uvflag vis=cx012.SS433.2006sep07.1.miriad tsys=1000  flagval=flag 
+\end{verbatim}
+\normalsize
+
+would flag all records where the system temperature was above 1000K.
 
 
 \subsection{Flagging based on tracking errors}
@@ -865,7 +884,7 @@ the recommended value is 5.
 
 \subsection{Passband Calibration}
 
-When a strong passband calibrator is available it can be used using
+When a strong calibrator is available it can be used using
 {\tt mfcal} to correct the passband of your other sources (not just
 the target source, but also for example the phase and amplitude
 calibrator). Choose a small interval to construct the antenna based
@@ -891,11 +910,13 @@ subsequent calibration and/or mapping:
 \begin{verbatim}
 
   % gpcopy vis=pbcal.mir   out=phasecal.mir options=nocal
-  % gpcopy vis=source1.mir out=source2.mir  options=nocal
+  % uvcat  vis=phasecal.mir out=phasecal_pb.mir
 
 \end{verbatim}
 \normalsize
 
+and then you can proceed calibrating the now passband corrected data for the phase calibrator. The
+same applies to any other (e.g. your science source) sources that need to be further calibrated.
 
 
 
@@ -1197,10 +1218,13 @@ your observation and bootstrap its flux to scale the flux of your
 phase or amplitude calibrator.
 \footnote{http://www.astro.uiuc.edu/$^\sim$wkwon/CARMA/fluxcal}
 
-It maintains a list of 11 ``secondary flux calibrators'', and
-publishes their fluxes as function of time. Fluxes are maintained in
-Miriad in a database that you can consult using the {\tt calflux}
+CARMA maintains a list of 11 ``secondary flux calibrators''\footnote{0319+415 (3C84), 
+0530+135, 0854+201, 0927+390, 1229+020 (3C273), 1256-057 (3C279),
+1642+398, 1751+096, 2148+069, 2225-049 (3C446), and 2251+158 (3C454.3)},
+and publishes their fluxes as function of time. Fluxes are maintained in
+MIRIAD in a database that you can consult using the {\tt calflux}
 program:
+
 
 
 \footnotesize
@@ -1224,10 +1248,13 @@ Flux of: 3C84      07OCT12.00 at  90.7 GHz:  6.80 Jy; rms: 0.10 Jy
 \end{verbatim}
 \normalsize
 
-This calibration list is essentially the old BIMA flux calibrator history
-now appended with new CARMA values, so there is a gap between 2004 and 2006
-when the BIMA dishes were moved from Hat Creek to Cedar Flat to the merged
-CARMA array.
+This calibration list consists of the older BIMA flux calibrator list
+(1985-2002), appended with new CARMA values. There is
+a gap between November 2002 and December 2006, which includes the time
+the BIMA dishes were moved from Hat Creek to Cedar Flat for the
+CARMA merge.
+
+% hmmm, what happed between nov 2002 and the BIMA move ..???
 
 Another source of information is the flux data maintained by
 ATCA\footnote{{\tt http://www.narrabri.atnf.csiro.au/calibrators/}}  and 
@@ -1249,7 +1276,7 @@ in the range 1999-2014, used as follows:
 To find the model value:
 \footnotesize
 \begin{verbatim}
-   marstb epoch=08mar02 freq=95.0
+   % marstb epoch=08mar02 freq=95.0
 Brightness temperature at  95.0 GHz: 187.675
 \end{verbatim}
 \normalsize
@@ -1259,14 +1286,13 @@ variable PLTB using either the varplt log option or uvio if it is in your
 distribution, e.g.
 \footnotesize
 \begin{verbatim}
-   varplt vis=ct007.mars_88GHz.2006nov12.1.mir yaxis=pltb log=tblog
-   more tblog
+   % varplt vis=ct007.mars_88GHz.2006nov12.1.mir yaxis=pltb log=tblog
 \end{verbatim}
 \normalsize
 or
 \footnotesize
 \begin{verbatim}
-   uvlist vis=ct007.mars_88GHz.2006nov12.1.mir options=var,full | grep pltb
+   % uvlist vis=ct007.mars_88GHz.2006nov12.1.mir options=var,full | grep pltb
           pltb      206.6920013
 \end{verbatim}
 \normalsize
@@ -1274,10 +1300,18 @@ or
 To change the value of PLTB in your file, use uvputhd (makes new file):
 \footnotesize
 \begin{verbatim}
-   uvputhd vis=ct007.2008mar02_3mm.mars.1.mir hdvar=pltb varval=187.675 \
+   % uvputhd vis=ct007.2008mar02_3mm.mars.1.mir hdvar=pltb varval=187.675 \
            type=r out=ct007.2008mar02_3mm.mars.1.mir_fixed
 \end{verbatim}
 \normalsize       %%%   figure this out, puthd should work as well???
+
+This is actually an example where {\tt puthd} should work just as well:
+\footnotesize
+\begin{verbatim}
+   % puthd in=ct007.2008mar02_3mm.mars.1.mir/pltb value=187.675 type=real
+\end{verbatim}
+\normalsize   
+
 
 The model values are disk-averaged Planck brightness temperatures from the
 Caltech Thermal Model. As Mel noted, Mars isn't always a disk and dust
@@ -1325,11 +1359,13 @@ TODO: needs more explanation
 \normalsize
 
 Even for a single pointing observation, your beam (dataset {\tt xxx.bm} in the example) will
-currently contain 3 maps (i.e. an image cube). The first plane is probably the OVRO-OVRO
+currently contain 3 maps (i.e. an image cube). The first plane is mostl likely the OVRO-OVRO
 beam, followed by the OVRO-BIMA beam, and finally the BIMA=BIMA beam.
 
 
-It is also important to set the area to be cleaned carefully. Use a mosaic sensitivity map and use
+%% mos
+It is also important to set the area to be cleaned carefully. Use a mosaic sensitivity map 
+(see the task {\tt mossen}) and use
 something like a 1.5$\sigma$ cutoff. The mask thus generated can be copied into the cube to be
 cleaned. 
 

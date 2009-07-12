@@ -6,7 +6,7 @@
 #   calibration steps. 
 #
 #   This is a simple example from a fringe test, the
-#   standard one in the CARMA cookbook data archive
+#   standard one in the CARMA cookbook data archive.
 #
 
 
@@ -25,7 +25,7 @@ listobs vis=$vis log=listobs.log
 # leaving only the cross correlations)
 uvcat vis=$vis  select='-source(NOISE),-auto' out=all.vis
 
-# first attempt to map the data
+# first attempt to map the data 
 invert vis=all.vis map=map0 beam=beam0 line=wide,1,1,6,6
 
 # line length calibration

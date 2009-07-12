@@ -23,28 +23,29 @@ download example scripts from there as well.
 
 
 
-\section{Users Guide}
+\section{Users Guides}
 
 All general information, and many procedures also relevant for CARMA, can already 
-be obtained from two existing Users Guides:
+be obtained from several existing Users Guides:
 
 \subsection{Miriad Users Guide}
 
-Ideally the cookbook  assumes familiarity with the (ATNF) \miriad\ Users Guide, in 
+Ideally the cookbook  assumes familiarity with the \miriad\ Users Guide, in 
 particular Chapters 2 (the {\tt miriad} shell), 3 (plotting and the {\tt device=} keyword), 4 
 (what \miriad\ datasets
 really are). Chapter 5 on visibility data is in particular important, it deals with
-the different types of {\it calibration tables}, and the {\tt select=} keyword. Chapter 6
+the different types of {\it calibration tables}, and a description
+of the powerful {\tt select=} keyword. Chapter 6
 on image data is much shorter but also important to read. Chapter 10 on flagging
-is also important. However, note the ATNF version of \miriad\ is specialized for that
-array and different from
-the CARMA version, and here we will assume you are using the CARMA version of \miriad.
+is also important. Since this particular Users Guide was most recently overhauled
+by the ATNF team,  some of the procedures described in there are somewhat ATNF specific.
+Hence our CARMA cookbook.
 
 \subsection{SMA Users Guide}
 
 The recently written SMA Users Guide contains lots of useful information as well,
 in a cookbook style, which can be complementary to the current CARMA cookbook and
-the ATNF \miriad\ Users Guide.
+the (ATNF) \miriad\ Users Guide.
 
 \subsection{CARMA cookbook}
 
@@ -58,30 +59,31 @@ missing or conflicting information for the moment.
 
 \section{Future}
 
-This cookbook is currently a live document, and it will change rapidly over the coming
-months. Also be sure to be subscribed to the relevant mailing lists:
+This cookbook is  currently a live document, and you can expect changes to come with
+the new correlator and procedures such as PACS coming online in the coming year.
+ Also be sure to be subscribed to the relevant mailing lists:
 {\tt miriad-dev} for Miriad development issues, {\tt carma\_users} for 
 CARMA observatory\footnote{subscription details on web....}.
 Miriad data versions (the filler changes from time to time). Developments around
 flagging and blanking, baseline and band dependent integration times, polarization {\it etc.}. 
 Our {\bf bugzilla} has a module for Miriad as well, though again, this is probably
-only useful for developers (though the developers should maintain a list of active
-bugs on a more user friendly webpage).
+only useful for developers 
+% (though the developers should maintain a list of active bugs on a more user friendly webpage).
 
 \section{STYLE}
 
-There are two possible styles for code examples. One is based on Unix command line, i.e. how
-you would issue the command from your shell, as well as how they would appear in your
-shell script:
+There are two possible styles for code examples. One is WYSIWYG as 
+you type it on the Unix command line and in shell scripts:
 
 \begin{verbatim}
- % uvlist vis=cx012.SS433.2006sep07.1.miriad options=spectra
+ % uvlist  vis=cx012.SS433.2006sep07.1.miriad  options=spectra
 \end{verbatim}
 
 
-
 and the other employs the {\tt miriad} shell, an AIPS like program in which you set variables
-and run the task, one by one. 
+and run the task, one by one. The output also shows all program parameters, leaving them
+blank if the default is used. These examples are not cut-and-paste friendly, but perhaps
+read a little easier.
 
 \begin{verbatim}
 Task:   uvlist
@@ -94,8 +96,8 @@ Task:   uvlist
   log      =  
 \end{verbatim}
 
-The parameters are global though, when you switch a taskname, the same {\tt vis=} would appear in
-this list if the new task also has this parameter.
+Within the MIRIAD shell, the parameters are global, when you switch a taskname, the same {\tt vis=} would appear in
+this list if the new task also has this parameter. This concept doesn't quite apply to the Unix command line.
 
 
 
@@ -131,7 +133,7 @@ Google mailing list for MIRIAD users, at
 \item 20-apr-2007:   first draft 
 \item 15-feb-2008:   Draft for version 2 of this document
 \item 21-jun-2008:   Summerschool 2008 version
-\item 10-jul-2009:   Largely Revised Summerschool 2009 version 
+\item 12-jul-2009:   Largely Revised Summerschool 2009 version 
 
 \end{itemize}
 

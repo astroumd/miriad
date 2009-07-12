@@ -5,8 +5,8 @@
 
 Before we bury ourselves into the details of a more typical CARMA data reduction, let us look at a
 very simple continuum observation and go over the essentials from calibrating visibility data
-to making astronomical images. While this is perhaps a silent introduction to MIRIAD, we will
-then cover a little more what MIRIAD is all about in later chapters.
+to making astronomical images. While this is also a silent introduction to MIRIAD, we will
+cover more what MIRIAD is all about in later chapters.
 
 \section{CARMA Continuum data}
 
@@ -18,14 +18,14 @@ example\footnote{windows 1 and 4 from {\tt c0319.1D\_86GCRing.5.mir},
 observed on March 20, 2009 by M. Pound and F. Yusef-Zadeh, in D array}.
 
 
-The commands you see below are all Unix shell commands, most of these are MIRIAD programs.
+The commands you see below are all Unix shell commands, most of these are in fact MIRIAD programs.
 This is one of at least three ways to reduce your data using MIRIAD. It is the most compact form
 and probably the one most people will be familiar with.
 
 
 Later we will explain the ways you get your data from the archive, but for now, lets
 assume you have the tar file in your current (ideally clean) working directory, you first
-untar this (usuall compressed) file:
+untar this (usually compressed) file using the Unix {\tt tar} command:
 
 \footnotesize
 \begin{verbatim}
@@ -37,8 +37,10 @@ and you will see your observation is a directory (a MIRIAD dataset) with files i
 never manipulate these file directly, unless you really know what you are doing. MIRIAD program generally
 deal with these files.
 
-Probably the first thing you do is make a summary listing: check the names, frequency setup, LST ranges 
-of the various sources in this observation. The MIRIAD task ``{\tt listobs}'' is used for this:
+Probably the next thing you do is make an observing summary log where you can 
+check the names, frequency setup, LST ranges 
+of the various sources in your observation etc.. 
+The MIRIAD task ``{\tt listobs}'' is used for this:
 
 \footnotesize
 \begin{verbatim}
@@ -46,15 +48,30 @@ of the various sources in this observation. The MIRIAD task ``{\tt listobs}'' is
 \end{verbatim}
 \normalsize
 
-You will note that unlike the typical options in Unix commands, MIRIAD commands use a ``{\it keyword=value}'' 
+Note that unlike the typical options in Unix commands, MIRIAD commands use a ``{\it keyword=value}'' 
 command line syntax,
 but are otherwise implemented as Unix commands. In fact, they are simple Fortran programs that call libraries,
-and some astronomers are even known to make small modifications for themselves and recompile them.
+and some astronomers are even known to make small modifications for themselves and recompile these programs.
 
 
-Looking at the {\tt listobs.log} file,
-The dataset has several sources, a flux calibrator, a phase (gain) calibrator, a passband calibrator and the
-science source of interest. Sometimes some of the calibrators are actually the same. In particular,
+Looking at the {\tt listobs.log} file, and here is the example from SgrA:
+
+\footnotesize
+\begin{verbatim}
+
+            Observed Sources Coordinates and Corr Freqs
+Source         Purpose    RA         Decl         Vlsr            Corfs in MHz
+NOISE              B      20 32 45.53 40 39 36.63     0.00E+00     0.0
+MWC349             BF     20 32 45.53 40 39 36.63     0.00E+00     0.0
+3C345              B      16 42 58.81 39 48 37.00     0.00E+00     0.0
+1733-130           G      17 33 02.71 -13 04 49.54    0.00E+00     0.0
+GCRING             S      17 45 40.03 -29 00 27.87    0.00E+00     0.0
+
+\end{verbatim}
+\normalsize
+
+the dataset has several sources: a flux calibrator (F), a phase (gain) calibrator (G), a passband calibrator (B)
+and the science source (S) of interest. Sometimes some of the calibrators are actually the same. In particular,
 the phase calibrator will normally be observed alternatingly with your source every 10-20 mins. The
 flux and/or passband calibrator are normally stronger and observed for a short time (5-15 mins) before
 or after your observation. Sometimes a planet, if available, will be observed as well,
@@ -146,7 +163,7 @@ the source data. Use the output of listobs and your own judgement if this is a v
 
 
 In this particular example we have calibrated both amplitude and phase, another option would
-be to only calibrate the phases, and use a planet for amplitude (scale) corrections. This
+be to only calibrate the phases, and use a planet for amplitude scaling. This
 will be covered in later chapters.
 % longer/better description now, or later?
 
@@ -165,11 +182,11 @@ the calibrator and compare it to the beam:
 
 
 
-Since CARMA is a heterogeous array,
+Since CARMA is a heterogeous array, with different primary beams,
 we apply a mosaicing option to the mapping program, even if there is only one single pointing
 in the observation. Except when you want to detect or map a very small field of view, or
-a point source, this is essential. The current example observation of SgrA have 7 pointings,
-and because the source is extended, mosaicing is essential.
+a point source, this is essential. The current example observation of SgrA has 7 pointings,
+and because the source is extended, mosaicing is essential here:
 
 
 \footnotesize
@@ -187,29 +204,30 @@ and because the source is extended, mosaicing is essential.
 
 
 A last note before you might get your fingers wet: these commands are obviously
-tedious to type, and prone to
-typing errors. 
+tedious to type, and prone to typos.
 Of course in real life we use scripts (e.g. C-shell or python scripts), in such a way 
 that you repeat your data reduction script, finetuning the various calibration schemes you apply.
-The rule of thumb is also if you have some string appear twice
-(for example a source name such as 1733-130), it ought to be a variable.
 
 \subsection{CARMA test data and shell scripts}
 
 For this chapter there
 are 3 shell scripts available for study that with their comments go into more depth and show
-plotting example of a simple continuum observation:
+plotting example of a simple continuum observation. You will always be able to find
+these scripts, and their accompanying data, in 
+\htmladdnormallink{ftp://ftp.astro.umd.edu/pub/carma/data}
+{ftp://ftp.astro.umd.edu/pub/carma/data}
 
 \begin{enumerate}
 
 \item
 {\bg simple0.csh}:
 A very short 1 minute observation called ``fringetest'', used to show how the various calibration
-schemes can even dillute the signal of a strong quasar.
+schemes can even dillute the signal of a strong quasar. 
+
 
 \item
 {\bg simple1a.csh}:
-a simple calibration qpipeline 
+a simple calibration pipeline  (see below)
 
 \item
 {\bg simple1b.csh}:
@@ -223,13 +241,13 @@ breaking it up in different source files
 
 \section{A little more on MIRIAD}
 
-As you have seen above, MIRIAD programs are just standard programs that you can run on
-your computer, normally from an interactive shell, or through a shell script. The other thing
-to realize is that most MIRIAD datasets are implemted as a set of files organized in a
-directory. You refer to a MIRIAD dataset by the directory name, you can use the tools on
-your computer to copy, rename, remove, archive etc. them.
+As you have seen above, MIRIAD programs are just Unix programs that you can run,
+normally from an interactive shell, or through a shell script. The other thing
+to re-emphasize is that most MIRIAD datasets are implemented as a set of items (usually
+files) organized in a directory. You refer to a MIRIAD dataset by its directory name, you 
+can use the tools on your computer to copy, rename, remove, archive etc. them.
 
-If you need help on a MIRIAD command, there are some shell commands. For example for {\tt uvcat} you
+If you need help on a MIRIAD command, there are several ways. For example for {\tt uvcat} you
 would type:
 
 \footnotesize

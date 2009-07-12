@@ -13,6 +13,9 @@ Unix shells have different command history recall.
 
 Shell (csh/sh/bash) programming vs. python (pyramid)
 
+Useful to import, like MIRIAD programs, to allow a {\it keyword=value} 
+commandline syntax. Easy to fake in csh.
+
 \section{Example: mosaic.py}
 
 Here is an example of a mosaic script, using {\tt pyramid} procedures.
