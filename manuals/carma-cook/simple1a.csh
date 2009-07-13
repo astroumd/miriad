@@ -5,10 +5,10 @@
 #
 #
 # this script works mostly with one visibility file, and uses select= to work on selected data
-
+#
 # sources: 
 # --------
-# MWC349     flux (ignored)
+# MWC349     flux (ignored here)
 # 3C345      passband
 # 1733-130   phase
 # GCRING     source
@@ -89,6 +89,6 @@ restor map=map0 beam=beam0 model=model0 out=clean0
 # map the source
 
 rm -rf beam1 map1 model1 clean1
-invert vis=all_4.vis map=map1 beam=beam1 line=wide,1,1,2,2 "select=source($sname)" options=mosaic imsize=129
+invert vis=all_4.vis map=map1 beam=beam1 line=wide,1,1,2,2 "select=source($sname)" options=mosaic,double,systemp imsize=129
 mossdi map=map1 beam=beam1 out=model1
 restor map=map1 beam=beam1 model=model1 out=clean1

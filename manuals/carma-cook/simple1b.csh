@@ -79,7 +79,6 @@ uvcat  vis=s_1.vis out=s_2.vis
 
 
 # gain calibration, looking quite nice now
-rm -rf all_4.vis 
 mselfcal vis=g_2.vis refant=$pref options=amp,apriori,noscale interval=5
 
 #gpplt vis=g_2.vis yaxis=phase nxy=5,3 device=/xs options=gains
@@ -87,6 +86,7 @@ mselfcal vis=g_2.vis refant=$pref options=amp,apriori,noscale interval=5
 
 puthd in=g_2.vis/interval value=0.1
 
+rm -rf s_3.vis
 gpcopy vis=g_2.vis out=s_2.vis options=nopass,nopol
 uvcat  vis=s_2.vis out=s_3.vis
 

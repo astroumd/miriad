@@ -227,17 +227,25 @@ schemes can even dillute the signal of a strong quasar.
 
 \item
 {\bg simple1a.csh}:
-a simple calibration pipeline  (see below)
-
-\item
-{\bg simple1b.csh}:
-breaking it up in different source files
-
-\end{enumerate}
+a simple calibration pipeline, as we discussed before.
 
 \footnotesize
 \verbatimlisting{simple1a.csh}
 \normalsize
+
+
+\item
+{\bg simple1b.csh}:
+breaking it up in different source files. This is the way the more complex calibration routines work.
+
+\footnotesize
+\verbatimlisting{simple1b.csh}
+\normalsize
+
+
+\end{enumerate}
+
+
 
 \section{A little more on MIRIAD}
 
