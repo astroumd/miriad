@@ -9,12 +9,12 @@
 \section{Setting up your account}
 
 Setting up your account to use \miriad\ 
-of course varies a little from system to system, mostly where the package was installed.
-If in doubt, ask a local Miriad user. We will assume you are using the \verb+csh+
+of course varies a little from system to system, mostly in which directory the package was installed.
+If in doubt, ask a local MIRIAD user. We will assume you are using the \verb+csh+
 shell. The environment variable {\tt \$SHELL} \index{SHELL, environment}
 will display what login shell you are using.\footnote{For MacOSX an additional surprise will
 be that the two terminals, Terminal and xterm, have subtle differences how to set your default
-shell, and for Miriad you should almost always want to use the xterm}
+shell, and for MIRIAD you should almost always want to use the xterm given its X11 output.}
 For {\tt bash}, just replace {\tt .csh} with {\tt .sh} in the examples below.
 
 % miriad 4
@@ -41,7 +41,7 @@ it should be version 4.1.1 as of this writing (July 2009).
 
 \section{Site dependent setup}
 
-Each of the CARMA sites will have a maintained version of Miriad. 
+Each of the CARMA sites will have a maintained version of MIRIAD.
 
 \subsection{OVRO}
 

@@ -8,9 +8,9 @@
 
 \begin{itemize}
 
-\item miriad-101:
+\item MIRIAD-101:
   \begin{itemize}
-  \item the Miriad Package is a set of Unix commands, often called ``tasks'',
+  \item for users the MIRIAD package is a set of Unix commands, often called ``tasks'',
     with a set of {\it keyword=value} command line parameters  to control the program.
     Typicallly you source a script (e.g. {\tt miriad\_start.csh}) to change your
     Unix environment to have this package included.
@@ -67,12 +67,13 @@ visibility data and image cubes, described in a bit more detail below:
 
 \subsection{Visibility data}
 
-Bla bla, and 
 See Appendix~\ref{app:uvvars} for more information.
 
 Apart from direct observatory data, 
 you can create visibility data using {\tt uvgen} or import them from other
-packages using the {\tt fits} program.
+packages using the {\tt fits} program, though both of those have limitations
+to the number of UV variables it can produce (and thus limit the functionality
+of some MIRIAD programs).
 
 \subsubsection{Calibration Tables}
 
@@ -80,7 +81,8 @@ Calibration programs such as {\tt selfcal} and {\tt mfcal} write gain and bandpa
 calibration tables inside a visibility dataset. Programs {\tt gplist} and {\tt bplist}
 will list them on the screen, and {\tt gpplt options=gains} or 
 {\tt gpplt options=bandpass} will plot them. Programs such as {\tt uvcat} and
-{\tt uvcal} will selectively apply these complex gains as they copy the data.
+{\tt uvcal} will selectively apply these complex gains as they copy the data, in
+essence they have calibrated the data.
 
 % relevant item:  gains, bandpass
 
@@ -220,7 +222,7 @@ multiple files separated by a comma) and images (in=).
 
 Observations such as the one in CARMA are tagging by time, and map portions of the sky
 at a number of frequencies. As such the concept of understanding gridding coordinates 
-sometimes becomes important how ``pixels'' are labeled. Are they using the center,
+becomes important how ``pixels'' are labeled. Are they using the center,
 or are they using the start of a interval/pixel/voxel... This section will clarify the
 conventions in MIRIAD.   In FITS, an astronomy standard to exchange data, the 
 convention is always the center of the pixel/interval, as long as the FITS keyswords
@@ -251,9 +253,11 @@ times:
 
 Programs such {\tt selfcal} and {\tt mselfcal} extract and average times from these 
 observations and again record the nominal starting time of their interval in the gain
-tables. {\tt uvaver} can also average in time, and as researching the recorded time
-stamps some small issues became apparent that if used under circumstances of large
-phase drifts, there could be issues resulting from slighly offset times.
+tables. {\tt uvaver} can also average in time.
+
+% PJT: check
+% the recorded time stamps some small issues became apparent that if used under circumstances of large
+% phase drifts, there could be issues resulting from slighly offset times.
 
 \subsection{frequency: uvaver}
 
@@ -262,6 +266,8 @@ the normal FITS convention where the center of the interval/pixel
 
 \subsection{position: invert}
 
+Maps produced by {\invert} produce sky coordinates that comply with the FITS convention 
+that the center of the pixel refers to the coordinate.
 
 
 

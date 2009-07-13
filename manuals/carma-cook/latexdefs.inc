@@ -4,7 +4,8 @@
   \renewcommand{\thepage}{\thechapter-\arabic{page}}
   \setcounter{page}{1}}
 
-\newcommand{\miriad}{{\bf $\cal MIRIAD$}}
+% \newcommand{\miriad}{{\bf $\cal MIRIAD$}}
+\newcommand{\miriad}{MIRIAD}
 \newcommand{\aips}{{\bf $\cal AIPS$}}
 \newcommand{\task}[1]{{\tt #1}\index{#1}}
 \newcommand{\unix}[1]{{\tt #1}\index{#1}}

@@ -1218,10 +1218,14 @@ your observation and bootstrap its flux to scale the flux of your
 phase or amplitude calibrator.
 \footnote{http://www.astro.uiuc.edu/$^\sim$wkwon/CARMA/fluxcal}
 
-CARMA maintains a list of 11 ``secondary flux calibrators''\footnote{0319+415 (3C84), 
+During commissioning 
+CARMA maintained a list of 12 ``secondary flux calibrators''\footnote{0319+415 (3C84), 
 0530+135, 0854+201, 0927+390, 1229+020 (3C273), 1256-057 (3C279),
-1642+398, 1751+096, 2148+069, 2225-049 (3C446), and 2251+158 (3C454.3)},
-and publishes their fluxes as function of time. Fluxes are maintained in
+1642+398, 1751+096, 2148+069, 2225-049 (3C446), 2251+158 (3C454.3), and MWC349}
+and publishes their fluxes as function of time. The current list is
+4 (3C84, 3C273, 3C345, and MWC349) for which - based on 1mm and 3mm -
+also a spectral index is recorded if a reliable planet is available.
+Fluxes are maintained in
 MIRIAD in a database that you can consult using the {\tt calflux}
 program:
 
