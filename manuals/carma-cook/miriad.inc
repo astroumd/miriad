@@ -271,8 +271,6 @@ that the center of the pixel refers to the coordinate.
 
 
 
-
-
 \section{Programming in MIRIAD}
 
 MIRIAD was written with the intent that ``anybody'' should be able to re-program it.

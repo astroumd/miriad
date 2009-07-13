@@ -4,11 +4,12 @@
 # PI: Marc Pound and Farhad Yusef-Zadeh.
 #
 #
-# this script works mostly with one visibility file, and uses select= to work on selected data
-
+# this script works by copying over gain tables and applying them, not the simplest
+# of ways, but flexible in terms of the more complex calibration schemes that can occur.
+#
 # sources: 
 # --------
-# MWC349     flux (ignored)
+# MWC349     flux (ignored here)
 # 3C345      passband
 # 1733-130   phase
 # GCRING     source
@@ -56,39 +57,52 @@ linecal vis=all_1.vis
 #gpplt vis=all_1.vis yaxis=phase nxy=5,3 device=/xs options=wrap
 uvcat   vis=all_1.vis out=all_2.vis
 
-# smauvplt vis=all_2.vis device=/xs axis=time,phase options=nocal,nopass
+# now we split the full source (B,G,S) in pieces
+rm -rf b_1.vis g_1.vis s_1.vis
+uvcat vis=all_2.vis out=b_1.vis select="source($bname)"
+uvcat vis=all_2.vis out=g_1.vis select="source($gname)"
+uvcat vis=all_2.vis out=s_1.vis select="source($sname)"
 
 # bandpass calibration
-rm -rf all_3.vis 
-mfcal vis=all_2.vis refant=$bref select="source($bname)" interval=999
-#gpplt vis=all_2.vis yaxis=phase nxy=5,3 device=/xs options=bandpass
-#gpplt vis=all_2.vis yaxis=amp   nxy=5,3 device=/xs options=bandpass
-uvcat vis=all_2.vis out=all_3.vis options=nocal
+mfcal vis=b_1.vis refant=$bref interval=999
+#gpplt vis=b_1.vis yaxis=phase nxy=5,3 device=/xs options=bandpass
+#gpplt vis=b_1.vis yaxis=amp   nxy=5,3 device=/xs options=bandpass
+
+# and copy gains into G and S, and apply them
+rm -rf g_2.vis
+gpcopy vis=b_1.vis out=g_1.vis options=nocal,nopol
+uvcat  vis=g_1.vis out=g_2.vis
+
+rm -rf s_2.vis
+gpcopy vis=b_1.vis out=s_1.vis options=nocal,nopol
+uvcat  vis=s_1.vis out=s_2.vis
 
 
 # gain calibration, looking quite nice now
 rm -rf all_4.vis 
-mselfcal vis=all_3.vis refant=$pref select="source($gname)" options=amp,apriori,noscale interval=5
+mselfcal vis=g_2.vis refant=$pref options=amp,apriori,noscale interval=5
 
-#gpplt vis=all_3.vis yaxis=phase nxy=5,3 device=/xs options=gains
-#gpplt vis=all_3.vis yaxis=amp   nxy=5,3 device=/xs options=gains
+#gpplt vis=g_2.vis yaxis=phase nxy=5,3 device=/xs options=gains
+#gpplt vis=g_2.vis yaxis=amp   nxy=5,3 device=/xs options=gains
 
-puthd in=all_3.vis/interval value=0.1
-uvcat vis=all_3.vis out=all_4.vis 
+puthd in=g_2.vis/interval value=0.1
 
-# should check flagged values in all_3 and all_4 and they should be the same
+gpcopy vis=g_2.vis out=s_2.vis options=nopass,nopol
+uvcat  vis=s_2.vis out=s_3.vis
+
+# should check flagged values in s_2 and s_3 and they should be the same
 # if the new interval is long enough to catch all inter- and extra-polations
 
 # map the calibrator
 
 rm -rf beam0 map0  model0 clean0
-invert vis=all_4.vis map=map0 beam=beam0 imsize=128 line=wide,1,1,2,2 select="source($gname)"
+invert vis=g_2.vis map=map0 beam=beam0 imsize=128 line=wide,1,1,2,2 
 clean map=map0 beam=beam0 out=model0
 restor map=map0 beam=beam0 model=model0 out=clean0
 
 # map the source
 
 rm -rf beam1 map1 model1 clean1
-invert vis=all_4.vis map=map1 beam=beam1 line=wide,1,1,2,2 "select=source($sname)" options=mosaic imsize=129
+invert vis=s_3.vis map=map1 beam=beam1 line=wide,1,1,2,2 options=mosaic,double,systemp imsize=129
 mossdi map=map1 beam=beam1 out=model1
 restor map=map1 beam=beam1 model=model1 out=clean1
