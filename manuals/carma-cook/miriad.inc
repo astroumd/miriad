@@ -266,7 +266,7 @@ the normal FITS convention where the center of the interval/pixel
 
 \subsection{position: invert}
 
-Maps produced by {\invert} produce sky coordinates that comply with the FITS convention 
+Maps produced by {\tt invert} produce sky coordinates that comply with the FITS convention 
 that the center of the pixel refers to the coordinate.
 
 

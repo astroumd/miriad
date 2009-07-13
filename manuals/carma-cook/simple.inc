@@ -220,14 +220,16 @@ these scripts, and their accompanying data, in
 \begin{enumerate}
 
 \item
-{\bg simple0.csh}:
+{\bf simple0.csh}:
 A very short 1 minute observation called ``fringetest'', used to show how the various calibration
 schemes can even dillute the signal of a strong quasar. 
 
 
 \item
-{\bg simple1a.csh}:
-a simple calibration pipeline, as we discussed before.
+{\bf simple1a.csh}:
+a simple calibration pipeline, as we discussed before. The advantage of keeping all sources together
+in a single file is fewer files (and thus I/O, saving time) is needed and it is easier to check how
+well the calibration worked on any source in your track.
 
 \footnotesize
 \verbatimlisting{simple1a.csh}
@@ -235,8 +237,9 @@ a simple calibration pipeline, as we discussed before.
 
 
 \item
-{\bg simple1b.csh}:
+{\bf simple1b.csh}:
 breaking it up in different source files. This is the way the more complex calibration routines work.
+You will wind up with a lot more files this way. 
 
 \footnotesize
 \verbatimlisting{simple1b.csh}
@@ -244,6 +247,14 @@ breaking it up in different source files. This is the way the more complex calib
 
 
 \end{enumerate}
+
+\begin{figure}[ht]
+\begin{center}
+\epsfxsize=3cm\leavevmode\epsffile{simple1a.eps}
+\end{center}
+\caption{Flow diagram simple1a}
+\label{fig:simpl1a}
+\end{figure}
 
 
 

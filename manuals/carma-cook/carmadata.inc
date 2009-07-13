@@ -213,4 +213,4 @@ considered.
 \label{uvedit}
 
 All data prior to January 23, 2008, should have their baseline corrected. See also
-Section~\label{s:baseline}. Use {\tt uvedit} and the appropriate baseline file
+Section~\ref{s:baseline}. Use {\tt uvedit} and the appropriate baseline file
