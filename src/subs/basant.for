@@ -31,7 +31,7 @@ c***********************************************************************
       call basants(baseline,ant1,ant2,.FALSE.)
       end
 
-c* BasAnt - determine antennas from baseline number
+c* BasAnts - determine antennas from baseline number
 c& pjt
 c: calibration, uv-i/o, uv-data, utilities
 c+
