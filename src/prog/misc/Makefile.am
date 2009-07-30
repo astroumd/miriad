@@ -6,7 +6,7 @@ include $(top_srcdir)/mircommon.mak
 
 bin_PROGRAMS = addhis atmosph calc copyhd corset cotra delhd \
   design dwell gethd hex hexc itemize j2000 julian listobs marstb mathd \
-  mfplan moslst obsrms obstau planets pnt pntgen prthd prthis \
+  maxdim mfplan moslst obsrms obstau planets pnt pntgen prthd prthis \
   puthd remove rmdata rmsfit sinbad sinpoly solar tacos taco \
   telepar warpfit xcorr xfcor mfile
 
@@ -15,24 +15,23 @@ AM_CXXFLAGS = -I$(top_srcdir)/src/subs
 AM_FFLAGS = @no_globals@
 LDADD = $(prog_libs)
 
-BUILT_SOURCES = addhis.f atmosph.f calc.f copyhd.f corset.f \
-  cotra.f delhd.f design.f dwell.f gethd.f hex.f itemize.f \
-  j2000.f julian.f listobs.f marstb.f mathd.f mfplan.f moslst.f obsrms.f \
-  obstau.f planets.f pnt.f pntgen.f prthd.f prthis.f puthd.f \
-  remove.f rmdata.f rmsfit.f sinbad.f sinpoly.f solar.f tacos.f \
-  taco.f telepar.f warpfit.f xcorr.f xfcor.f
+BUILT_SOURCES = addhis.f atmosph.f calc.f copyhd.f corset.f cotra.f delhd.f \
+  design.f dwell.f gethd.f hex.f itemize.f j2000.f julian.f listobs.f \
+  marstb.f mathd.f maxdim.f mfplan.f moslst.f obsrms.f obstau.f planets.f \
+  pnt.f pntgen.f prthd.f prthis.f puthd.f remove.f rmdata.f rmsfit.f sinbad.f \
+  sinpoly.f solar.f tacos.f taco.f telepar.f warpfit.f xcorr.f xfcor.f
 
 CLEANFILES = $(BUILT_SOURCES)
 
 noinst_HEADERS = atmosph.h calc.h design.h listobs.h mathd.h pnt.h sinpoly.h
 
-EXTRA_DIST = addhis.for atmosph.for calc.for copyhd.for corset.for \
-  cotra.for delhd.for design.for dwell.for gethd.for hex.for \
-  itemize.for j2000.for julian.for listobs.for marstb.for mathd.for mfplan.for \
-  moslst.for obsrms.for obstau.for planets.for pnt.for pntgen.for \
-  prthd.for prthis.for puthd.for remove.for rmdata.for rmsfit.for \
-  sinbad.for sinpoly.for solar.for tacos.for taco.for telepar.for \
-  warpfit.for xcorr.for xfcor.for
+EXTRA_DIST = addhis.for atmosph.for calc.for copyhd.for corset.for cotra.for \
+  delhd.for design.for dwell.for gethd.for hex.for itemize.for j2000.for \
+  julian.for listobs.for marstb.for mathd.for maxdim.for mfplan.for \
+  moslst.for obsrms.for obstau.for planets.for pnt.for pntgen.for prthd.for \
+  prthis.for puthd.for remove.for rmdata.for rmsfit.for sinbad.for \
+  sinpoly.for solar.for tacos.for taco.for telepar.for warpfit.for xcorr.for \
+  xfcor.for
 
 mfile_SOURCES = mfile.cc mfilelib.h
 
@@ -53,6 +52,7 @@ nodist_julian_SOURCES = julian.f
 nodist_listobs_SOURCES = listobs.f
 nodist_marstb_SOURCES = marstb.f
 nodist_mathd_SOURCES = mathd.f
+nodist_maxdim_SOURCES = maxdim.f
 nodist_mfplan_SOURCES = mfplan.f
 nodist_moslst_SOURCES = moslst.f
 nodist_obsrms_SOURCES = obsrms.f
