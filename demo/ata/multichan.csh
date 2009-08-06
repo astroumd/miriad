@@ -6,6 +6,8 @@ echo "Performance tests for ATA imaging"
 # 18apr03 added uvrange. 
 # 22mar05 added harange. 
 # 09may05 add more parameters to title.
+# 07oct08 better values for baseunit=-3.335668 lat=40:49:02.50 in uvgen
+# 27may09 added weighting options to input parameters.
 
 
 # Nyquist sample time = 12 x 3600 s x (dish_diam/2)/(pi*baseline)
@@ -16,7 +18,7 @@ goto start
 start:
 
 # check inputs
-  if($#argv<4) then
+  if($#argv<5) then
     echo " Usage: $0  config  declination  harange  nchan" 
     echo "   config"
     echo "          Antenna configuration. "
@@ -27,6 +29,8 @@ start:
     echo "          HA range: start,stop,interval in hours. No default."
     echo "   nchan"                                                                 
     echo "          Number of spectral channels. No default."
+    echo "   weighting"                                                                 
+    echo "          weighting options: 'sup=0',  'robust=0.5', uniform. No default."
     echo " "
     exit 1
   endif
@@ -41,8 +45,7 @@ set imsize     = 256
 set systemp    = 40 
 set jyperk     = 150 
 set bandwidth  = 100 
-set weighting  = 'robust=0.5' 
-set weighting  = 'sup=0' 
+set weighting  = $5
 
 
 echo "   ---  ATA Single Field MULTICHANNEL Imaging    ---   " > timing
@@ -66,7 +69,7 @@ continue:
 
 echo generate uv-data
 rm -r $config.$dec.uv
-uvgen ant=$config.ant baseunit=-3.33564 radec=23:23:25.803,$dec harange=$harange source=$MIRCAT/point.source telescop=hatcreek systemp=$systemp jyperk=$jyperk freq=$freq corr=$nchan,1,1,$bandwidth out=$config.$dec.uv
+uvgen ant=$config.ant baseunit=-3.335668 lat=40:49:02.50 radec=23:23:25.803,$dec harange=$harange source=$MIRCAT/point.source telescop=hatcreek systemp=$systemp jyperk=$jyperk freq=$freq corr=$nchan,1,1,$bandwidth out=$config.$dec.uv
 # pnoise=30
 echo UVGEN: `date` >> timing
 
@@ -74,7 +77,7 @@ echo UVGEN: `date` >> timing
 #selfcal vis=$config.$dec.uv interval=1
 #echo SELFCAL: `date` >> timing
 
-#uvplt vis=$config.$dec.uv device=/xs axis=uc,vc options=nobase,equal
+uvplt vis=$config.$dec.uv device=/xs axis=uc,vc options=nobase,equal
 
 
 echo image
@@ -83,9 +86,9 @@ set nvis = `invert vis=$config.$dec.uv map=$config.$dec.mp beam=$config.$dec.bm 
 echo INVERT: `date` >> timing
 
 echo plotting
-#implot in=$config.$dec.bm device=/xs units=s conflag=l conargs=1.6 region=quarter
-#implot in=$config.$dec.bm device=/xs units=s conflag=l conargs=1.6 'region=relpix,box(-25,-25,25,25)'
-#implot in=$config.$dec.bm device=/xs units=s 'region=relpix,box(-25,-25,25,25)'
+implot in=$config.$dec.bm device=/xs units=s conflag=l conargs=1.6 region=quarter
+implot in=$config.$dec.bm device=/xs units=s conflag=l conargs=1.6 'region=relpix,box(-25,-25,25,25)'
+implot in=$config.$dec.bm device=/xs units=s 'region=relpix,box(-25,-25,25,25)'
 echo IMPLOT: `date` >> timing
 
 echo deconvolve
@@ -119,9 +122,11 @@ set records = `grep records $config.$dec.uv/history | awk '{print $2}'`
 set Nvis = `calc "100*$nvis/$records/$nchan" | awk '{printf("%.0f\n",$1)}'`
 set uvrange = `uvcheck vis=$config.$dec.uv    | awk '{if(NR==6)print 0.3*$6, 0.3*$7}'`
 echo " " >> timing
-echo "Config  DEC  HA[hrs]  Nchan  Rms[mJy]  Beam[arcsec]  Tb_rms[mK]  Sidelobe[%]:Rms,Max,Min  Nvis[%] uvrange[m]  weighting" >> timing
-echo  "$config  $dec  $harange  $nchan  $RMS  $BMAJ  $BMIN   $TBRMS  $SRMS  $SMAX  $SMIN  $Nvis  $nvis  $uvrange"  $weighting >> timing
+echo "Config  DEC    HA  Nchan   Rms     Beam       Tb_rms     Sidelobe[%]    Nvis   uvrange  weighting"  >> timing
+echo "        deg.   hrs.       [mJy]    [arcsec]     [mK]     Rms,Max,Min   %     #    [m]" >> timing
+echo  "$config  $dec  $harange  $nchan    $RMS    $BMAJ  $BMIN   $TBRMS  $SRMS  $SMAX  $SMIN  $Nvis  $nvis  $uvrange"  $weighting >> timing
 echo " "
-echo  "$config  $dec  $harange  $nchan  $RMS  $BMAJ x $BMIN  $TBRMS  $SRMS  $SMAX  $SMIN  $Nvis  $nvis  $uvrange"  $weighting >> beams.results
+echo  "$config  $dec  $harange  $nchan    $RMS    $BMAJ x $BMIN  $TBRMS    $SRMS  $SMAX  $SMIN  $Nvis  $nvis  $uvrange"  $weighting >> beams.results
+echo " "
 mv timing $config.$dec.$harange.$nchan.$imsize.$nvis
 cat $config.$dec.$harange.$nchan.$imsize.$nvis
