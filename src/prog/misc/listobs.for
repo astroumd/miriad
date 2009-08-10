@@ -1,4 +1,4 @@
-cd -c***********************************************************************
+c***********************************************************************
         program listobs
 c
 c  Makes a listing of time ordered information about the observations in
@@ -88,6 +88,7 @@ c          04-feb-08 dnf Added object purpose to source listing output
 c          19-feb-08 pjt Added versan() version login
 c           8-dec-08 pjt make it work for SZA data as well
 c          12-dec-08 pjt deal with version 1.1 SZA data (wsystemp instead of systemp)
+c          10-aug-09 pjt list end time of observations, only UT needed for now
 c          
 c
 c
@@ -99,7 +100,6 @@ c-----------------------------------------------------------------------
 	include 'mirconst.h'
         include 'caldefs.h'
         include 'calapply.h'
-c        include 'maxdim.h'
         include 'listobs.h'
 c
 	character pversion*80, versan*80
@@ -114,7 +114,7 @@ c
 	real focnew(MAXANT),focold(MAXANT),focdiff,rlst,uvd
         real bl
 	double precision jdold,jdnow,antpos(3 * MAXANT),apos(6)
-	double precision foclst(50),focjday(50),ftime
+	double precision foclst(50),focjday(50),ftime,jdend,utend
         double precision lat,lon,sinlat,coslat,sinlon,coslon
 	logical more,fthere,anthere(MAXANT),updated,nobase
         logical pthere
@@ -151,6 +151,7 @@ c    initialize array counter and focus counter
         coslat = 0.0d0
         sinlon = 1.0d0
         coslon = 0.0d0
+        jdend  = -1.0d0
 c-----------------------------------------------------------------------
 c    gather up all of the data from all files requested
 c
@@ -199,6 +200,10 @@ c --- check source purpose
 		 call uvgetvrd(tin,'time',jdnow,1)
 		 call uvgetvrr(tin,'inttime',tint,1)
                  call uvgetvra(tin,'source',newsou)
+                 if (jdnow.gt.jdend) then
+                    jdend = jdnow + inttime/(3600.0*24.0)
+                    call uvgetvrd(tin,'ut',utend,1)
+                 endif
 		 tint = tint/8.640e+4
 		 diff = jdnow - (jdold + 1.12d0 * tint)
 		 if(abs(diff) .gt. tint .or. 
@@ -391,16 +396,20 @@ c
   250	continue
         write(text,2201) objs(ii),uthms,lsthms,dur(ii),el(ii),
      1        (isys(hereidx(j)),j=1,nhere)
- 2201	format(a,1x,a,1x,a,1x,f4.1,1x,f4.0,1x,  
+ 2201	format(a,1x,a,1x,a,1x,f5.1,1x,f4.0,1x,  
      1         15(i4,1x))
+ 2202	format(a,1x,a)
 	call LogWrite(text,more)
   300	continue
+	call rad2hms(real(utend),uthms)
+        write(text,2202) '<END>            ',uthms
+	call LogWrite(text,more)
+	call LogWrite(dash,more)
 c
 c    organize focus numbers in time order and see if there are any
 c    changes with time
 c
 	call sortidxd(nfocs,focjday,order)
-	call LogWrite(dash,more)
  2301	format('              Record of Focus Values')
 	if(nfocs .gt. 0) then
            write(text,2301)
