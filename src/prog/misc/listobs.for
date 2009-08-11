@@ -89,7 +89,7 @@ c          19-feb-08 pjt Added versan() version login
 c           8-dec-08 pjt make it work for SZA data as well
 c          12-dec-08 pjt deal with version 1.1 SZA data (wsystemp instead of systemp)
 c          10-aug-09 pjt list end time of observations, only UT needed for now
-c          
+c                        and revert back, Quality would be upset with this change
 c
 c
 c TODO:
@@ -401,8 +401,8 @@ c
  2202	format(a,1x,a)
 	call LogWrite(text,more)
   300	continue
-	call rad2hms(real(utend),uthms)
-        write(text,2202) '<END>            ',uthms
+c	call rad2hms(real(utend),uthms)
+c        write(text,2202) '<END>            ',uthms
 	call LogWrite(text,more)
 	call LogWrite(dash,more)
 c
