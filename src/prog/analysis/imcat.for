@@ -48,11 +48,12 @@ c		   number of axis.
 c    12jun97 nebk  Copy header items for axes 6 and 7
 c    02jul97 rjs   cellscal change.
 c    23jul97 rjs   add pbtype.
+c    12aug09 mchw  copy header items mostable and rms.
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	include 'maxnax.h'
 	character version*(*)	
-        parameter(version='IMCAT: version 12-Jun-97')
+        parameter(version='IMCAT: version 12-Aug-09')
 	integer MAXMAP
 	parameter(MAXMAP=300)
 	character in(MAXMAP)*80,out*80
@@ -71,7 +72,7 @@ c
 c  Header keywords.
 c
 	integer nkeys
-	parameter(nkeys=51)
+	parameter(nkeys=53)
 	character keyw(nkeys)*8
 	data keyw/   'bmaj    ','bmin    ','bpa     ','bunit   ',
      *	  'cdelt1  ','cdelt2  ','cdelt3  ','cdelt4  ','cdelt5  ',
@@ -85,7 +86,8 @@ c
      *	  'epoch   ','history ','niters  ','obstime ','object  ',
      *	  'observer','pbfwhm  ','obsra   ','obsdec  ','restfreq',
      *	  'telescop','vobs    ','ltype   ','lstart  ','lwidth  ',
-     *	  'lstep   ','btype   ','cellscal','pbtype  '/
+     *	  'lstep   ','btype   ','cellscal','pbtype  ','mostable',
+     *    'rms     '/
 c
 c  Get the input parameters.
 c
