@@ -403,7 +403,7 @@ c
   300	continue
 c	call rad2hms(real(utend),uthms)
 c        write(text,2202) '<END>            ',uthms
-	call LogWrite(text,more)
+c	call LogWrite(text,more)
 	call LogWrite(dash,more)
 c
 c    organize focus numbers in time order and see if there are any
