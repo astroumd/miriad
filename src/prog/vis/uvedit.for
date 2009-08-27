@@ -58,6 +58,7 @@ c                     offsets given in SMA logs
 c    pjt   30nov05    compute (u,v,w) instead of (u,v)
 c    pjt   16mar06    reformatted sma to keep the solaris compiler happy
 c                     and somehow linux allowed r>0 instead of r.gt.0
+c    pjt   26aug09    added options=time for CARMA time adjustment
 c***********************************************************************
 c= Uvedit - Editing of the baseline of a UV data set.
 c& pjt
@@ -244,6 +245,13 @@ c       uvrotate Rotate uv-coordinates from current to standard epoch.
 c                This is needed for BIMA data, or any data that keeps
 c                their UV(W) in current epoch instead of the more common
 c                standard epoch.
+c       time     adjust the time to the start of an integration time, 
+c                instead of the middle. Hence an offset of -inttime/2 will be 
+c                applied. Unlike the TIME keyword described above, this will have
+c                no other side effect. After this change 'ut' and 'time' should
+c                agree again. Applies to CARMA filled data Feb 2006 - August 2009.
+c                Raw observatory data were not affected.
+c
 c
 c--
 c-----------------------------------------------------------------------
@@ -255,7 +263,7 @@ c
       character PROG*(*)
       parameter (PROG = 'UVEDIT: ')
       character VERSION*(*)
-      parameter (VERSION = 'version 16-mar-06')
+      parameter (VERSION = 'version 27-aug-09')
 c
       double precision SECRAD, ASECRAD
 c  -------------(SECRAD = DPI / (12.d0 * 3600.d0))
@@ -287,7 +295,7 @@ c
       integer nspect, nwide
       integer ant1, ant2
       integer nschan(MAXCHAN), ischan(MAXCHAN)
-      real timeoff
+      real timeoff,inttime
       real dra
       real wt, wtup, wtdn
       real phase, timphz, radphz, antphz, tmphaz, tmpdelay
@@ -313,7 +321,7 @@ c
       logical suffix, allsrc, srcfound, changed
       logical raabs, decabs, antabs
       logical dotime, dorad, doants, dodelay, douv, dodra, douvrot
-      logical dopntra, dopntdec, dodelra, dodeldec
+      logical dopntra, dopntdec, dodelra, dodeldec, doatime
       logical updUT, updLst, updodra, updora, updodec, updra, upddec
       logical dowide, docorr
       logical more, updated
@@ -379,6 +387,7 @@ c
         dotime = .TRUE.
         Nflags = Nflags + 1
       endif
+
 c
 c Position.  Default these logicals here in case only an RA or Dec
 c correction (but not both) is specified.
@@ -446,8 +455,16 @@ c
 c Options.
 c
 
-       call GetOpt(douv, dodra, dosma, douvrot)
+      call GetOpt(douv, dodra, dosma, douvrot, doatime)
 
+c
+c TimeAdjust (-inttime/2) to cope with a CARMA filler bug (pre august 2009)
+c
+      if(doatime) then
+         if (dotime) call bug('f','cannot time+adjust')
+         call bug('i','Adjusting CARMA -inttime/2 bug')
+         Nflags = Nflags + 1
+      endif
 c
 c Antenna.
 c
@@ -1027,6 +1044,10 @@ c
                     preamble(4) = preamble(4) + (timeoff / (2 * PI))
                     HA = HA + timeoff
                   endif
+                  if (doatime) then
+                    call uvrdvrr(Lin, 'inttime', inttime, 0.0)
+                    preamble(4) = preamble(4) - inttime/(2.0*86400.0)
+                  endif
                   if (dorad) HA = HA - delra
                   if (dotime .or. dorad) then
                     cosHA = cos(HA)
@@ -1286,9 +1307,9 @@ cc= GetOpt - Internal routine to get command line options.
 cc& jm
 cc: internal utility
 cc+
-      subroutine GetOpt(douv, dodra, dosma, douvrot)
+      subroutine GetOpt(douv, dodra, dosma, douvrot, doatime)
       implicit none
-      logical douv, dodra, dosma, douvrot
+      logical douv, dodra, dosma, douvrot, doatime
 c
 c  Get user options from the command line.
 c
@@ -1301,23 +1322,25 @@ c    dodra    If true, then multiply dra by 1/cos(obsdec).
 c    dosma    if true, then convert geocentric coordinates (meter)
 c                      to equatorial coordinates (nonasec).
 c    douvrot  if true, also rotate the u and v for epoch
+c    doatime  if true, adjust time with -inttime/2 (CARMA < aug 2009)
 c--
 c-----------------------------------------------------------------------
 c
 c  Internal variables.
 c
       integer NOPTS
-      parameter (NOPTS = 4)
+      parameter (NOPTS = 5)
 c
       character opts(NOPTS)*9
       logical present(NOPTS)
-      data opts/'nouv', 'dra', 'sma', 'uvrotate'/
+      data opts/'nouv', 'dra', 'sma', 'uvrotate', 'time'/
 c
       call Options('options', opts, present, NOPTS)
       douv = .not. present(1)
       dodra = present(2)
       dosma = present(3)
       douvrot = present(4)
+      doatime = present(5)
 c
       end
 c************************************************************************
