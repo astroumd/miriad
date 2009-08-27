@@ -1,0 +1,14 @@
+if you don't see a directory 'nemo' here, it probably means you did not
+get this added package for miriad. If you used CVS, and need to plant
+the nemo tree here (in CVS terms: nemo is a separate module under CVS)
+
+If miriad has been installed, the following commands should install wip:
+
+	cd $MIR/borrow 		You need to have miriad loaded
+	cvs checkout nemo	plant the wip tree
+	mirboss			become miriad boss
+	mir.install nemo	compile nemo
+
+check out the logfile in $MIR/tmp for any errors.
+	
+
