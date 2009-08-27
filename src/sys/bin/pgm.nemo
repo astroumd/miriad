@@ -1,0 +1,38 @@
+#!/bin/csh -f
+# -------------------------------------------------------------------
+set mir    = $MIR
+set host   = $MIRHOST
+set lsys   = $mir/bin/localsys
+set libdir = $mir/lib/$host
+set bindir = $mir/bin/$host
+set admdir = $mir/src/sys/bin
+set raddir = $mir/borrow/rad
+# -------------------------------------------------------------------
+if (! -d $mir/borrow/nemo || ! -e $mir/borrow/nemo/README) then
+  echo NEMO does not seem to exist within your miriad distribution.
+  echo Installation skipped  
+  exit 0
+endif
+# -------------------------------------------------------------------
+if (-e $lsys/pgm.nemo && ! $?local_compile) then
+  echo $lsys/pgm.nemo exists =======================
+  setenv local_compile
+  exec $lsys/pgm.nemo $argv
+endif
+# -------------------------------------------------------------------
+if ($?Compile == 0) then
+   if (-e $admdir/compile.${host}) then
+      source $admdir/compile.${host}
+   else
+      echo "Cannot find $admdir/compile.${host} - exiting."
+      exit 1
+   endif
+endif
+# -------------------------------------------------------------------
+#
+cd $MIR/borrow/nemo
+source AAA_SOURCE_ME
+#
+# -------------------------------------------------------------------
+unsetenv local_compile
+exit 0
