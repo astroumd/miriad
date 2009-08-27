@@ -62,6 +62,8 @@ foreach i ($argv)
            $admdir/mir.gendoc  >& $tdir/gendoc.${fn}
    else if ($i == rad ) then
            $admdir/pgm.rad  >& $tdir/rad.${fn}
+   else if ($i == nemo ) then
+           $admdir/pgm.nemo  >& $tdir/nemo.${fn}
    else if ($i == libs) then
            foreach j ($subslist)
 	      $admdir/lib.${j} >& $tdir/${j}.${fn}
