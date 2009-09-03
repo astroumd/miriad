@@ -110,6 +110,9 @@ c	degrees. The default is 0,30.
 c@ harange
 c	Hour Angle range (start,stop,step) in hours. Default is
 c	-6 hrs to + 6 hrs, with a sample interval=0.1 (6 minute)
+c       There is a time slip option in the code available to make 
+c       hour angles into true time hours, but by default this 
+c       keyword honors earth rotation.
 c@ ellim
 c	Elevation limit in degrees. The default is not to limit
 c	uv coverage by elevation. If set, then hour angles below the
@@ -229,6 +232,10 @@ c@ out
 c	This gives the name of the output Miriad data file. There is
 c	no default. If the dataset exists, visibilities are appended to
 c	the dataset, with an appropriate informational message.
+c@ options
+c       slip   slip time, such that hour angles become clock hours, ignoring
+c              earths rotation. For short observations this is ok especially
+c              if you want "nicer" times for your timestamps.
 c--
 c  UVGEN computes model visibility data from source components file
 c  and antennas file.
@@ -334,6 +341,7 @@ c    02may08  mchw  baseline in 100m units for atmospheric phase index.
 c    07oct08  mchw  better values for baseunit=-3.335668 lat=40:49:02.50 in uvgen
 c    02dec08  mchw  increase line(512) to accomodate longer filenames.
 c     2jul09  pjt   add veltype to make listobs work
+c    26aug09  pjt   doslip, to allow for integral times, and equate hour angle = clock hours
 c
 c  Bugs/Shortcomings:
 c    * Frequency and time smearing is not simulated.
@@ -341,6 +349,10 @@ c    * Primary beam is a gaussian -- which is too ideal.
 c    * Primary beam is not a function of frequency.
 c    * Geometry for extended sources could be improved.
 c
+c  See also:
+c    uvmodel
+c    uvgenmodel
+c 
 c  The following is the documentation for the unimplemented 2-gaussian beam.
 c
 c@ pbfwhm
@@ -362,7 +374,7 @@ c	pbfwhm=76,137,-0.2 simulates a primary beam pattern between
 c	10m and 6m antennas at 100 GHz. 
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version = 'Uvgen: version 1.0 2-jul-2009')
+	parameter(version = 'Uvgen: version 1.0 26-aug-2009')
 	integer ALTAZ,EQUATOR
 	parameter(ALTAZ=0,EQUATOR=1)
 	integer PolRR,PolLL,PolRL,PolLR,PolXX,PolYY,PolXY,PolYX
@@ -396,7 +408,7 @@ c
 	character line*512, umsg*80
 	complex gatm
 	real baseline,patm,pslope,pelev,xx,xxamp
-	logical doatm,dopolar,doellim,ok
+	logical doatm,dopolar,doellim,doslip,ok
 c
 c  Parameters from the user.
 c
@@ -546,6 +558,8 @@ c
 	if(outfile.eq.' ')
      *	  call bug('f','Output file must be given')
 c        call GetOpt(dochi,dogaus)
+        call GetOpt(doslip)
+	if (doslip) call bug('i','Time slip option engaged')
 	call keyfin
 c
 c  Determine the rise and set times of the source, at the minimum
@@ -959,7 +973,11 @@ c
 	    h = lst - ra
 	    call uvputvrd(unit,'ut',lst,1)
 	    call uvputvrd(unit,'lst',lst,1)
-	    preamble(4) = timeout + 365.25/366.25*ha/24.
+	    if (doslip) then
+	      preamble(4) = timeout + ha/24.
+	    else
+	      preamble(4) = timeout + 365.25/366.25*ha/24.
+	    endif
 	    sinha = sin(h)
 	    cosha = cos(h)
 	    sinq = cosl*sinha
@@ -1654,26 +1672,24 @@ c                       cases where this is already done. E.g. corrected
 c                       data, equatorial mounts or polarization rotators.
 c          'gaussian'   Make a Gaussian spectral line with
 c                       center=fcen and FWHM=fwid [GHz].
-        subroutine GetOpt(dochi,dogaus)
+        subroutine GetOpt(doslip)
 c
         implicit none
-        logical dochi,dogaus
+        logical doslip
 c
 c  Determine extra processing options.
 c
 c  Output:
-c    dochi      Set the effective parallactic angle to zero
-c    dogaus     Make Gaussian line profile.
+c    doslip     Slip time, equating hour angle with clock hours
 c-----------------------------------------------------------------------
        integer nopt
-        parameter(nopt=2)
+        parameter(nopt=1)
         character opts(nopt)*9
         logical present(nopt)
-        data opts/'parang   ','gaussian '/
+        data opts/'slip    '/
 c
         call options('options',opts,present,nopt)
-        dochi  = present(1)
-        dogaus = present(2)
+        doslip  = present(1)
 c
         end
 c********1*********2*********3*********4*********5*********6*********7*c
