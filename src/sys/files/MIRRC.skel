@@ -95,6 +95,11 @@ if (-e $MIR/borrow/karma/.login) then
   endif
 endif
 
+#  NEMO, if present
+if (-e   $MIR/borrow/nemo/nemo_start.csh) then
+  source $MIR/borrow/nemo/nemo_start.csh
+endif
+
 #
 #  If the file $MIR/MIRRC.local exists, execute it now.
 #

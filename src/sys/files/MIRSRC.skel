@@ -90,6 +90,11 @@ if [ -f $MIR/borrow/karma/.karmarc ]; then
   fi
 fi
 
+# NEMO , if present
+if [ -f $MIR/borrow/nemo/nemo_start.sh ]; then
+ source $MIR/borrow/nemo/nemo_start.sh
+fi
+
 #
 #  If the file $MIR/MIRRC.local exists, execute it now.
 #
