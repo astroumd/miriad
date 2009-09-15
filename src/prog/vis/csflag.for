@@ -16,19 +16,23 @@ c       it should work for any heterogenous array.
 c
 c       Note that this program only SETS flags, never unsets. Multiple
 c       runs of csflag with decreasing values of cfraction= will thus 
-c       NOT have the effect you think it might have.
+c       NOT have the effect you think it might have. Make a backup
+c       of your flags/wflags files if you want to recover
 c
 c@ vis
 c	The input visibility file to be flagged. No default.
 c@ antdiam
 c       Array of diameters (in m) for each antenna. By default
 c       all antenna are the same, and equal the antdiam found in
-c       the dataset. No default. See also carma=
+c       the dataset. No default. See also carma= and sza= below
+c       for a faster approach.
+c       Default: not used
 c@ carma
 c       Boolean, if set to true, the default CARMA array is loaded
 c       in the antdiam array. Also it is then assumed the first 6
 c       are OVRO dishes (assumed 10.4m), the remaining 9 are BIMA 
-c       (assumed 6.1m).
+c       (assumed 6.1m), with an optional addition 8 for the SZA 3.5m
+c       dishes.
 c       If selected, it will also print out the number of records
 c       flagged for O-O, B-B and O-B (labeled O/H/C).
 c       The default is true.
@@ -39,8 +43,12 @@ c       SZA antennas. If given, if will override the carma setting.
 c       The default is false.   
 c@ cfraction
 c       Special CARMA option to multiply the antdiam array for
-c       OVRO and BIMA dishes by. Two numbers are expected here: the
-c       fraction for OVRO and that for BIMA. Default: 1,1
+c       OVRO and BIMA dishes by. Two or three numbers are expected here,
+c       depending if sza was set to true: 
+c       fraction for OVRO, that for BIMA, and optionally that for sza.
+c       You normally want this leave this at 1, but can experiment with
+c       smaller values to try and keep some partially shadowed data.
+c       Default: 1,1,1
 c
 c--
 c
@@ -52,6 +60,7 @@ c     pjt       25jul07 count different styles of carma shadowing
 c     pjt       14aug07 Added cfraction=
 c     pjt       21aug07 fix for Wide and Narrow  data
 c     pjt       12apr08 Add option to include SZA array with 8 3.5m ants
+c     pjt       14sep09 Add cfraction for sza
 c
 c  Todo:
 c     - options=noapply ???
@@ -67,29 +76,34 @@ c---------------------------------------------------------------------------
 	implicit none
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='csflag: version 12-apr-08')
+	parameter(version='csflag: version 14-sep-09')
 c
 	complex data(MAXCHAN)
 	double precision preamble(5), antpos(3*MAXANT)
 	integer lVis,ntot,nflag,i,nv,nants,na
-        integer ntoto,ntoth,ntotc,ncf
-        real antdiam(MAXANT),cfraction(2)
-	character in*80
+        integer ntoto,ntoth,ntotc,ntots,ntota,ntot6,ncf
+        real antdiam(MAXANT),cfraction(3)
+	character in*120
 	logical flags(MAXCHAN),shadow,carma,sza,reset,doshadow
         external shadow
 
-        common /antpos/antpos,ntoto,ntoth,ntotc
+        common /antpos/antpos,sza,ntoto,ntoth,ntotc,ntots,ntota,ntot6
 c
 c Get inputs
 c
 	call output(version)
 	call keyini
 	call keya('vis', in, ' ')
-	if(in.eq.' ')call bug('f','Visibility file name not given')
+	if(in.eq.' ')call bug('f','Input dataset missing: vis=')
         call mkeyr('antdiam',antdiam,MAXANT,na)
         call keyl('carma',carma,.TRUE.)
-        call keyl('sza',sza,.FALSE.)
-        call mkeyr('cfraction',cfraction,2,ncf)
+        call keyl('sza',sza,.TRUE.)
+        if (sza) then
+           carma = .FALSE.
+           call mkeyr('cfraction',cfraction,3,ncf)
+        else
+           call mkeyr('cfraction',cfraction,2,ncf)
+        endif
         call keyl('reset',reset,.FALSE.)
 	call keyfin
 
@@ -126,10 +140,14 @@ c
         if (ncf.eq.0) then
            cfraction(1) = 1.0
            cfraction(2) = 1.0
+           cfraction(3) = 1.0
+        else if (ncf.eq.2) then
+           cfraction(3) = cfraction(2)
         else if (ncf.eq.1) then
            cfraction(2) = cfraction(1)
-        else if (ncf.ne.2) then
-           call bug('f','cfraction= needs two values')
+           cfraction(3) = cfraction(1)
+        else if (ncf.gt.3) then
+           call bug('f','cfraction= needs two or three values')
         endif
 c
 c Open files
@@ -142,6 +160,9 @@ c
         ntotc = 0
         ntoto = 0
         ntoth = 0
+        ntots = 0
+        ntota = 0
+        ntot6 = 0
 c
 c Loop over visibilities and set flags
 c
@@ -168,6 +189,19 @@ c
            enddo
            do i=7,15
               antdiam(i) = antdiam(i) * cfraction(2)
+           enddo
+        endif
+        if (sza) then
+           if (nants.ne.23) call bug('f','CARMA+SZA nants.ne.23 ???')
+           write(*,*) 'new cfraction option: ',cfraction
+           do i=1,6
+              antdiam(i) = antdiam(i) * cfraction(1)
+           enddo
+           do i=7,15
+              antdiam(i) = antdiam(i) * cfraction(2)
+           enddo
+           do i=16,23
+              antdiam(i) = antdiam(i) * cfraction(3)
            enddo
         endif
         call uvgetvrd(lVis,'antpos',antpos,3*nants)
@@ -198,10 +232,14 @@ c
         call hisclose (lVis)
 	call uvclose(lVis)
         if (carma) then
-           write(*,*) 'Processed ',ntot, ' records, flagged ',
+           write(*,*) 'Got ',ntot, ' recs, flgd ',
      *                 nflag, ' O/H/C: ',ntoto,ntoth,ntotc
+        else if (sza) then
+           write(*,*) 'Got ',ntot, ' recs, flgd ',
+     *                 nflag, ' O/H/C/S/10/6: ',
+     *                 ntoto,ntoth,ntotc,ntots,ntota,ntot6
         else
-           write(*,*) 'Processed ',ntot, ' records, flagged ',
+           write(*,*) 'Got ',ntot, ' recs, flgd ',
      *                 nflag
         endif
 c
@@ -218,8 +256,10 @@ c
 	double precision antpos(3*MAXANT),ha,lst,ra,dec
         double precision sinha,cosha,sind,cosd,limit,bx,by,bz,bxy,byx
         double precision u(MAXANT), v(MAXANT), w(MAXANT),uu,vv,ww
-        integer i0,i1,i2,i,j,ntoto,ntoth,ntotc
-        common /antpos/antpos,ntoto,ntoth,ntotc
+        integer i0,i1,i2,i,j,ntoto,ntoth,ntotc,ntots,ntota,ntot6
+        logical sza
+        common /antpos/antpos,sza,ntoto,ntoth,ntotc,ntots,ntota,ntot6
+c       pjt = debug, set it to < 0 if you want to see UVW's
         integer pjt
         data pjt/0/
         save pjt
@@ -251,11 +291,8 @@ c
         endif
 
         call basant(p(5),i1,i2)
-c        write(*,*) p(1),p(2),p(3)
-c        write(*,*) u(i1)-u(i2),v(i1)-v(i2),w(i1)-w(i2)
         if (i1.gt.nants .or. i2.gt.nants) call bug('f',
      *          'odd....not enough antdiam known')
-
 
 c
 c  j-loop over both i1 shadowing i2, or vice versa.
@@ -274,8 +311,25 @@ c
                     vv=v(i)-v(i0)
                     ww=w(i)-w(i0)
                     if (uu*uu+vv*vv .le. limit  .and.  ww.ge.0) then
-                       pjt=pjt+1
-c                       write(*,*) 'SHADOW CS ',pjt,uu,vv,ww,sqrt(limit)
+                      pjt=pjt+1
+                      if (sza) then
+
+                       if (i1.le.6 .and. i2.le.6) then
+                          ntoto = ntoto + 1
+                       else if (i1.le.6 .and. i2.le.15) then
+                          ntotc = ntotc + 1
+                       else if (i1.le.6 .and. i2.le.23) then
+                          ntota = ntota + 1
+                       else if (i1.le.15 .and. i2.le.15) then
+                          ntoth = ntoth + 1
+                       else if (i1.le.15 .and. i2.le.23) then
+                          ntot6 = ntot6 + 1
+                       else 
+                          ntots = ntots + 1
+                       endif
+
+                      else
+
                        if (i1.le.6 .and. i2.le.6) then
                           ntoto = ntoto + 1
                        else if (i1.gt.6 .and. i2.gt.6) then
@@ -283,8 +337,10 @@ c                       write(*,*) 'SHADOW CS ',pjt,uu,vv,ww,sqrt(limit)
                        else 
                           ntotc = ntotc + 1
                        endif
-                       shadow = .TRUE.
-                       return
+
+                      endif
+                      shadow = .TRUE.
+                      return
                     endif
                 endif
             enddo
