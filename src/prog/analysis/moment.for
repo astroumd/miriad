@@ -87,10 +87,11 @@ c    16feb01 pjt   Added mom=-3 for velocity of peak fit to poly=2
 c    18jan02 pjt   Turned rngmask typo into rngmsk (duh)
 c     4mar02 pjt   documented FWHM/sigma, fixed units of mom=2 map
 c    27jul08 pjt   Added raw=; keep Stuartt Corder finishing his thesis in time
+c    15sep09 pjt   Fixed mom=2 because of using chan2 through column 81 !!!
 c------------------------------------------------------------------------
 	include 'maxdim.h'
  	character version*(*)
-	parameter(version='version 27-jul-08')
+	parameter(version='version 15-sep-09')
 	integer maxnax,maxboxes,maxruns,naxis
 	parameter(maxnax=3,maxboxes=2048)
 	parameter(maxruns=3*maxdim)
@@ -600,8 +601,8 @@ c
 		   else
 		      sum(i0,j0,1) = sum(i0,j0,1) + buf(i)
 		   endif
-	          if(mom.ge.1) sum(i0,j0,2) = sum(i0,j0,2) + buf(i)*chan
-		  if(mom.ge.2) sum(i0,j0,3) = sum(i0,j0,3) + buf(i)*chan2
+	          if(mom.ge.1) sum(i0,j0,2)=sum(i0,j0,2) + buf(i)*chan
+		  if(mom.ge.2) sum(i0,j0,3)=sum(i0,j0,3) + buf(i)*chan2
 		endif
 	      endif
 	      i0 = i0 + 1
