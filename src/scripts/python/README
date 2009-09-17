@@ -22,3 +22,15 @@ for an example how to generate one of those.
 
 The *.i files for SWIG explain how to build
 the python bindings.
+
+NOTE on swig versions 1.3.30 - 1.3.41
+> the 3 argument version of memmove you see is 'transformed' into
+> the 2 argument version via the multi-argument typemap in cdata.swg or
+> cdata.i:
+>
+> %typemap(in) (const void *indata, size_t inlen) = (char *STRING, size_t
+> SIZE);
+>
+> This typemap had an error in it and was introduced some while back with
+> some changes using int instead of size_t as the type was made. It is
+> fixed now in svn.
