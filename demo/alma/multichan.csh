@@ -1,11 +1,12 @@
 #!/bin/csh -f
 
-#echo "Performance tests for mfs imaging"
-echo "Performance tests for multichannel imaging"
+echo "Performance tests for ALMA imaging"
 
 # mchw 27jun02
-
-# 23sep02 increase image size and decrease Nyquist sample interval for config > 20
+# 18apr03 added uvrange.
+# 22mar05 added harange.
+# 09may05 add more parameters to title.
+# 27may09 added weighting options to input parameters.
 
 
 # Nyquist sample time = 12 x 3600 s x (dish_diam/2)/(pi*baseline)
@@ -13,6 +14,7 @@ echo "Performance tests for multichannel imaging"
 # 1 min = 0.01666 hours is Nyquist sample interval at 1.375 km
 # PBFWHM = 24"
 # field = 24/pixel
+# old configurations:
 # config   uvmin  uvmax(m)  fwhm   pixel(")  field(pixel) Nyquist
 #   1       14.4    159     1.6    0.425        57        8.65 min
 #  10       14.4    415     1.0    0.174       138        3.3
@@ -24,32 +26,41 @@ goto start
 start:
 
 # check inputs
-  if($#argv<3) then
-    echo " Usage: $0.csh   config   declination nchan" 
+  if($#argv<5) then
+    echo " Usage: $0.csh   config   declination  harange  nchan" 
     echo "   config"
     echo "          Antenna configuration. "
     echo "            e.g. config1.ant. Omit the .ant. No default."
     echo "   declination"
     echo "          Source declination in degrees. No default."
+    echo "   harange"
+    echo "          HA range: start,stop,interval in hours. No default."
     echo "   nchan"                                                                 
     echo "          Number of spectral channels. No default."
+    echo "   weighting"
+    echo "          weighting options: 'sup=0',  'robust=0.5', uniform. No default."
     echo " "
     exit 1
   endif
 
 set config  = $1
 set dec     = $2
-set nchan   = $3
-set harange = -1,1,0.0057
-set select = '-shadow(12)'
+set harange = $3
+set nchan   = $4
+set select  = '-shadow(12)'
+set antdiam = 12
 set freq    = 230
-set imsize  = 256
 set imsize  = 1024
+set imsize  = 256
 set imsize  = 0
 # imsize = 0 lets invert choose the image size with ~ 1.5 x Nyquist sampling.
+set systemp    = 40
+set jyperk     = 40
+set bandwidth  = 8000
+set weighting  = $5
 
 
- echo "   ---  ALMA Single Field Multichannel Imaging    ---   " > timing
+echo "   ---  ALMA Single Field Multichannel Imaging    ---   " > timing
 #echo "   ---  ALMA Single Field MFS Imaging    ---   " > timing
 echo " config  = $config"             >> timing
 echo " dec     =  $dec"               >> timing
@@ -67,7 +78,7 @@ continue:
 
 echo generate uv-data
 rm -r $config.$dec.uv
-uvgen ant=$config.ant baseunit=-3.33564 radec=23:23:25.803,$dec lat=-23.02 harange=$harange source=$MIRCAT/point.source telescop=alma systemp=40 jyperk=40 freq=$freq corr=$nchan,1,1,8000 out=$config.$dec.uv
+uvgen ant=$config.ant baseunit=-3.33564 radec=23:23:25.803,$dec lat=-23.02 harange=$harange source=$MIRCAT/point.source telescop=alma systemp=$systemp jyperk=$jyperk freq=$freq corr=$nchan,1,1,$bandwidth out=$config.$dec.uv
 # pnoise=30
 echo UVGEN: `date` >> timing
 
@@ -75,12 +86,13 @@ echo UVGEN: `date` >> timing
 #selfcal vis=$config.$dec.uv interval=1
 #echo SELFCAL: `date` >> timing
 
+# plot uv coverage
+uvplt vis=$config.$dec.uv device=/xs axis=uc,vc options=nobase,equal
 
 echo image
 rm -r $config.$dec.bm $config.$dec.mp
-#set nvis = `invert options=mfs vis=$config.$dec.uv map=$config.$dec.mp beam=$config.$dec.bm imsize=$imsize sup=0 select=$select | grep Visibilities | awk '{print $3}'`
-# capture nvis from standard output stream. The alternative line below is for multichannel imaging.
- set nvis = `invert vis=$config.$dec.uv map=$config.$dec.mp beam=$config.$dec.bm imsize=$imsize sup=0 select=$select | grep Visibilities | awk '{print $3}'`
+set nvis = `invert vis=$config.$dec.uv map=$config.$dec.mp beam=$config.$dec.bm imsize=$imsize $weighting select=$select | grep Visibilities | awk '{print $3}'`
+# capture nvis from standard output stream. 
 echo INVERT: `date` >> timing
 
 echo plotting
@@ -116,14 +128,19 @@ grep phases $config.$dec.uv/history >> timing
 # get number of visibilities written and number unshadowed
 set records = `grep records $config.$dec.uv/history | awk '{print $2}'`
 calc "$nvis/$records"
- set Nvis = `calc "100*$nvis/$records" | awk '{printf("%.0f\n",$1)}'`
-# line above for multichannel images. For mfs imaging, below, we need to divide by nchan
-#set Nvis = `calc "100*$nvis/$records/$nchan" | awk '{printf("%.0f\n",$1)}'`
+#set Nvis = `calc "100*$nvis/$records" | awk '{printf("%.0f\n",$1)}'`
+# line above for multichannel images. For mfs imaging we need to divide by nchan
+set Nvis = `calc "100*$nvis/$records/$nchan" | awk '{printf("%.0f\n",$1)}'`
+set uvrange = `uvcheck vis="$config.$dec.uv" | awk '{if(NR==6)print 0.3*$6, 0.3*$7}'`
+# Nyquist sample time = 12 x 3600 s x (dish_diam/2)/(pi*baseline)
+set baseline = `echo $uvrange | awk '{print $2}'`
+set Nyquist = `calc "12*3600*($antdiam/2)/(pi*$baseline)" | awk '{printf("%.1f\n",$1)}'`
 echo " " >> timing
-echo " Config  DEC  Nchan HA[hrs]  Rms[\muJy]  Beam[arcsec] Tb_rms[\muK] Sidelobe[%]:Rms,Max,Min Nvis[%]" >> timing
-echo  "$config  $dec  $nchan  $harange  $RMS  $BMAJ $BMIN  $TBRMS  $SRMS  $SMAX  $SMIN  $nvis" >> timing
+echo "Config  DEC    HA  Nchan   Rms     Beam       Tb_rms     Sidelobe[%]    Nvis   uvrange  weighting"  >> timing
+echo "        deg.   hrs.      [\muJy]    [arcsec]   [\muK]     Rms,Max,Min   %     #    [m]" >> timing
+echo  "$config  $dec  $harange  $nchan    $RMS    $BMAJ  $BMIN   $TBRMS  $SRMS  $SMAX  $SMIN  $Nvis  $nvis  $uvrange"  $weighting >> timing
 echo " "
-echo  "$config  $dec  $nchan  $harange  $RMS  $BMAJ x $BMIN  $TBRMS  $SRMS  $SMAX  $SMIN  $nvis $Nvis" >> beams.results
+echo  "$config  $dec  $harange  $nchan    $RMS    $BMAJ x $BMIN  $TBRMS    $SRMS  $SMAX  $SMIN  $Nvis  $nvis  $uvrange"  $weighting >> beams.results
 mv timing $config.$dec.$harange.$nchan.$imsize.$nvis
 cat $config.$dec.$harange.$nchan.$imsize.$nvis
 
