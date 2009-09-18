@@ -5,6 +5,7 @@ echo This script give some examples of data reduction for ALMA data using MIRIAD
 
 #History:
 # 18nov02  catenate some examples for multichannel, mfs and mosaic imaging.
+# 18sep09  revised multichan.csh input parameters
 
 goto 0
 
@@ -31,14 +32,14 @@ mfs.csh config29 -30 -1,1,.1 10
 
 2:
 echo compact configuration - small maps with 10 and 100 channels
-multichan.csh config1 -30 10
-multichan.csh config1 15 100
+multichan.csh config1 -30 -1,1,.1 10
+multichan.csh config1 15  -1,1,.1 100
 
 
 3:
 echo 4km  configuration - large maps with 10 channels
 echo " Warning: it is faster to image large maps with a few channels at a time."
-multichan.csh config29 -30 10
+multichan.csh config29 -30 -1,1,.1 10
 
 
 4:
