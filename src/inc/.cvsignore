@@ -1,4 +1,6 @@
 Makefile
 Makefile.in
+cfg_maxdim.h
+cfg_maxdimc.h
 maxdim.h
 maxdimc.h
