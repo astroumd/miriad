@@ -4,7 +4,7 @@
 #   Script to convert carma XYZ positions (in ns) to ENU (in m)
 #
 #   24-jun-2009      written,    Peter Teuben
-#
+#   24-sep-2009      allow ns2m to be not 0.299...
 
 import math,sys
 
@@ -23,12 +23,11 @@ def read_antpos(file):
         xyz.append( (x,y,z) )
     return xyz
 
-def xyz2enu(xyz,lat=37.2804):
+def xyz2enu(xyz,lat=37.2804,ns2m=0.299792458):
     """ CARMA latitude is the default"""
     sinl=math.sin(lat*math.pi/180.0)
     cosl=math.cos(lat*math.pi/180.0)
     enu=[]
-    ns2m = 0.299792458
     for p in xyz:
         e = ( p[1]                 ) * ns2m
         n = (-p[0]*sinl + p[2]*cosl) * ns2m
@@ -59,17 +58,20 @@ def print3(label,xyz):
 
         
 if __name__ == '__main__':
+    lat = 37.2804
+    ns2m = 0.299792458
     if len(sys.argv) > 1:
         file = sys.argv[1]
-        lat = 37.2804
         if len(sys.argv) > 2: lat = float(sys.argv[2])
+        if len(sys.argv) > 3: ns2m = float(sys.argv[3])
         xyz = read_antpos(file)
         print "Found %d ants in %s, lat=%f" % (len(xyz),file,lat)
         print3('xyz (ns)',xyz)
-        enu = xyz2enu(xyz,lat)
+        enu = xyz2enu(xyz,lat,ns2m)
         print3('enu (m) ',enu)
         range_enu(enu)
         
     else:
         print 'Need antpos filename, optionally followed by latitude of observatory'
         print 'Default is for carma at latitude 37.2804'
+	print 'Default ns2m = 0.299792458'
