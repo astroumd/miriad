@@ -1,0 +1,7 @@
+Antenna position files (.ant and  .ary)
+
+For a detailed explanation of the units in the antenna position
+files, see the documentation for UVGEN
+
+vla_*.ant      equatorial in  ns
+
