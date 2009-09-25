@@ -3,7 +3,7 @@ texname = progguide
 doc_DATA = $(texname)_US.ps.gz
 EXTRA_DIST = $(texname).tex titlepage.inc.in
 
-includes = defs.inc image.inc install.inc uvvars.inc titlepage.inc.in
+includes = defs.inc image.inc install.inc uvvars.inc
 
 CLEANFILES = $(doc_DATA) $(includes) titlepage.inc \
   $(texname).aux \
