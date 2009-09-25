@@ -46,7 +46,7 @@
 #define FALSE 0
 
 private void process(),usage(),getmodes(),getindent();
-private int getline();
+private int my_getline();
 private char *skip();
 
 /************************************************************************/
@@ -208,7 +208,7 @@ FILE *fin,*fout;
   foutd = NULL;
   mode = OUTSIDE;
 
-  while(s = getline(fin,line,s1,s2)){
+  while(s = my_getline(fin,line,s1,s2)){
     t = skip(line);
     switch(s){
       case '=':
@@ -285,7 +285,7 @@ FILE *fin,*fout;
   if(foutd != NULL && fout == NULL)fclose(fout);
 }
 /**********************************************************************/
-private int getline(fin,line,c1,c2)
+private int my_getline(fin,line,c1,c2)
 FILE *fin;
 char *line,*c1,*c2;
 {

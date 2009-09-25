@@ -186,7 +186,7 @@ void get_vars(),save_vars(),doset(),dounset(),doinp(),dogo(),dohelp(),
      dotask(),dosource(), doer(), docd(), doload(), dosave(),
      docommand(), doview(), dotput(), dotget(),motd(),newenv();
 void filename(), bug();
-int  getline(),task_args();
+int  my_getline(),task_args();
 #if defined(INTERRUPT)
 void review();
 #endif
@@ -223,7 +223,7 @@ char *av[];
 
   more = 1;
   while(more) {                      /* Loop to get a command. */
-    argc = getline(argv);
+    argc = my_getline(argv);
     if(!argc);
     else if(!strcmp(argv[0],"set"))      {mecho = input_level == 0;
 					  doset(argc,argv);
@@ -280,7 +280,7 @@ void motd()
   }
 }
 /************************************************************************/
-int getline(argv)
+int my_getline(argv)
 char *argv[];
 /*
   This prompts and reads a line from STDIN. It breaks it into tokens.

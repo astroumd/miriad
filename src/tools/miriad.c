@@ -318,7 +318,7 @@ void motd(), filename(), bug(), docd();
 void set_defaults();
 void newenv();
 char *expand();
-int getline();
+int my_getline();
 int task_args();
 int findname();
 
@@ -364,7 +364,7 @@ char *ep[];     /* environment strings ENV=val */
 
   while (more > 0) {
     /* Get a token list. */
-    argc = getline(buffer, MAXBUF, argv, MAXARGS, (char *)NULL);
+    argc = my_getline(buffer, MAXBUF, argv, MAXARGS, (char *)NULL);
     if (argc > 0)                     /* If there are any arguments... */
       more = do_miriad(argc, argv); /* ... call dispatcher to execute. */
   }
@@ -488,7 +488,7 @@ int Qkeys;
 } /* end_miriad */
 
 /************************************************************************/
-int getline(outbuf, maxbuf, argv, maxargs, cmdnow)
+int my_getline(outbuf, maxbuf, argv, maxargs, cmdnow)
 char *outbuf;
 int maxbuf;
 char *argv[];
