@@ -90,6 +90,43 @@ AC_PROG_FC([g95 gfortran gfortran-mp-4.2])
 
 AC_PROG_LIBTOOL
 
+dnl OS X XCode >= 3.1 needs a special linker flag for dynamic libraries
+dnl and main programs to share common blocks. This is a required feature
+dnl for the MIRIAD 'mem' routines and possibly other parts of MIRIAD as well.
+dnl We'll just blindly supply the flag if the linker accepts it. 
+dnl
+dnl OS X XCode = 3.0 has the default behavior of XCode 3.1, which breaks
+dnl MIRIAD, but it doesn't have the flag that allows it to be overridden.
+dnl (The change in behavior appears to have been an unintended side effect
+dnl of some other changes). MIRIAD thus appears to be un-compilable with
+dnl XCode 3.0. The culprit in particular seems to be OS X ld64 version 77.
+dnl
+dnl See http://software.intel.com/en-us/forums/intel-fortran-compiler-for-linux-and-mac-os-x/topic/56995/
+dnl for related discussion.
+
+ldver=`$LD -v 2>&1 |grep PROJECT:ld64-77`
+
+if test x"$ldver" != x ; then
+   AC_MSG_ERROR([your system appears to use the XCode 3.0 linker, which has a
+bug that prevents MIRIAD from being built successfully. Please upgrade your
+installation of XCode.])
+fi
+
+commonflag="-Wl,-commons -Wl,use_dylibs"
+AC_MSG_CHECKING([if the linker accepts $commonflag])
+
+LDFLAGS_save="$LDFLAGS"
+LDFLAGS="$LDFLAGS $commonflag"
+
+AC_LINK_IFELSE([int main (void) { return 0; }],[
+   AC_MSG_RESULT([yes])
+],[
+   AC_MSG_RESULT([no])
+   LDFLAGS="$LDFLAGS_save"
+])
+
+dnl Other programs
+
 AC_PROG_AWK
 AC_PROG_INSTALL
 AC_PROG_LN_S
