@@ -38,10 +38,15 @@ $(texname)_US.ps.gz: $(texname).dvi
 # We regenerate titlepage.inc on every build since it records
 # the current date, so keeping it around doesn't make sense.
 
+# When run in a MacPorts build, an 'echo' command here somehow
+# interprets the backslashes as escape characters and mangles
+# the latex code. (Running sh -c 'echo q\br' demonstrates this
+# too). I am led to believe the printf is essentially universal
+# and has more consistent semantics, so use that instead.
 install.inc: $(top_srcdir)/install.MIR
-	echo "{\small\begin{verbatim}" >$@
+	printf '{\\small\\begin{verbatim}\n' >$@
 	$(top_builddir)/src/tools/detab $< >>$@
-	echo "\end{verbatim}}" >>$@
+	printf '\\end{verbatim}}\n' >>$@
 
 defs.inc: $(top_srcdir)/manuals/atnf-user/latexdefs.inc
 	cp -f $< $@
