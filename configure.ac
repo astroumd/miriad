@@ -144,6 +144,7 @@ if test x"$wantdocs" = xno ; then
     MAKEINDEX=notchecked
     FIG2DEV=notchecked
     GNUPLOT=notchecked
+    LATEX2HTML=notchecked
     BUILD_DOCS=false
     docswhy="no ; disabled via --disable-docs"
 else
@@ -153,6 +154,7 @@ else
     AC_PATH_PROG(MAKEINDEX, makeindex, notfound)
     AC_PATH_PROG(FIG2DEV, fig2dev, notfound)
     AC_PATH_PROG(GNUPLOT, gnuplot, notfound)
+    AC_PATH_PROG(LATEX2HTML, latex2html, notfound)
 
     dnl If --enable-docs is explicitly given and we can't build
     dnl docs, treat that as an error.
@@ -171,6 +173,9 @@ else
     elif test x"$GNUPLOT" = xnotfound ; then
       BUILD_DOCS=false
       docswhy="'gnuplot' not found in PATH"
+    elif test x"$LATEX2HTML" = xnotfound ; then
+      BUILD_DOCS=false
+      docswhy="'latex2html' not found in PATH"
     else
       BUILD_DOCS=true
       docswhy="yes"
