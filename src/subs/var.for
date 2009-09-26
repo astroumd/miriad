@@ -102,7 +102,7 @@ c
 	integer i
 c
 	integer nvar,nline,nwide,nvelo
-	parameter(nvar=91,nline=10,nwide=3,nvelo=6)
+	parameter(nvar=95,nline=10,nwide=3,nvelo=6)
         character var(nvar)*8,line(nline)*8,wide(nwide)*8,velo(nvelo)*8
 c
 c  Variables to check for a change, for line=channel.
@@ -141,7 +141,8 @@ c
      *	   'ut      ','veldop  ','veltype ','version ','vsource ',
      *	   'winddir ','windmph ','delay   ','delay0  ',
      *	   'xsampler','ysampler','xyamp   ','pbtype  ',
-     *     'tau230  ','rmspath ','lefty   ','modedesc','purpose '/
+     *     'tau230  ','rmspath ','lefty   ','modedesc','purpose ',
+     *     'ambpsys ','pamatten','psys    ','psysattn'/
 c------------------------------------------------------------------------
 	avall = .false.
 c
