@@ -65,7 +65,7 @@
 
 \section{UV Dataset}
 
-\newcommand{\uvversion}{July 4, 2009}
+\newcommand{\uvversion}{September 26, 2009}
 
 A \miriad\ uv dataset is composed of a collection of items and `\MM{u-v} variables'.
 The variables are parameters that are known at the time of the observation,
@@ -155,7 +155,8 @@ They are the same as the data type in the first column of the
 
 Variables with two
 dimensions have the first dimension varying fastest, the usual FORTRAN
-notation.
+notation. UV-Variables, just like items in a MIRIAD dataset, should
+be limited to 8 characters.
 
 NB: The formal version of this document is recorded as ``{\it \uvversion}''.
 \newpage
@@ -382,6 +383,7 @@ longitu		\>D	\>radians
 
 lst		\>D     \>radians
 \> Local apparent sidereal time.\\
+%% CARMA mid interval? see UT comments
 
 modedesc         \>A     \>-
 \> Correlator mode description (CARMA only) \\
@@ -635,6 +637,7 @@ time			\>D     \>days
 \>\>\> {\tt time} is also known as {\tt preamble(3)} or {\tt preamble(4)}\\
 \>\>\> depending if you have uv or uvw data resp.\\
 \>\>\> time is the beginning of an integration with length inttime\\
+\>\>\> NOTE ut is the mid-interval for CARMA, beginning for BIMA\\
 
 tpower		\>R	\>volts
 \> Total power measurements (Hat Ck)\\
@@ -771,8 +774,18 @@ A reminder on some telescope specific variables
 
 \subsection{SZA}
 
-TBA
 
+\footnotesize
+\begin{verbatim}
+
+  ambpsys(nants,nspect)         ambient Psys
+  pamatten(nants)               PAM attenuation
+  psys(nants,nspect)            Psys 
+  psysattn(nants,nspect)        Psys attenuation 
+
+
+\end{verbatim}
+\normalsize
 
 \subsection{SMA}
 
