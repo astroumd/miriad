@@ -249,9 +249,10 @@ c       time     adjust the time to the start of an integration time,
 c                instead of the middle. Hence an offset of -inttime/2 will be 
 c                applied. Unlike the TIME keyword described above, this will have
 c                no other side effect. After this change 'ut' and 'time' should
-c                agree again. Applies to CARMA filled data Feb 2006 - August 2009.
-c                Raw observatory data were not affected.
-c
+c                agree again as they did erroneously in BIMA data and CARMA
+c                data before Feb 2006.
+c                Normally this option should not be applied unless you know
+c                what you are doing.
 c
 c--
 c-----------------------------------------------------------------------
@@ -263,7 +264,7 @@ c
       character PROG*(*)
       parameter (PROG = 'UVEDIT: ')
       character VERSION*(*)
-      parameter (VERSION = 'version 27-aug-09')
+      parameter (VERSION = 'version 5-oct-09')
 c
       double precision SECRAD, ASECRAD
 c  -------------(SECRAD = DPI / (12.d0 * 3600.d0))
