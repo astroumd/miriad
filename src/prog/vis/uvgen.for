@@ -99,6 +99,10 @@ c	The default is 80JAN01.0. A function of this is also used
 c	as a seed for the random number generator.
 c	With the unix date command you can use 
 c                date +%y%b%d:%H:%M:%S | tr '[A-Z]' '[a-z]'
+c       A note on the definition of time in a miriad dataset (which
+c       is integration centered):   this program computes them
+c       instantaneous, and could therefor be argued to be off by
+c       inttime/2 (as old BIMA data was). 
 c
 c@ freq
 c	Frequency and IF frequency in GHz.
@@ -374,7 +378,7 @@ c	pbfwhm=76,137,-0.2 simulates a primary beam pattern between
 c	10m and 6m antennas at 100 GHz. 
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version = 'Uvgen: version 1.0 26-aug-2009')
+	parameter(version = 'Uvgen: version 1.0 5-oct-2009')
 	integer ALTAZ,EQUATOR
 	parameter(ALTAZ=0,EQUATOR=1)
 	integer PolRR,PolLL,PolRL,PolLR,PolXX,PolYY,PolXY,PolYX
@@ -974,7 +978,7 @@ c
 	    call uvputvrd(unit,'ut',lst,1)
 	    call uvputvrd(unit,'lst',lst,1)
 	    if (doslip) then
-	      preamble(4) = timeout + ha/24.
+	      preamble(4) = timeout + ha/24.d0
 	    else
 	      preamble(4) = timeout + 365.25/366.25*ha/24.
 	    endif
