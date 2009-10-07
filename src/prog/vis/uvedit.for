@@ -59,6 +59,7 @@ c    pjt   30nov05    compute (u,v,w) instead of (u,v)
 c    pjt   16mar06    reformatted sma to keep the solaris compiler happy
 c                     and somehow linux allowed r>0 instead of r.gt.0
 c    pjt   26aug09    added options=time for CARMA time adjustment
+c    mchw  26aug09    Added CAVEAT in documentation for options=time.
 c***********************************************************************
 c= Uvedit - Editing of the baseline of a UV data set.
 c& pjt
@@ -251,8 +252,8 @@ c                applied. Unlike the TIME keyword described above, this will hav
 c                no other side effect. After this change 'ut' and 'time' should
 c                agree again as they did erroneously in BIMA data and CARMA
 c                data before Feb 2006.
-c                Normally this option should not be applied unless you know
-c                what you are doing.
+c                Normally 'ut' and 'time' are the mid point of each integration.
+c                Do not use this option unless you know what you are doing.
 c
 c--
 c-----------------------------------------------------------------------
@@ -264,7 +265,7 @@ c
       character PROG*(*)
       parameter (PROG = 'UVEDIT: ')
       character VERSION*(*)
-      parameter (VERSION = 'version 5-oct-09')
+      parameter (VERSION = 'version 07-Oct-2009')
 c
       double precision SECRAD, ASECRAD
 c  -------------(SECRAD = DPI / (12.d0 * 3600.d0))
