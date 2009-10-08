@@ -584,7 +584,7 @@ c
       data gaps, doabut, dotr /.false., .false., .false./
 c-----------------------------------------------------------------------
       call output (' ')
-      call output ('Sfind: Version 4-jan-2005')
+      call output ('Sfind: Version 08-oct-2009')
       call output (' ')
 c
 c Get user inputs
@@ -2784,7 +2784,7 @@ c area covered by beam, or no pixels at all were used.
 c
 c  Convert the coordinates to pixels, and fill in defaults if necessary.
 c
-       call CoordFid(lIn,k,.true.)
+       call CoordFid(lIn,k,.false.)
        call GetEst
 c make sure it's a 2-D gaussian
        gdim = 2
