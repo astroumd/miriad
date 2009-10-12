@@ -8,6 +8,7 @@ c     23-jul-97   General tidy up.				     RJS
 c     30-jul-97   More precision for RA and add "epoch" keyword.     RJS
 c     07-aug-97   Correct use of epo2jul routine.		     RJS
 c      4-apr-08   Add some velocity reference frames                 PJT
+c     10-aug-09   Add some doppler calculations                      PJT
 c-----------------------------------------------------------------------
 c= cotra - coordinate transformations
 c& pjt
@@ -47,6 +48,16 @@ c       Default:   9,12,7
 c@ theta0
 c       LSR speed in km/s. Default: 220
 c       The GSR motion (-62,40,-35) is currently hardcoded.
+c@ z
+c       Redshift. You can also give an explicit velocity 
+c       defined via the optical or radio definiton
+c       if a 2nd argument is specified, e.g.
+c       z=1234.5,opt
+c       Default : 0
+c@ restfreq
+c       Rest frequency of a spectral line in GHz. 
+c       Default: 115.271204 (the CO 0-1 transition)
+c       
 c----------------------------------------------------------------------
 c todo:
 c vLSR = vBSR + 9 cos(l) cos(b) + 12 sin(l) cos(b) + 7 sin(b) 
@@ -55,11 +66,12 @@ c vLGSR = vGSR − 62 cos(l) cos(b) + 40 sin(l) cos(b) − 35 sin(b)
 c
 	INCLUDE 'mirconst.h'
 	CHARACTER  VERSION*(*)
-	PARAMETER (VERSION='Version 16-apr-09')
+	PARAMETER (VERSION='Version 10-aug-09')
 c
 	double precision lon,lat,blon,blat,dra,ddec,epoch
         double precision dvlsr, dvgsr, dvlgsr,uvw(3),theta0
-	character line*64
+        double precision restfreq,z,vopt,vrad,freq
+	character line*128, vtype*10
 c
 	integer NTYPES
 	parameter(NTYPES=5)
@@ -70,6 +82,7 @@ c  Externals.
 c
 	double precision epo2jul
 	character rangle*13,hangleh*15
+        logical keyprsnt
 c
 	data types/'b1950           ','j2000           ',
      *		   'galactic        ',
@@ -90,6 +103,9 @@ c
         call keyd('uvw',uvw(2),12d0)
         call keyd('uvw',uvw(3),7d0)
         call keyd('theta0',theta0,220d0)
+        call keyd('restfreq',restfreq,115.271204d0)
+        call keyd('z',z,0.0d0)
+        call keya('z',vtype,'z')
 	CALL keyfin
 c
 c  Convert to b1950 coordinates.
@@ -147,4 +163,30 @@ c
 	call output(line) 
         write(line,'(a,f14.6)')'dVlgsr:        ', dvlgsr
 	call output(line)
+
+        IF (z.NE.0.0d0) THEN
+           if (vtype(1:1).eq.'z') then
+              freq = restfreq/(1.0d0+z)
+              write(line,'(a,2f11.6,a,f10.4)')
+     *              'Doppler:          ',
+     *              restfreq,freq,' z=',z
+           else if (vtype(1:1).eq.'r') then
+              vrad = z/DCMKS 
+              freq = restfreq/(1.0d0+vrad)
+              write(line,'(a,2f11.6,a,f10.4)') 
+     *              'Doppler:          ',
+     *              restfreq,freq,' vrad/c=',vrad
+              write(*,*) vrad
+           else if (vtype(1:1).eq.'o') then
+              vopt = z/DCMKS 
+              freq = restfreq/(1.0d0+vopt)
+              write(line,'(a,2f11.6,a,f10.4))')
+     *              'Doppler:          ',
+     *              restfreq,freq,' vpot/c=',vopt
+           else
+              write(line,'(a,a)') 'velocity type unknown:',vtype
+              call bug('f',line)
+           endif
+           call output(line)
+        ENDIF
 	END
