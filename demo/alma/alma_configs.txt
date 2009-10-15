@@ -1,0 +1,12 @@
+Hope this does the trick.  I have redone the file to remove the headers, etc, (also blank lines) and then added the occupation matrices.  Note that this has all pads including the ACA and total power antennas.
+
+The files are:
+1 Standard configs for 50 antennas
+2 NS elongated configs for 50 antennas
+3 ACA configs - standard and NS elongated (12 antennas)
+4 The three initial cases I considered for early science with 16 antennas.
+
+Best Richard
+Richard Hills
+<rhills@alma.cl> 	Attachment Thu, Oct 15, 2009 at 11:55 AM
+To: melvyn wright <melvyn.wright@gmail.com>
