@@ -7,7 +7,7 @@ awk '{if($4==1)  printf("%.2f  %.2f  0.0  %s\n", $3, $2, $1)}' ALMA_ACA_configs 
 #goto end
 
 awk '{if($4==1)  printf("%.2f  %.2f  0.0  %s\n", $3, $2, $1)}' ALMA_ACA_configs > ACA_config1.ant
-awk '{if($5==1)  printf("%.2f  %.2f  0.0  %s\n", $3, $2, $4)}' ALMA_ACA_configs > ACA_config2.ant
+awk '{if($5==1)  printf("%.2f  %.2f  0.0  %s\n", $3, $2, $1)}' ALMA_ACA_configs > ACA_config2.ant
 
 echo "ALMA_ACA beams with natural weighting (sup=0)"
 
