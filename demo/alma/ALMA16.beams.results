@@ -1,0 +1,43 @@
+   ---  ALMA Single Field MFS Imaging    ---   
+ config  = ALMA16_config3
+ dec     =  -30
+ harange =  -1,1,.1  hours
+ select  =  -shadow(12)
+ freq    =  230
+ nchan   = 1
+ imsize  = 0
+ 
+   ---  TIMING   ---   
+START: Fri Oct 16 12:39:24 PDT 2009
+UVGEN: Fri Oct 16 12:39:24 PDT 2009
+INVERT: Fri Oct 16 12:39:24 PDT 2009
+IMPLOT: Fri Oct 16 12:39:25 PDT 2009
+CLEAN: Fri Oct 16 12:39:25 PDT 2009
+IMFIT: Fri Oct 16 12:39:25 PDT 2009
+FINISH: Fri Oct 16 12:39:25 PDT 2009
+ 
+   ---  RESULTS   ---   
+UVGEN:       2400 records written to file: ALMA16_config3.-30.uv
+ 
+Config          DEC    HA  Nchan  Rms     Beam       Tb_rms     Sidelobe[%]   Nvis   uvrange  weighting
+                deg.   hrs.      [\muJy]  [arcsec]   [\muK]     Rms,Max,Min    %     #    [m]
+ALMA16_config1  30  -1,1,.1  1   11.5    2.60 x 1.49  69    2.9  20.0  -10.9   80  1690  9 232.5 sup=0
+ALMA16_config1   0  -1,1,.1  1   10.3    1.89 x 1.58  80    5.3  25.2  -12.7  100  2100  13.2 232.5 sup=0
+ALMA16_config1 -30  -1,1,.1  1   10.3    1.83 x 1.53  85    4.5  21.0  -12.4  100  2100  14.7 232.5 sup=0
+ALMA16_config2  30  -1,1,.1  1   10.3    0.37 x 0.29  2219  2.5  18.6  -7.9   100  2100  60.3 1027.2 sup=0
+ALMA16_config2   0  -1,1,.1  1   10.3    0.30 x 0.23  3451  3.7  62.0  -43.0  100  2100  78.3 1027.2 sup=0
+ALMA16_config2 -30  -1,1,.1  1   10.3    0.30 x 0.22  3608  2.8  62.6  -43.0  100  2100  83.1 1027.2 sup=0
+ALMA16_config3  30  -1,1,.1  1    9.6    0.79 x 0.65  432   3.3  18.0  -7.1   100  2400  27.3 471 sup=0
+ALMA16_config3   0  -1,1,.1  1    9.6    0.66 x 0.50  673   4.1  28.3  -7.2   100  2400  31.2 494.7 sup=0
+ALMA16_config3 -30  -1,1,.1  1    9.6    0.66 x 0.47  716   3.3  17.9  -7.0   100  2400  33.6 504.3 sup=0
+
+ALMA16_config1  30  -4,4,.1  1    6.6    1.81 x 1.30  65    1.6  11.1  -6.4    69  5905  4.2 232.5 robust=0.5
+ALMA16_config1   0  -4,4,.1  1    5.6    1.65 x 1.35  58    1.9  25.8  -10.7   94  8027  9 232.5 robust=0.5
+ALMA16_config1 -30  -4,4,.1  1    5.5    1.47 x 1.25  69    1.4  13.2  -7.2    98  8365  10.8 232.5 robust=0.5
+ALMA16_config2  30  -4,4,.1  1    5.4    0.31 x 0.29  1389  1.2  10.4  -11.7  100  8505  24.3 1027.2 robust=0.5
+ALMA16_config2   0  -4,4,.1  1    5.4    0.32 x 0.21  1858  1.8  44.9  -12.8  100  8505  44.7 1027.2 robust=0.5
+ALMA16_config2 -30  -4,4,.1  1    5.4    0.28 x 0.20  2230  1.2   7.8  -10.7  100  8505  51.6 1027.2 robust=0.5
+ALMA16_config3  30  -4,4,.1  1    5.1    0.68 x 0.62  280   1.1   9.1  -9.1    98  9570  8.1 497.7 robust=0.5
+ALMA16_config3   0  -4,4,.1  1    5.1    0.74 x 0.44  362   1.5  20.7  -10.2  100  9720  18.6 504.3 robust=0.5
+ALMA16_config3 -30  -4,4,.1  1    5.0    0.64 x 0.42  430   1.1   6.8  -9.2   100  9720  21.6 504.3 robust=0.5
+
