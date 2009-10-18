@@ -1,0 +1,11 @@
+MMM = MIRIAD Masterclass with Melvyn 
+
+
+Obtain via 
+    svn co  https://svn.hcro.org/mmm/
+
+These are a set of tasks, developed by ATA users, especially the RAPID
+pipeline developed by Garrett Keating. These are mostly ATA-specific
+tools but a lot of time has been put into them and some of them might
+well be of interest to users of other telescopes
+
