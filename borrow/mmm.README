@@ -7,10 +7,12 @@ well be of interest to users of other telescopes
 
 
 
-Obtain via  https://svn.hcro.org/mmm/
+Obtain via  https://svn.hcro.org/mmm/, use the svn client as
+follows:
 
-Currently SETI people allow you to browse the files, but 
-not yet download them via svn. 
+
+   svn co  https://svn.hcro.org/mmm
+
 
 
 
