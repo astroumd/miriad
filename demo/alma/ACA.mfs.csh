@@ -7,7 +7,7 @@ echo "Performance tests for ALMA imaging"
 # 22mar05 added harange.
 # 09may05 add more parameters to title.
 # 27may09 added weighting options to input parameters.
-# 18oct09 version with imsize=0 and shadow=12m for ALMA 
+# 18oct09 version with imsize=128 and shadow=7m for ALMA ACA
 
 
 # Nyquist sample time = 12 x 3600 s x (dish_diam/2)/(pi*baseline)
@@ -49,14 +49,16 @@ set dec     = $2
 set harange = $3
 set nchan   = $4
 set select  = '-shadow(12)'
+set select  = '-shadow(7)'
 set antdiam = 12
 set freq    = 230
 set imsize  = 1024
 set imsize  = 256
 set imsize  = 0
+set imsize  = 128
 # imsize = 0 lets invert choose the image size with ~ 1.5 x Nyquist sampling.
 set systemp    = 40
-set jyperk     = 40
+set jyperk     = 100
 set bandwidth  = 8000
 set weighting  = $5
 
