@@ -15,14 +15,22 @@ c@ vis
 c	Input visibility data file. No default
 c@ out
 c	Output visibility data file name. No default. 
-c@ 
+c@ tab
+c       Input table, currently must be ascii
+c       with '#' comment character to skip lines, others
+c       must be data with 4 numbers:  U, V, Re, Im
 c--
 c
 c  History:
 c    pjt   20oct09 Original version cloned from UVSWAP
 c                  quick hack for Andrea Isella at CSS'09
-c
+c TODO
+c   - allow for nread>1 (but line is limited to 256 chars)
+c   - allow more general tables, not current u,v,re,im
+c     use table I/O routines for this, 
+c   - allow Re/Im or Amp/Phase
 c------------------------------------------------------------------------
+c
       include 'maxdim.h'
       character version*(*)
       parameter(version='version 20-oct-09')
