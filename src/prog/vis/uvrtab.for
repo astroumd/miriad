@@ -27,8 +27,8 @@ c------------------------------------------------------------------------
       character version*(*)
       parameter(version='version 20-oct-09')
 c
-      character vis*256, out*256, tab*256
-      integer nread, tvis, tout, ttab, iostat
+      character vis*256, out*256, tab*256, aline*256
+      integer nread, tvis, tout, ttab, ilen, iostat, nvis
       double precision preamble(5)
       complex data(MAXCHAN)
       logical flags(MAXCHAN)
@@ -47,8 +47,6 @@ c Check the input parameters
 c
       if (vis.eq.' ' .or. out.eq.' ') call bug ('f',
      +    'Input (vis=) and output (out=) must both be given') 
-      if (tab.eq.' ') call bug('f',
-     +    'Table Input (tab=) must be given') 
 c
 c Open sesame
 c
@@ -62,9 +60,19 @@ c
 c
 c Perform the copying.
 c
+      nvis = 0
       call uvread (tvis, preamble, data, flags, MAXCHAN, nread)
       do while (nread.gt.0) 
+	nvis = nvis + 1
         call varcopy (tvis, tout)
+
+	aline = '#'
+	do while (aline(1:1).eq.'#')
+	  call txtread(ttab, aline, ilen, iostat)
+	  if (iostat.ne.0) call bug('f','table too short')
+	end do
+	call myparse(aline,nread,data)
+
         call uvwrite (tout, preamble, data, flags, nread)
         call uvread (tvis, preamble, data, flags, MAXCHAN, nread)
       end do
@@ -79,6 +87,24 @@ c
 c
       call uvclose (tvis)
       call uvclose (tout)
+
+      call txtread(ttab, aline, ilen, iostat)
+      if (iostat.eq.0) call bug('w','End Of Table not reached')
+
       call txtclose(ttab)
 c
       end
+c-----------------------------------------------------------------------
+      subroutine myparse(aline,nread,data)
+      character aline*(*)
+      integer nread
+      complex data(nread)
+c
+      real u,v,re,im
+c
+      read(aline,*) u,v,re,im
+      data(1) = cmplx(re,im)
+
+      return   
+      end
+
