@@ -85,7 +85,8 @@ c
       CHARACTER version*80, versan*80
 
       version = versan('itemize',
-     * '$Id$')
+     * '$Revision $',
+     * '$Date $')
 
 c
 c  Get the input parameters.
