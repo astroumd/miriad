@@ -179,8 +179,9 @@ c
 c
 c  Get the input parameters.
 c
-	version = versan('GPBUDDY',
-     *   '$Id$')
+	version = versan('gpbuddy',
+     *   	'$Revision$',
+     *          '$Date$')
      
 	call keyini
 	call keya('vis',vis,' ')
