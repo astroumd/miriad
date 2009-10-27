@@ -33,9 +33,14 @@ c     Quiet mode?
 
       call lcase (versan)
       i0 = len1(versan) + 1
-
+c     ATNF version uses RCS, CARMA version uses CVS, keep the users less confused
+#ifdef USE_RCS
       versan(i0:) = ': Version '
       i0 = i0 + 10
+#else
+      versan(i0:) = ': CVS Version '
+      i0 = i0 + 14
+#endif
 
 c     Parse the RCS revision information.
       i1 = 12
