@@ -1,6 +1,14 @@
-c***********************************************************************
+cvsqc***********************************************************************
 c  Fix CARMA 62MHz windows before March 18 2008 where the CARMA pipeline
 c  didn't properly pad/fft the data
+c
+c  Algorithm/Recipe:
+c  1) input 63 complex channels data(1:63)
+c  2) pad 0 at either end, giving 65 channels data1(1:65)
+c  3) fftcr() this to 128 real-only lags, data3(1:128)
+c  3) zero out the high end lags, data3(60:67)
+c  4) fftrc() back to spectrum, complex data2(1:65)
+c  5) copy data2(2:64) back to data(1:63), the output
 c
 c   pjt    18/19-mar08   Cloned off uvwide
 c
@@ -28,17 +36,21 @@ c     The name of the recomputed output visibility dataset.
 c     In addition to fixed 62MHz windows, all widebands will have been
 c     recomputed.
 c     No default.
+c
+c@ test
+c     Optional input table with an ascii spectrum. 
+c     This will bypass vis=
+c
 c@ mode62
 c     Optional mode of fixing the 62MHz problem.
 c
 c     0=do nothing (though widebands are still recomputed)
 c     1=fix the 62MHz padding problem    [the default]
-c     2=(test)output lags
-c     3=(test)output fft of lags, should be original
 c     11=(test) first 63 lags
 c     12=(test) last  63 lags
 c     13=(test) no zeroing of lags
 c     14=(test) zero lags as in option 1, and then subtract mean of them
+c     15=(test) write data in a table, only first scan, then quit
 c--
 c
 c-----------------------------------------------------------------------
@@ -52,12 +64,13 @@ c
 c
 c  Internal variables.
 c
-      CHARACTER Infile*132, Outfile*132, type*1
+      CHARACTER Infile*132, Outfile*132, Testfile*132, type*1
+      CHARACTER string*100
       CHARACTER*11 except(15)
-      INTEGER i, k, m, lin, lout, mode62
+      INTEGER i, k, m, lin, lout, mode62, iostat, length
       INTEGER nread, nwread, lastchn, nexcept
-      INTEGER nschan(MAXCHAN), ischan(MAXCHAN), nspect, nwide
-      REAL wfreq(MAXCHAN), wt
+      INTEGER nschan(MAXCHAN), ischan(MAXCHAN), nspect, nwide, tid
+      REAL wfreq(MAXCHAN), wt, x, y
       DOUBLE PRECISION sdf(MAXCHAN), sfreq(MAXCHAN), preamble(5), width
       COMPLEX data(MAXCHAN), wdata(MAXCHAN)
       LOGICAL dowide, docorr, updated
@@ -69,8 +82,10 @@ c  End declarations.
 c-----------------------------------------------------------------------
 c  Announce program.
       
-      version = versan(PROG,
-     * '$Id$')
+      version = versan('uvfix62',
+     *   '$Revision$',
+     *   '$Date$')
+
 
 c-----------------------------------------------------------------------
 c  Use the key routines to get the user input parameters and check the
@@ -80,8 +95,23 @@ c
       CALL keyini
       CALL keyf('vis', infile, ' ')
       CALL keya('out', outfile, ' ')
+      CALL keyf('test',testfile, ' ')
       CALL keyi('mode62', mode62, 1)
       CALL keyfin
+
+      IF(testfile.NE.' ') THEN
+         CALL txtopen(tid,testfile,'old',iostat)
+         IF(iostat.ne.0) call bug('f','bad table')
+         DO i=1,63
+            CALL txtread(tid,string, length,iostat)
+            IF(iostat.ne.0) call bug('f','short table')
+            read(string,*) wt,x,y
+            write(*,*) 'XY: ',i,x,y
+            data(i) = CMPLX(x,y)
+         ENDDO
+         CALL txtclose(tid)
+         CALL fix62(data,63,mode62)
+      ENDIF
 
       CALL assertl(infile.NE.' ',
      *     'An input visibility file must be given. vis=')
@@ -419,28 +449,23 @@ c 1) copy array, and pad an extra 0 at both ends, we have 65 channels now
       data1(1)    = 0
       data1(n1+1) = 0
 
-c 1a) special modes for testing
-c     2 = make a complex lag and return
-c     3 = FFT and iFFT, should return identical spectrum
-
-      IF (mode62.EQ.2 .OR. mode62.EQ.3) THEN
-         CALL fftcc(data1,data2,1,64)
-         IF (mode62.EQ.2) THEN
-            DO i=1,63
-               data(i) = data2(i)
-            ENDDO
-         ELSE IF (mode62.EQ.3) THEN
-            CALL fftcc(data2,data1,-1,64)
-            DO i=1,63
-               data(i) = data1(i)/64.0
-            ENDDO
-         ENDIF
-         RETURN
+      IF (mode62.EQ.15) THEN
+         DO i=1,n1+1
+            write(*,*) 'SPEC1: ',i,REAL(data1(i)),
+     *                             IMAG(data1(i))
+         ENDDO
       ENDIF
 
-c 2) fft to lag space, a real spectrum of 128
+c 2) fft to lag space, a real valued spectrum of 128 lags
 
       CALL fftcr(data1,data3, 1,128)
+
+      IF (mode62.EQ.15) THEN
+         DO i=1,128
+            write(*,*) 'LAG: ',i,data3(i)
+         ENDDO
+      ENDIF
+
 
       IF (mode62.EQ.11) THEN
          DO i=1,63
@@ -461,16 +486,7 @@ c method1, around the
 c Note that if you turn off the zero'ing, you indeed get
 c back the original spectrum, within rounding (1e-5)
 
-      IF (mode62.EQ.14) THEN
-         aver = 0.0
-         DO i=1,8
-            aver = aver + data3(60+i)
-         ENDDO
-         aver = aver / 8.0
-         DO i=1,128
-            data3(i) = data3(i) - aver
-         ENDDO
-      ENDIF
+      IF (.false.) THEN
 
       IF (mode62.NE.13) THEN
          DO i=1,8
@@ -478,8 +494,19 @@ c back the original spectrum, within rounding (1e-5)
          ENDDO
       ENDIF
 
+      ENDIF
+
 c 4) fft back
-      CALL fftrc(data3,data2,-1,128)
+      CALL fftrc(data3,data2, -1,128)
+
+      IF (mode62.EQ.15) THEN
+         DO i=1,n1+1
+            write(*,*) 'SPEC2: ',i,REAL(data2(i))/128.0,
+     *                             IMAG(data2(i))/128.0
+         ENDDO
+         STOP
+      ENDIF
+
          
 
 c 5) copy array and return; 0-lag is in first array element
@@ -488,3 +515,78 @@ c 5) copy array and return; 0-lag is in first array element
       ENDDO
 
       END
+c-----------------------------------------------------------------------
+c NUMREC's four1 version
+      SUBROUTINE fix62f(data,n,mode62)
+      IMPLICIT NONE
+      INTEGER n, mode62
+      COMPLEX data(n)
+
+c
+      include 'maxdim.h'
+      COMPLEX data1(MAXCHAN), data2(MAXCHAN)
+      REAL    data3(MAXCHAN), aver
+      INTEGER i, n1, n2
+
+      IF (mode62.EQ.0) RETURN
+
+      IF (n.NE.63) call bug('f','fix62: not a 63 channel spectrum')
+      n1 = n+1
+            
+
+c 1) copy array, and pad an extra 0 at both ends, we have 65 channels now
+      DO i=1,n
+         data1(i+1) =  data(i)
+      ENDDO
+      data1(1)    = 0
+      n2 = 2*n1
+
+      DO i=1,n1
+         data1(n2+1-i) = CONJG(data1(i))
+      ENDDO
+      data1(n2+1) = 0
+
+      IF (mode62.EQ.15) THEN
+         DO i=1,n2
+            write(*,*) 'SPEC1: ',i,REAL(data1(i)),
+     *                             IMAG(data1(i))
+         ENDDO
+         write (*,*) 'CHECK: ',data1(n2+1)
+      ENDIF
+
+c 2) fft to lag space, a real valued spectrum of 128 lags
+
+      CALL four1(data1,128,1)
+
+      IF (mode62.EQ.15) THEN
+         DO i=1,128
+            write(*,*) 'LAG: ',i,REAL(data1(i)),IMAG(data1(i))
+         ENDDO
+         write (*,*) 'CHECK: ',data1(n2+1)
+      ENDIF
+
+c 4) fft back
+
+
+      CALL four1(data1,128,-1)
+
+      IF (mode62.EQ.15) THEN
+         DO i=1,n2
+            write(*,*) 'SPEC2: ',i,REAL(data1(i))/128.0,
+     *                             IMAG(data1(i))/128.0
+         ENDDO
+         write (*,*) 'CHECK: ',data1(n2+1)
+         STOP
+      ENDIF
+
+         
+
+c 5) copy array and return; 0-lag is in first array element
+      DO i=1,63
+         data(i) = data1(i+1)/128.0
+      ENDDO
+
+      END
+c-----------------------------------------------------------------------
+      include 'four1.for'
+c-----------------------------------------------------------------------
