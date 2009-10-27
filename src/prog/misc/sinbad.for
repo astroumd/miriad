@@ -70,7 +70,9 @@ c
 c  Read the inputs.
 c
         version = versan('sinbad',
-     *  '$Id$')
+     *  '$Revision$',
+     *  '$Date$')
+
  	call keyini
         call getopt(spectrum,diffrnce,ratio)
 	call keyf('vis',vis,' ')

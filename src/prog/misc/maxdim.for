@@ -45,7 +45,8 @@ c
       EXTERNAL membuf
 
       version = versan('maxdim',
-     * '$Id$')
+     * '$Revision$',
+     * '$Date$')
 
 c
 c  Get the input parameters 
