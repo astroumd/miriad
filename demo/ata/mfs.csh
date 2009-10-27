@@ -8,6 +8,7 @@ echo "Performance tests for ATA imaging"
 # 09may05 add more parameters to title.
 # 07oct08 better values for baseunit=-3.335668 lat=40:49:02.50 in uvgen
 # 27may09 added weighting options to input parameters.
+# 27oct09 better doc.
 
 
 # Nyquist sample time = 12 x 3600 s x (dish_diam/2)/(pi*baseline)
@@ -19,10 +20,11 @@ start:
 
 # check inputs
   if($#argv<5) then
-    echo " Usage: $0  config  declination  harange  nchan" 
+    echo " Usage:   $0   config   declination  harange  nchan  weighting"
+    echo " e.g:     mfs.csh   ata-42     -30       0,.1,.1    1       sup=0"
     echo "   config"
     echo "          Antenna configuration. "
-    echo "            e.g. config1.ant. Omit the .ant. No default."
+    echo "            e.g. ata-42   Omit the .ant. No default."
     echo "   declination"
     echo "          Source declination in degrees. No default."
     echo "   harange"
