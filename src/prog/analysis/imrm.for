@@ -252,10 +252,10 @@ c
       data nbl /6*0/
       data padummy /-100000.0/
 c-----------------------------------------------------------------------
-      version = versan('imrm',
-     + '$Id$')
+      version = versan ('imrm',
+     :                  '$Revision$',
+     :                  '$Date$')
 
-      call output (version)
       call output (' ')
       call output ('The order of the input position angle images is ')
       call output ('now IMPORTANT.  See the HELP file for details of ')
