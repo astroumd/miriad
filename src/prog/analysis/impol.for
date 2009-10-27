@@ -166,7 +166,8 @@ c
       data li, lpout, lmout, lpaout /0, 2*0, 2*0, 2*0/
 c-----------------------------------------------------------------------
       version = versan ('impol',
-     + '$Id$')
+     :                  '$Revision$',
+     :                  '$Date$')
 c
 c Get the inputs
 c
