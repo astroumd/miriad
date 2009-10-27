@@ -90,6 +90,7 @@ c           8-dec-08 pjt make it work for SZA data as well
 c          12-dec-08 pjt deal with version 1.1 SZA data (wsystemp instead of systemp)
 c          10-aug-09 pjt list end time of observations, only UT needed for now
 c                        and revert back, Quality would be upset with this change
+c          25-aug-09 pjt UVW one more digit for A array when UVW < 0
 c
 c
 c TODO:
@@ -123,7 +124,8 @@ c
 c----------------------------------------------------------------------c
 
         pversion=versan('listobs',
-     *  '$Id$')
+     *  '$Revision$',
+     *  '$Date$')
 c-----------------------------------------------------------------------
 
 	dash = '----------------------------------------' //
@@ -204,7 +206,7 @@ c --- check source purpose
                     jdend = jdnow + inttime/(3600.0*24.0)
                     call uvgetvrd(tin,'ut',utend,1)
                  endif
-		 tint = tint/8.640e+4
+		 tint = tint/86400.0
 		 diff = jdnow - (jdold + 1.12d0 * tint)
 		 if(abs(diff) .gt. tint .or. 
      1                      newsou .ne. oldsou) then
@@ -212,10 +214,10 @@ c --- check source purpose
 		    ipt      = ipt + 1
 	            if(ipt.gt.MAXP)CALL bug('f','Too many points')
 		    call getall(tin,ipt,pthere)
-		    totint   = 8.640e4 * tint
+		    totint   = 86400.0 * tint
                     oldsou = newsou
                  else
-                    totint = totint + 8.640e4 * tint
+                    totint = totint + 86400.0 * tint
 		 endif
 		 jdold  = jdnow
 
@@ -317,8 +319,9 @@ c                  apos(1..3) is XYZ    apos(4..6) is ENU
           call LogWrite('           ------------------------',more)
 	  call LogWrite('      for Decl = 0 deg. Source at Transit',
      1                  more)
-	  call LogWrite('                 U           V           W'//
-     1                  '           UVdistance',more)
+	  call LogWrite('                  '//
+     1                  'U             V             W'//
+     2                  '           UVdistance',more)
 
 	  do j=1,nants-1
 	   do k=j+1,nants
@@ -335,7 +338,7 @@ c                  apos(1..3) is XYZ    apos(4..6) is ENU
            enddo
           enddo
         endif
- 2003	format('Bsln  ',i2,'-',i2,': ',4(f10.2,2x))
+ 2003	format('Bsln  ',i2,'-',i2,': ',4(f11.2,2x))
 c
 c   Write out section showing source names, coordinates, and corr freqs
 c
@@ -626,8 +629,8 @@ c        print 2002, secs
 c-----------------------------------------------------------------------
 	subroutine CalElev(ha,decl,elev,lat)
 c
-c    Calculates the source Elevation from the source hour angle (HA)
-c    and declination (DECL) assuming the latitude of Hat Creek.
+c    Calculates the source Elevation from the source hour angle (HA),
+c    declination (DECL) and latitude of observatory (LAT)
 c    HA, DECL, and ELEV are all in radians.
 c
 	real ha,decl,elev,lat,dummy
