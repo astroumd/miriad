@@ -82,7 +82,7 @@ int main(int argc, string argv[])
     setimhead(unit);                            /* set header variables      */
     mkimage();                                  /* create image of object    */
     for (j=0; j<naxisi[1]; j++)
-        xywrite_c(unit,j,image+j*naxisi[0]);    /* write image into file     */
+        xywrite_c(unit,j+1,image+j*naxisi[0]);  /* write image into file     */
     xyclose_c(unit);                            /* close miriad image file   */
 
 }
