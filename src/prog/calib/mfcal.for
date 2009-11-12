@@ -221,6 +221,9 @@ c
      *		     MAXSOLN,nsoln,time,Count,minant,refant,interval,
      *		     edge,Source,PolMap)
 	if(nants.gt.MAXANT)call bug('f','Too many antennas')
+c  Bugzilla 793?
+	if(nspect.GT.MAXWIN)call bug('w',
+     *     'BUGZILLA 793: Possibly too many windows (MAXWIN)')
 c
 c  Squeeze out spectral windows that have no data and amalgamate windows
 c  that differ insignificantly (probably because of Doppler tracking).
@@ -1864,8 +1867,12 @@ c
 	      edrop = max(0,
      *		nstep*chans+start-1+edge(2)-nschan0(ispect)+nstep-1 )
      *		/ nstep
-	      if(bdrop+edrop.ge.chans)
-     *		call bug('f','Illegal edge parameter')
+	      if(bdrop+edrop.ge.chans) then
+		 write(*,*) 'BAD',bdrop,edrop,chans
+     		call bug('f','Illegal edge parameter')
+	      else
+		 write(*,*) 'GOOD',bdrop,edrop,chans
+	      endif
 	      f = sfreq0(ispect) +
      *		  sdf0(ispect) * (start - 1 + 0.5*(nwidth-1))
 	      call SetState(state,f,nstep*sdf0(ispect),chans,
