@@ -1870,8 +1870,8 @@ c
 	      if(bdrop+edrop.ge.chans) then
 		 write(*,*) 'BAD',bdrop,edrop,chans
      		call bug('f','Illegal edge parameter')
-	      else
-		 write(*,*) 'GOOD',bdrop,edrop,chans
+c	      else
+c		 write(*,*) 'GOOD',bdrop,edrop,chans
 	      endif
 	      f = sfreq0(ispect) +
      *		  sdf0(ispect) * (start - 1 + 0.5*(nwidth-1))
