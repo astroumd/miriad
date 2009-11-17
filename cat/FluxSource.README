@@ -1,0 +1,15 @@
+Instructions and background to CARMA's flux catalog (2009)
+
+- there are three files:
+  1)   FluxSource.cat            the official catalog
+  2)   FluxSource_newadd.cat     the incremental catalog
+  3)   FluxSource.README         this file, explaining it all
+
+- if you need CVS access to write to any of these files, and don't
+  have an account, visit
+	http://www.astro.umd.edu/~teuben/miriad/cvs.html
+  and send me (teuben@astro.umd.edu currently) the encrypted
+  cvs password using the perl example (see 'CVS Client Setup and Usage').
+  It is suggested not to use a strong password, but one you often use
+  for not-so-important work online.
+
