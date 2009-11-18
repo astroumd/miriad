@@ -14,7 +14,7 @@
 set name=miriad
 set sleep=0
 set force=0
-set dir=/chara2/teuben/redo_miriad/autobuild
+set dir=/chara/teuben/redo_miriad/autobuild
 
 foreach arg ($*)
   set $arg
