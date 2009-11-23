@@ -1,0 +1,19 @@
+# sza_B.ant configuration PACS 2008
+# topocentric coordinates in meters.
+# baseunit=-3.33564 to convert to equatorial system measured in nanoseconds.
+# north    east      zenith     station   antenna     comments
+#  35.180 -225.450    0.000       23        10m        c1
+-142.690 -474.720    0.000       7/21      10m       c2  c21
+# 112.630 -292.020    0.000       27        10m        c3
+ 615.590 -228.500    0.000       20        10m       c4  c23
+ 288.370  196.340    0.000       15/16     10m       c5  c20
+-267.560  109.270    0.000       14/17     10m       c6  c18
+# 375.480 -151.810    0.000       28         6m        c7
+ 140.370 -453.760    0.000       6/22       6m       c8  c19
+-166.820 -222.940    0.000       13/18      6m       c9  c22
+# -85.510 -209.170    0.000       25         6m    c10 moved to station 44 for 2009dec
+# 190.470 -155.090    0.000       24         6m        c11
+#  45.280  -44.240    0.000       26         6m        c12
+ -46.730  -10.840    0.000       29         6m       c13  c16
+# -42.580 -342.280    0.000       30         6m        c14
+ 235.100 -279.590    0.000       11/19      6m       c15  c17
