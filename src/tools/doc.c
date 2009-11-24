@@ -85,12 +85,13 @@ History:
   pjt 28aug05 uninitialized variables in gcc4 with -O  ; removed vaxc code
   pkgw 22jun07 Fix a segfault caused by buffer over-use in untab() ;
                exposed by running doc on imhist.for on my machine.
+  pjt  24nov09 Increased line length, protoized the code
 
 TODO:
   - spaces before slash-star commands are not understood 
 
 ********************************************************************/
-char *version = { "version 2.7 - 23-nov-2009" };
+char *version = { "version 2.8 - 24-nov-2009" };
 /*******************************************************************/
 /*= doc - MIRIAD documentation program                             */
 /*& bpw                                                            */
@@ -700,7 +701,7 @@ void build_namelist(void);
 void decode(int argc, char *argv[], char *listfile[], int *nsingle);
 void tell_usage(void);
 void show_format(void);
-void show_categs(int num);
+void show_categs(char num);
 void show_cats(char *pr_categories[], int N_CATS);
 void process(char *listfile);
 void get_name(char *listfile, char *filename);
@@ -711,9 +712,9 @@ void end_module(int eof);
 void treat_flag_line(char *fname, char *line);
 void handle_option_N(int directive, char *line, char *filename);
 void start_new_module(void);
-int find_sourcetype(int directive, char *filename);
+void find_sourcetype(int directive, char *filename);
 void write_filename_on_index(char *filename);
-int change_outstream(char modulename[]);
+void change_outstream(char modulename[]);
 void handle_option_P(char person[]);
 void handle_option_D(char *describes);
 void handle_option_K(char *keyword);
@@ -721,7 +722,7 @@ void handle_option_I(char *keyword);
 void handle_option_colon(char *categories_line);
 void handle_option_plus(char line[]);
 void handle_option_B(char line[]);
-void handle_option_plus_and_B(char line[], int opt);
+void handle_option_plus_and_B(char line[], char opt);
 void handle_option_dash(char line[]);
 void treat_description_line(char *line, int start);
 void putc_chks(int c, FILE *stream);
@@ -730,18 +731,18 @@ void index_files(int mode);
 void add_dots(char line[], int person);
 void type_persons_info(FILE *indexfile);
 void category_list(char *categories[], char *pr_categories[], int N_CATS);
-int print_routines(int f, int i, FILE *sysindfile, char *category, char *pr_category);
-int print_header(int i, char *category, char *pr_category);
-int type_dashes_line(void);
+void print_routines(int f, int i, FILE *sysindfile, char *category, char *pr_category);
+void print_header(int i, char *category, char *pr_category);
+void type_dashes_line(void);
 int toggle_if(int select, int the_logical, int mode, char name_of_logical[]);
 void toggle_write(int the_logical, int mode, char name_of_logical[], FILE *output);
-int wl(void);
+void wl(void);
 int ndec(int i);
 void setarr(int array[], int len, int val);
 int nelc(char *s);
-int occurs(int c, char *s);
-char *indexl(int c, char *s);
-char *indexr(int c, char *s);
+int occurs(char c, char *s);
+char *indexl(char c, char *s);
+char *indexr(char c, char *s);
 void blank(char *s, int n);
 void upcase(char *s);
 void lowcase(char *s);
@@ -765,7 +766,7 @@ int rdline(FILE *file, char *data);
 void type(char *filename);
 int eol(int c);
 int eof(int c);
-int remov(char *filename);
+void remov(char *filename);
 char *lognam(char *envvar);
 
 /************************************************************************/
@@ -979,9 +980,6 @@ int main(int argc,char *argv[])
 {
     char *file[FMAX];
     int   n, nsingle;
-    void  build_namelist();
-    void  decode(), process();
-    void  index_files();
 
     build_namelist();
     decode ( argc,argv,file,&nsingle );
@@ -1031,13 +1029,8 @@ void build_namelist(void)
 /* number of logicals. For some options it also will return the name of */
 /* the file which contains a list of inputfiles.                        */
 
-void decode(argc,argv,listfile,nsingle)
-int    argc;
-char  *argv[];
-char  *listfile[];
-int   *nsingle;
+void decode(int argc, char **argv, char **listfile, int *nsingle)
 {
-    void tell_usage(), show_format(), show_categs();
     int     i;
     logical mswi=FALSE;
     char   *t;
@@ -1107,7 +1100,7 @@ int   *nsingle;
 /* tell_usage is invoked if no option at all was given and then explains*/
 /* a bit what is possible.                                              */
 
-void tell_usage()
+void tell_usage(void)
 {
 /* Option letters used up: "a cdef  ij lm op rstu wx  " */
 printf ("doc ... %s\n",version);
@@ -1143,9 +1136,8 @@ printf("files input file(s) to be processed\n");
 /* show_format is invoked with option -f and repeats the input format   */
 /* for documentation information.                                       */
 
-void show_format()
+void show_format(void)
 {
-void show_categs();
 printf("\n");
 printf("Format for .for, .f, .f2c and .c files:\n");
 printf("  c= [module name] [one-line description] for tasks\n");
@@ -1195,9 +1187,8 @@ printf("\nScript categories\n\n");     show_categs('3');
 /* show_categs is invoked with option -c and prints the recognized      */
 /* categories.                                                          */
 
-void show_categs(num)
-char num;
-{   void show_cats();
+void show_categs(char num)
+{  
     if( num == '1' ) show_cats(pr_p_categories,N_PCATS);
     if( num == '2' ) show_cats(pr_s_categories,N_SCATS);
     if( num == '3' ) show_cats(pr_c_categories,N_CCATS);
@@ -1205,8 +1196,7 @@ char num;
 /************************************************************************/
 /* show_cats prints the recognized categories.                          */
 
-void show_cats(pr_categories,N_CATS)
-char *pr_categories[]; int N_CATS;
+void show_cats(char **pr_categories, int N_CATS)
 {
     int i, j, ncats; j=1;
     ncats = locate( "...", pr_categories, N_CATS );
@@ -1227,13 +1217,10 @@ char *pr_categories[]; int N_CATS;
 /* It also makes sure that the indexfile processing is initialized and  */
 /* finished.                                                            */
 
-void process(listfile)
-char *listfile;
+void process(char *listfile)
 {
     FILE *list_file;
     char  filename[NAMELEN];
-    void  get_name();
-    void  process_docfile();
 
     if( single ) {
         get_name( listfile, filename );
@@ -1262,8 +1249,7 @@ char *listfile;
 /* All this is disabled when the -e option was used. Then no searching  */
 /* is done.                                                             */
 
-void get_name(listfile,filename)
-char *listfile, *filename;
+void get_name(char *listfile, char *filename)
 {
     char  dir[NAMELEN];
     FILE *fptr;
@@ -1306,13 +1292,9 @@ char *listfile, *filename;
 /* by the directive lines.                                              */
 /* After finishing with reading the file it closes off.                 */
 
-void process_docfile(filename)
-
-char *filename;
+void process_docfile(char *filename)
 {
-    FILE   *instream, *new_file();
-    void re_init(), end_module();
-    void treat_flag_line(), treat_description_line();
+    FILE   *instream;
     char    line[STRINGLEN];
     int     c1,c2,c3;
 
@@ -1402,8 +1384,7 @@ char *filename;
 /* continuing with the next file, however.                              */
 /* taskfile is reset                                                    */
 
-FILE *new_file(filename)
-char *filename;
+FILE *new_file(char *filename)
 {
     FILE *instream;
     char  ext[STRINGLEN];
@@ -1472,8 +1453,7 @@ char *filename;
 /* indexline,sysindline->set to blanks;                                 */
 /* setarr->no current category(ies) known.                              */
 
-void re_init(bof)
-logical bof;
+void re_init(int bof)
 {
     doc_block   = FALSE;
     copy        = FALSE;
@@ -1498,11 +1478,8 @@ logical bof;
 /* whether the searched-for routine was found and makes DOC quit if it  */
 /* was.                                                                 */
 
-void end_module(eof)
-logical eof;
+void end_module(int eof)
 {
-    logical      toggle_if();
-    void index_files();
     if( doc_block ) {
         if( preformat >= 2 ) {
             verbatim    = toggle_if( DOC, verbatim,    TRUE, "verbatim"  );
@@ -1538,17 +1515,9 @@ logical eof;
 /* not yet found a new routine or after a documentation block has ended */
 /* (i.e. after a call to end_module).                                   */
 
-void treat_flag_line(fname,line)
-char *fname;
-char *line;
+void treat_flag_line(char *fname, char *line)
 {
-    logical toggle_if();
     int     option;
-    void handle_option_N();
-    void handle_option_D(),     handle_option_P();
-    void handle_option_K(),     handle_option_I();
-    void handle_option_colon(), handle_option_plus();
-    void handle_option_dash(),  handle_option_B();
 
     option = *line++;
     remove_leading_spaces(line); remove_trailing_spaces(line);
@@ -1599,15 +1568,10 @@ char *line;
 /* indicate that a modulename was found and turns on the copy or        */
 /* verbatim switch.                                                     */
 
-void handle_option_N(directive,line,filename)
-int   directive;
-char *line;
-char *filename;
+void handle_option_N(int directive, char *line, char *filename)
 {
     int     i=0;
     char    filnam[NAMELEN], fnam[NAMELEN];
-    logical matches();
-    void    start_new_module(), handle_option_D();
 
   /* split input line into modulename and rest */
 
@@ -1691,9 +1655,8 @@ char *filename;
 /* halfway through a file. It saves who is the person responsible.      */
 /* It ends the previous module if that was not done by option dash.     */
 
-void start_new_module()
+void start_new_module(void)
 {
-    void re_init(), end_module();
     char person[4];
     if( doc_block ) end_module(FALSE);
     if( document && !preformat ) type_dashes_line();
@@ -1712,11 +1675,8 @@ void start_new_module()
 /* still FALSE). If so, the file's name is written to the index too.    */
 /* mksys is also set, so that the proper systematic index is put out.   */
 
-find_sourcetype(directive,filename)
-int   directive;
-char *filename;
+void find_sourcetype(int directive, char *filename)
 {
-    void write_filename_on_index();
 /* find the type of input (pure docfile/task/subroutine/script/comfile) */
     if(   L_MODE )                                 sourcetype = LIST;
     if(   P_MODE )                                 sourcetype = PROG;
@@ -1754,10 +1714,8 @@ char *filename;
 /************************************************************************/
 /* write_filename_on_index does what its name says                      */
 
-void write_filename_on_index(filename)
-char *filename;
+void write_filename_on_index(char *filename)
 {
-    void index_files();
     if(        preformat != 3 ) {
         indexline[0] = '\0';                    index_files( ADDLINE );
         streq( indexline,0,87, filename,0,78 ); index_files( ADDLINE );
@@ -1776,8 +1734,7 @@ char *filename;
 /* with extension .tex/.doc/.cdoc/.sdoc/.tdoc/.doc, whichever is        */
 /* appropriate. It is called only when the -u or -p options were given. */
 
-change_outstream(modulename)
-char modulename[];
+void change_outstream(char *modulename)
 {
     char  outfile[NAMELEN];
     int   c;
@@ -1815,8 +1772,7 @@ char modulename[];
 /* line will not contain descriptive information so copy is set to      */
 /* false.                                                               */
 
-void handle_option_P(person)
-char person[];
+void handle_option_P(char *person)
 {
     char persons_code[STRINGLEN], pgmr_name[STRINGLEN];
     int  i=0;
@@ -1851,8 +1807,7 @@ char person[];
 /* a description. The next line will not contain descriptive            */
 /* information so copy is set to false.                                 */
 
-void handle_option_D(describes)
-char *describes;
+void handle_option_D(char *describes)
 {
     while ( (!isalnum(*describes)&&*describes!='%') && *describes ) describes++;
     if( *describes=='%' && *(describes+1)=='F' ) strcpy( describes, "..." );
@@ -1881,10 +1836,8 @@ char *describes;
 /* copy flag so the the lines following the %A or c@ line will be       */
 /* copied to stdout.                                                    */
 
-void handle_option_K(keyword)
-char *keyword;
+void handle_option_K(char *keyword)
 {
-    logical toggle_if();
 /*    upcase(keyword); if( preformat == 1 ) lowcase(keyword); */
     if( alfind   ) ;
     if( sysind   ) ;
@@ -1912,12 +1865,11 @@ char *keyword;
 /************************************************************************/
 /* handle_option_I includes a standard keyword.                         */
 
-void handle_option_I(keyword)
-char *keyword;
+void handle_option_I(char *keyword)
 {
     FILE *keyfile;
     int   offset;
-    void  treat_description_line();
+
     handle_option_K(keyword);
     if( document && (keyfile=f_open_expand(KEYWORDS,"r")) != NULL ) {
         if( preformat >= 2 ) offset=1; else offset=0;
@@ -1943,8 +1895,7 @@ char *keyword;
 /* subroutines the categories are used as input for the (La)TeX \index  */
 /* macro.                                                               */
 
-void handle_option_colon(categories_line)
-char *categories_line;
+void handle_option_colon(char *categories_line)
 {
     char    category[STRINGLEN];
     char    new_categ_line[STRINGLEN];
@@ -2009,31 +1960,25 @@ char *categories_line;
 /* in the userguide this will be in verbatim mode.                      */
 /* The description block may start on the c+ line already.              */
 
-void handle_option_plus(line)
-char line[];
+void handle_option_plus(char *line)
 {
-    void handle_option_plus_and_B(); handle_option_plus_and_B(line,'+');
+    handle_option_plus_and_B(line, '+');
 }
 /************************************************************************/
 /* handle_option_B will set copy flag so the the lines following the %B */
 /* line will be copied to stdout. It is the equivalent of c+ in files   */
 /* in doc format.                                                       */
 
-void handle_option_B(line)
-char line[];
+void handle_option_B(char *line)
 {
-    void handle_option_plus_and_B(); handle_option_plus_and_B(line,'B');
+    handle_option_plus_and_B(line, 'B');
 }
 /************************************************************************/
 /* handle_option_plus_and_B does the work of the previous two routines. */
 /* There is a trivial difference in the output.                         */
 
-void handle_option_plus_and_B(line,opt)
-char line[];
-char opt;
+void handle_option_plus_and_B(char *line, char opt)
 {
-    logical toggle_if();
-
     if( alfind   ) ;
     if( sysind   ) ;
     if( persresp ) ;
@@ -2069,12 +2014,8 @@ char opt;
 /* When searching for a particular routine it will also cause DOC to    */
 /* exit via end_module.                                                 */
 
-void handle_option_dash(line)
-char line[];
+void handle_option_dash(char *line)
 {
-    logical toggle_if();
-    void end_module();
-
     if( alfind   ) ;
     if( sysind   ) ;
     if( persresp ) ;
@@ -2101,12 +2042,9 @@ char line[];
 /* too. Next the descriptive line is copied to outstream. Outside       */
 /* verbatim mode some characters are escaped.                           */
 
-void treat_description_line(line,start)
-char *line; int start;
+void treat_description_line(char *line, int start)
 {
-    logical toggle_if();
     int     c;
-    void    putc_chkd(), putc_chks();
     int     charcnt=0;
 
     if( alfind   ) ;
@@ -2153,9 +2091,7 @@ char *line; int start;
 /************************************************************************/
 /* putc_chks translates \\ in doc file to single slash in verbatim mode */
 
-void putc_chks(c,stream)
-int   c;
-FILE *stream;
+void putc_chks(int c, FILE *stream)
 {
     if( c != '\\' ) { slash = FALSE; putc(c,stream); }
     else {
@@ -2167,9 +2103,7 @@ FILE *stream;
 /************************************************************************/
 /* putc_chkd escapes some special characters for userguide output.      */
 
-void putc_chkd(c,stream)
-int   c;
-FILE *stream;
+void putc_chkd(int c, FILE *stream)
 {
     switch(c) {
     case '$': case '&': case '%': case '#': case '_': 
@@ -2212,12 +2146,10 @@ FILE *stream;
 /* useful when encountering testsubroutines in task source code, or vice*/
 /* versa.                                                               */
 
-void index_files(mode)
-int mode;
+void index_files(int mode)
 {
     int   f;
     int   i=0;
-    void add_dots(), type_persons_info(), category_list();
 
     if( mode == OPEN ) {
         if( alfind ) for(f=0;f<NT;f++) {
@@ -2231,7 +2163,7 @@ int mode;
                 sourcetype = f+1; alfverbatim = FALSE;
                 alfverbatim = toggle_if( ALF,alfverbatim,FALSE,"verbatim" );
             }
-        }
+	  }
         if( sysind ) sysindfile = f_open( tempsysind, "w" );
     }
     if( mode == ADDLINE && !skip ) {
@@ -2289,9 +2221,7 @@ int mode;
 
 /************************************************************************/
 /* add_dots adds a number of dots to guide the eye when preformat=3     */
-void add_dots(line,person)
-char    line[];
-logical person;
+void add_dots(char *line, int person)
 {
     int i, namelen;
     blank(scrline,STRINGLEN); strcpy(scrline,line); blank(line,STRINGLEN);
@@ -2318,10 +2248,10 @@ logical person;
 /* type_persons_info appends the names of programmers to the alphabetic */
 /* index file.                                                          */
 
-void type_persons_info(indexfile)
-FILE *indexfile;
+void type_persons_info(FILE *indexfile)
 {
-    FILE *catfile; void toggle_write();
+    FILE *catfile; 
+
     if( preformat >= 2 ) {
         if( alfverbatim ) {
             toggle_write( alfverbatim, TRUE,  "verbatim", indexfile  );
@@ -2347,14 +2277,11 @@ FILE *indexfile;
 /* For each category a header is printed and the temporary file is      */
 /* completely scanned for all line containing the proper category code. */
 
-void category_list(categories,pr_categories,N_CATS)
-char *categories[], *pr_categories[];
-int   N_CATS;
+void category_list(char **categories, char **pr_categories, int N_CATS)
 {
     int   f;
     int   i;
     FILE *sysindfile;
-    logical toggle_if();
 
     if(N_CATS==N_PCATS) f=0; if(N_CATS==N_SCATS) f=1; if(N_CATS==N_CCATS) f=2;
 
@@ -2380,9 +2307,8 @@ int   N_CATS;
         if( document && !single ) fclose(outstream);
     }
 }
-print_routines(f,i,sysindfile,category,pr_category)
-int f,i; FILE *sysindfile;
-char *category, *pr_category;
+
+void print_routines(int f, int i, FILE *sysindfile, char *category, char *pr_category)
 {   logical hdone; logical none; int linecount;
     int number;
     hdone = FALSE; none = TRUE; linecount=0;
@@ -2401,10 +2327,9 @@ char *category, *pr_category;
         wl(); fprintf( outstream, "<none>\n" );
     }
 }
-print_header(i,category,pr_category)
-int i; char *category, *pr_category;
+void print_header(int i, char *category, char *pr_category)
 {   int c;
-    logical toggle_if();
+
     if( preformat >= 2 ) {
         if( i>1 ) { wl();fprintf(outstream,"\n");wl();fprintf(outstream,"\n"); }
         verbatim = toggle_if( SYS, verbatim, TRUE,  "verbatim" );
@@ -2422,7 +2347,7 @@ int i; char *category, *pr_category;
 /************************************************************************/
 /* type_dashes_line prints a line indicating that a new routine is now  */
 /* starting.                                                            */
-type_dashes_line()
+void type_dashes_line(void)
 {   int i=0;
     wl(); fprintf(outstream,"\n");
     for(i=0;i<79;i++) { fprintf(outstream,"-"); }
@@ -2432,13 +2357,10 @@ type_dashes_line()
 /* toggle_if prints \begin{mode} or \end{mode} if applicable, depending */
 /* on the current status of mode.                                       */
 
-logical toggle_if(select,the_logical,mode,name_of_logical)
-int     select;
-logical the_logical;
-logical mode;
-char    name_of_logical[];
+logical toggle_if(int select, int the_logical, int mode, char *name_of_logical)
 {
-    int f; void toggle_write();
+    int f; 
+
     if( select == ALF ) {
         if(sourcetype==PROG)f=0;if(sourcetype==SUBR)f=1;if(sourcetype==COMF)f=2;
         toggle_write(the_logical,mode,name_of_logical,indexfile[f]); }
@@ -2450,11 +2372,7 @@ char    name_of_logical[];
     return (the_logical);
 }
 
-void toggle_write(the_logical,mode,name_of_logical,output)
-logical the_logical;
-logical mode;
-char    name_of_logical[];
-FILE   *output;
+void toggle_write(int the_logical, int mode, char *name_of_logical, FILE *output)
 {
     if(        preformat == 2 ) {
         if( !mode ) if( !the_logical )
@@ -2474,7 +2392,7 @@ FILE   *output;
 /* reached and queries the user if that is true. This is only done when */
 /* output is typed to the screen and the -w flag has been specified.    */
 
-int wl()
+void wl(void)
 {
     int c;
     if( outstream == stdout  &&  query == TRUE ) {
@@ -2500,68 +2418,67 @@ int wl()
 int ndec(i) int i;{ int n; if(i<100)n=2; if(i<10)n=1; return (n); }
 /************************************************************************/
 /* set all members of array to value val                                */
-void setarr(array,len,val) int array[],len, val; {
+void setarr(int *array, int len, int val) {
     int i; for(i=0;i<len;i++) array[i]=val; }
 /************************************************************************/
 /* return length of string excluding trailing blanks                    */
-int nelc(s) char *s; { int i=0;
+int nelc(char *s) { int i=0;
     while(*s) {s++;i++;}  s--;i--;
     while(*s==' '&&i>=0) {s--;i--;} return (i+1); }
 /************************************************************************/
 /* return is character c occurs within string s                         */
-logical occurs(c,s) char c,*s; { char *t;
+logical occurs(char c, char *s) { char *t;
     t=indexl(c,s); if(*t) return TRUE; else return FALSE; }
 /************************************************************************/
 /* return a pointer to the first character c in string s                */
-char *indexl(c,s) char c,*s; { char *t; t=s;
+char *indexl(char c, char *s) { char *t; t=s;
     while( *t && *t!=c ) t++; return t; }
 /************************************************************************/
 /* return a pointer to the last character c in string s                 */
-char *indexr(c,s) char c,*s; { char *t; t=s; while(*t) t++;
+char *indexr(char c,char *s) { char *t; t=s; while(*t) t++;
     while(t>=s&& *t!=c ) t--; if(t>=s) return t; else return 0; }
 /************************************************************************/
 /* set all character of string s to a space                             */
-void blank(s,n) char *s; int n; { int i; for(i=0;i<n;i++) *s++ = ' '; }
+void blank(char *s, int n) { int i; for(i=0;i<n;i++) *s++ = ' '; }
 /************************************************************************/
 /* make uppercase letters of characters in string s                     */
 void upcase(s) char *s; { while(*s){if(*s>='a'&&*s<='z' ) *s += 'A'-'a'; s++;} }
 /************************************************************************/
 /* make lowercase letters of characters in string s                     */
-void lowcase(s) char *s; {
+void lowcase(char *s) {
 while(*s){if(*s>='A'&&*s<='Z' ) *s += 'a'-'A'; s++;} }
 /************************************************************************/
 /* escape special characters in a string                                */
-void unspecial(s,t) char *s, *t; { blank(t,STRINGLEN);
+void unspecial(char *s, char *t) { blank(t,STRINGLEN);
 while(*s) { if( occurs(*s,"$&%#{}_~^|") ) *t++='\\'; *t++ = *s++; } *t = '\0';
 }
 /************************************************************************/
 /* set characters i1 to i2 of str1 equal to characters j1 to j2 of str2 */
 /* if i2-i1>j2-j1 then str1 is padded with blanks                       */
 /* if i2-i1<j2-j1 then the remaining characters of str2 are ignored     */
-void streq(str1,i1,i2,str2,j1,j2) char *str1,*str2; int i1,i2; int j1,j2;
+void streq(char *str1, int i1, int i2, char *str2, int j1, int j2)
 {   int i,j; str1+=i1; str2+=j1; i=i1; j=j1;
     while( i<=i2 && j<=j2 && *str2!='\0' ) { *str1++ = *str2++; i++;j++; }
     while( i<=i2 ) { *str1++=' '; i++; } }
 /************************************************************************/
 /* concatenate two strings                                              */
-void strconcat(sout,s1,s2) char *sout,*s1,*s2; { char st1[1024],st2[1024];
+void strconcat(char *sout, char *s1, char *s2) { char st1[1024],st2[1024];
     strcpy(st1,s1); strcpy(st2,s2);
     strcpy(sout,st1); strcat(&sout[strlen(st1)],st2); }
 /************************************************************************/
 /* compare str1 and str2 in a case-insensitive manner                   */
-int strccmp(str1,str2) char *str1,*str2; { char s1[132], s2[132];
+int strccmp(char *str1, char *str2) { char s1[132], s2[132];
     strcpy(s1,str1); strcpy(s2,str2); upcase(s1); upcase(s2);
     return strcmp(s1,s2); }
 /************************************************************************/
 /* compare n characters of str1 and str2 in a case-insensitive manner   */
-int strcncmp(str1,str2,n) char *str1,*str2; int n; { char s1[132], s2[132];
+int strcncmp(char *str1, char *str2, int n) { char s1[132], s2[132];
     strcpy(s1,str1); strcpy(s2,str2); upcase(s1); upcase(s2);
     return strncmp(s1,s2,n); }
 /************************************************************************/
 /* return the nr'th substring of string, where a substring is delimited */
 /* by the character 'separator'                                         */
-logical get_element(nr,string,separator,substring)
-int nr; char *string; char *separator; char *substring;
+logical get_element(int nr, char *string, char *separator, char *substring)
 {   int i=0; char *start; start=substring;
     while(TRUE) {
         if(*string != *separator) { *substring++ = *string; }
@@ -2572,14 +2489,14 @@ int nr; char *string; char *separator; char *substring;
 /************************************************************************/
 /* Within the set of strings ss find string s and return the ordinal    */
 /* number of that string                                                */
-int locate(s,ss,ns) char *s; char *ss[]; int ns; { int i=0; 
+int locate(char *s, char **ss, int ns) { int i=0; 
     while(i<ns){ if(!strncmp(s,ss[i],nelc(ss[i]))) return i; i++; } return -1; }
 /************************************************************************/
 /* matches checks if the searched-for routine is the current one. If the*/
 /* search string contains a '*' any substring of the modulename will    */
 /* match.                                                               */
-logical matches(to_search,mname) char *to_search; char *mname;
-    {int namelen, checklen, i, imax;
+logical matches(char *to_search, char *mname)
+{int namelen, checklen, i, imax;
     if( exact_match ) return !strccmp(to_search,mname);
     namelen=strlen(mname); checklen=strlen(to_search); imax=namelen-checklen;
     for( i=0; i<=imax; i++ ) {
@@ -2587,19 +2504,19 @@ logical matches(to_search,mname) char *to_search; char *mname;
     return (i<=imax); }
 /************************************************************************/
 /* remove the leading spaces in string s                                */
-void remove_leading_spaces(s) char *s;{ char *t;
+void remove_leading_spaces(char *s) { char *t;
     t=s; while(*s==' '||*s=='\t')s++; do {*t++ = *s++;} while(*s); *t = *s; }
 /************************************************************************/
 /* remove the trailing spaces and tab character in string s by setting  */
 /* the zero byte at the position of the first trailing space or tab     */
-void remove_trailing_spaces(s) char *s; { char *start; start=s;
+void remove_trailing_spaces(char *s) { char *start; start=s;
     if(!C_MODE) while(*s) s++;
     if( C_MODE) while(*s) { if(*s=='*'){if(*(s+1)=='/'){*s='\0';break;}} s++; }
     while( s>start && ( *s=='\0' || *s=='\t' || *s==' ' ) ) s--;
     *(s+1) = '\0';   }
 /************************************************************************/
 /* replace tabs by the appropriate number of spaces                     */
-void untab(s,start) char *s; int start; { int i,pad; char *t;
+void untab(char *s, int start) { int i,pad; char *t;
     char tmp[STRINGLEN];
     i=0; t=s; pad=8-start;
     while( *t ) {
@@ -2609,12 +2526,12 @@ void untab(s,start) char *s; int start; { int i,pad; char *t;
     } tmp[i]='\0'; strcpy( s, tmp ); }
 /************************************************************************/
 /* check if string f could be a filename                                */
-logical isfilename(f) char *f; {
+logical isfilename(char *f) {
     while( *f ) { if( isalnum(*f) || occurs(*f,"/_.[]:;-$") ) f++; else break; }
     return (*f=='\0'); }
 /************************************************************************/
 /* expand filename to a filename consisting of directory/name.extension */
-void fn_dne(filename,fname) char *filename, *fname; { char s[NAMELEN];
+void fn_dne(char *filename, char *fname) { char s[NAMELEN];
     fn_parse( filename, s, "dir" ); strcpy( fname, s );
     strcat( fname, "/" );
     fn_parse( filename, s, "nam" ); strcat( fname, s );
@@ -2652,7 +2569,7 @@ void fn_parse(char *filename,char *output,char *part)
 /************************************************************************/
 /* open a file, giving a warning if it does not exist and quitting if   */
 /* the first character of mode is "q"                                   */
-FILE *f_open(filename,mode) char *filename; char *mode;
+FILE *f_open(char *filename, char *mode)
 {   FILE *filepointer; logical quit;
     if(*mode=='q') { quit=TRUE; mode++; } else { quit=FALSE; }
     if( (filepointer=fopen(filename,mode)) == NULL ) {
@@ -2674,22 +2591,22 @@ FILE *f_open_expand( char *string, char *mode ) {
 /************************************************************************/
 /* Read from file until the newline character. Delimit the output by a  */
 /* zero byte. On returning rdline becomes FALSE at end-of-file.         */
-logical rdline(file,data) FILE *file; char *data; { int c; int i=0;
+logical rdline(FILE *file, char *data) { int c; int i=0;
     do { c=getc(file); *data++=c; } while( !eol(c) && !eof(c) && i++<132 );
     *--data = '\0'; return (!eof(c)); }
 /************************************************************************/
 /* copy the file with name filename to stdout                           */
-void type(filename) char *filename; { FILE *file; char line[STRINGLEN];
+void type(char *filename) { FILE *file; char line[STRINGLEN];
     if( ( file = f_open(filename,"r") ) != NULL ){
     while( rdline(file,line) ) { wl(); printf("%s\n",line); }  }}
 /************************************************************************/
 /* return TRUE of FALSE whether character c is end-of-line/end-of-file  */
-logical eol(c) int c; { return ( c == '\n' || c == '\r' ); }
-logical eof(c) int c; { return ( c == EOF ); }
+logical eol(int c) { return ( c == '\n' || c == '\r' ); }
+logical eof(int c) { return ( c == EOF ); }
 
 /************************************************************************/
 /* translate the unlink to the remove function for unix machines        */
-remov(char *filename) {
+void remov(char *filename) {
   unlink(filename);
 }
 
