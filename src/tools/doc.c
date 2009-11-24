@@ -90,7 +90,7 @@ TODO:
   - spaces before slash-star commands are not understood 
 
 ********************************************************************/
-char *version = { "version 2.7 - 28-aug-05" };
+char *version = { "version 2.7 - 23-nov-2009" };
 /*******************************************************************/
 /*= doc - MIRIAD documentation program                             */
 /*& bpw                                                            */
@@ -685,7 +685,7 @@ c* directive) will have extension .tdoc.
 
 #define  TRUE 1
 #define  FALSE 0
-#define  STRINGLEN 132
+#define  STRINGLEN 256
 #define  NAMELEN 256
 
 #include <ctype.h>
