@@ -57,11 +57,13 @@ c     pjt       21aug07 fix for Wide and Narrow  data
 c     pjt       12apr08 Add option to include SZA array with 8 3.5m ants
 c     pjt       14sep09 Add cfraction for sza
 c     pjt       28nov09 remove confusing sza= keyword, just auto-scan 15/23
+c                       auto-fill antdiam array
 c
 c  Todo:
 c     - options=noapply ???
 c     - should re-read antdiam when new ones available 
 c     - hardcoded for data that has wide and narrow line data
+c     - doesn't handle data with multiple arrays
 c
 c  
 c---------------------------------------------------------------------------
@@ -160,8 +162,10 @@ c
            endif
         endif
         if (na.gt.0 .and. na.lt.nants) then
-           write(*,*) 'Vis file has: ',nants,' You gave: ',na
-           call bug('f','Wrong number of ants given')
+           call bug('w','Filling antdiam array')
+           do i=na+1,nants
+              antdiam(i) = antdiam(i-1)
+           enddo
         else if (na.eq.0) then
            call uvgetvrr(lVis,'antdiam',antdiam(1),1)
            do i=2,nants
