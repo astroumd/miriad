@@ -24,28 +24,23 @@ c	The input visibility file to be flagged. No default.
 c@ antdiam
 c       Array of diameters (in m) for each antenna. By default
 c       all antenna are the same, and equal the antdiam found in
-c       the dataset. No default. See also carma= and sza= below
-c       for a faster approach.
+c       the dataset. No default. See also carma= below for a 
+c       faster approach.
 c       Default: not used
 c@ carma
-c       Boolean, if set to true, the default CARMA array is loaded
+c       Boolean, if set to true, the 23-antenna CARMA array is loaded
 c       in the antdiam array. Also it is then assumed the first 6
-c       are OVRO dishes (assumed 10.4m), the remaining 9 are BIMA 
-c       (assumed 6.1m), with an optional addition 8 for the SZA 3.5m
-c       dishes.
+c       are OVRO dishes (assumed 10.4m), the next 9 are BIMA 
+c       (assumed 6.1m), and final 8 for the SZA 3.5m dishes 
 c       If selected, it will also print out the number of records
-c       flagged for O-O, B-B and O-B (labeled O/H/C).
+c       flagged for O-O, B-B and O-B (labeled O/H/C) for 15-ants
+c       and labeled O/H/C/S/10/6 for 23-ants
 c       The default is true.
-c@ sza
-c       Boolean, if set to to true, the default CARMA+SZA array is
-c       loaded in the antdiam array. The last 8 antennas are 3.5m
-c       SZA antennas. If given, if will override the carma setting.
-c       The default is false.   
 c@ cfraction
 c       Special CARMA option to multiply the antdiam array for
 c       OVRO and BIMA dishes by. Two or three numbers are expected here,
-c       depending if sza was set to true: 
-c       fraction for OVRO, that for BIMA, and optionally that for sza.
+c       depending if sza was set or found to be true: 
+c       fraction for OVRO, that for BIMA, and optionally that for SZA.
 c       You normally want this leave this at 1, but can experiment with
 c       smaller values to try and keep some partially shadowed data.
 c       Default: 1,1,1
@@ -61,22 +56,19 @@ c     pjt       14aug07 Added cfraction=
 c     pjt       21aug07 fix for Wide and Narrow  data
 c     pjt       12apr08 Add option to include SZA array with 8 3.5m ants
 c     pjt       14sep09 Add cfraction for sza
+c     pjt       28nov09 remove confusing sza= keyword, just auto-scan 15/23
 c
 c  Todo:
 c     - options=noapply ???
 c     - should re-read antdiam when new ones available 
 c     - hardcoded for data that has wide and narrow line data
-c     - maybe implement this reset= keyword?
-c       @ reset
-c       If set, it will reset the flags of all records to be good.
-c       Default: false.
 c
 c  
 c---------------------------------------------------------------------------
 	implicit none
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='csflag: version 14-sep-09')
+	parameter(version='csflag: version 28-nov-09')
 c
 	complex data(MAXCHAN)
 	double precision preamble(5), antpos(3*MAXANT)
@@ -84,10 +76,11 @@ c
         integer ntoto,ntoth,ntotc,ntots,ntota,ntot6,ncf
         real antdiam(MAXANT),cfraction(3)
 	character in*120
-	logical flags(MAXCHAN),shadow,carma,sza,reset,doshadow
+	logical flags(MAXCHAN),shadow,carma,sza,doshadow
         external shadow
 
         common /antpos/antpos,sza,ntoto,ntoth,ntotc,ntots,ntota,ntot6
+
 c
 c Get inputs
 c
@@ -97,25 +90,14 @@ c
 	if(in.eq.' ')call bug('f','Input dataset missing: vis=')
         call mkeyr('antdiam',antdiam,MAXANT,na)
         call keyl('carma',carma,.TRUE.)
-        call keyl('sza',sza,.TRUE.)
-        if (sza) then
-           carma = .FALSE.
-           call mkeyr('cfraction',cfraction,3,ncf)
-        else
-           call mkeyr('cfraction',cfraction,2,ncf)
-        endif
-        call keyl('reset',reset,.FALSE.)
+        call mkeyr('cfraction',cfraction,3,ncf)
 	call keyfin
-
-        if (reset) call bug('w','reset not implemented yet')
 
 
 c
 c Handle default CARMA or SZA
 c
-        if (sza .and. na.EQ.0) then
-           call bug('i',
-     *          'Preloading CARMA+SZA-23 antdiam (10.4,6.1,3.5) array')           
+        if (carma) then
            na = 23
            do i=1,6
               antdiam(i) = 10.4
@@ -126,15 +108,8 @@ c
            do i=16,23
               antdiam(i) = 3.5
            enddo
-        else if (carma .and. na.EQ.0) then
-           call bug('i','Preloading CARMA-15 antdiam (10.4,6.1) array')
-           na = 15
-           do i=1,6
-              antdiam(i) = 10.4
-           enddo
-           do i=7,15
-              antdiam(i) = 6.1
-           enddo
+        else if (na.EQ.0) then
+           call bug('f','No antdiam= specified')
         endif
 
         if (ncf.eq.0) then
@@ -170,7 +145,21 @@ c
         if (nv.eq.0) call bug('f','No data')
         
         call uvgetvri(lVis,'nants',nants,1)
-        if (na.gt.0 .and. na.ne.nants) then
+        if (carma) then
+           if (nants.eq.15) then
+              call bug('i',
+     *          'Preloaded CARMA-15 antdiam (10.4,6.1) array')
+              sza = .false.
+           else if(nants.eq.23) then
+              call bug('i',
+     *          'Preloaded CARMA+SZA-23 antdiam (10.4,6.1,3.5) array')
+              carma = .false.
+              sza = .true.
+           else
+              call bug('f','CARMA/SZA array with unexpected nants')
+           endif
+        endif
+        if (na.gt.0 .and. na.lt.nants) then
            write(*,*) 'Vis file has: ',nants,' You gave: ',na
            call bug('f','Wrong number of ants given')
         else if (na.eq.0) then
@@ -182,8 +171,6 @@ c
            call bug('i','Extracting antdiam from the data')
         endif
         if (carma) then
-           if (nants.ne.15) call bug('f','CARMA nants.ne.15 ???')
-           write(*,*) 'new cfraction option: ',cfraction
            do i=1,6
               antdiam(i) = antdiam(i) * cfraction(1)
            enddo
@@ -192,8 +179,6 @@ c
            enddo
         endif
         if (sza) then
-           if (nants.ne.23) call bug('f','CARMA+SZA nants.ne.23 ???')
-           write(*,*) 'new cfraction option: ',cfraction
            do i=1,6
               antdiam(i) = antdiam(i) * cfraction(1)
            enddo
@@ -258,16 +243,16 @@ c
         double precision u(MAXANT), v(MAXANT), w(MAXANT),uu,vv,ww
         integer i0,i1,i2,i,j,ntoto,ntoth,ntotc,ntots,ntota,ntot6
         logical sza
+        integer pjt
         common /antpos/antpos,sza,ntoto,ntoth,ntotc,ntots,ntota,ntot6
 c       pjt = debug, set it to < 0 if you want to see UVW's
-        integer pjt
         data pjt/0/
         save pjt
 
         call uvgetvrd(lVis,'lst',lst,1)
         call uvgetvrd(lVis,'obsra',ra,1)
         call uvgetvrd(lVis,'obsdec',dec,1)
-        ha = lst-ra;
+        ha = lst-ra
         sinha = sin(ha)
         cosha = cos(ha)
         sind = sin(dec)
