@@ -142,11 +142,12 @@ c    22mar02 mchw  better logarithmic contour levels.
 c    26jun02 mchw  fixed bug due to longer filenames. (cf. 19sep00)
 c    08jun09 mchw  added example to doc. 
 c    08jun09 mchw  fixed old bug: save vmax,vmin in subroutine velmap
+c    01dec09 mchw  fixed old bug: change caption on spectra to Jy/Beam.
 c----------------------------------------------------------------------c
 	include 'velplot.h'
 	include 'mem.h'
 	character*(*) version
-	parameter(version='(version 3.0 08-June-2009)')
+	parameter(version='(version 3.0 01-Dec-2009)')
 	integer maxnax,maxboxes
 	parameter(maxnax=3,maxboxes=128)
 	integer boxes(maxboxes),nsize(maxnax),blc(maxnax),trc(maxnax)
@@ -2160,7 +2161,7 @@ c
           if (units.eq.'K') then
             ylabel='K'
           else if (units.eq.'J') then
-            ylabel='JY'
+            ylabel='Jy/Beam'
           else
             ylabel='Map units'
           endif
