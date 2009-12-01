@@ -129,13 +129,14 @@ c                       fixed residual map computation
 c    pjt   15dec03      make sure median .or. mode is selected, not both
 c    pjt   20jun05      g95 wants medsmooth to be an integer
 c    pjt/ml 18jan06     fix for rings with '0' pixels
+c    mchw  01dec09      fix bug in scale of cummulative flux.
 c
 c----------------------------------------------------------------------c
         include 'mirconst.h'
 	include 'maxdim.h'
 	include 'mem.h'
         character*(*) label,version
-        parameter(version='version 18-jan-2006')
+        parameter(version='version 01-dec-2009')
         double precision rts,value
         parameter(label='Integrate a Miriad image in elliptical annuli')
         integer maxnax,maxboxes,maxruns,naxis,axis,plane,maxring
@@ -431,7 +432,7 @@ c
                    ave = ave * scale
                    rms = rms * scale
                    flux(ir) = flux(ir) * scale
-                   fsum = fsum * scale
+                   fsum = fsum
                 endif
 c     
                 if (domedian) then
