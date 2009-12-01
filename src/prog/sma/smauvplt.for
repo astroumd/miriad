@@ -19,6 +19,9 @@ c	No default
 c@ line
 c	This is the normal linetype specification. See the help on "line"
 c	for more information. The default is all channels.
+c       Note that if more than one channel is selected, the ones with good
+c       flags are vector averaged into one point unless options=nofqav is
+c       used. See also the average= keyword below
 c@ select
 c	This selects which visibilities to be used. Default is all
 c	visibilities. See the Users Guide for information about how
@@ -373,6 +376,7 @@ c                  for non-default size selection.
 c    jhz 08mar17   fixed bug in color index for multiple input
 c                  files.
 c    jhz 08apr23   added ww(wc)=delay in both xaxis and yaxis.
+c    pjt 09dec01   minor doc from uvplt and fix VMS-ism
 c To do:
 c
 c   Vector averaging rms not yet implemented
@@ -517,7 +521,7 @@ c
       start_sid=0
       next_sid=0 
 c-----------------------------------------------------------------------
-      call output ('SmaUvPlt: version 1.8 23-Apr-08')
+      call output ('SmaUvPlt: version 1.8 1-dec-09')
 c
 c  Get the parameters given by the user and check them for blunders
 c
@@ -2851,10 +2855,10 @@ c
         comment(ilen+1:) = word(1:ilen2)//' '
         ilen = ilen + ilen2 + 1
       enddo
-        call keya('title', titlepnt, 'NO')
+      call keya('title', titlepnt, 'NO')
       if((titlepnt.ne.'BL').and.(titlepnt.ne.'FR').and.
-    & (titlepnt.ne.'PO').and.(titlepnt.ne.'AV').and.
-    & (titlepnt.ne.'NO')) then
+     *   (titlepnt.ne.'PO').and.(titlepnt.ne.'AV').and.
+     *   (titlepnt.ne.'NO')) then
         line = 'The title code "'//titlepnt//'" is not supported.'
         call bug('w', line)
         call bug('w', 'Using the default.')
