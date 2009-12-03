@@ -237,9 +237,14 @@ c	This gives the name of the output Miriad data file. There is
 c	no default. If the dataset exists, visibilities are appended to
 c	the dataset, with an appropriate informational message.
 c@ options
-c       slip   slip time, such that hour angles become clock hours, ignoring
-c              earths rotation. For short observations this is ok especially
-c              if you want "nicer" times for your timestamps.
+c       slip    slip time, such that hour angles become clock hours, ignoring
+c               earths rotation. For short observations this is ok especially
+c               if you want "nicer" times for your timestamps.
+c       real    store correlations as reals, instead of scaled integers
+c               by default the threshold is (or was) 4 channels, above which
+c               correlations are stored as scaled integers
+c       complex store correlations as complex. Although allowed as an option
+c               here, most miriad programs do not support this mode yet.
 c--
 c  UVGEN computes model visibility data from source components file
 c  and antennas file.
@@ -346,6 +351,7 @@ c    07oct08  mchw  better values for baseunit=-3.335668 lat=40:49:02.50 in uvge
 c    02dec08  mchw  increase line(512) to accomodate longer filenames.
 c     2jul09  pjt   add veltype to make listobs work
 c    26aug09  pjt   doslip, to allow for integral times, and equate hour angle = clock hours
+c     3dec09  pjt   real (or even complex) corr storage option
 c
 c  Bugs/Shortcomings:
 c    * Frequency and time smearing is not simulated.
@@ -412,7 +418,7 @@ c
 	character line*512, umsg*80
 	complex gatm
 	real baseline,patm,pslope,pelev,xx,xxamp
-	logical doatm,dopolar,doellim,doslip,ok
+	logical doatm,dopolar,doellim,doslip,doreal,docmplx,ok
 c
 c  Parameters from the user.
 c
@@ -562,7 +568,7 @@ c
 	if(outfile.eq.' ')
      *	  call bug('f','Output file must be given')
 c        call GetOpt(dochi,dogaus)
-        call GetOpt(doslip)
+        call GetOpt(doslip,doreal,docmplx)
 	if (doslip) call bug('i','Time slip option engaged')
 	call keyfin
 c
@@ -623,6 +629,8 @@ c
         endif
 
 	call uvset(unit,'preamble','uvw/time/baseline',0,0.,0.,0.)
+	if (doreal)  call uvset(unit,'corr','r',0,0.,0.,0.)
+	if (docmplx) call uvset(unit,'corr','c',0,0.,0.,0.)
 c
         call hiswrite(unit,'UVGEN: Miriad '//version)
         call hisinput(unit,'UVGEN')
@@ -1676,24 +1684,29 @@ c                       cases where this is already done. E.g. corrected
 c                       data, equatorial mounts or polarization rotators.
 c          'gaussian'   Make a Gaussian spectral line with
 c                       center=fcen and FWHM=fwid [GHz].
-        subroutine GetOpt(doslip)
+        subroutine GetOpt(doslip,doreal,docmplx)
 c
         implicit none
-        logical doslip
+        logical doslip,doreal,docmplx
 c
 c  Determine extra processing options.
 c
 c  Output:
 c    doslip     Slip time, equating hour angle with clock hours
+c    doreal     Force to store corr's as real, not perhaps scaled int2's
 c-----------------------------------------------------------------------
        integer nopt
-        parameter(nopt=1)
+        parameter(nopt=3)
         character opts(nopt)*9
         logical present(nopt)
-        data opts/'slip    '/
+        data opts/'slip    ','real    ','complex '/
 c
         call options('options',opts,present,nopt)
         doslip  = present(1)
+	doreal  = present(2)
+	docmplx = present(3)
+	if (doreal.AND.docmplx) call bug('f',
+     *       'Only options=real or complex allowed, not both')
 c
         end
 c********1*********2*********3*********4*********5*********6*********7*c
