@@ -17,32 +17,54 @@ c	The line length gains are applied when copying or plotting
 c	the data.
 c
 c       NOTE: the linelength data are stored as an antenna based
-c       uv variable called phasem1, in radians. But note that this
+c       UV variable called phasem1, in radians. But note that this
 c       variable is not removed by any subsquent uvcat, and applying
 c       linecal twice is probably not a good thing.
 c@ vis
 c	Name of input visibility data file. No default.
 c	The visibility data must be in time order.
 c@ out
-c       Name of output calibration file. The default is to write the gain
-c       corrections into the input visibility file.
+c       Optional name of the output calibration file. 
+c       The default is to write the gain corrections into the input
+c       visibility file.
+c@ freq
+c       Optional Frequency (in GHz) to use to convert a cable (in ms) 
+c       measurement (in ns) to phasem1 (in radians) for linelength. 
+c       Normally this option is not used, since phasem1 was derived 
+c       by using the LO1 frequency. This option has been added for 
+c       debugging the cable to phasem1 conversion.
+c       Usually this option does not make sense for CARMA as LO1 is 
+c       doppler  tracked and this freq= would not be. For SZA this is
+c       appropriate, as they do not doppler track.
+c       
+c       
 c--
 c  History:
 c    01aug96 mchw Better way of handling linecal.
 c    08mar99 mchw Patch for single linecal measure.
 c    mchw 24may07 Check for auto instead of not cross. i.e. allow mixed.
 c    pjt  19nov09 optionally use cable, instead of phasem1?
+c    pjt  12dec09 Optional freq= to debug cable-phasem1 conversion
+c    pjt  14dec09 Merge in the various changes
 c------------------------------------------------------------------------
+c TODO:
+c    'uselo1' is hardcoded to be .false., if .true. it would inherit
+c    it from uv variable and i've confirmed that way cable->phasem1
+c    conversion is correct and gives the same asnwer as the sdpFiller did
+c    (pjt  dec 2009)
+c--
 	character version*(*),vis*80,out*80
-	parameter(version='(version 1.0 24-May-2007)')
+	parameter(version='(version 14-dec-2009)')
 	include	'maxdim.h'
+	include	'mirconst.h'
 	integer length,item
 	complex gains(MAXANT)
 	real phasem1(MAXANT)
-	double precision time,time0,interval
+	double precision cable(MAXANT)
+	double precision time,time0,interval,freq
 	integer refant,tvis,tgains,nants,nsols,i,iostat,offset,header(2)
 	character obstype*32,type*1
-	logical updated
+	logical updated,uselo1
 c
 c  Externals.
 c
@@ -57,6 +79,8 @@ c
 	call keyf('vis',vis,' ')
 	call keyi('refant',refant,0)
 	call keya('out',out,' ')
+	call keyd('freq',freq,-1.0d0)
+	uselo1 = .false.
 	call keyfin
 c
 c  Open the uvdata file.
@@ -73,6 +97,12 @@ c
 	if(type.ne.'r') call bug('f','phasem1 is not in uv-data')
 	call uvprobvr(tvis,'nants',type,length,updated)
 	if(type.ne.'i') call bug('f','nants is not in uv-data')
+	if(freq.gt.0d0) then
+	   call bug('i','Using cable instead of phasem1')
+	   write(*,*) 'freq=',freq
+	   call uvprobvr(tvis,'cable',type,length,updated)
+	   if(type.ne.'d') call bug('f','cable is not in uv-data')
+	endif
 c
 c  Open the output file to contain the gain solutions. Start History.
 c
@@ -118,6 +148,13 @@ c
             if(nants.eq.0)call bug('f','nants is zero')
           endif
 	  call uvgetvrr(tvis,'phasem1',phasem1,nants)
+	  if (freq.gt.0d0) then
+	    call uvgetvrd(tvis,'cable',cable,nants)
+	    if (uselo1) call uvgetvrd(tvis,'lo1',freq,1)
+	    do i=1,nants
+	       phasem1(i) = TWOPI*MOD(cable(i)*freq,1.0d0) - PI
+	    enddo
+	  endif
 	  do i=1,nants
 	    gains(i) = expi(phasem1(i))
 	  enddo
