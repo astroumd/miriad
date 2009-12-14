@@ -15,6 +15,11 @@ c	The gains for bad line length phases can be edited with GPEDIT,
 c	or with BEE if you want to do fancy things.
 c	The line length gains are applied when copying or plotting
 c	the data.
+c
+c       NOTE: the linelength data are stored as an antenna based
+c       uv variable called phasem1, in radians. But note that this
+c       variable is not removed by any subsquent uvcat, and applying
+c       linecal twice is probably not a good thing.
 c@ vis
 c	Name of input visibility data file. No default.
 c	The visibility data must be in time order.
@@ -26,6 +31,7 @@ c  History:
 c    01aug96 mchw Better way of handling linecal.
 c    08mar99 mchw Patch for single linecal measure.
 c    mchw 24may07 Check for auto instead of not cross. i.e. allow mixed.
+c    pjt  19nov09 optionally use cable, instead of phasem1?
 c------------------------------------------------------------------------
 	character version*(*),vis*80,out*80
 	parameter(version='(version 1.0 24-May-2007)')
