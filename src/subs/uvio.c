@@ -170,6 +170,7 @@
 /*  pjt   8may08 wrap HA back into -12..12 from -24..24..               */
 /*  dhem 13may08 Change uvputvr_c to always update var's buffer         */
 /*  dhem 14may08 uvputvr_c always reallocs var's buffer on size change  */
+/*  pjt   3dec09 allow minsize2 threshold on INT2 vs. REAL for corr's   */
 /*----------------------------------------------------------------------*/
 /*									*/
 /*		Handle UV files.					*/
@@ -260,7 +261,7 @@
 /*		list to be formed for hashing.				*/
 /*									*/
 /*----------------------------------------------------------------------*/
-#define VERSION_ID "14-jan-09 pjt"
+#define VERSION_ID "3-dec-09 pjt"
 
 #define private static
 
@@ -473,7 +474,8 @@ typedef struct {
 
 typedef struct {
 	int item;
-	int nvar,saved_nvar,tno,flags,callno,maxvis,mark;
+        int nvar,saved_nvar,tno,flags,callno,maxvis,mark;
+        int minsize2;  /* at -1 always use REAL, else use to trigger INT2 */
         off_t offset, max_offset;
 	int presize,gflag;
 	FLAGS corr_flags,wcorr_flags;
@@ -1027,6 +1029,7 @@ private UV *uv_getuv(int tno)
   uv->vhans	= NULL;
   uv->nvar	= 0;
   uv->presize   = 0;
+  uv->minsize2  = 4;   /* trigger REAL (vs. INT2) storage, or -1 for always */
   uv->gflag     = 1;
   uv->saved_nvar= 0;
   uv->offset    = 0;
@@ -1977,7 +1980,8 @@ void uvwrite_c(int tno,Const double *preamble,Const float *data,
       uv->data_line.linetype = LINE_CHANNEL;
     if( uv->data_line.linetype == LINE_CHANNEL){
       if( uv->corr == NULL )
-        uv->corr = uv_mkvar(tno,"corr", ( n > 4 ? H_INT2 : H_REAL) );
+        uv->corr = uv_mkvar(tno,"corr", 
+         		    ( uv->minsize2 < 0 || n <= uv->minsize2 ? H_REAL : H_INT2) );
       uv->corr->flags |= UVF_NOCHECK;
       if(uv->corr_flags.handle == NULL){
         status = (uv->corr_flags.offset == 0 ? "new" : "old");
@@ -2609,6 +2613,8 @@ void uvset_c(int tno,Const char *object,Const char *type,
     else {
       ERROR('f',(message,"Unrecognised flags mode \'%s\', in UVSET",type));
     }
+  } else if(!strcmp(object,"minsize2")) {
+    uv->minsize2 = n;
   } else if(!strcmp(object,"corr")) {
     if(uv->corr != NULL)return;
     if(!strcmp(type,"r"))
