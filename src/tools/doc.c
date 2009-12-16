@@ -86,12 +86,13 @@ History:
   pkgw 22jun07 Fix a segfault caused by buffer over-use in untab() ;
                exposed by running doc on imhist.for on my machine.
   pjt  24nov09 Increased line length, protoized the code
+  pjt  12dec09 Don't chop off long lines anymore
 
 TODO:
   - spaces before slash-star commands are not understood 
 
 ********************************************************************/
-char *version = { "version 2.8 - 24-nov-2009" };
+char *version = { "version 2.9 - 16-dec-2009" };
 /*******************************************************************/
 /*= doc - MIRIAD documentation program                             */
 /*& bpw                                                            */
@@ -951,7 +952,7 @@ char    *pr_c_categories[N_CCATS] = {
          "Other\0",             "...\0"                                   };
 
 
-#define  N_PGMR 60
+#define  N_PGMR 99
 int      number_of_pgmrs;
 char     initials[N_PGMR][7], pgmrname[N_PGMR][19];
 
@@ -2077,7 +2078,7 @@ void treat_description_line(char *line, int start)
             }
         }
         new_description = FALSE; defer = FALSE;
-        while( *line && charcnt<80 ) {
+        while( *line && charcnt<STRINGLEN ) {   
             c = *line++;
             if( C_MODE ) if( c=='*' && *line=='/' ) break;
             if( verbatim ) putc_chks(c,outstream);
