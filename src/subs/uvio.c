@@ -171,6 +171,7 @@
 /*  dhem 13may08 Change uvputvr_c to always update var's buffer         */
 /*  dhem 14may08 uvputvr_c always reallocs var's buffer on size change  */
 /*  pjt   3dec09 allow minsize2 threshold on INT2 vs. REAL for corr's   */
+/*  pjt  16dec09 cloned uvread_match() into uvread_matchp() for purpose */
 /*----------------------------------------------------------------------*/
 /*									*/
 /*		Handle UV files.					*/
@@ -525,7 +526,7 @@ private void uv_addopers(),uv_override();
 private UV *uv_getuv();
 private VARIABLE *uv_mkvar(),*uv_locvar(),*uv_checkvar();
 private int uv_scan(),uvread_line(),uvread_select(),uvread_maxvis();
-private int uvread_shadowed(),uvread_match();
+private int uvread_shadowed(),uvread_match(),uvread_matchp();
 private double uv_getskyfreq();
 
 /************************************************************************/
@@ -3537,7 +3538,7 @@ private int uvread_select(UV *uv)
     if(op->type == SEL_PURP){
       discard = !op->discard;
       while(n < sel->noper && op->type == SEL_PURP){
-	if(uvread_match(op->stval,uv->purpose->buf,uv->purpose->length))
+	if(uvread_matchp(op->stval,uv->purpose->buf,uv->purpose->length))
 	  discard = op->discard;
 	op++; n++;
       }
@@ -3574,7 +3575,7 @@ private int uvread_match(char *s1,char *s2, int length)
 /*
     This matches two (source) names in upper case. The first name may contain 
     wildcards (just asterisks, not the full blown UNIX regex). The second string
-    is not zero terminated. Used by select=source() and purpose()
+    is not zero terminated. Used by select=source() 
 
   Input:
     s1		The first string. Can contain wildcards. Zero terminated.
@@ -3607,6 +3608,34 @@ private int uvread_match(char *s1,char *s2, int length)
     return 1;
 
   return *s1 == 0 && length == 0;
+}
+
+private int uvread_matchp(char *s1,char *s2, int len2)
+/*
+    This matches two purposes in upper case. No asterisks allowed.
+    The second string is not zero terminated. Used by select=purpose()
+    The first string should contain only 1 letter
+
+  Input:
+    s1		The first string. No wildcards. Zero terminated.
+    s2		The second string. No wildcards. Not zero terminated.
+    len2	Length of the second string.
+  Output:
+    uvread_matchp True (1) if the two strings match.
+------------------------------------------------------------------------*/
+{
+  char *s;
+
+  /* could do a strpbrk on 'BFGPRSO', the current CARMA allowed ones    */
+  /* i.e. if strpbrk(s1,"BFGPRSO") is NULL, BUG out ; but skip for now  */
+  
+  while(len2 > 0) {          
+    for (s=s1; *s; s++)    /* loop over s1 */
+      if(toupper(*s) == toupper(*s2)) return 1; /* match */
+    s2++;
+    len2--;
+  }
+  return 0;  /* no match */
 }
 /************************************************************************/
 private int uvread_shadowed(UV *uv,double diameter)
