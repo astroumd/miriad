@@ -198,11 +198,12 @@ can handle only a single dataset at a time.
         can be given. An asterisk in the source name is treated as a
         wildcard. Note that the sourcename match is done IGNORING CASE. 
 
-	  purpose(LIST[,option])
-	Select based on the intent/purpose of the observation. Introduced in CARMA,
-	where the letters B (bandpass), F (fluxcal), G (gaincal), P (polarization),
-	S (science) and O (other) are used.
-	Current options are EXACT and any match.
+	  purpose(TYPE)
+	Select based on the intent/purpose of the observation. Introduced in 
+	CARMA, where the letters B (bandpass), F (fluxcal), G (gaincal), 
+        P (polarization), R (radio pointing), S (science) and O (other) 
+        are used. 
+	Multiple letters from this set can be chooses. No wildcards allowed.
 
 	  seeing(r1,r2)
 	Select on seeing monitor rms path length (in microns). The UV variable used
@@ -247,6 +248,9 @@ can handle only a single dataset at a time.
           or
         The list of subcommands before and after the 'or' are "ored"
         together.
+
+	  and
+	Default ???
 
 
 %N window
