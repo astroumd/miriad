@@ -36,6 +36,8 @@ c       debugging the cable to phasem1 conversion.
 c       Usually this option does not make sense for CARMA as LO1 is 
 c       doppler  tracked and this freq= would not be. For SZA this is
 c       appropriate, as they do not doppler track.
+c       For SZA data freq=35.938 should be used.
+c       Default: not used, and phasem1 is used to build the gain table.
 c       
 c       
 c--
