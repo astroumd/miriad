@@ -7,19 +7,19 @@ include $(top_srcdir)/mircommon.mak
 ## Removed mbanal, doesn't build in regular miriad anyway...
 ## CGK 12jun2007
 
-bin_PROGRAMS = antpol atmerge atxy blflag bootflux bwsel calred closure conterr contsen csflag early fgflag im2uv mfflat mosgen offaxis offpol opcal paraplot qvack sfunc sinpoly transfix uvaflag uvamp uvarchdd uvaver uvcal uvcal2 uvcat uvcheck uvclip uvcover uvdecor uvdiff uvedit uvfft uvfit uvfix uvflag uvflux uvfstats uvgains uvgen uvgenmodel uvglue uvimage uvindex uvlin uvlist uvmodel uvphase uvplanet uvplot uvplt uvpnt uvputhd uvrandom uvratio uvredo uvsector uvspec uvspect uvsplit uvstat uvsub uvswap uvtcor uvtplt uvtrack uvtriple uvtsub uvwide varfit varlist varmap varplot varplt
+bin_PROGRAMS = antpol atmerge atxy blflag bootflux bwsel calred closure conterr contsen csflag early fgflag im2uv mfflat mosgen offaxis offpol opcal paraplot pgflag qvack sfunc sinpoly transfix uvaflag uvamp uvarchdd uvaver uvcal uvcal2 uvcat uvcheck uvclip uvcover uvdecor uvdiff uvedit uvfft uvfit uvfix uvflag uvflux uvfstats uvgains uvgen uvgenmodel uvglue uvimage uvindex uvlin uvlist uvmodel uvphase uvplanet uvplot uvplt uvpnt uvputhd uvrandom uvratio uvredo uvsector uvspec uvspect uvsplit uvstat uvsub uvswap uvtcor uvtplt uvtrack uvtriple uvtsub uvwide varfit varlist varmap varplot varplt
 
 AM_CFLAGS = @x_cflags@
 AM_FFLAGS = @no_globals@
 LDADD = $(prog_libs)
 
-BUILT_SOURCES = antpol.f atmerge.f atxy.f blflag.f bootflux.f bwsel.f calred.f closure.f conterr.f contsen.f csflag.f early.f fgflag.f im2uv.f mfflat.f mosgen.f offaxis.f offpol.f opcal.f paraplot.f qvack.f sfunc.f sinpoly.f transfix.f uvaflag.f uvamp.f uvarchdd.f uvaver.f uvcal.f uvcal2.f uvcat.f uvcheck.f uvclip.f uvcover.f uvdecor.f uvdiff.f uvedit.f uvfft.f uvfit.f uvfix.f uvflag.f uvflux.f uvfstats.f uvgains.f uvgen.f uvgenmodel.f uvglue.f uvimage.f uvindex.f uvlin.f uvlist.f uvmodel.f uvphase.f uvplanet.f uvplot.f uvplt.f uvpnt.f uvputhd.f uvrandom.f uvratio.f uvredo.f uvsector.f uvspec.f uvspect.f uvsplit.f uvstat.f uvsub.f uvswap.f uvtcor.f uvtplt.f uvtrack.f uvtriple.f uvtsub.f uvwide.f varfit.f varlist.f varmap.f varplot.f varplt.f
+BUILT_SOURCES = antpol.f atmerge.f atxy.f blflag.f bootflux.f bwsel.f calred.f closure.f conterr.f contsen.f csflag.f early.f fgflag.f im2uv.f mfflat.f mosgen.f offaxis.f offpol.f opcal.f paraplot.f pgflag.f qvack.f sfunc.f sinpoly.f transfix.f uvaflag.f uvamp.f uvarchdd.f uvaver.f uvcal.f uvcal2.f uvcat.f uvcheck.f uvclip.f uvcover.f uvdecor.f uvdiff.f uvedit.f uvfft.f uvfit.f uvfix.f uvflag.f uvflux.f uvfstats.f uvgains.f uvgen.f uvgenmodel.f uvglue.f uvimage.f uvindex.f uvlin.f uvlist.f uvmodel.f uvphase.f uvplanet.f uvplot.f uvplt.f uvpnt.f uvputhd.f uvrandom.f uvratio.f uvredo.f uvsector.f uvspec.f uvspect.f uvsplit.f uvstat.f uvsub.f uvswap.f uvtcor.f uvtplt.f uvtrack.f uvtriple.f uvtsub.f uvwide.f varfit.f varlist.f varmap.f varplot.f varplt.f
 
 CLEANFILES = $(BUILT_SOURCES)
 
 noinst_HEADERS = atxy.h sinpoly.h uvaver.h uvdiff.h uvfit.h uvgains.h uvgen.h uvgenmodel.h uvlist.h uvplot.h uvpnt.h uvputhd.h uvspec.h uvsplit.h uvtrack.h varplot.h
 
-EXTRA_DIST = antpol.for atmerge.for atxy.for blflag.for bootflux.for bwsel.for calred.for closure.for conterr.for contsen.for csflag.for early.for fgflag.for im2uv.for mfflat.for mosgen.for offaxis.for offpol.for opcal.for paraplot.for qvack.for sfunc.for sinpoly.for transfix.for uvaflag.for uvamp.for uvarchdd.for uvaver.for uvcal.for uvcal2.for uvcat.for uvcheck.for uvclip.for uvcover.for uvdecor.for uvdiff.for uvedit.for uvfft.for uvfit.for uvfix.for uvflag.for uvflux.for uvfstats.for uvgains.for uvgen.for uvgenmodel.for uvglue.for uvimage.for uvindex.for uvlin.for uvlist.for uvmodel.for uvphase.for uvplanet.for uvplot.for uvplt.for uvpnt.for uvputhd.for uvrandom.for uvratio.for uvredo.for uvsector.for uvspec.for uvspect.for uvsplit.for uvstat.for uvsub.for uvswap.for uvtcor.for uvtplt.for uvtrack.for uvtriple.for uvtsub.for uvwide.for varfit.for varlist.for varmap.for varplot.for varplt.for
+EXTRA_DIST = antpol.for atmerge.for atxy.for blflag.for bootflux.for bwsel.for calred.for closure.for conterr.for contsen.for csflag.for early.for fgflag.for im2uv.for mfflat.for mosgen.for offaxis.for offpol.for opcal.for paraplot.for pgflag.for qvack.for sfunc.for sinpoly.for transfix.for uvaflag.for uvamp.for uvarchdd.for uvaver.for uvcal.for uvcal2.for uvcat.for uvcheck.for uvclip.for uvcover.for uvdecor.for uvdiff.for uvedit.for uvfft.for uvfit.for uvfix.for uvflag.for uvflux.for uvfstats.for uvgains.for uvgen.for uvgenmodel.for uvglue.for uvimage.for uvindex.for uvlin.for uvlist.for uvmodel.for uvphase.for uvplanet.for uvplot.for uvplt.for uvpnt.for uvputhd.for uvrandom.for uvratio.for uvredo.for uvsector.for uvspec.for uvspect.for uvsplit.for uvstat.for uvsub.for uvswap.for uvtcor.for uvtplt.for uvtrack.for uvtriple.for uvtsub.for uvwide.for varfit.for varlist.for varmap.for varplot.for varplt.for
 
 nodist_antpol_SOURCES = antpol.f
 nodist_atmerge_SOURCES = atmerge.f
@@ -41,6 +41,7 @@ nodist_offaxis_SOURCES = offaxis.f
 nodist_offpol_SOURCES = offpol.f
 nodist_opcal_SOURCES = opcal.f
 nodist_paraplot_SOURCES = paraplot.f
+nodist_pgflag_SOURCES = pgflag.f
 nodist_qvack_SOURCES = qvack.f
 nodist_sfunc_SOURCES = sfunc.f
 nodist_sinpoly_SOURCES = sinpoly.f
