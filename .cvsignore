@@ -4,6 +4,7 @@ aclocal.m4
 autom4te.cache
 automiriad.csh
 automiriad.sh
+bin
 compile
 config.guess
 config.h.in
@@ -13,7 +14,10 @@ config.status
 config.sub
 configure
 depcomp
+include
 install-sh
+lib
+libexec
 libtool
 libtool.m4
 ltoptions.m4
@@ -23,6 +27,7 @@ lt~obsolete.m4
 ltmain.sh
 miriad-*.tar.gz
 missing
+share
 stamp-h1
 *.diff
 BUILD*
