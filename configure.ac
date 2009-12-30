@@ -426,9 +426,13 @@ dnl found, so there is some context for this message:
 
 save_CPPFLAGS="$CPPFLAGS"
 CPPFLAGS="$CPPFLAGS $X_CFLAGS"
-AC_CHECK_HEADER([X11/Xaw/Box.h], [],
+AC_CHECK_HEADERS([X11/Xresource.h],[],
 dnl there is similarly context for this message.
-[AC_MSG_ERROR([you need to install Xaw development files])],)
+[AC_MSG_ERROR([you may need to install X11 development files])],)
+AC_CHECK_HEADERS([X11/Xaw/Box.h],[],
+dnl there is similarly context for this message.
+[AC_MSG_ERROR([you may need to install Xaw development files])],[#include <X11/Xresource.h>
+#include <X11/Intrinsic.h>])
 CPPFLAGS="$save_CPPFLAGS"
 
 x_libs="$X_PRE_LIBS $X_LIBS -lX11 -lXaw $X_EXTRA_LIBS"
