@@ -8,17 +8,18 @@
 /*   rjs  26oct95  Better messages on errors.				*/
 /*   pjt  19jun02  MIR4 prototypes                                      */
 /*   jwr  05nov04  Change file offsets to type off_t			*/
+/*   rjs  03jan05  Include file rationalisation.                        */
 /*   pjt  16feb07  Minor doc improvements                               */
 /*   pjt  11dec07  More helpful message when scratch files fail         */
-/*   pjt  11jul08  Merged in WSRT code to optionally use memory         */
 /*   rjs  01apr09  Add scrRecSz routine and associated work.		*/
 /*   rjs  13may09  Make returned handle always positive (some tasks have*/
-/*		   relied on this).					*/
+/*		   relied on this).                                     */
+/*   pjt   7jan09  Merged in previous CARMA changes, long live CVS      */
 /************************************************************************/
 
 #include <stdio.h>
-#include "io.h"
 #include "miriad.h"
+#include "io.h"
 
 
 #define MAXITEMS 100
@@ -122,7 +123,7 @@ void scrrecsz_c(int handle,size_t recsize)
   recsiz[handle] = recsize*sizeof(float);
 }
 /************************************************************************/
-void scrread_c(int handle,float *buffer,int offset,int length)
+void scrread_c(int handle,float *buffer,off_t offset,size_t length)
 /**scrread -- Read real data from a scratch file.			*/
 /*:scratch-i/o								*/
 /*+  FORTRAN call sequence:
@@ -159,7 +160,7 @@ void scrread_c(int handle,float *buffer,int offset,int length)
   }
 }
 /************************************************************************/
-void scrwrite_c(int handle,Const float *buffer,int offset,int length)
+void scrwrite_c(int handle,Const float *buffer,off_t offset,size_t length)
 /**scrwrite -- Write real data to the scratch file.			*/
 /*:scratch-i/o								*/
 /*+  FORTRAN call sequence:
