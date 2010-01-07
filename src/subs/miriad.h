@@ -27,6 +27,7 @@
 // 18-may-06 pjt/df  added mir.c prototypes for mir (the miriad->mir converter)
 // 12-feb-09 dhem added bughandler_c prototype (new function in bug.c)
 // 01-apr-09 rjs Add additional interface to scrRecSz
+//  7-jan-10 pjt re-aligned ATNF and CARMA code
 */
 
 #if !defined(MIR_MIRIAD_H)
@@ -103,6 +104,7 @@ extern  "C" {
 #define H_DBLE          5
 #define H_TXT           6
 #define H_CMPLX         7
+#define H_INT8          8
 
 /* hio.c */
 
@@ -203,6 +205,7 @@ void uvclose_c  (int tno);
 void uvflush_c  (int tno);
 void uvnext_c   (int tno);
 void uvrewind_c (int tno);
+int  uvdim_c    (int tno);
 void uvcopyvr_c (int tin, int tout);
 int  uvupdate_c (int tno);
 void uvvarini_c (int tno, int *vhan);
@@ -270,6 +273,7 @@ void uvinfo_c   (int tno, Const char *object, double *data);
 void xyopen_c  (int *tno, Const char *name, Const char *status, int naxis, int axes[]);
 void xyflush_c (int tno);
 void xyclose_c (int tno);
+int  xydim_c   (int tno);
 void xyread_c  (int tno, int index, float *array);
 void xywrite_c (int tno, int index, Const float *array);
 void xymkrd_c  (int tno, int index, int *runs, int n, int *nread);
@@ -281,8 +285,8 @@ void xysetpl_c (int tno, int naxis, Const int *axes);
 /* maskio.c */
 char *mkopen_c (int tno, char *name, char *status);
 void mkclose_c (char *handle);
-int  mkread_c  (char *handle, int mode, int *flags, int offset, int n, int nsize);
-void mkwrite_c (char *handle, int mode, int *flags, int offset, int n, int nsize);
+int  mkread_c  (char *handle, int mode, int *flags, off_t offset, int n, int nsize);
+void mkwrite_c (char *handle, int mode, int *flags, off_t offset, int n, int nsize);
 void mkflush_c (char *handle);
 
 
@@ -291,7 +295,6 @@ void mkflush_c (char *handle);
 void xyzopen_c  (int *tno, Const char *name, Const char *status, int *naxis, int axlen[]);
 void xyzclose_c (int tno);
 void xyzflush_c (int tno);
-void xyzmkbuf_c (void);
 void xyzsetup_c (int tno, Const char *subcube, Const int blc[], Const int trc[], int viraxlen[], int vircubesize[]);
 void xyzs2c_c   (int tno, int subcubenr, int coords[]);
 void xyzc2s_c   (int tno, Const int coords[], int *subcubenr);
@@ -303,7 +306,9 @@ void xyzwrite_c (int tno, Const int coords[], Const float *data, Const int *mask
 void xyzpixwr_c (int tno, int pixelnr, Const float *data, Const int *mask);
 void xyzprfwr_c (int tno, int profilenr, Const float *data, Const int *mask, Const int *ndata);
 void xyzplnwr_c (int tno, int planenr, Const float *data, Const int *mask, Const int *ndata);
-
+void xyzmkbuf_c (void);
+void xyzdim_c   (int tno, int *naxis, int *dimsub);
+int xyzpix_c    (int tno, int dims);
 
 /* bug.c */
 
@@ -320,8 +325,8 @@ void bugv_c      (char s, Const char *m, ...);
 
 void scropen_c  (int *handle);
 void scrclose_c (int handle);
-void scrread_c  (int handle, float *buffer, int offset, int length);
-void scrwrite_c (int handle, Const float *buffer, int offset, int length);
+void scrread_c  (int handle, float *buffer, off_t offset, size_t length);
+void scrwrite_c (int handle, Const float *buffer, off_t offset, size_t length);
 void scrrecsz_c (int handle, size_t recsize);
 
 /* tabio.c */
