@@ -16,6 +16,7 @@
 /*    rjs   6nov94   Change item handle to an integer.			*/
 /*    rjs  19apr97   Handle FORTRAN LOGICALs better. Some tidying.      */
 /*    rjs  03jan05   Tidying.						*/
+/*    pjt   7jan10   yes, and fixed 64bit offsets (not lengths!!!)      */
 /************************************************************************/
 
 #include <stdio.h>
