@@ -79,6 +79,7 @@ typedef char Void;
 #define Const /* NULL */
 #define ARGS(s) ()
 #endif /* __STDC__ */
+#define private static
 #endif /* MIRIAD_TYPES_DEFINED */
 
 typedef int int2;
