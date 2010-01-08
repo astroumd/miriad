@@ -123,10 +123,11 @@ c    08nov06 mchw  Increase MAXANTS to 64 and MAXSOLS to 4096
 c    10may07 mchw  Added topocentric coordinates in meters to summary.
 c    19dec07 jkoda Added 'XY' option
 c    14feb08 mchw  Added refraction correction in beedr.
+c    08jan10 mchw  Changed default pressmb=785, relhumid=42.
 c-----------------------------------------------------------------------
 	include 'bee.h'
 	character version*(*),device*80,log*80,ans*20
-	parameter(version='(version 3.0 29-mar-2009)')
+	parameter(version='(version 3.0 08-Jan-2010)')
 	integer length,tvis,tgains,iostat
 	logical doscale
 c
@@ -1437,9 +1438,9 @@ c
 	  if(refract.eq.'Y'.or.height.eq.'Y')then
 	    sinel = slat*sind + clat*cosd*cosh
 	    if (sinel .eq. 0.) sinel = 0.1
-	    pressmb = 910.
+	    pressmb = 785.
 	    kelvin = tair(i) + 273.2
-	    relhumid = 100.
+	    relhumid = 42.
 	    pwv = 6.105 * 
      *	   exp((25.22*(kelvin-273.2)/kelvin) - (5.31*log(kelvin/273.2)))
 c********1*********2*********3*********4*********5*********6*********7*c
