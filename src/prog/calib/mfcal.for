@@ -133,6 +133,7 @@ c    mhw  29sep09 Time variable bandpass bug fixes
 c    rjs  01oct09 Handle missing antennas slightly better.
 c    rjs  17dec09 There was a bug in packit/unpackit where handling a dataset
 c		  with many windows or Doppler tracking.
+c    pgkw 11jan10 Add noxyalign option.
 c
 c  Problems:
 c    * Should do simple spectral index fit.
