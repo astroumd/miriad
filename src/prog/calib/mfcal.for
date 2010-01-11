@@ -146,7 +146,7 @@ c------------------------------------------------------------------------
 	parameter(MAXSOLN=1024,MAXPOL=2)
 c
 	character version*(*)
-	parameter(version='MfCal: version 1.1 17-Dec-09')
+	parameter(version='MfCal: version 1.1 11-jan-10')
 c
 	integer tno
 	integer pWGains,pFreq,pSource,pPass,pGains,pTau
