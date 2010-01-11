@@ -77,6 +77,16 @@ c	            channels will not have a bandpass solution
 c	  oldflux   This causes MFCAL to use a pre-August 1994 ATCA flux
 c	            density scale. See the help on "oldflux" for more
 c	            information.
+c         noxyalign By default, when computing bandpasses for dual-feed antennas,
+c                   MFCAL will write a solution in which the antenna gain phases
+c                   for both feeds are the same and the bandpass phases
+c                   for the Y feeds are not centered on zero. This allows for
+c                   higher-sensitivity phase solutions during later calibration
+c                   since one can solve for a single phase for each antenna using
+c                   both X and Y data, if the bandpass solution has been applied.
+c                   If this option is supplied, all of the bandpass phases will
+c                   be centered on zero and the antenna gain phases for the two
+c                   feeds on each antenna will differ.
 c@ tol
 c	Solution convergence tolerance. Default is 0.001.
 c--
@@ -153,7 +163,7 @@ c
 	complex Vis(MAXVIS)
 	real Wt(MAXVIS)
 	character line*64,uvflags*16,Source*64
-	logical dodelay,dopass,defflux,interp,oldflux
+	logical dodelay,dopass,defflux,interp,oldflux,dopush
 c
 c  Dynamic memory stuff.
 c
@@ -172,7 +182,7 @@ c  Get inputs and check them.
 c
 	call output(version)
 	call keyini
-	call GetOpt(dodelay,dopass,interp,oldflux)
+	call GetOpt(dodelay,dopass,interp,oldflux,dopush)
 	uvflags = 'dlbxs'
 	if(.not.dopass)uvflags(6:6) = 'f'
 	call uvDatInp('vis',uvflags)
@@ -373,7 +383,7 @@ c
 c
 	if (dopass.and.interp) call intext(npol,nants,nchan,nspect,
      *    nschan,npsoln,cref(pPass))
-	if(dopass.and.npol.eq.2)
+	if(dopass.and.npol.eq.2.and.dopush)
      *	  call pushxy(npol,nants,nsoln,cref(pGains),nchan,npsoln,
      *          cref(pPass))
 c
@@ -546,19 +556,19 @@ c------------------------------------------------------------------------
 	endif
 	end
 c************************************************************************
-	subroutine GetOpt(dodelay,dopass,interp,oldflux)
+	subroutine GetOpt(dodelay,dopass,interp,oldflux,dopush)
 c
 	implicit none
-	logical dodelay,dopass,interp,oldflux
+	logical dodelay,dopass,interp,oldflux,dopush
 c
 c  Get extra processing options.
 c------------------------------------------------------------------------
 	integer nopt
-	parameter(nopt=4)
+	parameter(nopt=5)
 	logical present(nopt)
 	character opts(nopt)*11
 	data opts/ 'delay      ','nopassol   ','interpolate',
-     *		   'oldflux    '/
+     *		   'oldflux    ','noxyalign  '/
 c
 	call options('options',opts,present,nopt)
 c
@@ -566,6 +576,7 @@ c
 	dopass  = .not.present(2)
         interp  =      present(3)
 	oldflux =      present(4)
+	dopush  = .not.present(5)
 	end
 c************************************************************************
 	subroutine GainTab(tno,time,Gains,Tau,npol,nants,nsoln,
