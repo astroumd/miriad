@@ -6,9 +6,9 @@ c= mselfcal - Determine self-calibration of calibration gains.
 c& mwr
 c: calibration, map making
 c+
-c	SELFCAL is a MIRIAD task to perform self-calibration of visibility data.
+c	MSELFCAL is a MIRIAD task to perform self-calibration of visibility data.
 c	Either phase only or amplitude and phase calibration can be performed.
-c	The input to SELCAL are a visibility data file, and model images.
+c	The input to MSELFCAL are a visibility data file, and model images.
 c	This program then calculates the visibilities corresponding to the
 c	model, accumulates the statistics needed to determine the antennae
 c	solutions, and then calculates the self-cal solutions.
@@ -186,6 +186,8 @@ c    mwr  05aug99 Renamed it mselfcal and increased maxmod to 64 from 32.
 c    pjt  20apr07 Warn about apriori/flux
 c    pjt  23mar09 Fix roudoff error in timestamp (see selfcal)
 c    pjt  27may09 Fix initialization bug in selfacc1
+c    pkgw 11jan10 Accept mixed auto/cross inputs, suggesting select=-auto.
+c                 Typo fixes and clarification of help text.
 c
 c  Bugs/Shortcomings:
 c   * Selfcal should check that the user is not mixing different
@@ -272,8 +274,11 @@ c  the line type if necessary.
 c
 	call uvopen(tvis,vis,'old')
 	call rdhda(tvis,'obstype',obstype,'crosscorrelation')
-	if(obstype(1:5).ne.'cross')
-     *	  call bug('f','The vis file is not cross correlation data')
+	if(obstype(1:4).eq.'auto')
+     *	  call bug('f','The vis file contains only autocorrelations')
+	if(obstype(1:5).eq.'mixed')
+     *	  call bug('w',
+     *    'vis contains autocorrs; probably want to use select=-auto')
 	if(doline)call uvset(tvis,'data',ltype,nchan,lstart,lwidth,
      *								lstep)
 c
