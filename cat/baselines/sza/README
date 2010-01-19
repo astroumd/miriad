@@ -1,0 +1,42 @@
+This directory contains a historic record of all the best fitted
+(using a set of quasars accross the sky) baseline positions in
+the various configurations of SZA before the proper merge in (2010??)
+
+The first 3 columns are the equatorial X,Y,Z positions (in nanosec)
+of the antennae. By convention, ants 1-15 are reserved for the
+OVRO/BIMA dishes, and 16-23 the SZA dishes.
+
+You can also generate simulated data using UVGEN, with the following
+important settings:
+
+   uvgen ant=antpos.YYMMDD baseunit=1
+
+
+Given the appropriate antpos file, SZA data should be corrected as
+follows:
+
+   uvedit vis=xxx.mir out=yyy.mir apfile=antpos.YYMMDD
+
+It is safe to apply these (absolute) corrections again. In doubt,
+check the xxx.mir/history file.
+
+
+Contents:
+  README		this file
+  antpos.YYMMDD         various antpos files for uvedit
+  get1                  shell script to easily get another one
+
+
+See also:
+
+The official carma baseline page:
+   http://cedarflat.mmarray.org/observing/baseline/
+which should be on Cedar Flat in the directory:
+   ~obs/web_pages/observing/baseline/antpos/
+You can also obtain them directory as in this example:
+   wget http://cedarflat.mmarray.org/observing/baseline/antpos/antpos.080606
+
+The index.html file should be:
+   wget http://cedarflat.mmarray.org/observing/baseline/index.html
+    
+
