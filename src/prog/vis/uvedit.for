@@ -265,7 +265,7 @@ c
       character PROG*(*)
       parameter (PROG = 'UVEDIT: ')
       character VERSION*(*)
-      parameter (VERSION = 'version 07-Oct-2009')
+      parameter (VERSION = 'version 26-jan-10')
 c
       double precision SECRAD, ASECRAD
 c  -------------(SECRAD = DPI / (12.d0 * 3600.d0))
@@ -1803,24 +1803,23 @@ c
 cc for sma, the antenna file contains four entries:
 cc antenna number, X,Y,and Z geocentric coordinates in meter.
 c
-           if(dosma) then
-           do j = 1, 4
-            call getfield(line, k1, k2, token, tlen)
-            if (tlen .gt. 0) then
-              call atodf(token(1:tlen), dpval, okay)
-              if (okay.and.j.gt.1) ants(nants, j-1) = dpval
-            endif
-          enddo
-
+          if(dosma) then
+            do j = 1, 4
+              call getfield(line, k1, k2, token, tlen)
+              if (tlen .gt. 0) then
+                call atodf(token(1:tlen), dpval, okay)
+                if (okay.and.j.gt.1) ants(nants, j-1) = dpval
+              endif
+            enddo
           else
-          do j = 1, 3
-            call getfield(line, k1, k2, token, tlen)
-            if (tlen .gt. 0) then
-              call atodf(token(1:tlen), dpval, okay)
-              if (okay) ants(nants, j) = dpval
-            endif
-          enddo
-          end if
+            do j = 1, 3
+              call getfield(line, k1, k2, token, tlen)
+              if (tlen .gt. 0) then
+                call atodf(token(1:tlen), dpval, okay)
+                if (okay) ants(nants, j) = dpval
+              endif
+            enddo
+          endif
 cc
         endif
         call TxtRead(Lu, line, length, iostat)
