@@ -63,9 +63,9 @@ typedef char Void;
 #define Const /* NULL */
 #endif /* __STDC__ */
 
-#ifndef _cplusplus
+#if !defined(__cplusplus)
 #  define private static
-#endif
+#endif /* __cplusplus */
 
 /* Define the argument list if needed. */
 
