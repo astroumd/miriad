@@ -143,11 +143,12 @@ c    26jun02 mchw  fixed bug due to longer filenames. (cf. 19sep00)
 c    08jun09 mchw  added example to doc. 
 c    08jun09 mchw  fixed old bug: save vmax,vmin in subroutine velmap
 c    01dec09 mchw  fixed old bug: change caption on spectra to Jy/Beam.
+c    01jan10 mchw  write positions and info from cursor options to log.
 c----------------------------------------------------------------------c
 	include 'velplot.h'
 	include 'mem.h'
 	character*(*) version
-	parameter(version='(version 3.0 01-Dec-2009)')
+	parameter(version='(version 3.0 01-Jan-2010)')
 	integer maxnax,maxboxes
 	parameter(maxnax=3,maxboxes=128)
 	integer boxes(maxboxes),nsize(maxnax),blc(maxnax),trc(maxnax)
@@ -378,10 +379,12 @@ c
 	call rdhdr(lIn,'crpix3',crpix,1.)
 	call rdhdr(lIn,'crval3',crval,1.)
 	call rdhda(lIn,'ctype3',ctype3,' ')
+c mchw Jan 2010 -- try using original axes -- see what breaks -it did!
 	if(ctype3(1:4).eq.'FREQ'.and.restfreq.ne.0.)then
 	  call output('Convert frequency axis to velocity')
 	  cdelt = cdelt/restfreq*ckms
-	  crval = crval/restfreq*ckms
+c mchw Jan 2010 OK. correct this next line instead.
+	  crval = (1.-(crval/restfreq))*ckms
 	endif
 	vel = crval + (blc(3)-crpix)*cdelt
 	delv = cdelt
@@ -740,9 +743,11 @@ c
 	endif
 	dperjy = 1.
 	freqs = restfreq*(1.-vel/ckms)
+c	print *, 'restfreq, vel: ', restfreq, vel
 	if(freqs.ne.0.) then
 	  dperjy = (0.3/freqs)**2 / (2.*1.38e3*omega)
 	endif
+c	print *, 'xy,bmaj,bmin,freqs,dperj',xy,bmaj,bmin,freqs,dperj
 c
 c --- write out map header information ---
 c
@@ -946,6 +951,7 @@ c  Get position for spectra
 	  write(msg, 113) nspec,xx,yy
 113	  format(' spectra(',i2,') x=',f8.3,'  y=',f8.3)
 	  call output(msg)
+	  call LogWrit(msg)
           sx(1)=xc(nspec)
           sy(1)=yc(nspec)
           sym=nspec+64
@@ -955,6 +961,7 @@ c  ra and dec
           decs = rangleh(dble(crval2+yy/rts))
           write(msg,'(a,a)') ras, decs
 	  call output(msg)
+	  call LogWrit(msg)
 c  Get pos-vel cuts 
 	else if (key.eq.'P') then
 	  if(ncut.ge.25) then
@@ -975,6 +982,7 @@ c  Get pos-vel cuts
           write(msg, 114) ncut,xcut(ncut),ycut(ncut),pa(ncut)
 114       format(' cut(',i2,') x=',f8.3,' y=',f8.3,' pa=',f8.3)
           call output(msg)
+          call LogWrit(msg)
           pat=-tan(pi/2.-pa(ncut)*pi/180.)
           xpts(1)=-1e4
           ypts(1)=-1e4*pat+(ycut(ncut)-xcut(ncut)*pat) 
@@ -1008,11 +1016,13 @@ c  cursor position and value
 	  flux = ary(nint(xx)+midx,nint(yy)+midy)
 	  write(msg, *) 'x=',xx, '  y=',yy, '  value=',flux
 	  call output(msg)
+	  call LogWrit(msg)
 c  ra and dec
           ras = hangleh(dble(crval1-xx/rts/cos(crval2)))
           decs = rangleh(dble(crval2+yy/rts))
           write(msg,'(a,a)') ras, decs
 	  call output(msg)
+	  call LogWrit(msg)
 c clear spectrum pos-vel stacks
         else if (key.eq.'D') then
           call output('-cleared spec/pos-vel stacks')
