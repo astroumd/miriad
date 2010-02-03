@@ -302,6 +302,7 @@ c    rjs   01jul99  Changes in call sequence to hdfiddle.
 c    pjt   25apr03  verbose error when images too big
 c    rjs   03apr09  Change way of accessing scrio to help access larger files.
 c    pkgw  10apr09  Correctly echo to user nvis when it is >=10**8
+c    pjt    3feb10  fix maxrun to be related to maxchan to invert all channels (ATNF)
 c  Bugs:
 c
 c------------------------------------------------------------------------
@@ -310,7 +311,7 @@ c------------------------------------------------------------------------
 	include 'mem.h'
 c
 	character version*(*)
-	parameter(version='Invert: version 1.0 19-apr-09')
+	parameter(version='Invert: version 1.0 3-feb-10')
 	integer MAXPOL,MAXRUNS
 	parameter(MAXPOL=4,MAXRUNS=4*MAXDIM)
 c
@@ -845,11 +846,12 @@ c  Output:
 c    Wts	Array containing the visibility weights.
 c
 c------------------------------------------------------------------------
+	include 'maxdim.h'
 	integer InU,InV,InW,InWt,InPnt,InRms2,InFreq,InData
 	parameter(InU=0,InV=1,InW=2,InPnt=3,InWt=6,InRms2=4)
 	parameter(InFreq=5,InData=8)
 	integer Maxrun
-	parameter(Maxrun=2048)
+	parameter(Maxrun=8*MAXCHAN+20)
 	integer i,id,j,VispBuf, VisSize,u,v,k,ktot,l,ltot,ipnt
 	real Visibs(Maxrun)
 c
@@ -994,7 +996,7 @@ c------------------------------------------------------------------------
 c
 c  Externals.
 c
-	character itoaf*8
+	character itoaf*10
 c
 	T = - Fwhm**2 * (pi**2 / (4.*log(2.)))
 	gd = 1/abs(Cell * gn)
@@ -1095,7 +1097,7 @@ c------------------------------------------------------------------------
 	parameter(InU=0,InV=1,InW=2,InPnt=3,InRms=4,InFreq=5,InWt=6,
      *		  InData=8)
 	integer maxrun
-	parameter(maxrun=8192)
+	parameter(maxrun=8200)
 c
 	real Wts(maxrun/(InData+2)),Vis(maxrun),logFreq0,Wt,SumWt,t
 	integer i,j,k,l,size,step,n,u,v,offcorr,nbeam,ncorr,ipnt
