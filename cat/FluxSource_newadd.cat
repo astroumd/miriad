@@ -897,3 +897,41 @@ MWC349     2009-DEC-20.0    91.0       1.12      0.17   CARMA13   URANUS
 0008+686   2009-DEC-23.0    92.3       0.23      0.03   CARMA13   MWC349     1.1
 0005+544   2009-DEC-23.0    92.3       0.17      0.03   CARMA13   MWC349     1.1
 0019+734   2009-DEC-23.0    92.3       0.67      0.10   CARMA13   MWC349     1.1
+1927+739      2010-FEB-01.0   89.0       4.2       0.6    CARMA8    NEPTUNE
+2009+724      2010-FEB-01.0   89.0       0.6       0.1    CARMA8    NEPTUNE
+3C454.3      2010-FEB-01.0   89.0       32.1       4.8    CARMA8    NEPTUNE
+3C111      2010-JAN-29.0   110.7       2.3       0.3    CARMA8    URANUS
+0431+206      2010-JAN-29.0   110.7       0.2       0.1    CARMA8    URANUS
+0336+323      2010-JAN-29.0   110.7       2.0       0.3    CARMA8    URANUS
+3C454.3      2010-JAN-29.0   110.7       28.4       4.3    CARMA8    URANUS
+3C84      2010-JAN-28.0   90.5       10.8       1.6    CARMA8    URANUS
+3C111      2010-JAN-28.0   103.0       2.5       0.4    CARMA8    URANUS
+3C84      2010-JAN-28.0   103.0       9.9       2.7    CARMA8    URANUS
+3C111      2010-FEB-01.0   103.0       2.4       0.4    CARMA8    URANUS
+0431+206      2010-FEB-01.0   103.0       0.2       0.1    CARMA8    URANUS
+0336+323      2010-FEB-01.0   103.0       2.3       0.3    CARMA8    URANUS
+3C84      2010-FEB-01.0   103.0       10.3       1.5    CARMA8    URANUS
+3C84      2010-FEB-09.0   103.0       10.6       1.6    CARMA8    URANUS
+3C111      2010-FEB-09.0   103.0       2.5       0.4    CARMA8    URANUS
+3C84      2010-FEB-09.0   103.0       9.6       1.4    CARMA8    URANUS
+1625-254      2010-FEB-08.0   103.0       1.9       0.3    CARMA8    NEPTUNE
+3C454.3      2010-FEB-08.0   103.0       28.4       4.3    CARMA8    NEPTUNE
+1733-130      2010-FEB-01.0   103.0       3.9       0.6    CARMA8    NEPTUNE
+3C454.3      2010-FEB-01.0   103.0       30.8       4.6    CARMA8    NEPTUNE
+1625-254      2010-JAN-30.0   103.0       1.9       0.3    CARMA8    NEPTUNE
+1625-254      2010-JAN-31.0   103.0       2.0       0.3    CARMA8    NEPTUNE
+3C454.3      2010-JAN-31.0   103.0       28.7       4.3    CARMA8    NEPTUNE
+0530+135      2010-JAN-27.0   103.0       0.8       0.1    CARMA8    URANUS
+3C84      2010-JAN-27.0   103.0       10.4       1.6    CARMA8    URANUS
+3C111      2010-FEB-02.0   103.0       2.4       0.4    CARMA8    URANUS
+0336+323      2010-FEB-02.0   103.0       2.2       0.3    CARMA8    URANUS
+3C84      2010-FEB-02.0   103.0       10.0       2.9    CARMA8    URANUS
+0423-013      2010-JAN-31.0   88.2       7.7       1.2    CARMA8    URANUS
+0339-017      2010-JAN-31.0   88.2       1.4       0.2    CARMA8    URANUS
+0423-013      2010-FEB-04.0   88.2       7.3       1.1    CARMA8    URANUS
+0339-017      2010-FEB-04.0   88.2       1.4       0.2    CARMA8    URANUS
+0423-013      2010-FEB-05.0   88.2       7.6       1.1    CARMA8    URANUS
+0339-017      2010-FEB-05.0   88.2       1.4       0.2    CARMA8    URANUS
+3C84      2010-FEB-04.0   88.2       11.2       1.7    CARMA8    URANUS
+0423-013      2010-FEB-08.0   88.2       8.8       1.6    CARMA8    URANUS
+0339-017      2010-FEB-08.0   88.2       1.7       0.3    CARMA8    URANUS
