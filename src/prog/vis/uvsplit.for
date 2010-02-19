@@ -85,7 +85,7 @@ c------------------------------------------------------------------------
 	integer MAXSELS
 	parameter(MAXSELS=256)
 	character version*(*)
-	parameter(version='UvSplit: version 1.0 19-May-08')
+	parameter(version='UvSplit: version 1.0 14-oct-09')
 c
 	character vis*64,dtype*1
 	integer tvis
