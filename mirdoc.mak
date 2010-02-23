@@ -9,7 +9,7 @@
 
 DOCSTAMPS = $(DOCINPUTS:=_ds)
 
-.for.for_ds:
+%.for_ds: %.for $(doc_prog)
 	@echo Generating docs from $< ...
 	@cat=`pwd`/$(doc_catsrc) ; \
 	doc=`pwd`/$(doc_prog) ; \
@@ -18,7 +18,7 @@ DOCSTAMPS = $(DOCINPUTS:=_ds)
 	(cd docwork && MIRCAT=$$cat $$doc -p $(DOCFLAGS) $$input) && \
 	touch $@
 
-.f2c.f2c_ds:
+%.f2c_ds: %.f2c $(doc_prog)
 	@echo Generating docs from $< ...
 	@cat=`pwd`/$(doc_catsrc) ; \
 	doc=`pwd`/$(doc_prog) ; \
@@ -27,7 +27,7 @@ DOCSTAMPS = $(DOCINPUTS:=_ds)
 	(cd docwork && MIRCAT=$$cat $$doc -p $(DOCFLAGS) $$input) && \
 	touch $@
 
-.c.c_ds:
+%.c_ds: %.c $(doc_prog)
 	@echo Generating docs from $< ...
 	@cat=`pwd`/$(doc_catsrc) ; \
 	doc=`pwd`/$(doc_prog) ; \
@@ -36,7 +36,7 @@ DOCSTAMPS = $(DOCINPUTS:=_ds)
 	(cd docwork && MIRCAT=$$cat $$doc -p $(DOCFLAGS) $$input) && \
 	touch $@
 
-.f.f_ds:
+%.f_ds: %.f $(doc_prog)
 	@echo Generating docs from $< ...
 	@cat=`pwd`/$(doc_catsrc) ; \
 	doc=`pwd`/$(doc_prog) ; \
@@ -47,7 +47,7 @@ DOCSTAMPS = $(DOCINPUTS:=_ds)
 
 # This is needed for src/tools. Sigh.
 
-.clone.clone_ds:
+%.clone_ds: %.clone $(doc_prog)
 	@echo Generating docs from $< ...
 	@cat=`pwd`/$(doc_catsrc) ; \
 	doc=`pwd`/$(doc_prog) ; \
@@ -64,6 +64,11 @@ DOCSTAMPS = $(DOCINPUTS:=_ds)
 
 .inc.inc_ds:
 	@touch $@
+
+# Need a rule for how to build this ...
+
+$(doc_prog):
+	$(MAKE) -C $(dir $@) $(notdir $@)
 
 # Hooking up all the rules ...
 
