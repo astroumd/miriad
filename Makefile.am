@@ -52,6 +52,7 @@ automiriad.csh: automiriad.csh.in
 	    -e "s,%prefix%,$(prefix)," \
 	    -e "s,%pkgdatadir%,$(pkgdatadir)," \
 	    -e "s,%fincludedir%,$(fincludedir)," \
+	    -e "s,%catdir%,$(catdir)," \
 	    -e "s,%bindir%,$(bindir)," \
 	    -e "s,%libdir%,$(libdir)," <$< >$@
 
@@ -61,6 +62,7 @@ automiriad.sh: automiriad.sh.in
 	    -e "s,%prefix%,$(prefix)," \
 	    -e "s,%pkgdatadir%,$(pkgdatadir)," \
 	    -e "s,%fincludedir%,$(fincludedir)," \
+	    -e "s,%catdir%,$(catdir)," \
 	    -e "s,%bindir%,$(bindir)," \
 	    -e "s,%libdir%,$(libdir)," <$< >$@
 

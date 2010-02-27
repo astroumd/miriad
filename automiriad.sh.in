@@ -22,7 +22,6 @@ export MIRDEF=.
 # Things that come directly from the source tree
 
 export MIR="%abs_srcdir%"
-export MIRCAT="$MIR/cat"
 export MIRNEWS="$MIR/news"
 export MIRPROG="$MIR/src/prog"
 export MIRSRC="$MIR/src"
@@ -33,6 +32,7 @@ export MIRSUBS="$MIR/src/subs"
 
 export MIRBIN="%bindir%"
 export MIRLIB="%libdir%"
+export MIRCAT="%catdir%"
 export MIRINC="%fincludedir%"
 export MIRDOC="%pkgdatadir%/doc"
 export MIRPDOC="$MIRDOC/prog"

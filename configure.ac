@@ -14,6 +14,9 @@ if test x"$docdir" = x ; then
    AC_SUBST([docdir])
 fi
 
+catdir='${pkgdatadir}/cat'
+AC_SUBST([catdir])
+
 dnl ---                 sizeof various data types
 AC_CHECK_SIZEOF([float])
 AC_CHECK_SIZEOF([double])

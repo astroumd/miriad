@@ -1,6 +1,6 @@
 include $(top_srcdir)/mircommon.mak
 
-EXTRA_DIST = 0.122.ant 0.122b.ant 0.375.ant 0.75a.ant 0.75b.ant \
+cat_DATA = 0.122.ant 0.122b.ant 0.375.ant 0.75a.ant 0.75b.ant \
   0.75c.ant 0.75d.ant 1.5a.ant 1.5b.ant 1.5c.ant 1.5d.ant \
   3.0a.ant 3.0b.ant 3.0c.ant 3.0d.ant 3km_min_red_1.ant \
   3km_min_red_2.ant 3km_min_red_3.ant 3km_min_red_4.ant \
@@ -23,12 +23,7 @@ EXTRA_DIST = 0.122.ant 0.122b.ant 0.375.ant 0.75a.ant 0.75b.ant \
   uvgen.def.at.mfs uvgen.def.vla uvgen.source vla_a.ant \
   vla_b.ant vla_c.ant vla_d.ant walpol.9ant wishlist
 
-# 'doc' wants this file. We should probably really install all of the
-# above files for reference -- in the automake model, you should be able
-# to 'make install' then blow away the source directory and not be missing
-# anything.
-
-pkgdata_DATA = miriad.pgmrs
+EXTRA_DIST = $(cat_DATA)
 
 # Generate and install the keyword documentation files.
 

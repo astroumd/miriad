@@ -23,7 +23,6 @@ setenv MIRDEF .
 # Things that come directly from the source tree
 
 setenv MIR "%abs_srcdir%"
-setenv MIRCAT "$MIR/cat"
 setenv MIRNEWS "$MIR/news"
 setenv MIRPROG "$MIR/src/prog"
 setenv MIRSRC "$MIR/src"
@@ -34,6 +33,7 @@ setenv MIRSUBS "$MIR/src/subs"
 
 setenv MIRBIN "%bindir%"
 setenv MIRLIB "%libdir%"
+setenv MIRCAT "%catdir%"
 setenv MIRINC "%fincludedir%"
 setenv MIRDOC "%pkgdatadir%/doc"
 setenv MIRPDOC "$MIRDOC/prog"
