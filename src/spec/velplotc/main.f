@@ -408,9 +408,9 @@ c
 	  cmin=0.0
 	  cpa=0.0
 	else
-	  cmaj=max(0,value(1))
-	  cmin=max(0,value(2))
-	  cpa=max(0,value(3))
+	  cmaj=max(0.0,value(1))
+	  cmin=max(0.0,value(2))
+	  cpa=max(0.0,value(3))
 	end if
 c	write(*,*) "boxc",boxc
 c

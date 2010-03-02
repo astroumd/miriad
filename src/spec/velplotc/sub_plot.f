@@ -264,8 +264,8 @@ c     +         PYCH,PGXLEN(PGID),PGYLEN(PGID)
 	if (index.eq.3) then ! reserve space for annotation
 	  RATIO=((PGNXC(PGID)-1)*oldPGXSZ+oldPGXLEN)/
      +       (aschi-oldPGXVP)
-	  PGXVP(PGID)=max(oldPGXVP,25)
-	  PGYVP(PGID)=max(oldPGYVP,28)
+	  PGXVP(PGID)=max(oldPGXVP,25.0)
+	  PGYVP(PGID)=max(oldPGYVP,28.0)
 	  Txlen=((PGNXC(PGID)-1)*oldPGXSZ+oldPGXLEN)*ratio
 	  xratio=Txlen/(oldPGXVP-PGXVP(PGID)+Txlen)
 	  Tylen=((PGNYC(PGID)-1)*oldPGYSZ+oldPGYLEN)

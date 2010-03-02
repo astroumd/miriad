@@ -24,8 +24,11 @@ HEADERS = header.h mem.h plot.h cut.h data.h dim.h
 $(EXE): $(OBJS) $(HEADERS) 
 	$(FC) $(OFLAGS) -o $(EXE) $(OBJS) `mirlibs` $(LIBFORMS)
 
+#  mainform needs to be triggered what compiler we're using
+#  since gfortran does not need the _ to __ macro trick g77/ifort
+#  needs by default. Or else use the -fno-second-underscore for g77
 mainform.o:mainform.c
-	$(CC) $(OFLAGS) -I$(INCFORMS) -c mainform.c
+	$(CC) $(OFLAGS) -I$(INCFORMS) -Duse_$(FC) -c mainform.c
 
 .SUFFIXES: .f
 

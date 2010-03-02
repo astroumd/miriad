@@ -5,3 +5,9 @@ you need to install before you can install this package.
 
 Binaries for most architectures are available through that web page or from
 http://world.std.com/~xforms/ftp/ftp.html
+
+Here's a recent example on Fedora-11, which comes with xforms version
+"1.0.90-12.fc11", e.g.
+	yum install xforms-devel
+will install this.
+Note the comments in Makefile about using g77 vs. gfortran.

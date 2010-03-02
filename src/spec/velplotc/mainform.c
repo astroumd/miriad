@@ -1,4 +1,5 @@
-#ifdef linux
+
+#ifndef use_gfortran
 /* call fortran */
 #define plot_setting_(a,ia,b,ib,flag) plot_setting__(a,ia,b,ib,flag) 
 #define read_write_(a,ia,b,ib,flag) read_write__(a,ia,b,ib,flag)
