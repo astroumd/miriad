@@ -1,6 +1,6 @@
 #! /bin/csh -f
 #
-set version=30-apr-09
+set version=1-mar-2010
 #
 #  2-aug-99 Updated for Sebok's Mandrake setup
 #  1-aug-00 Updated to allow to build private PGPLOT version
@@ -485,9 +485,12 @@ if (-e $install_root/do_patch) then
     popd >& /dev/null
 endif
 
-# velplotc: - make it depend on if Xforms is present
+# velplotc: - make it depend on if Xforms is present - only works on linux
 #       check http://world.std.com/~xforms/
 #             http://savannah.nongnu.org/files/?group=xforms
+# fedora-11:  xforms-devel.i586                  1.0.90-12.fc11
+#             but note only .so files, no .a file, which messes up 
+#             the code below.
 set dofl=0
 foreach ldir ($searchlibs)
     if (-e $ldir/libforms.a) then
@@ -499,7 +502,7 @@ foreach ldir ($searchlibs)
     endif
 end
 if ($dofl) then
-   echo Compiling velplotc:
+   echo Compiling velplotc with local libforms
    pushd $MIR/src/spec/velplotc >& /dev/null
    # TODO: makefile's should know about miriad's universe and inherit
    #       compile flags, names of compilers etc.
@@ -509,8 +512,15 @@ if ($dofl) then
    make clean >>& $MIR//tmp/velplotc.$$.$hosttype
    popd >& /dev/null
 else
-   echo Could not find libforms.a to compile velplotc
-   echo You will also need to find forms.h
+   echo Could not find libforms.a to compile velplotc, trying system libforms.so
+   pushd $MIR/src/spec/velplotc >& /dev/null
+   # TODO: makefile's should know about miriad's universe and inherit
+   #       compile flags, names of compilers etc.
+   make clean velplotc FC=$fortran >& $MIR//tmp/velplotc.$$.$hosttype
+   if ($status) echo Warning: problems compiling velplotc
+   mv velplotc $MIRBIN
+   make clean >>& $MIR//tmp/velplotc.$$.$hosttype
+   popd >& /dev/null
 endif
 
 # ATNF stuff, linux only for now; always in debugging mode
