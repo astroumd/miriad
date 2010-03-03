@@ -91,6 +91,7 @@ c          12-dec-08 pjt deal with version 1.1 SZA data (wsystemp instead of sys
 c          10-aug-09 pjt list end time of observations, only UT needed for now
 c                        and revert back, Quality would be upset with this change
 c          25-aug-09 pjt UVW one more digit for A array when UVW < 0
+c           3-mar-10 pjt rad2hms in double precision, better rounding
 c
 c
 c TODO:
@@ -598,21 +599,24 @@ c
 	return
 	end
 c-----------------------------------------------------------------------
-	subroutine Rad2Hms(RadTime,CharHms)
+	subroutine Rad2Hms(SRadTime,CharHms)
+	character*8 CharHms
+        real        SRadTime
 c
 c   Converts time in radians to time in hh:mm:ss.s in a character
 c   string
 c
         include 'mirconst.h'
 
-	character*8 CharHms
-	real RadTime,secs,time,float
-	integer ihour,imin,ifix
+	double precision RadTime,secs,time,dble
+	integer ihour,imin,idint
+
+        RadTime = SRadTime
 	time  = 12.0*RadTime/PI
-	ihour = ifix(time+0.0001)
-	imin  = ifix(60.0*(time-float(ihour)) + 0.0001)
-	secs  = 60.0 * (60.0 * (time-float(ihour)) - float(imin))
-	if(secs .ge. 9.95) then
+	ihour = idint(time)
+	imin  = idint(60.0d0*(time-dble(ihour)))
+	secs  = 60.0d0 * (60.0d0 * (time-dble(ihour)) - dble(imin))
+	if(secs .ge. 9.95d0) then
 	    write(CharHms,2001) ihour,imin,secs
 	else
 	    write(CharHms,2002) ihour,imin,secs
@@ -621,6 +625,11 @@ c
            write(*,*) radtime,time,ihour,imin,secs,' =>',charhms
            call bug('f','bad rad2hms conversion')
         endif
+c        if (CharHms(5:6).eq.'60') then
+c           call bug('w','Bad RAD2HMS conversion')
+c           write(*,*) 'PJT: ',radtime,' ',charhms
+c           write(*,*) '     ',time,ihour,imin,secs
+c        endif
 c        print 2002, secs
  2001	format(i2.2,i2.2,f4.1)
  2002	format(i2.2,i2.2,'0',f3.1)
