@@ -5,6 +5,7 @@ c
 c= PRTHD -- Print a summary about the contents of a data-set.
 c& rjs
 c: miscellaneous
+c+
 c	PRTHD is a Miriad task which gives a summary about a Miriad data-set.
 c
 c       A caveat when using visibilty files:
