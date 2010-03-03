@@ -19,9 +19,10 @@ c	The frequency, in GHz. Default is 100 GHz.
 c--
 c  History
 c    smw  08apr15 First version using 1999 Gurwell file good to 2014.
+c    pjt  10apr03 Fix minor fortran dialect issue 
 c------------------------------------------------------------------------
 	character version*(*)
-      parameter(version = 'MARSTB: version 16APR08')
+      parameter(version = 'MARSTB: version 5-may-2008')
 c
 c  jy2k is JD for 0 Jan 2000 (i.e. 31 Dec 1999); file is in MJD.
 c
@@ -53,9 +54,9 @@ c------------------------------------------------------------------------
 c
 c Interpolates in table for frequency and date
 c
-	double precision jday, frmod(4), tst(4), seval
-	integer i,j
-	real freq,tb,date(226),tbmod(4,226),tb1,tb2
+      double precision jday, frmod(4), tst(4), seval
+      integer i,j
+      real freq,tb,date(226),tbmod(4,226),tb1,tb2
       double precision b1(4),c1(4),d1(4),b2(4),c2(4),d2(4)
       data frmod /43.d0,115.d0,230.d0,345.d0/
 
@@ -238,8 +239,8 @@ c use 25-day interval to get the index for the date
 c abort if outside time range
 
       if ((j.le.0).or.(j.gt.225)) call 
-     -   bug('f','Date appears to be outside allowed
-     -            range: 1999 Aug 1 to 2014 Dec 25.')
+     -   bug('f','Date appears to be outside allowed ' //
+     -            'range: 1999 Aug 1 to 2014 Dec 25.')
 
       if ((freq.lt.43.0).or.(freq.gt.345.0)) call 
      -   bug('f','Frequency is outside allowed range 43-345 GHz.')
