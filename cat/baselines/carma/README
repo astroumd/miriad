@@ -31,7 +31,7 @@ See also:
 The official carma baseline page:
    http://cedarflat.mmarray.org/observing/baseline/
 which should be on Cedar Flat in the directory:
-   ~obs/web_pages/observing/baseline/antpos/
+   /home/obs/web_pages/observing/baseline/
 You can also obtain them directory as in this example:
    wget http://cedarflat.mmarray.org/observing/baseline/antpos/antpos.080606
 
