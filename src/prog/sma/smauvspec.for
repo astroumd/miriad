@@ -246,7 +246,7 @@ c
         character mname*8000, moln*16
         integer mtag(maxmline), nmline, j, jp, js, je, iline
         character version*(*)
-        parameter(version='SmaUvSpec: version 1.19 19-Mar-08')
+        parameter(version='SmaUvSpec: version 1.19 9-Mar-2010')
         character uvflags*8,device*64,xaxis*12,yaxis*12,logf*64
         character xtitle*64,ytitle*64, veldef*8
         character xtitlebuf*64, line*64
@@ -841,7 +841,7 @@ c  chnkpntr     The spectral chunk pntr.
         integer polmin,polmax
         parameter(polmin=-8,polmax=4)
         integer maxplt,maxpnt
-        parameter(maxpnt=32168,maxplt=1024)
+        parameter(maxpnt=100000,maxplt=10000)
         real xp(maxpnt),yp(maxpnt),xrange(2),inttime
         real ypp(maxpnt)
         integer plot(maxplt+1), sppntr(maxpnt)
