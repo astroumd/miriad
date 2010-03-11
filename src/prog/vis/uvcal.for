@@ -50,6 +50,8 @@ c	             changes. This option also corrects the phase difference
 c	             between the wide channels due to line length.
 c	             options=linecal,avechan remakes the wideband from
 c	             the channel data after the phase slope is removed.	
+c       'linecal1'   alias for 'linecal'
+c       'linecal2'   Same as linecal1, but uses cable, instead of phasem1
 c	'atmcal'     ATM phase monitoring testing - work in progress
 c                    It will normalize on freqatm, and if missing will attempt
 c                    to use lo1. Use puthd to fake a new freqatm variable.
@@ -261,11 +263,12 @@ c    pjt  20nov08  added atmcal option
 c    pjt   4dec08  fix wides for atmcal option
 c    mchw 29jan09  exclude flagged data in options=slope
 c    mchw 21may09  fringe rate correction.
+c    pjt  19nov09  linecal2 option to look at cable instead of phasem1
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	integer maxbad
 	character version*(*)
-	parameter(version='UVCAL: version 21-may-2009')
+	parameter(version='UVCAL: version 19-nov-2009')
 	parameter(maxbad=20)
 	real PI
 	parameter(PI=3.1415926)
@@ -280,7 +283,7 @@ c
 	logical dooffset,doseeing
 	logical nocal,nopol,nopass,nowide,nochan,doall,dopass,
      *       dohann,docont,doconj,dophase,holo,dopower,avechan,slope,
-     *       linecal,atmcal,uvrot,doparang,dofxcal,doconjlsb
+     *       linecal1,atmcal,uvrot,doparang,dofxcal,doconjlsb,linecal2
 	character out*64,type*1,uvflags*8
 	real mask(MAXCHAN),sigma
 	integer polcode,nants,ant1,ant2,on
@@ -314,7 +317,7 @@ c
 	call keyini
 	call GetOpt(nocal,nopol,nopass,nowide,nochan,doall,dopass,
      *       dohann,docont,doconj,dophase,holo,dopower,avechan,slope,
-     *       linecal,atmcal,uvrot,doparang,dofxcal,doconjlsb)
+     *       linecal1,linecal2,atmcal,uvrot,doparang,dofxcal,doconjlsb)
 	lflags = 3
 	uvflags(1:3) = 'ds3'
 	if(.not.nocal)then
@@ -599,8 +602,11 @@ c
      *							endchan,nave)
 	      if(docont) call contsub(lIn,data,flags,nchan,
      *						endchan,mask,sigma)
-	      if(linecal)
-     *		  call linecal1(lIn,data,flags,nchan,wdata,wflags,nwide,
+	      if(linecal1)
+     *		  call linecalp(lIn,data,flags,nchan,wdata,wflags,nwide,
+     *					dowide,dochan,preamble)
+	      if(linecal2)
+     *		  call linecalc(lIn,data,flags,nchan,wdata,wflags,nwide,
      *					dowide,dochan,preamble)
 
 	      if(atmcal)
@@ -620,7 +626,7 @@ c
 c  Process the wideband data separately if doing both wide and channel data.
 c
 	      if(dowide.and.dochan)then
-                if(.not.(slope.or.avechan.or.linecal.or.atmcal))
+                if(.not.(slope.or.avechan.or.linecal1.or.atmcal))
      *                    call uvDatWRd(wdata,wflags,maxchan,nwide)
             if(dooffset)then
               do i=1,nwide
@@ -738,12 +744,12 @@ c
 c********1*********2*********3*********4*********5*********6*********7*c
 	subroutine GetOpt(nocal,nopol,nopass,nowide,nochan,doall,dopass,
      *       dohann,docont,doconj,dophase,holo,dopower,avechan,slope,
-     *       linecal,atmcal,uvrot,doparang,dofxcal,doconjlsb)
+     *       linecal1,linecal2,atmcal,uvrot,doparang,dofxcal,doconjlsb)
 c
 	implicit none
 	logical nocal,nopol,nopass,nowide,nochan,doall,dopass,
      *       dohann,docont,doconj,dophase,holo,dopower,avechan,slope,
-     *       linecal,atmcal,uvrot,doparang,dofxcal,doconjlsb
+     *       linecal1,linecal2,atmcal,uvrot,doparang,dofxcal,doconjlsb
 c
 c  Determine extra processing options.
 c
@@ -764,21 +770,23 @@ c    dofxcal   Calibrate cross correlations using sqrt(autcorrelations)
 c    holo      Replace u,v with dra,ddec for holography.
 c    avechan   Average unflagged spectral channels into wideband.
 c    slope     Fit phase slope and store in wideband.
-c    linecal   Correct phase slope due to line length change.
+c    linecal1  Correct phase slope due to line length change (phasem1)
+c    linecal2  Correct phase slope due to line length change (cable)
 c    atmcal    Correct phase slope due to ATM testing
 c    uvrot     Rotate uv-coordinates from current to standard epoch.
 c    doparang  Multiply LR by expi(2*chi) and RL by expi(-2*chi)
 c	 doconjlsb Copy conjugate of LSB spectral windows into USB.
 c------------------------------------------------------------------------
 	integer nopt
-	parameter(nopt=19)
+	parameter(nopt=21)
 	character opts(nopt)*9
 	logical present(nopt)
 	data opts/    'nocal    ','nowide   ','nochannel','unflagged',
      *		      'passband ','hanning  ','nopol    ','contsub  ',
      *            'conjugate','nopass   ','holo     ',
      *            'avechan  ','slope    ','linecal  ','atmcal   ',
-     *            'uvrotate ','parang   ','fxcal    ','noisecal '/
+     *            'uvrotate ','parang   ','fxcal    ','noisecal ',
+     *            'linecal1 ','linecal2 '/
 
 	call options('options',opts,present,nopt)
 	nocal   = present(1)
@@ -794,12 +802,13 @@ c------------------------------------------------------------------------
 	holo    = present(11)
 	avechan = present(12)
 	slope   = present(13)
-	linecal = present(14)
 	atmcal  = present(15)
 	uvrot   = present(16)
 	doparang= present(17)
 	dofxcal = present(18)
 	doconjlsb = present(19)
+	linecal1  = present(14).or.present(20)
+	linecal2  = present(21)
 c
 c  Check for imcompatible options
 c
@@ -990,7 +999,7 @@ c  Return with the corrected data.
 c
 	end
 c********1*********2*********3*********4*********5*********6*********7*c
-	subroutine linecal1(lIn,data,flags,nchan,wdata,wflags,nwide,
+	subroutine linecalp(lIn,data,flags,nchan,wdata,wflags,nwide,
      *					dowide,dochan,preamble)
 	implicit none
 	integer lIn,nchan,nwide
@@ -999,6 +1008,7 @@ c********1*********2*********3*********4*********5*********6*********7*c
 	double precision preamble(5)
 c
 c  Remove phase slope across passband due to line length changes.
+c  Based on the phasem1 UV variable, and thus needs LO1
 c  This option also corrects the phase difference
 c  between the wide channels due to line length.
 c
@@ -1024,6 +1034,7 @@ c
 c  Externals.
 c
 	complex expi
+	call bug('i','linecal/phasem1 used')
 c
 c  Get the line length phase for lo1.
 c
@@ -1052,6 +1063,73 @@ c
 	do i=1,nchan
 	  phase = sfreq(i) / lo1 * phaselo1
 	  data(i) = data(i) * expi(phase)
+	enddo
+	end
+c********1*********2*********3*********4*********5*********6*********7*c
+	subroutine linecalc(lIn,data,flags,nchan,wdata,wflags,nwide,
+     *					dowide,dochan,preamble)
+	implicit none
+	integer lIn,nchan,nwide
+	complex data(nchan),wdata(nchan)
+	logical flags(nchan),wflags(nchan),dowide,dochan
+	double precision preamble(5)
+c
+c  Remove phase slope across passband due to line length changes.
+c  Based on the cable UV variable, and does not need LO1
+c  This option also corrects the phase difference
+c  between the wide channels due to line length.
+c
+c  In:
+c    lIn	Handle of input uv-data.
+c    nchan	Number of channels.
+c    dowide	do wide data.
+c    dochan	do channel data.
+c    preamble
+c  In/out:
+c    data	Channel data
+c    flags	Channel flags
+c  Out:
+c    wdata	wide data
+c    wflags	wide flags
+c    nwide	number of wide data.
+c------------------------------------------------------------------------
+	include 'maxdim.h'
+	include 'mirconst.h'
+	integer i,ant1,ant2,nants
+	real wfreq(MAXWIN)
+	double precision cable(MAXANT), sfreq(MAXCHAN), p1, p2
+c
+c  Externals.
+c
+	complex expi
+c
+c  Get the line length phase for lo1.
+c
+	call uvgetvri(lIn,'nants',nants,1)
+	call uvgetvrd(lIn,'cable',cable,nants)
+	call basant(preamble(5),ant1,ant2)
+c
+c  Handle the wideband if channel data also present.
+c
+	if(dowide.and.dochan) then
+     	  call uvDatWRd(wdata,wflags,MAXCHAN,nwide)
+	  call uvgetvrr(lIn,'wfreq',wfreq,nwide)
+	  do i=1,nwide
+	    p1 = DTWOPI*mod(wfreq(i) * cable(ant1), 1.0)-DPI
+	    p2 = DTWOPI*mod(wfreq(i) * cable(ant2), 1.0)-DPI
+	    wdata(i) = wdata(i) * expi(REAL(p1-p2))
+	  enddo
+	endif
+c
+c  Handle the selected data.
+c
+	call uvinfo(lIn,'sfreq',sfreq)
+	do i=1,nchan
+	   p1 = DTWOPI*mod(sfreq(i) * cable(ant1), 1.0)-DPI
+	   p2 = DTWOPI*mod(sfreq(i) * cable(ant2), 1.0)-DPI
+	    if (i.eq.1) write(*,*) 
+     *         ant1,ant2,p1,p2
+	   data(i) = data(i) * expi(REAL(p1-p2))
 	enddo
 	end
 c********1*********2*********3*********4*********5*********6*********7*c
