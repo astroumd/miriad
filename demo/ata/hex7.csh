@@ -79,8 +79,8 @@ if($model == point.model)then
 # use casc.vla as a template to compare point source model with same size casc model
   set region = `calc "$cell*500" | awk '{printf("arcsec,box(%.2f,-%.2f,-%.2f,%.2f)",$1,$1,$1,$1)}'`
   rm -r point.model
-#  imgen in=casc.vla out=point.model factor=0 object=p,p,p,p,p,p,p,p spar=1,0,0,1,10,10,1,-20,20,1,30,-30,1,-40,-40,1,50,50,1,-60,60,1,70,-70
-  imgen in=casc.vla out=point.model factor=0 object=p,p,p,p,p,p,p,p spar=1,0,0,1,90,0,1,20,25,1,-30,10,1,45,-45,1,50,65,1,-70,-75,1,-85,80
+#  imgen in=casc.vla out=point.model factor=0 object=point,point,point,point,point,point,point,point spar=1,0,0,1,10,10,1,-20,20,1,30,-30,1,-40,-40,1,50,50,1,-60,60,1,70,-70
+  imgen in=casc.vla out=point.model factor=0 object=point,point,point,point,point,point,point,point spar=1,0,0,1,90,0,1,20,25,1,-30,10,1,45,-45,1,50,65,1,-70,-75,1,-85,80
 endif
 
 if($model == casc.vla)then
