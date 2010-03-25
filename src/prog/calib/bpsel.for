@@ -8,13 +8,11 @@ c: calibration
 c+
 c@ vis
 c       The name of the input data-set. This will normally be a visibility
-c       data-set. No default.
+c       data-set with a bandpass file. No default.
 c@ fmhz
-c       Required frequency resolution of bandpass soln in MHz.  Only 
-c       windows that match this criterion are kept.
-c       To recall, for CARMA the resolutions are 
-c       31.25 0.99, 0.49, 0.xx and 0.xx MHz for spectral windows with
-c       500, 64, 32, 8 and 2 MHz bandwidth resp.
+c       Required frequency resolution(s) of bandpass soln in MHz.  Only 
+c       windows that match this criterion are kept.  Up to 8 comma-separated
+c       values can be input.
 c@ tol
 c       Fractional tolerance for a frequency resolution match.
 c       Default is 0.25, so frequency resolution ranging from 75% to
@@ -23,18 +21,19 @@ c@ show
 c       Only show the matched selection, but don't apply.
 c--
 c  History:
+c       24mar2010 - allow multiple inputs for fmhz
 c  Bugs:
 c------------------------------------------------------------------------
         include 'maxdim.h'
         integer maxGains
         parameter(maxGains=2*MAXCHAN*MAXANT)
         character version*(*)
-        parameter(version='BPSEL: version 2008-May-06')
+        parameter(version='BPSEL: version 2010-mar-24')
         character vis*80,line*80
-        integer tIn,nschan,nspect,iostat,item,off,i,j,ifeed,iant
+        integer tIn,nschan,nspect,iostat,item,off,i,j,k,ifeed,iant
         integer ispect,nchan2,nchan,ntau,nfeeds,ngains,nants
-        integer nschan_save(MAXWIN),newch(maxGains)
-        double precision freqs(2),fmhz
+        integer nschan_save(MAXWIN),newch(maxGains),nres
+        double precision freqs(2),fmhz(8)
         double precision freq1_save(MAXWIN),freq2_save(MAXWIN)
         real tol
         complex Gains(maxGains),Gains2(maxGains)
@@ -45,8 +44,8 @@ c
         call output(version)
         call keyini
         call keya('vis',vis,' ')
-        if(vis.eq.' ')call bug('f','Input data-set must be given')
-        call keyd('fmhz',fmhz,0.d0)
+        if(vis.eq.' ')call bug('f','Input dataset must be given')
+        call mkeyd('fmhz',fmhz,8,nres)
         call keyr('tol',tol,0.25)
         call keyl('show',show,.FALSE.)
         call keyfin
@@ -95,7 +94,7 @@ c
           call hreadi(item,nschan,off,4,iostat)
           off = off + 8
           if(iostat.eq.0)call hreadd(item,freqs,off,2*8,iostat)
-          write(line,602) 'Window ',i,': nschan, freqs = ',nschan,
+          write(line,602) 'Window ',i,': nschan,freq,inc = ',nschan,
      *      freqs(1),freqs(2)
           call output(line)
 602       format(a,i2,a,i4,f12.4,f10.5)
@@ -104,16 +103,20 @@ c
             call bug('w','Error reading bandpass frequency table')
             call bugno('f',iostat)
           endif
-          if (abs(1-abs(freqs(2)*1e3/fmhz)) .lt. tol) then
-            ispect = ispect + 1
-            nschan_save(ispect) = nschan
-            freq1_save(ispect) = freqs(1)
-            freq2_save(ispect) = freqs(2)
-            do j = 1, nschan
-               newch(j+nchan2) = j+nchan
-            enddo
-            nchan2 = nchan2 + nschan
-          endif
+          do j=1,nres
+            if (fmhz(j).gt.0) then
+              if (abs(1-abs(freqs(2)*1e3/fmhz(j))) .lt. tol) then
+                ispect = ispect + 1
+                nschan_save(ispect) = nschan
+                freq1_save(ispect) = freqs(1)
+                freq2_save(ispect) = freqs(2)
+                do k = 1, nschan
+                   newch(k+nchan2) = k+nchan
+                enddo
+                nchan2 = nchan2 + nschan
+              endif
+            endif
+          enddo
           nchan = nchan + nschan
         enddo
         write(line,*) 'Selected ', ispect, ' spectral windows'
@@ -137,13 +140,13 @@ c
         off = 8
         call hreadr(item,Gains,off,8*nants*nfeeds*nchan,iostat)
 c       nfeeds needs to be 1 here
-        if (show) then
-           do i = 1, nchan
-              do j = 1, nants
-                 write(46,*) i,j,Gains(i+(j-1)*nchan)
-              enddo
-           enddo
-        endif
+C        if (show) then
+C           do i = 1, nchan
+C              do j = 1, nants
+C                 write(46,*) i,j,Gains(i+(j-1)*nchan)
+C              enddo
+C           enddo
+C        endif
         if(iostat.ne.0)then
           call bug('w','Error reading the bandpass table')
           call bugno('f',iostat)
@@ -155,7 +158,7 @@ c
         if(iostat.ne.0)call bugno('f',iostat)
 
         if (show) then
-           call bug('f','Done!')
+           call bug('i','Done!')
            stop
         endif
 c
