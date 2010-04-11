@@ -141,10 +141,11 @@ c   17may07 mchw - cleaned up options=list and options=baseline.
 c   25nov08 pjt  - implement recnum=0
 c   19dec08 mchw - restored  Pol code in options=list.
 c   27feb09 mchw - used azel function in options=list.
+c   11apr10 pjt - increased buffer for char variables (var,full)
 c-----------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='UVLIST: version  27-FEB-09')
+	parameter(version='UVLIST: version  11-apr-2010')
 	real rtoh,rtod,pi
 	integer maxsels
 	parameter(pi=3.141592653589793,rtoh=12/pi,rtod=180/pi)
@@ -1224,7 +1225,7 @@ c
 	logical more,vupd
 c
 	character line*670
-	character sdata*32
+	character sdata*64
 	real data(maxdata)
 	integer idata(maxdata)
 	double precision ddata(maxdata)
