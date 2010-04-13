@@ -18,7 +18,9 @@ c@ ifsel
 c       IF number to select.  Default is all IFs.  For example,
 c       if you observed with 5 GHz (frequency 1) and 8 GHz (frequency 2)
 c       simultaneously, IF 1 would be the 5 GHz data and IF 2 would
-c       be the 8 GHz data.
+c       be the 8 GHz data. This now also lets you select zoom bands
+c       using values greater than 2. The freq 1 zoom bands come before 
+c       the freq 2 ones.
 c@ restfreq
 c       The rest frequency, in GHz, for line observations.  By default,
 c       the value in the RPFITS file is used.  Giving a value for the
@@ -2488,7 +2490,7 @@ c
      *          xgtp,ygtp,xsdo,ysdo,xcaljy,ycaljy,
      *          chi,tcorr,pntrms,pntmax,
      *          nxyp,xyp,ptag,xya,atag,MAXXYP,xflag,yflag,wband,cabb,
-     *          mdata,mcount)
+     *          mdata,mcount,qband)
 c
 c  Data record. Check whether we want to accept it.
 c  If OK, and we have a new scan, calculate the new scan info.
@@ -2681,8 +2683,7 @@ c             tint = 0
               tint = intbase
               if(tint.eq.0)tint = intime
               if(tint.eq.0)tint = 15.0
-              flipper = .not.qband.and.
-     *                  (.not.kband.or.time.gt.J01Jul04)
+              flipper = .not.kband.or.time.gt.J01Jul04
 c
 c  xymode sets the way xy phase correction is potentially done. If negative,
 c  then correctionis done on all data. If positive, then just that antenna
@@ -3136,7 +3137,7 @@ c************************************************************************
      *          xyphase,xyamp,xtsys,ytsys,xsamp,ysamp,
      *          xgtp,ygtp,xsdo,ysdo,xcaljy,ycaljy,
      *          chi,tcorr,pntrms,pntmax,nxyp,xyp,ptag,xya,atag,MAXXYP,
-     *          xflag,yflag,mmrelax,cabb,mdata,mcount)
+     *          xflag,yflag,mmrelax,cabb,mdata,mcount,qband)
 c
         integer MAXIF,MAXANT,MAXXYP,nq,nif,nant,invert(MAXIF)
         integer tcorr,mcount
@@ -3156,6 +3157,7 @@ c
         integer atag(MAXXYP,MAXIF,MAXANT)
         integer nxyp(MAXIF,MAXANT)
         logical xflag(MAXIF,MAXANT),yflag(MAXIF,MAXANT),mmrelax,cabb
+        logical qband
 c
 c  Copy across SYSCAL records. Do any necessary fiddles on the way.
 c------------------------------------------------------------------------
@@ -3205,6 +3207,7 @@ c
      *          xflag(ij,ik),yflag(ij,ik),mmrelax,cabb)
               if(.not.done.and.syscal(12,j,k).ne.0)then
                 chi = pi/180 * syscal(12,j,k) + pi/4
+                if (qband) chi = chi + pi/2
                 done = .true.
               endif
 c
@@ -3300,7 +3303,8 @@ c
         nsimgrp = 0
         do i=1,nif
           If2Sim(i) = 0
-          if(ifsel.eq.0.or.ifsel.eq.ifchain(i))then
+c          if(ifsel.eq.0.or.ifsel.eq.ifchain(i))then
+          if(ifsel.eq.0.or.ifsel.eq.i) then
             do j=1,i-1
               if(ifsimul(i).eq.ifsimul(j).and.If2Sim(j).gt.0)
      *          If2Sim(i) = If2Sim(j)
