@@ -2,13 +2,14 @@
 
 echo "Performance tests for ATA imaging"
 
-# mchw 27jun02
+# mchw 15apr10
 # 18apr03 added uvrange. 
 # 22mar05 added harange. 
 # 09may05 add more parameters to title.
 # 07oct08 better values for baseunit=-3.335668 lat=40:49:02.50 in uvgen
 # 27may09 added weighting options to input parameters.
 # 27oct09 better doc.
+# 15apr10 select on parameter line allows  uvdata selection.
 
 
 # Nyquist sample time = 12 x 3600 s x (dish_diam/2)/(pi*baseline)
@@ -33,6 +34,8 @@ start:
     echo "          Number of spectral channels. No default."
     echo "   weighting"                                                                 
     echo "          weighting options: 'sup=0',  'robust=0.5', uniform. No default."
+    echo "   select"                                                                 
+    echo "          uvdata selection. e.g. '-shadow(6.1)'. No default."
     echo " "
     exit 1
   endif
@@ -41,13 +44,13 @@ set config     = $1
 set dec        = $2
 set harange    = $3
 set nchan      = $4
-set select     = '-shadow(6.1)'
+set weighting  = $5
+set select     = $6
 set freq       = 1.42
 set imsize     = 256 
 set systemp    = 40 
 set jyperk     = 150 
 set bandwidth  = 100 
-set weighting  = $5
 
 
 echo "   ---  ATA Single Field MFS Imaging    ---   " > timing

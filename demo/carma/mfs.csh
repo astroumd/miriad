@@ -2,13 +2,14 @@
 
 echo "Performance tests for CARMA imaging"
 
-# mchw 27jun02
+# mchw 15apr10
 # 18apr03 added uvrange. 
 # 22mar05 added harange. 
 # 09may05 add more parameters to title.
 # 20mar06 CARMA version.
 # 27may09 added weighting options to input parameters.
 # 27oct09 clean up doc.
+# 15apr10 select on parameter line allows  uvdata selection.
 
 
 # Nyquist sample time = 12 x 3600 s x (dish_diam/2)/(pi*baseline)
@@ -33,6 +34,8 @@ start:
     echo "          Number of spectral channels. No default."
     echo "   weighting"
     echo "          weighting options: 'sup=0',  'robust=0.5', uniform. No default."
+    echo "   select"
+    echo "          uvdata selection. e.g. '-shadow(6.1)'. No default."
     echo " "
     exit 1
   endif
@@ -41,14 +44,13 @@ set config     = $1
 set dec        = $2
 set harange    = $3
 set nchan      = $4
-set select     = '-shadow(6.1)'
-set select     = '-shadow(10.4)'
+set weighting  = $5
+set select     = $6
 set freq       = 230
 set imsize     = 256 
 set systemp    = 80,290,0.26 
 set jyperk     = 73 
 set bandwidth  = 500
-set weighting  = $5
 set region  =  'relpix,box(-30,-30,30,30)'
 
 
