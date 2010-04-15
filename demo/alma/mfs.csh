@@ -9,6 +9,7 @@ echo "Performance tests for ALMA imaging"
 # 27may09 added weighting options to input parameters.
 # 18oct09 version with imsize=0 and shadow=12m for ALMA 
 # 27oct09 clean up doc.
+# 15apr10 select on parameter line allows  uvdata selection.
 
 
 # Nyquist sample time = 12 x 3600 s x (dish_diam/2)/(pi*baseline)
@@ -42,25 +43,27 @@ start:
     echo "          Number of spectral channels. No default."
     echo "   weighting"
     echo "          weighting options: 'sup=0',  'robust=0.5', uniform. No default."
+    echo "   select"
+    echo "          uvdata selection. e.g. '-shadow(12)'. No default."
     echo " "
     exit 1
   endif
 
-set config  = $1
-set dec     = $2
-set harange = $3
-set nchan   = $4
-set select  = '-shadow(12)'
-set antdiam = 12
-set freq    = 230
-set imsize  = 1024
-set imsize  = 256
-set imsize  = 0
-# imsize = 0 lets invert choose the image size with ~ 1.5 x Nyquist sampling.
-set systemp    = 40
-set jyperk     = 40
-set bandwidth  = 8000
-set weighting  = $5
+set config    = $1
+set dec       = $2
+set harange   = $3
+set nchan     = $4
+set weighting = $5
+set select    = $6
+set antdiam   = 12
+set freq      = 230
+set imsize    = 1024
+set imsize    = 256
+set imsize    = 0
+# imsize      = 0 lets invert choose the image size with ~ 1.5 x Nyquist sampling.
+set systemp   = 40
+set jyperk    = 40
+set bandwidth = 8000
 
 
 # echo "   ---  ALMA Single Field Multichannel Imaging    ---   " > timing
@@ -75,6 +78,7 @@ echo " imsize  = $imsize"             >> timing
 echo " systemp    = $systemp "        >> timing
 echo " jyperk     = $jyperk "         >> timing
 echo " bandwidth  = $bandwidth "      >> timing
+echo " weighting =  $weighting"       >> timing
 echo " "                              >> timing
 echo "   ---  TIMING   ---   "        >> timing
 echo START: `date` >> timing
