@@ -24,6 +24,7 @@ c                     (global LSB/USB)
 c   pjt    30jul07    complete overhaul for CARMA (and thus more general)
 c   pjt     6may08    Fix computing the (center) new wfreq values for nwide=
 c   pjt    25nov08    Fix computing narrow flags from wide flags 
+c   pjt    19apr10    Hack wsystemp copy from systemp
 c***********************************************************************
 c= uvwide - recompute wide band from narrow band
 c& pjt
@@ -74,7 +75,8 @@ c     windows.
 c     Default: 0
 c@ blankf
 c     If given, discard this fraction of each edge from a spectral window.
-c     At BIMA this fraction was 0.033.
+c     At BIMA this fraction was 0.033. Normally the edge= keyword
+c     would be used.
 c     Default: 0.0
 c@ nwide
 c     If used, and allowed, this will be the number of wide band channels
@@ -82,7 +84,11 @@ c     created when none are present in the input file. The channels used to
 c     compute the wideband data are derived from the first 'nwide' spectral
 c     windows (i.e. NWIDE.le. NSPECT). For fancy preprocessing, use UVAVER
 c     before running UVWIDE with the NWIDE= option.
-c     ** PJT/LGM experimental code **
+c
+c@ wsystemp
+c     Boolean if to recompute the wsystemp from systemp (currently just
+c     a copy)
+c     Default: true
 c--
 c
 c NOTE: 
@@ -91,6 +97,7 @@ c     and wide band data is assumed by this program.
 c
 c     Could allow reset=t and narrow=t and handle it symmetric from
 c     the wide-computation case.
+c
 c-----------------------------------------------------------------------
 c
 c  Internal parameters.
@@ -100,7 +107,7 @@ c
       CHARACTER PROG*(*)
       PARAMETER (PROG = 'UVWIDE')
       CHARACTER VERSION*(*)
-      PARAMETER (VERSION = '25-nov-08')
+      PARAMETER (VERSION = '19-apr-2010')
 
 c
 c  Internal variables.
@@ -108,13 +115,14 @@ c
       CHARACTER Infile*132, Outfile*132, type*1
       CHARACTER*11 except(15)
       INTEGER i, k, m, lin, lout
-      INTEGER nread, nwread, lastchn, nexcept, skip
+      INTEGER nread, nwread, lastchn, nexcept, skip, nsys
       INTEGER nschan(MAXCHAN), ischan(MAXCHAN), nspect, nwide, edge
       REAL wfreq(MAXCHAN), wwidth(MAXCHAN), blankf, wt
       DOUBLE PRECISION sdf(MAXCHAN), sfreq(MAXCHAN), preamble(4), lo1
+      REAL systemp(MAXWIN*MAXANT)
       COMPLEX data(MAXCHAN), wdata(MAXCHAN)
       LOGICAL dowide, docorr, updated, reset, donarrow, doflag
-      LOGICAL newide, first, hasnone
+      LOGICAL newide, first, hasnone, dowsys
       LOGICAL flags(MAXCHAN), wflags(MAXCHAN)
 c
 c  End declarations.
@@ -132,6 +140,7 @@ c
       CALL keya('out', outfile, ' ')
       CALL keyl('reset',reset,.TRUE.)
       CALL keyl('narrow',donarrow,.FALSE.)
+      CALL keyl('wsystemp',dowsys,.TRUE.)
       CALL keyi('edge',edge,0)
       CALL keyr('blankf',blankf,0.0)
       CALL keyi('nwide',nwide,0)
@@ -214,6 +223,11 @@ c
          newide = .FALSE.
       ENDIF
       hasnone = .FALSE.
+      IF (newide .AND. dowsys) THEN
+         CALL uvprobvr(lin,'systemp',type,nsys,updated)
+         IF (.NOT.updated) CALL bug('f','Missing systemp')
+         CALL bug('i','wsystemp recreated from systemp')
+      ENDIF
 
 c
 c  Open the output visibility file, if not in flagging mode
@@ -253,6 +267,10 @@ c
                wfreq(i)  = sfreq(i) + 0.5*(nschan(i)-1.0)*sdf(i)
                wwidth(i) = sdf(i) * nschan(i)
             ENDDO
+            IF (dowsys) THEN
+               CALL uvgetvrr(lin,'systemp',systemp,nsys)
+               CALL uvputvrr(lout,'wsystemp',systemp,nsys)
+            ENDIF
             CALL uvputvrr(lout,'wfreq',wfreq,nwide)
             CALL uvputvrr(lout,'wwidth',wwidth,nwide)
             IF (first) THEN
