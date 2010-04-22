@@ -6,7 +6,7 @@ start:
 
 foreach dec ( 30 0 -30 )
   foreach config ( 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 )
-    mfs.csh config$config $dec -1,1,.1 1
+    mfs.csh config$config $dec -1,1,.1 1 sup=0 '-shadow(12)'
   end
 end
 goto end
