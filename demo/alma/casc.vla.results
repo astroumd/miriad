@@ -1,0 +1,56 @@
+   ---  Mosaicing with ALMA  -  hex7.csh model=casc.vla,  Fri Apr 23 12:55:48 PDT 2010   
+ config  = config4
+ dec     = -30
+ scale   = .4
+ method  = mosmem
+ harange = -1,1,.013  hours
+ select  = -shadow(12)
+ freq    = 30
+ nchan   = 1
+ imsize  = 513
+ region  = arcsec,box(200.00,-200.00,-200.00,200.00)
+ 
+   ---  TIMING   ---   
+START: Fri Apr 23 12:55:48 PDT 2010
+Generate uv-data. Tsys=40K, bandwidth=8 GHz 
+UVGEN: Fri Apr 23 12:55:49 PDT 2010
+Scale model size. from pixel 0.4 to .4 arcsec
+Make model images for each pointing center
+Make model uv-data using VLA image of Cas A as a model (the model has the VLA primary beam)
+UVMODEL: Fri Apr 23 12:55:57 PDT 2010 add the model to the noisy sampled uv-data
+INVERT: Fri Apr 23 12:56:01 PDT 2010
+Make single dish image and beam Fri Apr 23 12:56:01 PDT 2010
+Single dish FWHM = 183.6 arcsec at 30 GHz
+ MOSMEM Interferometer only
+MOSMEM: Fri Apr 23 13:00:10 PDT 2010
+convolve the model by the beam and subtract from the deconvolved image
+regrid the convolved model to the deconvolved image template
+FINISH: Fri Apr 23 13:00:11 PDT 2010
+ 
+   ---  RESULTS   ---   
+ Config  DEC  HA[hrs]    Beam[arcsec] scale Model_Flux,Peak  Image_Flux,Peak Residual:Rms,Max,Min[Jy] Fidelity
+config4  -30  -1,1,.013     9.65 8.14    .4  731.656 2.949  714.562 2.916   0.049  0.157  -0.316  60
+---  Mosaicing with ALMA  -  hex7.csh model=casc.vla,  Fri Apr 23 12:55:48 PDT 2010   
+Using hex7 mosaic with 83'' spacing
+ MOSMEM Interferometer only with niters=200 flux=732.063 rmsfac=200.
+config4  -30  -1,1,.013     9.65 8.14    .4  731.656 2.949  714.562 2.916   0.049  0.157  -0.316  60
+   ---  Mosaicing with ALMA  -  hex7.csh model=casc.vla,  Fri Apr 23 13:16:28 PDT 2010   
+Using hex7 mosaic with 83'' spacing
+ MOSMEM Interferometer only with niters=200 flux=732.063 rmsfac=200.
+config5  -30  -1,1,.013     8.35 7.11    .4  731.663 2.333  720.893 2.322   0.039  0.131  -0.258  60
+   ---  Mosaicing with ALMA  -  ./hex7.csh model=casc.vla,  Fri Apr 23 13:30:39 PDT 2010   
+Using hex7 mosaic with 83'' spacing
+ MOSMEM Interferometer only with niters=200 flux=732.063 rmsfac=200.
+config6  -30  -1,1,.013     7.25 6.16    .4  731.669 1.840  733.217 1.842   0.033  0.107  -0.214  56
+   ---  Mosaicing with ALMA  -  ./hex7.csh model=casc.vla,  Fri Apr 23 13:36:46 PDT 2010   
+MOSMEM with default single dish image; niters=200 rmsfac=200
+config6  -30  -1,1,.013     7.25 6.16    .4  731.669 1.840  650.523 1.814   0.031  0.160  -0.207  59
+   ---  Mosaicing with ALMA  -  ./hex7.csh model=casc.vla,  Fri Apr 23 13:41:20 PDT 2010   
+Joint deconvolution of interferometer and single dish data ; niters=200 rmsfac=200,1
+config6  -30  -1,1,.013     7.25 6.16    .4  731.669 1.840  699.453 1.829   0.022  0.081  -0.243  83
+   ---  Mosaicing with ALMA  -  ./hex7.csh model=casc.vla,  Fri Apr 23 13:47:28 PDT 2010   
+Using hex7 mosaic with 83'' spacing
+ MOSMEM Interferometer only with niters=200 flux=732.063 rmsfac=200.
+config7  -30  -1,1,.013     6.17 5.30    .4  731.675 1.418  756.404 1.414   0.032  0.092  -0.158  44
+   ---  Mosaicing with ALMA  -  ./hex7.csh model=casc.vla,  Fri Apr 23 13:52:35 PDT 2010   
+MOSMEM with default single dish image; niters=200 rmsfac=200
