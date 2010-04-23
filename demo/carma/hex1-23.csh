@@ -1,7 +1,7 @@
 #!/bin/csh -f
 
 echo "   ---  Mosaicing with CARMA-23   ---   "
-echo "   hex7.csh"
+echo "   $0"
 echo "This script assumes that antennas 1-6 are OVRO, 7-15 are HATCREEK, and 16-23 are SZA"
 echo "   mchw. 15aug2002"
 echo "   mchw. 02jul2004"

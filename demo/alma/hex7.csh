@@ -1,5 +1,6 @@
 #!/bin/csh -vf
-echo "   ---  ALMA Mosaicing (Cas A model)   ---   "
+echo "   ---  ALMA Mosaicing  ---   "
+echo " $0 "
 echo "   mchw. 23apr2010 version"
 
 # History:
