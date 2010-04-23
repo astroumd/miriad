@@ -1,3 +1,67 @@
+   ---  Mosaicing with CARMA-23  -  ./hex7-23.csh model=casc.vla,  Fri Apr 23 15:19:24 PDT 2010   
+ model   = casc.vla
+ config  = CZ
+ dec     = 60
+ scale   = 0.4
+ method  = joint
+ harange = -2,2,.008  hours
+ select  = -shadow(3.5)
+ freq    = 30
+ bw      = 8000
+ nchan   = 1
+ imsize  = 513
+ region  = arcsec,box(200.00,-200.00,-200.00,200.00)
+ 
    ---  Mosaicing with CARMA-23  -  default7-23.csh model=casc.vla,  Tue Mar 21 14:32:08 PST 2006   
+   ---  TIMING   ---   
+START: Fri Apr 23 15:19:24 PDT 2010
+Joint deconvolution of interferometer and single dish data
+MOSMEM: Fri Apr 23 15:45:18 PDT 2010
+convolve the model by the beam and subtract from the deconvolved image
+regrid the convolved model to the deconvolved image template
+FINISH: Fri Apr 23 15:45:19 PDT 2010
+ 
+   ---  RESULTS   ---   
+Config  DEC  HA[hrs]  scale  RMS  Beam[arcsec]  Model_Flux,Peak  Image_Flux,Peak Residual:Rms,Max,Min[Jy] Fidelity
+CZ  60  -2,2,.008  0.4    6.59 6.03  731.686  1.677  732.066 1.659  0.009  0.063  -0.055  184
 MOSMEM with default single dish image; niters=200 rmsfac=1
-DZ  30  -2,2,.008  .05                      
+   ---  Mosaicing with CARMA-23  -  ./hex1-23.csh model=casc.vla,  Fri Apr 23 11:24:20 PDT 2010   
+Using ./hex1-23.csh mosaic with 15'' spacing
+ MOSMEM Interferometer only with niters=200 flux=732.069 rmsfac=1.
+CZ  60  -2,2,.008  0.4    6.59 6.03  731.686  1.677  734.086 1.667  0.018  0.110  -0.095  93
+   ---  Mosaicing with CARMA-23  -  ./hex1-23.csh model=casc.vla,  Fri Apr 23 12:53:44 PDT 2010   
+MOSMEM with default single dish image; niters=200 rmsfac=1
+CZ  60  -2,2,.008  0.4    6.59 6.03  731.686  1.677  733.910 1.669  0.017  0.108  -0.093  98
+   ---  Mosaicing with CARMA-23  -  ./hex1-23.csh model=casc.vla,  Fri Apr 23 12:58:21 PDT 2010   
+Joint deconvolution of interferometer and single dish data ; niters=200 rmsfac=1,1
+CZ  60  -2,2,.008  0.4    6.59 6.03  731.686  1.677  730.701 1.664  0.017  0.112  -0.095  98
+   ---  Mosaicing with CARMA-23  -  ./hex1-23.csh model=casc.vla,  Fri Apr 23 13:18:12 PDT 2010   
+Using ./hex1-23.csh mosaic with 15'' spacing
+ MOSMEM Interferometer only with niters=200 flux=732.069 rmsfac=1.
+CZ  60  -2,2,.008  0.3    6.59 6.03  731.673  2.707  733.054 2.666  0.020  0.107  -0.126  133
+   ---  Mosaicing with CARMA-23  -  ./hex1-23.csh model=casc.vla,  Fri Apr 23 13:28:59 PDT 2010   
+MOSMEM with default single dish image; niters=200 rmsfac=1
+CZ  60  -2,2,.008  0.3    6.59 6.03  731.673  2.707  732.876 2.666  0.019  0.104  -0.123  140
+   ---  Mosaicing with CARMA-23  -  ./hex1-23.csh model=casc.vla,  Fri Apr 23 13:33:39 PDT 2010   
+Joint deconvolution of interferometer and single dish data ; niters=200 rmsfac=1,1
+CZ  60  -2,2,.008  0.3    6.59 6.03  731.673  2.707  732.418 2.659  0.020  0.108  -0.128  133
+   ---  Mosaicing with CARMA-23  -  ./hex1-23.csh model=casc.vla,  Fri Apr 23 13:38:40 PDT 2010   
+Using ./hex1-23.csh mosaic with 15'' spacing
+ MOSMEM Interferometer only with niters=200 flux=732.069 rmsfac=1.
+CZ  60  -2,2,.008  0.2    6.59 6.03  731.638  5.376  731.595 5.296  0.017  0.090  -0.141  312
+   ---  Mosaicing with CARMA-23  -  ./hex1-23.csh model=casc.vla,  Fri Apr 23 13:48:02 PDT 2010   
+MOSMEM with default single dish image; niters=200 rmsfac=1
+CZ  60  -2,2,.008  0.2    6.59 6.03  731.638  5.376  731.672 5.297  0.017  0.090  -0.139  312
+   ---  Mosaicing with CARMA-23  -  ./hex1-23.csh model=casc.vla,  Fri Apr 23 13:52:46 PDT 2010   
+Joint deconvolution of interferometer and single dish data ; niters=200 rmsfac=1,1
+CZ  60  -2,2,.008  0.2    6.59 6.03  731.638  5.376  731.901 5.299  0.017  0.091  -0.137  312
+   ---  Mosaicing with CARMA-23  -  ./hex7-23.csh model=casc.vla,  Fri Apr 23 14:15:27 PDT 2010   
+Using ./hex7-23.csh mosaic with 15'' spacing
+ MOSMEM Interferometer only with niters=200 flux=732.069 rmsfac=1.
+CZ  60  -2,2,.008  0.4    6.59 6.03  731.686  1.677  734.150 1.661  0.009  0.063  -0.057  185
+   ---  Mosaicing with CARMA-23  -  ./hex7-23.csh model=casc.vla,  Fri Apr 23 14:51:46 PDT 2010   
+MOSMEM with default single dish image; niters=200 rmsfac=1
+CZ  60  -2,2,.008  0.4    6.59 6.03  731.686  1.677  734.028 1.663  0.008  0.061  -0.056  208
+   ---  Mosaicing with CARMA-23  -  ./hex7-23.csh model=casc.vla,  Fri Apr 23 15:19:24 PDT 2010   
+Joint deconvolution of interferometer and single dish data ; niters=200 rmsfac=1,1
+CZ  60  -2,2,.008  0.4    6.59 6.03  731.686  1.677  732.066 1.659  0.009  0.063  -0.055  184
