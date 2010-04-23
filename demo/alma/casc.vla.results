@@ -54,3 +54,27 @@ Using hex7 mosaic with 83'' spacing
 config7  -30  -1,1,.013     6.17 5.30    .4  731.675 1.418  756.404 1.414   0.032  0.092  -0.158  44
    ---  Mosaicing with ALMA  -  ./hex7.csh model=casc.vla,  Fri Apr 23 13:52:35 PDT 2010   
 MOSMEM with default single dish image; niters=200 rmsfac=200
+config7  -30  -1,1,.013     6.17 5.30    .4  731.675 1.418  647.402 1.394   0.025  0.136  -0.161  56
+   ---  Mosaicing with ALMA  -  ./hex7.csh model=casc.vla,  Fri Apr 23 13:58:19 PDT 2010   
+Joint deconvolution of interferometer and single dish data ; niters=200 rmsfac=200,1
+config7  -30  -1,1,.013     6.17 5.30    .4  731.675 1.418  699.671 1.410   0.016  0.061  -0.193  88
+   ---  Mosaicing with ALMA  -  ./hex7.csh model=casc.vla,  Fri Apr 23 14:21:22 PDT 2010   
+Using hex7 mosaic with 83'' spacing
+ MOSMEM Interferometer only with niters=200 flux=732.063 rmsfac=200.
+config7  -30  -1,1,.013     6.17 5.30    .3  731.664 2.287  741.934 2.288   0.005  0.016  -0.039  458
+   ---  Mosaicing with ALMA  -  ./hex7.csh model=casc.vla,  Fri Apr 23 14:26:57 PDT 2010   
+MOSMEM with default single dish image; niters=200 rmsfac=200
+config7  -30  -1,1,.013     6.17 5.30    .3  731.664 2.287  723.156 2.278   0.006  0.028  -0.036  380
+   ---  Mosaicing with ALMA  -  ./hex7.csh model=casc.vla,  Fri Apr 23 14:32:16 PDT 2010   
+Joint deconvolution of interferometer and single dish data ; niters=200 rmsfac=200,1
+config7  -30  -1,1,.013     6.17 5.30    .3  731.664 2.287  725.992 2.280   0.004  0.019  -0.038  570
+   ---  Mosaicing with ALMA  -  ./hex7.csh model=casc.vla,  Fri Apr 23 14:51:14 PDT 2010   
+Using hex7 mosaic with 83'' spacing
+ MOSMEM Interferometer only with niters=200 flux=732.063 rmsfac=200.
+config7  -30  -1,1,.013     6.17 5.30    .2  731.642 4.529  737.930 4.511   0.003  0.014  -0.021  1504
+   ---  Mosaicing with ALMA  -  ./hex7.csh model=casc.vla,  Fri Apr 23 14:56:11 PDT 2010   
+MOSMEM with default single dish image; niters=200 rmsfac=200
+config7  -30  -1,1,.013     6.17 5.30    .2  731.642 4.529  735.510 4.509   0.002  0.014  -0.022  2254
+   ---  Mosaicing with ALMA  -  ./hex7.csh model=casc.vla,  Fri Apr 23 15:00:39 PDT 2010   
+Joint deconvolution of interferometer and single dish data ; niters=200 rmsfac=200,1
+config7  -30  -1,1,.013     6.17 5.30    .2  731.642 4.529  731.744 4.504   0.002  0.014  -0.024  2252
