@@ -118,7 +118,7 @@ c--------------------------------------------------------------------------
         parameter (maxco=15)
 c
 	character version*(*)
-	parameter(version='UvSpec: version 1.0 9-mar-2010')
+	parameter(version='UvSpec: version 1.0 27-apr-2010')
 	character uvflags*8,device*64,xaxis*12,yaxis*12,logf*64
 	character xtitle*64,ytitle*64
 	logical ampsc,rms,nobase,avall,first,buffered,doflush,dodots
@@ -493,7 +493,7 @@ c------------------------------------------------------------------------
 	integer PolMin,PolMax
 	parameter(PolMin=-8,PolMax=4)
 	integer MAXPLT,MAXPNT
-	parameter(MAXPNT=100000,MAXPLT=10000)
+	parameter(MAXPNT=1000000,MAXPLT=100000)
 	real xp(MAXPNT),yp(MAXPNT),xrange(2),inttime
 	integer plot(MAXPLT+1)
 	double precision time
