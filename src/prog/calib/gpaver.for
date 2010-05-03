@@ -28,13 +28,14 @@ c    rjs     28aug96 Minor change to get around gcc-related bug. Change
 c		     care Dave Rayner.
 c    pjt     20oct99 FIxed bug (at least on linux) of not initializing nnsols
 c    pjt      3dec02 using MAXANT2
+c    pkgw    03may10 Change arrays in AverIt back to MAXANT
 c
 c  Bugs and Shortcomings:
 c    ? Perfect ?
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='GpAver: version 3-dec-02')
+	parameter(version='GpAver: version 3-may-10')
 	logical dovec
 	double precision interval
 	character vis*64
@@ -226,16 +227,16 @@ c  Output:
 c    nnsols	The new number of solutions.
 c------------------------------------------------------------------------
 	include 'maxdim.h'
-	complex AvGains(3*MAXANT2),t
-	real AvAmps(3*MAXANT2)
-	integer Count(3*MAXANT2),CountT,totgood,ngains,i,j,n
+	complex AvGains(3*MAXANT),t
+	real AvAmps(3*MAXANT)
+	integer Count(3*MAXANT),CountT,totgood,ngains,i,j,n
 	double precision Tend,AvT
 	logical tau
 c
 c  Check we have enough space in out internal buffers.
 c
 	ngains = nants*(nfeeds+ntau)
-	if(ngains.gt.3*MAXANT2)
+	if(ngains.gt.3*MAXANT)
      *	  call bug('f','Buffers too small, in AverIt')
 c
 c  Loop over all the gains, accumulating while we go.
