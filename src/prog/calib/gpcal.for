@@ -202,6 +202,7 @@ c    rjs     12oct99 Attempts to perform absolute flux calibration.
 c    rjs      7oct04 Set senmodel parameter.
 c    rjs     27nov06 Doc correction only.
 c    rjs     24apr09 xyphase array was being ignored in some instances.
+c    pkgw    03may10 Log whether the fit converged and the final error value.
 c
 c  Bugs:
 c    * Polarisation solutions when using noamp are wrong! The equations it
@@ -213,7 +214,7 @@ c------------------------------------------------------------------------
 	integer MAXITER
 	character version*(*)
 	parameter(MAXITER=30)
-	parameter(version='Gpcal: version 1.0 24-Apr-2009')
+	parameter(version='Gpcal: version 1.0 03-May-2010')
 c
 	integer tIn
 	double precision interval(2), freq
@@ -431,8 +432,15 @@ c
 	    epsi = 0
 	  endif
 	enddo
-	if(niter.ge.MAXITER)
-     *	  call bug('w','Failed to converge ... saving solution anyway')
+	if(niter.ge.MAXITER)then
+          call bug('w','Failed to converge ... saving solution anyway')
+	  call HisWrite(tIn,'GPCAL: convergence failed')
+	else
+	  call HisWrite(tIn,'GPCAL: convergence successful')
+	endif
+	write(line,'(a,f9.5,a,f9.5)')'GPCAL: final solution error: ',
+     *    epsi,' tolerance:',tol
+	call HisWrite(tIn,line)
 c
 c  If no flux was given, scale the gains so that they have an rms of
 c  1. Determine what flux this implies.
