@@ -267,6 +267,7 @@ case $TELESCOPE in
      "bima")  echo "Selecting old BIMA array"
 	continue;;
      "carma")  echo "Selecting CARMA array"
+	def_maxchan=8192
 	continue;;
      "lofar")  echo "Selecting LOFAR simulation 2048-array"
         def_maxiant=2048
