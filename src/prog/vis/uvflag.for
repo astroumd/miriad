@@ -65,6 +65,9 @@ c       Tsys cannot be combined with linetype 'wide'. If tsys is
 c	used, the linetype defaults to channel,0,1,1,1, i.e. all
 c	channels.
 c       Default tsys is 100000,100000.
+c@ phase
+c       Flag based on phase. One value is given; data with abs(phase)
+c       outside of that value (in degrees) will be flagged.
 c@ flagval
 c	Either 'flag' or 'unflag', which tells whether the flags for
 c	the correlations selected by 'select', 'line' and 'edge'
@@ -172,7 +175,7 @@ c Then it asks for the next visibility file and does the whole process
 c again until the list is exhausted.
 
       character*(*) version
-      parameter ( version = 'uvflag: 21-apr-09')
+      parameter ( version = 'uvflag: 20-may-10')
 
       character*64     vis
 
@@ -181,12 +184,14 @@ c again until the list is exhausted.
       real	       sels(MAXSELS)
 
       integer	       line(7),tsyslim(2)
+      real             phaselim
       character*16     type
       include	       'maxdim.h'
       logical	       usech(MAXCHAN)
 
       logical	       flagval
       logical          dotsys
+      logical          dophase
 
       logical	       apply
       character*10     ropt
@@ -195,15 +200,18 @@ c again until the list is exhausted.
       data	       usech / MAXCHAN * .true. /
 
       dotsys = .false.
+      dophase = .false.
 
       call output( version )
       call keyini
       call keyf( 'vis', vis, ' ' )
       call inputs( vis, sels,maxsels, line,type,
-     *			flagval, apply,ropt,tformat,tsyslim,dotsys )
+     *		flagval, apply,ropt,tformat,tsyslim,phaselim,dotsys,
+     *          dophase )
       do while( vis .ne. ' ' )
 	 call scanvis( vis, sels, maxsels, line,type,usech,
-     *			    flagval, apply,ropt,tformat,tsyslim,dotsys)
+     *		flagval, apply,ropt,tformat,tsyslim,phaselim,dotsys,
+     *          dophase )
 	 call keyf( 'vis', vis, ' ' )
       enddo
       call keyfin
@@ -223,9 +231,9 @@ c apply is true by default and false if the 'noapply' option was given.
 c ropt gives the verbosity level.
 c tformat indicates the time format: 'H' or 'D'.
 
-      subroutine inputs( vis, sels,maxsels, line,type,
-     *			      flagval, apply,ropt,tformat,tsyslim,
-     *                        dotsys)
+      subroutine inputs( vis,sels,maxsels,line,type,
+     *			      flagval,apply,ropt,tformat,tsyslim,
+     *                        phaselim,dotsys,dophase )
 
       IMPLICIT NONE
       character*(*)    vis
@@ -238,7 +246,9 @@ c tformat indicates the time format: 'H' or 'D'.
       character*(*)    ropt
       character*(*)    tformat
       integer          tsyslim(*)
+      real             phaselim
       logical          dotsys
+      logical          dophase
 
       integer	       unit
       integer	       nchan
@@ -280,7 +290,7 @@ c meaningless flagging.
 	 call keyr( 'line', start, 1. )
 	 call keyr( 'line', width, 1. )
 	 call keyr( 'line', step, width )
-	 call assertl( start.gt.0., 'Channel numbers <0 do not exist'  )
+	 call assertl( start.gt.0., 'Channel numbers <1 do not exist'  )
 	 call assertl( width.eq.1., 'Width must be 1 for UVFLAG' )
 	 call assertl( step .gt.0., 'Step between channels must be >0' )
       else
@@ -328,6 +338,16 @@ c If not, the program quits.
      *		    'Flagval must be flag or unflag; options=noapply' )
       if( optprsnt(1) ) flagval = .false.
       if( optprsnt(2) ) flagval = .true.
+
+      call keyr('phase',phaselim,1000.0)
+      if(phaselim .ne. 1000.0) then
+        if(phaselim .gt. 180 .or. phaselim .lt. 0)
+      *    call bug('f',
+      *		"Phase limit must be between 0 and 180 degrees.")
+        call output("Flagging based on phase")
+        dophase = .true.
+        phaselim = phaselim / 57.29578
+      endif
 
       call keyi('tsys',tsyslim(1),100000)
       call keyi('tsys',tsyslim(2),100000)
@@ -441,7 +461,7 @@ c tformat is transfered to report.
 
       subroutine scanvis( vis, sels,maxsels, line,type,usech,
      *			       flagval, apply,ropt,tformat,tsyslim,
-     *                         dotsys )
+     *                         phaselim,dotsys,dophase )
 
       character*(*)    vis
       integer	       maxsels
@@ -454,7 +474,8 @@ c tformat is transfered to report.
       character*(*)    ropt
       character*(*)    tformat
       integer          tsyslim(*)
-      logical          dotsys
+      real             phaselim
+      logical          dotsys,dophase
 
       integer	       unit
       double precision preamble(4)
@@ -479,7 +500,7 @@ c tformat is transfered to report.
 	      call work(   unit, preamble, 'channel',
      *			 flagval, ropt,tformat,line,
      *			 data,oldflags,newflags, usech, nchan,tsyslim,
-     *                   dotsys)
+     *                   phaselim,dotsys,dophase)
 	      if( apply ) call uvflgwr( unit,newflags )
 	    endif
 
@@ -489,7 +510,7 @@ c tformat is transfered to report.
 		call work(   unit, preamble, 'wide',
      *			 flagval, ropt,tformat,line,
      *			 data,oldflags,newflags, usech, nwchan,tsyslim,
-     *                   dotsys )
+     *                   phaselim,dotsys,dophase)
 		if( apply ) call uvwflgwr( unit,newflags )
 	      endif
 	    endif
@@ -506,7 +527,7 @@ c tformat is transfered to report.
 	      call work(   unit, preamble, type,
      *			 flagval, ropt,tformat,line,
      *			 data,oldflags,newflags, usech, nchan,tsyslim,
-     *                   dotsys )
+     *                   phaselim,dotsys,dophase )
 	      if( apply ) call uvflgwr( unit,newflags )
 	    endif
 	 endif
@@ -629,7 +650,7 @@ c Do statistics and reporting.
       subroutine work( unit, preamble, type,
      *		       flagval, ropt,tformat,line,
      *		       data,oldflags,newflags, usech, nchan,tsyslim,
-     *                 dotsys )
+     *                 phaselim,dotsys,dophase )
 
       IMPLICIT NONE
       integer	       unit
@@ -643,7 +664,8 @@ c Do statistics and reporting.
       logical	       usech(*)
       integer	       nchan
       integer          tsyslim(*)
-      logical          dotsys
+      real             phaselim
+      logical          dotsys,dophase
 c------------------------------------------------------------------------
       integer itemp
 c
@@ -652,7 +674,7 @@ c
       integer counting
 c
       call flgset( unit, flagval, data,oldflags,newflags, usech, nchan,
-     *             tsyslim,dotsys,preamble)
+     *             tsyslim,phaselim,dotsys,dophase,preamble)
       itemp = counting( type, oldflags,newflags, nchan )
       call report( ropt, unit,preamble,tformat,line,type,
      *		   data,oldflags,newflags, usech, nchan )
@@ -663,7 +685,8 @@ c Depending on the value of amprange(1) a check will be made whether the
 c data are in or out of range.
 
       subroutine flgset( unit, flagval, data,oldflags,newflags,
-     *			 usech, nchan,tsyslim,dotsys,preamble )
+     *			 usech, nchan,tsyslim,phaselim,dotsys,
+     *			 dophase,preamble )
 
       IMPLICIT NONE
       integer	       unit
@@ -673,10 +696,12 @@ c data are in or out of range.
       logical	       usech(*)
       integer	       nchan
       integer          tsyslim(*)
-      logical          dotsys
+      real             phaselim
+      logical          dotsys,dophase
       double precision preamble(*)
       include	       'maxdim.h'
 
+      double precision phase
       double precision amp2
       integer	       i,j
 
@@ -701,7 +726,15 @@ c keep old flags before setting some or all of the new flags.
       do i = 1, nchan
 	 newflags(i) = oldflags(i)
       enddo
-
+      if(dophase)then
+        do i = 1, nchan 
+           if( usech(i) ) then 
+              phase = atan2(aimag(data(i)),real(data(i)))
+              if( abs(phase) > phaselim ) 
+      *         newflags(i) = flagval
+           endif
+        enddo
+      endif
       if(dotsys)then
          call uvgetvri(unit,"nants",nants,1)
          call uvrdvri(unit,"nspect",nspect,0)
@@ -727,8 +760,8 @@ c do the system temperature flagging
       else
 c amprange(1)= 0: no amplitude selection requested by 'select' keyword
 c then uvinfo returned the default value of 0.
-c so: set all flags in the record
-         if(     ampflag.eq.0 )
+c so: set all flags in the record unless we're flagging by phase
+         if((ampflag.eq.0) .and. (dophase .eqv. .false.))
      *        then
             do i = 1, nchan
                if( usech(i) ) newflags(i) = flagval
