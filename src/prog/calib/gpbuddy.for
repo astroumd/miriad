@@ -9,7 +9,7 @@ c+
 c	GPBUDDY is a MIRIAD task that copies the gain table of a selected
 c       number of antennas into a second set of antennas in another dataset. 
 c       It is intended to be used in conjunction with UVCAL,to perform 
-c       antenna-based atmospheric phase correction.
+c       antenna-based atmospheric phase correction  (PACS).
 c       All non-selected antennas have the option of having their gains 
 c       interpolated from paired antennas using different methods.
 c
@@ -25,11 +25,12 @@ c       these phaseatm tables at phases at the LO1 frequency and correctly compu
 c       and apply the atmospheric delays.   
 c
 c	Example: phase correction for 3mm
-C         gpbuddy vis=carma vis2=sza 
+C         gpbuddy vis=carma vis2=sza out=carma.out    
 C                list1=2,4,5,6,8,9,13,15 
 C                list2=21,23,20,18,19,22,16,17
 c                factor=3.09
-c         uvcal vis=carma out=carma.atm options=atmcal
+c
+c         uvcal vis=carma.out out=carma.atm options=atmcal
 c
 c@ vis
 c	The input visibility file, containing the visibility data
@@ -70,7 +71,8 @@ c@ mode
 c       gains or phaseatm. 
 c       For gains the gains of the input file(s) are overwritten,
 c       For phaseatm you will need to supply (an) output file(s).
-c       DO NOT USE.
+c       DO NOT USE, since gains option do not apply freq dependant
+c       phase corrections.
 c       Default: phaseatm
 c
 c@ nearest
@@ -82,7 +84,7 @@ c       Will become false, since nearest doesn't know how to flag
 c       when nothing in the interval.
 c
 c@ method
-c       Method by which antenna phased of non-paired antennas are
+c       Method by which antenna phases of non-paired antennas are
 c       deduced. 
 c       Currently implemented are:
 c       power:     inverse power law weighted average on projected distance
@@ -221,9 +223,9 @@ c       select between 'gain' and 'phaseatm' mode
      *              'Currently still need to set scale= for phaseatm')
 	endif
 
-c       figure out which method to use for interpolations
 
-
+	write(*,*) 'Method ',imethod,' Param=',param
+	
 c
 c  Open the input file. We need full uvopen, since we also need
 c  to get the antennae positions
@@ -247,6 +249,8 @@ c        Reading the second visibility file, if needed
           call uvopen(tVis2,vis2,'old')
           call uvread(tVis2,preamble2,data2,flags2,MAXCHAN,nread2)
           if (nread2.eq.0) call bug('f','No visibilities in vis2?')
+	else
+	  tVis2 = -1
         endif
 c-------------------------------------------
 
@@ -254,7 +258,6 @@ c
 c  Determine size dependant number of things in the gain table.
 c  If vis2= present, get the gains from vis2, else from vis
 c
-
 
 	if(vis2.eq.' ') then
 	   call gheader(vis,tvis,nants,nfeeds,ntau,nsols)
@@ -363,7 +366,6 @@ c
      *                 xy,xy2,list1,list2,n1,n2,scale,doreset)
         endif
 
-
 c
 c  Write out the gains, and update the history
 c
@@ -460,6 +462,9 @@ c
 	DO imethod=1,NM
 	   if (present(imethod)) RETURN
 	ENDDO
+	IF (found.EQ.1) THEN
+	   write(*,*) 'Using method=',methods(imethod)
+	ENDIF
 	RETURN
 	END
 c***********************************************************************
@@ -883,6 +888,8 @@ c
 c************************************************************************
 	subroutine GainATM(nsols,nants,nfeeds,times,Gains,mask,atm)
 c
+c  convert a gain() to atm() phase array, including unwrapping
+c  
 	implicit none
 	include 'mirconst.h'
 c
