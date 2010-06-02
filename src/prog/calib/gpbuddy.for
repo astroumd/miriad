@@ -107,6 +107,8 @@ c       Compute antenna phases for non-paired antennas by interpolating
 c       over paired antennas using a user-selectable weighting function
 c       specified by wscheme and param
 c       Default: true
+c--
+c       don't use 'reset', hardcoded to be false
 c@ reset
 c       Normally for non-paired antennas the phaseatm are set to 0,
 c       to prevent any changes to those antennae. However, these baselines
@@ -132,6 +134,8 @@ c    adb     16dec08 added tophat,parabol. Vis are flagged if no antenna
 c                    is within range of interpolation
 c    pjt     17dec08 continuing our daily hack,this adds interpolation
 c                    in time.
+c    pjt      2jun10 removed the confusing 'reset=' keyword
+c                    (a small tophat can achieve the same thing)
 c
 c  Bugs and Shortcomings:
 c     phaseatm:  interpolate on an interval, don't take nearest neighbor
@@ -192,7 +196,6 @@ c
         call mkeyi('list2',list2,MAXANT,n2)
         call keya('vis2',vis2,' ')   
 	call keyl('show',show,.FALSE.)
-	call keyl('reset',doreset,.FALSE.)
 	call keya('mode',mode,'phaseatm')
 	call keyr('scale',scale,0.0)
 	call keyr('param',param,2.0)
@@ -200,6 +203,8 @@ c
 	call keyl('antipol',antipol,.TRUE.)
 	call keyl('nearest',donear,.TRUE.)
 	call keyfin
+	doreset = .FALSE.
+
 c 
 c  Various options, vis only, vis+antenna lists or 2 vis files
 c
@@ -345,10 +350,12 @@ c
 c  Read the gains, and also transform them to phaseatm's
 c
 	if(vis2.eq.' ') then
-	  call GainRd(itGain,nsols,nants,nfeeds,times,Gains,mask)
+	  call GainRd(itGain,nsols,nants,nfeeds,times,Gains,mask,
+     *               'vis')
 	  call GainATM(nsols,nants,nfeeds,times,Gains,mask,atm)
 	else
-	  call GainRd(itGain2,nsols2,nants2,nfeeds2,times2,Gains2,mask2)
+	  call GainRd(itGain2,nsols2,nants2,nfeeds2,times2,Gains2,mask2,
+     *               'vis2')
 	  call GainATM(nsols2,nants2,nfeeds2,times2,Gains2,mask2,atm2)
         endif
 
@@ -530,7 +537,6 @@ c
 	LOGICAL wflags(MAXWIDE), flags(MAXCHAN)
 	CHARACTER type*1
 	REAL phaseatm(MAXANT), bweight(MAXANT,MAXANT),suma,sumw
-	
 c
 	EXTERNAL nearest,wscheme
 
@@ -578,7 +584,7 @@ c
 c  A first pass through the data is needed to accumulate the buddy phases (in atm())
 c  and depending on the weighting scheme (wscheme) compute phased for the non-buddy
 c  antennas. This will then fill the whole atm() array with 'non-zero' phases
-c  and in the second pass these are applied
+c  and in the second pass these are applied ** write out as phaseatm **
 c
 c  CAVEAT:  although the data does not need to be time sorted, the do need
 c           to clump together all baselines, so when the time changes
@@ -598,6 +604,7 @@ c           all valid baselines must have been seen for accumulation
 		 nchan=-1
 	      ENDIF
 	      IF ((nchan.LT.0).OR.(time1.NE.time0)) THEN
+c		 write(*,*) 'DEDUG1: ',nchan,time0,time1,time1-time0
 		 idx = nearest(nsols,times,time0)
 		 DO i=1,nants
 		    IF (.NOT.mask(i)) THEN
@@ -619,19 +626,22 @@ c           all valid baselines must have been seen for accumulation
 		       ELSE
 			  atm(i,idx)=suma/sumw
 		       ENDIF
+c		       write(*,*) 'ATM ',i,idx,atm(i,idx)
 c		       WRITE(*,*) 'COPYVIS:',i,idx,atm(i,idx),time0
 		    ENDIF
 		 ENDDO
 		 DO i=1,nants
 		    DO j=1,nants
 		       bweight(i,j)=0.0
-		    ENDDO
+ 		    ENDDO
 		 ENDDO
 		 time0=time1
 	      ELSE
+c		 write(*,*) 'DEDUG2: ',nchan,time0,time1,time1-time0
 		 IF (nchan.GT.0) THEN
 		    bweight(ant1,ant2)=wscheme(preamble(1),preamble(2),
      *                                         param)
+c		    write(*,*) 'WEIGHT: ',ant1,ant2,bweight(ant1,ant2)
 		 ENDIF
 	      ENDIF
 	   ENDIF
@@ -653,7 +663,7 @@ c     second pass to interpolate atm's for output
 	CALL uvrewind(tVis)
 	nintpol = 0
 	IF (donear) THEN
-	   CALL bug('i','Using nearest neighbors')
+	   CALL bug('i','Using nearest time for interpolation')
 	ELSE
 	   CALL bug('i','Linear interpolation of phases in time')
 	ENDIF
@@ -831,13 +841,14 @@ c
       END
 
 c***********************************************************************
-	subroutine GainRd(itGain,nsols,nants,nfeeds,times,Gains,mask)
+	subroutine GainRd(itGain,nsols,nants,nfeeds,times,Gains,mask,v)
 c
 	implicit none
 	integer itGain,nsols,nants,nfeeds
 	complex Gains(nfeeds*nants,nsols)
 	double precision times(nsols)
 	logical mask(nfeeds*nants)
+	character v*(*)
 c
 c  Read the gains from the gains table.
 c
@@ -853,6 +864,7 @@ c    mask       TRUE if some or all of this ant have data, FALSE if not present
 c------------------------------------------------------------------------
 	integer offset,iostat,i,k
 	logical some,all
+	integer len1
 c
 	write(*,*) 'GainRd:',itGain,nants,nsols
 c
@@ -876,9 +888,11 @@ c
 	   enddo
 	   if (.not.all) then
 	      mask(i) = .FALSE.
-	      write(*,*) 'Feed/Ant ',i,' all flagged'
+	      write(*,*) 'GainRd: Feed/Ant ',i,' all flagged for ',
+     *             v(1:len1(v))
 	   else if (some) then
-	      write(*,*) 'Feed/Ant ',i,' some flagged'
+	      write(*,*) 'GainRd: Feed/Ant ',i,' some flagged for ',
+     *             v(1:len1(v))
 	   endif
 	enddo
 	write(*,*) 'Any Feed/Ant not listed means no flagged data'
