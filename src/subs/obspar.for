@@ -41,6 +41,7 @@ c    mchw 07jul04 updated CARMA longitude and latitude to station 32
 c    jhz  12jan07 deleted sma/ew entry; corrected the value of 
 c                 sub-reflector dismeter.
 c    mchw 03dec07 Added ATA at hatcreek and BIMA at the Carma site.
+c    mchw 02jun10 Added KAT7.
 c************************************************************************
 c* ObsPrint -- Print list of known observatories.
 c: utility
@@ -87,7 +88,7 @@ c
 c  Input:
 c    observ	Name of the observatory. Current list is :
 c                 'ALMA', 'ATCA', 'CARMA', CEDUNA30M', 'CSO', 'GMRT',
-c                 'HATCREEK', 'HOBART26M', 'IRAM15M', 'JCMT',
+c                 'HATCREEK', 'HOBART26M', 'IRAM15M', 'JCMT', 'KAT7',
 c                 'KITTPEAK', 'NOBEYAMA', 'NOBEYAMA45', 'ONSALA', 'OVRO',
 c		  'PARKES', 'PENTICTON', 'QUABBIN', 'RPA', 'SZA', 'SZA10', 'SZA6', 'VLA', 
 c		  'WSRT'
@@ -341,6 +342,21 @@ c
 	call obsad('jcmt/subdiam',	0.75d0)
 	call obsad('jcmt/systemp',	500.d0)
 c
+c  KAT7  array
+# longitude and latitude 21.41, -30.7213 in degrees.
+# email from Mattieu de Villiers <mattieu@ska.ac.za>
+# to    Mel Wright <mwright@astro.berkeley.edu>
+# date  Wed, Jun 2, 2010 at 3:24 PM
+c
+	call obsad('kat7/antdiam',	12.d0)
+	call obsad('kat7/height',	1000.d0)
+	call obsad('kat7/jyperk',	55.d0)
+	call obsad('kat7/latitude',	obsdms(-1,  30,43,16.68))
+	call obsad('kat7/longitude',    obsdms( 1,  21,24,36.00))
+	call obsad('kat7/mount',        ALTAZ)
+	call obsad('kat7/nants',	7.d0)
+	call obsad('kat7/systemp',	100.d0)
+c
 c  The Kitt Peak mm single dish (NRAO).
 c  Jyperk and systemp given by Wright, from 3mm vlbi.
 c
@@ -349,7 +365,7 @@ c
 	call obsad('kittpeak/jyperk',	55.d0)
 	call obsad('kittpeak/latitude',	obsdms( 1, 31,57,12.10))
 	call obsad('kittpeak/longitude',obsdms(-1,111,36,51.12))
-        call obsad('kittpeak/mount',     ALTAZ)
+        call obsad('kittpeak/mount',    ALTAZ)
 	call obsad('kittpeak/nants',	1.d0)
 	call obsad('kittpeak/systemp',	200.d0)
 c
