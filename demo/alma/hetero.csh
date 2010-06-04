@@ -5,7 +5,7 @@
 # mchw 14aug02 - reduce size of region in imfit which was including sidelobes in relpix +/- 10
 # mchw 20aug02 - hetero.csh This script assumes that the first 6 antennas are OVRO and the next 9 are hatcreek
 # mchw 26sep02 - decrease Nyquist sample interval for 2 km configuration.
-# mchw 30oct02 - version for ALMA with 6 and 12m antennas.
+# mchw 30oct02 - version for ALMA with 7 and 12m antennas.
 
 # Nyquist sample time = 12 x (dish_diam/2)/(pi*baseline)
 # calc '12*(10.4/2)/(pi*2000)' = 0.01 hours = 36 sec.
@@ -66,9 +66,9 @@ echo generate uv-data
 # assume aperture efficiency 75% to get jyperk
 echo "Generate uv-data. Tsys=40K, bandwidth=4 GHz " >> timing
 rm -r carma.uv ovro.uv hatcreek.uv
-uvgen ant=$config.ant baseunit=-3.33564 radec=23:23:25.803,$dec lat=37.02 harange=$harange source=$MIRCAT/no.source systemp=80,290,0.26 jyperk=73 freq=$freq corr=$nchan,1,0,4000 out=carma.uv telescop=carma ellim=$ellim 
-uvgen ant=$config.ant baseunit=-3.33564 radec=23:23:25.803,$dec lat=37.02 harange=$harange source=$MIRCAT/no.source systemp=80,290,0.26 jyperk=43  freq=$freq corr=$nchan,1,0,4000 out=ovro.uv telescop=ovro ellim=$ellim 
-uvgen ant=$config.ant baseunit=-3.33564 radec=23:23:25.803,$dec lat=37.02 harange=$harange source=$MIRCAT/no.source systemp=80,290,0.26 jyperk=126 freq=$freq corr=$nchan,1,0,4000 out=hatcreek.uv telescop=hatcreek ellim=$ellim 
+uvgen ant=$config.ant baseunit=-3.33564 radec=23:23:25.803,$dec lat=-23.02 harange=$harange source=$MIRCAT/no.source systemp=80,290,0.26 jyperk=73 freq=$freq corr=$nchan,1,0,4000 out=carma.uv telescop=carma ellim=$ellim 
+uvgen ant=$config.ant baseunit=-3.33564 radec=23:23:25.803,$dec lat=-23.02 harange=$harange source=$MIRCAT/no.source systemp=80,290,0.26 jyperk=43  freq=$freq corr=$nchan,1,0,4000 out=ovro.uv telescop=ovro ellim=$ellim 
+uvgen ant=$config.ant baseunit=-3.33564 radec=23:23:25.803,$dec lat=-23.02 harange=$harange source=$MIRCAT/no.source systemp=80,290,0.26 jyperk=126 freq=$freq corr=$nchan,1,0,4000 out=hatcreek.uv telescop=hatcreek ellim=$ellim 
 echo UVGEN: `date` >> timing
 
 # select data for heterogenous array
