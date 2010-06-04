@@ -1,6 +1,6 @@
 #!/bin/csh -f
 
-echo "Performance tests for ATA imaging"
+echo "Performance tests for KAT7 imaging"
 
 # mchw 15apr10
 # 18apr03 added uvrange. 
@@ -10,6 +10,7 @@ echo "Performance tests for ATA imaging"
 # 27may09 added weighting options to input parameters.
 # 27oct09 better doc.
 # 15apr10 select on parameter line allows  uvdata selection.
+# 02jun10 version for kat7.
 
 
 # Nyquist sample time = 12 x 3600 s x (dish_diam/2)/(pi*baseline)
@@ -22,10 +23,10 @@ start:
 # check inputs
   if($#argv<5) then
     echo " Usage:   $0   config   declination  harange  nchan  weighting"
-    echo " e.g:     mfs.csh   ata-42     -30       0,.1,.1    1       sup=0"
+    echo " e.g:     mfs.csh   kat7     -30       0,.1,.1    1       sup=0"
     echo "   config"
     echo "          Antenna configuration. "
-    echo "            e.g. ata-42   Omit the .ant. No default."
+    echo "            e.g. kat7   Omit the .ant. No default."
     echo "   declination"
     echo "          Source declination in degrees. No default."
     echo "   harange"
@@ -49,11 +50,11 @@ set select     = $6
 set freq       = 1.42
 set imsize     = 256 
 set systemp    = 40 
-set jyperk     = 150 
-set bandwidth  = 100 
+set jyperk     = 55 
+set bandwidth  = 400 
 
 
-echo "   ---  ATA Single Field MFS Imaging    ---   " > timing
+echo "   ---  KAT7 Single Field MFS Imaging    ---   " > timing
 echo " config    =  $config"            >> timing
 echo " dec       =  $dec"               >> timing
 echo " harange   =  $harange  hours"    >> timing
@@ -74,7 +75,7 @@ continue:
 
 echo generate uv-data
 rm -r $config.$dec.uv
-uvgen ant=$config.ant baseunit=-3.335668 lat=40:49:02.50 radec=23:23:25.803,$dec harange=$harange source=$MIRCAT/point.source telescop=hatcreek systemp=$systemp jyperk=$jyperk freq=$freq corr=$nchan,1,1,$bandwidth out=$config.$dec.uv
+uvgen ant=$config.ant baseunit=-3.335668 lat=-30:43:16.68 radec=23:23:25.803,$dec harange=$harange source=$MIRCAT/point.source telescop=kat7 systemp=$systemp jyperk=$jyperk freq=$freq corr=$nchan,1,1,$bandwidth out=$config.$dec.uv
 # pnoise=30
 echo UVGEN: `date` >> timing
 
@@ -83,7 +84,6 @@ echo UVGEN: `date` >> timing
 #echo SELFCAL: `date` >> timing
 
 uvplt vis=$config.$dec.uv device=/xs axis=uc,vc options=nobase,equal
-
 
 echo image
 rm -r $config.$dec.bm $config.$dec.mp
