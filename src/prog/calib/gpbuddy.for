@@ -84,9 +84,10 @@ c       Will become false, since nearest doesn't know how to flag
 c       when nothing in the interval.
 c
 c@ antpos
-c       By default, the projected UV coordinates are used to compare
-c       distances, by using antpos=TRUE, regular distances are used
-c       between the antennae.
+c       By default, the projected UV coordinates (in ns) are used to 
+c       compare distances, by using antpos=TRUE, regular distances are used
+c       between the antennae, except these are used in m!!! When using
+c       a weighting scheme such as gaussian, units are m.
 c       Default: FALSE
 c
 c@ method
@@ -103,9 +104,11 @@ c
 c@ param
 c       Parameter for the weighting function method.
 c       For power-law: negative of the power index
-c       For gaussian: Gaussian FWHM (in nanoseconds)
-c       For tophat: radius (in nanoseconds)
-c       For parabol: radius (in nanoseconds)
+c       For gaussian: Gaussian FWHM (in ns, or m, depending on antpos=)
+c       For tophat: radius (in ns, or m)
+c       For parabol: radius (in ns, or m)
+c       If antpos=false, make sure length units are ns,
+c       for antpos=true, units are m.
 c       Default: 2
 c
 c@ antipol
@@ -142,6 +145,7 @@ c    pjt     17dec08 continuing our daily hack,this adds interpolation
 c                    in time.
 c    pjt      2jun10 removed the confusing 'reset=' keyword
 c                    (a small tophat can achieve the same thing)
+c    pjt      7jun10 added antpos=
 c
 c  Bugs and Shortcomings:
 c     phaseatm:  interpolate on an interval, don't take nearest neighbor
@@ -208,7 +212,7 @@ c
 	call getMethod('method','power',imethod)
 	call keyl('antipol',antipol,.TRUE.)
 	call keyl('nearest',donear,.TRUE.)
-	call keyl('nearest',doantpos,.FALSE.)
+	call keyl('antpos',doantpos,.FALSE.)
 	call keyfin
 	doreset = .FALSE.
 
@@ -238,7 +242,7 @@ c       select between 'gain' and 'phaseatm' mode
 
 	write(*,*) 'Method ',imethod,' Param=',param
 	if (doantpos) then
-	  call bug('i','Using new antpos scheme for distances')
+	   write(*,*) 'Using new antpos scheme'
 	endif
 	
 c
@@ -525,8 +529,7 @@ c
 	end
 c***********************************************************************
 	SUBROUTINE CopyVis(vis,visout,nsols,nants,times,gains,mask,atm,
-     *                     wscheme,param,antipol,donear,
-     *                     doantpos,xy)
+     *                     wscheme,param,antipol,donear,doantpos,xy)
 c
 	implicit none
 	include 'maxdim.h'
@@ -536,18 +539,18 @@ c
         complex Gains(nants,nsols)
 	double precision times(nsols)
 	logical mask(nants)
-	real atm(nants,nsols),xy(2,nants)
+	real atm(nants,nsols)
         logical antipol,donear,doantpos
-	real wscheme,param
+	real wscheme,param,xy(2,nants)
 c
 	INTEGER tVis,tOut,length,nchan,nwide,idx,idx0,nearest,nbad,nvis
 	INTEGER ant1,ant2,i,j,nintpol
 	LOGICAL dowide,doline,doboth,updated
-	DOUBLE PRECISION preamble(4),time0,time1
+	DOUBLE PRECISION preamble(4),time0,time1,dx,dy
 	COMPLEX wcorr(MAXWIDE), corr(MAXCHAN)
 	LOGICAL wflags(MAXWIDE), flags(MAXCHAN)
 	CHARACTER type*1
-	REAL phaseatm(MAXANT), bweight(MAXANT,MAXANT),suma,sumw,dx,dy
+	REAL phaseatm(MAXANT), bweight(MAXANT,MAXANT),suma,sumw
 c
 	EXTERNAL nearest,wscheme
 
@@ -558,7 +561,6 @@ c       but without any gain tables
 
 	CALL uvopen(tVis,vis,'old')
 	CALL uvopen(tOut,visout,'new')
-
 
 c       probe what kind of data we have 
 
@@ -650,13 +652,13 @@ c		       WRITE(*,*) 'COPYVIS:',i,idx,atm(i,idx),time0
 	      ELSE
 c		 write(*,*) 'DEDUG2: ',nchan,time0,time1,time1-time0
 		 IF (nchan.GT.0) THEN
-		    IF (doantpos) THEN
+		    if (doantpos) then
 		       dx = xy(1,ant1)-xy(1,ant2)
 		       dy = xy(2,ant1)-xy(2,ant2)
-		    ELSE
+		    else
 		       dx = preamble(1)
 		       dy = preamble(2)
-		    ENDIF
+		    endif
 		    bweight(ant1,ant2)=wscheme(dx,dy,param)
 c		    write(*,*) 'WEIGHT: ',ant1,ant2,bweight(ant1,ant2)
 		 ENDIF
