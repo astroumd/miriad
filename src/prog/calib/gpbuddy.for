@@ -83,6 +83,12 @@ c
 c       Will become false, since nearest doesn't know how to flag
 c       when nothing in the interval.
 c
+c@ antpos
+c       By default, the projected UV coordinates are used to compare
+c       distances, by using antpos=TRUE, regular distances are used
+c       between the antennae.
+c       Default: FALSE
+c
 c@ method
 c       Method by which antenna phases of non-paired antennas are
 c       deduced. 
@@ -166,7 +172,7 @@ c-----------------------------------------------------------------------
         complex gains2(2*MAXANT*MAXSOLN),data2(MAXCHAN)
 	real atm(MAXANT*MAXSOLN), atm2(MAXANT*MAXSOLN)
 	logical mask(2*MAXANT),flags(MAXCHAN),show,dogain,doreset
-        logical mask2(2*MAXANT),flags2(MAXCHAN),donear
+        logical mask2(2*MAXANT),flags2(MAXCHAN),donear,doantpos
 	real xy(2,MAXANT)
         real xy2(2,MAXANT)
 	real scale
@@ -202,6 +208,7 @@ c
 	call getMethod('method','power',imethod)
 	call keyl('antipol',antipol,.TRUE.)
 	call keyl('nearest',donear,.TRUE.)
+	call keyl('nearest',doantpos,.FALSE.)
 	call keyfin
 	doreset = .FALSE.
 
@@ -230,6 +237,9 @@ c       select between 'gain' and 'phaseatm' mode
 
 
 	write(*,*) 'Method ',imethod,' Param=',param
+	if (doantpos) then
+	  call bug('i','Using new antpos scheme for distances')
+	endif
 	
 c
 c  Open the input file. We need full uvopen, since we also need
@@ -417,19 +427,19 @@ c
 	   write(*,*) (mask2(i),i=1,nants2)
 	   if (imethod.eq.1) then
 	      call CopyVis(vis,visout,nsols,nants,times,Gains,mask,atm,
-     *                  wscheme1,param,antipol,donear)
+     *                  wscheme1,param,antipol,donear,doantpos,xy)
 	   else if (imethod.eq.2) then
 	      call CopyVis(vis,visout,nsols,nants,times,Gains,mask,atm,
-     *                  wscheme2,param,antipol,donear)
+     *                  wscheme2,param,antipol,donear,doantpos,xy)
 	   else if (imethod.eq.3) then
 	      call CopyVis(vis,visout,nsols,nants,times,Gains,mask,atm,
-     *                  wscheme3,param,antipol,donear)
+     *                  wscheme3,param,antipol,donear,doantpos,xy)
 	   else if (imethod.eq.4) then
 	      call CopyVis(vis,visout,nsols,nants,times,Gains,mask,atm,
-     *                  wscheme4,param,antipol,donear)
+     *                  wscheme4,param,antipol,donear,doantpos,xy)
 	   else if (imethod.eq.5) then
 	      call CopyVis(vis,visout,nsols,nants,times,Gains,mask,atm,
-     *                  wscheme5,param,antipol,donear)
+     *                  wscheme5,param,antipol,donear,doantpos,xy)
 	   else
 	      call bug('w','No valid method')
 	   endif
@@ -515,7 +525,8 @@ c
 	end
 c***********************************************************************
 	SUBROUTINE CopyVis(vis,visout,nsols,nants,times,gains,mask,atm,
-     *                     wscheme,param,antipol,donear)
+     *                     wscheme,param,antipol,donear,
+     *                     doantpos,xy)
 c
 	implicit none
 	include 'maxdim.h'
@@ -525,8 +536,8 @@ c
         complex Gains(nants,nsols)
 	double precision times(nsols)
 	logical mask(nants)
-	real atm(nants,nsols)
-        logical antipol,donear
+	real atm(nants,nsols),xy(2,nants)
+        logical antipol,donear,doantpos
 	real wscheme,param
 c
 	INTEGER tVis,tOut,length,nchan,nwide,idx,idx0,nearest,nbad,nvis
@@ -536,7 +547,7 @@ c
 	COMPLEX wcorr(MAXWIDE), corr(MAXCHAN)
 	LOGICAL wflags(MAXWIDE), flags(MAXCHAN)
 	CHARACTER type*1
-	REAL phaseatm(MAXANT), bweight(MAXANT,MAXANT),suma,sumw
+	REAL phaseatm(MAXANT), bweight(MAXANT,MAXANT),suma,sumw,dx,dy
 c
 	EXTERNAL nearest,wscheme
 
@@ -639,8 +650,14 @@ c		       WRITE(*,*) 'COPYVIS:',i,idx,atm(i,idx),time0
 	      ELSE
 c		 write(*,*) 'DEDUG2: ',nchan,time0,time1,time1-time0
 		 IF (nchan.GT.0) THEN
-		    bweight(ant1,ant2)=wscheme(preamble(1),preamble(2),
-     *                                         param)
+		    IF (doantpos) THEN
+		       dx = xy(1,ant1)-xy(1,ant2)
+		       dy = xy(2,ant1)-xy(2,ant2)
+		    ELSE
+		       dx = preamble(1)
+		       dy = preamble(2)
+		    ENDIF
+		    bweight(ant1,ant2)=wscheme(dx,dy,param)
 c		    write(*,*) 'WEIGHT: ',ant1,ant2,bweight(ant1,ant2)
 		 ENDIF
 	      ENDIF
