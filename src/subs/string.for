@@ -26,6 +26,8 @@ c   rjs     06feb95 Fixed handling of quotes in getfield. What did bpw do?
 c   rjs     25jul97 Treat " and ' as quote characters.
 c   rjs     03aug98 Included updated version of matodf and matorf.
 c   rjs     05feb01 Added st routines.
+c   rjs     07may10 Increase precision in atodf - there was some real number
+c		    arithmetic being used.
 c
 c $Id$
 c************************************************************************
@@ -244,9 +246,9 @@ c
 	  else if(string(l:l).eq.'.')then
 	    if(state.eq.whole)then
 	      state = frac
-	      wd = 1
-	      w0 = 0.1 * w0
-	      ww0 = 0.1
+	      wd = 1d0
+	      w0 = 0.1d0 * w0
+	      ww0 = 0.1d0
 	    else
 	      state = bad
 	    endif
