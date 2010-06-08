@@ -137,11 +137,13 @@ c    02jun09 rjs  Flag by theoretical rms.
 c    27jan10 mhw  Add option nofqav and increase buffers some more
 C    04feb10 mhw  Add channel as an axis value and increase MAXEDIT
 c    24feb10 mhw  Add xrange, yrange; use MAXBUF for 64bit machines
+c     8jun10 pjt  Fixed bug when MAXBASE is not MAXANT*(MAXANT-1)/2
+c                 originally fixed 17feb09 
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
 	integer MILLION,MAXDAT,MAXPLT,MAXEDIT
-	parameter(version='BlFlag: version 23-Apr-09')
+	parameter(version='BlFlag: version 8-jun-2010')
 	parameter(MILLION=1000000,MAXDAT=(MAXBUF/MILLION+5)*MILLION,
      *            MAXPLT=4*MILLION,MAXEDIT=MILLION)
 c
@@ -234,7 +236,7 @@ c
 	  do j=1,MAXANT
 	    do i=1,j
 	      k = k + 1
-	      if(present(k))then
+	      if(k.lt.MAXBASE.and.present(k))then
 	        title = 'Baseline '//itoaf(i)
 	        length = len1(title)
 		title(length+1:) = '-'//itoaf(j)
