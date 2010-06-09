@@ -42,12 +42,9 @@ set version=9-jun-2010
 # 16-jun-08 add zeno/hkmiriad
 # 10-dec-08 pgplot64 fix
 # 18-mar-09 force darwin no shared libs
-#  9-jun-10 gif=0 will force a simpler pgplot with no GIF/.... drivers
-#           sincer older gfortran compilers cannot deal with %REF/VAL() code
+#  9-jun-10 allow gif=0 to disable GIF drivers for older gfortran
+#           also check for SELinux now
 #
-#
-# if SELINUX is enabled:
-#    chcon -t texrel_shlib_t $MIR/lib/linux/*.so
 #-----------------------------------------------------------------------
 
 # sanity check: find out from the way it was called where the script lives
@@ -620,6 +617,13 @@ set benchpars=(`echo $bench | awk -F, '{print $1,$2,$3}'`)
 if ($#benchpars == 3 && $benchpars[1] > 1) then
    mir.bench nchan=$benchpars[1] mapsize=$benchpars[2] cell=$benchpars[3]
 endif
+
+if (-d /etc/selinux) then
+   echo Checking to enable MIRIAD shared libraries for SELinux
+   selinuxenabled
+   if ($status == 0) chcon -t texrel_shlib_t $MIR/lib/linux/*.so
+endif
+
 
 
 #   Now tag it, so we can 'find -newer' things that have been updated since creation!
