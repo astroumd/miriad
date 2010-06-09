@@ -1,6 +1,6 @@
 #! /bin/csh -f
 #
-set version=1-mar-2010
+set version=9-jun-2010
 #
 #  2-aug-99 Updated for Sebok's Mandrake setup
 #  1-aug-00 Updated to allow to build private PGPLOT version
@@ -42,6 +42,8 @@ set version=1-mar-2010
 # 16-jun-08 add zeno/hkmiriad
 # 10-dec-08 pgplot64 fix
 # 18-mar-09 force darwin no shared libs
+#  9-jun-10 gif=0 will force a simpler pgplot with no GIF/.... drivers
+#           sincer older gfortran compilers cannot deal with %REF/VAL() code
 #
 #
 # if SELINUX is enabled:
@@ -63,6 +65,9 @@ endif
 #  carma, wsrt, atnf, sma, bima, ....
 #  there is no good support here for combined (e.g. MAX(carma,sma)) arrays
 set telescope=carma
+
+#  pgplot patch 
+set gif=1
 
 #  try the new generic (autoconf) created compile directives file?
 set generic=0
@@ -151,6 +156,9 @@ set test=1                  #  mir.test  baseline test (batch oriented)
 set tests=1		    #  mir.tests sanity tests (batch oriented)
 set testx=0		    #  mir.testx testing X routines (interactive)
 set bench=0,512,1           #  mir.bench nchan,mapsize,cell  (nchan=0 will skip bench)
+
+#     MUST pick one of these
+set g77=0                   #  g77 compiler
 set intel=0                 #  use intel compiler (ifc/icc) for linux?
 set g95=0                   #  use g95 as default gnu compiler, instead of g77 [linux only]
 set gfortran=0              #  use gfortran as default gnu compiler, instead of g77 [linux only]
@@ -412,6 +420,13 @@ echo LIB: linpack subs
 mir.install linpack subs 
 if ($pgplot) then
   mir.install pgplot
+  if ($gif == 0) then
+    echo Patching PGPLOT, removing GIF drivers.
+    set d=$MIRLIB/drivers.list
+    mv $d $d.bad
+    cat   $d.bad | grep -v GIDRIV | grep -v PPDRIV | grep -v WDDRIV > $d
+    mir.install pgplot
+  endif
   if ($hosttype == darwin) rm -f $MIRLIB/libpgplot.so
 endif
 
