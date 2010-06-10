@@ -20,6 +20,7 @@
 #    3-jun-08    optionally work from tar file with reuse=2
 #   15-may-09    only remove old rootdir when present
 #   11-jul-09    optionally grab a (local) file, optionally intel/gfortran
+#   10-jun-10    handle gif, add test for autobuild
 #
 #  
 #----
@@ -44,6 +45,9 @@ set reuse=0
 # optionally pick one
 set gfortran=0
 set intel=0
+
+# sigh, old gfortran can't do gif, but default we try
+set gif=1
 
 #   tar file to grab from ftp (rootdir)
 set ftp=ftp://ftp.astro.umd.edu/progs/bima/miriad.tar.gz
@@ -154,9 +158,11 @@ if ($auto) then
  ./configure --prefix=`pwd`/$build
  make
  make install
+ (cd tmp ; ../install/mir.test; ../install/mir.tests)
+
 else
  cd $rootdir
- time install/install.miriad $opts generic=$generic
+ time install/install.miriad $opts generic=$generic gif=$gif
 endif
 
 #    patch the VERSION
