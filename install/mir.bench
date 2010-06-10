@@ -60,7 +60,7 @@ set ant=($MIRCAT/bima9_a.ant $MIRCAT/bima9_b.ant $MIRCAT/bima9_c.ant.equ)
 # setenv TMPDIR /tmp
 
 time uvgen out=vis1 harange=$harange source=$MIRCAT/point.source \
- corr=$corr spectra=$spectra ant=$ant[1] \
+ corr=$corr spectra=$spectra ant=$ant[1] minsize2=-1 \
  gnoise=$gnoise pnoise=$pnoise systemp=$systemp tpower=$tpower jyperk=$jyperk \
  > uvgen1.log
 time uvgen out=vis2 harange=$harange source=$MIRCAT/point.source \
