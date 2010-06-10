@@ -63,7 +63,7 @@ endif
 #  there is no good support here for combined (e.g. MAX(carma,sma)) arrays
 set telescope=carma
 
-#  pgplot patch 
+#  pgplot patch ; for older gfortran compilers  gif=0 is required
 set gif=1
 
 #  try the new generic (autoconf) created compile directives file?
@@ -463,6 +463,8 @@ cc -O $lfs -DTESTBED -I$MIRINC $MIRSUBS/uvio.c -o $MIRBIN/uvio $MIRLIB/libmir.a 
 # xcorf: (open)motif or lesstiff needs to have been installed for this
 # aug 2001: newer versions of lesstiff use /usr/X11R6/LessTif/Motif1.2/include
 #           instead of /usr/X11R6/include (which is now used by openmotif !!!)
+# Note: this tool is useful for BIMA only, for CARMA there is an online
+#       java version on http://cedarflat.mmarray.org/observing/tools/CGS.html
 #
 set inc_motif=(/usr/X11R6/include /usr/X11R6/LessTif/Motif1.2/include /usr/X11R6/LessTif/Motif2.0/include)
 set lib_motif=(/usr/X11R6/lib     /usr/X11R6/LessTif/Motif1.2/lib     /usr/X11R6/LessTif/Motif2.0/lib)
@@ -588,6 +590,7 @@ if (-e checklist) then
     else
 	echo Found $bad / $all binaries missing:
 	cat $badlist
+        echo The ones you should not worry about are:  atlod, xcorf and velplotc.
     endif
   else
     echo "Wow, they all compiled"
