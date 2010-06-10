@@ -627,6 +627,9 @@ if (-d /etc/selinux) then
    if ($status == 0) chcon -t texrel_shlib_t $MIR/lib/linux/*.so
 endif
 
+# copy some interesting files to tmp
+cp /etc/*release /etc/shells  $MIR/tmp
+
 
 
 #   Now tag it, so we can 'find -newer' things that have been updated since creation!
