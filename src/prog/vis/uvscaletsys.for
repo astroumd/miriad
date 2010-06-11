@@ -34,7 +34,7 @@ c
       INCLUDE 'maxdim.h'
       INCLUDE 'mirconst.h'
       CHARACTER PROG*(*)
-      PARAMETER (PROG = 'UVWIDE')
+      PARAMETER (PROG = 'UVSCALETSYS')
       CHARACTER VERSION*(*)
       PARAMETER (VERSION = '10-jun-2010')
 
