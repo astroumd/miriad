@@ -1,5 +1,6 @@
 c***********************************************************************
-c  Rescale system temperatures
+c  Rescale system temperatures, useful for SZA calibration
+c  in hybrid cm mode - june 2010
 c
 c   pjt    10jun10   cloned off uvwide, quick and dirty
 c
@@ -24,6 +25,7 @@ c     temperatures.
 c     No default.
 c@ table
 c     Ascii Table of nspect rows and nants columns.
+c     No default.
 c--
 c-----------------------------------------------------------------------
 c
@@ -41,7 +43,7 @@ c  Internal variables.
 c
       CHARACTER Infile*132, Outfile*132, Tabfile*132, type*1
       CHARACTER*11 except(15)
-      INTEGER i, k, m, lin, lout
+      INTEGER k, lin, lout
       INTEGER nread, nwread, nexcept, nants, nspect, nsys
       DOUBLE PRECISION preamble(5)
       REAL systemp(MAXWIN*MAXANT), wsystemp(MAXWIN*MAXANT)
@@ -255,8 +257,10 @@ c-----------------------------------------------------------------------
       REAL sscale(nspect*nants)
 c
       INTEGER i, j, nsys, nline, iostat
-      INTEGER lu, k1, k2, length
-      CHARACTER line*1024
+      INTEGER lu, k1, k2, length, tlen
+      CHARACTER line*1024, token*64
+      LOGICAL okay
+      DOUBLE PRECISION dval
 c
 c     since the array order is systemp(nants,nspect)
 c     sscale will be stored the same way
@@ -270,15 +274,36 @@ c     sscale will be stored the same way
       if (iostat.ne.0) call bug('f','error opening tabfile')
       CALL txtread(lu, line, length, iostat)
       nline = 0
+      i = 0
+      write(*,*) 'Expecting scale: ',nants,' * ', nspect
       DO WHILE (iostat.EQ.0)
+         write(*,*) 'GETSCALE: ',line(1:length)
          IF (line(1:1) .ne. '#') THEN
             nline = nline + 1
             IF (nline.GT.nspect) CALL bug('f','too many lines')
             k1 = 1
             k2 = length
+            DO j=1,nants
+               CALL getfield(line,k1,k2,token,tlen)
+               IF (tlen.GT.0) THEN
+                  CALL atodf(token(1:tlen), dval, okay)
+                  IF (okay) THEN
+                     sscale(i) = dval
+                     i = i + 1 
+                  ELSE
+                     CALL bug('f','Error decoding')
+                  ENDIF
+               ELSE
+                  CALL bug('f','Not enough ants')
+               ENDIF      
+            ENDDO
+            CALL getfield(line,k1,k2,token,tlen)
+            IF (tlen.GT.0) CALL bug('w','Too many ants')
          ENDIF
          CALL txtread(lu, line, length, iostat)
       ENDDO
+      write(*,*) 'Read ',i,nspect*nants
+      IF (i.NE.nspect*nants) CALL bug('f','Not enuf values read')
 
       RETURN
       END
