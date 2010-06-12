@@ -51,6 +51,7 @@
  *     jm   17nov94   Added forward declartion prototypes for each key
  *                    function called.
  *     jm   27dec94   Added new function keyinit().
+ *     pjt  12jun10   Added keyputc for ATNF compatibility
  */
 
 #include "sysdep.h" /* Include necessary for definition of ARGS macro. */
@@ -60,6 +61,12 @@ fortran subroutine keyinit(character task)
 {
   extern void keyinit_c ARGS((Const char *));
   keyinit_c(task.zterm);
+}
+/***********************************************************************/
+fortran subroutine keyputc(character arg)
+{
+  extern void keyputc_c ARGS((char *));
+  keyputc_c(arg.zterm);
 }
 /***********************************************************************/
 fortran subroutine keyput(character task, character arg)

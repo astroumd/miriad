@@ -24,6 +24,7 @@
  *		   expansion fatal (it would crash later if only a warning
  *		   is given)
  *    pjt  13jul07 make unique messages in different pieces of code
+ *    pjt  12jun10 added keyputc_c for ATNF compatibility
  ***********************************************************************
  */
 
@@ -236,6 +237,12 @@ void keyinit_c(Const char *task)
     iniCalled = KEYTRUE;  /* Is True only when keyini[_c]() is called. */
 }
 
+/* hack to be able to use the ATNF fortran subroutine keyputc */
+
+void keyputc_c(char *string)
+{
+  keyput_c("unknown", string);
+}
 /***********************************************************************/
 void keyput_c(Const char *task, char *string)
 /** KeyPut -- Store a keyword for later retrieval. */
