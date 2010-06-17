@@ -1,6 +1,6 @@
 #! /bin/csh -f
 #
-set version=9-jun-2010
+set version=17-jun-2010
 #
 #  2-aug-99 Updated for Sebok's Mandrake setup
 #  1-aug-00 Updated to allow to build private PGPLOT version
@@ -76,6 +76,9 @@ set generic=0
 set newdir=`date +%y%b%d | tr A-Z a-z`
 set hosttype=`uname -s | tr A-Z a-z`
 
+# test file for mac
+set Xcode=/Developer/Applications/Xcode.app/Contents/version.plist
+
 # hosttypes we support:  linux, darwin (MacOSX), sunos (->sun4sol)
 
 #	patch to use Stupar's original names
@@ -111,6 +114,12 @@ else if ($hosttype == sun4sol) then
   set mirxinc="/usr/include/X11"
   set mirxlib="/usr/X/lib"
 else if ($hosttype == darwin) then
+  if (-e $Xcode) then
+    echo Your Xcode version:
+    cat $Xcode
+  else
+    echo WARNING: no file Xcode=$Xcode 
+  endif
   set mirxinc="/usr/X11R6/include/X11"
   set mirxlib="/usr/X11R6/lib"
 else
