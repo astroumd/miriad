@@ -45,7 +45,7 @@ c
       CHARACTER PROG*(*)
       PARAMETER (PROG = 'UVSCALETSYS')
       CHARACTER VERSION*(*)
-      PARAMETER (VERSION = '20-jun-2010')
+      PARAMETER (VERSION = '21-jun-2010')
 
 c
 c  Internal variables.
@@ -278,6 +278,7 @@ c
       DOUBLE PRECISION dval
 c
 c     since the array order is systemp(nants,nspect)
+c     and wsystemp(nants,nwide)
 c     sscale will be stored the same way
 
       nsys = nspect*nants
@@ -300,11 +301,12 @@ c     sscale will be stored the same way
             k2 = length
             DO j=1,nants
                CALL getfield(line,k1,k2,token,tlen)
+c               write(*,*) 'token; ',line(1:k2),token,k1,k2
                IF (tlen.GT.0) THEN
                   CALL atodf(token(1:tlen), dval, okay)
                   IF (okay) THEN
-                     sscale(i) = dval
                      i = i + 1 
+                     sscale(i) = dval
                   ELSE
                      CALL bug('f','Error decoding')
                   ENDIF
