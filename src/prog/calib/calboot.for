@@ -10,6 +10,7 @@ c       2-dec-91    new calbflux() format V6.4 - still fixing some bugs
 c	4-dec-91    flux= now implemented - @ Berkeley
 c	9-dec-91    finished the flux= implementation 
 c      27-mar-92    assertl now
+c      18-apr-06    longer source names
 c
 c------ Inline doc (retrieved with doc to a .doc file) ----------------c
 c
@@ -56,11 +57,11 @@ c------ Declarations ---------------------------------------------------c
       INCLUDE 'calpoly.h'
       
       CHARACTER PVERSION*(*)
-      PARAMETER (PVERSION='Version 26-mar-92')
+      PARAMETER (PVERSION='Version 18-apr-2006')
 
       CHARACTER ctime0*40, line*132, dataset*100, logfile*100
       CHARACTER s2code*4, code*4
-      CHARACTER  source(MAXSRC)*8
+      CHARACTER  source(MAXSRC)*17
       CHARACTER bname*5, blname*5, planet*12, quasar*12
       INTEGER   i, j, p, p1, b, nsources, nfluxes
       INTEGER   valid, sum0, pidx, qidx, maxvalid, tno, iostat
