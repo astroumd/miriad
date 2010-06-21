@@ -317,8 +317,7 @@ can handle only a single dataset at a time.
 
 
 %N region
->Standard region keyword. See section "Image region of interest" in
-	the userguide.
+>Standard region keyword. See section "Image region of interest" in the userguide.
         This selects a subregion of an image. Multiple subregions can be
         selected, which are "ored" together. The following subcommands are
         recognized (each of which can be abbreviated to uniqueness).
