@@ -133,6 +133,9 @@ c    pjt     30jun09 Add antenna numbers (to get SZA data to work: 16..230
 c                    
 c  Bugs and Shortcomings:
 c    fix options=complex for > 8 ants
+c    missing antennas are listed as 0's, not easily distinguishable from a refant
+c    phases are wrapped within -180..180, and integer, there is no options
+c    unwrap here (yet), cf. options=wrap in gpplt.
 c-----------------------------------------------------------------------
 	include 'gplist.h'
 	character version*(*)
