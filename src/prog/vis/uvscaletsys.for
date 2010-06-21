@@ -3,6 +3,9 @@ c  Rescale system temperatures, useful for SZA calibration
 c  in hybrid cm mode - june 2010
 c
 c   pjt    10jun10   cloned off uvwide, quick and dirty
+c   pjt    20jun10   ignore wsystemps if not sized the same
+c                    useful for SZA data where USB was stripped
+c                    and nspect = nwide / 2
 c
 c***********************************************************************
 c= uvscaletsys - Rescale system temperatures
@@ -29,6 +32,12 @@ c     No default.
 c--
 c-----------------------------------------------------------------------
 c
+C TODO:   allow a single-time entry gaintable to be applied
+c         as a scale factor to the system temperatures
+c         Alternative, could imagine scale the visibilities 
+c         as well. Dick has been craving for this for decades
+c         is the word on the street.
+c
 c  Internal parameters.
 c
       INCLUDE 'maxdim.h'
@@ -36,7 +45,7 @@ c
       CHARACTER PROG*(*)
       PARAMETER (PROG = 'UVSCALETSYS')
       CHARACTER VERSION*(*)
-      PARAMETER (VERSION = '10-jun-2010')
+      PARAMETER (VERSION = '20-jun-2010')
 
 c
 c  Internal variables.
@@ -44,7 +53,7 @@ c
       CHARACTER Infile*132, Outfile*132, Tabfile*132, type*1
       CHARACTER*11 except(15)
       INTEGER k, lin, lout
-      INTEGER nread, nwread, nexcept, nants, nspect, nsys
+      INTEGER nread, nwread,nexcept,nants,nspect,nwide,nsys,nwsys
       DOUBLE PRECISION preamble(5)
       REAL systemp(MAXWIN*MAXANT), wsystemp(MAXWIN*MAXANT)
       REAL sscale(MAXWIN*MAXANT)
@@ -120,10 +129,18 @@ c
       CALL uvprobvr(lin,'systemp',type,nsys,updated)
       IF (.NOT.updated) CALL bug('f','Missing systemp')
 
+      CALL uvprobvr(lin,'wsystemp',type,nwsys,updated)
+      IF (.NOT.updated) CALL bug('w','Missing wsystemp')
+
       CALL uvrdvri(lin,'nants',nants,0) 
       CALL uvrdvri(lin,'nspect',nspect,0) 
+      CALL uvrdvri(lin,'nwide',nwide,0) 
       IF (nsys.NE.nants*nspect) CALL bug('f',
      *      'systemp not dimensioned as expected')
+      IF (nwsys.NE.nants*nwide) CALL bug('f',
+     *      'wsystemp not dimensioned as expected')
+      IF (nsys.NE.nwsys) CALL bug('w',
+     *      'wsystemp not same as systemp, ignoring them')
 
       CALL getscale(tabfile,nspect,nants,sscale)
 
@@ -150,14 +167,12 @@ c  Copy unchanged variables to the output data set.
 c
          CALL uvcopyvr(lin, lout)
 
+c  get the systemps, scale them , and write them out
          CALL uvgetvrr(lin,'systemp',systemp,nsys)
-         CALL uvgetvrr(lin,'wsystemp',wsystemp,nsys)
-         
-c  Scale the darn thing
-         CALL rescale(nsys, systemp, wsystemp, sscale)
-
+         CALL uvgetvrr(lin,'wsystemp',wsystemp,nwsys)
+         CALL rescale(nsys, nwsys, systemp, wsystemp, sscale)
          CALL uvputvrr(lout,'systemp',systemp,nsys)
-         CALL uvputvrr(lout,'wsystemp',wsystemp,nsys)
+         CALL uvputvrr(lout,'wsystemp',wsystemp,nwsys)
 
          CALL uvwread(lin, wdata, wflags, MAXCHAN, nwread)
          IF (nwread .LE. 0) CALL bug('f',PROG // ' No wide band data?')
@@ -308,16 +323,16 @@ c     sscale will be stored the same way
       RETURN
       END
 c-----------------------------------------------------------------------
-      SUBROUTINE rescale(nsys,systemp, wsystemp, sscale)
+      SUBROUTINE rescale(nsys, nwsys, systemp, wsystemp, sscale)
       IMPLICIT NONE
-      INTEGER nsys
-      REAL systemp(nsys), wsystemp(nsys), sscale(nsys)
+      INTEGER nsys, nwsys
+      REAL systemp(nsys), wsystemp(nwsys), sscale(nsys)
 c
       INTEGER i
 
       DO i=1,nsys
           systemp(i) =  systemp(i) * sscale(i) 
-         wsystemp(i) = wsystemp(i) * sscale(i) 
+          if (nsys.EQ.nwsys) wsystemp(i) = wsystemp(i) * sscale(i) 
       ENDDO
 
       RETURN
