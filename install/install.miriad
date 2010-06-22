@@ -1,6 +1,6 @@
 #! /bin/csh -f
 #
-set version=17-jun-2010
+set version=22-jun-2010
 #
 #  2-aug-99 Updated for Sebok's Mandrake setup
 #  1-aug-00 Updated to allow to build private PGPLOT version
@@ -44,6 +44,7 @@ set version=17-jun-2010
 # 18-mar-09 force darwin no shared libs
 #  9-jun-10 allow gif=0 to disable GIF drivers for older gfortran
 #           also check for SELinux now
+# 22-jun-10 brief=1 option to only install the core of miriad
 #
 #-----------------------------------------------------------------------
 
@@ -68,6 +69,9 @@ set gif=1
 
 #  try the new generic (autoconf) created compile directives file?
 set generic=0
+
+#  brief
+set brief=0
 
 #   'newdir' is something that tags the date this version was made (e.g. 98jun08)
 #   later on this will also be stored again in the file $MIR/DATE, where the CVS miriad
@@ -158,6 +162,7 @@ set pgplot=1                #  include PGPLOT in $MIRLIB ? (you almost ALWAYS wa
 set debug=0                 #  compile in debug (-g) mode ?
 set cvs=1                   #  use CVS archive to get miriad.tar.gz ?
 set internal=1              #  internal sourcecode build; overrides cvs, mirroot and newdir
+set xcorf=0                 #  xcorf is old now, for BIMA 
 set test=1                  #  mir.test  baseline test (batch oriented)
 set tests=1		    #  mir.tests sanity tests (batch oriented)
 set testx=0		    #  mir.testx testing X routines (interactive)
@@ -480,14 +485,16 @@ set lib_motif=(/usr/X11R6/lib     /usr/X11R6/LessTif/Motif1.2/lib     /usr/X11R6
 #   index into above array (1,2,..)
 set imotif=1
 
-echo Compiling XCORF:
-cd $MIR/src/spec/xcorf
-make sol6 SOLARISLIBS= \
+if ($xcorf) then
+  echo Compiling XCORF:
+  cd $MIR/src/spec/xcorf
+  make sol6 SOLARISLIBS= \
           CFLAGS="-O -I$inc_motif[$imotif]" \
 	  RFLAGS6= \
 	  LFLAGS6=-L$lib_motif[$imotif] >& $MIR/tmp/xcorf.$$.$hosttype
-mv xcorf $MIRBIN
-make cleanup
+  mv xcorf $MIRBIN
+  make cleanup
+endif
 
 # add keyword documentation to MIRPDOC
 cd $MIRPDOC
@@ -547,7 +554,7 @@ else
 endif
 
 # ATNF stuff, linux only for now; always in debugging mode
-if ($hosttype == linux) then
+if ($hosttype == linux && $brief == 0) then
 
  echo Compiling rpfits
  pushd $MIR/borrow/rpfits >& /dev/null
@@ -606,7 +613,7 @@ if (-e checklist) then
   endif
 endif
 
-if ($zeno && -e $MIR/borrow/zeno) then
+if ($zeno && -e $MIR/borrow/zeno && $brief == 0) then
   echo Adding zeno and hkmiriad
   (cd $MIR/borrow/zeno;                                    make install_miriad)  >& hkmiriad.log
   (cd $MIR/src/spec/hkmiriad/;  cp Makefile.hk  Makefile ; make install_miriad) >>& hkmiriad.log
