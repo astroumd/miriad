@@ -42,6 +42,9 @@ set generic=1
 #   reuse the current rootdir directory, instead of removing it (0=cvs, 1=reuse the rootdir, 2=tar)
 set reuse=0
 
+#   brief will only do miriad, no other stuff (wip, rad ...)
+set brief=0
+
 # optionally pick one
 set gfortran=0
 set intel=0
@@ -106,7 +109,7 @@ if ($reuse == 0) then
     rm -rf $rootdir
     echo "...done".
   endif
-  if (1) then
+  if ($brief == 0) then
     echo "getting miriad,wip and rad via cvs....".
     (cvs -Q co $branch -d $rootdir miriad; cd $rootdir/borrow; cvs -Q co wip; cvs -Q co rad)
   else
@@ -162,7 +165,7 @@ if ($auto) then
 
 else
  cd $rootdir
- time install/install.miriad $opts generic=$generic gif=$gif
+ time install/install.miriad $opts generic=$generic gif=$gif brief=$brief
 endif
 
 #    patch the VERSION
