@@ -246,7 +246,7 @@ c
         character mname*8000, moln*16
         integer mtag(maxmline), nmline, j, jp, js, je, iline
         character version*(*)
-        parameter(version='SmaUvSpec: version 1.19 27-apr-2010')
+        parameter(version='SmaUvSpec: version 1.19 24-jun-2010')
         character uvflags*8,device*64,xaxis*12,yaxis*12,logf*64
         character xtitle*64,ytitle*64, veldef*8
         character xtitlebuf*64, line*64
@@ -768,7 +768,7 @@ c
         integer maxblpnt
         parameter(maxblpnt=maxbase*256 + maxbase-1)
         integer maxaver,maxpol
-        parameter(maxaver=276525,maxpol=4)
+        parameter(maxaver=655360,maxpol=4)
 c       parameter(maxaver=276525,maxpol=4)
         complex buf(maxaver)
         real    bufr(maxaver),buf2(maxaver)
@@ -826,7 +826,8 @@ c  cnt		The number of things accumulated into the preambles.
 c  chnkpntr     The spectral chunk pntr.
         include 'maxdim.h'
         integer maxaver,maxpol
-        parameter(maxaver=276525,maxpol=4)
+c        parameter(maxaver=276525,maxpol=4)
+        parameter(maxaver=655360,maxpol=4)
         integer maxblpnt
         parameter(maxblpnt=maxbase*256 + maxbase-1)
         complex buf(maxaver)
@@ -1149,7 +1150,8 @@ c  cnt		The number of things accumulated into the preambles.
 c
         include 'maxdim.h'
         integer maxaver,maxpol
-        parameter(maxaver=276525,maxpol=4)
+c        parameter(maxaver=276525,maxpol=4)
+        parameter(maxaver=655360,maxpol=4)
         integer maxblpnt
         parameter(maxblpnt=maxbase*256 + maxbase-1)
         complex buf(maxaver)
@@ -1231,8 +1233,11 @@ c
           nchan(p,bl) = nread
           pnt(p,bl) = free
           free = free + nread
-          if(free.gt.maxaver)call bug('f',
+          if(free.gt.maxaver)then
+		write(*,*) 'MAXAVER: ',maxaver
+	     call bug('f',
      *      'Too much data to accumulate, in BufAcc')
+	  endif
 c
 c  Copy across the new data.
 c
