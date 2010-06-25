@@ -9,6 +9,7 @@ echo "   mchw. 20sep02 version"
 #  20sep02 mchw. Re-import CARMA improvements for ALMA.
 #  25sep02 mchw. Re-import improvements from hex7.csh to hex19.csh
 #  26sep02 mchw. Increase imsize from 129 to 257.
+#  24jun10 mchw. Added uv and image plots.
 
 goto start
 start:
@@ -56,6 +57,7 @@ echo " "                             >> timing
 echo "   ---  TIMING   ---   "       >> timing
 echo START: `date` >> timing
 
+goto plot
 goto continue
 continue:
 
@@ -93,6 +95,9 @@ echo "Make model uv-data using VLA image of Cas A as a model (the model has the 
     uvmodel vis=$config.uv model=$config.cas.$cell.demos$i options=add,selradec out=$config.$dec.cas.$cell.uv$i
   end
 echo UVMODEL: `date` add the model to the noisy sampled uv-data >> timing
+
+uvplt vis=$config.$dec.cas.$cell.uv1 axis=uc,vc options=equal,nobase device=/xs
+uvplt vis=$config.$dec.cas.$cell.uv1 axis=uc,vc options=equal,nobase device=uvplt.$config.$dec.cas.$cell.gif/gif
 
 rm -r $config.$dec.cas.$cell.mp $config.$dec.cas.$cell.bm
 invert "vis=$config.$dec.cas.$cell.uv*" map=$config.$dec.cas.$cell.mp beam=$config.$dec.cas.$cell.bm imsize=$imsize sup=0 options=mosaic,double select=$select
@@ -166,13 +171,30 @@ echo "regrid the convolved model to the deconvolved image template" >> timing
   rm -r $config.$dec.cas.$cell.regrid
   regrid in=$config.$dec.cas.$cell.conv out=$config.$dec.cas.$cell.regrid tin=$config.$dec.cas.$cell.cm axes=1,2
   implot in=$config.$dec.cas.$cell.regrid device=/xs units=s region=$region
-#  cgdisp range=0,0,lin,8 in=$config.$dec.cas.$cell.conv device=$config.$dec.cas.$cell.conv.gif/gif labtyp=arcsec,arcsec options=beambl,wedge  region=$region
+
+plot:
+  cgdisp range=0,0,lin,8 in=$config.$dec.cas.$cell.cm device=$config.$dec.cas.$cell.cm.gif/gif labtyp=arcsec,arcsec options=beambl,wedge  region=$region device=/xs
+  cgdisp range=0,0,lin,8 in=$config.$dec.cas.$cell.cm device=$config.$dec.cas.$cell.cm.gif/gif labtyp=arcsec,arcsec options=beambl,wedge  region=$region
+  cgdisp range=0,0,lin,8 in=$config.$dec.cas.$cell.regrid device=$config.$dec.cas.$cell.regrid.gif/gif labtyp=arcsec,arcsec options=beambl,wedge  region=$region device=/xs
+  cgdisp range=0,0,lin,8 in=$config.$dec.cas.$cell.regrid device=$config.$dec.cas.$cell.regrid.gif/gif labtyp=arcsec,arcsec options=beambl,wedge  region=$region
+rm -r $config.$dec.cas.$cell.imcat
+imcat in=$config.$dec.cas.$cell.cm,$config.$dec.cas.$cell.regrid out=$config.$dec.cas.$cell.imcat options=relax
+ cgdisp range=0,0,lin,8 in=$config.$dec.cas.$cell.imcat device=$config.$dec.cas.$cell.imcat.gif/gif labtyp=arcsec,arcsec options=beambl,wedge  region=$region device=/xs
+ cgdisp range=0,0,lin,8 in=$config.$dec.cas.$cell.imcat device=$config.$dec.cas.$cell.imcat.gif/gif labtyp=arcsec,arcsec options=beambl,wedge region=$region
+
+
 #  mv $config.$dec.cas.$cell.conv.gif ~/public_html
+
 
   rm -r $config.$dec.cas.$cell.resid
   imdiff in1=$config.$dec.cas.$cell.cm in2=$config.$dec.cas.$cell.regrid resid=$config.$dec.cas.$cell.resid options=nox,noy,noex
   implot device=/xs units=s in=$config.$dec.cas.$cell.resid region=$region
   histo in=$config.$dec.cas.$cell.resid region=$region
+plot:
+rm -r $config.$dec.cas.$cell.mosmem
+imcat in=$config.$dec.cas.$cell.cm,$config.$dec.cas.$cell.regrid,$config.$dec.cas.$cell.resid options=relax out=$config.$dec.cas.$cell.mosmem
+  cgdisp in=$config.$dec.cas.$cell.mosmem labtyp=arcsec,arcsec options=beambl,wedge region=$region device=$config.$dec.cas.$cell.mosmem.gif/gif
+
 echo FINISH: `date` >> timing
 echo " " >> timing
 
