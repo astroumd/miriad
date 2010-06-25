@@ -71,12 +71,15 @@ set method  = $4
 set harange = -2,2,.008
 set ellim   = 10
 set select = '-shadow(3.5)'
-set freq    = 30
+set freq    = 230
 set bw      = 8000
 set nchan   = 1
+set imsize  = 513
 set imsize  = 129
 set imsize  = 257
-set imsize  = 513
+# mosaic grid size is currently hardcoded in uvgen 15" for 230 GHz, 108" for 30 GHz
+set center  = hex7_108
+set center  = hex7_15
 set region  = 'arcsec,box(25,-25,-25,25)'
 if($model == casc.vla)then
   set region = `calc "$cell*500" | awk '{printf("arcsec,box(%.2f,-%.2f,-%.2f,%.2f)",$1,$1,$1,$1)}'`
@@ -130,22 +133,22 @@ echo "Using $0 mosaic with 15'' spacing" >> $model.results
 echo "Generate uv-data. Tsys=80,290,0.26, bandwidth=$bw MHz " >> timing
 rm -r carma.uv ovro.uv hatcreek.uv sza.uv sza10.uv sza6.uv
 # CARMA
-uvgen ant=$config.ant baseunit=-3.33564 radec=23:23:25.803,$dec lat=37.02 harange=$harange source=$MIRCAT/no.source systemp=80,290,0.26 jyperk=73 freq=$freq corr=$nchan,1,0,$bw out=carma.uv telescop=carma ellim=$ellim center=@hex7_108
+uvgen ant=$config.ant baseunit=-3.33564 radec=23:23:25.803,$dec lat=37.02 harange=$harange source=$MIRCAT/no.source systemp=80,290,0.26 jyperk=73 freq=$freq corr=$nchan,1,0,$bw out=carma.uv telescop=carma ellim=$ellim center=@hex7_15
 
 # OVRO
-uvgen ant=$config.ant baseunit=-3.33564 radec=23:23:25.803,$dec lat=37.02 harange=$harange source=$MIRCAT/no.source systemp=80,290,0.26 jyperk=43  freq=$freq corr=$nchan,1,0,$bw out=ovro.uv telescop=ovro ellim=$ellim  center=@hex7_108
+uvgen ant=$config.ant baseunit=-3.33564 radec=23:23:25.803,$dec lat=37.02 harange=$harange source=$MIRCAT/no.source systemp=80,290,0.26 jyperk=43  freq=$freq corr=$nchan,1,0,$bw out=ovro.uv telescop=ovro ellim=$ellim  center=@hex7_15
 
 # HATCREEK
-uvgen ant=$config.ant baseunit=-3.33564 radec=23:23:25.803,$dec lat=37.02 harange=$harange source=$MIRCAT/no.source systemp=80,290,0.26 jyperk=126 freq=$freq corr=$nchan,1,0,$bw out=hatcreek.uv telescop=hatcreek ellim=$ellim  center=@hex7_108
+uvgen ant=$config.ant baseunit=-3.33564 radec=23:23:25.803,$dec lat=37.02 harange=$harange source=$MIRCAT/no.source systemp=80,290,0.26 jyperk=126 freq=$freq corr=$nchan,1,0,$bw out=hatcreek.uv telescop=hatcreek ellim=$ellim  center=@hex7_15
 
 # SZA
-uvgen ant=$config.ant baseunit=-3.33564 radec=23:23:25.803,$dec lat=37.02 harange=$harange source=$MIRCAT/no.source systemp=80,290,0.26 jyperk=383 freq=$freq corr=$nchan,1,0,$bw out=sza.uv telescop=sza ellim=$ellim  center=@hex7_108
+uvgen ant=$config.ant baseunit=-3.33564 radec=23:23:25.803,$dec lat=37.02 harange=$harange source=$MIRCAT/no.source systemp=80,290,0.26 jyperk=383 freq=$freq corr=$nchan,1,0,$bw out=sza.uv telescop=sza ellim=$ellim  center=@hex7_15
 
 # SZA-OVRO
-uvgen ant=$config.ant baseunit=-3.33564 radec=23:23:25.803,$dec lat=37.02 harange=$harange source=$MIRCAT/no.source systemp=80,290,0.26 jyperk=128 freq=$freq corr=$nchan,1,0,$bw out=sza10.uv telescop=sza10 ellim=$ellim  center=@hex7_108
+uvgen ant=$config.ant baseunit=-3.33564 radec=23:23:25.803,$dec lat=37.02 harange=$harange source=$MIRCAT/no.source systemp=80,290,0.26 jyperk=128 freq=$freq corr=$nchan,1,0,$bw out=sza10.uv telescop=sza10 ellim=$ellim  center=@hex7_15
 
 # SZA-BIMA
-uvgen ant=$config.ant baseunit=-3.33564 radec=23:23:25.803,$dec lat=37.02 harange=$harange source=$MIRCAT/no.source systemp=80,290,0.26 jyperk=220 freq=$freq corr=$nchan,1,0,$bw out=sza6.uv telescop=sza6 ellim=$ellim  center=@hex7_108
+uvgen ant=$config.ant baseunit=-3.33564 radec=23:23:25.803,$dec lat=37.02 harange=$harange source=$MIRCAT/no.source systemp=80,290,0.26 jyperk=220 freq=$freq corr=$nchan,1,0,$bw out=sza6.uv telescop=sza6 ellim=$ellim  center=@hex7_15
 echo UVGEN: `date` >> timing
 
 uvindex vis=carma.uv
@@ -291,6 +294,14 @@ echo "regrid the convolved model to the deconvolved image template" >> timing
   histo in=$config.$dec.$model.$cell.resid region=$region
   cgdisp range=0,0,lin,8 in=$config.$dec.$model.$cell.cm device=/xs labtyp=arcsec,arcsec options=beambl,wedge region=$region
   cgdisp in=$config.$dec.$model.$cell.cm,$config.$dec.$model.$cell.regrid,$config.$dec.$model.$cell.resid device=/xs labtyp=arcsec,arcsec options=beambl,wedge region=$region 
+
+plot:
+rm -r $config.$dec.$model.$cell.imcat
+imcat in=$config.$dec.$model.$cell.cm,$config.$dec.$model.$cell.regrid out=$config.$dec.$model.$cell.imcat options=relax
+ cgdisp range=0,0,lin,8 in=$config.$dec.$model.$cell.imcat device=$config.$dec.$model.$cell.imcat.gif/gif labtyp=arcsec,arcsec options=beambl,wedge  region=$region device=/xs
+ cgdisp range=0,0,lin,8 in=$config.$dec.$model.$cell.imcat device=$config.$dec.$model.$cell.imcat.gif/gif labtyp=arcsec,arcsec options=beambl,wedge region=$region
+
+  rm -r $config.$dec.$model.$cell.$method
   imcat in=$config.$dec.$model.$cell.cm,$config.$dec.$model.$cell.regrid,$config.$dec.$model.$cell.resid options=relax out=$config.$dec.$model.$cell.$method
 #  cgdisp in=$config.$dec.$model.$cell.$method labtyp=arcsec,arcsec options=beambl,wedge region=$region device=/xs
   cgdisp in=$config.$dec.$model.$cell.$method labtyp=arcsec,arcsec options=beambl,wedge region=$region device=$config.$dec.$model.$cell.$method.gif/gif
