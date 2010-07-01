@@ -1,0 +1,273 @@
+#!/bin/sh 
+#
+# A Set of Procedures to test some basic behavior of MIRIAD
+# for CARMA
+#
+#  1-jul-2010     for new version
+#-----------------------------------------------------------------------
+
+#  we're using tail +N
+export _POSIX2_VERSION=1
+
+usage() {
+  (
+  echo "Usage: $0 [help] [basic] [xyio] [uvio] [calib] [map] [rad] [device=$device]"
+  echo "Run a (selective) number of tests to test some basic"
+  echo "miriad capabilities"
+  )
+}
+
+#
+# Make sure a miriad executable ($MIRBIN for now) is present by compiling it
+#
+# BUG: It does not allow for programs to be in the search path alone, but will
+# use them if they are before the $MIRBIN version
+#
+# $*    Name of the program(s) required
+#
+#
+require() {
+  (
+  for file in $* ; do
+    if test -f $MIRBIN/$file; then
+      echo $file exist
+    else
+      mir.prog $file
+    fi
+  done
+  )
+}
+#
+# make a blank MIRIAD dataset
+#
+#  $1 = name of dataset
+
+mkdata() {
+  if test -d $1; then
+    echo Dataset $1 already exists, cannot continue
+    exit 1
+  else
+    echo Creating blank dataset $1
+    mkdir $1
+    touch $1/header
+  fi
+}
+
+run() {
+  pgm=$1
+  $*
+  echo RUN $pgm $?
+}
+
+runt() {
+  pgm=$1
+  time $*
+  echo RUN $pgm $?
+}
+
+#
+# Basic miriad (mostly non-astronomical programs from $MIRPROG/misc)
+#
+
+basic() {
+  (
+  require itemize puthd mathd delhd copyhd prthd remove prthis addhis
+  mkdir $1
+  cd $1
+  run mkdata test1
+  run itemize in=test1
+  run addhis in=test1 comment=hello
+  run addhis in=test1 comment='hello world'
+  run prthis in=test1
+  run puthd in=test1/real   value=3.1415     type=real
+  run puthd in=test1/double value=3.1415d1   type=double
+  run puthd in=test1/int    value=3          type=integer
+  run puthd in=test1/ascii  value=Hello      type=ascii
+  run itemize in=test1
+  run prthis in=test1 log=prthis.log
+  cd ..
+  )
+}
+
+
+xyio() {
+  (
+  require imgen histo imlist
+  mkdir $1
+  cd $1
+  runt imgen out=map1 imsize=512 object=j1x spar=1,0,0,200,100,30
+  runt histo in=map1
+  runt imlist in=map1 options=stat
+  run imlist in=map1 options=data "region=relpix,box(-2,-2,2,2)"
+  run imgen out=map2 imsize=128 object=level spar=1
+  echo 0000000 0000 0400 803f 0000 803f 0000 803f 0000 > endian.lit
+  echo 0000000 0000 0004 3f80 0000 3f80 0000 3f80 0000 > endian.big
+  # Use echo to compress extra whitepsace that some od's output
+  echo `od -x map2/image | head -1` > endian.this
+  cmp -s endian.lit endian.this
+  if [ $? = 0 ] ; then	    
+    echo this machine is LITTLE_ENDIAN
+  else
+    cmp -s endian.big endian.this
+    if [ $? = 0 ] ; then    
+      echo this machine is BIG_ENDIAN
+    else
+      echo this machine has UNKNOWN_ENDIAN and might not run miriad properly:
+      echo `cat endian.big` BIG_ENDIAN
+      echo `cat endian.lit` LITTLE_ENDIAN
+      echo `cat endian.this` MACHINE_ENDIAN
+    fi
+  fi
+  cd ..
+  )
+}
+
+#
+# this is really brain-dead. There seems to be an AT version of UVGEN
+# around that has a different format. The only safe way is to bypass
+# uvgen's brain-dead I/O and run it in default mode, and let uvgen
+# create the 3 files quasi-interactively....
+# until we have a better solution. For now, this works (reliably?)
+# (e.g. a comma separated list didn't work in the strict f2c compiler)
+#
+# this procedure creates 3 files: uvgen.source uvgen.corr and uvgen.ant
+#
+init_uvgen_also_bad() {
+  uvgen << END_OF_UVGEN
+1,0,0,0,0,0,0,0
+
+0,0,0
+100,0,0
+0,40,0
+0,100,0
+0,-160,0
+0,240,0
+
+1
+0
+100,100,100,100
+25,25,25,25
+0,100,100
+END_OF_UVGEN
+}
+
+init_uvgen_bad() {
+  (
+  echo 1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0 > uvgen.source
+  echo 0,1,100.00,100.00,100.00,100.00,25.00,25.00,25.00,25.00,0.0 > uvgen.corr
+  echo 0,0,0 >     uvgen.ant
+  echo 100,0,0 >>  uvgen.ant
+  echo 0,40,0  >>  uvgen.ant
+  echo 0,100,0 >>  uvgen.ant
+  echo 0,-160,0 >> uvgen.ant
+  echo 0,240,0  >> uvgen.ant
+  )
+}
+
+
+uvio() {
+  (
+  mkdir $1
+  cd $1
+  require uvgen uvlist uvcat
+  # init_uvgen
+  runt uvgen out=vis1 harange=-6,6,1 source=$MIRCAT/point.source corr=512,9 ant=$MIRCAT/carma_DZ.ant
+  runt uvlist vis=vis1 recnum=20
+  runt uvcat vis=vis1 out=vis2 select='vis(1,30)'
+  cd ..
+  )
+}
+
+map() {
+  (
+  mkdir $1
+  cd $1
+  require uvgen invert clean restor
+  # init_uvgen
+  runt uvgen out=vis1 harange=-6,6,0.01 source=$MIRCAT/point.source corr=0,1 ant=$MIRCAT/bima9_b.ant
+  runt invert vis=vis1 map=map1 beam=beam1 imsize=512 cell=0.5 
+  runt clean map=map1 beam=beam1 out=clean1
+  runt restor model=clean1 beam=beam1 map=map1 out=cmap1
+  cd ..
+  )
+}
+
+rad() {
+  (
+  mkdir $1
+  cd $1
+  require lvg micsph
+  cp -a $MIR/borrow/rad/test .
+  cd test
+  runt lvg -f lvg.def
+  runt micsph -f leung1.def
+  diff lvg.test1.log lvg.test1-arch.log
+  diff leung1.log leung1-arch.log
+  cd ../..
+  )
+}
+
+
+check() {
+  (
+  grep \^RUN $1 | awk '{if ($3!=0) print $2,$3}' | uniq -c > tmp.0
+  if test -s tmp.0; then
+    echo Checking $1, errors are reported by:
+    echo "# errors    Program Exit_status"
+  else
+    echo OK
+  fi
+  )
+}
+
+
+# Set up a new test directory
+  data=tmp$$
+  mkdir $data
+  cd $data
+
+# Run tests
+  echo -n "Running basic: "
+  basic basic > basic.log 2>&1
+  check basic.log
+
+
+  echo -n "Running xyio: "
+  xyio xyio > xyio.log 2>&1
+  check xyio.log
+
+
+  echo -n "Running uvio: "
+  uvio uvio > uvio.log 2>&1
+  check uvio.log
+
+  echo -n "Running map: "
+  map map > map.log 2>&1
+  check map.log
+
+  if test -f $MIR/borrow/rad/README; then
+    echo -n "Running rad: "
+    rad rad > rad.log 2>&1
+    echo "OK"
+  fi
+
+  echo Creating logfile for baseline check:
+  sum=summary_$USER.log
+  itemize in=basic/test1 | tail +2 > $sum
+  histo in=xyio/map1 | tail +2 >> $sum
+  grep _ENDIAN xyio.log >> $sum
+  # od -x xyio/map2/image | head -1  >> $sum
+  uvlist vis=uvio/vis2 recnum=100 | tail +2 >> $sum
+  histo in=map/cmap1 | tail +2 >> $sum
+  # copy back to /tmp so we can retrieve it for baseline comparision
+  cp $sum /tmp
+
+  version=version.log
+  echo Record date and version etc.
+  echo UNAME: `uname -a` > $version
+  echo DATE: `date`     >> $version
+  echo MIR:  $MIR       >> $version
+
+
+exit 0
+	
