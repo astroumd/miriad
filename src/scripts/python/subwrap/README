@@ -1,0 +1,81 @@
+--------------------------------------------------------------------------
+
+This is a set of python wrappers for a large portion of miriad
+  subroutines (~730) with the following caveats:
+  1. Not all of these wrappers have been tested and thus may not work
+     as expected
+  2. Specific subroutines have not been included:
+     a. those dealing directly with pgplot
+     b. those that take external functions as arguments
+     c. those for which the input/output arguments were poorly/not
+        documented
+     d. sma subroutines
+     e. string and i/o manipulation since python has built in functions
+        to do this already
+     f. text file i/o routines as python can do this itself
+     g. matrix manipulation as the numpy and numarray python modules do
+        this quite well
+   Feel free to add/edit these wrappers to correct any of the above issues
+
+--------------------------------------------------------------------------
+
+Requirements:
+  1. Python must be insatlled on your system
+  2. Miriad must be installed on your system
+  3. SWIG must be installed on your system (this is a free download from
+     www.swig.org
+
+--------------------------------------------------------------------------
+
+To build and install these wrappers use the following command:
+
+   	 build_python.sh <MIRDIR> <OS>
+
+Where <MIRDIR> is the installation directory of your miriad installation.
+This is usually represented by $MIR if you have miriad in your path. <OS>
+is your operating system type (currently only linux and darwin have been
+tested).
+
+The python files and libraries are installed in $MIRLIB/python.
+
+--------------------------------------------------------------------------
+
+How to use these wrappers (Note that $MIRLIB/python must be in your python
+ path. It should be once miriad is insatlled, type "echo $PYTHONPATH" to
+ ckeck):
+
+As an example - opening a visibility file, reading in an integration set,
+and closing the file
+
+python
+>>> import miriadwrap
+>>> handle = miriadwrap.uvopen("1733-130.mir","old")
+>>> preamble,data,flags = miriadwrap.uvread(handle)
+>>> miriadwrap.uvclose(handle)
+
+In this example the call to uvopen takes 2 arguments: the visibility file
+name and new/old for creating/opening a file, and returns the handle to the
+data set. the call to uvread takes the handle as an argument and returns the
+preamble, data (in python complex format), and data flags (as booleans) from
+the first integration. The call to uvclose takes the handle as an agrument
+and closes off the file.
+
+You can type help <task> (e.g. mirwrap.uvread) to get some info on the
+calling/return sequence for any task. The details of each task are left
+to the miriad manual.
+
+In general the following rules apply to the wrappers:
+   1. Complex data are returned/taken as lists of python complex values
+   2. Flags and other boolean values are returned/taken as python
+      booleans (not 1/0)
+   3. Return values are returned as tuples
+   4. Values that are returned/taken as arrays are python lists
+   5. Lengths of lists are not taken as arguments or returned from functions
+      as the built in python len() function can be used to get the length
+There are likely to be exceptions to these rules as some may have been missed,
+feel free to correct them.
+
+--------------------------------------------------------------------------
+
+These routines rely on an external package mxTools, which is included in
+the build (along with its open source license).
