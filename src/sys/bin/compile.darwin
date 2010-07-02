@@ -13,6 +13,7 @@ set mlsys = $mmir/bin/localsys
 #  You need cc_dynamic if you like an FSF versions of g77 with apple's gcc
 #  when you link FSF versions of gcc and g77, should be ok.
 #  which seems to happen if you did not install Xcode
+#  add -DWORDS_BIGENDIAN to Coptions if you're on a PPC
 #
 setenv Fcompile  "g77"
 setenv Foptions  "-O -fno-globals -fno-common"
@@ -22,8 +23,8 @@ setenv Flinklib  "-lmir -llinpack -lpgplot -lX11 -lSystemStubs -lm"
 setenv Finclude  "-I`echo $mmir/src/inc $MIRXINC | sed 's/ / -I/g'`"
 # the gnu compiler actually adds -Dlinux, so we don't need it here
 setenv Ccompile  "gcc"
-setenv Coptions  "-O -fno-common -DWORDS_BIGENDIAN -Ddarwin"
-setenv CoptionsN "-DWORDS_BIGENDIAN -Ddarwin"
+setenv Coptions  "-O -fno-common -Ddarwin"
+setenv CoptionsN "-Ddarwin"
 setenv Clinkdir  "-L`echo $mmir/lib/$mhost $MIRXLIB | sed 's/ / -L/g'`"
 setenv Clinklib  "-lmir -llinpack -lpgplot -lX11 -lf2c -lm"
 setenv Cinclude  "-I`echo $mmir/src/inc $mmir/src/subs | sed 's/ / -I/g'`"
