@@ -171,9 +171,9 @@ uvio() {
   cd $1
   require uvgen uvlist uvcat
   # init_uvgen
-  runt uvgen out=vis1 harange=-6,6,1 source=$MIRCAT/point.source corr=512,9 ant=$MIRCAT/carma_DZ.ant
+  runt uvgen out=vis1 harange=-1,1,1 source=$MIRCAT/point.source corr=2048,4 ant=$MIRCAT/carma_DZ.ant
   runt uvlist vis=vis1 recnum=20
-  runt uvcat vis=vis1 out=vis2 select='vis(1,30)'
+  runt uvcat vis=vis1 out=vis1a select='vis(1,30)'
   cd ..
   )
 }
