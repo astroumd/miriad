@@ -1,0 +1,159 @@
+#! /bin/csh -f
+#  
+# script to tinker with a single calibrator (e.g. fringetest)
+#
+# see also arryay health:   fringeCheck.csh
+#
+# Default: fringe.3C273.2008jun18.4
+# For default settingsf rms in the 6 windows is:  
+# 22.11 22.20 22.54 22.72 23.42 25.72 mJy/beam  (all, minus the 31x31 center)
+# 20.53 20.59 20.43 20.84 21.54 24.39           (quarter)
+
+#
+set vis=fringe.3C273.2008jun18.4.miriad   #> IFILE  vis=fringe.3C273.2008jun18.4.miriad
+#
+set band4=1                               #> RADIO  band4=0        0,1
+set linecal=0                             #> RADIO  linecal=0      0,1
+set bandpassg=0                           #> RADIO  bandpassg=0    0,1
+set selfcal=1                             #> RADIO  selfcal=1      0,1
+set ampcal=0                              #> RADIO  ampcal=0       0,1
+#
+set interval=2                            #> SCALE  interval=2     0.05:4:0.05
+set refant=7                              #> RADIO  refant=7       1,2,3,4,5,6,7,8,9,10,11,12,13,14,15
+#
+set imsize=256                            #> RADIO  imsize=256     0,128,129,256,257,512,513
+set cell=1                                #> SCALE  cell=1.0       0:4:0.1
+set mfs=0                                 #> RADIO  mfs=0          0,1
+set dogsv=0                               #> RADIO  dogsv=0        0,1
+set systemp=0                             #> RADIO  systemp=0      0,1
+set mosaic=0                              #> RADIO  mosaic=0       0,1
+set niters=250                            #> SCALE  niters=250     0:1000:1
+set ds9=0                                 #> RADIO  ds9=0          0,1
+#
+foreach arg ($*)
+  set $arg
+end
+set bench=ftp://ftp.astro.umd.edu:/pub/carma/fringe.3C273.2008jun18.4.miriad.tar.gz
+# -----------------------------------------------------------------------
+
+if ($ampcal) then
+ set selfcal_options=(options=amp,noscale,apriori)
+else
+ set selfcal_options=(options=phase)
+endif
+
+set invert_options=(options=double)
+if ($systemp) set invert_options=$invert_options,systemp
+if ($mfs)     set invert_options=$invert_options,mfs
+if ($mosaic)  set invert_options=$invert_options,mosaic
+
+if ($bandpassg) then
+  set uvcat1_options=()
+else
+  set uvcat1_options=(options=nocal)
+endif
+
+# ------------------------------------------------------------------------
+
+rm -rf vis0 vis1 vis2  vis0.* vis1.* vis2.*  >& /dev/null
+
+set dat=$vis
+if ($dat:e == gz) then
+  set tmp1=$dat:r
+  set tmp2=$tmp1:r
+  set dat=$tmp2:t
+  if (-d $dat) then
+    echo Using local dataset $dat
+  else
+    tar zxf $dat
+    echo Rewrote tar.gz as local dataset $dat
+  endif
+endif
+
+if (! -d $dat) then
+  echo Dataset $dat does not exist
+  echo Try grabbing $bench
+  exit 1
+endif
+
+listobs vis=$dat > vis0.listobs
+
+uvcat vis=$dat out=vis0 "select=-source(noise),-auto"
+
+# lINE calibration
+if ($linecal) linecal vis=vis0
+uvcat vis=vis0 out=vis1  # select="win(1,2,3,5,6,7)"
+
+# PASSBAND calibration
+mfcal vis=vis1 refant=$refant interval=$interval
+gplist vis=vis1 options=phase
+gplist vis=vis1 options=amp
+uvcat vis=vis1 out=vis2 $uvcat1_options
+
+# GAIN calibration
+if ($selfcal) then
+  selfcal vis=vis2 interval=$interval refant=$refant $selfcal_options 
+  gplist vis=vis2 options=phase
+  gplist vis=vis2 options=amp
+endif
+
+
+closure vis=vis2
+
+if ($imsize == 0) exit 0
+
+#
+# ----------------------------------------------------------------------
+# Mapping
+
+if ($dogsv) puthd in=vis2/senmodel value=GSV type=ascii
+
+set vis=vis2
+
+# HACK test: 
+if (0) then
+  rm -rf $vis.tmp
+  mv $vis $vis.tmp 
+  #uvedit vis=$vis.tmp out=$vis ra=3 dec=30
+  uvedit vis=$vis.tmp out=$vis ra=12,29,8 dec=2,03,30
+endif
+
+invert vis=$vis  map=$vis.mp beam=$vis.bm \
+    imsize=$imsize cell=$cell \
+    line=chan,1,1,15,15 \
+    $invert_options 
+
+
+if ($mosaic) then
+  mossdi map=$vis.mp beam=$vis.bm \
+    niters=$niters \
+    out=$vis.cc > clean.log
+  mospsf beam=$vis.bm out=$vis.psf
+  imfit in=$vis.psf object=beam > $vis.psf.log
+  set bmaj=`grep "Major axis" $vis.psf.log | awk '{print $4}'`
+  set bmin=`grep "Minor axis" $vis.psf.log | awk '{print $4}'`
+  set bpa=`grep "Position angle" $vis.psf.log | awk '{print $4}'`
+  echo $bmaj $bmin $bpa
+  restor model=$vis.cc beam=$vis.bm map=$vis.mp \
+    out=$vis.cm fwhm=$bmaj,$bmin pa=$bpa
+else
+  #  hogbom clark steer any
+  clean map=$vis.mp beam=$vis.bm \
+    niters=$niters \
+    out=$vis.cc > clean.log
+  restor model=$vis.cc beam=$vis.bm map=$vis.mp \
+    out=$vis.cm
+endif
+
+
+# mask out the center where the beam is
+set region="relpix,box(-15,-15,15,15)"
+immask in=$vis.mp "region=$region" flag=false logic=and
+immask in=$vis.cm "region=$region" flag=false logic=and
+maths exp="<$vis.cm>" out=$vis.cmm
+
+if ($ds9) mirds9 $vis.cm
+
+
+imstat in=$vis.cm
+imstat in=$vis.cm "region=quarter"
