@@ -1,6 +1,6 @@
 #! /bin/csh -f
 #
-set version=22-jun-2010
+set version=4-jul-2010
 #
 #  2-aug-99 Updated for Sebok's Mandrake setup
 #  1-aug-00 Updated to allow to build private PGPLOT version
@@ -45,6 +45,7 @@ set version=22-jun-2010
 #  9-jun-10 allow gif=0 to disable GIF drivers for older gfortran
 #           also check for SELinux now
 # 22-jun-10 brief=1 option to only install the core of miriad
+#  4-jul-10 added carma specific tests
 #
 #-----------------------------------------------------------------------
 
@@ -630,6 +631,11 @@ endif
 
 if ($tests) then
    ./mir.tests
+endif
+
+if ($telescope == carma) then
+   ./mir.carma
+   ./mir.fringe
 endif
 
 set benchpars=(`echo $bench | awk -F, '{print $1,$2,$3}'`)
