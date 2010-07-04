@@ -3,6 +3,7 @@
 #  mask (or) in PROS region descriptors into a miriad dataset
 #  15-jul-1992    Original version                Peter Teuben
 #  17-jan-2001    small changes for the 'cubemask' script conventions
+#  31-jan-2008    add check for region_basename
 #
 set version="SAOMASK: Version 17-jan-01"
 
@@ -11,10 +12,9 @@ echo $version
 if ($#argv != 2) then
   echo "Usage: $0 image region_basename"
   echo " image = miriad image dataset"
-  echo " region = base filename of region descriptors (in PROS format)"
-  echo "          that have been created with SAOIMAGE"
-  echo "          Note they must have numeric filename extensions, "
-  echo "          corresponding to its image plane".
+  echo " region = directory of region descriptors (in PROS format)"
+  echo "          that have been created with SAOIMAGE/DS9"
+
   exit 1
 endif
 
@@ -22,6 +22,10 @@ set image=$1
 set base=$2
 if (! -d $image) then
   echo $image does not seem like a miriad image
+  exit 1
+endif
+if (! -d $image/$base) then
+  echo "$image does not have a subdirectory $base with saoregion.* files"
   exit 1
 endif
 set boxes=($image/$base/saoregion.[0-9]*)
