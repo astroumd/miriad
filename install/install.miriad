@@ -630,7 +630,7 @@ if ($testx) then
 endif
 
 if ($tests) then
-   ./mir.tests
+   ./mir.tests gif=$gif
 endif
 
 if ($telescope == carma) then
