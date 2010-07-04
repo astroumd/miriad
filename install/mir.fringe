@@ -1,0 +1,40 @@
+#! /bin/csh -f
+#
+#  mir.fringe:   run (standard) fringe test
+#                and compare with reference map
+#
+#
+#
+set tmp=fringe$$
+mkdir $tmp
+cd $tmp
+
+set ftp=ftp://ftp.astro.umd.edu/pub/carma/data/
+set fringe=fringe.3C273.2008jun18.4.miriad.tar.gz
+
+foreach a ($*)
+  set $a
+end
+
+
+
+wget $ftp/$fringe
+if ($status) then
+  echo No wget ... Trying curl $ftp/$fringe 
+  curl $ftp/$fringe | tar zxf -
+else
+  tar   zxf $fringe
+endif
+
+set vis=$fringe:r:r
+
+echo Running fringemap:
+$MIR/src/scripts/fringemap vis=$vis >& fringe.log
+
+
+if (-d $vis/vis2.cm.ref) then
+  maths exp="<$vis/vis2.cm.ref>-<vis2.cm>" out=vis2.cm.diff
+  histo in=vis2.cm.diff
+else
+  echo Warning: no standard reference file present in $vis
+endif
