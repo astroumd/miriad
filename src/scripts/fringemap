@@ -29,6 +29,7 @@ set systemp=0                             #> RADIO  systemp=0      0,1
 set mosaic=0                              #> RADIO  mosaic=0       0,1
 set niters=250                            #> SCALE  niters=250     0:1000:1
 set ds9=0                                 #> RADIO  ds9=0          0,1
+set mask=0                                #> RADIO  mask=1         0,1
 #
 foreach arg ($*)
   set $arg
@@ -147,10 +148,12 @@ endif
 
 
 # mask out the center where the beam is
-set region="relpix,box(-15,-15,15,15)"
-immask in=$vis.mp "region=$region" flag=false logic=and
-immask in=$vis.cm "region=$region" flag=false logic=and
-maths exp="<$vis.cm>" out=$vis.cmm
+if ($mask) then
+  set region="relpix,box(-15,-15,15,15)"
+  immask in=$vis.mp "region=$region" flag=false logic=and
+  immask in=$vis.cm "region=$region" flag=false logic=and
+  maths exp="<$vis.cm>" out=$vis.cmm
+endif
 
 if ($ds9) mirds9 $vis.cm
 
