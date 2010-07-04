@@ -29,7 +29,7 @@ endif
 set vis=$fringe:r:r
 
 echo Running fringemap:
-$MIR/src/scripts/fringemap vis=$vis >& fringe.log
+$MIR/src/scripts/fringemap vis=$vis mask=0 >& fringe.log
 
 
 if (-d $vis/vis2.cm.ref) then
