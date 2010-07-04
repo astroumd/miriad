@@ -38,3 +38,6 @@ if (-d $vis/vis2.cm.ref) then
 else
   echo Warning: no standard reference file present in $vis
 endif
+
+histo in=vis2.mp | grep ^M
+histo in=vis2.cm | grep ^M
