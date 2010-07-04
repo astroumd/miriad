@@ -2,7 +2,10 @@
 #
 #  mask a miriad datacube manually using external programs that supply regions
 #
-set version="CUBEMASK: Version 17-jan-01"
+#      17-jan-01   Original                           Peter Teuben
+#       1-feb-08   enforce saoimage region format     PJT
+#
+set version="CUBEMASK: Version 1-feb-08"
 
 echo $version
 
@@ -68,6 +71,7 @@ echo "Some tips:"
 echo '  - tear off the Region pulldown menu from ds9'
 echo '  - make sure the "Region Format" is "saoimage"'
 echo '  - make sure there are no entries in "List Regions"'
+echo 'we will also put the regions format to saoimage'
 
 xpaset -p ds9 regions format saoimage
 
