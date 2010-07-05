@@ -1,29 +1,52 @@
 include $(top_srcdir)/mircommon.mak
 
-cat_DATA = 0.122.ant 0.122b.ant 0.375.ant 0.75a.ant 0.75b.ant \
-  0.75c.ant 0.75d.ant 1.5a.ant 1.5b.ant 1.5c.ant 1.5d.ant \
-  3.0a.ant 3.0b.ant 3.0c.ant 3.0d.ant 3km_min_red_1.ant \
-  3km_min_red_2.ant 3km_min_red_3.ant 3km_min_red_4.ant \
-  a.ary a++.ary ary.doc at.corr.1 at.corr.32 at.corr.mfs \
-  atmos.1997 b.ary beamgen.source bima9_a96.ant.equ bima9_a.ant \
-  bima9_ab.ant bima9_b.ant bima9_c.ant.equ bima_a1mm.ant \
-  bima_a99.ant bima_a.ant bima_a++.ant bima_a.antpos bima_ab.ant \
-  bima_b.ant bima_b.antpos bima_c.ant bima_c.antpos bima_d.ant \
-  bima_d.antpos cals.fluxes cals.pfluxes carma_A.ant \
-  carma_ABCDE.ant carma_B.ant carma_BCDE.ant carma_C.ant carma_CDE.ant \
-  carma_CZ.ant carma_D.ant carma_DE.ant carma_de.04oct.ant \
-  carma_DZ.ant carma_E.ant carma_EZ.ant c.ary ew214.ant ew352.ant \
-  ew367.ant h168.ant h214.ant h75.ant hc.pad hermes.in hermes.txt \
-  keywords.kdoc lovas.1mm lovas.3mm lovas3mm.dat miriad.pgmrs \
-  no.source ns214.ant ovro_phase.1996 poff.source point.source \
-  qpoint.source recom.lis select.kdoc spiral.source stations.1985 \
-  stations.1986 stations.1987 stations.1988 stations.1989 \
-  stations.1990 stations.1991 stations.list stations.pl \
-  stations.txt target.stn uvctlg uvgen.corr uvgen.def.at \
-  uvgen.def.at.mfs uvgen.def.vla uvgen.source vla_a.ant \
-  vla_b.ant vla_c.ant vla_d.ant walpol.9ant wishlist
+# Install and distribute everything in cat/ and subdirectories.  If
+# we're using a Git checkout, use Git's knowledge to get the list of
+# files to process; otherwise, just install everything we find, even
+# though unnecessary files such as backups and personal junk files
+# might get installed and disted.
+#
+# Implementation notes: find has a -delete option, but it will try
+# to delete a potential CVS directory without deleting its contents,
+# so that will fail.
+#
+# We have to make sure the installed files have the right mode since
+# they'll inherit what they have in $srcdir, and in distcheck mode
+# this is missing the write bit since distcheck makes $srcdir readonly;
+# this causes the uninstall to fail and distcheck to barf, and is
+# generally not the thing to do.
+#
+# Note that git archive will output what's been committed to the repo,
+# not any uncommitted changes in the working tree, so those won't
+# be captured when disting or installing. This seems like an awfully
+# minor corner case though.
 
-EXTRA_DIST = $(cat_DATA)
+install-data-local:
+	test -z "$(catdir)" || $(MKDIR_P) "$(DESTDIR)$(catdir)"
+	if test -d $(top_srcdir)/.git ; then \
+	  command="git archive --format=tar HEAD" ; \
+	else \
+	  command="$(AMTAR) cf - ." ; \
+	fi ; \
+	(cd $(srcdir) && $$command) | (cd "$(DESTDIR)$(catdir)" && $(AMTAR) xf -)
+	find "$(DESTDIR)$(catdir)" \( -name 'Makefile*' -o -name CVS \) -print0 |xargs -0 rm -rf
+	find "$(DESTDIR)$(catdir)" -type f -print0 |xargs -0 chmod 0644
+	find "$(DESTDIR)$(catdir)" -type d -print0 |xargs -0 chmod 0755
+
+uninstall-local:
+	-rm -rf $(DESTDIR)$(catdir)
+
+dist-hook:
+	$(MKDIR_P) "$(distdir)"
+	if test -d $(top_srcdir)/.git ; then \
+	  command="git archive --format=tar HEAD" ; \
+	else \
+	  command="$(AMTAR) cf - ." ; \
+	fi ; \
+	(cd $(srcdir) && $$command) | (cd "$(distdir)" && $(AMTAR) xf -)
+	find "$(distdir)" -name CVS -print0 |xargs -0 rm -rf
+	find "$(distdir)" -type f -print0 |xargs -0 chmod 0644
+	find "$(distdir)" -type d -print0 |xargs -0 chmod 0755
 
 # Generate and install the keyword documentation files.
 
