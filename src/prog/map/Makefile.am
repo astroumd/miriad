@@ -1,15 +1,17 @@
 include $(top_srcdir)/mircommon.mak
 
-bin_PROGRAMS = invert
-
 AM_CFLAGS = @x_cflags@
 LDADD = $(prog_libs)
 
-BUILT_SOURCES = invert.f
-CLEANFILES = $(BUILT_SOURCES)
-nodist_invert_SOURCES = invert.f
-EXTRA_DIST = invert.for
+ftasks = invert
+bin_PROGRAMS = $(ftasks)
+CLEANFILES = $(ftasks:=.f)
+EXTRA_DIST = $(ftasks:=.for)
+
 noinst_HEADERS = invert.h
+
+dist-hook:
+	-rm -f $(distdir)/*.f
 
 DOCINPUTS = $(EXTRA_DIST)
 include $(top_srcdir)/mirdoc.mak

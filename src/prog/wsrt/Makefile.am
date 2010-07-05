@@ -4,22 +4,18 @@
 
 include $(top_srcdir)/mircommon.mak
 
-bin_PROGRAMS = tsysmed wsrtfits wsrtuvmodel
-
-AM_CFLAGS = @x_cflags@
 AM_FFLAGS = @no_globals@
 LDADD = $(prog_libs)
 
-BUILT_SOURCES = tsysmed.f wsrtfits.f wsrtuvmodel.f
-CLEANFILES = $(BUILT_SOURCES)
+ftasks = tsysmed wsrtfits wsrtuvmodel
+bin_PROGRAMS = $(ftasks)
+CLEANFILES = $(ftasks:=.f)
+EXTRA_DIST = $(ftasks:=.for)
 
 noinst_HEADERS = wsrtfits.h
 
-EXTRA_DIST = tsysmed.for wsrtfits.for wsrtuvmodel.for
-
-nodist_tsysmed_SOURCES = tsysmed.f
-nodist_wsrtfits_SOURCES = wsrtfits.f
-nodist_wsrtuvmodel_SOURCES = wsrtuvmodel.f
+dist-hook:
+	-rm -f $(distdir)/*.f
 
 DOCINPUTS = $(EXTRA_DIST)
 include $(top_srcdir)/mirdoc.mak

@@ -4,18 +4,18 @@
 
 include $(top_srcdir)/mircommon.mak
 
-bin_PROGRAMS = c2m uvcaldb
-
-AM_CFLAGS = @x_cflags@
 AM_FFLAGS = @no_globals@
 LDADD = $(prog_libs)
 
-BUILT_SOURCES = c2m.f
+# Only two tasks, and one of them is special (uvcaldb is generated straight
+# from a .f, not a .for), so just do this manually.
 
-noinst_HEADERS = 
-
+bin_PROGRAMS = c2m uvcaldb
+CLEANFILES = c2m.f
 EXTRA_DIST = c2m.for
 
-nodist_c2m_SOURCES = c2m.f
-dist_uvcaldb_SOURCES = uvcaldb.f
+dist-hook:
+	-rm -f $(distdir)/c2m.f
 
+DOCINPUTS = $(EXTRA_DIST)
+include $(top_srcdir)/mirdoc.mak

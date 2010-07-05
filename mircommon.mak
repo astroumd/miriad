@@ -10,6 +10,10 @@ F2C=$(top_builddir)/src/tools/intf2c
 .f2c.c:
 	$(F2C) -s f2c $< $@
 
+# Default for building tasks
+
+AM_DEFAULT_SOURCE_EXT = .f
+
 # Include directories.
 
 fincludedir = $(includedir)/miriad-f
