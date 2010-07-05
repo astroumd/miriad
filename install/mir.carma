@@ -257,7 +257,7 @@ check() {
   histo in=xyio/map1 | tail +2 >> $sum
   grep _ENDIAN xyio.log >> $sum
   # od -x xyio/map2/image | head -1  >> $sum
-  uvlist vis=uvio/vis2 recnum=100 | tail +2 >> $sum
+  uvlist vis=uvio/vis1a recnum=100 | tail +2 >> $sum
   histo in=map/cmap1 | tail +2 >> $sum
   # copy back to /tmp so we can retrieve it for baseline comparision
   cp $sum /tmp
