@@ -177,6 +177,7 @@ set gfortran=0              #  use gfortran as default gnu compiler, instead of 
 set man=1		    #  do manual pages
 set zeno=1                  #  add zeno and hkmiriad?
 set lfs=(-D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE) # LFS flags for uvio
+set subwrap=0               #  install python/subwrap
 
 
 #		   	remember from where we were installing, since we have stuff here.....
@@ -576,6 +577,12 @@ if ($hosttype == linux && $brief == 0) then
  rm -f atlod.*
  popd >& /dev/null
 
+endif
+
+if ($subwrap) then
+ pushd $MIR/src/scripts/subwrap >& /dev/null
+ ./build_python.sh $MIR $MIRHOST
+ popd >& /dev/null
 endif
 
 
