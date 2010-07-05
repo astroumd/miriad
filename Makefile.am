@@ -38,7 +38,8 @@ SUBDIRS += manuals
 endif
 
 EXTRA_DIST = mircommon.mak mirdoc.mak \
-  automiriad.csh.in automiriad.sh.in install.MIR
+  automiriad.csh.in automiriad.sh.in install.MIR \
+  install/mir.test
 
 # configure has an abs_srcdir substitution that we could use, but it
 # can look like /path/to/srcdir/buildsubdir/.., so CD and PWD to
