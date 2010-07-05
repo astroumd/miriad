@@ -493,11 +493,6 @@ AC_CONFIG_SUBDIRS(borrow/pgplot)
 PGPLOT_LIB='$(top_builddir)/borrow/pgplot/libpgplot.la'
 AC_SUBST(PGPLOT_LIB)
 
-AC_SUBST(LINPACK_PREFIX)
-AC_ARG_WITH(linpack,
-    [AS_HELP_STRING([--with-linpack=DIR],[If not specified, uses internal linpack])],
-    LINPACK_PREFIX=$withval, LINPACK_PREFIX=borrow/linpack)
-
 AC_CONFIG_HEADER(config.h)
 AC_CONFIG_FILES([
     Makefile
