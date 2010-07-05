@@ -15,10 +15,10 @@ SUBDIRS = \
   src/tools \
   cat \
   borrow/pgplot \
+  borrow/linpack \
   src/subs \
   src/scripts \
   src/scripts/ata/rapid \
-  borrow/linpack \
   src/prog/analysis \
   src/prog/calib \
   src/prog/carma \

@@ -1,8 +1,7 @@
+## Uninstalled convenience library of linpack routines, linked into
+## libmir.la.
 
-## Note, dirs.c removed from list, deprecated, no more VMS
-## support..
-
-lib_LTLIBRARIES = \
+noinst_LTLIBRARIES = \
   libmir_linpack.la
 
 libmir_linpack_la_LDFLAGS = -dynamic @single_module@

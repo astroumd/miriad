@@ -24,8 +24,7 @@ LIBTOOL = $(libdir)/miriad/libtool
 LINK = $(LIBTOOL) --tag=F77 --mode=link $(F77) $(FFLAGS) \
   $(x_libs) $(LDFLAGS)
 
-LIBS = $(libdir)/libmir.la $(libdir)/libmir_uvio.la \
-  $(libdir)/libmir_linpack.la $(libdir)/libpgplot.la \
+LIBS = $(libdir)/libmir.la
 
 all: $(PROG)$(EXEEXT)
 
@@ -37,4 +36,3 @@ $(PROG)$(EXEEXT): $(PROG).f
 
 $(PROG).f: $(PROG).for
 	$(RATTY) -I $(fincludedir) -I . $< $@
-

@@ -1,33 +1,17 @@
 include $(top_srcdir)/mircommon.mak
 
-## Deliberately excluding the following, because they don't
-## even compile in the old miriad install...
-## args.for ivfiddle.f ivmenu.f ivofm.f ivtext.f
+## The main MIRIAD subroutine library.
 
-## Note, dirs.c removed from list, deprecated, no more VMS
-## support..
-
-finclude_HEADERS = model.h
+lib_LTLIBRARIES = libmir.la
 
 includes = -I$(top_builddir)/src/inc -I$(top_srcdir)/src/inc -I$(srcdir)
-
-lib_LTLIBRARIES = \
-  libmir_uvio.la \
-  libmir.la
-
-libmir_uvio_la_SOURCES = bug.c dio.c headio.c hio.c \
-  interface.c jplread.c key.c maskio.c mir_io.c pack.c \
-  scrio.c sma_csub.c sma_mirRead.c tabio.c uvio.c xyio.c \
-  xyzio.c
-libmir_uvio_la_CFLAGS = $(includes) @single_module@
-
 libmir_la_CFLAGS = $(includes)
 libmir_la_LDFLAGS = -dynamic @single_module@
+libmir_la_LIBADD = \
+  $(top_builddir)/borrow/linpack/libmir_linpack.la \
+  $(PGPLOT_LIB)
 
 AM_FFLAGS = @no_globals@
-
-## argsHP.for compiles and links on Mac OS X, but not linux...
-## should it stay in for Mac OS ?
 
 nodist_libmir_la_SOURCES = \
   align.f amphase.f angles.f antennas.f \
@@ -56,12 +40,22 @@ nodist_libmir_la_SOURCES = \
   bugwrap.c iface.c keywrap.c mirwrap.c mm.c oscalls.c \
   packwrap.c smawrap.c tabiowrap.c tcpio.c wrap.c xyziowrap.c
 
+libmir_doc_sources = \
+  bug.c dio.c headio.c hio.c \
+  interface.c jplread.c key.c maskio.c mir_io.c pack.c \
+  scrio.c sma_csub.c sma_mirRead.c tabio.c uvio.c xyio.c \
+  xyzio.c
+
+finclude_HEADERS = model.h
+cinclude_HEADERS = hio.h io.h miriad.h sma_data.h sysdep.h
+
 dist_libmir_la_SOURCES = \
-  boxes.h co.h ctrl.h fitsio.h hdtab.h hio.h intpio.h io.h \
-  log.h mapper.h mc.h miriad.h model.h modp.h mostab.h \
-  obspar.h ofm.h pb.h pcvt.h plproc.h rest.h select.h \
-  sma_data.h sysdep.h tabflux.h tin.h trnio.h tv.h uvdat.h \
-  uvgn.h win.h
+  $(libmir_doc_sources) \
+  $(finclude_HEADERS) \
+  $(cinclude_HEADERS) \
+  boxes.h co.h ctrl.h fitsio.h hdtab.h intpio.h log.h mapper.h mc.h \
+  modp.h mostab.h obspar.h ofm.h pb.h pcvt.h plproc.h rest.h select.h \
+  tabflux.h tin.h trnio.h tv.h uvdat.h uvgn.h win.h
 
 EXTRA_DIST = \
   align.for amphase.for angles.for antennas.for \
@@ -88,14 +82,7 @@ EXTRA_DIST = \
   uvgetbl.for uvgn.for uvsubs.for var.for varmint.for velocity.for versan.for \
   win.for wpfit.for zed.for zeebin.for \
   bugwrap.f2c iface.f2c keywrap.f2c mirwrap.f2c mm.f2c oscalls.f2c \
-  packwrap.f2c smawrap.f2c tabiowrap.f2c tcpio.f2c wrap.f2c xyziowrap.f2c \
-  boxes.h co.h ctrl.h fitsio.h hdtab.h hio.h intpio.h io.h \
-  log.h mapper.h mc.h miriad.h model.h modp.h mostab.h \
-  obspar.h ofm.h pb.h pcvt.h plproc.h rest.h select.h \
-  sma_data.h sysdep.h tabflux.h tin.h trnio.h tv.h uvdat.h \
-  uvgn.h win.h 
-
-cinclude_HEADERS = hio.h io.h miriad.h sma_data.h sysdep.h
+  packwrap.f2c smawrap.f2c tabiowrap.f2c tcpio.f2c wrap.f2c xyziowrap.f2c
 
 CLEANFILES = $(nodist_libmir_la_SOURCES)
 
@@ -105,12 +92,9 @@ bin_PROGRAMS = uvio
 
 uvio_SOURCES = uvio.c
 uvio_CFLAGS = -DTESTBED $(includes)
-uvio_LDADD = libmir_uvio.la
+uvio_LDADD = libmir.la
 
-## The inc files should probably end up in the top-level Makefile.am
-## because they're part of the overall package/sortof API
-## But since this is the primary library and it's built early on, they're
-## here for now.
+# Docs
 
-DOCINPUTS = $(EXTRA_DIST) $(libmir_uvio_la_SOURCES)
+DOCINPUTS = $(EXTRA_DIST) $(libmir_doc_sources)
 include $(top_srcdir)/mirdoc.mak

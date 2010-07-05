@@ -4,8 +4,6 @@
 
 include $(top_srcdir)/mircommon.mak
 
-##ANALYSIS_LD_ADD = ../../subs/libmir_uvio.la ../../subs/libmir.la
-##ANALYSIS_LD_FLAGS = 
 AM_CFLAGS = @x_cflags@
 LDADD = $(prog_libs)
 
