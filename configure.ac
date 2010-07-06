@@ -4,7 +4,7 @@ AC_REVISION([$Revision$])
 
 AC_CONFIG_SRCDIR
 AC_CONFIG_MACRO_DIR([.])
-AM_INIT_AUTOMAKE([--warnings=obsolete  --warnings=gnu --warnings=unsupported --warnings=no-syntax --warnings=no-portability foreign])
+AM_INIT_AUTOMAKE([-Wobsolete -Wgnu -Wunsupported -Wno-syntax -Wno-portability foreign])
 
 dnl If using automake 1.9 / autoconf 2.59 (which is not uncommon),
 dnl 'docdir' isn't defined, and we need to define it ourselves.
@@ -17,25 +17,19 @@ fi
 catdir='${pkgdatadir}/cat'
 AC_SUBST([catdir])
 
-dnl ---                 sizeof various data types
-AC_CHECK_SIZEOF([float])
-AC_CHECK_SIZEOF([double])
-AC_CHECK_SIZEOF([int])
-AC_CHECK_SIZEOF([long])
-AC_CHECK_SIZEOF([long long])
+dnl Check for compilers. Check for F77 first, since that will trigger
+dnl the autoconf check for usable compiler output, and Fortran is the
+dnl one we're most likely to have problems with. The check for 'cc'
+dnl allows the vendor C compiler to override GCC.
 
-
-AC_HEADER_STDC
-AC_CHECK_FUNCS([strchr memcpy bcopy])
-
-# Use native cc if present
-AC_MSG_CHECKING([for vendor's cc to be used instead of gcc])
+AC_PROG_F77
 AC_CHECK_PROG(CC, cc, cc)
-
 AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_CPP
-AC_PROG_F77
+
+AC_HEADER_STDC
+AC_CHECK_FUNCS([strchr memcpy bcopy])
 
 dnl This keeps g77 from returning an error code when 
 dnl there are disagreements between subroutine parameter types and the
