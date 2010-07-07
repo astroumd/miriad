@@ -276,10 +276,12 @@ if ($?CC && $?F77 && $?CXX) then
 
 endif
 
+# not here.....
 if (-d $MIRTEMP/bin/localsys) then
   cp $install_dir/compile.generic $MIRTEMP/bin/localsys
   if ($generic) then
     echo "Warning: try out new compile.generic"
+    echo cp $install_dir/compile.generic $MIRTEMP/bin/localsys/compile.$hosttype
     cp $install_dir/compile.generic $MIRTEMP/bin/localsys/compile.$hosttype
   endif
 endif
@@ -399,6 +401,17 @@ chmod -R +w $MIR
  
 echo Installing scripts....
 mir.install scripts 
+
+# if generic, patch
+if (-d $MIRTEMP/bin/localsys) then
+  cp $install_dir/compile.generic $MIRTEMP/bin/localsys
+  if ($generic) then
+    echo "Warning: try out new compile.generic"
+    echo cp $install_dir/compile.generic $MIRTEMP/bin/localsys/compile.$hosttype
+    cp $install_dir/compile.generic $MIRTEMP/bin/localsys/compile.$hosttype
+  endif
+endif
+
 
 #  another bug in the cvs setup, should also be fixed -- is now fixed
 echo Yuck, resetting xbit in MIRBIN
