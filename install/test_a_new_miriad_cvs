@@ -3,6 +3,7 @@
 #   Example of a script that assembles miriad from scratch and compiles
 #   could be part of a nightly script.
 #   Note this script gets miriad, with wip and rad as well.
+#   On a fast 2010-style CPU takes about 2:02 to install (old style)
 #
 #   Examples of use:
 #
