@@ -1,3 +1,4 @@
+
 c************************************************************************
 	program uvspec
 	implicit none
@@ -118,7 +119,7 @@ c--------------------------------------------------------------------------
         parameter (maxco=15)
 c
 	character version*(*)
-	parameter(version='UvSpec: version 1.0 27-apr-2010')
+	parameter(version='UvSpec: version 1.0 8-jul-2010')
 	character uvflags*8,device*64,xaxis*12,yaxis*12,logf*64
 	character xtitle*64,ytitle*64
 	logical ampsc,rms,nobase,avall,first,buffered,doflush,dodots
@@ -501,6 +502,7 @@ c------------------------------------------------------------------------
 	logical doamp,doampsc,dorms,dophase,doreal,doimag,dopoint,dolag
 	logical Hit(PolMin:PolMax)
 	integer npol,pol(MAXPOL)
+
 c
 c  Determine the conversion of the data.
 c
@@ -792,8 +794,10 @@ c
 	  nchan(p,bl) = nread
 	  pnt(p,bl) = free
 	  free = free + nread
-	  if(free.gt.MAXAVER)call bug('f',
-     *	    'Too much data to accumulate, in BufAcc')
+	  if(free.gt.MAXAVER) then
+	     write(*,*) 'MAXAVER,nread=',MAXAVER,nread
+            call bug('f','Too much data to accumulate, in BufAcc')
+	 endif
 c
 c  Copy across the new data.
 c
