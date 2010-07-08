@@ -233,6 +233,7 @@ c                 lsrvel. The velocity vsource has been used in the
 c                 on-line doppler tracking for SMA from users input 
 c                 'lsrvel'.
 c    jhz 19mar08  enable handling multiple input files. 
+c    pjt  8jul10  maxaver increased, but 3 times??? why not in .h file ???
 c  Bugs:
 c------------------------------------------------------------------------
         include 'maxdim.h'
@@ -768,8 +769,7 @@ c
         integer maxblpnt
         parameter(maxblpnt=maxbase*256 + maxbase-1)
         integer maxaver,maxpol
-        parameter(maxaver=655360,maxpol=4)
-c       parameter(maxaver=276525,maxpol=4)
+        parameter(maxaver=2000000,maxpol=4)
         complex buf(maxaver)
         real    bufr(maxaver),buf2(maxaver)
         integer count(maxaver),chnkpntr(maxaver)
@@ -826,8 +826,7 @@ c  cnt		The number of things accumulated into the preambles.
 c  chnkpntr     The spectral chunk pntr.
         include 'maxdim.h'
         integer maxaver,maxpol
-c        parameter(maxaver=276525,maxpol=4)
-        parameter(maxaver=655360,maxpol=4)
+        parameter(maxaver=2000000,maxpol=4)
         integer maxblpnt
         parameter(maxblpnt=maxbase*256 + maxbase-1)
         complex buf(maxaver)
@@ -1150,8 +1149,7 @@ c  cnt		The number of things accumulated into the preambles.
 c
         include 'maxdim.h'
         integer maxaver,maxpol
-c        parameter(maxaver=276525,maxpol=4)
-        parameter(maxaver=655360,maxpol=4)
+        parameter(maxaver=2000000,maxpol=4)
         integer maxblpnt
         parameter(maxblpnt=maxbase*256 + maxbase-1)
         complex buf(maxaver)
