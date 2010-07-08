@@ -188,6 +188,7 @@ c    pjt  23mar09 Fix roudoff error in timestamp (see selfcal)
 c    pjt  27may09 Fix initialization bug in selfacc1
 c    pkgw 11jan10 Accept mixed auto/cross inputs, suggesting select=-auto.
 c                 Typo fixes and clarification of help text.
+c    pjt   8jul10 Ant I3 format, no NaN's when 1 solution
 c
 c  Bugs/Shortcomings:
 c   * Selfcal should check that the user is not mixing different
@@ -196,7 +197,7 @@ c   * It would be desirable to apply bandpasses, and merge gain tables,
 c     apply polarisation calibration, etc.
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version='MSelfcal: version 1.0 11-jan-10')
+	parameter(version='MSelfcal: version 1.0 8-jul-10')
 	integer MaxMod,maxsels,nhead
 	parameter(MaxMod=64,maxsels=1024,nhead=3)
 c
@@ -1199,7 +1200,7 @@ c------------------------------------------------------------------------
 	real m1,m2,wt,antR(MAXANT),antsum(MAXANT),antsumwts(MAXANT)
 	real uncert,uncsum(MAXANT),dphsum(MAXANT),dphase
 	real oldamp,oldphase,phase,sumph2,tsigma,tuncert,alluncer
-	real sumantwts
+	real sumantwts,adelta
 
 	complex g1,g2
 	integer i,j,k,sol,antcount(MAXANT),numbl
@@ -1306,12 +1307,14 @@ c
 	enddo
 c
 	do j=1,nants
- 756	  format('Antenna',i2,' Avg Sigma=',f5.2,
+ 756	  format('Antenna',i3,' Avg Sigma=',f5.2,
      *	     ' Avg Uncertainy=',f5.2,
      *	     ' Avg delta phase=',f7.2)
 	  if(antcount(j).ne.0) then
-	 write(line,756)j,antsum(j)/antcount(j),uncsum(j)/antcount(j),
-     *					dphsum(j)/(antcount(j)-1)
+	     adelta = 0.0
+	     if (antcount(j).ne.1) adelta = dphsum(j)/(antcount(j)-1)
+	     write(line,756)j,antsum(j)/antcount(j),
+     *			      uncsum(j)/antcount(j),adelta
 	    call output(line)
 	    call HisWrite(tgains,'SELFCAL: '//line)
 	  endif
