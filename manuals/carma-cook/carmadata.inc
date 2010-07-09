@@ -50,6 +50,7 @@ Here is the log of data versions. Those annotated with {\bf [refill]} should be 
 data. The various stages of baseline corrections are not maintained here, see Section~\ref{s:baseline}.
 
 \begin{itemize}
+
 \item
 2006/02/01:  (VERSION 0.1.2)
 \item
@@ -81,7 +82,8 @@ data. The various stages of baseline corrections are not maintained here, see Se
 \item
 2008/03/31:  frequent semi-automated updates of flux calibrator lists (FluxSource.cat in both CARMA and MIRIAD)
 \item
-2008/04/20:  better models for mars brightness temperature (see also miriad's {\tt marstb}\index{marstb} program)
+2008/04/20:  better models for mars brightness temperature (see also 
+miriad's {\tt marstb}\index{marstb} program)
 \item
 2008/11/xx:  PACS (SZA) data now routinely available. Usually place a 'z' in front of your ct or cx file but these are not integrated into the Illinois archive.
 \item

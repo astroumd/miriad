@@ -1680,7 +1680,7 @@ this command:
 
 
 This variable is normally set by 
-MFCAL or GPCAL\foonote{see \$MIRSUBS/defsmodl.for}
+MFCAL or GPCAL\footnote{see \$MIRSUBS/defsmodl.for}
 but these are not commonly used for gain calibration at
 CARMA, and in any case {\tt defsmodl} only sets gain-scaled variance
 for ATCA data.  

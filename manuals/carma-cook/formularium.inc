@@ -77,7 +77,7 @@ $$
 and can be applied via commands such as {\tt uvcat}. Note that this
 procedure does not apply any bandpass slope.
 
-Recall that the LO1 frequency, $\vu_0$, is generally 
+Recall that the LO1 frequency, $\nu_0$, is generally 
 doppler tracked, so some of the variations you will see
 with programs such as {\tt varplt} will be due to a
 doppler shift component due to earth rotation. The maximum
@@ -96,7 +96,7 @@ about $2^0$.
 
 \subsection{Passband Calibration}
 
-{\tt mfcal} solves for antennae based complex gains $b_i(\nu})$,
+{\tt mfcal} solves for antennae based complex gains $b_i(\nu)$,
 and corrects the visibities as follows:
 
 $$
