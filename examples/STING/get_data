@@ -1,0 +1,37 @@
+#! /bin/csh -f
+#  
+#
+
+
+set ftp=ftp://ftp.astro.umd.edu:/pub/carma/data
+set tar=c0104I.8D_115NGC4254.2.miriad.tar.gz
+
+foreach arg ($*)
+  set $arg
+end
+
+
+set file=$ftp/$tar
+
+
+which wget >& /dev/null
+if ($status) then
+  which curl >& /dev/null
+  if ($status) then
+    echo Cannot use wget or curl to fetch $file, go grab it yourself
+    exit 1
+  else
+    curl $file | tar zxf -
+  endif
+else
+  wget -O - $file | tar zxf -
+endif
+
+set vis=$tar:r:r
+
+echo $file has been downloaded
+echo Local miriad dataset is now $vis
+
+
+
+

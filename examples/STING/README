@@ -1,0 +1,9 @@
+This is an example from the STING survey (Bolatto et al.). The example here
+is a single mosaicing track for M99 (NGC4254) also used in a comparison
+study in 2010 to compare reducing CARMA data through MIRIAD and CASA. This
+is still ongoing and not published yet.  More info here in due time
+
+After running get_data, proceed and run the M99 script.
+
+Peter Teuben
+
