@@ -3,7 +3,8 @@
 #
 
 
-set ftp=ftp://ftp.astro.umd.edu:/pub/carma/data
+set ftp=http://carma.astro.umd.edu/data
+#set ftp=ftp://ftp.astro.umd.edu:/pub/carma/data
 set tar=c0104I.8D_115NGC4254.2.miriad.tar.gz
 set tar2=ngc4254.cmnorm.ref.tar.gz
 
