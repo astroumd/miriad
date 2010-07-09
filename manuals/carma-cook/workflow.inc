@@ -290,7 +290,7 @@ and some antennas are better than others, but there should be no outliers.
 The output of {\tt uvindex} should be
 compared with the log sent by e-mail and the actual data length. Sometimes there
 is a failure in filling the data properly, and the data archive center should be 
-contacted.\footnote{currently: Lisa Xu, lisaxu@ncsa.uiuc.edu}    %% 2007,2008
+contacted.\footnote{generic email: carma@ncsa.uiuc.edu } 
 An example output of {\tt uvindex} follows:\index{uvindex}
 
 
@@ -570,7 +570,7 @@ from the newly computed ones. Normally these are stored in a small
 ascii table with equatorial values in nanoseconds.\index{baseline correction}
 ({\it cf}. {\tt uvgen baseunit=1}).
 Antpos datafiles
-can be found\footnote{At CARMA, {\tt /array/rt/baselineSolutions/antpos.YYMMDD}
+can be found\footnote{At CARMA, {\tt /home/obs/web\_pages/observing/baseline/}
 is the official repository}
 at {\tt http://cedarflat.mmarray.org/observing/baseline/}, as well in your
 local MIRIAD distribution in {\tt \$MIRCAT/baselines/carma}\footnote{use {\tt cvs update}
@@ -804,7 +804,7 @@ line=chan,}{\it n,start,width,step}:
 After this you should recompute the wide band averages using {\tt
 uvwide}\index{uvwide}, if you plan to use the wide band explicitly.
 
-\subsection{Flagging using tvflag}
+\subsection{Flagging using tvflag and pgflag}
 
 The interactive flagging program {\tt tvflag} must be run on an 8-bit
 (a.k.a. PseudoColor) display. Most modern desktops are so color
@@ -831,6 +831,8 @@ or use VNC:
   % vncserver -kill :1
 \end{verbatim}
 \normalsize
+
+An alternative program, using PGPLOT, and called {\tt pgflag} is available.
 
 
 \subsection{Flagging based system temperatures}
@@ -1206,6 +1208,267 @@ science target.  Finally, in lines 22-25 we copy the solution from the
 wide bands of the gain calibrator to the narrow bands of the gain
 calibrator.
 
+\subsection{PACS calibration}
+
+In PACS (``Paired Antenna Calibration Scheme'') mode,
+a set of CARMA and SZA antennas (currently 8) 
+are paired up (they are physically
+close to each other) in the A- or B-array. The SZA 
+phases of a quasar at 1cm
+can be scaled up by the ratio of the observing
+frequencies to apply a correction to the 1mm or 3mm CARMA phases,
+to compensate for the rapid atmospheric phase fluctuations. While
+the SZA is continuesly observing the quasar to obtain these corrected
+phases, CARMA is switching between the quasar and science source
+in the usual source-cal cycle.
+
+There are currently two methods to apply PACS calibration, 
+{\bf baseline} based and {\bf antenna} based, described in the
+next two sections.
+
+\subsubsection{Antenna based: gpbuddy}
+
+In the antenna based approach, a selfcal solution is first obtained,
+which determines a time dependant gain (read: phase)
+for each antenna\footnote{this is actually done in two steps, a
+longer time interval based selfcal is first applied to remove
+any gross drifts},
+$g_1(i_1,t_1)$ for the CARMA antennas ($i_i$), and
+$g_2(i_2,t_2)$ for the SZA antennas ($i_2$). 
+The scaled SZA phases can now be applied to the CARMA phases to obtain
+the phase correction:
+$$
+    \phi_{i_1j_1}^C = \phi_{i_1j_1}^C - \alpha \phi_{i_2j_2}^S
+$$
+
+where $\alpha$ is the ratio of the observing frequencies at CARMA to SZA.
+This number is around 3 for 3mm and 7 for 1mm.
+
+For various reasons this calibration is currently
+a two-step process MIRIAD. The program
+{\tt gpbuddy} computes the antenna based 
+SZA phase correction ($ \alpha \phi_{i_2}^S $), and stores these
+into the {\tt phaseatm} uv-variable of the output dataset. These phase
+corrections are then applied in a baseline based mode using
+{\tt options=atmcal} in {\tt uvcal}, including a small bandpass slope
+correction based on $\nu/\nu_0$, where $\nu_0$ is normally LO$_1$.
+
+The following example illustrates this style of phase calibration,
+skipping the usual passband calibration, but starting with the slow
+selfcal, the rapid selfcal, and finally transferring the phases
+from SZA to CARMA. 
+
+\footnotesize
+\begin{verbatim}
+   # We have the following sources:
+   # cal_c :  carma calibrator, roughly only every 20mins for 5 mins
+   # cal_s :  sza calibrator, continuesly observed
+   # src   :  carma source, roughly only every 20 mins for 15 mins
+   # 
+   # to keep the example simple, some keyword (e.g. refant) are omitted
+
+   # step 1: slow and fast selfcal for the CARMA calibrator
+
+   selfcal vis=cal_c  interval=3
+   uvcat   vis=cal_c                 out=cal_cs
+   selfcal vis=cal_cs interval=0.05                      #### gains actually unused
+
+
+   # step 2: slow and fast selfcal for the SZA calibrator
+
+   selfcal vis=cal_s  interval=3
+   uvcat   vis=cal_s                 out=cal_ss
+   selfcal vis=cal_ss interval=0.05
+
+
+   # step 3: apply SZA calibrator phases to CARMA calibrator (so you can check improvement)
+
+   gpbuddy vis=cal_cs vis2=cal_ss    out=cal_ca
+   uvcal   vis=cal_ca                out=cal_atm   options=atmcal
+
+
+   # step 4: apply SZA calibrator phases to CARMA source, but first apply slow CARMA calibrator
+
+   gpcopy  vis=cal_c                 out=src
+   uvcat   vis=src                   out=src_s
+   gpbuddy vis=src_c  vis2=cal_ss    out=src_ca
+   uvcal   vis=src_ca                out=src_atm   options=atmcal
+   
+
+\end{verbatim}
+\normalsize
+
+
+
+\footnotesize
+\begin{verbatim}
+
+GPBUDDY is a MIRIAD task that copies the gain table of a selected
+number of antennas into a second set of antennas in another dataset. 
+It is intended to be used in conjunction with UVCAL,to perform 
+antenna-based atmospheric phase correction.
+All non-selected antennas have the option of having their gains 
+interpolated from paired antennas using different methods.
+
+GPBUDDY will take the gains corresponding to the antennas in list2 
+from the dataset specified by vis2, then set their amplitudes to one 
+and multiply the phases by a given scale factor, then unwrap them and write 
+them into the antenna-based phaseatm uv variable in the vis dataset for
+the antennas in list1. Antennas present in vis but not listed in list1
+will get a phaseatm value that is obtained from the application of
+the specified method. Antennas for which the method produce no solution will 
+be flagged during that time interval. {\tt uvcal options=atmcal} will interpret 
+these phaseatm tables at phases at the LO1 frequency and correctly compute 
+and apply the atmospheric delays.   
+
+         Example: phase correction for 3mm
+           gpbuddy vis=carma vis2=sza 
+                  list1=2,4,5,6,8,9,13,15 
+                  list2=21,23,20,18,19,22,16,17
+                  factor=3.09
+           uvcal vis=carma out=carma.atm options=atmcal
+
+Keyword: vis
+         The input visibility file, containing the visibility data
+         to be copied with an additional phaseatm table.
+         No default.
+
+Keyword: out
+         Output file for vis, if selected. This file will contain the phaseatm
+         variable derived from the gains of a buddy antenna.
+
+Keyword: vis2
+         The 2nd input visibility file, containing a selfcal gain table from
+         which gains will be applied to antennas in the primary 
+         dataset (the gain table of the input visibility file).
+
+         Default is to leave this blank, which will simply copy 
+         gains internally from the primary visibility dataset.
+
+Keyword: show
+         Show the East-North layout (in meters) in tabular format.
+         LISTOBS will also print these out by default.
+         Default: false
+
+Keyword: list1
+         The list of primary antennas to receive new gains.
+
+Keyword: list2
+         The 2nd list of paired antennas to apply gains to primary
+
+Keyword: scale
+         This is usually a number larger than 1 and can normally be
+         computed from the ratio of the effective frequencies at which the two
+         gain solutions were derived. 
+         Currently no default allowed, since we have not properly
+         obtained these effective frequencies. The usual numbers are 3.09 for
+         3mm and 7.4 for 1mm.
+Keyword: options
+         ** not used at the moment **
+
+Keyword: mode
+         gains or phaseatm. 
+         For gains the gains of the input file(s) are overwritten,
+         For phaseatm you will need to supply (an) output file(s).
+         DO NOT USE.
+         Default: phaseatm
+
+Keyword: nearest
+         Use nearest neighbor for time interpolation. If not, linear
+         interpolation is used.
+         Default: true.
+
+         Will become false, since nearest doesn't know how to flag
+         when nothing in the interval.
+
+Keyword: method
+         Method by which antenna phased of non-paired antennas are
+         deduced. 
+         Currently implemented are:
+         power:     inverse power law weighted average on projected distance
+         gaussian:  Gaussian weighted average on projected distance
+         tophat:    equal weights within a projected radius
+         parabol:   inverse projected distance square within a radius
+         none:      none, the phase corrections for non-buddies are 0 (not implemented) 
+         Default: power
+
+Keyword: param
+         Parameter for the weighting function method.
+         For power-law: negative of the power index
+         For gaussian: Gaussian FWHM (in nanoseconds)
+         For tophat: radius (in nanoseconds)
+         For parabol: radius (in nanoseconds)
+         Default: 2
+
+Keyword: antipol
+         Compute antenna phases for non-paired antennas by interpolating
+         over paired antennas using a user-selectable weighting function
+         specified by wscheme and param
+         Default: true
+
+Keyword: reset
+         Normally for non-paired antennas the phaseatm are set to 0,
+         to prevent any changes to those antennae. However, these baselines
+         are not flagged. By setting reset=false you will then force these
+         baselines to be flagged.
+         Default: false
+
+         **WARNING**    this keyword will disappear and absorbed into method=
+\end{verbatim}
+\normalsize
+
+
+\subsubsection{Baseline based: bldelay}
+
+\footnotesize
+\begin{verbatim}
+
+         BLDELAY is a Miriad program that reads baseline phases and
+         derives estimates for the atmospheric delay. The visibility
+         data should have been calibrated to give zero phases in
+         all windows and channels at the start of the data. There is
+         no averaging done. If this is required it should be done in
+         another Miriad task.
+
+Keyword: vis
+         The input visibility file. No default.
+
+Keyword: out
+         The file containing the derived delays.
+
+Keyword: options
+         The options are
+             mean        (default) estimate the delay from the mean phase
+                         across the band divided by the mean frequency,
+                         and zero phase at zero frequency
+             slope       estimate the delay from the slope across all the
+                         bands or channels
+             track       track phases in time to resolve wraps
+
+Keyword: select
+         This selects the data to be processed, using the standard uvselect
+         format. Default is all data.
+
+Keyword: line
+         Specify whether to use the wideband ("wide") or channel
+         ("channel") data to derive the delays.
+
+Keyword: wraps
+         Number of 2*pi steps to search for the best delay fit. The
+         default is 3 (to search +/- 3*pi)
+
+
+\end{verbatim}
+\normalsize
+
+\subsubsection{minipacs}
+
+A method was divised to quickly asses the amount of success
+PACS can have. This is dubbed {\it minipacs}, in which
+two nearby quasars are observed and the difference between
+regular and PACS calibration can be quickly assessed. It was
+first used in the winter 2009/2010 PACS campaign.
+
 \subsection{Absolute Flux Calibration}
 
 Although one can rely on known fluxes of strong calibrators such as
@@ -1340,6 +1603,8 @@ beam}.
 If you want to map anything but a point source in the phase center, 
 you MUST map your source in mosaic'd mode, even if you have a single pointing!
 
+
+
 \subsection{Mosaicing}
 
 {\tt mospsf} needs to estimate the ``average'' beam appropriate for restoring.
@@ -1348,6 +1613,7 @@ you MUST map your source in mosaic'd mode, even if you have a single pointing!
 \footnotesize
 \begin{verbatim}
   % invert ... beam=xxx.bm options=systemp,double,mosaic imsize=129,129 cell=1,1 
+  % mospsf in=xxx.bm ...
   % imfit in=xxx.bm object=beam
 
   % mossdi ...
@@ -1373,6 +1639,93 @@ It is also important to set the area to be cleaned carefully. Use a mosaic sensi
 something like a 1.5$\sigma$ cutoff. The mask thus generated can be copied into the cube to be
 cleaned. 
 
+\subsection{Weights in mapping}
+
+There are several options in {\tt invert} to weigh your visibilities
+to optimize resolution vs. sensitivity:
+
+\begin{itemize}
+\item {\bf sup=} 
+sidelob suprression area (arcsec); 0 means natural,
+the default is uniform if not supplied.
+
+\item {\bf fwhm=}   
+gaussian taper in image domain, given in arcsec. This is
+effectively a smoothing in the image plane. In AIPS this
+is normally given in the UV plane, in $k\lambda$:
+$$
+    \theta_{xy} = {182 \over \theta_{uv}}
+$$
+
+\item {\bf robust=}
+Brigg's weighting scheme (-big means none, +2 means natural)
+
+\end{itemize}
+
+In addition some of the options also control the weighting,
+in particular {\bf options=systemp}. The current version of MIRIAD
+can only include the system temperatures into the weighting scheme,
+but for antennas that have bad gains (e.g. pointing errors) it could
+be useful to fold in the antenna gain.
+
+One scheme to include the gains in the systemp weighting using
+this command:
+
+
+\footnotesize
+\begin{verbatim}
+   % puthd in=$phcalfile/senmodel value=GSV type=ascii
+\end{verbatim}
+\normalsize   
+
+
+This variable is normally set by 
+MFCAL or GPCAL\foonote{see \$MIRSUBS/defsmodl.for}
+but these are not commonly used for gain calibration at
+CARMA, and in any case {\tt defsmodl} only sets gain-scaled variance
+for ATCA data.  
+Setting {\tt GSV} causes {\tt uvdat} to include the gains
+in the variance calculation.  
+{\tt gpcopy} then copies the {\tt senmodel} parameter to the source data.
+
+In order for this to work, one should NOT apply the gains before
+running invert (though one can and should apply the passband). 
+
+
+It would also be possible to fold in the gains into the systemps,
+or modify jyperk, since the variance is calculated as follows:
+$$
+        {(Jy/K)^2 T_1 T_2} \over {\Delta \nu \Delta T}
+$$
+but there is currently no option in MIRIAD programs to do this.
+
+\subsection{Channel averaging in invert}
+
+A perhaps not so well known shortcoming of mapping with {\tt invert}
+is that MIRIAD tasks that depend on noise variances compute that
+variance based on the first channel that is retrieved. When
+in early 2010 band 4 was introduced with a much larger number of
+channels, instead of the COBRA 15 channel 500 MHz windows, this caused
+the naive approach to produce maps with inferior noise characteristics.
+
+A work-around is to pre-process the data using {\tt  uvcal options=avechan}
+at the time of applying the bandpass calibration. This also has the
+added advantage that flagged channel data are re-averaged in new
+wide-band data. The phase calibration and mapping will then take
+place using the wide-band data. Mapping can optionally take place via
+{\tt options=mfs} and properly combine the LSB and USB to account for
+the different beamshapes at the different frequencies.
+
+\footnotesize
+\begin{verbatim}
+   % mfcal vis=bp_mir
+   % gpcopy bp_mir -> gc_mir
+   % uvcal  gc_mir -> gcb_mir options=avechan,nocal
+   
+\end{verbatim}
+\normalsize   
+
+
 
 \section{Tips and Tricks}
 
@@ -1381,7 +1734,8 @@ cleaned.
 \item In selfcal style applications (selfcal, mfcal, gmake) the reference
 antenna {\tt refant=} should be choosen somewhat centrally in the array. 
 
-\item In the selection of a pgplot graphics device for X11 it is recommended
+\item In the selection of a pgplot graphics device for X11 it is 
+recommended
 to use the persistent driver ({\tt device=1/xs}, {\tt device=2/xs}, ....),
 which allows for as screens as you want or your screen can handle.
 

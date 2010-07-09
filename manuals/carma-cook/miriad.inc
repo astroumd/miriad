@@ -67,6 +67,7 @@ visibility data and image cubes, described in a bit more detail below:
 
 \subsection{Visibility data}
 
+% TODO: explain this a bit here,then perhaps redirect to appendix
 See Appendix~\ref{app:uvvars} for more information.
 
 Apart from direct observatory data, 
@@ -104,6 +105,11 @@ is contained. To get a listing of these centers, use {\tt imlist options=mosaic}
 
 A number of keywords are often used with the same meaning. You can use the {\tt mirhelp} command
 on them to get current help, but here are some reminders to the most important ones:
+
+
+\subsection{vis=}
+
+\subsection{in=}
 
 \subsection{device=}
 

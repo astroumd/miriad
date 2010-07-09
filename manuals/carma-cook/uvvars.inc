@@ -59,13 +59,14 @@
 %                  [i know this is bad, but it will go back to the official location as such]
 %   3-jan-08  pjt  clarify center of channel for frequency calculations
 %  21-nov-08  pjt  clarify items, add bandpass calibration items
+%   5-oct-09  pjt  various clarifications, most notably TIME as integer midpoint!
 %
 %  nband - appears to be CARMA's Control.SpectralLineCorrelator.numBands (but it's 8, not 6=nspect)
 %  later removed again
 
 \section{UV Dataset}
 
-\newcommand{\uvversion}{September 26, 2009}
+\newcommand{\uvversion}{November 30, 2009}
 
 A \miriad\ uv dataset is composed of a collection of items and `\MM{u-v} variables'.
 The variables are parameters that are known at the time of the observation,
@@ -636,8 +637,8 @@ time			\>D     \>days
 \>\>\> For example, noon on Jan 1, 1980 is 2,444,240.0! \\
 \>\>\> {\tt time} is also known as {\tt preamble(3)} or {\tt preamble(4)}\\
 \>\>\> depending if you have uv or uvw data resp.\\
-\>\>\> time is the beginning of an integration with length inttime\\
-\>\>\> NOTE ut is the mid-interval for CARMA, beginning for BIMA\\
+\>\>\> time is the midpoint of an integration with length inttime\\
+\>\>\> NOTE ut is at the starting time of an integration \\
 
 tpower		\>R	\>volts
 \> Total power measurements (Hat Ck)\\
