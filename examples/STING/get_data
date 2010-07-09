@@ -31,7 +31,7 @@ set vis=$tar:r:r
 
 echo $file has been downloaded
 echo Local miriad dataset is now $vis
-
+itemize in=$vis
 
 
 
