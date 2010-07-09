@@ -5,6 +5,7 @@
 
 set ftp=ftp://ftp.astro.umd.edu:/pub/carma/data
 set tar=c0104I.8D_115NGC4254.2.miriad.tar.gz
+set tar2=ngc4254.cmnorm.ref.tar.gz
 
 foreach arg ($*)
   set $arg
@@ -12,6 +13,7 @@ end
 
 
 set file=$ftp/$tar
+set file2=$ftp/$tar2
 
 
 which wget >& /dev/null
@@ -21,10 +23,12 @@ if ($status) then
     echo Cannot use wget or curl to fetch $file, go grab it yourself
     exit 1
   else
-    curl $file | tar zxf -
+    curl $file  | tar zxf -
+    curl $file2 | tar zxf -
   endif
 else
-  wget -O - $file | tar zxf -
+  wget -O - $file  | tar zxf -
+  wget -O - $file2 | tar zxf -
 endif
 
 set vis=$tar:r:r
