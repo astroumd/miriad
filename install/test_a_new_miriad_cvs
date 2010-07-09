@@ -3,7 +3,6 @@
 #   Example of a script that assembles miriad from scratch and compiles
 #   could be part of a nightly script.
 #   Note this script gets miriad, with wip and rad as well.
-#   On a fast 2010-style CPU takes about 2:02 to install (old style)
 #
 #   Examples of use:
 #
@@ -22,6 +21,7 @@
 #   15-may-09    only remove old rootdir when present
 #   11-jul-09    optionally grab a (local) file, optionally intel/gfortran
 #   10-jun-10    handle gif, add test for autobuild
+#    9-jul-10    add drpacs
 #
 #  
 #----
@@ -112,7 +112,7 @@ if ($reuse == 0) then
   endif
   if ($brief == 0) then
     echo "getting miriad,wip and rad via cvs....".
-    (cvs -Q co $branch -d $rootdir miriad; cd $rootdir/borrow; cvs -Q co wip; cvs -Q co rad)
+    (cvs -Q co $branch -d $rootdir miriad; cd $rootdir/borrow; cvs -Q co wip rad drpacs)
   else
     echo "getting miriad only cvs....".
     (cvs -Q co $branch -d $rootdir miriad)
