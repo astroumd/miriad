@@ -1,0 +1,13 @@
+#! /bin/csh -f
+#  
+#
+
+
+set map=ngc4254.cmnorm
+set ref=$map.ref
+set out=$map.diff
+
+rm -rf $out
+maths exp="<$map>-<$ref>" out=$out
+histo in=$out
+
