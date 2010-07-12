@@ -267,7 +267,6 @@ else
     mv libf2c.so $MIRLIB/.
     mv libf2c.a $MIRLIB/.
     cd ..
-    rehash
     echo "$as_me:$LINENO: checking for need for -K flag in f2c"
     if f2c -K test.F; then
 	F2CARG="-K"
