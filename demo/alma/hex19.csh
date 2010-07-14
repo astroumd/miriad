@@ -57,7 +57,6 @@ echo " "                             >> timing
 echo "   ---  TIMING   ---   "       >> timing
 echo START: `date` >> timing
 
-goto plot
 goto continue
 continue:
 
