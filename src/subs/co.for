@@ -1262,7 +1262,7 @@ c  Standardise. For compatibility with old interface, use
       ttype = type
       call ucase(ttype)
       if (ttype.eq.'RADIO') then
-        ttype = 'VELTYP'
+        ttype = 'VELO'
       else if (ttype.eq.'OPTICAL') then
         ttype = 'FELO'
       else if (ttype.eq.'FREQUENCY') then
@@ -1284,7 +1284,8 @@ c
       else if (ttype(1:4).eq.'FELO') then
         otype = FELTYP
       else
-        call bug('f','Unrecognised conversion type, in coVelSet')
+        call bug('f',ttype(1:4) //
+     *       ': Unrecognised conversion type, in coVelSet')
       endif
 c
 c Determine the reference frame conversion.
