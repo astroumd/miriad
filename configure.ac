@@ -1,5 +1,5 @@
 AC_PREREQ(2.59)
-AC_INIT([MIRIAD],[4.1.3],[miriad-dev-bugs@astro.berkeley.edu])
+AC_INIT([MIRIAD],[4.1.5],[miriad-dev-bugs@astro.berkeley.edu])
 AC_REVISION([$Revision$])
 
 AC_CONFIG_SRCDIR
