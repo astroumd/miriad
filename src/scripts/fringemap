@@ -34,7 +34,7 @@ set mask=15                               #> SCALE  mask=15        0:30:1
 foreach arg ($*)
   set $arg
 end
-set bench=ftp://ftp.astro.umd.edu:/pub/carma/fringe.3C273.2008jun18.4.miriad.tar.gz
+set bench=ftp://ftp.astro.umd.edu/pub/carma/data/fringe.3C273.2008jun18.4.miriad.tar.gz
 # -----------------------------------------------------------------------
 
 if ($ampcal) then
