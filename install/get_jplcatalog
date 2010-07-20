@@ -11,9 +11,11 @@
 #  See also 
 # http://sma-www.cfa.harvard.edu/miriadWWW/manuals/SMAuguide/smauserhtml/index_JPLCatIdentify.html
 # http://sma-www.cfa.harvard.edu/miriadWWW/manuals/SMAuguide/smauserhtml/index_JPLCatInstall.html
+#
 
 set mode=1
 
+set backup_url=ftp://ftp.astro.umd.edu/pub/carma/jplcatalog.tar.gz
 set url=http://sma-www.cfa.harvard.edu/miriadWWW/smaspec/catalog/jplcatalog.tar.gz
 
 
@@ -29,5 +31,5 @@ else if ($mode = 2) then
   tar zxf $url:t
   rm $url:t
 else
-  echo mode $mode not supported
+  echo "mode $mode not supported (mode=1 curl mode=2 wget)
 endif
