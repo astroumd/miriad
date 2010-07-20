@@ -16,7 +16,11 @@
 set mode=1
 
 set backup_url=ftp://ftp.astro.umd.edu/pub/carma/jplcatalog.tar.gz
-set url=http://sma-www.cfa.harvard.edu/miriadWWW/smaspec/catalog/jplcatalog.tar.gz
+set url=http://www.cfa.harvard.edu/sma/miriad/smaspec/catalog/jplcatalog.tar.gz
+
+foreach a ($*)
+  set $a
+end
 
 
 cd $MIRCAT
@@ -26,10 +30,22 @@ endif
 
 if ($mode == 1) then
   curl $url | tar zxf -
+  if ($status) goto bad
 else if ($mode = 2) then
   wget $url
+  if ($status) goto bad
   tar zxf $url:t
   rm $url:t
 else
   echo "mode $mode not supported (mode=1 curl mode=2 wget)
 endif
+
+
+exit 0
+
+bad:
+  echo Bad url=$url
+  echo Try url=$backup_url
+  exit 1
+
+
