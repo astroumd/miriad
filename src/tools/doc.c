@@ -1754,13 +1754,11 @@ void change_outstream(char *modulename)
     if(outstream!=stdout) fclose(outstream);
 
     if( ( outstream = fopen( outfile, "r" ) )!=NULL ) {
-        fprintf(stderr,"Output file of module %s already present",modulename);
         if( ask ) {
+            fprintf(stderr,"Output file of module %s already present",modulename);
             fprintf(stderr,"\nOverwrite existing file and continue? [y]/n >");
             c=getchar(); if( c=='N' || c=='n' ) exit(1);
             if( c!='\n' ) c=getchar();
-        } else {
-            fprintf( stderr, "; existing file overwritten.\n");
         }
         fclose( outstream );
     }
