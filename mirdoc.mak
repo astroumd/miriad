@@ -74,18 +74,21 @@ $(doc_prog):
 
 all-local: $(DOCSTAMPS)
 
-install-data-hook:
+install-data-local:
 	$(mkdir_p) "$(DESTDIR)$(sdocdir)"
 	$(mkdir_p) "$(DESTDIR)$(pdocdir)"
-	for f in docwork/* ; do \
-	  if echo "$$f" |$(EGREP) '\*' 1>/dev/null 2>&1; then \
+	if test "`echo docwork/*.sdoc`" = 'docwork/*.sdoc'; then \
+	  : ; \
+	else \
+	  echo $(INSTALL_DATA) docwork/*.sdoc "$(DESTDIR)$(sdocdir)" ; \
+	  $(INSTALL_DATA) docwork/*.sdoc "$(DESTDIR)$(sdocdir)" ; \
+	fi
+	for ext in doc cdoc tdoc kdoc ; do \
+	  if test "`echo docwork/*.$$ext`" = 'docwork/*.'$$ext ; then \
 	    : ; \
-	  elif echo "$$f" |$(EGREP) '\.sdoc' 1>/dev/null 2>&1; then \
-	    echo $(INSTALL_DATA) "$$f" "$(DESTDIR)$(sdocdir)" ; \
-	    $(INSTALL_DATA) "$$f" "$(DESTDIR)$(sdocdir)" ; \
 	  else \
-	    echo $(INSTALL_DATA) "$$f" "$(DESTDIR)$(pdocdir)" ; \
-	    $(INSTALL_DATA) "$$f" "$(DESTDIR)$(pdocdir)" ; \
+	    echo $(INSTALL_DATA) docwork/*.$$ext "$(DESTDIR)$(pdocdir)" ; \
+	    $(INSTALL_DATA) docwork/*.$$ext "$(DESTDIR)$(pdocdir)" ; \
 	  fi ; \
 	done
 
