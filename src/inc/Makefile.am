@@ -24,14 +24,14 @@ cinclude_HEADERS = maxdimc.h
 # included via ratty. But hopefully that will change in the future.
 
 maxdim.h: cfg_maxdim.h
-	if diff $< $@ >/dev/null 2>&1 ; then \
+	$(AM_V_at)if diff $< $@ >/dev/null 2>&1 ; then \
 	   : ; \
 	else \
 	   cp -f $< $@ ; \
 	fi
 
 maxdimc.h: cfg_maxdimc.h
-	if diff $< $@ >/dev/null 2>&1 ; then \
+	$(AM_V_at)if diff $< $@ >/dev/null 2>&1 ; then \
 	   : ; \
 	else \
 	   cp -f $< $@ ; \

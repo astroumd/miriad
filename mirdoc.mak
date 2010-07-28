@@ -10,8 +10,7 @@
 DOCSTAMPS = $(DOCINPUTS:=_ds)
 
 %.for_ds: %.for $(doc_prog)
-	@echo Generating docs from $< ...
-	@cat=`pwd`/$(doc_catsrc) ; \
+	$(AM_V_GEN)cat=`pwd`/$(doc_catsrc) ; \
 	doc=`pwd`/$(doc_prog) ; \
 	input=`pwd`/$< ; \
 	$(mkdir_p) docwork ; \
@@ -19,8 +18,7 @@ DOCSTAMPS = $(DOCINPUTS:=_ds)
 	touch $@
 
 %.f2c_ds: %.f2c $(doc_prog)
-	@echo Generating docs from $< ...
-	@cat=`pwd`/$(doc_catsrc) ; \
+	$(AM_V_GEN)cat=`pwd`/$(doc_catsrc) ; \
 	doc=`pwd`/$(doc_prog) ; \
 	input=`pwd`/$< ; \
 	$(mkdir_p) docwork ; \
@@ -28,8 +26,7 @@ DOCSTAMPS = $(DOCINPUTS:=_ds)
 	touch $@
 
 %.c_ds: %.c $(doc_prog)
-	@echo Generating docs from $< ...
-	@cat=`pwd`/$(doc_catsrc) ; \
+	$(AM_V_GEN)cat=`pwd`/$(doc_catsrc) ; \
 	doc=`pwd`/$(doc_prog) ; \
 	input=`pwd`/$< ; \
 	$(mkdir_p) docwork ; \
@@ -37,8 +34,7 @@ DOCSTAMPS = $(DOCINPUTS:=_ds)
 	touch $@
 
 %.f_ds: %.f $(doc_prog)
-	@echo Generating docs from $< ...
-	@cat=`pwd`/$(doc_catsrc) ; \
+	$(AM_V_GEN)cat=`pwd`/$(doc_catsrc) ; \
 	doc=`pwd`/$(doc_prog) ; \
 	input=`pwd`/$< ; \
 	$(mkdir_p) docwork ; \
@@ -48,8 +44,7 @@ DOCSTAMPS = $(DOCINPUTS:=_ds)
 # This is needed for src/tools. Sigh.
 
 %.clone_ds: %.clone $(doc_prog)
-	@echo Generating docs from $< ...
-	@cat=`pwd`/$(doc_catsrc) ; \
+	$(AM_V_GEN)cat=`pwd`/$(doc_catsrc) ; \
 	doc=`pwd`/$(doc_prog) ; \
 	input=`pwd`/$< ; \
 	$(mkdir_p) docwork ; \

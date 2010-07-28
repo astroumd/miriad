@@ -57,7 +57,6 @@ pdoc_DATA = device.kdoc in.kdoc line.kdoc options.kdoc out.kdoc \
 $(pdoc_DATA): keyword-doc.stamp
 
 keyword-doc.stamp: keywords.kdoc
-	$(DOC) -p $<
-	touch $@
+	$(AM_V_GEN)$(DOC) -p $< ; touch $@
 
 CLEANFILES = keyword-doc.stamp $(pdoc_DATA)

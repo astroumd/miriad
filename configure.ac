@@ -2,9 +2,10 @@ AC_PREREQ(2.59)
 AC_INIT([MIRIAD],[4.1.5],[miriad-dev-bugs@astro.berkeley.edu])
 AC_REVISION([$Revision$])
 
-AC_CONFIG_SRCDIR
+AC_CONFIG_SRCDIR([src/subs/uvio.c])
 AC_CONFIG_MACRO_DIR([.])
-AM_INIT_AUTOMAKE([-Wobsolete -Wgnu -Wunsupported -Wno-syntax -Wno-portability foreign])
+AM_INIT_AUTOMAKE([-Wobsolete -Wgnu -Wunsupported -Wno-syntax -Wno-portability
+                  foreign silent-rules])
 
 dnl If using automake 1.9 / autoconf 2.59 (which is not uncommon),
 dnl 'docdir' isn't defined, and we need to define it ourselves.

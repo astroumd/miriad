@@ -48,7 +48,7 @@ EXTRA_DIST = mircommon.mak mirdoc.mak \
 pkglib_SCRIPTS = automiriad.csh automiriad.sh libtool
 
 automiriad.csh: automiriad.csh.in
-	abssrc=`cd $(top_srcdir) && pwd` ; \
+	$(AM_V_GEN)abssrc=`cd $(top_srcdir) && pwd` ; \
 	sed -e "s,%abs_srcdir%,$$abssrc," \
 	    -e "s,%prefix%,$(prefix)," \
 	    -e "s,%pkgdatadir%,$(pkgdatadir)," \
@@ -58,7 +58,7 @@ automiriad.csh: automiriad.csh.in
 	    -e "s,%libdir%,$(libdir)," <$< >$@
 
 automiriad.sh: automiriad.sh.in
-	abssrc=`cd $(top_srcdir) && pwd` ; \
+	$(AM_V_GEN)abssrc=`cd $(top_srcdir) && pwd` ; \
 	sed -e "s,%abs_srcdir%,$$abssrc," \
 	    -e "s,%prefix%,$(prefix)," \
 	    -e "s,%pkgdatadir%,$(pkgdatadir)," \
