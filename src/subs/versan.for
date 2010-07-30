@@ -1,5 +1,5 @@
 c-----------------------------------------------------------------------
-c* versan - Announce task version information.
+c* versan - Announce task revision information.
 c& mrc
 c: terminal-i/o
 c+
@@ -7,13 +7,13 @@ c+
 
         character task*(*), rcsrev*(*), rcsdat*(*)
 
-c  Construct task version information from the RCS Revision and Date
+c  Construct task revision information from the RCS Revision and Date
 c  strings and announce it on standard output (usually the user's
 c  terminal).  The string is also returned as the value of the function,
 c  e.g. for use in the history log.
 c
 c  Input:
-c    task       The task name.  If prefixed with '-' the version will
+c    task       The task name.  If prefixed with '-' the revision will
 c               not be reported.
 c    rcsrev     RCS Revision string.
 c    rcsid      RCS Date string.
@@ -33,13 +33,13 @@ c     Quiet mode?
 
       call lcase (versan)
       i0 = len1(versan) + 1
-c     ATNF version uses RCS, CARMA version uses CVS, keep the users less confused
+
 #ifdef USE_RCS
-      versan(i0:) = ': Version '
-      i0 = i0 + 10
+      versan(i0:) = ': Revision '
+      i0 = i0 + 11
 #else
-      versan(i0:) = ': CVS Version '
-      i0 = i0 + 14
+      versan(i0:) = ': CVS Revision '
+      i0 = i0 + 15
 #endif
 
 c     Parse the RCS revision information.
@@ -70,7 +70,7 @@ c         Time.
         end if
 
       else
-        versan(i0:) = ' (not recorded)'
+        versan(i0:) = '(not recorded)'
       endif
 
       if (.not.quiet) then
