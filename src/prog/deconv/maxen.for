@@ -38,7 +38,7 @@ c	centered region that it is safe to deconvolve.
 c@ measure
 c	The entropy measure to be used, either "gull" (-p*log(p/e)) or
 c	"cornwell" (-log(cosh(p)) -- also called the maximum emptyness
-c	criteria).
+c	criterion). The default is "gull".
 c@ tol
 c	Tolerance of solution. There is no need to change this from the
 c	default of 0.01.
