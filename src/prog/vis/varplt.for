@@ -74,6 +74,7 @@ c    dhem 07jan08 Declare itoaf to be 4 characters long (was 2) in Logit
 c    pjt   4dec08 Added phaseatm
 c    mchw 08dec08 increased parameter(MAXPNTS=10000000) 
 c    mchw 03feb09 increased parameter(MAXPNTS=40000000) 
+c    pjt   1aug10 MAXRUNS 1024 for 32_winx23_ant SZA 
 c
 c  Bugs:
 c    ?? Perfect?
@@ -81,7 +82,7 @@ c------------------------------------------------------------------------
 	character version*(*)
 	integer MAXPNTS
 	parameter(MAXPNTS=10000000)
-	parameter(version='VarPlt: version 1.1 03-Feb-09')
+	parameter(version='VarPlt: version 1.1 1-aug-2010')
 	logical doplot,dolog,dotime,dounwrap
 	character vis*64,device*64,logfile*64,xaxis*16,yaxis*16
 	character xtype*1,ytype*1,xunit*16,yunit*16,calday*24
@@ -699,7 +700,7 @@ c
 c
 c------------------------------------------------------------------------
 	integer MAXRUNS
-	parameter(MAXRUNS=512)
+	parameter(MAXRUNS=1024)
 	double precision xdrun(MAXRUNS),ydrun(MAXRUNS)
 	integer xirun(MAXRUNS),yirun(MAXRUNS)
 	real xrrun(MAXRUNS),yrrun(MAXRUNS)
