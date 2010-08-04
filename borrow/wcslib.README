@@ -1,7 +1,11 @@
 In July 2010 the coordinate routines in $MIRSUBS/co.for have
 obtained a dependance on the WCS library the ATNF distributes
 with their version of miriad.
-See: http://www.atnf.csiro.au/people/mcalabre/WCS/
+Check $MIRSUBS/co.h and if you see the line
+   include 'wcslib/cel.inc'
+you have the routines with the WCSLIB dependancy.
+
+More info on: http://www.atnf.csiro.au/people/mcalabre/WCS/
 
 If you have this version you will need to integrate this
 library:
