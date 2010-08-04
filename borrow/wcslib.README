@@ -11,3 +11,7 @@ library:
     add -lwcs to link line
 
 wget ftp://ftp.atnf.csiro.au/pub/software/wcslib/wcslib.tar.bz2
+
+./configure --bindir=$MIRBIN --libdir=$MIRLIB --includedir=$MIRINC
+make 
+make install
