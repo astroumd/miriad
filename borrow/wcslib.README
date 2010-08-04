@@ -1,6 +1,8 @@
 In July 2010 the coordinate routines in $MIRSUBS/co.for have
 obtained a dependance on the WCS library the ATNF distributes
 with their version of miriad.
+See: http://www.atnf.csiro.au/people/mcalabre/WCS/
+
 If you have this version you will need to integrate this
 library:
     after the usual configure (e.g. --prefix=$MIR/opt)
@@ -8,4 +10,4 @@ library:
     copy the include/* directory to $MIRINC
     add -lwcs to link line
 
-URL:  ftp://ftp.atnf.csiro.au/pub/software/wcslib/wcslib.tar.bz2
+wget ftp://ftp.atnf.csiro.au/pub/software/wcslib/wcslib.tar.bz2
