@@ -18,8 +18,8 @@ c	and $MIRCAT/recom.lis. The default is $MIRCAT/lovas.3mm.
 c@ freq
 c	The rest frequency of the line in GHz. The default 110.0 GHz.
 c@ iffreq
-c	The intermediate frequency in MHz. The default 150.0 MHz.
-c	This is the frequency in the 90-900 MHz IF at which the line
+c	The intermediate frequency in MHz. The default 1500.0 MHz.
+c	This is the frequency in the 900-9000 MHz IF at which the line
 c	rest frequency will appear. A negative value indictes that
 c	the line should appear in the lower sideband of the first LO. 
 c@ vlsr
@@ -52,20 +52,15 @@ c	 6   bw1/256  -     100/32 100/32   bw3/256   -     100/32 100/32
 c	 7    25/256  -     100/32 100/32   100/32  100/32  100/32 100/32
 c	 8  *bw1/128 100/32 100/32 100/32   100/32  100/32  100/32 100/32
 c	-----------------------------------------------------------------
-c       * In cormode=8, bw1 is restricted to 25, 50, or 100 MHz.
-c       These same windows are repeated in both sidebands of the first LO.
-c	There are double the number of channels in auto correlation mode
-c       but there is no sideband separation.
 c@ coropt
 c	This keyword identifies the correlator option and is:
 c         0: for crosscorrelation;
 c         1: for autocorrelation;
 c       If this keyword is not present, cross correlation is assumed.
 c@ corf
-c	Correlator LO frequencies. Four numbers in range 90 to 900 MHz.
-c	Default=200,400,600,800. Using cormode=8 and corbw=100 gives
+c	Correlator IF frequencies. Four numbers in range 90 to 900 MHz.
+c	Default=2000,4000,6000,8000. Using cormode=8 and corbw=100 gives
 c	the maximum bandwidth contiguous bandwidth from 100 to 900 MHz.
-c	Indicate missing values. e.g. corset cormode=3 corf=200,400,,600
 c@ corbw
 c	Correlator filter widths. Up to 4 values depending on the mode.
 c	6.25/12.5/25/50/100 MHz. The default is 100,100,100,100.
@@ -120,19 +115,20 @@ c                  chan() array is assigned in crstdrln).
 c    mchw 22may96  Increased MAXLINES to 500 and trapped excess lines.
 c    mchw 23dec96  print out defective line in CRSTLINE.
 c    mchw 01jan97  Fiddles for 1mm band. Change default to lovas.3mm.
+c    mchw 01sep10  Carma version 4.
 c----------------------------------------------------------------------
 c  Parameters.
 c
 	character VERSION*(*)
- 	parameter (VERSION='Version 3.0 01-JAN-97')
+ 	parameter (VERSION='Version 4.0 01-SEP-2010')
 	character PROG*(*)
 	parameter (PROG='CORSET: ')
 	integer NMAX
 	parameter (NMAX=5)
 	integer MAXLINES
-	parameter (MAXLINES=500)
+	parameter (MAXLINES=5000)
 	double precision LO2
-	parameter (LO2 = 1270.0D0)
+	parameter (LO2 = 0.0D0)
 c
 c  Internal variables.
 c
@@ -176,14 +172,14 @@ c
 	call keya('log',ldev,' ')
 	call keyi('cormode',mode,8)
 	call keyi('coropt',coropt,0)
-	call keyd('corf',corfs(1),200.0D0)
-	call keyd('corf',corfs(2),400.0D0)
-	call keyd('corf',corfs(3),600.0D0)
-	call keyd('corf',corfs(4),800.0D0)
-	call keyd('corbw',bw(1),100.0D0)
-	call keyd('corbw',bw(2),100.0D0)
-	call keyd('corbw',bw(3),100.0D0)
-	call keyd('corbw',bw(4),100.0D0)
+	call keyd('corf',corfs(1),2000.0D0)
+	call keyd('corf',corfs(2),4000.0D0)
+	call keyd('corf',corfs(3),6000.0D0)
+	call keyd('corf',corfs(4),8000.0D0)
+	call keyd('corbw',bw(1),500.0D0)
+	call keyd('corbw',bw(2),500.0D0)
+	call keyd('corbw',bw(3),500.0D0)
+	call keyd('corbw',bw(4),500.0D0)
 	call keyr('birdie',birdif(1),0.0)
 	nbirdie = nint(birdif(1))
 	if (nbirdie.gt.0) then
@@ -220,100 +216,21 @@ c
 	endif
 c
 	do i=1,4
-	  if(corfs(i).lt.90 .or. corfs(i).gt.900) then
+	  if(corfs(i).lt.90 .or. corfs(i).gt.9000) then
 	    errmsg = PROG // 'Illegal value for corf '
 	    call bug('f',errmsg(1:Len1(errmsg)))
 	  endif
 	enddo
 c
-c  Check modes and fix unused bw's for shiftrate calculation.
+c  Check allowed bandwidths.
 c
-	if(mode.eq.1 .or. mode.eq.2) bw(4) = bw(2)
-	if(mode.eq.1 .or. mode.eq.2 .or. mode.eq.3 .or. mode.eq.5)
-     *      bw(3) = bw(1)
-	if(mode.eq.5 .and.(bw(2).ne.100.d0 .or. bw(4).ne.100.d0))then
-	    call bug('w','setting corbw 2 & 4 to 100 MHz')
-	    bw(2) = 100.d0
-	    bw(4) = 100.d0
-	else if(mode.eq.6) then
-	  if(bw(2).ne.100.d0 .or. bw(4).ne.100.d0)then
-	    call bug('w','setting corbw 2 & 4 to 100 MHz')
-	    bw(2) = 100.d0
-	    bw(4) = 100.d0
+	if(mode.eq.8) then
+         do i=1,3
+	  if(bw(i).eq.125.d0 .or. bw(i).eq.250.d0) then
+	    call bug('f','bw(',i1,' can not be 125 or 250 at present')
 	  endif
-	else if(mode.eq.7) then
-	  if(bw(1).ne.25.d0)then
-	    call bug('w','setting corbw 1 to 25 MHz')
-	    bw(1) = 25.d0
-	  endif
-	  if(bw(2).ne.100.d0 .or. bw(3).ne.100.d0
-     *					 .or. bw(4).ne.100.d0)then
-	    call bug('w','setting corbw 2, 3 & 4 to 100 MHz')
-	    bw(2) = 100.d0
-	    bw(3) = 100.d0
-	    bw(4) = 100.d0
-	  endif
-	else if(mode.eq.8) then
-	  if(bw(1).ne.25.d0 .and. bw(1).ne.50.d0
-     *					 .and. bw(1).ne.100.d0)then
-	    call bug('f','bw(1) must be 25, 50 or 100 MHz')
-	  endif
-	  if(bw(2).ne.100.d0 .or. bw(3).ne.100.d0
-     *					 .or. bw(4).ne.100.d0)then
-	    call bug('w','setting corbw 2, 3 & 4 to 100 MHz')
-	    bw(2) = 100.d0
-	    bw(3) = 100.d0
-	    bw(4) = 100.d0
-	  endif
+         enddo
 	endif
-c
-c  check bandwidths
-c
-	do i=1,4
-	  if((bw(i) .ne. 100.0d0) .and. (bw(i) .ne. 50.0d0) .and.
-     *       (bw(i) .ne. 25.0d0)  .and. (bw(i) .ne. 12.5d0) .and.
-     *       (bw(i) .ne. 6.250d0)) then
-	   errmsg=PROG // 'Illegal value for corbw '
-	   call bug('f',errmsg(1:Len1(errmsg)))
-	  endif
-	enddo
-c	
-c  Set values for cormpx
-c
-	do i=1,4
-	  if(bw(i).eq.100.0d0) then
-	    cormpx(i) = 4
-	  else if(bw(i).eq.50.0d0) then 
-	    cormpx(i) = 2
-	  else
-	    cormpx(i) = 1
-	  endif
-	enddo
-c
-c  Set default values for corshift
-c
-	do i=1,2
-	   if(bw(i).ge.25..or.bw(i+2).ge.25.)then
-	      corshift(i) = 50.
-	   else if(bw(i).eq.12.5.or.bw(i+2).eq.12.5)then
-	      corshift(i) = 25.
-	   else
-		  corshift(i) = 12.5
-	   endif
-c
-c  Check for under and oversampling.
-c
-	  do j=0,2,2
-	    if(bw(i+j).gt.cormpx(i+j)*corshift(i)/2.)then
-	        write(errmsg,'(a,i2,a)')'corbw(',i+j,') is undersampled'
-	   	call bug('f',errmsg(1:Len1(errmsg)))
-	    endif
-	    if(bw(i+j).lt.cormpx(i+j)*corshift(i)/2.)then
-	  	write(errmsg,'(a,i2,a)')'corbw(',i+j,') is oversampled'
-	   	call bug('w',errmsg(1:Len1(errmsg)))
-	    endif
-	  enddo
-	enddo
 c
 	do i = 1, nfile
 	  linefile(i) = fullname(file(i))
@@ -328,7 +245,7 @@ c  Calculate the range of sky frequencies observable
 	  LO1 = (obsfreq*1.0E3 + LO2 + abs(ifrq))/1.0E3
 	endif
 c  Check values of LO1
-	if ((LO1.gt.68.d0).and.(LO1.lt.116.d0)
+	if ((LO1.gt.9000.d0).and.(LO1.lt.116.d0)
      *	 .or.(LO1.gt.200.d0).and.(LO1.lt.280.d0)) then
 	  call bug('i','LO1 is between 70 and 118 GHz for 3mm band.')
 	  call bug('i','LO1 is between 200 and 280 GHz for 1mm band.')
@@ -336,14 +253,15 @@ c  Check values of LO1
 	  call bug('w','LO1 is between 70 and 118 GHz for 3mm band.')
 	  call bug('w','LO1 is between 200 and 280 GHz for 1mm band.')
 	endif
+	print *,'LO1=',LO1
 c********1*********2*********3*********4*********5*********6*********7**
 c  Return LO1 in GHz
 	freqminu = crstfobs(LO1,LO2,70.d0)
-	freqmaxu = crstfobs(LO1,LO2,900.d0)
-	freqminl = crstfobs(LO1,LO2,-900.d0)
+	freqmaxu = crstfobs(LO1,LO2,9000.d0)
+	freqminl = crstfobs(LO1,LO2,-9000.d0)
 	freqmaxl = crstfobs(LO1,LO2,-70.d0)
 c
-c  Find all lines in if passband
+c  Find all lines in IF bandpass
 c
 	call crstline(lines,linefreq,numlines,maxlines,freqmaxu,
      *            freqminu,freqmaxl,freqminl,linefile,nfile,linetran)
@@ -374,7 +292,9 @@ c
 c  Check exactness of correlator settings and 
 c    report known birdie freqs
 c
+	print *,'corfs=', corfs
 	call crstadj(corfs,nbirdie,birdif,ifrq,LO2,obsfreq)
+	print *,'crstDJ corfs=', corfs
 c
 c  Treat the birdies as if they are lines that appear in
 c    both USB and LSB
@@ -404,40 +324,9 @@ c
 c
 c  compute the number of channels in each window
 c
-	if(mode.eq.1)then
-	  nschan(1)=NUMCHAN/cormpx(1)
-	else if(mode.eq.2)then
-	  nschan(1)=NUMCHAN/2./cormpx(1)
-	  nschan(2)=NUMCHAN/2./cormpx(2)
-	else if(mode.eq.3)then
-	  nschan(1)=NUMCHAN/2./cormpx(1)
-	  nschan(2)=NUMCHAN/4./cormpx(2)
-	  nschan(3)=NUMCHAN/4./cormpx(4)
-	else if(mode.eq.4)then
-	  do i=1,4
-	    nschan(i)=NUMCHAN/4./cormpx(i)
-	  enddo
-	else if(mode.eq.5)then
-	  nschan(1)=NUMCHAN/2./cormpx(1)
-	  do i=2,5
-	    nschan(i)=NUMCHAN/8./4.
-	  enddo
-	else if(mode.eq.6)then
-	  nschan(1)=NUMCHAN/4./cormpx(1)
-	  nschan(2)=NUMCHAN/8./4.
-	  nschan(3)=NUMCHAN/8./4.
-	  nschan(4)=NUMCHAN/4./cormpx(3)
-	  nschan(5)=NUMCHAN/8./4.
-	  nschan(6)=NUMCHAN/8./4.
-	else if(mode.eq.7)then
-	  nschan(1)=NUMCHAN/4./1.
-	  do i=2,7
-	    nschan(i)=NUMCHAN/8./4.
-	  enddo
-	else if(mode.eq.8)then
-	  nschan(1)=NUMCHAN/8./cormpx(1)
-	  do i=2,8
-	    nschan(i)=NUMCHAN/8./4.
+	if(mode.eq.8)then
+	  do i=1,8
+	    nschan(i)=93
 	  enddo
 	endif
 c
@@ -454,24 +343,11 @@ c
      *	     numlines,pldev,nsf,obsfreq,ifrq,vlsr,LO1,LO2,
      *       chan,nschan,coropt)
 c
-c  Display line list
+c  print line list
 c
 	call crstlist(lines,linefreq,lineif,linetran,numlines,ldev,
      *                nsf,obsfreq,LO1,LO2,ifrq,chan,
      *                mode,bw,corfs,coropt)
-c
-	if (ldev .eq. ' ') then
-	  call Prompt(str, length, 'Print list to printer (y/n) [n]? ')
-	  if (str .eq. 'Y') str = 'y'
-	  if (str .eq. 'N') str = 'n'
-	  if ((str .ne. 'y') .and. (str .ne. 'n')) str = 'n'
-	  if (str .ne. 'n') then
-	    ldev = '/printer'
-	    call crstlist(lines,linefreq,lineif,linetran,numlines,ldev,
-     *                nsf,obsfreq,LO1,LO2,ifrq,chan,
-     *                mode,bw,corfs,coropt)
-	  endif
-	endif
 c
 	end
 c***********************************************************************
@@ -610,8 +486,6 @@ c***********************************************************************
 	implicit none
 c
 c	List out spectral lines and their IF frequencies
-c	ldev = ' '  --------> terminal
-c	ldev = '/printer'  -> printer (at call of logclose)
 c
 c  Inputs:
 c    lines	lines from the line file in the frequency range
@@ -743,7 +617,7 @@ c  Write out line
 	  call Logwrite(line(1:Len1(line)), more)
 	enddo
 c
-	call Logclose
+c	call Logclose
 c
 	return
 	end
@@ -968,97 +842,9 @@ c
 	  delif2 = abs(lineif(k)) - corfs(2)
 	  delif3 = corfs(3) - abs(lineif(k))
 	  delif4 = abs(lineif(k)) - corfs(4)
-	  hundred = 100.0D0
+	  hundred = 500.0D0
 c
-	  if (mode.eq.1) then
-	    if(delif1.gt.0. .and. delif1.le.bw(1)) then
-	      chan(1,k) = nschan(1) - delif1*nschan(1)/bw(1) 
-	    endif
-
-	  else if(mode.eq.2) then
-	    if(delif1.gt.0. .and. delif1.le.bw(1)) then
-	      chan(1,k) = nschan(1) - delif1*nschan(1)/bw(1) 
-	    endif
-	    if(delif2.gt.0. .and. delif2.le.bw(2)) then
-	      chan(2,k) = nschan(1) + delif2*nschan(2)/bw(2) 
-	    endif
-
-	  else if(mode.eq.3) then
-	    if(delif1.gt.0. .and. delif1.le.bw(1)) then
-	      chan(1,k) = nschan(1) - delif1*nschan(1)/bw(1) 
-	    endif
-	    if(delif2.gt.0. .and. delif2.le.bw(2)) then
-	      chan(2,k) = nschan(1) + delif2*nschan(2)/bw(2) 
-	    endif
-	    if(delif4.gt.0. .and. delif4.le.bw(4)) then
- 	      chan(4,k) = nschan(1) + nschan(2)
-     *					 + delif4*nschan(3)/bw(4) 
-	    endif
-
-	  else if(mode.eq.4) then
-	    if(delif1.gt.0. .and. delif1.le.bw(1)) then
-	      chan(1,k) = nschan(1) - delif1*nschan(1)/bw(1) 
-	    endif
-	    if(delif2.gt.0. .and. delif2.le.bw(2)) then
-	      chan(2,k) = nschan(1) + delif2*nschan(2)/bw(2) 
-	    endif
-	    if(delif3.gt.0. .and. delif3.le.bw(3)) then
-	      chan(3,k) = nschan(1) + nschan(2) + nschan(3)
-     *					 - delif3*nschan(3)/bw(3) 
-	    endif
-	    if(delif4.gt.0. .and. delif4.le.bw(4)) then
-	      chan(4,k) = nschan(1) + nschan(2) + nschan(3)
-     *					+ delif4*nschan(4)/bw(4) 
-	    endif
-
-	  else if(mode.eq.5) then
-	    if(delif1.gt.0. .and. delif1.le.bw(1)) then
-	      chan(1,k) = nschan(1) - delif1*nschan(1)/bw(1) 
-	    endif
-	    if(abs(delif2).le.hundred) then
-	      chan(2,k) = nschan(1) + nschan(2)
-     *					 + delif2*nschan(2)/hundred
-	    endif
-	    if(abs(delif4).le.hundred) then
-	      chan(4,k) = nschan(1) + 2.* nschan(2) + nschan(4)
-     *					 + delif4*nschan(4)/hundred 
-	    endif
-
-	  else if(mode.eq.6) then
-	    if(delif1.gt.0. .and. delif1.le.bw(1)) then
-	      chan(1,k) = nschan(1) - delif1*nschan(1)/bw(1) 
-	    endif
-	    if(abs(delif2).le.hundred) then
-	      chan(2,k) = nschan(1) + nschan(2)
-     *					 + delif2*nschan(2)/hundred 
-	    endif
-	    if(delif3.gt.0. .and. delif3.le.bw(3)) then
-	      chan(3,k) = nschan(1) + 2.* nschan(2) + nschan(4)
-     *					- delif3*nschan(4)/bw(3)
-	    endif
-	    if(abs(delif4).le.hundred) then
-	      chan(4,k) = nschan(1) + 2.* nschan(2) + nschan(4)
-     *				+ nschan(5) + delif4*nschan(6)/hundred 
-	    endif
-
-	  else if(mode.eq.7) then
-	    if(delif1.gt.0. .and. delif1.le.bw(1)) then
-	      chan(1,k) = nschan(1) - delif1*nschan(1)/bw(1) 
-	    endif
-	    if(abs(delif2).le.hundred) then
-	      chan(2,k) = nschan(1) + nschan(2)
-     *					 + delif2*nschan(2)/hundred 
-	    endif
-	    if(abs(delif3).le.hundred) then
-	      chan(3,k) = nschan(1) + 3.* nschan(2)
-     *				 - delif3*nschan(4)/hundred 
-	    endif
-	    if(abs(delif4).le.hundred) then
-	      chan(4,k) = nschan(1) + 5.* nschan(2)
-     *				 + delif4*nschan(6)/hundred 
-	    endif
-
-	  else if(mode.eq.8) then
+	  if(mode.eq.8) then
 	    if(delif1.gt.0. .and. delif1.le.bw(1)) then
 	      chan(1,k) = nschan(1) - delif1*nschan(1)/bw(1) 
 	    endif
