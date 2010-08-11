@@ -6,22 +6,25 @@ c= corset - model correlator setups.
 c& mchw
 c: utility
 c+
-c	CORSET is a MIRIAD task to model correlator setups.  It takes
+c	CORSET is a MIRIAD task to model correlator setups. It takes
 c	as input, an observing frequency and IF and then searches
-c       spectral line files for all spectral lines that would be
-c	observable in IF passband. The positions of the lines in
-c	the correlator for the selected correlator settup are plotted. 
+c       spectral line files for all spectral lines that are 
+c	in IF bandpass. The positions of the lines in spectral windows
+c	and channel numbers and printed and plotted.
 c@ in
 c	The name of the spectral line file.  Up to 5 input files are
 c	permitted.  Available files are: $MIRCAT/lovas.3mm, $MIRCAT/lovas.1mm
 c	and $MIRCAT/recom.lis. The default is $MIRCAT/lovas.3mm.
 c@ freq
 c	The rest frequency of the line in GHz. The default 110.0 GHz.
+c	CARMA 10 and 6-m antennas have 85-116 and 215-270 GHz receivers.
+c	3.5-m antennas have SSB 26-36 GHz and 85-115 GHz receivers 	
 c@ iffreq
 c	The intermediate frequency in MHz. The default 1500.0 MHz.
-c	This is the frequency in the 900-9000 MHz IF at which the line
+c	This is the frequency in the 1000-9000 MHz IF at which the line
 c	rest frequency will appear. A negative value indictes that
 c	the line should appear in the lower sideband of the first LO. 
+c	The IF band is 1-9 GHz at 3 mm and 1-4.5 GHz at 1 mm.
 c@ vlsr
 c	Vlsr of the source in km/s.  The default 0 km/s.
 c@ device
@@ -29,45 +32,31 @@ c	The device used for plotting.  See the User's Manual for
 c	details on how to specify the PGPLOT device.
 c@ log
 c	The output log file.  The default is the terminal.
-c@ cormode
-c	The mode determines the correlator configuration and number of
-c	spectral windows. The default is mode 8 with the maximum bandwidth.
-c	The following table gives the bandwidth and the number of channels
-c	in each correlator window. The four bandwidths bw1, bw2, bw3, bw4
-c	may be one of 6.25/12.5/25/50/100 MHz. Multiplexing is used for a
-c	bandwidth 50 or 100 MHz, and reduces the number of channels in the
-c	window by a factor 2 or 4 respectively.
-c
-c				Correlator Modes.
-c	-----------------------------------------------------------------
-c		corf1		corf2		corf3		corf4	
-c	cormode lsb1 usb1   lsb2   usb2      lsb3   usb3    lsb4  usb4
-c	-----------------------------------------------------------------
-c 	 1   bw1/1024 -       -     -          -      -      -     -
-c	 2   bw1/512  -       -    bw2/512     -      -      -     -
-c	 3   bw1/512  -       -    bw2/256     -      -      -    bw4/256
-c	 4   bw1/256  -       -    bw2/256  bw3/256   -      -    bw4/256
-c	 5   bw1/512  -     100/32 100/32      -      -     100/32 100/32
-c	 6   bw1/256  -     100/32 100/32   bw3/256   -     100/32 100/32
-c	 7    25/256  -     100/32 100/32   100/32  100/32  100/32 100/32
-c	 8  *bw1/128 100/32 100/32 100/32   100/32  100/32  100/32 100/32
-c	-----------------------------------------------------------------
 c@ coropt
 c	This keyword identifies the correlator option and is:
 c         0: for crosscorrelation;
 c         1: for autocorrelation;
 c       If this keyword is not present, cross correlation is assumed.
 c@ corf
-c	Correlator IF frequencies. Four numbers in range 90 to 900 MHz.
-c	Default=2000,4000,6000,8000. Using cormode=8 and corbw=100 gives
-c	the maximum bandwidth contiguous bandwidth from 100 to 900 MHz.
+c	Correlator IF frequencies in MHz. Only 4 bands can be plotted at one time.
+c	Default=2000,4000,6000,8000
+c	The IF band is 1-9 GHz at 3 mm and 1-4.5 GHz at 1 mm.
 c@ corbw
-c	Correlator filter widths. Up to 4 values depending on the mode.
-c	6.25/12.5/25/50/100 MHz. The default is 100,100,100,100.
-c	The pairs corbw1,3 and corbw2,4 use the same shift rate. 100/50/25
-c	can be paired, but corbw1,3 and corbw2,4 should be the same for
-c	smaller bandwidths. Indicate missing or constant values. e.g.
-c	corset cormode=6 corbw=25,,25
+c	CARMA has 8 bands, yielding a maximum bandwidth of 4GHz per sideband. 
+c	Each band may be configured in one of the following bandwidths:
+c	Bandwidth N_chan Chan.width dV[3mm] Vtot[3mm] dV[1mm] Vtot[1mm]
+c	(MHz)	(per sideband)	(MHz)	(km/s)	(km/s)	(km/s)	(km/s)
+c	500	129	3.88	12	1500	3.9	500
+c	250	193	1.30	3.9	 750	1.3	250
+c	125	289	0.433	1.3	375	0.43	125
+c	62	385	0.161	0.49	188	0.16	62.5
+c	31	385	0.081	0.24	93.8	0.081	31.2
+c	8	385	0.021	0.061	23.4	0.020	7.81
+c	2	385	0.0052	0.015	5.86	0.005	1.95
+c	An analog filter attenuates the edge channels of the 62-MHz band. 
+c	An overlap of about 6 channels is recommended to cover a single line.
+c	The 3.5-meter antennas use a separate correlator with 8 GHz bandwidth, 
+c	and 16 500 MHz bands; each of these has 15 channels of 31.25 MHz.
 c@ birdie
 c	Number of birdies followed by a list of the birdie frequencies 
 c	in MHz. Up to 20 birdies are allowed. The default is 0 birdies.
@@ -166,7 +155,7 @@ c
 	call keyini
 	call mkeyf('in',file,NMAX,nfile)
 	call keyd('freq',obsfreq,110.0D0)
-	call keyd('iffreq',ifrq,150.0D0)
+	call keyd('iffreq',ifrq,1500.0D0)
 	call keyd('vlsr',vlsr,0.0D0)
 	call keya('device',pldev,'?')
 	call keya('log',ldev,' ')
@@ -253,7 +242,6 @@ c  Check values of LO1
 	  call bug('w','LO1 is between 70 and 118 GHz for 3mm band.')
 	  call bug('w','LO1 is between 200 and 280 GHz for 1mm band.')
 	endif
-	print *,'LO1=',LO1
 c********1*********2*********3*********4*********5*********6*********7**
 c  Return LO1 in GHz
 	freqminu = crstfobs(LO1,LO2,70.d0)
