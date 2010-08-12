@@ -205,7 +205,7 @@ c
 	endif
 c
 	do i=1,4
-	  if(corfs(i).lt.90 .or. corfs(i).gt.9000) then
+	  if(corfs(i).lt.1000 .or. corfs(i).gt.9000) then
 	    errmsg = PROG // 'Illegal value for corf '
 	    call bug('f',errmsg(1:Len1(errmsg)))
 	  endif
@@ -234,13 +234,13 @@ c  Calculate the range of sky frequencies observable
 	  LO1 = (obsfreq*1.0E3 + LO2 + abs(ifrq))/1.0E3
 	endif
 c  Check values of LO1
-	if ((LO1.gt.9000.d0).and.(LO1.lt.116.d0)
-     *	 .or.(LO1.gt.200.d0).and.(LO1.lt.280.d0)) then
-	  call bug('i','LO1 is between 70 and 118 GHz for 3mm band.')
-	  call bug('i','LO1 is between 200 and 280 GHz for 1mm band.')
+	if ((LO1.gt.85.d0).and.(LO1.lt.116.d0)
+     *	 .or.(LO1.gt.215.d0).and.(LO1.lt.270.d0)) then
+	  call bug('i','LO1 is between 85 and 116 GHz for 3mm band.')
+	  call bug('i','LO1 is between 215 and 270 GHz for 1mm band.')
 	else
-	  call bug('w','LO1 is between 70 and 118 GHz for 3mm band.')
-	  call bug('w','LO1 is between 200 and 280 GHz for 1mm band.')
+	  call bug('w','LO1 NOT between 85 and 116 GHz for 3mm band.')
+	  call bug('w','LO1 NOT between 215 and 270 GHz for 1mm band.')
 	endif
 c********1*********2*********3*********4*********5*********6*********7**
 c  Return LO1 in GHz
@@ -308,13 +308,26 @@ c  Doppler shift corfs -> dcorfs.
 c
 	do i=1,4
 	  dcorfs(i)=(corfs(i)+LO2)*cor-LO2
-	end do
+	enddo
 c
 c  compute the number of channels in each window
+c  center each band on odd numbered center channel
 c
 	if(mode.eq.8)then
-	  do i=1,8
-	    nschan(i)=93
+	  do i=1,4
+           if(bw(i).eq.500.d0)then
+	    nschan(2*i-1)= 129/2
+	    nschan(2*i)  = 129/2
+           else if(bw(i).eq.250.d0)then
+	    nschan(2*i-1)= 193/2
+	    nschan(2*i)  = 193/2
+           else if(bw(i).eq.125.d0)then
+	    nschan(2*i-1)= 289/2
+	    nschan(2*i)  = 289/2
+           else
+	    nschan(2*i-1)= 385/2
+	    nschan(2*i)  = 385/2
+           endif
 	  enddo
 	endif
 c
@@ -324,6 +337,7 @@ c
 	do i=1,mode
 	  nchan = nchan + nschan(i)
 	enddo
+	print *,'Number of channels in each sideband of LO1= ', nchan
 c
 c  Plot correlator setup
 c
@@ -837,19 +851,19 @@ c
 	      chan(1,k) = nschan(1) - delif1*nschan(1)/bw(1) 
 	    endif
 	    if(delif1.lt.0. .and. delif1.ge.-hundred) then
-	      chan(1,k) = nschan(1) - delif1*nschan(2)/hundred
+	      chan(1,k) = nschan(1) - delif1*nschan(2)/bw(2)
 	    endif
 	    if(abs(delif2).le.hundred) then
 	      chan(2,k) = nschan(1) + 2.* nschan(2)
-     *					 + delif2*nschan(2)/hundred 
+     *					 + delif2*nschan(2)/bw(2) 
 	    endif
 	    if(abs(delif3).le.hundred) then
 	      chan(3,k) = nschan(1) + 4.* nschan(2)
-     *				 - delif3*nschan(2)/hundred 
+     *				 - delif3*nschan(2)/bw(2) 
 	    endif
 	    if(abs(delif4).le.hundred) then
 	      chan(4,k) = nschan(1) + 6.* nschan(2)
-     *				 + delif4*nschan(4)/hundred 
+     *				 + delif4*nschan(4)/bw(2) 
 	    endif
 	  endif
 c
