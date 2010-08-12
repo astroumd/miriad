@@ -216,7 +216,7 @@ c
 	if(mode.eq.8) then
          do i=1,3
 	  if(bw(i).eq.125.d0 .or. bw(i).eq.250.d0) then
-	    call bug('f','bw(',i1,' can not be 125 or 250 at present')
+	    call bug('w','bands 1 2 3 can not be 125 or 250 at present')
 	  endif
          enddo
 	endif
