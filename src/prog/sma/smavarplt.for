@@ -106,13 +106,14 @@ c    jhz 11jan07  added chi2 to VarChar data list.
 c    jhz 15mar07  added Keyword dotsize.
 c    pjt 18apr07  Increased maxpnts a bit for a typical 11hr carma track (see varplt)
 c    jhz 07jun07  cleaned a few lines.
+c    pjt 23aug10  MAXRUNS 1024 for 23ant CARMA
 c  Bugs:
 c    ?? Perfect?
 c------------------------------------------------------------------------
         character version*(*)
         integer maxpnts
         parameter(maxpnts=1000000)
-        parameter(version='SmaVarPlt: version 1.9 07-June-07')
+        parameter(version='SmaVarPlt: version 1.9 23-aug-2010')
         logical doplot,dolog,dotime,dounwrap
         character vis*128,device*64,logfile*128,xaxis*16,yaxis*16
         character xtype*1,ytype*1,xunit*16,yunit*16,calday*24
@@ -1002,7 +1003,7 @@ c************************************************************************
 c
 c------------------------------------------------------------------------
         integer maxruns,xsoupnt,maxspect
-        parameter(maxruns=512,maxspect=48, maxinte=5000)
+        parameter(maxruns=1024,maxspect=48, maxinte=5000)
         double precision xdrun(maxruns),ydrun(maxruns)
         integer xirun(maxruns),yirun(maxruns)
         real xrrun(maxruns),yrrun(maxruns)
