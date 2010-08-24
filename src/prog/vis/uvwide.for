@@ -25,6 +25,7 @@ c   pjt    30jul07    complete overhaul for CARMA (and thus more general)
 c   pjt     6may08    Fix computing the (center) new wfreq values for nwide=
 c   pjt    25nov08    Fix computing narrow flags from wide flags 
 c   pjt    19apr10    Hack wsystemp copy from systemp
+c   pjt    23aug10    call varOnit to preserve correlation type
 c***********************************************************************
 c= uvwide - recompute wide band from narrow band
 c& pjt
@@ -107,7 +108,7 @@ c
       CHARACTER PROG*(*)
       PARAMETER (PROG = 'UVWIDE')
       CHARACTER VERSION*(*)
-      PARAMETER (VERSION = '19-apr-2010')
+      PARAMETER (VERSION = '23-aug-2010')
 
 c
 c  Internal variables.
@@ -235,6 +236,7 @@ c  else append history to input file
 c
       IF (.NOT.doflag) THEN
          CALL uvopen(lout, outfile, 'new')
+         CALL varOnit(lin,lout,'channel')
          CALL output(PROG//': Writing visibilities to: '// Outfile)
          CALL hdcopy(lin, lout, 'history')
          CALL hisopen(lout, 'append')

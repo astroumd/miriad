@@ -16,6 +16,7 @@ c pjt/sally 31-mar-97  defined MAXVAL and increased from 8 to 16
 c       pjt 17-aug-99  added tabular time dependant input, substantial rewrite
 c       tw   4-nov-02  table can now give non-ascii array values
 c       pjt 16-jan-03  fix array input from varval= keyword
+c       pjt 23-aug-10  use varOnit to preserve correlation type
 c          
 c  unfinished:
 c       - array values for tables
@@ -79,7 +80,7 @@ c    Name of the output dataset. No default.
 c-----------------------------------------------------------------------
 	include 'uvputhd.h'
 	character VERSION*(*)
-	parameter(VERSION='(Version 24-oct-06)')
+	parameter(VERSION='(Version 23-aug-10)')
 	character varval(MAXVAL)*30,hdvar*10,time0*32
         character outfile*80,infile*80,tabfile*80
         character except(20)*10,newtype*1,line*256
@@ -198,6 +199,7 @@ c
 c  Open the output and copy history
 c
         call uvopen(outset,outfile,'new')
+	call varOnit(inset,outset,'channel')
         call hdcopy(inset,outset,'history') 
 	write(line,'('' Writing data out to file: '',a)') outfile
 	call output(line)
