@@ -5,6 +5,7 @@
 #
 #   24-jun-2009      written,    Peter Teuben
 #   24-sep-2009      allow ns2m to be not 0.299...
+#   25-aug-2010      print out ant number
 
 import math,sys
 
@@ -53,8 +54,10 @@ def range_enu(enu):
     print "Min and Max baseline: ",dmin,dmax
 
 def print3(label,xyz):
+    ant = 0
     for p in xyz:
-        print "%s   %10.3f %10.3f %10.3f" % (label,p[0],p[1],p[2])
+	ant = ant + 1
+        print "%s   %2d %10.3f %10.3f %10.3f" % (label,ant,p[0],p[1],p[2])
 
         
 if __name__ == '__main__':
