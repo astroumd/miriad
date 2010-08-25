@@ -104,16 +104,17 @@ c    rjs  13mar98 Change format statement.
 c    nebk 13jul04 More sig figs for leakages
 c    rjs  23jan07 Handle second leakage table.
 c    mchw 23jun09 Print mean and rms value on plots.
+c    pjt  25aug10 fixed sqrt(rms) when < 0 roundoff, reindent a bit
 c  Bugs:
 c------------------------------------------------------------------------
 	integer MAXSELS
 	character version*(*)
 	parameter(MAXSELS=256)
-	parameter(version='GpPlt: version 23-Jun-09')
+	parameter(version='GpPlt: version 25-aug-10')
 	include 'gpplt.h'
 	integer iostat,tIn,nx,ny,nfeeds,nants,nsols,ierr,symbol,nchan
 	integer ntau,length
-	character vis*64,device*64,logfile*64,BaseTime*20
+	character vis*128,device*128,logfile*128,BaseTime*20
 	double precision T0
 	logical doamp,dophase,doreal,doimag,dogains,dopol,dodtime,doxy
 	logical doxbyy,doplot,dolog,more,ltemp,dodots,dodelay,dopass
@@ -1112,36 +1113,37 @@ c
 	  enddo
 c
 	  do ifeed=1,nfeeds
-	    nres = 0
-	    do iant=1,nants
-	      offset = (ifeed-1) + (iant-1)*nfeeds
-	      ng = 0
-	      Value(offset+1) = 0
-          ave = 0.
-          rms = 0.
-	      do ichan=1,nchan
-		Gain = G(ichan + nchan*offset)
-		if(abs(real(Gain))+abs(aimag(Gain)).gt.0)then
-		  ng = ng + 1
-		  x(ng) = freq(ichan)
-		  y(ng) = GetVal(Gain,Value(offset+1))
-          ave = ave + y(ng)
-          rms = rms + y(ng)*y(ng)
+	     nres = 0
+	     do iant=1,nants
+		offset = (ifeed-1) + (iant-1)*nfeeds
+		ng = 0
+		Value(offset+1) = 0
+		ave = 0.
+		rms = 0.
+		do ichan=1,nchan
+		   Gain = G(ichan + nchan*offset)
+		   if(abs(real(Gain))+abs(aimag(Gain)).gt.0)then
+		      ng = ng + 1
+		      x(ng) = freq(ichan)
+		      y(ng) = GetVal(Gain,Value(offset+1))
+		      ave = ave + y(ng)
+		      rms = rms + y(ng)*y(ng)
+		   endif
+		enddo
+		if(ng.gt.0)then
+		   call SetPG(freqmin,freqmax,y,ng,range,.true.)
+		   call pgpt(ng,x,y,symbol)
+		   Label = Feeds(ifeed)//'-BandPass-'//type
+		   Title = 'Antenna '//itoaf(iant)
+		   call pglab('Frequency (GHz)',Label,Title)
+		   nres = nres + 1
+		   ave = ave/ng
+		   rms = rms/ng - ave*ave
+		   if (rms.gt.0.0) rms=sqrt(rms)
+		   print *, Title, Label, 'ave, rms=', ave, rms
 		endif
-	      enddo
-	      if(ng.gt.0)then
-		call SetPG(freqmin,freqmax,y,ng,range,.true.)
-		call pgpt(ng,x,y,symbol)
-	        Label = Feeds(ifeed)//'-BandPass-'//type
-	        Title = 'Antenna '//itoaf(iant)
-	        call pglab('Frequency (GHz)',Label,Title)
-		nres = nres + 1
-            ave = ave/ng
-            rms = sqrt(rms/ng - ave*ave)
-            print *, Title, Label, 'ave, rms=', ave, rms
-	      endif
-	    enddo
-	    call subfill(nres,ppp)
+	     enddo
+	     call subfill(nres,ppp)
 	  enddo
 	endif
 c
