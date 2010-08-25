@@ -35,15 +35,27 @@ c       (assumed 6.1m), and final 8 for the SZA 3.5m dishes
 c       If selected, it will also print out the number of records
 c       flagged for O-O, B-B and O-B (labeled O/H/C) for 15-ants
 c       and labeled O/H/C/S/10/6 for 23-ants
+c       This will also load the Swept Volume descriptors.
 c       The default is true.
 c@ cfraction
 c       Special CARMA option to multiply the antdiam array for
 c       OVRO and BIMA dishes by. Two or three numbers are expected here,
-c       depending if sza was set or found to be true: 
+c       depending if SZA was set or found to be true: 
 c       fraction for OVRO, that for BIMA, and optionally that for SZA.
 c       You normally want this leave this at 1, but can experiment with
-c       smaller values to try and keep some partially shadowed data.
+c       smaller values to try and keep some partially shadowed data;
+c       but check your calibrator(s) how well this is expected to work.
 c       Default: 1,1,1
+c@ all
+c       By default only baselines from the dataset itself are investigated
+c       if an antenna of a pair is shadowed. By setting all=true you can
+c       allow the other antennae to be investigated. For example in the sci2
+c       subarray with only C16-23, the C1-15 can actually cause shadowing.
+c       However, more details geometric modeling, as well as exact knowledge
+c       where C1-15 are pointing, would be needed to do a correct calculation,
+c       which is not done here (yet).
+c       Also known as the Swept Volume method (Eric Leitch)
+c       Default: false
 c
 c--
 c
@@ -58,6 +70,7 @@ c     pjt       12apr08 Add option to include SZA array with 8 3.5m ants
 c     pjt       14sep09 Add cfraction for sza
 c     pjt       28nov09 remove confusing sza= keyword, just auto-scan 15/23
 c                       auto-fill antdiam array
+c     pjt       23aug10 Allow subarray to see the other antennas
 c
 c  Todo:
 c     - options=noapply ???
@@ -70,18 +83,19 @@ c---------------------------------------------------------------------------
 	implicit none
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='csflag: version 28-nov-09')
+	parameter(version='csflag: version 25-aug-10')
 c
 	complex data(MAXCHAN)
-	double precision preamble(5), antpos(3*MAXANT)
+	double precision preamble(5), antpos(3*MAXANT), lat
 	integer lVis,ntot,nflag,i,nv,nants,na
         integer ntoto,ntoth,ntotc,ntots,ntota,ntot6,ncf
-        real antdiam(MAXANT),cfraction(3)
+        real antdiam(MAXANT),elAxisH(MAXANT),sweptVD(MAXANT)
+        real cfraction(3)
 	character in*120
-	logical flags(MAXCHAN),shadow,carma,sza,doshadow
-        external shadow
+	logical flags(MAXCHAN),shadow1,shadow2,carma,sza,doshadow,qall
+        external shadow1,shadow2
 
-        common /antpos/antpos,sza,ntoto,ntoth,ntotc,ntots,ntota,ntot6
+        common /counters/sza,ntoto,ntoth,ntotc,ntots,ntota,ntot6
 
 c
 c Get inputs
@@ -93,22 +107,29 @@ c
         call mkeyr('antdiam',antdiam,MAXANT,na)
         call keyl('carma',carma,.TRUE.)
         call mkeyr('cfraction',cfraction,3,ncf)
+        call keyl('all',Qall,.FALSE.)
 	call keyfin
 
 
 c
-c Handle default CARMA or SZA
+c Handle default CARMA array 
 c
         if (carma) then
            na = 23
            do i=1,6
               antdiam(i) = 10.4
+              elAxisH(i) = 5.435
+              sweptVD(i) = 2*7.043
            enddo
            do i=7,15
               antdiam(i) = 6.1
+              elAxisH(i) = 5.198
+              sweptVD(i) = 2*5.6388
            enddo
            do i=16,23
               antdiam(i) = 3.5
+              elAxisH(i) = 2.7526
+              sweptVD(i) = 4.41442
            enddo
         else if (na.EQ.0) then
            call bug('f','No antdiam= specified')
@@ -154,7 +175,7 @@ c
               sza = .false.
            else if(nants.eq.23) then
               call bug('i',
-     *          'Preloaded CARMA+SZA-23 antdiam (10.4,6.1,3.5) array')
+     *          'Preloaded CARMA-23 antdiam (10.4,6.1,3.5) array')
               carma = .false.
               sza = .true.
            else
@@ -194,9 +215,19 @@ c
            enddo
         endif
         call uvgetvrd(lVis,'antpos',antpos,3*nants)
-
+        if (Qall) then
+           write(*,*) 'Converting antpos XYZ to ENU'
+           call uvgetvrd(lVis,'latitud',lat,1)
+           call xyz2enu(nants, antpos, lat) 
+        endif
         do while(nv.gt.0)
-           doshadow = shadow(lVis,preamble,nants,antdiam)
+           if (Qall) then
+              doshadow = shadow1(lVis,preamble,nants,
+     *                         antdiam,antpos,elAxisH,sweptVD)
+           else
+              doshadow = shadow2(lVis,preamble,nants,
+     *                         antdiam,antpos)
+           endif
            if (doshadow) then
               nflag = nflag + 1
               do i=1,nv
@@ -233,106 +264,197 @@ c
         endif
 c
 	end
-c*******************************************************************************
-        logical function shadow(lVis, p, nants, antdiam)
+c-----------------------------------------------------------------------
+        subroutine xyz2enu(nants, antpos, lat)
 	implicit none
-        integer lVis
-        double precision p(5)
         integer nants
-        real antdiam(nants)
+        double precision antpos(nants,3), lat
 c
-        include 'maxdim.h'
-	double precision antpos(3*MAXANT),ha,lst,ra,dec
-        double precision sinha,cosha,sind,cosd,limit,bx,by,bz,bxy,byx
-        double precision u(MAXANT), v(MAXANT), w(MAXANT),uu,vv,ww
-        integer i0,i1,i2,i,j,ntoto,ntoth,ntotc,ntots,ntota,ntot6
-        logical sza
-        integer pjt
-        common /antpos/antpos,sza,ntoto,ntoth,ntotc,ntots,ntota,ntot6
-c       pjt = debug, set it to < 0 if you want to see UVW's
-        data pjt/0/
-        save pjt
+        include 'mirconst.h'
+        double precision  sinlat, coslat, e, n, u
+        integer i
 
-        call uvgetvrd(lVis,'lst',lst,1)
-        call uvgetvrd(lVis,'obsra',ra,1)
-        call uvgetvrd(lVis,'obsdec',dec,1)
-        ha = lst-ra
-        sinha = sin(ha)
-        cosha = cos(ha)
-        sind = sin(dec)
-        cosd = cos(dec)
+        sinlat = sin(lat)
+        coslat = cos(lat)
+
         do i=1,nants
-           bx=antpos(i)
-           by=antpos(i+nants)
-           bz=antpos(i+nants*2)
-           bxy =  bx*sinha + by*cosha
-           byx = -bx*cosha + by*sinha
-           u(i) =  bxy
-           v(i) =  byx*sind + bz*cosd
-           w(i) = -byx*cosd + bz*sind
+           if (antpos(i,1).eq.0d0 .and. 
+     *         antpos(i,2).eq.0d0 .and. 
+     *         antpos(i,3).eq.0d0) write(*,*) '0 ant ',i
+c          write(*,*) 'XYZ ',i,antpos(i,1),antpos(i,2),antpos(i,3)
+           e =  antpos(i,2)
+           n = -antpos(i,1)*sinlat + antpos(i,3)*coslat
+           u =  antpos(i,1)*coslat + antpos(i,3)*sinlat
+           antpos(i,1) = e * DCMKS/1.0d9
+           antpos(i,2) = n * DCMKS/1.0d9
+           antpos(i,3) = u * DCMKS/1.0d9
+           write(*,*) 'ENU ',i,antpos(i,1),antpos(i,2),antpos(i,3)
         enddo
-        
-        if (pjt.lt.0) then
-           do i=1,nants
-              write(*,*) 'UVW=>',i,u(i),v(i),w(i)
-           enddo
-           pjt = 0
-        endif
 
-        call basant(p(5),i1,i2)
-        if (i1.gt.nants .or. i2.gt.nants) call bug('f',
+        end
+c-----------------------------------------------------------------------
+        subroutine counter(i1, i2)
+        implicit none
+        integer i1,i2
+c
+        logical          sza
+        integer              ntoto,ntoth,ntotc,ntots,ntota,ntot6
+        common /counters/sza,ntoto,ntoth,ntotc,ntots,ntota,ntot6
+c
+        if (sza) then
+           if (i1.le.6 .and. i2.le.6) then
+              ntoto = ntoto + 1
+           else if (i1.le.6 .and. i2.le.15) then
+              ntotc = ntotc + 1
+           else if (i1.le.6 .and. i2.le.23) then
+              ntota = ntota + 1
+           else if (i1.le.15 .and. i2.le.15) then
+              ntoth = ntoth + 1
+           else if (i1.le.15 .and. i2.le.23) then
+              ntot6 = ntot6 + 1
+           else 
+              ntots = ntots + 1
+           endif
+        else
+           if (i1.le.6 .and. i2.le.6) then
+              ntoto = ntoto + 1
+           else if (i1.gt.6 .and. i2.gt.6) then
+              ntoth = ntoth + 1
+           else 
+              ntotc = ntotc + 1
+           endif
+        endif
+        end
+
+c-----------------------------------------------------------------------
+      logical function shadow2(lVis, p, nants, antdiam, antpos)
+      implicit none
+      integer lVis
+      integer nants
+      double precision p(5),antpos(nants,3)
+      real antdiam(nants)
+c
+      include 'maxdim.h'
+      double precision ha,lst,ra,dec
+      double precision sinha,cosha,sind,cosd,limit,bx,by,bz,bxy,byx
+      double precision u(MAXANT), v(MAXANT), w(MAXANT),uu,vv,ww
+      integer i0,i1,i2,i,j
+      integer pjt
+c     pjt = debug, set it to < 0 if you want to see UVW's
+      data pjt/0/
+      save pjt
+
+      call uvgetvrd(lVis,'lst',lst,1)
+      call uvgetvrd(lVis,'obsra',ra,1)
+      call uvgetvrd(lVis,'obsdec',dec,1)
+      ha = lst-ra
+      sinha = sin(ha)
+      cosha = cos(ha)
+      sind = sin(dec)
+      cosd = cos(dec)
+      do i=1,nants
+         bx=antpos(i,1)
+         by=antpos(i,2)
+         bz=antpos(i,3)
+         bxy =  bx*sinha + by*cosha
+         byx = -bx*cosha + by*sinha
+         u(i) =  bxy
+         v(i) =  byx*sind + bz*cosd
+         w(i) = -byx*cosd + bz*sind
+      enddo
+        
+      if (pjt.lt.0) then
+         do i=1,nants
+            write(*,*) 'UVW=>',i,u(i),v(i),w(i)
+         enddo
+         pjt = 0
+      endif
+
+      call basant(p(5),i1,i2)
+      if (i1.gt.nants .or. i2.gt.nants) call bug('f',
+     *     'odd....not enough antdiam known')
+
+c
+c  j-loop over both i1 shadowing i2, or vice versa.
+c
+      shadow2 = .FALSE.
+      do j=1,2
+         if (j.eq.1) i0=i1
+         if (j.eq.2) i0=i2
+         if (i1.eq.i2 .and. j.eq.2) return
+         do i=1,nants
+            if (i.ne.i0) then
+               limit = (antdiam(i)+antdiam(i0))/2
+               limit = limit/0.299792458
+               limit = limit*limit
+               uu=u(i)-u(i0)
+               vv=v(i)-v(i0)
+               ww=w(i)-w(i0)
+               if (uu*uu+vv*vv .le. limit  .and.  ww.ge.0) then
+                  pjt=pjt+1
+                  call counter(i1,i2)
+                  shadow2 = .TRUE.
+                  return
+               endif
+            endif
+         enddo
+      enddo
+      
+      end
+c-----------------------------------------------------------------------
+c  shadow1: swept volume computation (courtesy: Eric Leitch)
+c
+      logical function shadow1(lVis,p,nants,antdiam,enu,elAxisH,sweptVD)
+      implicit none
+      integer lVis
+      integer nants
+      double precision p(5), enu(nants,3)
+      real antdiam(nants), elAxisH(nants), sweptVD(nants)
+c
+      include 'maxdim.h'
+      double precision de0,dn0,du0,de1,dn1,du1,mag,saz,caz,sel,cel
+      double precision cdang, dang, anglim
+      integer i0,i1,i2,i,j
+c     
+      double precision antel(MAXANT), antaz(MAXANT)
+      
+      call uvgetvrd(lVis,'antel',antel,nants)
+      call uvgetvrd(lVis,'antaz',antaz,nants)
+      
+      call basant(p(5),i1,i2)
+      if (i1.gt.nants .or. i2.gt.nants) call bug('f',
      *          'odd....not enough antdiam known')
 
 c
 c  j-loop over both i1 shadowing i2, or vice versa.
 c
-        shadow = .FALSE.
-        do j=1,2
-            if (j.eq.1) i0=i1
-            if (j.eq.2) i0=i2
-            if (i1.eq.i2 .and. j.eq.2) return
-            do i=1,nants
-                if (i.ne.i0) then
-                    limit = (antdiam(i)+antdiam(i0))/2
-                    limit = limit/0.299792458
-                    limit = limit*limit
-                    uu=u(i)-u(i0)
-                    vv=v(i)-v(i0)
-                    ww=w(i)-w(i0)
-                    if (uu*uu+vv*vv .le. limit  .and.  ww.ge.0) then
-                      pjt=pjt+1
-                      if (sza) then
+      shadow1 = .FALSE.
 
-                       if (i1.le.6 .and. i2.le.6) then
-                          ntoto = ntoto + 1
-                       else if (i1.le.6 .and. i2.le.15) then
-                          ntotc = ntotc + 1
-                       else if (i1.le.6 .and. i2.le.23) then
-                          ntota = ntota + 1
-                       else if (i1.le.15 .and. i2.le.15) then
-                          ntoth = ntoth + 1
-                       else if (i1.le.15 .and. i2.le.23) then
-                          ntot6 = ntot6 + 1
-                       else 
-                          ntots = ntots + 1
-                       endif
-
-                      else
-
-                       if (i1.le.6 .and. i2.le.6) then
-                          ntoto = ntoto + 1
-                       else if (i1.gt.6 .and. i2.gt.6) then
-                          ntoth = ntoth + 1
-                       else 
-                          ntotc = ntotc + 1
-                       endif
-
-                      endif
-                      shadow = .TRUE.
-                      return
-                    endif
-                endif
-            enddo
-        enddo
-
-        end
+c  loop over i1 and i2
+      do i=1,2
+         if (i.eq.1) i0 = i1
+         if (i.eq.2) i0 = i2
+         do j=1,nants
+            du1 = enu(i1,3) + elAxisH(i1) - enu(j,3) - elAxisH(j)
+            dn1 = enu(i1,2) - enu(j,2)
+            de1 = enu(i1,1) - enu(j,1)
+            mag = sqrt(du1*du1 + dn1*dn1 + de1*de1)
+            saz = sin(antaz(i1))
+            caz = cos(antaz(i1))
+            sel = sin(antel(i1))
+            cel = cos(antel(i1))
+            du0 = mag*sel
+            de0 = mag*cel*saz
+            dn0 = mag*cel*caz
+            cdang = (du0*du1 + de0*de1 + dn0*dn1)/(mag*mag)
+            dang = abs(acos(cdang))
+            anglim = abs(asin((antdiam(i1)+sweptVD(j))/(2*mag)))
+            if (dang < anglim) then
+               call counter(i1,i2)
+               shadow1 = .TRUE.
+               return
+            endif
+         enddo
+      enddo
+      
+      end
