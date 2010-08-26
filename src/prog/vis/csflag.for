@@ -46,6 +46,9 @@ c       You normally want this leave this at 1, but can experiment with
 c       smaller values to try and keep some partially shadowed data;
 c       but check your calibrator(s) how well this is expected to work.
 c       Default: 1,1,1
+c@ sfraction
+c       Cheat to make the swept volume bigger by this factor
+c       Default: 1
 c@ all
 c       By default only baselines from the dataset itself are investigated
 c       if an antenna of a pair is shadowed. By setting all=true you can
@@ -90,7 +93,7 @@ c
 	integer lVis,ntot,nflag,i,nv,nants,na
         integer ntoto,ntoth,ntotc,ntots,ntota,ntot6,ncf
         real antdiam(MAXANT),elAxisH(MAXANT),sweptVD(MAXANT)
-        real cfraction(3)
+        real cfraction(3), sfraction
 	character in*120
 	logical flags(MAXCHAN),shadow1,shadow2,carma,sza,doshadow,qall
         external shadow1,shadow2
@@ -107,6 +110,7 @@ c
         call mkeyr('antdiam',antdiam,MAXANT,na)
         call keyl('carma',carma,.TRUE.)
         call mkeyr('cfraction',cfraction,3,ncf)
+        call keyr('sfraction',sfraction,1.0)
         call keyl('all',Qall,.FALSE.)
 	call keyfin
 
@@ -119,17 +123,17 @@ c
            do i=1,6
               antdiam(i) = 10.4
               elAxisH(i) = 5.435
-              sweptVD(i) = 2*7.043
+              sweptVD(i) = 2*7.043 * sfraction
            enddo
            do i=7,15
               antdiam(i) = 6.1
               elAxisH(i) = 5.198
-              sweptVD(i) = 2*5.6388
+              sweptVD(i) = 2*5.6388 * sfraction
            enddo
            do i=16,23
               antdiam(i) = 3.5
               elAxisH(i) = 2.7526
-              sweptVD(i) = 4.41442
+              sweptVD(i) = 4.41442 * sfraction
            enddo
         else if (na.EQ.0) then
            call bug('f','No antdiam= specified')
@@ -421,6 +425,12 @@ c
       
       call uvgetvrd(lVis,'antel',antel,nants)
       call uvgetvrd(lVis,'antaz',antaz,nants)
+
+c-pjt-test
+c     do i=1,nants
+c        antel(i) = 10.0
+c        antaz(i) = 0.0
+c     enddo
       
       call basant(p(5),i1,i2)
       if (i1.gt.nants .or. i2.gt.nants) call bug('f',
@@ -441,24 +451,24 @@ c  loop over i1 and i2, discard autocorrellations
          cel = cos(antel(i0)*DD2R)
          do j=1,nants
             if (i0.ne.j) then
-               du1 = enu(i0,3) + elAxisH(i0) - enu(j,3) - elAxisH(j)
-               dn1 = enu(i0,2) - enu(j,2)
-               de1 = enu(i0,1) - enu(j,1)
+               du1 = enu(j,3) + elAxisH(j) - enu(i0,3) - elAxisH(i0)
+               dn1 = enu(j,2) - enu(i0,2)
+               de1 = enu(j,1) - enu(i0,1)
                mag = sqrt(du1*du1 + dn1*dn1 + de1*de1)
                du0 = mag*sel
                de0 = mag*cel*saz
                dn0 = mag*cel*caz
                cdang = (du0*du1 + de0*de1 + dn0*dn1)/(mag*mag)
-               dang = acos(cdang)
+               dang = abs(acos(cdang))
                anglim = (antdiam(i0)+sweptVD(j))/(2*mag)
                if (anglim.lt.1d0) then
                   anglim = asin(anglim)
                else
                   anglim = DPI_2
                endif
-c               write(*,*) 'chk ',i0,j,dang,anglim,antaz(i0),antel(i0)
+c              write(*,*) 'chk ',i0,j,dang,anglim,antaz(i0),antel(i0)
                if (dang < anglim) then
-c                  write(*,*) 'sweep ',i0,' by ',j
+c                 write(*,*) 'sweep ',i0,' by ',j
                   call counter(i1,i2)
                   shadow1 = .TRUE.
                   return
