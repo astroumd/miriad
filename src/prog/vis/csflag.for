@@ -83,7 +83,7 @@ c---------------------------------------------------------------------------
 	implicit none
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='csflag: version 25-aug-10 PJT1')
+	parameter(version='csflag: version 26-aug-10')
 c
 	complex data(MAXCHAN)
 	double precision preamble(5), antpos(3*MAXANT), lat
@@ -412,6 +412,7 @@ c
       real antdiam(nants), elAxisH(nants), sweptVD(nants)
 c
       include 'maxdim.h'
+      include 'mirconst.h'
       double precision de0,dn0,du0,de1,dn1,du1,mag,saz,caz,sel,cel
       double precision cdang, dang, anglim
       integer i0,i1,i2,i,j
@@ -432,26 +433,32 @@ c
 
 c  loop over i1 and i2, discard autocorrellations
       do i=1,2
-         if (i.eq.1) i0 = i1
+         i0 = i1
          if (i.eq.2) i0 = i2
+         saz = sin(antaz(i0)*DD2R)
+         caz = cos(antaz(i0)*DD2R)
+         sel = sin(antel(i0)*DD2R)
+         cel = cos(antel(i0)*DD2R)
          do j=1,nants
             if (i0.ne.j) then
                du1 = enu(i0,3) + elAxisH(i0) - enu(j,3) - elAxisH(j)
                dn1 = enu(i0,2) - enu(j,2)
                de1 = enu(i0,1) - enu(j,1)
                mag = sqrt(du1*du1 + dn1*dn1 + de1*de1)
-               saz = sin(antaz(i0))
-               caz = cos(antaz(i0))
-               sel = sin(antel(i0))
-               cel = cos(antel(i0))
                du0 = mag*sel
                de0 = mag*cel*saz
                dn0 = mag*cel*caz
                cdang = (du0*du1 + de0*de1 + dn0*dn1)/(mag*mag)
-               dang = abs(acos(cdang))
-               anglim = abs(asin((antdiam(i0)+sweptVD(j))/(2*mag)))
+               dang = acos(cdang)
+               anglim = (antdiam(i0)+sweptVD(j))/(2*mag)
+               if (anglim.lt.1d0) then
+                  anglim = asin(anglim)
+               else
+                  anglim = DPI_2
+               endif
+c               write(*,*) 'chk ',i0,j,dang,anglim,antaz(i0),antel(i0)
                if (dang < anglim) then
-c                 write(*,*) 'sweep ',i0,' by ',j
+c                  write(*,*) 'sweep ',i0,' by ',j
                   call counter(i1,i2)
                   shadow1 = .TRUE.
                   return
