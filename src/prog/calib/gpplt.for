@@ -105,12 +105,13 @@ c    nebk 13jul04 More sig figs for leakages
 c    rjs  23jan07 Handle second leakage table.
 c    mchw 23jun09 Print mean and rms value on plots.
 c    pjt  25aug10 fixed sqrt(rms) when < 0 roundoff, reindent a bit
+c    pjt   1sep10 narrower format to prevent wrapped phases eating it
 c  Bugs:
 c------------------------------------------------------------------------
 	integer MAXSELS
 	character version*(*)
 	parameter(MAXSELS=256)
-	parameter(version='GpPlt: version 25-aug-10')
+	parameter(version='GpPlt: version 1-sep-2010')
 	include 'gpplt.h'
 	integer iostat,tIn,nx,ny,nfeeds,nants,nsols,ierr,symbol,nchan
 	integer ntau,length
@@ -1167,9 +1168,9 @@ c
 	    do j1=1,nfeeds*nants,6
 	      j2 = min(j1+5,nfeeds*nants)
 	      if(j1.eq.1)then
-		write(line,'(f10.5,6f10.5)')freq(ichan),(y(j),j=j1,j2)
+		write(line,'(f10.5,6f10.4)')freq(ichan),(y(j),j=j1,j2)
 	      else
-		write(line,'(10x,  6f10.5)')            (y(j),j=j1,j2)
+		write(line,'(10x,  6f10.4)')            (y(j),j=j1,j2)
 	      endif
 	      call LogWrite(line,more)
 	    enddo
