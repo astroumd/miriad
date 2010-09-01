@@ -88,10 +88,11 @@ c    18jan02 pjt   Turned rngmask typo into rngmsk (duh)
 c     4mar02 pjt   documented FWHM/sigma, fixed units of mom=2 map
 c    27jul08 pjt   Added raw=; keep Stuartt Corder finishing his thesis in time
 c    15sep09 pjt   Fixed mom=2 because of using chan2 through column 81 !!!
+c     1sep10 pjt   Allow missing axis descriptors with warnings instead
 c------------------------------------------------------------------------
 	include 'maxdim.h'
  	character version*(*)
-	parameter(version='version 15-sep-09')
+	parameter(version='version 1-sep-2010')
 	integer maxnax,maxboxes,maxruns,naxis
 	parameter(maxnax=3,maxboxes=2048)
 	parameter(maxruns=3*maxdim)
@@ -345,7 +346,10 @@ c
      *						ctype(1:4).ne.'FREQ')
      *        call bug('w','Axis is not VELO, FELO, or FREQ.')
 	call rdhdr(lin,'cdelt'//cin,cdelt,0.0)
-	if(cdelt.eq. 0.0) call bug('f','cdelt is 0 or not present.')
+	if(cdelt.eq. 0.0) then
+            call bug('w','cdelt is 0 or not present, trying 1')
+	    cdelt = 1.0
+	endif
 c
 	if(mom .eq. -1) then
 	  scale = 1.0 / real(trc(axis)-blc(axis)+1)
@@ -369,7 +373,10 @@ c
 	  call rdhdr(lin,'crval'//cin,crval,0.0)
 	  offset = crpix - crval/cdelt
 	else
-	  call bug('f','crpix, or crval not in header.')
+	  call bug('w','crpix, or crval not in header.')
+	  crpix=1.0
+	  crval=0.0
+	  offset = crpix - crval/cdelt
 	endif
 c
 c  Compute the moment.
