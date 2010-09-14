@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-<title>WCSLIB 4.5: tab.h File Reference</title>
+<title>WCSLIB 4.5.1: tab.h File Reference</title>
 <link href="doxygen.css" rel="stylesheet" type="text/css">
 <link href="tabs.css" rel="stylesheet" type="text/css">
 </head><body>
@@ -259,7 +259,7 @@ Size of the <a class="el" href="structtabprm.html" title="Tabular transformation
     <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>alloc</em>&nbsp;</td><td>If true, allocate memory unconditionally for arrays in the <a class="el" href="structtabprm.html" title="Tabular transformation parameters.">tabprm</a> struct. <br>
  If false, it is assumed that pointers to these arrays have been set by the user except if they are null pointers in which case memory will be allocated for them regardless. (In other words, setting alloc true saves having to initalize these pointers to zero.) </td></tr>
     <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>M</em>&nbsp;</td><td>The number of tabular coordinate axes. </td></tr>
-    <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>K</em>&nbsp;</td><td>Vector of length M whose elements <img class="formulaInl" alt="$(K_1, K_2,... K_M)$" src="form_57.png"> record the lengths of the axes of the coordinate array and of each indexing vector. M and K[] are used to determine the length of the various <a class="el" href="structtabprm.html" title="Tabular transformation parameters.">tabprm</a> arrays and therefore the amount of memory to allocate for them. Their values are copied into the <a class="el" href="structtabprm.html" title="Tabular transformation parameters.">tabprm</a> struct. <br>
+    <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>K</em>&nbsp;</td><td>Vector of length M whose elements <img class="formulaInl" alt="$(K_1, K_2,... K_M)$" src="form_59.png"> record the lengths of the axes of the coordinate array and of each indexing vector. M and K[] are used to determine the length of the various <a class="el" href="structtabprm.html" title="Tabular transformation parameters.">tabprm</a> arrays and therefore the amount of memory to allocate for them. Their values are copied into the <a class="el" href="structtabprm.html" title="Tabular transformation parameters.">tabprm</a> struct. <br>
  It is permissible to set K (i.e. the address of the array) to zero which has the same effect as setting each element of K[] to zero. In this case no memory will be allocated for the index vectors or coordinate array in the <a class="el" href="structtabprm.html" title="Tabular transformation parameters.">tabprm</a> struct. These together with the K vector must be set separately before calling <a class="el" href="tab_8h.html#519e8e4503f7c41c0f99e8597171c97f" title="Setup routine for the tabprm struct.">tabset()</a>.</td></tr>
     <tr><td valign="top"><tt>[in,out]</tt>&nbsp;</td><td valign="top"><em>tab</em>&nbsp;</td><td>Tabular transformation parameters. Note that, in order to initialize memory management <a class="el" href="structtabprm.html#27a7b0b12492e1b5f19242ec0eff8e08">tabprm::flag</a> should be set to -1 when tab is initialized for the first time (memory leaks may result if it had already been initialized).</td></tr>
   </table>
@@ -588,7 +588,7 @@ Error messages to match the status value returned from each function.
 </div>
 </div><p>
 </div>
-<hr size="1"><address style="text-align: right;"><small>Generated on Fri Jul 16 17:01:46 2010 for WCSLIB 4.5 by&nbsp;
+<hr size="1"><address style="text-align: right;"><small>Generated on Thu Aug 12 18:27:48 2010 for WCSLIB 4.5.1 by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.5.6 </small></address>
 </body>

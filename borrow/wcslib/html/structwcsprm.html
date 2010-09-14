@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-<title>WCSLIB 4.5: wcsprm Struct Reference</title>
+<title>WCSLIB 4.5.1: wcsprm Struct Reference</title>
 <link href="doxygen.css" rel="stylesheet" type="text/css">
 <link href="tabs.css" rel="stylesheet" type="text/css">
 </head><body>
@@ -471,7 +471,7 @@ npvmax will be set by <a class="el" href="wcs_8h.html#2afc8255fde0965dddaa374463
 <p>
 (Given or returned) Address of the first element of an array of length npvmax of <a class="el" href="structpvcard.html" title="Store for PVi_ma keyrecords.">pvcard</a> structs. Set by <a class="el" href="wcs_8h.html#2afc8255fde0965dddaa374463666d45" title="Default constructor for the wcsprm struct.">wcsini()</a> if it allocates memory for pv[], otherwise it must be set by the user. See also <a class="el" href="wcs_8h.html#42b2578d76ace7ca6114d82b7ae46a89" title="Memory allocation for PVi_ma.">wcsnpv()</a>.<p>
 As a FITS header parser encounters each <code><b>PV</b>i<b>_</b>ma</code> keyword it should load it into a <a class="el" href="structpvcard.html" title="Store for PVi_ma keyrecords.">pvcard</a> struct in the array and increment npv. <a class="el" href="wcs_8h.html#e5cc3f5d249755583403cdf54d2ebb91" title="Setup routine for the wcsprm struct.">wcsset()</a> interprets these as required.<p>
-Note that, if they were not given, <a class="el" href="wcs_8h.html#e5cc3f5d249755583403cdf54d2ebb91" title="Setup routine for the wcsprm struct.">wcsset()</a> resets the entries for <b><code>PV</code>i<code>_1</code>a</b>, <b><code>PV</code>i<code>_2</code>a</b>, <b><code>PV</code>i<code>_3</code>a</b>, and <b><code>PV</code>i<code>_4</code>a</b> for longitude axis <b>i</b> to match <img class="formulaInl" alt="$(\phi_0,\theta_0)$" src="form_62.png">, the native longitude and latitude of the reference point given by <code><b>LONPOLE</b>a</code> and <code><b>LATPOLE</b>a</code>. 
+Note that, if they were not given, <a class="el" href="wcs_8h.html#e5cc3f5d249755583403cdf54d2ebb91" title="Setup routine for the wcsprm struct.">wcsset()</a> resets the entries for <b><code>PV</code>i<code>_1</code>a</b>, <b><code>PV</code>i<code>_2</code>a</b>, <b><code>PV</code>i<code>_3</code>a</b>, and <b><code>PV</code>i<code>_4</code>a</b> for longitude axis <b>i</b> to match <img class="formulaInl" alt="$(\phi_0,\theta_0)$" src="form_64.png">, the native longitude and latitude of the reference point given by <code><b>LONPOLE</b>a</code> and <code><b>LATPOLE</b>a</code>. 
 </div>
 </div><p>
 <a class="anchor" name="4c89dafecd036e169f96cb84d53ace65"></a><!-- doxytag: member="wcsprm::nps" ref="4c89dafecd036e169f96cb84d53ace65" args="" -->
@@ -1463,7 +1463,7 @@ These may also serve as indices into the pixcrd[][] array provided that the <cod
 </div>
 </div><p>
 </div>
-<hr size="1"><address style="text-align: right;"><small>Generated on Fri Jul 16 17:01:47 2010 for WCSLIB 4.5 by&nbsp;
+<hr size="1"><address style="text-align: right;"><small>Generated on Thu Aug 12 18:27:49 2010 for WCSLIB 4.5.1 by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.5.6 </small></address>
 </body>
