@@ -27,8 +27,8 @@ if ($?Ccompile == 0) then
    endif
 endif
 # -------------------------------------------------------------------
-if (! -e $srcdir/wcslib.pc) then
-   echo "Cannot find $srcdir/wcslib.pc - exiting."
+if (! -e $srcdir/wcslib.pdf) then
+   echo "Cannot find $srcdir/wcslib.pdf - exiting."
    exit 1
 endif
 # -------------------------------------------------------------------
