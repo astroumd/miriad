@@ -408,3 +408,39 @@ int sphdpa(
 
   return 0;
 }
+
+/*--------------------------------------------------------------------------*/
+
+int sphpad(
+  int nfield,
+  double lng0,
+  double lat0,
+  const double dist[],
+  const double pa[],
+  double lng[],
+  double lat[])
+
+{
+  int i;
+  double eul[5];
+
+  /* Set the Euler angles for the coordinate transformation. */
+  eul[0] = lng0;
+  eul[1] = 90.0 - lat0;
+  eul[2] = 0.0;
+  eul[3] = cosd(eul[1]);
+  eul[4] = sind(eul[1]);
+
+  for (i = 0; i < nfield; i++) {
+    /* Latitude in the new frame is obtained from angular distance. */
+    lat[i] = 90.0 - dist[i];
+
+    /* Longitude in the new frame is obtained from position angle. */
+    lng[i] = -pa[i];
+  }
+
+  /* Transform field points to the old system. */
+  sphx2s(eul, nfield, 0, 1, 1, lng, lat, lng, lat);
+
+  return 0;
+}

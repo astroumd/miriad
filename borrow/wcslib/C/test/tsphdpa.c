@@ -43,16 +43,22 @@ int main()
 {
   double dist, lat, lat0, lng, lng0, pa;
 
+  printf("\nEnter reference (lng,lat): ");
+  scanf("%lf%*[ ,	]%lf", &lng0, &lat0);
+
   while (1) {
-    printf("\nEnter reference (lng,lat): ");
-    scanf("%lf%*[ ,	]%lf", &lng0, &lat0);
-    printf("Enter   field   (lng,lat): ");
+    printf("\nEnter   field   (lng,lat): ");
     scanf("%lf%*[ ,	]%lf", &lng, &lat);
 
     sphdpa(1, lng0, lat0, &lng, &lat, &dist, &pa);
 
-    printf("(%.4f,%.4f) - (%.4f,%.4f) -> %.4f, %.4f (dist,pa)\n",
+    printf("(%.4f,%.4f) - (%.4f,%.4f) -> (%.4f,%.4f) (dist,pa)\n",
       lng0, lat0, lng, lat, dist, pa);
+
+    sphpad(1, lng0, lat0, &dist, &pa, &lng, &lat);
+
+    printf("(%.4f,%.4f) + (%.4f,%.4f) -> (%.4f,%.4f) (lng,lat)\n",
+      lng0, lat0, dist, pa, lng, lat);
   }
 
   return 0;

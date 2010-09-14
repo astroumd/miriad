@@ -50,8 +50,11 @@
 * The WCS spherical coordinate transformations are implemented via separate
 * functions, sphx2s() and sphs2x(), for the transformation in each direction.
 *
-* A utility function, sphdpa(), uses these to compute the angular distance and
-* position angle from a given point on the sky to a number of other points.
+* A utility function, sphdpa(), computes the angular distances and position
+* angles from a given point on the sky to a number of other points.  sphpad()
+* does the complementary operation - computes the coordinates of points offset
+* by the given angular distances and position angles from a given point on the
+* sky.
 *
 *
 * sphx2s() - Rotation in the pixel-to-world direction
@@ -76,7 +79,9 @@
 *                       system of the projection [deg].
 *
 * Returned:
-*   lng,lat   double[]  Celestial longitude and latitude [deg].
+*   lng,lat   double[]  Celestial longitude and latitude [deg].  These may
+*                       refer to the same storage as phi and theta
+*                       respectively.
 *
 * Function return value:
 *             int       Status return value:
@@ -103,20 +108,23 @@
 *                       Celestial longitude and latitude [deg].
 *
 * Returned:
-*   phi,theta double[]  Longitude and latitude in the native coordinate
-*                       system of the projection [deg].
+*   phi,theta double[]  Longitude and latitude in the native coordinate system
+*                       of the projection [deg].  These may refer to the same
+*                       storage as lng and lat respectively.
 *
 * Function return value:
 *             int       Status return value:
 *                         0: Success.
 *
 *
-* sphdpa() - Angular distance and position angle
-* ----------------------------------------------
+* sphdpa() - Compute angular distance and position angle
+* ------------------------------------------------------
 * sphdpa() computes the angular distance and generalized position angle (see
 * notes) from a "reference" point to a number of "field" points on the sphere.
 * The points must be specified consistently in any spherical coordinate
 * system.
+*
+* sphdpa() is complementary to sphpad().
 *
 * Given:
 *   nfield    int       The number of field points.
@@ -125,7 +133,9 @@
 *                       Spherical coordinates of the field points [deg].
 *
 * Returned:
-*   dist,pa   double[]  Angular distance and position angle [deg].
+*   dist,pa   double[]  Angular distances and position angles [deg].  These
+*                       may refer to the same storage as lng and lat
+*                       respectively.
 *
 * Function return value:
 *             int       Status return value:
@@ -139,10 +149,14 @@
 *
 =     eul[0] = lng0;
 =     eul[1] = 90.0 - lat0;
-=     eul[2] = 0.0;
+=     eul[2] =  0.0;
 *
 *   The angular distance and generalized position angle are readily obtained
-*   from the longitude and latitude of the field point in the new system.
+*   from the longitude and latitude of the field point in the new system.  
+*   This applies even if the reference point is at one of the poles, in which
+*   case the "position angle" returned is as would be computed for a reference
+*   point at (lng0,+90-epsilon) or (lng0,-90+epsilon), in the limit as epsilon
+*   goes to zero.
 *
 *   It is evident that the coordinate system in which the two points are
 *   expressed is irrelevant to the determination of the angular separation
@@ -163,6 +177,41 @@
 *   coincident or antipodal.  This may be detected by checking for a distance
 *   of 0 or 180 degrees (within rounding tolerance).  sphdpa() will return an
 *   arbitrary position angle in such circumstances.
+*
+*
+* sphpad() - Compute field points offset from a given point
+* ---------------------------------------------------------
+* sphpad() computes the coordinates of a set of points that are offset by the
+* specified angular distances and position angles from a given "reference"
+* point on the sky.  The distances and position angles must be specified
+* consistently in any spherical coordinate system.
+*
+* sphpad() is complementary to sphdpa().
+*
+* Given:
+*   nfield    int       The number of field points.
+*   lng0,lat0 double    Spherical coordinates of the reference point [deg].
+*   dist,pa   const double[]
+*                       Angular distances and position angles [deg].
+*
+* Returned:
+*   lng,lat   double[]  Spherical coordinates of the field points [deg].
+*                       These may refer to the same storage as dist and pa
+*                       respectively.
+*
+* Function return value:
+*             int       Status return value:
+*                         0: Success.
+*
+* Notes:
+*   sphpad() is implemented analogously to sphdpa() although using sphx2s()
+*   for the inverse transformation.  In particular, when the reference point
+*   is at one of the poles, "position angle" is interpreted as though the
+*   reference point was at (lng0,+90-epsilon) or (lng0,-90+epsilon), in the
+*   limit as epsilon goes to zero.
+*
+*   Applying sphpad() with the distances and position angles computed by
+*   sphdpa() should return the original field points.
 *
 *===========================================================================*/
 
@@ -185,6 +234,10 @@ int sphs2x(const double eul[5], int nlng, int nlat, int sll , int spt,
 int sphdpa(int nfield, double lng0, double lat0,
            const double lng[], const double lat[],
            double dist[], double pa[]);
+
+int sphpad(int nfield, double lng0, double lat0,
+           const double dist[], const double pa[],
+           double lng[], double lat[]);
 
 
 #ifdef __cplusplus

@@ -32,5 +32,5 @@
 *=======================================================================
 
 *     Functions.
-      EXTERNAL  SPHDPA, SPHS2X, SPHX2S
-      INTEGER   SPHDPA, SPHS2X, SPHX2S
+      EXTERNAL  SPHDPA, SPHPAD, SPHS2X, SPHX2S
+      INTEGER   SPHDPA, SPHPAD, SPHS2X, SPHX2S

@@ -1,3 +1,18 @@
+WCSLIB version 4.5.1 (2010/08/12)
+---------------------------------
+
+* C library
+
+  - New utility function, sphpad(), computes the coordinates of points
+    offset by given angular distances and position angles from a given
+    point on the sky (complementary to sphdpa()).
+
+* Fortran wrappers
+
+  - New wrapper function:
+    - SPHPAD for sphpad().
+
+
 WCSLIB version 4.5 (2010/07/16)
 -------------------------------
 

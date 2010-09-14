@@ -9,7 +9,7 @@
 # $Id$
 #-----------------------------------------------------------------------------
 
-AC_INIT([WCSLIB], [4.5], [mcalabre@atnf.csiro.au], [wcslib-4.5])
+AC_INIT([WCSLIB], [4.5.1], [mcalabre@atnf.csiro.au], [wcslib-4.5.1])
 AC_PREREQ([2.53])
 AC_REVISION([$Revision$])
 AC_SUBST([PACKAGE_VERSION])
