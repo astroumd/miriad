@@ -442,8 +442,8 @@ if ($dorl == 0) then
    echo Your system does not seem to have readline, and miriad.c will not use it
 endif
 
-echo LIB: linpack subs 
-mir.install linpack subs 
+echo LIB: linpack wcslib subs 
+mir.install linpack wcslib subs 
 if ($pgplot) then
   mir.install pgplot
   if ($gif == 0) then
