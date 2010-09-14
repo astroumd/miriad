@@ -8,7 +8,7 @@
 #
 #    Usage:  mir.subs [$argv]
 #
-#            $argv = [readline] [hdf] [pgplot] [subs]
+#            $argv = [readline] [hdf] [pgplot] [wcslib] [subs]
 #                    [miriad subroutine name(s)]
 #
 #    $argv = name of a miriad "borrowed" library and/or subs
