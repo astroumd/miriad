@@ -1,0 +1,43 @@
+#!/bin/csh -f
+# 
+# --------------------------------------------------------------
+# subscript lib.wcslib
+# --------------------------------------------------------------
+set mir    = $MIR
+set host   = $MIRHOST
+set lsys   = $mir/bin/localsys
+set libdir = $mir/lib/$host
+set bindir = $mir/bin/$host
+set incdir = $mir/src/inc
+set admdir = $mir/src/sys/bin
+set srcdir = $mir/borrow/wcslib
+# -------------------------------------------------------------------
+if (-e $lsys/lib.wcslib && ! $?local_compile) then
+  echo $lsys/lib.wcslib exists =======================
+  setenv local_compile
+  exec $lsys/lib.wcslib $argv
+endif
+# -------------------------------------------------------------------
+if ($?Ccompile == 0) then
+   if (-e $admdir/compile.${host}) then
+      source $admdir/compile.${host}
+   else
+      echo "Cannot find $admdir/compile.${host} - exiting."
+      exit 1
+   endif
+endif
+# -------------------------------------------------------------------
+if (! -e $srcdir/wcslib.pc) then
+   echo "Cannot find $srcdir/wcslib.pc - exiting."
+   exit 1
+endif
+# -------------------------------------------------------------------
+#  Compile the code.
+cd $srcdir
+./configure --bindir=$bindir --libdir=$libdir --includedir=$incdir
+make
+make install
+echo ' '
+# -------------------------------------------------------------------
+unsetenv local_compile
+exit 0
