@@ -48,7 +48,7 @@ endif
 # --------------------------------------------------------------
 if ($#argv == 0) then
    foreach i (`ls $admdir/lib.*`)
-      $admdir/$i
+      $i
    end
    exit 0
 endif
