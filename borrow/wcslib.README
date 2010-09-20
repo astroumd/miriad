@@ -16,6 +16,18 @@ library:
 
 wget ftp://ftp.atnf.csiro.au/pub/software/wcslib/wcslib.tar.bz2
 
+
+old style:
 ./configure --bindir=$MIRBIN --libdir=$MIRLIB --includedir=$MIRINC
 make 
 make install
+
+new style:???
+./configure --bindir=$MIRBIN --libdir=$MIRLIB --includedir=$MIRINC
+make 
+make install
+
+
+History:
+    14-sep-2010    Imported 4.5 into local CVS and added build scripts for CVS miriad
+    14-sep-2010    Upgraded to 4.5.1
