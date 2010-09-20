@@ -60,13 +60,14 @@
 %   3-jan-08  pjt  clarify center of channel for frequency calculations
 %  21-nov-08  pjt  clarify items, add bandpass calibration items
 %   5-oct-09  pjt  various clarifications, most notably TIME as integer midpoint!
+%  20-sep-10  pjt  corbit changed type and dimension
 %
 %  nband - appears to be CARMA's Control.SpectralLineCorrelator.numBands (but it's 8, not 6=nspect)
 %  later removed again
 
 \section{UV Dataset}
 
-\newcommand{\uvversion}{November 30, 2009}
+\newcommand{\uvversion}{September 20, 2010}
 
 A \miriad\ uv dataset is composed of a collection of items and `\MM{u-v} variables'.
 The variables are parameters that are known at the time of the observation,
@@ -174,7 +175,7 @@ airtemp         \>R     \>centigr.
 \> Air temperature at observatory\\
 
 antaz(nants)    \>D     \>deg.
-\> azimuth of antennas (BIMA was using 0=south  CARMA will use 0=north)\\
+\> azimuth of antennas (CW; BIMA used 0=south  CARMA uses 0=north)\\
 
 antdiam		\>R	\>meters
 \> Antenna diameter\\
@@ -239,8 +240,12 @@ coord(*)        \>D     \>nanosec
 \>\>\> depending if you have uv or uvw data resp.\\
 
 
-corbit		\>R	\>-	
-\>  Number of correlator bits (Hat Ck)\\
+% http://www.mmarray.org/bugzilla/show_bug.cgi?id=899
+%   was never used in code at HatCk
+% corbit		\>R	\>-	
+% \>  Number of correlator bits (Hat Ck)\\
+corbit(nspect)		\>I	\>-	
+\>  Number of correlator bits (CARMA: 2,3,4)\\
 
 corbw(2)	\>R	\>MHz
 \>	Correlator bandwidth setting (Hat Ck)\\
