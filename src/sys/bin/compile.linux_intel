@@ -11,18 +11,23 @@ set mlsys = $mmir/bin/localsys
 # -finit-local-zero              if you debug code and need initialized data
 # -mcpu=i686 -march=i686 -malign-double -ffast-math         architecture opt
 #
+if (-e $MIRLIB/libwcs.a) then
+  set wcslib="-lpgsbox -lwcs"
+else
+  set wcslib=""
+endif
 setenv Fcompile  "ifort"
 setenv Foptions  "-O -Vaxlib"
 setenv FoptionsN ""
 setenv Flinkdir  "-L`echo $mmir/lib/$mhost $MIRXLIB | sed 's/ / -L/g'`"
-setenv Flinklib  "-lmir -llinpack -lpgplot -lX11"
+setenv Flinklib  "-lmir -llinpack -lpgplot $wcslib -lX11"
 setenv Finclude  "-I`echo $mmir/src/inc $MIRXINC | sed 's/ / -I/g'`"
 # the gnu compiler actually adds -Dlinux, so we don't need it here
 setenv Ccompile  "icc"
 setenv Coptions  "-O"
 setenv CoptionsN ""
 setenv Clinkdir  "-L`echo $mmir/lib/$mhost $MIRXLIB | sed 's/ / -L/g'`"
-setenv Clinklib  "-lmir -llinpack -lpgplot -lX11 -lf2c -lm"
+setenv Clinklib  "-lmir -llinpack -lpgplot $wcslib -lX11 -lf2c -lm"
 setenv Cinclude  "-I`echo $mmir/src/inc $mmir/src/subs | sed 's/ / -I/g'`"
 #
 setenv Ratty 	 "$mmir/bin/$mhost/ratty -s f2c -b -D linux"

@@ -14,18 +14,23 @@ set mlsys = $mmir/bin/localsys
 ###         #define _LARGEFILE_SOURCE
 ###         #define _FILE_OFFSET_BITS=64
 set lfs="-D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -Wall"
+if (-e $MIRLIB/libwcs.a) then
+  set wcslib="-lpgsbox -lwcs"
+else
+  set wcslib=""
+endif
 setenv Fcompile  "gfortran"
 setenv Foptions  "-O -fPIC"
 setenv FoptionsN "-fPIC"
 setenv Flinkdir  "-L`echo $mmir/lib/$mhost $MIRXLIB | sed 's/ / -L/g'`"
-setenv Flinklib  "$lfs -lmir -llinpack -lpgplot -lX11 -lm"
+setenv Flinklib  "$lfs -lmir -llinpack -lpgplot $wcslib -lX11 -lm"
 setenv Finclude  "-I`echo $mmir/src/inc $MIRXINC | sed 's/ / -I/g'`"
 # the gnu compiler actually adds -Dlinux, so we don't need it here
 setenv Ccompile  "gcc"
 setenv Coptions  "-O -fPIC $lfs"
 setenv CoptionsN "-fPIC $lfs"
 setenv Clinkdir  "-L`echo $mmir/lib/$mhost $MIRXLIB | sed 's/ / -L/g'`"
-setenv Clinklib  "-lmir -llinpack -lpgplot -lX11 -lgfortran -lm"
+setenv Clinklib  "-lmir -llinpack -lpgplot $wcslib -lX11 -lgfortran -lm"
 setenv Cinclude  "-I`echo $mmir/src/inc $mmir/src/subs | sed 's/ / -I/g'`"
 #
 setenv Ratty 	 "$mmir/bin/$mhost/ratty -s f2c -b -D linux"

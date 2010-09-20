@@ -14,18 +14,23 @@ set mlsys = $mmir/bin/localsys
 #  when you link FSF versions of gcc and g77, should be ok.
 #  which seems to happen if you did not install Xcode
 #
+if (-e $MIRLIB/libwcs.a) then
+  set wcslib="-lpgsbox -lwcs"
+else
+  set wcslib=""
+endif
 setenv Fcompile  "gfortran"
 setenv Foptions  "-O"
 setenv FoptionsN ""
 setenv Flinkdir  "-L`echo $mmir/lib/$mhost $MIRXLIB | sed 's/ / -L/g'`"
-setenv Flinklib  "-lmir -llinpack -lpgplot -lX11 -lSystemStubs -lm"
+setenv Flinklib  "-lmir -llinpack -lpgplot $wcslib -lX11 -lSystemStubs -lm"
 setenv Finclude  "-I`echo $mmir/src/inc $MIRXINC | sed 's/ / -I/g'`"
 # the gnu compiler actually adds -Dlinux, so we don't need it here
 setenv Ccompile  "gcc"
 setenv Coptions  "-O -fno-common -Ddarwin"
 setenv CoptionsN "-Ddarwin"
 setenv Clinkdir  "-L`echo $mmir/lib/$mhost $MIRXLIB | sed 's/ / -L/g'`"
-setenv Clinklib  "-lmir -llinpack -lpgplot -lX11 -lgfortran -lm"
+setenv Clinklib  "-lmir -llinpack -lpgplot $wcslib -lX11 -lgfortran -lm"
 setenv Cinclude  "-I`echo $mmir/src/inc $mmir/src/subs | sed 's/ / -I/g'`"
 #
 setenv Ratty 	 "$mmir/bin/$mhost/ratty -s f2c -b -D linux"

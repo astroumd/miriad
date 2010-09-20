@@ -15,18 +15,23 @@ set mlsys = $mmir/bin/localsys
 #  which seems to happen if you did not install Xcode
 #  add -DWORDS_BIGENDIAN to Coptions if you're on a PPC
 #
+if (-e $MIRLIB/libwcs.a) then
+  set wcslib="-lpgsbox -lwcs"
+else
+  set wcslib=""
+endif
 setenv Fcompile  "g77"
 setenv Foptions  "-O -fno-globals -fno-common"
 setenv FoptionsN "-fno-globals"
 setenv Flinkdir  "-L`echo $mmir/lib/$mhost $MIRXLIB | sed 's/ / -L/g'`"
-setenv Flinklib  "-lmir -llinpack -lpgplot -lX11 -lSystemStubs -lm"
+setenv Flinklib  "-lmir -llinpack -lpgplot $wcslib -lX11 -lSystemStubs -lm"
 setenv Finclude  "-I`echo $mmir/src/inc $MIRXINC | sed 's/ / -I/g'`"
 # the gnu compiler actually adds -Dlinux, so we don't need it here
 setenv Ccompile  "gcc"
 setenv Coptions  "-O -fno-common -Ddarwin"
 setenv CoptionsN "-Ddarwin"
 setenv Clinkdir  "-L`echo $mmir/lib/$mhost $MIRXLIB | sed 's/ / -L/g'`"
-setenv Clinklib  "-lmir -llinpack -lpgplot -lX11 -lf2c -lm"
+setenv Clinklib  "-lmir -llinpack -lpgplot $wcslib -lX11 -lf2c -lm"
 setenv Cinclude  "-I`echo $mmir/src/inc $mmir/src/subs | sed 's/ / -I/g'`"
 #
 setenv Ratty 	 "$mmir/bin/$mhost/ratty -s f2c -b -D linux"
