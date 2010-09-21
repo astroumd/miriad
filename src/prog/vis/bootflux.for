@@ -90,6 +90,7 @@ c    pjt/mwp 4apr08  fixed default day for calget(), document behavior
 c    pjt     2dec08  fixed UV vs. UVW files  coord(2) or (3)
 c    dnf 04mar09 fixed latitude problem, now the latitude is obtained from 
 c                the data rather than hard coded
+c    pjt 21sep10 fixed write statements for bigant=23
 c  Bugs:
 c
 c   - Polarization mode not tested.
@@ -102,13 +103,13 @@ c------------------------------------------------------------------------
       character version*(*),defdir*(*)
       parameter(MAXPOL=4,MAXSRC=512,MAXANT3=MAXANT,MAXBASE3=MAXBASE,
      *          PolMin=-9,PolMax=4)
-      parameter(version='BootFlux: version 05-mar-09')
+      parameter(version='BootFlux: version 21-sep-10')
       parameter(defdir=
 c     *         '/home/bima2/data/flux/measured_fluxes/')
 c     *          '/lma/mirth/programmers/lgm/measured_fluxes/')
      *          './' )
 c
-      character uvflags*16,polcode*2,line*132,type
+      character uvflags*16,polcode*2,line*256,type
       logical docal,dopol,dopass,found,valid(MAXSRC)
       character sources(MAXSRC)*16,source*16
       complex flux(MAXPOL,MAXBASE3,MAXSRC)
@@ -145,7 +146,7 @@ c
       double precision startjd(MAXSRC),dlst,draobs,ddecobs
       character calsou*16,ctime*18,caltime*18,filename*80
       character savedir*80,logfile*80
-      logical newtime,save,more,sorted,ok
+      logical newtime,save,more,sorted,ok,amask(MAXANT)
 c
 c  Externals.
 c
@@ -195,9 +196,10 @@ c
       sources(1) = '      '
       starttm(1) = -100.0
       do i=1,MAXANT3
-      do j=1,MAXANT3
-        blmatrx(i,j) = 0
-      enddo
+	 amask(i) = .FALSE.
+	 do j=1,MAXANT3
+	    blmatrx(i,j) = 0
+	 enddo
       enddo
       do ibl=1,MAXBASE3
         inttime(ibl,1)= 0.
@@ -444,6 +446,8 @@ c
             thisbas = bases(ibl)
 c	    print*,thisbas,nbase,ibl
             call basant(thisbas,ant1,ant2)
+	    amask(ant1) = .TRUE.
+	    amask(ant2) = .TRUE.
             bigant = max0(bigant,ant2)
             if(ncnt(ipol,ibl,isrc).gt.0) then
               vecaver = flux(ipol,ibl,isrc) / ncnt(ipol,ibl,isrc)
@@ -472,6 +476,7 @@ c	    print*,thisbas,nbase,ibl
           enddo
 c          write(line,'('' ANTS '',12(1x,i3,3x))') (i,i=1,bigant)
 c          call logwrite(line,more)
+cPJT:  use amask() here to only print out the available ants
           do i=1,bigant
             write(line(1:5),'(i3,''  '')') i
             do j=1,bigant
@@ -509,6 +514,7 @@ c  Find calibration source location in source array
 c
       ncal = 0
       do isrc=1,nsrc
+c	write(*,*) 'source ',sources(isrc),calsou,valid(isrc)
         if(sources(isrc) .eq. calsou .and. valid(isrc)) then
            ncal = ncal + 1
            calscan(ncal) = isrc
@@ -608,7 +614,8 @@ c
             call logwrite(line,more)
           endif
 c                     TODO: this format stmt depends on a variable
-          write(line,'('' ANTS '',15(3x,i2,3x))') (i,i=1,bigant)
+c                     TODO: use amask()
+          write(line,'('' ANTS '',23(3x,i2,3x))') (i,i=1,bigant)
           call logwrite(line,more)
           do i=1,bigant
             write(line(1:5),'(i3,''  '')') i
