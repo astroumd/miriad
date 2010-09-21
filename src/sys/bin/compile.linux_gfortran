@@ -1,5 +1,5 @@
 #-----------------------------------------------------------
-# source'd file compile.linux 
+# source'd file compile.linux_gfortran
 # Note: this is the little-endian LINUX for intel cpu's
 #	and won't work on the expected Linux for PowerPC or 68xxx
 #-----------------------------------------------------------
