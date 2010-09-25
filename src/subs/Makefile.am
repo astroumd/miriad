@@ -26,7 +26,7 @@ nodist_libmir_la_SOURCES = \
   j1xbyx.f julday.f \
   keyf.f keyline.f lagwt.f linetype.f log.f lsearch.f lsf.f \
   lspoly.f lsqfit.f lsqu.f lsqu1.f mapper.f match.f math.f \
-  mc.f medfit.f median.f mem.f model.f modp.f mostab.f \
+  mc.f medfit.f median.f mem.f model.f modp.f mostab.f mp.f \
   nearest.f nextpow2.f nllsqu.f noise.f nswc.f numbpg.f \
   obspar.f ofm.f options.f pb.f pcvt.f pghline.f pkfit.f \
   plane.f planet.f plotone.f plproc.f pols.f poly.f \
@@ -37,7 +37,7 @@ nodist_libmir_la_SOURCES = \
   tv.f tvsubs.f txtio.f utilities.f uvdat.f uvfitsubs.f \
   uvgetbl.f uvgn.f uvsubs.f var.f varmint.f velocity.f versan.f \
   win.f wpfit.f zed.f zeebin.f \
-  bugwrap.c iface.c keywrap.c mirwrap.c mm.c oscalls.c \
+  bugwrap.c hio3.c iface.c keywrap.c mirwrap.c mm.c oscalls.c \
   packwrap.c smawrap.c tabiowrap.c tcpio.c wrap.c xyziowrap.c
 
 libmir_doc_sources = \
@@ -70,7 +70,7 @@ EXTRA_DIST = \
   j1xbyx.for julday.for \
   keyf.for keyline.for lagwt.for linetype.for log.for lsearch.for lsf.for \
   lspoly.for lsqfit.for lsqu.for lsqu1.for mapper.for match.for math.for \
-  mc.for medfit.for median.for mem.for model.for modp.for mostab.for \
+  mc.for medfit.for median.for mem.for model.for modp.for mostab.for mp.for \
   nearest.for nextpow2.for nllsqu.for noise.for nswc.for numbpg.for \
   obspar.for ofm.for options.for pb.for pcvt.for pghline.for pkfit.for \
   plane.for planet.for plotone.for plproc.for pols.for poly.for \
@@ -81,7 +81,7 @@ EXTRA_DIST = \
   tv.for tvsubs.for txtio.for utilities.for uvdat.for uvfitsubs.for \
   uvgetbl.for uvgn.for uvsubs.for var.for varmint.for velocity.for versan.for \
   win.for wpfit.for zed.for zeebin.for \
-  bugwrap.f2c iface.f2c keywrap.f2c mirwrap.f2c mm.f2c oscalls.f2c \
+  bugwrap.f2c hio3.f2c iface.f2c keywrap.f2c mirwrap.f2c mm.f2c oscalls.f2c \
   packwrap.f2c smawrap.f2c tabiowrap.f2c tcpio.f2c wrap.f2c xyziowrap.f2c
 
 CLEANFILES = $(nodist_libmir_la_SOURCES)
