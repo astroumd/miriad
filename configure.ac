@@ -490,7 +490,26 @@ AC_CONFIG_SUBDIRS(borrow/pgplot)
 PGPLOT_LIB='$(top_builddir)/borrow/pgplot/libpgplot.la'
 AC_SUBST(PGPLOT_LIB)
 
-AC_CONFIG_HEADER(config.h)
+dnl Stuff needed by WCSLIB
+AC_DEFINE([WCSLIB_VERSION], [4.5.1], [The version of WCSLIB])
+AM_PROG_LEX
+AC_CHECK_FUNCS([sincos])
+dnl Copied from wcslib configure.ac:
+AC_CHECK_SIZEOF([int])
+AC_CHECK_SIZEOF([long int])
+AC_CHECK_SIZEOF([long long int])
+if test "x$ac_cv_sizeof_long_long_int" = x8; then
+  AC_DEFINE([WCSLIB_INT64], [long long int], [64-bit integer data type.])
+elif test "x$ac_cv_sizeof_long_int" = x8; then
+  AC_DEFINE([WCSLIB_INT64], [long int], [64-bit integer data type.])
+elif test "x$ac_cv_sizeof_int" = x8; then
+  AC_DEFINE([WCSLIB_INT64], [int], [64-bit integer data type.])
+fi
+dnl End copying.
+dnl We ignore #defines needed by wcsconfig_utils and wcsconfig_tests.
+AC_F77_WRAPPERS
+
+AC_CONFIG_HEADERS([config.h borrow/wcslib/wcsconfig.h borrow/wcslib/wcsconfig_f77.h])
 AC_CONFIG_FILES([
     Makefile
     cat/Makefile
@@ -504,6 +523,7 @@ AC_CONFIG_FILES([
     src/scripts/Makefile
     src/scripts/ata/rapid/Makefile
     borrow/linpack/Makefile
+    borrow/wcslib/Makefile
     src/prog/analysis/Makefile
     src/prog/calib/Makefile
     src/prog/carma/Makefile

@@ -2,8 +2,10 @@
 
 RATTY=$(top_builddir)/src/tools/ratty
 
+# The "borrow" inclusion here gets includes of wcslib/foo.inc to work.
 .for.f:
-	$(AM_V_GEN)$(RATTY) $(no_f90) -I $(top_builddir)/src/inc -I $(top_srcdir)/src/inc -I $(srcdir) $< $@
+	$(AM_V_GEN)$(RATTY) $(no_f90) -I $(top_builddir)/src/inc -I $(top_srcdir)/src/inc \
+	  -I $(top_builddir)/borrow -I $(srcdir) $< $@
 
 F2C=$(top_builddir)/src/tools/intf2c
 

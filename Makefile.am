@@ -16,6 +16,7 @@ SUBDIRS = \
   cat \
   borrow/pgplot \
   borrow/linpack \
+  borrow/wcslib \
   src/subs \
   src/scripts \
   src/scripts/ata/rapid \

@@ -1,0 +1,13 @@
+*.lo
+*.la
+*-amhack.l
+*-amhack.c
+*.inc
+.deps
+.libs
+stamp-h?
+Makefile.in
+Makefile
+wcsconfig.h
+wcsconfig_f77.h
+
