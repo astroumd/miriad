@@ -9,6 +9,8 @@ libmir_la_CFLAGS = $(includes)
 libmir_la_LDFLAGS = -dynamic @single_module@
 libmir_la_LIBADD = \
   $(top_builddir)/borrow/linpack/libmir_linpack.la \
+  $(top_builddir)/borrow/wcslib/libmir_wcs.la \
+  $(top_builddir)/borrow/wcslib/libmir_pgsbox.la \
   $(PGPLOT_LIB)
 
 AM_FFLAGS = @no_globals@
