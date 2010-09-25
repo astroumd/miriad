@@ -29,5 +29,6 @@ miriad-*.tar.gz
 missing
 share
 stamp-h1
+ylwrap
 *.diff
 BUILD*
