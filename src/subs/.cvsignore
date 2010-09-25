@@ -10,6 +10,7 @@ docwork
 *.la
 *.f
 bugwrap.c
+hio3.c
 iface.c
 keywrap.c
 mirwrap.c
