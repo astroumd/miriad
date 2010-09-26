@@ -56,7 +56,7 @@ dist_libmir_la_SOURCES = \
   $(finclude_HEADERS) \
   $(cinclude_HEADERS) \
   boxes.h co.h ctrl.h fitsio.h hdtab.h intpio.h log.h mapper.h mc.h \
-  modp.h mostab.h obspar.h ofm.h pb.h pcvt.h plproc.h rest.h select.h \
+  modp.h mostab.h mp.h obspar.h ofm.h pb.h pcvt.h plproc.h rest.h select.h \
   tabflux.h tin.h trnio.h tv.h uvdat.h uvgn.h win.h
 
 EXTRA_DIST = \
