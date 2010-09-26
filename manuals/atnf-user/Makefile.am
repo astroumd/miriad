@@ -34,6 +34,7 @@ figs = \
   polcal1.fig \
   polcal2.fig \
   polcal3.fig \
+  polcalnew.fig \
   selfcal.fig \
   strategy.fig 
 

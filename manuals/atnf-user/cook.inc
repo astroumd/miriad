@@ -1505,7 +1505,7 @@ Typical inputs for \task{atlod} are given below.
 \multicolumn{2}{|c|}{{\bf ATLOD}} \\
 \hline
 in=/dev/nrst0               & Input is either exabyte name\\
-in=2010-02-04_1844.C007	    & or RPFITS file.\\
+in=2010-02-04\_1844.C007	    & or RPFITS file.\\
 out=0823.uv                 & Output visibility data set.\\
 options=birdie,rfiflag,xycorr,opcorr & Normal CABB data options, or\\
 options=birdie,reweight,xycorr	    & Normal old-correlator continuum mode options, or\\
@@ -2653,7 +2653,7 @@ device=/xs & Specify PGPLOT device \\
 mode=amp & Display amplitude \\
 stokes=xx & Select first linear polarisation, or\\
 stokes=yy & Select second linear polarisation\\
-line & Unset for all channels
+line & Unset for all channels\\
 \hline
 \end{tabular}
 \end{center}
@@ -5179,7 +5179,7 @@ ephemeris used for RA and DEC is not sufficiently accurate to point or
 phase track the telescope).
 
 Information on using the ATCA to observe a planet is available on-line at
-\htmladdnormallink{http://www.narrabri.atnf.csiro.au/observing/users_guide/html/new_atug_20.html#Scheduling-Strategy}.
+\htmladdnormallink{this link}{http://www.narrabri.atnf.csiro.au/observing/users_guide/html/new_atug_20.html\#Scheduling-Strategy}.
 
 \section{The Interpolation Process}\index{calibration, interpolation}
 You should now have a program source dataset containing the
