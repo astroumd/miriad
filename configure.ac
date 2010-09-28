@@ -4,6 +4,7 @@ AC_REVISION([$Revision$])
 
 AC_CONFIG_SRCDIR([src/subs/uvio.c])
 AC_CONFIG_MACRO_DIR([.])
+AC_CONFIG_AUX_DIR([.])
 AM_INIT_AUTOMAKE([-Wobsolete -Wgnu -Wunsupported -Wno-syntax -Wno-portability
                   foreign])
 
@@ -28,6 +29,7 @@ AC_CHECK_PROG(CC, cc, cc)
 AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_CPP
+AC_PROG_MKDIR_P dnl needed for cat/Makefile.am
 
 AC_HEADER_STDC
 AC_CHECK_FUNCS([strchr memcpy bcopy])
