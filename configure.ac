@@ -5,7 +5,7 @@ AC_REVISION([$Revision$])
 AC_CONFIG_SRCDIR([src/subs/uvio.c])
 AC_CONFIG_MACRO_DIR([.])
 AM_INIT_AUTOMAKE([-Wobsolete -Wgnu -Wunsupported -Wno-syntax -Wno-portability
-                  foreign silent-rules])
+                  foreign])
 
 dnl If using automake 1.9 / autoconf 2.59 (which is not uncommon),
 dnl 'docdir' isn't defined, and we need to define it ourselves.
