@@ -22,7 +22,7 @@ include $(top_srcdir)/mircommon.mak
 # minor corner case though.
 
 install-data-local:
-	test -z "$(catdir)" || $(MKDIR_P) "$(DESTDIR)$(catdir)"
+	test -z "$(catdir)" || $(mkinstalldirs) "$(DESTDIR)$(catdir)"
 	if test -d $(top_srcdir)/.git ; then \
 	  command="git archive --format=tar HEAD" ; \
 	else \
@@ -37,7 +37,7 @@ uninstall-local:
 	-rm -rf $(DESTDIR)$(catdir)
 
 dist-hook:
-	$(MKDIR_P) "$(distdir)"
+	$(mkinstalldirs) "$(distdir)"
 	if test -d $(top_srcdir)/.git ; then \
 	  command="git archive --format=tar HEAD" ; \
 	else \

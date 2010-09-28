@@ -29,7 +29,6 @@ AC_CHECK_PROG(CC, cc, cc)
 AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_CPP
-AC_PROG_MKDIR_P dnl needed for cat/Makefile.am
 
 AC_HEADER_STDC
 AC_CHECK_FUNCS([strchr memcpy bcopy])
