@@ -1,3 +1,10 @@
+## The wcslib source tree includes a "GNUmakefile", which would override
+## our Makefiles when using GNU make ... which we require. Automake
+## recurses into the PWD for some operations, so we need to specify
+## AM_MAKEFLAGS here the same way we do in the toplevel Makefile.am
+
+AM_MAKEFLAGS = -f Makefile
+
 lib_LTLIBRARIES = libmir_wcs.la libmir_pgsbox.la
 
 libmir_wcs_la_CFLAGS = -I$(srcdir)/C

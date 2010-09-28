@@ -508,6 +508,23 @@ fi
 dnl End copying.
 dnl We ignore #defines needed by wcsconfig_utils and wcsconfig_tests.
 AC_F77_WRAPPERS
+dnl Make sure that, since we're using the autotools-based build system,
+dnl the user can't accidentally invoke wcslib's builtin build system.
+dnl It'd be nice to override it completely, but I can't figure out a
+dnl way to do that completely reliably without modifying files kept
+dnl in CVS, which is a no-no.
+AC_CONFIG_COMMANDS([borrow/wcslib/makedefs],[
+  cat <<'EOF' >borrow/wcslib/makedefs
+# Due to technical tradeoffs that aren't really worth going into,
+# you cannot simply run "make" directly in the borrow/wcslib
+# directory when using the autoconf-based MIRIAD build system.
+# Simply run "make -f Makefile" instead (with whatever other
+# arguments you wish to provide). We apologize for the inconvenience
+# and weird behavior.
+include You_must_run_"make_-f_Makefile"_in_wcslib.
+include See_the_file_borrow/wcslib/makedefs_for_more_information.
+EOF
+])
 
 AC_CONFIG_HEADERS([config.h borrow/wcslib/wcsconfig.h borrow/wcslib/wcsconfig_f77.h])
 AC_CONFIG_FILES([

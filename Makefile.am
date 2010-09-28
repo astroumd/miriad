@@ -8,6 +8,13 @@ ACLOCAL_AMFLAGS = -I .
 
 include $(top_srcdir)/mircommon.mak
 
+## The wcslib source tree includes a "GNUmakefile", which would override
+## our Makefiles when using GNU make ... which we require. This flag
+## will tell make to use the right Makefile when recursing into the wcslib
+## directory.
+
+AM_MAKEFLAGS = -f Makefile
+
 ## Build tools first to get the doc program ASAP.
 
 SUBDIRS = \
