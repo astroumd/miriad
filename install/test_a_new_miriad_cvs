@@ -22,8 +22,8 @@
 #   11-jul-09    optionally grab a (local) file, optionally intel/gfortran
 #   10-jun-10    handle gif, add test for autobuild
 #    9-jul-10    add drpacs
+#   30-sep-10    fix forced fortran compiler selection for new-style
 #
-#  
 #----
 
 
@@ -86,6 +86,26 @@ if ($?MIR) then
   echo Cannot test if a MIR environment has been set 
   echo MIR=$MIR
   exit 1
+endif
+
+if ($gfortran) then
+   if ($?F77) then
+      echo Overriding $F77 for gfortran
+   endif
+   setenv F77 gfortran
+   setenv CC  gcc
+   setenv CXX g++
+else if ($intel) then
+   if ($?F77) then
+      echo Overriding $F77 for intel
+   endif
+   setenv F77 ifort
+   setenv CC  icc
+   setenv CXX icc
+endif
+
+if ($?F77) then
+   echo Note: using F77=$F77 for fortran compiler
 endif
 
 if ($reuse == 0) then
@@ -158,6 +178,7 @@ if ($auto) then
  if ($dist) then
     echo Creating $rootdir.tar.gz
     (cd ..; tar zcf  $rootdir.tar.gz  $rootdir)
+    exit 0
  endif
  ./configure --prefix=`pwd`/$build
  make
