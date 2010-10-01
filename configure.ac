@@ -1,11 +1,18 @@
-AC_PREREQ(2.59)
+dnl Autoconf 2.59 was required before, but Automake 1.11 requires
+dnl Autoconf 2.62 -- see discussion below.
+AC_PREREQ(2.62)
 AC_INIT([MIRIAD],[4.1.5],[miriad-dev-bugs@astro.berkeley.edu])
 AC_REVISION([$Revision$])
 
 AC_CONFIG_SRCDIR([src/subs/uvio.c])
 AC_CONFIG_MACRO_DIR([.])
 AC_CONFIG_AUX_DIR([.])
-AM_INIT_AUTOMAKE([-Wobsolete -Wgnu -Wunsupported -Wno-syntax -Wno-portability
+dnl FIXME! Require Automake 1.11 for now, since we currently need 
+dnl AM_DEFAULT_SOURCE_EXT to build all of the tasks. A lot
+dnl of people don't have Automake this recent. We need to settle
+dnl on a policy, but given the current Makefile.am code, 1.11 is
+dnl what's required.
+AM_INIT_AUTOMAKE([1.11 -Wobsolete -Wgnu -Wunsupported -Wno-syntax -Wno-portability
                   foreign])
 
 dnl If using automake 1.9 / autoconf 2.59 (which is not uncommon),
@@ -29,6 +36,7 @@ AC_CHECK_PROG(CC, cc, cc)
 AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_CPP
+AC_PROG_SED dnl $(SED) used in cat/Makefile.am
 
 AC_HEADER_STDC
 AC_CHECK_FUNCS([strchr memcpy bcopy])
