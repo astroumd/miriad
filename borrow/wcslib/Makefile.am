@@ -115,7 +115,7 @@ fortran_incs = \
  Fortran/wcs.inc \
  Fortran/wcsunits.inc
 
-mirrored_incs = $(dist_noinst_DATA:Fortran/%=%)
+mirrored_incs = $(fortran_incs:Fortran/%=%)
 
 dist_noinst_DATA += $(fortran_incs)
 
