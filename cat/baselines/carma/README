@@ -37,5 +37,10 @@ You can also obtain them directory as in this example:
 
 The index.html file should be:
    wget http://cedarflat.mmarray.org/observing/baseline/index.html
+
+Here's a summary of all configurations, including pictures with the
+array configurations and data summary's:
+
+http://cedarflat.mmarray.org/information/Antenna_Configuration_History.html
     
 
