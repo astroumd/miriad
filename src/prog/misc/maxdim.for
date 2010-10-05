@@ -5,6 +5,7 @@ c History:
 c
 c  pjt      2008  original version
 c  pjt     aug-2009   merged in the miralloc test code (still old style ptrdiff)
+c  pjt     oct-2010   display MIRBIN
 c
 c= maxdim - Report all known MAXDIM related parameters, and test memory usage
 c& pjt
@@ -39,7 +40,7 @@ c
       INTEGER nx,ny,nz,n,i
       CHARACTER type*10
 c
-      CHARACTER version*80, versan*80
+      CHARACTER version*80, versan*80, mirbin*128
       INTEGER membuf,size
 
       EXTERNAL membuf
@@ -61,6 +62,10 @@ c
 
       CALL output('$MIR/VERSION:')
       CALL system('cat $MIR/VERSION')
+
+      CALL mgetenv(mirbin,'MIRBIN')
+      WRITE(*,'(A,A)') 'MIRBIN: ',mirbin
+
 
       nx1 = nx
       ny1 = ny
