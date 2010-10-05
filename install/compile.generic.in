@@ -23,6 +23,12 @@ set mlsys = $mmir/bin/localsys
 # LDFLAGS=@LDFLAGS@
 # CPPFLAGS=@CPPFLAGS@
 
+set slib=@SLIB@
+set slib_flags=""
+
+if ($slib == linux) set slib_flags="-fPIC"
+
+
 ###         #define _LARGEFILE_SOURCE
 ###         #define _FILE_OFFSET_BITS=64
 set lfs="-D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -Wall"
@@ -32,15 +38,15 @@ else
   set wcslib=""
 endif
 setenv Fcompile  "@F77@"
-setenv Foptions  "-O"
-setenv FoptionsN ""
+setenv Foptions  "-O $slib_flags"
+setenv FoptionsN "$slib_flags"
 setenv Flinkdir  "-L`echo $mmir/lib/$mhost $MIRXLIB | sed 's/ / -L/g'`"
 setenv Flinklib  "$lfs -lmir -llinpack -lpgplot $wcslib -lX11 -lm"
 setenv Finclude  "-I`echo $mmir/src/inc $MIRXINC | sed 's/ / -I/g'`"
 # the gnu compiler actually adds -Dlinux, so we don't need it here
 setenv Ccompile  "@CC@"
-setenv Coptions  "-O $lfs"
-setenv CoptionsN "$lfs"
+setenv Coptions  "-O $lfs $slib_flags"
+setenv CoptionsN "$lfs $slib_flags"
 setenv Clinkdir  "-L`echo $mmir/lib/$mhost $MIRXLIB | sed 's/ / -L/g'`"
 setenv Clinklib  "-lmir -llinpack -lpgplot $wcslib -lX11 -lf2c -lm"
 setenv Cinclude  "-I`echo $mmir/src/inc $mmir/src/subs | sed 's/ / -I/g'`"
