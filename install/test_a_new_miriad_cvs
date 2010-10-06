@@ -23,12 +23,14 @@
 #   10-jun-10    handle gif, add test for autobuild
 #    9-jul-10    add drpacs
 #   30-sep-10    fix forced fortran compiler selection for new-style
+#    6-oct-10    optional autotools pre-install (tools=0 remains default)
 #
 #----
 
 
 #   new auto tools based? And if so, should a distribution tar ball be created?
 set auto=0
+set tools=0
 set dist=0
 set build=build
 
@@ -37,7 +39,7 @@ set build=build
 #   
 set rootdir=miriad
 
-#   use autoconf generated compile.generic file
+#   use autoconf generated compile.generic file (old style)
 set generic=1
 
 #   reuse the current rootdir directory, instead of removing it (0=cvs, 1=reuse the rootdir, 2=tar)
@@ -54,7 +56,9 @@ set intel=0
 set gif=1
 
 #   tar file to grab from ftp (rootdir)
+set ftpdir=ftp://ftp.astro.umd.edu/pub/carma
 set ftp=ftp://ftp.astro.umd.edu/progs/bima/miriad.tar.gz
+set autotools=(autoconf-2.68.tar.gz automake-1.11.1.tar.gz libtool-2.4.tar.gz)
 
 #   options directly passed to install.miriad
 set opts=()
@@ -172,6 +176,23 @@ if (-e  $rootdir/src/tools/ercmd.c) rm $rootdir/src/tools/ercmd.c
 
 if ($auto) then
  cd $rootdir
+ if ($tools) then
+   mkdir -p tmp
+   set adir=`pwd`/opt
+   set alog=`pwd`/tmp/autotools.$$.log
+   set path=($adir/bin $path) ; rehash
+   echo Installing autotools     >& $alog
+   foreach t ($autotools)
+     wget $ftpdir/tools/$t      >>& $alog
+     tar zxf $t
+     pushd $t:r:r
+     ./configure --prefix=$adir >>& $alog
+     make                       >>& $alog
+     make install               >>& $alog
+     popd
+     rehash
+   end
+ endif
  # on the mac....
  if (-e /Applications) setenv LIBTOOLIZE glibtoolize
  if (! -e configure) ./autogen.sh
