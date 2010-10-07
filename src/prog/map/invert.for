@@ -303,6 +303,7 @@ c    pjt   25apr03  verbose error when images too big
 c    rjs   03apr09  Change way of accessing scrio to help access larger files.
 c    pkgw  10apr09  Correctly echo to user nvis when it is >=10**8
 c    pjt    3feb10  fix maxrun to be related to maxchan to invert all channels (ATNF)
+c    pjt    7oct10  also changed maxrun=8*maxchan (or should it be 2 ??)
 c  Bugs:
 c
 c------------------------------------------------------------------------
@@ -311,7 +312,7 @@ c------------------------------------------------------------------------
 	include 'mem.h'
 c
 	character version*(*)
-	parameter(version='Invert: version 1.0 3-feb-10')
+	parameter(version='Invert: version 1.0 7-oct-10')
 	integer MAXPOL,MAXRUNS
 	parameter(MAXPOL=4,MAXRUNS=4*MAXDIM)
 c
@@ -1093,11 +1094,14 @@ c  Output:
 c    Rms2	An estimate of the rms noise in the output map.
 c    umax,vmax	Maximum u and v values.
 c------------------------------------------------------------------------
+	include 'maxdim.h'
 	integer InU,InV,InW,InPnt,InRms,InFreq,InWt,InData
 	parameter(InU=0,InV=1,InW=2,InPnt=3,InRms=4,InFreq=5,InWt=6,
      *		  InData=8)
 	integer maxrun
-	parameter(maxrun=8200)
+c  not clear yet what the best value is?
+c	parameter(Maxrun=8*MAXCHAN+20)
+	parameter(Maxrun=2*MAXCHAN+20)
 c
 	real Wts(maxrun/(InData+2)),Vis(maxrun),logFreq0,Wt,SumWt,t
 	integer i,j,k,l,size,step,n,u,v,offcorr,nbeam,ncorr,ipnt
