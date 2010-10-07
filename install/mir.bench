@@ -17,6 +17,8 @@ set cell=0.5
 set standalone=0
 set clean=0
 set fidelity=0
+set interval=0.01
+set uvcat=1
 
 foreach a ($*)
   set $a
@@ -32,7 +34,7 @@ if ($standalone) then
    setenv  LD_LIBRARY_PATH ..
 endif	
 
-echo "MIRBENCH: (2003-12-05) $tmp : nchan=$nchan mapsize=$mapsize"
+echo "MIRBENCH: (2010-10-07) $tmp : nchan=$nchan mapsize=$mapsize"
 echo hostname=`hostname` 
 echo benchdir=$tmp
 echo system=`uname -a`  
@@ -47,7 +49,7 @@ echo "1,0,0,0,0,0,0,0,0" > point.source
 #set corr=0,1,100.0,1000.0 
 set corr=$nchan,1,100.0,1000.0
 set spectra=1.0,100.0,0.1
-set harange=-6,6,0.01
+set harange=-6,6,$interval
 set gnoise=0.1
 set pnoise=10,0,0,0
 set systemp=75,290,0.15
@@ -63,16 +65,21 @@ time uvgen out=vis1 harange=$harange source=$MIRCAT/point.source \
  corr=$corr spectra=$spectra ant=$ant[1] minsize2=-1 \
  gnoise=$gnoise pnoise=$pnoise systemp=$systemp tpower=$tpower jyperk=$jyperk \
  > uvgen1.log
-time uvgen out=vis2 harange=$harange source=$MIRCAT/point.source \
- corr=$corr spectra=$spectra ant=$ant[2] \
- gnoise=$gnoise pnoise=$pnoise systemp=$systemp tpower=$tpower jyperk=$jyperk \
- > uvgen2.log
-time uvgen out=vis3 harange=$harange source=$MIRCAT/point.source \
- corr=$corr spectra=$spectra ant=$ant[3] \
- gnoise=$gnoise pnoise=$pnoise systemp=$systemp tpower=$tpower jyperk=$jyperk \
- > uvgen3.log
 
-time uvcat vis=vis1,vis2,vis3 out=vis > uvcat.log
+if ($uvcat) then
+ time uvgen out=vis2 harange=$harange source=$MIRCAT/point.source \
+  corr=$corr spectra=$spectra ant=$ant[2] \
+  gnoise=$gnoise pnoise=$pnoise systemp=$systemp tpower=$tpower jyperk=$jyperk \
+  > uvgen2.log
+ time uvgen out=vis3 harange=$harange source=$MIRCAT/point.source \
+  corr=$corr spectra=$spectra ant=$ant[3] \
+  gnoise=$gnoise pnoise=$pnoise systemp=$systemp tpower=$tpower jyperk=$jyperk \
+  > uvgen3.log
+ time uvcat vis=vis1,vis2,vis3 out=vis > uvcat.log
+else
+ mv vis1 vis
+endif
+
 # echo May need to add 'line=channel,$nchan' to invert for the old versions...
 time invert vis=vis map=map1 beam=beam1 imsize=$mapsize cell=$cell > invert.log
 time clean map=map1 beam=beam1 out=clean1 > clean.log
