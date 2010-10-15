@@ -66,6 +66,7 @@ c		  prevent tables getting corrupted. Add check for
 c		  apparently corrupt gain table.
 c    rjs  19sep04 Copy across sensitivity model.
 c    rjs  23jan07 Correct some logical errors and also copy "leakage2" table.
+c    pkgw 15oct10 Increase filename length buffers from 64 to 1024 bytes.
 c  Bugs:
 c    None?
 c------------------------------------------------------------------------
@@ -73,7 +74,7 @@ c------------------------------------------------------------------------
 	parameter(version='GpCopy: version 23-Jan-07')
 	logical dopol,docal,dopass,docopy
 	integer iostat,tIn,tOut
-	character vis*64,out*64,mode*8,line*64
+	character vis*1024,out*1024,mode*8,line*1024
 	double precision interval
 c
 c  Externals.
