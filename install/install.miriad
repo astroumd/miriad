@@ -1,6 +1,6 @@
 #! /bin/csh -f
 #
-set version=4-jul-2010
+set version=3-nov-2010
 #
 #  2-aug-99 Updated for Sebok's Mandrake setup
 #  1-aug-00 Updated to allow to build private PGPLOT version
@@ -125,6 +125,8 @@ else if ($hosttype == darwin) then
   else
     echo WARNING: no file Xcode=$Xcode 
   endif
+  echo Output from the sw_vers command:
+  sw_vers
   set mirxinc="/usr/X11R6/include/X11"
   set mirxlib="/usr/X11R6/lib"
 else
