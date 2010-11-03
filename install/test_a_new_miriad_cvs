@@ -201,6 +201,8 @@ if ($auto) then
     (cd ..; tar zcf  $rootdir.tar.gz  $rootdir)
     exit 0
  endif
+ # note configure thus assumes we're using $FC in the environment
+ # if you want to set another compiler 
  ./configure --prefix=`pwd`/$build
  make
  make install
