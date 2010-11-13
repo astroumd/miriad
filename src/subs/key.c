@@ -553,6 +553,20 @@ void keya_c(Const char *keyword, char *value, Const char *keydef)
     return;
 }
 
+void keya_len_c(Const char *keyword, char *value, size_t vlen, Const char *keydef)
+{
+    char *s;
+
+    s = getKeyValue(keyword, KEYFALSE);
+
+    if (strlen (s) >= vlen)
+	bugv_c ('f', "KeyA: value \"%s\" of keyword \"%s\" is doesn\'t fit in its "
+		"Fortran buffer, which is only %zd bytes.", s, keyword, vlen);
+
+    (void)strcpy(value, ((s == (char *)NULL) ? keydef : s));
+    return;
+}
+
 /***********************************************************************/
 void keyf_c(Const char *keyword, char *value, Const char *keydef)
 /** Keyf -- Retrieve a file name (with wildcards) from the command line. */

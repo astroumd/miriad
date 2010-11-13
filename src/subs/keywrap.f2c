@@ -89,8 +89,8 @@ fortran logical function keyprsnt(character key)
 /***********************************************************************/
 fortran subroutine keya(character key, character value, character defval)
 {
-  extern void keya_c ARGS((Const char *, char *, Const char *));
-  keya_c(key.zterm, value.addr, defval.zterm);
+  extern void keya_len_c ARGS((Const char *, char *, size_t, Const char *));
+  keya_len_c(key.zterm, value.addr, value.len, defval.zterm);
   value.pad;
 }
 /***********************************************************************/
