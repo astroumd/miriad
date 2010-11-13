@@ -132,3 +132,5 @@ all-local: $(mirrored_incs)
 
 clean-local:
 	-rm -f $(mirrored_incs) $(amhack_lexes)
+
+DISTCLEANFILES = makedefs
