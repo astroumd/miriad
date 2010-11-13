@@ -499,9 +499,32 @@ AC_CONFIG_SUBDIRS(borrow/pgplot)
 PGPLOT_LIB='$(top_builddir)/borrow/pgplot/libpgplot.la'
 AC_SUBST(PGPLOT_LIB)
 
-dnl Stuff needed by WCSLIB
-AC_DEFINE([WCSLIB_VERSION], [4.5.1], [The version of WCSLIB])
+dnl flex, needed by WCSLIB.
 AM_PROG_LEX
+
+AC_MSG_CHECKING([if $LEX is flex >= 2.5.9])
+lexversion=`$LEX --version`
+
+if echo "$lexversion" |$GREP "^flex " >/dev/null ; then
+   :
+else
+   AC_MSG_RESULT([not flex])
+   AC_MSG_ERROR([wcslib in MIRIAD requires flex to be installed])
+fi
+
+vcode=`echo "$lexversion" |sed -e "s/^flex //" |\
+	    $AWK -F. '{print $1*10000 + $2*100 + $3}'`
+
+if test $vcode -lt 20509 ; then
+   AC_MSG_RESULT([version $lexversion too old])
+   AC_MSG_ERROR([wcslib in MIRIAD requires flex of version at least 2.5.9])
+fi
+
+dnl LIBS="$LIBS $LEXLIB"
+AC_MSG_RESULT([yes])
+
+dnl Other stuff needed by WCSLIB
+AC_DEFINE([WCSLIB_VERSION], [4.5.1], [The version of WCSLIB])
 AC_CHECK_FUNCS([sincos])
 dnl Copied from wcslib configure.ac:
 AC_CHECK_SIZEOF([int])

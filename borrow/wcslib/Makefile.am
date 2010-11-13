@@ -61,6 +61,11 @@ libmir_wcs_la_SOURCES = \
 # makes it easy to change this?!?) so we have to hack the source
 # files to give it what it wants.
 #
+# Furthermore, the wcslib lex files redefine "exit", which can cause
+# compilation problems when this redefinition precedes the actual
+# prototype of exit. We fix this by splicing in an #include <stdlib.h>
+# into the header stanzas, which come before the redefinition.
+#
 # For whatever bizarro reason, it doesn't work to list source_lexes
 # explicitly and compute amhack_lexes from it; the opposite is fine.
 
@@ -74,7 +79,8 @@ amhack_lexes = \
 source_lexes = $(amhack_lexes:%-amhack.l=C/%.l)
 
 %-amhack.l: C/%.l
-	$(SED) -e 's/outfile=.*/outfile="lex.yy.c"/' <$< >$@
+	$(SED) -e 's/outfile=.*/outfile="lex.yy.c"/' \
+	       -e 's/#include <setjmp.h>/#include <setjmp.h>\n#include <stdlib.h>/' <$< >$@
 
 dist_noinst_DATA = $(source_lexes)
 
