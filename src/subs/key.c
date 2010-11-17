@@ -559,7 +559,7 @@ void keya_len_c(Const char *keyword, char *value, size_t vlen, Const char *keyde
 
     s = getKeyValue(keyword, KEYFALSE);
 
-    if (strlen (s) >= vlen)
+    if (s && strlen (s) >= vlen)
 	bugv_c ('f', "KeyA: value \"%s\" of keyword \"%s\" is doesn\'t fit in its "
 		"Fortran buffer, which is only %zd bytes.", s, keyword, vlen);
 
