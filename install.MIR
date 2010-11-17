@@ -1,4 +1,5 @@
 As of version 4.1.0 we will have two types of installation:
+As of version 4.2.0 we will require flex, needed by wcslib 
 
 1) What we now call "old-style" installation:
  
@@ -11,13 +12,15 @@ development, which will be based on the GNU 'autoconf' toolkit.
 This method will be deprecated some time in the future when it starts to
 conflict with the method below.
 
-2) The new style uses the GNU auto tools and libtool.
+2) The new style uses the GNU auto tools and libtool. Some reasonably modern
+   version of this is needed. You might otherwise need to locally install
+   m4, autoconf, automake and libtool (in that order) for a developer version.
 
 Quick summary. On the first compile:
 
-	setenv LIBTOOLIZE glibtoolize    (only on mac)
         ./autogen.sh
-	./configure --prefix=`pwd`/build  (prefix is just an example)
+	./configure --prefix=`pwd`/build  F77=gfortran 
+		 (prefix is just an example, and F77= can also be left off
 	make
 	make install
 
