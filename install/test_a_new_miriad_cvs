@@ -24,7 +24,7 @@
 #    9-jul-10    add drpacs
 #   30-sep-10    fix forced fortran compiler selection for new-style
 #    6-oct-10    optional autotools pre-install (tools=0 remains default)
-#
+#   19-nov-10    added m4 and flex to 'tools=1'
 #----
 
 
@@ -58,7 +58,7 @@ set gif=1
 #   tar file to grab from ftp (rootdir)
 set ftpdir=ftp://ftp.astro.umd.edu/pub/carma
 set ftp=ftp://ftp.astro.umd.edu/progs/bima/miriad.tar.gz
-set autotools=(autoconf-2.68.tar.gz automake-1.11.1.tar.gz libtool-2.4.tar.gz)
+set autotools=(m4-1.4.15.tar.gz autoconf-2.68.tar.gz automake-1.11.1.tar.gz libtool-2.4.tar.gz  flex-2.5.35.tar.gz )
 
 #   options directly passed to install.miriad
 set opts=()
@@ -201,8 +201,6 @@ if ($auto) then
     (cd ..; tar zcf  $rootdir.tar.gz  $rootdir)
     exit 0
  endif
- # note configure thus assumes we're using $FC in the environment
- # if you want to set another compiler 
  ./configure --prefix=`pwd`/$build
  make
  make install
