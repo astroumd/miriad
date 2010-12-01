@@ -8,25 +8,47 @@ echo This script give some examples of data reduction for ALMA data using MIRIAD
 # 18sep09  revised multichan.csh input parameters
 # 13jul10  revised mfs.csh input parameters
 
+
 goto 0
 
+goto start
 0:
 echo make single channel maps and beams for all 29 configurations for dec=-30
 set dec = -30
 #foreach i ( 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 )
-foreach i (1 3 5 7 9 11 13 15 17 19 21)
+foreach i (1 3 5 7 9 11 13 15 17 19)
   mfs.csh config$i $dec -.5,.5,.1 1 robust=.5 '-shadow(12)'
 end
 
 01:
 echo plot central beam patch for all 29 configurations for dec=-30
 set dec = -30
-foreach i (1 3 5 7 9 11 13 15 17 19 21)
+foreach i (1 3 5 7 9 11 13 15 17 19)
 #foreach i (1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 )
   set config = config$i
   set region = 'relpix,box(-20,-20,20,20)'
   implot in=$config.$dec.bm device=/xs units=s conflag=l conargs=1.4 region=$region
 end
+
+02:
+echo plot central beam patch for all 29 configurations for dec=-30
+set dec = -30
+foreach i (1 3 5 7 9 11 13 15 17 19)
+  set config = config$i
+  set region = 'arcsec,box(-10,-10,10,10)'
+  implot in=$config.$dec.cm device=/xs units=s conflag=l conargs=1.4 region=$region
+end
+
+
+start:
+
+03:
+echo "Show central hole"
+uvplt device=/xs vis=config1.-30.uv axis=uc,vc options=nobase,equal
+
+
+goto 5
+
 goto end
 
 
@@ -49,52 +71,12 @@ multichan.csh config29 -30 -1,1,.1 10 sup=0
 
 4:
 echo small mosaic with 3 different MEM deconvolutions 
-hex7.csh    config1 30 0.04
-default.csh config1 30 0.04
-joint.csh   config1 30 0.04
+hex7_demo.csh
 
 
 5:
 echo larger mosaic with 3 different MEM deconvolutions 
-hex19.csh   config1 0 0.05
-default.csh config1 0 0.05
-joint.csh   config1 0 0.05
+hex19_demo.csh
 
-
-6:
-echo MOSMEM FOR 5 CONFIGURATIONS >> casa.results
-oecho "   ---  TIMING   ---   "       >> casa.results
-echo START: `date` >> casa.results
-
-foreach i ( 1 2 3 4 5 )
-  foreach dec ( 30 0 -30 )
-    hex19.csh   config$i $dec 0.05
-    default.csh config$i $dec 0.05
-    joint.csh   config$i $dec 0.05
-  end
-end
-echo END: `date` >> casa.results
-
-
-7:
-
-# These scripts do not re-generate the uv-data, which was generated for #6 above.
-
-echo "ADD NOISE TO SINGLE DISH FOR MOSMEM IN 5 CONFIGURATIONS"  >> casa.results
-echo "   ---  TIMING   ---   "       >> casa.results
-echo START: `date` >> casa.results
-
-foreach rms ( 1 2 4 )
-  foreach i ( 1 2 3 4 5 )
-    foreach dec ( 30 0 -30 )
-      hex19_noise.csh   config$i $dec 0.05 $rms
-      default_noise.csh config$i $dec 0.05 $rms
-      joint_noise.csh   config$i $dec 0.05 $rms
-    end
-  end
-end
-echo END: `date` >> casa.results
-
-goto end
 
 end:

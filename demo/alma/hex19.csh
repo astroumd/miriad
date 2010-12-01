@@ -37,6 +37,14 @@ start:
     exit 1
   endif
 
+# Cas A model, casc.vla, pixel=0.4", Cas A is about 320" diameter; image size 1024 == 409.6"
+# scale model size. eg. cell=0.1 arcsec -> 80" diameter
+
+# Saturn model, sat1mm.modj2, pixel=0.1", Saturn's rings are ~ 50" diameter; imsize=603 == 60"
+
+set model   = sat1mm.modj2
+set model   = Halo3.mp
+set model   = casc.vla
 set config  = $1
 set dec     = $2
 set cell    = $3
@@ -51,7 +59,9 @@ set imsize  = 257
 set region  = 'arcsec,box(20,-20,-20,20)'
 set region = `calc "$cell*500" | awk '{printf("arcsec,box(%.2f,-%.2f,-%.2f,%.2f)",$1,$1,$1,$1)}'`
 
-echo "   ---  ALMA Mosaicing (Cas A model)   ---   " > timing
+echo "   ---  Mosaicing with ALMA  -  $0 model=$model,  `date`   " >> $0.$model.results
+echo "   ---  Mosaicing with ALMA  -  $0 model=$model,  `date`   " > timing
+echo " model   = $model"             >> timing
 echo " config  = $config"            >> timing
 echo " dec     = $dec"               >> timing
 echo " scale   = $cell"              >> timing
@@ -83,7 +93,7 @@ echo "Generate mosaic grid"
 #  lambda/2*antdiam (arcsec)
 calc "300/$freq/2/12e3*2e5"
 
-echo "Using hex19 mosaic with 12'' spacing" >> casa.results
+echo "Using hex19 mosaic with 12'' spacing" >> $0.$model.results
 
 
 echo "Generate uv-data. Tsys=40K, bandwidth=8 GHz " >> timing
@@ -145,21 +155,21 @@ goto mosmem
 
 joint:
 echo "Joint deconvolution of interferometer and single dish data" >> timing
-echo "Joint deconvolution of interferometer and single dish data ; niters=200 rmsfac=1,1" >> casa.results
+echo "Joint deconvolution of interferometer and single dish data ; niters=200 rmsfac=1,1" >> $0.$model.results
 rm -r $config.$dec.cas.$cell.mem $config.$dec.cas.$cell.cm
  mosmem  map=$config.$dec.cas.$cell.mp,single.$dec.cas.$cell.map beam=$config.$dec.cas.$cell.bm,single.$dec.cas.$cell.beam out=$config.$dec.cas.$cell.mem niters=200 region=$region rmsfac=1,1
 goto restor
  
 mosmem:
 echo " MOSMEM Interferometer only" >> timing
-echo " MOSMEM Interferometer only with niters=200 flux=732.063 rmsfac=1." >> casa.results
+echo " MOSMEM Interferometer only with niters=200 flux=732.063 rmsfac=1." >> $0.$model.results
 rm -r $config.$dec.cas.$cell.mem $config.$dec.cas.$cell.cm
 mosmem  map=$config.$dec.cas.$cell.mp beam=$config.$dec.cas.$cell.bm out=$config.$dec.cas.$cell.mem region=$region niters=200 flux=732.063 rmsfac=1
 goto restor
 
 default:
 echo "MOSMEM with default single dish image"  >> timing
-echo "MOSMEM with default single dish image; niters=200 rmsfac=1"  >> casa.results
+echo "MOSMEM with default single dish image; niters=200 rmsfac=1"  >> $0.$model.results
 rm -r $config.$dec.cas.$cell.mem $config.$dec.cas.$cell.cm
 mosmem map=$config.$dec.cas.$cell.mp default=single.$dec.cas.$cell.map beam=$config.$dec.cas.$cell.bm out=$config.$dec.cas.$cell.mem region=$region niters=200 rmsfac=1
 goto restor
@@ -237,10 +247,10 @@ set Fidelity = `calc $Peak/$SRMS | awk '{printf("%.0f", $1)}'`
 echo " Config  DEC  HA[hrs]    Beam[arcsec] scale Model_Flux,Peak  Image_Flux,Peak Residual:Rms,Max,Min[Jy] Fidelity" >> timing
 echo  "$config  $dec  $harange  $RMS   $b1 $b2    $cell  $Model_Flux $Model_Peak  $Flux $Peak   $SRMS  $SMAX  $SMIN  $Fidelity" >> timing
 echo  " "
-echo  "$config  $dec  $harange  $RMS   $b1 $b2    $cell  $Model_Flux $Model_Peak  $Flux $Peak   $SRMS  $SMAX  $SMIN  $Fidelity" >> casa.results
+echo  "$config  $dec  $harange  $RMS   $b1 $b2    $cell  $Model_Flux $Model_Peak  $Flux $Peak   $SRMS  $SMAX  $SMIN  $Fidelity" >> $0.$model.results
 mv timing hex19.$config.$dec.$harange.$nchan.$imsize
 cat $config.$dec.$harange.$nchan.$imsize
-cat casa.results
-#enscript -r casa.results
+cat $0.$model.results
+#enscript -r $0.$model.results
 
 end:
