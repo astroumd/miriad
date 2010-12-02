@@ -25,6 +25,9 @@
  *		   is given)
  *    pjt  13jul07 make unique messages in different pieces of code
  *    pjt  12jun10 added keyputc_c for ATNF compatibility
+ *   dm/pjt 2dec10 better protection for keyword values overrun
+ *                 keywrap.f2c is now calling keya_len_c() instead
+ *                 deprecate keya_c()
  ***********************************************************************
  */
 
@@ -548,6 +551,8 @@ void keya_c(Const char *keyword, char *value, Const char *keydef)
 {
     char *s;
 
+    bugv_c ('w', "KeyA: keyword \"%s\" length not checked", keyword);
+
     s = getKeyValue(keyword, KEYFALSE);
     (void)strcpy(value, ((s == (char *)NULL) ? keydef : s));
     return;
@@ -559,11 +564,14 @@ void keya_len_c(Const char *keyword, char *value, size_t vlen, Const char *keyde
 
     s = getKeyValue(keyword, KEYFALSE);
 
-    if (s && strlen (s) >= vlen)
+    if (s && strlen (s) > vlen)
 	bugv_c ('f', "KeyA: value \"%s\" of keyword \"%s\" is doesn\'t fit in its "
 		"Fortran buffer, which is only %zd bytes.", s, keyword, vlen);
+    if ((s==(char *)NULL) && strlen(keydef) > vlen)
+	bugv_c ('f', "KeyA: default value \"%s\" of keyword \"%s\" is would not fit in its "
+		"Fortran buffer, which is only %zd bytes.", keydef, keyword, vlen);
 
-    (void)strcpy(value, ((s == (char *)NULL) ? keydef : s));
+    (void)strncpy(value, ((s == (char *)NULL) ? keydef : s), vlen);
     return;
 }
 
