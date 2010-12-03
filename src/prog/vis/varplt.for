@@ -84,7 +84,7 @@ c------------------------------------------------------------------------
 	parameter(MAXPNTS=10000000)
 	parameter(version='VarPlt: version 1.1 1-aug-2010')
 	logical doplot,dolog,dotime,dounwrap
-	character vis*64,device*64,logfile*64,xaxis*16,yaxis*16
+	character vis*128,device*128,logfile*128,xaxis*16,yaxis*16
 	character xtype*1,ytype*1,xunit*16,yunit*16,calday*24
 	real xrange(2),yrange(2),xvals(MAXPNTS),yvals(MAXPNTS)
 	double precision xscale,xoff,yscale,yoff
