@@ -10,7 +10,7 @@ echo "Performance tests for ALMA imaging"
 # 18oct09 version with imsize=0 and shadow=12m for ALMA 
 # 27oct09 clean up doc.
 # 15apr10 select on parameter line allows  uvdata selection.
-
+# 02dec10 fix some formats.
 
 # Nyquist sample time = 12 x 3600 s x (dish_diam/2)/(pi*baseline)
 # calc '12*3600*6/(pi*4000)' = 20s = 5.73E-3 hours for 4 km config
@@ -29,7 +29,7 @@ goto start
 start:
 
 # check inputs
-  if($#argv<5) then
+  if($#argv<6) then
     echo " Usage:   $0   config   declination  harange  nchan  weighting" 
     echo " e.g:     mfs.csh   config1     -30       0,.1,.1    1       sup=0"
     echo "   config"
@@ -65,22 +65,22 @@ set systemp   = 40
 set jyperk    = 40
 set bandwidth = 8000
 
-
 # echo "   ---  ALMA Single Field Multichannel Imaging    ---   " > timing
 echo "   ---  ALMA Single Field MFS Imaging    ---   " > timing
-echo " config  = $config"             >> timing
-echo " dec     =  $dec"               >> timing
-echo " harange =  $harange  hours"    >> timing
-echo " select  =  $select"            >> timing
-echo " freq    =  $freq"              >> timing
-echo " nchan   = $nchan"              >> timing
-echo " imsize  = $imsize"             >> timing
-echo " systemp    = $systemp "        >> timing
-echo " jyperk     = $jyperk "         >> timing
-echo " bandwidth  = $bandwidth "      >> timing
-echo " weighting =  $weighting"       >> timing
-echo " "                              >> timing
-echo "   ---  TIMING   ---   "        >> timing
+echo " config    =  $config"            >> timing
+echo " dec       =  $dec"               >> timing
+echo " harange   =  $harange  hours"    >> timing
+echo " select    =  $select"            >> timing
+echo " nchan     =  $nchan"             >> timing
+echo " weighting =  $weighting"         >> timing
+echo " freq      =  $freq"              >> timing
+echo " imsize    =  $imsize"            >> timing
+echo " systemp   =  $systemp "          >> timing
+echo " jyperk    =  $jyperk "           >> timing
+echo " bandwidth =  $bandwidth "        >> timing
+echo " weighting =  $weighting"         >> timing
+echo " "                                >> timing
+echo "   ---  TIMING   ---   "          >> timing
 echo START: `date` >> timing
 
 goto continue
