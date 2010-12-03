@@ -17,7 +17,7 @@ echo "Make single field images and plot beams "
 foreach WEIGHT (sup=0 robust=0.5 uniform )
   foreach CONFIG (1 2 3 )
     foreach DEC ( 30 0 -30 )
-     ./mfs.csh ALMA16_config$CONFIG $DEC -4,4,.1 1 $WEIGHT
+     ./mfs.csh ALMA16_config$CONFIG $DEC -4,4,.1 1 $WEIGHT '-shadow(12)'
     end
   end
 end
