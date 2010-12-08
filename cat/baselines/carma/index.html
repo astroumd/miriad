@@ -1,10 +1,8 @@
-
-
-	<html>
+<html>
 <head>
 <title>CARMA baseline solutions</title>
 <!-- Changed by: T Pillai, 03-Mar-2010 -->
-<!-- Changed by: Carma Observer, 03-Aug-2010 -->
+<!-- Changed by: Carma Observer, 15-Nov-2010 -->
 </head>
 
 <center>
@@ -59,55 +57,142 @@ $MIRCAT/baselines/carma/antpos.YYMMDD file.
     <th>Notes</th>
   </tr>
 
-<tr>                                                                                                                                                     
-    <td>D</td>                                                                                                                                      
-    <td><a href="./antpos/antpos.100803">antpos.100803</a></td>                                                                                          
-    <td>Aug 3, 2010</td>                                                                                                                                
-    <td> Second baseline track                                                                                                                           
+<tr>
+    <td>A</td>
+    <td><a href="./antpos/antpos.sza.101124">antpos.sza.101124</a></td> 
+    <td>Nov 24, 2010</td>
+    <td> First PACS track in A array
+    <td> C16 used as reference antenna (tried using C20, but failed to give good solutions), C17 out of the array. The changes to the initial solution are in the range 0.4 -- 3.0 cms (as reported by uvedit in miriad). The new solutions have significantly improved the data (see <a href="./plots/before_sza.101124.png"> before </a> and <a href="./plots/after_sza.101124.png"> after </a> plots).  </td>
+</tr> 
+
+<tr>
+    <td>A</td>
+    <td><a href="./antpos/antpos.101124">antpos.101124</a></td> 
+    <td>Nov 24, 2010</td>
+    <td> First A track 
+    <td> C8 reference antenna; The new solutions have significantly improved the data (see <a href="./plots/before_carma.101124.png"> before </a> and <a href="./plots/after_carma.101124.png"> after </a> plots), but are still preliminary for few antennas (C7 for e.g.) and needs to be refined with a new track. An xy only fit for a single target (wierdly) failed, and these solutions were based on iterations of phase slope and phase difference between LSB and USB on all sources. </td>
+</tr> 
+
+<tr>
+    <td>C</td>
+    <td><a href="./antpos/antpos.sza.101112">antpos.sza.101112</a></td> 
+    <td>Nov 12, 2010</td>
+    <td> Final track
+    <td> C20 used as reference antenna, C17 out of the array. No significant changes from previous solutions as seen <a href="./plots/compare_101009_101112_sci2.pdf">  here. </td>
+</tr> 
+
+<tr>
+    <td>C</td>
+    <td><a href="./antpos/antpos.101112">antpos.101112</a></td> 
+    <td>Nov 12, 2010</td>
+    <td> Final track 
+    <td> C8 reference antenna; C9 and C11 changed by ~+0.4mm in "x" offsets relative to Oct 09 solutions as seen <a href="./plots/compare_101009_101112.pdf"> here. </td>
+</tr> 
+
+<tr>
+    <td>C</td>
+    <td><a href="./antpos/antpos.sza.101009">antpos.sza.101009</a></td> 
+    <td>Oct 09, 2010</td>
+    <td> second track? 
+    <td> C20 used as reference antenna, improved solutions for all. </td>
+</tr> 
+
+<tr>                                        
+<td>C</td>
+   <td><a href="./antpos/antpos.101009">antpos.101009</a></td> 
+    <td>Oct 09, 2010</td>
+    <td> Second track    
+    <td> C8 used as reference antenna; ~ 5 hours of good weather data;
+    improved the initial solutions with only C5 showing >0.6 mm
+    offsets from previous position. </td>
+</tr>  
+
+<tr>
+   <td>C</td>
+   <td><a href="./antpos/antpos.100922">antpos.100922</a></td> 
+    <td>Sep 22, 2010</td>
+    <td> First C track    
+    <td> C8 used as reference antenna; satisfactory initial solutions for all antennas based on phase difference followed by 4-parameter fit method; solutions can be improved later on based on a better weather track. </td>
+</tr>    
+
+<tr>
+    <td>D</td>                                                                                                        
+    <td><a href="./antpos/antpos.100919">antpos.100919</a></td>                                                       
+    <td>Sep 19, 2010</td>                                                                                             
+    <td> Final baseline track                                                                                         
+    <td> C8 used as reference antenna. The previous solutions were not updated into the system. Changes from Aug 1 solutions however are < 0.4mm.</td>                                              
+  </tr>    
+<tr>                                                                                                                  
+    <td>D</td>                                                                                                        
+    <td><a href="./antpos/antpos.100906">antpos.100906</a></td>                                                       
+    <td>Sep 6, 2010</td>                                                                                              
+    <td> Third baseline track                                                                                         
+    <td> C8 used as reference antenna. C10 data is noisy. Changes to antenna positions is < 0.4mm as seen <a href="./plots/compare_100906_100803.pdf"> here. </a> </td>
+  </tr>    
+<tr>                                                                                                                  
+
+    <td>D</td>                                                                                                        
+    <td><a href="./antpos/antpos.100803">antpos.100803</a></td>                                                       
+    <td>Aug 3, 2010</td>                                                                                              
+    <td> Second baseline track                                                                                       
     <td> C8 used as reference antenna. Track taken after setting the (large) delay offsets. Baseline solutions have been significantly improved. </td>                                                                                  
   </tr> 
 
-<tr>                                                                                                                                                       \
-                                                                                                                                                            
-    <td>D</td>                                                                                                                                             \
-                                                                                                                                                            
-    <td><a href="./antpos/antpos.100801">antpos.100801</a></td>                                                                                                                                                            
-    <td>Aug 1, 2010</td>                                                                                                                                                            
-    <td> First track (for which solutions have been derived)                                                                                                                                                                   <td> C8 used as reference antenna. Initial solutions for all antennas. Solutions for C3, C5 and C10 are significantly off (> 7 cms) from the initial offsets. </td>                                                           </tr>   
+<tr>                                                                                                                
+    <td>D</td>                                                                                                        
+    <td><a href="./antpos/antpos.100801">antpos.100801</a></td>                                                     
+    <td>Aug 1, 2010</td>                                                                                             
+    <td> First track (for which solutions have been derived)                                           
+    <td> C8 used as reference antenna. Initial solutions for all
+    antennas. Solutions for C3, C5 and C10 are significantly off (> 7
+    cms) from the initial offsets. </td>                                                           
+    </tr>   
 
-<tr>                                                                                                                                                                                                                                                       
-    <td>E</td>                                                                                                                                                                                                                                             
-    <td><a href="./antpos/antpos.100727">antpos.100727</a></td>                                                                                                                                                                                            
-    <td>July 27, 2010</td>                                                                                                                                                                                                                                  
-    <td> Final track                                                                                                                                                                                                                                      
-    <td> C9 used as reference antenna. No significant changes from the previous solution. </td>                                          
+<tr>                                                                                                                
+    <td>SH</td>                                                                                                      
+    <td><a href="./antpos/antpos.Sci2.100728~">antpos.Sci2.100728</a></td>                                          
+    <td>July 28, 2010</td>                                                                                           
+    <td> Final SH-config 
+    <td> Best(?) baseline solution after switch to DSS.</td>
 </tr>   
-<tr>                                                                                                                                                                                           
-    <td>E</td>                                                                                                                                                                            
-    <td><a href="./antpos/antpos.100708">antpos.100708</a></td>                                                                                                                                
-    <td>July 8, 2010</td>                                                                                                                                                                      
-    <td> Second track                                                                                                                                                                  
-    <td> C9 used as reference antenna. These are the first solutions for C6 (and moved by ~ 2.3 cms). The solutions have been improved for all other antennas, particularly those that were significantly off from the initial pad offsets. </td>                                                                                                                                                                               
+<tr>                                                                                                                 
+    <td>E</td>                                                                                                        
+    <td><a href="./antpos/antpos.100727">antpos.100727</a></td>                                                      
+    <td>July 27, 2010</td>                                                                                            
+    <td> Final track                                                                                                  
+    <td> C9 used as reference antenna. No significant changes from the previous solution. </td>                      
+</tr>   
+<tr>                                                                                                                  
+    <td>E</td>                                                                                                        
+    <td><a href="./antpos/antpos.100708">antpos.100708</a></td>                                                  
+    <td>July 8, 2010</td>                                                                                           
+    <td> Second track                                                                                                 
+    <td> C9 used as reference antenna. These are the first solutions for C6 (and moved by ~ 2.3 cms). The solutions have been improved for all other antennas, particularly those that were significantly off from the initial pad offsets. </td>                                                                                                                   
   </tr>           
-<tr>                                                                                                                                  \
-    <td>E</td>                                                                                                                   \
-    <td><a href="./antpos/antpos.100702">antpos.100702</a></td>                                                                       \
-    <td>July 2, 2010</td>                                                                                                             \
-    <td> First E-array baseline track                                                                                                                         <td> C9 used as reference antenna. No data for C6. Solutions for C1 and C5 have been derived from an earlier very short baseline track and needs improvement. Good solutions for the rest of the array. The initial pad offsets off by ~ 4--6 cms for three antennas.  </td>                                                              \
-                                                                                                                                       </tr>      
-<tr>                                                                                                                                                     
-    <td>hybrid</td>                                                                                                                                      
-    <td><a href="./antpos/antpos.100609">antpos.100609</a></td>                                                                                          
-    <td>June 9, 2010</td>                                                                                                                                
-    <td> Third baseline track                                                                                                                           
-    <td> C1 used as reference antenna. C10 baseline problem has been tracked down to a pointing issue. These are the first good solutions for C10. The initial pad offsets for C10 were off by ~ 7 cms!! </td>                                                                                  
+<tr>                                                                                                                 
+    <td>E</td>                                                                                                        
+    <td><a href="./antpos/antpos.100702">antpos.100702</a></td>                                                       
+    <td>July 2, 2010</td>                                                                                             
+    <td> First E-array baseline
+    track                                                                                                                         <td>
+    C9 used as reference antenna. No data for C6. Solutions for C1 and
+    C5 have been derived from an earlier very short baseline track and
+    needs improvement. Good solutions for the rest of the array. The
+    initial pad offsets off by ~ 4--6 cms for three antennas.  
+</td>                                                                                                                              </tr>      
+<tr>                                                                                                                  
+    <td>hybrid</td>                                                                                                   
+    <td><a href="./antpos/antpos.100609">antpos.100609</a></td>                                                      
+    <td>June 9, 2010</td>                                                                                           
+    <td> Third baseline track                                                                                       
+    <td> C1 used as reference antenna. C10 baseline problem has been tracked down to a pointing issue. These are the first good solutions for C10. The initial pad offsets for C10 were off by ~ 7 cms!! </td>                              
   </tr> 
 <tr>                                                                                                    
     <td>hybrid</td>                                                                                       
     <td><a href="./antpos/antpos.100606">antpos.100606</a></td>                                           
     <td>June 6, 2010</td>                                                                                 
     <td> Second baseline track                                                                              
-    <td> C1 used as reference antenna. Flagged out some bad C17 & C22 data (issues with tertiary). These are the first solutions for C7. Refined solutions for all others except C10, which still has significant errors. </td>                                        
+    <td> C1 used as reference antenna. Flagged out some bad C17 & C22 data (issues with tertiary). These are the first solutions for C7. Refined solutions for all others except C10, which still has significant errors. </td>          
   </tr>  
   <tr>
     <td>hybrid</td>
@@ -118,24 +203,25 @@ $MIRCAT/baselines/carma/antpos.YYMMDD file.
     C7 not locked; C10 highly questionable; phase jump on C18</td>
   </tr>
 
-<tr>                                                                                                                                                                                                                           
-    <td> D</td>                                                                                                                                                                                                                
-    <td><a href="./tpillai/antpos.100530">antpos.100530</a></td>                                                                                                                                                               
-    <td> May 30, 2010; Final D-array track. </td>                                                                                                                                                                   
-    <td> D-config </td>                                                                                                                                                                                                        
+<tr>                                                                                                               
+    <td> D</td>                                                                                                      
+    <td><a href="./antpos/antpos.100530">antpos.100530</a></td>                                                     
+    <td> May 30, 2010; Final D-array track. </td>                                                                 
+    <td> D-config </td>                                                                                      
     <td> C8 used as reference antenna. No significant changes from previous solution (< 0.4mm).      
- </td>                                                                                                                                                                                                                         
+ </td>                                                                                                         
 </tr>      
-<tr>                                                                                                                                                                            
-    <td> D</td>                                                                                                                                                                 
-    <td><a href="./tpillai/antpos.100501">antpos.100501</a></td>                                                                                                                
-    <td> May 1, 2010; Second D-array baseline track. </td>                                                                                                                      
-    <td> D-config </td>                                                                                                                                                         
-    <td> C8 used as reference antenna. Users with 2010 D-array data starting from 1 May until the next baseline update SHOULD use this solution.                                                                                               
- </td>                                                                                                                                                                          </tr>    
+<tr>                                                                                                                
+    <td> D</td>                                                                                                      
+    <td><a href="./antpos/antpos.100501">antpos.100501</a></td>                                                    
+    <td> May 1, 2010; Second D-array baseline track. </td>                                                           
+    <td> D-config </td>                                                                                             
+    <td> C8 used as reference antenna. Users with 2010 D-array data starting from 1 May until the next baseline update SHOULD use this solution.                                                                                            
+ </td>                                                                                                               
+ </tr>    
 <tr>
     <td> D</td>
-    <td><a href="./tpillai/antpos.100413">antpos.100413</a></td>
+    <td><a href="./antpos/antpos.100413">antpos.100413</a></td>
     <td> April 13, 2010; First D-array baseline track. </td>
     <td> D-config </td>
     <td> C8 used as reference antenna. After flagging the first half of the track with noisy data, the initial solutions were derived using phase-slope method and the 4-parameter fit in bee. Please note that the initial solutions were in error by ~ lambdas!!!  Therefore, it is important that PIs who have data taken in D-array before 01 May 2010 use this solution.
@@ -144,49 +230,49 @@ $MIRCAT/baselines/carma/antpos.YYMMDD file.
 <tr>
 <tr>
     <td> C</td>
-    <td><a href="./tpillai/antpos.100402">antpos.100402</a></td>
+    <td><a href="./antpos/antpos.100402">antpos.100402</a></td>
     <td> April 02, 2010; Final C-array track. </td>
     <td> C-config </td>
-    <td> C11 used as reference antenna. The corrections to  all antenna positions except C4 and C6 are small as shown  <a href="./tpillai/compare_14mar_02apr.pdf"> here </a> . C4 and C6 solutions have improved the data. </td>
+    <td> C11 used as reference antenna. The corrections to  all antenna positions except C4 and C6 are small as shown  <a href="./plots/compare_14mar_02apr.pdf"> here </a> . C4 and C6 solutions have improved the data. </td>
 </tr>
 <tr>
     <td> C</td>
-    <td><a href="./tpillai/antpos.100314">antpos.100314</a></td>
+    <td><a href="./antpos/antpos.100314">antpos.100314</a></td>
     <td> Mar 14, 2010; Second C-array track. </td>
     <td> C-config </td>
-    <td> C11 used as reference antenna. The first half of the data was taken under 200 -350 mu rms and the phase scatter is > 0.5 radian. The corrections to  all antenna positions are small as shown  <a href="./tpillai/compare_01mar_14mar.pdf"> here </a> . </td>
+    <td> C11 used as reference antenna. The first half of the data was taken under 200 -350 mu rms and the phase scatter is > 0.5 radian. The corrections to  all antenna positions are small as shown  <a href="./plots/compare_01mar_14mar.pdf"> here </a> . </td>
 </tr>
 <tr>
     <td> C</td>
-    <td><a href="./tpillai/antpos.100301">antpos.100301</a></td>
+    <td><a href="./antpos/antpos.100301">antpos.100301</a></td>
     <td> Mar 01, 2010; First C-array track. </td>
     <td> C-config </td>
-    <td> C11 used as reference antenna. I used the slope method to get initial baseline solutions, which was then refined by applying to the raw data and re-deriving baseline solutions in bee (see <a href="./tpillai/01mar_track1_before.png"> before </a> and <a href="./tpillai/01mar_track1_after.png"> after </a> plots). The corrections to  all antenna positions are significant (few cms!) as shown <a href="./tpillai/compare_before_after_mar01.ps"> here </a> . </td>
+    <td> C11 used as reference antenna. I used the slope method to get initial baseline solutions, which was then refined by applying to the raw data and re-deriving baseline solutions in bee (see <a href="./plots/01mar_track1_before.png"> before </a> and <a href="./plots/01mar_track1_after.png"> after </a> plots). The corrections to  all antenna positions are significant (few cms!) as shown <a href="./plots/compare_before_after_mar01.ps"> here </a> . </td>
 <!--Offsets of few cms is very unusual after an array change (at most a cm), and is because only C8 was put back in the same pad as for the last C array. --!>
 </tr>
 
 <tr>
     <td> A</td>
-    <td><a href="./tpillai/antpos.100214">antpos.100214</a></td>
+    <td><a href="./antpos/antpos.100214">antpos.100214</a></td>
     <td> Feb 14, 2010;  Third (and probably final) A-array track. </td>
     <td> A-config </td>
-    <td> C13 used as refant. Given that C4 was not in the array for the last baseline track, these are the first solutions for C4 (see <a href="./tpillai/14Feb_before.png"> before </a> and <a href="./tpillai/14Feb_after.png"> after </a> plots). </td>
+    <td> C13 used as refant. Given that C4 was not in the array for the last baseline track, these are the first solutions for C4 (see <a href="./plots/14Feb_before.png"> before </a> and <a href="./plots/14Feb_after.png"> after </a> plots). </td>
 </tr>
 
 <tr>
     <td> A</td>
-    <td><a href="./tpillai/antpos.100115">antpos.10015</a></td>
+    <td><a href="./antpos/antpos.100115">antpos.10015</a></td>
     <td> Jan 15, 2010;  Second A-array track on the same night. </td>
     <td> A-config </td>
-    <td> Very good weather conditions through out the track. C13 used as refant. C4 not in the array (see <a href="./tpillai/15Jan_track2_before.png"> before </a> and <a href="./tpillai/15Jan_track2_after.png"> after </a> plots). As shown in the plots, these baseline solutions have significantly improved the data. </td>
+    <td> Very good weather conditions through out the track. C13 used as refant. C4 not in the array (see <a href="./plots/15Jan_track2_before.png"> before </a> and <a href="./plots/15Jan_track2_after.png"> after </a> plots). As shown in the plots, these baseline solutions have significantly improved the data. </td>
 </tr>
 
 <tr>
     <td> A</td>
-    <td><a href="./tpillai/antpos.100114">antpos.100114</a></td>
+    <td><a href="./antpos/antpos.100114">antpos.100114</a></td>
     <td> Jan 14, 2010;  First A-array track </td>
     <td> A-config </td>
-    <td> Good weather conditions during the track. C13 used as refant. C4 not in the array (see <a href="./tpillai/15Jan_track1_before.png"> before </a> and <a href="./tpillai/15Jan_track1_after.png"> after </a> plots) </td>
+    <td> Good weather conditions during the track. C13 used as refant. C4 not in the array (see <a href="./plots/15Jan_track1_before.png"> before </a> and <a href="./plots/15Jan_track1_after.png"> after </a> plots) </td>
 </tr>
 
 <tr>
@@ -215,7 +301,7 @@ $MIRCAT/baselines/carma/antpos.YYMMDD file.
   </tr>
 <tr>
     <td> B</td>
-    <td><a href="./tpillai/antpos.091204">antpos.091204</a></td>
+    <td><a href="./antpos/antpos.091204">antpos.091204</a></td>
     <td> Dec 4, 2009 -- Jan 5, 2010 </td>
     <td> second B-config solution w/ all antennas </td>
     <td> Obtained good solutions for all antennas. Baseline solutions for Dec03 vs Dec04 is shown <a href="./plots/compare03_04dec_B.pdf">here</a>.  Phase vs time plots <a href="./plots/PhaseTime.noBS.091204.pdf">before</a> and <a href="./plots/PhaseTime.BS.091204.pdf">after</a> the solutions have been applied. </td>
