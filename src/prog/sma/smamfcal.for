@@ -216,7 +216,8 @@ c
 c  Get inputs and check them.
 c
         version = versan('smamfcal',
-     * '$Id$')
+     * '$Revision$',
+     * '$Date$')
         call keyini
         call getopt(dodelay,dopass,interp,oldflux,
      *              dosmooth,donply,dowrap,doaverrll)
