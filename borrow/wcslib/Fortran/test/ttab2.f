@@ -1,6 +1,6 @@
 *=======================================================================
 *
-* WCSLIB 4.5 - an implementation of the FITS WCS standard.
+* WCSLIB 4.6 - an implementation of the FITS WCS standard.
 * Copyright (C) 1995-2010, Mark Calabretta
 *
 * This file is part of WCSLIB.
@@ -57,7 +57,7 @@
       PARAMETER (NP = 128)
       PARAMETER (SCL = 2.0/(NP-1))
 
-      INTEGER   I, IM, IK, J, L, L1, L2, L3, STAT(NP*NP), STATUS
+      INTEGER   I, IM, IK, J, L, L1, L2, L3, LSTEP, STAT(NP*NP), STATUS
       REAL      ARRAY(NP,NP), CLEV(-10:20), LTM(6), V0, V1, W
       DOUBLE PRECISION X(M,NP,NP), WORLD(M,NP,NP)
       CHARACTER TEXT*80

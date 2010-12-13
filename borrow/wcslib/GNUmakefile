@@ -1,5 +1,5 @@
 #-----------------------------------------------------------------------------
-# GNU makefile for building WCSLIB 4.5.
+# GNU makefile for building WCSLIB 4.6
 #
 # Summary of the main targets
 # ---------------------------
@@ -20,7 +20,7 @@
 #   cleanest:  Like distclean, but deletes everything that can be regenerated
 #              from the source files, including the programmers' manual, but
 #              excluding 'configure'.
-#   show_all:  Print the values of important variables used in this and the
+#   show:      Print the values of important variables used in this and the
 #              other makefiles.
 #   writable:  Run chmod recursively to make all sources writable.
 #
@@ -38,7 +38,7 @@
 include makedefs
 
 .PHONY : build check chmod clean cleaner cleanest distclean install \
-         realclean show_all tests writable
+         realclean show tests writable
 
 build :
 	-@ for DIR in $(SUBDIRS) ; do \
@@ -47,7 +47,7 @@ build :
 	     $(MAKE) -k -C $$DIR build ; \
 	   done
 
-check tests : show_all
+check tests : show
 	-@ echo ''
 	-@ $(TIMER)
 	 @ for DIR in $(SUBDIRS) ; do \
@@ -75,22 +75,23 @@ install :
 	   $(INSTALL) -m 444 wcslib.pc $(LIBDIR)/pkgconfig/wcslib.pc
 
 clean cleaner :
-	for DIR in $(SUBDIRS) doxygen ; do \
-	   $(MAKE) -C $$DIR $@ ; \
-	done
+	   for DIR in $(SUBDIRS) doxygen ; do \
+	     $(MAKE) -C $$DIR $@ ; \
+	   done
 
 cleanest distclean realclean :
-	for DIR in $(SUBDIRS) doxygen ; do \
-	   $(MAKE) -C $$DIR $@ ; \
-	done
-	$(RM) -r autom4te.cache autoscan.log
-	$(RM) confdefs.h conftest.*
-	$(RM) config.log config.status configure.lineno
-	$(RM) makedefs wcslib.pc
-	$(RM) wcsconfig.h wcsconfig_*.h
-	$(RM) wcslib-*.tar.gz
+	   for DIR in $(SUBDIRS) doxygen ; do \
+	     $(MAKE) -C $$DIR $@ ; \
+	   done
+	-  $(RM) *.log
+	-  $(RM) -r autom4te.cache autoscan.log
+	-  $(RM) confdefs.h conftest.*
+	-  $(RM) config.log config.status configure.lineno
+	-  $(RM) makedefs wcslib.pc
+	-  $(RM) wcsconfig.h wcsconfig_*.h
+	-  $(RM) wcslib-*.tar.gz
 
-show_all ::
+show ::
 	-@ echo 'Subdirectories to be built...'
 	-@ echo '  SUBDIRS     := $(SUBDIRS)'
 	-@ echo '  TSTDIRS     := $(TSTDIRS)'

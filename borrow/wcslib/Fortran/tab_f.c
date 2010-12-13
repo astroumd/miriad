@@ -1,6 +1,6 @@
 /*============================================================================
 
-  WCSLIB 4.5 - an implementation of the FITS WCS standard.
+  WCSLIB 4.6 - an implementation of the FITS WCS standard.
   Copyright (C) 1995-2010, Mark Calabretta
 
   This file is part of WCSLIB.
@@ -45,6 +45,11 @@
 #define tabset_  F77_FUNC(tabset,  TABSET)
 #define tabx2s_  F77_FUNC(tabx2s,  TABX2S)
 #define tabs2x_  F77_FUNC(tabs2x,  TABS2X)
+
+#define tabptd_ F77_FUNC(tabptd, TABPTD)
+#define tabpti_ F77_FUNC(tabpti, TABPTI)
+#define tabgtd_ F77_FUNC(tabgtd, TABGTD)
+#define tabgti_ F77_FUNC(tabgti, TABGTI)
 
 #define TAB_FLAG     100
 #define TAB_M        101
@@ -139,6 +144,18 @@ int tabput_(
   return 0;
 }
 
+int tabptd_(int *tab, const int *what, const double *value, const int *m,
+  const int *k)
+{
+  return tabput_(tab, what, value, m, k);
+}
+
+int tabpti_(int *tab, const int *what, const int *value, const int *m,
+  const int *k)
+{
+  return tabput_(tab, what, value, m, k);
+}
+
 /*--------------------------------------------------------------------------*/
 
 int tabget_(const int *tab, const int *what, void *value)
@@ -227,6 +244,16 @@ int tabget_(const int *tab, const int *what, void *value)
   }
 
   return 0;
+}
+
+int tabgtd_(const int *tab, const int *what, double *value)
+{
+  return tabget_(tab, what, value);
+}
+
+int tabgti_(const int *tab, const int *what, int *value)
+{
+  return tabget_(tab, what, value);
 }
 
 /*--------------------------------------------------------------------------*/

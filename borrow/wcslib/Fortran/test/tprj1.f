@@ -1,6 +1,6 @@
 *=======================================================================
 *
-* WCSLIB 4.5 - an implementation of the FITS WCS standard.
+* WCSLIB 4.6 - an implementation of the FITS WCS standard.
 * Copyright (C) 1995-2010, Mark Calabretta
 *
 * This file is part of WCSLIB.
@@ -37,7 +37,9 @@
 * TPRJ1 tests forward and reverse spherical projections for closure.
 *
 *-----------------------------------------------------------------------
-      INTEGER   J
+      INCLUDE 'prj.inc'
+
+      INTEGER   J, K, STATUS
       DOUBLE PRECISION PV(0:29)
 
       DOUBLE PRECISION PI
@@ -52,9 +54,21 @@
      :        '-----------------------------------------------',
      :        '------------------')
 
-      DO 20 J = 0, 29
+      WRITE (*, '(/,A)') 'List of prj status return values:'
+      DO 40 STATUS = 1, 4
+        DO 30 K = 80, 1, -1
+          IF (PRJ_ERRMSG(STATUS)(K:K).NE.' ') THEN
+            WRITE(*, 20) STATUS, PRJ_ERRMSG(STATUS)(:K)
+ 20         FORMAT(I4,': ',A,'.')
+            GO TO 40
+          ENDIF
+ 30     CONTINUE
+ 40   CONTINUE
+      WRITE(*, '()')
+
+      DO 50 J = 0, 29
         PV(J) = 0D0
- 20   CONTINUE
+ 50   CONTINUE
 
 *     AZP: zenithal/azimuthal perspective.
       PV(1) = 0.5D0

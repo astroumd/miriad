@@ -1,5 +1,5 @@
 #-----------------------------------------------------------------------------
-# GNU makefile for building WCSLIB 4.5 and its test suite.
+# GNU makefile for building WCSLIB 4.6 and its test suite.
 #
 # Summary of the main targets
 # ---------------------------
@@ -32,37 +32,22 @@
 # Get configure settings.
 include ../makedefs
 
-MODULES := cel.o \
-           fitshdr.o \
-           lin.o \
-           log.o \
-           prj.o \
-           spc.o \
-           sph.o \
-           spx.o \
-           tab.o \
-           wcs.o \
-           wcsbth.o \
-           wcsfix.o \
-           wcshdr.o \
-           wcspih.o \
-           wcsulex.o  \
-           wcsunits.o \
-           wcsutil.o \
-           wcsutrn.o
+FLEXMODS := $(patsubst %.l,%.c,$(wildcard *.l))
+MODULES  := $(sort \
+              $(patsubst %.c,%.o, \
+                $(filter-out getwcstab.c,$(wildcard *.c)) $(FLEXMODS)))
 
 ifeq "$(WCSTRIG)" "MACRO"
   CPPFLAGS += -DWCSTRIG_MACRO
+  MODULES  := $(filter-out wcstrig.o, $(MODULES))
 else
-  ifneq "$(WCSTRIG)" "NATIVE"
-    MODULES += wcstrig.o
+  ifeq "$(WCSTRIG)" "NATIVE"
+    MODULES := $(filter-out wcstrig.o, $(MODULES))
   endif
 endif
 
-# Build the sharable library?
-ifneq "$(SHRLIB)" ""
-  PICLIB := libwcs-PIC.a
-endif
+# For building the sharable library.
+PICLIB := libwcs-PIC.a
 
 CPPFLAGS += -I. -I..
 
@@ -102,7 +87,7 @@ ifneq "$(CFITSIOLIB)" ""
 endif
 endif
 
-PGSBOXLIB := ../pgsbox/libpgsbox-$V.a
+LIBPGSBOX := ../pgsbox/libpgsbox-$V.a
 
 # Pattern rules
 #--------------
@@ -127,7 +112,7 @@ $(LIBWCS)(%.o) : %.c
 
 $(PICLIB)(%.o) : %.c
 	-@ echo ''
-	   $(CC) $(CPPFLAGS) $(SHRFLAGS) -c $<
+	   $(CC) $(CPPFLAGS) $(CFLAGS) $(SHRFLAGS) -c $<
 	   $(AR) r $(PICLIB) $%
 	-@ $(RM) $%
 
@@ -142,6 +127,7 @@ $(PICLIB)(%.o) : %.c
 	   sed -n -e 's|^# 1 "\([^/].*\.h\)".*|\1|p' | \
 	   sort -u
 
+# Use 'make FLAVOUR=Linux run_%' to have VALGRIND defined (from flavours).
 run_% : %
 	-@ echo ''
 	-@ $(TIMER)
@@ -149,17 +135,17 @@ run_% : %
 	     printf 'Press <CR> to run $<: ' ; \
 	     read DUMMY ; \
 	     if [ '$<' = tunits ] ; then \
-	       ./$< < test/units_test ; \
+	       $(VALGRIND) ./$< < test/units_test ; \
 	     elif [ '$<' != twcshdr ] ; then \
-	       ./$< ; \
+	       $(VALGRIND) ./$< ; \
 	     fi ; \
 	   else \
 	     if [ '$<' = tcel2 ] ; then \
-	       echo N | ./$< ; \
+	       echo N | $(VALGRIND) ./$< ; \
 	     elif [ '$<' = tunits ] ; then \
-	       ./$< < test/units_test ; \
+	       $(VALGRIND) ./$< < test/units_test ; \
 	     elif [ '$<' != twcshdr ] ; then \
-	       ./$< < /dev/null 2>&1 ; \
+	       $(VALGRIND) ./$< < /dev/null 2>&1 ; \
 	     fi ; \
 	   fi
 	-@ echo ''
@@ -172,7 +158,7 @@ run_% : %
 
 build : lib
 
-lib : fitshdr.c wcsbth.c wcspih.c wcsulex.c wcsutrn.c $(LIBWCS) $(SHRLIB)
+lib : $(FLEXMODS) $(LIBWCS) $(SHRLIB)
 
 $(LIBWCS) : $(MODULES:%=$(LIBWCS)(%))
 	-@ echo ''
@@ -181,9 +167,12 @@ $(LIBWCS) : $(MODULES:%=$(LIBWCS)(%))
 $(SHRLIB) : $(PICLIB)
 	-@ echo ''
 	-@ $(RM) -r tmp
-	   mkdir tmp
-	   cd tmp && $(AR) x ../$(PICLIB) && $(SHRLD) -o $@ *.o && mv $@ ..
-	-  $(RM) -r tmp
+	   mkdir tmp && \
+	     cd tmp && \
+	     trap 'cd .. ; $(RM) -r tmp' 0 1 2 3 15 ; \
+	     $(AR) x ../$(PICLIB) && \
+	     $(SHRLD) -o $@ *.o && \
+	     mv $@ ..
 
 $(PICLIB) : $(MODULES:%.o=$(PICLIB)(%.o)) ;
 
@@ -193,14 +182,14 @@ install : build
 	   fi
 	   $(INSTALL) -m 644 $(LIBWCS) $(LIBDIR)
 	   $(RANLIB) $(LIBDIR)/$(LIBWCS)
-	-  if [ -L "$(LIBDIR)/libwcs.a" ] ; then \
+	-  if [ -h "$(LIBDIR)/libwcs.a" ] ; then \
 	     $(RM) $(LIBDIR)/libwcs.a ; \
 	   fi
-	   $(LN_S) $(LIBWCS) $(LIBDIR)/libwcs.a
+	-  $(LN_S) $(LIBWCS) $(LIBDIR)/libwcs.a
 	-  if [ "$(SHRLIB)" != "" ] ; then \
 	     $(INSTALL) -m 644 $(SHRLIB) $(LIBDIR) ; \
 	     if [ "$(SHRLN)" != "" ] ; then \
-	       if [ -L "$(LIBDIR)/$(SHRLN)" ] ; then \
+	       if [ -h "$(LIBDIR)/$(SHRLN)" ] ; then \
 	         $(RM) $(LIBDIR)/$(SHRLN) ; \
 	       fi ; \
 	       $(LN_S) $(SHRLIB) $(LIBDIR)/$(SHRLN) ; \
@@ -242,10 +231,10 @@ $(TEST_P) : % : test/%.c $(LIBWCS)
 	   $(LD) $(LDFLAGS) -o $@ $@.o $(PGPLOTLIB) $(LIBWCS) $(LIBS)
 	-@ $(RM) $@.o
 
-tpih2 : test/tpih2.c $(PGSBOXLIB) $(LIBWCS)
+tpih2 : test/tpih2.c $(LIBPGSBOX) $(LIBWCS)
 	-@ echo ''
 	   $(CC) $(CPPFLAGS) -I../pgsbox $(PGPLOTINC) $(CFLAGS) -c -o $@.o $<
-	   $(LD) $(LDFLAGS) -o $@ $@.o $(PGSBOXLIB) $(PGPLOTLIB) $(LIBWCS) \
+	   $(LD) $(LDFLAGS) -o $@ $@.o $(LIBPGSBOX) $(PGPLOTLIB) $(LIBWCS) \
 	     $(FLIBS) $(LIBS)
 	-@ $(RM) $@.o
 
@@ -255,11 +244,11 @@ tfitshdr_cfitsio tpih1_cfitsio tbth1_cfitsio : %_cfitsio : test/%.c $(LIBWCS)
 	     $(LDFLAGS) -o $@ $< $(CFITSIOLIB) $(LIBWCS) $(LIBS)
 	-@ $(RM) $@.o
 
-tpih2_cfitsio : test/tpih2.c $(PGSBOXLIB) $(LIBWCS)
+tpih2_cfitsio : test/tpih2.c $(LIBPGSBOX) $(LIBWCS)
 	-@ echo ''
 	   $(CC) -DDO_CFITSIO $(CPPFLAGS) -I../pgsbox $(PGPLOTINC) \
 	     $(CFITSIOINC) $(CFLAGS) -c -o $@.o $<
-	   $(LD) $(LDFLAGS) -o $@ $@.o $(PGSBOXLIB) $(PGPLOTLIB) \
+	   $(LD) $(LDFLAGS) -o $@ $@.o $(LIBPGSBOX) $(PGPLOTLIB) \
 	     $(CFITSIOLIB) $(LIBWCS) $(FLIBS) $(LIBS)
 	-@ $(RM) $@.o
 
@@ -279,7 +268,7 @@ getwcstab.o : getwcstab.c getwcstab.h
 	-@ echo ''
 	   $(CC) $(CPPFLAGS) $(CFLAGS) $(CFITSIOINC) -c $<
 
-$(PGSBOXLIB) :
+$(LIBPGSBOX) :
 	-@ echo ''
 	   $(MAKE) -C ../pgsbox lib
 
@@ -298,6 +287,10 @@ GNUmakefile : ../makedefs ;
     wcsconfig_tests.h.in ../config.status
 	-@ $(RM) ../wcsconfig.h ../wcsconfig_tests.h
 	   cd .. && ./config.status
+
+show ::
+	-@ -@ echo '  FLEXMODS    := $(FLEXMODS)'
+	-@ -@ echo '  MODULES     := $(MODULES)'
 
 # Dependencies
 #-------------

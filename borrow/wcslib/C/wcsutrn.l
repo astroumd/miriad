@@ -1,6 +1,6 @@
 /*============================================================================
 
-  WCSLIB 4.5 - an implementation of the FITS WCS standard.
+  WCSLIB 4.6 - an implementation of the FITS WCS standard.
   Copyright (C) 1995-2010, Mark Calabretta
 
   This file is part of WCSLIB.
@@ -58,6 +58,7 @@
 
 #include <setjmp.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "wcsunits.h"

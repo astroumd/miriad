@@ -1,6 +1,6 @@
 *=======================================================================
 *
-* WCSLIB 4.5 - an implementation of the FITS WCS standard.
+* WCSLIB 4.6 - an implementation of the FITS WCS standard.
 * Copyright (C) 1995-2010, Mark Calabretta
 *
 * This file is part of WCSLIB.
@@ -32,8 +32,11 @@
 *=======================================================================
 
 *     Functions.
-      EXTERNAL  PRJINI, PRJPRT, PRJPUT, PRJGET, PRJSET, PRJX2S, PRJS2X
-      INTEGER   PRJINI, PRJPRT, PRJPUT, PRJGET, PRJSET, PRJX2S, PRJS2X
+      EXTERNAL  PRJGET, PRJGTC, PRJGTD, PRJGTI, PRJINI, PRJPRT, PRJPTC,
+     :          PRJPTD, PRJPTI, PRJPUT, PRJS2X, PRJSET, PRJX2S
+      INTEGER   PRJGET, PRJGTC, PRJGTD, PRJGTI, PRJINI, PRJPRT, PRJPTC,
+     :          PRJPTD, PRJPTI, PRJPUT, PRJS2X, PRJSET, PRJX2S
+
       EXTERNAL  AZPSET, AZPX2S, AZPS2X,    SFLSET, SFLX2S, SFLS2X,
      :          SZPSET, SZPX2S, SZPS2X,    PARSET, PARX2S, PARS2X,
      :          TANSET, TANX2S, TANS2X,    MOLSET, MOLX2S, MOLS2X,
@@ -65,6 +68,10 @@
 *     machines.  Only needs to be 114 on 32-bit machines.
       INTEGER   PRJLEN
       PARAMETER (PRJLEN = 116)
+
+*     Number of projection parameters supported by WCSLIB, 0 to PVN-1.
+      INTEGER   PRJ_PVN
+      PARAMETER (PRJ_PVN = 30)
 
 *     Codes for PRJ data structure elements used by PRJPUT and PRJGET.
       INTEGER   PRJ_BOUNDS, PRJ_CODE, PRJ_FLAG, PRJ_PHI0, PRJ_PV,
@@ -111,9 +118,4 @@
       PARAMETER (PRJ_HEALPIX           = 8)
 
       CHARACTER PRJ_ERRMSG(0:4)*80
-      DATA PRJ_ERRMSG /
-     :  'Success',
-     :  'Null prjprm pointer passed',
-     :  'Invalid projection parameters',
-     :  'One or more of the (x,y) coordinates were invalid',
-     :  'One or more of the (phi,theta) coordinates were invalid'/
+      COMMON /PRJ_DATA/ PRJ_ERRMSG

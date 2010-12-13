@@ -1,3 +1,112 @@
+WCSLIB version 4.6.3 (2010/11/24)
+---------------------------------
+
+* C library
+
+  - Bug fix in wcsbth() for handling the inheritance of image header
+    keywords (uncovered by valgrind, reported by Jim Lewis).
+
+
+WCSLIB version 4.6.2 (2010/11/22)
+---------------------------------
+
+* C library
+
+  - Fixed a memory leak in wcsbth.l (reported by Jim Lewis).
+
+
+WCSLIB version 4.6.1 (2010/11/18)
+---------------------------------
+
+* Fortran wrappers
+
+  - Fixed typos in cel_f.c, celget[cdi] -> celgt[cdi].
+
+
+WCSLIB version 4.6 (2010/11/16)
+-------------------------------
+
+* C library
+
+  - In wcsulex.l and wcsutrn.l, stdlib.h must be included explicitly
+    before the redefinition of exit() - most versions of flex do include
+    it upfront but some don't (reported by Peter Williams).
+
+* Fortran wrappers
+
+  - Changes intended to avert nuisance compiler warnings that could
+    potentially obscure warnings indicative of a genuine problem:
+
+    - To stop messages about unused variables when the relevant compiler
+      option is set, e.g. 'g77 -Wunused', the various *_ERRMSG arrays
+      defined in the Fortran include files and (formerly) initialized
+      therein via DATA statements, e.g. PRJ_ERRMSG in prj.inc, have now
+      been placed into COMMON blocks with names such as PRJ_DATA, and
+      are initialized via DATA statements in BLOCK DATA subprograms
+      defined in separate files, e.g. prj_data.f.
+
+    - To stop messages about subroutines being invoked with inconsistent
+      argument lists if the relevant compiler option is not set, e.g.
+      'g77 -Wno-globals', the C wrapper functions that take 'void *'
+      arguments now have separate forms for INTEGER, DOUBLE PRECISION,
+      and CHARACTER arguments that simply invoke the generic function.
+      Application code must be modified to take advantage of this.
+
+* General
+
+  - In the section on the Fortran wrappers in the manual, warn about the
+    need for the INTEGER array holding a data structure to be aligned on
+    a DOUBLE PRECISION boundary.
+
+
+WCSLIB version 4.5.6 (2010/10/28)
+---------------------------------
+
+* Installation
+
+  - Fixed the search for CFITSIO and PGPLOT library and include
+    directories.
+
+
+WCSLIB version 4.5.5 (2010/10/14)
+---------------------------------
+
+* Installation
+
+  - Build the PGSBOX sharable library.
+
+
+WCSLIB version 4.5.4 (2010/09/28)
+---------------------------------
+
+* C library
+
+  - In wcshdo(), according to the FITS standard, "Letters in the
+    exponential form ('E' or 'D') shall be upper case" (reported by
+    Michael Droettboom).
+
+
+WCSLIB version 4.5.3 (2010/09/23)
+---------------------------------
+
+* Utilities
+
+  - Various improvements to wcsgrid: correct the scaling set via
+    cpgwnad(); label angles other than RA,Dec in decimal degrees;
+    draw the projection boundary for projections other than zenithals.
+
+
+WCSLIB version 4.5.2 (2010/09/23)
+---------------------------------
+
+* C library
+
+  - Fixed the translation of GLS to SFL in wcsset() and celfix() when
+    the reference longitude is non-zero - it introduces an offset in
+    longitude in the normal way.  (This undoes part of the change
+    applied in version 4.4.)
+
+
 WCSLIB version 4.5.1 (2010/08/12)
 ---------------------------------
 
@@ -45,13 +154,11 @@ WCSLIB version 4.5 (2010/07/16)
 WCSLIB version 4.4.4 (2009/09/14)
 ---------------------------------
 
-* General
+* Installation
 
   - Added more configure options for controlling the build:
     --disable-fortran, --disable-utils, --without-cfitsio, and
     --without-pgplot.
-
-* (No changes to any of the libraries.)
 
 
 WCSLIB version 4.4.3 (2009/09/03)
@@ -86,7 +193,7 @@ WCSLIB version 4.4.2 (2009/08/13)
     and the magnitude of the first latitude in the lat[] vector exceeds
     90 deg (reported by Hans Terlouw).
 
-* General
+* Installation
 
   - Fix relating to creation of symlinks when installing the libraries.
 
@@ -94,12 +201,10 @@ WCSLIB version 4.4.2 (2009/08/13)
 WCSLIB version 4.4.1 (2009/08/11)
 ---------------------------------
 
-* General
+* Installation
 
   - Fixes for installation of the CHANGES file and for the creation of a
     symbolic link for the sharable library if one already exists.
-
-* (No changes to any of the libraries.)
 
 
 WCSLIB version 4.4 (2009/08/10)
@@ -202,7 +307,7 @@ WCSLIB version 4.4 (2009/08/10)
       line, or else on stdin, printing them as 80-character keyrecords
       without trailing blanks.
 
-* General
+* Installation
 
   - New configure options, --with-pgplotinc, --with-pgplotlib,
     --with-cfitsioinc and --with-cfitsiolib allow additional directories
@@ -232,14 +337,6 @@ WCSLIB version 4.3.3 (2009/04/30)
     all in the header then create a default WCS with blank alternate
     version.
 
-* Fortran wrappers
-
-  - (No changes.)
-
-* PGSBOX
-
-  - (No changes.)
-
 
 WCSLIB version 4.3.2 (2009/03/16)
 ---------------------------------
@@ -249,29 +346,13 @@ WCSLIB version 4.3.2 (2009/03/16)
   - utils/GNUmakefile: create BINDIR if necessary prior to installing
     utilities.
 
-* Fortran wrappers
-
-  - (No changes.)
-
-* PGSBOX
-
-  - (No changes.)
-
 
 WCSLIB version 4.3.1 (2008/09/08)
 ---------------------------------
 
-* C library
+* Installation
 
   - Top-level GNUmakefile: install header files.
-
-* Fortran wrappers
-
-  - (No changes.)
-
-* PGSBOX
-
-  - (No changes.)
 
 
 WCSLIB version 4.3 (2007/12/27)
@@ -369,6 +450,8 @@ WCSLIB version 4.3 (2007/12/27)
   - In comment text, replaced use of the obsolete term "card" with
     "keyrecord" which consists of a "keyword", "keyvalue", and
     "keycomment".
+
+* Installation
 
   - General improvements to the installation process: autoconf-related
     portability improvements, particularly relating to Fortran name
@@ -674,6 +757,8 @@ WCSLIB version 4.0 (2005/02/07)
     GPL as recommended by the FSF (http://www.gnu.org/licenses/why-not-
     lgpl.html).
 
+* Installation
+
   - General improvements to the installation process: fixed the
     interaction between the FLAVOUR and PGPLOTLIB definitions in the
     Makefile by introducing a separate variable, DO_PLOTS, to control
@@ -752,7 +837,7 @@ WCSLIB version 3.6 (2004/08/25)
 
   - (No substantive changes.)
 
-* General
+* Installation
 
   - Worked over the C, FORTRAN, and PGSBOX makefiles, in particular to
     make them all consistent.

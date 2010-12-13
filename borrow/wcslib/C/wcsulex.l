@@ -1,6 +1,6 @@
 /*============================================================================
 
-  WCSLIB 4.5 - an implementation of the FITS WCS standard.
+  WCSLIB 4.6 - an implementation of the FITS WCS standard.
   Copyright (C) 1995-2010, Mark Calabretta
 
   This file is part of WCSLIB.
@@ -95,6 +95,7 @@ ADD_UNIT  {ADD_ALL}|{ADD_SUP}|{ADD_SUB}|{ADD_NONE}
 #include <math.h>
 #include <setjmp.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "wcsmath.h"
 #include "wcsunits.h"

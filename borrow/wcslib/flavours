@@ -4,7 +4,7 @@
 # distribution.  Variables like CC and CFLAGS are exported into the
 # environment so that they will be seen by 'configure', e.g.
 #
-#   gmake cleanest
+#   gmake distclean
 #   gmake FLAVOUR=Linux configure
 #
 # Reminder: add '-d' to FLFLAGS for debugging.
@@ -45,8 +45,9 @@ endif
 ifeq "$(FLAVOUR)" "Linux"
   export CC       := gcc -std=c89 -pedantic
   export CPPFLAGS := $(FEATURES)
-  export CFLAGS   := -g -Wall -Wpadded -Wno-long-long
-  export FFLAGS   := -g -Wimplicit -Wno-globals -I.
+  export CFLAGS   := -g -O0 -Wall -Wpadded -Wno-long-long
+  export FFLAGS   := -g -O0 -Wimplicit -Wunused -Wno-globals -I.
+         VALGRIND := valgrind -v --leak-check=yes
 endif
 
 ifeq "$(FLAVOUR)" "Linuxp"
@@ -64,7 +65,7 @@ ifeq "$(FLAVOUR)" "SUN/GNU"
   export CC       := gcc -std=c89 -pedantic
   export CPPFLAGS := $(FEATURES)
   export CFLAGS   := -g -Wall -Wpadded -Wno-long-long
-  export FFLAGS   := -g -Wimplicit -Wno-globals -I.
+  export FFLAGS   := -g -Wimplicit -Wunused -Wno-globals -I.
 endif
 
 ifeq "$(FLAVOUR)" "SUN/GNU3"
@@ -72,7 +73,7 @@ ifeq "$(FLAVOUR)" "SUN/GNU3"
   export CPPFLAGS := $(FEATURES)
   export CFLAGS   := -g -Wall -Wpadded -Wno-long-long
   export F77      := g77-3.1.1
-  export FFLAGS   := -g -Wimplicit -Wno-globals -I.
+  export FFLAGS   := -g -Wimplicit -Wunused -Wno-globals -I.
   LD      := gcc-3.1.1
 endif
 
@@ -123,6 +124,10 @@ ifdef F77
   FC := $(F77)
 endif
 
+ifndef TIMER
+  TIMER := date +"%a %Y/%m/%d %X %z, executing on $$HOST"
+endif
+
 ifdef FLAVOUR
   TIMER := $(TIMER) ; echo "    with $(FLAVOUR) FLAVOUR."
 endif
@@ -131,5 +136,6 @@ show_all ::
 	-@ echo 'For code development...'
 	-@ echo '  FLAVOURS    := $(FLAVOURS)'
 	-@ echo '  FLAVOUR     := $(FLAVOUR)'
+	-@ echo '  VALGRIND    := $(VALGRIND)'
 	-@ echo '  EXTRA_CLEAN := $(EXTRA_CLEAN)'
 	-@ echo ''

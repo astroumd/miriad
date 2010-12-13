@@ -1,6 +1,6 @@
 /*============================================================================
 
-  WCSLIB 4.5 - an implementation of the FITS WCS standard.
+  WCSLIB 4.6 - an implementation of the FITS WCS standard.
   Copyright (C) 1995-2010, Mark Calabretta
 
   This file is part of WCSLIB.
@@ -40,6 +40,13 @@
 #define prjput_ F77_FUNC(prjput, PRJPUT)
 #define prjget_ F77_FUNC(prjget, PRJGET)
 #define prjprt_ F77_FUNC(prjprt, PRJPRT)
+
+#define prjptc_ F77_FUNC(prjptc, PRJPTC)
+#define prjptd_ F77_FUNC(prjptd, PRJPTD)
+#define prjpti_ F77_FUNC(prjpti, PRJPTI)
+#define prjgtc_ F77_FUNC(prjgtc, PRJGTC)
+#define prjgtd_ F77_FUNC(prjgtd, PRJGTD)
+#define prjgti_ F77_FUNC(prjgti, PRJGTI)
 
 #define PRJ_FLAG      100
 #define PRJ_CODE      101
@@ -116,6 +123,21 @@ int prjput_(int *prj, const int *what, const void *value, const int *m)
   }
 
   return 0;
+}
+
+int prjptc_(int *prj, const int *what, const char *value, const int *m)
+{
+  return prjput_(prj, what, value, m);
+}
+
+int prjptd_(int *prj, const int *what, const double *value, const int *m)
+{
+  return prjput_(prj, what, value, m);
+}
+
+int prjpti_(int *prj, const int *what, const int *value, const int *m)
+{
+  return prjput_(prj, what, value, m);
 }
 
 /*--------------------------------------------------------------------------*/
@@ -202,6 +224,21 @@ int prjget_(const int *prj, const int *what, void *value)
   }
 
   return 0;
+}
+
+int prjgtc_(const int *prj, const int *what, char *value)
+{
+  return prjget_(prj, what, value);
+}
+
+int prjgtd_(const int *prj, const int *what, double *value)
+{
+  return prjget_(prj, what, value);
+}
+
+int prjgti_(const int *prj, const int *what, int *value)
+{
+  return prjget_(prj, what, value);
 }
 
 /*--------------------------------------------------------------------------*/

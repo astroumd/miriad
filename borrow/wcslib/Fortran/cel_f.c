@@ -1,6 +1,6 @@
 /*============================================================================
 
-  WCSLIB 4.5 - an implementation of the FITS WCS standard.
+  WCSLIB 4.6 - an implementation of the FITS WCS standard.
   Copyright (C) 1995-2010, Mark Calabretta
 
   This file is part of WCSLIB.
@@ -42,6 +42,13 @@
 #define celset_ F77_FUNC(celset, CELSET)
 #define celx2s_ F77_FUNC(celx2s, CELX2S)
 #define cels2x_ F77_FUNC(cels2x, CELS2X)
+
+#define celptc_ F77_FUNC(celptc, CELPTC)
+#define celptd_ F77_FUNC(celptd, CELPTD)
+#define celpti_ F77_FUNC(celpti, CELPTI)
+#define celgtc_ F77_FUNC(celgtc, CELGTC)
+#define celgtd_ F77_FUNC(celgtd, CELGTD)
+#define celgti_ F77_FUNC(celgti, CELGTI)
 
 #define CEL_FLAG   100
 #define CEL_OFFSET 101
@@ -110,6 +117,21 @@ int celput_(int *cel, const int *what, const void *value, const int *i)
   return 0;
 }
 
+int celptc_(int *cel, const int *what, const char *value, const int *i)
+{
+  return celput_(cel, what, value, i);
+}
+
+int celptd_(int *cel, const int *what, const double *value, const int *i)
+{
+  return celput_(cel, what, value, i);
+}
+
+int celpti_(int *cel, const int *what, const int *value, const int *i)
+{
+  return celput_(cel, what, value, i);
+}
+
 /*--------------------------------------------------------------------------*/
 
 int celget_(const int *cel, const int *what, void *value)
@@ -167,6 +189,21 @@ int celget_(const int *cel, const int *what, void *value)
   }
 
   return 0;
+}
+
+int celgtc_(const int *cel, const int *what, char *value)
+{
+  return celget_(cel, what, value);
+}
+
+int celgtd_(const int *cel, const int *what, double *value)
+{
+  return celget_(cel, what, value);
+}
+
+int celgti_(const int *cel, const int *what, int *value)
+{
+  return celget_(cel, what, value);
 }
 
 /*--------------------------------------------------------------------------*/

@@ -1,6 +1,6 @@
 /*============================================================================
 
-  WCSLIB 4.5 - an implementation of the FITS WCS standard.
+  WCSLIB 4.6 - an implementation of the FITS WCS standard.
   Copyright (C) 1995-2010, Mark Calabretta
 
   This file is part of WCSLIB.
@@ -1462,7 +1462,7 @@ int wcsset(struct wcsprm *wcs)
     /* Do simple alias translations. */
     if (strncmp(wcs->ctype[wcs->lng]+5, "GLS", 3) == 0) {
       wcscel->offset = 1;
-      wcscel->phi0   = wcs->crval[wcs->lng];
+      wcscel->phi0   = 0.0;
       wcscel->theta0 = wcs->crval[wcs->lat];
       strcpy(wcsprj->code, "SFL");
 

@@ -1,15 +1,17 @@
 #-----------------------------------------------------------------------------
 # Process this file with autoconf-2.53 or later to produce a configure script.
 #-----------------------------------------------------------------------------
-# Use autoconf-2.61 in MacOSX 10.6.2 to avoid spurious messages about deleting
-# conftest.dSYM when configuring in MacOSX 10.6.
+# N.B. it is necessary to run autoconf on a Mac in order for configure to
+# locate the X11 dylibs for PGPLOT.  Use autoconf-2.61 in MacOSX 10.6.2 to
+# avoid spurious messages about deleting conftest.dSYM when configuring in
+# MacOSX 10.6.
 #
 # Author: Mark Calabretta, Australia Telescope National Facility
 # http://www.atnf.csiro.au/~mcalabre/index.html
 # $Id$
 #-----------------------------------------------------------------------------
 
-AC_INIT([WCSLIB], [4.5.1], [mcalabre@atnf.csiro.au], [wcslib-4.5.1])
+AC_INIT([WCSLIB], [4.6.3], [mcalabre@atnf.csiro.au], [wcslib-4.6.3])
 AC_PREREQ([2.53])
 AC_REVISION([$Revision$])
 AC_SUBST([PACKAGE_VERSION])
@@ -226,7 +228,7 @@ AC_PROG_RANLIB
 # Shared library generation.
 if test "x$ac_cv_c_compiler_gnu" = xyes ; then
   # Note that -fPIC is on by default for Macs, this just makes it obvious.
-  SHRFLAGS="$CFLAGS -fPIC"
+  SHRFLAGS="-fPIC"
   SHRLD="\$(CC) \$(SHRFLAGS)"
 
   V="$PACKAGE_VERSION"
@@ -301,7 +303,6 @@ AC_SYS_LARGEFILE
 
 # Extra places to look for third-party libraries and header files.
 LIBDIRS=
-INCDIRS=
 
 AC_ARG_WITH([cfitsio], [AS_HELP_STRING([--without-cfitsio],
             [eschew CFITSIO])], [])
@@ -317,12 +318,16 @@ else
   AC_ARG_WITH([cfitsioinc], [AS_HELP_STRING([--with-cfitsioinc=DIR],
               [directory containing cfitsio header files])], [])
   if test "x$with_cfitsioinc" != x ; then
-    INCDIRS="$INCDIRS $with_cfitsioinc"
+    CFITSIO_INCDIRS="$with_cfitsioinc"
   fi
 
+  CFITSIO_INCDIRS="$CFITSIO_INCDIRS   \
+           /usr/local/cfitsio/include \
+           /local/cfitsio/include"
+
   LIBDIRS="$LIBDIRS           \
-           /local/cfitsio     \
-           /usr/local/cfitsio"
+           /usr/local/cfitsio/lib \
+           /local/cfitsio/lib"
 fi
 
 AC_ARG_WITH([pgplot], [AS_HELP_STRING([--without-pgplot],
@@ -339,20 +344,24 @@ else
   AC_ARG_WITH([pgplotinc], [AS_HELP_STRING([--with-pgplotinc=DIR],
               [directory containing pgplot header files])], [])
   if test "x$with_pgplotinc" != x ; then
-    INCDIRS="$INCDIRS $with_pgplotinc"
+    PGPLOT_INCDIRS="$with_pgplotinc"
   fi
 
+  PGPLOT_INCDIRS="$PGPLOT_INCDIRS    \
+           /usr/local/pgplot/include \
+           /local/pgplot/include"
+
   LIBDIRS="$LIBDIRS           \
-           /local/pgplot      \
-           /usr/local/pgplot"
+           /usr/local/pgplot/lib  \
+           /local/pgplot/lib"
 fi
 
 
 if test "x$with_cfitsio" != xno -o \
         "x$with_pgplot"  != xno ; then
   LIBDIRS="$LIBDIRS           \
-           /local/lib         \
            /usr/local/lib     \
+	   /local/lib         \
            /opt/local/lib     \
            /opt/SUNWspro/lib  \
            /sw/lib"
@@ -361,9 +370,9 @@ if test "x$with_cfitsio" != xno -o \
     AC_CHECK_FILE([$LIBDIR], [LDFLAGS="$LDFLAGS -L$LIBDIR"], [continue])
   done
 
-  INCDIRS="$INCDIRS           \
+  # Generic include directories.
+  INCDIRS="/usr/local/include \
            /local/include     \
-           /usr/local/include \
            /opt/local/include \
            /sw/include        \
            /local             \
@@ -373,7 +382,7 @@ if test "x$with_cfitsio" != xno -o \
   # CFITSIO.
   if test "x$with_cfitsio" != xno ; then
     # Search for CFITSIO.
-    for INCDIR in $INCDIRS ; do
+    for INCDIR in $CFITSIO_INCDIRS $INCDIRS ; do
       AC_CHECK_FILE([$INCDIR/cfitsio/fitsio.h],
                     [CFITSIOINC="-I$INCDIR/cfitsio"; break])
       AC_CHECK_FILE([$INCDIR/fitsio.h], [CFITSIOINC="-I$INCDIR"; break])
@@ -402,7 +411,7 @@ if test "x$with_cfitsio" != xno -o \
   # PGPLOT.
   if test "x$F77" != x -a "x$with_pgplot" != xno ; then
     # Search for PGPLOT.
-    for INCDIR in $INCDIRS ; do
+    for INCDIR in $PGPLOT_INCDIRS $INCDIRS ; do
       AC_CHECK_FILE([$INCDIR/pgplot/cpgplot.h],
                     [PGPLOTINC="-I$INCDIR/pgplot"; break])
       AC_CHECK_FILE([$INCDIR/cpgplot.h], [PGPLOTINC="-I$INCDIR"; break])

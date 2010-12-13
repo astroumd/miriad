@@ -1,6 +1,6 @@
 /*============================================================================
 
-  WCSLIB 4.5 - an implementation of the FITS WCS standard.
+  WCSLIB 4.6 - an implementation of the FITS WCS standard.
   Copyright (C) 1995-2010, Mark Calabretta
 
   This file is part of WCSLIB.
@@ -46,6 +46,10 @@
 #define fitshdr_  F77_FUNC(fitshdr,  FITSHDR)
 #define freekeys_ F77_FUNC(freekeys, FREEKEYS)
 
+#define keyidptc_ F77_FUNC(keyidptc, KEYIDPTC)
+#define keyidgtc_ F77_FUNC(keyidgtc, KEYIDGTC)
+#define keyidgti_ F77_FUNC(keyidgti, KEYIDGTI)
+
 #define KEYID_NAME   100
 #define KEYID_COUNT  101
 #define KEYID_IDX    102
@@ -83,6 +87,11 @@ int keyidput_(int *keyid, const int *i, const int *what, const void *value)
   return 0;
 }
 
+int keyidptc_(int *keyid, const int *i, const int *what, const char *value)
+{
+  return keyidput_(keyid, i, what, value);
+}
+
 /*--------------------------------------------------------------------------*/
 
 int keyidget_(const int *keyid, const int *i, const int *what, void *value)
@@ -114,6 +123,16 @@ int keyidget_(const int *keyid, const int *i, const int *what, void *value)
   }
 
   return 0;
+}
+
+int keyidgtc_(const int *keyid, const int *i, const int *what, char *value)
+{
+  return keyidget_(keyid, i, what, value);
+}
+
+int keyidgti_(const int *keyid, const int *i, const int *what, int *value)
+{
+  return keyidget_(keyid, i, what, value);
 }
 
 /*--------------------------------------------------------------------------*/

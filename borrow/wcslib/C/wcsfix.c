@@ -1,6 +1,6 @@
 /*============================================================================
 
-  WCSLIB 4.5 - an implementation of the FITS WCS standard.
+  WCSLIB 4.6 - an implementation of the FITS WCS standard.
   Copyright (C) 1995-2010, Mark Calabretta
 
   This file is part of WCSLIB.
@@ -368,11 +368,13 @@ int celfix(struct wcsprm *wcs)
 
       if (wcs->crval[wcs->lng] != 0.0 || wcs->crval[wcs->lat] != 0.0) {
         /* In the AIPS convention, setting the reference longitude and
-         * latitude for GLS simply translates the reference point (i.e. the
-         * map as a whole) to those coordinates without creating an oblique
-         * grid.  This might be effected by adjusting CRPIXja but that is
-         * complicated by the linear transformation and instead is
-         * accomplished here by setting (phi_0,theta_0). */
+         * latitude for GLS does not create an oblique graticule.  A non-zero
+         * reference longitude introduces an offset in longitude in the normal
+         * way, whereas a non-zero reference latitude simply translates the
+         * reference point (i.e. the map as a whole) to that latitude.  This
+         * might be effected by adjusting CRPIXja but that is complicated by
+         * the linear transformation and instead is accomplished here by
+         * setting theta_0. */
         if (wcs->npvmax < wcs->npv + 2) {
           /* Allocate space for three more PVi_ja keyvalues. */
           if (wcs->m_flag == WCSSET && wcs->pv == wcs->m_pv) {
@@ -401,9 +403,10 @@ int celfix(struct wcsprm *wcs)
         wcs->pv[wcs->npv].value = 1.0;
         (wcs->npv)++;
 
+        /* Note that the reference longitude is still zero. */
         wcs->pv[wcs->npv].i = wcs->lng + 1;
         wcs->pv[wcs->npv].m = 1;
-        wcs->pv[wcs->npv].value = wcs->crval[wcs->lng];
+        wcs->pv[wcs->npv].value = 0.0;
         (wcs->npv)++;
 
         wcs->pv[wcs->npv].i = wcs->lng + 1;

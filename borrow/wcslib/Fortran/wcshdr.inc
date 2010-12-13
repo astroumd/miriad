@@ -1,6 +1,6 @@
 *=======================================================================
 *
-* WCSLIB 4.5 - an implementation of the FITS WCS standard.
+* WCSLIB 4.6 - an implementation of the FITS WCS standard.
 * Copyright (C) 1995-2010, Mark Calabretta
 *
 * This file is part of WCSLIB.
@@ -69,8 +69,4 @@
       PARAMETER (WCSHDR_PIXLIST  = 2**18)
 
       CHARACTER WCSHDR_ERRMSG(0:3)*80
-      DATA WCSHDR_ERRMSG /
-     :  'Success',
-     :  'Null wcsprm pointer passed',
-     :  'Memory allocation failed',
-     :  'Invalid tabular parameters'/
+      COMMON /WCSHDR_DATA/ WCSHDR_ERRMSG

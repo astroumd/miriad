@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-<title>WCSLIB 4.5.1: prj.h Source File</title>
+<title>WCSLIB 4.6.3: prj.h Source File</title>
 <link href="doxygen.css" rel="stylesheet" type="text/css">
 <link href="tabs.css" rel="stylesheet" type="text/css">
 </head><body>
@@ -16,7 +16,7 @@
   </div>
 <h1>prj.h</h1><a href="prj_8h.html">Go to the documentation of this file.</a><div class="fragment"><pre class="fragment"><a name="l00001"></a>00001 <span class="comment">/*============================================================================</span>
 <a name="l00002"></a>00002 <span class="comment"></span>
-<a name="l00003"></a>00003 <span class="comment">  WCSLIB 4.5 - an implementation of the FITS WCS standard.</span>
+<a name="l00003"></a>00003 <span class="comment">  WCSLIB 4.6 - an implementation of the FITS WCS standard.</span>
 <a name="l00004"></a>00004 <span class="comment">  Copyright (C) 1995-2010, Mark Calabretta</span>
 <a name="l00005"></a>00005 <span class="comment"></span>
 <a name="l00006"></a>00006 <span class="comment">  This file is part of WCSLIB.</span>
@@ -47,7 +47,7 @@
 <a name="l00031"></a>00031 <span class="comment">  $Id$</span>
 <a name="l00032"></a>00032 <span class="comment">*=============================================================================</span>
 <a name="l00033"></a>00033 <span class="comment">*</span>
-<a name="l00034"></a>00034 <span class="comment">* WCSLIB 4.5 - C routines that implement the spherical map projections</span>
+<a name="l00034"></a>00034 <span class="comment">* WCSLIB 4.6 - C routines that implement the spherical map projections</span>
 <a name="l00035"></a>00035 <span class="comment">* recognized by the FITS World Coordinate System (WCS) standard.  Refer to</span>
 <a name="l00036"></a>00036 <span class="comment">*</span>
 <a name="l00037"></a>00037 <span class="comment">*   "Representations of world coordinates in FITS",</span>
@@ -544,7 +544,7 @@
 <a name="l00528"></a><a class="code" href="structprjprm.html">00528</a> <span class="keyword">struct </span><a class="code" href="structprjprm.html" title="Projection parameters.">prjprm</a> {
 <a name="l00529"></a>00529   <span class="comment">/* Initialization flag (see the prologue above).                          */</span>
 <a name="l00530"></a>00530   <span class="comment">/*------------------------------------------------------------------------*/</span>
-<a name="l00531"></a><a class="code" href="structprjprm.html#d304d66b3f3aa64fe9c7251d3c420d02">00531</a>   <span class="keywordtype">int</span>   <a class="code" href="structprjprm.html#d304d66b3f3aa64fe9c7251d3c420d02">flag</a>;                   <span class="comment">/* Set to zero to force initialization.     */</span>
+<a name="l00531"></a><a class="code" href="structprjprm.html#d304d66b3f3aa64fe9c7251d3c420d02">00531</a>   <span class="keywordtype">int</span>    <a class="code" href="structprjprm.html#d304d66b3f3aa64fe9c7251d3c420d02">flag</a>;                  <span class="comment">/* Set to zero to force initialization.     */</span>
 <a name="l00532"></a>00532 
 <a name="l00533"></a>00533   <span class="comment">/* Parameters to be provided (see the prologue above).                    */</span>
 <a name="l00534"></a>00534   <span class="comment">/*------------------------------------------------------------------------*/</span>
@@ -552,23 +552,23 @@
 <a name="l00536"></a><a class="code" href="structprjprm.html#3894c2e551929b29adce50cd637fa351">00536</a>   <span class="keywordtype">double</span> <a class="code" href="structprjprm.html#3894c2e551929b29adce50cd637fa351">r0</a>;                    <span class="comment">/* Radius of the generating sphere.         */</span>
 <a name="l00537"></a><a class="code" href="structprjprm.html#46d6928a9026e7b3376dcf0d3f91db64">00537</a>   <span class="keywordtype">double</span> <a class="code" href="structprjprm.html#46d6928a9026e7b3376dcf0d3f91db64">pv</a>[<a class="code" href="prj_8h.html#c8dfb42cf72db0c4bc690d030f75c662" title="Total number of projection parameters.">PVN</a>];               <span class="comment">/* Projection parameters.                   */</span>
 <a name="l00538"></a><a class="code" href="structprjprm.html#e91fa3ff034b1c6de3ec98d8fb9e0ab1">00538</a>   <span class="keywordtype">double</span> <a class="code" href="structprjprm.html#699ad609ff7c1935d8fb6a457a5b8164">phi0</a>, <a class="code" href="structprjprm.html#e91fa3ff034b1c6de3ec98d8fb9e0ab1">theta0</a>;          <span class="comment">/* Fiducial native coordinates.             */</span>
-<a name="l00539"></a><a class="code" href="structprjprm.html#b8dd3d8b1e462a2b261fc9e304885943">00539</a>   <span class="keywordtype">int</span>   <a class="code" href="structprjprm.html#b8dd3d8b1e462a2b261fc9e304885943">bounds</a>;                 <span class="comment">/* Enable strict bounds checking.           */</span>
+<a name="l00539"></a><a class="code" href="structprjprm.html#b8dd3d8b1e462a2b261fc9e304885943">00539</a>   <span class="keywordtype">int</span>    <a class="code" href="structprjprm.html#b8dd3d8b1e462a2b261fc9e304885943">bounds</a>;                <span class="comment">/* Enable strict bounds checking.           */</span>
 <a name="l00540"></a>00540 
 <a name="l00541"></a>00541   <span class="comment">/* Information derived from the parameters supplied.                      */</span>
 <a name="l00542"></a>00542   <span class="comment">/*------------------------------------------------------------------------*/</span>
 <a name="l00543"></a><a class="code" href="structprjprm.html#b165b11d417700de0a4187f133050a2b">00543</a>   <span class="keywordtype">char</span>   <a class="code" href="structprjprm.html#b165b11d417700de0a4187f133050a2b">name</a>[40];              <span class="comment">/* Projection name.                         */</span>
-<a name="l00544"></a><a class="code" href="structprjprm.html#f0fcebbc8155f0b1ee868e64a2ed9ac3">00544</a>   <span class="keywordtype">int</span>   <a class="code" href="structprjprm.html#f0fcebbc8155f0b1ee868e64a2ed9ac3">category</a>;               <span class="comment">/* Projection category.                     */</span>
-<a name="l00545"></a><a class="code" href="structprjprm.html#bcd2a3ee9f61b930d23bf741cea63bf3">00545</a>   <span class="keywordtype">int</span>   <a class="code" href="structprjprm.html#bcd2a3ee9f61b930d23bf741cea63bf3">pvrange</a>;                <span class="comment">/* Range of projection parameter indices.   */</span>
-<a name="l00546"></a><a class="code" href="structprjprm.html#fecdd175932cbf29fcfac575b1a5cb9b">00546</a>   <span class="keywordtype">int</span>   <a class="code" href="structprjprm.html#fecdd175932cbf29fcfac575b1a5cb9b">simplezen</a>;              <span class="comment">/* Is it a simple zenithal projection?      */</span>
-<a name="l00547"></a><a class="code" href="structprjprm.html#b3e207e26d1c9db06cedba2cf4460340">00547</a>   <span class="keywordtype">int</span>   <a class="code" href="structprjprm.html#b3e207e26d1c9db06cedba2cf4460340">equiareal</a>;              <span class="comment">/* Is it an equal area projection?          */</span>
-<a name="l00548"></a><a class="code" href="structprjprm.html#d7a41e3d03cb739c2a9aa1f8aabf54f9">00548</a>   <span class="keywordtype">int</span>   <a class="code" href="structprjprm.html#d7a41e3d03cb739c2a9aa1f8aabf54f9">conformal</a>;              <span class="comment">/* Is it a conformal projection?            */</span>
-<a name="l00549"></a><a class="code" href="structprjprm.html#e634b0747fe55f77e65b6909c94227d9">00549</a>   <span class="keywordtype">int</span>   <a class="code" href="structprjprm.html#e634b0747fe55f77e65b6909c94227d9">global</a>;                 <span class="comment">/* Can it map the whole sphere?             */</span>
-<a name="l00550"></a><a class="code" href="structprjprm.html#62e88bd3c9e02f38193a800035b83918">00550</a>   <span class="keywordtype">int</span>   <a class="code" href="structprjprm.html#62e88bd3c9e02f38193a800035b83918">divergent</a>;              <span class="comment">/* Does the projection diverge in latitude? */</span>
+<a name="l00544"></a><a class="code" href="structprjprm.html#f0fcebbc8155f0b1ee868e64a2ed9ac3">00544</a>   <span class="keywordtype">int</span>    <a class="code" href="structprjprm.html#f0fcebbc8155f0b1ee868e64a2ed9ac3">category</a>;              <span class="comment">/* Projection category.                     */</span>
+<a name="l00545"></a><a class="code" href="structprjprm.html#bcd2a3ee9f61b930d23bf741cea63bf3">00545</a>   <span class="keywordtype">int</span>    <a class="code" href="structprjprm.html#bcd2a3ee9f61b930d23bf741cea63bf3">pvrange</a>;               <span class="comment">/* Range of projection parameter indices.   */</span>
+<a name="l00546"></a><a class="code" href="structprjprm.html#fecdd175932cbf29fcfac575b1a5cb9b">00546</a>   <span class="keywordtype">int</span>    <a class="code" href="structprjprm.html#fecdd175932cbf29fcfac575b1a5cb9b">simplezen</a>;             <span class="comment">/* Is it a simple zenithal projection?      */</span>
+<a name="l00547"></a><a class="code" href="structprjprm.html#b3e207e26d1c9db06cedba2cf4460340">00547</a>   <span class="keywordtype">int</span>    <a class="code" href="structprjprm.html#b3e207e26d1c9db06cedba2cf4460340">equiareal</a>;             <span class="comment">/* Is it an equal area projection?          */</span>
+<a name="l00548"></a><a class="code" href="structprjprm.html#d7a41e3d03cb739c2a9aa1f8aabf54f9">00548</a>   <span class="keywordtype">int</span>    <a class="code" href="structprjprm.html#d7a41e3d03cb739c2a9aa1f8aabf54f9">conformal</a>;             <span class="comment">/* Is it a conformal projection?            */</span>
+<a name="l00549"></a><a class="code" href="structprjprm.html#e634b0747fe55f77e65b6909c94227d9">00549</a>   <span class="keywordtype">int</span>    <a class="code" href="structprjprm.html#e634b0747fe55f77e65b6909c94227d9">global</a>;                <span class="comment">/* Can it map the whole sphere?             */</span>
+<a name="l00550"></a><a class="code" href="structprjprm.html#62e88bd3c9e02f38193a800035b83918">00550</a>   <span class="keywordtype">int</span>    <a class="code" href="structprjprm.html#62e88bd3c9e02f38193a800035b83918">divergent</a>;             <span class="comment">/* Does the projection diverge in latitude? */</span>
 <a name="l00551"></a><a class="code" href="structprjprm.html#164706f09314c493c7e9d2c7325f8372">00551</a>   <span class="keywordtype">double</span> <a class="code" href="structprjprm.html#ae2c61d85c72e87f4b2b77a14c8eb316">x0</a>, <a class="code" href="structprjprm.html#164706f09314c493c7e9d2c7325f8372">y0</a>;                <span class="comment">/* Fiducial offsets.                        */</span>
 <a name="l00552"></a>00552 
 <a name="l00553"></a><a class="code" href="structprjprm.html#3b40a2df3b436c4ffcf5be6814993278">00553</a>   <span class="keywordtype">double</span> <a class="code" href="structprjprm.html#3b40a2df3b436c4ffcf5be6814993278">w</a>[10];                 <span class="comment">/* Intermediate values.                     */</span>
-<a name="l00554"></a><a class="code" href="structprjprm.html#ab36c6218a33025ac4c5025de7c67d42">00554</a>   <span class="keywordtype">int</span>   <a class="code" href="structprjprm.html#ab36c6218a33025ac4c5025de7c67d42">n</a>;                      <span class="comment">/* Intermediate value.                      */</span>
-<a name="l00555"></a><a class="code" href="structprjprm.html#546d3a98a76c7ebb39d5a56d3a8574c1">00555</a>   <span class="keywordtype">int</span>   <a class="code" href="structprjprm.html#546d3a98a76c7ebb39d5a56d3a8574c1">padding</a>;                <span class="comment">/* (Dummy inserted for alignment purposes.) */</span>
+<a name="l00554"></a><a class="code" href="structprjprm.html#ab36c6218a33025ac4c5025de7c67d42">00554</a>   <span class="keywordtype">int</span>    <a class="code" href="structprjprm.html#ab36c6218a33025ac4c5025de7c67d42">n</a>;                     <span class="comment">/* Intermediate value.                      */</span>
+<a name="l00555"></a><a class="code" href="structprjprm.html#546d3a98a76c7ebb39d5a56d3a8574c1">00555</a>   <span class="keywordtype">int</span>    <a class="code" href="structprjprm.html#546d3a98a76c7ebb39d5a56d3a8574c1">padding</a>;               <span class="comment">/* (Dummy inserted for alignment purposes.) */</span>
 <a name="l00556"></a>00556 
 <a name="l00557"></a>00557   int (*<a class="code" href="structprjprm.html#eef644ffeafea16e82b2b995a470a345">prjx2s</a>)(<a class="code" href="prj_8h.html#37ad31c5d2926862d211db0d14f401f0" title="For use in declaring deprojection function prototypes.">PRJX2S_ARGS</a>);   <span class="comment">/* Pointers to the spherical projection and */</span>
 <a name="l00558"></a>00558   int (*<a class="code" href="structprjprm.html#e699a5fb02198777343057972e1452d0">prjs2x</a>)(<a class="code" href="prj_8h.html#acc46318c778bd844e30d6997394cc8a" title="For use in declaring projection function prototypes.">PRJS2X_ARGS</a>);   <span class="comment">/* deprojection functions.                  */</span>
@@ -708,7 +708,7 @@
 <a name="l00692"></a>00692 <span class="preprocessor"></span>
 <a name="l00693"></a>00693 <span class="preprocessor">#endif </span><span class="comment">/* WCSLIB_PROJ */</span>
 </pre></div></div>
-<hr size="1"><address style="text-align: right;"><small>Generated on Thu Aug 12 18:27:48 2010 for WCSLIB 4.5.1 by&nbsp;
+<hr size="1"><address style="text-align: right;"><small>Generated on Wed Nov 24 12:48:54 2010 for WCSLIB 4.6.3 by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.5.6 </small></address>
 </body>

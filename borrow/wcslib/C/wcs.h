@@ -1,6 +1,6 @@
 /*============================================================================
 
-  WCSLIB 4.5 - an implementation of the FITS WCS standard.
+  WCSLIB 4.6 - an implementation of the FITS WCS standard.
   Copyright (C) 1995-2010, Mark Calabretta
 
   This file is part of WCSLIB.
@@ -31,7 +31,7 @@
   $Id$
 *=============================================================================
 *
-* WCSLIB 4.5 - C routines that implement the FITS World Coordinate System
+* WCSLIB 4.6 - C routines that implement the FITS World Coordinate System
 * (WCS) standard.  Refer to
 *
 *   "Representations of world coordinates in FITS",
@@ -344,10 +344,9 @@
 * it (refer to the description of the wcsprm struct).
 *
 * wcsset() recognizes the NCP projection and converts it to the equivalent SIN
-* projection and it also recognizes GLS as a synonym for SFL.  It also
-* translates the AIPS spectral types ('FREQ-LSR', 'FELO-HEL', etc.), possibly
-* changing the input header keywords wcsprm::ctype and/or wcsprm::specsys if
-* necessary.
+* projection and likewise translates GLS into SFL.  It also translates the
+* AIPS spectral types ('FREQ-LSR', 'FELO-HEL', etc.), possibly changing the
+* input header keywords wcsprm::ctype and/or wcsprm::specsys if necessary.
 *
 * Note that this routine need not be called directly; it will be invoked by
 * wcsp2s() and wcss2p() if the wcsprm::flag is anything other than a
@@ -815,8 +814,8 @@
 *
 *     Note that, if they were not given, wcsset() resets the entries for
 *     PVi_1a, PVi_2a, PVi_3a, and PVi_4a for longitude axis i to match
-*     (phi_0,theta_0), the native longitude and latitude of the reference
-*     point given by LONPOLEa and LATPOLEa.
+*     phi_0 and theta_0 (the native longitude and latitude of the reference
+*     point), LONPOLEa and LATPOLEa respectively.
 *
 *   int nps
 *     (Given) The number of entries in the wcsprm::ps[] array.

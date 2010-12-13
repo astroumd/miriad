@@ -1,6 +1,6 @@
 /*============================================================================
 
-  WCSLIB 4.5 - an implementation of the FITS WCS standard.
+  WCSLIB 4.6 - an implementation of the FITS WCS standard.
   Copyright (C) 1995-2010, Mark Calabretta
 
   This file is part of WCSLIB.
@@ -52,6 +52,13 @@
 #define wcss2p_  F77_FUNC(wcss2p,  WCSS2P)
 #define wcsmix_  F77_FUNC(wcsmix,  WCSMIX)
 #define wcssptr_ F77_FUNC(wcssptr, WCSSPTR)
+
+#define wcsptc_  F77_FUNC(wcsptc,  WCSPTC)
+#define wcsptd_  F77_FUNC(wcsptd,  WCSPTD)
+#define wcspti_  F77_FUNC(wcspti,  WCSPTI)
+#define wcsgtc_  F77_FUNC(wcsgtc,  WCSGTC)
+#define wcsgtd_  F77_FUNC(wcsgtd,  WCSGTD)
+#define wcsgti_  F77_FUNC(wcsgti,  WCSGTI)
 
 #define WCS_FLAG     100
 #define WCS_NAXIS    101
@@ -318,6 +325,24 @@ int wcsput_(
   }
 
   return 0;
+}
+
+int wcsptc_(int *wcs, const int *what, const char *value, const int *i,
+  const int *j)
+{
+  return wcsput_(wcs, what, value, i, j);
+}
+
+int wcsptd_(int *wcs, const int *what, const double *value, const int *i,
+  const int *j)
+{
+  return wcsput_(wcs, what, value, i, j);
+}
+
+int wcspti_(int *wcs, const int *what, const int *value, const int *i,
+  const int *j)
+{
+  return wcsput_(wcs, what, value, i, j);
 }
 
 /*--------------------------------------------------------------------------*/
@@ -592,6 +617,21 @@ int wcsget_(const int *wcs, const int *what, void *value)
   }
 
   return 0;
+}
+
+int wcsgtc_(const int *wcs, const int *what, char *value)
+{
+  return wcsget_(wcs, what, value);
+}
+
+int wcsgtd_(const int *wcs, const int *what, double *value)
+{
+  return wcsget_(wcs, what, value);
+}
+
+int wcsgti_(const int *wcs, const int *what, int *value)
+{
+  return wcsget_(wcs, what, value);
 }
 
 /*--------------------------------------------------------------------------*/

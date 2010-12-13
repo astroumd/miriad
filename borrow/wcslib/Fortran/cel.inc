@@ -1,6 +1,6 @@
 *=======================================================================
 *
-* WCSLIB 4.5 - an implementation of the FITS WCS standard.
+* WCSLIB 4.6 - an implementation of the FITS WCS standard.
 * Copyright (C) 1995-2010, Mark Calabretta
 *
 * This file is part of WCSLIB.
@@ -32,8 +32,10 @@
 *=======================================================================
 
 *     Functions.
-      EXTERNAL  CELINI, CELPUT, CELGET, CELPRT, CELSET, CELX2S, CELS2X
-      INTEGER   CELINI, CELPUT, CELGET, CELPRT, CELSET, CELX2S, CELS2X
+      EXTERNAL  CELGET, CELGTC, CELGTD, CELGTI, CELINI, CELPRT, CELPTC,
+     :          CELPTD, CELPTI, CELPUT, CELS2X, CELSET, CELX2S
+      INTEGER   CELGET, CELGTC, CELGTD, CELGTI, CELINI, CELPRT, CELPTC,
+     :          CELPTD, CELPTI, CELPUT, CELS2X, CELSET, CELX2S
 
 *     Length of the CELPRM data structure (INTEGER array) on 64-bit
 *     machines.  Only needs to be 140 on 32-bit machines.
@@ -59,11 +61,4 @@
       PARAMETER (CEL_ISOLAT = 202)
 
       CHARACTER CEL_ERRMSG(0:6)*80
-      DATA CEL_ERRMSG /
-     :  'Success',
-     :  'Null celprm pointer passed',
-     :  'Invalid projection parameters',
-     :  'Invalid coordinate transformation parameters',
-     :  'Ill-conditioned coordinate transformation parameters',
-     :  'One or more of the (x,y) coordinates were invalid',
-     :  'One or more of the (lng,lat) coordinates were invalid'/
+      COMMON /CEL_DATA/ CEL_ERRMSG

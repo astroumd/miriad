@@ -1,6 +1,6 @@
 *=======================================================================
 *
-* WCSLIB 4.5 - an implementation of the FITS WCS standard.
+* WCSLIB 4.6 - an implementation of the FITS WCS standard.
 * Copyright (C) 1995-2010, Mark Calabretta
 *
 * This file is part of WCSLIB.
@@ -32,10 +32,10 @@
 *=======================================================================
 
 *     Functions.
-      EXTERNAL  TABINI, TABCPY, TABPUT, TABGET, TABFREE, TABMEM, TABPRT,
-     :          TABSET, TABX2S, TABS2X
-      INTEGER   TABINI, TABCPY, TABPUT, TABGET, TABFREE, TABMEM, TABPRT,
-     :          TABSET, TABX2S, TABS2X
+      EXTERNAL  TABCPY, TABFREE, TABGET, TABGTD, TABGTI, TABINI, TABMEM,
+     :          TABPRT, TABPTD, TABPTI, TABPUT, TABS2X, TABSET, TABX2S
+      INTEGER   TABCPY, TABFREE, TABGET, TABGTD, TABGTI, TABINI, TABMEM,
+     :          TABPRT, TABPTD, TABPTI, TABPUT, TABS2X, TABSET, TABX2S
 
 *     Length of the TABPRM data structure (INTEGER array) on 64-bit
 *     machines.  Only needs to be 23 on 32-bit machines.
@@ -64,10 +64,4 @@
       PARAMETER (TAB_EXTREMA = 204)
 
       CHARACTER TAB_ERRMSG(0:5)*80
-      DATA TAB_ERRMSG /
-     :  'Success',
-     :  'Null tabprm pointer passed',
-     :  'Memory allocation failed',
-     :  'Invalid tabular parameters',
-     :  'One or more of the x coordinates were invalid',
-     :  'One or more of the world coordinates were invalid'/
+      COMMON /TAB_DATA/ TAB_ERRMSG

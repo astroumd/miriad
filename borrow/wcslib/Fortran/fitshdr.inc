@@ -1,6 +1,6 @@
 *=======================================================================
 *
-* WCSLIB 4.5 - an implementation of the FITS WCS standard.
+* WCSLIB 4.6 - an implementation of the FITS WCS standard.
 * Copyright (C) 1995-2010, Mark Calabretta
 *
 * This file is part of WCSLIB.
@@ -32,8 +32,10 @@
 *=======================================================================
 
 *     Functions.
-      EXTERNAL  FITSHDR, KEYGET, KEYIDGET, KEYIDPUT, FREEKEYS
-      INTEGER   FITSHDR, KEYGET, KEYIDGET, KEYIDPUT, FREEKEYS
+      EXTERNAL  FITSHDR, FREEKEYS, KEYGET, KEYIDGET, KEYIDGTC, KEYIDGTI,
+     :          KEYIDPTC, KEYIDPUT
+      INTEGER   FITSHDR, FREEKEYS, KEYGET, KEYIDGET, KEYIDGTC, KEYIDGTI,
+     :          KEYIDPTC, KEYIDPUT
 
 *     Length of FITSKEY and FITSKEYID data structures (INTEGER arrays)
 *     on 64-bit machines.  KEYLEN only needs to be 38 on 32-bit machines.
@@ -62,7 +64,4 @@
       PARAMETER (KEY_COMMENT   = 207)
 
       CHARACTER FITSHDR_ERRMSG(0:2)*80
-      DATA FITSHDR_ERRMSG /
-     :  'Success',
-     :  'Null fitskey pointer-pointer passed',
-     :  'Memory allocation failed'/
+      COMMON /FITSHDR_DATA/ FITSHDR_ERRMSG

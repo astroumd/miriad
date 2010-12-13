@@ -1,6 +1,6 @@
 /*============================================================================
 
-  WCSLIB 4.5 - an implementation of the FITS WCS standard.
+  WCSLIB 4.6 - an implementation of the FITS WCS standard.
   Copyright (C) 1995-2010, Mark Calabretta
 
   This file is part of WCSLIB.
@@ -50,6 +50,13 @@
 #define spcxps_ F77_FUNC(spcxps, SPCXPS)
 #define spctrn_ F77_FUNC(spctrn, SPCTRN)
 #define spcaips_ F77_FUNC(spcaips, SPCAIPS)
+
+#define spcptc_ F77_FUNC(spcptc, SPCPTC)
+#define spcptd_ F77_FUNC(spcptd, SPCPTD)
+#define spcpti_ F77_FUNC(spcpti, SPCPTI)
+#define spcgtc_ F77_FUNC(spcgtc, SPCGTC)
+#define spcgtd_ F77_FUNC(spcgtd, SPCGTD)
+#define spcgti_ F77_FUNC(spcgti, SPCGTI)
 
 #define SPC_FLAG    100
 #define SPC_TYPE    101
@@ -119,6 +126,21 @@ int spcput_(int *spc, const int *what, const void *value, const int *m)
   return 0;
 }
 
+int spcptc_(int *spc, const int *what, const char *value, const int *m)
+{
+  return spcput_(spc, what, value, m);
+}
+
+int spcptd_(int *spc, const int *what, const double *value, const int *m)
+{
+  return spcput_(spc, what, value, m);
+}
+
+int spcpti_(int *spc, const int *what, const int *value, const int *m)
+{
+  return spcput_(spc, what, value, m);
+}
+
 /*--------------------------------------------------------------------------*/
 
 int spcget_(const int *spc, const int *what, void *value)
@@ -173,6 +195,21 @@ int spcget_(const int *spc, const int *what, void *value)
   }
 
   return 0;
+}
+
+int spcgtc_(const int *spc, const int *what, char *value)
+{
+  return spcget_(spc, what, value);
+}
+
+int spcgtd_(const int *spc, const int *what, double *value)
+{
+  return spcget_(spc, what, value);
+}
+
+int spcgti_(const int *spc, const int *what, int *value)
+{
+  return spcget_(spc, what, value);
 }
 
 /*--------------------------------------------------------------------------*/

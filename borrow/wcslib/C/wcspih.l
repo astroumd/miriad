@@ -1,6 +1,6 @@
 /*============================================================================
 
-  WCSLIB 4.5 - an implementation of the FITS WCS standard.
+  WCSLIB 4.6 - an implementation of the FITS WCS standard.
   Copyright (C) 1995-2010, Mark Calabretta
 
   This file is part of WCSLIB.
@@ -154,7 +154,7 @@ jmp_buf wcspih_abort_jmp_env;
 	int  i, j, m;
 	
 	char *cptr, *errmsg, errtxt[80], *hptr, *keep;
-	int  altlin, alts[27], iax, idx, ipx, ix, jx, naxis, *npptr,
+	int  altlin, alts[27], ialt, idx, ipx, ix, jx, naxis, *npptr,
 	     nps[27], npv[27], pass, status, valtype, voff;
 	double epoch[27], vsource[27];
 	void *vptr, *wptr;
@@ -162,12 +162,12 @@ jmp_buf wcspih_abort_jmp_env;
 	int yylex_destroy(void);
 	
 	naxis = 0;
-	for (iax = 0; iax < 27; iax++) {
-	  alts[iax] = 0;
-	  npv[iax] = 0;
-	  nps[iax] = 0;
-	  epoch[iax]   = UNDEFINED;
-	  vsource[iax] = UNDEFINED;
+	for (ialt = 0; ialt < 27; ialt++) {
+	  alts[ialt] = 0;
+	  npv[ialt] = 0;
+	  nps[ialt] = 0;
+	  epoch[ialt]   = UNDEFINED;
+	  vsource[ialt] = UNDEFINED;
 	}
 	
 	/* Parameters used to implement YY_INPUT. */
@@ -756,16 +756,16 @@ jmp_buf wcspih_abort_jmp_env;
 	  } else {
 	    if (vptr) {
 	      /* Determine the coordinate representation. */
-	      for (iax = 0; iax < *nwcs; iax++) {
+	      for (ialt = 0; ialt < *nwcs; ialt++) {
 	        /* The loop here is for keywords that apply */
 	        /* to every alternate; these have a == 0. */
 	        if (a >= 'A') {
-	          iax = alts[a-'A'+1];
+	          ialt = alts[a-'A'+1];
 	        }
 	
 	        wptr = vptr;
-	        if (iax) {
-	          voff = (char *)(*wcs+iax) - (char *)(*wcs);
+	        if (ialt) {
+	          voff = (char *)(*wcs+ialt) - (char *)(*wcs);
 	          wptr = (void *)((char *)vptr + voff);
 	        }
 	
@@ -802,16 +802,16 @@ jmp_buf wcspih_abort_jmp_env;
 	  } else {
 	    if (vptr) {
 	      /* Determine the coordinate representation. */
-	      for (iax = 0; iax < *nwcs; iax++) {
+	      for (ialt = 0; ialt < *nwcs; ialt++) {
 	        /* The loop here is for keywords like MJD-OBS that */
 	        /* apply to every alternate; these have a == 0.  */
 	        if (a >= 'A') {
-	          iax = alts[a-'A'+1];
+	          ialt = alts[a-'A'+1];
 	        }
 	
 	        wptr = vptr;
-	        if (iax) {
-	          voff = (char *)(*wcs+iax) - (char *)(*wcs);
+	        if (ialt) {
+	          voff = (char *)(*wcs+ialt) - (char *)(*wcs);
 	          wptr = (void *)((char *)vptr + voff);
 	        }
 	
@@ -820,10 +820,10 @@ jmp_buf wcspih_abort_jmp_env;
 	          wptr = *((double **)wptr) + idx;
 	
 	        } else if (npptr == npv) {
-	          ipx = (*wcs+iax)->npv++;
-	          (*wcs+iax)->pv[ipx].i = i;
-	          (*wcs+iax)->pv[ipx].m = m;
-	          wptr = &((*wcs+iax)->pv[ipx].value);
+	          ipx = (*wcs+ialt)->npv++;
+	          (*wcs+ialt)->pv[ipx].i = i;
+	          (*wcs+ialt)->pv[ipx].m = m;
+	          wptr = &((*wcs+ialt)->pv[ipx].value);
 	        }
 	
 	        /* Read the keyvalue. */
@@ -831,7 +831,7 @@ jmp_buf wcspih_abort_jmp_env;
 	
 	        /* Flag the presence of PCi_ja, or CDi_ja and/or CROTAia. */
 	        if (altlin) {
-	          (*wcs+iax)->altlin |= altlin;
+	          (*wcs+ialt)->altlin |= altlin;
 	          altlin = 0;
 	        }
 	
@@ -860,16 +860,16 @@ jmp_buf wcspih_abort_jmp_env;
 	  } else {
 	    if (vptr) {
 	      /* Determine the coordinate representation. */
-	      for (iax = 0; iax < *nwcs; iax++) {
+	      for (ialt = 0; ialt < *nwcs; ialt++) {
 	        /* The loop here is for keywords like DATE-OBS that */
 	        /* apply to every alternate; these have a == 0.   */
 	        if (a >= 'A') {
-	          iax = alts[a-'A'+1];
+	          ialt = alts[a-'A'+1];
 	        }
 	
 	        wptr = vptr;
-	        if (iax) {
-	          voff = (char *)(*wcs+iax) - (char *)(*wcs);
+	        if (ialt) {
+	          voff = (char *)(*wcs+ialt) - (char *)(*wcs);
 	          wptr = (void *)((char *)vptr + voff);
 	        }
 	
@@ -878,10 +878,10 @@ jmp_buf wcspih_abort_jmp_env;
 	          wptr = *((char (**)[72])wptr) + idx;
 	
 	        } else if (npptr == nps) {
-	          ipx = (*wcs+iax)->nps++;
-	          (*wcs+iax)->ps[ipx].i = i;
-	          (*wcs+iax)->ps[ipx].m = m;
-	          wptr = (*wcs+iax)->ps[ipx].value;
+	          ipx = (*wcs+ialt)->nps++;
+	          (*wcs+ialt)->ps[ipx].i = i;
+	          (*wcs+ialt)->ps[ipx].m = m;
+	          wptr = (*wcs+ialt)->ps[ipx].value;
 	        }
 	
 	        /* Read the keyvalue. */
@@ -1034,18 +1034,18 @@ void wcspih_naxes(int naxis, int i, int j, char a, int alts[], int *npptr)
 {
   /* On the first pass alts[] is used to determine the number of axes */
   /* for each of the 27 possible alternate coordinate descriptions.   */
-  int iax, *ip;
+  int ialt, *ip;
 
   if (a == 0) {
     return;
   }
 
-  iax = 0;
+  ialt = 0;
   if (a != ' ') {
-    iax = a - 'A' + 1;
+    ialt = a - 'A' + 1;
   }
 
-  ip = alts + iax;
+  ip = alts + ialt;
 
   if (*ip < naxis) {
     *ip = naxis;
@@ -1061,7 +1061,7 @@ void wcspih_naxes(int naxis, int i, int j, char a, int alts[], int *npptr)
   }
 
   if (npptr) {
-    npptr[iax]++;
+    npptr[ialt]++;
   }
 }
 
@@ -1080,13 +1080,13 @@ int wcspih_inits(
   struct wcsprm **wcs)
 
 {
-  int iax, npsmax, npvmax, status = 0;
+  int ialt, npsmax, npvmax, status = 0;
   struct wcsprm *wcsp;
 
   /* Find the number of coordinate descriptions. */
   *nwcs = 0;
-  for (iax = 0; iax < 27; iax++) {
-    if (alts[iax]) (*nwcs)++;
+  for (ialt = 0; ialt < 27; ialt++) {
+    if (alts[ialt]) (*nwcs)++;
   }
 
   if (!(*nwcs) && naxis) {
@@ -1109,23 +1109,23 @@ int wcspih_inits(
     /* Initialize each wcsprm struct. */
     wcsp = *wcs;
     *nwcs = 0;
-    for (iax = 0; iax < 27; iax++) {
-      if (alts[iax]) {
+    for (ialt = 0; ialt < 27; ialt++) {
+      if (alts[ialt]) {
         wcsp->flag = -1;
-        wcsnpv(npv[iax]);
-        wcsnps(nps[iax]);
-        if ((status = wcsini(1, alts[iax], wcsp))) {
+        wcsnpv(npv[ialt]);
+        wcsnps(nps[ialt]);
+        if ((status = wcsini(1, alts[ialt], wcsp))) {
           wcsvfree(nwcs, wcs);
           break;
         }
 
         /* Record the alternate version code. */
-        if (iax) {
-          wcsp->alt[0] = 'A' + iax - 1;
+        if (ialt) {
+          wcsp->alt[0] = 'A' + ialt - 1;
         }
 
         /* On the second pass alts[] indexes the array of wcsprm structs. */
-        alts[iax] = (*nwcs)++;
+        alts[ialt] = (*nwcs)++;
 
         wcsp++;
       }
@@ -1152,25 +1152,25 @@ int wcspih_final(
   struct wcsprm **wcs)
 
 {
-  int iax, status;
+  int ialt, status;
   double beta, c = 299792458.0;
 
-  for (iax = 0; iax < *nwcs; iax++) {
+  for (ialt = 0; ialt < *nwcs; ialt++) {
     /* Check for EPOCH overriding EQUINOXa. */
-    if (undefined((*wcs+iax)->equinox) && !undefined(epoch[iax])) {
+    if (undefined((*wcs+ialt)->equinox) && !undefined(epoch[ialt])) {
       /* Set EQUINOXa. */
-      (*wcs+iax)->equinox = epoch[iax];
+      (*wcs+ialt)->equinox = epoch[ialt];
     }
 
     /* Check for VSOURCEa overriding ZSOURCEa. */
-    if (undefined((*wcs+iax)->zsource) && !undefined(vsource[iax])) {
+    if (undefined((*wcs+ialt)->zsource) && !undefined(vsource[ialt])) {
       /* Convert relativistic Doppler velocity to redshift. */
-      beta = vsource[iax]/c;
-      (*wcs+iax)->zsource = (1.0+beta)/sqrt(1.0 - beta*beta) - 1.0;
+      beta = vsource[ialt]/c;
+      (*wcs+ialt)->zsource = (1.0+beta)/sqrt(1.0 - beta*beta) - 1.0;
     }
 
     /* Interpret -TAB header keywords. */
-    if ((status = wcstab(*wcs+iax))) {
+    if ((status = wcstab(*wcs+ialt))) {
        wcsvfree(nwcs, wcs);
        return status;
     }

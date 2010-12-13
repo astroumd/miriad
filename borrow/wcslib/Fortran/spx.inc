@@ -1,6 +1,6 @@
 *=======================================================================
 *
-* WCSLIB 4.5 - an implementation of the FITS WCS standard.
+* WCSLIB 4.6 - an implementation of the FITS WCS standard.
 * Copyright (C) 1995-2010, Mark Calabretta
 *
 * This file is part of WCSLIB.
@@ -115,9 +115,4 @@
       EQUIVALENCE (SPXI(2), SPX_VELOTYPE)
 
       CHARACTER SPX_ERRMSG(0:4)*80
-      DATA SPX_ERRMSG /
-     :  'Success',
-     :  'Null spxprm pointer passed',
-     :  'Invalid spectral parameters',
-     :  'Invalid spectral variable',
-     :  'One or more of the inspec coordinates were invalid'/
+      COMMON /SPX_DATA/ SPX_ERRMSG

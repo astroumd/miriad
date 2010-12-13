@@ -1,6 +1,6 @@
 /*============================================================================
 
-  WCSLIB 4.5 - an implementation of the FITS WCS standard.
+  WCSLIB 4.6 - an implementation of the FITS WCS standard.
   Copyright (C) 1995-2010, Mark Calabretta
 
   This file is part of WCSLIB.
@@ -80,7 +80,7 @@ int main(int argc, char **argv)
   int  alts[27], gcode[2], hdunum = 1, hdutype, i, ic, naxes, naxis[2],
        nkeyrec, nreject, nwcs, stat[NWCSFIX], status;
   float  blc[2], trc[2];
-  double cache[257][4], grid1[1], grid2[1], nldprm[1];
+  double cache[257][4], grid1[3], grid2[3], nldprm[1];
   struct wcsprm *wcs;
   nlfunc_t pgwcsl_;
   fitsfile *fptr;
@@ -157,7 +157,7 @@ int main(int argc, char **argv)
       hdunum);
     return 1;
   } else if (naxes > 2) {
-    printf("HDU number %d contains an %d-D image array.\n", hdunum, naxes);
+    printf("HDU number %d contains a %d-D image array.\n", hdunum, naxes);
   }
 
   /* Read in the FITS header, excluding COMMENT and HISTORY keyrecords. */
@@ -247,22 +247,24 @@ int main(int argc, char **argv)
   }
   cpgvstd();
 
-  cpgwnad(0.0f, 1.0f, 0.0f, 1.0f);
+  cpgwnad(blc[0], trc[0], blc[0], trc[1]);
   cpgask(1);
   cpgpage();
-
-  opt[0] = 'G';
-  opt[1] = 'E';
 
   /* Compact lettering. */
   cpgsch(0.8f);
 
   /* Draw full grid lines. */
-  cpgsci(1);
   gcode[0] = 2;
   gcode[1] = 2;
-  grid1[0] = 0.0;
-  grid2[0] = 0.0;
+  grid1[0] =    0.0;
+  grid2[0] =    0.0;
+  grid1[1] = -180.0;
+  grid1[2] =  180.0;
+  grid2[1] =  -90.0;
+  grid2[2] =   90.0;
+
+  cpgsci(1);
 
   for (i = 0; i < nwcs; i++) {
     if (alt && (wcs+i)->alt[0] != alt) {
@@ -273,6 +275,9 @@ int main(int argc, char **argv)
       fprintf(stderr, "wcsset ERROR %d: %s.\n", status, wcs_errmsg[status]);
       continue;
     }
+
+    /* Draw the frame. */
+    cpgbox("BC", 0.0f, 0, "BC", 0.0f, 0);
 
     /* Axis labels; use CNAMEia in preference to CTYPEia. */
     if ((wcs+i)->cname[0][0]) {
@@ -293,6 +298,17 @@ int main(int argc, char **argv)
       printf("\n%s\n", idents[2]);
     }
 
+    /* Formatting control for celestial coordinates. */
+    if (strncmp((wcs+i)->ctype[0], "RA", 2) == 0) {
+      /* Right ascension in HMS, declination in DMS. */
+      opt[0] = 'G';
+      opt[1] = 'E';
+    } else {
+      /* Other angles in decimal degrees. */
+      opt[0] = 'A';
+      opt[1] = 'B';
+    }
+
     /* Draw the celestial grid.  The grid density is set for each world */
     /* coordinate by specifying LABDEN = 1224. */
     ic = -1;
@@ -300,8 +316,20 @@ int main(int argc, char **argv)
       grid2, 0, pgwcsl_, 1, WCSLEN, 1, nlcprm, (int *)(wcs+i), nldprm, 256,
       &ic, cache, &status);
 
-    /* Draw the frame. */
-    cpgbox("BC", 0.0f, 0, "BC", 0.0f, 0);
+    /* Delimit the projection boundary. */
+    if ((wcs+i)->cel.prj.category != ZENITHAL) {
+      /* Reset to the native coordinate graticule. */
+      (wcs+i)->crval[0] = (wcs+i)->cel.prj.phi0;
+      (wcs+i)->crval[1] = (wcs+i)->cel.prj.theta0;
+      (wcs+i)->lonpole  = 999.0;
+      (wcs+i)->latpole  = 999.0;
+      status = wcsset(wcs+i);
+
+      ic = -1;
+      cpgsbox(blc, trc, idents, opt, -1, 0, c0, gcode, 0.0, 2, grid1, 2,
+        grid2, 0, pgwcsl_, 1, WCSLEN, 1, nlcprm, (int *)(wcs+i), nldprm, 256,
+        &ic, cache, &status);
+    }
 
     cpgpage();
   }

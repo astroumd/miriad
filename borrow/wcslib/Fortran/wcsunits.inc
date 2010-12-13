@@ -1,6 +1,6 @@
 *=======================================================================
 *
-* WCSLIB 4.5 - an implementation of the FITS WCS standard.
+* WCSLIB 4.6 - an implementation of the FITS WCS standard.
 * Copyright (C) 1995-2010, Mark Calabretta
 *
 * This file is part of WCSLIB.
@@ -67,27 +67,5 @@
      :          WCSUNITS_TYPES(WCSUNITS_NTYPE)*18,
      :          WCSUNITS_UNITS(WCSUNITS_NTYPE)*9
 
-      DATA WCSUNITS_ERRMSG /
-     :  'Success',
-     :  'Invalid numeric multiplier',
-     :  'Dangling binary operator',
-     :  'Invalid symbol in INITIAL context',
-     :  'Function in invalid context',
-     :  'Invalid symbol in EXPON context',
-     :  'Unbalanced bracket',
-     :  'Unbalanced parenthesis',
-     :  'Consecutive binary operators',
-     :  'Internal parser error',
-     :  'Non-conformant unit specifications',
-     :  'Non-conformant functions',
-     :  'Potentially unsafe translation'/
-
-      DATA WCSUNITS_TYPES /
-     :  'plane angle', 'solid angle', 'charge', 'mole', 'temperature',
-     :  'luminous intensity', 'mass', 'length', 'time', 'beam', 'bin',
-     :  'bit', 'count', 'stellar magnitude', 'pixel', 'solar ratio',
-     :  'voxel'/
-
-      DATA WCSUNITS_UNITS /
-     :  'degree', 'steradian', 'Coulomb', 'mole', 'Kelvin', 'candela',
-     :  'kilogram', 'metre', 'second', '', '', '', '', '', '', '', ''/
+      COMMON /WCSUNITS_DATA/ WCSUNITS_ERRMSG, WCSUNITS_TYPES,
+     :                       WCSUNITS_UNITS

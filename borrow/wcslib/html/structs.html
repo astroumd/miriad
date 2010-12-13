@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-<title>WCSLIB 4.5.1: WCSLIB data structures</title>
+<title>WCSLIB 4.6.3: WCSLIB data structures</title>
 <link href="doxygen.css" rel="stylesheet" type="text/css">
 <link href="tabs.css" rel="stylesheet" type="text/css">
 </head><body>
@@ -14,7 +14,7 @@
       <li><a href="files.html"><span>Files</span></a></li>
     </ul>
   </div>
-  <div class="navpath"><a class="el" href="index.html">WCSLIB 4.5.1 and PGSBOX 4.5.1</a>
+  <div class="navpath"><a class="el" href="index.html">WCSLIB 4.6.3 and PGSBOX 4.6.3</a>
   </div>
 </div>
 <div class="contents">
@@ -33,7 +33,7 @@ Three basic operations apply to all WCSLIB structs:<p>
 Each struct contains a <em>flag</em> member that records its setup state. This is cleared by the initialization routine and checked by the routines that use the struct; they will invoke the setup routine automatically if necessary, hence it need not be invoked specifically by the application programmer. However, if any of the required values in a struct are changed then either the setup routine must be invoked on it, or else the <em>flag</em> must be zeroed to signal that the struct needs to be reset.<p>
 The initialization routine may be invoked repeatedly on a struct if it is desired to reuse it. However, the <em>flag</em> member of structs that contain allocated memory (<a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a>, <a class="el" href="structlinprm.html" title="Linear transformation parameters.">linprm</a> and <a class="el" href="structtabprm.html" title="Tabular transformation parameters.">tabprm</a>) must be set to -1 before the first initialization to initialize memory management, but not subsequently or else memory leaks will result.<p>
 Each struct has one or more service routines: to do deep copies from one to another, to print its contents, and to free allocated memory. Refer to the header files for a detailed description. </div>
-<hr size="1"><address style="text-align: right;"><small>Generated on Thu Aug 12 18:27:49 2010 for WCSLIB 4.5.1 by&nbsp;
+<hr size="1"><address style="text-align: right;"><small>Generated on Wed Nov 24 12:48:54 2010 for WCSLIB 4.6.3 by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.5.6 </small></address>
 </body>

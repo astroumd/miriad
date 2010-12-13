@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-<title>WCSLIB 4.5.1: Vector API</title>
+<title>WCSLIB 4.6.3: Vector API</title>
 <link href="doxygen.css" rel="stylesheet" type="text/css">
 <link href="tabs.css" rel="stylesheet" type="text/css">
 </head><body>
@@ -14,7 +14,7 @@
       <li><a href="files.html"><span>Files</span></a></li>
     </ul>
   </div>
-  <div class="navpath"><a class="el" href="index.html">WCSLIB 4.5.1 and PGSBOX 4.5.1</a>
+  <div class="navpath"><a class="el" href="index.html">WCSLIB 4.6.3 and PGSBOX 4.6.3</a>
   </div>
 </div>
 <div class="contents">
@@ -51,7 +51,7 @@ This is best described by illustration. The following diagram describes the situ
   lat[1]  |  x,y[5]   x,y[6]   x,y[7]  x,y[8]   x,y[9]
   lat[2]  |  x,y[10]  x,y[11]  x,y[12] x,y[13]  x,y[14]
 </pre></div><p>
-In this case, while only 5 longitude elements and 3 latitude elements are specified, the world-to-pixel routine would calculate <em>nlng * nlat = 15 (x,y)</em> coordinate pairs. It is the responsibility of the caller to ensure that sufficient space has been allocated in <b><em>all</em></b> of the output arrays, in this case <em>phi[]</em>, <em>theta[]</em>, <em>x[]</em>, <em>y[]</em> and <em>stat[]</em>.<p>
+In this case, while only 5 longitude elements and 3 latitude elements are specified, the world-to-pixel routine would calculate <em>nlng * nlat = 15 (x,y)</em> coordinate pairs. It is the responsibility of the caller to ensure that sufficient space has been allocated in <em><b>all</b></em> of the output arrays, in this case <em>phi[]</em>, <em>theta[]</em>, <em>x[]</em>, <em>y[]</em> and <em>stat[]</em>.<p>
 Vector computation will often be required where neither <em>lng</em> nor <em>lat</em> is constant. This is accomplished by setting <em>nlat</em> = 0 which is interpreted to mean <em>nlat = nlng</em> but only the matrix diagonal is to be computed. Thus, for <em>nlng = 3</em> and <em>nlat = 0</em> only three <em>(x,y)</em> coordinate pairs are computed:<p>
 <div class="fragment"><pre class="fragment">
              lng[0]   lng[1]   lng[2]
@@ -86,7 +86,7 @@ As a further example consider the following two arrangements in memory of the el
 <p>
 For routines such as <a class="el" href="cel_8h.html#6661c05703158b0808038b7d551f1ea1" title="World-to-pixel celestial transformation.">cels2x()</a>, each of the pair of input vectors is assumed to have the same stride. Each of the output vectors also has the same stride, though it may differ from the input stride. For example, for <a class="el" href="cel_8h.html#6661c05703158b0808038b7d551f1ea1" title="World-to-pixel celestial transformation.">cels2x()</a> the input <em>lng[]</em> and <em>lat[]</em> vectors each have vector stride <em>sll</em>, while the <em>x[]</em> and <em>y[]</em> output vectors have stride <em>sxy</em>. However, the intermediate <em>phi[]</em> and <em>theta[]</em> arrays each have unit stride, as does the <em>stat[]</em> vector.<p>
 If the vector length is 1 then the stride is irrelevant and so ignored. It may be set to 0. </div>
-<hr size="1"><address style="text-align: right;"><small>Generated on Thu Aug 12 18:27:49 2010 for WCSLIB 4.5.1 by&nbsp;
+<hr size="1"><address style="text-align: right;"><small>Generated on Wed Nov 24 12:48:54 2010 for WCSLIB 4.6.3 by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.5.6 </small></address>
 </body>

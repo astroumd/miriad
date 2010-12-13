@@ -62,15 +62,14 @@
 \form#61:$K_1 K_2 \ldots K_M$
 \form#62:$\Upsilon_m$
 \form#63:$K_1$
-\form#64:$(\phi_0,\theta_0)$
-\form#65:$\le$
-\form#66:$\pi/180^\circ$
-\form#67:$\sqrt{2}$
-\form#68:$1/\sqrt{2}$
-\form#69:$\beta$
-\form#70:$(\rho,\beta)$
-\form#71:$\arg(x,y)$
-\form#72:$v$
-\form#73:$1 < |v| < 1 + WCSTRIG\_TOL$
-\form#74:$|v| == 1$
-\form#75:$10^6$
+\form#64:$\le$
+\form#65:$\pi/180^\circ$
+\form#66:$\sqrt{2}$
+\form#67:$1/\sqrt{2}$
+\form#68:$\beta$
+\form#69:$(\rho,\beta)$
+\form#70:$\arg(x,y)$
+\form#71:$v$
+\form#72:$1 < |v| < 1 + WCSTRIG\_TOL$
+\form#73:$|v| == 1$
+\form#74:$10^6$

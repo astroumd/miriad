@@ -1,6 +1,6 @@
 *=======================================================================
 *
-* WCSLIB 4.5 - an implementation of the FITS WCS standard.
+* WCSLIB 4.6 - an implementation of the FITS WCS standard.
 * Copyright (C) 1995-2010, Mark Calabretta
 *
 * This file is part of WCSLIB.
@@ -32,12 +32,12 @@
 *=======================================================================
 
 *     Functions.
-      EXTERNAL  WCSCOPY, WCSFREE, WCSGET, WCSINI, WCSMIX, WCSNPS,
-     :          WCSNPV, WCSP2S, WCSPRT, WCSSPTR, WCSPUT, WCSS2P, WCSSET,
-     :          WCSSUB
-      INTEGER   WCSCOPY, WCSFREE, WCSGET, WCSINI, WCSMIX, WCSNPS,
-     :          WCSNPV, WCSP2S, WCSPRT, WCSSPTR, WCSPUT, WCSS2P, WCSSET,
-     :          WCSSUB
+      EXTERNAL  WCSCOPY, WCSFREE, WCSGET, WCSGTC, WCSGTD, WCSGTI,
+     :          WCSINI, WCSMIX, WCSNPS, WCSNPV, WCSP2S, WCSPRT, WCSSPTR,
+     :          WCSPTC, WCSPTD, WCSPTI, WCSPUT, WCSS2P, WCSSET, WCSSUB
+      INTEGER   WCSCOPY, WCSFREE, WCSGET, WCSGTC, WCSGTD, WCSGTI,
+     :          WCSINI, WCSMIX, WCSNPS, WCSNPV, WCSP2S, WCSPRT, WCSSPTR,
+     :          WCSPTC, WCSPTD, WCSPTI, WCSPUT, WCSS2P, WCSSET, WCSSUB
 
 *     Length of the WCSPRM data structure (INTEGER array) on 64-bit
 *     machines.  Only needs to be 403 on 32-bit machines.
@@ -132,18 +132,4 @@
       PARAMETER (WCSSUB_STOKES    = 4096 + 16)
 
       CHARACTER WCS_ERRMSG(0:13)*80
-      DATA WCS_ERRMSG /
-     :  'Success',
-     :  'Null wcsprm pointer passed',
-     :  'Memory allocation failed',
-     :  'Linear transformation matrix is singular',
-     :  'Inconsistent or unrecognized coordinate axis types',
-     :  'Invalid parameter value',
-     :  'Invalid coordinate transformation parameters',
-     :  'Ill-conditioned coordinate transformation parameters',
-     :  'One or more of the pixel coordinates were invalid',
-     :  'One or more of the world coordinates were invalid',
-     :  'Invalid world coordinate',
-     :  'No solution found in the specified interval',
-     :  'Invalid subimage specification',
-     :  'Non-separable subimage coordinate system'/
+      COMMON /WCS_DATA/ WCS_ERRMSG

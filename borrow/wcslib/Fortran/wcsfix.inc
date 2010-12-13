@@ -1,6 +1,6 @@
 *=======================================================================
 *
-* WCSLIB 4.5 - an implementation of the FITS WCS standard.
+* WCSLIB 4.6 - an implementation of the FITS WCS standard.
 * Copyright (C) 1995-2010, Mark Calabretta
 *
 * This file is part of WCSLIB.
@@ -48,15 +48,4 @@
       PARAMETER (WCSFIX_NWCS = 6)
 
       CHARACTER WCSFIX_ERRMSG(0:10)*80
-      DATA WCSFIX_ERRMSG /
-     :  'Success',
-     :  'Null wcsprm pointer passed',
-     :  'Memory allocation failed',
-     :  'Linear transformation matrix is singular',
-     :  'Inconsistent or unrecognized coordinate axis types',
-     :  'Invalid parameter value',
-     :  'Invalid coordinate transformation parameters',
-     :  'Ill-conditioned coordinate transformation parameters',
-     :  'All of the corner pixel coordinates are invalid',
-     :  'Could not determine reference pixel coordinate',
-     :  'Could not determine reference pixel value'/
+      COMMON /WCSFIX_DATA/ WCSFIX_ERRMSG

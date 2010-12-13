@@ -1,6 +1,6 @@
 *=======================================================================
 *
-* WCSLIB 4.5 - an implementation of the FITS WCS standard.
+* WCSLIB 4.6 - an implementation of the FITS WCS standard.
 * Copyright (C) 1995-2010, Mark Calabretta
 *
 * This file is part of WCSLIB.
@@ -36,8 +36,4 @@
       INTEGER   LOGS2X, LOGX2S
 
       CHARACTER LOG_ERRMSG(0:3)*80
-      DATA LOG_ERRMSG /
-     :  'Success',
-     :  ' ',
-     :  'Invalid log-coordinate reference value',
-     :  'One or more of x coordinates were invalid'/
+      COMMON /LOG_DATA/ LOG_ERRMSG
