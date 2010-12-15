@@ -34,7 +34,9 @@ endif
 # -------------------------------------------------------------------
 #  Compile the code.
 cd $srcdir
+touch configure
 ./configure --bindir=$bindir --libdir=$libdir --includedir=$incdir
+cp config.log config.log.1
 make
 make install
 echo ' '
