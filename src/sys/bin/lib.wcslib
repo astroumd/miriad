@@ -33,6 +33,7 @@ if (! -e $srcdir/wcslib.pdf) then
 endif
 # -------------------------------------------------------------------
 #  Compile the code.
+#  (touching configure prevents it accidental remake if timestamps bad)
 cd $srcdir
 touch configure
 ./configure --bindir=$bindir --libdir=$libdir --includedir=$incdir
