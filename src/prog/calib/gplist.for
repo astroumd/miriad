@@ -74,7 +74,7 @@ c     Use options=addphase to add phases to the existing ones.
 c 
 c     Use options=addphase,force to replace phases.
 c
-c@ ants=
+c@ ants
 c     If given, this is the list of ants you want to see displayed.
 c     Useful if you want a less wide screen display.
 c     By default all are displayed, within limits.
