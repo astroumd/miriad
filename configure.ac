@@ -92,7 +92,7 @@ AC_SUBST(no_globals)
 dnl end no_globals check
 
 AC_F77_LIBRARY_LDFLAGS
-AC_PROG_FC([g95 gfortran gfortran-mp-4.2])
+AC_PROG_FC([g95 gfortran gfortran-mp-4.5])
 ## AM_FCFLAGS([-I$(srcdir)/inc])
 
 AC_PROG_LIBTOOL
