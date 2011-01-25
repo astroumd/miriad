@@ -9,6 +9,7 @@ c     30-jul-97   More precision for RA and add "epoch" keyword.     RJS
 c     07-aug-97   Correct use of epo2jul routine.		     RJS
 c      4-apr-08   Add some velocity reference frames                 PJT
 c     10-aug-09   Add some doppler calculations                      PJT
+c     25-jan-11   Add more doppler options, more obvious output      PJT
 c-----------------------------------------------------------------------
 c= cotra - coordinate transformations
 c& pjt
@@ -23,6 +24,9 @@ c       for common velocity frames of reference:
 c       dVlsr  = Vlsr  - Vbsr     (BSR = Heliocentric)
 c       dVgsr  = Vgsr  - Vlsr
 c       dVlgsr = Vlgsr - Vgsr
+c
+c       In addition, several conversions between doppler velocities
+c       can be calculated (optical, radio, relativistic)
 c@ radec
 c	Input RA/DEC or longitude/latitude. RA is given in hours
 c	(or hh:mm:ss), whereas all the others are given in degrees
@@ -49,10 +53,10 @@ c@ theta0
 c       LSR speed in km/s. Default: 220
 c       The GSR motion (-62,40,-35) is currently hardcoded.
 c@ z
-c       Redshift. You can also give an explicit velocity 
-c       defined via the optical or radio definiton
-c       if a 2nd argument is specified, e.g.
-c       z=1234.5,opt
+c       Redshift (unitless) or velocity (km/s).
+c       If velocity is given,  the optical or radio definition
+c       in a 2nd argument needs to be specified. Valid are
+c       'o' (optical), 'r' (radio) and 'x' (relativistic).
 c       Default : 0
 c@ restfreq
 c       Rest frequency of a spectral line in GHz. 
@@ -66,12 +70,12 @@ c vLGSR = vGSR − 62 cos(l) cos(b) + 40 sin(l) cos(b) − 35 sin(b)
 c
 	INCLUDE 'mirconst.h'
 	CHARACTER  VERSION*(*)
-	PARAMETER (VERSION='Version 10-aug-09')
+	PARAMETER (VERSION='Version 25-jan-2011')
 c
 	double precision lon,lat,blon,blat,dra,ddec,epoch
         double precision dvlsr, dvgsr, dvlgsr,uvw(3),theta0
-        double precision restfreq,z,vopt,vrad,freq
-	character line*128, vtype*10
+        double precision restfreq,z,vopt,vrad,vrel,freq,c
+	character line*200, vtype*10
 c
 	integer NTYPES
 	parameter(NTYPES=5)
@@ -82,7 +86,6 @@ c  Externals.
 c
 	double precision epo2jul
 	character rangle*13,hangleh*15
-        logical keyprsnt
 c
 	data types/'b1950           ','j2000           ',
      *		   'galactic        ',
@@ -164,27 +167,51 @@ c
         write(line,'(a,f14.6)')'dVlgsr:        ', dvlgsr
 	call output(line)
 
+c       speed of light in km/s
+        c = DCMKS/1000.0
         IF (z.NE.0.0d0) THEN
            if (vtype(1:1).eq.'z') then
               freq = restfreq/(1.0d0+z)
-              write(line,'(a,2f11.6,a,f10.4)')
-     *              'Doppler:          ',
-     *              restfreq,freq,' z=',z
+              vrel = ((z+1)*(z+1)-1)/((z+1)*(z+1)+1)*c
+              vopt = z*c
+              vrad = vopt/(1+z)
+              write(line,'(a,2f11.6,a,f8.6,a,f12.4,a,f12.4,a,f12.4)')
+     *              'Doppler:          ', restfreq,freq,
+     *              ' z=',z, ' v=',vrel,
+     *              ' vopt=',vopt,' vrad=',vrad
            else if (vtype(1:1).eq.'r') then
-              vrad = z/DCMKS 
-              freq = restfreq/(1.0d0+vrad)
-              write(line,'(a,2f11.6,a,f10.4)') 
+              vrad = z
+              vopt = vrad/(1-vrad/c)
+              z = vopt/c
+              freq = restfreq*(1.0d0-vrad/c)
+              vrel = ((z+1)*(z+1)-1)/((z+1)*(z+1)+1)*c
+              write(line,'(a,2f11.6,a,f8.6,a,f12.4,a,f12.4)') 
      *              'Doppler:          ',
-     *              restfreq,freq,' vrad/c=',vrad
-              write(*,*) vrad
+     *              restfreq,freq,
+     *              ' z=',z, ' v=',vrel,' vopt=',vopt
            else if (vtype(1:1).eq.'o') then
-              vopt = z/DCMKS 
-              freq = restfreq/(1.0d0+vopt)
-              write(line,'(a,2f11.6,a,f10.4))')
+              vopt = z
+              z = vopt/c
+              freq = restfreq/(1.0d0+z)
+              vrad = vopt/(1+vopt/c)
+              vrel = ((z+1)*(z+1)-1)/((z+1)*(z+1)+1)*c
+              write(line,'(a,2f11.6,a,f8.6,a,f12.4,a,f12.4))')
      *              'Doppler:          ',
-     *              restfreq,freq,' vpot/c=',vopt
+     *              restfreq,freq,
+     *              ' z=',z,' v=',vrel,' vrad=',vrad
+           else if (vtype(1:1).eq.'x') then
+              vrel = z
+              beta = vrel/c
+              z = sqrt((1+beta)/(1-beta)) - 1
+              vopt = c*z
+              vrad = vopt/(1+z)
+              freq = restfreq/(1.0d0+z)
+              write(line,'(a,2f11.6,a,f8.6,a,f12.4,a,f12.4))')
+     *              'Doppler:          ',
+     *              restfreq,freq,
+     *              ' z=',z,' vopt=',vopt,' vrad=',vrad
            else
-              write(line,'(a,a)') 'velocity type unknown:',vtype
+              write(line,'(a,a)') 'vel type unknown [z,r,o,x]:',vtype
               call bug('f',line)
            endif
            call output(line)
