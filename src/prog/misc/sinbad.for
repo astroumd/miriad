@@ -8,10 +8,13 @@ c: uv analysis
 c+
 c       SINBAD is a MIRIAD task to calculate (ON-OFF)/OFF*TSYS for
 c       autocorrelation data. The preceeding OFF and TSYS record
-c	for each antenna is used. Flags on the OFF scans are ignored.
+c	for each antenna is used. When flags on the OFF scans are bad,
+c       the scan is now ignored as an OFF scan.
 c	Flags on the ON scans are copied to the output file.
 c       Missing TSYS can be replaced via the tsys= keyword as a last
-c       resort, or the spectral window based systemp() UV variable.
+c       resort, or the spectral window based systemp() UV variable
+c       that should be present in normal MIRIAD datasets.
+c       For baseline subtraction, see:  sinpoly
 c@ vis
 c       The name of the input autocorrelation data set.
 c       Only one name must be given.
@@ -43,6 +46,7 @@ c    pjt/mwp 19feb08  safeguard off before on, tsys=1 if not present
 c    pjt     25feb08  use window based systemp array if tsys not available.
 c    mwp     16may08  added options for spectrum, difference, ratio
 c    mwp     16may08-2  off() must be complex!!! very funny behavior if not.
+c    pjt     28jan11  made it listen to flags in the OFF scans
 c---------------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*80,versan*80
@@ -66,6 +70,7 @@ c
 	integer num,   non,   noff,   ntsys
 	data    num/0/,non/0/,noff/0/,ntsys/0/
         logical spectrum, diffrnce, ratio
+        logical allflags
 c
 c  Read the inputs.
 c
@@ -152,21 +157,21 @@ c	  print *, num,basein,basein/256
 c
 c  Determine the polarisation info, if needed.
 c
-            if(dopol)then
-              call uvgetvri(lIn,'npol',nPol,1)
-              if(nPol.le.0) call bug('f',
-     *          'Could not determine number of polarizations present')
-              if(nPol.ne.SnPol)then
+          if(dopol)then
+             call uvgetvri(lIn,'npol',nPol,1)
+             if(nPol.le.0) call bug('f',
+     *            'Could not determine number of polarizations present')
+             if(nPol.ne.SnPol)then
                 call uvputvri(lOut,'npol',nPol,1)
                 PolVary = SnPol.ne.0
                 SnPol = nPol
-              endif
-              call uvgetvri(lIn,'pol',Pol,1)
-              if(Pol.ne.SPol)then
+             endif
+             call uvgetvri(lIn,'pol',Pol,1)
+             if(Pol.ne.SPol)then
                 call uvputvri(lOut,'pol',Pol,1)
                 SPol = Pol
-              endif
-            endif
+             endif
+          endif
 c
 c  Copy the variables we are interested in.
 c
@@ -178,22 +183,25 @@ c
               call uvgetvri(lIn,'on',on,1)
 	      ant = basein/256
 	      if(on.eq.0)then
-		noff = noff + 1
-		do i=1,nchan
-		  off(i,ant) = data(i)
-		enddo
+                 if (allflags(nchan,flags)) then
+                    noff = noff + 1
+                    do i=1,nchan
+                       off(i,ant) = data(i)
+                    enddo
+                 endif
 	      else if(on.eq.-1)then
-		ntsys = ntsys + 1
-		do i=1,nchan
-		  tsys(i,ant) = data(i)
-		enddo
+                 if (allflags(nchan,flags)) then
+                    ntsys = ntsys + 1
+                    do i=1,nchan
+                       tsys(i,ant) = data(i)
+                    enddo
+                 endif
 	      else if(on.eq.1)then
                 if (noff.eq.0) call bug('f','No off before on found')
                 if (ntsys.eq.0 .and. tsys1.lt.0.0)
      *              call getwtsys(lIn,tsys,MAXCHAN,MAXANT) 
 		non = non + 1
                 if(spectrum) then
-c********1*********2*********3*********4*********5*********6*********7**
 		  do i=1,nchan
 		   data(i) = tsys(i,ant)*(data(i)/off(i,ant)) - 1.0
 		  enddo
@@ -251,6 +259,23 @@ c
         call uvclose(lOut)
         end
 c********1*********2*********3*********4*********5*********6*********7**
+c     
+        logical function allflags(nchan,flags)
+        implicit none
+        integer nchan
+        logical flags(nchan)
+c
+        integer i
+        allflags = .TRUE.
+        do i=1,nchan
+           if (.NOT.flags(i)) then
+              allflags = .FALSE.
+              return 
+           endif
+        enddo
+        return
+        end
+        
         subroutine getwtsys(lIn,tsys,mchan,mant)
         implicit none
         integer lIn, mchan, mant
