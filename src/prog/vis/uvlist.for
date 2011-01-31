@@ -142,10 +142,11 @@ c   25nov08 pjt  - implement recnum=0
 c   19dec08 mchw - restored  Pol code in options=list.
 c   27feb09 mchw - used azel function in options=list.
 c   11apr10 pjt - increased buffer for char variables (var,full)
+c   21jan11 pjt - increased digits for handling high-z output
 c-----------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='UVLIST: version  11-apr-2010')
+	parameter(version='UVLIST: version  21-jan-2011')
 	real rtoh,rtod,pi
 	integer maxsels
 	parameter(pi=3.141592653589793,rtoh=12/pi,rtod=180/pi)
@@ -1398,14 +1399,14 @@ c   8nov89  mchw changed sign of velocity increment
 c   7may90  mchw changed to handle nspect.gt.6
 c------------------------------------------------------------------------
         include 'maxdim.h'
-	double precision ckms
-	parameter(ckms=299792.458d0)
-	character line*80
+	include 'mirconst.h'
+	character line*100
 	logical more
 	integer nspect,ischan(MAXWIN),nschan(MAXWIN),i,j,k
 	double precision restfreq(MAXWIN),sfreq(MAXWIN)
-	double precision sdf(MAXWIN),velocity(maxchan)
+	double precision sdf(MAXWIN),velocity(maxchan),ckms
 c
+	ckms = DCMKS/1000d0
 	call LogWrite(' ',more)
 	call uvrdvri(unit,'nspect',nspect,0)
 	if(nspect.gt.MAXWIN)call bug('f','Too many windows')
@@ -1418,28 +1419,28 @@ c
 	  call uvinfo(unit,'velocity',velocity)
 	  do j=1,nspect,6
 	    k=min(j+5,nspect)
-	    write(line,'(''rest frequency     :'',8f10.5)')
+	    write(line,'(''rest frequency     :'',8f11.6)')
      .		(restfreq(i),i=j,k)
 	    call LogWrite(line,more)
-	    write(line,'(''starting channel   :'',8i10)')
+	    write(line,'(''starting channel   :'',8i11)')
      .		(ischan(i),i=j,k)
 	    call LogWrite(line,more)
-	    write(line,'(''number of channels :'',8i10)')
+	    write(line,'(''number of channels :'',8i11)')
      .		(nschan(i),i=j,k)
 	    call LogWrite(line,more)
-	    write(line,'(''starting frequency :'',8f10.5)')
+	    write(line,'(''starting frequency :'',8f11.6)')
      .		(sfreq(i),i=j,k)
 	    call LogWrite(line,more)
-	    write(line,'(''frequency interval :'',8f10.5)')
+	    write(line,'(''frequency interval :'',8f11.6)')
      .		(sdf(i),i=j,k)
 	    call LogWrite(line,more)
-	    write(line,'(''starting velocity  :'',8f10.3)')
+	    write(line,'(''starting velocity  :'',8f11.3)')
      .		(velocity(ischan(i)),i=j,k)
 	    call LogWrite(line,more)
-	    write(line,'(''ending velocity    :'',8f10.3)')
+	    write(line,'(''ending velocity    :'',8f11.3)')
      .		(velocity(ischan(i)+nschan(i)-1),i=j,k)
 	    call LogWrite(line,more)
-	    write(line,'(''velocity interval  :'',8f10.3)')
+	    write(line,'(''velocity interval  :'',8f11.3)')
      .		(-sdf(i)/restfreq(i)*ckms,i=j,k)
 	    call LogWrite(line,more)
 	    call LogWrite(' ',more)

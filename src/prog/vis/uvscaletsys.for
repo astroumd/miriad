@@ -6,6 +6,7 @@ c   pjt    10jun10   cloned off uvwide, quick and dirty
 c   pjt    20jun10   ignore wsystemps if not sized the same
 c                    useful for SZA data where USB was stripped
 c                    and nspect = nwide / 2
+c   pjt     6dec10   ?issue?
 c
 c***********************************************************************
 c= uvscaletsys - Rescale system temperatures

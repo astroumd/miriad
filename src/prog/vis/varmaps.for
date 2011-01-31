@@ -89,6 +89,9 @@ c@ xbeam
 c     Smoothing in X. same syntax as xcell.
 c@ ybeam
 c     Smoothing in Y. same syntax as ycell.
+c@ size
+c     Number of neighbor pixels to look around for smoothing.
+c     Default: 0 
 c
 c@ options
 c       This gives extra processing options. Several options can be given,
@@ -102,7 +105,7 @@ c----------------------------------------------------------------------c
        include 'maxdim.h'
        include 'mirconst.h'
        character*(*) version
-       parameter(version='VARMAPS: version 30-jan-2011')
+       parameter(version='VARMAPS: version 31-jan-2011')
        integer MAXSELS
        parameter(MAXSELS=512)
        integer MAXVIS
@@ -110,7 +113,7 @@ c----------------------------------------------------------------------c
        integer MAXCHAN2
        parameter(MAXCHAN2=1024)
        integer MAXVPP
-       parameter(MAXVPP=MAXVIS/16)
+       parameter(MAXVPP=MAXVIS/4)
        real sels(MAXSELS)
        complex data(MAXCHAN2)
        logical flags(MAXCHAN2)
@@ -129,13 +132,13 @@ c----------------------------------------------------------------------c
        real stacks(MAXVIS,MAXCHAN2)
        real    xstacks(MAXVIS), ystacks(MAXVIS)
        integer istacks(MAXVIS), jstacks(MAXVIS)
-       integer idx(MAXSIZE,MAXSIZE,MAXVPP)
+       integer idx(MAXSIZE,MAXSIZE,MAXVPP+1)
        real array(MAXSIZE,MAXSIZE,MAXCHAN2)
        real weight(MAXSIZE,MAXSIZE,MAXCHAN2)
        real x,y,z,x0,y0,datamin,datamax,w
        character*1 xtype, ytype, type
        integer length, xlength, ylength, xindex, yindex, cnt
-       logical updated,sum,hasbeam
+       logical updated,sum,debug,hasbeam
 c
        integer nout, nopt
        parameter(nopt=8)
@@ -167,7 +170,8 @@ c
        call keymatch('ycell',nopt,opts,1,yunit,nout)
        if(nout.eq.0)yunit = xunit
        call keyr ('ybeam',beam(2),beam(1))
-       call GetOpt(sum)
+       call keyi ('size',size,0)
+       call GetOpt(sum,debug)
        call keyfin
 c
 c  Check that the inputs are reasonable.
@@ -255,32 +259,21 @@ c
       call maphead(lIn,lOut,nsize,cell,xaxis,yaxis,
      *   xunit,yunit,linetype)
 
-c
-c  First pass through the data to get the number of scans
-c
-      do while(nread.gt.0)
-         call uvread(lIn, preamble, data, flags, MAXCHAN2, nread)
-         nvis = nvis + 1
-      enddo
-      write(*,*) 'Found ',nvis,' Visibilities'
-      call uvrewind(lIn)
-      nvis = 0
-
       do i=1,MAXSIZE
          do j=1,MAXSIZE
             idx(i,j,1) = 0
          enddo
       enddo
+      nvis = 0
+      ngrid = 0 
 
 c
-c  Read through the uvdata again
+c  Read through the uvdata 
 c
-      call uvread(lIn, preamble, data, flags, MAXCHAN2, nread)
-
       do while(nread.gt.0)
+         nvis = nvis + 1
          if(nread.ne.nsize(3))
-
-     *		 call bug('w','Number of channels has changed.')
+     *		 call bug('f','Number of channels has changed.')
 c
 c  Get the selected axes.
 c
@@ -318,7 +311,7 @@ c
 	    call bug('f','Invalid yaxis')
          endif
 c
-c  Grid the data.
+c  Grid the data, and stack them away for later retrieval
 c
          i = nint(x/cell(1) + nsize(1)/2 + 1)
          j = nint(y/cell(2) + nsize(2)/2 + 1)
@@ -328,8 +321,9 @@ c
             ystacks(ngrid) = y
             istacks(ngrid) = i
             jstacks(ngrid) = j
-            write(*,*) 'Adding ',i,j
+            if (debug) write(*,*) 'Adding ',i,j
             cnt = idx(i,j,1) + 1
+            if (cnt.ge.MAXVPP) call bug('f','Too many scans for MAXVPP')
             idx(i,j,1) = cnt
             idx(i,j,cnt+1) = ngrid
 	    do k=1,nread
@@ -345,23 +339,20 @@ c
                   else
                      call bug('f','Unknown zaxis')
                   endif
-c                  array(i,j,k)  = array(i,j,k)  + z
-c                  weight(i,j,k) = weight(i,j,k) + 1.
                   stacks(ngrid,k) = z
+               else
+                  stacks(ngrid,k) = 0.0
                endif
             enddo
          endif
-c     
-c  Loop the loop (get next record)
-c     
          call uvread(lIn, preamble, data, flags, MAXCHAN2, nread)
-         nvis = nvis + 1
       enddo
 
+c
+c Retrieve all the uv scans from the stacks and smooth them into each
+c grid point
+c
 
-      call bug('i','New adding /smoothing method')
-      size = 3
-      write(*,*) 'Neighbor Size=',size
       do i=1,MAXSIZE
          x0 = (i-1 - nsize(1)/2 ) * cell(1)
          do j=1,MAXSIZE
@@ -386,21 +377,21 @@ c
                               w = exp(-w)
                            else
                               w = 1.0
-                           endif
-                           write(*,*) i,j,i1,j1,cnt,ng,w
+                           end if
+                           if(debug)write(*,*) i,j,i1,j1,cnt,ng,w
                            do k=1,nsize(3)
                               array(i,j,k) = 
      *                             array(i,j,k) + w*stacks(ng,k)
                               weight(i,j,k) = 
      *                             weight(i,j,k) + w
-                           enddo
-                        enddo
-                     endif
-                  endif
-               enddo
-            enddo
-         enddo
-      enddo
+                           end do
+                        end do
+                     end if
+                  end if
+               end do
+            end do
+         end do
+      end do
 
 c     
 c  Average the data, compute final minmax
@@ -416,10 +407,10 @@ c
                   array(i,j,k) = array(i,j,k) / weight(i,j,k)
                   if(array(i,j,k).gt.datamax) datamax=array(i,j,k)
                   if(array(i,j,k).lt.datamin) datamin=array(i,j,k)
-               endif
-            enddo
-         enddo
-      enddo
+               end if
+            end do
+         end do
+      end do
 c     
 c  Write the image and it's header.
 c
@@ -558,23 +549,26 @@ c
       enddo
       end
 c********1*********2*********3*********4*********5*********6*********7**
-      subroutine GetOpt(sum)
+      subroutine GetOpt(sum,debug)
       implicit none
-      logical sum
+      logical sum,debug
 c     
 c  Determine extra processing options.
 c
 c  Output:
 c    sum      Sum the data in each pixel. Default is to average.
+c    debug    More debug output
 c------------------------------------------------------------------------
       integer nopt
-      parameter(nopt=1)
+      parameter(nopt=2)
       character opts(nopt)*9
       logical present(nopt)
-      data opts/'sum      '/ 
+      data opts/'sum      ',
+     *          'debug    '/
 c     
       call options('options',opts,present,nopt)
       sum = present(1)
+      debug = present(2)
 c     
       end
 c********1*********2*********3*********4*********5*********6*********7**
