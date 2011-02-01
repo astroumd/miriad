@@ -205,7 +205,7 @@ c --- check source purpose
 		 call uvgetvrr(tin,'inttime',tint,1)
                  call uvgetvra(tin,'source',newsou)
                  if (jdnow.gt.jdend) then
-                    jdend = jdnow + inttime/(3600.0*24.0)
+                    jdend = jdnow + tint/(3600.0*24.0)
                     call uvgetvrd(tin,'ut',utend,1)
                  endif
 		 tint = tint/86400.0
