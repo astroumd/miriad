@@ -92,6 +92,7 @@ c          10-aug-09 pjt list end time of observations, only UT needed for now
 c                        and revert back, Quality would be upset with this change
 c          25-aug-09 pjt UVW one more digit for A array when UVW < 0
 c           3-mar-10 pjt rad2hms in double precision, better rounding
+c          31-jan-11 pjt carma-23 formatting improved
 c
 c
 c TODO:
@@ -109,7 +110,7 @@ c
         integer ipt,nfiles,uvflag,order(MAXP),nameidx(100),nnames
         integer isys(MAXANT),i,uvscan,j,ii,jj,ipicked,ifix
         integer tin,k,nfocs,length,nhere,hereidx(MAXANT)
-	character dataset(MAXF)*60,outlog*60,text*256,dash*80
+	character dataset(MAXF)*128,outlog*128,text*256,dash*80
 	character radec*24,uthms*8,lsthms*8,oldsou*17,newsou*17
 	character type*1, sftime*30
 	real diff,totint,tint,baseline(MAXBASE),focus(MAXANT,50)
@@ -387,7 +388,7 @@ c
 	call LogWrite(text,more)
         write(text,'(''                  hhmmss   hhmmss'')')
         tlen1 = len1(text)
-        write(text(tlen1+1:),'(''    min deg    '',15(i2,3x))')
+        write(text(tlen1+1:),'(''    min deg    '',23(i2,3x))')
      1        (hereidx(i),i=1,nhere)
 	call LogWrite(text,more)
  2110   format('               Chronology of Observations on ',A)
@@ -401,7 +402,7 @@ c
         write(text,2201) objs(ii),uthms,lsthms,dur(ii),el(ii),
      1        (isys(hereidx(j)),j=1,nhere)
  2201	format(a,1x,a,1x,a,1x,f5.1,1x,f4.0,1x,  
-     1         15(i4,1x))
+     1       23(i4,1x))
  2202	format(a,1x,a)
 	call LogWrite(text,more)
   300	continue
