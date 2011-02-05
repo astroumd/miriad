@@ -48,6 +48,7 @@ c	The output log file. The default is the terminal.
 c@ options
 c	None yet. Reserved for alternative models.
 c--
+c  Note:      there is a more advanced C version in NEMO since 2003.
 c  History:
 c    30sep92  mchw  New task for Miriad.
 c    29aug02  pjt   Added frang= to prevent large divisions for models
