@@ -86,12 +86,16 @@ c     are "arcsec", "arcmin", "degrees" and "hours".
 c     Default is to use the same value and units as xcell.
 c
 c@ xbeam
-c     Smoothing in X. same syntax as xcell.
+c     Smoothing beam in X. Will use same units are xcell.
 c@ ybeam
-c     Smoothing in Y. same syntax as ycell.
+c     Smoothing beam in Y. Will use same units are ycell.
 c@ size
 c     Number of neighbor pixels to look around for smoothing.
 c     Default: 0 
+c@ mode
+c     Smoothing mode.
+c     0 = gaussian
+c     1 = cone
 c
 c@ options
 c       This gives extra processing options. Several options can be given,
@@ -105,7 +109,7 @@ c----------------------------------------------------------------------c
        include 'maxdim.h'
        include 'mirconst.h'
        character*(*) version
-       parameter(version='VARMAPS: version 31-jan-2011')
+       parameter(version='VARMAPS: version 8-feb-2011')
        integer MAXSELS
        parameter(MAXSELS=512)
        integer MAXVIS
@@ -126,18 +130,18 @@ c----------------------------------------------------------------------c
        real rdata(MAXANT)
        double precision ddata(MAXANT)
        integer lout,nsize(3),i,j,k,l,ng,i1,j1,id,jd,size
-       real cell(2),beam(2)
+       real cell(2),beam(2),beam2(2)
        integer MAXSIZE
-       parameter(MAXSIZE=64)
+       parameter(MAXSIZE=128)
        real stacks(MAXVIS,MAXCHAN2)
        real    xstacks(MAXVIS), ystacks(MAXVIS)
        integer istacks(MAXVIS), jstacks(MAXVIS)
        integer idx(MAXSIZE,MAXSIZE,MAXVPP+1)
        real array(MAXSIZE,MAXSIZE,MAXCHAN2)
        real weight(MAXSIZE,MAXSIZE,MAXCHAN2)
-       real x,y,z,x0,y0,datamin,datamax,w
+       real x,y,z,x0,y0,datamin,datamax,w,cutoff, xscale,yscale
        character*1 xtype, ytype, type
-       integer length, xlength, ylength, xindex, yindex, cnt
+       integer length, xlength, ylength, xindex, yindex, cnt, mode
        logical updated,sum,debug,hasbeam
 c
        integer nout, nopt
@@ -171,6 +175,8 @@ c
        if(nout.eq.0)yunit = xunit
        call keyr ('ybeam',beam(2),beam(1))
        call keyi ('size',size,0)
+       call keyi ('mode',mode,0)
+       call keyr ('cutoff',cutoff,0.000001)
        call GetOpt(sum,debug)
        call keyfin
 c
@@ -208,9 +214,12 @@ c
      *   ' y-axis: ', yaxis, yindex, '   pixel size =', cell(2), yunit
        call output(line)
        write(*,*) 'BEAM: ',beam(1),beam(2)
+       xscale = 1.0
+       yscale = 1.0
+       if (xaxis.eq.'dra') xscale=-1.0
 c
-       beam(1) = beam(1)*beam(1) / 2.77259
-       beam(2) = beam(2)*beam(2) / 2.77259
+       beam2(1) = beam(1)*beam(1) / 2.77259
+       beam2(2) = beam(2)*beam(2) / 2.77259
 c
 c  Open an old visibility file, and apply selection criteria.
 c
@@ -310,6 +319,8 @@ c
          else
 	    call bug('f','Invalid yaxis')
          endif
+         x = xscale * x
+         y = yscale * y
 c
 c  Grid the data, and stack them away for later retrieval
 c
@@ -372,19 +383,32 @@ c
                            x = xstacks(ng)
                            y = ystacks(ng)
                            if (hasbeam) then
-                              w = (x-x0)*(x-x0)/beam(1)+
-     *                             (y-y0)*(y-y0)/beam(2)
-                              w = exp(-w)
+                              if (mode.eq.0) then
+                                 w = (x-x0)*(x-x0)/beam2(1)+
+     *                                (y-y0)*(y-y0)/beam2(2)
+                                 w = exp(-w)
+                              else 
+                                 w = ((x-x0)/beam(1))**2 +
+     *                               ((y-y0)/beam(2))**2
+                                 if (w.LT.1.0) then
+                                    w = 1-sqrt(w)
+                                 else
+                                    w=0.0
+                                 endif
+                              endif
                            else
                               w = 1.0
                            end if
+                           if (w.lt.cutoff) w = 0.0
                            if(debug)write(*,*) i,j,i1,j1,cnt,ng,w
-                           do k=1,nsize(3)
-                              array(i,j,k) = 
+                           if (w.gt.0.0) then
+                              do k=1,nsize(3)
+                                 array(i,j,k) = 
      *                             array(i,j,k) + w*stacks(ng,k)
-                              weight(i,j,k) = 
+                                 weight(i,j,k) = 
      *                             weight(i,j,k) + w
-                           end do
+                              end do
+                           end if
                         end do
                      end if
                   end if
@@ -414,7 +438,7 @@ c
 c     
 c  Write the image and it's header.
 c
-      call putimage(lOut,nsize,array)
+      call putimage(lOut,MAXSIZE,MAXCHAN2,nsize,array)
       call wrhdr(lOut,'datamin',datamin)
       call wrhdr(lOut,'datamax',datamax)
 c
@@ -514,10 +538,11 @@ c
 c     
       end
 c********1*********2*********3*********4*********5*********6*********7**
-      subroutine putimage(lOut,nsize,array)
+      subroutine putimage(lOut,nxy,nz,nsize,array)
       implicit none
-      integer lOut,nsize(3)
-      real array(64,64,1024)
+      integer lOut,nsize(3), nxy,nz
+c @TODO:   this ought to be MAXSIZE,MAXSIZE,MAXCHAN2
+      real array(nxy,nxy,nz)
 c     Inputs:
 c     lOut	The handle of the output image.
 c     nsize	The output image size.
