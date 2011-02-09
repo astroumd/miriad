@@ -50,6 +50,7 @@ r themt
 d ut
 r veldop
 a veltype
+a version
 r vsource
 r winddir
 r windmph
