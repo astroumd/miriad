@@ -35,6 +35,7 @@ set z = "$Foptions $Flinkdir $Flinklib"
 
 if ($out == atlod) set z="$z -lrpfits"
 if ($out == wblod) set z="$z -lrpfits"
+if ($out == mopfix) set z="$z -lrpfits"
 
 echo "$Fcompile -o $bindir/${out} $libdir/${out}.f $z"
       $Fcompile -o $bindir/${out} $libdir/${out}.f $z
