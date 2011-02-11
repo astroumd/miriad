@@ -93,6 +93,7 @@ c                        and revert back, Quality would be upset with this chang
 c          25-aug-09 pjt UVW one more digit for A array when UVW < 0
 c           3-mar-10 pjt rad2hms in double precision, better rounding
 c          31-jan-11 pjt carma-23 formatting improved
+c          11-feb-11 pjt systemp computation improved (nschan and flags)
 c
 c
 c TODO:
@@ -171,7 +172,7 @@ c --- check source purpose
            call uvprobvr(tin,'purpose',type,length,pthere)
            ipt = ipt + 1
 	   if(ipt.gt.MAXP)CALL bug('f','Too many points')
-	   call getall(tin,ipt,pthere)
+	   call getall(tin,ipt,pthere,nread,flags)
 	   jdold = jday(ipt)
 	   call uvgetvrr(tin,'inttime',tint,1)
 	   totint = tint
@@ -215,7 +216,7 @@ c --- check source purpose
 		    dur(ipt) = totint/60.0
 		    ipt      = ipt + 1
 	            if(ipt.gt.MAXP)CALL bug('f','Too many points')
-		    call getall(tin,ipt,pthere)
+		    call getall(tin,ipt,pthere,nread,flags)
 		    totint   = 86400.0 * tint
                     oldsou = newsou
                  else
@@ -496,7 +497,7 @@ c
 	return
 	end
 c-----------------------------------------------------------------------
-	subroutine getall(tin,ipt,pthere)
+	subroutine getall(tin,ipt,pthere,nread,flags)
 c
 c   gets all the header information that will be later printed
 c
@@ -505,10 +506,10 @@ c
 c        include 'maxdim.h'
         include 'listobs.h'
 
-	integer tin,ipt,iants,j,i,length
+	integer tin,ipt,iants,j,i,length,nschan(MAXSPECT)
 	double precision utdouble,dlst,dlinef,dlo1,dif,lat,draobs,
      1                   ddecobs,sfreq(MAXSPECT)
-	real systemps(MAXSPECT*MAXANT)
+	real systemps(MAXSPECT*MAXANT),tsys
         real cfreq(MAXSPECT/2),haobs,decobs,sum
         character vtype*4
         logical vupd,systhere,pthere
@@ -533,6 +534,7 @@ c	call uvgetvrd(tin,'dec',dec(ipt),1)
 	call uvrdvri(tin,'nspect',nspec,0)
 	if(nspec.ne.0)then
 	  call uvgetvri(tin,'nchan',nchan,1)
+          call uvgetvri(tin,'nschan',nschan,nspec)
 c the following was changed to accomodate CARMA data (doesn't use corfin)
 c and SZA data (in version 1.1 system has wrong dimension)
           call uvprobvr(tin,'corfin',vtype,ncorfin,vupd)
@@ -578,12 +580,24 @@ c
         utst(ipt) = utdouble
 	lst(ipt)  = dlst
 
+c   LSB for C16-23 not flagged yet, so use this kludge
+        call bug('w','Only Tsys < 10,000 used in band averaging')
+
 	do 200 i=1,iants
 	   sum = 0.0
+           isum = 0
 	   do 100 j=1,nspec
-	      sum = sum + systemps(i + (j-1)*iants)
+              tsys = systemps(i + (j-1)*iants)
+              if (nschan(j).GT.0 .AND.  tsys.LT.9999.9) then
+	         sum = sum + tsys
+                 isum = isum + 1
+              endif
   100	   continue
-	   syst(ipt,i) = sum/nspec
+           if (isum.gt.0) then
+              syst(ipt,i) = sum/isum
+           else
+              syst(ipt,i) = 0.0
+           endif
   200	continue
 	if(iants .gt. nants) nants = iants
 	do 300 i=1,ncorfin
