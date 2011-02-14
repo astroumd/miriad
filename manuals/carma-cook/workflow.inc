@@ -701,9 +701,12 @@ do:
 Here the {\tt gpplt} commands displays the actual phase corrections
 that are going to applied in {\tt uvcat}. You might see many wraps,
 but remember it is only the  differences in phases that matter, these
-are antenna based phases.
+are antenna based phases you are looking at.
 
 TODO: careful with select=-source(noise)
+
+TODO: say more about the difference between {\tt linecal} and 
+{\tt uvcal options=linecal}
 
 \subsection{Other UV variables}
 
@@ -1233,7 +1236,7 @@ which determines a time dependant gain (read: phase)
 for each antenna\footnote{this is actually done in two steps, a
 longer time interval based selfcal is first applied to remove
 any gross drifts},
-$g_1(i_1,t_1)$ for the CARMA antennas ($i_i$), and
+$g_1(i_1,t_1)$ for the CARMA antennas ($i_1$), and
 $g_2(i_2,t_2)$ for the SZA antennas ($i_2$). 
 The scaled SZA phases can now be applied to the CARMA phases to obtain
 the phase correction:
@@ -1298,35 +1301,31 @@ from SZA to CARMA.
 \end{verbatim}
 \normalsize
 
+GPBUDDY is a MIRIAD task that copies the gain table of a selected
+number of antennas into a second set of antennas in another dataset.
+It is intended to be used in conjunction with UVCAL,to perform
+antenna-based atmospheric phase correction.  All non-selected antennas
+have the option of having their gains interpolated from paired
+antennas using different methods.
 
+GPBUDDY will take the gains corresponding to the antennas in list2
+from the dataset specified by vis2, then set their amplitudes to one
+and multiply the phases by a given scale factor, then unwrap them and
+write them into the antenna-based phaseatm uv variable in the vis
+dataset for the antennas in list1. Antennas present in vis but not
+listed in list1 will get a phaseatm value that is obtained from the
+application of the specified method. Antennas for which the method
+produce no solution will be flagged during that time interval. 
+{\tt  uvcal options=atmcal} will interpret these phaseatm tables at phases
+at the LO1 frequency and correctly compute and apply the atmospheric
+delays.
 
 \footnotesize
 \begin{verbatim}
 
-GPBUDDY is a MIRIAD task that copies the gain table of a selected
-number of antennas into a second set of antennas in another dataset. 
-It is intended to be used in conjunction with UVCAL,to perform 
-antenna-based atmospheric phase correction.
-All non-selected antennas have the option of having their gains 
-interpolated from paired antennas using different methods.
 
-GPBUDDY will take the gains corresponding to the antennas in list2 
-from the dataset specified by vis2, then set their amplitudes to one 
-and multiply the phases by a given scale factor, then unwrap them and write 
-them into the antenna-based phaseatm uv variable in the vis dataset for
-the antennas in list1. Antennas present in vis but not listed in list1
-will get a phaseatm value that is obtained from the application of
-the specified method. Antennas for which the method produce no solution will 
-be flagged during that time interval. {\tt uvcal options=atmcal} will interpret 
-these phaseatm tables at phases at the LO1 frequency and correctly compute 
-and apply the atmospheric delays.   
+Program: GPBUDDY
 
-         Example: phase correction for 3mm
-           gpbuddy vis=carma vis2=sza 
-                  list1=2,4,5,6,8,9,13,15 
-                  list2=21,23,20,18,19,22,16,17
-                  factor=3.09
-           uvcal vis=carma out=carma.atm options=atmcal
 
 Keyword: vis
          The input visibility file, containing the visibility data
@@ -1420,15 +1419,18 @@ Keyword: reset
 
 \subsubsection{Baseline based: bldelay}
 
+BLDELAY is a Miriad program that reads baseline phases and
+derives estimates for the atmospheric delay. The visibility
+data should have been calibrated to give zero phases in
+all windows and channels at the start of the data. There is
+no averaging done. If this is required it should be done in
+another Miriad task.
+
 \footnotesize
 \begin{verbatim}
 
-         BLDELAY is a Miriad program that reads baseline phases and
-         derives estimates for the atmospheric delay. The visibility
-         data should have been calibrated to give zero phases in
-         all windows and channels at the start of the data. There is
-         no averaging done. If this is required it should be done in
-         another Miriad task.
+
+Program: BLDELAY
 
 Keyword: vis
          The input visibility file. No default.
