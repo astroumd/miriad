@@ -93,8 +93,11 @@ flags       & integer & optional flags for narrowband data \\
 wflags      & integer & optional flags for wideband data \\ \hline
 
 gains       & mixed   & antenna gain table; {\bf delhd} (or {\bf rm}) this item to disable gain table\\
+            &         & table: (t,gains(ngains))(nsols) \\
 bandpass    & complex & bandpass function gains; {\bf delhd} (or {\bf rm}) this item to disable passband corrections \\
+            &         & table: (nchan0,ngains) \\
 freqs	    & mixed   & frequency set up description table for `bandpass'\\
+            &         & table: (nschan,ndum,sfreq,sdf)(nspect0)\\
 nspect0     & integer & number of windows in the bandpass function\\
 nchan0      & integer & total number of channels in the bandpass function\\
 nfeeds	    & integer & number of feeds on each antenna \\
@@ -370,6 +373,7 @@ jyperk		\>R	\>Jy/K
 \> The efficiency Jy/K, \\
 \>\>\> calculated during online calibration\\
 
+% the jyperk program in the early CARMA era played a role in use jyperka
 jyperka(nants)	\>R	\>sqrt(Jy/K)
 \> Antenna based Jy/K, \\
 \>\>\> calculated during online calibration (Hat Ck)\\
