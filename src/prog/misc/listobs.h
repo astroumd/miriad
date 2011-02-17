@@ -10,7 +10,7 @@ C
         integer MAXP,MAXF,MAXSPECT
         parameter (MAXP = 10000 )
         parameter (MAXF = 50 )
-        parameter (MAXSPECT = 16)
+        parameter (MAXSPECT = 32)
  
         integer nspec,nchan,nants,ncorbw,ncorfin
         real utst(MAXP),dur(MAXP),el(MAXP)

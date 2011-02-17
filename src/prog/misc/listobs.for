@@ -94,6 +94,7 @@ c          25-aug-09 pjt UVW one more digit for A array when UVW < 0
 c           3-mar-10 pjt rad2hms in double precision, better rounding
 c          31-jan-11 pjt carma-23 formatting improved
 c          11-feb-11 pjt systemp computation improved (nschan and flags)
+c          17-feb-11 pjt increased MAXSPECT for sci2 (needs 32)
 c
 c
 c TODO:
