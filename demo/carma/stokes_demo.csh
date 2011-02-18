@@ -7,7 +7,6 @@ echo  uvflux with polcal
 echo  plot real,imag with and without polcal
 echo  default xyphase=0. default refant=3. xyphase is put into y-gain-phase
 echo  fitting xyphase copies refant xyphase to all antennas since uvdata has zero xyphase
-:
 
 goto start
 
