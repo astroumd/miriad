@@ -2,7 +2,7 @@ c***********************************************************************
 	program uvcal2
 	implicit none
 c
-c= uvcal - Apply special processing options to uv-data.
+c= uvcal2 - Apply special processing options to uv-data.
 c& mchw
 c: uv analysis
 c+
