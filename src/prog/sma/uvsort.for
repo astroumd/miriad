@@ -27,11 +27,12 @@ c  jhz 22sept05 made an initiative versioni, requested by dan marrone.
 c  jhz 26sept05 purged irrelevant lines and notes.
 c  pjt 18apr06  moved sortd to sort.for and cleaned up some indentation
 c  jhz 03jun07  incorporated peter williams modification
+c  pjt 21sep11  also handle auto-correlations
 c  Bugs:
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='UvSort: version 1.1 03-jun-07')
+	parameter(version='UvSort: version 21-feb-11')
 	character uvflags*12,ltype*16,out*120,line*120
 	integer npol,pol,tIn,tOut,vupd,nread,nrec
 	integer i,nuniq,written,nthistime,nrewind
@@ -242,5 +243,5 @@ c
 c Set up calibration flags
 c
 c
-           uvflags = 'bxdlr3'
+           uvflags = 'bdlr3'
 	end
