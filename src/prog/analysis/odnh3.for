@@ -81,15 +81,16 @@ c------------------------------------------------------------------------
 	INTEGER BUFLEN,RBUFLEN,MAXBOX
         PARAMETER(BufLen=64,RBufLen=MaxBuf,MaxBox=2048)
 	CHARACTER PVERSION*(*)
-	PARAMETER (PVERSION='Version 26-Nov-92')
+	PARAMETER (PVERSION='Version 22-Feb-2011')
 c
-	CHARACTER map1*64,map2*64,mapt*64,out*64,mask*64,op*16
+	CHARACTER map1*128,map2*128,mapt*128,out*128,mask*128,op*16
 	INTEGER	  LOWI,HIGHI
 	PARAMETER(LOWI=1,HIGHI=180)
 	INTEGER   type,lout,index,i,j,n,low,high,counter
 	INTEGER	  run,runmin,runmax
 	INTEGER   maskbuf(BUFLEN),boxes(MAXBOX)
-	INTEGER   size1(3),size2(3),size3(3),naxis1,naxis2,naxis3 
+	INTEGER   size1(maxnax),size2(maxnax),size3(maxnax)
+	INTEGER   naxis1,naxis2,naxis3 
 	REAL      rbuf(RBUFLEN),maskrbuf(BUFLEN)
 	REAL	  buf1(512),buf2(512),buf3(512)
 	REAL	  R(500),tau(500),Robs,tauobs,tempobs,tout
