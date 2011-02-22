@@ -155,9 +155,11 @@ c
 	endif
   	if(naxis1.ne.naxis2.or.naxis2.ne.naxis3.or.naxis3.ne.naxis1)
      *    call bug('f','Input images must have the same dimensionality')
-	if(naxis1.gt.2.or.naxis2.gt.2.or.naxis3.gt.2)
-     *    call bug('f','Odnh3 presently only supports '//
-     *					 'two-dimensional images')
+	if ((naxis1.gt.2 .and. size1(3).ne.1).or.
+     *	    (naxis2.gt.2 .and. size2(3).ne.1).or.
+     *	    (naxis3.gt.2 .and. size3(3).ne.1)) then
+	  call bug('f','Currently only 2D images supported')
+	endif
 	naxis = naxis1
 c
 c  Parse the mask.
