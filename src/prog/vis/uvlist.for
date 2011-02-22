@@ -146,7 +146,7 @@ c   21jan11 pjt - increased digits for handling high-z output
 c-----------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='UVLIST: version  21-jan-2011')
+	parameter(version='UVLIST: version  22-feb-2011')
 	real rtoh,rtod,pi
 	integer maxsels
 	parameter(pi=3.141592653589793,rtoh=12/pi,rtod=180/pi)
@@ -839,7 +839,7 @@ c
 	   if(type.eq.'d') call uvgetvrd(unit,'delev',delev,nants)
 	   write(line,
 c********1*********2*********3*********4*********5*********6*********7**
-     * '(i6,1x,a,4f10.4,1x,i2,1x,i2,3f10.4,2f8.2,f7.3,1x,i4,4f7.2)')
+     * '(i6,1x,a,4f10.4,1x,i2,1x,i2,3f10.4,2f8.2,f7.3,1x,i4,4f8.2)')
      *	  mod(Visno,1000000),src,ut*rtoh,lst*rtoh,ha*rtoh,obsdec*rtod,
      *	  ant1,ant2,uin*ntm,vin*ntm,win*ntm,azim*rtod,elev*rtod,
      *    amp(1),nint(phas(1)),
@@ -853,7 +853,7 @@ c********1*********2*********3*********4*********5*********6*********7**
        if(p.ne.0) pol = PolsC2P(p)
 	   write(line, '(i6,1x,a,4f10.4,1x,i3,1x,i3,1x,a,1x,
 c********1*********2*********3*********4*********5*********6*********7**
-     *    3f10.4,2f8.2,f7.3,1x,i4,3f7.2)')
+     *    3f10.4,2f8.2,f7.3,1x,i4,3f8.2)')
      *	  mod(Visno,1000000),src,ut*rtoh,lst*rtoh,ha*rtoh,obsdec*rtod,
      *	  ant1,ant2,pol,uin*ntm,vin*ntm,win*ntm,azim*rtod,elev*rtod,
      *    amp(1),nint(phas(1)),
