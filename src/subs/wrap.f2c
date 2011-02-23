@@ -290,6 +290,12 @@ fortran subroutine uvputvra(integer tno,character var,character data)
   uvputvr_c(tno.val,H_BYTE,var.zterm,s,strlen(s));
 }
 /************************************************************************/
+fortran logical function uvchkshadow(integer tno, double diameter_meters)
+{
+  return uvchkshadow_c (tno.val, diameter_meters.val) ?
+     FORT_TRUE : FORT_FALSE;
+}
+/************************************************************************/
 fortran subroutine hopen(integer tno,character name,character status,
 	integer iostat)
 {

@@ -3638,6 +3638,56 @@ private int uvread_matchp(char *s1,char *s2, int len2)
   return 0;  /* no match */
 }
 /************************************************************************/
+int uvchkshadow_c (int tno, double diameter_meters)
+/**uvchkshadow -- Check if the record comes from shadowed antennas	*/
+/*&pkgw                                                                 */
+/*:uv-i/o								*/
+/*+ FORTRAN call sequence:
+
+	logical function uvchkshadow(tno,diameter_meters)
+	integer tno
+	double precision diameter_meters
+
+  Returns whether the most recently-read UV record comes from a
+  baseline involving shadowed antennas. The antenna diameter used in
+  the shadow computation is passed in as an argument. The test
+  performed in this function is identical to the one performed when
+  using the "shadow()" selection keyword. There is no way to obtain
+  the results of the keyword test, however, without filtering out data
+  records. This function makes it possible to check whether a given
+  record was shadowed without filtering records.
+
+  In order for this function to operate, you must apply a selection of
+  the form "shadow(1e9)" when reading the data. This is because UVW
+  recomputation must be performed as the data are read in, which is
+  only reliably triggered by applying a "shadow()" selection. The
+  extremely large argument ensures that no data are filtered out by
+  the selection.  Invoking this function without applying the
+  necessary selection will result in a fatal bug being signaled.
+
+  Another routine, SHADOWED, is provided with MIRIAD and provides
+  similar functionality. It is unclear, however, whether SHADOWED is
+  correct. It and the "shadow()" select keyword do their work
+  differently and yield different results. As of 2011 Feb 17, no tasks
+  in MIRIAD use SHADOWED.
+
+  Input:
+    tno	            Handle of the uv data file.
+    diameter_meters The assumed antenna diameter in meters.
+  Output:
+    uvchkshadow     Whether the last-read baseline was shadowed.	*/
+/*--									*/
+/*----------------------------------------------------------------------*/
+{
+    UV *uv = uvs[tno];
+
+    if (!(uv->need_uvw))
+	BUG('f', "Cannot check shadowing without setting up UVW recomputation"
+	    " (try adding a shadow() selection)");
+
+    return uvread_shadowed (uv, diameter_meters);
+}
+/************************************************************************/
 private int uvread_shadowed(UV *uv,double diameter)
 /*
     This determines if a particular baseline is shadowed.

@@ -232,6 +232,7 @@ void uvwread_c  (int tno, float *data, int *flags, int n, int *nread);
 void uvflgwr_c  (int tno, Const int *flags);
 void uvwflgwr_c (int tno, Const int *flags);
 void uvinfo_c   (int tno, Const char *object, double *data);
+int  uvchkshadow_c (int tno, double diameter_meters);
 
 /* Macros defined in uvio.c */
 
