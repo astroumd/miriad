@@ -67,10 +67,11 @@ c    mchw  21apr94  Added options=rms.
 c    mchw  27apr94  Cleaned up user inputs. Added options=sample.
 c    mchw  06may94  Use quadratic sum of vsys and integral for rms.
 c    rjs   10jan96  Change to stop g77 complaint.
+c    pjt   23feb11  Add mask when velocity not determined
 c----------------------------------------------------------------------c
 	include 'maxdim.h'
 	character*(*) version
-	parameter (version='Version 1.0 06-May-94')
+	parameter (version='Version 23-feb-2011')
 	double precision pi,rts
 	parameter(pi=3.141592654,rts=3600.d0*180.d0/pi)
 	integer maxnax,maxboxes,maxruns,naxis
@@ -84,7 +85,7 @@ c----------------------------------------------------------------------c
 	real v1,v2,vsys,z0,zexp,vel
 	real buf(maxdim),cospa,sinpa,cosi,sini,x,y,xt,yt
 	character in*64,out*64,cin*1,ctype*9
-	logical dorms,dosamp
+	logical dorms,dosamp,mask(maxdim)
 c
 c  Externals.
 c
@@ -206,6 +207,7 @@ c
 	do j = blc(2),trc(2)
 	  y = (j-crpix(2))*cdelt(2) - center(2)
 	  do i = blc(1),trc(1)
+	    mask(i) = .TRUE.
 	    x  = (i-crpix(1))*cdelt(1) - center(1)
 	    yt =  x*sinpa + y*cospa
 	    xt = -(x*cospa - y*sinpa)/cosi
@@ -218,7 +220,9 @@ c
       +				radius)
 	      buf(i) = vsys + vel*sini
 	    endif
+	    mask(i) = vel.ne.0.0
 	  enddo
+	  call xyflgwr(lout,j-blc(2)+1,mask(blc(1)))
 	  call xywrite(lout,j-blc(2)+1,buf(blc(1)))
 	enddo
 c
