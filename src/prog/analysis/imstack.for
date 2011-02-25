@@ -293,12 +293,14 @@ c
 c------------------------------------------------------------------------
 	double precision In(3),Out(3)
 	integer i
+	logical valid
 c
 	call pcvtinit(tOut,tIn)
 	In(1) = 1
 	In(2) = 1
 	In(3) = 1
-	call pcvt(In,Out,3)
+	call pcvt(In,Out,3,valid)
+	if (.not.valid) call bug('f','Invalid coords-1 matching')
 	blctrc(1) = Out(1)
 	blctrc(2) = Out(2)
 	blctrc(3) = Out(3)
@@ -306,7 +308,8 @@ c
 	In(1) = nsize(1)
 	In(2) = nsize(2)
 	In(3) = nsize(3)
-	call pcvt(In,Out,3)
+	call pcvt(In,Out,3,valid)
+	if (.not.valid) call bug('f','Invalid coords-2 matching')
 	blctrc(4) = Out(1)
 	blctrc(5) = Out(2)
 	blctrc(6) = Out(3)
