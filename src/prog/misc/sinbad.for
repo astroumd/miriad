@@ -11,10 +11,12 @@ c       autocorrelation data. The preceeding OFF and TSYS record
 c	for each antenna is used. When flags on the OFF scans are bad,
 c       the scan is now ignored as an OFF scan.
 c	Flags on the ON scans are copied to the output file.
+c       Only the ON scans are copied to the output file.
 c       Missing TSYS can be replaced via the tsys= keyword as a last
 c       resort, or the spectral window based systemp() UV variable
 c       that should be present in normal MIRIAD datasets.
-c       For baseline subtraction, see:  sinpoly
+c       For baseline subtraction, see:  SINPOLY
+c       For single dish mapping, see:  VARMAPS
 c@ vis
 c       The name of the input autocorrelation data set.
 c       Only one name must be given.
@@ -37,6 +39,9 @@ c       Exclusively one of the following (minimum match):
 c         'spectrum'     Compute Tsys*(on-off/off).  This is the default
 c         'difference'   Compute (on-off)
 c         'ratio'        Compute on/off
+c@ slop
+c       Allow some fraction of channels bad for accepting
+c       Default: 0
 c--
 c
 c  History:
@@ -47,36 +52,53 @@ c    pjt     25feb08  use window based systemp array if tsys not available.
 c    mwp     16may08  added options for spectrum, difference, ratio
 c    mwp     16may08-2  off() must be complex!!! very funny behavior if not.
 c    pjt     28jan11  made it listen to flags in the OFF scans
+c    pjt     28feb11  quick hack to pre-cache first scan of all OFF's
 c---------------------------------------------------------------------------
+c  TODO:
+c    - integration time from listobs appears wrong
+c    - the on/off flag is still copied, looks a bit confusing perhaps
+c      even though the off scans are not written
+c
+c  - proper handling of flags (oflags is now read)
+c    useful if ON and OFF are different
+c  - optionally allow interpolaton betwene two nearby OFF's
+c  - specify OFF's from a different source name (useful if data were
+c    not marked correctly).
+
 	include 'maxdim.h'
 	character version*80,versan*80
 	integer maxsels
 	parameter(maxsels=1024)
 c
 	real sels(maxsels)
-	real start,step,width,tsys1
-	character linetype*20,vis*80,out*80
+	real start,step,width,tsys1,slop
+	character linetype*20,vis*128,out*128
 	complex data(maxchan)
 	logical flags(maxchan)
         logical first,new,dopol,PolVary,doon
 	integer lIn,lOut,nchan,npol,pol,SnPol,SPol,on,i,j,ant
-        character type*1
+        character type*1, line*128
         integer length 
         logical updated
+c what the heck is this trick to read the preamble(4) or preamble(5)
 	double precision uin,vin,timein,basein
 	common/preamb/uin,vin,timein,basein
+c
 	complex off(MAXCHAN,MAXANT)
         real    tsys(MAXCHAN,MAXANT)
+        logical oflags(MAXCHAN,MAXANT)
 	integer num,   non,   noff,   ntsys
 	data    num/0/,non/0/,noff/0/,ntsys/0/
-        logical spectrum, diffrnce, ratio
-        logical allflags
+        logical spectrum, diffrnce, ratio, have_ant(MAXANT)
+        logical allflags,debug
 c
 c  Read the inputs.
 c
         version = versan('sinbad',
      *  '$Revision$',
      *  '$Date$')
+
+        call bug('i','New caching of OFF positions')
 
  	call keyini
         call getopt(spectrum,diffrnce,ratio)
@@ -89,6 +111,8 @@ c
 	call keyr('line',step,width)
  	call keya('out',out,' ')
         call keyr('tsys',tsys1,-1.0)
+        call keyr('slop',slop,0)
+        call keyl('debug',debug,.FALSE.)
 	call keyfin
 c
 c  Check user inputs.
@@ -123,7 +147,32 @@ c
            do i=1,MAXCHAN
               tsys(i,j) = tsys1
            enddo
+           have_ant(j) = .FALSE.
         enddo
+c
+c  Scan the file once and pre-cache the OFF positions
+c
+	call uvread(lIn,uin,data,flags,maxchan,nchan)
+	do while (nchan.gt.0)
+           call uvgetvri(lIn,'on',on,1)
+           ant = basein/256
+           if(on.eq.0)then
+              if (debug) write(*,*) 'Reading off ant ',
+     *             ant,on,have_ant(ant)
+              if (allflags(nchan,flags,slop)) then
+                 if (.not.have_ant(ant)) then
+                    if(debug)write(*,*) 'Saving off ant ',ant
+                    have_ant(ant) = .TRUE.
+                    do i=1,nchan
+                       off(i,ant) = data(i)
+                       oflags(i,ant) = flags(i)
+                    enddo
+                 endif
+              endif
+           endif
+           call uvread(lIn,uin,data,flags,maxchan,nchan)
+        end do
+        call uvrewind(lIn)
 c
 c  Read through the file, listing what we have to.
 c
@@ -174,30 +223,40 @@ c
           endif
 c
 c  Copy the variables we are interested in.
+c  Since only the "on" scans are output, there's an 
+c  un-intended side effect here: some variables are written
+c  twice (e.g. the "on" will be off, then on again).
 c
             call VarCopy(lIn,lOut)
 c
-c  Now process the line data.
+c  Now process the data.
 c
             if(doon)then
               call uvgetvri(lIn,'on',on,1)
 	      ant = basein/256
 	      if(on.eq.0)then
-                 if (allflags(nchan,flags)) then
+                 if (allflags(nchan,flags,slop)) then
                     noff = noff + 1
                     do i=1,nchan
                        off(i,ant) = data(i)
+                       oflags(i,ant) = flags(i)
                     enddo
                  endif
 	      else if(on.eq.-1)then
-                 if (allflags(nchan,flags)) then
+                 if (allflags(nchan,flags,slop)) then
                     ntsys = ntsys + 1
                     do i=1,nchan
                        tsys(i,ant) = data(i)
+                       oflags(i,ant) = flags(i)
                     enddo
                  endif
 	      else if(on.eq.1)then
-                if (noff.eq.0) call bug('f','No off before on found')
+                if (.not.have_ant(ant)) then
+                   write(line,
+     *                   '(''Did not find OFF scan for ant'',I2)') ant
+                   call bug('f',line)
+                 endif
+                if (noff.eq.0) call bug('f','No OFF before ON found')
                 if (ntsys.eq.0 .and. tsys1.lt.0.0)
      *              call getwtsys(lIn,tsys,MAXCHAN,MAXANT) 
 		non = non + 1
@@ -258,24 +317,27 @@ c
         call hisclose (lOut)
         call uvclose(lOut)
         end
-c********1*********2*********3*********4*********5*********6*********7**
-c     
-        logical function allflags(nchan,flags)
+c-----------------------------------------------------------------------
+        logical function allflags(nchan,flags,slop)
         implicit none
         integer nchan
         logical flags(nchan)
+        real slop
 c
-        integer i
+        integer i, nf
         allflags = .TRUE.
+
+        if (slop.eq.1.0) return
+
+        nf = 0
         do i=1,nchan
-           if (.NOT.flags(i)) then
-              allflags = .FALSE.
-              return 
-           endif
+           if (.NOT.flags(i)) nf = nf + 1
         enddo
+c       write(*,*) nf,nchan,slop*nchan
+        allflags = nf .LE. (slop*nchan)
         return
         end
-        
+c-----------------------------------------------------------------------        
         subroutine getwtsys(lIn,tsys,mchan,mant)
         implicit none
         integer lIn, mchan, mant
@@ -307,9 +369,9 @@ c                 write(*,*) i2,' :t: ',(tsys(i2,j),j=1,nants)
         endif
 
         end
+c-----------------------------------------------------------------------
+c  Get the various (exclusive) options
 c
-c********1*********2*********3*********4*********5*********6*********7**
-cc Get the various (exclusive) options
         subroutine getopt(spectrum,diffrnce,ratio)
         implicit none
         logical spectrum, diffrnce, ratio
