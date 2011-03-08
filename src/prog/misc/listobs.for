@@ -513,7 +513,8 @@ c        include 'maxdim.h'
 	real systemps(MAXSPECT*MAXANT),tsys
         real cfreq(MAXSPECT/2),haobs,decobs,sum
         character vtype*4
-        logical vupd,systhere,pthere
+        logical vupd,systhere,pthere,first
+        data first/.TRUE./
 c
 c   get all of the desired uv variables from header
 c
@@ -582,7 +583,10 @@ c
 	lst(ipt)  = dlst
 
 c   LSB for C16-23 not flagged yet, so use this kludge
-        call bug('w','Only Tsys < 10,000 used in band averaging')
+        if (first) then
+           call bug('w','Only Tsys < 10,000 used in band averaging')
+           first = .FALSE.
+        endif
 
 	do 200 i=1,iants
 	   sum = 0.0
