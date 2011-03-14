@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.6 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2010, Mark Calabretta
+  WCSLIB 4.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2011, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -70,6 +70,7 @@ char usage[] =
 #include <wcsfix.h>
 #include <wcs.h>
 #include <getwcstab.h>
+
 
 int main(int argc, char **argv)
 
@@ -259,6 +260,8 @@ int main(int argc, char **argv)
   gcode[1] = 2;
   grid1[0] =    0.0;
   grid2[0] =    0.0;
+
+  /* These are for the projection boundary. */
   grid1[1] = -180.0;
   grid1[2] =  180.0;
   grid2[1] =  -90.0;

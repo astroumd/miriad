@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 4.6 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2010, Mark Calabretta
+* WCSLIB 4.7 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2011, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -84,6 +84,8 @@
       INTEGER   STAT(WCSFIX_NWCS), STATUS
       CHARACTER CTYPES*8
       INTEGER   WCS(WCSLEN)
+      DOUBLE PRECISION DUMMY
+      EQUIVALENCE (WCS,DUMMY)
 *-----------------------------------------------------------------------
       WRITE (*, 10)
  10   FORMAT ('Testing WCSLIB translator for non-standard usage ',

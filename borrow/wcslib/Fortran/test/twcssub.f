@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 4.6 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2010, Mark Calabretta
+* WCSLIB 4.7 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2011, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -53,6 +53,8 @@
       INCLUDE 'wcs.inc'
 
       INTEGER   WCS(WCSLEN), WCSEXT(WCSLEN)
+      DOUBLE PRECISION DUMMY1, DUMMY2
+      EQUIVALENCE (WCS,DUMMY1), (WCSEXT,DUMMY2)
 
       DATA (CRPIX(J), J=1,NAXIS)
      :             / 1025D0,  64D0, 512D0,  513D0/

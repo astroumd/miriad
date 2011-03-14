@@ -3958,8 +3958,8 @@ char *wcsutrntext;
 #line 1 "wcsutrn.l"
 /*============================================================================
 
-  WCSLIB 4.6 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2010, Mark Calabretta
+  WCSLIB 4.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2011, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -4184,7 +4184,7 @@ YY_DECL
 	BEGIN(INITIAL);
 	
 #ifdef DEBUG
-	printf("\n%s ->\n", unitstr);
+	fprintf(stderr, "\n%s ->\n", unitstr);
 #endif
 
 #line 4191 "wcsutrn.c"

@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 4.6 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2010, Mark Calabretta
+* WCSLIB 4.7 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2011, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -51,6 +51,8 @@
       INTEGER   CEL(CELLEN)
       INTEGER   NTV(CELLEN)
       INTEGER   PRJ(PRJLEN)
+      DOUBLE PRECISION DUMMY1, DUMMY2, DUMMY3
+      EQUIVALENCE (CEL,DUMMY1), (NTV,DUMMY2), (PRJ,DUMMY3)
 *-----------------------------------------------------------------------
       WRITE (*, 10)
  10   FORMAT ('Testing WCSLIB celestial coordinate transformation ',

@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-<title>WCSLIB 4.6.3: wcs.h Source File</title>
+<title>WCSLIB 4.7: wcs.h Source File</title>
 <link href="doxygen.css" rel="stylesheet" type="text/css">
 <link href="tabs.css" rel="stylesheet" type="text/css">
 </head><body>
@@ -16,8 +16,8 @@
   </div>
 <h1>wcs.h</h1><a href="wcs_8h.html">Go to the documentation of this file.</a><div class="fragment"><pre class="fragment"><a name="l00001"></a>00001 <span class="comment">/*============================================================================</span>
 <a name="l00002"></a>00002 <span class="comment"></span>
-<a name="l00003"></a>00003 <span class="comment">  WCSLIB 4.6 - an implementation of the FITS WCS standard.</span>
-<a name="l00004"></a>00004 <span class="comment">  Copyright (C) 1995-2010, Mark Calabretta</span>
+<a name="l00003"></a>00003 <span class="comment">  WCSLIB 4.7 - an implementation of the FITS WCS standard.</span>
+<a name="l00004"></a>00004 <span class="comment">  Copyright (C) 1995-2011, Mark Calabretta</span>
 <a name="l00005"></a>00005 <span class="comment"></span>
 <a name="l00006"></a>00006 <span class="comment">  This file is part of WCSLIB.</span>
 <a name="l00007"></a>00007 <span class="comment"></span>
@@ -47,7 +47,7 @@
 <a name="l00031"></a>00031 <span class="comment">  $Id$</span>
 <a name="l00032"></a>00032 <span class="comment">*=============================================================================</span>
 <a name="l00033"></a>00033 <span class="comment">*</span>
-<a name="l00034"></a>00034 <span class="comment">* WCSLIB 4.6 - C routines that implement the FITS World Coordinate System</span>
+<a name="l00034"></a>00034 <span class="comment">* WCSLIB 4.7 - C routines that implement the FITS World Coordinate System</span>
 <a name="l00035"></a>00035 <span class="comment">* (WCS) standard.  Refer to</span>
 <a name="l00036"></a>00036 <span class="comment">*</span>
 <a name="l00037"></a>00037 <span class="comment">*   "Representations of world coordinates in FITS",</span>
@@ -1365,88 +1365,89 @@
 <a name="l01349"></a><a class="code" href="structwcsprm.html#8625c0a6ff99c754566c46c2372df801">01349</a>   <span class="keywordtype">int</span>    <a class="code" href="structwcsprm.html#8625c0a6ff99c754566c46c2372df801">nwtb</a>;                  <span class="comment">/* Number of wtbarr structs.                */</span>
 <a name="l01350"></a><a class="code" href="structwcsprm.html#292133b2b7143b969a3af6a3f2cf3709">01350</a>   <span class="keyword">struct </span><a class="code" href="structtabprm.html" title="Tabular transformation parameters.">tabprm</a> *<a class="code" href="structwcsprm.html#292133b2b7143b969a3af6a3f2cf3709">tab</a>;           <span class="comment">/* Tabular transformation parameters.       */</span>
 <a name="l01351"></a><a class="code" href="structwcsprm.html#9063e8d0c956e9eae7f7d6f3608b9ed2">01351</a>   <span class="keyword">struct </span><a class="code" href="structwtbarr.html" title="Extraction of coordinate lookup tables from BINTABLE.">wtbarr</a> *<a class="code" href="structwcsprm.html#9063e8d0c956e9eae7f7d6f3608b9ed2">wtb</a>;           <span class="comment">/* Array of wtbarr structs.                 */</span>
-<a name="l01352"></a>01352 
-<a name="l01353"></a>01353   <span class="comment">/* Information derived from the FITS header keyvalues by wcsset().        */</span>
-<a name="l01354"></a>01354   <span class="comment">/*------------------------------------------------------------------------*/</span>
-<a name="l01355"></a><a class="code" href="structwcsprm.html#b63cdcf6ff8febd1b40d0e044ca7d7ef">01355</a>   <span class="keywordtype">int</span>    *<a class="code" href="structwcsprm.html#b63cdcf6ff8febd1b40d0e044ca7d7ef">types</a>;                <span class="comment">/* Coordinate type codes for each axis.     */</span>
-<a name="l01356"></a><a class="code" href="structwcsprm.html#5b56e1b378a6ae9f8dfff5c364f0653c">01356</a>   <span class="keywordtype">char</span>   <a class="code" href="structwcsprm.html#5b56e1b378a6ae9f8dfff5c364f0653c">lngtyp</a>[8], <a class="code" href="structwcsprm.html#e352318ce3202dab1b5db8b9ceec7703">lattyp</a>[8];  <span class="comment">/* Celestial axis types, e.g. RA, DEC.      */</span>
-<a name="l01357"></a><a class="code" href="structwcsprm.html#b9729795155b8f37afd80784fb70068b">01357</a>   <span class="keywordtype">int</span>    <a class="code" href="structwcsprm.html#08098820949433d1336841d32d0b62b5">lng</a>, <a class="code" href="structwcsprm.html#b7f7173e6d2b1b8028a3275bdd751e79">lat</a>, <a class="code" href="structwcsprm.html#b9729795155b8f37afd80784fb70068b">spec</a>;        <span class="comment">/* Longitude, latitude and spectral axis    */</span>
-<a name="l01358"></a>01358                                 <span class="comment">/* indices (0-relative).                    */</span>
-<a name="l01359"></a><a class="code" href="structwcsprm.html#de8495d3ca5047eeadba5934d0bb2708">01359</a>   <span class="keywordtype">int</span>    <a class="code" href="structwcsprm.html#de8495d3ca5047eeadba5934d0bb2708">cubeface</a>;              <span class="comment">/* True if there is a CUBEFACE axis.        */</span>
-<a name="l01360"></a>01360 
-<a name="l01361"></a><a class="code" href="structwcsprm.html#3224bd06f8f4d2d7d398533eb44a49e8">01361</a>   <span class="keyword">struct </span><a class="code" href="structlinprm.html" title="Linear transformation parameters.">linprm</a> <a class="code" href="structwcsprm.html#3224bd06f8f4d2d7d398533eb44a49e8">lin</a>;            <span class="comment">/* Linear    transformation parameters.     */</span>
-<a name="l01362"></a><a class="code" href="structwcsprm.html#c8391dd770637dbb841067996b7777ba">01362</a>   <span class="keyword">struct </span><a class="code" href="structcelprm.html" title="Celestial transformation parameters.">celprm</a> <a class="code" href="structwcsprm.html#c8391dd770637dbb841067996b7777ba">cel</a>;            <span class="comment">/* Celestial transformation parameters.     */</span>
-<a name="l01363"></a><a class="code" href="structwcsprm.html#e83952aec7c1ac76c090bc89bf4eeea7">01363</a>   <span class="keyword">struct </span><a class="code" href="structspcprm.html" title="Spectral transformation parameters.">spcprm</a> <a class="code" href="structwcsprm.html#e83952aec7c1ac76c090bc89bf4eeea7">spc</a>;            <span class="comment">/* Spectral  transformation parameters.     */</span>
-<a name="l01364"></a>01364 
-<a name="l01365"></a><a class="code" href="structwcsprm.html#5ed753e401cda620a04adfb4ebfb8e0d">01365</a>   <span class="keywordtype">int</span>    <a class="code" href="structwcsprm.html#5780880281f2f9d085d2e06919b7647a">m_flag</a>, <a class="code" href="structwcsprm.html#5ed753e401cda620a04adfb4ebfb8e0d">m_naxis</a>;       <span class="comment">/* The remainder are for memory management. */</span>
-<a name="l01366"></a><a class="code" href="structwcsprm.html#6778d31ec5a2ee643dc5f0a8af630b03">01366</a>   <span class="keywordtype">double</span> *<a class="code" href="structwcsprm.html#164e3852bcd2dea8b5f73e1dff79ddf5">m_crpix</a>, *<a class="code" href="structwcsprm.html#6778d31ec5a2ee643dc5f0a8af630b03">m_pc</a>, *<a class="code" href="structwcsprm.html#42e0ff2da3b0c1ca0a9509f787ed1951">m_cdelt</a>, *<a class="code" href="structwcsprm.html#5072893bd9beddb33967697d501acdce">m_crval</a>;
-<a name="l01367"></a><a class="code" href="structwcsprm.html#f1cb3e68560d1ac42c620cfe3900af95">01367</a>   char  (*<a class="code" href="structwcsprm.html#f1cb3e68560d1ac42c620cfe3900af95">m_cunit</a>)[72], (*m_ctype)[72];
-<a name="l01368"></a><a class="code" href="structwcsprm.html#6a3fa7adc304567271c5cc0eda3ac986">01368</a>   <span class="keyword">struct </span><a class="code" href="structpvcard.html" title="Store for PVi_ma keyrecords.">pvcard</a> *<a class="code" href="structwcsprm.html#6a3fa7adc304567271c5cc0eda3ac986">m_pv</a>;
-<a name="l01369"></a><a class="code" href="structwcsprm.html#042875def8cab8354c5b2c40ab9fa374">01369</a>   <span class="keyword">struct </span><a class="code" href="structpscard.html" title="Store for PSi_ma keyrecords.">pscard</a> *<a class="code" href="structwcsprm.html#042875def8cab8354c5b2c40ab9fa374">m_ps</a>;
-<a name="l01370"></a><a class="code" href="structwcsprm.html#5444415c94c7ab0226788f5efe93221d">01370</a>   <span class="keywordtype">double</span> *<a class="code" href="structwcsprm.html#7a88af56c4c978c6d4213ae1f4bec87a">m_cd</a>, *<a class="code" href="structwcsprm.html#5444415c94c7ab0226788f5efe93221d">m_crota</a>;
-<a name="l01371"></a><a class="code" href="structwcsprm.html#4ed527b90d49e8365c1b727f7bec29c7">01371</a>   <span class="keywordtype">int</span>    *<a class="code" href="structwcsprm.html#4ed527b90d49e8365c1b727f7bec29c7">m_colax</a>;
-<a name="l01372"></a><a class="code" href="structwcsprm.html#092c11d209ecdd16bb79858c68e4d582">01372</a>   char  (*<a class="code" href="structwcsprm.html#092c11d209ecdd16bb79858c68e4d582">m_cname</a>)[72];
-<a name="l01373"></a><a class="code" href="structwcsprm.html#13fab263ca03f35844fdaca289b7dfac">01373</a>   <span class="keywordtype">double</span> *<a class="code" href="structwcsprm.html#0d15534535c7f9308c9daa2cceff29e7">m_crder</a>, *<a class="code" href="structwcsprm.html#13fab263ca03f35844fdaca289b7dfac">m_csyer</a>;
-<a name="l01374"></a><a class="code" href="structwcsprm.html#e09d5bf005e3bd7ee880353e8816ceb8">01374</a>   <span class="keyword">struct </span><a class="code" href="structtabprm.html" title="Tabular transformation parameters.">tabprm</a> *<a class="code" href="structwcsprm.html#e09d5bf005e3bd7ee880353e8816ceb8">m_tab</a>;
-<a name="l01375"></a><a class="code" href="structwcsprm.html#ce7e0986c79d73bd3a0613034b71974f">01375</a>   <span class="keyword">struct </span><a class="code" href="structwtbarr.html" title="Extraction of coordinate lookup tables from BINTABLE.">wtbarr</a> *<a class="code" href="structwcsprm.html#ce7e0986c79d73bd3a0613034b71974f">m_wtb</a>;
-<a name="l01376"></a>01376 };
-<a name="l01377"></a>01377 
-<a name="l01378"></a>01378 <span class="comment">/* Size of the wcsprm struct in int units, used by the Fortran wrappers. */</span>
-<a name="l01379"></a><a class="code" href="wcs_8h.html#6852f6dd2883c82296f1108b897d337e">01379</a> <span class="preprocessor">#define WCSLEN (sizeof(struct wcsprm)/sizeof(int))</span>
-<a name="l01380"></a>01380 <span class="preprocessor"></span>
-<a name="l01381"></a>01381 
-<a name="l01382"></a>01382 <span class="keywordtype">int</span> <a class="code" href="wcs_8h.html#42b2578d76ace7ca6114d82b7ae46a89" title="Memory allocation for PVi_ma.">wcsnpv</a>(<span class="keywordtype">int</span> n);
-<a name="l01383"></a>01383 
-<a name="l01384"></a>01384 <span class="keywordtype">int</span> <a class="code" href="wcs_8h.html#e790c9ce6c9b7a4845cf1c3c97b1e97a" title="Memory allocation for PSi_ma.">wcsnps</a>(<span class="keywordtype">int</span> n);
-<a name="l01385"></a>01385 
-<a name="l01386"></a>01386 <span class="keywordtype">int</span> <a class="code" href="wcs_8h.html#2afc8255fde0965dddaa374463666d45" title="Default constructor for the wcsprm struct.">wcsini</a>(<span class="keywordtype">int</span> alloc, <span class="keywordtype">int</span> naxis, <span class="keyword">struct</span> <a class="code" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> *wcs);
-<a name="l01387"></a>01387 
-<a name="l01388"></a>01388 <span class="keywordtype">int</span> <a class="code" href="wcs_8h.html#864c99fef9f3eee29085ce42d0ee0d64" title="Subimage extraction routine for the wcsprm struct.">wcssub</a>(<span class="keywordtype">int</span> alloc, <span class="keyword">const</span> <span class="keyword">struct</span> <a class="code" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> *wcssrc, <span class="keywordtype">int</span> *nsub, <span class="keywordtype">int</span> axes[],
-<a name="l01389"></a>01389            <span class="keyword">struct</span> <a class="code" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> *wcsdst);
-<a name="l01390"></a>01390 
-<a name="l01391"></a>01391 <span class="keywordtype">int</span> <a class="code" href="wcs_8h.html#4ab38bc642c4656f62c43acf84a849f1" title="Destructor for the wcsprm struct.">wcsfree</a>(<span class="keyword">struct</span> <a class="code" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> *wcs);
-<a name="l01392"></a>01392 
-<a name="l01393"></a>01393 <span class="keywordtype">int</span> <a class="code" href="wcs_8h.html#b9aeb8cf1afb1bfb22e989580d90fca8" title="Print routine for the wcsprm struct.">wcsprt</a>(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> *wcs);
-<a name="l01394"></a>01394 
-<a name="l01395"></a>01395 <span class="keywordtype">int</span> <a class="code" href="wcs_8h.html#e5cc3f5d249755583403cdf54d2ebb91" title="Setup routine for the wcsprm struct.">wcsset</a>(<span class="keyword">struct</span> <a class="code" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> *wcs);
-<a name="l01396"></a>01396 
-<a name="l01397"></a>01397 <span class="keywordtype">int</span> <a class="code" href="wcs_8h.html#27d3dd209db3e76cf4c50f48c01ba986" title="Pixel-to-world transformation.">wcsp2s</a>(<span class="keyword">struct</span> <a class="code" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> *wcs, <span class="keywordtype">int</span> ncoord, <span class="keywordtype">int</span> nelem, <span class="keyword">const</span> <span class="keywordtype">double</span> pixcrd[],
-<a name="l01398"></a>01398            <span class="keywordtype">double</span> imgcrd[], <span class="keywordtype">double</span> phi[], <span class="keywordtype">double</span> theta[], <span class="keywordtype">double</span> world[],
-<a name="l01399"></a>01399            <span class="keywordtype">int</span> stat[]);
-<a name="l01400"></a>01400 
-<a name="l01401"></a>01401 <span class="keywordtype">int</span> <a class="code" href="wcs_8h.html#60673d05a3513659ac848a9cb3d0cb07" title="World-to-pixel transformation.">wcss2p</a>(<span class="keyword">struct</span> <a class="code" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> *wcs, <span class="keywordtype">int</span> ncoord, <span class="keywordtype">int</span> nelem, <span class="keyword">const</span> <span class="keywordtype">double</span> world[],
-<a name="l01402"></a>01402            <span class="keywordtype">double</span> phi[], <span class="keywordtype">double</span> theta[], <span class="keywordtype">double</span> imgcrd[], <span class="keywordtype">double</span> pixcrd[],
-<a name="l01403"></a>01403            <span class="keywordtype">int</span> stat[]);
-<a name="l01404"></a>01404 
-<a name="l01405"></a>01405 <span class="keywordtype">int</span> <a class="code" href="wcs_8h.html#f3f00b876c8212d43f32a51feeadaa81" title="Hybrid coordinate transformation.">wcsmix</a>(<span class="keyword">struct</span> <a class="code" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> *wcs, <span class="keywordtype">int</span> mixpix, <span class="keywordtype">int</span> mixcel, <span class="keyword">const</span> <span class="keywordtype">double</span> vspan[],
-<a name="l01406"></a>01406            <span class="keywordtype">double</span> vstep, <span class="keywordtype">int</span> viter, <span class="keywordtype">double</span> world[], <span class="keywordtype">double</span> phi[],
-<a name="l01407"></a>01407            <span class="keywordtype">double</span> theta[], <span class="keywordtype">double</span> imgcrd[], <span class="keywordtype">double</span> pixcrd[]);
-<a name="l01408"></a>01408 
-<a name="l01409"></a>01409 <span class="keywordtype">int</span> <a class="code" href="wcs_8h.html#57975833fe0588eb7c7b6d79f13a7693" title="Spectral axis translation.">wcssptr</a>(<span class="keyword">struct</span> <a class="code" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> *wcs, <span class="keywordtype">int</span> *<a class="code" href="structwtbarr.html#8743b84c99b4b5e7ab7bf0653507a180">i</a>, <span class="keywordtype">char</span> ctype[9]);
-<a name="l01410"></a>01410 
-<a name="l01411"></a>01411 <span class="comment">/* Defined mainly for backwards compatibility, use wcssub() instead. */</span>
-<a name="l01412"></a><a class="code" href="wcs_8h.html#c55946dadc53ac592cb686275902ae7b">01412</a> <span class="preprocessor">#define wcscopy(alloc, wcssrc, wcsdst) wcssub(alloc, wcssrc, 0, 0, wcsdst)</span>
-<a name="l01413"></a>01413 <span class="preprocessor"></span>
-<a name="l01414"></a>01414 
-<a name="l01415"></a>01415 <span class="comment">/* Deprecated. */</span>
-<a name="l01416"></a><a class="code" href="wcs_8h.html#1bcf49cfe1ed1bb2bc4c930f98d808fa">01416</a> <span class="preprocessor">#define wcsini_errmsg wcs_errmsg</span>
-<a name="l01417"></a><a class="code" href="wcs_8h.html#465ef3c77aaf546324dae0692e6de7fe">01417</a> <span class="preprocessor"></span><span class="preprocessor">#define wcssub_errmsg wcs_errmsg</span>
-<a name="l01418"></a><a class="code" href="wcs_8h.html#e1738854472218541bda531653ef2709">01418</a> <span class="preprocessor"></span><span class="preprocessor">#define wcscopy_errmsg wcs_errmsg</span>
-<a name="l01419"></a><a class="code" href="wcs_8h.html#3d64b57cec404114c75bd25a562e8053">01419</a> <span class="preprocessor"></span><span class="preprocessor">#define wcsfree_errmsg wcs_errmsg</span>
-<a name="l01420"></a><a class="code" href="wcs_8h.html#8f5c31a6983b17abbe2fead61550d55c">01420</a> <span class="preprocessor"></span><span class="preprocessor">#define wcsprt_errmsg wcs_errmsg</span>
-<a name="l01421"></a><a class="code" href="wcs_8h.html#84a67c964e212bbf004c264b3ca70fee">01421</a> <span class="preprocessor"></span><span class="preprocessor">#define wcsset_errmsg wcs_errmsg</span>
-<a name="l01422"></a><a class="code" href="wcs_8h.html#de3959355dc9d0987e7ccc4070795c38">01422</a> <span class="preprocessor"></span><span class="preprocessor">#define wcsp2s_errmsg wcs_errmsg</span>
-<a name="l01423"></a><a class="code" href="wcs_8h.html#37c4884cf58baf25b2984ec3bccb80a5">01423</a> <span class="preprocessor"></span><span class="preprocessor">#define wcss2p_errmsg wcs_errmsg</span>
-<a name="l01424"></a><a class="code" href="wcs_8h.html#cfbadc770489b6b5186b95eaa35467f1">01424</a> <span class="preprocessor"></span><span class="preprocessor">#define wcsmix_errmsg wcs_errmsg</span>
-<a name="l01425"></a>01425 <span class="preprocessor"></span>
-<a name="l01426"></a>01426 <span class="preprocessor">#ifdef __cplusplus</span>
-<a name="l01427"></a>01427 <span class="preprocessor"></span><span class="preprocessor">#undef wtbarr</span>
-<a name="l01428"></a>01428 <span class="preprocessor"></span>}
-<a name="l01429"></a>01429 <span class="preprocessor">#endif</span>
-<a name="l01430"></a>01430 <span class="preprocessor"></span>
-<a name="l01431"></a>01431 <span class="preprocessor">#endif </span><span class="comment">/* WCSLIB_WCS */</span>
+<a name="l01352"></a><a class="code" href="structwcsprm.html#0e226178fece28149cd6680ca12a95bb">01352</a>   <span class="keywordtype">int</span>    *<a class="code" href="structwcsprm.html#0e226178fece28149cd6680ca12a95bb">padding</a>;              <span class="comment">/* (Dummy inserted for alignment purposes.) */</span>
+<a name="l01353"></a>01353 
+<a name="l01354"></a>01354   <span class="comment">/* Information derived from the FITS header keyvalues by wcsset().        */</span>
+<a name="l01355"></a>01355   <span class="comment">/*------------------------------------------------------------------------*/</span>
+<a name="l01356"></a><a class="code" href="structwcsprm.html#b63cdcf6ff8febd1b40d0e044ca7d7ef">01356</a>   <span class="keywordtype">int</span>    *<a class="code" href="structwcsprm.html#b63cdcf6ff8febd1b40d0e044ca7d7ef">types</a>;                <span class="comment">/* Coordinate type codes for each axis.     */</span>
+<a name="l01357"></a><a class="code" href="structwcsprm.html#5b56e1b378a6ae9f8dfff5c364f0653c">01357</a>   <span class="keywordtype">char</span>   <a class="code" href="structwcsprm.html#5b56e1b378a6ae9f8dfff5c364f0653c">lngtyp</a>[8], <a class="code" href="structwcsprm.html#e352318ce3202dab1b5db8b9ceec7703">lattyp</a>[8];  <span class="comment">/* Celestial axis types, e.g. RA, DEC.      */</span>
+<a name="l01358"></a><a class="code" href="structwcsprm.html#b9729795155b8f37afd80784fb70068b">01358</a>   <span class="keywordtype">int</span>    <a class="code" href="structwcsprm.html#08098820949433d1336841d32d0b62b5">lng</a>, <a class="code" href="structwcsprm.html#b7f7173e6d2b1b8028a3275bdd751e79">lat</a>, <a class="code" href="structwcsprm.html#b9729795155b8f37afd80784fb70068b">spec</a>;        <span class="comment">/* Longitude, latitude and spectral axis    */</span>
+<a name="l01359"></a>01359                                 <span class="comment">/* indices (0-relative).                    */</span>
+<a name="l01360"></a><a class="code" href="structwcsprm.html#de8495d3ca5047eeadba5934d0bb2708">01360</a>   <span class="keywordtype">int</span>    <a class="code" href="structwcsprm.html#de8495d3ca5047eeadba5934d0bb2708">cubeface</a>;              <span class="comment">/* True if there is a CUBEFACE axis.        */</span>
+<a name="l01361"></a>01361 
+<a name="l01362"></a><a class="code" href="structwcsprm.html#3224bd06f8f4d2d7d398533eb44a49e8">01362</a>   <span class="keyword">struct </span><a class="code" href="structlinprm.html" title="Linear transformation parameters.">linprm</a> <a class="code" href="structwcsprm.html#3224bd06f8f4d2d7d398533eb44a49e8">lin</a>;            <span class="comment">/* Linear    transformation parameters.     */</span>
+<a name="l01363"></a><a class="code" href="structwcsprm.html#c8391dd770637dbb841067996b7777ba">01363</a>   <span class="keyword">struct </span><a class="code" href="structcelprm.html" title="Celestial transformation parameters.">celprm</a> <a class="code" href="structwcsprm.html#c8391dd770637dbb841067996b7777ba">cel</a>;            <span class="comment">/* Celestial transformation parameters.     */</span>
+<a name="l01364"></a><a class="code" href="structwcsprm.html#e83952aec7c1ac76c090bc89bf4eeea7">01364</a>   <span class="keyword">struct </span><a class="code" href="structspcprm.html" title="Spectral transformation parameters.">spcprm</a> <a class="code" href="structwcsprm.html#e83952aec7c1ac76c090bc89bf4eeea7">spc</a>;            <span class="comment">/* Spectral  transformation parameters.     */</span>
+<a name="l01365"></a>01365 
+<a name="l01366"></a><a class="code" href="structwcsprm.html#5ed753e401cda620a04adfb4ebfb8e0d">01366</a>   <span class="keywordtype">int</span>    <a class="code" href="structwcsprm.html#5780880281f2f9d085d2e06919b7647a">m_flag</a>, <a class="code" href="structwcsprm.html#5ed753e401cda620a04adfb4ebfb8e0d">m_naxis</a>;       <span class="comment">/* The remainder are for memory management. */</span>
+<a name="l01367"></a><a class="code" href="structwcsprm.html#6778d31ec5a2ee643dc5f0a8af630b03">01367</a>   <span class="keywordtype">double</span> *<a class="code" href="structwcsprm.html#164e3852bcd2dea8b5f73e1dff79ddf5">m_crpix</a>, *<a class="code" href="structwcsprm.html#6778d31ec5a2ee643dc5f0a8af630b03">m_pc</a>, *<a class="code" href="structwcsprm.html#42e0ff2da3b0c1ca0a9509f787ed1951">m_cdelt</a>, *<a class="code" href="structwcsprm.html#5072893bd9beddb33967697d501acdce">m_crval</a>;
+<a name="l01368"></a><a class="code" href="structwcsprm.html#f1cb3e68560d1ac42c620cfe3900af95">01368</a>   char  (*<a class="code" href="structwcsprm.html#f1cb3e68560d1ac42c620cfe3900af95">m_cunit</a>)[72], (*m_ctype)[72];
+<a name="l01369"></a><a class="code" href="structwcsprm.html#6a3fa7adc304567271c5cc0eda3ac986">01369</a>   <span class="keyword">struct </span><a class="code" href="structpvcard.html" title="Store for PVi_ma keyrecords.">pvcard</a> *<a class="code" href="structwcsprm.html#6a3fa7adc304567271c5cc0eda3ac986">m_pv</a>;
+<a name="l01370"></a><a class="code" href="structwcsprm.html#042875def8cab8354c5b2c40ab9fa374">01370</a>   <span class="keyword">struct </span><a class="code" href="structpscard.html" title="Store for PSi_ma keyrecords.">pscard</a> *<a class="code" href="structwcsprm.html#042875def8cab8354c5b2c40ab9fa374">m_ps</a>;
+<a name="l01371"></a><a class="code" href="structwcsprm.html#5444415c94c7ab0226788f5efe93221d">01371</a>   <span class="keywordtype">double</span> *<a class="code" href="structwcsprm.html#7a88af56c4c978c6d4213ae1f4bec87a">m_cd</a>, *<a class="code" href="structwcsprm.html#5444415c94c7ab0226788f5efe93221d">m_crota</a>;
+<a name="l01372"></a><a class="code" href="structwcsprm.html#4ed527b90d49e8365c1b727f7bec29c7">01372</a>   <span class="keywordtype">int</span>    *<a class="code" href="structwcsprm.html#4ed527b90d49e8365c1b727f7bec29c7">m_colax</a>;
+<a name="l01373"></a><a class="code" href="structwcsprm.html#092c11d209ecdd16bb79858c68e4d582">01373</a>   char  (*<a class="code" href="structwcsprm.html#092c11d209ecdd16bb79858c68e4d582">m_cname</a>)[72];
+<a name="l01374"></a><a class="code" href="structwcsprm.html#13fab263ca03f35844fdaca289b7dfac">01374</a>   <span class="keywordtype">double</span> *<a class="code" href="structwcsprm.html#0d15534535c7f9308c9daa2cceff29e7">m_crder</a>, *<a class="code" href="structwcsprm.html#13fab263ca03f35844fdaca289b7dfac">m_csyer</a>;
+<a name="l01375"></a><a class="code" href="structwcsprm.html#e09d5bf005e3bd7ee880353e8816ceb8">01375</a>   <span class="keyword">struct </span><a class="code" href="structtabprm.html" title="Tabular transformation parameters.">tabprm</a> *<a class="code" href="structwcsprm.html#e09d5bf005e3bd7ee880353e8816ceb8">m_tab</a>;
+<a name="l01376"></a><a class="code" href="structwcsprm.html#ce7e0986c79d73bd3a0613034b71974f">01376</a>   <span class="keyword">struct </span><a class="code" href="structwtbarr.html" title="Extraction of coordinate lookup tables from BINTABLE.">wtbarr</a> *<a class="code" href="structwcsprm.html#ce7e0986c79d73bd3a0613034b71974f">m_wtb</a>;
+<a name="l01377"></a>01377 };
+<a name="l01378"></a>01378 
+<a name="l01379"></a>01379 <span class="comment">/* Size of the wcsprm struct in int units, used by the Fortran wrappers. */</span>
+<a name="l01380"></a><a class="code" href="wcs_8h.html#6852f6dd2883c82296f1108b897d337e">01380</a> <span class="preprocessor">#define WCSLEN (sizeof(struct wcsprm)/sizeof(int))</span>
+<a name="l01381"></a>01381 <span class="preprocessor"></span>
+<a name="l01382"></a>01382 
+<a name="l01383"></a>01383 <span class="keywordtype">int</span> <a class="code" href="wcs_8h.html#42b2578d76ace7ca6114d82b7ae46a89" title="Memory allocation for PVi_ma.">wcsnpv</a>(<span class="keywordtype">int</span> n);
+<a name="l01384"></a>01384 
+<a name="l01385"></a>01385 <span class="keywordtype">int</span> <a class="code" href="wcs_8h.html#e790c9ce6c9b7a4845cf1c3c97b1e97a" title="Memory allocation for PSi_ma.">wcsnps</a>(<span class="keywordtype">int</span> n);
+<a name="l01386"></a>01386 
+<a name="l01387"></a>01387 <span class="keywordtype">int</span> <a class="code" href="wcs_8h.html#2afc8255fde0965dddaa374463666d45" title="Default constructor for the wcsprm struct.">wcsini</a>(<span class="keywordtype">int</span> alloc, <span class="keywordtype">int</span> naxis, <span class="keyword">struct</span> <a class="code" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> *wcs);
+<a name="l01388"></a>01388 
+<a name="l01389"></a>01389 <span class="keywordtype">int</span> <a class="code" href="wcs_8h.html#864c99fef9f3eee29085ce42d0ee0d64" title="Subimage extraction routine for the wcsprm struct.">wcssub</a>(<span class="keywordtype">int</span> alloc, <span class="keyword">const</span> <span class="keyword">struct</span> <a class="code" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> *wcssrc, <span class="keywordtype">int</span> *nsub, <span class="keywordtype">int</span> axes[],
+<a name="l01390"></a>01390            <span class="keyword">struct</span> <a class="code" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> *wcsdst);
+<a name="l01391"></a>01391 
+<a name="l01392"></a>01392 <span class="keywordtype">int</span> <a class="code" href="wcs_8h.html#4ab38bc642c4656f62c43acf84a849f1" title="Destructor for the wcsprm struct.">wcsfree</a>(<span class="keyword">struct</span> <a class="code" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> *wcs);
+<a name="l01393"></a>01393 
+<a name="l01394"></a>01394 <span class="keywordtype">int</span> <a class="code" href="wcs_8h.html#b9aeb8cf1afb1bfb22e989580d90fca8" title="Print routine for the wcsprm struct.">wcsprt</a>(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> *wcs);
+<a name="l01395"></a>01395 
+<a name="l01396"></a>01396 <span class="keywordtype">int</span> <a class="code" href="wcs_8h.html#e5cc3f5d249755583403cdf54d2ebb91" title="Setup routine for the wcsprm struct.">wcsset</a>(<span class="keyword">struct</span> <a class="code" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> *wcs);
+<a name="l01397"></a>01397 
+<a name="l01398"></a>01398 <span class="keywordtype">int</span> <a class="code" href="wcs_8h.html#27d3dd209db3e76cf4c50f48c01ba986" title="Pixel-to-world transformation.">wcsp2s</a>(<span class="keyword">struct</span> <a class="code" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> *wcs, <span class="keywordtype">int</span> ncoord, <span class="keywordtype">int</span> nelem, <span class="keyword">const</span> <span class="keywordtype">double</span> pixcrd[],
+<a name="l01399"></a>01399            <span class="keywordtype">double</span> imgcrd[], <span class="keywordtype">double</span> phi[], <span class="keywordtype">double</span> theta[], <span class="keywordtype">double</span> world[],
+<a name="l01400"></a>01400            <span class="keywordtype">int</span> stat[]);
+<a name="l01401"></a>01401 
+<a name="l01402"></a>01402 <span class="keywordtype">int</span> <a class="code" href="wcs_8h.html#60673d05a3513659ac848a9cb3d0cb07" title="World-to-pixel transformation.">wcss2p</a>(<span class="keyword">struct</span> <a class="code" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> *wcs, <span class="keywordtype">int</span> ncoord, <span class="keywordtype">int</span> nelem, <span class="keyword">const</span> <span class="keywordtype">double</span> world[],
+<a name="l01403"></a>01403            <span class="keywordtype">double</span> phi[], <span class="keywordtype">double</span> theta[], <span class="keywordtype">double</span> imgcrd[], <span class="keywordtype">double</span> pixcrd[],
+<a name="l01404"></a>01404            <span class="keywordtype">int</span> stat[]);
+<a name="l01405"></a>01405 
+<a name="l01406"></a>01406 <span class="keywordtype">int</span> <a class="code" href="wcs_8h.html#f3f00b876c8212d43f32a51feeadaa81" title="Hybrid coordinate transformation.">wcsmix</a>(<span class="keyword">struct</span> <a class="code" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> *wcs, <span class="keywordtype">int</span> mixpix, <span class="keywordtype">int</span> mixcel, <span class="keyword">const</span> <span class="keywordtype">double</span> vspan[],
+<a name="l01407"></a>01407            <span class="keywordtype">double</span> vstep, <span class="keywordtype">int</span> viter, <span class="keywordtype">double</span> world[], <span class="keywordtype">double</span> phi[],
+<a name="l01408"></a>01408            <span class="keywordtype">double</span> theta[], <span class="keywordtype">double</span> imgcrd[], <span class="keywordtype">double</span> pixcrd[]);
+<a name="l01409"></a>01409 
+<a name="l01410"></a>01410 <span class="keywordtype">int</span> <a class="code" href="wcs_8h.html#57975833fe0588eb7c7b6d79f13a7693" title="Spectral axis translation.">wcssptr</a>(<span class="keyword">struct</span> <a class="code" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> *wcs, <span class="keywordtype">int</span> *<a class="code" href="structwtbarr.html#8743b84c99b4b5e7ab7bf0653507a180">i</a>, <span class="keywordtype">char</span> ctype[9]);
+<a name="l01411"></a>01411 
+<a name="l01412"></a>01412 <span class="comment">/* Defined mainly for backwards compatibility, use wcssub() instead. */</span>
+<a name="l01413"></a><a class="code" href="wcs_8h.html#c55946dadc53ac592cb686275902ae7b">01413</a> <span class="preprocessor">#define wcscopy(alloc, wcssrc, wcsdst) wcssub(alloc, wcssrc, 0, 0, wcsdst)</span>
+<a name="l01414"></a>01414 <span class="preprocessor"></span>
+<a name="l01415"></a>01415 
+<a name="l01416"></a>01416 <span class="comment">/* Deprecated. */</span>
+<a name="l01417"></a><a class="code" href="wcs_8h.html#1bcf49cfe1ed1bb2bc4c930f98d808fa">01417</a> <span class="preprocessor">#define wcsini_errmsg wcs_errmsg</span>
+<a name="l01418"></a><a class="code" href="wcs_8h.html#465ef3c77aaf546324dae0692e6de7fe">01418</a> <span class="preprocessor"></span><span class="preprocessor">#define wcssub_errmsg wcs_errmsg</span>
+<a name="l01419"></a><a class="code" href="wcs_8h.html#e1738854472218541bda531653ef2709">01419</a> <span class="preprocessor"></span><span class="preprocessor">#define wcscopy_errmsg wcs_errmsg</span>
+<a name="l01420"></a><a class="code" href="wcs_8h.html#3d64b57cec404114c75bd25a562e8053">01420</a> <span class="preprocessor"></span><span class="preprocessor">#define wcsfree_errmsg wcs_errmsg</span>
+<a name="l01421"></a><a class="code" href="wcs_8h.html#8f5c31a6983b17abbe2fead61550d55c">01421</a> <span class="preprocessor"></span><span class="preprocessor">#define wcsprt_errmsg wcs_errmsg</span>
+<a name="l01422"></a><a class="code" href="wcs_8h.html#84a67c964e212bbf004c264b3ca70fee">01422</a> <span class="preprocessor"></span><span class="preprocessor">#define wcsset_errmsg wcs_errmsg</span>
+<a name="l01423"></a><a class="code" href="wcs_8h.html#de3959355dc9d0987e7ccc4070795c38">01423</a> <span class="preprocessor"></span><span class="preprocessor">#define wcsp2s_errmsg wcs_errmsg</span>
+<a name="l01424"></a><a class="code" href="wcs_8h.html#37c4884cf58baf25b2984ec3bccb80a5">01424</a> <span class="preprocessor"></span><span class="preprocessor">#define wcss2p_errmsg wcs_errmsg</span>
+<a name="l01425"></a><a class="code" href="wcs_8h.html#cfbadc770489b6b5186b95eaa35467f1">01425</a> <span class="preprocessor"></span><span class="preprocessor">#define wcsmix_errmsg wcs_errmsg</span>
+<a name="l01426"></a>01426 <span class="preprocessor"></span>
+<a name="l01427"></a>01427 <span class="preprocessor">#ifdef __cplusplus</span>
+<a name="l01428"></a>01428 <span class="preprocessor"></span><span class="preprocessor">#undef wtbarr</span>
+<a name="l01429"></a>01429 <span class="preprocessor"></span>}
+<a name="l01430"></a>01430 <span class="preprocessor">#endif</span>
+<a name="l01431"></a>01431 <span class="preprocessor"></span>
+<a name="l01432"></a>01432 <span class="preprocessor">#endif </span><span class="comment">/* WCSLIB_WCS */</span>
 </pre></div></div>
-<hr size="1"><address style="text-align: right;"><small>Generated on Wed Nov 24 12:48:54 2010 for WCSLIB 4.6.3 by&nbsp;
+<hr size="1"><address style="text-align: right;"><small>Generated on Mon Feb 7 18:03:56 2011 for WCSLIB 4.7 by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.5.6 </small></address>
 </body>

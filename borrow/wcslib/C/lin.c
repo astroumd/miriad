@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.6 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2010, Mark Calabretta
+  WCSLIB 4.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2011, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -34,6 +34,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+
+#include "wcsprintf.h"
 #include "lin.h"
 
 const int LINSET = 137;
@@ -281,75 +283,75 @@ const struct linprm *lin;
   if (lin == 0x0) return 1;
 
   if (lin->flag != LINSET) {
-    printf("The linprm struct is UNINITIALIZED.\n");
+    wcsprintf("The linprm struct is UNINITIALIZED.\n");
     return 0;
   }
 
-  printf("       flag: %d\n", lin->flag);
-  printf("      naxis: %d\n", lin->naxis);
-  printf("      crpix: %p\n", (void *)lin->crpix);
-  printf("            ");
+  wcsprintf("       flag: %d\n", lin->flag);
+  wcsprintf("      naxis: %d\n", lin->naxis);
+  wcsprintf("      crpix: %p\n", (void *)lin->crpix);
+  wcsprintf("            ");
   for (i = 0; i < lin->naxis; i++) {
-    printf("  %- 11.5g", lin->crpix[i]);
+    wcsprintf("  %- 11.5g", lin->crpix[i]);
   }
-  printf("\n");
+  wcsprintf("\n");
 
   k = 0;
-  printf("         pc: %p\n", (void *)lin->pc);
+  wcsprintf("         pc: %p\n", (void *)lin->pc);
   for (i = 0; i < lin->naxis; i++) {
-    printf("    pc[%d][]:", i);
+    wcsprintf("    pc[%d][]:", i);
     for (j = 0; j < lin->naxis; j++) {
-      printf("  %- 11.5g", lin->pc[k++]);
+      wcsprintf("  %- 11.5g", lin->pc[k++]);
     }
-    printf("\n");
+    wcsprintf("\n");
   }
 
-  printf("      cdelt: %p\n", (void *)lin->cdelt);
-  printf("            ");
+  wcsprintf("      cdelt: %p\n", (void *)lin->cdelt);
+  wcsprintf("            ");
   for (i = 0; i < lin->naxis; i++) {
-    printf("  %- 11.5g", lin->cdelt[i]);
+    wcsprintf("  %- 11.5g", lin->cdelt[i]);
   }
-  printf("\n");
+  wcsprintf("\n");
 
-  printf("      unity: %d\n", lin->unity);
+  wcsprintf("      unity: %d\n", lin->unity);
 
   if (lin->piximg == 0x0) {
-    printf("     piximg: (nil)\n");
+    wcsprintf("     piximg: (nil)\n");
   } else {
     k = 0;
     for (i = 0; i < lin->naxis; i++) {
-      printf("piximg[%d][]:", i);
+      wcsprintf("piximg[%d][]:", i);
       for (j = 0; j < lin->naxis; j++) {
-        printf("  %- 11.5g", lin->piximg[k++]);
+        wcsprintf("  %- 11.5g", lin->piximg[k++]);
       }
-      printf("\n");
+      wcsprintf("\n");
     }
   }
 
   if (lin->imgpix == 0x0) {
-    printf("     imgpix: (nil)\n");
+    wcsprintf("     imgpix: (nil)\n");
   } else {
     k = 0;
     for (i = 0; i < lin->naxis; i++) {
-      printf("imgpix[%d][]:", i);
+      wcsprintf("imgpix[%d][]:", i);
       for (j = 0; j < lin->naxis; j++) {
-        printf("  %- 11.5g", lin->imgpix[k++]);
+        wcsprintf("  %- 11.5g", lin->imgpix[k++]);
       }
-      printf("\n");
+      wcsprintf("\n");
     }
   }
 
-  printf("     m_flag: %d\n", lin->m_flag);
-  printf("    m_naxis: %d\n", lin->m_naxis);
-  printf("    m_crpix: %p", (void *)lin->m_crpix);
-  if (lin->m_crpix == lin->crpix) printf("  (= crpix)");
-  printf("\n");
-  printf("       m_pc: %p", (void *)lin->m_pc);
-  if (lin->m_pc == lin->pc) printf("  (= pc)");
-  printf("\n");
-  printf("    m_cdelt: %p", (void *)lin->m_cdelt);
-  if (lin->m_cdelt == lin->cdelt) printf("  (= cdelt)");
-  printf("\n");
+  wcsprintf("     m_flag: %d\n", lin->m_flag);
+  wcsprintf("    m_naxis: %d\n", lin->m_naxis);
+  wcsprintf("    m_crpix: %p", (void *)lin->m_crpix);
+  if (lin->m_crpix == lin->crpix) wcsprintf("  (= crpix)");
+  wcsprintf("\n");
+  wcsprintf("       m_pc: %p", (void *)lin->m_pc);
+  if (lin->m_pc == lin->pc) wcsprintf("  (= pc)");
+  wcsprintf("\n");
+  wcsprintf("    m_cdelt: %p", (void *)lin->m_cdelt);
+  if (lin->m_cdelt == lin->cdelt) wcsprintf("  (= cdelt)");
+  wcsprintf("\n");
 
   return 0;
 }

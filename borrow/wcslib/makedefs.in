@@ -1,5 +1,5 @@
 #-----------------------------------------------------------------------------
-# GNU makefile definitions for building WCSLIB 4.6
+# GNU makefile definitions for building WCSLIB 4.7
 #
 # makedefs is generated from makedefs.in by configure.  It contains variable
 # definitions and some general-purpose rules for building WCSLIB.
@@ -39,11 +39,11 @@
 #      compiled separately without this option.
 #
 #      The shared library will be installed with version number, e.g. as
-#      libwcs.so.4.6 or libwcs.4.6.dylib with or without the symlink
+#      libwcs.so.4.7 or libwcs.4.7.dylib with or without the symlink
 #      required to make it visible to the linker (controlled by the SHRLN
 #      variable).  On Macs it is deliberately not created because its very
 #      existence precludes static linking with the cctools linker.  You can
-#      still link dynamically by using -lwcs.4.6.
+#      still link dynamically by using -lwcs.4.7.
 #
 #   4) PGPLOT is Tim Pearson's Fortran graphics library with separate C
 #      interface available from astro.caltech.edu.  It is only required by
@@ -77,8 +77,8 @@
 # $Id$
 #-----------------------------------------------------------------------------
 # Version.
-  V := @PACKAGE_VERSION@
-  WCSLIBV  := wcslib-$V
+  LIBVER    := @LIBVER@
+  WCSLIBPKG := wcslib-@PACKAGE_VERSION@
 
 # System architecture.
   ARCH     := @ARCH@
@@ -101,7 +101,7 @@
   FFLAGS   := @FFLAGS@
 
 # Static object library.
-  LIBWCS   := libwcs-$V.a
+  WCSLIB   := libwcs-$(LIBVER).a
   RANLIB   := @RANLIB@
 
 # Shared (dynamic) library (see note 3 above).
@@ -121,13 +121,20 @@
   LN_S     := @LN_S@
   INSTALL  := @INSTALL@
 
-  prefix   := @prefix@
-  exec_prefix := @exec_prefix@
+  # Needed for the definitions provided by autoconf.
+  prefix          := @prefix@
+  exec_prefix     := @exec_prefix@
+  datarootdir     := @datarootdir@
+  PACKAGE_TARNAME := @PACKAGE_TARNAME@
+  docdir          := @docdir@
 
-  LIBDIR   := @libdir@
-  BINDIR   := @bindir@
-  INCDIR   := @includedir@/$(WCSLIBV)
-  INCLINK  := @includedir@/wcslib
+  LIBDIR   := $(DESTDIR)@libdir@
+  BINDIR   := $(DESTDIR)@bindir@
+  INCDIR   := $(DESTDIR)@includedir@/wcslib-$(LIBVER)
+  INCLINK  := $(DESTDIR)@includedir@/wcslib
+  DOCDIR   := $(DESTDIR)@docdir@
+  HTMLDIR  := $(DESTDIR)@htmldir@
+  PDFDIR   := $(DESTDIR)@pdfdir@
 
 # For putting timestamps in the build log.
   TIMER    := date +"%a %Y/%m/%d %X %z, executing on $$HOST"
@@ -179,7 +186,7 @@ show :: wcsconfig.h
 	-@ $(MAKE) --version | head -1
 	-@ echo '  MAKEFLAGS   := $(MAKEFLAGS)'
 	-@ echo ''
-	-@ echo 'For building and installing $(WCSLIBV)...'
+	-@ echo 'For building and installing $(WCSLIBPKG)...'
 	-@ echo '  ARCH        := $(ARCH)'
 	-@ echo '  FLEX        := $(FLEX)'
 	-@ echo '  FLFLAGS     := $(FLFLAGS)'
@@ -190,7 +197,7 @@ show :: wcsconfig.h
 	-@ echo '  CFLAGS      := $(CFLAGS)'
 	-@ echo '  FC          := $(FC)'
 	-@ echo '  FFLAGS      := $(FFLAGS)'
-	-@ echo '  LIBWCS      := $(LIBWCS)'
+	-@ echo '  WCSLIB      := $(WCSLIB)'
 	-@ echo '  RANLIB      := $(RANLIB)'
 	-@ echo '  SHRLIB      := $(SHRLIB)'
 	-@ echo '  SHRFLAGS    := $(SHRFLAGS)'
@@ -202,6 +209,9 @@ show :: wcsconfig.h
 	-@ echo '  BINDIR      := $(BINDIR)'
 	-@ echo '  INCDIR      := $(INCDIR)'
 	-@ echo '  INCLINK     := $(INCLINK)'
+	-@ echo '  DOCDIR      := $(DOCDIR)'
+	-@ echo '  HTMLDIR     := $(HTMLDIR)'
+	-@ echo '  PDFDIR      := $(PDFDIR)'
 	-@ echo '  TIMER       := $(TIMER)'
 	-@ echo ''
 	-@ echo 'Important wcsconfig.h defines...'

@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.6 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2010, Mark Calabretta
+  WCSLIB 4.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2011, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -53,6 +53,7 @@
 #include <wcs.h>
 #include <wcshdr.h>
 #include <wcsfix.h>
+#include <wcsprintf.h>
 
 int main()
 
@@ -173,10 +174,13 @@ int main()
   printf("\n");
 
 
-  /* Fix non-standard usage and print each of the wcsprm structs. */
+  /* Fix non-standard usage and print each of the wcsprm structs.  The output
+   * from wcsprt() will be written to an internal buffer and then printed just
+   * to show that it can be done. */
+  wcsprintf_set(0x0);
   for (iwcs = 0; iwcs < nwcs; iwcs++) {
-    printf("\n------------------------------------"
-           "------------------------------------\n");
+    wcsprintf("\n------------------------------------"
+              "------------------------------------\n");
 
     /* Fix non-standard WCS keyvalues. */
     if ((status = wcsfix(7, 0, wcs+iwcs, stat))) {
@@ -196,6 +200,7 @@ int main()
       fprintf(stderr, "wcsprt ERROR %d: %s.\n", status, wcs_errmsg[status]);
     }
   }
+  printf("%s", wcsprintf_buf());
 
   status = wcsvfree(&nwcs, &wcs);
 

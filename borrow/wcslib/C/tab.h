@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.6 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2010, Mark Calabretta
+  WCSLIB 4.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2011, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -31,7 +31,7 @@
   $Id$
 *=============================================================================
 *
-* WCSLIB 4.6 - C routines that implement tabular coordinate systems as
+* WCSLIB 4.7 - C routines that implement tabular coordinate systems as
 * defined by the FITS World Coordinate System (WCS) standard.  Refer to
 *
 *   "Representations of world coordinates in FITS",
@@ -399,15 +399,15 @@
 *     whose elements indicate whether the corresponding indexing vector is
 *     monotonic increasing (+1), or decreasing (-1).
 *
-*   double *p0
+*   int *p0
 *     (Returned) Pointer to the first element of a vector of length tabprm::M
 *     of interpolated indices into the coordinate array such that Upsilon_m,
-*     as defined in Paper III, is equal to p0[m] + tabprm::delta[m].
+*     as defined in Paper III, is equal to (p0[m] + 1) + tabprm::delta[m].
 *
 *   double *delta
 *     (Returned) Pointer to the first element of a vector of length tabprm::M
 *     of interpolated indices into the coordinate array such that Upsilon_m,
-*     as defined in Paper III, is equal to tabprm::p0[m] + delta[m].
+*     as defined in Paper III, is equal to (tabprm::p0[m] + 1) + delta[m].
 *
 *   double *extrema
 *     (Returned) Pointer to the first element of an array that records the

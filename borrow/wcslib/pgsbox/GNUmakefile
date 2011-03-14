@@ -1,5 +1,5 @@
 #-----------------------------------------------------------------------------
-# GNU makefile for building PGSBOX 4.6
+# GNU makefile for building PGSBOX 4.7
 #
 # Summary of the main targets
 # ---------------------------
@@ -26,7 +26,7 @@
 #      instead and re-run configure.
 #
 #   2) In compiling the test programs, this makefile assumes that the
-#      WCSLIB 4.6 sources reside in ../C and ../Fortran (as in the
+#      WCSLIB 4.7 sources reside in ../C and ../Fortran (as in the
 #      distribution kit).
 #
 # Author: Mark Calabretta, Australia Telescope National Facility
@@ -36,13 +36,13 @@
 # Get configure settings.
 include ../makedefs
 
-LIBPGSBOX := libpgsbox-$V.a
+PGSBOXLIB := libpgsbox-$(LIBVER).a
 MODULES   := pgsbox.o \
              cpgsbox.o \
              pgwcsl.o \
              pgcrfn.o
 
-LIBWCS   := ../C/$(LIBWCS)
+WCSLIB   := ../C/$(WCSLIB)
 
 # For building the sharable library.
 PICLIB := libpgsbox-PIC.a
@@ -60,16 +60,16 @@ vpath %.inc ../Fortran
 # Pattern rules
 #--------------
 
-$(LIBPGSBOX)(%.o) : %.f
+$(PGSBOXLIB)(%.o) : %.f
 	-@ echo ''
 	   $(FC) -I../Fortran $(FFLAGS) -c $<
-	   $(AR) r $(LIBPGSBOX) $%
+	   $(AR) r $(PGSBOXLIB) $%
 	-@ $(RM) $%
 
-$(LIBPGSBOX)(%.o) : %.c
+$(PGSBOXLIB)(%.o) : %.c
 	-@ echo ''
 	   $(CC) $(CPPFLAGS) $(CFLAGS) -c $<
-	   $(AR) r $(LIBPGSBOX) $%
+	   $(AR) r $(PGSBOXLIB) $%
 	-@ $(RM) $%
 
 $(PICLIB)(%.o) : %.f
@@ -103,9 +103,9 @@ $(PICLIB)(%.o) : %.c
 
 build : lib
 
-lib : $(LIBPGSBOX) $(SHRLIB)
+lib : $(PGSBOXLIB) $(SHRLIB)
 
-$(LIBPGSBOX) : $(MODULES:%=$(LIBPGSBOX)(%))
+$(PGSBOXLIB) : $(MODULES:%=$(PGSBOXLIB)(%))
 	-@ echo ''
 	   $(RANLIB) $@
 
@@ -123,10 +123,10 @@ $(PICLIB) : $(MODULES:%.o=$(PICLIB)(%.o)) ;
 
 install : build
 	   $(MAKE) -C ../Fortran install
-	   $(INSTALL) -m 644 $(LIBPGSBOX) $(LIBDIR)
-	   $(RANLIB) $(LIBDIR)/$(LIBPGSBOX)
+	   $(INSTALL) -m 644 $(PGSBOXLIB) $(LIBDIR)
+	   $(RANLIB) $(LIBDIR)/$(PGSBOXLIB)
 	   $(RM) $(LIBDIR)/libpgsbox.a
-	   $(LN_S) $(LIBDIR)/$(LIBPGSBOX) $(LIBDIR)/libpgsbox.a
+	   $(LN_S) $(LIBDIR)/$(PGSBOXLIB) $(LIBDIR)/libpgsbox.a
 	-  if [ "$(SHRLIB)" != "" ] ; then \
 	     $(INSTALL) -m 644 $(SHRLIB) $(LIBDIR) ; \
 	     if [ "$(SHRLN)" != "" ] ; then \
@@ -168,19 +168,19 @@ check test : tests
 
 tests : wcslib pgtest cpgtest
 
-wcslib : $(LIBWCS)
+wcslib : $(WCSLIB)
 
-$(LIBWCS) :
+$(WCSLIB) :
 	-@ echo ''
 	   $(MAKE) -C ../Fortran lib
 
-pgtest : pgtest.f fscan.f lngvel.f $(LIBPGSBOX) $(LIBWCS)
+pgtest : pgtest.f fscan.f lngvel.f $(PGSBOXLIB) $(WCSLIB)
 	-@ $(RM) $@
 	-@ echo ''
 	   $(FC) -I../Fortran $(FFLAGS) $(LDFLAGS) -o $@ $^ \
 	     $(PGPLOTLIB) $(LIBS)
 
-cpgtest : cpgtest.c fscan.f lngvel.f $(LIBPGSBOX) $(LIBWCS)
+cpgtest : cpgtest.c fscan.f lngvel.f $(PGSBOXLIB) $(WCSLIB)
 	-@ $(RM) $@
 	-@ echo ''
 	   $(FC) -I../Fortran $(FFLAGS) -c fscan.f lngvel.f
@@ -197,7 +197,7 @@ GNUmakefile : ../makedefs ;
 
 show ::
 	-@ echo 'For building libpgsbox...'
-	-@ echo '  LIBPGSBOX   := $(LIBPGSBOX)'
+	-@ echo '  PGSBOXLIB   := $(PGSBOXLIB)'
 	-@ echo '  PICLIB      := $(PICLIB)'
 	-@ echo '  WCSSHR      := $(WCSSHR)'
 	-@ echo '  SHRLIB      := $(SHRLIB)'
@@ -210,8 +210,8 @@ show ::
 # Dependencies
 #-------------
 
-$(LIBPGSBOX)(cpgsbox.o) : cpgsbox.h wcsconfig_f77.h
-$(LIBPGSBOX)(pgwcsl.o)  : cel.h lin.h prj.h spc.h sph.h spx.h tab.h wcs.h \
+$(PGSBOXLIB)(cpgsbox.o) : cpgsbox.h wcsconfig_f77.h
+$(PGSBOXLIB)(pgwcsl.o)  : cel.h lin.h prj.h spc.h sph.h spx.h tab.h wcs.h \
                           wcsconfig_f77.h
 
 pgtest.o  : wcs.inc

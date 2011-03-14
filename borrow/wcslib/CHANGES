@@ -1,3 +1,67 @@
+WCSLIB version 4.7 (2011/02/07)
+-------------------------------
+
+* C library
+
+  - Bug fix in celset() for interpreting LATPOLEa when LONPOLEa = phi0.
+    Crept in at version 4.4.
+
+  - Fixed the bounds test on y in hpxx2s() (HEALPix projection) for
+    unconventional values of H and K.  In hpxx2s() and hpxs2x(),
+    corrected the offset of the southern polar half-facets for
+    even K.  In hpxs2x(), put the phi = 180 meridian in the expected
+    place.
+
+  - Bug fixes in tabx2s() and tabs2x() for default indexes (reported
+    by David Berry).  In tabs2x(), if no solution is found then do
+    minor extrapolation past the ends of each row (1-D case only).
+    Sped up tabs2x() by about 50%.
+
+  - New functions wcsprintf(), wcsprintf_set(), and wcsprintf_buf(),
+    declared in wcsprintf.h, provide control over the disposition of
+    output from celprt(), linprt(), prjprt(), spcprt(), tabprt(), and
+    wcsprt() routines.  Prompted by Michael Droettboom, with an initial
+    implementation.
+
+* Fortran wrappers
+
+  - In the various test programs, used EQUIVALENCEs to ensure that the
+    CEL, LIN, PRJ, etc. arrays are aligned on a DOUBLE PRECISION
+    boundary.
+
+* PGSBOX
+
+  - Bug fix for the case where NG1 == 0 and GRID1(0) < 0, and likewise
+    for NG2 and GRID2.
+
+* Utilities
+
+  - In wcsware, added a '-w' option to convert world coordinates
+    obtained from stdin to pixel coordinates using wcss2p().  Allow
+    multiple sets of input coordinates with the '-x' and '-w' options
+    and report the value of the intermediate world coordinates.
+
+* User manual
+
+  - Fixed list formatting for function return values < 0 or > 9.
+
+  - New section for wcsprintf() and related routines.
+
+* Installation
+
+  - Changes prompted by Sébastien Fabbro for the Gentoo Linux package:
+      a) autoconf updates,
+      b) respect LDFLAGS when building the shared library,
+      c) install documentation,
+      d) recognise DESTDIR for doing a staged installation.
+
+  - As of this release, the minor WCSLIB version number (second field)
+    will be incremented if and only if a change is made that affects the
+    library itself, not the documentation or utilities.  The version
+    number on the installed libraries and header files will omit the
+    patch number (third field).
+
+
 WCSLIB version 4.6.3 (2010/11/24)
 ---------------------------------
 
@@ -52,7 +116,7 @@ WCSLIB version 4.6 (2010/11/16)
       and CHARACTER arguments that simply invoke the generic function.
       Application code must be modified to take advantage of this.
 
-* General
+* User manual
 
   - In the section on the Fortran wrappers in the manual, warn about the
     need for the INTEGER array holding a data structure to be aligned on
@@ -177,7 +241,7 @@ WCSLIB version 4.4.3 (2009/09/03)
 
   - In wcssptr(), ensure that i is always reset if given < 0.
 
-* General
+* User manual
 
   - Augmented the list of FITS WCS and related software in the manual.
 

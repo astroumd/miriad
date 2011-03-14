@@ -1,7 +1,7 @@
 /*============================================================================
 
-  PGSBOX 4.6 - draw curvilinear coordinate axes for PGPLOT.
-  Copyright (C) 1997-2010, Mark Calabretta
+  PGSBOX 4.7 - draw curvilinear coordinate axes for PGPLOT.
+  Copyright (C) 1997-2011, Mark Calabretta
 
   This file is part of PGSBOX.
 

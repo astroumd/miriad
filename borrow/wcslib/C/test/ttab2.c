@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.6 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2010, Mark Calabretta
+  WCSLIB 4.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2011, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -145,12 +145,12 @@ int main()
 
     for (l2 = 0; l2 <= 100; l2 += 20) {
       /* (k1,k2) = (0,1). */
-      tab.coord[3] = 0.01 * l2;
+      tab.coord[5] = 0.01 * l2;
 
       cpgpage();
       for (l1 = 0; l1 <= 100; l1 += 2) {
         /* (k1,k2) = (1,0). */
-        tab.coord[5] = 0.01 * l1;
+        tab.coord[3] = 0.01 * l1;
 
         /* Compute coordinates within the interpolation element. */
         tab.flag = 0;
@@ -185,9 +185,9 @@ int main()
         /* Label the value of the coordinate element in each corner. */
         sprintf(text, "%.1f", tab.coord[1]);
         cpgtext(-0.09f, -0.05f, text);
-        sprintf(text, "%.1f", tab.coord[3]);
+        sprintf(text, "%.2f", tab.coord[3]);
         cpgtext( 1.02f, -0.05f, text);
-        sprintf(text, "%.2f", tab.coord[5]);
+        sprintf(text, "%.1f", tab.coord[5]);
         cpgtext(-0.13f,  1.02f, text);
         sprintf(text, "%.1f", tab.coord[7]);
         cpgtext( 1.02f,  1.02f, text);

@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-<title>WCSLIB 4.6.3: WCSLIB Fortran wrappers</title>
+<title>WCSLIB 4.7: WCSLIB Fortran wrappers</title>
 <link href="doxygen.css" rel="stylesheet" type="text/css">
 <link href="tabs.css" rel="stylesheet" type="text/css">
 </head><body>
@@ -14,7 +14,7 @@
       <li><a href="files.html"><span>Files</span></a></li>
     </ul>
   </div>
-  <div class="navpath"><a class="el" href="index.html">WCSLIB 4.6.3 and PGSBOX 4.6.3</a>
+  <div class="navpath"><a class="el" href="index.html">WCSLIB 4.7 and PGSBOX 4.7</a>
   </div>
 </div>
 <div class="contents">
@@ -35,6 +35,8 @@ A basic coding fragment is<p>
 
 *     WCSLEN is defined as a parameter in wcs.inc.
       INTEGER   WCS(WCSLEN)
+      DOUBLE PRECISION DUMMY
+      EQUIVALENCE (WCS, DUMMY)
 
 *     Allocate memory and set default values for 2 axes.
       STATUS = WCSPUT (WCS, WCS_FLAG, -1, 0, 0)
@@ -68,7 +70,7 @@ A basic coding fragment is<p>
 Refer to the various Fortran test programs for further programming examples. In particular, <em>twcs</em> and <em>twcsmix</em> show how to retrieve elements of the <a class="el" href="structcelprm.html" title="Celestial transformation parameters.">celprm</a> and <a class="el" href="structprjprm.html" title="Projection parameters.">prjprm</a> structs contained within the <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> struct.<p>
 Note that the data type of the third argument to the <code>*PUT</code> and <code>*GET</code> routines differs depending on the data type of the corresponding C struct member, be it <em>int</em>, <em>double</em>, or <em>char</em>[]. It is essential that the Fortran data type match that of the C struct for <em>int</em> and <em>double</em> types, and be a <code>CHARACTER</code> variable of the correct length for <em>char</em>[] types. Compilers (e.g. g77) may warn of inconsistent usage of this argument but this can (usually) be safely ignored. If these warnings become annoying, type-specific variants are provided for each of the <code>*PUT</code> routines, <code>*PTI</code>, <code>*PTD</code>, and <code>*PTC</code> for <em>int</em>, <em>double</em>, or <em>char</em>[] and likewise <code>*GTI</code>, <code>*GTD</code>, and <code>*GTC</code> for the <code>*GET</code> routines.<p>
 A basic assumption made by the wrappers is that an <code>INTEGER</code> variable is no less than half the size of a <code>DOUBLE</code> <code>PRECISION</code>. </div>
-<hr size="1"><address style="text-align: right;"><small>Generated on Wed Nov 24 12:48:54 2010 for WCSLIB 4.6.3 by&nbsp;
+<hr size="1"><address style="text-align: right;"><small>Generated on Mon Feb 7 18:03:57 2011 for WCSLIB 4.7 by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.5.6 </small></address>
 </body>

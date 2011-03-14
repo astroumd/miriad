@@ -9,7 +9,7 @@ doxextr extracts information from the header files and applies doxygen
 markup to it.  This is passed through a generic sed filter, doxexr.sed,
 and possibly also a specific sed filter, e.g. prj.sed for prj.h, which
 applies additional doxygen markup, mainly for fonts and formulae.  The
-makefile rule which drives this process writes the output to a set of
+makefile rule that drives this process writes the output to a set of
 files with names of the form *.dox, e.g. prj.dox.
 
 Additional doxygen markup may also be provided via files in this

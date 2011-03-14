@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 4.6 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2010, Mark Calabretta
+* WCSLIB 4.7 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2011, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -48,6 +48,8 @@
 
       INCLUDE 'lin.inc'
       INTEGER LIN(LINLEN)
+      DOUBLE PRECISION DUMMY
+      EQUIVALENCE (LIN,DUMMY)
 
       DATA (CRPIX(I), I=1,NAXIS)
      :           /256D0, 256D0,  64D0, 128D0,   1D0/

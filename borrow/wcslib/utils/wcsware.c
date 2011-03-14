@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.6 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2010, Mark Calabretta
+  WCSLIB 4.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2011, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -53,7 +53,9 @@ char usage[] =
 "               contain an image array.  (Useful for input from stdin.)\n"
 "  -p           Print the struct(s) using wcsprt() (default operation).\n"
 "  -x           Convert pixel coordinates, obtained from stdin, to world\n"
-"               coordinates using wcsp2s().\n";
+"               coordinates using wcsp2s().\n"
+"  -w           Convert world coordinates, obtained from stdin, to pixel\n"
+"               coordinates using wcss2p().\n";
 
 #include <ctype.h>
 #include <stdio.h>
@@ -72,8 +74,8 @@ int main(int argc, char **argv)
 
 {
   char alt = ' ', *header, idents[3][80], *infile;
-  int  alts[27], dofix = 0, doprt = 0, dopix = 0, hdunum = 1, hdutype, i, j,
-       nelem, nkeyrec, nreject, nwcs, *stat = 0x0, status;
+  int  alts[27], c, dofix = 0, doprt = 0, dopix = 0, doworld = 0, hdunum = 1,
+       hdutype, i, j, nelem, nkeyrec, nreject, nwcs, *stat = 0x0, status;
   double *imgcrd = 0x0, phi, *pixcrd = 0x0, theta, *world = 0x0;
   struct wcsprm *wcs;
   fitsfile *fptr;
@@ -104,6 +106,10 @@ int main(int argc, char **argv)
       dopix = 1;
       break;
 
+    case 'w':
+      doworld = 1;
+      break;
+
     default:
       fprintf(stderr, "%s", usage);
       return 1;
@@ -127,7 +133,7 @@ int main(int argc, char **argv)
     return 1;
   }
 
-  if (!dopix) doprt = 1;
+  if (!dopix && !doworld) doprt = 1;
 
 
   /* Open the FITS file and move to the required HDU. */
@@ -232,35 +238,120 @@ int main(int argc, char **argv)
       wcsprt(wcs+i);
     }
 
-    /* Transform pixel coordinates. */
-    if (dopix) {
+    /* Transform coordinates? */
+    if (dopix || doworld) {
       nelem = (wcs+i)->naxis;
-      pixcrd = realloc(pixcrd, nelem * sizeof(double));
-      imgcrd = realloc(imgcrd, nelem * sizeof(double));
       world  = realloc(world,  nelem * sizeof(double));
+      imgcrd = realloc(imgcrd, nelem * sizeof(double));
+      pixcrd = realloc(pixcrd, nelem * sizeof(double));
       stat   = realloc(stat,   nelem * sizeof(int));
 
-      printf("\nEnter %d pixel coordinate elements: ", nelem);
-      scanf("%lf", pixcrd);
-      for (j = 1; j < nelem; j++) {
-        scanf("%*[ ,]%lf", pixcrd+j);
-      }
+      if (dopix) {
+        /* Transform pixel coordinates. */
+        while (1) {
+          printf("\nEnter %d pixel coordinate element%s: ", nelem,
+            (nelem==1)?"":"s");
+          c = fgetc(stdin);
+          if (c == EOF || c == '\n') {
+            if (c == EOF) printf("\n");
+            break;
+          }
+          ungetc(c, stdin);
 
-      wcsp2s(wcs+i, 1, nelem, pixcrd, imgcrd, &phi, &theta, world, stat);
-      printf("Pixel: ");
-      for (j = 0; j < nelem; j++) {
-        printf("%s%14.9g", j?", ":"", pixcrd[j]);
-      }
-      printf("\nWorld: ");
-      for (j = 0; j < nelem; j++) {
-        if (j == (wcs+i)->lng || j == (wcs+i)->lat) {
-          /* Print angles in fixed format. */
-          printf("%s%14.6f", j?", ":"", world[j]);
-        } else {
-          printf("%s%14.9g", j?", ":"", world[j]);
+          scanf("%lf", pixcrd);
+          for (j = 1; j < nelem; j++) {
+            scanf("%*[ ,]%lf", pixcrd+j);
+          }
+          while (fgetc(stdin) != '\n');
+
+          printf("Pixel: ");
+          for (j = 0; j < nelem; j++) {
+            printf("%s%14.9g", j?", ":"", pixcrd[j]);
+          }
+
+          if ((status = wcsp2s(wcs+i, 1, nelem, pixcrd, imgcrd, &phi, &theta,
+                               world, stat))) {
+            fprintf(stderr, "wcsp2s ERROR %d: %s.\n", status,
+              wcs_errmsg[status]);
+
+          } else {
+            printf("\nImage: ");
+            for (j = 0; j < nelem; j++) {
+              if (j == (wcs+i)->lng || j == (wcs+i)->lat) {
+                /* Print angles in fixed format. */
+                printf("%s%14.6f", j?", ":"", imgcrd[j]);
+              } else {
+                printf("%s%14.9g", j?", ":"", imgcrd[j]);
+              }
+            }
+
+            printf("\nWorld: ");
+            for (j = 0; j < nelem; j++) {
+              if (j == (wcs+i)->lng || j == (wcs+i)->lat) {
+                /* Print angles in fixed format. */
+                printf("%s%14.6f", j?", ":"", world[j]);
+              } else {
+                printf("%s%14.9g", j?", ":"", world[j]);
+              }
+            }
+            printf("\n");
+          }
         }
       }
-      printf("\n");
+
+
+      if (doworld) {
+        /* Transform world coordinates. */
+        while (1) {
+          printf("\nEnter %d world coordinate element%s: ", nelem,
+            (nelem==1)?"":"s");
+          c = fgetc(stdin);
+          if (c == EOF || c == '\n') {
+            if (c == EOF) printf("\n");
+            break;
+          }
+          ungetc(c, stdin);
+
+          scanf("%lf", world);
+          for (j = 1; j < nelem; j++) {
+            scanf("%*[ ,]%lf", world+j);
+          }
+          while (fgetc(stdin) != '\n');
+
+          printf("World: ");
+          for (j = 0; j < nelem; j++) {
+            if (j == (wcs+i)->lng || j == (wcs+i)->lat) {
+              /* Print angles in fixed format. */
+              printf("%s%14.6f", j?", ":"", world[j]);
+            } else {
+              printf("%s%14.9g", j?", ":"", world[j]);
+            }
+          }
+
+          if ((status = wcss2p(wcs+i, 1, nelem, world, &phi, &theta, imgcrd,
+                               pixcrd, stat))) {
+            fprintf(stderr, "wcss2p ERROR %d: %s.\n", status,
+              wcs_errmsg[status]);
+
+          } else {
+            printf("\nImage: ");
+            for (j = 0; j < nelem; j++) {
+              if (j == (wcs+i)->lng || j == (wcs+i)->lat) {
+                /* Print angles in fixed format. */
+                printf("%s%14.6f", j?", ":"", imgcrd[j]);
+              } else {
+                printf("%s%14.9g", j?", ":"", imgcrd[j]);
+              }
+            }
+
+            printf("\nPixel: ");
+            for (j = 0; j < nelem; j++) {
+              printf("%s%14.9g", j?", ":"", pixcrd[j]);
+            }
+            printf("\n");
+          }
+        }
+      }
     }
   }
 

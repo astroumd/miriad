@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.6 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2010, Mark Calabretta
+  WCSLIB 4.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2011, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -31,7 +31,7 @@
   $Id$
 *=============================================================================
 *
-* WCSLIB 4.6 - C routines that implement the FITS World Coordinate System
+* WCSLIB 4.7 - C routines that implement the FITS World Coordinate System
 * (WCS) standard.  Refer to
 *
 *   "Representations of world coordinates in FITS",
@@ -1349,6 +1349,7 @@ struct wcsprm {
   int    nwtb;			/* Number of wtbarr structs.                */
   struct tabprm *tab;		/* Tabular transformation parameters.       */
   struct wtbarr *wtb;		/* Array of wtbarr structs.                 */
+  int    *padding;		/* (Dummy inserted for alignment purposes.) */
 
   /* Information derived from the FITS header keyvalues by wcsset().        */
   /*------------------------------------------------------------------------*/

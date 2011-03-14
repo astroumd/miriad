@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.6 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2010, Mark Calabretta
+  WCSLIB 4.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2011, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -37,6 +37,7 @@
 #include <string.h>
 
 #include "wcsmath.h"
+#include "wcsprintf.h"
 #include "wcstrig.h"
 #include "wcsunits.h"
 #include "wcsutil.h"
@@ -439,8 +440,8 @@ int wcsini(int alloc, int naxis, struct wcsprm *wcs)
   wcs->latpole = +90.0;
 
   /* Set defaults for the spectral transformation parameters. */
-  wcs->restfrq =  0.0;
-  wcs->restwav =  0.0;
+  wcs->restfrq = 0.0;
+  wcs->restwav = 0.0;
 
   /* Default parameter values. */
   wcs->npv = 0;
@@ -1018,363 +1019,363 @@ int wcsprt(const struct wcsprm *wcs)
   if (wcs == 0x0) return 1;
 
   if (wcs->flag != WCSSET) {
-    printf("The wcsprm struct is UNINITIALIZED.\n");
+    wcsprintf("The wcsprm struct is UNINITIALIZED.\n");
     return 0;
   }
 
-  printf("       flag: %d\n", wcs->flag);
-  printf("      naxis: %d\n", wcs->naxis);
-  printf("      crpix: %p\n", (void *)wcs->crpix);
-  printf("            ");
+  wcsprintf("       flag: %d\n", wcs->flag);
+  wcsprintf("      naxis: %d\n", wcs->naxis);
+  wcsprintf("      crpix: %p\n", (void *)wcs->crpix);
+  wcsprintf("            ");
   for (i = 0; i < wcs->naxis; i++) {
-    printf("  %- 11.5g", wcs->crpix[i]);
+    wcsprintf("  %- 11.5g", wcs->crpix[i]);
   }
-  printf("\n");
+  wcsprintf("\n");
 
   /* Linear transformation. */
   k = 0;
-  printf("         pc: %p\n", (void *)wcs->pc);
+  wcsprintf("         pc: %p\n", (void *)wcs->pc);
   for (i = 0; i < wcs->naxis; i++) {
-    printf("    pc[%d][]:", i);
+    wcsprintf("    pc[%d][]:", i);
     for (j = 0; j < wcs->naxis; j++) {
-      printf("  %- 11.5g", wcs->pc[k++]);
+      wcsprintf("  %- 11.5g", wcs->pc[k++]);
     }
-    printf("\n");
+    wcsprintf("\n");
   }
 
   /* Coordinate increment at reference point. */
-  printf("      cdelt: %p\n", (void *)wcs->cdelt);
-  printf("            ");
+  wcsprintf("      cdelt: %p\n", (void *)wcs->cdelt);
+  wcsprintf("            ");
   for (i = 0; i < wcs->naxis; i++) {
-    printf("  %- 11.5g", wcs->cdelt[i]);
+    wcsprintf("  %- 11.5g", wcs->cdelt[i]);
   }
-  printf("\n");
+  wcsprintf("\n");
 
   /* Coordinate value at reference point. */
-  printf("      crval: %p\n", (void *)wcs->crval);
-  printf("            ");
+  wcsprintf("      crval: %p\n", (void *)wcs->crval);
+  wcsprintf("            ");
   for (i = 0; i < wcs->naxis; i++) {
-    printf("  %- 11.5g", wcs->crval[i]);
+    wcsprintf("  %- 11.5g", wcs->crval[i]);
   }
-  printf("\n");
+  wcsprintf("\n");
 
   /* Coordinate units and type. */
-  printf("      cunit: %p\n", (void *)wcs->cunit);
+  wcsprintf("      cunit: %p\n", (void *)wcs->cunit);
   for (i = 0; i < wcs->naxis; i++) {
-    printf("             \"%s\"\n", wcs->cunit[i]);
+    wcsprintf("             \"%s\"\n", wcs->cunit[i]);
   }
 
-  printf("      ctype: %p\n", (void *)wcs->ctype);
+  wcsprintf("      ctype: %p\n", (void *)wcs->ctype);
   for (i = 0; i < wcs->naxis; i++) {
-    printf("             \"%s\"\n", wcs->ctype[i]);
+    wcsprintf("             \"%s\"\n", wcs->ctype[i]);
   }
 
   /* Celestial and spectral transformation parameters. */
   if (undefined(wcs->lonpole)) {
-    printf("    lonpole: UNDEFINED\n");
+    wcsprintf("    lonpole: UNDEFINED\n");
   } else {
-    printf("    lonpole: %9f\n", wcs->lonpole);
+    wcsprintf("    lonpole: %9f\n", wcs->lonpole);
   }
-  printf("    latpole: %9f\n", wcs->latpole);
-  printf("    restfrq: %f\n", wcs->restfrq);
-  printf("    restwav: %f\n", wcs->restwav);
+  wcsprintf("    latpole: %9f\n", wcs->latpole);
+  wcsprintf("    restfrq: %f\n", wcs->restfrq);
+  wcsprintf("    restwav: %f\n", wcs->restwav);
 
   /* Parameter values. */
-  printf("        npv: %d\n", wcs->npv);
-  printf("     npvmax: %d\n", wcs->npvmax);
-  printf("         pv: %p\n", (void *)wcs->pv);
+  wcsprintf("        npv: %d\n", wcs->npv);
+  wcsprintf("     npvmax: %d\n", wcs->npvmax);
+  wcsprintf("         pv: %p\n", (void *)wcs->pv);
   for (i = 0; i < wcs->npv; i++) {
-    printf("             %3d%4d  %- 11.5g\n", (wcs->pv[i]).i,
+    wcsprintf("             %3d%4d  %- 11.5g\n", (wcs->pv[i]).i,
       (wcs->pv[i]).m, (wcs->pv[i]).value);
   }
-  printf("        nps: %d\n", wcs->nps);
-  printf("     npsmax: %d\n", wcs->npsmax);
-  printf("         ps: %p\n", (void *)wcs->ps);
+  wcsprintf("        nps: %d\n", wcs->nps);
+  wcsprintf("     npsmax: %d\n", wcs->npsmax);
+  wcsprintf("         ps: %p\n", (void *)wcs->ps);
   for (i = 0; i < wcs->nps; i++) {
-    printf("             %3d%4d  %s\n", (wcs->ps[i]).i,
+    wcsprintf("             %3d%4d  %s\n", (wcs->ps[i]).i,
       (wcs->ps[i]).m, (wcs->ps[i]).value);
   }
 
   /* Alternate linear transformations. */
   k = 0;
-  printf("         cd: %p\n", (void *)wcs->cd);
+  wcsprintf("         cd: %p\n", (void *)wcs->cd);
   if (wcs->cd) {
     for (i = 0; i < wcs->naxis; i++) {
-      printf("    cd[%d][]:", i);
+      wcsprintf("    cd[%d][]:", i);
       for (j = 0; j < wcs->naxis; j++) {
-        printf("  %- 11.5g", wcs->cd[k++]);
+        wcsprintf("  %- 11.5g", wcs->cd[k++]);
       }
-      printf("\n");
+      wcsprintf("\n");
     }
   }
 
-  printf("      crota: %p\n", (void *)wcs->crota);
+  wcsprintf("      crota: %p\n", (void *)wcs->crota);
   if (wcs->crota) {
-    printf("            ");
+    wcsprintf("            ");
     for (i = 0; i < wcs->naxis; i++) {
-      printf("  %- 11.5g", wcs->crota[i]);
+      wcsprintf("  %- 11.5g", wcs->crota[i]);
     }
-    printf("\n");
+    wcsprintf("\n");
   }
 
-  printf("     altlin: %d\n", wcs->altlin);
-  printf("     velref: %d\n", wcs->velref);
+  wcsprintf("     altlin: %d\n", wcs->altlin);
+  wcsprintf("     velref: %d\n", wcs->velref);
 
 
 
   /* Auxiliary coordinate system information. */
-  printf("        alt: '%c'\n", wcs->alt[0]);
-  printf("     colnum: %d\n", wcs->colnum);
+  wcsprintf("        alt: '%c'\n", wcs->alt[0]);
+  wcsprintf("     colnum: %d\n", wcs->colnum);
 
-  printf("      colax: %p\n", (void *)wcs->colax);
+  wcsprintf("      colax: %p\n", (void *)wcs->colax);
   if (wcs->colax) {
-    printf("           ");
+    wcsprintf("           ");
     for (i = 0; i < wcs->naxis; i++) {
-      printf("  %5d", wcs->colax[i]);
+      wcsprintf("  %5d", wcs->colax[i]);
     }
-    printf("\n");
+    wcsprintf("\n");
   }
 
   if (wcs->wcsname[0] == '\0') {
-    printf("    wcsname: UNDEFINED\n");
+    wcsprintf("    wcsname: UNDEFINED\n");
   } else {
-    printf("    wcsname: \"%s\"\n", wcs->wcsname);
+    wcsprintf("    wcsname: \"%s\"\n", wcs->wcsname);
   }
 
-  printf("      cname: %p\n", (void *)wcs->cname);
+  wcsprintf("      cname: %p\n", (void *)wcs->cname);
   if (wcs->cname) {
     for (i = 0; i < wcs->naxis; i++) {
       if (wcs->cname[i][0] == '\0') {
-        printf("             UNDEFINED\n");
+        wcsprintf("             UNDEFINED\n");
       } else {
-        printf("             \"%s\"\n", wcs->cname[i]);
+        wcsprintf("             \"%s\"\n", wcs->cname[i]);
       }
     }
   }
 
-  printf("      crder: %p\n", (void *)wcs->crder);
+  wcsprintf("      crder: %p\n", (void *)wcs->crder);
   if (wcs->crder) {
-    printf("           ");
+    wcsprintf("           ");
     for (i = 0; i < wcs->naxis; i++) {
       if (undefined(wcs->crder[i])) {
-        printf("  UNDEFINED   ");
+        wcsprintf("  UNDEFINED   ");
       } else {
-        printf("  %- 11.5g", wcs->crder[i]);
+        wcsprintf("  %- 11.5g", wcs->crder[i]);
       }
     }
-    printf("\n");
+    wcsprintf("\n");
   }
 
-  printf("      csyer: %p\n", (void *)wcs->csyer);
+  wcsprintf("      csyer: %p\n", (void *)wcs->csyer);
   if (wcs->csyer) {
-    printf("           ");
+    wcsprintf("           ");
     for (i = 0; i < wcs->naxis; i++) {
       if (undefined(wcs->csyer[i])) {
-        printf("  UNDEFINED   ");
+        wcsprintf("  UNDEFINED   ");
       } else {
-        printf("  %- 11.5g", wcs->csyer[i]);
+        wcsprintf("  %- 11.5g", wcs->csyer[i]);
       }
     }
-    printf("\n");
+    wcsprintf("\n");
   }
 
   if (wcs->radesys[0] == '\0') {
-    printf("    radesys: UNDEFINED\n");
+    wcsprintf("    radesys: UNDEFINED\n");
   } else {
-    printf("    radesys: \"%s\"\n", wcs->radesys);
+    wcsprintf("    radesys: \"%s\"\n", wcs->radesys);
   }
 
   if (undefined(wcs->equinox)) {
-    printf("    equinox: UNDEFINED\n");
+    wcsprintf("    equinox: UNDEFINED\n");
   } else {
-    printf("    equinox: %9f\n", wcs->equinox);
+    wcsprintf("    equinox: %9f\n", wcs->equinox);
   }
 
   if (wcs->specsys[0] == '\0') {
-    printf("    specsys: UNDEFINED\n");
+    wcsprintf("    specsys: UNDEFINED\n");
   } else {
-    printf("    specsys: \"%s\"\n", wcs->specsys);
+    wcsprintf("    specsys: \"%s\"\n", wcs->specsys);
   }
 
   if (wcs->ssysobs[0] == '\0') {
-    printf("    ssysobs: UNDEFINED\n");
+    wcsprintf("    ssysobs: UNDEFINED\n");
   } else {
-    printf("    ssysobs: \"%s\"\n", wcs->ssysobs);
+    wcsprintf("    ssysobs: \"%s\"\n", wcs->ssysobs);
   }
 
   if (undefined(wcs->velosys)) {
-    printf("    velosys: UNDEFINED\n");
+    wcsprintf("    velosys: UNDEFINED\n");
   } else {
-    printf("    velosys: %9f\n", wcs->velosys);
+    wcsprintf("    velosys: %9f\n", wcs->velosys);
   }
 
   if (wcs->ssyssrc[0] == '\0') {
-    printf("    ssyssrc: UNDEFINED\n");
+    wcsprintf("    ssyssrc: UNDEFINED\n");
   } else {
-    printf("    ssyssrc: \"%s\"\n", wcs->ssyssrc);
+    wcsprintf("    ssyssrc: \"%s\"\n", wcs->ssyssrc);
   }
 
   if (undefined(wcs->zsource)) {
-    printf("    zsource: UNDEFINED\n");
+    wcsprintf("    zsource: UNDEFINED\n");
   } else {
-    printf("    zsource: %9f\n", wcs->zsource);
+    wcsprintf("    zsource: %9f\n", wcs->zsource);
   }
 
-  printf("     obsgeo: ");
+  wcsprintf("     obsgeo: ");
   for (i = 0; i < 3; i++) {
     if (undefined(wcs->obsgeo[i])) {
-      printf("UNDEFINED     ");
+      wcsprintf("UNDEFINED     ");
     } else {
-      printf("%- 11.5g  ", wcs->obsgeo[i]);
+      wcsprintf("%- 11.5g  ", wcs->obsgeo[i]);
     }
   }
-  printf("\n");
+  wcsprintf("\n");
 
   if (wcs->dateobs[0] == '\0') {
-    printf("    dateobs: UNDEFINED\n");
+    wcsprintf("    dateobs: UNDEFINED\n");
   } else {
-    printf("    dateobs: \"%s\"\n", wcs->dateobs);
+    wcsprintf("    dateobs: \"%s\"\n", wcs->dateobs);
   }
 
   if (wcs->dateavg[0] == '\0') {
-    printf("    dateavg: UNDEFINED\n");
+    wcsprintf("    dateavg: UNDEFINED\n");
   } else {
-    printf("    dateavg: \"%s\"\n", wcs->dateavg);
+    wcsprintf("    dateavg: \"%s\"\n", wcs->dateavg);
   }
 
   if (undefined(wcs->mjdobs)) {
-    printf("     mjdobs: UNDEFINED\n");
+    wcsprintf("     mjdobs: UNDEFINED\n");
   } else {
-    printf("     mjdobs: %9f\n", wcs->mjdobs);
+    wcsprintf("     mjdobs: %9f\n", wcs->mjdobs);
   }
 
   if (undefined(wcs->mjdavg)) {
-    printf("     mjdavg: UNDEFINED\n");
+    wcsprintf("     mjdavg: UNDEFINED\n");
   } else {
-    printf("     mjdavg: %9f\n", wcs->mjdavg);
+    wcsprintf("     mjdavg: %9f\n", wcs->mjdavg);
   }
 
-  printf("       ntab: %d\n", wcs->ntab);
-  printf("        tab: %p", (void *)wcs->tab);
-  if (wcs->tab != 0x0) printf("  (see below)");
-  printf("\n");
-  printf("       nwtb: %d\n", wcs->nwtb);
-  printf("        wtb: %p", (void *)wcs->wtb);
-  if (wcs->wtb != 0x0) printf("  (see below)");
-  printf("\n");
+  wcsprintf("       ntab: %d\n", wcs->ntab);
+  wcsprintf("        tab: %p", (void *)wcs->tab);
+  if (wcs->tab != 0x0) wcsprintf("  (see below)");
+  wcsprintf("\n");
+  wcsprintf("       nwtb: %d\n", wcs->nwtb);
+  wcsprintf("        wtb: %p", (void *)wcs->wtb);
+  if (wcs->wtb != 0x0) wcsprintf("  (see below)");
+  wcsprintf("\n");
 
   /* Derived values. */
-  printf("      types: %p\n           ", (void *)wcs->types);
+  wcsprintf("      types: %p\n           ", (void *)wcs->types);
   for (i = 0; i < wcs->naxis; i++) {
-    printf("%5d", wcs->types[i]);
+    wcsprintf("%5d", wcs->types[i]);
   }
-  printf("\n");
+  wcsprintf("\n");
 
-  printf("     lngtyp: \"%s\"\n", wcs->lngtyp);
-  printf("     lattyp: \"%s\"\n", wcs->lattyp);
-  printf("        lng: %d\n", wcs->lng);
-  printf("        lat: %d\n", wcs->lat);
-  printf("       spec: %d\n", wcs->spec);
-  printf("   cubeface: %d\n", wcs->cubeface);
+  wcsprintf("     lngtyp: \"%s\"\n", wcs->lngtyp);
+  wcsprintf("     lattyp: \"%s\"\n", wcs->lattyp);
+  wcsprintf("        lng: %d\n", wcs->lng);
+  wcsprintf("        lat: %d\n", wcs->lat);
+  wcsprintf("       spec: %d\n", wcs->spec);
+  wcsprintf("   cubeface: %d\n", wcs->cubeface);
 
-  printf("        lin: (see below)\n");
-  printf("        cel: (see below)\n");
-  printf("        spc: (see below)\n");
+  wcsprintf("        lin: (see below)\n");
+  wcsprintf("        cel: (see below)\n");
+  wcsprintf("        spc: (see below)\n");
 
   /* Memory management. */
-  printf("     m_flag: %d\n", wcs->m_flag);
-  printf("    m_naxis: %d\n", wcs->m_naxis);
-  printf("    m_crpix: %p", (void *)wcs->m_crpix);
-  if (wcs->m_crpix == wcs->crpix) printf("  (= crpix)");
-  printf("\n");
-  printf("       m_pc: %p", (void *)wcs->m_pc);
-  if (wcs->m_pc == wcs->pc) printf("  (= pc)");
-  printf("\n");
-  printf("    m_cdelt: %p", (void *)wcs->m_cdelt);
-  if (wcs->m_cdelt == wcs->cdelt) printf("  (= cdelt)");
-  printf("\n");
-  printf("    m_crval: %p", (void *)wcs->m_crval);
-  if (wcs->m_crval == wcs->crval) printf("  (= crval)");
-  printf("\n");
-  printf("    m_cunit: %p", (void *)wcs->m_cunit);
-  if (wcs->m_cunit == wcs->cunit) printf("  (= cunit)");
-  printf("\n");
-  printf("    m_ctype: %p", (void *)wcs->m_ctype);
-  if (wcs->m_ctype == wcs->ctype) printf("  (= ctype)");
-  printf("\n");
-  printf("       m_pv: %p", (void *)wcs->m_pv);
-  if (wcs->m_pv == wcs->pv) printf("  (= pv)");
-  printf("\n");
-  printf("       m_ps: %p", (void *)wcs->m_ps);
-  if (wcs->m_ps == wcs->ps) printf("  (= ps)");
-  printf("\n");
-  printf("       m_cd: %p", (void *)wcs->m_cd);
-  if (wcs->m_cd == wcs->cd) printf("  (= cd)");
-  printf("\n");
-  printf("    m_crota: %p", (void *)wcs->m_crota);
-  if (wcs->m_crota == wcs->crota) printf("  (= crota)");
-  printf("\n");
-  printf("\n");
-  printf("    m_colax: %p", (void *)wcs->m_colax);
-  if (wcs->m_colax == wcs->colax) printf("  (= colax)");
-  printf("\n");
-  printf("    m_cname: %p", (void *)wcs->m_cname);
-  if (wcs->m_cname == wcs->cname) printf("  (= cname)");
-  printf("\n");
-  printf("    m_crder: %p", (void *)wcs->m_crder);
-  if (wcs->m_crder == wcs->crder) printf("  (= crder)");
-  printf("\n");
-  printf("    m_csyer: %p", (void *)wcs->m_csyer);
-  if (wcs->m_csyer == wcs->csyer) printf("  (= csyer)");
-  printf("\n");
-  printf("      m_tab: %p", (void *)wcs->m_tab);
-  if (wcs->m_tab == wcs->tab) printf("  (= tab)");
-  printf("\n");
-  printf("      m_wtb: %p", (void *)wcs->m_wtb);
-  if (wcs->m_wtb == wcs->wtb) printf("  (= wtb)");
-  printf("\n");
+  wcsprintf("     m_flag: %d\n", wcs->m_flag);
+  wcsprintf("    m_naxis: %d\n", wcs->m_naxis);
+  wcsprintf("    m_crpix: %p", (void *)wcs->m_crpix);
+  if (wcs->m_crpix == wcs->crpix) wcsprintf("  (= crpix)");
+  wcsprintf("\n");
+  wcsprintf("       m_pc: %p", (void *)wcs->m_pc);
+  if (wcs->m_pc == wcs->pc) wcsprintf("  (= pc)");
+  wcsprintf("\n");
+  wcsprintf("    m_cdelt: %p", (void *)wcs->m_cdelt);
+  if (wcs->m_cdelt == wcs->cdelt) wcsprintf("  (= cdelt)");
+  wcsprintf("\n");
+  wcsprintf("    m_crval: %p", (void *)wcs->m_crval);
+  if (wcs->m_crval == wcs->crval) wcsprintf("  (= crval)");
+  wcsprintf("\n");
+  wcsprintf("    m_cunit: %p", (void *)wcs->m_cunit);
+  if (wcs->m_cunit == wcs->cunit) wcsprintf("  (= cunit)");
+  wcsprintf("\n");
+  wcsprintf("    m_ctype: %p", (void *)wcs->m_ctype);
+  if (wcs->m_ctype == wcs->ctype) wcsprintf("  (= ctype)");
+  wcsprintf("\n");
+  wcsprintf("       m_pv: %p", (void *)wcs->m_pv);
+  if (wcs->m_pv == wcs->pv) wcsprintf("  (= pv)");
+  wcsprintf("\n");
+  wcsprintf("       m_ps: %p", (void *)wcs->m_ps);
+  if (wcs->m_ps == wcs->ps) wcsprintf("  (= ps)");
+  wcsprintf("\n");
+  wcsprintf("       m_cd: %p", (void *)wcs->m_cd);
+  if (wcs->m_cd == wcs->cd) wcsprintf("  (= cd)");
+  wcsprintf("\n");
+  wcsprintf("    m_crota: %p", (void *)wcs->m_crota);
+  if (wcs->m_crota == wcs->crota) wcsprintf("  (= crota)");
+  wcsprintf("\n");
+  wcsprintf("\n");
+  wcsprintf("    m_colax: %p", (void *)wcs->m_colax);
+  if (wcs->m_colax == wcs->colax) wcsprintf("  (= colax)");
+  wcsprintf("\n");
+  wcsprintf("    m_cname: %p", (void *)wcs->m_cname);
+  if (wcs->m_cname == wcs->cname) wcsprintf("  (= cname)");
+  wcsprintf("\n");
+  wcsprintf("    m_crder: %p", (void *)wcs->m_crder);
+  if (wcs->m_crder == wcs->crder) wcsprintf("  (= crder)");
+  wcsprintf("\n");
+  wcsprintf("    m_csyer: %p", (void *)wcs->m_csyer);
+  if (wcs->m_csyer == wcs->csyer) wcsprintf("  (= csyer)");
+  wcsprintf("\n");
+  wcsprintf("      m_tab: %p", (void *)wcs->m_tab);
+  if (wcs->m_tab == wcs->tab) wcsprintf("  (= tab)");
+  wcsprintf("\n");
+  wcsprintf("      m_wtb: %p", (void *)wcs->m_wtb);
+  if (wcs->m_wtb == wcs->wtb) wcsprintf("  (= wtb)");
+  wcsprintf("\n");
 
   /* Tabular transformation parameters. */
   if ((wtbp = wcs->wtb)) {
     for (j = 0; j < wcs->nwtb; j++, wtbp++) {
-      printf("\n");
-      printf("wtb[%d].*\n", j);
-      printf("          i: %d\n", wtbp->i);
-      printf("          m: %d\n", wtbp->m);
-      printf("       kind: %c\n", wtbp->kind);
-      printf("     extnam: %s\n", wtbp->extnam);
-      printf("     extver: %d\n", wtbp->extver);
-      printf("     extlev: %d\n", wtbp->extlev);
-      printf("      ttype: %s\n", wtbp->ttype);
-      printf("        row: %ld\n", wtbp->row);
-      printf("       ndim: %d\n", wtbp->ndim);
-      printf("     dimlen: %p\n", (void *)wtbp->dimlen);
-      printf("     arrayp: %p -> %p\n", (void *)wtbp->arrayp,
-                                        (void *)(*(wtbp->arrayp)));
+      wcsprintf("\n");
+      wcsprintf("wtb[%d].*\n", j);
+      wcsprintf("          i: %d\n", wtbp->i);
+      wcsprintf("          m: %d\n", wtbp->m);
+      wcsprintf("       kind: %c\n", wtbp->kind);
+      wcsprintf("     extnam: %s\n", wtbp->extnam);
+      wcsprintf("     extver: %d\n", wtbp->extver);
+      wcsprintf("     extlev: %d\n", wtbp->extlev);
+      wcsprintf("      ttype: %s\n", wtbp->ttype);
+      wcsprintf("        row: %ld\n", wtbp->row);
+      wcsprintf("       ndim: %d\n", wtbp->ndim);
+      wcsprintf("     dimlen: %p\n", (void *)wtbp->dimlen);
+      wcsprintf("     arrayp: %p -> %p\n", (void *)wtbp->arrayp,
+                                           (void *)(*(wtbp->arrayp)));
     }
   }
 
   if (wcs->tab) {
     for (j = 0; j < wcs->ntab; j++) {
-      printf("\n");
-      printf("tab[%d].*\n", j);
+      wcsprintf("\n");
+      wcsprintf("tab[%d].*\n", j);
       tabprt(wcs->tab + j);
     }
   }
 
   /* Linear transformation parameters. */
-  printf("\n");
-  printf("   lin.*\n");
+  wcsprintf("\n");
+  wcsprintf("   lin.*\n");
   linprt(&(wcs->lin));
 
   /* Celestial transformation parameters. */
-  printf("\n");
-  printf("   cel.*\n");
+  wcsprintf("\n");
+  wcsprintf("   cel.*\n");
   celprt(&(wcs->cel));
 
   /* Spectral transformation parameters. */
-  printf("\n");
-  printf("   spc.*\n");
+  wcsprintf("\n");
+  wcsprintf("   spc.*\n");
   spcprt(&(wcs->spc));
 
   return 0;

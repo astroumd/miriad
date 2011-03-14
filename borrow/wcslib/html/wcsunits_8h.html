@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-<title>WCSLIB 4.6.3: wcsunits.h File Reference</title>
+<title>WCSLIB 4.7: wcsunits.h File Reference</title>
 <link href="doxygen.css" rel="stylesheet" type="text/css">
 <link href="tabs.css" rel="stylesheet" type="text/css">
 </head><body>
@@ -435,9 +435,7 @@ Number of entries in the <em>units</em> array returned by <a class="el" href="wc
   </table>
 </dl>
 <dl class="return" compact><dt><b>Returns:</b></dt><dd>Status return value:<ul>
-<li>0: Success.</li></ul>
-1-9: Status return from <a class="el" href="wcsunits_8h.html#0e7fd01137ef47ca728c19e8870d1ab5" title="FITS units specification parser.">wcsulex()</a>.<ul>
-<li>10: Non-conformant unit specifications.</li><li>11: Non-conformant functions.</li></ul>
+<li>0: Success.</li><li>1-9: Status return from <a class="el" href="wcsunits_8h.html#0e7fd01137ef47ca728c19e8870d1ab5" title="FITS units specification parser.">wcsulex()</a>.</li><li>10: Non-conformant unit specifications.</li><li>11: Non-conformant functions.</li></ul>
 scale is zeroed on return if an error occurs. </dd></dl>
 
 </div>
@@ -478,9 +476,9 @@ Thus ctrl == 0 doesn't do any unsafe translations, whereas ctrl == 7 does all of
  Inline units specifications in the a FITS header keycomment are also handled. If the first non-blank character in unitstr is '[' then the unit string is delimited by its matching ']'. Blanks preceding '[' will be stripped off, but text following the closing bracket will be preserved without modification.</td></tr>
   </table>
 </dl>
-<dl class="return" compact><dt><b>Returns:</b></dt><dd>Status return value: -1: No change was made, other than stripping blanks (not an error).<ul>
-<li>0: Success.</li><li>9: Internal parser error.</li></ul>
-12: Potentially unsafe translation, whether applied or not (see notes).</dd></dl>
+<dl class="return" compact><dt><b>Returns:</b></dt><dd>Status return value:<ul>
+<li>-1: No change was made, other than stripping blanks (not an error).</li><li>0: Success.</li><li>9: Internal parser error.</li><li>12: Potentially unsafe translation, whether applied or not (see notes).</li></ul>
+</dd></dl>
 <b>Notes:</b> <br>
  Translation of non-standard unit specifications: apart from leading and trailing blanks, a case-sensitive match is required for the aliases listed below, in particular the only recognized aliases with metric prefixes are "KM", "KHZ", "MHZ", and "GHZ". Potentially unsafe translations of "D", "H", and "S", shown in parentheses, are optional. <div class="fragment"><pre class="fragment">      Unit       Recognized aliases
       ----       -------------------------------------------------------------
@@ -498,7 +496,7 @@ Thus ctrl == 0 doesn't do any unsafe translations, whereas ctrl == 7 does all of
       Jy         JY
       K          kelvin, kelvins, Kelvin, Kelvins, KELVIN, KELVINS
       km         KM
-      m          metre, meter, metres, meters, M, METRE, METER, METRES, METERS
+      <a class="code" href="structprjprm.html#fb805c40a4d37c195074c1305874d615">m</a>          metre, meter, metres, meters, M, METRE, METER, METRES, METERS
       min        MIN
       MHz        MHZ
       Ohm        ohm
@@ -643,7 +641,7 @@ The remainder are dimensionless.
 </div>
 </div><p>
 </div>
-<hr size="1"><address style="text-align: right;"><small>Generated on Wed Nov 24 12:48:54 2010 for WCSLIB 4.6.3 by&nbsp;
+<hr size="1"><address style="text-align: right;"><small>Generated on Mon Feb 7 18:03:57 2011 for WCSLIB 4.7 by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.5.6 </small></address>
 </body>

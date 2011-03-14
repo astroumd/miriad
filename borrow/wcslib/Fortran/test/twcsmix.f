@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 4.6 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2010, Mark Calabretta
+* WCSLIB 4.7 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2011, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -231,6 +231,8 @@
       INCLUDE 'cel.inc'
       INCLUDE 'prj.inc'
       INTEGER   CEL(CELLEN), PRJ(PRJLEN), WCS(WCSLEN)
+      DOUBLE PRECISION DUMMY1, DUMMY2, DUMMY3
+      EQUIVALENCE (CEL,DUMMY1), (PRJ,DUMMY2), (WCS,DUMMY3)
 *-----------------------------------------------------------------------
 *     This routine simulates the actions of a FITS header parser.
       STATUS = WCSPUT (WCS, WCS_FLAG, -1, 0, 0)
@@ -410,6 +412,8 @@
       INCLUDE 'cel.inc'
       INCLUDE 'prj.inc'
       INTEGER   CEL(CELLEN), PRJ(PRJLEN), WCS(WCSLEN)
+      DOUBLE PRECISION DUMMY1, DUMMY2
+      EQUIVALENCE (CEL,DUMMY1), (PRJ,DUMMY2)
 *-----------------------------------------------------------------------
       IF (DOID.NE.0) THEN
 *       Compute native coordinates.
@@ -458,6 +462,9 @@
       INCLUDE 'lin.inc'
       INTEGER   CEL(CELLEN), LIN(LINLEN), PRJ(PRJLEN), WCS(WCSLEN)
       INTEGER   NATIVE(WCSLEN)
+      DOUBLE PRECISION DUMMY1, DUMMY2, DUMMY3, DUMMY4
+      EQUIVALENCE (CEL,DUMMY1), (LIN,DUMMY2), (PRJ,DUMMY3),
+     :          (NATIVE,DUMMY4)
 *-----------------------------------------------------------------------
 *     Initialize non-celestial world coordinates.
       STATUS = WCSGET (WCS, WCS_LNG, LNGIDX)

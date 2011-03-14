@@ -1,5 +1,5 @@
 #-----------------------------------------------------------------------------
-# GNU makefile for WCSLIB 4.6 utilities: fitshdr, HPXcvt, wcsgrid and wcsware.
+# GNU makefile for WCSLIB 4.7 utilities: fitshdr, HPXcvt, wcsgrid and wcsware.
 #
 # Summary of the main targets
 # ---------------------------
@@ -12,7 +12,7 @@
 #   1: If you need to make changes then preferably modify ../makedefs.in
 #      instead and re-run configure.
 #
-#   2: In compiling these utilities, this makefile assumes that the WCSLIB 4.6
+#   2: In compiling these utilities, this makefile assumes that the WCSLIB 4.7
 #      sources reside in ../{pgsbox,C} (as in the distribution kit).
 #
 # Author: Mark Calabretta, Australia Telescope National Facility
@@ -36,8 +36,8 @@ ifneq "$(CFITSIOLIB)" ""
 endif
 endif
 
-LIBWCS    := ../C/$(LIBWCS)
-PGSBOXLIB := ../pgsbox/libpgsbox-$V.a
+WCSLIB    := ../C/$(WCSLIB)
+PGSBOXLIB := ../pgsbox/libpgsbox-$(LIBVER).a
 
 ifneq "$(GETWCSTAB)" ""
   GETWCSTAB := ../C/$(GETWCSTAB)
@@ -68,20 +68,20 @@ HPXcvt : HPXcvt.c
 	   $(LD) -o $@ $@.o $(LDFLAGS) $(CFITSIOLIB) $(LIBS)
 	-@ $(RM) $@.o
 
-wcsware : wcsware.c $(GETWCSTAB) $(LIBWCS)
+wcsware : wcsware.c $(GETWCSTAB) $(WCSLIB)
 	-@ echo ''
 	   $(CC) -DDO_CFITSIO $(CPPFLAGS) -I../pgsbox -I../C $(CFITSIOINC) \
 	     $(CFLAGS) -c -o $@.o $<
-	   $(LD) $(LDFLAGS) -o $@ $@.o $(GETWCSTAB) $(CFITSIOLIB) $(LIBWCS) \
+	   $(LD) $(LDFLAGS) -o $@ $@.o $(GETWCSTAB) $(CFITSIOLIB) $(WCSLIB) \
 	     $(FLIBS) $(LIBS)
 	-@ $(RM) $@.o
 
-wcsgrid : wcsgrid.c $(PGSBOXLIB) $(GETWCSTAB) $(LIBWCS)
+wcsgrid : wcsgrid.c $(PGSBOXLIB) $(GETWCSTAB) $(WCSLIB)
 	-@ echo ''
 	   $(CC) -DDO_CFITSIO $(CPPFLAGS) -I../pgsbox -I../C $(PGPLOTINC) \
 	     $(CFITSIOINC) $(CFLAGS) -c -o $@.o $<
 	   $(LD) $(LDFLAGS) -o $@ $@.o $(PGSBOXLIB) $(PGPLOTLIB) \
-	     $(GETWCSTAB) $(CFITSIOLIB) $(LIBWCS) $(FLIBS) $(LIBS)
+	     $(GETWCSTAB) $(CFITSIOLIB) $(WCSLIB) $(FLIBS) $(LIBS)
 	-@ $(RM) $@.o
 
 ../C/getwcstab.o :
@@ -97,7 +97,7 @@ $(PGSBOXLIB) :
 	-@ echo ''
 	   $(MAKE) -C ../pgsbox lib
 
-$(LIBWCS) :
+$(WCSLIB) :
 	-@ echo ''
 	   $(MAKE) -C ../C lib
 

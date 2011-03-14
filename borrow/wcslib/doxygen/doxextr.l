@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.6 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2010, Mark Calabretta
+  WCSLIB 4.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2011, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -33,7 +33,7 @@
 *
 * doxextr.l is a Flex description file containing a lexical scanner definition
 * used to extract comments from the prologue of WCSLIB header files and
-* producing mark-up for doxygen.  It relies on strict formatting of comments
+* produce mark-up for doxygen.  It relies on strict formatting of comments
 * in the header file.
 *
 * Header sections are:
@@ -413,7 +413,8 @@ DASH {WS1}-{WS1}
 	  BEGIN(PRINTE);
 	}
 
-<PARAM>[a-zA-Z].{17}"  ".* {
+<PARAM>[a-zA-Z].{17}"  ".* |
+<PARAM>"..."" "{7}.{8}"  ".* {
 	  if (pcont) {
 	    printf("%s\n%-*s", strtok(yytext, " "), id, "*");
 	    pcont = 0;
@@ -469,11 +470,11 @@ DASH {WS1}-{WS1}
 	  BEGIN(FLUSH);
 	}
 
-<RETURN>{ID}" [-1]".*:{WS1}.* {
+<RETURN>{ID}" "[-1].*:{WS1}.* {
 	  /* Status return value, less than 0 or greater than 9. */
 	  if (lmore > 2) printf("* @n\n");
 	  printf("%-*s- ", id, "*");
-	  printe(yytext+(id-2), name);
+	  printe(yytext+(id-3), name);
 	  plist = 1;
 	  BEGIN(FLUSH);
 	}

@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-<title>WCSLIB 4.6.3: wcsfix.h File Reference</title>
+<title>WCSLIB 4.7: wcsfix.h File Reference</title>
 <link href="doxygen.css" rel="stylesheet" type="text/css">
 <link href="tabs.css" rel="stylesheet" type="text/css">
 </head><body>
@@ -301,8 +301,8 @@ Number of elements in the status vector returned by <a class="el" href="wcsfix_8
     <tr><td valign="top"><tt>[in,out]</tt>&nbsp;</td><td valign="top"><em>wcs</em>&nbsp;</td><td>Coordinate transformation parameters.</td></tr>
   </table>
 </dl>
-<dl class="return" compact><dt><b>Returns:</b></dt><dd>Status return value: -1: No change required (not an error).<ul>
-<li>0: Success.</li><li>1: Null <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> pointer passed. </li></ul>
+<dl class="return" compact><dt><b>Returns:</b></dt><dd>Status return value:<ul>
+<li>-1: No change required (not an error).</li><li>0: Success.</li><li>1: Null <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> pointer passed. </li></ul>
 </dd></dl>
 
 </div>
@@ -330,8 +330,8 @@ Number of elements in the status vector returned by <a class="el" href="wcsfix_8
     <tr><td valign="top"><tt>[in,out]</tt>&nbsp;</td><td valign="top"><em>wcs</em>&nbsp;</td><td>Coordinate transformation parameters. <a class="el" href="structwcsprm.html#ad387ccbd7847672b5dc2223d9124120">wcsprm::dateobs</a> and/or <a class="el" href="structwcsprm.html#c0cb013b1505fb7abd4167ac0db0e0aa">wcsprm::mjdobs</a> may be changed.</td></tr>
   </table>
 </dl>
-<dl class="return" compact><dt><b>Returns:</b></dt><dd>Status return value: -1: No change required (not an error).<ul>
-<li>0: Success.</li><li>1: Null <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> pointer passed.</li><li>5: Invalid parameter value.</li></ul>
+<dl class="return" compact><dt><b>Returns:</b></dt><dd>Status return value:<ul>
+<li>-1: No change required (not an error).</li><li>0: Success.</li><li>1: Null <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> pointer passed.</li><li>5: Invalid parameter value.</li></ul>
 </dd></dl>
 <b>Notes:</b> <br>
  The MJD algorithms used by <b>datfix</b>() are from D.A. Hatcher, 1984, QJRAS, 25, 53-55, as modified by P.T. Wallace for use in SLALIB subroutines <em>CLDJ</em> and <em>DJCL</em>. 
@@ -370,8 +370,8 @@ Number of elements in the status vector returned by <a class="el" href="wcsfix_8
     <tr><td valign="top"><tt>[in,out]</tt>&nbsp;</td><td valign="top"><em>wcs</em>&nbsp;</td><td>Coordinate transformation parameters.</td></tr>
   </table>
 </dl>
-<dl class="return" compact><dt><b>Returns:</b></dt><dd>Status return value: -1: No change required (not an error).<ul>
-<li>0: Success.</li><li>1: Null <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> pointer passed. </li></ul>
+<dl class="return" compact><dt><b>Returns:</b></dt><dd>Status return value:<ul>
+<li>-1: No change required (not an error).</li><li>0: Success.</li><li>1: Null <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> pointer passed. </li></ul>
 </dd></dl>
 
 </div>
@@ -400,8 +400,8 @@ Two additional pv[] keyvalues are created when translating <code><b>NCP</b></cod
     <tr><td valign="top"><tt>[in,out]</tt>&nbsp;</td><td valign="top"><em>wcs</em>&nbsp;</td><td>Coordinate transformation parameters. <a class="el" href="structwcsprm.html#e1f462606974e1324cd38f143eda691e">wcsprm::ctype</a>[] and/or <a class="el" href="structwcsprm.html#04fbd6ed1b338e225f2291523e64be2c">wcsprm::pv</a>[] may be changed.</td></tr>
   </table>
 </dl>
-<dl class="return" compact><dt><b>Returns:</b></dt><dd>Status return value: -1: No change required (not an error).<ul>
-<li>0: Success.</li><li>1: Null <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> pointer passed.</li><li>2: Memory allocation failed.</li><li>3: Linear transformation matrix is singular.</li><li>4: Inconsistent or unrecognized coordinate axis types.</li><li>5: Invalid parameter value.</li><li>6: Invalid coordinate transformation parameters.</li><li>7: Ill-conditioned coordinate transformation parameters. </li></ul>
+<dl class="return" compact><dt><b>Returns:</b></dt><dd>Status return value:<ul>
+<li>-1: No change required (not an error).</li><li>0: Success.</li><li>1: Null <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> pointer passed.</li><li>2: Memory allocation failed.</li><li>3: Linear transformation matrix is singular.</li><li>4: Inconsistent or unrecognized coordinate axis types.</li><li>5: Invalid parameter value.</li><li>6: Invalid coordinate transformation parameters.</li><li>7: Ill-conditioned coordinate transformation parameters. </li></ul>
 </dd></dl>
 
 </div>
@@ -429,8 +429,8 @@ Two additional pv[] keyvalues are created when translating <code><b>NCP</b></cod
     <tr><td valign="top"><tt>[in,out]</tt>&nbsp;</td><td valign="top"><em>wcs</em>&nbsp;</td><td>Coordinate transformation parameters. <a class="el" href="structwcsprm.html#e1f462606974e1324cd38f143eda691e">wcsprm::ctype</a>[] and/or <a class="el" href="structwcsprm.html#c089e5d0e3191255ceaea7f8591b27ea">wcsprm::specsys</a> may be changed.</td></tr>
   </table>
 </dl>
-<dl class="return" compact><dt><b>Returns:</b></dt><dd>Status return value: -1: No change required (not an error).<ul>
-<li>0: Success.</li><li>1: Null <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> pointer passed.</li><li>2: Memory allocation failed.</li><li>3: Linear transformation matrix is singular.</li><li>4: Inconsistent or unrecognized coordinate axis types.</li><li>5: Invalid parameter value.</li><li>6: Invalid coordinate transformation parameters.</li><li>7: Ill-conditioned coordinate transformation parameters. </li></ul>
+<dl class="return" compact><dt><b>Returns:</b></dt><dd>Status return value:<ul>
+<li>-1: No change required (not an error).</li><li>0: Success.</li><li>1: Null <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> pointer passed.</li><li>2: Memory allocation failed.</li><li>3: Linear transformation matrix is singular.</li><li>4: Inconsistent or unrecognized coordinate axis types.</li><li>5: Invalid parameter value.</li><li>6: Invalid coordinate transformation parameters.</li><li>7: Ill-conditioned coordinate transformation parameters. </li></ul>
 </dd></dl>
 
 </div>
@@ -468,9 +468,9 @@ Two additional pv[] keyvalues are created when translating <code><b>NCP</b></cod
     <tr><td valign="top"><tt>[in,out]</tt>&nbsp;</td><td valign="top"><em>wcs</em>&nbsp;</td><td>Coordinate transformation parameters.</td></tr>
   </table>
 </dl>
-<dl class="return" compact><dt><b>Returns:</b></dt><dd>Status return value: -1: No change required (not an error).<ul>
-<li>0: Success.</li><li>1: Null <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> pointer passed.</li><li>2: Memory allocation failed.</li><li>3: Linear transformation matrix is singular.</li><li>4: Inconsistent or unrecognized coordinate axis types.</li><li>5: Invalid parameter value.</li><li>6: Invalid coordinate transformation parameters.</li><li>7: Ill-conditioned coordinate transformation parameters.</li><li>8: All of the corner pixel coordinates are invalid.</li><li>9: Could not determine reference pixel coordinate.</li></ul>
-10: Could not determine reference pixel value. </dd></dl>
+<dl class="return" compact><dt><b>Returns:</b></dt><dd>Status return value:<ul>
+<li>-1: No change required (not an error).</li><li>0: Success.</li><li>1: Null <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> pointer passed.</li><li>2: Memory allocation failed.</li><li>3: Linear transformation matrix is singular.</li><li>4: Inconsistent or unrecognized coordinate axis types.</li><li>5: Invalid parameter value.</li><li>6: Invalid coordinate transformation parameters.</li><li>7: Ill-conditioned coordinate transformation parameters.</li><li>8: All of the corner pixel coordinates are invalid.</li><li>9: Could not determine reference pixel coordinate.</li><li>10: Could not determine reference pixel value. </li></ul>
+</dd></dl>
 
 </div>
 </div><p>
@@ -491,7 +491,7 @@ Error messages to match the status value returned from each function.
 </div>
 </div><p>
 </div>
-<hr size="1"><address style="text-align: right;"><small>Generated on Wed Nov 24 12:48:54 2010 for WCSLIB 4.6.3 by&nbsp;
+<hr size="1"><address style="text-align: right;"><small>Generated on Mon Feb 7 18:03:57 2011 for WCSLIB 4.7 by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.5.6 </small></address>
 </body>

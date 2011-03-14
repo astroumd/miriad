@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.6 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2010, Mark Calabretta
+  WCSLIB 4.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2011, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -35,6 +35,7 @@
 #include <stdio.h>
 
 #include "wcsmath.h"
+#include "wcsprintf.h"
 #include "wcstrig.h"
 #include "sph.h"
 #include "cel.h"
@@ -89,44 +90,44 @@ const struct celprm *cel;
 
   if (cel == 0x0) return 1;
 
-  printf("      flag: %d\n",  cel->flag);
-  printf("     offset: %d\n",  cel->offset);
+  wcsprintf("      flag: %d\n",  cel->flag);
+  wcsprintf("     offset: %d\n",  cel->offset);
   if (undefined(cel->phi0)) {
-    printf("       phi0: UNDEFINED\n");
+    wcsprintf("       phi0: UNDEFINED\n");
   } else {
-    printf("       phi0: %9f\n", cel->phi0);
+    wcsprintf("       phi0: %9f\n", cel->phi0);
   }
   if (undefined(cel->theta0)) {
-    printf("     theta0: UNDEFINED\n");
+    wcsprintf("     theta0: UNDEFINED\n");
   } else {
-    printf("     theta0: %9f\n", cel->theta0);
+    wcsprintf("     theta0: %9f\n", cel->theta0);
   }
-  printf("       ref:");
+  wcsprintf("       ref:");
   for (i = 0; i < 4; i++) {
-    printf("  %- 11.5g", cel->ref[i]);
+    wcsprintf("  %- 11.5g", cel->ref[i]);
   }
-  printf("\n");
-  printf("       prj: (see below)\n");
+  wcsprintf("\n");
+  wcsprintf("       prj: (see below)\n");
 
-  printf("     euler:");
+  wcsprintf("     euler:");
   for (i = 0; i < 5; i++) {
-    printf("  %- 11.5g", cel->euler[i]);
+    wcsprintf("  %- 11.5g", cel->euler[i]);
   }
-  printf("\n");
-  printf("    latpreq: %d", cel->latpreq);
+  wcsprintf("\n");
+  wcsprintf("    latpreq: %d", cel->latpreq);
   if (cel->latpreq == 0) {
-    printf(" (not required)\n");
+    wcsprintf(" (not required)\n");
   } else if (cel->latpreq == 1) {
-    printf(" (disambiguation)\n");
+    wcsprintf(" (disambiguation)\n");
   } else if (cel->latpreq == 2) {
-    printf(" (specification)\n");
+    wcsprintf(" (specification)\n");
   } else {
-    printf(" (UNDEFINED)\n");
+    wcsprintf(" (UNDEFINED)\n");
   }
-  printf("     isolat: %d\n", cel->isolat);
+  wcsprintf("     isolat: %d\n", cel->isolat);
 
-  printf("\n");
-  printf("   prj.*\n");
+  wcsprintf("\n");
+  wcsprintf("   prj.*\n");
   prjprt(&(cel->prj));
 
   return 0;
@@ -261,46 +262,48 @@ struct celprm *cel;
       }
     }
 
-    latp1 = u + v;
-    if (latp1 > 180.0) {
-      latp1 -= 360.0;
-    } else if (latp1 < -180.0) {
-      latp1 += 360.0;
-    }
-
-    latp2 = u - v;
-    if (latp2 > 180.0) {
-      latp2 -= 360.0;
-    } else if (latp2 < -180.0) {
-      latp2 += 360.0;
-    }
-
-    if (fabs(latp1) < 90.0+tol &&
-        fabs(latp2) < 90.0+tol) {
-      /* There are two valid solutions for latp. */
-      cel->latpreq = 1;
-    }
-
-    if (fabs(latp-latp1) < fabs(latp-latp2)) {
-      if (fabs(latp1) < 90.0+tol) {
-        latp = latp1;
-      } else {
-        latp = latp2;
+    if (cel->latpreq == 0) {
+      latp1 = u + v;
+      if (latp1 > 180.0) {
+        latp1 -= 360.0;
+      } else if (latp1 < -180.0) {
+        latp1 += 360.0;
       }
-    } else {
-      if (fabs(latp2) < 90.0+tol) {
-        latp = latp2;
-      } else {
-        latp = latp1;
-      }
-    }
 
-    /* Account for rounding error. */
-    if (fabs(latp) < 90.0+tol) {
-      if (latp > 90.0) {
-        latp =  90.0;
-      } else if (latp < -90.0) {
-        latp = -90.0;
+      latp2 = u - v;
+      if (latp2 > 180.0) {
+        latp2 -= 360.0;
+      } else if (latp2 < -180.0) {
+        latp2 += 360.0;
+      }
+
+      if (fabs(latp1) < 90.0+tol &&
+          fabs(latp2) < 90.0+tol) {
+        /* There are two valid solutions for latp. */
+        cel->latpreq = 1;
+      }
+
+      if (fabs(latp-latp1) < fabs(latp-latp2)) {
+        if (fabs(latp1) < 90.0+tol) {
+          latp = latp1;
+        } else {
+          latp = latp2;
+        }
+      } else {
+        if (fabs(latp2) < 90.0+tol) {
+          latp = latp2;
+        } else {
+          latp = latp1;
+        }
+      }
+
+      /* Account for rounding error. */
+      if (fabs(latp) < 90.0+tol) {
+        if (latp > 90.0) {
+          latp =  90.0;
+        } else if (latp < -90.0) {
+          latp = -90.0;
+        }
       }
     }
 
@@ -328,7 +331,7 @@ struct celprm *cel;
       lngp = lng0 - atan2d(y,x);
     }
 
-    /* Make celestial longitude at the pole the same sign as at the
+    /* Make celestial longitude of the native pole the same sign as at the
        fiducial point. */
     if (lng0 >= 0.0) {
       if (lngp < 0.0) {

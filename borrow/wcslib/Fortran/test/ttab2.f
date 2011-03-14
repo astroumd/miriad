@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 4.6 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2010, Mark Calabretta
+* WCSLIB 4.7 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2011, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -64,6 +64,8 @@
 
       INCLUDE 'tab.inc'
       INTEGER   TAB(TABLEN)
+      DOUBLE PRECISION DUMMY
+      EQUIVALENCE (TAB,DUMMY)
 *-----------------------------------------------------------------------
 
       WRITE (*, 10)
@@ -136,12 +138,12 @@
 
         DO 160 L2 = 0, 100, 20
 *         (k1,k2) = (1,2).
-          STATUS = TABPUT (TAB, TAB_COORD, 0.01D0*L2, 4, 0)
+          STATUS = TABPUT (TAB, TAB_COORD, 0.01D0*L2, 6, 0)
 
           CALL PGPAGE ()
           DO 150 L1 = 0, 100, 2
 *           (k1,k2) = (2,1).
-            STATUS = TABPUT (TAB, TAB_COORD, 0.01D0*L1, 6, 0)
+            STATUS = TABPUT (TAB, TAB_COORD, 0.01D0*L1, 4, 0)
 
 *           Compute coordinates within the interpolation element.
             STATUS = TABX2S (TAB, NP*NP, 2, X, WORLD, STAT)
@@ -176,9 +178,9 @@
 *           Label the value of the coordinate element in each corner.
             WRITE (TEXT, '(F3.1)') 0.0
             CALL PGTEXT (-0.09, -0.05, TEXT)
-            WRITE (TEXT, '(F3.1)') 0.01*L1
+            WRITE (TEXT, '(F4.2)') 0.01*L1
             CALL PGTEXT ( 1.02, -0.05, TEXT)
-            WRITE (TEXT, '(F4.2)') 0.01*L2
+            WRITE (TEXT, '(F3.1)') 0.01*L2
             CALL PGTEXT (-0.13,  1.02, TEXT)
             WRITE (TEXT, '(F3.1)') 0.01*L3
             CALL PGTEXT ( 1.02,  1.02, TEXT)

@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-<title>WCSLIB 4.6.3: tabprm Struct Reference</title>
+<title>WCSLIB 4.7: tabprm Struct Reference</title>
 <link href="doxygen.css" rel="stylesheet" type="text/css">
 <link href="tabs.css" rel="stylesheet" type="text/css">
 </head><body>
@@ -50,7 +50,7 @@
 
 <tr><td class="memItemLeft" nowrap align="right" valign="top">int *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structtabprm.html#dc7e170dba47f4e6d40afabfdaecfddd">sense</a></td></tr>
 
-<tr><td class="memItemLeft" nowrap align="right" valign="top">int *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structtabprm.html#b40e75052c0a64dd5f672d07c4ce7863">p0</a></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">int *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structtabprm.html#48cbe51ee26f0615036308fe72768403">p0</a></td></tr>
 
 <tr><td class="memItemLeft" nowrap align="right" valign="top">double *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structtabprm.html#77130658a6e330e0edba348d1dc7edf2">delta</a></td></tr>
 
@@ -257,19 +257,19 @@ this is interpreted as default indexing, i.e. <div class="fragment"><pre class="
 (<em>Returned</em>) Pointer to the first element of a vector of length <a class="el" href="structtabprm.html#64b8a2eaba4116cc647a435108269be3">tabprm::M</a> whose elements indicate whether the corresponding indexing vector is monotonic increasing (+1), or decreasing (-1). 
 </div>
 </div><p>
-<a class="anchor" name="b40e75052c0a64dd5f672d07c4ce7863"></a><!-- doxytag: member="tabprm::p0" ref="b40e75052c0a64dd5f672d07c4ce7863" args="" -->
+<a class="anchor" name="48cbe51ee26f0615036308fe72768403"></a><!-- doxytag: member="tabprm::p0" ref="48cbe51ee26f0615036308fe72768403" args="" -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">double * <a class="el" href="structtabprm.html#b40e75052c0a64dd5f672d07c4ce7863">tabprm::p0</a>          </td>
+          <td class="memname">int * <a class="el" href="structtabprm.html#48cbe51ee26f0615036308fe72768403">tabprm::p0</a>          </td>
         </tr>
       </table>
 </div>
 <div class="memdoc">
 
 <p>
-(<em>Returned</em>) Pointer to the first element of a vector of length <a class="el" href="structtabprm.html#64b8a2eaba4116cc647a435108269be3">tabprm::M</a> of interpolated indices into the coordinate array such that <img class="formulaInl" alt="$\Upsilon_m$" src="form_62.png">, as defined in Paper III, is equal to p0[m] + <a class="el" href="structtabprm.html#77130658a6e330e0edba348d1dc7edf2">tabprm::delta</a>[m]. 
+(<em>Returned</em>) Pointer to the first element of a vector of length <a class="el" href="structtabprm.html#64b8a2eaba4116cc647a435108269be3">tabprm::M</a> of interpolated indices into the coordinate array such that <img class="formulaInl" alt="$\Upsilon_m$" src="form_62.png">, as defined in Paper III, is equal to (p0[m] + 1) + <a class="el" href="structtabprm.html#77130658a6e330e0edba348d1dc7edf2">tabprm::delta</a>[m]. 
 </div>
 </div><p>
 <a class="anchor" name="77130658a6e330e0edba348d1dc7edf2"></a><!-- doxytag: member="tabprm::delta" ref="77130658a6e330e0edba348d1dc7edf2" args="" -->
@@ -284,7 +284,7 @@ this is interpreted as default indexing, i.e. <div class="fragment"><pre class="
 <div class="memdoc">
 
 <p>
-(<em>Returned</em>) Pointer to the first element of a vector of length <a class="el" href="structtabprm.html#64b8a2eaba4116cc647a435108269be3">tabprm::M</a> of interpolated indices into the coordinate array such that <img class="formulaInl" alt="$\Upsilon_m$" src="form_62.png">, as defined in Paper III, is equal to <a class="el" href="structtabprm.html#b40e75052c0a64dd5f672d07c4ce7863">tabprm::p0</a>[m] + delta[m]. 
+(<em>Returned</em>) Pointer to the first element of a vector of length <a class="el" href="structtabprm.html#64b8a2eaba4116cc647a435108269be3">tabprm::M</a> of interpolated indices into the coordinate array such that <img class="formulaInl" alt="$\Upsilon_m$" src="form_62.png">, as defined in Paper III, is equal to (<a class="el" href="structtabprm.html#48cbe51ee26f0615036308fe72768403">tabprm::p0</a>[m] + 1) + delta[m]. 
 </div>
 </div><p>
 <a class="anchor" name="ade738f7269d71d34fdf3d52f1c61d88"></a><!-- doxytag: member="tabprm::extrema" ref="ade738f7269d71d34fdf3d52f1c61d88" args="" -->
@@ -455,7 +455,7 @@ this is interpreted as default indexing, i.e. <div class="fragment"><pre class="
 </div>
 </div><p>
 </div>
-<hr size="1"><address style="text-align: right;"><small>Generated on Wed Nov 24 12:48:54 2010 for WCSLIB 4.6.3 by&nbsp;
+<hr size="1"><address style="text-align: right;"><small>Generated on Mon Feb 7 18:03:57 2011 for WCSLIB 4.7 by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.5.6 </small></address>
 </body>

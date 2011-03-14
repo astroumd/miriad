@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* PGSBOX 4.6 - draw curvilinear coordinate axes for PGPLOT.
-* Copyright (C) 1997-2010, Mark Calabretta
+* PGSBOX 4.7 - draw curvilinear coordinate axes for PGPLOT.
+* Copyright (C) 1997-2011, Mark Calabretta
 *
 * This file is part of PGSBOX.
 *
@@ -289,7 +289,7 @@
 *          2.4771 = log10(300)    3
 *
 *      The subset chosen depends on the coordinate increment as
-*      specified by the caller (e.g. via NG1 = 0, GRID1(0) != 0) or as
+*      specified by the caller (e.g. via NG1 = 0, GRID1(0) > 0) or as
 *      deduced by PGSBOX from the required density of grid lines
 *      specified in the LABDEN argument.  The selection is made
 *      according to the following table:
@@ -587,8 +587,9 @@
 *  WMIN(1:2)  ...lower limit of each world coordinate element.
 *  WMAX(1:2)  ...upper limit of each world coordinate element.
 *  GSTEP(1:2) ...spacing between grid lines for each element.
+*  DW(1:2)    ...span from WMIN to WMAX.
+*  SW(1:2)    ...increment in world coordinate between plotting steps.
 *  NSTEP(1:2) ...number of plotting steps between WMIN and WMAX.
-*  SW(1:2)    ...increment in world coordinate between steps.
       FULLSM = .FALSE.
       IF (IC.GE.0 .AND. IC.LT.NC-1) FULLSM = CACHE(1,NC-1).EQ.1D0
 
@@ -797,8 +798,8 @@
         DENS(2) = DENS0
       END IF
 
-      IF (NG1.EQ.0) G0(1) = GRID1(0)
-      IF (NG2.EQ.0) G0(2) = GRID2(0)
+      IF (NG(1).EQ.0) G0(1) = GRID1(0)
+      IF (NG(2).EQ.0) G0(2) = GRID2(0)
 
       DO 60 J = 1, 2
         IF (J.EQ.1) THEN
@@ -807,11 +808,22 @@
           K = 1
         END IF
 
-        IF (NG(J).EQ.0 .AND. G0(J).NE.0D0) THEN
+        IF (NG(J).EQ.0 .AND. G0(J).LT.0D0) THEN
+*         Defeat grid lines and tick marks.
+          GCODE(J) = 0
+        END IF
+
+        IF (NG(J).EQ.0 .AND. G0(J).GT.0D0) THEN
+*         User-specified, directly.
           GSTEP(J) = G0(J)
-        ELSE IF (DOEQ .AND. NG(K).EQ.0 .AND. G0(K).NE.0D0) THEN
+        ELSE IF (DOEQ .AND. NG(K).EQ.0 .AND. G0(K).GT.0D0) THEN
+*         User-specified, indirectly.
           GSTEP(J) = G0(K)
         ELSE
+*         Left to us to choose.  Even if grid lines are not drawn for
+*         coordinate J, i.e. NG(J) = 0 and G0(J) < 0, GSTEP(J) is still
+*         needed because it is used to deduce SW(J) which is used for
+*         drawing grid lines for the other coordinate.
           DW(J) = WMAX(J) - WMIN(J)
           STEP = DW(J)/DENS(J)
 
@@ -1182,8 +1194,12 @@
           IF (NG(J).GT.0) THEN
 *           User-specified.
             IF (IWJ.EQ.0) GO TO 110
-            WORLD(1) = GRID1(IWJ)
-            WORLD(2) = GRID2(IWJ)
+            IF (J.EQ.1) THEN
+              WORLD(1) = GRID1(IWJ)
+            ELSE
+              WORLD(2) = GRID2(IWJ)
+            END IF
+
           ELSE
 *           Internally computed.
             IF (FTYPE(J).EQ.'Y' .AND. GSTEP(J).GE.100D0) THEN
@@ -1494,11 +1510,11 @@
                 IF (NP.GT.1) CALL PGLINE(NP, XR, YR)
                 NP = 0
               END IF
-90          CONTINUE
-100       CONTINUE
+ 90         CONTINUE
+ 100      CONTINUE
 
           IF (NP.GT.1) CALL PGLINE(NP, XR, YR)
-110     CONTINUE
+ 110    CONTINUE
  120  CONTINUE
 
       IERR = 0

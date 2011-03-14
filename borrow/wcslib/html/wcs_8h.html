@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-<title>WCSLIB 4.6.3: wcs.h File Reference</title>
+<title>WCSLIB 4.7: wcs.h File Reference</title>
 <link href="doxygen.css" rel="stylesheet" type="text/css">
 <link href="tabs.css" rel="stylesheet" type="text/css">
 </head><body>
@@ -591,8 +591,8 @@ Refer to the notes (below) for further usage examples. <br>
   </table>
 </dl>
 <dl class="return" compact><dt><b>Returns:</b></dt><dd>Status return value:<ul>
-<li>0: Success.</li><li>1: Null <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> pointer passed.</li><li>2: Memory allocation failed.</li></ul>
-12: Invalid subimage specification. 13: Non-separable subimage coordinate system.</dd></dl>
+<li>0: Success.</li><li>1: Null <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> pointer passed.</li><li>2: Memory allocation failed.</li><li>12: Invalid subimage specification.</li><li>13: Non-separable subimage coordinate system.</li></ul>
+</dd></dl>
 <b>Notes:</b> <br>
  Combinations of subimage axes of particular types may be extracted in the same order as they occur in the input image by combining preprocessor codes, for example <div class="fragment"><pre class="fragment">      *nsub = 1;
       axes[0] = <a class="code" href="wcs_8h.html#0653c98b8a1bee5755740ae3f4854094" title="Mask for extraction of longitude axis by wcssub().">WCSSUB_LONGITUDE</a> | <a class="code" href="wcs_8h.html#5d377c202850ee0eaf44b3e989d0736e" title="Mask for extraction of latitude axis by wcssub().">WCSSUB_LATITUDE</a> | <a class="code" href="wcs_8h.html#4b2dfca2e80fe80ba85dc830cd9c377b" title="Mask for extraction of spectral axis by wcssub().">WCSSUB_SPECTRAL</a>;
@@ -973,8 +973,8 @@ Note that this routine need not be called directly; it will be invoked by <a cla
   </table>
 </dl>
 <dl class="return" compact><dt><b>Returns:</b></dt><dd>Status return value:<ul>
-<li>0: Success.</li><li>1: Null <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> pointer passed.</li><li>2: Memory allocation failed.</li><li>3: Linear transformation matrix is singular.</li><li>4: Inconsistent or unrecognized coordinate axis types.</li><li>5: Invalid parameter value.</li><li>6: Invalid coordinate transformation parameters.</li><li>7: Ill-conditioned coordinate transformation parameters.</li></ul>
-10: Invalid world coordinate. 11: No solution found in the specified interval.</dd></dl>
+<li>0: Success.</li><li>1: Null <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> pointer passed.</li><li>2: Memory allocation failed.</li><li>3: Linear transformation matrix is singular.</li><li>4: Inconsistent or unrecognized coordinate axis types.</li><li>5: Invalid parameter value.</li><li>6: Invalid coordinate transformation parameters.</li><li>7: Ill-conditioned coordinate transformation parameters.</li><li>10: Invalid world coordinate.</li><li>11: No solution found in the specified interval.</li></ul>
+</dd></dl>
 <b>Notes:</b> <br>
  Initially the specified solution interval is checked to see if it's a "crossing" interval. If it isn't, a search is made for a crossing solution by iterating on the unknown celestial coordinate starting at the upper limit of the solution interval and decrementing by the specified step size. A crossing is indicated if the trial value of the pixel coordinate steps through the value specified. If a crossing interval is found then the solution is determined by a modified form of "regula falsi" division of the crossing interval. If no crossing interval was found within the specified solution interval then a search is made for a "non-crossing" solution as may arise from a point of tangency. The process is complicated by having to make allowance for the discontinuities that occur in all map projections.<p>
 Once one solution has been determined others may be found by subsequent invokations of <b>wcsmix</b>() with suitably restricted solution intervals.<p>
@@ -1023,8 +1023,8 @@ Because of its generality <b>wcsmix</b>() is very compute-intensive. For compute
   </table>
 </dl>
 <dl class="return" compact><dt><b>Returns:</b></dt><dd>Status return value:<ul>
-<li>0: Success.</li><li>1: Null <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> pointer passed.</li><li>2: Memory allocation failed.</li><li>3: Linear transformation matrix is singular.</li><li>4: Inconsistent or unrecognized coordinate axis types.</li><li>5: Invalid parameter value.</li><li>6: Invalid coordinate transformation parameters.</li><li>7: Ill-conditioned coordinate transformation parameters.</li></ul>
-12: Invalid subimage specification (no spectral axis). </dd></dl>
+<li>0: Success.</li><li>1: Null <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> pointer passed.</li><li>2: Memory allocation failed.</li><li>3: Linear transformation matrix is singular.</li><li>4: Inconsistent or unrecognized coordinate axis types.</li><li>5: Invalid parameter value.</li><li>6: Invalid coordinate transformation parameters.</li><li>7: Ill-conditioned coordinate transformation parameters.</li><li>12: Invalid subimage specification (no spectral axis). </li></ul>
+</dd></dl>
 
 </div>
 </div><p>
@@ -1045,7 +1045,7 @@ Error messages to match the status value returned from each function.
 </div>
 </div><p>
 </div>
-<hr size="1"><address style="text-align: right;"><small>Generated on Wed Nov 24 12:48:54 2010 for WCSLIB 4.6.3 by&nbsp;
+<hr size="1"><address style="text-align: right;"><small>Generated on Mon Feb 7 18:03:57 2011 for WCSLIB 4.7 by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.5.6 </small></address>
 </body>

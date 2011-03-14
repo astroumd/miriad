@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.6 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2010, Mark Calabretta
+  WCSLIB 4.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2011, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -31,7 +31,7 @@
   $Id$
 *=============================================================================
 *
-* WCSLIB 4.6 - C routines that implement the spherical map projections
+* WCSLIB 4.7 - C routines that implement the spherical map projections
 * recognized by the FITS World Coordinate System (WCS) standard.  Refer to
 *
 *   "Representations of world coordinates in FITS",
@@ -551,8 +551,7 @@ struct prjprm {
   double x0, y0;		/* Fiducial offsets.                        */
 
   double w[10];			/* Intermediate values.                     */
-  int    n;			/* Intermediate value.                      */
-  int    padding;		/* (Dummy inserted for alignment purposes.) */
+  int    m, n;			/* Intermediate values.                     */
 
   int (*prjx2s)(PRJX2S_ARGS);	/* Pointers to the spherical projection and */
   int (*prjs2x)(PRJS2X_ARGS);	/* deprojection functions.                  */

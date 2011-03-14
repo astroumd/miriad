@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 4.6 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2010, Mark Calabretta
+* WCSLIB 4.7 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2011, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -58,6 +58,8 @@
       INCLUDE 'getwcstab.inc'
       INTEGER STAT(WCSFIX_NWCS)
       INTEGER WCS(WCSLEN)
+      DOUBLE PRECISION DUMMY
+      EQUIVALENCE (WCS,DUMMY)
 
       DATA INFILE /'../C/wcstab.fits'/
 *-----------------------------------------------------------------------
@@ -161,7 +163,7 @@
 *     Initialize the wcsprm struct, taking memory allocated by FTWCST.
       IF (STATUS.EQ.0) STATUS = WCSSET (WCS)
       IF (STATUS.NE.0) THEN
-        WRITE (*, 80) STATUS, WCS_ERRMSG(STATUS)
+        WRITE (*, 90) STATUS, WCS_ERRMSG(STATUS)
  90     FORMAT ('WCSSET ERROR',I2,A)
         GO TO 998
       END IF

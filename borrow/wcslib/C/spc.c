@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.6 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2010, Mark Calabretta
+  WCSLIB 4.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2011, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -36,6 +36,7 @@
 #include <string.h>
 
 #include "wcsmath.h"
+#include "wcsprintf.h"
 #include "wcstrig.h"
 #include "wcsutil.h"
 #include "spc.h"
@@ -119,59 +120,59 @@ int spcprt(const struct spcprm *spc)
 
   if (spc == 0x0) return 1;
 
-  printf("       flag: %d\n", spc->flag);
-  printf("       type: \"%s\"\n", spc->type);
-  printf("       code: \"%s\"\n", spc->code);
+  wcsprintf("       flag: %d\n", spc->flag);
+  wcsprintf("       type: \"%s\"\n", spc->type);
+  wcsprintf("       code: \"%s\"\n", spc->code);
   if (undefined(spc->crval)) {
-    printf("      crval: UNDEFINED\n");
+    wcsprintf("      crval: UNDEFINED\n");
   } else {
-    printf("      crval: %- 11.4g\n", spc->crval);
+    wcsprintf("      crval: %- 11.4g\n", spc->crval);
   }
-  printf("    restfrq: %f\n", spc->restfrq);
-  printf("    restwav: %f\n", spc->restwav);
+  wcsprintf("    restfrq: %f\n", spc->restfrq);
+  wcsprintf("    restwav: %f\n", spc->restwav);
 
-  printf("         pv:");
+  wcsprintf("         pv:");
   if (spc->isGrism) {
     for (i = 0; i < 5; i++) {
       if (undefined(spc->pv[i])) {
-        printf("  UNDEFINED   ");
+        wcsprintf("  UNDEFINED   ");
       } else {
-        printf("  %- 11.4g", spc->pv[i]);
+        wcsprintf("  %- 11.4g", spc->pv[i]);
       }
     }
-    printf("\n            ");
+    wcsprintf("\n            ");
     for (i = 5; i < 7; i++) {
       if (undefined(spc->pv[i])) {
-        printf("  UNDEFINED   ");
+        wcsprintf("  UNDEFINED   ");
       } else {
-        printf("  %- 11.4g", spc->pv[i]);
+        wcsprintf("  %- 11.4g", spc->pv[i]);
       }
     }
-    printf("\n");
+    wcsprintf("\n");
 
   } else {
-    printf(" (not used)\n");
+    wcsprintf(" (not used)\n");
   }
 
-  printf("          w:");
+  wcsprintf("          w:");
   for (i = 0; i < 3; i++) {
-    printf("  %- 11.4g", spc->w[i]);
+    wcsprintf("  %- 11.4g", spc->w[i]);
   }
   if (spc->isGrism) {
-    printf("\n            ");
+    wcsprintf("\n            ");
     for (i = 3; i < 6; i++) {
-      printf("  %- 11.4g", spc->w[i]);
+      wcsprintf("  %- 11.4g", spc->w[i]);
     }
-    printf("\n");
+    wcsprintf("\n");
   } else {
-    printf("  (remainder unused)\n");
+    wcsprintf("  (remainder unused)\n");
   }
 
-  printf("    isGrism: %d\n", spc->isGrism);
-  printf("     spxX2P: %p\n", (void *)spc->spxX2P);
-  printf("     spxP2S: %p\n", (void *)spc->spxP2S);
-  printf("     spxS2P: %p\n", (void *)spc->spxS2P);
-  printf("     spxP2X: %p\n", (void *)spc->spxP2X);
+  wcsprintf("    isGrism: %d\n", spc->isGrism);
+  wcsprintf("     spxX2P: %p\n", (void *)spc->spxX2P);
+  wcsprintf("     spxP2S: %p\n", (void *)spc->spxP2S);
+  wcsprintf("     spxS2P: %p\n", (void *)spc->spxS2P);
+  wcsprintf("     spxP2X: %p\n", (void *)spc->spxP2X);
 
   return 0;
 }

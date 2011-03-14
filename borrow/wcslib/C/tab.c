@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.6 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2010, Mark Calabretta
+  WCSLIB 4.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2011, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -37,6 +37,7 @@
 #include <string.h>
 
 #include "wcsmath.h"
+#include "wcsprintf.h"
 #include "tab.h"
 
 const int TABSET = 137;
@@ -460,54 +461,54 @@ int tabprt(const struct tabprm *tab)
   if (tab == 0x0) return 1;
 
   if (tab->flag != TABSET) {
-    printf("The tabprm struct is UNINITIALIZED.\n");
+    wcsprintf("The tabprm struct is UNINITIALIZED.\n");
     return 0;
   }
 
-  printf("       flag: %d\n", tab->flag);
-  printf("          M: %d\n", tab->M);
+  wcsprintf("       flag: %d\n", tab->flag);
+  wcsprintf("          M: %d\n", tab->M);
 
   /* Array dimensions. */
-  printf("          K: %p\n", (void *)tab->K);
-  printf("            ");
+  wcsprintf("          K: %p\n", (void *)tab->K);
+  wcsprintf("            ");
   for (m = 0; m < tab->M; m++) {
-    printf("%6d", tab->K[m]);
+    wcsprintf("%6d", tab->K[m]);
   }
-  printf("\n");
+  wcsprintf("\n");
 
   /* Map vector. */
-  printf("        map: %p\n", (void *)tab->map);
-  printf("            ");
+  wcsprintf("        map: %p\n", (void *)tab->map);
+  wcsprintf("            ");
   for (m = 0; m < tab->M; m++) {
-    printf("%6d", tab->map[m]);
+    wcsprintf("%6d", tab->map[m]);
   }
-  printf("\n");
+  wcsprintf("\n");
 
   /* Reference index value. */
-  printf("      crval: %p\n", (void *)tab->crval);
-  printf("            ");
+  wcsprintf("      crval: %p\n", (void *)tab->crval);
+  wcsprintf("            ");
   for (m = 0; m < tab->M; m++) {
-    printf("  %- 11.5g", tab->crval[m]);
+    wcsprintf("  %- 11.5g", tab->crval[m]);
   }
-  printf("\n");
+  wcsprintf("\n");
 
   /* Index vectors. */
-  printf("      index: %p\n", (void *)tab->index);
+  wcsprintf("      index: %p\n", (void *)tab->index);
   for (m = 0; m < tab->M; m++) {
-    printf("   index[%d]: %p", m, (void *)tab->index[m]);
+    wcsprintf("   index[%d]: %p", m, (void *)tab->index[m]);
     if (tab->index[m]) {
       for (k = 0; k < tab->K[m]; k++) {
         if (k%5 == 0) {
-          printf("\n            ");
+          wcsprintf("\n            ");
         }
-        printf("  %- 11.5g", tab->index[m][k]);
+        wcsprintf("  %- 11.5g", tab->index[m][k]);
       }
-      printf("\n");
+      wcsprintf("\n");
     }
   }
 
   /* Coordinate array. */
-  printf("      coord: %p\n", (void *)tab->coord);
+  wcsprintf("      coord: %p\n", (void *)tab->coord);
   dp = tab->coord;
   for (n = 0; n < tab->nc; n++) {
     /* Array index. */
@@ -520,49 +521,49 @@ int tabprt(const struct tabprm *tab)
       cp += strlen(cp);
     }
 
-    printf("             (*%s)", text);
+    wcsprintf("             (*%s)", text);
     for (m = 0; m < tab->M; m++) {
-      printf("  %- 11.5g", *(dp++));
+      wcsprintf("  %- 11.5g", *(dp++));
     }
-    printf("\n");
+    wcsprintf("\n");
   }
 
-  printf("         nc: %d\n", tab->nc);
+  wcsprintf("         nc: %d\n", tab->nc);
 
   if (tab->sense == 0x0) {
-    printf("      sense: (nil)\n");
+    wcsprintf("      sense: (nil)\n");
   } else {
-    printf("      sense: %p\n", (void *)tab->sense);
-    printf("            ");
+    wcsprintf("      sense: %p\n", (void *)tab->sense);
+    wcsprintf("            ");
     for (m = 0; m < tab->M; m++) {
-      printf("%6d", tab->sense[m]);
+      wcsprintf("%6d", tab->sense[m]);
     }
-    printf("\n");
+    wcsprintf("\n");
   }
 
   if (tab->p0 == 0x0) {
-    printf("         p0: (nil)\n");
+    wcsprintf("         p0: (nil)\n");
   } else {
-    printf("         p0: %p\n", (void *)tab->p0);
-    printf("            ");
+    wcsprintf("         p0: %p\n", (void *)tab->p0);
+    wcsprintf("            ");
     for (m = 0; m < tab->M; m++) {
-      printf("%6d", tab->p0[m]);
+      wcsprintf("%6d", tab->p0[m]);
     }
-    printf("\n");
+    wcsprintf("\n");
   }
 
   if (tab->delta == 0x0) {
-    printf("      delta: (nil)\n");
+    wcsprintf("      delta: (nil)\n");
   } else {
-    printf("      delta: %p\n", (void *)tab->delta);
-    printf("            ");
+    wcsprintf("      delta: %p\n", (void *)tab->delta);
+    wcsprintf("            ");
     for (m = 0; m < tab->M; m++) {
-      printf("  %- 11.5g", tab->delta[m]);
+      wcsprintf("  %- 11.5g", tab->delta[m]);
     }
-    printf("\n");
+    wcsprintf("\n");
   }
 
-  printf("    extrema: %p\n", (void *)tab->extrema);
+  wcsprintf("    extrema: %p\n", (void *)tab->extrema);
   dp = tab->extrema;
   for (n = 0; n < tab->nc/tab->K[0]; n++) {
     /* Array index. */
@@ -576,43 +577,43 @@ int tabprt(const struct tabprm *tab)
       cp += strlen(cp);
     }
 
-    printf("             (*,*%s)", text);
+    wcsprintf("             (*,*%s)", text);
     for (m = 0; m < 2*tab->M; m++) {
-      if (m == tab->M) printf("->  ");
-      printf("  %- 11.5g", *(dp++));
+      if (m == tab->M) wcsprintf("->  ");
+      wcsprintf("  %- 11.5g", *(dp++));
     }
-    printf("\n");
+    wcsprintf("\n");
   }
 
   /* Memory management. */
-  printf("     m_flag: %d\n", tab->m_flag);
-  printf("        m_M: %d\n", tab->m_M);
-  printf("        m_N: %d\n", tab->m_N);
+  wcsprintf("     m_flag: %d\n", tab->m_flag);
+  wcsprintf("        m_M: %d\n", tab->m_M);
+  wcsprintf("        m_N: %d\n", tab->m_N);
 
-  printf("        m_K: %p", (void *)tab->m_K);
-  if (tab->m_K == tab->K) printf("  (= K)");
-  printf("\n");
+  wcsprintf("        m_K: %p", (void *)tab->m_K);
+  if (tab->m_K == tab->K) wcsprintf("  (= K)");
+  wcsprintf("\n");
 
-  printf("      m_map: %p", (void *)tab->m_map);
-  if (tab->m_map == tab->map) printf("  (= map)");
-  printf("\n");
+  wcsprintf("      m_map: %p", (void *)tab->m_map);
+  if (tab->m_map == tab->map) wcsprintf("  (= map)");
+  wcsprintf("\n");
 
-  printf("    m_crval: %p", (void *)tab->m_crval);
-  if (tab->m_crval == tab->crval) printf("  (= crval)");
-  printf("\n");
+  wcsprintf("    m_crval: %p", (void *)tab->m_crval);
+  if (tab->m_crval == tab->crval) wcsprintf("  (= crval)");
+  wcsprintf("\n");
 
-  printf("    m_index: %p", (void *)tab->m_index);
-  if (tab->m_index == tab->index) printf("  (= index)");
-  printf("\n");
+  wcsprintf("    m_index: %p", (void *)tab->m_index);
+  if (tab->m_index == tab->index) wcsprintf("  (= index)");
+  wcsprintf("\n");
   for (m = 0; m < tab->M; m++) {
-    printf(" m_indxs[%d]: %p", m, (void *)tab->m_indxs[m]);
-    if (tab->m_indxs[m] == tab->index[m]) printf("  (= index[%d])", m);
-    printf("\n");
+    wcsprintf(" m_indxs[%d]: %p", m, (void *)tab->m_indxs[m]);
+    if (tab->m_indxs[m] == tab->index[m]) wcsprintf("  (= index[%d])", m);
+    wcsprintf("\n");
   }
 
-  printf("    m_coord: %p", (void *)tab->m_coord);
-  if (tab->m_coord == tab->coord) printf("  (= coord)");
-  printf("\n");
+  wcsprintf("    m_coord: %p", (void *)tab->m_coord);
+  if (tab->m_coord == tab->coord) wcsprintf("  (= coord)");
+  wcsprintf("\n");
 
   return 0;
 }
@@ -623,7 +624,7 @@ int tabset(struct tabprm *tab)
 
 {
   int i, ic, k, *Km, m, M, ne;
-  double *dcrd, *dmax, *dmin, *Psi;
+  double *dcrd, *dmax, *dmin, dPsi, dval, *Psi;
 
   if (tab == 0x0) return 1;
 
@@ -719,7 +720,7 @@ int tabset(struct tabprm *tab)
     tab->sense[m] = 0;
 
     if (*Km > 1) {
-      if ((Psi = tab->index[m]) == 0) {
+      if ((Psi = tab->index[m]) == 0x0) {
         /* Default indexing. */
         tab->sense[m] = 1;
 
@@ -771,19 +772,55 @@ int tabset(struct tabprm *tab)
     }
   }
 
-  /* Deduce the extremal values of the coordinate elements in each row. */
+  /* Find the extremal values of the coordinate elements in each row. */
   dcrd = tab->coord;
   dmin = tab->extrema;
   dmax = tab->extrema + M;
   for (ic = 0; ic < tab->nc; ic += tab->K[0]) {
     for (m = 0; m < M; m++, dcrd++) {
-      *(dmax+m) = *(dmin+m) = *dcrd;
+      if (tab->K[0] > 1) {
+        /* Extrapolate a little before the start of the row. */
+        Psi = tab->index[0];
+        if (Psi == 0x0) {
+          dPsi = 1.0;
+        } else {
+          dPsi = Psi[1] - Psi[0];
+        }
+
+        dval = *dcrd;
+        if (dPsi != 0.0) {
+          dval -= 0.5 * (*(dcrd+M) - *dcrd)/dPsi;
+        }
+
+        *(dmax+m) = *(dmin+m) = dval;
+      } else {
+        *(dmax+m) = *(dmin+m) = *dcrd;
+      }
     }
 
-    for (i = 1; i < tab->K[0]; i++) {
+    dcrd -= M;
+    for (i = 0; i < tab->K[0]; i++) {
       for (m = 0; m < M; m++, dcrd++) {
         if (*(dmax+m) < *dcrd) *(dmax+m) = *dcrd;
         if (*(dmin+m) > *dcrd) *(dmin+m) = *dcrd;
+
+        if (tab->K[0] > 1 && i == tab->K[0]-1) {
+          /* Extrapolate a little beyond the end of the row. */
+          Psi = tab->index[0];
+          if (Psi == 0x0) {
+            dPsi = 1.0;
+          } else {
+            dPsi = Psi[i] - Psi[i-1];
+          }
+
+          dval = *dcrd;
+          if (dPsi != 0.0) {
+            dval += 0.5 * (*dcrd - *(dcrd-M))/dPsi;
+          }
+
+          if (*(dmax+m) < dval) *(dmax+m) = dval;
+          if (*(dmin+m) > dval) *(dmin+m) = dval;
+        }
       }
     }
 
@@ -807,7 +844,7 @@ int tabx2s(
   int stat[])
 
 {
-  int i, iv, k, *Km, m, M, n, nv, offset, p0, status;
+  int i, iv, k, *Km, m, M, n, nv, offset, p1, status;
   double *coord, *Psi, psi_m, upsilon, wgt;
   register int *statp;
   register const double *xp;
@@ -830,17 +867,23 @@ int tabx2s(
     /* Determine the indexes. */
     Km = tab->K;
     for (m = 0; m < M; m++, Km++) {
+      /* N.B. psi_m and Upsilon_m are 1-relative FITS indexes. */
       i = tab->map[m];
       psi_m = *(xp+i) + tab->crval[m];
 
-      if ((Psi = tab->index[m]) == 0) {
+      Psi = tab->index[m];
+      if (Psi == 0x0) {
         /* Default indexing is simple. */
         upsilon = psi_m;
 
       } else {
+        /* To ease confusion, decrement Psi so that we can use 1-relative
+           C array indexing to match the 1-relative FITS indexing. */
+        Psi--;
+
         if (*Km == 1) {
           /* Index vector is degenerate. */
-          if (Psi[0]-0.5 <= psi_m && psi_m <= Psi[0]+0.5) {
+          if (Psi[1]-0.5 <= psi_m && psi_m <= Psi[1]+0.5) {
             upsilon = psi_m;
           } else {
             *statp = 1;
@@ -852,10 +895,10 @@ int tabx2s(
           /* Interpolate in the indexing vector. */
           if (tab->sense[m] == 1) {
             /* Monotonic increasing index values. */
-            if (psi_m < Psi[0]) {
-              if (Psi[0] - 0.5*(Psi[1]-Psi[0]) <= psi_m) {
+            if (psi_m < Psi[1]) {
+              if (Psi[1] - 0.5*(Psi[2]-Psi[1]) <= psi_m) {
                 /* Allow minor extrapolation. */
-                k = 0;
+                k = 1;
 
               } else {
                 /* Index is out of range. */
@@ -864,10 +907,10 @@ int tabx2s(
                 goto next;
               }
 
-            } else if (Psi[*Km-1] < psi_m) {
-              if (psi_m <= Psi[*Km-1] + 0.5*(Psi[*Km-1]-Psi[*Km-2])) {
+            } else if (Psi[*Km] < psi_m) {
+              if (psi_m <= Psi[*Km] + 0.5*(Psi[*Km]-Psi[*Km-1])) {
                 /* Allow minor extrapolation. */
-                k = *Km - 2;
+                k = *Km - 1;
 
               } else {
                 /* Index is out of range. */
@@ -877,7 +920,7 @@ int tabx2s(
               }
 
             } else {
-              for (k = 0; k < *Km-1; k++) {
+              for (k = 1; k < *Km; k++) {
                 if (psi_m < Psi[k]) {
                   continue;
                 }
@@ -892,10 +935,10 @@ int tabx2s(
 
           } else {
             /* Monotonic decreasing index values. */
-            if (psi_m > Psi[0]) {
-              if (Psi[0] + 0.5*(Psi[0]-Psi[1]) >= psi_m) {
+            if (psi_m > Psi[1]) {
+              if (Psi[1] + 0.5*(Psi[1]-Psi[2]) >= psi_m) {
                 /* Allow minor extrapolation. */
-                k = 0;
+                k = 1;
 
               } else {
                 /* Index is out of range. */
@@ -904,10 +947,10 @@ int tabx2s(
                 goto next;
               }
 
-            } else if (psi_m < Psi[*Km-1]) {
-              if (Psi[*Km-1] - 0.5*(Psi[*Km-2]-Psi[*Km-1]) <= psi_m) {
+            } else if (psi_m < Psi[*Km]) {
+              if (Psi[*Km] - 0.5*(Psi[*Km-1]-Psi[*Km]) <= psi_m) {
                 /* Allow minor extrapolation. */
-                k = *Km - 2;
+                k = *Km - 1;
 
               } else {
                 /* Index is out of range. */
@@ -917,7 +960,7 @@ int tabx2s(
               }
 
             } else {
-              for (k = 0; k < *Km-1; k++) {
+              for (k = 1; k < *Km; k++) {
                 if (psi_m > Psi[k]) {
                   continue;
                 }
@@ -935,24 +978,25 @@ int tabx2s(
         }
       }
 
-      if (upsilon < -0.5 || upsilon > *Km - 0.5) {
+      if (upsilon < 0.5 || upsilon > *Km + 0.5) {
         /* Index out of range. */
         *statp = 1;
         status = 4;
         goto next;
       }
 
-      /* Fiducial array indices and fractional offset. */
-      p0 = (int)floor(upsilon);
-      tab->p0[m] = p0;
-      tab->delta[m] = upsilon - p0;
+      /* Fiducial array indices and fractional offset.
+         p1 is 1-relative while tab::p0 is 0-relative. */
+      p1 = (int)floor(upsilon);
+      tab->p0[m] = p1 - 1;
+      tab->delta[m] = upsilon - p1;
 
-      if (p0 == -1) {
-       tab->p0[m] += 1;
-       tab->delta[m] -= 1.0;
-      } else if (p0 == *Km-1 && *Km > 1) {
-       tab->p0[m] -= 1;
-       tab->delta[m] += 1.0;
+      if (p1 == 0) {
+        tab->p0[m] += 1;
+        tab->delta[m] -= 1.0;
+      } else if (p1 == *Km && *Km > 1) {
+        tab->p0[m] -= 1;
+        tab->delta[m] += 1.0;
       }
     }
 
@@ -1017,10 +1061,10 @@ int tabs2x(
 {
   int tabedge(struct tabprm *);
   int tabrow(struct tabprm *, const double *);
-  int tabvox(struct tabprm *, const double *, int, unsigned int *);
+  int tabvox(struct tabprm *, const double *, int, double **, unsigned int *);
 
-  int edge, i, ic, k, *Km, M, m, n, status;
-  double *Psi, psi_m, upsilon;
+  int edge, i, ic, iv, k, *Km, M, m, n, nv, offset, status;
+  double *dcrd, delta, *Psi, psi_m, **tabcoord, upsilon;
   register int *statp;
   register const double *wp;
   register double *xp;
@@ -1033,6 +1077,11 @@ int tabs2x(
 
   /* This is used a lot. */
   M = tab->M;
+
+  if (M > 1) {
+    nv = 1 << M;
+    tabcoord = calloc(nv, sizeof(double *));
+  }
 
 
   status = 0;
@@ -1051,15 +1100,18 @@ int tabs2x(
         /* New row, could it contain a solution? */
         if (edge || tabrow(tab, wp)) {
           /* No, skip it. */
-          ic += tab->K[0] - 1;
+          ic += tab->K[0];
           tab->p0[1]++;
           edge = tabedge(tab);
+
+          /* Because ic will be incremented when the loop is reentered. */
+          ic--;
           continue;
         }
       }
 
       if (M == 1) {
-        /* Deal with the one-dimensional case separately. */
+        /* Deal with the one-dimensional case separately for efficiency. */
         if (*wp == tab->coord[0]) {
           tab->p0[0] = 0;
           tab->delta[0] = 0.0;
@@ -1068,7 +1120,7 @@ int tabs2x(
         } else if (ic < tab->nc - 1) {
           if (((tab->coord[ic] <= *wp && *wp <= tab->coord[ic+1]) ||
                (tab->coord[ic] >= *wp && *wp >= tab->coord[ic+1])) &&
-               (tab->index[0] == 0 ||
+               (tab->index[0] == 0x0 ||
                 tab->index[0][ic] != tab->index[0][ic+1])) {
             tab->p0[0] = ic;
             tab->delta[0] = (*wp - tab->coord[ic]) /
@@ -1078,15 +1130,63 @@ int tabs2x(
         }
 
       } else {
-        /* Multi-dimensional tables are much harder. */
-        if (!edge && tabvox(tab, wp, 0, 0) == 0) {
-          /* Found a solution. */
-          break;
+        /* Multi-dimensional tables are harder. */
+        if (!edge) {
+          /* Addresses of the coordinates for each corner of the "voxel". */
+          for (iv = 0; iv < nv; iv++) {
+            offset = 0;
+            for (m = M-1; m >= 0; m--) {
+              offset *= tab->K[m];
+              offset += tab->p0[m];
+              if ((iv & (1 << m)) && (tab->K[m] > 1)) offset++;
+            }
+            tabcoord[iv] = tab->coord + offset*M;
+          }
+
+          if (tabvox(tab, wp, 0, tabcoord, 0x0) == 0) {
+            /* Found a solution. */
+            break;
+          }
         }
 
         /* Next voxel. */
         tab->p0[0]++;
         edge = tabedge(tab);
+      }
+    }
+
+
+    if (ic == tab->nc) {
+      /* Coordinate not found; allow minor extrapolation. */
+      if (M == 1) {
+        /* Should there be a solution? */
+        if (tab->extrema[0] <= *wp && *wp <= tab->extrema[1]) {
+          dcrd = tab->coord;
+          for (i = 0; i < 2; i++) {
+            if (i) dcrd += tab->K[0] - 2;
+
+            delta = (*wp - *dcrd) / (*(dcrd+1) - *dcrd);
+
+            if (i == 0) {
+              if (-0.5 <= delta && delta <= 0.0) {
+                tab->p0[0] = 0;
+                tab->delta[0] = delta;
+                ic = 0;
+                break;
+              }
+            } else {
+              if (1.0 <= delta && delta <= 1.5) {
+                tab->p0[0] = tab->K[0] - 1;
+                tab->delta[0] = delta - 1.0;
+                ic = 0;
+              }
+            }
+          }
+        }
+
+      } else {
+        /* Multi-dimensional tables. */
+        /* >>> TBD <<< */
       }
     }
 
@@ -1099,26 +1199,33 @@ int tabs2x(
       /* Determine the intermediate world coordinates. */
       Km = tab->K;
       for (m = 0; m < M; m++, Km++) {
-        upsilon = tab->p0[m] + tab->delta[m];
-        if (upsilon < -0.5 || upsilon > *Km - 0.5) {
+        /* N.B. Upsilon_m and psi_m are 1-relative FITS indexes. */
+        upsilon = (tab->p0[m] + 1) + tab->delta[m];
+
+        if (upsilon < 0.5 || upsilon > *Km + 0.5) {
           /* Index out of range. */
           *statp = 1;
           status = 5;
 
         } else {
           /* Do inverse lookup of the index vector. */
-          if ((Psi = tab->index[m]) == 0) {
+          Psi = tab->index[m];
+          if (Psi == 0x0) {
             /* Default indexing. */
             psi_m = upsilon;
 
           } else {
+            /* Decrement Psi and use 1-relative C array indexing to match the
+               1-relative FITS indexing. */
+            Psi--;
+
             if (*Km == 1) {
               /* Degenerate index vector. */
-              psi_m = Psi[0];
+              psi_m = Psi[1];
             } else {
-              k = (int)upsilon;
+              k = (int)(upsilon);
               psi_m = Psi[k];
-              if (k < *Km-1) {
+              if (k < *Km) {
                 psi_m += (upsilon - k) * (Psi[k+1] - Psi[k]);
               }
             }
@@ -1136,14 +1243,16 @@ int tabs2x(
     statp++;
   }
 
+  if (M > 1) free(tabcoord);
+
   return status;
 }
 
-/*--------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------
+* Convenience routine to deal with of edge effects in tabprm::p0.
+*---------------------------------------------------------------------------*/
 
-int tabedge(tab)
-
-struct tabprm* tab;
+int tabedge(struct tabprm* tab)
 
 {
   int edge, *Km, m;
@@ -1152,10 +1261,12 @@ struct tabprm* tab;
   Km = tab->K;
   for (m = 0; m < tab->M; m++, Km++) {
     if (tab->p0[m] == *Km) {
+      /* p0 has been incremented beyond the end of the row, point it to the
+         next one. */
       tab->p0[m] = 0;
       tab->p0[m+1]++;
     } else if (tab->p0[m] == *Km - 1 && *Km > 1) {
-      /* Edge effects? */
+      /* p0 is sitting at the end of a non-degenerate row. */
       edge = 1;
     }
   }
@@ -1163,47 +1274,89 @@ struct tabprm* tab;
   return edge;
 }
 
-/*--------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------
+* Quick test to see whether the world coordinate indicated by wp could lie
+* somewhere along (or near) the row of the image indexed by tabprm::p0.
+* Return 0 if so, 1 otherwise.
+*
+* tabprm::p0 selects a particular row of the image, p0[0] being ignored (i.e.
+* treated as zero).  Adjacent rows that delimit a row of "voxels" are formed
+* by incrementing elements other than p0[0] in all binary combinations.  N.B.
+* these are not the same as the voxels (pixels) that are indexed by, and
+* centred on, integral pixel coordinates in FITS. 
+*
+* To see why it is necessary to examine the adjacent rows, consider the 2-D
+* case where the first world coordinate element is constant along each row.
+* If the first element of wp has value 0.5, and its value in the row indexed
+* by p0 has value 0, and in the next row it has value 1, then it is clear that
+* the solution lies in neither row but somewhere between them.  Thus both rows
+* will be involved in finding the solution.
+*
+* tabprm::extrema is the address of the first element of a 1-D array that
+* records the minimum and maximum value of each element of the coordinate
+* vector in each row of the coordinate array, treated as though it were
+* defined as
+*
+*   double extrema[K_M]...[K_2][2][M]
+*
+* The minimum is recorded in the first element of the compressed K_1
+* dimension, then the maximum.
+*---------------------------------------------------------------------------*/
 
-int tabrow(tab, wp)
-
-struct tabprm* tab;
-const double *wp;
+int tabrow(struct tabprm* tab, const double *wp)
 
 {
   int iv, M, m, nv, offset;
-  unsigned int eq, et, gt, lt;
-  const double tol = 1.0e-10;
+  unsigned int eq, gt, lt;
+  const double tol = 1e-10;
   double *cp, w;
 
   M = tab->M;
 
-  /* Could the coordinate lie somewhere along this row of voxels? */
+  /* The number of corners in a "voxel".  We need examine only half this
+     number of rows.  The extra factor of two will be used to select between
+     the minimal and maximal values in each row. */
+  nv = 1 << M;
+
+  eq = 0;
   lt = 0;
   gt = 0;
-  eq = 0;
-  nv = 1 << M;
   for (iv = 0; iv < nv; iv++) {
-    /* Find the extrema at this end of the row. */
+    /* Find the index into tabprm::extrema for this row. */
     offset = 0;
     for (m = M-1; m > 0; m--) {
       offset *= tab->K[m];
       offset += tab->p0[m];
+
+      /* Select the row. */
       if (iv & (1 << m)) {
         if (tab->K[m] > 1) offset++;
       }
     }
 
+    /* The K_1 dimension has length 2 (see prologue). */
     offset *= 2;
-    offset += tab->p0[0];
-    if (iv & 1 && tab->K[0] > 1) offset++;
 
-    et = 0;
-    cp = tab->extrema + offset*M;
+    /* Select the minimum on even numbered iterations, else the maximum. */
+    if (iv & 1) offset++;
+
+    /* The last dimension has length M (see prologue). */
+    offset *= M;
+
+    /* Address of the extremal elements (min or max) for this row. */
+    cp = tab->extrema + offset;
+
+    /* For each coordinate element, we only need to find one row where its
+       minimum value is less than that of wp, and one row where the maximum
+       value is greater.  That doesn't mean that there is a solution, only
+       that there might be. */
     for (m = 0; m < M; m++, cp++) {
+      /* Apply the axis mapping. */
       w = wp[tab->map[m]];
+
+      /* Finally the test itself; set bits in the bitmask. */
       if (fabs(*cp - w) < tol) {
-        et |= (1 << m);
+        eq |= (1 << m);
       } else if (*cp < w) {
         lt |= (1 << m);
       } else if (*cp > w) {
@@ -1211,68 +1364,85 @@ const double *wp;
       }
     }
 
-    if (et == nv-1) {
-      /* Solution found in a corner. */
+    /* Have all bits been switched on? */
+    if ((lt | eq) == nv-1 && (gt | eq) == nv-1) {
+      /* A solution could lie within this row of voxels. */
       return 0;
     }
-
-    eq |= et;
-  }
-
-  if ((lt | eq) == nv-1 && (gt | eq) == nv-1) {
-    /* A solution could lie within this row of voxels. */
-    return 0;
   }
 
   /* No solution in this row. */
   return 1;
 }
 
-/*--------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------
+* Does the world coordinate indicated by wp lie within the voxel indexed by
+* tabprm::p0?  If so, do a binary chop of the interior of the voxel to find
+* it and return 0, with tabprm::delta set to the solution.  Else return 1.
+*
+* As in tabrow(), a "voxel" is formed by incrementing the elements of
+* tabprm::p0 in all binary combinations.  Note that these are not the same as
+* the voxels (pixels) that are indexed by, and centred on, integral pixel
+* coordinates in FITS. 
+*  
+* tabvox() calls itself recursively.  When called from outside, level, being
+* the level of recursion, should be given as zero.  tabcoord is an array
+* holding the addresses of the coordinates for each corner of the voxel.
+* vox is the address of a work array (vox2) used during recursive calls to
+* dissect the voxel.  It is ignored when tabvox() is called from outside
+* (level == 0).
+*
+* It is assumed that the image dimensions are no greater than 16.
+----------------------------------------------------------------------------*/
 
-int tabvox(tab, wp, level, vox)
-
-struct tabprm* tab;
-const double *wp;
-int level;
-unsigned int *vox;
+int tabvox( 
+  struct tabprm* tab,
+  const double *wp,
+  int level,
+  double **tabcoord,
+  unsigned int *vox)
 
 {
-  int i, iv, jv, M, m, nv, offset;
+  int i, iv, jv, M, m, nv;
   unsigned int eq, et, gt, lt, vox2[16];
-  const double tol = 1.0e-10;
+  const double tol = 1e-10;
   double coord[16], *cp, dv, w, wgt;
 
   M = tab->M;
+
+  /* The number of corners in a voxel. */
+  nv = 1 << M;
 
   dv = 1.0;
   for (i = 0; i < level; i++) {
     dv /= 2.0;
   }
 
-  /* Could the coordinate lie within this voxel? */
+  /* Could the coordinate lie within this voxel (level == 0) or sub-voxel
+     (level > 0)?  We use the fact that with linear interpolation the
+     coordinate elements are extremal in a corner and test each one. */
   lt = 0;
   gt = 0;
   eq = 0;
-  nv = 1 << M;
   for (iv = 0; iv < nv; iv++) {
-    /* Compute the coordinates of this corner of the voxel. */
+    /* Select a corner of the sub-voxel. */
     for (m = 0; m < M; m++) {
       coord[m] = 0.0;
       tab->delta[m] = level ? dv*vox[m] : 0.0;
+
       if (iv & (1 << m)) {
         tab->delta[m] += dv;
       }
     }
 
+    /* Compute the coordinates of this corner of the sub-voxel by linear
+       interpolation using the weighting algorithm described in Sect. 3.4 of
+       WCS Paper IV. */
     for (jv = 0; jv < nv; jv++) {
-      offset = 0;
+      /* Find the weight for this corner of the parent voxel. */
       wgt = 1.0;
-      for (m = M-1; m >= 0; m--) {
-        offset *= tab->K[m];
-        offset += tab->p0[m];
+      for (m = 0; m < M; m++) {
         if (jv & (1 << m)) {
-          if (tab->K[m] > 1) offset++;
           wgt *= tab->delta[m];
         } else {
           wgt *= 1.0 - tab->delta[m];
@@ -1281,7 +1451,8 @@ unsigned int *vox;
 
       if (wgt == 0.0) continue;
 
-      cp = tab->coord + offset*M;
+      /* Add its contribution to each coordinate element. */
+      cp = tabcoord[jv];
       for (m = 0; m < M; m++) {
         coord[m] += *(cp++) * wgt;
       }
@@ -1292,7 +1463,10 @@ unsigned int *vox;
     /* Coordinate elements are minimal or maximal in a corner. */
     et = 0;
     for (m = 0; m < M; m++) {
+      /* Apply the axis mapping. */
       w = wp[tab->map[m]];
+
+      /* Finally the test itself; set bits in the bitmask. */
       if (fabs(coord[m] - w) < tol) {
         et |= (1 << m);
       } else if (coord[m] < w) {
@@ -1303,18 +1477,20 @@ unsigned int *vox;
     }
 
     if (et == nv-1) {
-      /* Solution found in a corner. */
+      /* We've stumbled across a solution in this corner of the sub-voxel. */
       return 0;
     }
 
     eq |= et;
   }
 
+  /* Could the coordinate lie within this sub-voxel? */
   if ((lt | eq) == nv-1 && (gt | eq) == nv-1) {
-    /* The coordinate could lie within this voxel, but does it? */
+    /* Yes it could, but does it? */
 
+    /* Is it time to stop the recursion? */
     if (level == 31) {
-      /* Stop the recursion. */
+      /* We have a solution, squeeze out the last bit of juice. */
       dv /= 2.0;
       for (m = 0; m < M; m++) {
         tab->delta[m] = dv * (2.0*vox[m] + 1.0);
@@ -1323,8 +1499,9 @@ unsigned int *vox;
       return 0;
     }
 
-    /* Subdivide and try again. */
+    /* Subdivide the sub-voxel and try again for each subdivision. */
     for (iv = 0; iv < nv; iv++) {
+      /* Select the subdivision. */
       for (m = 0; m < M; m++) {
         vox2[m] = level ? 2*vox[m] : 0;
         if (iv & (1 << m)) {
@@ -1332,12 +1509,13 @@ unsigned int *vox;
         }
       }
 
-      if (tabvox(tab, wp, level+1, vox2) == 0) {
+      /* Recurse. */
+      if (tabvox(tab, wp, level+1, tabcoord, vox2) == 0) {
         return 0;
       }
     }
   }
 
-  /* No solution in this voxel. */
+  /* No solution in this sub-)voxel. */
   return 1;
 }

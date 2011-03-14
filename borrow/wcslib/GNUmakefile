@@ -1,5 +1,5 @@
 #-----------------------------------------------------------------------------
-# GNU makefile for building WCSLIB 4.6
+# GNU makefile for building WCSLIB 4.7
 #
 # Summary of the main targets
 # ---------------------------
@@ -66,9 +66,18 @@ install :
 	     $(MAKE) -k -C $$DIR $@ ; \
 	   done
 	   $(INSTALL) -m 444 wcsconfig.h wcsconfig_f77.h $(INCDIR)
-	   $(INSTALL) -m 444 CHANGES $(INCDIR)/CHANGES
-	   $(INSTALL) -m 444 COPYING $(INCDIR)/COPYING
-	   $(INSTALL) -m 444 README  $(INCDIR)/README
+	-  if [ ! -d "$(DOCDIR)" ] ; then \
+	     $(INSTALL) -d -m 2775 $(DOCDIR) ; \
+	   fi
+	   $(INSTALL) -m 444 CHANGES COPYING* README $(DOCDIR)
+	-  if [ ! -d "$(PDFDIR)" ] ; then \
+	     $(INSTALL) -d -m 2775 $(PDFDIR) ; \
+	   fi
+	   $(INSTALL) -m 444 wcslib.pdf $(PDFDIR)
+	-  if [ ! -d "$(HTMLDIR)/html" ] ; then \
+	     $(INSTALL) -d -m 2775 $(HTMLDIR)/html ; \
+	   fi
+	   $(INSTALL) -m 444 html/* $(HTMLDIR)/html
 	   if [ ! -d "$(LIBDIR)/pkgconfig" ] ; then \
 	     $(INSTALL) -d -m 2775 $(LIBDIR)/pkgconfig ; \
 	   fi
@@ -131,37 +140,37 @@ config.status : configure
 dist :
 	   $(MAKE) -C doxygen cleanest build
 	   $(MAKE) distclean
-	-@ echo $(WCSLIBV)/C/RCS        >  wcslib.X
-	-@ echo $(WCSLIBV)/C/flexed/RCS >> wcslib.X
-	-@ echo $(WCSLIBV)/C/test/RCS   >> wcslib.X
-	-@ echo $(WCSLIBV)/doxygen/RCS  >> wcslib.X
-	-@ echo $(WCSLIBV)/Fortran/RCS  >> wcslib.X
-	-@ echo $(WCSLIBV)/Fortran/test/RCS >> wcslib.X
-	-@ echo $(WCSLIBV)/makedefs     >> wcslib.X
-	-@ echo $(WCSLIBV)/other        >> wcslib.X
-	-@ echo $(WCSLIBV)/pgsbox/RCS   >> wcslib.X
-	-@ echo $(WCSLIBV)/RCS          >> wcslib.X
-	-@ echo $(WCSLIBV)/TODO         >> wcslib.X
-	-@ echo $(WCSLIBV)/utils/RCS    >> wcslib.X
-	-@ echo $(WCSLIBV)/wcslib.T     >> wcslib.X
-	-@ echo $(WCSLIBV)/wcslib.X     >> wcslib.X
-	   rm -f $(WCSLIBV).tar.bz2
-	   tar cf - -C .. -X wcslib.X $(WCSLIBV) | \
+	-@ echo $(WCSLIBPKG)/C/RCS        >  wcslib.X
+	-@ echo $(WCSLIBPKG)/C/flexed/RCS >> wcslib.X
+	-@ echo $(WCSLIBPKG)/C/test/RCS   >> wcslib.X
+	-@ echo $(WCSLIBPKG)/doxygen/RCS  >> wcslib.X
+	-@ echo $(WCSLIBPKG)/Fortran/RCS  >> wcslib.X
+	-@ echo $(WCSLIBPKG)/Fortran/test/RCS >> wcslib.X
+	-@ echo $(WCSLIBPKG)/makedefs     >> wcslib.X
+	-@ echo $(WCSLIBPKG)/other        >> wcslib.X
+	-@ echo $(WCSLIBPKG)/pgsbox/RCS   >> wcslib.X
+	-@ echo $(WCSLIBPKG)/RCS          >> wcslib.X
+	-@ echo $(WCSLIBPKG)/TODO         >> wcslib.X
+	-@ echo $(WCSLIBPKG)/utils/RCS    >> wcslib.X
+	-@ echo $(WCSLIBPKG)/wcslib.T     >> wcslib.X
+	-@ echo $(WCSLIBPKG)/wcslib.X     >> wcslib.X
+	   rm -f $(WCSLIBPKG).tar.bz2
+	   tar cf - -C .. -X wcslib.X $(WCSLIBPKG) | \
 	     tar t | \
 	     grep -v '/$$' | \
 	     sort > wcslib.T
 	   rm -f wcslib.X
-	   tar cvf $(WCSLIBV).tar -C .. -T wcslib.T
+	   tar cvf $(WCSLIBPKG).tar -C .. -T wcslib.T
 	   rm -f wcslib.T
-	   bzip2 $(WCSLIBV).tar
-	   chmod 444 $(WCSLIBV).tar.bz2
+	   bzip2 $(WCSLIBPKG).tar
+	   chmod 444 $(WCSLIBPKG).tar.bz2
 
 install_dist :
-	   cp -fp $(WCSLIBV).tar.bz2 /nfs/ftp/software/wcslib/
-	   mv -f  $(WCSLIBV).tar.bz2 ../wcslib-releases/
+	   cp -fp $(WCSLIBPKG).tar.bz2 /nfs/ftp/software/wcslib/
+	   mv -f  $(WCSLIBPKG).tar.bz2 ../wcslib-releases/
 	   (cd /nfs/ftp/software/wcslib/ && \
 	     rm -f wcslib.tar.bz2 && \
-	     ln -s $(WCSLIBV).tar.bz2 wcslib.tar.bz2)
+	     ln -s $(WCSLIBPKG).tar.bz2 wcslib.tar.bz2)
 	   cp -fp CHANGES wcslib.pdf ~/public_html/WCS/
 	   rsync --archive --delete html/ ~/public_html/WCS/wcslib/
 

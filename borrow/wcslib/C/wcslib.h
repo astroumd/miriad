@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.6 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2010, Mark Calabretta
+  WCSLIB 4.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2011, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -31,7 +31,7 @@
   $Id$
 *=============================================================================
 *
-* WCSLIB 4.6 - C routines that implement the FITS World Coordinate System
+* WCSLIB 4.7 - C routines that implement the FITS World Coordinate System
 * (WCS) standard.
 *
 * Summary of wcslib.h
@@ -57,6 +57,7 @@
 #include "wcsfix.h"
 #include "wcshdr.h"
 #include "wcsmath.h"
+#include "wcsprintf.h"
 #include "wcstrig.h"
 #include "wcsunits.h"
 #include "wcsutil.h"

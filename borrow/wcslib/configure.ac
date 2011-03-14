@@ -11,11 +11,15 @@
 # $Id$
 #-----------------------------------------------------------------------------
 
-AC_INIT([WCSLIB], [4.6.3], [mcalabre@atnf.csiro.au], [wcslib-4.6.3])
+AC_INIT([WCSLIB], [4.7], [mcalabre@atnf.csiro.au], [wcslib-4.7])
 AC_PREREQ([2.53])
 AC_REVISION([$Revision$])
 AC_SUBST([PACKAGE_VERSION])
-AC_DEFINE_UNQUOTED([WCSLIB_VERSION], [$PACKAGE_VERSION])
+AC_DEFINE_UNQUOTED([WCSLIB_VERSION], [$PACKAGE_VERSION], [Define wcslib version])
+
+# Remove the patch number from the library version.
+LIBVER=`echo "$PACKAGE_VERSION" | sed -e '{s/\./-/;s/\.[[0-9]]*$//;s/-/./;}'`
+AC_SUBST([LIBVER])
 
 AC_CONFIG_SRCDIR([C/wcs.h])
 AC_CONFIG_AUX_DIR([config])
@@ -75,8 +79,8 @@ AC_TYPE_UINT32_T
 
 # Check for ANSI C headers.
 AC_HEADER_STDC
-AC_CHECK_HEADERS([ctype.h errno.h limits.h math.h setjmp.h stdio.h stdlib.h \
-                  string.h])
+AC_CHECK_HEADERS([ctype.h errno.h limits.h math.h setjmp.h stdarg.h stdio.h \
+                  stdlib.h string.h])
 if test "x$ac_cv_header_stdc" = xno; then
   AC_MSG_ERROR([
     -------------------------------------------------------------------
@@ -95,6 +99,7 @@ AC_FUNC_MALLOC
 AC_FUNC_REALLOC
 AC_FUNC_SETVBUF_REVERSED
 AC_FUNC_STAT
+AC_FUNC_VPRINTF
 AC_CHECK_FUNCS([floor memset pow sqrt strchr strstr])
 
 # System libraries that may be required by WCSLIB itself.
@@ -141,22 +146,30 @@ AC_RUN_IFELSE(
 )
 
 
+# Starting values, may be augmented later.
+SUBDIRS="C"
+TSTDIRS="C"
+INSTDIR="C"
+
+
+# Ways of specifying the Fortran compiler, in order of precedence:
+#   configure --enable-fortran=<compiler>
+#   F77=<compiler> configure    ...bash
+#
 # Ways of disabling Fortran:
 #   configure --disable-fortran
 #   configure --enable-fortran=no
 #   F77=no configure            ...bash
+AC_ARG_ENABLE([fortran], [AS_HELP_STRING([--enable-fortran=ARG],
+            [Fortran compiler to use])], [])
 AC_ARG_ENABLE([fortran], [AS_HELP_STRING([--disable-fortran],
             [don't build the Fortran wrappers or PGSBOX])], [])
-if test "x$enable_fortran" != x ; then
+if test "x$enable_fortran" != x -a "x$enable_fortran" != xyes ; then
   F77="$enable_fortran"
 fi
 
 if test "x$F77" = xno ; then
   F77=
-
-  SUBDIRS="C"
-  TSTDIRS="C"
-  INSTDIR="C"
 
   AC_MSG_WARN([Compilation of Fortran wrappers and PGSBOX disabled])
 
@@ -169,17 +182,13 @@ else
 
   if test "x$F77" = x; then
     AC_MSG_WARN([
-      ---------------------------------------------------------------------
-      Fortran compiler not found, will skip PGSBOX and Fortran test suite.
-      ---------------------------------------------------------------------])
+      ------------------------------------------------------------------
+      Fortran compiler not found, will skip Fortran wrappers and PGSBOX.
+      ------------------------------------------------------------------])
 
     # Best guess at Fortran name mangling for use if a compiler does ever
     # become available.
     AC_DEFINE([F77_FUNC(name,NAME)], [name ## _])
-
-    SUBDIRS="C Fortran"
-    TSTDIRS="C"
-    INSTDIR="Fortran"
 
   else
     if test "x$ac_cv_f77_compiler_gnu" = xyes ; then
@@ -193,14 +202,14 @@ else
     AC_LANG_PUSH(Fortran 77)
     FFLAGS_save=$FFLAGS
     FFLAGS=-I.
-    AC_TRY_COMPILE([], [], [FFLAGS="$FFLAGS_save -I."; AC_MSG_RESULT(yes)],
+    AC_COMPILE_IFELSE(AC_LANG_PROGRAM([], []),
+      [FFLAGS="$FFLAGS_save -I."; AC_MSG_RESULT(yes)],
       [FFLAGS="$FFLAGS_save"; AC_MSG_RESULT(no)])
     AC_LANG_POP()
 
     # Libraries required by the Fortran compiler itself (sets FLIBS).
-    # Required by utilities and test programs written in C that link to the
-    # pgsbox object library - this contains the only Fortran modules in the
-    # WCSLIB suite.
+    # Required by utilities and test programs written in C that link to
+    # Fortran object modules such as pgsbox.
     AC_F77_LIBRARY_LDFLAGS
 
     # F77 name mangling (defines the F77_FUNC preprocessor macro).
@@ -208,7 +217,7 @@ else
 
     SUBDIRS="C Fortran"
     TSTDIRS="C Fortran"
-    INSTDIR="pgsbox"
+    INSTDIR="Fortran"
   fi
 fi
 
@@ -231,12 +240,11 @@ if test "x$ac_cv_c_compiler_gnu" = xyes ; then
   SHRFLAGS="-fPIC"
   SHRLD="\$(CC) \$(SHRFLAGS)"
 
-  V="$PACKAGE_VERSION"
   case "$build_os" in
   darwin*)
-    SHRLIB="libwcs.$V.dylib"
+    SHRLIB="libwcs.$LIBVER.dylib"
     SHRLD="$SHRLD -dynamiclib -single_module"
-    SHRLD="$SHRLD -compatibility_version $V -current_version $V"
+    SHRLD="$SHRLD -compatibility_version $LIBVER -current_version $LIBVER"
     SHRLN=
 
     case "$build_cpu" in
@@ -248,7 +256,7 @@ if test "x$ac_cv_c_compiler_gnu" = xyes ; then
     ;;
   *)
     # Covers Linux and Solaris at least.
-    SHRLIB="libwcs.so.$V"
+    SHRLIB="libwcs.so.$LIBVER"
     SHRLD="$SHRLD -shared -Wl,-h\$(SHRLIB)"
     SHRLN="libwcs.so"
     ;;
@@ -279,19 +287,6 @@ AC_MSG_NOTICE([End of primary configuration.
 # The following are required to build utilities and test programs.
 # ----------------------------------------------------------------
 AC_MSG_NOTICE([Looking for libraries etc. for utilities and test suite...])
-
-# Utilities, ways of disabling them:
-#   configure --disable-utils
-#   configure --enable-utils=no
-AC_ARG_ENABLE([utils], [AS_HELP_STRING([--disable-utils],
-            [don't build the WCS utilities])], [])
-if test "x$enable_utils" != xno ; then
-  SUBDIRS="$SUBDIRS utils"
-  INSTDIR="$INSTDIR utils"
-else
-  AC_MSG_WARN([Compilation of WCS utilities disabled])
-fi
-
 
 # Check for other quasi-standard header files.
 AC_CHECK_HEADERS([unistd.h])
@@ -361,7 +356,7 @@ if test "x$with_cfitsio" != xno -o \
         "x$with_pgplot"  != xno ; then
   LIBDIRS="$LIBDIRS           \
            /usr/local/lib     \
-	   /local/lib         \
+           /local/lib         \
            /opt/local/lib     \
            /opt/SUNWspro/lib  \
            /sw/lib"
@@ -420,7 +415,8 @@ if test "x$with_cfitsio" != xno -o \
     # FLIBS (found above via AC_F77_LIBRARY_LDFLAGS) only helps if PGPLOT was
     # built using the same Fortran compiler that we are using here.
 
-    # PGPLOT compiled by the SUN Fortran compiler but linked with something else.
+    # PGPLOT compiled by the SUN Fortran compiler but linked with something
+    # else.
     AC_CHECK_LIB([M77],     [iand_],     [PGPLOTLIB="-lM77 $PGPLOTLIB"],
                  [], [$PGPLOTLIB $LIBS])
     AC_CHECK_LIB([F77],     [f77_init],  [PGPLOTLIB="-lF77 $PGPLOTLIB"],
@@ -460,6 +456,7 @@ if test "x$with_cfitsio" != xno -o \
     # Only need the PGPLOT include file to build PGSBOX.
     if test "x$PGPLOTINC" != x; then
       SUBDIRS="$SUBDIRS pgsbox"
+      INSTDIR="pgsbox"
     fi
 
     # Also need the PGPLOT library to build pgtest and cpgtest.
@@ -472,6 +469,21 @@ if test "x$with_cfitsio" != xno -o \
     fi
   fi
 fi
+
+
+# Utilities are compiled last since they need the libraries.
+# Ways of disabling them:
+#   configure --disable-utils
+#   configure --enable-utils=no
+AC_ARG_ENABLE([utils], [AS_HELP_STRING([--disable-utils],
+            [don't build the WCS utilities])], [])
+if test "x$enable_utils" != xno ; then
+  SUBDIRS="$SUBDIRS utils"
+  INSTDIR="$INSTDIR utils"
+else
+  AC_MSG_WARN([Compilation of WCS utilities disabled])
+fi
+
 
 AC_SUBST([CFITSIOINC])
 AC_SUBST([CFITSIOLIB])
@@ -491,6 +503,6 @@ AC_MSG_NOTICE([End of auxiliary configuration.
 # Do it.
 AC_MSG_NOTICE([Configuring files...])
 AC_CONFIG_FILES([makedefs wcslib.pc])
-AC_CONFIG_HEADERS([wcsconfig.h wcsconfig_f77.h wcsconfig_tests.h \
+AC_CONFIG_HEADERS([wcsconfig.h wcsconfig_f77.h wcsconfig_tests.h
                    wcsconfig_utils.h])
 AC_OUTPUT

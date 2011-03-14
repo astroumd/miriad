@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.6 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2010, Mark Calabretta
+  WCSLIB 4.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2011, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -36,6 +36,7 @@
 #include <string.h>
 
 #include "wcsmath.h"
+#include "wcsprintf.h"
 #include "wcstrig.h"
 #include "prj.h"
 
@@ -155,8 +156,8 @@ struct prjprm *prj;
   prj->x0 = 0.0;
   prj->y0 = 0.0;
   for (k = 0; k < 10; prj->w[k++] = 0.0);
+  prj->m = 0;
   prj->n = 0;
-  prj->padding = 0;
 
   return 0;
 }
@@ -172,71 +173,72 @@ const struct prjprm *prj;
 
   if (prj == 0x0) return 1;
 
-  printf("       flag: %d\n",  prj->flag);
-  printf("       code: \"%s\"\n",  prj->code);
-  printf("         r0: %9f\n", prj->r0);
-  printf("         pv:");
+  wcsprintf("       flag: %d\n",  prj->flag);
+  wcsprintf("       code: \"%s\"\n",  prj->code);
+  wcsprintf("         r0: %9f\n", prj->r0);
+  wcsprintf("         pv:");
   if (prj->pvrange) {
     n = (prj->pvrange)%100;
 
     if (prj->pvrange/100) {
-      printf(" (0)");
+      wcsprintf(" (0)");
     } else {
-      printf(" %- 11.5g", prj->pv[0]);
+      wcsprintf(" %- 11.5g", prj->pv[0]);
       n--;
     }
 
     for (i = 1; i <= n; i++) {
       if (i%5 == 1) {
-        printf("\n           ");
+        wcsprintf("\n           ");
       }
 
       if (undefined(prj->pv[i])) {
-        printf("  UNDEFINED   ");
+        wcsprintf("  UNDEFINED   ");
       } else {
-        printf("  %- 11.5g", prj->pv[i]);
+        wcsprintf("  %- 11.5g", prj->pv[i]);
       }
     }
-    printf("\n");
+    wcsprintf("\n");
   } else {
-    printf(" (not used)\n");
+    wcsprintf(" (not used)\n");
   }
   if (undefined(prj->phi0)) {
-    printf("       phi0: UNDEFINED\n");
+    wcsprintf("       phi0: UNDEFINED\n");
   } else {
-    printf("       phi0: %9f\n", prj->phi0);
+    wcsprintf("       phi0: %9f\n", prj->phi0);
   }
   if (undefined(prj->theta0)) {
-    printf("     theta0: UNDEFINED\n");
+    wcsprintf("     theta0: UNDEFINED\n");
   } else {
-    printf("     theta0: %9f\n", prj->theta0);
+    wcsprintf("     theta0: %9f\n", prj->theta0);
   }
-  printf("     bounds: %d\n",  prj->bounds);
+  wcsprintf("     bounds: %d\n",  prj->bounds);
 
-  printf("\n");
-  printf("       name: \"%s\"\n", prj->name);
-  printf("   category: %d (%s)\n", prj->category,
-                                   prj_categories[prj->category]);
-  printf("    pvrange: %d\n", prj->pvrange);
-  printf("  simplezen: %d\n", prj->simplezen);
-  printf("  equiareal: %d\n", prj->equiareal);
-  printf("  conformal: %d\n", prj->conformal);
-  printf("     global: %d\n", prj->global);
-  printf("  divergent: %d\n", prj->divergent);
-  printf("         x0: %f\n", prj->x0);
-  printf("         y0: %f\n", prj->y0);
-  printf("        w[]:");
+  wcsprintf("\n");
+  wcsprintf("       name: \"%s\"\n", prj->name);
+  wcsprintf("   category: %d (%s)\n", prj->category,
+                                      prj_categories[prj->category]);
+  wcsprintf("    pvrange: %d\n", prj->pvrange);
+  wcsprintf("  simplezen: %d\n", prj->simplezen);
+  wcsprintf("  equiareal: %d\n", prj->equiareal);
+  wcsprintf("  conformal: %d\n", prj->conformal);
+  wcsprintf("     global: %d\n", prj->global);
+  wcsprintf("  divergent: %d\n", prj->divergent);
+  wcsprintf("         x0: %f\n", prj->x0);
+  wcsprintf("         y0: %f\n", prj->y0);
+  wcsprintf("        w[]:");
   for (i = 0; i < 5; i++) {
-    printf("  %- 11.5g", prj->w[i]);
+    wcsprintf("  %- 11.5g", prj->w[i]);
   }
-  printf("\n            ");
+  wcsprintf("\n            ");
   for (i = 5; i < 10; i++) {
-    printf("  %- 11.5g", prj->w[i]);
+    wcsprintf("  %- 11.5g", prj->w[i]);
   }
-  printf("\n");
-  printf("          n: %d\n", prj->n);
-  printf("     prjx2s: %p\n", (void *)prj->prjx2s);
-  printf("     prjs2x: %p\n", (void *)prj->prjs2x);
+  wcsprintf("\n");
+  wcsprintf("          m: %d\n", prj->m);
+  wcsprintf("          n: %d\n", prj->n);
+  wcsprintf("     prjx2s: %p\n", (void *)prj->prjx2s);
+  wcsprintf("     prjs2x: %p\n", (void *)prj->prjs2x);
 
   return 0;
 }
@@ -7466,6 +7468,7 @@ int stat[];
 *      prj->code    "HPX"
 *      prj->x0      Fiducial offset in x.
 *      prj->y0      Fiducial offset in y.
+*      prj->m       True if H is odd.
 *      prj->n       True if K is odd.
 *      prj->w[0]    r0*(pi/180)
 *      prj->w[1]    (180/pi)/r0
@@ -7475,8 +7478,8 @@ int stat[];
 *      prj->w[5]    90*(K-1)/H
 *      prj->w[6]    180/H
 *      prj->w[7]    H/360
-*      prj->w[8]    (90*K/H)*r0*(pi/180)
-*      prj->w[9]     (180/H)*r0*(pi/180)
+*      prj->w[8]    r0*(pi/180)*(90*K/H)
+*      prj->w[9]    r0*(pi/180)*(180/H)
 *      prj->prjx2s  Pointer to hpxx2s().
 *      prj->prjs2x  Pointer to hpxs2x().
 *===========================================================================*/
@@ -7507,7 +7510,8 @@ struct prjprm *prj;
     return 2;
   }
 
-  prj->n = ((int)prj->pv[2])%2;
+  prj->m = ((int)(prj->pv[1]+0.5))%2;
+  prj->n = ((int)(prj->pv[2]+0.5))%2;
 
   if (prj->r0 == 0.0) {
     prj->r0 = R2D;
@@ -7546,7 +7550,8 @@ int stat[];
 {
   int h, mx, my, offset, rowlen, rowoff, status;
   double absy, s, sigma, t, yr;
-  const double tol = 1.0e-12;
+  const double slim = prj->w[6] + 1e-12;
+  const double ylim = prj->w[9] * prj->w[4];
   register int istat, ix, iy, *statp;
   register const double *xp, *yp;
   register double *phip, *thetap;
@@ -7576,6 +7581,7 @@ int stat[];
   rowlen = nx*spt;
   for (ix = 0; ix < nx; ix++, rowoff += spt, xp += sxy) {
     s = prj->w[1] * (*xp + prj->x0);
+    /* x_c for K odd or theta > 0. */ 
     t = -180.0 + (2.0 * floor((*xp + 180.0) * prj->w[7]) + 1.0) * prj->w[6];
     t = prj->w[1] * (*xp - t);
 
@@ -7609,7 +7615,7 @@ int stat[];
         *(statp++) = 0;
       }
 
-    } else if (absy <= 90.0) {
+    } else if (absy <= ylim) {
       /* Polar regime. */
       offset = (prj->n || *yp > 0.0) ? 0 : 1;
 
@@ -7636,7 +7642,7 @@ int stat[];
       for (ix = 0; ix < mx; ix++, phip += spt, thetap += spt) {
         if (offset) {
           /* Offset the southern polar half-facets for even K. */
-          h = (int)floor(*phip / prj->w[6]);
+          h = (int)floor(*phip / prj->w[6]) + prj->m;
           if (h%2) {
             *thetap -= prj->w[6];
           } else {
@@ -7646,7 +7652,7 @@ int stat[];
 
         /* Recall that theta[] holds (x - x_c). */
         s *= *thetap;
-        if ((fabs(s) - prj->w[6]) < tol) {
+        if (fabs(s) < slim) {
           if (s != 0.0) s -= *thetap;
           *phip += s;
           *thetap = t;
@@ -7714,13 +7720,15 @@ int stat[];
   rowlen = nphi*sxy;
   for (iphi = 0; iphi < nphi; iphi++, rowoff += sxy, phip += spt) {
     xi = prj->w[0] * (*phip) - prj->x0;
-    t  = -180.0 + (2.0*floor((*phip+180.0) * prj->w[7]) + 1.0) * prj->w[6];
-    t  = prj->w[0] * (*phip - t);
+
+    /* phi_c for K odd or theta > 0. */ 
+    t = -180.0 + (2.0*floor((*phip+180.0) * prj->w[7]) + 1.0) * prj->w[6];
+    t = prj->w[0] * (*phip - t);
 
     xp = x + rowoff;
     yp = y + rowoff;
     for (itheta = 0; itheta < mtheta; itheta++) {
-      /* y[] is used to hold an intermediate value. */
+      /* y[] is used to hold (phi - phi_c). */
       *xp = xi;
       *yp = t;
       xp += rowlen;
@@ -7760,7 +7768,7 @@ int stat[];
       for (iphi = 0; iphi < mphi; iphi++, xp += sxy, yp += sxy) {
         if (offset) {
           /* Offset the southern polar half-facets for even K. */
-          h = (int)floor((*xp + prj->x0) / prj->w[9]);
+          h = (int)floor((*xp + prj->x0) / prj->w[9]) + prj->m;
           if (h%2) {
             *yp -= prj->w[9];
           } else {
@@ -7768,10 +7776,13 @@ int stat[];
           }
         }
 
-        /* Recall that y[] holds an intermediate value. */
+        /* Recall that y[] holds (phi - phi_c). */
         *xp += *yp * xi;
         *yp = eta;
         *(statp++) = 0;
+
+        /* Put the phi = 180 meridian in the expected place. */
+        if (180.0 < *xp) *xp = 360.0 - *xp;
       }
     }
   }
