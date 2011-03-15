@@ -35,6 +35,8 @@ libmir_wcs_la_SOURCES = \
  C/wcshdr.h \
  C/wcslib.h \
  C/wcsmath.h \
+ C/wcsprintf.c \
+ C/wcsprintf.h \
  C/wcstrig.c \
  C/wcstrig.h \
  C/wcsunits.c \
