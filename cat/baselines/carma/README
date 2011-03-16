@@ -34,6 +34,8 @@ which should be on Cedar Flat in the directory:
    /home/obs/web_pages/observing/baseline/
 You can also obtain them directory as in this example:
    wget http://cedarflat.mmarray.org/observing/baseline/antpos/antpos.080606
+and sometimes
+   wget http://cedarflat.mmarray.org/observing/baseline/tpillai/antpos.080606
 
 The index.html file should be:
    wget http://cedarflat.mmarray.org/observing/baseline/index.html
