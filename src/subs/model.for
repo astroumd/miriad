@@ -55,6 +55,7 @@ c    rjs   9mar95 Turn off geometry correction for "imhead" option.
 c    mhw  05jan96 Add zero option for Model and ModMap
 c    pjt  27may99 Return and bug out when no visibities accumulated
 c    pjt   3oct07 Report fluxes found if no planets
+c    pkgw 15mar11 Use scrrecsz() to allow very large scratchfiles
 c************************************************************************
 c*ModelIni -- Ready the uv data file for processing by the Model routine.
 c&rjs
@@ -314,16 +315,17 @@ c
 	if(index(flags,'a').ne.0)then
 	  length = nhead + 5*nchan
 	  if(length.gt.maxlen) call bug('f','MODEL: Buffer overflow')
+	  call scrrecsz(tscr,length)
 	  if(ModPow.le.0)
      *	    call bug('f','Cannot autoscale to a zero model')
 	  a = sqrt(VisPow/ModPow)
 	  do j=1,nvis
-	    call scrread(tscr,Out,(j-1)*length,length)
+	    call scrread(tscr,Out,j-1,1)
 	    do i=nhead+1,nhead+5*nchan,5
 	      Out(i+2) = a*Out(i+2)
 	      Out(i+3) = a*Out(i+3)
 	    enddo
-	    call scrwrite(tscr,Out,(j-1)*length,length)
+	    call scrwrite(tscr,Out,j-1,1)
 	  enddo
 	endif
 c
@@ -458,6 +460,7 @@ c  Loop the loop.
 c
 	nread = nchan
 	length = nhead + 5*nread
+	call scrrecsz(tscr,length)
 	dowhile(nread.eq.nchan)
 	  call header(tvis,preamble,In,flags,nread,accept,Out,nhead)
 	  if(accept)then
@@ -537,7 +540,7 @@ c
 	    enddo
 	    call ModStat(calscale,tvis,Out(nhead+1),nread,
      *		calget,level,VisPow,ModPow)
-	    call scrwrite(tscr,Out,nvis*length,length)
+	    call scrwrite(tscr,Out,nvis,1)
 	    nvis = nvis + 1
 	  endif
 	  call uvread(tvis,preamble,In,flags,maxchan,nread)
@@ -1080,6 +1083,7 @@ c
 c
 	nread = nchan
 	length = nhead + 5*nchan
+	call scrrecsz(tscr,length)
 c
 c  Copy the data to the output, and compute the point model.
 c
@@ -1121,7 +1125,7 @@ c
 c
 	    call ModStat(calscale,tvis,Out(nhead+1),nchan,calget,level,
      *		VisPow,ModPow)
-	    call scrwrite(tscr,Out,nvis*length,length)
+	    call scrwrite(tscr,Out,nvis,1)
 	    nvis = nvis + 1
 	  endif
 	  call uvread(tvis,preamble,In,flags,maxchan,nread)

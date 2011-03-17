@@ -126,10 +126,11 @@ c    rjs  22mar00 Relax implicit assumption that XX/YY much stronger than XY/YX.
 c    rjs   8jan01 Fix buggy error message
 c    pjt  11feb02 Fix double + sign some complilers don't grok
 c    gmx  19jan05 Fix call to model to include the calget argument
+c    pkgw 15mar11 Use scrrecsz() to allow very large scratchfiles
 c------------------------------------------------------------------------
 	include 'gpscal.h'
 	character version*(*)
-	parameter(version='GpsCal: version 1.0 19-jan-05')
+	parameter(version='GpsCal: version 1.0 15-mar-11')
 	integer MAXSELS,nhead
 	parameter(MAXSELS=256,nhead=5)
 c
@@ -1423,8 +1424,8 @@ c
 c  Read the first record in the first file.
 c
 	length = 5*nchan + 5
-	offset = ivis*length
-	call scrread(tscr(1),In,offset,length)
+	call scrrecsz(tscr(1),length)
+	call scrread(tscr(1),In,ivis,1)
 c
 	npol = nint(In(1))
 	dbl = In(3)
@@ -1434,12 +1435,13 @@ c
 c  Read and process all the records.
 c
 	do ifile=1,nfiles
-	  offset = ivis*length
+	  offset = ivis
+	  call scrrecsz(tscr(ifile),length)
 	  do ipol=1,npol
 	    if(ipol.ne.1.or.ifile.ne.1)
-     *		call scrread(tscr(ifile),In,offset,length)
+     *		call scrread(tscr(ifile),In,offset,1)
 	    pol = nint(In(2))
-	    offset = offset + length
+	    offset = offset + 1
 	    if(ifile.eq.1)then
 	      if(hit(pol))call bug('f','Multiple records of same type')
 	      hit(pol) = .true.

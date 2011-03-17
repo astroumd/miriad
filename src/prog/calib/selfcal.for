@@ -174,6 +174,7 @@ c    pjt  20apr07 Warn about apriori/flux
 c    mchw 27apr07 Check for auto instead of not cross. i.e. allow mixed.   
 c    mchw 23may07 if (nants.gt.MAXANT) call bug('f', 'number of antennas > MAXANT in currently installed task')
 c    pjt  19mar09 fix timestamp accuracy due to roundoff errors
+c    pkgw 15mar11 Use scrrecsz() to allow very large scratchfiles
 
 c
 c  Bugs/Shortcomings:
@@ -183,7 +184,7 @@ c   * It would be desirable to apply bandpasses, and merge gain tables,
 c     apply polarisation calibration, etc.
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version='Selfcal: version 1.0 19-mar-2009')
+	parameter(version='Selfcal: version 1.0 15-mar-2011')
 	integer MaxMod,maxsels,nhead
 	parameter(MaxMod=64,maxsels=1024,nhead=3)
 c
@@ -611,9 +612,10 @@ c------------------------------------------------------------------------
 c
 	if(nchan.gt.maxchan) call bug('f','Too many channels')
 	length = nhead + 5*nchan
+	call scrrecsz(tscr,length)
 c
 	do j=1,nvis
-	  call scrread(tscr,Out,(j-1)*length,length)
+	  call scrread(tscr,Out,j-1,1)
 	  itime = nint(Out(2)/interval)
 	  ihash = 2*itime + 1
 	  i = mod(itime,nHash)

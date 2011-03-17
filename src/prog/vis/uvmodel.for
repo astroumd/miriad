@@ -165,13 +165,14 @@ c    pjt  17mar01 documented the change Mel made with increased maxsels in 98
 c    mchw 09jan08 Add options=imaginary to handle imaginary image.
 c    mchw 20aug08  include 'mem.h'
 c    mchw 03apr09 out(1) = sqrt(abs(sigma2)) in subroutine header.
+c    pkgw 15mar11 Use scrrecsz() to allow very large scratchfiles
 c  Bugs:
 c    * Polarisation processing is pretty crude.
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	include 'mem.h'
 	character version*(*)
-	parameter(version='version 1.0 03-apr-2009')
+	parameter(version='version 1.0 15-mar-2011')
 	integer maxsels,nhead,nbuf
 	parameter(maxsels=1024,nhead=1,nbuf=5*maxchan+nhead)
 c
@@ -319,11 +320,12 @@ c
 c  Perform the copying.
 c
 	length = 5*nchan + nhead
+	call scrrecsz(tscr,length)
 	do i=1,nvis
 	  call uvread(tvis,preamble,data,flags,maxchan,nread)
 	  if(nread.ne.nchan) call bug('f',
      *	    'No. channels  unexpectedly changed, when rereading data')
-	  call scrread(tscr,buffer,(i-1)*length,length)
+	  call scrread(tscr,buffer,i-1,1)
 	  call process(oper,buffer(1)*sigma,buffer(nhead+1),
      *		data,flags,nchan,tvis,preamble(5),maxant,polcor,doimag)
 	  if(imhead)then

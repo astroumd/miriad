@@ -189,6 +189,7 @@ c    pjt  27may09 Fix initialization bug in selfacc1
 c    pkgw 11jan10 Accept mixed auto/cross inputs, suggesting select=-auto.
 c                 Typo fixes and clarification of help text.
 c    pjt   8jul10 Ant I3 format, no NaN's when 1 solution
+c    pkgw 15mar11 Use scrrecsz() to allow very large scratchfiles
 c
 c  Bugs/Shortcomings:
 c   * Selfcal should check that the user is not mixing different
@@ -197,7 +198,7 @@ c   * It would be desirable to apply bandpasses, and merge gain tables,
 c     apply polarisation calibration, etc.
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version='MSelfcal: version 1.0 8-jul-10')
+	parameter(version='MSelfcal: version 1.0 15-mar-11')
 	integer MaxMod,maxsels,nhead
 	parameter(MaxMod=64,maxsels=1024,nhead=3)
 c
@@ -648,9 +649,10 @@ c------------------------------------------------------------------------
 c
 	if(nchan.gt.maxchan) call bug('f','Too many channels')
 	length = nhead + 5*nchan
+	call scrrecsz(tscr,length)
 c
 	do j=1,nvis
-	  call scrread(tscr,Out,(j-1)*length,length)
+	  call scrread(tscr,Out,j-1,1)
 	  itime = nint(Out(2)/interval)
 	  ihash = 2*itime + 1
 	  i = nsols

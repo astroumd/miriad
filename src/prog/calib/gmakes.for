@@ -34,6 +34,7 @@ c   mwr/pjt aug99 applied last scan bug in the old version
 c                 (last visibility was always alone in a time interval)
 c    pjt  31jul00 default options=amp,noscale,apriori wasn't done so
 c    pjt  28sep05 renamed to GMAKES to avoid conflict with gnu gmake 
+c    pkgw 15mar11 Use scrrecsz() to allow very large scratchfiles
 c
 c= gmakes - Convert a visibility dataset into a gain visibility dataset
 c& pjt
@@ -194,7 +195,7 @@ c
 
 c-----------------------------------------------------------------------
       CHARACTER VERSION*(*)
-      PARAMETER(VERSION='GMAKES: Version 21-feb-08')
+      PARAMETER(VERSION='GMAKES: Version 15-mar-11')
       INTEGER   MAXMOD,   MAXSELS,    NHEAD
       PARAMETER(MAXMOD=32,MAXSELS=256,NHEAD=3)
 c
@@ -780,6 +781,7 @@ c
 c
       IF(nchan.GT.MAXCHAN) call bug('f','Too many channels')
       length = nhead + 5*nchan
+      call scrrecsz(tscr,length)
 cd      write(*,*) 'Selfacc1: nvis=',nvis
 
 c        zero all the accumulator entries ... (dangerous for multiple models)
@@ -798,7 +800,7 @@ c        zero all the accumulator entries ... (dangerous for multiple models)
       ENDDO
 c
       DO j=1,nvis
-         call scrread(tscr,Out,(j-1)*length,length)
+         call scrread(tscr,Out,j-1,1)
          i = findsoli(DBLE(Out(2)),interval)
 c
 c           accumulate in the info about this visibility record.

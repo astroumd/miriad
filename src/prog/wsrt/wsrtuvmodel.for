@@ -136,10 +136,11 @@ c    rjs  01dec98 More warning messages.
 c    gmx  15sep05 Added to Miriad4 since it has a different functionality
 c                 from the standard uvmodel, and is required by WSRT data
 c                 processing.
+c    pkgw 15mar11 Use scrrecsz() to allow very large scratchfiles
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='version 10-jul-08')
+	parameter(version='version 15-mar-11')
 	integer maxsels,nhead,nbuf
 	parameter(maxsels=64,nhead=1,nbuf=5*maxchan+nhead)
 c
@@ -281,11 +282,12 @@ c
 c  Perform the copying.
 c
 	length = 5*nchan + nhead
+	call scrrecsz(tscr,length)
 	do i=1,nvis
 	  call uvread(tvis,preamble,data,flags,maxchan,nread)
 	  if(nread.ne.nchan) call bug('f',
      *	    'No. channels  unexpectedly changed, when rereading data')
-	  call scrread(tscr,buffer,(i-1)*length,length)
+	  call scrread(tscr,buffer,i-1,1)
 	  call process(oper,buffer(1)*sigma,
      *			buffer(nhead+1),data,flags,nchan)
 c
