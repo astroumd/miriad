@@ -14,6 +14,8 @@ c	Name of the input image datasets. Several can be given.
 c	Wildcards are supported. At least one must be given.
 c@ out
 c	The name of the output dataset.
+c@ resid
+c       Optional name of a residual dataset (in-out). 
 c
 c@ options
 c	Extra processing options. 
@@ -22,7 +24,8 @@ c--
 c  History:
 c    pjt  25feb2011 Original version, cloned off imcomb
 c  TODO:
-c    
+c      - cubes, but for smaller maps, up to 128 or 256
+c      - residual map/cube
 c------------------------------------------------------------------------
       include 'maxdim.h'
       include 'maxnax.h'
