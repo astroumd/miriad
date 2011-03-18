@@ -2,7 +2,7 @@ c***********************************************************************
       program imstack
       implicit none
 c
-c= imstack - stack images with median filtering
+c= imstack - stack images with median filtering and optional scaling
 c& pjt
 c: map combination
 c+
@@ -14,35 +14,48 @@ c	Name of the input image datasets. Several can be given.
 c	Wildcards are supported. At least one must be given.
 c@ out
 c	The name of the output dataset.
-c@ resid
-c       Optional name of a residual dataset (in-out). 
+c
+c@ refmap
+c       If choosen, this is the reference map/cube to which all maps are scaled
+c       up to using a linear fit forced through 0.  The number picked will be
+c       the refmap'd entry in the in= list.
+c       You can override the scaling factors if given via the scale= keyword
+c       Default: 0
+c
+c@ scale
+c       Multiplicative scale factor for each map given before filtering. By default
+c       all are 1 and a median filter is used.
 c
 c@ options
 c	Extra processing options. 
-
+c       resid      compute a '.res' cube/map for each input cube/map
+c
 c--
 c  History:
 c    pjt  25feb2011 Original version, cloned off imcomb
+c    pjt  17mar2011 added refmap, scale, options=resid
 c  TODO:
 c      - cubes, but for smaller maps, up to 128 or 256
-c      - residual map/cube
 c------------------------------------------------------------------------
       include 'maxdim.h'
       include 'maxnax.h'
       include 'mem.h'
       character version*(*)
-      parameter(version='ImStack: version 3-mar-2011')
+      parameter(version='ImStack: version 17-mar-2011')
       integer MAXIN
       parameter(MAXIN=24)
 c
-      character in(MAXIN)*128,out*128
+      character in(MAXIN)*128,out*128,out2*128
       integer nin,tno(MAXIN),tOut,nsize(3,MAXIN)
       integer nOut(MAXNAX),i,j,k,naxis
-      integer nbuf
-      logical mosaic,nonorm
-      real data(MAXDIM,MAXIN),buffer(MAXIN)
+      integer nbuf,refmap,ns
+      logical mosaic,nonorm,doresid
+      real data(MAXDIM,MAXIN),buffer(MAXIN),scale(MAXIN)
+      real a1, a2, b1, b2, sigx, sigy, corr, x, y
+      double precision sum1, sumx, sumy, sumsqx, sumsqy, sumxy
       logical flags(MAXDIM,MAXIN)
-
+      integer len1
+      external len1
 c
 c  Get the inputs.
 c
@@ -50,31 +63,81 @@ c
       call keyini
       call mkeyf('in',in,MAXIN,nin)
       call keya('out',out,' ')
-      call GetOpt(mosaic,nonorm)
+      call keyi('refmap',refmap,0)
+      call mkeyr('scale',scale,MAXIN,ns)
+      call GetOpt(mosaic,nonorm,doresid)
       call keyfin
 c
 c  Check the inputs.
 c
-      if(nin.le.1)call bug('f','Input images must be given')
+      if(nin.le.1)call bug('f','in= : input images must be given')
       if(out.eq.' ')call bug('f','An output image must be given')
-      if(nin.gt.MAXIN) call bug('f','Too many input files')
+      if(nin.gt.MAXIN) call bug('f','MAXIN: Too many input files')
+      if(ns.gt.0 .and. ns.ne.nin) call bug('f','Incorrect # for scale=')
 c
-c  Open the files, determine the size of the output. Determine the grid
-c  system from the first map, the rest needs to match
+c  Open the files, determine the size of the output. 
 c
-      do i=1,nIn
-         call xyopen(tno(i),In(i),'old',3,nsize(1,i))
-         if (nsize(3,i).gt.1) call bug('f','Cannot handle cubes')
+      do k=1,nIn
+         call xyopen(tno(k),In(k),'old',3,nsize(1,k))
+         if (nsize(3,k).gt.1) call bug('f','Cannot handle cubes')
 
-         if(i.eq.1)then
-	    call rdhdi(tno(i),'naxis',naxis,3)
+         if(k.eq.1)then
+	    call rdhdi(tno(k),'naxis',naxis,3)
 	    naxis = min(naxis,MAXNAX)
-            do k=1,3
-               Nout(k) = nsize(k,1)
+            do i=1,3
+               Nout(i) = nsize(i,1)
             enddo
+            write(*,*) 'naxis=',naxis
          endif
       enddo
 
+      if (refmap .GT. 0) then
+         call bug('i','Computing scaling factors')
+         do k=1,nIn
+            scale(k) = 1.0
+            if (k.ne.refmap) then
+               sum1 = 0d0
+               sumx = 0d0
+               sumy = 0d0
+               sumsqx = 0d0
+               sumsqy = 0d0
+               sumxy  = 0d0
+               do j=1,Nout(2)
+                  call xyread(tno(refmap),j,data(1,refmap))
+                  call xyflgrd(tno(refmap),j,flags(1,refmap))       
+
+                  call xyread(tno(k),j,data(1,k))
+                  call xyflgrd(tno(k),j,flags(1,k))       
+                  do i=1,Nout(1)
+                     if (flags(i,k).and.flags(i,refmap)) then
+                        x = data(i,refmap)
+                        y = data(i,k)
+                        sum1 = sum1 + 1
+                        sumx = sumx + x
+                        sumy = sumy + y
+                        sumsqx = sumsqx + x**2
+                        sumsqy = sumsqy + y**2
+                        sumxy  = sumxy  + x*y
+                     endif
+                  enddo
+               enddo
+               if (sum1.gt.0) then
+                 a1   = (sum1*sumxy - sumx*sumy)/(sum1*sumsqx - sumx**2)
+                 a2   = (sum1*sumxy - sumx*sumy)/(sum1*sumsqy - sumy**2)
+                 b1   = (sumy - a1*sumx)/sum1
+                 b2   = (sumx - a2*sumy)/sum1
+                 sigx = sqrt(sumsqx/sum1 - sumx*sumx/sum1/sum1)
+                 sigy = sqrt(sumsqy/sum1 - sumy*sumy/sum1/sum1)
+                 corr = (sumxy/sum1  - sumx*sumy/sum1/sum1)/(sigx*sigy)
+                 write (*,*) k,a1,a2,b1,b2,sigx,sigy,corr
+                 scale(k) = a2
+              else
+                 write (*,*) k,' no solution'
+              endif
+            endif
+         enddo
+      endif
+c
       write(*,*) 'Ouput cube: ',nOut(1),'x',nOut(2),'x',nIn
 c
       do k=4,naxis
@@ -85,11 +148,9 @@ c  Create the output.
 c
       call xyopen(tOut,out,'new',naxis,nOut)
       call hdout(tno(1),tOut,version)
-
 c
 c  Loop over files, row by row
 c
-
       do j=1,Nout(2)
          do k=1,nIn
             call xyread(tno(k),j,data(1,k))
@@ -115,20 +176,48 @@ c
          call xywrite(tOut,j,data(1,1))
          call xyflgwr(tOut,j,flags(1,1))
       enddo
-
 c
 c  Close up.
 c
-      do i=1,nIn
-	 call xyclose(tno(i))
+      do k=1,nIn
+	 call xyclose(tno(k))
       enddo
       call xyclose(tOut)
+c
+c  Optionally create residual maps
+c
+      if (doresid) then
+         write(*,*) 'RESIDUAL MAP CREATION'
+         call xyopen(tOut,out,'old',naxis,nOut)
+         do k=1,nIn
+            out2 = In(k)(1:len1(In(k))) // '.res'
+            call xyopen(tno(k),  In(k),  'old',3,nsize(1,1))
+            call xyopen(tno(k+1),out2,   'new',3,nsize(1,1))
+            call hdout(tno(k),tno(k+1),version)
+            do j=1,Nout(2)
+               call xyread(tno(k),j,data(1,1))
+               call xyflgrd(tno(k),j,flags(1,1))   
+               call xyread(tout,j,data(1,2))
+               call xyflgrd(tout,j,flags(1,2))   
+               do i=1,Nout(1)
+                  data(i,1) = scale(k) * data(i,1) - data(i,2)
+                  flags(i,1) = flags(i,1) .AND. flags(i,2)
+               enddo
+               call xywrite(tno(k+1),j,data(1,1))
+               call xyflgwr(tno(k+1),j,flags(1,1))
+            enddo
+            call xyclose(tno(k+1))
+            call xyclose(tno(k))
+         enddo
+         call xyclose(tout)
+      endif
+
       end
 c***********************************************************************
-	subroutine GetOpt(mosaic,nonorm)
+	subroutine GetOpt(mosaic,nonorm,doresid)
 c
 	implicit none
-	logical mosaic,nonorm
+	logical mosaic,nonorm,doresid
 c
 c  Determine processing options.
 c
@@ -137,15 +226,16 @@ c    mosaic
 c    nonorm
 c------------------------------------------------------------------------
 	integer NOPTS
-	parameter(NOPTS=2)
+	parameter(NOPTS=3)
 	logical present(NOPTS)
 	character opts(NOPTS)*12
-	data opts/'mosaic      ','nonormalise '/
+	data opts/'mosaic      ','nonormalise ','residual    '/
 c
 	call options('options',opts,present,NOPTS)
 c
 	mosaic = present(1)
 	nonorm = present(2)
+        doresid = present(3)
 c
 	end
 c************************************************************************
