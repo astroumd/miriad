@@ -97,6 +97,9 @@ c     Smoothing mode.
 c     0 = gaussian
 c     1 = cone
 c
+c@ cutoff
+c     Level at which the gaussian is cut off to 0.  Default: 0.000001
+c
 c@ options
 c       This gives extra processing options. Several options can be given,
 c       each separated by commas. They may be abbreviated to the minimum
@@ -105,11 +108,12 @@ c
 c--
 c  History:
 c     pjt  28jan11  Initial version, cloned off varmap
+c     pjt  18mar11  write flags as well
 c----------------------------------------------------------------------c
        include 'maxdim.h'
        include 'mirconst.h'
        character*(*) version
-       parameter(version='VARMAPS: version 8-feb-2011')
+       parameter(version='VARMAPS: version 18-mar-2011')
        integer MAXSELS
        parameter(MAXSELS=512)
        integer MAXVIS
@@ -142,7 +146,7 @@ c----------------------------------------------------------------------c
        real x,y,z,x0,y0,datamin,datamax,w,cutoff, xscale,yscale
        character*1 xtype, ytype, type
        integer length, xlength, ylength, xindex, yindex, cnt, mode
-       logical updated,sum,debug,hasbeam
+       logical updated,sum,debug,hasbeam,doweight
 c
        integer nout, nopt
        parameter(nopt=8)
@@ -323,6 +327,9 @@ c
          y = yscale * y
 c
 c  Grid the data, and stack them away for later retrieval
+c  Note nsize()/2 needs to be integer division to make
+c  reference pixel at the center of a pixel in both odd
+c  and even axes.
 c
          i = nint(x/cell(1) + nsize(1)/2 + 1)
          j = nint(y/cell(2) + nsize(2)/2 + 1)
@@ -420,6 +427,7 @@ c
 c     
 c  Average the data, compute final minmax
 c
+      doweight = .TRUE.
       write(line,'(a)') 'Averaging the XY pixels...'
       call output(line)
       datamin = 1.E10
@@ -428,7 +436,9 @@ c
          do j=1,MAXSIZE
             do k=1,nsize(3)
                if(weight(i,j,k).ne.0.)then
-                  array(i,j,k) = array(i,j,k) / weight(i,j,k)
+                  if (doweight) then
+                     array(i,j,k) = array(i,j,k) / weight(i,j,k)
+                  endif
                   if(array(i,j,k).gt.datamax) datamax=array(i,j,k)
                   if(array(i,j,k).lt.datamin) datamin=array(i,j,k)
                end if
@@ -550,6 +560,7 @@ c     array	image values.
 c-----------------------------------------------------------------------
       include 'maxdim.h'
       real row(MAXDIM)
+      logical flags(MAXDIM)
       integer i,j,imin,imax,jmin,jmax,ioff,joff,k
 c     
       imin = 1
@@ -567,9 +578,15 @@ c
             if((j .ge. jmin) .and. (j .le. jmax)) then
                do i=1,nsize(1)
                   row(i)=array(i-ioff,j-joff,k)
+                  if (row(i).eq.0.0) then
+                     flags(i) = .FALSE.
+                  else
+                     flags(i) = .TRUE.
+                  endif
                enddo
             endif
             call xywrite(lOut,j,row)
+            call xyflgwr(lOut,j,flags)
 	 enddo
       enddo
       end
