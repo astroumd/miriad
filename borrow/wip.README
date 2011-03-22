@@ -10,5 +10,16 @@ If miriad has been installed, the following commands should install wip:
 	mir.install wip		compile wip
 
 check out the logfile in $MIR/tmp for any errors.
+
+17 March 2011
+
+The autotools build method doesn't seem to be aware of wip, even if it has been checked out.  FWIW, I was able to build wip by running these commands...
+
+cd $MIR.borrow
+cvs checkout wip
+cd $MIR/borrow/wip
+./makewip -lib $MIRLIB -bin $MIRBIN -fc gfortran -pgplot $MIRLIB -copts -I$MIRINC/../pgplot-miriad-remix
+
+Dave MacMahon
 	
 
