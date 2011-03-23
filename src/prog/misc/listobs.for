@@ -354,6 +354,7 @@ c
      1         '            Corfs in MHz')
 	call LogWrite(text,more)
 	do 200 j=1,nnames
+c           write(*,*)nameidx(j)
 	   call DegHms(ra(nameidx(j))*180.0d0/DPI,
      1                 dec(nameidx(j))*180.0d0/DPI,radec)
 	   write(text,2005) objs(nameidx(j)),purpose(nameidx(j)),radec,
@@ -405,7 +406,7 @@ c
      1        (isys(hereidx(j)),j=1,nhere)
  2201	format(a,1x,a,1x,a,1x,f5.1,1x,f4.0,1x,  
      1       23(i4,1x))
- 2202	format(a,1x,a)
+c 2202	format(a,1x,a)
 	call LogWrite(text,more)
   300	continue
 c	call rad2hms(real(utend),uthms)
@@ -449,26 +450,47 @@ c
 
 	end
 c-----------------------------------------------------------------------
-	subroutine findnam(nobs,objs,indx,nidx)
+	subroutine findnam(nobs,objts,indx,nidx)
 c
 c  sort through objects names to collect index locations of unique
 c  sources.
 c
-	character*(*) objs(*)
-	integer nobs,nidx,indx(*),i,j
+        implicit none
+        include 'maxdim.h'
+        include 'listobs.h'
+        integer tindx
+	character*(*) objts(*)
+	integer nobs,nidx,indx(*),i,j,k
 	character*10 oldnames(100)
+        character*5 oldpurp(10000)
 	nidx = 1
-	oldnames(1) = objs(1)
+	oldnames(1) = objts(1)
+        oldpurp(1) = purpose(1)
+        
 	indx(1) = 1
 	do 100 i=1,nobs
 	   do 50 j=1,nidx
-	      if(objs(i) .eq. oldnames(j)) go to 55
+	      if(objts(i) .eq. oldnames(j))then
+                 do k=1,i-1
+                    if(objts(i) .eq. objts(k))then
+                       if(index(purpose(k),purpose(i)(1:1)) .eq. 0) then
+                          tindx=index(purpose(k)," ")
+                          purpose(k) = purpose(k)(1:tindx-1)
+     *                                //purpose(i)(1:1)
+                       endif
+                       exit
+                    endif
+                 enddo
+                 go to 55
+              endif
    50      continue
 	   nidx = nidx + 1
-	   oldnames(nidx) = objs(i)
+	   oldnames(nidx) = objts(i)
+           oldpurp(nidx) = purpose(i)
 	   indx(nidx) = i
    55	   continue
   100	continue
+
 	return
 	end
 c-----------------------------------------------------------------------
@@ -526,6 +548,7 @@ c
         else
            purpose(ipt) = " "
         endif
+c        write(*,*) ipt,objs(ipt),purpose(ipt)
 c	call uvgetvrd(tin,'ra',ra(ipt),1)
 c	call uvgetvrd(tin,'dec',dec(ipt),1)
 	call uvrdvrd(tin,'ra',ra(ipt),0.0d0)

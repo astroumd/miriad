@@ -12,7 +12,7 @@ C
         parameter (MAXF = 50 )
         parameter (MAXSPECT = 32)
  
-        integer nspec,nchan,nants,ncorbw,ncorfin
+        integer nspec,nchan,nants,ncorbw,ncorfin,cmode
         real utst(MAXP),dur(MAXP),el(MAXP)
         real vel(MAXP),syst(MAXP,MAXANT)
         integer corbw(MAXP,MAXSPECT/2)
