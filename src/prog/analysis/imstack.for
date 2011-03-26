@@ -79,7 +79,7 @@ c  Open the files, determine the size of the output.
 c
       do k=1,nIn
          call xyopen(tno(k),In(k),'old',3,nsize(1,k))
-         if (nsize(3,k).gt.1) call bug('f','Cannot handle cubes')
+         if (nsize(3,k).gt.1) call bug('f','Cannot handle cubes yet')
 
          if(k.eq.1)then
 	    call rdhdi(tno(k),'naxis',naxis,3)
@@ -92,7 +92,7 @@ c
       enddo
 
       if (refmap .GT. 0) then
-         call bug('i','Computing scaling factors')
+         call bug('i','Computing scaling factors for each map')
          do k=1,nIn
             scale(k) = 1.0
             if (k.ne.refmap) then
@@ -122,6 +122,11 @@ c
                   enddo
                enddo
                if (sum1.gt.0) then
+c  TODO:
+c                y=b1+x*a1
+c                x=b2+y*a2
+c                      OLS would be mean of both: (a1+1/a2)/2
+c                      but we still need to force b1=b2=0
                  a1   = (sum1*sumxy - sumx*sumy)/(sum1*sumsqx - sumx**2)
                  a2   = (sum1*sumxy - sumx*sumy)/(sum1*sumsqy - sumy**2)
                  b1   = (sumy - a1*sumx)/sum1
@@ -191,8 +196,8 @@ c
          call xyopen(tOut,out,'old',naxis,nOut)
          do k=1,nIn
             out2 = In(k)(1:len1(In(k))) // '.res'
-            call xyopen(tno(k),  In(k),  'old',3,nsize(1,1))
-            call xyopen(tno(k+1),out2,   'new',3,nsize(1,1))
+            call xyopen(tno(k),  In(k),  'old',naxis,nOut)
+            call xyopen(tno(k+1),out2,   'new',naxis,nOut)
             call hdout(tno(k),tno(k+1),version)
             do j=1,Nout(2)
                call xyread(tno(k),j,data(1,1))
