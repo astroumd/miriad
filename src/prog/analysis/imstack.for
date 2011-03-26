@@ -34,6 +34,7 @@ c--
 c  History:
 c    pjt  25feb2011 Original version, cloned off imcomb
 c    pjt  17mar2011 added refmap, scale, options=resid
+c    pjt  25mar2011 handle cubes?
 c  TODO:
 c      - cubes, but for smaller maps, up to 128 or 256
 c------------------------------------------------------------------------
@@ -41,13 +42,13 @@ c------------------------------------------------------------------------
       include 'maxnax.h'
       include 'mem.h'
       character version*(*)
-      parameter(version='ImStack: version 17-mar-2011')
+      parameter(version='ImStack: version 25-mar-2011')
       integer MAXIN
       parameter(MAXIN=24)
 c
       character in(MAXIN)*128,out*128,out2*128
       integer nin,tno(MAXIN),tOut,nsize(3,MAXIN)
-      integer nOut(MAXNAX),i,j,k,naxis
+      integer nOut(MAXNAX),i,j,k,f,naxis
       integer nbuf,refmap,ns
       logical mosaic,nonorm,doresid
       real data(MAXDIM,MAXIN),buffer(MAXIN),scale(MAXIN)
@@ -77,12 +78,12 @@ c
 c
 c  Open the files, determine the size of the output. 
 c
-      do k=1,nIn
-         call xyopen(tno(k),In(k),'old',3,nsize(1,k))
-         if (nsize(3,k).gt.1) call bug('f','Cannot handle cubes yet')
+      do f=1,nIn
+         call xyopen(tno(f),In(f),'old',3,nsize(1,f))
+         if (nsize(3,f).gt.1) call bug('f','Cannot handle cubes yet')
 
-         if(k.eq.1)then
-	    call rdhdi(tno(k),'naxis',naxis,3)
+         if(f.eq.1)then
+	    call rdhdi(tno(f),'naxis',naxis,3)
 	    naxis = min(naxis,MAXNAX)
             do i=1,3
                Nout(i) = nsize(i,1)
@@ -93,9 +94,9 @@ c
 
       if (refmap .GT. 0) then
          call bug('i','Computing scaling factors for each map')
-         do k=1,nIn
-            scale(k) = 1.0
-            if (k.ne.refmap) then
+         do f=1,nIn
+            scale(f) = 1.0
+            if (f.ne.refmap) then
                sum1 = 0d0
                sumx = 0d0
                sumy = 0d0
@@ -106,12 +107,12 @@ c
                   call xyread(tno(refmap),j,data(1,refmap))
                   call xyflgrd(tno(refmap),j,flags(1,refmap))       
 
-                  call xyread(tno(k),j,data(1,k))
-                  call xyflgrd(tno(k),j,flags(1,k))       
+                  call xyread(tno(f),j,data(1,f))
+                  call xyflgrd(tno(f),j,flags(1,f))
                   do i=1,Nout(1)
-                     if (flags(i,k).and.flags(i,refmap)) then
+                     if (flags(i,f).and.flags(i,refmap)) then
                         x = data(i,refmap)
-                        y = data(i,k)
+                        y = data(i,f)
                         sum1 = sum1 + 1
                         sumx = sumx + x
                         sumy = sumy + y
@@ -134,10 +135,10 @@ c                      but we still need to force b1=b2=0
                  sigx = sqrt(sumsqx/sum1 - sumx*sumx/sum1/sum1)
                  sigy = sqrt(sumsqy/sum1 - sumy*sumy/sum1/sum1)
                  corr = (sumxy/sum1  - sumx*sumy/sum1/sum1)/(sigx*sigy)
-                 write (*,*) k,a1,a2,b1,b2,sigx,sigy,corr
-                 scale(k) = a2
+                 write (*,*) f,a1,a2,b1,b2,sigx,sigy,corr
+                 scale(f) = a2
               else
-                 write (*,*) k,' no solution'
+                 write (*,*) f,' no solution'
               endif
             endif
          enddo
@@ -145,8 +146,8 @@ c                      but we still need to force b1=b2=0
 c
       write(*,*) 'Ouput cube: ',nOut(1),'x',nOut(2),'x',nIn
 c
-      do k=4,naxis
-	  nout(k) = 1
+      do f=4,naxis
+	  nout(f) = 1
       enddo
 c
 c  Create the output.
@@ -157,16 +158,16 @@ c
 c  Loop over files, row by row
 c
       do j=1,Nout(2)
-         do k=1,nIn
-            call xyread(tno(k),j,data(1,k))
-            call xyflgrd(tno(k),j,flags(1,k))
+         do f=1,nIn
+            call xyread(tno(f),j,data(1,f))
+            call xyflgrd(tno(f),j,flags(1,f))
          enddo
          do i=1,Nout(1)
             nbuf = 0
-            do k=1,nIn
-               if (flags(i,k)) then
+            do f=1,nIn
+               if (flags(i,f)) then
                   nbuf = nbuf + 1
-                  buffer(nbuf) = data(i,k)
+                  buffer(nbuf) = data(i,f)
                endif
             enddo
             if (nbuf.gt.0) then
@@ -184,8 +185,8 @@ c
 c
 c  Close up.
 c
-      do k=1,nIn
-	 call xyclose(tno(k))
+      do f=1,nIn
+	 call xyclose(tno(f))
       enddo
       call xyclose(tOut)
 c
@@ -194,25 +195,25 @@ c
       if (doresid) then
          write(*,*) 'RESIDUAL MAP CREATION'
          call xyopen(tOut,out,'old',naxis,nOut)
-         do k=1,nIn
-            out2 = In(k)(1:len1(In(k))) // '.res'
-            call xyopen(tno(k),  In(k),  'old',naxis,nOut)
-            call xyopen(tno(k+1),out2,   'new',naxis,nOut)
-            call hdout(tno(k),tno(k+1),version)
+         do f=1,nIn
+            out2 = In(f)(1:len1(In(f))) // '.res'
+            call xyopen(tno(f),  In(f),  'old',naxis,nOut)
+            call xyopen(tno(f+1),out2,   'new',naxis,nOut)
+            call hdout(tno(f),tno(f+1),version)
             do j=1,Nout(2)
-               call xyread(tno(k),j,data(1,1))
-               call xyflgrd(tno(k),j,flags(1,1))   
+               call xyread(tno(f),j,data(1,1))
+               call xyflgrd(tno(f),j,flags(1,1))   
                call xyread(tout,j,data(1,2))
                call xyflgrd(tout,j,flags(1,2))   
                do i=1,Nout(1)
-                  data(i,1) = scale(k) * data(i,1) - data(i,2)
+                  data(i,1) = scale(f) * data(i,1) - data(i,2)
                   flags(i,1) = flags(i,1) .AND. flags(i,2)
                enddo
-               call xywrite(tno(k+1),j,data(1,1))
-               call xyflgwr(tno(k+1),j,flags(1,1))
+               call xywrite(tno(f+1),j,data(1,1))
+               call xyflgwr(tno(f+1),j,flags(1,1))
             enddo
-            call xyclose(tno(k+1))
-            call xyclose(tno(k))
+            call xyclose(tno(f+1))
+            call xyclose(tno(f))
          enddo
          call xyclose(tout)
       endif
