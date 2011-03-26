@@ -29,6 +29,7 @@ c
 c@ options
 c	Extra processing options. 
 c       resid      compute a '.res' cube/map for each input cube/map
+c       mean       compute the mean instead of median
 c
 c--
 c  History:
@@ -50,7 +51,7 @@ c
       integer nin,tno(MAXIN),tOut,nsize(3,MAXIN)
       integer nOut(MAXNAX),i,j,k,l,f,naxis
       integer nbuf,refmap,ns
-      logical mosaic,nonorm,doresid,doaver
+      logical mosaic,nonorm,doresid,domean
       real data(MAXDIM,MAXIN),buffer(MAXIN),scale(MAXIN)
       real a1, a2, b1, b2, sigx, sigy, corr, x, y
       double precision sum1, sumx, sumy, sumsqx, sumsqy, sumxy
@@ -66,7 +67,7 @@ c
       call keya('out',out,' ')
       call keyi('refmap',refmap,0)
       call mkeyr('scale',scale,MAXIN,ns)
-      call GetOpt(mosaic,nonorm,doresid,doaver)
+      call GetOpt(mosaic,nonorm,doresid,domean)
       call keyfin
 c
 c  Check the inputs.
@@ -181,7 +182,7 @@ c
                   endif
                enddo
                if (nbuf.gt.0) then
-                  if (doaver) then
+                  if (domean) then
                      data(i,1) = buffer(1)
                      do l=2,nbuf
                         data(i,1) = data(i,1) + buffer(1)
@@ -245,10 +246,10 @@ c
 
       end
 c***********************************************************************
-	subroutine GetOpt(mosaic,nonorm,doresid,doaver)
+	subroutine GetOpt(mosaic,nonorm,doresid,domean)
 c
 	implicit none
-	logical mosaic,nonorm,doresid,doaver
+	logical mosaic,nonorm,doresid,domean
 c
 c  Determine processing options.
 c
@@ -261,14 +262,14 @@ c------------------------------------------------------------------------
 	logical present(NOPTS)
 	character opts(NOPTS)*12
 	data opts/'mosaic      ','nonormalise ','residual    ',
-     *            'average     '/
+     *            'mean        '/
 c
 	call options('options',opts,present,NOPTS)
 c
 	mosaic  = present(1)
 	nonorm  = present(2)
         doresid = present(3)
-        doaver  = present(4)
+        domean  = present(4)
 c
 	end
 c************************************************************************
