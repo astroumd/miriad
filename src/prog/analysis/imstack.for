@@ -6,19 +6,20 @@ c= imstack - stack images with median filtering and optional scaling
 c& pjt
 c: map combination
 c+
-c	IMSTACK is a MIRIAD task which combines several identical images into
-c	one.  Some optional filtering (e.g. median) can be done.
+c	IMSTACK is a MIRIAD task which combines several identical images or
+c       cube into one.  Some optional filtering (e.g. median) can be done.
 c       See also: IMCOMB (for weighted averaging)
 c@ in
-c	Name of the input image datasets. Several can be given.
-c	Wildcards are supported. At least one must be given.
+c	Name of the input image datasets. Several should be given.
+c	Wildcards are supported, though be careful with the use of refmap
+c       in which order they will be read.
 c@ out
 c	The name of the output dataset.
 c
 c@ refmap
-c       If choosen, this is the reference map/cube to which all maps are scaled
+c       If choosen, this is the reference map to which all maps are scaled
 c       up to using a linear fit forced through 0.  The number picked will be
-c       the refmap'd entry in the in= list.
+c       the refmap'd entry in the in= list, 1 being the first.
 c       You can override the scaling factors if given via the scale= keyword
 c       Default: 0
 c
@@ -29,6 +30,9 @@ c
 c@ options
 c	Extra processing options. 
 c       resid      compute a '.res' cube/map for each input cube/map
+c                  <res> = <in> - <out>
+c                  When a refmap is used, <res> = S*<in> - <out>
+c                  where <a> is the fitted slope <out>/<in>
 c       mean       compute the mean instead of median
 c
 c--
@@ -36,6 +40,7 @@ c  History:
 c    pjt  25feb2011 Original version, cloned off imcomb
 c    pjt  17mar2011 added refmap, scale, options=resid
 c    pjt  25mar2011 handle cubes, fixed scale bug when refmap=0
+c    pjt  28mar2011 scale data also in median computation if refmap>0
 c  TODO:
 c      - cubes, but for smaller maps, up to 128 or 256
 c------------------------------------------------------------------------
@@ -43,7 +48,7 @@ c------------------------------------------------------------------------
       include 'maxnax.h'
       include 'mem.h'
       character version*(*)
-      parameter(version='ImStack: version 25-mar-2011')
+      parameter(version='ImStack: version 28-mar-2011')
       integer MAXIN
       parameter(MAXIN=24)
 c
@@ -81,8 +86,6 @@ c  Open the files, determine the size of the output.
 c
       do f=1,nIn
          call xyopen(tno(f),In(f),'old',3,nsize(1,f))
-         if (nsize(3,f).gt.1) call bug('w','New cube handling code')
-
          if(f.eq.1)then
 	    call rdhdi(tno(f),'naxis',naxis,3)
 	    naxis = min(naxis,MAXNAX)
@@ -110,7 +113,6 @@ c
                   do j=1,Nout(2)
                      call xyread(tno(refmap),j,data(1,refmap))
                      call xyflgrd(tno(refmap),j,flags(1,refmap))       
-
                      call xyread(tno(f),j,data(1,f))
                      call xyflgrd(tno(f),j,flags(1,f))
                      do i=1,Nout(1)
@@ -133,6 +135,7 @@ c                y=b1+x*a1
 c                x=b2+y*a2
 c                      OLS would be mean of both: (a1+1/a2)/2
 c                      but we still need to force b1=b2=0
+c                this code just cut and paste from lsqu.for
                  a1   = (sum1*sumxy - sumx*sumy)/(sum1*sumsqx - sumx**2)
                  a2   = (sum1*sumxy - sumx*sumy)/(sum1*sumsqy - sumy**2)
                  b1   = (sumy - a1*sumx)/sum1
@@ -144,6 +147,7 @@ c                      but we still need to force b1=b2=0
                  scale(f) = a2
               else
                  write (*,*) f,' no solution'
+                 scale(f) = 1.0
               endif
             endif
          enddo
@@ -178,7 +182,7 @@ c
                do f=1,nIn
                   if (flags(i,f)) then
                      nbuf = nbuf + 1
-                     buffer(nbuf) = data(i,f)
+                     buffer(nbuf) = scale(f) * data(i,f)
                   endif
                enddo
                if (nbuf.gt.0) then
