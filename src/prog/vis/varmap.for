@@ -100,6 +100,8 @@ c    mchw  22feb06  Support for arrays and unit conversion of uvvariables.
 c    mchw  25feb06  Move units conversion into xcell and ycell keywords.
 c    pjt   16mar06  fortran fix for solaris
 c----------------------------------------------------------------------c
+c TODO:
+c    dra has wrong sign, see varmaps for a kludged solution
        include 'maxdim.h'
        include 'mirconst.h'
        character*(*) version
