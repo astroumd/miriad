@@ -50,6 +50,7 @@ c     8jun94 pjt   region= clarification
 c    14may96 rjs   Fix bugs, implement region selection, better messages,
 c		   some tidying. Shoddy job pjt.
 c    02nov04 tw    Replace keyf with keya for output log file.
+c    28mar11 pjt   doc and fix cube handling
 c
 c  Various things to do or to think about:
 c   - fit portions of data with LSQFIT
@@ -58,21 +59,21 @@ c   - plot is simple, could have more control, like minmax,
 c     adding a fit
 c   - cutoff, i.e. ignoring near zero's or so
 c   - region: but in this case perhaps only square areas
-c     more control could be done via a program IMFLAG
+c     more control could be done via a program IMMASK
 c     which is under construction (sep-91 PJT)
 c   - more check if the two maps are really the same. Now
 c     only the dimensions are checked, but really one
 c     should also check if crpix, cdelt and crval are
-c     consistent.
+c     consistent. At least warn.
 c-----------------------------------------------------------------------
       INCLUDE 'maxdim.h'
 c
       CHARACTER PVERSION*(*)
       INTEGER NAXIS, MAXPTS,  MAXBOXES
       PARAMETER(NAXIS=3, MAXPTS=MAXBUF/2, MAXBOXES=1024)
-      PARAMETER(PVERSION='Version 1.0 02-Nov-04')
+      PARAMETER(PVERSION='Version 28-mar-2011')
 c
-      CHARACTER in1*80,in2*80,line*256,logfile*80
+      CHARACTER in1*128,in2*128,line*256,logfile*128
       INTEGER row,plane,i,dcount,llog,iostat,tolcount
       INTEGER lin1,lin2,size1(NAXIS),size2(NAXIS),blc(NAXIS),trc(NAXIS)
       REAL buf1(MAXDIM),buf2(MAXDIM), d1(MAXPTS), d2(MAXPTS),tol,cut
@@ -147,8 +148,8 @@ c
       first = .TRUE.
       dcount = 0
       DO plane = blc(3),trc(3)
-	 CALL xysetpl(lin1,1,size1(3))
-	 CALL xysetpl(lin2,1,size1(3))
+	 CALL xysetpl(lin1,1,plane)
+	 CALL xysetpl(lin2,1,plane)
 	 DO row=blc(2),trc(2)
 	    CALL xyread(lin1,row,buf1)
 	    CALL xyflgrd(lin1,row,mask1)
@@ -183,8 +184,8 @@ c
       ENDDO
       CALL xyclose(lin1)
       CALL xyclose(lin2)
-      IF(dcount.EQ.MAXPTS) CALL bug('w',
-     *	    'Too many points in image; only first few taken')
+      IF (dcount.EQ.MAXPTS) CALL bug('w',
+     *	    'Too many points in image; only first MAXPTS taken')
       CALL output('Number of pixels selected: '//itoaf(dcount))
       WRITE(line,'(''Image min and max values are:'',1p2e18.6)')
      *		    dmin,dmax
@@ -194,8 +195,10 @@ c
 	 diff=d1(i)-d2(i)
 	 IF(ABS(diff).GT.tol) tolcount=tolcount+1
       ENDDO
-      CALL output('Number of pixles differing by more than tol: '//
-     *	itoaf(tolcount))
+      IF (tol.GT.0) THEN
+        CALL output('Number of pixels differing by more than tol: '//
+     *	             itoaf(tolcount))
+      ENDIF
 c
 c  Write the data to a file if log option is present
 c
