@@ -104,9 +104,10 @@ c@ options
 c       This gives extra processing options. Several options can be given,
 c       each separated by commas. They may be abbreviated to the minimum
 c       needed to avoid ambiguity. 
-c       sum
-c       taper
-c       edge
+c       sum     - not used
+c       taper   - not used
+c       edge    - sharp edge, it will cut signal outside
+c       soft    - FWHM softended edge
 c
 c--
 c  History:
@@ -147,7 +148,7 @@ c----------------------------------------------------------------------c
        integer idx(MAXSIZE,MAXSIZE,MAXVPP+1)
        real array(MAXSIZE,MAXSIZE,MAXCHAN2)
        real weight(MAXSIZE,MAXSIZE,MAXCHAN2)
-       real x,y,z,x0,y0,datamin,datamax,w,cutoff, xscale,yscale
+       real x,y,z,x0,y0,datamin,datamax,f,w,cutoff, xscale,yscale
        character*1 xtype, ytype, type
        integer length, xlength, ylength, xindex, yindex, cnt, mode
        integer imin,jmin,imax,jmax
@@ -186,7 +187,7 @@ c
        call keyi ('size',size,0)
        call keyi ('mode',mode,0)
        call keyr ('cutoff',cutoff,0.00000001)
-       call GetOpt(sum,debug,dotaper1,edge)
+       call GetOpt(sum,debug,dotaper1,edge,dotaper2)
        call keyfin
 c
 c  Check that the inputs are reasonable.
@@ -205,14 +206,6 @@ c
             call bug('f',line)
           endif
        enddo
-       if (xunit.ne.' ') then
-          call units(cell(1),xunit)
-          call units(beam(1),xunit)
-       endif
-       if (yunit.ne.' ') then
-          call units(cell(2),yunit)
-          call units(beam(2),yunit)
-       endif
        write(line,'(a,a)')
      *	 'Mapping ', zaxis 
        call output(line)
@@ -222,7 +215,15 @@ c
        write(line,'(a,a,i3,4x,  a,g12.4,2x,a)')
      *   ' y-axis: ', yaxis, yindex, '   pixel size =', cell(2), yunit
        call output(line)
-       write(*,*) 'BEAM: ',beam(1),beam(2)
+       if (xunit.ne.' ') then
+          call units(cell(1),xunit)
+          call units(beam(1),xunit)
+       endif
+       if (yunit.ne.' ') then
+          call units(cell(2),yunit)
+          call units(beam(2),yunit)
+       endif
+
        xscale = 1.0
        yscale = 1.0
        if (xaxis.eq.'dra') xscale=-1.0
@@ -459,20 +460,19 @@ c
       call output(line)
       datamin = 1.E10
       datamax = -1.E10
+      doweight = .TRUE.
       do i=1,MAXSIZE
          do j=1,MAXSIZE
-            if (dotaper1) then
-               doweight = imin.le.i .and. i.le.imax .and.
-     *                    jmin.le.j .and. j.le.jmax
-            else
-               doweight = .TRUE.
-            endif
             do k=1,nsize(3)
                if(weight(i,j,k).ne.0.)then
+                  if (edge) then
+                     if (i.lt.imin .or. i.gt.imax .or.
+     *                   j.lt.jmin .or. j.gt.jmax) then
+                        array(i,j,k) = 0.0
+                     endif
+                  endif
                   if (doweight) then
                      array(i,j,k) = array(i,j,k) / weight(i,j,k)
-                  else
-                     if (edge) array(i,j,k) = 0.0
                   endif
                   if(array(i,j,k).gt.datamax) datamax=array(i,j,k)
                   if(array(i,j,k).lt.datamin) datamin=array(i,j,k)
@@ -484,10 +484,48 @@ c
 c
 c taper2 ?
 c   should taper the edges using the FWHM
+c   should dotaper1 be active and dotaper2 only gets 
+c   active a few more cells (FWHM) outside of imin..imax and jmin..jmax
 c
       if (dotaper2) then
+         f = beam(1)/cell(1)
+         write(*,*) 'FWHM/CELL = ',f
+         f = 2*2.355*2.355*f*f
          do i=1,MAXSIZE
             do j=1,MAXSIZE
+               if (i.lt.imin) then
+                  if (jmin.le.j .and. j.le.jmax) then
+                     w = (imin-i)**2
+                  else if (j.gt.jmax) then
+                     w = (imin-i)**2 + (j-jmax)**2
+                  else if (j.le.jmin) then
+                     w = (imin-i)**2 + (jmin-j)**2
+                  else
+                     call bug('f','Should never get here-1')
+                  endif
+               else if (i.gt.imax) then
+                  if (jmin.le.j .and. j.le.jmax) then
+                     w = (i-imax)**2
+                  else if (j.gt.jmax) then
+                     w = (i-imax)**2 + (j-jmax)**2
+                  else if (j.lt.jmin) then
+                     w = (i-imax)**2 + (jmin-j)**2
+                  else
+                     call bug('f','Should never get here-2')
+                  endif
+               else if (j.gt.jmax) then
+                  w = (j-jmax)**2 
+               else if (j.lt.jmin) then
+                  w = (jmin-j)**2
+               else
+                  w = -1
+               endif
+               if (w.gt.0) then
+                  w = exp(-w/f)
+                  do k=1,nsize(3)
+                     array(i,j,k) = w * array(i,j,k)
+                  enddo
+               endif
             enddo
          enddo
       endif
@@ -637,9 +675,9 @@ c
       enddo
       end
 c********1*********2*********3*********4*********5*********6*********7**
-      subroutine GetOpt(sum,debug,dotaper,edge)
+      subroutine GetOpt(sum,debug,dotaper,edge,soft)
       implicit none
-      logical sum,debug,dotaper,edge
+      logical sum,debug,dotaper,edge,soft
 c     
 c  Determine extra processing options.
 c
@@ -648,19 +686,21 @@ c    sum      Sum the data in each pixel. Default is to average.
 c    debug    More debug output
 c------------------------------------------------------------------------
       integer nopt
-      parameter(nopt=4)
+      parameter(nopt=5)
       character opts(nopt)*9
       logical present(nopt)
       data opts/'sum      ',
      *          'debug    ',
      *          'taper    ',
-     *          'edge     '/
+     *          'edge     ',
+     *          'soft     '/
 c     
       call options('options',opts,present,nopt)
       sum = present(1)
       debug = present(2)
       dotaper = present(3)
       edge = present(4)
+      soft = present(5)
 c     
       end
 c********1*********2*********3*********4*********5*********6*********7**
