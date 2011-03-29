@@ -104,16 +104,20 @@ c@ options
 c       This gives extra processing options. Several options can be given,
 c       each separated by commas. They may be abbreviated to the minimum
 c       needed to avoid ambiguity. 
+c       sum
+c       taper
+c       edge
 c
 c--
 c  History:
 c     pjt  28jan11  Initial version, cloned off varmap
 c     pjt  18mar11  write flags as well
+c     pjt  28mar11  taper,edge
 c----------------------------------------------------------------------c
        include 'maxdim.h'
        include 'mirconst.h'
        character*(*) version
-       parameter(version='VARMAPS: version 18-mar-2011')
+       parameter(version='VARMAPS: version 29-mar-2011')
        integer MAXSELS
        parameter(MAXSELS=512)
        integer MAXVIS
@@ -146,7 +150,8 @@ c----------------------------------------------------------------------c
        real x,y,z,x0,y0,datamin,datamax,w,cutoff, xscale,yscale
        character*1 xtype, ytype, type
        integer length, xlength, ylength, xindex, yindex, cnt, mode
-       logical updated,sum,debug,hasbeam,doweight
+       integer imin,jmin,imax,jmax
+       logical updated,sum,debug,hasbeam,doweight,dotaper1,dotaper2,edge
 c
        integer nout, nopt
        parameter(nopt=8)
@@ -180,8 +185,8 @@ c
        call keyr ('ybeam',beam(2),beam(1))
        call keyi ('size',size,0)
        call keyi ('mode',mode,0)
-       call keyr ('cutoff',cutoff,0.000001)
-       call GetOpt(sum,debug)
+       call keyr ('cutoff',cutoff,0.00000001)
+       call GetOpt(sum,debug,dotaper1,edge)
        call keyfin
 c
 c  Check that the inputs are reasonable.
@@ -376,13 +381,13 @@ c
          do j=1,MAXSIZE
             y0 = (j-1 - nsize(2)/2 ) * cell(2)
             weight(i,j,k) = 0.0
-            array(i,j,k) = 0.0
+            array(i,j,k)  = 0.0
             do id=-size,size
+               i1 = i + id
                do jd=-size,size
-                  i1 = i + id
                   j1 = j + jd
                   if (i1.ge.1.and.i1.le.nsize(1) .and. 
-     *                 j1.ge.1.and.j1.le.nsize(2))then
+     *                j1.ge.1.and.j1.le.nsize(2))then
                      cnt = idx(i1,j1,1)
                      if (cnt.gt.0) then
                         do l=1,cnt
@@ -392,7 +397,7 @@ c
                            if (hasbeam) then
                               if (mode.eq.0) then
                                  w = (x-x0)*(x-x0)/beam2(1)+
-     *                                (y-y0)*(y-y0)/beam2(2)
+     *                               (y-y0)*(y-y0)/beam2(2)
                                  w = exp(-w)
                               else 
                                  w = ((x-x0)/beam(1))**2 +
@@ -400,7 +405,7 @@ c
                                  if (w.LT.1.0) then
                                     w = 1-sqrt(w)
                                  else
-                                    w=0.0
+                                    w = 0.0
                                  endif
                               endif
                            else
@@ -426,18 +431,48 @@ c
 
 c     
 c  Average the data, compute final minmax
+c  If you want to taper the edges by FWHM, it will do that
+c  when no original pointings were seen in those cells
+c  For this we need to compute the bounding box in cell space
+c  where we've seen pointings
 c
-      doweight = .TRUE.
+      imin=MAXSIZE+1
+      jmin=MAXSIZE+1
+      imax=0
+      jmax=0
+
+      cnt = 0
+      do i=1,MAXSIZE
+         do j=1,MAXSIZE
+            if(idx(i,j,1).gt.0) then
+               cnt = cnt + 1
+               if(i.lt.imin) imin=i
+               if(j.lt.jmin) jmin=j
+               if(i.gt.imax) imax=i
+               if(j.gt.jmax) jmax=j
+            endif
+         enddo
+      enddo
+      write(*,*) 'Count: ',cnt
+      write(*,*) 'Box: ',imin,imax,jmin,jmax
       write(line,'(a)') 'Averaging the XY pixels...'
       call output(line)
       datamin = 1.E10
       datamax = -1.E10
       do i=1,MAXSIZE
          do j=1,MAXSIZE
+            if (dotaper1) then
+               doweight = imin.le.i .and. i.le.imax .and.
+     *                    jmin.le.j .and. j.le.jmax
+            else
+               doweight = .TRUE.
+            endif
             do k=1,nsize(3)
                if(weight(i,j,k).ne.0.)then
                   if (doweight) then
                      array(i,j,k) = array(i,j,k) / weight(i,j,k)
+                  else
+                     if (edge) array(i,j,k) = 0.0
                   endif
                   if(array(i,j,k).gt.datamax) datamax=array(i,j,k)
                   if(array(i,j,k).lt.datamin) datamin=array(i,j,k)
@@ -445,6 +480,17 @@ c
             end do
          end do
       end do
+
+c
+c taper2 ?
+c   should taper the edges using the FWHM
+c
+      if (dotaper2) then
+         do i=1,MAXSIZE
+            do j=1,MAXSIZE
+            enddo
+         enddo
+      endif
 c     
 c  Write the image and it's header.
 c
@@ -591,9 +637,9 @@ c
       enddo
       end
 c********1*********2*********3*********4*********5*********6*********7**
-      subroutine GetOpt(sum,debug)
+      subroutine GetOpt(sum,debug,dotaper,edge)
       implicit none
-      logical sum,debug
+      logical sum,debug,dotaper,edge
 c     
 c  Determine extra processing options.
 c
@@ -602,15 +648,19 @@ c    sum      Sum the data in each pixel. Default is to average.
 c    debug    More debug output
 c------------------------------------------------------------------------
       integer nopt
-      parameter(nopt=2)
+      parameter(nopt=4)
       character opts(nopt)*9
       logical present(nopt)
       data opts/'sum      ',
-     *          'debug    '/
+     *          'debug    ',
+     *          'taper    ',
+     *          'edge     '/
 c     
       call options('options',opts,present,nopt)
       sum = present(1)
       debug = present(2)
+      dotaper = present(3)
+      edge = present(4)
 c     
       end
 c********1*********2*********3*********4*********5*********6*********7**
