@@ -115,6 +115,7 @@ c
 
       if (refindex .GT. 0) then
          call bug('i','Computing scaling factors for each map')
+         write(*,*) 'RefIndex = ',refindex
          do f=1,nIn
             scale(f) = 1.0
             if (f.ne.refindex) then
