@@ -26,10 +26,14 @@ c
 c@ refmap
 c       If choosen, this is the actual filename for the reference map. Instead
 c       of giving a reference map index, as in the previous keyword.
+c       Usage of this keyword will also override any value given for refindex.
 c
 c@ scale
 c       Multiplicative scale factor for each map given before filtering. By default
 c       all are 1 and a median filter is used.
+c
+c@ cutoff
+c       Only values above this will be used in a refmap/refindex scaling.
 c
 c@ options
 c	Extra processing options. 
@@ -53,7 +57,7 @@ c------------------------------------------------------------------------
       include 'maxnax.h'
       include 'mem.h'
       character version*(*)
-      parameter(version='ImStack: version 28-mar-2011')
+      parameter(version='ImStack: version 1-apr-2011')
       integer MAXIN
       parameter(MAXIN=24)
 c
@@ -62,8 +66,8 @@ c
       integer nOut(MAXNAX),i,j,k,l,f,naxis
       integer nbuf,refindex,ns
       logical mosaic,nonorm,doresid,domean
-      real data(MAXDIM,MAXIN),buffer(MAXIN),scale(MAXIN)
-      real a1, a2, b1, b2, sigx, sigy, corr, x, y
+      real data(MAXDIM,MAXIN),buffer(MAXIN),scale(MAXIN), cutoff
+      real a1, a2, b1, b2, sigx, sigy, corr, x, y, a10, a20
       double precision sum1, sumx, sumy, sumsqx, sumsqy, sumxy
       logical flags(MAXDIM,MAXIN)
       integer len1
@@ -78,6 +82,7 @@ c
       call keyi('refindex',refindex,0)
       call keya('refmap',refmap,'')
       call mkeyr('scale',scale,MAXIN,ns)
+      call keyr('cutoff',cutoff,-999999.9)
       call GetOpt(mosaic,nonorm,doresid,domean)
       call keyfin
 c
@@ -102,6 +107,12 @@ c
          endif
       enddo
 
+      if (refmap.ne.'') then
+         if (nIn.eq.MAXIN) call bug('f','no room for refmap (>MAXIN)')
+         refindex = nIn+1
+         call xyopen(tno(refindex),refmap,'old',3,nsize(1,refindex))
+      endif
+
       if (refindex .GT. 0) then
          call bug('i','Computing scaling factors for each map')
          do f=1,nIn
@@ -123,14 +134,17 @@ c
                      call xyflgrd(tno(f),j,flags(1,f))
                      do i=1,Nout(1)
                         if (flags(i,f).and.flags(i,refindex)) then
-                           x = data(i,refindex)
-                           y = data(i,f)
-                           sum1 = sum1 + 1
-                           sumx = sumx + x
-                           sumy = sumy + y
-                           sumsqx = sumsqx + x**2
-                           sumsqy = sumsqy + y**2
-                           sumxy  = sumxy  + x*y
+                           if (data(i,f)        .gt. cutoff .and. 
+     *                         data(i,refindex) .gt. cutoff) then
+                              y = data(i,f)
+                              x = data(i,refindex)
+                              sum1 = sum1 + 1
+                              sumx = sumx + x
+                              sumy = sumy + y
+                              sumsqx = sumsqx + x**2
+                              sumsqy = sumsqy + y**2
+                              sumxy  = sumxy  + x*y
+                           endif
                         endif
                      enddo
                   enddo
@@ -149,7 +163,10 @@ c                this code just cut and paste from lsqu.for
                  sigx = sqrt(sumsqx/sum1 - sumx*sumx/sum1/sum1)
                  sigy = sqrt(sumsqy/sum1 - sumy*sumy/sum1/sum1)
                  corr = (sumxy/sum1  - sumx*sumy/sum1/sum1)/(sigx*sigy)
-                 write (*,*) f,a1,a2,b1,b2,sigx,sigy,corr
+c
+                 a10 = sumxy / sumsqx
+                 a20 = sumxy / sumsqy
+                 write (*,*) f,a1,a2,b1,b2,a10,a20
                  scale(f) = a2
               else
                  write (*,*) f,' no solution'
