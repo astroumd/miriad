@@ -49,7 +49,7 @@ c    pjt  25feb2011 Original version, cloned off imcomb
 c    pjt  17mar2011 added refmap, scale, options=resid
 c    pjt  25mar2011 handle cubes, fixed scale bug when refmap=0
 c    pjt  28mar2011 scale data also in median computation if refmap>0
-c    pjt   1apr2011 refmap now named refindex
+c    pjt   2apr2011 refmap now named refindex, fixed bug computing mean
 c  TODO:
 c      - cubes, but for smaller maps, up to 128 or 256
 c------------------------------------------------------------------------
@@ -57,13 +57,13 @@ c------------------------------------------------------------------------
       include 'maxnax.h'
       include 'mem.h'
       character version*(*)
-      parameter(version='ImStack: version 1-apr-2011')
+      parameter(version='ImStack: version 2-apr-2011')
       integer MAXIN
       parameter(MAXIN=24)
 c
       character in(MAXIN)*128,out*128,out2*128,refmap*128
       integer nin,tno(MAXIN),tOut,nsize(3,MAXIN)
-      integer nOut(MAXNAX),i,j,k,l,f,naxis
+      integer nOut(MAXNAX),i,j,k,f,naxis
       integer nbuf,refindex,ns
       logical mosaic,nonorm,doresid,domean
       real data(MAXDIM,MAXIN),buffer(MAXIN),scale(MAXIN), cutoff
@@ -211,11 +211,7 @@ c
                enddo
                if (nbuf.gt.0) then
                   if (domean) then
-                     data(i,1) = buffer(1)
-                     do l=2,nbuf
-                        data(i,1) = data(i,1) + buffer(1)
-                     enddo
-                     data(i,1) = data(i,1)/nbuf
+                     call mean(buffer,nbuf,data(i,1))
                   else
                      call median(buffer,nbuf,data(i,1))
                   endif
@@ -300,7 +296,20 @@ c
         domean  = present(4)
 c
 	end
-c************************************************************************
+c***********************************************************************
+	subroutine mean(data,n,dmean)
+        implicit none
+        integer n
+        real data(n),dmean
+c
+        integer i
+        dmean = data(1)
+        do i=2,n
+           dmean = dmean + data(i)
+        enddo
+        dmean = dmean / n
+        end
+c***********************************************************************
 	subroutine hdout(tin,tout,version)
 c
 	implicit none
