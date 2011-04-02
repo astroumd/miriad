@@ -166,8 +166,8 @@ c                this code just cut and paste from lsqu.for
 c
                  a10 = sumxy / sumsqx
                  a20 = sumxy / sumsqy
-                 write (*,*) f,a1,a2,b1,b2,a10,a20
-                 scale(f) = a2
+                 scale(f) = (a20+1.0/a20)/2.0
+                 write (*,*) f,scale(f),a1,a2,a10,a20,sum1
               else
                  write (*,*) f,' no solution'
                  scale(f) = 1.0
