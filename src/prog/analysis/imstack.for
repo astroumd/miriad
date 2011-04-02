@@ -16,12 +16,16 @@ c       in which order they will be read.
 c@ out
 c	The name of the output dataset.
 c
-c@ refmap
+c@ refindex
 c       If choosen, this is the reference map to which all maps are scaled
 c       up to using a linear fit forced through 0.  The number picked will be
 c       the refmap'd entry in the in= list, 1 being the first.
 c       You can override the scaling factors if given via the scale= keyword
 c       Default: 0
+c
+c@ refmap
+c       If choosen, this is the actual filename for the reference map. Instead
+c       of giving a reference map index, as in the previous keyword.
 c
 c@ scale
 c       Multiplicative scale factor for each map given before filtering. By default
@@ -41,6 +45,7 @@ c    pjt  25feb2011 Original version, cloned off imcomb
 c    pjt  17mar2011 added refmap, scale, options=resid
 c    pjt  25mar2011 handle cubes, fixed scale bug when refmap=0
 c    pjt  28mar2011 scale data also in median computation if refmap>0
+c    pjt   1apr2011 refmap now named refindex
 c  TODO:
 c      - cubes, but for smaller maps, up to 128 or 256
 c------------------------------------------------------------------------
@@ -52,10 +57,10 @@ c------------------------------------------------------------------------
       integer MAXIN
       parameter(MAXIN=24)
 c
-      character in(MAXIN)*128,out*128,out2*128
+      character in(MAXIN)*128,out*128,out2*128,refmap*128
       integer nin,tno(MAXIN),tOut,nsize(3,MAXIN)
       integer nOut(MAXNAX),i,j,k,l,f,naxis
-      integer nbuf,refmap,ns
+      integer nbuf,refindex,ns
       logical mosaic,nonorm,doresid,domean
       real data(MAXDIM,MAXIN),buffer(MAXIN),scale(MAXIN)
       real a1, a2, b1, b2, sigx, sigy, corr, x, y
@@ -70,7 +75,8 @@ c
       call keyini
       call mkeyf('in',in,MAXIN,nin)
       call keya('out',out,' ')
-      call keyi('refmap',refmap,0)
+      call keyi('refindex',refindex,0)
+      call keya('refmap',refmap,'')
       call mkeyr('scale',scale,MAXIN,ns)
       call GetOpt(mosaic,nonorm,doresid,domean)
       call keyfin
@@ -96,11 +102,11 @@ c
          endif
       enddo
 
-      if (refmap .GT. 0) then
+      if (refindex .GT. 0) then
          call bug('i','Computing scaling factors for each map')
          do f=1,nIn
             scale(f) = 1.0
-            if (f.ne.refmap) then
+            if (f.ne.refindex) then
                sum1 = 0d0
                sumx = 0d0
                sumy = 0d0
@@ -108,16 +114,16 @@ c
                sumsqy = 0d0
                sumxy  = 0d0
                do k=1,Nout(3)
-                  call xysetpl(tno(refmap),1,k)
+                  call xysetpl(tno(refindex),1,k)
                   call xysetpl(tno(f),1,k)
                   do j=1,Nout(2)
-                     call xyread(tno(refmap),j,data(1,refmap))
-                     call xyflgrd(tno(refmap),j,flags(1,refmap))       
+                     call xyread(tno(refindex),j,data(1,refindex))
+                     call xyflgrd(tno(refindex),j,flags(1,refindex))       
                      call xyread(tno(f),j,data(1,f))
                      call xyflgrd(tno(f),j,flags(1,f))
                      do i=1,Nout(1)
-                        if (flags(i,f).and.flags(i,refmap)) then
-                           x = data(i,refmap)
+                        if (flags(i,f).and.flags(i,refindex)) then
+                           x = data(i,refindex)
                            y = data(i,f)
                            sum1 = sum1 + 1
                            sumx = sumx + x
