@@ -118,13 +118,13 @@ c----------------------------------------------------------------------c
        include 'maxdim.h'
        include 'mirconst.h'
        character*(*) version
-       parameter(version='VARMAPS: version 29-mar-2011')
+       parameter(version='VARMAPS: version 4-apr-2011')
        integer MAXSELS
        parameter(MAXSELS=512)
        integer MAXVIS
-       parameter(MAXVIS=1024)
+       parameter(MAXVIS=10240)
        integer MAXCHAN2
-       parameter(MAXCHAN2=1024)
+       parameter(MAXCHAN2=256)
        integer MAXVPP
        parameter(MAXVPP=MAXVIS/4)
        real sels(MAXSELS)
@@ -142,7 +142,7 @@ c----------------------------------------------------------------------c
        real cell(2),beam(2),beam2(2)
        integer MAXSIZE
        parameter(MAXSIZE=128)
-       real stacks(MAXVIS,MAXCHAN2)
+       real stacks(MAXVIS,MAXCHAN2), buffer(MAXCHAN2)
        real    xstacks(MAXVIS), ystacks(MAXVIS)
        integer istacks(MAXVIS), jstacks(MAXVIS)
        integer idx(MAXSIZE,MAXSIZE,MAXVPP+1)
@@ -341,6 +341,7 @@ c
          j = nint(y/cell(2) + nsize(2)/2 + 1)
          if(i.ge.1.and.i.le.nsize(1).and.j.ge.1.and.j.le.nsize(2))then
 	    ngrid = ngrid + 1
+            if (ngrid.GE.MAXVIS) call bug('f','MAXVIS not big enough')
             xstacks(ngrid) = x
             ystacks(ngrid) = y
             istacks(ngrid) = i
@@ -370,6 +371,27 @@ c
             enddo
          endif
          call uvread(lIn, preamble, data, flags, MAXCHAN2, nread)
+      enddo
+
+c
+c Optionally go over all the indexed stacks in an (i,j) cell, and 
+c mean or median filter those into a single (thus cnt=1) stack per
+c pointing
+c
+
+      write(*,*) 'TESTING median/mean filtering in varmaps'
+
+      do i=1,MAXSIZE
+         do j=1,MAXSIZE
+            cnt = idx(i,j,1)
+            if (cnt.gt.0) then
+               write(*,*) i,j,cnt
+               do l=1,cnt
+                  ng = idx(i,j,l+1)
+                  stacks(ng,1) = cnt
+               enddo
+            endif
+         enddo
       enddo
 
 c
