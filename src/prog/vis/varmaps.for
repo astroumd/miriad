@@ -56,6 +56,9 @@ c	w.r.t. the (0,0) offset to get  'real', 'imag' or 'phase' correct.
 c	This also could also be an option in varmap to save a
 c	pre-calibration step.
 c
+c@ scale
+c       Scaling factor applied to the data
+c
 c@ out
 c	Output image. No default.
 c
@@ -114,6 +117,7 @@ c  History:
 c     pjt  28jan11  Initial version, cloned off varmap
 c     pjt  18mar11  write flags as well
 c     pjt  28mar11  taper,edge
+c     pjt   4apr11  added scale=
 c----------------------------------------------------------------------c
        include 'maxdim.h'
        include 'mirconst.h'
@@ -148,7 +152,7 @@ c----------------------------------------------------------------------c
        integer idx(MAXSIZE,MAXSIZE,MAXVPP+1)
        real array(MAXSIZE,MAXSIZE,MAXCHAN2)
        real weight(MAXSIZE,MAXSIZE,MAXCHAN2)
-       real x,y,z,x0,y0,datamin,datamax,f,w,cutoff, xscale,yscale
+       real x,y,z,x0,y0,datamin,datamax,f,w,cutoff, xscale,yscale,scale
        character*1 xtype, ytype, type
        integer length, xlength, ylength, xindex, yindex, cnt, mode
        integer imin,jmin,imax,jmax
@@ -169,6 +173,7 @@ c
        call keyline(linetype,nchan,start,width,step)
        call SelInput ('select',sels,maxsels)
        call keya ('out',out,' ')
+       call keyr ('scale',scale,1.0)
        call keya ('xaxis',xaxis,'dra')
        call keyi ('xaxis',xindex,1)
        call keya ('yaxis',yaxis,'ddec')
@@ -364,7 +369,7 @@ c
                   else
                      call bug('f','Unknown zaxis')
                   endif
-                  stacks(ngrid,k) = z
+                  stacks(ngrid,k) = z * scale
                else
                   stacks(ngrid,k) = 0.0
                endif
