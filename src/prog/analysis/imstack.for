@@ -50,6 +50,7 @@ c    pjt  17mar2011 added refmap, scale, options=resid
 c    pjt  25mar2011 handle cubes, fixed scale bug when refmap=0
 c    pjt  28mar2011 scale data also in median computation if refmap>0
 c    pjt   2apr2011 refmap now named refindex, fixed bug computing mean
+c    pjt   4apr2011 fixed bug computing scale factors
 c  TODO:
 c      - cubes, but for smaller maps, up to 128 or 256
 c------------------------------------------------------------------------
@@ -57,7 +58,7 @@ c------------------------------------------------------------------------
       include 'maxnax.h'
       include 'mem.h'
       character version*(*)
-      parameter(version='ImStack: version 2-apr-2011')
+      parameter(version='ImStack: version 4-apr-2011')
       integer MAXIN
       parameter(MAXIN=24)
 c
@@ -167,7 +168,7 @@ c                this code just cut and paste from lsqu.for
 c
                  a10 = sumxy / sumsqx
                  a20 = sumxy / sumsqy
-                 scale(f) = (a20+1.0/a20)/2.0
+                 scale(f) = (a20+1.0/a10)/2.0
                  write (*,*) f,scale(f),a1,a2,a10,a20,sum1
               else
                  write (*,*) f,' no solution'
