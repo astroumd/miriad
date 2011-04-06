@@ -16,7 +16,7 @@ ftasks = avmaths boxspec boxtest clfind clplot \
   imhead imheq imhist imhol imlist \
   imload immask immedian immerge imom \
   implot impol impoly impos imrm \
-  imsad imsharp imspec imspect imstat \
+  imsad imsharp imspec imspect imstack imstat \
   imstore imsub imtab imwcs imwrite \
   linmos maths maxfit mfspin minmax \
   moment mossen odnh3 pbplot pcsub polargrid \

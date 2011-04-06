@@ -19,7 +19,8 @@ ftasks = \
   uvgains uvgen uvgenmodel uvglue uvimage uvindex uvlin uvlist uvmodel \
   uvphase uvplanet uvplot uvplt uvpnt uvputhd uvrandom uvratio uvredo \
   uvsector uvspec uvspect uvsplit uvstat uvsub uvswap uvtcor uvtplt \
-  uvtrack uvtriple uvtsub uvwide varfit varlist varmap varplot varplt
+  uvtrack uvtriple uvtsub uvwide varfit varlist varmap varmaps varplot \
+  varplt
 bin_PROGRAMS = $(ftasks)
 CLEANFILES = $(ftasks:=.f)
 EXTRA_DIST = $(ftasks:=.for)
