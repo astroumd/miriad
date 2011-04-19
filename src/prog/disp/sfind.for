@@ -432,7 +432,7 @@ c       the fitted size of the source, proportional to bmaj x bmin, is a
 c       smaller gaussian volume than that of the beam.) In this situation it
 c       is suggested that the peak flux density be used.
 c
-c     Suggestions for believing in a source or not:
+c       Suggestions for believing in a source or not:
 c       If a source is close to being indistinguishable by eye from the
 c       background there are a few rules of thumb to help determine whether
 c       the gaussian fit is telling the truth about a source, or whether the
@@ -539,6 +539,8 @@ c                  estimates from the gaussian fitting process, on occasion,
 c                  being ridiculously high. Code now checks for this against
 c                  brute force rms, and adopts the brute force value if the
 c                  gaussian fitted estimate is well off.
+c    pkgw 19apr11  Fix degree-radian conversion in BeamPar, affecting
+c                  pointlike sources when psfsize option enabled.
 c
 c
 c To do:
@@ -3630,7 +3632,7 @@ c
       call rdhdr(lIn,'bmaj',bmaj,0.)
       call rdhdr(lIn,'bmin',bmin,0.)
       call rdhdr(lIn,'bpa',bpa,0.)
-      bpa =bpa * R2D
+      bpa = bpa * D2R
         if ((bmaj.eq.0.).or.(bmin.eq.0.)) then
          call bug('w','Beam not detected in map -')
          call bug('w','Using arbitrary value of 5 pixels.')
