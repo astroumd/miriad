@@ -317,7 +317,7 @@ c       "oldsfind" Use this to run SFIND as the original implementation
 c         for the interactive interface, or just consistency with earlier
 c         measurements.
 c
-c       "fdrimage" An output image called sfind.fdr will be created
+c       "fdrimg" An output image called sfind.fdr will be created
 c         with pixel values of 100, if their p-values are below the FDR
 c         threshold, or 0 otherwise.
 c         Ignored if 'oldsfind' is present.
