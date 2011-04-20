@@ -42,6 +42,7 @@ c    jhz  12jan07 deleted sma/ew entry; corrected the value of
 c                 sub-reflector dismeter.
 c    mchw 03dec07 Added ATA at hatcreek and BIMA at the Carma site.
 c    mchw 02jun10 Added KAT7.
+c    mchw 19apr11 added ovro/evector =pi/2 ; changed bima/evector to pi/2
 c************************************************************************
 c* ObsPrint -- Print list of known observatories.
 c: utility
@@ -241,13 +242,13 @@ c  The BIMA 6m antennas at the CARMA site.
 c  Jyperk and systemp given by Wright, from 3mm vlbi.
 c
 	call obsad('bima/antdiam',	6.1d0)
-	call obsad('bima/evector',	0.0d0)
+	call obsad('bima/evector',	0.5*dpi)
 	call obsad('bima/height',	2196.22d0)
 	call obsad('bima/jyperk',	120.d0)
 	call obsad('bima/latitude',    obsdms( 1, 37,16, 49.37285))
  	call obsad('bima/longitude',   obsdms(-1,118, 8, 29.92699))
 	call obsad('bima/mount',	ALTAZ)
-	call obsad('bima/nants',    9.d0)
+	call obsad('bima/nants',    	9.d0)
 	call obsad('bima/subdiam',	0.61d0)
 	call obsad('bima/systemp',	300.d0)
 c
@@ -412,6 +413,7 @@ c  Owens Valley Radio Observatory (mm array).
 c  Jyperk and systemp given by Wright, from 3mm vlbi.
 c
 	call obsad('ovro/antdiam',	10.4d0)
+        call obsad('ovro/evector',	0.5*dpi)
 	call obsad('ovro/height',	1222.d0)
 	call obsad('ovro/jyperk',	74.d0)
 	call obsad('ovro/latitude',	obsdms( 1, 37,14, 0.00))
@@ -470,7 +472,7 @@ c
 	call obsad('sma/antdiam',	6.0d0)
 c Reference:  Todd Hunter  Log#7242
         call obsad('sma/ellimit',      14.0*dpi/180.d0)
-        call obsad('sma/evector',      0.25*dpi)
+        call obsad('sma/evector',	0.25*dpi)
 	call obsad('sma/height',	4080.0d0)
 c frequency dependent - but clearly one of these two is the better one
         call obsad('sma/jyperk',        130.d0)
@@ -495,7 +497,7 @@ c          while at the valley floor, using OVRO coord's for now
 c
         call obsad('sza/antdiam',     3.5d0)
         call obsad('sza/ellimit',     5.0*dpi/180.d0)
-        call obsad('sza/evector',     0.5*dpi)
+        call obsad('sza/evector',	0.5*dpi)
 	call obsad('sza/height',	1222.d0)
         call obsad('sza/jyperk',      383.d0)
 	call obsad('sza/latitude',	obsdms( 1, 37,14, 0.00))
@@ -521,7 +523,7 @@ c  SZA6 - SZA cross correlalations of 3.5m and 6.1m antennas - part of CARMA.
 c
         call obsad('sza6/antdiam',     4.6d0)
         call obsad('sza6/ellimit',     5.0*dpi/180.d0)
-        call obsad('sza6/evector',     0.5*dpi)
+        call obsad('sza6/evector',	0.5*dpi)
         call obsad('sza6/height',      2400.0d0)
         call obsad('sza6/jyperk',      220.d0)
         call obsad('sza6/latitude',     obsdms( 1, 37,14, 0.00))
