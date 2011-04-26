@@ -186,7 +186,8 @@ c       of the image. It is suggested that this be several to many times
 c       the beam size to prevent sources from artificially skewing the
 c       background estimates. This may require some experimentation,
 c       and 'options=normimg' may be useful in determining the
-c       effectiveness of a particular rmsbox size.
+c       effectiveness of a particular rmsbox size. A warning will be
+c       printed if the box area is less than 10 times the beam volume.
 c
 c       In the original implementation (options=oldsfind), it is the
 c       size (in pixels) of a box centred on each source within which
@@ -541,6 +542,11 @@ c                  brute force rms, and adopts the brute force value if the
 c                  gaussian fitted estimate is well off.
 c    pkgw 19apr11  Fix degree-radian conversion in BeamPar, affecting
 c                  pointlike sources when psfsize option enabled.
+c    pkgw 26apr11  Remove copy/paste-o in basecal that caused central pixels
+c                  to be ignored when computing the gridded RMS. This could
+c                  result in occasional user-inexplicable failures. Add a
+c                  warning if the area of the RMS box isn't substantially
+c                  bigger than the beam.
 c
 c
 c To do:
@@ -1807,6 +1813,12 @@ c
        call bug('f','No beam information found - FDR analysis'
      +      //' needs this to work')
       end if
+      if (rmsbox**2.lt.10*bvolp) then
+         write(line2,
+     +        '("rmsbox area is only ",f5.2," times the beam volume")')
+     +        rmsbox**2/bvolp
+         call bug('w', line2)
+      end if
 c Now begin properly.
       call output (' ')
       call output ('****************************************')
@@ -1895,7 +1907,7 @@ c
 c
 c
       subroutine basecal (nx, ny, l, m, base0, sigma, rmsbox, image,
-     +                    nimage, boxsize, ok, mask, image2, auto)
+     +                    nimage, ok, mask, image2, auto)
 c-----------------------------------------------------------------------
 c    Calculate the base level around the found source using "imsad's"
 c    method of fitting a gaussian to the pixel histogram, using
@@ -1910,7 +1922,6 @@ c    image   Image matrix with pixel values
 c    nimage  blanking image
 c    rmsbox  Side length of box within which the background rms is
 c            calculated
-c    boxsize 1.5*bmajp
 c  Output:
 c    base0   The base-level (the mean of the gaussian background)
 c    sigma   The background rms
@@ -1924,7 +1935,7 @@ c-----------------------------------------------------------------------
       include 'maxnax.h'
       integer ii,jj,lmn,lmx,mmn,mmx,nx,ny,kk,l,m,rmsbox, half, ptr
       real base0, base1, base2, basen, sigma, rx, rr
-      real image(nx,ny), boxsize, rng(2), image2((rmsbox+1)*(rmsbox+1))
+      real image(nx,ny), rng(2), image2((rmsbox+1)*(rmsbox+1))
       real mean, sigmax
       integer nimage(nx,ny), blc(MAXNAX), trc(MAXNAX)
       logical ok,histok, mask((rmsbox+1)*(rmsbox+1)), auto
@@ -1996,7 +2007,7 @@ c
          rx = (ii - l)**2
          do jj = mmn, mmx
            rr = rx + (jj-m)**2
-           if (nimage(ii,jj).gt.0 .and. rr.ge.(boxsize**2) .and.
+           if (nimage(ii,jj).gt.0 .and.
      +          abs(image(ii,jj)-base0).le.3*sigma) then
              basen = basen + 1.
              base1 = base1 + image(ii,jj)
@@ -3823,7 +3834,7 @@ c
         m = boxsize/2 + (jj-1)*boxsize
         if ((l.le.(nx+boxsize/2)).and.(m.le.(ny+boxsize/2))) then
          call basecal(nx, ny, l, m, base0, sigma, boxsize, image,
-     +           nimage, 1.5*bmajp, ok, meml(ipim),memr(ip2im), auto)
+     +           nimage, ok, meml(ipim),memr(ip2im), auto)
          if (ok) then
           lmn = max(0,(l-boxsize/2)) + 1
           lmx = min(nx,(lmn+boxsize-1))
