@@ -1,0 +1,85 @@
+This demo directory has a number of scripts to demonstrate, excerize and
+benchmark MIRIAD for a heterogeneous CARMA array.
+
+Data:
+=====
+casc.vla		11.2 GHz continuum map of Cas A at 0.4" pixel	
+sat1mm.modj2		225 GHz (1mm) map of Saturn, but used from optical
+
+Shell scripts:
+==============
+beams.csh
+default7-15.csh
+default7-23.csh
+demo.csh
+DZ.csh
+EZ.csh
+gnoise.csh
+hetero-23.csh
+hetero.csh
+heteroDZ.csh
+heteroz.csh
+hex1-23.csh
+hex7-15.csh
+hex7-15_demo.csh
+hex7-23.csh
+joint7-15.csh
+joint7-23.csh
+mfs.csh
+mfs_pnoise.csh
+mfs_sza.csh
+mfs_sza_demo.csh
+mosaic.csh
+mosaic_sensitivity.csh
+stokes.csh
+stokes_demo.csh
+
+Antenna configurations:
+=======================
+060324.ant
+A.ant
+AZ.ant
+B.ant
+BZ.ant
+C.ant
+carma_32compact.ant
+carma_A.ant
+carma_B.ant
+carma_C.ant
+carma_CZ.ant
+carma_D.ant
+carma_DZ.ant
+carma_E.ant
+carma_EZ.ant
+CZ.ant
+D.ant
+DZ.ant
+E.ant
+EZ.ant
+MinRed3.ant
+MinRed4.ant
+MinRed5.ant
+MinRed6.2.ant
+MinRed6.ant
+sza_A.ant
+sza.ant
+sza_B.ant
+sza_compact.ant
+sza_imaging.ant
+
+
+Source descriptions for UVGEN:
+==============================
+point.source
+Q.source
+U.source
+V.source
+
+Others:
+=======
+CDE.wip
+beams.results
+casa.results
+casc.vla.results
+sat1mm.modj2.results
+
