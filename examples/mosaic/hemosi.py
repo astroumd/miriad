@@ -7,6 +7,7 @@
 #   3-aug-08  pjt   added as hemosi.py to miriad's examples - but lots to clean up
 #   4-aug-08  pjt   keywords changed names and more consistent usage; change into run directory??
 #    8-8-8    pjt   device= implemented (no more plot=)
+#   1-may-11  pjt   folding back some changes to $MIR/demo
 #
 #
 #
@@ -32,21 +33,21 @@
 import sys, os, time, string, math
 from Miriad import *
 
-version='2008-08-11'
+version='2011-05-02'
 
 print "   ---  HEMOSI: HEterogenous MOsaicing SImulations  ---   "
 
-# command line arguments that can be changed...
+# command line arguments 
 keyval = {
     "dir"       : "run1\n                                         Run directory in which all datasets written",
-    "ant"       : "CZ.ant\n                                       Antenna config file (NEU in meters)",
+    "ant"       : "carma_CZ.ant\n                                 Antenna config file (NEU in meters)",
     "pb"        : "ovro,6,hatcreek,9,sza,8,carma,sza10,sza6\n     Antennae types, numbers, cross types names",
     "systemp"   : "80,290,0.26\n                                  Systemp temperature for UVGEN",
     "jyperk"    : "43,126,383,73,128,220\n                        Jy/K scaling for all antenna types",
     "dec"       : "30.0\n                                         declination where object should be placed",
     "freq"      : "115.0\n                                        observing frequency [GHz]",
     "image"     : "casc.vla\n                                     model image to test ",
-    "cell"      : "1.0\n                                          scaling cell size of model in arcsec",
+    "cell"      : "0.1\n                                          scaling cell size of model in arcsec",
     "factor"    : "1\n                                            scaling factor for model",
     "size"      : "50.0\n                                         size of cleaning and plotting region (-size..size) [arcsec]",
     "nchan"     : "1\n                                            number of channels to use from model image",
@@ -55,11 +56,13 @@ keyval = {
     "flux"      : "0\n                                            expected flux in the image (for mosmem)",
     "gnoise"    : "0\n                                            Noise (percentage)",
     "nring"     : "2\n                                            number of rings in the mosaic",
-    "grid"      : "20.0\n                                         gridsize (in arcsec) for the mosaic",
+    "grid"      : "30.0\n                                         gridsize (in arcsec) for the mosaic",
     "center"    : "\n                                             optional center file that overrides (nring,grid)",
+    "harange"   : "-2,2,0.013\n                                   Observing HA range ",
+    "imsize"    : "257\n                                          Image size (need 2**N+1)",
     "device"    : "/null\n                                        PGPLOT device name",
     "log"       : "f\n                                            Show miriad.log?",
-    "VERSION"   : "2.1 pjt\n                                      VERSION id for the user interface"
+    "VERSION"   : "2.3 pjt\n                                      VERSION id for the user interface"
     }
 
 help = """
@@ -93,6 +96,8 @@ The minimum amount of information you need to run this task is:
 #>   SCALE nring=2                                1:10:1
 #>   SCALE grid=20                                1:100:1
 #>   IFILE center=
+#>   ENTRY harange=-2,2,0.013
+#>   RADIO imsize=257                             33,65,129,257,513,1025,2049,4097
 #>   ENTRY device=/null
 #>   RADIO log=f                                  t,f
 
@@ -322,7 +327,7 @@ def mosmem(map,beam,out,region,niters=100,flux=0,default=0):
     if flux != 0:
         cmd.append('flux=%g' % flux)
     if default != 0:
-        cmd.appenx('default=%s' % default)
+        cmd.append('default=%s' % default)
     zap(out)
     return cmd
 
@@ -350,7 +355,7 @@ def mossdi2(map,beam,out,region,niters=100):
     zap(out)
     return cmd
 
-def restor(map,beam,model,out,fwhm=None,pa=None):
+def restor(map,beam,model,out,fwhm=None,pa=None,mode=None):
     cmd = [
         'restor',
         'model=%s' %  model,
@@ -362,6 +367,8 @@ def restor(map,beam,model,out,fwhm=None,pa=None):
         cmd.append('fwhm=%g,%g' % (fwhm[0],fwhm[1]))
     if pa != None:
         cmd.append('pa=%g' % pa)
+    if mode != None:
+        cmd.append('mode=%s' % mode)
     zap(out)
     return cmd
 
@@ -544,11 +551,10 @@ device  = keya('device')
 Qlog    = keyb('log')
 freq    = keyr('freq')
 gnoise  = keyr('gnoise')
+harange = keya('harange')
+imsize  = keyi('imsize')
 
-
-harange = '-2,2,0.013'
 select  = '-shadow\(3.5\)'
-imsize  = 257                    # avoid 2**N, image size 2**N + 1 is good.  [or calculate from image]
 
 mir = os.environ['MIR']
 
@@ -702,13 +708,13 @@ if method == "mosmem":
 
     copy_file(ant,rundir)                       # copy ant file in run directory
 
-    print "Generate uv-data" 
+    print "1) Generate uv-data" 
 
     for k in range(0,k1):
         miriad(uvgen(ant,dec,harange,freq,nchan,uv_k[k],center,telescopes[k],jyperk[k],systemp))
         miriad(uvindex(uv_k[k]))
     
-    print "Copy model, scale it by factor=%g and set cell=%g" % (factor,cell)
+    print "2) Copy model, scale it by factor=%g and set cell=%g" % (factor,cell)
     miriad(imgen0(image,base2,factor))
     miriad(puthd(base2,'crval1',ra,units='hms'))
     miriad(puthd(base2,'crval2',dec,units='dms'))
@@ -719,13 +725,13 @@ if method == "mosmem":
     flux = string.atof(grepcmd('histo in=%s' % base2, 'Flux', 5))
     print 'Model has flux=',flux
 
-    print "Make model images for each pointing center for each antenna type"
+    print "3) Make model images for each pointing center for each antenna type"
     for k in range(0,k1):
         miriad(demos(base2,uv_k[k],demos_k[k]))
 
-    print "Make model uv-data using %s as a model" % image
+    print "4) Make model uv-data using %s as a model" % image
     vis_all = ""
-    fp = open("%s/vis.all" % rundir, "w")
+    fp = open("%s/vis.inc" % rundir, "w")
     for k in range(0,k1):
         for i in range(1,npoint+1):
             vis_i = "%s_%d_%d"% (uv,k,i)
@@ -744,7 +750,7 @@ if method == "mosmem":
     print "UVMODEL: add the model to the noisy sampled uv-data"
 
     if gnoise > 0:
-        print "Adding pointing errors: gnoise=%g" % gnoise
+        print "5) Adding pointing errors: gnoise=%g" % gnoise
         visgain = '%s/uv_gains' % rundir
         for k in range(0,k1):
             miriad(uvgen_point(ant,dec,harange,freq,nchan,visgain,telescopes[k],jyperk[k],systemp,gnoise))
@@ -753,17 +759,17 @@ if method == "mosmem":
                 vis_i = "%s_%d_%d"% (uv,k,i)
                 miriad(gpcopy(visgain,vis_i))
     else:
-        print "Skipping adding pointing noise (gnoise)"
+        print "5) Skipping adding pointing noise (gnoise=0)"
             
-    vis_all = "@%s/vis.all" % rundir
+    print "6) invert visibilities to raw map and beam(s)"
+
+    vis_all = "@%s/vis.inc" % rundir
     miriad(invert(vis_all, base1+".mp", base1+".bm", imsize, select))
             
-    print "INVERT: "
-        
     miriad(implot(base1+'.mp',region=region,device=dev.next()))
     miriad(imlist(base1+'.mp'))
             
-    print "Make single dish image and beam"
+    print "7) Make single dish image and beam"
 
     s1 = grepcmd("pbplot telescop=%s freq=%g" % (telescope,freq), "FWHM", 2)
     pbfwhm = string.atof(s1) * 60.0
@@ -811,6 +817,7 @@ bpa  = string.atof(grepcmd('imfit in=%s object=beam' % psf1, '  Position angle',
 print 'MOSPSF: Beam = %g x %g arcsec PA = %g degrees' % (bmaj,bmin,bpa)
 
 miriad(restor(map1,beam1,cc,cm,[bmaj,bmin],bpa))
+#miriad(restor(map1,beam1,cc,res,[bmaj,bmin],bpa))  used twice....@todo
 miriad(implot(map1,region=region,device=dev.next()))
 
 print "convolve the model by the beam and subtract from the deconvolved image"
