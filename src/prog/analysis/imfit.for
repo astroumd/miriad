@@ -119,17 +119,18 @@ c    rjs  27apr98 Merge above two sets of changes.
 c    rjs  27oct98 Improved format statements.
 c    rjs  30jun99 Ditto.
 c    paj  28Mar03 Fix bug in uncertainty estimates
+c    pkgw 04May11 Increase buffer size for input/output filenames.
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	include 'maxnax.h'
 	include 'mem.h'
 c
 	character version*(*)
-	parameter(version='version 1.0 28-mar-03')
+	parameter(version='version 1.0 05-may-11')
 	integer MAXBOX,MAXVAR
 	parameter(MAXBOX=1024,MAXVAR=30)
 c
-	character in*64,out*64,object*32
+	character in*512,out*512,object*32
 	real clip,x(MAXVAR),covar(MAXVAR*MAXVAR),rms,trms
 	real bmaj,bmin,bpa,bvol,bvolp
 	logical dores,inten,defsrc,doOut,dofit
@@ -783,7 +784,7 @@ c------------------------------------------------------------------------
 	parameter(nopts=1)
 	character opts(nopts)*8
 	logical present(nopts)
-	data opts/'residual '/
+	data opts/'residual'/
 c
 	call options('options',opts,present,nopts)
 c
