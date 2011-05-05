@@ -1,7 +1,7 @@
       program imwcs
       implicit none
 c
-c= IMWCS- Changes image header for new WCS parameters
+c= IMWCS - Changes image header for new WCS parameters
 c& pjt
 c: image analysis
 c+
@@ -144,36 +144,3 @@ c
  100  format(A,I1)
 
       end
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
