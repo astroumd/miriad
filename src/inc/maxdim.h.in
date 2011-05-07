@@ -1,4 +1,4 @@
-c @WARNING@
+c @configure_input@
 c TELESCOPE=@TELESCOPE@
 c=======================================================================
 	CHARACTER*(*) MIRTEL
@@ -13,7 +13,6 @@ c
 	PARAMETER(MAXIANT=@MAXIANT@,MAXANT=@MAXANT@,MAXANT2=@MAXANT2@)
 c		maximum number of baselines
 	INTEGER   MAXBASE
-c	PARAMETER(MAXBASE=((MAXANT*(MAXANT+1))/2))
 	PARAMETER(MAXBASE=@MAXBASE@)
 	INTEGER   MAXBASE2
 	PARAMETER(MAXBASE2=@MAXBASE2@)

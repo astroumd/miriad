@@ -1,5 +1,5 @@
 /*
- * @WARNING@
+ * @configure_input@
  *
  * TELESCOPE=@TELESCOPE@
  */
@@ -9,11 +9,7 @@
 #define         MAXIANT         @MAXIANT@
 #define		MAXANT		@MAXANT@
 #define		MAXANT2		@MAXANT2@
-#if 0
-#define         MAXBASE         ((MAXANT * (MAXANT + 1)) / 2) */
-#else
 #define		MAXBASE		@MAXBASE@
-#endif
 #define		MAXBASE2	@MAXBASE2@
 #define		MAXCHAN		@MAXCHAN@
 #define		MAXNAX		@MAXNAX@
