@@ -16,6 +16,9 @@ dnl silent-rules option must be removed.
 AM_INIT_AUTOMAKE([1.11 -Wobsolete -Wgnu -Wunsupported -Wno-syntax 
 		  -Wno-portability foreign silent-rules])
 
+LT_PREREQ([2.2.1])
+LT_INIT([disable-static])
+
 dnl If using automake 1.9 / autoconf 2.59 (which is not uncommon),
 dnl 'docdir' isn't defined, and we need to define it ourselves.
 
@@ -27,18 +30,20 @@ fi
 catdir='${pkgdatadir}/cat'
 AC_SUBST([catdir])
 
-dnl Check for compilers. Check for F77 first, since that will trigger
-dnl the autoconf check for usable compiler output, and Fortran is the
-dnl one we're most likely to have problems with. The check for 'cc'
-dnl allows the vendor C compiler to override GCC.
+dnl Compilers. Check for F77 first, since that will trigger the
+dnl autoconf check for usable compiler output, and Fortran is the one
+dnl we're most likely to have problems with.
 
 AC_PROG_F77
-AC_CHECK_PROG(CC, cc, cc)
+AC_PROG_FC([gfortran gfortran-mp-4.5 g95])
 AC_PROG_CC
-AC_PROG_SED dnl $(SED) used in cat/Makefile.am
 
-AC_HEADER_STDC
-AC_CHECK_FUNCS([strchr memcpy bcopy])
+dnl Other programs
+
+AC_PROG_AWK dnl for checking lex version
+AC_PROG_LN_S
+AC_PROG_SED dnl $(SED) used in cat/Makefile.am
+AC_PROG_LEX
 
 dnl This keeps g77 from returning an error code when 
 dnl there are disagreements between subroutine parameter types and the
@@ -76,10 +81,6 @@ fi
 AC_SUBST([AM_FFLAGS])
 
 AC_F77_LIBRARY_LDFLAGS
-AC_PROG_FC([g95 gfortran gfortran-mp-4.5])
-## AM_FCFLAGS([-I$(srcdir)/inc])
-
-AC_PROG_LIBTOOL
 
 dnl OS X XCode >= 3.1 needs a special linker flag for dynamic libraries
 dnl and main programs to share common blocks. This is a required feature
@@ -116,12 +117,19 @@ AC_LINK_IFELSE([int main (void) { return 0; }],[
    LDFLAGS="$LDFLAGS_save"
 ])
 
-dnl Other programs
+AC_SYS_LARGEFILE
+AC_FUNC_FSEEKO dnl used in wcslib
 
-AC_PROG_AWK
-AC_PROG_INSTALL
-AC_PROG_LN_S
-AC_PROG_MAKE_SET
+dnl Miscellaneous library functions, headers, etc
+dnl
+dnl Fortran linking means that we automatically get -lm, but
+dnl it seems smart to set it up for C programs as well, and 
+dnl this allows the wcslib check for sincos to succeed later.
+
+AC_CHECK_LIB(m, cos)
+AC_CHECK_LIB(readline, read_history) dnl miriad.c
+AC_CHECK_HEADERS([stdlib.h]) dnl doc_atnf.c
+AC_CHECK_FUNCS([strerror]) dnl bug.c
 
 dnl Documentation checks
 
@@ -188,9 +196,6 @@ fi
 AC_SUBST(LATEX)
 AC_SUBST(MAKEINDEX)
 AM_CONDITIONAL(BUILD_DOCS,$BUILD_DOCS)
-
-AC_SYS_LARGEFILE
-AC_FUNC_FSEEKO dnl used in wcslib
 
 dnl Telescope selection -- sets defaults for maxdim parameters
 
@@ -354,51 +359,12 @@ dnl there is similarly context for this message.
 #include <X11/Intrinsic.h>])
 CPPFLAGS="$save_CPPFLAGS"
 
-AC_CHECK_LIB(readline, read_history)
-
-AC_CHECK_LIB(z, inflate)
-AC_CHECK_LIB(c, strtoll)
-AC_CHECK_LIB(c, strtoull)
-
-AC_SEARCH_LIBS(sin, m)
-
-dnl Checks for header files.
-
-AC_HEADER_DIRENT
-AC_HEADER_STDC
-AC_HEADER_SYS_WAIT
-AC_CHECK_HEADERS([fcntl.h limits.h malloc.h sgtty.h strings.h sys/file.h])
-AC_CHECK_HEADERS([sys/ioctl.h sys/time.h unistd.h])
-
-dnl Checks for typedefs, structures, and compiler characteristics.
-AC_C_CONST
-AC_C_INLINE
-AC_C_BIGENDIAN 
-AC_TYPE_OFF_T
-AC_TYPE_SIZE_T
-AC_HEADER_TIME
-AC_STRUCT_TM
-
-AC_SYS_LONG_FILE_NAMES
-
-dnl Checks for library functions.
-AC_TYPE_GETGROUPS
-AC_PROG_GCC_TRADITIONAL
-AC_FUNC_MEMCMP
-AC_FUNC_MMAP
-AC_TYPE_SIGNAL
-AC_FUNC_VFORK
-AC_FUNC_VPRINTF
-AC_CHECK_FUNCS([ftime gethostname gettimeofday getwd mkdir select])
-AC_CHECK_FUNCS([strdup strtod strtol strtoul dprintf strerror])
-
 dnl Initialize PGPLOT
 AC_CONFIG_SUBDIRS(borrow/pgplot)
 PGPLOT_LIB='$(top_builddir)/borrow/pgplot/libpgplot.la'
 AC_SUBST(PGPLOT_LIB)
 
-dnl flex, needed by WCSLIB.
-AM_PROG_LEX
+dnl WCSLIB needs sufficiently new flex
 
 AC_MSG_CHECKING([if $LEX is flex >= 2.5.9])
 lexversion=`$LEX --version`
@@ -418,7 +384,6 @@ if test $vcode -lt 20509 ; then
    AC_MSG_ERROR([wcslib in MIRIAD requires flex of version at least 2.5.9])
 fi
 
-dnl LIBS="$LIBS $LEXLIB"
 AC_MSG_RESULT([yes])
 
 dnl Other stuff needed by WCSLIB
