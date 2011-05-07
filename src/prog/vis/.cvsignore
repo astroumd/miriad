@@ -85,5 +85,7 @@ uvwide
 varfit
 varlist
 varmap
+varmaps
+varmerge
 varplot
 varplt

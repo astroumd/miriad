@@ -8,5 +8,6 @@
 stamp-h?
 Makefile.in
 Makefile
+makedefs
 wcsconfig.h
 wcsconfig_f77.h
