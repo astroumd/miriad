@@ -6,7 +6,7 @@ lib_LTLIBRARIES = libmir.la
 
 includes = -I$(top_builddir)/src/inc -I$(top_srcdir)/src/inc -I$(srcdir)
 libmir_la_CFLAGS = $(includes)
-libmir_la_LDFLAGS = -dynamic @single_module@
+libmir_la_LDFLAGS = -dynamic
 libmir_la_LIBADD = \
   $(top_builddir)/borrow/linpack/libmir_linpack.la \
   $(top_builddir)/borrow/wcslib/libmir_wcs.la \

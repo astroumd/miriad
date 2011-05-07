@@ -372,49 +372,13 @@ AC_ARG_WITH(maxbuf,
        [Maximum size, in words, of blank common buffer])],
     MAXBUF=$withval, MAXBUF="$def_maxbuf")
 
-AC_SUBST(SLIB)
-case $host_os in
-  linux*|Linux*)
-    SLIB=linux
-    ;;
-  darwin*)
-    SLIB=mac
-    ;;
-  sol*)
-    SLIB=linux
-    ;;
-  *)
-    SLIB=none
-    ;;
-esac
-
-dnl ---------------------------------------------------------------------
-dnl             Check for important libtool/linker flag
-
-dnl TO DO, Find out how to do this using straight autoconf, it seems
-dnl to be aware of the need for this, dunno why it doesn't do it properly
-dnl in later libtool commands...
-
-if test x"$SLIB" = xmac; then
-  single_module="-Wl,-single_module"
-else
-  single_module=""
-fi
-AC_SUBST(single_module)
-
-dnl             done checking for important libtool/linker flag
-dnl ---------------------------------------------------------------------
 
 dnl ---------------------------------------------------------------------
 dnl             Check for basic X windows stuff
 AC_PATH_XTRA
 
 if test x"$no_x" = xyes; then
-  AC_MSG_WARN([Could not find X11 Window System Headers or Libraries!])
-  if test x"$SLIB" = xmac; then
-    AC_MSG_WARN([On Mac OS X, you must first install the X11 SDK])
-  fi 
-  AC_MSG_ERROR([Cannot proceed with build])
+  AC_MSG_ERROR([X11 libraries are required to build MIRIAD])
 fi
 
 dnl Check for Xaw: library and headers. For xpanel.
@@ -441,11 +405,6 @@ CPPFLAGS="$save_CPPFLAGS"
 
 x_libs="$X_PRE_LIBS $X_LIBS -lX11 -lXaw $X_EXTRA_LIBS"
 x_cflags="$X_CFLAGS"
-
-## if test x"$SLIB" = xmac; then
-## else
-## dnl "$X_LIBS $X_PRE_LIBS -lXext -lX11 $X_EXTRA_LIBS"
-## fi
 
 AC_SUBST(x_libs)
 AC_SUBST(x_cflags)
