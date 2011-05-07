@@ -3,10 +3,10 @@ dnl Autoconf 2.62 -- see discussion below.
 AC_PREREQ(2.62)
 AC_INIT([MIRIAD],[4.1.7],[miriad-dev-bugs@astro.berkeley.edu])
 AC_REVISION([$Revision$])
-
 AC_CONFIG_SRCDIR([src/subs/uvio.c])
 AC_CONFIG_MACRO_DIR([.])
 AC_CONFIG_AUX_DIR([.])
+
 dnl FIXME! Require Automake 1.11 for now, since we currently need 
 dnl AM_DEFAULT_SOURCE_EXT to build all of the tasks. A lot
 dnl of people don't have Automake this recent. We need to settle
@@ -16,8 +16,10 @@ dnl silent-rules option must be removed.
 AM_INIT_AUTOMAKE([1.11 -Wobsolete -Wgnu -Wunsupported -Wno-syntax 
 		  -Wno-portability foreign silent-rules])
 
+dnl Libtool. Required version number is made-up.
 LT_PREREQ([2.2.1])
 LT_INIT([disable-static])
+
 
 dnl If using automake 1.9 / autoconf 2.59 (which is not uncommon),
 dnl 'docdir' isn't defined, and we need to define it ourselves.
@@ -29,6 +31,7 @@ fi
 
 catdir='${pkgdatadir}/cat'
 AC_SUBST([catdir])
+
 
 dnl Compilers. Check for F77 first, since that will trigger the
 dnl autoconf check for usable compiler output, and Fortran is the one
@@ -45,7 +48,9 @@ AC_PROG_LN_S
 AC_PROG_SED dnl $(SED) used in cat/Makefile.am
 AC_PROG_LEX
 
-dnl This keeps g77 from returning an error code when 
+dnl Some basic compiler flags.
+dnl 
+dnl -fno-globals keeps g77 from returning an error code when 
 dnl there are disagreements between subroutine parameter types and the
 dnl subroutine call.  Warnings are still printed.
 dnl FIXME: this test and the one below do not catch the case where
@@ -64,8 +69,7 @@ if test x"$G77" = xyes; then
    AM_FFLAGS="$AM_FFLAGS -fno-backslash"
 fi
 
-dnl Turn off all warnings (by default)
-dnl The warnings are primarily useful for developers
+dnl Warning control
 
 AC_ARG_ENABLE([warnings],
     [AS_HELP_STRING([--enable-warnings],
@@ -80,7 +84,6 @@ fi
 
 AC_SUBST([AM_FFLAGS])
 
-AC_F77_LIBRARY_LDFLAGS
 
 dnl OS X XCode >= 3.1 needs a special linker flag for dynamic libraries
 dnl and main programs to share common blocks. This is a required feature
@@ -117,8 +120,42 @@ AC_LINK_IFELSE([int main (void) { return 0; }],[
    LDFLAGS="$LDFLAGS_save"
 ])
 
+
+dnl Large file support
+
 AC_SYS_LARGEFILE
 AC_FUNC_FSEEKO dnl used in wcslib
+
+
+dnl X windows and Xaw (for xpanel)
+
+AC_PATH_XTRA
+
+if test x"$no_x" = xyes; then
+  AC_MSG_ERROR([X11 libraries are required to build MIRIAD])
+fi
+
+dnl Must set action-if-found to nonempty to avoid
+dnl the default action of adding -lXaw to LIBS and
+dnl defining HAVE_LIBXAW.
+AC_CHECK_LIB([Xaw], [XawScrollbarSetThumb], [true],
+  dnl the previous line of output will indicate what was not
+  dnl found, so there is some context for this message:
+  [AC_MSG_ERROR([you need to install the Xaw library])],
+  [$X_PRE_LIBS $X_LIBS -lX11 $X_EXTRA_LIBS])
+
+save_CPPFLAGS="$CPPFLAGS"
+CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+AC_CHECK_HEADERS([X11/Xresource.h],[],
+  dnl there is similarly context for this message.
+  [AC_MSG_ERROR([you may need to install X11 development files])],)
+AC_CHECK_HEADERS([X11/Xaw/Box.h],[],
+  dnl there is similarly context for this message.
+  [AC_MSG_ERROR([you may need to install Xaw development files])],
+  [#include <X11/Xresource.h>
+   #include <X11/Intrinsic.h>])
+CPPFLAGS="$save_CPPFLAGS"
+
 
 dnl Miscellaneous library functions, headers, etc
 dnl
@@ -129,7 +166,11 @@ dnl this allows the wcslib check for sincos to succeed later.
 AC_CHECK_LIB(m, cos)
 AC_CHECK_LIB(readline, read_history) dnl miriad.c
 AC_CHECK_HEADERS([stdlib.h]) dnl doc_atnf.c
-AC_CHECK_FUNCS([strerror]) dnl bug.c
+AC_CHECK_FUNCS([
+  strerror dnl bug.c
+  sincos dnl wcslib:wcstrig.c
+])
+
 
 dnl Documentation checks
 
@@ -197,6 +238,7 @@ AC_SUBST(LATEX)
 AC_SUBST(MAKEINDEX)
 AM_CONDITIONAL(BUILD_DOCS,$BUILD_DOCS)
 
+
 dnl Telescope selection -- sets defaults for maxdim parameters
 
 AC_ARG_WITH(telescope,
@@ -261,8 +303,8 @@ case $TELESCOPE in
      *) echo "Not a valid array"
 esac
 
-dnl ---------------------------------------------------------------------
-dnl All the MAXDIM related stuff
+
+dnl Fine-grained config and definition of maxdim parameters
 
 AC_SUBST(TELESCOPE)
 AC_SUBST(MAXDIM)
@@ -329,40 +371,12 @@ AC_ARG_WITH(maxbuf,
     MAXBUF=$withval, MAXBUF="$def_maxbuf")
 
 
-dnl ---------------------------------------------------------------------
-dnl             Check for basic X windows stuff
-AC_PATH_XTRA
+dnl PGPLOT
 
-if test x"$no_x" = xyes; then
-  AC_MSG_ERROR([X11 libraries are required to build MIRIAD])
-fi
-
-dnl Check for Xaw: library and headers. For xpanel.
-
-dnl Must set action-if-found to nonempty to avoid
-dnl the default action of adding -lXaw to LIBS and
-dnl defining HAVE_LIBXAW.
-AC_CHECK_LIB([Xaw], [XawScrollbarSetThumb], [true],
-dnl the previous line of output will indicate what was not
-dnl found, so there is some context for this message:
-[AC_MSG_ERROR([you need to install the Xaw library])],
-[$X_PRE_LIBS $X_LIBS -lX11 $X_EXTRA_LIBS])
-
-save_CPPFLAGS="$CPPFLAGS"
-CPPFLAGS="$CPPFLAGS $X_CFLAGS"
-AC_CHECK_HEADERS([X11/Xresource.h],[],
-dnl there is similarly context for this message.
-[AC_MSG_ERROR([you may need to install X11 development files])],)
-AC_CHECK_HEADERS([X11/Xaw/Box.h],[],
-dnl there is similarly context for this message.
-[AC_MSG_ERROR([you may need to install Xaw development files])],[#include <X11/Xresource.h>
-#include <X11/Intrinsic.h>])
-CPPFLAGS="$save_CPPFLAGS"
-
-dnl Initialize PGPLOT
 AC_CONFIG_SUBDIRS(borrow/pgplot)
 PGPLOT_LIB='$(top_builddir)/borrow/pgplot/libpgplot.la'
 AC_SUBST(PGPLOT_LIB)
+
 
 dnl WCSLIB needs sufficiently new flex
 
@@ -386,9 +400,10 @@ fi
 
 AC_MSG_RESULT([yes])
 
-dnl Other stuff needed by WCSLIB
+
+dnl Other setup for WCSLIB ...
 AC_DEFINE([WCSLIB_VERSION], [4.5.1], [The version of WCSLIB])
-AC_CHECK_FUNCS([sincos])
+
 dnl Copied from wcslib configure.ac:
 AC_CHECK_SIZEOF([int])
 AC_CHECK_SIZEOF([long int])
@@ -401,8 +416,9 @@ elif test "x$ac_cv_sizeof_int" = x8; then
   AC_DEFINE([WCSLIB_INT64], [int], [64-bit integer data type.])
 fi
 dnl End copying.
-dnl We ignore #defines needed by wcsconfig_utils and wcsconfig_tests.
-AC_F77_WRAPPERS
+
+AC_F77_WRAPPERS dnl wcslib uses F77_FUNC a lot
+
 dnl Make sure that, since we're using the autotools-based build system,
 dnl the user can't accidentally invoke wcslib's builtin build system.
 dnl It'd be nice to override it completely, but I can't figure out a
@@ -421,7 +437,15 @@ include See_the_file_borrow/wcslib/makedefs_for_more_information.
 EOF
 ])
 
-AC_CONFIG_HEADERS([config.h borrow/wcslib/wcsconfig.h borrow/wcslib/wcsconfig_f77.h])
+
+dnl Make the files.
+
+AC_CONFIG_HEADERS([
+  config.h
+  borrow/wcslib/wcsconfig.h
+  borrow/wcslib/wcsconfig_f77.h
+])
+
 AC_CONFIG_FILES([
     Makefile
     cat/Makefile
@@ -456,6 +480,7 @@ AC_CONFIG_FILES([
 ])
 
 AC_OUTPUT
+
 
 dnl Summarize important configuration settings.
 
