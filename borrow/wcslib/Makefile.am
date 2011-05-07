@@ -8,7 +8,6 @@ AM_MAKEFLAGS = -f Makefile
 lib_LTLIBRARIES = libmir_wcs.la libmir_pgsbox.la
 
 libmir_wcs_la_CFLAGS = -I$(srcdir)/C
-libmir_wcs_la_LDFLAGS = -dynamic
 libmir_wcs_la_SOURCES = \
  C/cel.c \
  C/cel.h \
@@ -91,7 +90,6 @@ dist_noinst_DATA = $(source_lexes)
 # now, we just mirror the usual standalone-library setup.
 
 libmir_pgsbox_la_CFLAGS = -Ipgsbox -I$(srcdir)/C
-libmir_pgsbox_la_LDFLAGS = -dynamic
 libmir_pgsbox_la_LIBADD = libmir_wcs.la
 libmir_pgsbox_la_SOURCES = \
  pgsbox/cpgsbox.c \

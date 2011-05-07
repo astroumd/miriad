@@ -4,8 +4,6 @@
 noinst_LTLIBRARIES = \
   libmir_linpack.la
 
-libmir_linpack_la_LDFLAGS = -dynamic
- 
 libmir_linpack_la_SOURCES = \
   caxpy.f cchdc.f cchdd.f cchex.f cchud.f ccopy.f cdotc.f cdotu.f cgbco.f \
   cgbdi.f cgbfa.f cgbsl.f cgeco.f cgedi.f cgefa.f cgesl.f cgtsl.f chico.f \
