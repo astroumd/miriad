@@ -11,9 +11,10 @@ dnl FIXME! Require Automake 1.11 for now, since we currently need
 dnl AM_DEFAULT_SOURCE_EXT to build all of the tasks. A lot
 dnl of people don't have Automake this recent. We need to settle
 dnl on a policy, but given the current Makefile.am code, 1.11 is
-dnl what's required.
-AM_INIT_AUTOMAKE([1.11 -Wobsolete -Wgnu -Wunsupported -Wno-syntax -Wno-portability
-                  foreign])
+dnl what's required. If the requirement is downgraded, the
+dnl silent-rules option must be removed.
+AM_INIT_AUTOMAKE([1.11 -Wobsolete -Wgnu -Wunsupported -Wno-syntax 
+		  -Wno-portability foreign silent-rules])
 
 dnl If using automake 1.9 / autoconf 2.59 (which is not uncommon),
 dnl 'docdir' isn't defined, and we need to define it ourselves.
