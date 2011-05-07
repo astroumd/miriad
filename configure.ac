@@ -358,12 +358,6 @@ dnl there is similarly context for this message.
 #include <X11/Intrinsic.h>])
 CPPFLAGS="$save_CPPFLAGS"
 
-x_libs="$X_PRE_LIBS $X_LIBS -lX11 -lXaw $X_EXTRA_LIBS"
-x_cflags="$X_CFLAGS"
-
-AC_SUBST(x_libs)
-AC_SUBST(x_cflags)
-
 AC_CHECK_LIB(readline, read_history)
 
 AC_CHECK_LIB(z, inflate)

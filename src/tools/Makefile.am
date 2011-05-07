@@ -28,8 +28,8 @@ tpcp_SOURCES = tpcp.c
 trim_SOURCES = trim.c
 
 xpanel_SOURCES = xpanel.c
-xpanel_CFLAGS = @x_cflags@ 
-xpanel_LDADD = @x_libs@ -lXt
+xpanel_CFLAGS = $(X_CFLAGS)
+xpanel_LDADD = $(X_PRE_LIBS) $(X_LIBS) -lX11 -lXt -lXaw $(X_EXTRA_LIBS)
 
 DOCINPUTS = $(bin_PROGRAMS:=.c)
 include $(top_srcdir)/mirdoc.mak

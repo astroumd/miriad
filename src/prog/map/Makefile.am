@@ -1,6 +1,5 @@
 include $(top_srcdir)/mircommon.mak
 
-AM_CFLAGS = @x_cflags@
 LDADD = $(prog_libs)
 
 ftasks = invert

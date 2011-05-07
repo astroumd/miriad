@@ -9,8 +9,6 @@
 
 include $(top_srcdir)/mircommon.mak
 
-AM_CFLAGS = @x_cflags@ 
-AM_CXXFLAGS = -I$(top_srcdir)/src/subs
 AM_FFLAGS = @no_globals@
 LDADD = $(prog_libs)
 

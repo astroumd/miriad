@@ -4,7 +4,6 @@
 
 include $(top_srcdir)/mircommon.mak
 
-AM_CFLAGS = @x_cflags@
 AM_FFLAGS = @no_globals@
 LDADD = $(prog_libs)
 

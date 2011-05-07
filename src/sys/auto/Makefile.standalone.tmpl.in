@@ -12,7 +12,6 @@ libdir = %libdir%
 bindir = %bindir%
 fincludedir = %fincludedir%
 
-x_libs = @x_libs@
 F77 = @F77@
 FFLAGS = @FFLAGS@
 LDFLAGS = @LDFLAGS@
@@ -22,7 +21,7 @@ RATTY = $(bindir)/ratty
 LIBTOOL = $(libdir)/miriad/libtool
 
 LINK = $(LIBTOOL) --tag=F77 --mode=link $(F77) $(FFLAGS) \
-  $(x_libs) $(LDFLAGS)
+  $(LDFLAGS)
 
 LIBS = $(libdir)/libmir.la
 
