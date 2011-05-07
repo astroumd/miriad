@@ -583,6 +583,7 @@ AC_CONFIG_FILES([
     src/prog/misc/Makefile
     src/prog/sma/Makefile
     src/prog/vis/Makefile
+    src/prog/atnf/Makefile
     src/prog/wsrt/Makefile
     src/sys/auto/Makefile
     src/sys/auto/Makefile.standalone.tmpl
@@ -591,12 +592,7 @@ AC_CONFIG_FILES([
     src/inc/cfg_maxdimc.h:src/inc/maxdimc.h.in
 ])
 
-
-dnl Not used??
-dnl    src/prog/eor/Makefile
-
 AC_OUTPUT
-
 
 dnl Summarize important configuration settings.
 
@@ -608,7 +604,6 @@ echo "MAXDIM2      : $MAXDIM2"
 echo "MAXIANT      : $MAXIANT"
 echo "MAXANT       : $MAXANT"
 echo "MAXANT2      : $MAXANT2"
-dnl echo "MAXBASE      : (MAXANT2*(MAXANT2-1))/2  (hardcoded)"
 echo "MAXBASE      : $MAXBASE"
 echo "MAXBASE2     : $MAXBASE2"
 echo "MAXCHAN      : $MAXCHAN"

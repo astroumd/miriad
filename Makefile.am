@@ -37,6 +37,7 @@ SUBDIRS = \
   src/prog/misc \
   src/prog/sma \
   src/prog/vis \
+  src/prog/atnf \
   src/prog/wsrt \
   src/sys/auto \
   src
