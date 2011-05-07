@@ -53,17 +53,6 @@ else
   no_globals=""
 fi
 
-dnl No F90 constructs allowed if an F77-only compiler. A better test
-dnl would be to do just see whether $F77 accepts F90 constructs.
-
-if test x"$F77" = xg77 -o x"$F77" = xf77; then
-  no_f90="-D NOF90"
-else
-  no_f90=""
-fi
-
-AC_SUBST(no_f90)
-
 dnl If using a GNU Fortran compiler (g77 or gfortran), give
 dnl -fno-backslash to interpret our backslashed strings
 dnl correctly.
