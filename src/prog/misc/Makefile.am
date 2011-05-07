@@ -2,6 +2,11 @@
 ## $Id$
 ##
 
+# We do not build 'mfile', which is written in C++ and has no
+# documentation. Nor do we build 'hexc', which seems entirely
+# redundant with 'hex' except that it's in C and has no
+# documentation.
+
 include $(top_srcdir)/mircommon.mak
 
 AM_CFLAGS = @x_cflags@ 
@@ -17,14 +22,11 @@ ftasks = \
   pntgen prthd prthis puthd remove rmdata \
   rmsfit sinbad sinpoly solar tacos taco telepar \
   warpfit xcorr	xfcor
-bin_PROGRAMS = $(ftasks) hexc mfile
+bin_PROGRAMS = $(ftasks)
 CLEANFILES = $(ftasks:=.f)
 EXTRA_DIST = $(ftasks:=.for)
 
 noinst_HEADERS = atmosph.h calc.h design.h listobs.h mathd.h pnt.h sinpoly.h
-
-hexc_SOURCES = hexc.c
-mfile_SOURCES = mfile.cc mfilelib.h
 
 dist-hook:
 	-rm -f $(distdir)/*.f

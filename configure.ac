@@ -34,8 +34,6 @@ dnl allows the vendor C compiler to override GCC.
 AC_PROG_F77
 AC_CHECK_PROG(CC, cc, cc)
 AC_PROG_CC
-AC_PROG_CXX
-AC_PROG_CPP
 AC_PROG_SED dnl $(SED) used in cat/Makefile.am
 
 AC_HEADER_STDC
