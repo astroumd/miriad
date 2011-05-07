@@ -166,9 +166,8 @@ dnl this allows the wcslib check for sincos to succeed later.
 AC_CHECK_LIB(m, cos)
 AC_CHECK_LIB(readline, read_history) dnl miriad.c
 AC_CHECK_HEADERS([stdlib.h]) dnl doc_atnf.c
-AC_CHECK_FUNCS([
-  strerror dnl bug.c
-  sincos dnl wcslib:wcstrig.c
+AC_CHECK_FUNCS([strerror dnl bug.c
+		sincos dnl wcslib:wcstrig.c
 ])
 
 
@@ -440,11 +439,7 @@ EOF
 
 dnl Make the files.
 
-AC_CONFIG_HEADERS([
-  config.h
-  borrow/wcslib/wcsconfig.h
-  borrow/wcslib/wcsconfig_f77.h
-])
+AC_CONFIG_HEADERS([config.h borrow/wcslib/wcsconfig.h borrow/wcslib/wcsconfig_f77.h])
 
 AC_CONFIG_FILES([
     Makefile
