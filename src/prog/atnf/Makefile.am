@@ -5,7 +5,6 @@ include $(top_srcdir)/mircommon.mak
 # like hooking it up to autotools right now. If someone needs one
 # of these tasks, I'll look into hooking it up.
 
-AM_FFLAGS = @no_globals@
 LDADD = $(prog_libs)
 
 ftasks = \

@@ -48,9 +48,7 @@ dnl the compiler is actually g77 but it is known under another name;
 dnl e.g. /absolute/path/to/g77 or g77-x.y.z or cpu-os-mach-g77.
 
 if test x"$F77" = xg77; then
-  no_globals="-fno-globals"
-else
-  no_globals=""
+   AM_FFLAGS="-fno-globals"
 fi
 
 dnl If using a GNU Fortran compiler (g77 or gfortran), give
@@ -58,7 +56,7 @@ dnl -fno-backslash to interpret our backslashed strings
 dnl correctly.
 
 if test x"$G77" = xyes; then
-   no_globals="$no_globals -fno-backslash"
+   AM_FFLAGS="$AM_FFLAGS -fno-backslash"
 fi
 
 dnl Turn off all warnings (by default)
@@ -70,14 +68,12 @@ AC_ARG_ENABLE([warnings],
     allwarningsok=$enableval, allwarningsok=no)
 
 if test x"$allwarningsok" = xno; then
-  no_globals="$no_globals -w"
+  AM_FFLAGS="$AM_FFLAGS -w"
 else
-  no_globals="$no_globals -Wall"
+  AM_FFLAGS="$AM_FFLAGS -Wall"
 fi
 
-AC_SUBST(no_globals)
-
-dnl end no_globals check
+AC_SUBST([AM_FFLAGS])
 
 AC_F77_LIBRARY_LDFLAGS
 AC_PROG_FC([g95 gfortran gfortran-mp-4.5])

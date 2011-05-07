@@ -4,7 +4,6 @@
 
 include $(top_srcdir)/mircommon.mak
 
-AM_FFLAGS = @no_globals@
 LDADD = $(prog_libs)
 
 ## keeping hatmap out of this, doesn't seem to build

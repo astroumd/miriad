@@ -4,7 +4,6 @@
 
 include $(top_srcdir)/mircommon.mak
 
-AM_FFLAGS = @no_globals@
 LDADD = $(prog_libs)
 
 # We name the executable 'mirclean' so as not to conflict with the 'make clean'

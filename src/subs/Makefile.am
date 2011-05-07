@@ -12,8 +12,6 @@ libmir_la_LIBADD = \
   $(top_builddir)/borrow/wcslib/libmir_pgsbox.la \
   $(PGPLOT_LIB)
 
-AM_FFLAGS = @no_globals@
-
 nodist_libmir_la_SOURCES = \
   align.f amphase.f angles.f antennas.f \
   ari.f assert.f atjones.f axistype.f basant.f bessel.f \

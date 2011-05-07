@@ -4,7 +4,6 @@
 
 include $(top_srcdir)/mircommon.mak
 
-AM_FFLAGS = @no_globals@
 LDADD = $(prog_libs)
 
 ## Removed mbanal, doesn't build in regular miriad anyway...
