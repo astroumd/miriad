@@ -379,27 +379,46 @@ PGPLOT_LIB='$(top_builddir)/borrow/pgplot/libpgplot.la'
 AC_SUBST(PGPLOT_LIB)
 
 
-dnl WCSLIB needs sufficiently new flex
+dnl WCSLIB needs sufficiently new flex, but casual users won't have
+dnl it. If we're building from a tarball, flex isn't needed, so
+dnl accommodate that situation.
 
-AC_MSG_CHECKING([if $LEX is flex >= 2.5.9])
-lexversion=`$LEX --version`
-
-if echo "$lexversion" |$GREP "^flex " >/dev/null ; then
-   :
+if test x"$LEX" = x":" ; then
+  flexnotok=true
+  flexwhy="no; not installed"
 else
-   AC_MSG_RESULT([not flex])
-   AC_MSG_ERROR([wcslib in MIRIAD requires flex to be installed])
+  AC_MSG_CHECKING([if $LEX is flex >= 2.5.9])
+  lexversion=`$LEX --version`
+
+  if echo "$lexversion" |$GREP "^flex " >/dev/null ; then
+    vcode=`echo "$lexversion" |sed -e "s/^flex //" |\
+		$AWK -F. '{print $1*10000 + $2*100 + $3}'`
+    if test $vcode -lt 20509 ; then
+      AC_MSG_RESULT([version $lexversion too old])
+      flexnotok=true
+      flexwhy="no; need version >= 2.5.9"
+    else
+      AC_MSG_RESULT([yes])
+      flexnotok=false
+      flexwhy="yes"
+    fi
+  else
+    AC_MSG_RESULT([not flex])
+    flexnotok=true
+    flexwhy="no; not GNU flex"
+  fi
 fi
 
-vcode=`echo "$lexversion" |sed -e "s/^flex //" |\
-	    $AWK -F. '{print $1*10000 + $2*100 + $3}'`
-
-if test $vcode -lt 20509 ; then
-   AC_MSG_RESULT([version $lexversion too old])
-   AC_MSG_ERROR([wcslib in MIRIAD requires flex of version at least 2.5.9])
+if $flexnotok ; then
+  LEX="$MISSING flex-2.5.9"
+  AC_MSG_CHECKING([for pregenerated lexer source $srcdir/borrow/wcslib/wcsbth-amhack.c])
+  if test -f $srcdir/borrow/wcslib/wcsbth-amhack.c ; then
+    AC_MSG_RESULT([yes])
+  else
+    AC_MSG_RESULT([no])
+    AC_MSG_ERROR([you need GNU flex 2.5.9 or newer to build from scratch (see README)])
+  fi
 fi
-
-AC_MSG_RESULT([yes])
 
 
 dnl Other setup for WCSLIB ...
@@ -497,3 +516,4 @@ echo
 echo "Building docs  : $docswhy"
 echo "Building xpanel: $xawwhy"
 echo "F77 Warnings   : $allwarningsok (change with --(en|dis)able-warnings)"
+echo "flex available : $flexwhy"
