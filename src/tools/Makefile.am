@@ -7,7 +7,11 @@ include $(top_srcdir)/mircommon.mak
 ## leaving mirnewer out, new build system obsoletes its use
 
 bin_PROGRAMS = detab doc doc_atnf docfmt docman flint ratty intf2c \
-  miriad miriad_er tpcp trim xpanel
+  miriad miriad_er tpcp trim
+
+if HAVE_XAW
+bin_PROGRAMS += xpanel
+endif
 
 AM_CFLAGS = -I$(top_srcdir)/src/subs
 

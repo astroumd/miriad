@@ -135,27 +135,29 @@ if test x"$no_x" = xyes; then
   AC_MSG_ERROR([X11 libraries are required to build MIRIAD])
 fi
 
+have_xaw=true
+xawwhy=yes
+
 dnl Must set action-if-found to nonempty to avoid
 dnl the default action of adding -lXaw to LIBS and
 dnl defining HAVE_LIBXAW.
 AC_CHECK_LIB([Xaw], [XawScrollbarSetThumb], [true],
-  dnl the previous line of output will indicate what was not
-  dnl found, so there is some context for this message:
-  [AC_MSG_ERROR([you need to install the Xaw library])],
+  [have_xaw=false xawwhy="no; libXaw not found or not linkable"],
   [$X_PRE_LIBS $X_LIBS -lX11 $X_EXTRA_LIBS])
 
-save_CPPFLAGS="$CPPFLAGS"
-CPPFLAGS="$CPPFLAGS $X_CFLAGS"
-AC_CHECK_HEADERS([X11/Xresource.h],[],
-  dnl there is similarly context for this message.
-  [AC_MSG_ERROR([you may need to install X11 development files])],)
-AC_CHECK_HEADERS([X11/Xaw/Box.h],[],
-  dnl there is similarly context for this message.
-  [AC_MSG_ERROR([you may need to install Xaw development files])],
-  [#include <X11/Xresource.h>
-   #include <X11/Intrinsic.h>])
-CPPFLAGS="$save_CPPFLAGS"
+if $have_xaw ; then
+  save_CPPFLAGS="$CPPFLAGS"
+  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+  AC_CHECK_HEADER([X11/Xresource.h],[],
+    [have_xaw=false xawwhy="no; header X11/Xresource.h not found or not compilable"],)
+  AC_CHECK_HEADER([X11/Xaw/Box.h],[],
+    [have_xaw=false xawwhy="no; header X11/Xaw/Box.h not found or not compilable"],
+    [#include <X11/Xresource.h>
+     #include <X11/Intrinsic.h>])
+  CPPFLAGS="$save_CPPFLAGS"
+fi
 
+AM_CONDITIONAL(HAVE_XAW,$have_xaw)
 
 dnl Miscellaneous library functions, headers, etc
 dnl
@@ -479,21 +481,19 @@ AC_OUTPUT
 
 dnl Summarize important configuration settings.
 
-echo ""
-echo "TELESCOPE    : $TELESCOPE"
-echo ""
-echo "MAXDIM       : $MAXDIM"
-echo "MAXDIM2      : $MAXDIM2"
-echo "MAXIANT      : $MAXIANT"
-echo "MAXANT       : $MAXANT"
-echo "MAXANT2      : $MAXANT2"
-echo "MAXBASE      : $MAXBASE"
-echo "MAXBASE2     : $MAXBASE2"
-echo "MAXCHAN      : $MAXCHAN"
-echo "MAXWIN       : $MAXWIN"
-echo "MAXWIDE      : $MAXWIDE"
-echo "MAXNAX       : $MAXNAX"
-echo "MAXBUF       : $MAXBUF"
 echo
-echo "Building docs: $docswhy"
-echo "F77 Warnings : $allwarningsok (change with --(en|dis)able-warnings)"
+echo "Telescope      : $TELESCOPE"
+echo
+echo "    MAXDIM(2)  : $MAXDIM ($MAXDIM2)"
+echo "    MAXIANT    : $MAXIANT"
+echo "    MAXANT(2)  : $MAXANT ($MAXANT2)"
+echo "    MAXBASE(2) : $MAXBASE ($MAXBASE2)"
+echo "    MAXCHAN    : $MAXCHAN"
+echo "    MAXWIN     : $MAXWIN"
+echo "    MAXWIDE    : $MAXWIDE"
+echo "    MAXNAX     : $MAXNAX"
+echo "    MAXBUF     : $MAXBUF"
+echo
+echo "Building docs  : $docswhy"
+echo "Building xpanel: $xawwhy"
+echo "F77 Warnings   : $allwarningsok (change with --(en|dis)able-warnings)"
