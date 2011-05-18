@@ -260,48 +260,39 @@ def_maxnax=7
 def_maxbuf=10000000
 
 case $TELESCOPE in
-     "ata")  echo "Selecting ATA-350 array"
-        def_maxiant=2048
-	continue;;
-     "atnf")  echo "Selecting ATNF array"
-	continue;;
-     "bima")  echo "Selecting old BIMA array"
-	continue;;
-     "carma")  echo "Selecting CARMA array"
+     ata)
+        def_maxiant=2048 ;;
+     atnf) ;;
+     bima) ;;
+     carma)
 	def_maxwin=32
 	def_maxwide=32
-	def_maxchan=8192
-	continue;;
-     "lofar")  echo "Selecting LOFAR simulation 2048-array"
+	def_maxchan=8192 ;;
+     lofar)
         def_maxiant=2048
         def_maxant=2048
-        def_maxbase=2096128
-	continue;;
-     "fasr") echo "Selecting FASR simulation 128-array"
+        def_maxbase=2096128 ;;
+     fasr)
 	def_maxant=128
 	def_maxant2=128
-        def_maxbase=8128
-	continue;;
-     "gmrt")  echo "Selecting GMRT array"
-	def_maxant=30
-	continue;;
-     "sma")  echo "Selecting SMA array"
+        def_maxbase=8128 ;;
+     gmrt)
+	def_maxant=30 ;;
+     sma)
         def_maxdim=4096
 	def_maxant=30
 	def_maxbase=435
 	def_maxchan=12288
 	def_maxwin=48
-	def_maxwide=50
-	continue;;
-     "wsrt")  echo "Selecting WSRT array"
-	continue;;
-     "ral512") echo "Selecting RAL simulation 512-array"
+	def_maxwide=50 ;;
+     wsrt) ;;
+     ral512)
         def_maxiant=2048
         def_maxant=512
         def_maxant2=512
-        def_maxbase=4096
-	continue;;
-     *) echo "Not a valid array"
+        def_maxbase=4096 ;;
+     *)
+	AC_MSG_ERROR([unknown telescope choice "$TELESCOPE"])
 esac
 
 
