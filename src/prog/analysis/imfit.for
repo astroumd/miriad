@@ -120,13 +120,14 @@ c    rjs  27oct98 Improved format statements.
 c    rjs  30jun99 Ditto.
 c    paj  28Mar03 Fix bug in uncertainty estimates
 c    pkgw 04May11 Increase buffer size for input/output filenames.
+c    pkgw 20May11 Increase data buffer from 1M to 10M
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	include 'maxnax.h'
 	include 'mem.h'
 c
 	character version*(*)
-	parameter(version='version 1.0 05-may-11')
+	parameter(version='version 1.0 20-may-11')
 	integer MAXBOX,MAXVAR
 	parameter(MAXBOX=1024,MAXVAR=30)
 c

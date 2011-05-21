@@ -1,7 +1,7 @@
 	integer LEVEL,GAUSSIAN,DISK,POINT,BEAM
 	parameter(LEVEL=1,GAUSSIAN=2,DISK=3,POINT=4,BEAM=5)
 	integer MAXSRC,MAXDATA
-	parameter(MAXSRC=10,MAXDATA=1000000)
+	parameter(MAXSRC=10,MAXDATA=10000000)
 	integer nsrc,ndata
 	integer srctype(MAXSRC)
 	real fwhm1(MAXSRC),fwhm2(MAXSRC),pa(MAXSRC),flux(MAXSRC)
