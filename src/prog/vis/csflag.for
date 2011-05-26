@@ -74,6 +74,8 @@ c     pjt       14sep09 Add cfraction for sza
 c     pjt       28nov09 remove confusing sza= keyword, just auto-scan 15/23
 c                       auto-fill antdiam array
 c     pjt       23aug10 Allow subarray to see the other antennas
+c     pjt       26may11 fix up SZA looking only at non-SZA for all=true
+c                       
 c
 c  Todo:
 c     - options=noapply ???
@@ -86,7 +88,7 @@ c---------------------------------------------------------------------------
 	implicit none
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='csflag: version 26-aug-10')
+	parameter(version='csflag: version 26-may-11')
 c
 	complex data(MAXCHAN)
 	double precision preamble(5), antpos(3*MAXANT), lat
@@ -95,8 +97,9 @@ c
         real antdiam(MAXANT),elAxisH(MAXANT),sweptVD(MAXANT)
         real cfraction(3), sfraction
 	character in*120
-	logical flags(MAXCHAN),shadow1,shadow2,carma,sza,doshadow,qall
-        external shadow1,shadow2
+	logical flags(MAXCHAN),carma,sza,doshadow,qall
+        logical  shadow1,shadow2,shadow3
+        external shadow1,shadow2,shadow3
 
         common /counters/sza,ntoto,ntoth,ntotc,ntots,ntota,ntot6
 
@@ -225,12 +228,11 @@ c
            call xyz2enu(nants, antpos, lat) 
         endif
         do while(nv.gt.0)
-           if (Qall) then
-              doshadow = shadow1(lVis,preamble,nants,
-     *                         antdiam,antpos,elAxisH,sweptVD)
-           else
-              doshadow = shadow2(lVis,preamble,nants,
-     *                         antdiam,antpos)
+           doshadow = shadow2(lVis,preamble,nants,
+     *          antdiam,antpos)
+           if (Qall .and. .not.doshadow) then
+              doshadow = shadow3(lVis,preamble,nants,
+     *             antdiam,antpos,elAxisH,sweptVD)
            endif
            if (doshadow) then
               nflag = nflag + 1
@@ -406,6 +408,7 @@ c
       
       end
 c-----------------------------------------------------------------------
+c
 c  shadow1: swept volume computation (courtesy: Eric Leitch)
 c
       logical function shadow1(lVis,p,nants,antdiam,enu,elAxisH,sweptVD)
@@ -471,6 +474,86 @@ c              write(*,*) 'chk ',i0,j,dang,anglim,antaz(i0),antel(i0)
 c                 write(*,*) 'sweep ',i0,' by ',j
                   call counter(i1,i2)
                   shadow1 = .TRUE.
+                  return
+               endif
+            endif
+         enddo
+      enddo
+      
+      end
+c-----------------------------------------------------------------------
+c
+c  shadow3: swept volume computation (courtesy: Eric Leitch)
+c           but not using ants from its own array
+c           currently hardcoded for SZA (16-23) vs. 1-15.
+c
+      logical function shadow3(lVis,p,nants,antdiam,enu,elAxisH,sweptVD)
+      implicit none
+      integer lVis
+      integer nants
+      double precision p(5), enu(nants,3)
+      real antdiam(nants), elAxisH(nants), sweptVD(nants)
+c
+      include 'maxdim.h'
+      include 'mirconst.h'
+      double precision de0,dn0,du0,de1,dn1,du1,mag,saz,caz,sel,cel
+      double precision cdang, dang, anglim
+      integer i0,i1,i2,i,j
+      logical cross
+c     
+      double precision antel(MAXANT), antaz(MAXANT)
+      
+      call uvgetvrd(lVis,'antel',antel,nants)
+      call uvgetvrd(lVis,'antaz',antaz,nants)
+
+c-pjt-test
+c     do i=1,nants
+c        antel(i) = 10.0
+c        antaz(i) = 0.0
+c     enddo
+      
+      call basant(p(5),i1,i2)
+      if (i1.gt.nants .or. i2.gt.nants) call bug('f',
+     *          'odd....not enough antdiam known')
+
+c
+c  j-loop over both i1 shadowing i2, or vice versa.
+c
+      shadow3 = .FALSE.
+
+c  loop over i1 and i2, discard autocorrellations
+      do i=1,2
+         i0 = i1
+         if (i.eq.2) i0 = i2
+         saz = sin(antaz(i0)*DD2R)
+         caz = cos(antaz(i0)*DD2R)
+         sel = sin(antel(i0)*DD2R)
+         cel = cos(antel(i0)*DD2R)
+         do j=1,nants
+            cross = .FALSE.
+            if (.not.cross) cross = i0.le.15 .and. j.ge.16
+            if (.not.cross) cross = i0.ge.16 .and. j.le.15
+            if (cross) then
+               du1 = enu(j,3) + elAxisH(j) - enu(i0,3) - elAxisH(i0)
+               dn1 = enu(j,2) - enu(i0,2)
+               de1 = enu(j,1) - enu(i0,1)
+               mag = sqrt(du1*du1 + dn1*dn1 + de1*de1)
+               du0 = mag*sel
+               de0 = mag*cel*saz
+               dn0 = mag*cel*caz
+               cdang = (du0*du1 + de0*de1 + dn0*dn1)/(mag*mag)
+               dang = abs(acos(cdang))
+               anglim = (antdiam(i0)+sweptVD(j))/(2*mag)
+               if (anglim.lt.1d0) then
+                  anglim = asin(anglim)
+               else
+                  anglim = DPI_2
+               endif
+c              write(*,*) 'chk ',i0,j,dang,anglim,antaz(i0),antel(i0)
+               if (dang < anglim) then
+c                 write(*,*) 'sweep ',i0,' by ',j
+                  call counter(i1,i2)
+                  shadow3 = .TRUE.
                   return
                endif
             endif
