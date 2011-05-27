@@ -6,18 +6,27 @@ c& pjt
 c: flagging
 c+
 c	CSFLAG is a MIRIAD task which flags correlations where an array
-c       of variable sized antennae could shadow each other.
+c       of variable sized antennae could geometrically shadow each other.
 c       An array of antenna diameters must be given, the number of antenna
 c       must be exactly equal that in the dataset.
 c       Although UVFLAG can also be used, the current visibility format
 c       does not easily allow for variable sized antennae shadowing 
-c       calculations, and although this program was designed for CARMA,
+c       calculations. Although this program was designed for CARMA,
 c       it should work for any heterogenous array.
+c
+c       It is also possible to define a sub-array, and  find out
+c       if antennas from the remaining antennas are shadowing the antennas
+c       in the sub-array. With the caveat of not knowing exactly where the
+c       other antennae are pointing, a swept volume algorithm is used for
+c       this instead.
 c
 c       Note that this program only SETS flags, never unsets. Multiple
 c       runs of csflag with decreasing values of cfraction= will thus 
 c       NOT have the effect you think it might have. Make a backup
-c       of your flags/wflags files if you want to recover
+c       of your flags/wflags files if you want to recover.
+c       Check with
+c         uvflag vis= flagval=flag options=noapply
+c       to see how many active flags you have now.
 c
 c@ vis
 c	The input visibility file to be flagged. No default.
@@ -47,16 +56,25 @@ c       smaller values to try and keep some partially shadowed data;
 c       but check your calibrator(s) how well this is expected to work.
 c       Default: 1,1,1
 c@ sfraction
-c       Cheat to make the swept volume bigger by this factor
+c       Another cheat, like cfraction, to make the swept volume smaller/bigger 
+c       by this factor
 c       Default: 1
+c@ sarray
+c       Specify the sub-array (if there is such a thing) for use in the
+c       Swept Volume method of flagging. If you specify 0, it will first
+c       scan the visibility data to find out which ants are present, and
+c       will use these for the sub-array. All other antennas in the 
+c       antenna position array will then be used in the Swept Volume
+c       array.
+c       Default: not used.
 c@ all
 c       By default only baselines from the dataset itself are investigated
 c       if an antenna of a pair is shadowed. By setting all=true you can
-c       allow the other antennae to be investigated. For example in the sci2
-c       subarray with only C16-23, the C1-15 can actually cause shadowing.
-c       However, more details geometric modeling, as well as exact knowledge
-c       where C1-15 are pointing, would be needed to do a correct calculation,
-c       which is not done here (yet).
+c       allow the other antennae in the array to be taken into account.
+c       This is a very conservative algorithm, and is generally not needed 
+c       in most circumstances. Usually the sarray= keyword is sufficient to
+c       compute how the non-subarray antannea are shadowing the subarray
+c       in the current dataset.
 c       Also known as the Swept Volume method (Eric Leitch)
 c       Default: false
 c
@@ -75,6 +93,7 @@ c     pjt       28nov09 remove confusing sza= keyword, just auto-scan 15/23
 c                       auto-fill antdiam array
 c     pjt       23aug10 Allow subarray to see the other antennas
 c     pjt       26may11 fix up SZA looking only at non-SZA for all=true
+c     pjt       27may11 add sarray= and restore all= to old meaning
 c                       
 c
 c  Todo:
@@ -88,12 +107,13 @@ c---------------------------------------------------------------------------
 	implicit none
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='csflag: version 26-may-11')
+	parameter(version='csflag: version 27-may-11')
 c
 	complex data(MAXCHAN)
 	double precision preamble(5), antpos(3*MAXANT), lat
 	integer lVis,ntot,nflag,i,nv,nants,na
         integer ntoto,ntoth,ntotc,ntots,ntota,ntot6,ncf
+        integer ants(MAXANT), i1, i2, mants, iants(MAXANT)
         real antdiam(MAXANT),elAxisH(MAXANT),sweptVD(MAXANT)
         real cfraction(3), sfraction
 	character in*120
@@ -114,6 +134,7 @@ c
         call keyl('carma',carma,.TRUE.)
         call mkeyr('cfraction',cfraction,3,ncf)
         call keyr('sfraction',sfraction,1.0)
+        call mkeyi('sarray',iants,MAXANT,mants)
         call keyl('all',Qall,.FALSE.)
 	call keyfin
 
@@ -159,6 +180,40 @@ c Open files
 c
         call uvopen(lVis,in,'old')
         call uvset(lVis,'preamble','uvw/time/baseline',0,0.,0.,0.)
+        call uvread(lVis,preamble,data,flags,MAXCHAN,nv)
+        if (nv.eq.0) call bug('f','No data')
+        call uvgetvri(lVis,'nants',nants,1)
+
+        if (mants.eq.1 .and. iants(1).eq.0) then
+           call bug('i','Scanning file for subarray')
+           do i1=1,nants
+              ants(i1) = 0              
+           enddo
+           do while (nv.gt.0) 
+              call basant(preamble(5),i1,i2)
+              ants(i1) = 1
+              ants(i2) = 1
+              call uvread(lVis,preamble,data,flags,MAXCHAN,nv)
+           enddo
+           do i1=1,nants
+              write(*,*) 'Ants:',i1,ants(i1)
+           enddo
+           call uvrewind(lVis)
+           call uvread(lVis,preamble,data,flags,MAXCHAN,nv)
+        else if (mants.gt.0) then
+           write(*,*) 'Predefined sub-array'
+           do i1=1,nants
+              ants(i1) = 0
+           enddo
+           do i1=1,mants
+              if (iants(i1).lt.0 .or. iants(i1).gt.nants) call bug('f',
+     *             'Illegal antenna number in sarray')
+              ants(iants(i1)) = 1
+           enddo
+           do i1=1,nants
+              write(*,*) 'Ants:',i1,ants(i1)
+           enddo
+        endif
 
 	ntot  = 0
 	nflag = 0
@@ -171,10 +226,6 @@ c
 c
 c Loop over visibilities and set flags
 c
-        call uvread(lVis,preamble,data,flags,MAXCHAN,nv)
-        if (nv.eq.0) call bug('f','No data')
-        
-        call uvgetvri(lVis,'nants',nants,1)
         if (carma) then
            if (nants.eq.15) then
               call bug('i',
@@ -222,17 +273,23 @@ c
            enddo
         endif
         call uvgetvrd(lVis,'antpos',antpos,3*nants)
-        if (Qall) then
+        if (Qall .or. mants.gt.0) then
            write(*,*) 'Converting antpos XYZ to ENU'
            call uvgetvrd(lVis,'latitud',lat,1)
            call xyz2enu(nants, antpos, lat) 
         endif
         do while(nv.gt.0)
-           doshadow = shadow2(lVis,preamble,nants,
-     *          antdiam,antpos)
-           if (Qall .and. .not.doshadow) then
-              doshadow = shadow3(lVis,preamble,nants,
+           if (Qall) then
+              doshadow = shadow2(lVis,preamble,nants,
      *             antdiam,antpos,elAxisH,sweptVD)
+           else
+              if (mants.gt.0) then
+                 doshadow = shadow3(lVis,preamble,nants,
+     *                antdiam,antpos,elAxisH,sweptVD,ants)
+              else
+                 doshadow = shadow1(lVis,preamble,nants,
+     *             antdiam,antpos)
+              endif
            endif
            if (doshadow) then
               nflag = nflag + 1
@@ -333,7 +390,9 @@ c
         end
 
 c-----------------------------------------------------------------------
-      logical function shadow2(lVis, p, nants, antdiam, antpos)
+c  shadow1: simple projected-UV shadowing calculation
+c
+      logical function shadow1(lVis, p, nants, antdiam, antpos)
       implicit none
       integer lVis
       integer nants
@@ -346,7 +405,7 @@ c
       double precision u(MAXANT), v(MAXANT), w(MAXANT),uu,vv,ww
       integer i0,i1,i2,i,j
       integer pjt
-c     pjt = debug, set it to < 0 if you want to see UVW's
+c     pjt = debug, set it to < 0 if you want to see UVW's once
       data pjt/0/
       save pjt
 
@@ -383,7 +442,7 @@ c     pjt = debug, set it to < 0 if you want to see UVW's
 c
 c  j-loop over both i1 shadowing i2, or vice versa.
 c
-      shadow2 = .FALSE.
+      shadow1 = .FALSE.
       do j=1,2
          if (j.eq.1) i0=i1
          if (j.eq.2) i0=i2
@@ -399,7 +458,7 @@ c
                if (uu*uu+vv*vv .le. limit  .and.  ww.ge.0) then
                   pjt=pjt+1
                   call counter(i1,i2)
-                  shadow2 = .TRUE.
+                  shadow1 = .TRUE.
                   return
                endif
             endif
@@ -409,9 +468,9 @@ c
       end
 c-----------------------------------------------------------------------
 c
-c  shadow1: swept volume computation (courtesy: Eric Leitch)
+c  shadow2: swept volume computation (courtesy: Eric Leitch)
 c
-      logical function shadow1(lVis,p,nants,antdiam,enu,elAxisH,sweptVD)
+      logical function shadow2(lVis,p,nants,antdiam,enu,elAxisH,sweptVD)
       implicit none
       integer lVis
       integer nants
@@ -442,7 +501,7 @@ c     enddo
 c
 c  j-loop over both i1 shadowing i2, or vice versa.
 c
-      shadow1 = .FALSE.
+      shadow2 = .FALSE.
 
 c  loop over i1 and i2, discard autocorrellations
       do i=1,2
@@ -473,7 +532,7 @@ c              write(*,*) 'chk ',i0,j,dang,anglim,antaz(i0),antel(i0)
                if (dang < anglim) then
 c                 write(*,*) 'sweep ',i0,' by ',j
                   call counter(i1,i2)
-                  shadow1 = .TRUE.
+                  shadow2 = .TRUE.
                   return
                endif
             endif
@@ -487,10 +546,11 @@ c  shadow3: swept volume computation (courtesy: Eric Leitch)
 c           but not using ants from its own array
 c           currently hardcoded for SZA (16-23) vs. 1-15.
 c
-      logical function shadow3(lVis,p,nants,antdiam,enu,elAxisH,sweptVD)
+      logical function shadow3(lVis,p,nants,antdiam,enu,elAxisH,
+     *                         sweptVD,ants)
       implicit none
       integer lVis
-      integer nants
+      integer nants, ants(nants)
       double precision p(5), enu(nants,3)
       real antdiam(nants), elAxisH(nants), sweptVD(nants)
 c
@@ -531,8 +591,9 @@ c  loop over i1 and i2, discard autocorrellations
          cel = cos(antel(i0)*DD2R)
          do j=1,nants
             cross = .FALSE.
-            if (.not.cross) cross = i0.le.15 .and. j.ge.16
-            if (.not.cross) cross = i0.ge.16 .and. j.le.15
+            if (.not.cross) cross = ants(i0).eq.0 .and. ants(j).eq.1
+            if (.not.cross) cross = ants(i0).eq.1 .and. ants(j).eq.0
+c           write(*,*) 'CROSS: ',i0,j,ants(i0),ants(j),cross
             if (cross) then
                du1 = enu(j,3) + elAxisH(j) - enu(i0,3) - elAxisH(i0)
                dn1 = enu(j,2) - enu(i0,2)
