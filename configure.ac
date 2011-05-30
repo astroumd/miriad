@@ -113,7 +113,9 @@ AC_MSG_CHECKING([if the linker accepts $commonflag])
 LDFLAGS_save="$LDFLAGS"
 LDFLAGS="$LDFLAGS $commonflag"
 
-AC_LINK_IFELSE([int main (void) { return 0; }],[
+AC_LINK_IFELSE([
+   AC_LANG_PROGRAM([[]],[[]])
+],[
    AC_MSG_RESULT([yes])
 ],[
    AC_MSG_RESULT([no])
