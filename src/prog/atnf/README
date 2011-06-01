@@ -1,7 +1,9 @@
-These are routines specific to the ATCA.
+These are routines specific to the ATCA/ATNF
+
 Specifically it should also be noted that some of 
 their programs share the name with ours, and have
-been renamed with 'at' prepended:
+been renamed with 'at_' prepended to prevent conflicts:
 
 
-uvplt	->	atuvplt		(in addition we also have smauvplt)
+uvplt	->	at_uvplt	(in addition we also have smauvplt)
+mfcal   ->      at_mfcal
