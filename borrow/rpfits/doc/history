@@ -1,0 +1,30 @@
+A few historical notes on RPFITS
+--------------------------------
+
+RPFITS was developed c1984 by Ray Norris and so is not much younger 
+than FITS itself which explains some of its eccentricities.  At that 
+time FITS didn't have a floating point format, everything had to be
+converted to integer.  RPFITS originally went with that but switched
+to VAX floating point and 2560-byte blocks when the ATCA came into 
+operation to cope with an IO bottle-neck between correlator and tape
+via a VAX.  Also, for real-time use with data streamed to tape, GCOUNT 
+is normally set to 0 in the header - and that's still the case even 
+though data now goes to disk!  Thus RPFITS readers are required to 
+expand output files on the fly.  This was a challenge to code in AIPS 
+in 1985 - it didn't support file expansion because Modcomps couldn't
+do it.
+
+RPFITS was designed for visibility data from the ATCA and was used 
+initially for the PTI (Parkes-Tidbinbilla Interferometer).  No thought 
+at all was given to single dish data.  If I remember correctly, it was 
+adapted for the Parkes multibeam system in the mid-1990s via the simple 
+expedient of storing RA, Dec, and UTC (the position timestamp) in the 
+UU, VV, and WW random parameters, with BASELINE used for the beam 
+number.  With this, none of the low-level RPFITS IO code needed to be
+changed - how's that for recycling!
+
+The name "RPFITS" came from "RadioPhysics FITS", Radiophysics being 
+the precursor of ATNF.  However, its oddities led Eric Greisen c1990
+to dub it "Ray's Pseudo-FITS" which is how I still think of it!
+
+2010/11/12 MRC
