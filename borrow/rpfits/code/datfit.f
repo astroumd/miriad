@@ -26,12 +26,7 @@
 * $Id$
 *-----------------------------------------------------------------------
       INTEGER   IMON, IDAY, IYEAR, IERR
-      INTEGER*4 TIME, TARRAY(9)
       CHARACTER INDATE*8, NEWDAT*12, OLDDAT*(*)
-
-      EQUIVALENCE (IDAY,  TARRAY(4))
-      EQUIVALENCE (IMON,  TARRAY(5))
-      EQUIVALENCE (IYEAR, TARRAY(6))
 *-----------------------------------------------------------------------
       IF (LEN(OLDDAT).GE.8 .AND. OLDDAT.NE.' ') THEN
          IF (OLDDAT(3:3).NE.'/') THEN
@@ -70,12 +65,12 @@
 *        Years written at Mopra past 1999.
          IF (IYEAR.LT.70) IYEAR = IYEAR + 100
 
+         IYEAR = 1900 + IYEAR
+
       ELSE
 *        Get the current UTC date.
-         CALL GMTIME(TIME(), TARRAY)
+         CALL UTDATE (IYEAR, IMON, IDAY)
       END IF
-
-      IYEAR = 1900 + IYEAR
 
       WRITE (NEWDAT, '(I4.4,2(A,I2.2))') IYEAR, '-', IMON, '-', IDAY
 
