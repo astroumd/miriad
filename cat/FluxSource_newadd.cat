@@ -12,100 +12,47 @@
 # Enter new data here (1st 6 columns required, BEGIN WITH NO HASH), for example:
 # Source   Day.UT          Freq(GHz)  Flux(Jy)  RMS(Jy) Reference PrimaryCal PrimCalFlux(Jy)
 #
-MWC349       2011-MAY-08.0    93.1     1.18     0.18   CARMA8       URANUS
-3C84         2011-MAY-08.0    93.1    11.03     1.65   CARMA8       URANUS
-MWC349       2011-MAY-06.0    91.8     1.17     0.18   CARMA8       URANUS
-3C84         2011-MAY-06.0    91.8    10.13     1.52   CARMA8       URANUS
-MWC349       2011-MAY-09.0    93.1     1.15     0.17   CARMA8       URANUS
-2025+337     2011-MAY-09.0    93.1     1.41     0.21   CARMA7       URANUS
-3C454.3      2011-MAY-09.0    93.1    15.29     2.29   CARMA7       URANUS
-2232+117     2011-MAY-09.0    93.1     1.18     0.18   CARMA7       URANUS
-2148+069     2011-MAY-09.0    93.1     1.80     0.27   CARMA7       URANUS
-2232+117     2011-MAY-09.0    91.8     1.24     0.19   CARMA7       URANUS
-3C454.3      2011-MAY-09.0    91.8    15.08     2.26   CARMA7       URANUS
-0006-063     2011-MAY-09.0    91.8     1.46     0.22   CARMA7       URANUS
-0108+015     2011-MAY-09.0    91.8     1.87     0.28   CARMA7       URANUS
-3C345        2011-MAY-13.0    91.8     3.53     0.53   CARMA7       NEPTUNE
-MWC349       2011-MAY-13.0    91.8     1.15     0.17   CARMA7       NEPTUNE
-3C345        2011-MAY-14.0   228.1     1.49     0.22   CARMA8       MWC349       1.9
-3C345        2011-MAY-14.0    93.1     3.56     0.53   CARMA8       MWC349       1.2
-3C273        2011-MAY-05.0   228.1     3.90     0.59   CARMA8       3C345        1.5
-0927+390     2011-MAY-05.0   228.1     1.86     0.28   CARMA8       3C345        1.5
-3C273        2011-MAY-05.0    93.1    11.87     1.78   CARMA8       3C345        3.5
-0927+390     2011-MAY-05.0    93.1     5.33     0.80   CARMA8       3C345        3.5
-0927+390     2011-MAY-10.0    93.1     5.89     0.88   CARMA7       3C273        11.9
-0748+240     2011-MAY-10.0    93.1     1.02     0.15   CARMA7       3C273        11.9
-0757+099     2011-MAY-10.0    93.1     1.36     0.20   CARMA7       3C273        11.9
-0750+125     2011-MAY-10.0    99.3     2.30     0.34   CARMA7       3C273        11.9
-1613+342     2011-MAY-14.0    91.8     1.54     0.23   CARMA8       NEPTUNE
-1751+096     2011-MAY-14.0    91.8     5.49     0.82   CARMA8       NEPTUNE
-2015+372     2011-MAY-14.0    91.8     2.56     0.38   CARMA8       NEPTUNE
-2007+404     2011-MAY-14.0    91.8     1.84     0.28   CARMA8       NEPTUNE
-MWC349       2011-MAY-14.0    91.8     1.11     0.17   CARMA8       NEPTUNE
-MWC349       2011-MAY-15.0    99.3     1.16     0.17   CARMA8       URANUS
-2025+337     2011-MAY-15.0    99.3     1.80     0.27   CARMA8       URANUS
-2015+372     2011-MAY-15.0    99.3     2.92     0.44   CARMA8       URANUS
-3C345        2011-MAY-16.0   228.1     1.82     0.27   CARMA8       MWC349       1.9
-1635+381     2011-MAY-16.0   228.1     3.51     0.53   CARMA8       MWC349       1.9
-1613+342     2011-MAY-16.0   228.1     0.69     0.10   CARMA8       MWC349       1.9
-1550+054     2011-MAY-16.0   228.1     0.72     0.11   CARMA8       MWC349       1.9
-1549+026     2011-MAY-16.0   228.1     1.33     0.20   CARMA8       MWC349       1.9
-1751+096     2011-MAY-16.0   228.1     2.92     0.44   CARMA8       MWC349       1.9
-1743-038     2011-MAY-16.0   228.1     1.87     0.28   CARMA8       MWC349       1.9
-1733-130     2011-MAY-16.0   228.1     2.19     0.33   CARMA8       MWC349       1.9
-1911-201     2011-MAY-16.0   228.1     0.62     0.09   CARMA8       MWC349       1.9
-2148+069     2011-MAY-16.0   228.1     0.70     0.11   CARMA8       MWC349       1.9
-2136+006     2011-MAY-16.0   228.1     0.70     0.11   CARMA8       MWC349       1.9
-2134-018     2011-MAY-16.0   228.1     0.66     0.10   CARMA8       MWC349       1.9
-3C454.3      2011-MAY-16.0   228.1     8.38     1.26   CARMA8       MWC349       1.9
-2232+117     2011-MAY-16.0   228.1     0.55     0.08   CARMA8       MWC349       1.9
-2025+337     2011-MAY-16.0   228.1     0.90     0.14   CARMA8       MWC349       1.9
-3C446        2011-MAY-16.0   228.1     0.88     0.13   CARMA8       MWC349       1.9
-BLLAC        2011-MAY-16.0   228.1     4.60     0.69   CARMA8       MWC349       1.9
-2038+513     2011-MAY-16.0   228.1     1.00     0.15   CARMA8       MWC349       1.9
-0102+584     2011-MAY-16.0   228.1     1.75     0.26   CARMA8       MWC349       1.9
-2229-085     2011-MAY-16.0   228.1     1.42     0.21   CARMA8       MWC349       1.9
-0006-063      2011-MAY-27.0   108.5       1.4       0.2    CARMA8    NEPTUNE
-3C454.3      2011-MAY-27.0   108.5       12.1       1.8    CARMA8    NEPTUNE
-3C84      2011-MAY-26.0   226.2       6.6       1.0    CARMA8    MARS
-3C120      2011-MAY-26.0   102.7       1.5       0.2    CARMA8    URANUS
-3C84      2011-MAY-26.0   102.7       11.0       1.7    CARMA8    URANUS
-1824+568      2011-MAY-21.0   97.4       1.3       0.2    CARMA8    NEPTUNE
-1751+096      2011-MAY-21.0   97.4       5.5       0.8    CARMA8    NEPTUNE
-1824+568      2011-MAY-22.0   105.6       1.3       0.2    CARMA8    NEPTUNE
-1733-130      2011-MAY-22.0   105.6       4.3       0.6    CARMA8    NEPTUNE
-0136+478      2011-MAY-21.0   101.7       1.8       0.3    CARMA8    MARS
-3C84      2011-MAY-21.0   101.7       10.4       1.6    CARMA8    MARS
-0136+478      2011-MAY-22.0   101.7       2.0       0.3    CARMA8    URANUS
-3C454.3      2011-MAY-22.0   101.7       14.7       2.2    CARMA8    URANUS
-0136+478      2011-MAY-23.0   101.7       2.0       0.3    CARMA8    URANUS
-3C454.3      2011-MAY-23.0   101.7       14.4       2.2    CARMA8    URANUS
-0449+113      2011-MAY-21.0   94.3       0.8       0.1    CARMA8    MARS
-3C84      2011-MAY-21.0   94.3       10.4       1.6    CARMA8    MARS
-0423-013      2011-MAY-23.0   34.7       4.2       0.6    CARMA8    MARS
-0319+415      2011-MAY-23.0   34.7       17.0       2.5    CARMA8    MARS
-0423-013      2011-MAY-23.0   34.7       4.3       0.6    CARMA8    MARS
-0319+415      2011-MAY-23.0   34.7       18.2       2.7    CARMA8    MARS
-0750+125      2011-MAY-23.0   108.6       1.9       0.3    CARMA8    MARS
-0927+390      2011-MAY-23.0   108.6       4.1       0.6    CARMA8    MARS
-0750+125      2011-MAY-24.0   108.6       1.9       0.3    CARMA8    MARS
-0927+390      2011-MAY-24.0   108.6       4.3       0.7    CARMA8    MARS
-1743-038      2011-MAY-23.0   104.9       3.4       0.5    CARMA8    URANUS
-3C454.3      2011-MAY-23.0   104.9       14.2       2.1    CARMA8    URANUS
-2203+317      2011-MAY-22.0   34.7       4.0       0.6    CARMA8    URANUS
-3C454.3      2011-MAY-22.0   34.7       24.9       3.7    CARMA8    URANUS
-2203+317      2011-MAY-24.0   34.7       3.8       0.6    CARMA8    URANUS
-3C454.3      2011-MAY-24.0   34.7       23.2       3.5    CARMA8    URANUS
-2203+317      2011-MAY-25.0   34.7       3.8       0.6    CARMA8    URANUS
-3C454.3      2011-MAY-25.0   34.7       23.2       3.5    CARMA8    URANUS
-2203+317      2011-MAY-26.0   34.7       3.7       0.6    CARMA8    URANUS
-3C454.3      2011-MAY-26.0   34.7       24.0       3.6    CARMA8    URANUS
-3C345      2011-MAY-22.0   34.7       7.2       1.1    CARMA8    URANUS
-3C345      2011-MAY-23.0   34.7       6.4       1.0    CARMA8    URANUS
-0238+166      2011-MAY-26.0   34.7       1.2       0.2    CARMA8    MARS
-0423-013      2011-MAY-26.0   34.7       4.2       0.6    CARMA8    MARS
-1801+440      2011-MAY-25.0   96.1       0.5       0.1    CARMA8    URANUS
-3C84      2011-MAY-25.0   96.1       11.8       1.8    CARMA8    URANUS
-3C454.3      2011-MAY-25.0   96.1       14.0       2.1    CARMA8    URANUS
-1824+568      2011-MAY-26.0   254.3       1.8       0.3    CARMA8    NEPTUNE
-3C454.3      2011-MAY-26.0   254.3       7.4       1.1    CARMA8    NEPTUNE
+0006-063     2011-MAY-27.0   108.5     1.40     0.20   CARMA8       NEPTUNE
+3C454.3      2011-MAY-27.0   108.5    12.10     1.80   CARMA8       NEPTUNE
+3C84         2011-MAY-26.0   226.2     6.60     1.00   CARMA8       MARS
+3C120        2011-MAY-26.0   102.7     1.50     0.20   CARMA8       URANUS
+3C84         2011-MAY-26.0   102.7    11.00     1.70   CARMA8       URANUS
+1824+568     2011-MAY-21.0    97.4     1.30     0.20   CARMA8       NEPTUNE
+1751+096     2011-MAY-21.0    97.4     5.50     0.80   CARMA8       NEPTUNE
+1824+568     2011-MAY-22.0   105.6     1.30     0.20   CARMA8       NEPTUNE
+1733-130     2011-MAY-22.0   105.6     4.30     0.60   CARMA8       NEPTUNE
+0136+478     2011-MAY-21.0   101.7     1.80     0.30   CARMA8       MARS
+3C84         2011-MAY-21.0   101.7    10.40     1.60   CARMA8       MARS
+0136+478     2011-MAY-22.0   101.7     2.00     0.30   CARMA8       URANUS
+3C454.3      2011-MAY-22.0   101.7    14.70     2.20   CARMA8       URANUS
+0136+478     2011-MAY-23.0   101.7     2.00     0.30   CARMA8       URANUS
+3C454.3      2011-MAY-23.0   101.7    14.40     2.20   CARMA8       URANUS
+0449+113     2011-MAY-21.0    94.3     0.80     0.10   CARMA8       MARS
+3C84         2011-MAY-21.0    94.3    10.40     1.60   CARMA8       MARS
+0423-013     2011-MAY-23.0    34.7     4.20     0.60   CARMA8       MARS
+0319+415     2011-MAY-23.0    34.7    17.00     2.50   CARMA8       MARS
+0423-013     2011-MAY-23.0    34.7     4.30     0.60   CARMA8       MARS
+0319+415     2011-MAY-23.0    34.7    18.20     2.70   CARMA8       MARS
+0750+125     2011-MAY-23.0   108.6     1.90     0.30   CARMA8       MARS
+0927+390     2011-MAY-23.0   108.6     4.10     0.60   CARMA8       MARS
+0750+125     2011-MAY-24.0   108.6     1.90     0.30   CARMA8       MARS
+0927+390     2011-MAY-24.0   108.6     4.30     0.70   CARMA8       MARS
+1743-038     2011-MAY-23.0   104.9     3.40     0.50   CARMA8       URANUS
+3C454.3      2011-MAY-23.0   104.9    14.20     2.10   CARMA8       URANUS
+2203+317     2011-MAY-22.0    34.7     4.00     0.60   CARMA8       URANUS
+3C454.3      2011-MAY-22.0    34.7    24.90     3.70   CARMA8       URANUS
+2203+317     2011-MAY-24.0    34.7     3.80     0.60   CARMA8       URANUS
+3C454.3      2011-MAY-24.0    34.7    23.20     3.50   CARMA8       URANUS
+2203+317     2011-MAY-25.0    34.7     3.80     0.60   CARMA8       URANUS
+3C454.3      2011-MAY-25.0    34.7    23.20     3.50   CARMA8       URANUS
+2203+317     2011-MAY-26.0    34.7     3.70     0.60   CARMA8       URANUS
+3C454.3      2011-MAY-26.0    34.7    24.00     3.60   CARMA8       URANUS
+3C345        2011-MAY-22.0    34.7     7.20     1.10   CARMA8       URANUS
+3C345        2011-MAY-23.0    34.7     6.40     1.00   CARMA8       URANUS
+0238+166     2011-MAY-26.0    34.7     1.20     0.20   CARMA8       MARS
+0423-013     2011-MAY-26.0    34.7     4.20     0.60   CARMA8       MARS
+1801+440     2011-MAY-25.0    96.1     0.50     0.10   CARMA8       URANUS
+3C84         2011-MAY-25.0    96.1    11.80     1.80   CARMA8       URANUS
+3C454.3      2011-MAY-25.0    96.1    14.00     2.10   CARMA8       URANUS
+1824+568     2011-MAY-26.0   254.3     1.80     0.30   CARMA8       NEPTUNE
+3C454.3      2011-MAY-26.0   254.3     7.40     1.10   CARMA8       NEPTUNE
