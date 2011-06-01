@@ -8,14 +8,14 @@ include $(top_srcdir)/mircommon.mak
 LDADD = $(prog_libs)
 
 ftasks = \
-  atfix atmos atrtfix atscfix attsys atwvr elevcor lagflg \
-  mbspect mfboot plboot plplt wbplt
+  at_mfcal at_uvplt atfix atmos atrtfix atscfix attsys atwvr \
+  elevcor lagflg mbspect mfboot plboot plplt wbplt
 bin_PROGRAMS = $(ftasks)
 CLEANFILES = $(ftasks:=.f)
 EXTRA_DIST = $(ftasks:=.for)
 
 noinst_HEADERS = \
-  atfix.h atmos.h mbspect.h wbcomm.h
+  atfix.h atmos.h mbspect.h mfcal.h wbcomm.h
 
 EXTRA_DIST += atlod.for atlod.h mopfix.for wblod.for wblod.h
 
