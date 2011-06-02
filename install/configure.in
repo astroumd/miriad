@@ -122,8 +122,10 @@ case $TELESCOPE in
 	continue;;
      "test")  echo "Selecting small TEST array"
         def_maxdim=1024
+	def_maxdim2=1024
 	def_maxant=9
 	def_maxbase=36
+	def_maxbase2=36
 	def_maxchan=1024
 	def_maxwin=16
 	def_maxwide=18
