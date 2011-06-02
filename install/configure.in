@@ -120,6 +120,14 @@ case $TELESCOPE in
 	def_maxwin=48
 	def_maxwide=50
 	continue;;
+     "test")  echo "Selecting small TEST array"
+        def_maxdim=1024
+	def_maxant=9
+	def_maxbase=36
+	def_maxchan=1024
+	def_maxwin=16
+	def_maxwide=18
+	continue;;
      "wsrt")  echo "Selecting WSRT array"
 	continue;;
      *) echo "Not a valid array"
