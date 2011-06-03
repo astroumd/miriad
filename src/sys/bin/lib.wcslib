@@ -36,7 +36,10 @@ endif
 #  (touching configure prevents it accidental remake if timestamps bad)
 cd $srcdir
 touch configure
-./configure --bindir=$bindir --libdir=$libdir --includedir=$incdir
+make distclean
+./configure --bindir=$bindir --libdir=$libdir --includedir=$incdir \
+       --with-pgplotlib=$libdir --with-pgplotinc=$incdir  \
+       --docdir=$mir/tmp
 cp config.log config.log.1
 make
 make install
