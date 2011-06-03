@@ -38,7 +38,7 @@ cd $srcdir
 touch configure
 make distclean
 ./configure --bindir=$bindir --libdir=$libdir --includedir=$incdir \
-       --with-pgplotlib=$libdir --with-pgplotinc=$incdir  \
+       --with-pgplotlib=$libdir --with-pgplotinc=$libdir  \
        --docdir=$mir/tmp
 cp config.log config.log.1
 make
