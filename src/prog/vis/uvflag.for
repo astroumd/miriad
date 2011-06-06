@@ -164,6 +164,7 @@ c           pjt     13oct06 NSELS -> MAXSELS to clear the confusion
 c           pjt     23jan08 simplified message when options=noapply
 c           dnf     08apr09 added system temperature flagging
 c           dnf     21apr09 forgotten initialization 
+c           mchw    06jun11 changed MAXWIN=50 in subroutine settup.
 c************************************************************************
 c uvflag works as follows:
 c It reads the name of the first visibility file.
@@ -175,7 +176,7 @@ c Then it asks for the next visibility file and does the whole process
 c again until the list is exhausted.
 
       character*(*) version
-      parameter ( version = 'uvflag: 20-may-10')
+      parameter ( version = 'uvflag: 06-JUNE-2011')
 
       character*64     vis
 
@@ -575,8 +576,9 @@ c new input datafile. It also opens it.
       character*(*)    type
       logical	       usech(*)
       integer	       unit
-
-      integer	       nchan, nwins, stwin(32), chwin(32)
+      integer	       MAXWIN
+      parameter        (MAXWIN=50)
+      integer	       nchan, nwins, stwin(MAXWIN), chwin(MAXWIN)
       integer	       chan, chnr, win, boxnri, stawin, midwin, endwin
       integer	       i, inittot
 
