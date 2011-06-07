@@ -24,7 +24,8 @@
 #    9-jul-10    add drpacs
 #   30-sep-10    fix forced fortran compiler selection for new-style
 #    6-oct-10    optional autotools pre-install (tools=0 remains default)
-#   19-nov-10    added m4 and flex to 'tools=1'
+#   19-nov-10    added m4 and flex to 'tools=1'  (useful for strict wcslib)
+#    3-jun-11    telescope= 
 #----
 
 
@@ -47,6 +48,9 @@ set reuse=0
 
 #   brief will only do miriad, no other stuff (wip, rad ...)
 set brief=0
+
+#   pick a valid telescope  (telescope=test is useful for low memory compilations)
+set telescope=carma
 
 # optionally pick one
 set gfortran=0
@@ -208,7 +212,7 @@ if ($auto) then
 
 else
  cd $rootdir
- time install/install.miriad $opts generic=$generic gif=$gif brief=$brief
+ time install/install.miriad $opts generic=$generic gif=$gif brief=$brief telescope=$telescope
 endif
 
 #    patch the VERSION
