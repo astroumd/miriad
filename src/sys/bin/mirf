@@ -81,7 +81,7 @@
           -e 's| SUBROUTINE *| subroutine |' \
           -e 's| FUNCTION *| function |' \
           -e 's| INCLUDE | include |' \
-          -e 's| PARAMETER *(| parameter (|' \
+          -e 's| PARAMETER | parameter |' \
           -e 's| LOGICAL | logical |' \
           -e 's| INTEGER | integer |' \
           -e 's| REAL | real |' \
@@ -92,6 +92,7 @@
           -e 's| DATA | data |' \
           -e 's| CALL | call |' \
           -e 's| WRITE\( *(\)| write\1|' \
+          -e 's| FORMAT\( *(\)| format\1|' \
           -e 's|\([0-9]\)\.0*E\([-+0-9]\)|\1e\2|g' \
           -e 's|\([0-9]\)\.0*D\([-+0-9]\)|\1d\2|g' \
           -e 's|\.EQ\.|.eq.|g' \
@@ -113,12 +114,15 @@
           -e 's| DO *WHILE *(| do while (|' \
           -e 's| DO | do |' \
           -e 's| END *DO$| enddo|' \
+          -e 's| GOTO *\([1-9][0-9]*$\)| goto \1|' \
+          -e 's| RETURN$| return|' \
           -e 's|^ *END$|      end|'
     else
       cat
     fi |
       sed -e 's|  *$||' \
-          -e 's|^[C*]|c|' \
+          -e 's|^C|c|' \
+          -e '/^*[^*][^*]/s|*|c|' \
           -e '/^c/s|'\`\`'|"|g' \
           -e '/^c/s|'\'\''|"|g' \
           -e '/^c-\{72\}/s|-||' \
@@ -129,7 +133,8 @@
           -e 's|\([0-9]\)\.0*e\([-+0-9]\)|\1e\2|g' \
           -e 's|\([0-9]\)\.0*d\([-+0-9]\)|\1d\2|g' \
           -e 's|\([0-9]\)\.$|\1.0|g' \
-          -e 's|\([-+*/,() ][0-9][0-9]*\)\.\([-+*/,() ]\)|\1.0\2|g' \
+          -e 's|\([-+*/=.,() ][0-9][0-9]*\)\.\([-+*/,() ]\)|\1.0\2|g' \
+          -e 's|\([-+*/=.,() ][0-9][0-9]*\)\.\([-+*/,() ]\)|\1.0\2|g' \
           -e 's|parameter(|parameter (|' \
           -e 's|( |(|g' \
           -e 's| )|)|g' \
@@ -155,6 +160,9 @@
           -e 's|\.or\.\([^ ]\)|.or. \1|g'   \
           -e 's|\([^ ]\)\.and\.|\1 .and.|g' \
           -e 's|\.and\.\([^ ]\)|.and. \1|g' \
+          -e 's| write  *(| write(|'   \
+          -e 's| format  *(| format(|'   \
+          -e 's| call  *\([a-zA-Z][a-zA-Z0-9]*\)  *(| call \1(|'   \
           -e 's| if(| if (|'   \
           -e 's|)then|) then|' \
           -e 's|end if|endif|' \
@@ -163,4 +171,5 @@
           -e '/^ *do /s|^\([^,]*\),\([^ ][^,]*\)$|\1, \2|g' \
           -e 's| dowhile\([ (]\)| do while\1|' \
           -e 's| do while(| do while (|' \
-          -e 's| end do$|enddo|'
+          -e 's| end do$| enddo|' \
+          -e 's| goto *\([1-9][0-9]*$\)| goto \1|' \
