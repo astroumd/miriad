@@ -18,13 +18,14 @@ Each step has a seperate Section devoted to it.
 
 % \section{CARMA track finished}
 
-The PI will normally have received an email with a ``{\tt CARMA track finished}'' subject line.
-It will have attached the observing script and logfile, and 
-it will remind you how to download the data from the CARMA data archive. This Chapter guides you
-through the steps of getting your data, inspecting the data quality, and 
-calibration of the data. Some comments on 
-mapping and Deconvolution (standard procedures in Miriad and covered in depth
-elsewhere) are in place as well.
+The PI will normally have received an email with a ``{\tt CARMA track
+  finished}'' subject line.  It will have attached the observing
+script and logfile, and it will remind you how to download the data
+from the CARMA data archive. This Chapter guides you through the steps
+of getting your data, inspecting the data quality, and calibration of
+the data. Some comments on mapping and Deconvolution (standard
+procedures in Miriad and covered in depth elsewhere) are in place as
+well.
 
 
 \section{CARMA Data Retrieval}
@@ -1593,8 +1594,10 @@ example above from a month ago).
 
 \section{Mapping and Deconvolution}
 
-CARMA is a heterogeneous array, currently with 2 different types of antennae
-(10m and 6m), and as such will contribute 3 different types of baselines with
+% FIX THIS UP FOR CARMA23
+CARMA is a heterogeneous array, currently with 3 different types of antennae
+(10.4m, 6.1m and 3.5m), 
+and as such will contribute 6 different types of baselines with
 OVRO-OVRO, BIMA-BIMA and OVRO-BIMA baselines. The latter is currently
 labeled in the visibility data as a {\tt CARMA} (nominally about 8m) antennae, 
 the first two simply being ``pure'' {\tt OVRO} (10m) and {\tt HATCREEK} (6m)
@@ -1697,14 +1700,20 @@ running invert (though one can and should apply the passband).
 It would also be possible to fold in the gains into the systemps,
 or modify jyperk, since the variance is calculated as follows:
 $$
-        {(Jy/K)^2 T_1 T_2} \over {\Delta \nu \Delta T}
+        {(Jy/K)^2 T_1 T_2} \over {2 \Delta \nu \Delta T}
 $$
-but there is currently no option in MIRIAD programs to do this.
+where 
+$$
+       { {Jy} \over {K} } = {{2k} \over {\eta A}}
+$$
+for aperture efficiency $\eta$ and 
+aperture $A$.
+There is currently no option in MIRIAD programs to include the gains directly.
 
 \subsection{Channel averaging in invert}
 
 A perhaps not so well known shortcoming of mapping with {\tt invert}
-is that MIRIAD tasks that depend on noise variances compute that
+is that MIRIAD tasks that depend on noise variances computes that
 variance based on the first channel that is retrieved. When
 in early 2010 band 4 was introduced with a much larger number of
 channels, instead of the COBRA 15 channel 500 MHz windows, this caused
