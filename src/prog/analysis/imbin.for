@@ -34,7 +34,6 @@ c       ambiguity is needed.
 c         sum       Produce sum rather than average of pixels in
 c                   each bin
 c
-c$Id$
 c--
 c
 c  History:
