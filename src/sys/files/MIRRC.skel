@@ -75,6 +75,8 @@ else
    set path = ($MIRBIN $path)
 endif
 
+if (-d $MIR/opt/bin) set path=($MIR/opt/bin $path)
+
 alias   mirfind         mir.find
 alias   mirhelp         mir.help
 alias   mirindex        mir.index

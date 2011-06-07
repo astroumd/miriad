@@ -68,6 +68,10 @@ else
  export PATH=${MIRBIN}:$PATH
 fi
 
+if [ -d $MIR/opt/bin ]; then
+  export PATH=$MIR/opt/bin:$PATH
+fi
+
 echo new: $PATH
 
 alias   mirfind=mir.find
