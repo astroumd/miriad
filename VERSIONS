@@ -16,4 +16,5 @@
 4.0.5  W.I.P.   (as trunk) MIR4 branch for bugfixes
 4.1.0  07aug01  Full autotoolized build
 4.1.2  09jul18  CARMA summerschool 2009 version
-4.2.0  11jun06  Conversion to the need for WCSLIB, for Summerschool 2011 
+4.2.0  11jun06  Conversion to the need for WCSLIB, for Summerschool 2011
+4.2.1  11jun07  ptrdiff support in fortran and corresponding mem allocations
