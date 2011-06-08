@@ -2,12 +2,16 @@
 #
 #  mir.bigbench: produce a 2GB+ file and also measure miriad's uvio
 #
+#  when fits=1 it writes a UV FITS file, which is nearly 3 times the
+#  size of the miriad file.
+#  Currently (2011) the FITS file has to be below 8GB, or nchan=1300
+#
 #
 set tmp=bench$$
 mkdir $tmp
 cd $tmp
 
-#			default parameters  (gives 85MB)
+#			default parameters  (gives just over 2.1GB)
 set nchan=1024
 set npts=525000
 set fits=0
