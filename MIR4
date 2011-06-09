@@ -1,6 +1,18 @@
 Notes on what was done to miriad for the MIR4 transition:
 
+MIR42 notes: (June 2011)
+========================
+
+- large fits files (8+ GB) 
+- new memory managment (mm)
+- new ptrdif (close to an earlier WSRT version using prtdiff_t) for mm
+- mosaicing changes
+- WCSLIB integration
+- (more to come)
+
+
 MIR41 notes:
+============
 
 intf2c.c	longinteger in .f2c files
 		int8 is used, and become 'int' or 'long long int'
