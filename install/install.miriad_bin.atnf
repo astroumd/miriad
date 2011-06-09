@@ -9,6 +9,7 @@
 #  cd $ASTROMAKE/opt/miriad
 #  wget ftp://ftp.atnf.csiro.au/pub/software/miriad/miriad-common.tar.gz
 #  wget ftp://ftp.atnf.csiro.au/pub/software/miriad/miriad-linux.tar.gz
+#
 
 set ftp=ftp://ftp.atnf.csiro.au/pub/software/miriad/
 
@@ -21,7 +22,7 @@ foreach arg ($*)
 end
 
 echo root=$root
-echo "arch=$arch  (possible options:  linux  linux64  sun4sol  darwin_ppc  darwin_x86)"
+echo "arch=$arch  (possible options:  linux  linux64  sun4sol  darwin_x86_64)"
 echo mir=$mir
 sleep 5
 
@@ -53,4 +54,6 @@ setenv MIR `pwd`
 sed -e "s,@MIRROOT@,$MIR," scripts/MIRRC.in > MIRRC
 sed -e "s,@MIRROOT@,$MIR," scripts/MIRRC.sh.in > MIRRC.sh
 chmod 644 MIRRC*
+
+# now write the new-style miriad_start.(c)sh files
 
