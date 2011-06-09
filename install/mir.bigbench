@@ -15,12 +15,15 @@ cd $tmp
 set nchan=1024
 set npts=525000
 set fits=0
+set diff=0
 
 foreach a ($*)
   set $a
 end
 
-echo "MIRBIGBENCH: (2011-06-08) $tmp : nchan=$nchan npts=$npts fits=$fits"
+if ($diff) set fits=1
+
+echo "MIRBIGBENCH: (2011-06-08) $tmp : nchan=$nchan npts=$npts fits=$fits diff=$diff"
 echo hostname=`hostname` 
 echo system=`uname -a`  
 echo date=`date`
@@ -35,8 +38,17 @@ time sum vis1/visdata >& sum1.log
 time sum vis2/visdata >& sum2.log
 time dd if=vis1/visdata of=/dev/null >& dd1.log
 time dd if=vis2/visdata of=/dev/null >& dd2.log
+
 if ($fits) then
-time fits in=vis1 out=vis1.fits op=uvout >& fits.log
+  time fits in=vis1 out=vis1.fits op=uvout >& fits.log
+endif
+
+if ($diff) then
+  time fits in=vis1.fits out=vis1a op=uvin
+  time invert vis=vis1  map=map1  imsize=256
+  time invert vis=vis1a map=map1a imsize=256
+  time maths exp=map1-map1a out=map1d
+  time histo in=map1d region=quarter
 endif
 
 echo All done. Results in: $tmp 
