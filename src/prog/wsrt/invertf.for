@@ -190,6 +190,7 @@ c--
 c  History
 c    jwr   23nov04  SumWt and rms2 now in double precision
 c    pjt   10jul08  Merged in the WSRT changes and renamed to INVERTF
+c    pjt    7jun11  big fat warning, since moschar() has now 3 arguments
 c  Bugs:
 c
 c------------------------------------------------------------------------
@@ -198,7 +199,7 @@ c------------------------------------------------------------------------
 	include 'mem.h'
 c
 	character version*(*)
-	parameter(version='Invert: version 10-jul-08')
+	parameter(version='Invert: version 7-jun-2011')
 	integer MAXPOL,MAXRUNS
 	parameter(MAXPOL=4,MAXRUNS=4*MAXDIM)
 c
@@ -216,7 +217,7 @@ c
 c
 	integer tno,tvis
 	integer nUWts
-	ptrdiff_t UWts,Map,MMap
+	ptrdiff UWts,Map,MMap
 c
 	integer nRuns,Runs(3,MAXRUNS)
 c  prevent compiler from allocating Runs on stack
@@ -237,6 +238,7 @@ c  Get the input parameters. Convert all angular things into
 c  radians as soon as possible!!
 c
 	call output(version)
+        call bug('w','NEEDS REWRITE FOR NEW MosChar API - see INVERT')
 	call keyini
 	call keya('beam',beam,' ')
 	call mkeya('map',maps,MAXPOL,nmap)

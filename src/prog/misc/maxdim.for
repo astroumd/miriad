@@ -6,6 +6,7 @@ c
 c  pjt      2008  original version
 c  pjt     aug-2009   merged in the miralloc test code (still old style ptrdiff)
 c  pjt     oct-2010   display MIRBIN
+c  pjt     jun-2011   new style ptrdiff, add summing the array
 c
 c= maxdim - Report all known MAXDIM related parameters, and test memory usage
 c& pjt
@@ -16,7 +17,8 @@ c       and C programs in Miriad use and limit memory usage.
 c       Sometimes an obscure message (e.g. Hash table overflow) actually
 c       means the MAXBUF parameter needs to be increased.
 c 
-c       By specifiying a cube size (nx,ny,nz) you can easily 
+c       By specifiying a cube size (nx,ny,nz) you can easily test your
+c       memory and behavior of MIRIAD programs. 
 c
 c@ nx
 c       X dimension of a cube to be allocated
@@ -28,20 +30,26 @@ c@ n
 c       Number of XYZ cubes that are to be allocated. There is room
 c       for up to 128 
 c@ type
+c       Data type of the array. Allowed are Real and Double.
+c@ sum
+c       If 
 c------------------------------------------------------------------------
 c
+	IMPLICIT NONE
       include 'maxdim.h'
       include 'mem.h'
 c
       INTEGER MAXP
       PARAMETER(MAXP=128)
 
-      PTRDIFF_T nx1,ny1,nz1,ntot,p(MAXP)
+      PTRDIFF nx1,ny1,nz1,ntot,p(MAXP)
       INTEGER nx,ny,nz,n,i
       CHARACTER type*10
 c
       CHARACTER version*80, versan*80, mirbin*128
       INTEGER membuf,size
+      REAL  sr
+      DOUBLE PRECISION sd
 
       EXTERNAL membuf
 
@@ -58,6 +66,7 @@ c
       CALL keyi('nz',nz,3)
       CALL keyi('n',n,0)
       CALL keya('type',type,'r')
+      CALL keyd('sum',sd,0d0)
       CALL keyfin
 
       CALL output('$MIR/VERSION:')
@@ -66,6 +75,8 @@ c
       CALL mgetenv(mirbin,'MIRBIN')
       WRITE(*,'(A,A)') 'MIRBIN: ',mirbin
 
+      CALL lcase(type)
+      sr = sd
 
       nx1 = nx
       ny1 = ny
@@ -95,35 +106,39 @@ c     WRITE(*,*) 'MAXNAX       = ',MAXNAX
 
       CALL output('static membuf (maxbuf) usage:')
       size = membuf()
-      WRITE(*,*) 'membuf()     = ',size
+      WRITE(*,*) 'membuf()     =',size
 
       IF (n.gt.0) THEN
-	 WRITE(*,*) 'nx*ny*nz=',nx*ny*nz
-	 WRITE(*,*) 'ntot    =',ntot
-	 WRITE(*,*) 'n       =',n
+	 WRITE(*,*) 'nx*ny*nz     =',nx*ny*nz
+	 WRITE(*,*) 'ntot         =',ntot
+	 WRITE(*,*) 'n            =',n
 
 	 DO i=1,n
 	    IF (type(1:1).eq.'r') CALL MemAlloc(p(i), nx*ny*nz, 'r')
 	    IF (type(1:1).eq.'d') CALL MemAlloc(p(i), nx*ny*nz, 'd')
-	    write(*,*) 'pData(i)   =',i,p(i)
+	    write(*,*) 'pData(i)     =',i,p(i)
 	 ENDDO
 
 	 DO i=1,n
-	    IF (type(1:1).eq.'r') CALL myWorkR(memr(p(i)),nx,ny,nz)
-	    IF (type(1:1).eq.'d') CALL myWorkD(memd(p(i)),nx,ny,nz)
+	    IF (type(1:1).eq.'r') CALL myWorkR(memr(p(i)),nx,ny,nz,sr)
+	    IF (type(1:1).eq.'d') CALL myWorkD(memd(p(i)),nx,ny,nz,sd)
 	 ENDDO
 
 	 DO i=1,n
 	    IF (type(1:1).eq.'r') CALL MemFree(p(i), nx*ny*nz, 'r')
 	    IF (type(1:1).eq.'d') CALL MemFree(p(i), nx*ny*nz, 'd')
 	 ENDDO
+
+	 
+	 IF (type(1:1).eq.'r') WRITE(*,*) 'SumR         = ',sr
+	 IF (type(1:1).eq.'d') WRITE(*,*) 'SumD         = ',sd
       ENDIF
 
       END
 c-----------------------------------------------------------------------
-      SUBROUTINE myWorkR(data,nx,ny,nz)
+      SUBROUTINE myWorkR(data,nx,ny,nz,sum)
       INTEGER nx,ny,nz
-      REAL data(nx,ny,nz)
+      REAL data(nx,ny,nz), sum
 c
       INTEGER ix,iy,iz
 
@@ -135,11 +150,22 @@ c
         ENDDO
       ENDDO
 
+      IF (sum.LT.0) RETURN
+
+      DO iz=1,nz
+        DO iy=1,ny
+          DO ix=1,nx
+            sum = sum + data(ix,iy,iz)
+          ENDDO
+        ENDDO
+      ENDDO
+
+
       END
 c-----------------------------------------------------------------------
-      SUBROUTINE myWorkD(data,nx,ny,nz)
+      SUBROUTINE myWorkD(data,nx,ny,nz,sum)
       INTEGER nx,ny,nz
-      DOUBLE PRECISION data(nx,ny,nz)
+      DOUBLE PRECISION data(nx,ny,nz),sum
 c
       INTEGER ix,iy,iz
 
@@ -150,5 +176,17 @@ c
           ENDDO
         ENDDO
       ENDDO
+
+      IF (sum.LT.0d0) RETURN
+
+      DO iz=1,nz
+        DO iy=1,ny
+          DO ix=1,nx
+            sum = sum + data(ix,iy,iz)
+          ENDDO
+        ENDDO
+      ENDDO
+
+
 
       END
