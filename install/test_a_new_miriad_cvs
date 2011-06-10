@@ -25,7 +25,7 @@
 #   30-sep-10    fix forced fortran compiler selection for new-style
 #    6-oct-10    optional autotools pre-install (tools=0 remains default)
 #   19-nov-10    added m4 and flex to 'tools=1'  (useful for strict wcslib)
-#    3-jun-11    telescope= 
+#    3-jun-11    telescope= ,  gfortran=1 now default
 #----
 
 

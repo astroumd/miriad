@@ -47,6 +47,7 @@ set version=1-jun-2011
 # 22-jun-10 brief=1 option to only install the core of miriad
 #  4-jul-10 added carma specific tests
 #  1-jun-11 minor change for new rpfits 2.23 install
+# 10-jun-11 gfortran=1 generic=1 now the default, 
 #
 #-----------------------------------------------------------------------
 
@@ -70,7 +71,7 @@ set telescope=carma
 set gif=1
 
 #  try the new generic (autoconf) created compile directives file?
-set generic=0
+set generic=1
 
 #  brief
 set brief=0
@@ -176,7 +177,9 @@ set bench=0,512,1           #  mir.bench nchan,mapsize,cell  (nchan=0 will skip 
 set g77=0                   #  g77 compiler
 set intel=0                 #  use intel compiler (ifc/icc) for linux?
 set g95=0                   #  use g95 as default gnu compiler, instead of g77 [linux only]
-set gfortran=0              #  use gfortran as default gnu compiler, instead of g77 [linux only]
+set gfortran=1              #  use gfortran as default gnu compiler, instead of g77 [linux only]
+
+
 set man=1		    #  do manual pages
 set zeno=1                  #  add zeno and hkmiriad?
 set lfs=(-D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE) # LFS flags for uvio
