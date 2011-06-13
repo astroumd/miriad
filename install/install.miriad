@@ -1,6 +1,6 @@
 #! /bin/csh -f
 #
-set version=1-jun-2011
+set version=13-jun-2011
 #
 #  2-aug-99 Updated for Sebok's Mandrake setup
 #  1-aug-00 Updated to allow to build private PGPLOT version
@@ -577,11 +577,18 @@ else
 endif
 
 # ATNF stuff, linux only for now; always in debugging mode
-if ($hosttype == linux && $brief == 0) then
+if ($brief == 0) then
 
- echo Compiling rpfits
+ echo Compiling rpfits for $hosttype
+
  pushd $MIR/borrow/rpfits >& /dev/null
- make RPARCH=linux RANLIB=ranlib FC=$fortran FFLAGS=-g CFLAGS=-g >& $MIR/tmp/rpfits.$$.$hosttype 
+ if ($hosttype == darwin) then
+    if (! -e code/darwin) then
+      (cd code; ln -s linux darwin)
+    endif
+ endif
+
+ make RPARCH=$hosttype RANLIB=ranlib FC=$fortran FFLAGS=-g CFLAGS=-g >& $MIR/tmp/rpfits.$$.$hosttype 
  if ($status) echo Problems compiling RPFITS library
  mv librpfits.a $MIRLIB
  make clean
