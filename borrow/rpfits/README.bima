@@ -4,6 +4,7 @@ or  ftp://ftp.atnf.csiro.au/pub/software/rpfits/rpfits-2.8.tar.gz for the code
 
 BIMA History:
   3-dec-2002:  In miriad V3.1.0 rpfits V2.4 was imported into CVS.
+ 13-jun-2011:  In miriad V4.2.1 linux and maxosx supported
 
 RPFITS History:
   4-jun-2001:  Version 2.4 released
@@ -11,6 +12,6 @@ RPFITS History:
  17-sep-2005:  imported 2.8 release into MIR 4.0.4
   1-jun-2011:  imported 2.23 release into pre-MIR 4.2
 
-The script $MIR/install/install.linux will attempt to install the
+The script $MIR/install/install.miriad will attempt to install the
 library and one program 'atlod' (see $MIR/src/prog/atnf/atlod.for)
 
