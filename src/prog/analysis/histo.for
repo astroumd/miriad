@@ -39,6 +39,7 @@ c    28feb97 nebk  Add object to output
 c    14may99 rjs   Increase MAXRUNS.
 c    15feb01 pjt   look within range to find min/max/mean/dispersion
 c    21oct03 pjt   check for JY/BEAM in the first 7 chars only
+c    14jun11 pjt   add SPITZER MJy/sr check
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	include 'maxnax.h'
@@ -46,7 +47,7 @@ c------------------------------------------------------------------------
 	character version*(*)
 	parameter(NBINDEF=16,NBINMAX=40,MAXBOXES=2048)
 	parameter(MAXRUNS=40*MAXDIM)
-	parameter(VERSION = 'version 21-oct-03' )
+	parameter(VERSION = 'version 14-jun-11' )
 c
 	character file*128,asterisk*30,line*72,coord*64,bunit*32,
      +   object*32
@@ -210,6 +211,8 @@ c
 
         if (barea.gt.0.0 .and. bunit(1:7).eq.'JY/BEAM') then
           write(line,100) av,rms,sum/barea
+        else if (bunit.eq.'MJy/sr') then
+          write(line,100) av,rms,sum*abs(cdelt1*cdelt2)*1e6
 	else if (bunit.eq.'JY/PIXEL') then
 	  write(line,100) av,rms,sum
         else
