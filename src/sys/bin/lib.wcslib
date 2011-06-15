@@ -44,7 +44,7 @@ cp config.log config.log.1
 make
 make install
 # big hack/fix for proper symlink
-(cd $mirlib ; rm libpgsbox.a ; ln -s libpgsbox-4.7.a libpgsbox.a)
+(cd $libdir ; rm libpgsbox.a ; ln -s libpgsbox-4.7.a libpgsbox.a)
 echo ' '
 # -------------------------------------------------------------------
 unsetenv local_compile
