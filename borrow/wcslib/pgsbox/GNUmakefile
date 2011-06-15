@@ -126,7 +126,7 @@ install : build
 	   $(INSTALL) -m 644 $(PGSBOXLIB) $(LIBDIR)
 	   $(RANLIB) $(LIBDIR)/$(PGSBOXLIB)
 	   $(RM) $(LIBDIR)/libpgsbox.a
-	   $(LN_S) $(LIBDIR)/$(PGSBOXLIB) $(LIBDIR)/libpgsbox.a
+	   $(LN_S) $(PGSBOXLIB) $(LIBDIR)/libpgsbox.a
 	-  if [ "$(SHRLIB)" != "" ] ; then \
 	     $(INSTALL) -m 644 $(SHRLIB) $(LIBDIR) ; \
 	     if [ "$(SHRLN)" != "" ] ; then \
