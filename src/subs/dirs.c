@@ -1,6 +1,7 @@
 /************************************************************************/
 /*									*/
 /*	Various directory related routines - VMS only.			*/
+/*      Not supported anymore, kepts for historic reasons?              */
 /*									*/
 /*  History:								*/
 /*    rjs  Dark-ages Original version.					*/
