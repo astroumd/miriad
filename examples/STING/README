@@ -5,5 +5,8 @@ is still ongoing and not published yet.  More info here in due time
 
 After running get_data, proceed and run the M99 script.
 
+spitzer2miriad.csh is an example of the kinds of things to do (and watch
+out for) if you convert spitzer/IRAC data to miriad
+
 Peter Teuben
 
