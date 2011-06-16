@@ -18,6 +18,7 @@
 #  the number of points per beam, i.e. 1.1331 * B^2/P^2, where
 #  B = FHWM of beam, and again P = pixelsize
 #
+#  15-jun-2011     Created                  Peter Teuben
 
 
 # set the beam in arcsec
