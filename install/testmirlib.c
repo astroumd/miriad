@@ -116,12 +116,12 @@ void test_hio(char *name1, int write)
     rdhdr_c(t1,"a_real_f",&pi_f, 0.0);   printf("a_real_f=%g\n",pi_f);
     rdhdr_c(t1,"a_real_d",&pi_d, 0.0);   printf("a_real_d=%g\n",pi_d);
     rdhdi_c(t1,"a_int",   &d,    0);     printf("a_int=%d\n",d);
-    rdhdl_c(t1,"a_int8_0",&d8_0, 0);     printf("a_int8_0=%ld\n",d8_0);
-    rdhdl_c(t1,"a_int8_1",&d8_1, 0);     printf("a_int8_1=%ld\n",d8_1);
-    rdhdl_c(t1,"a_int8_2",&d8_2, 0);     printf("a_int8_2=%ld\n",d8_2);
-    rdhdl_c(t1,"a_int8_3",&d8_3, 0);     printf("a_int8_3=%ld\n",d8_3);
-    rdhdl_c(t1,"a_int8_4",&d8_4, 0);     printf("a_int8_4=%ld\n",d8_4);
-    rdhdl_c(t1,"a_int8_5",&d8_5, 0);     printf("a_int8_5=%ld\n",d8_5);
+    rdhdl_c(t1,"a_int8_0",&d8_0, 0);     printf("a_int8_0=%lld\n",d8_0);
+    rdhdl_c(t1,"a_int8_1",&d8_1, 0);     printf("a_int8_1=%lld\n",d8_1);
+    rdhdl_c(t1,"a_int8_2",&d8_2, 0);     printf("a_int8_2=%lld\n",d8_2);
+    rdhdl_c(t1,"a_int8_3",&d8_3, 0);     printf("a_int8_3=%lld\n",d8_3);
+    rdhdl_c(t1,"a_int8_4",&d8_4, 0);     printf("a_int8_4=%lld\n",d8_4);
+    rdhdl_c(t1,"a_int8_5",&d8_5, 0);     printf("a_int8_5=%lld\n",d8_5);
   }
 
   haccess_c(t1,&i1,"a_item","write",&iostat);         check(iostat);
@@ -210,6 +210,8 @@ void test_sizes(void)
   printf("sizeof(size_t)    = %d\n",sizeof(size_t));
   printf("sizeof(off_t)     = %d\n",sizeof(off_t));
   printf("sizeof(void *)    = %d\n",sizeof(void *));
+  printf("sizeof(int8)      = %d\n",sizeof(int8));
+  printf("sizeof(int2)      = %d\n",sizeof(int2));
 
 #ifdef MIRTEL
   printf("MIRTEL            = %s\n",MIRTEL);
