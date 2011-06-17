@@ -1,6 +1,6 @@
 #! /bin/csh -f
 #
-set version=13-jun-2011
+set version=17-jun-2011
 #
 #  2-aug-99 Updated for Sebok's Mandrake setup
 #  1-aug-00 Updated to allow to build private PGPLOT version
