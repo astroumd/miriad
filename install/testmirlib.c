@@ -12,21 +12,35 @@
  *     set lfs=(-D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE)
  *     gcc -g $lfs -I$MIRINC -I$MIRSUBS -o testmirlib testmirlib.c $MIRLIB/libmir.a -lm
 
-          +0 +1 +2 +3 +4 +5 +6 +7 +8 +9 +A +B +C +D +E +F    0123456789ABCDEF
+ *  After this , hexdump -C test1.mir/header , will show the layout of the bytes
 
- +00000000 61 5F 69 74 65 6D 00 00 00 00 00 00 00 00 00 00    a_item..........
-  00000010 61 5F 63 68 61 72 00 00 00 00 00 00 00 00 00 09    a_char..........
-  00000020 00 00 00 01 48 65 6C 6C 6F 00 00 00 00 00 00 00    ....Hello.......
-  00000030 61 5F 69 6E 74 38 00 00 00 00 00 00 00 00 00 08    a_int8..........
-  00000040 00 00 00 02 00 00 00 1C 00 00 00 00 00 00 00 00    ................
-  00000050 61 5F 69 6E 74 00 00 00 00 00 00 00 00 00 00 08    a_int...........
-  00000060 00 00 00 02 00 00 00 1C 00 00 00 00 00 00 00 00    ................
-  00000070 61 5F 72 65 61 6C 5F 64 00 00 00 00 00 00 00 08    a_real_d........
-  00000080 00 00 00 04 40 49 0F DB 00 00 00 00 00 00 00 00    ....@I..........
-  00000090 61 5F 72 65 61 6C 5F 66 00 00 00 00 00 00 00 08    a_real_f........
-  000000A0 00 00 00 04 40 49 0F DB 00 00 00 00 00 00 00 00    ....@I..........
-  000000B0 61 5F 64 6F 75 62 6C 65 00 00 00 00 00 00 00 10    a_double........
-  000000C0 00 00 00 05 58 01 C0 00 40 09 21 FB 54 44 2D 18    ....X...@.!.TD-.
+          +0 +1 +2 +3 +4 +5 +6 +7 +8 +9 +A +B +C +D +E +F    0123456789ABCDEF
+00000000  61 5f 69 74 65 6d 00 00  00 00 00 00 00 00 00 00  |a_item..........|
+00000010  61 5f 63 68 61 72 5f 31  00 00 00 00 00 00 00 0f  |a_char_1........|
+00000020  00 00 00 01 48 65 6c 6c  6f 20 57 6f 72 6c 64 00  |....Hello World.|
+00000030  61 5f 63 68 61 72 00 31  00 00 00 00 00 00 00 09  |a_char.1........|
+00000040  00 00 00 01 48 65 6c 6c  6f 00 00 00 00 00 00 00  |....Hello.......|
+00000050  61 5f 69 6e 74 38 5f 35  00 00 00 00 00 00 00 10  |a_int8_5........|
+00000060  00 00 00 08 00 00 00 00  00 00 00 01 00 00 00 02  |................|
+00000070  61 5f 69 6e 74 38 5f 34  00 00 00 00 00 00 00 10  |a_int8_4........|
+00000080  00 00 00 08 00 00 00 00  00 00 00 01 00 00 00 00  |................|
+00000090  61 5f 69 6e 74 38 5f 33  00 00 00 00 00 00 00 10  |a_int8_3........|
+000000a0  00 00 00 08 00 00 00 00  00 00 00 00 ff ff ff ff  |................|
+000000b0  61 5f 69 6e 74 38 5f 32  00 00 00 00 00 00 00 10  |a_int8_2........|
+000000c0  00 00 00 08 00 00 00 00  00 00 00 00 80 00 00 00  |................|
+000000d0  61 5f 69 6e 74 38 5f 31  00 00 00 00 00 00 00 10  |a_int8_1........|
+000000e0  00 00 00 08 00 00 00 00  00 00 00 00 7f ff ff ff  |................|
+000000f0  61 5f 69 6e 74 38 5f 30  00 00 00 00 00 00 00 10  |a_int8_0........|
+00000100  00 00 00 08 00 00 00 00  00 00 00 00 00 00 01 02  |................|
+00000110  61 5f 69 6e 74 00 5f 30  00 00 00 00 00 00 00 08  |a_int._0........|
+00000120  00 00 00 02 00 00 01 02  00 00 00 00 00 00 00 00  |................|
+00000130  61 5f 72 65 61 6c 5f 64  00 00 00 00 00 00 00 08  |a_real_d........|
+00000140  00 00 00 04 40 49 0f db  00 00 00 00 00 00 00 00  |....@I..........|
+00000150  61 5f 72 65 61 6c 5f 66  00 00 00 00 00 00 00 08  |a_real_f........|
+00000160  00 00 00 04 40 49 0f db  00 00 00 00 00 00 00 00  |....@I..........|
+00000170  61 5f 64 6f 75 62 6c 65  00 00 00 00 00 00 00 10  |a_double........|
+00000180  00 00 00 05 f0 03 38 00  40 09 21 fb 54 44 2d 18  |......8.@.!.TD-.|
+00000190
 
  *
  * History:
@@ -34,6 +48,7 @@
  *      
  *      aug-2006:     some changes for MIR5
  *      oct-2008      append option, added more to 's' to show things
+ *      jun-2011      made it compile for ATNF version as well, add header readx
  */
 
 
@@ -45,47 +60,69 @@
 
 #include "maxdimc.h"
 #include "miriad.h"
+/* work around an ATNF header difference */
+#ifndef BUFSIZE
+#include "sysdep.h"
+#endif
 
 
 #define check(iostat) if(iostat)bugno_c('f',iostat)
 
 
-void test_hio(char *name1)
+void test_hio(char *name1, int write)
 {
   int t1, i1,iostat;
   double pi_d = 3.14159265358979323846;
   float  pi_f = 3.14159265358979323846;
-  int  d  = 258;          /* 0x01 0x02 */
-  int8 d8_0 = 258;
-  int8 d8_1 = 2147483647LL; /*      0x0F 0xFF 0xFF 0xFF */
-  int8 d8_2 = 2147483648LL; /*      0x0F 0xFF 0xFF 0xFF */
-  int8 d8_3 = 4294967295LL; /* 0x01 0x00 0x00 0x00 0x02 */
-  int8 d8_4 = 4294967296LL; /* 0x01 0x00 0x00 0x00 0x02 */
+  int  d    = 258;          /*                0x01 0x02 */
+  int8 d8_0 = 258;          /*                0x01 0x02 */
+  int8 d8_1 = 2147483647LL; /*      0x7F 0xFF 0xFF 0xFF */
+  int8 d8_2 = 2147483648LL; /*      0x80 0x00 0x00 0x00 */
+  int8 d8_3 = 4294967295LL; /*      0x0F 0xFF 0xFF 0xFF */
+  int8 d8_4 = 4294967296LL; /* 0x01 0x00 0x00 0x00 0x00 */
   int8 d8_5 = 4294967298LL; /* 0x01 0x00 0x00 0x00 0x02 */
 
   fprintf(stderr,"test_hio: %s\n",name1);
 
-  hopen_c(&t1, name1, "old", &iostat);
-  if (iostat==0) {
-    fprintf(stderr,"Deleting previous dataset %s\n",name1);
-    hrm_c(t1);
-  } else
-    fprintf(stderr,"Creating new dataset %s\n",name1);
+  if (write) {
+    hopen_c(&t1, name1, "old", &iostat);
+    if (iostat==0) {
+      fprintf(stderr,"Deleting previous dataset %s\n",name1);
+      hrm_c(t1);
+    } else
+      fprintf(stderr,"Creating new dataset %s\n",name1);
+    hopen_c(&t1, name1, "new", &iostat);                check(iostat);
+  } else {
+    hopen_c(&t1, name1, "old", &iostat);                check(iostat);
+  }
 
-  hopen_c(&t1, name1, "new", &iostat);                check(iostat);
 
-  wrhdd_c(t1,"a_double",pi_d);
-  wrhdr_c(t1,"a_real_f",pi_f);
-  wrhdr_c(t1,"a_real_d",pi_d);
-  wrhdi_c(t1,"a_int",d);
-  wrhdl_c(t1,"a_int8_0",d8_0);
-  wrhdl_c(t1,"a_int8_1",d8_1);
-  wrhdl_c(t1,"a_int8_2",d8_2);
-  wrhdl_c(t1,"a_int8_3",d8_3);
-  wrhdl_c(t1,"a_int8_4",d8_4);
-  wrhdl_c(t1,"a_int8_5",d8_5);
-  wrhda_c(t1,"a_char","Hello");
-  wrhda_c(t1,"a_char_1","Hello World");
+  if (write) {
+    wrhdd_c(t1,"a_double",pi_d);
+    wrhdr_c(t1,"a_real_f",pi_f);
+    wrhdr_c(t1,"a_real_d",pi_d);
+    wrhdi_c(t1,"a_int",   d);
+    wrhdl_c(t1,"a_int8_0",d8_0);
+    wrhdl_c(t1,"a_int8_1",d8_1);
+    wrhdl_c(t1,"a_int8_2",d8_2);
+    wrhdl_c(t1,"a_int8_3",d8_3);
+    wrhdl_c(t1,"a_int8_4",d8_4);
+    wrhdl_c(t1,"a_int8_5",d8_5);
+    wrhda_c(t1,"a_char","Hello");
+    wrhda_c(t1,"a_char_1","Hello World");
+    wrhda_c(t1,"a_char_2","Hello World abcdefghijklmnopqrstuvwxyz");
+  } else {
+    rdhdd_c(t1,"a_double",&pi_d, 0.0);   printf("a_double=%g\n",pi_d);
+    rdhdr_c(t1,"a_real_f",&pi_f, 0.0);   printf("a_real_f=%g\n",pi_f);
+    rdhdr_c(t1,"a_real_d",&pi_d, 0.0);   printf("a_real_d=%g\n",pi_d);
+    rdhdi_c(t1,"a_int",   &d,    0);     printf("a_int=%d\n",d);
+    rdhdl_c(t1,"a_int8_0",&d8_0, 0);     printf("a_int8_0=%ld\n",d8_0);
+    rdhdl_c(t1,"a_int8_1",&d8_1, 0);     printf("a_int8_1=%ld\n",d8_1);
+    rdhdl_c(t1,"a_int8_2",&d8_2, 0);     printf("a_int8_2=%ld\n",d8_2);
+    rdhdl_c(t1,"a_int8_3",&d8_3, 0);     printf("a_int8_3=%ld\n",d8_3);
+    rdhdl_c(t1,"a_int8_4",&d8_4, 0);     printf("a_int8_4=%ld\n",d8_4);
+    rdhdl_c(t1,"a_int8_5",&d8_5, 0);     printf("a_int8_5=%ld\n",d8_5);
+  }
 
   haccess_c(t1,&i1,"a_item","write",&iostat);         check(iostat);
   hdaccess_c(i1,&iostat);                             check(iostat);
@@ -174,8 +211,16 @@ void test_sizes(void)
   printf("sizeof(off_t)     = %d\n",sizeof(off_t));
   printf("sizeof(void *)    = %d\n",sizeof(void *));
 
+#ifdef MIRTEL
   printf("MIRTEL            = %s\n",MIRTEL);
+#else
+  printf("MIRTEL            = %s\n","ATNF");
+#endif
+#ifdef MAXIANT
   printf("MAXIANT           = %d\n",MAXIANT);
+#else
+  printf("MAXIANT           = %d\n",-1);
+#endif
   printf("MAXANT            = %d\n",MAXANT);
   printf("MAXBASE           = %d\n",MAXBASE);
   printf("MAXDIM            = %d\n",MAXDIM);
@@ -191,7 +236,8 @@ int main(int argc, char *argv[])
   fprintf(stderr,"Testing MIRLIB:\n");
   if (argc==1) {
     fprintf(stderr,"Command line options\n");
-    fprintf(stderr," h                              hio test on test1.mir \n");
+    fprintf(stderr," w                              hio write test on test1.mir \n");
+    fprintf(stderr," r                              hio read test on test1.mir \n");
     fprintf(stderr," x [nx ny nz]                   xyio write test on test1.xy\n");
     fprintf(stderr," u [nc nw nr]                   uvio write test on test1.uv\n");
     fprintf(stderr," m                              malloc loop until full memory [sic]\n");
@@ -200,8 +246,11 @@ int main(int argc, char *argv[])
   }
 
   switch (*argv[1]) {
-  case 'h': 
-    test_hio("test1.mir");
+  case 'w': 
+    test_hio("test1.mir",1);
+    break;
+  case 'r': 
+    test_hio("test1.mir",0);
     break;
   case 'x':
     if (argc>2) {
