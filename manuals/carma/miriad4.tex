@@ -1,12 +1,12 @@
 %\documentclass{report}
 \documentstyle[11pt,aaspp4]{article}
-\slugcomment{CARMA memo xxx - 14mar2004}
+\slugcomment{CARMA memo xxx - 17jun2011}
 
 %\documentclass{article}
 
 \begin{document}
 \title{
---draft-- {\Large  {\bf CARMA MIRIAD} } --draft--\\
+{\Large  {\bf CARMA MIRIAD 4.2} } \\
 {\footnotesize a.k.a. MIRIAD V4, a.k.a. the ABC's of MIRIAD}}
 \medskip
 
@@ -37,6 +37,8 @@ between the two versions are highlighted.
 
 \section{Introduction}
 
+The initial MIRIAD development occured between 1987 and 1990 for BIMA,
+in Illinois, with help from partners in Berkeley and Maryland.
 After Sault departed Illinois in May 1990, development of 
 miriad continued in two separate versions: the A (ATNF, initially
 Sault) and B (BIMA,  first at Illinois, now at Maryland). An attempt was made
@@ -99,6 +101,9 @@ Also dubbed the CARMA release.
 
 \item[2004] Miriad V3.1.1 (Released as 04jan13) was the last official
 Miriad V3.
+
+\item[2011] Miriad V4.2 (to be released before 2011 Summerschool) with
+WCSLIB merged in as a required package. 
 
 
 \end{enumerate}
@@ -835,7 +840,24 @@ Present:   Wright, Teuben, McWilliams,
 
 \end{verbatim}
 
-\section{CARMA-ATNF differences}
+
+\section{MIRIAD V4.2}
+
+The major changed for version 4.2 are:
+
+\begin{itemize}
+\item
+WCSLIB
+\item
+better large file support, e.g. FITS files over 8GB.
+\item
+memory management and ptrdif now merged from ATNF version
+\item
+example MIS pipeline (separate CVS module)
+
+\end{itemize}
+
+\subsection{CARMA-ATNF differences}
 
 Despite various attempts to combine the two versions of MIRIAD, there 
 remain two different versions. For the 4.2 release a renewed effort
