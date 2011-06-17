@@ -29,6 +29,8 @@ for ALMA, ATA, CARMA, and LOFAR simulations.  Support for more than 256
 antennas and for datasets larger than 2GB (8GB upcoming) has been added
 to enable ATA and LOFAR simulations. Other new directions include
 the WSRT parallelization efforts and a python interface to miriad.
+The situation with the ATNF version is discussed as well, and differences
+between the two versions are highlighted.
 
 
 \end{abstract}
@@ -267,12 +269,16 @@ of time it takes for a snapshot to be written to disk.
 Here are some technical notes on CVS usage in MIRIAD, including branching, tagging
 and versioning:
 
+\subsection{Branching}
+
+Branching:  only
+done for serious development that has to happen in parallel to ongoing
+development, particularly when it's an experiment that may fail.
+(some of these can also happen in a persons private sandbox that never gets
+committed)
+
 \begin{verbatim}
 
-Branching:  only done for serious development that has to happen in parallel to ongoing
-            development, particularly when it's an experiment that may fail.
-            (some of these can also happen in a persons private sandbox that never gets
-	     committed)
 
      cvs co miriad                # checkout a fresh copy, (tag it???)
      cvs tag -b ....              # branch it
@@ -280,12 +286,17 @@ Branching:  only done for serious development that has to happen in parallel to 
      
      ...
      cvs co miriad                # checkout another fresh copy
-     cvs -j BTNAME                # merge it, resolved conflict, build it, test it, etc.etc.
+     cvs up -j BTNAME             # merge it, resolved conflict, build it, test it, etc.etc.
      cvs ci                       # check back all the changes
+\end{verbatim}
 
-Tagging:    normally done when a version changes (e.g. from 4.0.2 to 4.0.3)
+\subsection{Tagging}
 
-     Do this from a clean checkout (also to prevent that WIP and RAD gets tagged)
+Tagging: normally done when a version changes (e.g. from 4.0.2 to 4.0.3)
+
+Do this from a clean checkout (also to prevent that WIP and RAD gets tagged)
+
+\begin{verbatim}
 
      cvs co miriad
      cd miriad
@@ -812,6 +823,26 @@ Action items:
 
 
 \end{verbatim}
+
+\section{Miriad 2011 telecon}
+
+
+\section{Miriad 2011 telecon}
+\begin{verbatim}
+
+Location: Berkeley
+Present:   Wright, Teuben, McWilliams, 
+
+\end{verbatim}
+
+\section{CARMA-ATNF differences}
+
+Despite various attempts to combine the two versions of MIRIAD, there 
+remain two different versions. For the 4.2 release a renewed effort
+took place to minimize these differences, including support to build
+a separate ATNF version with the CARMA environment of MIRIAD.
+
+More to come here.
 
 \section*{References}
 
