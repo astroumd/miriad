@@ -26,6 +26,7 @@
 #    6-oct-10    optional autotools pre-install (tools=0 remains default)
 #   19-nov-10    added m4 and flex to 'tools=1'  (useful for strict wcslib)
 #    3-jun-11    telescope= ,  gfortran=1 now default
+#   17-jun-11    add MIS pipeline (successor to drpacs)
 #----
 
 
@@ -140,7 +141,7 @@ if ($reuse == 0) then
   endif
   if ($brief == 0) then
     echo "getting miriad,wip and rad via cvs....".
-    (cvs -Q co $branch -d $rootdir miriad; cd $rootdir/borrow; cvs -Q co wip rad drpacs)
+    (cvs -Q co $branch -d $rootdir miriad; cd $rootdir/borrow; cvs -Q co wip rad drpacs mis)
   else
     echo "getting miriad only cvs....".
     (cvs -Q co $branch -d $rootdir miriad)
