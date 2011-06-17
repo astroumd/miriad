@@ -359,6 +359,9 @@ freq		\>D	\>GHz
 freqif		\>D	\>GHz
 \> ? (Hat Ck only?)\\
 
+ifchain		\>?	\>?
+\>ATNF specific? \\
+
 inttime		\>R	\>seconds
 \>Integration time (see also time) \\
 
