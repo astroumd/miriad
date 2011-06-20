@@ -12,12 +12,12 @@ LDADD = $(prog_libs)
 
 ftasks = \
   maxen mfclean mosmem mospsf mossdi mossdi2 \
-  mostess pmosmem restor tvcln
+  mostess pmosmem restor rmclean tvcln
 bin_PROGRAMS = $(ftasks) mirclean
 CLEANFILES = $(ftasks:=.f) clean.f
 EXTRA_DIST = $(ftasks:=.for) clean.for
 
-noinst_HEADERS = restor.h tvcln.h
+noinst_HEADERS = restor.h rmclean.h tvcln.h
 mirclean_SOURCES = clean.f
 
 install-exec-hook:
