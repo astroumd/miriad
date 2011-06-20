@@ -3,13 +3,14 @@
 RATTY=$(top_builddir)/src/tools/ratty
 
 # The "borrow" inclusion here gets includes of wcslib/foo.inc to work.
-.for.f:
-	$(AM_V_GEN)$(RATTY) -D NOF90 -I $(top_builddir)/src/inc -I $(top_srcdir)/src/inc \
+%.f: %.for $(RATTY)
+	$(AM_V_GEN)$(RATTY) -p "@ptrdiff_ftype@" -D NOF90 \
+	  -I $(top_builddir)/src/inc -I $(top_srcdir)/src/inc \
 	  -I $(top_builddir)/borrow -I $(srcdir) $< $@
 
 F2C=$(top_builddir)/src/tools/intf2c
 
-.f2c.c:
+%.c: %.f2c $(F2C)
 	$(AM_V_GEN)$(F2C) -s f2c $< $@
 
 # Default for building tasks
@@ -30,7 +31,6 @@ DOC = MIRCAT=$(doc_catsrc) $(doc_prog)
 mirdocdir = $(pkgdatadir)/doc
 pdocdir = $(mirdocdir)/prog
 sdocdir = $(mirdocdir)/subs
-# mdocdir = $(docdir)/misc : This seems to be basically unused.
 
 # Utility.
 

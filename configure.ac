@@ -129,6 +129,16 @@ AC_SYS_LARGEFILE
 AC_FUNC_FSEEKO dnl used in wcslib
 
 
+dnl Size of ptrdiff_t, used by ratty for Fortran memory routines
+
+AC_CHECK_SIZEOF([ptrdiff_t],, [#include <stddef.h>])
+if test x"ac_cv_sizeof_ptrdiff_t" = x0 ; then
+   AC_MSG_ERROR([could not determine size of ptrdiff_t type])
+fi
+ptrdiff_ftype="INTEGER*$ac_cv_sizeof_ptrdiff_t"
+AC_SUBST(ptrdiff_ftype)
+
+
 dnl X windows and Xaw (for xpanel)
 
 AC_PATH_XTRA
