@@ -9,6 +9,7 @@ foreach a ($*)
   set $a
 end
 
+if (-d map0) rm -rf map0
 imgen out=map0
 hexdump -C map0/header > map0.hexdump 
 tail -2 map0.hexdump | grep -q "00 00 00 02 00 00 00 02"
@@ -27,3 +28,5 @@ if ($gif) then
   implot in=map0 device=/gif
 endif
 
+imgen out=map0/map0big imsize=256 cell=120 radec=0,80
+cgdisp in=map0/map0big labtyp=hms,dms options=trlab,grid device=big.ps/ps
