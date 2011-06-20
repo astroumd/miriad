@@ -4,7 +4,7 @@
 #
 #  when fits=1 it writes a UV FITS file, which is nearly 3 times the
 #  size of the miriad file.
-#  Currently (2011) the FITS file has to be below 8GB, or nchan=1300
+#  To keep the FITS file just below 8GB, use nchan=1300
 #
 #
 set tmp=bench$$
@@ -16,6 +16,7 @@ set nchan=1024
 set npts=525000
 set fits=0
 set diff=0
+set cleanup=0
 
 foreach a ($*)
   set $a
@@ -23,17 +24,19 @@ end
 
 if ($diff) set fits=1
 
-echo "MIRBIGBENCH: (2011-06-08) $tmp : nchan=$nchan npts=$npts fits=$fits diff=$diff"
+echo "MIRBIGBENCH: (2011-06-20) $tmp : nchan=$nchan npts=$npts fits=$fits diff=$diff"
+echo "nchan=$nchan npts=$npts fits=$fits diff=$diff" > ARGS
 echo hostname=`hostname` 
 echo system=`uname -a`  
 echo date=`date`
 echo MIR=$MIR
 echo pwd=`pwd`
-echo 'Needs:  uvrandom uvcat'
 
 
 time uvrandom out=vis1 nchan=$nchan npts=$npts  >& uvrandom.log
+ls -l vis1/visdata
 time uvcat vis=vis1 out=vis2 >& uvcat.log
+ls -l vis2/visdata
 time sum vis1/visdata >& sum1.log
 time sum vis2/visdata >& sum2.log
 time dd if=vis1/visdata of=/dev/null >& dd1.log
@@ -41,6 +44,7 @@ time dd if=vis2/visdata of=/dev/null >& dd2.log
 
 if ($fits) then
   time fits in=vis1 out=vis1.fits op=uvout >& fits.log
+  ls -l vis1.fits
 endif
 
 if ($diff) then
@@ -51,7 +55,13 @@ if ($diff) then
   time histo in=map1d region=quarter
 endif
 
-echo All done. Results in: $tmp 
+if ($cleanup) then
+  echo All done. cleanup $tmp 
+  cd ..
+  rm -rf $tmp
+else
+  echo All done. Results in: $tmp 
+endif
 
 exit 0
 
