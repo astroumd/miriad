@@ -3,10 +3,17 @@
 #  mir.bigbench: produce a 2GB+ file and also measure miriad's uvio
 #
 #  when fits=1 it writes a UV FITS file, which is nearly 3 times the
-#  size of the miriad file.
-#  To keep the FITS file just below 8GB, use nchan=1300
+#  size of the miriad file.  Here are some example sizes of miriad
+#  and fits for choices of nchan (for fixed npts=525000)
 #
-#
+#  nchan  vis1/visdata     vis1.fits    atnf.fits    critical size
+#  -----  ------------    ----------    ----------  ---------------
+#      4      46200292      35709120      35709120
+#    256     567000308    1623309120    1623309120  2147483648 = 2G
+#   1024    2179800308    6461709120    6461709120     
+#   1300    2759400308    8200509120    8200509120  8589934592 = 8G
+#   1400    2969400308    8830509120    8830509120 
+#  ---------------------------------------------------------------- 
 set tmp=bench$$
 mkdir $tmp
 cd $tmp
@@ -14,6 +21,7 @@ cd $tmp
 #			default parameters  (gives just over 2.1GB)
 set nchan=1024
 set npts=525000
+set uvcat=1
 set fits=0
 set diff=0
 set cleanup=0
@@ -24,8 +32,8 @@ end
 
 if ($diff) set fits=1
 
-echo "MIRBIGBENCH: (2011-06-20) $tmp : nchan=$nchan npts=$npts fits=$fits diff=$diff"
-echo "nchan=$nchan npts=$npts fits=$fits diff=$diff" > ARGS
+echo "MIRBIGBENCH: (2011-06-20) $tmp : nchan=$nchan npts=$npts uvcat=$uvcat fits=$fits diff=$diff"
+echo "nchan=$nchan npts=$npts uvcat=$uvcat fits=$fits diff=$diff" > ARGS
 echo hostname=`hostname` 
 echo system=`uname -a`  
 echo date=`date`
@@ -35,14 +43,18 @@ echo pwd=`pwd`
 
 time uvrandom out=vis1 nchan=$nchan npts=$npts  >& uvrandom.log
 ls -l vis1/visdata
-time uvcat vis=vis1 out=vis2 >& uvcat.log
-ls -l vis2/visdata
-time sum vis1/visdata >& sum1.log
-time sum vis2/visdata >& sum2.log
-time dd if=vis1/visdata of=/dev/null >& dd1.log
-time dd if=vis2/visdata of=/dev/null >& dd2.log
+if ($uvcat) then
+  time uvcat vis=vis1 out=vis2 >& uvcat.log
+  ls -l vis2/visdata
+  time sum vis1/visdata >& sum1.log
+  time sum vis2/visdata >& sum2.log
+  time dd if=vis1/visdata of=/dev/null >& dd1.log
+  time dd if=vis2/visdata of=/dev/null >& dd2.log
+endif
 
 if ($fits) then
+  # Note, fits uses scrio and needs twice the space of output file
+  #       the fits output is about 3 times that of the miriad input
   time fits in=vis1 out=vis1.fits op=uvout >& fits.log
   ls -l vis1.fits
 endif
