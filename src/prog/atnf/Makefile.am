@@ -1,9 +1,9 @@
 include $(top_srcdir)/mircommon.mak
 
-# We do not build atlod, mopfix, or wblod, because they require the
-# rpfits library. This resides in borrow/rpfits/, but I don't feel
-# like hooking it up to autotools right now. If someone needs one
-# of these tasks, I'll look into hooking it up.
+# We do not build atlod, fakeotf, mopfix, or wblod, because they
+# require the rpfits library. This resides in borrow/rpfits/, but I
+# don't feel like hooking it up to autotools right now. If someone
+# needs one of these tasks, I'll look into hooking it up.
 
 LDADD = $(prog_libs)
 
