@@ -1,6 +1,5 @@
-c************************************************************************
+c***********************************************************************
 	program invert
-	implicit none
 c
 c= invert - Transform multi-pointing visibility data into a map
 c& rjs
@@ -27,7 +26,7 @@ c@ imsize
 c	The size of the output dataset. The default is to image out to
 c	primary beam half power points. For options=mosaic, an image of
 c	this size is made for each pointing before a linear mosaic
-c	operation is performed. 
+c	operation is performed.
 c@ cell
 c	Image cell size, in arcsec. If two values are given, they give
 c	the RA and DEC cell sizes. If only one value is given, the cells
@@ -43,8 +42,7 @@ c	When mosaicing, this gives the sky coordinate (RA and DEC) of the
 c	reference pixel in the imaging process. The value can be given in the
 c	form hh:mm:ss,dd:mm:ss, or as decimal hours and degrees. INVERT
 c	applies appropriate shifts to make this location fall on a pixel.
-c	The default is a central observing center (which may or may not be
-c       at the center of your object of interest).
+c	The default is a central observing center.
 c@ fwhm
 c	This determines a gaussian taper to apply to the visibility data.
 c	It specifies the FWHM of an image-domain gaussian -- tapering the
@@ -86,7 +84,7 @@ c	can be used to down-weight excessive weight being given to
 c	visibilities in relatively sparsely filled regions of the $u-v$ plane.
 c	Most useful settings are in the range [-2,2], with values less than
 c	-2 corresponding to very little down-weighting, and values greater than
-c	+2 reducing the weighting to natural weighting. 
+c	+2 reducing the weighting to natural weighting.
 c
 c	Sidelobe levels and beam-shape degrade with increasing values of
 c	robustness, but the theoretical noise level will also decrease.
@@ -94,9 +92,9 @@ c
 c	The default is no down-weighting (robust=-infinity).
 c@ line
 c	Standard "line" parameter, with the normal defaults. In particular,
-c	the default is to image all channels. See the help on "line" for 
+c	the default is to image all channels. See the help on "line" for
 c	more information.
-c	The "line" parameter consists of a string followed by up to 
+c	The "line" parameter consists of a string followed by up to
 c	four numbers, viz:
 c
 c	  linetype,nchan,start,width,step
@@ -159,7 +157,7 @@ c	  fft    The conventional grid-and-FFT approach. This is the default
 c	         and by far the fastest.
 c	  dft    Use a discrete Fourier transform. This avoids aliasing
 c	         but at a hugh time penalty.
-c	  median This uses a median approach. This is generally robust to 
+c	  median This uses a median approach. This is generally robust to
 c	         bad data and sidelobes, has a even larger time penalty
 c	         and produces images that cannot be deconvolved.
 c	NOTE: Dft and median modes are not supported with options=mosaic.
@@ -298,21 +296,17 @@ c    rjs   29feb96  Call xyflush after each plane.
 c    rjs   12jul96  Be fore forgiving if beam too big -- just make it smaller.
 c    rjs   20jun97  Correct handling of multiple stokes in slopintp.
 c    rjs   07jul97  Change coaxdesc to coaxget.
-c    rjs   01jul99  Changes in call sequence to hdfiddle.
-c    pjt   25apr03  verbose error when images too big
+c    rjs   01jul99  CHanges in call sequence to hdfiddle.
+c    rjs   29jun05  Handle changes in calling sequence to mostab/hdtab routines.
 c    rjs   03apr09  Change way of accessing scrio to help access larger files.
-c    pkgw  10apr09  Correctly echo to user nvis when it is >=10**8
-c    pjt    3feb10  fix maxrun to be related to maxchan to invert all channels (ATNF)
-c    pjt    7oct10  also changed maxrun=8*maxchan (or should it be 2 ??)
 c  Bugs:
 c
-c------------------------------------------------------------------------
+c $Id$
+c-----------------------------------------------------------------------
 	include 'mirconst.h'
 	include 'maxdim.h'
 	include 'mem.h'
 c
-	character version*(*)
-	parameter(version='Invert: version 1.0 7-oct-10')
 	integer MAXPOL,MAXRUNS
 	parameter(MAXPOL=4,MAXRUNS=4*MAXDIM)
 c
@@ -320,7 +314,7 @@ c
 	real umax,vmax,wdu,wdv,tu,tv,rms,robust
 	real ChanWt(MAXPOL*MAXCHAN)
 	character maps(MAXPOL)*64,beam*64,uvflags*16,mode*16,vis*64
-	character proj*3,line*64
+	character line*64, version*80
 	double precision ra0,dec0,offset(2),lmn(3),x(2)
 	integer i,j,k,nmap,tscr,nvis,nchan,npol,npnt,coObj,pols(MAXPOL)
 	integer nx,ny,bnx,bny,mnx,mny,wnu,wnv
@@ -330,7 +324,7 @@ c
 c
 	integer tno,tvis
 	integer nUWts,nMMap
-	integer UWts,Map,MMap
+	ptrdiff UWts,Map,MMap
 c
 	integer nRuns,Runs(3,MAXRUNS)
 c
@@ -340,15 +334,19 @@ c
 c
 c  Externals.
 c
-	character polsc2p*3,itoaf*8
 	logical keyprsnt
+	integer nextpow2
+	character itoaf*10, polsc2p*3, versan*80
 c
 	data slops/'zero        ','interpolate '/
+c-----------------------------------------------------------------------
+      version = versan ('invert',
+     :                  '$Revision$',
+     :                  '$Date$')
 c
 c  Get the input parameters. Convert all angular things into
 c  radians as soon as possible!!
 c
-	call output(version)
 	call keyini
 	call keya('beam',beam,' ')
 	call mkeya('map',maps,MAXPOL,nmap)
@@ -382,10 +380,7 @@ c
 c
 	call keyi('imsize',nx,0)
 	call keyi('imsize',ny,nx)
-	if(max(nx,ny).gt.MAXDIM) then
-	   write(*,*) 'nx,ny,MAXDIM=',nx,ny,MAXDIM
-	   call bug('f','Output image too big (MAXDIM)')
-        endif
+	if(max(nx,ny).gt.MAXDIM)call bug('f','Output image too big')
 c
 	defWt = .not.keyprsnt('sup')
 	call keyr('sup',supx,0.)
@@ -422,7 +417,7 @@ c
 	if(beam.ne.' ')call assertf(beam,.false.,
      *	    'Dataset already exists: '//beam)
 	do i=1,npol
-	  call assertf(maps(i),.false., 
+	  call assertf(maps(i),.false.,
      *	    'Dataset already exists: '//maps(i))
 	enddo
 c
@@ -462,19 +457,18 @@ c  Give the "Hd" routines the header information, and create a initial
 c  coordinate object for the output.
 c
 	if(mosaic)then
-	  call MosChar(ra0,dec0,npnt,proj)
+	  call MosChar(ra0,dec0,npnt)
 	  if(doset)then
 	    ra0 = offset(1)
 	    dec0 = offset(2)
 	  endif
 	  call output('Number of pointings: '//itoaf(npnt))
-	  call output('Using '//proj//' projection geometry')
 	else
 	  npnt = 1
 	endif
 	if(npnt.ne.1.and.mode.ne.'fft')
      *	  call bug('f','Only mode=fft is supported with options=mosaic')
-	call HdSet(cellx,celly,ra0,dec0,proj,freq0)
+	call HdSet(cellx,celly,ra0,dec0,freq0)
 	call HdCoObj(coObj)
 c
 c  Determine the default image size, if needed.
@@ -490,6 +484,8 @@ c
      *	    'Reducing beam size of be maximum image size')
 	  bnx = min(2*nx - 1,MAXDIM)
 	  bny = min(2*ny - 1,MAXDIM)
+          if (nextpow2(bnx).gt.MAXDIM) bnx = nx
+          if (nextpow2(bny).gt.MAXDIM) bny = ny
 	else
 	  bnx = nx
 	  bny = ny
@@ -511,10 +507,8 @@ c
 	  lmn(1) = 0
 	  lmn(2) = 0
 	  lmn(3) = 1
-	  if(max(mnx,mny).gt.MAXDIM) then
-	    write(*,*) 'mnx,mny,MAXDIM=',mnx,mny,MAXDIM
-     	    call bug('f','Mosaiced image too big: select=source()?')
-	  endif
+	  if(max(mnx,mny).gt.MAXDIM)
+     *	    call bug('f','Mosaiced image is too big for me')
 	else
 	  mnx = nx
 	  mny = ny
@@ -534,7 +528,7 @@ c
 	if(.not.Natural)then
 	  call output('Calculating the weights ...')
 	  nUWts = (wnu/2+1) * wnv * npnt
-	  call Memalloc(UWts,nUWts,'r')
+	  call Memallop(UWts,nUWts,'r')
 	  call WtCalc(tscr,memr(UWts),wdu,wdv,wnu,wnv,npnt,
      *						nvis,npol*nchan)
 	  if(robust.gt.-4)
@@ -556,7 +550,7 @@ c
      *	  nvis,npol,nchan,mosaic,idb,sdb,doamp,dophase,freq0,Rms,
      *	  ChanWt,lmn,umax,vmax,cellx,celly)
 c
-	if(nUWts.gt.0)call MemFree(UWts,nUWts,'r')
+	if(nUWts.gt.0)call MemFrep(UWts,nUWts,'r')
 	if(mosaic)call mosGFin
 c
 c  Tell the user about the noise level in the output images.
@@ -605,7 +599,7 @@ c  Create space for the mosaiced image, if needed.
 c
 	if(mosaic)then
 	  nMMap = mnx*mny
-	  call MemAlloc(MMap,nMMap,'r')
+	  call MemAllop(MMap,nMMap,'r')
 	else
 	  nMMap = 0
 	endif
@@ -662,23 +656,22 @@ c
 c
 c  All said and done. Tidy up and exit.
 c
-	if(nMMap.gt.0)call MemFree(MMap,nMMap,'r')
+	if(nMMap.gt.0)call MemFrep(MMap,nMMap,'r')
 	call MapFin
 	call uvclose(tvis)
 	call scrclose(tscr)
 	call output('Completed 100% !')
 c
 	end
-c************************************************************************
+c***********************************************************************
 	subroutine BmWrite(tno,i,Dat,nx,ny,npnt,mosaic)
 c
-	implicit none
 	integer tno,i,nx,ny,npnt
 	logical mosaic
 	real Dat(nx,ny,npnt)
 c
 c  Write out a beam dataset.
-c------------------------------------------------------------------------
+c-----------------------------------------------------------------------
 	integer ndims,n(2),k
 	logical mosaic1
 c
@@ -698,15 +691,14 @@ c
 	enddo
 c
 	end
-c************************************************************************
+c***********************************************************************
 	subroutine DatWrite(tno,Dat,nx,ny)
 c
-	implicit none
 	integer tno,nx,ny
 	real Dat(nx,ny)
 c
 c  The routine that does the real work in writing out the data.
-c------------------------------------------------------------------------
+c-----------------------------------------------------------------------
 	integer j
 c
 	do j=1,ny
@@ -714,18 +706,17 @@ c
 	enddo
 	call xyflush(tno)
 	end
-c************************************************************************
+c***********************************************************************
 	subroutine BeamMake(tno,beam,coIn,mosaic,sdb,bnx,bny,npnt,
      *	  tvis,version)
 c
-	implicit none
 	integer tno,bnx,bny,npnt,coIn,tvis
 	character beam*(*),version*(*)
 	logical mosaic,sdb
 c
 c  Create an output beam dataset. It takes a bit of thinking to determine
 c  the dimensionality of the output.
-c------------------------------------------------------------------------
+c-----------------------------------------------------------------------
 	integer naxis,imsize(5),coOut
 	double precision crpix,crval,cdelt
 	character ctype*16
@@ -765,18 +756,17 @@ c
 	call HdFiddle(tvis,tno,version,mosaic,coOut,'beam',0.0,bnx,bny)
 	call coFin(coOut)
 	end
-c************************************************************************
+c***********************************************************************
 	subroutine ImMake(tno,map,coIn,mosaic,nx,ny,nchan,
      *	  tvis,version,rms)
 c
-	implicit none
 	integer tno,coIn,nx,ny,nchan,tvis
 	real rms
 	logical mosaic
 	character map*(*),version*(*)
 c
 c  Create an output image dataset -- this is pretty easy!
-c------------------------------------------------------------------------
+c-----------------------------------------------------------------------
 	integer imsize(4),naxis
 c
 	imsize(1) = nx
@@ -789,18 +779,17 @@ c
 	call HdFiddle(tvis,tno,version,mosaic,coIn,'intensity',
      *							rms,nx,ny)
 	end
-c************************************************************************
+c***********************************************************************
 	subroutine HdFiddle(tvis,tno,version,mosaic,coIn,btype,
      *							rms,nx,ny)
 c
-	implicit none
 	integer tvis,tno,coIn,nx,ny
 	logical mosaic
 	character version*(*),btype*(*)
 	real rms
 c
 c  Make the header of the output dataset.
-c------------------------------------------------------------------------
+c-----------------------------------------------------------------------
 	character line*64
 c
 c  Call the various routines which handle these sorts of things.
@@ -826,10 +815,9 @@ c
 	call xyflush(tno)
 c
 	end
-c************************************************************************
+c***********************************************************************
 	subroutine WtCalc(tvis,Wts,wdu,wdv,wnu,wnv,npnt,nvis,nchan)
 c
-	implicit none
 	integer tvis,wnu,wnv,nvis,nchan,npnt
 	real Wts(wnv,wnu/2+1,npnt),wdu,wdv
 c
@@ -846,7 +834,7 @@ c
 c  Output:
 c    Wts	Array containing the visibility weights.
 c
-c------------------------------------------------------------------------
+c-----------------------------------------------------------------------
 	include 'maxdim.h'
 	integer InU,InV,InW,InWt,InPnt,InRms2,InFreq,InData
 	parameter(InU=0,InV=1,InW=2,InPnt=3,InWt=6,InRms2=4)
@@ -906,11 +894,10 @@ c
 	enddo
 c
 	end
-c************************************************************************
+c***********************************************************************
 	subroutine WtIni(defWt,supx,supy,nx,ny,cellx,celly,
      *	  fwhmx,fwhmy,umax,vmax,Natural,wnu,wnv,wdu,wdv,tu,tv)
 c
-	implicit none
 	logical defWt,Natural
 	real supx,supy,cellx,celly,fwhmx,fwhmy,wdu,wdv,tu,tv,umax,vmax
 	integer nx,ny,wnu,wnv
@@ -930,7 +917,7 @@ c    wnu,wnv	Size of the weights grid.
 c    wdu,wdv	Weight grid cell size.
 c    tu,tv	Taper parameters.
 c    Natural	True if natural weighting is being used.
-c------------------------------------------------------------------------
+c-----------------------------------------------------------------------
 	include 'mirconst.h'
 	integer n(2),length,i,nxd,nyd
 	character line*64
@@ -966,10 +953,9 @@ c
 	endif
 c
 	end
-c************************************************************************
+c***********************************************************************
 	subroutine Sizes(defWt,sup,gn,cell,fwhm,uvmax,wn,wd,T)
 c
-	implicit none
 	real cell,sup,wd,fwhm,T,uvmax
 	integer gn,wn
 	logical defWt
@@ -990,7 +976,7 @@ c    wn		Dimension of weights array (pixels).
 c    wd		Uv plane weights cell size (wavelengths).
 c    T		Taper exponent parameter (nepers/wavelength**2).
 c
-c------------------------------------------------------------------------
+c-----------------------------------------------------------------------
 	include 'maxdim.h'
 	include 'mirconst.h'
 	real gd
@@ -1017,15 +1003,14 @@ c
      *	  'Maximum permitted image size is '//itoaf(maxdim))
 c
 	end
-c************************************************************************
+c***********************************************************************
 	subroutine WtRobust(robust,UWts,wnu,wnv,npnt)
 c
-	implicit none
 	integer wnv,wnu,npnt
 	real robust,UWts(wnv,wnu/2+1,npnt)
 c
 c  Use Brigg's scheme to make the weights robust.
-c------------------------------------------------------------------------
+c-----------------------------------------------------------------------
 	integer i,j,k
 	real SumW,SumW2,t,Wav,S2
 c
@@ -1056,12 +1041,11 @@ c
 	enddo
 c
 	end
-c************************************************************************
+c***********************************************************************
 	subroutine Wter(tscr,Natural,UWts,wdu,wdv,wnu,wnv,npnt,Tu,Tv,
      *	  nvis,npol,nchan,mosaic,idb,sdb,doamp,dophase,freq0,Rms2,
      *	  Slop,lmn,umax,vmax,cellx,celly)
 c
-	implicit none
 	integer tscr,wnu,wnv,nvis,npol,nchan,npnt
 	logical Natural,sdb,idb,mosaic,doamp,dophase
 	real Tu,Tv,wdu,wdv,UWts(wnv,wnu/2+1,npnt),cellx,celly
@@ -1093,15 +1077,12 @@ c    dophase	True if phase-only imaging.
 c  Output:
 c    Rms2	An estimate of the rms noise in the output map.
 c    umax,vmax	Maximum u and v values.
-c------------------------------------------------------------------------
-	include 'maxdim.h'
+c-----------------------------------------------------------------------
 	integer InU,InV,InW,InPnt,InRms,InFreq,InWt,InData
 	parameter(InU=0,InV=1,InW=2,InPnt=3,InRms=4,InFreq=5,InWt=6,
      *		  InData=8)
 	integer maxrun
-c  not clear yet what the best value is?
-c	parameter(Maxrun=8*MAXCHAN+20)
-	parameter(Maxrun=2*MAXCHAN+20)
+	parameter(maxrun=8192)
 c
 	real Wts(maxrun/(InData+2)),Vis(maxrun),logFreq0,Wt,SumWt,t
 	integer i,j,k,l,size,step,n,u,v,offcorr,nbeam,ncorr,ipnt
@@ -1276,10 +1257,9 @@ c
 	endif
 c
 	end
-c************************************************************************
+c***********************************************************************
 	subroutine WtShift(size,n,nchan,Vis,lmn)
 c
-	implicit none
 	integer size,n,nchan
 	complex Vis(size,n)
 	double precision lmn(3)
@@ -1293,7 +1273,7 @@ c    nchan	Total number of channels (actually npol*nchan).
 c    lmn	Direction cosines of place to shift to.
 c  Input/Output:
 c    Vis	The visibilities.
-c------------------------------------------------------------------------
+c-----------------------------------------------------------------------
 	include 'mirconst.h'
 	integer InUV,InWPnt,InData
 	parameter(InUV=1,InWPnt=2,InData=5)
@@ -1322,17 +1302,16 @@ c
 	enddo
 c
 	end
-c************************************************************************
+c***********************************************************************
 	subroutine GetOpt(uvflags,systemp,mfs,sdb,doimag,mosaic,double,
      *						doamp,dophase,mode)
 c
-	implicit none
 	character uvflags*(*),mode*(*)
 	logical systemp,mfs,sdb,doimag,mosaic,double,doamp,dophase
 c
 c  Get extra processing options.
 c
-c------------------------------------------------------------------------
+c-----------------------------------------------------------------------
 	integer NOPTS
 	parameter(NOPTS=11)
 	character opts(NOPTS)*9
@@ -1378,11 +1357,10 @@ c
 	if(.not.present(3))uvflags(11:11) = 'f'
 c	if(.not.mfs)	   uvflags(12:12) = '1'
 	end
-c************************************************************************
+c***********************************************************************
 	subroutine GetVis(doimag,systemp,mosaic,mfs,npol,tscr,slop,
      *		slopmode,vis,nvis,nchan,umax,vmax,ChanWt,mchan,freq0)
 c
-	implicit none
 	logical doimag,systemp,mosaic,mfs
 	integer npol,tscr,nvis,nchan,mchan
 	real umax,vmax,freq0,slop,ChanWt(npol*mchan)
@@ -1410,7 +1388,7 @@ c    nchan	Number of channels.
 c    nvis	The number of visibilities read.
 c    ChanWt	Extra weighting factor for each channel.
 c    freq0	MFS reference frequency.
-c------------------------------------------------------------------------
+c-----------------------------------------------------------------------
 	include 'maxdim.h'
 	integer MAXPOL,MAXLEN
 	parameter(MAXPOL=4,MAXLEN=4+MAXPOL*MAXCHAN)
@@ -1423,7 +1401,7 @@ c------------------------------------------------------------------------
 c
 c  Externals.
 c
-	character itoaf*12
+	character itoaf*10
 	integer len1
 c
 c  Get the first record.
@@ -1513,7 +1491,7 @@ c
 c  Process an accepted record.
 c
 	  if(nrec.gt.0)then
-	    call HdChk(tno)
+	    call HdChk(tno,uvw)
 	    if(mosaic)then
 	      call MosChk(tno,pnt)
 	    else
@@ -1566,12 +1544,11 @@ c
 	endif
 c
 	end
-c************************************************************************
+c***********************************************************************
 	subroutine ProcMFS(tno,uvw,Wt,rms2,data,flags,
      *		npol,mchan,nchan,nvis,nbad,out,MAXLEN,nrec,ncorr,
      *		uumax,vvmax,umax,vmax,SumWt,freq0)
 c
-	implicit none
 	integer tno,nchan,npol,mchan,nvis,nbad,MAXLEN,nrec,ncorr
 	double precision uvw(3)
 	real rms2,uumax,vvmax,umax,vmax,Wt
@@ -1601,7 +1578,7 @@ c  Output:
 c    out	A record consisting of
 c		u,v,w,pointing,rms**2,log(freq),wt,0,r1,i1,r2,i2,...
 c    nrec	Number of records.
-c------------------------------------------------------------------------
+c-----------------------------------------------------------------------
 	include 'maxdim.h'
 	integer i,j,nlen
 	logical ok
@@ -1667,12 +1644,11 @@ c
 	nrec = nlen / (4 + ncorr)
 c
 	end
-c************************************************************************
+c***********************************************************************
 	subroutine ProcSpec(tno,uvw,Wt,rms2,data,flags,
      *		npol,MAXCHAN,nchan,nvis,nbad,out,MAXLEN,nrec,ncorr,
      *		uumax,vvmax,umax,vmax,SumWt,ChanWt,slop,slopmode)
 c
-	implicit none
 	integer tno,nchan,npol,MAXCHAN,nvis,nbad,MAXLEN,nrec,ncorr
 	double precision uvw(3)
 	real rms2,umax,vmax,uumax,vvmax,ChanWt(npol*nchan),slop,Wt,SumWt
@@ -1703,7 +1679,7 @@ c    nbad	Number of bad visibilities.
 c  Output:
 c    out	A record consisting of
 c		u,v,w,pointing,rms**2,0,wt,0,r1,i1,r2,i2,...
-c------------------------------------------------------------------------
+c-----------------------------------------------------------------------
 	integer i,j,badcorr,pnt
 	real u,v
 	logical ok,somebad
@@ -1712,7 +1688,7 @@ c  Is the weight positive?
 c
 	ok = Wt.gt.0
 	if(ncorr.ne.npol*nchan)
-       *                call bug('f','Something screwy in ProcSpec')
+     *		call bug('f','Something screwy in ProcSpec')
 c
 c  Count the number of bad correlations.
 c
@@ -1767,10 +1743,9 @@ c
 	endif
 c
 	end
-c************************************************************************
+c***********************************************************************
 	subroutine SlopIntp(Data,flags,nchan,npol,MAXCHAN)
 c
-	implicit none
 	integer nchan,npol,MAXCHAN
 	complex Data(MAXCHAN,npol)
 	logical flags(MAXCHAN,npol)
@@ -1783,7 +1758,7 @@ c    npol
 c  Input/Output:
 c    data
 c    flags
-c------------------------------------------------------------------------
+c-----------------------------------------------------------------------
 	integer i,j,i0,id
 	real fac
 	logical badpatch
@@ -1826,17 +1801,16 @@ c
 	enddo
 c
 	end
-c************************************************************************
+c***********************************************************************
 	subroutine GetRec(tno,uvw,data,flags,npol,MAXCHAN,nchan)
 c
-	implicit none
 	integer npol,MAXCHAN,nchan,tno
 	double precision uvw(5)
 	complex data(MAXCHAN,npol)
 	logical flags(MAXCHAN,npol)
 c
 c  Get a record from the input dataset.
-c------------------------------------------------------------------------
+c-----------------------------------------------------------------------
 	integer nread,i
 	logical more,first
 c
@@ -1882,14 +1856,13 @@ c
 	if(first)call VarChk(tno)
 c
 	end
-c************************************************************************
+c***********************************************************************
 	subroutine VarChk(tno)
 c
-	implicit none
 	integer tno
 c
 c  Check whether we can successfully compute the noise variance.
-c------------------------------------------------------------------------
+c-----------------------------------------------------------------------
 	integer CHANNEL,WIDE
 	parameter(CHANNEL=1,WIDE=2)
 	real rtemp
