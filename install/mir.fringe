@@ -12,6 +12,8 @@ cd $tmp
 set ftp=ftp://ftp.astro.umd.edu/pub/carma/data/
 set fringe=fringe.3C273.2008jun18.4.miriad.tar.gz
 
+set mosaic=0
+
 foreach a ($*)
   set $a
 end
@@ -29,7 +31,7 @@ endif
 set vis=$fringe:r:r
 
 echo Running fringemap:
-$MIR/src/scripts/fringemap vis=$vis mask=0 >& fringe.log
+$MIR/src/scripts/fringemap vis=$vis mask=0 mosaic=$mosaic >& fringe.log
 
 
 if (-d $vis/vis2.cm.ref) then
