@@ -33,13 +33,14 @@ set vis=$fringe:r:r
 echo Running fringemap:
 $MIR/src/scripts/fringemap vis=$vis mask=0 mosaic=$mosaic >& fringe.log
 
-
-if (-d $vis/vis2.cm.ref) then
-  maths exp="<$vis/vis2.cm.ref>-<vis2.cm>" out=vis2.cm.diff
-  echo HISTO Difference map:
-  histo in=vis2.cm.diff
-else
-  echo Warning: no standard reference file present in $vis
+if ($mosaic == 0) then
+  if (-d $vis/vis2.cm.ref) then
+    maths exp="<$vis/vis2.cm.ref>-<vis2.cm>" out=vis2.cm.diff
+    echo HISTO Difference map:
+    histo in=vis2.cm.diff
+  else
+    echo Warning: no standard reference file present in $vis
+  endif
 endif
 
 echo HISTO Dirty map:
