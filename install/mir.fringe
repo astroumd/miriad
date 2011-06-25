@@ -1,7 +1,7 @@
 #! /bin/csh -f
 #
 #  mir.fringe:   run (standard) fringe test
-#                and compare with reference map
+#                and compare with reference map in non-mosaic mode
 #
 #
 #
@@ -31,16 +31,21 @@ endif
 set vis=$fringe:r:r
 
 echo Running fringemap:
-$MIR/src/scripts/fringemap vis=$vis mask=0 mosaic=$mosaic >& fringe.log
-
 if ($mosaic == 0) then
-  if (-d $vis/vis2.cm.ref) then
-    maths exp="<$vis/vis2.cm.ref>-<vis2.cm>" out=vis2.cm.diff
-    echo HISTO Difference map:
-    histo in=vis2.cm.diff
-  else
-    echo Warning: no standard reference file present in $vis
-  endif
+  set mospars=(mosaic=0 imsize=256)
+else  
+  set mospars=(mosaic=1 imsize=257)  
+endif
+$MIR/src/scripts/fringemap vis=$vis mask=0 $mospars >& fringe.log
+
+set refmap=vis2.cm${mosaic}.ref
+
+if (-d $vis/$refmap) then
+  maths exp="<$vis/$refmap>-<vis2.cm>" out=vis2.cm.diff
+  echo HISTO Difference map:
+  histo in=vis2.cm.diff
+else
+  echo Warning: no standard reference file present in $vis
 endif
 
 echo HISTO Dirty map:
