@@ -7,6 +7,7 @@ c  pjt      2008  original version
 c  pjt     aug-2009   merged in the miralloc test code (still old style ptrdiff)
 c  pjt     oct-2010   display MIRBIN
 c  pjt     jun-2011   new style ptrdiff, add summing the array
+c  pjt     jun-2011   add option to use big bogus array, showing memory hog
 c
 c= maxdim - Report all known MAXDIM related parameters, and test memory usage
 c& pjt
@@ -19,6 +20,9 @@ c       means the MAXBUF parameter needs to be increased.
 c 
 c       By specifiying a cube size (nx,ny,nz) you can easily test your
 c       memory and behavior of MIRIAD programs. 
+c
+c       A useful test to exhaust your memory is:
+c          maxdim nx=100 ny=100 nz=100 n=100
 c
 c@ nx
 c       X dimension of a cube to be allocated
@@ -39,13 +43,16 @@ c
       include 'maxdim.h'
       include 'mem.h'
 c
-      INTEGER MAXP
-      PARAMETER(MAXP=128)
+      INTEGER MAXP,MAXN
+      PARAMETER(MAXP=128,MAXN=512)
 
       PTRDIFF nx1,ny1,nz1,ntot,p(MAXP)
       INTEGER nx,ny,nz,n,i
       CHARACTER type*10
-c
+c the 3D array takes lots of memory on modern ld on linux?
+      REAL biga(MAXN,MAXN,MAXN)
+c      REAL biga(MAXN)
+
       CHARACTER version*80, versan*80, mirbin*128
       INTEGER membuf,size
       REAL  sr
@@ -134,6 +141,8 @@ c     WRITE(*,*) 'MAXNAX       = ',MAXNAX
 	 IF (type(1:1).eq.'d') WRITE(*,*) 'SumD         = ',sd
       ENDIF
 
+      CALL work2(MAXN,biga,sr)
+
       END
 c-----------------------------------------------------------------------
       SUBROUTINE myWorkR(data,nx,ny,nz,sum)
@@ -189,4 +198,15 @@ c
 
 
 
+      END
+c-----------------------------------------------------------------------
+      SUBROUTINE work2(n, a, sum)
+      INTEGER n
+      REAL a(n)
+      INTEGER i
+
+      sum = 0
+      DO i=1,n
+        sum = sum + a(i)
+      ENDDO
       END
