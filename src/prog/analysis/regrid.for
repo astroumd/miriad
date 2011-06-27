@@ -124,7 +124,7 @@ c-----------------------------------------------------------------------
       include 'mirconst.h'
 
       character version*(*)
-      parameter(version='Regrid: version 1.0 31-May-06')
+      parameter(version='Regrid: version 1.0 27-jun-11')
 
       character in*128,out*128,tin*128,ctype*16,cellscal*12,proj*3
       character line*128
