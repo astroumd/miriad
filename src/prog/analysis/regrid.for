@@ -126,8 +126,8 @@ c-----------------------------------------------------------------------
       character version*(*)
       parameter(version='Regrid: version 1.0 31-May-06')
 
-      character in*64,out*64,tin*64,ctype*16,cellscal*12,proj*3
-      character line*64
+      character in*128,out*128,tin*128,ctype*16,cellscal*12,proj*3
+      character line*128
       double precision desc(4,MAXNAX),crpix,crval,cdelt,epoch1,epoch2
       double precision llrot,rot
       logical noscale,dooff,doepo,dogaleq,nearest,dorot
