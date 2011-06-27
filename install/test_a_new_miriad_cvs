@@ -27,6 +27,7 @@
 #   19-nov-10    added m4 and flex to 'tools=1'  (useful for strict wcslib)
 #    3-jun-11    telescope= ,  gfortran=1 now default
 #   17-jun-11    add MIS pipeline (successor to drpacs)
+#   27-jun-11    add gold=0 default, to counter ld memory hog problems
 #----
 
 
@@ -53,10 +54,12 @@ set brief=0
 #   pick a valid telescope  (telescope=test is useful for low memory compilations)
 set telescope=carma
 
-# pick a compiler (gfortran, intel, g77, g95)
+# pick a compiler (gfortran, intel, g77, g95) or trust a default
 set gfortran=1
+set intel=0
+set gold=0
 
-# sigh, old gfortran can't do gif, but default we try
+# sigh, some old gfortran cannot do gif, but default we try
 set gif=1
 
 #   tar file to grab from ftp (rootdir)
@@ -96,11 +99,19 @@ if ($?MIR) then
   exit 1
 endif
 
+if ($gold == 0 && -e /usr/bin/gold) then
+  echo Warning: your linking might benefit from setting gold=1
+endif
+
 if ($gfortran) then
    if ($?F77) then
       echo Overriding $F77 for gfortran
    endif
-   setenv F77 gfortran
+   if ($gold) then
+     setenv F77 "gfortran -fuse-ld=gold"
+   else
+     setenv F77 gfortran
+   endif
    setenv CC  gcc
    setenv CXX g++
 else if ($intel) then
