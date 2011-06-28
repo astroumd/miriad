@@ -129,8 +129,8 @@ if ($mosaic) then
   mossdi map=$vis.mp beam=$vis.bm \
     niters=$niters \
     out=$vis.cc > clean.log
-  mospsf beam=$vis.bm out=$vis.psf
-  imfit in=$vis.psf object=beam > $vis.psf.log
+  mospsf beam=$vis.bm out=$vis.psf 
+  imfit in=$vis.psf object=beam 'region=rel,box(-32,-32,31,31)' > $vis.psf.log
   set bmaj=`grep "Major axis" $vis.psf.log | awk '{print $4}'`
   set bmin=`grep "Minor axis" $vis.psf.log | awk '{print $4}'`
   set bpa=`grep "Position angle" $vis.psf.log | awk '{print $4}'`
@@ -157,6 +157,7 @@ endif
 
 if ($ds9) mirds9 $vis.cm
 
-
+echo IMSTAT on full image, with mask=$mask
 imstat in=$vis.cm
+echo IMSTAT on inner quarter, with mask=$mask
 imstat in=$vis.cm "region=quarter"
