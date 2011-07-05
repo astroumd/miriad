@@ -1,0 +1,22 @@
+# carma_EZ.ant configuration
+# topocentric coordinates in meters.
+# baseunit=-3.33564 to convert to equatorial system measured in nanoseconds.
+# north    east      zenith     station   ant
+# -16.880   -2.270    0.000       49/70    10m move to pad 31 to avoid shadowing 3.5m
+ -17.820  -19.560    0.000       31
+  25.170   24.000    0.000       71       10m
+  33.420    6.800    0.000       72       10m
+  36.070  -18.600    0.000       73       10m
+  15.730  -29.230    0.000       74       10m
+# -22.370   12.620    0.000       75       10m move to pad 58 to avoid shadowing 3.5m
+# -10.720  -41.650    0.000       58       10m
+ 22.220   35.450    0.000       53         10m
+  10.500   -0.850    0.000       61        6m
+  13.230    8.580    0.000       62        6m
+   3.050   -7.750    0.000       63        6m
+   4.460    7.150    0.000       64        6m
+   0.000    0.000    0.000       32/47/65  6m
+   3.620   19.700    0.000       66        6m
+  -0.370  -20.020    0.000       48/67     6m
+  -7.310  -11.540    0.000       46/68     6m
+  -9.060   12.000    0.000       69        6m

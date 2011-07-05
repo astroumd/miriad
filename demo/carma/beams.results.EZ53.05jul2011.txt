@@ -1,0 +1,50 @@
+
+   ---  CARMA Single Field MFS Imaging    ---   
+ config    =  carma_E53
+ dec       =  0
+ harange   =  -4,4,.5  hours
+ nchan     =  1
+ select    =  -shadow(10.4)
+ freq      =  230
+ imsize    =  256
+ systemp   =  80,290,0.26
+ jyperk    =  73
+ bandwidth =  500
+ weighting =  sup=0
+ 
+   ---  TIMING   ---   
+START: Tue Jul 5 14:34:36 PDT 2011
+UVGEN: Tue Jul 5 14:34:36 PDT 2011
+INVERT: Tue Jul 5 14:34:37 PDT 2011
+IMPLOT: Tue Jul 5 14:34:37 PDT 2011
+CLEAN: Tue Jul 5 14:34:37 PDT 2011
+IMFIT: Tue Jul 5 14:34:37 PDT 2011
+FINISH: Tue Jul 5 14:34:37 PDT 2011
+ 
+   ---  RESULTS   ---   
+UVGEN:       1680 records written to file: carma_E53.0.uv
+ 
+Config     DEC    HA  Nchan   Rms     Beam       Tb_rms     Sidelobe[%]      Nvis   uvrange  weight
+           deg.   hrs.       [mJy]    [arcsec]     [mK]     Rms,Max,Min      %   #    [m]
+
+23-antenna configurations
+carma_EZ58  -30  -2,2,.5  1    3.51    7.13 x 2.26  5.0    6.7  63.7  -21.3  6  114  1.8 80.4 sup=0
+carma_EZ53  -30  -2,2,.5  1    3.56    6.92 x 2.52  4.7    6.9  38.6  -57.8  5  108  1.8 73.8 sup=0
+carma_EZ58  -30  -4,4,.5  1    4.15    6.85 x 2.32  6.0    5.8  32.9  -17.6  5  156  1.5 80.4 sup=0
+carma_EZ53  -30  -4,4,.5  1    4.13    6.35 x 2.57  5.9    6.0  30.8  -22.2  4  142  1.5 75.3 sup=0
+carma_EZ58    0  -4,4,.5  1    0.71    3.88 x 2.88  1.5    3.1  26.2  -12.4  20 815  2.4 80.4 sup=0
+carma_EZ53    0  -4,4,.5  1    0.74    3.75 x 3.04  1.5    3.2  26.4  -11.9  19 751  2.4 75.6 sup=0
+carma_EZ58   30  -4,4,.5  1    0.47    3.11 x 2.98  1.2    2.2  11.8   -9.0  29 1160 3.3 80.4 sup=0
+carma_EZ53   30  -4,4,.5  1    0.49    3.14 x 3.00  1.2    2.2  15.0  -10.4  27 1087 3.3 75.6 sup=0
+
+15-antenna configurations
+carma_E58   -30  -2,2,.5  1    3.56    8.15 x 2.60  3.9    6.7  45.9  -30.2  13  111  3.3 74.7 sup=0
+carma_E53   -30  -2,2,.5  1    3.64    8.41 x 2.52  4.0    7.0  41.5  -23.0  12  103  3.3 67.2 sup=0
+carma_E58    30  -2,2,.5  1    0.72    3.81 x 2.78  1.6    3.4  16.5  -10.5  51  430  7.5 74.7 sup=0
+carma_E53    30  -2,2,.5  1    0.72    3.84 x 2.79  1.6    3.4  19.6  -12.1  51  430  7.5 68.1 sup=0
+carma_E58   -30  -4,4,.5  1    4.37    8.56 x 2.63  4.5    6.1  35.7  -20.5  11  153  2.1 75 sup=0
+carma_E53   -30  -4,4,.5  1    4.41    7.85 x 2.63  4.9    6.5  35.6  -21.3  10  135  2.1 68.1 sup=0
+carma_E58     0  -4,4,.5  1    0.84    4.33 x 2.91  1.5    3.5  38.2  -14.7  35  586  3.3 74.7 sup=0
+carma_E53     0  -4,4,.5  1    0.87    4.24 x 3.00  1.6    3.8  47.2  -12.7  32  532  3.3 68.1 sup=0
+carma_E58    30  -4,4,.5  1    0.58    3.74 x 2.91  1.2    2.6  12.6  -11.0  45  757  6 74.7 sup=0
+carma_E53    30  -4,4,.5  1    0.60    3.69 x 2.98  1.3    2.7  15.8  -10.9  42  699  6 68.1 sup=0
