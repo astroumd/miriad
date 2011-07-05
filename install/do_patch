@@ -16,7 +16,7 @@ cp mir.man                      $MIRBIN
 if (1) then
   echo Keeping log in $MIR/tmp/mir.genman.log
   echo Sometimes this program can hang on linux man page updates.....
-  mir.genman -n >& $MIR/tmp/mir.genman.log &
+  ./mir.genman -n >& $MIR/tmp/mir.genman.log &
 else
   echo Skipping mir.genman for now
 endif
