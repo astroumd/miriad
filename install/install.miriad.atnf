@@ -1,5 +1,7 @@
 #! /bin/csh -f
 #
+#  install.miriad.atnf 
+#
 #  This script installs a linux version of ATNF miriad.
 #  For mac, you'll need to hardcode some (pretty obvious) changes here.
 #
@@ -35,7 +37,7 @@ cd    $mirdir
 tar zxf ../miriad-code.tar.gz
 tar zxf ../miriad-common.tar.gz
 tar zxf ../rpfits.tar.gz
-tar jzx ../wcslib.tar.bz2
+tar jxf ../wcslib.tar.bz2
 
 # remember where we are, on and what we are
 set mir=`pwd`/miriad
@@ -43,19 +45,20 @@ set mirarch=`miriad/scripts/mirarch`
 mkdir $mir/$mirarch
 set prefix=$mir/$mirarch
 echo PREFIX=$prefix
-
+mkdir $mir/$mirarch/{lib,include}
      
 # really need to install PGPLOT first....
-# setenv PGPLOT_DIR $mir/lib/linux
+#
 #   e.g. get them from another miriad? in this case we need $MIRLIB
 #   make sure PGPLOT came from the same fortran as the fortran here
 # cp $MIRLIB/libpgplot.*  $mir/$mirarch/lib/
 # cp $MIRLIB/cpgplot.h    $mir/$mirarch/include/
-# cp $MIRLIB/libcpgplot.a $mir/$mirarch/lib/
+# cp $MIRLIB/libcpgplot.* $mir/$mirarch/lib/
 
 # wcslib, needs pgplot from another source (catch-22 ??)
+# might need flex as well here, or is that with realclean?
 pushd wcslib-$wcslib
-make realclean
+# make realclean
 ./configure --prefix=$prefix \
     F77=$fc \
    --with-pgplotlib=$prefix/lib  --with-pgplotinc=$prefix/include
@@ -73,8 +76,11 @@ pushd miriad
 setenv MIR     $mir
 setenv MIRARCH $mirarch
 ./configure F77=$fc
-diff inc/rpfits.inc linux64/include/
+diff inc/rpfits.inc $mirarch/include/
 make 
+
+
+# --------------------------------------------------------------------------------
 
 if (0) then
 set rc=miriad_start.csh
