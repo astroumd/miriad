@@ -19,7 +19,13 @@ if (-e $MIRLIB/libwcs.a) then
 else
   set wcslib=""
 endif
-setenv Fcompile  "gfortran"
+# prevent linker to allocate non-initialized data (e.g. ubuntu 10.10)
+if (-e /usr/bin/gold) then
+  set gold="-fuse-ld=gold"
+else
+  set gold=""
+endif
+setenv Fcompile  "gfortran $gold"
 setenv Foptions  "-O -fPIC"
 setenv FoptionsN "-fPIC"
 setenv Flinkdir  "-L`echo $mmir/lib/$mhost $MIRXLIB | sed 's/ / -L/g'`"
