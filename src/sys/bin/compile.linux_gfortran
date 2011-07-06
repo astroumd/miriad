@@ -25,9 +25,9 @@ if (-e /usr/bin/gold) then
 else
   set gold=""
 endif
-setenv Fcompile  "gfortran $gold"
-setenv Foptions  "-O -fPIC"
-setenv FoptionsN "-fPIC"
+setenv Fcompile  "gfortran"
+setenv Foptions  "$gold -O -fPIC"
+setenv FoptionsN "$gold -fPIC"
 setenv Flinkdir  "-L`echo $mmir/lib/$mhost $MIRXLIB | sed 's/ / -L/g'`"
 setenv Flinklib  "$lfs -lmir -llinpack -lpgplot $wcslib -lX11 -lm"
 setenv Finclude  "-I`echo $mmir/src/inc $MIRXINC | sed 's/ / -I/g'`"
