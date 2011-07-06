@@ -5,6 +5,8 @@
 #  This script installs a linux version of ATNF miriad.
 #  For mac, you'll need to hardcode some (pretty obvious) changes here.
 #
+#  See also: ftp://ftp.atnf.csiro.au/pub/software/miriad/INSTALL.html 
+#
 #  You should run this from a clean directory in which
 #  a few source tar balls are present, within which the
 #  miriad tree will be built. The script 'miriad_start.csh'
