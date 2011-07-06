@@ -77,6 +77,7 @@ setenv MIR     $mir
 setenv MIRARCH $mirarch
 ./configure F77=$fc
 diff inc/rpfits.inc $mirarch/include/
+#  on ubuntu, you really need the -fuse-ld=gold compile flag if your memory < 3GB
 make 
 
 
