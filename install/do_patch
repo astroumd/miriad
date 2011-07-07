@@ -22,3 +22,9 @@ else
 endif
 
 
+set opt=$MIR/opt
+mkdir -p $opt
+echo 'Optional bin/lib/include/.... can be used for 3rd things miriad needs' >  $opt/README
+
+
+
