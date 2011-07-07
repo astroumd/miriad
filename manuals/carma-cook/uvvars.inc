@@ -307,7 +307,15 @@ dec		\>R or	\>radians
 \> coordinate definition. See also {\tt obsdec}\\
 
 delay(nants)	\>D	\>nanosec
-\> delay setting at beginning of integration (Hat Ck)\\
+\> delay setting at beginning of integration (Hat Ck/CARMA \<2011)\\
+
+delayry(nants)	\>D	\>nanosec
+\> delay setting RY at beginning of integration (CARMA 2011)\\
+
+delaylx(nants)	\>D	\>nanosec
+\> delay setting LX at beginning of integration (CARMA 2011)\\
+
+
 
 delay0(nants)	\>R	\>nanosec
 \> delay offset for antennas (Hat Ck) \\
