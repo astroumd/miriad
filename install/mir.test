@@ -108,6 +108,7 @@ xyio() {
   runt imlist in=map1 options=stat
   run imlist in=map1 options=data "region=relpix,box(-2,-2,2,2)"
   run imgen out=map2 imsize=128 object=level spar=1
+  run fits in=map1 out=map1.fits op=xyout
   echo 0000000 0000 0400 803f 0000 803f 0000 803f 0000 > endian.lit
   echo 0000000 0000 0004 3f80 0000 3f80 0000 3f80 0000 > endian.big
   # Use echo to compress extra whitepsace that some od's output
