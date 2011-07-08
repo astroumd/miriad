@@ -92,6 +92,10 @@ vector processing capacities (compilers "unicos", "alliant" and "convex"):
 * History:
 *   Refer to the RCS log, v1.1 includes prior revision information.
 *
+* CARMA MIRIAD customizations:
+*
+* 2011/Jul/07  pkgw  Reduce chattiness by removing "number of lines" message
+*
 * $Id$
 ******************************************************************************
 * ToDos/Shortcomings:
@@ -298,9 +302,6 @@ int main(int argc,char *argv[])
   process(in,infile);
   Fclose(in);
   Fclose(out);
-
-  /* Give a final message. */
-  printf("Number of lines = %d; number of routines = %d\n",lines,routines);
   return 0;
 }
 
