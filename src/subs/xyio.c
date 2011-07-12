@@ -15,6 +15,10 @@
 /*    rjs/pjt 3jun03 "append" mode in xyopen - long live non-CVS devel. */
 /*----------------------------------------------------------------------*/
 
+#if defined(HAVE_CONFIG_H) && HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>

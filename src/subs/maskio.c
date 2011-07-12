@@ -19,6 +19,10 @@
 /*    pjt   7jan10   yes, and fixed 64bit offsets (not lengths!!!)      */
 /************************************************************************/
 
+#if defined(HAVE_CONFIG_H) && HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

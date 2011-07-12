@@ -6,6 +6,10 @@
 /*    rjs  16jul09  Original version. Adapted from wrap.f2c.		*/
 /************************************************************************/
 
+#if defined(HAVE_CONFIG_H) && HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <limits.h>
 #include <unistd.h>
 #include <string.h>

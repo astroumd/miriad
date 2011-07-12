@@ -5,6 +5,10 @@
 /*  History:                                                            */
 /*    dnf  15mar06  initial version                                     */
 /************************************************************************/
+#if defined(HAVE_CONFIG_H) && HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>

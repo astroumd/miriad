@@ -5,6 +5,10 @@
 /*    dnf  16mar06  initial version                                     */
 /************************************************************************/
 
+#if defined(HAVE_CONFIG_H) && HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #define CHECK(x,a) if(x) {  bug_c('w',((void)sprintf a,message)); \
 			    bugno_c('f',x);			 \
 			 }

@@ -24,6 +24,10 @@
 /*    20jun02  pjt  pedantic                                            */
 /************************************************************************/
 
+#if defined(HAVE_CONFIG_H) && HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #define MAXLEN 128
 #include <stddef.h>
 #include <time.h>

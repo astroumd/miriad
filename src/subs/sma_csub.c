@@ -13,6 +13,10 @@
    TODO:   <string.h>::bcopy -> memcpy
  */
 
+#if defined(HAVE_CONFIG_H) && HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 /* #dfin SWAP_ENDIAN 1  for cfa0 (big endian lf-o-righ incra
     in addr numbr - Moorola 680x0  */
 /* #dfin SWAP_ENDIAN 0  for id (inl)  buzz (alpha) and linux (

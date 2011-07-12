@@ -226,6 +226,10 @@
 // 2008-01-23 (JHZ) set static variable to target and unknown
 //                  updated rar2c and decr2c array size                  
 //***********************************************************
+#if defined(HAVE_CONFIG_H) && HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <math.h>
 #include <rpc/rpc.h>
 #include <signal.h>

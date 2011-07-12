@@ -29,6 +29,10 @@
 /*    pjt  21jun02   MIR4 prototyping                                   */
 /************************************************************************/
 
+#if defined(HAVE_CONFIG_H) && HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "sysdep.h"
 #include "miriad.h"
 

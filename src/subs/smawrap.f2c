@@ -7,6 +7,10 @@
 /*   18-may-2006   jhz      added nohighspr1 to rspokeinisma_c          */
 /*   10-jan-2007   jhz      added evec to rspokeinisma_c                */
 /************************************************************************/
+#if defined(HAVE_CONFIG_H) && HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <string.h>
 #include "miriad.h"
 /*#include "sysdep.h"*/

@@ -262,6 +262,10 @@
 /*		list to be formed for hashing.				*/
 /*									*/
 /*----------------------------------------------------------------------*/
+#if defined(HAVE_CONFIG_H) && HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #define VERSION_ID "16-dec-09 pjt"
 
 #define private static

@@ -33,6 +33,10 @@
 /*       2-mar-05  pjt template->templat for C++, just in case          */
 /************************************************************************/
 
+#if defined(HAVE_CONFIG_H) && HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>

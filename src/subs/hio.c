@@ -42,6 +42,10 @@
        12-jul-11  pjt   applied ATNF fix of some static function use off_t/size_t
 */
 
+#if defined(HAVE_CONFIG_H) && HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdlib.h>
 #include <string.h>
 

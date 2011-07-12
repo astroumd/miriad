@@ -32,6 +32,10 @@
 /*    pjt   6sep06   read integers via rdhdi                            */
 /*    rjs  01apr09   Add scrRecSz routine.				*/
 /************************************************************************/
+#if defined(HAVE_CONFIG_H) && HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>

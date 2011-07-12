@@ -6,6 +6,10 @@
 /*    pjt   9aug07 Original version.                                          */
 /******************************************************************************/
 
+#if defined(HAVE_CONFIG_H) && HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "miriad.h"
 
 /************************************************************************/

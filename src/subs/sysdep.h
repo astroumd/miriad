@@ -33,10 +33,6 @@
  *    cgk 20dec07 make HAS_STRERROR be HAVE_STRERROR per configure.ac
  */
 
-#if defined(HAVE_CONFIG_H) && HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #if !defined(MIR_SYSDEP_H)
 #define MIR_SYSDEP_H
 
