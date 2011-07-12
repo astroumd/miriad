@@ -6,6 +6,7 @@ c     17jan03 pjt   cloned off IMSHARP, Q&D for Stuart Vogel
 c     23jan03 pjt   finalized
 c     21feb03 pjt   removed the local (duplicated/old wrong) copy of sortr
 c     25jul08 pjt   bigger default size
+c      7jul11 pjt   add an nsigma keyword
 c
 c  TODO:
 c     - implement looping over all planes in the cube
@@ -32,6 +33,10 @@ c@ size
 c     Half the box size. The filtering box will be square and have
 c     a size of 2*SIZE+1, and will thus always have an odd number of pixels
 c     centered on the pixel to be filtered. Edge pixels are left untouched.
+c@ nsigma
+c     If set to a non-zero value, instead of a median, all outliers
+c     more than nsigma*sigma from the mean are removed in computing
+c     the filtered output value
 c
 c-----------------------------------------------------------------------
 c
@@ -39,7 +44,7 @@ c
       INCLUDE 'maxnax.h'
 c
       CHARACTER  PVERSION*(*)
-      PARAMETER (PVERSION='Version 1.0 25-jul-08')
+      PARAMETER (PVERSION='Version 1.0 7-jul-11')
       INTEGER   MAXDIM3
       PARAMETER (MAXDIM3=2048)
       INTEGER   MAXBOX
@@ -52,7 +57,7 @@ c
       INTEGER   i,j,k, i1,j1,k1,nx, ny, nz, voldim
       INTEGER   naxis,lun,lout,size,size2
       REAL      buf(MAXDIM3,MAXDIM3), obuf(MAXDIM3), dmin, dmax
-      REAL      dat(MAXBOX*MAXBOX), xdat
+      REAL      dat(MAXBOX*MAXBOX), xdat, nsigma
       LOGICAL   flg(MAXDIM3,MAXDIM3), oflg(MAXDIM3)
 c-----------------------------------------------------------------------
 c  Announce
@@ -65,6 +70,7 @@ c
       CALL keya('out',outfile,' ')
       CALL keyi('size',size,1)
       size2 = 2*size+1
+      CALL keyr('nsigma',nsigma,0.0)
       CALL keyfin
 c
 c  Open files for in and output, check if buffers large enough, and
@@ -150,7 +156,11 @@ c                                                 size+1 ...nx..size:  filter
                ENDDO
                IF (k1.GT.0) THEN
 c                  write(*,*) 'median ',i,j,k1
-                  CALL median(k1,dat,xdat)
+                  IF (nsigma.GT.0) THEN
+                     CALL filter2(k1,dat,xdat,nsigma)
+                  ELSE
+                     CALL median(k1,dat,xdat)
+                  ENDIF
                   obuf(i) = xdat
                   oflg(i) = .TRUE.
                ELSE
@@ -226,4 +236,28 @@ c
       ELSE
         xmed=x(n2+1)
       ENDIF
+      END
+c***********************************************************************
+      SUBROUTINE filter1(n,x,xmean,nsigma)
+      IMPLICIT NONE
+      INTEGER n
+      REAL x(n),xmean,nsigma
+c
+      INTEGER i
+c
+      xmean = 0.0
+      DO i=1,n
+         xmean = xmean + x(i)
+      ENDDO
+      xmean = xmean/n
+      END
+c***********************************************************************
+      SUBROUTINE filter2(n,x,xmean,nsigma)
+      IMPLICIT NONE
+      INTEGER n
+      REAL x(n),xmean,nsigma
+c
+      INTEGER ip
+c
+      xmean = x(n)
       END
