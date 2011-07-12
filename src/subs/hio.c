@@ -39,6 +39,7 @@
        05-nov-04  jwr	changed file sizes from size_t to off_t
        01-jan-05  pjt   a few bug_c() -> bugv_c()
        03-jan-05  pjt/rjs   hreada/hwritea off_t -> size_t for length 
+       12-jul-11  pjt   applied ATNF fix of some static function use off_t/size_t
 */
 
 #include <stdlib.h>
@@ -132,12 +133,12 @@ private int first=TRUE;
 /* Declare our private routines. */
 
 static void hinit_c(void);
-static int hfind_nl(char *buf, int len);
+static int  hfind_nl(char *buf, size_t len);
 static void hcheckbuf_c(ITEM *item, off_t next, int *iostat);
-static void hwrite_fill_c(ITEM *item, IOB *iob, int next, int *iostat);
+static void hwrite_fill_c(ITEM *item, IOB *iob, off_t next, int *iostat);
 static void hcache_create_c(TREE *t, int *iostat);
 static void hcache_read_c(TREE *t, int *iostat);
-static int hname_check(char *name);
+static int  hname_check(char *name);
 static void hdir_c(ITEM *item);
 static void hrelease_item_c(ITEM *item);
 static ITEM *hcreate_item_c(TREE *tree, char *name);
@@ -262,7 +263,8 @@ void hflush_c(int tno,int *iostat)
   TREE *t;
   ITEM *item;
   char s[CACHE_ENT];
-  int offset,i,ihandle;
+  int   i, ihandle;
+  off_t offset;
 
   t = hget_tree(tno);
   *iostat = 0;
@@ -1114,7 +1116,7 @@ void hio_c(int ihandle,int dowrite,int type,char *buf,
   }
 }
 /************************************************************************/
-private int hfind_nl(char *buf,int len)
+private int hfind_nl(char *buf, size_t len)
 /*
   Return the character number of the first new-line character.
 ------------------------------------------------------------------------*/
@@ -1169,7 +1171,7 @@ private void hcheckbuf_c(ITEM *item,off_t next,int *iostat)
   }
 }
 /************************************************************************/
-private void hwrite_fill_c(ITEM *item,IOB *iob,int next,int *iostat)
+private void hwrite_fill_c(ITEM *item, IOB *iob, off_t next, int *iostat)
 /*
   A nonaligned nonsequential write operation has been requested. Read in the
   portion that we are missing. We need to fill the i/o buffer up to at
@@ -1185,7 +1187,8 @@ private void hwrite_fill_c(ITEM *item,IOB *iob,int next,int *iostat)
 ------------------------------------------------------------------------*/
 {
   char buffer[BUFSIZE];
-  int offset,length;
+  off_t  offset;
+  size_t length;
 
   offset = BUFALIGN * ((iob->offset + iob->length) / BUFALIGN);
   length = BUFALIGN * ((next-1)/BUFALIGN + 1) - offset;
@@ -1284,7 +1287,7 @@ private void hcache_read_c(TREE *t,int *iostat)
   abort completely.
 ------------------------------------------------------------------------*/
 {
-  int offset;
+  off_t offset;
   ITEM *item;
   char s[CACHE_ENT];
   int ihandle;
@@ -1318,7 +1321,7 @@ private int hname_check(char *name)
   alpha is allowed. The name "header" is generally reserved.
 ------------------------------------------------------------------------*/
 {
-  int length,i;
+  size_t i, length;
   char c;
 
   length = strlen(name);
@@ -1340,7 +1343,7 @@ private void hdir_c(ITEM *item)
   file.
 ------------------------------------------------------------------------*/
 {
-  int length,plength,len;
+  size_t len, length, plength;
   char *context,*s;
   ITEM *it;
   TREE *t;
