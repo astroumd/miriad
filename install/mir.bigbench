@@ -5,14 +5,18 @@
 #  when fits=1 it writes a UV FITS file, which is nearly 3 times the
 #  size of the miriad file.  Here are some example sizes of miriad
 #  and fits for choices of nchan (for fixed npts=525000)
+#  Note the current directory needs 6 times, because of the scratch
+#  file that is being used.
 #
 #  nchan  vis1/visdata     vis1.fits    atnf.fits    critical size
 #  -----  ------------    ----------    ----------  ---------------
 #      4      46200292      35709120      35709120
 #    256     567000308    1623309120    1623309120  2147483648 = 2G
-#   1024    2179800308    6461709120    6461709120     
+# *  384     835800308    2429709120
+#    768    1642200308    4848909120
+# * 1024    2179800308    6461709120    6461709120     
 #   1300    2759400308    8200509120    8200509120  8589934592 = 8G
-#   1400    2969400308    8830509120    8830509120 
+# * 1400    2969400308    8830509120    8830509120 
 #   4096    8631000308
 #  ---------------------------------------------------------------- 
 set tmp=bench$$
@@ -33,7 +37,7 @@ end
 
 if ($diff) set fits=1
 
-echo "MIRBIGBENCH: (2011-06-20) $tmp : nchan=$nchan npts=$npts uvcat=$uvcat fits=$fits diff=$diff"
+echo "MIRBIGBENCH: (2011-07-12) $tmp : nchan=$nchan npts=$npts uvcat=$uvcat fits=$fits diff=$diff"
 echo "nchan=$nchan npts=$npts uvcat=$uvcat fits=$fits diff=$diff" > ARGS
 echo hostname=`hostname` 
 echo system=`uname -a`  
