@@ -220,20 +220,20 @@ void test_sizes(void)
   printf("sizeof(long double) = %d\n",sizeof(long double) );
 
 #ifdef MIRTEL
-  printf("MIRTEL            = %s\n",MIRTEL);
+  printf("MIRTEL              = %s\n",MIRTEL);
 #else
-  printf("MIRTEL            = %s\n","ATNF");
+  printf("MIRTEL              = %s\n","ATNF");
 #endif
 #ifdef MAXIANT
-  printf("MAXIANT           = %d\n",MAXIANT);
+  printf("MAXIANT             = %d\n",MAXIANT);
 #else
-  printf("MAXIANT           = %d\n",-1);
+  printf("MAXIANT             = %d\n",-1);
 #endif
-  printf("MAXANT            = %d\n",MAXANT);
-  printf("MAXBASE           = %d\n",MAXBASE);
-  printf("MAXDIM            = %d\n",MAXDIM);
-  printf("MAXCHAN           = %d\n",MAXCHAN);
-  printf("MAXWIN            = %d\n",MAXWIN);
+  printf("MAXANT              = %d\n",MAXANT);
+  printf("MAXBASE             = %d\n",MAXBASE);
+  printf("MAXDIM              = %d\n",MAXDIM);
+  printf("MAXCHAN             = %d\n",MAXCHAN);
+  printf("MAXWIN              = %d\n",MAXWIN);
   
 }
 
