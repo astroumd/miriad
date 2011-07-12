@@ -62,10 +62,14 @@ set gold=0
 # sigh, some old gfortran cannot do gif, but default we try
 set gif=1
 
+# grab precompiled manuals
+set man=1
+
 #   tar file to grab from ftp (rootdir)
 set ftpdir=ftp://ftp.astro.umd.edu/pub/carma
 set ftp=ftp://ftp.astro.umd.edu/progs/bima/miriad.tar.gz
 set autotools=(m4-1.4.15.tar.gz autoconf-2.68.tar.gz automake-1.11.1.tar.gz libtool-2.4.tar.gz  flex-2.5.35.tar.gz )
+set manuals=(userguide_US.pdf progguide_US.pdf)
 
 #   options directly passed to install.miriad
 set opts=()
@@ -107,6 +111,7 @@ if ($gfortran) then
    if ($?F77) then
       echo Overriding $F77 for gfortran
    endif
+   # not good idea, wip doesn't like this style
    if ($gold) then
      setenv F77 "gfortran -fuse-ld=gold"
    else
@@ -150,8 +155,15 @@ if ($reuse == 0) then
     echo "...done".
   endif
   if ($brief == 0) then
-    echo "getting miriad,wip and rad via cvs....".
-    (cvs -Q co $branch -d $rootdir miriad; cd $rootdir/borrow; cvs -Q co wip rad drpacs mis)
+    echo "getting miriad,wip and rad via cvs...."
+    cvs -Q co $branch -d $rootdir miriad
+    (cd $rootdir/borrow; cvs -Q co wip rad drpacs mis)
+    echo "getting precompiled manuals"
+    pushd $rootdir/manuals
+    foreach m ($manuals)
+       wget $ftpdir/$m >& /dev/null
+    end
+    popd
   else
     echo "getting miriad only cvs....".
     (cvs -Q co $branch -d $rootdir miriad)
