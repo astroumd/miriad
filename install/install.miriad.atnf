@@ -2,7 +2,7 @@
 #
 #  install.miriad.atnf 
 #
-#  This script installs a linux version of ATNF miriad.
+#  This script installs a linux version of ATNF miriad (in development)
 #  For mac, you'll need to hardcode some (pretty obvious) changes here.
 #
 #  See also: ftp://ftp.atnf.csiro.au/pub/software/miriad/INSTALL.html 
@@ -79,8 +79,14 @@ setenv MIR     $mir
 setenv MIRARCH $mirarch
 ./configure F77=$fc
 diff inc/rpfits.inc $mirarch/include/
-#  on ubuntu, you really need the -fuse-ld=gold compile flag if your memory < 3GB
-make 
+
+if (-e /usr/bin/gold) then
+   #  on ubuntu, you really need the -fuse-ld=gold compile flag
+   # if your memory < 3GB  
+  make FC="$fc -fuse-ld=gold"
+else
+  make
+endif
 
 
 # --------------------------------------------------------------------------------
