@@ -74,11 +74,13 @@ c       26aug00  tw  added rmpmax keyword.
 c       18sep00  tw  added cormax keyword.
 c	21oct00  tw  initiliaze rmpold.
 c       30nov07  pjt added delaymaxdecor=, fixed old bugs updating wcorr's
+c       24jun11  pjt deal with more recent CARMA data where delay was split
+c                    into delayry and delaylx.
 c                  
 c------------------------------------------------------------------------
         include 'maxdim.h'
 	character version*(*)
-	parameter(version='UvDecor: Version 30-nov-07')
+	parameter(version='UvDecor: Version 24-jun-11')
 c
 	integer nchan,vhand,lIn,lOut,i,j,nspect,nPol,Pol,SnPol,SPol
 	integer nschan(MAXWIN),ischan(MAXWIN),ioff,nwdata,length
@@ -90,13 +92,13 @@ c
 	logical nocal,nopol,window,wins(MAXWIN)
 	logical first,init,new,more,dopol,PolVary,donenpol
 	logical nowide,nochan,dochan,dowide,docopy,doall,updated
-	logical nopass
+	logical nopass,need2
         real rmspath,rmpscale,rmpold,corfac,oldinttime,inttime
 	real medcorfac,avgcorfac,sumcorfac,lambda,pi
 	real corfacarray(1000000)
 	real maxcorfac,rmpmax,minbadrmp,cormax
 	real delaymax,delayd
-	double precision delay(MAXANT)
+	double precision delay(MAXANT), delay2(MAXANT)
 	integer count,badrmp,baduvd,badfac,nants,ant1,ant2,baddel
 	double precision draobs,ddecobs,dlst,u,v,uvdist,freq
 	real lat,dummy,elev,obsha
@@ -161,6 +163,7 @@ c
 	SnPol = 0
 	SPol = 0
 	PolVary = .false.
+	need2 = .FALSE.
 	badrmp = 0
 	baduvd = 0
 	baddel = 0
@@ -199,7 +202,14 @@ c
 	  call uvDatRd(preamble,data,flags,maxchan,nchan)
 	  if (delaymax.gt.0) then
 	     call uvgetvri(lIn,'nants',nants,1)
-	     call uvgetvrd(lIn,'delay',delay,nants)
+	     call uvprobvr(lIn,'delay',type,length,updated)
+	     if (.not.updated) then
+		call uvgetvrd(lIn,'delayry',delay,nants)
+		call uvgetvrd(lIn,'delaylx',delay2,nants)
+		need2 = .TRUE.
+	     else
+		need2 = .FALSE.
+	     endif
 	     call basant(preamble(4),ant1,ant2)
 	  endif
 c
@@ -455,6 +465,12 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
      *     baddel
 	call hiswrite(lOut,line)
 	call output(line)
+	if (need2) then
+	   write(line,'(a)')
+     *    'UVDECOR: using delayry (and delaylx) instead of delay'
+	   call hiswrite(lOut,line)
+	   call output(line)
+	endif
 
 
         call hisclose (lOut)
