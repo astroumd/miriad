@@ -53,6 +53,7 @@
 
 
 #include <stdio.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
@@ -203,15 +204,20 @@ void test_uvio(char *fname, int nc, int nw, int nr)
 
 void test_sizes(void)
 {
-  printf("sizeof(short)     = %d\n",sizeof(short));
-  printf("sizeof(int)       = %d\n",sizeof(int));
-  printf("sizeof(long)      = %d\n",sizeof(long));
-  printf("sizeof(long long) = %d\n",sizeof(long long));
-  printf("sizeof(size_t)    = %d\n",sizeof(size_t));
-  printf("sizeof(off_t)     = %d\n",sizeof(off_t));
-  printf("sizeof(void *)    = %d\n",sizeof(void *));
-  printf("sizeof(int8)      = %d\n",sizeof(int8));
-  printf("sizeof(int2)      = %d\n",sizeof(int2));
+  printf("sizeof(char)        = %d\n",sizeof(char));
+  printf("sizeof(short)       = %d\n",sizeof(short));
+  printf("sizeof(int)         = %d\n",sizeof(int));
+  printf("sizeof(long)        = %d\n",sizeof(long));
+  printf("sizeof(long long)   = %d\n",sizeof(long long));
+  printf("sizeof(void *)      = %d\n",sizeof(void *));
+  printf("sizeof(off_t)       = %d\n",sizeof(off_t));
+  printf("sizeof(size_t)      = %d\n",sizeof(size_t));
+  printf("sizeof(ptrdiff_t)   = %d\n",sizeof(ptrdiff_t) );
+  printf("sizeof(int2)        = %d\n",sizeof(int2));
+  printf("sizeof(int8)        = %d\n",sizeof(int8));
+  printf("sizeof(float)       = %d\n",sizeof(float) );
+  printf("sizeof(double)      = %d\n",sizeof(double) );
+  printf("sizeof(long double) = %d\n",sizeof(long double) );
 
 #ifdef MIRTEL
   printf("MIRTEL            = %s\n",MIRTEL);
