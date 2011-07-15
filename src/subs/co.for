@@ -20,6 +20,9 @@ c    subroutine coSpcSet(lu,axis,iax,algo)
 c    subroutine coPrjSet(lu,proj)
 c    subroutine coAxGet(lu,iax,ctype,crpix,crval,cdelt)
 c    subroutine coAxSet(lu,iax,ctype,crpix,crval,cdelt)
+c    subroutine coCpyD(lu1,lu2,object)
+c    subroutine coCpyI(lu1,lu2,object)
+c    subroutine coCpyA(lu1,lu2,object)
 c    subroutine coGetD(lu,object,value)
 c    subroutine coGetI(lu,object,value)
 c    subroutine coGetA(lu,object,value)
@@ -137,7 +140,7 @@ c-----------------------------------------------------------------------
       obstime(icrd2) = obstime(icrd1)
 
       defs(1,icrd2)  = defs(1,icrd1)
-      defs(2,icrd2)  = defs(3,icrd1)
+      defs(2,icrd2)  = defs(2,icrd1)
       defs(3,icrd2)  = defs(3,icrd1)
       defs(4,icrd2)  = defs(4,icrd1)
 
@@ -283,7 +286,331 @@ c-----------------------------------------------------------------------
 
 c***********************************************************************
 
-c* coSetD -- Set a value in the guts of the coordinate routines.
+c* coCpyA -- Copy a value from one coordinate object to another.
+c& mrc
+c: coordinates
+c+
+      subroutine coCpyA(lu1, lu2, object)
+
+      integer   lu1, lu2
+      character object*(*)
+c  ---------------------------------------------------------------------
+c  Copy a character value from one coordinate object to another.
+c
+c  Input:
+c    lu1        Handle of the source coordinate object.
+c    lu2        Handle of the destination coordinate object.
+c    object     Name of the thing to set.
+c-----------------------------------------------------------------------
+      character cVal*128
+c-----------------------------------------------------------------------
+      call coGetA(lu1, object, cVal)
+      call coSetA(lu2, object, cVal)
+
+      end
+
+c***********************************************************************
+
+c* coCpyD -- Copy a value from one coordinate object to another.
+c& mrc
+c: coordinates
+c+
+      subroutine coCpyD(lu1, lu2, object)
+
+      integer   lu1, lu2
+      character object*(*)
+c  ---------------------------------------------------------------------
+c  Copy a floating point value from one coordinate object to another.
+c
+c  Input:
+c    lu1        Handle of the source coordinate object.
+c    lu2        Handle of the destination coordinate object.
+c    object     Name of the thing to set.
+c-----------------------------------------------------------------------
+      double precision dVal
+c-----------------------------------------------------------------------
+      call coGetD(lu1, object, dVal)
+      call coSetD(lu2, object, dVal)
+
+      end
+
+c***********************************************************************
+
+c* coCpyI -- Copy a value from one coordinate object to another.
+c& mrc
+c: coordinates
+c+
+      subroutine coCpyI(lu1, lu2, object)
+
+      integer   lu1, lu2
+      character object*(*)
+c  ---------------------------------------------------------------------
+c  Copy an integer value from one coordinate object to another.
+c
+c  Input:
+c    lu1        Handle of the source coordinate object.
+c    lu2        Handle of the destination coordinate object.
+c    object     Name of the thing to set.
+c-----------------------------------------------------------------------
+      integer   iVal
+c-----------------------------------------------------------------------
+      call coGetI(lu1, object, iVal)
+      call coSetI(lu2, object, iVal)
+
+      end
+
+c***********************************************************************
+
+c* coGetA -- Get a value from a coordinate object.
+c& rjs
+c: coordinates
+c+
+      subroutine coGetA(lu,object,cVal)
+
+      integer   lu
+      character object*(*), cVal*(*)
+c  ---------------------------------------------------------------------
+c  Get a character value from a coordinate object.
+c
+c  Input:
+c    lu         Handle of the coordinate object.
+c    object     Name of the thing to set.
+c  Output:
+c    cVal       The value.
+c-----------------------------------------------------------------------
+      include 'co.h'
+
+      integer   iax, icrd
+      character obj*8
+
+      external  coLoc, len1
+      integer   coLoc, len1
+c-----------------------------------------------------------------------
+      icrd = coLoc(lu,.false.)
+
+c     Parse parameterized keywords.
+      obj = object
+      iax = 0
+      if (obj(:5).eq.'ctype' .and. len1(obj).eq.6) then
+        iax = ichar(obj(6:6)) - ichar('0')
+        if (1.le.iax .and. iax.le.MAXNAX) then
+          obj(6:6) = ' '
+        else
+          iax = 0
+        endif
+      endif
+
+      if (obj.eq.'ctype' .and. iax.gt.0) then
+        cVal = ctype(iax,icrd)
+      else if (obj.eq.'cellscal') then
+        if (frqscl(icrd)) then
+          cVal = '1/F'
+        else
+          cVal = 'CONSTANT'
+        endif
+      else
+        call bug('f','Unrecognised object in coGetA: '//obj)
+      endif
+
+      end
+
+c***********************************************************************
+
+c* coGetD -- Get a value from a coordinate object.
+c& rjs
+c: coordinates
+c+
+      subroutine coGetD(lu,object,dVal)
+
+      integer lu
+      character object*(*)
+      double precision dVal
+c  ---------------------------------------------------------------------
+c  Get a floating point value from a coordinate object.
+c
+c  Input:
+c    lu         Handle of the coordinate object.
+c    object     Name of the thing to set.
+c  Output:
+c    dVal       The value.
+c-----------------------------------------------------------------------
+      include 'co.h'
+      include 'wcslib/prj.inc'
+
+      integer   iax, icrd, m, prj(PRJLEN), status
+      double precision pv(0:29), ref(4)
+      character obj*8
+
+      external  coLoc, len1
+      integer   coLoc, len1
+c-----------------------------------------------------------------------
+      icrd = coLoc(lu,.false.)
+
+c     Parse parameterized keywords.
+      obj = object
+      iax = 0
+      m   = -1
+      if (obj(:1).eq.'c' .and. len1(obj).eq.6) then
+        iax = ichar(obj(6:6)) - ichar('0')
+        if (1.le.iax .and. iax.le.MAXNAX) then
+          obj(6:6) = ' '
+        else
+          iax = 0
+        endif
+      else if (obj(:2).eq.'pv') then
+        if (len1(obj).eq.3) then
+          m = ichar(obj(3:3)) - ichar('0')
+          if (0.le.m .and. m.le.9) obj = 'pv'
+        else if (len1(obj).eq.4) then
+          m = 10*(ichar(obj(3:3)) - ichar('0')) +
+     *            ichar(obj(4:4)) - ichar('0')
+          if (0.le.m .and. m.le.29) obj = 'pv'
+        endif
+      endif
+
+      if (obj(1:5).eq.'crpix' .and. iax.gt.0) then
+        dVal = crpix(iax,icrd)
+      else if (obj(1:5).eq.'cdelt' .and. iax.gt.0) then
+        dVal = cdelt(iax,icrd)
+      else if (obj(1:5).eq.'crval' .and. iax.gt.0) then
+        dVal = crval(iax,icrd)
+
+      else if (obj.eq.'llrot') then
+        if (sinrot(icrd).eq.0d0) then
+          dVal = 0d0
+        else
+          dVal = atan2(sinrot(icrd),cosrot(icrd))
+        endif
+
+      else if (obj.eq.'lonpole') then
+        status = celgtd(cel(1,icrd), CEL_REF, ref)
+        dVal = ref(3)
+      else if (obj.eq.'latpole') then
+        status = celgtd(cel(1,icrd), CEL_REF, ref)
+        dVal = ref(4)
+      else if (obj.eq.'phi0') then
+        status = celgtd(cel(1,icrd), CEL_PHI0, dVal)
+      else if (obj.eq.'theta0') then
+        status = celgtd(cel(1,icrd), CEL_THETA0, dVal)
+      else if (obj.eq.'pv' .and. m.ge.0) then
+        status = celgti(cel(1,icrd), CEL_PRJ, prj)
+        status = prjgtd(prj, PRJ_PV, pv)
+        dVal = pv(m)
+
+      else if (obj.eq.'restfreq') then
+        dVal = restfrq(icrd)
+      else if (obj.eq.'vobs') then
+        dVal = vobs(icrd)
+      else if (obj.eq.'epoch') then
+        dVal = eqnox(icrd)
+      else if (obj.eq.'obstime') then
+        dVal = obstime(icrd)
+      else
+        call bug('f','Unrecognised object in coGetD: '//obj)
+      endif
+
+      end
+
+c***********************************************************************
+
+c* coGetI -- Get a value from a coordinate object.
+c& mrc
+c: coordinates
+c+
+      subroutine coGetI(lu, object, iVal)
+
+      integer   lu
+      character object*(*)
+      integer    iVal
+c  ---------------------------------------------------------------------
+c  Get an integer value from a coordinate object.
+c
+c  Input:
+c    lu         Handle of the coordinate object.
+c    object     Name of the thing to set.
+c  Output:
+c     iVal      The value.
+c-----------------------------------------------------------------------
+      include 'co.h'
+
+      integer   icrd, status
+
+      external  coLoc
+      integer   coLoc
+c-----------------------------------------------------------------------
+      icrd = coLoc(lu,.false.)
+
+c     Parse parameterized keywords.
+      if (object.eq.'naxis') then
+        iVal = naxis(icrd)
+      else if (object.eq.'xyzero') then
+        status = celgti(cel(1,icrd), CEL_OFFSET, iVal)
+      else
+        call bug('f','Unrecognised object in coGetI: '//object(:8))
+      endif
+
+      end
+
+c***********************************************************************
+
+c* coSetA -- Set a value in a coordinate object.
+c& rjs
+c: coordinates
+c+
+      subroutine coSetA(lu,object,value)
+
+      integer lu
+      character object*(*),value*(*)
+c  ---------------------------------------------------------------------
+c  Set a character value in a coordinate object.
+c
+c  Input:
+c    lu         Handle of the coordinate object.
+c    object     Name of the thing to set.
+c    value      Value to use.
+c-----------------------------------------------------------------------
+      include 'co.h'
+
+      integer   iax, icrd
+      character obj*8
+
+      external  coLoc, len1
+      integer   coLoc, len1
+c-----------------------------------------------------------------------
+      icrd = coLoc(lu,.false.)
+
+c     Parse parameterized keywords.
+      obj = object
+      iax = 0
+      if (obj(:5).eq.'ctype' .and. len1(obj).eq.6) then
+        iax = ichar(obj(6:6)) - ichar('0')
+        if (1.le.iax .and. iax.le.MAXNAX) then
+          obj(6:6) = ' '
+        else
+          iax = 0
+        endif
+      endif
+
+      if (obj.eq.'ctype' .and. iax.gt.0) then
+        ctype(iax,icrd) = value
+
+      else if (obj.eq.'cellscal') then
+        if (value.eq.'CONSTANT') then
+          frqscl(icrd) = .false.
+        else if (value.eq.'1/F') then
+          frqscl(icrd) = .true.
+        else
+          call bug('f','Unrecognised value for cellscal in coSetA')
+        endif
+      else
+        call bug('f','Unrecognised object in coSetA: '//obj)
+      endif
+
+      end
+
+c***********************************************************************
+
+c* coSetD -- Set a value in a coordinate object.
 c& rjs
 c: coordinates
 c+
@@ -293,7 +620,7 @@ c+
       character object*(*)
       double precision value
 c  ---------------------------------------------------------------------
-c  Set a value in the guts of the coordinate routines.
+c  Set a floating point value in a coordinate object.
 c
 c  Input:
 c    lu         Handle of the coordinate object.
@@ -376,7 +703,7 @@ c     Parse parameterized keywords.
 
 c***********************************************************************
 
-c* coSetI -- Set a value in the guts of the coordinate routines.
+c* coSetI -- Set a value in a coordinate object.
 c& mrc
 c: coordinates
 c+
@@ -386,7 +713,7 @@ c+
       character object*(*)
       integer value
 c  ---------------------------------------------------------------------
-c  Set a value in the guts of the coordinate routines.
+c  Set an integer value in a coordinate object.
 c
 c  Input:
 c    lu         Handle of the coordinate object.
@@ -406,255 +733,6 @@ c-----------------------------------------------------------------------
         status = celpti(cel(1,icrd), CEL_OFFSET, value, 0)
       else
         call bug('f','Unrecognised object in coSetI: '//object(:8))
-      endif
-
-      end
-
-c***********************************************************************
-
-c* coSetA -- Set a value in the guts of the coordinate routines.
-c& rjs
-c: coordinates
-c+
-      subroutine coSetA(lu,object,value)
-
-      integer lu
-      character object*(*),value*(*)
-c  ---------------------------------------------------------------------
-c  Set a value in the guts of the coordinate routines.
-c
-c  Input:
-c    lu         Handle of the coordinate object.
-c    object     Name of the thing to set.
-c    value      Value to use.
-c-----------------------------------------------------------------------
-      include 'co.h'
-
-      integer   iax, icrd
-      character obj*8
-
-      external  coLoc, len1
-      integer   coLoc, len1
-c-----------------------------------------------------------------------
-      icrd = coLoc(lu,.false.)
-
-c     Parse parameterized keywords.
-      obj = object
-      iax = 0
-      if (obj(:5).eq.'ctype' .and. len1(obj).eq.6) then
-        iax = ichar(obj(6:6)) - ichar('0')
-        if (1.le.iax .and. iax.le.MAXNAX) then
-          obj(6:6) = ' '
-        else
-          iax = 0
-        endif
-      endif
-
-      if (obj.eq.'ctype' .and. iax.gt.0) then
-        ctype(iax,icrd) = value
-
-      else if (obj.eq.'cellscal') then
-        if (value.eq.'CONSTANT') then
-          frqscl(icrd) = .false.
-        else if (value.eq.'1/F') then
-          frqscl(icrd) = .true.
-        else
-          call bug('f','Unrecognised value for cellscal in coSetA')
-        endif
-      else
-        call bug('f','Unrecognised object in coSetA'//obj)
-      endif
-
-      end
-
-c***********************************************************************
-
-c* coGetD -- Get a value from the guts of the coordinate routines.
-c& rjs
-c: coordinates
-c+
-      subroutine coGetD(lu,object,dVal)
-
-      integer lu
-      character object*(*)
-      double precision dVal
-c  ---------------------------------------------------------------------
-c  Get a floating value from the guts of the coordinate routines.
-c
-c  Input:
-c    lu         Handle of the coordinate object.
-c    object     Name of the thing to set.
-c  Output:
-c    dVal       The value.
-c-----------------------------------------------------------------------
-      include 'co.h'
-      include 'wcslib/prj.inc'
-
-      integer   iax, icrd, m, prj(PRJLEN), status
-      double precision pv(0:29), ref(4)
-      character obj*8
-
-      external  coLoc, len1
-      integer   coLoc, len1
-c-----------------------------------------------------------------------
-      icrd = coLoc(lu,.false.)
-
-c     Parse parameterized keywords.
-      obj = object
-      iax = 0
-      m   = -1
-      if (obj(:1).eq.'c' .and. len1(obj).eq.6) then
-        iax = ichar(obj(6:6)) - ichar('0')
-        if (1.le.iax .and. iax.le.MAXNAX) then
-          obj(6:6) = ' '
-        else
-          iax = 0
-        endif
-      else if (obj(:2).eq.'pv') then
-        if (len1(obj).eq.3) then
-          m = ichar(obj(3:3)) - ichar('0')
-          if (0.le.m .and. m.le.9) obj = 'pv'
-        else if (len1(obj).eq.4) then
-          m = 10*(ichar(obj(3:3)) - ichar('0')) +
-     *            ichar(obj(4:4)) - ichar('0')
-          if (0.le.m .and. m.le.29) obj = 'pv'
-        endif
-      endif
-
-      if (obj(1:5).eq.'crpix' .and. iax.gt.0) then
-        dVal = crpix(iax,icrd)
-      else if (obj(1:5).eq.'cdelt' .and. iax.gt.0) then
-        dVal = cdelt(iax,icrd)
-      else if (obj(1:5).eq.'crval' .and. iax.gt.0) then
-        dVal = crval(iax,icrd)
-
-      else if (obj.eq.'llrot') then
-        if (sinrot(icrd).eq.0d0) then
-          dVal = 0d0
-        else
-          dVal = atan2(sinrot(icrd),cosrot(icrd))
-        endif
-
-      else if (obj.eq.'lonpole') then
-        status = celgtd(cel(1,icrd), CEL_REF, ref)
-        dVal = ref(3)
-      else if (obj.eq.'latpole') then
-        status = celgtd(cel(1,icrd), CEL_REF, ref)
-        dVal = ref(4)
-      else if (obj.eq.'phi0') then
-        status = celgtd(cel(1,icrd), CEL_PHI0, dVal)
-      else if (obj.eq.'theta0') then
-        status = celgtd(cel(1,icrd), CEL_THETA0, dVal)
-      else if (obj.eq.'pv' .and. m.ge.0) then
-        status = celgti(cel(1,icrd), CEL_PRJ, prj)
-        status = prjgtd(prj, PRJ_PV, pv)
-        dVal = pv(m)
-
-      else if (obj.eq.'restfreq') then
-        dVal = restfrq(icrd)
-      else if (obj.eq.'vobs') then
-        dVal = vobs(icrd)
-      else if (obj.eq.'epoch') then
-        dVal = eqnox(icrd)
-      else if (obj.eq.'obstime') then
-        dVal = obstime(icrd)
-      else
-        call bug('f','Unrecognised object in coGetD'//obj)
-      endif
-
-      end
-
-c***********************************************************************
-
-c* coGetI -- Get a value from the guts of the coordinate routines.
-c& mrc
-c: coordinates
-c+
-      subroutine coGetI(lu, object, iVal)
-
-      integer   lu
-      character object*(*)
-      integer    iVal
-c  ---------------------------------------------------------------------
-c  Get an integer value from the guts of the coordinate routines.
-c
-c  Input:
-c    lu         Handle of the coordinate object.
-c    object     Name of the thing to set.
-c  Output:
-c     iVal      The value.
-c-----------------------------------------------------------------------
-      include 'co.h'
-
-      integer   icrd, status
-
-      external  coLoc
-      integer   coLoc
-c-----------------------------------------------------------------------
-      icrd = coLoc(lu,.false.)
-
-c     Parse parameterized keywords.
-      if (object.eq.'naxis') then
-        iVal = naxis(icrd)
-      else if (object.eq.'xyzero') then
-        status = celgti(cel(1,icrd), CEL_OFFSET, iVal)
-      else
-        call bug('f','Unrecognised object in coGetI'//object(:8))
-      endif
-
-      end
-
-c***********************************************************************
-
-c* coGetA -- Get a value from the guts of the coordinate routines.
-c& rjs
-c: coordinates
-c+
-      subroutine coGetA(lu,object,cVal)
-
-      integer   lu
-      character object*(*), cVal*(*)
-c  ---------------------------------------------------------------------
-c  Get a character value from the guts of the coordinate routines.
-c
-c  Input:
-c    lu         Handle of the coordinate object.
-c    object     Name of the thing to set.
-c  Output:
-c    cVal       The value.
-c-----------------------------------------------------------------------
-      include 'co.h'
-
-      integer   iax, icrd
-      character obj*8
-
-      external  coLoc, len1
-      integer   coLoc, len1
-c-----------------------------------------------------------------------
-      icrd = coLoc(lu,.false.)
-
-c     Parse parameterized keywords.
-      obj = object
-      iax = 0
-      if (obj(:5).eq.'ctype' .and. len1(obj).eq.6) then
-        iax = ichar(obj(6:6)) - ichar('0')
-        if (1.le.iax .and. iax.le.MAXNAX) then
-          obj(6:6) = ' '
-        else
-          iax = 0
-        endif
-      endif
-
-      if (obj.eq.'ctype' .and. iax.gt.0) then
-        cVal = ctype(iax,icrd)
-      else if (obj.eq.'cellscal') then
-        if (frqscl(icrd)) then
-          cVal = '1/F'
-        else
-          cVal = 'CONSTANT'
-        endif
-      else
-        call bug('f','Unrecognised object in coGetA'//obj)
       endif
 
       end
@@ -2733,7 +2811,7 @@ c     We did not find it.  If we are allowed to allocate one, do so.
         return
       endif
 
-      call bug('f','Unable to find coordinate object in coInit')
+      call bug('f','Unable to find coordinate object in coLoc')
       coLoc = 0
 
       end
