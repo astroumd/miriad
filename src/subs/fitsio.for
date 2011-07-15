@@ -181,7 +181,7 @@ c
         call fitrdhdi(lu,'BITPIX', bitpix,0)
         if (bitpix.ne.16 .and. abs(bitpix).ne.32) then
            if (bitpix.eq.-64) then
-              call bug('w','Loosing precision for BITPIX=-64')
+              call bug('w','Losing precision for BITPIX=-64')
            else
               call bug('f','Unsupported value for BITPIX')
            endif
