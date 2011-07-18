@@ -15,4 +15,4 @@
 #define		MAXNAX		@MAXNAX@
 #define		MAXWIN		@MAXWIN@
 #define		MAXBUF		@MAXBUF@
-
+#define		MAXWIDE		@MAXWIDE@
