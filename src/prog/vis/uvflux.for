@@ -80,6 +80,9 @@ c	           are applied if they exist.
 c         uvpol    Print out fractional linear polarisation and 
 c                  polarisation position angle (provided Stokes I,Q,U are
 c                  requested). 
+c         vlbi     Average amplitude of vector average for each integration.
+c                  data are vector averaged over channel and baseline,
+c                  and amplitude averaged for each integration interval.
 c--
 c  History:
 c    rjs   5mar93 Original version.
@@ -93,6 +96,7 @@ c    rjs  09mar97 CHange label "visibs" to "corrs" and change doc file.
 c    rjs  12oct98 Changed printing format.
 c    heb/rjs 20nov98 Added options=uvpol to print out polarization params.
 c    rjs  24jun99 Increase max number of sources.  
+c    mchw 17jul11 VLBI: average amplitude of vector average for each integration.
 c  Bugs:
 c    ?? Perfect?
 c------------------------------------------------------------------------
@@ -101,10 +105,10 @@ c------------------------------------------------------------------------
 	integer MAXPOL,MAXSRC,PolMin,PolMax
 	character version*(*)
 	parameter(MAXPOL=4,MAXSRC=1024,PolMin=-9,PolMax=4)
-	parameter(version='UvFlux: version 1.0 24-Jun-99')
+	parameter(version='UvFlux: version 1.0 17-Jul-11')
 c
 	character uvflags*16,polcode*2,line*132
-	logical docal,dopol,dopass,found,doshift,douvpol,ok
+	logical docal,dopol,dopass,found,doshift,douvpol,ok,dovlbi
 	character sources(MAXSRC)*32,source*32
 	double precision fluxr(MAXPOL,MAXSRC),fluxi(MAXPOL,MAXSRC)
 	double precision amp(MAXPOL,MAXSRC),amp2(MAXPOL,MAXSRC)
@@ -112,6 +116,7 @@ c
 	double precision shift(2),shft(2)
 	complex vecaver
 	real vecscat,scalscat,temp,vecamp,vecpha,scalamp,sig2
+	real vlbir,vlbii
 	integer i,j,t,nlines,lmax
 	integer ncnt(MAXPOL,MAXSRC)
 	integer PolIndx(PolMin:PolMax),p(MAXPOL),pp(MAXPOL)
@@ -121,7 +126,7 @@ c
 	integer vI,vQ,vU
 c
 	integer nchan
-	double precision preamble(4)
+	double precision preamble(4),time0
 	complex data(MAXCHAN)
 	logical flags(MAXCHAN)
 c
@@ -135,7 +140,7 @@ c  Get the user parameters.
 c
 	call output(version)
 	call keyini
-	call GetOpt(docal,dopol,dopass,douvpol)
+	call GetOpt(docal,dopol,dopass,douvpol,dovlbi)
 c
 c  Determine the shift.
 c
@@ -160,6 +165,8 @@ c
 	isrc = 0
 	nsrc = 0
 	npol = 0
+	vlbir = 0.
+	vlbii = 0.
 	do i=PolMin,PolMax
 	  PolIndx(i) = 0
 	enddo
@@ -176,6 +183,7 @@ c
 	  call uvVarIni(tno,vsource)
 	  call uvVarSet(vsource,'source')
 	  call uvDatRd(preamble,data,flags,MAXCHAN,nchan)
+          time0 = preamble(3)
 	  dowhile(nchan.gt.0)
 c
 c  Determine the polarisation.
@@ -244,11 +252,26 @@ c
 		fluxi(ipol,isrc) = fluxi(ipol,isrc) + aimag(data(i))
 		rms2(ipol,isrc) = rms2(ipol,isrc) + sig2
 		temp = abs(data(i))
-		amp(ipol,isrc)  = amp(ipol,isrc) + temp
+                if(dovlbi)then
+		  vlbir = vlbir + real(data(i))
+		  vlbii = vlbii + aimag(data(i))
+                else
+		  amp(ipol,isrc)  = amp(ipol,isrc) + temp
+                endif
 		amp2(ipol,isrc) = amp2(ipol,isrc) + temp*temp
 		ncnt(ipol,isrc) = ncnt(ipol,isrc) + 1
 	      endif
 	    enddo
+c
+c  VLBI average amplitude of vector average for each integration interval.
+c
+            if(dovlbi.and.preamble(3).ne.time0)then
+		temp = abs(cmplx(vlbir,vlbii))
+		amp(ipol,isrc)  = amp(ipol,isrc) + temp
+                time0 = preamble(3)
+	        vlbir = 0.
+	        vlbii = 0.
+            endif
 c
 c  Loop the loop.
 c
@@ -391,26 +414,29 @@ c
 c
 	end
 c************************************************************************
-	subroutine GetOpt(docal,dopol,dopass,douvpol)
+	subroutine GetOpt(docal,dopol,dopass,douvpol,dovlbi)
 c
 	implicit none
-	logical docal,dopol,dopass,douvpol
+	logical docal,dopol,dopass,douvpol,dovlbi
 c
 c  Outputs:
 c    docal	Apply calibration corrections.
 c    dopol	Apply polarisation leakage corrections.
 c    dopass	Apply bandpass corrections.
 c    douvpol    Print out additional polarisation parameters.
+c    dovlbi     Average amplitude of vector average for each integration.
 c------------------------------------------------------------------------
 	integer NOPT
-	parameter(NOPT=4)
+	parameter(NOPT=5)
 	character opts(NOPT)*8
 	logical present(NOPT)
-	data opts/'nocal   ','nopol   ','nopass  ','uvpol   '/
+	data opts/'nocal   ','nopol   ','nopass  ','uvpol   ',
+     * 'vlbi    '/
 c
 	call options('options',opts,present,NOPT)
 	docal = .not.present(1)
 	dopol = .not.present(2)
 	dopass= .not.present(3)
         douvpol= present(4)
+        dovlbi = present(5)
 	end
