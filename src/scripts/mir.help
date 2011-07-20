@@ -10,9 +10,10 @@
 #                     17-mar-91 reincorporated mir.find (bpw)
 #                     25-jul-91 removed references to other scripts
 #                               in the docs (mjs)
+#                     18-jul-11 added -e option (pjt)
 #
 #* mir.help - Obtain programmer-useful help about MIRIAD source files.
-#& bpw
+#& pjt
 #: programmer tool
 #+
 # Find information about all tasks/subroutines whose name matches all
@@ -44,7 +45,7 @@
 # Alias:  ``mirhelp'' is an alias for ``mir.help''.
 #--
 #* mirhelp - Obtain programmer-useful help about MIRIAD source files.
-#& bpw
+#& pjt
 #: programmer tool
 #+
 # Find information about all tasks/subroutines whose name matches all
@@ -74,9 +75,10 @@
 # Alias:  ``mirhelp'' is an alias for ``mir.help''.
 #--
 
-set version = "Version 3 --- 17-mar-91"
+set version = "Version 4 --- 18-jul-2011"
 set DOC = $MIRBIN/doc
 set tmp = /tmp/tmp$$
+set examples = $MIR/examples/prog
 if( ! $?PAGER ) set PAGER = more
 
 if ($#argv == 0) then
@@ -94,12 +96,14 @@ if ($#argv == 0) then
    echo "   -i runs doc to create an alphabetic index for the given topic"
    echo "   -t runs doc to create a systematic index for the given topic"
    echo "      (-i and -t only if topic was 'tasks' or 'subroutines')"
+   echo "   -e tries to find examples on running specific task"
    exit 0
 endif
 
 if ( "$2" == "-s" )          goto subroutine_search
 if ( "$2" == "-i" )          goto indices
 if ( "$2" == "-t" )          goto indices
+if ( "$1" == "-e" )          goto examples
 if ( "$1" == "find" )        goto file_search
 if ( "$1" == "tasks" )       goto taskfind
 if ( "$1" == "subroutines" ) goto subroutinefind
@@ -145,6 +149,9 @@ taskfind:
    | $PAGER
    goto quit
 
+examples:
+   $PAGER $examples/$2.txt
+   goto quit
 
 subroutinefind:
    find $MIRSUBS \( -name \*.for -o -name \*.c \) -print | sort | $PAGER
