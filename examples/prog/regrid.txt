@@ -1,0 +1,18 @@
+# REGRID using an axis description
+
+  First we create an image with a heavily oversampled non-circular gauss
+  Note that regrid is now using Hours and Degrees
+  map1 has 0.25" pixels, map2 has 1.0" pixels
+
+imgen out=map1 cell=0.25 imsize=256 radec=0,30 spar=1,0,0,10,5,0
+regrid in=map1 out=map2 desc=0,31,.00027777,64,30,31,.00027777,64 axes=1,2
+
+# REGRID using a simple rotation
+
+  note as is, this doesn't put in the right WCS, so map3 has a bad WCS
+  maybe it needs more keywords
+
+regrid in=map1 out=map3 rotate=30
+
+# REGRID using a template
+  
