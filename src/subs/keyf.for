@@ -54,6 +54,7 @@ c    pjt    6mar01    Increased cmdline arg to 2048
 c    mchw   15mar02   Increased cmdline arg to 4096
 c    pjt     5nov08   Remind user which are valid flags
 c    pjt    11nov08   Add -kw flag
+c    pjt    20jul11   Add -e flag
 c************************************************************************
 c* KeyIni -- Initialise the `key' routines.
 c& pjt
@@ -146,12 +147,15 @@ c
           else if(arg .eq. '-kw') then
 	    call command('doc '//task//' | grep ^Keyword')
             stop
+          else if(arg .eq. '-e') then
+	    call command('mir.help -e '//task)
+            stop
 c
 c  Other flags are not understood yet
 c
           else if(arg(1:1) .eq. '-') then
             call bug('w','Flag '//arg(1:len1(arg))//' not understood')
-            call bug('w','Valid:  -f <parfile>,  -k,  -?, -h, --help')
+            call bug('w','Valid: -f <parfile>,-k[w],-e,-?,-h,--help')
 c
 c  Otherwise the argument is a parameter
 c
