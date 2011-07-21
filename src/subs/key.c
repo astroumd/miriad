@@ -28,6 +28,7 @@
  *   dm/pjt 2dec10 better protection for keyword values overrun
  *                 keywrap.f2c is now calling keya_len_c() instead
  *                 deprecate keya_c()
+ *    pjt  21jul11 keyl_c() now calls keya_len_c()
  ***********************************************************************
  */
 
@@ -774,10 +775,10 @@ void keyl_c(Const char *keyword, int *value, Const int keydef)
     int state;
 
     if (keydef == FORT_FALSE) {
-      keya_c(keyword, string, "f");
+      keya_len_c(keyword, string, MAXSTRING, "f");
       state = KEYFALSE;
     } else {
-      keya_c(keyword, string, "t");
+      keya_len_c(keyword, string, MAXSTRING, "t");
       state = KEYTRUE;
     }
 
