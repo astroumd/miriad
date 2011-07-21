@@ -105,18 +105,14 @@ endif
 
 if ($gold == 0 && -e /usr/bin/gold) then
   echo Warning: your linking might benefit from setting gold=1
+  echo Unless you have plenty of memory. Check your compile logs.
 endif
 
 if ($gfortran) then
    if ($?F77) then
       echo Overriding $F77 for gfortran
    endif
-   # not good idea, wip doesn't like this style
-   if ($gold) then
-     setenv F77 "gfortran -fuse-ld=gold"
-   else
-     setenv F77 gfortran
-   endif
+   setenv F77 gfortran
    setenv CC  gcc
    setenv CXX g++
 else if ($intel) then
