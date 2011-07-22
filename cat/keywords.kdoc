@@ -227,6 +227,8 @@ can handle only a single dataset at a time.
         If "d" is zero, then the actual diameter of the antennas (if known) is used. 
         If some data is shadowed, it is advisable to use an antenna diameter value 
         greater than the physical antenna size (e.g. 20% larger).
+        See also the task CSFLAG for more finegrained approach for heterogeneous
+	arrays and dealing with sub arrays.
 
           bin(b1,b2)
         Select visibilities which have pulsar bin numbers in the range
