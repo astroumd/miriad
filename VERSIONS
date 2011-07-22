@@ -20,6 +20,7 @@ CARMA miriad:   http://carma.astro.umd.edu/miriad/
 4.1.2  09jul18  CARMA summerschool 2009 version
 4.2.0  11jun06  Conversion to the need for WCSLIB, for Summerschool 2011
 4.2.1  11jun07  ptrdiff support in fortran and corresponding mem allocations
+4.2.2  11jul22  CARMA summerschool 2011 version
 
 
 ATNF miriad:    http://www.atnf.csiro.au/computing/software/miriad/
