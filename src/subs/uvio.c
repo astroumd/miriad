@@ -266,7 +266,7 @@
 #include "config.h"
 #endif
 
-#define VERSION_ID "16-dec-09 pjt"
+#define VERSION_ID "21-jul-11 pjt"
 
 #define private static
 
@@ -3157,7 +3157,7 @@ private int uvread_select(UV *uv)
   double time,t0,uu,vv,uv2,uv2f,ra,dec,skyfreq,diameter;
   double *dazim, *delev;
   double lst,ha;
-  float elev;
+  double *elev;
   SELECT *sel;
   OPERS *op;
   WINDOW *win;
@@ -3485,10 +3485,17 @@ private int uvread_select(UV *uv)
 /* Apply elevation selection. */
 
     if(op->type == SEL_ELEV){
+      bl = *((float *)(uv->bl->buf)) + 0.5;
+      uvbasant_c(bl,&i1,&i2);
       discard = !op->discard;
-      elev = *(double *)uv->elev->buf;
+      elev = (double *)uv->elev->buf; 
+      nants = VARLEN(uv->elev);
+      if(i1 < 1 || i2 > nants){
+	BUG('f',"Bad antenna numbers when checking elevation, in UVREAD(select)"); }
+      
       while(n < sel->noper && op->type == SEL_ELEV){
-        if(op->loval <= elev && elev <= op->hival)
+        if(op->loval <= elev[i1] && elev[i1] <= op->hival &&
+           op->loval <= elev[i2] && elev[i2] <= op->hival)
 	  discard = op->discard;
         op++; n++;
       }
@@ -3496,6 +3503,7 @@ private int uvread_select(UV *uv)
     }
 
 /* Apply delta AZIM selection. */
+    /* @todo:  should only consider the current baseline */
 
     if(op->type == SEL_DAZIM){
       discard = !op->discard;
@@ -3518,6 +3526,7 @@ private int uvread_select(UV *uv)
     }
 
 /* Apply delta ELEV selection. */
+    /* @todo:  should only consider the current baseline */
 
     if(op->type == SEL_DELEV){
       discard = !op->discard;
