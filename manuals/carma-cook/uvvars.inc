@@ -87,6 +87,7 @@ Item name   & Type  &  Description \\ \hline
 obstype     & ascii   & value: `{\tt cross}', `{\tt auto}' or `{\tt mixed}' \\
 history     & text    & history text file (in principle editable) \\
 vartable    & text    & lookup table for all uv variables (never edit!) \\
+bftable     & text    & lookup table for bfmask \\
 visdata     & mixed   & data stream of uv variables \\ \hline
 
 flags       & integer & optional flags for narrowband data \\
@@ -217,6 +218,9 @@ baseline        \>R     \>-
 \>\>\> \MM{ant1 < ant2}. \\
 \>\>\> {\tt baseline} is also known as {\tt preamble(4)} or  {\tt preamble(5)}\\
 \>\>\> depending if you have uv or uvw data resp.\\
+
+bfmask(nspect)  \>I     \>-
+\> Blanking/Flagging mask (Not Implemented yet)\\
 
 bin		\>I	\>-
 \> Pulsar bin number.\\
@@ -385,7 +389,7 @@ jyperk		\>R	\>Jy/K
 \>\>\> calculated during online calibration\\
 
 % the jyperk program in the early CARMA era played a role in use jyperka
-jyperka(nants)	\>R	\>sqrt(Jy/K)
+jyperka(nants)	\>R	\>$\sqrt{Jy/K}$
 \> Antenna based Jy/K, \\
 \>\>\> calculated during online calibration (Hat Ck)\\
 
