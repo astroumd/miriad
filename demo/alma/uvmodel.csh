@@ -73,12 +73,11 @@ echo " freq    = $freq"              >> timing
 echo " ra      = $ra"                >> timing
 echo " dec     = $dec"               >> timing
 echo " harange = $harange  hours"    >> timing
-echo " scale   = $cell"              >> timing
+echo " cell    = $cell"              >> timing
 echo " select  = $select"            >> timing
 echo " nchan   = $nchan"             >> timing
 echo " imsize  = $imsize"            >> timing
 echo " region  = $region"            >> timing
-echo " "                             >> timing
 echo " method  = $method"            >> timing
 echo " "                             >> timing
 echo "   ---  TIMING   ---   "       >> timing
@@ -167,8 +166,7 @@ mosmem map=$config.$freq.$model.$cell.mp default=single.$freq.$model.$cell.map b
 goto restor
 
 clean:
-echo "CLEAN "  >> timing
-echo "CLEAN "  >> $0.$model.results
+echo CLEAN: `date` >> timing
 rm -r $config.$freq.$model.$cell.mem $config.$freq.$model.$cell.cm
 clean map=$config.$freq.$model.$cell.mp beam=$config.$freq.$model.$cell.bm out=$config.$freq.$model.$cell.mem  niters=1000
 
