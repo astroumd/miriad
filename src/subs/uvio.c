@@ -172,6 +172,7 @@
 /*  dhem 14may08 uvputvr_c always reallocs var's buffer on size change  */
 /*  pjt   3dec09 allow minsize2 threshold on INT2 vs. REAL for corr's   */
 /*  pjt  16dec09 cloned uvread_match() into uvread_matchp() for purpose */
+/*  pjt  22jul11 better antenna based handling ELEV, DAZIM, DELEV       */
 /*----------------------------------------------------------------------*/
 /*									*/
 /*		Handle UV files.					*/
