@@ -9,10 +9,12 @@ on the horizon that you can expect future versions of the cookbook to address:
 
 \begin{itemize}
 \item 
-Polarization
+Polarization: dual-polarization (LL and RR) are available, as well as full stokes.
 \item 
 Blanking and Flagging: baseline and band dependant integration times. This will
-require some changes to the lower level Miriad code.
+require some changes to the lower level Miriad code. A special uv-variable 
+{\tt bfmask(nspect)} is being prepared, with a task {\tt uvflagb} that will transfer
+selected mask-bits to the normal miriad narrow and wide band flags.
 \item 
 More detailed primary beam models for OVRO and BIMA for improved mosaicing. Currently
 only simple gaussians are used. Again something needed in Miriad.
