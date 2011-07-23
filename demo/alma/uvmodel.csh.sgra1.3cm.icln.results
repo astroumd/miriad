@@ -1,0 +1,39 @@
+Mosaicing with ALMA  ./uvmodel.csh CompactCycle0 230 0.03 clean sgra1.3cm.icln,  Fri Jul 22 16:52:44 PDT 2011   
+ model   = sgra1.3cm.icln
+ config  = CompactCycle0
+ freq    = 230
+ ra      = 17:45:40.051
+ dec     = -29:00:27.978
+ harange = -4,4,.1  hours
+ cell    = 0.03
+ select  = -shadow(12)
+ nchan   = 1
+ imsize  = 2049
+ region  = quart
+ method  = clean
+ 
+   ---  TIMING   ---   
+START: Fri Jul 22 16:52:44 PDT 2011
+Generate uv-data. Tsys=40K, bandwidth=8 GHz 
+UVGEN: Fri Jul 22 16:52:45 PDT 2011
+Scale model size to 0.03 arcsec pixel
+Make model images for each pointing center
+Make uv-data using model image (the model may have the primary beam)
+UVMODEL: Fri Jul 22 16:52:59 PDT 2011 add the model to the noisy sampled uv-data
+Make model images for each pointing center
+INVERT: Fri Jul 22 16:53:05 PDT 2011
+CLEAN: Fri Jul 22 16:53:06 PDT 2011
+convolve the model by the beam and subtract from the deconvolved image
+regrid the convolved model to the deconvolved image template
+compare the model with the deconvolved image 
+plot the model and deconvolved image 
+FINISH: Fri Jul 22 16:56:32 PDT 2011
+ 
+   ---  RESULTS   ---   
+Config  freq[GHz]  HA[hrs]  RMS[mJy] Beam[arcsec] cell Model_Flux,Peak Image_Flux,Peak Residual:Rms,Max,Min[Jy] Fidelity
+ExtendedCycle0 345  -4,4,.1  0.005   0.46 0.42    0.03  4.139 0.999  27.232 22.239   0.045  0.085  -0.365  494
+ExtendedCycle0 230  -4,4,.1  0.005   0.70 0.63    0.03  4.139 0.999  36.168 23.707   0.080  0.139  -0.408  296
+ExtendedCycle0 100  -4,4,.1  0.005   1.63 1.47    0.03  4.139 1.004  58.502 24.728   0.168  1.028  -0.500  147
+CompactCycle0  345  -4,4,.1  0.005   1.65 1.45    0.03  4.139 1.004  37.580 24.273   0.292  1.722  -1.141  83
+CompactCycle0  230  -4,4,.1  0.005   2.48 2.18    0.03  4.139 1.024  54.828 24.962   0.345  2.035  -1.363  72
+CompactCycle0  100  -4,4,.1  0.005   5.70 5.01    0.03  4.137 1.435  85.447 35.900   0.208  0.819  -0.855  173
