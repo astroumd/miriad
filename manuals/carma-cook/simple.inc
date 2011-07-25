@@ -248,13 +248,13 @@ You will wind up with a lot more files this way.
 
 \end{enumerate}
 
-\begin{figure}[ht]
-\begin{center}
-\epsfxsize=3cm\leavevmode\epsffile{simple1a.eps}
-\end{center}
-\caption{Flow diagram simple1a}
-\label{fig:simpl1a}
-\end{figure}
+%\begin{figure}[ht]
+%\begin{center}
+%\epsfxsize=3cm\leavevmode\epsffile{simple1a.eps}
+%\end{center}
+%\caption{Flow diagram simple1a}
+%\label{fig:simpl1a}
+%\end{figure}
 
 
 

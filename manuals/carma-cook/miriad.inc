@@ -310,7 +310,7 @@ normally inside a single {\tt \$MIR/build} directory.
 
 If you want to change a subroutine, it will depend if your Unix version uses shared libraries
 if you need to recompile the relevant programs as well. Currently the answer is : Linux uses
-a shared library ({\tt \$MIRLIB/libmir.so), whereas Mac does not.
+a shared library ({\tt \$MIRLIB/libmir.so}), whereas Mac does not.
 
 
 \footnotesize

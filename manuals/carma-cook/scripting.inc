@@ -24,3 +24,4 @@ Here is an example of a mosaic script, using {\tt pyramid} procedures.
 \verbatimlisting{mosaic.py}
 \normalsize
 
+\begin{verbatim}\end{verbatim} % prevents 'missing \item' error; no idea why

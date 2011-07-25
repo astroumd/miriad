@@ -556,6 +556,7 @@ Just make sure you have a good set of CPUs!
 \normalsize
 
 
+\begin{verbatim}\end{verbatim} % prevents 'missing \item' error; no idea why
 
 \newpage
 

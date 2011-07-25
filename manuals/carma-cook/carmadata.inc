@@ -74,7 +74,7 @@ data. The various stages of baseline corrections are not maintained here, see Se
 \item
 2007/05/24:  line-length corrections activated 
 \item
-2007/11/26:  amplitude decorrelation fixed; use uvdecor {see \ref{uvdecor}) to fix
+2007/11/26:  amplitude decorrelation fixed; use uvdecor (see \ref{uvdecor}) to fix
 \item
 2007/12/04:  source name confusion (bugzilla \#564) fixed (btw, we're at data version 1.0.3!!)
 \item
