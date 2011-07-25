@@ -472,6 +472,7 @@ AC_CONFIG_FILES([
     manuals/atnf-prog/Makefile
     manuals/atnf-user/Makefile
     manuals/carma/Makefile
+    manuals/carma-cook/Makefile
     src/inc/Makefile
     src/tools/Makefile
     src/subs/Makefile

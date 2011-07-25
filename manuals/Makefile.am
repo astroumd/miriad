@@ -1,4 +1,4 @@
-SUBDIRS = atnf-prog atnf-user carma
+SUBDIRS = atnf-prog atnf-user carma carma-cook
 
 EXTRA_DIST = README
 
