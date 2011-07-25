@@ -7,6 +7,8 @@ _libs
 *_ds
 docwork
 *.f
+at_mfcal
+at_uvplt
 atfix
 atmos
 atrtfix
