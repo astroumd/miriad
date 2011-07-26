@@ -103,8 +103,8 @@ c
       include 'maxdim.h'
       character PVERSION*(*)
       integer NAXIS, MAXPTS, MAXNAX, imask,method
-      PARAMETER(NAXIS=3, MAXPTS=MAXDIM*MAXDIM/4, MAXNAX=7)
-      PARAMETER(PVERSION='Version 1.0 05-feb-92')
+      PARAMETER(NAXIS=3, MAXPTS=MAXDIM*(MAXDIM/4), MAXNAX=7)
+      PARAMETER(PVERSION='Version 1.0 26-jul-11')
 c
       character in1*80,in2*80,out*80,total*6,masked*6
       character opts(3)*6
