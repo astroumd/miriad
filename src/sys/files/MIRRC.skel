@@ -111,8 +111,10 @@ endif
 # 
 #  If the user's file $HOME/.mirrc exists, execute it now.
 #
-if (-e $HOME/.mirrc) then
-  source $HOME/.mirrc
+if ($?HOME) then
+  if (-e $HOME/.mirrc) then
+    source $HOME/.mirrc
+  endif
 endif
 
 #  -------------------------------------------------------------

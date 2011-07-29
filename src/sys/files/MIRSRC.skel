@@ -57,10 +57,6 @@ export MIRSRC=$MIR/src
 export MIRSUBS=$MIR/src/subs
 export MIRTEL=MIRTEL:unknown
 
-
-
-echo old: $PATH
-
 if [ `echo ":${PATH}:" | grep -c ":\.:"` = 1 ]; then
  export PATH=`echo ":${PATH}:" | sed -e "s&:.:&:.:${MIRBIN}:&"`
  export PATH=`echo $PATH | sed -e 's/^://' -e 's/:$//'`
@@ -71,8 +67,6 @@ fi
 if [ -d $MIR/opt/bin ]; then
   export PATH=$MIR/opt/bin:$PATH
 fi
-
-echo new: $PATH
 
 alias   mirfind=mir.find
 alias   mirhelp=mir.help
@@ -108,8 +102,10 @@ fi
 #
 #  If the user's file $HOME/.mirrc exists, execute it now.
 #
-if [ -f $HOME/.mirsrc ]; then
-  . $HOME/.mirsrc
+if ! test -z $HOME ; then
+  if [ -f $HOME/.mirsrc ]; then
+    . $HOME/.mirsrc
+  fi
 fi
 
 #  -------------------------------------------------------------
