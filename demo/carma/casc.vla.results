@@ -65,3 +65,42 @@ CZ  60  -2,2,.008  0.4    6.59 6.03  731.686  1.677  734.028 1.663  0.008  0.061
    ---  Mosaicing with CARMA-23  -  ./hex7-23.csh model=casc.vla,  Fri Apr 23 15:19:24 PDT 2010   
 Joint deconvolution of interferometer and single dish data ; niters=200 rmsfac=1,1
 CZ  60  -2,2,.008  0.4    6.59 6.03  731.686  1.677  732.066 1.659  0.009  0.063  -0.055  184
+
+
+   ---  Mosaicing with CARMA-15  ---   
+ model   = casc.vla
+ config  = carma_E
+ dec     = 22
+ scale   = .1
+ harange = -2,2,.008  hours
+ select  = -shadow(6.1)
+ freq    = 230
+ nchan   = 1
+ imsize  = 257
+ region  = arcsec,box(50.00,-50.00,-50.00,50.00)
+ gnoise  = 5
+ flux    = 732.069
+ sd_rms  = 36.60345
+ method  = joint
+ 
+   ---  TIMING   ---   
+START: Wed Jul 14 15:00:30 PDT 2010
+Joint deconvolution of interferometer and single dish data
+MOSMEM: Wed Jul 14 15:03:11 PDT 2010
+convolve the model by the beam and subtract from the deconvolved image
+regrid the convolved model to the deconvolved image template
+FINISH: Wed Jul 14 15:03:12 PDT 2010
+ 
+   ---  RESULTS   ---   
+Config  DEC  HA[hrs]  scale  RMS  Beam[arcsec]  Model_Flux,Peak  Image_Flux,Peak Residual:Rms,Max,Min[Jy] Fidelity gnoise
+carma_E  22  -2,2,.008  .1    4.52 3.04  731.616  7.112  685.517 6.626  0.385  0.899  -1.173  17  5
+   ---  Mosaicing with CARMA-15  -  hex7-15.csh model=casc.vla,  Wed Jul 14 14:54:50 PDT 2010   
+Using hex7-15.csh mosaic with 15'' spacing
+ MOSMEM Interferometer only with niters=200 flux=732.069 rmsfac=1.
+carma_E  22  -2,2,.008  .1    4.52 3.04  731.616  7.112  741.721 6.734  0.418  1.058  -1.196  16  5  scaled for pointing
+   ---  Mosaicing with CARMA-15  -  hex7-15.csh model=casc.vla,  Wed Jul 14 14:57:48 PDT 2010   
+MOSMEM with default single dish image; niters=200 rmsfac=1
+carma_E  22  -2,2,.008  .1    4.52 3.04  731.616  7.112  739.630 7.081  0.140  0.545  -0.460  51  5  scaled for pointing
+   ---  Mosaicing with CARMA-15  -  hex7-15.csh model=casc.vla,  Wed Jul 14 15:00:30 PDT 2010   
+Joint deconvolution of interferometer and single dish data ; niters=200 rmsfac=1,1
+carma_E  22  -2,2,.008  .1    4.52 3.04  731.616  7.112  685.517 6.626  0.385  0.899  -1.173  17  5  scaled for pointing
