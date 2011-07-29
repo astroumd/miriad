@@ -54,6 +54,8 @@ if [ -f "$MIR/MIRSRC.local" ]; then
     . "$MIR/MIRSRC.local"
 fi
 
-if [ -f "$HOME/.mirsrc" ] ; then
+if ! test -z $HOME ; then
+  if [ -f "$HOME/.mirsrc" ] ; then
     . "$HOME/.mirsrc"
+  fi
 fi
