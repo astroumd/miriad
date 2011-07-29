@@ -196,7 +196,17 @@ c	09MAY21:13:27:04.0 is Julian Day 2454973.060463
 c	e.g. 
 c	i) if fringe rate has not been applied on line, then set fringe=1
 c	ii) data at 3040 MHz that has been fringe rotated for 3140, fringe=-(3140-3040)/3040
-c
+c@ xydelay
+c	XY delay of each antenna in units radians/GHz. The default is 0 for all antennas.
+c	xydelay will correct a phase slope across the band for
+c	RL, LR, XY, and YX corelations.
+c       The xydelay in units radians/GHz can be fitted using uvcal options=slope.
+c@ xyphase
+c	XY phase of each antenna in units radians.  The default is 0 for all antennas.
+c       xyphase will correct the  phase for RL, LR, XY, and YX corelations.
+c	If the XY phase has not been applied to the
+c       data, then it is important that this parameter is set correctly in GPCAL
+c       particularly for the reference antenna.
 c@ out
 c	The name of the output uv data set. No default.
 c--
@@ -264,11 +274,12 @@ c    pjt   4dec08  fix wides for atmcal option
 c    mchw 29jan09  exclude flagged data in options=slope
 c    mchw 21may09  fringe rate correction.
 c    pjt  19nov09  linecal2 option to look at cable instead of phasem1
+c    mchw 27jul11  added xyphase calibration.
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	integer maxbad
 	character version*(*)
-	parameter(version='UVCAL: version 19-nov-2009')
+	parameter(version='UVCAL: version 27-jul-2011')
 	parameter(maxbad=20)
 	real PI
 	parameter(PI=3.1415926)
@@ -286,7 +297,7 @@ c
      *       linecal1,atmcal,uvrot,doparang,dofxcal,doconjlsb,linecal2
 	character out*64,type*1,uvflags*8
 	real mask(MAXCHAN),sigma
-	integer polcode,nants,ant1,ant2,on
+	integer polcode,nants,ant1,ant2,on,nxydelay,nxyphase
 	real parot,sinpa,cospa
 	real scale(2),polcal(2),model(3),offset(2)
 	complex coffset
@@ -296,6 +307,7 @@ c
 	double precision fringe, time0
 	character start_time*64
 	real seeing, fwhms, uvsig, gauss
+	real xydelay(MAXANT), xyphase(MAXANT)
 c
 c  Externals.
 c
@@ -312,6 +324,7 @@ c
 	call bug('i','14mar07 options=noisecal: copy conj LSB into USB')
 	call bug('i','01oct07 keyword onsource to set uvvariable on')
 	call bug('i','20nov08 options=atmcal available')
+	call bug('i','27jul11 added xydelay and xyphase calibration.')
 c********1*********2*********3*********4*********5*********6*********7*c
 c
 	call keyini
@@ -335,8 +348,8 @@ c
 c
 	call uvDatInp('vis',uvflags(1:lflags))
 	call keya('out',out,' ')
-      call keyt('radec',ra,'hms',0.d0)
-      call keyt('radec',dec,'dms',0.d0)
+	call keyt('radec',ra,'hms',0.d0)
+	call keyt('radec',dec,'dms',0.d0)
 	call keyi('nave',nave,1)
 	call keyi('endchan',endchan,0)
 	call keyi('badchan',nbad,0)
@@ -362,6 +375,8 @@ c
 	call keyr('sigma',sigma,0.)
 	call keyd('fringe',fringe,0.d0)
 	call keya('fringe',start_time,'09MAY21:13:27:04.0')
+        call mkeyr('xydelay',xydelay,MAXANT,nxydelay)
+        call mkeyr('xyphase',xyphase,MAXANT,nxyphase)
 	call keyfin
 c
 c  Check user inputs.
@@ -377,16 +392,16 @@ c
 	dopolcal = polcal(1).ne.0.
 	if(dopolcal) polcal(2) = polcal(2)*PI/180.
 	doseeing = seeing.ne.0.
-       if(doseeing)then
+        if(doseeing)then
            print *,'Correct amplitude for atmospheric phase coherence'
-       endif
+        endif
 c
-       if(fringe.ne.0.d0)then
+        if(fringe.ne.0.d0)then
 	     print *,'doing fringe rate correction with factor= ',fringe)
          call dayjul(start_time, time0)
 c        print *,'c   09MAY21:13:27:04.0 is Julian Day 2454973.060463'
          print *, 'start_time: ',start_time, '  is Julian Day ', time0
-       endif
+        endif
 c
 c  Open the output.
 c
@@ -560,7 +575,7 @@ c
 	        call uvgetvri(lIn,'nants',nants,1)
 	        call uvgetvrd(lIn,'dazim',dazim,nants)
 	        call uvgetvrd(lIn,'delev',delev,nants)
-            call basant(preamble(5),ant1,ant2)
+                call basant(preamble(5),ant1,ant2)
 c voltage pattern for ant2
             if(dazim(ant1).eq.0..and.delev(ant1).eq.0.) then
               preamble(1) = 2.062648062d05*dazim(ant2)
@@ -619,6 +634,14 @@ c
 	      if(slope)
      *	          call fitslope(lIn,data,flags,nchan,wdata,wflags,nwide,
      *					dowide,lOut,endchan,mask,sigma)
+	      if(Pol.eq.-8.or.Pol.eq.7.or.Pol.eq.-4.or.Pol.eq.-3)then
+                 call basant(preamble(5),ant1,ant2)
+	        if(xydelay(ant1).ne.xydelay(ant2) .or. 
+     *             xyphase(ant1).ne.xyphase(ant2)) then
+     	         call xycal(lIn,Pol,data,flags,nchan,wdata,wflags,nwide,
+     *	       ant1,ant2,dowide,lOut,endchan,mask,sigma,xydelay,xyphase)
+                endif
+	      endif
           if(doconjlsb)
      *            call ConjLSB(lIn,data,flags,nchan,
      *							endchan,nave)
@@ -1346,18 +1369,18 @@ c
         wgt(i) = 0.
       enddo
 c
-c  Linear Fit to the phase of the good channels.
+c  Linear Fit to the phase of the good channels for each specral window.
 c
-	  do i=1,nspect
+      do i=1,nspect
         n = 0
         j1 = ischan(i)+endchan
         j2 = ischan(i)+nschan(i)-1-endchan
-	    do j=j1,j2
+	do j=j1,j2
           call amphase(data(j),amp(j),phi(j))
 c
 c unwrap phase
 c
-	      if(flags(j).and.mask(j).ne.0)then
+	  if(flags(j).and.mask(j).ne.0)then
             n = n + 1
             if(n.eq.1) theta = phi(j)
             x(n) = mask(j) * (sfreq(i) + sdf(i) * (j-ischan(i)))
@@ -1393,10 +1416,8 @@ c
         if(wgt(i).ne.0.)then
           wdata(i) = cabs(wdata(i)/wgt(i)) * expi(a*pi/180.)
           wfreq(i) = wfreq(i)/wgt(i)
-c          wwidth(i) = wwidth(i)/wgt(i)
+          wwidth(i) = wwidth(i)/wgt(i)
           wflags(i) = .true.
-          call uvputvrr(lOut,'wfreq',wfreq,nwide)
-          call uvputvrr(lOut,'wwidth',wwidth,nwide)
         else
           wflags(i) = .false.
         endif      
@@ -1421,15 +1442,17 @@ c
           do i=1,nspect
             wflags(i) = .false.
           enddo
-          do i=1,nchan
-            flags(i) = .false.
+          do j=1,nchan
+            flags(j) = .false.
           enddo
         endif
       endif
 c
 c  Return with the corrected data.
 c
-       end
+      call uvputvrr(lOut,'wfreq',wfreq,nwide)
+      call uvputvrr(lOut,'wwidth',wwidth,nwide)
+      end
 c********1*********2*********3*********4*********5*********6*********7*c
        subroutine pcenter(lIn,preamble,data,nchan,obsra,obsdec,line)
        implicit none
@@ -1987,4 +2010,147 @@ c
 	     data(i) = data(i) * exp(sfreq(i)*sfreq(i)*gauss)
        enddo
        end
+c********1*********2*********3*********4*********5*********6*********7*c
+	subroutine xycal(lIn,Pol,data,flags,nchan,wdata,wflags,nwide,
+     *	  ant1,ant2,dowide,lOut,endchan,mask,sigma,xydelay,xyphase)
+c  Correct RL and LR or XY and YX correlations for X-Y delay and phase  
+c  for dual polarization observations. Two values delay and phase.
+c  units: delays in radians/GHz, and phase in radians
+c********1*********2*********3*********4*********5*********6*********7*c
+	implicit none
+	integer lIn,Pol,lOut,nchan,nwide,endchan,ant1,ant2
+	complex data(nchan),wdata(nchan)
+	logical flags(nchan),wflags(nchan),dowide
+	real mask(nchan),sigma
+c
+c  In:
+c    lIn	Handle of input uv-data.
+c    lOut	Handle of output uv-data.
+c    Pol        Polarization code
+c    data	data
+c    flags	flags
+c    nchan	Number of input channel or wideband data.
+c    endchan	Number of end channels to drop.
+c    mask       Mask for bad channels.
+c    sigma      Rms noise level used to flag data.
+c    xydelay    xydelay in units radians/GHz.
+c    xyphase    xyphase in units radians.
+c    ant1,ant2  antenna pair
+c  Out:
+c    data	data
+c    dowide write wideband data
+c    wdata	wide data
+c    wflags	wide flags
+c    nwide	number of output wideband data.
+c------------------------------------------------------------------------
+      include 'maxdim.h'
+      include 'mirconst.h'
+      double precision sfreq(MAXWIN),sdf(MAXWIN)
+      integer nspect,ischan(MAXWIN),nschan(MAXWIN)
+      integer i,j,j1,j2
+      real sumsq,wt,x1,y1
+      real a,b
+      real wgt(MAXCHAN)
+      real wfreq(MAXWIDE), wwidth(MAXWIDE)
+      real xydelay(MAXANT), xyphase(MAXANT)
+c
+c polcode
+c       Polarizations are  YX,XY,YY,XX,LR,RL,LL,RR,-,I,Q,U,V
+c       Polarization codes -8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4
+c
+c  Externals.
+c
+       complex expi
+c
+c  Get the dimensioning info.
+c
+      call uvgetvri(lIn,'nspect',nspect,1)
+      if(nspect.le.0)
+     *  call bug('f','Bad value for uv-variable nspect')
+      call uvgetvri(lIn,'ischan',ischan,nspect)
+      call uvgetvri(lIn,'nschan',nschan,nspect)
+      call uvgetvrd(lIn,'sfreq',sfreq,nspect)
+      call uvgetvrd(lIn,'sdf',sdf,nspect)
+c
+c  Initialize new wideband data 
+c
+      dowide = .true.
+      nwide = nspect
+      do i=1,nwide
+        wdata(i) = (0.,0.)
+        wfreq(i) = 0.
+        wwidth(i) = 0.
+        wgt(i) = 0.
+      enddo
+c
+c  Set the xydelay and phase for each spectral window
+c
+      do i=1,nspect
+        if(Pol.eq.-8.or.Pol.eq.-4)then
+          a = xydelay(ant1) - xydelay(ant2)
+          b = xyphase(ant1) - xyphase(ant2)
+        else if(Pol.eq.-7.or.Pol.eq.-3)then
+          a = -xydelay(ant1) + xydelay(ant2)
+          b = -xyphase(ant1) + xyphase(ant2)
+        endif
+c	print *,'pol,ant1,ant2,a,b',pol,ant1,ant2,a,b
+c
+c  Subtract the xydelay and xyphase from the data and sum the wideband.
+c
+        j1=ischan(i)+endchan
+        j2=ischan(i)+nschan(i)-1-endchan
+        do j=j1,j2
+        if(flags(j).and.mask(j).ne.0)then
+          x1 = sfreq(i) + sdf(i) * (j-ischan(i))
+          y1 = a*x1 + b
+          data(j) = data(j) * expi(y1)
+          wdata(i) = wdata(i) + data(j)
+          wfreq(i) = wfreq(i) + x1
+          wwidth(i) = wwidth(i) + sdf(i)
+          wgt(i) = wgt(i) + 1.
+        endif
+        enddo
+c
+c  average the wideband.
+c
+        if(wgt(i).ne.0.)then
+          wdata(i) = wdata(i)/wgt(i)
+          wfreq(i) = wfreq(i)/wgt(i)
+          wwidth(i) = wwidth(i)/wgt(i)
+          wflags(i) = .true.
+        else
+          wflags(i) = .false.
+        endif      
+      enddo
+c
+c  Flag data if channel rms after linear fit is .gt. sigma.
+c
+      if(sigma.gt.0.) then
+        sumsq = 0.
+        wt = 0.
+        do i=1,nspect
+          j1=ischan(i)+endchan
+          j2=ischan(i)+nschan(i)-1-endchan
+          do j=j1,j2
+            sumsq = sumsq + mask(j) * real(data(j)) * real(data(j))
+     *            + mask(j) * aimag(data(j)) *aimag(data(j))
+            wt = wt + mask(j)
+          enddo
+        enddo
+c
+        if(sumsq.gt.wt*sigma*sigma) then
+          do i=1,nspect
+            wflags(i) = .false.
+          enddo
+          do j=1,nchan
+            flags(j) = .false.
+          enddo
+        endif
+      endif
+c
+c  Return with the corrected data.
+c
+      call uvputvrr(lOut,'wfreq',wfreq,nwide)
+      call uvputvrr(lOut,'wwidth',wwidth,nwide)
+      end
 c********1*********2*********3*********4*********5*********6*********7*c
