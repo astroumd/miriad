@@ -1,0 +1,39 @@
+   ---  Mosaicing with ALMA  -  hex19.csh model=casc.vla,  Fri Jul 29 09:00:15 PDT 2011   
+ model   = casc.vla
+ config  = config3
+ dec     = -30
+ scale   = 0.1
+ harange = -1,1,.013  hours
+ select  = -shadow(12)
+ freq    = 230
+ nchan   = 1
+ imsize  = 257
+ region  = arcsec,box(50.00,-50.00,-50.00,50.00)
+ 
+ method  = joint
+ 
+   ---  TIMING   ---   
+START: Fri Jul 29 09:00:15 PDT 2011
+Joint deconvolution of interferometer and single dish data
+MOSMEM: Fri Jul 29 09:03:26 PDT 2011
+convolve the model by the beam and subtract from the deconvolved image
+regrid the convolved model to the deconvolved image template
+FINISH: Fri Jul 29 09:03:28 PDT 2011
+ 
+   ---  RESULTS   ---   
+   ---  Mosaicing with ALMA  -  hex19.csh model=casc.vla,  Fri Jul 29 09:00:15 PDT 2011   
+Using hex19 mosaic with 12'' spacing
+Config  DEC  HA[hrs]    Beam[arcsec] scale Model_Flux,Peak  Image_Flux,Peak Residual:Rms,Max,Min[Jy] Fidelity
+ MOSMEM Interferometer only with niters=200 flux=732.063 rmsfac=1.
+config3  -30  -1,1,.013     1.43 1.21    0.05  731.646 3.943  706.363 3.898   0.017  0.086  -0.068  229
+MOSMEM with default single dish image; niters=200 rmsfac=1
+config3  -30  -1,1,.013     1.43 1.21    0.05  731.646 3.943  727.450 3.925   0.005  0.024  -0.020  785
+Joint deconvolution of interferometer and single dish data ; niters=200 rmsfac=1,1
+config3  -30  -1,1,.013     1.43 1.21    0.05  731.646 3.943  723.203 3.919   0.006  0.030  -0.024  653
+
+ MOSMEM Interferometer only with niters=200 flux=732.063 rmsfac=1.
+config3  -30  -1,1,.013     1.43 1.21    0.1  731.678 1.238  732.339 1.205   0.041  0.111  -0.430  29
+MOSMEM with default single dish image; niters=200 rmsfac=1
+config3  -30  -1,1,.013     1.43 1.21    0.1  731.678 1.238  611.730 1.179   0.036  0.095  -0.406  33
+Joint deconvolution of interferometer and single dish data ; niters=200 rmsfac=1,1
+config3  -30  -1,1,.013     1.43 1.21    0.1  731.678 1.238  616.001 1.173   0.033  0.111  -0.381  36

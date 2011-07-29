@@ -12,6 +12,7 @@ echo "   mchw. 20sep02 version"
 #  24jun10 mchw. Added uv and image plots.
 #  13jul10 mchw. Added default and joint deconvolutions.
 #  16jul10 mchw. Added gif plots. Changed rmsfac=200 to 1, same as carma version.
+#  29jul11 mchw. Added plot single dish and interferometer image
 
 goto start
 start:
@@ -150,6 +151,8 @@ imgen in=single.$dec.cas.$cell.map factor=0 object=gaussian spar=1,0,0,$pbfwhm,$
 implot in=single.$dec.cas.$cell.map units=s device=/xs conflag=l conargs=2
 puthd in=single.$dec.cas.$cell.map/rms value=7.32
 
+# plot single dish and interferometer image
+cgdisp in=$config.$dec.cas.$cell.mp,single.$dec.cas.$cell.map region=$region device=/xs
 
 goto mosmem
 
