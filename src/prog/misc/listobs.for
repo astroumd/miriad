@@ -31,6 +31,7 @@ c       needed to avoid ambiguity.
 c         'nobase'      Do not list baselines. Useful for big arrays such
 c                       as ATA. By default baselines and uvdistance are
 c                       listed.
+c         'allants'     List all antennas, not just those in the dataset
 c--
 c
 c< time
@@ -95,6 +96,7 @@ c           3-mar-10 pjt rad2hms in double precision, better rounding
 c          31-jan-11 pjt carma-23 formatting improved
 c          11-feb-11 pjt systemp computation improved (nschan and flags)
 c          17-feb-11 pjt increased MAXSPECT for sci2 (needs 32)
+c           2-aug-11 pjt add options=allants
 c
 c
 c TODO:
@@ -121,7 +123,7 @@ c
 	double precision jdold,jdnow,antpos(3 * MAXANT),apos(6)
 	double precision foclst(50),focjday(50),ftime,jdend,utend
         double precision lat,lon,sinlat,coslat,sinlon,coslon
-	logical more,fthere,anthere(MAXANT),updated,nobase
+	logical more,fthere,anthere(MAXANT),updated,nobase,allants
         logical pthere
         integer len1,tlen1
         data more /.true./
@@ -143,7 +145,7 @@ c
         if (nfiles.eq.0)
      *      call bug('f','No data set name(s) given; use vis=')
 	call keya('log',outlog,' ')
-        call getopt(nobase)
+        call getopt(nobase,allants)
         call keyfin
 c
 c-----------------------------------------------------------------------
@@ -300,7 +302,7 @@ c
      1                       '          E           N           U    '
      2                   ,more)
 	do 160 j=1,nants
-           if(anthere(j)) then
+           if(anthere(j) .or. allants) then
 	      do jj=1,3
 	         apos(jj) = antpos(j+nants*(jj-1))
               enddo
@@ -693,16 +695,17 @@ c
 	return
 	end
 c-----------------------------------------------------------------------
-        subroutine getopt(nobase)
+        subroutine getopt(nobase,allants)
         implicit none
-        logical nobase
+        logical nobase,allants
 c
         integer nopt
-        parameter(nopt=1)
+        parameter(nopt=2)
         character opts(nopt)*9
         logical present(nopt)
-        data opts/'nobase   '/
+        data opts/'nobase   ','allants  '/
         call options('options',opts,present,nopt)
         nobase = present(1)
+        allants = present(2)
         end
 
