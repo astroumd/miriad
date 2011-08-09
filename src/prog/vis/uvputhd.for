@@ -44,11 +44,13 @@ c@ hdvar
 c    Name of header variable to be changed. Refer to user manual or
 c    run VARLIST to see the selection of allowed variable names.
 c    Although one is allowed to make up new uv variables, this is not 
-c    a recommended practice. 
+c    a recommended practice.
+c    Existing UV variables cannot have their type changed.
 c    No default.
 c@ type
 c    Type of variable, either integer (i),real (r), double precision (d), 
-c    or ascii (a). Unused if variable already exists in the data file.
+c    or ascii (a). Unused if variable already exists in the data file,
+c    i.e. you cannot change the type of an existing UV variable.
 c    CAVEAT: Tables do not support ascii types yet.
 c    No Default.
 c@ length
