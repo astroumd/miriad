@@ -132,3 +132,63 @@ BLLAC        2011-JUL-17.0    30.9     3.71     0.03   CARMA16       MARS
 0530+135      2011-AUG-07.0   34.7       2.0       0.3    CARMA8    MARS
 1058+015      2011-AUG-12.0   34.7       5.7       0.9    CARMA8    MARS
 0530+135      2011-AUG-12.0   34.7       1.9       0.3    CARMA8    MARS
+MWC349     2011-JUL-13.0    93.1       1.23      0.18   CARMA8    NEPTUNE    
+3C84       2011-JUL-13.0    93.1      13.29      1.99   CARMA8    NEPTUNE    
+MWC349     2011-JUL-13.0    93.1       1.23      0.18   CARMA8    URANUS     
+3C84       2011-JUL-13.0    93.1      13.15      1.97   CARMA8    URANUS     
+3C84       2011-JUL-13.0    93.1      12.92      1.94   CARMA8    MARS       
+MWC349     2011-JUL-13.0    93.1       1.21      0.18   CARMA8    MARS       
+3C84       2011-JUL-13.0    93.1      13.16      1.97   CARMA8    URANUS     
+MWC349     2011-JUL-13.0    93.1       1.18      0.18   CARMA8    URANUS     
+3C345      2011-JUL-13.0    93.1       3.21      0.48   CARMA8    NEPTUNE    
+MWC349     2011-JUL-13.0    93.1       1.25      0.19   CARMA8    URANUS     
+3C84       2011-JUL-13.0    93.1      13.52      2.03   CARMA8    URANUS     
+MWC349     2011-JUL-13.0    93.1       1.22      0.18   CARMA8    URANUS     
+1039+811   2011-JUL-05.0    93.1       0.67      0.10   CARMA8    MWC349     1.2
+1419+543   2011-JUL-05.0    93.1       0.35      0.05   CARMA8    MWC349     1.2
+0339-017   2011-JUL-06.0    93.1       2.72      0.41   CARMA8    URANUS     
+0424+006   2011-JUL-06.0    93.1       0.43      0.06   CARMA8    URANUS     
+0416-188   2011-JUL-06.0    93.1       0.35      0.05   CARMA7    URANUS     
+0407-121   2011-JUL-06.0    93.1       0.51      0.08   CARMA7    URANUS     
+0423-013   2011-JUL-06.0    93.1       3.47      0.52   CARMA7    URANUS     
+0431+206   2011-JUL-06.0    93.1       0.16      0.02   CARMA7    URANUS     
+3C120      2011-JUL-06.0    93.1       0.82      0.12   CARMA7    URANUS     
+0449+113   2011-JUL-06.0    93.1       0.61      0.09   CARMA7    URANUS     
+0336+323   2011-JUL-06.0    93.1       0.78      0.12   CARMA7    URANUS     
+0442-002   2011-JUL-06.0    93.1       0.06      0.01   CARMA7    URANUS     
+0513-219   2011-JUL-06.0    93.1       0.22      0.03   CARMA7    URANUS     
+0503+020   2011-JUL-06.0    93.1       0.14      0.02   CARMA7    URANUS     
+3C138      2011-JUL-06.0    93.1       0.49      0.07   CARMA7    URANUS     
+0530+135   2011-JUL-06.0    93.1       2.93      0.44   CARMA7    URANUS     
+0532+075   2011-JUL-06.0    93.1       1.16      0.17   CARMA7    URANUS     
+0541-056   2011-JUL-06.0    93.1       0.33      0.05   CARMA7    URANUS     
+0627-058   2011-JUL-06.0    93.1       0.27      0.04   CARMA7    URANUS     
+3C111      2011-JUL-06.0    93.1       2.63      0.40   CARMA7    URANUS     
+3C123      2011-JUL-06.0    93.1       0.36      0.05   CARMA7    URANUS     
+0607-085   2011-JUL-06.0    93.1       1.68      0.25   CARMA7    URANUS     
+0609-157   2011-JUL-06.0    93.1       1.36      0.20   CARMA7    URANUS     
+0650-166   2011-JUL-06.0    93.1       0.82      0.12   CARMA7    URANUS     
+0841+708   2011-JUL-11.0    93.1       1.68      0.25   CARMA8    3C273      10
+1048+717   2011-JUL-11.0    93.1       0.95      0.14   CARMA8    3C273      10
+1139+657   2011-JUL-11.0    93.1       0.11      0.02   CARMA8    3C273      10
+0958+655   2011-JUL-11.0    93.1       0.96      0.14   CARMA8    3C273      10
+0957+553   2011-JUL-11.0    93.1       0.56      0.08   CARMA8    3C273      10
+0921+622   2011-JUL-11.0    93.1       0.72      0.11   CARMA8    3C273      10
+1153+495   2011-JUL-11.0    93.1       2.82      0.42   CARMA8    3C273      10
+3C345      2011-JUL-30.0    93.1       3.16      0.47   CARMA8    NEPTUNE    
+MWC349     2011-AUG-02.0    93.1       1.22      0.18   CARMA8    NEPTUNE    
+MWC349     2011-AUG-02.0    93.1       1.26      0.19   CARMA8    URANUS     
+3C84       2011-AUG-02.0    93.1      12.96      1.94   CARMA8    URANUS     
+3C84       2011-AUG-02.0    93.1      12.56      1.88   CARMA8    URANUS     
+MWC349     2011-AUG-02.0    93.1       1.24      0.19   CARMA8    URANUS     
+3C84       2011-AUG-02.0    93.1      13.45      2.02   CARMA8    URANUS     
+MWC349     2011-AUG-02.0    93.1       1.18      0.18   CARMA8    URANUS     
+3C273      2011-AUG-10.0   228.1       4.41      0.66   CARMA8    3C345      1.8
+3C273      2011-AUG-10.0    93.1      11.17      1.68   CARMA8    3C345      3.4
+MWC349     2011-AUG-10.0   228.1       1.97      0.30   CARMA8    URANUS     
+3C84       2011-AUG-10.0   228.1       6.68      1.00   CARMA8    URANUS     
+MWC349     2011-AUG-10.0    93.1       1.18      0.18   CARMA8    URANUS     
+3C84       2011-AUG-10.0    93.1      12.99      1.95   CARMA8    URANUS     
+3C84       2011-AUG-11.0   228.1       6.30      0.95   CARMA13   URANUS     
+3C84       2011-AUG-11.0    93.1      12.75      1.91   CARMA13   URANUS     
+3C345      2011-AUG-15.0    93.1       3.37      0.51   CARMA8    NEPTUNE    
