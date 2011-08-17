@@ -1,0 +1,9 @@
+# antpos file for CARMA SL array, July 2011
+# This has C19 waaay out to avoid shadowing by C1-15
+#           N          E          U
+        -39.024     -5.421      2.501
+        -27.533     -4.409      2.630
+        -33.459     -8.846      2.554
+        -31.102      1.975      2.564
+        -33.629     -3.850      2.533
+        -35.584      1.379      2.462
