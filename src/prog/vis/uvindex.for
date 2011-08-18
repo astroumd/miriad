@@ -226,6 +226,7 @@ c
 	  endif
 c
 c  Increment the total observing time if this is a new integration.
+c  @todo inttime can now vary accross baselines at CARMA
 c
 	  call uvrdvrr(lIn,'inttime',inttime,30.0)
 	  inttime = inttime/86400
@@ -250,6 +251,7 @@ c
 c
 	total = 24*total
 	write(line,'(a,f6.2,a)')'Total observing time is',total,' hours'
+c @todo  also report Total Wall Clock Time
 	call LogWrit(line)
 	call LogWrit(' ')	
 	call LogWrit('The input data-set contains '//
