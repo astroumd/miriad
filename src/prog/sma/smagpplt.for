@@ -201,11 +201,11 @@ c------------------------------------------------------------------------
         parameter (DPI = 3.14159265358979323846)
         parameter (TWOPI = 2 * PI)
         parameter (DTWOPI = 2 * DPI)        
-        parameter(version='SmaGpPlt: version 1.13 17-Aug-07')
+        parameter(version='SmaGpPlt: 18-Aug-2011')
         include 'smagpplt.h'
         integer iostat,tin,nx,ny,nfeeds,nants,nsols,ierr,symbol,nchan
         integer ntau,length, i, j, k,nschann(maxspect)
-        character vis*64,device*64,logfile*64,basetime*20
+        character vis*256,device*256,logfile*256,basetime*20
         double precision t0
         logical doamp,dophase,doreal,doimag,dogains,dopol,dodtime,doxy
         logical doxbyy,doplot,dolog,more,ltemp,dodots,dodelay,dopass
