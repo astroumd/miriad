@@ -19,6 +19,7 @@ d delayry
 d delev
 r dra
 r epoch
+r evector
 d freq
 r inttime
 i ischan
