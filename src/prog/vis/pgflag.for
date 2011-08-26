@@ -792,8 +792,8 @@ c     flag the data in the selection box
                      goto 40
                   endif
                enddo
- 40         enddo
-            if ((pressed(1:1).eq.'f').or.(pressed(1:1).eq.'F')) then
+            enddo
+ 40         if ((pressed(1:1).eq.'f').or.(pressed(1:1).eq.'F')) then
                do_flag=.true.
                if (pressed(1:1).eq.'f') then
                   f_mode=1
@@ -881,8 +881,8 @@ c     we select only the regions that are brighter on this baseline
                      goto 60
                   endif
                enddo
- 60         enddo
-            do while (meas_maxval.gt.datamax)
+            enddo
+ 60         do while (meas_maxval.gt.datamax)
                call FlagData(points,f_a1,f_a2,f_mode,
      *              do_flag,do_unflag,do_undoflag,chans,times,
      *              bases,flagval,MAXEDIT,nflags,day0,t1,ntime,chanoff,
@@ -1236,8 +1236,8 @@ c     must be flagging based on one antenna; figure out which one
                isave(5)=1
             endif
             if (nflagged.gt.0) then
-               time1=times(1,i)+1
-               time2=times(2,i)+1
+               time1=times(1,i)
+               time2=times(2,i)
                if (time1.gt.ntime) then
                   time1=ntime
                endif
@@ -1293,17 +1293,23 @@ c     do the flagging
             bl=((ant2-1)*ant2)/2+ant1
             do i=1,nflags
                if (bases(bl,i).eqv..true.) then
-                  time1=times(1,i)+1
-                  time2=times(2,i)+1
+c                  write(status,'(A,F20.10)') 'preamble time',t
+c                  call output(status)
+                  time1=times(1,i)
+                  time2=times(2,i)
                   if (time1.gt.ntime) then
                      time1=ntime
                   endif
                   if (time2.gt.ntime) then
                      time2=ntime
                   endif
+c                  write(status,'(A,F20.10,F20.10)') 'ftimes',
+c     *                 t1(time1),t1(time2)
+c                  call output(status)
                   if ((t1(time1).le.t).and.
      *                (t1(time2).ge.t)) then
                      flagged=.true.
+c                     call output('flagged')
                      do j=chans(1,i),chans(2,i)
                         flags(j)=.not.flagval(i)
                         if (flagval(i).eqv..false.) then
@@ -1620,15 +1626,16 @@ c     check that we have a full selection box
                flagval(nflags)=.false.
                isave(5)=1
             endif
-            time1=miny+1
-            time2=maxy+1
+            time1=miny
+            time2=maxy
             if (time1.gt.ntime) then
                time1=ntime
             endif
             if (time2.gt.ntime) then
                time2=ntime
             endif
-            call FmtCmd(flagstring,isave,t1(time1),t1(time2),chanoff,
+            call FmtCmd(flagstring,isave,t1(time1),t1(time2),
+     *       chanoff,
      *       chanw,day0,selectline)
             call output(flagstring)
          elseif (undo) then
@@ -1882,7 +1889,7 @@ c     check we have a valid time
          else
             meas_amplitude=0.0
          endif
-         call TimeToString(day0,t1(curs_y),1,meas_time)
+         call TimeToString(day0,t1(int(curs_y)),1,meas_time)
       endif
 c
       end
@@ -2042,8 +2049,8 @@ c     figure out what baseline it is
                goto 10
             endif
          enddo
- 10   enddo
-      titles(2,1)=meas_baseline
+      enddo
+ 10   titles(2,1)=meas_baseline
       WRITE(titles(2,2),'(I4.4)') meas_channel
       WRITE(titles(2,3),'(F12.4)') meas_frequency
       titles(2,4)=meas_time
@@ -2770,7 +2777,7 @@ c
       include 'maxdim.h'
       integer i,j,k,offset,length,pnt,bl,i0
       real buf(2*MAXCHAN+3),t
-c      character status*60
+c      character status*80
 
       some_unflagged=.false.
       if (firstread) then
@@ -2795,11 +2802,17 @@ c
          bl=nint(buf(1))
          if (bl.eq.rqbl) then
             t=buf(2)+(dble(buf(3))-day0)
+c            write(status,'(A,I6,F20.10)') 'btimes',k,t
+c            call output(status)
             do pnt=1,ntime
                if (t1(pnt).gt.-1.0) then
+c                  write(status,'(A,I6,F20.10,F20.10,F20.10)') 'ttimes',
+c     *                 pnt,t1(pnt),t1(pnt+1),t1(pnt+2)
+c                  call output(status)
 c                  call output('time valid')
-                  if ((t1(pnt).le.t).and.((t.le.t1(pnt+1)).or.
-     *               ((t1(pnt+1).eq.-2).and.(t.le.t1(pnt+2))))) goto 10
+                  if (((t1(pnt).le.t).and.(t.lt.t1(pnt+1))).or.
+     *               ((t1(pnt+1).eq.-2).and.(t.lt.t1(pnt+2))).or.
+     *               ((t1(pnt).le.t).and.(pnt.eq.ntime)))goto 10
                endif
             enddo
 c            write(status,'(A,F20.10)') 'Time slot miscalculation',t
@@ -2821,7 +2834,8 @@ c            call output(status)
                endif
                i0=i0+2
             enddo
- 11      endif
+ 11         i0=3
+         endif
       enddo
 c
       end
@@ -3321,7 +3335,7 @@ c
                   goto 10
                endif
             enddo
- 10      enddo
+         enddo
       elseif ((isave(1).eq.2).or.(isave(1).eq.3)) then
          write(baseflag,'(A,I3)') 'all baselines with antenna',
      *        isave(2)
@@ -3330,7 +3344,7 @@ c
          baseflag='all baselines'
          selectant=' '
       endif
-      if (isave(5).eq.1) then
+ 10   if (isave(5).eq.1) then
          flagval='GOOD'
       else
          flagval='BAD'
