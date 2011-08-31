@@ -173,6 +173,7 @@
 /*  pjt   3dec09 allow minsize2 threshold on INT2 vs. REAL for corr's   */
 /*  pjt  16dec09 cloned uvread_match() into uvread_matchp() for purpose */
 /*  pjt  22jul11 better antenna based handling ELEV, DAZIM, DELEV       */
+/*  pjt  31aug11 fix bug in ELEV selection                              */
 /*----------------------------------------------------------------------*/
 /*									*/
 /*		Handle UV files.					*/
@@ -267,7 +268,7 @@
 #include "config.h"
 #endif
 
-#define VERSION_ID "21-jul-11 pjt"
+#define VERSION_ID "31-aug-2011 pjt"
 
 #define private static
 
@@ -3495,8 +3496,8 @@ private int uvread_select(UV *uv)
 	BUG('f',"Bad antenna numbers when checking elevation, in UVREAD(select)"); }
       
       while(n < sel->noper && op->type == SEL_ELEV){
-        if(op->loval <= elev[i1] && elev[i1] <= op->hival &&
-           op->loval <= elev[i2] && elev[i2] <= op->hival)
+        if(op->loval <= elev[i1-1] && elev[i1-1] <= op->hival &&
+           op->loval <= elev[i2-1] && elev[i2-1] <= op->hival)
 	  discard = op->discard;
         op++; n++;
       }
