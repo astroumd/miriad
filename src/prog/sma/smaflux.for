@@ -59,6 +59,8 @@ c                      Extended smadir from 82 chars to 256.
 c                      Added  call mgetenv(mirhome,'MIR')
 c    jhz  2007-02-17   Added a message in case the Julian date
 c                      in the data exceeds the limit of catalog.
+c
+c  @todo   CARMA has some 30GHz adaptations coming up
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
