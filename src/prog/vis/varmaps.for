@@ -103,6 +103,10 @@ c
 c@ cutoff
 c     Level at which the gaussian is cut off to 0.  Default: 0.000001
 c
+c@ soft
+c     Factor by which FWHM should be multiplied for the soft edge
+c     under options=soft. Default: 1
+c
 c@ options
 c       This gives extra processing options. Several options can be given,
 c       each separated by commas. They may be abbreviated to the minimum
@@ -110,7 +114,7 @@ c       needed to avoid ambiguity.
 c       sum     - not used
 c       taper   - not used
 c       edge    - sharp edge, it will cut signal outside
-c       soft    - FWHM softended edge
+c       soft    - FWHM softened edge
 c
 c--
 c  History:
@@ -118,11 +122,12 @@ c     pjt  28jan11  Initial version, cloned off varmap
 c     pjt  18mar11  write flags as well
 c     pjt  28mar11  taper,edge
 c     pjt   4apr11  added scale=
+c     pjt   6sep11  added soft= 
 c----------------------------------------------------------------------c
        include 'maxdim.h'
        include 'mirconst.h'
        character*(*) version
-       parameter(version='VARMAPS: version 4-apr-2011')
+       parameter(version='VARMAPS: version 6-sep-2011')
        integer MAXSELS
        parameter(MAXSELS=512)
        integer MAXVIS
@@ -153,6 +158,7 @@ c----------------------------------------------------------------------c
        real array(MAXSIZE,MAXSIZE,MAXCHAN2)
        real weight(MAXSIZE,MAXSIZE,MAXCHAN2)
        real x,y,z,x0,y0,datamin,datamax,f,w,cutoff, xscale,yscale,scale
+       real softfac
        character*1 xtype, ytype, type
        integer length, xlength, ylength, xindex, yindex, cnt, mode
        integer imin,jmin,imax,jmax
@@ -192,6 +198,7 @@ c
        call keyi ('size',size,0)
        call keyi ('mode',mode,0)
        call keyr ('cutoff',cutoff,0.00000001)
+       call keyr ('soft', softfac, 1.0)
        call GetOpt(sum,debug,dotaper1,edge,dotaper2)
        call keyfin
 c
@@ -515,7 +522,7 @@ c   should dotaper1 be active and dotaper2 only gets
 c   active a few more cells (FWHM) outside of imin..imax and jmin..jmax
 c
       if (dotaper2) then
-         f = beam(1)/cell(1)
+         f = beam(1)/cell(1)*softfac
          write(*,*) 'FWHM/CELL = ',f
          f = 2*2.355*2.355*f*f
          do i=1,MAXSIZE
