@@ -59,16 +59,17 @@ c                      Extended smadir from 82 chars to 256.
 c                      Added  call mgetenv(mirhome,'MIR')
 c    jhz  2007-02-17   Added a message in case the Julian date
 c                      in the data exceeds the limit of catalog.
+c    pjt  2011-11-08   fixed the 333 GHz ref freq for mars to 345
 c
 c  @todo   CARMA has some 30GHz adaptations coming up
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='SmaFlux: version 1.1 17-02-07')
+	parameter(version='SmaFlux: version 8-09-2011')
 	integer MAXVIS
 	parameter(MAXVIS=32)
 c
-	character vis(MAXVIS)*64,source*32,line*64
+	character vis(MAXVIS)*256,source*32,line*80
         character mirhome*256
 	logical vector,planet,noapply,nofqav
 	integer nvis,lVis,vsource,nchan,iplanet,nants,i,iplanetp
@@ -6580,7 +6581,7 @@ c
         parameter(NMAR=225)
         real Ma(6,NMAR)
         real f(5),tn(5),tl(5),a,b
-        data f/43.,115.,230.,333.,1000./
+        data f/43.,115.,230.,345.,1000./
 c! Caltech Mars Thermal Model - Whole Disk Planck Brightness Temperature
 c! 7mm, 2.6mm, 1.3mm, 0.9mm, 0.3mm
 c! Best fit radial cosine law exponent: 0.32
