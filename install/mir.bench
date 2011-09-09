@@ -19,6 +19,7 @@ set clean=0
 set fidelity=0
 set interval=0.01
 set uvcat=1
+set testcat=0
 
 foreach a ($*)
   set $a
@@ -91,6 +92,12 @@ if ($fidelity) then
    set rms=(`histo in=res1  | grep Rms | awk '{print $4}'`)
    set max=(`histo in=cmap1 | grep Max | awk '{print $3}'`)
    echo Fidelity: `calc $max/$rms`
+endif
+
+if ($testcat) then
+  time invert vis=vis1,vis2,vis3 map=map1a beam=beam1a imsize=$mapsize cell=$cell > inverta.log
+  maths exp=map1a-map1 out=map1d
+  histo in=map1d
 endif
 
 
