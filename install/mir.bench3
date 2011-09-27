@@ -1,0 +1,46 @@
+#! /bin/csh -f
+#
+#  mir.bench3: a more pure CPU mossdi style benchmark
+#              it grabs an 80MB file from carma.astro.umd.edu
+#
+#  if you  'setenv TMPDIR /dev/shm'   on linux,you can get extra
+#  improvement in the I/O portion of this benchmark. 
+#  Be aware you have enough memory allocated to this!
+#
+
+set file=mirbench3.tar
+set ftp=ftp://ftp.astro.umd.edu/pub/carma
+set rundir=mirbench3
+set wget=1
+set options=()
+
+foreach a ($*)
+  set $a
+end
+
+echo "MIRBENCH3: (2011-90-27)"
+echo hostname=`hostname` 
+echo benchdir=$rundir
+echo system=`uname -a`  
+echo date=`date`
+echo MIR=$MIR
+
+# use options= on the commandline for this:
+# wget could need --active-ftp, since --passive-ftp is default
+# curl has a similar option, --ftp-pasv
+
+if (! -e $rundir) then
+  if ($wget) then
+    wget $options -O - $ftp/$file | tar -xf -
+  else
+    curl $options      $ftp/$file | tar -xf -
+  endif
+endif
+
+if (! -e $rundir) then
+  echo $rundir was not created
+  exit 1
+endif
+
+cd $rundir
+./run1

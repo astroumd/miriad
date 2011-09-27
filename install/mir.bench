@@ -2,6 +2,8 @@
 #
 #  mir.bench: see also http://bima.astro.umd.edu/memo/abstracts.html#81
 #
+#  The standard benchmark needs about 350 MB (and some scratch space)
+#
 #  if you  'setenv TMPDIR /dev/shm'   on linux,you can get extra
 #  improvement in the I/O portion of this benchmark. 
 #  Be aware you have enough memory allocated to this!

@@ -30,6 +30,7 @@ set uvcat=1
 set fits=0
 set diff=0
 set cleanup=0
+set imgen=0
 
 foreach a ($*)
   set $a
@@ -37,7 +38,7 @@ end
 
 if ($diff) set fits=1
 
-echo "MIRBIGBENCH: (2011-07-12) $tmp : nchan=$nchan npts=$npts uvcat=$uvcat fits=$fits diff=$diff"
+echo "MIRBIGBENCH: (2011-07-27) $tmp : nchan=$nchan npts=$npts uvcat=$uvcat fits=$fits diff=$diff imgen=$imgen"
 echo "nchan=$nchan npts=$npts uvcat=$uvcat fits=$fits diff=$diff" > ARGS
 echo hostname=`hostname` 
 echo system=`uname -a`  
@@ -70,6 +71,13 @@ if ($diff) then
   time invert vis=vis1a map=map1a imsize=256
   time maths exp=map1-map1a out=map1d
   time histo in=map1d region=quarter
+endif
+
+if ($imgen) then
+  # OmegaCam size:  set imgen=16384 
+  time imgen out=map0 imsize=$imgen object=level spar=1
+  time maths exp=map0 out=map1
+  time fits in=map0 out=map0.fits op=xyout
 endif
 
 if ($cleanup) then
