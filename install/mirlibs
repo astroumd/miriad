@@ -10,7 +10,7 @@ set libs=(`echo $MIRLIB $MIRXLIB | sed 's/:/ /g'`)
 
 
 set Llist = "-L`echo $libs | sed 's/ / -L/g'`"
-echo "$Llist -lmir -llinpack -lpgplot -lX11 -lm"
+echo "$Llist -lmir -llinpack -lpgplot -lwcs -lX11 -lm"
 
 # -L/usr/X11R6/lib -lmir -llinpack -lpgplot -lX11 -lm
 
