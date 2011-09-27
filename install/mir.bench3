@@ -35,6 +35,8 @@ if (! -e $rundir) then
   else
     curl $options      $ftp/$file | tar -xf -
   endif
+else
+  echo Warning, reusing old $rundir directory
 endif
 
 if (! -e $rundir) then
