@@ -89,7 +89,7 @@ c
 c  Input:
 c    observ	Name of the observatory. Current list is :
 c                 'ALMA', 'ATCA', 'CARMA', CEDUNA30M', 'CSO', 'GMRT',
-c                 'HATCREEK', 'HOBART26M', 'IRAM15M', 'JCMT', 'KAT7',
+c                 'HATCREEK', 'HOBART26M', 'IRAM15M', 'JCMT', 'KAT-7',
 c                 'KITTPEAK', 'NOBEYAMA', 'NOBEYAMA45', 'ONSALA', 'OVRO',
 c		  'PARKES', 'PENTICTON', 'QUABBIN', 'RPA', 'SZA', 'SZA10', 'SZA6', 'VLA', 
 c		  'WSRT'
@@ -349,14 +349,14 @@ c  KAT7  array
 # to    Mel Wright <mwright@astro.berkeley.edu>
 # date  Wed, Jun 2, 2010 at 3:24 PM
 c
-	call obsad('kat7/antdiam',	12.d0)
-	call obsad('kat7/height',	1000.d0)
-	call obsad('kat7/jyperk',	55.d0)
-	call obsad('kat7/latitude',	obsdms(-1,  30,43,16.68))
-	call obsad('kat7/longitude',    obsdms( 1,  21,24,36.00))
-	call obsad('kat7/mount',        ALTAZ)
-	call obsad('kat7/nants',	7.d0)
-	call obsad('kat7/systemp',	100.d0)
+	call obsad('kat-7/antdiam',	12.d0)
+	call obsad('kat-7/height',	1000.d0)
+	call obsad('kat-7/jyperk',	55.d0)
+	call obsad('kat-7/latitude',	obsdms(-1,  30,43,16.68))
+	call obsad('kat-7/longitude',    obsdms( 1,  21,24,36.00))
+	call obsad('kat-7/mount',        ALTAZ)
+	call obsad('kat-7/nants',	7.d0)
+	call obsad('kat-7/systemp',	100.d0)
 c
 c  The Kitt Peak mm single dish (NRAO).
 c  Jyperk and systemp given by Wright, from 3mm vlbi.
