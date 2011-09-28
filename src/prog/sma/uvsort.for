@@ -32,7 +32,7 @@ c  Bugs:
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='UvSort: version 21-feb-11')
+	parameter(version='UvSort: version 28-sep-2011')
 	character uvflags*12,ltype*16,out*120,line*120
 	integer npol,pol,tIn,tOut,vupd,nread,nrec
 	integer i,nuniq,written,nthistime,nrewind
@@ -86,6 +86,7 @@ c
 	call uvDatRd(preamble,data,flags,maxchan,nread)
 	do while(nread.gt.0)
 	   nrec = nrec + 1
+	   if (nrec.GE.MAXREC) call bug('f','MAXREC too small')
 	   sortedtime(nrec) = preamble(4) 
 	   call uvDatRd(preamble,data,flags,maxchan,nread)
 	end do
