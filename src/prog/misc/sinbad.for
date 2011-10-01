@@ -39,6 +39,8 @@ c       Exclusively one of the following (minimum match):
 c         'spectrum'     Compute Tsys*(on-off/off).  This is the default
 c         'difference'   Compute (on-off)
 c         'ratio'        Compute on/off
+c         'on'           Output (on)
+c         'off'          Output (off)
 c@ slop
 c       Allow some fraction of channels bad for accepting
 c       Default: 0
@@ -54,6 +56,7 @@ c    mwp     16may08-2  off() must be complex!!! very funny behavior if not.
 c    pjt     28jan11  made it listen to flags in the OFF scans
 c    pjt     28feb11  quick hack to pre-cache first scan of all OFF's
 c    pjt      3mar11  flagging
+c    pjt     30sep11  options=on,off 
 c---------------------------------------------------------------------------
 c  TODO:
 c    - integration time from listobs appears wrong
@@ -91,7 +94,7 @@ c
       integer num,   non,   noff,   ntsys
       data    num/0/,non/0/,noff/0/,ntsys/0/
       logical spectrum, diffrnce, ratio, have_ant(MAXANT), rant(MAXANT)
-      logical allflags,debug
+      logical allflags,debug,qon,qoff
 c     
 c  Read the inputs.
 c
@@ -102,7 +105,7 @@ c
       call bug('i','New caching of OFF positions')
       
       call keyini
-      call getopt(spectrum,diffrnce,ratio)
+      call getopt(spectrum,diffrnce,ratio,qon,qoff)
       call keyf('vis',vis,' ')
       call SelInput('select',sels,maxsels)
       call keya('line',linetype,' ')
@@ -128,12 +131,15 @@ c but this is a little more obvious
 c
       if( ( spectrum .eqv. .false. ) .and.
      *     ( diffrnce .eqv. .false. ) .and.
+     *     ( qon .eqv. .false. ) .and.
+     *     ( qoff .eqv. .false. ) .and.
      *     ( ratio    .eqv. .false. ) ) then
          spectrum = .true.
       endif
 c
 c  Open the output file.
 c
+
       call uvopen(lOut,out,'new')
 c     
 c  Open the data file, apply selection, do linetype initialisation and
@@ -174,6 +180,7 @@ c
          endif
          call uvread(lIn,uin,data,flags,maxchan,nchan)
       end do
+
       call uvrewind(lIn)
 c
 c  Read through the file, listing what we have to.
@@ -234,6 +241,7 @@ c
 c  Now process the data.
 c
          if(doon)then
+
             call uvgetvri(lIn,'on',on,1)
             ant = basein/256
             if(on.eq.0)then
@@ -273,6 +281,15 @@ c
                         data(i) = data(i)/off(i,ant)
                         flags(i) = flags(i).AND.oflags(i,ant)
                      enddo
+                  else if(qon) then
+                     do i=1,nchan
+                        flags(i) = flags(i).AND.oflags(i,ant)
+                     enddo
+                  else if(qoff) then
+                     do i=1,nchan
+                        data(i) = off(i,ant)
+                        flags(i) = flags(i).AND.oflags(i,ant)
+                     enddo
                   endif
                   call uvwrite(lOut,uin,data,flags,nchan)
                else
@@ -304,6 +321,12 @@ c
       endif
       if (ratio) then 
          print *,'records written: (on/off)',non
+      endif
+      if (qon) then 
+         print *,'records written: (on)',non
+      endif
+      if (qoff) then 
+         print *,'records written: (off)',non
       endif
       
       if (ntsys.eq.0) then
@@ -383,18 +406,21 @@ c              write(*,*) i2,' :t: ',(tsys(i2,j),j=1,nants)
 c-----------------------------------------------------------------------
 c     Get the various (exclusive) options
 c     
-      subroutine getopt(spectrum,diffrnce,ratio)
+      subroutine getopt(spectrum,diffrnce,ratio,qon,qoff)
       implicit none
-      logical spectrum, diffrnce, ratio
+      logical spectrum, diffrnce, ratio, qon,qoff
 c     
       integer nopt
-      parameter(nopt=3)
+      parameter(nopt=5)
       character opts(nopt)*10
       logical present(nopt)
-      data opts/'spectrum  ','difference','ratio    '/
+      data opts/'spectrum  ','difference','ratio    ',
+     *          'on        ','off       '/
       call options('options',opts,present,nopt)
       spectrum = present(1)
       diffrnce = present(2)
-      ratio      = present(3)
+      ratio    = present(3)
+      qon      = present(4)
+      qoff     = present(5)
       end
 
