@@ -40,6 +40,7 @@ c    14may99 rjs   Increase MAXRUNS.
 c    15feb01 pjt   look within range to find min/max/mean/dispersion
 c    21oct03 pjt   check for JY/BEAM in the first 7 chars only
 c    14jun11 pjt   add SPITZER MJy/sr check
+c    15oct11 pjt   merged in '02jan05 rjs ' 
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	include 'maxnax.h'
@@ -47,9 +48,9 @@ c------------------------------------------------------------------------
 	character version*(*)
 	parameter(NBINDEF=16,NBINMAX=40,MAXBOXES=2048)
 	parameter(MAXRUNS=40*MAXDIM)
-	parameter(VERSION = 'version 14-jun-11' )
+	parameter(VERSION = 'version 15-oct-2011' )
 c
-	character file*128,asterisk*30,line*72,coord*64,bunit*32,
+	character file*128,asterisk*30,line*80,coord*64,bunit*32,
      +   object*32
 	integer nsize(MAXNAX),plane(MAXNAX),maxv(MAXNAX),minv(MAXNAX)
 	integer blc(MAXNAX),trc(MAXNAX)
@@ -259,16 +260,16 @@ c
 c  Format histogram.
 c
 	asterisk = '******************************'
-	write(line,'(7x,a,3x,i8)')'Underflow',under
+	write(line,'(7x,a,3x,i10)')'Underflow',under
 	call output(line)
 	do i=1,nbin
 	  j = nint( r * bin(i) )+1
 	  write(line,200)i,x,bin(i),asterisk(1:j)
-  200	  format(i5,1x,1pe13.6,i8,1x,a)
+  200	  format(i5,1x,1pe13.6,i10,1x,a)
 	  call output(line)
 	  x = x + xinc
 	enddo
-	write(line,'(7x,a,4x,i8)')'Overflow',over
+	write(line,'(7x,a,4x,i10)')'Overflow',over
 	call output(line)
 c
 c  Thats all folks. Close up and go home.
