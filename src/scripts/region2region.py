@@ -82,10 +82,10 @@ if __name__ == "__main__":
         coord1 = "%s,%s" % (xy)
         print coord1
         miriad(impos(map1,coord1,'abspix'),1)
-        ra  = grepnlog('impos.log','Axis 1:',1,5)
-        dec = grepnlog('impos.log','Axis 2:',1,5)
+        ra  = grepknlog('impos.log','Axis 1:',1,5)
+        dec = grepknlog('impos.log','Axis 2:',1,5)
         coord2 = "%s,%s" % (ra,dec)
         miriad(impos(map2,coord2,'hms,dms'),1)
-        x2 = grepnlog('impos.log','Axis 1:',3,5)
-        y2 = grepnlog('impos.log','Axis 2:',3,5)
+        x2 = grepknlog('impos.log','Axis 1:',3,5)
+        y2 = grepknlog('impos.log','Axis 2:',3,5)
         print "OLD/NEW: ",xy,x2,y2
