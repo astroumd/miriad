@@ -21,6 +21,28 @@ def read_list(file):
         xy.append( (x,y) )
     return xy
 
+
+def read_saoregion(file):
+    """read an saoregion file
+        polygon(x1,y1,x2,y2,.....)
+    """
+    fp = open(file)
+    lines = fp.readlines()
+    fp.close()
+    print "Found %d lines in %s" % (len(lines),file)
+    xy = []
+    for line in lines:
+        if line[0] == '#': continue
+        words = line.split('(')
+        xypairs = words[1].split(')')[0].split(',')
+        x=[]
+        y=[]
+        for i in range(len(xypairs)/2):
+            x.append(float(xypairs[i]))
+            y.append(float(xypairs[i+1]))
+        return (words[0],x,y)
+    return 0
+
 # MIRIAD
 #  grep through a logfile for the kth' occurence of a word
 #  in return the nth word in that line
@@ -77,15 +99,19 @@ if __name__ == "__main__":
     file = sys.argv[1]
     map1 = sys.argv[2]
     map2 = sys.argv[3]
-    xylist = read_list(file)
-    for xy in xylist:
-        coord1 = "%s,%s" % (xy)
-        print coord1
-        miriad(impos(map1,coord1,'abspix'),1)
-        ra  = grepknlog('impos.log','Axis 1:',1,5)
-        dec = grepknlog('impos.log','Axis 2:',1,5)
-        coord2 = "%s,%s" % (ra,dec)
-        miriad(impos(map2,coord2,'hms,dms'),1)
-        x2 = grepknlog('impos.log','Axis 1:',3,5)
-        y2 = grepknlog('impos.log','Axis 2:',3,5)
-        print "OLD/NEW: ",xy,x2,y2
+    if False:
+        xylist = read_list(file)
+        for xy in xylist:
+            coord1 = "%s,%s" % (xy)
+            print coord1
+            miriad(impos(map1,coord1,'abspix'),1)
+            ra  = grepknlog('impos.log','Axis 1:',1,5)
+            dec = grepknlog('impos.log','Axis 2:',1,5)
+            coord2 = "%s,%s" % (ra,dec)
+            miriad(impos(map2,coord2,'hms,dms'),1)
+            x2 = grepknlog('impos.log','Axis 1:',3,5)
+            y2 = grepknlog('impos.log','Axis 2:',3,5)
+            print "OLD/NEW: ",xy,x2,y2
+    else:
+        wxylist = read_saoregion(file)
+        print wxylist
