@@ -38,8 +38,8 @@ def read_saoregion(file):
         x=[]
         y=[]
         for i in range(len(xypairs)/2):
-            x.append(float(xypairs[i]))
-            y.append(float(xypairs[i+1]))
+            x.append(xypairs[2*i])
+            y.append(xypairs[2*i+1])
         return (words[0],x,y)
     return 0
 
@@ -115,3 +115,23 @@ if __name__ == "__main__":
     else:
         wxylist = read_saoregion(file)
         print wxylist
+        new = '%s(' % wxylist[0]
+        first = True
+        for x,y in zip(wxylist[1],wxylist[2]):
+            print x,y
+            #..
+            x2 = x
+            y2 = y
+            if first:
+                new = new + x2 + ','
+                first = False
+            else:
+                new = new + ',' + x2 + ','
+            new = new + y2
+        new = new + ')'
+        print new
+
+            
+            
+
+
