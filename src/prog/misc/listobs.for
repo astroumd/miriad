@@ -9,7 +9,7 @@ c= Listobs - Makes a summary of a set of observations.
 c& pjt
 c: utility
 c+
-c	LISTOBS makes a summary of a set of observations.  Parameters of
+c	LISTOBS makes a summary of a set of CARMA observations.  Parameters of
 c	interest to the observer are pulled from one or many files, and
 c	printed to a log file.  A time ordered summary of the sources
 c	observed is compiled.  The primary use of this program is to
@@ -21,6 +21,8 @@ c       For more details on the correlator setup, use
 c       uvlist options=spectra vis=...
 c       or
 c       uvindex vis=...
+c       Although LISTOBS is specific to CARMA data, old BIMA can be fixed
+c       up for LISTOBS using the fix4bima script.
 c< vis
 c@ log 
 c	Output device. (default is standard user output)
