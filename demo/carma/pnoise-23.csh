@@ -9,13 +9,13 @@
 # mchw 21mar03 - clean up.
 # mchw 09jun04 - all correlations with SZA.
 # mchw 29jun04 - get uvmin from sza, uvmax from cross antennas. 
-# mchw 04nov2011 - added pnoise.
+# mchw 04nov2011 - pnoise-23.csh.
 
 # Nyquist sample time = 12 x (dish_diam/2)/(pi*baseline)
 # calc '12*(10.4/2)/(pi*2000)' = 0.01 hours = 36 sec.
 # calc '12*(6.1/2)/(pi*1150)'  = 0.01 hours = 36 sec.
 
-echo "   ---  CARMA Heterogenous Array Beams  ---   "
+echo "   ---  CARMA PACS for atmospheric phase noise  ---   "
 echo "   $0 assumes that the first 15 antennas are 10.4 or 6.1 and the next 8 are SZA"
 echo "   mchw. 20aug2002"
 
@@ -86,11 +86,11 @@ echo generate uv-data
 echo "Generate uv-data. Tsys=40K, bandwidth=4 GHz " >> timing
 echo "Using 73 Jyperk for 10.4 and 6.1,  383 for SZA, and sqrt(383*73) = 167 for carma-sza correlations" >> beams.results
 rm -r cross.uv carma.uv sza.uv
-uvgen ant=$config.ant baseunit=$baseunit radec=23:23:25.803,$dec lat=37.02 harange=$harange source=$MIRCAT/no.source systemp=80,290,0.26 jyperk=167 freq=$freq corr=$nchan,1,0,4000 out=cross.uv telescop=ovro ellim=$ellim pnoise=$pnoise
+uvgen ant=$config.ant baseunit=$baseunit radec=23:23:25.803,$dec lat=37.02 harange=$harange source=$MIRCAT/point.source systemp=80,290,0.26 jyperk=167 freq=$freq corr=$nchan,1,0,4000 out=cross.uv telescop=ovro ellim=$ellim pnoise=$pnoise
 
-uvgen ant=$config.ant baseunit=$baseunit radec=23:23:25.803,$dec lat=37.02 harange=$harange source=$MIRCAT/no.source systemp=80,290,0.26 jyperk=73  freq=$freq corr=$nchan,1,0,4000 out=carma.uv telescop=carma ellim=$ellim  pnoise=$pnoise
+uvgen ant=$config.ant baseunit=$baseunit radec=23:23:25.803,$dec lat=37.02 harange=$harange source=$MIRCAT/point.source systemp=80,290,0.26 jyperk=73  freq=$freq corr=$nchan,1,0,4000 out=carma.uv telescop=carma ellim=$ellim  pnoise=$pnoise
 
-uvgen ant=$config.ant baseunit=$baseunit radec=23:23:25.803,$dec lat=37.02 harange=$harange source=$MIRCAT/no.source systemp=80,290,0.26 jyperk=383 freq=$freq corr=$nchan,1,0,4000 out=sza.uv telescop=sza ellim=$ellim pnoise=$pnoise
+uvgen ant=$config.ant baseunit=$baseunit radec=23:23:25.803,$dec lat=37.02 harange=$harange source=$MIRCAT/point.source systemp=80,290,0.26 jyperk=383 freq=$freq corr=$nchan,1,0,4000 out=sza.uv telescop=sza ellim=$ellim pnoise=$pnoise
 
 echo UVGEN: `date` >> timing
 
@@ -115,6 +115,7 @@ echo INVERT: `date` >> timing
 echo plotting
 implot in=$config.$dec.bm device=/xs units=s conflag=an conargs=0.05
 implot in=$config.$dec.bm device=/xs units=s conflag=an conargs=0.05 region=$region
+implot in=$config.$dec.cm device=/xs units=s region=$region
 echo IMPLOT: `date` >> timing
 
 echo deconvolve
@@ -124,14 +125,14 @@ echo CLEAN: `date` >> timing
 restor map=$config.$dec.mp beam=$config.$dec.bm out=$config.$dec.cm model=$config.$dec.cl
 echo IMFIT: `date` >> timing
 
-echo fit beam and get residual sidelobe levels
+echo fit image and get residual sidelobe levels
 rm -r residual
-imfit in=$config.$dec.bm object=gauss 'region=relpix,box(-10,-10,10,10)' out=residual options=residual
+imfit in=$config.$dec.cm object=gauss 'region=relpix,box(-10,-10,10,10)' out=residual options=residual
 histo in=residual
 echo FINISH: `date` >> timing
 echo " " >> timing
 
-echo print out results - summarize rms and beam sidelobe levels
+echo print out results - summarize rms and sidelobe levels
 echo "   ---  RESULTS   ---   " >> timing
 set RMS = `itemize in=$config.$dec.mp   | grep rms       | awk '{printf("%.2f   ", 1e3*$3)}'`
 set BMAJ=`prthd in=$config.$dec.cm      | egrep Beam     | awk '{printf("%.2f   ", $3)}'`
