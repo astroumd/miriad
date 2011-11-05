@@ -19,7 +19,6 @@ echo "   ---  CARMA PACS for atmospheric phase noise  ---   "
 echo "   $0 assumes that the first 15 antennas are 10.4 or 6.1 and the next 8 are SZA"
 echo "   mchw. 20aug2002"
 
-echo "   $0 assumes that the first 15 antennas are 10.4 or 6.1 and the next 8 are SZA" >> beams.results
 goto start
 start:
 
@@ -51,7 +50,7 @@ Source declination in degrees. No default."
 set config  = $1
 set dec     = $2
 set pnoise  = $3
-set harange = -4,4,.01
+set harange = -4,4,.1
 set ellim   = 10
 set select = '-shadow(10.4)'
 set select = '-shadow(3.5)'
@@ -74,9 +73,11 @@ echo " nchan            = $nchan"              >> timing
 echo " imsize           = $imsize"             >> timing
 echo " pnoise           = $pnoise"             >> timing
 echo " " >> timing
+echo "$0 assumes that the first 15 antennas are 10.4 or 6.1 and the next 8 are SZA" >> timing
+echo "Using 73 Jyperk for 10.4 and 6.1,  383 for SZA, and sqrt(383*73) = 167 for carma-sza correlations" >> timing
+
 echo "   ---  TIMING   ---   "        >> timing
 echo START: `date` >> timing
-
 
 goto continue
 continue:
@@ -84,7 +85,6 @@ continue:
 echo generate uv-data
 # assume aperture efficiency 75% to get jyperk
 echo "Generate uv-data. Tsys=40K, bandwidth=4 GHz " >> timing
-echo "Using 73 Jyperk for 10.4 and 6.1,  383 for SZA, and sqrt(383*73) = 167 for carma-sza correlations" >> beams.results
 rm -r cross.uv carma.uv sza.uv
 uvgen ant=$config.ant baseunit=$baseunit radec=23:23:25.803,$dec lat=37.02 harange=$harange source=$MIRCAT/point.source systemp=80,290,0.26 jyperk=167 freq=$freq corr=$nchan,1,0,4000 out=cross.uv telescop=ovro ellim=$ellim pnoise=$pnoise
 
@@ -116,7 +116,6 @@ echo INVERT: `date` >> timing
 echo plotting
 implot in=$config.$dec.bm device=/xs units=s conflag=an conargs=0.05
 implot in=$config.$dec.bm device=/xs units=s conflag=an conargs=0.05 region=$region
-implot in=$config.$dec.cm device=/xs units=s region=$region
 echo IMPLOT: `date` >> timing
 
 echo deconvolve
@@ -124,24 +123,36 @@ rm -r $config.$dec.cl $config.$dec.cm
 clean map=$config.$dec.mp beam=$config.$dec.bm out=$config.$dec.cl
 echo CLEAN: `date` >> timing
 restor map=$config.$dec.mp beam=$config.$dec.bm out=$config.$dec.cm model=$config.$dec.cl
-echo IMFIT: `date` >> timing
+implot in=$config.$dec.cm device=/xs units=s region=$region
 
-echo fit image and get residual sidelobe levels
-rm -r residual
-imfit in=$config.$dec.cm object=gauss 'region=relpix,box(-10,-10,10,10)' out=residual options=residual
-histo in=residual
+echo IMFIT: `date` >> timing
+#  Peak value:                 0.7320     +/-  7.3921E-03
+#  Total integrated flux:      0.8500
+#  Offset Position (arcsec):       0.000     0.000
+#  Positional errors (arcsec):     0.001     0.001
+#  Right Ascension:                23:23:25.803
+#  Declination:                    30:00:00.000
+#  Major axis (arcsec):           0.165 +/-  0.002
+#  Minor axis (arcsec):           0.144 +/-  0.001
+
+
+echo fit image and get Peak, Major and Minor axis
+imfit in=$config.$dec.cm object=gauss 'region=relpix,box(-10,-10,10,10)' > imfit.txt
+set FLUX = ` grep Total imfit.txt           | awk '{printf("%.3f  ", $4)}'`
+set PEAK = ` grep  Peak imfit.txt           | awk '{printf("%.3f  ", $3)}'`
+set SMAJ = ` grep "Major axis"  imfit.txt   | awk '{printf("%.3f  ", $4)}'`
+set SMIN = ` grep "Minor axis"  imfit.txt   | awk '{printf("%.3f  ", $4)}'`
+
 echo FINISH: `date` >> timing
 echo " " >> timing
 
 echo print out results - summarize rms and sidelobe levels
 echo "   ---  RESULTS   ---   " >> timing
+echo " pnoise(1) + pnoise(2)*(baseline)**pnoise(3)*sinel**pnoise(4)" >> timing
 set RMS = `itemize in=$config.$dec.mp   | grep rms       | awk '{printf("%.2f   ", 1e3*$3)}'`
 set BMAJ=`prthd in=$config.$dec.cm      | egrep Beam     | awk '{printf("%.2f   ", $3)}'`
 set BMIN=`prthd in=$config.$dec.cm      | egrep Beam     | awk '{printf("%.2f   ", $5)}'`
 set TBRMS = `calc "$RMS*.3/$freq*.3/$freq/2/1.38e3/(pi/(4*log(2))*$BMAJ*$BMIN/4.25e10)" | awk '{printf("%.2f ", $1)}'`
-set SRMS = `histo in=residual | grep Rms       | awk '{printf("%.1f  ", 100*$4)}'`
-set SMAX = `histo in=residual | grep Maximum   | awk '{printf("%.1f  ", 100*$3)}'`
-set SMIN = `histo in=residual | grep Minimum   | awk '{printf("%.1f  ", 100*$3)}'`
 # get number of visibilities written and number unshadowed
 set ncross = `uvindex vis=cross.$dec.uv | grep "records of polarization I" | awk '{printf("%.0f\n",$3)}'`
 set ncarma  = `uvindex vis=carma.$dec.uv | grep "records of polarization I" | awk '{printf("%.0f\n",$3)}'`
@@ -152,11 +163,11 @@ set Nvis = `calc "100*$nvis/$records" | awk '{printf("%.0f\n",$1)}'`
 set uvmax = `uvcheck vis="cross.$dec.uv" | awk '{if(NR==6)print 0.3*$7}'`
 set uvmin = `uvcheck vis="sza.$dec.uv" | awk '{if(NR==6)print 0.3*$6}'`
 echo " " >> timing
-echo "Config  DEC  HA[hrs]  Rms[mJy]  Beam[arcsec]  Tb_rms[mK]  Sidelobe[%]: Rms Max Min  Nvis[%]  uvrange[m]" >> timing
-echo "$config  $dec  $harange  $RMS   $BMAJ x $BMIN    $TBRMS   $SRMS  $SMAX  $SMIN  $nvis  $uvmin  $uvmax" >> timing
+echo "Config    DEC    pnoise    HA[hrs]  Rms[mJy]  Beam[arcsec]  Flux    Peak   Major  Minor  Nvis[%]  uvrange[m]" >> timing
+echo  "$config  $dec  $pnoise  $harange  $RMS   $BMAJ x $BMIN    $FLUX   $PEAK  $SMAJ  $SMIN  $nvis  $uvmin  $uvmax" >> timing
 
 echo " "
-echo  "$config   $dec   $harange   $RMS  $BMAJ x $BMIN   $TBRMS        $SRMS   $SMAX   $SMIN   $Nvis  $uvmin  $uvmax" >> beams.results
+echo  "$config  $dec  $pnoise  $harange  $RMS   $BMAJ x $BMIN    $FLUX   $PEAK  $SMAJ  $SMIN  $Nvis  $uvmin  $uvmax" >> beams.results
 mv timing $config.$dec.$harange.$nchan.$imsize.$nvis
 #cat $config.$dec.$harange.$nchan.$imsize.$nvis
 tail beams.results
