@@ -104,6 +104,7 @@ uvcat vis=sza.uv out=sza.$dec.uv 'select=-ant(1,2,3,4,5,6,7,8,9,10,11,12,13,14,1
 
 uvplt vis=cross.$dec.uv,carma.$dec.uv,sza.$dec.uv axis=uc,vc options=nobase,equal select=$select device=/xs 
 uvplt vis=cross.$dec.uv,carma.$dec.uv,sza.$dec.uv axis=uc,vc options=nobase,equal select=$select device=$config.$dec.ps/cps
+uvplt vis=sza.$dec.uv,cross.$dec.uv,carma.$dec.uv axis=uvd,ph options=nobase select=$select device=/xs 
 
 echo image
 # natural weight
