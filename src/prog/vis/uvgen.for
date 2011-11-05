@@ -352,6 +352,7 @@ c    02dec08  mchw  increase line(512) to accomodate longer filenames.
 c     2jul09  pjt   add veltype to make listobs work
 c    26aug09  pjt   doslip, to allow for integral times, and equate hour angle = clock hours
 c     3dec09  pjt   real (or even complex) corr storage option
+c    04nov11  mchw  added atmospheric phase noise for channel data.
 c
 c  Bugs/Shortcomings:
 c    * Frequency and time smearing is not simulated.
@@ -384,7 +385,7 @@ c	pbfwhm=76,137,-0.2 simulates a primary beam pattern between
 c	10m and 6m antennas at 100 GHz. 
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version = 'Uvgen: version 1.0 5-oct-2009')
+	parameter(version = 'Uvgen: version 1.0 04-Nov-2011')
 	integer ALTAZ,EQUATOR
 	parameter(ALTAZ=0,EQUATOR=1)
 	integer PolRR,PolLL,PolRL,PolLR,PolXX,PolYY,PolXY,PolYX
@@ -1064,6 +1065,7 @@ c
 		  if(dogains)
      *		     call AntGain(wcorr,nwide,maxspect,npol,
      *			Gain(m)*conjg(gain(n)*gatm))
+c	print *, 'gatm',gatm
 		  if(donoise)
      *		     call NoiseAdd(wcorr,nwide,maxspect,npol,wrms)
 	        endif
@@ -1112,7 +1114,7 @@ c
 		  enddo
 		  if(dogains)
      *		     call AntGain(chan,numchan,MAXCHAN,npol,
-     *			Gain(m)*conjg(gain(n)))
+     *			Gain(m)*conjg(gain(n)*gatm))
 		  if(doleak)
      *		     call PolLeak(chan,numchan,MAXCHAN,npol,
      *			leak(1,m),leak(1,n))
