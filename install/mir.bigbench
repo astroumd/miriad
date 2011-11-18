@@ -25,12 +25,16 @@ cd $tmp
 
 #			default parameters  (gives just over 2.1GB)
 set nchan=1024
-set npts=525000
+set uvgen=0
 set uvcat=1
 set fits=0
 set diff=0
 set cleanup=0
 set imgen=0
+#                npts is for the uvrandom normalization
+set npts=525000
+#                dt   is for the uvgen    normalization 
+set dt=0.0008264
 
 foreach a ($*)
   set $a
@@ -38,7 +42,7 @@ end
 
 if ($diff) set fits=1
 
-echo "MIRBIGBENCH: (2011-07-27) $tmp : nchan=$nchan npts=$npts uvcat=$uvcat fits=$fits diff=$diff imgen=$imgen"
+echo "MIRBIGBENCH: (2011-11-18) $tmp : nchan=$nchan npts=$npts uvcat=$uvcat fits=$fits diff=$diff imgen=$imgen"
 echo "nchan=$nchan npts=$npts uvcat=$uvcat fits=$fits diff=$diff" > ARGS
 echo hostname=`hostname` 
 echo system=`uname -a`  
@@ -46,9 +50,18 @@ echo date=`date`
 echo MIR=$MIR
 echo pwd=`pwd`
 
-
-time uvrandom out=vis1 nchan=$nchan npts=$npts  >& uvrandom.log
-ls -l vis1/visdata
+if ($uvgen) then
+  # uvgen takes a lot more CPU, but the current ATNF version of miriad
+  # doesn't carry uvrandom
+  time uvgen out=vis1 ant=$MIRCAT/bima9_b.ant source=$MIRCAT/point.source \
+    corr=$nchan,1,100,1000 harange=-6,6,$dt \
+    >& uvgen.log
+else
+  time uvrandom out=vis1 nchan=$nchan npts=$npts  >& uvrandom.log
+endif
+ls -l  vis1/visdata
+ls -sF vis1/visdata
+exit 0
 if ($uvcat) then
   time uvcat vis=vis1 out=vis2 >& uvcat.log
   ls -l vis2/visdata
