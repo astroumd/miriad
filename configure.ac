@@ -63,10 +63,6 @@ dnl correctly.
 
 AX_CHECK_COMPILE_FLAG([-fno-backslash],[AM_FFLAGS="$AM_FFLAGS -fno-backslash"])
 
-dnl Statically link with libgfortran, resulting in more portable binaries
-
-AX_CHECK_COMPILE_FLAG([-static-libgfortran],[AM_FFLAGS="$AM_FFLAGS -static-libgfortran"])
-
 dnl Warning control
 
 AC_ARG_ENABLE([warnings],
