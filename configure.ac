@@ -53,21 +53,19 @@ dnl
 dnl -fno-globals keeps g77 from returning an error code when 
 dnl there are disagreements between subroutine parameter types and the
 dnl subroutine call.  Warnings are still printed.
-dnl FIXME: this test and the one below do not catch the case where
-dnl the compiler is actually g77 but it is known under another name;
-dnl e.g. /absolute/path/to/g77 or g77-x.y.z or cpu-os-mach-g77.
 
-if test x"$F77" = xg77; then
-   AM_FFLAGS="-fno-globals"
-fi
+AC_LANG_PUSH([Fortran 77])
+AX_CHECK_COMPILE_FLAG([-fno-globals],[AM_FFLAGS="$AM_FFLAGS -fno-globals"])
 
 dnl If using a GNU Fortran compiler (g77 or gfortran), give
 dnl -fno-backslash to interpret our backslashed strings
 dnl correctly.
 
-if test x"$G77" = xyes; then
-   AM_FFLAGS="$AM_FFLAGS -fno-backslash"
-fi
+AX_CHECK_COMPILE_FLAG([-fno-backslash],[AM_FFLAGS="$AM_FFLAGS -fno-backslash"])
+
+dnl Statically link with libgfortran, resulting in more portable binaries
+
+AX_CHECK_COMPILE_FLAG([-static-libgfortran],[AM_FFLAGS="$AM_FFLAGS -static-libgfortran"])
 
 dnl Warning control
 
@@ -77,13 +75,15 @@ AC_ARG_ENABLE([warnings],
     allwarningsok=$enableval, allwarningsok=no)
 
 if test x"$allwarningsok" = xno; then
-  AM_FFLAGS="$AM_FFLAGS -w"
+  AX_CHECK_COMPILE_FLAG([-w],[AM_FFLAGS="$AM_FFLAGS -w"],
+    [AC_MSG_WARN([warning suppression requested but -w option not supported])])
 else
-  AM_FFLAGS="$AM_FFLAGS -Wall"
+  AX_CHECK_COMPILE_FLAG([-Wall],[AM_FFLAGS="$AM_FFLAGS -Wall"],
+    [AC_MSG_WARN([extra warnings requested but -Wall option not supported])])
 fi
 
 AC_SUBST([AM_FFLAGS])
-
+AC_LANG_POP([Fortran 77])
 
 dnl OS X XCode >= 3.1 needs a special linker flag for dynamic libraries
 dnl and main programs to share common blocks. This is a required feature
