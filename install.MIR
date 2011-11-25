@@ -168,10 +168,10 @@ Tips for the new build system
 To save typing you may want to put something like the following alias
 into your shell's initialization scripts:
 
-	alias mirenv="source <prefix>/lib/miriad/automiriad.CSH"
+	alias mirenv="source <prefix>/lib/miriad/automiriad.csh"
 
-Then you can just type 'mirenv' to set up your shell to run Miriad
-tasks.
+(if you use a C shell). Then you can just type 'mirenv' to set up your
+shell to run Miriad tasks.
 
 2) Separate build directories
 
@@ -318,6 +318,19 @@ only of the 'clean' task, you can save some time by running:
 	make install
 
 as opposed to running 'make' from $MIR.
+
+9) More portable binaries
+
+If gfortran is your Fortran compiler, you can force it to be run with
+the -static-libgfortran flag to statically link the Fortran libraries,
+which will help the generated MIRIAD binaries be compatible with
+systems which only have g77 installed. This can be accomplished with
+
+	./configure F77="gfortran -static-libgfortran" ...
+
+This option, however, may lead to build failures on some systems.
+Initial investigations suggests that it works on Fedora machines but
+not on SuSE machines.
 
 ==================================================
 Handling Auto Tools Errors
