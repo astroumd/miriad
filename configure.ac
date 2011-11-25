@@ -378,8 +378,6 @@ AC_ARG_WITH(maxbuf,
 dnl PGPLOT
 
 AC_CONFIG_SUBDIRS(borrow/pgplot)
-PGPLOT_LIB='$(top_builddir)/borrow/pgplot/libpgplot.la'
-AC_SUBST(PGPLOT_LIB)
 
 
 dnl WCSLIB needs sufficiently new flex, but casual users won't have

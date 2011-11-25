@@ -10,7 +10,7 @@ libmir_la_LIBADD = \
   $(top_builddir)/borrow/linpack/libmir_linpack.la \
   $(top_builddir)/borrow/wcslib/libmir_wcs.la \
   $(top_builddir)/borrow/wcslib/libmir_pgsbox.la \
-  $(PGPLOT_LIB)
+  $(top_builddir)/borrow/pgplot/libpgplot.la
 
 nodist_libmir_la_SOURCES = \
   align.f amphase.f angles.f antennas.f \
