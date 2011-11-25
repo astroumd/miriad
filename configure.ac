@@ -150,6 +150,16 @@ fi
 have_xaw=true
 xawwhy=yes
 
+
+dnl Readline, for the miriad and miriad_er mini-shells
+
+AC_CHECK_LIB([readline], [read_history],
+  [have_readline=true readlinewhy="yes"],
+  [have_readline=false readlinewhy="no; libreadline not found or not linkable"])
+
+AM_CONDITIONAL(HAVE_READLINE,$have_readline)
+
+
 dnl Must set action-if-found to nonempty to avoid
 dnl the default action of adding -lXaw to LIBS and
 dnl defining HAVE_LIBXAW.
@@ -178,7 +188,6 @@ dnl it seems smart to set it up for C programs as well, and
 dnl this allows the wcslib check for sincos to succeed later.
 
 AC_CHECK_LIB(m, cos)
-AC_CHECK_LIB(readline, read_history) dnl miriad.c
 AC_CHECK_HEADERS([stdlib.h]) dnl doc_atnf.c
 AC_CHECK_FUNCS([strerror dnl bug.c
 		sincos dnl wcslib:wcstrig.c
@@ -517,5 +526,6 @@ echo "    MAXBUF     : $MAXBUF"
 echo
 echo "Building docs  : $docswhy"
 echo "Building xpanel: $xawwhy"
+echo "Building shells: $readlinewhy"
 echo "F77 Warnings   : $allwarningsok (change with --(en|dis)able-warnings)"
 echo "flex available : $flexwhy"
