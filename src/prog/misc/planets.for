@@ -14,7 +14,9 @@ c	This can be "sun" or the name of a major planet (excluding the Earth).
 c	No default.
 c@ epoch
 c	The time (UTC) for which information is required, in standard
-c	Miriad time format. No default.
+c	Miriad time format (yymmmdd.ddd or yymmmdd:hh:mm:ss.s). 
+c       For example 11DEC25:18:02:01.2
+c       No default.
 c@ telescop
 c	The name of an observatory used in computing rise and set times.
 c	The default is not to compute these. See telepar for a list of
@@ -32,7 +34,7 @@ c------------------------------------------------------------------------
 	character version*(*)
 	double precision AUKM,jy2k
 	integer EARTH,SUN,JUPITER
-	parameter(version='Planets: version 1.0 7-Feb-99')
+	parameter(version='Planets: version 1.0 30-nov-2011')
 	parameter(AUKM=149.597870D6,EARTH=3,SUN=0,JUPITER=5)
 c
 c  0 Jan 2000 (i.e. 31 Dec 1999).
@@ -61,9 +63,10 @@ c
 	call output(version)
 	call keyini
 	call keymatch('source',NPLANETS,plans,1,planet,nout)
-	if(nout.eq.0)call bug('f','An object must be given')
+	if(nout.eq.0)call bug('f','An object must be given; source=')
 	call keyt('epoch',jday,'atime',0.d0)
-	if(jday.lt.1)call bug('f','An epoch must be given')
+	if(jday.lt.1)call bug('f',
+     *       'An epoch must be given; epoch=yymmmdd:hh:mm:ss.s')
 	call keya('telescop',observ,' ')
 	call keyfin
 c
