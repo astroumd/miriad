@@ -41,14 +41,15 @@ c    15feb01 pjt   look within range to find min/max/mean/dispersion
 c    21oct03 pjt   check for JY/BEAM in the first 7 chars only
 c    14jun11 pjt   add SPITZER MJy/sr check
 c    15oct11 pjt   merged in '02jan05 rjs ' 
+c    01dec11 pkgw  Increase NBINMAX from 40 to 2048
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	include 'maxnax.h'
 	integer NBINDEF,NBINMAX,MAXBOXES,MAXRUNS
 	character version*(*)
-	parameter(NBINDEF=16,NBINMAX=40,MAXBOXES=2048)
+	parameter(NBINDEF=16,NBINMAX=2048,MAXBOXES=2048)
 	parameter(MAXRUNS=40*MAXDIM)
-	parameter(VERSION = 'version 15-oct-2011' )
+	parameter(VERSION = 'version 01-dec-2011' )
 c
 	character file*128,asterisk*30,line*80,coord*64,bunit*32,
      +   object*32
