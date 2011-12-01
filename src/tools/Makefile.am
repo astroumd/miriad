@@ -1,14 +1,13 @@
 include $(top_srcdir)/mircommon.mak
 
-bin_PROGRAMS = detab doc doc_atnf docfmt docman flint ratty intf2c \
-  tpcp trim
+bin_PROGRAMS = doc docfmt docman flint ratty intf2c
 
 if HAVE_XAW
 bin_PROGRAMS += xpanel
 endif
 
 if HAVE_READLINE
-bin_PROGRAMS += miriad miriad_er
+bin_PROGRAMS += miriad
 endif
 
 AM_CFLAGS = -I$(top_srcdir)/src/subs
@@ -19,16 +18,12 @@ EXTRA_DIST = xpanel.icon
 # we've changed the default source extension to .f, so we must
 # explicitly identify these programs as having C source.
 
-detab_SOURCES = detab.c
 doc_SOURCES = doc.c
-doc_atnf_SOURCES = doc_atnf.c
 docfmt_SOURCES = docfmt.c
 docman_SOURCES = docman.c
 flint_SOURCES = flint.c
 intf2c_SOURCES = intf2c.c
 ratty_SOURCES = ratty.c
-tpcp_SOURCES = tpcp.c
-trim_SOURCES = trim.c
 
 xpanel_SOURCES = xpanel.c
 xpanel_CFLAGS = $(X_CFLAGS)
@@ -37,8 +32,7 @@ xpanel_LDADD = $(X_PRE_LIBS) $(X_LIBS) -lX11 -lXt -lXaw $(X_EXTRA_LIBS)
 miriad_SOURCES = miriad.c
 miriad_LDADD = -lreadline
 
-miriad_er_SOURCES = miriad_er.c
-miriad_er_LDADD = -lreadline
-
-DOCINPUTS = $(bin_PROGRAMS:=.c)
+# Skip programs that overwrite docs for existing versions or don't
+# have docs:
+DOCINPUTS = doc.c docfmt.c docman.c flint.c ratty.c intf2c.c xpanel.c miriad.c
 include $(top_srcdir)/mirdoc.mak
