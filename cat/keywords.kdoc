@@ -335,7 +335,11 @@ can handle only a single dataset at a time.
           boxes(xmin,ymin,xmax,ymax)(z1,z2)
         Select the pixels within a box with corners xmin,ymin,xmax,ymax.
         z1 and z2 are the same as in the "image" subcommand. If z1 and z2
-        are omitted, all planes are selected.
+        are omitted, all planes are selected. If the coordinate system
+        is a relative one, instead of specifying four values for xmin,
+        ymin, xmax, and ymax, a single value "m" maybe be specified,
+        which is exactly equivalent to specifying a box of shape
+        "-m,-m,m,m".
 
           polygon(x0,y0,x1,y1,x2,y2,...)(z1,z2)
         Select the pixels within the polygon defined by the list of vertices.
