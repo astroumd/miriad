@@ -5023,6 +5023,11 @@ private void uvinfo_chan(UV *uv,double *data,int mode)
  *  basant.for:  subroutine basant() , function antbas()
  *
  *  see also maxdim.h and maxdimc.h
+ *
+ *  Notes from the 32/64 bit times:
+ *     MAXIANT should be 2048, and is the largest value
+ *             to accomodate baseline encoding in double's
+ *     65536 is really 256*256
  */
 
 private void uvbasant_c(int baseline,int *i1,int *i2)
