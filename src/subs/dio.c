@@ -31,6 +31,7 @@
 /*       3-jan-05  pjt ssize casting to appease the compiler            */
 /*                     use SSIZE_MAX to protect from bad casting ?      */
 /*       2-mar-05  pjt template->templat for C++, just in case          */
+/*      02-dec-11 pkgw Fix semantics of I/O syscalls in dread, dwrite   */
 /************************************************************************/
 
 #if defined(HAVE_CONFIG_H) && HAVE_CONFIG_H
@@ -207,9 +208,23 @@ void dread_c(int fd, char *buffer,off_t offset,size_t length,int *iostat)
   if (length >= SSIZE_MAX) bugv_c('f',"dread_c: possible incomplete read");
 #endif
   if(Lseek(fd,offset,SEEK_SET) < 0) { *iostat = errno; return; }
-  nread = read(fd,buffer,length);
-  if(nread < 0) *iostat = errno; 
-  else if(nread != (ssize_t) length) *iostat = EIO;
+
+  while (length) {
+    nread = read(fd,buffer,length);
+    if(nread < 0) {
+      if(errno == EINTR)
+	nread = 0; /* should reattempt the system call identically */
+      else {
+	*iostat = errno;
+	return;
+      }
+    } else if(nread == 0) {
+      /* unexpected EOF -- no good errno code for this */
+      *iostat = EIO;
+      return;
+    }
+    length -= nread;
+  }
 }
 /************************************************************************/
 void dwrite_c(int fd, char *buffer,off_t offset,size_t length,int *iostat)
@@ -222,9 +237,19 @@ void dwrite_c(int fd, char *buffer,off_t offset,size_t length,int *iostat)
   if (length >= SSIZE_MAX) bugv_c('f',"dwrite_c: possible incomplete write");
 #endif
   if(Lseek(fd,offset,SEEK_SET) < 0) { *iostat = errno; return; }
-  nwrite = write(fd,buffer,length);
-  if(nwrite < 0) *iostat = errno; 
-  else if(nwrite != (ssize_t) length) *iostat = EIO;
+
+  while (length) {
+    nwrite = write(fd,buffer,length);
+    if(nwrite < 0) {
+      if(errno == EINTR)
+	nwrite = 0; /* should reattempt the system call identically */
+      else {
+	*iostat = errno;
+	return;
+      }
+    }
+    length -= nwrite;
+  }
 }
 /************************************************************************/
 /*ARGSUSED*/
