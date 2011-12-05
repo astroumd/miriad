@@ -265,7 +265,6 @@ AC_ARG_WITH(telescope,
 
 def_maxdim=65536
 def_maxdim2=8192
-def_maxiant=256
 def_maxant=64
 def_maxant2=28
 def_maxbase=1058
@@ -277,8 +276,7 @@ def_maxnax=7
 def_maxbuf=10000000
 
 case $TELESCOPE in
-     ata)
-        def_maxiant=2048 ;;
+     ata) ;;
      atnf) ;;
      bima) ;;
      carma)
@@ -286,7 +284,6 @@ case $TELESCOPE in
 	def_maxwide=32
 	def_maxchan=8192 ;;
      lofar)
-        def_maxiant=2048
         def_maxant=2048
         def_maxbase=2096128 ;;
      fasr)
@@ -304,7 +301,6 @@ case $TELESCOPE in
 	def_maxwide=50 ;;
      wsrt) ;;
      ral512)
-        def_maxiant=2048
         def_maxant=512
         def_maxant2=512
         def_maxbase=4096 ;;
@@ -337,9 +333,7 @@ AC_ARG_WITH(maxdim2,
     [AS_HELP_STRING([--with-maxdim2=MAXDIM2],[2D access to images])],
     MAXDIM2=$withval, MAXDIM2="$def_maxdim2")
 
-AC_ARG_WITH(maxiant,
-    [AS_HELP_STRING([--with-maxiant=MAXIANT],[MAXIANT])],
-    MAXIANT=$withval, MAXIANT="$def_maxiant")
+MAXIANT=2048 dnl affects data format, don't expose as an adjustable param
 
 AC_ARG_WITH(maxant,
     [AS_HELP_STRING([--with-maxant=MAXANT],[1D access to antenna based arrays])],
@@ -511,7 +505,6 @@ echo
 echo "Telescope      : $TELESCOPE"
 echo
 echo "    MAXDIM(2)  : $MAXDIM ($MAXDIM2)"
-echo "    MAXIANT    : $MAXIANT"
 echo "    MAXANT(2)  : $MAXANT ($MAXANT2)"
 echo "    MAXBASE(2) : $MAXBASE ($MAXBASE2)"
 echo "    MAXCHAN    : $MAXCHAN"
