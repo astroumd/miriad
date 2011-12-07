@@ -100,7 +100,6 @@ c  and some not in maxdim.h but in maxdimc.h:   MAXNAX
       WRITE(*,*) 'MAXBUF       = ',MAXBUF
       WRITE(*,*) 'MAXDIM       = ',MAXDIM
       WRITE(*,*) 'MAXDIM2      = ',MAXDIM2
-      WRITE(*,*) 'MAXIANT      = ',MAXIANT
       WRITE(*,*) 'MAXANT       = ',MAXANT
       WRITE(*,*) 'MAXANT2      = ',MAXANT2
       WRITE(*,*) 'MAXBASE      = ',MAXBASE

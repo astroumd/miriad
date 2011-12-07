@@ -531,7 +531,6 @@ MAXBASE2
 MAXBASE
 MAXANT2
 MAXANT
-MAXIANT
 MAXDIM2
 MAXDIM
 TELESCOPE
@@ -605,7 +604,6 @@ enable_i8
 with_telescope
 with_maxdim
 with_maxdim2
-with_maxiant
 with_maxant
 with_maxant2
 with_maxbase
@@ -1265,7 +1263,6 @@ Optional Packages:
   --with-telescope=MIRTEL    Default telescope (for maxdim)
   --with-maxdim=MAXDIM       1D access to images
   --with-maxdim2=MAXDIM2     2D access to images
-  --with-maxiant=MAXIANT     MAXIANT
   --with-maxant=MAXANT       1D access to antenna based arrays
   --with-maxant2=MAXANT2     2D access to antenna based arrays
   --with-maxbase=MAXBASE     MAXBASE
@@ -5710,7 +5707,6 @@ TELESCOPE=$with_telescope
 
 def_maxdim=65536	##
 def_maxdim2=8192
-def_maxiant=256
 def_maxant=64		##
 def_maxant2=28
 def_maxbase=1058	#
@@ -5723,7 +5719,6 @@ def_maxbuf=10000000     ##
 
 case $TELESCOPE in
      "ata")  echo "Selecting ATA-350 array"
-        def_maxiant=2048
 	continue;;
      "atnf")  echo "Selecting ATNF array"
 	continue;;
@@ -5735,7 +5730,6 @@ case $TELESCOPE in
 	def_maxchan=8192
 	continue;;
      "lofar")  echo "Selecting LOFAR simulation 2048-array"
-        def_maxiant=2048
         def_maxant=2048
         def_maxbase=2096128
 	continue;;
@@ -5806,16 +5800,6 @@ else
 fi
 
 MAXDIM2=$with_maxdim2
-
-
-# Check whether --with-maxiant was given.
-if test "${with_maxiant+set}" = set; then :
-  withval=$with_maxiant; with_maxiant=$withval
-else
-  with_maxiant="$def_maxiant"
-fi
-
-MAXIANT=$with_maxiant
 
 
 # Check whether --with-maxant was given.
@@ -10026,7 +10010,6 @@ echo "TELESCOPE    : $TELESCOPE"
 echo ""
 echo "MAXDIM       : $MAXDIM"
 echo "MAXDIM2      : $MAXDIM2"
-echo "MAXIANT      : $MAXIANT"
 echo "MAXANT       : $MAXANT"
 echo "MAXANT2      : $MAXANT2"
 echo "MAXBASE      : $MAXBASE"

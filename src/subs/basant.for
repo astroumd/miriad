@@ -15,6 +15,7 @@ c    pjt   12may03    documented some thoughts on allowing MAXANT 32768
 c                     and included maxdim.h
 c    pjt   17oct03    return 0's if record has invalid baseline
 c    pjt    6jan05    provide a less strict version that allows ant1 > ant2
+c    pkgw   5dec11    move definition of MAXIANT here, document value
 c***********************************************************************
 
       subroutine basant(baseline, ant1, ant2)
@@ -44,26 +45,45 @@ c
 c  BasAnt is a Miriad routine that returns the antenna numbers that are
 c  required to produce the input baseline number.  According to the
 c  Miriad programming manual, the relationship between the baseline
-c  and the antenna numbers is defined as either
+c  and the antenna numbers is defined as
 c    baseline = (Ant1 * 256) + Ant2.
-c  or
+c  if Ant2 < 256 or
 c    baseline = (Ant1 * 2048) + Ant2 + 65536.
+c  otherwise. As should be clear, at most 2047 antennas are
+c  supported, regardless of the value of the MAXANT configuration
+c  parameter, because of the data storage format (see below).
 c
-c  Note:  Because Ant1 is ALWAYS suppose to be less than Ant2,
+c  The output values are not clipped to MAXANT.
+c
+c  Note:  Because Ant1 is ALWAYS supposed to be less than Ant2,
 c         it is considered a fatal error if Ant2 is larger than
 c         Ant1.  (No restriction is placed on the condition Ant1
-c         equal to Ant2 to allow for autocorrelation data)
+c         equal to Ant2 to allow for autocorrelation data.) This
+c         is true even if check is .FALSE.
 c
-c  Note2: the largest possible size we could use with this encoding
-c         is 32675, viz.
-c     baseline = (Ant1 * 32768) + Ant2 + 65536.
-c         before running into the sign/end bit of an integer*4 type.
-c         HOWEVER, since UVFITS (random groups) stores the baseline
-c         in a float, where not all bits are equal, the maxant=2048 
-c         is the practical limit.
+c  Older versions of MIRIAD only support 255 antennas and use only the
+c  first part of the encoding scheme shown above. The modified scheme
+c  maintains compatibility with these datasets but also allows eight
+c  times as many antennas.
 c
-c     MAXIANT = 2048 for import/export purposes, 32768 for internal
-c     (see maxdim.h)
+c  The factor of 2048 in the encoding scheme is referred to as MAXIANT
+c  in the implementation of BASANT. The value of MAXIANT is limited by
+c  the MIRIAD visibility data format. The 'baseline' UV variable is
+c  stored as a 32-bit floating point number, which means it has about 24
+c  bits of available precision. MAXIANT = 2048 consumes approximately 22
+c  of those bits, while MAXIANT = 4096 would push the limit. An
+c  easy-to-write test program confirms that 4096 in fact fails for large
+c  values of Ant1 and Ant2.
+c
+c  There is hypothetical room for increasing the number of representable
+c  antennas because (1) MAXIANT need not be a power of 2 and (2) one
+c  could offset the antenna numbers by 256 in the high-antenna-number
+c  case. Note also that if the 32-bit baseline value was treated as an
+c  unsigned integer and antenna numbers started at zero, one could
+c  handle 65536 distinct antennas. This encoding would not, however, be
+c  compatible with any existing MIRIAD datasets and would probably lead
+c  to problems elsewhere within MIRIAD.
+c
 c
 c  Input:
 c    baseline The baseline number.  This value is usually obtained
@@ -74,15 +94,15 @@ c               call uvset(tvis,'preamble','uvw/time/baseline',0,0.,0.,0.)
 c             was used.
 c
 c  Output:
-c    ant1     The first antenna number. Numbered 1...maxant
-c    ant2     The second antenna number. Numbered 1...maxant
+c    ant1     The first antenna number. Numbered 1...MAXIANT
+c    ant2     The second antenna number. Numbered 1...MAXIANT
 c
-c  NOTE::::   For GILDAS it can now reteurn ant1=ant2=0 if the record
-c             is invalid and should be skipped.
 c
 c--
 c-----------------------------------------------------------------------
       include 'maxdim.h'
+      integer MAXIANT
+      parameter(MAXIANT=2048)
       integer mant
 c
       ant2 = nint(baseline)
@@ -121,10 +141,16 @@ c
 c  Determine the baseline number of a pair of antennas.
 c
 c  Note: i1 <= i2.
-c  See also MAXANT in maxant.h and maxantc.h on limits on i2.
+c  See also MAXANT in maxant.h and maxantc.h on limits on i2, although
+c  these limits are not enforced by ANTBAS.
+c
+c  See BASANT for a thorough description of the encoding scheme
+c  used to determine baseline numbers.
 c
 c------------------------------------------------------------------------
         include 'maxdim.h'
+        integer MAXIANT
+        parameter(MAXIANT=2048)
 	if(i1.gt.i2) then
            call bug('f','Illegal baseline number in antbas')
         endif

@@ -174,6 +174,8 @@
 /*  pjt  16dec09 cloned uvread_match() into uvread_matchp() for purpose */
 /*  pjt  22jul11 better antenna based handling ELEV, DAZIM, DELEV       */
 /*  pjt  31aug11 fix bug in ELEV selection                              */
+/*  pkgw 05dec11 Move definition of MAXIANT here, reference the         */
+/*               thorough BASANT documentation.                         */
 /*----------------------------------------------------------------------*/
 /*									*/
 /*		Handle UV files.					*/
@@ -5028,7 +5030,12 @@ private void uvinfo_chan(UV *uv,double *data,int mode)
  *     MAXIANT should be 2048, and is the largest value
  *             to accomodate baseline encoding in double's
  *     65536 is really 256*256
+ *
+ *  The rationale for the value of MAXIANT and this encoding scheme
+ *  in general are documented thoroughly in BASANT.
  */
+
+enum { MAXIANT = 2048 };
 
 private void uvbasant_c(int baseline,int *i1,int *i2)
 {

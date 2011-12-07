@@ -327,6 +327,7 @@ c    jhz 27-nov-07 added a patch to fix the frequency labelling problem
 c                  in the old SMA data (before 2007-11-26) with the recipe
 c                  described in the SMA operation log # 14505
 c    jhz 23-jan-08 fixed a bug in rar2c and decr2c in c program
+c   pkgw 05-dec-11 Remove reference to MAXIANT.
 c------------------------------------------------------------------------
         include 'maxdim.h'
         integer maxfiles
@@ -447,7 +448,7 @@ c
             fname = in(1)(1:len1(in(1)))//'antennas'
             call txtopen(lIn,fname,'old',iostat)
             if(iostat==0) then
-            do i=1,MAXIANT 
+            do i=1,10 ! see limitation below
             call txtread(lIn,line,length,iostat)
             if(iostat==-1) goto 211
             end do

@@ -314,7 +314,6 @@ dnl Fine-grained config and definition of maxdim parameters
 AC_SUBST(TELESCOPE)
 AC_SUBST(MAXDIM)
 AC_SUBST(MAXDIM2)
-AC_SUBST(MAXIANT)
 AC_SUBST(MAXANT)
 AC_SUBST(MAXANT2)
 AC_SUBST(MAXBASE)
@@ -332,8 +331,6 @@ AC_ARG_WITH(maxdim,
 AC_ARG_WITH(maxdim2,
     [AS_HELP_STRING([--with-maxdim2=MAXDIM2],[2D access to images])],
     MAXDIM2=$withval, MAXDIM2="$def_maxdim2")
-
-MAXIANT=2048 dnl affects data format, don't expose as an adjustable param
 
 AC_ARG_WITH(maxant,
     [AS_HELP_STRING([--with-maxant=MAXANT],[1D access to antenna based arrays])],

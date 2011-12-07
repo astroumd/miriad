@@ -6,7 +6,6 @@
 #define         MIRTEL          "@TELESCOPE@"
 #define		MAXDIM		@MAXDIM@
 #define		MAXDIM2		@MAXDIM2@
-#define         MAXIANT         @MAXIANT@
 #define		MAXANT		@MAXANT@
 #define		MAXANT2		@MAXANT2@
 #define		MAXBASE		@MAXBASE@
