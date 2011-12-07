@@ -26,11 +26,11 @@ c       up for LISTOBS using the fix4bima script.
 c< vis
 c@ log 
 c	Output device. (default is standard user output)
-c@ gap
-c       Percentage of gap allowed between records to not trigger a new entry
-c       in the output. Default is 0.12 (12%), but for short integrations
-c       you may want to increase this to 0.5. Use a negative value to never
-c       check for gaps, only on source changes.
+c@ gapc  
+c       Maximum gap time allowed between integrations, anything over this
+c       time will cause a new record to be displayed. Source changes always
+c       cause a new record to be displayed.
+c       Default: 1 minute.
 c@ options
 c       This gives extra processing options. Several options can be given,
 c       each separated by commas. They may be abbreivated to the minimum
@@ -153,7 +153,7 @@ c
         if (nfiles.eq.0)
      *      call bug('f','No data set name(s) given; use vis=')
 	call keya('log',outlog,' ')
-        call keyd('gap',gap,0.12d0)
+        call keyd('gap',gap,1.0d0)
         call getopt(nobase,allants)
         call keyfin
 c
@@ -223,9 +223,9 @@ c --- check source purpose
                  endif
 		 tint = tint/86400.0
                  if (gap.gt.0d0) then
-                    diff = jdnow - (jdold + (1.0d0+gap)*tint)
+                    diff = jdnow - (jdold + tint + gap/1440.0d0)
                  else
-                    diff = 0.0d0
+                    diff = jdnow - (jdold + (1.0d0-gap)*tint)
                  endif
 		 if(diff .gt. 0d0 .or. newsou .ne. oldsou) then
 		    dur(ipt) = totint/60.0
