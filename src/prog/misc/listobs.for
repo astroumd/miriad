@@ -26,6 +26,11 @@ c       up for LISTOBS using the fix4bima script.
 c< vis
 c@ log 
 c	Output device. (default is standard user output)
+c@ gap
+c       Percentage of gap allowed between records to not trigger a new entry
+c       in the output. Default is 0.12 (12%), but for short integrations
+c       you may want to increase this to 0.5. Use a negative value to never
+c       check for gaps, only on source changes.
 c@ options
 c       This gives extra processing options. Several options can be given,
 c       each separated by commas. They may be abbreivated to the minimum
@@ -99,11 +104,12 @@ c          31-jan-11 pjt carma-23 formatting improved
 c          11-feb-11 pjt systemp computation improved (nschan and flags)
 c          17-feb-11 pjt increased MAXSPECT for sci2 (needs 32)
 c           2-aug-11 pjt add options=allants
+c           7-dec-11 pjt add gap to tinker with less output records
 c
 c
 c TODO:
 c      - remove old corr column - check with Doug Friedel
-c      - there is a strange bug (causing segfault) is the cal*h are replaced with maxdim.h
+c      - there is a strange bug (causing segfault) if the cal*h are replaced with maxdim.h
 c        suggesting somebody is writing over it's boundaries.
 c-----------------------------------------------------------------------
 	include 'mirconst.h'
@@ -124,7 +130,7 @@ c
         real bl
 	double precision jdold,jdnow,antpos(3 * MAXANT),apos(6)
 	double precision foclst(50),focjday(50),ftime,jdend,utend
-        double precision lat,lon,sinlat,coslat,sinlon,coslon
+        double precision lat,lon,sinlat,coslat,sinlon,coslon,gap
 	logical more,fthere,anthere(MAXANT),updated,nobase,allants
         logical pthere
         integer len1,tlen1
@@ -147,6 +153,7 @@ c
         if (nfiles.eq.0)
      *      call bug('f','No data set name(s) given; use vis=')
 	call keya('log',outlog,' ')
+        call keyd('gap',gap,0.12d0)
         call getopt(nobase,allants)
         call keyfin
 c
@@ -215,12 +222,15 @@ c --- check source purpose
                     call uvgetvrd(tin,'ut',utend,1)
                  endif
 		 tint = tint/86400.0
-		 diff = jdnow - (jdold + 1.12d0 * tint)
-		 if(abs(diff) .gt. tint .or. 
-     1                      newsou .ne. oldsou) then
+                 if (gap.gt.0d0) then
+                    diff = jdnow - (jdold + (1.0d0+gap)*tint)
+                 else
+                    diff = 0.0d0
+                 endif
+		 if(diff .gt. 0d0 .or. newsou .ne. oldsou) then
 		    dur(ipt) = totint/60.0
 		    ipt      = ipt + 1
-	            if(ipt.gt.MAXP)CALL bug('f','Too many points')
+	            if(ipt.gt.MAXP)CALL bug('f','Too many points[MAXP]')
 		    call getall(tin,ipt,pthere,nread,flags)
 		    totint   = 86400.0 * tint
                     oldsou = newsou
