@@ -26,10 +26,13 @@ c       up for LISTOBS using the fix4bima script.
 c< vis
 c@ log 
 c	Output device. (default is standard user output)
-c@ gapc  
+c@ gap
 c       Maximum gap time allowed between integrations, anything over this
 c       time will cause a new record to be displayed. Source changes always
-c       cause a new record to be displayed.
+c       cause a new record to be displayed. Use 0 if you want to see each
+c       record.  Negative numbers resort to the old percentage of the
+c       integration time gap, i.e. -0.12 defines the gap 12% of the
+c       current integration time.
 c       Default: 1 minute.
 c@ options
 c       This gives extra processing options. Several options can be given,
