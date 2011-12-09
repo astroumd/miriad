@@ -64,7 +64,7 @@ endif
 
 # Import user customizations. Same rationale as above.
 
-if ($?HOME)
+if ($?HOME) then
   if ( -e "$HOME/.automirsrc" ) then
     source "$HOME/.automirsrc"
   endif
