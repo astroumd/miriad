@@ -204,6 +204,24 @@ MWC349       2011-NOV-15.0  30.938    0.544    0.014   CARMA16      URANUS
 1058+015      2011-NOV-13.0   34.7       5.5       0.8    CARMA8    MARS
 1058+015      2011-NOV-14.0   34.7       5.4       0.8    CARMA8    MARS
 1058+015      2011-NOV-15.0   34.7       5.5       1.4    CARMA8    MARS
+0429+274      2011-NOV-30.0   34.7       0.4       0.1    CARMA8    URANUS
+3C84      2011-NOV-30.0   34.7       32.4       4.9    CARMA8    URANUS
+3C111      2011-DEC-02.0   34.7       6.30      0.5    CARMA8    URANUS
+0403+260      2011-DEC-02.0   34.7       3.0       0.4    CARMA8    URANUS
+3C84      2011-DEC-02.0   34.7       52.2       7.8    CARMA8    URANUS
+3C111      2011-NOV-26.0   103.6       3.1       0.5    CARMA8    URANUS
+3C84      2011-NOV-26.0   103.6       15.3       2.3    CARMA8    URANUS
+3C111      2011-NOV-26.0   34.7       4.2       0.6    CARMA8    URANUS
+0443+346      2011-NOV-26.0   34.7       0.2       0.1    CARMA8    URANUS
+3C84      2011-NOV-26.0   34.7       37.8       5.7    CARMA8    URANUS
+3C454.3      2011-NOV-26.0   34.7       11.0       1.7    CARMA8    URANUS
+2148+611      2011-NOV-26.0   34.7       0.8       0.2    CARMA8    URANUS
+3C454.3      2011-NOV-26.0   34.7       9.1       1.4    CARMA8    NEPTUNE
+2148+611      2011-NOV-26.0   34.7       0.7       0.1    CARMA8    NEPTUNE
+3C454.3      2011-NOV-27.0   34.7       0.6       0.1    CARMA8    NEPTUNE
+2148+611      2011-NOV-27.0   34.7       0.2       0.1    CARMA8    NEPTUNE
+3C454.3      2011-NOV-29.0   34.7       9.4       1.4    CARMA8    NEPTUNE
+2148+611      2011-NOV-29.0   34.7       0.7       0.1    CARMA8    NEPTUNE
 0510+180      2011-DEC-09.0   34.7       1.4       0.2    CARMA8    URANUS                                
 3C84      2011-DEC-09.0   34.7       21.7       3.3    CARMA8    URANUS                                   
 0429+274      2011-DEC-09.0   34.7       0.2       0.1    CARMA8    URANUS                                
@@ -224,6 +242,10 @@ MWC349       2011-NOV-15.0  30.938    0.544    0.014   CARMA16      URANUS
 0339-017      2011-DEC-04.0   34.7       4.1       0.6    CARMA8    URANUS                                
 3C84      2011-DEC-04.0   34.7       28.2       4.2    CARMA8    URANUS                                   
 3C454.3      2011-DEC-08.0   107.7       4.7       0.7    CARMA8    URANUS
+<<<<<<< FluxSource_newadd.cat
+
+=======
 3C84      2011-NOV-24.0   34.7       32.9       4.9    CARMA8    URANUS
 3C111      2011-NOV-25.0   34.7       3.1       0.5    CARMA8    URANUS
 3C84      2011-NOV-25.0   34.7       28.5       4.3    CARMA8    URANUS
+>>>>>>> 1.248
