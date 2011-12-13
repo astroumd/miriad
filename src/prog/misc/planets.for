@@ -7,10 +7,13 @@ c& rjs
 c: utility
 c+
 c	PLANETS is a MIRIAD task to report some parameters on solar system
-c	objects.
+c	objects. An approximate builtin ephemeris is also available.
 c
 c@ source
 c	This can be "sun" or the name of a major planet (excluding the Earth).
+c       Some of the moons of Jupiter and Saturn are also recognized, the parent
+c       planet will remain to control the output, but an additional line will
+c       report the diameter of that moon.
 c	No default.
 c@ epoch
 c	The time (UTC) for which information is required, in standard
@@ -29,12 +32,13 @@ c    rjs  18dec95 Sub-earth point uses right-handed coord system.
 c    rjs   7jun96 Include SysIII(1957) for Jupiter as well
 c    rjs  10jun97 Change observ to telescop
 c    rjs  07feb00 Added Jovian SysI and SysII longitudes.
+c    pjt  13dec11 Added some moon options
 c------------------------------------------------------------------------
 	include 'mirconst.h'
 	character version*(*)
 	double precision AUKM,jy2k
 	integer EARTH,SUN,JUPITER
-	parameter(version='Planets: version 1.0 30-nov-2011')
+	parameter(version='Planets: version 1.0 13-dec-2011')
 	parameter(AUKM=149.597870D6,EARTH=3,SUN=0,JUPITER=5)
 c
 c  0 Jan 2000 (i.e. 31 Dec 1999).
@@ -52,13 +56,23 @@ c  Externals.
 c
 	character rangle*32,hangleh*32
 	double precision deltime
+	real moonsize, ms
 c
 	integer NPLANETS
-	parameter(NPLANETS=10)
+	parameter(NPLANETS=13)
 	character plans(NPLANETS)*8
+	integer   moons(NPLANETS)
 	data plans/'sun     ','mercury ','venus   ','earth   ',
-     *		     'mars    ','jupiter ','saturn  ','uranus  ',
-     *		     'neptune ','pluto   '/
+     *		   'mars    ','jupiter ','saturn  ','uranus  ',
+     *		   'neptune ','pluto   ',
+     *             'ganymede','callisto',
+     *             'titan   '/
+	data moons/0,0,0,0,
+     *             0,0,0,0,
+     *             0,0,
+     *             5,5,
+     *             6/
+	
 c
 	call output(version)
 	call keyini
@@ -73,7 +87,16 @@ c
 c  Match the planet.
 c
 	do i=1,NPLANETS
-	  if(plans(i).eq.planet)np = i-1
+	  if(plans(i).eq.planet) then
+	     if (moons(i).eq.0) then
+		ms = 0.0
+		np = i-1
+	     else
+		ms = moonsize(planet)
+		planet = plans(moons(i)+1)
+		np = moons(i)
+	     endif
+	  endif
 	enddo
 	if(np.eq.EARTH)
      *	  call bug('f','No information available on the Earth')
@@ -134,6 +157,11 @@ c
 	  call output(line)
 	  write(line,'(a,f7.2)')'PA of axis   (deg)   ',180/pi*bpa
 	  call output(line)
+	  if (ms.gt.0.0) then
+             write(line,'(a,f7.2)')'Moon size    (arcsec)',
+     *            180/pi*3600*bmaj*ms
+	     call output(line)
+	  endif
 	endif
 c
 c  Handle the rise and set time if needed.
@@ -207,3 +235,26 @@ c
 	endif
 c
 	end
+c
+	real function moonsize(moon)
+c
+	implicit none
+	character moon*(*)
+c
+c returns relative moonsize to major axis of parent body
+c ganymede  2631 / 71492 km
+c callisto  2410
+c titan     2575 / 60268
+c
+	moonsize = 0.0
+	if (moon .eq. 'ganymede') then
+	   moonsize = 0.03680
+	else if (moon .eq. 'callisto') then
+	   moonsize = 0.03371
+	else if (moon .eq. 'titan') then
+	   moonsize = 0.04273
+	endif
+
+	return
+	end
+
