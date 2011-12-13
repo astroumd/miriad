@@ -58,6 +58,10 @@ c
 	double precision deltime
 	real moonsize, ms
 c
+c  Planets - and moons. If you add a moon, make sure NPLANETS is increased,
+c            as well as the /moons/ index into what is the parent planet,
+c            and change the 'moonsize' function to return the relative size
+c            of the moon to its parent.
 	integer NPLANETS
 	parameter(NPLANETS=13)
 	character plans(NPLANETS)*8
