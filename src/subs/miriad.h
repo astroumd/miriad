@@ -28,6 +28,7 @@
 // 12-feb-09 dhem added bughandler_c prototype (new function in bug.c)
 // 01-apr-09 rjs Add additional interface to scrRecSz
 //  7-jan-10 pjt re-aligned ATNF and CARMA code
+// 14-dec-11 pkgw Declare errmsg_c()
 */
 
 #if !defined(MIR_MIRIAD_H)
@@ -323,6 +324,7 @@ void bughandler_c(void (*handler)(char s, Const char *m));
 void bugrecover_c(void (*cl)(void));
 void buglabel_c  (Const char *name);
 void bugno_c     (char s, int n);
+char *errmsg_c   (int n);
 void bug_c       (char s, Const char *m);
 void bugv_c      (char s, Const char *m, ...);
 

@@ -176,6 +176,7 @@
 /*  pjt  31aug11 fix bug in ELEV selection                              */
 /*  pkgw 05dec11 Move definition of MAXIANT here, reference the         */
 /*               thorough BASANT documentation.                         */
+/*  pkgw 14dec11 Use errmsg_c() for cleaner I/O error reporting         */
 /*----------------------------------------------------------------------*/
 /*									*/
 /*		Handle UV files.					*/
@@ -343,9 +344,8 @@
 
 #define BUG(sev,a)   bug_c(sev,a)
 #define ERROR(sev,a) bug_c(sev,((void)sprintf a,message))
-#define CHECK(x,a) if(x) {  bug_c('w',((void)sprintf a,message)); \
-			    bugno_c('f',x);			 \
-			 }
+#define CHECK(x,a) if(x) { Sprintf a; bugv_c('f', "%s: %s", \
+					     message, errmsg_c (x)); }
 
 #define uvputvra_c(tno,name,value)   \
 	uvputvr_c(tno,H_BYTE,name,value,strlen(value))

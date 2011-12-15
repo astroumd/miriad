@@ -22,6 +22,7 @@
 /*    pkgw     6mar08 declare Name as static to prevent symbol clashes  */
 /*    dhem    12feb09 added hooks to allow alien clients to completely  */
 /*                    override the default bug handler                  */
+/*    pkgw    14dec11 Make errmsg_c public for use in uvio.c            */
 /************************************************************************/
 
 #if defined(HAVE_CONFIG_H) && HAVE_CONFIG_H
@@ -34,7 +35,7 @@
 #include <stdarg.h>
 #include "miriad.h"
 
-static char *errmsg_c(int n);
+char *errmsg_c(int n);
 static int  handle_bug_cleanup(int d, char s, Const char *m);
 
 static char *Name = NULL;     /* a slot to store the program name       */
@@ -320,7 +321,7 @@ void bugno_c(char s,int n)
   else bug_c(s,errmsg_c(n));
 }
 /************************************************************************/
-static char *errmsg_c(int n)
+char *errmsg_c(int n)
 /*
   Return the error message associated with some error number.
 ------------------------------------------------------------------------*/
@@ -331,6 +332,8 @@ static char *errmsg_c(int n)
  */
 #if defined(linux) || (defined(HAVE_STRERROR) && HAVE_STRERROR)
   /* new POSIX.1 style, 20 years old now... (1988) */
+  if(n == -1)
+    return "End of file detected";
   return strerror(n);
 #else
   /* very old style code -- stdio.h is supposed to supply this */
