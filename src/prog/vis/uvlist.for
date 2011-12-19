@@ -143,10 +143,11 @@ c   19dec08 mchw - restored  Pol code in options=list.
 c   27feb09 mchw - used azel function in options=list.
 c   11apr10 pjt - increased buffer for char variables (var,full)
 c   21jan11 pjt - increased digits for handling high-z output
+c   19dec11 pjt - added frequency width for better accuracy, options=spectra
 c-----------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='UVLIST: version  22-feb-2011')
+	parameter(version='UVLIST: version  19-dec-2011')
 	real rtoh,rtod,pi
 	integer maxsels
 	parameter(pi=3.141592653589793,rtoh=12/pi,rtod=180/pi)
@@ -1433,6 +1434,9 @@ c
 	    call LogWrite(line,more)
 	    write(line,'(''frequency interval :'',8f11.6)')
      .		(sdf(i),i=j,k)
+	    call LogWrite(line,more)
+	    write(line,'(''band width         :'',8f11.6)')
+     .		(sdf(i)*nschan(i),i=j,k)
 	    call LogWrite(line,more)
 	    write(line,'(''starting velocity  :'',8f11.3)')
      .		(velocity(ischan(i)),i=j,k)
