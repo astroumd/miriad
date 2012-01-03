@@ -29,9 +29,9 @@ install-data-local:
 	  command="$(AMTAR) cf - ." ; \
 	fi ; \
 	(cd $(srcdir) && $$command) | (cd "$(DESTDIR)$(catdir)" && $(AMTAR) xf -)
-	find "$(DESTDIR)$(catdir)" \( -name 'Makefile*' -o -name CVS \) -print0 |xargs -0 rm -rf
 	find "$(DESTDIR)$(catdir)" -type f -print0 |xargs -0 chmod 0644
 	find "$(DESTDIR)$(catdir)" -type d -print0 |xargs -0 chmod 0755
+	find "$(DESTDIR)$(catdir)" \( -name 'Makefile*' -o -name CVS \) -print0 |xargs -0 rm -rf
 
 uninstall-local:
 	-rm -rf $(DESTDIR)$(catdir)
@@ -44,9 +44,9 @@ dist-hook:
 	  command="$(AMTAR) cf - ." ; \
 	fi ; \
 	(cd $(srcdir) && $$command) | (cd "$(distdir)" && $(AMTAR) xf -)
-	find "$(distdir)" -name CVS -print0 |xargs -0 rm -rf
 	find "$(distdir)" -type f -print0 |xargs -0 chmod 0644
 	find "$(distdir)" -type d -print0 |xargs -0 chmod 0755
+	find "$(distdir)" -name CVS -print0 |xargs -0 rm -rf
 
 # Generate and install the keyword documentation files.
 
