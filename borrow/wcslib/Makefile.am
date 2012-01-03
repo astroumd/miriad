@@ -7,41 +7,50 @@ AM_MAKEFLAGS = -f Makefile
 
 lib_LTLIBRARIES = libmir_wcs.la libmir_pgsbox.la
 
-libmir_wcs_la_CFLAGS = -I$(srcdir)/C
-libmir_wcs_la_SOURCES = \
- C/cel.c \
+wcscincdir = $(includedir)/miriad-c/wcslib
+wcsfincdir = $(includedir)/miriad-f/wcslib
+
+BUILT_SOURCES = wcsconfig.h wcsconfig_f77.h
+
+wcscinc_HEADERS = \
  C/cel.h \
  C/fitshdr.h \
- C/lin.c \
  C/lin.h \
- C/log.c \
  C/log.h \
- C/prj.c \
  C/prj.h \
- C/spc.c \
  C/spc.h \
- C/sph.c \
  C/sph.h \
- C/spx.c \
  C/spx.h \
- C/tab.c \
  C/tab.h \
- C/wcs.c \
- C/wcsfix.c \
  C/wcsfix.h \
  C/wcs.h \
- C/wcshdr.c \
  C/wcshdr.h \
  C/wcslib.h \
  C/wcsmath.h \
- C/wcsprintf.c \
  C/wcsprintf.h \
- C/wcstrig.c \
  C/wcstrig.h \
- C/wcsunits.c \
  C/wcsunits.h \
- C/wcsutil.c \
  C/wcsutil.h \
+ wcsconfig.h
+
+libmir_wcs_la_CFLAGS = -I$(srcdir)/C
+libmir_wcs_la_SOURCES = \
+ $(wcscinc_HEADERS) \
+ C/cel.c \
+ C/lin.c \
+ C/log.c \
+ C/prj.c \
+ C/spc.c \
+ C/sph.c \
+ C/spx.c \
+ C/tab.c \
+ C/wcs.c \
+ C/wcsfix.c \
+ C/wcshdr.c \
+ C/wcsprintf.c \
+ C/wcstrig.c \
+ C/wcsunits.c \
+ C/wcsutil.c \
  $(amhack_lexes) \
  Fortran/cel_f.c \
  Fortran/fitshdr_f.c \
@@ -106,7 +115,7 @@ libmir_pgsbox_la_SOURCES = \
 # so that the 'include wcslib/foo.inc' statements in the MIRIAD source
 # code can succeed without modifying the code. Nice.
 
-fortran_incs = \
+wcsfinc_HEADERS = \
  Fortran/cel.inc \
  Fortran/fitshdr.inc \
  Fortran/lin.inc \
@@ -121,9 +130,7 @@ fortran_incs = \
  Fortran/wcs.inc \
  Fortran/wcsunits.inc
 
-mirrored_incs = $(fortran_incs:Fortran/%=%)
-
-dist_noinst_DATA += $(fortran_incs)
+mirrored_incs = $(wcsfinc_HEADERS:Fortran/%=%)
 
 %.inc: Fortran/%.inc
 	$(AM_V_GEN)$(LN_S) $< $@
