@@ -112,8 +112,8 @@ c    ?? Perfect?
 c------------------------------------------------------------------------
         character version*(*)
         integer maxpnts
-        parameter(maxpnts=1000000)
-        parameter(version='SmaVarPlt: version 1.9 23-aug-2010')
+        parameter(maxpnts=40000000)
+        parameter(version='SmaVarPlt: version 1.9 4-jan-2011')
         logical doplot,dolog,dotime,dounwrap
         character vis*128,device*128,logfile*128,xaxis*16,yaxis*16
         character xtype*1,ytype*1,xunit*16,yunit*16,calday*24
