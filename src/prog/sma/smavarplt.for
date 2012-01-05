@@ -107,13 +107,14 @@ c    jhz 15mar07  added Keyword dotsize.
 c    pjt 18apr07  Increased maxpnts a bit for a typical 11hr carma track (see varplt)
 c    jhz 07jun07  cleaned a few lines.
 c    pjt 23aug10  MAXRUNS 1024 for 23ant CARMA
+c    pjt  5jan11  no check for MAXINTE was done, and increased MAXINTE
 c  Bugs:
 c    ?? Perfect?
 c------------------------------------------------------------------------
         character version*(*)
         integer maxpnts
         parameter(maxpnts=40000000)
-        parameter(version='SmaVarPlt: version 1.9 4-jan-2011')
+        parameter(version='SmaVarPlt: version 1.9 5-jan-2011')
         logical doplot,dolog,dotime,dounwrap
         character vis*128,device*128,logfile*128,xaxis*16,yaxis*16
         character xtype*1,ytype*1,xunit*16,yunit*16,calday*24
@@ -1003,7 +1004,7 @@ c************************************************************************
 c
 c------------------------------------------------------------------------
         integer maxruns,xsoupnt,maxspect
-        parameter(maxruns=1024,maxspect=48, maxinte=5000)
+        parameter(maxruns=1024,maxspect=48, MAXINTE=10000)
         double precision xdrun(maxruns),ydrun(maxruns)
         integer xirun(maxruns),yirun(maxruns)
         real xrrun(maxruns),yrrun(maxruns)
@@ -1018,8 +1019,8 @@ c------------------------------------------------------------------------
         integer nchan,i1,i2,nrecord,nants,nflagbl(maxant)
         character xt*1,yt*1, tt*1, souread*32
         common/sour/soupnt,source,nsource
-        logical tsysflag(maxant,maxinte),blflag
-        double precision mytime(maxinte)
+        logical tsysflag(MAXANT,MAXINTE),blflag
+        double precision mytime(MAXINTE)
         common/tsysflag/tsysflag,mytime
 c
 c  Externals.
@@ -1040,7 +1041,7 @@ c initialize flfrun 1 -> good data
         do i=1,maxant
                nflagbl(i)=0
                nflagbl(i)=0
-            do j=1,maxinte
+            do j=1,MAXINTE
                tsysflag(i,j) = .false.
             enddo
         end do
@@ -1117,6 +1118,7 @@ c nbls=nflagbl(i)(nflagbl(i)+1)/2, antenna i should be flagged.
              if(preamble(3).gt.ctime) then
                 ctime= preamble(3)
                 inhid=inhid+1
+                if(inhid.gt.MAXINTE) call bug('f','MAXINTE too small')
                 mytime(inhid) = ctime
              endif
           nrecord=nrecord+1
