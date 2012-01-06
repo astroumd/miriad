@@ -279,7 +279,7 @@ c------------------------------------------------------------------------
 	include 'maxdim.h'
 	integer maxbad
 	character version*(*)
-	parameter(version='UVCAL: version 27-jul-2011')
+	parameter(version='UVCAL: version 6-jan-2012')
 	parameter(maxbad=20)
 	real PI
 	parameter(PI=3.1415926)
@@ -1057,7 +1057,6 @@ c
 c  Externals.
 c
 	complex expi
-	call bug('i','linecal/phasem1 used')
 c
 c  Get the line length phase for lo1.
 c
