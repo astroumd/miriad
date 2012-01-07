@@ -1,0 +1,11 @@
+RADEX: 
+
+http://www.sron.rug.nl/~vdtak/radex/index.shtml
+http://www.sron.rug.nl/~vdtak/radex/radex.php
+
+old: http://www.strw.leidenuniv.nl/~moldata/radex.html
+
+setenv RADEXDAT  $MIR/borrow/Radex/data
+
+see also the NEMO frontend 'runradex' if you need
+to run radex many times in an automated fashion.
