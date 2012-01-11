@@ -56,8 +56,230 @@ correction (don't forget @).
       <th>status</th>
       <th>Notes</th>
     </tr>
+  <tr>
+      <td>B<br>
+      </td>
+      <td><a href="./antpos/antpos.120102">antpos.120102</a></td>
+      <td>Jan 02, 2012</td>
+      <td>&nbsp; CARMA15 (3mm) and SZA (1cm) track <br>
+      </td>
+      <td> <span style="font-weight: bold;"> Final B array baseline solutions.</span>;
+this solution includes CARMA15 3mm solutions and SZA 1cm solutions concatenated from two separate tracks.
+Positions relative to C6 and C16 for sci1 and sci2 respectively. 
+Significant change in solutions only for C17 and C19 from the previous ultra-short sci2 track. <br>
+      </td>
+    </tr>
+  
     <tr>
-      <td>E+SZA<br>
+      <td>B<br>
+      </td>
+      <td><a href="./antpos/antpos.111221">antpos.111221</a></td>
+      <td>Dec 21, 2011</td>
+      <td>&nbsp; SZA (1cm) track <br>
+      </td>
+      <td> First baseline track for sci2. &lt; 2 hours of data,
+therefore HA coverage is not great; should improve the present solution
+with a CARMA23 track; <span style="font-weight: bold;"> this solution
+includes first B array sci1 solutions for all moved antennas from Dec 15</span>;
+positions fit relative to C23.<br>
+      </td>
+    </tr>
+    <tr>
+      <td>B<br>
+      </td>
+      <td><a href="./antpos/antpos.111215">antpos.111215</a></td>
+      <td>Dec 15, 2011</td>
+      <td>&nbsp; Sci1 <br>
+      </td>
+      <td> First Sci1 baseline solution after move to B config.<br>
+      </td>
+    </tr>
+    <tr>
+      <td>A<br>
+      </td>
+      <td><a href="./antpos/antpos.111213">antpos.111213</a></td>
+      <td>Dec 13, 2011</td>
+      <td>&nbsp; CARMA23 track <br>
+      </td>
+      <td> Final CARMA23 track after the SZA pad
+offsets for C19 and C20 were updated by Nikolaus. Still no fringes on
+C20 baselines (even for the paired antenna baseline C5-C20). C16 and
+C23 out of the array and only partial data for C17. Good solutions for
+all other antennas to be
+used for PACS correction
+relative to C8.
+C19 (whose pad offsets were updated prior to the track),&nbsp; and C22
+(which had &lt; 2 hrs of data in the previous track)&nbsp; have
+significant offsets. x, y, z offsets for C19 (in ns): -0.16, 0.14,
+-0.02.&nbsp; C22 offset is significant in x (0.01 ns).<br>
+      </td>
+    </tr>
+    <tr>
+      <td>A<br>
+      </td>
+      <td><a href="./antpos/antpos.111206">antpos.111206</a></td>
+      <td>Dec 06, 2011</td>
+      <td>&nbsp; CARMA23 track <br>
+      </td>
+      <td> Excellent weather CARMA23 track after the new SZA pad
+offsets were put into the system (on Dec 02). No fringes on C16, C19,
+and C20 for all baselines. Good solutions for all other antennas to be
+used for PACS correction
+relative to C8.
+C1, C5, C11 and C15 have significant offsets from the previous value;
+curiously all 0.01 ns in the x-direction. The PACS SZA antennas C17,
+C18, C21, C2 and C23 had a roughly constant offset in x, y and z of
+-0.15,+0.14,-0.01 ns respectively. C22 had data for less than 2 hours,
+so solutions are based on few sources (but reasonable HA and Dec.
+coverage). <br>
+Steps:<br>
+1. Derive solutions for C1,C2,C5,C10 relative to C8 using bee 4-P fit<br>
+2. use this group to derive solutions individually for all other sci1
+and sci2 antennas<br>
+3. sci2 antenna solutions derived using step2 followed several
+iterations of phase difference and 4-P.<br>
+4. using win(9) only in 4-P fit for sci2 antennas reduced the phase
+noise considerably.<br>
+      </td>
+    </tr>
+    <tr>
+      <td>&nbsp;&nbsp;&nbsp;&nbsp; A<br>
+      </td>
+      <td><a href="./antpos/antpos.111123">antpos.111123</a></td>
+      <td>Nov 23, 2011</td>
+      <td>&nbsp; sci2 track <br>
+      </td>
+      <td> <span style="font-weight: bold;">Solutions derived for C17</span>.
+C20
+used
+as
+reference
+antenna.
+The
+pad
+offsets
+were
+very
+large.
+The difference relative to the <span style="font-weight: bold;">raw
+positions
+off by 1.2m, 12 cm, 0.8m </span>in x, y and z respectively.<br>
+I did
+the following to derive this. <br>
+      <ol>
+        <li>Choose a reasonably bright source with good HA coverage to
+fit
+the slopes across bands and solve for the xy position. <br>
+        </li>
+        <li>Choose a cluster of reasonably bright sources close to 0
+dec,
+fit the slopes across bands and do a 4-parameter fit <br>
+        </li>
+        <li>Step 3 and Step 4.
+USB-LSB difference for all sources, followed by 4p. This involved
+several iterations, flagging, unwrapping etc in bee on all sources. <a
+ href="./plots/before_111123.png">Before</a> and <a
+ href="./plots/after_111123.png">After</a> these solutions were
+applied for C17 baselines. </li>
+      </ol>
+      </td>
+    </tr>
+    <tr>
+      <td>&nbsp;&nbsp;&nbsp; A<br>
+      </td>
+      <td><a href="./antpos/antpos.111117">antpos.111117</a></td>
+      <td>Nov 17, 2011</td>
+      <td>&nbsp; sci1 track <br>
+      </td>
+      <td> First complete A array solutions based on three succesive
+tracks from the first day of the move (15 Nov). C8 used as reference
+antenna. Summary: used phase slopes across wide bands, phase
+differences between LSB and USB and finally 4-P bit in bee. <br>
+      </td>
+    </tr>
+    <tr>
+      <td>SH+D<br>
+      </td>
+      <td><a href="./antpos/antpos.111113">antpos.111113</a></td>
+      <td>Nov 13, 2011</td>
+      <td>&nbsp; CARMA23 track <br>
+      </td>
+      <td> Final D array solutions. C8 used as reference antenna. Final
+solutions in D array for all antennas except C20. No data for C20.
+These solutions have improved the data, although changes to the pad
+offsets from previous solutions are not large. <br>
+      </td>
+    </tr>
+    <tr>
+      <td>SH+D<br>
+      </td>
+      <td><a href="./antpos/antpos.111007">antpos.111007</a></td>
+      <td>Oct 07, 2011</td>
+      <td>&nbsp; CARMA23 track <br>
+      </td>
+      <td> Solutions derived
+relative to C8. Flagged first half of the data with poor atmosphere and
+data at elevations &lt; 30 deg. <span style="font-weight: bold;">No
+data for C1 and C16.</span>&nbsp;&nbsp; Offset from previous
+solution atmost 1mm. Curiously&nbsp; 0.5 - 1mm <span
+ style="font-weight: bold;">x</span> and <span
+ style="font-weight: bold;">z</span> offset seen for all SZA antennas. <br>
+      </td>
+    </tr>
+    <tr>
+      <td>SH+D<br>
+      </td>
+      <td><a href="./antpos/antpos.110903">antpos.110903</a></td>
+      <td>Sep 03, 2011</td>
+      <td>&nbsp; CARMA23 track <br>
+      </td>
+      <td> Second baseline track. Solutions derived
+relative to C8. Offsets from previous solutions &lt; 0.4 mm. Flagged
+data at elevations &lt; 30 deg. </td>
+    </tr>
+    <tr>
+      <td>SH+D<br>
+      </td>
+      <td><a href="./antpos/antpos.110826">antpos.110826</a></td>
+      <td>Aug 26, 2011</td>
+      <td>&nbsp; CARMA23 track <br>
+      </td>
+      <td> First baseline track after move to D. Solutions derived
+relative to C8. Flagged data at elevations &lt; 30 deg. We have good
+solutions
+for all antennas. C6, C11 and C15 had large offsets (3 -- 6 cms).<br>
+      </td>
+    </tr>
+    <tr>
+      <td>SL+E<br>
+      </td>
+      <td><a href="./antpos/antpos.110818">antpos.110818</a></td>
+      <td>Aug 18, 2011</td>
+      <td>&nbsp; CARMA23 track <br>
+      </td>
+      <td> The previous solutions were good to start with, so these
+solutions have marginally improved the data for all antennas. This is
+likely the last solutions for E array. Users encouraged to use this
+solutions for their dat set.<br>
+      </td>
+    </tr>
+    <tr>
+      <td>SL<br>
+      </td>
+      <td><a href="./antpos/antpos.110803">antpos.110803</a></td>
+      <td>Aug 03, 2011</td>
+      <td>&nbsp; cm SZA track <br>
+      </td>
+      <td> <span style="font-weight: bold;">Improved solutions for
+C17. </span>
+C19 out of the array. Refined
+solutions for all other SZA antennas. The previous solutions (from July
+21) were not updated in the system. Note that this is also the SH
+configuration although the antennas haven't been moved.<br>
+      </td>
+    </tr>
+    <tr>
+      <td>E+SL<br>
       </td>
       <td><a href="./antpos/antpos.110721">antpos.110721</a></td>
       <td>July 21, 2011</td>
@@ -84,20 +306,49 @@ the pad offsets<br>
 raw
 offsets
 for
-C10 were off ~8cms (as reported by uvedit in miriad)
-relative to C8. The observers zeroed the pad offsets for C10 on 14 July
-2011 before running the track from which the current solutions were
+C10
+were
+off
+~8cms
+(as
+reported
+by
+uvedit
+in
+miriad)
+relative
+to
+C8.
+The
+observers
+zeroed
+the
+pad
+offsets
+for
+C10
+on
+14
+July
+2011
+before
+running
+the
+track
+from
+which
+the current solutions were
 derived.
 These solutions have significantly improved the data and should be used
 by users.<br>
       </td>
     </tr>
     <tr>
-      <td>E+SZA<br>
+      <td>E+SL<br>
       </td>
       <td><a href="./antpos/antpos.110710">antpos.110710</a></td>
       <td>July 10, 2011</td>
-      <td> E&nbsp; &amp; SZA <br>
+      <td> E&nbsp; &amp; SL <br>
       </td>
       <td> Refined solutions for CARMA and SZA antennas with C8 as the
 reference. These solutions should be used for all tracks taken
@@ -108,7 +359,8 @@ C17
 and
 C23
 to
-be improved.<br>
+be
+improved.<br>
       </td>
     </tr>
     <tr>
@@ -662,6 +914,35 @@ plots
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
       <a href="./plots/PhaseTime.noBS.091204.pdf">before</a>
 and <a href="./plots/PhaseTime.BS.091204.pdf">after</a> the solutions
 have been applied. </td>
@@ -863,7 +1144,65 @@ in
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
       <a href="./plots/PhaseTime.BS.090131.pdf">(PhaseTime.BS.090131.pdf)</a>.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
