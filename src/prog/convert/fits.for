@@ -150,6 +150,10 @@ c      is needed. Probably need the user to give an auxillary text file.
 c
 c  History:
 c    Refer to the RCS log, v1.1 includes prior revision information.
+c
+c  CARMA customizations:
+c
+c  2012jan03  pkgw  Convert FITS VOPT to MIRIAD FELO and vice versa
 c-----------------------------------------------------------------------
       integer   MAXBOXES
       parameter (MAXBOXES=2048)
@@ -3983,8 +3987,12 @@ c           And another one!
           endif
         else if (ctemp.eq.'VLSR') then
           ctemp = 'VELO-LSR'
+c         Units are km/s, so counteract the correction in kwdIn
           cdelt(i) = cdelt(i)*1e3
           crval(i) = crval(i)*1e3
+        else if (ctemp.eq.'VOPT') then
+c         FITS standard uses different keyword
+          ctemp = 'FELO'
         endif
 
         l1 = index(ctemp,'-') - 1
@@ -4524,8 +4532,11 @@ c       Determine scale factor.
           scale = DR2D
         else if (ctype(1:4).eq.'FREQ') then
           scale = 1d9
-        else if (ctype(1:4).eq.'VELO' .or. ctype(1:4).eq.'FELO') then
+        else if (ctype(1:4).eq.'VELO') then
           scale = 1d3
+        else if (ctype(1:4).eq.'FELO') then
+          scale = 1d3
+          ctype(1:4) = 'VOPT'
         endif
 
         call fitwrhdd(lOut, 'CRPIX'//cax, crpix-dble(blc(iax)-1))
