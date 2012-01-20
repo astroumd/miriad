@@ -152,13 +152,9 @@ c	imaging on planets, after we have done the calibration using
 c	delta_az and delta_el to select the "on source" calibrations.
 c
 c@ polcal
-c	Subtract the source polarization from the uv-data. Two values
-c	give polarized intensity, Ip, and position angle, 2*psi, in degrees.
-c	Use same amplitude units as uv-data after calibration is applied..
-c	subtract Ip*expi(2*psi)*expi(-2*chi) from LR, and
-c	subtract Ip*expi(-2*psi)*expi(2*chi) from RL
-c	where chi is the parallactic angle for Alt-Az antennas.
-c	Default=0,0. is no correction.
+c	Subtract the source polarization from the uv-data. 
+c	Three values give fractional linear, position angle in degrees,
+c	and fractional circular polarization. Default=0,0,0. i.e. none.
 c	After subtracting the source polarization, the averaged uv-data
 c	gives the instrumental polarization for each baseline.
 c
@@ -275,11 +271,12 @@ c    mchw 29jan09  exclude flagged data in options=slope
 c    mchw 21may09  fringe rate correction.
 c    pjt  19nov09  linecal2 option to look at cable instead of phasem1
 c    mchw 27jul11  added xyphase calibration.
+c    mchw 20jan12  added XY feeds and circular polarization to polcal
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	integer maxbad
 	character version*(*)
-	parameter(version='UVCAL: version 6-jan-2012')
+	parameter(version='UVCAL: version 20-Jan-2012')
 	parameter(maxbad=20)
 	real PI
 	parameter(PI=3.1415926)
@@ -299,7 +296,7 @@ c
 	real mask(MAXCHAN),sigma
 	integer polcode,nants,ant1,ant2,on,nxydelay,nxyphase
 	real parot,sinpa,cospa
-	real scale(2),polcal(2),model(3),offset(2)
+	real scale(2),polcal(2),polV,model(3),offset(2)
 	complex coffset
 	double precision obsra,obsdec,dazim(MAXANT),delev(MAXANT)
 	double precision ra,dec,uu,vv,epoch,jepoch,theta,costh,sinth,jd
@@ -369,6 +366,7 @@ c
 	call keyt('onsource',delta_el,'dms',0.d0)
 	call keyr('polcal',polcal(1),0.)
 	call keyr('polcal',polcal(2),0.)
+	call keyr('polcal',polV,0.)
 	call keyi('polcode',polcode,0)
 	call keyr('parot',parot,0.)
 	call keyr('seeing',seeing,0.)
@@ -389,8 +387,10 @@ c
 	if(dooffset) coffset=offset(1)*expi(offset(2)*PI/180.)
 	domodel = model(1).ne.0.
 	doscale = scale(1).ne.0..or.scale(2).ne.0.
-	dopolcal = polcal(1).ne.0.
-	if(dopolcal) polcal(2) = polcal(2)*PI/180.
+	dopolcal = polcal(1).ne.0..or.polV.ne.0.
+	if(dopolcal)then
+          polcal(2) = polcal(2)*PI/180.
+	endif
 	doseeing = seeing.ne.0.
         if(doseeing)then
            print *,'Correct amplitude for atmospheric phase coherence'
@@ -673,7 +673,7 @@ c
               call model1(lIn,preamble,wdata,nwide,model)
             endif
             if(dopolcal)then
-              call polcal1(lIn,Pol,wdata,nwide,polcal)
+              call polcal1(lIn,pol,wdata,nwide,polcal,polV)
             endif
 	        call uvwwrite(lOut,wdata,wflags,nwide)
           endif
@@ -702,7 +702,7 @@ c
             call model1(lIn,preamble,data,nchan,model)
           endif
           if(dopolcal)then
-            call polcal1(lIn,Pol,data,nchan,polcal)
+            call polcal1(lIn,pol,data,nchan,polcal,polV)
           endif
           call uvwrite(lOut,preamble,data,flags,nchan)
         endif
@@ -1913,25 +1913,29 @@ c------------------------------------------------------------------------
 
 	end
 c********1*********2*********3*********4*********5*********6*********7*c
-	subroutine polcal1(lIn,Pol,data,nchan,polcal)
+	subroutine polcal1(lIn,pol,data,nchan,per,pa,polV)
 	implicit none
-	integer lIn,Pol,nchan
+	integer lIn,pol,nchan
 	complex data(nchan)
-	real polcal(2)
+	real per,pa,polV
 c
 c Subtract the source polarization from the uv-data.
 c
 c  In:
 c    lIn	Handle of input uv-data.
 c    nchan	Number of channels.
-c    polcal	source polarization
+c    per        Fractional linear polarisation (in range [0,1]).
+c    pa         Position angle of the polarisation, in radians.
+c    polV       Fractional circular polarisation (in range [0,1]).
 c  In/out:
 c    data	Channel or wideband data
 c------------------------------------------------------------------------
-	real chi
-	integer PolRL,PolLR,i
-	parameter (PolRL=-3,PolLR=-4)
-	complex polcor
+	real psi
+        integer PolI,PolRR,PolLL,PolRL,PolLR,PolXX,PolYY,PolXY,PolYX
+        parameter(PolI=1,PolRR=-1,PolLL=-2,PolRL=-3,PolLR=-4)
+        parameter(       PolXX=-5,PolYY=-6,PolXY=-7,PolYX=-8)
+c
+	complex vis
 c
 c  Externals.
 c
@@ -1939,19 +1943,40 @@ c
 c
 c  Get polarization correction.
 c
-	if(Pol.eq.PolLR)then
-          call uvrdvrr (lIn, 'chi', chi, 0.)
-	  polcor = polcal(1) * expi(polcal(2)) * expi(-2*chi)
-	  do i=1,nchan
-	    data(i) = data(i) - polcor
-	  enddo
-	else if(Pol.eq.PolRL)then
-          call uvrdvrr (lIn, 'chi', chi, 0.)
-	  polcor = polcal(1) * expi(-polcal(2)) * expi(2*chi)
-	  do i=1,nchan
-	    data(i) = data(i) - polcor
-	  enddo
-	endif
+        call uvrdvrr (lIn, 'chi', psi, 0.)
+
+        if((per.eq.0.).or.
+     *      pol.eq.PolI.or.pol.eq.PolRR.or.pol.eq.PolLL)then
+              vis = 0.
+        else if(pol.eq.PolXX)then
+              vis = per * cos(2.* (pa - psi))
+        else if(pol.eq.PolYY)then
+              vis = - per * cos(2.* (pa - psi))
+        else if(pol.eq.PolXY.or.pol.eq.PolYX)then
+              vis = per * sin(2.* (pa - psi))
+        else if(pol.eq.PolRL)then
+              vis = per * expi(-2.* (pa - psi))
+        else if(pol.eq.PolLR)then
+              vis = per * expi( 2.* (pa - psi))
+        else
+              call bug('f','Unsupported polarization, in polcal1')
+        endif
+
+        if(polV.ne.0.)then
+           if(pol.eq.PolRR)then
+                vis = vis + polV
+           else if(pol.eq.PolLL)then
+                vis = vis - polV
+           else if(pol.eq.PolXY)then
+                vis = vis - cmplx(0.,1.)*polV
+           else if(pol.eq.PolYX)then
+                vis = vis + cmplx(0.,1.)*polV
+           endif
+        endif
+
+	do i=1,nchan
+	    data(i) = data(i)*(1. - vis)
+	enddo
 c
 	end
 c********1*********2*********3*********4*********5*********6*********7*c
