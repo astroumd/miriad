@@ -296,7 +296,7 @@ c
 	real mask(MAXCHAN),sigma
 	integer polcode,nants,ant1,ant2,on,nxydelay,nxyphase
 	real parot,sinpa,cospa
-	real scale(2),polcal(2),polV,model(3),offset(2)
+	real scale(2),per,pa,polV,model(3),offset(2)
 	complex coffset
 	double precision obsra,obsdec,dazim(MAXANT),delev(MAXANT)
 	double precision ra,dec,uu,vv,epoch,jepoch,theta,costh,sinth,jd
@@ -364,8 +364,8 @@ c
 	call keyr('model',model(3),0.)
 	call keyt('onsource',delta_az,'dms',0.d0)
 	call keyt('onsource',delta_el,'dms',0.d0)
-	call keyr('polcal',polcal(1),0.)
-	call keyr('polcal',polcal(2),0.)
+	call keyr('polcal',per,0.)
+	call keyr('polcal',pa,0.)
 	call keyr('polcal',polV,0.)
 	call keyi('polcode',polcode,0)
 	call keyr('parot',parot,0.)
@@ -387,9 +387,9 @@ c
 	if(dooffset) coffset=offset(1)*expi(offset(2)*PI/180.)
 	domodel = model(1).ne.0.
 	doscale = scale(1).ne.0..or.scale(2).ne.0.
-	dopolcal = polcal(1).ne.0..or.polV.ne.0.
+	dopolcal = per.ne.0..or.polV.ne.0.
 	if(dopolcal)then
-          polcal(2) = polcal(2)*PI/180.
+          pa = pa*PI/180.
 	endif
 	doseeing = seeing.ne.0.
         if(doseeing)then
@@ -673,7 +673,7 @@ c
               call model1(lIn,preamble,wdata,nwide,model)
             endif
             if(dopolcal)then
-              call polcal1(lIn,pol,wdata,nwide,polcal,polV)
+              call polcal1(lIn,pol,wdata,nwide,per,pa,polV)
             endif
 	        call uvwwrite(lOut,wdata,wflags,nwide)
           endif
@@ -702,7 +702,7 @@ c
             call model1(lIn,preamble,data,nchan,model)
           endif
           if(dopolcal)then
-            call polcal1(lIn,pol,data,nchan,polcal,polV)
+            call polcal1(lIn,pol,data,nchan,per,pa,polV)
           endif
           call uvwrite(lOut,preamble,data,flags,nchan)
         endif
@@ -1931,6 +1931,7 @@ c  In/out:
 c    data	Channel or wideband data
 c------------------------------------------------------------------------
 	real psi
+        integer i
         integer PolI,PolRR,PolLL,PolRL,PolLR,PolXX,PolYY,PolXY,PolYX
         parameter(PolI=1,PolRR=-1,PolLL=-2,PolRL=-3,PolLR=-4)
         parameter(       PolXX=-5,PolYY=-6,PolXY=-7,PolYX=-8)
@@ -1940,6 +1941,9 @@ c
 c  Externals.
 c
 	complex expi
+
+
+	print *, 'per,pa,polV =', per, pa,polV
 c
 c  Get polarization correction.
 c
