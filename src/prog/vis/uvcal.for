@@ -1943,7 +1943,7 @@ c
 	complex expi
 
 
-	print *, 'per,pa,polV =', per, pa,polV
+c	print *, 'per,pa,polV =', per, pa,polV
 c
 c  Get polarization correction.
 c
@@ -1979,7 +1979,7 @@ c
         endif
 
 	do i=1,nchan
-	    data(i) = data(i)*(1. - vis)
+            data(i) = data(i)/(1. + vis)
 	enddo
 c
 	end
