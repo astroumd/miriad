@@ -41,3 +41,7 @@ backup:
 
 clean:
 	rm -f *~ core *.o $(EXE)
+
+install: $(EXE)
+	mv $(EXE) $(MIRBIN)
+ 
