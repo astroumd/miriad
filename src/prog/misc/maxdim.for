@@ -32,22 +32,26 @@ c@ nz
 c       Z dimension of a cube to be allocated
 c@ n
 c       Number of XYZ cubes that are to be allocated. There is room
-c       for up to 128 
+c       for up to 10000 (MAXP)
+c@ m
+c       Repeat summing over the XYZ cubes a number of times.
+c       Default: 1
 c@ type
 c       Data type of the array. Allowed are Real and Double.
 c@ sum
 c       If 
 c------------------------------------------------------------------------
 c
-	IMPLICIT NONE
+      IMPLICIT NONE
       include 'maxdim.h'
       include 'mem.h'
 c
       INTEGER MAXP,MAXN
-      PARAMETER(MAXP=128,MAXN=512)
+c pjt 512
+      PARAMETER(MAXP=10000,MAXN=512)
 
       PTRDIFF nx1,ny1,nz1,ntot,p(MAXP)
-      INTEGER nx,ny,nz,n,i
+      INTEGER nx,ny,nz,n,m,i,j
       CHARACTER type*10
 c the 3D array takes lots of memory on modern ld on linux?
       REAL biga(MAXN,MAXN,MAXN)
@@ -72,6 +76,7 @@ c
       CALL keyi('ny',ny,3)
       CALL keyi('nz',nz,3)
       CALL keyi('n',n,0)
+      CALL keyi('m',m,1)
       CALL keya('type',type,'r')
       CALL keyd('sum',sd,0d0)
       CALL keyfin
@@ -118,16 +123,21 @@ c     WRITE(*,*) 'MAXNAX       = ',MAXNAX
 	 WRITE(*,*) 'nx*ny*nz     =',nx*ny*nz
 	 WRITE(*,*) 'ntot         =',ntot
 	 WRITE(*,*) 'n            =',n
+	 if (n.GT.MAXP) call bug('f','n too large (MAXN)')
 
 	 DO i=1,n
+	    write(*,*) 'nxyz: ',nx,ny,nz
 	    IF (type(1:1).eq.'r') CALL MemAlloc(p(i), nx*ny*nz, 'r')
 	    IF (type(1:1).eq.'d') CALL MemAlloc(p(i), nx*ny*nz, 'd')
 	    write(*,*) 'pData(i)     =',i,p(i)
 	 ENDDO
 
+	 DO j=1,m
+	 IF (m.GT.1) write(*,*) 'Summing iteration ',j,'/',m
 	 DO i=1,n
 	    IF (type(1:1).eq.'r') CALL myWorkR(memr(p(i)),nx,ny,nz,sr)
 	    IF (type(1:1).eq.'d') CALL myWorkD(memd(p(i)),nx,ny,nz,sd)
+	 ENDDO
 	 ENDDO
 
 	 DO i=1,n
