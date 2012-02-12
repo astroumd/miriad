@@ -17,7 +17,7 @@ ftasks = avmaths boxspec boxtest clfind clplot \
   implot impol impoly impos imrm \
   imsad imsharp imspec imspect imstack imstat \
   imstore imsub imtab imwcs imwrite \
-  linmos maths maxfit mfspin minmax \
+  linmos mafia maths maxfit mfspin minmax \
   moment mossen odnh3 pbplot pcsub polargrid \
   pops posvel potfft psrfix psrplt \
   regrid reorder rotcurmask shifty sigest \
@@ -30,7 +30,7 @@ EXTRA_DIST = $(ftasks:=.for)
 
 noinst_HEADERS = clfind.h clpars.h clplot.h clstats.h hermes.h \
   imblob.h imdiff.h imfit.h imhist.h imsad.h imsad2.h imspec.h \
-  imstat.h maths.h mfspin.h psrfix.h regrid.h velplot.h 
+  imstat.h maths.h maxfld.h mfspin.h psrfix.h regrid.h velplot.h 
 
 dist-hook:
 	-rm -f $(distdir)/*.f
