@@ -554,6 +554,7 @@ c                  bigger than the beam.
 c    pkgw 01dec11  Handle bigger images by bumping up the 'n' parameter
 c                  in the "fitting" subroutine. Also tweak doc spacing
 c                  and fix most compiler warnings.
+c    pjt  13feb12  Merging essential ATNF changes (initco->coInit, conturcg)
 c
 c To do:
 c
@@ -638,7 +639,7 @@ c
 c Open image
 c
       call opimcg (maxnax, in, lin, size, naxis)
-      call initco (lin)
+      call coInit (lin)
       if (pbcor) call mosLoad(lin,npnt)
 c
 c Finish key inputs for region of interest now
@@ -778,7 +779,8 @@ c
 c Draw contours
 c
            call conturcg (.false., blank, .false., win(1), win(2),
-     +                    doblnk, memr(ipim), nlevs, levs, tr, 0.0)
+     +                    doblnk, memr(ipim), nlevs, levs, tr, 0.0,
+     +                    0, 0)
          end if
 c
 c Determine if the axes need ascii or numeric labelling
@@ -842,7 +844,7 @@ c
        call memfree (ipim,  win(1)*win(2), 'r')
        call memfree (ipnim, win(1)*win(2), 'i')
 c
-       call finco (lin)
+       call coFin (lin)
        call xyclose(lin)
        call txtclose(llog)
        call pgend
