@@ -10,10 +10,6 @@ c    prog: cgcurs.for, cgdisp.for, cgslice.for, cgspec.for, gpcomb.for,
 c          gpdof.for, impos.for, maxfit.for, sfind.for
 c
 c  User callable routines are:
-c
-c   initco  : Initialize coordinate object
-c   finco   : Free coordinate object
-c
 c   axfndco : Find axis of specified generic type
 c   axtypco : Return generic axis type
 c   chkaxco : Check axis CTYPE and axis label type for consistency
@@ -54,17 +50,17 @@ c    lun    Image handle
 c    type   Generic axis type to find.  The first axis encountered
 c           that has this type is returned.  The type should be one of:
 c
-c             RA   ->  RA, LL, ELON, GLON
-c             DEC  ->  DEC, MM, ELAT, GLAT
-c             LONG ->  ELON, GLON
-c             LATI ->  ELAT, GLAT
-c             VELO ->  VELO, FELO
-c             FREQ ->  FREQ
-c             UV   ->  UU, VV
-c             ANGL ->  ANGLE
-c             RAD  ->  An axis whose increment should be in
-c                      radians.  These are RA, DEC, LAT, LONG,
-c                      ANGL axes as described by the LHS above.
+c             RA   -> RA, LL, ELON, GLON
+c             DEC  -> DEC, MM, ELAT, GLAT
+c             LNG  -> ELON, GLON
+c             LAT  -> ELAT, GLAT
+c             VELO -> VELO, FELO
+c             FREQ -> FREQ
+c             UV   -> UU, VV
+c             ANGL -> ANGLE
+c             RAD  -> An axis whose increment should be in radians.
+c                     These are RA, DEC, LNG, LAT, ANGL axes as
+c                     described by the LHS above.
 c           Other types are searched for exactly as specified
 c    n      Number of axes to search starting from 1
 c    iax    SPecific axis to match if N=0
@@ -105,14 +101,14 @@ c
             if (n.ne.0) jax = i
             return
           endif
-        else if (ltype.eq.'LONG') then
+        else if (ltype.eq.'LNG') then
           if (lctype(1:il).eq.'ELON' .or.
      *        lctype(1:il).eq.'GLON') then
             jax = 1
             if (n.ne.0) jax = i
             return
           endif
-        else if (ltype.eq.'LATI') then
+        else if (ltype.eq.'LAT') then
           if (lctype(1:il).eq.'ELAT' .or.
      *        lctype(1:il).eq.'GLAT') then
             jax = 1
@@ -190,17 +186,17 @@ c    iax      Specific axis if N=0
 c    ctype    Array of axis type descriptors
 c  Output
 c    type     Array of generic axis types describing each axis
-c             The generic names returned are one of
-c              RA, DEC, LATI, LONG, VELO, FREQ, UV, ANGL, NONE  where
+c             The generic names returned are one of RA, DEC, LNG, LAT,
+c             VELO, FREQ, UV, ANGL, NONE  where
 c
-c             RA   means CTYPE was one of   RA, LL
-c             DEC  means CTYPE was one of   DEC, MM
-c             LONG means CTYPE was one of   ELON, GLON
-c             LATI means CTYPE was one of   ELAT, GLAT
-c             VELO means CTYPE was one of   VELO, FELO
-c             FREQ means CTYPE was one of   FREQ
-c             UV   means CTYPE was one of   UU, VV
-c             ANGL means CTYPE was          ANGLE
+c             RA   means CTYPE was one of RA, LL
+c             DEC  means CTYPE was one of DEC, MM
+c             LNG  means CTYPE was one of ELON, GLON
+c             LAT  means CTYPE was one of ELAT, GLAT
+c             VELO means CTYPE was one of VELO, FELO
+c             FREQ means CTYPE was one of FREQ
+c             UV   means CTYPE was one of UU, VV
+c             ANGL means CTYPE was        ANGLE
 c             NONE means CTYPE was not recognized
 c-----------------------------------------------------------------------
       integer i, i1, i2, j, il
@@ -230,11 +226,11 @@ c-----------------------------------------------------------------------
         else if
      *     (lctype(1:il).eq.'ELON' .or.
      *      lctype(1:il).eq.'GLON') then
-          type(j) = 'LONG'
+          type(j) = 'LNG'
         else if
      *     (lctype(1:il).eq.'ELAT' .or.
      *      lctype(1:il).eq.'GLAT') then
-          type(j) = 'LATI'
+          type(j) = 'LAT'
         else if
      *     (lctype(1:4).eq.'VELO' .or.
      *      lctype(1:4).eq.'FELO') then
@@ -270,64 +266,72 @@ c  ---------------------------------------------------------------------
 c  Check axis type and desired coordinate type are compatible.
 c
 c  Input
-c    lun    Image handle
+c    lun    Image handle.
 c    ltype  Coordinate type user has asked for; one of
-c               'hms',    'dms',    'arcsec', 'arcmin', 'absdeg',
-c               'reldeg', 'abspix', 'relpix', 'absghz', 'relghz',
-c               'abskms', 'relkms', 'absnat', 'relnat', none'
-c    iax    Axis of interest
-c    stype  Spectral axis descriptor.  If this is ' ', then
-c           the CTYPE must match the TYPE (i.e. VELO/abskms is
-c           good, FELO/absghz is bad).  Otherwise, it is assumed
-c           that the spectral axis is going to be switched to
-c           the desired STYPE so that any spectral CTYPE is
-c           compatible with any spectral TYPE
+c               'hms',    'dms',
+c               'arcsec', 'arcmin', 'arcmas',
+c               'absdeg', 'reldeg',
+c               'absghz', 'relghz',
+c               'abskms', 'relkms',
+c               'absnat', 'relnat',
+c               'abspix', 'relpix',
+c               'none'
+c    iax    Axis of interest.
+c    stype  Spectral axis descriptor.  If blank, then CTYPE must match
+c           the TYPE (i.e. VELO/abskms is good, FELO/absghz is bad).
+c           Otherwise, it is assumed that the spectral axis is going to
+c           be switched to the desired STYPE so that any spectral CTYPE
+c           is compatible with any spectral TYPE.
 c-----------------------------------------------------------------------
-      integer il, jax
-      character ctype*32, str*132, gtype*4
-      logical bad, bads
+      logical   bads, good
+      integer   il, jax
+      character ctype*32, gtype*4, str*132
 c-----------------------------------------------------------------------
       if (stype.ne.' ' .and. stype.ne.'frequency' .and.
      *    stype.ne.'optical' .and. stype.ne.'radio') then
         str = 'CHKAXCO: invalid spectral axis type ('//stype//') given'
         call bug('f', str)
       endif
-c
-c Get generic axis type
-c
+
+c     Get generic axis type.
       call axtypco(lun, 0, iax, gtype)
 
-      bad = .false.
+c     Compare generic axis type with label type.
       bads = .false.
-c
-c Compare generic axis type with label type
-c
+
       if (ltype.eq.'hms') then
-        if (gtype.ne.'RA' .and. gtype.ne.'LL') bad = .true.
+        good = gtype.eq.'RA'  .or. gtype.eq.'LL'
+
       else if (ltype.eq.'dms') then
-        if (gtype.ne.'DEC' .and. gtype.ne.'MM') bad = .true.
+        good = gtype.eq.'DEC' .or. gtype.eq.'MM' .or.
+     *         gtype.eq.'LNG' .or. gtype.eq.'LAT'
+
       else if (ltype.eq.'arcsec' .or. ltype.eq.'arcmin' .or.
      *         ltype.eq.'arcmas' .or.
      *         ltype.eq.'absdeg' .or. ltype.eq.'reldeg') then
         call axfndco(lun, 'RAD', 0, iax, jax)
-        if (jax.eq.0) bad = .true.
+        good = jax.ne.0
+
       else if (ltype.eq.'abskms' .or. ltype.eq.'relkms') then
-        if (gtype.ne.'VELO' .and. gtype.ne.'FREQ') bad = .true.
+        good = gtype.eq.'VELO' .or. gtype.eq.'FREQ'
         if (gtype.eq.'FREQ' .and. stype.eq.' ') bads = .true.
+
       else if (ltype.eq.'absghz' .or. ltype.eq.'relghz') then
-        if (gtype.ne.'VELO' .and. gtype.ne.'FREQ') bad = .true.
+        good = gtype.eq.'VELO' .or. gtype.eq.'FREQ'
         if (gtype.eq.'VELO' .and. stype.eq.' ') bads = .true.
-      else if (ltype.eq.'absnat' .or. ltype.eq.'relnat') then
+
+      else
+        good = .true.
         continue
       endif
-c
-c Bug out if no good
-c
-      if (bad .or. bads) then
+
+c     Bug out if no good.
+      if (.not.good .or. bads) then
         call ctypeco(lun, iax, ctype, il)
         call output('Axis ctype = '//ctype)
         str = 'Coordinate type = '//ltype
         call output(str)
+
         if (bads) then
           if (stype.eq.' ') then
             call output('Spectral axis convention unspecified')
@@ -336,6 +340,7 @@ c
             call output(str)
           endif
         endif
+
         call bug('f', 'CHKAXCO: These are inconsistent')
       endif
 
@@ -352,7 +357,7 @@ c+
       integer iax, lun, il
       character*(*) ctype
 c  ---------------------------------------------------------------------
-c     Return CTYPE for one axis
+c  Return CTYPE for one axis.
 c
 c  Input
 c    lun    Handle
@@ -374,43 +379,6 @@ c-----------------------------------------------------------------------
         il = il + 1
       enddo
       il = il - 1
-
-      end
-
-c***********************************************************************
-
-c* finCO -- Finish up after coordinate conversion routines
-c& nebk
-c: coordinates
-c+
-      subroutine finco (lun)
-
-      integer lun
-c  ---------------------------------------------------------------------
-c     Tidy up after coordinate conversion routines have been accessed
-c
-c  Input
-c    lun    Handle of image
-c-----------------------------------------------------------------------
-      call coFin(lun)
-
-      end
-
-c***********************************************************************
-c* initCO -- Initialize coordinate conversion routines
-c& nebk
-c: coordinates
-c+
-      subroutine initco (lun)
-
-      integer lun
-c  ---------------------------------------------------------------------
-c     Initialize coordinate conversion routine
-c
-c  Input
-c    lun    Handle of image
-c-----------------------------------------------------------------------
-      call coInit(lun)
 
       end
 
@@ -554,9 +522,7 @@ c-----------------------------------------------------------------------
       endif
 
       do i = i1, i2
-c
-c Get generic axis type and set default
-c
+c       Get generic axis type and set default.
         call axtypco(lun, 0, i, gtype)
 
         j = 1
@@ -573,7 +539,7 @@ c
           else
             types(j) = 'dms'
           endif
-        else if (gtype.eq.'LONG' .or. gtype.eq.'LATI') then
+        else if (gtype.eq.'LNG' .or. gtype.eq.'LAT') then
           if (absoff.eq.'off') then
             types(j) = 'reldeg'
           else
@@ -628,7 +594,7 @@ c  Output:
 c    stype  ' ' if not spectral, else 'radio', 'optical', 'frequency'
 c-----------------------------------------------------------------------
       integer   il
-      character ctype*9 
+      character ctype*9
 c-----------------------------------------------------------------------
       call ctypeco(lun, iax, ctype, il)
 
@@ -832,7 +798,7 @@ c     while we are it.
       endif
 
 c     Switch spectral axis to type of input coordinate.
-      if (stypei.ne.' ') call coSpcSet(lun, stypei, ifrq, algo)
+      if (stypei.ne.' ') call coSpcSet(lun, stypei, ' ', ifrq, algo)
 
 c     Convert coordinates to absolute pixels first; loop over axes.
       cti = '  '
@@ -870,7 +836,7 @@ c       Having turned the coordinate into a pixel, we can now convert
 c       it to the desired output coordinate type.
 
 c       Switch spectral axis to type of output coordinate.
-        if (stypeo.ne.' ') call coSpcSet(lun, stypeo, ifrq, algo)
+        if (stypeo.ne.' ') call coSpcSet(lun, stypeo, ' ', ifrq, algo)
 
 c       Loop over axes
         cti = '  '
@@ -905,7 +871,7 @@ c     the input values to improve precision.
       enddo
 
 c     Restore spectral axis type from header.
-      call coSpcSet(lun, ' ', ifrq, algo)
+      call coSpcSet(lun, ' ', ' ', ifrq, algo)
 
       end
 
