@@ -4,26 +4,26 @@ c= IMPOS - Converts image coordinates between different systems.
 c& nebk
 c: image analysis
 c+
-c       IMPOS takes a coordinate in a specified system (such
-c       as "abspix" or "arcsec") and converts it to all appropriate
-c       coordinate systems (absolute world, offset world, pixels,
-c       offset pixels).   Spectral axes are converted to values in
-c       frequency, radio and optical velocities.
+c       IMPOS takes a coordinate in a specified system (such as "abspix"
+c       or "arcsec") and converts it to all appropriate coordinate
+c       systems (absolute world, offset world, pixels, offset pixels).
+c       Spectral axes are converted to values in frequency, radio and
+c       optical velocities.
 c
 c       If the input is an image and the specified coordinate represents
 c       a valid pixel, its value is reported as well.
 c
 c@ in
-c       The input image or visibility dataset. For a visibility dataset,
-c       the coordinate system is relative to the first visibility
-c       record.
+c       The input image or visibility dataset.  For a visibility
+c       dataset, the coordinate system is relative to the first
+c       visibility record.
 c@ coord
 c       Specify the coordinate for each axis that you are interested
 c       in; you don't necessarily need one for every axis in the image.
 c       No default.
 c@ type
 c       Specify the coordinate system of the input coordinate for each
-c       axis.  Different axes can be in different systems. Choose from:
+c       axis.  Different axes can be in different systems.  Choose from:
 c
 c          "hms"         HH:MM:SS.S  (e.g. for RA)
 c          "dms"         DD:MM:SS.S  (e.g. for DEC)
@@ -48,6 +48,17 @@ c       example, you might give an optical velocity with "type=abskms",
 c       but the header indicates a frequency axis.  If unset, it is
 c       assumed the coordinate is in the convention defined by the image
 c       header.
+c@ options
+c       Extra processing options.  Several can be given, separated by
+c       commas, with minimum-match.
+c         altprj    Interpret a CAR (plate carée) projection in the
+c                   input ot template image as a simple linear
+c                   coordinate system with an additional 1/cos(lat0)
+c                   scaling factor applied when computing the longitude,
+c                   e.g.
+c                      RA = (p1 - CRPIX1)*CDELT1/cos(CRVAL2).
+c                   This interpretation differs significantly from the
+c                   FITS standard when lat0 (i.e. CRVAL2) is non-zero.
 c
 c$Id$
 c--
@@ -62,18 +73,17 @@ c-----------------------------------------------------------------------
       integer MAXTYP
       parameter (MAXTYP = 13)
 
-      logical   doim, dospec, off
-      integer   i, il, iostat, ipix(MAXNAX), lun, naxis, nco,
+      logical   altPrj, doim, dospec, off
+      integer   i, il, iostat, ipix(MAXNAX), lIn, naxis, nco,
      *          nsize(MAXNAX), nstypes, ntypei, sax, strlen1(MAXNAX),
      *          strlen2(MAXNAX), strlen3(MAXNAX)
       real      data(MAXDIM), value
       double precision rfreq, pixel(MAXNAX), win(MAXNAX)
       character bunit*9, ctypes(MAXNAX)*9, file*80, labtyp(MAXTYP)*6,
-     *          sctypes(3)*4, str1*132, strout1(MAXNAX)*80,
+     *          sctypes(3)*8, str1*132, strout1(MAXNAX)*80,
      *          strout2(MAXNAX)*80, strout3(MAXNAX)*80, stypei*9,
-     *          stypes(3)*9, text*132, trail*6, typei(MAXNAX)*6,
-     *          typeo(MAXNAX)*6, typeo2(MAXNAX)*6, typeo3(MAXNAX)*6,
-     *          version*80
+     *          stypes(3)*9, text*132, typei(MAXNAX)*6, typeo(MAXNAX)*6,
+     *          typeo2(MAXNAX)*6, typeo3(MAXNAX)*6, version*80
 
       external  hdprsnt, versan
       logical   hdprsnt
@@ -115,56 +125,62 @@ c       Get coordinate.
 
 c     Get spectral-axis type.
       call keymatch('stype', 3, stypes, 1, stypei, nstypes)
+
+c     Get options.
+      call options('options', 'altprj', altPrj, 1)
       call keyfin
 
 c     Open file.
-      call hopen(lun, file, 'old', iostat)
+      call hopen(lIn, file, 'old', iostat)
       if (iostat.ne.0) then
         call bug('w','Error opening input')
         call bugno('f',iostat)
       endif
 
-      doim = hdprsnt(lun,'image')
-      call hclose(lun)
+      doim = hdprsnt(lIn,'image')
+      call hclose(lIn)
       if (doim) then
-        call xyopen(lun, file, 'old', MAXNAX, nsize)
-        call rdhda(lun, 'bunit', bunit, ' ')
+        call xyopen(lIn, file, 'old', MAXNAX, nsize)
+        call rdhda(lIn, 'bunit', bunit, ' ')
       else
-        call uvopen(lun, file, 'old')
-        call uvnext(lun)
+        call uvopen(lIn, file, 'old')
+        call uvnext(lIn)
       endif
 
-      call initco(lun)
-      call coGetI(lun, 'naxis', naxis)
-      call coGetD(lun, 'restfreq', rfreq)
+      call coInit(lIn)
+      if (altPrj) call coAltPrj(lIn)
+      call coGetI(lIn, 'naxis', naxis)
+      call coGetD(lIn, 'restfreq', rfreq)
 
 c     Initialize coordinate transformation routines and fish out CTYPES.
       do i = 1, naxis
-        call ctypeco(lun, i, ctypes(i), il)
+        call ctypeco(lIn, i, ctypes(i), il)
       enddo
 
 c     Check spectral-axis type, set default value if needed and
 c     convention order in which spectral axes will be listed.
-      call sstdef(lun, nco, typei, stypei, sax)
+      call sstdef(lIn, nco, typei, stypei, sax)
       dospec = sax.ne.0 .and. nco.ge.sax
       if (sax.gt.0) then
-        trail = ctypes(sax)(5:)
-        sctypes(1) = ctypes(sax)(1:4)
+        sctypes(1) = ctypes(sax)
+        if (sctypes(1)(:4).eq.'VELO') sctypes(1) = 'VRAD'
+        if (sctypes(1)(:4).eq.'FELO') sctypes(1) = 'VOPT-F2W'
+
         if (rfreq.gt.0d0) then
           if (sctypes(1).eq.'FREQ') then
-            sctypes(2) = 'VELO'
-            sctypes(3) = 'FELO'
+            sctypes(2) = 'VRAD'
+            sctypes(3) = 'VOPT-F2W'
             stypes(1) = 'frequency'
             stypes(2) = 'radio'
             stypes(3) = 'optical'
-          else if (sctypes(1).eq.'VELO') then
-            sctypes(2) = 'FELO'
+          else if (sctypes(1).eq.'VRAD') then
+            sctypes(2) = 'VOPT-F2W'
             sctypes(3) = 'FREQ'
             stypes(1) = 'radio'
             stypes(2) = 'optical'
             stypes(3) = 'frequency'
-          else if (sctypes(1).eq.'FELO') then
-            sctypes(2) = 'VELO'
+          else if (sctypes(1).eq.'VOPT-F2W') then
+            sctypes(2) = 'VRAD'
             sctypes(3) = 'FREQ'
             stypes(1) = 'optical'
             stypes(2) = 'radio'
@@ -181,17 +197,17 @@ c     convention order in which spectral axes will be listed.
 c     -----------------
 c     World coordinate.
 c     -----------------
-      call setoaco(lun, 'abs', nco, 0, typeo)
+      call setoaco(lIn, 'abs', nco, 0, typeo)
 
 c     Convert & format and inform.
-      call w2wfco(lun, nco, typei, stypei, win, typeo, stypes(1),
+      call w2wfco(lIn, nco, typei, stypei, win, typeo, stypes(1),
      *             .false., strout1, strlen1)
 
       if (dospec) then
         call repspc(sax, stypes, nco, typeo, typeo2, typeo3)
-        call w2wfco(lun, nco, typei, stypei, win, typeo2, stypes(2),
+        call w2wfco(lIn, nco, typei, stypei, win, typeo2, stypes(2),
      *              .false., strout2, strlen2)
-        call w2wfco(lun, nco, typei, stypei, win, typeo3, stypes(3),
+        call w2wfco(lIn, nco, typei, stypei, win, typeo3, stypes(3),
      *              .false., strout3, strlen3)
       endif
 
@@ -200,21 +216,18 @@ c     Convert & format and inform.
         call pader(typeo(i), strout1(i), strlen1(i))
 
         if (i.eq.sax) then
-          write(text, 100) i, sctypes(1)//trail,
-     *                     strout1(i)(1:strlen1(i))
+          write(text, 100) i, sctypes(1), strout1(i)(1:strlen1(i))
           call output(text)
 
           if (dospec) then
-            write(text, 100) i, sctypes(2)//trail,
-     *                       strout2(i)(1:strlen2(i))
+            write(text, 100) i, sctypes(2), strout2(i)(1:strlen2(i))
             call output(text)
-            write(text, 100) i, sctypes(3)//trail,
-     *                       strout3(i)(1:strlen3(i))
+            write(text, 100) i, sctypes(3), strout3(i)(1:strlen3(i))
             call output(text)
           endif
         else
           write(text, 100) i, ctypes(i), strout1(i)(1:strlen1(i))
-100       format('Axis ', i1, ': ',  a, ' = ', a)
+100       format('Axis',i2,': ',a8,' = ',a)
           call output(text)
         endif
       enddo
@@ -222,15 +235,15 @@ c     Convert & format and inform.
 c     ------------------------
 c     Offset world coordinate.
 c     ------------------------
-      call setoaco(lun, 'off', nco, 0, typeo)
-      call w2wfco(lun, nco, typei, stypei, win, typeo, stypes(1),
+      call setoaco(lIn, 'off', nco, 0, typeo)
+      call w2wfco(lIn, nco, typei, stypei, win, typeo, stypes(1),
      *            .false., strout1, strlen1)
 
       if (dospec) then
         call repspc(sax, stypes, nco, typeo, typeo2, typeo3)
-        call w2wfco(lun, nco, typei, stypei, win, typeo2, stypes(2),
+        call w2wfco(lIn, nco, typei, stypei, win, typeo2, stypes(2),
      *              .false., strout2, strlen2)
-        call w2wfco(lun, nco, typei, stypei, win, typeo3, stypes(3),
+        call w2wfco(lIn, nco, typei, stypei, win, typeo3, stypes(3),
      *              .false., strout3, strlen3)
       endif
 
@@ -238,16 +251,13 @@ c     ------------------------
       call output('Offset world coordinates')
       do i = 1, nco
         if (i.eq.sax) then
-          write(text, 100) i, sctypes(1)//trail,
-     *                     strout1(i)(1:strlen1(i))
+          write(text, 100) i, sctypes(1), strout1(i)(1:strlen1(i))
           call output(text)
 
           if (dospec) then
-            write(text, 100) i, sctypes(2)//trail,
-     *                       strout2(i)(1:strlen2(i))
+            write(text, 100) i, sctypes(2), strout2(i)(1:strlen2(i))
             call output(text)
-            write(text, 100) i, sctypes(3)//trail,
-     *                       strout3(i)(1:strlen3(i))
+            write(text, 100) i, sctypes(3), strout3(i)(1:strlen3(i))
             call output(text)
           endif
         else
@@ -263,8 +273,8 @@ c     ----------------
         do i = 1, nco
           typeo(i) = 'abspix'
         enddo
-        call w2wco(lun, nco, typei, stypei, win, typeo, ' ', pixel)
-        call w2wfco(lun, nco, typei, stypei, win, typeo, stypes(1),
+        call w2wco(lIn, nco, typei, stypei, win, typeo, ' ', pixel)
+        call w2wfco(lIn, nco, typei, stypei, win, typeo, stypes(1),
      *              .true., strout1, strlen1)
 
         call output(' ')
@@ -282,7 +292,7 @@ c     --------------
         do i = 1, nco
           typeo(i) = 'relpix'
         enddo
-        call w2wfco(lun, nco, typei, stypei, win, typeo, stypes(1),
+        call w2wfco(lIn, nco, typei, stypei, win, typeo, stypes(1),
      *              .true., strout1, strlen1)
 
         call output(' ')
@@ -304,8 +314,8 @@ c     Find nearest pixel to coordinate location.
 
 c         Find value if on image.
           if (.not.off) then
-            call xysetpl(lun, MAXNAX-2, ipix(3))
-            call xyread(lun, ipix(2), data)
+            call xysetpl(lIn, MAXNAX-2, ipix(3))
+            call xyread(lIn, ipix(2), data)
             value = data(ipix(1))
 
             call output(' ')
@@ -325,12 +335,12 @@ c         Find value if on image.
 
 c     All done
       if (doim) then
-        call xyclose(lun)
+        call xyclose(lIn)
       else
-        call uvclose(lun)
+        call uvclose(lIn)
       endif
 
-      call finco(lun)
+      call coFin(lIn)
 
       end
 
@@ -356,9 +366,9 @@ c-----------------------------------------------------------------------
 
 c***********************************************************************
 
-      subroutine sstdef (lun, n, typei, stypei, sax)
+      subroutine sstdef (lIn, n, typei, stypei, sax)
 
-      integer   lun, n, sax
+      integer   lIn, n, sax
       character typei(n)*(*), stypei*(*)
 c-----------------------------------------------------------------------
 c  Check consistency of spectral-axis type and set a default if needed.
@@ -380,7 +390,7 @@ c     First set a default spectral axis type based upon the header.
       i = 1
       do while (i.le.n .and. dstype.eq.' ')
 c       See if this axis is spectral.
-        call specco(lun, i, dstype)
+        call specco(lIn, i, dstype)
         if (dstype.ne.' ') sax = i
         i = i + 1
       enddo
