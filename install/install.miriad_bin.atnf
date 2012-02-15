@@ -7,16 +7,17 @@
 #
 #  Typical example of install:
 #     cd $ASTROMAKE/opt/miriad
-#     wget ftp://ftp.atnf.csiro.au/pub/software/miriad/miriad-common.tar.gz
-#     wget ftp://ftp.atnf.csiro.au/pub/software/miriad/miriad-linux.tar.gz
-#  but this does not include sources, if you need those, add this as well:
-#     wget ftp://ftp.atnf.csiro.au/pub/software/miriad/miriad-code.tar.gz
+#     $MIR/install/install.miriad_bin.atnf mir=at
+#  this will create a new directory 'at' within which the
+#  ATNF style miriad will live
 #
+# Last updated:
+#    15-feb-2012  modified for recent change from .gz to .bz2
 
 set ftp=ftp://ftp.atnf.csiro.au/pub/software/miriad/
 
 set root=.
-set arch=linux
+set arch=linux64
 set mir=miriad
 set code=1
 
@@ -29,21 +30,24 @@ echo "arch=$arch  (possible options:  linux  linux64  sun4sol  darwin_x86_64)"
 echo mir=$mir
 sleep 5
 
-set files=(miriad-common.tar.gz miriad-$arch.tar.gz)
-if ($code) set files=($files miriad-code.tar.gz)
+set files=(miriad-common.tar.bz2 miriad-$arch.tar.bz2)
+if ($code) set files=($files miriad-code.tar.bz2)
 
 if (-d $root/miriad) then
   echo Cannot install over an old version of miriad in $root
+  echo This directory is temporary 
   exit 1
 endif
 
 #  get the files on the fly, or if they exist, use them
 foreach file ($files)
   if (-e $file) then
-     tar -C $root -zxf $file
+     echo Using $file
+     tar -C $root -jxf $file
   else
+     echo Getting  $ftp/$file 
       #wget -O - $ftp/$file | tar -C $root -zxf -
-     curl $ftp/$file | tar -C $root -zxf -
+     curl $ftp/$file | tar -C $root -jxf -
   endif
 end
 
