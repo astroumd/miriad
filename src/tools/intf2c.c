@@ -27,6 +27,7 @@ Usage:
             INTEGER, REAL, DOUBLE PRECISION, LOGICAL and PTRDIFF
             respectively. The default is "int", "float", "double", "int"
             and "int" respectively.
+    -a      automatically use '-p long' if sizeof(long)=8 on 64bit machines
     -c      Invoke code to convert between FORTRAN and C integers and logicals.
 
 Intf2c and the C preprocessor:
@@ -108,7 +109,7 @@ fortran subroutine fstrcpy(character out,character in)
 /*    rjs  21jul09 Change in flags for types. Add FORTRAN PTRDIFF type. */
 /************************************************************************/
 
-#define VERSION_ID "version 1.0 21-Jul-09"
+#define VERSION_ID "version 1.0 15-feb-2012"
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -208,7 +209,7 @@ char *argv[];
 /* Handle the command line. Determine input and output files and the system. */
 
   fortran_real = "float";
-  fortran_integer = "int";
+  fortran_integer = "int"; 
   fortran_logical = "int";
   fortran_ptrdiff = "int";
   fortran_double  = "double";
@@ -229,6 +230,7 @@ char *argv[];
 	case 'd': if(++i < argc)fortran_double  = argv[i]; break;
 	case 'l': if(++i < argc)fortran_logical = argv[i]; break;
 	case 'p': if(++i < argc)fortran_ptrdiff = argv[i]; break;
+	case 'a': if(sizeof(long)==8) fortran_ptrdiff = "long"; break;
 	case 'c': cvtint = 1; cvtlog = 1; break;
 	case '?':
 	  usage();

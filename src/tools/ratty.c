@@ -10,7 +10,7 @@ for these machines.
 Usage:
 
  ratty [-h] [-s system] [-I incdir] [-D symbol] [-bglu [-n start inc]
-       [-p data-type] [in] [out]
+       [-p data-type] [-a] [in] [out]
 
     system:  compiler/system type, one of
                "alliant"   (alliant unix compiler)
@@ -35,6 +35,8 @@ Usage:
     symbol:  Define this symbol to the preprocessor. Multiple
              definitions are allowed, defining one symbol per -D entry
              (eg, define two symbols as "-D sym1 -D sym2").
+
+    -a:      shortcut when sizeof(long) == 8, use '-p INTEGER*8'
 
     -b:      If specified, backslashes inside quoted textstrings are
              doubled. This allows for compilers which treat the
@@ -95,6 +97,7 @@ vector processing capacities (compilers "unicos", "alliant" and "convex"):
 * CARMA MIRIAD customizations:
 *
 * 2011/Jul/07  pkgw  Reduce chattiness by removing "number of lines" message
+* 2012/Feb/15  pjt   -a flag to simplify 64bit usage of integer*8
 *
 * $Id$
 ******************************************************************************
@@ -106,7 +109,7 @@ vector processing capacities (compilers "unicos", "alliant" and "convex"):
 *      (uflag?textout("continue\n"):textout("CONTINUE\n"));
 *  comment lines like "c#define foo bar" still define !!! 
 *****************************************************************************/
-#define VERSION_ID   "2011/05/16"
+#define VERSION_ID   "2012/02/15"
 
 #define max(a,b) ((a) > (b) ? (a) : (b) )
 #define min(a,b) ((a) < (b) ? (a) : (b) )
@@ -240,6 +243,7 @@ int main(int argc,char *argv[])
     if(*s == '-'){				/* Handle flags. */
       s++;
       while(*s)switch(*s++){
+	case 'a': if (sizeof(long)==8) ptrdiff = "integer*8";   break;
         case 'b': dbslash = TRUE;				break;
 	case 's': if(++i < argc) sysname = argv[i];		break;
 	case 'd':
