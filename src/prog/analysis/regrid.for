@@ -230,7 +230,6 @@ c       Must be less that 0.5.  The default is 0.05.
 c
 c$Id$
 c--
-c
 c  History:
 c    Refer to the RCS log, v1.1 includes prior revision information.
 c-----------------------------------------------------------------------
@@ -352,7 +351,7 @@ c     Descriptors, if given, must match the number in 'axes'.
 c   Set up the output coordinate system.
       call coInit(lIn)
       if (altPrj) call coAltPrj(lIn)
-      call coCreate(cOut)
+      call coCreate(naxes, cOut)
 
       call coFindAx(lIn, 'longitude', ilng)
       call coFindAx(lIn, 'latitude',  ilat)
@@ -406,7 +405,7 @@ c       Reset descriptors from the template.
 c           Reset the spectral axis of the input coordinate object to
 c           match that of the output (may change vobs).  Preempts any
 c           change that pCvtInit might make by calling coSpcSet.
-            call coSpcSet(lIn, ctype, ispc, algo)
+            call coSpcSet(lIn, ctype, ' ', ispc, algo)
           endif
         enddo
 
