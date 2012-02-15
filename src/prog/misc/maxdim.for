@@ -22,8 +22,8 @@ c
 c       By specifiying a cube size (nx,ny,nz) you can easily test your
 c       memory and behavior of MIRIAD programs. 
 c
-c       A useful test to exhaust your memory is:
-c          maxdim nx=100 ny=100 nz=100 n=100
+c       A useful test to exhaust your memory and test if you can go over 2GB
+c          maxdim nx=100 ny=100 nz=100 n=3000
 c
 c@ nx
 c       X dimension of a cube to be allocated
@@ -50,7 +50,6 @@ c
       include 'mem.h'
 c
       INTEGER MAXP,MAXN
-c pjt 512
       PARAMETER(MAXP=10000,MAXN=512)
 
       PTRDIFF p(MAXP)
