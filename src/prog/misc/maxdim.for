@@ -8,6 +8,7 @@ c  pjt     aug-2009   merged in the miralloc test code (still old style ptrdiff)
 c  pjt     oct-2010   display MIRBIN
 c  pjt     jun-2011   new style ptrdiff, add summing the array
 c  pjt     jun-2011   add option to use big bogus array, showing memory hog
+c  pjt     feb-2012   proper usage of mem.h space to go over 2GB arrays
 c
 c= maxdim - Report all known MAXDIM related parameters, and test memory usage
 c& pjt
@@ -32,7 +33,9 @@ c@ nz
 c       Z dimension of a cube to be allocated
 c@ n
 c       Number of XYZ cubes that are to be allocated. There is room
-c       for up to 10000 (MAXP)
+c       for up to 10000 (MAXP).
+c       The product is nx*ny*nz should not exceed 2,147,483,647
+c       as fortran integers could be negative.
 c@ m
 c       Repeat summing over the XYZ cubes a number of times.
 c       Default: 1
@@ -50,12 +53,12 @@ c
 c pjt 512
       PARAMETER(MAXP=10000,MAXN=512)
 
-      PTRDIFF nx1,ny1,nz1,ntot,p(MAXP)
-      INTEGER nx,ny,nz,n,m,i,j
+      PTRDIFF p(MAXP)
+      INTEGER nx,ny,nz,ntot,n,m,i,j
       CHARACTER type*10
-c the 3D array takes lots of memory on modern ld on linux?
-      REAL biga(MAXN,MAXN,MAXN)
-c      REAL biga(MAXN)
+c the 3D array can take a lots of memory on some ld versions on linux?
+c      REAL biga(MAXN,MAXN,MAXN)
+      REAL biga(MAXN)
 
       CHARACTER version*80, versan*80, mirbin*128
       INTEGER membuf,size
@@ -90,10 +93,8 @@ c
       CALL lcase(type)
       sr = sd
 
-      nx1 = nx
-      ny1 = ny
-      nz1 = nz
-      ntot = nx1*ny1*nz1
+      ntot = nx*ny*nz
+      IF(ntot.LE.0) CALL bug('f','Cube too big?')
 
 c  There are some variables that are only present in maxdim.h (fortran)
 c  and not in maxdimc.h (C): MAXWIDE
@@ -127,8 +128,8 @@ c     WRITE(*,*) 'MAXNAX       = ',MAXNAX
 
 	 DO i=1,n
 	    write(*,*) 'nxyz: ',nx,ny,nz
-	    IF (type(1:1).eq.'r') CALL MemAlloc(p(i), nx*ny*nz, 'r')
-	    IF (type(1:1).eq.'d') CALL MemAlloc(p(i), nx*ny*nz, 'd')
+	    IF (type(1:1).eq.'r') CALL MemAllop(p(i), nx*ny*nz, 'r')
+	    IF (type(1:1).eq.'d') CALL MemAllop(p(i), nx*ny*nz, 'd')
 	    write(*,*) 'pData(i)     =',i,p(i)
 	 ENDDO
 
@@ -141,8 +142,8 @@ c     WRITE(*,*) 'MAXNAX       = ',MAXNAX
 	 ENDDO
 
 	 DO i=1,n
-	    IF (type(1:1).eq.'r') CALL MemFree(p(i), nx*ny*nz, 'r')
-	    IF (type(1:1).eq.'d') CALL MemFree(p(i), nx*ny*nz, 'd')
+	    IF (type(1:1).eq.'r') CALL MemFrep(p(i), nx*ny*nz, 'r')
+	    IF (type(1:1).eq.'d') CALL MemFrep(p(i), nx*ny*nz, 'd')
 	 ENDDO
 
 	 
