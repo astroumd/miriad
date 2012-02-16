@@ -31,6 +31,7 @@ c
 c--
 c     nebk 04mar97 Original version
 c     nebk 10mar97 Handle multiple channels
+c     pkgw 16feb12 I have an idea: let's check for error conditions!
 c---------------------------------------------------------------------------
       implicit none
 c
@@ -38,13 +39,13 @@ c
       character in*80, out*80, name*90, line*80
       double precision preamble(5)
       integer nchani, nchano, lin, lins, lout, nread, irec, ichan,
-     +  offset, ioff, npol, pol, nfiles, j, k, ifile
+     +  offset, ioff, npol, pol, nfiles, j, k, ifile, nrec0
       logical gflags(maxchan), first
       complex data(maxchan)
       real scratch(maxchan*3)
 
       character version*(*)
-      parameter (version='UvGlue: Version 10-Mar-97')
+      parameter (version='UvGlue: Version 16-feb-12')
       integer len1
       character itoaf*3
       data first /.true./
@@ -129,6 +130,19 @@ c
         write (line, 100) irec
 100     format ('Read ', i8, ' records from this file')
 c        call output (line)
+c
+c Check the files all have same number of records
+c
+        if (ifile.eq.1) then
+           nrec0 = irec
+        else
+           if (irec.ne.nrec0) then
+              write (line, 200) nrec0, ifile, irec
+ 200          format ('first has ', i8, '; number ', i3, ' has ', i8)
+              call bug ('f', 'files contain different numbers' //
+     +             ' of records: ' // line)
+           endif
+        endif
         irec = 0
       end do
       call output (' ')
