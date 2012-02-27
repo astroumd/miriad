@@ -77,6 +77,19 @@ c       is assumed automatically, regardless of user input. This means
 c       the inputs for 'type,' 'range,' 'device' etc are not relevant
 c       and are ignored.
 c
+c       In large images with no clear sources, SFIND may find zero
+c       source pixels and report a cutoff p-value of zero. In this case
+c       it will also report a "needed" p-value (among other
+c       quantities). If one pixel had been present with this p-value or
+c       smaller, SFIND would have detected it as a source pixel. This
+c       p-value can be converted to a limiting sigma with:
+c           sigmalim = sqrt(2) * erfinv(1 - 2 * pvneeded).
+c       This value isn't reported by SFIND because we have no "erf
+c       inverse" function. Genuine sources will occupy more than one
+c       pixel, but the single-pixel case seems to provide the best
+c       limit. This limiting sigma can be used to determine a minimum
+c       detectible source flux density.
+c
 c       In the original implementation, SFIND displays an image via
 c       a contour plot or a pixel map representation on a PGPLOT device.
 c       The user is then provided with the opportunity to interactively
@@ -554,6 +567,9 @@ c                  bigger than the beam.
 c    pkgw 01dec11  Handle bigger images by bumping up the 'n' parameter
 c                  in the "fitting" subroutine. Also tweak doc spacing
 c                  and fix most compiler warnings.
+c    pkgw 30jan12  In images with zero source pixels, report what p-value
+c                  would have been necessary to find one, and document how to
+c                  turn this into a limiting sigma.
 c    pjt  13feb12  Merging essential ATNF changes (initco->coInit, conturcg)
 c
 c To do:
@@ -4004,6 +4020,21 @@ c       pline = (alpha/100.)
         gotit = .true.
        end if
       end do
+c Diagnostic in case no detected pixels at all
+      if (pcut.le.0.) then
+         write(line,'(a,e12.6,a,e12.6)')
+     +     'No FDR pixels detected! Minimal p-value ', plist(1),
+     +      ' ; needed ',(alpha/(100.*fdrdenom*float(npix)))
+         call output(line)
+         write(line,'(a,e12.6)')
+     +     '  With alpha=100%, would need a p-value of ',
+     +        (1./(fdrdenom*float(npix)))
+         call output(line)
+         write(line,'(a,f8.2,a)')
+     +     '  Could detect one pixel by setting alpha to ',
+     +        (100.*fdrdenom*float(npix)*plist(1)), '%'
+         call output(line)
+      end if
 c
 c Loop over all pixels to test whether image2(l,m)<P_cut.
 c If image2(l,m) > pcut, then pixel is most likely background,
