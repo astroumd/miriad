@@ -571,6 +571,8 @@ c    pkgw 30jan12  In images with zero source pixels, report what p-value
 c                  would have been necessary to find one, and document how to
 c                  turn this into a limiting sigma.
 c    pjt  13feb12  Merging essential ATNF changes (initco->coInit, conturcg)
+c    pkgw 20feb12  Report the RMS of all of the valid RMS values computed in
+c                  the image; i.e. a single characteristic image noise value.
 c
 c To do:
 c
@@ -3752,9 +3754,9 @@ c-----------------------------------------------------------------------
       include 'mem.h'
       include 'mirconst.h'
       integer ii,jj,lmn,lmx,mmn,mmx,nx,ny,l,m,npix
-      integer nn,lin,maxx,maxy
+      integer nn,lin,maxx,maxy,noksigma
       parameter (nn=20000)
-      real sigma, xrms, alpha
+      real sigma, xrms, alpha, rmssigma
       real image(nx,ny),pvalue,pline
       real plist(nx*ny),pcut
       real bmajp,bminp,bareap,ee,fdrdenom
@@ -3848,6 +3850,8 @@ c boxsize, and subtracting mean and dividing by sigma, to make the fdr
 c stuff work for images with images where sigma varies significantly
 c over the image
 c
+      noksigma = 0
+      rmssigma = 0.0
       do ii = 1,nint(float(nx)/float(boxsize))+1
        do jj = 1,nint(float(ny)/float(boxsize))+1
         l = boxsize/2 + (ii-1)*boxsize
@@ -3866,6 +3870,13 @@ c
              image2(iii,jjj) = (image(iii,jjj) - base0)/sigma
              meanimg(iii,jjj) = base0
              sgimg(iii,jjj) = sigma
+c This selects pixels within a circle in the center of the image with
+c a radius of one quarter of the image size (if it's square).
+             if (((iii-nx/2)**2+(jjj-ny/2)**2).lt.
+     +            0.03125*(nx**2+ny**2)) then
+              noksigma = noksigma + 1
+              rmssigma = rmssigma + sigma**2
+             end if
             end if
            end do
           end do
@@ -3873,6 +3884,15 @@ c
         end if
        end do
       end do
+c
+c     Report RMS sigma =~ typical image noise
+c
+      if (noksigma.gt.0) then
+         rmssigma = sqrt(rmssigma / noksigma)
+         write(line,'("RMS of the interior RMS values: ",f16.10)')
+     +        rmssigma
+         call output(line)
+      end if
 c
 c free memory from basecal arrays
       call memfree(ip2im,(boxsize+1)*(boxsize+1),'r')
