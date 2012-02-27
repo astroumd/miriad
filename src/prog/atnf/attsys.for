@@ -3,16 +3,14 @@ c************************************************************************
 c
 	implicit none
 c
-c= attsys - Apply or un-apply or redo on-line Tsys values.
+c= attsys - Do various operations with Tsys values.
 c& rjs
 c: uv analysis
 c+
 c	ATTSYS can apply or remove the Tsys weighting from correlation
-c	data and can reapply Tsys based on a specified IF.
+c	data, reapply Tsys based on a specified IF, or scale the
+c       the Tsys values (leaving the data unchanged)
 c
-c	NOTE: If you are using two IF bands when observing, ATTSYS cannot
-c	be used after you have split or copied the file down to single-IF
-c	datasets.
 c@ vis
 c	The names of the input uv data sets. No default.
 c@ out
@@ -24,6 +22,9 @@ c       E.g., 1,1,3,3 will overwrite the 2nd and 4th set of tsys values
 c       with the 1st and 3rd. This parameter is only used with the redo
 c       option. Default value is 1, which applies the tsys for the 1st
 c       IF to all following IFs.
+c@ factor
+c       Scale factor to apply to the Tsys values recorded in the data.
+c       This parameter is ignored except if options=scale.
 c@ options
 c	Extra processing options. Several options can be given,
 c	separated by commas. Minimum match is supported. Possible values
@@ -45,6 +46,11 @@ c                   This can be used for certain CABB observations where
 c                   the zoom bands have no valid Tsys information.
 c                   This option cannot be combined with the previous ones.
 c         inverse   Apply the inverse correction for redo
+c         scale     Scale the existing tsys values by the value given by
+c                   the parameter factor (leaves data unchanged)
+c         nocal     Do not apply the gains file. 
+c         nopass    Do not apply bandpass corrections.
+c         nopol     Do not apply polarization corrections. 
 c
 c $Id$
 c--
@@ -54,17 +60,18 @@ c    25may02 rjs  Added options=auto
 c    20jul11 mhw  Incorporate tsysfix program by jra
 c    25nov11 mhw  Make tsysif an array and update tsys variables
 c    12jan12 mhw  Fix array indexing and add inverse option
+c    23feb12 mhw  Add scale option
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*80
 	integer lVis,lOut,vupd,pol,npol,i1,i2,i,j,k
-	logical updated,doapply,auto,redo,update,inv
-	character vis*64,out*64,type*1
+	logical updated,doapply,auto,redo,update,inv,scale
+	character vis*64,out*64,type*1,uvflags*12
 	integer nschan(MAXWIN),nif,nchan,nants,length,tcorr,na
-        integer tsysif(MAXWIN),n
+        integer tsysif(MAXWIN),n,nst
 	real xtsys(MAXANT*MAXWIN),ytsys(MAXANT*MAXWIN)
         real nxtsys(MAXANT*MAXWIN),nytsys(MAXANT*MAXWIN)
-        real systemp(MAXANT*MAXWIN)
+        real systemp(MAXANT*MAXWIN),factor
 	complex data(MAXCHAN)
 	logical flags(MAXCHAN),first
 	double precision preamble(5)
@@ -78,14 +85,15 @@ c
      *                   '$Revision$',
      *                   '$Date$')
 	call keyini
-	call keya('vis',vis,' ')
+	call GetOpt(uvflags,doapply,auto,redo,inv,scale)
+	call uvDatInp('vis',uvflags)
 	call keya('out',out,' ')
         call mkeyi('tsysif',tsysif,MAXWIN,n)
         if (n.eq.0) then
           tsysif(1)=1
           n=1
         endif
-	call GetOpt(doapply,auto,redo,inv)
+        call keyr('factor',factor,1.0)
 	call keyfin
 c
 c  Check the inputs.
@@ -95,13 +103,14 @@ c
 c
 c  Get ready to copy the data.
 c
-	call uvopen(lVis,vis,'old')
-	call uvset(lVis,'preamble','uvw/time/baseline',0,0.,0.,0.)
+	call uvDatOpn(lVis)
+c	call uvset(lVis,'preamble','uvw/time/baseline',0,0.,0.,0.)
 	call varInit(lVis,'channel')
 c
 	call uvvarIni(lVis,vupd)
 	call uvvarSet(vupd,'xtsys')
 	call uvvarSet(vupd,'ytsys')
+	call uvvarSet(vupd,'systemp')
 	call uvvarSet(vupd,'nschan')
 c
 	call uvopen(lOut,out,'new')
@@ -118,7 +127,7 @@ c
 c
 c  Get first record.
 c
-	call uvread(lVis,preamble,data,flags,MAXCHAN,nchan)
+	call uvDatRd(preamble,data,flags,MAXCHAN,nchan)
 c
 c  If auto mode has been requested, check that the "tcorr" variable
 c  is present.
@@ -133,8 +142,8 @@ c
 c
 	dowhile(nchan.gt.0)
           update=.false.
-	  call uvrdvri(lVis,'pol',pol,0)
-	  call uvrdvri(lVis,'npol',npol,0)
+	  call uvDatGti('pol',pol)
+	  call uvDatGti('npol',npol)
 c
 	  if(uvvarUpd(vupd))then
 	    call uvprobvr(lVis,'nschan',type,length,updated)
@@ -160,13 +169,19 @@ c
 	    nants = length/nif
 	    if(nants*nif.ne.length.or.nants.le.0.or.nants.gt.MAXANT
      *	      .or.type.ne.'r')call bug('f','Invalid tsys parameter')
-	    if(na.ne.nants)
-     *		call bug('f','Inconsistency in number of IFs')
+	    if(na.ne.nants) then
+              if (.not.scale) then
+                call bug('f','Inconsistency in number of IFs')
+              endif
+            endif
 	    call uvgetvrr(lVis,'xtsys',xtsys,nants*nif)
 	    call uvprobvr(lVis,'ytsys',type,length,updated)
 	    if(nants*nif.ne.length.or.type.ne.'r')
      *			      call bug('f','Invalid ytsys parameter')
 	    call uvgetvrr(lVis,'ytsys',ytsys,nants*nif)
+            call uvprobvr(lVis,'systemp',type,nst,updated)
+	    call uvgetvrr(lVis,'systemp',systemp,nst)
+            
             update=.true.
 	  endif
 c
@@ -179,35 +194,37 @@ c
 	    endif
 	    if(doapply.eqv.(tcorr.eq.0))call tsysap(data,nchan,nschan,
      *		xtsys,ytsys,nants,nif,doapply,redo,inv,i1,i2,pol,tsysif)
-	  else
+	  else if (.not.scale) then
 	    call tsysap(data,nchan,nschan,xtsys,ytsys,nants,nif,
      *			doapply,redo,inv,i1,i2,pol,tsysif)
 	  endif
 c
 	  call varCopy(lVis,lOut)
-	  if(npol.gt.0)then
-	    call uvputvri(lOut,'npol',npol,1)
-	    call uvputvri(lOut,'pol',pol,1)
-	  endif
-          if (redo.and.update) then
+	  call uvputvri(lOut,'pol',pol,1)
+	  call uvputvri(lOut,'npol',npol,1)
+          if ((redo.or.scale).and.update) then
             k=0
             do i=1,nif
-              do j=1,nants 
+              do j=1,na 
                 k=k+1
-                nxtsys(k)=xtsys(j+(tsysif(i)-1)*nants)
-                nytsys(k)=ytsys(j+(tsysif(i)-1)*nants)
-                systemp(k)=sqrt(nxtsys(k)*nytsys(k))
+                if (redo) then
+                  nxtsys(k)=xtsys(j+(tsysif(i)-1)*na)
+                  nytsys(k)=ytsys(j+(tsysif(i)-1)*na)
+                  systemp(k)=sqrt(nxtsys(k)*nytsys(k))
+                else if (scale) then
+                  systemp(k)=systemp(k)*factor
+                endif
               enddo
             enddo
-            call uvputvrr(lOut,'xtsys',nxtsys,nants*nif)
-            call uvputvrr(lOut,'ytsys',nytsys,nants*nif)
-            call uvputvrr(lOut,'systemp',systemp,nants*nif)      
+            call uvputvrr(lOut,'xtsys',nxtsys,na*nif)
+            call uvputvrr(lOut,'ytsys',nytsys,na*nif)
+            call uvputvrr(lOut,'systemp',systemp,nst)      
           endif
 	  call uvwrite(lOut,preamble,data,flags,nchan)
-	  call uvread(lVis,preamble,data,flags,MAXCHAN,nchan)
+	  call uvDatRd(preamble,data,flags,MAXCHAN,nchan)
 	enddo
 c
-	call uvclose(lVis)
+	call uvDatCls()
 	call uvclose(lOut)
 	end
 c************************************************************************
@@ -265,18 +282,21 @@ c
 c
 	end
 c************************************************************************
-	subroutine getopt(doapply,auto,redo,inv)
+	subroutine getopt(uvflags,doapply,auto,redo,inv,scale)
 c
 	implicit none
-	logical doapply,auto,redo,inv
+        character uvflags*(*)
+	logical doapply,auto,redo,inv,scale
 c------------------------------------------------------------------------
 	integer NOPTS
-	parameter(NOPTS=5)
+	parameter(NOPTS=9)
 	character opts(NOPTS)*10
 	logical present(NOPTS)
+        integer l
 c
 	data opts/'apply     ','unapply   ','automatic ','redo      ',
-     *   'inverse   '/
+     *            'inverse   ','scale     ','nocal     ','nopass    ',
+     *            'nopol     '/
 c
 	call options('options',opts,present,NOPTS)
 	if(present(1).and.present(2))call bug('f',
@@ -288,5 +308,29 @@ c
      *    call bug('f',
      *      'Option redo cannot be combined with (un)apply or auto')
         inv = present(5)
+        if (present(6)) then
+          if (present(1).or.present(2).or.present(3).or.present(4))then
+            call bug('f','Option scale cannot be combined with '//
+     *       '(un)apply, auto or redo')
+          endif
+        endif
+        scale = present(6)
 c
+c Set up calibration flags
+c
+        uvflags = '3'
+        l = 1
+        if(.not.present(7))then
+          l = l + 1
+          uvflags(l:l) = 'c'
+        endif
+        if(.not.present(8))then
+         l = l + 1
+         uvflags(l:l) = 'f'
+        endif
+        if(.not.present(9))then
+          l = l + 1
+          uvflags(l:l) = 'e'
+        endif
+
 	end
