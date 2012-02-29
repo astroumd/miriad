@@ -92,38 +92,40 @@ c    pjt  20oct2011  Original cloned off uvflag
 c    pjt  23feb2012  new cloned off uvcheck
 c----------------------------------------------------------------------c
 	include 'maxdim.h'
-	character*(*) version
-	parameter(version='UVBFLAG: version 29-feb-2012')
-	integer MAXSELS, MAXBIT, ochan, nbugs, nflag, nwflag
+	character version*128
+	integer MAXSELS, MAXBIT, nflag, nwflag
 	parameter(MAXSELS=512,MAXBIT=32)
 	real sels(MAXSELS)
 	complex data(MAXCHAN)
-	double precision preamble(5),freq,ofreq,obsdec
-	integer lIn,nchan,nread,nvis,nspect,onspect,varlen,nwide,onwide
+	double precision preamble(5),freq,obsdec
+	integer lIn,nchan,nread,nvis,nspect,varlen,nwide
 	real start,width,step
 	character vis*128,log*128,line*128,date*18,var*9,vartype*1
         character oper*10
-	character source*9,osource*9,linetype*20,flagval*10
+	character source*9,linetype*20,flagval*10
 	logical flags(MAXCHAN),updated,doflag,varflag,newflag
 	logical dowide
 	integer nvar,ant1,ant2,bfmask(MAXWIN),nvisflag
         integer mask1(MAXBIT),mask2(MAXBIT),mask3(MAXBIT),i
         integer list1(MAXBIT),list2(MAXBIT),list3(MAXBIT),n1,n2,n3
-	real ave,rms
-	double precision vmin,vmax,datline(6)
+	double precision datline(6)
         integer CHANNEL,WIDE,VELOCITY,type
         parameter(CHANNEL=1,WIDE=2,VELOCITY=3)
         logical histo,debug,mrepeat
 c
 c  Externals and data
 c
+        character*128 versan
         logical ismasked
 	integer len1
-	data osource,ochan,onspect,onwide,ofreq/' ',0,0,0,0./
-	data nvar,vmin,vmax,ave,rms/0,1.d20,-1.d20,0.,0./
+	data nvar/0/
 c
 c  Get the parameters given by the user.
 c
+        version = versan ('uvbflag',
+     :                  '$Revision$',
+     :                  '$Date$')
+
 	call output(version)
 	call keyini
 	call keyf ('vis',vis,' ')
@@ -176,7 +178,6 @@ c
 c  Miscelaneous initialization.
 c
       nvis = 0
-      nbugs = 0
       nflag = 0
       nwflag = 0
       nvisflag = 0
