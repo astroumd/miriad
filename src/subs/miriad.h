@@ -294,6 +294,8 @@ void mkclose_c (char *handle);
 int  mkread_c  (char *handle, int mode, int *flags, off_t offset, int n, int nsize);
 void mkwrite_c (char *handle, int mode, Const int *flags, off_t offset, int n, int nsize);
 void mkflush_c (char *handle);
+void setmaski_c(int *mask, Const int *masks);
+void getmaski_c(Const int mask, int *masks);
 
 
 /* xyzio.c */

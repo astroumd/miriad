@@ -596,3 +596,13 @@ fortran logical function hdprsnt(integer tno,character keyword)
 {
   return(hdprsnt_c(tno.val,keyword.zterm));
 }
+/************************************************************************/
+fortran subroutine getmaski(integer mask, integer masks)
+{
+  getmaski_c(mask.val, masks.addr);
+}
+/************************************************************************/
+fortran subroutine setmaski(integer mask, integer masks)
+{
+  getmaski_c(mask.addr, masks.addr);
+}
