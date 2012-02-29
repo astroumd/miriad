@@ -171,9 +171,11 @@ c
 c
 c  Append history if flagging was going to occur
 c
-      call hisopen(lin,'append')
-      call hiswrite(lin, version)
-      call hisinput(lin, 'UVBFLAG')
+      if (doflag) then
+         call hisopen(lin,'append')
+         call hiswrite(lin, version)
+         call hisinput(lin, 'UVBFLAG')
+      endif
 c
 c  Miscelaneous initialization.
 c
@@ -193,6 +195,7 @@ c  the wrongly dimensioned bfmask
       call uvprobvr(lIn,var,vartype,varlen,updated)
       call uvrdvri(lIn,'nspect',nspect,0)
       if(nspect.eq.0) call bug('f','No spectral windows?')
+      if(varlen.eq.0) call bug('f','No bfmask present')
       if(nspect.ne.varlen) then
          write(*,*) nspect,varlen
          call bug('w','bfmask dimension error - repeat bands')
@@ -293,7 +296,9 @@ c
       endif
       call LogClose
 c
-      call hisclose (lIn)
+      if (doflag) then
+         call hisclose (lIn)
+      endif
       call uvclose (lIn)
       end
 c********1*********2*********3*********4*********5*********6*********7*c
