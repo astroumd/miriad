@@ -116,7 +116,7 @@ c----------------------------------------------------------------------c
 	character source*9,osource*9,linetype*20,refline*20,flagval*10
 	logical flags(MAXCHAN),updated,doflag,varflag,newflag
 	logical dowide
-	integer nvar,ant1,ant2,bfmask(MAXWIN)
+	integer nvar,ant1,ant2,bfmask(MAXWIN),nvisflag
         integer mask1(MAXBIT),mask2(MAXBIT),mask3(MAXBIT),nmask,i
         integer list1(MAXBIT),list2(MAXBIT),list3(MAXBIT),n1,n2,n3
 	real ave,rms
@@ -203,6 +203,7 @@ c
       nbugs = 0
       nflag = 0
       nwflag = 0
+      nvisflag = 0
 c
 c  Read the first record.
 c
@@ -299,6 +300,8 @@ c	    call LogWrit(line)
      *                varflag,
      *                (list3(i),i=1,n3)
         endif
+        if (varflag) nvisflag = nvisflag + 1
+
 c
 c  Flag the data, if requested
 c
@@ -324,7 +327,9 @@ c
 c
 c  Write summary.
 c
-      write(line,'(a,a,i6)') date, ' # records= ', nvis
+      write(line,'(a,a,i9)') date, ' # records= ', nvis
+      call LogWrit(line)
+      write(line,'(a,a,i9)') date, ' # flagged= ', nvisflag
       call LogWrit(line)
       write(line,'(i10,a)') nflag,  ' channels flagged'
       call LogWrit(line)
@@ -465,7 +470,12 @@ c
          masks(i) = 0
       enddo
       do i=1,nl
-         masks(l(i)) = l(i)
+         if (l(i).gt.0 .and. l(i).le.n) then
+            masks(l(i)) = l(i)
+         else
+            write(*,*) 'l2m: ', l(i)
+            call bug('f','bad value for list in l2m')
+         endif
       enddo
       end
 c********1*********2*********3*********4*********5*********6*********7*c
