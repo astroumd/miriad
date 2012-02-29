@@ -25,15 +25,6 @@ c  See UVCHECK or UVFLAG for related flagging operations.
 c
 c@ vis
 c	The input visibility file. No default.
-c@ select
-c	This selects which visibilities to be used. Default is
-c	all visibilities. See the Users Guide for information about
-c	how to specify uv-data selection.
-c@ line
-c	Linetype of the data in the format line,nchan,start,width,step
-c	"line" must be either `channel' or `wide'  for flagging data.
-c	The default is all the channel data, and the wideband data.
-c	Use line=wide to check only the wideband data.
 c@ flagval
 c       set to either 'flag' or 'unflag' to flag the data.
 c       Default: don't change the flags, but operations
@@ -109,15 +100,14 @@ c----------------------------------------------------------------------c
 	complex data(MAXCHAN)
 	double precision preamble(5),freq,ofreq,obsdec
 	integer lIn,nchan,nread,nvis,nspect,onspect,varlen,nwide,onwide
-	real start,width,step,varmin,varmax,uvdist
-	real refstart, refwidth, reflo, refhi
+	real start,width,step
 	character vis*128,log*128,line*128,date*18,var*9,vartype*1
         character oper*10
-	character source*9,osource*9,linetype*20,refline*20,flagval*10
+	character source*9,osource*9,linetype*20,flagval*10
 	logical flags(MAXCHAN),updated,doflag,varflag,newflag
 	logical dowide
 	integer nvar,ant1,ant2,bfmask(MAXWIN),nvisflag
-        integer mask1(MAXBIT),mask2(MAXBIT),mask3(MAXBIT),nmask,i
+        integer mask1(MAXBIT),mask2(MAXBIT),mask3(MAXBIT),i
         integer list1(MAXBIT),list2(MAXBIT),list3(MAXBIT),n1,n2,n3
 	real ave,rms
 	double precision vmin,vmax,datline(6)
@@ -138,17 +128,8 @@ c
 	call keyini
 	call keyf ('vis',vis,' ')
 	call keyline(linetype,nchan,start,width,step)
-	call keyrline(refline,refstart,refwidth)
-	call keya ('flagval',flagval,' ')
-c-
-	call keyr ('refamp',reflo,0.)
-c-
-	call keyr ('refamp',refhi,1.e20)
 	call SelInput ('select',sels,maxsels)
-c-
-	call keyr ('range',varmin,-1.e20)
-c-
-	call keyr ('range',varmax,1.e20)
+	call keya ('flagval',flagval,' ')
 	call keya ('log',log,' ')
 c @todo: this will need to become an options list, via getopt() style
         call mkeyi('mask',list1,MAXBIT-1,n1)
@@ -165,11 +146,6 @@ c
       if (step.ne.1.) call bug ('f','step must be 1 in line=') 
       doflag = flagval.eq.'flag' .or. flagval.eq.'unflag'
       newflag = flagval.eq.'unflag'
-      if (refline.ne.'wide'.and.
-     *    refline.ne.'channel'.and.
-     *    refline.ne.' ') then
-     		call bug('f','ref= not channel or wide: '//refline)
-      endif
       call l2m(n1,list1,MAXBIT-1,mask1)
 c
 c  Open an old visibility file, and apply selection criteria.
@@ -217,6 +193,7 @@ c  the wrongly dimensioned bfmask
       call uvrdvri(lIn,'nspect',nspect,0)
       if(nspect.eq.0) call bug('f','No spectral windows?')
       if(nspect.ne.varlen) then
+         write(*,*) nspect,varlen
          call bug('w','bfmask dimension error - repeat bands')
          mrepeat = .TRUE.
       else
@@ -251,54 +228,29 @@ c
 	call uvrdvri(lIn,'nwide',nwide,0)
 	call uvrdvrd(lIn,'freq',freq,0.d0)
         call uvrdvrd(lIn,'obsdec',obsdec,0.d0)
-
         call uvprobvr(lIn,'bfmask',vartype,varlen,updated)
         if (updated) then
            mrepeat = varlen.ne.nspect
            if (mrepeat) then
               call uvrdvri(lIn,'bfmask',bfmask,0)
-              do i=1,nspect
+              do i=2,nspect
                  bfmask(i) = bfmask(1)
               enddo
            else
               call uvgetvri(lIn,'bfmask',bfmask,nspect)
            endif
-        endif
-
 c              convert each bfmask(i) into a mask array, and a list for debug
-        call getmaski(bfmask(1),mask2)
-        call m2l(MAXBIT-1,mask2,n2,list2)
-c
-c  Check if source, freq, or number of channels or spectra change.
-c
-	if(source.ne.osource .or. nread.ne.ochan .or.
-     *	   nspect.ne.onspect .or.nwide.ne.onwide .or.
-     *	   freq.ne.ofreq) then
-	  write(line,'(a,x,a,a,i6,a,i4,a,i4,a,f10.6,a,z16)') 
-     *      date,source,
-     *	    ' nchan=',nread,' nspect=',nspect,' nwide=',nwide,
-     *	    ' freq=',freq,' bfmask=',bfmask(1)
-c	    call LogWrit(line)
-	  osource = source
-	  onspect = nspect
-	  onwide = nwide
-	  ofreq = freq
-	  ochan = nread
-	endif
-
-        if (debug) then
-           updated = .TRUE.
-        endif
-        if(updated) then
            call getmaski(bfmask(1),mask2)
            call m2l(MAXBIT-1,mask2,n2,list2)
            call maskop(MAXBIT-1,mask1,mask2,oper,mask3)
            call m2l(MAXBIT-1,mask3,n3,list3)
            varflag = ismasked(MAXBIT-1,mask3)
-           write(*,*) date,ant1,ant2,bfmask(1),varlen,
+           if (debug) then
+              write(*,*) date,ant1,ant2,bfmask(1),varlen,
      *                (list2(i),i=1,n2),
      *                varflag,
      *                (list3(i),i=1,n3)
+           endif
         endif
         if (varflag) nvisflag = nvisflag + 1
 
@@ -306,8 +258,7 @@ c
 c  Flag the data, if requested
 c
         if (doflag) then
-           call uvxflag(lIn, data, flags, nread, dowide,
-     *          refline, refstart, refwidth, reflo, refhi, newflag,
+           call uvxflag(lIn, flags, nread, dowide,newflag,
      *          varflag, nflag, nwflag, debug)
 	endif
 
@@ -345,15 +296,11 @@ c
       call uvclose (lIn)
       end
 c********1*********2*********3*********4*********5*********6*********7*c
-      subroutine uvxflag(lIn, data, flags, nread, dowide,
-     *              refline, refstart, refwidth, reflo, refhi, newflag,
+      subroutine uvxflag(lIn, flags, nread, dowide,newflag,
      *              varflag, nflag, nwflag, debug)
 	implicit none
         integer lIn, nread, nflag, nwflag
-        complex data(nread)
         logical flags(nread), varflag, newflag, dowide, debug
-        character refline*(*)
-        real refstart, refwidth, reflo, refhi
 c
 c  flag data if uv-variable, or reference amplitude 
 c	is outside the specified range.
@@ -361,7 +308,7 @@ c
 c--
       include 'maxdim.h'
       complex wdata(MAXWIDE)
-      logical ampflag, wflags(MAXWIDE), reflag
+      logical wflags(MAXWIDE)
       integer nwread, i
 
       if(dowide) call uvwread(lIn,wdata,wflags,MAXWIDE,nwread)
@@ -383,40 +330,6 @@ c--
 	  nwflag = nwflag + nwread
 	endif
       endif
-      end
-c********1*********2*********3*********4*********5*********6*********7*c
-      logical function reflag(nread,data,flags,
-     *                          refstart,refwidth,reflo,refhi)
-	implicit none
-        integer nread
-        complex data(nread)
-        logical flags(nread)
-        real refstart, refwidth, reflo, refhi
-c
-c  return TRUE if the reference amplitude of ref line is out of range
-c--
-        integer istart, iwidth, cnt, i
-        real amp
-        complex sum
-      
-        istart = refstart
-        iwidth = refwidth
-
-        sum = cmplx(0.0,0.0)
-        cnt = 0
-        do i=istart,istart+iwidth-1
-          if (flags(i)) then
-            sum = sum + data(i)
-            cnt = cnt + 1
-          endif
-        enddo
-        if (cnt.gt.0) then
-          sum = sum / float(cnt)
-          amp = cabs(sum)
-          reflag = amp.lt.reflo .or. amp.gt.refhi
-        else
-          reflag = .TRUE.
-        endif
       end
 c********1*********2*********3*********4*********5*********6*********7**
         subroutine GetOpt(histo,debug)
