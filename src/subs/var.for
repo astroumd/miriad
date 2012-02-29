@@ -103,7 +103,7 @@ c
 	integer i
 c
 	integer nvar,nline,nwide,nvelo
-	parameter(nvar=98,nline=10,nwide=3,nvelo=6)
+	parameter(nvar=99,nline=10,nwide=3,nvelo=6)
         character var(nvar)*8,line(nline)*8,wide(nwide)*8,velo(nvelo)*8
 c
 c  Variables to check for a change, for line=channel.
@@ -124,7 +124,8 @@ c
 c  Variables to copy whenever they change.
 c
 	data var/     'airtemp ','antaz   ','antdiam ','antel   ',
-     *	   'antpos  ','atten   ','axisrms ','bin     ','cable   ',
+     *	   'antpos  ','atten   ','axisrms ','bfmask  ',
+     *     'bin     ','cable   ',
      *	   'chi     ','corbit  ','corbw   ','corfin  ','cormode ',
      *	   'chi2    ','coropt  ','cortaper','dazim   ',
      *     'ddec    ','dec     ','deldec  ','delev'   ,
