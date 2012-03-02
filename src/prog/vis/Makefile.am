@@ -13,7 +13,7 @@ ftasks = \
   antpol atmerge atxy blflag bootflux bwsel calred closure \
   conterr contsen csflag early fgflag im2uv mfflat mosgen offaxis \
   offpol opcal paraplot pgflag qvack sfunc sinpoly transfix uvaflag \
-  uvamp uvarchdd uvaver uvcal uvcal2 uvcat uvcheck uvclip uvcover \
+  uvamp uvarchdd uvaver uvbflag uvcal uvcal2 uvcat uvcheck uvclip uvcover \
   uvdecor uvdiff uvedit uvfft uvfit uvfix uvflag uvflux uvfstats \
   uvgains uvgen uvgenmodel uvglue uvimage uvindex uvlin uvlist uvmodel \
   uvphase uvplanet uvplot uvplt uvpnt uvputhd uvrandom uvratio uvredo \
