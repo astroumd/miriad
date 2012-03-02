@@ -20,6 +20,8 @@ c	optimally disentangle the line and the continuum.
 c
 c	See the related tasks CONTSEN and CONTERR, which give estimates
 c	of the noise amplification and the residual continuum.
+c       See also Sault's paper ``An analysis of visibility-based
+c       continuum subtraction'', 1994A&AS..107...55S
 c@ vis
 c	The name of the input uv data set. No default.
 c@ select
