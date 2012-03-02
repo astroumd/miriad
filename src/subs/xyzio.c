@@ -44,13 +44,8 @@
      pjt  14-jan-03  cleared up some more prototypes, fixed bug in
                      *s[ITEM_HDR_SIZE] declaration (no pointer, just char)
      jwr  18-may-05  print address using %p instead of %d
-
-
+     rjs  18-sep-05  Added routine xyzdim_.
 *******************************************************************************/
-
-#if defined(HAVE_CONFIG_H) && HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 /******************************************************************************/
 /*                                                                            */
@@ -61,9 +56,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "maxdimc.h"
-#include "io.h"
 #include "miriad.h"
+#include "io.h"
+#include "maxdimc.h"
 
 #define check(x) if(x)bugno_c('f',x)
 
@@ -221,7 +216,7 @@ used to define the dataset.
 		    output dimension of datacube; for 'new' datasets: dimension
 		    of new dataset
 	axlen       The length of the axes, output for 'old' datasets, 'input'
-		    for 'new' datasets                                         */
+		    for 'new' datasets                                        */
 /*-- */
 
 void xyzopen_c( int *handle, Const char *name, Const char *status, 
@@ -292,9 +287,51 @@ void xyzopen_c( int *handle, Const char *name, Const char *status,
     imgs[tno].number = ntno;
     dimsub[tno] = -1;
 }
+/******************************************************************************/
+/** xyzdim - Return dimension information.				      */
+/*& rjs									      */
+/*: image-i/o								      */
+/*+
+      subroutine xyzdim(tno,naxis,dimsub
+      integer tno,naxis,dimsub
 
+This returns dimension information.
 
+   Input:
+      tno	The image file handle.
+   Output:
+      naxis	Number of dimensions.
+      dumsub    Number of skipped subdimensions.                              */
+/*--*/
 
+void xyzdim_c(int tno,int *naxis,int *subdim)
+{
+    *naxis = imgs[tno].naxis;
+    *subdim = dimsub[tno];
+}
+/******************************************************************************/
+/** xyzpix - Return information on number of pixels.			      */
+/*& rjs									      */
+/*: image-i/o								      */
+/*+
+      integer function xyzpix(tno,dims)
+      integer tno,dim
+
+This returns dimension information.
+
+   Input:
+      tno	The image file handle.
+      dim       Dimension information.
+/*--*/
+
+int xyzpix_c(int tno,int dims)
+{
+    int dim_sub;
+    dim_sub = dims;
+    if(dim_sub == 0)dim_sub = dimsub[tno];
+    return(bufs[tno].cubesize[dim_sub]);
+}
+/******************************************************************************/
 /** xyzclose - Close an image file                                            */
 /*& bpw                                                                       */
 /*: image-i/o                                                                 */
@@ -321,7 +358,7 @@ void xyzclose_c( int tno )
 	 free( mbuffr ); mbuffr = NULL;
     }
 }
-
+/******************************************************************************/
 /** xyzflush - Force output buffer to be written to disk                      */
 /*& bpw                                                                       */
 /*: image-i/o                                                                 */
@@ -344,12 +381,7 @@ void xyzflush_c( int tno )
     written[tno] = FALSE;
     if( imgs[tno].lastwritten<imgs[tno].cubesize[imgs[tno].naxis] ) zero(2,tno);
 }
-
-
 /******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/
-
 /** xyzsetup - Set up arbitrary subcube                                       */
 /*& bpw                                                                       */
 /*: image-i/o                                                                 */
@@ -535,12 +567,7 @@ static void ferr( char *string, int arg )
     *msg++ = ':'; *msg++ = ' '; *msg++ = arg; *msg = '\0';
     bug_c( 'f', message );
 }
-
-
 /******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/
-
 /** xyzmkbuf - create the i/o buffer (only once)                              */
 /*& bpw                                                                       */
 /*: image-i/o                                                                 */
@@ -562,11 +589,7 @@ void xyzmkbuf_c()
    i = bufferallocation( MAXBUF );
    neverfree = TRUE;
 }
-
 /******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/
-
 /** xyzs2c - Get the fixed coordinates for a given subcube                    */
 /*& bpw                                                                       */
 /*: image-i/o                                                                 */
@@ -625,10 +648,7 @@ void xyzs2c_c( int tno, int subcubenr, int *coords )
 		   bufs[tno].filfir, bufs[tno].fillas, offset );
     }
 }
-
-
 /******************************************************************************/
-
 /** xyzc2s - Get the subcubenr at a fixed coordinate                          */
 /*& bpw                                                                       */
 /*: image-i/o                                                                 */
@@ -680,12 +700,7 @@ void xyzc2s_c(int tno, Const int *coords, int *subcubenr )
 		   bufs[tno].filfir, bufs[tno].fillas, offset );
     }
 }
-
-
 /******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/
-
 /** xyzread - Read arbitrary subcube                                          */
 /*& bpw                                                                       */
 /*: image-i/o                                                                 */
@@ -760,9 +775,7 @@ void xyzread_c(int tno, Const int *coords, float *data, int *mask, int *ndata )
 	 dim++; }
     MODE=GET; get_put_data( tno, virpix_off, data, mask, ndata, dim_sub );
 }
-
-
-
+/******************************************************************************/
 /** xyzpixrd - Get a pixel from a dataset                                     */
 /*& bpw                                                                       */
 /*: image-i/o                                                                 */
@@ -806,9 +819,7 @@ void xyzpixrd_c(int tno, int pixelnr, float *data, int *mask)
     if(otest) testprint( tno, virpix_off, virpix_off );
 #endif
 }
-
-
-
+/******************************************************************************/
 /** xyzprfrd - Get a profile from a dataset                                   */
 /*& bpw                                                                       */
 /*: image-i/o                                                                 */
@@ -846,9 +857,7 @@ void xyzprfrd_c(int tno, int profilenr, float *data, int *mask, int *ndata )
     virpix_off = (profilenr-1) * bufs[tno].cubesize[1];
     MODE=GET; get_put_data( tno, virpix_off, data, mask, ndata, 1 );
 }
-
-
-
+/******************************************************************************/
 /** xyzplnrd - Get a plane from a dataset                                     */
 /*& bpw                                                                       */
 /*: image-i/o                                                                 */
@@ -888,11 +897,7 @@ void xyzplnrd_c(int tno, int planenr, float *data, int *mask, int *ndata)
     virpix_off = (planenr-1) * bufs[tno].cubesize[2];
     MODE=GET; get_put_data( tno, virpix_off, data, mask, ndata, 2 );
 }
-
 /******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/
-
 /** xyzwrite - Write arbitrary subcube                                        */
 /*& bpw                                                                       */
 /*: image-i/o                                                                 */
@@ -968,9 +973,7 @@ void xyzwrite_c(int tno, Const int *coords, Const float *data,
     MODE=PUT; 
     get_put_data( tno, virpix_off, (float *)data, (int *)mask, (int *)ndata, dim_sub );
 }
-
-
-
+/******************************************************************************/
 /** xyzpixwr - Write a pixel to a dataset                                     */
 /*& bpw                                                                       */
 /*: image-i/o                                                                 */
@@ -1013,9 +1016,7 @@ void xyzpixwr_c(int tno, int pixelnr, Const float *data, Const int *mask )
     if(otest) testprint( tno, virpix_off, virpix_off );
 #endif
 }
-
-
-
+/******************************************************************************/
 /** xyzprfwr - Write a profile to a dataset                                   */
 /*& bpw                                                                       */
 /*: image-i/o                                                                 */
@@ -1055,9 +1056,7 @@ void xyzprfwr_c(int tno, int profilenr, Const float *data,
     get_put_data( tno, virpix_off, (float *)data, (int *)mask, (int *)ndata, 1 );
     written[tno] = TRUE;
 }
-
-
-
+/******************************************************************************/
 /** xyzplnwr - Write a plane to a dataset                                     */
 /*& bpw                                                                       */
 /*: image-i/o                                                                 */
@@ -1099,11 +1098,6 @@ void xyzplnwr_c(int tno, int planenr, Const float *data,
     get_put_data( tno, virpix_off, (float *)data, (int *)mask, (int *)ndata, 2 );
     written[tno] = TRUE;
 }
-
-/******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/
-
 /******************************************************************************/
 /*                                                                            */
 /* The routine that figures out if i-o must be done                           */
@@ -1183,8 +1177,7 @@ static void get_put_data( int tno, int virpix_off, float *data, int *mask, int *
     if(otest) testprint( tno, virpix_off, virpix_lst );
 #endif
 }
-
-
+/******************************************************************************/
 static void do_copy( float *bufptr, float *bufend, int DIR, float *data, int *mask )
 {
     int *mbufpt;
@@ -1203,17 +1196,11 @@ static void do_copy( float *bufptr, float *bufend, int DIR, float *data, int *ma
 	 while( bufptr>=bufend ) { *bufptr-- = *data++; *mbufpt-- = *mask++; }}
     }
 }
-
-/******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/
-
 /******************************************************************************/
 /*                                                                            */
 /* Buffer control, figures out how to call loop_buffer                        */
 /*                                                                            */
 /******************************************************************************/
-
 static void manage_buffer( int tno, int virpix_off )
 {
 /* This controls the buffer. It tries to do the absolute minimum number
@@ -1334,13 +1321,11 @@ static void manage_the_buffer( int tno, int virpix_off )
     if( MODE==PUT ) set_bufs_limits( tno, virpix_off );
     bufs[tno].bufstart = - bufs[tno].filfir + bufs[tno].bufstart;
 }
-
 /******************************************************************************/
 /*                                                                            */
 /* Find the length of a buffer that fits in memory                            */
 /*                                                                            */
 /******************************************************************************/
-
 static void get_buflen(void)
 {
     int  tno;
@@ -1391,15 +1376,13 @@ static int bufferallocation( int n )
     }
     if( n == 1 ) bug_c( 'f', "xyzsetup: Failed to allocate any memory" );
 
-    if(itest)printf("Allocated %d reals @ %p\n",n,buffer);
-    if(itest)printf("Allocated %d ints  @ %p\n",n,mbuffr);
+    if(itest)printf("Allocated %d reals @ %p\n",n,(Void *)buffer);
+    if(itest)printf("Allocated %d ints  @ %p\n",n,(Void *)mbuffr);
 
     currentallocation = n;
     return( n );
 }
-
 /******************************************************************************/
-
 static void copy_to_one_d( int tno )
 {
 /* All this does is make one-d arrays of some 2-d arrays, so that the
@@ -1570,7 +1553,8 @@ static void p2c( int pix_off, int *axlen, int *cubesize, int naxis, int *coords 
 
 static void fill_buffer( int tno, int start, int last )
 {
-    int length, begin;
+    size_t length;
+    off_t begin;
     int bufstart, *buf;
     int i,iostat;
 
@@ -1578,8 +1562,8 @@ static void fill_buffer( int tno, int start, int last )
     if(itest) printf( "Read %d values: %d to %d\n", last-start+1, start, last );
 
     if( !imgs[tno].nocopy ) bufstart=0; else bufstart=bufs[tno].bufstart;
-    length = H_REAL_SIZE * ( last - start + 1 );
-    begin  = H_REAL_SIZE * start + ITEM_HDR_SIZE;
+    length = H_REAL_SIZE * (size_t)( last - start + 1 );
+    begin  = H_REAL_SIZE * (off_t)start + ITEM_HDR_SIZE;
 /*  hgrab_c(  imgs[tno].itno,(char *)(buffer+bufstart),begin,length,&iostat );*/
     hreadr_c( imgs[tno].itno,(char *)(buffer+bufstart),begin,length,&iostat );
     check(iostat);
@@ -1600,7 +1584,8 @@ static void fill_buffer( int tno, int start, int last )
 
 static void empty_buffer( int tno, int start, int last )
 {
-    int length, begin;
+    size_t length;
+    off_t begin;
     int bufstart;
     int iostat;
 
@@ -1608,8 +1593,8 @@ static void empty_buffer( int tno, int start, int last )
     if(itest) printf( "Write %d values: %d to %d\n", last-start+1,start,last );
 
     if( !imgs[tno].nocopy ) bufstart=0; else bufstart=bufs[tno].bufstart;
-    length = H_REAL_SIZE * ( last - start + 1 );
-    begin  = H_REAL_SIZE * start + ITEM_HDR_SIZE;
+    length = H_REAL_SIZE * (size_t)( last - start + 1 );
+    begin  = H_REAL_SIZE * (off_t)start + ITEM_HDR_SIZE;
 /*  hdump_c(  imgs[tno].itno,(char *)(buffer+bufstart),begin,length,&iostat );*/
     hwriter_c(imgs[tno].itno,(char *)(buffer+bufstart),begin,length,&iostat );
     if( imgs[tno].lastwritten < last ) imgs[tno].lastwritten = last;
@@ -1621,13 +1606,11 @@ static void empty_buffer( int tno, int start, int last )
     }
 
 }
-
 /******************************************************************************/
 /*                                                                            */
 /* Copy from the i-o buffer to the xyzio-buffer, the core of the routine      */
 /*                                                                            */
 /******************************************************************************/
-
 static void loop_buffer( int tno, int start, int last, int *newstart )
 {
 /* This routine checks all pixels in the in/out buffer and puts them at
