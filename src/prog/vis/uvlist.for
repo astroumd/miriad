@@ -26,6 +26,7 @@ c	  "history"   the history file.
 c	  "flux"      flux visibility, uvdistance and Jy/AveAmp.
 c	  "full"      The opposite of "brief".
 c	  "list"      ut,lst,ant,pol,u,v,AZ,EL,paralactic angle,dra, ddec.
+c         "bfmask"    special debug output for bfmask enabled data
 c	  "variables" uv variables.
 c	  "stat"      max, ave, rms and high channels for each record.
 c	  "birds      frequencies for high channels in each record.
@@ -144,10 +145,11 @@ c   27feb09 mchw - used azel function in options=list.
 c   11apr10 pjt - increased buffer for char variables (var,full)
 c   21jan11 pjt - increased digits for handling high-z output
 c   19dec11 pjt - added frequency width for better accuracy, options=spectra
+c    7mar12 pjt - bfmask option
 c-----------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='UVLIST: version  19-dec-2011')
+	parameter(version='UVLIST: version  7-mar-2012')
 	real rtoh,rtod,pi
 	integer maxsels
 	parameter(pi=3.141592653589793,rtoh=12/pi,rtod=180/pi)
@@ -160,6 +162,7 @@ c
 	logical flags(maxchan)
 	logical dohead,dodata,dospect,dohist,dobrief,dolist,dostat
 	logical eof,more,ltemp,doallan,doave,doflux,dobird,dobase
+	logical dobfmask
 	double precision ut,lst,visno
 	integer unit,recnum,numchan,num,time0,p,i
 	double precision uin,vin,win,timein,basein,preamble(5)
@@ -177,7 +180,7 @@ c
 	if(vis.eq.' ')call bug('f','Input file must be given (vis=)')
 	call GetOpt(dohead,dodata,dospect,dohist,
      *		    dobrief,dolist,dostat,doallan,doave,doflux,dobird,
-     *              dobase)
+     *              dobase,dobfmask)
 	call SelInput('select',sels,maxsels)
 	call keyline(linetype,numchan,start,width,step)
 	call keyi('recnum',recnum,1)
@@ -196,10 +199,10 @@ c
 	call SelApply(unit,sels,.true.)
 c-----------------------------------------------------------------------
 	if(dodata.or.dolist.or.dostat.or.doflux.or.dobird.or.
-     *     dobase)then
+     *     dobase.or.dobfmask)then
 	  if(linetype.ne.' ')
      *	    call uvset(unit,'data',linetype,numchan,start,width,step)
-	  if (dolist.or.dobase) then
+	  if (dolist.or.dobase.or.dobfmask) then
 	     call uvset(unit,'preamble','uvw/time/baseline',0,0.,0.,0.)
 	     call uvset(unit,'coord','nanosec',0,0.,0.,0.)
 	  else
@@ -212,7 +215,7 @@ c
 c  Read through the file, listing what we have to.
 c
 	num=0
-	if (dolist.or.dobase)then
+	if (dolist.or.dobase.or.dobfmask)then
 	   call uvread(unit,preamble,data,flags,maxchan,numchan)
 	   uin = preamble(1)
 	   vin = preamble(2)
@@ -231,7 +234,7 @@ c
 	time0 = timein + 100
 	call writein(unit,vis,dohead,dodata,dospect,
      *	  dohist,dolist,dobrief,dostat,doallan,doave,doflux,dobird,
-     *                  dobase,scale)
+     *                  dobase,scale,dobfmask)
 	last = ' '
 	dowhile ( numchan.gt.0 .and. (num.lt.recnum .or. recnum.eq.0))
 	  num = num + 1
@@ -243,7 +246,7 @@ c
 	    last = 'v'
 	  endif
 	  if(dodata.or.dolist.or.dostat.or.doflux.or.dobird.or.
-     *       dobase)then
+     *       dobase.or.dobfmask)then
 	    call uvinfo(unit,'visno',VisNo)
 c	    call uvrdvrd(unit,'ut',ut,
 c     *			((timein-0.5)-int((timein-0.5)))*24.d0/rtoh)
@@ -252,9 +255,11 @@ c           we really want to use the midpoint of the integration (time)
 	    ut = ((timein-0.5)-int((timein-0.5)))*24.0d0/rtoh
             call uvrdvrd(unit,'lst',lst,0.d0/rtoh)
 	    call uvrdvri(unit,'pol',p,0)
-	    if(dolist.or.dobase)then
-	      call ListDat(last.ne.'d',unit,uin,vin,win,basein,ut,lst,
-     *		       dobrief,dobase,nint(VisNo),data,flags,numchan,p)
+	    if(dolist.or.dobase.or.dobfmask)then
+	      call ListDat(last.ne.'d',unit,uin,vin,win,basein,
+     *                 ut,lst,timein,
+     *		       dobrief,dobase,dobfmask,
+     *                 nint(VisNo),data,flags,numchan,p)
 	    else if(dobrief)then
 	      if(int(timein-0.5).ne.time0)then
 	        ltemp = .true.
@@ -299,7 +304,7 @@ c
 c
 c  Loop the loop.
 c
-	  if (dolist.or.dobase) then
+	  if (dolist.or.dobase.or.dobfmask) then
 	   call uvread(unit,preamble,data,flags,maxchan,numchan)
 	   uin = preamble(1)
 	   vin = preamble(2)
@@ -737,13 +742,15 @@ c
 	call LogWrite(line(1:length),more)
 	end
 c********1*********2*********3*********4*********5*********6*********7**
-	subroutine ListDat(needhd,unit,uin,vin,win,basein,ut,lst,
-     *			     dobrief,dobase,VisNo,data,flags,numchan,p)
+	subroutine ListDat(needhd,unit,uin,vin,win,basein,
+     *                       ut,lst,timein,
+     *			     dobrief,dobase,dobfmask,
+     *                       VisNo,data,flags,numchan,p)
 	implicit none
 	integer numchan,VisNo,p,unit
-	logical needhd,flags(numchan),dobrief,dobase
+	logical needhd,flags(numchan),dobrief,dobase,dobfmask
 	complex data(numchan)
-	double precision uin,vin,win,basein,ut,lst
+	double precision uin,vin,win,basein,ut,lst,timein
 	include 'mirconst.h'
 	include 'maxdim.h'
 c
@@ -753,11 +760,13 @@ c  Input:
 c    needhd	If true, give a heading line.
 c    dobrief	Do brief listing.
 c    dobase     List baselines with enough info to debug
+c    dobfmask   List bfmask enabled data
 c    unit	Handle of the uvdata.
 c    VisNo	Visibility number.
 c    uin,vin,win U,V (optionally W)coordinates, in wavelengths.
 c    basein	Baseline number.
 c    ut,lst	UT and LST, in radians.
+c    timein     time, in JD, tagged to the record
 c    data	The correlation data.
 c    flags	The data flags.
 c    numchan	The number of channels.
@@ -768,78 +777,86 @@ c------------------------------------------------------------------------
 	parameter(rtoh=12/PI,rtod=180/PI)
 	parameter(MCHAN=5,rts=3600.*180./PI)
 	character line*256,cflag(MCHAN)*1, telescop*20,pol*2,src*9
-	character type*1
-	real amp(MCHAN),phas(MCHAN),ha, chi,inttime
+	character type*1, date*18
+	real amp(MCHAN),phas(MCHAN),ha, chi,inttime,deltime
 	double precision obsra,obsdec,latitude,dra,ddec,freq,ntm
 	double precision azim,elev
 	double precision dazim(MAXANT)
-	double precision delev(MAXANT)
+	double precision delev(MAXANT),timein0
 	logical more,ok
-	integer i,j,ant1,ant2,nchan,nants,length
+	integer i,j,ant1,ant2,nchan,nants,length,bfmask
 c
-	data dazim/MAXANT*0.0d0/, delev/MAXANT*0.0d0/
+      data dazim/MAXANT*0.0d0/, delev/MAXANT*0.0d0/
+      data timein0/0.0d0/
+c
+      save deltime,timein0
 c
 c  Externals.
 c
-	character PolsC2P*2
+      character PolsC2P*2
 c
-	  if(needhd)then
-	    call LogWrite(' ',more)
-		call uvgetvrd(unit,'freq',freq,1)
-	    call uvgetvrr(unit,'inttime',inttime,1)
-		write(line,'(''freq='',f16.10,'' Ghz  inttime='',f7.3)') 
+      if(needhd)then
+        call LogWrite(' ',more)
+        call uvgetvrd(unit,'freq',freq,1)
+	call uvgetvrr(unit,'inttime',inttime,1)
+        write(line,'(''freq='',f16.10,'' Ghz  inttime='',f7.3)') 
      *        freq,inttime
-		call LogWrite(line,more)
+	call LogWrite(line,more)
 c
-	  if(dobase) then
-	     line =' Vis # Source      UT(hrs)  LST(hrs)   HA(hrs)'
+c********1*********2*********3*********4*********5*********6*********7**
+	if(dobase) then
+	  line =' Vis # Source      UT(hrs)  LST(hrs)   HA(hrs)'
      *           //'   Dec(deg)  Ant     u(m)      v(m)      w(m)  '
      *           //' Azim  Elev(deg)   Amp/Phas '
      *           //'  daz1   del1   daz2   del2'
-c********1*********2*********3*********4*********5*********6*********7**
-	  else
-	     line =' Vis # Source      UT(hrs)  LST(hrs)   HA(hrs)'
+	else if (dobfmask) then
+	  line =' Date      Vis #     Source     bfmask '
+     *           //'   A1 A2 Pol Itime Dtime '
+     *           //'    dra(")  ddec(") Flag'
+	else 
+	 line =' Vis # Source      UT(hrs)  LST(hrs)   HA(hrs)'
      *          //'   Dec(deg)  Ant  Pol    u(m)      v(m)      w(m)  '
      *           //' Azim  Elev(deg)   Amp/Phas '
      *           //'  Chi    dra(")  ddec(")'
-	  endif
-	  call LogWrite(line,more)
-	  endif
+	endif
+        call LogWrite(line,more)
+      endif
 c********1*********2*********3*********4*********5*********6*********7**
 c
 c  Calculate the elevation and paralactic angle.
 c
-	call uvrdvrd(unit,'obsra',obsra,0.d0)
-	call uvrdvrd(unit,'obsdec',obsdec,0.d0)
-	call uvrdvrd(unit,'dra',dra,0.d0)
-	call uvrdvrd(unit,'ddec',ddec,0.d0)
-	call uvrdvrd(unit,'latitud',latitude,0.d0)
-	if(latitude.eq.0.d0)then
-          call uvrdvra(unit,'telescop',telescop,'UNKNOWN')
-          if(telescop.ne.'UNKNOWN') then
-	    call obspar(telescop,'latitude',latitude,ok)
-	  else 
-	    call bug('w','unable to determine latitude')
-	  endif
+      call uvrdvrd(unit,'obsra',obsra,0.d0)
+      call uvrdvrd(unit,'obsdec',obsdec,0.d0)
+      call uvrdvrd(unit,'dra',dra,0.d0)
+      call uvrdvrd(unit,'ddec',ddec,0.d0)
+      call uvrdvrd(unit,'latitud',latitude,0.d0)
+      call uvrdvri(unit,'bfmask',bfmask,0)
+      call uvgetvrr(unit,'inttime',inttime,1)
+      if(latitude.eq.0.d0)then
+        call uvrdvra(unit,'telescop',telescop,'UNKNOWN')
+        if(telescop.ne.'UNKNOWN') then
+	  call obspar(telescop,'latitude',latitude,ok)
+	else 
+	  call bug('w','unable to determine latitude')
 	endif
-	ha = lst-obsra
-	call azel(obsra,obsdec,lst,latitude,azim,elev)
-	call parang(obsra,obsdec,lst,latitude,chi)
-	pol = ' '
-	if(p.ne.0) pol = PolsC2P(p)
-       call basant(basein,ant1,ant2)
-	   ntm =CMKS/1d9 
-	   call uvrdvra(unit,'source',src,'unknown')
-	   call amphase(data(1),amp(1),phas(1))
+      endif
+      ha = lst-obsra
+      call azel(obsra,obsdec,lst,latitude,azim,elev)
+      call parang(obsra,obsdec,lst,latitude,chi)
+      pol = ' '
+      if(p.ne.0) pol = PolsC2P(p)
+      call basant(basein,ant1,ant2)
+      ntm =CMKS/1d9 
+      call uvrdvra(unit,'source',src,'unknown')
+      call amphase(data(1),amp(1),phas(1))
 
-	if(dobase) then
-	   call uvrdvri(unit,'nants',nants,0)
-       call uvprobvr (unit, 'dazim', type, length, ok)
-       if(type.eq.'d') call uvgetvrd(unit,'dazim',dazim,nants)
-       call uvprobvr (unit, 'delev', type, length, ok)
-	   if(type.eq.'d') call uvgetvrd(unit,'delev',delev,nants)
-	   write(line,
-c********1*********2*********3*********4*********5*********6*********7**
+      if(dobase) then
+        call uvrdvri(unit,'nants',nants,0)
+        call uvprobvr (unit, 'dazim', type, length, ok)
+        if(type.eq.'d') call uvgetvrd(unit,'dazim',dazim,nants)
+        call uvprobvr (unit, 'delev', type, length, ok)
+        if(type.eq.'d') call uvgetvrd(unit,'delev',delev,nants)
+	write(line,
      * '(i6,1x,a,4f10.4,1x,i2,1x,i2,3f10.4,2f8.2,f7.3,1x,i4,4f8.2)')
      *	  mod(Visno,1000000),src,ut*rtoh,lst*rtoh,ha*rtoh,obsdec*rtod,
      *	  ant1,ant2,uin*ntm,vin*ntm,win*ntm,azim*rtod,elev*rtod,
@@ -849,23 +866,41 @@ c********1*********2*********3*********4*********5*********6*********7**
      *    dazim(ant2)*rtod*60,
      *    delev(ant2)*rtod*60
 
-	else
-       pol = ' '
-       if(p.ne.0) pol = PolsC2P(p)
-	   write(line, '(i6,1x,a,4f10.4,1x,i3,1x,i3,1x,a,1x,
+      else if (dobfmask) then
+        pol = ' '
+        if(p.ne.0) pol = PolsC2P(p)
+	call julday(timein,'H',date)
+	if (timein.ne.timein0) then
+	   if (timein0.gt.0d0) then
+	      deltime = (timein-timein0)*3600.0*24.0
+	   else
+	      deltime = 0.0
+	   endif
+	   timein0 = timein
+	endif
+c********1*********2*********3*********4*********5*********6*********7**
+	write(line,'(a,i6,1x,a,z8,1x,2i3,1x,a,1x,2f6.2,1x,2f8.2,1x,L1)')
+     *    date,
+     *	  mod(Visno,1000000),src,bfmask,
+     *	  ant1,ant2,pol,inttime,deltime,
+     *    dra*rts,ddec*rts,flags(1)
+      else
+        pol = ' '
+        if(p.ne.0) pol = PolsC2P(p)
+	write(line, '(i6,1x,a,4f10.4,1x,i3,1x,i3,1x,a,1x,
 c********1*********2*********3*********4*********5*********6*********7**
      *    3f10.4,2f8.2,f7.3,1x,i4,3f8.2)')
      *	  mod(Visno,1000000),src,ut*rtoh,lst*rtoh,ha*rtoh,obsdec*rtod,
      *	  ant1,ant2,pol,uin*ntm,vin*ntm,win*ntm,azim*rtod,elev*rtod,
      *    amp(1),nint(phas(1)),
      *    chi*rtod,dra*rts,ddec*rts
-	endif
+      endif
 c********1*********2*********3*********4*********5*********6*********7**
-	call LogWrite(line,more)
+      call LogWrite(line,more)
 c
 c  List the channel data.
 c
-	if(.not.dobrief)then
+      if(.not.dobrief)then
 	  do i=1,numchan,MCHAN
 	    nchan = min(numchan-i+1,MCHAN)
 	    do j=1,nchan
@@ -882,8 +917,8 @@ c
 	  enddo
 c
 	  call LogWrite(' ',more)
-	endif
-	end
+      endif
+      end
 c********1*********2*********3*********4*********5*********6*********7**
 	subroutine LongDat(needhd,uin,vin,timein,basein,ut,lst,VisNo,
      *						data,flags,numchan,p)
@@ -961,11 +996,11 @@ c
 c************************************************************************
 	subroutine GetOpt(dohead,dodata,dospect,dohist,
      *		    dobrief,dolist,dostat,doallan,doave,doflux,dobird,
-     *              dobase)
+     *              dobase,dobfmask)
 c
 	implicit none
 	logical dohead,dodata,dospect,dohist,dobrief,dolist,dostat,doave
-	logical doallan,doflux,dobird,dobase
+	logical doallan,doflux,dobird,dobase,dobfmask
 c
 c  Determine which of the options is to be done. Default is
 c  "brief" "data".
@@ -973,16 +1008,17 @@ c
 c  Outputs:
 c    dohead,dodata,dospect,dohist,dolist,dostat,dobird,doallan,doave
 c    dobrief			  Do it in brief or verbose mode.
+c    dobfmask                     Special bfmask enabled files
 c------------------------------------------------------------------------
 	integer nopts
-	parameter(nopts=13)
+	parameter(nopts=14)
 	character opts(nopts)*9
 	logical present(nopts)
 c
 	data opts/'brief    ','full     ','data     ','variables',
      *		  'spectra  ','list     ','history  ','statistic',
      *		  'average  ','allan    ','flux     ','birds    ',
-     *            'baseline '/
+     *            'baseline ','bfmask   '/
 c
 	call options('options',opts,present,nopts)
 c
@@ -1000,7 +1036,8 @@ c
 	doflux  = present(11)
 	dobird  = present(12)
 	dobase  = present(13)
-	if(.not.(dohead.or.dolist.or.dospect.or.dohist
+	dobfmask= present(14)
+	if(.not.(dohead.or.dolist.or.dospect.or.dohist.or.dobfmask
      *			.or.dostat.or.doflux.or.dobird))
      *							dodata = .true.
 c
@@ -1008,13 +1045,13 @@ c
 c********1*********2*********3*********4*********5*********6*********7**
 	subroutine writein(unit,vis,dohead,dodata,dospect,
      *	  dohist,dolist,dobrief,dostat,doallan,doave,doflux,dobird,
-     *                  dobase,scale)
+     *                  dobase,scale,dobfmask)
 c
 	implicit none
 	integer unit
 	character vis*(*)
 	logical dohead,dodata,dospect,dohist,dolist,dobrief,dostat
-	logical doave,doallan,doflux,dobird,dobase
+	logical doave,doallan,doflux,dobird,dobase,dobfmask
         real scale
 c
 c  Write out the input parameters to the output log file / terminal.
@@ -1073,6 +1110,7 @@ c
 	if(doflux)  call cat(line,length,',planet flux visibility')
 	if(dobird)  call cat(line,length,',frequency birdies')
 	if(dobase)  call cat(line,length,',baseline')
+	if(dobfmask)call cat(line,length,',bfmask')
 	call LogWrite(line,more)
 c
 	if(dodata)then
