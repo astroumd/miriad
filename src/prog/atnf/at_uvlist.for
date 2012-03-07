@@ -2,7 +2,7 @@
 	program uvlist
 	implicit none
 c
-c= UVLIST - Print data, variables and other information from uv dataset
+c= AT_UVLIST - Print data, variables and other information from uv dataset
 c& rjs
 c: uv analysis
 c+
@@ -115,10 +115,12 @@ c   11may97 rjs  - Better listing format for options=array
 c   19aug98 rjs  - Correct printing of longitude in options=array
 c   22may01 dpr  - XY-EW support
 c   01jan07 rjs  - Handle more than 100 antennas in a simple way.
+c   18jun09 rjs  - Number antennas in "array" printout.
+c   23apr10 rjs  - Recognised blanked antenna numbers in "array" printout.
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='Uvlist: version 1.0 01-Jan-07')
+	parameter(version='Uvlist: version 1.0 23-Apr-10')
 c
 	character out*50,last*1,date*18,uvflags*8
 	complex data(MAXCHAN)
@@ -643,7 +645,7 @@ c    brief	If true, then only the important variables are considered.
 c  Output:
 c    vars	Variable handle.
 c------------------------------------------------------------------------
-	include 'uvlist.h'
+	include 'at_uvlist.h'
 	integer item,is,i,j,k
 	logical select,overflow
 	character varin*12,vsave*8
@@ -732,7 +734,7 @@ c    timein	Julian date.
 c------------------------------------------------------------------------
 	integer maxdata
 	parameter(maxdata=50)
-	include 'uvlist.h'
+	include 'at_uvlist.h'
 c
 	character vflag*1,date*18
 	integer k,i,j,nsubs,vsubs,ant1,ant2,length
@@ -1167,13 +1169,19 @@ c
 	call logwrite(
      *	  'Antenna positions in local equatorial coordinates',more)
 	call logwrite(' ',more)
-	call logwrite('       X (meters)     Y (meters)     Z (meters)',
-     *		more)
-	call logwrite('       ----------     ----------     ----------',
-     *		more)
+	call logwrite(
+     *	  '        X (meters)     Y (meters)     Z (meters)',more)
+	call logwrite(
+     *	  '        ----------     ----------     ----------',more)
 	do i=1,nants
-	  write(line,'(2x,3f15.4)')
+	  if(nint(xyz(i)).eq.999999.and.
+     *	    nint(xyz(i+nants)).eq.999999.and.
+     *	    nint(xyz(i+2*nants)).eq.999999)then
+	    write(line,'(i3,11x,a,14x,a,14x,a)')i,'?','?','?'
+	  else
+	    write(line,'(i3,3f15.4)')i,
      *		FAC*xyz(i),FAC*xyz(i+nants),FAC*xyz(i+2*nants)
+	  endif
 	  call logwrite(line,more)
 	enddo
 	end
