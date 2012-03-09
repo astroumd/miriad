@@ -10,6 +10,8 @@ CLEANFILES = mirmake Makefile.standalone
 mirmake: mirmake.in
 	$(AM_V_GEN)sed -e 's,%libdir%,$(libdir),' <$< >$@
 
+# Automake >~ 1.11.3 doesn't like DATA in pkglibdir (??)
+mypkglibdir = $(pkglibdir) 
 pkglib_DATA = Makefile.standalone
 
 Makefile.standalone: Makefile.standalone.tmpl

@@ -54,7 +54,9 @@ EXTRA_DIST = mircommon.mak mirdoc.mak \
 # can look like /path/to/srcdir/buildsubdir/.., so CD and PWD to
 # get a pretty-looking absolute path to top_srcdir.
 
-pkglib_SCRIPTS = automiriad.csh automiriad.sh libtool
+# Automake >~ 1.11.3 doesn't like SCRIPTS in pkglibdir (??)
+mypkglibdir = $(pkglibdir) 
+mypkglib_SCRIPTS = automiriad.csh automiriad.sh libtool
 
 automiriad.csh: automiriad.csh.in
 	$(AM_V_GEN)abssrc=`cd $(top_srcdir) && pwd` ; \
