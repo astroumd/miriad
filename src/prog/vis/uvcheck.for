@@ -33,8 +33,7 @@ c	Allowed values are:
 c	    channel,start,width
 c           wide,start,width
 c	Default: no reference line.
-c@ 
-c	refamp
+c@ refamp
 c       Minimum and maximum values for the reference line amplitude.
 c	Flag the uv-data when the reference amplitude
 c	is OUTSIDE the selected range.
