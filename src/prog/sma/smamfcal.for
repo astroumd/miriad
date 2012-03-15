@@ -10,7 +10,7 @@ c	(antenna gains, delay terms and passband shapes) from a
 c	multi-frequency observation.  The delays and passband are
 c	determined from an average of all the selected data.  The gains
 c	are worked out periodically depending upon the user
-c	selected interval. SmaMfcal implements algothrims for weighting,
+c	selected interval. SmaMfcal implements algorithms for weighting,
 c       continuum vector normalization, and moving smooth prior to solving
 c       for bandpass and gains, which are necessary for handling data
 c       at submillimeter wavelength when the S/N is poor and phase dispersion
@@ -166,10 +166,12 @@ c                 virtually no weight.
 c  pkgw  23Jun08  When fitting polynomials, obey the interpolate option.
 c   jhz  24Jun08  added description on the working buffers in
 c                 passtab.
+c   pjt  15mar12  try proper mem.h and memallop()/memfrep() to fix a bug
 c  Problems:
 c    * Should do simple spectral index fit.
 c------------------------------------------------------------------------
         include 'maxdim.h'
+        include 'mem.h'
         integer maxspect,maxvis,maxsoln,maxiter,maxpol
         parameter(maxspect=49,maxvis=7000000,maxiter=30,maxsoln=1024)
         parameter(maxpol=2)
@@ -177,8 +179,8 @@ c
         character version*80, versan*80
 c
         integer tno
-        integer pwgains,pfreq,psource,ppass,pgains,ptau
-        integer popass,pogains,potau
+        ptrdiff pwgains,pfreq,psource,ppass,pgains,ptau
+        ptrdiff popass,pogains,potau
         integer nvis,vid(maxvis)
         integer nspect,nschan(maxspect),ischan(maxspect)
         integer npol,nants,nsoln,count(maxsoln),nchan,refant,minant
@@ -193,16 +195,16 @@ c
         logical dodelay,dopass,defflux,interp,oldflux
         logical dosmooth,donply,dowrap,doaverrll,defaultwt
 c
-c  Dynamic memory stuff.
+c  Dynamic memory stuff. (see mem.h now)
 c
         integer weight
-        real ref(maxbuf)
-        complex cref(maxbuf/2)
-        double precision dref(maxbuf/2)
-        equivalence(ref,cref,dref)
+c        real ref(maxbuf)
+c        complex cref(maxbuf/2)
+c        double precision dref(maxbuf/2)
+c        equivalence(ref,cref,dref)
         real smooth(3)
         integer nply(3),bnply(3)
-        common ref
+c        common ref
         common/bsmooth/smooth,bnply
 c
 c  Externals.
@@ -314,57 +316,57 @@ c
 c
 c  Generate the frequencies for each channel in the total passband.
 c
-        call memalloc(pfreq,nchan,'d')
+        call memallop(pfreq,nchan,'d')
         call freqgen(nspect,nschan,sfreq,sdf,
-     *                          freqc,dref(pfreq),nchan)
+     *                          freqc,memd(pfreq),nchan)
 c
 c  Generate the source model.
 c
-        call memalloc(psource,nchan,'r')
+        call memallop(psource,nchan,'r')
         call srcgen(source,oldflux,defflux,
-     *    ref(psource),nchan,dref(pfreq),freq0,flux(1),flux(3))
+     *    memr(psource),nchan,memd(pfreq),freq0,flux(1),flux(3))
 c
 c  Now make the frequency relative to the reference frequency.
 c
-        call freqrel(dref(pfreq),freq0,nchan)
+        call freqrel(memd(pfreq),freq0,nchan)
         call freqrel(freqc,freq0,nspect)
 c
 c  Allocate some extra memory.
 c
-        call memalloc(ppass,nants*nchan*npol,'c')
-        call memalloc(pgains,nants*nsoln*npol,'c')
-        call memalloc(ptau,nants*nsoln,'r')
-        call memalloc(popass,nants*nchan*npol,'c')
-        call memalloc(pogains,nants*nsoln*npol,'c')
-        call memalloc(potau,nants*nsoln,'r')
+        call memallop(ppass,nants*nchan*npol,'c')
+        call memallop(pgains,nants*nsoln*npol,'c')
+        call memallop(ptau,nants*nsoln,'r')
+        call memallop(popass,nants*nchan*npol,'c')
+        call memallop(pogains,nants*nsoln*npol,'c')
+        call memallop(potau,nants*nsoln,'r')
 c
 c  Get an initial estimate of the wide gains and passband.
 c
         call output('Generating initial solution estimate ...')
-        call memalloc(pwgains,nants*nspect*nsoln*npol,'c')
+        call memallop(pwgains,nants*nspect*nsoln*npol,'c')
 c
 c
 c  Estimate the "wide" gains. The gains in each spectral window are
 c  solved for independently.
 c
         call wgini(vis,wt,vid,ischan,nvis,npol,count,nsoln,nchan,
-     *    nants,nspect,ref(psource),cref(pwgains),refant,minant)
+     *    nants,nspect,memr(psource),memc(pwgains),refant,minant)
 c
 c  Given the gains for each antenna for each band (WGains), estimate the
 c  passband gain (Pass), atmospheric delay (Tau) and antenna gain (Gains).
 c  These are estimates that are used in a full-blown solver later on.
 c
-        call bpini(npol,nants,nchan,nsoln,nspect,nschan,cref(pwgains),
-     *    freqc,cref(ppass),cref(pgains),ref(ptau),dodelay,dopass)
-        call memfree(pwgains,nants*nspect*nsoln*npol,'c')
+        call bpini(npol,nants,nchan,nsoln,nspect,nschan,memc(pwgains),
+     *    freqc,memc(ppass),memc(pgains),memr(ptau),dodelay,dopass)
+        call memfrep(pwgains,nants*nspect*nsoln*npol,'c')
 c
 c  Normalise the gains, and make a copy for later comparison.
 c
-        if(dopass)call norm(npol,nants,nchan,nsoln,cref(ppass),
-     *    cref(pgains),ref(ptau),dref(pfreq))
+        if(dopass)call norm(npol,nants,nchan,nsoln,memc(ppass),
+     *    memc(pgains),memr(ptau),memd(pfreq))
 c
-        call gaincpy(npol,nants,nchan,nsoln,cref(ppass),cref(pgains),
-     *    ref(ptau),cref(popass),cref(pogains),ref(potau))
+        call gaincpy(npol,nants,nchan,nsoln,memc(ppass),memc(pgains),
+     *    memr(ptau),memc(popass),memc(pogains),memr(potau))
 c
 c  We have estimates of the antenna gains (Gains), the delay term
 c  (Tau) and the passbands (Pass). Perform the main solver iterations.
@@ -378,26 +380,26 @@ c
 c  Get the antenna gains and delay.
 c
           call solvegt(refant,minant,nants,nspect,nchan,nsoln,
-     *      cref(ppass),ref(psource),dref(pfreq),vis,wt,vid,ischan,
-     *      count,nvis,npol,cref(pgains),ref(ptau),
+     *      memc(ppass),memr(psource),memd(pfreq),vis,wt,vid,ischan,
+     *      count,nvis,npol,memc(pgains),memr(ptau),
      *      dodelay.and.niter.ne.1,tol)
 c
 c  Get the passband.
 c
           if(dopass)call solvebp(refant,minant,nants,nspect,nchan,nsoln,
-     *      cref(ppass),ref(psource),dref(pfreq),vis,wt,vid,ischan,
-     *      count,nvis,npol,cref(pgains),ref(ptau),tol)
+     *      memc(ppass),memr(psource),memd(pfreq),vis,wt,vid,ischan,
+     *      count,nvis,npol,memc(pgains),memr(ptau),tol)
 c
 c  Normalise the total gains so that the average delay is zero and
 c  the rms passband gain is 1.
 c
-          if(dopass)call norm(npol,nants,nchan,nsoln,cref(ppass),
-     *      cref(pgains),ref(ptau),dref(pfreq))
+          if(dopass)call norm(npol,nants,nchan,nsoln,memc(ppass),
+     *      memc(pgains),memr(ptau),memd(pfreq))
 c
 c  Compare the solution with previous solutions.
 c
-          call gaincmp(npol,nants,nchan,nsoln,cref(ppass),cref(pgains),
-     *          ref(ptau),cref(popass),cref(pogains),ref(potau),epsi)
+          call gaincmp(npol,nants,nchan,nsoln,memc(ppass),memc(pgains),
+     *          memr(ptau),memc(popass),memc(pogains),memr(potau),epsi)
 c
 c  Keep the user awake.
 c
@@ -409,31 +411,31 @@ c
 c  Scale the gains if we have no idea what the source flux really was.
 c
         if(defflux)then
-          call gainscal(flux,cref(pgains),npol*nants*nsoln)
+          call gainscal(flux,memc(pgains),npol*nants*nsoln)
           write(line,'(a,f8.3)')'I flux density: ',flux(1)
           call output(line)
         endif
 c
         if(epsi.gt.tol)call bug('w','Failed to converge')
         call output('Saving solution ...')
-        call gaintab(tno,time,cref(pgains),ref(ptau),npol,nants,nsoln,
+        call gaintab(tno,time,memc(pgains),memr(ptau),npol,nants,nsoln,
      *    freq0,dodelay,pee)
         if (dopass.and.interp) call intext(npol,nants,nchan,nspect,
-     *    nschan,cref(ppass))
+     *    nschan,memc(ppass))
         if(dopass)call passtab(tno,npol,nants,nchan,
-     *    nspect,sfreq,sdf,nschan,cref(ppass),pee,
+     *    nspect,sfreq,sdf,nschan,memc(ppass),pee,
      *    donply,interp,dowrap,doaverrll)
 c
 c  Free up all the memory, and close down shop.
 c
-        call memfree(potau,nants*nsoln,'r')
-        call memfree(pogains,nants*nsoln*npol,'c')
-        call memfree(popass,nants*nchan*npol,'c')
-        call memfree(ptau,nants*nsoln,'r')
-        call memfree(pgains,nants*nsoln*npol,'c')
-        call memfree(ppass,nants*nchan*npol,'c')
-        call memfree(psource,nchan,'r')
-        call memfree(pfreq,nchan,'d')
+        call memfrep(potau,nants*nsoln,'r')
+        call memfrep(pogains,nants*nsoln*npol,'c')
+        call memfrep(popass,nants*nchan*npol,'c')
+        call memfrep(ptau,nants*nsoln,'r')
+        call memfrep(pgains,nants*nsoln*npol,'c')
+        call memfrep(ppass,nants*nchan*npol,'c')
+        call memfrep(psource,nchan,'r')
+        call memfrep(pfreq,nchan,'d')
         call hisclose(tno)
         call uvdatcls
 c
@@ -3009,34 +3011,35 @@ c    tol	Convergence tolerance.
 c  Input/Output:
 c    Pass	Pass band.
 c------------------------------------------------------------------------
-         include 'maxdim.h'
-        integer psumvm,psummm
+        include 'maxdim.h'
+        include 'mem.h'
+        ptrdiff psumvm,psummm
         real epsi
         integer nbl,off,i,p
 c
-        real ref(maxbuf)
-        complex cref(maxbuf/2)
-        equivalence(ref,cref)
-        common ref
+c        real ref(maxbuf)
+c        complex cref(maxbuf/2)
+c        equivalence(ref,cref)
+c        common ref
 c
         nbl = nants*(nants-1)/2
 c
 c  Allocate memory.
 c
-        call memalloc(psumvm,nbl*nchan*npol,'c')
-        call memalloc(psummm,nbl*nchan*npol,'r')
+        call memallop(psumvm,nbl*nchan*npol,'c')
+        call memallop(psummm,nbl*nchan*npol,'r')
 c
 c  Accumulate statistics.
 c
         call accpb(nants,nspect,nbl,nchan,npol,nsoln,source,freq,dat,wt,
-     *          vid,ischan,count,n,gains,tau,cref(psumvm),ref(psummm))
+     *          vid,ischan,count,n,gains,tau,memc(psumvm),memr(psummm))
 c
 c  Having accumulated the crap, go and get a solution.
 c
         off = 0
         do p=1,npol
           do i=1,nchan
-            call solve(nants,nbl,cref(psumvm+off),ref(psummm+off),
+            call solve(nants,nbl,memc(psumvm+off),memr(psummm+off),
      *        pass(1,i,p),refant,minant,tol*tol,epsi,.false.)
             off = off + nbl
           enddo
@@ -3044,8 +3047,8 @@ c
 c
 c  Free up the allocated memory.
 c
-        call memfree(psumvm,nbl*nchan*npol,'c')
-        call memfree(psummm,nbl*nchan*npol,'r')
+        call memfrep(psumvm,nbl*nchan*npol,'c')
+        call memfrep(psummm,nbl*nchan*npol,'r')
         end
 c************************************************************************
         subroutine solve(nants,nbl,sumvm,summm,gains,
@@ -3454,6 +3457,7 @@ c    Gains
 c    Tau
 c------------------------------------------------------------------------
         include 'maxdim.h'
+        include 'mem.h'
         integer maxdata,maxpol
         parameter(maxdata=5000,maxpol=2)
 c
@@ -3472,12 +3476,12 @@ c
 c  Scratch arrays for the least squares solver.
 c
         real x(MAXVAR),dx(MAXVAR),W
-        integer dfdx,aa,f,fp
+        ptrdiff dfdx,aa,f,fp
 c
 c  Dynamic memory commons.
 c
-        real ref(MAXBUF)
-        common ref
+c        real ref(MAXBUF)
+c        common ref
 c
 c  Externals.
 c
@@ -3559,24 +3563,24 @@ c
 c
 c  Allocate memory for scratch arrays.
 c
-        call memalloc(dfdx,neqn*nvar,'r')
-        call memalloc(aa,nvar*nvar,'r')
-        call memalloc(f,neqn,'r')
-        call memalloc(fp,neqn,'r')
+        call memallop(dfdx,neqn*nvar,'r')
+        call memallop(aa,nvar*nvar,'r')
+        call memallop(f,neqn,'r')
+        call memallop(fp,neqn,'r')
 c
 c  Call the solver at last.
 c
         call nllsqu(nvar,neqn,x,x,MAXITER,0.,tol,.true.,
-     *    ifail,FUNC,DERIVE,ref(f),ref(fp),dx,ref(dfdx),ref(aa))
+     *    ifail,FUNC,DERIVE,memr(f),memr(fp),dx,memr(dfdx),memr(aa))
         if(ifail.ne.0)call bug('w',
      *    'Solver failed to converge: ifail='//itoaf(ifail))
 c
 c  Free up the memory now.
 c
-        call memfree(fp,neqn,'r')
-        call memfree(f,neqn,'r')
-        call memfree(aa,nvar*nvar,'r')
-        call memfree(dfdx,neqn*nvar,'r')
+        call memfrep(fp,neqn,'r')
+        call memfrep(f,neqn,'r')
+        call memfrep(aa,nvar*nvar,'r')
+        call memfrep(dfdx,neqn*nvar,'r')
 c
 c  Now unpack the solution.
 c
