@@ -52,15 +52,16 @@ setenv Clinklib  "-lmir -llinpack -lpgplot $wcslib -lX11 -lf2c -lm"
 setenv Cinclude  "-I`echo $mmir/src/inc $mmir/src/subs | sed 's/ / -I/g'`"
 
 # NOF90 is conservative, some new routines use F90 style declarations
-setenv Ratty 	 "$mmir/bin/$mhost/ratty -s f2c -b -D linux -D NOF90"
-setenv Intf2c 	 "$mmir/bin/$mhost/intf2c -s f2c"
+setenv Ratty 	 "$mmir/bin/$mhost/ratty -s f2c -b -D linux -D NOF90 -a"
+setenv Intf2c 	 "$mmir/bin/$mhost/intf2c -s f2c -a"
 #
 #-----------------------------------------------------------
 if ($?MIRDEBUG)   then
-   setenv Coptions  "$Coptions  -g"
-   setenv CoptionsN "$CoptionsN -g"
-   setenv Foptions  "$Foptions  -g"
-   setenv FoptionsN "$FoptionsN -g"
+   setenv Coptions  "$Coptions  -g -DDEBUG"
+   setenv CoptionsN "$CoptionsN -g -DDEBUG"
+   setenv Foptions  "$Foptions  -g -DDEBUG"
+   setenv FoptionsN "$FoptionsN -g -DDEBUG"
+   setenv Ratty     "$Ratty -D DEBUG"
 endif
 if ($?MIRTESTBED) then
    setenv Coptions  "$Coptions  -DTESTBED"
