@@ -16,6 +16,7 @@
 /*    13mar06 rjs  Coditional include of malloc.h, which appears not    */
 /*		   to be part of MacOS dialect.				*/
 /*    22jul09 rjs  Support ptrdiff data type.				*/
+/*    21mar12 pjt  Add some -DDEBUG output                              */
 /*                                                                      */
 /************************************************************************/
 
@@ -120,7 +121,15 @@ c
   if(s == (fort_integer *)NULL) return;
   offset = s - data.addr;
   t = (fort_ptrdiff)offset;
-  if(t != offset)bug_c('f',"Some odd form of rounding problem, in mmAlloc");
+#ifdef DEBUG
+  printf("MM_DEBUG: s=0x%x  data=0x%lx \n",s,data.addr);
+  printf("MM_DEBUG: t=0x%lx  offset=0x%lx size=%d\n",t,offset,size.val);
+  printf("          s=%ld data=%ld offset=%ld\n",s,data.addr,offset);
+  printf("          s=%d data=%d offset=%d\n",s,data.addr,offset);
+  printf("          sizeof(fort_ptrdiff)=%ld sizeof(ptrdiff_t)=%ld\n",
+                    sizeof(fort_ptrdiff),    sizeof(ptrdiff_t));
+#endif
+  if(t != offset) bug_c('f',"Some odd form of rounding problem, in mmAlloc");
   *(ptr.addr) = t+1;
 }
 /************************************************************************/
