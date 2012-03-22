@@ -8,10 +8,13 @@ c+
 c  UVBFLAG is a Miriad program to apply the blanking mask
 c  (carried in the UV variable 'bfmask') and carry them into
 c  the normal uv-data flags.  This has been a standard operation
-c  at CARMA since early 2012.
+c  at CARMA since March 2012.
 c 
 c  It might be wise to make a copy of the flags and wflags items
-c  before complex operations are attempted.
+c  before complex operations are attempted,e.g. using
+c       mkdir VIS/backup 
+c       touch VIS/backup/header
+c       copyhd in=VIS out=VIS/backup items=wflags,flags
 c
 c  A bit about logic, flags and masking:
 c  The flags in a vis dataset are true/false, a true value for a correlation 
@@ -20,8 +23,11 @@ c  The blanking mask is set if some bad condition was met during observing
 c  that ought to cause flags to be set to false, e.g. lost phaselock,
 c  shadowing etc.
 c  
+c  The current version applies flags to all channels (no select= is allowed)
+c  in narrow and wide band (if present).
 c
 c  See UVCHECK or UVFLAG for related flagging operations.
+c  UVLIST options=bfmask will help you displaying the flags for first window
 c
 c@ vis
 c	The input visibility file. No default.
@@ -29,6 +35,11 @@ c@ flagval
 c       set to either 'flag' or 'unflag' to flag the data.
 c       Default: don't change the flags, but operations
 c       are reported had there been flagging or unflagging.
+c       Warning: flagging and unflagging does not know about previous
+c       settings of the flags. In order to return to a previous
+c       setting , you will need to make a backup of the flags and wflags
+c       items, viz.
+c
 c@ mask
 c       A list of mnemonic names, or digits (1=first, 31=last), which
 c       are to be used to transfer masking bits to the normal uv flags. 
@@ -98,15 +109,16 @@ c----------------------------------------------------------------------c
 	real sels(MAXSELS)
 	complex data(MAXCHAN)
 	double precision preamble(5),freq,obsdec
-	integer lIn,nchan,nread,nvis,nspect,varlen,nwide
-	real start,width,step
+	integer lIn,nchan,nread,nvis,nwin,nspect,varlen,nwide
+	real start,width,step,inttime
 	character vis*128,log*128,line*128,date*18,var*9,vartype*1
-        character oper*10
+        character oper*10,bfmaska*8
 	character source*9,linetype*20,flagval*10
 	logical flags(MAXCHAN),updated,doflag,varflag,newflag
-	logical dowide
-	integer nvar,ant1,ant2,bfmask(MAXWIN),nvisflag
-        integer mask1(MAXBIT),mask2(MAXBIT),mask3(MAXBIT),i
+	logical dowide,mflag(MAXWIN)
+	integer nvar,ant1,ant2,nvisflag,nwinflag
+        integer bfmask(MAXWIN), nschan(MAXWIN), ischan(MAXWIN)
+        integer mask1(MAXBIT),mask2(MAXBIT),mask3(MAXBIT),i,j
         integer list1(MAXBIT),list2(MAXBIT),list3(MAXBIT),n1,n2,n3
 	double precision datline(6)
         integer CHANNEL,WIDE,VELOCITY,type
@@ -122,7 +134,7 @@ c
 c
 c  Get the parameters given by the user.
 c
-        version = versan ('uvbflag',
+        version = versan ('UVBFLAG', 
      :                  '$Revision$',
      :                  '$Date$')
 
@@ -180,9 +192,11 @@ c
 c  Miscelaneous initialization.
 c
       nvis = 0
+      nwin = 0
       nflag = 0
       nwflag = 0
       nvisflag = 0
+      nwinflag = 0
 c
 c  Read the first record.
 c
@@ -202,7 +216,7 @@ c  the wrongly dimensioned bfmask
          mrepeat = .TRUE.
       else
 c        @ todo, fix this in uvxflag()
-         call bug('f','bfmask band based not implmented yet')
+         call bug('w','bfmask band based not implmented yet')
          mrepeat = .FALSE.
       endif
 
@@ -232,38 +246,50 @@ c
 	call uvrdvri(lIn,'nwide',nwide,0)
 	call uvrdvrd(lIn,'freq',freq,0.d0)
         call uvrdvrd(lIn,'obsdec',obsdec,0.d0)
+        call uvrdvrr(lIn,'inttime',inttime,0.0)
+        call uvgetvri(lIn,'nschan',nschan,nspect)
+        call uvgetvri(lIn,'ischan',ischan,nspect)
         call uvprobvr(lIn,'bfmask',vartype,varlen,updated)
         if (updated) then
            mrepeat = varlen.ne.nspect
            if (mrepeat) then
               call uvrdvri(lIn,'bfmask',bfmask,0)
-              do i=2,nspect
-                 bfmask(i) = bfmask(1)
+              do j=2,nspect
+                 bfmask(j) = bfmask(1)
               enddo
            else
               call uvgetvri(lIn,'bfmask',bfmask,nspect)
            endif
-c              convert each bfmask(i) into a mask array, and a list for debug
-           call getmaski(bfmask(1),mask2)
-           call m2l(MAXBIT-1,mask2,n2,list2)
-           call maskop(MAXBIT-1,mask1,mask2,oper,mask3)
-           call m2l(MAXBIT-1,mask3,n3,list3)
-           varflag = ismasked(MAXBIT-1,mask3)
-           if (debug) then
-              write(*,*) date,ant1,ant2,bfmask(1),varlen,
+           write(bfmaska,'(z8)') bfmask(1)
+c              convert each bfmask(j) into a mask array, and a list for debug
+           do j=1,nspect
+              call getmaski(bfmask(j),mask2)
+              call m2l(MAXBIT-1,mask2,n2,list2)
+              call maskop(MAXBIT-1,mask1,mask2,oper,mask3)
+              call m2l(MAXBIT-1,mask3,n3,list3)
+              mflag(j) = ismasked(MAXBIT-1,mask3)
+              if (debug .and. j.eq.1) then
+                 write(*,*) date,inttime,source,ant1,ant2,bfmaska,
+     *                varlen,
      *                (list2(i),i=1,n2),
-     *                varflag,
+     *                mflag(j),
      *                (list3(i),i=1,n3)
-           endif
+              endif
+           enddo
+           varflag = mflag(1)
         endif
         if (varflag) nvisflag = nvisflag + 1
+        do j=1,nspect
+           if (mflag(j)) nwinflag = nwinflag + 1
+        enddo
 
 c
 c  Flag the data, if requested
 c
         if (doflag) then
-           call uvxflag(lIn, flags, nread, dowide,newflag,
-     *          varflag, nflag, nwflag, debug)
+           call uvxflag(lIn, flags, nread, dowide, newflag,
+     *          nspect, nschan, ischan, mflag,
+     *          nflag, nwflag, debug)
 	endif
 
 c
@@ -271,6 +297,7 @@ c  Loop the loop (get next record)
 c
         call uvread(lIn, preamble, data, flags, maxchan, nread)
 	nvis = nvis + 1
+        nwin = nwin + nspect
       enddo
 c
 c  Rename flagged "channels" if linetype.eq.'wide'
@@ -282,14 +309,19 @@ c
 c
 c  Write summary.
 c
-      write(line,'(a,a,i9)') date, ' # records= ', nvis
+      write(line,'(a,i9,1x,a,i9)') '# flagged records= ', 
+     *      nvisflag,'/',nvis
       call LogWrit(line)
-      write(line,'(a,a,i9)') date, ' # flagged= ', nvisflag
+      write(line,'(a,i9,1x,a,i9)') '# flagged windows= ', 
+     *      nwinflag,'/',nwin
       call LogWrit(line)
-      write(line,'(i10,a)') nflag,  ' channels flagged'
-      call LogWrit(line)
-      write(line,'(i10,a)') nwflag, ' wideband flagged'
-      call LogWrit(line)
+
+      if (doflag) then
+         write(line,'(i10,a)') nflag,  ' channels flagged'
+         call LogWrit(line)
+         write(line,'(i10,a)') nwflag, ' wideband flagged'
+         call LogWrit(line)
+      endif
       if(nvar.gt.0)then
         call LogWrit(' nvar > 0 ')
 	call LogWrit(line)
@@ -303,10 +335,13 @@ c
       end
 c********1*********2*********3*********4*********5*********6*********7*c
       subroutine uvxflag(lIn, flags, nread, dowide,newflag,
-     *              varflag, nflag, nwflag, debug)
+     *              nspect, nschan, ischan, mflag,
+     *              nflag, nwflag, debug)
 	implicit none
         integer lIn, nread, nflag, nwflag
-        logical flags(nread), varflag, newflag, dowide, debug
+        integer nspect, nschan(nspect), ischan(nspect)
+        logical mflag(nspect)
+        logical flags(nread), newflag, dowide, debug
 c
 c  flag data if uv-variable, or reference amplitude 
 c	is outside the specified range.
@@ -317,25 +352,20 @@ c--
       logical wflags(MAXWIDE)
       integer nwread, i
 
-      if(dowide) call uvwread(lIn,wdata,wflags,MAXWIDE,nwread)
-
-      if (varflag) then
-        if(debug) then
-           write(*,*) '### Flagging record',newflag,dowide
-        endif
-        do i=1,nread
-          flags(i) = newflag
-        enddo
-        call uvflgwr(lIn,flags)
-        nflag = nflag + nread
-	if (dowide) then
-          do i=1,nwread
+      do i=1,nread
+         flags(i) = newflag
+      enddo
+      call uvflgwr(lIn,flags)
+      nflag = nflag + nread
+      if (dowide) then
+         call uvwread(lIn,wdata,wflags,MAXWIDE,nwread)
+         do i=1,nwread
             wflags(i) = newflag
-          enddo
-          call uvwflgwr(lIn,wflags)
-	  nwflag = nwflag + nwread
-	endif
+         enddo
+         call uvwflgwr(lIn,wflags)
+         nwflag = nwflag + nwread
       endif
+
       end
 c********1*********2*********3*********4*********5*********6*********7**
         subroutine GetOpt(histo,debug)
@@ -385,9 +415,17 @@ c
 c
       integer i
 
-      do i=1,n
-         masks(i) = 0
-      enddo
+      if (nl.eq.1 .and. l(1).eq.0) then
+         call bug('i','Turning full list on')
+         do i=1,n
+            masks(i) = i
+         enddo
+         return
+      else
+         do i=1,n
+            masks(i) = 0
+         enddo
+      endif
       do i=1,nl
          if (l(i).gt.0 .and. l(i).le.n) then
             masks(l(i)) = l(i)
