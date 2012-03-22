@@ -15,6 +15,7 @@ c  before complex operations are attempted,e.g. using
 c       mkdir VIS/backup 
 c       touch VIS/backup/header
 c       copyhd in=VIS out=VIS/backup items=wflags,flags
+c  NOTE: this will be done by UVBFLAG in one of the next revisions.
 c
 c  A bit about logic, flags and masking:
 c  The flags in a vis dataset are true/false, a true value for a correlation 
@@ -53,6 +54,7 @@ c       for flagval (which can be flagged or unflagged)
 c       Full names of the masking bits are in the miriad item 'blfmask',
 c       carried in the uv dataset.
 c       Currently for CARMA (2012) we use the following bits (1..31)
+c       (options=blfmask should always produce the current list)
 c
 C        1 A1_PHASELOCK
 C        2 A2_PHASELOCK
@@ -94,13 +96,15 @@ c@ log
 c	The output log file. Default is the terminal.
 c@ options
 c       Extra processing options. Possible values are:
-c         debug    Print more output
+c         debug    Print more output (but only when bfmask changes)
+c         blfmask  Show the names in the blfmask item
 c--
 c
 c
 c  History:
 c    pjt  20oct2011  Original cloned off uvflag
 c    pjt  23feb2012  new cloned off uvcheck
+c    pjt  22mar2012  fixed up multi-band implementation
 c----------------------------------------------------------------------c
 	include 'maxdim.h'
 	character version*128
@@ -123,7 +127,7 @@ c----------------------------------------------------------------------c
 	double precision datline(6)
         integer CHANNEL,WIDE,VELOCITY,type
         parameter(CHANNEL=1,WIDE=2,VELOCITY=3)
-        logical histo,debug,mrepeat
+        logical debug,mrepeat,doblfmask
 c
 c  Externals and data
 c
@@ -138,7 +142,6 @@ c
      :                  '$Revision$',
      :                  '$Date$')
 
-	call output(version)
 	call keyini
 	call keyf ('vis',vis,' ')
 	call keyline(linetype,nchan,start,width,step)
@@ -148,7 +151,7 @@ c
 c @todo: this will need to become an options list, via getopt() style
         call mkeyi('mask',list1,MAXBIT-1,n1)
         call keya('logic',oper,'AND')
-	call GetOpt(histo,debug)
+	call GetOpt(debug,doblfmask)
 	call keyfin
 c
 c  Check that the inputs are reasonable.
@@ -165,12 +168,17 @@ c
 c  Open an old visibility file, and apply selection criteria.
 c
       call uvopen (lIn,vis,'old')
+      if (doblfmask) then
+         call blfmask(lIn)
+         call uvclose(lIn)
+         stop
+      endif
 c
       if(linetype.ne.' ')
      *	  call uvset(lIn,'data',linetype,nchan,start,width,step)
       call uvset(lIn,'preamble','uvw/time/baseline',0,0.,0.,0.)
-      call uvset (lIn,'coord','nanosec',0, 0.0, 0.0, 0.0)
-      call uvset (lIn,'planet', ' ', 0, 0.0, 0.0, 0.0)
+      call uvset(lIn,'coord','nanosec',0, 0.0, 0.0, 0.0)
+      call uvset(lIn,'planet', ' ', 0, 0.0, 0.0, 0.0)
       call SelApply(lIn,sels,.true.)
 c
 c  Open log file and write title.
@@ -182,11 +190,13 @@ c
       call LogWrit(' ')
 c
 c  Append history if flagging was going to occur
+c  Make a backup of flags and wflags if they didn't exist yet
 c
       if (doflag) then
          call hisopen(lin,'append')
          call hiswrite(lin, version)
          call hisinput(lin, 'UVBFLAG')
+         call fbackup(lin)
       endif
 c
 c  Miscelaneous initialization.
@@ -215,8 +225,6 @@ c  the wrongly dimensioned bfmask
          call bug('w','bfmask dimension error - repeat bands')
          mrepeat = .TRUE.
       else
-c        @ todo, fix this in uvxflag()
-         call bug('w','bfmask band based not implmented yet')
          mrepeat = .FALSE.
       endif
 
@@ -284,12 +292,12 @@ c              convert each bfmask(j) into a mask array, and a list for debug
         enddo
 
 c
-c  Flag the data, if requested
+c  Flag or Unflag the data, if requested
 c
         if (doflag) then
            call uvxflag(lIn, flags, nread, dowide, newflag,
      *          nspect, nschan, ischan, mflag,
-     *          nflag, nwflag, debug)
+     *          nflag, nwflag)
 	endif
 
 c
@@ -317,9 +325,9 @@ c
       call LogWrit(line)
 
       if (doflag) then
-         write(line,'(i10,a)') nflag,  ' channels flagged'
+         write(line,'(i10,a)') nflag,  ' channels currently flagged'
          call LogWrit(line)
-         write(line,'(i10,a)') nwflag, ' wideband flagged'
+         write(line,'(i10,a)') nwflag, ' wideband currently flagged'
          call LogWrit(line)
       endif
       if(nvar.gt.0)then
@@ -334,44 +342,48 @@ c
       call uvclose (lIn)
       end
 c********1*********2*********3*********4*********5*********6*********7*c
-      subroutine uvxflag(lIn, flags, nread, dowide,newflag,
+      subroutine uvxflag(lIn, flags, nread, dowide, newflag,
      *              nspect, nschan, ischan, mflag,
-     *              nflag, nwflag, debug)
-	implicit none
-        integer lIn, nread, nflag, nwflag
-        integer nspect, nschan(nspect), ischan(nspect)
-        logical mflag(nspect)
-        logical flags(nread), newflag, dowide, debug
-c
-c  flag data if uv-variable, or reference amplitude 
-c	is outside the specified range.
-c
+     *              nflag, nwflag)
+      implicit none
+      integer lIn, nread, nflag, nwflag
+      integer nspect, nschan(nspect), ischan(nspect)
+      logical mflag(nspect)
+      logical flags(nread), newflag, dowide
 c--
       include 'maxdim.h'
       complex wdata(MAXWIDE)
       logical wflags(MAXWIDE)
-      integer nwread, i
+      integer nwread, i,j
 
-      do i=1,nread
-         flags(i) = newflag
+      do j=1,nspect
+         if (mflag(j)) then
+            do i=ischan(j),ischan(j)+nschan(j)
+               flags(i) = newflag
+            enddo
+            nflag = nflag + nschan(j)
+         endif
       enddo
       call uvflgwr(lIn,flags)
-      nflag = nflag + nread
+
       if (dowide) then
          call uvwread(lIn,wdata,wflags,MAXWIDE,nwread)
+         if (nwread.ne.nspect) call bug('w','not enuf wides in uvwread')
          do i=1,nwread
-            wflags(i) = newflag
+            if (mflag(i)) then
+               wflags(i) = newflag
+               nwflag = nwflag + nwread
+            endif
          enddo
          call uvwflgwr(lIn,wflags)
-         nwflag = nwflag + nwread
       endif
 
       end
 c********1*********2*********3*********4*********5*********6*********7**
-        subroutine GetOpt(histo,debug)
+        subroutine GetOpt(debug,doblfmask)
 c
         implicit none
-        logical histo,debug
+        logical debug,doblfmask
 c
 c  Get extra processing options.
 c------------------------------------------------------------------------
@@ -379,11 +391,11 @@ c------------------------------------------------------------------------
         parameter(nopts=2)
         logical present(nopts)
         character opts(nopts)*8
-        data opts/'histo   ','debug    '/
+        data opts/'debug   ','blfmask '/
 c
         call options('options',opts,present,nopts)
-        histo = present(1)
-        debug = present(2)
+        debug     = present(1)
+        doblfmask = present(2)
         end
 c********1*********2*********3*********4*********5*********6*********7*c
 c
@@ -495,3 +507,38 @@ c
          endif
       enddo
       end
+c-----------------------------------------------------------------------
+      subroutine fbackup(lin)
+      integer lin
+c
+      call bug('i','no backup of flags and wflags yet')
+      end
+c-----------------------------------------------------------------------
+      subroutine blfmask(lin)
+      integer lin
+c
+      integer item,iostat,n
+      logical eof
+      character line*80,name*80
+c extern
+      integer len1
+      
+      call haccess(lin,item,'blfmask','read',iostat)
+      if (iostat.ne.0) then
+         call bug('w','Error opening blfmask')
+         return
+      endif
+      eof = .FALSE.
+      n = 0
+      do while(.not.eof)
+         call hreada(item,name,eof)
+         if (.not.eof) then
+            n = n + 1
+            write(line,'(i2,1x,a)')n,name(1:len1(name))
+            write(*,*) line
+         endif
+      end do
+      call hdaccess(item,iostat)
+      if (iostat.ne.0) call bug('f','Error closing blfmask')
+      end
+
