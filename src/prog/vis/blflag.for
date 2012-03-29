@@ -45,7 +45,7 @@ c       to all channels.  The default is all channels.
 c
 c@ device
 c       Normal PGPLOT plot device.  An interactive device, e.g. /xserve,
-c       must be selected.  No default.
+c       must be selected.  No default, unless options=batch is selected.
 c
 c@ stokes
 c       Normal Stokes/polarisation parameter selection.  The default is
@@ -127,6 +127,9 @@ c         nofqaver Do not average spectra - the resulting number of
 c                 points may be too large to handle.  Use select to
 c                 break up the data in time ranges or use yrange to
 c                 exclude noise.
+c         batch   Use blflag in batch mode, simply flag 
+c                 the selected visibilities. The default is interactive
+c                 via the selected PGPLOT device
 c       The following options can be used to disable calibration.
 c         nocal   Do not apply antenna gain calibration.
 c         nopass  Do not apply bandpass correction.
@@ -134,7 +137,11 @@ c         nopol   Do not apply polarisation leakage correction.
 c
 c$Id$
 c--
+c  
 c  History:
+c  2012/03/29 Gyula Jozsa: added option nointer to enable non-interactive
+c  flagging, see comments GJbeg and GJend (but renamed to batch)
+c            
 c    Refer to the RCS log, v1.1 includes prior revision information.
 c-----------------------------------------------------------------------
       include 'maxdim.h'
@@ -146,7 +153,7 @@ c     fail with truncated relocations.
       parameter (MAXDAT = 2*MAXBUF)
 
       logical   finish, havebl(MAXBASE), noapply, nobase, nofqaver, rms,
-     *          scalar, selgen
+     *          scalar, selgen, batch
       integer   ant1, ant2, bl, blIdxp, i, j, length, lIn, nBl, nBlIdx,
      *          nDat, nEdit, nPol, pCorr, pCorr1, pCorr2, pFlags, pNpnt,
      *          pVis
@@ -170,12 +177,18 @@ c-----------------------------------------------------------------------
 
 c     Get the input parameters.
       call keyini
-      call keya('device',device,' ')
-      if (device.eq.' ') call bug('f','A PGPLOT device must be given')
-      call getAxis(xaxis,yaxis)
+c  GJbeg: needed to shift the options upwards a bit, because if not 
+c  interactive, you don't want to be bothered with entering a devive
       call getOpt(nobase,selgen,noapply,rms,scalar,nofqaver,
-     *  uvflags)
+     *     uvflags,batch)
       if (xaxis.eq.'channel' .or. yaxis.eq.'channel') nofqaver=.true.
+      call keya('device',device,' ')
+      if (.not.batch) then
+         if (device.eq.' ') call bug('f',
+     *        'A PGPLOT device must be given')
+      endif
+c  GJend
+      call getAxis(xaxis,yaxis)
 
 c     Get axis ranges
       call getRng('xrange', xaxis, xmin, xmax)
@@ -191,13 +204,18 @@ c     Open the input data.
       if (.not.uvDatOpn(lIn)) call bug('f','Error opening input')
 
 c     Open the plot device.
-      if (pgbeg(0,device,1,1).ne.1) then
-        call pgldev
-        call bug('f','Unable to open PGPLOT device')
+c  GJbeg
+      if (.not.batch) then
+         if (pgbeg(0,device,1,1).ne.1) then
+            call pgldev
+            call bug('f','Unable to open PGPLOT device')
+         endif
+         call pgqinf('CURSOR',val,length)
+         if (val.eq.'NO') call 
+     *        bug('f','PGPLOT device is not interactive')
+         call pgask(.false.)
       endif
-      call pgqinf('CURSOR',val,length)
-      if (val.eq.'NO') call bug('f','PGPLOT device is not interactive')
-      call pgask(.false.)
+c  GJend
 
 c     Allocate memory for getDat.
       call memAlloc(pFlags, MAXCHAN, 'l')
@@ -214,7 +232,12 @@ c     Get the data.
      *  blDat,chDat,time0,tDat,xDat,yDat)
       call uvDatCls
       call output('Number of points to edit: '//itoaf(nDat))
-      if (nDat.eq.0) call bug('f','No points to flag')
+
+c  GJbeg: again, you don't want to be bothered with an error message
+      if (.not.batch) then
+         if (nDat.eq.0) call bug('f','No points to flag')
+      endif
+c  GJend: again, you don't want to be bothered with an error message
 
 c     Free memory (in reverse order).
       call memFree(pVis,   MAXCHAN, 'c')
@@ -225,55 +248,72 @@ c     Free memory (in reverse order).
       call memFree(pFlags, MAXCHAN, 'l')
 
 c     Loop over the baselines.
-      call output('Entering interactive mode...')
+      
+c  GJbeg
+      if (.not.batch) then
+         call output('Entering interactive mode...')
+      endif
+c  GJend
       nEdit  = 0
       blIdxp = 1
       if (nobase) then
-        do i = 1, nDat
-          blIdx(i) = i
-        enddo
+         do i = 1, nDat
+            blIdx(i) = i
+         enddo
+c     GJbeg
+         if (.not.batch) then
+            call edit(xaxis,yaxis,'All baselines',nDat,xDat,yDat,nDat,
+     *           blIdx,nEdit,finish)
+         else
+            call flall(nDat,xDat,yDat,nDat,blIdx,nEdit,finish,xmin,xmax)
+         endif
+c     GJend
 
-        call edit(xaxis,yaxis,'All baselines',nDat,xDat,yDat,nDat,blIdx,
-     *    nEdit,finish)
-        nBlIdx = nDat
-
+            nBlIdx = nDat
       else
-        bl = 0
-        do ant2 = 1, MAXANT
-          do ant1 = 1, ant2
-            bl = bl + 1
-            if (havebl(bl)) then
-              title = 'Baseline ' // itoaf(ant1)
-              length = len1(title)
-              title(length+1:) = '-' // itoaf(ant2)
-
-              call getIdx(bl,nDat,blDat,nBl,blIdx(blIdxp))
-              if (nBl.gt.0) then
-                call edit(xaxis,yaxis,title,nDat,xDat,yDat,nBl,
-     *            blIdx(blIdxp),nEdit,finish)
-                blIdxp = blIdxp + nBl
-                if (finish) goto 10
-              endif
-            endif
-          enddo
-        enddo
-
- 10     nBlIdx = blIdxp - 1
+         bl = 0
+         do ant2 = 1, MAXANT
+            do ant1 = 1, ant2
+               bl = bl + 1
+               if (havebl(bl)) then
+                  title = 'Baseline ' // itoaf(ant1)
+                  length = len1(title)
+                  title(length+1:) = '-' // itoaf(ant2)
+                  
+                  call getIdx(bl,nDat,blDat,nBl,blIdx(blIdxp))
+                  if (nBl.gt.0) then
+c                 GJbeg
+                     if (.not.batch) then
+                        call edit(xaxis,yaxis,title,nDat,xDat,yDat,nBl,
+     *                       blIdx(blIdxp),nEdit,finish)
+                     else
+                        call flall(nDat,xDat,yDat,nBl,blIdx(blIdxp),
+     *                       nEdit,finish,xmin,xmax) 
+                     endif
+c                 GJend                     
+                     blIdxp = blIdxp + nBl
+                     if (finish) goto 10
+                  endif
+               endif
+            enddo
+         enddo
+         
+ 10      nBlIdx = blIdxp - 1
       endif
-
+      
       call pgend
-
+         
 c     Move flagged entries to the start of blIdx for efficiency.
-      if (nEdit.gt.0) then
-        j = 0
-        do i = 1, nBlIdx
-          if (blIdx(i).lt.0) then
-            j = j + 1
-            blIdx(j) = abs(blIdx(i))
-          endif
-        enddo
-        nBlIdx = j
-      endif
+         if (nEdit.gt.0) then
+            j = 0
+            do i = 1, nBlIdx
+               if (blIdx(i).lt.0) then
+                  j = j + 1
+                  blIdx(j) = abs(blIdx(i))
+               endif
+            enddo
+            nBlIdx = j
+         endif
 
 c     Generate the "blflag.select" file, if needed.
       if (selgen) then
@@ -283,6 +323,7 @@ c     Generate the "blflag.select" file, if needed.
           call doSelGen(nDat,blDat,chDat,time0,tDat,nBlIdx,blIdx)
         endif
       endif
+
 
 c     Apply the changes.
       if (nEdit.gt.0 .and. .not.noapply) then
@@ -323,22 +364,22 @@ c-----------------------------------------------------------------------
 c***********************************************************************
 
       subroutine getOpt(nobase,selgen,noapply,rms,scalar,nofqaver,
-     *  uvflags)
+     *  uvflags,batch)
 
-      logical   nobase, selgen, noapply, rms, scalar, nofqaver
+      logical   nobase, selgen, noapply, rms, scalar, nofqaver, batch
       character uvflags*(*)
 c-----------------------------------------------------------------------
 c  Get extra processing options.
 c-----------------------------------------------------------------------
       integer    NOPTS
-      parameter (NOPTS=9)
+      parameter (NOPTS=10)
 
       logical   present(NOPTS)
       character opts(NOPTS)*8
 
       data opts/'nobase  ','nocal   ','nopass  ','nopol   ',
      *          'selgen  ','noapply ','rms     ','scalar  ',
-     *          'nofqaver'/
+     *          'nofqaver','batch   '/
 c-----------------------------------------------------------------------
       call options('options',opts,present,NOPTS)
 
@@ -348,6 +389,7 @@ c-----------------------------------------------------------------------
       rms    = present(7)
       scalar = present(8)
       nofqaver=present(9)
+      batch   =present(10)
       if (scalar .and. rms)
      *  call bug('f','Options scalar and rms cannot be used together')
       uvflags = 'sdlwb'
@@ -854,6 +896,56 @@ c-----------------------------------------------------------------------
       finish = .false.
 
       end
+
+c  GJbeg
+c***********************************************************************
+
+      subroutine flall(NDAT,xDat,yDat,NBL,blIdx,nEdit,
+     *  finish, xmin, xmax)
+
+c     Given.
+      integer   NDAT
+      real      xDat(NDAT), yDat(NDAT), xmin, xmax
+      integer   NBL
+
+c     Given and returned.
+      integer   blIdx(NBL), nEdit
+
+c     Returned.
+      logical   finish
+c-----------------------------------------------------------------------
+      integer   i
+c-----------------------------------------------------------------------
+
+      do i = 1, NBL
+         blIdx(i) = abs(blIdx(i))
+      enddo
+
+      do i = 1, NBL
+         k = blIdx(i)
+         if (xDat(k).ge.xmin) then
+            blIdx(i) = -blIdx(i)
+            nEdit = nEdit + 1
+         endif
+         if (xDat(k).le.xmax) then
+            blIdx(i) = -blIdx(i)
+            nEdit = nEdit + 1
+         endif
+         if (yDat(k).ge.ymin) then
+            blIdx(i) = -blIdx(i)
+            nEdit = nEdit + 1
+         endif
+         if (yDat(k).le.ymax) then
+            blIdx(i) = -blIdx(i)
+            nEdit = nEdit + 1
+         endif
+      enddo
+
+      finish = .false.
+
+      end
+c  GJend
+
 
 c***********************************************************************
 
