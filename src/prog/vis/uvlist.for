@@ -149,7 +149,7 @@ c    7mar12 pjt - bfmask option
 c-----------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='UVLIST: version  8-mar-2012')
+	parameter(version='UVLIST: version  29-mar-2012')
 	real rtoh,rtod,pi
 	integer maxsels
 	parameter(pi=3.141592653589793,rtoh=12/pi,rtod=180/pi)
@@ -810,8 +810,8 @@ c********1*********2*********3*********4*********5*********6*********7**
      *           //' Azim  Elev(deg)   Amp/Phas '
      *           //'  daz1   del1   daz2   del2'
 	else if (dobfmask) then
-	  line =' Date      Vis #     Source     bfmask '
-     *           //'   A1 A2 Pol Itime Dtime '
+	  line =' Date               Vis # Source     bfmask '
+     *           //'   A1 A2 Pol  Itime  Dtime '
      *           //'    dra(")  ddec(") Flag'
 	else 
 	 line =' Vis # Source      UT(hrs)  LST(hrs)   HA(hrs)'
@@ -879,9 +879,10 @@ c
 	   timein0 = timein
 	endif
 c********1*********2*********3*********4*********5*********6*********7**
-	write(line,'(a,i7,1x,a,z8,1x,2i3,1x,a,1x,2f7.1,1x,2f8.2,1x,L1)')
+	write(line,
+     *   '(a,i7,1x,a,a,z8.8,1x,2i3,1x,a,1x,2f7.1,1x,2f8.2,1x,L1)')
      *    date,
-     *	  mod(Visno,1000000),src,bfmask,
+     *	  mod(Visno,1000000),src,'0x',bfmask,
      *	  ant1,ant2,pol,inttime,deltime,
      *    dra*rts,ddec*rts,flags(1)
       else
