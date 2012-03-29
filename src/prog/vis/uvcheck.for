@@ -104,10 +104,11 @@ c    mchw 17dec02  Make Check for known problems a debug option so output format
 c    mchw 07mar03  Added 1 to bin in histo plot.
 c    mchw 21mar03  Add cummulative sum in histo plot.
 c    mchw 16oct08  change doc only on var=systemp.
+c    mchw 29mar12  remove extra space in opts to appease ratty.
 c----------------------------------------------------------------------c
 	include 'maxdim.h'
 	character*(*) version
-	parameter(version='UVCHECK: version 16-Oct-2008')
+	parameter(version='UVCHECK: version 29-Mar-2012')
 	integer maxsels, ochan, nbugs, nflag, nwflag
 	parameter(MAXSELS=512)
 	real sels(MAXSELS)
@@ -713,7 +714,7 @@ c------------------------------------------------------------------------
         parameter(nopts=2)
         logical present(nopts)
         character opts(nopts)*8
-        data opts/'histo   ','debug    '/
+        data opts/'histo   ','debug   '/
 c
         call options('options',opts,present,nopts)
         histo = present(1)
