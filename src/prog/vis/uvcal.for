@@ -45,13 +45,15 @@ c	             by dividing the cross correlations by the
 c	             geometric mean of the autocorrelations.
 c	'hanning'    Hanning smooth each spectral window.
 c
-c	'linecal'    Remove phase slope across passband due to line length
-c	             changes. This option also corrects the phase difference
+c	'linecal'    Remove phase slopes across passband due to line length
+c	             changes using uv-variables: phasem1 and lo1.
+c	             This option also corrects the phase difference
 c	             between the wide channels due to line length.
 c	             options=linecal,avechan remakes the wideband from
 c	             the channel data after the phase slope is removed.	
 c       'linecal1'   alias for 'linecal'
-c       'linecal2'   Same as linecal1, but uses cable, instead of phasem1
+c       'linecal2'   Same as linecal1, but uses the measured line length,
+c		     uv-variable: cable, instead of phasem1 and lo1.
 c	'atmcal'     ATM phase monitoring testing - work in progress
 c                    It will normalize on freqatm, and if missing will attempt
 c                    to use lo1. Use puthd to fake a new freqatm variable.
@@ -272,11 +274,12 @@ c    mchw 21may09  fringe rate correction.
 c    pjt  19nov09  linecal2 option to look at cable instead of phasem1
 c    mchw 27jul11  added xyphase calibration.
 c    mchw 20jan12  added XY feeds and circular polarization to polcal
+c    mchw 29mar12  improved doc for linecal.
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	integer maxbad
 	character version*(*)
-	parameter(version='UVCAL: version 20-Jan-2012')
+	parameter(version='UVCAL: version 29-Mar-2012')
 	parameter(maxbad=20)
 	real PI
 	parameter(PI=3.1415926)
@@ -393,11 +396,11 @@ c
 	endif
 	doseeing = seeing.ne.0.
         if(doseeing)then
-           print *,'Correct amplitude for atmospheric phase coherence'
+          print *,'Correct amplitude for atmospheric phase coherence'
         endif
 c
         if(fringe.ne.0.d0)then
-	     print *,'doing fringe rate correction with factor= ',fringe)
+          print *,'doing fringe rate correction with factor= ',fringe
          call dayjul(start_time, time0)
 c        print *,'c   09MAY21:13:27:04.0 is Julian Day 2454973.060463'
          print *, 'start_time: ',start_time, '  is Julian Day ', time0
