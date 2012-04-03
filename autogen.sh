@@ -9,7 +9,7 @@ if test "x$LIBTOOLIZE" = x; then
 fi
 
 echo "Initializing build scripts ..."
-aclocal
+aclocal -I .
 if [ $? -ne 0 ]; then
   echo "ERROR - Exiting..."
   exit 1

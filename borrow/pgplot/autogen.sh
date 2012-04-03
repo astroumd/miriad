@@ -10,7 +10,7 @@ if test "x$LIBTOOLIZE" = x; then
 fi
 
 $LIBTOOLIZE --copy --force
-aclocal
+aclocal -I .
 #autoheader
 autoconf
-automake --add-missing --copy --warnings=obsolete  --warnings=gnu --warnings=unsupported --warnings=no-syntax --warnings=no-portability
+automake --add-missing --copy
