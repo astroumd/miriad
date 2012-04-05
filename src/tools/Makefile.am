@@ -1,6 +1,7 @@
 include $(top_srcdir)/mircommon.mak
 
 bin_PROGRAMS = doc docfmt docman flint ratty intf2c
+noinst_PROGRAMS = detab # used in building docs
 
 if HAVE_XAW
 bin_PROGRAMS += xpanel
@@ -18,6 +19,7 @@ EXTRA_DIST = xpanel.icon
 # we've changed the default source extension to .f, so we must
 # explicitly identify these programs as having C source.
 
+detab_SOURCES = detab.c
 doc_SOURCES = doc.c
 docfmt_SOURCES = docfmt.c
 docman_SOURCES = docman.c
