@@ -2,7 +2,8 @@ include $(top_srcdir)/mircommon.mak
 
 LDADD = $(prog_libs)
 
-ftasks = ax axcor jyperk noiseglue
+ftasks = ax axcor jyperk noiseglue xyauto
+noinst_HEADERS = xyauto.h
 bin_PROGRAMS = $(ftasks)
 CLEANFILES = $(ftasks:=.f)
 EXTRA_DIST = $(ftasks:=.for)
