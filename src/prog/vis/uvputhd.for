@@ -16,7 +16,7 @@ c pjt/sally 31-mar-97  defined MAXVAL and increased from 8 to 16
 c       pjt 17-aug-99  added tabular time dependant input, substantial rewrite
 c       tw   4-nov-02  table can now give non-ascii array values
 c       pjt 16-jan-03  fix array input from varval= keyword
-c       pjt 23-aug-10  use varOnit to preserve correlation type
+c       mhw 24-jan-12  keep output correlations same type as input
 c          
 c  unfinished:
 c       - array values for tables
@@ -32,25 +32,21 @@ c    UVPUTHD allows the user to change the values of uv variables in a
 c    uv dataset. All occurances of the variable are changed to the
 c    new value. If the variable is an array, all new values must be
 c    entered in sequential order. If the user desires to set all members 
-c    of an array to a single value, only one value needs to be entered.
+c    of an array to a single value, only one value need be entered.
 c    Values can also be inserted from a time ordered table.
 c    Note: PUTHD must be used to use the uv override principle, but
 c    can only be used for single items, i.e. uv variables which are
-c    not an array. 
+c    not an array.
 c@ vis	
 c    Name of the input MIRIAD dataset. Only one dataset is allowed.
 c    No default.
 c@ hdvar
 c    Name of header variable to be changed. Refer to user manual or
 c    run VARLIST to see the selection of allowed variable names.
-c    Although one is allowed to make up new uv variables, this is not 
-c    a recommended practice.
-c    Existing UV variables cannot have their type changed.
 c    No default.
 c@ type
 c    Type of variable, either integer (i),real (r), double precision (d), 
-c    or ascii (a). Unused if variable already exists in the data file,
-c    i.e. you cannot change the type of an existing UV variable.
+c    or ascii (a). Unused if variable already exists in the data file.
 c    CAVEAT: Tables do not support ascii types yet.
 c    No Default.
 c@ length
@@ -79,21 +75,27 @@ c    Default: not used, in which case the offset is 0, in which case
 c    fractional days are really Julian Days.
 c@ out
 c    Name of the output dataset. No default.
+c$Id$
 c-----------------------------------------------------------------------
 	include 'uvputhd.h'
-	character VERSION*(*)
-	parameter(VERSION='(Version 23-aug-10)')
+	character version*80
 	character varval(MAXVAL)*30,hdvar*10,time0*32
         character outfile*80,infile*80,tabfile*80
-        character except(20)*10,newtype*1,line*256
+        character except(20)*10,newtype*1,line*256,ctype*1
 	integer nread,inset,outset,nexcept,nwread,newlong,nval
 	double precision preamble(4), jd0, jd1
 	complex data(MAXCHAN),wdata(MAXCHAN)
-	logical flags(MAXCHAN),wflags(MAXCHAN),there,first
-	integer len1,ncols,i
+	logical flags(MAXCHAN),wflags(MAXCHAN),there,first,updated
+	integer len1,ncols,i,l
 	logical keyprsnt
 c
-	call output('UVPUTHD: '//version)
+c Externals
+c
+        character*80 versan
+c-----------------------------------------------------------------------
+        version = versan ('uvputhd',
+     :                    '$Revision$',
+     :                    '$Date$')
 	call keyini
 	call keyf('vis',infile,' ')
 	call keya('hdvar',hdvar,' ')
@@ -189,19 +191,20 @@ c   read ascii input of user header variable values and stick them
 c   into the appropriate arrays (non-table input)
 c
 	if (tabfile .eq. ' ') then
-	   call readval(hdvar,varval,nval)
+	   call readval(varval,nval)
 	endif
 c
 c  Read the first record in visfile
 c
 	first = .true.
+        call uvprobvr(inset,'corr',ctype,l,updated)
 	call uvread(inset,preamble,data,flags,maxchan,nread) 
 	if(nread.le.0) call bug('f','No data in input vis file')
 c
 c  Open the output and copy history
 c
         call uvopen(outset,outfile,'new')
-	call varOnit(inset,outset,'channel')
+        if (ctype.ne.' ') call uvset(outset,'corr',ctype,0,0.,0.,0.)
         call hdcopy(inset,outset,'history') 
 	write(line,'('' Writing data out to file: '',a)') outfile
 	call output(line)
@@ -466,13 +469,13 @@ c           write(*,*) 'Updating not there ',vtype,nvals
 	ENDIF
 	END
 c***********************************************************************
-        subroutine readval(hdvar,varval,nvals)
+        subroutine readval(varval,nvals)
 c
 c   read ascii input of user header variable values and stick them
 c   into the appropriate arrays
 c
 	integer nvals
-	character hdvar*(*),varval(nvals)*(*)
+	character varval(nvals)*(*)
 c
         include 'uvputhd.h'
 	character vtype*1
