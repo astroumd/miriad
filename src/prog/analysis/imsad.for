@@ -136,8 +136,8 @@ c     Viewports for histogram, image, and subimage
       data ivp2 /0.1, 0.3, 0.6, 0.9/
 c-----------------------------------------------------------------------
       version = versan('imsad',
-     *                 '$Revision',
-     *                 '$Date')
+     *                 '$Revision$',
+     *                 '$Date$')
 
 c     Initialise program enviroment.
       call init(lui,logfile,boxes,nsize,naxis,blc,trc,clip,dolog,dohist,
