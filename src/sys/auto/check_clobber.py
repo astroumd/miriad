@@ -8,19 +8,12 @@
 import sys, os, os.path
 from os.path import join, exists, isdir
 
-if len (sys.argv) > 3:
-    print >>sys.stderr, 'Usage: %s [CVS checkout topdir] [build topdir]' % sys.argv[0]
+if len (sys.argv) != 3:
+    print >>sys.stderr, 'Usage: %s <CVS-checkout-topdir> <build-topdir>' % sys.argv[0]
     sys.exit (1)
 
-if len (sys.argv) < 2:
-    topsrc = '.'
-else:
-    topsrc = sys.argv[1]
-
-if len (sys.argv) < 3:
-    topbuild = topsrc
-else:
-    topbuild = sys.argv[2]
+topsrc = sys.argv[1]
+topbuild = sys.argv[2]
 
 # Ready to go.
 

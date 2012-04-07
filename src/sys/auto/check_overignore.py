@@ -15,14 +15,11 @@ import sys, os, os.path
 from fnmatch import fnmatch
 from os.path import join, exists
 
-if len (sys.argv) > 2:
-    print >>sys.stderr, 'Usage: %s [CVS checkout topdir]' % sys.argv[0]
+if len (sys.argv) != 2:
+    print >>sys.stderr, 'Usage: %s <CVS-checkout-topdir>' % sys.argv[0]
     sys.exit (1)
 
-if len (sys.argv) == 1:
-    topdir = '.'
-else:
-    topdir = sys.argv[1]
+topdir = sys.argv[1]
 
 dirs = [(topdir, '')]
 diridx = 0
