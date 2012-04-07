@@ -65,6 +65,7 @@ c    rjs  15jun00  Simple handling of blank source name.
 c    pjt  11feb05  Adapt to use maxdim.h, MAXSPECT=MAXWIDE, not 18.
 c    pjt  11jan06  Scan for the new dazim/delev CARMA, and report if present (add refant=)
 c    pjt  14apr06  Change some bug() calls to assert*()
+c    pjt   7apr12  fixed for carma data with 0 length spectral windows
 c----------------------------------------------------------------------c
 	include 'mirconst.h'
 	include 'maxdim.h'
@@ -76,7 +77,7 @@ c           MAXFREQ  = max number of freq setups we can handle
 c           MAXSPECT = max number of "channels" in the widebands to check for
 	parameter(MAXSRC=5000,MAXFREQ=64,MAXSPECT=MAXWIDE)
 	parameter(PolMin=-8,PolMax=4,PolI=1)
-	parameter(version='UVINDEX: version 17-MAR-2011')
+	parameter(version='UVINDEX: version 7-apr-2012')
 c
 	integer pols(PolMin:PolMax),pol
 	integer lIn,i,j,j1,nvis,nants,l
@@ -666,14 +667,18 @@ c
 	do i=1,nspect(i1)
 	  if(nschan(i,i1).ne.nschan(i,i2))return
 	  w = abs(sfreqs(i,2,i1))
-	  if(abs(sfreqs(i,2,i1)-sfreqs(i,2,i2)).gt.0.01*w)return
-	  if(abs(sfreqs(i,3,i1)-sfreqs(i,1,i2)).gt.0.5*w)return
+	  if (w.gt.0.0 .and. nschan(i,i1).gt.0) then
+	     if(abs(sfreqs(i,2,i1)-sfreqs(i,2,i2)).gt.0.01*w)return
+	     if(abs(sfreqs(i,3,i1)-sfreqs(i,1,i2)).gt.0.5*w)return
+	  endif
 	enddo
 c
 	do i=1,nwide(i1)
 	  w = abs(wfreqs(i,2,i1))
-	  if(abs(wfreqs(i,2,i1)-wfreqs(i,2,i2)).gt.0.01*w)return
-	  if(abs(wfreqs(i,3,i1)-wfreqs(i,1,i2)).gt.0.5*w)return
+	  if (w.gt.0.0) then
+	     if(abs(wfreqs(i,2,i1)-wfreqs(i,2,i2)).gt.0.01*w)return
+	     if(abs(wfreqs(i,3,i1)-wfreqs(i,1,i2)).gt.0.5*w)return
+	  endif
 	enddo
 c
 	FreqEq = .true.
