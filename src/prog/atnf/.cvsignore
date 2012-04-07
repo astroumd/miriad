@@ -8,6 +8,7 @@ _libs
 docwork
 *.f
 at_mfcal
+at_uvlist
 at_uvplt
 atfix
 atmos
