@@ -19,7 +19,7 @@ c    mchw  10may96    Different plot symbols with frequency.
 c    rjs   22aug97    Better listing format.
 c***********************************************************************
 c= CalFlux - Print or plot flux data for a calibrator source.
-c& jm
+c& pjt
 c: calibration, flux
 c+
       program calflux
