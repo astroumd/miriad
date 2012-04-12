@@ -32,15 +32,23 @@
 cd $MIR
 set m = '$MIR'
 if( ! $#argv ) then
-	echo "### Argument(s) required ###"
-	echo "    mir.find argv1 [argv2 ...]"
-	echo "       or"
-	echo "    mirfind  argv1 [argv2 ...]"
+    echo "### Argument(s) required ###"
+    echo "    mir.find [-w] argv1 [argv2 ...]"
+    echo "       or"
+    echo "    mirfind  [-w] argv1 [argv2 ...]"
 else
+    if (X$1 == X-w) then
+	shift argv
+	(find src    -name '*\.*' -print ; \
+	 find borrow -name '*\.*' -print ; \
+	 find cat    -name '*\.*' -print ) \
+	 | xargs grep -in "$*" /dev/null
+    else
 	foreach i ($argv)
-		set n = (`find src -name \*${i:t}\* -print`)
-		foreach j ($n)
-			echo "${m}/${j}"
-		end
+	    set n = (`find src -name \*${i:t}\* -print`)
+	    foreach j ($n)
+		echo "${m}/${j}"
+	    end
 	end
+    endif
 endif
