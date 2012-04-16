@@ -14,7 +14,7 @@ c	included.
 c
 c	The output consists of 6 columns. They are the
 c
-c	outer radius (arcsec) of the annulus;
+c	outer radius (arcsec for RA, DEC images) of the annulus;
 c	number of pixels in the annulus;
 c	the average (median) in the annulus;
 c	the rms of the annulus;
@@ -131,13 +131,14 @@ c    pjt   20jun05      g95 wants medsmooth to be an integer
 c    pjt/ml 18jan06     fix for rings with '0' pixels
 c    mchw  01dec09      fix bug in scale of cummulative flux.
 c    mchw  11nov11      refix bug in scale of cummulative flux.
+c    mchw  16apr12      change title line and doc for options=natural.
 c
 c----------------------------------------------------------------------c
         include 'mirconst.h'
 	include 'maxdim.h'
 	include 'mem.h'
         character*(*) label,version
-        parameter(version='version 11-NOV-2011')
+        parameter(version='version 16-APR-2012')
         double precision rts,value
         parameter(label='Integrate a Miriad image in elliptical annuli')
         integer maxnax,maxboxes,maxruns,naxis,axis,plane,maxring
@@ -403,7 +404,11 @@ c     Write out the results (for mean and median only)
 c     
           if (.not.dotab) then
              call logwrit(' ')
-             if (domedian) then
+             if(natural)then
+                write(line,'(a,a,a,a,a,a)') '   Radius    ',
+     *               '   Pixels   ', '  Median  ', '      rms  ',
+     *               ' Ann. Sum  ',' Cum. Sum '
+             else if (domedian) then
                 write(line,'(a,a,a,a,a,a)') '   Radius(") ',
      *               '   Pixels   ', '  Median  ', '      rms  ',
      *               ' Ann. Sum  ',' Cum. Sum '
