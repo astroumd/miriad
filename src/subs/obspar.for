@@ -43,6 +43,7 @@ c                 sub-reflector dismeter.
 c    mchw 03dec07 Added ATA at hatcreek and BIMA at the Carma site.
 c    mchw 02jun10 Added KAT7.
 c    mchw 19apr11 added ovro/evector =pi/2 ; changed bima/evector to pi/2
+c    mchw 18apr12 Added GBT.
 c************************************************************************
 c* ObsPrint -- Print list of known observatories.
 c: utility
@@ -288,6 +289,11 @@ c
 	call obsad('cso/mount',	        ALTAZ)
 	call obsad('cso/nants',	        6.d0)
 	call obsad('cso/systemp',	500.d0)
+c
+c  GBT.
+c
+	call obsad('gbt/antdiam',	100.d0)
+	call obsad('gbt/mount',	ALTAZ)
 c
 c  GMRT.
 c
