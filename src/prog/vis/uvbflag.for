@@ -56,38 +56,38 @@ c       carried in the uv dataset.
 c       Currently for CARMA (2012) we use the following bits (1..31)
 c       (options=blfmask should always produce the current list)
 c
-C        1 A1_PHASELOCK
-C        2 A2_PHASELOCK
-C        3 A1_MAJOR_TRACKING
-C        4 A2_MAJOR_TRACKING
-C        5 A1_TSYS_BAD
-C        6 A2_TSYS_BAD
-C        7 A1_SHADOWED
-C        8 A2_SHADOWED
-C        9 A1_OFFLINE
-C       10 A2_OFFLINE
-C       11 A1_MINOR_TRACKING
-C       12 A2_MINOR_TRACKING
-C       13 UNKNOWN10
+C        1 A1_PHASELOCK               0x00000001
+C        2 A2_PHASELOCK               0x00000002
+C        3 A1_MAJOR_TRACKING          0x00000004
+C        4 A2_MAJOR_TRACKING          0x00000008
+C        5 A1_TSYS_BAD                0x00000010
+C        6 A2_TSYS_BAD                0x00000020
+C        7 A1_SHADOWED                0x00000040
+C        8 A2_SHADOWED                0x00000080
+C        9 A1_OFFLINE                 0x00000100
+C       10 A2_OFFLINE                 0x00000200
+C       11 A1_MINOR_TRACKING          0x00000400
+C       12 A2_MINOR_TRACKING          0x00000800
+C       13 UNKNOWN10                  0x00001000
 C       14 UNKNOWN11
 C       15 UNKNOWN12
 C       16 UNKNOWN13
-C       17 UNKNOWN14
+C       17 UNKNOWN14                  0x00010000
 C       18 UNKNOWN15
 C       19 UNKNOWN16
 C       20 UNKNOWN17
-C       21 UNKNOWN18
+C       21 UNKNOWN18                  0x00100000
 C       22 UNKNOWN19
 C       23 UNKNOWN20
 C       24 UNKNOWN21
-C       25 BAND_OFFLINE
-C       26 UNMAPPED_SIGNAL
-C       27 MONITOR_DATA_BAD
-C       28 BAD_CHANNEL_COUNT
-C       29 NO_RX_IN_SIDEBAND
-C       30 CORR_DATA_MISSING
-C       31 CORR_DATA_INVALID
-C       32 DO_NOT_USE
+C       25 BAND_OFFLINE               0x01000000
+C       26 UNMAPPED_SIGNAL            0x02000000
+C       27 MONITOR_DATA_BAD           0x04000000
+C       28 BAD_CHANNEL_COUNT          0x08000000
+C       29 NO_RX_IN_SIDEBAND          0x10000000
+C       30 CORR_DATA_MISSING          0x20000000
+C       31 CORR_DATA_INVALID          0x40000000
+C       32 DO_NOT_USE                 0x80000000
 c
 c@ logic
 c       What operation to apply to masking? AND, OR or XOR are
@@ -165,6 +165,15 @@ c
       newflag = flagval.eq.'unflag'
       call l2m(n1,list1,MAXBIT-1,mask1)
 c
+c  Open log file and write title.
+c
+      call LogOpen(log,' ')
+      call LogWrit(version)
+      line = 'File: '//vis
+      call LogWrit(line(1:len1(line)))
+      call LogWrit(' ')
+
+c
 c  Open an old visibility file, and apply selection criteria.
 c
       call uvopen (lIn,vis,'old')
@@ -180,14 +189,6 @@ c
       call uvset(lIn,'coord','nanosec',0, 0.0, 0.0, 0.0)
       call uvset(lIn,'planet', ' ', 0, 0.0, 0.0, 0.0)
       call SelApply(lIn,sels,.true.)
-c
-c  Open log file and write title.
-c
-      call LogOpen(log,' ')
-      call LogWrit(version)
-      line = 'File: '//vis
-      call LogWrit(line(1:len1(line)))
-      call LogWrit(' ')
 c
 c  Append history if flagging was going to occur
 c  Make a backup of flags and wflags if they didn't exist yet
@@ -535,7 +536,7 @@ c extern
          if (.not.eof) then
             n = n + 1
             write(line,'(i2,1x,a)')n,name(1:len1(name))
-            write(*,*) line
+            call LogWrit(line(1:len1(line)))
          endif
       end do
       call hdaccess(item,iostat)
