@@ -32,6 +32,10 @@ c  UVLIST options=bfmask will help you displaying the flags for first window
 c
 c@ vis
 c	The input visibility file. No default.
+c@ select
+c       Selection of visibilities, as long as they do not change
+c       the number of channels or windows, only selections that
+c       pick out full records are allowed.
 c@ flagval
 c       set to either 'flag' or 'unflag' to flag the data.
 c       Default: don't change the flags, but operations
@@ -90,8 +94,11 @@ C       31 CORR_DATA_INVALID          0x40000000
 C       32 DO_NOT_USE                 0x80000000
 c
 c@ logic
-c       What operation to apply to masking? AND, OR or XOR are
+c       What operation to apply to masking? AND, OR or XOR are 
 c       allowed. Default: AND
+c       It is not adviced to change this.
+c       For flagging:   mask.AND.bfmask  has to be true to flag
+c       For unflagging: .NOT.mask.AND.bfmask has to be false to unflag
 c@ log
 c	The output log file. Default is the terminal.
 c@ options
@@ -105,6 +112,7 @@ c  History:
 c    pjt  20oct2011  Original cloned off uvflag
 c    pjt  23feb2012  new cloned off uvcheck
 c    pjt  22mar2012  fixed up multi-band implementation
+c    pjt  22apr2012  fix logic for unflagging
 c----------------------------------------------------------------------c
 	include 'maxdim.h'
 	character version*128
@@ -164,6 +172,9 @@ c
       doflag = flagval.eq.'flag' .or. flagval.eq.'unflag'
       newflag = flagval.eq.'unflag'
       call l2m(n1,list1,MAXBIT-1,mask1)
+      if (newflag) then
+         call maskop(MAXBIT-1,mask1,mask1,'NOT',mask1)
+      endif
 c
 c  Open log file and write title.
 c
@@ -277,6 +288,8 @@ c              convert each bfmask(j) into a mask array, and a list for debug
               call maskop(MAXBIT-1,mask1,mask2,oper,mask3)
               call m2l(MAXBIT-1,mask3,n3,list3)
               mflag(j) = ismasked(MAXBIT-1,mask3)
+cpjt? reverse logic if we unflag !!!
+              if (newflag) mflag(j) = .NOT.mflag(j)
               if (debug .and. j.eq.1) then
                  write(*,*) date,inttime,source,ant1,ant2,bfmaska,
      *                varlen,
@@ -467,6 +480,14 @@ c
       if (oper.eq.'set' .or. oper.eq.'SET') then
          do i=1,n
             mask3(i) = mask1(i)
+         enddo
+      else if (oper.eq.'not' .or. oper.eq.'NOT') then
+         do i=1,n
+            if (mask1(i).eq.0) then
+               mask3(i) = 1
+            else
+               mask3(i) = 0
+            endif
          enddo
       else if (oper.eq.'and' .or. oper.eq.'AND') then
          do i=1,n
