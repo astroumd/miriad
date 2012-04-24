@@ -47,6 +47,7 @@ c    jhz  11jan07 added chi2 to the var list.
 c    pjt  31jan07 added modedesc to the var list
 c    pjt  17may07 added purpose to the var list
 c    pjt   3jan11 added delaylx,delayry to the var list
+c    pjt  24apr12 added bfmask
 c************************************************************************
 c*VarInit -- Initialise the copy routines.
 c:uv-data
@@ -86,7 +87,7 @@ c    polarisation variables:	npol, pol
 c    data variables:		corr, wcorr, nchan, nwide
 c  Variables produced by the VarCopy routine:
 c   line=channel or velocity: nspect,nschan,ischan,sdf,sfreq,restfreq,systemp,
-c       xtsys,ytsys
+c       xtsys,ytsys,bfmask
 c   line=wide		    : wfreq,wwidth,wsystemp.
 c  Variables setup for copying, and copied by VarWInit:
 c   wfreq,wwidth,wsystemp
@@ -103,14 +104,14 @@ c
 	integer i
 c
 	integer nvar,nline,nwide,nvelo
-	parameter(nvar=99,nline=10,nwide=3,nvelo=6)
+	parameter(nvar=98,nline=11,nwide=3,nvelo=6)
         character var(nvar)*8,line(nline)*8,wide(nwide)*8,velo(nvelo)*8
 c
 c  Variables to check for a change, for line=channel.
 c
 	data line/    'nspect  ','restfreq','ischan  ','nschan  ',
      *	   'sfreq   ','sdf     ','systemp ','xtsys','ytsys',
-     *     'xyphase '/
+     *     'xyphase ','bfmask  '/
 c
 c  Variables to check for a change, for line=wide.
 c
@@ -124,7 +125,7 @@ c
 c  Variables to copy whenever they change.
 c
 	data var/     'airtemp ','antaz   ','antdiam ','antel   ',
-     *	   'antpos  ','atten   ','axisrms ','bfmask  ',
+     *	   'antpos  ','atten   ','axisrms ',
      *     'bin     ','cable   ',
      *	   'chi     ','corbit  ','corbw   ','corfin  ','cormode ',
      *	   'chi2    ','coropt  ','cortaper','dazim   ',
@@ -262,7 +263,7 @@ c    tOut	Handle of the output uv file.
 c
 c  UV variables produced are:
 c   line=channel or velocity: nspect,nschan,ischan,sdf,sfreq,restfreq,systemp,
-c       xtsys,ytsys
+c       xtsys,ytsys,bfmask
 c   line=wide		    : wfreq,wwidth,wsystemp.
 c
 c
@@ -429,6 +430,7 @@ c    restfreq
 c    systemp	
 c    xtsys
 c    ytsys
+c    bfmask
 c
 c  Inputs:
 c    tvis	Handle of the input uv data file.
@@ -448,8 +450,8 @@ c
 	double precision rfreq(MAXWIN),sdf(MAXWIN)
 	double precision rfreq0(MAXWIN),sdf0(MAXWIN)
 	double precision sfreq0(MAXWIN),sfreq(MAXWIN)
-	integer ischan0(MAXWIN),nschan0(MAXWIN)
-	integer nschan(MAXWIN),trn(MAXWIN)
+	integer ischan0(MAXWIN),nschan0(MAXWIN),bfmask(MAXWIN)
+	integer nschan(MAXWIN),trn(MAXWIN),bfmask0(MAXWIN)
 	integer ispect,ospect,nspect,n,i,j,k,l,nants,start
 	integer nsystemp,nxtsys,nytsys,nxyphase
 	character type*1
@@ -467,6 +469,7 @@ c
 	call uvgetvrd(tVis,'sdf',sdf,nspect)
 	call uvgetvrd(tVis,'sfreq',sfreq,nspect)
 	call uvgetvrd(tVis,'restfreq',rfreq,nspect)
+	call uvgetvri(tVis,'bfmask',bfmask,nspect)
 	call uvrdvri(tVis,'nants',nants,0)
 c
 c  Generate the window description parameters for the output.
@@ -485,6 +488,7 @@ c
      *		(start-1)*sdf(ispect) + 0.5*(lwidth-1)*sdf(ispect)
 	  nschan0(ospect) = min((nschan(ispect)-start)/lstep + 1,n)
 	  rfreq0(ospect) = rfreq(ispect)
+	  bfmask0(ospect) = bfmask(ispect)
 	  trn(ospect) = ispect
 	  if(nschan0(ospect).eq.1)then
 	    sdf0(ospect) = lwidth*sdf(ispect)
@@ -643,6 +647,7 @@ c
 	call uvputvrd(tOut,'sdf',sdf0,ospect)
 	call uvputvrd(tOut,'sfreq',sfreq0,ospect)
 	call uvputvrd(tOut,'restfreq',rfreq0,ospect)
+	call uvputvri(tOut,'bfmask',bfmask0,ospect)
 c
 	if(nsystemp.gt.0)
      *	  call uvputvrr(tOut,'systemp',systemp0,nsystemp)

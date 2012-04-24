@@ -94,7 +94,7 @@ c--
 c------------------------------------------------------------------------
         include 'maxdim.h'
 	character version*(*)
-	parameter(version='UvCat: version 1.0 30-Jun-06')
+	parameter(version='UvCat: version 1.0 24-apr-2012')
 c
 	integer nchan,vhand,lIn,lOut,i,j,nspect,nPol,Pol,SnPol,SPol
 	integer nschan(MAXWIN),ischan(MAXWIN),ioff,nwdata,length
@@ -288,11 +288,12 @@ c------------------------------------------------------------------------
 	logical updated
 c
 	integer nwin
-	parameter(nwin=9)
+	parameter(nwin=10)
 	character windpar(nwin)*8
 c
 	data windpar/ 'ischan  ','nschan  ','nspect  ','restfreq',
-     *	   'sdf     ','sfreq   ','systemp ' , 'xtsys' , 'ytsys'/
+     *	   'sdf     ','sfreq   ','systemp ' , 'xtsys' , 'ytsys',
+     *     'bfmask  '/
 c
 c  Check if "wcorr" and "corr" are present, and determine which ones we
 c  want to write out.
@@ -349,6 +350,7 @@ c    restfreq
 c    systemp
 c    xtsys
 c    ytsys
+c    bfmask
 c
 c  It also returns a description used by a later routine to extract the
 c  useful channels.
@@ -365,7 +367,7 @@ c    ischand	The offset of the first channel in each window.
 c    window	This is false if all windows are selected.
 c------------------------------------------------------------------------
 	include 'maxdim.h'
-	integer nschan(MAXWIN),ischan(MAXWIN),nants
+	integer nschan(MAXWIN),ischan(MAXWIN),bfmask(MAXWIN),nants
 	integer length,nspect,offset,nout,i,j,nsystemp,nxyph
 	integer nxtsys,nytsys
 	double precision sdf(MAXWIN),sfreq(MAXWIN),restfreq(MAXWIN)
@@ -373,7 +375,7 @@ c------------------------------------------------------------------------
 	real xtsys(MAXANT*MAXWIN),ytsys(MAXANT*MAXWIN)
 	character type*1
 	logical unspect,unschan,uischan,usdf,usfreq,urest,usyst
-	logical uxtsys,uytsys
+	logical uxtsys,uytsys,ubfmask
 	logical uxyph
 c
 c  Get the dimensioning info.
@@ -398,6 +400,8 @@ c
 	call uvgetvrd(lIn,'sfreq',sfreq,nspect)
 	call uvprobvr(lIn,'restfreq',type,length,urest)
 	call uvgetvrd(lIn,'restfreq',restfreq,nspect)
+	call uvprobvr(lIn,'bfmask',type,length,ubfmask)
+	if (ubfmask) call uvgetvri(lIn,'bfmask',bfmask,nspect)
 c
 c       System Temperature
 c
@@ -441,6 +445,7 @@ c
 	    sdf(nout) = sdf(i)
 	    sfreq(nout) = sfreq(i)
 	    restfreq(nout) = restfreq(i)
+	    bfmask(nout) = bfmask(i)
 c
 	    if(usyst.and.nsystemp.ge.nspect*nants)then
 	      do j=1,nants
@@ -477,6 +482,7 @@ c
 	call uvputvrd(lOut,'sdf',sdf,nout)
 	call uvputvrd(lOut,'sfreq',sfreq,nout)
 	call uvputvrd(lOut,'restfreq',restfreq,nout)
+	if (ubfmask) call uvputvri(lOut,'bfmask',bfmask,nout)
 	if(nsystemp.ge.nspect*nants)nsystemp = nout*nants
 	if(usyst)call uvputvrr(lOut,'systemp',systemp,nsystemp)
 	if(nxtsys.ge.nspect*nants) nxtsys = nout*nants
