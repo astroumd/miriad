@@ -127,7 +127,7 @@ c----------------------------------------------------------------------c
        include 'maxdim.h'
        include 'mirconst.h'
        character*(*) version
-       parameter(version='VARMAPS: version 6-sep-2011')
+       parameter(version='VARMAPS: version 25-apr-2012')
        integer MAXSELS
        parameter(MAXSELS=512)
        integer MAXVIS
@@ -150,7 +150,7 @@ c----------------------------------------------------------------------c
        integer lout,nsize(3),i,j,k,l,ng,i1,j1,id,jd,size
        real cell(2),beam(2),beam2(2)
        integer MAXSIZE
-       parameter(MAXSIZE=128)
+       parameter(MAXSIZE=256)
        real stacks(MAXVIS,MAXCHAN2), buffer(MAXCHAN2)
        real    xstacks(MAXVIS), ystacks(MAXVIS)
        integer istacks(MAXVIS), jstacks(MAXVIS)
@@ -358,8 +358,8 @@ c
             ystacks(ngrid) = y
             istacks(ngrid) = i
             jstacks(ngrid) = j
-            if (debug) write(*,*) 'Adding ',i,j
             cnt = idx(i,j,1) + 1
+            if (debug) write(*,*) 'Adding ',i,j,nvis,cnt,nread
             if (cnt.ge.MAXVPP) call bug('f','Too many scans for MAXVPP')
             idx(i,j,1) = cnt
             idx(i,j,cnt+1) = ngrid
