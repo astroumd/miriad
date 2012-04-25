@@ -47,7 +47,7 @@ c    jhz  11jan07 added chi2 to the var list.
 c    pjt  31jan07 added modedesc to the var list
 c    pjt  17may07 added purpose to the var list
 c    pjt   3jan11 added delaylx,delayry to the var list
-c    pjt  24apr12 added bfmask
+c    pjt  25apr12 added bfmask, and check for bfmask
 c************************************************************************
 c*VarInit -- Initialise the copy routines.
 c:uv-data
@@ -453,9 +453,9 @@ c
 	integer ischan0(MAXWIN),nschan0(MAXWIN),bfmask(MAXWIN)
 	integer nschan(MAXWIN),trn(MAXWIN),bfmask0(MAXWIN)
 	integer ispect,ospect,nspect,n,i,j,k,l,nants,start
-	integer nsystemp,nxtsys,nytsys,nxyphase
+	integer nsystemp,nxtsys,nytsys,nxyphase,nbfmask
 	character type*1
-	logical upd
+	logical upd,ubfmask
 c
 c  Get the various window-related variables from the uvdata.
 c
@@ -469,7 +469,8 @@ c
 	call uvgetvrd(tVis,'sdf',sdf,nspect)
 	call uvgetvrd(tVis,'sfreq',sfreq,nspect)
 	call uvgetvrd(tVis,'restfreq',rfreq,nspect)
-	call uvgetvri(tVis,'bfmask',bfmask,nspect)
+	call uvprobvr(tVis,'bfmask',type,nbfmask,ubfmask)
+	if (ubfmask) call uvgetvri(tVis,'bfmask',bfmask,nspect)
 	call uvrdvri(tVis,'nants',nants,0)
 c
 c  Generate the window description parameters for the output.
@@ -647,7 +648,7 @@ c
 	call uvputvrd(tOut,'sdf',sdf0,ospect)
 	call uvputvrd(tOut,'sfreq',sfreq0,ospect)
 	call uvputvrd(tOut,'restfreq',rfreq0,ospect)
-	call uvputvri(tOut,'bfmask',bfmask0,ospect)
+	if (ubfmask) call uvputvri(tOut,'bfmask',bfmask0,ospect)
 c
 	if(nsystemp.gt.0)
      *	  call uvputvrr(tOut,'systemp',systemp0,nsystemp)
