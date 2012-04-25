@@ -17,6 +17,7 @@ c                     flux file name change and limit lines to 72 chars.
 c    mchw  01sep94    Added plot.
 c    mchw  10may96    Different plot symbols with frequency.
 c    rjs   22aug97    Better listing format.
+c    pjt   25apr12    Updated docs (see also tabflux.for)
 c***********************************************************************
 c= CalFlux - Print or plot flux data for a calibrator source.
 c& pjt
@@ -38,9 +39,10 @@ c	as yymmmdd.d where yy is the year field 19yy, mmm is the three
 c	character string of the month, and dd.d is the decimal value
 c	of days.  None of the inputs are required, but they provide a
 c	means of bracketing the desired source(s).
+c       See also MIRSUBS/tabflux.for for implementation details.
 c@ in
 c	Name of the calibration data file (Default is the file
-c	cals.fluxes in the directory MIRCAT).
+c	FluxSource.cat in the directory MIRCAT).
 c@ source
 c	Name of the calibration source to list (default is all sources).
 c	The source name is minimum match format.
@@ -113,7 +115,7 @@ c End declarations.
 c-----------------------------------------------------------------------
 c Announce program.
 c
-      mesg = 'Calflux: version 1.5 10-MAY-96'
+      mesg = 'Calflux: version 25-apr-2012'
       nlen = len1(mesg)
       call output(mesg(1:nlen))
 c
