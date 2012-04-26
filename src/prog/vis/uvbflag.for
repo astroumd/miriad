@@ -8,24 +8,26 @@ c+
 c  UVBFLAG is a Miriad program to apply the blanking mask
 c  (carried in the UV variable 'bfmask') and carry them into
 c  the normal uv-data flags.  This has been a standard operation
-c  at CARMA since March 2012.
+c  at CARMA since March 2012, but can be employed by any observatory.
 c 
 c  It might be wise to make a copy of the flags and wflags items
 c  before complex operations are attempted,e.g. using
-c       mkdir VIS/backup 
-c       touch VIS/backup/header
-c       copyhd in=VIS out=VIS/backup items=wflags,flags
+c       mkdir $VIS/backup 
+c       touch $VIS/backup/header
+c       copyhd in=$VIS out=$VIS/backup items=wflags,flags
 c  NOTE: this will be done by UVBFLAG in one of the next revisions.
 c
 c  A bit about logic, flags and masking:
 c  The flags in a vis dataset are true/false, a true value for a correlation 
-c  means that bit is set, and the correllation is deemed good.
-c  The blanking mask is set if some bad condition was met during observing
+c  means that bit is set, and the correllation is deemed good. They appear
+c  in the (w)flags item as 1.
+c  The blanking mask is set if some (bad) condition was met during observing
 c  that ought to cause flags to be set to false, e.g. lost phaselock,
-c  shadowing etc.
+c  bad tracking, antenna shadowing etc.
 c  
-c  The current version applies flags to all channels (no select= is allowed)
-c  in narrow and wide band (if present).
+c  The current version applies flags to all channels in both narrow and wide
+c  band (if present). Use UVWIDE to recompute the wide band values based on
+c  flags.
 c
 c  See UVCHECK or UVFLAG for related flagging operations.
 c  UVLIST options=bfmask will help you displaying the flags for first window
@@ -53,10 +55,10 @@ c       (baseline,window) pair is then selected
 c       See also: http://www.mmarray.org/twiki/index.php/Blanking_and_flagging
 c       Note that bit 32 is not used, due to possible confusion with the 
 c       sign bit.
-c       If BFmask is not dimensions, it will be applied to all windows.
+c       If BFmask is not dimensioned, it will be applied to all windows
 c       for flagval (which can be flagged or unflagged)
 c       Full names of the masking bits are in the miriad item 'blfmask',
-c       carried in the uv dataset.
+c       carried in the original uv dataset.
 c       Currently for CARMA (2012) we use the following bits (1..31)
 c       (options=blfmask should always produce the current list)
 c
@@ -105,6 +107,9 @@ c@ options
 c       Extra processing options. Possible values are:
 c         debug    Print more output (but only when bfmask changes)
 c         blfmask  Show the names in the blfmask item
+c         swap     Special option to swap true/false flags in the file
+c         all      Show all bfmask(nspect) values for selected records
+c         one      Force bfmask(2..nspect) to be bfmask(1)
 c--
 c
 c
@@ -113,6 +118,8 @@ c    pjt  20oct2011  Original cloned off uvflag
 c    pjt  23feb2012  new cloned off uvcheck
 c    pjt  22mar2012  fixed up multi-band implementation
 c    pjt  22apr2012  fix logic for unflagging
+c    pjt  22apr2012  add options=swap 
+c    pjt  25apr2012  add options=all and one
 c----------------------------------------------------------------------c
 	include 'maxdim.h'
 	character version*128
@@ -135,7 +142,7 @@ c----------------------------------------------------------------------c
 	double precision datline(6)
         integer CHANNEL,WIDE,VELOCITY,type
         parameter(CHANNEL=1,WIDE=2,VELOCITY=3)
-        logical debug,mrepeat,doblfmask
+        logical debug,mrepeat,doblfmask,doswap,doall,doone
 c
 c  Externals and data
 c
@@ -159,7 +166,7 @@ c
 c @todo: this will need to become an options list, via getopt() style
         call mkeyi('mask',list1,MAXBIT-1,n1)
         call keya('logic',oper,'AND')
-	call GetOpt(debug,doblfmask)
+	call GetOpt(debug,doblfmask,doswap,doall,doone)
 	call keyfin
 c
 c  Check that the inputs are reasonable.
@@ -169,7 +176,7 @@ c
       if (nchan.lt.0) call bug ('f', 'Bad number of channels')
       if (width.le.0.0) call bug ('f','Negative width is useless')
       if (step.ne.1.) call bug ('f','step must be 1 in line=') 
-      doflag = flagval.eq.'flag' .or. flagval.eq.'unflag'
+      doflag = flagval.eq.'flag' .or. flagval.eq.'unflag' .or. doswap
       newflag = flagval.eq.'unflag'
       call l2m(n1,list1,MAXBIT-1,mask1)
       if (newflag) then
@@ -272,13 +279,17 @@ c
         call uvprobvr(lIn,'bfmask',vartype,varlen,updated)
         if (updated) then
            mrepeat = varlen.ne.nspect
-           if (mrepeat) then
+           if (mrepeat.or.doone) then
               call uvrdvri(lIn,'bfmask',bfmask,0)
               do j=2,nspect
                  bfmask(j) = bfmask(1)
               enddo
            else
               call uvgetvri(lIn,'bfmask',bfmask,nspect)
+           endif
+           if (doall) then
+              write(*,'(i6,16(1x,z8))') nvis,
+     *            (bfmask(j),j=1,16)
            endif
            write(bfmaska,'(z8)') bfmask(1)
 c              convert each bfmask(j) into a mask array, and a list for debug
@@ -288,7 +299,6 @@ c              convert each bfmask(j) into a mask array, and a list for debug
               call maskop(MAXBIT-1,mask1,mask2,oper,mask3)
               call m2l(MAXBIT-1,mask3,n3,list3)
               mflag(j) = ismasked(MAXBIT-1,mask3)
-cpjt? reverse logic if we unflag !!!
               if (newflag) mflag(j) = .NOT.mflag(j)
               if (debug .and. j.eq.1) then
                  write(*,*) date,inttime,source,ant1,ant2,bfmaska,
@@ -311,11 +321,11 @@ c
         if (doflag) then
            call uvxflag(lIn, flags, nread, dowide, newflag,
      *          nspect, nschan, ischan, mflag,
-     *          nflag, nwflag)
+     *          nflag, nwflag, doswap)
 	endif
 
 c
-c  Loop the loop (get next record)
+c  Loop the loop (get next record, if it exists)
 c
         call uvread(lIn, preamble, data, flags, maxchan, nread)
 	nvis = nvis + 1
@@ -358,58 +368,77 @@ c
 c********1*********2*********3*********4*********5*********6*********7*c
       subroutine uvxflag(lIn, flags, nread, dowide, newflag,
      *              nspect, nschan, ischan, mflag,
-     *              nflag, nwflag)
+     *              nflag, nwflag, doswap)
       implicit none
       integer lIn, nread, nflag, nwflag
       integer nspect, nschan(nspect), ischan(nspect)
       logical mflag(nspect)
-      logical flags(nread), newflag, dowide
+      logical flags(nread), newflag, dowide, doswap
 c--
       include 'maxdim.h'
       complex wdata(MAXWIDE)
       logical wflags(MAXWIDE)
       integer nwread, i,j
 
-      do j=1,nspect
-         if (mflag(j)) then
+      if (doswap) then
+         do j=1,nspect
             do i=ischan(j),ischan(j)+nschan(j)
-               flags(i) = newflag
+               flags(i) = .NOT.flags(i)
             enddo
-            nflag = nflag + nschan(j)
-         endif
-      enddo
+         enddo
+c         write(*,*)
+      else
+         do j=1,nspect
+            if (mflag(j)) then
+               do i=ischan(j),ischan(j)+nschan(j)
+                  flags(i) = newflag
+               enddo
+               nflag = nflag + nschan(j)
+            endif
+         enddo
+      endif
       call uvflgwr(lIn,flags)
 
       if (dowide) then
          call uvwread(lIn,wdata,wflags,MAXWIDE,nwread)
          if (nwread.ne.nspect) call bug('w','not enuf wides in uvwread')
-         do i=1,nwread
-            if (mflag(i)) then
-               wflags(i) = newflag
-               nwflag = nwflag + nwread
-            endif
-         enddo
+         if (doswap) then
+            do i=1,nwread
+               wflags(i) = .NOT.wflags(i) 
+            enddo
+         else
+            do i=1,nwread
+               if (mflag(i)) then
+                  wflags(i) = newflag
+                  nwflag = nwflag + nwread
+               endif
+            enddo
+         endif
          call uvwflgwr(lIn,wflags)
       endif
 
       end
 c********1*********2*********3*********4*********5*********6*********7**
-        subroutine GetOpt(debug,doblfmask)
+        subroutine GetOpt(debug,doblfmask,doswap,doall,doone)
 c
         implicit none
-        logical debug,doblfmask
+        logical debug,doblfmask,doswap,doall,doone
 c
 c  Get extra processing options.
 c------------------------------------------------------------------------
         integer nopts
-        parameter(nopts=2)
+        parameter(nopts=5)
         logical present(nopts)
         character opts(nopts)*8
-        data opts/'debug   ','blfmask '/
+        data opts/'debug   ','blfmask ','swap    ','all     ',
+     *            'one     '/
 c
         call options('options',opts,present,nopts)
         debug     = present(1)
         doblfmask = present(2)
+        doswap    = present(3)
+        doall     = present(4)
+        doone     = present(5)
         end
 c********1*********2*********3*********4*********5*********6*********7*c
 c
