@@ -122,7 +122,7 @@ c    pjt  22apr2012  add options=swap
 c    pjt  25apr2012  add options=all and one
 c----------------------------------------------------------------------c
 	include 'maxdim.h'
-	character version*128
+	character version*128, fmt1*32
 	integer MAXSELS, MAXBIT, nflag, nwflag
 	parameter(MAXSELS=512,MAXBIT=32)
 	real sels(MAXSELS)
@@ -288,8 +288,8 @@ c
               call uvgetvri(lIn,'bfmask',bfmask,nspect)
            endif
            if (doall) then
-              write(*,'(i6,16(1x,z8))') nvis,
-     *            (bfmask(j),j=1,16)
+              write(fmt1,'(a,i2,a)') '(i6,',nspect,'(1x,z8))'
+              write(*,fmt1) nvis, (bfmask(j),j=1,nspect)
            endif
            write(bfmaska,'(z8)') bfmask(1)
 c              convert each bfmask(j) into a mask array, and a list for debug
