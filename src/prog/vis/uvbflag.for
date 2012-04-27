@@ -401,7 +401,6 @@ c         write(*,*)
 
       if (dowide) then
          call uvwread(lIn,wdata,wflags,MAXWIDE,nwread)
-         if (nwread.ne.nspect) call bug('w','not enuf wides in uvwread')
          if (doswap) then
             do i=1,nwread
                wflags(i) = .NOT.wflags(i) 
