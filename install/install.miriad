@@ -48,6 +48,7 @@ set version=26-jun-2011
 #  4-jul-10 added carma specific tests
 #  1-jun-11 minor change for new rpfits 2.23 install
 # 10-jun-11 gfortran=1 generic=1 now the default, 
+#  1-may-12 debug=1 expanded to include -DDEBUG; brief=2
 #
 #-----------------------------------------------------------------------
 
@@ -73,7 +74,7 @@ set gif=1
 #  try the new generic (autoconf) created compile directives file?
 set generic=1
 
-#  brief
+#  brief (1:         2: no binaries)
 set brief=0
 
 #   'newdir' is something that tags the date this version was made (e.g. 98jun08)
@@ -114,6 +115,8 @@ if ($hosttype == linux) then
       set pgplot64 = 1
     endif
   else
+    # ubuntu12 uses now /usr/lib/i386-linux-gnu/ but solves this via /etc/ld.so.conf
+    # so this useless setting doesn't do any harm
     set mirxlib="/usr/X11R6/lib"
   endif
 else if ($hosttype == sun4sol) then
@@ -490,11 +493,15 @@ if ($shared) then
 endif
 
 echo PGM: prog wip rad 
-mir.install prog wip rad 
+if ($brief < 2) then
+  mir.install prog wip rad 
+else
+  echo SKIPPING prog wip rad, since brief=$brief
+endif
 
 # special things....
 
-echo Compiling UVIO:
+echo Compiling a static UVIO:
 cc -O $lfs -DTESTBED -I$MIRINC $MIRSUBS/uvio.c -o $MIRBIN/uvio $MIRLIB/libmir.a -lm >& $MIR/tmp/uvio.$$.$hosttype
 
 # xcorf: (open)motif or lesstiff needs to have been installed for this
