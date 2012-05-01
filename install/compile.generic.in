@@ -37,18 +37,21 @@ if (-e $MIRLIB/libwcs.a) then
 else
   set wcslib=""
 endif
+#  DSO linking might need this patch for AS_NEEDED, X11 is the usual offender for libpgplot.so
+set X11=(-Wl,--no-as-needed -lX11 -Wl,-as-needed)
+set X11=(-lX11)
 setenv Fcompile  "@F77@"
 setenv Foptions  "-O $slib_flags"
 setenv FoptionsN "$slib_flags"
 setenv Flinkdir  "-L`echo $mmir/lib/$mhost $MIRXLIB | sed 's/ / -L/g'`"
-setenv Flinklib  "$lfs -lmir -llinpack -lpgplot $wcslib -lX11 -lm"
+setenv Flinklib  "$lfs -lmir -llinpack -lpgplot $wcslib $X11 -lm"
 setenv Finclude  "-I`echo $mmir/src/inc $MIRXINC | sed 's/ / -I/g'`"
 # the gnu compiler actually adds -Dlinux, so we don't need it here
 setenv Ccompile  "@CC@"
 setenv Coptions  "-O $lfs $slib_flags"
 setenv CoptionsN "$lfs $slib_flags"
 setenv Clinkdir  "-L`echo $mmir/lib/$mhost $MIRXLIB | sed 's/ / -L/g'`"
-setenv Clinklib  "-lmir -llinpack -lpgplot $wcslib -lX11 -lf2c -lm"
+setenv Clinklib  "-lmir -llinpack -lpgplot $wcslib $X11 -lm"
 setenv Cinclude  "-I`echo $mmir/src/inc $mmir/src/subs | sed 's/ / -I/g'`"
 
 # NOF90 is conservative, some new routines use F90 style declarations
