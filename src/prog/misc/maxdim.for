@@ -9,6 +9,8 @@ c  pjt     oct-2010   display MIRBIN
 c  pjt     jun-2011   new style ptrdiff, add summing the array
 c  pjt     jun-2011   add option to use big bogus array, showing memory hog
 c  pjt     feb-2012   proper usage of mem.h space to go over 2GB arrays
+c  pjt     may-2012   made nx,ny,nz more reasonable for current testing
+c                     and filled arrays with better defaults for violations
 c
 c= maxdim - Report all known MAXDIM related parameters, and test memory usage
 c& pjt
@@ -138,9 +140,14 @@ c     WRITE(*,*) 'MAXNAX       = ',MAXNAX
 	 DO j=1,m
 	 IF (m.GT.1) write(*,*) 'Summing iteration ',j,'/',m
 	 DO i=1,n
-	    IF (type(1:1).eq.'r') CALL myWorkR(memr(p(i)),nx,ny,nz,sr)
-	    IF (type(1:1).eq.'d') CALL myWorkD(memd(p(i)),nx,ny,nz,sd)
+	    IF (type(1:1).eq.'r') CALL myWorkR(memr(p(i)),nx,ny,nz,sr,i)
+	    IF (type(1:1).eq.'d') CALL myWorkD(memd(p(i)),nx,ny,nz,sd,i)
 	 ENDDO
+	 ENDDO
+
+	 DO i=1,n
+	    IF (type(1:1).eq.'r') CALL chkWorkR(memr(p(i)),nx,ny,nz,i)
+	    IF (type(1:1).eq.'d') CALL chkWorkD(memd(p(i)),nx,ny,nz,i)
 	 ENDDO
 
 	 DO i=1,n
@@ -157,8 +164,8 @@ c     WRITE(*,*) 'MAXNAX       = ',MAXNAX
 
       END
 c-----------------------------------------------------------------------
-      SUBROUTINE myWorkR(data,nx,ny,nz,sum)
-      INTEGER nx,ny,nz
+      SUBROUTINE myWorkR(data,nx,ny,nz,sum,init)
+      INTEGER nx,ny,nz,init
       REAL data(nx,ny,nz), sum
 c
       INTEGER ix,iy,iz
@@ -166,7 +173,7 @@ c
       DO iz=1,nz
         DO iy=1,ny
           DO ix=1,nx
-            data(ix,iy,iz) = 1.0
+            data(ix,iy,iz) = init
           ENDDO
         ENDDO
       ENDDO
@@ -184,8 +191,8 @@ c
 
       END
 c-----------------------------------------------------------------------
-      SUBROUTINE myWorkD(data,nx,ny,nz,sum)
-      INTEGER nx,ny,nz
+      SUBROUTINE myWorkD(data,nx,ny,nz,sum,init)
+      INTEGER nx,ny,nz,init
       DOUBLE PRECISION data(nx,ny,nz),sum
 c
       INTEGER ix,iy,iz
@@ -193,7 +200,7 @@ c
       DO iz=1,nz
         DO iy=1,ny
           DO ix=1,nx
-            data(ix,iy,iz) = 1.0d0
+            data(ix,iy,iz) = init
           ENDDO
         ENDDO
       ENDDO
@@ -208,7 +215,29 @@ c
         ENDDO
       ENDDO
 
+      END
+c-----------------------------------------------------------------------
+      SUBROUTINE chkWorkR(data,nx,ny,nz,init)
+      INTEGER nx,ny,nz,init
+      REAL data(nx,ny,nz) 
+c
+      INTEGER ix,iy,iz
 
+      IF (data(1,1,1).ne.init) THEN
+	 WRITE(*,*) 'chkWork failed: ',init,data(1,1,1)
+      ENDIF
+
+      END
+c-----------------------------------------------------------------------
+      SUBROUTINE chkWorkD(data,nx,ny,nz,init)
+      INTEGER nx,ny,nz,init
+      DOUBLE PRECISION data(nx,ny,nz)
+c
+      INTEGER ix,iy,iz
+
+      IF (data(1,1,1).ne.init) THEN
+	 WRITE(*,*) 'chkWork failed: ',init,data(1,1,1)
+      ENDIF
 
       END
 c-----------------------------------------------------------------------
