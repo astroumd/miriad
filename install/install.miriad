@@ -1,6 +1,6 @@
 #! /bin/csh -f
 #
-set version=26-jun-2011
+set version=3-may-2012
 #
 #  2-aug-99 Updated for Sebok's Mandrake setup
 #  1-aug-00 Updated to allow to build private PGPLOT version
@@ -48,8 +48,8 @@ set version=26-jun-2011
 #  4-jul-10 added carma specific tests
 #  1-jun-11 minor change for new rpfits 2.23 install
 # 10-jun-11 gfortran=1 generic=1 now the default, 
+# 30-apr-12 ubuntu 12.04, enable more DEBUG with debug=1
 #  1-may-12 debug=1 expanded to include -DDEBUG; brief=2
-#
 #-----------------------------------------------------------------------
 
 # sanity check: find out from the way it was called where the script lives
@@ -167,7 +167,7 @@ set install_root=`pwd`
 set official=0              #  also modify the system (c)shrc.MIRIAD?
 set shared=1                #  also build shared library libmir.so? [not working on mac yet]
 set pgplot=1                #  include PGPLOT in $MIRLIB ? (you almost ALWAYS want this to be 1)
-set debug=0                 #  compile in debug (-g) mode ?
+set debug=0                 #  compile in debug (-g) mode ?   also enables -DDEBUG
 set cvs=1                   #  use CVS archive to get miriad.tar.gz ?
 set internal=1              #  internal sourcecode build; overrides cvs, mirroot and newdir
 set xcorf=0                 #  xcorf is old now, for BIMA 
