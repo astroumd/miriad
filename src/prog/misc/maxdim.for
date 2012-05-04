@@ -26,11 +26,11 @@ c       A useful test to exhaust your memory and test if you can go over 2GB
 c          maxdim nx=100 ny=100 nz=100 n=3000
 c
 c@ nx
-c       X dimension of a cube to be allocated
+c       X dimension of a cube to be allocated. Default: 100
 c@ ny
-c       Y dimension of a cube to be allocated
+c       Y dimension of a cube to be allocated. Default: 100
 c@ nz
-c       Z dimension of a cube to be allocated
+c       Z dimension of a cube to be allocated. Default: 100
 c@ n
 c       Number of XYZ cubes that are to be allocated. There is room
 c       for up to 10000 (MAXP).
@@ -38,9 +38,11 @@ c       The product is nx*ny*nz should not exceed 2,147,483,647
 c       as fortran integers could be negative.
 c@ m
 c       Repeat summing over the XYZ cubes a number of times.
+c       Perhaps only useful for benchmarking.
 c       Default: 1
 c@ type
-c       Data type of the array. Allowed are Real and Double.
+c       Data type of the array. Allowed are 'real' and 'double'. 
+c       Default: real
 c@ sum
 c       If 
 c------------------------------------------------------------------------
@@ -56,7 +58,7 @@ c
       INTEGER nx,ny,nz,ntot,n,m,i,j
       CHARACTER type*10
 c the 3D array can take a lots of memory on some ld versions on linux?
-c      REAL biga(MAXN,MAXN,MAXN)
+c     REAL biga(MAXN,MAXN,MAXN)
       REAL biga(MAXN)
 
       CHARACTER version*80, versan*80, mirbin*128
@@ -74,12 +76,13 @@ c
 c  Get the input parameters 
 c
       CALL keyini
-      CALL keyi('nx',nx,3)
-      CALL keyi('ny',ny,3)
-      CALL keyi('nz',nz,3)
+      CALL keyi('nx',nx,100)
+      CALL keyi('ny',ny,100)
+      CALL keyi('nz',nz,100)
       CALL keyi('n',n,0)
       CALL keyi('m',m,1)
       CALL keya('type',type,'r')
+      IF(type(1:1).eq.'f') type='r'
       CALL keyd('sum',sd,0d0)
       CALL keyfin
 
