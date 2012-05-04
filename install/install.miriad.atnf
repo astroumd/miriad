@@ -18,15 +18,17 @@
 #
 #  Typical example of install:
 #  cd $ASTROMAKE/opt/miriad
-#  wget ftp://ftp.atnf.csiro.au/pub/software/miriad/miriad-code.tar.gz
-#  wget ftp://ftp.atnf.csiro.au/pub/software/miriad/miriad-common.tar.gz
-#  wget ftp://ftp.atnf.csiro.au/pub/software/rpfits/rpfits.tar.gz
+#  wget ftp://ftp.atnf.csiro.au/pub/software/miriad/miriad-code.tar.bz2
+#  wget ftp://ftp.atnf.csiro.au/pub/software/miriad/miriad-common.tar.bz2
+#  wget ftp://ftp.atnf.csiro.au/pub/software/rpfits/rpfits-2.23.tar.gz
 #  wget ftp://ftp.atnf.csiro.au/pub/software/wcslib/wcslib.tar.bz2
 #  ./install.miriad.atnf mirdir=atnf wcslib=4.7 >& atnf.log
+#
+#  See also:   http://www.atnf.csiro.au/computing/software/miriad/
 
 
 set mirdir=atnf
-set wcslib=4.7
+set wcslib=4.13.4
 set fc=gfortran
 
 foreach arg ($*)
