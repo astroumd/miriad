@@ -47,6 +47,9 @@ c       Data type of the array. Allowed are 'real' and 'double'.
 c       Default: real
 c@ sum
 c       If 
+c@ maxbuf2
+c       Allocate some memory before work.  Use -1 if none, use 0 for the
+c       max allowed. Default: -1
 c------------------------------------------------------------------------
 c
       IMPLICIT NONE
@@ -56,7 +59,7 @@ c
       INTEGER MAXP,MAXN
       PARAMETER(MAXP=10000,MAXN=512)
 
-      PTRDIFF p(MAXP)
+      PTRDIFF p0,p(MAXP)
       INTEGER nx,ny,nz,ntot,n,m,i,j
       CHARACTER type*10
 c the 3D array can take a lots of memory on some ld versions on linux?
@@ -64,7 +67,7 @@ c     REAL biga(MAXN,MAXN,MAXN)
       REAL biga(MAXN)
 
       CHARACTER version*80, versan*80, mirbin*128
-      INTEGER membuf,size
+      INTEGER membuf,size,maxbuf2
       REAL  sr
       DOUBLE PRECISION sd
 
@@ -86,6 +89,7 @@ c
       CALL keya('type',type,'r')
       IF(type(1:1).eq.'f') type='r'
       CALL keyd('sum',sd,0d0)
+      CALL keyi('maxbuf2',maxbuf2,-1)
       CALL keyfin
 
       CALL output('$MIR/VERSION:')
@@ -123,7 +127,12 @@ c     WRITE(*,*) 'MAXNAX       = ',MAXNAX
       CALL output('static membuf (maxbuf) usage:')
       size = membuf()
       WRITE(*,*) 'membuf()     =',size
-
+      IF(maxbuf2.eq.0) THEN
+	 CALL memallop(p0, size, type)
+      ELSE IF (maxbuf2.gt.0) THEN
+	 CALL memallop(p0, maxbuf2, type)
+      ENDIF
+      
       IF (n.gt.0) THEN
 	 WRITE(*,*) 'nx*ny*nz     =',nx*ny*nz
 	 WRITE(*,*) 'ntot         =',ntot
