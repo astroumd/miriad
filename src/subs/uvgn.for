@@ -796,7 +796,8 @@ c************************************************************************
 c
 	implicit none
 	integer tno,maxspect,ngains,nchan,nspect
-	integer nschan(maxspect),Size,pGains
+	integer nschan(maxspect),Size
+	ptrdiff pGains
 	double precision sfreq(maxspect),sdf(maxspect)
 c
 c  Load in the bandpass gains.
@@ -829,7 +830,7 @@ c
 	if(ngains.le.0.or.nchan.le.0.or.nspect.le.0) call bug('f',
      *	  'Invalid value for nchan, ngains or nspect, in uvDat')
 	Size = ngains*nchan
-	call MemAlloc(pGains,Size,'c')
+	call MemAllop(pGains,Size,'c')
 	if(nspect.gt.maxspect)call bug('f',
      *	  'Too many spectral windows for me to handle, in uvDat')
 c
@@ -930,8 +931,8 @@ c
 	      call MemFree(pFlags,nDat,'l')
 	    endif
 	    nDat = nfeeds*nants*nread
-	    call MemAlloc(pDat,nDat,'c')
-	    call MemAlloc(pFlags,nDat,'l')
+	    call MemAllop(pDat,nDat,'c')
+	    call MemAllop(pFlags,nDat,'l')
 	  endif
 c
 	  call uvGnPsMa(nfeeds*nants,nchan,nspect,sfreq,sdf,nschan,
@@ -946,7 +947,7 @@ c
 	  if(nFreq.lt.nread)then
 	    if(nFreq.gt.0)call MemFree(pFreq,nFreq,'d')
 	    nFreq = nread
-	    call MemAlloc(pFreq,nFreq,'d')
+	    call MemAllop(pFreq,nFreq,'d')
 	  endif
 c
 	  call uvGnPsFq(nread,nspect0,sfreq0,sdf0,nschan0,dref(pFreq))
@@ -1275,7 +1276,7 @@ c
 c
 c  Allocate memory.
 c
-	call MemAlloc(pCgains,ncgains*ncbase,'c')
+	call MemAllop(pCgains,ncgains*ncbase,'c')
 c
 c  Open the cgains item.
 c
@@ -1315,7 +1316,7 @@ c
 c
 c  Allocate memory.
 c
-	call MemAlloc(pWgains,nwgains*nwbase,'c')
+	call MemAllop(pWgains,nwgains*nwbase,'c')
 c
 c  Open the wgains item.
 c

@@ -43,12 +43,14 @@ c
 c
 	integer ncgains,ncbase,nwgains,nwbase
 	logical docgains,dowgains
-	integer pCgains,pWgains
+	ptrdiff pCgains,pWgains
 c
 	logical dopass,aver,first
 	integer tno,vwide,vline,nchan,nspect,nschan(MAXSPECT)
 	double precision sfreq(MAXSPECT),sdf(MAXSPECT),freq0
-	integer pFlags(2),pDat(2),nDat(2),pTab,nTab,pFreq(2),nFreq(2)
+	ptrdiff pFlags(2),pDat(2),pTab,pFreq(2)
+        integer nDat(2),nTab,nFreq(2)
+
 c
 c
 c  The common blocks.
