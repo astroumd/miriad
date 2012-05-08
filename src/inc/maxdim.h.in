@@ -25,5 +25,8 @@ c
 c
 	INTEGER   MAXWIDE
 	PARAMETER(MAXWIDE=@MAXWIDE@)
+c
+	INTEGER   MAXFBIN
+	PARAMETER(MAXFBIN=@MAXWIN@)
 c=======================================================================
 
