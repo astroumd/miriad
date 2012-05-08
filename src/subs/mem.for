@@ -95,6 +95,9 @@ c
 	t = intsize*MAXBUF/align
 	Data(2) = align*t
 	First = .false.
+#ifdef DEBUG
+	call memInfo
+#endif
 	end
 c************************************************************************
 	subroutine memInfo
