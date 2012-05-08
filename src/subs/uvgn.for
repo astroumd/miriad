@@ -27,6 +27,7 @@ c    24feb97 rjs  Make "bandpass calibration" work for wide-only files.
 c    01jan05 rjs  Double precision baselines and use basant.
 c    08jan07 rjs  Use MAXWIN more rigorously.
 c    13feb07 pjt  Fix sign of swidth for LSB wide bands
+c     8may12 pjt  Use memallop() and ptrdiff
 c************************************************************************
 	subroutine uvGnIni(tno1,dogains1,dopass1)
 	implicit none
@@ -186,33 +187,33 @@ c  Free up all the memory that may have been allocated for the antenna
 c  based bandpass calibration.
 c
 	if(nTab.ne.0)then
-	  call MemFree(pTab, nTab, 'c')
+	  call MemFrep(pTab, nTab, 'c')
 	  nTab = 0
 	endif
 	if(nDat(1).ne.0)then
-	  call MemFree(pDat(1),nDat(1),'c')
-	  call MemFree(pFlags(1),nDat(1),'l')
+	  call MemFrep(pDat(1),nDat(1),'c')
+	  call MemFrep(pFlags(1),nDat(1),'l')
 	  nDat(1) = 0
 	endif
 	if(nDat(2).ne.0)then
-	  call MemFree(pDat(2),nDat(2),'c')
-	  call MemFree(pFlags(2),nDat(2),'l')
+	  call MemFrep(pDat(2),nDat(2),'c')
+	  call MemFrep(pFlags(2),nDat(2),'l')
 	  nDat(2) = 0
 	endif
 	if(nFreq(1).ne.0)then
-	  call MemFree(pFreq(1),nFreq(1),'d')
+	  call MemFrep(pFreq(1),nFreq(1),'d')
 	  nFreq(1) = 0
 	endif
 	if(nFreq(2).ne.0)then
-	  call MemFree(pFreq(2),nFreq(2),'d')
+	  call MemFrep(pFreq(2),nFreq(2),'d')
 	  nFreq(2) = 0
 	endif
 c
 c  Free up all the memory that may have been allocated for the baseline
 c  based bandpass calibration.
 c
-	if(docgains)call MemFree(pCgains,ncgains*ncbase,'c')
-	if(dowgains)call MemFree(pWgains,nwgains*nwbase,'c')
+	if(docgains)call MemFrep(pCgains,ncgains*ncbase,'c')
+	if(dowgains)call MemFrep(pWgains,nwgains*nwbase,'c')
 c
 c  Clear out everything.
 c
@@ -927,8 +928,8 @@ c
 	if(dopass)then
 	  if(nDat.lt.nfeeds*nants*nread)then
 	    if(nDat.gt.0)then
-	      call MemFree(pDat,nDat,'c')
-	      call MemFree(pFlags,nDat,'l')
+	      call MemFrep(pDat,nDat,'c')
+	      call MemFrep(pFlags,nDat,'l')
 	    endif
 	    nDat = nfeeds*nants*nread
 	    call MemAllop(pDat,nDat,'c')
@@ -945,7 +946,7 @@ c  Then generate the frequency table.
 c
 	if(dotau)then
 	  if(nFreq.lt.nread)then
-	    if(nFreq.gt.0)call MemFree(pFreq,nFreq,'d')
+	    if(nFreq.gt.0)call MemFrep(pFreq,nFreq,'d')
 	    nFreq = nread
 	    call MemAllop(pFreq,nFreq,'d')
 	  endif
