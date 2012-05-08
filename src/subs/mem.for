@@ -212,6 +212,9 @@ c  Find a block of memory that is big enough.
 c
 	if(size.le.0)
      *	  call bug('f','Bad value for size, in MemAlloc')
+#ifdef DEBUG
+	write(*,*)  'MemAlloc : ',size,type
+#endif
 	q = 1
 	p = 0
 	nc = align
@@ -422,6 +425,9 @@ c  Find a block of memory that is big enough.
 c
 	if(size.le.0)
      *	  call bug('f','Bad value for size, in MemAlloc')
+#ifdef DEBUG
+	write(*,*)  'MemAllop : ',size,type
+#endif
 	q = 1
 	p = 0
 	nc = align
