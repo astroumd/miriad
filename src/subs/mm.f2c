@@ -123,7 +123,7 @@ c
   offset = s - data.addr;
   t = (fort_ptrdiff)offset;
 #ifdef DEBUG
-  printf("MM_DEBUG: s=0x%x  data=0x%lx count=%d\n",s,data.addr,counter++);
+  printf("MM_DEBUG: s=0x%lx  data=0x%lx count=%d\n",s,data.addr,counter++);
   printf("MM_DEBUG: t=0x%lx  offset=0x%lx size=%d\n",t,offset,size.val);
   printf("          s=%ld data=%ld offset=%ld\n",s,data.addr,offset);
   printf("          s=%d data=%d offset=%d\n",s,data.addr,offset);
