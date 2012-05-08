@@ -184,11 +184,11 @@ c   * It would be desirable to apply bandpasses, and merge gain tables,
 c     apply polarisation calibration, etc.
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version='Selfcal: version 1.0 15-mar-2011')
+	parameter(version='Selfcal: version 1.0 8-may-2012')
 	integer MaxMod,maxsels,nhead
 	parameter(MaxMod=64,maxsels=1024,nhead=3)
 c
-	character Models(MaxMod)*64,vis*64,ltype*32,out*80
+	character Models(MaxMod)*128,vis*128,ltype*32,out*80
 	character flag1*8,flag2*8,obstype*32
 	integer tvis,tmod,tscr,tgains,iostat
 	integer nModel,minants,refant,nsize(3),nchan,nvis,i
@@ -492,13 +492,13 @@ c
 	maxSol = min(nHash,max(minSol,(MemBuf()-10)/SolSize))
 	nSols = 0
 	TotVis = 0
-	call MemAlloc(pSumVM,maxSol*nBl,'c')
-	call MemAlloc(pSumVV,maxSol*nBl,'r')
-	call MemAlloc(pSumMM,maxSol,'r')
-	call MemAlloc(pWeight,maxSol*nBl,'r')
-	call MemAlloc(pCount,maxSol,'d')
-	call MemAlloc(pGains,maxSol*nants,'c')
-	call MemAlloc(prTime,maxSol,'d')
+	call MemAllop(pSumVM,maxSol*nBl,'c')
+	call MemAllop(pSumVV,maxSol*nBl,'r')
+	call MemAllop(pSumMM,maxSol,'r')
+	call MemAllop(pWeight,maxSol*nBl,'r')
+	call MemAllop(pCount,maxSol,'d')
+	call MemAllop(pGains,maxSol*nants,'c')
+	call MemAllop(prTime,maxSol,'d')
 c
 	end
 c************************************************************************
@@ -510,13 +510,13 @@ c  Release allocated memory.
 c
 c------------------------------------------------------------------------
 	include 'selfcal.h'
-	call MemFree(pSumVM,maxSol*nBl,'c')
-	call MemFree(pSumVV,maxSol*nBl,'r')
-	call MemFree(pSumMM,maxSol,'r')
-	call MemFree(pWeight,maxSol*nBl,'r')
-	call MemFree(pCount,maxSol,'d')
-	call MemFree(pGains,maxSol*nants,'c')
-	call MemFree(prTime,maxSol,'d')
+	call MemFrep(pSumVM,maxSol*nBl,'c')
+	call MemFrep(pSumVV,maxSol*nBl,'r')
+	call MemFrep(pSumMM,maxSol,'r')
+	call MemFrep(pWeight,maxSol*nBl,'r')
+	call MemFrep(pCount,maxSol,'d')
+	call MemFrep(pGains,maxSol*nants,'c')
+	call MemFrep(prTime,maxSol,'d')
 	end
 c************************************************************************
 	subroutine SelfAcc(tscr,nchan,nvis,interval)
