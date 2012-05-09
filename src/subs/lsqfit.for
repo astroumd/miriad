@@ -50,16 +50,18 @@ c--
 c  History:
 c    ??????? rjs  Original version.
 c    05dec95 rjs  Documented.
+c     8may12 pjt  converted to memallop() and ptrdiff
 c------------------------------------------------------------------------
 	real epsfcn,tol
 	parameter(epsfcn=1e-3,tol=1e-6)
 	include 'maxdim.h'
 	include 'mem.h'
-	integer lwa,wa,iwa
+	integer lwa
+	ptrdiff wa,iwa
 c
 	lwa = m*n + 5*n + 2*m
-	call memalloc(wa,lwa,'r')
-	call memalloc(iwa,n,'i')
+	call memallop(wa,lwa,'r')
+	call memallop(iwa,n,'i')
 	call lmdiff(FCN,m,n,x,memr(wa),epsfcn,tol,
      *	  ifail1,memi(iwa),memr(wa+m),lwa-m)
 c
@@ -79,8 +81,8 @@ c
 c
 c  Free up memory.
 c
-	call memfree(wa,lwa,'r')
-	call memfree(iwa,n,'i')
+	call memfrep(wa,lwa,'r')
+	call memfrep(iwa,n,'i')
 	end
 c************************************************************************
 	subroutine getcovar(FCN,m,n,x,fvec,wrk,epsfcn,covar,rms,ifail)
