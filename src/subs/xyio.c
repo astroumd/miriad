@@ -13,6 +13,9 @@
 /*    rjs  15mar96   Inlcude an exrta include file.			*/
 /*    pjt  17jun02   MIR4 prototypes, > 2GB patches                     */
 /*    rjs/pjt 3jun03 "append" mode in xyopen - long live non-CVS devel. */
+/*    pkgw 09may12   Prevent XYOPEN callers from causing it to scribble */
+/*                   over our image data structures (and potentially    */
+/*                   beyond).                                           */
 /*----------------------------------------------------------------------*/
 
 #if defined(HAVE_CONFIG_H) && HAVE_CONFIG_H
@@ -88,6 +91,14 @@ void xyopen_c(int *thandle,Const char *name,Const char *status,int naxis,int *ax
   else if(!strcmp("new",status))   { access = NEW; mode = "write"; stat = "new";}
   else
    ERROR('f',(message,"Unrecognised status when opening %s, in XYOPEN",name));
+
+  if(naxis > MAXNAX)
+      /* If the above is true, the current code scribbles off the end
+       * of image[tno].axes. With a bit of work we could probably
+       * handle this situation, but it's a lot easier to just say
+       * "don't do this." */
+      ERROR('f',(message,"Program wanted %d axes but XYOPEN can only provide %d",
+		 naxis,MAXNAX));
 
 /* Access the image data. */
 
