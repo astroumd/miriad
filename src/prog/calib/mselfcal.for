@@ -190,6 +190,7 @@ c    pkgw 11jan10 Accept mixed auto/cross inputs, suggesting select=-auto.
 c                 Typo fixes and clarification of help text.
 c    pjt   8jul10 Ant I3 format, no NaN's when 1 solution
 c    pkgw 15mar11 Use scrrecsz() to allow very large scratchfiles
+c    pjt   9may12 use ptrdiff and mallop()
 c
 c  Bugs/Shortcomings:
 c   * Selfcal should check that the user is not mixing different
@@ -198,7 +199,7 @@ c   * It would be desirable to apply bandpasses, and merge gain tables,
 c     apply polarisation calibration, etc.
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version='MSelfcal: version 1.0 15-mar-11')
+	parameter(version='MSelfcal: version 1.0 9-may-2012')
 	integer MaxMod,maxsels,nhead
 	parameter(MaxMod=64,maxsels=1024,nhead=3)
 c
@@ -519,15 +520,15 @@ c
 	maxSol = min(nHash,max(minSol,(MemBuf()-10)/SolSize))
 	nSols = 0
 	TotVis = 0
-	call MemAlloc(pSumVM,maxSol*nBl,'c')
-	call MemAlloc(pSumVV,maxSol*nBl,'r')
-	call MemAlloc(pSumMM,maxSol,'r')
-	call MemAlloc(pWeight,maxSol*nBl,'r')
-	call MemAlloc(pCount,maxSol,'d')
-	call MemAlloc(pGains,maxSol*nants,'c')
-	call MemAlloc(prTime,maxSol,'d')
-	call MemAlloc(pstptim,maxSol,'r')
-	call MemAlloc(pstrtim,maxSol,'r')
+	call MemAllop(pSumVM,maxSol*nBl,'c')
+	call MemAllop(pSumVV,maxSol*nBl,'r')
+	call MemAllop(pSumMM,maxSol,'r')
+	call MemAllop(pWeight,maxSol*nBl,'r')
+	call MemAllop(pCount,maxSol,'d')
+	call MemAllop(pGains,maxSol*nants,'c')
+	call MemAllop(prTime,maxSol,'d')
+	call MemAllop(pstptim,maxSol,'r')
+	call MemAllop(pstrtim,maxSol,'r')
 c
 	end
 c************************************************************************
@@ -539,15 +540,15 @@ c  Release allocated memory.
 c
 c------------------------------------------------------------------------
 	include 'mselfcal.h'
-	call MemFree(pSumVM,maxSol*nBl,'c')
-	call MemFree(pSumVV,maxSol*nBl,'r')
-	call MemFree(pSumMM,maxSol,'r')
-	call MemFree(pWeight,maxSol*nBl,'r')
-	call MemFree(pCount,maxSol,'d')
-	call MemFree(pGains,maxSol*nants,'c')
-	call MemFree(prTime,maxSol,'d')
-	call MemFree(pstpTim,maxSol,'r')
-	call MemFree(pstrTim,maxSol,'r')
+	call MemFrep(pSumVM,maxSol*nBl,'c')
+	call MemFrep(pSumVV,maxSol*nBl,'r')
+	call MemFrep(pSumMM,maxSol,'r')
+	call MemFrep(pWeight,maxSol*nBl,'r')
+	call MemFrep(pCount,maxSol,'d')
+	call MemFrep(pGains,maxSol*nants,'c')
+	call MemFrep(prTime,maxSol,'d')
+	call MemFrep(pstpTim,maxSol,'r')
+	call MemFrep(pstrTim,maxSol,'r')
 	end
 c************************************************************************
 	subroutine SelfAcc(tscr,nchan,nvis,interval,timeonly)

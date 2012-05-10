@@ -1,5 +1,5 @@
 c------------------------------------------
-c	selfcal.h
+c	mselfcal.h
 c------------------------------------------
 	include 'maxdim.h'
 	include 'mem.h'
@@ -7,7 +7,7 @@ c------------------------------------------
 	parameter(maxHash=30000,minSol=200)
 	integer nants,nBl,nbad,maxSol,nsols,TotVis,minants,pstptim
 	integer nHash,Hash(maxHash),Indx(maxHash),Time(maxHash)
-	integer pSumVM,pSumVV,pSumMM,pWeight,pCount,pGains,prTime
+	ptrdiff pSumVM,pSumVV,pSumMM,pWeight,pCount,pGains,prTime
         integer pstrtim
 	logical first
 	double precision time0
