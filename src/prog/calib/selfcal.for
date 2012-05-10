@@ -175,6 +175,7 @@ c    mchw 27apr07 Check for auto instead of not cross. i.e. allow mixed.
 c    mchw 23may07 if (nants.gt.MAXANT) call bug('f', 'number of antennas > MAXANT in currently installed task')
 c    pjt  19mar09 fix timestamp accuracy due to roundoff errors
 c    pkgw 15mar11 Use scrrecsz() to allow very large scratchfiles
+c    pjt   9may12 use ptrdiff and mallop()
 
 c
 c  Bugs/Shortcomings:
