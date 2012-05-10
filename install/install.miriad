@@ -185,6 +185,7 @@ set gfortran=1              #  use gfortran as default gnu compiler, instead of 
 
 set man=1		    #  do manual pages
 set zeno=1                  #  add zeno and hkmiriad?
+set nemo=0                  #  add nemo?
 set lfs=(-D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE) # LFS flags for uvio
 set subwrap=0               #  install python/subwrap
 
@@ -661,6 +662,11 @@ if ($zeno && -e $MIR/borrow/zeno && $brief == 0) then
   (cd $MIR/borrow/zeno;                                    make install_miriad)  >& hkmiriad.log
   (cd $MIR/src/spec/hkmiriad/;  cp Makefile.hk  Makefile ; make install_miriad) >>& hkmiriad.log
   if ($status) echo Warning: hkmiriad.log seems to indicate some compile issues with hkmiriad
+endif
+
+if ($nemo) then
+  echo Adding nemo
+  (cd $MIR/borrow; cvs -Q co nemo; mir.install nemo) >& nemo.log
 endif
 
 if ($test) then
