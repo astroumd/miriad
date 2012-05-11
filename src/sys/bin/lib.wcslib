@@ -39,10 +39,10 @@ touch configure
 make distclean
 ./configure --bindir=$bindir --libdir=$libdir --includedir=$incdir \
        --with-pgplotlib=$libdir --with-pgplotinc=$libdir  \
-       --docdir=$mir/tmp
+       --docdir=$mir/doc --mandir=$mir/man
 cp config.log config.log.1
 make
-make install
+make -i install
 # big hack/fix for proper symlink 
 # (cd $libdir ; rm libpgsbox.a ; ln -s libpgsbox-4.7.a libpgsbox.a)
 echo ' '
