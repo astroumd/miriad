@@ -14,7 +14,7 @@ c    sels	The selection specification to pass to SelApply.
 c    line,nchan,lstart,lwidth,lstep	The data linetype specification.
 c    ref,rstart,rwidth		The reference linetype specification.
 c    plmaj,plmin,plangle	Planet parameters.
-c    InBuf(k1(i):k2(i))		The name of the i'th input file.'
+c    InBuf(k1(i):k2(i))		The name of the i'th input file.
 c    doplanet			True if planet processing is to be performed.
 c    plinit			True if the planet parameters have been
 c				initialised.
@@ -52,14 +52,16 @@ c				gains.
 c    npream			Number of elements in the preamble.
 c    idxT			Index of "time" in the preamble.
 c    idxBL			Index of "baseline" in the preamble.
+c    dofbcal                    Frequency binned cal file is present
+c    dofbleak                   Frequency binned leakage file is present
 c
 	integer maxsels,maxNam,maxIn
-	parameter(maxsels=1024,maxNam=200000,maxIn=4000)
+	parameter(maxsels=512,maxNam=20000,maxIn=400)
 	real sels(maxsels),lstart,lwidth,lstep,lflag,rstart,rwidth,rstep
 	real plmaj,plmin,plangle
 	logical doplanet,dowave,doref,dodata,docal,dosels,doleak,dopass
 	logical PlInit,WillCal,WillLeak,auto,cross,calmsg(maxIn),dow
-	logical dogsv
+	logical dogsv, dofbcal, dofbleak
 	integer k1(maxIn),k2(maxIn),nchan,npream,idxT,idxBL
 	character line*32,ref*32,InBuf*(maxNam)
 	integer nIn,pnt,tno
@@ -108,23 +110,26 @@ c
 	integer Snread
 	complex SData(MAXCHAN,MAXPOL)
 	integer ncoeff(MAXPOL),indices(MAXPOL,MAXPOL)
-	logical doaver(MAXPOL),Sflags(MAXCHAN,MAXPOL)
-	complex coeffs(MAXPOL,MAXPOL)
-	real SumWts(MAXPOL),GWt
-	integer nLeaks
-	complex Leaks(2,MAXANT)
+	logical doaver(MAXPOL),Sflags(MAXCHAN,MAXPOL),updated
+	complex coeffs(MAXPOL,MAXPOL,0:MAXFBIN)
+	real SumWts(MAXPOL,0:MAXFBIN),GWt
+	integer nLeaks, nfbin, vupd
+	complex Leaks(2,MAXANT,0:MAXFBIN)
+        double precision freq(0:MAXFBIN), chnfreq(MAXCHAN)
 c
 c  The common blocks.
 c
 	common/UVDatCoA/sels,lstart,lwidth,lstep,lflag,
      *	 rstart,rwidth,rstep,
-     *	 plmaj,plmin,plangle,doplanet,dowave,doref,dodata,dosels,dow,
+     *	 plmaj,plmin,plangle
+	common/UVDatCoD/doplanet,dowave,doref,dodata,dosels,dow,
      *	 dogsv,plinit,k1,k2,nchan,nIn,pnt,tno,npream,idxT,idxBL,
-     *	 auto,cross,docal,WillCal,doleak,WillLeak,dopass,calmsg
+     *	 auto,cross,docal,WillCal,doleak,WillLeak,dopass,dofbcal,
+     *   dofbleak,calmsg
 c
 	common/UVDatCoB/line,ref,InBuf
 c
-	common/UvDatCoC/Spreambl,Leaks,coeffs,SumWts,GWt,WillPol,
-     *	 PolCpy,
+	common/UvDatCoC/Spreambl,Leaks,coeffs,freq,chnfreq,SumWts,GWt
+	common/UVDatCoE/WillPol,PolCpy,
      *	 SelPol,SelPol1,nPol,nPolF,Pols,iPol,Snread,SData,ncoeff,doaver,
-     *	 Sflags,indices,nLeaks
+     *	 Sflags,indices,nLeaks,nfbin,vupd,updated
