@@ -56,6 +56,7 @@ c    mhw  05jan96 Add zero option for Model and ModMap
 c    pjt  27may99 Return and bug out when no visibities accumulated
 c    pjt   3oct07 Report fluxes found if no planets
 c    pkgw 15mar11 Use scrrecsz() to allow very large scratchfiles
+c    pjt  10may12 Use memallop() and ptrdiff
 c************************************************************************
 c*ModelIni -- Ready the uv data file for processing by the Model routine.
 c&rjs
@@ -359,11 +360,13 @@ c    VisPow
 c    ModPow
 c------------------------------------------------------------------------
 	include 'maxdim.h'
+	include 'mem.h'
 	integer maxgcf,width,maxlen
 	parameter(maxgcf=2048,width=6)
 	parameter(maxlen=5*maxchan+10)
 c
-	integer length,nx,ny,nz,nxd,nyd,nu,nv,ngcf,u0,v0,nread,i,j,pnt
+	integer length,nx,ny,nz,nxd,nyd,nu,nv,ngcf,u0,v0,nread,i,j
+	ptrdiff pnt
 	integer polm
 	double precision preamble(5),ucoeff(3),vcoeff(3),wcoeff(3)
 	double precision x1(2),x2(2)
@@ -412,7 +415,7 @@ c
 	v0 = nyd/2 + 1
 	umax = 0.5*(nxd-1-width)
 	vmax = 0.5*(nyd-1-width)
-	call MemAlloc(pnt,2*nu*nv*nz+1,'r')
+	call MemAllop(pnt,nu*nv*nz+1,'c')
 c
 	nvis = 0
 	VisPow = 0
@@ -451,7 +454,7 @@ c
 c  Now that we have the info, we can find the FFT of the model.
 c
 	call ModFFT(tvis,tmod,nx,ny,nz,nxd,nyd,level,polm,doclip,
-     *	  imhead,Buffer(pnt/2+1),nv,nu,mfs,xref1,yref1,xref2,yref2)
+     *	  imhead,memC(pnt),nv,nu,mfs,xref1,yref1,xref2,yref2)
 	ngcf = width*((maxgcf-1)/width) + 1
 	doshift = abs(xref1)+abs(yref1)+abs(xref2)+abs(yref2).gt.0
 	call gcffun('spheroidal',gcf,ngcf,width,1.)
@@ -494,7 +497,7 @@ c
 c                 Flag data if zero option not used
 		  if(.not.zero) flags(j) = .false.
 		else
-		  call ModGrid(uu,vv,Buffer(pnt/2+1),nu,nv,nz,u0,v0,
+		  call ModGrid(uu,vv,memC(pnt),nu,nv,nz,u0,v0,
      *		    gcf,ngcf,Intp(j))
 		  if(nz.eq.2) Intp(j) = Intp(j) +
      *			log(real(sfreq(j)/freq0))*Intp(j+1)
@@ -512,7 +515,7 @@ c
 		enddo
 		GotFreq = .true.
 	      else
-	        call ModGrid(u,v,Buffer(pnt/2+1),nu,nv,nread,u0,v0,
+	        call ModGrid(u,v,memC(pnt),nu,nv,nread,u0,v0,
      *		  gcf,ngcf,Intp)
 	      endif
 	    endif
@@ -548,7 +551,7 @@ c
 c
 	if(nread.ne.0) call bug('w',
      *	  'Stopped reading vis data when number of channels changed')
-	call MemFree(pnt,2*nu*nv*nz+1,'r')
+	call MemFrep(pnt,nu*nv*nz+1,'c')
 	end
 c************************************************************************
 	subroutine ModPolM(tmod,polm)
