@@ -64,10 +64,6 @@ c
 c  History:
 c    Refer to the RCS log, v1.1 includes prior revision information.
 c
-c  CARMA Customizations:
-c
-c  2011-Jul-13  pkgw  Add box(m) shorthand for box(-m,-m,m,m)
-c
 c $Id$
 c--
 c***********************************************************************
@@ -106,15 +102,14 @@ c-----------------------------------------------------------------------
       include 'boxes.h'
       include 'maxnax.h'
 
-      integer   NTYPES
+      integer    NTYPES
       parameter (NTYPES=10)
 
-      logical   coordini, more, units
-      integer   boxtype, i, iax, iax1, iax2, k2, length,k1, lu(3), n,
+      logical   coordini, more, dounit
+      integer   boxtype, i, ilat, ilng, ispc, k2, length,k1, lu(3), n,
      *          nshape, nsize(MAXNAX), offset, spare, tmp(4)
-      double precision cdelt, crpix, crval
-      character algo*3, ctype*9, spec*4096, type*9, types(NTYPES)*9,
-     *          xytype*6, ztype*6
+      character algo*8, spec*4096, type*9, types(NTYPES)*9, units*8,
+     *          wtype*16, xytype*6, ztype*6
 
       external  keyprsnt, len1
       logical   keyprsnt
@@ -159,22 +154,22 @@ c       Determine the subcommand type.
         endif
 
 c       Process unit specification subcommands.
-        units = .false.
+        dounit = .false.
         if (boxtype.eq.ABSPIX) then
           xytype = 'abspix'
           ztype  = 'abspix'
         else if (boxtype.eq.RELPIX) then
           xytype = 'relpix'
-          units = .true.
+          dounit = .true.
         else if (boxtype.eq.RELCEN) then
           xytype = 'relcen'
-          units = .true.
+          dounit = .true.
         else if (boxtype.eq.ARCSEC) then
           xytype = 'arcsec'
-          units = .true.
+          dounit = .true.
         else if (boxtype.eq.KMS) then
           ztype = 'kms'
-          units = .true.
+          dounit = .true.
 
         else if (boxtype.eq.IMAGE .or. boxtype.eq.QUART) then
 c         Process region specification subcommands.
@@ -212,7 +207,7 @@ c       Finish up with this subcommand.
         if (boxtype.eq.ABSPIX) then
           continue
 
-        else if (units) then
+        else if (dounit) then
           if (.not.coordini) then
             coordini = .true.
             if (file.eq.' ') call bug('f',
@@ -225,21 +220,21 @@ c       Finish up with this subcommand.
           endif
 
           if (boxtype.eq.ARCSEC) then
-            call coFindAx(lu,'longitude',iax1)
-            call coFindAx(lu,'latitude',iax2)
-            if (min(iax1,iax2).ne.1 .or. max(iax1,iax2).ne.2)
+            call coFindAx(lu, 'longitude',ilng)
+            call coFindAx(lu, 'latitude', ilat)
+            if (min(ilng,ilat).ne.1 .or. max(ilng,ilat).ne.2)
      *        call BoxBug(spec,'First two axes are not in arcsec')
+
           else if (boxtype.eq.KMS) then
-            call coFindAx(lu, 'spectral', iax)
-            if (iax.ne.3) call BoxBug(spec,'No spectral axis present')
-            call coAxGet(lu, iax, ctype, crpix, crval, cdelt)
-            if (ctype(1:4).ne.'VRAD' .and.
-     *          ctype(1:4).ne.'VOPT' .and.
-     *          ctype(1:4).ne.'VELO' .and.
-     *          ctype(1:4).ne.'FELO') then
-              call coSpcSet(lu, 'VRAD', ' ', iax, algo)
+            ispc = 0
+            call coAxType(lu, ispc, 'spectral', wtype, units)
+            if (ispc.ne.3) call BoxBug(spec,'No spectral axis present')
+
+            if (units.ne.'km/s') then
+              call coSpcSet(lu, 'VRAD', ' ', ispc, algo)
             endif
           endif
+
         else
           boxes(offset+ITYPE) = boxtype
           offset = offset + boxes(offset+SIZE) + HDR
@@ -344,7 +339,7 @@ c
 c-----------------------------------------------------------------------
       include 'mirconst.h'
       integer k0,i
-      logical more,ok,shhand
+      logical more,ok
       double precision temp,temp2,x1(2),x2(2)
 c-----------------------------------------------------------------------
       if (spec(k1:k1).ne.'(')
@@ -358,8 +353,6 @@ c-----------------------------------------------------------------------
           more = spec(k1:k1).eq.','
           if (k1.le.k0) call BoxBug(spec,'Bad region subcommand')
           n = n + 1
-          shhand = (.not.more).and.(n.eq.1).and.
-     *         (modulo.eq.4).and.(nmax.eq.4)
           if (n.gt.nmax)
      *    call BoxBug(spec,'Subregion too complex -- buffer overflow')
           call atodf(spec(k0:k1-1),temp,ok)
@@ -367,56 +360,19 @@ c-----------------------------------------------------------------------
           if (type.eq.'abspix') then
             boxes(n) = nint(temp)
           else if (type.eq.'relpix') then
-            if (shhand) then
-c            Implicit (-x, -x, +x, +x) box
-               call coCvt1(lu,1,'op',-temp,'ap',temp2)
-               boxes(1) = nint(temp2)
-               call coCvt1(lu,2,'op',-temp,'ap',temp2)
-               boxes(2) = nint(temp2)
-               call coCvt1(lu,1,'op',temp,'ap',temp2)
-               boxes(3) = nint(temp2)
-               call coCvt1(lu,2,'op',temp,'ap',temp2)
-               boxes(4) = nint(temp2)
-               n = 4
-            else
-               i = mod(n-1,2) + 1
-               call coCvt1(lu,i,'op',temp,'ap',temp2)
-               boxes(n) = nint(temp2)
-            endif
+            i = mod(n-1,2) + 1
+            call coCvt1(lu,i,'op',temp,'ap',temp2)
+            boxes(n) = nint(temp2)
           else if (type.eq.'relcen') then
-            if (shhand) then
-c            Implicit (-x, -x, +x, +x) box
-               boxes(1) = nint(-temp) + lu(2)/2 + 1
-               boxes(2) = nint(-temp) + lu(3)/2 + 1
-               boxes(3) = nint(temp) + lu(2)/2 + 1
-               boxes(4) = nint(temp) + lu(3)/2 + 1
-               n = 4
-            else
-               i = mod(n-1,2) + 1
-               boxes(n) = nint(temp) + lu(i+1)/2 + 1
-            endif
+            i = mod(n-1,2) + 1
+            boxes(n) = nint(temp) + lu(i+1)/2 + 1
           else if (type.eq.'arcsec') then
-            if (shhand) then
-c            Implicit (-x, -x, +x, +x) box
-               x1(1) = dpi/180/3600 * (-temp)
-               x1(2) = x1(1)
-               call coCvt(lu,'ow/ow',x1,'ap/ap',x2)
-               boxes(1) = nint(x2(1))
-               boxes(2) = nint(x2(2))
-               x1(1) = dpi/180/3600 * temp
-               x1(2) = x1(1)
-               call coCvt(lu,'ow/ow',x1,'ap/ap',x2)
-               boxes(3) = nint(x2(1))
-               boxes(4) = nint(x2(2))
-               n = 4
-            else
-               i = mod(n-1,2) + 1
-               x1(i) = dpi/180/3600 * temp
-               if (i.eq.2) then
-                  call coCvt(lu,'ow/ow',x1,'ap/ap',x2)
-                  boxes(n-1) = nint(x2(1))
-                  boxes(n)   = nint(x2(2))
-               endif
+            i = mod(n-1,2) + 1
+            x1(i) = dpi/180/3600 * temp
+            if (i.eq.2) then
+              call coCvt(lu,'ow/ow',x1,'ap/ap',x2)
+              boxes(n-1) = nint(x2(1))
+              boxes(n)   = nint(x2(2))
             endif
           else if (type.eq.'kms') then
             call coCvt1(lu,3,'aw',temp,'ap',temp2)
