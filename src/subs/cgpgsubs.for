@@ -340,11 +340,10 @@ c+
       character labtyp(2)*(*)
       real      xpos, ypos, yinc
 c  ---------------------------------------------------------------------
-c  Do some set up chores for the full plot annotation and
-c  write the reference values to the plot.  The window is
-c  redefined to be the same as the available part of the
-c  view-surface in normalized device coords (0 -> 1) to make
-c  life easier.
+c  Setup chores for the full plot annotation and write the reference
+c  values to the plot.  The window is redefined to be the same as the
+c  available part of the view-surface in normalized device coords
+c  (0 -> 1) to make life easier.
 c
 c  Input
 c    lh       Image handle
@@ -361,102 +360,88 @@ c    yinc     World increment between lines of text
 c-----------------------------------------------------------------------
       include 'maxnax.h'
 
-      double precision win(maxnax)
-      real xht, yht, xhta, yhta, acs, ychinc, yoff, ygap
-      character str1*132, str2*132, gentyp*4, typeo(maxnax)*6,
-     *  typei(maxnax)*6, refstr(maxnax)*30, ctype*9,
-     *  itoaf*1
-      integer len1, naxis, maxis, ip, il1, i, ir(maxnax), il
+      integer   iax, il, ip, ir(MAXNAX), maxis, naxis
+      real      acs, xht, xhta, ychinc, ygap, yht, yhta, yoff
+      double precision win(MAXNAX)
+      character axtype*16, refstr(MAXNAX)*30, str1*132, str2*132,
+     *          typei(MAXNAX)*6, typeo(MAXNAX)*6, units*8, wtype*16
+
+      external  itoaf, len1
+      integer   len1
+      character itoaf*1
 c-----------------------------------------------------------------------
-c
-c Define viewport to space left at bottom of viewsurface and define
-c the window to something easy to use here.  Define character size
-c for annotation
-c
+c     Define viewport to space left at bottom of viewsurface and define
+c     the window to something easy to use here.  Define character size
+c     for annotation.
       call pgsvp(0.0, 1.0, 0.0, vymin)
       call pgswin(0.0, 1.0, 0.0, vymin)
       call anndefcg(acs, ychinc, ygap)
-c
-c Find size of one character in n.d.c. for axis labels and annotation
-c
+
+c     Find size of one character in n.d.c. for axis labels and
+c     annotation.
       call pgsch(pcs)
       call pgqcs(0, xht, yht)
       call pgsch(acs)
       call pgqcs(0, xhta, yhta)
-c
-c Find start of annotation, allowing for x-label and a bit of space
-c between label and annotation
-c
+
+c     Find start of annotation, allowing for x-label and a bit of space
+c     between label and annotation.
       if (labtyp(1).eq.'none') then
         yoff = (1.0 + ygap)*yhta
       else
         yoff = ydispb*yht + (1.0 + ygap)*yhta
       endif
-c
-c Increment between annotation lines in world coordinates (recall
-c n.d.c. = world coordinates with the above viewport deifnitions)
-c
+
+c     Increment between annotation lines in world coordinates (recall
+c     n.d.c. = world coordinates with the above viewport deifnitions).
       yinc = ychinc * yhta
-c
+
       xpos = 0.0
       ypos = vymin - yoff
-c
-c Format reference pixels of each axis.
-c
+
+c     Format reference pixels of each axis.
       str1 = ' '
       call rdhdi(lh, 'naxis', naxis, 0)
       maxis = min(3,naxis)
       if (no3) maxis = min(2,naxis)
       ip = 2
-      do i = 1, maxis
-        typei(i) = 'abspix'
-        call rdhdd(lh, 'crpix'//itoaf(i), win(i), 0d0)
+      call coInit(lh)
+      do iax = 1, maxis
+        typei(iax) = 'abspix'
+        call rdhdd(lh, 'crpix'//itoaf(iax), win(iax), 0d0)
 
-        call axtypco(lh, 0, i, gentyp)
-        il1 = len1(gentyp)
-c
-c Bit of a mess for UU or VV as their generic descriptor is UV
-c
-        if (gentyp(1:il1).eq.'UV') then
-          call ctypeco(lh, i, ctype, il)
-          if (ctype(1:il).eq.'UU') then
-            str1(ip:) = 'UU,'
-          else
-            str1(ip:) = 'VV,'
-          endif
-        else
-          write(str1(ip:),'(a)') gentyp(1:il1)//','
-        endif
+        call coAxType(lh, iax, axtype, wtype, units)
+
+        il = min(4,len1(wtype))
+        str1(ip:) = wtype(:il)//','
         ip = len1(str1) + 2
       enddo
       ip = len1(str1)
       str1(ip:) = ' = '
 
-      call coInit(lh)
       call setoaco(lh, 'abs', maxis, 0, typeo)
-      call w2wfco(lh, maxis, typei, ' ', win, typeo, ' ', .false.,
-     *             refstr, ir)
+      call w2wfco(lh, maxis, typei, win, typeo, .false., refstr, ir)
       call coFin(lh)
-      do i = 1, maxis
+
+      do iax = 1, maxis
         ip = len1(str1) + 2
-        write(str1(ip:),'(a)') refstr(i)(1:ir(i))//','
+        write(str1(ip:),'(a)') refstr(iax)(1:ir(iax))//','
       enddo
 
       ip = len1(str1)
       write(str1(ip:), '(a)') ' at pixel ('
       ip = len1(str1) + 1
-      do i = 1, maxis
-        call strfd(win(i), '(f7.2)', str2, il1)
-        str1(ip:) = str2(1:il1)//','
-        ip = ip + il1 + 2
+      do iax = 1, maxis
+        call strfd(win(iax), '(f7.2)', str2, il)
+        str1(ip:) = str2(1:il)//','
+        ip = ip + il + 2
       enddo
       ip = len1(str1)
       str1(ip:ip) = ')'
 
       call pgtext(xpos, ypos, str1(1:ip))
-c
-c Increment location
-c
+
+c     Increment location.
       ypos = ypos - yinc
 
       end
@@ -975,8 +960,8 @@ c  Scratch
 c    x,yline
 c          plot buffers
 c-----------------------------------------------------------------------
-      logical valid
-      integer i, naxis, npt
+      logical   ok
+      integer   i, naxis, npt
       double precision inc, wi(3), po(3)
       character typei(3)*6, typeo(3)*6
 c-----------------------------------------------------------------------
@@ -1009,8 +994,8 @@ c
 
       npt = 0
       do i = 1, n
-        call w2wcov(lun, naxis, typei, ' ', wi, typeo, ' ', po, valid)
-        if (.not.valid) then
+        call w2wcov(lun, naxis, typei, wi, typeo, po, ok)
+        if (.not.ok) then
           if (npt.gt.1) call pgline(npt, xline, yline)
           npt = 0
         endif
@@ -1181,9 +1166,10 @@ c+
       subroutine lab3cg (lun, doerase, doval, dopix, labtyp, ipl,
      *                   plav, val3form)
 
-      integer ipl, plav, lun
-      logical doval, dopix, doerase
-      character*6  labtyp(2)
+      integer   lun
+      logical   doerase, doval, dopix
+      character labtyp(2)*6
+      integer   ipl, plav
       character val3form*(*)
 c  ---------------------------------------------------------------------
 c  Label the plot with the third axis values or pixel or both
@@ -1198,20 +1184,22 @@ c    ipl        Start plane of image being plotted
 c    plav       Number of planes being averaged for current sub-plot
 c    val3form   Format for 3val label
 c-----------------------------------------------------------------------
-      double precision pix, val3
-      real mx, my, x1, x2, y1, y2, xb(4), yb(4), dx, dy
-      character str1*30, str2*30, str3*60, types(3)*4, ltype*6, form*30
-      integer i1, i3, is2, ie2
-
       include 'maxnax.h'
-      integer len1, naxis
-      character*30 hangleh, rangle
+
+      integer   i1, i3, ilat, ilng, is2, ie2, naxis
+      real      dx, dy, mx, my, x1, x2, xb(4), y1, y2, yb(4)
+      double precision pix, val3
+      character axtype*16, form*30, ltype*6, str1*30, str2*30, str3*60,
+     *          units*8, wtype*16
+
+      external  hangleh, len1, rangle
+      integer   len1
+      character hangleh*30, rangle*30
 c-----------------------------------------------------------------------
       call rdhdi(lun, 'naxis', naxis, 0)
       if (naxis.lt.3) return
-c
-c Prepare pixel label
-c
+
+c     Prepare pixel label.
       if (plav.eq.1) then
         call pgnumb(ipl, 0, 0, str1, i1)
         pix = ipl
@@ -1219,62 +1207,51 @@ c
         pix = (ipl+ipl+plav-1) / 2.0
         call strfmtcg(real(pix), 5, str1, i1)
       endif
-c
-c Prepare value label.  The units depend upon what type of axis the
-c third axis is, and what the units of the complementary axis is
-c
-      call coInit(lun)
+
+c     Prepare value label.  The units depend upon what type of axis the
+c     third axis is, and what the units of the complementary axis is.
       if (doval) then
-        call axtypco(lun, 3, 0, types)
-        if (types(3).eq.'VELO') then
+        call coInit(lun)
+        call coAxType(lun, 3, axtype, wtype, units)
+
+        if (units.eq.'km/s') then
           ltype = 'abskms'
-        else if (types(3).eq.'FREQ') then
+        else if (units.eq.'GHz') then
           ltype = 'absghz'
-        else if (types(3).eq.'UV' .or. types(3).eq.'NONE' .or.
-     *           types(3).eq.'ANGL') then
+        else if (axtype.eq.'longitude') then
+c         Look for latitude amongst first two axes and find label type
+c         to set label type for 3rd axis value.
+          call coFindAx(lun, 'latitude', ilat)
+          if (0.lt.ilat .and. ilat.le.2) then
+            ltype = 'hms'
+            if (labtyp(ilat).eq.'arcsec' .or.
+     *          labtyp(ilat).eq.'arcmin' .or.
+     *          labtyp(ilat).eq.'arcmas' .or.
+     *          labtyp(ilat)(4:).eq.'deg')
+     *         ltype = labtyp(ilat)
+          endif
+        else if (axtype.eq.'latitude') then
+c         Look for longitude axis amongst first two and find label type
+c         to set label type for 3rd axis value.
+          call coFindAx(lun, 'longitude', ilng)
+          if (0.lt.ilng .and. ilng.le.2) then
+            ltype = 'hms'
+            if (labtyp(ilng).eq.'arcsec' .or.
+     *          labtyp(ilng).eq.'arcmin' .or.
+     *          labtyp(ilng).eq.'arcmas' .or.
+     *          labtyp(ilng)(4:).eq.'deg')
+     *         ltype = labtyp(ilng)
+          endif
+        else
           ltype = 'absnat'
-        else if (types(3).eq.'RA' .or. types(3).eq.'LNG') then
-c
-c Look for DEC axis amongst first two and find label type to
-c set label type for 3rd axis value
-c
-          if (types(1).eq.'DEC' .or. types(1).eq.'LAT') then
-            ltype = 'hms'
-            if (labtyp(1).eq.'arcsec' .or. labtyp(1).eq.'arcmin' .or.
-     *          labtyp(1).eq.'arcmas' .or. labtyp(1)(4:6).eq.'deg')
-     *          ltype = labtyp(1)
-          else if (types(2).eq.'DEC' .or. types(2).eq.'LAT') then
-            ltype = 'hms'
-            if (labtyp(2).eq.'arcsec' .or. labtyp(2).eq.'arcmin' .or.
-     *          labtyp(2).eq.'arcmas' .or. labtyp(2)(4:6).eq.'deg')
-     *          ltype = labtyp(2)
-          endif
-        else if (types(3).eq.'DEC' .or. types(3).eq.'LAT') then
-c
-c Look for RA axis amongst first two and find label type to
-c set label type for 3rd axis value
-c
-          if (types(1).eq.'RA' .or. types(1).eq.'LNG') then
-            ltype = 'dms'
-            if (labtyp(1).eq.'arcsec' .or. labtyp(1).eq.'arcmin' .or.
-     *          labtyp(1).eq.'arcmas' .or. labtyp(1)(4:6).eq.'deg')
-     *          ltype = labtyp(1)
-          else if (types(2).eq.'RA' .or. types(2).eq.'LNG') then
-            ltype = 'dms'
-            if (labtyp(2).eq.'arcsec' .or. labtyp(2).eq.'arcmin' .or.
-     *          labtyp(2).eq.'arcmas' .or. labtyp(2)(4:6).eq.'deg')
-     *          ltype = labtyp(2)
-          endif
         endif
-c
-c Now compute the value of the third axis in the desired units
-c and format it
-c
-        call w2wsco(lun, 3, 'abspix', ' ', pix, ltype, ' ', val3)
+
+c       Compute the value of the third axis in the desired units and
+c       format it.
+        call w2wsco(lun, 3, 'abspix', pix, ltype, val3)
         call coFin(lun)
-c
-c Format value
-c
+
+c       Format value.
         if (ltype.eq.'hms') then
           str2 = hangleh(val3)
         else if (ltype.eq.'dms') then
@@ -1300,9 +1277,8 @@ c
           is2 = is2 + 1
         enddo
       endif
-c
-c Concatenate strings
-c
+
+c     Concatenate strings.
       if (doval .and. dopix) then
         str3 = str2(is2:ie2)//', '//str1(1:i1)
       else if (doval) then
@@ -1311,9 +1287,8 @@ c
         str3 = str1(1:i1)
       endif
       i3 = len1(str3)
-c
-c Work out world coordinate of string BLC; 1 char in & 2 char down
-c
+
+c     Work out world coordinate of string BLC; 1 char in & 2 char down.
       call pgqwin(x1, x2, y1, y2)
       call pgqtxt(0.0, 0.0, 0.0, 0.0, 'X', xb, yb)
       dx = (xb(4) - xb(1))
@@ -1322,9 +1297,8 @@ c
 
       mx = x1 + dx
       my = y2 - 2.0*dy
-c
-c Erase rectangle and write string
-c
+
+c     Erase rectangle and write string.
       call strerscg(doerase, 0.0, str3(1:i3), mx, my)
 
       end
@@ -1364,13 +1338,13 @@ c    grid      Draw on grid instead of just ticks
 c-----------------------------------------------------------------------
       include 'mirconst.h'
 
+      logical   dotime(2), zero(2)
+      integer   i, j, ip, krng(2), naxis, nxsub, nysub
+      real      tick(2),  tickl(2), wpix(4)
       double precision wwi(3), wblc(3), wtrc(3), wbrc(3), wtlc(3),
      * tickd(2), xmin, xmax, ymin, ymax, zp, ticklp(2), dp, dw,
      * blcd(2), trcd(2), wrap
-      real tick(2),  tickl(2), wpix(4)
-      integer nxsub, nysub, i, j, krng(2), ip, naxis
       character xopt*20, yopt*20, typei(3)*6, typeo(3)*6
-      logical zero(2), dotime(2)
 c-----------------------------------------------------------------------
 c
 c Save pixel window
@@ -1418,17 +1392,17 @@ c
       wwi(1) = blcd(1)
       wwi(2) = blcd(2)
       wwi(3) = zp
-      call w2wco(lun, naxis, typei, ' ', wwi, typeo, ' ', wblc)
+      call w2wco(lun, naxis, typei, wwi, typeo, wblc)
       wwi(1) = trcd(1)
       wwi(2) = trcd(2)
-      call w2wco(lun, naxis, typei, ' ', wwi, typeo, ' ', wtrc)
+      call w2wco(lun, naxis, typei, wwi, typeo, wtrc)
 
       wwi(1) = trcd(1)
       wwi(2) = blcd(2)
-      call w2wco(lun, naxis, typei, ' ', wwi, typeo, ' ', wbrc)
+      call w2wco(lun, naxis, typei, wwi, typeo, wbrc)
       wwi(1) = blcd(1)
       wwi(2) = trcd(2)
-      call w2wco(lun, naxis, typei, ' ', wwi, typeo, ' ', wtlc)
+      call w2wco(lun, naxis, typei, wwi, typeo, wtlc)
 c
 c Add 2pi to one end if we cross RA=0.  RA axis units are intrinsically
 c radians but we are concerned here if we are labelling them as hms or
@@ -1703,15 +1677,16 @@ c             for X label
 c-----------------------------------------------------------------------
       include 'mirconst.h'
 
-      double precision ymin, ymax, win(2), wout1(2), wout2(2)
-      real dely, xch, ych, xl, yl
-      character str*60, stypeo*8, typei(2)*6
-      integer len1, il
-      logical zero(2)
+      logical   zero(2)
+      integer   il
+      real      dely, xl, xch, yl, ych
+      double precision win(2), wout1(2), wout2(2), ymin, ymax
+      character str*60, typei(2)*6
+
+      external  len1
+      integer   len1
 c-----------------------------------------------------------------------
-c
-c X axis
-c
+c     X axis.
       if (labtyp(1).eq.'hms') then
         ydispb = 3.6
       else if (labtyp(1).eq.'dms') then
@@ -1721,31 +1696,26 @@ c
       else
         ydispb = 3.1
       endif
-c
-c Y axis.  Have a stab at a correct axis label displacement when using
-c HMS or DMS; it depends upon the number of decimal places in the
-c labels and knowing about the PGTBOX algorithm.  Very modular.
-c Allow for space between numeric label and axis, and between
-c numeric label and axis label.
-c
+
+c     Y axis.  Have a stab at a correct axis label displacement when
+c     using HMS or DMS; it depends upon the number of decimal places in
+c     the labels and knowing about the PGTBOX algorithm.  Very modular.
+c     Allow for space between numeric label and axis, and between
+c     numeric label and axis label.
       if (labtyp(2).eq.'hms' .or. labtyp(2).eq.'dms') then
-c
-c Work out y min and max in radians
-c
-        stypeo = ' '
+c       Work out y min and max in radians.
         typei(1) = 'abspix'
         typei(2) = 'abspix'
 
         call coInit(lh)
         win(1) = blc(1) - 0.5
         win(2) = blc(2) - 0.5
-        call w2wco(lh, 2, typei, ' ', win, labtyp, stypeo, wout1)
+        call w2wco(lh, 2, typei, win, labtyp, wout1)
         win(2) = trc(2) + 0.5
-        call w2wco(lh, 2, typei, ' ', win, labtyp, stypeo, wout2)
+        call w2wco(lh, 2, typei, win, labtyp, wout2)
         call coFin(lh)
-c
-c Allow for RA axis zero crossing
-c
+
+c       Allow for RA axis zero crossing.
         call razerocg(lh, blc, trc, zero)
         if (zero(2)) then
           if (wout1(2).lt.wout2(2)) then
@@ -1754,9 +1724,8 @@ c
             wout2(2) = wout2(2) + DTWOPI
           endif
         endif
-c
-c Convert to seconds of time/arc
-c
+
+c       Convert to seconds of time/arc.
         ymin = wout1(2)
         ymax = wout2(2)
         call angconcg(1, labtyp(2), ymin)
@@ -1784,10 +1753,9 @@ c
           str(il+1:il+1) = '-'
           il = len1(str)
         endif
-c
-c Find the length of this string in mm and convert to
-c displacement to left of axis for vertical axis label
-c
+
+c       Find the length of this string in mm and convert to
+c       displacement to left of axis for vertical axis label.
         call pglen(2, str(1:il), xl, yl)
         call pgqcs(2, xch, ych)
         xdispl = xl / xch
