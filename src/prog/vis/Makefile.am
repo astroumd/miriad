@@ -14,7 +14,7 @@ ftasks = \
   conterr contsen csflag early fgflag im2uv mfflat mosgen offaxis \
   offpol opcal paraplot pgflag qvack sfunc sinpoly transfix uvaflag \
   uvamp uvarchdd uvaver uvbflag uvcal uvcal2 uvcat uvcheck uvclip uvcover \
-  uvdecor uvdiff uvedit uvfft uvfit uvfix uvflag uvflux uvfstats \
+  uvdecor uvdiff uvedit uvfft uvfit uvfix uvflag uvflux uvfmeas uvfstats \
   uvgains uvgen uvgenmodel uvglue uvimage uvindex uvlin uvlist uvmodel \
   uvphase uvplanet uvplot uvplt uvpnt uvputhd uvrandom uvratio uvredo \
   uvsector uvspec uvspect uvsplit uvstat uvsub uvswap uvtcor uvtplt \
