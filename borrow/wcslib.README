@@ -18,12 +18,14 @@ wget ftp://ftp.atnf.csiro.au/pub/software/wcslib/wcslib.tar.bz2
 
 
 old style:
-./configure --bindir=$MIRBIN --libdir=$MIRLIB --includedir=$MIRINC
+./configure --bindir=$MIRBIN --libdir=$MIRLIB --includedir=$MIRINC --mandir=$MIRDOC/man --docdir=$MIRDOC
 make 
-make install
+make -i  install
+
+(see $MIR/src/sys/bin/lib.wcslib)
 
 new style:???
-./configure --bindir=$MIRBIN --libdir=$MIRLIB --includedir=$MIRINC
+./configure --bindir=$MIRBIN --libdir=$MIRLIB --includedir=$MIRINC ...
 make 
 make install
 
