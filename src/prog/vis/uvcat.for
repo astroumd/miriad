@@ -53,6 +53,8 @@ c                   when removing channels.
 c    jwr  16jun04   Fixed bug in calling uvVarUpd that relied on McCarthy
 c                   evaluation of logical expressions (ifort does not!)
 c    dnf  30jun06   increased size of output file name to 256 characters
+c    pjt  11may12   deal with bfmask(nspect) and bfmask(1)
+c
 c  Bugs:
 c
 c= uvcat - Catenate and copy uv datasets; Apply gains file, Select windows.
@@ -94,7 +96,7 @@ c--
 c------------------------------------------------------------------------
         include 'maxdim.h'
 	character version*(*)
-	parameter(version='UvCat: version 1.0 24-apr-2012')
+	parameter(version='UvCat: version 1.0 11-may-2012')
 c
 	integer nchan,vhand,lIn,lOut,i,j,nspect,nPol,Pol,SnPol,SPol
 	integer nschan(MAXWIN),ischan(MAXWIN),ioff,nwdata,length
@@ -377,6 +379,10 @@ c------------------------------------------------------------------------
 	logical unspect,unschan,uischan,usdf,usfreq,urest,usyst
 	logical uxtsys,uytsys,ubfmask
 	logical uxyph
+	logical bfirst
+c
+	save bfirst
+	data bfirst/.TRUE./
 c
 c  Get the dimensioning info.
 c
@@ -401,7 +407,28 @@ c
 	call uvprobvr(lIn,'restfreq',type,length,urest)
 	call uvgetvrd(lIn,'restfreq',restfreq,nspect)
 	call uvprobvr(lIn,'bfmask',type,length,ubfmask)
-	if (ubfmask) call uvgetvri(lIn,'bfmask',bfmask,nspect)
+c
+c  bfmask if a new CARMA variable (for general use). But
+c  it is allowed to contain 1 element, but is forced to
+c  be nspect, as is required by most downstream software
+c  This construction here will fix that issue.
+c
+	if (ubfmask) then
+	   if (length.eq.nspect) then
+	      call uvgetvri(lIn,'bfmask',bfmask,nspect)
+	   else if (length.eq.1) then
+	      if (bfirst) then
+		 call bug('i','Fixing up bfmask(nspect)')
+		 bfirst = .FALSE.
+	      endif
+	      call uvgetvri(lIn,'bfmask',bfmask,1)
+	      do i=2,nspect
+		 bfmask(i) = bfmask(1)
+	      enddo
+	   else
+	      call bug('f','bfmask is not nspect or 1 in size')
+	   endif
+	endif
 c
 c       System Temperature
 c
