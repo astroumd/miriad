@@ -31,6 +31,7 @@
 /*    rjs  19mar97   Handle logical translation better. Tidying.	*/
 /*    pjt   6sep06   read integers via rdhdi                            */
 /*    rjs  01apr09   Add scrRecSz routine.				*/
+/*    pjt  11may12   scrread/write now using ptrdiff                    */
 /************************************************************************/
 #if defined(HAVE_CONFIG_H) && HAVE_CONFIG_H
 #include "config.h"
@@ -66,13 +67,13 @@ fortran subroutine scrrecsz(integer handle, integer recsize)
 }
 /************************************************************************/
 fortran subroutine scrread(integer handle,real buffer,
-	integer offset,integer length)
+	ptrdiff offset,integer length)
 {
   scrread_c(handle.val,buffer.addr,offset.val,length.val);
 }
 /************************************************************************/
 fortran subroutine scrwrite(integer handle,real buffer,
-	integer offset,integer length)
+	ptrdiff offset,integer length)
 {
   scrwrite_c(handle.val,buffer.addr,offset.val,length.val);
 }
