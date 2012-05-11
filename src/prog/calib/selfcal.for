@@ -176,7 +176,7 @@ c    mchw 23may07 if (nants.gt.MAXANT) call bug('f', 'number of antennas > MAXAN
 c    pjt  19mar09 fix timestamp accuracy due to roundoff errors
 c    pkgw 15mar11 Use scrrecsz() to allow very large scratchfiles
 c    pjt   9may12 use ptrdiff and mallop()
-
+c    pjt  11may12 use ptrdiff in scrread()
 c
 c  Bugs/Shortcomings:
 c   * Selfcal should check that the user is not mixing different
@@ -185,7 +185,7 @@ c   * It would be desirable to apply bandpasses, and merge gain tables,
 c     apply polarisation calibration, etc.
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version='Selfcal: version 1.0 8-may-2012')
+	parameter(version='Selfcal: version 1.0 11-may-2012')
 	integer MaxMod,maxsels,nhead
 	parameter(MaxMod=64,maxsels=1024,nhead=3)
 c
@@ -609,6 +609,7 @@ c------------------------------------------------------------------------
 	integer maxlen,nhead
 	parameter(nhead=3,maxlen=5*maxchan+nhead)
 	integer i,j,k,ihash,itime,bl,i1,i2,length
+	ptrdiff off
 	real Out(maxlen),Wt
 c
 	if(nchan.gt.maxchan) call bug('f','Too many channels')
@@ -616,7 +617,8 @@ c
 	call scrrecsz(tscr,length)
 c
 	do j=1,nvis
-	  call scrread(tscr,Out,j-1,1)
+	  off = j-1
+	  call scrread(tscr,Out,off,1)
 	  itime = nint(Out(2)/interval)
 	  ihash = 2*itime + 1
 	  i = mod(itime,nHash)
