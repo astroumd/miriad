@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.7 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2011, Mark Calabretta
+  WCSLIB 4.13 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2012, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -69,22 +69,29 @@ int main()
     printf("%4d: %s.\n", status, cel_errmsg[status]);
   }
 
-  printf("\n\nLegend\n------");
+  printf("\n\nLegend (in the order drawn)\n---------------------------\n");
 
-  printf("\nReference point of the projection (phi0,theta0) marked with\n"
-         "   a green circle with red centre.\n");
-  printf("\nCelestial meridian (CRVAL1) and parallel (CRVAL2) through the "
-         "reference point\n   is dashed.\n");
-  printf("\nCelestial pole (LONPOLE,LATPOLE) marked with\n"
-         "   a green circle with black centre.\n");
-  printf("\nNative longitude of celestial pole (LONPOLE) marked with\n"
-         "   a green tag.\n");
-  printf("\nCelestial prime meridian expected for \"change of origin\" case "
-         "marked with\n   an open yellow circle (where applicable).\n");
-  printf("\nCelestial equator and prime meridian marked with\n"
-         "   yellow grid lines.\n");
-  printf("\nDirection of increasing celestial longitude and latitude:\n"
-         "   white -> blue -> red.\n");
+  printf("Native graticule in dark green with the meridian containing the "
+         "celestial\n   pole (LONPOLE) thicker and in green.  Also tagged "
+         "beyond the perimeter.\n");
+
+  printf("Celestial graticule colour-coded, the direction of increasing "
+         "celestial\n   longitude and latitude is white -> blue -> red, "
+         "with the equator and\n   prime meridian in yellow.\n");
+
+  printf("Celestial meridian (CRVAL1) and parallel (CRVAL2) through the "
+         "reference point\n   is thicker and dashed.\n");
+
+  printf("Reference point of the projection (phi0,theta0) is marked with "
+         "a green circle\n   with red centre.  It should coincide with the "
+         "dashed celestial meridian and\n   parallel.\n");
+
+  printf("Celestial pole (LONPOLE,LATPOLE) marked with a green circle with "
+         "black centre.\n");
+
+  printf("Celestial prime meridian expected for \"change of origin\" case "
+         "marked with\n   an open yellow circle (where applicable).  Should "
+         "coincide with the prime\n   meridian.\n");
 
   printf("\n\n");
 
@@ -109,17 +116,17 @@ int main()
   cpgbeg(0, text, 1, 1);
 
   /* Define pen colours. */
-  cpgscr( 0, 0.0f, 0.0f, 0.0f);
-  cpgscr( 1, 1.0f, 1.0f, 0.0f);
-  cpgscr( 2, 1.0f, 1.0f, 1.0f);
-  cpgscr( 3, 0.5f, 0.5f, 0.8f);
-  cpgscr( 4, 0.8f, 0.5f, 0.5f);
-  cpgscr( 5, 0.8f, 0.8f, 0.8f);
-  cpgscr( 6, 0.5f, 0.5f, 0.8f);
-  cpgscr( 7, 0.8f, 0.5f, 0.5f);
-  cpgscr( 8, 0.3f, 0.5f, 0.3f);
-  cpgscr( 9, 0.0f, 1.0f, 0.0f);
-  cpgscr(10, 1.0f, 0.0f, 0.0f);
+  cpgscr( 0, 0.0f, 0.0f, 0.0f);		/* Black      */
+  cpgscr( 1, 1.0f, 1.0f, 0.0f);		/* Yellow     */
+  cpgscr( 2, 1.0f, 1.0f, 1.0f);		/* White      */
+  cpgscr( 3, 0.5f, 0.5f, 0.8f);		/* Mauve      */
+  cpgscr( 4, 0.8f, 0.5f, 0.5f);		/* Pink       */
+  cpgscr( 5, 0.8f, 0.8f, 0.8f);		/* Grey       */
+  cpgscr( 6, 0.5f, 0.5f, 0.8f);		/* Mauve      */
+  cpgscr( 7, 0.8f, 0.5f, 0.5f);		/* Pink       */
+  cpgscr( 8, 0.3f, 0.5f, 0.3f);		/* Dark green */
+  cpgscr( 9, 0.0f, 1.0f, 0.0f);		/* Green      */
+  cpgscr(10, 1.0f, 0.0f, 0.0f);		/* Red        */
 
   /* Define PGPLOT viewport. */
   cpgenv(-195.0f, 195.0f, -195.0f, 195.0f, 1, -2);
@@ -249,8 +256,8 @@ int main()
           cpgtext(-180.0f, -213.0f, text);
 
           sprintf(text, "(LONPOLE, LATPOLE): (%+3.3d, %+3.3d) -> "
-            "(%+3.3d, %+2.2d) - open green circle, green tag", lonpole,
-            latpole, nint(celestial.ref[2]), nint(celestial.ref[3]));
+            "(%+3.3d, %+2.2d) - open green circle", lonpole, latpole,
+            nint(celestial.ref[2]), nint(celestial.ref[3]));
           cpgtext(-180.0f, -226.0f, text);
 
           sprintf(text, "(\\ga\\dp\\u, \\gd\\dp\\u): (%+3.3d, %+2.2d)",
@@ -267,7 +274,7 @@ int main()
           cpgtext(-40.0f, -239.0f, text);
 
 
-          /* Draw the native graticule faintly in the background. */
+          /* Draw the native graticule in the background (dark green). */
           cpgsci(8);
 
           /* Draw native meridians of longitude. */
@@ -281,8 +288,8 @@ int main()
             if (ilng == -180) lng[0] = -179.99;
             if (ilng ==  180) lng[0] =  179.99;
 
-            /* Mark the longitude of the celestial pole. */
-            if ((ilng-phi_p)%360 == 0) {
+            /* Meridian containing the celestial pole (thick green). */
+            if (ilng == phi_p) {
               cpgslw(5);
               cpgsci(9);
             }
@@ -335,6 +342,19 @@ int main()
             cpgline(k, xr, yr);
           }
 
+          /* Tag the longitude of the celestial pole. */
+          cpgslw(5);
+          cpgsci(9);
+          phi[0]   = celestial.ref[2];
+          theta[0] = -90.0;
+          theta[1] = -80.0;
+          prjs2x(&(native.prj), 1, 2, 1, 1, phi, theta, x, y, stat);
+          xr[0] = -x[0];
+          yr[0] =  y[0];
+          xr[1] = -x[0] + (x[1] - x[0]);
+          yr[1] =  y[0] - (y[1] - y[0]);
+          cpgline(2, xr, yr);
+
 
           /* Draw a colour-coded celestial coordinate graticule. */
           ci = 1;
@@ -347,10 +367,11 @@ int main()
           for (ilng = -180; ilng <= 180; ilng += 15) {
             lng[0] = (double)ilng;
 
+            /* Cycle through colours with the prime meridian in yellow. */
             if (++ci > 7) ci = 2;
             cpgsci(ilng?ci:1);
 
-            /* Dash the reference longitude. */
+            /* Dash the reference longitude and make it thicker. */
             if ((ilng-crval1)%360 == 0) {
               cpgsls(2);
               cpgslw(5);
@@ -394,10 +415,11 @@ int main()
           for (ilat = -90; ilat <= 90; ilat += 15) {
             lat[0] = (double)ilat;
 
+            /* Cycle through colours with the prime meridian in yellow. */
             if (++ci > 7) ci = 2;
             cpgsci(ilat?ci:1);
 
-            /* Dash the reference latitude. */
+            /* Dash the reference latitude and make it thicker. */
             if (ilat == crval2) {
               cpgsls(2);
               cpgslw(5);
@@ -432,31 +454,19 @@ int main()
             cpgslw(1);
           }
 
-          cpgslw(5);
-          cpgsci(9);
-
-          /* Mark the fiducial point. */
+          /* Mark the fiducial point (green with red centre). */
           phi[0]   = celestial.phi0;
           theta[0] = celestial.theta0;
           prjs2x(&(native.prj), 1, 1, 1, 1, phi, theta, x, y, stat);
           xr[0] = -x[0];
           yr[0] =  y[0];
+
+          cpgslw(5);
+          cpgsci(9);
           cpgpt1(xr[0], yr[0], 24);
           cpgpt1(xr[0], yr[0], 23);
           cpgsci(10);
           cpgpt1(xr[0], yr[0], 17);
-          cpgsci(9);
-
-          /* Tag the longitude of the celestial pole. */
-          phi[0]   = celestial.ref[2];
-          theta[0] = -90.0;
-          theta[1] = -80.0;
-          prjs2x(&(native.prj), 1, 2, 1, 1, phi, theta, x, y, stat);
-          xr[0] = -x[0];
-          yr[0] =  y[0];
-          xr[1] = -x[0] + (x[1] - x[0]);
-          yr[1] =  y[0] - (y[1] - y[0]);
-          cpgline(2, xr, yr);
 
           /* Mark the celestial pole. */
           phi[0]   = celestial.ref[2];
@@ -464,14 +474,16 @@ int main()
           prjs2x(&(native.prj), 1, 1, 1, 1, phi, theta, x, y, stat);
           xr[0] = -x[0];
           yr[0] =  y[0];
+
+          cpgslw(5);
+          cpgsci(9);
           cpgpt1(xr[0], yr[0], 24);
           cpgpt1(xr[0], yr[0], 23);
           cpgsci(0);
           cpgpt1(xr[0], yr[0], 17);
-          cpgsci(9);
 
-          /* Mark zero celestial longitude expected for */
-          /* "change of origin" case.                   */
+          /* Mark zero celestial longitude expected for "change of origin"
+           * case with a thick yellow circle. */
           if (celestial.euler[1] == 0.0 || celestial.euler[1] == 180.0) {
             if (celestial.theta0 == 90.0) {
               alpha_p = celestial.ref[0];
@@ -498,11 +510,12 @@ int main()
               phi[0] -= 360.0;
             }
 
-            theta[0] = -90.0;
-            theta[1] = -87.0;
-            prjs2x(&(native.prj), 1, 2, 1, 1, phi, theta, x, y, stat);
-            xr[0] = -x[0] + (x[1] - x[0]);
-            yr[0] =  y[0] - (y[1] - y[0]);
+            theta[0] = -45.0;
+            prjs2x(&(native.prj), 1, 1, 1, 1, phi, theta, x, y, stat);
+            xr[0] = -x[0];
+            yr[0] =  y[0];
+
+            cpgslw(5);
             cpgsci(1);
             cpgpt1(xr[0], yr[0], 24);
           }
@@ -537,6 +550,7 @@ int main()
             break;
           }
 
+          if (ctrl == 'p') break;
           if (ctrl == 'b' || ctrl == 'B') break;
           if (ctrl == 'j' || ctrl == 'J') break;
           if (ctrl == 'e' || ctrl == 'E') goto end;
@@ -545,9 +559,11 @@ int main()
           first = 0;
         }
 
+        if (ctrl == 'p') break;
         if (ctrl == 'j' || ctrl == 'J') break;
       }
 
+      if (ctrl == 'p') break;
       if (ctrl == 'j' || ctrl == 'J') {
         /* Save CRVAL1 and LONPOLE for next time. */
         crval1_j  = crval1;
@@ -557,7 +573,7 @@ int main()
         crval2_i  = 1;
       } else {
         crval2_i  = 45;
-       }
+      }
     }
   }
 

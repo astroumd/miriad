@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.7 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2011, Mark Calabretta
+  WCSLIB 4.13 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2012, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -37,10 +37,10 @@
 
 #include "wcsprintf.h"
 
-FILE  *wcsprintf_file = 0x0;
-char  *wcsprintf_buff = 0x0;
-char  *wcsprintf_bufp = 0x0;
-size_t wcsprintf_size = 0;
+static FILE  *wcsprintf_file = 0x0;
+static char  *wcsprintf_buff = 0x0;
+static char  *wcsprintf_bufp = 0x0;
+static size_t wcsprintf_size = 0;
 
 /*--------------------------------------------------------------------------*/
 

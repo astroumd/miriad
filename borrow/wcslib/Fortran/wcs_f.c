@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.7 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2011, Mark Calabretta
+  WCSLIB 4.13 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2012, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -31,6 +31,7 @@
   $Id$
 *===========================================================================*/
 
+#include <stdio.h>
 #include <string.h>
 
 #include <wcsutil.h>
@@ -47,6 +48,7 @@
 #define wcsget_  F77_FUNC(wcsget,  WCSGET)
 #define wcsfree_ F77_FUNC(wcsfree, WCSFREE)
 #define wcsprt_  F77_FUNC(wcsprt,  WCSPRT)
+#define wcsperr_ F77_FUNC(wcsperr, WCSPERR)
 #define wcsset_  F77_FUNC(wcsset,  WCSSET)
 #define wcsp2s_  F77_FUNC(wcsp2s,  WCSP2S)
 #define wcss2p_  F77_FUNC(wcss2p,  WCSS2P)
@@ -109,16 +111,17 @@
 #define WCS_NWTB     201
 #define WCS_TAB      202
 #define WCS_WTB      203
-#define WCS_TYPES    204
-#define WCS_LNGTYP   205
-#define WCS_LATTYP   206
-#define WCS_LNG      207
-#define WCS_LAT      208
-#define WCS_SPEC     209
-#define WCS_CUBEFACE 210
+#define WCS_LNGTYP   204
+#define WCS_LATTYP   205
+#define WCS_LNG      206
+#define WCS_LAT      207
+#define WCS_SPEC     208
+#define WCS_CUBEFACE 209
+#define WCS_TYPES    210
 #define WCS_LIN      211
 #define WCS_CEL      212
 #define WCS_SPC      213
+#define WCS_ERR      214
 
 /*--------------------------------------------------------------------------*/
 
@@ -195,6 +198,9 @@ int wcsput_(
   case WCS_CDELT:
     wcsp->cdelt[i0] = *dvalp;
     break;
+  case WCS_CRVAL:
+    wcsp->crval[i0] = *dvalp;
+    break;
   case WCS_CUNIT:
     strncpy(wcsp->cunit[i0], cvalp, 72);
     wcsutil_null_fill(72, wcsp->cunit[i0]);
@@ -202,9 +208,6 @@ int wcsput_(
   case WCS_CTYPE:
     strncpy(wcsp->ctype[i0], cvalp, 72);
     wcsutil_null_fill(72, wcsp->ctype[i0]);
-    break;
-  case WCS_CRVAL:
-    wcsp->crval[i0] = *dvalp;
     break;
   case WCS_LONPOLE:
     wcsp->lonpole = *dvalp;
@@ -239,15 +242,18 @@ int wcsput_(
     wcsutil_null_fill(72, (wcsp->ps + wcsp->nps)->value);
     (wcsp->nps)++;
     break;
-  case WCS_ALTLIN:
-    wcsp->altlin = *ivalp;
-    break;
   case WCS_CD:
     k = (i0)*(wcsp->naxis) + (j0);
     *(wcsp->cd+k) = *dvalp;
     break;
   case WCS_CROTA:
     wcsp->crota[i0] = *dvalp;
+    break;
+  case WCS_ALTLIN:
+    wcsp->altlin = *ivalp;
+    break;
+  case WCS_VELREF:
+    wcsp->velref = *ivalp;
     break;
 
   case WCS_ALT:
@@ -303,6 +309,12 @@ int wcsput_(
     strncpy(wcsp->ssysobs, cvalp, 72);
     wcsutil_null_fill(72, wcsp->ssysobs);
     break;
+  case WCS_VELOSYS:
+    wcsp->velosys = *dvalp;
+    break;
+  case WCS_ZSOURCE:
+    wcsp->zsource = *dvalp;
+    break;
   case WCS_SSYSSRC:
     strncpy(wcsp->ssyssrc, cvalp, 72);
     wcsutil_null_fill(72, wcsp->ssyssrc);
@@ -310,15 +322,9 @@ int wcsput_(
   case WCS_VELANGL:
     wcsp->velangl = *dvalp;
     break;
-  case WCS_VELOSYS:
-    wcsp->velosys = *dvalp;
-    break;
   case WCS_WCSNAME:
     strncpy(wcsp->wcsname, cvalp, 72);
     wcsutil_null_fill(72, wcsp->wcsname);
-    break;
-  case WCS_ZSOURCE:
-    wcsp->zsource = *dvalp;
     break;
   default:
     return 1;
@@ -393,6 +399,11 @@ int wcsget_(const int *wcs, const int *what, void *value)
       *(dvalp++) = wcsp->cdelt[i];
     }
     break;
+  case WCS_CRVAL:
+    for (i = 0; i < naxis; i++) {
+      *(dvalp++) = wcsp->crval[i];
+    }
+    break;
   case WCS_CUNIT:
     for (i = 0; i < naxis; i++) {
       strncpy(cvalp, wcsp->cunit[i], 72);
@@ -405,11 +416,6 @@ int wcsget_(const int *wcs, const int *what, void *value)
       strncpy(cvalp, wcsp->ctype[i], 72);
       wcsutil_blank_fill(72, cvalp);
       cvalp += 72;
-    }
-    break;
-  case WCS_CRVAL:
-    for (i = 0; i < naxis; i++) {
-      *(dvalp++) = wcsp->crval[i];
     }
     break;
   case WCS_LONPOLE:
@@ -453,9 +459,6 @@ int wcsget_(const int *wcs, const int *what, void *value)
       cvalp += 72;
     }
     break;
-  case WCS_ALTLIN:
-    *ivalp = wcsp->altlin;
-    break;
   case WCS_CD:
     /* C row-major to FORTRAN column-major. */
     for (j = 0; j < naxis; j++) {
@@ -470,6 +473,12 @@ int wcsget_(const int *wcs, const int *what, void *value)
     for (i = 0; i < naxis; i++) {
       *(dvalp++) = wcsp->crota[i];
     }
+    break;
+  case WCS_ALTLIN:
+    *ivalp = wcsp->altlin;
+    break;
+  case WCS_VELREF:
+    *ivalp = wcsp->velref;
     break;
 
   case WCS_ALT:
@@ -536,6 +545,12 @@ int wcsget_(const int *wcs, const int *what, void *value)
     strncpy(cvalp, wcsp->ssysobs, 72);
     wcsutil_blank_fill(72, cvalp);
     break;
+  case WCS_VELOSYS:
+    *dvalp = wcsp->velosys;
+    break;
+  case WCS_ZSOURCE:
+    *dvalp = wcsp->zsource;
+    break;
   case WCS_SSYSSRC:
     strncpy(cvalp, wcsp->ssyssrc, 72);
     wcsutil_blank_fill(72, cvalp);
@@ -543,33 +558,22 @@ int wcsget_(const int *wcs, const int *what, void *value)
   case WCS_VELANGL:
     *dvalp = wcsp->velangl;
     break;
-  case WCS_VELOSYS:
-    *dvalp = wcsp->velosys;
-    break;
   case WCS_WCSNAME:
     strncpy(cvalp, wcsp->wcsname, 72);
     wcsutil_blank_fill(72, cvalp);
     break;
-  case WCS_ZSOURCE:
-    *dvalp = wcsp->zsource;
-    break;
 
-  case WCS_NWTB:
-    *ivalp = wcsp->nwtb;
-    break;
-  case WCS_WTB:
-    *(void **)value = wcsp->wtb;
-    break;
   case WCS_NTAB:
     *ivalp = wcsp->ntab;
+    break;
+  case WCS_NWTB:
+    *ivalp = wcsp->nwtb;
     break;
   case WCS_TAB:
     *(void **)value = wcsp->tab;
     break;
-  case WCS_TYPES:
-    for (i = 0; i < naxis; i++) {
-      *(ivalp++) = wcsp->types[i];
-    }
+  case WCS_WTB:
+    *(void **)value = wcsp->wtb;
     break;
   case WCS_LNGTYP:
     strncpy(cvalp, wcsp->lngtyp, 4);
@@ -591,25 +595,43 @@ int wcsget_(const int *wcs, const int *what, void *value)
   case WCS_CUBEFACE:
     *ivalp = wcsp->cubeface;
     break;
+  case WCS_TYPES:
+    for (i = 0; i < naxis; i++) {
+      *(ivalp++) = wcsp->types[i];
+    }
+    break;
   case WCS_LIN:
-    k = (int *)(&(wcsp->lin)) - (int *)wcsp;
-    iwcsp = wcs + k;
+    /* Copy the contents of the linprm struct. */
+    iwcsp = (int *)(&(wcsp->lin));
     for (k = 0; k < LINLEN; k++) {
       *(ivalp++) = *(iwcsp++);
     }
     break;
   case WCS_CEL:
-    k = (int *)(&(wcsp->cel)) - (int *)wcsp;
-    iwcsp = wcs + k;
+    /* Copy the contents of the celprm struct. */
+    iwcsp = (int *)(&(wcsp->cel));
     for (k = 0; k < CELLEN; k++) {
       *(ivalp++) = *(iwcsp++);
     }
     break;
   case WCS_SPC:
-    k = (int *)(&(wcsp->spc)) - (int *)wcsp;
-    iwcsp = wcs + k;
+    /* Copy the contents of the spcprm struct. */
+    iwcsp = (int *)(&(wcsp->spc));
     for (k = 0; k < SPCLEN; k++) {
       *(ivalp++) = *(iwcsp++);
+    }
+    break;
+  case WCS_ERR:
+    /* Copy the contents of the wcserr struct. */
+    if (wcsp->err) {
+      iwcsp = (int *)(wcsp->err);
+      for (k = 0; k < ERRLEN; k++) {
+        *(ivalp++) = *(iwcsp++);
+      }
+    } else {
+      for (k = 0; k < ERRLEN; k++) {
+        *(ivalp++) = 0;
+      }
     }
     break;
   default:
@@ -647,7 +669,39 @@ int wcsfree_(int *wcs)
 int wcsprt_(int *wcs)
 
 {
+  /* This may or may not force the Fortran I/O buffers to be flushed.  If
+   * not, try CALL FLUSH(6) before calling WCSPRT in the Fortran code. */
+  fflush(NULL);
+
   return wcsprt((struct wcsprm *)wcs);
+}
+
+/*--------------------------------------------------------------------------*/
+
+/* prefix should be null-terminated, or else of length 72 in which case
+ * trailing blanks are not significant. */
+
+int wcsperr_(int *wcs, const char prefix[72])
+
+{
+  char prefix_[72];
+  int  i;
+
+  strncpy(prefix_, prefix, 72);
+  if (prefix_[71] == ' ') {
+    for (i = 70; i >= 0; i--) {
+      if (prefix_[i] != ' ') break;
+      prefix_[i] = '\0';
+    }
+  } else {
+    prefix_[71] = '\0';
+  }
+
+  /* This may or may not force the Fortran I/O buffers to be flushed. */
+  /* If not, try CALL FLUSH(6) before calling WCSPERR in the Fortran code. */
+  fflush(NULL);
+
+  return wcsperr((struct wcsprm *)wcs, prefix_);
 }
 
 /*--------------------------------------------------------------------------*/

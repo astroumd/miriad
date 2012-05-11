@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-<title>WCSLIB 4.7: lin.h File Reference</title>
+<title>WCSLIB 4.13.4: lin.h File Reference</title>
 <link href="doxygen.css" rel="stylesheet" type="text/css">
 <link href="tabs.css" rel="stylesheet" type="text/css">
 </head><body>
@@ -16,7 +16,8 @@
   </div>
 </div>
 <div class="contents">
-<h1>lin.h File Reference</h1>
+<h1>lin.h File Reference</h1><code>#include &quot;<a class="el" href="wcserr_8h-source.html">wcserr.h</a>&quot;</code><br>
+
 <p>
 <a href="lin_8h-source.html">Go to the source code of this file.</a><table border="0" cellpadding="0" cellspacing="0">
 <tr><td></td></tr>
@@ -49,6 +50,13 @@
 <tr><td class="memItemLeft" nowrap align="right" valign="top">#define&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="lin_8h.html#7232df93295216e063c438671652c2b4">linx2p_errmsg</a>&nbsp;&nbsp;&nbsp;<a class="el" href="lin_8h.html#7bdf034bd750df1e518db9feeebf7a79">lin_errmsg</a></td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Deprecated.  <a href="#7232df93295216e063c438671652c2b4"></a><br></td></tr>
+<tr><td colspan="2"><br><h2>Enumerations</h2></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">enum &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="lin_8h.html#6690044d47c6784a4cc0ccf6f52bfc1f">lin_errmsg_enum</a> { <a class="el" href="lin_8h.html#6690044d47c6784a4cc0ccf6f52bfc1f2544660be2086b8225623e8a7b534dfb">LINERR_SUCCESS</a> =  0, 
+<a class="el" href="lin_8h.html#6690044d47c6784a4cc0ccf6f52bfc1f84e4dcf5e518ba3dce985ef7c9687513">LINERR_NULL_POINTER</a> =  1, 
+<a class="el" href="lin_8h.html#6690044d47c6784a4cc0ccf6f52bfc1f28004da63d882a7df754d49047ea7f2d">LINERR_MEMORY</a> =  2, 
+<a class="el" href="lin_8h.html#6690044d47c6784a4cc0ccf6f52bfc1fd2248fa36c9d85c91187179ae95207e8">LINERR_SINGULAR_MTX</a> =  3
+ }</td></tr>
+
 <tr><td colspan="2"><br><h2>Functions</h2></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="lin_8h.html#7ddea28768d99f01c6be1c71a4d8fe58">linini</a> (int alloc, int naxis, struct <a class="el" href="structlinprm.html">linprm</a> *lin)</td></tr>
 
@@ -212,6 +220,34 @@ Size of the <a class="el" href="structlinprm.html" title="Linear transformation 
 
 </div>
 </div><p>
+<hr><h2>Enumeration Type Documentation</h2>
+<a class="anchor" name="6690044d47c6784a4cc0ccf6f52bfc1f"></a><!-- doxytag: member="lin.h::lin_errmsg_enum" ref="6690044d47c6784a4cc0ccf6f52bfc1f" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum <a class="el" href="lin_8h.html#6690044d47c6784a4cc0ccf6f52bfc1f">lin_errmsg_enum</a>          </td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+<dl compact><dt><b>Enumerator: </b></dt><dd>
+<table border="0" cellspacing="2" cellpadding="0">
+<tr><td valign="top"><em><a class="anchor" name="6690044d47c6784a4cc0ccf6f52bfc1f2544660be2086b8225623e8a7b534dfb"></a><!-- doxytag: member="LINERR_SUCCESS" ref="6690044d47c6784a4cc0ccf6f52bfc1f2544660be2086b8225623e8a7b534dfb" args="" -->LINERR_SUCCESS</em>&nbsp;</td><td>
+</td></tr>
+<tr><td valign="top"><em><a class="anchor" name="6690044d47c6784a4cc0ccf6f52bfc1f84e4dcf5e518ba3dce985ef7c9687513"></a><!-- doxytag: member="LINERR_NULL_POINTER" ref="6690044d47c6784a4cc0ccf6f52bfc1f84e4dcf5e518ba3dce985ef7c9687513" args="" -->LINERR_NULL_POINTER</em>&nbsp;</td><td>
+</td></tr>
+<tr><td valign="top"><em><a class="anchor" name="6690044d47c6784a4cc0ccf6f52bfc1f28004da63d882a7df754d49047ea7f2d"></a><!-- doxytag: member="LINERR_MEMORY" ref="6690044d47c6784a4cc0ccf6f52bfc1f28004da63d882a7df754d49047ea7f2d" args="" -->LINERR_MEMORY</em>&nbsp;</td><td>
+</td></tr>
+<tr><td valign="top"><em><a class="anchor" name="6690044d47c6784a4cc0ccf6f52bfc1fd2248fa36c9d85c91187179ae95207e8"></a><!-- doxytag: member="LINERR_SINGULAR_MTX" ref="6690044d47c6784a4cc0ccf6f52bfc1fd2248fa36c9d85c91187179ae95207e8" args="" -->LINERR_SINGULAR_MTX</em>&nbsp;</td><td>
+</td></tr>
+</table>
+</dl>
+
+</div>
+</div><p>
 <hr><h2>Function Documentation</h2>
 <a class="anchor" name="7ddea28768d99f01c6be1c71a4d8fe58"></a><!-- doxytag: member="lin.h::linini" ref="7ddea28768d99f01c6be1c71a4d8fe58" args="(int alloc, int naxis, struct linprm *lin)" -->
 <div class="memitem">
@@ -256,8 +292,8 @@ Size of the <a class="el" href="structlinprm.html" title="Linear transformation 
   </table>
 </dl>
 <dl class="return" compact><dt><b>Returns:</b></dt><dd>Status return value:<ul>
-<li>0: Success.</li><li>1: Null <a class="el" href="structlinprm.html" title="Linear transformation parameters.">linprm</a> pointer passed.</li><li>2: Memory allocation failed. </li></ul>
-</dd></dl>
+<li>0: Success.</li><li>1: Null <a class="el" href="structlinprm.html" title="Linear transformation parameters.">linprm</a> pointer passed.</li><li>2: Memory allocation failed.</li></ul>
+For returns &gt; 1, a detailed error message is set in <a class="el" href="structlinprm.html#2975830d4214bb6b35cb1ca922875057">linprm::err</a> if enabled, see <a class="el" href="wcserr_8h.html#1691b8bd184d40ca6fda255be078fa53" title="Enable/disable error messaging.">wcserr_enable()</a>. </dd></dl>
 
 </div>
 </div><p>
@@ -302,8 +338,8 @@ Size of the <a class="el" href="structlinprm.html" title="Linear transformation 
   </table>
 </dl>
 <dl class="return" compact><dt><b>Returns:</b></dt><dd>Status return value:<ul>
-<li>0: Success.</li><li>1: Null <a class="el" href="structlinprm.html" title="Linear transformation parameters.">linprm</a> pointer passed.</li><li>2: Memory allocation failed. </li></ul>
-</dd></dl>
+<li>0: Success.</li><li>1: Null <a class="el" href="structlinprm.html" title="Linear transformation parameters.">linprm</a> pointer passed.</li><li>2: Memory allocation failed.</li></ul>
+For returns &gt; 1, a detailed error message is set in <a class="el" href="structlinprm.html#2975830d4214bb6b35cb1ca922875057">linprm::err</a> if enabled, see <a class="el" href="wcserr_8h.html#1691b8bd184d40ca6fda255be078fa53" title="Enable/disable error messaging.">wcserr_enable()</a>. </dd></dl>
 
 </div>
 </div><p>
@@ -354,7 +390,7 @@ Size of the <a class="el" href="structlinprm.html" title="Linear transformation 
 <div class="memdoc">
 
 <p>
-<b>linprt</b>() prints the contents of a <a class="el" href="structlinprm.html" title="Linear transformation parameters.">linprm</a> struct.<p>
+<b>linprt</b>() prints the contents of a <a class="el" href="structlinprm.html" title="Linear transformation parameters.">linprm</a> struct using <a class="el" href="wcsprintf_8h.html#46950abaf5a27347da8160741f98f973" title="Print function used by WCSLIB diagnostic routines.">wcsprintf()</a>. Mainly intended for diagnostic purposes.<p>
 <dl compact><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
     <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>lin</em>&nbsp;</td><td>Linear transformation parameters.</td></tr>
@@ -391,8 +427,8 @@ Note that this routine need not be called directly; it will be invoked by <a cla
   </table>
 </dl>
 <dl class="return" compact><dt><b>Returns:</b></dt><dd>Status return value:<ul>
-<li>0: Success.</li><li>1: Null <a class="el" href="structlinprm.html" title="Linear transformation parameters.">linprm</a> pointer passed.</li><li>2: Memory allocation failed.</li><li>3: <code><b>PC</b>i<b>_</b>ja</code> matrix is singular. </li></ul>
-</dd></dl>
+<li>0: Success.</li><li>1: Null <a class="el" href="structlinprm.html" title="Linear transformation parameters.">linprm</a> pointer passed.</li><li>2: Memory allocation failed.</li><li>3: <code><b>PC</b>i<b>_</b>ja</code> matrix is singular.</li></ul>
+For returns &gt; 1, a detailed error message is set in <a class="el" href="structlinprm.html#2975830d4214bb6b35cb1ca922875057">linprm::err</a> if enabled, see <a class="el" href="wcserr_8h.html#1691b8bd184d40ca6fda255be078fa53" title="Enable/disable error messaging.">wcserr_enable()</a>. </dd></dl>
 
 </div>
 </div><p>
@@ -450,8 +486,8 @@ Note that this routine need not be called directly; it will be invoked by <a cla
   </table>
 </dl>
 <dl class="return" compact><dt><b>Returns:</b></dt><dd>Status return value:<ul>
-<li>0: Success.</li><li>1: Null <a class="el" href="structlinprm.html" title="Linear transformation parameters.">linprm</a> pointer passed.</li><li>2: Memory allocation failed.</li><li>3: <code><b>PC</b>i<b>_</b>ja</code> matrix is singular. </li></ul>
-</dd></dl>
+<li>0: Success.</li><li>1: Null <a class="el" href="structlinprm.html" title="Linear transformation parameters.">linprm</a> pointer passed.</li><li>2: Memory allocation failed.</li><li>3: <code><b>PC</b>i<b>_</b>ja</code> matrix is singular.</li></ul>
+For returns &gt; 1, a detailed error message is set in <a class="el" href="structlinprm.html#2975830d4214bb6b35cb1ca922875057">linprm::err</a> if enabled, see <a class="el" href="wcserr_8h.html#1691b8bd184d40ca6fda255be078fa53" title="Enable/disable error messaging.">wcserr_enable()</a>. </dd></dl>
 
 </div>
 </div><p>
@@ -506,8 +542,8 @@ Note that this routine need not be called directly; it will be invoked by <a cla
     <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>ncoord,nelem</em>&nbsp;</td><td>The number of coordinates, each of vector length nelem but containing lin.naxis coordinate elements. </td></tr>
     <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>imgcrd</em>&nbsp;</td><td>Array of intermediate world coordinates.</td></tr>
     <tr><td valign="top"><tt>[out]</tt>&nbsp;</td><td valign="top"><em>pixcrd</em>&nbsp;</td><td>Array of pixel coordinates. Status return value:<ul>
-<li>0: Success.</li><li>1: Null <a class="el" href="structlinprm.html" title="Linear transformation parameters.">linprm</a> pointer passed.</li><li>2: Memory allocation failed.</li><li>3: <code><b>PC</b>i<b>_</b>ja</code> matrix is singular. </li></ul>
-</td></tr>
+<li>0: Success.</li><li>1: Null <a class="el" href="structlinprm.html" title="Linear transformation parameters.">linprm</a> pointer passed.</li><li>2: Memory allocation failed.</li><li>3: <code><b>PC</b>i<b>_</b>ja</code> matrix is singular.</li></ul>
+For returns &gt; 1, a detailed error message is set in <a class="el" href="structlinprm.html#2975830d4214bb6b35cb1ca922875057">linprm::err</a> if enabled, see <a class="el" href="wcserr_8h.html#1691b8bd184d40ca6fda255be078fa53" title="Enable/disable error messaging.">wcserr_enable()</a>. </td></tr>
   </table>
 </dl>
 
@@ -576,7 +612,7 @@ Error messages to match the status value returned from each function.
 </div>
 </div><p>
 </div>
-<hr size="1"><address style="text-align: right;"><small>Generated on Mon Feb 7 18:03:57 2011 for WCSLIB 4.7 by&nbsp;
+<hr size="1"><address style="text-align: right;"><small>Generated on Mon Apr 2 17:55:23 2012 for WCSLIB 4.13.4 by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.5.6 </small></address>
 </body>

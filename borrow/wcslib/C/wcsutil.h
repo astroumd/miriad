@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.7 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2011, Mark Calabretta
+  WCSLIB 4.13 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2012, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -33,13 +33,15 @@
 *
 * Summary of the wcsutil routines
 * -------------------------------
-* Simple utility functions used by WCSLIB.  They are documented here solely as
-* an aid to understanding the code.  Thay are not intended for external use -
-* the API may change without notice!
+* Simple utility functions for internal use only by WCSLIB.  They are
+* documented here solely as an aid to understanding the code.  They are not
+* intended for external use - the API may change without notice!
 *
 *
 * wcsutil_blank_fill() - Fill a character string with blanks
 * ----------------------------------------------------------
+* INTERNAL USE ONLY.
+*
 * wcsutil_blank_fill() pads a character string with blanks starting with the
 * terminating NULL character.
 *
@@ -59,6 +61,8 @@
 *
 * wcsutil_null_fill() - Fill a character string with NULLs
 * --------------------------------------------------------
+* INTERNAL USE ONLY.
+*
 * wcsutil_null_fill() strips off trailing blanks and pads the character array
 * holding the string with NULL characters.
 *
@@ -78,12 +82,16 @@
 *
 * wcsutil_allEq() - Test for equality of a particular vector element
 * ------------------------------------------------------------------
+* INTERNAL USE ONLY.
+*
 * wcsutil_allEq() tests for equality of a particular element in a set of
 * vectors.
 *
 * Given:
 *   nvec      int       The number of vectors.
+*
 *   nelem     int       The length of each vector.
+*
 *   first     const double*
 *                       Pointer to the first element to test in the array.
 *                       The elements tested for equality are
@@ -105,10 +113,13 @@
 *
 * wcsutil_setAll() - Set a particular vector element
 * --------------------------------------------------
+* INTERNAL USE ONLY.
+*
 * wcsutil_setAll() sets the value of a particular element in a set of vectors.
 *
 * Given:
 *   nvec      int       The number of vectors.
+*
 *   nelem     int       The length of each vector.
 *
 * Given and returned:
@@ -130,10 +141,13 @@
 *
 * wcsutil_setAli() - Set a particular vector element
 * --------------------------------------------------
+* INTERNAL USE ONLY.
+*
 * wcsutil_setAli() sets the value of a particular element in a set of vectors.
 *
 * Given:
 *   nvec      int       The number of vectors.
+*
 *   nelem     int       The length of each vector.
 *
 * Given and returned:
@@ -155,14 +169,18 @@
 *
 * wcsutil_setBit() - Set bits in selected elements of an array
 * ------------------------------------------------------------
+* INTERNAL USE ONLY.
+*
 * wcsutil_setBit() sets bits in selected elements of an array.
 *
 * Given:
 *   nelem     int       Number of elements in the array.
+*
 *   sel       const int*
-*                       Address of a selection array of length nelem.
-*                       May be specified as the null pointer in which case all
+*                       Address of a selection array of length nelem.  May
+*                       be specified as the null pointer in which case all
 *                       elements are selected.
+*
 *   bits      int       Bit mask.
 *
 * Given and returned:
@@ -170,6 +188,29 @@
 *
 * Function return value:
 *             void
+*
+*
+* wcsutil_fptr2str() - Translate pointer-to-function to string
+* ------------------------------------------------------------
+* INTERNAL USE ONLY.
+*
+* wcsutil_fptr2str() translates a pointer-to-function to hexadecimal string
+* representation for output.  It is used by the various routines that print
+* the contents of WCSLIB structs.  Note that it is not strictly legal to
+* type-pun a function pointer to void*.
+*
+* See stackoverflow.com/questions/2741683/how-to-format-a-function-pointer
+*
+* Given:
+*   fptr      int (*)() Pointer to function.
+*
+* Returned:
+*   hext      char[]    Null-terminated string.  Should be at least 19 bytes
+*                       in size to accomodate a 64-bit address (16 bytes in
+*                       hex), plus the leading "0x" and trailing '\0'.
+*
+* Function return value:
+*             char *    The address of hext.
 *
 *===========================================================================*/
 
@@ -183,5 +224,6 @@ int  wcsutil_allEq (int nvec, int nelem, const double *first);
 void wcsutil_setAll(int nvec, int nelem, double *first);
 void wcsutil_setAli(int nvec, int nelem, int *first);
 void wcsutil_setBit(int nelem, const int *sel, int bits, int *array);
+char *wcsutil_fptr2str(int (*func)(), char hext[]);
 
 #endif /* WCSLIB_WCSUTIL */

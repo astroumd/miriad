@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.7 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2011, Mark Calabretta
+  WCSLIB 4.13 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2012, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -47,10 +47,9 @@
 #define NSPEC 10001
 
 const double tol = 1.0e-11;
+const double C = 2.99792458e8;
 
 int closure(const char[9], double, double, int, double, double, double);
-
-const double C = 2.99792458e8;
 
 /* KPNO MARS spectrograph grism parameters. */
 double mars[7] = {4.5e5, 1.0, 27.0, 1.765, -1.077e6, 3.0, 5.0};
@@ -60,7 +59,7 @@ int main()
 
 {
   char text[80];
-  int naxisj, status;
+  int  naxisj, nFail = 0, status;
   double cdeltX, crpixj, crvalX, restfrq, restwav, x1, x2;
 
 
@@ -91,12 +90,12 @@ int main()
   printf("\nLinear frequency axis, span: %.1f to %.1f (GHz), step: %.3f "
          "(kHz)\n---------------------------------------------------------"
          "-----------------\n", x1*1e-9, x2*1e-9, cdeltX*1e-3);
-  closure("WAVE-F2W",     0.0,     0.0, naxisj, crpixj, cdeltX, crvalX);
-  closure("VOPT-F2W",     0.0, restwav, naxisj, crpixj, cdeltX, crvalX);
-  closure("ZOPT-F2W",     0.0, restwav, naxisj, crpixj, cdeltX, crvalX);
-  closure("AWAV-F2A",     0.0,     0.0, naxisj, crpixj, cdeltX, crvalX);
-  closure("VELO-F2V", restfrq,     0.0, naxisj, crpixj, cdeltX, crvalX);
-  closure("BETA-F2V", restfrq,     0.0, naxisj, crpixj, cdeltX, crvalX);
+  nFail += closure("WAVE-F2W",     0.0,     0.0, naxisj, crpixj, cdeltX, crvalX);
+  nFail += closure("VOPT-F2W",     0.0, restwav, naxisj, crpixj, cdeltX, crvalX);
+  nFail += closure("ZOPT-F2W",     0.0, restwav, naxisj, crpixj, cdeltX, crvalX);
+  nFail += closure("AWAV-F2A",     0.0,     0.0, naxisj, crpixj, cdeltX, crvalX);
+  nFail += closure("VELO-F2V", restfrq,     0.0, naxisj, crpixj, cdeltX, crvalX);
+  nFail += closure("BETA-F2V", restfrq,     0.0, naxisj, crpixj, cdeltX, crvalX);
 
   restwav = 700.0e-9;
   restfrq = C/restwav;
@@ -107,29 +106,29 @@ int main()
   printf("\nLinear vacuum wavelength axis, span: %.0f to %.0f (nm), "
          "step: %f (nm)\n---------------------------------------------"
          "-----------------------------\n", x1*1e9, x2*1e9, cdeltX*1e9);
-  closure("FREQ-W2F",     0.0,     0.0, naxisj, crpixj, cdeltX, crvalX);
-  closure("AFRQ-W2F",     0.0,     0.0, naxisj, crpixj, cdeltX, crvalX);
-  closure("ENER-W2F",     0.0,     0.0, naxisj, crpixj, cdeltX, crvalX);
-  closure("WAVN-W2F",     0.0,     0.0, naxisj, crpixj, cdeltX, crvalX);
-  closure("VRAD-W2F", restfrq,     0.0, naxisj, crpixj, cdeltX, crvalX);
-  closure("AWAV-W2A",     0.0,     0.0, naxisj, crpixj, cdeltX, crvalX);
-  closure("VELO-W2V",     0.0, restwav, naxisj, crpixj, cdeltX, crvalX);
-  closure("BETA-W2V",     0.0, restwav, naxisj, crpixj, cdeltX, crvalX);
+  nFail += closure("FREQ-W2F",     0.0,     0.0, naxisj, crpixj, cdeltX, crvalX);
+  nFail += closure("AFRQ-W2F",     0.0,     0.0, naxisj, crpixj, cdeltX, crvalX);
+  nFail += closure("ENER-W2F",     0.0,     0.0, naxisj, crpixj, cdeltX, crvalX);
+  nFail += closure("WAVN-W2F",     0.0,     0.0, naxisj, crpixj, cdeltX, crvalX);
+  nFail += closure("VRAD-W2F", restfrq,     0.0, naxisj, crpixj, cdeltX, crvalX);
+  nFail += closure("AWAV-W2A",     0.0,     0.0, naxisj, crpixj, cdeltX, crvalX);
+  nFail += closure("VELO-W2V",     0.0, restwav, naxisj, crpixj, cdeltX, crvalX);
+  nFail += closure("BETA-W2V",     0.0, restwav, naxisj, crpixj, cdeltX, crvalX);
 
 
   printf("\nLinear air wavelength axis, span: %.0f to %.0f (nm), "
          "step: %f (nm)\n------------------------------------------"
          "--------------------------------\n", x1*1e9, x2*1e9, cdeltX*1e9);
-  closure("FREQ-A2F",     0.0,     0.0, naxisj, crpixj, cdeltX, crvalX);
-  closure("AFRQ-A2F",     0.0,     0.0, naxisj, crpixj, cdeltX, crvalX);
-  closure("ENER-A2F",     0.0,     0.0, naxisj, crpixj, cdeltX, crvalX);
-  closure("WAVN-A2F",     0.0,     0.0, naxisj, crpixj, cdeltX, crvalX);
-  closure("VRAD-A2F", restfrq,     0.0, naxisj, crpixj, cdeltX, crvalX);
-  closure("WAVE-A2W",     0.0,     0.0, naxisj, crpixj, cdeltX, crvalX);
-  closure("VOPT-A2W",     0.0, restwav, naxisj, crpixj, cdeltX, crvalX);
-  closure("ZOPT-A2W",     0.0, restwav, naxisj, crpixj, cdeltX, crvalX);
-  closure("VELO-A2V",     0.0, restwav, naxisj, crpixj, cdeltX, crvalX);
-  closure("BETA-A2V",     0.0, restwav, naxisj, crpixj, cdeltX, crvalX);
+  nFail += closure("FREQ-A2F", 0.0,     0.0, naxisj, crpixj, cdeltX, crvalX);
+  nFail += closure("AFRQ-A2F", 0.0,     0.0, naxisj, crpixj, cdeltX, crvalX);
+  nFail += closure("ENER-A2F", 0.0,     0.0, naxisj, crpixj, cdeltX, crvalX);
+  nFail += closure("WAVN-A2F", 0.0,     0.0, naxisj, crpixj, cdeltX, crvalX);
+  nFail += closure("VRAD-A2F", restfrq, 0.0, naxisj, crpixj, cdeltX, crvalX);
+  nFail += closure("WAVE-A2W", 0.0,     0.0, naxisj, crpixj, cdeltX, crvalX);
+  nFail += closure("VOPT-A2W", 0.0, restwav, naxisj, crpixj, cdeltX, crvalX);
+  nFail += closure("ZOPT-A2W", 0.0, restwav, naxisj, crpixj, cdeltX, crvalX);
+  nFail += closure("VELO-A2V", 0.0, restwav, naxisj, crpixj, cdeltX, crvalX);
+  nFail += closure("BETA-A2V", 0.0, restwav, naxisj, crpixj, cdeltX, crvalX);
 
 
   restfrq = 1420.40595e6;
@@ -141,15 +140,15 @@ int main()
   printf("\nLinear velocity axis, span: %.0f to %.0f m/s, step: %.0f "
          "(m/s)\n------------------------------------------------------"
          "--------------------\n", x1, x2, cdeltX);
-  closure("FREQ-V2F", restfrq,     0.0, naxisj, crpixj, cdeltX, crvalX);
-  closure("AFRQ-V2F", restfrq,     0.0, naxisj, crpixj, cdeltX, crvalX);
-  closure("ENER-V2F", restfrq,     0.0, naxisj, crpixj, cdeltX, crvalX);
-  closure("WAVN-V2F", restfrq,     0.0, naxisj, crpixj, cdeltX, crvalX);
-  closure("VRAD-V2F", restfrq,     0.0, naxisj, crpixj, cdeltX, crvalX);
-  closure("WAVE-V2W",     0.0, restwav, naxisj, crpixj, cdeltX, crvalX);
-  closure("VOPT-V2W",     0.0, restwav, naxisj, crpixj, cdeltX, crvalX);
-  closure("ZOPT-V2W",     0.0, restwav, naxisj, crpixj, cdeltX, crvalX);
-  closure("AWAV-V2A",     0.0, restwav, naxisj, crpixj, cdeltX, crvalX);
+  nFail += closure("FREQ-V2F", restfrq, 0.0, naxisj, crpixj, cdeltX, crvalX);
+  nFail += closure("AFRQ-V2F", restfrq, 0.0, naxisj, crpixj, cdeltX, crvalX);
+  nFail += closure("ENER-V2F", restfrq, 0.0, naxisj, crpixj, cdeltX, crvalX);
+  nFail += closure("WAVN-V2F", restfrq, 0.0, naxisj, crpixj, cdeltX, crvalX);
+  nFail += closure("VRAD-V2F", restfrq, 0.0, naxisj, crpixj, cdeltX, crvalX);
+  nFail += closure("WAVE-V2W", 0.0, restwav, naxisj, crpixj, cdeltX, crvalX);
+  nFail += closure("VOPT-V2W", 0.0, restwav, naxisj, crpixj, cdeltX, crvalX);
+  nFail += closure("ZOPT-V2W", 0.0, restwav, naxisj, crpixj, cdeltX, crvalX);
+  nFail += closure("AWAV-V2A", 0.0, restwav, naxisj, crpixj, cdeltX, crvalX);
 
 
   restwav = 650.0e-9;
@@ -161,17 +160,17 @@ int main()
   printf("\nVacuum wavelength grism axis, span: %.0f to %.0f (nm), "
          "step: %f (nm)\n--------------------------------------------"
          "------------------------------\n", x1*1e9, x2*1e9, cdeltX*1e9);
-  closure("FREQ-GRI",     0.0,     0.0, naxisj, crpixj, cdeltX, crvalX);
-  closure("AFRQ-GRI",     0.0,     0.0, naxisj, crpixj, cdeltX, crvalX);
-  closure("ENER-GRI",     0.0,     0.0, naxisj, crpixj, cdeltX, crvalX);
-  closure("WAVN-GRI",     0.0,     0.0, naxisj, crpixj, cdeltX, crvalX);
-  closure("VRAD-GRI", restfrq,     0.0, naxisj, crpixj, cdeltX, crvalX);
-  closure("WAVE-GRI",     0.0,     0.0, naxisj, crpixj, cdeltX, crvalX);
-  closure("VOPT-GRI",     0.0, restwav, naxisj, crpixj, cdeltX, crvalX);
-  closure("ZOPT-GRI",     0.0, restwav, naxisj, crpixj, cdeltX, crvalX);
-  closure("AWAV-GRI",     0.0,     0.0, naxisj, crpixj, cdeltX, crvalX);
-  closure("VELO-GRI",     0.0, restwav, naxisj, crpixj, cdeltX, crvalX);
-  closure("BETA-GRI",     0.0, restwav, naxisj, crpixj, cdeltX, crvalX);
+  nFail += closure("FREQ-GRI", 0.0,     0.0, naxisj, crpixj, cdeltX, crvalX);
+  nFail += closure("AFRQ-GRI", 0.0,     0.0, naxisj, crpixj, cdeltX, crvalX);
+  nFail += closure("ENER-GRI", 0.0,     0.0, naxisj, crpixj, cdeltX, crvalX);
+  nFail += closure("WAVN-GRI", 0.0,     0.0, naxisj, crpixj, cdeltX, crvalX);
+  nFail += closure("VRAD-GRI", restfrq, 0.0, naxisj, crpixj, cdeltX, crvalX);
+  nFail += closure("WAVE-GRI", 0.0,     0.0, naxisj, crpixj, cdeltX, crvalX);
+  nFail += closure("VOPT-GRI", 0.0, restwav, naxisj, crpixj, cdeltX, crvalX);
+  nFail += closure("ZOPT-GRI", 0.0, restwav, naxisj, crpixj, cdeltX, crvalX);
+  nFail += closure("AWAV-GRI", 0.0,     0.0, naxisj, crpixj, cdeltX, crvalX);
+  nFail += closure("VELO-GRI", 0.0, restwav, naxisj, crpixj, cdeltX, crvalX);
+  nFail += closure("BETA-GRI", 0.0, restwav, naxisj, crpixj, cdeltX, crvalX);
 
 
   /* Reproduce Fig. 5 of Paper III. */
@@ -188,26 +187,36 @@ int main()
   printf("\nAir wavelength grism axis, span: %.0f to %.0f (nm), "
          "step: %f (nm)\n--------------------------------------------"
          "------------------------------\n", x1*1e9, x2*1e9, cdeltX*1e9);
-  closure("AWAV-GRA",     0.0,     0.0, naxisj, crpixj, cdeltX, crvalX);
-  closure("VELO-GRA",     0.0, restwav, naxisj, crpixj, cdeltX, crvalX);
+  nFail += closure("AWAV-GRA", 0.0,     0.0, naxisj, crpixj, cdeltX, crvalX);
+  nFail += closure("VELO-GRA", 0.0, restwav, naxisj, crpixj, cdeltX, crvalX);
 
   cpgask(0);
   cpgend();
 
-  return 0;
+  if (nFail) {
+    printf("\nFAIL: %d closure residuals exceed reporting tolerance.\n",
+      nFail);
+  } else {
+    printf("\nPASS: All closure residuals are within reporting tolerance.\n");
+  }
+
+  return nFail;
 }
 
 /*--------------------------------------------------------------------------*/
 
-int closure (ctypeS, restfrq, restwav, naxisj, crpixj, cdeltX, crvalX)
-
-const char ctypeS[9];
-int   naxisj;
-double cdeltX, crpixj, crvalX, restfrq, restwav;
+int closure (
+  const char ctypeS[9],
+  double restfrq,
+  double restwav,
+  int    naxisj,
+  double crpixj,
+  double cdeltX,
+  double crvalX)
 
 {
   char ptype, sname[32], title[80], units[8], xtype, ylab[80];
-  int  restreq, stat1[NSPEC], stat2[NSPEC], status;
+  int  nFail = 0, restreq, stat1[NSPEC], stat2[NSPEC], status;
   register int j;
   float  tmp, x[NSPEC], xmin, xmax, y[NSPEC], ymax, ymin;
   double cdeltS, clos[NSPEC], crvalS, dSdX, resid, residmax, spec1[NSPEC],
@@ -241,7 +250,7 @@ double cdeltX, crpixj, crvalX, restfrq, restwav;
     spec1[j] = (j+1 - crpixj)*cdeltS;
   }
 
-  printf("%4s (CRVALk+w) range: %13.6E to %13.6E, step: %13.6E\n", ctypeS,
+  printf("%4s (CRVALk+w) range: %13.6e to %13.6e, step: %13.6e\n", ctypeS,
     crvalS+spec1[0], crvalS+spec1[naxisj-1], cdeltS);
 
 
@@ -269,13 +278,13 @@ double cdeltX, crpixj, crvalX, restfrq, restwav;
   /* Test closure. */
   for (j = 0; j < naxisj; j++) {
     if (stat1[j]) {
-      printf("%s: w =%20.12E -> %s = ???, stat = %d\n", ctypeS, spec1[j],
+      printf("%s: w =%20.12e -> %s = ???, stat = %d\n", ctypeS, spec1[j],
              spc.type, stat1[j]);
       continue;
     }
 
     if (stat2[j]) {
-      printf("%s: w =%20.12E -> %s =%20.12E -> w = ???, stat = %d\n",
+      printf("%s: w =%20.12e -> %s =%20.12e -> w = ???, stat = %d\n",
              ctypeS, spec1[j], spc.type, spec2[j], stat2[j]);
       continue;
     }
@@ -284,13 +293,14 @@ double cdeltX, crpixj, crvalX, restfrq, restwav;
     if (resid > residmax) residmax = resid;
 
     if (resid > tol) {
-      printf("%s: w =%20.12E -> %s =%20.12E ->\n          w =%20.12E,  "
-             "resid =%20.12E\n", ctypeS, spec1[j], spc.type, spec2[j],
+      nFail++;
+      printf("%s: w =%20.12e -> %s =%20.12e ->\n          w =%20.12e,  "
+             "resid =%20.12e\n", ctypeS, spec1[j], spc.type, spec2[j],
              clos[j], resid);
     }
   }
 
-  printf("%s: Maximum closure residual = %.12E pixel\n", ctypeS, residmax);
+  printf("%s: Maximum closure residual = %.1e pixel.\n", ctypeS, residmax);
 
 
   /* Draw graph. */
@@ -342,5 +352,5 @@ double cdeltX, crpixj, crvalX, restfrq, restwav;
 
   printf("\n");
 
-  return 0;
+  return nFail;
 }

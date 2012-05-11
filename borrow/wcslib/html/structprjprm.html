@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-<title>WCSLIB 4.7: prjprm Struct Reference</title>
+<title>WCSLIB 4.13.4: prjprm Struct Reference</title>
 <link href="doxygen.css" rel="stylesheet" type="text/css">
 <link href="tabs.css" rel="stylesheet" type="text/css">
 </head><body>
@@ -63,6 +63,10 @@
 <tr><td class="memItemLeft" nowrap align="right" valign="top">double&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structprjprm.html#ae2c61d85c72e87f4b2b77a14c8eb316">x0</a></td></tr>
 
 <tr><td class="memItemLeft" nowrap align="right" valign="top">double&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structprjprm.html#164706f09314c493c7e9d2c7325f8372">y0</a></td></tr>
+
+<tr><td class="memItemLeft" nowrap align="right" valign="top">struct <a class="el" href="structwcserr.html">wcserr</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structprjprm.html#30e78bb110dc7a8ad0303370ce20762c">err</a></td></tr>
+
+<tr><td class="memItemLeft" nowrap align="right" valign="top">void *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structprjprm.html#36fa82794133f84373606b1f692ce8c4">padding</a></td></tr>
 
 <tr><td class="memItemLeft" nowrap align="right" valign="top">double&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structprjprm.html#3b40a2df3b436c4ffcf5be6814993278">w</a> [10]</td></tr>
 
@@ -380,6 +384,37 @@ Provided for information only, not used by the projection routines.
 (<em>Returned</em>) ... the offset in <img class="formulaInl" alt="$y$" src="form_31.png"> used to force <img class="formulaInl" alt="$(x,y)$" src="form_0.png"> = (0,0) at (<img class="formulaInl" alt="$\phi_0$" src="form_3.png">,<img class="formulaInl" alt="$\theta_0$" src="form_4.png">). 
 </div>
 </div><p>
+<a class="anchor" name="30e78bb110dc7a8ad0303370ce20762c"></a><!-- doxytag: member="prjprm::err" ref="30e78bb110dc7a8ad0303370ce20762c" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">struct <a class="el" href="structwcserr.html">wcserr</a> * <a class="el" href="structprjprm.html#30e78bb110dc7a8ad0303370ce20762c">prjprm::err</a><code> [read]</code>          </td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+(<em>Returned</em>) If enabled, when an error status is returned this struct contains detailed information about the error, see <a class="el" href="wcserr_8h.html#1691b8bd184d40ca6fda255be078fa53" title="Enable/disable error messaging.">wcserr_enable()</a>.<p>
+void *padding (An unused variable inserted for alignment purposes only.) 
+</div>
+</div><p>
+<a class="anchor" name="36fa82794133f84373606b1f692ce8c4"></a><!-- doxytag: member="prjprm::padding" ref="36fa82794133f84373606b1f692ce8c4" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void* <a class="el" href="structprjprm.html#36fa82794133f84373606b1f692ce8c4">prjprm::padding</a>          </td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+
+</div>
+</div><p>
 <a class="anchor" name="3b40a2df3b436c4ffcf5be6814993278"></a><!-- doxytag: member="prjprm::w" ref="3b40a2df3b436c4ffcf5be6814993278" args="[10]" -->
 <div class="memitem">
 <div class="memproto">
@@ -457,7 +492,7 @@ Usage of the w[] array as it applies to each projection is described in the prol
 </div>
 </div><p>
 </div>
-<hr size="1"><address style="text-align: right;"><small>Generated on Mon Feb 7 18:03:57 2011 for WCSLIB 4.7 by&nbsp;
+<hr size="1"><address style="text-align: right;"><small>Generated on Mon Apr 2 17:55:24 2012 for WCSLIB 4.13.4 by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.5.6 </small></address>
 </body>

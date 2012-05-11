@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-<title>WCSLIB 4.7: tabprm Struct Reference</title>
+<title>WCSLIB 4.13.4: tabprm Struct Reference</title>
 <link href="doxygen.css" rel="stylesheet" type="text/css">
 <link href="tabs.css" rel="stylesheet" type="text/css">
 </head><body>
@@ -55,6 +55,8 @@
 <tr><td class="memItemLeft" nowrap align="right" valign="top">double *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structtabprm.html#77130658a6e330e0edba348d1dc7edf2">delta</a></td></tr>
 
 <tr><td class="memItemLeft" nowrap align="right" valign="top">double *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structtabprm.html#ade738f7269d71d34fdf3d52f1c61d88">extrema</a></td></tr>
+
+<tr><td class="memItemLeft" nowrap align="right" valign="top">struct <a class="el" href="structwcserr.html">wcserr</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structtabprm.html#3df12930fa5f38dcfc71aece8aed816c">err</a></td></tr>
 
 <tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structtabprm.html#8572ca79676edfe06b3d1df00f93384b">m_flag</a></td></tr>
 
@@ -304,6 +306,21 @@ this is interpreted as default indexing, i.e. <div class="fragment"><pre class="
 (see <a class="el" href="structtabprm.html#f00d4a4e089737a799fb91e1a68040dc">tabprm::K</a>). The minimum is recorded in the first element of the compressed <img class="formulaInl" alt="$K_1$" src="form_63.png"> dimension, then the maximum. This array is used by the inverse table lookup function, <a class="el" href="tab_8h.html#aded7db92aa2758198b33f35f5f18d6e" title="World-to-pixel transformation.">tabs2x()</a>, to speed up table searches. 
 </div>
 </div><p>
+<a class="anchor" name="3df12930fa5f38dcfc71aece8aed816c"></a><!-- doxytag: member="tabprm::err" ref="3df12930fa5f38dcfc71aece8aed816c" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">struct <a class="el" href="structwcserr.html">wcserr</a> * <a class="el" href="structtabprm.html#3df12930fa5f38dcfc71aece8aed816c">tabprm::err</a><code> [read]</code>          </td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+(<em>Returned</em>) If enabled, when an error status is returned this struct contains detailed information about the error, see <a class="el" href="wcserr_8h.html#1691b8bd184d40ca6fda255be078fa53" title="Enable/disable error messaging.">wcserr_enable()</a>. 
+</div>
+</div><p>
 <a class="anchor" name="8572ca79676edfe06b3d1df00f93384b"></a><!-- doxytag: member="tabprm::m_flag" ref="8572ca79676edfe06b3d1df00f93384b" args="" -->
 <div class="memitem">
 <div class="memproto">
@@ -455,7 +472,7 @@ this is interpreted as default indexing, i.e. <div class="fragment"><pre class="
 </div>
 </div><p>
 </div>
-<hr size="1"><address style="text-align: right;"><small>Generated on Mon Feb 7 18:03:57 2011 for WCSLIB 4.7 by&nbsp;
+<hr size="1"><address style="text-align: right;"><small>Generated on Mon Apr 2 17:55:24 2012 for WCSLIB 4.13.4 by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.5.6 </small></address>
 </body>

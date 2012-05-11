@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.7 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2011, Mark Calabretta
+  WCSLIB 4.13 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2012, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -31,22 +31,25 @@
   $Id$
 *===========================================================================*/
 
+#include <stdio.h>
 #include <string.h>
+
 #include <prj.h>
 
 /* Fortran name mangling. */
 #include <wcsconfig_f77.h>
-#define prjini_ F77_FUNC(prjini, PRJINI)
-#define prjput_ F77_FUNC(prjput, PRJPUT)
-#define prjget_ F77_FUNC(prjget, PRJGET)
-#define prjprt_ F77_FUNC(prjprt, PRJPRT)
+#define prjini_  F77_FUNC(prjini,  PRJINI)
+#define prjput_  F77_FUNC(prjput,  PRJPUT)
+#define prjget_  F77_FUNC(prjget,  PRJGET)
+#define prjfree_ F77_FUNC(prjfree, PRJFREE)
+#define prjprt_  F77_FUNC(prjprt,  PRJPRT)
 
-#define prjptc_ F77_FUNC(prjptc, PRJPTC)
-#define prjptd_ F77_FUNC(prjptd, PRJPTD)
-#define prjpti_ F77_FUNC(prjpti, PRJPTI)
-#define prjgtc_ F77_FUNC(prjgtc, PRJGTC)
-#define prjgtd_ F77_FUNC(prjgtd, PRJGTD)
-#define prjgti_ F77_FUNC(prjgti, PRJGTI)
+#define prjptc_  F77_FUNC(prjptc,  PRJPTC)
+#define prjptd_  F77_FUNC(prjptd,  PRJPTD)
+#define prjpti_  F77_FUNC(prjpti,  PRJPTI)
+#define prjgtc_  F77_FUNC(prjgtc,  PRJGTC)
+#define prjgtd_  F77_FUNC(prjgtd,  PRJGTD)
+#define prjgti_  F77_FUNC(prjgti,  PRJGTI)
 
 #define PRJ_FLAG      100
 #define PRJ_CODE      101
@@ -66,8 +69,9 @@
 #define PRJ_DIVERGENT 207
 #define PRJ_X0        208
 #define PRJ_Y0        209
-#define PRJ_W         210
-#define PRJ_N         211
+#define PRJ_ERR       210
+#define PRJ_W         211
+#define PRJ_N         212
 
 /*--------------------------------------------------------------------------*/
 
@@ -145,10 +149,11 @@ int prjpti_(int *prj, const int *what, const int *value, const int *m)
 int prjget_(const int *prj, const int *what, void *value)
 
 {
-  int m;
+  int  k, m;
   char *cvalp;
   int  *ivalp;
   double *dvalp;
+  const int *iprjp;
   const struct prjprm *prjp;
 
   /* Cast pointers. */
@@ -211,6 +216,19 @@ int prjget_(const int *prj, const int *what, void *value)
   case PRJ_Y0:
     *dvalp = prjp->y0;
     break;
+  case PRJ_ERR:
+    /* Copy the contents of the wcserr struct. */
+    if (prjp->err) {
+      iprjp = (int *)(prjp->err);
+      for (k = 0; k < ERRLEN; k++) {
+        *(ivalp++) = *(iprjp++);
+      }
+    } else {
+      for (k = 0; k < ERRLEN; k++) {
+        *(ivalp++) = 0;
+      }
+    }
+    break;
   case PRJ_W:
     for (m = 0; m < 10; m++) {
       *(dvalp++) = prjp->w[m];
@@ -243,9 +261,21 @@ int prjgti_(const int *prj, const int *what, int *value)
 
 /*--------------------------------------------------------------------------*/
 
+int prjfree_(int *prj)
+
+{
+  return prjfree((struct prjprm *)prj);
+}
+
+/*--------------------------------------------------------------------------*/
+
 int prjprt_(int *prj)
 
 {
+  /* This may or may not force the Fortran I/O buffers to be flushed.  If
+   * not, try CALL FLUSH(6) before calling PRJPRT in the Fortran code. */
+  fflush(NULL);
+
   return prjprt((struct prjprm *)prj);
 }
 

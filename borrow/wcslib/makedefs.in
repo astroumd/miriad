@@ -1,5 +1,5 @@
 #-----------------------------------------------------------------------------
-# GNU makefile definitions for building WCSLIB 4.7
+# GNU makefile definitions for building WCSLIB 4.13
 #
 # makedefs is generated from makedefs.in by configure.  It contains variable
 # definitions and some general-purpose rules for building WCSLIB.
@@ -39,11 +39,11 @@
 #      compiled separately without this option.
 #
 #      The shared library will be installed with version number, e.g. as
-#      libwcs.so.4.7 or libwcs.4.7.dylib with or without the symlink
+#      libwcs.so.4.13 or libwcs.4.13.dylib with or without the symlink
 #      required to make it visible to the linker (controlled by the SHRLN
 #      variable).  On Macs it is deliberately not created because its very
 #      existence precludes static linking with the cctools linker.  You can
-#      still link dynamically by using -lwcs.4.7.
+#      still link dynamically by using -lwcs.4.13.
 #
 #   4) PGPLOT is Tim Pearson's Fortran graphics library with separate C
 #      interface available from astro.caltech.edu.  It is only required by
@@ -106,6 +106,7 @@
 
 # Shared (dynamic) library (see note 3 above).
   SHRLIB   := @SHRLIB@
+  SONAME   := @SONAME@
   SHRFLAGS := @SHRFLAGS@
   SHRLD    := @SHRLD@
   SHRLN    := @SHRLN@
@@ -133,8 +134,10 @@
   INCDIR   := $(DESTDIR)@includedir@/wcslib-$(LIBVER)
   INCLINK  := $(DESTDIR)@includedir@/wcslib
   DOCDIR   := $(DESTDIR)@docdir@
+  DOCLINK  := $(dir $(DESTDIR)@docdir@)wcslib
   HTMLDIR  := $(DESTDIR)@htmldir@
   PDFDIR   := $(DESTDIR)@pdfdir@
+  MANDIR   := $(DESTDIR)@mandir@
 
 # For putting timestamps in the build log.
   TIMER    := date +"%a %Y/%m/%d %X %z, executing on $$HOST"
@@ -200,6 +203,7 @@ show :: wcsconfig.h
 	-@ echo '  WCSLIB      := $(WCSLIB)'
 	-@ echo '  RANLIB      := $(RANLIB)'
 	-@ echo '  SHRLIB      := $(SHRLIB)'
+	-@ echo '  SONAME      := $(SONAME)'
 	-@ echo '  SHRFLAGS    := $(SHRFLAGS)'
 	-@ echo '  SHRLD       := $(SHRLD)'
 	-@ echo '  SHRLN       := $(SHRLN)'
@@ -210,8 +214,10 @@ show :: wcsconfig.h
 	-@ echo '  INCDIR      := $(INCDIR)'
 	-@ echo '  INCLINK     := $(INCLINK)'
 	-@ echo '  DOCDIR      := $(DOCDIR)'
+	-@ echo '  DOCLINK     := $(DOCLINK)'
 	-@ echo '  HTMLDIR     := $(HTMLDIR)'
 	-@ echo '  PDFDIR      := $(PDFDIR)'
+	-@ echo '  MANDIR      := $(MANDIR)'
 	-@ echo '  TIMER       := $(TIMER)'
 	-@ echo ''
 	-@ echo 'Important wcsconfig.h defines...'

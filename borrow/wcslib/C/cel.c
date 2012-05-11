@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.7 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2011, Mark Calabretta
+  WCSLIB 4.13 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2012, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -33,7 +33,9 @@
 
 #include <math.h>
 #include <stdio.h>
+#include <stdlib.h>
 
+#include "wcserr.h"
 #include "wcsmath.h"
 #include "wcsprintf.h"
 #include "wcstrig.h"
@@ -52,6 +54,9 @@ const char *cel_errmsg[] = {
   "One or more of the (x,y) coordinates were invalid",
   "One or more of the (lng,lat) coordinates were invalid"};
 
+/* Convenience macro for invoking wcserr_set(). */
+#define CEL_ERRMSG(status) WCSERR_SET(status), cel_errmsg[status]
+
 /*--------------------------------------------------------------------------*/
 
 int celini(cel)
@@ -61,7 +66,7 @@ struct celprm *cel;
 {
   register int k;
 
-  if (cel == 0x0) return 1;
+  if (cel == 0x0) return CELERR_NULL_POINTER;
 
   cel->flag = 0;
 
@@ -76,7 +81,28 @@ struct celprm *cel;
   for (k = 0; k < 5; cel->euler[k++] = 0.0);
   cel->latpreq = -1;
 
+  cel->err = 0x0;
+
   return prjini(&(cel->prj));
+}
+
+/*--------------------------------------------------------------------------*/
+
+int celfree(cel)
+
+struct celprm *cel;
+
+{
+  if (cel == 0x0) return CELERR_NULL_POINTER;
+
+  if (cel->err) {
+    free(cel->err);
+    cel->err = 0x0;
+  }
+
+  prjfree(&(cel->prj));
+
+  return 0;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -88,7 +114,7 @@ const struct celprm *cel;
 {
   int i;
 
-  if (cel == 0x0) return 1;
+  if (cel == 0x0) return CELERR_NULL_POINTER;
 
   wcsprintf("      flag: %d\n",  cel->flag);
   wcsprintf("     offset: %d\n",  cel->offset);
@@ -126,6 +152,11 @@ const struct celprm *cel;
   }
   wcsprintf("     isolat: %d\n", cel->isolat);
 
+  WCSPRINTF_PTR("        err: ", cel->err, "\n");
+  if (cel->err) {
+    wcserr_prt(cel->err, "             ");
+  }
+
   wcsprintf("\n");
   wcsprintf("   prj.*\n");
   prjprt(&(cel->prj));
@@ -140,14 +171,17 @@ int celset(cel)
 struct celprm *cel;
 
 {
-  int status;
+  static const char *function = "celset";
+
   const double tol = 1.0e-10;
   double clat0, cphip, cthe0, lat0, lng0, phip, slat0, slz, sphip, sthe0;
   double latp, latp1, latp2, lngp;
   double u, v, x, y, z;
   struct prjprm *celprj;
+  struct wcserr **err;
 
-  if (cel == 0x0) return 1;
+  if (cel == 0x0) return CELERR_NULL_POINTER;
+  err = &(cel->err);
 
   /* Initialize the projection driver routines. */
   celprj = &(cel->prj);
@@ -160,8 +194,8 @@ struct celprm *cel;
     celprj->theta0 = UNDEFINED;
   }
 
-  if ((status = prjset(celprj))) {
-    return status;
+  if (prjset(celprj)) {
+    return wcserr_set(CEL_ERRMSG(CELERR_BAD_PARAM));
   }
 
   /* Defaults set by the projection routines. */
@@ -174,7 +208,8 @@ struct celprm *cel;
 
   } else if (fabs(cel->theta0) > 90.0) {
     if (fabs(cel->theta0) > 90.0 + tol) {
-      return 3;
+      return wcserr_set(WCSERR_SET(CELERR_BAD_COORD_TRANS),
+        "Invalid coordinate transformation parameters: theta0 > 90");
     }
 
     if (cel->theta0 > 90.0) {
@@ -232,7 +267,9 @@ struct celprm *cel;
       z = sqrt(x*x + y*y);
       if (z == 0.0) {
         if (slat0 != 0.0) {
-          return 3;
+          return wcserr_set(WCSERR_SET(CELERR_BAD_COORD_TRANS),
+            "Invalid coordinate description:\n"
+            "lat0 == 0 is required for |phip - phi0| = 90 and theta0 == 0");
         }
 
         /* latp determined solely by LATPOLEa in this case. */
@@ -253,7 +290,9 @@ struct celprm *cel;
               slz = -1.0;
             }
           } else {
-            return 3;
+            return wcserr_set(WCSERR_SET(CELERR_BAD_COORD_TRANS),
+              "Invalid coordinate description:\n|lat0| <= %.3f is required "
+              "for these values of phip, phi0, and theta0", asind(z));
           }
         }
 
@@ -326,7 +365,9 @@ struct celprm *cel;
       x = (sthe0 - sind(latp)*slat0)/z;
       y =  sphip*cthe0/clat0;
       if (x == 0.0 && y == 0.0) {
-        return 3;
+        /* Sanity check (shouldn't be possible). */
+        return wcserr_set(WCSERR_SET(CELERR_BAD_COORD_TRANS),
+          "Invalid coordinate transformation parameters, internal error");
       }
       lngp = lng0 - atan2d(y,x);
     }
@@ -361,7 +402,9 @@ struct celprm *cel;
 
   /* Check for ill-conditioned parameters. */
   if (fabs(latp) > 90.0+tol) {
-    return 4;
+    return wcserr_set(WCSERR_SET(CELERR_ILL_COORD_TRANS),
+      "Ill-conditioned coordinate transformation parameters\nNo valid "
+      "solution for latp for these values of phip, phi0, and theta0");
   }
 
   return 0;
@@ -379,12 +422,16 @@ double lng[], lat[];
 int stat[];
 
 {
+  static const char *function = "celx2s";
+
   int    nphi, status;
   struct prjprm *celprj;
-
+  struct wcserr **err;
 
   /* Initialize. */
-  if (cel == 0x0) return 1;
+  if (cel == 0x0) return CELERR_NULL_POINTER;
+  err = &(cel->err);
+
   if (cel->flag != CELSET) {
     if ((status = celset(cel))) return status;
   }
@@ -393,11 +440,13 @@ int stat[];
   celprj = &(cel->prj);
   if ((status = celprj->prjx2s(celprj, nx, ny, sxy, 1, x, y, phi, theta,
                                stat))) {
-    if (status == 3) {
-      status = 5;
-    } else {
-      return status;
+    if (status == PRJERR_BAD_PIX) {
+      status = CELERR_BAD_PIX;
     }
+
+    wcserr_set(CEL_ERRMSG(status));
+
+    if (status != CELERR_BAD_PIX) return status;
   }
 
   nphi = (ny > 0) ? (nx*ny) : nx;
@@ -420,12 +469,16 @@ double x[], y[];
 int stat[];
 
 {
+  static const char *function = "cels2x";
+
   int    nphi, ntheta, status;
   struct prjprm *celprj;
-
+  struct wcserr **err;
 
   /* Initialize. */
-  if (cel == 0x0) return 1;
+  if (cel == 0x0) return CELERR_NULL_POINTER;
+  err = &(cel->err);
+
   if (cel->flag != CELSET) {
     if ((status = celset(cel))) return status;
   }
@@ -444,10 +497,14 @@ int stat[];
 
   /* Apply the spherical projection. */
   celprj = &(cel->prj);
-  if ((status = celprj->prjs2x(celprj, nphi, ntheta, 1, sxy, phi, theta, x,
-                               y, stat))) {
-    return status == 2 ? 2 : 6;
-   }
+  if ((status = celprj->prjs2x(celprj, nphi, ntheta, 1, sxy, phi, theta, x, y,
+                               stat))) {
+    if (status != PRJERR_BAD_PARAM) {
+      status = CELERR_BAD_WORLD;
+    }
 
-   return 0;
+    return wcserr_set(CEL_ERRMSG(status));
+  }
+
+  return 0;
 }

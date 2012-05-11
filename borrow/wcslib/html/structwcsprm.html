@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-<title>WCSLIB 4.7: wcsprm Struct Reference</title>
+<title>WCSLIB 4.13.4: wcsprm Struct Reference</title>
 <link href="doxygen.css" rel="stylesheet" type="text/css">
 <link href="tabs.css" rel="stylesheet" type="text/css">
 </head><body>
@@ -122,10 +122,6 @@
 
 <tr><td class="memItemLeft" nowrap align="right" valign="top">struct <a class="el" href="structwtbarr.html">wtbarr</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structwcsprm.html#9063e8d0c956e9eae7f7d6f3608b9ed2">wtb</a></td></tr>
 
-<tr><td class="memItemLeft" nowrap align="right" valign="top">int *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structwcsprm.html#0e226178fece28149cd6680ca12a95bb">padding</a></td></tr>
-
-<tr><td class="memItemLeft" nowrap align="right" valign="top">int *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structwcsprm.html#b63cdcf6ff8febd1b40d0e044ca7d7ef">types</a></td></tr>
-
 <tr><td class="memItemLeft" nowrap align="right" valign="top">char&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structwcsprm.html#5b56e1b378a6ae9f8dfff5c364f0653c">lngtyp</a> [8]</td></tr>
 
 <tr><td class="memItemLeft" nowrap align="right" valign="top">char&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structwcsprm.html#e352318ce3202dab1b5db8b9ceec7703">lattyp</a> [8]</td></tr>
@@ -138,11 +134,19 @@
 
 <tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structwcsprm.html#de8495d3ca5047eeadba5934d0bb2708">cubeface</a></td></tr>
 
+<tr><td class="memItemLeft" nowrap align="right" valign="top">int *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structwcsprm.html#b63cdcf6ff8febd1b40d0e044ca7d7ef">types</a></td></tr>
+
+<tr><td class="memItemLeft" nowrap align="right" valign="top">void *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structwcsprm.html#b253d36f0dc1716952285c6078622e66">padding</a></td></tr>
+
 <tr><td class="memItemLeft" nowrap align="right" valign="top">struct <a class="el" href="structlinprm.html">linprm</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structwcsprm.html#3224bd06f8f4d2d7d398533eb44a49e8">lin</a></td></tr>
 
 <tr><td class="memItemLeft" nowrap align="right" valign="top">struct <a class="el" href="structcelprm.html">celprm</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structwcsprm.html#c8391dd770637dbb841067996b7777ba">cel</a></td></tr>
 
 <tr><td class="memItemLeft" nowrap align="right" valign="top">struct <a class="el" href="structspcprm.html">spcprm</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structwcsprm.html#e83952aec7c1ac76c090bc89bf4eeea7">spc</a></td></tr>
+
+<tr><td class="memItemLeft" nowrap align="right" valign="top">struct <a class="el" href="structwcserr.html">wcserr</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structwcsprm.html#f54ce939604be183231f0ee006e2f8ed">err</a></td></tr>
+
+<tr><td class="memItemLeft" nowrap align="right" valign="top">void *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structwcsprm.html#603ef3ab7f3bc42cf8d8bf99b79b63ac">m_padding</a></td></tr>
 
 <tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structwcsprm.html#5780880281f2f9d085d2e06919b7647a">m_flag</a></td></tr>
 
@@ -343,9 +347,9 @@ would be legitimate.
 
 <p>
 (<em>Given</em>) Address of the first element of an array of char[72] containing the <code><b>CUNIT</b>ia</code> keyvalues which define the units of measurement of the <code><b>CRVAL</b>ia</code>, <code><b>CDELT</b>ia</code>, and <code><b>CD</b>i<b>_</b>ja</code> keywords.<p>
-As <code><b>CUNIT</b>ia</code> is an optional header keyword, cunit[][72] may be left blank but otherwise is expected to contain a standard units specification as defined by WCS Paper I. Utility function <a class="el" href="wcsunits_8h.html#560462cb2a7fa7eae6b4f325c85e7911" title="Translation of non-standard unit specifications.">wcsutrn()</a>, described in <a class="el" href="wcsunits_8h.html">wcsunits.h</a>, is available to translate commonly used non-standard units specifications but this must be done as a separate step before invoking <a class="el" href="wcs_8h.html#e5cc3f5d249755583403cdf54d2ebb91" title="Setup routine for the wcsprm struct.">wcsset()</a>.<p>
-For celestial axes, if cunit[][72] is not blank, <a class="el" href="wcs_8h.html#e5cc3f5d249755583403cdf54d2ebb91" title="Setup routine for the wcsprm struct.">wcsset()</a> uses <a class="el" href="wcsunits_8h.html#ef5d64e333f758458b1edaa617911513" title="FITS units specification conversion.">wcsunits()</a> to parse it and scale cdelt[], crval[], and cd[][*] to degrees. It then resets cunit[][72] to "deg".<p>
-For spectral axes, if cunit[][72] is not blank, <a class="el" href="wcs_8h.html#e5cc3f5d249755583403cdf54d2ebb91" title="Setup routine for the wcsprm struct.">wcsset()</a> uses <a class="el" href="wcsunits_8h.html#ef5d64e333f758458b1edaa617911513" title="FITS units specification conversion.">wcsunits()</a> to parse it and scale cdelt[], crval[], and cd[][*] to SI units. It then resets cunit[][72] accordingly.<p>
+As <code><b>CUNIT</b>ia</code> is an optional header keyword, cunit[][72] may be left blank but otherwise is expected to contain a standard units specification as defined by WCS Paper I. Utility function <a class="el" href="wcsunits_8h.html#560462cb2a7fa7eae6b4f325c85e7911">wcsutrn()</a>, described in <a class="el" href="wcsunits_8h.html">wcsunits.h</a>, is available to translate commonly used non-standard units specifications but this must be done as a separate step before invoking <a class="el" href="wcs_8h.html#e5cc3f5d249755583403cdf54d2ebb91" title="Setup routine for the wcsprm struct.">wcsset()</a>.<p>
+For celestial axes, if cunit[][72] is not blank, <a class="el" href="wcs_8h.html#e5cc3f5d249755583403cdf54d2ebb91" title="Setup routine for the wcsprm struct.">wcsset()</a> uses <a class="el" href="wcsunits_8h.html#ef5d64e333f758458b1edaa617911513">wcsunits()</a> to parse it and scale cdelt[], crval[], and cd[][*] to degrees. It then resets cunit[][72] to "deg".<p>
+For spectral axes, if cunit[][72] is not blank, <a class="el" href="wcs_8h.html#e5cc3f5d249755583403cdf54d2ebb91" title="Setup routine for the wcsprm struct.">wcsset()</a> uses <a class="el" href="wcsunits_8h.html#ef5d64e333f758458b1edaa617911513">wcsunits()</a> to parse it and scale cdelt[], crval[], and cd[][*] to SI units. It then resets cunit[][72] accordingly.<p>
 <a class="el" href="wcs_8h.html#e5cc3f5d249755583403cdf54d2ebb91" title="Setup routine for the wcsprm struct.">wcsset()</a> ignores cunit[][72] for other coordinate types; cunit[][72] may be used to label coordinate values.<p>
 These variables accomodate the longest allowed string-valued FITS keyword, being limited to 68 characters, plus the null-terminating character. 
 </div>
@@ -984,95 +988,6 @@ The <a class="el" href="structtabprm.html" title="Tabular transformation paramet
 Although technically <a class="el" href="structwcsprm.html#8625c0a6ff99c754566c46c2372df801">wcsprm::nwtb</a> and wtb are "given", they will normally be set by invoking <a class="el" href="wcshdr_8h.html#6dd857f7b61a5b349cc8af5a4b6d8a1c" title="Tabular construction routine.">wcstab()</a>, whether directly or indirectly. 
 </div>
 </div><p>
-<a class="anchor" name="0e226178fece28149cd6680ca12a95bb"></a><!-- doxytag: member="wcsprm::padding" ref="0e226178fece28149cd6680ca12a95bb" args="" -->
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">int* <a class="el" href="structwcsprm.html#0e226178fece28149cd6680ca12a95bb">wcsprm::padding</a>          </td>
-        </tr>
-      </table>
-</div>
-<div class="memdoc">
-
-<p>
-
-</div>
-</div><p>
-<a class="anchor" name="b63cdcf6ff8febd1b40d0e044ca7d7ef"></a><!-- doxytag: member="wcsprm::types" ref="b63cdcf6ff8febd1b40d0e044ca7d7ef" args="" -->
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">int * <a class="el" href="structwcsprm.html#b63cdcf6ff8febd1b40d0e044ca7d7ef">wcsprm::types</a>          </td>
-        </tr>
-      </table>
-</div>
-<div class="memdoc">
-
-<p>
-(<em>Returned</em>) Address of the first element of an array of int containing a four-digit type code for each axis.<p>
-<ul>
-<li>
-First digit (i.e. 1000s): <ul>
-<li>
-0: Non-specific coordinate type. </li>
-<li>
-1: Stokes coordinate. </li>
-<li>
-2: Celestial coordinate (including <code><b>CUBEFACE</b></code>). </li>
-<li>
-3: Spectral coordinate. </li>
-</ul>
-<p>
-</li>
-<li>
-Second digit (i.e. 100s): <ul>
-<li>
-0: Linear axis. </li>
-<li>
-1: Quantized axis (<code><b>STOKES</b></code>, <code><b>CUBEFACE</b></code>). </li>
-<li>
-2: Non-linear celestial axis. </li>
-<li>
-3: Non-linear spectral axis. </li>
-<li>
-4: Logarithmic axis. </li>
-<li>
-5: Tabular axis. </li>
-</ul>
-<p>
-</li>
-<li>
-Third digit (i.e. 10s): <ul>
-<li>
-0: Group number, e.g. lookup table number, being an index into the <a class="el" href="structtabprm.html" title="Tabular transformation parameters.">tabprm</a> array (see above). </li>
-</ul>
-<p>
-</li>
-<li>
-The fourth digit is used as a qualifier depending on the axis type.<p>
-<ul>
-<li>
-For celestial axes: <ul>
-<li>
-0: Longitude coordinate. </li>
-<li>
-1: Latitude coordinate. </li>
-<li>
-2: <code><b>CUBEFACE</b></code> number. </li>
-</ul>
-<p>
-</li>
-<li>
-For lookup tables: the axis number in a multidimensional table. </li>
-</ul>
-</li>
-</ul>
-<p>
-<code><b>CTYPE</b>ia</code> in "4-3" form with unrecognized algorithm code will have its type set to -1 and generate an error. 
-</div>
-</div><p>
 <a class="anchor" name="5b56e1b378a6ae9f8dfff5c364f0653c"></a><!-- doxytag: member="wcsprm::lngtyp" ref="5b56e1b378a6ae9f8dfff5c364f0653c" args="[8]" -->
 <div class="memitem">
 <div class="memproto">
@@ -1164,6 +1079,96 @@ These may also serve as indices into the pixcrd[][] array provided that the <cod
 (<em>Returned</em>) Index into the pixcrd[][] array for the <code><b>CUBEFACE</b></code> axis. This is used for quadcube projections where the cube faces are stored on a separate axis (see <a class="el" href="wcs_8h.html">wcs.h</a>). 
 </div>
 </div><p>
+<a class="anchor" name="b63cdcf6ff8febd1b40d0e044ca7d7ef"></a><!-- doxytag: member="wcsprm::types" ref="b63cdcf6ff8febd1b40d0e044ca7d7ef" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int * <a class="el" href="structwcsprm.html#b63cdcf6ff8febd1b40d0e044ca7d7ef">wcsprm::types</a>          </td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+(<em>Returned</em>) Address of the first element of an array of int containing a four-digit type code for each axis.<p>
+<ul>
+<li>
+First digit (i.e. 1000s): <ul>
+<li>
+0: Non-specific coordinate type. </li>
+<li>
+1: Stokes coordinate. </li>
+<li>
+2: Celestial coordinate (including <code><b>CUBEFACE</b></code>). </li>
+<li>
+3: Spectral coordinate. </li>
+</ul>
+<p>
+</li>
+<li>
+Second digit (i.e. 100s): <ul>
+<li>
+0: Linear axis. </li>
+<li>
+1: Quantized axis (<code><b>STOKES</b></code>, <code><b>CUBEFACE</b></code>). </li>
+<li>
+2: Non-linear celestial axis. </li>
+<li>
+3: Non-linear spectral axis. </li>
+<li>
+4: Logarithmic axis. </li>
+<li>
+5: Tabular axis. </li>
+</ul>
+<p>
+</li>
+<li>
+Third digit (i.e. 10s): <ul>
+<li>
+0: Group number, e.g. lookup table number, being an index into the <a class="el" href="structtabprm.html" title="Tabular transformation parameters.">tabprm</a> array (see above). </li>
+</ul>
+<p>
+</li>
+<li>
+The fourth digit is used as a qualifier depending on the axis type.<p>
+<ul>
+<li>
+For celestial axes: <ul>
+<li>
+0: Longitude coordinate. </li>
+<li>
+1: Latitude coordinate. </li>
+<li>
+2: <code><b>CUBEFACE</b></code> number. </li>
+</ul>
+<p>
+</li>
+<li>
+For lookup tables: the axis number in a multidimensional table. </li>
+</ul>
+</li>
+</ul>
+<p>
+<code><b>CTYPE</b>ia</code> in "4-3" form with unrecognized algorithm code will have its type set to -1 and generate an error.<p>
+void *padding (An unused variable inserted for alignment purposes only.) 
+</div>
+</div><p>
+<a class="anchor" name="b253d36f0dc1716952285c6078622e66"></a><!-- doxytag: member="wcsprm::padding" ref="b253d36f0dc1716952285c6078622e66" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void* <a class="el" href="structwcsprm.html#b253d36f0dc1716952285c6078622e66">wcsprm::padding</a>          </td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+
+</div>
+</div><p>
 <a class="anchor" name="3224bd06f8f4d2d7d398533eb44a49e8"></a><!-- doxytag: member="wcsprm::lin" ref="3224bd06f8f4d2d7d398533eb44a49e8" args="" -->
 <div class="memitem">
 <div class="memproto">
@@ -1207,6 +1212,37 @@ These may also serve as indices into the pixcrd[][] array provided that the <cod
 
 <p>
 (<em>Returned</em>) Spectral transformation parameters (usage is described in the prologue to <a class="el" href="spc_8h.html">spc.h</a>). 
+</div>
+</div><p>
+<a class="anchor" name="f54ce939604be183231f0ee006e2f8ed"></a><!-- doxytag: member="wcsprm::err" ref="f54ce939604be183231f0ee006e2f8ed" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">struct <a class="el" href="structwcserr.html">wcserr</a> * <a class="el" href="structwcsprm.html#f54ce939604be183231f0ee006e2f8ed">wcsprm::err</a><code> [read]</code>          </td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+(<em>Returned</em>) If enabled, when an error status is returned this struct contains detailed information about the error, see <a class="el" href="wcserr_8h.html#1691b8bd184d40ca6fda255be078fa53" title="Enable/disable error messaging.">wcserr_enable()</a>.<p>
+void *m_padding (For internal use only.) 
+</div>
+</div><p>
+<a class="anchor" name="603ef3ab7f3bc42cf8d8bf99b79b63ac"></a><!-- doxytag: member="wcsprm::m_padding" ref="603ef3ab7f3bc42cf8d8bf99b79b63ac" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void* <a class="el" href="structwcsprm.html#603ef3ab7f3bc42cf8d8bf99b79b63ac">wcsprm::m_padding</a>          </td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+
 </div>
 </div><p>
 <a class="anchor" name="5780880281f2f9d085d2e06919b7647a"></a><!-- doxytag: member="wcsprm::m_flag" ref="5780880281f2f9d085d2e06919b7647a" args="" -->
@@ -1480,7 +1516,7 @@ These may also serve as indices into the pixcrd[][] array provided that the <cod
 </div>
 </div><p>
 </div>
-<hr size="1"><address style="text-align: right;"><small>Generated on Mon Feb 7 18:03:57 2011 for WCSLIB 4.7 by&nbsp;
+<hr size="1"><address style="text-align: right;"><small>Generated on Mon Apr 2 17:55:24 2012 for WCSLIB 4.13.4 by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.5.6 </small></address>
 </body>

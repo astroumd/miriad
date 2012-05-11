@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 4.7 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2011, Mark Calabretta
+* WCSLIB 4.13 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2012, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -32,7 +32,7 @@
 *=======================================================================
 
 *     Functions.
-      EXTERNAL SPECX,
+      EXTERNAL SPECX, SPXGET, SPXGTI,
      :         FREQAFRQ, AFRQFREQ, FREQENER, ENERFREQ,
      :         FREQWAVN, WAVNFREQ, FREQVRAD, VRADFREQ,
      :         FREQWAVE, WAVEFREQ, FREQAWAV, AWAVFREQ,
@@ -40,7 +40,7 @@
      :         WAVEZOPT, ZOPTWAVE, WAVEAWAV, AWAVWAVE,
      :         WAVEVELO, VELOWAVE, AWAVVELO, VELOAWAV,
      :         VELOBETA, BETAVELO
-      INTEGER  SPECX,
+      INTEGER  SPECX, SPXGET, SPXGTI,
      :         FREQAFRQ, AFRQFREQ, FREQENER, ENERFREQ,
      :         FREQWAVN, WAVNFREQ, FREQVRAD, VRADFREQ,
      :         FREQWAVE, WAVEFREQ, FREQAWAV, AWAVFREQ,
@@ -113,6 +113,21 @@
       EQUIVALENCE (SPXI,    SPX_TYPES)
       EQUIVALENCE (SPXI(1), SPX_WAVETYPE)
       EQUIVALENCE (SPXI(2), SPX_VELOTYPE)
+
+*     Codes for SPX data structure elements used by SPXGET (only).
+      INTEGER   SPX_ERR
+
+      PARAMETER (SPX_ERR     = 200)
+
+*     Error codes and messages.
+      INTEGER   SPXERR_BAD_INSPEC_COORD, SPXERR_BAD_SPEC_PARAMS,
+     :          SPXERR_BAD_SPEC_VAR, SPXERR_NULL_POINTER, SPXERR_SUCCESS
+
+      PARAMETER (SPXERR_SUCCESS          = 0)
+      PARAMETER (SPXERR_NULL_POINTER     = 1)
+      PARAMETER (SPXERR_BAD_SPEC_PARAMS  = 2)
+      PARAMETER (SPXERR_BAD_SPEC_VAR     = 3)
+      PARAMETER (SPXERR_BAD_INSPEC_COORD = 4)
 
       CHARACTER SPX_ERRMSG(0:4)*80
       COMMON /SPX_DATA/ SPX_ERRMSG

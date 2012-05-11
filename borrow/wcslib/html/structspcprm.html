@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-<title>WCSLIB 4.7: spcprm Struct Reference</title>
+<title>WCSLIB 4.13.4: spcprm Struct Reference</title>
 <link href="doxygen.css" rel="stylesheet" type="text/css">
 <link href="tabs.css" rel="stylesheet" type="text/css">
 </head><body>
@@ -48,7 +48,11 @@
 
 <tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structspcprm.html#ec5d37c00d382a84a090d4f52d9a4346">isGrism</a></td></tr>
 
-<tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structspcprm.html#e30a7c49f819b7089aab9753a069bb1e">padding</a></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structspcprm.html#844792d006c308f465ce8ca593a37df3">padding1</a></td></tr>
+
+<tr><td class="memItemLeft" nowrap align="right" valign="top">struct <a class="el" href="structwcserr.html">wcserr</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structspcprm.html#6d4124d4db8f7addcbfee99a8634522e">err</a></td></tr>
+
+<tr><td class="memItemLeft" nowrap align="right" valign="top">void *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structspcprm.html#55316470e5591401576ba3c5c384df0b">padding2</a></td></tr>
 
 <tr><td class="memItemLeft" nowrap align="right" valign="top">int(*&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structspcprm.html#20db4194170d78054908acf94b41d9d9">spxX2P</a> )(SPX_ARGS)</td></tr>
 
@@ -245,12 +249,12 @@ The remainder are grism intermediates.
 
 </div>
 </div><p>
-<a class="anchor" name="e30a7c49f819b7089aab9753a069bb1e"></a><!-- doxytag: member="spcprm::padding" ref="e30a7c49f819b7089aab9753a069bb1e" args="" -->
+<a class="anchor" name="844792d006c308f465ce8ca593a37df3"></a><!-- doxytag: member="spcprm::padding1" ref="844792d006c308f465ce8ca593a37df3" args="" -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">int <a class="el" href="structspcprm.html#e30a7c49f819b7089aab9753a069bb1e">spcprm::padding</a>          </td>
+          <td class="memname">int <a class="el" href="structspcprm.html#844792d006c308f465ce8ca593a37df3">spcprm::padding1</a>          </td>
         </tr>
       </table>
 </div>
@@ -258,6 +262,37 @@ The remainder are grism intermediates.
 
 <p>
 (An unused variable inserted for alignment purposes only.) 
+</div>
+</div><p>
+<a class="anchor" name="6d4124d4db8f7addcbfee99a8634522e"></a><!-- doxytag: member="spcprm::err" ref="6d4124d4db8f7addcbfee99a8634522e" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">struct <a class="el" href="structwcserr.html">wcserr</a> * <a class="el" href="structspcprm.html#6d4124d4db8f7addcbfee99a8634522e">spcprm::err</a><code> [read]</code>          </td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+(<em>Returned</em>) If enabled, when an error status is returned this structure contains detailed information about the error, see <a class="el" href="wcserr_8h.html#1691b8bd184d40ca6fda255be078fa53" title="Enable/disable error messaging.">wcserr_enable()</a>.<p>
+void *padding2 (An unused variable inserted for alignment purposes only.) 
+</div>
+</div><p>
+<a class="anchor" name="55316470e5591401576ba3c5c384df0b"></a><!-- doxytag: member="spcprm::padding2" ref="55316470e5591401576ba3c5c384df0b" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void* <a class="el" href="structspcprm.html#55316470e5591401576ba3c5c384df0b">spcprm::padding2</a>          </td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+
 </div>
 </div><p>
 <a class="anchor" name="20db4194170d78054908acf94b41d9d9"></a><!-- doxytag: member="spcprm::spxX2P" ref="20db4194170d78054908acf94b41d9d9" args=")(SPX_ARGS)" -->
@@ -321,7 +356,7 @@ The remainder are grism intermediates.
 </div>
 </div><p>
 </div>
-<hr size="1"><address style="text-align: right;"><small>Generated on Mon Feb 7 18:03:57 2011 for WCSLIB 4.7 by&nbsp;
+<hr size="1"><address style="text-align: right;"><small>Generated on Mon Apr 2 17:55:24 2012 for WCSLIB 4.13.4 by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.5.6 </small></address>
 </body>

@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.7 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2011, Mark Calabretta
+  WCSLIB 4.13 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2012, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -35,6 +35,7 @@
 *
 *---------------------------------------------------------------------------*/
 
+#include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -52,15 +53,17 @@ double PC[5][5] = {{  1.0,   0.5,   0.0,   0.0,   0.0},
                    {  0.0,   0.0,   0.0,   0.0,   1.0}};
 double CDELT[5] =  {  1.2,   2.3,   3.4,   4.5,   5.6};
 
-double pix[2][9] = {{303.0, 265.0, 112.4, 144.5,  28.2, 0.0, 0.0, 0.0, 0.0},
-                    { 19.0,  57.0,   2.0,  15.0,  42.0, 0.0, 0.0, 0.0, 0.0}};
-double img[2][9];
+double pix0[2][9] = {{303.0, 265.0, 112.4, 144.5,  28.2, 0.0, 0.0, 0.0, 0.0},
+                     { 19.0,  57.0,   2.0,  15.0,  42.0, 0.0, 0.0, 0.0, 0.0}};
+
+const double tol = 1.0e-13;
+
 
 int main()
 
 {
-  int i, j, k, status;
-  double *pcij;
+  int i, j, k, nFail, status;
+  double img[2][9], *pcij, pix[2][9], resid, residmax;
   struct linprm lin;
 
 
@@ -91,12 +94,12 @@ int main()
   for (k = 0; k < NCOORD; k++) {
     printf("\nPIX %d:", k+1);
     for (j = 0; j < NAXIS; j++) {
-      printf("%14.8f", pix[k][j]);
+      printf("%14.8f", pix0[k][j]);
     }
   }
   printf("\n");
 
-  if ((status = linp2x(&lin, NCOORD, NELEM, pix[0], img[0]))) {
+  if ((status = linp2x(&lin, NCOORD, NELEM, pix0[0], img[0]))) {
     printf("linp2x ERROR %d\n", status);
     return 1;
   }
@@ -122,20 +125,29 @@ int main()
   }
   printf("\n");
 
-  if ((status = linp2x(&lin, NCOORD, NELEM, pix[0], img[0]))) {
-    printf("linp2x ERROR %d\n", status);
-    return 1;
-  }
-
+  /* Check closure. */
+  nFail = 0;
+  residmax = 0.0;
   for (k = 0; k < NCOORD; k++) {
-    printf("\nIMG %d:", k+1);
     for (j = 0; j < NAXIS; j++) {
-      printf("%14.8f", img[k][j]);
+      resid = fabs(pix[k][j] - pix0[k][j]);
+      if (residmax < resid) residmax = resid;
+      if (resid > tol) nFail++;
     }
   }
-  printf("\n");
+
+  printf("\nlinp2x/linx2p: Maximum closure residual = %.1e pixel.\n",
+    residmax);
 
   linfree(&lin);
 
-  return 0;
+
+  if (nFail) {
+    printf("\nFAIL: %d closure residuals exceed reporting tolerance.\n",
+      nFail);
+  } else {
+    printf("\nPASS: All closure residuals are within reporting tolerance.\n");
+  }
+
+  return nFail;
 }

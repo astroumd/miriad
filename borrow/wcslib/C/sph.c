@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.7 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2011, Mark Calabretta
+  WCSLIB 4.13 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2012, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -79,8 +79,8 @@ int sphx2s(
       latp = lat;
       phip   = phi;
       thetap = theta;
-      for (itheta = 0; itheta < ntheta; itheta++, phip += spt, thetap += spt) {
-        for (iphi = 0; iphi < mphi; iphi++, lngp += sll, latp += sll) {
+      for (itheta = 0; itheta < ntheta; itheta++) {
+        for (iphi = 0; iphi < mphi; iphi++) {
           *lngp = *phip + dlng;
           *latp = *thetap;
 
@@ -96,6 +96,11 @@ int sphx2s(
           } else if (*lngp < -360.0) {
             *lngp += 360.0;
           }
+
+          lngp   += sll;
+          latp   += sll;
+          phip   += spt;
+          thetap += spt;
         }
       }
 
@@ -106,8 +111,8 @@ int sphx2s(
       latp = lat;
       phip   = phi;
       thetap = theta;
-      for (itheta = 0; itheta < ntheta; itheta++, phip += spt, thetap += spt) {
-        for (iphi = 0; iphi < mphi; iphi++, lngp += sll, latp += sll) {
+      for (itheta = 0; itheta < ntheta; itheta++) {
+        for (iphi = 0; iphi < mphi; iphi++) {
           *lngp = dlng - *phip;
           *latp = -(*thetap);
 
@@ -123,6 +128,11 @@ int sphx2s(
           } else if (*lngp < -360.0) {
             *lngp += 360.0;
           }
+
+          lngp   += sll;
+          latp   += sll;
+          phip   += spt;
+          thetap += spt;
         }
       }
     }
@@ -254,8 +264,8 @@ int sphs2x(
       latp = lat;
       phip   = phi;
       thetap = theta;
-      for (ilat = 0; ilat < nlat; ilat++, lngp += sll, latp += sll) {
-        for (ilng = 0; ilng < mlng; ilng++, phip += spt, thetap += spt) {
+      for (ilat = 0; ilat < nlat; ilat++) {
+        for (ilng = 0; ilng < mlng; ilng++) {
           *phip = fmod(*lngp + dphi, 360.0);
           *thetap = *latp;
 
@@ -265,6 +275,11 @@ int sphs2x(
           } else if (*phip < -180.0) {
             *phip += 360.0;
           }
+
+          phip   += spt;
+          thetap += spt;
+          lngp   += sll;
+          latp   += sll;
         }
       }
 
@@ -275,8 +290,8 @@ int sphs2x(
       latp = lat;
       phip   = phi;
       thetap = theta;
-      for (ilat = 0; ilat < nlat; ilat++, lngp += sll, latp += sll) {
-        for (ilng = 0; ilng < mlng; ilng++, phip += spt, thetap += spt) {
+      for (ilat = 0; ilat < nlat; ilat++) {
+        for (ilng = 0; ilng < mlng; ilng++) {
           *phip = fmod(dphi - *lngp, 360.0);
           *thetap = -(*latp);
 
@@ -286,6 +301,11 @@ int sphs2x(
           } else if (*phip < -180.0) {
             *phip += 360.0;
           }
+
+          phip   += spt;
+          thetap += spt;
+          lngp   += sll;
+          latp   += sll;
         }
       }
     }

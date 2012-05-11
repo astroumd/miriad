@@ -1,3 +1,234 @@
+WCSLIB version 4.13.4 (2012/04/02)
+----------------------------------
+
+* Installation
+
+  - Relaxed the closure tolerance slightly in tlog.f as for tlog.c
+    previously.
+
+
+WCSLIB version 4.13.3 (2012/03/26)
+----------------------------------
+
+* Installation
+
+  - Relaxed the closure tolerance slightly in tlog.c for gcc 4.6.3 on
+    Ubuntu 12.04 (reported by Ole Streicher).
+
+
+WCSLIB version 4.13.2 (2012/03/21)
+----------------------------------
+
+* Installation
+
+  - Changes to configure.ac and the GNUmakefiles to put '-lm' strictly
+    in the correct sequence when producing the sharable library
+    (reported by Ole Streicher).
+
+
+WCSLIB version 4.13.1 (2012/03/15)
+----------------------------------
+
+* C library
+
+  - Workaround in wcserr_set() for an unfortunate compiler segv from
+    gcc 4.2.1 in MacOSX 10.7.
+
+
+WCSLIB version 4.13 (2012/03/14)
+--------------------------------
+
+* C library
+
+  - Allow naxis == 0 in wcsini() and linini() for a degenerate
+    coordinate system as may be produced by wcssub().  In wcssub(),
+    ensure that wcsini() is called for coordinate systems with
+    naxis == 0.  In wcssptr(), call spcfree() before spcini() to plug a
+    memory leak.
+
+
+WCSLIB version 4.12 (2012/02/29)
+--------------------------------
+
+* C library
+
+  - In spctrne(), guard against restfrq == restwav == 0.0 when
+    translating between two velocity-characteristic types, or between
+    two wave-characteristic types (the translation is independent of
+    restfrq and restwav, but a dummy value is needed for intermediate
+    calculations).
+
+
+WCSLIB version 4.11 (2012/02/21)
+--------------------------------
+
+* C library
+
+  - Bug fix in spcset() for handling simple linear spectral axes.
+
+* Fortran wrappers
+
+  - Bug fix in spctrne_() for handling ctypeS2.
+
+
+WCSLIB version 4.10 (2012/02/06)
+--------------------------------
+
+* C library
+
+  - datfix() and spcfix() now return informative messages when dates and
+    AIPS-convention spectral axes are translated (changes contributed by
+    Michael Droettboom).  spcaips() now returns an error status for
+    invalid values of VELREF.
+
+  - wcssub() has been augmented with the ability to add new axes onto a
+    wcsprm struct.
+
+
+WCSLIB version 4.9 (2012/01/24)
+-------------------------------
+
+* C library
+
+  - Fixes to wcsfixi() for collecting the messages properly in the info
+    array (from Michael Droettboom).
+
+  - Handle certain malformed date strings more gracefully in datfix().
+
+  - Make informative messages printed by wcserr_prt() a bit more
+    informative.
+
+
+WCSLIB version 4.8.4 (2011/12/05)
+---------------------------------
+
+* C library
+
+  - Fixed the pseudo-random number generator in twcstab.c - gcc 4.6 with
+    '-O2' baulked at testing for signed integer overflow.
+
+* Installation
+
+  - In configure.ac, the Fortran compiler's libraries must be added to
+    the link list when checking for the PGPLOT libraries since gcc is
+    driving the linker.  Likewise in C/GNUmakefile when linking test
+    programs that use PGPLOT.
+
+  - Use 'make CHECK=nopgplot check' to run only the non-graphical tests
+    (even if PGPLOT is available).
+
+  - After compiling and running the tests, 'make check' now summarizes
+    the non-graphical test results and stops if any failed.
+
+
+WCSLIB version 4.8.3 (2011/11/17)
+---------------------------------
+
+* C library
+
+  - Minor generalization of the wcserr diagnostics to allow the return
+    of informative messages which are associated with negative status
+    values.  wcserr_prt() will now recognize and print them as such.
+    Added wcserr_clear() to reset (clear) a wcserr struct.
+
+  - Modified unitfix() to return an informative message if a units
+    alias is applied, and wcsfixi() to allow such messages to be
+    propagated through the info array (from Michael Droettboom).
+
+  - Modified twcsfix.c to use wcserr diagnostics, in particular to
+    report units alias translations.
+
+* Fortran wrappers
+
+  - In wcsfix_(), interpret *naxis == 0 as meaning naxis == 0x0, thus
+    causing cylfix() to be skipped.
+
+  - Modified twcsfix.f to reflect changes made to twcsfix.c.
+
+
+WCSLIB version 4.8.2 (2011/10/04)
+---------------------------------
+
+* Installation
+
+  - Changes for Debian package generation contributed by Ole Streicher:
+    - Corrections to 'configure' reported by 'lintian'.
+    - Generate man pages for the utility programs and install them.
+
+
+WCSLIB version 4.8.1 (2011/09/19)
+---------------------------------
+
+* Installation
+
+  - Set SONAME in the sharable library in accordance with
+    tldp.org/HOWTO/Program-Library-HOWTO/shared-libraries.html
+    (reported by Ole Streicher, Debian package maintainer).  The
+    sharable library will again be installed with full release number
+    and with a symbolic link from SONAME pointing to it.  If defined,
+    SHRLN will point to SONAME.
+
+
+WCSLIB version 4.8 (2011/08/15)
+-------------------------------
+
+* C library
+
+  - New error diagnostics mechanism contributed by Michael Droettboom:
+
+    Most functions that return a numeric status (error) code now also
+    write a detailed error message to a wcserr struct attached to the
+    passed-in *prm struct.  See wcserr.h for more information.
+
+    Functions that didn't have a *prm struct as an argument have no
+    direct way to return an error message.  Therefore, these functions
+    now have duplicate versions with the suffix "e" that take an
+    additional "struct wcserr *" parameter.  These functions are:
+
+        spcspx()    ->  spcspxe()
+        spctrn()    ->  spctrne()
+        spctyp()    ->  spctype()
+        spcxps()    ->  spcxpse()
+        wcsulex()   ->  wcsulexe()
+        wcsunits()  ->  wcsunitse()
+        wcsutrn()   ->  wcsutrne()
+
+    A new function wcsfixi() was added which is identical to wcsfix()
+    but in addition stores all of the detailed textual messages about
+    the fixes that were performed.
+
+  - In wcssub(), ensure that wcstab->m_tab has been initialized
+    before trying to free it on status return 12 or 13 (reported by
+    Hans Terlow).
+
+  - Bug fixes:
+    - In sphx2s() and sphs2x() for the case where |eul[1]| = 180.0.
+    - For parsing AIPS-convention VELREF in wcsbth().
+    - In spcaips() for translating AIPS-convention CTYPEia without
+      Doppler frame.
+
+  - Non-graphical test programs now simply report "PASS" if they satisfy
+    the reporting tolerance for closure residuals, etc.  Their full
+    output is reported otherwise.  Run 'make MODE=interactive check' to
+    revert to the previous behaviour of reporting the full output for
+    tests that succeed.
+
+  - Eliminated compiler warnings about type-punning of pointer-to-
+    function.
+
+* Fortran wrappers
+
+    Extensive modifications to track the new error handling mechanism
+    in the C library.
+
+* Installation
+
+  - configure now prefers gfortran over g77 if available.
+
+  - Don't rely on "." being in the PATH if config.status needs to be
+    run in the pgsbox and utils makefile (reported by Peter Teuben).
+
+
 WCSLIB version 4.7 (2011/02/07)
 -------------------------------
 

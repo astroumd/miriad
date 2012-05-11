@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-<title>WCSLIB 4.7: wcs.h File Reference</title>
+<title>WCSLIB 4.13.4: wcs.h File Reference</title>
 <link href="doxygen.css" rel="stylesheet" type="text/css">
 <link href="tabs.css" rel="stylesheet" type="text/css">
 </head><body>
@@ -20,6 +20,7 @@
 <code>#include &quot;<a class="el" href="cel_8h-source.html">cel.h</a>&quot;</code><br>
 <code>#include &quot;<a class="el" href="spc_8h-source.html">spc.h</a>&quot;</code><br>
 <code>#include &quot;<a class="el" href="tab_8h-source.html">tab.h</a>&quot;</code><br>
+<code>#include &quot;<a class="el" href="wcserr_8h-source.html">wcserr.h</a>&quot;</code><br>
 
 <p>
 <a href="wcs_8h-source.html">Go to the source code of this file.</a><table border="0" cellpadding="0" cellspacing="0">
@@ -59,7 +60,7 @@
 <tr><td class="memItemLeft" nowrap align="right" valign="top">#define&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="wcs_8h.html#6852f6dd2883c82296f1108b897d337e">WCSLEN</a>&nbsp;&nbsp;&nbsp;(sizeof(struct <a class="el" href="structwcsprm.html">wcsprm</a>)/sizeof(int))</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Size of the <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> struct in int units.  <a href="#6852f6dd2883c82296f1108b897d337e"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">#define&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="wcs_8h.html#c55946dadc53ac592cb686275902ae7b">wcscopy</a>(alloc, wcssrc, wcsdst)&nbsp;&nbsp;&nbsp;wcssub(alloc, wcssrc, 0, 0, wcsdst)</td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">#define&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="wcs_8h.html#c55946dadc53ac592cb686275902ae7b">wcscopy</a>(alloc, wcssrc, wcsdst)&nbsp;&nbsp;&nbsp;wcssub(alloc, wcssrc, 0x0, 0x0, wcsdst)</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Copy routine for the <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> struct.  <a href="#c55946dadc53ac592cb686275902ae7b"></a><br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">#define&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="wcs_8h.html#1bcf49cfe1ed1bb2bc4c930f98d808fa">wcsini_errmsg</a>&nbsp;&nbsp;&nbsp;<a class="el" href="wcs_8h.html#d16bd8db875ee05b014429efdc1f3471">wcs_errmsg</a></td></tr>
@@ -89,6 +90,28 @@
 <tr><td class="memItemLeft" nowrap align="right" valign="top">#define&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="wcs_8h.html#cfbadc770489b6b5186b95eaa35467f1">wcsmix_errmsg</a>&nbsp;&nbsp;&nbsp;<a class="el" href="wcs_8h.html#d16bd8db875ee05b014429efdc1f3471">wcs_errmsg</a></td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Deprecated.  <a href="#cfbadc770489b6b5186b95eaa35467f1"></a><br></td></tr>
+<tr><td colspan="2"><br><h2>Enumerations</h2></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">enum &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="wcs_8h.html#158615aa1622d8feedd228795ff9a25f">wcs_errmsg_enum</a> { <br>
+&nbsp;&nbsp;<a class="el" href="wcs_8h.html#158615aa1622d8feedd228795ff9a25f8b87c21d4a2cab41d4eea0a95378fca8">WCSERR_SUCCESS</a> =  0, 
+<a class="el" href="wcs_8h.html#158615aa1622d8feedd228795ff9a25fc51c733d8a719dd698f9e96e9a4fa83f">WCSERR_NULL_POINTER</a> =  1, 
+<a class="el" href="wcs_8h.html#158615aa1622d8feedd228795ff9a25f5c58d5530bc7577a70185376c15180af">WCSERR_MEMORY</a> =  2, 
+<a class="el" href="wcs_8h.html#158615aa1622d8feedd228795ff9a25f2904278d916c820236347783312a7ce0">WCSERR_SINGULAR_MTX</a> =  3, 
+<br>
+&nbsp;&nbsp;<a class="el" href="wcs_8h.html#158615aa1622d8feedd228795ff9a25f598db0fcc4961aa3c5e0a296bec2b313">WCSERR_BAD_CTYPE</a> =  4, 
+<a class="el" href="wcs_8h.html#158615aa1622d8feedd228795ff9a25ffe9ed842ea8f525c7b8fed2f60015dd9">WCSERR_BAD_PARAM</a> =  5, 
+<a class="el" href="wcs_8h.html#158615aa1622d8feedd228795ff9a25f71cb7eaa633d9e0f560555a016f1f007">WCSERR_BAD_COORD_TRANS</a> =  6, 
+<a class="el" href="wcs_8h.html#158615aa1622d8feedd228795ff9a25fdfa2a8cf8021827378091315b8e0a020">WCSERR_ILL_COORD_TRANS</a> =  7, 
+<br>
+&nbsp;&nbsp;<a class="el" href="wcs_8h.html#158615aa1622d8feedd228795ff9a25f08306533cf0c7555dad662e82e8a4a69">WCSERR_BAD_PIX</a> =  8, 
+<a class="el" href="wcs_8h.html#158615aa1622d8feedd228795ff9a25f03824b7b5c22e5f0cc91363eb695a804">WCSERR_BAD_WORLD</a> =  9, 
+<a class="el" href="wcs_8h.html#158615aa1622d8feedd228795ff9a25f5d662102c172495df1f9bb03cedd701d">WCSERR_BAD_WORLD_COORD</a> =  10, 
+<a class="el" href="wcs_8h.html#158615aa1622d8feedd228795ff9a25f832122bb304560f92df91e391d55948a">WCSERR_NO_SOLUTION</a> =  11, 
+<br>
+&nbsp;&nbsp;<a class="el" href="wcs_8h.html#158615aa1622d8feedd228795ff9a25f88e600163f719a759d3569bf1548109e">WCSERR_BAD_SUBIMAGE</a> =  12, 
+<a class="el" href="wcs_8h.html#158615aa1622d8feedd228795ff9a25f37c8aa0aedc12c63df08f39cb7177ff7">WCSERR_NON_SEPARABLE</a> =  13
+<br>
+ }</td></tr>
+
 <tr><td colspan="2"><br><h2>Functions</h2></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="wcs_8h.html#42b2578d76ace7ca6114d82b7ae46a89">wcsnpv</a> (int n)</td></tr>
 
@@ -108,6 +131,9 @@
 <tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="wcs_8h.html#b9aeb8cf1afb1bfb22e989580d90fca8">wcsprt</a> (const struct <a class="el" href="structwcsprm.html">wcsprm</a> *wcs)</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Print routine for the <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> struct.  <a href="#b9aeb8cf1afb1bfb22e989580d90fca8"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="wcs_8h.html#8fe5dcd9927240dc0348b850ee662367">wcsperr</a> (const struct <a class="el" href="structwcsprm.html">wcsprm</a> *wcs, const char *prefix)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Print error messages from a <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> struct.  <a href="#8fe5dcd9927240dc0348b850ee662367"></a><br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="wcs_8h.html#e5cc3f5d249755583403cdf54d2ebb91">wcsset</a> (struct <a class="el" href="structwcsprm.html">wcsprm</a> *wcs)</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Setup routine for the <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> struct.  <a href="#e5cc3f5d249755583403cdf54d2ebb91"></a><br></td></tr>
@@ -131,6 +157,7 @@
 <hr><a name="_details"></a><h2>Detailed Description</h2>
 These routines implement the FITS World Coordinate System (WCS) standard which defines methods to be used for computing world coordinates from image pixel coordinates, and vice versa. They are based on the <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> struct which contains all information needed for the computations. The struct contains some members that must be set by the user, and others that are maintained by these routines, somewhat like a C++ class but with no encapsulation.<p>
 Three routines, <a class="el" href="wcs_8h.html#2afc8255fde0965dddaa374463666d45" title="Default constructor for the wcsprm struct.">wcsini()</a>, <a class="el" href="wcs_8h.html#864c99fef9f3eee29085ce42d0ee0d64" title="Subimage extraction routine for the wcsprm struct.">wcssub()</a>, and <a class="el" href="wcs_8h.html#4ab38bc642c4656f62c43acf84a849f1" title="Destructor for the wcsprm struct.">wcsfree()</a> are provided to manage the <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> struct and another, <a class="el" href="wcs_8h.html#b9aeb8cf1afb1bfb22e989580d90fca8" title="Print routine for the wcsprm struct.">wcsprt()</a>, to prints its contents. Refer to the description of the <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> struct for an explanation of the anticipated usage of these routines. <a class="el" href="wcs_8h.html#c55946dadc53ac592cb686275902ae7b" title="Copy routine for the wcsprm struct.">wcscopy()</a>, which does a deep copy of one <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> struct to another, is defined as a preprocessor macro function that invokes <a class="el" href="wcs_8h.html#864c99fef9f3eee29085ce42d0ee0d64" title="Subimage extraction routine for the wcsprm struct.">wcssub()</a>.<p>
+<a class="el" href="wcs_8h.html#8fe5dcd9927240dc0348b850ee662367" title="Print error messages from a wcsprm struct.">wcsperr()</a> prints the error message(s) (if any) stored in a <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> struct, and the <a class="el" href="structlinprm.html" title="Linear transformation parameters.">linprm</a>, <a class="el" href="structcelprm.html" title="Celestial transformation parameters.">celprm</a>, <a class="el" href="structprjprm.html" title="Projection parameters.">prjprm</a>, <a class="el" href="structspcprm.html" title="Spectral transformation parameters.">spcprm</a>, and <a class="el" href="structtabprm.html" title="Tabular transformation parameters.">tabprm</a> structs that it contains.<p>
 A setup routine, <a class="el" href="wcs_8h.html#e5cc3f5d249755583403cdf54d2ebb91" title="Setup routine for the wcsprm struct.">wcsset()</a>, computes intermediate values in the <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> struct from parameters in it that were supplied by the user. The struct always needs to be set up by <a class="el" href="wcs_8h.html#e5cc3f5d249755583403cdf54d2ebb91" title="Setup routine for the wcsprm struct.">wcsset()</a> but this need not be called explicitly - refer to the explanation of <a class="el" href="structwcsprm.html#35bff8de85e5a8892e1b68db69ca7a68">wcsprm::flag</a>.<p>
 <a class="el" href="wcs_8h.html#27d3dd209db3e76cf4c50f48c01ba986" title="Pixel-to-world transformation.">wcsp2s()</a> and <a class="el" href="wcs_8h.html#60673d05a3513659ac848a9cb3d0cb07" title="World-to-pixel transformation.">wcss2p()</a> implement the WCS world coordinate transformations. In fact, they are high level driver routines for the WCS linear, logarithmic, celestial, spectral and tabular transformation routines described in <a class="el" href="lin_8h.html">lin.h</a>, <a class="el" href="log_8h.html">log.h</a>, <a class="el" href="cel_8h.html">cel.h</a>, <a class="el" href="spc_8h.html">spc.h</a> and <a class="el" href="tab_8h.html">tab.h</a>.<p>
 Given either the celestial longitude or latitude plus an element of the pixel coordinate a hybrid routine, <a class="el" href="wcs_8h.html#f3f00b876c8212d43f32a51feeadaa81" title="Hybrid coordinate transformation.">wcsmix()</a>, iteratively solves for the unknown elements.<p>
@@ -267,7 +294,7 @@ Size of the <a class="el" href="structwcsprm.html" title="Coordinate transformat
           <td class="paramtype">wcsdst&nbsp;</td>
           <td class="paramname">          </td>
           <td>&nbsp;)&nbsp;</td>
-          <td>&nbsp;&nbsp;&nbsp;wcssub(alloc, wcssrc, 0, 0, wcsdst)</td>
+          <td>&nbsp;&nbsp;&nbsp;wcssub(alloc, wcssrc, 0x0, 0x0, wcsdst)</td>
         </tr>
       </table>
 </div>
@@ -421,6 +448,54 @@ Size of the <a class="el" href="structwcsprm.html" title="Coordinate transformat
 
 </div>
 </div><p>
+<hr><h2>Enumeration Type Documentation</h2>
+<a class="anchor" name="158615aa1622d8feedd228795ff9a25f"></a><!-- doxytag: member="wcs.h::wcs_errmsg_enum" ref="158615aa1622d8feedd228795ff9a25f" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum <a class="el" href="wcs_8h.html#158615aa1622d8feedd228795ff9a25f">wcs_errmsg_enum</a>          </td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+<dl compact><dt><b>Enumerator: </b></dt><dd>
+<table border="0" cellspacing="2" cellpadding="0">
+<tr><td valign="top"><em><a class="anchor" name="158615aa1622d8feedd228795ff9a25f8b87c21d4a2cab41d4eea0a95378fca8"></a><!-- doxytag: member="WCSERR_SUCCESS" ref="158615aa1622d8feedd228795ff9a25f8b87c21d4a2cab41d4eea0a95378fca8" args="" -->WCSERR_SUCCESS</em>&nbsp;</td><td>
+</td></tr>
+<tr><td valign="top"><em><a class="anchor" name="158615aa1622d8feedd228795ff9a25fc51c733d8a719dd698f9e96e9a4fa83f"></a><!-- doxytag: member="WCSERR_NULL_POINTER" ref="158615aa1622d8feedd228795ff9a25fc51c733d8a719dd698f9e96e9a4fa83f" args="" -->WCSERR_NULL_POINTER</em>&nbsp;</td><td>
+</td></tr>
+<tr><td valign="top"><em><a class="anchor" name="158615aa1622d8feedd228795ff9a25f5c58d5530bc7577a70185376c15180af"></a><!-- doxytag: member="WCSERR_MEMORY" ref="158615aa1622d8feedd228795ff9a25f5c58d5530bc7577a70185376c15180af" args="" -->WCSERR_MEMORY</em>&nbsp;</td><td>
+</td></tr>
+<tr><td valign="top"><em><a class="anchor" name="158615aa1622d8feedd228795ff9a25f2904278d916c820236347783312a7ce0"></a><!-- doxytag: member="WCSERR_SINGULAR_MTX" ref="158615aa1622d8feedd228795ff9a25f2904278d916c820236347783312a7ce0" args="" -->WCSERR_SINGULAR_MTX</em>&nbsp;</td><td>
+</td></tr>
+<tr><td valign="top"><em><a class="anchor" name="158615aa1622d8feedd228795ff9a25f598db0fcc4961aa3c5e0a296bec2b313"></a><!-- doxytag: member="WCSERR_BAD_CTYPE" ref="158615aa1622d8feedd228795ff9a25f598db0fcc4961aa3c5e0a296bec2b313" args="" -->WCSERR_BAD_CTYPE</em>&nbsp;</td><td>
+</td></tr>
+<tr><td valign="top"><em><a class="anchor" name="158615aa1622d8feedd228795ff9a25ffe9ed842ea8f525c7b8fed2f60015dd9"></a><!-- doxytag: member="WCSERR_BAD_PARAM" ref="158615aa1622d8feedd228795ff9a25ffe9ed842ea8f525c7b8fed2f60015dd9" args="" -->WCSERR_BAD_PARAM</em>&nbsp;</td><td>
+</td></tr>
+<tr><td valign="top"><em><a class="anchor" name="158615aa1622d8feedd228795ff9a25f71cb7eaa633d9e0f560555a016f1f007"></a><!-- doxytag: member="WCSERR_BAD_COORD_TRANS" ref="158615aa1622d8feedd228795ff9a25f71cb7eaa633d9e0f560555a016f1f007" args="" -->WCSERR_BAD_COORD_TRANS</em>&nbsp;</td><td>
+</td></tr>
+<tr><td valign="top"><em><a class="anchor" name="158615aa1622d8feedd228795ff9a25fdfa2a8cf8021827378091315b8e0a020"></a><!-- doxytag: member="WCSERR_ILL_COORD_TRANS" ref="158615aa1622d8feedd228795ff9a25fdfa2a8cf8021827378091315b8e0a020" args="" -->WCSERR_ILL_COORD_TRANS</em>&nbsp;</td><td>
+</td></tr>
+<tr><td valign="top"><em><a class="anchor" name="158615aa1622d8feedd228795ff9a25f08306533cf0c7555dad662e82e8a4a69"></a><!-- doxytag: member="WCSERR_BAD_PIX" ref="158615aa1622d8feedd228795ff9a25f08306533cf0c7555dad662e82e8a4a69" args="" -->WCSERR_BAD_PIX</em>&nbsp;</td><td>
+</td></tr>
+<tr><td valign="top"><em><a class="anchor" name="158615aa1622d8feedd228795ff9a25f03824b7b5c22e5f0cc91363eb695a804"></a><!-- doxytag: member="WCSERR_BAD_WORLD" ref="158615aa1622d8feedd228795ff9a25f03824b7b5c22e5f0cc91363eb695a804" args="" -->WCSERR_BAD_WORLD</em>&nbsp;</td><td>
+</td></tr>
+<tr><td valign="top"><em><a class="anchor" name="158615aa1622d8feedd228795ff9a25f5d662102c172495df1f9bb03cedd701d"></a><!-- doxytag: member="WCSERR_BAD_WORLD_COORD" ref="158615aa1622d8feedd228795ff9a25f5d662102c172495df1f9bb03cedd701d" args="" -->WCSERR_BAD_WORLD_COORD</em>&nbsp;</td><td>
+</td></tr>
+<tr><td valign="top"><em><a class="anchor" name="158615aa1622d8feedd228795ff9a25f832122bb304560f92df91e391d55948a"></a><!-- doxytag: member="WCSERR_NO_SOLUTION" ref="158615aa1622d8feedd228795ff9a25f832122bb304560f92df91e391d55948a" args="" -->WCSERR_NO_SOLUTION</em>&nbsp;</td><td>
+</td></tr>
+<tr><td valign="top"><em><a class="anchor" name="158615aa1622d8feedd228795ff9a25f88e600163f719a759d3569bf1548109e"></a><!-- doxytag: member="WCSERR_BAD_SUBIMAGE" ref="158615aa1622d8feedd228795ff9a25f88e600163f719a759d3569bf1548109e" args="" -->WCSERR_BAD_SUBIMAGE</em>&nbsp;</td><td>
+</td></tr>
+<tr><td valign="top"><em><a class="anchor" name="158615aa1622d8feedd228795ff9a25f37c8aa0aedc12c63df08f39cb7177ff7"></a><!-- doxytag: member="WCSERR_NON_SEPARABLE" ref="158615aa1622d8feedd228795ff9a25f37c8aa0aedc12c63df08f39cb7177ff7" args="" -->WCSERR_NON_SEPARABLE</em>&nbsp;</td><td>
+</td></tr>
+</table>
+</dl>
+
+</div>
+</div><p>
 <hr><h2>Function Documentation</h2>
 <a class="anchor" name="42b2578d76ace7ca6114d82b7ae46a89"></a><!-- doxytag: member="wcs.h::wcsnpv" ref="42b2578d76ace7ca6114d82b7ae46a89" args="(int n)" -->
 <div class="memitem">
@@ -522,8 +597,8 @@ Size of the <a class="el" href="structwcsprm.html" title="Coordinate transformat
   </table>
 </dl>
 <dl class="return" compact><dt><b>Returns:</b></dt><dd>Status return value:<ul>
-<li>0: Success.</li><li>1: Null <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> pointer passed.</li><li>2: Memory allocation failed. </li></ul>
-</dd></dl>
+<li>0: Success.</li><li>1: Null <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> pointer passed.</li><li>2: Memory allocation failed.</li></ul>
+For returns &gt; 1, a detailed error message is set in <a class="el" href="structwcsprm.html#f54ce939604be183231f0ee006e2f8ed">wcsprm::err</a> if enabled, see <a class="el" href="wcserr_8h.html#1691b8bd184d40ca6fda255be078fa53" title="Enable/disable error messaging.">wcserr_enable()</a>. </dd></dl>
 
 </div>
 </div><p>
@@ -574,25 +649,27 @@ Size of the <a class="el" href="structwcsprm.html" title="Coordinate transformat
 <b>wcssub</b>() extracts the coordinate description for a subimage from a <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> struct. It does a deep copy, using <a class="el" href="wcs_8h.html#2afc8255fde0965dddaa374463666d45" title="Default constructor for the wcsprm struct.">wcsini()</a> to allocate memory for its arrays if required. Only the "information to be provided" part of the struct is extracted; a call to <a class="el" href="wcs_8h.html#e5cc3f5d249755583403cdf54d2ebb91" title="Setup routine for the wcsprm struct.">wcsset()</a> is required to set up the remainder.<p>
 The world coordinate system of the subimage must be separable in the sense that the world coordinates at any point in the subimage must depend only on the pixel coordinates of the axes extracted. In practice, this means that the <code><b>PC</b>i<b>_</b>ja</code> matrix of the original image must not contain non-zero off-diagonal terms that associate any of the subimage axes with any of the non-subimage axes.<p>
 Note that while the required elements of the <a class="el" href="structtabprm.html" title="Tabular transformation parameters.">tabprm</a> array are extracted, the <a class="el" href="structwtbarr.html" title="Extraction of coordinate lookup tables from BINTABLE.">wtbarr</a> array is not. (Thus it is not appropriate to call <b>wcssub</b>() after <a class="el" href="wcshdr_8h.html#6dd857f7b61a5b349cc8af5a4b6d8a1c" title="Tabular construction routine.">wcstab()</a> but before filling the <a class="el" href="structtabprm.html" title="Tabular transformation parameters.">tabprm</a> structs - refer to <a class="el" href="wcshdr_8h.html">wcshdr.h</a>.)<p>
+<b>wcssub</b>() can also add axes to a <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> struct. The new axes will be created using the defaults set by <a class="el" href="wcs_8h.html#2afc8255fde0965dddaa374463666d45" title="Default constructor for the wcsprm struct.">wcsini()</a> which produce a simple, unnamed, linear axis with world coordinate equal to the pixel coordinate. These default values can be changed in before invoking <a class="el" href="wcs_8h.html#e5cc3f5d249755583403cdf54d2ebb91" title="Setup routine for the wcsprm struct.">wcsset()</a>.<p>
 <dl compact><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
     <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>alloc</em>&nbsp;</td><td>If true, allocate memory for the crpix, etc. arrays in the destination. Otherwise, it is assumed that pointers to these arrays have been set by the user except if they are null pointers in which case memory will be allocated for them regardless. </td></tr>
     <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>wcssrc</em>&nbsp;</td><td>Struct to extract from.</td></tr>
     <tr><td valign="top"><tt>[in,out]</tt>&nbsp;</td><td valign="top"><em>nsub</em>&nbsp;</td><td></td></tr>
     <tr><td valign="top"><tt>[in,out]</tt>&nbsp;</td><td valign="top"><em>axes</em>&nbsp;</td><td>Vector of length *nsub containing the image axis numbers (1-relative) to extract. Order is significant; axes[0] is the axis number of the input image that corresponds to the first axis in the subimage, etc. <br>
- nsub (the pointer) may be set to zero, and so also may nsub, to indicate the number of axes in the input image; the number of axes will be returned if nsub != 0. axes itself (the pointer) may be set to zero to indicate the first *nsub axes in their original order. <br>
+ Use an axis number of 0 to create a new axis using the defaults set by <a class="el" href="wcs_8h.html#2afc8255fde0965dddaa374463666d45" title="Default constructor for the wcsprm struct.">wcsini()</a>. <br>
+ nsub (the pointer) may be set to zero, and so also may nsub, to indicate the number of axes in the input image; the number of axes will be returned if nsub != 0x0. axes itself (the pointer) may be set to zero to indicate the first *nsub axes in their original order. <br>
  Set both nsub and axes to zero to do a deep copy of one <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> struct to another. <br>
  Subimage extraction by coordinate axis type may be done by setting the elements of axes[] to the following special preprocessor macro values: <br>
 <ul>
 <li>WCSSUB_LONGITUDE: Celestial longitude.</li><li>WCSSUB_LATITUDE: Celestial latitude.</li><li>WCSSUB_CUBEFACE: Quadcube <code><b>CUBEFACE</b></code> axis.</li><li>WCSSUB_SPECTRAL: Spectral axis.</li><li>WCSSUB_STOKES: Stokes axis.</li></ul>
 Refer to the notes (below) for further usage examples. <br>
- On return, *nsub will contain the number of axes in the subimage; this may be zero if there were no axes of the required type(s) (in which case no memory will be allocated). axes[] will contain the axis numbers that were extracted. The vector length must be sufficient to contain all axis numbers. No checks are performed to verify that the coordinate axes are consistent, this is done by <a class="el" href="wcs_8h.html#e5cc3f5d249755583403cdf54d2ebb91" title="Setup routine for the wcsprm struct.">wcsset()</a>. </td></tr>
+ On return, *nsub will contain the number of axes in the subimage; this may be zero if there were no axes of the required type(s) (in which case no memory will be allocated). axes[] will contain the axis numbers that were extracted, or 0 for newly created axes. The vector length must be sufficient to contain all axis numbers. No checks are performed to verify that the coordinate axes are consistent, this is done by <a class="el" href="wcs_8h.html#e5cc3f5d249755583403cdf54d2ebb91" title="Setup routine for the wcsprm struct.">wcsset()</a>. </td></tr>
     <tr><td valign="top"><tt>[in,out]</tt>&nbsp;</td><td valign="top"><em>wcsdst</em>&nbsp;</td><td>Struct describing the subimage. <a class="el" href="structwcsprm.html#35bff8de85e5a8892e1b68db69ca7a68">wcsprm::flag</a> should be set to -1 if wcsdst was not previously initialized (memory leaks may result if it was previously initialized).</td></tr>
   </table>
 </dl>
 <dl class="return" compact><dt><b>Returns:</b></dt><dd>Status return value:<ul>
 <li>0: Success.</li><li>1: Null <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> pointer passed.</li><li>2: Memory allocation failed.</li><li>12: Invalid subimage specification.</li><li>13: Non-separable subimage coordinate system.</li></ul>
-</dd></dl>
+For returns &gt; 1, a detailed error message is set in <a class="el" href="structwcsprm.html#f54ce939604be183231f0ee006e2f8ed">wcsprm::err</a> if enabled, see <a class="el" href="wcserr_8h.html#1691b8bd184d40ca6fda255be078fa53" title="Enable/disable error messaging.">wcserr_enable()</a>.</dd></dl>
 <b>Notes:</b> <br>
  Combinations of subimage axes of particular types may be extracted in the same order as they occur in the input image by combining preprocessor codes, for example <div class="fragment"><pre class="fragment">      *nsub = 1;
       axes[0] = <a class="code" href="wcs_8h.html#0653c98b8a1bee5755740ae3f4854094" title="Mask for extraction of longitude axis by wcssub().">WCSSUB_LONGITUDE</a> | <a class="code" href="wcs_8h.html#5d377c202850ee0eaf44b3e989d0736e" title="Mask for extraction of latitude axis by wcssub().">WCSSUB_LATITUDE</a> | <a class="code" href="wcs_8h.html#4b2dfca2e80fe80ba85dc830cd9c377b" title="Mask for extraction of spectral axis by wcssub().">WCSSUB_SPECTRAL</a>;
@@ -606,7 +683,7 @@ The codes may also be negated to extract all but the types specified, for exampl
       axes[3] = -(<a class="code" href="wcs_8h.html#4b2dfca2e80fe80ba85dc830cd9c377b" title="Mask for extraction of spectral axis by wcssub().">WCSSUB_SPECTRAL</a> | <a class="code" href="wcs_8h.html#6ba6d2640572b12a11e3558fa75a01ed" title="Mask for extraction of STOKES axis by wcssub().">WCSSUB_STOKES</a>);
 </pre></div><p>
 The last of these specifies all axis types other than spectral or Stokes. Extraction is done in the order specified by axes[] a longitude axis (if present) would be extracted first (via axes[0]) and not subsequently (via axes[3]). Likewise for the latitude and cubeface axes in this example.<p>
-From the foregoing, it is apparent that the value of *nsub returned may be less than or greater than that given. However, it will never exceed the number of axes in the input image. 
+From the foregoing, it is apparent that the value of *nsub returned may be less than or greater than that given. However, it will never exceed the number of axes in the input image (plus the number of newly-created axes if any were specified on input). 
 </div>
 </div><p>
 <a class="anchor" name="4ab38bc642c4656f62c43acf84a849f1"></a><!-- doxytag: member="wcs.h::wcsfree" ref="4ab38bc642c4656f62c43acf84a849f1" args="(struct wcsprm *wcs)" -->
@@ -656,10 +733,49 @@ From the foregoing, it is apparent that the value of *nsub returned may be less 
 <div class="memdoc">
 
 <p>
-<b>wcsprt</b>() prints the contents of a <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> struct.<p>
+<b>wcsprt</b>() prints the contents of a <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> struct using <a class="el" href="wcsprintf_8h.html#46950abaf5a27347da8160741f98f973" title="Print function used by WCSLIB diagnostic routines.">wcsprintf()</a>. Mainly intended for diagnostic purposes.<p>
 <dl compact><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
     <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>wcs</em>&nbsp;</td><td>Coordinate transformation parameters.</td></tr>
+  </table>
+</dl>
+<dl class="return" compact><dt><b>Returns:</b></dt><dd>Status return value:<ul>
+<li>0: Success.</li><li>1: Null <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> pointer passed. </li></ul>
+</dd></dl>
+
+</div>
+</div><p>
+<a class="anchor" name="8fe5dcd9927240dc0348b850ee662367"></a><!-- doxytag: member="wcs.h::wcsperr" ref="8fe5dcd9927240dc0348b850ee662367" args="(const struct wcsprm *wcs, const char *prefix)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int wcsperr           </td>
+          <td>(</td>
+          <td class="paramtype">const struct <a class="el" href="structwcsprm.html">wcsprm</a> *&nbsp;</td>
+          <td class="paramname"> <em>wcs</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const char *&nbsp;</td>
+          <td class="paramname"> <em>prefix</em></td><td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td><td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+<b>wcsperr</b>() prints the error message(s), if any, stored in a <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> struct, and the <a class="el" href="structlinprm.html" title="Linear transformation parameters.">linprm</a>, <a class="el" href="structcelprm.html" title="Celestial transformation parameters.">celprm</a>, <a class="el" href="structprjprm.html" title="Projection parameters.">prjprm</a>, <a class="el" href="structspcprm.html" title="Spectral transformation parameters.">spcprm</a>, and <a class="el" href="structtabprm.html" title="Tabular transformation parameters.">tabprm</a> structs that it contains. If there are no errors then nothing is printed. It uses <a class="el" href="wcserr_8h.html#6585b9fc3a59b369e3336f3133dd1ca9" title="Print a wcserr struct.">wcserr_prt()</a>, q.v.<p>
+<dl compact><dt><b>Parameters:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>wcs</em>&nbsp;</td><td>Coordinate transformation parameters. </td></tr>
+    <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>prefix</em>&nbsp;</td><td>If non-NULL, each output line will be prefixed with this string.</td></tr>
   </table>
 </dl>
 <dl class="return" compact><dt><b>Returns:</b></dt><dd>Status return value:<ul>
@@ -694,8 +810,8 @@ Note that this routine need not be called directly; it will be invoked by <a cla
   </table>
 </dl>
 <dl class="return" compact><dt><b>Returns:</b></dt><dd>Status return value:<ul>
-<li>0: Success.</li><li>1: Null <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> pointer passed.</li><li>2: Memory allocation failed.</li><li>3: Linear transformation matrix is singular.</li><li>4: Inconsistent or unrecognized coordinate axis types.</li><li>5: Invalid parameter value.</li><li>6: Invalid coordinate transformation parameters.</li><li>7: Ill-conditioned coordinate transformation parameters. </li></ul>
-</dd></dl>
+<li>0: Success.</li><li>1: Null <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> pointer passed.</li><li>2: Memory allocation failed.</li><li>3: Linear transformation matrix is singular.</li><li>4: Inconsistent or unrecognized coordinate axis types.</li><li>5: Invalid parameter value.</li><li>6: Invalid coordinate transformation parameters.</li><li>7: Ill-conditioned coordinate transformation parameters.</li></ul>
+For returns &gt; 1, a detailed error message is set in <a class="el" href="structwcsprm.html#f54ce939604be183231f0ee006e2f8ed">wcsprm::err</a> if enabled, see <a class="el" href="wcserr_8h.html#1691b8bd184d40ca6fda255be078fa53" title="Enable/disable error messaging.">wcserr_enable()</a>. </dd></dl>
 
 </div>
 </div><p>
@@ -782,8 +898,8 @@ Note that this routine need not be called directly; it will be invoked by <a cla
   </table>
 </dl>
 <dl class="return" compact><dt><b>Returns:</b></dt><dd>Status return value:<ul>
-<li>0: Success.</li><li>1: Null <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> pointer passed.</li><li>2: Memory allocation failed.</li><li>3: Linear transformation matrix is singular.</li><li>4: Inconsistent or unrecognized coordinate axis types.</li><li>5: Invalid parameter value.</li><li>6: Invalid coordinate transformation parameters.</li><li>7: Ill-conditioned coordinate transformation parameters.</li><li>8: One or more of the pixel coordinates were invalid, as indicated by the stat vector. </li></ul>
-</dd></dl>
+<li>0: Success.</li><li>1: Null <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> pointer passed.</li><li>2: Memory allocation failed.</li><li>3: Linear transformation matrix is singular.</li><li>4: Inconsistent or unrecognized coordinate axis types.</li><li>5: Invalid parameter value.</li><li>6: Invalid coordinate transformation parameters.</li><li>7: Ill-conditioned coordinate transformation parameters.</li><li>8: One or more of the pixel coordinates were invalid, as indicated by the stat vector.</li></ul>
+For returns &gt; 1, a detailed error message is set in <a class="el" href="structwcsprm.html#f54ce939604be183231f0ee006e2f8ed">wcsprm::err</a> if enabled, see <a class="el" href="wcserr_8h.html#1691b8bd184d40ca6fda255be078fa53" title="Enable/disable error messaging.">wcserr_enable()</a>. </dd></dl>
 
 </div>
 </div><p>
@@ -870,8 +986,8 @@ Note that this routine need not be called directly; it will be invoked by <a cla
   </table>
 </dl>
 <dl class="return" compact><dt><b>Returns:</b></dt><dd>Status return value:<ul>
-<li>0: Success.</li><li>1: Null <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> pointer passed.</li><li>2: Memory allocation failed.</li><li>3: Linear transformation matrix is singular.</li><li>4: Inconsistent or unrecognized coordinate axis types.</li><li>5: Invalid parameter value.</li><li>6: Invalid coordinate transformation parameters.</li><li>7: Ill-conditioned coordinate transformation parameters.</li><li>9: One or more of the world coordinates were invalid, as indicated by the stat vector. </li></ul>
-</dd></dl>
+<li>0: Success.</li><li>1: Null <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> pointer passed.</li><li>2: Memory allocation failed.</li><li>3: Linear transformation matrix is singular.</li><li>4: Inconsistent or unrecognized coordinate axis types.</li><li>5: Invalid parameter value.</li><li>6: Invalid coordinate transformation parameters.</li><li>7: Ill-conditioned coordinate transformation parameters.</li><li>9: One or more of the world coordinates were invalid, as indicated by the stat vector.</li></ul>
+For returns &gt; 1, a detailed error message is set in <a class="el" href="structwcsprm.html#f54ce939604be183231f0ee006e2f8ed">wcsprm::err</a> if enabled, see <a class="el" href="wcserr_8h.html#1691b8bd184d40ca6fda255be078fa53" title="Enable/disable error messaging.">wcserr_enable()</a>. </dd></dl>
 
 </div>
 </div><p>
@@ -974,7 +1090,7 @@ Note that this routine need not be called directly; it will be invoked by <a cla
 </dl>
 <dl class="return" compact><dt><b>Returns:</b></dt><dd>Status return value:<ul>
 <li>0: Success.</li><li>1: Null <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> pointer passed.</li><li>2: Memory allocation failed.</li><li>3: Linear transformation matrix is singular.</li><li>4: Inconsistent or unrecognized coordinate axis types.</li><li>5: Invalid parameter value.</li><li>6: Invalid coordinate transformation parameters.</li><li>7: Ill-conditioned coordinate transformation parameters.</li><li>10: Invalid world coordinate.</li><li>11: No solution found in the specified interval.</li></ul>
-</dd></dl>
+For returns &gt; 1, a detailed error message is set in <a class="el" href="structwcsprm.html#f54ce939604be183231f0ee006e2f8ed">wcsprm::err</a> if enabled, see <a class="el" href="wcserr_8h.html#1691b8bd184d40ca6fda255be078fa53" title="Enable/disable error messaging.">wcserr_enable()</a>.</dd></dl>
 <b>Notes:</b> <br>
  Initially the specified solution interval is checked to see if it's a "crossing" interval. If it isn't, a search is made for a crossing solution by iterating on the unknown celestial coordinate starting at the upper limit of the solution interval and decrementing by the specified step size. A crossing is indicated if the trial value of the pixel coordinate steps through the value specified. If a crossing interval is found then the solution is determined by a modified form of "regula falsi" division of the crossing interval. If no crossing interval was found within the specified solution interval then a search is made for a "non-crossing" solution as may arise from a point of tangency. The process is complicated by having to make allowance for the discontinuities that occur in all map projections.<p>
 Once one solution has been determined others may be found by subsequent invokations of <b>wcsmix</b>() with suitably restricted solution intervals.<p>
@@ -1019,12 +1135,12 @@ Because of its generality <b>wcsmix</b>() is very compute-intensive. For compute
   <table border="0" cellspacing="2" cellpadding="0">
     <tr><td valign="top"><tt>[in,out]</tt>&nbsp;</td><td valign="top"><em>wcs</em>&nbsp;</td><td>Coordinate transformation parameters. </td></tr>
     <tr><td valign="top"><tt>[in,out]</tt>&nbsp;</td><td valign="top"><em>i</em>&nbsp;</td><td>Index of the spectral axis (0-relative). If given &lt; 0 it will be set to the first spectral axis identified from the ctype[] keyvalues in the <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> struct. </td></tr>
-    <tr><td valign="top"><tt>[in,out]</tt>&nbsp;</td><td valign="top"><em>ctype</em>&nbsp;</td><td>Desired spectral <code><b>CTYPE</b>ia</code>. Wildcarding may be used as for the ctypeS2 argument to <a class="el" href="spc_8h.html#96e8686daa13255e36506c3bfc213e46" title="Spectral keyword translation.">spctrn()</a> as described in the prologue of <a class="el" href="spc_8h.html">spc.h</a>, i.e. if the final three characters are specified as "???", or if just the eighth character is specified as '?', the correct algorithm code will be substituted and returned.</td></tr>
+    <tr><td valign="top"><tt>[in,out]</tt>&nbsp;</td><td valign="top"><em>ctype</em>&nbsp;</td><td>Desired spectral <code><b>CTYPE</b>ia</code>. Wildcarding may be used as for the ctypeS2 argument to <a class="el" href="spc_8h.html#96e8686daa13255e36506c3bfc213e46">spctrn()</a> as described in the prologue of <a class="el" href="spc_8h.html">spc.h</a>, i.e. if the final three characters are specified as "???", or if just the eighth character is specified as '?', the correct algorithm code will be substituted and returned.</td></tr>
   </table>
 </dl>
 <dl class="return" compact><dt><b>Returns:</b></dt><dd>Status return value:<ul>
-<li>0: Success.</li><li>1: Null <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> pointer passed.</li><li>2: Memory allocation failed.</li><li>3: Linear transformation matrix is singular.</li><li>4: Inconsistent or unrecognized coordinate axis types.</li><li>5: Invalid parameter value.</li><li>6: Invalid coordinate transformation parameters.</li><li>7: Ill-conditioned coordinate transformation parameters.</li><li>12: Invalid subimage specification (no spectral axis). </li></ul>
-</dd></dl>
+<li>0: Success.</li><li>1: Null <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> pointer passed.</li><li>2: Memory allocation failed.</li><li>3: Linear transformation matrix is singular.</li><li>4: Inconsistent or unrecognized coordinate axis types.</li><li>5: Invalid parameter value.</li><li>6: Invalid coordinate transformation parameters.</li><li>7: Ill-conditioned coordinate transformation parameters.</li><li>12: Invalid subimage specification (no spectral axis).</li></ul>
+For returns &gt; 1, a detailed error message is set in <a class="el" href="structwcsprm.html#f54ce939604be183231f0ee006e2f8ed">wcsprm::err</a> if enabled, see <a class="el" href="wcserr_8h.html#1691b8bd184d40ca6fda255be078fa53" title="Enable/disable error messaging.">wcserr_enable()</a>. </dd></dl>
 
 </div>
 </div><p>
@@ -1045,7 +1161,7 @@ Error messages to match the status value returned from each function.
 </div>
 </div><p>
 </div>
-<hr size="1"><address style="text-align: right;"><small>Generated on Mon Feb 7 18:03:57 2011 for WCSLIB 4.7 by&nbsp;
+<hr size="1"><address style="text-align: right;"><small>Generated on Mon Apr 2 17:55:24 2012 for WCSLIB 4.13.4 by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.5.6 </small></address>
 </body>

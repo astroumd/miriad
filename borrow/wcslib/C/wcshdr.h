@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.7 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2011, Mark Calabretta
+  WCSLIB 4.13 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2012, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -31,7 +31,7 @@
   $Id$
 *=============================================================================
 *
-* WCSLIB 4.7 - C routines that implement the FITS World Coordinate System
+* WCSLIB 4.13 - C routines that implement the FITS World Coordinate System
 * (WCS) standard.  Refer to
 *
 *   "Representations of world coordinates in FITS",
@@ -144,6 +144,7 @@
 *
 * Given:
 *   nkeyrec   int       Number of keyrecords in header[].
+*
 *   relax     int       Degree of permissiveness:
 *                         0: Recognize only FITS keywords defined by the
 *                            published WCS standard.
@@ -151,6 +152,7 @@
 *                            extensions of the WCS standard.
 *                       Fine-grained control of the degree of permissiveness
 *                       is also possible as explained in wcsbth() note 5.
+*
 *   ctrl      int       Error reporting and other control options for invalid
 *                       WCS and other header keyrecords:
 *                           0: Do not report any rejected header keyrecords.
@@ -186,7 +188,9 @@
 *                       illegal values, etc.  Keywords not recognized as WCS
 *                       keywords are simply ignored.  Refer also to wcsbth()
 *                       note 5.
+*
 *   nwcs      int*      Number of coordinate representations found.
+*
 *   wcs       struct wcsprm**
 *                       Pointer to an array of wcsprm structs containing up to
 *                       27 coordinate representations.
@@ -268,6 +272,7 @@
 *
 * Given:
 *   nkeyrec   int       Number of keyrecords in header[].
+*
 *   relax     int       Degree of permissiveness:
 *                         0: Recognize only FITS keywords defined by the
 *                            published WCS standard.
@@ -275,6 +280,7 @@
 *                            extensions of the WCS standard.
 *                       Fine-grained control of the degree of permissiveness
 *                       is also possible, as explained in note 5 below.
+*
 *   ctrl      int       Error reporting and other control options for invalid
 *                       WCS and other header keyrecords:
 *                           0: Do not report any rejected header keyrecords.
@@ -304,6 +310,7 @@
 *                       character), otherwise it will contain its original
 *                       complement of nkeyrec keyrecords and possibly not be
 *                       null-terminated.
+*
 *   keysel    int       Vector of flag bits that may be used to restrict the
 *                       keyword types considered:
 *                         WCSHDR_IMGHEAD: Image header keywords.
@@ -320,6 +327,7 @@
 *                       is present, then WCSHDR_IMGHEAD and WCSHDR_PIXLIST
 *                       alone may be sufficient to cause the construction of
 *                       coordinate descriptions for binary table image arrays.
+*
 *   colsel    int*      Pointer to an array of table column numbers used to
 *                       restrict the keywords considered by wcsbth().
 *
@@ -342,7 +350,9 @@
 *                       illegal values, etc.  Keywords not recognized as WCS
 *                       keywords are simply ignored, refer also to note 5
 *                       below.
+*
 *   nwcs      int*      Number of coordinate representations found.
+*
 *   wcs       struct wcsprm**
 *                       Pointer to an array of wcsprm structs containing up
 *                       to 27027 coordinate representations, refer to note 6
@@ -762,6 +772,11 @@
 *             int       Status return value:
 *                         0: Success.
 *                         1: Null wcsprm pointer passed.
+*                         2: Memory allocation failed.
+*                         3: Invalid tabular parameters.
+*
+*                       For returns > 1, a detailed error message is set in
+*                       wcsprm::err if enabled, see wcserr_enable().
 *
 *
 * wcsidx() - Index alternate coordinate representations
@@ -775,6 +790,7 @@
 *
 * Given:
 *   nwcs      int       Number of coordinate representations in the array.
+*
 *   wcs       const struct wcsprm**
 *                       Pointer to an array of wcsprm structs returned by
 *                       wcspih() or wcsbth().
@@ -807,9 +823,11 @@
 *
 * Given:
 *   nwcs      int       Number of coordinate representations in the array.
+*
 *   wcs       const struct wcsprm**
 *                       Pointer to an array of wcsprm structs returned by
 *                       wcsbth().
+*
 *   type      int       Select the type of coordinate representation:
 *                         0: binary table image arrays,
 *                         1: pixel lists.
@@ -848,6 +866,7 @@
 * Given and returned:
 *   nwcs      int*      Number of coordinate representations found; set to 0
 *                       on return.
+*
 *   wcs       struct wcsprm**
 *                       Pointer to the array of wcsprm structs; set to 0 on
 *                       return.
@@ -915,6 +934,7 @@
 * Returned:
 *   nkeyrec   int*      Number of FITS header keyrecords returned in the
 *                       "header" array.
+*
 *   header    char**    Pointer to an array of char holding the header.
 *                       Storage for the array is allocated by wcshdo() in
 *                       blocks of 2880 bytes (32 x 80-character keyrecords)
@@ -925,9 +945,20 @@
 *                       (*header)[0], the second at (*header)[80], etc.
 *
 * Function return value:
-*             int       Status return value:
+*             int       Status return value (associated with wcs_errmsg[]):
 *                         0: Success.
 *                         1: Null wcsprm pointer passed.
+*                         2: Memory allocation failed.
+*                         3: Linear transformation matrix is singular.
+*                         4: Inconsistent or unrecognized coordinate axis
+*                            types.
+*                         5: Invalid parameter value.
+*                         6: Invalid coordinate transformation parameters.
+*                         7: Ill-conditioned coordinate transformation
+*                            parameters.
+*
+*                       For returns > 1, a detailed error message is set in
+*                       wcsprm::err if enabled, see wcserr_enable().
 *
 * Notes:
 *   wcshdo() interprets the "relax" argument as a vector of flag bits to
@@ -1020,6 +1051,7 @@
 * Global variable: const char *wcshdr_errmsg[] - Status return messages
 * ---------------------------------------------------------------------
 * Error messages to match the status value returned from each function.
+* Use wcs_errmsg[] for status returns from wcshdo().
 *
 *===========================================================================*/
 
@@ -1067,6 +1099,15 @@ extern "C" {
 
 extern const char *wcshdr_errmsg[];
 
+enum wcshdr_errmsg_enum {
+  WCSHDRERR_SUCCESS            = 0,	/* Success. */
+  WCSHDRERR_NULL_POINTER       = 1,	/* Null wcsprm pointer passed. */
+  WCSHDRERR_MEMORY             = 2,	/* Memory allocation failed. */
+  WCSHDRERR_BAD_COLUMN         = 3,	/* Invalid column selection. */
+  WCSHDRERR_PARSER             = 4,	/* Fatal error returned by Flex
+					   parser. */
+  WCSHDRERR_BAD_TABULAR_PARAMS = 5 	/* Invalid tabular parameters. */
+};
 
 int wcspih(char *header, int nkeyrec, int relax, int ctrl, int *nreject,
            int *nwcs, struct wcsprm **wcs);

@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.7 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2011, Mark Calabretta
+  WCSLIB 4.13 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2012, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -31,7 +31,7 @@
   $Id$
 *=============================================================================
 *
-* WCSLIB 4.7 - C routines that implement the FITS World Coordinate System
+* WCSLIB 4.13 - C routines that implement the FITS World Coordinate System
 * (WCS) standard.  Refer to
 *
 *   "Representations of world coordinates in FITS",
@@ -89,8 +89,8 @@
 *   EPOCH, VELREF or VSOURCEa keywords; this may be done by the FITS WCS
 *   header parser supplied with WCSLIB, refer to wcshdr.h.
 *
-* wcsfix() applies all of the corrections handled by the following specific
-* functions which may also be invoked separately:
+* wcsfix() and wcsfixi() apply all of the corrections handled by the following
+* specific functions which may also be invoked separately:
 *
 *   - cdfix(): Sets the diagonal element of the CDi_ja matrix to 1.0 if all
 *     CDi_ja keywords associated with a particular axis are omitted.
@@ -103,11 +103,11 @@
 *   - unitfix(): translate some commonly used but non-standard unit strings in
 *     the CUNITia keyvalues, e.g. 'DEG' -> 'deg'.
 *
-*   - celfix(): translate AIPS-convention celestial projection types, NCP and
-*     GLS, in ctype[] as set from CTYPEia.
-*
 *   - spcfix(): translate AIPS-convention spectral types, 'FREQ-LSR',
 *     'FELO-HEL', etc., in ctype[] as set from CTYPEia.
+*
+*   - celfix(): translate AIPS-convention celestial projection types, NCP and
+*     GLS, in ctype[] as set from CTYPEia.
 *
 *   - cylfix(): fixes WCS keyvalues for malformed cylindrical projections that
 *     suffer from the problem described in Sect. 7.3.4 of Paper I.
@@ -115,8 +115,13 @@
 *
 * wcsfix() - Translate a non-standard WCS struct
 * ----------------------------------------------
-* wcsfix() applies all of the corrections handled separately by datfix(),
-* unitfix(), celfix(), spcfix() and cylfix().
+* wcsfix() is identical to wcsfixi(), but lacks the info argument.
+*
+*
+* wcsfixi() - Translate a non-standard WCS struct
+* -----------------------------------------------
+* wcsfix() applies all of the corrections handled separately by cdfix(),
+* datfix(), unitfix(), spcfix(), celfix(), and cylfix().
 *
 * Given:
 *   ctrl      int       Do potentially unsafe translations of non-standard
@@ -135,9 +140,15 @@
 *   stat      int [NWCSFIX]
 *                       Status returns from each of the functions.  Use the
 *                       preprocessor macros NWCSFIX to dimension this vector
-*                       and CDFIX, DATFIX, UNITFIX, CELFIX, SPCFIX and CYLFIX
+*                       and CDFIX, DATFIX, UNITFIX, SPCFIX, CELFIX, and CYLFIX
 *                       to access its elements.  A status value of -2 is set
 *                       for functions that were not invoked.
+*
+*   info      struct wcserr [NWCSFIX]
+*                       Status messages from each of the functions.  Use the
+*                       preprocessor macros NWCSFIX to dimension this vector
+*                       and CDFIX, DATFIX, UNITFIX, SPCFIX, CELFIX, and CYLFIX
+*                       to access its elements.
 *
 * Function return value:
 *             int       Status return value:
@@ -185,6 +196,9 @@
 *                         1: Null wcsprm pointer passed.
 *                         5: Invalid parameter value.
 *
+*                       For returns > 1, a detailed error message is set in
+*                       wcsprm::err if enabled, see wcserr_enable().
+*
 * Notes:
 *   The MJD algorithms used by datfix() are from D.A. Hatcher, 1984, QJRAS,
 *   25, 53-55, as modified by P.T. Wallace for use in SLALIB subroutines CLDJ
@@ -207,8 +221,43 @@
 * Function return value:
 *             int       Status return value:
 *                        -1: No change required (not an error).
+*                         0: Success (an alias was applied).
+*                         1: Null wcsprm pointer passed.
+*
+*                       When units are translated (i.e. status 0), status -2
+*                       is set in the wcserr struct to allow an informative
+*                       message to be returned.
+*
+*
+* spcfix() - Translate AIPS-convention spectral types
+* ---------------------------------------------------
+* spcfix() translates AIPS-convention spectral coordinate types,
+* '{FREQ,FELO,VELO}-{LSR,HEL,OBS}' (e.g. 'FREQ-OBS', 'FELO-HEL', 'VELO-LSR')
+* set in wcsprm::ctype[], subject to VELREF set in wcsprm::velref.
+*
+* Note that if wcs::specsys is already set then it will not be overridden.
+*
+* Given and returned:
+*   wcs       struct wcsprm*
+*                       Coordinate transformation parameters.  wcsprm::ctype[]
+*                       and/or wcsprm::specsys may be changed.
+*
+* Function return value:
+*             int       Status return value:
+*                        -1: No change required (not an error).
 *                         0: Success.
 *                         1: Null wcsprm pointer passed.
+*                         2: Memory allocation failed.
+*                         3: Linear transformation matrix is singular.
+*                         4: Inconsistent or unrecognized coordinate axis
+*                            types.
+*                         5: Invalid parameter value.
+*                         6: Invalid coordinate transformation parameters.
+*                         7: Ill-conditioned coordinate transformation
+*                            parameters.
+*
+*                       For returns > 1, a detailed error message is set in
+*                       wcsprm::err if enabled, see wcserr_enable().
 *
 *
 * celfix() - Translate AIPS-convention celestial projection types
@@ -240,31 +289,8 @@
 *                         7: Ill-conditioned coordinate transformation
 *                            parameters.
 *
-*
-* spcfix() - Translate AIPS-convention spectral types
-* ---------------------------------------------------
-* spcfix() translates AIPS-convention spectral coordinate types,
-* '{FREQ,FELO,VELO}-{LSR,HEL,OBS}' (e.g. 'FREQ-OBS', 'FELO-HEL', 'VELO-LSR')
-* set in wcsprm::ctype[], subject to VELREF set in wcsprm::velref.
-*
-* Given and returned:
-*   wcs       struct wcsprm*
-*                       Coordinate transformation parameters.  wcsprm::ctype[]
-*                       and/or wcsprm::specsys may be changed.
-*
-* Function return value:
-*             int       Status return value:
-*                        -1: No change required (not an error).
-*                         0: Success.
-*                         1: Null wcsprm pointer passed.
-*                         2: Memory allocation failed.
-*                         3: Linear transformation matrix is singular.
-*                         4: Inconsistent or unrecognized coordinate axis
-*                            types.
-*                         5: Invalid parameter value.
-*                         6: Invalid coordinate transformation parameters.
-*                         7: Ill-conditioned coordinate transformation
-*                            parameters.
+*                       For returns > 1, a detailed error message is set in
+*                       wcsprm::err if enabled, see wcserr_enable().
 *
 *
 * cylfix() - Fix malformed cylindrical projections
@@ -297,6 +323,9 @@
 *                         9: Could not determine reference pixel coordinate.
 *                        10: Could not determine reference pixel value.
 *
+*                       For returns > 1, a detailed error message is set in
+*                       wcsprm::err if enabled, see wcserr_enable().
+*
 *
 * Global variable: const char *wcsfix_errmsg[] - Status return messages
 * ---------------------------------------------------------------------
@@ -308,6 +337,7 @@
 #define WCSLIB_WCSFIX
 
 #include "wcs.h"
+#include "wcserr.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -316,16 +346,43 @@ extern "C" {
 #define CDFIX    0
 #define DATFIX   1
 #define UNITFIX  2
-#define CELFIX   3
-#define SPCFIX   4
+#define SPCFIX   3
+#define CELFIX   4
 #define CYLFIX   5
 #define NWCSFIX  6
 
 extern const char *wcsfix_errmsg[];
 #define cylfix_errmsg wcsfix_errmsg
 
+enum wcsfix_errmsg_enum {
+  FIXERR_DATE_FIX         = -4, /* The date formatting has been fixed up. */
+  FIXERR_SPC_UPDATE       = -3, /* Spectral axis type modified. */
+  FIXERR_UNITS_ALIAS      = -2,	/* Units alias translation. */
+  FIXERR_NO_CHANGE        = -1,	/* No change. */
+  FIXERR_SUCCESS          =  0,	/* Success. */
+  FIXERR_NULL_POINTER     =  1,	/* Null wcsprm pointer passed. */
+  FIXERR_MEMORY           =  2,	/* Memory allocation failed. */
+  FIXERR_SINGULAR_MTX     =  3,	/* Linear transformation matrix is
+				   singular. */
+  FIXERR_BAD_CTYPE        =  4,	/* Inconsistent or unrecognized coordinate
+				   axis types. */
+  FIXERR_BAD_PARAM        =  5,	/* Invalid parameter value. */
+  FIXERR_BAD_COORD_TRANS  =  6,	/* Invalid coordinate transformation
+				   parameters. */
+  FIXERR_ILL_COORD_TRANS  =  7,	/* Ill-conditioned coordinate transformation
+				   parameters. */
+  FIXERR_BAD_CORNER_PIX   =  8,	/* All of the corner pixel coordinates are
+				   invalid. */
+  FIXERR_NO_REF_PIX_COORD =  9,	/* Could not determine reference pixel
+				   coordinate. */
+  FIXERR_NO_REF_PIX_VAL   = 10	/* Could not determine reference pixel
+				   value. */
+};
 
 int wcsfix(int ctrl, const int naxis[], struct wcsprm *wcs, int stat[]);
+
+int wcsfixi(int ctrl, const int naxis[], struct wcsprm *wcs, int stat[],
+            struct wcserr info[]);
 
 int cdfix(struct wcsprm *wcs);
 
@@ -333,9 +390,9 @@ int datfix(struct wcsprm *wcs);
 
 int unitfix(int ctrl, struct wcsprm *wcs);
 
-int celfix(struct wcsprm *wcs);
-
 int spcfix(struct wcsprm *wcs);
+
+int celfix(struct wcsprm *wcs);
 
 int cylfix(const int naxis[], struct wcsprm *wcs);
 

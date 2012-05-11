@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.7 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2011, Mark Calabretta
+  WCSLIB 4.13 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2012, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -31,7 +31,7 @@
   $Id$
 *=============================================================================
 *
-* WCSLIB 4.7 - C routines that implement logarithmic coordinate systems as
+* WCSLIB 4.13 - C routines that implement logarithmic coordinate systems as
 * defined by the FITS World Coordinate System (WCS) standard.  Refer to
 *
 *   "Representations of world coordinates in FITS",
@@ -80,23 +80,24 @@
 *
 * Given:
 *   nx        int       Vector length.
+*
 *   sx        int       Vector stride.
+*
 *   slogc     int       Vector stride.
+*
 *   x         const double[]
 *                       Intermediate world coordinates, in SI units.
 *
 * Returned:
 *   logc      double[]  Logarithmic coordinates, in SI units.
+*
 *   stat      int[]     Status return value status for each vector element:
 *                         0: Success.
-*                         1: Invalid value of x.
 *
 * Function return value:
 *             int       Status return value:
 *                         0: Success.
 *                         2: Invalid log-coordinate reference value.
-*                         3: One or more of the x coordinates were invalid,
-*                            as indicated by the stat vector.
 *
 *
 * logs2x() - Transform logarithmic coordinates
@@ -109,13 +110,17 @@
 *
 * Given:
 *   nlogc     int       Vector length.
+*
 *   slogc     int       Vector stride.
+*
 *   sx        int       Vector stride.
+*
 *   logc      const double[]
 *                       Logarithmic coordinates, in SI units.
 *
 * Returned:
 *   x         double[]  Intermediate world coordinates, in SI units.
+*
 *   stat      int[]     Status return value status for each vector element:
 *                         0: Success.
 *                         1: Invalid value of logc.
@@ -124,6 +129,8 @@
 *             int       Status return value:
 *                         0: Success.
 *                         2: Invalid log-coordinate reference value.
+*                         4: One or more of the world-coordinate values
+*                            are incorrect, as indicated by the stat vector.
 *
 *
 * Global variable: const char *log_errmsg[] - Status return messages
@@ -139,9 +146,17 @@
 extern "C" {
 #endif
 
-
 extern const char *log_errmsg[];
 
+enum log_errmsg_enum {
+  LOGERR_SUCCESS         = 0,	/* Success. */
+  LOGERR_NULL_POINTER    = 1,	/* Null pointer passed. */
+  LOGERR_BAD_LOG_REF_VAL = 2,	/* Invalid log-coordinate reference value. */
+  LOGERR_BAD_X           = 3,	/* One or more of the x coordinates were
+				   invalid. */
+  LOGERR_BAD_WORLD       = 4 	/* One or more of the world coordinates were
+				   invalid. */
+};
 
 int logx2s(double crval, int nx, int sx, int slogc, const double x[],
            double logc[], int stat[]);

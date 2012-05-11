@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.7 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2011, Mark Calabretta
+  WCSLIB 4.13 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2012, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -70,6 +70,7 @@
 *                       keyrecords are NOT null-terminated.
 *
 *   nkeyrec   int       Number of keyrecords in header[].
+*
 *   nkeyids   int       Number of entries in keyids[].
 *
 * Given and returned:
@@ -85,6 +86,7 @@
 * Returned:
 *   nreject   int*      Number of header keyrecords rejected for syntax
 *                       errors.
+*
 *   keys      struct fitskey**
 *                       Pointer to an array of nkeyrec fitskey structs
 *                       containing all keywords and keyvalues extracted from

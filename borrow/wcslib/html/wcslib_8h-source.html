@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-<title>WCSLIB 4.7: wcslib.h Source File</title>
+<title>WCSLIB 4.13.4: wcslib.h Source File</title>
 <link href="doxygen.css" rel="stylesheet" type="text/css">
 <link href="tabs.css" rel="stylesheet" type="text/css">
 </head><body>
@@ -16,8 +16,8 @@
   </div>
 <h1>wcslib.h</h1><a href="wcslib_8h.html">Go to the documentation of this file.</a><div class="fragment"><pre class="fragment"><a name="l00001"></a>00001 <span class="comment">/*============================================================================</span>
 <a name="l00002"></a>00002 <span class="comment"></span>
-<a name="l00003"></a>00003 <span class="comment">  WCSLIB 4.7 - an implementation of the FITS WCS standard.</span>
-<a name="l00004"></a>00004 <span class="comment">  Copyright (C) 1995-2011, Mark Calabretta</span>
+<a name="l00003"></a>00003 <span class="comment">  WCSLIB 4.13 - an implementation of the FITS WCS standard.</span>
+<a name="l00004"></a>00004 <span class="comment">  Copyright (C) 1995-2012, Mark Calabretta</span>
 <a name="l00005"></a>00005 <span class="comment"></span>
 <a name="l00006"></a>00006 <span class="comment">  This file is part of WCSLIB.</span>
 <a name="l00007"></a>00007 <span class="comment"></span>
@@ -47,7 +47,7 @@
 <a name="l00031"></a>00031 <span class="comment">  $Id$</span>
 <a name="l00032"></a>00032 <span class="comment">*=============================================================================</span>
 <a name="l00033"></a>00033 <span class="comment">*</span>
-<a name="l00034"></a>00034 <span class="comment">* WCSLIB 4.7 - C routines that implement the FITS World Coordinate System</span>
+<a name="l00034"></a>00034 <span class="comment">* WCSLIB 4.13 - C routines that implement the FITS World Coordinate System</span>
 <a name="l00035"></a>00035 <span class="comment">* (WCS) standard.</span>
 <a name="l00036"></a>00036 <span class="comment">*</span>
 <a name="l00037"></a>00037 <span class="comment">* Summary of wcslib.h</span>
@@ -70,23 +70,67 @@
 <a name="l00054"></a>00054 <span class="preprocessor">#include "<a class="code" href="spx_8h.html">spx.h</a>"</span>
 <a name="l00055"></a>00055 <span class="preprocessor">#include "<a class="code" href="tab_8h.html">tab.h</a>"</span>
 <a name="l00056"></a>00056 <span class="preprocessor">#include "<a class="code" href="wcs_8h.html">wcs.h</a>"</span>
-<a name="l00057"></a>00057 <span class="preprocessor">#include "<a class="code" href="wcsfix_8h.html">wcsfix.h</a>"</span>
-<a name="l00058"></a>00058 <span class="preprocessor">#include "<a class="code" href="wcshdr_8h.html">wcshdr.h</a>"</span>
-<a name="l00059"></a>00059 <span class="preprocessor">#include "<a class="code" href="wcsmath_8h.html">wcsmath.h</a>"</span>
-<a name="l00060"></a>00060 <span class="preprocessor">#include "<a class="code" href="wcsprintf_8h.html">wcsprintf.h</a>"</span>
-<a name="l00061"></a>00061 <span class="preprocessor">#include "<a class="code" href="wcstrig_8h.html">wcstrig.h</a>"</span>
-<a name="l00062"></a>00062 <span class="preprocessor">#include "<a class="code" href="wcsunits_8h.html">wcsunits.h</a>"</span>
-<a name="l00063"></a>00063 <span class="preprocessor">#include "<a class="code" href="wcsutil_8h.html">wcsutil.h</a>"</span>
-<a name="l00064"></a>00064 
-<a name="l00065"></a>00065 <span class="preprocessor">#endif </span><span class="comment">/* WCSLIB_WCSLIB */</span>
-<a name="l00066"></a>00066 
-<a name="l02293"></a>02293 <span class="comment">/*</span>
-<a name="l02294"></a>02294 <span class="comment">Author: Mark Calabretta, Australia Telescope National Facility</span>
-<a name="l02295"></a>02295 <span class="comment">http://www.atnf.csiro.au/~mcalabre/index.html</span>
-<a name="l02296"></a>02296 <span class="comment">$Id$</span>
-<a name="l02297"></a>02297 <span class="comment">*/</span>
+<a name="l00057"></a>00057 <span class="preprocessor">#include "<a class="code" href="wcserr_8h.html">wcserr.h</a>"</span>
+<a name="l00058"></a>00058 <span class="preprocessor">#include "<a class="code" href="wcsfix_8h.html">wcsfix.h</a>"</span>
+<a name="l00059"></a>00059 <span class="preprocessor">#include "<a class="code" href="wcshdr_8h.html">wcshdr.h</a>"</span>
+<a name="l00060"></a>00060 <span class="preprocessor">#include "<a class="code" href="wcsmath_8h.html">wcsmath.h</a>"</span>
+<a name="l00061"></a>00061 <span class="preprocessor">#include "<a class="code" href="wcsprintf_8h.html">wcsprintf.h</a>"</span>
+<a name="l00062"></a>00062 <span class="preprocessor">#include "<a class="code" href="wcstrig_8h.html">wcstrig.h</a>"</span>
+<a name="l00063"></a>00063 <span class="preprocessor">#include "<a class="code" href="wcsunits_8h.html">wcsunits.h</a>"</span>
+<a name="l00064"></a>00064 <span class="preprocessor">#include "<a class="code" href="wcsutil_8h.html">wcsutil.h</a>"</span>
+<a name="l00065"></a>00065 
+<a name="l00066"></a>00066 <span class="preprocessor">#endif </span><span class="comment">/* WCSLIB_WCSLIB */</span>
+<a name="l00067"></a>00067 
+<a name="l01936"></a>01936   <a class="code" href="wcserr_8h.html#1691b8bd184d40ca6fda255be078fa53" title="Enable/disable error messaging.">wcserr_enable</a>(1);
+<a name="l01937"></a>01937   <a class="code" href="wcsprintf_8h.html#5c6f91916a0b8f8c2d85274c0ba130f6" title="Set output disposition for wcsprintf().">wcsprintf_set</a>(stderr);
+<a name="l01938"></a>01938 
+<a name="l01939"></a>01939   ...
+<a name="l01940"></a>01940 
+<a name="l01941"></a>01941   <span class="keywordflow">if</span> (<a class="code" href="wcs_8h.html#e5cc3f5d249755583403cdf54d2ebb91" title="Setup routine for the wcsprm struct.">wcsset</a>(&amp;wcs) {
+<a name="l01942"></a>01942     <a class="code" href="wcs_8h.html#8fe5dcd9927240dc0348b850ee662367" title="Print error messages from a wcsprm struct.">wcsperr</a>(&amp;wcs);
+<a name="l01943"></a>01943     <span class="keywordflow">return</span> wcs.err-&gt;status;
+<a name="l01944"></a>01944   }
+<a name="l01945"></a>01945 <span class="keyword">@end</span>verbatim
+<a name="l01946"></a>01946 In <span class="keyword">this</span> example, <span class="keywordflow">if</span> an error was generated in one of the <a class="code" href="prj_8h.html#d43dbc765c63162d0af2b9285b8a434f" title="Generic setup routine for the prjprm struct.">prjset</a>() functions,
+<a name="l01947"></a>01947 <a class="code" href="wcs_8h.html#8fe5dcd9927240dc0348b850ee662367" title="Print error messages from a wcsprm struct.">wcsperr</a>() would print an error traceback starting with <a class="code" href="wcs_8h.html#e5cc3f5d249755583403cdf54d2ebb91" title="Setup routine for the wcsprm struct.">wcsset</a>(), then
+<a name="l01948"></a>01948 <a class="code" href="cel_8h.html#b0f67d1727750616f71c7bfcb3a037b6" title="Setup routine for the celprm struct.">celset</a>(), and finally the particular projection-setting function that
+<a name="l01949"></a>01949 generated the error.  For each of them it would print the status return value,
+<a name="l01950"></a>01950 function name, source file, line number, and an error message which may be
+<a name="l01951"></a>01951 more specific and informative than the general error messages reported in the
+<a name="l01952"></a>01952 first example.  For example, in response to a deliberately generated error,
+<a name="l01953"></a>01953 the @c twcs test program, which tests <a class="code" href="structwcserr.html" title="Error message handling.">wcserr</a> among other things, produces a
+<a name="l01954"></a>01954 traceback similar to this:
+<a name="l01955"></a>01955 @verbatim
+<a name="l01956"></a>01956 ERROR 5 in wcsset() at line 1564 of file wcs.c:
+<a name="l01957"></a>01957   Invalid parameter value.
+<a name="l01958"></a>01958 ERROR 2 in celset() at line 196 of file cel.c:
+<a name="l01959"></a>01959   Invalid projection parameters.
+<a name="l01960"></a>01960 ERROR 2 in <a class="code" href="prj_8h.html#aec02a8e47d68e126983e9bb07a0c0aa" title="Set up a prjprm struct for Bonne&amp;#39;s (BON) projection.">bonset</a>() at line 5727 of file prj.c:
+<a name="l01961"></a>01961   Invalid parameters for Bonne's projection.
+<a name="l01962"></a>01962 @endverbatim
+<a name="l01963"></a>01963 
+<a name="l01964"></a>01964 Each of the @ref structs "structs" in @ref overview "WCSLIB" includes a
+<a name="l01965"></a>01965 pointer, called @a err, to a <a class="code" href="structwcserr.html" title="Error message handling.">wcserr</a> struct.  When an error occurs, a struct is
+<a name="l01966"></a>01966 allocated and error information stored in it.  The <a class="code" href="structwcserr.html" title="Error message handling.">wcserr</a> pointers and the
+<a name="l01967"></a>01967 @ref memory "memory" allocated for them are managed by the routines that
+<a name="l01968"></a>01968 manage the various structs such as <a class="code" href="wcs_8h.html#2afc8255fde0965dddaa374463666d45" title="Default constructor for the wcsprm struct.">wcsini</a>() and <a class="code" href="wcs_8h.html#4ab38bc642c4656f62c43acf84a849f1" title="Destructor for the wcsprm struct.">wcsfree</a>().
+<a name="l01969"></a>01969 
+<a name="l01970"></a>01970 <a class="code" href="structwcserr.html" title="Error message handling.">wcserr</a> messaging is an opt-in system enabled via <a class="code" href="wcserr_8h.html#1691b8bd184d40ca6fda255be078fa53" title="Enable/disable error messaging.">wcserr_enable</a>(), as in the
+<a name="l01971"></a>01971 example above.  If enabled, when an error occurs it is the user's
+<a name="l01972"></a>01972 responsibility to free the memory allocated for the error message using
+<a name="l01973"></a>01973 <a class="code" href="wcs_8h.html#4ab38bc642c4656f62c43acf84a849f1" title="Destructor for the wcsprm struct.">wcsfree</a>(), <a class="code" href="cel_8h.html#39bb7bf8e545c200191d51884ecfb89b" title="Destructor for the celprm struct.">celfree</a>(), <a class="code" href="prj_8h.html#50db1538981df162709b81be0b2961ab" title="Destructor for the prjprm struct.">prjfree</a>(), etc.  Failure to do so before the struct goes
+<a name="l01974"></a>01974 out of scope will result in memory leaks (if execution continues beyond the
+<a name="l01975"></a>01975 error).
+<a name="l01976"></a>01976 */
+<a name="l01977"></a>01977 
+<a name="l01978"></a>01978 
+<a name="l02450"></a>02450 <span class="comment">/*</span>
+<a name="l02451"></a>02451 <span class="comment">Author: Mark Calabretta, Australia Telescope National Facility</span>
+<a name="l02452"></a>02452 <span class="comment">http://www.atnf.csiro.au/~mcalabre/index.html</span>
+<a name="l02453"></a>02453 <span class="comment">$Id$</span>
+<a name="l02454"></a>02454 <span class="comment">*/</span>
 </pre></div></div>
-<hr size="1"><address style="text-align: right;"><small>Generated on Mon Feb 7 18:03:57 2011 for WCSLIB 4.7 by&nbsp;
+<hr size="1"><address style="text-align: right;"><small>Generated on Mon Apr 2 17:55:23 2012 for WCSLIB 4.13.4 by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.5.6 </small></address>
 </body>

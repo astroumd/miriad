@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-<title>WCSLIB 4.7: tab.h File Reference</title>
+<title>WCSLIB 4.13.4: tab.h File Reference</title>
 <link href="doxygen.css" rel="stylesheet" type="text/css">
 <link href="tabs.css" rel="stylesheet" type="text/css">
 </head><body>
@@ -16,7 +16,8 @@
   </div>
 </div>
 <div class="contents">
-<h1>tab.h File Reference</h1>
+<h1>tab.h File Reference</h1><code>#include &quot;<a class="el" href="wcserr_8h-source.html">wcserr.h</a>&quot;</code><br>
+
 <p>
 <a href="tab_8h-source.html">Go to the source code of this file.</a><table border="0" cellpadding="0" cellspacing="0">
 <tr><td></td></tr>
@@ -49,6 +50,18 @@
 <tr><td class="memItemLeft" nowrap align="right" valign="top">#define&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="tab_8h.html#49872082d67e357c5c68a633824133ae">tabs2x_errmsg</a>&nbsp;&nbsp;&nbsp;<a class="el" href="tab_8h.html#824d1e7c8fea5e5918a8555df39aa5b7">tab_errmsg</a></td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Deprecated.  <a href="#49872082d67e357c5c68a633824133ae"></a><br></td></tr>
+<tr><td colspan="2"><br><h2>Enumerations</h2></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">enum &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="tab_8h.html#bd68f3b717dcf0fcd0078b9a4204f2ed">tab_errmsg_enum</a> { <br>
+&nbsp;&nbsp;<a class="el" href="tab_8h.html#bd68f3b717dcf0fcd0078b9a4204f2ed42a664a8df3b0a485f49eb0e7c8108cd">TABERR_SUCCESS</a> =  0, 
+<a class="el" href="tab_8h.html#bd68f3b717dcf0fcd0078b9a4204f2eda0705873598b9fa5bf3b9afbc598a6bc">TABERR_NULL_POINTER</a> =  1, 
+<a class="el" href="tab_8h.html#bd68f3b717dcf0fcd0078b9a4204f2ed1e503c059ddfe8f4aca37d335f7271f8">TABERR_MEMORY</a> =  2, 
+<a class="el" href="tab_8h.html#bd68f3b717dcf0fcd0078b9a4204f2ed09c02b9ffff721d3f2dd64c318d7c38b">TABERR_BAD_PARAMS</a> =  3, 
+<br>
+&nbsp;&nbsp;<a class="el" href="tab_8h.html#bd68f3b717dcf0fcd0078b9a4204f2edc6f6b4c9eca2bd36b0bf2f89309f9297">TABERR_BAD_X</a> =  4, 
+<a class="el" href="tab_8h.html#bd68f3b717dcf0fcd0078b9a4204f2ed9d77712eeed3ab7d2bf25e5251c9451b">TABERR_BAD_WORLD</a> =  5
+<br>
+ }</td></tr>
+
 <tr><td colspan="2"><br><h2>Functions</h2></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="tab_8h.html#bb7920acdfb83179d3bac65035144c02">tabini</a> (int alloc, int M, const int K[], struct <a class="el" href="structtabprm.html">tabprm</a> *tab)</td></tr>
 
@@ -213,6 +226,38 @@ Size of the <a class="el" href="structtabprm.html" title="Tabular transformation
 
 </div>
 </div><p>
+<hr><h2>Enumeration Type Documentation</h2>
+<a class="anchor" name="bd68f3b717dcf0fcd0078b9a4204f2ed"></a><!-- doxytag: member="tab.h::tab_errmsg_enum" ref="bd68f3b717dcf0fcd0078b9a4204f2ed" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum <a class="el" href="tab_8h.html#bd68f3b717dcf0fcd0078b9a4204f2ed">tab_errmsg_enum</a>          </td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+<dl compact><dt><b>Enumerator: </b></dt><dd>
+<table border="0" cellspacing="2" cellpadding="0">
+<tr><td valign="top"><em><a class="anchor" name="bd68f3b717dcf0fcd0078b9a4204f2ed42a664a8df3b0a485f49eb0e7c8108cd"></a><!-- doxytag: member="TABERR_SUCCESS" ref="bd68f3b717dcf0fcd0078b9a4204f2ed42a664a8df3b0a485f49eb0e7c8108cd" args="" -->TABERR_SUCCESS</em>&nbsp;</td><td>
+</td></tr>
+<tr><td valign="top"><em><a class="anchor" name="bd68f3b717dcf0fcd0078b9a4204f2eda0705873598b9fa5bf3b9afbc598a6bc"></a><!-- doxytag: member="TABERR_NULL_POINTER" ref="bd68f3b717dcf0fcd0078b9a4204f2eda0705873598b9fa5bf3b9afbc598a6bc" args="" -->TABERR_NULL_POINTER</em>&nbsp;</td><td>
+</td></tr>
+<tr><td valign="top"><em><a class="anchor" name="bd68f3b717dcf0fcd0078b9a4204f2ed1e503c059ddfe8f4aca37d335f7271f8"></a><!-- doxytag: member="TABERR_MEMORY" ref="bd68f3b717dcf0fcd0078b9a4204f2ed1e503c059ddfe8f4aca37d335f7271f8" args="" -->TABERR_MEMORY</em>&nbsp;</td><td>
+</td></tr>
+<tr><td valign="top"><em><a class="anchor" name="bd68f3b717dcf0fcd0078b9a4204f2ed09c02b9ffff721d3f2dd64c318d7c38b"></a><!-- doxytag: member="TABERR_BAD_PARAMS" ref="bd68f3b717dcf0fcd0078b9a4204f2ed09c02b9ffff721d3f2dd64c318d7c38b" args="" -->TABERR_BAD_PARAMS</em>&nbsp;</td><td>
+</td></tr>
+<tr><td valign="top"><em><a class="anchor" name="bd68f3b717dcf0fcd0078b9a4204f2edc6f6b4c9eca2bd36b0bf2f89309f9297"></a><!-- doxytag: member="TABERR_BAD_X" ref="bd68f3b717dcf0fcd0078b9a4204f2edc6f6b4c9eca2bd36b0bf2f89309f9297" args="" -->TABERR_BAD_X</em>&nbsp;</td><td>
+</td></tr>
+<tr><td valign="top"><em><a class="anchor" name="bd68f3b717dcf0fcd0078b9a4204f2ed9d77712eeed3ab7d2bf25e5251c9451b"></a><!-- doxytag: member="TABERR_BAD_WORLD" ref="bd68f3b717dcf0fcd0078b9a4204f2ed9d77712eeed3ab7d2bf25e5251c9451b" args="" -->TABERR_BAD_WORLD</em>&nbsp;</td><td>
+</td></tr>
+</table>
+</dl>
+
+</div>
+</div><p>
 <hr><h2>Function Documentation</h2>
 <a class="anchor" name="bb7920acdfb83179d3bac65035144c02"></a><!-- doxytag: member="tab.h::tabini" ref="bb7920acdfb83179d3bac65035144c02" args="(int alloc, int M, const int K[], struct tabprm *tab)" -->
 <div class="memitem">
@@ -265,8 +310,8 @@ Size of the <a class="el" href="structtabprm.html" title="Tabular transformation
   </table>
 </dl>
 <dl class="return" compact><dt><b>Returns:</b></dt><dd>Status return value:<ul>
-<li>0: Success.</li><li>1: Null <a class="el" href="structtabprm.html" title="Tabular transformation parameters.">tabprm</a> pointer passed.</li><li>2: Memory allocation failed.</li><li>3: Invalid tabular parameters. </li></ul>
-</dd></dl>
+<li>0: Success.</li><li>1: Null <a class="el" href="structtabprm.html" title="Tabular transformation parameters.">tabprm</a> pointer passed.</li><li>2: Memory allocation failed.</li><li>3: Invalid tabular parameters.</li></ul>
+For returns &gt; 1, a detailed error message is set in <a class="el" href="structtabprm.html#3df12930fa5f38dcfc71aece8aed816c">tabprm::err</a> if enabled, see <a class="el" href="wcserr_8h.html#1691b8bd184d40ca6fda255be078fa53" title="Enable/disable error messaging.">wcserr_enable()</a>. </dd></dl>
 
 </div>
 </div><p>
@@ -294,8 +339,8 @@ Size of the <a class="el" href="structtabprm.html" title="Tabular transformation
   </table>
 </dl>
 <dl class="return" compact><dt><b>Returns:</b></dt><dd>Status return value:<ul>
-<li>0: Success.</li><li>1: Null <a class="el" href="structtabprm.html" title="Tabular transformation parameters.">tabprm</a> pointer passed. </li></ul>
-</dd></dl>
+<li>0: Success.</li><li>1: Null <a class="el" href="structtabprm.html" title="Tabular transformation parameters.">tabprm</a> pointer passed.</li><li>2: Memory allocation failed.</li></ul>
+For returns &gt; 1, a detailed error message is set in <a class="el" href="structtabprm.html#3df12930fa5f38dcfc71aece8aed816c">tabprm::err</a> if enabled, see <a class="el" href="wcserr_8h.html#1691b8bd184d40ca6fda255be078fa53" title="Enable/disable error messaging.">wcserr_enable()</a>. </dd></dl>
 
 </div>
 </div><p>
@@ -341,8 +386,8 @@ Size of the <a class="el" href="structtabprm.html" title="Tabular transformation
   </table>
 </dl>
 <dl class="return" compact><dt><b>Returns:</b></dt><dd>Status return value:<ul>
-<li>0: Success.</li><li>1: Null <a class="el" href="structtabprm.html" title="Tabular transformation parameters.">tabprm</a> pointer passed.</li><li>2: Memory allocation failed. </li></ul>
-</dd></dl>
+<li>0: Success.</li><li>1: Null <a class="el" href="structtabprm.html" title="Tabular transformation parameters.">tabprm</a> pointer passed.</li><li>2: Memory allocation failed.</li></ul>
+For returns &gt; 1, a detailed error message is set in <a class="el" href="structtabprm.html#3df12930fa5f38dcfc71aece8aed816c">tabprm::err</a> (associated with tabdst) if enabled, see <a class="el" href="wcserr_8h.html#1691b8bd184d40ca6fda255be078fa53" title="Enable/disable error messaging.">wcserr_enable()</a>. </dd></dl>
 
 </div>
 </div><p>
@@ -393,7 +438,7 @@ Size of the <a class="el" href="structtabprm.html" title="Tabular transformation
 <div class="memdoc">
 
 <p>
-<b>tabprt</b>() prints the contents of a <a class="el" href="structtabprm.html" title="Tabular transformation parameters.">tabprm</a> struct.<p>
+<b>tabprt</b>() prints the contents of a <a class="el" href="structtabprm.html" title="Tabular transformation parameters.">tabprm</a> struct using <a class="el" href="wcsprintf_8h.html#46950abaf5a27347da8160741f98f973" title="Print function used by WCSLIB diagnostic routines.">wcsprintf()</a>. Mainly intended for diagnostic purposes.<p>
 <dl compact><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
     <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>tab</em>&nbsp;</td><td>Tabular transformation parameters.</td></tr>
@@ -430,8 +475,8 @@ Note that this routine need not be called directly; it will be invoked by <a cla
   </table>
 </dl>
 <dl class="return" compact><dt><b>Returns:</b></dt><dd>Status return value:<ul>
-<li>0: Success.</li><li>1: Null <a class="el" href="structtabprm.html" title="Tabular transformation parameters.">tabprm</a> pointer passed.</li><li>3: Invalid tabular parameters. </li></ul>
-</dd></dl>
+<li>0: Success.</li><li>1: Null <a class="el" href="structtabprm.html" title="Tabular transformation parameters.">tabprm</a> pointer passed.</li><li>3: Invalid tabular parameters.</li></ul>
+For returns &gt; 1, a detailed error message is set in <a class="el" href="structtabprm.html#3df12930fa5f38dcfc71aece8aed816c">tabprm::err</a> if enabled, see <a class="el" href="wcserr_8h.html#1691b8bd184d40ca6fda255be078fa53" title="Enable/disable error messaging.">wcserr_enable()</a>. </dd></dl>
 
 </div>
 </div><p>
@@ -498,8 +543,8 @@ Note that this routine need not be called directly; it will be invoked by <a cla
   </table>
 </dl>
 <dl class="return" compact><dt><b>Returns:</b></dt><dd>Status return value:<ul>
-<li>0: Success.</li><li>1: Null <a class="el" href="structtabprm.html" title="Tabular transformation parameters.">tabprm</a> pointer passed.</li><li>3: Invalid tabular parameters.</li><li>4: One or more of the x coordinates were invalid, as indicated by the stat vector. </li></ul>
-</dd></dl>
+<li>0: Success.</li><li>1: Null <a class="el" href="structtabprm.html" title="Tabular transformation parameters.">tabprm</a> pointer passed.</li><li>3: Invalid tabular parameters.</li><li>4: One or more of the x coordinates were invalid, as indicated by the stat vector.</li></ul>
+For returns &gt; 1, a detailed error message is set in <a class="el" href="structtabprm.html#3df12930fa5f38dcfc71aece8aed816c">tabprm::err</a> if enabled, see <a class="el" href="wcserr_8h.html#1691b8bd184d40ca6fda255be078fa53" title="Enable/disable error messaging.">wcserr_enable()</a>. </dd></dl>
 
 </div>
 </div><p>
@@ -566,8 +611,8 @@ Note that this routine need not be called directly; it will be invoked by <a cla
   </table>
 </dl>
 <dl class="return" compact><dt><b>Returns:</b></dt><dd>Status return value:<ul>
-<li>0: Success.</li><li>1: Null <a class="el" href="structtabprm.html" title="Tabular transformation parameters.">tabprm</a> pointer passed.</li><li>3: Invalid tabular parameters.</li><li>5: One or more of the world coordinates were invalid, as indicated by the stat vector. </li></ul>
-</dd></dl>
+<li>0: Success.</li><li>1: Null <a class="el" href="structtabprm.html" title="Tabular transformation parameters.">tabprm</a> pointer passed.</li><li>3: Invalid tabular parameters.</li><li>5: One or more of the world coordinates were invalid, as indicated by the stat vector.</li></ul>
+For returns &gt; 1, a detailed error message is set in <a class="el" href="structtabprm.html#3df12930fa5f38dcfc71aece8aed816c">tabprm::err</a> if enabled, see <a class="el" href="wcserr_8h.html#1691b8bd184d40ca6fda255be078fa53" title="Enable/disable error messaging.">wcserr_enable()</a>. </dd></dl>
 
 </div>
 </div><p>
@@ -588,7 +633,7 @@ Error messages to match the status value returned from each function.
 </div>
 </div><p>
 </div>
-<hr size="1"><address style="text-align: right;"><small>Generated on Mon Feb 7 18:03:57 2011 for WCSLIB 4.7 by&nbsp;
+<hr size="1"><address style="text-align: right;"><small>Generated on Mon Apr 2 17:55:24 2012 for WCSLIB 4.13.4 by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.5.6 </small></address>
 </body>

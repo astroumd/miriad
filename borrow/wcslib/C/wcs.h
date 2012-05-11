@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.7 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2011, Mark Calabretta
+  WCSLIB 4.13 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2012, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -31,7 +31,7 @@
   $Id$
 *=============================================================================
 *
-* WCSLIB 4.7 - C routines that implement the FITS World Coordinate System
+* WCSLIB 4.13 - C routines that implement the FITS World Coordinate System
 * (WCS) standard.  Refer to
 *
 *   "Representations of world coordinates in FITS",
@@ -64,6 +64,9 @@
 * of these routines.  wcscopy(), which does a deep copy of one wcsprm struct
 * to another, is defined as a preprocessor macro function that invokes
 * wcssub().
+*
+* wcsperr() prints the error message(s) (if any) stored in a wcsprm struct,
+* and the linprm, celprm, prjprm, spcprm, and tabprm structs that it contains.
 *
 * A setup routine, wcsset(), computes intermediate values in the wcsprm struct
 * from parameters in it that were supplied by the user.  The struct always
@@ -152,6 +155,9 @@
 *                         1: Null wcsprm pointer passed.
 *                         2: Memory allocation failed.
 *
+*                       For returns > 1, a detailed error message is set in
+*                       wcsprm::err if enabled, see wcserr_enable().
+*
 *
 * wcsnpv() - Memory allocation for PVi_ma
 * ---------------------------------------
@@ -201,6 +207,11 @@
 * wtbarr array is not.  (Thus it is not appropriate to call wcssub() after
 * wcstab() but before filling the tabprm structs - refer to wcshdr.h.)
 *
+* wcssub() can also add axes to a wcsprm struct.  The new axes will be created
+* using the defaults set by wcsini() which produce a simple, unnamed, linear
+* axis with world coordinate equal to the pixel coordinate.  These default
+* values can be changed in before invoking wcsset().
+*
 * Given:
 *   alloc     int       If true, allocate memory for the crpix, etc. arrays in
 *                       the destination.  Otherwise, it is assumed that
@@ -219,10 +230,13 @@
 *                       image that corresponds to the first axis in the
 *                       subimage, etc.
 *
+*                       Use an axis number of 0 to create a new axis using
+*                       the defaults set by wcsini().
+*
 *                       nsub (the pointer) may be set to zero, and so also may
 *                       nsub, to indicate the number of axes in the input
 *                       image; the number of axes will be returned if
-*                       nsub != 0.  axes itself (the pointer) may be set to
+*                       nsub != 0x0.  axes itself (the pointer) may be set to
 *                       zero to indicate the first *nsub axes in their
 *                       original order.
 *
@@ -245,10 +259,11 @@
 *                       the subimage; this may be zero if there were no axes
 *                       of the required type(s) (in which case no memory will
 *                       be allocated).  axes[] will contain the axis numbers
-*                       that were extracted.  The vector length must be
-*                       sufficient to contain all axis numbers.  No checks are
-*                       performed to verify that the coordinate axes are
-*                       consistent, this is done by wcsset().
+*                       that were extracted, or 0 for newly created axes.  The
+*                       vector length must be sufficient to contain all axis
+*                       numbers.  No checks are performed to verify that the
+*                       coordinate axes are consistent, this is done by
+*                       wcsset().
 *
 *   wcsdst    struct wcsprm*
 *                       Struct describing the subimage.  wcsprm::flag should
@@ -263,6 +278,9 @@
 *                         2: Memory allocation failed.
 *                        12: Invalid subimage specification.
 *                        13: Non-separable subimage coordinate system.
+*
+*                       For returns > 1, a detailed error message is set in
+*                       wcsprm::err if enabled, see wcserr_enable().
 *
 * Notes:
 *   Combinations of subimage axes of particular types may be extracted in the
@@ -295,7 +313,8 @@
 *
 *   From the foregoing, it is apparent that the value of *nsub returned may be
 *   less than or greater than that given.  However, it will never exceed the
-*   number of axes in the input image.
+*   number of axes in the input image (plus the number of newly-created axes
+*   if any were specified on input).
 *
 *
 * wcscopy() macro - Copy routine for the wcsprm struct
@@ -326,11 +345,32 @@
 *
 * wcsprt() - Print routine for the wcsprm struct
 * ----------------------------------------------
-* wcsprt() prints the contents of a wcsprm struct.
+* wcsprt() prints the contents of a wcsprm struct using wcsprintf().  Mainly
+* intended for diagnostic purposes.
 *
 * Given:
 *   wcs       const struct wcsprm*
 *                       Coordinate transformation parameters.
+*
+* Function return value:
+*             int       Status return value:
+*                         0: Success.
+*                         1: Null wcsprm pointer passed.
+*
+*
+* wcsperr() - Print error messages from a wcsprm struct
+* -----------------------------------------------------
+* wcsperr() prints the error message(s), if any, stored in a wcsprm struct,
+* and the linprm, celprm, prjprm, spcprm, and tabprm structs that it contains.
+* If there are no errors then nothing is printed.  It uses wcserr_prt(), q.v.
+*
+* Given:
+*   wcs       const struct wcsprm*
+*                       Coordinate transformation parameters.
+*
+*   prefix    const char *
+*                       If non-NULL, each output line will be prefixed with
+*                       this string.
 *
 * Function return value:
 *             int       Status return value:
@@ -369,6 +409,9 @@
 *                         7: Ill-conditioned coordinate transformation
 *                            parameters.
 *
+*                       For returns > 1, a detailed error message is set in
+*                       wcsprm::err if enabled, see wcserr_enable().
+*
 *
 * wcsp2s() - Pixel-to-world transformation
 * ----------------------------------------
@@ -385,6 +428,7 @@
 *                       Thus nelem must equal or exceed the value of the
 *                       NAXIS keyword unless ncoord == 1, in which case nelem
 *                       is not used.
+*
 *   pixcrd    const double[ncoord][nelem]
 *                       Array of pixel coordinates.
 *
@@ -429,6 +473,9 @@
 *                         8: One or more of the pixel coordinates were
 *                            invalid, as indicated by the stat vector.
 *
+*                       For returns > 1, a detailed error message is set in
+*                       wcsprm::err if enabled, see wcserr_enable().
+*
 *
 * wcss2p() - World-to-pixel transformation
 * ----------------------------------------
@@ -445,6 +492,7 @@
 *                       nelem must equal or exceed the value of the NAXIS
 *                       keyword unless ncoord == 1, in which case nelem is not
 *                       used.
+*
 *   world     const double[ncoord][nelem]
 *                       Array of world coordinates.  For celestial axes,
 *                       world[][wcs.lng] and world[][wcs.lat] are the
@@ -491,6 +539,9 @@
 *                         9: One or more of the world coordinates were
 *                            invalid, as indicated by the stat vector.
 *
+*                       For returns > 1, a detailed error message is set in
+*                       wcsprm::err if enabled, see wcserr_enable().
+*
 *
 * wcsmix() - Hybrid coordinate transformation
 * -------------------------------------------
@@ -506,6 +557,7 @@
 *
 * Given:
 *   mixpix    int       Which element of the pixel coordinate is given.
+*
 *   mixcel    int       Which element of the celestial coordinate is given:
 *                         1: Celestial longitude is given in
 *                            world[wcs.lng], latitude returned in
@@ -571,6 +623,9 @@
 *                        10: Invalid world coordinate.
 *                        11: No solution found in the specified interval.
 *
+*                       For returns > 1, a detailed error message is set in
+*                       wcsprm::err if enabled, see wcserr_enable().
+*
 * Notes:
 *   Initially the specified solution interval is checked to see if it's a
 *   "crossing" interval.  If it isn't, a search is made for a crossing
@@ -607,9 +662,11 @@
 * Given and returned:
 *   wcs       struct wcsprm*
 *                       Coordinate transformation parameters.
+*
 *   i         int*      Index of the spectral axis (0-relative).  If given < 0
 *                       it will be set to the first spectral axis identified
 *                       from the ctype[] keyvalues in the wcsprm struct.
+*
 *   ctype     char[9]   Desired spectral CTYPEia.  Wildcarding may be used as
 *                       for the ctypeS2 argument to spctrn() as described in
 *                       the prologue of spc.h, i.e. if the final three
@@ -631,6 +688,9 @@
 *                            parameters.
 *                        12: Invalid subimage specification (no spectral
 *                            axis).
+*
+*                       For returns > 1, a detailed error message is set in
+*                       wcsprm::err if enabled, see wcserr_enable().
 *
 *
 * wcsprm struct - Coordinate transformation parameters
@@ -1025,6 +1085,30 @@
 *     Although technically wcsprm::nwtb and wtb are "given", they will
 *     normally be set by invoking wcstab(), whether directly or indirectly.
 *
+*   char lngtyp[8]
+*     (Returned) Four-character WCS celestial longitude and ...
+*   char lattyp[8]
+*     (Returned) ... latitude axis types. e.g. "RA", "DEC", "GLON", "GLAT",
+*     etc. extracted from 'RA--', 'DEC-', 'GLON', 'GLAT', etc. in the first
+*     four characters of CTYPEia but with trailing dashes removed.  (Declared
+*     as char[8] for alignment reasons.)
+*
+*   int lng
+*     (Returned) Index for the longitude coordinate, and ...
+*   int lat
+*     (Returned) ... index for the latitude coordinate, and ...
+*   int spec
+*     (Returned) ... index for the spectral coordinate in the imgcrd[][] and
+*     world[][] arrays in the API of wcsp2s(), wcss2p() and wcsmix().
+*
+*     These may also serve as indices into the pixcrd[][] array provided that
+*     the PCi_ja matrix does not transpose axes.
+*
+*   int cubeface
+*     (Returned) Index into the pixcrd[][] array for the CUBEFACE axis.  This
+*     is used for quadcube projections where the cube faces are stored on a
+*     separate axis (see wcs.h).
+*
 *   int *types
 *     (Returned) Address of the first element of an array of int containing a
 *     four-digit type code for each axis.
@@ -1059,29 +1143,8 @@
 *     CTYPEia in "4-3" form with unrecognized algorithm code will have its
 *     type set to -1 and generate an error.
 *
-*   char lngtyp[8]
-*     (Returned) Four-character WCS celestial longitude and ...
-*   char lattyp[8]
-*     (Returned) ... latitude axis types. e.g. "RA", "DEC", "GLON", "GLAT",
-*     etc. extracted from 'RA--', 'DEC-', 'GLON', 'GLAT', etc. in the first
-*     four characters of CTYPEia but with trailing dashes removed.  (Declared
-*     as char[8] for alignment reasons.)
-*
-*   int lng
-*     (Returned) Index for the longitude coordinate, and ...
-*   int lat
-*     (Returned) ... index for the latitude coordinate, and ...
-*   int spec
-*     (Returned) ... index for the spectral coordinate in the imgcrd[][] and
-*     world[][] arrays in the API of wcsp2s(), wcss2p() and wcsmix().
-*
-*     These may also serve as indices into the pixcrd[][] array provided that
-*     the PCi_ja matrix does not transpose axes.
-*
-*   int cubeface
-*     (Returned) Index into the pixcrd[][] array for the CUBEFACE axis.  This
-*     is used for quadcube projections where the cube faces are stored on a
-*     separate axis (see wcs.h).
+*   void *padding
+*     (An unused variable inserted for alignment purposes only.)
 *
 *   struct linprm lin
 *     (Returned) Linear transformation parameters (usage is described in the
@@ -1095,6 +1158,12 @@
 *     (Returned) Spectral transformation parameters (usage is described in the
 *     prologue to spc.h).
 *
+*   struct wcserr *err
+*     (Returned) If enabled, when an error status is returned this struct
+*     contains detailed information about the error, see wcserr_enable().
+*
+*   void *m_padding
+*     (For internal use only.)
 *   int m_flag
 *     (For internal use only.)
 *   int m_naxis
@@ -1158,7 +1227,8 @@
 * All members of this struct are to be set by the user.
 *
 *   int i
-*     (Given) Axis number (1-relative), as in the FITS PVi_ma keyword.
+*     (Given) Axis number (1-relative), as in the FITS PVi_ma keyword.  If
+*     i == 0, wcsset() will replace it with the latitude axis number.
 *
 *   int m
 *     (Given) Parameter number (non-negative), as in the FITS PVi_ma keyword.
@@ -1231,6 +1301,7 @@
 #include "cel.h"
 #include "spc.h"
 #include "tab.h"
+#include "wcserr.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -1246,6 +1317,32 @@ extern "C" {
 
 extern const char *wcs_errmsg[];
 
+enum wcs_errmsg_enum {
+  WCSERR_SUCCESS         =  0,	/* Success. */
+  WCSERR_NULL_POINTER    =  1,	/* Null wcsprm pointer passed. */
+  WCSERR_MEMORY          =  2,	/* Memory allocation failed. */
+  WCSERR_SINGULAR_MTX    =  3,	/* Linear transformation matrix is
+				   singular. */
+  WCSERR_BAD_CTYPE       =  4,	/* Inconsistent or unrecognized coordinate
+				   axis types. */
+  WCSERR_BAD_PARAM       =  5,	/* Invalid parameter value. */
+  WCSERR_BAD_COORD_TRANS =  6,	/* Invalid coordinate transformation
+				   parameters. */
+  WCSERR_ILL_COORD_TRANS =  7,	/* Ill-conditioned coordinate transformation
+				   parameters. */
+  WCSERR_BAD_PIX         =  8,	/* One or more of the pixel coordinates were
+				   invalid. */
+  WCSERR_BAD_WORLD       =  9,	/* One or more of the world coordinates were
+				   invalid. */
+  WCSERR_BAD_WORLD_COORD = 10,	/* Invalid world coordinate. */
+  WCSERR_NO_SOLUTION     = 11,	/* No solution found in the specified
+				   interval. */
+  WCSERR_BAD_SUBIMAGE    = 12,	/* Invalid subimage specification. */
+  WCSERR_NON_SEPARABLE   = 13	/* Non-separable subimage coordinate
+				   system. */
+};
+
+
 /* Struct used for storing PVi_ma keywords. */
 struct pvcard {
   int i;			/* Axis number, as in PVi_ma (1-relative).  */
@@ -1260,7 +1357,9 @@ struct pscard {
   char value[72];		/* Parameter value.                         */
 };
 
-				/* For extracting wcstab arrays.            */
+				/* For extracting wcstab arrays.  Matches   */
+				/* the wtbarr typedef defined in CFITSIO    */
+				/* header fitsio.h.                         */
 #ifdef __cplusplus
 #define wtbarr wtbarr_s		/* See prologue above.                      */
 #endif
@@ -1349,21 +1448,28 @@ struct wcsprm {
   int    nwtb;			/* Number of wtbarr structs.                */
   struct tabprm *tab;		/* Tabular transformation parameters.       */
   struct wtbarr *wtb;		/* Array of wtbarr structs.                 */
-  int    *padding;		/* (Dummy inserted for alignment purposes.) */
 
   /* Information derived from the FITS header keyvalues by wcsset().        */
   /*------------------------------------------------------------------------*/
-  int    *types;		/* Coordinate type codes for each axis.     */
   char   lngtyp[8], lattyp[8];	/* Celestial axis types, e.g. RA, DEC.      */
   int    lng, lat, spec;	/* Longitude, latitude and spectral axis    */
 				/* indices (0-relative).                    */
   int    cubeface;		/* True if there is a CUBEFACE axis.        */
+  int    *types;		/* Coordinate type codes for each axis.     */
+  void   *padding;		/* (Dummy inserted for alignment purposes.) */
 
   struct linprm lin;		/* Linear    transformation parameters.     */
   struct celprm cel;		/* Celestial transformation parameters.     */
   struct spcprm spc;		/* Spectral  transformation parameters.     */
 
-  int    m_flag, m_naxis;	/* The remainder are for memory management. */
+  /* Error handling                                                         */
+  /*------------------------------------------------------------------------*/
+  struct wcserr *err;
+
+  /* Private - the remainder are for memory management.                     */
+  /*------------------------------------------------------------------------*/
+  void   *m_padding;
+  int    m_flag, m_naxis;
   double *m_crpix, *m_pc, *m_cdelt, *m_crval;
   char  (*m_cunit)[72], (*m_ctype)[72];
   struct pvcard *m_pv;
@@ -1393,6 +1499,8 @@ int wcsfree(struct wcsprm *wcs);
 
 int wcsprt(const struct wcsprm *wcs);
 
+int wcsperr(const struct wcsprm *wcs, const char *prefix);
+
 int wcsset(struct wcsprm *wcs);
 
 int wcsp2s(struct wcsprm *wcs, int ncoord, int nelem, const double pixcrd[],
@@ -1410,7 +1518,7 @@ int wcsmix(struct wcsprm *wcs, int mixpix, int mixcel, const double vspan[],
 int wcssptr(struct wcsprm *wcs, int *i, char ctype[9]);
 
 /* Defined mainly for backwards compatibility, use wcssub() instead. */
-#define wcscopy(alloc, wcssrc, wcsdst) wcssub(alloc, wcssrc, 0, 0, wcsdst)
+#define wcscopy(alloc, wcssrc, wcsdst) wcssub(alloc, wcssrc, 0x0, 0x0, wcsdst)
 
 
 /* Deprecated. */

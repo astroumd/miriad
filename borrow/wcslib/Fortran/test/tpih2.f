@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 4.7 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2011, Mark Calabretta
+* WCSLIB 4.13 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2012, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -40,18 +40,24 @@
 *
 * Input comes from file 'pih.fits'.
 *
+* WCSP, which is meant to hold an address, is declared as an INTEGER
+* array of length 2 to accomodate 64-bit machines for which
+* sizeof(void *) = 2*sizeof(int).
 *-----------------------------------------------------------------------
       LOGICAL   GOTEND
       INTEGER   C0(7), GCODE(2), I, IC, IERR, J, K, NAXIS(2),
-     :          NKEYRC, NREJECT, NWCS, RELAX, WCSP
+     :          NKEYRC, NREJECT, NWCS, RELAX, WCSP(2)
       REAL      BLC(2), TRC(2)
       DOUBLE PRECISION CACHE(4,0:256), NLDPRM(8)
       CHARACTER KEYREC*80, DEVTYP*16, HEADER*28801, IDENTS(3)*80,
      :          INFILE*9, NLCPRM(1)*1, OPT(2)*1, WCSNAME*72
 
+*     On some systems, such as Sun Sparc, the struct MUST be aligned
+*     on a double precision boundary, done here using an equivalence.
+*     Failure to do this may result in mysterious "bus errors".
       INCLUDE 'wcshdr.inc'
       INCLUDE 'wcs.inc'
-      INTEGER WCS(WCSLEN)
+      INTEGER   WCS(WCSLEN)
       DOUBLE PRECISION DUMMY
       EQUIVALENCE (WCS,DUMMY)
 

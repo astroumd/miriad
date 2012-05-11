@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.7 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2011, Mark Calabretta
+  WCSLIB 4.13 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2012, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -31,7 +31,7 @@
   $Id$
 *=============================================================================
 *
-* WCSLIB 4.7 - C routines that implement the spherical coordinate
+* WCSLIB 4.13 - C routines that implement the spherical coordinate
 * transformations used by the FITS World Coordinate System (WCS) standard.
 * Refer to
 *
@@ -71,9 +71,12 @@
 *                         2: Native longitude of the celestial pole [deg].
 *                         3: cos(eul[1])
 *                         4: sin(eul[1])
+*
 *   nphi,
 *   ntheta    int       Vector lengths.
+*
 *   spt,sxy   int       Vector strides.
+*
 *   phi,theta const double[]
 *                       Longitude and latitude in the native coordinate
 *                       system of the projection [deg].
@@ -102,8 +105,11 @@
 *                         2: Native longitude of the celestial pole [deg].
 *                         3: cos(eul[1])
 *                         4: sin(eul[1])
+*
 *   nlng,nlat int       Vector lengths.
+*
 *   sll,spt   int       Vector strides.
+*
 *   lng,lat   const double[]
 *                       Celestial longitude and latitude [deg].
 *
@@ -128,7 +134,9 @@
 *
 * Given:
 *   nfield    int       The number of field points.
+*
 *   lng0,lat0 double    Spherical coordinates of the reference point [deg].
+*
 *   lng,lat   const double[]
 *                       Spherical coordinates of the field points [deg].
 *
@@ -152,7 +160,7 @@
 =     eul[2] =  0.0;
 *
 *   The angular distance and generalized position angle are readily obtained
-*   from the longitude and latitude of the field point in the new system.  
+*   from the longitude and latitude of the field point in the new system.
 *   This applies even if the reference point is at one of the poles, in which
 *   case the "position angle" returned is as would be computed for a reference
 *   point at (lng0,+90-epsilon) or (lng0,-90+epsilon), in the limit as epsilon
@@ -190,7 +198,9 @@
 *
 * Given:
 *   nfield    int       The number of field points.
+*
 *   lng0,lat0 double    Spherical coordinates of the reference point [deg].
+*
 *   dist,pa   const double[]
 *                       Angular distances and position angles [deg].
 *

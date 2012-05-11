@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-<title>WCSLIB 4.7: Data Fields</title>
+<title>WCSLIB 4.13.4: Data Fields</title>
 <link href="doxygen.css" rel="stylesheet" type="text/css">
 <link href="tabs.css" rel="stylesheet" type="text/css">
 </head><body>
@@ -26,6 +26,8 @@
       <li><a href="globals_func.html"><span>Functions</span></a></li>
       <li><a href="globals_vars.html"><span>Variables</span></a></li>
       <li><a href="globals_type.html"><span>Typedefs</span></a></li>
+      <li><a href="globals_enum.html"><span>Enumerations</span></a></li>
+      <li><a href="globals_eval.html"><span>Enumerator</span></a></li>
       <li><a href="globals_defs.html"><span>Defines</span></a></li>
     </ul>
   </div>
@@ -73,6 +75,8 @@ Here is a list of all functions, variables, defines, enums, and typedefs with li
 : <a class="el" href="spx_8h.html#5eed4e6f2879b4607e60b4f77e2736bd">spx.h</a>
 <li>wcs_errmsg
 : <a class="el" href="wcs_8h.html#d16bd8db875ee05b014429efdc1f3471">wcs.h</a>
+<li>wcs_errmsg_enum
+: <a class="el" href="wcs_8h.html#158615aa1622d8feedd228795ff9a25f">wcs.h</a>
 <li>wcsbdx()
 : <a class="el" href="wcshdr_8h.html#16e35904c64fe6b0aab144bd022c722f">wcshdr.h</a>
 <li>wcsbth()
@@ -81,10 +85,56 @@ Here is a list of all functions, variables, defines, enums, and typedefs with li
 : <a class="el" href="wcs_8h.html#c55946dadc53ac592cb686275902ae7b">wcs.h</a>
 <li>wcscopy_errmsg
 : <a class="el" href="wcs_8h.html#e1738854472218541bda531653ef2709">wcs.h</a>
+<li>WCSERR_BAD_COORD_TRANS
+: <a class="el" href="wcs_8h.html#158615aa1622d8feedd228795ff9a25f71cb7eaa633d9e0f560555a016f1f007">wcs.h</a>
+<li>WCSERR_BAD_CTYPE
+: <a class="el" href="wcs_8h.html#158615aa1622d8feedd228795ff9a25f598db0fcc4961aa3c5e0a296bec2b313">wcs.h</a>
+<li>WCSERR_BAD_PARAM
+: <a class="el" href="wcs_8h.html#158615aa1622d8feedd228795ff9a25ffe9ed842ea8f525c7b8fed2f60015dd9">wcs.h</a>
+<li>WCSERR_BAD_PIX
+: <a class="el" href="wcs_8h.html#158615aa1622d8feedd228795ff9a25f08306533cf0c7555dad662e82e8a4a69">wcs.h</a>
+<li>WCSERR_BAD_SUBIMAGE
+: <a class="el" href="wcs_8h.html#158615aa1622d8feedd228795ff9a25f88e600163f719a759d3569bf1548109e">wcs.h</a>
+<li>WCSERR_BAD_WORLD
+: <a class="el" href="wcs_8h.html#158615aa1622d8feedd228795ff9a25f03824b7b5c22e5f0cc91363eb695a804">wcs.h</a>
+<li>WCSERR_BAD_WORLD_COORD
+: <a class="el" href="wcs_8h.html#158615aa1622d8feedd228795ff9a25f5d662102c172495df1f9bb03cedd701d">wcs.h</a>
+<li>wcserr_clear()
+: <a class="el" href="wcserr_8h.html#a3843f24df9351294fa4847eaff672bc">wcserr.h</a>
+<li>wcserr_copy()
+: <a class="el" href="wcserr_8h.html#d970e4ae584d3052b7bec2f1afb4689d">wcserr.h</a>
+<li>wcserr_enable()
+: <a class="el" href="wcserr_8h.html#1691b8bd184d40ca6fda255be078fa53">wcserr.h</a>
+<li>WCSERR_ILL_COORD_TRANS
+: <a class="el" href="wcs_8h.html#158615aa1622d8feedd228795ff9a25fdfa2a8cf8021827378091315b8e0a020">wcs.h</a>
+<li>WCSERR_MEMORY
+: <a class="el" href="wcs_8h.html#158615aa1622d8feedd228795ff9a25f5c58d5530bc7577a70185376c15180af">wcs.h</a>
+<li>WCSERR_MSG_LENGTH
+: <a class="el" href="wcserr_8h.html#d53f2d5e6a70e53cb3decc6c7b42ad96">wcserr.h</a>
+<li>WCSERR_NO_SOLUTION
+: <a class="el" href="wcs_8h.html#158615aa1622d8feedd228795ff9a25f832122bb304560f92df91e391d55948a">wcs.h</a>
+<li>WCSERR_NON_SEPARABLE
+: <a class="el" href="wcs_8h.html#158615aa1622d8feedd228795ff9a25f37c8aa0aedc12c63df08f39cb7177ff7">wcs.h</a>
+<li>WCSERR_NULL_POINTER
+: <a class="el" href="wcs_8h.html#158615aa1622d8feedd228795ff9a25fc51c733d8a719dd698f9e96e9a4fa83f">wcs.h</a>
+<li>wcserr_prt()
+: <a class="el" href="wcserr_8h.html#6585b9fc3a59b369e3336f3133dd1ca9">wcserr.h</a>
+<li>WCSERR_SET
+: <a class="el" href="wcserr_8h.html#cfa8a447539633296d50e67c7ab466c2">wcserr.h</a>
+<li>wcserr_set()
+: <a class="el" href="wcserr_8h.html#b0945d3588b604205b9c1b3d661a794f">wcserr.h</a>
+<li>WCSERR_SINGULAR_MTX
+: <a class="el" href="wcs_8h.html#158615aa1622d8feedd228795ff9a25f2904278d916c820236347783312a7ce0">wcs.h</a>
+<li>WCSERR_SUCCESS
+: <a class="el" href="wcs_8h.html#158615aa1622d8feedd228795ff9a25f8b87c21d4a2cab41d4eea0a95378fca8">wcs.h</a>
 <li>wcsfix()
 : <a class="el" href="wcsfix_8h.html#89e1b5b4d2fa89af03f5d1143352b05f">wcsfix.h</a>
 <li>wcsfix_errmsg
 : <a class="el" href="wcsfix_8h.html#256ce6281894f65dd15396cc0994e875">wcsfix.h</a>
+<li>wcsfix_errmsg_enum
+: <a class="el" href="wcsfix_8h.html#0399bbea1e28abad3259a8ea05b25183">wcsfix.h</a>
+<li>wcsfixi()
+: <a class="el" href="wcsfix_8h.html#62298e0fb06332a282d9daab718a1286">wcsfix.h</a>
 <li>wcsfree()
 : <a class="el" href="wcs_8h.html#4ab38bc642c4656f62c43acf84a849f1">wcs.h</a>
 <li>wcsfree_errmsg
@@ -129,6 +179,8 @@ Here is a list of all functions, variables, defines, enums, and typedefs with li
 : <a class="el" href="wcshdr_8h.html#5feeef18919b1cbb79729bbfa75976ec">wcshdr.h</a>
 <li>wcshdr_errmsg
 : <a class="el" href="wcshdr_8h.html#06cd9297f8315235ba1cf13d1cc115e1">wcshdr.h</a>
+<li>wcshdr_errmsg_enum
+: <a class="el" href="wcshdr_8h.html#e2dfc36c150d3a16a5e83131d32ecdae">wcshdr.h</a>
 <li>WCSHDR_IMGHEAD
 : <a class="el" href="wcshdr_8h.html#b65e929c7d525d735ae240046d4f0d9c">wcshdr.h</a>
 <li>WCSHDR_LONGKEY
@@ -149,6 +201,18 @@ Here is a list of all functions, variables, defines, enums, and typedefs with li
 : <a class="el" href="wcshdr_8h.html#fc0a5a6b475a8e50b77d4be099790985">wcshdr.h</a>
 <li>WCSHDR_VSOURCE
 : <a class="el" href="wcshdr_8h.html#1b66d50d7f1927222a170bc88f9db51e">wcshdr.h</a>
+<li>WCSHDRERR_BAD_COLUMN
+: <a class="el" href="wcshdr_8h.html#e2dfc36c150d3a16a5e83131d32ecdae0c926e2cc98a8c39585aa0e212423459">wcshdr.h</a>
+<li>WCSHDRERR_BAD_TABULAR_PARAMS
+: <a class="el" href="wcshdr_8h.html#e2dfc36c150d3a16a5e83131d32ecdaeeae58359638c0c631e6c7c573a343508">wcshdr.h</a>
+<li>WCSHDRERR_MEMORY
+: <a class="el" href="wcshdr_8h.html#e2dfc36c150d3a16a5e83131d32ecdae0a858638ef0dd0dc9b529f98b14cc46f">wcshdr.h</a>
+<li>WCSHDRERR_NULL_POINTER
+: <a class="el" href="wcshdr_8h.html#e2dfc36c150d3a16a5e83131d32ecdae99dd31e274ec97542e650ff89357cded">wcshdr.h</a>
+<li>WCSHDRERR_PARSER
+: <a class="el" href="wcshdr_8h.html#e2dfc36c150d3a16a5e83131d32ecdae218297c7a2a4d405c251e9ed239e615b">wcshdr.h</a>
+<li>WCSHDRERR_SUCCESS
+: <a class="el" href="wcshdr_8h.html#e2dfc36c150d3a16a5e83131d32ecdaebfe69dd9e4c486f856a5dc44b02e79a1">wcshdr.h</a>
 <li>wcsidx()
 : <a class="el" href="wcshdr_8h.html#6174a483baad91dae3fa1c30b0e4cde5">wcshdr.h</a>
 <li>wcsini()
@@ -169,12 +233,16 @@ Here is a list of all functions, variables, defines, enums, and typedefs with li
 : <a class="el" href="wcs_8h.html#27d3dd209db3e76cf4c50f48c01ba986">wcs.h</a>
 <li>wcsp2s_errmsg
 : <a class="el" href="wcs_8h.html#de3959355dc9d0987e7ccc4070795c38">wcs.h</a>
+<li>wcsperr()
+: <a class="el" href="wcs_8h.html#8fe5dcd9927240dc0348b850ee662367">wcs.h</a>
 <li>wcspih()
 : <a class="el" href="wcshdr_8h.html#c75623ee805ab7d43b0bba684c719a60">wcshdr.h</a>
 <li>wcsprintf()
 : <a class="el" href="wcsprintf_8h.html#46950abaf5a27347da8160741f98f973">wcsprintf.h</a>
 <li>wcsprintf_buf()
 : <a class="el" href="wcsprintf_8h.html#b8a869f35385b17a26cb5070ab63e5d5">wcsprintf.h</a>
+<li>WCSPRINTF_PTR
+: <a class="el" href="wcsprintf_8h.html#7af03fe3aabc25673cc012adc1e3f8cc">wcsprintf.h</a>
 <li>wcsprintf_set()
 : <a class="el" href="wcsprintf_8h.html#5c6f91916a0b8f8c2d85274c0ba130f6">wcsprintf.h</a>
 <li>wcsprt()
@@ -213,6 +281,8 @@ Here is a list of all functions, variables, defines, enums, and typedefs with li
 : <a class="el" href="wcstrig_8h.html#dd1b8466211aa6885bed0619f32b35c7">wcstrig.h</a>
 <li>wcsulex()
 : <a class="el" href="wcsunits_8h.html#0e7fd01137ef47ca728c19e8870d1ab5">wcsunits.h</a>
+<li>wcsulexe()
+: <a class="el" href="wcsunits_8h.html#f2c6e7c95fd6741183b2b74dd24d59ce">wcsunits.h</a>
 <li>wcsunits()
 : <a class="el" href="wcsunits_8h.html#ef5d64e333f758458b1edaa617911513">wcsunits.h</a>
 <li>WCSUNITS_BEAM
@@ -227,6 +297,8 @@ Here is a list of all functions, variables, defines, enums, and typedefs with li
 : <a class="el" href="wcsunits_8h.html#27df51b1593f3642bfd9833e71c73a34">wcsunits.h</a>
 <li>wcsunits_errmsg
 : <a class="el" href="wcsunits_8h.html#8217718f8c515151dc33ceba922b39ba">wcsunits.h</a>
+<li>wcsunits_errmsg_enum
+: <a class="el" href="wcsunits_8h.html#864e6b966575a8c42eb333ba9f14a3ef">wcsunits.h</a>
 <li>WCSUNITS_LENGTH
 : <a class="el" href="wcsunits_8h.html#59e3354bb9908a4841aa478f2dbd3973">wcsunits.h</a>
 <li>WCSUNITS_LUMINTEN
@@ -257,10 +329,14 @@ Here is a list of all functions, variables, defines, enums, and typedefs with li
 : <a class="el" href="wcsunits_8h.html#cd49d777bc04d68cdfdd29f5b6a7252b">wcsunits.h</a>
 <li>WCSUNITS_VOXEL
 : <a class="el" href="wcsunits_8h.html#946bca82ae3fb279ad3d86dbc793be07">wcsunits.h</a>
+<li>wcsunitse()
+: <a class="el" href="wcsunits_8h.html#47aa4e0a54f11d7ed5146c00906a3984">wcsunits.h</a>
 <li>wcsutil_allEq()
 : <a class="el" href="wcsutil_8h.html#4c7c5a686aaa39f511598b32e944ac68">wcsutil.h</a>
 <li>wcsutil_blank_fill()
 : <a class="el" href="wcsutil_8h.html#38322fa65b3bad54552d374d873ad037">wcsutil.h</a>
+<li>wcsutil_fptr2str()
+: <a class="el" href="wcsutil_8h.html#9bc774de065f8937aa9bbffa2df6089c">wcsutil.h</a>
 <li>wcsutil_null_fill()
 : <a class="el" href="wcsutil_8h.html#9d96f343fc444f8c6f1fa01367c4d765">wcsutil.h</a>
 <li>wcsutil_setAli()
@@ -271,11 +347,13 @@ Here is a list of all functions, variables, defines, enums, and typedefs with li
 : <a class="el" href="wcsutil_8h.html#0d982911e7f694a751f2887ea38890e4">wcsutil.h</a>
 <li>wcsutrn()
 : <a class="el" href="wcsunits_8h.html#560462cb2a7fa7eae6b4f325c85e7911">wcsunits.h</a>
+<li>wcsutrne()
+: <a class="el" href="wcsunits_8h.html#25ba0f0129e88c6e7c74d4562cf796cd">wcsunits.h</a>
 <li>wcsvfree()
 : <a class="el" href="wcshdr_8h.html#27465844aaeea0623133f8151ca4fd9b">wcshdr.h</a>
 </ul>
 </div>
-<hr size="1"><address style="text-align: right;"><small>Generated on Mon Feb 7 18:03:57 2011 for WCSLIB 4.7 by&nbsp;
+<hr size="1"><address style="text-align: right;"><small>Generated on Mon Apr 2 17:55:24 2012 for WCSLIB 4.13.4 by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.5.6 </small></address>
 </body>

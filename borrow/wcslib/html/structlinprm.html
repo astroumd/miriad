@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-<title>WCSLIB 4.7: linprm Struct Reference</title>
+<title>WCSLIB 4.13.4: linprm Struct Reference</title>
 <link href="doxygen.css" rel="stylesheet" type="text/css">
 <link href="tabs.css" rel="stylesheet" type="text/css">
 </head><body>
@@ -46,17 +46,25 @@
 
 <tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structlinprm.html#f0a5cac7b1d2d3a0feb6905c05b122c2">unity</a></td></tr>
 
+<tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structlinprm.html#7f40c88135117b07a7767082ef24aba9">padding</a></td></tr>
+
+<tr><td class="memItemLeft" nowrap align="right" valign="top">struct <a class="el" href="structwcserr.html">wcserr</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structlinprm.html#2975830d4214bb6b35cb1ca922875057">err</a></td></tr>
+
 <tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structlinprm.html#596f68ff17fce142f36530d72dd838c4">i_naxis</a></td></tr>
 
 <tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structlinprm.html#5ef7cce6307f640aca1080d0d5ad9ba1">m_flag</a></td></tr>
 
 <tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structlinprm.html#eefcacedf2989970f0df2c246d84bfb7">m_naxis</a></td></tr>
 
+<tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structlinprm.html#b73e780d0792b3570fcf2cf55651f22c">m_padding</a></td></tr>
+
 <tr><td class="memItemLeft" nowrap align="right" valign="top">double *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structlinprm.html#091103ceb860eeed1a280effa0df28df">m_crpix</a></td></tr>
 
 <tr><td class="memItemLeft" nowrap align="right" valign="top">double *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structlinprm.html#7036b8527bc8b220ad8a863442631f48">m_pc</a></td></tr>
 
 <tr><td class="memItemLeft" nowrap align="right" valign="top">double *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structlinprm.html#5ac85757a7a46247e353a089374eb128">m_cdelt</a></td></tr>
+
+<tr><td class="memItemLeft" nowrap align="right" valign="top">void *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structlinprm.html#b7a8cacb1454446f9b5a521703fcca75">padding2</a></td></tr>
 
 </table>
 <hr><a name="_details"></a><h2>Detailed Description</h2>
@@ -207,6 +215,36 @@ would be legitimate.
 (<em>Returned</em>) True if the linear transformation matrix is unity. 
 </div>
 </div><p>
+<a class="anchor" name="7f40c88135117b07a7767082ef24aba9"></a><!-- doxytag: member="linprm::padding" ref="7f40c88135117b07a7767082ef24aba9" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int <a class="el" href="structlinprm.html#7f40c88135117b07a7767082ef24aba9">linprm::padding</a>          </td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+(An unused variable inserted for alignment purposes only.) 
+</div>
+</div><p>
+<a class="anchor" name="2975830d4214bb6b35cb1ca922875057"></a><!-- doxytag: member="linprm::err" ref="2975830d4214bb6b35cb1ca922875057" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">struct <a class="el" href="structwcserr.html">wcserr</a> * <a class="el" href="structlinprm.html#2975830d4214bb6b35cb1ca922875057">linprm::err</a><code> [read]</code>          </td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+(<em>Returned</em>) If enabled, when an error status is returned this struct contains detailed information about the error, see <a class="el" href="wcserr_8h.html#1691b8bd184d40ca6fda255be078fa53" title="Enable/disable error messaging.">wcserr_enable()</a>. 
+</div>
+</div><p>
 <a class="anchor" name="596f68ff17fce142f36530d72dd838c4"></a><!-- doxytag: member="linprm::i_naxis" ref="596f68ff17fce142f36530d72dd838c4" args="" -->
 <div class="memitem">
 <div class="memproto">
@@ -243,6 +281,21 @@ would be legitimate.
       <table class="memname">
         <tr>
           <td class="memname">int <a class="el" href="structlinprm.html#eefcacedf2989970f0df2c246d84bfb7">linprm::m_naxis</a>          </td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+(For internal use only.) 
+</div>
+</div><p>
+<a class="anchor" name="b73e780d0792b3570fcf2cf55651f22c"></a><!-- doxytag: member="linprm::m_padding" ref="b73e780d0792b3570fcf2cf55651f22c" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int <a class="el" href="structlinprm.html#b73e780d0792b3570fcf2cf55651f22c">linprm::m_padding</a>          </td>
         </tr>
       </table>
 </div>
@@ -294,11 +347,26 @@ would be legitimate.
 <div class="memdoc">
 
 <p>
-(For internal use only.) 
+(For internal use only.) void *padding2 (For internal use only.) 
+</div>
+</div><p>
+<a class="anchor" name="b7a8cacb1454446f9b5a521703fcca75"></a><!-- doxytag: member="linprm::padding2" ref="b7a8cacb1454446f9b5a521703fcca75" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void* <a class="el" href="structlinprm.html#b7a8cacb1454446f9b5a521703fcca75">linprm::padding2</a>          </td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+
 </div>
 </div><p>
 </div>
-<hr size="1"><address style="text-align: right;"><small>Generated on Mon Feb 7 18:03:57 2011 for WCSLIB 4.7 by&nbsp;
+<hr size="1"><address style="text-align: right;"><small>Generated on Mon Apr 2 17:55:24 2012 for WCSLIB 4.13.4 by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.5.6 </small></address>
 </body>

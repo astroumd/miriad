@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-<title>WCSLIB 4.7: fitshdr.h File Reference</title>
+<title>WCSLIB 4.13.4: fitshdr.h File Reference</title>
 <link href="doxygen.css" rel="stylesheet" type="text/css">
 <link href="tabs.css" rel="stylesheet" type="text/css">
 </head><body>
@@ -207,7 +207,7 @@ This is typedef'd in <a class="el" href="fitshdr_8h.html">fitshdr.h</a> as<p>
 <div class="fragment"><pre class="fragment"><span class="preprocessor">   #ifdef WCSLIB_INT64</span>
 <span class="preprocessor"></span>     <span class="keyword">typedef</span> WCSLIB_INT64 <a class="code" href="fitshdr_8h.html#88ab82d73e5c2607f0a40af8917fffe1" title="64-bit signed integer data type.">int64</a>;
 <span class="preprocessor">   #else</span>
-<span class="preprocessor"></span>     <span class="keyword">typedef</span> <span class="keywordtype">int</span> <a class="code" href="fitshdr_8h.html#88ab82d73e5c2607f0a40af8917fffe1" title="64-bit signed integer data type.">int64</a>[3];
+<span class="preprocessor"></span>     <span class="keyword">typedef</span> <span class="keywordtype">int</span> int64[3];
 <span class="preprocessor">   #endif</span>
 </pre></div><p>
 See <a class="el" href="structfitskey.html#dbc83643fe92fd44408a6d62dbaf87b1">fitskey::type</a>. 
@@ -351,7 +351,7 @@ Error messages to match the status value returned from each function.
 </div>
 </div><p>
 </div>
-<hr size="1"><address style="text-align: right;"><small>Generated on Mon Feb 7 18:03:57 2011 for WCSLIB 4.7 by&nbsp;
+<hr size="1"><address style="text-align: right;"><small>Generated on Mon Apr 2 17:55:23 2012 for WCSLIB 4.13.4 by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.5.6 </small></address>
 </body>

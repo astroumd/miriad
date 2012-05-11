@@ -1,4 +1,4 @@
-/** @mainpage WCSLIB 4.7 and PGSBOX 4.7
+/** @mainpage WCSLIB 4.13.4 and PGSBOX 4.13.4
 
 @image html Bonne.gif "Bonne's projection"
 
@@ -9,6 +9,7 @@
 - @subpage overview
 - @subpage structs
 - @subpage memory
+- @subpage diagnostics
 - @subpage vector
 - @subpage threads
 - @subpage testing
@@ -18,8 +19,8 @@
 @section copyright Copyright
 
 @verbatim
-  WCSLIB 4.7 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2011, Mark Calabretta
+  WCSLIB 4.13 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2012, Mark Calabretta
 
   WCSLIB is free software: you can redistribute it and/or modify it under the
   terms of the GNU Lesser General Public License as published by the Free
@@ -102,7 +103,6 @@ Several implementations of the FITS WCS standards are available:
   - @b AST, developed by David Berry within the U.K. Starlink project,
     http://www.starlink.ac.uk/ast/ and now supported by JAC, Hawaii
     http://starlink.jach.hawaii.edu/starlink/<I></I>.
-    .
     @n@n
     A useful utility for experimenting with FITS WCS descriptions (similar to
     @a wcsgrid) is also provided; go to the above site and then look at the
@@ -114,8 +114,8 @@ Several implementations of the FITS WCS standards are available:
     including spectral,
     http://sohowww.nascom.nasa.gov/solarsoft/gen/idl/wcs/<I></I>.
 
-  - @b The IDL Astronomy Library, http://idlastro.gsfc.nasa.gov/<I></I>,
-    contains an independent implementation of FITS-WCS in IDL by Rick Balsano,
+  - The IDL Astronomy Library, http://idlastro.gsfc.nasa.gov/<I></I>, contains
+    an independent implementation of FITS-WCS in IDL by Rick Balsano,
     Wayne Landsman and others.  See
     http://idlastro.gsfc.nasa.gov/contents.html#C5<I></I>.
 
@@ -136,12 +136,12 @@ Java is supported via
 Recommended WCS-aware FITS image viewers:
 
   - Bill Joye's <B>DS9</B>, http://hea-www.harvard.edu/RD/ds9/<I></I>, and
-  
+
   - <B>Fv</B> by Pan Chai, http://heasarc.gsfc.nasa.gov/ftools/fv/<I></I>.
-  
+
 both handle 2-D images.
-  
-Currently (2011/01/14) I know of no image viewers that handle 1-D spectra
+
+Currently (2012/01/24) I know of no image viewers that handle 1-D spectra
 properly nor multi-dimensional data, not even multi-dimensional data with
 only two non-degenerate image axes (please inform me if you know otherwise).
 
@@ -214,7 +214,7 @@ essentially three levels, though some intermediate levels exist within these:
   translate it at this level so that the middle- and low-level routines need
   only deal with standard constructs:
   - wcsfix.h,c    -- Translator for non-standard FITS WCS constructs (uses
-                     wcsutrn()).
+                     wcsutrne()).
   - wcsutrn.l     -- Lexical translator for non-standard units specifications.
   .
   @n
@@ -230,7 +230,7 @@ essentially three levels, though some intermediate levels exist within these:
   the glue that binds together the low-level routines into a complete
   coordinate description.
   - wcs.h,c       -- Driver routines for the low-level routines.
-  - wcsunits.h,c  -- Unit conversions (uses wcsulex()).
+  - wcsunits.h,c  -- Unit conversions (uses wcsulexe()).
   - wcsulex.l     -- Lexical parser for units specifications.
   .
   @n
@@ -429,6 +429,80 @@ copy: wcssub(), lincpy() or tabcpy().
 */
 
 
+/** @page diagnostics Diagnostic output
+
+All @ref overview "WCSLIB" functions return a status value, each of which is
+associated with a fixed error message which may be used for diagnostic output.
+For example
+@verbatim
+  int status;
+  struct wcsprm wcs;
+
+  ...
+
+  if ((status = wcsset(&wcs)) {
+    fprintf(stderr, "ERROR %d from wcsset(): %s.\n", status, wcs_errmsg[status]);
+    return status;
+  }
+@endverbatim
+This might produce output like
+@verbatim
+ERROR 5 from wcsset(): Invalid parameter value.
+@endverbatim
+The error messages are provided as global variables with names of the form
+@a cel_errmsg, @a prj_errmsg, etc. by including the relevant header file.
+
+As of version 4.8, courtesy of Michael Droettboom @ref software "(pywcs)",
+WCSLIB has a second error messaging system which provides more detailed
+information about errors, including the function, source file, and line number
+where the error occurred.  For example,
+@verbatim
+  struct wcsprm wcs;
+
+  /* Enable wcserr and send messages to stderr. */
+  wcserr_enable(1);
+  wcsprintf_set(stderr);
+
+  ...
+
+  if (wcsset(&wcs) {
+    wcsperr(&wcs);
+    return wcs.err->status;
+  }
+@endverbatim
+In this example, if an error was generated in one of the prjset() functions,
+wcsperr() would print an error traceback starting with wcsset(), then
+celset(), and finally the particular projection-setting function that
+generated the error.  For each of them it would print the status return value,
+function name, source file, line number, and an error message which may be
+more specific and informative than the general error messages reported in the
+first example.  For example, in response to a deliberately generated error,
+the @c twcs test program, which tests wcserr among other things, produces a
+traceback similar to this:
+@verbatim
+ERROR 5 in wcsset() at line 1564 of file wcs.c:
+  Invalid parameter value.
+ERROR 2 in celset() at line 196 of file cel.c:
+  Invalid projection parameters.
+ERROR 2 in bonset() at line 5727 of file prj.c:
+  Invalid parameters for Bonne's projection.
+@endverbatim
+
+Each of the @ref structs "structs" in @ref overview "WCSLIB" includes a
+pointer, called @a err, to a wcserr struct.  When an error occurs, a struct is
+allocated and error information stored in it.  The wcserr pointers and the
+@ref memory "memory" allocated for them are managed by the routines that
+manage the various structs such as wcsini() and wcsfree().
+
+wcserr messaging is an opt-in system enabled via wcserr_enable(), as in the
+example above.  If enabled, when an error occurs it is the user's
+responsibility to free the memory allocated for the error message using
+wcsfree(), celfree(), prjfree(), etc.  Failure to do so before the struct goes
+out of scope will result in memory leaks (if execution continues beyond the
+error).
+*/
+
+
 /** @page vector Vector API
 
 WCSLIB's API is vector-oriented.  At the least, this allows the function call
@@ -612,7 +686,7 @@ may be set to 0.
 
 /** @page threads Thread-safety
 
-With the following exceptions WCSLIB 4.7 is thread-safe:
+With the following exceptions WCSLIB 4.13 is thread-safe:
 
 - The C code generated by Flex is not re-entrant.  Flex does have the capacity
   for producing re-entrant scanners but they have a different API.  This may
@@ -624,10 +698,15 @@ With the following exceptions WCSLIB 4.7 is thread-safe:
   wcsbth().  They would rarely need to be used by application programmers.
 
 - Diagnostic functions that print the contents of the various structs, namely
-  celprt(), linprt(), prjprt(), spcprt(), tabprt(), and wcsprt(), use printf()
-  which is thread-safe by the POSIX requirement on @c stdio.  However, this is
-  only at the function level.  Where multiple threads invoke these functions
-  simultaneously their output is likely to be interleaved.
+  celprt(), linprt(), prjprt(), spcprt(), tabprt(), wcsprt(), and wcsperr()
+  use printf() which is thread-safe by the POSIX requirement on @c stdio.
+  However, this is only at the function level.  Where multiple threads invoke
+  these functions simultaneously their output is likely to be interleaved.
+
+- wcserr_enable() sets a static variable and so is not thread-safe.  However,
+  this facility is not intended to be used dynamically.  If detailed error
+  messages are required, enable wcserr when execution starts and don't change
+  it.
 */
 
 
@@ -673,9 +752,9 @@ of the mathematical routines.
   successful and failed solutions.  @a twcssub tests the extraction of a
   coordinate description for a subimage from a wcsprm struct by wcssub().
   @n@n
-  @a tunits tests wcsutrn(), wcsunits() and wcsulex(), the units specification
-  translator, converter and parser, either interactively or using a list of
-  units specifications contained in units_test.
+  @a tunits tests wcsutrne(), wcsunitse() and wcsulexe(), the units
+  specification translator, converter and parser, either interactively or
+  using a list of units specifications contained in units_test.
 
 - Low level:
   @n
@@ -814,6 +893,10 @@ A basic coding fragment is
 
 *     Initialize.
       STATUS = WCSSET (WCS)
+      IF (STATUS.NE.0) THEN
+        CALL FLUSH(6)
+        STATUS = WCSPERR(WCS, CHAR(0))
+      ENDIF
 
 *     Find the "longitude" axis.
       STATUS = WCSGET (WCS, WCS_LNG, LNGIDX)
@@ -836,6 +919,16 @@ can (usually) be safely ignored.  If these warnings become annoying,
 type-specific variants are provided for each of the @c *PUT routines, @c *PTI,
 @c *PTD, and @c *PTC for @a int, @a double, or @a char[] and likewise @c *GTI,
 @c *GTD, and @c *GTC for the @c *GET routines.
+
+When calling wrappers for C functions that print to @a stdout, such as
+@c WCSPRT, and @c WCSPERR, or that may print to @a stderr, such as @c WCSPIH,
+@c WCSBTH, @c WCSULEXE, or @c WCSUTRNE, it may be necessary to flush the
+Fortran I/O buffers beforehand so that the output appears in the correct
+order.  The wrappers for these functions do call @c fflush(NULL), but
+depending on the particular system, this may not succeed in flushing the
+Fortran I/O buffers.  Most Fortran compilers provide the non-standard
+intrinsic @c FLUSH(), which is called with unit number 6 to flush @a stdout
+(as in the example above), and unit 0 for @a stderr.
 
 A basic assumption made by the wrappers is that an @c INTEGER variable is no
 less than half the size of a @c DOUBLE @c PRECISION.

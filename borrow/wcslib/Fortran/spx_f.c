@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.7 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2011, Mark Calabretta
+  WCSLIB 4.13 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2012, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -37,7 +37,50 @@
 
 /* Fortran name mangling. */
 #include <wcsconfig_f77.h>
-#define specx_ F77_FUNC(specx, SPECX)
+#define spxget_ F77_FUNC(spxget, SPXGET)
+#define specx_  F77_FUNC(specx,  SPECX)
+
+#define SPX_ERR     200
+
+/*--------------------------------------------------------------------------*/
+
+int spxget_(const int *spx, const int *what, void *value)
+
+{
+  int  k;
+  int  *ivalp;
+  const int *ispxp;
+  const struct spxprm *spxp;
+
+  /* Cast pointers. */
+  spxp  = (const struct spxprm *)spx;
+  ivalp = (int *)value;
+
+  switch (*what) {
+  case SPX_ERR:
+    /* Copy the contents of the wcserr struct. */
+    if (spxp->err) {
+      ispxp = (int *)(spxp->err);
+      for (k = 0; k < ERRLEN; k++) {
+        *(ivalp++) = *(ispxp++);
+      }
+    } else {
+      for (k = 0; k < ERRLEN; k++) {
+        *(ivalp++) = 0;
+      }
+    }
+    break;
+  default:
+    return 1;
+  }
+
+  return 0;
+}
+
+int spxgti_(const int *spx, const int *what, int *value)
+{
+  return spxget_(spx, what, value);
+}
 
 /*--------------------------------------------------------------------------*/
 

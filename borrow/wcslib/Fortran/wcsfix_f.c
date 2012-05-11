@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.7 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2011, Mark Calabretta
+  WCSLIB 4.13 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2012, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -48,6 +48,7 @@
 int wcsfix_(int *ctrl, const int naxis[], int *wcs, int stat[])
 
 {
+  if (*naxis == 0) naxis = 0x0;
   return wcsfix(*ctrl, naxis, (struct wcsprm *)wcs, stat);
 }
 

@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 4.7 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2011, Mark Calabretta
+* WCSLIB 4.13 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2012, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -41,7 +41,7 @@
       INTEGER   NSPEC
       PARAMETER (NSPEC = 9991)
 
-      INTEGER   J, K, STAT(NSPEC), STATUS
+      INTEGER   CLOSURE, J, K, NFAIL, STAT(NSPEC), STATUS
       DOUBLE PRECISION AWAV(NSPEC), C, FREQ(NSPEC), RESTFRQ, RESTWAV,
      :          SPC1(NSPEC), SPC2(NSPEC), STEP, VELO(NSPEC), WAVE(NSPEC)
 
@@ -105,83 +105,94 @@
       STATUS = VELOFREQ(RESTFRQ, NSPEC, 1, 1, VELO, FREQ, STAT)
 
 *     Test closure of all two-way combinations.
-      CALL CLOSURE ('freq', 'afrq', 0D0,     FREQAFRQ, AFRQFREQ, FREQ,
-     :              SPC1)
-      CALL CLOSURE ('afrq', 'freq', 0D0,     AFRQFREQ, FREQAFRQ, SPC1,
-     :              SPC2)
+      NFAIL = 0
+      NFAIL = NFAIL + CLOSURE ('freq', 'afrq', 0D0,
+     :                         FREQAFRQ, AFRQFREQ, FREQ, SPC1)
+      NFAIL = NFAIL + CLOSURE ('afrq', 'freq', 0D0,
+     :                         AFRQFREQ, FREQAFRQ, SPC1, SPC2)
 
-      CALL CLOSURE ('freq', 'ener', 0D0,     FREQENER, ENERFREQ, FREQ,
-     :              SPC1)
-      CALL CLOSURE ('ener', 'freq', 0D0,     ENERFREQ, FREQENER, SPC1,
-     :              SPC2)
+      NFAIL = NFAIL + CLOSURE ('freq', 'ener', 0D0,
+     :                         FREQENER, ENERFREQ, FREQ, SPC1)
+      NFAIL = NFAIL + CLOSURE ('ener', 'freq', 0D0,
+     :                         ENERFREQ, FREQENER, SPC1, SPC2)
 
-      CALL CLOSURE ('freq', 'wavn', 0D0,     FREQWAVN, WAVNFREQ, FREQ,
-     :              SPC1)
-      CALL CLOSURE ('wavn', 'freq', 0D0,     WAVNFREQ, FREQWAVN, SPC1,
-     :              SPC2)
+      NFAIL = NFAIL + CLOSURE ('freq', 'wavn', 0D0,
+     :                         FREQWAVN, WAVNFREQ, FREQ, SPC1)
+      NFAIL = NFAIL + CLOSURE ('wavn', 'freq', 0D0,
+     :                         WAVNFREQ, FREQWAVN, SPC1, SPC2)
 
-      CALL CLOSURE ('freq', 'vrad', RESTFRQ, FREQVRAD, VRADFREQ, FREQ,
-     :              SPC1)
-      CALL CLOSURE ('vrad', 'freq', RESTFRQ, VRADFREQ, FREQVRAD, SPC1,
-     :              SPC2)
+      NFAIL = NFAIL + CLOSURE ('freq', 'vrad', RESTFRQ,
+     :                         FREQVRAD, VRADFREQ, FREQ, SPC1)
+      NFAIL = NFAIL + CLOSURE ('vrad', 'freq', RESTFRQ,
+     :                         VRADFREQ, FREQVRAD, SPC1, SPC2)
 
-      CALL CLOSURE ('freq', 'wave', 0D0,     FREQWAVE, WAVEFREQ, FREQ,
-     :              WAVE)
-      CALL CLOSURE ('wave', 'freq', 0D0,     WAVEFREQ, FREQWAVE, WAVE,
-     :              SPC2)
+      NFAIL = NFAIL + CLOSURE ('freq', 'wave', 0D0,
+     :                         FREQWAVE, WAVEFREQ, FREQ, WAVE)
+      NFAIL = NFAIL + CLOSURE ('wave', 'freq', 0D0,
+     :                         WAVEFREQ, FREQWAVE, WAVE, SPC2)
 
-      CALL CLOSURE ('freq', 'awav', 0D0,     FREQAWAV, AWAVFREQ, FREQ,
-     :              AWAV)
-      CALL CLOSURE ('awav', 'freq', 0D0,     AWAVFREQ, FREQAWAV, AWAV,
-     :              SPC2)
+      NFAIL = NFAIL + CLOSURE ('freq', 'awav', 0D0,
+     :                         FREQAWAV, AWAVFREQ, FREQ, AWAV)
+      NFAIL = NFAIL + CLOSURE ('awav', 'freq', 0D0,
+     :                         AWAVFREQ, FREQAWAV, AWAV, SPC2)
 
-      CALL CLOSURE ('freq', 'velo', RESTFRQ, FREQVELO, VELOFREQ, FREQ,
-     :              VELO)
-      CALL CLOSURE ('velo', 'freq', RESTFRQ, VELOFREQ, FREQVELO, VELO,
-     :              SPC2)
+      NFAIL = NFAIL + CLOSURE ('freq', 'velo', RESTFRQ,
+     :                         FREQVELO, VELOFREQ, FREQ, VELO)
+      NFAIL = NFAIL + CLOSURE ('velo', 'freq', RESTFRQ,
+     :                         VELOFREQ, FREQVELO, VELO, SPC2)
 
-      CALL CLOSURE ('wave', 'vopt', RESTWAV, WAVEVOPT, VOPTWAVE, WAVE,
-     :              SPC1)
-      CALL CLOSURE ('vopt', 'wave', RESTWAV, VOPTWAVE, WAVEVOPT, SPC1,
-     :              SPC2)
+      NFAIL = NFAIL + CLOSURE ('wave', 'vopt', RESTWAV,
+     :                         WAVEVOPT, VOPTWAVE, WAVE, SPC1)
+      NFAIL = NFAIL + CLOSURE ('vopt', 'wave', RESTWAV,
+     :                         VOPTWAVE, WAVEVOPT, SPC1, SPC2)
 
-      CALL CLOSURE ('wave', 'zopt', RESTWAV, WAVEZOPT, ZOPTWAVE, WAVE,
-     :              SPC1)
-      CALL CLOSURE ('zopt', 'wave', RESTWAV, ZOPTWAVE, WAVEZOPT, SPC1,
-     :              SPC2)
+      NFAIL = NFAIL + CLOSURE ('wave', 'zopt', RESTWAV,
+     :                         WAVEZOPT, ZOPTWAVE, WAVE, SPC1)
+      NFAIL = NFAIL + CLOSURE ('zopt', 'wave', RESTWAV,
+     :                         ZOPTWAVE, WAVEZOPT, SPC1, SPC2)
 
-      CALL CLOSURE ('wave', 'awav', 0D0,     WAVEAWAV, AWAVWAVE, WAVE,
-     :              SPC1)
-      CALL CLOSURE ('awav', 'wave', 0D0,     AWAVWAVE, WAVEAWAV, SPC1,
-     :              SPC2)
+      NFAIL = NFAIL + CLOSURE ('wave', 'awav', 0D0,
+     :                         WAVEAWAV, AWAVWAVE, WAVE, SPC1)
+      NFAIL = NFAIL + CLOSURE ('awav', 'wave', 0D0,
+     :                         AWAVWAVE, WAVEAWAV, SPC1, SPC2)
 
-      CALL CLOSURE ('wave', 'velo', RESTWAV, WAVEVELO, VELOWAVE, WAVE,
-     :              SPC1)
-      CALL CLOSURE ('velo', 'wave', RESTWAV, VELOWAVE, WAVEVELO, SPC1,
-     :              SPC2)
+      NFAIL = NFAIL + CLOSURE ('wave', 'velo', RESTWAV,
+     :                         WAVEVELO, VELOWAVE, WAVE, SPC1)
+      NFAIL = NFAIL + CLOSURE ('velo', 'wave', RESTWAV,
+     :                         VELOWAVE, WAVEVELO, SPC1, SPC2)
 
-      CALL CLOSURE ('awav', 'velo', RESTWAV, AWAVVELO, VELOAWAV, AWAV,
-     :              SPC1)
-      CALL CLOSURE ('velo', 'awav', RESTWAV, VELOAWAV, AWAVVELO, SPC1,
-     :              SPC2)
+      NFAIL = NFAIL + CLOSURE ('awav', 'velo', RESTWAV,
+     :                         AWAVVELO, VELOAWAV, AWAV, SPC1)
+      NFAIL = NFAIL + CLOSURE ('velo', 'awav', RESTWAV,
+     :                         VELOAWAV, AWAVVELO, SPC1, SPC2)
 
-      CALL CLOSURE ('velo', 'beta', 0D0,     VELOBETA, BETAVELO, VELO,
-     :              SPC1)
-      CALL CLOSURE ('beta', 'velo', 0D0,     BETAVELO, VELOBETA, SPC1,
-     :              SPC2)
+      NFAIL = NFAIL + CLOSURE ('velo', 'beta', 0D0,
+     :                         VELOBETA, BETAVELO, VELO, SPC1)
+      NFAIL = NFAIL + CLOSURE ('beta', 'velo', 0D0,
+     :                         BETAVELO, VELOBETA, SPC1, SPC2)
 
+
+      IF (NFAIL.NE.0) THEN
+        WRITE (*, 70) NFAIL
+ 70     FORMAT (/,'FAIL:',I5,' closure residuals exceed reporting ',
+     :    'tolerance.')
+      ELSE
+        WRITE (*, 80)
+ 80     FORMAT (/,'PASS: All closure residuals are within reporting ',
+     :    'tolerance.')
+      END IF
 
       END
 
 *=======================================================================
 
-      SUBROUTINE CLOSURE (FROM, TO, PARM, FWD, REV, SPEC1, SPEC2)
+      INTEGER FUNCTION CLOSURE (FROM, TO, PARM, FWD, REV, SPEC1, SPEC2)
 
       INTEGER   NSPEC
       PARAMETER (NSPEC = 9991)
 
       LOGICAL   SKIP
-      INTEGER   J, STAT1(NSPEC), STAT2(NSPEC), STATUS
+      INTEGER   J, NFAIL, STAT1(NSPEC), STAT2(NSPEC), STATUS
       DOUBLE PRECISION CLOS(NSPEC), PARM, RESID, RESIDMAX, SPEC1(NSPEC),
      :          SPEC2(NSPEC), TOL
       CHARACTER FROM*(*), TO*(*)
@@ -208,9 +219,9 @@
         WRITE (*, 10) TO, FROM, STATUS
       END IF
 
-      RESIDMAX = 0.0
-
 *     Test closure.
+      NFAIL = 0
+      RESIDMAX = 0.0
       DO 50 J = 1, NSPEC
         IF (STAT1(J).NE.0) THEN
           IF (SKIP) WRITE (*, *)
@@ -239,18 +250,19 @@
         END IF
 
         IF (RESID.GT.TOL) THEN
+          NFAIL = NFAIL + 1
           IF (SKIP) WRITE (*, *)
           WRITE (*, 40) FROM, TO, FROM, SPEC1(J), TO, SPEC2(J), FROM,
      :                  CLOS(J), RESID
  40       FORMAT (A,A,': ',A,' =',1PE19.12,' -> ',A,' =',1PE19.12,
      :            ' ->',/,'          ',A,' =',1PE19.12,',  resid =',
-     :            1PE19.12)
+     :            1PE8.1)
           SKIP = .FALSE.
         END IF
  50   CONTINUE
 
       WRITE (*, 60) FROM, TO, RESIDMAX
- 60   FORMAT (A,A,': Maximum closure residual =',1PE19.12)
+ 60   FORMAT (A,A,': Maximum closure residual =',1PE8.1)
       IF (RESIDMAX.GT.TOL) THEN
         WRITE (*, *)
         SKIP = .FALSE.
@@ -258,5 +270,6 @@
         SKIP = .TRUE.
       END IF
 
-      RETURN
+      CLOSURE = NFAIL
+
       END

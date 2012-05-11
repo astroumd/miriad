@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.7 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2011, Mark Calabretta
+  WCSLIB 4.13 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2012, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -97,11 +97,12 @@ ADD_UNIT  {ADD_ALL}|{ADD_SUP}|{ADD_SUB}|{ADD_NONE}
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "wcserr.h"
 #include "wcsmath.h"
 #include "wcsunits.h"
 
-#define YY_DECL int wcsulex(const char unitstr[], int *func, double *scale, \
-                            double units[])
+#define YY_DECL int wcsulexe(const char unitstr[], int *func, double *scale, \
+                             double units[], struct wcserr **err)
 
 /* Used in preempting the call to exit() by yy_fatal_error(). */
 jmp_buf wcsulex_abort_jmp_env;
@@ -110,6 +111,8 @@ jmp_buf wcsulex_abort_jmp_env;
 %}
 
 %%
+	static const char *function = "wcsulexe";
+
 	int bracket  = 0;
 	int operator = 0;
 	int paren    = 0;
@@ -134,7 +137,8 @@ jmp_buf wcsulex_abort_jmp_env;
 	
 	/* Return here via longjmp() invoked by yy_fatal_error(). */
 	if (setjmp(wcsulex_abort_jmp_env)) {
-	  return 9;
+	  return wcserr_set(WCSERR_SET(UNITSERR_PARSER_ERROR),
+	    "Internal units parser error parsing '%s'", unitstr);
 	}
 	
 	BEGIN(INITIAL);
@@ -157,7 +161,8 @@ jmp_buf wcsulex_abort_jmp_env;
 	}
 
 ^10[0-9] {
-	  status = 1;
+	  status = wcserr_set(WCSERR_SET(UNITSERR_BAD_NUM_MULTIPLIER),
+	    "Invalid exponent in '%s'", unitstr);
 	  BEGIN(FLUSH);
 	}
 
@@ -186,7 +191,8 @@ jmp_buf wcsulex_abort_jmp_env;
 
 ^[*.]	{
 	  /* Leading binary multiply. */
-	  status = 2;
+	  status = wcserr_set(WCSERR_SET(UNITSERR_DANGLING_BINOP),
+	    "Dangling binary operator in '%s'", unitstr);
 	  BEGIN(FLUSH);
 	}
 
@@ -239,7 +245,8 @@ sqrt" "*"(" {
 	}
 
 .	{
-	  status = 3;
+	  status = wcserr_set(WCSERR_SET(UNITSERR_BAD_INITIAL_SYMBOL),
+	    "Invalid symbol in INITIAL context in '%s'", unitstr);
 	  BEGIN(FLUSH);
 	}
 
@@ -260,11 +267,12 @@ sqrt" "*"(" {
 	    yytext[yyleng-1] = '\0';
 	
 	    buf = YY_CURRENT_BUFFER;
-	    status = wcsulex(yytext+1, &func_r, &factor_r, types);
+	    status = wcsulexe(yytext+1, &func_r, &factor_r, types, err);
 	    yy_switch_to_buffer(buf);
 	
 	    if (func_r) {
-	      status = 4;
+	      status = wcserr_set(WCSERR_SET(UNITSERR_FUNCTION_CONTEXT),
+	        "Function in invalid context in '%s'", unitstr);
 	    }
 	
 	    if (status) {
@@ -382,7 +390,8 @@ sqrt" "*"(" {
 
 <PREFIX>. {
 	  /* Internal parser error. */
-	  status = 9;
+	  status = wcserr_set(WCSERR_SET(UNITSERR_PARSER_ERROR),
+	    "Internal units parser error parsing '%s'", unitstr);
 	  BEGIN(FLUSH);
 	}
 
@@ -820,7 +829,8 @@ sqrt" "*"(" {
 
 <UNITS>. {
 	  /* Internal parser error. */
-	  status = 9;
+	  status = wcserr_set(WCSERR_SET(UNITSERR_PARSER_ERROR),
+	    "Internal units parser error parsing '%s'", unitstr);
 	  BEGIN(FLUSH);
 	}
 
@@ -912,7 +922,8 @@ sqrt" "*"(" {
 	}
 
 <EXPON>. {
-	  status = 5;
+	  status = wcserr_set(WCSERR_SET(UNITSERR_BAD_EXPON_SYMBOL),
+	    "Invalid symbol in EXPON context in '%s'", unitstr);
 	  BEGIN(FLUSH);
 	}
 
@@ -929,11 +940,17 @@ sqrt" "*"(" {
 	  yylex_destroy();
 	
 	  if (bracket) {
-	    status = 6;
+	    status = wcserr_set(WCSERR_SET(UNITSERR_UNBAL_BRACKET),
+	      "Unbalanced bracket in '%s'", unitstr);
 	  } else if (paren) {
-	    status = 7;
+	    status = wcserr_set(WCSERR_SET(UNITSERR_UNBAL_PAREN),
+	      "Unbalanced parenthesis in '%s'", unitstr);
+	  } else if (operator == 1) {
+	    status = wcserr_set(WCSERR_SET(UNITSERR_DANGLING_BINOP),
+	      "Dangling binary operator in '%s'", unitstr);
 	  } else if (operator) {
-	    status = (operator == 1) ? 2 : 8;
+	    status = wcserr_set(WCSERR_SET(UNITSERR_CONSEC_BINOPS),
+	      "Consecutive binary operators in '%s'", unitstr);
 	  #ifdef DEBUG
 	  } else {
 	    fprintf(stderr, "EOS\n");

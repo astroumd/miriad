@@ -1,5 +1,5 @@
 #-----------------------------------------------------------------------------
-# GNU makefile for building WCSLIB 4.7
+# GNU makefile for building WCSLIB 4.13
 #
 # Summary of the main targets
 # ---------------------------
@@ -15,11 +15,11 @@
 #              programmers' manual.
 #   distclean (or realclean): Recursively delete all platform-dependent files
 #              generated during the build, preserving only the programmers'
-#              manual (which is normally provided pre-built).  It is the one
-#              to use between builds for multiple platforms.
+#              manual and man pages (which are normally provided pre-built).
+#              It is the one to use between builds for multiple platforms.
 #   cleanest:  Like distclean, but deletes everything that can be regenerated
-#              from the source files, including the programmers' manual, but
-#              excluding 'configure'.
+#              from the source files, including the programmers' manual and
+#              man pages, but excluding 'configure'.
 #   show:      Print the values of important variables used in this and the
 #              other makefiles.
 #   writable:  Run chmod recursively to make all sources writable.
@@ -37,6 +37,10 @@
 # Get configure settings.
 include makedefs
 
+ifeq "$(CHECK)" "nopgplot"
+  TSTDIRS := $(filter-out pgsbox,$(TSTDIRS))
+endif
+
 .PHONY : build check chmod clean cleaner cleanest distclean install \
          realclean show tests writable
 
@@ -47,7 +51,7 @@ build :
 	     $(MAKE) -k -C $$DIR build ; \
 	   done
 
-check tests : show
+check tests :: show
 	-@ echo ''
 	-@ $(TIMER)
 	 @ for DIR in $(SUBDIRS) ; do \
@@ -61,6 +65,17 @@ check tests : show
 	     $(MAKE) -k -C $$DIR $@ ; \
 	   done
 
+check ::
+	-@ echo ''
+	-@ echo 'Summary of results for non-graphical tests'
+	-@ echo '------------------------------------------'
+	-@ cat ./*/test_results
+	 @ if grep 'FAIL:' ./*/test_results > /dev/null ; then \
+	     exit 1 ; \
+	   else \
+	     exit 0 ; \
+	   fi
+
 install :
 	 @ for DIR in $(INSTDIR) ; do \
 	     $(MAKE) -k -C $$DIR $@ ; \
@@ -70,6 +85,10 @@ install :
 	     $(INSTALL) -d -m 2775 $(DOCDIR) ; \
 	   fi
 	   $(INSTALL) -m 444 CHANGES COPYING* README $(DOCDIR)
+	-  if [ -h $(DOCLINK) ] ; then \
+	     $(RM) $(DOCLINK) ; \
+	     $(LN_S) $(notdir $(DOCDIR)) $(DOCLINK) ; \
+	   fi
 	-  if [ ! -d "$(PDFDIR)" ] ; then \
 	     $(INSTALL) -d -m 2775 $(PDFDIR) ; \
 	   fi
@@ -139,6 +158,7 @@ config.status : configure
 
 dist :
 	   $(MAKE) -C doxygen cleanest build
+	   $(MAKE) -C utils man
 	   $(MAKE) distclean
 	-@ echo $(WCSLIBPKG)/C/RCS        >  wcslib.X
 	-@ echo $(WCSLIBPKG)/C/flexed/RCS >> wcslib.X

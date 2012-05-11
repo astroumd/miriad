@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.7 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2011, Mark Calabretta
+  WCSLIB 4.13 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2012, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -234,7 +234,7 @@ int main()
       break;
     case 5:
       /* Float. */
-      sprintf(text, "%+13.6E", kptr->keyvalue.f);
+      sprintf(text, "%+13.6e", kptr->keyvalue.f);
       break;
     case 6:
       /* Int complex. */
@@ -243,7 +243,7 @@ int main()
       break;
     case 7:
       /* Float complex. */
-      sprintf(text, "%+13.6E  %+13.6E", kptr->keyvalue.c[0],
+      sprintf(text, "%+13.6e  %+13.6e", kptr->keyvalue.c[0],
                                         kptr->keyvalue.c[1]);
       break;
     case 8:

@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.7 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2011, Mark Calabretta
+  WCSLIB 4.13 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2012, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -1151,7 +1151,7 @@ int wcsbth_final(struct wcsbth_alts *alts, int *nwcs, struct wcsprm **wcs);
 	
 	  if (a == ' ' || (relax & WCSHDR_VELREFa)) {
 	    valtype = INTEGER;
-	    vptr = wcstem.specsys;
+	    vptr = &(wcstem.velref);
 	
 	    unput(a);
 	    extkey = "VELREF";

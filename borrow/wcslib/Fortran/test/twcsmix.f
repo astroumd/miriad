@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 4.7 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2011, Mark Calabretta
+* WCSLIB 4.13 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2012, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -227,6 +227,9 @@
      :          WORLD(4)
       CHARACTER PCODE*3
 
+*     On some systems, such as Sun Sparc, the structs MUST be aligned
+*     on a double precision boundary, done here using equivalences.
+*     Failure to do this may result in mysterious "bus errors".
       INCLUDE 'wcs.inc'
       INCLUDE 'cel.inc'
       INCLUDE 'prj.inc'
@@ -408,6 +411,11 @@
       DOUBLE PRECISION EULER(5), LNG1, LAT1, PHI, PIXLAT, PIXLNG, THETA
       CHARACTER PCODE*3
 
+*     On some systems, such as Sun Sparc, the structs MUST be aligned
+*     on a double precision boundary.  As a dummy argument, WCS should
+*     already be aligned.  The others are aligned here using
+*     equivalences.  Failure to do this may result in mysterious "bus
+*     errors".
       INCLUDE 'wcs.inc'
       INCLUDE 'cel.inc'
       INCLUDE 'prj.inc'
@@ -456,6 +464,11 @@
      :          WORLD(NELEM,0:360)
       CHARACTER PCODE*3, TEXT*80
 
+*     On some systems, such as Sun Sparc, the structs MUST be aligned
+*     on a double precision boundary.  As a dummy argument, WCS should
+*     already be aligned.  The others are aligned here using
+*     equivalences.  Failure to do this may result in mysterious "bus
+*     errors".
       INCLUDE 'wcs.inc'
       INCLUDE 'cel.inc'
       INCLUDE 'prj.inc'

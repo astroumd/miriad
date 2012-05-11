@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-<title>WCSLIB 4.7: spxprm Struct Reference</title>
+<title>WCSLIB 4.13.4: spxprm Struct Reference</title>
 <link href="doxygen.css" rel="stylesheet" type="text/css">
 <link href="tabs.css" rel="stylesheet" type="text/css">
 </head><body>
@@ -111,6 +111,10 @@
 <tr><td class="memItemLeft" nowrap align="right" valign="top">double&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structspxprm.html#1d7633da24d461d6f791e003be2a508a">dvelobeta</a></td></tr>
 
 <tr><td class="memItemLeft" nowrap align="right" valign="top">double&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structspxprm.html#cc8a46737906be2cee7cba0b2aa09d87">dbetavelo</a></td></tr>
+
+<tr><td class="memItemLeft" nowrap align="right" valign="top">struct <a class="el" href="structwcserr.html">wcserr</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structspxprm.html#b232cb470b7f96330512dea46791644e">err</a></td></tr>
+
+<tr><td class="memItemLeft" nowrap align="right" valign="top">void *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structspxprm.html#c8f016fe8e911c4ffbedde63318bb3db">padding</a></td></tr>
 
 </table>
 <hr><a name="_details"></a><h2>Detailed Description</h2>
@@ -732,8 +736,40 @@ If one or other of <a class="el" href="structspxprm.html#533847a7e77e2bba8ce8862
 (<em>Returned</em>) ... vice versa [s/m] (constant, <img class="formulaInl" alt="$= 1/c$" src="form_58.png">, always available). 
 </div>
 </div><p>
+<a class="anchor" name="b232cb470b7f96330512dea46791644e"></a><!-- doxytag: member="spxprm::err" ref="b232cb470b7f96330512dea46791644e" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">struct <a class="el" href="structwcserr.html">wcserr</a> * <a class="el" href="structspxprm.html#b232cb470b7f96330512dea46791644e">spxprm::err</a><code> [read]</code>          </td>
+        </tr>
+      </table>
 </div>
-<hr size="1"><address style="text-align: right;"><small>Generated on Mon Feb 7 18:03:57 2011 for WCSLIB 4.7 by&nbsp;
+<div class="memdoc">
+
+<p>
+(<em>Returned</em>) If enabled, when an error status is returned this struct contains detailed information about the error, see <a class="el" href="wcserr_8h.html#1691b8bd184d40ca6fda255be078fa53" title="Enable/disable error messaging.">wcserr_enable()</a>.<p>
+void *padding (An unused variable inserted for alignment purposes only.)<p>
+Global variable: const char *spx_errmsg[] - Status return messages Error messages to match the status value returned from each function. 
+</div>
+</div><p>
+<a class="anchor" name="c8f016fe8e911c4ffbedde63318bb3db"></a><!-- doxytag: member="spxprm::padding" ref="c8f016fe8e911c4ffbedde63318bb3db" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void* <a class="el" href="structspxprm.html#c8f016fe8e911c4ffbedde63318bb3db">spxprm::padding</a>          </td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+
+</div>
+</div><p>
+</div>
+<hr size="1"><address style="text-align: right;"><small>Generated on Mon Apr 2 17:55:24 2012 for WCSLIB 4.13.4 by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.5.6 </small></address>
 </body>

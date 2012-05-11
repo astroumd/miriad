@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 4.7 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2011, Mark Calabretta
+* WCSLIB 4.13 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2012, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -41,7 +41,7 @@
       INTEGER   NSPEC
       PARAMETER (NSPEC = 10001)
 
-      INTEGER   NAXISJ
+      INTEGER   CLOSURE, NAXISJ, NFAIL
       DOUBLE PRECISION C, CDELTX, CRPIXJ, CRVALX, MARS(0:6), RESTFRQ,
      :          RESTWAV, X1, X2
 
@@ -58,7 +58,7 @@
      :        '--------------------------------------------------',
      :        '-----------------')
 
-
+      NFAIL = 0
 
 *     PGPLOT initialization.
       CALL PGBEG (0, '/xwindow', 1, 1)
@@ -76,18 +76,18 @@
  20   FORMAT (/,'Linear frequency axis, span:',F4.1,' to',F4.1,
      :        ' (GHz), step:',F8.3,' (kHz)',/,'---------------------',
      :        '-----------------------------------------------------')
-      CALL CLOSURE('WAVE-F2W',     0D0,     0D0, NAXISJ, CRPIXJ, CDELTX,
-     :             CRVALX)
-      CALL CLOSURE('VOPT-F2W',     0D0, RESTWAV, NAXISJ, CRPIXJ, CDELTX,
-     :             CRVALX)
-      CALL CLOSURE('ZOPT-F2W',     0D0, RESTWAV, NAXISJ, CRPIXJ, CDELTX,
-     :             CRVALX)
-      CALL CLOSURE('AWAV-F2A',     0D0,     0D0, NAXISJ, CRPIXJ, CDELTX,
-     :             CRVALX)
-      CALL CLOSURE('VELO-F2V', RESTFRQ,     0D0, NAXISJ, CRPIXJ, CDELTX,
-     :             CRVALX)
-      CALL CLOSURE('BETA-F2V', RESTFRQ,     0D0, NAXISJ, CRPIXJ, CDELTX,
-     :             CRVALX)
+      NFAIL = NFAIL + CLOSURE('WAVE-F2W', 0D0,     0D0, NAXISJ, CRPIXJ,
+     :                        CDELTX, CRVALX)
+      NFAIL = NFAIL + CLOSURE('VOPT-F2W', 0D0, RESTWAV, NAXISJ, CRPIXJ,
+     :                        CDELTX, CRVALX)
+      NFAIL = NFAIL + CLOSURE('ZOPT-F2W', 0D0, RESTWAV, NAXISJ, CRPIXJ,
+     :                        CDELTX, CRVALX)
+      NFAIL = NFAIL + CLOSURE('AWAV-F2A', 0D0,     0D0, NAXISJ, CRPIXJ,
+     :                        CDELTX, CRVALX)
+      NFAIL = NFAIL + CLOSURE('VELO-F2V', RESTFRQ, 0D0, NAXISJ, CRPIXJ,
+     :                        CDELTX, CRVALX)
+      NFAIL = NFAIL + CLOSURE('BETA-F2V', RESTFRQ, 0D0, NAXISJ, CRPIXJ,
+     :                        CDELTX, CRVALX)
 
 
       RESTWAV = 700D-9
@@ -100,48 +100,48 @@
  30   FORMAT (/,'Linear vacuum wavelength axis, span:',I4,' to',I4,
      :        ' (nm), step:',F9.6,' (nm)',/,'----------------------',
      :        '----------------------------------------------------')
-      CALL CLOSURE('FREQ-W2F',     0D0,     0D0, NAXISJ, CRPIXJ, CDELTX,
-     :             CRVALX)
-      CALL CLOSURE('AFRQ-W2F',     0D0,     0D0, NAXISJ, CRPIXJ, CDELTX,
-     :             CRVALX)
-      CALL CLOSURE('ENER-W2F',     0D0,     0D0, NAXISJ, CRPIXJ, CDELTX,
-     :             CRVALX)
-      CALL CLOSURE('WAVN-W2F',     0D0,     0D0, NAXISJ, CRPIXJ, CDELTX,
-     :             CRVALX)
-      CALL CLOSURE('VRAD-W2F', RESTFRQ,     0D0, NAXISJ, CRPIXJ, CDELTX,
-     :             CRVALX)
-      CALL CLOSURE('AWAV-W2A',     0D0,     0D0, NAXISJ, CRPIXJ, CDELTX,
-     :             CRVALX)
-      CALL CLOSURE('VELO-W2V',     0D0, RESTWAV, NAXISJ, CRPIXJ, CDELTX,
-     :             CRVALX)
-      CALL CLOSURE('BETA-W2V',     0D0, RESTWAV, NAXISJ, CRPIXJ, CDELTX,
-     :             CRVALX)
+      NFAIL = NFAIL + CLOSURE('FREQ-W2F', 0D0,     0D0, NAXISJ, CRPIXJ,
+     :                        CDELTX, CRVALX)
+      NFAIL = NFAIL + CLOSURE('AFRQ-W2F', 0D0,     0D0, NAXISJ, CRPIXJ,
+     :                        CDELTX, CRVALX)
+      NFAIL = NFAIL + CLOSURE('ENER-W2F', 0D0,     0D0, NAXISJ, CRPIXJ,
+     :                        CDELTX, CRVALX)
+      NFAIL = NFAIL + CLOSURE('WAVN-W2F', 0D0,     0D0, NAXISJ, CRPIXJ,
+     :                        CDELTX, CRVALX)
+      NFAIL = NFAIL + CLOSURE('VRAD-W2F', RESTFRQ, 0D0, NAXISJ, CRPIXJ,
+     :                        CDELTX, CRVALX)
+      NFAIL = NFAIL + CLOSURE('AWAV-W2A', 0D0,     0D0, NAXISJ, CRPIXJ,
+     :                        CDELTX, CRVALX)
+      NFAIL = NFAIL + CLOSURE('VELO-W2V', 0D0, RESTWAV, NAXISJ, CRPIXJ,
+     :                        CDELTX, CRVALX)
+      NFAIL = NFAIL + CLOSURE('BETA-W2V', 0D0, RESTWAV, NAXISJ, CRPIXJ,
+     :                        CDELTX, CRVALX)
 
 
       WRITE (*, 40) INT(X1*1D9), INT(X2*1D9), CDELTX*1D9
  40   FORMAT (/,'Linear air wavelength axis, span:',I4,' to',I4,
      :        ' (nm), step:',F9.6,' (nm)',/,'----------------------',
      :        '----------------------------------------------------')
-      CALL CLOSURE('FREQ-A2F',     0D0,     0D0, NAXISJ, CRPIXJ, CDELTX,
-     :             CRVALX)
-      CALL CLOSURE('AFRQ-A2F',     0D0,     0D0, NAXISJ, CRPIXJ, CDELTX,
-     :             CRVALX)
-      CALL CLOSURE('ENER-A2F',     0D0,     0D0, NAXISJ, CRPIXJ, CDELTX,
-     :             CRVALX)
-      CALL CLOSURE('WAVN-A2F',     0D0,     0D0, NAXISJ, CRPIXJ, CDELTX,
-     :             CRVALX)
-      CALL CLOSURE('VRAD-A2F', RESTFRQ,     0D0, NAXISJ, CRPIXJ, CDELTX,
-     :             CRVALX)
-      CALL CLOSURE('WAVE-A2W',     0D0,     0D0, NAXISJ, CRPIXJ, CDELTX,
-     :             CRVALX)
-      CALL CLOSURE('VOPT-A2W',     0D0, RESTWAV, NAXISJ, CRPIXJ, CDELTX,
-     :             CRVALX)
-      CALL CLOSURE('ZOPT-A2W',     0D0, RESTWAV, NAXISJ, CRPIXJ, CDELTX,
-     :             CRVALX)
-      CALL CLOSURE('VELO-A2V',     0D0, RESTWAV, NAXISJ, CRPIXJ, CDELTX,
-     :             CRVALX)
-      CALL CLOSURE('BETA-A2V',     0D0, RESTWAV, NAXISJ, CRPIXJ, CDELTX,
-     :             CRVALX)
+      NFAIL = NFAIL + CLOSURE('FREQ-A2F', 0D0,     0D0, NAXISJ, CRPIXJ,
+     :                        CDELTX, CRVALX)
+      NFAIL = NFAIL + CLOSURE('AFRQ-A2F', 0D0,     0D0, NAXISJ, CRPIXJ,
+     :                        CDELTX, CRVALX)
+      NFAIL = NFAIL + CLOSURE('ENER-A2F', 0D0,     0D0, NAXISJ, CRPIXJ,
+     :                        CDELTX, CRVALX)
+      NFAIL = NFAIL + CLOSURE('WAVN-A2F', 0D0,     0D0, NAXISJ, CRPIXJ,
+     :                        CDELTX, CRVALX)
+      NFAIL = NFAIL + CLOSURE('VRAD-A2F', RESTFRQ, 0D0, NAXISJ, CRPIXJ,
+     :                        CDELTX, CRVALX)
+      NFAIL = NFAIL + CLOSURE('WAVE-A2W', 0D0,     0D0, NAXISJ, CRPIXJ,
+     :                        CDELTX, CRVALX)
+      NFAIL = NFAIL + CLOSURE('VOPT-A2W', 0D0, RESTWAV, NAXISJ, CRPIXJ,
+     :                        CDELTX, CRVALX)
+      NFAIL = NFAIL + CLOSURE('ZOPT-A2W', 0D0, RESTWAV, NAXISJ, CRPIXJ,
+     :                        CDELTX, CRVALX)
+      NFAIL = NFAIL + CLOSURE('VELO-A2V', 0D0, RESTWAV, NAXISJ, CRPIXJ,
+     :                        CDELTX, CRVALX)
+      NFAIL = NFAIL + CLOSURE('BETA-A2V', 0D0, RESTWAV, NAXISJ, CRPIXJ,
+     :                        CDELTX, CRVALX)
 
 
       RESTFRQ = 1420.40595D6
@@ -154,24 +154,24 @@
  50   FORMAT (/,'Linear velocity axis, span:',I11,' to',I10,
      :        ' m/s, step:',I6,' (m/s)',/,'-----------------------',
      :        '---------------------------------------------------')
-      CALL CLOSURE('FREQ-V2F', RESTFRQ,     0D0, NAXISJ, CRPIXJ, CDELTX,
-     :             CRVALX)
-      CALL CLOSURE('AFRQ-V2F', RESTFRQ,     0D0, NAXISJ, CRPIXJ, CDELTX,
-     :             CRVALX)
-      CALL CLOSURE('ENER-V2F', RESTFRQ,     0D0, NAXISJ, CRPIXJ, CDELTX,
-     :             CRVALX)
-      CALL CLOSURE('WAVN-V2F', RESTFRQ,     0D0, NAXISJ, CRPIXJ, CDELTX,
-     :             CRVALX)
-      CALL CLOSURE('VRAD-V2F', RESTFRQ,     0D0, NAXISJ, CRPIXJ, CDELTX,
-     :             CRVALX)
-      CALL CLOSURE('WAVE-V2W',     0D0, RESTWAV, NAXISJ, CRPIXJ, CDELTX,
-     :             CRVALX)
-      CALL CLOSURE('VOPT-V2W',     0D0, RESTWAV, NAXISJ, CRPIXJ, CDELTX,
-     :             CRVALX)
-      CALL CLOSURE('ZOPT-V2W',     0D0, RESTWAV, NAXISJ, CRPIXJ, CDELTX,
-     :             CRVALX)
-      CALL CLOSURE('AWAV-V2A',     0D0, RESTWAV, NAXISJ, CRPIXJ, CDELTX,
-     :             CRVALX)
+      NFAIL = NFAIL + CLOSURE('FREQ-V2F', RESTFRQ, 0D0, NAXISJ, CRPIXJ,
+     :                        CDELTX, CRVALX)
+      NFAIL = NFAIL + CLOSURE('AFRQ-V2F', RESTFRQ, 0D0, NAXISJ, CRPIXJ,
+     :                        CDELTX, CRVALX)
+      NFAIL = NFAIL + CLOSURE('ENER-V2F', RESTFRQ, 0D0, NAXISJ, CRPIXJ,
+     :                        CDELTX, CRVALX)
+      NFAIL = NFAIL + CLOSURE('WAVN-V2F', RESTFRQ, 0D0, NAXISJ, CRPIXJ,
+     :                        CDELTX, CRVALX)
+      NFAIL = NFAIL + CLOSURE('VRAD-V2F', RESTFRQ, 0D0, NAXISJ, CRPIXJ,
+     :                        CDELTX, CRVALX)
+      NFAIL = NFAIL + CLOSURE('WAVE-V2W', 0D0, RESTWAV, NAXISJ, CRPIXJ,
+     :                        CDELTX, CRVALX)
+      NFAIL = NFAIL + CLOSURE('VOPT-V2W', 0D0, RESTWAV, NAXISJ, CRPIXJ,
+     :                        CDELTX, CRVALX)
+      NFAIL = NFAIL + CLOSURE('ZOPT-V2W', 0D0, RESTWAV, NAXISJ, CRPIXJ,
+     :                        CDELTX, CRVALX)
+      NFAIL = NFAIL + CLOSURE('AWAV-V2A', 0D0, RESTWAV, NAXISJ, CRPIXJ,
+     :                        CDELTX, CRVALX)
 
 
       RESTWAV = 650D-9
@@ -184,28 +184,28 @@
  60   FORMAT (/,'Vacuum wavelength grism axis, span:',I4,' to',I5,
      :        ' (nm), step:',F9.6,' (nm)',/,'----------------------',
      :        '----------------------------------------------------')
-      CALL CLOSURE('FREQ-GRI',     0D0,     0D0, NAXISJ, CRPIXJ, CDELTX,
-     :             CRVALX)
-      CALL CLOSURE('AFRQ-GRI',     0D0,     0D0, NAXISJ, CRPIXJ, CDELTX,
-     :             CRVALX)
-      CALL CLOSURE('ENER-GRI',     0D0,     0D0, NAXISJ, CRPIXJ, CDELTX,
-     :             CRVALX)
-      CALL CLOSURE('WAVN-GRI',     0D0,     0D0, NAXISJ, CRPIXJ, CDELTX,
-     :             CRVALX)
-      CALL CLOSURE('VRAD-GRI', RESTFRQ,     0D0, NAXISJ, CRPIXJ, CDELTX,
-     :             CRVALX)
-      CALL CLOSURE('WAVE-GRI',     0D0,     0D0, NAXISJ, CRPIXJ, CDELTX,
-     :             CRVALX)
-      CALL CLOSURE('VOPT-GRI',     0D0, RESTWAV, NAXISJ, CRPIXJ, CDELTX,
-     :             CRVALX)
-      CALL CLOSURE('ZOPT-GRI',     0D0, RESTWAV, NAXISJ, CRPIXJ, CDELTX,
-     :             CRVALX)
-      CALL CLOSURE('AWAV-GRI',     0D0,     0D0, NAXISJ, CRPIXJ, CDELTX,
-     :             CRVALX)
-      CALL CLOSURE('VELO-GRI',     0D0, RESTWAV, NAXISJ, CRPIXJ, CDELTX,
-     :             CRVALX)
-      CALL CLOSURE('BETA-GRI',     0D0, RESTWAV, NAXISJ, CRPIXJ, CDELTX,
-     :             CRVALX)
+      NFAIL = NFAIL + CLOSURE('FREQ-GRI', 0D0,     0D0, NAXISJ, CRPIXJ,
+     :                        CDELTX, CRVALX)
+      NFAIL = NFAIL + CLOSURE('AFRQ-GRI', 0D0,     0D0, NAXISJ, CRPIXJ,
+     :                        CDELTX, CRVALX)
+      NFAIL = NFAIL + CLOSURE('ENER-GRI', 0D0,     0D0, NAXISJ, CRPIXJ,
+     :                        CDELTX, CRVALX)
+      NFAIL = NFAIL + CLOSURE('WAVN-GRI', 0D0,     0D0, NAXISJ, CRPIXJ,
+     :                        CDELTX, CRVALX)
+      NFAIL = NFAIL + CLOSURE('VRAD-GRI', RESTFRQ, 0D0, NAXISJ, CRPIXJ,
+     :                        CDELTX, CRVALX)
+      NFAIL = NFAIL + CLOSURE('WAVE-GRI', 0D0,     0D0, NAXISJ, CRPIXJ,
+     :                        CDELTX, CRVALX)
+      NFAIL = NFAIL + CLOSURE('VOPT-GRI', 0D0, RESTWAV, NAXISJ, CRPIXJ,
+     :                        CDELTX, CRVALX)
+      NFAIL = NFAIL + CLOSURE('ZOPT-GRI', 0D0, RESTWAV, NAXISJ, CRPIXJ,
+     :                        CDELTX, CRVALX)
+      NFAIL = NFAIL + CLOSURE('AWAV-GRI', 0D0,     0D0, NAXISJ, CRPIXJ,
+     :                        CDELTX, CRVALX)
+      NFAIL = NFAIL + CLOSURE('VELO-GRI', 0D0, RESTWAV, NAXISJ, CRPIXJ,
+     :                        CDELTX, CRVALX)
+      NFAIL = NFAIL + CLOSURE('BETA-GRI', 0D0, RESTWAV, NAXISJ, CRPIXJ,
+     :                        CDELTX, CRVALX)
 
 
 *     Reproduce Fig. 5 of Paper III.
@@ -223,25 +223,37 @@
  70   FORMAT (/,'Air wavelength grism axis, span:',I4,' to',I5,
      :        ' (nm), step:',F9.6,' (nm)',/,'----------------------',
      :        '----------------------------------------------------')
-      CALL CLOSURE('AWAV-GRA',     0D0,     0D0, NAXISJ, CRPIXJ, CDELTX,
-     :             CRVALX)
-      CALL CLOSURE('VELO-GRA',     0D0, RESTWAV, NAXISJ, CRPIXJ, CDELTX,
-     :             CRVALX)
+      NFAIL = NFAIL + CLOSURE('AWAV-GRA', 0D0,     0D0, NAXISJ, CRPIXJ,
+     :                        CDELTX, CRVALX)
+      NFAIL = NFAIL + CLOSURE('VELO-GRA', 0D0, RESTWAV, NAXISJ, CRPIXJ,
+     :                        CDELTX, CRVALX)
 
       CALL PGASK(0)
       CALL PGEND()
+
+
+      IF (NFAIL.NE.0) THEN
+        WRITE (*, 80) NFAIL
+ 80     FORMAT (/,'FAIL:',I5,' closure residuals exceed reporting ',
+     :    'tolerance.')
+      ELSE
+        WRITE (*, 90)
+ 90     FORMAT (/,'PASS: All closure residuals are within reporting ',
+     :    'tolerance.')
+      END IF
 
       END
 
 *=======================================================================
 
-      SUBROUTINE CLOSURE (CTYPES, RESTFRQ, RESTWAV, NAXISJ, CRPIXJ,
-     :   CDELTX, CRVALX)
+      INTEGER FUNCTION CLOSURE (CTYPES, RESTFRQ, RESTWAV, NAXISJ,
+     :  CRPIXJ, CDELTX, CRVALX)
 
       INTEGER   NSPEC
       PARAMETER (NSPEC = 10001)
 
-      INTEGER   J, NAXISJ, RESTREQ, STAT1(NSPEC), STAT2(NSPEC), STATUS
+      INTEGER   J, NAXISJ, NFAIL, RESTREQ, STAT1(NSPEC), STAT2(NSPEC),
+     :          STATUS
       REAL      TMP, X(NSPEC), XMIN, XMAX, Y(NSPEC), YMAX, YMIN
       DOUBLE PRECISION CDELTS, CDELTX, CLOS(NSPEC), CRPIXJ, CRVALS,
      :          CRVALX, DSDX, MARS(0:6), RESID, RESIDMAX, RESTFRQ,
@@ -249,6 +261,9 @@
       CHARACTER CTYPES*8, PTYPE, SCODE*3, SNAME*21, STYPE*4, TITLE*80,
      :          UNITS*7, XTYPE, YLAB*80
 
+*     On some systems, such as Sun Sparc, the struct MUST be aligned
+*     on a double precision boundary, done here using an equivalence.
+*     Failure to do this may result in mysterious "bus errors".
       INCLUDE 'spx.inc'
       INCLUDE 'spc.inc'
       INTEGER   SPC(SPCLEN)
@@ -317,9 +332,10 @@
         RETURN
       END IF
 
-      RESIDMAX = 0D0
 
 *     Test closure.
+      NFAIL = 0
+      RESIDMAX = 0D0
       STATUS = SPCGET (SPC, SPC_TYPE, STYPE, 0)
       DO 80 J = 1, NAXISJ
         IF (STAT1(J).NE.0) THEN
@@ -339,15 +355,16 @@
         IF (RESID.GT.RESIDMAX) RESIDMAX = RESID
 
         IF (RESID.GT.TOL) THEN
+          NFAIL = NFAIL + 1
           WRITE (*, 70) CTYPES, SPEC1(J), STYPE, SPEC2(J), CLOS(J),
      :                  RESID
  70       FORMAT (A,': w =',1PE20.12,' -> ',A,' =',1PE20.12,' ->',/,
-     :           '          w =',1PE20.12,',  resid =',1PE20.12)
+     :           '          w =',1PE20.12,',  resid =',1PE8.1)
         END IF
  80   CONTINUE
 
       WRITE (*, 90) CTYPES, RESIDMAX
- 90   FORMAT (A,': Maximum closure residual =',1PE19.12,' pixel')
+ 90   FORMAT (A,': Maximum closure residual =',1PE8.1,' pixel')
 
 
 *     Draw graph.
@@ -404,5 +421,6 @@
       READ (*, *, END=130)
  130  WRITE (*, *)
 
-      RETURN
+      CLOSURE = NFAIL
+
       END

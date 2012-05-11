@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-<title>WCSLIB 4.7: celprm Struct Reference</title>
+<title>WCSLIB 4.13.4: celprm Struct Reference</title>
 <link href="doxygen.css" rel="stylesheet" type="text/css">
 <link href="tabs.css" rel="stylesheet" type="text/css">
 </head><body>
@@ -47,6 +47,10 @@
 <tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcelprm.html#756c8f0991a748ab47361b0215c4577b">latpreq</a></td></tr>
 
 <tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcelprm.html#7bb5e1ff4d73c884d73eeb0f8f2677d7">isolat</a></td></tr>
+
+<tr><td class="memItemLeft" nowrap align="right" valign="top">struct <a class="el" href="structwcserr.html">wcserr</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcelprm.html#1b9cbfd7cfa2306464d57dc4acd03b06">err</a></td></tr>
+
+<tr><td class="memItemLeft" nowrap align="right" valign="top">void *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcelprm.html#07d1785f7d7a8793555147140757956d">padding</a></td></tr>
 
 </table>
 <hr><a name="_details"></a><h2>Detailed Description</h2>
@@ -225,8 +229,40 @@ The returned value, <a class="el" href="structcelprm.html#756c8f0991a748ab47361b
 (<em>Returned</em>) True if the spherical rotation preserves the magnitude of the latitude, which occurs iff the axes of the native and celestial coordinates are coincident. It signals an opportunity to cache intermediate calculations common to all elements in a vector computation. 
 </div>
 </div><p>
+<a class="anchor" name="1b9cbfd7cfa2306464d57dc4acd03b06"></a><!-- doxytag: member="celprm::err" ref="1b9cbfd7cfa2306464d57dc4acd03b06" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">struct <a class="el" href="structwcserr.html">wcserr</a> * <a class="el" href="structcelprm.html#1b9cbfd7cfa2306464d57dc4acd03b06">celprm::err</a><code> [read]</code>          </td>
+        </tr>
+      </table>
 </div>
-<hr size="1"><address style="text-align: right;"><small>Generated on Mon Feb 7 18:03:57 2011 for WCSLIB 4.7 by&nbsp;
+<div class="memdoc">
+
+<p>
+(<em>Returned</em>) If enabled, when an error status is returned this struct contains detailed information about the error, see <a class="el" href="wcserr_8h.html#1691b8bd184d40ca6fda255be078fa53" title="Enable/disable error messaging.">wcserr_enable()</a>.<p>
+void *padding (An unused variable inserted for alignment purposes only.)<p>
+Global variable: const char *cel_errmsg[] - Status return messages Status messages to match the status value returned from each function. 
+</div>
+</div><p>
+<a class="anchor" name="07d1785f7d7a8793555147140757956d"></a><!-- doxytag: member="celprm::padding" ref="07d1785f7d7a8793555147140757956d" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void* <a class="el" href="structcelprm.html#07d1785f7d7a8793555147140757956d">celprm::padding</a>          </td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+
+</div>
+</div><p>
+</div>
+<hr size="1"><address style="text-align: right;"><small>Generated on Mon Apr 2 17:55:24 2012 for WCSLIB 4.13.4 by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.5.6 </small></address>
 </body>

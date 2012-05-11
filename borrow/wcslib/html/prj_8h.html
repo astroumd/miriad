@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-<title>WCSLIB 4.7: prj.h File Reference</title>
+<title>WCSLIB 4.13.4: prj.h File Reference</title>
 <link href="doxygen.css" rel="stylesheet" type="text/css">
 <link href="tabs.css" rel="stylesheet" type="text/css">
 </head><body>
@@ -16,7 +16,8 @@
   </div>
 </div>
 <div class="contents">
-<h1>prj.h File Reference</h1>
+<h1>prj.h File Reference</h1><code>#include &quot;<a class="el" href="wcserr_8h-source.html">wcserr.h</a>&quot;</code><br>
+
 <p>
 <a href="prj_8h-source.html">Go to the source code of this file.</a><table border="0" cellpadding="0" cellspacing="0">
 <tr><td></td></tr>
@@ -52,10 +53,24 @@
 <tr><td class="memItemLeft" nowrap align="right" valign="top">#define&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="prj_8h.html#df9cca0265038851129d1966017cd525">prjs2x_errmsg</a>&nbsp;&nbsp;&nbsp;<a class="el" href="prj_8h.html#cb157519ef498bf669298c5508492f3e">prj_errmsg</a></td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Deprecated.  <a href="#df9cca0265038851129d1966017cd525"></a><br></td></tr>
+<tr><td colspan="2"><br><h2>Enumerations</h2></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">enum &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="prj_8h.html#2ac22403e59a9e8d2b2f53f6d0574305">prj_errmsg_enum</a> { <br>
+&nbsp;&nbsp;<a class="el" href="prj_8h.html#2ac22403e59a9e8d2b2f53f6d05743056f3a73d3c0a7dc7d15ceb00e00714bea">PRJERR_SUCCESS</a> =  0, 
+<a class="el" href="prj_8h.html#2ac22403e59a9e8d2b2f53f6d057430560d6a804ddfa2f2d0f25f397d653695b">PRJERR_NULL_POINTER</a> =  1, 
+<a class="el" href="prj_8h.html#2ac22403e59a9e8d2b2f53f6d05743056a0f63e2f52f594637a12db14e5814e6">PRJERR_BAD_PARAM</a> =  2, 
+<a class="el" href="prj_8h.html#2ac22403e59a9e8d2b2f53f6d0574305d33460ba0b865ff7580e6d2cebd92c74">PRJERR_BAD_PIX</a> =  3, 
+<br>
+&nbsp;&nbsp;<a class="el" href="prj_8h.html#2ac22403e59a9e8d2b2f53f6d05743050d15cd17822bea2f7fc0209a180cc998">PRJERR_BAD_WORLD</a> =  4
+<br>
+ }</td></tr>
+
 <tr><td colspan="2"><br><h2>Functions</h2></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="prj_8h.html#d994cb23871c51b20754973bef180f8a">prjini</a> (struct <a class="el" href="structprjprm.html">prjprm</a> *prj)</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Default constructor for the <a class="el" href="structprjprm.html" title="Projection parameters.">prjprm</a> struct.  <a href="#d994cb23871c51b20754973bef180f8a"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="prj_8h.html#50db1538981df162709b81be0b2961ab">prjfree</a> (struct <a class="el" href="structprjprm.html">prjprm</a> *prj)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Destructor for the <a class="el" href="structprjprm.html" title="Projection parameters.">prjprm</a> struct.  <a href="#50db1538981df162709b81be0b2961ab"></a><br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="prj_8h.html#8785bdf33bdaa3d9d52fd51b621ec8d5">prjprt</a> (const struct <a class="el" href="structprjprm.html">prjprm</a> *prj)</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Print routine for the <a class="el" href="structprjprm.html" title="Projection parameters.">prjprm</a> struct.  <a href="#8785bdf33bdaa3d9d52fd51b621ec8d5"></a><br></td></tr>
@@ -351,7 +366,7 @@
 </table>
 <hr><a name="_details"></a><h2>Detailed Description</h2>
 These routines implement the spherical map projections defined by the FITS WCS standard. They are based on the <a class="el" href="structprjprm.html" title="Projection parameters.">prjprm</a> struct which contains all information needed for the computations. The struct contains some members that must be set by the user, and others that are maintained by these routines, somewhat like a C++ class but with no encapsulation.<p>
-Routine <a class="el" href="prj_8h.html#d994cb23871c51b20754973bef180f8a" title="Default constructor for the prjprm struct.">prjini()</a> is provided to initialize the <a class="el" href="structprjprm.html" title="Projection parameters.">prjprm</a> struct with default values, and another, <a class="el" href="prj_8h.html#8785bdf33bdaa3d9d52fd51b621ec8d5" title="Print routine for the prjprm struct.">prjprt()</a>, to print its contents.<p>
+Routine <a class="el" href="prj_8h.html#d994cb23871c51b20754973bef180f8a" title="Default constructor for the prjprm struct.">prjini()</a> is provided to initialize the <a class="el" href="structprjprm.html" title="Projection parameters.">prjprm</a> struct with default values, <a class="el" href="prj_8h.html#50db1538981df162709b81be0b2961ab" title="Destructor for the prjprm struct.">prjfree()</a> reclaims any memory that may have been allocated to store an error message, and <a class="el" href="prj_8h.html#8785bdf33bdaa3d9d52fd51b621ec8d5" title="Print routine for the prjprm struct.">prjprt()</a> prints its contents.<p>
 Setup routines for each projection with names of the form <b>???set()</b>, where "???" is the down-cased three-letter projection code, compute intermediate values in the <a class="el" href="structprjprm.html" title="Projection parameters.">prjprm</a> struct from parameters in it that were supplied by the user. The struct always needs to be set by the projection's setup routine but that need not be called explicitly - refer to the explanation of <a class="el" href="structprjprm.html#d304d66b3f3aa64fe9c7251d3c420d02">prjprm::flag</a>.<p>
 Each map projection is implemented via separate functions for the spherical projection, <b>???s2x()</b>, and deprojection, <b>???x2s()</b>.<p>
 A set of driver routines, <a class="el" href="prj_8h.html#d43dbc765c63162d0af2b9285b8a434f" title="Generic setup routine for the prjprm struct.">prjset()</a>, <a class="el" href="prj_8h.html#9a387f05414e7b59487fdcb03ff79ced" title="Generic Cartesian-to-spherical deprojection.">prjx2s()</a>, and <a class="el" href="prj_8h.html#be28216295d9e7ad7dbb01bf5985df9f" title="Generic spherical-to-Cartesian projection.">prjs2x()</a>, provides a generic interface to the specific projection routines which they invoke via pointers-to-functions stored in the <a class="el" href="structprjprm.html" title="Projection parameters.">prjprm</a> struct.<p>
@@ -572,6 +587,36 @@ Size of the <a class="el" href="structprjprm.html" title="Projection parameters.
 
 </div>
 </div><p>
+<hr><h2>Enumeration Type Documentation</h2>
+<a class="anchor" name="2ac22403e59a9e8d2b2f53f6d0574305"></a><!-- doxytag: member="prj.h::prj_errmsg_enum" ref="2ac22403e59a9e8d2b2f53f6d0574305" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum <a class="el" href="prj_8h.html#2ac22403e59a9e8d2b2f53f6d0574305">prj_errmsg_enum</a>          </td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+<dl compact><dt><b>Enumerator: </b></dt><dd>
+<table border="0" cellspacing="2" cellpadding="0">
+<tr><td valign="top"><em><a class="anchor" name="2ac22403e59a9e8d2b2f53f6d05743056f3a73d3c0a7dc7d15ceb00e00714bea"></a><!-- doxytag: member="PRJERR_SUCCESS" ref="2ac22403e59a9e8d2b2f53f6d05743056f3a73d3c0a7dc7d15ceb00e00714bea" args="" -->PRJERR_SUCCESS</em>&nbsp;</td><td>
+</td></tr>
+<tr><td valign="top"><em><a class="anchor" name="2ac22403e59a9e8d2b2f53f6d057430560d6a804ddfa2f2d0f25f397d653695b"></a><!-- doxytag: member="PRJERR_NULL_POINTER" ref="2ac22403e59a9e8d2b2f53f6d057430560d6a804ddfa2f2d0f25f397d653695b" args="" -->PRJERR_NULL_POINTER</em>&nbsp;</td><td>
+</td></tr>
+<tr><td valign="top"><em><a class="anchor" name="2ac22403e59a9e8d2b2f53f6d05743056a0f63e2f52f594637a12db14e5814e6"></a><!-- doxytag: member="PRJERR_BAD_PARAM" ref="2ac22403e59a9e8d2b2f53f6d05743056a0f63e2f52f594637a12db14e5814e6" args="" -->PRJERR_BAD_PARAM</em>&nbsp;</td><td>
+</td></tr>
+<tr><td valign="top"><em><a class="anchor" name="2ac22403e59a9e8d2b2f53f6d0574305d33460ba0b865ff7580e6d2cebd92c74"></a><!-- doxytag: member="PRJERR_BAD_PIX" ref="2ac22403e59a9e8d2b2f53f6d0574305d33460ba0b865ff7580e6d2cebd92c74" args="" -->PRJERR_BAD_PIX</em>&nbsp;</td><td>
+</td></tr>
+<tr><td valign="top"><em><a class="anchor" name="2ac22403e59a9e8d2b2f53f6d05743050d15cd17822bea2f7fc0209a180cc998"></a><!-- doxytag: member="PRJERR_BAD_WORLD" ref="2ac22403e59a9e8d2b2f53f6d05743050d15cd17822bea2f7fc0209a180cc998" args="" -->PRJERR_BAD_WORLD</em>&nbsp;</td><td>
+</td></tr>
+</table>
+</dl>
+
+</div>
+</div><p>
 <hr><h2>Function Documentation</h2>
 <a class="anchor" name="d994cb23871c51b20754973bef180f8a"></a><!-- doxytag: member="prj.h::prjini" ref="d994cb23871c51b20754973bef180f8a" args="(struct prjprm *prj)" -->
 <div class="memitem">
@@ -602,6 +647,35 @@ Size of the <a class="el" href="structprjprm.html" title="Projection parameters.
 
 </div>
 </div><p>
+<a class="anchor" name="50db1538981df162709b81be0b2961ab"></a><!-- doxytag: member="prj.h::prjfree" ref="50db1538981df162709b81be0b2961ab" args="(struct prjprm *prj)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int prjfree           </td>
+          <td>(</td>
+          <td class="paramtype">struct <a class="el" href="structprjprm.html">prjprm</a> *&nbsp;</td>
+          <td class="paramname"> <em>prj</em>          </td>
+          <td>&nbsp;)&nbsp;</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+<b>prjfree</b>() frees any memory that may have been allocated to store an error message in the <a class="el" href="structprjprm.html" title="Projection parameters.">prjprm</a> struct.<p>
+<dl compact><dt><b>Parameters:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>prj</em>&nbsp;</td><td>Projection parameters.</td></tr>
+  </table>
+</dl>
+<dl class="return" compact><dt><b>Returns:</b></dt><dd>Status return value:<ul>
+<li>0: Success.</li><li>1: Null <a class="el" href="structprjprm.html" title="Projection parameters.">prjprm</a> pointer passed. </li></ul>
+</dd></dl>
+
+</div>
+</div><p>
 <a class="anchor" name="8785bdf33bdaa3d9d52fd51b621ec8d5"></a><!-- doxytag: member="prj.h::prjprt" ref="8785bdf33bdaa3d9d52fd51b621ec8d5" args="(const struct prjprm *prj)" -->
 <div class="memitem">
 <div class="memproto">
@@ -619,7 +693,7 @@ Size of the <a class="el" href="structprjprm.html" title="Projection parameters.
 <div class="memdoc">
 
 <p>
-<b>prjprt</b>() prints the contents of a <a class="el" href="structprjprm.html" title="Projection parameters.">prjprm</a> struct.<p>
+<b>prjprt</b>() prints the contents of a <a class="el" href="structprjprm.html" title="Projection parameters.">prjprm</a> struct using <a class="el" href="wcsprintf_8h.html#46950abaf5a27347da8160741f98f973" title="Print function used by WCSLIB diagnostic routines.">wcsprintf()</a>. Mainly intended for diagnostic purposes.<p>
 <dl compact><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
     <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>prj</em>&nbsp;</td><td>Projection parameters.</td></tr>
@@ -657,8 +731,8 @@ The one important distinction between <b>prjset</b>() and the setup routines for
   </table>
 </dl>
 <dl class="return" compact><dt><b>Returns:</b></dt><dd>Status return value:<ul>
-<li>0: Success.</li><li>1: Null <a class="el" href="structprjprm.html" title="Projection parameters.">prjprm</a> pointer passed.</li><li>2: Invalid projection parameters. </li></ul>
-</dd></dl>
+<li>0: Success.</li><li>1: Null <a class="el" href="structprjprm.html" title="Projection parameters.">prjprm</a> pointer passed.</li><li>2: Invalid projection parameters.</li></ul>
+For returns &gt; 1, a detailed error message is set in <a class="el" href="structprjprm.html#30e78bb110dc7a8ad0303370ce20762c">prjprm::err</a> if enabled, see <a class="el" href="wcserr_8h.html#1691b8bd184d40ca6fda255be078fa53" title="Enable/disable error messaging.">wcserr_enable()</a>. </dd></dl>
 
 </div>
 </div><p>
@@ -694,8 +768,8 @@ The projection is that specified by <a class="el" href="structprjprm.html#4f3c36
   </table>
 </dl>
 <dl class="return" compact><dt><b>Returns:</b></dt><dd>Status return value:<ul>
-<li>0: Success.</li><li>1: Null <a class="el" href="structprjprm.html" title="Projection parameters.">prjprm</a> pointer passed.</li><li>2: Invalid projection parameters.</li><li>3: One or more of the <img class="formulaInl" alt="$(x,y)$" src="form_0.png"> coordinates were invalid, as indicated by the stat vector. </li></ul>
-</dd></dl>
+<li>0: Success.</li><li>1: Null <a class="el" href="structprjprm.html" title="Projection parameters.">prjprm</a> pointer passed.</li><li>2: Invalid projection parameters.</li><li>3: One or more of the <img class="formulaInl" alt="$(x,y)$" src="form_0.png"> coordinates were invalid, as indicated by the stat vector.</li></ul>
+For returns &gt; 1, a detailed error message is set in <a class="el" href="structprjprm.html#30e78bb110dc7a8ad0303370ce20762c">prjprm::err</a> if enabled, see <a class="el" href="wcserr_8h.html#1691b8bd184d40ca6fda255be078fa53" title="Enable/disable error messaging.">wcserr_enable()</a>. </dd></dl>
 
 </div>
 </div><p>
@@ -731,8 +805,8 @@ The projection is that specified by <a class="el" href="structprjprm.html#4f3c36
   </table>
 </dl>
 <dl class="return" compact><dt><b>Returns:</b></dt><dd>Status return value:<ul>
-<li>0: Success.</li><li>1: Null <a class="el" href="structprjprm.html" title="Projection parameters.">prjprm</a> pointer passed.</li><li>2: Invalid projection parameters.</li><li>4: One or more of the <img class="formulaInl" alt="$(\phi,\theta)$" src="form_2.png"> coordinates were, invalid, as indicated by the stat vector. </li></ul>
-</dd></dl>
+<li>0: Success.</li><li>1: Null <a class="el" href="structprjprm.html" title="Projection parameters.">prjprm</a> pointer passed.</li><li>2: Invalid projection parameters.</li><li>4: One or more of the <img class="formulaInl" alt="$(\phi,\theta)$" src="form_2.png"> coordinates were, invalid, as indicated by the stat vector.</li></ul>
+For returns &gt; 1, a detailed error message is set in <a class="el" href="structprjprm.html#30e78bb110dc7a8ad0303370ce20762c">prjprm::err</a> if enabled, see <a class="el" href="wcserr_8h.html#1691b8bd184d40ca6fda255be078fa53" title="Enable/disable error messaging.">wcserr_enable()</a>. </dd></dl>
 
 </div>
 </div><p>
@@ -2620,7 +2694,7 @@ List of all recognized three-letter projection codes (currently 27), e.g. <b><co
 </div>
 </div><p>
 </div>
-<hr size="1"><address style="text-align: right;"><small>Generated on Mon Feb 7 18:03:57 2011 for WCSLIB 4.7 by&nbsp;
+<hr size="1"><address style="text-align: right;"><small>Generated on Mon Apr 2 17:55:24 2012 for WCSLIB 4.13.4 by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.5.6 </small></address>
 </body>

@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.7 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2011, Mark Calabretta
+  WCSLIB 4.13 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2012, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -49,11 +49,15 @@ const char *wcshdr_errmsg[] = {
   "Success",
   "Null wcsprm pointer passed",
   "Memory allocation failed",
-  "Invalid tabular parameters",
-  "Fatal error returned by Flex parser"};
+  "Invalid column selection",
+  "Fatal error returned by Flex parser",
+  "Invalid tabular parameters"};
 
-void wcshdo_util(int, const char [], const char [], int, const char [], int,
-  int, int, char, int, int [], char [], const char [], int *, char **,
+/* Convenience macro for invoking wcserr_set(). */
+#define WCSHDR_ERRMSG(status) WCSERR_SET(status), wcshdr_errmsg[status]
+
+static void wcshdo_util(int, const char [], const char [], int, const char [],
+  int, int, int, char, int, int [], char [], const char [], int *, char **,
   int *);
 
 /*--------------------------------------------------------------------------*/
@@ -61,16 +65,19 @@ void wcshdo_util(int, const char [], const char [], int, const char [], int,
 int wcstab(struct wcsprm *wcs)
 
 {
+  static const char *function = "wcstab";
+
   char (*PSi_0a)[72] = 0x0, (*PSi_1a)[72] = 0x0, (*PSi_2a)[72] = 0x0;
   int  *PVi_1a = 0x0, *PVi_2a = 0x0, *PVi_3a = 0x0, *tabax, *tabidx = 0x0;
   int   getcrd, i, ip, itab, itabax, j, jtabax, m, naxis, ntabax, status;
   struct wtbarr *wtbp;
   struct tabprm *tabp;
+  struct wcserr **err;
 
+  if (wcs == 0x0) return WCSHDRERR_NULL_POINTER;
+  err = &(wcs->err);
 
   /* Free memory previously allocated by wcstab(). */
-  if (wcs == 0x0) return 1;
-
   if (wcs->flag != -1 && wcs->m_flag == WCSSET) {
     if (wcs->wtb == wcs->m_wtb) wcs->wtb = 0x0;
     if (wcs->tab == wcs->m_tab) wcs->tab = 0x0;
@@ -94,7 +101,7 @@ int wcstab(struct wcsprm *wcs)
   /* Determine the number of -TAB axes. */
   naxis = wcs->naxis;
   if (!(tabax = calloc(naxis, sizeof(int)))) {
-    return 2;
+    return wcserr_set(WCSHDR_ERRMSG(WCSHDRERR_MEMORY));
   }
 
   ntabax = 0;
@@ -124,7 +131,7 @@ int wcstab(struct wcsprm *wcs)
         (PSi_2a = calloc(ntabax, sizeof(char[72]))) &&
         (PVi_3a = calloc(ntabax, sizeof(int)))      &&
         (tabidx = calloc(ntabax, sizeof(int))))) {
-    status = 2;
+    status = wcserr_set(WCSHDR_ERRMSG(WCSHDRERR_MEMORY));
     goto cleanup;
   }
 
@@ -183,7 +190,8 @@ int wcstab(struct wcsprm *wcs)
   for (itabax = 0; itabax < ntabax; itabax++) {
     /* These have no defaults. */
     if (!PSi_0a[itabax][0] || !PSi_1a[itabax][0]) {
-      status = 3;
+      status = wcserr_set(WCSERR_SET(WCSHDRERR_BAD_TABULAR_PARAMS),
+        "Invalid tabular parameters: PSi_0a and PSi_1a must be specified");
       goto cleanup;
     }
 
@@ -207,7 +215,7 @@ int wcstab(struct wcsprm *wcs)
   }
 
   if (!(wcs->tab = calloc(wcs->ntab, sizeof(struct tabprm)))) {
-    status = 2;
+    status = wcserr_set(WCSHDR_ERRMSG(WCSHDRERR_MEMORY));
     goto cleanup;
   }
   wcs->m_tab = wcs->tab;
@@ -224,6 +232,8 @@ int wcstab(struct wcsprm *wcs)
 
   for (itab = 0; itab < wcs->ntab; itab++) {
     if ((status = tabini(1, wcs->tab[itab].M, 0, wcs->tab + itab))) {
+      if (status == 3) status = 5;
+      wcserr_set(WCSHDR_ERRMSG(status));
       goto cleanup;
     }
   }
@@ -248,7 +258,8 @@ int wcstab(struct wcsprm *wcs)
   for (itab = 0; itab < wcs->ntab; itab++) {
     for (m = 0; m < wcs->tab[itab].M; m++) {
       if (wcs->tab[itab].map[m] < 0) {
-        status = 3;
+        status = wcserr_set(WCSERR_SET(WCSHDRERR_BAD_TABULAR_PARAMS),
+          "Invalid tabular parameters: the axis mapping is undefined");
         goto cleanup;
       }
     }
@@ -270,7 +281,7 @@ int wcstab(struct wcsprm *wcs)
   if (!(wcs->wtb = calloc(wcs->nwtb, sizeof(struct wtbarr)))) {
     wcs->nwtb = 0;
 
-    status = 2;
+    status = wcserr_set(WCSHDR_ERRMSG(WCSHDRERR_MEMORY));
     goto cleanup;
   }
   wcs->m_wtb = wcs->wtb;
@@ -361,7 +372,7 @@ int wcsidx(int nwcs, struct wcsprm **wcs, int alts[27])
   }
 
   if (wcs == 0x0) {
-    return 1;
+    return WCSHDRERR_NULL_POINTER;
   }
 
   wcsp = *wcs;
@@ -398,7 +409,7 @@ int wcsbdx(int nwcs, struct wcsprm **wcs, int type, short alts[1000][28])
   }
 
   if (wcs == 0x0) {
-    return 1;
+    return WCSHDRERR_NULL_POINTER;
   }
 
   wcsp = *wcs;
@@ -445,7 +456,7 @@ int wcsvfree(int *nwcs, struct wcsprm **wcs)
   struct wcsprm *wcsp;
 
   if (wcs == 0x0) {
-    return 1;
+    return WCSHDRERR_NULL_POINTER;
   }
 
   wcsp = *wcs;
@@ -468,17 +479,19 @@ int wcshdo(int relax, struct wcsprm *wcs, int *nkeyrec, char **header)
 /* ::: CUBEFACE and STOKES handling? */
 
 {
+  static const char *function = "wcshdo";
+
   char alt, comment[72], keyvalue[72], keyword[16], obsg[8] = "OBSG?",
        obsgeo[8] = "OBSGEO-?", ptype, xtype, xyz[] = "XYZ";
   int  bintab, col0, *colax, colnum, i, j, k, naxis, pixlist, primage,
        status = 0;
+  struct wcserr **err;
 
   *nkeyrec = 0;
   *header  = 0x0;
 
-  if (wcs == 0x0) {
-    return 1;
-  }
+  if (wcs == 0x0) return WCSHDRERR_NULL_POINTER;
+  err = &(wcs->err);
 
   if (wcs->flag != WCSSET) {
     if ((status = wcsset(wcs))) return status;
@@ -911,6 +924,9 @@ int wcshdo(int relax, struct wcsprm *wcs, int *nkeyrec, char **header)
       colnum, colax, keyvalue, comment, nkeyrec, header, &status);
   }
 
+  if (status == WCSHDRERR_MEMORY) {
+    wcserr_set(WCSHDR_ERRMSG(status));
+  }
   return status;
 }
 
@@ -944,7 +960,7 @@ void wcshdo_util(
   if ((*nkeyrec)%32 == 0) {
     nbyte = ((*nkeyrec)/32 + 1) * 2880;
     if (!(hptr = realloc(*header, nbyte))) {
-      *status = 2;
+      *status = WCSHDRERR_MEMORY;
       return;
     }
 

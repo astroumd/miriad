@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 4.7 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2011, Mark Calabretta
+* WCSLIB 4.13 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2012, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -38,7 +38,7 @@
 * routines for closure.
 *
 *-----------------------------------------------------------------------
-      INTEGER   J, LAT, LNG, SPHS2X, SPHX2S, STATUS
+      INTEGER   J, LAT, LNG, NFAIL, SPHS2X, SPHX2S, STATUS
       DOUBLE PRECISION COSLAT, DLAT, DLATMX, DLNG, DLNGMX, LNG1(361),
      :          LNG2(361), EUL(5), LAT1, LAT2(361), PHI(361),
      :          THETA(361), TOL, ZETA
@@ -49,8 +49,8 @@
       PARAMETER (PI = 3.141592653589793238462643D0)
       PARAMETER (D2R = PI/180D0)
 *-----------------------------------------------------------------------
-      WRITE (*, 5)
- 5    FORMAT ('Testing closure of WCSLIB coordinate transformation ',
+      WRITE (*, 10)
+ 10   FORMAT ('Testing closure of WCSLIB coordinate transformation ',
      :        'routines (tsph.f)',/,
      :        '----------------------------------------------------',
      :        '-----------------')
@@ -59,17 +59,18 @@
       EUL(1) =  90D0
       EUL(2) =  30D0
       EUL(3) = -90D0
-      WRITE (*, 10) (EUL(J),J=1,3)
- 10   FORMAT (/,'Celestial longitude and latitude of the native pole, ',
+      WRITE (*, 20) (EUL(J),J=1,3)
+ 20   FORMAT (/,'Celestial longitude and latitude of the native pole, ',
      :        'and native',/,'longitude of the celestial pole ',
      :        '(degrees):',3F10.4)
 
       EUL(4) = COS(EUL(2)*D2R)
       EUL(5) = SIN(EUL(2)*D2R)
 
-      WRITE (*, 20) TOL
- 20   FORMAT ('Reporting tolerance:',1PG8.1,' degrees of arc.')
+      WRITE (*, 30) TOL
+ 30   FORMAT ('Reporting tolerance:',1PG8.1,' degrees of arc.')
 
+      NFAIL  = 0
       DLNGMX = 0D0
       DLATMX = 0D0
 
@@ -78,10 +79,10 @@
         COSLAT = COS(LAT1*D2R)
 
         J = 1
-        DO 30 LNG = -180, 180
+        DO 40 LNG = -180, 180
           LNG1(J) = DBLE(LNG)
           J = J + 1
- 30     CONTINUE
+ 40     CONTINUE
 
         STATUS = SPHS2X (EUL, 361, 1, 1, 1, LNG1, LAT1, PHI, THETA)
         STATUS = SPHX2S (EUL, 361, 0, 1, 1, PHI, THETA, LNG2, LAT2)
@@ -96,6 +97,7 @@
           IF (DLAT.GT.DLATMX) DLATMX = DLAT
 
           IF (DLNG.GT.TOL .OR. DLAT.GT.TOL) THEN
+            NFAIL = NFAIL + 1
             WRITE (*, 50) LNG1(J), LAT1, PHI(J), THETA(J), LNG2(J),
      :                    LAT2(J)
  50         FORMAT ('Unclosed: LNG1 =',F20.15,'  LAT1 =',F20.15,/,
@@ -126,6 +128,7 @@
           IF (DLAT.GT.DLATMX) DLATMX = DLAT
 
           IF (DLNG.GT.TOL .OR. DLAT.GT.TOL) THEN
+            NFAIL = NFAIL + 1
             WRITE (*, 50) LNG1(1), LAT1, PHI(1), THETA(1), LNG2(1),
      :                    LAT2(1)
           END IF
@@ -136,6 +139,18 @@
  90   CONTINUE
 
       WRITE (*, 100) DLNGMX, DLATMX
- 100  FORMAT (/,'Maximum residual: lng',1P,E10.3,'   lat',E10.3)
+ 100  FORMAT (/,'SPHS2X/SPHX2S: Maximum closure residual =',1P,E8.1,
+     :  ' (lng)',E8.1,' (lat) deg.')
+
+
+      IF (NFAIL.NE.0) THEN
+        WRITE (*, 110) NFAIL
+ 110    FORMAT (/,'FAIL:',I5,' closure residuals exceed reporting ',
+     :    'tolerance.')
+      ELSE
+        WRITE (*, 120)
+ 120    FORMAT (/,'PASS: All closure residuals are within reporting ',
+     :    'tolerance.')
+      END IF
 
       END

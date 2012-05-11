@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 4.7 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2011, Mark Calabretta
+* WCSLIB 4.13 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2012, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -46,6 +46,26 @@
       PARAMETER (WCSFIX_SPC  = 5)
       PARAMETER (WCSFIX_CYL  = 6)
       PARAMETER (WCSFIX_NWCS = 6)
+
+*     Error codes and messages.
+      INTEGER   FIXERR_BAD_COORD_TRANS, FIXERR_BAD_CORNER_PIX,
+     :          FIXERR_BAD_CTYPE, FIXERR_BAD_PARAM,
+     :          FIXERR_ILL_COORD_TRANS, FIXERR_MEMORY, FIXERR_NO_CHANGE,
+     :          FIXERR_NO_REF_PIX_COORD, FIXERR_NO_REF_PIX_VAL,
+     :          FIXERR_NULL_POINTER, FIXERR_SINGULAR_MTX, FIXERR_SUCCESS
+
+      PARAMETER (FIXERR_NO_CHANGE        = -1)
+      PARAMETER (FIXERR_SUCCESS          =  0)
+      PARAMETER (FIXERR_NULL_POINTER     =  1)
+      PARAMETER (FIXERR_MEMORY           =  2)
+      PARAMETER (FIXERR_SINGULAR_MTX     =  3)
+      PARAMETER (FIXERR_BAD_CTYPE        =  4)
+      PARAMETER (FIXERR_BAD_PARAM        =  5)
+      PARAMETER (FIXERR_BAD_COORD_TRANS  =  6)
+      PARAMETER (FIXERR_ILL_COORD_TRANS  =  7)
+      PARAMETER (FIXERR_BAD_CORNER_PIX   =  8)
+      PARAMETER (FIXERR_NO_REF_PIX_COORD =  9)
+      PARAMETER (FIXERR_NO_REF_PIX_VAL   = 10)
 
       CHARACTER WCSFIX_ERRMSG(0:10)*80
       COMMON /WCSFIX_DATA/ WCSFIX_ERRMSG

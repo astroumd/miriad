@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.7 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2011, Mark Calabretta
+  WCSLIB 4.13 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2012, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -31,6 +31,8 @@
   $Id$
 *===========================================================================*/
 
+#include <stdio.h>
+
 #include <lin.h>
 
 /* Fortran name mangling. */
@@ -56,9 +58,10 @@
 #define LIN_PC     103
 #define LIN_CDELT  104
 
-#define LIN_UNITY  200
-#define LIN_PIXIMG 201
-#define LIN_IMGPIX 202
+#define LIN_PIXIMG 200
+#define LIN_IMGPIX 201
+#define LIN_UNITY  202
+#define LIN_ERR    203
 
 /*--------------------------------------------------------------------------*/
 
@@ -143,9 +146,10 @@ int linpti_( int *lin, const int *what, const int *value,
 int linget_(const int *lin, const int *what, void *value)
 
 {
-  int i, j, naxis;
+  int i, j, k, naxis;
   int *ivalp;
   double *dvalp;
+  const int *ilinp;
   const double *dlinp;
   const struct linprm *linp;
 
@@ -183,9 +187,6 @@ int linget_(const int *lin, const int *what, void *value)
       *(dvalp++) = linp->cdelt[i];
     }
     break;
-  case LIN_UNITY:
-    *ivalp = linp->unity;
-    break;
   case LIN_PIXIMG:
     /* C row-major to FORTRAN column-major. */
     for (j = 0; j < naxis; j++) {
@@ -203,6 +204,22 @@ int linget_(const int *lin, const int *what, void *value)
       for (i = 0; i < naxis; i++) {
         *(dvalp++) = *dlinp;
         dlinp += naxis;
+      }
+    }
+    break;
+  case LIN_UNITY:
+    *ivalp = linp->unity;
+    break;
+  case LIN_ERR:
+    /* Copy the contents of the wcserr struct. */
+    if (linp->err) {
+      ilinp = (int *)(linp->err);
+      for (k = 0; k < ERRLEN; k++) {
+        *(ivalp++) = *(ilinp++);
+      }
+    } else {
+      for (k = 0; k < ERRLEN; k++) {
+        *(ivalp++) = 0;
       }
     }
     break;
@@ -236,6 +253,10 @@ int linfree_(int *lin)
 int linprt_(int *lin)
 
 {
+  /* This may or may not force the Fortran I/O buffers to be flushed.  If
+   * not, try CALL FLUSH(6) before calling LINPRT in the Fortran code. */
+  fflush(NULL);
+
   return linprt((struct linprm *)lin);
 }
 

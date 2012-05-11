@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-<title>WCSLIB 4.7: Data Fields</title>
+<title>WCSLIB 4.13.4: Data Fields</title>
 <link href="doxygen.css" rel="stylesheet" type="text/css">
 <link href="tabs.css" rel="stylesheet" type="text/css">
 </head><body>
@@ -26,6 +26,8 @@
       <li><a href="globals_func.html"><span>Functions</span></a></li>
       <li><a href="globals_vars.html"><span>Variables</span></a></li>
       <li><a href="globals_type.html"><span>Typedefs</span></a></li>
+      <li><a href="globals_enum.html"><span>Enumerations</span></a></li>
+      <li><a href="globals_eval.html"><span>Enumerator</span></a></li>
       <li><a href="globals_defs.html"><span>Defines</span></a></li>
     </ul>
   </div>
@@ -77,12 +79,28 @@ Here is a list of all functions, variables, defines, enums, and typedefs with li
 : <a class="el" href="prj_8h.html#eb7881cd5d7b4b5e26281a512b8f62ac">prj.h</a>
 <li>spc_errmsg
 : <a class="el" href="spc_8h.html#96978fec523018fd6898301a3452c166">spc.h</a>
+<li>spc_errmsg_enum
+: <a class="el" href="spc_8h.html#51ba1ce5380fd2e7693c37554d18fc3b">spc.h</a>
 <li>spcaips()
 : <a class="el" href="spc_8h.html#615d3ef3a505a8be7da1578d9338d218">spc.h</a>
+<li>SPCERR_BAD_SPEC
+: <a class="el" href="spc_8h.html#51ba1ce5380fd2e7693c37554d18fc3b7e218c5bd52bd6a45d8ad66573653007">spc.h</a>
+<li>SPCERR_BAD_SPEC_PARAMS
+: <a class="el" href="spc_8h.html#51ba1ce5380fd2e7693c37554d18fc3b0653e60411a641a326492c65d257daa8">spc.h</a>
+<li>SPCERR_BAD_X
+: <a class="el" href="spc_8h.html#51ba1ce5380fd2e7693c37554d18fc3b3ba9183c7c3dace15eef0606980fd615">spc.h</a>
+<li>SPCERR_NO_CHANGE
+: <a class="el" href="spc_8h.html#51ba1ce5380fd2e7693c37554d18fc3be000828492cbedc0502f757d8b892606">spc.h</a>
+<li>SPCERR_NULL_POINTER
+: <a class="el" href="spc_8h.html#51ba1ce5380fd2e7693c37554d18fc3b7c5e0d09fac9f441e39f3cf28801961f">spc.h</a>
+<li>SPCERR_SUCCESS
+: <a class="el" href="spc_8h.html#51ba1ce5380fd2e7693c37554d18fc3b0b84f38d1e903eacda3122ce55bff741">spc.h</a>
 <li>SPCFIX
 : <a class="el" href="wcsfix_8h.html#0816c5f2354ee6c0044e11867d7558ea">wcsfix.h</a>
 <li>spcfix()
 : <a class="el" href="wcsfix_8h.html#f011e4065b6179e19d2964bc9646b6af">wcsfix.h</a>
+<li>spcfree()
+: <a class="el" href="spc_8h.html#2e04fc3ccd8aceebb4bfef56c5399a7d">spc.h</a>
 <li>spcini()
 : <a class="el" href="spc_8h.html#30c95d776068ef3cc959a50af9995fa9">spc.h</a>
 <li>spcini_errmsg
@@ -103,16 +121,24 @@ Here is a list of all functions, variables, defines, enums, and typedefs with li
 : <a class="el" href="spc_8h.html#49807752ce4e223d4095cf6ad13bac0a">spc.h</a>
 <li>spcspx()
 : <a class="el" href="spc_8h.html#b9fc42d8e1d281839a0a42ac00bcd180">spc.h</a>
+<li>spcspxe()
+: <a class="el" href="spc_8h.html#300fdb21c6e53aca6749db3455e531b2">spc.h</a>
 <li>spctrn()
 : <a class="el" href="spc_8h.html#96e8686daa13255e36506c3bfc213e46">spc.h</a>
+<li>spctrne()
+: <a class="el" href="spc_8h.html#cc0b7b9e5bc5495f24129492e4ff5218">spc.h</a>
 <li>spctyp()
 : <a class="el" href="spc_8h.html#6f88e6f1a549bffa0d0ab2b9523d2000">spc.h</a>
+<li>spctype()
+: <a class="el" href="spc_8h.html#eb46b7cc0b8e5a01be7862b3c446204a">spc.h</a>
 <li>spcx2s()
 : <a class="el" href="spc_8h.html#e7fe86ae85a1a3bd19c2d78c3dba58f6">spc.h</a>
 <li>spcx2s_errmsg
 : <a class="el" href="spc_8h.html#ab517aed3ee9f8d5a5ca1f990d310b61">spc.h</a>
 <li>spcxps()
 : <a class="el" href="spc_8h.html#49f16254df0e3498ae2c1eb641f5232c">spc.h</a>
+<li>spcxpse()
+: <a class="el" href="spc_8h.html#99689938e16d737f26bf6504f2e1599a">spc.h</a>
 <li>specx()
 : <a class="el" href="spx_8h.html#192c7ea1edb2fc79d391a51bec7442e0">spx.h</a>
 <li>sphdpa()
@@ -126,7 +152,17 @@ Here is a list of all functions, variables, defines, enums, and typedefs with li
 <li>SPX_ARGS
 : <a class="el" href="spx_8h.html#777e5c4790da397aefcada61445a1bb3">spx.h</a>
 <li>spx_errmsg
-: <a class="el" href="spx_8h.html#652e95a1904d66117dc500c092b58e81">spx.h</a>
+: <a class="el" href="spx_8h.html#d99a404f496d5b8ce3ef6e53c630ecaf">spx.h</a>
+<li>SPXERR_BAD_INSPEC_COORD
+: <a class="el" href="spx_8h.html#d99a404f496d5b8ce3ef6e53c630ecafe795e388e346496b34e57864af841ae2">spx.h</a>
+<li>SPXERR_BAD_SPEC_PARAMS
+: <a class="el" href="spx_8h.html#d99a404f496d5b8ce3ef6e53c630ecaf23753b512249d3752a74ce7497d9c852">spx.h</a>
+<li>SPXERR_BAD_SPEC_VAR
+: <a class="el" href="spx_8h.html#d99a404f496d5b8ce3ef6e53c630ecaf6b6639fb6d3683c9d356dbd7cf705de1">spx.h</a>
+<li>SPXERR_NULL_POINTER
+: <a class="el" href="spx_8h.html#d99a404f496d5b8ce3ef6e53c630ecaf7342349cd1dc5b4581ae9c39f31d055e">spx.h</a>
+<li>SPXERR_SUCCESS
+: <a class="el" href="spx_8h.html#d99a404f496d5b8ce3ef6e53c630ecaf45313ec670a74e7effc1bcee16cb0b56">spx.h</a>
 <li>SPXLEN
 : <a class="el" href="spx_8h.html#45f0db5bb967998f070cad30e5e68180">spx.h</a>
 <li>SQRT2
@@ -147,7 +183,7 @@ Here is a list of all functions, variables, defines, enums, and typedefs with li
 : <a class="el" href="prj_8h.html#2fe67a5ecf17729881efa24c83482611">prj.h</a>
 </ul>
 </div>
-<hr size="1"><address style="text-align: right;"><small>Generated on Mon Feb 7 18:03:57 2011 for WCSLIB 4.7 by&nbsp;
+<hr size="1"><address style="text-align: right;"><small>Generated on Mon Apr 2 17:55:24 2012 for WCSLIB 4.13.4 by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.5.6 </small></address>
 </body>

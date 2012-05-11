@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.7 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2011, Mark Calabretta
+  WCSLIB 4.13 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2012, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -30,6 +30,8 @@
   http://www.atnf.csiro.au/~mcalabre/index.html
   $Id$
 *===========================================================================*/
+
+#include <stdio.h>
 
 #include <tab.h>
 
@@ -64,6 +66,7 @@
 #define TAB_P0       202
 #define TAB_DELTA    203
 #define TAB_EXTREMA  204
+#define TAB_ERR      205
 
 /*--------------------------------------------------------------------------*/
 
@@ -164,6 +167,7 @@ int tabget_(const int *tab, const int *what, void *value)
   int i, k, m, n;
   int    *ivalp;
   double *dvalp;
+  const int *itabp;
   const struct tabprm *tabp;
 
   /* Cast pointers. */
@@ -239,6 +243,19 @@ int tabget_(const int *tab, const int *what, void *value)
       *(dvalp++) = tabp->extrema[i];
     }
     break;
+  case TAB_ERR:
+    /* Copy the contents of the wcserr struct. */
+    if (tabp->err) {
+      itabp = (int *)(tabp->err);
+      for (k = 0; k < ERRLEN; k++) {
+        *(ivalp++) = *(itabp++);
+      }
+    } else {
+      for (k = 0; k < ERRLEN; k++) {
+        *(ivalp++) = 0;
+      }
+    }
+    break;
   default:
     return 1;
   }
@@ -269,6 +286,10 @@ int tabfree_(int *tab)
 int tabprt_(const int *tab)
 
 {
+  /* This may or may not force the Fortran I/O buffers to be flushed.  If
+   * not, try CALL FLUSH(6) before calling TABPRT in the Fortran code. */
+  fflush(NULL);
+
   return tabprt((const struct tabprm *)tab);
 }
 

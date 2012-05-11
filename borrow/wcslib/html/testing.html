@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-<title>WCSLIB 4.7: Example code, testing and verification</title>
+<title>WCSLIB 4.13.4: Example code, testing and verification</title>
 <link href="doxygen.css" rel="stylesheet" type="text/css">
 <link href="tabs.css" rel="stylesheet" type="text/css">
 </head><body>
@@ -14,7 +14,7 @@
       <li><a href="files.html"><span>Files</span></a></li>
     </ul>
   </div>
-  <div class="navpath"><a class="el" href="index.html">WCSLIB 4.7 and PGSBOX 4.7</a>
+  <div class="navpath"><a class="el" href="index.html">WCSLIB 4.13.4 and PGSBOX 4.13.4</a>
   </div>
 </div>
 <div class="contents">
@@ -34,7 +34,7 @@ The high- and middle-level test programs are more instructive for applications p
 <li>Middle level: <br>
  <em>twcs</em> tests closure of <a class="el" href="wcs_8h.html#60673d05a3513659ac848a9cb3d0cb07" title="World-to-pixel transformation.">wcss2p()</a> and <a class="el" href="wcs_8h.html#27d3dd209db3e76cf4c50f48c01ba986" title="Pixel-to-world transformation.">wcsp2s()</a> for a number of selected projections. <em>twcsmix</em> verifies <a class="el" href="wcs_8h.html#f3f00b876c8212d43f32a51feeadaa81" title="Hybrid coordinate transformation.">wcsmix()</a> on the <img class="formulaInl" alt="$1^\circ$" src="form_20.png"> grid of celestial longitude and latitude for a number of selected projections. It plots a test grid for each projection and indicates the location of successful and failed solutions. <em>twcssub</em> tests the extraction of a coordinate description for a subimage from a <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> struct by <a class="el" href="wcs_8h.html#864c99fef9f3eee29085ce42d0ee0d64" title="Subimage extraction routine for the wcsprm struct.">wcssub()</a>. <br>
 <br>
- <em>tunits</em> tests <a class="el" href="wcsunits_8h.html#560462cb2a7fa7eae6b4f325c85e7911" title="Translation of non-standard unit specifications.">wcsutrn()</a>, <a class="el" href="wcsunits_8h.html#ef5d64e333f758458b1edaa617911513" title="FITS units specification conversion.">wcsunits()</a> and <a class="el" href="wcsunits_8h.html#0e7fd01137ef47ca728c19e8870d1ab5" title="FITS units specification parser.">wcsulex()</a>, the units specification translator, converter and parser, either interactively or using a list of units specifications contained in units_test.</li></ul>
+ <em>tunits</em> tests <a class="el" href="wcsunits_8h.html#25ba0f0129e88c6e7c74d4562cf796cd" title="Translation of non-standard unit specifications.">wcsutrne()</a>, <a class="el" href="wcsunits_8h.html#47aa4e0a54f11d7ed5146c00906a3984" title="FITS units specification conversion.">wcsunitse()</a> and <a class="el" href="wcsunits_8h.html#f2c6e7c95fd6741183b2b74dd24d59ce" title="FITS units specification parser.">wcsulexe()</a>, the units specification translator, converter and parser, either interactively or using a list of units specifications contained in units_test.</li></ul>
 <p>
 <ul>
 <li>Low level: <br>
@@ -50,7 +50,7 @@ The high- and middle-level test programs are more instructive for applications p
 <br>
  Although tests for closure help to verify the internal consistency of the routines they do not verify them in an absolute sense. This is partly addressed by <em>tcel1</em>, <em>tcel2</em>, <em>tprj2</em>, <em>ttab2</em> and <em>ttab3</em> which plot graticules for visual inspection of scaling, orientation, and other macroscopic characteristics of the projections. </li></ul>
 </div>
-<hr size="1"><address style="text-align: right;"><small>Generated on Mon Feb 7 18:03:57 2011 for WCSLIB 4.7 by&nbsp;
+<hr size="1"><address style="text-align: right;"><small>Generated on Mon Apr 2 17:55:24 2012 for WCSLIB 4.13.4 by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.5.6 </small></address>
 </body>

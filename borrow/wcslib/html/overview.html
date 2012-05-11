@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-<title>WCSLIB 4.7: Overview of WCSLIB</title>
+<title>WCSLIB 4.13.4: Overview of WCSLIB</title>
 <link href="doxygen.css" rel="stylesheet" type="text/css">
 <link href="tabs.css" rel="stylesheet" type="text/css">
 </head><body>
@@ -14,7 +14,7 @@
       <li><a href="files.html"><span>Files</span></a></li>
     </ul>
   </div>
-  <div class="navpath"><a class="el" href="index.html">WCSLIB 4.7 and PGSBOX 4.7</a>
+  <div class="navpath"><a class="el" href="index.html">WCSLIB 4.13.4 and PGSBOX 4.13.4</a>
   </div>
 </div>
 <div class="contents">
@@ -28,13 +28,13 @@ WCSLIB is layered software, each layer depends only on those beneath; understand
 <li><a class="el" href="fitshdr_8h.html">fitshdr.h</a>,l -- Generic FITS header parser (not WCS-specific).</li></ul>
 <br>
  The philosophy adopted for dealing with non-standard WCS usage is to translate it at this level so that the middle- and low-level routines need only deal with standard constructs:<ul>
-<li><a class="el" href="wcsfix_8h.html">wcsfix.h</a>,c -- Translator for non-standard FITS WCS constructs (uses <a class="el" href="wcsunits_8h.html#560462cb2a7fa7eae6b4f325c85e7911" title="Translation of non-standard unit specifications.">wcsutrn()</a>).</li><li>wcsutrn.l -- Lexical translator for non-standard units specifications.</li></ul>
+<li><a class="el" href="wcsfix_8h.html">wcsfix.h</a>,c -- Translator for non-standard FITS WCS constructs (uses <a class="el" href="wcsunits_8h.html#25ba0f0129e88c6e7c74d4562cf796cd" title="Translation of non-standard unit specifications.">wcsutrne()</a>).</li><li>wcsutrn.l -- Lexical translator for non-standard units specifications.</li></ul>
 <br>
  As a concrete example, within this layer the <code>CTYPEia</code> keyvalues would be extracted from a FITS header and copied into the <em>ctype</em>[] array within a <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> struct. None of the header keyrecords are interpreted.</li></ul>
 <p>
 <ul>
 <li>The <b>middle layer</b> analyses the WCS information obtained from the FITS header by the top-level routines, identifying the separate steps of the WCS algorithm chain for each of the coordinate axes in the image. It constructs the various data structures on which the low-level routines are based and invokes them in the correct sequence. Thus the <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> struct is essentially the glue that binds together the low-level routines into a complete coordinate description.<ul>
-<li><a class="el" href="wcs_8h.html">wcs.h</a>,c -- Driver routines for the low-level routines.</li><li><a class="el" href="wcsunits_8h.html">wcsunits.h</a>,c -- Unit conversions (uses <a class="el" href="wcsunits_8h.html#0e7fd01137ef47ca728c19e8870d1ab5" title="FITS units specification parser.">wcsulex()</a>).</li><li>wcsulex.l -- Lexical parser for units specifications.</li></ul>
+<li><a class="el" href="wcs_8h.html">wcs.h</a>,c -- Driver routines for the low-level routines.</li><li><a class="el" href="wcsunits_8h.html">wcsunits.h</a>,c -- Unit conversions (uses <a class="el" href="wcsunits_8h.html#f2c6e7c95fd6741183b2b74dd24d59ce" title="FITS units specification parser.">wcsulexe()</a>).</li><li>wcsulex.l -- Lexical parser for units specifications.</li></ul>
 <br>
  To continue the above example, within this layer the <em>ctype</em>[] keyvalues in a <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> struct are analysed to determine the nature of the coordinate axes in the image.</li></ul>
 <p>
@@ -74,7 +74,7 @@ Several utility programs are distributed with WCSLIB:<p>
 <ul>
 <li><em>fitshdr</em> lists headers from a FITS file specified on the command line, or else on stdin, printing them as 80-character keyrecords without trailing blanks. It is independent of WCSLIB. </li></ul>
 </div>
-<hr size="1"><address style="text-align: right;"><small>Generated on Mon Feb 7 18:03:57 2011 for WCSLIB 4.7 by&nbsp;
+<hr size="1"><address style="text-align: right;"><small>Generated on Mon Apr 2 17:55:24 2012 for WCSLIB 4.13.4 by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.5.6 </small></address>
 </body>

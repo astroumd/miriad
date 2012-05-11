@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 4.7 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2011, Mark Calabretta
+* WCSLIB 4.13 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2012, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -39,7 +39,7 @@
 *-----------------------------------------------------------------------
       INCLUDE 'prj.inc'
 
-      INTEGER   J, K, STATUS
+      INTEGER   J, K, NFAIL, PROJEX, STATUS
       DOUBLE PRECISION PV(0:29)
 
       DOUBLE PRECISION PI
@@ -61,7 +61,7 @@
             WRITE(*, 20) STATUS, PRJ_ERRMSG(STATUS)(:K)
  20         FORMAT(I4,': ',A,'.')
             GO TO 40
-          ENDIF
+          END IF
  30     CONTINUE
  40   CONTINUE
       WRITE(*, '()')
@@ -70,30 +70,32 @@
         PV(J) = 0D0
  50   CONTINUE
 
+      NFAIL = 0
+
 *     AZP: zenithal/azimuthal perspective.
       PV(1) = 0.5D0
       PV(2) =  30D0
-      CALL PROJEX ('AZP', PV, 90,   5, TOL)
+      NFAIL = NFAIL + PROJEX ('AZP', PV, 90,   5, TOL)
 
 *     SZP: slant zenithal perspective.
       PV(1) = 0.5D0
       PV(2) = 210D0
       PV(3) =  60D0
-      CALL PROJEX ('SZP', PV, 90, -90, TOL)
+      NFAIL = NFAIL + PROJEX ('SZP', PV, 90, -90, TOL)
 
 *     TAN: gnomonic.
-      CALL PROJEX ('TAN', PV, 90,   5, TOL)
+      NFAIL = NFAIL + PROJEX ('TAN', PV, 90,   5, TOL)
 
 *     STG: stereographic.
-      CALL PROJEX ('STG', PV, 90, -85, TOL)
+      NFAIL = NFAIL + PROJEX ('STG', PV, 90, -85, TOL)
 
 *     SIN: orthographic/synthesis.
       PV(1) = -0.3D0
       PV(2) =  0.5D0
-      CALL PROJEX ('SIN', PV, 90,  45, TOL)
+      NFAIL = NFAIL + PROJEX ('SIN', PV, 90,  45, TOL)
 
 *     ARC: zenithal/azimuthal equidistant.
-      CALL PROJEX ('ARC', PV, 90, -90, TOL)
+      NFAIL = NFAIL + PROJEX ('ARC', PV, 90, -90, TOL)
 
 *     ZPN: zenithal/azimuthal polynomial.
       PV(0) =  0.00000D0
@@ -106,87 +108,98 @@
       PV(7) = -0.00019D0
       PV(8) =  0.00000D0
       PV(9) =  0.00000D0
-      CALL PROJEX ('ZPN', PV, 90,  10, TOL)
+      NFAIL = NFAIL + PROJEX ('ZPN', PV, 90,  10, TOL)
 
 *     ZEA: zenithal/azimuthal equal area.
-      CALL PROJEX ('ZEA', PV, 90, -85, TOL)
+      NFAIL = NFAIL + PROJEX ('ZEA', PV, 90, -85, TOL)
 
 *     AIR: Airy's zenithal projection.
       PV(1) = 45D0
-      CALL PROJEX ('AIR', PV, 90, -85, TOL)
+      NFAIL = NFAIL + PROJEX ('AIR', PV, 90, -85, TOL)
 
 *     CYP: cylindrical perspective.
       PV(1) = 3.0D0
       PV(2) = 0.8D0
-      CALL PROJEX ('CYP', PV, 90, -90, TOL)
+      NFAIL = NFAIL + PROJEX ('CYP', PV, 90, -90, TOL)
 
 *     CEA: cylindrical equal area.
       PV(1) = 0.75D0
-      CALL PROJEX ('CEA', PV, 90, -90, TOL)
+      NFAIL = NFAIL + PROJEX ('CEA', PV, 90, -90, TOL)
 
 *     CAR: plate carree.
-      CALL PROJEX ('CAR', PV, 90, -90, TOL)
+      NFAIL = NFAIL + PROJEX ('CAR', PV, 90, -90, TOL)
 
 *     MER: Mercator's.
-      CALL PROJEX ('MER', PV, 85, -85, TOL)
+      NFAIL = NFAIL + PROJEX ('MER', PV, 85, -85, TOL)
 
 *     SFL: Sanson-Flamsteed.
-      CALL PROJEX ('SFL', PV, 90, -90, TOL)
+      NFAIL = NFAIL + PROJEX ('SFL', PV, 90, -90, TOL)
 
 *     PAR: parabolic.
-      CALL PROJEX ('PAR', PV, 90, -90, TOL)
+      NFAIL = NFAIL + PROJEX ('PAR', PV, 90, -90, TOL)
 
 *     MOL: Mollweide's projection.
-      CALL PROJEX ('MOL', PV, 90, -90, TOL)
+      NFAIL = NFAIL + PROJEX ('MOL', PV, 90, -90, TOL)
 
 *     AIT: Hammer-Aitoff.
-      CALL PROJEX ('AIT', PV, 90, -90, TOL)
+      NFAIL = NFAIL + PROJEX ('AIT', PV, 90, -90, TOL)
 
 *     COP: conic perspective.
       PV(1) =  60D0
       PV(2) =  15D0
-      CALL PROJEX ('COP', PV, 90, -25, TOL)
+      NFAIL = NFAIL + PROJEX ('COP', PV, 90, -25, TOL)
 
 *     COE: conic equal area.
       PV(1) =  60D0
       PV(2) = -15D0
-      CALL PROJEX ('COE', PV, 90, -90, TOL)
+      NFAIL = NFAIL + PROJEX ('COE', PV, 90, -90, TOL)
 
 *     COD: conic equidistant.
       PV(1) = -60D0
       PV(2) =  15D0
-      CALL PROJEX ('COD', PV, 90, -90, TOL)
+      NFAIL = NFAIL + PROJEX ('COD', PV, 90, -90, TOL)
 
 *     COO: conic orthomorphic.
       PV(1) = -60D0
       PV(2) = -15D0
-      CALL PROJEX ('COO', PV, 85, -90, TOL)
+      NFAIL = NFAIL + PROJEX ('COO', PV, 85, -90, TOL)
 
 *     BON: Bonne's projection.
       PV(1) = 30D0
-      CALL PROJEX ('BON', PV, 90, -90, TOL)
+      NFAIL = NFAIL + PROJEX ('BON', PV, 90, -90, TOL)
 
 *     PCO: polyconic.
-      CALL PROJEX ('PCO', PV, 90, -90, TOL)
+      NFAIL = NFAIL + PROJEX ('PCO', PV, 90, -90, TOL)
 
 *     TSC: tangential spherical cube.
-      CALL PROJEX ('TSC', PV, 90, -90, TOL)
+      NFAIL = NFAIL + PROJEX ('TSC', PV, 90, -90, TOL)
 
 *     CSC: COBE quadrilateralized spherical cube.
-      CALL PROJEX ('CSC', PV, 90, -90, 4D-2)
+      NFAIL = NFAIL + PROJEX ('CSC', PV, 90, -90, 4D-2)
 
 *     QSC: quadrilateralized spherical cube.
-      CALL PROJEX ('QSC', PV, 90, -90, TOL)
+      NFAIL = NFAIL + PROJEX ('QSC', PV, 90, -90, TOL)
 
 *     HPX: HEALPix projection.
       PV(1) = 4D0
       PV(2) = 3D0
-      CALL PROJEX ('HPX', PV, 90, -90, TOL)
+      NFAIL = NFAIL + PROJEX ('HPX', PV, 90, -90, TOL)
+
+
+      IF (NFAIL.NE.0) THEN
+        WRITE (*, 60) NFAIL
+ 60     FORMAT (/,'FAIL:',I5,' closure residuals exceed reporting ',
+     :    'tolerance.')
+      ELSE
+        WRITE (*, 70)
+ 70     FORMAT (/,'PASS: All closure residuals are within reporting ',
+     :    'tolerance.')
+      END IF
 
       END
 
-
-      SUBROUTINE PROJEX (PCODE, PV, NORTH, SOUTH, TOL)
+*-----------------------------------------------------------------------
+      INTEGER FUNCTION PROJEX (PCODE, PV, NORTH, SOUTH, TOL)
 *-----------------------------------------------------------------------
 *   PROJEX exercises the spherical projection routines.
 *
@@ -197,13 +210,16 @@
 *      SOUTH    I        Southern cutoff latitude, degrees.
 *      TOL      D        Reporting tolerance, degrees.
 *-----------------------------------------------------------------------
-      INTEGER   J, LAT, LNG, NORTH, SOUTH, STAT1(361), STAT2(361),
-     :          STATUS
+      INTEGER   J, LAT, LNG, NFAIL, NORTH, SOUTH, STAT1(361),
+     :          STAT2(361), STATUS
       DOUBLE PRECISION DLAT, DLATMX, DLNG, DLNGMX, DR, DRMAX, LAT1,
      :          LAT2(361), LNG1(361), LNG2(361), PV(0:29), R, THETA,
      :          TOL, X(361), X1(361), X2(361), Y(361), Y1(361), Y2(361)
       CHARACTER PCODE*3
 
+*     On some systems, such as Sun Sparc, the struct MUST be aligned
+*     on a double precision boundary, done here using an equivalence.
+*     Failure to do this may result in mysterious "bus errors".
       INCLUDE 'prj.inc'
       INTEGER   PRJ(PRJLEN)
       DOUBLE PRECISION DUMMY
@@ -229,6 +245,7 @@
  20   FORMAT ('Testing ',A3,'; latitudes',I3,' to',I4,
      :        ', reporting tolerance',1PG8.1,' deg.')
 
+      NFAIL  = 0
       DLNGMX = 0D0
       DLATMX = 0D0
 
@@ -274,6 +291,7 @@
           IF (DLAT.GT.DLATMX) DLATMX = DLAT
 
           IF (DLAT.GT.TOL) THEN
+            NFAIL = NFAIL + 1
             WRITE (*, 60) PCODE, LNG1(J), LAT1, X(J), Y(J), LNG2(J),
      :                    LAT2(J)
  60         FORMAT (8X,A3,': lng1 =',F20.15,'  lat1 =',F20.15,/,
@@ -281,6 +299,7 @@
      :              8X,'     lng2 =',F20.15,'  lat2 =',F20.15)
           ELSE IF (ABS(LAT).NE.90) THEN
             IF (DLNG.GT.TOL) THEN
+              NFAIL = NFAIL + 1
               WRITE (*, 60) PCODE, LNG1(J), LAT1, X(J), Y(J),
      :                      LNG2(J), LAT2(J)
              END IF
@@ -289,7 +308,7 @@
  80   CONTINUE
 
       WRITE (*, 90) DLNGMX, DLATMX
- 90   FORMAT (13X,'Maximum residual (sky): lng',1P,E10.3,'   lat',E10.3)
+ 90   FORMAT (13X,'Maximum residual (sky): lng',1P,E8.1,'   lat',E8.1)
 
 
 *     Test closure at points close to the reference point.
@@ -322,6 +341,7 @@
         DR = SQRT((X2(1)-X1(1))**2 + (Y2(1)-Y1(1))**2)
         IF (DR.GT.DRMAX) DRMAX = DR
         IF (DR.GT.TOL) THEN
+          NFAIL = NFAIL + 1
           WRITE (*, 120) PCODE, X1(1), Y1(1), LNG1(1), LAT1, X2(1),
      :                   Y2(1)
  120      FORMAT (8X,A3,':   x1 =',F20.15,'    y1 =',F20.15,/,
@@ -334,8 +354,9 @@
  140  CONTINUE
 
       WRITE (*, 150) DRMAX
- 150  FORMAT (13X,'Maximum residual (ref):  dR',1PE10.3)
+ 150  FORMAT (13X,'Maximum residual (ref):  dR',1PE8.1)
 
 
-      RETURN
+      PROJEX = NFAIL
+
       END

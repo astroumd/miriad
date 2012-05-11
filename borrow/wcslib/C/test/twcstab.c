@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.7 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2011, Mark Calabretta
+  WCSLIB 4.13 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2012, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -44,7 +44,6 @@
 
 #include <math.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 #include <fitsio.h>
@@ -54,6 +53,7 @@
 
 int create_input();
 int do_wcs_stuff(fitsfile *fptr, struct wcsprm *wcs);
+double lcprng();
 
 int main()
 
@@ -236,14 +236,13 @@ int create_input()
   fits_insert_key_str(fptr, "TDIM1", keyrec, "Dimensions of 3-D array",
     &status);
 
-  /* Plate carree projection with a bit of noise for the sake of realism. */
-  srand(137u);
+  /* Plate carrée projection with a bit of noise for the sake of realism. */
   fp = array;
   for (k2 = 0; k2 < K2; k2++) {
     for (k1 = 0; k1 < K1; k1++) {
       /* Box-Muller transformation: uniform -> normal distribution. */
-      x1 = ((double)rand()) / RAND_MAX;
-      x2 = ((double)rand()) / RAND_MAX;
+      x1 = lcprng();
+      x2 = lcprng();
       if (x1 == 0.0) x1 = 1.0;
       z  = sqrt(-2.0 * log(x1));
       x2 *= TWOPI;
@@ -306,6 +305,21 @@ int create_input()
   }
 
   return 0;
+}
+
+/*--------------------------------------------------------------------------*/
+
+/* A simple linear congruential pseudo-random number generator that produces
+ * the same results on all systems so that the test output can be compared.
+ * It produces a fixed sequence of uniformly distributed numbers in [0,1].
+ * Adapted from the example in Numerical Recipes in C. */
+
+double lcprng()
+{
+  static unsigned long next = 137UL;
+
+  next = next * 1664525UL + 1013904223UL;
+  return (double)(next % 1073741824UL) / 1073741823.0;
 }
 
 /*--------------------------------------------------------------------------*/

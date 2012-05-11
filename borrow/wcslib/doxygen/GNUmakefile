@@ -1,5 +1,5 @@
 #-----------------------------------------------------------------------------
-# GNU makefile for building the documentation for WCSLIB 4.7
+# GNU makefile for building the documentation for WCSLIB 4.13
 #
 # Summary of the main targets
 # ---------------------------

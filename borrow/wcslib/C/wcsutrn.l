@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.7 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2011, Mark Calabretta
+  WCSLIB 4.13 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2012, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -61,9 +61,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "wcserr.h"
 #include "wcsunits.h"
 
-#define YY_DECL int wcsutrn(int ctrl, char unitstr[])
+#define YY_DECL int wcsutrne(int ctrl, char unitstr[], struct wcserr **err)
 
 /* Used in preempting the call to exit() by yy_fatal_error(). */
 jmp_buf wcsutrn_abort_jmp_env;
@@ -72,6 +73,8 @@ jmp_buf wcsutrn_abort_jmp_env;
 %}
 
 %%
+	static const char *function = "wcsutrne";
+
 	char orig[80], subs[80];
 	int bracket = 0;
 	int unsafe  = 0;
@@ -87,7 +90,8 @@ jmp_buf wcsutrn_abort_jmp_env;
 	
 	/* Return here via longjmp() invoked by yy_fatal_error(). */
 	if (setjmp(wcsutrn_abort_jmp_env)) {
-	  return 9;
+	  return wcserr_set(WCSERR_SET(UNITSERR_PARSER_ERROR),
+	    "Internal units translator error parsing '%s'", unitstr);
 	}
 	
 	BEGIN(INITIAL);
@@ -327,7 +331,11 @@ years?|YR|YEARS? {
 	  }
 	
 	  yylex_destroy();
-	  return unsafe ? 12 : status;
+	  if (unsafe) {
+	    return wcserr_set(WCSERR_SET(UNITSERR_UNSAFE_TRANS),
+	      "Unsafe unit translation in '%s'", unitstr);
+	  }
+	  return status;
 	}
 
 %%

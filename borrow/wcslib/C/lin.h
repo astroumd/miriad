@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.7 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2011, Mark Calabretta
+  WCSLIB 4.13 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2012, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -31,7 +31,7 @@
   $Id$
 *=============================================================================
 *
-* WCSLIB 4.7 - C routines that implement the FITS World Coordinate System
+* WCSLIB 4.13 - C routines that implement the FITS World Coordinate System
 * (WCS) standard.  Refer to
 *
 *   "Representations of world coordinates in FITS",
@@ -100,6 +100,9 @@
 *                         1: Null linprm pointer passed.
 *                         2: Memory allocation failed.
 *
+*                       For returns > 1, a detailed error message is set in
+*                       linprm::err if enabled, see wcserr_enable().
+*
 *
 * lincpy() - Copy routine for the linprm struct
 * ---------------------------------------------
@@ -114,6 +117,7 @@
 *                       that pointers to these arrays have been set by the
 *                       user except if they are null pointers in which case
 *                       memory will be allocated for them regardless.
+*
 *   linsrc    const struct linprm*
 *                       Struct to copy from.
 *
@@ -128,6 +132,9 @@
 *                         0: Success.
 *                         1: Null linprm pointer passed.
 *                         2: Memory allocation failed.
+*
+*                       For returns > 1, a detailed error message is set in
+*                       linprm::err if enabled, see wcserr_enable().
 *
 *
 * linfree() - Destructor for the linprm struct
@@ -151,7 +158,8 @@
 *
 * linprt() - Print routine for the linprm struct
 * ----------------------------------------------
-* linprt() prints the contents of a linprm struct.
+* linprt() prints the contents of a linprm struct using wcsprintf().  Mainly
+* intended for diagnostic purposes.
 *
 * Given:
 *   lin       const struct linprm*
@@ -184,6 +192,9 @@
 *                         2: Memory allocation failed.
 *                         3: PCi_ja matrix is singular.
 *
+*                       For returns > 1, a detailed error message is set in
+*                       linprm::err if enabled, see wcserr_enable().
+*
 *
 * linp2x() - Pixel-to-world linear transformation
 * -----------------------------------------------
@@ -197,6 +208,7 @@
 *   ncoord,
 *   nelem     int       The number of coordinates, each of vector length nelem
 *                       but containing lin.naxis coordinate elements.
+*
 *   pixcrd    const double[ncoord][nelem]
 *                       Array of pixel coordinates.
 *
@@ -211,6 +223,9 @@
 *                         2: Memory allocation failed.
 *                         3: PCi_ja matrix is singular.
 *
+*                       For returns > 1, a detailed error message is set in
+*                       linprm::err if enabled, see wcserr_enable().
+*
 *
 * linx2p() - World-to-pixel linear transformation
 * -----------------------------------------------
@@ -224,6 +239,7 @@
 *   ncoord,
 *   nelem     int       The number of coordinates, each of vector length nelem
 *                       but containing lin.naxis coordinate elements.
+*
 *   imgcrd   const double[ncoord][nelem]
 *                       Array of intermediate world coordinates.
 *
@@ -236,6 +252,9 @@
 *                         1: Null linprm pointer passed.
 *                         2: Memory allocation failed.
 *                         3: PCi_ja matrix is singular.
+*
+*                       For returns > 1, a detailed error message is set in
+*                       linprm::err if enabled, see wcserr_enable().
 *
 *
 * linprm struct - Linear transformation parameters
@@ -307,6 +326,9 @@
 *   int unity
 *     (Returned) True if the linear transformation matrix is unity.
 *
+*   int padding
+*     (An unused variable inserted for alignment purposes only.)
+*
 *   double *piximg
 *     (Returned) Pointer to the first element of the matrix containing the
 *     product of the CDELTia diagonal matrix and the PCi_ja matrix.
@@ -315,17 +337,25 @@
 *     (Returned) Pointer to the first element of the inverse of the
 *     linprm::piximg matrix.
 *
+*   struct wcserr *err
+*     (Returned) If enabled, when an error status is returned this struct
+*     contains detailed information about the error, see wcserr_enable().
+*
 *   int i_naxis
 *     (For internal use only.)
 *   int m_flag
 *     (For internal use only.)
 *   int m_naxis
 *     (For internal use only.)
+*   int m_padding
+*     (For internal use only.)
 *   double *m_crpix
 *     (For internal use only.)
 *   double *m_pc
 *     (For internal use only.)
 *   double *m_cdelt
+*     (For internal use only.)
+*   void *padding2
 *     (For internal use only.)
 *
 *
@@ -338,6 +368,8 @@
 #ifndef WCSLIB_LIN
 #define WCSLIB_LIN
 
+#include "wcserr.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -345,6 +377,12 @@ extern "C" {
 
 extern const char *lin_errmsg[];
 
+enum lin_errmsg_enum {
+  LINERR_SUCCESS      = 0,	/* Success. */
+  LINERR_NULL_POINTER = 1,	/* Null linprm pointer passed. */
+  LINERR_MEMORY       = 2,	/* Memory allocation failed. */
+  LINERR_SINGULAR_MTX = 3 	/* PCi_ja matrix is singular. */
+};
 
 struct linprm {
   /* Initialization flag (see the prologue above).                          */
@@ -362,11 +400,19 @@ struct linprm {
   /*------------------------------------------------------------------------*/
   double *piximg;		/* Product of CDELTia and PCi_ja matrices.  */
   double *imgpix;		/* Inverse of the piximg matrix.            */
-  int unity;			/* True if the PCi_ja matrix is unity.      */
+  int    unity;			/* True if the PCi_ja matrix is unity.      */
 
-  int i_naxis;			/* The remainder are for memory management. */
-  int m_flag, m_naxis;
+  /* Error handling                                                         */
+  /*------------------------------------------------------------------------*/
+  int    padding;		/* (Dummy inserted for alignment purposes.) */
+  struct wcserr *err;
+
+  /* Private - the remainder are for memory management.                     */
+  /*------------------------------------------------------------------------*/
+  int    i_naxis;
+  int    m_flag, m_naxis, m_padding;
   double *m_crpix, *m_pc, *m_cdelt;
+  void   *padding2;
 };
 
 /* Size of the linprm struct in int units, used by the Fortran wrappers. */

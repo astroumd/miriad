@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.7 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2011, Mark Calabretta
+  WCSLIB 4.13 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2012, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -35,6 +35,7 @@
 #include <stdlib.h>
 #include <math.h>
 
+#include "wcserr.h"
 #include "wcsprintf.h"
 #include "lin.h"
 
@@ -42,11 +43,13 @@ const int LINSET = 137;
 
 /* Map status return value to message. */
 const char *lin_errmsg[] = {
-   "Success",
-   "Null linprm pointer passed",
+  "Success",
+  "Null linprm pointer passed",
   "Memory allocation failed",
   "PCi_ja matrix is singular"};
 
+/* Convenience macro for invoking wcserr_set(). */
+#define LIN_ERRMSG(status) WCSERR_SET(status), lin_errmsg[status]
 
 /*--------------------------------------------------------------------------*/
 
@@ -56,20 +59,35 @@ int alloc, naxis;
 struct linprm *lin;
 
 {
+  static const char *function = "linini";
+
   int i, j;
   double *pc;
+  struct wcserr **err;
 
-  if (lin == 0x0) return 1;
-  if (naxis <= 0) {
-    return 2;
+  if (lin == 0x0) return LINERR_NULL_POINTER;
+
+  /* Initialize error message handling. */
+  err = &(lin->err);
+  if (lin->flag != -1) {
+    if (lin->err) free(lin->err);
   }
+  lin->err = 0x0;
 
+
+  /* Initialize memory management. */
   if (lin->flag == -1 || lin->m_flag != LINSET) {
     lin->m_flag  = 0;
     lin->m_naxis = 0x0;
     lin->m_crpix = 0x0;
     lin->m_pc    = 0x0;
     lin->m_cdelt = 0x0;
+  }
+
+
+  if (naxis < 0) {
+    return wcserr_set(WCSERR_SET(LINERR_MEMORY),
+      "naxis must not be negative (got %d)", naxis);
   }
 
 
@@ -92,7 +110,7 @@ struct linprm *lin;
 
       } else {
         if (!(lin->crpix = calloc(naxis, sizeof(double)))) {
-          return 2;
+          return wcserr_set(LIN_ERRMSG(LINERR_MEMORY));
         }
 
         lin->m_flag  = LINSET;
@@ -109,7 +127,7 @@ struct linprm *lin;
       } else {
         if (!(lin->pc = calloc(naxis*naxis, sizeof(double)))) {
           linfree(lin);
-          return 2;
+          return wcserr_set(LIN_ERRMSG(LINERR_MEMORY));
         }
 
         lin->m_flag  = LINSET;
@@ -126,7 +144,7 @@ struct linprm *lin;
       } else {
         if (!(lin->cdelt = calloc(naxis, sizeof(double)))) {
           linfree(lin);
-          return 2;
+          return wcserr_set(LIN_ERRMSG(LINERR_MEMORY));
         }
 
         lin->m_flag  = LINSET;
@@ -145,7 +163,6 @@ struct linprm *lin;
   lin->piximg = 0x0;
   lin->imgpix = 0x0;
   lin->i_naxis = 0x0;
-
 
   lin->flag  = 0;
   lin->naxis = naxis;
@@ -189,15 +206,21 @@ const struct linprm *linsrc;
 struct linprm *lindst;
 
 {
+  static const char *function = "lincpy";
+
   int i, j, naxis, status;
   const double *srcp;
   double *dstp;
+  struct wcserr **err;
 
-  if (linsrc == 0x0) return 1;
+  if (linsrc == 0x0) return LINERR_NULL_POINTER;
+  if (lindst == 0x0) return LINERR_NULL_POINTER;
+  err = &(lindst->err);
 
   naxis = linsrc->naxis;
-  if (naxis <= 0) {
-    return 2;
+  if (naxis < 1) {
+    return wcserr_set(WCSERR_SET(LINERR_MEMORY),
+      "naxis must be positive (got %d)", naxis);
   }
 
   if ((status = linini(alloc, naxis, lindst))) {
@@ -234,7 +257,7 @@ int linfree(lin)
 struct linprm *lin;
 
 {
-  if (lin == 0x0) return 1;
+  if (lin == 0x0) return LINERR_NULL_POINTER;
 
   if (lin->flag != -1) {
     /* Free memory allocated by linini(). */
@@ -266,6 +289,11 @@ struct linprm *lin;
   lin->imgpix = 0x0;
   lin->i_naxis = 0;
 
+  if (lin->err) {
+    free(lin->err);
+    lin->err = 0x0;
+  }
+
   lin->flag = 0;
 
   return 0;
@@ -280,7 +308,7 @@ const struct linprm *lin;
 {
   int i, j, k;
 
-  if (lin == 0x0) return 1;
+  if (lin == 0x0) return LINERR_NULL_POINTER;
 
   if (lin->flag != LINSET) {
     wcsprintf("The linprm struct is UNINITIALIZED.\n");
@@ -289,7 +317,7 @@ const struct linprm *lin;
 
   wcsprintf("       flag: %d\n", lin->flag);
   wcsprintf("      naxis: %d\n", lin->naxis);
-  wcsprintf("      crpix: %p\n", (void *)lin->crpix);
+  WCSPRINTF_PTR("      crpix: ", lin->crpix, "\n");
   wcsprintf("            ");
   for (i = 0; i < lin->naxis; i++) {
     wcsprintf("  %- 11.5g", lin->crpix[i]);
@@ -297,7 +325,7 @@ const struct linprm *lin;
   wcsprintf("\n");
 
   k = 0;
-  wcsprintf("         pc: %p\n", (void *)lin->pc);
+  WCSPRINTF_PTR("         pc: ", lin->pc, "\n");
   for (i = 0; i < lin->naxis; i++) {
     wcsprintf("    pc[%d][]:", i);
     for (j = 0; j < lin->naxis; j++) {
@@ -306,7 +334,7 @@ const struct linprm *lin;
     wcsprintf("\n");
   }
 
-  wcsprintf("      cdelt: %p\n", (void *)lin->cdelt);
+  WCSPRINTF_PTR("      cdelt: ", lin->cdelt, "\n");
   wcsprintf("            ");
   for (i = 0; i < lin->naxis; i++) {
     wcsprintf("  %- 11.5g", lin->cdelt[i]);
@@ -314,6 +342,11 @@ const struct linprm *lin;
   wcsprintf("\n");
 
   wcsprintf("      unity: %d\n", lin->unity);
+
+  WCSPRINTF_PTR("        err: ", lin->err, "\n");
+  if (lin->err) {
+    wcserr_prt(lin->err, "             ");
+  }
 
   if (lin->piximg == 0x0) {
     wcsprintf("     piximg: (nil)\n");
@@ -343,13 +376,13 @@ const struct linprm *lin;
 
   wcsprintf("     m_flag: %d\n", lin->m_flag);
   wcsprintf("    m_naxis: %d\n", lin->m_naxis);
-  wcsprintf("    m_crpix: %p", (void *)lin->m_crpix);
+  WCSPRINTF_PTR("    m_crpix: ", lin->m_crpix, "");
   if (lin->m_crpix == lin->crpix) wcsprintf("  (= crpix)");
   wcsprintf("\n");
-  wcsprintf("       m_pc: %p", (void *)lin->m_pc);
+  WCSPRINTF_PTR("       m_pc: ", lin->m_pc, "");
   if (lin->m_pc == lin->pc) wcsprintf("  (= pc)");
   wcsprintf("\n");
-  wcsprintf("    m_cdelt: %p", (void *)lin->m_cdelt);
+  WCSPRINTF_PTR("    m_cdelt: ", lin->m_cdelt, "");
   if (lin->m_cdelt == lin->cdelt) wcsprintf("  (= cdelt)");
   wcsprintf("\n");
 
@@ -363,10 +396,14 @@ int linset(lin)
 struct linprm *lin;
 
 {
+  static const char *function = "linset";
+
   int i, j, n, status;
   double *pc, *piximg;
+  struct wcserr **err;
 
-  if (lin == 0x0) return 1;
+  if (lin == 0x0) return LINERR_NULL_POINTER;
+  err = &(lin->err);
 
   n = lin->naxis;
 
@@ -411,12 +448,12 @@ struct linprm *lin;
 
       /* Allocate memory for internal arrays. */
       if (!(lin->piximg = calloc(n*n, sizeof(double)))) {
-        return 2;
+        return wcserr_set(LIN_ERRMSG(LINERR_MEMORY));
       }
 
       if (!(lin->imgpix = calloc(n*n, sizeof(double)))) {
         free(lin->piximg);
-        return 2;
+        return wcserr_set(LIN_ERRMSG(LINERR_MEMORY));
       }
 
       lin->i_naxis = n;
@@ -433,7 +470,7 @@ struct linprm *lin;
 
     /* Compute the image-to-pixel transformation matrix. */
     if ((status = matinv(n, lin->piximg, lin->imgpix))) {
-      return status;
+      return wcserr_set(LIN_ERRMSG(status));
     }
   }
 
@@ -460,7 +497,7 @@ double imgcrd[];
 
 
   /* Initialize. */
-  if (lin == 0x0) return 1;
+  if (lin == 0x0) return LINERR_NULL_POINTER;
   if (lin->flag != LINSET) {
     if ((status = linset(lin))) return status;
   }
@@ -522,7 +559,7 @@ double pixcrd[];
 
 
   /* Initialize. */
-  if (lin == 0x0) return 1;
+  if (lin == 0x0) return LINERR_NULL_POINTER;
   if (lin->flag != LINSET) {
     if ((status = linset(lin))) return status;
   }
@@ -568,11 +605,7 @@ double pixcrd[];
 
 /*--------------------------------------------------------------------------*/
 
-int matinv(n, mat, inv)
-
-int n;
-const double mat[];
-double inv[];
+int matinv(int n, const double mat[], double inv[])
 
 {
   register int i, ij, ik, j, k, kj, pj;
@@ -581,23 +614,25 @@ double inv[];
 
 
   /* Allocate memory for internal arrays. */
-  if (!(mxl = calloc(n, sizeof(int)))) return 2;
+  if (!(mxl = calloc(n, sizeof(int)))) {
+    return LINERR_MEMORY;
+  }
   if (!(lxm = calloc(n, sizeof(int)))) {
     free(mxl);
-    return 2;
+    return LINERR_MEMORY;
   }
 
   if (!(rowmax = calloc(n, sizeof(double)))) {
     free(mxl);
     free(lxm);
-    return 2;
+    return LINERR_MEMORY;
   }
 
   if (!(lu = calloc(n*n, sizeof(double)))) {
     free(mxl);
     free(lxm);
     free(rowmax);
-    return 2;
+    return LINERR_MEMORY;
   }
 
 
@@ -621,7 +656,7 @@ double inv[];
       free(lxm);
       free(rowmax);
       free(lu);
-      return 3;
+      return LINERR_SINGULAR_MTX;
     }
   }
 

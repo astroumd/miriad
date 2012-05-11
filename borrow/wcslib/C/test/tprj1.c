@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.7 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2011, Mark Calabretta
+  WCSLIB 4.13 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2012, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -43,12 +43,13 @@
 #include <wcstrig.h>
 #include <prj.h>
 
+int projex(char pcode[4], struct prjprm *prj, int north, int south,
+           double tol);
 
 int main()
 
 {
-  void projex();
-  int  status;
+  int  nFail = 0, status;
   const double tol = 1.0e-9;
   struct prjprm prj;
 
@@ -71,27 +72,27 @@ int main()
   /* AZP: zenithal/azimuthal perspective. */
   prj.pv[1] =   0.5;
   prj.pv[2] =  30.0;
-  projex("AZP", &prj, 90, 5, tol);
+  nFail += projex("AZP", &prj, 90, 5, tol);
 
   /* SZP: slant zenithal perspective. */
   prj.pv[1] =   0.5;
   prj.pv[2] = 210.0;
   prj.pv[3] =  60.0;
-  projex("SZP", &prj, 90, -90, tol);
+  nFail += projex("SZP", &prj, 90, -90, tol);
 
   /* TAN: gnomonic. */
-  projex("TAN", &prj, 90, 5, tol);
+  nFail += projex("TAN", &prj, 90, 5, tol);
 
   /* STG: stereographic. */
-  projex("STG", &prj, 90, -85, tol);
+  nFail += projex("STG", &prj, 90, -85, tol);
 
   /* SIN: orthographic/synthesis. */
   prj.pv[1] = -0.3;
   prj.pv[2] =  0.5;
-  projex("SIN", &prj, 90, 45, tol);
+  nFail += projex("SIN", &prj, 90, 45, tol);
 
   /* ARC: zenithal/azimuthal equidistant. */
-  projex("ARC", &prj, 90, -90, tol);
+  nFail += projex("ARC", &prj, 90, -90, tol);
 
   /* ZPN: zenithal/azimuthal polynomial. */
   prj.pv[0] =  0.00000;
@@ -104,89 +105,97 @@ int main()
   prj.pv[7] = -0.00019;
   prj.pv[8] =  0.00000;
   prj.pv[9] =  0.00000;
-  projex("ZPN", &prj, 90, 10, tol);
+  nFail += projex("ZPN", &prj, 90, 10, tol);
 
   /* ZEA: zenithal/azimuthal equal area. */
-  projex("ZEA", &prj, 90, -85, tol);
+  nFail += projex("ZEA", &prj, 90, -85, tol);
 
   /* AIR: Airy's zenithal projection. */
   prj.pv[1] = 45.0;
-  projex("AIR", &prj, 90, -85, tol);
+  nFail += projex("AIR", &prj, 90, -85, tol);
 
   /* CYP: cylindrical perspective. */
   prj.pv[1] = 3.0;
   prj.pv[2] = 0.8;
-  projex("CYP", &prj, 90, -90, tol);
+  nFail += projex("CYP", &prj, 90, -90, tol);
 
   /* CEA: cylindrical equal area. */
   prj.pv[1] = 0.75;
-  projex("CEA", &prj, 90, -90, tol);
+  nFail += projex("CEA", &prj, 90, -90, tol);
 
   /* CAR: plate carree. */
-  projex("CAR", &prj, 90, -90, tol);
+  nFail += projex("CAR", &prj, 90, -90, tol);
 
   /* MER: Mercator's. */
-  projex("MER", &prj, 85, -85, tol);
+  nFail += projex("MER", &prj, 85, -85, tol);
 
   /* SFL: Sanson-Flamsteed. */
-  projex("SFL", &prj, 90, -90, tol);
+  nFail += projex("SFL", &prj, 90, -90, tol);
 
   /* PAR: parabolic. */
-  projex("PAR", &prj, 90, -90, tol);
+  nFail += projex("PAR", &prj, 90, -90, tol);
 
   /* MOL: Mollweide's projection. */
-  projex("MOL", &prj, 90, -90, tol);
+  nFail += projex("MOL", &prj, 90, -90, tol);
 
   /* AIT: Hammer-Aitoff. */
-  projex("AIT", &prj, 90, -90, tol);
+  nFail += projex("AIT", &prj, 90, -90, tol);
 
   /* COP: conic perspective. */
   prj.pv[1] =  60.0;
   prj.pv[2] =  15.0;
-  projex("COP", &prj, 90, -25, tol);
+  nFail += projex("COP", &prj, 90, -25, tol);
 
   /* COE: conic equal area. */
   prj.pv[1] =  60.0;
   prj.pv[2] = -15.0;
-  projex("COE", &prj, 90, -90, tol);
+  nFail += projex("COE", &prj, 90, -90, tol);
 
   /* COD: conic equidistant. */
   prj.pv[1] = -60.0;
   prj.pv[2] =  15.0;
-  projex("COD", &prj, 90, -90, tol);
+  nFail += projex("COD", &prj, 90, -90, tol);
 
   /* COO: conic orthomorphic. */
   prj.pv[1] = -60.0;
   prj.pv[2] = -15.0;
-  projex("COO", &prj, 85, -90, tol);
+  nFail += projex("COO", &prj, 85, -90, tol);
 
   /* BON: Bonne's projection. */
   prj.pv[1] = 30.0;
-  projex("BON", &prj, 90, -90, tol);
+  nFail += projex("BON", &prj, 90, -90, tol);
 
   /* PCO: polyconic. */
-  projex("PCO", &prj, 90, -90, tol);
+  nFail += projex("PCO", &prj, 90, -90, tol);
 
   /* TSC: tangential spherical cube. */
-  projex("TSC", &prj, 90, -90, tol);
+  nFail += projex("TSC", &prj, 90, -90, tol);
 
   /* CSC: COBE quadrilateralized spherical cube. */
-  projex("CSC", &prj, 90, -90, 4.0e-2);
+  nFail += projex("CSC", &prj, 90, -90, 4.0e-2);
 
   /* QSC: quadrilateralized spherical cube. */
-  projex("QSC", &prj, 90, -90, tol);
+  nFail += projex("QSC", &prj, 90, -90, tol);
 
   /* HPX: HEALPix projection. */
   prj.pv[1] = 4.0;
   prj.pv[2] = 3.0;
-  projex("HPX", &prj, 90, -90, tol);
+  nFail += projex("HPX", &prj, 90, -90, tol);
 
-  return 0;
+
+  if (nFail) {
+    printf("\nFAIL: %d closure residuals exceed reporting tolerance.\n",
+      nFail);
+  } else {
+    printf("\nPASS: All closure residuals are within reporting tolerance.\n");
+  }
+
+  return nFail;
 }
 
 
 /*----------------------------------------------------------------------------
-*   PROJEX exercises the spherical projection routines.
+*   projex() exercises the spherical projection routines.
 *
 *   Given:
 *      pcode[4]  char     Projection code.
@@ -196,17 +205,20 @@ int main()
 *
 *   Given and returned:
 *      prj       prjprm*  Projection parameters.
+*
+*   Function return value:
+*                int      Number of results exceeding reporting tolerance.
 *---------------------------------------------------------------------------*/
 
-void projex(pcode, prj, north, south, tol)
-
-char   pcode[4];
-int    north, south;
-double tol;
-struct prjprm *prj;
+int projex(
+  char pcode[4],
+  struct prjprm *prj,
+  int north,
+  int south,
+  double tol)
 
 {
-  int    lat, lng, stat1[361], stat2[361], status;
+  int    lat, lng, nFail = 0, stat1[361], stat2[361], status;
   register int j;
   double dlat, dlatmx, dlng, dlngmx, dr, drmax;
   double lat1, lat2[361], lng1[361], lng2[361];
@@ -220,7 +232,7 @@ struct prjprm *prj;
   /* projection parameters.                                         */
   /* prj->r0 = R2D; */
 
-  printf("Testing %s; latitudes%3d to%4d, reporting tolerance%8.1E deg.\n",
+  printf("Testing %s; latitudes%3d to%4d, reporting tolerance%8.1e deg.\n",
     prj->code, north, south, tol);
 
   dlngmx = 0.0;
@@ -262,6 +274,7 @@ struct prjprm *prj;
       if (dlat > dlatmx) dlatmx = dlat;
 
       if (dlat > tol) {
+        nFail++;
         printf("        %3s: lng1 =%20.15f  lat1 =%20.15f\n",
           pcode, lng1[j], lat1);
         printf("                x =%20.15f     y =%20.15f\n",
@@ -270,6 +283,7 @@ struct prjprm *prj;
           lng2[j], lat2[j]);
       } else if (abs(lat) != 90) {
         if (dlng > tol) {
+          nFail++;
           printf("        %3s: lng1 =%20.15f  lat1 =%20.15f\n",
             pcode, lng1[j], lat1);
           printf("                x =%20.15f     y =%20.15f\n",
@@ -281,7 +295,7 @@ struct prjprm *prj;
     }
   }
 
-  printf("             Maximum residual (sky): lng%10.3E   lat%10.3E\n",
+  printf("             Maximum residual (sky): lng%8.1e  lat%8.1e\n",
     dlngmx, dlatmx);
 
 
@@ -310,6 +324,7 @@ struct prjprm *prj;
       dr = sqrt((x2[0]-x1[0])*(x2[0]-x1[0]) + (y2[0]-y1[0])*(y2[0]-y1[0]));
       if (dr > drmax) drmax = dr;
       if (dr > tol) {
+        nFail++;
         printf("        %3s:   x1 =%20.15f    y1 =%20.15f\n",
           pcode, x1[0], y1[0]);
         printf("              lng =%20.15f   lat =%20.15f\n",
@@ -323,9 +338,9 @@ struct prjprm *prj;
     theta += 15.0;
   }
 
-  printf("             Maximum residual (ref):  dR%10.3E\n", drmax);
+  printf("             Maximum residual (ref):  dR%8.1e\n", drmax);
 
   prjini(prj);
 
-  return;
+  return nFail;
 }

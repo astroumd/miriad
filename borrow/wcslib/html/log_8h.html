@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-<title>WCSLIB 4.7: log.h File Reference</title>
+<title>WCSLIB 4.13.4: log.h File Reference</title>
 <link href="doxygen.css" rel="stylesheet" type="text/css">
 <link href="tabs.css" rel="stylesheet" type="text/css">
 </head><body>
@@ -20,6 +20,17 @@
 <p>
 <a href="log_8h-source.html">Go to the source code of this file.</a><table border="0" cellpadding="0" cellspacing="0">
 <tr><td></td></tr>
+<tr><td colspan="2"><br><h2>Enumerations</h2></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">enum &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="log_8h.html#3ca7c9ed3cef9e053e1f32b60a0d0c36">log_errmsg_enum</a> { <br>
+&nbsp;&nbsp;<a class="el" href="log_8h.html#3ca7c9ed3cef9e053e1f32b60a0d0c361f9859b85143e5ddc55744beff6d433c">LOGERR_SUCCESS</a> =  0, 
+<a class="el" href="log_8h.html#3ca7c9ed3cef9e053e1f32b60a0d0c36a1df3b688a38178c3bb75225c8921259">LOGERR_NULL_POINTER</a> =  1, 
+<a class="el" href="log_8h.html#3ca7c9ed3cef9e053e1f32b60a0d0c36fd604876bd42694c1a04cdae2be719e6">LOGERR_BAD_LOG_REF_VAL</a> =  2, 
+<a class="el" href="log_8h.html#3ca7c9ed3cef9e053e1f32b60a0d0c3685932a7f3c52c3090c1a1c5e82ed1c22">LOGERR_BAD_X</a> =  3, 
+<br>
+&nbsp;&nbsp;<a class="el" href="log_8h.html#3ca7c9ed3cef9e053e1f32b60a0d0c3605b7fdbe8fcf799db114f90f04083273">LOGERR_BAD_WORLD</a> =  4
+<br>
+ }</td></tr>
+
 <tr><td colspan="2"><br><h2>Functions</h2></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="log_8h.html#239e115e583af4e67e60de4a4f95f09e">logx2s</a> (double crval, int nx, int sx, int slogc, const double x[], double logc[], int stat[])</td></tr>
 
@@ -38,7 +49,37 @@ These routines implement the part of the FITS WCS standard that deals with logar
 <b>Argument checking:</b> <br>
  The input log-coordinate values are only checked for values that would result in floating point exceptions and the same is true for the log-coordinate reference value.<p>
 <b>Accuracy:</b> <br>
- No warranty is given for the accuracy of these routines (refer to the copyright notice); intending users must satisfy for themselves their adequacy for the intended purpose. However, closure effectively to within double precision rounding error was demonstrated by test routine tlog.c which accompanies this software. <hr><h2>Function Documentation</h2>
+ No warranty is given for the accuracy of these routines (refer to the copyright notice); intending users must satisfy for themselves their adequacy for the intended purpose. However, closure effectively to within double precision rounding error was demonstrated by test routine tlog.c which accompanies this software. <hr><h2>Enumeration Type Documentation</h2>
+<a class="anchor" name="3ca7c9ed3cef9e053e1f32b60a0d0c36"></a><!-- doxytag: member="log.h::log_errmsg_enum" ref="3ca7c9ed3cef9e053e1f32b60a0d0c36" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum <a class="el" href="log_8h.html#3ca7c9ed3cef9e053e1f32b60a0d0c36">log_errmsg_enum</a>          </td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+<dl compact><dt><b>Enumerator: </b></dt><dd>
+<table border="0" cellspacing="2" cellpadding="0">
+<tr><td valign="top"><em><a class="anchor" name="3ca7c9ed3cef9e053e1f32b60a0d0c361f9859b85143e5ddc55744beff6d433c"></a><!-- doxytag: member="LOGERR_SUCCESS" ref="3ca7c9ed3cef9e053e1f32b60a0d0c361f9859b85143e5ddc55744beff6d433c" args="" -->LOGERR_SUCCESS</em>&nbsp;</td><td>
+</td></tr>
+<tr><td valign="top"><em><a class="anchor" name="3ca7c9ed3cef9e053e1f32b60a0d0c36a1df3b688a38178c3bb75225c8921259"></a><!-- doxytag: member="LOGERR_NULL_POINTER" ref="3ca7c9ed3cef9e053e1f32b60a0d0c36a1df3b688a38178c3bb75225c8921259" args="" -->LOGERR_NULL_POINTER</em>&nbsp;</td><td>
+</td></tr>
+<tr><td valign="top"><em><a class="anchor" name="3ca7c9ed3cef9e053e1f32b60a0d0c36fd604876bd42694c1a04cdae2be719e6"></a><!-- doxytag: member="LOGERR_BAD_LOG_REF_VAL" ref="3ca7c9ed3cef9e053e1f32b60a0d0c36fd604876bd42694c1a04cdae2be719e6" args="" -->LOGERR_BAD_LOG_REF_VAL</em>&nbsp;</td><td>
+</td></tr>
+<tr><td valign="top"><em><a class="anchor" name="3ca7c9ed3cef9e053e1f32b60a0d0c3685932a7f3c52c3090c1a1c5e82ed1c22"></a><!-- doxytag: member="LOGERR_BAD_X" ref="3ca7c9ed3cef9e053e1f32b60a0d0c3685932a7f3c52c3090c1a1c5e82ed1c22" args="" -->LOGERR_BAD_X</em>&nbsp;</td><td>
+</td></tr>
+<tr><td valign="top"><em><a class="anchor" name="3ca7c9ed3cef9e053e1f32b60a0d0c3605b7fdbe8fcf799db114f90f04083273"></a><!-- doxytag: member="LOGERR_BAD_WORLD" ref="3ca7c9ed3cef9e053e1f32b60a0d0c3605b7fdbe8fcf799db114f90f04083273" args="" -->LOGERR_BAD_WORLD</em>&nbsp;</td><td>
+</td></tr>
+</table>
+</dl>
+
+</div>
+</div><p>
+<hr><h2>Function Documentation</h2>
 <a class="anchor" name="239e115e583af4e67e60de4a4f95f09e"></a><!-- doxytag: member="log.h::logx2s" ref="239e115e583af4e67e60de4a4f95f09e" args="(double crval, int nx, int sx, int slogc, const double x[], double logc[], int stat[])" -->
 <div class="memitem">
 <div class="memproto">
@@ -105,12 +146,12 @@ These routines implement the part of the FITS WCS standard that deals with logar
     <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>x</em>&nbsp;</td><td>Intermediate world coordinates, in SI units.</td></tr>
     <tr><td valign="top"><tt>[out]</tt>&nbsp;</td><td valign="top"><em>logc</em>&nbsp;</td><td>Logarithmic coordinates, in SI units. </td></tr>
     <tr><td valign="top"><tt>[out]</tt>&nbsp;</td><td valign="top"><em>stat</em>&nbsp;</td><td>Status return value status for each vector element:<ul>
-<li>0: Success.</li><li>1: Invalid value of x.</li></ul>
+<li>0: Success.</li></ul>
 </td></tr>
   </table>
 </dl>
 <dl class="return" compact><dt><b>Returns:</b></dt><dd>Status return value:<ul>
-<li>0: Success.</li><li>2: Invalid log-coordinate reference value.</li><li>3: One or more of the x coordinates were invalid, as indicated by the stat vector. </li></ul>
+<li>0: Success.</li><li>2: Invalid log-coordinate reference value. </li></ul>
 </dd></dl>
 
 </div>
@@ -186,7 +227,7 @@ These routines implement the part of the FITS WCS standard that deals with logar
   </table>
 </dl>
 <dl class="return" compact><dt><b>Returns:</b></dt><dd>Status return value:<ul>
-<li>0: Success.</li><li>2: Invalid log-coordinate reference value. </li></ul>
+<li>0: Success.</li><li>2: Invalid log-coordinate reference value.</li><li>4: One or more of the world-coordinate values are incorrect, as indicated by the stat vector. </li></ul>
 </dd></dl>
 
 </div>
@@ -208,7 +249,7 @@ Error messages to match the status value returned from each function.
 </div>
 </div><p>
 </div>
-<hr size="1"><address style="text-align: right;"><small>Generated on Mon Feb 7 18:03:57 2011 for WCSLIB 4.7 by&nbsp;
+<hr size="1"><address style="text-align: right;"><small>Generated on Mon Apr 2 17:55:23 2012 for WCSLIB 4.13.4 by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.5.6 </small></address>
 </body>

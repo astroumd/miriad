@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.7 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2011, Mark Calabretta
+  WCSLIB 4.13 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2012, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -46,7 +46,7 @@
 int main()
 
 {
-  int   j, lat, lng;
+  int   j, lat, lng, nFail = 0;
   double coslat, dlat, dlatmx, dlng, dlngmx, lng1[361], lng2[361], eul[5],
          lat1, lat2[361], phi[361], theta[361], zeta;
   const double tol = 1.0e-12;
@@ -55,7 +55,6 @@ int main()
   printf(
   "Testing closure of WCSLIB coordinate transformation routines (tsph.c)\n"
   "---------------------------------------------------------------------\n");
-
 
   /* Set reference angles. */
   eul[0] =  90.0;
@@ -68,7 +67,7 @@ int main()
   eul[3] = cosd(eul[1]);
   eul[4] = sind(eul[1]);
 
-  printf ("Reporting tolerance:%8.1E degrees of arc.\n", tol);
+  printf ("Reporting tolerance:%8.1e degrees of arc.\n", tol);
 
   dlngmx = 0.0;
   dlatmx = 0.0;
@@ -94,6 +93,7 @@ int main()
       if (dlat > dlatmx) dlatmx = dlat;
 
       if (dlng > tol || dlat > tol) {
+        nFail++;
         printf("Unclosed: lng1 =%20.15f  lat1 =%20.15f\n", lng1[j], lat1);
         printf("           phi =%20.15f theta =%20.15f\n", phi[j], theta[j]);
         printf("          lng2 =%20.15f  lat2 =%20.15f\n", lng2[j], lat2[j]);
@@ -121,8 +121,8 @@ int main()
       if (dlng > dlngmx) dlngmx = dlng;
       if (dlat > dlatmx) dlatmx = dlat;
 
-
       if (dlng > tol || dlat > tol) {
+        nFail++;
         printf("Unclosed: lng1 =%20.15f  lat1 =%20.15f\n", lng1[0], lat1);
         printf("           phi =%20.15f theta =%20.15f\n", phi[0], theta[0]);
         printf("          lng2 =%20.15f  lat2 =%20.15f\n", lng2[0], lat2[0]);
@@ -133,7 +133,16 @@ int main()
     }
   }
 
-  printf("\nMaximum residual: lng%10.3E   lat%10.3E\n", dlngmx, dlatmx);
+  printf("\nsphs2x/sphx2s: Maximum closure residual = %.1e (lng), %.1e (lat) "
+    "deg.\n", dlngmx, dlatmx);
 
-  return 0;
+
+  if (nFail) {
+    printf("\nFAIL: %d closure residuals exceed reporting tolerance.\n",
+      nFail);
+  } else {
+    printf("\nPASS: All closure residuals are within reporting tolerance.\n");
+  }
+
+  return nFail;
 }

@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 4.7 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2011, Mark Calabretta
+* WCSLIB 4.13 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2012, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -46,6 +46,9 @@
      :          X(361), Y(361)
       CHARACTER TEXT*72
 
+*     On some systems, such as Sun Sparc, the structs MUST be aligned
+*     on a double precision boundary, done here using a equivalences.
+*     Failure to do this may result in mysterious "bus errors".
       INCLUDE 'cel.inc'
       INCLUDE 'prj.inc'
       INTEGER   CEL(CELLEN)

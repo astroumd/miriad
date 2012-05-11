@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 4.7 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2011, Mark Calabretta
+* WCSLIB 4.13 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2012, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -40,16 +40,22 @@
 *
 * Input comes from file 'pih.fits'.
 *
+* WCSP, which is meant to hold an address, is declared as an INTEGER
+* array of length 2 to accomodate 64-bit machines for which
+* sizeof(void *) = 2*sizeof(int).
 *-----------------------------------------------------------------------
       LOGICAL   GOTEND
       INTEGER   ALTS(0:26), CTRL, I, IERR, J, K, NKEYRC, NREJECT, NWCS,
-     :          RELAX, WCSP
+     :          RELAX, WCSP(2)
       CHARACTER CALTS(0:26)*2, KEYREC*80, HEADER*288001, INFILE*9
 
+*     On some systems, such as Sun Sparc, the struct MUST be aligned
+*     on a double precision boundary, done here using an equivalence.
+*     Failure to do this may result in mysterious "bus errors".
       INCLUDE 'wcshdr.inc'
       INCLUDE 'wcs.inc'
       INCLUDE 'wcsfix.inc'
-      INTEGER WCS(WCSLEN), STAT(WCSFIX_NWCS)
+      INTEGER   WCS(WCSLEN), STAT(WCSFIX_NWCS)
       DOUBLE PRECISION DUMMY
       EQUIVALENCE (WCS,DUMMY)
 
@@ -111,7 +117,9 @@
  80   FORMAT (/,'Illegal-WCS header keyrecords rejected by wcspih():')
       RELAX = WCSHDR_all
       CTRL = -2
+
 *     WCSPIH will allocate memory for NWCS intialized WCSPRM structs.
+      CALL FLUSH(6)
       IERR = WCSPIH (HEADER, NKEYRC, RELAX, CTRL, NREJECT, NWCS, WCSP)
       IF (IERR.NE.0) THEN
         WRITE (*, 90) IERR
@@ -162,6 +170,7 @@
           GO TO 190
         END IF
 
+        CALL FLUSH(6)
         IERR = WCSPRT (WCS)
         IF (IERR.NE.0) THEN
           WRITE (*, 180) IERR

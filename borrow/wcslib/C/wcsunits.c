@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.7 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2011, Mark Calabretta
+  WCSLIB 4.13 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2012, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -84,6 +84,14 @@ const char *wcsunits_units[] = {
   "second",
   "", "", "", "", "", "", "", ""};
 
+const char *wcsunits_funcs[] = {
+  "none",
+  "log",
+  "ln",
+  "exp"};
+
+/*--------------------------------------------------------------------------*/
+
 int wcsunits(
   const char have[],
   const char want[],
@@ -92,21 +100,40 @@ int wcsunits(
   double *power)
 
 {
+  return wcsunitse(
+    have, want, scale, offset, power, 0x0);
+}
+
+/* : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :  */
+
+int wcsunitse(
+  const char have[],
+  const char want[],
+  double *scale,
+  double *offset,
+  double *power,
+  struct wcserr **err)
+
+{
+  static const char *function = "wcsunitse";
+
   int    func1, func2, i, status;
   double scale1, scale2, units1[WCSUNITS_NTYPE], units2[WCSUNITS_NTYPE];
 
-  if ((status = wcsulex(have, &func1, &scale1, units1))) {
+  if ((status = wcsulexe(have, &func1, &scale1, units1, err))) {
     return status;
   }
 
-  if ((status = wcsulex(want, &func2, &scale2, units2))) {
+  if ((status = wcsulexe(want, &func2, &scale2, units2, err))) {
     return status;
   }
 
   /* Check conformance. */
   for (i = 0; i < WCSUNITS_NTYPE; i++) {
     if (units1[i] != units2[i]) {
-      return 10;
+      return wcserr_set(WCSERR_SET(UNITSERR_BAD_UNIT_SPEC),
+        "Mismatched units type '%s': have '%s', want '%s'",
+        wcsunits_types[i], have, want);
     }
   }
 
@@ -118,7 +145,9 @@ int wcsunits(
   case 0:
     /* No function. */
     if (func2) {
-      return 11;
+      return wcserr_set(WCSERR_SET(UNITSERR_BAD_FUNCS),
+        "Mismatched unit functions: have '%s' (%s), want '%s' (%s)",
+        have, wcsunits_funcs[func1], want, wcsunits_funcs[func2]);
     }
 
     *scale = scale1 / scale2;
@@ -137,7 +166,9 @@ int wcsunits(
       *offset = log(scale1 / scale2);
 
     } else {
-      return 11;
+      return wcserr_set(WCSERR_SET(UNITSERR_BAD_FUNCS),
+        "Mismatched unit functions: have '%s' (%s), want '%s' (%s)",
+        have, wcsunits_funcs[func1], want, wcsunits_funcs[func2]);
     }
 
     break;
@@ -155,7 +186,9 @@ int wcsunits(
       *offset = log(scale1 / scale2);
 
     } else {
-      return 11;
+      return wcserr_set(WCSERR_SET(UNITSERR_BAD_FUNCS),
+        "Mismatched unit functions: have '%s' (%s), want '%s' (%s)",
+        have, wcsunits_funcs[func1], want, wcsunits_funcs[func2]);
     }
 
     break;
@@ -163,7 +196,9 @@ int wcsunits(
   case 3:
     /* exp(). */
     if (func2 != 3) {
-      return 11;
+      return wcserr_set(WCSERR_SET(UNITSERR_BAD_FUNCS),
+        "Mismatched unit functions: have '%s' (%s), want '%s' (%s)",
+        have, wcsunits_funcs[func1], want, wcsunits_funcs[func2]);
     }
 
     *scale = 1.0;
@@ -172,8 +207,25 @@ int wcsunits(
 
   default:
     /* Internal parser error. */
-    return 9;
+    return wcserr_set(WCSERR_SET(UNITSERR_PARSER_ERROR),
+      "Internal units parser error");
   }
 
   return 0;
+}
+
+/*--------------------------------------------------------------------------*/
+
+int wcsutrn(int ctrl, char unitstr[])
+
+{
+  return wcsutrne(ctrl, unitstr, 0x0);
+}
+
+/*--------------------------------------------------------------------------*/
+
+int wcsulex(const char unitstr[], int *func, double *scale, double units[])
+
+{
+  return wcsulexe(unitstr, func, scale, units, 0x0);
 }

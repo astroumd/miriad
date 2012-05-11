@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-<title>WCSLIB 4.7: WCSLIB Fortran wrappers</title>
+<title>WCSLIB 4.13.4: WCSLIB Fortran wrappers</title>
 <link href="doxygen.css" rel="stylesheet" type="text/css">
 <link href="tabs.css" rel="stylesheet" type="text/css">
 </head><body>
@@ -14,7 +14,7 @@
       <li><a href="files.html"><span>Files</span></a></li>
     </ul>
   </div>
-  <div class="navpath"><a class="el" href="index.html">WCSLIB 4.7 and PGSBOX 4.7</a>
+  <div class="navpath"><a class="el" href="index.html">WCSLIB 4.13.4 and PGSBOX 4.13.4</a>
   </div>
 </div>
 <div class="contents">
@@ -60,6 +60,10 @@ A basic coding fragment is<p>
 
 *     Initialize.
       STATUS = WCSSET (WCS)
+      IF (STATUS.NE.0) THEN
+        CALL FLUSH(6)
+        STATUS = WCSPERR(WCS, CHAR(0))
+      ENDIF
 
 *     Find the "longitude" axis.
       STATUS = WCSGET (WCS, WCS_LNG, LNGIDX)
@@ -69,8 +73,9 @@ A basic coding fragment is<p>
 </pre></div><p>
 Refer to the various Fortran test programs for further programming examples. In particular, <em>twcs</em> and <em>twcsmix</em> show how to retrieve elements of the <a class="el" href="structcelprm.html" title="Celestial transformation parameters.">celprm</a> and <a class="el" href="structprjprm.html" title="Projection parameters.">prjprm</a> structs contained within the <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> struct.<p>
 Note that the data type of the third argument to the <code>*PUT</code> and <code>*GET</code> routines differs depending on the data type of the corresponding C struct member, be it <em>int</em>, <em>double</em>, or <em>char</em>[]. It is essential that the Fortran data type match that of the C struct for <em>int</em> and <em>double</em> types, and be a <code>CHARACTER</code> variable of the correct length for <em>char</em>[] types. Compilers (e.g. g77) may warn of inconsistent usage of this argument but this can (usually) be safely ignored. If these warnings become annoying, type-specific variants are provided for each of the <code>*PUT</code> routines, <code>*PTI</code>, <code>*PTD</code>, and <code>*PTC</code> for <em>int</em>, <em>double</em>, or <em>char</em>[] and likewise <code>*GTI</code>, <code>*GTD</code>, and <code>*GTC</code> for the <code>*GET</code> routines.<p>
+When calling wrappers for C functions that print to <em>stdout</em>, such as <code>WCSPRT</code>, and <code>WCSPERR</code>, or that may print to <em>stderr</em>, such as <code>WCSPIH</code>, <code>WCSBTH</code>, <code>WCSULEXE</code>, or <code>WCSUTRNE</code>, it may be necessary to flush the Fortran I/O buffers beforehand so that the output appears in the correct order. The wrappers for these functions do call <code>fflush(NULL)</code>, but depending on the particular system, this may not succeed in flushing the Fortran I/O buffers. Most Fortran compilers provide the non-standard intrinsic <code>FLUSH()</code>, which is called with unit number 6 to flush <em>stdout</em> (as in the example above), and unit 0 for <em>stderr</em>.<p>
 A basic assumption made by the wrappers is that an <code>INTEGER</code> variable is no less than half the size of a <code>DOUBLE</code> <code>PRECISION</code>. </div>
-<hr size="1"><address style="text-align: right;"><small>Generated on Mon Feb 7 18:03:57 2011 for WCSLIB 4.7 by&nbsp;
+<hr size="1"><address style="text-align: right;"><small>Generated on Mon Apr 2 17:55:24 2012 for WCSLIB 4.13.4 by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.5.6 </small></address>
 </body>

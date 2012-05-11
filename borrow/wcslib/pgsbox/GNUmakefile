@@ -1,5 +1,5 @@
 #-----------------------------------------------------------------------------
-# GNU makefile for building PGSBOX 4.7
+# GNU makefile for building PGSBOX 4.13
 #
 # Summary of the main targets
 # ---------------------------
@@ -15,7 +15,7 @@
 #   check (or test): Compile and run the test programs.  By default they are
 #              executed in batch mode; use
 #
-#                gmake MODE=interactive check
+#                make MODE=interactive check
 #
 #              to run them interactively.
 #
@@ -26,7 +26,7 @@
 #      instead and re-run configure.
 #
 #   2) In compiling the test programs, this makefile assumes that the
-#      WCSLIB 4.7 sources reside in ../C and ../Fortran (as in the
+#      WCSLIB 4.13 sources reside in ../C and ../Fortran (as in the
 #      distribution kit).
 #
 # Author: Mark Calabretta, Australia Telescope National Facility
@@ -48,6 +48,7 @@ WCSLIB   := ../C/$(WCSLIB)
 PICLIB := libpgsbox-PIC.a
 WCSSHR := ../C/$(SHRLIB)
 SHRLIB := $(subst libwcs,libpgsbox,$(SHRLIB))
+SONAME := $(subst libwcs,libpgsbox,$(SONAME))
 SHRLD  := $(subst libwcs,libpgsbox,$(SHRLD))
 SHRLN  := $(subst libwcs,libpgsbox,$(SHRLN))
 
@@ -116,7 +117,7 @@ $(SHRLIB) : $(PICLIB)
 	     cd tmp && \
 	     trap 'cd .. ; $(RM) -r tmp' 0 1 2 3 15 ; \
 	     $(AR) x ../$(PICLIB) && \
-	     $(SHRLD) -o $@ *.o ../$(WCSSHR) $(LDFLAGS) $(PGPLOTLIB) && \
+	     $(SHRLD) -o $@ *.o ../$(WCSSHR) $(LDFLAGS) $(PGPLOTLIB) $(FLIBS) && \
 	     mv $@ ..
 
 $(PICLIB) : $(MODULES:%.o=$(PICLIB)(%.o)) ;
@@ -129,11 +130,15 @@ install : build
 	   $(LN_S) $(PGSBOXLIB) $(LIBDIR)/libpgsbox.a
 	-  if [ "$(SHRLIB)" != "" ] ; then \
 	     $(INSTALL) -m 644 $(SHRLIB) $(LIBDIR) ; \
+	     if [ -h "$(LIBDIR)/$(SONAME)" ] ; then \
+	       $(RM) $(LIBDIR)/$(SONAME) ; \
+	     fi ; \
+	     $(LN_S) $(SHRLIB) $(LIBDIR)/$(SONAME) ; \
 	     if [ "$(SHRLN)" != "" ] ; then \
 	       if [ -h "$(LIBDIR)/$(SHRLN)" ] ; then \
 	         $(RM) $(LIBDIR)/$(SHRLN) ; \
 	       fi ; \
-	       $(LN_S) $(SHRLIB) $(LIBDIR)/$(SHRLN) ; \
+	       $(LN_S) $(SONAME) $(LIBDIR)/$(SHRLN) ; \
 	     fi ; \
 	   fi
 	   $(INSTALL) -m 444 *.h $(INCDIR)
@@ -177,15 +182,15 @@ $(WCSLIB) :
 pgtest : pgtest.f fscan.f lngvel.f $(PGSBOXLIB) $(WCSLIB)
 	-@ $(RM) $@
 	-@ echo ''
-	   $(FC) -I../Fortran $(FFLAGS) $(LDFLAGS) -o $@ $^ \
+	   $(FC) -I../Fortran $(FFLAGS) -o $@ $^ $(LDFLAGS) \
 	     $(PGPLOTLIB) $(LIBS)
 
 cpgtest : cpgtest.c fscan.f lngvel.f $(PGSBOXLIB) $(WCSLIB)
 	-@ $(RM) $@
 	-@ echo ''
 	   $(FC) -I../Fortran $(FFLAGS) -c fscan.f lngvel.f
-	   $(CC) $(CPPFLAGS) $(PGPLOTINC) $(CFLAGS) $(LDFLAGS) -o $@ \
-	     $(^:.f=.o) $(PGPLOTLIB) $(FLIBS) $(LIBS)
+	   $(CC) $(CPPFLAGS) $(PGPLOTINC) $(CFLAGS) -o $@ $(^:.f=.o) \
+	     $(LDFLAGS) $(PGPLOTLIB) $(FLIBS) $(LIBS)
 	-@ $(RM) fscan.o lngvel.o
 
 GNUmakefile : ../makedefs ;
@@ -193,7 +198,7 @@ GNUmakefile : ../makedefs ;
 ../makedefs ../wcsconfig_f77.h : makedefs.in wcsconfig_f77.h.in \
     ../config.status
 	-@ $(RM) ../wcsconfig_f77.h
-	   cd .. && config.status
+	   cd .. && ./config.status
 
 show ::
 	-@ echo 'For building libpgsbox...'
@@ -201,6 +206,7 @@ show ::
 	-@ echo '  PICLIB      := $(PICLIB)'
 	-@ echo '  WCSSHR      := $(WCSSHR)'
 	-@ echo '  SHRLIB      := $(SHRLIB)'
+	-@ echo '  SONAME      := $(SONAME)'
 	-@ echo '  SHRFLAGS    := $(SHRFLAGS)'
 	-@ echo '  SHRLD       := $(SHRLD)'
 	-@ echo '  SHRLN       := $(SHRLN)'

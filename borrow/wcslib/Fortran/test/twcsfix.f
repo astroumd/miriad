@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 4.7 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2011, Mark Calabretta
+* WCSLIB 4.13 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2012, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -42,9 +42,10 @@
       DOUBLE PRECISION TOL
       PARAMETER (TOL = 1D-10)
 
+*     CUNITia is set to arcsec below as an additional test.
       DOUBLE PRECISION DEC, RA
-      PARAMETER (RA  = 265.62209470900*3600D0)
-      PARAMETER (DEC = -28.98849996030*3600D0)
+      PARAMETER (RA  = 265.62209470900D0 * 3600D0)
+      PARAMETER (DEC = -28.98849996030D0 * 3600D0)
 
 *     Number of axes.
       INTEGER   N
@@ -57,6 +58,17 @@
 
       COMMON /HEADER/ CRPIX, PC, CDELT, CRVAL, RESTFRQ, RESTWAV, NAXIS
       COMMON /HEADCH/ CTYPE, CUNIT, DATEOBS
+
+*     On some systems, such as Sun Sparc, the struct MUST be aligned
+*     on a double precision boundary, done here using an equivalence.
+*     Failure to do this may result in mysterious "bus errors".
+      INCLUDE 'wcs.inc'
+      INCLUDE 'wcsfix.inc'
+      INTEGER   STAT(WCSFIX_NWCS), STATUS
+      CHARACTER CTYPES*8
+      INTEGER   WCS(WCSLEN)
+      DOUBLE PRECISION DUMMY
+      EQUIVALENCE (WCS,DUMMY)
 
       DATA NAXIS   /N/
       DATA (CRPIX(J), J=1,N)
@@ -78,14 +90,6 @@
 
 *     N.B. non-standard, corresponding to MJD 35884.04861111
       DATA DATEOBS /'1957/02/15 01:10:00'/
-
-      INCLUDE 'wcs.inc'
-      INCLUDE 'wcsfix.inc'
-      INTEGER   STAT(WCSFIX_NWCS), STATUS
-      CHARACTER CTYPES*8
-      INTEGER   WCS(WCSLEN)
-      DOUBLE PRECISION DUMMY
-      EQUIVALENCE (WCS,DUMMY)
 *-----------------------------------------------------------------------
       WRITE (*, 10)
  10   FORMAT ('Testing WCSLIB translator for non-standard usage ',
@@ -97,40 +101,48 @@
       STATUS = WCSPUT (WCS, WCS_FLAG, -1, 0, 0)
       CALL PARSER (WCS)
 
-*     Print the unmodified struct.
-      STATUS = WCSPRT (WCS)
-      WRITE (*, 20)
- 20   FORMAT (/,'------------------------------------',
-     :          '------------------------------------')
-
 *     Fix non-standard WCS keyvalues.
       STATUS = WCSFIX (7, 0, WCS, STAT)
+      WRITE (*, 20) (STAT(I), I=1,WCSFIX_NWCS)
+ 20   FORMAT ('WCSFIX status returns: (',I2,5(',',I2),')',/)
+
       IF (STATUS.NE.0) THEN
-        WRITE (*, 30) (STAT(I), I=1,WCSFIX_NWCS)
- 30     FORMAT ('WCSFIX ERROR, status returns: (',(I2,:,','),')')
+        WRITE (*, 30) STATUS
+ 30     FORMAT ('WCSFIX ERROR',I2,'.')
         GO TO 999
       END IF
 
+*     Extract information from the FITS header.
+      STATUS = WCSSET (WCS)
+      IF (STATUS.NE.0) THEN
+        WRITE (*, 40) STATUS
+ 40     FORMAT (/,'WCSSET ERROR',I2,'.')
+      END IF
+
+      CALL FLUSH(6)
       STATUS = WCSPRT (WCS)
-      WRITE (*, 20)
+      WRITE (*, 50)
+ 50   FORMAT (/,'------------------------------------',
+     :          '------------------------------------')
 
 *     Should now have a 'VOPT-F2W' axis, translate it to frequency.
       CTYPES = 'FREQ-???'
       I = -1
       STATUS = WCSSPTR (WCS, I, CTYPES)
       IF (STATUS.NE.0) THEN
-        WRITE (*, 40) STATUS
- 40     FORMAT ('WCSPTR ERROR',I2,'.')
+        WRITE (*, 60) STATUS
+ 60     FORMAT ('WCSPTR ERROR',I2,'.')
         GO TO 999
       END IF
 
       STATUS = WCSSET (WCS)
       IF (STATUS.NE.0) THEN
-        WRITE (*, 50) STATUS
- 50     FORMAT ('WCSSET ERROR',I2,'.')
+        WRITE (*, 70) STATUS
+ 70     FORMAT ('WCSSET ERROR',I2,'.')
         GO TO 999
       END IF
 
+      CALL FLUSH(6)
       STATUS = WCSPRT (WCS)
 
       STATUS = WCSFREE (WCS)
@@ -176,11 +188,7 @@
  10     CONTINUE
 
         STATUS = WCSPUT (WCS, WCS_CDELT, CDELT(I), I, 0)
-
-*       Translate non-standard units specifications.
-        STATUS = WCSUTRN (7, CUNIT(I))
         STATUS = WCSPUT (WCS, WCS_CUNIT, CUNIT(I), I, 0)
-
         STATUS = WCSPUT (WCS, WCS_CTYPE, CTYPE(I), I, 0)
         STATUS = WCSPUT (WCS, WCS_CRVAL, CRVAL(I), I, 0)
  20   CONTINUE
@@ -192,13 +200,6 @@
       STATUS = WCSPUT (WCS, WCS_PV, -1D0, -1, -1)
 
       STATUS = WCSPUT (WCS, WCS_DATEOBS, DATEOBS, 0, 0)
-
-*     Extract information from the FITS header.
-      STATUS = WCSSET (WCS)
-      IF (STATUS.NE.0) THEN
-        WRITE (*, 30) STATUS
- 30     FORMAT (/,'WCSSET ERROR',I3,'.')
-      END IF
 
       RETURN
       END

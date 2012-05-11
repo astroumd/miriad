@@ -1,11 +1,14 @@
 #-----------------------------------------------------------------------------
 # Makefile overrides for various combinations of architecture, operating
-# system and compiler, used for WCSLIB development and testing, not for
-# distribution.  Variables like CC and CFLAGS are exported into the
-# environment so that they will be seen by 'configure', e.g.
+# system and compiler.  Used for development and testing only, not required
+# for building WCSLIB.
 #
-#   gmake distclean
-#   gmake FLAVOUR=Linux configure
+# Variables like CC and CFLAGS are exported into the environment so that they
+# will be seen by 'configure'.  Thus, normal usage is as follows:
+#
+#   make distclean
+#   make FLAVOUR=Linux configure
+#   make
 #
 # Reminder: add '-d' to FLFLAGS for debugging.
 #
@@ -43,13 +46,13 @@ ifeq "$(notdir $(shell pwd))" "utils"
 endif
 
 
-# Linux with gcc/g77.
+# Linux with gcc/gfortran (also works for Darwin).
 ifeq "$(FLAVOUR)" "Linux"
   F := $(FLAVOUR)
   export CC       := gcc -std=c89 -pedantic
   export CPPFLAGS := $(FEATURES)
   export CFLAGS   := -g -O0 -Wall -Wpadded -Wno-long-long
-  export FFLAGS   := -g -O0 -Wimplicit -Wunused -Wno-globals -I.
+  export FFLAGS   := -g -O0 -fimplicit-none -Wall -I.
          VALGRIND := valgrind -v --leak-check=yes
 endif
 
@@ -58,19 +61,21 @@ ifeq "$(FLAVOUR)" "Linuxp"
   export CC       := gcc -std=c89 -pedantic
   export CPPFLAGS := $(FEATURES)
   export CFLAGS   := -pg -g -O -Wall -Wpadded -Wno-long-long
-  export FFLAGS   := -pg -a -g -O -Wimplicit -Wuninitialized -Wno-globals -I.
+  export FFLAGS   := -pg -a -g -O -fimplicit-none -Wall -I.
   export LDFLAGS  := -pg -g $(filter -L%, $(LDFLAGS))
   override EXTRA_CLEAN := gmon.out bb.out
 endif
 
 
-# Solaris with gcc/g77.
+# Solaris with gcc/gfortran 4.x (lynx).
 ifeq "$(FLAVOUR)" "SUN/GNU"
   F := $(FLAVOUR)
-  export CC       := gcc -std=c89 -pedantic
+  export CC       := gcc -std=c89
   export CPPFLAGS := $(FEATURES)
   export CFLAGS   := -g -Wall -Wpadded -Wno-long-long
-  export FFLAGS   := -g -Wimplicit -Wunused -Wno-globals -I.
+  export F77      := gfortran
+  export FFLAGS   := -g -fimplicit-none -Wall -I.
+  LD      := gcc
 endif
 
 ifeq "$(FLAVOUR)" "SUN/GNU3"
@@ -83,22 +88,12 @@ ifeq "$(FLAVOUR)" "SUN/GNU3"
   LD      := gcc-3.1.1
 endif
 
-ifeq "$(FLAVOUR)" "SUN/GNU4"
-  F := $(FLAVOUR)
-  export CC       := gcc-4.5.1 -std=c89
-  export CPPFLAGS := $(FEATURES)
-  export CFLAGS   := -g -Wall -Wpadded -Wno-long-long
-  export F77      := gfortran-4.5.1
-  export FFLAGS   := -g -Wunused -I.
-  LD      := gcc-4.5.1
-endif
-
 ifeq "$(FLAVOUR)" "SUN/GNUp"
   F := $(FLAVOUR)
   export CC       := gcc -std=c89 -pedantic
   export CPPFLAGS := $(FEATURES)
   export CFLAGS   := -pg -a -g -O -Wall -Wpadded -Wno-long-long
-  export FFLAGS   := -pg -a -g -O -Wimplicit -Wuninitialized -Wno-globals -I.
+  export FFLAGS   := -pg -a -g -O -fimplicit-none -Wall -I.
   export LDFLAGS  := -pg -a -g $(filter -L%, $(LDFLAGS))
   override EXTRA_CLEAN := gmon.out bb.out
 endif

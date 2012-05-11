@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.7 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2011, Mark Calabretta
+  WCSLIB 4.13 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2012, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -40,21 +40,20 @@
 
 #include <spx.h>
 
-
 #define NSPEC 9991
 
+const double C = 2.99792458e8;
 const double tol = 1.0e-9;
 
-void closure (const char *, const char *, double, int (*)(), int (*)(),
-              const double [], double []);
-
-const double C = 2.99792458e8;
+int closure(const char *from, const char *to, double parm,
+            int (*fwd)(SPX_ARGS), int (*rev)(SPX_ARGS), const double spec1[],
+            double spec2[]);
 
 
 int main()
 
 {
-  int    stat[NSPEC], status;
+  int    nFail = 0, stat[NSPEC], status;
   double restfrq, restwav, step;
   double awav[NSPEC], freq[NSPEC], spc1[NSPEC], spc2[NSPEC], velo[NSPEC],
          wave[NSPEC];
@@ -84,62 +83,62 @@ int main()
     return 1;
   }
 
-  printf("    restfrq:%20.12E\n", spx.restfrq);
-  printf("    restwav:%20.12E\n", spx.restwav);
+  printf("    restfrq:%20.12e\n", spx.restfrq);
+  printf("    restwav:%20.12e\n", spx.restwav);
   printf("   wavetype:%3d\n",     spx.wavetype);
   printf("   velotype:%3d\n",     spx.velotype);
   printf("\n");
-  printf("       freq:%20.12E\n", spx.freq);
-  printf("       afrq:%20.12E\n", spx.afrq);
-  printf("       ener:%20.12E\n", spx.ener);
-  printf("       wavn:%20.12E\n", spx.wavn);
-  printf("       vrad:%20.12E\n", spx.vrad);
-  printf("       wave:%20.12E\n", spx.wave);
-  printf("       vopt:%20.12E\n", spx.vopt);
-  printf("       zopt:%20.12E\n", spx.zopt);
-  printf("       awav:%20.12E\n", spx.awav);
-  printf("       velo:%20.12E\n", spx.velo);
-  printf("       beta:%20.12E\n", spx.beta);
+  printf("       freq:%20.12e\n", spx.freq);
+  printf("       afrq:%20.12e\n", spx.afrq);
+  printf("       ener:%20.12e\n", spx.ener);
+  printf("       wavn:%20.12e\n", spx.wavn);
+  printf("       vrad:%20.12e\n", spx.vrad);
+  printf("       wave:%20.12e\n", spx.wave);
+  printf("       vopt:%20.12e\n", spx.vopt);
+  printf("       zopt:%20.12e\n", spx.zopt);
+  printf("       awav:%20.12e\n", spx.awav);
+  printf("       velo:%20.12e\n", spx.velo);
+  printf("       beta:%20.12e\n", spx.beta);
   printf("\n");
 
-  printf("dfreq/dafrq:%20.12E\n", spx.dfreqafrq);
-  printf("dafrq/dfreq:%20.12E\n", spx.dafrqfreq);
+  printf("dfreq/dafrq:%20.12e\n", spx.dfreqafrq);
+  printf("dafrq/dfreq:%20.12e\n", spx.dafrqfreq);
 
-  printf("dfreq/dener:%20.12E\n", spx.dfreqener);
-  printf("dener/dfreq:%20.12E\n", spx.denerfreq);
+  printf("dfreq/dener:%20.12e\n", spx.dfreqener);
+  printf("dener/dfreq:%20.12e\n", spx.denerfreq);
 
-  printf("dfreq/dwavn:%20.12E\n", spx.dfreqwavn);
-  printf("dwavn/dfreq:%20.12E\n", spx.dwavnfreq);
+  printf("dfreq/dwavn:%20.12e\n", spx.dfreqwavn);
+  printf("dwavn/dfreq:%20.12e\n", spx.dwavnfreq);
 
-  printf("dfreq/dvrad:%20.12E\n", spx.dfreqvrad);
-  printf("dvrad/dfreq:%20.12E\n", spx.dvradfreq);
+  printf("dfreq/dvrad:%20.12e\n", spx.dfreqvrad);
+  printf("dvrad/dfreq:%20.12e\n", spx.dvradfreq);
 
-  printf("dfreq/dwave:%20.12E\n", spx.dfreqwave);
-  printf("dwave/dfreq:%20.12E\n", spx.dwavefreq);
+  printf("dfreq/dwave:%20.12e\n", spx.dfreqwave);
+  printf("dwave/dfreq:%20.12e\n", spx.dwavefreq);
 
-  printf("dfreq/dawav:%20.12E\n", spx.dfreqawav);
-  printf("dawav/dfreq:%20.12E\n", spx.dawavfreq);
+  printf("dfreq/dawav:%20.12e\n", spx.dfreqawav);
+  printf("dawav/dfreq:%20.12e\n", spx.dawavfreq);
 
-  printf("dfreq/dvelo:%20.12E\n", spx.dfreqvelo);
-  printf("dvelo/dfreq:%20.12E\n", spx.dvelofreq);
+  printf("dfreq/dvelo:%20.12e\n", spx.dfreqvelo);
+  printf("dvelo/dfreq:%20.12e\n", spx.dvelofreq);
 
-  printf("dwave/dvopt:%20.12E\n", spx.dwavevopt);
-  printf("dvopt/dwave:%20.12E\n", spx.dvoptwave);
+  printf("dwave/dvopt:%20.12e\n", spx.dwavevopt);
+  printf("dvopt/dwave:%20.12e\n", spx.dvoptwave);
 
-  printf("dwave/dzopt:%20.12E\n", spx.dwavezopt);
-  printf("dzopt/dwave:%20.12E\n", spx.dzoptwave);
+  printf("dwave/dzopt:%20.12e\n", spx.dwavezopt);
+  printf("dzopt/dwave:%20.12e\n", spx.dzoptwave);
 
-  printf("dwave/dawav:%20.12E\n", spx.dwaveawav);
-  printf("dawav/dwave:%20.12E\n", spx.dawavwave);
+  printf("dwave/dawav:%20.12e\n", spx.dwaveawav);
+  printf("dawav/dwave:%20.12e\n", spx.dawavwave);
 
-  printf("dwave/dvelo:%20.12E\n", spx.dwavevelo);
-  printf("dvelo/dwave:%20.12E\n", spx.dvelowave);
+  printf("dwave/dvelo:%20.12e\n", spx.dwavevelo);
+  printf("dvelo/dwave:%20.12e\n", spx.dvelowave);
 
-  printf("dawav/dvelo:%20.12E\n", spx.dawavvelo);
-  printf("dvelo/dawav:%20.12E\n", spx.dveloawav);
+  printf("dawav/dvelo:%20.12e\n", spx.dawavvelo);
+  printf("dvelo/dawav:%20.12e\n", spx.dveloawav);
 
-  printf("dvelo/dbeta:%20.12E\n", spx.dvelobeta);
-  printf("dbeta/dvelo:%20.12E\n", spx.dbetavelo);
+  printf("dvelo/dbeta:%20.12e\n", spx.dvelobeta);
+  printf("dbeta/dvelo:%20.12e\n", spx.dbetavelo);
   printf("\n");
 
 
@@ -155,62 +154,70 @@ int main()
   velofreq(restfrq, NSPEC, 1, 1, velo, freq, stat);
 
   /* Test closure of all two-way combinations. */
-  closure("freq", "afrq", 0.0,     freqafrq, afrqfreq, freq, spc1);
-  closure("afrq", "freq", 0.0,     afrqfreq, freqafrq, spc1, spc2);
+  nFail += closure("freq", "afrq", 0.0,     freqafrq, afrqfreq, freq, spc1);
+  nFail += closure("afrq", "freq", 0.0,     afrqfreq, freqafrq, spc1, spc2);
 
-  closure("freq", "ener", 0.0,     freqener, enerfreq, freq, spc1);
-  closure("ener", "freq", 0.0,     enerfreq, freqener, spc1, spc2);
+  nFail += closure("freq", "ener", 0.0,     freqener, enerfreq, freq, spc1);
+  nFail += closure("ener", "freq", 0.0,     enerfreq, freqener, spc1, spc2);
 
-  closure("freq", "wavn", 0.0,     freqwavn, wavnfreq, freq, spc1);
-  closure("wavn", "freq", 0.0,     wavnfreq, freqwavn, spc1, spc2);
+  nFail += closure("freq", "wavn", 0.0,     freqwavn, wavnfreq, freq, spc1);
+  nFail += closure("wavn", "freq", 0.0,     wavnfreq, freqwavn, spc1, spc2);
 
-  closure("freq", "vrad", restfrq, freqvrad, vradfreq, freq, spc1);
-  closure("vrad", "freq", restfrq, vradfreq, freqvrad, spc1, spc2);
+  nFail += closure("freq", "vrad", restfrq, freqvrad, vradfreq, freq, spc1);
+  nFail += closure("vrad", "freq", restfrq, vradfreq, freqvrad, spc1, spc2);
 
-  closure("freq", "wave", 0.0,     freqwave, wavefreq, freq, wave);
-  closure("wave", "freq", 0.0,     wavefreq, freqwave, wave, spc2);
+  nFail += closure("freq", "wave", 0.0,     freqwave, wavefreq, freq, wave);
+  nFail += closure("wave", "freq", 0.0,     wavefreq, freqwave, wave, spc2);
 
-  closure("freq", "awav", 0.0,     freqawav, awavfreq, freq, awav);
-  closure("awav", "freq", 0.0,     awavfreq, freqawav, awav, spc2);
+  nFail += closure("freq", "awav", 0.0,     freqawav, awavfreq, freq, awav);
+  nFail += closure("awav", "freq", 0.0,     awavfreq, freqawav, awav, spc2);
 
-  closure("freq", "velo", restfrq, freqvelo, velofreq, freq, velo);
-  closure("velo", "freq", restfrq, velofreq, freqvelo, velo, spc2);
+  nFail += closure("freq", "velo", restfrq, freqvelo, velofreq, freq, velo);
+  nFail += closure("velo", "freq", restfrq, velofreq, freqvelo, velo, spc2);
 
-  closure("wave", "vopt", restwav, wavevopt, voptwave, wave, spc1);
-  closure("vopt", "wave", restwav, voptwave, wavevopt, spc1, spc2);
+  nFail += closure("wave", "vopt", restwav, wavevopt, voptwave, wave, spc1);
+  nFail += closure("vopt", "wave", restwav, voptwave, wavevopt, spc1, spc2);
 
-  closure("wave", "zopt", restwav, wavezopt, zoptwave, wave, spc1);
-  closure("zopt", "wave", restwav, zoptwave, wavezopt, spc1, spc2);
+  nFail += closure("wave", "zopt", restwav, wavezopt, zoptwave, wave, spc1);
+  nFail += closure("zopt", "wave", restwav, zoptwave, wavezopt, spc1, spc2);
 
-  closure("wave", "awav", 0.0,     waveawav, awavwave, wave, spc1);
-  closure("awav", "wave", 0.0,     awavwave, waveawav, spc1, spc2);
+  nFail += closure("wave", "awav", 0.0,     waveawav, awavwave, wave, spc1);
+  nFail += closure("awav", "wave", 0.0,     awavwave, waveawav, spc1, spc2);
 
-  closure("wave", "velo", restwav, wavevelo, velowave, wave, spc1);
-  closure("velo", "wave", restwav, velowave, wavevelo, spc1, spc2);
+  nFail += closure("wave", "velo", restwav, wavevelo, velowave, wave, spc1);
+  nFail += closure("velo", "wave", restwav, velowave, wavevelo, spc1, spc2);
 
-  closure("awav", "velo", restwav, awavvelo, veloawav, awav, spc1);
-  closure("velo", "awav", restwav, veloawav, awavvelo, spc1, spc2);
+  nFail += closure("awav", "velo", restwav, awavvelo, veloawav, awav, spc1);
+  nFail += closure("velo", "awav", restwav, veloawav, awavvelo, spc1, spc2);
 
-  closure("velo", "beta", 0.0,     velobeta, betavelo, velo, spc1);
-  closure("beta", "velo", 0.0,     betavelo, velobeta, spc1, spc2);
+  nFail += closure("velo", "beta", 0.0,     velobeta, betavelo, velo, spc1);
+  nFail += closure("beta", "velo", 0.0,     betavelo, velobeta, spc1, spc2);
 
-  return 0;
+
+  if (nFail) {
+    printf("\nFAIL: %d closure residuals exceed reporting tolerance.\n",
+      nFail);
+  } else {
+    printf("\nPASS: All closure residuals are within reporting tolerance.\n");
+  }
+
+  return nFail;
 }
 
 /*--------------------------------------------------------------------------*/
 
-void closure (from, to, parm, fwd, rev, spec1, spec2)
-
-const char *from, *to;
-double parm;
-int (*fwd)(SPX_ARGS);
-int (*rev)(SPX_ARGS);
-const double spec1[];
-double spec2[];
+int closure (
+  const char *from,
+  const char *to,
+  double parm,
+  int (*fwd)(SPX_ARGS),
+  int (*rev)(SPX_ARGS),
+  const double spec1[],
+  double spec2[])
 
 {
   static char skip = '\0';
-  int stat1[NSPEC], stat2[NSPEC], status;
+  int nFail = 0, stat1[NSPEC], stat2[NSPEC], status;
   register int j;
   double clos[NSPEC], resid, residmax;
 
@@ -229,14 +236,14 @@ double spec2[];
   /* Test closure. */
   for (j = 0; j < NSPEC; j++) {
     if (stat1[j]) {
-      printf("%c%s%s: %s = %.12E -> %s = ???, stat = %d\n", skip, from, to,
+      printf("%c%s%s: %s = %.12e -> %s = ???, stat = %d\n", skip, from, to,
              from, spec1[j], to, stat1[j]);
       skip = '\0';
       continue;
     }
 
     if (stat2[j]) {
-      printf("%c%s%s: %s = %.12E -> %s = %.12E -> %s = ???, stat = %d\n",
+      printf("%c%s%s: %s = %.12e -> %s = %.12e -> %s = ???, stat = %d\n",
              skip, to, from, from, spec1[j], to, spec2[j], from, stat2[j]);
       skip = '\0';
       continue;
@@ -250,14 +257,15 @@ double spec2[];
     }
 
     if (resid > tol) {
-      printf("%c%s%s: %s = %.12E -> %s = %.12E ->\n          %s = %.12E,  "
-             "resid = %.12E\n", skip, from, to, from, spec1[j], to,
+      nFail++;
+      printf("%c%s%s: %s = %.12e -> %s = %.12e ->\n          %s = %.12e,  "
+             "resid = %.1e\n", skip, from, to, from, spec1[j], to,
              spec2[j], from, clos[j], resid);
       skip = '\0';
     }
   }
 
-  printf("%s%s: Maximum closure residual = %.12E\n", from, to, residmax);
+  printf("%s%s: Maximum closure residual = %.1e\n", from, to, residmax);
   if (residmax > tol) {
     printf("\n");
     skip = '\0';
@@ -265,5 +273,5 @@ double spec2[];
     skip = '\n';
   }
 
-  return;
+  return nFail;
 }

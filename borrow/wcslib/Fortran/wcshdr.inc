@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 4.7 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2011, Mark Calabretta
+* WCSLIB 4.13 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2012, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -67,6 +67,17 @@
       PARAMETER (WCSHDR_IMGHEAD  = 2**16)
       PARAMETER (WCSHDR_BIMGARR  = 2**17)
       PARAMETER (WCSHDR_PIXLIST  = 2**18)
+
+*     Error codes and messages.
+      INTEGER   WCSHDRERR_BAD_TABULAR_PARAMS, WCSHDRERR_MEMORY,
+     :          WCSHDRERR_NULL_POINTER, WCSHDRERR_PARSER,
+     :          WCSHDRERR_SUCCESS
+
+      PARAMETER (WCSHDRERR_SUCCESS            = 0)
+      PARAMETER (WCSHDRERR_NULL_POINTER       = 1)
+      PARAMETER (WCSHDRERR_MEMORY             = 2)
+      PARAMETER (WCSHDRERR_BAD_TABULAR_PARAMS = 3)
+      PARAMETER (WCSHDRERR_PARSER             = 4)
 
       CHARACTER WCSHDR_ERRMSG(0:3)*80
       COMMON /WCSHDR_DATA/ WCSHDR_ERRMSG

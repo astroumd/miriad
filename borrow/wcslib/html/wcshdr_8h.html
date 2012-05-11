@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-<title>WCSLIB 4.7: wcshdr.h File Reference</title>
+<title>WCSLIB 4.13.4: wcshdr.h File Reference</title>
 <link href="doxygen.css" rel="stylesheet" type="text/css">
 <link href="tabs.css" rel="stylesheet" type="text/css">
 </head><body>
@@ -106,6 +106,18 @@
 <tr><td class="memItemLeft" nowrap align="right" valign="top">#define&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="wcshdr_8h.html#9a70ad2a355a9736711d8017535bf72b">WCSHDO_WCSNna</a>&nbsp;&nbsp;&nbsp;0x20</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Bit mask for <a class="el" href="wcshdr_8h.html#0b8372e555a2e2bcc63a11f3dc7a1bf6" title="Write out a wcsprm struct as a FITS header.">wcshdo()</a> - write <code><b>WCSN</b>na</code> instead of <code><b>TWCS</b>na</code>.  <a href="#9a70ad2a355a9736711d8017535bf72b"></a><br></td></tr>
+<tr><td colspan="2"><br><h2>Enumerations</h2></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">enum &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="wcshdr_8h.html#e2dfc36c150d3a16a5e83131d32ecdae">wcshdr_errmsg_enum</a> { <br>
+&nbsp;&nbsp;<a class="el" href="wcshdr_8h.html#e2dfc36c150d3a16a5e83131d32ecdaebfe69dd9e4c486f856a5dc44b02e79a1">WCSHDRERR_SUCCESS</a> =  0, 
+<a class="el" href="wcshdr_8h.html#e2dfc36c150d3a16a5e83131d32ecdae99dd31e274ec97542e650ff89357cded">WCSHDRERR_NULL_POINTER</a> =  1, 
+<a class="el" href="wcshdr_8h.html#e2dfc36c150d3a16a5e83131d32ecdae0a858638ef0dd0dc9b529f98b14cc46f">WCSHDRERR_MEMORY</a> =  2, 
+<a class="el" href="wcshdr_8h.html#e2dfc36c150d3a16a5e83131d32ecdae0c926e2cc98a8c39585aa0e212423459">WCSHDRERR_BAD_COLUMN</a> =  3, 
+<br>
+&nbsp;&nbsp;<a class="el" href="wcshdr_8h.html#e2dfc36c150d3a16a5e83131d32ecdae218297c7a2a4d405c251e9ed239e615b">WCSHDRERR_PARSER</a> =  4, 
+<a class="el" href="wcshdr_8h.html#e2dfc36c150d3a16a5e83131d32ecdaeeae58359638c0c631e6c7c573a343508">WCSHDRERR_BAD_TABULAR_PARAMS</a> =  5
+<br>
+ }</td></tr>
+
 <tr><td colspan="2"><br><h2>Functions</h2></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="wcshdr_8h.html#c75623ee805ab7d43b0bba684c719a60">wcspih</a> (char *header, int nkeyrec, int relax, int ctrl, int *nreject, int *nwcs, struct <a class="el" href="structwcsprm.html">wcsprm</a> **wcs)</td></tr>
 
@@ -622,6 +634,38 @@ Bit mask for the <em>relax</em> argument of <a class="el" href="wcshdr_8h.html#0
 Refer to the notes for <a class="el" href="wcshdr_8h.html#0b8372e555a2e2bcc63a11f3dc7a1bf6" title="Write out a wcsprm struct as a FITS header.">wcshdo()</a>. 
 </div>
 </div><p>
+<hr><h2>Enumeration Type Documentation</h2>
+<a class="anchor" name="e2dfc36c150d3a16a5e83131d32ecdae"></a><!-- doxytag: member="wcshdr.h::wcshdr_errmsg_enum" ref="e2dfc36c150d3a16a5e83131d32ecdae" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum <a class="el" href="wcshdr_8h.html#e2dfc36c150d3a16a5e83131d32ecdae">wcshdr_errmsg_enum</a>          </td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+<dl compact><dt><b>Enumerator: </b></dt><dd>
+<table border="0" cellspacing="2" cellpadding="0">
+<tr><td valign="top"><em><a class="anchor" name="e2dfc36c150d3a16a5e83131d32ecdaebfe69dd9e4c486f856a5dc44b02e79a1"></a><!-- doxytag: member="WCSHDRERR_SUCCESS" ref="e2dfc36c150d3a16a5e83131d32ecdaebfe69dd9e4c486f856a5dc44b02e79a1" args="" -->WCSHDRERR_SUCCESS</em>&nbsp;</td><td>
+</td></tr>
+<tr><td valign="top"><em><a class="anchor" name="e2dfc36c150d3a16a5e83131d32ecdae99dd31e274ec97542e650ff89357cded"></a><!-- doxytag: member="WCSHDRERR_NULL_POINTER" ref="e2dfc36c150d3a16a5e83131d32ecdae99dd31e274ec97542e650ff89357cded" args="" -->WCSHDRERR_NULL_POINTER</em>&nbsp;</td><td>
+</td></tr>
+<tr><td valign="top"><em><a class="anchor" name="e2dfc36c150d3a16a5e83131d32ecdae0a858638ef0dd0dc9b529f98b14cc46f"></a><!-- doxytag: member="WCSHDRERR_MEMORY" ref="e2dfc36c150d3a16a5e83131d32ecdae0a858638ef0dd0dc9b529f98b14cc46f" args="" -->WCSHDRERR_MEMORY</em>&nbsp;</td><td>
+</td></tr>
+<tr><td valign="top"><em><a class="anchor" name="e2dfc36c150d3a16a5e83131d32ecdae0c926e2cc98a8c39585aa0e212423459"></a><!-- doxytag: member="WCSHDRERR_BAD_COLUMN" ref="e2dfc36c150d3a16a5e83131d32ecdae0c926e2cc98a8c39585aa0e212423459" args="" -->WCSHDRERR_BAD_COLUMN</em>&nbsp;</td><td>
+</td></tr>
+<tr><td valign="top"><em><a class="anchor" name="e2dfc36c150d3a16a5e83131d32ecdae218297c7a2a4d405c251e9ed239e615b"></a><!-- doxytag: member="WCSHDRERR_PARSER" ref="e2dfc36c150d3a16a5e83131d32ecdae218297c7a2a4d405c251e9ed239e615b" args="" -->WCSHDRERR_PARSER</em>&nbsp;</td><td>
+</td></tr>
+<tr><td valign="top"><em><a class="anchor" name="e2dfc36c150d3a16a5e83131d32ecdaeeae58359638c0c631e6c7c573a343508"></a><!-- doxytag: member="WCSHDRERR_BAD_TABULAR_PARAMS" ref="e2dfc36c150d3a16a5e83131d32ecdaeeae58359638c0c631e6c7c573a343508" args="" -->WCSHDRERR_BAD_TABULAR_PARAMS</em>&nbsp;</td><td>
+</td></tr>
+</table>
+</dl>
+
+</div>
+</div><p>
 <hr><h2>Function Documentation</h2>
 <a class="anchor" name="c75623ee805ab7d43b0bba684c719a60"></a><!-- doxytag: member="wcshdr.h::wcspih" ref="c75623ee805ab7d43b0bba684c719a60" args="(char *header, int nkeyrec, int relax, int ctrl, int *nreject, int *nwcs, struct wcsprm **wcs)" -->
 <div class="memitem">
@@ -1134,8 +1178,8 @@ Note that <a class="el" href="wcshdr_8h.html#c75623ee805ab7d43b0bba684c719a60" t
   </table>
 </dl>
 <dl class="return" compact><dt><b>Returns:</b></dt><dd>Status return value:<ul>
-<li>0: Success.</li><li>1: Null <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> pointer passed. </li></ul>
-</dd></dl>
+<li>0: Success.</li><li>1: Null <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> pointer passed.</li><li>2: Memory allocation failed.</li><li>3: Invalid tabular parameters.</li></ul>
+For returns &gt; 1, a detailed error message is set in <a class="el" href="structwcsprm.html#f54ce939604be183231f0ee006e2f8ed">wcsprm::err</a> if enabled, see <a class="el" href="wcserr_8h.html#1691b8bd184d40ca6fda255be078fa53" title="Enable/disable error messaging.">wcserr_enable()</a>. </dd></dl>
 
 </div>
 </div><p>
@@ -1364,9 +1408,9 @@ Fine-grained control of the degree of permissiveness is also possible as explain
  Each keyrecord is 80 characters long and is *NOT* null-terminated, so the first keyrecord starts at (*header)[0], the second at (*header)[80], etc.</td></tr>
   </table>
 </dl>
-<dl class="return" compact><dt><b>Returns:</b></dt><dd>Status return value:<ul>
-<li>0: Success.</li><li>1: Null <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> pointer passed.</li></ul>
-</dd></dl>
+<dl class="return" compact><dt><b>Returns:</b></dt><dd>Status return value (associated with wcs_errmsg[]):<ul>
+<li>0: Success.</li><li>1: Null <a class="el" href="structwcsprm.html" title="Coordinate transformation parameters.">wcsprm</a> pointer passed.</li><li>2: Memory allocation failed.</li><li>3: Linear transformation matrix is singular.</li><li>4: Inconsistent or unrecognized coordinate axis types.</li><li>5: Invalid parameter value.</li><li>6: Invalid coordinate transformation parameters.</li><li>7: Ill-conditioned coordinate transformation parameters.</li></ul>
+For returns &gt; 1, a detailed error message is set in <a class="el" href="structwcsprm.html#f54ce939604be183231f0ee006e2f8ed">wcsprm::err</a> if enabled, see <a class="el" href="wcserr_8h.html#1691b8bd184d40ca6fda255be078fa53" title="Enable/disable error messaging.">wcserr_enable()</a>.</dd></dl>
 <b>Notes:</b> <br>
  <b>wcshdo</b>() interprets the <em>relax</em> argument as a vector of flag bits to provide fine-grained control over what non-standard WCS keywords to write. The flag bits are subject to change in future and should be set by using the preprocessor macros (see below) for the purpose.<p>
 <ul>
@@ -1473,11 +1517,11 @@ Note that these keywords provide auxiliary information only, none of them are ne
 <div class="memdoc">
 
 <p>
-Error messages to match the status value returned from each function. 
+Error messages to match the status value returned from each function. Use wcs_errmsg[] for status returns from <b>wcshdo</b>(). 
 </div>
 </div><p>
 </div>
-<hr size="1"><address style="text-align: right;"><small>Generated on Mon Feb 7 18:03:57 2011 for WCSLIB 4.7 by&nbsp;
+<hr size="1"><address style="text-align: right;"><small>Generated on Mon Apr 2 17:55:24 2012 for WCSLIB 4.13.4 by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.5.6 </small></address>
 </body>

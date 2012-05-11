@@ -2,23 +2,23 @@
 # Process this file with autoconf-2.53 or later to produce a configure script.
 #-----------------------------------------------------------------------------
 # N.B. it is necessary to run autoconf on a Mac in order for configure to
-# locate the X11 dylibs for PGPLOT.  Use autoconf-2.61 in MacOSX 10.6.2 to
-# avoid spurious messages about deleting conftest.dSYM when configuring in
-# MacOSX 10.6.
+# locate the X11 dylibs for PGPLOT.  Use autoconf-2.61 in MacOSX 10.6.2 or
+# later to avoid spurious messages about deleting conftest.dSYM when
+# configuring in MacOSX 10.6.
 #
 # Author: Mark Calabretta, Australia Telescope National Facility
 # http://www.atnf.csiro.au/~mcalabre/index.html
 # $Id$
 #-----------------------------------------------------------------------------
 
-AC_INIT([WCSLIB], [4.7], [mcalabre@atnf.csiro.au], [wcslib-4.7])
+AC_INIT([WCSLIB], [4.13.4], [mcalabre@atnf.csiro.au], [wcslib-4.13.4])
 AC_PREREQ([2.53])
 AC_REVISION([$Revision$])
 AC_SUBST([PACKAGE_VERSION])
 AC_DEFINE_UNQUOTED([WCSLIB_VERSION], [$PACKAGE_VERSION], [Define wcslib version])
 
-# Remove the patch number from the library version.
-LIBVER=`echo "$PACKAGE_VERSION" | sed -e '{s/\./-/;s/\.[[0-9]]*$//;s/-/./;}'`
+# Library version number, same as package version.
+LIBVER="$PACKAGE_VERSION"
 AC_SUBST([LIBVER])
 
 AC_CONFIG_SRCDIR([C/wcs.h])
@@ -139,9 +139,9 @@ AC_RUN_IFELSE(
                        return 2;]])],
   AC_DEFINE([MODZ], ["z"], [printf format modifier for size_t type.])
     AC_MSG_RESULT(yes),
-  AC_DEFINE([MODZ], ["l"], [printf format modifier for size_t type.])
+  AC_DEFINE([MODZ], [""],  [printf format modifier for size_t type.])
     AC_MSG_RESULT(no),
-  AC_DEFINE([MODZ], ["l"], [printf format modifier for size_t type.])
+  AC_DEFINE([MODZ], [""],  [printf format modifier for size_t type.])
     AC_MSG_RESULT(assumed not)
 )
 
@@ -176,7 +176,7 @@ if test "x$F77" = xno ; then
 else
   if test "x$F77" = x ; then
     # Look for a Fortran compiler.
-    AC_PROG_F77([g77 f77 gfortran ifort xlf frt pgf77 fl32 af77 fort77 f90 \
+    AC_PROG_F77([gfortran g77 f77 ifort xlf frt pgf77 fl32 af77 fort77 f90 \
                  xlf90 pgf90 epcf90 f95 fort xlf95 lf95 g95])
   fi
 
@@ -192,8 +192,8 @@ else
 
   else
     if test "x$ac_cv_f77_compiler_gnu" = xyes ; then
-      # Beware of gfortran!
       if test "x$F77" = xg77 -o "x$F77" = xf77 ; then
+        # Not recognized by gfortran.
         FFLAGS="$FFLAGS -Wno-globals"
       fi
     fi
@@ -236,6 +236,8 @@ AC_PROG_RANLIB
 
 # Shared library generation.
 if test "x$ac_cv_c_compiler_gnu" = xyes ; then
+  SHVER=`echo "$LIBVER" | sed -e 's/\..*$//'`
+
   # Note that -fPIC is on by default for Macs, this just makes it obvious.
   SHRFLAGS="-fPIC"
   SHRLD="\$(CC) \$(SHRFLAGS)"
@@ -243,13 +245,14 @@ if test "x$ac_cv_c_compiler_gnu" = xyes ; then
   case "$build_os" in
   darwin*)
     SHRLIB="libwcs.$LIBVER.dylib"
+    SONAME="libwcs.$SHVER.dylib"
     SHRLD="$SHRLD -dynamiclib -single_module"
-    SHRLD="$SHRLD -compatibility_version $LIBVER -current_version $LIBVER"
+    SHRLD="$SHRLD -compatibility_version $SHVER -current_version $LIBVER"
     SHRLN=
 
     case "$build_cpu" in
     powerpc*)
-      # Switch off -fPIC (not applicable for Intel Macs).
+      # Switch off -fPIC (not applicable for PowerPC Macs).
       CFLAGS="$CFLAGS -mdynamic-no-pic"
       ;;
     esac
@@ -257,13 +260,15 @@ if test "x$ac_cv_c_compiler_gnu" = xyes ; then
   *)
     # Covers Linux and Solaris at least.
     SHRLIB="libwcs.so.$LIBVER"
-    SHRLD="$SHRLD -shared -Wl,-h\$(SHRLIB)"
+    SONAME="libwcs.so.$SHVER"
+    SHRLD="$SHRLD -shared -Wl,-h\$(SONAME)"
     SHRLN="libwcs.so"
     ;;
   esac
 
 else
   SHRLIB=
+  SONAME=
   SHRFLAGS=
   SHRLD=
   SHRSFX=
@@ -271,6 +276,7 @@ else
 fi
 
 AC_SUBST([SHRLIB])
+AC_SUBST([SONAME])
 AC_SUBST([SHRFLAGS])
 AC_SUBST([SHRLD])
 AC_SUBST([SHRSFX])
@@ -422,15 +428,24 @@ if test "x$with_cfitsio" != xno -o \
     AC_CHECK_LIB([F77],     [f77_init],  [PGPLOTLIB="-lF77 $PGPLOTLIB"],
                  [], [$PGPLOTLIB $LIBS])
 
-    # PGPLOT compiled with g77 but linked with something else.
-    AC_CHECK_LIB([frtbegin], [main],     [PGPLOTLIB="-lfrtbegin $PGPLOTLIB"],
-                 [], [$PGPLOTLIB $LIBS])
-    AC_CHECK_LIB([g2c],      [gerror_],  [PGPLOTLIB="-lg2c $PGPLOTLIB"],
-                 [], [$PGPLOTLIB $LIBS])
+    if test "x$F77" != xg77; then
+      # For PGPLOT compiled with g77 but linked with something else.
+      AC_CHECK_LIB([frtbegin], [main],     [PGPLOTLIB="-lfrtbegin $PGPLOTLIB"],
+                   [], [$PGPLOTLIB $LIBS])
+      AC_CHECK_LIB([g2c],      [gerror_],  [PGPLOTLIB="-lg2c $PGPLOTLIB"],
+                   [], [$PGPLOTLIB $LIBS])
+    fi
 
-    # PGPLOT compiled with gfortran but linked with something else.
-    AC_CHECK_LIB([gfortran], [_gfortran_abort],
-                 [PGPLOTLIB="-lgfortran $PGPLOTLIB"], [], [$PGPLOTLIB $LIBS])
+    if test "x$F77" != xgfortran; then
+      # For PGPLOT compiled with gfortran but linked with something else.
+      # Note that if gfortran itself is driving the linker it can be harmful
+      # to add -lgfortran to the link list without also adding -lgfortranbegin.
+      # Doing so stops gfortran from adding -lgfortranbegin which is needed to
+      # resolve "main".
+      AC_CHECK_LIB([gfortran], [_gfortran_abort],
+                   [PGPLOTLIB="-lgfortran $PGPLOTLIB"], [],
+                   [$PGPLOTLIB $LIBS])
+    fi
 
     # Search for X11 includes and libraries.
     AC_PATH_X
@@ -449,9 +464,9 @@ if test "x$with_cfitsio" != xno -o \
     AC_CHECK_LIB([png],     [png_error], [PGPLOTLIB="-lpng $PGPLOTLIB"],
                  [], [$PGPLOTLIB $LIBS])
     AC_CHECK_LIB([pgplot],  [pgbeg_],    [PGPLOTLIB="-lpgplot $PGPLOTLIB"],
-                 [], [$PGPLOTLIB $LIBS])
+                 [], [$PGPLOTLIB $FLIBS $LIBS])
     AC_CHECK_LIB([cpgplot], [cpgbeg],    [PGPLOTLIB="-lcpgplot $PGPLOTLIB"],
-                 [PGPLOTLIB=], [$PGPLOTLIB $LIBS])
+                 [PGPLOTLIB=], [$PGPLOTLIB $FLIBS $LIBS])
 
     # Only need the PGPLOT include file to build PGSBOX.
     if test "x$PGPLOTINC" != x; then
@@ -503,6 +518,5 @@ AC_MSG_NOTICE([End of auxiliary configuration.
 # Do it.
 AC_MSG_NOTICE([Configuring files...])
 AC_CONFIG_FILES([makedefs wcslib.pc])
-AC_CONFIG_HEADERS([wcsconfig.h wcsconfig_f77.h wcsconfig_tests.h
-                   wcsconfig_utils.h])
+AC_CONFIG_HEADERS([wcsconfig.h wcsconfig_f77.h wcsconfig_tests.h wcsconfig_utils.h])
 AC_OUTPUT

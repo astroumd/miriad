@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-<title>WCSLIB 4.7: spx.h File Reference</title>
+<title>WCSLIB 4.13.4: spx.h File Reference</title>
 <link href="doxygen.css" rel="stylesheet" type="text/css">
 <link href="tabs.css" rel="stylesheet" type="text/css">
 </head><body>
@@ -16,7 +16,8 @@
   </div>
 </div>
 <div class="contents">
-<h1>spx.h File Reference</h1>
+<h1>spx.h File Reference</h1><code>#include &quot;<a class="el" href="wcserr_8h-source.html">wcserr.h</a>&quot;</code><br>
+
 <p>
 <a href="spx_8h-source.html">Go to the source code of this file.</a><table border="0" cellpadding="0" cellspacing="0">
 <tr><td></td></tr>
@@ -31,6 +32,17 @@
 <tr><td class="memItemLeft" nowrap align="right" valign="top">#define&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="spx_8h.html#777e5c4790da397aefcada61445a1bb3">SPX_ARGS</a></td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">For use in declaring spectral conversion function prototypes.  <a href="#777e5c4790da397aefcada61445a1bb3"></a><br></td></tr>
+<tr><td colspan="2"><br><h2>Enumerations</h2></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">enum &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="spx_8h.html#d99a404f496d5b8ce3ef6e53c630ecaf">spx_errmsg</a> { <br>
+&nbsp;&nbsp;<a class="el" href="spx_8h.html#d99a404f496d5b8ce3ef6e53c630ecaf45313ec670a74e7effc1bcee16cb0b56">SPXERR_SUCCESS</a> =  0, 
+<a class="el" href="spx_8h.html#d99a404f496d5b8ce3ef6e53c630ecaf7342349cd1dc5b4581ae9c39f31d055e">SPXERR_NULL_POINTER</a> =  1, 
+<a class="el" href="spx_8h.html#d99a404f496d5b8ce3ef6e53c630ecaf23753b512249d3752a74ce7497d9c852">SPXERR_BAD_SPEC_PARAMS</a> =  2, 
+<a class="el" href="spx_8h.html#d99a404f496d5b8ce3ef6e53c630ecaf6b6639fb6d3683c9d356dbd7cf705de1">SPXERR_BAD_SPEC_VAR</a> =  3, 
+<br>
+&nbsp;&nbsp;<a class="el" href="spx_8h.html#d99a404f496d5b8ce3ef6e53c630ecafe795e388e346496b34e57864af841ae2">SPXERR_BAD_INSPEC_COORD</a> =  4
+<br>
+ }</td></tr>
+
 <tr><td colspan="2"><br><h2>Functions</h2></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="spx_8h.html#192c7ea1edb2fc79d391a51bec7442e0">specx</a> (const char *type, double spec, double restfrq, double restwav, struct <a class="el" href="structspxprm.html">spxprm</a> *specs)</td></tr>
 
@@ -114,9 +126,8 @@
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Convert redshift to vacuum wavelength (vector).  <a href="#da5d4cf3e8791d64da68575da692e3f3"></a><br></td></tr>
 <tr><td colspan="2"><br><h2>Variables</h2></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">const char *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="spx_8h.html#652e95a1904d66117dc500c092b58e81">spx_errmsg</a> []</td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">const char *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="spx_8h.html#286f473d94247fbd7c2485e515fee67f">spx_errmsg</a> []</td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Status return messages.  <a href="#652e95a1904d66117dc500c092b58e81"></a><br></td></tr>
 </table>
 <hr><a name="_details"></a><h2>Detailed Description</h2>
 <a class="el" href="spx_8h.html#192c7ea1edb2fc79d391a51bec7442e0" title="Spectral cross conversions (scalar).">specx()</a> is a scalar routine that, given one spectral variable (e.g. frequency), computes all the others (e.g. wavelength, velocity, etc.) plus the required derivatives of each with respect to the others. The results are returned in the <a class="el" href="structspxprm.html" title="Spectral variables and their derivatives.">spxprm</a> struct.<p>
@@ -225,8 +236,38 @@ Size of the <a class="el" href="structspxprm.html" title="Spectral variables and
 
 <p>
 <b>Value:</b><div class="fragment"><pre class="fragment"><span class="keywordtype">double</span> param, <span class="keywordtype">int</span> nspec, <span class="keywordtype">int</span> instep, <span class="keywordtype">int</span> outstep, \
-                 <span class="keyword">const</span> <span class="keywordtype">double</span> inspec[], <span class="keywordtype">double</span> outspec[], <span class="keywordtype">int</span> stat[]
+    <span class="keyword">const</span> <span class="keywordtype">double</span> inspec[], <span class="keywordtype">double</span> outspec[], <span class="keywordtype">int</span> stat[]
 </pre></div>Preprocessor macro used for declaring spectral conversion function prototypes. 
+</div>
+</div><p>
+<hr><h2>Enumeration Type Documentation</h2>
+<a class="anchor" name="d99a404f496d5b8ce3ef6e53c630ecaf"></a><!-- doxytag: member="spx.h::spx_errmsg" ref="d99a404f496d5b8ce3ef6e53c630ecaf" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum <a class="el" href="spx_8h.html#d99a404f496d5b8ce3ef6e53c630ecaf">spx_errmsg</a>          </td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+<dl compact><dt><b>Enumerator: </b></dt><dd>
+<table border="0" cellspacing="2" cellpadding="0">
+<tr><td valign="top"><em><a class="anchor" name="d99a404f496d5b8ce3ef6e53c630ecaf45313ec670a74e7effc1bcee16cb0b56"></a><!-- doxytag: member="SPXERR_SUCCESS" ref="d99a404f496d5b8ce3ef6e53c630ecaf45313ec670a74e7effc1bcee16cb0b56" args="" -->SPXERR_SUCCESS</em>&nbsp;</td><td>
+</td></tr>
+<tr><td valign="top"><em><a class="anchor" name="d99a404f496d5b8ce3ef6e53c630ecaf7342349cd1dc5b4581ae9c39f31d055e"></a><!-- doxytag: member="SPXERR_NULL_POINTER" ref="d99a404f496d5b8ce3ef6e53c630ecaf7342349cd1dc5b4581ae9c39f31d055e" args="" -->SPXERR_NULL_POINTER</em>&nbsp;</td><td>
+</td></tr>
+<tr><td valign="top"><em><a class="anchor" name="d99a404f496d5b8ce3ef6e53c630ecaf23753b512249d3752a74ce7497d9c852"></a><!-- doxytag: member="SPXERR_BAD_SPEC_PARAMS" ref="d99a404f496d5b8ce3ef6e53c630ecaf23753b512249d3752a74ce7497d9c852" args="" -->SPXERR_BAD_SPEC_PARAMS</em>&nbsp;</td><td>
+</td></tr>
+<tr><td valign="top"><em><a class="anchor" name="d99a404f496d5b8ce3ef6e53c630ecaf6b6639fb6d3683c9d356dbd7cf705de1"></a><!-- doxytag: member="SPXERR_BAD_SPEC_VAR" ref="d99a404f496d5b8ce3ef6e53c630ecaf6b6639fb6d3683c9d356dbd7cf705de1" args="" -->SPXERR_BAD_SPEC_VAR</em>&nbsp;</td><td>
+</td></tr>
+<tr><td valign="top"><em><a class="anchor" name="d99a404f496d5b8ce3ef6e53c630ecafe795e388e346496b34e57864af841ae2"></a><!-- doxytag: member="SPXERR_BAD_INSPEC_COORD" ref="d99a404f496d5b8ce3ef6e53c630ecafe795e388e346496b34e57864af841ae2" args="" -->SPXERR_BAD_INSPEC_COORD</em>&nbsp;</td><td>
+</td></tr>
+</table>
+</dl>
+
 </div>
 </div><p>
 <hr><h2>Function Documentation</h2>
@@ -284,9 +325,9 @@ Given one spectral variable <b>specx</b>() computes all the others, plus the req
   </table>
 </dl>
 <dl class="return" compact><dt><b>Returns:</b></dt><dd>Status return value:<ul>
-<li>0: Success.</li><li>1: Null <a class="el" href="structspxprm.html" title="Spectral variables and their derivatives.">spxprm</a> pointer passed.</li><li>2: Invalid spectral parameters.</li><li>3: Invalid spectral variable. </li></ul>
-</dd></dl>
-
+<li>0: Success.</li><li>1: Null <a class="el" href="structspxprm.html" title="Spectral variables and their derivatives.">spxprm</a> pointer passed.</li><li>2: Invalid spectral parameters.</li><li>3: Invalid spectral variable.</li></ul>
+For returns &gt; 1, a detailed error message is set in <a class="el" href="structspxprm.html#b232cb470b7f96330512dea46791644e">spxprm::err</a> if enabled, see <a class="el" href="wcserr_8h.html#1691b8bd184d40ca6fda255be078fa53" title="Enable/disable error messaging.">wcserr_enable()</a>.</dd></dl>
+<a class="el" href="spx_8h.html#6ee182e1185978bc6e7f69e4604fe341" title="Convert frequency to angular frequency (vector).">freqafrq()</a>, <a class="el" href="spx_8h.html#d0a5167b8e52a0cdc3990e35a324ba02" title="Convert angular frequency to frequency (vector).">afrqfreq()</a>, <a class="el" href="spx_8h.html#5c2eb2d8649eaab21e71efcd25d9236c" title="Convert frequency to photon energy (vector).">freqener()</a>, <a class="el" href="spx_8h.html#89a689b848429cfa5780757a5eee9347" title="Convert photon energy to frequency (vector).">enerfreq()</a>, <a class="el" href="spx_8h.html#9eb861d7c7437c5f974ad425da8b5664" title="Convert frequency to wave number (vector).">freqwavn()</a>, <a class="el" href="spx_8h.html#5eed4e6f2879b4607e60b4f77e2736bd" title="Convert wave number to frequency (vector).">wavnfreq()</a>, <a class="el" href="spx_8h.html#51b714ff0ed788c20f1b273ec551b6f6" title="Convert frequency to vacuum wavelength (vector).">freqwave()</a>, <a class="el" href="spx_8h.html#6c79d97dcc410e1a7a3e6e26ba3dabe6" title="Convert vacuum wavelength to frequency (vector).">wavefreq()</a>, <a class="el" href="spx_8h.html#3e86c3462619b4fdf0aeeeea9874757e" title="Convert frequency to air wavelength (vector).">freqawav()</a>, <a class="el" href="spx_8h.html#16bc2fef69c592c5bcdc695633f17df0" title="Convert air wavelength to frequency (vector).">awavfreq()</a>, <a class="el" href="spx_8h.html#5a497ffd57345f2f0bf1c9abc56842c4" title="Convert vacuum wavelength to air wavelength (vector).">waveawav()</a>, <a class="el" href="spx_8h.html#413fa882d2b67a792a35938738214057" title="Convert air wavelength to vacuum wavelength (vector).">awavwave()</a>, <a class="el" href="spx_8h.html#8aba8fe47efe098740991771e97fe756" title="Convert relativistic velocity to relativistic beta (vector).">velobeta()</a>, and <a class="el" href="spx_8h.html#09b951b08ac818b9da44389a3ddf614a" title="Convert relativistic beta to relativistic velocity (vector).">betavelo()</a> implement vector conversions between wave-like or velocity-like spectral types (i.e. conversions that do not need the rest frequency or wavelength). They all have the same API. 
 </div>
 </div><p>
 <a class="anchor" name="6ee182e1185978bc6e7f69e4604fe341"></a><!-- doxytag: member="spx.h::freqafrq" ref="6ee182e1185978bc6e7f69e4604fe341" args="(SPX_ARGS)" -->
@@ -881,23 +922,23 @@ See <a class="el" href="spx_8h.html#a626b0cad9206c62e7e265bdf8c92c31" title="Con
 </div>
 </div><p>
 <hr><h2>Variable Documentation</h2>
-<a class="anchor" name="652e95a1904d66117dc500c092b58e81"></a><!-- doxytag: member="spx.h::spx_errmsg" ref="652e95a1904d66117dc500c092b58e81" args="[]" -->
+<a class="anchor" name="286f473d94247fbd7c2485e515fee67f"></a><!-- doxytag: member="spx.h::spx_errmsg" ref="286f473d94247fbd7c2485e515fee67f" args="[]" -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">const char * <a class="el" href="spx_8h.html#652e95a1904d66117dc500c092b58e81">spx_errmsg</a>[]          </td>
+          <td class="memname">const char* <a class="el" href="spx_8h.html#d99a404f496d5b8ce3ef6e53c630ecaf">spx_errmsg</a>[]          </td>
         </tr>
       </table>
 </div>
 <div class="memdoc">
 
 <p>
-Error messages to match the status value returned from each function. 
+
 </div>
 </div><p>
 </div>
-<hr size="1"><address style="text-align: right;"><small>Generated on Mon Feb 7 18:03:57 2011 for WCSLIB 4.7 by&nbsp;
+<hr size="1"><address style="text-align: right;"><small>Generated on Mon Apr 2 17:55:24 2012 for WCSLIB 4.13.4 by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.5.6 </small></address>
 </body>

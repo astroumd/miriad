@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 4.7 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2011, Mark Calabretta
+* WCSLIB 4.13 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2012, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -55,6 +55,9 @@
       DOUBLE PRECISION COORD(M,K1,K2), WORLD(M,361), X(K1), XY(M,361),
      :          Y(K2)
 
+*     On some systems, such as Sun Sparc, the structs MUST be aligned
+*     on a double precision boundary, done here using equivalences.
+*     Failure to do this may result in mysterious "bus errors".
       INCLUDE 'prj.inc'
       INCLUDE 'tab.inc'
       INTEGER   PRJ(PRJLEN), TAB(TABLEN)

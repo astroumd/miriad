@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 4.7 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2011, Mark Calabretta
+* WCSLIB 4.13 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2012, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -34,6 +34,16 @@
 *     Functions.
       EXTERNAL  LOGS2X, LOGX2S
       INTEGER   LOGS2X, LOGX2S
+
+*     Error codes and messages.
+      INTEGER   LOGERR_BAD_LOG_REF_VAL, LOGERR_BAD_WORLD, LOGERR_BAD_X,
+     :          LOGERR_NULL_POINTER, LOGERR_SUCCESS
+
+      PARAMETER (LOGERR_SUCCESS         = 0)
+      PARAMETER (LOGERR_NULL_POINTER    = 1)
+      PARAMETER (LOGERR_BAD_LOG_REF_VAL = 2)
+      PARAMETER (LOGERR_BAD_X           = 3)
+      PARAMETER (LOGERR_BAD_WORLD       = 4)
 
       CHARACTER LOG_ERRMSG(0:3)*80
       COMMON /LOG_DATA/ LOG_ERRMSG

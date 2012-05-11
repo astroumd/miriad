@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 4.7 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2011, Mark Calabretta
+* WCSLIB 4.13 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2012, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -38,9 +38,9 @@
      :          LINPRT, LINPTD, LINPTI, LINPUT, LINSET, LINX2P
 
 *     Length of the LINPRM data structure (INTEGER array) on 64-bit
-*     machines.  Only needs to be 14 on 32-bit machines.
+*     machines.  Only needs to be 18 on 32-bit machines.
       INTEGER   LINLEN
-      PARAMETER (LINLEN = 22)
+      PARAMETER (LINLEN = 28)
 
 *     Codes for LIN data structure elements used by LINPUT and LINGET.
       INTEGER   LIN_CDELT, LIN_CRPIX, LIN_FLAG, LIN_NAXIS, LIN_PC
@@ -52,11 +52,21 @@
       PARAMETER (LIN_CDELT  = 104)
 
 *     Codes for LIN data structure elements used by LINGET (only).
-      INTEGER   LIN_IMGPIX, LIN_PIXIMG, LIN_UNITY
+      INTEGER   LIN_ERR, LIN_IMGPIX, LIN_PIXIMG, LIN_UNITY
 
-      PARAMETER (LIN_UNITY  = 200)
-      PARAMETER (LIN_PIXIMG = 201)
-      PARAMETER (LIN_IMGPIX = 202)
+      PARAMETER (LIN_PIXIMG = 200)
+      PARAMETER (LIN_IMGPIX = 201)
+      PARAMETER (LIN_UNITY  = 202)
+      PARAMETER (LIN_ERR    = 203)
+
+*     Error codes and messages.
+      INTEGER   LINERR_MEMORY, LINERR_NULL_POINTER, LINERR_SINGULAR_MTX,
+     :          LINERR_SUCCESS
+
+      PARAMETER (LINERR_SUCCESS      = 0)
+      PARAMETER (LINERR_NULL_POINTER = 1)
+      PARAMETER (LINERR_MEMORY       = 2)
+      PARAMETER (LINERR_SINGULAR_MTX = 3)
 
       CHARACTER LIN_ERRMSG(0:3)*80
       COMMON /LIN_DATA/ LIN_ERRMSG

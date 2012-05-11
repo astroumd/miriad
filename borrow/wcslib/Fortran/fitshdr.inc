@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 4.7 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2011, Mark Calabretta
+* WCSLIB 4.13 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2012, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -38,7 +38,7 @@
      :          KEYIDPTC, KEYIDPUT
 
 *     Length of FITSKEY and FITSKEYID data structures (INTEGER arrays)
-*     on 64-bit machines.  KEYLEN only needs to be 38 on 32-bit machines.
+*     on 64-bit machines.  These are the same for 32-bit machines.
       INTEGER   KEYLEN, KEYIDLEN
       PARAMETER (KEYLEN = 48)
       PARAMETER (KEYIDLEN = 6)

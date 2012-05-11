@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.7 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2011, Mark Calabretta
+  WCSLIB 4.13 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2012, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -31,6 +31,7 @@
   $Id$
 *===========================================================================*/
 
+#include <stdio.h>
 #include <string.h>
 
 #include "wcsutil.h"
@@ -146,4 +147,40 @@ void wcsutil_setBit(int nelem, const int *sel, int bits, int *array)
       if (*(sel++)) *arrp |= bits;
     }
   }
+}
+
+/*--------------------------------------------------------------------------*/
+
+char *wcsutil_fptr2str(int (*func)(), char hext[])
+
+{
+  unsigned char *p = (unsigned char *)(&func);
+  char *t = hext;
+  int i, *(ip[2]), j[2], le = 1, gotone = 0;
+
+  /* Test for little-endian addresses. */
+  ip[0] = j;
+  ip[1] = j + 1;
+  if ((unsigned char *)ip[0] < (unsigned char *)ip[1]) {
+    /* Little-endian, reverse it. */
+    p += sizeof(func) - 1;
+    le = -1;
+  }
+
+  sprintf(t, "0x0");
+  t += 2;
+
+  for (i = 0; i < sizeof(func); i++) {
+    /* Skip leading zeroes. */
+    if (*p) gotone = 1;
+
+    if (gotone) {
+      sprintf(t, "%02x", *p);
+      t += 2;
+    }
+
+    p += le;
+  }
+
+  return hext;
 }

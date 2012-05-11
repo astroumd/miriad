@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 4.7 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2011, Mark Calabretta
+* WCSLIB 4.13 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2012, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -32,10 +32,10 @@
 *=======================================================================
 
 *     Functions.
-      EXTERNAL  PRJGET, PRJGTC, PRJGTD, PRJGTI, PRJINI, PRJPRT, PRJPTC,
-     :          PRJPTD, PRJPTI, PRJPUT, PRJS2X, PRJSET, PRJX2S
-      INTEGER   PRJGET, PRJGTC, PRJGTD, PRJGTI, PRJINI, PRJPRT, PRJPTC,
-     :          PRJPTD, PRJPTI, PRJPUT, PRJS2X, PRJSET, PRJX2S
+      EXTERNAL  PRJFREE, PRJGET, PRJGTC, PRJGTD, PRJGTI, PRJINI, PRJPRT,
+     :          PRJPTC,  PRJPTD, PRJPTI, PRJPUT, PRJS2X, PRJSET, PRJX2S
+      INTEGER   PRJFREE, PRJGET, PRJGTC, PRJGTD, PRJGTI, PRJINI, PRJPRT,
+     :          PRJPTC,  PRJPTD, PRJPTI, PRJPUT, PRJS2X, PRJSET, PRJX2S
 
       EXTERNAL  AZPSET, AZPX2S, AZPS2X,    SFLSET, SFLX2S, SFLS2X,
      :          SZPSET, SZPX2S, SZPS2X,    PARSET, PARX2S, PARS2X,
@@ -65,9 +65,9 @@
      :          MERSET, MERX2S, MERS2X,    QSCSET, QSCX2S, QSCS2X
 
 *     Length of the PRJPRM data structure (INTEGER array) on 64-bit
-*     machines.  Only needs to be 114 on 32-bit machines.
+*     machines.  Only needs to be 116 on 32-bit machines.
       INTEGER   PRJLEN
-      PARAMETER (PRJLEN = 116)
+      PARAMETER (PRJLEN = 120)
 
 *     Number of projection parameters supported by WCSLIB, 0 to PVN-1.
       INTEGER   PRJ_PVN
@@ -86,9 +86,9 @@
       PARAMETER (PRJ_BOUNDS    = 106)
 
 *     Codes for PRJ data structure elements used by PRJGET (only).
-      INTEGER   PRJ_CATEGORY, PRJ_CONFORMAL, PRJ_GLOBAL, PRJ_DIVERGENT,
-     :          PRJ_EQUIAREAL, PRJ_N, PRJ_NAME, PRJ_PVRANGE,
-     :          PRJ_SIMPLEZEN, PRJ_W, PRJ_X0, PRJ_Y0
+      INTEGER   PRJ_CATEGORY, PRJ_CONFORMAL, PRJ_ERR, PRJ_GLOBAL,
+     :          PRJ_DIVERGENT, PRJ_EQUIAREAL, PRJ_N, PRJ_NAME,
+     :          PRJ_PVRANGE, PRJ_SIMPLEZEN, PRJ_W, PRJ_X0, PRJ_Y0
 
       PARAMETER (PRJ_NAME      = 200)
       PARAMETER (PRJ_CATEGORY  = 201)
@@ -100,8 +100,9 @@
       PARAMETER (PRJ_DIVERGENT = 207)
       PARAMETER (PRJ_X0        = 208)
       PARAMETER (PRJ_Y0        = 209)
-      PARAMETER (PRJ_W         = 210)
-      PARAMETER (PRJ_N         = 211)
+      PARAMETER (PRJ_ERR       = 210)
+      PARAMETER (PRJ_W         = 211)
+      PARAMETER (PRJ_N         = 212)
 
 *     Projection categories.
       INTEGER   PRJ_CONIC, PRJ_CONVENTIONAL, PRJ_CYLINDRICAL,
@@ -116,6 +117,16 @@
       PARAMETER (PRJ_POLYCONIC         = 6)
       PARAMETER (PRJ_QUADCUBE          = 7)
       PARAMETER (PRJ_HEALPIX           = 8)
+
+*     Error codes and messages.
+      INTEGER   PRJERR_BAD_PARAM, PRJERR_BAD_PIX, PRJERR_BAD_WORLD,
+     :          PRJERR_NULL_POINTER, PRJERR_SUCCESS
+
+      PARAMETER (PRJERR_SUCCESS      = 0)
+      PARAMETER (PRJERR_NULL_POINTER = 1)
+      PARAMETER (PRJERR_BAD_PARAM    = 2)
+      PARAMETER (PRJERR_BAD_PIX      = 3)
+      PARAMETER (PRJERR_BAD_WORLD    = 4)
 
       CHARACTER PRJ_ERRMSG(0:4)*80
       COMMON /PRJ_DATA/ PRJ_ERRMSG

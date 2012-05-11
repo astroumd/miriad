@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 4.7 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2011, Mark Calabretta
+* WCSLIB 4.13 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2012, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -50,12 +50,15 @@
       DATA MAP   /0, 1/
       DATA CRVAL /1D0, -1D0/
 
-      INTEGER   I, IK, IK1, IK2, IM, J, N, STAT0(128), STAT1(128),
-     :          STATUS
+      INTEGER   I, IK, IK1, IK2, IM, J, N, NFAIL, STAT0(128),
+     :          STAT1(128), STATUS
       DOUBLE PRECISION CRPIX4, EPSILON, RESID, RESIDMAX, TIME(12),
      :          WORLD(M,11,11), XT0(12), XT1(12), X0(M,11,11),
      :          X1(M,11,11), Z
 
+*     On some systems, such as Sun Sparc, the struct MUST be aligned
+*     on a double precision boundary, done here using an equivalence.
+*     Failure to do this may result in mysterious "bus errors".
       INCLUDE 'tab.inc'
       INTEGER   TAB(TABLEN)
       DOUBLE PRECISION DUMMY
@@ -138,6 +141,7 @@
       WRITE (*, '(/)')
 
 *     Test closure.
+      NFAIL = 0
       RESIDMAX = 0D0
       DO 110 I = 1, 12
         IF (STAT0(I).NE.0) THEN
@@ -156,6 +160,7 @@
         IF (RESID.GT.RESIDMAX) RESIDMAX = RESID
 
         IF (RESID.GT.TOL) THEN
+          NFAIL = NFAIL + 1
           WRITE (*, 100) XT0(I), TIME(I), XT1(I)
  100      FORMAT ('   Closure error:',/,'      X = ',F20.15,/,
      :            '   -> T = ',F20.15,/,'   -> X = ',F20.15)
@@ -240,6 +245,7 @@
             IF (RESID.GT.RESIDMAX) RESIDMAX = RESID
 
             IF (RESID.GT.TOL) THEN
+              NFAIL = NFAIL + 1
               WRITE (*, 230) X0(1,J,I), X0(2,J,I), WORLD(1,J,I),
      :                       WORLD(2,J,I), X1(1,J,I), X1(2,J,I)
  230          FORMAT ('   Closure error:',/,
@@ -253,7 +259,17 @@
  260  CONTINUE
 
       WRITE (*, 270) RESIDMAX
- 270  FORMAT ('Maximum closure residual =',1PE19.12)
+ 270  FORMAT (/,'TABX2S/TABS2X: Maximum closure residual =',1PE8.1)
+
+      IF (NFAIL.NE.0) THEN
+        WRITE (*, 280) NFAIL
+ 280    FORMAT (/,'FAIL:',I5,' closure residuals exceed reporting ',
+     :    'tolerance.')
+      ELSE
+        WRITE (*, 290)
+ 290    FORMAT (/,'PASS: All closure residuals are within reporting ',
+     :    'tolerance.')
+      END IF
 
 
  999  STATUS = TABFREE (TAB)

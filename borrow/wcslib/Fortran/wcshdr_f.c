@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.7 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2011, Mark Calabretta
+  WCSLIB 4.13 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2012, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -31,6 +31,8 @@
   $Id$
 *===========================================================================*/
 
+#include <stdio.h>
+
 #include <wcshdr.h>
 #include <wcs.h>
 
@@ -53,9 +55,13 @@ int wcspih_(
   const int *ctrl,
   int *nreject,
   int *nwcs,
-  int *wcsp)
+  iptr wcsp)
 
 {
+  /* This may or may not force the Fortran I/O buffers to be flushed.  If
+   * not, try CALL FLUSH(6) before calling WCSPIH in the Fortran code. */
+  fflush(NULL);
+
   return wcspih(header, *nkeys, *relax, *ctrl, nreject, nwcs,
     (struct wcsprm **)wcsp);
 }
@@ -71,9 +77,13 @@ int wcsbth_(
   int *colsel,
   int *nreject,
   int *nwcs,
-  int *wcsp)
+  iptr wcsp)
 
 {
+  /* This may or may not force the Fortran I/O buffers to be flushed.  If
+   * not, try CALL FLUSH(6) before calling WCSBTH in the Fortran code. */
+  fflush(NULL);
+
   return wcsbth(header, *nkeys, *relax, *ctrl, *keysel, colsel, nreject,
     nwcs, (struct wcsprm **)wcsp);
 }
@@ -88,7 +98,7 @@ int wcstab_(int *wcs)
 
 /*--------------------------------------------------------------------------*/
 
-int wcsidx_(int *nwcs, int *wcsp, int alts[27])
+int wcsidx_(int *nwcs, iptr wcsp, int alts[27])
 
 {
   return wcsidx(*nwcs, (struct wcsprm **)wcsp, alts);
@@ -96,7 +106,7 @@ int wcsidx_(int *nwcs, int *wcsp, int alts[27])
 
 /*--------------------------------------------------------------------------*/
 
-int wcsbdx_(int *nwcs, int *wcsp, int *type, short alts[1000][28])
+int wcsbdx_(int *nwcs, iptr wcsp, int *type, short alts[1000][28])
 
 {
   return wcsbdx(*nwcs, (struct wcsprm **)wcsp, *type, alts);
@@ -104,7 +114,7 @@ int wcsbdx_(int *nwcs, int *wcsp, int *type, short alts[1000][28])
 
 /*--------------------------------------------------------------------------*/
 
-int wcsvcopy_(const int *wcspp, const int *i, int *wcs)
+int wcsvcopy_(const iptr wcspp, const int *i, int *wcs)
 
 {
   struct wcsprm *wcsdst, *wcssrc;
@@ -138,7 +148,7 @@ int wcsvcopy_(const int *wcspp, const int *i, int *wcs)
 
 /*--------------------------------------------------------------------------*/
 
-int wcsvfree_(int *nwcs, int *wcspp)
+int wcsvfree_(int *nwcs, iptr wcspp)
 
 {
   return wcsvfree(nwcs, (struct wcsprm **)wcspp);

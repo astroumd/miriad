@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.7 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2011, Mark Calabretta
+  WCSLIB 4.13 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2012, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -47,8 +47,8 @@ int main()
 
 {
   char   nl;
-  int    i, j, K[2], K1, K2, k, k1, k2, M, m, map[2], n, stat0[128],
-         stat1[128], status, status0, status1;
+  int    i, j, K[2], K1, K2, k, k1, k2, M, m, map[2], n, nFail = 0,
+         stat0[128], stat1[128], status, status0, status1;
   double crpix, crval[2], epsilon, *index[1], psi_0, psi_1, resid, residmax,
          s[16], world[11][11][2], xt0[16], xt1[16], x0[11][11][2],
          x1[11][11][2], z;
@@ -161,6 +161,7 @@ int main()
     if (resid > residmax) residmax = resid;
 
     if (resid > tol) {
+      nFail++;
       if (nl) printf("\n");
       printf("   Closure error:\n");
       printf("      x = %20.15f\n", xt0[i]);
@@ -268,6 +269,7 @@ int main()
     if (resid > residmax) residmax = resid;
 
     if (resid > tol) {
+      nFail++;
       if (nl) printf("\n");
       printf("   Closure error:\n");
       printf("      x = %20.15f\n", xt0[i]);
@@ -392,6 +394,7 @@ int main()
         if (resid > residmax) residmax = resid;
 
         if (resid > tol) {
+          nFail++;
           if (nl) printf("\n");
           printf("   Closure error:\n");
           printf("      x = (%20.15f,%20.15f)\n", x0[i][j][0], x0[i][j][1]);
@@ -406,9 +409,17 @@ int main()
     }
   }
 
-  printf("\nMaximum closure residual = %.12E\n", residmax);
+  printf("\ntabx2s/tabs2x: Maximum closure residual = %.1e\n", residmax);
 
   tabfree(&tab);
 
-  return 0;
+
+  if (nFail) {
+    printf("\nFAIL: %d closure residuals exceed reporting tolerance.\n",
+      nFail);
+  } else {
+    printf("\nPASS: All closure residuals are within reporting tolerance.\n");
+  }
+
+  return nFail;
 }
