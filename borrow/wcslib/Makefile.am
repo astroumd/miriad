@@ -22,6 +22,7 @@ wcscinc_HEADERS = \
  C/sph.h \
  C/spx.h \
  C/tab.h \
+ C/wcserr.h \
  C/wcsfix.h \
  C/wcs.h \
  C/wcshdr.h \
@@ -45,6 +46,7 @@ libmir_wcs_la_SOURCES = \
  C/spx.c \
  C/tab.c \
  C/wcs.c \
+ C/wcserr.c \
  C/wcsfix.c \
  C/wcshdr.c \
  C/wcsprintf.c \
