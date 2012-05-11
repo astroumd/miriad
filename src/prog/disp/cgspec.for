@@ -377,14 +377,15 @@ c-----------------------------------------------------------------------
      *          csize(MAXNAX,MAXCON), defwid, gnaxis, grpbeg(MAXCHAN),
      *          gsize(MAXNAX), his(NBINS), i, ibin(2), iblc, ierr, ilen,
      *          imsp, insp, ipim, ipimb, ipnim, ipsp, iside(MAXSPEC),
-     *          iwsp, ixsp, iysp, j, jbin(2), krng(2), labcol, lb,
+     *          ispc, iwsp, ixsp, iysp, j, jbin(2), krng(2), labcol, lb,
      *          lc(MAXCON), lcn(MAXCON), lg, lgn, lh, ls,
      *          nblnkc(MAXCON), nblnkcs, nblnkg, ncon, ngrp(MAXCHAN),
      *          ngrps, nlevs(MAXCON), nofile, npos, npts, nspec,
      *          sblc(MAXNAX), sgrps(2,MAXDIM), size(MAXNAX), sizespec,
-     *          slines(2,MAXSPEC), snaxis, spcAx, srtlev(MAXLEV,MAXCON),
+     *          slines(2,MAXSPEC), snaxis, srtlev(MAXLEV,MAXCON),
      *          ssize(MAXNAX), strc(MAXNAX), tflen(0:2), trc(3),
-     *          vircsiz(MAXNAX), virsiz(MAXNAX), win(MAXNAX)
+     *          virsiz(MAXNAX), win(MAXNAX)
+      ptrdiff   vircsiz(MAXNAX)
       real      blankc, blankg, break(MAXCON), cmm(3,MAXCON), cs(2),
      *          cumhis(NBINS), gmm(3), groff, imax, imin, irange(2),
      *          iscale(MAXSPEC), levs(MAXLEV,MAXCON), pixr(2),
@@ -829,12 +830,12 @@ c       Open image.
 
 c       Find spectral axis (again; checked to exist in OPNCHK).
         call coInit(ls)
-        call coFindAx(ls, 'spectral', spcAx)
+        call coFindAx(ls, 'spectral', ispc)
         call coFin(ls)
-        spcAxC = axC(spcAx:spcAx)
+        spcAxC = axC(ispc:ispc)
 
 c       Allocate memory for binned spectrum.
-        call specsiz(ls, vrange, spcAx, sizespec)
+        call specsiz(ls, vrange, ispc, sizespec)
         call memalloc(ixsp, sizespec, 'r')
         call memalloc(iysp, sizespec, 'r')
         call memalloc(insp, sizespec, 'r')
@@ -845,7 +846,7 @@ c       Allocate memory for binned spectrum.
 c       Loop over number of spectrum locations.
         do j = 1, npos
 c         Locate desired sub-cube in spectrum cube.
-          call specloc(lh, ls, snaxis, ssize, opos(1,j), vrange, spcAx,
+          call specloc(lh, ls, snaxis, ssize, opos(1,j), vrange, ispc,
      *      sblc, strc, fits)
 
 c         Continue if requested spectrum can be extracted from the cube.
@@ -877,12 +878,12 @@ c             Set up for XYZIO call.
               call xyzsetup(ls, spcAxC, sblc, strc, virsiz, vircsiz)
 
 c             Read and spatially bin up the sub-cube producing spectrum.
-              call specin(ls, snaxis, sblc, spcAx, virsiz,
+              call specin(ls, snaxis, sblc, ispc, virsiz,
      *           spnorm, iscale(i), memr(ixsp), memr(iysp),
      *           memi(insp), allzero, memr(ipsp), meml(imsp))
 
 c             Draw spectrum.
-              npts = strc(spcAx) - sblc(spcAx) + 1
+              npts = strc(ispc) - sblc(ispc) + 1
               if (allzero) then
                 write(aline, 60) j, ofile2(1:len1(ofile2))
  60             format('Spectrum # ',i4,' from ',a,' is all blanked')
@@ -983,33 +984,33 @@ c    lIn     Image handle
 c    doSpc   Look for spectral axis too
 c    inp     Image name
 c-----------------------------------------------------------------------
-      integer   i, iax, naxis, spcAx
-      character line*80
+      integer   iax, ispc, naxis
+      character axtype*16, line*80, units*8, wtype*16
 
       external  itoaf, len1
       integer   len1
       character itoaf*1
 c-----------------------------------------------------------------------
       call rdhdi(lIn, 'naxis', naxis, 0)
+      call coInit(lIn)
+
       if (doSpc) then
 c       Look for spectral axis.
-        call coInit(lIn)
-        call coFindAx(lIn, 'spectral', spcAx)
-        call coFin(lIn)
+        call coFindAx(lIn, 'spectral', ispc)
 
-        if (spcAx.eq.0) then
+        if (ispc.eq.0) then
           line = 'Spectrum image '//inp(1:len1(inp))//
      *           ' doesn''t have a spectral axis'
           call bug('f', line)
         endif
 
 c       Look for radian axes.
-        do i = 1, min(3,naxis)
-          if (i.ne.spcAx) then
-            call axfndco(lIn, 'RAD', 0, i, iax)
-            if (iax.eq.0) then
+        do iax = 1, min(3,naxis)
+          if (iax.ne.ispc) then
+            call coAxType(lIn, iax, axtype, wtype, units)
+            if (units.ne.'rad') then
               line = 'Spectrum image '//inp(1:len1(inp))//
-     *               ' axis '//itoaf(i)//
+     *               ' axis '//itoaf(iax)//
      *               ' doesn''t have radian pixel increments'
               call bug('f', line)
             endif
@@ -1018,15 +1019,17 @@ c       Look for radian axes.
 
       else
 c       Just check radian increments on first two axes
-        do i = 1, min(2,naxis)
-          call axfndco(lIn, 'RAD', 0, i, iax)
-          if (iax.eq.0) then
-            line = 'Image '//inp(1:len1(inp))//' axis '//itoaf(i)//
+        do iax = 1, min(2,naxis)
+          call coAxType(lIn, iax, axtype, wtype, units)
+          if (units.ne.'rad') then
+            line = 'Image '//inp(1:len1(inp))//' axis '//itoaf(iax)//
      *             ' doesn''t have radian pixel increments'
             call bug('f', line)
           endif
         enddo
       endif
+
+      call coFin(lIn)
 
       end
 
@@ -2069,9 +2072,9 @@ c    imin,max Min and max intensities from all spectrum images
 c-----------------------------------------------------------------------
       include 'maxnax.h'
 
-      integer size(MAXNAX), lh, i, iostat, len1, ilen, naxis, spcAx
+      integer   i, ilen, iostat, ispc, len1, lh, naxis, size(MAXNAX)
+      real      limax, limin, lvmax, lvmin
       double precision v1, v2
-      real limin, limax, lvmin, lvmax
       character line*80
 c-----------------------------------------------------------------------
       call output('Begin file existence checks')
@@ -2121,17 +2124,16 @@ c-----------------------------------------------------------------------
 
 c       Find spectral axis.
         call coInit(lh)
-        call coFindAx(lh, 'spectral', spcAx)
+        call coFindAx(lh, 'spectral', ispc)
         call coFin(lh)
-        if (spcAx.eq.0) then
+        if (ispc.eq.0) then
           line = 'Spectrum image '//spin(i)(1:len1(spin(i)))//
      *           ' doesn''t have a spectral axis'
           call bug('f', line)
         endif
 
-        call w2wsco(lh, spcAx, 'abspix', ' ', 1d0, 'absnat', ' ', v1)
-        call w2wsco(lh, spcAx, 'abspix', ' ', dble(size(spcAx)),
-     *              'absnat', ' ', v2)
+        call w2wsco(lh, ispc, 'abspix', 1d0, 'absnat', v1)
+        call w2wsco(lh, ispc, 'abspix', dble(size(ispc)), 'absnat', v2)
 
         lvmin = min(v1,v2)
         lvmax = max(v1,v2)
@@ -2697,10 +2699,10 @@ c    allblnk All pixels in the spectrum average area are blank in the
 c            mask
 c    miss    This spectrum falls off the spatial image
 c-----------------------------------------------------------------------
-      integer i1, i2, j1, j2, i, j, bblc(2), ttrc(2)
-
       include 'mirconst.h'
-      double precision  win(2), wout(2), wblc(2), wtrc(2)
+
+      integer   bblc(2), i, i1, i2, j, j1, j2, ttrc(2)
+      double precision wblc(2), win(2), wout(2), wtrc(2)
       character typei(2)*6, typeo(2)*6
 c-----------------------------------------------------------------------
 c     Positions that are centred off the edge of the pixel map/contour
@@ -2719,18 +2721,18 @@ c     spectrum image, so this blanking check is approximate only.
         typeo(i) = 'arcsec'
         win(i) = pos(i)
       enddo
-      call w2wco(lh, 2, typei, ' ', win, typeo, ' ', wout)
+      call w2wco(lh, 2, typei, win, typeo, wout)
 
       do i = 1, 2
         typei(i) = 'arcsec'
         typeo(i) = 'abspix'
         win(i) = wout(i) - pos(i+2)
       enddo
-      call w2wco(lh, 2, typei, ' ', win, typeo, ' ', wblc)
+      call w2wco(lh, 2, typei, win, typeo, wblc)
       do i = 1, 2
         win(i) = wout(i) + pos(i+2)
       enddo
-      call w2wco(lh, 2, typei, ' ', win, typeo, ' ', wtrc)
+      call w2wco(lh, 2, typei, win, typeo, wtrc)
 
       i1 = wblc(1)
       j1 = wblc(2)
@@ -2766,10 +2768,10 @@ c     See if region is all blanked.
 
 c***********************************************************************
 
-      subroutine specin (ls, snaxis, sblc, spcAx, virsiz, norm, scale,
+      subroutine specin (ls, snaxis, sblc, ispc, virsiz, norm, scale,
      *                   xspec, yspec, nspec, skip, prof, mprof)
 
-      integer ls, snaxis, sblc(snaxis), virsiz(snaxis), spcAx, nspec(*)
+      integer ls, snaxis, sblc(snaxis), virsiz(snaxis), ispc, nspec(*)
       real xspec(*), yspec(*), scale, prof(*)
       logical norm, skip, mprof(*)
 c-----------------------------------------------------------------------
@@ -2780,7 +2782,7 @@ c    ls       Handle for spectrum image
 c    snaxis   Number of axes in image
 c    masks    True if there are some blanked pixels in the image
 c    sblc,trc blc and trc of sub-cube to read
-c    spcAx    Axis number of spectral axis
+c    ispc     Axis number of spectral axis
 c    virsiz   Sizes of sub-cube axes, in order vxy
 c    norm     Normalize peak of spectrum to 1.0
 c    scale    Scale factor to apply to intensities
@@ -2824,13 +2826,13 @@ c     Read and bin.
 c     Normalize.
       ymin =  1e30
       ymax = -1e30
-      call rdhdd(ls, 'crpix'//itoaf(spcAx), crpix, 0d0)
-      call rdhdd(ls, 'crval'//itoaf(spcAx), crval, 0d0)
-      call rdhdd(ls, 'cdelt'//itoaf(spcAx), cdelt, 0d0)
+      call rdhdd(ls, 'crpix'//itoaf(ispc), crpix, 0d0)
+      call rdhdd(ls, 'crval'//itoaf(ispc), crval, 0d0)
+      call rdhdd(ls, 'cdelt'//itoaf(ispc), cdelt, 0d0)
       do i = 1, virsiz(1)
 
 c       Compute abcissa array.
-        j = i + sblc(spcAx) - 1
+        j = i + sblc(ispc) - 1
         xspec(i) = (dble(j)-crpix)*cdelt + crval
 
         if (nspec(i).ne.0) then
@@ -2859,52 +2861,55 @@ c     Renormalize.
 
 c***********************************************************************
 
-      subroutine specloc (lh, ls, snaxis, ssize, pos, vrange, spcAx,
+      subroutine specloc (lh, ls, snaxis, ssize, pos, vrange, ispc,
      *                    sblc, strc, fits)
 
-      integer snaxis, sblc(snaxis), strc(snaxis), ssize(snaxis),
-     *  spcAx, lh, ls
+      integer   lh, ls, snaxis, ssize(snaxis)
       double precision pos(4)
-      real vrange(2)
-      logical fits(2)
+      real      vrange(2)
+      integer   ispc, sblc(snaxis), strc(snaxis)
+      logical   fits(2)
 c-----------------------------------------------------------------------
 c  Work out the bounding box in absolute pixels for the sub-cube to
 c  average for the current spectrum position.
 c
 c  Input:
 c    l*      Image handles
-c    snaxis  NUmber of axes in spectrum image
+c    snaxis  Number of axes in spectrum image
 c    ssize   Size of spectrum image
 c    pos     Spectrum location, x, y (contour/pixel map spatial pixels)
 c            xsize, ysize (arcsec)  x and y are full image unbinned
 c            pixels not just the displayed region pixels
 c    vrange  Spectral range of interest
-c    spcAx   The axis corresponding to the spectral axis of the
+c    ispc    The axis corresponding to the spectral axis of the
 c            current spectrum image
 c  Output:
-c    sblc,trc
+c    sblc,strc
 c            BLC and TRC of sub-cube to read in.
 c    fits(2) True if spatial and spectral areas fit partly or wholly
 c            in spectrum image.
 c-----------------------------------------------------------------------
-      double precision win(3), wout(3), wcen(3)
-      real dv
-      integer i, j, pt(3), i1, i2, naxis
-      character tpi(2)*4, tsi(3)*4, typei(3)*6, typeo(3)*6
+      integer   axtype, i, i1, i2, j, naxis, pt(3)
+      real      dv
+      double precision wcen(3), win(3), wout(3)
+      character iwtype(2)*16, swtype*16, typei(3)*6, typeo(3)*6, units*8
 c-----------------------------------------------------------------------
-c     Work out order of spectrum image spatial axes with respect to
-c     spatial image spatial axes.
-      call axtypco(lh, 2, 0, tpi)
-      call axtypco(ls, 3, 0, tsi)
+c     World coordinate types for the spatial image.
+      call coAxType(lh, 1, axtype, iwtype(1), units)
+      call coAxType(lh, 2, axtype, iwtype(2), units)
+
+c     Work out the order of the spatial axes in the spectral cube with
+c     respect to the spatial image.
       do i = 1, 3
-        if (i.ne.spcAx) then
-          if (tsi(i).eq.tpi(1)) then
+        if (i.ne.ispc) then
+          call coAxType(ls, i, axtype, swtype, units)
+          if (swtype.eq.iwtype(1)) then
             pt(i) = 1
-          else if (tsi(i).eq.tpi(2)) then
+          else if (swtype.eq.iwtype(2)) then
             pt(i) = 2
           else
             call bug('f', 'Spatial axes of spectrum image and '//
-     *                'spatial image(s) are not similar')
+     *                    'spatial image(s) are not similar')
           endif
         endif
       enddo
@@ -2913,17 +2918,17 @@ c     Convert the spatial centre of the spectrum from pixel map/ contour
 c     pixels to world.
       do i = 1, 2
         typei(i) = 'abspix'
-        win(i) = pos(i)
+        win(i)   = pos(i)
         typeo(i) = 'absnat'
       enddo
-      call w2wco(lh, 2, typei, ' ', win, typeo, ' ', wout)
+      call w2wco(lh, 2, typei, win, typeo, wout)
 
 c     Now work out the centre of the spectrum in spectrum image
 c     coordinates (linear for spectral, arcsec for spatial).
       naxis = min(3,snaxis)
       j = 1
       do i = 1, naxis
-        if (i.eq.spcAx) then
+        if (i.eq.ispc) then
           win(i)   = (vrange(1) + vrange(2)) / 2.0
           typei(i) = 'absnat'
           typeo(i) = 'absnat'
@@ -2934,12 +2939,12 @@ c     coordinates (linear for spectral, arcsec for spatial).
           j = j + 1
         endif
       enddo
-      call w2wco(ls, naxis, typei, ' ', win, typeo, ' ', wcen)
+      call w2wco(ls, naxis, typei, win, typeo, wcen)
 
 c     Now offset to find the BLC of the subcube.
       dv = abs(vrange(2) - vrange(1)) / 2.0
       do i = 1, naxis
-        if (i.eq.spcAx) then
+        if (i.eq.ispc) then
           typei(i) = 'absnat'
           win(i) = wcen(i) - dv
         else
@@ -2949,14 +2954,14 @@ c     Now offset to find the BLC of the subcube.
         typeo(i) = 'abspix'
       enddo
 
-      call w2wco(ls, naxis, typei, ' ', win, typeo, ' ', wout)
+      call w2wco(ls, naxis, typei, win, typeo, wout)
       do i = 1, 3
         sblc(i) = nint(wout(i))
       enddo
 
 c     Offset to find the TRC of the subcube.
       do i = 1, naxis
-        if (i.eq.spcAx) then
+        if (i.eq.ispc) then
           typei(i) = 'absnat'
           win(i) = wcen(i) + dv
         else
@@ -2965,7 +2970,7 @@ c     Offset to find the TRC of the subcube.
         endif
         typeo(i) = 'abspix'
       enddo
-      call w2wco(ls, naxis, typei, ' ', win, typeo, ' ', wout)
+      call w2wco(ls, naxis, typei, win, typeo, wout)
       do i = 1, naxis
         strc(i) = nint(wout(i))
       enddo
@@ -2985,7 +2990,7 @@ c     Ensure sub-cube fits in image.
 c       Completely missed.
         if ((sblc(i).lt.1 .and. strc(i).lt.1) .or.
      *       (sblc(i).gt.ssize(i) .and. strc(i).gt.ssize(i))) then
-          if (i.ne.spcAx) then
+          if (i.ne.ispc) then
             fits(1) = .false.
           else
             fits(2) = .false.
