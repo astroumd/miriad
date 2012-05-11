@@ -31,3 +31,6 @@ make install
 History:
     14-sep-2010    Imported 4.5 into local CVS and added build scripts for CVS miriad
     14-sep-2010    Upgraded to 4.5.1
+    14-mar-2011    Upgraded to 4.7
+    10-may-2012    Upgraded to 4.13.4
+
