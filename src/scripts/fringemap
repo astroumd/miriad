@@ -137,6 +137,8 @@ if ($mosaic) then
   echo $bmaj $bmin $bpa
   restor model=$vis.cc beam=$vis.bm map=$vis.mp \
     out=$vis.cm fwhm=$bmaj,$bmin pa=$bpa
+  restor model=$vis.cc beam=$vis.bm map=$vis.mp \
+    out=$vis.res fwhm=$bmaj,$bmin pa=$bpa mode=residual
 else
   #  hogbom clark steer any
   clean map=$vis.mp beam=$vis.bm \
@@ -144,6 +146,8 @@ else
     out=$vis.cc > clean.log
   restor model=$vis.cc beam=$vis.bm map=$vis.mp \
     out=$vis.cm
+  restor model=$vis.cc beam=$vis.bm map=$vis.mp \
+    out=$vis.res mode=residual
 endif
 
 
