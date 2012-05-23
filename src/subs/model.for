@@ -57,6 +57,7 @@ c    pjt  27may99 Return and bug out when no visibities accumulated
 c    pjt   3oct07 Report fluxes found if no planets
 c    pkgw 15mar11 Use scrrecsz() to allow very large scratchfiles
 c    pjt  10may12 Use memallop() and ptrdiff
+c    pjt  23may12 Better calling of scread/write
 c************************************************************************
 c*ModelIni -- Ready the uv data file for processing by the Model routine.
 c&rjs
@@ -278,6 +279,7 @@ c
 	real Out(maxlen),a,VisPow,ModPow
 	integer i,j,length
 	logical calscale,imhead,mfs,doclip,zero
+	ptrdiff offs
 c
 c  Initialise the coordinate handles.
 c
@@ -321,12 +323,13 @@ c
      *	    call bug('f','Cannot autoscale to a zero model')
 	  a = sqrt(VisPow/ModPow)
 	  do j=1,nvis
-	    call scrread(tscr,Out,j-1,1)
+	    offs = j-1
+	    call scrread(tscr,Out,offset,1)
 	    do i=nhead+1,nhead+5*nchan,5
 	      Out(i+2) = a*Out(i+2)
 	      Out(i+3) = a*Out(i+3)
 	    enddo
-	    call scrwrite(tscr,Out,j-1,1)
+	    call scrwrite(tscr,Out,offs,1)
 	  enddo
 	endif
 c
@@ -377,6 +380,7 @@ c
 	complex Buffer((maxbuf+1)/2)
 	complex In(maxchan),Intp(maxchan+1)
 	double precision sfreq(maxchan),freq0
+	ptrdiff offset
 	common Buffer
 c
 c  Externals.
@@ -543,7 +547,8 @@ c
 	    enddo
 	    call ModStat(calscale,tvis,Out(nhead+1),nread,
      *		calget,level,VisPow,ModPow)
-	    call scrwrite(tscr,Out,nvis,1)
+	    offset = nvis
+	    call scrwrite(tscr,Out,offset,1)
 	    nvis = nvis + 1
 	  endif
 	  call uvread(tvis,preamble,In,flags,maxchan,nread)
@@ -1060,6 +1065,7 @@ c
 	logical accept,flags(maxchan)
 	complex In(maxchan)
 	double precision skyfreq(maxchan)
+	ptrdiff offs
 c
 	ModPow = 0
 	VisPow = 0
@@ -1128,7 +1134,8 @@ c
 c
 	    call ModStat(calscale,tvis,Out(nhead+1),nchan,calget,level,
      *		VisPow,ModPow)
-	    call scrwrite(tscr,Out,nvis,1)
+	    offs = nvis
+	    call scrwrite(tscr,Out,offs,1)
 	    nvis = nvis + 1
 	  endif
 	  call uvread(tvis,preamble,In,flags,maxchan,nread)
