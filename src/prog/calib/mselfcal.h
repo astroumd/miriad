@@ -5,10 +5,10 @@ c------------------------------------------
 	include 'mem.h'
 	integer maxHash,minSol
 	parameter(maxHash=30000,minSol=200)
-	integer nants,nBl,nbad,maxSol,nsols,TotVis,minants,pstptim
+	integer nants,nBl,nbad,maxSol,nsols,TotVis,minants
 	integer nHash,Hash(maxHash),Indx(maxHash),Time(maxHash)
 	ptrdiff pSumVM,pSumVV,pSumMM,pWeight,pCount,pGains,prTime
-        integer pstrtim
+        ptrdiff pstrtim,pstptim
 	logical first
 	double precision time0
 	common/selfcom/time0,Time,nants,nBl,nbad,nsols,maxSol,
