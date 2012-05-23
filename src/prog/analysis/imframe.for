@@ -66,15 +66,19 @@ c    bpw  02mar93  Include maxnax.h
 c    bpw  03mar93  Include maxdim.h instead of own BUFSIZE parameter
 c    rjs  24mar93  Halve the size of the MAXBUF arrays.
 c    rjs  31aug98  Fix call to rdhdd and eliminate flint complaints.
+c    pkgw 01dec11  Undo the halving of MAXBUF so we can handle bigger images
+c    pjt  23may12  merged ours and theirs.... joyful collaborations
 c------------------------------------------------------------------------
+c  @todo:  use mallop()
 
       character*80 version
-      parameter ( version = 'imframe version 1.1 31-Aug-98' )
+      parameter ( version = 'imframe version 23-may-2012' )
 
       include   'maxnax.h'
       include   'maxdim.h'
       integer   MAXBUF2
-      parameter(MAXBUF2=MAXBUF/2)
+c      parameter(MAXBUF2=MAXBUF/2)
+      parameter(MAXBUF2=MAXBUF)
 
       integer   tinp, tout
       integer   naxis
