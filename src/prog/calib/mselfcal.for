@@ -191,6 +191,7 @@ c                 Typo fixes and clarification of help text.
 c    pjt   8jul10 Ant I3 format, no NaN's when 1 solution
 c    pkgw 15mar11 Use scrrecsz() to allow very large scratchfiles
 c    pjt   9may12 use ptrdiff and mallop()
+c    pjt  23may12 proper arguments to scrread()
 c
 c  Bugs/Shortcomings:
 c   * Selfcal should check that the user is not mixing different
@@ -199,7 +200,7 @@ c   * It would be desirable to apply bandpasses, and merge gain tables,
 c     apply polarisation calibration, etc.
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version='MSelfcal: version 1.0 9-may-2012')
+	parameter(version='MSelfcal: version 1.0 23-may-2012')
 	integer MaxMod,maxsels,nhead
 	parameter(MaxMod=64,maxsels=1024,nhead=3)
 c
@@ -647,13 +648,15 @@ c------------------------------------------------------------------------
 	parameter(nhead=3,maxlen=5*maxchan+nhead)
 	integer i,j,k,ihash,itime,bl,i1,i2,length
 	real Out(maxlen),Wt,amp,phase
+	ptrdiff offset
 c
 	if(nchan.gt.maxchan) call bug('f','Too many channels')
 	length = nhead + 5*nchan
 	call scrrecsz(tscr,length)
 c
 	do j=1,nvis
-	  call scrread(tscr,Out,j-1,1)
+	  offset = j-1
+	  call scrread(tscr,Out,offset,1)
 	  itime = nint(Out(2)/interval)
 	  ihash = 2*itime + 1
 	  i = nsols
