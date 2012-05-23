@@ -302,6 +302,7 @@ c    07apr99  rjs  Merge bpw and rjs versions.
 c    27oct99  rjs  Correct labelling of unrecognised axes.
 c    15oct08  pkgw Fully initialize subcube to prevent intermittent cocvt
 c                  errors (seen with gfortran 4.1.2)
+c    23may12  pjt  use ptrdiff where the XYZ routines need them
 c------------------------------------------------------------------------
 
 c Main program of imstat and imspec. Puts out the identification, where
@@ -337,7 +338,7 @@ c the include file.
       program imstaspc
 
       character*21     version
-      parameter        ( version = 'version 2.2 27-Oct-99' )
+      parameter        ( version = 'version 23-mar-2012' )
       character*29     string
 
       include          'imstat.h'
@@ -404,7 +405,8 @@ c header puts out some information about the dataset and units
       character*1024     file
       integer            axlen( MAXNAX )
       integer            blc(MAXNAX), trc(MAXNAX)
-      integer            viraxlen( MAXNAX ), vircsz( MAXNAX )
+      integer            viraxlen( MAXNAX )
+      ptrdiff            vircsz( MAXNAX )
       character*(MAXNAX) subcube
 
       call keyini
@@ -853,7 +855,8 @@ c line.
       integer          naxis, axlen(MAXNAX)
       integer          axlenx, axleny
       integer          bmblc(MAXNAX), bmtrc(MAXNAX), bmsiz(2), bmctr(2)
-      integer          viraxlen(MAXNAX), vircsz(MAXNAX)
+      integer          viraxlen(MAXNAX)
+      ptrdiff          vircsz(MAXNAX), ii
       real             value
       logical          mask
 
@@ -961,8 +964,8 @@ c Set beamset region
          call xyzsetup( tbm, plane, bmblc, bmtrc, viraxlen, vircsz )
 c Integrate beam
          beaminfo(SUMBM) = 0.d0
-         do i = 1, vircsz(2)
-            call xyzpixrd( tbm, i, value, mask )
+         do ii = 1, vircsz(2)
+            call xyzpixrd( tbm, ii, value, mask )
             if( mask ) beaminfo(SUMBM) = beaminfo(SUMBM) + dble(value)
          enddo         
          call xyzclose( tbm )
@@ -1252,6 +1255,8 @@ c statistics for a subcube with one higher dimension, etc.
       parameter(MAXRUNS=3*MAXDIM)
 
       integer          subcube, i
+      ptrdiff          ii
+      
       integer          iloop, nloop
       integer          coo(MAXNAX)
       integer          level, nlevels
@@ -1286,8 +1291,8 @@ c Open the plot device
 
 c loop over all subcubes for which statistics are to be calculated.
       do subcube = 1, counts(nlevels)
-
-         call xyzs2c( tinp, subcube, coo )
+         ii = subcube
+         call xyzs2c( tinp, ii, coo )
 
          if( abs(dim).eq.2 )then
 	   call boxruns(  naxis,coo,'r',boxes,runs,MAXRUNS,nruns,
@@ -1405,6 +1410,7 @@ c on-the-spot conversions.
       integer          coo(     MAXNAX )
       double precision coords(  MAXNAX )
       character*12     cvalues( MAXNAX )
+      ptrdiff          ii
 
 
       nlevels = naxis - dim + 1
@@ -1422,7 +1428,8 @@ c each higher-level subcube
 c Convert the subcube number to pixels numbers (coo) and then to real
 c coordinates (coords) and string-encoded coordinates (cvalues).
             if( level.lt.nlevels ) then
-               call xyzs2c( tinp, subcube, coo )
+               ii = subcube
+               call xyzs2c( tinp, ii, coo )
                call getcoo( axlabel, nlevels, coo, coords, cvalues )
             endif
 
