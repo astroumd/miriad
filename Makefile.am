@@ -2,7 +2,7 @@
 ## $Id$
 ##
 
-ACLOCAL_AMFLAGS = -I .
+ACLOCAL_AMFLAGS = -I src/sys/auto
 
 ## For pdocdir / sdocdir.
 

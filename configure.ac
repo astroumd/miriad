@@ -4,8 +4,8 @@ AC_PREREQ(2.62)
 AC_INIT([MIRIAD],[4.3.1],[miriad-dev-bugs@astro.berkeley.edu])
 AC_REVISION([$Revision$])
 AC_CONFIG_SRCDIR([src/subs/uvio.c])
-AC_CONFIG_MACRO_DIR([.])
-AC_CONFIG_AUX_DIR([.])
+AC_CONFIG_MACRO_DIR([src/sys/auto])
+AC_CONFIG_AUX_DIR([src/sys/auto])
 
 dnl FIXME! Require Automake 1.11 for now, since we currently need 
 dnl AM_DEFAULT_SOURCE_EXT to build all of the tasks. A lot
