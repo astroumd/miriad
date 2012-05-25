@@ -573,6 +573,7 @@ c                  turn this into a limiting sigma.
 c    pjt  13feb12  Merging essential ATNF changes (initco->coInit, conturcg)
 c    pkgw 20feb12  Report the RMS of all of the valid RMS values computed in
 c                  the image; i.e. a single characteristic image noise value.
+c    pkgw 24may12  Sync with ATNF changes to w2wfco arguments.
 c
 c To do:
 c
@@ -1149,7 +1150,7 @@ c
 c
 c Convert location (peak or fitted) to formatted coordinate string
 c
-        call w2wfco (lin, 2, typei, ' ', posns,  typeo, ' ',
+        call w2wfco (lin, 2, typei, posns, typeo,
      +               .true., radec, radeclen)
 c
 c if 'pbcor' selected, correct the flux densities (peak and integrated)
@@ -4283,7 +4284,7 @@ c
           typei(2) = 'dms'
           typeo(1) = 'hms'
           typeo(2) = 'dms'
-          call w2wfco (lin, 2, typei, ' ', posns,  typeo, ' ',
+          call w2wfco (lin, 2, typei, posns, typeo,
      +                 .true., radec, radeclen)
 c
 c if 'pbcor' selected, correct the flux densities (peak and integrated)

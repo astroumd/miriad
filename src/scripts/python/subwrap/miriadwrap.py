@@ -3270,19 +3270,18 @@ def axtypco(lun,n,iax) :
     typeX = typeX.strip()
     return typeX
 
-def chkaxco(lun,ltype,iax,stype) :
+def chkaxco(lun,ltype,iax) :
     """ Miriad wrapper - see miriad documentation for full description
         input :
             lun -
             ltype -
             iax -
-            stype -
         returns :   (as a tuple)
     """
     lunX = miriad_io.copy_intp(lun)
     iaxX = miriad_io.copy_intp(iax)
     try :
-        XX = mx.safecall(miriad_io.chkaxco_,(lunX,ltype,iaxX,stype,len(ltype),len(stype)))
+        XX = mx.safecall(miriad_io.chkaxco_,(lunX,ltype,iaxX,len(ltype)))
         del XX
     except :
         pass
@@ -3431,16 +3430,14 @@ def sunitco(lun,iax,typeX) :
     units = units.strip()
     return units
 
-def w2wcov(lun,n,typei,stypei,win,typeo,stypeo,valid) :
+def w2wcov(lun,n,typei,win,typeo,valid) :
     """ Miriad wrapper - see miriad documentation for full description
         input :
             lun -
             n -
             typei -
-            stypei -
             win -
             typeo -
-            stypeo -
             valid -
         returns :   (as a tuple)
             wout -
@@ -3451,7 +3448,7 @@ def w2wcov(lun,n,typei,stypei,win,typeo,stypeo,valid) :
     woutX = doubleArray(n)
     validX = miriad_io.copy_intp(uncastLogical(valid))
     try :
-        XX = mx.safecall(miriad_io.w2wcov_,(lunX,nX,typei,stypei,winX,typeo,stypeo,woutX,validX,len(typei),len(stypei),len(typeo),len(stypeo)))
+        XX = mx.safecall(miriad_io.w2wcov_,(lunX,nX,typei,winX,typeo,woutX,validX,len(typei),len(typeo)))
         del XX
     except :
         pass
@@ -3460,16 +3457,14 @@ def w2wcov(lun,n,typei,stypei,win,typeo,stypeo,valid) :
     del woutX
     return woutR
 
-def w2wfco(lun,n,typei,stypei,win,typeo,stypeo,nounit) :
+def w2wfco(lun,n,typei,win,typeo,nounit) :
     """ Miriad wrapper - see miriad documentation for full description
         input :
             lun -
             n -
             typei -
-            stypei -
             win -
             typeo -
-            stypeo -
             nounit -
         returns :   (as a tuple)
             strout -
@@ -3482,7 +3477,7 @@ def w2wfco(lun,n,typei,stypei,win,typeo,stypeo,nounit) :
     nounitX = miriad_io.copy_intp(uncastLogical(nounit))
     strlenX = intArray(n)
     try :
-        XX = mx.safecall(miriad_io.w2wfco_,(lunX,nX,typei,stypei,winX,typeo,stypeo,nounitX,strout,strlenX,len(typei),len(stypei),len(typeo),len(stypeo),n))
+        XX = mx.safecall(miriad_io.w2wfco_,(lunX,nX,typei,winX,typeo,nounitX,strout,strlenX,len(typei),len(typeo),n))
         del XX
     except :
         pass
@@ -3491,16 +3486,14 @@ def w2wfco(lun,n,typei,stypei,win,typeo,stypeo,nounit) :
     del strlenX
     return strout,strlenR
 
-def w2wsco(lun,iax,typei,stypei,win,typeo,stypeo) :
+def w2wsco(lun,iax,typei,win,typeo) :
     """ Miriad wrapper - see miriad documentation for full description
         input :
             lun -
             iax -
             typei -
-            stypei -
             win -
             typeo -
-            stypeo -
         returns :   (as a tuple)
             wout -
     """
@@ -3509,23 +3502,21 @@ def w2wsco(lun,iax,typei,stypei,win,typeo,stypeo) :
     winX = miriad_io.copy_doublep(win)
     woutX = miriad_io.new_doublep()
     try :
-        XX = mx.safecall(miriad_io.w2wsco_,(lunX,iaxX,typei,stypei,winX,typeo,stypeo,woutX,len(typei),len(stypei),len(typeo),len(stypeo)))
+        XX = mx.safecall(miriad_io.w2wsco_,(lunX,iaxX,typei,winX,typeo,woutX,len(typei),len(typeo)))
         del XX
     except :
         pass
     woutR = miriad_io.doublep_value(woutX)
     return woutR
 
-def w2wsfco(lun,iax,typei,stypei,win,typeo,stypeo,nounit) :
+def w2wsfco(lun,iax,typei,win,typeo,nounit) :
     """ Miriad wrapper - see miriad documentation for full description
         input :
             lun -
             iax -
             typei -
-            stypei -
             win -
             typeo -
-            stypeo -
             nounit -
         returns :   (as a tuple)
             strout -
@@ -3537,7 +3528,7 @@ def w2wsfco(lun,iax,typei,stypei,win,typeo,stypeo,nounit) :
     nounitX = miriad_io.copy_intp(uncastLogical(nounit))
     strlenX = miriad_io.new_intp()
     try :
-        XX = mx.safecall(miriad_io.w2wsfco_,(lunX,iaxX,typei,stypei,winX,typeo,stypeo,nounitX,strout,strlenX,len(typei),len(stypei),len(typeo),len(stypeo),20))
+        XX = mx.safecall(miriad_io.w2wsfco_,(lunX,iaxX,typei,winX,typeo,nounitX,strout,strlenX,len(typei),len(typeo),20))
         del XX
     except :
         pass

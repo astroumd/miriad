@@ -593,6 +593,8 @@ c$Id$
 c--
 c  History:
 c    Refer to the RCS log, v1.1 includes prior revision information.
+c  CARMA cusomizations:
+c    pkgw  2012may24  Sync with ATNF changes to chkaxco arguments
 c-----------------------------------------------------------------------
       include 'maxdim.h'
       include 'maxnax.h'
@@ -3274,8 +3276,8 @@ c       angular units.
         pType(2) = pType(1)
       endif
 
-      call chkaxco(lun, pType(1), 1, ' ')
-      call chkaxco(lun, pType(2), 2, ' ')
+      call chkaxco(lun, pType(1), 1)
+      call chkaxco(lun, pType(2), 2)
 
 
 c     Get overlay position in pixel coordinates.
