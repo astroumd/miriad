@@ -2,10 +2,10 @@ tkrun is a small C program that turns your annotated scripts into
 a GUI, to more easily and quickly control a few keyword=value
 parameters.
 Although you can obtain it via NEMO, you can also manually add 
-this to MIRIAD as follows, using CVS.
+this to MIRIAD as follows, using CVS. 
 
-To get the source, and install, do the following:
-
+If you don't see the $MIR/borrow/tkrun directory, do the following
+to get the source, and install this program.
 
 
      cvs co  -d tkrun nemo/src/tools/tkrun
