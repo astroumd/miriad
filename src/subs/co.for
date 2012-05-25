@@ -223,7 +223,7 @@ c       Unrecognized projection code, revert to linear.
       else if (axtype.eq.'spectral') then
         if (ctypei.eq.'FREQUENCY') then
           wtype = 'FREQ'
-        else if (ctypei.eq.'FELOCITY') then
+        else if (ctypei.eq.'FELOCITY'.or.ctypei.eq.'FELO') then
           wtype = 'VOPT'
           algo  = 'F2W'
         else if (ctypei.eq.'VELOCITY') then
