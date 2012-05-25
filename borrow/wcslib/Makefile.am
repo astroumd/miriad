@@ -64,6 +64,7 @@ libmir_wcs_la_SOURCES = \
  Fortran/spx_f.c \
  Fortran/tab_f.c \
  Fortran/wcs_f.c \
+ Fortran/wcserr_f.c \
  Fortran/wcsfix_f.c \
  Fortran/wcshdr_f.c \
  Fortran/wcsunits_f.c
@@ -121,6 +122,7 @@ wcsfinc_HEADERS = \
  Fortran/sph.inc \
  Fortran/spx.inc \
  Fortran/tab.inc \
+ Fortran/wcserr.inc \
  Fortran/wcsfix.inc \
  Fortran/wcshdr.inc \
  Fortran/wcs.inc \
