@@ -2,7 +2,7 @@
 #
 #  mir.fringe:   run (standard) fringe test
 #                and compare with reference map in non-mosaic mode
-#
+#                keeps a copy in $MIR/data for re-use
 #
 #
 set tmp=fringe$$
@@ -13,22 +13,36 @@ set ftp=ftp://ftp.astro.umd.edu/pub/carma/data/
 set fringe=fringe.3C273.2008jun18.4.miriad.tar.gz
 
 set mosaic=0
+set keep=1
 
 foreach a ($*)
   set $a
 end
 
+set targz=$MIR/data/$fringe
 
 
-wget $ftp/$fringe
-if ($status) then
-  echo No wget ... Trying curl $ftp/$fringe 
-  curl $ftp/$fringe | tar zxf -
+if (-e $targz) then
+  echo Using local copy $targz 
+  tar zxf $targz
 else
-  tar   zxf $fringe
+  echo Grabbing remote copy $ftp/$fringe
+  wget $ftp/$fringe
+  if ($status) then
+    echo No wget ... Trying curl $ftp/$fringe 
+    curl $ftp/$fringe | tar zxf -
+  else
+    tar zxf $fringe
+  endif
+  if ($keep) cp $fringe $MIR/data
 endif
 
 set vis=$fringe:r:r
+
+if (! -d $vis) then
+  echo Missing fringe dataset $vis
+  exit 1
+endif
 
 echo Running fringemap:
 if ($mosaic == 0) then
