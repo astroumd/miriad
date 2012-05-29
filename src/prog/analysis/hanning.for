@@ -30,12 +30,13 @@ c    bpw  15dec92  Adapt for changed fndaxnum
 c    bpw   2mar93  Masked data set to zero
 c    lss,vk 30mar00 Adapted from hanning to include boxcar
 c    rjs  08may00  Change key call for output file to keyf.
+c    pkgw 12may29  Port ATNF ptrdiff-related changes.
 c
 c------------------------------------------------------------------------
        program hanning
 
        character*80 version
-       parameter ( version = 'hanning: version 1.0 2-mar-93' )
+       parameter ( version = 'hanning: version 1.0 2012-may-29' )
 
        include      'maxnax.h'
 
@@ -71,8 +72,9 @@ c------------------------------------------------------------------------
        integer      axlen(MAXNAX), axnum(MAXNAX)
        integer      iblc(MAXNAX),  itrc(MAXNAX)
        integer      oblc(MAXNAX),  otrc(MAXNAX)
-       integer      viraxlen(MAXNAX), vircsz(MAXNAX)
+       integer      viraxlen(MAXNAX)
        integer      i
+       ptrdiff      vircsz(MAXNAX)
 
        character    velaxis, object*8
        integer      velaxnr
@@ -105,6 +107,7 @@ c------------------------------------------------------------------------
        call xyzsetup( tinp, velaxis, iblc, itrc, viraxlen, vircsz )
        nprofiles = vircsz(naxis) / vircsz(1)
        nchan     = viraxlen(1)
+       if (nprofiles.lt.0) call bug('f','Integer overflow in hanning')
 
        do i = 1, naxis
           axnum(i) = i
