@@ -31,8 +31,11 @@ if ($slib == linux) set slib_flags="-fPIC -fno-stack-protector"
 if ($slib == linux) set slib_flags="-fPIC"
 
 # ubuntu 12.04 needs this for DSO linking
-set need=(" "  " ")
-set need=(-Wl,--no-as-needed -Wl,--as-needed)
+if ($MIRHOST == linux) then
+  set need=(-Wl,--no-as-needed   -Wl,--as-needed)
+else
+  set need=(" "                  " ")
+endif
 
 
 ###         #define _LARGEFILE_SOURCE
