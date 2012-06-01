@@ -162,12 +162,14 @@ c    pjt   23feb03  officially merged MIR4
 c    pjt   19jun05  fix for g95 **(-0.5)
 c    pjt   11jul07  add some dummy but reasonable header items for 3D cubes
 c    sac   20jan09  added power law model and j0 for holography study
+c    pjt    1jun12  various ATNF WCS related changes
+c    pjt    1jun12  write fake restfreq so that WCSLIB doesn't complain anymore
 c---
 c ToDo: 
-c    write good headers if 3D cubes written
+c    write better headers if 3D cubes written (WCSLIB is senstive now)
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version='Imgen: version 27-oct-08')
+	parameter(version='Imgen: version 1-jun-2012')
 	include 'mirconst.h'
 	include 'maxdim.h'
 	include 'maxnax.h'
@@ -385,19 +387,17 @@ c
 	do k=1,n3
 	  if(lIn.ne.0)call xysetpl(lIn,1,k)
 	  call xysetpl(lOut,1,k)
-c
-c  Convert the offsets and gaussian parameters from world to pixel units.
-c
+c         Convert offsets and Gaussian parameters to pixel coordinates.
+	  call coCvt1(lOut, 3, 'ap', dble(k), 'ow', x1(3))
 	  do i=1,nobjs
 	    x1(1) = x(i)
 	    x1(2) = y(i)
-	    x1(3) = k
-	    call coCvt(lOut,'ow/ow/p',x1,'ap/ap/ap',x2)
+	    call coCvt(lOut,'ow/ow/ow',x1,'ap/ap/ap',x2)
 	    xd(i) = x2(1)
 	    yd(i) = x2(2)
 	    if(objs(i).ne.'jet')then
 	     if(fwhm1(i)*fwhm2(i).gt.0.and.objs(i).ne.'jet')then
-	      call coGauCvt(lOut,'ow/ow/p',x1,
+	      call coGauCvt(lOut,'ow/ow/ow',x1,
      *	        'w',fwhm1(i), fwhm2(i), posang(i),
      *	        'p',fwhm1d(i),fwhm2d(i),posangd(i))
 	     else
@@ -537,6 +537,7 @@ c
 	     call wrhdd(lOut,'crpix3',1.0d0)
 	     call wrhdd(lOut,'cdelt3',1.0d0)
 	     call wrhdd(lOut,'crval3',0.0d0)
+	     call wrhdd(lOut,'restfreq',115.2712d0)
 	     call wrhda(lOut,'ctype3','VELO-LSR')
 	  endif
 	  if(bmaj*bmin.gt.0)then
@@ -548,9 +549,9 @@ c
 	    call wrhda(lOut,'bunit','JY/PIXEL')
 	  endif
 	else
-	  do i=1,nkeys
-	    call hdcopy(lIn,lOut,keyw(i))
-	  enddo
+c         Copy the old one.
+          call headcp(lIn, lOut, 0, 0, 0, 0)
+          call hdcopy(lIn, lOut, 'mask')
 	endif
 c
 c  Update the history.
