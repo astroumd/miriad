@@ -30,7 +30,8 @@ set slib_flags=""
 if ($slib == linux) set slib_flags="-fPIC -fno-stack-protector"
 if ($slib == linux) set slib_flags="-fPIC"
 
-# ubuntu 12.04 needs this for DSO linking
+# ubuntu 11+ needs this for linking (doesn't seem to hurt for those not needed it, yet)
+# see also:   https://wiki.ubuntu.com/NattyNarwhal/ToolchainTransition
 if ($MIRHOST == linux) then
   set need=(-Wl,--no-as-needed   -Wl,--as-needed)
 else
