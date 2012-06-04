@@ -289,6 +289,7 @@ c--
 c
 c  History:
 c    Refer to the RCS log, v1.1 includes prior revision information.
+c    4-jun-2012 merged ATNF/CARMA, pkwill's last change is also in this version
 c
 c-----------------------------------------------------------------------
       include 'imspec.h'
