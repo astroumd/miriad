@@ -63,10 +63,11 @@ c    pjt 12feb02 - submitted to miriad
 c    gmx  07mar04 - Changed optimum gain determination to handle
 c                   negative components
 c    pjt  22jun07 - Larger MAXRUN/MAXBOXES
+c    pjt   4jun12 - Use ptrdiff type for memory allocations
 c
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version='MosSDI2: version 1.0 22-jun-07')
+	parameter(version='MosSDI2: version 4-jun-2012')
 	include 'maxdim.h'
 	include 'maxnax.h'
 	include 'mem.h'
@@ -80,7 +81,7 @@ c
 	integer lMap,lBeam,lModel,lOut
 	integer i,k,imin,imax,jmin,jmax,kmin,kmax,xmin,xmax,ymin,ymax
 	integer naxis,nMap(3),nbeam(3),nout(MAXNAX),nModel(3)
-	integer pStep,pStepR,pRes,pEst,pWt
+	ptrdiff pStep,pStepR,pRes,pEst,pWt
 	integer maxniter,niter,ncomp
 	logical more,dopos
 	real dmin,dmax,drms,cutoff,clip,gain,flux,thresh
@@ -184,18 +185,18 @@ c
 	  if(nPoint.gt.0)then
 	    if(nPoint.gt.nAlloc)then
 	      if(nAlloc.gt.0)then
-		call memFree(pStep, nAlloc,'r')
-		call memFree(pStepR,nAlloc,'r')
-		call memFree(pEst,  nAlloc,'r')
-		call memFree(pRes,  nAlloc,'r')
-		call memFree(pWt,   nAlloc,'r')
+		call memFrep(pStep, nAlloc,'r')
+		call memFrep(pStepR,nAlloc,'r')
+		call memFrep(pEst,  nAlloc,'r')
+		call memFrep(pRes,  nAlloc,'r')
+		call memFrep(pWt,   nAlloc,'r')
 	      endif
 	      nAlloc = nPoint
-	      call memAlloc(pStep, nAlloc,'r')
-	      call memAlloc(pStepR,nAlloc,'r')
-	      call memAlloc(pEst,  nAlloc,'r')
-	      call memAlloc(pRes,  nAlloc,'r')
-	      call memAlloc(pWt,   nAlloc,'r')
+	      call memAllop(pStep, nAlloc,'r')
+	      call memAllop(pStepR,nAlloc,'r')
+	      call memAllop(pEst,  nAlloc,'r')
+	      call memAllop(pRes,  nAlloc,'r')
+	      call memAllop(pWt,   nAlloc,'r')
 	    endif
 c
 c  Get the Map.
@@ -275,11 +276,11 @@ c
 c  Free up memory.
 c
 	if(nAlloc.gt.0)then
-	  call memFree(pStep, nAlloc,'r')
-	  call memFree(pStepR,nAlloc,'r')
-	  call memFree(pEst,  nAlloc,'r')
-	  call memFree(pRes,  nAlloc,'r')
-	  call memFree(pWt,   nAlloc,'r')
+	  call memFrep(pStep, nAlloc,'r')
+	  call memFrep(pStepR,nAlloc,'r')
+	  call memFrep(pEst,  nAlloc,'r')
+	  call memFrep(pRes,  nAlloc,'r')
+	  call memFrep(pWt,   nAlloc,'r')
 	endif
 c
 c  Close up the files. Ready to go home.
