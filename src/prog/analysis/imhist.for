@@ -90,17 +90,19 @@ c     4jun98  bpw  Added upper cutoff
 c    12jun98  bpw  Add 'cutoutliers' option
 c    11jul07   tw  Fixed a segfault with gfortran
 c    13jul07  pjt  revert back, previous fix uses g95 notations
+c     4jun12  pjt  ptrdiff update for large cubes 
 c
 c------------------------------------------------------------------------
 
       program imhist
 
       character*40     version
-      parameter        ( version = 'version 2.1 13-Jul-07' )
+      parameter        ( version = 'version 4-jun-2012' )
 
       integer          tinp
       real             cut(3)
-      integer          naxis, npixels
+      integer          naxis
+      ptrdiff          npixels
       character*80     device
 
       call output( 'IMHIST: ' // version )
@@ -119,7 +121,8 @@ c------------------------------------------------------------------------
 
       integer            tinp
       real               cut(*)
-      integer            npixels, naxis
+      ptrdiff            npixels
+      integer            naxis
       character*(*)      device
       include            'imhist.h'
 
@@ -130,7 +133,8 @@ c------------------------------------------------------------------------
       integer            axlen( MAXNAX )
       integer            boxes( MAXBOXES )
       integer            blc(MAXNAX), trc(MAXNAX)
-      integer            viraxlen( MAXNAX ), vircsz( MAXNAX )
+      integer            viraxlen( MAXNAX )
+      ptrdiff            vircsz( MAXNAX )
 
       call keyini
 
@@ -415,7 +419,8 @@ c------------------------------------------------------------------------
 
       integer       tinp
       real          cut(*)
-      integer       npixels, naxis
+      integer       naxis
+      ptrdiff       npixels
       character*(*) device
       include       'imhist.h'
 
@@ -454,11 +459,11 @@ c------------------------------------------------------------------------
 
       integer          tinp
       real             cut(*)
-      integer          npixels
+      ptrdiff          npixels
       integer          HLEN, binmax
       include          'imhist.h'
 
-      integer          npoints
+      ptrdiff          npoints
       double precision sum, sumsq, calcrms
       real             minval, maxval
       logical          ok
@@ -495,14 +500,13 @@ c------------------------------------------------------------------------
 
       integer          tinp
       real             cut(*)
-      integer          npixels
-      integer          npoints
+      ptrdiff          npixels,npoints
       double precision sum, sumsq
       real             maxval, minval
       include          'imhist.h'
 
       integer          nloop, j
-      integer          i
+      ptrdiff          i
       real             data
       logical          mask
       logical          unmasked, init, ok
@@ -580,11 +584,12 @@ c     call assertl( npoints.gt.1,'Histogramming 1 datapoint will fail' )
       integer          tinp
       integer          binmax
       real             cut(*)
-      integer          npixels
+      ptrdiff          npixels
       real             xvals(0:*), hist(0:*)
       include          'imhist.h'
 
-      integer          bin, i
+      integer          bin
+      ptrdiff          i
       real             data
       logical          mask, unmasked
       real             rbin
@@ -666,6 +671,7 @@ c     call assertl( npoints.gt.1,'Histogramming 1 datapoint will fail' )
       parameter     ( EXTEND = 0.05 )
 
       integer       bin, i
+      ptrdiff       ny
       character*80  line
       integer       astlen
       parameter     ( astlen = 50 )
@@ -701,16 +707,18 @@ c     call assertl( npoints.gt.1,'Histogramming 1 datapoint will fail' )
          call logwrit( line )
          do bin = 1, n
             i = (  yarr(bin) / ymax  ) * astlen
+            ny = yarr(bin)
             if( i.ge.1 ) then
                write( line, '( i5, 4x, 1pg10.3, i8, 1x, a )' )
-     *                bin, xarr(bin), int(yarr(bin)), asterisk(:i)
+     *                bin, xarr(bin), ny, asterisk(:i)
             else
                write( line, '( i5, 4x, 1pg10.3, i8 )' )
-     *                bin, xarr(bin), int(yarr(bin))
+     *                bin, xarr(bin), ny
             endif
             call logwrit( line )
          enddo
-         write( line, '(''       Overflow    '', i8 )' ) int(yarr(n+1))
+         ny= yarr(n+1)
+         write( line, '(''       Overflow    '', i11 )' ) ny
          call logwrit( line )
 
       endif
@@ -729,6 +737,7 @@ c     call assertl( npoints.gt.1,'Histogramming 1 datapoint will fail' )
       include          'imhist.h'
 
       integer          i, len1
+      ptrdiff          n
       character*80     line
 
       call logwrit( ' ' )
@@ -740,9 +749,10 @@ c     call assertl( npoints.gt.1,'Histogramming 1 datapoint will fail' )
       if( histvar(MEDIANP) .le. xmin ) line(i:) = 'below'
       if( histvar(MEDIANP) .ge. xmax ) line(i:) = 'above'
       call logwrit( line )
+      n = histvar(NPTS)
 
       write( line, '( i11, 3x, 1pe14.7,1x, 1pe14.7 )' )
-     *       int(histvar(NPTS)), histvar(MEANP), histvar(RMSP)
+     *       n, histvar(MEANP), histvar(RMSP)
 
       i = len1( line ) + 5
       if(     histvar(MEDIANP) .le. xmin   .or.
