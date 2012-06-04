@@ -74,8 +74,8 @@ C        9 A1_OFFLINE                 0x00000100
 C       10 A2_OFFLINE                 0x00000200
 C       11 A1_MINOR_TRACKING          0x00000400
 C       12 A2_MINOR_TRACKING          0x00000800
-C       13 UNKNOWN10                  0x00001000
-C       14 UNKNOWN11
+C       13 A1_CALSTATE                0x00001000
+C       14 A2_CALSTATE
 C       15 UNKNOWN12
 C       16 UNKNOWN13
 C       17 UNKNOWN14                  0x00010000
@@ -120,6 +120,7 @@ c    pjt  22mar2012  fixed up multi-band implementation
 c    pjt  22apr2012  fix logic for unflagging
 c    pjt  22apr2012  add options=swap 
 c    pjt  25apr2012  add options=all and one
+c    pjt  15may2012  added CALSTATE, only in documentation
 c----------------------------------------------------------------------c
 	include 'maxdim.h'
 	character version*128, fmt1*32
