@@ -1,4 +1,4 @@
-cvsqc***********************************************************************
+c***********************************************************************
 c  Fix CARMA 62MHz windows before March 18 2008 where the CARMA pipeline
 c  didn't properly pad/fft the data
 c
