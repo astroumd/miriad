@@ -27,7 +27,9 @@ set slib=@SLIB@
 set slib_flags=""
 
 # need -fno-stack-protector for undefined reference to `__stack_chk_fail_local'
-if ($slib == linux) set slib_flags="-fPIC -fno-stack-protector"
+#  -fno-stack-protector 
+# need -fno-second-undercore if your compiler adds them and you don't want them
+#  -fno-stack-protector 
 if ($slib == linux) set slib_flags="-fPIC"
 
 # ubuntu 11+ needs this for linking (doesn't seem to hurt for those not needed it, yet)
