@@ -22,7 +22,7 @@
 #
 #  $Id$
 #
-set version="3.5 - 6-jun-2012 PJT"
+set version="3.5a - 6-jun-2012 PJT"
 
 if ($#argv == 0) then
     echo "Usage: $0 [-options] miriad_dataset [plane1] [plane2 ...]"
@@ -157,10 +157,14 @@ if (-d $name) then
         echo CRPIX2 `imhead in=$name key=crpix2 | awk '{print $1}'` >> $wcs
         echo CTYPE1 \'`imhead in=$name key=ctype1`\' >> $wcs
         echo CTYPE2 \'`imhead in=$name key=ctype2`\' >> $wcs
-        echo OBJECT \'$name:t\'                      >> $wcs
-	# puthd in=$name/llrot value=0 type=r
-        set llrot=`itemize in=$name/llrot |& tail -1 | awk '{print $3}'`
-        if ($llrot != "data,") then
+	set object=(`itemize in=$name/object |& tail -1 | awk -F= '{print $2}'`)
+	if ($#object > 0) then
+	    echo OBJECT \'$name:t_$object\'              >> $wcs
+	else
+	    echo OBJECT \'$name:t\'                      >> $wcs
+	endif
+        set llrot=(`itemize in=$name/llrot |& tail -1 | awk -F= '{print $2}'`)
+        if ($#llrot > 0) then
 	    # make sure it's not "llrota     (nonexistent data, 0 elements)"
 	    set crota=`calc "$llrot*180/pi"`
 	    echo CROTA: $llrot $crota
