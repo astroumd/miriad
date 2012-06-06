@@ -350,17 +350,18 @@ c
 	call obsad('jcmt/systemp',	500.d0)
 c
 c  KAT7  array
-# longitude and latitude 21.41, -30.7213 in degrees.
-# email from Mattieu de Villiers <mattieu@ska.ac.za>
-# to    Mel Wright <mwright@astro.berkeley.edu>
-# date  Wed, Jun 2, 2010 at 3:24 PM
+c  longitude and latitude 21.41, -30.7213 in degrees.
+c  email from Mattieu de Villiers <mattieu@ska.ac.za>
+c  to    Mel Wright <mwright@astro.berkeley.edu>
+c  date  Wed, Jun 2, 2010 at 3:24 PM
 c
 	call obsad('kat-7/antdiam',	12.d0)
+        call obsad('kat-7/evector',	0.0d0)
 	call obsad('kat-7/height',	1000.d0)
 	call obsad('kat-7/jyperk',	55.d0)
 	call obsad('kat-7/latitude',	obsdms(-1,  30,43,16.68))
-	call obsad('kat-7/longitude',    obsdms( 1,  21,24,36.00))
-	call obsad('kat-7/mount',        ALTAZ)
+	call obsad('kat-7/longitude',   obsdms( 1,  21,24,36.00))
+	call obsad('kat-7/mount',       ALTAZ)
 	call obsad('kat-7/nants',	7.d0)
 	call obsad('kat-7/systemp',	100.d0)
 c
