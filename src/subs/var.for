@@ -48,6 +48,8 @@ c    pjt  31jan07 added modedesc to the var list
 c    pjt  17may07 added purpose to the var list
 c    pjt   3jan11 added delaylx,delayry to the var list
 c    pjt  25apr12 added bfmask, and check for bfmask
+c    pjt   4jun12 added ifchain via ATNF (same dealings as bfmask)
+c
 c************************************************************************
 c*VarInit -- Initialise the copy routines.
 c:uv-data
@@ -104,14 +106,14 @@ c
 	integer i
 c
 	integer nvar,nline,nwide,nvelo
-	parameter(nvar=98,nline=11,nwide=3,nvelo=6)
+	parameter(nvar=98,nline=12,nwide=3,nvelo=6)
         character var(nvar)*8,line(nline)*8,wide(nwide)*8,velo(nvelo)*8
 c
 c  Variables to check for a change, for line=channel.
 c
 	data line/    'nspect  ','restfreq','ischan  ','nschan  ',
-     *	   'sfreq   ','sdf     ','systemp ','xtsys','ytsys',
-     *     'xyphase ','bfmask  '/
+     *	   'sfreq   ','sdf     ','systemp ','xtsys   ','ytsys   ',
+     *     'xyphase ','bfmask  ','ifchain '/
 c
 c  Variables to check for a change, for line=wide.
 c
@@ -119,8 +121,8 @@ c
 c
 c  Variables to check for a change, for line=velocity.
 c
-	data velo/    'restfreq','systemp ','xtsys','ytsys',
-    *      'veldop  ','vsource '/
+	data velo/    'restfreq','systemp ','xtsys   ','ytsys   ',
+     *      'veldop  ','vsource '/
 c
 c  Variables to copy whenever they change.
 c
@@ -431,6 +433,7 @@ c    systemp
 c    xtsys
 c    ytsys
 c    bfmask
+c    ifchain
 c
 c  Inputs:
 c    tvis	Handle of the input uv data file.
@@ -451,11 +454,12 @@ c
 	double precision rfreq0(MAXWIN),sdf0(MAXWIN)
 	double precision sfreq0(MAXWIN),sfreq(MAXWIN)
 	integer ischan0(MAXWIN),nschan0(MAXWIN),bfmask(MAXWIN)
+        integer ifchain(MAXWIN),ifchain0(MAXWIN)
 	integer nschan(MAXWIN),trn(MAXWIN),bfmask0(MAXWIN)
 	integer ispect,ospect,nspect,n,i,j,k,l,nants,start
 	integer nsystemp,nxtsys,nytsys,nxyphase,nbfmask
 	character type*1
-	logical upd,ubfmask
+	logical upd,ubfmask,doif
 c
 c  Get the various window-related variables from the uvdata.
 c
@@ -469,6 +473,9 @@ c
 	call uvgetvrd(tVis,'sdf',sdf,nspect)
 	call uvgetvrd(tVis,'sfreq',sfreq,nspect)
 	call uvgetvrd(tVis,'restfreq',rfreq,nspect)
+        call uvprobvr(tVis,'ifchain',type,n,upd)
+        doif=type.eq.'i'.and.n.eq.nspect
+        if (doif) call uvgetvri(tVis,'ifchain',ifchain,nspect)
 	call uvprobvr(tVis,'bfmask',type,nbfmask,ubfmask)
 	if (ubfmask) call uvgetvri(tVis,'bfmask',bfmask,nspect)
 	call uvrdvri(tVis,'nants',nants,0)
@@ -489,6 +496,7 @@ c
      *		(start-1)*sdf(ispect) + 0.5*(lwidth-1)*sdf(ispect)
 	  nschan0(ospect) = min((nschan(ispect)-start)/lstep + 1,n)
 	  rfreq0(ospect) = rfreq(ispect)
+          ifchain0(ospect) = ifchain(ispect)
 	  bfmask0(ospect) = bfmask(ispect)
 	  trn(ospect) = ispect
 	  if(nschan0(ospect).eq.1)then
@@ -648,6 +656,7 @@ c
 	call uvputvrd(tOut,'sdf',sdf0,ospect)
 	call uvputvrd(tOut,'sfreq',sfreq0,ospect)
 	call uvputvrd(tOut,'restfreq',rfreq0,ospect)
+        if (doif) call uvputvri(tOut,'ifchain',ifchain0,ospect)
 	if (ubfmask) call uvputvri(tOut,'bfmask',bfmask0,ospect)
 c
 	if(nsystemp.gt.0)
