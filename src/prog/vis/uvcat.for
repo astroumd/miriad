@@ -54,6 +54,10 @@ c    jwr  16jun04   Fixed bug in calling uvVarUpd that relied on McCarthy
 c                   evaluation of logical expressions (ifort does not!)
 c    dnf  30jun06   increased size of output file name to 256 characters
 c    pjt  11may12   deal with bfmask(nspect) and bfmask(1)
+c    pjt   4jun12   add l to uvflags to make sure line params get initialized  (ATNF)
+c    pjt   6jun12   more checks when to write out in windupd(), although this
+c                   takes care of bugzilla 1049, the root cause is still a
+c                   mystery
 c
 c  Bugs:
 c
@@ -117,8 +121,8 @@ c
 	call output(version)
 	call keyini
 	call GetOpt(nocal,nopol,nopass,nowide,nochan,doall)
-	lflags = 2
-	uvflags(1:2) = 'ds'
+	lflags = 3
+	uvflags(1:3) = 'dsl'
 	if(.not.nocal)then
 	  lflags = lflags + 1
 	  uvflags(lflags:lflags) = 'c'
@@ -294,7 +298,7 @@ c
 	character windpar(nwin)*8
 c
 	data windpar/ 'ischan  ','nschan  ','nspect  ','restfreq',
-     *	   'sdf     ','sfreq   ','systemp ' , 'xtsys' , 'ytsys',
+     *	   'sdf     ','sfreq   ','systemp ','xtsys   ','ytsys   ',
      *     'bfmask  '/
 c
 c  Check if "wcorr" and "corr" are present, and determine which ones we
@@ -433,14 +437,14 @@ c
 c       System Temperature
 c
 	call uvprobvr(lIn,'systemp',type,nsystemp,usyst)
-	usyst = type.eq.'r'.and.nsystemp.le.MAXANT*MAXWIN.and.
+	usyst = usyst.and.type.eq.'r'.and.nsystemp.le.MAXANT*MAXWIN.and.
      *				nsystemp.gt.0
 	if(usyst)call uvgetvrr(lIn,'systemp',systemp,nsystemp)
 c
 c       x-feed system temperature
 c
 	call uvprobvr(lIn,'xtsys',type,nxtsys,uxtsys)
-	uxtsys = type.eq.'r'.and.nxtsys.le.MAXANT*MAXWIN.and.
+	uxtsys = uxtsys.and.type.eq.'r'.and.nxtsys.le.MAXANT*MAXWIN.and.
      *				nxtsys.gt.0
 	if(uxtsys)call uvgetvrr(lIn,'xtsys',xtsys,nxtsys)
 
@@ -448,12 +452,12 @@ c
 c       y-feed system temperature
 c
 	call uvprobvr(lIn,'ytsys',type,nytsys,uytsys)
-	uytsys = type.eq.'r'.and.nytsys.le.MAXANT*MAXWIN.and.
+	uytsys = uytsys.and.type.eq.'r'.and.nytsys.le.MAXANT*MAXWIN.and.
      *				nytsys.gt.0
 	if(uytsys)call uvgetvrr(lIn,'ytsys',ytsys,nytsys)
 
 	call uvprobvr(lIn,'xyphase',type,nxyph,uxyph)
-	uxyph = type.eq.'r'.and.nxyph.le.MAXANT*MAXWIN.and.
+	uxyph = uxyph.and.type.eq.'r'.and.nxyph.le.MAXANT*MAXWIN.and.
      *				nxyph.gt.0
 	if(uxyph)call uvgetvrr(lIn,'xyphase',xyphase,nxyph)
 c
@@ -506,16 +510,17 @@ c
 	call uvputvri(lOut,'nspect',nout,1)
 	call uvputvri(lOut,'nschan',nschan,nout)
 	call uvputvri(lOut,'ischan',ischan,nout)
-	call uvputvrd(lOut,'sdf',sdf,nout)
-	call uvputvrd(lOut,'sfreq',sfreq,nout)
-	call uvputvrd(lOut,'restfreq',restfreq,nout)
-	if (ubfmask) call uvputvri(lOut,'bfmask',bfmask,nout)
+	if(usdf) call uvputvrd(lOut,'sdf',sdf,nout)
+	if(usfreq) call uvputvrd(lOut,'sfreq',sfreq,nout)
+	if(urest) call uvputvrd(lOut,'restfreq',restfreq,nout)
+	if(ubfmask) call uvputvri(lOut,'bfmask',bfmask,nout)
 	if(nsystemp.ge.nspect*nants)nsystemp = nout*nants
 	if(usyst)call uvputvrr(lOut,'systemp',systemp,nsystemp)
 	if(nxtsys.ge.nspect*nants) nxtsys = nout*nants
 	if(uxtsys) call uvputvrr(lOut,'xtsys',xtsys,nxtsys)
 	if(nytsys.ge.nspect*nants) nytsys = nout*nants
 	if(uytsys) call uvputvrr(lOut,'ytsys',ytsys,nytsys)
+c-check?
 	if(uxyph)call uvputvrr(lOut,'xyphase',xyphase,nxyph)
 c
 c  Determine the output parameters.
