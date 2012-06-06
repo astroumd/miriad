@@ -1,0 +1,311 @@
+#
+# ExtendedSource.cat created 06/05/12 by tyu, for use by calbuild (flux table update pipeline).
+#
+# Each line corresponds to a source in FluxSource.cat and begins with one or more designations
+# for that source, where the 1st is primary and remaining are aliases.
+# Unhash a line to designate that source as extended and append wavelength band(s) to qualify,
+# where the default is to include all bands (1mm 3mm 1cm).
+# There may be further qualification depending on array configuration, but for the moment that
+# is not explicit here.
+#
+# tyu 06/05/12: Initialize extended source assignments from BIMA era list, valid over all bands.
+#               W3OH 3C111 ORIMSR M82 3C274 NGC5128 DR21 NGC7027
+# tyu 06/05/12: Include 3C273 as extended at 1cm.
+                courtesy Christopher Greer <greer@oddjob.uchicago.edu>
+#
+#===============================================================================================
+#
+# 0005+544 1mm 3mm 1cm
+# 0006-063 1mm 3mm 1cm
+# 0008+686 1mm 3mm 1cm
+# 0010+109 0007+10 1mm 3mm 1cm
+# 0013+408 1mm 3mm 1cm
+# 0014+612 1mm 3mm 1cm
+# 0019+734 1mm 3mm 1cm
+# 0025-260 1mm 3mm 1cm
+# 0038+416 1mm 3mm 1cm
+# 0050-094 0048-09 1mm 3mm 1cm
+# 0102+584 1mm 3mm 1cm
+# 0108+015 0106+01 0106P013 1mm 3mm 1cm
+# 0115-014 1mm 3mm 1cm
+# 0116-116 1mm 3mm 1cm
+# 0121+043 1mm 3mm 1cm
+# 0125-000 1mm 3mm 1cm
+# 0132-169 1mm 3mm 1cm
+# 0136+478 0133+47 0133P476 1mm 3mm 1cm
+# 3C48 0137+331 1mm 3mm 1cm
+# 0141-094 1mm 3mm 1cm
+# 0152+221 1mm 3mm 1cm
+# 0204+152 0202+149 1mm 3mm 1cm
+# 0204-170 1mm 3mm 1cm
+# 0205+322 1mm 3mm 1cm
+# 0215+01 1mm 3mm 1cm
+# 0217+738 0212+735 0212P735 1mm 3mm 1cm
+# 0221+359 1mm 3mm 1cm
+# 3C66A 1mm 3mm 1cm
+# 0224+069 0221+067 0224P671 1mm 3mm 1cm
+  W3OH W3(OH) W3-OH 1mm 3mm 1cm
+# 0228+673 1mm 3mm 1cm
+# 0231+133 0229+13 1mm 3mm 1cm
+# 0237+288 CTD20 0234P285 1mm 3mm 1cm
+# 0238+166 0235+16 0235P164 1mm 3mm 1cm
+# 0239-025 0237-02 1mm 3mm 1cm
+# NGC1052 1mm 3mm 1cm
+# 0240-231 1mm 3mm 1cm
+# 0241+62 1mm 3mm 1cm
+# 0241-082 1mm 3mm 1cm
+# 0242+110 1mm 3mm 1cm
+# 0251+432 1mm 3mm 1cm
+# 0303+472 0300+47 1mm 3mm 1cm
+# 0309+104 0306+10 1mm 3mm 1cm
+# CTA21 1mm 3mm 1cm
+# 3C84 0319+415 0316+413 1mm 3mm 1cm
+# 0329-239 1mm 3mm 1cm
+# 0336+323 0333+32 1mm 3mm 1cm
+# 0339-017 0336-019 0336M019 CTA26 1mm 3mm 1cm
+# 0340-213 1mm 3mm 1cm
+# 0348-278 1mm 3mm 1cm
+# 0357+233 1mm 3mm 1cm
+# 0359+323 1mm 3mm 1cm
+# 0359+509 0355+50 NRAO150 NRA150 1mm 3mm 1cm
+# 0403+260 1mm 3mm 1cm
+# 0404+76 1mm 3mm 1cm
+# 0407-121 0405-12 1mm 3mm 1cm
+# 0416-188 1mm 3mm 1cm
+  3C111 0418+380 0415+379 1mm 3mm 1cm
+# 0423-013 0420-01 PK0420 1mm 3mm 1cm
+# 0423+418 1mm 3mm 1cm
+# 0424+006 0422+00 1mm 3mm 1cm
+# 0428+329 1mm 3mm 1cm
+# 0429+274 1mm 3mm 1cm
+# 0431+206 1mm 3mm 1cm
+# 3C119 0432+416 1mm 3mm 1cm
+# 3C120 0433+053 0430+052 1mm 3mm 1cm
+# 3C123 0437+296 1mm 3mm 1cm
+# 0438+300 1mm 3mm 1cm
+# 0440+146 1mm 3mm 1cm
+# 0442-002 0440-00 1mm 3mm 1cm
+# 0443+346 1mm 3mm 1cm
+# 0449+113 1mm 3mm 1cm
+# 0457-234 0454-23 1mm 3mm 1cm
+# 0501-019 0458-02 1mm 3mm 1cm
+# 0502+252 1mm 3mm 1cm
+# 0503+020 1mm 3mm 1cm
+# 0510+180 1mm 3mm 1cm
+# 0513-219 1mm 3mm 1cm
+# 3C138 0521+166 1mm 3mm 1cm
+# 0522-364 0521M365 1mm 3mm 1cm
+# 0530-250 0528-25 1mm 3mm 1cm
+# 0530+135 0528+13 0528P134 1mm 3mm 1cm
+# 0532+075 0529+075 0529P075 1mm 3mm 1cm
+# 0533+483 1mm 3mm 1cm
+  ORIMSR 1mm 3mm 1cm
+# 0541-056 1mm 3mm 1cm
+# 3C147 0542+498 1mm 3mm 1cm
+# 0555+398 0552+39 0552P398 1mm 3mm 1cm
+# 0607-085 0605-08 0605M085 1mm 3mm 1cm
+# 0609-157 0607-15 0607M157 1mm 3mm 1cm
+# 0627-058 1mm 3mm 1cm
+# 0646+448 0642+449 1mm 3mm 1cm
+# 0650-166 1mm 3mm 1cm
+# 0719+331 0716+332 0716+33 1mm 3mm 1cm
+# 0721+713 0716+714 1mm 3mm 1cm
+# 0725-009 0723-00 1mm 3mm 1cm
+# 0730-116 0727-11 0727M115 1mm 3mm 1cm
+# 0735-175 1mm 3mm 1cm
+# 0738+177 0735+17 0735P178 1mm 3mm 1cm
+# 0739+016 0736+01 0736P017 1mm 3mm 1cm
+# 0741+312 1mm 3mm 1cm
+# 0744-064 1mm 3mm 1cm
+# 0745+101 1mm 3mm 1cm
+# 0745-007 1mm 3mm 1cm
+# 0748+240 1mm 3mm 1cm
+# 0750+482 0746P483 1mm 3mm 1cm
+# 0750+125 0748+12 1mm 3mm 1cm
+# 0753+538 1mm 3mm 1cm
+# 0757+099 0754+10 1mm 3mm 1cm
+# 0805-078 0805M077 0805-077 0808-078 1mm 3mm 1cm
+# 0808+498 0804+499 1mm 3mm 1cm
+# 0811+017 1mm 3mm 1cm
+# 0818+423 0814+42 1mm 3mm 1cm
+# 0820-129 1mm 3mm 1cm
+# 0825+031 1mm 3mm 1cm
+# 0826-225 0823-22 1mm 3mm 1cm
+# 0830+241 0827+243 1mm 3mm 1cm
+# 0831+044 0829+04 1mm 3mm 1cm
+# 0832+492 1mm 3mm 1cm
+# 0834+555 0831+55 1mm 3mm 1cm
+# 0836-202 0834-20 1mm 3mm 1cm
+# 0837+584 1mm 3mm 1cm
+# 0841+708 0836+71 0836P710 1mm 3mm 1cm
+# OJ287 0854+201 0851+202 1mm 3mm 1cm
+# 0902-142 0859-14 1mm 3mm 1cm
+# 0903+468 1mm 3mm 1cm
+# 0909+013 0906+01 1mm 3mm 1cm
+# 0909+428 0906+43 1mm 3mm 1cm
+# 0920+446 1mm 3mm 1cm
+# 0921-263 1mm 3mm 1cm
+# 0921+622 0917P624 1mm 3mm 1cm
+# 0927+390 4C39.25 0923P392 1mm 3mm 1cm
+# 0927+35 1mm 3mm 1cm
+  M82 1mm 3mm 1cm
+# 0927-205 1mm 3mm 1cm
+# 0954+177 1mm 3mm 1cm
+# 0956+252 0953+25 1mm 3mm 1cm
+# 0957+553 1mm 3mm 1cm
+# 3C232 0958+324 1mm 3mm 1cm
+# 0958+655 0954+65 1mm 3mm 1cm
+# 1007+139 1mm 3mm 1cm
+# 1013+248 1mm 3mm 1cm
+# 1014+230 1mm 3mm 1cm
+# 1037-295 1034-293 1034M293 1mm 3mm 1cm
+# 1039+811 1mm 3mm 1cm
+# 1048-191 1mm 3mm 1cm
+# 1048+717 1044P719 1mm 3mm 1cm
+# 1051+213 1mm 3mm 1cm
+# 1058+015 1055+01 1055P018 1mm 3mm 1cm
+# 1104+382 1101+384 1101+382 1101+38 1mm 3mm 1cm
+# 1118+125 1116+12 1mm 3mm 1cm
+# 1127-189 1mm 3mm 1cm
+# 1130-148 1127-14 1mm 3mm 1cm
+# 1130+382 1mm 3mm 1cm
+# 1139+657 1137+66 1mm 3mm 1cm
+# 1146+399 1mm 3mm 1cm
+# 1150-003 1mm 3mm 1cm
+# 1153+809 1mm 3mm 1cm
+# 1153+495 1150+49 1mm 3mm 1cm
+# 1159+292 1156+29 1mm 3mm 1cm
+# 1205-265 1mm 3mm 1cm
+# 1209-241 1mm 3mm 1cm
+# 1215-175 1mm 3mm 1cm
+# 1215+30 1mm 3mm 1cm
+# 1221+282 1219+28 1mm 3mm 1cm
+# 1224+035 1mm 3mm 1cm
+# 1224+213 1mm 3mm 1cm
+  3C273 1229+020 1226+023 1cm
+  3C274 VIRGO 1230+123 1228+126 1mm 3mm 1cm
+# 1238+073 1mm 3mm 1cm
+# 1239+075 1236+077 1mm 3mm 1cm
+# 1246-257 1244-255 1mm 3mm 1cm
+# 1246-075 1mm 3mm 1cm
+# 1248-199 1mm 3mm 1cm
+# 3C279 1256-057 1253-055 1mm 3mm 1cm
+# 1305-105 1mm 3mm 1cm
+# 1310+323 1308+32 1mm 3mm 1cm
+  NGC5128 1mm 3mm 1cm
+# 1326+319 1mm 3mm 1cm
+# 1327+221 1mm 3mm 1cm
+# 3C287 1330+251 1mm 3mm 1cm
+# 3C286 1331+305 1mm 3mm 1cm
+# 1337-129 1334-12 1334M127 1mm 3mm 1cm
+# 1347+122 1345+12 1mm 3mm 1cm
+# 1357+193 1mm 3mm 1cm
+# 1357-154 1354-15 1mm 3mm 1cm
+# 1407+284 1404+28 1mm 3mm 1cm
+# 1415+133 1413+13 1413P135 1mm 3mm 1cm
+# 1419+543 1418+54 1418P546 1mm 3mm 1cm
+# 1446+173 1mm 3mm 1cm
+# 1458+042 1mm 3mm 1cm
+# 3C309.1 1459+716 1458+718 1mm 3mm 1cm
+# 1504+104 1502+10 1mm 3mm 1cm
+# 1506+833 1mm 3mm 1cm
+# 1507-168 1mm 3mm 1cm
+# 1512-090 1510-08 1510M089 1mm 3mm 1cm
+# 1513-102 1mm 3mm 1cm
+# 1517-243 1514-24 1mm 3mm 1cm
+# 1522+15 1mm 3mm 1cm
+# 1522-275 1mm 3mm 1cm
+# 1540+147 1mm 3mm 1cm
+# 1549+026 1546+027 1mm 3mm 1cm
+# 1550+054 1548+05 1mm 3mm 1cm
+# 1553+11 1mm 3mm 1cm
+# 1557-000 1555+00 1mm 3mm 1cm
+# 1602+334 1mm 3mm 1cm
+# 1608+104 1606+106 1mm 3mm 1cm
+# 1609+266 1607+26 1mm 3mm 1cm
+# 1613+342 1611+34 1mm 3mm 1cm
+# 1625-254 1622-25 1mm 3mm 1cm
+# 1626-298 1mm 3mm 1cm
+# 1637+826 1mm 3mm 1cm
+# 1635+381 1633+382 1633+38 1mm 3mm 1cm
+# 1638+573 1mm 3mm 1cm
+# 1640+397 1638+39 1mm 3mm 1cm
+# 1642+689 1642+69 1mm 3mm 1cm
+# 3C345 1642+398 1641+399 1mm 3mm 1cm
+# 1653+397 1652+39 1mm 3mm 1cm
+# 1658+476 1mm 3mm 1cm
+# 1658+076 1mm 3mm 1cm
+# 1658+052 1656+05 1mm 3mm 1cm
+# 1719+177 1mm 3mm 1cm
+# 1733-130 1730-13 NRAO530 NRA530 1mm 3mm 1cm
+# 1740+521 1739+52 1mm 3mm 1cm
+# 1743-038 1741-03 1741M038 1mm 3mm 1cm
+# 1744-312 1mm 3mm 1cm
+# 1745+173 1mm 3mm 1cm
+# 1748+700 1749+70 1mm 3mm 1cm
+# 1751+096 1749+09 1749P096 1mm 3mm 1cm
+# 1800+784 1803+78 1803+784 1803P784 1mm 3mm 1cm
+# 1801+440 1mm 3mm 1cm
+# 3C371 1806+698 1807+698 1mm 3mm 1cm
+# 1824+568 1mm 3mm 1cm
+# 3C380 1829+487 1828+487 1mm 3mm 1cm
+# 1830A 1mm 3mm 1cm
+# 1830+063 1mm 3mm 1cm
+# 1833-210 1mm 3mm 1cm
+# 3C390.3 1mm 3mm 1cm
+# 1848+323 1mm 3mm 1cm
+# 1849+670 1mm 3mm 1cm
+# 3C395 1902+319 1mm 3mm 1cm
+# 1911-201 1908M202 1mm 3mm 1cm
+# 1924-292 1921-293 1921-29 1921M293 OV236 1mm 3mm 1cm
+# 1925+211 1923+210 1mm 3mm 1cm
+# 1927+739 1928+738 1928P738 1mm 3mm 1cm
+# 1939-154 1mm 3mm 1cm
+# 1955+515 1mm 3mm 1cm
+# 2000-178 1958-17 1958M179 1mm 3mm 1cm
+# 2005+778 2007+77 1mm 3mm 1cm
+# 2006+644 1mm 3mm 1cm
+# 2007+404 2005+40 V2005 2005P403 1mm 3mm 1cm
+# 2009+724 1mm 3mm 1cm
+# 2011-157 1mm 3mm 1cm
+# 2015+372 2015+371 2013+370 1mm 3mm 1cm
+# 2022+616 2021+61 1mm 3mm 1cm
+# 2023+318 2021P317 1mm 3mm 1cm
+# 2023+544 1mm 3mm 1cm
+# 2025+032 1mm 3mm 1cm
+# 2025+337 1mm 3mm 1cm
+# MWC349 1mm 3mm 1cm
+# 3C418 2038+513 2037+511 2037P511 1mm 3mm 1cm
+  DR21 1mm 3mm 1cm
+# 2101+036 1mm 3mm 1cm
+  NGC7027 2107+422 1mm 3mm 1cm
+# 2123+055 2121+05 1mm 3mm 1cm
+# 2131-121 1mm 3mm 1cm
+# 2134-018 2131-02 1mm 3mm 1cm
+# 2136+006 2134+00 2134P004 P2134+00 1mm 3mm 1cm
+# 2148+069 2145+06 2145P067 1mm 3mm 1cm
+# 2148+611 1mm 3mm 1cm
+# 2155-30 1mm 3mm 1cm
+# 2158-150 2155-15 1mm 3mm 1cm
+# 2201+17 1mm 3mm 1cm
+# BLLAC 2202+422 VRO4222 1mm 3mm 1cm
+# 2203+317 2201+31 2201P315 1mm 3mm 1cm
+# 2206-185 1mm 3mm 1cm
+# 2208-13 1mm 3mm 1cm
+# 2213-254 1mm 3mm 1cm
+# 2218-035 2216-03 1mm 3mm 1cm
+# 2225-049 3C446 2223M052 1mm 3mm 1cm
+# 2229-085 1mm 3mm 1cm
+# 2230+697 1mm 3mm 1cm
+# 2232+117 CTA102 2230P114 1mm 3mm 1cm
+# 2236+284 2234+28 1mm 3mm 1cm
+# 2246-121 2243-12 2243M123 1mm 3mm 1cm
+# 2249+211 1mm 3mm 1cm
+# 3C454.3 3C454 2253+161 1mm 3mm 1cm
+# 2258-279 2255-28 2255M282 1mm 3mm 1cm
+# 2320+052 1mm 3mm 1cm
+# 2321+320 1mm 3mm 1cm
+# 2322+509 1mm 3mm 1cm
+# 2346+095 1mm 3mm 1cm
+# 2348-165 2345-16 1mm 3mm 1cm
+# 2358-103 1mm 3mm 1cm
