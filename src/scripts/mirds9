@@ -22,7 +22,7 @@
 #
 #  $Id$
 #
-set version="3.4 - 11-sep-08 PJT"
+set version="3.5 - 6-jun-2012 PJT"
 
 if ($#argv == 0) then
     echo "Usage: $0 [-options] miriad_dataset [plane1] [plane2 ...]"
@@ -38,6 +38,8 @@ if ($#argv == 0) then
     echo "                  use a matching ds9 as server (ds9 -title <TITLE>)"
     echo "      -swap"
     echo "                  force little endian data instead of big"
+    echo "      -debug"
+    echo "                  add some debug options, keep temp files etc."
     echo ""
     echo "  Version $version"
     echo ""
@@ -59,6 +61,7 @@ set scalelims=0
 set movie=0
 set wcs=0
 set dowcs=1
+set debug=0
 set arch=bigendian
 set title=ds9
 
@@ -79,6 +82,9 @@ foreach dummy ($*)
     shift argv
   else if ("$1" == "-swap") then
     set arch=littleendian
+    shift argv
+  else if ("$1" == "-debug") then
+    set debug=1
     shift argv
   else
     break
@@ -107,9 +113,13 @@ endif
 
 set wcsmsg=""
 if (-d $name) then
+    # assume it's a miriad data directory
     if (-e $name/visdata) then
        echo You cannot directly look at visdata, use uvimage to convert to an image
        exit 1
+    endif
+    if (! -e $name/image) then
+       echo Warning: does not look like a MIRIAD data directory, continue at your own risk
     endif
     set ndim=`itemize in=$name/naxis | tail -1 | awk '{print $3}'`
     set n1=`itemize in=$name/naxis1 | tail -1 | awk '{print $3}'`
@@ -122,7 +132,11 @@ if (-d $name) then
     set dims=(`itemize in=$name | grep naxis | tail +2 | awk '{print $3}'`)
     echo "Found $ndim-dim cube, ($dims) : maps $n1 x $n2 x $n3"
     if ($dowcs) then
-        set wcs=/tmp/saotng$$.wcs
+        if ($debug) then
+	  set wcs=/tmp/saotng_$USER.wcs
+        else
+          set wcs=/tmp/saotng_$$.wcs
+        endif
         # work around an earlier bug by adding NAXIS=2
         # note this method isn't robust, it doesn't really check the header
         imhead in=$name key=ctype1 | egrep -q '(RA|DEC|LON)'
@@ -134,6 +148,7 @@ if (-d $name) then
            set ascl=1
         endif
         echo "NAXIS  2" > $wcs
+	if ($n3 > 1) echo "NAXIS  3" > $wcs
         echo CDELT1 `imhead in=$name key=cdelt1 | awk '{printf("%.10f\n",$1*'$ascl')}'` >> $wcs
         echo CDELT2 `imhead in=$name key=cdelt2 | awk '{printf("%.10f\n",$1*'$ascl')}'` >> $wcs
         echo CRVAL1 `imhead in=$name key=crval1 | awk '{printf("%.10f\n",$1*'$ascl')}'` >> $wcs
@@ -142,6 +157,16 @@ if (-d $name) then
         echo CRPIX2 `imhead in=$name key=crpix2 | awk '{print $1}'` >> $wcs
         echo CTYPE1 \'`imhead in=$name key=ctype1`\' >> $wcs
         echo CTYPE2 \'`imhead in=$name key=ctype2`\' >> $wcs
+        echo OBJECT \'$name:t\'                      >> $wcs
+	# puthd in=$name/llrot value=0 type=r
+        set llrot=`itemize in=$name/llrot |& tail -1 | awk '{print $3}'`
+        if ($llrot != "data,") then
+	    # make sure it's not "llrota     (nonexistent data, 0 elements)"
+	    set crota=`calc "$llrot*180/pi"`
+	    echo CROTA: $llrot $crota
+	    echo CROTA1 $crota >> $wcs
+	    echo CROTA2 $crota >> $wcs
+        endif
 	if ($n3 > 1) then
 	  # TODO: should check per axis if ascl=1 or 57....
 	  set ascl=1
@@ -158,6 +183,8 @@ else if (-f $name) then
    if ($name:e == FITS) set type=FITS
    if ($name:e == fts) set type=FITS
    if ($name:e == FTS) set type=FITS
+   if ($name:e == fit) set type=FITS
+   if ($name:e == FIT) set type=FITS
    echo Found type $type
    if ($type == FITS) then
    	# echo $name | xpaset $title fits $name
@@ -246,9 +273,9 @@ if ($movie) then
   echo 'tcl set blinkFrames "'$frames'"' | xpaset $title
 endif
 
-if (1) then
-  rm -f $wcs
-else
+if ($debug) then
   echo Keeping $wcs
+else
+  rm -f $wcs
 endif
 
