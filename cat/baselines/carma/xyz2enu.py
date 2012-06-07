@@ -1,4 +1,4 @@
-#! /bin/env python
+#! /usr/bin/env python
 #
 #
 #   Script to convert carma XYZ positions (in ns) to ENU (in m)
