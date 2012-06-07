@@ -13,3 +13,6 @@ Instructions and background to CARMA's flux catalog (2009)
   It is suggested not to use a strong password, but one you often use
   for not-so-important work online.
 
+- as of June 6,2012 (r2.209) the format has expanded a bit to include 
+  proper errors in flux, spectral index and error (if avaiable).
+  Bad values are -999.99, and should be tested e.g. < -999
