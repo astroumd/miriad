@@ -11,6 +11,7 @@
 #   ./test_a_new_miriad_cvs auto=1                     install new-style
 #   ./test_a_new_miriad_cvs reuse=2                    install old-style wget
 #   ./test_a_new_miriad_cvs reuse=3                    install old-style local
+#   ./test_a_new_miriad_cvs auto=1 dist=1              only create a tar ball
 #
 #   dark-ages    -- written                      Peter Teuben
 #   23-nov-05    added to CVS                    PJT
@@ -29,7 +30,7 @@
 #   17-jun-11    add MIS pipeline (successor to drpacs)
 #   27-jun-11    add gold=0 default, to counter ld memory hog problems
 #   20-jul-11    add carmacookbook - hey, it's moonlanding #1 anniversary
-#   24-may-12    add TKRUN
+#    8-jun-12    various changes for school12
 #----
 
 
@@ -67,6 +68,12 @@ set gif=1
 # grab precompiled manuals
 set man=1
 
+# MIRDEBUG/debug
+set debug=0
+
+# DSO linking hack
+set dsolink=0
+
 #   tar file to grab from ftp (rootdir)
 set ftpdir=ftp://ftp.astro.umd.edu/pub/carma
 set ftp=ftp://ftp.astro.umd.edu/progs/bima/miriad.tar.gz
@@ -98,6 +105,8 @@ end
 
 if ($gfortran) set opts=(gfortran=1 $opts)
 if ($intel)    set opts=(intel=1    $opts)
+if ($debug)    set opts=(debug=1    $opts)
+if ($dsolink)  set opts=(dsolink=1  $opts)
 
 if ($?MIR) then
   echo Cannot test if a MIR environment has been set 
@@ -153,9 +162,10 @@ if ($reuse == 0) then
     echo "...done".
   endif
   if ($brief == 0) then
-    echo "getting miriad,wip, rad,mis and tkrun via cvs...."
+    echo "getting miriad,wip and rad via cvs...."
     cvs -Q co $branch -d $rootdir miriad
-    (cd $rootdir/borrow; cvs -Q co wip rad drpacs mis; cvs -Q co -d tkrun nemo/src/tools/tkrun)
+    (cd $rootdir/borrow; cvs -Q co wip rad drpacs mis)
+    (cd $rootdir/borrow; cvs -Q co -d tkrun nemo/src/tools/tkrun)
     echo "getting precompiled manuals"
     pushd $rootdir/manuals
     foreach m ($manuals)
@@ -222,7 +232,7 @@ if ($auto) then
  if (-e /Applications) setenv LIBTOOLIZE glibtoolize
  if (! -e configure) ./autogen.sh
  if ($dist) then
-    echo Creating $rootdir.tar.gz
+    echo Creating $rootdir.tar.gz for new style build
     (cd ..; tar zcf  $rootdir.tar.gz  $rootdir)
     exit 0
  endif
