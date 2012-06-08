@@ -4,11 +4,11 @@
 
 # Generate the title page
 
-Buildtitlepage
+./Buildtitlepage
 
 # Generate the figures (from .fig files)
 
-Buildfigs
+./Buildfigs
 
 # Run LaTeX three times to make sure we have the page numbering right.
 
