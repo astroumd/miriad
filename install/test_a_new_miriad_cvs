@@ -29,6 +29,7 @@
 #   17-jun-11    add MIS pipeline (successor to drpacs)
 #   27-jun-11    add gold=0 default, to counter ld memory hog problems
 #   20-jul-11    add carmacookbook - hey, it's moonlanding #1 anniversary
+#   24-may-12    add TKRUN
 #----
 
 
@@ -152,9 +153,9 @@ if ($reuse == 0) then
     echo "...done".
   endif
   if ($brief == 0) then
-    echo "getting miriad,wip and rad via cvs...."
+    echo "getting miriad,wip, rad,mis and tkrun via cvs...."
     cvs -Q co $branch -d $rootdir miriad
-    (cd $rootdir/borrow; cvs -Q co wip rad drpacs mis)
+    (cd $rootdir/borrow; cvs -Q co wip rad drpacs mis; cvs -Q co -d tkrun nemo/src/tools/tkrun)
     echo "getting precompiled manuals"
     pushd $rootdir/manuals
     foreach m ($manuals)
