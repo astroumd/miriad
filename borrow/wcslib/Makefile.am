@@ -126,8 +126,7 @@ wcsfinc_HEADERS = \
  Fortran/wcsfix.inc \
  Fortran/wcshdr.inc \
  Fortran/wcs.inc \
- Fortran/wcsunits.inc \
- Fortran/wcserr.inc
+ Fortran/wcsunits.inc
 
 mirrored_incs = $(wcsfinc_HEADERS:Fortran/%=%)
 
