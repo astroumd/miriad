@@ -15,7 +15,8 @@ The dataset
                   {ftp://ftp.astro.umd.edu/pub/carma/data/SgrA.mir.tar.gz}
 is used for this 
 example\footnote{windows 1 and 4 from {\tt c0319.1D\_86GCRing.5.mir},
-observed on March 20, 2009 by M. Pound and F. Yusef-Zadeh, in D array}.
+observed on March 20, 2009 by M. Pound and F. Yusef-Zadeh, in D array,
+with a spatial resolution of about xx arcsec.}
 
 
 The commands you see below are all Unix shell commands, most of these are in fact MIRIAD programs.
@@ -35,7 +36,7 @@ untar this (usually compressed) file using the Unix {\tt tar} command:
 
 and you will see your observation is a directory (a MIRIAD dataset) with files in them. You should
 never manipulate these file directly, unless you really know what you are doing. MIRIAD program generally
-deal with these files.
+deal with these files (in MIRIAD parlor,they are called items).
 
 Probably the next thing you do is make an observing summary log where you can 
 check the names, frequency setup, LST ranges 
@@ -50,8 +51,9 @@ The MIRIAD task ``{\tt listobs}'' is used for this:
 
 Note that unlike the typical options in Unix commands, MIRIAD commands use a ``{\it keyword=value}'' 
 command line syntax,
-but are otherwise implemented as Unix commands. In fact, they are simple Fortran programs that call libraries,
-and some astronomers are even known to make small modifications for themselves and recompile these programs.
+but are otherwise implemented as Unix commands. In fact, they are simple compiled 
+Fortran programs that call libraries. It is relatively
+straightforward to change and recompile these programs (MIRIAD comes with the source code).
 
 
 Looking at the {\tt listobs.log} file, and here is the example from SgrA:
@@ -76,7 +78,9 @@ the phase calibrator will normally be observed alternatingly with your source ev
 flux and/or passband calibrator are normally stronger and observed for a short time (5-15 mins) before
 or after your observation. Sometimes a planet, if available, will be observed as well,
 for a more reliable flux calibration. In this simple example we will just use a 
-passband and phase (gain) calibrator, {\tt 3C345} and {\tt 1733-130} resp.
+passband and phase (gain) calibrator, {\tt 3C345} and {\tt 1733-130} resp. The NOISE source is
+an artificial NOISE source, injected by the system which can optionally be used for passband
+calibration.
 
 % But first a few calibrations are applied to all of the data:
 
@@ -91,7 +95,7 @@ This is done with the powerful {\tt uvcat} command:
 \normalsize
 
 Now we are ready for a series of calibrations that can be applied to all the data. Line length and 
-baseline calibration are the two we show:
+baseline calibration are the two we show first:
 
 
 First we apply a line length calibration. This corrects for any instrumental phase 
@@ -118,20 +122,30 @@ this, by feeding is a new antenna position file:
 \normalsize
 
 Here you will need to find out which {\tt antpos} file is the appropriate one for
-your observation. Check the output of listobs with available {\tt antpos} files.
+your observation. Check the output of listobs with available {\tt antpos} files. If you want 
+to see how much the positions are different, use this command:
+
+\footnotesize
+\begin{verbatim}
+ $MIRCAT/baselines/carma/xyzdiff.py listobs.log $MIRCAT/baselines/carma/antpos.090331
+\end{verbatim}
+\normalsize
+
 
 \bigskip
 \bigskip
 
 There are now two basic approaches to calibration. We either continue on the scheme described before:
-selecting a calibration type, and apply this to all the data, and continue this pipeline until ready
-to map. Although very elegant, some of the more complex calibration schemes are not easily implemented
+selecting a calibration type, and apply this to all the data, and continue this pipeline until we
+are ready to map. 
+Although very elegant, some of the more complex calibration schemes are not easily implemented
 this way. Nonetheless, let us see how  this scheme continues.
 
 First we use a short 15 minute observation of a bright
 quasar (3C345 in this case) to calibrate
-the data such that the passband will then have zero phase and constant amplitude. The task
-{\tt mfcal} does this by computing an antenna based frequency dependant solution, 
+the data such that the passband will then have a zero phase (on average)
+and constant amplitude. The task
+{\tt mfcal} does this by computing an antenna based frequency dependent solution, 
 which we then apply to the whole observation.
 
 \footnotesize
@@ -143,7 +157,8 @@ which we then apply to the whole observation.
 
 
 We now calculate the gains as a function of time
-using the {\tt selfcal} program. This program
+using the {\tt selfcal} program\footnote{mselfcal and selfcal are near-identical
+implementation of the same program}. This program
 can also lookup the last reported flux of the calibrator and thus give you
 properly calibrated fluxes in your source later on. After selfcal, just as before,
 we apply the gains and now obtaining a fully calibrated dataset!    
@@ -181,9 +196,10 @@ the calibrator and compare it to the beam:
 \normalsize
 
 
-
-Since CARMA is a heterogeous array, with different primary beams,
-we apply a mosaicing option to the mapping program, even if there is only one single pointing
+This quasare is a point source,so the program {\tt clean} is appropriate to use. But
+CARMA is a heterogeous array, with different primary beams for different baselines,
+where we need to 
+apply a mosaicing option to the mapping program, even if there is only one single pointing
 in the observation. Except when you want to detect or map a very small field of view, or
 a point source, this is essential. The current example observation of SgrA has 7 pointings,
 and because the source is extended, mosaicing is essential here:
@@ -192,18 +208,19 @@ and because the source is extended, mosaicing is essential here:
 \footnotesize
 \begin{verbatim}
 
-  invert vis=all_4.vis map=map1 beam=beam1 line=wide,1,1,2,2 "select=source($sname)" options=mosaic imsize=129
+  invert vis=all_4.vis map=map1 beam=beam1 line=wide,1,1,2,2 "select=source(GCRING)" options=mosaic imsize=129
   mossdi map=map1 beam=beam1 out=model1
   restor map=map1 beam=beam1 model=model1 out=clean1
+
+  ds9 &
+  mirds9 clean1
 
 \end{verbatim}
 \normalsize
 
 
 
-
-
-A last note before you might get your fingers wet: these commands are obviously
+A last note before you might get your fingers too wet: these commands are obviously
 tedious to type, and prone to typos.
 Of course in real life we use scripts (e.g. C-shell or python scripts), in such a way 
 that you repeat your data reduction script, finetuning the various calibration schemes you apply.
@@ -325,6 +342,12 @@ data from other telescopes.
          f) bad channels
 
          g) bad pointing/tracking
+
+         h) passband calibrator is resolved
+         
+         i) missing flux or passband observations
+
+         j) bright point source in the field
 
          ...
 

@@ -102,9 +102,11 @@ or
 \end{verbatim}
 \normalsize
 
-This procedure will only work for recent data that are in the cache, for example all the 
-``Tracks Transferred within The Last Two Days'' listed on the Quick Searches page fall
-under this category.
+This procedure will only work once you have placed your data in the cache, so you need
+to first logon and trigger the CARMA filler to create (or make visible) the dataset.
+
+It goes without saying 
+
 
 \subsection{At CARMA}
 
@@ -164,6 +166,9 @@ with a script that combines all these data in the following way:
 where each ``Day'' directory is assumed to have its
 cleaned and calibrated MIRIAD dataset named {\tt n1234c}.
 
+There is a package called MIS (can be found in {\tt \$MIR/borrow/mis}), that takes
+this one step further, and builds a whole suite of (pipeline-able) scripts around
+this concept.\index{mis}
 
 \section{Quality Check}
 
@@ -184,6 +189,8 @@ by going to ``Observing with CARMA'' and following ``Obtaining and reducing your
 ``Quality output''.  Copy the output into your directory and inspect it.
 
 % see /opt/rt/scripts/quality, but right now only works at carma
+% in MIS:
+% $MIS/templates/quality.csh proj=c0924V.3D_88Serpen.5.miriad
 
 
 \section{Data Inspection}
@@ -561,8 +568,8 @@ to check if you should re-fetch the data.\index{mdsum}
 \subsection{Baseline correction}
 
 \label{s:baseline}
-You should always check if you need to (re)apply baseline 
-corrections\footnote{any data prior to 22-jan-2008 should always be corrected}.
+You should always check if you need to (re)apply a baseline 
+correction\footnote{any data prior to 22-jan-2008 should always be corrected}.
 Although your data may come with a pretty decent baseline solution,
 often a few weeks into a new array configuration
 improved baselines will become available. In the first few days up to several weeks
@@ -577,8 +584,8 @@ at {\tt http://cedarflat.mmarray.org/observing/baseline/}, as well in your
 local MIRIAD distribution in {\tt \$MIRCAT/baselines/carma}\footnote{use {\tt cvs update}
 to get any updated baselines}
 \smallskip
-To apply a new baseline, apply the program {\tt uvedit} to your multisource data set.
-Be sure to apply the new baseline to all sources (but not the NOISE source):
+To apply a new baseline, use the program {\tt uvedit} to your multisource data set.
+% Be sure to apply the new baseline to all sources (but not the NOISE source):
 
 % \footnotesize\normalsize
 \footnotesize
@@ -591,8 +598,8 @@ In rare cases, a new and better solution is found a month or so after
 your data were taken. Check the status of the baseline solution on the
 above mentioned web page. It is a good idea to apply an appropriate
 solution if you are not sure which solution has been applied to your
-data. No harm is done if you apply a solution that has already been
-applied.
+data. No harm is done if you accidentally
+apply the same baseline solution twice.
 
 
 Notice that for data taken during a move (which can take several days
@@ -605,7 +612,15 @@ Figure ...
 
 You can also visually check how much the baselines changed from what is
 available in your visibility dataset, by comparing  the X-Y-Z values (in nsec)
-in the {\tt antpos} file with what {\tt listobs} produced.
+in the {\tt antpos} file with what {\tt listobs} produced. The following
+command will compare two antpos files, or even the output of listobs and
+an antpos file:
+
+\footnotesize
+\begin{verbatim}
+   $MIRCAT/baselines/carma/xyzdiff.py listobs.log $MIRCAT/baselines/carma/antpos.120410   
+\end{verbatim}
+\normalsize
 
 \bigskip
 

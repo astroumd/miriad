@@ -61,6 +61,7 @@
 %  21-nov-08  pjt  clarify items, add bandpass calibration items
 %   5-oct-09  pjt  various clarifications, most notably TIME as integer midpoint!
 %  20-sep-10  pjt  corbit changed type and dimension
+%   jun-2012  pjt  various carma changes (bfmask)
 %
 %  nband - appears to be CARMA's Control.SpectralLineCorrelator.numBands (but it's 8, not 6=nspect)
 %  later removed again
@@ -87,7 +88,7 @@ Item name   & Type  &  Description \\ \hline
 obstype     & ascii   & value: `{\tt cross}', `{\tt auto}' or `{\tt mixed}' \\
 history     & text    & history text file (in principle editable) \\
 vartable    & text    & lookup table for all uv variables (never edit!) \\
-bftable     & text    & lookup table for bfmask \\
+blfmask     & text    & lookup table for bfmask \\
 visdata     & mixed   & data stream of uv variables \\ \hline
 
 flags       & integer & optional flags for narrowband data \\
@@ -220,7 +221,7 @@ baseline        \>R     \>-
 \>\>\> depending if you have uv or uvw data resp.\\
 
 bfmask(nspect)  \>I     \>-
-\> Blanking/Flagging mask (Not Implemented yet)\\
+\> Blanking/Flagging mask - see task UVBFLAG for meaning\\
 
 bin		\>I	\>-
 \> Pulsar bin number.\\
@@ -371,8 +372,8 @@ freq		\>D	\>GHz
 freqif		\>D	\>GHz
 \> ? (Hat Ck only?)\\
 
-ifchain		\>?	\>?
-\>ATNF specific? \\
+ifchain(nspect) 	\>?	\>?
+\>ATNF specific \\
 
 inttime		\>R	\>seconds
 \>Integration time (see also time) \\
