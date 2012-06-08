@@ -3,6 +3,7 @@
 #   Simplified ied "cvs update & install updated miriad subroutines and programs"
 #   This will only look at pure miriad code,it will not update libraries such
 #   as pgplot, wcslib etc.  
+#
 
 set tmp=/tmp/mirupdate$$
 set log=$tmp.log
@@ -15,6 +16,16 @@ endif
 if (! -e $MIR/CVS) then
   echo "MIR=$MIR does not contain a CVS/ link, so no update is possible"
   exit 1
+endif
+
+if ($#argv > 0) then
+  echo Assuming test mode
+  set test=$1
+  set path=($MIR/src/sys/bin $path); rehash
+  mir.subs fitsio
+  mir.prog fits
+  echo CAREFULLY look at this often very verbose output if you see any real errors
+  exit 0
 endif
 
 cd $MIR
