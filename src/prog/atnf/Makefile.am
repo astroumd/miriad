@@ -8,7 +8,7 @@ include $(top_srcdir)/mircommon.mak
 LDADD = $(prog_libs)
 
 ftasks = \
-  at_mfcal at_uvlist at_uvplt atfix atmos atrtfix atscfix attsys atwvr \
+  at_mfcal at_moment at_uvlist at_uvplt atfix atmos atrtfix atscfix attsys atwvr \
   elevcor lagflg mbspect mfboot plboot plplt wbplt
 bin_PROGRAMS = $(ftasks)
 CLEANFILES = $(ftasks:=.f)
