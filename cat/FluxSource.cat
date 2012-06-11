@@ -1,7 +1,10 @@
 # $Id$
 # Modified $MIRCAT/cals.fluxes for use with carma/services/Table class
 #
-# MIRCAT:Calibrator.fluxes
+# In MIRIAD this file is found in the following locations and search order:
+#    1)  by the env var   $MIRFLUXTAB 
+#    2)  as FluxSource.cat in the local directory
+#    3)  as FluxSource.cat in $MIRCAT 
 #
 # HISTORY
 # 85JUN06.0 - 87JUN20.0 from Bill Dent 30 Mar 1988.
