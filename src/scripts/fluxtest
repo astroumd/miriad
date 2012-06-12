@@ -46,13 +46,13 @@ smagpplt vis=orig.mir device=$idev$device options=bandpass,nofit,wrap xaxis=ch y
 #===========================================
 #  3. Extract planet and gain calibrator data, applying the bandpass solutions
 rm -rf prim.mir
-uvcat vis=orig.mir out=prim.mir options=nocal select="source($primcal),-auto"
+uvcat vis=orig.mir out=prim.mir    options=nocal select="source($primcal),-auto"
 rm -rf gaincal.mir
-uvcat vis=orig.mir out=gaincal.mir options=nocal select="source($gaincal)",-auto
+uvcat vis=orig.mir out=gaincal.mir options=nocal select="source($gaincal),-auto"
 
 #===========================================
 #  4. Phase-only SELFCAL planet and gain calibrator data
-selfcal vis=prim.mir refant=$refant select=-auto interval=0.5 options=phase,apriori
+selfcal vis=prim.mir    refant=$refant select=-auto interval=0.5 options=phase,apriori
 selfcal vis=gaincal.mir refant=$refant select=-auto interval=0.5 options=phase,apriori
 
 # Look at the solution if desired
@@ -65,14 +65,15 @@ gpplt vis=gaincal.mir device=$idev$device yaxis=ph nxy=5,3 yrange=-180,180
 #  5. Use bootflux to get the flux of the gain calibrator
 
 #  a. First average all windows together
-bootflux vis=gaincal.mir,prim.mir select="source($gaincal,$primcal),-auto" line=chan,1,1,156,156 taver=10 primary=$primcal
+bootflux vis=gaincal.mir,prim.mir select="source($gaincal,$primcal),-auto" line=chan,1,1,156,156 taver=10 primary=$primcal |&  tee bootflux1.log
 # this gives an average flux of 6.573 Jy at 100.5 GHz
+# grep ^average bootflux1.log | awk '{print $3}'
 
 #  b. Now try doing each window individually using marstb to get the appropriate brightness temperature.
 # From uvlist, we calculate the central frequencies of the four windows: 98.34, 92.74, 102.59, and 108.19 GHz.
 # Now we get the brightness temperature for MARS at each of these frequencies using marstb:
 foreach f (98.34 92.74 102.59 108.19)
-  marstb epoch=12APR13:04:40:11 freq=$f
+  marstb epoch=12APR13:04:40:11 freq=$f |& tee -a marstb1.log
 end
 # This gives brightness temperatures (K): 195.145, 194.865, 195.355, 195.626.
 # For reference, the brightness temperature in the dataset (at the LO frequency) is 195.011 K  
@@ -91,10 +92,14 @@ set flux2 = `bootflux vis=gaincal.mir,prim.mir select="source($gaincal,$primcal)
 set flux3 = `bootflux vis=gaincal.mir,prim.mir select="source($gaincal,$primcal),-auto" line=chan,1,79,39,39 taver=10 primary=$primcal,195.355 | grep 'Average Flux:' | awk '{ print $3 }'`
 set flux4 = `bootflux vis=gaincal.mir,prim.mir select="source($gaincal,$primcal),-auto" line=chan,1,118,39,39 taver=10 primary=$primcal,195.626 | grep 'Average Flux:' | awk '{ print $3 }'`
 echo "Average Flux in Each Window:"
-echo "  win1: $flux1 Jy at 98.34 GHz - should be 6.608"
-echo "  win2: $flux2 Jy at 92.74 GHz - should be 6.883"
-echo "  win3: $flux3 Jy at 102.59 GHz - should be 6.508"
-echo "  win4: $flux4 Jy at 108.19 GHz - should be 6.263"
+set flux1_c=6.608
+set flux2_c=6.883
+set flux3_c=6.508
+set flux4_c=6.263
+echo "  win1: $flux1 Jy at 98.34 GHz - should be $flux1_c"
+echo "  win2: $flux2 Jy at 92.74 GHz - should be $flux2_c"
+echo "  win3: $flux3 Jy at 102.59 GHz - should be $flux3_c"
+echo "  win4: $flux4 Jy at 108.19 GHz - should be $flux4_c"
 # This should give:
 # Average Flux in Each Window:
 #   win1: 6.608 Jy at 98.34 GHz
