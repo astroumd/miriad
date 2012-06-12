@@ -10,6 +10,8 @@ cd $tmp
 set ftp=ftp://ftp.astro.umd.edu/pub/carma/data/
 set flux=flux_test.miriad.tar.gz
 
+set keep=1
+
 foreach a ($*)
   set $a
 end
@@ -44,3 +46,5 @@ echo Running fluxtest:
 $MIR/src/scripts/fluxtest vis=$vis >& fluxtest.log
 
 echo Logfile in $tmp/fluxtest.log
+
+grep "should be" fluxtest.log  |  awk '{if ($2-$10 != 0) print "BAD BOOTFLUX ",NR,$0}'
