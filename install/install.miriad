@@ -85,7 +85,7 @@ set brief=0
 set newdir=`date +%y%b%d | tr A-Z a-z`
 set hosttype=`uname -s | tr A-Z a-z`
 
-# test file for mac
+# test file for mac (could also be /Application/...)
 set Xcode=/Developer/Applications/Xcode.app/Contents/version.plist
 
 # hosttypes we support:  linux, darwin (MacOSX), sunos (->sun4sol)
@@ -687,6 +687,7 @@ if ($telescope == carma) then
    ./mir.carma
    ./mir.fringe
    ./mir.fringe mosaic=1
+   ./mir.flux
 endif
 
 set benchpars=(`echo $bench | awk -F, '{print $1,$2,$3}'`)
