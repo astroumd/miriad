@@ -177,6 +177,7 @@
 /*  pkgw 05dec11 Move definition of MAXIANT here, reference the         */
 /*               thorough BASANT documentation.                         */
 /*  pkgw 14dec11 Use errmsg_c() for cleaner I/O error reporting         */
+/*  pjt   6jun12 Merged in a few useful ATNF updates                    */
 /*----------------------------------------------------------------------*/
 /*									*/
 /*		Handle UV files.					*/
@@ -271,7 +272,7 @@
 #include "config.h"
 #endif
 
-#define VERSION_ID "31-aug-2011 pjt"
+#define VERSION_ID "6-june-2012 pjt"
 
 #define private static
 
@@ -1611,7 +1612,8 @@ void uvgetvr_c(int tno,int type,Const char *var,char *data,int n)
   if(v->buf == NULL)
     ERROR('f',(message,"Variable %s currently has no value, in UVGETVR",var));
   if( (type == H_BYTE ? n < v->length + 1 : n*size != v->length) )
-    ERROR('f',(message,"Buffer for variable %s has wrong size, in UVGETVR",var));
+    ERROR('f',(message,"Buffer for variable %s has wrong size, in UVGETVR (%d != %d)",
+	       var,n*size,v->length));
 
 /* Copy the data. */
 
@@ -1725,7 +1727,8 @@ void uvputvr_c(int tno,int type,Const char *var,Const char *data,int n)
     hwritei_c(uv->item,&v->length,uv->offset+UV_HDR_SIZE,H_INT_SIZE,&iostat);
     CHECK(iostat,(message,"Error writing variable-length for %s, in UVPUTVR",var));
     uv->offset += UV_ALIGN;
-    v->buf = Realloc(v->buf,n*internal_size[type]);
+    if( !(v->flags & UVF_NOCHECK) )
+      v->buf = Realloc(v->buf,n*internal_size[type]);
   }
 
 /* Check if this variable has really changed.  */
@@ -1754,12 +1757,10 @@ void uvputvr_c(int tno,int type,Const char *var,Const char *data,int n)
     uv->offset = mroundup( uv->offset+v->length, UV_ALIGN);
     if(v->callno++ > CHECK_THRESH) {
       v->flags |= UVF_NOCHECK;
+    } else if(!(v->flags & UVF_NOCHECK)){
+      length = internal_size[type] * n;
+      memcpy(v->buf,data,length);
     }
-    length = internal_size[type] * n;
-    if(!v->buf) {
-      ERROR('f',(message,"Buffer for variable '%s' is NULL in UVPUTVR",var));
-    }
-    memcpy(v->buf,data,length);
   } else {
     v->callno = 0;
   }
@@ -1859,7 +1860,7 @@ private int uv_scan(UV *uv, VARIABLE *vt)
     vt		Structure describing variable to terminate scan when found.
 ------------------------------------------------------------------------*/
 {
-  int iostat,intsize,extsize,terminate,found,changed,i;
+  int iostat,intsize,extsize,terminate,found,changed,i,itemp;
   off_t offset;
   VARIABLE *v;
   char s[UV_HDR_SIZE],*b;
@@ -1879,7 +1880,8 @@ private int uv_scan(UV *uv, VARIABLE *vt)
 
     changed = FALSE;
     if(*(s+2) != VAR_EOR){
-      v = &uv->variable[*s];       /*  warning: array subscript has type `char' */
+      itemp = *s;
+      v = &uv->variable[itemp];
       intsize = internal_size[v->type];
       extsize = external_size[v->type];
     }
@@ -3766,6 +3768,7 @@ private void uvread_updated_uvw(UV *uv)
   if(uv->uvw == NULL)uv->uvw = (UVW *)Malloc(sizeof(UVW));
   uvw = uv->uvw;
   uvw->nants = VARLEN(uv->antpos)/3;
+  if(uvw->nants > MAXANT ) bug_c('f',"Too many antennas in uvread_updated_uvw");
 
 /* Get trig functions of the hour angle and the declination. */
 
