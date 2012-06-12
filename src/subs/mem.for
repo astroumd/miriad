@@ -220,7 +220,6 @@ c
 	if(size.le.0)
      *	  call bug('f','Bad value for size, in MemAlloc')
 
-	call bug('w','MemAlloc still called - convert to MemAllop')
 #ifdef DEBUG
 	write(*,*)  'MemAlloc : ',size,type
 #endif
@@ -306,7 +305,6 @@ c  Check.
 c
 	if(size.le.0)
      *	  call bug('f','Bad value for size, in MemFree')
-	call bug('w','MemFree still called - convert to MemFrep')
 
 	elsize = mmSize(ichar(type))
 	pntd = (pnt-1)*elsize
