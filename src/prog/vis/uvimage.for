@@ -278,6 +278,9 @@ c
           endif
           if (vmode.eq.5) then
              call uvgetvri(lIn,'bfmask',bfmask,nspect)
+             do i=1,nchannel
+                bfmask2(i) = 0
+             enddo
              do i=1,nspect
                 i0=(i-1)*MAXBIT+1
                 call getmaski(bfmask(i),bfmask2(i0))
