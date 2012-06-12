@@ -8,7 +8,7 @@ mkdir $tmp
 cd $tmp
 
 set ftp=ftp://ftp.astro.umd.edu/pub/carma/data/
-set flux=flux.mirtest.tar.gz
+set flux=flux_test.miriad.tar.gz
 
 foreach a ($*)
   set $a
@@ -39,3 +39,8 @@ if (! -d $vis) then
   exit 1
 endif
 
+echo Running fluxtest:
+
+$MIR/src/scripts/fluxtest vis=$vis >& fluxtest.log
+
+echo Logfile in $tmp/fluxtest.log
