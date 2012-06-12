@@ -33,8 +33,14 @@ c       Default is channel,0,1,1,1, which uses all the spectral
 c       channels. 
 c
 c@ view
-c	Visibility 'amplitude', 'phase', 'real', or 'imaginary'.
+c	Visibility 'amplitude', 'phase', 'real', 'imaginary', or 'bfmask'
 c	No calibration is applied by UVIMAGE.
+c       bfmask is a special mode, where the 32 bits in the bfmask(nspect)
+c       array are plotted as 0 or 1 values in the channel direction, where
+c       number of channels is now 32 * nspect. 
+c       Note the first bit comes first, and (sign) bit 32 is not used, always 0.
+c       See UVBFLAG for the meaning of the masks.
+c       
 c	Default: amplitude
 c
 c@ out
@@ -53,9 +59,9 @@ c       3: TIME-BASELINE-CHANNEL
 c
 c@ ignore
 c       Should flags be ignored?  If true, the underlying data values
-c       are shown, even if non-zero.
+c       are shown, even if non-zero.  Flags are always ignored if
+c       bfmask is selected to be viewed.
 c       Default: false
-c
 c--
 c  History:
 c     pjt  20sep06  Initial version, cloned off varmap
@@ -63,6 +69,7 @@ c     pjt  21sep06  Added mode keyword, more efficient memory usage
 c     pjt  22dec06  Less terse, add ignore=
 c     pjt   8dec08  Allow scanning mode if out= absent
 c     pjt  30jun09  fixed labeling bug in output cube
+c     pjt  12jun12  Experimenting with bfmask
 c
 c  TODO
 c     - write plane by plane, but this will limit it to mode=1
@@ -72,28 +79,33 @@ c       portable dynamic memory allocation trick in miriad
 c     - consider copying the flags from the vis brick to the image brick
 c     - MAXSIZE is 64MB right now.
 c     - if no out= present, scan it, and report irregular behavior
+c     - nasty things can happen if nspect changes in the file
 c----------------------------------------------------------------------c
 c #define miralloc
 c
        include 'maxdim.h'
        include 'mirconst.h'
        character*(*) version
-       parameter(version='UVIMAGE: version 30-jun-2009')
+       parameter(version='UVIMAGE: version 12-jun-2012')
        integer MAXSELS
        parameter(MAXSELS=512)
        integer MAXSIZE
        parameter(MAXSIZE=256*266*256)
+       integer MAXBIT
+       parameter(MAXBIT=32)
 
        real sels(MAXSELS)
        complex data(MAXCHAN)
        logical flags(MAXCHAN),qmnmx,ignore,cube
        double precision preamble(4),oldtime
        integer lIn,nchan,nread,nvis,nchannel,vmode,nbl,omode
+       integer nspect,bfmask(MAXWIN),bfmask2(MAXBIT*MAXWIN)
        real start,width,step
        character*128 vis,out,linetype,line
        character*10 view
-       integer antsel(MAXANT),ant1,ant2,nant,ntime,apnt
-       integer lout,nsize(3),i,j,k,l
+       integer antsel(MAXANT),ant1,ant2,nant,ntime
+       ptrdiff apnt
+       integer lout,nsize(3),i,j,k,l,i0
        real v
 #ifdef miralloc
        real array(MAXBUF)
@@ -137,6 +149,9 @@ c
           vmode = 3
        else if(index(view,'ph').gt.0) then
           vmode = 4
+       else if(index(view,'bf').gt.0) then
+          vmode = 5
+          ignore = .TRUE.
        else
           call bug('f','Unknown view='//view)
        endif
@@ -190,6 +205,7 @@ c
           endif
           call uvread(lIn, preamble, data, flags, maxchan, nread)
           nvis = nvis + 1
+          call uvgetvri(lIn,'nspect',nspect,1)
        enddo
        nant=0
        do i=1,MAXANT
@@ -198,6 +214,10 @@ c
        nbl = nvis/ntime
 
        write (*,*) 'Nvis=',nvis,' Nant=',nant
+       if (vmode.eq.5) then
+          nchannel = nspect*32
+          write (*,*) 'Nspect=',nspect,' (bfmask output mode)'
+       endif
        write (*,*) 'Nchan=',nchannel,' Nbl=',nbl,' Ntime=',ntime,
      *    ' Space used: ',nchannel*nbl*ntime,' / ',MAXSIZE,
      *    ' = ',REAL(nchannel*nbl*ntime)/REAL(MAXSIZE)*100,'%'
@@ -256,6 +276,17 @@ c
              j=1
              k=k+1
           endif
+          if (vmode.eq.5) then
+             call uvgetvri(lIn,'bfmask',bfmask,nspect)
+             do i=1,nspect
+                i0=(i-1)*MAXBIT+1
+                call getmaski(bfmask(i),bfmask2(i0))
+             enddo
+             do i=1,nchannel
+                if (bfmask2(i).ne.0) bfmask2(i) = 1
+             enddo
+             nread = nchannel
+          endif
           do i=1,nread
              if (flags(i) .or. ignore) then
                 if(vmode.eq.1) then
@@ -266,6 +297,8 @@ c
                    v = cabs(data(i))
                 else if(vmode.eq.4) then
                    v = 180./pi * atan2(aimag(data(i)),real(data(i)))
+                else if(vmode.eq.5) then
+                   v = bfmask2(i)
                 else
                    call bug('f','Illegal view')
                 endif
