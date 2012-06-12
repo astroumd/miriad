@@ -1,0 +1,169 @@
+#! /bin/csh -f
+#
+# Example script to bootstrap CARMA fluxes.   See also mir.flux how
+# this script is called in one of the MIRIAD benchmark testsuite scripts.
+#
+# History:
+# 12-jun-2012   Amber Bauermeister  - Created, adaptor for miriad by PJT
+#
+
+# SETUP: Set test file name, calibrator names and refant
+set vis         = flux_test.miriad
+set gaincal     = 3C273
+set bandpasscal = 3C273
+set primcal     = MARS
+set refant      = 8
+set device      = _flux.ps/ps
+set idev        = 0
+
+# Optionally parse the commandline so you can override the settings given here
+foreach arg ($*)
+   set $arg
+end
+
+#===========================================
+#  0. Make sure the data are here...
+if (! -e $vis) then
+  echo Missing dataset vis=$vis 
+  exit 1
+endif
+
+#===========================================
+#  1. Make a copy of the dataset to work on
+rm -rf orig.mir
+uvcat vis=$vis out=orig.mir
+
+#===========================================
+#  2. Calibrate the bandpass with MFCAL
+mfcal vis=orig.mir interval=0.5 refant=$refant select="source($bandpasscal),-auto"
+
+# Look at the passband solution if desired
+@ idev++
+smagpplt vis=orig.mir device=$idev$device options=bandpass,nofit xaxis=ch yaxis=amp yrange=0,3
+@ idev++
+smagpplt vis=orig.mir device=$idev$device options=bandpass,nofit,wrap xaxis=ch yaxis=ph yrange=-180,180
+
+#===========================================
+#  3. Extract planet and gain calibrator data, applying the bandpass solutions
+rm -rf prim.mir
+uvcat vis=orig.mir out=prim.mir options=nocal select="source($primcal),-auto"
+rm -rf gaincal.mir
+uvcat vis=orig.mir out=gaincal.mir options=nocal select="source($gaincal)",-auto
+
+#===========================================
+#  4. Phase-only SELFCAL planet and gain calibrator data
+selfcal vis=prim.mir refant=$refant select=-auto interval=0.5 options=phase,apriori
+selfcal vis=gaincal.mir refant=$refant select=-auto interval=0.5 options=phase,apriori
+
+# Look at the solution if desired
+@ idev++
+gpplt vis=prim.mir    device=$idev$device yaxis=ph nxy=5,3 yrange=-180,180
+@ idev++
+gpplt vis=gaincal.mir device=$idev$device yaxis=ph nxy=5,3 yrange=-180,180
+
+#===========================================
+#  5. Use bootflux to get the flux of the gain calibrator
+
+#  a. First average all windows together
+bootflux vis=gaincal.mir,prim.mir select="source($gaincal,$primcal),-auto" line=chan,1,1,156,156 taver=10 primary=$primcal
+# this gives an average flux of 6.573 Jy at 100.5 GHz
+
+#  b. Now try doing each window individually using marstb to get the appropriate brightness temperature.
+# From uvlist, we calculate the central frequencies of the four windows: 98.34, 92.74, 102.59, and 108.19 GHz.
+# Now we get the brightness temperature for MARS at each of these frequencies using marstb:
+foreach f (98.34 92.74 102.59 108.19)
+  marstb epoch=12APR13:04:40:11 freq=$f
+end
+# This gives brightness temperatures (K): 195.145, 194.865, 195.355, 195.626.
+# For reference, the brightness temperature in the dataset (at the LO frequency) is 195.011 K  
+#   (stored in variable pltb: varplt vis=prim.mir device=/xs yaxis=pltb log=pltb.log)
+
+# Now we can run bootflux in each window individually, forcing the desired brightness temperature 
+#   using primary=PlanetName,Tb via the following commands:
+#bootflux vis=gaincal.mir,prim.mir select="source($gaincal,$primcal),-auto" line=chan,1,1,39,39 taver=10 primary=$primcal,195.145
+#bootflux vis=gaincal.mir,prim.mir select="source($gaincal,$primcal),-auto" line=chan,1,40,39,39 taver=10 primary=$primcal,194.865
+#bootflux vis=gaincal.mir,prim.mir select="source($gaincal,$primcal),-auto" line=chan,1,79,39,39 taver=10 primary=$primcal,195.355
+#bootflux vis=gaincal.mir,prim.mir select="source($gaincal,$primcal),-auto" line=chan,1,118,39,39 taver=10 primary=$primcal,195.626
+
+# ...or, for a quick printout of the average fluxes, use the following:
+set flux1 = `bootflux vis=gaincal.mir,prim.mir select="source($gaincal,$primcal),-auto" line=chan,1,1,39,39 taver=10 primary=$primcal,195.145 | grep 'Average Flux:' | awk '{ print $3 }'`
+set flux2 = `bootflux vis=gaincal.mir,prim.mir select="source($gaincal,$primcal),-auto" line=chan,1,40,39,39 taver=10 primary=$primcal,194.865 | grep 'Average Flux:' | awk '{ print $3 }'`
+set flux3 = `bootflux vis=gaincal.mir,prim.mir select="source($gaincal,$primcal),-auto" line=chan,1,79,39,39 taver=10 primary=$primcal,195.355 | grep 'Average Flux:' | awk '{ print $3 }'`
+set flux4 = `bootflux vis=gaincal.mir,prim.mir select="source($gaincal,$primcal),-auto" line=chan,1,118,39,39 taver=10 primary=$primcal,195.626 | grep 'Average Flux:' | awk '{ print $3 }'`
+echo "Average Flux in Each Window:"
+echo "  win1: $flux1 Jy at 98.34 GHz - should be 6.608"
+echo "  win2: $flux2 Jy at 92.74 GHz - should be 6.883"
+echo "  win3: $flux3 Jy at 102.59 GHz - should be 6.508"
+echo "  win4: $flux4 Jy at 108.19 GHz - should be 6.263"
+# This should give:
+# Average Flux in Each Window:
+#   win1: 6.608 Jy at 98.34 GHz
+#   win2: 6.883 Jy at 92.74 GHz
+#   win3: 6.508 Jy at 102.59 GHz
+#   win4: 6.263 Jy at 108.19 GHz
+
+#===========================================
+#  6. Compare with FluxSource.cat values. For datasets with primary flux calibrator observations, 
+#   it is a good idea to compare the value you get to the historical record of fluxes in FluxSource.cat.
+#   If your dataset does NOT contain a primary flux calibrator observation, you may have to use
+#   the fluxes in FluxSource.cat to determine the flux of your gain calibrator.
+# 
+# This example dataset is from April 13, 2012. Using the calfind website, we see that the average 
+#   flux in the 3mm band from March 12, 2012 to May 20, 2012 is 6.78 +/- 0.63, which 
+#   agrees fairly well with our average value of 6.573 Jy at 100.5 GHz
+
+# Specifically, the FluxSource.cat entries from the days immediately surrounding the date of our observation are:
+# 3C273        2012-APR-11.0    98.5     6.70     1.00   CARMA8     MARS          -999.99     -999.99     -999.99
+# 3C273        2012-APR-12.0    99.2     6.60     1.00   CARMA8     MARS          -999.99     -999.99     -999.99
+# 3C273        2012-APR-13.0    98.5     6.70     1.00   CARMA8     MARS          -999.99     -999.99     -999.99
+# 3C273        2012-APR-13.0   100.8     5.10     0.80   CARMA8     NEPTUNE       -999.99     -999.99     -999.99
+# 3C273        2012-APR-15.0    99.2     6.50     1.00   CARMA8     MARS          -999.99     -999.99     -999.99
+# These agree except for the measurement of 5.10 Jy at 100.8 GHz.
+
+# Another strategy of comparison that may be useful is to use the spectral index information 
+#   in FluxSource.cat, if available. The example dataset was taken before spectral indices 
+#   were written in FluxSource.cat, but as an example, we may look at the first spectral index 
+#   available for 3C273 in the 3mm band:
+# 3C273        2012-MAY-12.0   107.5     6.28     0.20   CARMA12    MARS          -999.99       -0.80        0.07
+
+# A flux of 6.28 Jy at 107.5 GHz with a spectral index of -0.80 implies the following fluxes 
+#   at the central frequencies of our windows:
+#   win#   our flux    freq          expected flux based on FluxSource.cat entry
+#   win1: 6.608 Jy at 98.34 GHz     6.74 Jy
+#   win2: 6.883 Jy at 92.74 GHz     7.07 Jy
+#   win3: 6.508 Jy at 102.59 GHz    6.52 Jy
+#   win4: 6.263 Jy at 108.19 GHz    6.25 Jy
+
+# After comparing with FluxSource.cat values, we conclude that our derived fluxes are good 
+#   and we will use these to set the flux scale of the dataset.
+
+#===========================================
+#  7. Set the flux scale of the dataset by performing an amplitude SELFCAL. 
+
+# First copy the dataset in order to apply the bandpass solution
+rm -rf pb.mir
+uvcat vis=orig.mir out=pb.mir options=nocal select=-auto
+
+# Now do amplitude SELFCAL with an interval of 18 minutes (approximate length of the 
+#   source-gain cal cycle). Which window(s) you use to do this will depend on your 
+#   particular science goals.
+
+# If our science is in window 2 (for example), we can run selfcal on that window only, 
+#   using our flux estimate at the central frequency of window 2:
+selfcal vis=pb.mir refant=$refant select="source($gaincal),-auto" interval=18 options=amplitude,noscale flux=6.883 line=chan,1,40,39,39
+
+# Alternatively, we could use all the channels and use the average flux we found above (6.573 Jy):
+#selfcal vis=pb.mir refant=$refant select="source($gaincal),-auto" interval=18 options=amplitude,noscale flux=6.573 line=chan,1,1,156,156
+
+# look at the solution if desired
+@ idev++
+gpplt vis=pb.mir device=$idev$device yaxis=amp nxy=5,3 yrange=0,4
+@ idev++
+gpplt vis=pb.mir device=$idev$device yaxis=ph nxy=5,3 yrange=-360,360
+
+# Now pb.mir is fully calibrated with the correct flux scale. You are ready to make images
+#   and measure the flux of your science target with confidence! Remember though that any
+#   flux measurement will have an inherent uncertainty of ~20% due to the uncertainty in the
+#   models of the primary flux calibrators.
+
+
