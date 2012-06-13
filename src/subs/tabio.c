@@ -43,6 +43,12 @@
 
 #define MAXLINELEN 256
 
+#if defined(DEBUG)
+static int debug_io = 1;
+#else
+static int debug_io = 0;
+#endif
+
 
 static char message[132];
 
@@ -137,7 +143,7 @@ void tabopen_c(int *thandle,Const char *name,Const char *status,int *ncol, int *
 	      if (*cp=='|') nc++;
 	  }
 	  nh++;
-	  printf("Header %d: %s\n",nh,line);
+	  if (debug_io) printf("Header %d: %s\n",nh,line);
 	}
 	continue;
       }
@@ -147,7 +153,7 @@ void tabopen_c(int *thandle,Const char *name,Const char *status,int *ncol, int *
       nr++;
       if (iostat) break;
     }
-    printf("Found %d rows, and %d columns  (tno=%d)\n",nr,nc,tno);
+    if (debug_io) printf("Found %d rows, and %d columns  (tno=%d)\n",nr,nc,tno);
     tables[tno].nrow = nr;
     tables[tno].ncol = nc;
     *nrow = nr;
@@ -486,7 +492,7 @@ void tabgeta_c(int thandle, int row, char *data)
   nr = tables[thandle].nrow;
 
   if (row == -1) {
-    printf("HEAD1:%s\n",tables[thandle].head1);
+    if (debug_io) printf("HEAD1:%s\n",tables[thandle].head1);
     strcpy(data,tables[thandle].head1);
     return;
   }
