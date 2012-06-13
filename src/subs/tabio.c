@@ -452,6 +452,29 @@ void tabgetr_c(int thandle, int row, float *data)
   }
 }
 
+void tabgetd_c(int thandle, int row, double *data)
+{
+  int i,nc,nr;
+  char *cp, line[MAXLINELEN];
+
+  if (thandle<0) return;
+
+  nc = tables[thandle].ncol;
+  nr = tables[thandle].nrow;
+  if (row <= 0 || row > nr)
+    bugv_c('f',"Table access wrong row number %d [1..%d]",row,nr);
+
+  /* parse nc words and convert all to float */
+  strcpy(line,tables[thandle].rows[row-1]);
+  cp = line;
+  while (*cp && isspace(*cp)) cp++;
+  for(i=0; i<nc; i++) {
+    data[i] = atof(cp);
+    while(*cp && !isspace(*cp)) cp++;
+    while(*cp && isspace(*cp)) cp++;
+  }
+}
+
 void tabgeta_c(int thandle, int row, char *data)
 {
   int i,nc,nr;

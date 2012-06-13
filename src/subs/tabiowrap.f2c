@@ -65,6 +65,11 @@ fortran subroutine tabgetr(integer tno, integer row, real data)
   tabgetr_c(tno.val, row.val, data.addr);
 }
 
+fortran subroutine tabgetd(integer tno, integer row, double data)
+{
+  tabgetd_c(tno.val, row.val, data.addr);
+}
+
 fortran subroutine tabgeta(integer tno, integer row, character data)
 {
   tabgeta_c(tno.val, row.val, data.zterm);
