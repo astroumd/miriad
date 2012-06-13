@@ -323,7 +323,7 @@ c     hardcoded for marsTB/table
       delta = val2(1)-val1(1)
       mjd1 = val1(1)
       j = dint((jday-2400000.5d0-mjd1)/delta)+1
-      write(*,*) 'datej:',j,mjd1,delta
+      write(*,*) 'datej:',j,mjd1,jday,delta
       if ((j.le.0).or.(j.gt.nrow)) call 
      -   bug('f','Date appears to be outside allowed range')
 c     get the two that bracked the requested date
@@ -361,7 +361,7 @@ c-----------------------------------------------------------------------
       subroutine marsmod2(jday,freq,tb,marstab)
       implicit none
       double precision jday
-      real freq,tb,delta
+      real freq,tb
       character marstab*(*)
 c
 c Interpolates in table for frequency and date
@@ -369,32 +369,31 @@ c
       integer MTAB,FTAB
       parameter (MTAB=226,FTAB=10)
 
-      double precision frmod(FTAB), tst(FTAB), seval,mjd1
+      double precision frmod(FTAB), tst(FTAB), seval,mjd1,delta
       integer i,j,tno,ncol,nrow
-      real date(MTAB),tbmod(FTAB,MTAB),tb1,tb2,val1(FTAB+1),val2(FTAB+1)
-      double precision b1(FTAB),c1(FTAB),d1(FTAB)
-      double precision b2(FTAB),c2(FTAB),d2(FTAB)
+      real date(MTAB),tbmod(FTAB,MTAB),tb1,tb2
+      double precision b1(FTAB),c1(FTAB),d1(FTAB),val1(FTAB+1)
+      double precision b2(FTAB),c2(FTAB),d2(FTAB),val2(FTAB+1)
       character head1*128
       data frmod /26.0,31.0,36.0,85.0,90.0,95.0,100.0,105.0,110.0,115.0/
 
 c     hardcoded for marsTB2/table
       nrow=35065
-c     marsTB3 is 96433
       call tabopen(tno ,marstab,'old',ncol,nrow)
       write(*,*) 'Found ',nrow,' data rows ',ncol,' cols, tno=',tno
-      call tabgetr(tno, 1, val1)
-      call tabgetr(tno, 2, val2)
+      call tabgetd(tno, 1, val1)
+      call tabgetd(tno, 2, val2)
       write(*,*) 'F:',(val1(i),i=1,ncol)
       write(*,*) 'F:',(val2(i),i=1,ncol)
       delta = val2(1)-val1(1)
       mjd1 = val1(1)
       j = dint((jday-2400000.5d0-mjd1)/delta)+1
-      write(*,*) 'datej:',j,mjd1,delta
+      write(*,*) 'datej:',j,mjd1,jday,delta
       if ((j.le.0).or.(j.gt.nrow)) call 
      -   bug('f','Date appears to be outside allowed range')
 c     get the two that bracked the requested date
-      call tabgetr(tno, j,   val1)
-      call tabgetr(tno, j+1, val2)
+      call tabgetd(tno, j,   val1)
+      call tabgetd(tno, j+1, val2)
       write(*,*) 'C:',(val1(i),i=1,ncol)
       write(*,*) 'C:',(val2(i),i=1,ncol)
 c     grab the header and derive frmod values
@@ -427,7 +426,7 @@ c-----------------------------------------------------------------------
       subroutine marsmod3(jday,freq,tb,marstab)
       implicit none
       double precision jday
-      real freq,tb,delta
+      real freq,tb
       character marstab*(*)
 c
 c Interpolates in table for frequency and date
@@ -435,11 +434,11 @@ c
       integer MTAB,FTAB
       parameter (MTAB=226,FTAB=7)
 
-      double precision frmod(FTAB), tst(FTAB), seval,mjd1
+      double precision frmod(FTAB), tst(FTAB), seval,mjd1,delta
       integer i,j,tno,ncol,nrow
-      real date(MTAB),tbmod(FTAB,MTAB),tb1,tb2,val1(FTAB+1),val2(FTAB+1)
-      double precision b1(FTAB),c1(FTAB),d1(FTAB)
-      double precision b2(FTAB),c2(FTAB),d2(FTAB)
+      real date(MTAB),tbmod(FTAB,MTAB),tb1,tb2
+      double precision b1(FTAB),c1(FTAB),d1(FTAB),val1(FTAB+1)
+      double precision b2(FTAB),c2(FTAB),d2(FTAB),val2(FTAB+1)
       character head1*128
       data frmod /30.0,80.0,115.0,150.0,200.0,230.0,260.0/
 
@@ -447,19 +446,19 @@ c     hardcoded for marsTB3/table
       nrow=96432
       call tabopen(tno ,marstab,'old',ncol,nrow)
       write(*,*) 'Found ',nrow,' data rows ',ncol,' cols, tno=',tno
-      call tabgetr(tno, 1, val1)
-      call tabgetr(tno, 2, val2)
+      call tabgetd(tno, 1, val1)
+      call tabgetd(tno, 2, val2)
       write(*,*) 'F:',(val1(i),i=1,ncol)
       write(*,*) 'F:',(val2(i),i=1,ncol)
       delta = val2(1)-val1(1)
       mjd1 = val1(1)
       j = dint((jday-2400000.5d0-mjd1)/delta)+1
-      write(*,*) 'datej:',j,mjd1,delta
+      write(*,*) 'datej:',j,mjd1,jday,delta
       if ((j.le.0).or.(j.gt.nrow)) call 
      -   bug('f','Date appears to be outside allowed range')
 c     get the two that bracked the requested date
-      call tabgetr(tno, j,   val1)
-      call tabgetr(tno, j+1, val2)
+      call tabgetd(tno, j,   val1)
+      call tabgetd(tno, j+1, val2)
       write(*,*) 'C:',(val1(i),i=1,ncol)
       write(*,*) 'C:',(val2(i),i=1,ncol)
 c     grab the header and derive frmod values
