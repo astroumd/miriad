@@ -2,30 +2,29 @@ c************************************************************************
 	program marstb
 	implicit none
 c
-c= marstb -- Print brightness temperature of Mars from Caltech thermal
-c            model (courtesy of Mark Gurwell).
-c            Valid from 1999 Aug 1 to 2014 Dec 25.
+c= marstb -- Print brightness temperature of Mars 
 c& smw
 c: utility
 c+
-c	MARSTB is a MIRIAD task to report the brightness temperature of
+c     MARSTB is a MIRIAD task to report the brightness temperature of
 c     Mars from the Caltech thermal model (courtesy of Mark Gurwell)
-c     Original marstb was valid 
+c
 c     MarsTB  4 freqs, 226 entries, in 25 day increments
+c             valid 1999 Aug 1 to 2014 Dec 25
 c     MarsTB2 10 freqs, ranges from 26GHz to 115GHz, in 6 hour increments.
-c     MarsTB3 ranges from 
+c
+c     MarsTB3 ranges from 2010 to 2020 in 1 hour increments, 7 freqs for CARMA
 c
 c
 c@ epoch
 c	The time (UTC) for which information is required, in standard
-c	Miriad time format yymmmdd:hh:mm:ss. No default.
+c	MIRIAD time format yymmmdd:hh:mm:ss. No default.
 c@ freq
 c	The frequency, in GHz. Default is 100 GHz.
 c@ table
-c       Optional table, to override the simple internal table
-c       which is only valid until 2014.
+c       Optional table, to override the internal table (valid until 2014)
 c       Additional tables will need to be obtained and copied
-c       into $MIRCAT
+c       into $MIRCAT. Typically marstb, marstb2 and marstb3
 c@ mode
 c       Don't ask, it's a hack. Table mode (1=marstb, 2=marst2, 3=marstb3)
 c--
@@ -36,9 +35,10 @@ c    pjt  14sep11 Optional table
 c    pjt  12jun12 Added more table support, but a quick hack
 c------------------------------------------------------------------------
       character version*(*)
-      parameter(version = 'MARSTB: version 12-jun-2012')
+      parameter(version = 'MARSTB: version 13-jun-2012')
 c
 c  jy2k is JD for 0 Jan 2000 (i.e. 31 Dec 1999); file is in MJD.
+c  which is jd-2400000.5
 c
 	double precision jy2k
 	parameter(jy2k=2451543.5d0)
@@ -46,7 +46,7 @@ c
 	double precision jday
 	integer np,nout,i,mode
 	real freq,tb
-	character line*64,table*256
+	character line*128,table*256
 	logical ok
 c
 	call output(version)
@@ -302,7 +302,7 @@ c
 c Interpolates in table for frequency and date
 c
       integer MTAB,FTAB
-      parameter (MTAB=226,FTAB=4)
+      parameter (MTAB=1,FTAB=4)
 
       double precision frmod(FTAB), tst(FTAB), seval,mjd1
       integer i,j,tno,ncol,nrow
@@ -315,22 +315,25 @@ c
 c     hardcoded for marsTB/table
       nrow=226
       call tabopen(tno ,marstab,'old',ncol,nrow)
-      write(*,*) 'Found ',nrow,' data rows ',ncol,' cols, tno=',tno
       call tabgetr(tno, 1, val1)
       call tabgetr(tno, 2, val2)
+#ifdef DEBUG
+      write(*,*) 'Found ',nrow,' data rows ',ncol,' cols, tno=',tno
       write(*,*) 'F:',(val1(i),i=1,ncol)
       write(*,*) 'F:',(val2(i),i=1,ncol)
+#endif
       delta = val2(1)-val1(1)
       mjd1 = val1(1)
       j = dint((jday-2400000.5d0-mjd1)/delta)+1
-      write(*,*) 'datej:',j,mjd1,jday,delta
       if ((j.le.0).or.(j.gt.nrow)) call 
      -   bug('f','Date appears to be outside allowed range')
+      if (freq.lt.frmod(1).or.freq.gt.frmod(FTAB)) then
+	 write(*,*) 'Freq min/max=',frmod(1),frmod(FTAB)
+	 call bug('f','Illegal frequency range')
+      endif
 c     get the two that bracked the requested date
       call tabgetr(tno, j,   val1)
       call tabgetr(tno, j+1, val2)
-      write(*,*) 'C:',(val1(i),i=1,ncol)
-      write(*,*) 'C:',(val2(i),i=1,ncol)
 c     grab the header and derive frmod values
       call tabgeta(tno, -1, head1)
 c	
@@ -349,7 +352,12 @@ c
 c linear interpolation to actual date
       tb = tb1 + (jday-2400000.5d0-mjd1-(j-1)*delta)/delta*(tb2-tb1)
 
-	write(*,*) 'TB:',j,tb1,tb2,tb
+#ifdef DEBUG
+      write(*,*) 'datej:',j,mjd1,jday,delta
+      write(*,*) 'C:',(val1(i),i=1,ncol)
+      write(*,*) 'C:',(val2(i),i=1,ncol)
+      write(*,*) 'TB:',j,tb1,tb2,tb
+#endif
 
       call tabclose(tno)
 
@@ -367,7 +375,7 @@ c
 c Interpolates in table for frequency and date
 c
       integer MTAB,FTAB
-      parameter (MTAB=226,FTAB=10)
+      parameter (MTAB=1,FTAB=10)
 
       double precision frmod(FTAB), tst(FTAB), seval,mjd1,delta
       integer i,j,tno,ncol,nrow
@@ -380,22 +388,26 @@ c
 c     hardcoded for marsTB2/table
       nrow=35065
       call tabopen(tno ,marstab,'old',ncol,nrow)
-      write(*,*) 'Found ',nrow,' data rows ',ncol,' cols, tno=',tno
       call tabgetd(tno, 1, val1)
       call tabgetd(tno, 2, val2)
+#ifdef DEBUG
+      write(*,*) 'Found ',nrow,' data rows ',ncol,' cols, tno=',tno
       write(*,*) 'F:',(val1(i),i=1,ncol)
       write(*,*) 'F:',(val2(i),i=1,ncol)
+#endif
       delta = val2(1)-val1(1)
       mjd1 = val1(1)
       j = dint((jday-2400000.5d0-mjd1)/delta)+1
-      write(*,*) 'datej:',j,mjd1,jday,delta
       if ((j.le.0).or.(j.gt.nrow)) call 
      -   bug('f','Date appears to be outside allowed range')
+      if (freq.lt.frmod(1).or.freq.gt.frmod(FTAB)) then
+	 write(*,*) 'Freq min/max=',frmod(1),frmod(FTAB)
+	 call bug('f','Illegal frequency range')
+      endif
+
 c     get the two that bracked the requested date
       call tabgetd(tno, j,   val1)
       call tabgetd(tno, j+1, val2)
-      write(*,*) 'C:',(val1(i),i=1,ncol)
-      write(*,*) 'C:',(val2(i),i=1,ncol)
 c     grab the header and derive frmod values
       call tabgeta(tno, -1, head1)
 c	
@@ -414,8 +426,12 @@ c
 c linear interpolation to actual date
       tb = tb1 + (jday-2400000.5d0-mjd1-(j-1)*delta)/delta*(tb2-tb1)
 
-	write(*,*) 'TB:',j,tb1,tb2,tb
-
+#ifdef DEBUG
+      write(*,*) 'datej:',j,mjd1,jday,delta
+      write(*,*) 'C:',(val1(i),i=1,ncol)
+      write(*,*) 'C:',(val2(i),i=1,ncol)
+      write(*,*) 'TB:',j,tb1,tb2,tb
+#endif
       call tabclose(tno)
       return
       end
@@ -432,7 +448,7 @@ c
 c Interpolates in table for frequency and date
 c
       integer MTAB,FTAB
-      parameter (MTAB=226,FTAB=7)
+      parameter (MTAB=1,FTAB=7)
 
       double precision frmod(FTAB), tst(FTAB), seval,mjd1,delta
       integer i,j,tno,ncol,nrow
@@ -445,22 +461,25 @@ c
 c     hardcoded for marsTB3/table
       nrow=96432
       call tabopen(tno ,marstab,'old',ncol,nrow)
-      write(*,*) 'Found ',nrow,' data rows ',ncol,' cols, tno=',tno
       call tabgetd(tno, 1, val1)
       call tabgetd(tno, 2, val2)
+#ifdef DEBUG
+      write(*,*) 'Found ',nrow,' data rows ',ncol,' cols, tno=',tno
       write(*,*) 'F:',(val1(i),i=1,ncol)
       write(*,*) 'F:',(val2(i),i=1,ncol)
+#endif
       delta = val2(1)-val1(1)
       mjd1 = val1(1)
       j = dint((jday-2400000.5d0-mjd1)/delta)+1
-      write(*,*) 'datej:',j,mjd1,jday,delta
       if ((j.le.0).or.(j.gt.nrow)) call 
      -   bug('f','Date appears to be outside allowed range')
+      if (freq.lt.frmod(1).or.freq.gt.frmod(FTAB)) then
+	 write(*,*) 'Freq min/max=',frmod(1),frmod(FTAB)
+	 call bug('f','Illegal frequency range')
+      endif
 c     get the two that bracked the requested date
       call tabgetd(tno, j,   val1)
       call tabgetd(tno, j+1, val2)
-      write(*,*) 'C:',(val1(i),i=1,ncol)
-      write(*,*) 'C:',(val2(i),i=1,ncol)
 c     grab the header and derive frmod values
       call tabgeta(tno, -1, head1)
 c	
@@ -479,8 +498,12 @@ c
 c linear interpolation to actual date
       tb = tb1 + (jday-2400000.5d0-mjd1-(j-1)*delta)/delta*(tb2-tb1)
 
-	write(*,*) 'TB:',j,tb1,tb2,tb
-
+#ifdef DEBUG
+      write(*,*) 'datej:',j,mjd1,jday,delta
+      write(*,*) 'C:',(val1(i),i=1,ncol)
+      write(*,*) 'C:',(val2(i),i=1,ncol)
+      write(*,*) 'TB:',j,tb1,tb2,tb
+#endif
 
 
 
