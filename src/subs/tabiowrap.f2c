@@ -58,3 +58,14 @@ fortran subroutine tabwca( integer tno, integer col, character value)
 {
   tabwca_c(tno.val,col.val,value.zterm);
 }
+
+
+fortran subroutine tabgetr(integer tno, integer row, real data)
+{
+  tabgetr_c(tno.val, row.val, data.addr);
+}
+
+fortran subroutine tabgeta(integer tno, integer row, character data)
+{
+  tabgeta_c(tno.val, row.val, data.zterm);
+}

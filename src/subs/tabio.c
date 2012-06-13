@@ -8,9 +8,11 @@
 /*  History:								*/
 /*    pjt   9aug07   Original version, only writes tables               */
 /*    pjt   1oct08   Allow bypassing all I/O if tabname blank           */
+/*    pjt  14sep11   some reading options                               */
+/*    pjt  12jun12   hacked in some reading for marstb                  */
 /*									*/
 /*  TODO:						        	*/
-/*    reading?						        	*/
+/*    finish formal reading				        	*/
 /*    formatting options       			        	        */
 /*----------------------------------------------------------------------*/
 
@@ -21,6 +23,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include <sys/types.h>
 #include <unistd.h>
 
@@ -38,21 +41,27 @@
                          }
 #define ERROR(sev,a) bug_c(sev,((void)sprintf a,message))
 
+#define MAXLINELEN 256
+
 
 static char message[132];
 
 static struct { 
   int mode;            /* 0=fully static   1=row wise (OK)   2=col wise (not OK yet) */
+  int status;          /* 0=old   1=new   2=append */
   int nrow, ncol;      /* as initialize with */
   int maxrow, maxcol;  /* global count */
   int row;             /* current row being operated on */
   int table;           /* handle to the actual table */
+  char *head1;         /* #| column names */
+  char *head2;         /* #| column types */
+  char *head3;         /* #| column units */
   int *ncols;          /* if we need to keep track of # rows/column -- not used */
   int *nrows;          /* if we need to keep track of # cols/row    -- not used */
   char **fmt;          /* format per column -- not used */
   char ***data;        /* memory image of the table:  data[row][col] */
   char **datarow;      /* memory image of a single row datarow[col] */
-  
+  char **rows;         /* pointers to all rows */
 } tables[MAXOPEN];
 
 static void tab_checkcol(int thandle, int col);
@@ -86,8 +95,9 @@ void tabopen_c(int *thandle,Const char *name,Const char *status,int *ncol, int *
                 A negative number is passed if file is blank, no I/O done */
 /*----------------------------------------------------------------------*/
 {
-  int iostat,access,tno,i;
-  char *stat,*mode;
+  int iostat,access,tno,i,nc,nr,nh;
+  char *stat,*mode,*cp;
+  char line[MAXLINELEN];
 
   if (strlen(name) == 0 || !strcmp(name," ")){
     *thandle = -1;
@@ -109,11 +119,46 @@ void tabopen_c(int *thandle,Const char *name,Const char *status,int *ncol, int *
 
   /* only writing allowed now */
 
-  if (access == OLD) 
-    bug_c('f',"Table I/O can only write for now");
-
-  tables[tno].nrow = *nrow;
-  tables[tno].ncol = *ncol;
+  if (access == OLD)  {
+    tables[tno].status = 0;
+    nc = nr = nh = 0;
+    if (*nrow > 0) {
+      tables[tno].rows = (char **) calloc( (*nrow) , sizeof(char **));
+    }
+    for (;;) {
+      hreada_c(tables[tno].table,line,MAXLINELEN,&iostat);   
+      if (line[0] == '#') {
+	if (line[1] == '|') {
+	  if (nh==0) tables[tno].head1 = strdup(line);
+	  if (nh==1) tables[tno].head2 = strdup(line);
+	  if (nh==2) tables[tno].head3 = strdup(line);
+	  if (nh==0) {
+	    for(cp=line; *cp; cp++)
+	      if (*cp=='|') nc++;
+	  }
+	  nh++;
+	  printf("Header %d: %s\n",nh,line);
+	}
+	continue;
+      }
+      if (*nrow > 0 || nr < *nrow) {
+	tables[tno].rows[nr] = strdup(line);
+      }
+      nr++;
+      if (iostat) break;
+    }
+    printf("Found %d rows, and %d columns  (tno=%d)\n",nr,nc,tno);
+    tables[tno].nrow = nr;
+    tables[tno].ncol = nc;
+    *nrow = nr;
+    *ncol = nc;
+    *thandle = tno;
+    return;
+  } else {
+    tables[tno].status = 1;     /* no support for append mode (status=2) yet */
+    tables[tno].nrow = *nrow;
+    tables[tno].ncol = *ncol;
+  }
   tables[tno].maxrow = 0;
   tables[tno].maxcol = 0;
   tables[tno].row  = 0;
@@ -126,6 +171,7 @@ void tabopen_c(int *thandle,Const char *name,Const char *status,int *ncol, int *
   if (*nrow == 0)  {
     tables[tno].mode = 1;
   }
+
 
   if (tables[tno].mode == 0) {    
     /* allocate a full table for random access */
@@ -153,7 +199,7 @@ void tabsetr_c(int thandle, int row)
 	subroutine tabsetr(tno,row)
 	implicit none
 
-This sets the current row number. It not usesd, the row number might be
+This sets the current row number. It not used, the row number might be
 0 and illegal.
 
   Input:
@@ -256,6 +302,13 @@ void tabclose_c(int thandle)
 
   if (thandle<0) return;
 
+  if (tables[thandle].status == 0) {   /* read only mode */
+    // TODO: free some memory
+    hdaccess_c(tables[thandle].table,&iostat);			check(iostat);
+    hclose_c(thandle);
+    return;
+  }
+
   /* write table */
 
   if (tables[thandle].mode == 0) {
@@ -298,7 +351,7 @@ void tabclose_c(int thandle)
 
 /************************************************************************/
 void tabwcr_c(int thandle,int col,float value)
-/**xyread -- Write a real value to a column in a table             	*/
+/**tabwcr -- Write a real value to a column in a table             	*/
 /*:image-i/o								*/
 /*+ FORTRAN call sequence:
 
@@ -373,6 +426,48 @@ void tabwca_c(int thandle,int col,char *value)
     tables[thandle].data[tables[thandle].row - 1][col-1] = strdup(value);
   else if (tables[thandle].mode == 1)
     tables[thandle].datarow[col-1] = strdup(value);
+}
+
+
+void tabgetr_c(int thandle, int row, float *data)
+{
+  int i,nc,nr;
+  char *cp, line[MAXLINELEN];
+
+  if (thandle<0) return;
+
+  nc = tables[thandle].ncol;
+  nr = tables[thandle].nrow;
+  if (row <= 0 || row > nr)
+    bugv_c('f',"Table access wrong row number %d [1..%d]",row,nr);
+
+  /* parse nc words and convert all to float */
+  strcpy(line,tables[thandle].rows[row-1]);
+  cp = line;
+  while (*cp && isspace(*cp)) cp++;
+  for(i=0; i<nc; i++) {
+    data[i] = atof(cp);
+    while(*cp && !isspace(*cp)) cp++;
+    while(*cp && isspace(*cp)) cp++;
+  }
+}
+
+void tabgeta_c(int thandle, int row, char *data)
+{
+  int i,nc,nr;
+  char *cp, line[MAXLINELEN];
+
+  if (thandle<0) return;
+
+  nc = tables[thandle].ncol;
+  nr = tables[thandle].nrow;
+
+  if (row == -1) {
+    printf("HEAD1:%s\n",tables[thandle].head1);
+    strcpy(data,tables[thandle].head1);
+    return;
+  }
+  bugv_c('f',"tabgeta: row=%d not implemented yet",row);
 }
 
 
