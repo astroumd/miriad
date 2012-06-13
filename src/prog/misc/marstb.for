@@ -10,19 +10,33 @@ c: utility
 c+
 c	MARSTB is a MIRIAD task to report the brightness temperature of
 c     Mars from the Caltech thermal model (courtesy of Mark Gurwell)
+c     Original marstb was valid 
+c     MarsTB  4 freqs, 226 entries, in 25 day increments
+c     MarsTB2 10 freqs, ranges from 26GHz to 115GHz, in 6 hour increments.
+c     MarsTB3 ranges from 
+c
 c
 c@ epoch
 c	The time (UTC) for which information is required, in standard
 c	Miriad time format yymmmdd:hh:mm:ss. No default.
 c@ freq
 c	The frequency, in GHz. Default is 100 GHz.
+c@ table
+c       Optional table, to override the simple internal table
+c       which is only valid until 2014.
+c       Additional tables will need to be obtained and copied
+c       into $MIRCAT
+c@ mode
+c       Don't ask, it's a hack. Table mode (1=marstb, 2=marst2, 3=marstb3)
 c--
 c  History
 c    smw  08apr15 First version using 1999 Gurwell file good to 2014.
 c    pjt  10apr03 Fix minor fortran dialect issue 
+c    pjt  14sep11 Optional table
+c    pjt  12jun12 Added more table support, but a quick hack
 c------------------------------------------------------------------------
-	character version*(*)
-      parameter(version = 'MARSTB: version 5-may-2008')
+      character version*(*)
+      parameter(version = 'MARSTB: version 12-jun-2012')
 c
 c  jy2k is JD for 0 Jan 2000 (i.e. 31 Dec 1999); file is in MJD.
 c
@@ -30,22 +44,33 @@ c
 	parameter(jy2k=2451543.5d0)
 c
 	double precision jday
-	integer np,nout,i
+	integer np,nout,i,mode
 	real freq,tb
-	character line*64
+	character line*64,table*256
 	logical ok
 c
 	call output(version)
 	call keyini
 	call keyt('epoch',jday,'atime',0.d0)
-	if(jday.lt.1)call bug('f','An epoch must be given')
+	if(jday.lt.1)call bug('f',
+     *                 'An epoch [yymmmdd:hh:mm:ss] must be given ')
 	call keyr('freq',freq,100.0)
+	call keya('table',table,' ')
+	call keyi('mode',mode,2)
 	call keyfin
 c
-      call marsmod(jday,freq,tb)
-      write(line,'(a,f5.1,a,f7.3)') 
+	if (table .eq. ' ') then
+	   call marsmod(jday,freq,tb)
+	else if (mode.eq.1) then
+	   call marsmod1(jday,freq,tb,table)
+	else if (mode.eq.2) then
+	   call marsmod2(jday,freq,tb,table)
+	else if (mode.eq.3) then
+	   call marsmod3(jday,freq,tb,table)
+	endif
+	write(line,'(a,f5.1,a,f7.3)') 
      -           'Brightness temperature at ',freq,' GHz: ',tb
-      call output(line)
+        call output(line)
 c
 	end
 c------------------------------------------------------------------------
@@ -54,9 +79,11 @@ c------------------------------------------------------------------------
 c
 c Interpolates in table for frequency and date
 c
+      integer MTAB
+      parameter (MTAB=226)
       double precision jday, frmod(4), tst(4), seval
       integer i,j
-      real freq,tb,date(226),tbmod(4,226),tb1,tb2
+      real freq,tb,date(MTAB),tbmod(4,MTAB),tb1,tb2
       double precision b1(4),c1(4),d1(4),b2(4),c2(4),d2(4)
       data frmod /43.d0,115.d0,230.d0,345.d0/
 
@@ -95,7 +122,7 @@ c starting date is 01-AUG-1999; end is 25-DEC-2014, interval is 25 days
      -         56641.0,56666.0,56691.0,56716.0,56741.0,56766.0,56791.0,
      -         56816.0,56841.0,56866.0,56891.0,56916.0,56941.0,56966.0,
      -         56991.0,57016.0/
-      data (tbmod(1,i), i=1,226) /
+      data (tbmod(1,i), i=1,MTAB) /
      -         192.701,192.810,193.888,195.664,198.179,201.626,205.716,
      -         208.261,207.531,205.289,202.219,199.130,196.668,194.788,
      -         193.662,192.970,193.277,194.254,195.518,197.119,198.416,
@@ -129,7 +156,7 @@ c starting date is 01-AUG-1999; end is 25-DEC-2014, interval is 25 days
      -         195.977,196.867,197.719,198.605,198.487,197.195,195.333,
      -         194.108,193.412,192.999,192.988,193.824,195.363,197.480,
      -         200.452,204.100/
-      data (tbmod(2,i), i=1,226) /
+      data (tbmod(2,i), i=1,MTAB) /
      -         195.434,195.663,197.069,199.169,201.967,205.915,210.562,
      -         213.420,213.126,211.435,208.847,206.138,203.937,202.188,
      -         201.223,200.497,200.931,202.082,203.481,205.113,206.473,
@@ -163,7 +190,7 @@ c starting date is 01-AUG-1999; end is 25-DEC-2014, interval is 25 days
      -         203.763,204.666,205.654,206.798,206.526,203.747,199.742,
      -         197.164,195.992,195.653,195.988,197.312,199.417,201.956,
      -         205.321,209.637/
-      data (tbmod(3,i), i=1,226) /
+      data (tbmod(3,i), i=1,MTAB) /
      -         199.419,199.781,201.426,203.730,206.646,210.836,215.741,
      -         218.803,218.857,217.579,215.345,212.872,210.775,208.996,
      -         207.962,207.032,207.320,208.341,209.607,211.099,212.384,
@@ -197,7 +224,7 @@ c starting date is 01-AUG-1999; end is 25-DEC-2014, interval is 25 days
      -         209.292,210.189,211.375,212.962,213.087,209.818,204.593,
      -         201.169,199.732,199.533,200.180,201.873,204.356,207.127,
      -         210.678,215.304/
-      data (tbmod(4,i),i=1,226) /
+      data (tbmod(4,i),i=1,MTAB) /
      -         201.979,202.410,204.164,206.544,209.484,213.753,218.735,
      -         221.868,222.061,220.959,218.868,216.487,214.418,212.595,
      -         211.482,210.407,210.571,211.464,212.607,213.989,215.195,
@@ -234,7 +261,8 @@ c starting date is 01-AUG-1999; end is 25-DEC-2014, interval is 25 days
 
 c use 25-day interval to get the index for the date
       
-      j = dint((jday-2451391.5d0)/25.0d0)+1
+c      j = dint((jday-2451391.5d0)/25.0d0)+1
+      j = dint((jday-2400000.5d0-51391.0)/25.0d0)+1
 
 c abort if outside time range
 
@@ -261,4 +289,205 @@ c get spline coefficients for preceding and following model dates
 c linear interpolation to actual date
       tb = tb1 + (jday-2451391.5d0-(j-1)*25.0d0)/25.0d0*(tb2-tb1)
 
+      end
+
+c-----------------------------------------------------------------------
+
+      subroutine marsmod1(jday,freq,tb,marstab)
+      implicit none
+      double precision jday
+      real freq,tb,delta
+      character marstab*(*)
+c
+c Interpolates in table for frequency and date
+c
+      integer MTAB,FTAB
+      parameter (MTAB=226,FTAB=4)
+
+      double precision frmod(FTAB), tst(FTAB), seval,mjd1
+      integer i,j,tno,ncol,nrow
+      real date(MTAB),tbmod(FTAB,MTAB),tb1,tb2,val1(FTAB+1),val2(FTAB+1)
+      double precision b1(FTAB),c1(FTAB),d1(FTAB)
+      double precision b2(FTAB),c2(FTAB),d2(FTAB)
+      character head1*128
+      data frmod /43.d0,115.d0,230.d0,345.d0/
+
+c     hardcoded for marsTB/table
+      nrow=226
+      call tabopen(tno ,marstab,'old',ncol,nrow)
+      write(*,*) 'Found ',nrow,' data rows ',ncol,' cols, tno=',tno
+      call tabgetr(tno, 1, val1)
+      call tabgetr(tno, 2, val2)
+      write(*,*) 'F:',(val1(i),i=1,ncol)
+      write(*,*) 'F:',(val2(i),i=1,ncol)
+      delta = val2(1)-val1(1)
+      mjd1 = val1(1)
+      j = dint((jday-2400000.5d0-mjd1)/delta)+1
+      write(*,*) 'datej:',j,mjd1,delta
+      if ((j.le.0).or.(j.gt.nrow)) call 
+     -   bug('f','Date appears to be outside allowed range')
+c     get the two that bracked the requested date
+      call tabgetr(tno, j,   val1)
+      call tabgetr(tno, j+1, val2)
+      write(*,*) 'C:',(val1(i),i=1,ncol)
+      write(*,*) 'C:',(val2(i),i=1,ncol)
+c     grab the header and derive frmod values
+      call tabgeta(tno, -1, head1)
+c	
+
+      do i=1,FTAB
+         tst(i) = val1(i+1)
+      enddo
+      call spline(FTAB, frmod, tst, b1, c1, d1)
+      tb1 = seval(FTAB, dble(freq), frmod, tst, b1, c1, d1)
+      do i=1,FTAB
+         tst(i) = val2(i+1)
+      enddo
+      call spline(FTAB, frmod, tst, b2, c2, d2)
+      tb2 = seval(FTAB, dble(freq), frmod, tst, b2, c2, d2)
+
+c linear interpolation to actual date
+      tb = tb1 + (jday-2400000.5d0-mjd1-(j-1)*delta)/delta*(tb2-tb1)
+
+	write(*,*) 'TB:',j,tb1,tb2,tb
+
+      call tabclose(tno)
+
+      return
+      end
+
+c-----------------------------------------------------------------------
+
+      subroutine marsmod2(jday,freq,tb,marstab)
+      implicit none
+      double precision jday
+      real freq,tb,delta
+      character marstab*(*)
+c
+c Interpolates in table for frequency and date
+c
+      integer MTAB,FTAB
+      parameter (MTAB=226,FTAB=10)
+
+      double precision frmod(FTAB), tst(FTAB), seval,mjd1
+      integer i,j,tno,ncol,nrow
+      real date(MTAB),tbmod(FTAB,MTAB),tb1,tb2,val1(FTAB+1),val2(FTAB+1)
+      double precision b1(FTAB),c1(FTAB),d1(FTAB)
+      double precision b2(FTAB),c2(FTAB),d2(FTAB)
+      character head1*128
+      data frmod /26.0,31.0,36.0,85.0,90.0,95.0,100.0,105.0,110.0,115.0/
+
+c     hardcoded for marsTB2/table
+      nrow=35065
+c     marsTB3 is 96433
+      call tabopen(tno ,marstab,'old',ncol,nrow)
+      write(*,*) 'Found ',nrow,' data rows ',ncol,' cols, tno=',tno
+      call tabgetr(tno, 1, val1)
+      call tabgetr(tno, 2, val2)
+      write(*,*) 'F:',(val1(i),i=1,ncol)
+      write(*,*) 'F:',(val2(i),i=1,ncol)
+      delta = val2(1)-val1(1)
+      mjd1 = val1(1)
+      j = dint((jday-2400000.5d0-mjd1)/delta)+1
+      write(*,*) 'datej:',j,mjd1,delta
+      if ((j.le.0).or.(j.gt.nrow)) call 
+     -   bug('f','Date appears to be outside allowed range')
+c     get the two that bracked the requested date
+      call tabgetr(tno, j,   val1)
+      call tabgetr(tno, j+1, val2)
+      write(*,*) 'C:',(val1(i),i=1,ncol)
+      write(*,*) 'C:',(val2(i),i=1,ncol)
+c     grab the header and derive frmod values
+      call tabgeta(tno, -1, head1)
+c	
+
+      do i=1,FTAB
+         tst(i) = val1(i+1)
+      enddo
+      call spline(FTAB, frmod, tst, b1, c1, d1)
+      tb1 = seval(FTAB, dble(freq), frmod, tst, b1, c1, d1)
+      do i=1,FTAB
+         tst(i) = val2(i+1)
+      enddo
+      call spline(FTAB, frmod, tst, b2, c2, d2)
+      tb2 = seval(FTAB, dble(freq), frmod, tst, b2, c2, d2)
+
+c linear interpolation to actual date
+      tb = tb1 + (jday-2400000.5d0-mjd1-(j-1)*delta)/delta*(tb2-tb1)
+
+	write(*,*) 'TB:',j,tb1,tb2,tb
+
+      call tabclose(tno)
+      return
+      end
+c
+
+c-----------------------------------------------------------------------
+
+      subroutine marsmod3(jday,freq,tb,marstab)
+      implicit none
+      double precision jday
+      real freq,tb,delta
+      character marstab*(*)
+c
+c Interpolates in table for frequency and date
+c
+      integer MTAB,FTAB
+      parameter (MTAB=226,FTAB=7)
+
+      double precision frmod(FTAB), tst(FTAB), seval,mjd1
+      integer i,j,tno,ncol,nrow
+      real date(MTAB),tbmod(FTAB,MTAB),tb1,tb2,val1(FTAB+1),val2(FTAB+1)
+      double precision b1(FTAB),c1(FTAB),d1(FTAB)
+      double precision b2(FTAB),c2(FTAB),d2(FTAB)
+      character head1*128
+      data frmod /30.0,80.0,115.0,150.0,200.0,230.0,260.0/
+
+c     hardcoded for marsTB3/table
+      nrow=96432
+      call tabopen(tno ,marstab,'old',ncol,nrow)
+      write(*,*) 'Found ',nrow,' data rows ',ncol,' cols, tno=',tno
+      call tabgetr(tno, 1, val1)
+      call tabgetr(tno, 2, val2)
+      write(*,*) 'F:',(val1(i),i=1,ncol)
+      write(*,*) 'F:',(val2(i),i=1,ncol)
+      delta = val2(1)-val1(1)
+      mjd1 = val1(1)
+      j = dint((jday-2400000.5d0-mjd1)/delta)+1
+      write(*,*) 'datej:',j,mjd1,delta
+      if ((j.le.0).or.(j.gt.nrow)) call 
+     -   bug('f','Date appears to be outside allowed range')
+c     get the two that bracked the requested date
+      call tabgetr(tno, j,   val1)
+      call tabgetr(tno, j+1, val2)
+      write(*,*) 'C:',(val1(i),i=1,ncol)
+      write(*,*) 'C:',(val2(i),i=1,ncol)
+c     grab the header and derive frmod values
+      call tabgeta(tno, -1, head1)
+c	
+
+      do i=1,FTAB
+         tst(i) = val1(i+1)
+      enddo
+      call spline(FTAB, frmod, tst, b1, c1, d1)
+      tb1 = seval(FTAB, dble(freq), frmod, tst, b1, c1, d1)
+      do i=1,FTAB
+         tst(i) = val2(i+1)
+      enddo
+      call spline(FTAB, frmod, tst, b2, c2, d2)
+      tb2 = seval(FTAB, dble(freq), frmod, tst, b2, c2, d2)
+
+c linear interpolation to actual date
+      tb = tb1 + (jday-2400000.5d0-mjd1-(j-1)*delta)/delta*(tb2-tb1)
+
+	write(*,*) 'TB:',j,tb1,tb2,tb
+
+
+
+
+      call tabclose(tno)
+
+
+
+      return
       end
