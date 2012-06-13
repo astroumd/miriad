@@ -44,7 +44,7 @@ if (! -d $vis) then
   exit 1
 endif
 
-echo Running fringemap:
+echo Running fringemap mosaic=$mosaic:
 if ($mosaic == 0) then
   set mospars=(mosaic=0 imsize=256)
 else  
