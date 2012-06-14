@@ -104,6 +104,8 @@ xyio() {
   mkdir $1
   cd $1
   runt imgen out=map1 imsize=512 object=j1x spar=1,0,0,200,100,30
+  runt imgen out=cube0 imsize=32,32,32 object=gauss3 spar=1,0,0,16,5,10,0,5
+  runt imgen in=cube0 out=cube1 object=noise spar=0.1
   runt histo in=map1
   runt imlist in=map1 options=stat
   run imlist in=map1 options=data "region=relpix,box(-2,-2,2,2)"
