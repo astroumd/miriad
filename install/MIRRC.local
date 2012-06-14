@@ -8,7 +8,7 @@ if ($?TERM && ! $?MIRHELLO) then
       echo ""
       echo "MIRIAD version "`cat $MIR/VERSION`" [`cat $MIR/DATE`] loaded from MIR=$MIR"
       if ($?MIRTEL) then
-	echo "  Optimized for telescope=$MIRTEL"
+	echo "  Optimized for telescope=$MIRTEL, use the maxdim program to see all settings"
       endif
       echo ""
 endif
