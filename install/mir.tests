@@ -31,3 +31,10 @@ endif
 #  place a map closer to the pole to view the WCS grid
 imgen out=map0/map0big imsize=256 cell=120 radec=0,80
 cgdisp in=map0/map0big labtyp=hms,dms options=trlab,grid device=big.ps/ps
+
+#  create a cube with a gaussian blob in the center
+rm -rf cube0 cube1
+imgen out=cube0 imsize=32,32,32 object=gauss3 spar=1,0,0,16,5,10,0,5
+imgen in=cube0 out=cube1 object=noise spar=0.1
+gaufit2 in=cube1 'region=rel,box(-5,-5,5,5)' rmsest=0.1 options=average
+gaufit  in=cube1 'region=rel,box(-5,-5,5,5)' rmsest=0.1 options=average,findestim
