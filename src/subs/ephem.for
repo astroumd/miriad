@@ -28,6 +28,7 @@ c     1dec05 pjt  Added leapsec (the last?) for the coming newyear
 c    14feb06 pjt  oops, that's 2006, not 2005!!!! (Dan Marrone)
 c     9sep08 pjt  another leap second coming up after all
 c    22feb09 dhem fixed precision problem in epo2jul and jul2epo
+c    13jun12 mhw  Add leap second for 2012JUL01
 c
 c  General Reference:
 c    Explanatory Supplement to the Astronomical Almanac. 1993.
@@ -483,7 +484,7 @@ c------------------------------------------------------------------------
 c
 	logical init
 	integer NLEAP
-	parameter(NLEAP=24)
+	parameter(NLEAP=25)
 	character leap(NLEAP)*7
 	double precision dtime(NLEAP)
 	save init,leap
@@ -496,7 +497,7 @@ c
      *		   '77JAN01','78JAN01','79JAN01','80JAN01','81JUL01',
      *		   '82JUL01','83JUL01','85JUL01','88JAN01','90JAN01',
      *		   '91JAN01','92JUL01','93JUL01','94JUL01','96JAN01',
-     *		   '97JUL01','99JAN01','06JAN01','09JAN01'/
+     *		   '97JUL01','99JAN01','06JAN01','09JAN01','12JUL01'/
 c
 c  Initialise the table of leap seconds.
 c
