@@ -85,7 +85,8 @@ you type it on the Unix command line and in shell scripts:
 and the other employs the {\tt miriad} shell, an AIPS like program in which you set variables
 and run the task, one by one. The output also shows all program parameters, leaving them
 blank if the default is used. These examples are not cut-and-paste friendly, but perhaps
-read a little easier.
+read a little easier. This {\tt miriad} shell will also remember the previous setting of 
+your keywords, which can be a blessing as well as a curse.
 
 \begin{verbatim}
 Task:   uvlist
@@ -98,7 +99,8 @@ Task:   uvlist
   log      =  
 \end{verbatim}
 
-Within the MIRIAD shell, the parameters are global, when you switch a taskname, the same {\tt vis=} would appear in
+Within the {\tt miriad} shell, 
+the parameters are global, when you switch a taskname, the same {\tt vis=} would appear in
 this list if the new task also has this parameter. This concept doesn't quite apply to the Unix command line.
 
 

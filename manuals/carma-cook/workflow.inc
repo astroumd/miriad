@@ -23,7 +23,7 @@ The PI will normally have received an email with a ``{\tt CARMA track
 script and logfile, and it will remind you how to download the data
 from the CARMA data archive. This Chapter guides you through the steps
 of getting your data, inspecting the data quality, and calibration of
-the data. Some comments on mapping and Deconvolution (standard
+the data. Some comments on Mapping and Deconvolution (standard
 procedures in Miriad and covered in depth elsewhere) are in place as
 well.
 
@@ -607,8 +607,8 @@ and the array will be in some hybrid configuration) an antpos file
 will be available for each day. Please check the time validity
 carefully, either by filename, or comments in the file.\index{uvedit}
 
-Errors due to baselines can be seen as slopes in phase vs. time. See
-Figure ...
+Errors due to baselines can be seen as slopes in phase vs. time. 
+% See Figure ...
 
 You can also visually check how much the baselines changed from what is
 available in your visibility dataset, by comparing  the X-Y-Z values (in nsec)
@@ -802,6 +802,8 @@ An example of a birdie (often a antenna based single channel with high
 amplitudes) can be flagged easily with {\tt uvflag} using {\tt
 line=chan,}{\it n,start,width,step}:
 
+% DEM: Needs to be explained further.vector averaged number for all channels
+
 \footnotesize
 \begin{verbatim}
 
@@ -898,7 +900,62 @@ the recommended value is 5.
 
 %% show correlation axisrms vs. windwspeed?
 
+\subsection{bfmask based (un)flagging}
 
+In the spring 2012 CARMA added a new UV variable, {\tt bfmask}\index{bfmask}.
+This is an integer, one for each spectral window, where each bit
+in this mask identifies any of 31 possible failure modes why the data
+was flagged
+
+\footnotesize
+\begin{verbatim}
+
+  % uvlist ...  options=bfmask recnum=0 ...
+
+
+ Date               Vis # Source     bfmask    A1 A2 Pol  Itime  Dtime     dra(")  ddec(") Flag
+
+12MAY17:00:54:31.5    401 3C111    0x00000000  20 20 LL     9.7   10.0     0.00    0.00 T
+12MAY17:00:54:31.5    402 3C111    0x20000F0F  21 21 LL     0.0   10.0     0.00    0.00 F
+12MAY17:00:54:31.5    403 3C111    0x00000000  22 22 LL     9.7   10.0     0.00    0.00 T
+12MAY17:00:54:31.5    404 3C111    0x000000C0  23 23 LL     9.7   10.0     0.00    0.00 F
+12MAY17:00:54:31.5    405 3C111    0x10000000  16 17 LL     9.7   10.0     0.00    0.00 F
+
+
+\end{verbatim}
+\normalsize
+
+The task {\tt uvbflag} can be used to unflag records where a certain mask was set, and you
+would like to take the risk and unflag the data, as the underlying correllations might still
+be good (this is for you to decide). For example:
+
+
+\footnotesize
+\begin{verbatim}
+
+  % uvbflag vis=...   mask=3,4,11,12 flagval=unflag
+
+
+\end{verbatim}
+\normalsize
+
+
+or
+
+\footnotesize
+\begin{verbatim}
+
+  % uvflag vis=... flagval=flag
+  % uvbflag vis=...   mask=3,4,11,12 flagval=unflag
+
+
+\end{verbatim}
+\normalsize
+
+would first flag all data, and then unflag the data where originally the CARMA pipeline 
+deemed the antenna was not long enough on target, and flagged the correllation. This would
+be a way to find out how good the removed correllations were that were not on target and
+compare them to the ``best'' deemed values.
 
 \section{Calibration}
 
@@ -1556,7 +1613,9 @@ A special case has been reserved for the planet Mars, since it
 offers an option to
 fine-tune your calibration.  The Miriad task {\tt marstb} \index{marstb} 
 will interpolate a table of calculated values to a given frequency and date
-in the range 1999-2014, used as follows:
+in the range 1999-2014, used as follows:\footnote{The 2012 version of this program
+has new options to use two other tables with better models. CARMA Memo \#59 discusses
+this in more detail.}
 
 To find the model value:
 \footnotesize
@@ -1605,7 +1664,10 @@ should be more reliable than CARMA's previous model (10\% different in the
 example above from a month ago).
 
 
+\subsection{Polarization}
 
+CARMA is able to observe in either dual polarization (LL and RR) as well
+as full stokes (LL, RR, LR and RL).
 
 \section{Mapping and Deconvolution}
 

@@ -218,7 +218,7 @@ and because the source is extended, mosaicing is essential here:
 \end{verbatim}
 \normalsize
 
-
+% {\tt mossdi} should be used instead of {\tt clean} here, because
 
 A last note before you might get your fingers too wet: these commands are obviously
 tedious to type, and prone to typos.
