@@ -5,7 +5,7 @@ dnl   - deprecate this file (in 4.2.x?) since 4.1.x will introduce configure.ac
 dnl     in $MIR with the new (fully automake based) build system
 dnl ------------------------------------------------------------------------------------
 
-AC_MSG_CHECKING([MIRIAD4 config])
+dnl AC_MSG_CHECKING([MIRIAD4 config])
 
 AC_INIT(checklist)
 dnl AC_CONFIG_HEADER(config.h)
