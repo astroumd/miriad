@@ -1,0 +1,4 @@
+Sample scripts from the CARMA summerschool:
+
+carma_uv.csh       John Carpenter's 2011 script to reduce CARMA uv data
+carma_images.csh   John Carpenter's 2011 script to produce CARMA images
