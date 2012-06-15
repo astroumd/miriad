@@ -10,6 +10,7 @@
 /*    pjt  17jun02 MIR4 prototypes                                      */
 /************************************************************************/
 
+#include <sys/types.h>
 #include <string.h>
 
 void pad(char *string,int length)
@@ -26,7 +27,7 @@ void pad(char *string,int length)
   int len0,i;
   char *s;
 
-  len0 = strlen(string);
+  len0 = (int)strlen(string);
   s = string + len0;
   for(i=len0; i < length; i++) *s++ = ' ';
 }
@@ -67,7 +68,7 @@ char *zterm(char *string,int length)
 
   if(offset + length + 1 > CIRBUFSIZE) offset = 0;
   s = buffer + offset;
-  memcpy(s,string,length);
+  memcpy(s,string,(size_t)length);
   *(s+length) = 0;
   offset += length + 1;
   return(s);
