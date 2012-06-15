@@ -1,0 +1,63 @@
+Here we record the essentials in the differences between ATNF and CARMA versions
+of MIRIAD, and a 2012 attempt to re-align them a bit more.
+
+CARMA has ~240 files in MIRSUBS
+ATNF  has ~180 files , but they also have a few system dependant subdirectories
+
+MIRSUBS:
+
+assert.for :70  - replace atnf version
+basant.for :68  - replace atnf version
+bug.c :417      - replace atnf version
+bugwrap.f2c :8  - ? can't find config.h in either carma or atnf version
+co.for :36      - replace atnf version
+defsmodl.for :2 - remove debug output in carma version?
+ephem.for :8    - carma to add leap second (CARMA FIXED)
+fitsio.for :24  - replace atnf version
+gamma.for :12   - compiler bug workaround in atnf - maybe obsolete?
+headio.c :176   - differences in int8 read/write code
+hio.c :84       - better error reporting in carma -> replace atnf?
+hio.h :25       - carma version duplicates H_BYTE etc defs from miriad.h
+hio3.f2c :5     - config include in carma?
+hisinput.for :8 - larger line/file array in atnf, T format adopted in atnf
+iface.f2c :5    - config include in carma
+interface.c :10 - atnf is size_t aware (CARMA FIXED)
+io.h :27        - unused MIRIAD4 code in carma
+julday.for :587 - diverged in many places
+lagwt.for :25   - carma version needs update; only used for preCABB atnf data
+log.for :4      - timestamp change  - fix atnf
+lsqfit.for :34  - atnf to use memallop, carma missing '05 update
+lsqu1.for :5
+maskio.c :46
+math.for :98
+median.for :2
+mem.for :26
+mm.f2c :18
+model.for :1214
+noise.for :10
+nswc.for :245
+obspar.for :465
+oscalls.f2c :5
+packwrap.f2c :41
+pb.for :3
+plproc.for :10
+prime.for :98
+refract.for :4
+scrio.c :19
+select.for :75
+select.h :15
+sort.for :56
+sysdep.h :137
+tabflux.for :106
+tabflux.h :4
+tcpio.f2c :59
+title.for :55
+uvdat.h :4
+uvgetbl.for :2
+uvgn.for :1309
+uvgn.h :37
+uvio.c :1612
+var.for :197
+versan.for :48
+wrap.f2c :437
+xyio.c :52
