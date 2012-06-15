@@ -3,6 +3,7 @@
 #  mir.fringe:   run (standard) fringe test
 #                and compare with reference map in non-mosaic mode
 #                keeps a copy in $MIR/data for re-use
+#  @todo   fix keep=1 for curl only operating systems
 #
 #
 set tmp=fringe$$
