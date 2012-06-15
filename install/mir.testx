@@ -1,6 +1,6 @@
 #! /bin/csh -f
 # --
-echo TEST a few X related things:
+echo TEST a few X related things, hit return when ready
 
 echo -n "WIP: "; set ans=$<
 echo box > junk$$.wip
