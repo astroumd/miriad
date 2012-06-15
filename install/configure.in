@@ -118,15 +118,15 @@ case $TELESCOPE in
 	def_maxwide=50
 	continue;;
      "jwst")  echo "Selecting SMA array"     
-     	def_maxdim=65536;;
-	def_maxdim2=8192;;
-	def_maxant=512;;
-	def_maxant2=512;;
-	def_maxbase=1024;;
-	def_maxbase2=1024;
-	def_maxchan=128;;
-	def_maxwin=8;
-	def_maxwide=8;
+     	def_maxdim=65536
+	def_maxdim2=8192
+	def_maxant=512
+	def_maxant2=512
+	def_maxbase=1024
+	def_maxbase2=1024
+	def_maxchan=128
+	def_maxwin=8
+	def_maxwide=8
 	continue;;
      "test")  echo "Selecting small TEST array"
         def_maxdim=1024
