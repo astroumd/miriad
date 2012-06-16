@@ -15,8 +15,8 @@
     Typicallly you source a script (e.g. {\tt miriad\_start.csh}) to change your
     Unix environment to have this package included.
   \item The Miriad Program (called {\tt miriad}) 
-is a special (miriad) unix program that acts like the AIPS shell and is an
-alternative method to invoke Miriad programs. Useful for newbies, as a way
+is a special program that acts like the AIPS shell and is an
+alternative method to invoke Miriad programs. Useful for first time users, as a way
 of learning individual tasks.
   \item Miriad data are directories, with items (normally files, but see below) inside.
   \end{itemize}
@@ -30,7 +30,7 @@ to upper case before any comparision. Hence the following two examples are synon
     select=source(MARS)
 \end{verbatim}
 
-\item Autocorrelations and a noise source are present in the data, so often you will wind up
+\item Autocorrelations and a noise source are present in CARMA data, so often you will wind up
 having to select them out, the minus sign creates an exclusion selection:
 \begin{verbatim}
     select=-auto,-source(NOISE)
@@ -44,8 +44,12 @@ characters, such as parenthesis. Example
     % uvspec select='win(3)'
     % uvspec select="win(3)"
 \end{verbatim}
-If you are in the MIRIAD shell, these quotes are not needed.
-
+If you are in the MIRIAD shell, these quotes are not needed. Although they seem identical,there is
+a subtle difference: the single quote will prevent even shell variables from being interpreted,
+so in scripts you often use double quotes , e.g.  
+\begin{verbatim}
+    % uvspect select="win($win)"
+\end{verbatim}
 
 \end{itemize}
 
@@ -53,7 +57,8 @@ If you are in the MIRIAD shell, these quotes are not needed.
 
 Miriad datasets are implemented as a directory\footnote{formally they can be a hierarchy of
 directories, but no practical use has been made of this}. The data itself are organized
-in {\it items}, normally implemented as separate files, but small items (32 bytes or
+in {\it items}, normally implemented as separate files inside this directory, 
+but small items (32 bytes or
 less) can be found together in a file called {\tt header}. The Miriad program {\tt itemize}
 will list the items in a dataset.  Other programs that manipulate items are
 {\tt puthd} (add of modify a simple item), {\tt copyhd} (copy an item from one
@@ -62,8 +67,8 @@ item), {\tt prthd} (show compound contents of a dataset), and
 {\tt mathd} (perform a mathematical operation on an item).
 
 
-Miriad currently knows about two types of data:  
-visibility data and image cubes, described in a bit more detail below:
+Miriad currently knows about two types of data:\footnote{a third type of data, tables, are now also
+available but not widely used} visibility data and image cubes, described in a bit more detail below:
 
 \subsection{Visibility data}
 
@@ -166,6 +171,7 @@ These may be combined (logical AND) with comma separation, e.g. {\tt select=ant(
 
 \subsection{line=}
 
+% line=felocity
 
 \begin{verbatim}
   line=channel,NUMBER,START,WIDTH,STEP      (integers)
@@ -206,6 +212,10 @@ The {\tt mirhelp region} command also provides more details.
 
 \end{verbatim}
 
+Note that unlike UV selection, the {\tt region=} selections do not allow a minus sign to
+negate the region selection.  One way around this is to use the {\tt immask} task to 
+shape the image mask, wihch all programs should properly adhere to.
+
 \subsection{options=}
 
 This is a catch-all keyword many programs use to refine the operations of 
@@ -236,10 +246,14 @@ convention is always the center of the pixel/interval, as long as the FITS keysw
 
 \subsection{time: uvgen, CARMA, uvaver}
 
+% arguably uvgen timestamps them wrong, should be mid point, but you
+% could argue it's the mid points we are defining in the harange=
+% see comments in uvgen
+
 Time (UV variable {\tt time}, in JD) is
 recorded at the start of an integration interval (UV variable {\tt inttime}, in sec).
 For example, for {\tt uvgen time=09jul01:10:00:00 harange=0,1,0.1} you will see
-times:
+times:\footnote{see also explanation in the uvgen::time= keyword on timecentering}
 
 \footnotesize 
 \begin{verbatim}
@@ -260,6 +274,10 @@ times:
 Programs such {\tt selfcal} and {\tt mselfcal} extract and average times from these 
 observations and again record the nominal starting time of their interval in the gain
 tables. {\tt uvaver} can also average in time.
+
+NOTE: CARMA data record their time at the midpoint of the integration. With variable integration
+times,and the blanking enabled, this makes the definiton of ``time'' a little fuzzy on the
+timescale of ``inttime''.
 
 % PJT: check
 % the recorded time stamps some small issues became apparent that if used under circumstances of large
@@ -310,7 +328,7 @@ normally inside a single {\tt \$MIR/build} directory.
 
 If you want to change a subroutine, it will depend if your Unix version uses shared libraries
 if you need to recompile the relevant programs as well. Currently the answer is : Linux uses
-a shared library ({\tt \$MIRLIB/libmir.so}), whereas Mac does not.
+a shared library ({\tt \$MIRLIB/libmir.so}), whereas Mac does not (yet).
 
 
 \footnotesize

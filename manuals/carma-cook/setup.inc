@@ -19,7 +19,8 @@ For {\tt bash}, just replace {\tt .csh} with {\tt .sh} in the examples below.
 
 % miriad 4
 
-Typically you will need to know where MIRIAD is stored, and then
+Typically you will need to know where MIRIAD was installed, and source a file to set up your MIRIAD
+environment:
 
 \footnotesize
 \begin{verbatim}
@@ -37,7 +38,8 @@ files, please do so. You may also want to check your version of Miriad:
 \normalsize
 
 % it should be version 4.0.5 as of this writing (April 2007), {\it and 4.0.6 for December 2007.}
-it should be version 4.1.1 as of this writing (July 2009).
+% it should be version 4.1.1 as of this writing (July 2009).
+it should be version 4.3.4 as of this writing (June 2012).
 
 \section{Site dependent setup}
 
@@ -55,7 +57,7 @@ depending if you are down at OVRO in the Owens Valley
 or up at CARMA on Cedar Flat:
 
 \footnotesize\begin{verbatim}
-   source /array/miriad/cvs/miriad_start.csh
+   source /array/miriad/default/miriad_start.csh
 \end{verbatim}\normalsize
 
 Local MIRIAD maintainer: Peter Teuben.
@@ -90,11 +92,10 @@ Local MIRIAD maintainer: Douglas Friedel.
 
 \subsection{Maryland}
 
-Maryland uses mostly Mandrake Linux (10.1  as of this writing, but switching
-to Centos 5.1 as we speak) on IA-32
-as well as IA-64 type machines. A few
-Solaris machines are still present, but Miriad is not actively maintained
-on them (though available upon request).
+Maryland uses mostly Scienticic Linux (6.2)
+on IA-32 as well as IA-64 type machines,
+but Miriad is only actively maintained
+on 64-bit machines.
 
 \smallskip
 
@@ -107,12 +108,12 @@ the older version to peek through  the new one and cause unexpected
 results. Use with caution.
 Example:
 \footnotesize\begin{verbatim}
-   % source /n/astromake/astromake_start
+   % source /astromake/astromake_start
    % astroload ds9
    % astroload miriad
 or:
    % astroload -v daily miriad
-   % astroload -v 64 miriad
+   % astroload -v school11 miriad
 \end{verbatim}\normalsize %
 
 Local MIRIAD maintainer: Peter Teuben.
@@ -154,9 +155,8 @@ is much preferred to downloading a tar file each time and install that.
 
 \subsection{Binary Installation}
 
-We expect to make available binary releases for Linux (32bit and 64bit), MacOSX (ppc and intel)
-and perhaps Solaris (sol10 w/ gcc, sol10 w/ sunstudio12?). Details will be on the Miriad website through
-the WIKI pages.
+We expect to make available binary releases for Linux (32bit and 64bit), MacOSX (intel only)
+Details will be on the Miriad website through the WIKI pages.
 
 
 \subsection{Keeping your version up to date}
@@ -164,7 +164,8 @@ the WIKI pages.
 Various files in MIRIAD will be updated from time to time. Even if the source code does not change,
 there will be updated Flux Catalog and CARMA Baseline data. This is where CVS will come in very
 handy, so make sure this is installed on your computer.  The very first time you want to use 
-{\tt cvs} you may not the ``login'' and store the anonymous password.
+{\tt cvs} you may note the ``login'' login prompt and store the anonymous password. Simply
+hit the RETURN key, the anonymous account has no password:
 
 \footnotesize\begin{verbatim}
   1% cd $MIR
@@ -195,6 +196,16 @@ after which subroutine can be added to the library, and programs can be re-insta
   7% mir.prog itemize
 \end{verbatim}\normalsize
 
+If you feel confident the compile flags work for you, any next updates can be riguriously done via
+the simple shortcut
+
+\footnotesize\begin{verbatim}
+  1% mirupdate
+\end{verbatim}\normalsize
+
+Check your logfiles in {\tt \$MIR/tmp} though.
+
+
 \subsubsection{New and Old Build System}
 
 At the moment MIRIAD is undergoing a transition from an old build system (the {\tt mir.subs}
@@ -207,3 +218,4 @@ and the {\tt mir.prog} are part of this) to a new ``autoconf'' based system that
   2% cvs update
   3% make install
 \end{verbatim}\normalsize
+
