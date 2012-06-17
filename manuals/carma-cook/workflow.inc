@@ -939,8 +939,10 @@ be good (this is for you to decide). For example:
 \end{verbatim}
 \normalsize
 
+The meanings of the masks is hidden in the help file for uvbflag, as well as described in
+the item {\tt blfmask}  (e.g. {\tt more \$VIS/blfmask}).
 
-or
+You could also try looking at all tracking related masked data, and unflag those:
 
 \footnotesize
 \begin{verbatim}
@@ -952,7 +954,8 @@ or
 \end{verbatim}
 \normalsize
 
-would first flag all data, and then unflag the data where originally the CARMA pipeline 
+would first flag all data (careful: no backup of the old flags is made!), 
+and then unflag the data where originally the CARMA pipeline 
 deemed the antenna was not long enough on target, and flagged the correllation. This would
 be a way to find out how good the removed correllations were that were not on target and
 compare them to the ``best'' deemed values.
@@ -1669,9 +1672,9 @@ example above from a month ago).
 CARMA is able to observe in either dual polarization (LL and RR) as well
 as full stokes (LL, RR, LR and RL).
 
-{\bf An example:} \footnote{See also {\tt pol\_basic.csh}}
-how to reduce CARMA continuum polarization data with Miriad.
-This assumes FULLPOL correlator mode with 8 wideband windows, for CARMA this will
+{\bf An example:}\footnote{See also {\tt pol\_basic.csh}}
+This assumes FULLPOL correlator mode with 8 (500 MHz) wideband windows, 
+for CARMA this will
 be in the odd windows 1,3,5,7,9,11,13,15 (the even windows have 0 channels).
 
 \subsubsection{step 0:  setup parameters}
@@ -1693,8 +1696,6 @@ set REGION = 'arcsec,box(12,-12,-12,12)'	# region to plot
 \end{verbatim}
 \normalsize
 
-goto start
-
 \subsubsection{step 1: 'xyphase' calibration}
 
 The 'xyphase' is the LCP-RCP phase difference.  A direct calibration of the xyphase 
@@ -1708,11 +1709,9 @@ script.  Xyphase calibration data are labeled 'purpose(P)' in the Miriad dataset
     xyauto vis=$RAW select='purpose(P)' 
         # ... fits purpose(P) data, stores phase correction as a bandpass
  
-    smagpplt vis=$RAW options=bandpass,nofit,wrap device=/xs yrange=-180,180 \
-      xaxis=chan yaxis=phase
+    smagpplt vis=$RAW options=bandpass,nofit,wrap device=/xs yrange=-180,180 xaxis=chan yaxis=phase
         # ... examine result; all phases will be zero except for C1-C6 LCP
 
-    rm -r wide.xy
     uvcat vis=$RAW out=wide.xy options=nopol select='-source(noise),-auto,-purpose(P)' 
         # ... rewrite data to apply the correction
 \end{verbatim}
@@ -1729,15 +1728,12 @@ in order to transfer the xyphase calibration to the 6-m telescopes.
 \footnotesize
 \begin{verbatim}
     mfcal vis=wide.xy select=source($PASSCAL) interval=0.1 refant=$REFANT 
-    smagpplt vis=wide.xy options=bandpass,nofit,wrap device=/xs yrange=-180,180 \
-      xaxis=chan yaxis=phase
+    smagpplt vis=wide.xy options=bandpass,nofit,wrap device=/xs yrange=-180,180 xaxis=chan yaxis=phase
         # ... examine the result
 
-    rm -r wide.pb
     uvcat vis=wide.xy out=wide.pb options=nocal,nopol 
         # ... rewrite data to apply the correction
 
-    rm -r wide.av
     uvaver vis=wide.pb out=wide.av line=chan,8,1,47,47 options=nocal
         # ... condense to just 8 channels to speed further analysis
 \end{verbatim}
@@ -1757,8 +1753,7 @@ gain calibrator is unknown.
   
 \footnotesize
 \begin{verbatim}
-    uvplt vis=wide.av select='source('$GAINCAL'),pol(LL)' axis=time,parang device=/xs \
-	  options=nobase,nopol
+    uvplt vis=wide.av select='source('$GAINCAL'),pol(LL)' axis=time,parang device=/xs options=nobase,nopol
         # ... plot parallactic angle coverage of gain calibrator
 
     if $LEAKFILE == "None" then
@@ -1767,8 +1762,7 @@ gain calibrator is unknown.
           # ... fit leakages (and gains) to gain calibrator in this data set
     else    
       gpcopy vis=$LEAKFILE out=wide.av options=nocal,nopass
-      mfcal vis=wide.av select='source('$GAINCAL')' interval=0.5 refant=$REFANT \
-        flux=$GAINFLUX
+      mfcal vis=wide.av select='source('$GAINCAL')' interval=0.5 refant=$REFANT flux=$GAINFLUX
           # ... copy leakages from $LEAKFILE, fit gains separately 
     endif
  
@@ -1788,16 +1782,13 @@ applied in writing wide.av; the leakage and gains items are present in the datas
 
 \footnotesize
 \begin{verbatim}  
-    rm -r  $MAP.I.mp $MAP.Q.mp $MAP.U.mp $MAP.V.mp $MAP.bm
     invert vis=wide.av line=chan,8,1,1 \
       map=$MAP.I.mp,$MAP.Q.mp,$MAP.U.mp,$MAP.V.mp beam=$MAP.bm stokes=I,Q,U,V sup=0 \
       'select=source('$SRC')' options=mfs,systemp cell=0.25 imsize=512
 
     rm noiseList
     foreach MP ($MAP.I $MAP.Q $MAP.U $MAP.V)
-      rm -r $MP.sl
       clean map=$MP.mp beam=$MAP.bm out=$MP.sl niters=3000
-      rm -r $MP.cm
       restor map=$MP.mp beam=$MAP.bm model=$MP.sl out=$MP.cm 
       cgdisp in=$MP.cm device=/xs region='arcsec,box(20,-20,-20,20)' labtyp=arcsec 
       echo " " >> noiseList
