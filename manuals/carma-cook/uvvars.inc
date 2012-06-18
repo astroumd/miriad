@@ -68,7 +68,7 @@
 
 \section{UV Dataset}
 
-\newcommand{\uvversion}{September 20, 2010}
+\newcommand{\uvversion}{June 15, 2012}
 
 A \miriad\ uv dataset is composed of a collection of items and `\MM{u-v} variables'.
 The variables are parameters that are known at the time of the observation,
