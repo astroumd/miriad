@@ -16,7 +16,7 @@ The dataset
 is used for this 
 example\footnote{windows 1 and 4 from {\tt c0319.1D\_86GCRing.5.mir},
 observed on March 20, 2009 by M. Pound and F. Yusef-Zadeh, in D array,
-with a spatial resolution of about xx arcsec.}
+with a spatial resolution of about 5 arcsec.}
 
 
 The commands you see below are all Unix shell commands, most of these are in fact MIRIAD programs.
