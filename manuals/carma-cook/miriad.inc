@@ -202,6 +202,7 @@ The {\tt mirhelp region} command also provides more details.
   images(z1,z2)
   quarter(z1,z2)
   boxes(xmin,ymin,xmax,ymax)(z1,z2)
+  boxes(rsize)
   polygon(x0,y0,x1,y1,x2,y2,...)(z1,z2)
   mask(file)
   abspixel
