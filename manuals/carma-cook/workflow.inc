@@ -1746,7 +1746,7 @@ Leakage corrections compensate for cross-coupling between the LCP and RCP channe
 Leakages depend on the observing frequency and (unfortunately) the observing date
 (because of receiver swaps).  If feasible, use standard leakage tables.  For now, 
 obtain these by emailing chat@astro.berkeley.edu.  Or, if the gain calibrator was 
-observed  over a sufficiently wide range of parallactic angle (\> 90 degrees, say), 
+observed  over a sufficiently wide range of parallactic angle ($>$90 degrees, say), 
 fit the leakages to these data, as shown below.  Delete flux=\$GAINFLUX if flux of
 gain calibrator is unknown.
 
@@ -1805,7 +1805,7 @@ applied in writing wide.av; the leakage and gains items are present in the datas
 
 \subsubsection{step 5: plot the polarization}
 
-as wel as enter noise levels I\_{RMS} and QU\_{RMS} before proceeding}.
+as wel as enter noise levels I\_{RMS} and QU\_{RMS} before proceeding.
 
 \footnotesize
 \begin{verbatim}  
