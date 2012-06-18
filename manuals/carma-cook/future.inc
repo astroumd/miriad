@@ -13,8 +13,8 @@ Polarization: dual-polarization (LL and RR) are available, as well as full stoke
 \item 
 Blanking and Flagging: baseline and band dependant integration times. This will
 require some changes to the lower level Miriad code. A special uv-variable 
-{\tt bfmask(nspect)} is being prepared, with a task {\tt uvflagb} that will transfer
-selected mask-bits to the normal miriad narrow and wide band flags.
+{\tt bfmask(nspect)} is being prepared, with a task {\tt uvbflag} that will transfer
+selected mask-bits to the normal miriad visbility flags.
 \item 
 More detailed primary beam models for OVRO and BIMA for improved mosaicing. Currently
 only simple gaussians are used. Again something needed in Miriad.
@@ -23,6 +23,8 @@ Iterative Selfcal (cf. BIMA Song scripts)\
 \item
 % http://setiathome.berkeley.edu/~aparsons/aipy/index.html
 support for python (see e.g. AIPY)
+\item
+on the fly (vs. continuous) observing
 \end{itemize}
 
 
