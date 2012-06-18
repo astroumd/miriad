@@ -200,7 +200,7 @@ If you feel confident the compile flags work for you, any next updates can be ri
 the simple shortcut
 
 \footnotesize\begin{verbatim}
-  1% mirupdate
+  8% mirupdate
 \end{verbatim}\normalsize
 
 Check your logfiles in {\tt \$MIR/tmp} though.
