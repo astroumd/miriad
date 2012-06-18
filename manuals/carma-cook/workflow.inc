@@ -105,7 +105,7 @@ or
 This procedure will only work once you have placed your data in the cache, so you need
 to first logon and trigger the CARMA filler to create (or make visible) the dataset.
 
-It goes without saying 
+% It goes without saying 
 
 
 \subsection{At CARMA}
@@ -117,6 +117,7 @@ and CARMA data should probably be directly copied via one of the
 {\tt  /misc/sdp/archive\_sciencedata/} should contain data older than about a month.
 Eventually those data will also disappear and can then
 only be retrieved via the Data Archive.
+{\it NOTE: location is now outdated, needs updated}
 
 \smallskip
 Notice one subtle naming convention: currently the site uses {\tt .mir} names, where the
@@ -456,7 +457,7 @@ is careful and consistent data inspection.
 The end-goal of calibration is to create flat phases and/or flat amplitudes 
 for the calibrators as function 
 function of frequency and/or time. Use {\tt uvflag} and friends where needed to
-edit out discrepant data that could throw of calibration routines.
+edit out discrepant data that could throw off calibration routines.
 
 For the calibrator(s), inspect the run of phase and amplitude as a function of time and channel. In this
 example we are using the ``sma'' flavor of {\tt uvplt} and {\tt uvspec}:
