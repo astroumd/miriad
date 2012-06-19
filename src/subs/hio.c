@@ -40,6 +40,7 @@
        01-jan-05  pjt   a few bug_c() -> bugv_c()
        03-jan-05  pjt/rjs   hreada/hwritea off_t -> size_t for length 
        12-jul-11  pjt   applied ATNF fix of some static function use off_t/size_t
+       19-jun-12  pjt   fixed hashing bug colliding with handle=0
 */
 
 #if defined(HAVE_CONFIG_H) && HAVE_CONFIG_H
@@ -601,7 +602,7 @@ void haccess_c(int tno,int *ihandle,Const char *keyword,Const char *status,int *
     if(*iostat) return;
   }
 
-/* Check if the item is aleady here abouts. */
+/* Check if the item is already here abouts. */
 
   item = NULL;
   if(tno != 0)
@@ -1459,8 +1460,11 @@ private ITEM *hcreate_item_c(TREE *tree,char *name)
   hash %= MAXITEM;
 
 /* Find a slot in the list of addresses, and allocate it. */
+/* avoid hash=0 since the hash is returned as a handle and it will */
+/* collide with the special stdout value that MIRIAD often uses */
+/* could also return hash+1 ?  but what if this > MAXOPEN */
 
-  while(hget_item(hash) != NULL) hash = (hash+1) % MAXITEM;
+  while(hget_item(hash) != NULL || hash==0) hash = (hash+1) % MAXITEM;
   item_addr[hash] = (ITEM *)Malloc(sizeof(ITEM));
 
 /* Initialise it now. */
@@ -1507,7 +1511,7 @@ private TREE *hcreate_tree_c(char *name)
 
 /* Find a slot in the list of addresses, and allocate it. */
 
-  while(hget_tree(hash) != NULL) hash = (hash+1) % MAXOPEN;
+  while(hget_tree(hash) != NULL || hash==0) hash = (hash+1) % MAXOPEN;
   tree_addr[hash] = (TREE *)Malloc(sizeof(TREE));
 
 /* Initialise it. */
