@@ -225,8 +225,8 @@ imcat in=$config.$dec.cas.$cell.cm,$config.$dec.cas.$cell.regrid out=$config.$de
 plot:
 rm -r $config.$dec.cas.$cell.imcat
 imcat in=$config.$dec.cas.$cell.cm,$config.$dec.cas.$cell.regrid options=relax out=$config.$dec.cas.$cell.imcat
-cgdisp range=0.0.lin,8 in=$config.$dec.cas.$cell.imcat labtyp=arcsec,arcsec options=beambl,wedge region=$region device=/xs
-cgdisp range=0.0.lin,8 in=$config.$dec.cas.$cell.imcat labtyp=arcsec,arcsec options=beambl,wedge region=$region device=$config.$dec.cas.$cell.imcat.gif/gif
+cgdisp range=0,0,lin,8 in=$config.$dec.cas.$cell.imcat labtyp=arcsec,arcsec options=beambl,wedge region=$region device=/xs
+cgdisp range=0,0,lin,8 in=$config.$dec.cas.$cell.imcat labtyp=arcsec,arcsec options=beambl,wedge region=$region device=$config.$dec.cas.$cell.imcat.gif/gif
 
 if($method == plot) then
   goto end
