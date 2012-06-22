@@ -47,10 +47,11 @@ c	         (e.g. pixel increments etc).  Use with care.
 c--
 c  History:
 c    23sep92 mchw  New task.
+c    22jun12 mchw  Added BoxInput
 c-----------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)	
-        parameter(version='VELIMAGE: version 30-Nov-92')
+        parameter(version='VELIMAGE: version 22-Jun-2012')
 	integer maxboxes,maxruns,naxis
 	parameter(maxboxes=2048,maxruns=3*maxdim,naxis=4)
 	integer boxes(maxboxes)
@@ -78,6 +79,7 @@ c
 	call keyr('step',step,0.)
 	call keya('out',out,' ')
         call getopt(relax)
+        call BoxInput('region',In,boxes,maxboxes)
 	call keyfin
 c
 c  Check the inputs.
