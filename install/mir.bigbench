@@ -61,7 +61,7 @@ else
 endif
 ls -l  vis1/visdata
 ls -sF vis1/visdata
-exit 0
+
 if ($uvcat) then
   time uvcat vis=vis1 out=vis2 >& uvcat.log
   ls -l vis2/visdata
