@@ -28,6 +28,7 @@ c    01jan05 rjs  Double precision baselines and use basant.
 c    08jan07 rjs  Use MAXWIN more rigorously.
 c    13feb07 pjt  Fix sign of swidth for LSB wide bands
 c     8may12 pjt  Use memallop() and ptrdiff
+c    22jun12 pjt  Fixed some ptrdiff
 c************************************************************************
 	subroutine uvGnIni(tno1,dogains1,dopass1)
 	implicit none
@@ -873,7 +874,8 @@ c
 	integer tno,nread,nchan,nfeeds,nants,nspect,nschan(nspect)
 	double precision sfreq(nspect),sdf(nspect)
 	logical dowide,dotau,dopass,aver
-	integer pTab,pFlags,pDat,nDat,pFreq,nFreq
+	integer nDat,nFreq
+	ptrdiff pTab,pFlags,pDat,pFreq
 c
 c  Match and compute the passband gains.
 c
