@@ -144,11 +144,12 @@ c    08jun09 mchw  added example to doc.
 c    08jun09 mchw  fixed old bug: save vmax,vmin in subroutine velmap
 c    01dec09 mchw  fixed old bug: change caption on spectra to Jy/Beam.
 c    01jan10 mchw  write positions and info from cursor options to log.
+c    22jun12 mchw  format change in gausfit input.
 c----------------------------------------------------------------------c
 	include 'velplot.h'
 	include 'mem.h'
 	character*(*) version
-	parameter(version='(version 3.0 01-Jan-2010)')
+	parameter(version='(version 3.0 22-jun-2012)')
 	integer maxnax,maxboxes
 	parameter(maxnax=3,maxboxes=128)
 	integer boxes(maxboxes),nsize(maxnax),blc(maxnax),trc(maxnax)
@@ -2532,7 +2533,8 @@ c
                 goto 60
               endif
 	    endif
-66        endif
+66        continue
+         endif
 	enddo
 c
 c  Finished plotting maps.
@@ -3287,7 +3289,7 @@ c
       do i=1,ngauss(spec)
         write(line,107) i,amp,mom1,mom2*2.*sqrt(log(2.))
 c********1*********2*********3*********4*********5*********6*********7*c
-107   format('>Gaussian no. ',i1,', Enter amp, vel, fwhm [',3f8.3,'] :')
+107   format('>Gaussian no. ',i1,', Enter amp, vel, fwhm [',3f9.3,'] :')
         call prompt(ans,length,line)
         gauss(spec,1,i)=amp
         gauss(spec,2,i)=mom1
