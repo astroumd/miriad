@@ -121,6 +121,7 @@ c    pjt  22apr2012  fix logic for unflagging
 c    pjt  22apr2012  add options=swap 
 c    pjt  25apr2012  add options=all and one
 c    pjt  15may2012  added CALSTATE, only in documentation
+c    pjt  25jun2012  options=stats
 c----------------------------------------------------------------------c
 	include 'maxdim.h'
 	character version*128, fmt1*32
@@ -140,10 +141,11 @@ c----------------------------------------------------------------------c
         integer bfmask(MAXWIN), nschan(MAXWIN), ischan(MAXWIN)
         integer mask1(MAXBIT),mask2(MAXBIT),mask3(MAXBIT),i,j
         integer list1(MAXBIT),list2(MAXBIT),list3(MAXBIT),n1,n2,n3
+        integer counts(MAXBIT)
 	double precision datline(6)
         integer CHANNEL,WIDE,VELOCITY,type
         parameter(CHANNEL=1,WIDE=2,VELOCITY=3)
-        logical debug,mrepeat,doblfmask,doswap,doall,doone
+        logical debug,mrepeat,doblfmask,doswap,doall,doone,dostats
 c
 c  Externals and data
 c
@@ -167,7 +169,7 @@ c
 c @todo: this will need to become an options list, via getopt() style
         call mkeyi('mask',list1,MAXBIT-1,n1)
         call keya('logic',oper,'AND')
-	call GetOpt(debug,doblfmask,doswap,doall,doone)
+	call GetOpt(debug,doblfmask,doswap,doall,doone,dostats)
 	call keyfin
 c
 c  Check that the inputs are reasonable.
@@ -197,7 +199,7 @@ c  Open an old visibility file, and apply selection criteria.
 c
       call uvopen (lIn,vis,'old')
       if (doblfmask) then
-         call blfmask(lIn)
+         call blfmask(lIn,0,counts)
          call uvclose(lIn)
          stop
       endif
@@ -227,6 +229,9 @@ c
       nwflag = 0
       nvisflag = 0
       nwinflag = 0
+      do i=1,MAXBIT
+         counts(i) = 0
+      enddo
 c
 c  Read the first record.
 c
@@ -311,6 +316,14 @@ c              convert each bfmask(j) into a mask array, and a list for debug
            enddo
            varflag = mflag(1)
         endif
+        if (dostats) then
+           do j=1,nspect
+              call getmaski(bfmask(j),mask2)
+              do i=1,MAXBIT
+                 if (mask2(i).gt.0) counts(i) = counts(i) + 1
+              enddo
+           enddo
+        endif
         if (varflag) nvisflag = nvisflag + 1
         do j=1,nspect
            if (mflag(j)) nwinflag = nwinflag + 1
@@ -342,22 +355,27 @@ c
 c
 c  Write summary.
 c
-      write(line,'(a,i9,1x,a,i9)') '# flagged records= ', 
-     *      nvisflag,'/',nvis
-      call LogWrit(line)
-      write(line,'(a,i9,1x,a,i9)') '# flagged windows= ', 
-     *      nwinflag,'/',nwin
-      call LogWrit(line)
 
-      if (doflag) then
-         write(line,'(i10,a)') nflag,  ' channels currently flagged'
+      if (dostats) then
+         call blfmask(lIn,MAXBIT,counts)
+      else
+         write(line,'(a,i9,1x,a,i9)') '# flagged records= ', 
+     *      nvisflag,'/',nvis
          call LogWrit(line)
-         write(line,'(i10,a)') nwflag, ' wideband currently flagged'
+         write(line,'(a,i9,1x,a,i9)') '# flagged windows= ', 
+     *      nwinflag,'/',nwin
          call LogWrit(line)
-      endif
-      if(nvar.gt.0)then
-        call LogWrit(' nvar > 0 ')
-	call LogWrit(line)
+
+         if (doflag) then
+            write(line,'(i10,a)') nflag,  ' channels currently flagged'
+            call LogWrit(line)
+            write(line,'(i10,a)') nwflag, ' wideband currently flagged'
+            call LogWrit(line)
+         endif
+         if(nvar.gt.0)then
+            call LogWrit(' nvar > 0 ')
+            call LogWrit(line)
+         endif
       endif
       call LogClose
 c
@@ -419,19 +437,19 @@ c         write(*,*)
 
       end
 c********1*********2*********3*********4*********5*********6*********7**
-        subroutine GetOpt(debug,doblfmask,doswap,doall,doone)
+        subroutine GetOpt(debug,doblfmask,doswap,doall,doone,dostats)
 c
         implicit none
-        logical debug,doblfmask,doswap,doall,doone
+        logical debug,doblfmask,doswap,doall,doone,dostats
 c
 c  Get extra processing options.
 c------------------------------------------------------------------------
         integer nopts
-        parameter(nopts=5)
+        parameter(nopts=6)
         logical present(nopts)
         character opts(nopts)*8
         data opts/'debug   ','blfmask ','swap    ','all     ',
-     *            'one     '/
+     *            'one     ','stats   '/
 c
         call options('options',opts,present,nopts)
         debug     = present(1)
@@ -439,6 +457,7 @@ c
         doswap    = present(3)
         doall     = present(4)
         doone     = present(5)
+        dostats   = present(6)
         end
 c********1*********2*********3*********4*********5*********6*********7*c
 c
@@ -565,8 +584,8 @@ c
       call bug('i','no backup of flags and wflags yet')
       end
 c-----------------------------------------------------------------------
-      subroutine blfmask(lin)
-      integer lin
+      subroutine blfmask(lin, nc, counts)
+      integer lin, nc, counts(*)
 c
       integer item,iostat,n
       logical eof
@@ -585,7 +604,12 @@ c extern
          call hreada(item,name,eof)
          if (.not.eof) then
             n = n + 1
-            write(line,'(i2,1x,a)')n,name(1:len1(name))
+            if (nc.eq.0) then
+               write(line,'(i2,1x,a)')n,name(1:len1(name))
+            else
+               write(line,'(i2,1x,i12,2x,a)')n,counts(n),
+     *                                       name(1:len1(name))
+            endif
             call LogWrit(line(1:len1(line)))
          endif
       end do
