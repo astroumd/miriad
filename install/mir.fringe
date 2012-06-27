@@ -15,6 +15,7 @@ set fringe=fringe.3C273.2008jun18.4.miriad.tar.gz
 
 set mosaic=0
 set keep=1
+set clean=1
 
 foreach a ($*)
   set $a
@@ -45,13 +46,20 @@ if (! -d $vis) then
   exit 1
 endif
 
-echo Running fringemap mosaic=$mosaic :
 if ($mosaic == 0) then
   set mospars=(mosaic=0 imsize=256)
 else  
   set mospars=(mosaic=1 imsize=257)  
 endif
-$MIR/src/scripts/fringemap vis=$vis mask=0 $mospars >& fringe.log
+if ($clean == 1) then
+  set mospars=($mospars method=clean)
+else  
+  set mospars=($mospars method=maxen)
+endif
+echo Running fringemap $mospars
+echo $MIR/src/scripts/fringemap vis=$vis mask=0 $mospars '$*' > runme
+chmod +x runme
+./runme >& fringe.log
 
 set refmap=vis2.cm${mosaic}.ref
 
@@ -67,3 +75,5 @@ echo HISTO Dirty map:
 histo in=vis2.mp | grep ^M
 echo HISTO Cleaned map:
 histo in=vis2.cm | grep ^M
+
+echo Logfile in $tmp/fringe.log
