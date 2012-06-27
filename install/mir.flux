@@ -43,7 +43,9 @@ endif
 
 echo Running fluxtest:
 
-$MIR/src/scripts/fluxtest vis=$vis >& fluxtest.log
+echo $MIR/src/scripts/fluxtest vis=$vis '$*' > runme
+chmod +x runme
+./runme >& fluxtest.log
 
 echo Logfile in $tmp/fluxtest.log
 
