@@ -1,0 +1,32 @@
+#! /bin/csh -fvx
+#
+#
+
+
+echo Dumping machine characteristics, some commands may fail.
+
+which csh
+csh --version
+which gcc
+gcc -v
+which gfortran 
+gfortran -v
+gfortran -dumpmachine
+#
+which flex          
+flex --version      
+which as
+#as --version
+#
+uname -a
+cat /etc/issue       
+ls /usr/include/X11 
+# 
+which cvs
+which make
+automake --version
+libtool --version 
+java -version     
+xterm -version
+python --version
+ipython -V
