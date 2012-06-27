@@ -2686,7 +2686,8 @@ c-----------------------------------------------------------------------
 
       integer i,i0
       integer tIn,tScr,tOut,vSrc
-      integer nread,nvis,nVisRef,offset,length,velref,nchan
+      integer nread,nvis,nVisRef,length,velref,nchan
+      ptrdiff offset
       integer nSrc,iSrc
       integer ant1,ant2
       real wt,epoch
@@ -3311,6 +3312,7 @@ c
       character num*8,num2*8
       real In(uvRandom+1+3*maxchan),Out(uvRandom+3*maxPol*maxchan)
       real Time,wt
+      ptrdiff offset
 
 c     Externals.
       character itoaf*8,PolsC2P*2
@@ -3353,7 +3355,8 @@ c
       wt = 0
 
       do j = 1, nvis
-        call scrread(tScr,In,(j-1),1)
+        offset = j-1
+        call scrread(tScr,In,offset,1)
         P = nint(In(1))
         iP = pols(P)
 c
@@ -4199,12 +4202,12 @@ c-----------------------------------------------------------------------
       call bug('i','Assuming equinox of coordinates is B1950')
       call bug('i','Assuming TAN projection')
 
-      call rdhdi(lOut, 'naxis1', naxis1, 0)
-      call rdhdi(lOut, 'naxis2', naxis2, 0)
-      call rdhdd(lOut, 'cdelt1', cdelt1, 1d0)
-      call rdhdd(lOut, 'crval1', crval1, 0d0)
-      call rdhdd(lOut, 'cdelt2', cdelt2, 1d0)
-      call rdhdd(lOut, 'crval2', crval2, 0d0)
+      call rdhdi(lIn, 'naxis1', naxis1, 0)
+      call rdhdi(lIn, 'naxis2', naxis2, 0)
+      call rdhdd(lIn, 'cdelt1', cdelt1, 1d0)
+      call rdhdd(lIn, 'crval1', crval1, 0d0)
+      call rdhdd(lIn, 'cdelt2', cdelt2, 1d0)
+      call rdhdd(lIn, 'crval2', crval2, 0d0)
 
       crpix1 = dble(naxis1/2 + 1)
       crpix2 = dble(naxis2/2 + 1)
