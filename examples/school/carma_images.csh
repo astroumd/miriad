@@ -1,27 +1,34 @@
 #!/bin/csh -fe
 
-# Set calibrated visibility file and source to observe
-set vis = reduced/cs070.1E_110NGC106.2_narrow.mir
-set source =  ngc1068
-set region = "region=arcsec,box(-5,-5,5,5)"
-set cutoff = 1.0  # Cutoff flux for cleaning image in Jy
+# Set calibrated visibility file and source to image
+set vis = reduced/test.m51sn.1_wide.mir
+set source =  m51sn
+set region = "region=arcsec,box(-3,4,3,10)"
+set cutoff = 0.5e-3  # Jansky's
 
 # Set output images
 set out = $source
-rm -rf $out.{map,beam,cc,cm}
 
-# Make dirty map. 
+# Remove any existing images since miriad will not overwrite them
+rm -rf $out.{map,beam,cc,cm,snr,sen,gain}
+
+# Make dirty map
 invert vis=$vis map=$out.map beam=$out.beam \
-       select="source($source),win(6)" cell=2 imsize=129 \
-       robust=2 options=systemp,double,mosaic,mfs
+       select="source($source)" cell=2 imsize=129 \
+       robust=2 options=systemp,mfs,mosaic,double
 
-# Clean image.
-mossdi map=$out.map beam=$out.beam out=$out.cc cutoff=1 $region niters=100
+# Clean image
+mossdi map=$out.map beam=$out.beam out=$out.cc cutoff=$cutoff $region niters=10000
 
 # Restore image
 restor map=$out.map beam=$out.beam model=$out.cc out=$out.cm
 
-# Display cleaned image
-cgdisp device=/xs in=$out.cm options=full labtyp=arcsec beamtyp=b,l \
-       options=full,wedge chan=4,4 region="arcsec,box(-50,-50,50,50)"
+# Create theoretical noise image
+rm -rf $out.sen $out.gain $out.snr
+mossen in=$out.map sen=$out.sen gain=$out.gain
+maths exp="<$out.cm>/<$out.sen>" out=$out.snr
+
+# Display images
+cgdisp device=1/xs in=$out.cm  options=full labtyp=arcsec beamtyp=b,l options=full,wedge
+cgdisp device=2/xs in=$out.snr options=full labtyp=arcsec beamtyp=b,l options=full,wedge
 
