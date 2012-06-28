@@ -1,0 +1,51 @@
+#! /bin/csh -f
+#
+#  mir.cube      run some tests on a miriad data cube
+#
+#
+set tmp=cube$$
+mkdir $tmp
+cd $tmp
+
+set ftp=ftp://ftp.astro.umd.edu/pub/carma/data/
+set cube=n6503co.tar.gz
+
+set keep=1
+
+foreach a ($*)
+  set $a
+end
+
+set targz=$MIR/data/$cube
+
+
+if (-e $targz) then
+  echo Using local copy $targz 
+  tar zxf $targz
+else
+  echo Grabbing remote copy $ftp/$cube
+  wget $ftp/$cube
+  if ($status) then
+    echo No wget ... Trying curl $ftp/$cube
+    curl $ftp/$cube | tar zxf -
+  else
+    tar zxf $cube
+  endif
+  if ($keep) cp $cube $MIR/data
+endif
+
+set in=$cube:r:r
+
+if (! -d $in) then
+  echo Missing image cube dataset $in
+  exit 1
+endif
+
+echo Running cubetest
+
+echo $MIR/src/scripts/cubetest in=$in '$*' > runme
+chmod +x runme
+./runme >& cubetest.log
+
+echo Logfile in $tmp/cubetest.log
+
