@@ -1,0 +1,47 @@
+#! /bin/csh -f
+#
+# Example script to work on a datacube.   See also mir.cube how
+# this script is called in one of the MIRIAD benchmark testsuite scripts.
+#
+# History:
+# 28-jun-2012   Created - Peter Teuben
+#
+
+# SETUP: Set test file name, calibrator names and refant
+set in          = n6503co
+set device      = _cube.ps/ps
+set idev        = 0
+
+# Optionally parse the commandline so you can override the settings given here
+foreach arg ($*)
+   set $arg
+end
+
+#===========================================
+#  0. Make sure the data are here...
+if (! -e $in) then
+  echo Missing dataset in=$in
+  exit 1
+endif
+
+#===========================================
+#  1. Histograms and statistics
+histo in=$in
+imhist in=$in
+imstat in=$in
+
+#  2. Some plotting
+
+#
+moment in=$in out=$in.mom0 mom=0
+
+#  3. FITS file I/O
+fits in=$in      out=$in.fits op=xyout
+fits in=$in.fits out=$in.mir  op=xyin
+
+
+maths exp="<$in>-<$in.mir>" out=$in.diff
+histo in=$in.diff
+
+
+
