@@ -1,6 +1,6 @@
 #! /bin/csh -f
 #
-#  mir.cube      run some tests on a miriad data cube
+#  mir.cube      run some tests on a miriad data cube, using imsize= use it as a benchmark
 #
 #
 set tmp=cube$$
@@ -11,37 +11,43 @@ set ftp=ftp://ftp.astro.umd.edu/pub/carma/data/
 set cube=n6503co.tar.gz
 
 set keep=1
+set imsize=0
 
 foreach a ($*)
   set $a
 end
 
-set targz=$MIR/data/$cube
-
-
-if (-e $targz) then
-  echo Using local copy $targz 
-  tar zxf $targz
+if ($imsize > 0) then
+  # CUBE noise from scratch
+  set in=cube$imsize
+  imgen out=$in imsize=$imsize,$imsize,$imsize object=noise
 else
-  echo Grabbing remote copy $ftp/$cube
-  wget $ftp/$cube
-  if ($status) then
-    echo No wget ... Trying curl $ftp/$cube
-    curl $ftp/$cube | tar zxf -
-  else
-    tar zxf $cube
-  endif
-  if ($keep) cp $cube $MIR/data
-endif
+  # CUBE from data repository
+  set targz=$MIR/data/$cube
 
-set in=$cube:r:r
+  if (-e $targz) then
+    echo Using local copy $targz 
+    tar zxf $targz
+  else
+    echo Grabbing remote copy $ftp/$cube
+    wget $ftp/$cube
+    if ($status) then
+      echo No wget ... Trying curl $ftp/$cube
+      curl $ftp/$cube | tar zxf -
+    else
+      tar zxf $cube
+    endif
+    if ($keep) cp $cube $MIR/data
+  endif
+  set in=$cube:r:r
+endif
 
 if (! -d $in) then
   echo Missing image cube dataset $in
   exit 1
 endif
 
-echo Running cubetest
+echo Running cubetest in=$in
 
 echo $MIR/src/scripts/cubetest in=$in '$*' > runme
 chmod +x runme
