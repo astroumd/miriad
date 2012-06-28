@@ -1,27 +1,41 @@
-   ---  Mosaicing with CARMA-23  -  hex7-23.csh model=sat1mm.modj2,  Tue Mar 21 13:55:41 PST 2006   
-Using hex7-23.csh mosaic with 15'' spacing
+
+   ---  Mosaicing with CARMA-15  ---   
+ model   = sat1mm.modj2
+ config  = carma_E
+ dec     = 30
+ scale   = .05
+ harange = -4,4,.008  hours
+ select  = -shadow(6.1)
+ freq    = 265
+ nchan   = 1
+ imsize  = 257
+ region  = arcsec,box(12.50,-12.50,-12.50,12.50)
+ gnoise  = 0
+ flux    = 1160.990
+ sd_rms  = 0.000000
+ method  = mossdi
+ 
+   ---  TIMING   ---   
+START: Thu Jun 28 08:52:59 PDT 2012
+mossdi deconvolution of interferometer 
+MOSMEM: Thu Jun 28 08:53:34 PDT 2012
+convolve the model by the beam and subtract from the deconvolved image
+regrid the convolved model to the deconvolved image template
+FINISH: Thu Jun 28 08:53:35 PDT 2012
+ 
+   ---  RESULTS   ---   
+Config  DEC  HA[hrs]  scale  RMS  Beam[arcsec]  Model_Flux,Peak  Image_Flux,Peak Residual:Rms,Max,Min[Jy] Fidelity gnoise
+   ---  Mosaicing with CARMA-15  -  ./hex1-15.csh model=sat1mm.modj2,  Thu Jun 28 08:44:26 PDT 2012   
+Using ./hex1-15.csh mosaic with 15'' spacing
  MOSMEM Interferometer only with niters=200 flux=1160.990 rmsfac=1.
-   ---  Mosaicing with CARMA-23  -  hex7-23.csh model=sat1mm.modj2,  Tue Mar 21 14:25:40 PST 2006   
-Using hex7-23.csh mosaic with 15'' spacing
+carma_E  30  -4,4,.008  .1    3.92 2.57  1160.790  41.597  1306.030 41.838  0.472  1.580  -1.325  89  0  scaled for pointing
+   ---  Mosaicing with CARMA-15  -  ./hex1-15.csh model=sat1mm.modj2,  Thu Jun 28 08:45:39 PDT 2012   
+Using ./hex1-15.csh mosaic with 15'' spacing
  MOSMEM Interferometer only with niters=200 flux=1160.990 rmsfac=1.
-   ---  Mosaicing with CARMA-23  -  default7-23.csh model=sat1mm.modj2,  Tue Mar 21 14:34:11 PST 2006   
-MOSMEM with default single dish image; niters=200 rmsfac=1
-DZ  30  -2,2,.008  .05    2.11 1.87  1160.700  64.938  1161.560 64.599  0.048  0.268  -0.272  1346  
-   ---  Mosaicing with CARMA-23  -  joint7-23.csh model=sat1mm.modj2,  Tue Mar 21 14:37:04 PST 2006   
-Joint deconvolution of interferometer and single dish data ; niters=200 rmsfac=1,1
-DZ  30  -2,2,.008  .05    2.11 1.87  1160.700  64.938  1161.460 64.596  0.048  0.267  -0.262  1346
-   ---  Mosaicing with CARMA-23  -  hex7-23.csh model=sat1mm.modj2,  Fri Jul  7 15:45:37 PDT 2006   
-Using hex7-23.csh mosaic with 15'' spacing
- MOSMEM Interferometer only with niters=200 flux=1160.990 rmsfac=1.
-   ---  Mosaicing with CARMA-23  -  default7-23.csh model=sat1mm.modj2,  Fri Jul  7 15:48:22 PDT 2006   
-MOSMEM with default single dish image; niters=200 rmsfac=1
-DZ  30  -2,2,.008  .05    2.11 1.87  1160.700  64.938  1161.560 64.599  0.048  0.268  -0.272  1346  
-   ---  Mosaicing with CARMA-23  -  joint7-23.csh model=sat1mm.modj2,  Fri Jul  7 15:50:11 PDT 2006   
-Joint deconvolution of interferometer and single dish data ; niters=200 rmsfac=1,1
-DZ  30  -2,2,.008  .05    2.11 1.87  1160.700  64.938  1161.460 64.596  0.048  0.267  -0.262  1346
-   ---  Mosaicing with CARMA-23  -  hex7-23.csh model=sat1mm.modj2,  Fri Jul  7 15:55:30 PDT 2006   
-Using hex7-23.csh mosaic with 15'' spacing
- MOSMEM Interferometer only with niters=200 flux=1160.990 rmsfac=1.
-   ---  Mosaicing with CARMA-23  -  hex7-23.csh model=sat1mm.modj2,  Fri Jul  7 16:05:06 PDT 2006   
-   ---  Mosaicing with CARMA-23  -  hex7-23.csh model=sat1mm.modj2,  Fri Jul  7 16:06:03 PDT 2006   
-DZ  30  -2,2,.008  .05    2.11 1.87  1160.700  64.938  1161.780 64.599  0.048  0.268  -0.262  1346
+carma_E  30  -4,4,.008  .05    3.92 2.57  1157.710  161.948  1197.830 159.596  0.677  2.128  -3.783  236  0  scaled for pointing
+   ---  Mosaicing with CARMA-15  -  ./hex1-15.csh model=sat1mm.modj2,  Thu Jun 28 08:52:12 PDT 2012   
+mossdi deconvolution of interferometer ; niters=1000
+carma_E  30  -4,4,.008  .05    3.92 2.57  1157.710  161.948  628.007 142.921  3.489  0.457  -17.760  41  0  scaled for pointing
+   ---  Mosaicing with CARMA-15  -  ./hex1-15.csh model=sat1mm.modj2,  Thu Jun 28 08:52:59 PDT 2012   
+mossdi deconvolution of interferometer ; niters=10000
+carma_E  30  -4,4,.008  .05    3.92 2.57  1157.710  161.948  1143.300 160.083  0.623  2.448  -3.206  257  0  scaled for pointing
