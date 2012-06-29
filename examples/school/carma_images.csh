@@ -20,6 +20,9 @@ invert vis=$vis map=$out.map beam=$out.beam \
 # Clean image
 mossdi map=$out.map beam=$out.beam out=$out.cc cutoff=$cutoff $region niters=10000
 
+# Find out via mospsf and imfit what the restoring beam is, and use them
+# in restore with fwhm=$bmaj,$bmin pa=$pa   (see $MIRBIN/fringemap for an example)
+
 # Restore image
 restor map=$out.map beam=$out.beam model=$out.cc out=$out.cm
 
