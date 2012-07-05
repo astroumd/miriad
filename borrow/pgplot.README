@@ -1,0 +1,15 @@
+This version of PGPLOT is maintained by the MIRIAD group.
+Over the years a number of small problems have been solved
+in here, as operating systems have evolved (e.g.64bit) and
+the caltech version has not been patched with solutions
+from various groups accross the globe.  This is a shame,
+but that's sometimes how life in open source goes. 
+
+You will also find working versions of pgplot in various
+linux distro's, Ben Weiners page 
+     http://mingus.as.arizona.edu/~bjw/software/pgplot_fix.html
+and also within starlink and likely in the gipsy distribution.
+
+However, do not use the code from
+     http://www.astro.caltech.edu/~tjp/pgplot/
+as many places have updates.
