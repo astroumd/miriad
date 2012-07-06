@@ -1,0 +1,60 @@
+#! /bin/csh -f
+#
+#   horrible trick to interpolate accross bad points in a miriad file
+#   using NEMO's  ccdfill program.
+#   http://carma.astro.umd.edu/nemo/man_html/ccdfill.1.html
+#
+#   somehow this miriad command
+#     regrid in=pacs_160um_image.mir out=pacs_160um_rot.mir tin=pacs_70um_image.mir
+#   gave some bad pixels from regrid???
+#
+#   6-jul-2012    Created                     Peter Teuben
+
+#   1st argument needs to be a mir dataset
+set in=$1
+#   backup image/mask or not ?
+set backup=1
+
+#   sanity
+if (! -e $in) then
+  echo No such $in
+  exit 1
+endif
+
+#   more sanity
+if ($?MIR == 0) then
+  echo "No MIR (miriad) "
+  exit 1
+endif
+if ($?NEMO == 0) then
+  echo "No NEMO "
+  exit 1
+endif
+
+#   do the work in a tmp directory
+set tmp=$in/tmp
+rm -rf $tmp
+mkdir $tmp
+
+#   work!
+immask in=$in
+fits in=$in out=$tmp/fits1 op=xyout
+fitsccd $tmp/fits1 $tmp/nemo1 blank=0
+ccdfill $tmp/nemo1 $tmp/nemo2
+ccdfits $tmp/nemo2 $tmp/fits2
+fits in=$tmp/fits2 out=$tmp/mir2 op=xyin
+#   create backup of image and mask
+if ($backup) then
+  mv $in/image $in/image.orig
+  mv $in/mask $in/mask.orig
+else
+  rm -f $in/image $in/image
+endif
+#   move the final patches miriad image item accross
+mv $tmp/mir2/image $in
+#   be nice and say what we did
+addhis in=$in comment="nemo::ccdfill hack"
+immask in=$in
+#   remove that tmp
+rm -rf $tmp
+
