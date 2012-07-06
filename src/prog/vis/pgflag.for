@@ -285,6 +285,8 @@ c               whenever the source changes.
 c       noapply Do not apply the flagging.
 c       nodisp  Do not use the display, just use the specified command 
 c               to flag all baselines in the dataset.
+c       logstats Log flagging stats, not individual flags, this is the
+c               default for non interactive flagging
 c     The following options can be used to disable calibration.
 c       nocal   Do not apply antenna gain calibration.
 c       nopass  Do not apply bandpass correction.
@@ -396,8 +398,7 @@ c
       integer lScr,nchan,ntime,nvis,chanoff,chanw,nbl,cbl
       integer newbl,tbl,mbl,mant
       real t1(MAXTIME),ttol,curs_x,curs_y
-      logical blpres(MAXBASE),nosrc,nodisp,needplot,needread
-      logical firstread(MAXBASE)
+      logical blpres(MAXBASE),nosrc,nodisp,logstats,needplot,needread
       parameter(ttol=1.0/86400.0)
       integer iFlg,iDat,curr_zooms(2,2),points(2,2)
       integer min_x_zoom,max_x_zoom,min_y_zoom,max_y_zoom
@@ -444,7 +445,7 @@ c
       call keyr('flagpar',flagpar(6),3.0)
       call keya('command',command,' ')
       if (command.eq.' ') command=''
-      call GetOpt(selgen,noapply,nosrc,nodisp,uvflags)
+      call GetOpt(selgen,noapply,nosrc,nodisp,logstats,uvflags)
       if (command.eq.''.and.nodisp) call bug('f','Nothing to do')
       if (device.eq.' '.and..not.nodisp) 
      *   call bug('f','A PGPLOT device must be given')
@@ -502,7 +503,6 @@ c
          if (blpres(i)) then
 	   nbl=nbl+1
 	 endif
-         firstread(i)=.true.
       enddo
 c
 c Allocate memory.
@@ -559,7 +559,7 @@ c
             endif
             do while (some_unflagged.eqv..false.)
                call Gridit(memI(iFlg),memR(iDat),nchan,ntime,cbl,
-     *              day0,lScr,nvis,t1,firstread(cbl),some_unflagged)
+     *              day0,lScr,nvis,t1,some_unflagged)
                call ApplyFlags(memI(iFlg),nchan,ntime,chans,times,
      *            bases,flagval,MAXEDIT,nflags,cbl,mant,some_unflagged)
                if (some_unflagged.eqv..false.) then
@@ -592,7 +592,6 @@ c
                endif
             enddo
             needread=.false.
-            firstread(cbl)=.false.
             do i=1,mant
                do j=i,mant
                   tbl=((j-1)*j)/2+i
@@ -1273,7 +1272,7 @@ c
       if (pressed(1:1).eq.'q') then
          if (.not.noapply) then
             call WriteFlags(bases,chans,times,flagval,nflags,tno,t1,
-     *        day0,ntime,chanoff,chanw,selgen)
+     *        day0,ntime,chanoff,chanw,selgen,logstats)
          endif
       else
          call output('PGFLAG aborted at user request.')
@@ -1302,13 +1301,13 @@ c
       end
 c***********************************************************************
       subroutine WriteFlags(bases,chans,times,flagval,nflags,tno,t1,
-     *  day0,ntime,chanoff,chanw,selgen)
+     *  day0,ntime,chanoff,chanw,selgen,logstats)
 c
       include 'maxdim.h'
       integer nflags,ntime,tno,chanoff,chanw
       integer chans(2,nflags),times(2,nflags)
       integer bases(2,nflags)
-      logical flagval(nflags),selgen
+      logical flagval(nflags),selgen,logstats
       real t1(ntime)
       double precision day0
 c
@@ -1341,7 +1340,7 @@ c-----------------------------------------------------------------------
       real t,tprev
       integer oldflags_bad,oldflags_good,newflags_bad,newflags_good
       integer flags_goodtobad,flags_badtogood
-      integer time1,time2,ipol,ntflag,tflag(MAXEDIT2)
+      integer time1,time2,ntflag,tflag(MAXEDIT2)
       character outline*256
 c
 c     Externals
@@ -1395,8 +1394,8 @@ c     determine what type of flagging
 c
 c      Only log large flagged areas, not single points
 c               
-               if (bases(2,i).ne.1.or.(times(2,i)-times(1,i)).gt.10.or.
-     *           (chans(2,i)-chans(1,i)).gt.50) then
+               if ((bases(2,i).ne.1.or.(times(2,i)-times(1,i)).gt.10.or.
+     *           (chans(2,i)-chans(1,i)).gt.50).and..not.logstats) then
                  call FmtCmd(flagstring,isave,t1(time1),
      *              t1(time2),chanoff,chanw,day0,selectline)
                  call hiswrite(tno,'PGFLAG: '//flagstring)
@@ -1436,7 +1435,7 @@ c     do the flagging
          call uvread(tno,preamble,data,flags,MAXCHAN,nchan)
          do while (nchan.gt.0)
             do i=1,nchan
-               if (flags(i).eqv..true.) then
+               if (flags(i)) then
                   oldflags_good=oldflags_good+1
                else
                   oldflags_bad=oldflags_bad+1
@@ -1446,7 +1445,6 @@ c     do the flagging
             flagged=.false.
             call basant(preamble(4),ant1,ant2)
             bl=((ant2-1)*ant2)/2+ant1
-c           call uvrdvri(tno,'pol',ipol,0)
             if (t.ne.tprev) then
                ntflag=0
                do i=1,nflags
@@ -1470,11 +1468,13 @@ c           call uvrdvri(tno,'pol',ipol,0)
                if (blselect) then
                   flagged=.true.
                   do j=chans(1,i),chans(2,i)
-                     flags(j)=.not.flagval(i)
-                     if (flagval(i).eqv..false.) then
-                        flags_badtogood=flags_badtogood+1
-                     else
-                        flags_goodtobad=flags_goodtobad+1
+                     if (flags(j).neqv.(.not.flagval(i))) then
+                        flags(j)=.not.flagval(i)
+                        if (flags(j)) then
+                           flags_badtogood=flags_badtogood+1
+                        else
+                           flags_goodtobad=flags_goodtobad+1
+                        endif
                      endif
                   enddo
                endif
@@ -1490,26 +1490,35 @@ c           call uvrdvri(tno,'pol',ipol,0)
             call uvread(tno,preamble,data,flags,MAXCHAN,nchan)
             tprev=t
          enddo
-         call hisclose(tno)
          if (selgen) then
             call txtclose(lf)
             call txtclose(lu)
          endif
-      endif
 c     summary of flagging
-      call output('Counts of correlations within selected channels')
-      write(outline,'( A8,''  Originally  Currently'')') 'channel'
-      call output(outline)
-      write(outline,'( ''Good:  '', 3X, I10, 1X, I10 )')
-     *     oldflags_good,newflags_good
-      write(outline(len1(outline)+1:),
-     * '(4x, ''Changed to bad: '', I10 )') flags_goodtobad
-      call output(outline)
-      write(outline,'( ''Bad:   '', 3X, I10, 1X, I10 )')
+        outline='Counts of correlations within selected channels:'
+        call output(outline)
+        if (logstats) call hiswrite(tno,'PGFLAG: '//outline)
+        write(outline,'( A8,''  Originally  Currently'')') 'channel'
+        call output(outline)
+        if (logstats) call hiswrite(tno,'PGFLAG: '//outline)
+        write(outline,'( '' Good: '', 3X, I10, 1X, I10 )')
+     *       oldflags_good,newflags_good
+        write(outline(len1(outline)+1:),
+     *   '(4x, ''Changed to bad: '', I10 )') flags_goodtobad
+        call output(outline)
+        if (logstats) call hiswrite(tno,'PGFLAG: '//outline)
+        write(outline,'( '' Bad:  '', 3X, I10, 1X, I10 )')
      *     oldflags_bad,newflags_bad
-      write(outline(len1(outline)+1:),
-     * '(4x, ''Changed to good:'', I10 )') flags_badtogood
-      call output(outline)
+        write(outline(len1(outline)+1:),
+     *   '(4x, ''Changed to good:'', I10 )') flags_badtogood
+        call output(outline)
+        if (logstats) call hiswrite(tno,'PGFLAG: '//outline)
+        write(outline,'(F5.1,''% of the data is now flagged'')')
+     *    newflags_bad*100.0/(newflags_bad+newflags_good)
+        call output(outline)
+        if (logstats) call hiswrite(tno,'PGFLAG: '//outline)
+        call hisclose(tno)
+      endif
 
 c
       end
@@ -1776,10 +1785,10 @@ c     check that we have a full selection box
             if (time2.gt.ntime) then
                time2=ntime
             endif
-c            call FmtCmd(flagstring,isave,t1(time1),t1(time2),
-c     *       chanoff,
-c     *       chanw,day0,selectline)
-c            call output(flagstring)
+            call FmtCmd(flagstring,isave,t1(time1),t1(time2),
+     *       chanoff,
+     *       chanw,day0,selectline)
+            call output(flagstring)
          elseif (undo) then
             if (nflags.gt.0) then
                nflags=-1*nflags
@@ -2999,24 +3008,28 @@ c
         maxwt=maxwt*2-1
 	do j=1,xdim
 	  do i=1,ydim
-            acc = 0
-            wtsum = 0
-	    if(cstart(i).le.cend(i))then
-	      do i0=max(cstart(i),i-iw),min(cend(i),i+iw)
-		if(iflag(j,i0,2).gt.0)then
-                  wt = kernel(abs(i-i0))
-		  acc = acc + valarray(j,i0,1) * wt
-                  wtsum = wtsum + wt
-		endif
-	      enddo
-	    endif
+            if (iflag(j,i,2).gt.0) then
+              acc = 0
+              wtsum = 0
+	      if(cstart(i).le.cend(i))then
+	        do i0=max(cstart(i),i-iw),min(cend(i),i+iw)
+		  if(iflag(j,i0,2).gt.0)then
+                    wt = kernel(abs(i-i0))
+		    acc = acc + valarray(j,i0,1) * wt
+                    wtsum = wtsum + wt
+		  endif
+	        enddo
+	      endif
 c
 c  Save the result. Note we require a reasonable weight for the
 c  convolved value (a few isolated points will be zeroed instead)
 c
-            if (wtsum.gt.maxwt/4) then
-              valarray(j,i,2) = acc/wtsum
-            else 
+              if (wtsum.gt.maxwt/4) then
+                valarray(j,i,2) = acc/wtsum
+              else 
+                valarray(j,i,2) = 0
+              endif
+            else
               valarray(j,i,2) = 0
             endif
 	  enddo
@@ -3024,7 +3037,11 @@ c
       else
         do j=1,xdim
           do i=1,ydim
-            valarray(j,i,2) = valarray(j,i,1)
+            if (iflag(j,i,2).gt.0) then
+              valarray(j,i,2) = valarray(j,i,1)
+            else
+              valarray(j,i,2) = 0
+            endif
           enddo
         enddo
       endif
@@ -3042,30 +3059,39 @@ c
         maxwt = 2*maxwt-1
 	do i=1,ydim
 	  do j=1,xdim
-            acc = 0
-            wtsum = 0
-	    do j0=max(1,j-jw),min(xdim,j+jw)
-              if(iflag(j0,i,2).gt.0)then
-                wt = kernel(abs(j-j0))
-	        acc = acc + valarray(j0,i,2) * wt
-                wtsum = wtsum + wt
+            if (iflag(j,i,2).gt.0) then
+              acc = 0
+              wtsum = 0
+	      do j0=max(1,j-jw),min(xdim,j+jw)
+                if(iflag(j0,i,2).gt.0)then
+                  wt = kernel(abs(j-j0))
+	          acc = acc + valarray(j0,i,2) * wt
+                  wtsum = wtsum + wt
+                endif
+	      enddo
+              if (wtsum.gt.maxwt/4) then
+                c(j) = acc/wtsum
+              else 
+                c(j) = 0
               endif
-	    enddo
-            if (wtsum.gt.maxwt/4) then
-              c(j) = acc/wtsum
-            else 
-              c(j) = 0
             endif
 	  enddo
           do j=1,xdim
-            if (iflag(j,i,2).gt.0)valarray(j,i,2)=
-     *        valarray(j,i,1)-c(j)
+            if (iflag(j,i,2).gt.0) then
+              valarray(j,i,2)=valarray(j,i,1)-c(j)
+            else
+              valarray(j,i,2)=0
+            endif
           enddo
 	enddo
       else
         do i=1,ydim
           do j=1,xdim
-            valarray(j,i,2) = valarray(j,i,1) - valarray(j,i,2)
+            if (iflag(j,i,2).gt.0) then
+              valarray(j,i,2) = valarray(j,i,1) - valarray(j,i,2)
+            else
+              valarray(j,i,2) = 0
+            endif  
           enddo
         enddo
       endif
@@ -3079,7 +3105,7 @@ c***********************************************************************
 c
       integer xdim,ydim,iflag(xdim,ydim,2),minN
       integer cbl, nFlags, MAXEDIT
-      real valarray(xdim,ydim,2),t1(ydim)
+      real t1(ydim)
       integer chans(2,MAXEDIT),times(2,MAXEDIT),bases(2,MAXEDIT)
       logical flagval(MAXEDIT)
 c
@@ -3329,10 +3355,10 @@ c
       end
 c***********************************************************************
       subroutine Gridit(iflag,array,nchan,ntime,rqbl,day0,
-     *                  lScr,nvis,t1,firstread,some_unflagged)
+     *                  lScr,nvis,t1,some_unflagged)
 c
       integer nchan,ntime,lScr,nvis,rqbl
-      logical firstread,some_unflagged
+      logical some_unflagged
       integer iflag(nchan,ntime,2)
       real t1(ntime),array(nchan,ntime,2)
       double precision day0
@@ -3410,20 +3436,20 @@ c      call keymatch('axis',NAX,axes,1,xaxis,n)
       if(n.eq.0)yaxis = axes(1)
       end
 c***********************************************************************
-      subroutine GetOpt(selgen,noapply,nosrc,nodisp,uvflags)
+      subroutine GetOpt(selgen,noapply,nosrc,nodisp,logstats,uvflags)
 c
-      logical selgen,noapply,nosrc,nodisp
+      logical selgen,noapply,nosrc,nodisp,logstats
       character uvflags*(*)
 c
 c  Get extra processing options.
 c-----------------------------------------------------------------------
       integer NOPTS
-      parameter(NOPTS=7)
+      parameter(NOPTS=8)
       logical present(NOPTS)
       character opts(NOPTS)*8
       data opts/'nocal   ','nopass  ','nopol   ',
      *          'selgen  ','noapply ','nosrc   ',
-     *          'nodisp  '/
+     *          'nodisp  ','logstats'/
 c
       call options('options',opts,present,NOPTS)
 c
@@ -3431,6 +3457,7 @@ c
       noapply= present(5)
       nosrc  = present(6)
       nodisp = present(7)
+      logstats = present(8).or.nodisp
       uvflags = 'sdlwb'
       if(.not.present(1))uvflags(6:6) = 'c'
       if(.not.present(2))uvflags(7:7) = 'f'
@@ -3496,7 +3523,7 @@ c-----------------------------------------------------------------------
       double precision preamble(4),line(6),day1
       real buf(2*MAXCHAN+3),t,tprev,maxgap
       logical torder
-      integer vsrc,nread,length,ant1,ant2,i,bl,i0,ipol
+      integer vsrc,nread,length,ant1,ant2,i,bl,i0
       ptrdiff offset
 c
 c  Externals.
@@ -3540,7 +3567,6 @@ c      call uvread(lIn,preamble,data,flags,MAXCHAN,nchan)
         bl = ((ant2-1)*ant2)/2 + ant1
         mbl=max(mbl,bl)
         t = preamble(3) - day0
-        call uvDatGti('pol',ipol)
         if(t.lt.0)then
           day1 = nint(preamble(3)-1) + 0.5d0
           do i=1,ntime
