@@ -111,7 +111,7 @@ c  Internal parameters.
       CHARACTER  PVERSION*(*)
       INTEGER MAXBOXES, MAXRUNS, MAXNAX
 
-      PARAMETER (PVERSION = 'Version 1.0 5-may-03')
+      PARAMETER (PVERSION = 'Version 1.0 6-jul-2012')
       PARAMETER (MAXBOXES=4096, MAXRUNS=3*MAXDIM, MAXNAX=3)
 c
 c  Internal variables.
@@ -249,9 +249,14 @@ c              * patch the sections inside the region to 'flag' value
             WRITE (mesg,'('' Masking: '',I9,1x,A,1x,I9,'' => '',I9)')
      *          nin, logic, nmsk, nout
          ELSE
-            WRITE (mesg,'(I9,A,I9,A)') nin, ' out of ', 
+            WRITE (mesg,'(I9,A,I9,A,I9,A,f6.2,A)') nin, ' out of ', 
      *           naxis1(1)*naxis1(2)*naxis1(3),
-     *           ' pixels are masked as good'
+     *           ' pixels are masked as good', 
+     *           naxis1(1)*naxis1(2)*naxis1(3)-nin,
+     *           ' were bad (',
+     *           (naxis1(1)*naxis1(2)*naxis1(3)-nin) * 100.0 /
+     *           (naxis1(1)*naxis1(2)*naxis1(3)),
+     *           '%)'
          ENDIF
          CALL output(mesg)
 
