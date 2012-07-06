@@ -105,6 +105,8 @@ c@ log
 c	The output log file. Default is the terminal.
 c@ options
 c       Extra processing options. Possible values are:
+c         stats    Print out how often each bit mask was set
+c         astats   Print out how often each bit mask was set, per antenna
 c         debug    Print more output (but only when bfmask changes)
 c         blfmask  Show the names in the blfmask item
 c         swap     Special option to swap true/false flags in the file
@@ -122,6 +124,7 @@ c    pjt  22apr2012  add options=swap
 c    pjt  25apr2012  add options=all and one
 c    pjt  15may2012  added CALSTATE, only in documentation
 c    pjt  25jun2012  options=stats
+c    pjt   5jul2012  options=astats
 c----------------------------------------------------------------------c
 	include 'maxdim.h'
 	character version*128, fmt1*32
@@ -137,15 +140,16 @@ c----------------------------------------------------------------------c
 	character source*9,linetype*20,flagval*10
 	logical flags(MAXCHAN),updated,doflag,varflag,newflag
 	logical dowide,mflag(MAXWIN)
-	integer nvar,ant1,ant2,nvisflag,nwinflag
+	integer nvar,ant1,ant2,nvisflag,nwinflag,na
         integer bfmask(MAXWIN), nschan(MAXWIN), ischan(MAXWIN)
         integer mask1(MAXBIT),mask2(MAXBIT),mask3(MAXBIT),i,j
         integer list1(MAXBIT),list2(MAXBIT),list3(MAXBIT),n1,n2,n3
-        integer counts(MAXBIT)
+        integer counts(MAXBIT,MAXANT), amask(MAXANT), alist(MAXANT)
 	double precision datline(6)
         integer CHANNEL,WIDE,VELOCITY,type
         parameter(CHANNEL=1,WIDE=2,VELOCITY=3)
         logical debug,mrepeat,doblfmask,doswap,doall,doone,dostats
+        logical doastats
 c
 c  Externals and data
 c
@@ -169,7 +173,7 @@ c
 c @todo: this will need to become an options list, via getopt() style
         call mkeyi('mask',list1,MAXBIT-1,n1)
         call keya('logic',oper,'AND')
-	call GetOpt(debug,doblfmask,doswap,doall,doone,dostats)
+	call GetOpt(debug,doblfmask,doswap,doall,doone,dostats,doastats)
 	call keyfin
 c
 c  Check that the inputs are reasonable.
@@ -199,7 +203,7 @@ c  Open an old visibility file, and apply selection criteria.
 c
       call uvopen (lIn,vis,'old')
       if (doblfmask) then
-         call blfmask(lIn,0,counts)
+         call blfmask(lIn,0,0,counts,alist)
          call uvclose(lIn)
          stop
       endif
@@ -229,8 +233,11 @@ c
       nwflag = 0
       nvisflag = 0
       nwinflag = 0
-      do i=1,MAXBIT
-         counts(i) = 0
+      do j=1,MAXANT
+         amask(j)=0
+         do i=1,MAXBIT
+            counts(i,j) = 0
+         enddo
       enddo
 c
 c  Read the first record.
@@ -320,7 +327,19 @@ c              convert each bfmask(j) into a mask array, and a list for debug
            do j=1,nspect
               call getmaski(bfmask(j),mask2)
               do i=1,MAXBIT
-                 if (mask2(i).gt.0) counts(i) = counts(i) + 1
+                 if (mask2(i).gt.0) counts(i,1) = counts(i,1) + 1
+              enddo
+           enddo
+        else if (doastats) then
+           amask(ant1) = 1
+           amask(ant2) = 1
+           do j=1,nspect
+              call getmaski(bfmask(j),mask2)
+              do i=1,MAXBIT
+                 if (mask2(i).gt.0) then
+                    counts(i,ant1) = counts(i,ant1) + 1
+                    counts(i,ant2) = counts(i,ant2) + 1
+                 endif
               enddo
            enddo
         endif
@@ -356,8 +375,13 @@ c
 c  Write summary.
 c
 
-      if (dostats) then
-         call blfmask(lIn,MAXBIT,counts)
+      if (dostats .or. doastats) then
+         if (doastats) then
+            call m2l(MAXANT,amask,na,alist)
+         else
+            alist(1) = 0
+         endif
+         call blfmask(lIn,MAXBIT,na,counts,alist)
       else
          write(line,'(a,i9,1x,a,i9)') '# flagged records= ', 
      *      nvisflag,'/',nvis
@@ -437,19 +461,20 @@ c         write(*,*)
 
       end
 c********1*********2*********3*********4*********5*********6*********7**
-        subroutine GetOpt(debug,doblfmask,doswap,doall,doone,dostats)
+        subroutine GetOpt(debug,doblfmask,doswap,doall,doone,dostats,
+     *                    doastats)
 c
         implicit none
-        logical debug,doblfmask,doswap,doall,doone,dostats
+        logical debug,doblfmask,doswap,doall,doone,dostats,doastats
 c
 c  Get extra processing options.
 c------------------------------------------------------------------------
         integer nopts
-        parameter(nopts=6)
+        parameter(nopts=7)
         logical present(nopts)
         character opts(nopts)*8
         data opts/'debug   ','blfmask ','swap    ','all     ',
-     *            'one     ','stats   '/
+     *            'one     ','stats   ','astats  '/
 c
         call options('options',opts,present,nopts)
         debug     = present(1)
@@ -458,6 +483,7 @@ c
         doall     = present(4)
         doone     = present(5)
         dostats   = present(6)
+        doastats  = present(7)
         end
 c********1*********2*********3*********4*********5*********6*********7*c
 c
@@ -584,19 +610,28 @@ c
       call bug('i','no backup of flags and wflags yet')
       end
 c-----------------------------------------------------------------------
-      subroutine blfmask(lin, nc, counts)
-      integer lin, nc, counts(*)
+      subroutine blfmask(lin, nc, na, counts, alist)
+      integer lin, nc, na, counts(nc,na), alist(na)
 c
       integer item,iostat,n
-      logical eof
-      character line*80,name*80
+      logical eof,doastats
+      character line*256,name*80,fmt*64
+      integer i,k
 c extern
       integer len1
+
+      doastats  = alist(1).ne.0
       
       call haccess(lin,item,'blfmask','read',iostat)
       if (iostat.ne.0) then
          call bug('w','Error opening blfmask')
          return
+      endif
+      if (nc.ne.0 .and. doastats) then
+         write(fmt,'(''(a,1x,'',i3,''(i3,5x))'')') na
+c         write(*,*) 'FMT: ',fmt
+         write(line,fmt) 'BIT    ',(alist(k),k=1,na)
+         call LogWrit(line(1:len1(line)))
       endif
       eof = .FALSE.
       n = 0
@@ -606,8 +641,14 @@ c extern
             n = n + 1
             if (nc.eq.0) then
                write(line,'(i2,1x,a)')n,name(1:len1(name))
+            else if (doastats) then
+               write(fmt,'(''(i2,1x,'',i3,''i8,2x,a)'')') na
+c               write(*,*) 'FMT=',fmt(1:len1(fmt)),' NA=',na
+c               write(line,'(i2,1x,13i12,2x,a)') n, (counts(n,k),k=1,na),
+               write(line,fmt) n, (counts(n,k),k=1,na),
+     *                                       name(1:len1(name))
             else
-               write(line,'(i2,1x,i12,2x,a)')n,counts(n),
+               write(line,'(i2,1x,i12,2x,a)')n,counts(n,1),
      *                                       name(1:len1(name))
             endif
             call LogWrit(line(1:len1(line)))
