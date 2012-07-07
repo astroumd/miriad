@@ -10,6 +10,7 @@ c	IMCMP is a MIRIAD task to compare two images. The maps must have
 c	the same dimensions.
 c	The two images are compared on a pixel by pixel basis, within a
 c	user defined region.
+c       See also IMCORR
 c@ in1
 c	The first input image.	No default
 c@ in2

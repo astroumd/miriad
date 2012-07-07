@@ -9,6 +9,7 @@ c+
 c	IMCORR - make correlation plot of pixel values from two images.
 c	Print averages, rms, linear fit and correlation coeficient.
 c	Images must have same dimensions.
+c       See also IMCMP
 c@ in
 c	Input image names for x- and y-axes. Two values. No default.
 c@ fun
