@@ -125,6 +125,7 @@ c    pjt  25apr2012  add options=all and one
 c    pjt  15may2012  added CALSTATE, only in documentation
 c    pjt  25jun2012  options=stats
 c    pjt   5jul2012  options=astats
+c    pjt  13aug2012  fixed indexing bug (mostly applied to sci2)
 c----------------------------------------------------------------------c
 	include 'maxdim.h'
 	character version*128, fmt1*32
@@ -144,7 +145,7 @@ c----------------------------------------------------------------------c
         integer bfmask(MAXWIN), nschan(MAXWIN), ischan(MAXWIN)
         integer mask1(MAXBIT),mask2(MAXBIT),mask3(MAXBIT),i,j
         integer list1(MAXBIT),list2(MAXBIT),list3(MAXBIT),n1,n2,n3
-        integer counts(MAXBIT,MAXANT), amask(MAXANT), alist(MAXANT)
+        integer counts(MAXBIT+1,MAXANT), amask(MAXANT), alist(MAXANT)
 	double precision datline(6)
         integer CHANNEL,WIDE,VELOCITY,type
         parameter(CHANNEL=1,WIDE=2,VELOCITY=3)
@@ -235,7 +236,7 @@ c
       nwinflag = 0
       do j=1,MAXANT
          amask(j)=0
-         do i=1,MAXBIT
+         do i=1,MAXBIT+1
             counts(i,j) = 0
          enddo
       enddo
@@ -341,6 +342,9 @@ c              convert each bfmask(j) into a mask array, and a list for debug
                     counts(i,ant2) = counts(i,ant2) + 1
                  endif
               enddo
+              do i=1,MAXANT
+                 counts(MAXBIT+1,i) = counts(MAXBIT+1,i) + 1
+              enddo
            enddo
         endif
         if (varflag) nvisflag = nvisflag + 1
@@ -381,7 +385,7 @@ c
          else
             alist(1) = 0
          endif
-         call blfmask(lIn,MAXBIT,na,counts,alist)
+         call blfmask(lIn,MAXBIT+1,na,counts,alist)
       else
          write(line,'(a,i9,1x,a,i9)') '# flagged records= ', 
      *      nvisflag,'/',nvis
@@ -628,9 +632,9 @@ c extern
          return
       endif
       if (nc.ne.0 .and. doastats) then
-         write(fmt,'(''(a,1x,'',i3,''(i3,5x))'')') na
+         write(fmt,'(''(a,'',i3,''(i3,5x))'')') na
 c         write(*,*) 'FMT: ',fmt
-         write(line,fmt) 'BIT    ',(alist(k),k=1,na)
+         write(line,fmt) 'BIT\ANT',(alist(k),k=1,na)
          call LogWrit(line(1:len1(line)))
       endif
       eof = .FALSE.
@@ -645,7 +649,7 @@ c         write(*,*) 'FMT: ',fmt
                write(fmt,'(''(i2,1x,'',i3,''i8,2x,a)'')') na
 c               write(*,*) 'FMT=',fmt(1:len1(fmt)),' NA=',na
 c               write(line,'(i2,1x,13i12,2x,a)') n, (counts(n,k),k=1,na),
-               write(line,fmt) n, (counts(n,k),k=1,na),
+               write(line,fmt) n, (counts(n,alist(k)),k=1,na),
      *                                       name(1:len1(name))
             else
                write(line,'(i2,1x,i12,2x,a)')n,counts(n,1),
@@ -654,6 +658,11 @@ c               write(line,'(i2,1x,13i12,2x,a)') n, (counts(n,k),k=1,na),
             call LogWrit(line(1:len1(line)))
          endif
       end do
+      if (nc.gt.0) then
+         n = nc
+         write(line,fmt) -1, (counts(n,alist(k)),k=1,na),'-- TOTAL --'
+         call LogWrit(line(1:len1(line)))
+      endif
       call hdaccess(item,iostat)
       if (iostat.ne.0) call bug('f','Error closing blfmask')
       end
