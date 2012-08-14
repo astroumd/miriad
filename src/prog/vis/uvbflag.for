@@ -658,7 +658,7 @@ c               write(line,'(i2,1x,13i12,2x,a)') n, (counts(n,k),k=1,na),
             call LogWrit(line(1:len1(line)))
          endif
       end do
-      if (nc.gt.0) then
+      if (nc.gt.0 .and. doastats) then
          n = nc
          write(line,fmt) -1, (counts(n,alist(k)),k=1,na),'-- TOTAL --'
          call LogWrit(line(1:len1(line)))
