@@ -34,4 +34,7 @@ sdocdir = $(mirdocdir)/subs
 
 # Utility.
 
-prog_libs = $(top_builddir)/src/subs/libmir.la
+prog_libs = \
+  $(top_builddir)/src/subs/libmir.la \
+  $(top_builddir)/borrow/wcslib/libmir_wcs.la \
+  $(top_builddir)/borrow/pgplot/libpgplot.la
