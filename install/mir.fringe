@@ -5,6 +5,8 @@
 #                keeps a copy in $MIR/data for re-use
 #  @todo   fix keep=1 for curl only operating systems
 #
+#  See also: 
+#  http://cedarflat.mmarray.org/twiki/index.php/Array_Health_and_Regular_Maintenance#fringeCheck
 #
 set tmp=fringe$$
 mkdir $tmp
