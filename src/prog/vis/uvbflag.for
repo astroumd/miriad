@@ -126,6 +126,7 @@ c    pjt  15may2012  added CALSTATE, only in documentation
 c    pjt  25jun2012  options=stats
 c    pjt   5jul2012  options=astats
 c    pjt  13aug2012  fixed indexing bug (mostly applied to sci2)
+c    pjt   6sep2012  properly skip over 0-channel windows
 c----------------------------------------------------------------------c
 	include 'maxdim.h'
 	character version*128, fmt1*32
@@ -326,30 +327,34 @@ c              convert each bfmask(j) into a mask array, and a list for debug
         endif
         if (dostats) then
            do j=1,nspect
-              call getmaski(bfmask(j),mask2)
-              do i=1,MAXBIT
-                 if (mask2(i).gt.0) counts(i,1) = counts(i,1) + 1
-              enddo
+              if (nschan(j).gt.0) then
+                 call getmaski(bfmask(j),mask2)
+                 do i=1,MAXBIT
+                    if (mask2(i).gt.0) counts(i,1) = counts(i,1) + 1
+                 enddo
+              endif
            enddo
         else if (doastats) then
            amask(ant1) = 1
            amask(ant2) = 1
            do j=1,nspect
-              call getmaski(bfmask(j),mask2)
-              do i=1,MAXBIT
-                 if (mask2(i).gt.0) then
-                    counts(i,ant1) = counts(i,ant1) + 1
-                    counts(i,ant2) = counts(i,ant2) + 1
-                 endif
-              enddo
-              do i=1,MAXANT
-                 counts(MAXBIT+1,i) = counts(MAXBIT+1,i) + 1
-              enddo
+              if (nschan(j).gt.0) then
+                 call getmaski(bfmask(j),mask2)
+                 do i=1,MAXBIT
+                    if (mask2(i).gt.0) then
+                       counts(i,ant1) = counts(i,ant1) + 1
+                       counts(i,ant2) = counts(i,ant2) + 1
+                    endif
+                 enddo
+                 do i=1,MAXANT
+                    counts(MAXBIT+1,i) = counts(MAXBIT+1,i) + 1
+                 enddo
+              endif
            enddo
         endif
         if (varflag) nvisflag = nvisflag + 1
         do j=1,nspect
-           if (mflag(j)) nwinflag = nwinflag + 1
+           if (mflag(j).and.nschan(j).gt.0) nwinflag = nwinflag + 1
         enddo
 
 c
@@ -363,6 +368,7 @@ c
 
 c
 c  Loop the loop (get next record, if it exists)
+c  caveat:  nspect also counts windows that have 0 channels
 c
         call uvread(lIn, preamble, data, flags, maxchan, nread)
 	nvis = nvis + 1
@@ -429,18 +435,22 @@ c--
 
       if (doswap) then
          do j=1,nspect
-            do i=ischan(j),ischan(j)+nschan(j)
-               flags(i) = .NOT.flags(i)
-            enddo
+            if (nschan(j).gt.0) then
+               do i=ischan(j),ischan(j)+nschan(j)
+                  flags(i) = .NOT.flags(i)
+               enddo
+            endif
          enddo
 c         write(*,*)
       else
          do j=1,nspect
             if (mflag(j)) then
-               do i=ischan(j),ischan(j)+nschan(j)
-                  flags(i) = newflag
-               enddo
-               nflag = nflag + nschan(j)
+               if (nschan(j).gt.0) then
+                  do i=ischan(j),ischan(j)+nschan(j)
+                     flags(i) = newflag
+                  enddo
+                  nflag = nflag + nschan(j)
+               endif
             endif
          enddo
       endif
