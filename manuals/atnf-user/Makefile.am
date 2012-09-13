@@ -27,7 +27,8 @@ includes = \
   trouble.inc \
   uvvars.inc \
   viz.inc \
-  xmtv.inc
+  xmtv.inc \
+  html.sty
 
 figs = \
   mmcal.fig \

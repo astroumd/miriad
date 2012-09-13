@@ -1,7 +1,7 @@
 texname = progguide
 
 doc_DATA = $(texname)_US.ps.gz
-EXTRA_DIST = $(texname).tex titlepage.inc.in
+EXTRA_DIST = $(texname).tex titlepage.inc.in html.sty
 
 includes = defs.inc image.inc install.inc uvvars.inc
 
@@ -20,7 +20,7 @@ CLEANFILES = $(doc_DATA) $(includes) titlepage.inc \
 LATEX_ARGS = -interaction scrollmode
 INPUT_ENV = TEXINPUTS=:$(srcdir)$${TEXINPUTS:+:}$$TEXINPUTS 
 
-$(texname).dvi $(texname).idx: $(texname).tex titlepage.inc.in $(includes)
+$(texname).dvi $(texname).idx: $(texname).tex titlepage.inc.in html.sty $(includes)
 	sed -e "s,%date%,`date +"%d %h %Y"`,g" <$(srcdir)/titlepage.inc.in >titlepage.inc
 	$(INPUT_ENV) $(LATEX) $(LATEX_ARGS) $(srcdir)/$(texname)
 	$(INPUT_ENV) $(LATEX) $(LATEX_ARGS) $(srcdir)/$(texname)
@@ -56,4 +56,3 @@ uvvars.inc: $(top_srcdir)/manuals/atnf-user/uvvars.inc
 
 image.inc: $(top_srcdir)/manuals/atnf-user/image.inc
 	cp -f $< $@
-
