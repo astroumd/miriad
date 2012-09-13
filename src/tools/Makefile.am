@@ -7,11 +7,12 @@ if HAVE_XAW
 bin_PROGRAMS += xpanel
 endif
 
+AM_CPPFLAGS = -I$(top_srcdir)/src/subs
+
 if HAVE_READLINE
 bin_PROGRAMS += miriad
+AM_CPPFLAGS += -DREADLINE=1
 endif
-
-AM_CFLAGS = -I$(top_srcdir)/src/subs
 
 EXTRA_DIST = xpanel.icon
 
