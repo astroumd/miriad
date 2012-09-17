@@ -237,6 +237,29 @@ void test_sizes(void)
   
 }
 
+void my_handler(char c, char *msg)
+{
+  char *m = bugmessage_c();
+  printf("HANDLED1: %s\n",m);
+  printf("HANDLED2: %s\n",msg);
+}
+
+void my_recover(void)
+{
+  char *m = bugmessage_c();
+  printf("RECOVERED: %s\n",m);
+}
+
+void test_errors(void)
+{
+  printf("Testing error catching\n");
+  bughandler_c(my_handler);
+  //bugrecover_c(my_recover);
+  bug_c('f',"here's some random fatal error from miriad");
+  printf("And we just continue on....\n");
+}
+
+
 int main(int argc, char *argv[])
 {
   int n1, n2, n3;
@@ -250,6 +273,7 @@ int main(int argc, char *argv[])
     fprintf(stderr," u [nc nw nr]                   uvio write test on test1.uv\n");
     fprintf(stderr," m                              malloc loop until full memory [sic]\n");
     fprintf(stderr," s                              show sizeof() and MAX... of things\n");
+    fprintf(stderr," e                              test fatal error catching\n");
     return 1;
   }
 
@@ -292,6 +316,9 @@ int main(int argc, char *argv[])
     break;
   case 's':
     test_sizes();
+    break;
+  case 'e':
+    test_errors();
     break;
   default:
     break;
