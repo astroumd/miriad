@@ -353,37 +353,44 @@ c
          j = nint(y/cell(2) + nsize(2)/2 + 1)
          if(i.ge.1.and.i.le.nsize(1).and.j.ge.1.and.j.le.nsize(2))then
 	    ngrid = ngrid + 1
-            if (ngrid.GE.MAXVIS) call bug('f','MAXVIS not big enough')
-            xstacks(ngrid) = x
-            ystacks(ngrid) = y
-            istacks(ngrid) = i
-            jstacks(ngrid) = j
-            cnt = idx(i,j,1) + 1
-            if (debug) write(*,*) 'Adding ',i,j,nvis,cnt,nread
-            if (cnt.ge.MAXVPP) call bug('f','Too many scans for MAXVPP')
-            idx(i,j,1) = cnt
-            idx(i,j,cnt+1) = ngrid
-	    do k=1,nread
-               if(flags(k)) then
-                  if(index(zaxis,'re').gt.0) then
-                     z = real(data(k))
-                  else if(index(zaxis,'im').gt.0) then
-                     z = aimag(data(k))
-                  else if(index(zaxis,'am').gt.0) then
-                     z = cabs(data(k))
-                  else if(index(zaxis,'ph').gt.0) then
-                     z = 180./pi * atan2(aimag(data(k)),real(data(k)))
+            if (ngrid.EQ.MAXVIS) call bug('w','MAXVIS not big enough')
+            if (ngrid.LE.MAXVIS) then
+               xstacks(ngrid) = x
+               ystacks(ngrid) = y
+               istacks(ngrid) = i
+               jstacks(ngrid) = j
+               cnt = idx(i,j,1) + 1
+               if (debug) write(*,*) 'Adding ',i,j,nvis,cnt,nread
+               if (cnt.ge.MAXVPP) call bug('f',
+     *                           'Too many scans for MAXVPP')
+               idx(i,j,1) = cnt
+               idx(i,j,cnt+1) = ngrid
+               do k=1,nread
+                  if(flags(k)) then
+                     if(index(zaxis,'re').gt.0) then
+                        z = real(data(k))
+                     else if(index(zaxis,'im').gt.0) then
+                        z = aimag(data(k))
+                     else if(index(zaxis,'am').gt.0) then
+                        z = cabs(data(k))
+                     else if(index(zaxis,'ph').gt.0) then
+                        z = 180./pi*atan2(aimag(data(k)),real(data(k)))
+                     else
+                        call bug('f','Unknown zaxis')
+                     endif
+                     stacks(ngrid,k) = z * scale
                   else
-                     call bug('f','Unknown zaxis')
+                     stacks(ngrid,k) = 0.0
                   endif
-                  stacks(ngrid,k) = z * scale
-               else
-                  stacks(ngrid,k) = 0.0
-               endif
-            enddo
+               enddo
+            endif
          endif
          call uvread(lIn, preamble, data, flags, MAXCHAN2, nread)
       enddo
+      if (ngrid.gt.MAXVIS) then
+         write(*,*) 'Found ',ngrid,' scans to add. MAXVIS too small'
+         call bug('f','Increase your MAXVIS')
+      endif
 
 c
 c Optionally go over all the indexed stacks in an (i,j) cell, and 
