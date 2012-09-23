@@ -131,7 +131,7 @@ c----------------------------------------------------------------------c
        integer MAXSELS
        parameter(MAXSELS=512)
        integer MAXVIS
-       parameter(MAXVIS=10240)
+       parameter(MAXVIS=20000)
        integer MAXCHAN2
        parameter(MAXCHAN2=256)
        integer MAXVPP
@@ -630,6 +630,7 @@ c
       call wrhdd(lOut,'crpix3',1.0d0)
       call wrhdd(lOut,'cdelt1',dble(-cell(1)))
       call wrhdd(lOut,'cdelt2',dble(cell(2)))
+c  @todo:   this is weird, shouldn't that just be K ???
       call wrhda(lOut,'bunit','JY/BEAM')
       call wrhdd(lOut,'crval1',ra)
       call wrhdd(lOut,'crval2',dec)
