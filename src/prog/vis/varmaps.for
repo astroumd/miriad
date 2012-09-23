@@ -127,7 +127,7 @@ c----------------------------------------------------------------------c
        include 'maxdim.h'
        include 'mirconst.h'
        character*(*) version
-       parameter(version='VARMAPS: version 25-apr-2012')
+       parameter(version='VARMAPS: version 23-sep-2012')
        integer MAXSELS
        parameter(MAXSELS=512)
        integer MAXVIS
