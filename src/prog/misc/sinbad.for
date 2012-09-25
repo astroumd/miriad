@@ -15,6 +15,9 @@ c       Only valid ON scans are copied to the output file.
 c       Missing TSYS can be replaced via the tsys= keyword as a last
 c       resort, or the spectral window based systemp() UV variable
 c       that should be present in normal MIRIAD datasets.
+c       Normally the "on" uv variable is used to find out which record
+c       is the ON (on=1) or OFF (on=0) record. You can override this
+c       by supplying two source names using the onoff= keyword
 c       For baseline subtraction, see:  SINPOLY
 c       For single dish mapping, see:  VARMAPS
 c@ vis
@@ -33,6 +36,10 @@ c       The name of the output uv data set. No default.
 c@ tsys
 c       Value for flat tsys spectrum if neither band average systemp 
 c       nor full spectrum is available.
+c@ onoff
+c       Sourcenames for the on=1 and on=0 (off) positions. This will
+c       override the use of the on uv variable, which is the default.
+c       Default: not used.
 c@ options 
 c       Different computational output options (mainly for debugging).
 c       Exclusively one of the following (minimum match):
@@ -44,6 +51,9 @@ c         'off'          Output (off)
 c@ slop
 c       Allow some fraction of channels bad for accepting
 c       Default: 0
+c@ repair
+c       A list of bad channels (birdies) that need to be repaired by
+c       interpolating accross them.
 c--
 c
 c  History:
@@ -57,6 +67,8 @@ c    pjt     28jan11  made it listen to flags in the OFF scans
 c    pjt     28feb11  quick hack to pre-cache first scan of all OFF's
 c    pjt      3mar11  flagging
 c    pjt     30sep11  options=on,off 
+c    pjt      8may12  bad channel (interpolate accross) method  [not impl]
+c    pjt     24sep12  implemented onoff=
 c---------------------------------------------------------------------------
 c  TODO:
 c    - integration time from listobs appears wrong
@@ -65,7 +77,7 @@ c      even though the off scans are not written
 c
 c  - proper handling of flags (oflags is now read)
 c    useful if ON and OFF are different
-c  - optionally allow interpolaton betwene two nearby OFF's
+c  - optionally allow interpolaton between two nearby OFF's
 c  - specify OFF's from a different source name (useful if data were
 c    not marked correctly).
 
@@ -77,9 +89,10 @@ c
       real sels(maxsels)
       real start,step,width,tsys1,slop
       character linetype*20,vis*128,out*128
+      character srcon*16, srcoff*16, src*16
       complex data(maxchan)
       logical flags(maxchan)
-      logical first,new,dopol,PolVary,doon
+      logical first,new,dopol,PolVary,doon,dosrc
       integer lIn,lOut,nchan,npol,pol,SnPol,SPol,on,i,j,ant
       character type*1, line*128
       integer length 
@@ -117,12 +130,21 @@ c
       call keyr('tsys',tsys1,-1.0)
       call keyr('slop',slop,0.0)
       call keyl('debug',debug,.FALSE.)
+      call keya('onoff',srcon,' ')
+      call keya('onoff',srcoff,' ')
       call keyfin
 c     
 c     Check user inputs.
 c     
       if(vis.eq.' ')call bug('f','Input file name (vis=) missing')
       if(out.eq.' ')call bug('f','Output file name (out=) missing')
+c
+c     Check the on/off mode
+c
+      dosrc =  srcon.ne.' '
+      if (dosrc) then
+         if (srcoff.eq.' ') call bug('f','Need two sources for onoff=')
+      endif
 c     
 c default is spectrum, so set it if nothing specified on 
 c command line.  Note I could do this in getopt() like
@@ -162,7 +184,19 @@ c  Scan the file once and pre-cache the OFF positions
 c     
       call uvread(lIn,uin,data,flags,maxchan,nchan)
       do while (nchan.gt.0)
-         call uvgetvri(lIn,'on',on,1)
+         if (dosrc) then
+            call uvgetvra(lIn,'source',src)
+            write(*,*) "source: ",src
+            if (src.eq.srcon) then
+               on = 1
+            else if (src.eq.srcoff) then
+               on = 0
+            else
+               call bug('f','onoff not supported mode')
+            endif
+         else
+            call uvgetvri(lIn,'on',on,1)
+         endif
          ant = basein/256
          if(on.eq.0)then
             if (debug) write(*,*) 'Reading off ant ',
@@ -201,9 +235,14 @@ c
       call uvprobvr(lIn,'npol',type,length,updated)
       dopol = type.eq.'i'
       if(dopol) call bug('w', 'polarization variable is present')
-      call uvprobvr(lIn,'on',type,length,updated)
-      doon = type.eq.'i'
-      if(.not.doon) call bug('w', '"on" variable is missing')
+
+      if (.NOT.dosrc) then
+         call uvprobvr(lIn,'on',type,length,updated)
+         doon = type.eq.'i'
+         if(.not.doon) call bug('w', '"on" variable is missing')
+      else
+         doon = .TRUE.
+      endif
       if (tsys1.lt.0.0) call getwtsys(lIn,tsys,MAXCHAN,MAXANT)
       
 c
@@ -241,8 +280,19 @@ c
 c  Now process the data.
 c
          if(doon)then
-
-            call uvgetvri(lIn,'on',on,1)
+            if (dosrc) then
+               call uvgetvra(lIn,'source',src)
+               if (src.eq.srcon) then
+                  on=1
+               else if (src.eq.srcoff) then
+                  on=0
+               else
+                  on=-1
+               endif
+               write(*,*) 'source: ',src,on
+            else
+               call uvgetvri(lIn,'on',on,1)
+            endif
             ant = basein/256
             if(on.eq.0)then
                if (allflags(nchan,flags,slop)) then
@@ -422,5 +472,15 @@ c
       ratio    = present(3)
       qon      = present(4)
       qoff     = present(5)
+      end
+
+      subroutine uvrepair(nchan,data,flags)
+      integer nchan
+      complex data(nchan)
+      logical flags(nchan)
+
+      write(*,*) 'REPAIR',data(79),data(80),data(81)
+
+      return
       end
 
