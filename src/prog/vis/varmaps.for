@@ -127,7 +127,7 @@ c----------------------------------------------------------------------c
        include 'maxdim.h'
        include 'mirconst.h'
        character*(*) version
-       parameter(version='VARMAPS: version 23-sep-2012')
+       parameter(version='VARMAPS: version 25-sep-2012')
        integer MAXSELS
        parameter(MAXSELS=512)
        integer MAXVIS
@@ -637,8 +637,7 @@ c
       call wrhdd(lOut,'crpix3',1.0d0)
       call wrhdd(lOut,'cdelt1',dble(-cell(1)))
       call wrhdd(lOut,'cdelt2',dble(cell(2)))
-c  @todo:   this is weird, shouldn't that just be K ???
-      call wrhda(lOut,'bunit','JY/BEAM')
+      call wrhda(lOut,'bunit','K')
       call wrhdd(lOut,'crval1',ra)
       call wrhdd(lOut,'crval2',dec)
       call wrhdd(lOut,'restfreq',restfreq)
