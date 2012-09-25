@@ -49,6 +49,8 @@
  *      aug-2006:     some changes for MIR5
  *      oct-2008      append option, added more to 's' to show things
  *      jun-2011      made it compile for ATNF version as well, add header readx
+ *      sep-2012      fix bug when many uv files would be written/appended
+ *                    (sdpFiller had a similar bug)
  */
 
 
@@ -176,6 +178,7 @@ void test_uvio(char *fname, int nc, int nw, int nr)
   hopen_c(&t1, fname, "old", &iostat);
 
   if (iostat==0)  {
+    hclose_c(t1);
     fprintf(stderr,"  appending to %s\n",fname);
     uvopen_c(&t1, fname, "append");
   } else {
@@ -264,7 +267,8 @@ int main(int argc, char *argv[])
 {
   int n1, n2, n3;
   char *buf;
-  fprintf(stderr,"Testing MIRLIB:\n");
+  int n = 30;     /* set this to >> 1 if you want to test large # repeat I/O  (sep 2012) */
+  fprintf(stderr,"Testing MIRLIB: n=%d\n",n);
   if (argc==1) {
     fprintf(stderr,"Command line options\n");
     fprintf(stderr," w                              hio write test on test1.mir \n");
@@ -279,10 +283,12 @@ int main(int argc, char *argv[])
 
   switch (*argv[1]) {
   case 'w': 
-    test_hio("test1.mir",1);
+    while(n--) 
+      test_hio("test1.mir",1);
     break;
   case 'r': 
-    test_hio("test1.mir",0);
+    while(n--) 
+      test_hio("test1.mir",0);
     break;
   case 'x':
     if (argc>2) {
@@ -292,7 +298,8 @@ int main(int argc, char *argv[])
     } else {
       n1 = n2 = n3 = 64;
     }
-    test_xyio("test1.xy", n1,n2,n3);
+    while(n--) 
+      test_xyio("test1.xy", n1,n2,n3);
     break;
   case 'u':
     if (argc>2) {
@@ -304,7 +311,8 @@ int main(int argc, char *argv[])
       n2 = 16;
       n3 = 40000;
     }
-    test_uvio("test1.uv", n1,n2,n3);
+    while(n--) 
+      test_uvio("test1.uv", n1,n2,n3);
     break;
   case 'm':
     fprintf(stderr,"Malloc loop until memory full, incrementing by %d ... ",BUFSIZE);  
