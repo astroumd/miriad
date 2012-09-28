@@ -1,4 +1,5 @@
 include $(top_srcdir)/mircommon.mak
+doc_prog = doc
 
 bin_PROGRAMS = doc docfmt docman flint ratty intf2c
 noinst_PROGRAMS = detab # used in building docs
@@ -38,4 +39,4 @@ miriad_LDADD = -lreadline
 # Skip programs that overwrite docs for existing versions or don't
 # have docs:
 DOCINPUTS = doc.c docfmt.c docman.c flint.c ratty.c intf2c.c xpanel.c miriad.c
-include $(top_srcdir)/mirdoc.mak
+include $(top_srcdir)/mirdoc_noprog.mak
