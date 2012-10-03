@@ -22,7 +22,7 @@
 #
 #  $Id$
 #
-set version="3.5a - 6-jun-2012 PJT"
+set version="3.6 - 16-sep-2012 PJT"
 
 if ($#argv == 0) then
     echo "Usage: $0 [-options] miriad_dataset [plane1] [plane2 ...]"
@@ -36,6 +36,7 @@ if ($#argv == 0) then
     echo "                  do not load WCS, even if it has one"
     echo "      -title <TITLE>"
     echo "                  use a matching ds9 as server (ds9 -title <TITLE>)"
+    echo "                  or:   setenv DS9_TITLE foobar"
     echo "      -swap"
     echo "                  force little endian data instead of big"
     echo "      -debug"
@@ -63,7 +64,12 @@ set wcs=0
 set dowcs=1
 set debug=0
 set arch=bigendian
-set title=ds9
+
+if ($?DS9_TITLE) then
+  set title=$DS9_TITLE
+else
+  set title=ds9
+endif
 
 foreach dummy ($*)
   if ("$1" == "-minmax") then
