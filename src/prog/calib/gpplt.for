@@ -46,6 +46,8 @@ c	  dtime	       Give time in days and fractions of a day. This is more
 c	               useful for listing files which are to be passed into
 c	               some other analysis or plotting tool.
 c	  wrap         Don't unwrap phase plots
+c         absent       Also try and place empty plots when antenna absent
+c         table        Output simple table with one row per freq
 c@ nxy
 c	Number of plots in the x and y directions. The default is 2,2.
 c@ select
@@ -106,12 +108,15 @@ c    rjs  23jan07 Handle second leakage table.
 c    mchw 23jun09 Print mean and rms value on plots.
 c    pjt  25aug10 fixed sqrt(rms) when < 0 roundoff, reindent a bit
 c    pjt   1sep10 narrower format to prevent wrapped phases eating it
+c    pjt  15oct12 options=absent
 c  Bugs:
+c  @TODO 
+c     have an option to plot missing antennas as blank frames (e.g. based on nants)
 c------------------------------------------------------------------------
 	integer MAXSELS
 	character version*(*)
 	parameter(MAXSELS=256)
-	parameter(version='GpPlt: version 1-sep-2010')
+	parameter(version='GpPlt: version 15-oct-2012')
 	include 'gpplt.h'
 	integer iostat,tIn,nx,ny,nfeeds,nants,nsols,ierr,symbol,nchan
 	integer ntau,length
@@ -119,7 +124,7 @@ c------------------------------------------------------------------------
 	double precision T0
 	logical doamp,dophase,doreal,doimag,dogains,dopol,dodtime,doxy
 	logical doxbyy,doplot,dolog,more,ltemp,dodots,dodelay,dopass
-	logical dospec,dowrap,dopol2
+	logical dospec,dowrap,dopol2,doabsent
 	complex G1(maxGains),G2(maxGains)
 	real alpha(maxGains)
 	real times(maxTimes),range(2)
@@ -147,7 +152,7 @@ c
      *	  call bug('f','One of the device and log must be given')
 	call GetAxis(doamp,dophase,doreal,doimag)
 	call GetOpt(dogains,doxy,doxbyy,dopol,dopol2,dodtime,dodots,
-     *	  dodelay,dospec,dopass,dowrap)
+     *	  dodelay,dospec,dopass,dowrap,doabsent)
 	call keyi('nxy',nx,0)
 	call keyi('nxy',ny,0)
         if(nx.ne.0.and.ny.eq.0)then
@@ -261,19 +266,19 @@ c
 	    call GnCvt(G1,G2,nfeeds,ntau,nants*nsols)
 	    call GainPlt(vis,times,G2,nfeeds,nants,nsols,range,
      *		Feeds(nfeeds),doamp,dophase,dowrap,doreal,doimag,
-     *		doplot,dolog,dodtime,symbol,nx*ny)
+     *		doplot,dolog,dodtime,doabsent,symbol,nx*ny)
 	  endif
 	  if(doxy)then
 	    call XYCvt(G1,G2,nfeeds,ntau,nants*nsols,.true.)
 	    call GainPlt(vis,times,G2,1,nants,nsols,range,
      *		'XY',doamp,dophase,dowrap,doreal,doimag,
-     *		doplot,dolog,dodtime,symbol,nx*ny)
+     *		doplot,dolog,dodtime,doabsent,symbol,nx*ny)
 	  endif
 	  if(doxbyy)then
 	    call XYCvt(G1,G2,nfeeds,ntau,nants*nsols,.false.)
 	    call GainPlt(vis,times,G2,1,nants,nsols,range,
      *		'X*Y',doamp,dophase,dowrap,doreal,doimag,
-     *		doplot,dolog,dodtime,symbol,nx*ny)
+     *		doplot,dolog,dodtime,doabsent,symbol,nx*ny)
 	  endif
 	  if(dodelay)then
 	    call AlphaCvt(G1,alpha,nfeeds,ntau,nants*nsols,.true.)
@@ -807,13 +812,14 @@ c
 c************************************************************************
 	subroutine GainPlt(vis,time,G,nfeeds,nants,nsols,range,
      *	  Feeds,doamp,dophase,dowrap,doreal,doimag,doplot,dolog,
-     *    dodtime,symbol,ppp)
+     *    dodtime,doabsent,symbol,ppp)
 c
 	implicit none
 	integer nfeeds,nants,nsols,ppp,symbol
 	complex G(nfeeds*nants*nsols)
 	real time(nsols),range(2)
 	logical doamp,dophase,dowrap,doreal,doimag,doplot,dolog,dodtime
+	logical doabsent
 	character Feeds(nfeeds)*(*),vis*(*)
 c
 c  Plot/list the antenna gains.
@@ -842,20 +848,22 @@ c
 	external GetAmp,GetPhasW,GetPhase,GetReal,GetImag
 c
 	if(doamp)  call GainPlt2(vis,time,G,nfeeds,nants,nsols,range,
-     *	  'Amp',Feeds,doplot,dolog,dodtime,symbol,GetAmp,ppp)
+     *	  'Amp',Feeds,doplot,dolog,dodtime,doabsent,symbol,GetAmp,ppp)
 	if(dophase)then
 	  if(dowrap)then
 	    call GainPlt2(vis,time,G,nfeeds,nants,nsols,range,
-     *	      'Phase',Feeds,doplot,dolog,dodtime,symbol,GetPhasW,ppp)
+     *	      'Phase',Feeds,doplot,dolog,dodtime,doabsent,symbol,
+     *        GetPhasW,ppp)
 	  else
 	    call GainPlt2(vis,time,G,nfeeds,nants,nsols,range,
-     *	      'Phase',Feeds,doplot,dolog,dodtime,symbol,GetPhase,ppp)
+     *	      'Phase',Feeds,doplot,dolog,dodtime,doabsent,symbol,
+     *        GetPhase,ppp)
 	  endif
 	endif
 	if(doreal) call GainPlt2(vis,time,G,nfeeds,nants,nsols,range,
-     *	  'Real',Feeds,doplot,dolog,dodtime,symbol,GetReal,ppp)
+     *	  'Real',Feeds,doplot,dolog,dodtime,doabsent,symbol,GetReal,ppp)
 	if(doimag) call GainPlt2(vis,time,G,nfeeds,nants,nsols,range,
-     *	  'Imag',Feeds,doplot,dolog,dodtime,symbol,GetImag,ppp)
+     *	  'Imag',Feeds,doplot,dolog,dodtime,doabsent,symbol,GetImag,ppp)
 	end
 c************************************************************************
 	subroutine BpPlt(freq,G,nfeeds,nants,nchan,range,
@@ -966,13 +974,13 @@ c
 	end
 c************************************************************************
 	subroutine GainPlt2(vis,time,G,nfeeds,nants,nsols,range,
-     *	  Type,Feeds,doplot,dolog,dodtime,symbol,GetVal,ppp)
+     *	  Type,Feeds,doplot,dolog,dodtime,doabsent,symbol,GetVal,ppp)
 c
 	implicit none
 	integer nfeeds,nants,nsols,ppp,symbol
 	real time(nsols),range(2)
 	complex G(nfeeds*nants*nsols)
-	logical doplot,dolog,dodtime
+	logical doplot,dolog,dodtime,doabsent
 	character Feeds(nfeeds)*(*),vis*(*),Type*(*)
 	real GetVal
 	external GetVal
@@ -995,6 +1003,7 @@ c  Externals.
 c
 	character itoaf*3
 	integer len1
+
 c
 c  Do the plots.
 c
@@ -1020,6 +1029,12 @@ c
 	        Title = 'Antenna '//itoaf(iant)//'File='//vis
 		length = len1(title)
 	        call pglab('Time',Label,Title(1:length))
+		nres = nres + 1
+              else if (doabsent .and. iant.le.nants)then
+		call SetPG(time(1),time(nsols),y,ng,range,dodtime)
+		Title = 'Antenna '//itoaf(iant)//' Absent'
+		length = len1(title)
+		call pglab('Time',Label,Title(1:length))
 		nres = nres + 1
 	      endif
 	    enddo
@@ -1436,11 +1451,11 @@ c
 	end
 c************************************************************************
 	subroutine GetOpt(dogains,doxy,doxbyy,dopol,dopol2,dodtime,
-     *			dodots,dodelay,dospec,dopass,dowrap)
+     *			dodots,dodelay,dospec,dopass,dowrap,doabsent)
 c
 	implicit none
 	logical dogains,dopol,dodtime,doxy,doxbyy,dodots,dodelay
-	logical dospec,dopass,dowrap,dopol2
+	logical dospec,dopass,dowrap,dopol2,doabsent
 c
 c  Get extra processing options.
 c
@@ -1455,16 +1470,17 @@ c    dodots	If true, plot small dots (rather than big circles).
 c    dodelay	If true, process the delays table.
 c    dopass	If true, process the bandpass table.
 c    dowrap     If true, don't unwrap phases
+c    doansent   If true, also plot absent antennas
 c------------------------------------------------------------------------
 	integer nopt
-	parameter(nopt=11)
+	parameter(nopt=12)
 	logical present(nopt)
 	character opts(nopt)*14
 c
 	data opts/'gains         ','polarization  ','dtime         ',
      *		  'xygains       ','xbyygains     ','dots          ',
      *		  'delays        ','bandpass      ','speccor       ',
-     *            'wrap          ','2polarization '/
+     *            'wrap          ','2polarization ','absent        '/
 c
 	call options('options',opts,present,nopt)
 	dogains = present(1)
@@ -1478,6 +1494,7 @@ c
 	dospec  = present(9)
         dowrap  = present(10)
 	dopol2  = present(11)
+	doabsent= present(12)
 
 	end
 c************************************************************************
