@@ -47,7 +47,6 @@ c	               useful for listing files which are to be passed into
 c	               some other analysis or plotting tool.
 c	  wrap         Don't unwrap phase plots
 c         absent       Also try and place empty plots when antenna absent
-c         table        Output simple table with one row per freq
 c@ nxy
 c	Number of plots in the x and y directions. The default is 2,2.
 c@ select
@@ -108,10 +107,12 @@ c    rjs  23jan07 Handle second leakage table.
 c    mchw 23jun09 Print mean and rms value on plots.
 c    pjt  25aug10 fixed sqrt(rms) when < 0 roundoff, reindent a bit
 c    pjt   1sep10 narrower format to prevent wrapped phases eating it
-c    pjt  15oct12 options=absent
+c    pjt  15oct12 options=absent (for time and freq plots)
 c  Bugs:
 c  @TODO 
-c     have an option to plot missing antennas as blank frames (e.g. based on nants)
+c     options=
+c         table        Output simple table with one row per freq
+
 c------------------------------------------------------------------------
 	integer MAXSELS
 	character version*(*)
@@ -301,7 +302,7 @@ c
      *		maxGains,maxTimes)
 	  call BPPlt(times,G1,nfeeds,nants,nchan,range,
      *		Feeds(nfeeds),doamp,dophase,dowrap,doreal,doimag,
-     *		doplot,dolog,symbol,nx*ny)
+     *		doplot,dolog,doabsent,symbol,nx*ny)
 	endif
 c
 c  Do the polarization leakage term plots.
@@ -868,13 +869,13 @@ c
 c************************************************************************
 	subroutine BpPlt(freq,G,nfeeds,nants,nchan,range,
      *	  Feeds,doamp,dophase,dowrap,doreal,doimag,doplot,dolog,
-     *    symbol,ppp)
+     *    doabsent,symbol,ppp)
 c
 	implicit none
 	integer nfeeds,nants,nchan,ppp,symbol
 	complex G(nchan*nfeeds*nants)
 	real freq(nchan),range(2)
-	logical doamp,dophase,dowrap,doreal,doimag,doplot,dolog
+	logical doamp,dophase,dowrap,doreal,doimag,doplot,dolog,doabsent
 	character Feeds(nfeeds)*(*)
 c
 c  Plot/list the bandpass shape.
@@ -901,20 +902,20 @@ c
 	external GetAmp,GetPhasW,GetPhase,GetReal,GetImag
 c
 	if(doamp)  call BpPlt2(freq,G,nfeeds,nants,nchan,range,
-     *	  'Amp',Feeds,doplot,dolog,symbol,GetAmp,ppp)
+     *	  'Amp',Feeds,doplot,dolog,doabsent,symbol,GetAmp,ppp)
 	if(dophase)then
 	  if(dowrap)then
 	    call BpPlt2(freq,G,nfeeds,nants,nchan,range,
-     *	      'Phase',Feeds,doplot,dolog,symbol,GetPhasW,ppp)
+     *	      'Phase',Feeds,doplot,dolog,doabsent,symbol,GetPhasW,ppp)
 	  else
 	    call BpPlt2(freq,G,nfeeds,nants,nchan,range,
-     *	      'Phase',Feeds,doplot,dolog,symbol,GetPhase,ppp)
+     *	      'Phase',Feeds,doplot,dolog,doabsent,symbol,GetPhase,ppp)
 	  endif
 	endif
 	if(doreal) call BpPlt2(freq,G,nfeeds,nants,nchan,range,
-     *	  'Real',Feeds,doplot,dolog,symbol,GetReal,ppp)
+     *	  'Real',Feeds,doplot,dolog,doabsent,symbol,GetReal,ppp)
 	if(doimag) call BpPlt2(freq,G,nfeeds,nants,nchan,range,
-     *	  'Imag',Feeds,doplot,dolog,symbol,GetImag,ppp)
+     *	  'Imag',Feeds,doplot,dolog,doabsent,symbol,GetImag,ppp)
 	end
 c************************************************************************
 	subroutine PolPlt2(Leaks,nfeeds,nants,range,type,Feeds,
@@ -1086,13 +1087,13 @@ c
 	end
 c************************************************************************
 	subroutine BpPlt2(freq,G,nfeeds,nants,nchan,range,
-     *	  type,Feeds,doplot,dolog,symbol,GetVal,ppp)
+     *	  type,Feeds,doplot,dolog,doabsent,symbol,GetVal,ppp)
 c
 	implicit none
 	integer nfeeds,nants,nchan,ppp,symbol
 	real freq(nchan),range(2)
 	complex G(nchan*nfeeds*nants)
-	logical doplot,dolog
+	logical doplot,dolog,doabsent
 	character Feeds(nfeeds)*(*),type*(*)
 	real GetVal
 	external GetVal
@@ -1157,6 +1158,11 @@ c
 		   rms = rms/ng - ave*ave
 		   if (rms.gt.0.0) rms=sqrt(rms)
 		   print *, Title, Label, 'ave, rms=', ave, rms
+		else if (doabsent) then
+		   call SetPG(freqmin,freqmax,y,ng,range,.true.)		   
+		   Title = 'Antenna '//itoaf(iant)// ' absent'
+		   call pglab('Frequency (GHz)',Label,Title)
+		   nres = nres + 1
 		endif
 	     enddo
 	     call subfill(nres,ppp)
