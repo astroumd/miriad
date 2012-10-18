@@ -23,6 +23,11 @@ set interval=0.01
 set device=/null
 set noise=1
 
+set robust=0
+
+set gnoise=0.1
+set pnoise=10,0,0,0
+
 
 set niters=250
 set kiters=1
@@ -32,7 +37,7 @@ foreach a ($*)
   set $a
 end
 
-echo "MIRBENCH2: (2012-10-16) $tmp : nchan=$nchan imsize=$imsize"
+echo "MIRBENCH2: (2012-10-17) $tmp : nchan=$nchan imsize=$imsize"
 echo hostname=`hostname` 
 echo benchdir=$tmp
 echo system=`uname -a`  
@@ -43,14 +48,14 @@ echo "1,0,0,0,0,0,0,0,0" > point.source
 #set corr=0,1,100.0,1000.0 
 set corr=$nchan,1,100.0,500.0
 set harange=-6,6,$interval
-set gnoise=0.1
-set pnoise=10,0,0,0
-set systemp=75,290,0.15
+#set systemp=75,290,0.15
+set systemp=100,0,0
 set tpower=0,0
-set jyperk=150
+set jyperk=100
 set ant=($MIRCAT/carma_C.ant)
 #set ant=($MIRCAT/bima_b.ant)
 set baseunit=-3.335668
+set box=5
 
 
 if ($noise == 0) then
@@ -70,24 +75,35 @@ uvgen out=vis1 harange=$harange source=$MIRCAT/point.source time=$time \
  gnoise=$gnoise pnoise=$pnoise systemp=$systemp tpower=$tpower jyperk=$jyperk \
  > uvgen.log
 
-uvplt vis=vis1 axis=uc,vc options=equal,nobase,nanosec device=$device
+uvplt vis=vis1 axis=uc,vc options=equal,nobase,nanosec device=$device > uvplt.log
 
-invert vis=vis1 map=map1 beam=beam1 imsize=$imsize cell=$cell > invert.log
+invert vis=vis1 map=map1 beam=beam1 \
+    robust=$robust \
+    imsize=$imsize cell=$cell > invert.log
 
 # just for fun, using kiters>1 you can loop over clean, accumulating CC's into clean$k
 set model=()
 foreach k (`seq $kiters`)
-  clean map=map1 beam=beam1 out=clean$k $model niters=$niters > clean_$k.log
+  # want to enforce cleaning only close to the point source?
+  clean map=map1 beam=beam1 out=clean$k $model niters=$niters \
+    "region=rel,box(-$box,-$box,$box,$box)"  > clean_$k.log
+#     > clean_$k.log
   set model=(model=clean$k)
-  restor model=clean$k beam=beam1 map=map1 out=cmap$k    > restor_$k.log  
-  restor model=clean$k beam=beam1 map=map1 out=res$k mode=residual > restor2_$k.log
+  restor model=clean$k beam=beam1 map=map1 out=cmap$k               > restor1_$k.log  
+  restor model=clean$k beam=beam1 map=map1 out=res$k  mode=residual > restor2_$k.log
   histo in=cmap$k | grep Flux >> flux.log
 end
 
-set rms=(`histo in=res$kiters  | grep Rms | awk '{print $4}'`)
-set max=(`histo in=cmap$kiters | grep Max | awk '{print $3}'`)
+# note:   rms0 should depend on imsize.
+set rms=(`histo in=res$kiters  region=quarter | grep Rms | awk '{print $4}'`)
+set rms0=(`histo in=res$kiters region='box(10,10,110,110)' | grep Rms | awk '{print $4}'`)
+set max=(`histo in=cmap$kiters region=quarter | grep Max | awk '{print $3}'`)
 cat flux.log
+set rmst=`grep ^Theoretical invert.log | awk '{print $NF}'`
+echo "Theoretical RMS:       $rmst"
+echo "Measured RMS:          $rms"
+echo "Dirty box RMS:         $rms0"
+echo "Ratio:  `calc $rms/$rmst`"
 echo Fidelity: `calc $max/$rms`
-
 
 if ($clean) rm -rf $tmp.*
