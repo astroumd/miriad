@@ -15,7 +15,7 @@ c       Only valid ON scans are copied to the output file.
 c       Missing TSYS can be replaced via the tsys= keyword as a last
 c       resort, or the spectral window based systemp() UV variable
 c       that should be present in normal MIRIAD datasets.
-c       Normally the "on" uv variable is used to find out which record
+c       Normally the "on" UV-variable is used to find out which record
 c       is the ON (on=1) or OFF (on=0) record. You can override this
 c       by supplying two source names using the onoff= keyword
 c       For baseline subtraction, see:  SINPOLY
@@ -25,6 +25,8 @@ c       The name of the input autocorrelation data set.
 c       Only one name must be given.
 c@ select
 c       The normal uv selection commands. See the Users manual for details.
+c       Warning(BUG):   do not use win() selection,the tsys values are still
+c       not correctly obtained this way. Use UVCAT to preprocess your selection.
 c       The default is to process all data.
 c@ line
 c       The normal uv linetype in the form:
@@ -37,8 +39,9 @@ c@ tsys
 c       Value for flat tsys spectrum if neither band average systemp 
 c       nor full spectrum is available.
 c@ onoff
-c       Sourcenames for the on=1 and on=0 (off) positions. This will
-c       override the use of the on uv variable, which is the default.
+c       Two source names, for the on=1 and on=0 (off) positions. This will
+c       override the use of the "on" uv variable, which is how normal
+c       autocorrelation data are tagged for single dish work.
 c       Default: not used.
 c@ options 
 c       Different computational output options (mainly for debugging).
@@ -69,6 +72,7 @@ c    pjt      3mar11  flagging
 c    pjt     30sep11  options=on,off 
 c    pjt      8may12  bad channel (interpolate accross) method  [not impl]
 c    pjt     24sep12  implemented onoff=
+c    pjt     28sep12  fixing up some ....and then more
 c---------------------------------------------------------------------------
 c  TODO:
 c    - integration time from listobs appears wrong
@@ -83,29 +87,33 @@ c    not marked correctly).
 
       include 'maxdim.h'
       character version*80,versan*80
-      integer maxsels
-      parameter(maxsels=1024)
+      integer MAXSELS
+      parameter(MAXSELS=1024)
 c     
-      real sels(maxsels)
+      real sels(MAXSELS)
       real start,step,width,tsys1,slop
+      double precision timein0
       character linetype*20,vis*128,out*128
       character srcon*16, srcoff*16, src*16
-      complex data(maxchan)
-      logical flags(maxchan)
+      complex data(MAXCHAN)
+      logical flags(MAXCHAN)
       logical first,new,dopol,PolVary,doon,dosrc
       integer lIn,lOut,nchan,npol,pol,SnPol,SPol,on,i,j,ant
       character type*1, line*128
-      integer length 
+      integer length, nt
       logical updated
-c     what the heck is this trick to read the preamble(4) or preamble(5)
+      double precision preamble(5)
+c            trick to read the preamble(4) [or preamble(5)]
       double precision uin,vin,timein,basein
       common/preamb/uin,vin,timein,basein
 c     
       complex off(MAXCHAN,MAXANT)
       real    tsys(MAXCHAN,MAXANT)
       logical oflags(MAXCHAN,MAXANT)
-      integer num,   non,   noff,   ntsys
-      data    num/0/,non/0/,noff/0/,ntsys/0/
+      integer num,   non,    noff,    ntsys
+      integer        nonb,   noffb,   ntsysb
+      data    num/0/,non/0/, noff/0/, ntsys/0/
+      data           nonb/0/,noffb/0/,ntsysb/0/
       logical spectrum, diffrnce, ratio, have_ant(MAXANT), rant(MAXANT)
       logical allflags,debug,qon,qoff
 c     
@@ -120,7 +128,7 @@ c
       call keyini
       call getopt(spectrum,diffrnce,ratio,qon,qoff)
       call keyf('vis',vis,' ')
-      call SelInput('select',sels,maxsels)
+      call SelInput('select',sels,MAXSELS)
       call keya('line',linetype,' ')
       call keyi('line',nchan,0)
       call keyr('line',start,1.)
@@ -168,9 +176,10 @@ c  Open the data file, apply selection, do linetype initialisation and
 c  determine the variables of interest.
 c
       call uvopen(lIn,vis,'old')
-      call SelApply(lIn,sels,.true.)
+c      call SelApply(lIn,sels,.true.)
       if(linetype.ne.' ')
      *     call uvset(lIn,'data',linetype,nchan,start,width,step)
+      call SelApply(lIn,sels,.true.)
       call VarInit(lIn,'channel')
       do j=1,MAXANT
          do i=1,MAXCHAN
@@ -180,9 +189,11 @@ c
          rant(j) = .TRUE.
       enddo
 c     
-c  Scan the file once and pre-cache the OFF positions
+c  Scan the file once and pre-cache the first OFF positions
+c  for each antenna (danger: this could mean they're not
+c  all at taken at the same time)
 c     
-      call uvread(lIn,uin,data,flags,maxchan,nchan)
+      call uvread(lIn,uin,data,flags,MAXCHAN,nchan)
       do while (nchan.gt.0)
          if (dosrc) then
             call uvgetvra(lIn,'source',src)
@@ -212,14 +223,14 @@ c
                endif
             endif
          endif
-         call uvread(lIn,uin,data,flags,maxchan,nchan)
+         call uvread(lIn,uin,data,flags,MAXCHAN,nchan)
       end do
 
       call uvrewind(lIn)
 c
 c  Read through the file, listing what we have to.
 c
-      call uvread(lIn,uin,data,flags,maxchan,nchan)
+      call uvread(lIn,uin,data,flags,MAXCHAN,nchan)
 c
 c  Other initialisation.
 c     
@@ -228,6 +239,8 @@ c
       SnPol = 0
       SPol = 0
       PolVary = .false.
+      timein0 = timein
+      nt = 1
       call uvprobvr(lIn,'corr',type,length,updated)
       if(type.ne.'r'.and.type.ne.'j'.and.type.ne.'c')
      *     call bug('f','no spectral data in input file')
@@ -250,7 +263,6 @@ c  Loop through the data, writing (ON-OFF)/OFF*TSYS
 c
       do while (nchan.gt.0)
          num = num + 1
-c     print *, num,basein,basein/256
 c
 c  Determine the polarisation info, if needed.
 c     
@@ -280,6 +292,10 @@ c
 c  Now process the data.
 c
          if(doon)then
+            if (timein0.ne.timein) then
+               timein0 = timein
+               nt = nt + 1
+            endif
             if (dosrc) then
                call uvgetvra(lIn,'source',src)
                if (src.eq.srcon) then
@@ -301,6 +317,8 @@ c
                      off(i,ant) = data(i)
                      oflags(i,ant) = flags(i)
                   enddo
+               else
+                  noffb = noffb + 1
                endif
             else if(on.eq.-1)then
                if (allflags(nchan,flags,slop)) then
@@ -309,6 +327,8 @@ c
                      tsys(i,ant) = data(i)
                      oflags(i,ant) = flags(i)
                   enddo
+               else
+                  ntsysb = ntsysb + 1
                endif
             else if(on.eq.1)then
                if (have_ant(ant)) then
@@ -343,6 +363,7 @@ c
                   endif
                   call uvwrite(lOut,uin,data,flags,nchan)
                else
+                  nonb = nonb + 1
 c                 only rant about an antenna once in their lifetime
                   if (rant(ant)) then
                      write(line,
@@ -355,14 +376,14 @@ c                 only rant about an antenna once in their lifetime
                call bug('w','value of on not 1, 0 or -1')
             endif
          endif
-c     
-c     Loop the loop.
-c     
-         call uvread(lIn,uin,data,flags,maxchan,nchan)
+         call uvread(lIn,uin,data,flags,MAXCHAN,nchan)
       enddo
 c     
-      print *,'records read: ',num
-      print *,'records read: on:',non,'  off:',noff,'  tsys:',ntsys
+      print *,'Times read:         ',nt
+      print *,'records read:       ',num
+      print *,'records read: on:   ',non, '  off:',noff ,' tsys:',ntsys
+      print *,'records flagged:    ',num-non-noff-ntsys
+      print *,'records flagged: on:',nonb,'  off:',noffb,' tsys:',ntsysb
       if (spectrum) then 
          print *,'records written: (on-off)/off*tsys:',non
       endif
@@ -387,12 +408,9 @@ c
          endif
       endif
       
-c     
-c  Close up shop.
-c
       call uvclose(lIn)
 c     
-c  Finish up the history, and close up shop.
+c  Finish up the history, and close up shop
 c
       call hisopen(lOut,'append')
       call hiswrite(lOut,'SINBAD: Miriad '//version)
