@@ -57,6 +57,10 @@ c       Default: 0
 c@ repair
 c       A list of bad channels (birdies) that need to be repaired by
 c       interpolating accross them.
+c@ log
+c       Optional filename in which the ON pointing centers (in offset arcsec)
+c       are stored. A third column designates if this pointing center
+c       was the one immediately preceded by an OFF pointing.
 c--
 c
 c  History:
@@ -73,6 +77,7 @@ c    pjt     30sep11  options=on,off
 c    pjt      8may12  bad channel (interpolate accross) method  [not impl]
 c    pjt     24sep12  implemented onoff=
 c    pjt     28sep12  fixing up some ....and then more
+c    pjt     28oct12  added log=
 c---------------------------------------------------------------------------
 c  TODO:
 c    - integration time from listobs appears wrong
@@ -91,17 +96,17 @@ c    not marked correctly).
       parameter(MAXSELS=1024)
 c     
       real sels(MAXSELS)
-      real start,step,width,tsys1,slop
+      real start,step,width,tsys1,slop,dra,ddec
       double precision timein0
-      character linetype*20,vis*128,out*128
+      character linetype*20,vis*128,out*128,log*128,logline*128
       character srcon*16, srcoff*16, src*16
       complex data(MAXCHAN)
       logical flags(MAXCHAN)
       logical first,new,dopol,PolVary,doon,dosrc
-      integer lIn,lOut,nchan,npol,pol,SnPol,SPol,on,i,j,ant
+      integer lIn,lOut,nchan,npol,pol,SnPol,SPol,on,i,j,ant,koff
       character type*1, line*128
       integer length, nt
-      logical updated
+      logical updated,qlog,more
       double precision preamble(5)
 c            trick to read the preamble(4) [or preamble(5)]
       double precision uin,vin,timein,basein
@@ -115,7 +120,7 @@ c
       data    num/0/,non/0/, noff/0/, ntsys/0/
       data           nonb/0/,noffb/0/,ntsysb/0/
       logical spectrum, diffrnce, ratio, have_ant(MAXANT), rant(MAXANT)
-      logical allflags,debug,qon,qoff
+      logical allflags,debug,qon,qoff,qfirst
 c     
 c  Read the inputs.
 c
@@ -140,12 +145,14 @@ c
       call keyl('debug',debug,.FALSE.)
       call keya('onoff',srcon,' ')
       call keya('onoff',srcoff,' ')
+      call keya('log',log,' ')
       call keyfin
 c     
 c     Check user inputs.
 c     
       if(vis.eq.' ')call bug('f','Input file name (vis=) missing')
       if(out.eq.' ')call bug('f','Output file name (out=) missing')
+      qlog = log.ne.' '
 c
 c     Check the on/off mode
 c
@@ -171,6 +178,7 @@ c  Open the output file.
 c
 
       call uvopen(lOut,out,'new')
+      if (qlog) call logopen(log,' ')
 c     
 c  Open the data file, apply selection, do linetype initialisation and
 c  determine the variables of interest.
@@ -241,6 +249,7 @@ c
       PolVary = .false.
       timein0 = timein
       nt = 1
+      koff = 0
       call uvprobvr(lIn,'corr',type,length,updated)
       if(type.ne.'r'.and.type.ne.'j'.and.type.ne.'c')
      *     call bug('f','no spectral data in input file')
@@ -320,6 +329,7 @@ c
                else
                   noffb = noffb + 1
                endif
+               koff = 1
             else if(on.eq.-1)then
                if (allflags(nchan,flags,slop)) then
                   ntsys = ntsys + 1
@@ -362,6 +372,16 @@ c
                      enddo
                   endif
                   call uvwrite(lOut,uin,data,flags,nchan)
+c                 should ask if either dra or ddec was updated, only then print
+                  call uvrdvrr(lIn,'dra',dra,0.0)
+                  call uvrdvrr(lIn,'ddec',ddec,0.0)
+                  if (qlog) then
+                     dra  = dra*206265.0
+                     ddec = ddec*206265.0
+                     write(logline,'(F8.2,1x,F8.2,1x,i1)') dra,ddec,koff
+                     call LogWrite(logline,more)
+                  endif
+                  koff = 0
                else
                   nonb = nonb + 1
 c                 only rant about an antenna once in their lifetime
@@ -417,6 +437,7 @@ c
       call hisinput(lOut,'SINBAD')
       call hisclose (lOut)
       call uvclose(lOut)
+      if (qlog) call logclose
       end
       
 c-----------------------------------------------------------------------
