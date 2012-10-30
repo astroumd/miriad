@@ -1,0 +1,20 @@
+There are many ways from python to talk to MIRIAD. This list may
+not be complete.
+
+mirpy:
+   See also http://pypi.python.org/pypi/mirpy
+   author: Malte Marquarding (ATNF)
+
+miriad-python:
+   See also https://www.cfa.harvard.edu/~pwilliam/miriad-python/
+   author: Peter Williams (CARMA/BKY)
+   
+
+pyramid:
+   See $MIR/src/scripts/python/Miriad.py
+   author: Peter Teuben (CARMA/UMD)
+
+
+??
+   See $MIR/src/scripts/python/{README, uvio.i, Makefile, mirlib.py}
+   author:  Garrelt Mellema (WSRT)
