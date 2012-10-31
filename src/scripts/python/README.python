@@ -8,7 +8,10 @@ mirpy:
 miriad-python:
    See also https://www.cfa.harvard.edu/~pwilliam/miriad-python/
    author: Peter Williams (CARMA/BKY)
-   
+
+???
+   See adass 2012
+   author: Douglas Friedel   
 
 pyramid:
    See $MIR/src/scripts/python/Miriad.py
