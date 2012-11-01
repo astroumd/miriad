@@ -69,7 +69,7 @@ c    mchw    05feb97  write same type of correlation data as input file.
 c    pjt/mwp 19feb08  safeguard off before on, tsys=1 if not present
 c    pjt     25feb08  use window based systemp array if tsys not available.
 c    mwp     16may08  added options for spectrum, difference, ratio
-c    mwp     16may08-2  off() must be complex!!! very funny behavior if not.
+c    mwp     16may08-2  off() must be complex!!! very funny behavior if not. 
 c    pjt     28jan11  made it listen to flags in the OFF scans
 c    pjt     28feb11  quick hack to pre-cache first scan of all OFF's
 c    pjt      3mar11  flagging
@@ -78,6 +78,7 @@ c    pjt      8may12  bad channel (interpolate accross) method  [not impl]
 c    pjt     24sep12  implemented onoff=
 c    pjt     28sep12  fixing up some ....and then more
 c    pjt     28oct12  added log=
+c    pjt      1nov12  oops, bug in spectrum mode ever since 16may08
 c---------------------------------------------------------------------------
 c  TODO:
 c    - integration time from listobs appears wrong
@@ -348,7 +349,7 @@ c
                   non = non + 1
                   if(spectrum) then
                      do i=1,nchan
-                        data(i) = tsys(i,ant)*(data(i)/off(i,ant)) - 1.0
+                        data(i) = tsys(i,ant)*(data(i)/off(i,ant) - 1.0)
                         flags(i) = flags(i).AND.oflags(i,ant)
                      enddo
                   else if(diffrnce) then
