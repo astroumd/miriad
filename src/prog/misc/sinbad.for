@@ -509,7 +509,7 @@ c
 c              write(*,*) i2,' :t: ',(tsys(i2,j),j=1,nants)
             enddo
          enddo
-         write(*,*) 'new Tsys: ',tsys(1,1)
+c        write(*,*) 'new Tsys: ',tsys(1,1)
          
       endif
       
