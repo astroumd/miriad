@@ -46,17 +46,24 @@ c       Default: not used.
 c@ options 
 c       Different computational output options (mainly for debugging).
 c       Exclusively one of the following (minimum match):
-c         'spectrum'     Compute Tsys*(on-off/off).  This is the default
+c         'spectrum'     Compute Tsys*(on-off)/off.  This is the default
 c         'difference'   Compute (on-off)
 c         'ratio'        Compute on/off
 c         'on'           Output (on)
 c         'off'          Output (off)
+c         'tsys'         Tsys
 c@ slop
 c       Allow some fraction of channels bad for accepting
 c       Default: 0
 c@ repair
 c       A list of bad channels (birdies) that need to be repaired by
 c       interpolating accross them.
+c@ mode
+c       Interpolation mode between OFF before and after ON.  Default is 0,
+c       meaning no interpolation done, the last OFF scan is used.  
+c       1 signifies linear interpolation.
+c       Note any interpolation needs to scan the input file twice. 
+c
 c@ log
 c       Optional filename in which the ON pointing centers (in offset arcsec)
 c       are stored. A third column designates if this pointing center
@@ -79,6 +86,7 @@ c    pjt     24sep12  implemented onoff=
 c    pjt     28sep12  fixing up some ....and then more
 c    pjt     28oct12  added log=
 c    pjt      1nov12  oops, bug in spectrum mode ever since 16may08
+c    pjt      2nov12  start work on mode=, but added options=tsys
 c---------------------------------------------------------------------------
 c  TODO:
 c    - integration time from listobs appears wrong
@@ -93,8 +101,9 @@ c    not marked correctly).
 
       include 'maxdim.h'
       character version*80,versan*80
-      integer MAXSELS
+      integer MAXSELS, MAXTIME
       parameter(MAXSELS=1024)
+      parameter(MAXTIME=1000)
 c     
       real sels(MAXSELS)
       real start,step,width,tsys1,slop,dra,ddec
@@ -106,7 +115,7 @@ c
       logical first,new,dopol,PolVary,doon,dosrc
       integer lIn,lOut,nchan,npol,pol,SnPol,SPol,on,i,j,ant,koff
       character type*1, line*128
-      integer length, nt
+      integer length, nt, intmode, nvis
       logical updated,qlog,more
       double precision preamble(5)
 c            trick to read the preamble(4) [or preamble(5)]
@@ -116,12 +125,14 @@ c
       complex off(MAXCHAN,MAXANT)
       real    tsys(MAXCHAN,MAXANT)
       logical oflags(MAXCHAN,MAXANT)
+      double precision stime(MAXTIME)
+      integer otime(MAXTIME)
       integer num,   non,    noff,    ntsys
       integer        nonb,   noffb,   ntsysb
       data    num/0/,non/0/, noff/0/, ntsys/0/
       data           nonb/0/,noffb/0/,ntsysb/0/
       logical spectrum, diffrnce, ratio, have_ant(MAXANT), rant(MAXANT)
-      logical allflags,debug,qon,qoff,qfirst
+      logical allflags,debug,qon,qoff,qfirst,qtsys
 c     
 c  Read the inputs.
 c
@@ -132,7 +143,7 @@ c
       call bug('i','New caching of OFF positions')
       
       call keyini
-      call getopt(spectrum,diffrnce,ratio,qon,qoff)
+      call getopt(spectrum,diffrnce,ratio,qon,qoff,qtsys)
       call keyf('vis',vis,' ')
       call SelInput('select',sels,MAXSELS)
       call keya('line',linetype,' ')
@@ -147,6 +158,7 @@ c
       call keya('onoff',srcon,' ')
       call keya('onoff',srcoff,' ')
       call keya('log',log,' ')
+      call keyi('mode',intmode,0)
       call keyfin
 c     
 c     Check user inputs.
@@ -165,12 +177,13 @@ c
 c default is spectrum, so set it if nothing specified on 
 c command line.  Note I could do this in getopt() like
 c  spectrum = present(spectrum) || ( !present(diffrnce) && !present(ratio) )
-c but this is a little more obvious
+c but this is perhaps a little more obvious
 c
       if( ( spectrum .eqv. .false. ) .and.
      *     ( diffrnce .eqv. .false. ) .and.
      *     ( qon .eqv. .false. ) .and.
      *     ( qoff .eqv. .false. ) .and.
+     *     ( qtsys .eqv. .false. ) .and.
      *     ( ratio    .eqv. .false. ) ) then
          spectrum = .true.
       endif
@@ -197,6 +210,7 @@ c      call SelApply(lIn,sels,.true.)
          have_ant(j) = .FALSE.
          rant(j) = .TRUE.
       enddo
+      nvis = 0
 c     
 c  Scan the file once and pre-cache the first OFF positions
 c  for each antenna (danger: this could mean they're not
@@ -204,6 +218,7 @@ c  all at taken at the same time)
 c     
       call uvread(lIn,uin,data,flags,MAXCHAN,nchan)
       do while (nchan.gt.0)
+         nvis = nvis + 1
          if (dosrc) then
             call uvgetvra(lIn,'source',src)
             write(*,*) "source: ",src
@@ -371,6 +386,11 @@ c
                         data(i) = off(i,ant)
                         flags(i) = flags(i).AND.oflags(i,ant)
                      enddo
+                  else if(qtsys) then
+                     do i=1,nchan
+                        data(i) = tsys(i,ant)
+                        flags(i) = flags(i).AND.oflags(i,ant)
+                     enddo
                   endif
                   call uvwrite(lOut,uin,data,flags,nchan)
 c                 should ask if either dra or ddec was updated, only then print
@@ -489,6 +509,7 @@ c
 c              write(*,*) i2,' :t: ',(tsys(i2,j),j=1,nants)
             enddo
          enddo
+         write(*,*) 'new Tsys: ',tsys(1,1)
          
       endif
       
@@ -496,22 +517,23 @@ c              write(*,*) i2,' :t: ',(tsys(i2,j),j=1,nants)
 c-----------------------------------------------------------------------
 c     Get the various (exclusive) options
 c     
-      subroutine getopt(spectrum,diffrnce,ratio,qon,qoff)
+      subroutine getopt(spectrum,diffrnce,ratio,qon,qoff,qtsys)
       implicit none
-      logical spectrum, diffrnce, ratio, qon,qoff
+      logical spectrum, diffrnce, ratio, qon,qoff,qtsys
 c     
       integer nopt
-      parameter(nopt=5)
+      parameter(nopt=6)
       character opts(nopt)*10
       logical present(nopt)
       data opts/'spectrum  ','difference','ratio    ',
-     *          'on        ','off       '/
+     *          'on        ','off       ','tsys     '/
       call options('options',opts,present,nopt)
       spectrum = present(1)
       diffrnce = present(2)
       ratio    = present(3)
       qon      = present(4)
       qoff     = present(5)
+      qtsys    = present(6)
       end
 
       subroutine uvrepair(nchan,data,flags)
