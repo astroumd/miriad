@@ -2,7 +2,7 @@ c***********************************************************************
       program sinbad
       implicit none
 c
-c= sinbad - Calculate Tsys*(on-off)/off*  for autocorrelation data.
+c= sinbad - Calculate Tsys*(on-off)/off for autocorrelation data.
 c& mchw
 c: uv analysis
 c+
@@ -42,6 +42,8 @@ c@ onoff
 c       Two source names, for the on=1 and on=0 (off) positions. This will
 c       override the use of the "on" uv variable, which is how normal
 c       autocorrelation data are tagged for single dish work.
+c       This mode also disallows usage of Tsys hidden in on=-1 tagged
+c       data.
 c       Default: not used.
 c@ options 
 c       Different computational output options (mainly for debugging).
@@ -60,13 +62,20 @@ c       A list of bad channels (birdies) that need to be repaired by
 c       interpolating accross them.
 c@ mode
 c       Interpolation mode between OFF before and after ON.  Default is 0,
-c       meaning no interpolation done, the last OFF scan is used.  
+c       meaning no interpolation done, the last OFF scan is used, or an
+c       average (see OAVER= below) is used.
 c       1 signifies linear interpolation.
-c       Note any interpolation needs to scan the input file twice. 
+c@ oaver
+c       Avering mode for the OFF. Two integers, denoting the number of
+c       OFF's before the current ON, and the number after.  The default
+c       is to look at the most recent one, i.e. oaver=1,0
+c@ normalize
+c       Should all scan be normalized?
+c       Default: false
 c
 c@ log
 c       Optional filename in which the ON pointing centers (in offset arcsec)
-c       are stored. A third column designates if this pointing center
+c       are listed. A third column designates if this pointing center
 c       was the one immediately preceded by an OFF pointing.
 c--
 c
@@ -87,6 +96,7 @@ c    pjt     28sep12  fixing up some ....and then more
 c    pjt     28oct12  added log=
 c    pjt      1nov12  oops, bug in spectrum mode ever since 16may08
 c    pjt      2nov12  start work on mode=, but added options=tsys
+c    pjt      5nov12  added oaver=
 c---------------------------------------------------------------------------
 c  TODO:
 c    - integration time from listobs appears wrong
@@ -101,46 +111,49 @@ c    not marked correctly).
 
       include 'maxdim.h'
       character version*80,versan*80
-      integer MAXSELS, MAXTIME
+      integer MAXSELS, MAXTIME, MAXOFF, MAXCHAN2
       parameter(MAXSELS=1024)
       parameter(MAXTIME=1000)
+      parameter(MAXOFF=256)
+      parameter(MAXCHAN2=1024)
 c     
       real sels(MAXSELS)
       real start,step,width,tsys1,slop,dra,ddec
       double precision timein0
       character linetype*20,vis*128,out*128,log*128,logline*128
       character srcon*16, srcoff*16, src*16
-      complex data(MAXCHAN)
-      logical flags(MAXCHAN)
-      logical first,new,dopol,PolVary,doon,dosrc
-      integer lIn,lOut,nchan,npol,pol,SnPol,SPol,on,i,j,ant,koff
+      complex data(MAXCHAN2)
+      logical flags(MAXCHAN2)
+      logical first,new,dopol,PolVary,doon,dosrc,qnorm
+      integer lIn,lOut,nchan,npol,pol,SnPol,SPol,on,i,j,k,ant,koff
       character type*1, line*128
-      integer length, nt, intmode, nvis
+      integer length, nt, intmode, nvis, ivis, n
       logical updated,qlog,more
       double precision preamble(5)
 c            trick to read the preamble(4) [or preamble(5)]
       double precision uin,vin,timein,basein
       common/preamb/uin,vin,timein,basein
 c     
-      complex off(MAXCHAN,MAXANT)
-      real    tsys(MAXCHAN,MAXANT)
-      logical oflags(MAXCHAN,MAXANT)
+      complex off(MAXCHAN2,MAXANT,MAXOFF), toff(MAXCHAN2)
+      real    tsys(MAXCHAN2,MAXANT)
+      complex offsum(MAXANT,MAXOFF)
+      integer ivisoff(MAXOFF+1,MAXANT)  
+      logical oflags(MAXCHAN2,MAXANT,MAXOFF), tflags(MAXCHAN2)
       double precision stime(MAXTIME)
-      integer otime(MAXTIME)
+      integer otime(MAXTIME), oaver(2)
       integer num,   non,    noff,    ntsys
       integer        nonb,   noffb,   ntsysb
       data    num/0/,non/0/, noff/0/, ntsys/0/
       data           nonb/0/,noffb/0/,ntsysb/0/
       logical spectrum, diffrnce, ratio, have_ant(MAXANT), rant(MAXANT)
       logical allflags,debug,qon,qoff,qfirst,qtsys
+      integer iwhengtm
 c     
 c  Read the inputs.
 c
       version = versan('sinbad',
      *     '$Revision$',
      *     '$Date$')
-      
-      call bug('i','New caching of OFF positions')
       
       call keyini
       call getopt(spectrum,diffrnce,ratio,qon,qoff,qtsys)
@@ -159,6 +172,9 @@ c
       call keya('onoff',srcoff,' ')
       call keya('log',log,' ')
       call keyi('mode',intmode,0)
+      call keyi('oaver',oaver(1),1)
+      call keyi('oaver',oaver(2),0)
+      call keyl('normalize',qnorm,.FALSE.)
       call keyfin
 c     
 c     Check user inputs.
@@ -204,19 +220,25 @@ c      call SelApply(lIn,sels,.true.)
       call SelApply(lIn,sels,.true.)
       call VarInit(lIn,'channel')
       do j=1,MAXANT
-         do i=1,MAXCHAN
+         do i=1,MAXCHAN2
             tsys(i,j) = tsys1
          enddo
          have_ant(j) = .FALSE.
          rant(j) = .TRUE.
       enddo
+      do j=1,MAXANT
+         do k=1,MAXOFF
+            ivisoff(k,j) = 0
+         end do
+      end do
       nvis = 0
+
 c     
 c  Scan the file once and pre-cache the first OFF positions
 c  for each antenna (danger: this could mean they're not
 c  all at taken at the same time)
 c     
-      call uvread(lIn,uin,data,flags,MAXCHAN,nchan)
+      call uvread(lIn,uin,data,flags,MAXCHAN2,nchan)
       do while (nchan.gt.0)
          nvis = nvis + 1
          if (dosrc) then
@@ -234,27 +256,36 @@ c
          endif
          ant = basein/256
          if(on.eq.0)then
+            n = ivisoff(1,ant) + 1
             if (debug) write(*,*) 'Reading off ant ',
-     *           ant,on,have_ant(ant)
+     *           ant,have_ant(ant),nvis,n
+            if (n.eq.MAXOFF) call bug('f','MAXOFF: too many offs')
+            ivisoff(n+1,ant) = nvis
+            ivisoff(1,ant) = n
+            offsum(ant,n) = 0.0
+            do i=1,nchan
+               offsum(ant,n) = offsum(ant,n) + data(i)
+               off(i,ant,n) = data(i)
+               oflags(i,ant,n) = flags(i)
+            end do
+c                not sure if we should hang on to this?
             if (allflags(nchan,flags,slop)) then
                if (.not.have_ant(ant)) then
                   if(debug)write(*,*) 'Saving off ant ',ant
                   have_ant(ant) = .TRUE.
-                  do i=1,nchan
-                     off(i,ant) = data(i)
-                     oflags(i,ant) = flags(i)
-                  enddo
                endif
             endif
+
          endif
-         call uvread(lIn,uin,data,flags,MAXCHAN,nchan)
+         call uvread(lIn,uin,data,flags,MAXCHAN2,nchan)
       end do
 
       call uvrewind(lIn)
+      write(*,*) 'Rewinding file, reading ON'
 c
 c  Read through the file, listing what we have to.
 c
-      call uvread(lIn,uin,data,flags,MAXCHAN,nchan)
+      call uvread(lIn,uin,data,flags,MAXCHAN2,nchan)
 c
 c  Other initialisation.
 c     
@@ -281,7 +312,7 @@ c
       else
          doon = .TRUE.
       endif
-      if (tsys1.lt.0.0) call getwtsys(lIn,tsys,MAXCHAN,MAXANT)
+      if (tsys1.lt.0.0) call getwtsys(lIn,tsys,MAXCHAN2,MAXANT)
       
 c
 c  Loop through the data, writing (ON-OFF)/OFF*TSYS
@@ -338,10 +369,10 @@ c
             if(on.eq.0)then
                if (allflags(nchan,flags,slop)) then
                   noff = noff + 1
-                  do i=1,nchan
-                     off(i,ant) = data(i)
-                     oflags(i,ant) = flags(i)
-                  enddo
+c                  do i=1,nchan
+c                     off(i,ant) = data(i)
+c                     oflags(i,ant) = flags(i)
+c                  enddo
                else
                   noffb = noffb + 1
                endif
@@ -351,7 +382,7 @@ c
                   ntsys = ntsys + 1
                   do i=1,nchan
                      tsys(i,ant) = data(i)
-                     oflags(i,ant) = flags(i)
+c                    oflags(i,ant) = flags(i)
                   enddo
                else
                   ntsysb = ntsysb + 1
@@ -360,36 +391,39 @@ c
                if (have_ant(ant)) then
                   if (noff.eq.0) call bug('f','No OFF before ON found')
                   if (ntsys.eq.0 .and. tsys1.lt.0.0)
-     *                 call getwtsys(lIn,tsys,MAXCHAN,MAXANT) 
+     *                 call getwtsys(lIn,tsys,MAXCHAN2,MAXANT) 
                   non = non + 1
+                  call getoff(nchan,num,ant,oaver,qnorm,debug,
+     *                        MAXCHAN2,MAXANT,MAXOFF,
+     *                        off, offsum, ivisoff, toff, tflags)
                   if(spectrum) then
                      do i=1,nchan
-                        data(i) = tsys(i,ant)*(data(i)/off(i,ant) - 1.0)
-                        flags(i) = flags(i).AND.oflags(i,ant)
+                        data(i) = tsys(i,ant)*(data(i)/toff(i) - 1.0)
+                        flags(i) = flags(i).AND.tflags(i)
                      enddo
                   else if(diffrnce) then
                      do i=1,nchan
-                        data(i) = data(i)-off(i,ant)
-                        flags(i) = flags(i).AND.oflags(i,ant)
+                        data(i) = data(i)-toff(i)
+                        flags(i) = flags(i).AND.tflags(i)
                      enddo
                   else if(ratio) then
                      do i=1,nchan
-                        data(i) = data(i)/off(i,ant)
-                        flags(i) = flags(i).AND.oflags(i,ant)
+                        data(i) = data(i)/toff(i)
+                        flags(i) = flags(i).AND.tflags(i)
                      enddo
                   else if(qon) then
                      do i=1,nchan
-                        flags(i) = flags(i).AND.oflags(i,ant)
+                        flags(i) = flags(i).AND.tflags(i)
                      enddo
                   else if(qoff) then
                      do i=1,nchan
-                        data(i) = off(i,ant)
-                        flags(i) = flags(i).AND.oflags(i,ant)
+                        data(i) = toff(i)
+                        flags(i) = flags(i).AND.tflags(i)
                      enddo
                   else if(qtsys) then
                      do i=1,nchan
                         data(i) = tsys(i,ant)
-                        flags(i) = flags(i).AND.oflags(i,ant)
+                        flags(i) = flags(i).AND.tflags(i)
                      enddo
                   endif
                   call uvwrite(lOut,uin,data,flags,nchan)
@@ -417,7 +451,7 @@ c                 only rant about an antenna once in their lifetime
                call bug('w','value of on not 1, 0 or -1')
             endif
          endif
-         call uvread(lIn,uin,data,flags,MAXCHAN,nchan)
+         call uvread(lIn,uin,data,flags,MAXCHAN2,nchan)
       enddo
 c     
       print *,'Times read:         ',nt
@@ -443,9 +477,9 @@ c
       
       if (ntsys.eq.0) then
          if (tsys1.lt.0.0) then
-            call bug('w','No Tsys data on=-1 found, used systemp')
+            call bug('i','No Tsys data on=-1 found, used systemp')
          else
-            call bug('w','No Tsys data on=-1 found, used default tsys=')
+            call bug('i','No Tsys data on=-1 found, used default tsys=')
          endif
       endif
       
@@ -460,7 +494,81 @@ c
       call uvclose(lOut)
       if (qlog) call logclose
       end
-      
+c-----------------------------------------------------------------------
+      subroutine getoff(nchan,num,ant,oaver,Qnorm,debug,
+     *                  mchan,mant,moff,
+     *                  off, offsum, ivisoff, toff, tflags)
+
+c
+c  get the OFF based on past and/or future values
+c
+      implicit none
+      integer nchan, num, ant, mchan, mant, moff, oaver(2)
+      complex off(mchan, mant, moff), toff(mchan)
+      complex offsum(mant, moff)
+      integer ivisoff(moff+1, mant)
+      logical tflags(mchan),qnorm,debug
+c
+      integer i,k,n, k1,k2,ki, iwhengtm
+      real    kw
+
+c
+      if (oaver(1).eq.0 .and. oaver(2).eq.0) call bug('f','bad oaver')
+      if (oaver(1).lt.0 .or.  oaver(2).lt.0) call bug('f','oaver<0')
+
+c
+c  initialize to worst case scenario
+c
+      do i=1,nchan
+         toff(i) = 0.0
+         tflags(i) = .FALSE.
+      end do
+
+c  find where we are
+
+      n = ivisoff(1,ant)
+      k = iwhengtm(n, ivisoff(2,ant), num) - 1
+      if (debug) write(*,*) 'getoff: ',ant,num,n,k,
+     *                      ivisoff(k,ant),ivisoff(k+1,ant)
+      if (k.eq.0) return
+c  
+      if (oaver(1).eq.1 .and. oaver(2).eq.0) then
+         do i=1,nchan
+            toff(i) = off(i,ant,k)
+            tflags(i) = .TRUE.
+         end do
+      else
+         k1 = k-oaver(1)
+         k2 = k+oaver(2)
+         if (k1.lt.1) k1 = 1
+         if (k2.gt.n) k2 = n
+         kw = k2-k1+1
+         do i=1,nchan
+            toff(i) = 0.0
+            do ki=k1,k2
+               toff(i) = toff(i) + off(i,ant,ki)
+            enddo
+            toff(i) = toff(i)/kw
+            tflags(i) = .TRUE.
+         end do
+      endif
+
+      end
+c-----------------------------------------------------------------------
+      integer function iwhengtm(n, iarr, m)
+      implicit none
+      integer n, m, iarr(n)
+c  find the index in a sorted array which the first value is larger than 
+c  a given value (m)
+      integer i
+
+c  use a simple linear search for now
+      do iwhengtm=1,n
+         if (iarr(iwhengtm).gt.m) return
+      end do
+
+      iwhengtm = 0
+      end
 c-----------------------------------------------------------------------
       logical function allflags(nchan,flags,slop)
       implicit none
@@ -535,7 +643,7 @@ c
       qoff     = present(5)
       qtsys    = present(6)
       end
-
+c-----------------------------------------------------------------------
       subroutine uvrepair(nchan,data,flags)
       integer nchan
       complex data(nchan)
@@ -545,4 +653,4 @@ c
 
       return
       end
-
+c-----------------------------------------------------------------------
