@@ -108,6 +108,7 @@ c    useful if ON and OFF are different
 c  - optionally allow interpolaton between two nearby OFF's
 c  - specify OFF's from a different source name (useful if data were
 c    not marked correctly).
+c  - does't handle missing ants too well?
 
       include 'maxdim.h'
       character version*80,versan*80
@@ -483,19 +484,20 @@ c
          endif
       endif
       
-      call uvclose(lIn)
 c     
 c  Finish up the history, and close up shop
 c
+      call hdcopy(lIn,lOut,'history')
       call hisopen(lOut,'append')
       call hiswrite(lOut,'SINBAD: Miriad '//version)
       call hisinput(lOut,'SINBAD')
       call hisclose (lOut)
       call uvclose(lOut)
+      call uvclose(lIn)
       if (qlog) call logclose
       end
 c-----------------------------------------------------------------------
-      subroutine getoff(nchan,num,ant,oaver,Qnorm,debug,
+      subroutine getoff(nchan,num,ant,Oaver,Qnorm,debug,
      *                  mchan,mant,moff,
      *                  off, offsum, ivisoff, toff, tflags)
 

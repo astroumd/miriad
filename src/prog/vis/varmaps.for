@@ -127,11 +127,11 @@ c----------------------------------------------------------------------c
        include 'maxdim.h'
        include 'mirconst.h'
        character*(*) version
-       parameter(version='VARMAPS: version 25-sep-2012')
+       parameter(version='VARMAPS: version 28-oct-2012')
        integer MAXSELS
        parameter(MAXSELS=512)
        integer MAXVIS
-       parameter(MAXVIS=20000)
+       parameter(MAXVIS=10000)
        integer MAXCHAN2
        parameter(MAXCHAN2=256)
        integer MAXVPP
@@ -586,6 +586,8 @@ c
 c
 c  Write the history file.
 c
+
+      call hdcopy(lIn,lOut,'history')
       call hisopen(lOut,'append')
       call hiswrite(lOut, 'VARMAPS '//version)
       call hisinput(lOut, 'VARMAPS')
@@ -593,6 +595,7 @@ c
 c
 c  Close the files after writing history
 c
+      call uvclose(lIn)
       call xyclose(lOut)
 c
       end
