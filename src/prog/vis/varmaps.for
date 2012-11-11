@@ -93,7 +93,10 @@ c     Smoothing beam in X. Will use same units are xcell.
 c@ ybeam
 c     Smoothing beam in Y. Will use same units are ycell.
 c@ size
-c     Number of neighbor pixels to look around for smoothing.
+c     Number of neighbor pixels to look around for smoothing. This means
+c     an area of 2*size+1 by 2*size+1 pixels around the center pixel
+c     will be used for contributions to smoothing. This should probably
+c     be something a little larger than beam/cell.
 c     Default: 0 
 c@ mode
 c     Smoothing mode.
@@ -110,11 +113,13 @@ c
 c@ options
 c       This gives extra processing options. Several options can be given,
 c       each separated by commas. They may be abbreviated to the minimum
-c       needed to avoid ambiguity. 
+c       needed to avoid ambiguity. Some options cannot be choosen together.
 c       sum     - not used
 c       taper   - not used
 c       edge    - sharp edge, it will cut signal outside
 c       soft    - FWHM softened edge
+c       inttime - create integration time map in channel 1
+c       
 c
 c--
 c  History:
@@ -123,11 +128,12 @@ c     pjt  18mar11  write flags as well
 c     pjt  28mar11  taper,edge
 c     pjt   4apr11  added scale=
 c     pjt   6sep11  added soft= 
+c     pjt  11nov12  
 c----------------------------------------------------------------------c
        include 'maxdim.h'
        include 'mirconst.h'
        character*(*) version
-       parameter(version='VARMAPS: version 28-oct-2012')
+       parameter(version='VARMAPS: version 11-nov-2012')
        integer MAXSELS
        parameter(MAXSELS=512)
        integer MAXVIS
@@ -163,6 +169,7 @@ c----------------------------------------------------------------------c
        integer length, xlength, ylength, xindex, yindex, cnt, mode
        integer imin,jmin,imax,jmax
        logical updated,sum,debug,hasbeam,doweight,dotaper1,dotaper2,edge
+       logical doimap
 c
        integer nout, nopt
        parameter(nopt=8)
@@ -199,7 +206,7 @@ c
        call keyi ('mode',mode,0)
        call keyr ('cutoff',cutoff,0.00000001)
        call keyr ('soft', softfac, 1.0)
-       call GetOpt(sum,debug,dotaper1,edge,dotaper2)
+       call GetOpt(sum,debug,dotaper1,edge,dotaper2,doimap)
        call keyfin
 c
 c  Check that the inputs are reasonable.
@@ -570,6 +577,13 @@ c
             enddo
          enddo
       endif
+      if (.not.doimap) then
+         do j=1,MAXSIZE
+            do i=1,MAXSIZE
+               array(i,j,1) = 0.0
+            end do
+         end do
+      endif
 c     
 c  Write the image and it's header.
 c
@@ -719,9 +733,9 @@ c
       enddo
       end
 c********1*********2*********3*********4*********5*********6*********7**
-      subroutine GetOpt(sum,debug,dotaper,edge,soft)
+      subroutine GetOpt(sum,debug,dotaper,edge,soft,imap)
       implicit none
-      logical sum,debug,dotaper,edge,soft
+      logical sum,debug,dotaper,edge,soft,imap
 c     
 c  Determine extra processing options.
 c
@@ -730,14 +744,15 @@ c    sum      Sum the data in each pixel. Default is to average.
 c    debug    More debug output
 c------------------------------------------------------------------------
       integer nopt
-      parameter(nopt=5)
+      parameter(nopt=6)
       character opts(nopt)*9
       logical present(nopt)
       data opts/'sum      ',
      *          'debug    ',
      *          'taper    ',
      *          'edge     ',
-     *          'soft     '/
+     *          'soft     ',
+     *          'inttime  '/
 c     
       call options('options',opts,present,nopt)
       sum = present(1)
@@ -745,6 +760,7 @@ c
       dotaper = present(3)
       edge = present(4)
       soft = present(5)
+      imap = present(6)
 c     
       end
 c********1*********2*********3*********4*********5*********6*********7**
