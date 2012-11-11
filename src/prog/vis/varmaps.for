@@ -404,7 +404,7 @@ c
          do j=1,MAXSIZE
             cnt = idx(i,j,1)
             if (cnt.gt.0) then
-               write(*,*) i,j,cnt
+               if (debug) write(*,*) i,j,cnt
                do l=1,cnt
                   ng = idx(i,j,l+1)
                   stacks(ng,1) = cnt
