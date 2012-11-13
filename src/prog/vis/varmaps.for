@@ -119,6 +119,7 @@ c       taper   - not used
 c       edge    - sharp edge, it will cut signal outside
 c       soft    - FWHM softened edge
 c       inttime - create integration time map in channel 1
+c       debug   - lots of verbose output 
 c       
 c
 c--
@@ -128,12 +129,12 @@ c     pjt  18mar11  write flags as well
 c     pjt  28mar11  taper,edge
 c     pjt   4apr11  added scale=
 c     pjt   6sep11  added soft= 
-c     pjt  11nov12  
-c----------------------------------------------------------------------c
+c     pjt  13nov12  fixed init problem in maps, rearrange pixel filling
+c-----------------------------------------------------------------------
        include 'maxdim.h'
        include 'mirconst.h'
        character*(*) version
-       parameter(version='VARMAPS: version 11-nov-2012')
+       parameter(version='VARMAPS: version 13-nov-2012')
        integer MAXSELS
        parameter(MAXSELS=512)
        integer MAXVIS
@@ -410,6 +411,10 @@ c
       do i=1,MAXSIZE
          do j=1,MAXSIZE
             cnt = idx(i,j,1)
+            do k=1,MAXCHAN2
+               weight(i,j,k) = 0.0
+               array(i,j,k)  = 0.0
+            enddo
             if (cnt.gt.0) then
                if (debug) write(*,*) i,j,cnt
                do l=1,cnt
@@ -426,23 +431,21 @@ c grid point
 c
 
       do i=1,MAXSIZE
-         x0 = (i-1 - nsize(1)/2 ) * cell(1)
          do j=1,MAXSIZE
-            y0 = (j-1 - nsize(2)/2 ) * cell(2)
-            weight(i,j,k) = 0.0
-            array(i,j,k)  = 0.0
-            do id=-size,size
-               i1 = i + id
-               do jd=-size,size
-                  j1 = j + jd
-                  if (i1.ge.1.and.i1.le.nsize(1) .and. 
-     *                j1.ge.1.and.j1.le.nsize(2))then
-                     cnt = idx(i1,j1,1)
-                     if (cnt.gt.0) then
-                        do l=1,cnt
-                           ng = idx(i1,j1,l+1)
-                           x = xstacks(ng)
-                           y = ystacks(ng)
+            cnt = idx(i,j,1)
+            if (cnt.gt.0) then
+               do l=1,cnt
+                  ng = idx(i,j,l+1)
+                  x = xstacks(ng)
+                  y = ystacks(ng)
+                  do id=-size,size
+                     i1 = i + id
+                     x0 = (i1-1 - nsize(1)/2 ) * cell(1)
+                     do jd=-size,size
+                        j1 = j + jd
+                        y0 = (j1-1 - nsize(2)/2 ) * cell(2)
+                        if (i1.ge.1.and.i1.le.nsize(1) .and. 
+     *                      j1.ge.1.and.j1.le.nsize(2))then
                            if (hasbeam) then
                               if (mode.eq.0) then
                                  w = (x-x0)*(x-x0)/beam2(1)+
@@ -464,20 +467,20 @@ c
                            if(debug)write(*,*) i,j,i1,j1,cnt,ng,w
                            if (w.gt.0.0) then
                               do k=1,nsize(3)
-                                 array(i,j,k) = 
-     *                             array(i,j,k) + w*stacks(ng,k)
-                                 weight(i,j,k) = 
-     *                             weight(i,j,k) + w
+                                 array(i1,j1,k) = 
+     *                                array(i1,j1,k) + w*stacks(ng,k)
+                                 weight(i1,j1,k) = 
+     *                                weight(i1,j1,k) + w
                               end do
                            end if
-                        end do
-                     end if
-                  end if
+                        end if
+                     end do
+                  end do
                end do
-            end do
+            end if
          end do
       end do
-
+      
 c     
 c  Average the data, compute final minmax
 c  If you want to taper the edges by FWHM, it will do that
