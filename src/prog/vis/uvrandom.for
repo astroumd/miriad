@@ -38,15 +38,16 @@ c    31aug98 tth/pjt    added gauss option to distribute points
 c    10may99 mchw  increased MAXPTS=100000; Add Gaussian noise.
 c    19aug99 mchw  increased to 1e6
 c    17mar01  pjt documented and changed to 1e6 to 1000000  :-)
+c     5sep12 pjt  bigger MAXPTS and report that number if picked too big
 c    
 c-----------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*),uvfile*80
-	parameter(version='(version 1.1  17-mar-01)')
+	parameter(version='(version 1.1  5-sep-2012)')
 	double precision preamble(4),sfreq,sdf,restfreq,timeout
 	complex wcorr(MAXCHAN),corr(MAXCHAN),data(MAXCHAN)
 	integer i,j,npts,nwide,nchan,unit,MAXPTS,ischan,nschan,nspect
-	parameter(MAXPTS=1000000)
+	parameter(MAXPTS=10000000)
 	real umax,vmax,uns(MAXPTS),vns(MAXPTS),wfreq,wwidth,freq
 	real inttime,noise
 	logical flags(MAXCHAN), qgauss
@@ -74,7 +75,10 @@ c
 	if(nchan.le.0.and.nwide.le.0)
      *		call bug('f','No wide or spectral channels')
 	if(uvfile.eq.' ')call bug('f','Output filename must be given')
-	if(npts.gt.MAXPTS)call bug('f','Too many points requested')
+	if(npts.gt.MAXPTS) then
+	   write(*,*) 'MAXPTS=',MAXPTS
+           call bug('f','Too many points requested')
+	 endif
 c
 c  Open the output file and start the history file.
 c
