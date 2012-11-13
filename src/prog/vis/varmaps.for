@@ -49,18 +49,14 @@ c	e.g. yaxis=delev,1
 c
 c@ zaxis
 c	Visibility 'amplitude', 'phase', 'real', or 'imaginary'.
-c	Default zaxis=amplitude
-c	No calibration is applied by VARMAP. 'amplitude' is OK on uncalibrated
-c	data, but we need to calibrate the data, e.g. using UVCAL
-c	w.r.t. the (0,0) offset to get  'real', 'imag' or 'phase' correct.
-c	This also could also be an option in varmap to save a
-c	pre-calibration step.
+c	Default zaxis=real
+c	No calibration is applied by VARMAPS. 
 c
 c@ scale
-c       Scaling factor applied to the data
+c       Scaling factor applied to the data. Default:  1 ????
 c
 c@ out
-c	Output image. No default.
+c	Output image or image cube. No default.
 c
 c@ imsize
 c	The size of the output image x-axis and y-axis. If only one value is
@@ -192,7 +188,7 @@ c
        call keyi ('xaxis',xindex,1)
        call keya ('yaxis',yaxis,'ddec')
        call keyi ('yaxis',yindex,1)
-       call keya ('zaxis',zaxis,'amplitude')
+       call keya ('zaxis',zaxis,'real')
        call keyi ('imsize',nsize(1),16)
        call keyi ('imsize',nsize(2),nsize(1))
        call keyr ('xcell',cell(1),0.)
