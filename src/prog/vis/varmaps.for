@@ -93,6 +93,8 @@ c     Number of neighbor pixels to look around for smoothing. This means
 c     an area of 2*size+1 by 2*size+1 pixels around the center pixel
 c     will be used for contributions to smoothing. This should probably
 c     be something a little larger than beam/cell.
+c     A second size is used to put a guard around the outermost observed
+c     points. If not given, it defaults to the neighbor pixel count.      
 c     Default: 0 
 c@ mode
 c     Smoothing mode.
@@ -126,11 +128,12 @@ c     pjt  28mar11  taper,edge
 c     pjt   4apr11  added scale=
 c     pjt   6sep11  added soft= 
 c     pjt  13nov12  fixed init problem in maps, rearrange pixel filling
+c     pjt  19nov12  masking with better tapering
 c-----------------------------------------------------------------------
        include 'maxdim.h'
        include 'mirconst.h'
        character*(*) version
-       parameter(version='VARMAPS: version 13-nov-2012')
+       parameter(version='VARMAPS: version 19-nov-2012')
        integer MAXSELS
        parameter(MAXSELS=512)
        integer MAXVIS
@@ -150,7 +153,7 @@ c-----------------------------------------------------------------------
        integer idata(MAXANT)
        real rdata(MAXANT)
        double precision ddata(MAXANT)
-       integer lout,nsize(3),i,j,k,l,ng,i1,j1,id,jd,size
+       integer lout,nsize(3),i,j,k,l,ng,i1,j1,id,jd,size,size2
        real cell(2),beam(2),beam2(2)
        integer MAXSIZE
        parameter(MAXSIZE=256)
@@ -160,6 +163,7 @@ c-----------------------------------------------------------------------
        integer idx(MAXSIZE,MAXSIZE,MAXVPP+1)
        real array(MAXSIZE,MAXSIZE,MAXCHAN2)
        real weight(MAXSIZE,MAXSIZE,MAXCHAN2)
+       logical mask(MAXSIZE,MAXSIZE)
        real x,y,z,x0,y0,datamin,datamax,f,w,cutoff, xscale,yscale,scale
        real softfac
        character*1 xtype, ytype, type
@@ -200,6 +204,7 @@ c
        if(nout.eq.0)yunit = xunit
        call keyr ('ybeam',beam(2),beam(1))
        call keyi ('size',size,0)
+       call keyi ('size',size2,size)
        call keyi ('mode',mode,0)
        call keyr ('cutoff',cutoff,0.00000001)
        call keyr ('soft', softfac, 1.0)
@@ -294,9 +299,10 @@ c
       call maphead(lIn,lOut,nsize,cell,xaxis,yaxis,
      *   xunit,yunit,linetype)
 
-      do i=1,MAXSIZE
-         do j=1,MAXSIZE
+      do j=1,MAXSIZE
+         do i=1,MAXSIZE
             idx(i,j,1) = 0
+            mask(i,j) = .FALSE.
          enddo
       enddo
       nvis = 0
@@ -402,20 +408,25 @@ c mean or median filter those into a single (thus cnt=1) stack per
 c pointing
 c
 
-      write(*,*) 'TESTING median/mean filtering in varmaps'
-
-      do i=1,MAXSIZE
-         do j=1,MAXSIZE
-            cnt = idx(i,j,1)
+      do j=1,MAXSIZE
+         do i=1,MAXSIZE
             do k=1,MAXCHAN2
                weight(i,j,k) = 0.0
                array(i,j,k)  = 0.0
             enddo
+            cnt = idx(i,j,1)
             if (cnt.gt.0) then
                if (debug) write(*,*) i,j,cnt
                do l=1,cnt
                   ng = idx(i,j,l+1)
                   stacks(ng,1) = cnt
+               enddo
+               do jd=-size2,size2
+                  j1 = j+jd
+                  do id=-size2,size2
+                     i1=i+id
+                     mask(i1,j1) = .TRUE.
+                  enddo
                enddo
             endif
          enddo
@@ -426,22 +437,22 @@ c Retrieve all the uv scans from the stacks and smooth them into each
 c grid point
 c
 
-      do i=1,MAXSIZE
-         do j=1,MAXSIZE
+      do j=1,MAXSIZE
+         do i=1,MAXSIZE
             cnt = idx(i,j,1)
             if (cnt.gt.0) then
                do l=1,cnt
                   ng = idx(i,j,l+1)
                   x = xstacks(ng)
                   y = ystacks(ng)
-                  do id=-size,size
-                     i1 = i + id
-                     x0 = (i1-1 - nsize(1)/2 ) * cell(1)
-                     do jd=-size,size
-                        j1 = j + jd
-                        y0 = (j1-1 - nsize(2)/2 ) * cell(2)
+                  do jd=-size,size
+                     j1 = j + jd
+                     y0 = (j1-1 - nsize(2)/2 ) * cell(2)
+                     do id=-size,size
+                        i1 = i + id
+                        x0 = (i1-1 - nsize(1)/2 ) * cell(1)
                         if (i1.ge.1.and.i1.le.nsize(1) .and. 
-     *                      j1.ge.1.and.j1.le.nsize(2))then
+     *                      j1.ge.1.and.j1.le.nsize(2)) then
                            if (hasbeam) then
                               if (mode.eq.0) then
                                  w = (x-x0)*(x-x0)/beam2(1)+
@@ -460,6 +471,7 @@ c
                               w = 1.0
                            end if
                            if (w.lt.cutoff) w = 0.0
+                           if (.NOT.mask(i1,j1)) w = 0.0
                            if(debug)write(*,*) i,j,i1,j1,cnt,ng,w
                            if (w.gt.0.0) then
                               do k=1,nsize(3)
