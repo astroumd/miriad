@@ -112,10 +112,10 @@ c@ options
 c       This gives extra processing options. Several options can be given,
 c       each separated by commas. They may be abbreviated to the minimum
 c       needed to avoid ambiguity. Some options cannot be choosen together.
-c       sum     - not used
-c       taper   - not used
-c       edge    - sharp edge, it will cut signal outside
-c       soft    - FWHM softened edge
+c       sum     - not weights, only useful for regular grids.
+c       taper   - not used anymore
+c       edge    - sharp edge, it will cut signal outside the bounding box 
+c       soft    - FWHM softened edge (only works well for rectangles)
 c       inttime - create integration time map in channel 1
 c       debug   - lots of verbose output 
 c       
@@ -137,7 +137,7 @@ c-----------------------------------------------------------------------
        integer MAXSELS
        parameter(MAXSELS=512)
        integer MAXVIS
-       parameter(MAXVIS=10000)
+       parameter(MAXVIS=20000)
        integer MAXCHAN2
        parameter(MAXCHAN2=256)
        integer MAXVPP
@@ -405,7 +405,8 @@ c
 c
 c Optionally go over all the indexed stacks in an (i,j) cell, and 
 c mean or median filter those into a single (thus cnt=1) stack per
-c pointing
+c pointing. Right now we do this in imstack, but another option
+c is to do this here  (@todo)
 c
 
       do j=1,MAXSIZE
@@ -519,7 +520,11 @@ c
       call output(line)
       datamin = 1.E10
       datamax = -1.E10
-      doweight = .TRUE.
+      if (sum) then
+         doweight = .FALSE.
+      else
+         doweight = .TRUE.
+      endif
       do i=1,MAXSIZE
          do j=1,MAXSIZE
             do k=1,nsize(3)
@@ -545,10 +550,11 @@ c taper2 ?
 c   should taper the edges using the FWHM
 c   should dotaper1 be active and dotaper2 only gets 
 c   active a few more cells (FWHM) outside of imin..imax and jmin..jmax
+c NOTE: this only works well for a filled rectangular area
 c
       if (dotaper2) then
          f = beam(1)/cell(1)*softfac
-         write(*,*) 'FWHM/CELL = ',f
+         write(*,*) 'dotaper2:: FWHM/CELL = ',f
          f = 2*2.355*2.355*f*f
          do i=1,MAXSIZE
             do j=1,MAXSIZE
@@ -744,9 +750,9 @@ c
       enddo
       end
 c********1*********2*********3*********4*********5*********6*********7**
-      subroutine GetOpt(sum,debug,dotaper,edge,soft,imap)
+      subroutine GetOpt(sum,debug,taper,edge,soft,imap)
       implicit none
-      logical sum,debug,dotaper,edge,soft,imap
+      logical sum,debug,taper,edge,soft,imap
 c     
 c  Determine extra processing options.
 c
@@ -756,22 +762,22 @@ c    debug    More debug output
 c------------------------------------------------------------------------
       integer nopt
       parameter(nopt=6)
-      character opts(nopt)*9
+      character opts(nopt)*8
       logical present(nopt)
-      data opts/'sum      ',
-     *          'debug    ',
-     *          'taper    ',
-     *          'edge     ',
-     *          'soft     ',
-     *          'inttime  '/
+      data opts/'sum     ',
+     *          'debug   ',
+     *          'taper   ',
+     *          'edge    ',
+     *          'soft    ',
+     *          'inttime '/
 c     
       call options('options',opts,present,nopt)
-      sum = present(1)
-      debug = present(2)
-      dotaper = present(3)
-      edge = present(4)
-      soft = present(5)
-      imap = present(6)
+      sum     = present(1)
+      debug   = present(2)
+      taper   = present(3)
+      edge    = present(4)
+      soft    = present(5)
+      imap    = present(6)
 c     
       end
 c********1*********2*********3*********4*********5*********6*********7**
