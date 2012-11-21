@@ -15,6 +15,7 @@ c       and thus create single dish maps.
 c	Related tasks:
 c	  	UVCAL options=holo replace [u,v] with [dazim,delev]
 c	  	INVERT convolves uvdata into a grid and makes a 2D FFT.
+c               VARMAP more general (non-single dish) mapping routine
 c@ vis
 c       The input uv-dataset name. No default.
 c@ select
@@ -89,12 +90,15 @@ c     Smoothing beam in X. Will use same units are xcell.
 c@ ybeam
 c     Smoothing beam in Y. Will use same units are ycell.
 c@ size
+c     One or two numbers:
 c     Number of neighbor pixels to look around for smoothing. This means
 c     an area of 2*size+1 by 2*size+1 pixels around the center pixel
 c     will be used for contributions to smoothing. This should probably
 c     be something a little larger than beam/cell.
 c     A second size is used to put a guard around the outermost observed
 c     points. If not given, it defaults to the neighbor pixel count.      
+c     Addition softer tapering (see below) can be applied to this, treating
+c     each cell as if there was a pointing.
 c     Default: 0 
 c@ mode
 c     Smoothing mode.
@@ -133,11 +137,11 @@ c-----------------------------------------------------------------------
        include 'maxdim.h'
        include 'mirconst.h'
        character*(*) version
-       parameter(version='VARMAPS: version 19-nov-2012')
+       parameter(version='VARMAPS: version 20-nov-2012')
        integer MAXSELS
        parameter(MAXSELS=512)
        integer MAXVIS
-       parameter(MAXVIS=20000)
+       parameter(MAXVIS=10000)
        integer MAXCHAN2
        parameter(MAXCHAN2=256)
        integer MAXVPP
@@ -154,7 +158,7 @@ c-----------------------------------------------------------------------
        real rdata(MAXANT)
        double precision ddata(MAXANT)
        integer lout,nsize(3),i,j,k,l,ng,i1,j1,id,jd,size,size2
-       real cell(2),beam(2),beam2(2)
+       real cell(2),beam(2),beam2(2),beam3(2)
        integer MAXSIZE
        parameter(MAXSIZE=256)
        real stacks(MAXVIS,MAXCHAN2), buffer(MAXCHAN2)
@@ -167,7 +171,7 @@ c-----------------------------------------------------------------------
        real x,y,z,x0,y0,datamin,datamax,f,w,cutoff, xscale,yscale,scale
        real softfac
        character*1 xtype, ytype, type
-       integer length, xlength, ylength, xindex, yindex, cnt, mode
+       integer length, xlength, ylength, xindex, yindex, cnt, mode,nmask
        integer imin,jmin,imax,jmax
        logical updated,sum,debug,hasbeam,doweight,dotaper1,dotaper2,edge
        logical doimap
@@ -248,9 +252,11 @@ c
        xscale = 1.0
        yscale = 1.0
        if (xaxis.eq.'dra') xscale=-1.0
-c
+c              beam2 is for in-point smoothing, beam3 for softened edge smoothing
        beam2(1) = beam(1)*beam(1) / 2.77259
        beam2(2) = beam(2)*beam(2) / 2.77259
+       beam3(1) = beam2(1)*softfac
+       beam3(2) = beam2(2)*softfac
 c
 c  Open an old visibility file, and apply selection criteria.
 c
@@ -356,8 +362,8 @@ c
 c
 c  Grid the data, and stack them away for later retrieval
 c  Note nsize()/2 needs to be integer division to make
-c  reference pixel at the center of a pixel in both odd
-c  and even axes.
+c  reference pixel at the center of a pixel for both odd
+c  and even sized axes.
 c
          i = nint(x/cell(1) + nsize(1)/2 + 1)
          j = nint(y/cell(2) + nsize(2)/2 + 1)
@@ -423,7 +429,7 @@ c
                   stacks(ng,1) = cnt
                enddo
                do jd=-size2,size2
-                  j1 = j+jd
+                  j1=j+jd
                   do id=-size2,size2
                      i1=i+id
                      mask(i1,j1) = .TRUE.
@@ -432,6 +438,14 @@ c
             endif
          enddo
       enddo
+
+      nmask = 0
+      do j=1,MAXSIZE
+         do i=1,MAXSIZE
+            if (mask(i,j)) nmask = nmask + 1
+         enddo
+      enddo
+      write(*,*) 'Found ',nmask, ' points masked good. size:',size,size2
 
 c
 c Retrieve all the uv scans from the stacks and smooth them into each
@@ -452,8 +466,8 @@ c
                      do id=-size,size
                         i1 = i + id
                         x0 = (i1-1 - nsize(1)/2 ) * cell(1)
-                        if (i1.ge.1.and.i1.le.nsize(1) .and. 
-     *                      j1.ge.1.and.j1.le.nsize(2)) then
+                        if (i1.ge.1 .and. i1.le.nsize(1) .and. 
+     *                      j1.ge.1 .and. j1.le.nsize(2)) then
                            if (hasbeam) then
                               if (mode.eq.0) then
                                  w = (x-x0)*(x-x0)/beam2(1)+
@@ -490,12 +504,16 @@ c
          end do
       end do
       
+c--
+
+
 c     
 c  Average the data, compute final minmax
 c  If you want to taper the edges by FWHM, it will do that
 c  when no original pointings were seen in those cells
 c  For this we need to compute the bounding box in cell space
 c  where we've seen pointings
+c  Or taper as below
 c
       imin=MAXSIZE+1
       jmin=MAXSIZE+1
@@ -545,55 +563,56 @@ c
          end do
       end do
 
-c
-c taper2 ?
-c   should taper the edges using the FWHM
-c   should dotaper1 be active and dotaper2 only gets 
-c   active a few more cells (FWHM) outside of imin..imax and jmin..jmax
-c NOTE: this only works well for a filled rectangular area
-c
-      if (dotaper2) then
-         f = beam(1)/cell(1)*softfac
-         write(*,*) 'dotaper2:: FWHM/CELL = ',f
-         f = 2*2.355*2.355*f*f
+c--  now deal with the tapering off the masked area
+c    and only grab tapered signal from the inner (mask=true) regions
+
+      do j=1,MAXSIZE
+         y = (j-1 - nsize(2)/2 ) * cell(2)
          do i=1,MAXSIZE
-            do j=1,MAXSIZE
-               if (i.lt.imin) then
-                  if (jmin.le.j .and. j.le.jmax) then
-                     w = (imin-i)**2
-                  else if (j.gt.jmax) then
-                     w = (imin-i)**2 + (j-jmax)**2
-                  else if (j.le.jmin) then
-                     w = (imin-i)**2 + (jmin-j)**2
-                  else
-                     call bug('f','Should never get here-1')
+            x = (i-1 - nsize(1)/2 ) * cell(1)
+            if (.not.mask(i,j)) then
+               do jd=-size,size
+                  j1 = j + jd
+                  y0 = (j1-1 - nsize(2)/2 ) * cell(2)
+                  do id=-size,size
+                     i1 = i + id
+                     x0 = (i1-1 - nsize(1)/2 ) * cell(1)
+                     if (i1.ge.1 .and. i1.le.nsize(1) .and. 
+     *                   j1.ge.1 .and. j1.le.nsize(2) .and.
+     *                   mask(i1,j1)) then
+                        w = (x-x0)*(x-x0)/beam3(1)+
+     *                      (y-y0)*(y-y0)/beam3(2)
+                        w = exp(-w)
+                        if (w.lt.cutoff) w = 0.0
+                        if (w.gt.0.0) then
+                           do k=1,nsize(3)
+                              array(i,j,k) = 
+     *                             array(i,j,k) + w*array(i1,j1,k)
+                              weight(i,j,k) = 
+     *                             weight(i,j,k) + w
+                           end do
+                        end if
+                     end if
+                  end do
+               end do
+            end if
+         end do
+      end do
+c                          normalize the edge cells that got signal
+      do j=1,MAXSIZE
+         do i=1,MAXSIZE
+            if (.not.mask(i,j)) then
+               do k=1,nsize(3)
+                  if (weight(i,j,k).gt.0) then
+                     array(i,j,k) = array(i,j,k) / weight(i,j,k)
                   endif
-               else if (i.gt.imax) then
-                  if (jmin.le.j .and. j.le.jmax) then
-                     w = (i-imax)**2
-                  else if (j.gt.jmax) then
-                     w = (i-imax)**2 + (j-jmax)**2
-                  else if (j.lt.jmin) then
-                     w = (i-imax)**2 + (jmin-j)**2
-                  else
-                     call bug('f','Should never get here-2')
-                  endif
-               else if (j.gt.jmax) then
-                  w = (j-jmax)**2 
-               else if (j.lt.jmin) then
-                  w = (jmin-j)**2
-               else
-                  w = -1
-               endif
-               if (w.gt.0) then
-                  w = exp(-w/f)
-                  do k=1,nsize(3)
-                     array(i,j,k) = w * array(i,j,k)
-                  enddo
-               endif
-            enddo
-         enddo
-      endif
+               end do
+            endif
+         end do
+      end do
+
+c--   create super hard edges if so desired
+
       if (.not.doimap) then
          do j=1,MAXSIZE
             do i=1,MAXSIZE
