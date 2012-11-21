@@ -1,4 +1,4 @@
-#!/bin/csh -vf
+#!/bin/csh -f
 echo "   ---  ALMA Mosaicing (Cas A model)   ---   "
 echo "   mchw. 20sep02 version"
 
@@ -20,7 +20,7 @@ start:
 # check inputs
   if($#argv<4) then
     echo " Usage:  $0 array declination cell "
-    echo "   e.g.  $0 config1 30 0.04"
+    echo "   e.g.  $0 config1 -30 0.04 mosmem"
     echo " Inputs :"
     echo "   array"
     echo "          Antenna array used by uvgen task."
@@ -52,8 +52,8 @@ set cell    = $3
 set method  = $4
 # Nyquist sample rate for each pointing.
 calc '6/(pi*250)*12'
-set harange = -1,1,.013
-set select  = '-shadow(12)'
+set harange = -4,4,.013
+set select  = '-shadow(7)'
 set freq    = 230
 set nchan   = 1
 set imsize  = 257
@@ -152,7 +152,7 @@ implot in=single.$dec.cas.$cell.map units=s device=/xs conflag=l conargs=2
 puthd in=single.$dec.cas.$cell.map/rms value=7.32
 
 # plot single dish and interferometer image
-cgdisp in=$config.$dec.cas.$cell.mp,single.$dec.cas.$cell.map region=$region device=/xs
+cgdisp in=$config.$dec.cas.$cell.mp,single.$dec.cas.$cell.map region=$region device=/xs labtyp=arcsec
 
 goto mosmem
 
