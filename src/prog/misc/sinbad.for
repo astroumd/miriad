@@ -59,7 +59,9 @@ c       Allow some fraction of channels bad for accepting
 c       Default: 0
 c@ repair
 c       A list of bad channels (birdies) that need to be repaired by
-c       interpolating accross them.
+c       interpolating accross them. CLASSy data need 80 for each window
+c       of 159 channels.  eg. repair=80,239,398
+c       Default: not used.
 c@ mode
 c       Interpolation mode between OFF before and after ON.  Default is 0,
 c       meaning no interpolation done, the last OFF scan is used, or an
@@ -69,6 +71,7 @@ c@ oaver
 c       Avering mode for the OFF. Two integers, denoting the number of
 c       OFF's before the current ON, and the number after.  The default
 c       is to look at the most recent one, i.e. oaver=1,0
+c
 c@ normalize
 c       Should all scan be normalized?
 c       Default: false
@@ -112,11 +115,12 @@ c  - does't handle missing ants too well?
 
       include 'maxdim.h'
       character version*80,versan*80
-      integer MAXSELS, MAXTIME, MAXOFF, MAXCHAN2
+      integer MAXSELS, MAXTIME, MAXOFF, MAXCHAN2, MAXBAD
       parameter(MAXSELS=1024)
       parameter(MAXTIME=1000)
       parameter(MAXOFF=256)
       parameter(MAXCHAN2=1024)
+      parameter(MAXBAD=16)
 c     
       real sels(MAXSELS)
       real start,step,width,tsys1,slop,dra,ddec
@@ -129,6 +133,7 @@ c
       integer lIn,lOut,nchan,npol,pol,SnPol,SPol,on,i,j,k,ant,koff
       character type*1, line*128
       integer length, nt, intmode, nvis, ivis, n
+      integer nrepair, repair(MAXBAD)
       logical updated,qlog,more
       double precision preamble(5)
 c            trick to read the preamble(4) [or preamble(5)]
@@ -175,6 +180,7 @@ c
       call keyi('mode',intmode,0)
       call keyi('oaver',oaver(1),1)
       call keyi('oaver',oaver(2),0)
+      call mkeyi('repair',repair,MAXBAD,nrepair)
       call keyl('normalize',qnorm,.FALSE.)
       call keyfin
 c     
@@ -242,6 +248,9 @@ c
       call uvread(lIn,uin,data,flags,MAXCHAN2,nchan)
       do while (nchan.gt.0)
          nvis = nvis + 1
+         if (nrepair.gt.0) then
+            call uvrepair
+         endif
          if (dosrc) then
             call uvgetvra(lIn,'source',src)
             write(*,*) "source: ",src
@@ -646,12 +655,17 @@ c
       qtsys    = present(6)
       end
 c-----------------------------------------------------------------------
-      subroutine uvrepair(nchan,data,flags)
-      integer nchan
+      subroutine uvrepair(nchan,data,flags,nrepair,repair)
+      integer nchan,nrepair
+      real repair(1)
       complex data(nchan)
       logical flags(nchan)
+c      
+      integer i
 
-      write(*,*) 'REPAIR',data(79),data(80),data(81)
+      do i=1,nrepair
+         data(i) = 0.5*(data(i-1) + data(i+1))
+      enddo
 
       return
       end
