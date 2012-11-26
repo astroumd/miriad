@@ -137,7 +137,7 @@ c-----------------------------------------------------------------------
        include 'maxdim.h'
        include 'mirconst.h'
        character*(*) version
-       parameter(version='VARMAPS: version 20-nov-2012')
+       parameter(version='VARMAPS: version 25-nov-2012')
        integer MAXSELS
        parameter(MAXSELS=512)
        integer MAXVIS
@@ -169,7 +169,7 @@ c-----------------------------------------------------------------------
        real weight(MAXSIZE,MAXSIZE,MAXCHAN2)
        logical mask(MAXSIZE,MAXSIZE)
        real x,y,z,x0,y0,datamin,datamax,f,w,cutoff, xscale,yscale,scale
-       real softfac
+       real softfac, wsum
        character*1 xtype, ytype, type
        integer length, xlength, ylength, xindex, yindex, cnt, mode,nmask
        integer imin,jmin,imax,jmax
@@ -565,6 +565,18 @@ c
 
 c--  now deal with the tapering off the masked area
 c    and only grab tapered signal from the inner (mask=true) regions
+c    need the gaussian taper sum to normalize by
+
+      wsum = 0.0
+      do jd=-size,size
+         y = jd*cell(2)
+         do id=-size,size
+            x = jd*cell(1)
+            w = x*x/beam3(1) + y*y/beam3(2)
+            wsum = wsum + exp(-w)
+         end do
+      end do
+      write(*,*)  'Integral under gaussian edge taper: ',wsum
 
       do j=1,MAXSIZE
          y = (j-1 - nsize(2)/2 ) * cell(2)
@@ -588,8 +600,6 @@ c    and only grab tapered signal from the inner (mask=true) regions
                            do k=1,nsize(3)
                               array(i,j,k) = 
      *                             array(i,j,k) + w*array(i1,j1,k)
-                              weight(i,j,k) = 
-     *                             weight(i,j,k) + w
                            end do
                         end if
                      end if
@@ -604,12 +614,14 @@ c                          normalize the edge cells that got signal
             if (.not.mask(i,j)) then
                do k=1,nsize(3)
                   if (weight(i,j,k).gt.0) then
-                     array(i,j,k) = array(i,j,k) / weight(i,j,k)
+                     array(i,j,k) = array(i,j,k) / wsum
                   endif
                end do
             endif
          end do
       end do
+
+c--   classic simple smooth
 
 c--   create super hard edges if so desired
 
