@@ -174,7 +174,7 @@ c-----------------------------------------------------------------------
        integer length, xlength, ylength, xindex, yindex, cnt, mode,nmask
        integer imin,jmin,imax,jmax
        logical updated,sum,debug,hasbeam,doweight,dotaper1,dotaper2,edge
-       logical doimap
+       logical doimap,do0
 c
        integer nout, nopt
        parameter(nopt=8)
@@ -212,7 +212,7 @@ c
        call keyi ('mode',mode,0)
        call keyr ('cutoff',cutoff,0.00000001)
        call keyr ('soft', softfac, 1.0)
-       call GetOpt(sum,debug,dotaper1,edge,dotaper2,doimap)
+       call GetOpt(sum,debug,dotaper1,edge,dotaper2,doimap,do0)
        call keyfin
 c
 c  Check that the inputs are reasonable.
@@ -445,7 +445,7 @@ c
             if (mask(i,j)) nmask = nmask + 1
          enddo
       enddo
-      write(*,*) 'Found ',nmask, ' points masked good. size:',size,size2
+      write(*,*) 'Found ',nmask, ' cells masked good. size:',size,size2
 
 c
 c Retrieve all the uv scans from the stacks and smooth them into each
@@ -567,6 +567,9 @@ c--  now deal with the tapering off the masked area
 c    and only grab tapered signal from the inner (mask=true) regions
 c    need the gaussian taper sum to normalize by
 
+
+      if (dotaper1) then
+
       wsum = 0.0
       do jd=-size,size
          y = jd*cell(2)
@@ -620,6 +623,8 @@ c                          normalize the edge cells that got signal
             endif
          end do
       end do
+
+      endif
 
 c--   classic simple smooth
 
@@ -781,9 +786,9 @@ c
       enddo
       end
 c********1*********2*********3*********4*********5*********6*********7**
-      subroutine GetOpt(sum,debug,taper,edge,soft,imap)
+      subroutine GetOpt(sum,debug,taper,edge,soft,imap,do0)
       implicit none
-      logical sum,debug,taper,edge,soft,imap
+      logical sum,debug,taper,edge,soft,imap,do0
 c     
 c  Determine extra processing options.
 c
@@ -792,7 +797,7 @@ c    sum      Sum the data in each pixel. Default is to average.
 c    debug    More debug output
 c------------------------------------------------------------------------
       integer nopt
-      parameter(nopt=6)
+      parameter(nopt=7)
       character opts(nopt)*8
       logical present(nopt)
       data opts/'sum     ',
@@ -800,7 +805,8 @@ c------------------------------------------------------------------------
      *          'taper   ',
      *          'edge    ',
      *          'soft    ',
-     *          'inttime '/
+     *          'inttime ',
+     *          'none    '/
 c     
       call options('options',opts,present,nopt)
       sum     = present(1)
@@ -809,6 +815,7 @@ c
       edge    = present(4)
       soft    = present(5)
       imap    = present(6)
+      do0     = present(7)
 c     
       end
 c********1*********2*********3*********4*********5*********6*********7**
