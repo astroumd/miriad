@@ -51,6 +51,7 @@ c    pjt  25mar2011 handle cubes, fixed scale bug when refmap=0
 c    pjt  28mar2011 scale data also in median computation if refmap>0
 c    pjt   2apr2011 refmap now named refindex, fixed bug computing mean
 c    pjt   4apr2011 fixed bug computing scale factors
+c    pjt  28nov2012 more reporting
 c  TODO:
 c      - cubes, but for smaller maps, up to 128 or 256
 c------------------------------------------------------------------------
@@ -58,7 +59,7 @@ c------------------------------------------------------------------------
       include 'maxnax.h'
       include 'mem.h'
       character version*(*)
-      parameter(version='ImStack: version 4-apr-2011')
+      parameter(version='ImStack: version 28-nov-2012')
       integer MAXIN
       parameter(MAXIN=24)
 c
@@ -68,8 +69,10 @@ c
       integer nbuf,refindex,ns
       logical mosaic,nonorm,doresid,domean
       real data(MAXDIM,MAXIN),buffer(MAXIN),scale(MAXIN), cutoff
+      real datamax(MAXIN),datamax0(MAXIN)
       real a1, a2, b1, b2, sigx, sigy, corr, x, y, a10, a20
-      double precision sum1, sumx, sumy, sumsqx, sumsqy, sumxy
+      double precision sumx, sumy, sumxx, sumyy, sumxy
+      integer sum1
       logical flags(MAXDIM,MAXIN)
       integer len1
       external len1
@@ -106,6 +109,7 @@ c
             enddo
             write(*,*) 'naxis=',naxis
          endif
+         call rdhdr(tno(f),'datamax',datamax0(f),-999.999)
       enddo
 
       if (refmap.ne.'') then
@@ -115,17 +119,17 @@ c
       endif
 
       if (refindex .GT. 0) then
-         call bug('i','Computing scaling factors for each map')
          write(*,*) 'RefIndex = ',refindex
          do f=1,nIn
             scale(f) = 1.0
+            datamax(f) = -999.999
             if (f.ne.refindex) then
-               sum1 = 0d0
+               sum1 = 0
                sumx = 0d0
                sumy = 0d0
-               sumsqx = 0d0
-               sumsqy = 0d0
-               sumxy  = 0d0
+               sumxx = 0d0
+               sumyy = 0d0
+               sumxy = 0d0
                do k=1,Nout(3)
                   call xysetpl(tno(refindex),1,k)
                   call xysetpl(tno(f),1,k)
@@ -143,39 +147,50 @@ c
                               sum1 = sum1 + 1
                               sumx = sumx + x
                               sumy = sumy + y
-                              sumsqx = sumsqx + x**2
-                              sumsqy = sumsqy + y**2
-                              sumxy  = sumxy  + x*y
+                              sumxx = sumxx + x*x
+                              sumyy = sumyy + y*y
+                              sumxy = sumxy + x*y
+                              if (y.gt.datamax(f)) 
+     *                                 datamax(f) = y
+                              if (x.gt.datamax(refindex)) 
+     *                                 datamax(refindex) = x
                            endif
                         endif
                      enddo
                   enddo
                enddo
                if (sum1.gt.0) then
-c  TODO:
+c     TODO:
 c                y=b1+x*a1
 c                x=b2+y*a2
 c                      OLS would be mean of both: (a1+1/a2)/2
 c                      but we still need to force b1=b2=0
-c                this code just cut and paste from lsqu.for
-                 a1   = (sum1*sumxy - sumx*sumy)/(sum1*sumsqx - sumx**2)
-                 a2   = (sum1*sumxy - sumx*sumy)/(sum1*sumsqy - sumy**2)
-                 b1   = (sumy - a1*sumx)/sum1
-                 b2   = (sumx - a2*sumy)/sum1
-                 sigx = sqrt(sumsqx/sum1 - sumx*sumx/sum1/sum1)
-                 sigy = sqrt(sumsqy/sum1 - sumy*sumy/sum1/sum1)
-                 corr = (sumxy/sum1  - sumx*sumy/sum1/sum1)/(sigx*sigy)
-c
-                 a10 = sumxy / sumsqx
-                 a20 = sumxy / sumsqy
-                 scale(f) = (a20+1.0/a10)/2.0
-                 write (*,*) f,scale(f),a1,a2,a10,a20,sum1
-              else
-                 write (*,*) f,' no solution'
-                 scale(f) = 1.0
-              endif
+c                 this code mostly just cut and paste from lsqu.for
+                  a1   = (sum1*sumxy - sumx*sumy)/(sum1*sumxx - sumx**2)
+                  a2   = (sum1*sumxy - sumx*sumy)/(sum1*sumyy - sumy**2)
+                  b1   = (sumy - a1*sumx)/sum1
+                  b2   = (sumx - a2*sumy)/sum1
+                  sigx = sqrt(sumxx/sum1 - sumx*sumx/sum1/sum1)
+                  sigy = sqrt(sumyy/sum1 - sumy*sumy/sum1/sum1)
+                  corr = (sumxy/sum1  - sumx*sumy/sum1/sum1)/(sigx*sigy)
+c     
+                  a10 = sumxy / sumxx
+                  a20 = sumxy / sumyy
+                  scale(f) = 0.5*(a20+1.0/a10)
+c                  write (*,*) 'scale: ',f,scale(f),a1,a2,a10,a20,sum1,
+c     *                 datamax(f),datamax0(f)
+                  write (*,*) 'scale: ',f,scale(f),sum1,
+     *                 datamax(f),datamax0(f)
+               else
+                  write (*,*) f,' no solution'
+                  scale(f) = 1.0
+               endif
             endif
-         enddo
+         enddo !f
+c         write (*,*) 'scale: ',refindex,1.0,0.0,0.0,1.0,1.0,-1,
+c     *                 datamax(refindex),datamax0(refindex)
+         write (*,*) 'scale: ',refindex,1.0,-1,
+     *                 datamax(refindex),datamax0(refindex)
       else
          do f=1,nIn
             scale(f) = 1.0
