@@ -67,13 +67,16 @@ c       Interpolation mode between OFF before and after ON.  Default is 0,
 c       meaning no interpolation done, the last OFF scan is used, or an
 c       average (see OAVER= below) is used.
 c       1 signifies linear interpolation.
+c       ** not used **
 c@ oaver
 c       Avering mode for the OFF. Two integers, denoting the number of
-c       OFF's before the current ON, and the number after.  The default
-c       is to look at the most recent one, i.e. oaver=1,0
+c       OFF's before the current ON, and the number after.  Use a negative
+c       number to force averaging all scans.  The default is to look at the
+c       most recent one, i.e. oaver=1,0.
 c
 c@ normalize
-c       Should all scan be normalized?
+c       Should all scan be normalized before using the OFF?  
+c       Using larger oaver= should be combined with normalize=true
 c       Default: false
 c
 c@ log
@@ -100,6 +103,7 @@ c    pjt     28oct12  added log=
 c    pjt      1nov12  oops, bug in spectrum mode ever since 16may08
 c    pjt      2nov12  start work on mode=, but added options=tsys
 c    pjt      5nov12  added oaver=
+c    pjt     26nov12  implemented normalize=
 c---------------------------------------------------------------------------
 c  TODO:
 c    - integration time from listobs appears wrong
@@ -248,9 +252,7 @@ c
       call uvread(lIn,uin,data,flags,MAXCHAN2,nchan)
       do while (nchan.gt.0)
          nvis = nvis + 1
-         if (nrepair.gt.0) then
-            call uvrepair
-         endif
+         call uvrepair(nchan,data,flags,nrepair,repair)
          if (dosrc) then
             call uvgetvra(lIn,'source',src)
             write(*,*) "source: ",src
@@ -385,7 +387,7 @@ c                     oflags(i,ant) = flags(i)
 c                  enddo
                else
                   noffb = noffb + 1
-               endif
+               end if
                koff = 1
             else if(on.eq.-1)then
                if (allflags(nchan,flags,slop)) then
@@ -396,7 +398,7 @@ c                    oflags(i,ant) = flags(i)
                   enddo
                else
                   ntsysb = ntsysb + 1
-               endif
+               end if
             else if(on.eq.1)then
                if (have_ant(ant)) then
                   if (noff.eq.0) call bug('f','No OFF before ON found')
@@ -406,6 +408,7 @@ c                    oflags(i,ant) = flags(i)
                   call getoff(nchan,num,ant,oaver,qnorm,debug,
      *                        MAXCHAN2,MAXANT,MAXOFF,
      *                        off, offsum, ivisoff, toff, tflags)
+                  if (qnorm) call normdata(nchan,data,flags)
                   if(spectrum) then
                      do i=1,nchan
                         data(i) = tsys(i,ant)*(data(i)/toff(i) - 1.0)
@@ -435,7 +438,7 @@ c                    oflags(i,ant) = flags(i)
                         data(i) = tsys(i,ant)
                         flags(i) = flags(i).AND.tflags(i)
                      enddo
-                  endif
+                  end if
                   call uvwrite(lOut,uin,data,flags,nchan)
 c                 should ask if either dra or ddec was updated, only then print
                   call uvrdvrr(lIn,'dra',dra,0.0)
@@ -445,7 +448,7 @@ c                 should ask if either dra or ddec was updated, only then print
                      ddec = ddec*206265.0
                      write(logline,'(F8.2,1x,F8.2,1x,i1)') dra,ddec,koff
                      call LogWrite(logline,more)
-                  endif
+                  end if
                   koff = 0
                else
                   nonb = nonb + 1
@@ -455,12 +458,12 @@ c                 only rant about an antenna once in their lifetime
      *                 '(''Did not find valid scan for ant '',I2)') ant
                      call bug('w',line)
                      rant(ant) = .FALSE.
-                  endif
-               endif
+                  end if
+               end if
             else
                call bug('w','value of on not 1, 0 or -1')
-            endif
-         endif
+            end if
+         end if
          call uvread(lIn,uin,data,flags,MAXCHAN2,nchan)
       enddo
 c     
@@ -484,6 +487,11 @@ c
       if (qoff) then 
          print *,'records written: (off)',non
       endif
+      if (qnorm) then
+        write(*,*) 'Normalized scans were used'
+      else
+        write(*,*) 'Raw scans were used (not normalized)'
+      end if
       
       if (ntsys.eq.0) then
          if (tsys1.lt.0.0) then
@@ -544,10 +552,16 @@ c  find where we are
       if (k.eq.0) return
 c  
       if (oaver(1).eq.1 .and. oaver(2).eq.0) then
-         do i=1,nchan
-            toff(i) = off(i,ant,k)
-            tflags(i) = .TRUE.
-         end do
+         if (qnorm) then
+            do i=1,nchan
+               toff(i) = off(i,ant,k) / offsum(ant,k)
+            end do
+         else
+            do i=1,nchan
+               toff(i) = off(i,ant,k)
+               tflags(i) = .TRUE.
+            end do
+         endif
       else
          k1 = k-oaver(1)
          k2 = k+oaver(2)
@@ -556,9 +570,15 @@ c
          kw = k2-k1+1
          do i=1,nchan
             toff(i) = 0.0
-            do ki=k1,k2
-               toff(i) = toff(i) + off(i,ant,ki)
-            enddo
+            if (qnorm) then
+               do ki=k1,k2
+                  toff(i) = toff(i) + off(i,ant,ki)/offsum(ant,ki)
+               enddo
+            else
+               do ki=k1,k2
+                  toff(i) = toff(i) + off(i,ant,ki)
+               enddo
+            endif
             toff(i) = toff(i)/kw
             tflags(i) = .TRUE.
          end do
@@ -656,17 +676,43 @@ c
       end
 c-----------------------------------------------------------------------
       subroutine uvrepair(nchan,data,flags,nrepair,repair)
-      integer nchan,nrepair
-      real repair(1)
+      integer nchan,nrepair,repair(3)
       complex data(nchan)
       logical flags(nchan)
 c      
-      integer i
+      integer i,ir
+c      write(*,*) 'Repair: ',nrepair,repair(1),repair(2),repair(3),nchan
+
+      if (nrepair.lt.1) return
 
       do i=1,nrepair
-         data(i) = 0.5*(data(i-1) + data(i+1))
+         ir = repair(i)
+         if (ir.lt.2 .or. ir.gt.nchan-1) call bug('f',
+     *         'bad repair channel number (must be 2..nchan-1)')
+         data(ir) = 0.5*(data(ir-1) + data(ir+1))
+c         write(*,*) 'repair ', ir,nchan
       enddo
 
       return
       end
 c-----------------------------------------------------------------------
+      subroutine normdata(nchan,data,flags)
+      implicit none
+      integer nchan
+      complex data(nchan)
+      logical flags(nchan)
+c
+      real sum
+      integer i
+
+      sum = 0.0
+      do i=0,nchan
+         sum = sum + data(i)
+      end do
+
+      do i=0,nchan
+         data(i) = data(i) / sum
+      end do
+
+      return
+      end
