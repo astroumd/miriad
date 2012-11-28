@@ -331,6 +331,8 @@ c  Loop through the data, writing (ON-OFF)/OFF*TSYS
 c
       do while (nchan.gt.0)
          num = num + 1
+         call uvrepair(nchan,data,flags,nrepair,repair)
+
 c
 c  Determine the polarisation info, if needed.
 c     
@@ -681,16 +683,15 @@ c-----------------------------------------------------------------------
       logical flags(nchan)
 c      
       integer i,ir
-c      write(*,*) 'Repair: ',nrepair,repair(1),repair(2),repair(3),nchan
 
       if (nrepair.lt.1) return
+      if (nrepair.eq.1 .and. repair(1).lt.1) return
 
       do i=1,nrepair
          ir = repair(i)
          if (ir.lt.2 .or. ir.gt.nchan-1) call bug('f',
      *         'bad repair channel number (must be 2..nchan-1)')
          data(ir) = 0.5*(data(ir-1) + data(ir+1))
-c         write(*,*) 'repair ', ir,nchan
       enddo
 
       return
