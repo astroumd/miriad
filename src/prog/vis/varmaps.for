@@ -137,7 +137,7 @@ c-----------------------------------------------------------------------
        include 'maxdim.h'
        include 'mirconst.h'
        character*(*) version
-       parameter(version='VARMAPS: version 25-nov-2012')
+       parameter(version='VARMAPS: version 26-nov-2012')
        integer MAXSELS
        parameter(MAXSELS=512)
        integer MAXVIS
@@ -255,8 +255,8 @@ c
 c              beam2 is for in-point smoothing, beam3 for softened edge smoothing
        beam2(1) = beam(1)*beam(1) / 2.77259
        beam2(2) = beam(2)*beam(2) / 2.77259
-       beam3(1) = beam2(1)*softfac
-       beam3(2) = beam2(2)*softfac
+       beam3(1) = beam2(1)*softfac*softfac
+       beam3(2) = beam2(2)*softfac*softfac
 c
 c  Open an old visibility file, and apply selection criteria.
 c
@@ -393,14 +393,14 @@ c
                         z = 180./pi*atan2(aimag(data(k)),real(data(k)))
                      else
                         call bug('f','Unknown zaxis')
-                     endif
+                     end if
                      stacks(ngrid,k) = z * scale
                   else
                      stacks(ngrid,k) = 0.0
-                  endif
+                  end if
                enddo
-            endif
-         endif
+            end if
+         end if
          call uvread(lIn, preamble, data, flags, MAXCHAN2, nread)
       enddo
       if (ngrid.gt.MAXVIS) then
@@ -435,7 +435,7 @@ c
                      mask(i1,j1) = .TRUE.
                   enddo
                enddo
-            endif
+            end if
          enddo
       enddo
 
@@ -480,8 +480,8 @@ c
                                     w = 1-sqrt(w)
                                  else
                                     w = 0.0
-                                 endif
-                              endif
+                                 end if
+                              end if
                            else
                               w = 1.0
                            end if
@@ -529,7 +529,7 @@ c
                if(j.lt.jmin) jmin=j
                if(i.gt.imax) imax=i
                if(j.gt.jmax) jmax=j
-            endif
+            end if
          enddo
       enddo
       write(*,*) 'Count: ',cnt
@@ -551,11 +551,11 @@ c
                      if (i.lt.imin .or. i.gt.imax .or.
      *                   j.lt.jmin .or. j.gt.jmax) then
                         array(i,j,k) = 0.0
-                     endif
-                  endif
+                     end if
+                  end if
                   if (doweight) then
                      array(i,j,k) = array(i,j,k) / weight(i,j,k)
-                  endif
+                  end if
                   if(array(i,j,k).gt.datamax) datamax=array(i,j,k)
                   if(array(i,j,k).lt.datamin) datamin=array(i,j,k)
                end if
@@ -574,7 +574,7 @@ c    need the gaussian taper sum to normalize by
       do jd=-size,size
          y = jd*cell(2)
          do id=-size,size
-            x = jd*cell(1)
+            x = id*cell(1)
             w = x*x/beam3(1) + y*y/beam3(2)
             wsum = wsum + exp(-w)
          end do
@@ -603,6 +603,8 @@ c    need the gaussian taper sum to normalize by
                            do k=1,nsize(3)
                               array(i,j,k) = 
      *                             array(i,j,k) + w*array(i1,j1,k)
+                              weight(i,j,k) = 
+     *                             weight(i,j,k) + w
                            end do
                         end if
                      end if
@@ -617,16 +619,15 @@ c                          normalize the edge cells that got signal
             if (.not.mask(i,j)) then
                do k=1,nsize(3)
                   if (weight(i,j,k).gt.0) then
-                     array(i,j,k) = array(i,j,k) / wsum
-                  endif
+                  array(i,j,k) = array(i,j,k) / wsum
+c                 array(i,j,k) = array(i,j,k) / weight(i,j,k)
+                  end if
                end do
-            endif
+            end if
          end do
       end do
 
-      endif
-
-c--   classic simple smooth
+      end if
 
 c--   create super hard edges if so desired
 
@@ -636,7 +637,7 @@ c--   create super hard edges if so desired
                array(i,j,1) = 0.0
             end do
          end do
-      endif
+      end if
 c     
 c  Write the image and it's header.
 c
