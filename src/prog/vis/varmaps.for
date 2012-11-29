@@ -595,8 +595,8 @@ c    and only grab tapered signal from the inner (mask=true) regions
 c    need the gaussian taper sum to normalize by
 
 
-      if (.false.) then
-         write(*,*) 'Tapering at the edge using the mask'
+      if (dotaper2) then
+         write(*,*) 'Old edge tapering using the mask'
          do j=1,MAXSIZE
             y = (j-1 - nsize(2)/2 ) * cell(2)
             do i=1,MAXSIZE
@@ -636,7 +636,7 @@ c--                          normalize the edge cells that got signal
                   if (.not.mask(i,j)) then
                      do k=1,nsize(3)
                         if (weight(i,j,k).gt.0) then
-                           array(i,j,k) = array(i,j,k) / sumg3
+                           array(i,j,k) = array(i,j,k) / sumg2
 c                          array(i,j,k) = array(i,j,k) / weight(i,j,k)
                         end if
                      end do
