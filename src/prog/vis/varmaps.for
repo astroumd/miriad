@@ -138,7 +138,7 @@ c-----------------------------------------------------------------------
        include 'maxdim.h'
        include 'mirconst.h'
        character*(*) version
-       parameter(version='VARMAPS: version 28-nov-2012 v2')
+       parameter(version='VARMAPS: version 29-nov-2012 ')
        integer MAXSELS
        parameter(MAXSELS=512)
        integer MAXVIS
@@ -176,6 +176,8 @@ c-----------------------------------------------------------------------
        integer imin,jmin,imax,jmax
        logical updated,sum,debug,hasbeam,doweight,dotaper1,dotaper2,edge
        logical doimap,do0
+       logical masktest
+       external masktest
 c
 
        integer nout, nopt
@@ -558,7 +560,7 @@ c
          enddo
       enddo
       write(*,*) 'Count: ',cnt
-      write(*,*) 'Box: ',imin,imax,jmin,jmax
+      write(*,*) 'BoundingBox: ',imin,imax,jmin,jmax
       write(line,'(a)') 'Averaging the XY pixels...'
       call output(line)
       datamin = 1.E10
@@ -593,7 +595,7 @@ c    and only grab tapered signal from the inner (mask=true) regions
 c    need the gaussian taper sum to normalize by
 
 
-      if (dotaper1) then
+      if (.false.) then
          write(*,*) 'Tapering at the edge using the mask'
          do j=1,MAXSIZE
             y = (j-1 - nsize(2)/2 ) * cell(2)
@@ -636,6 +638,59 @@ c--                          normalize the edge cells that got signal
                         if (weight(i,j,k).gt.0) then
                            array(i,j,k) = array(i,j,k) / sumg3
 c                          array(i,j,k) = array(i,j,k) / weight(i,j,k)
+                        end if
+                     end do
+                  end if
+               end do
+            end do
+         end if
+      end if
+
+
+c--  yet another try
+      
+      if (dotaper1) then
+         write(*,*) 'New tapering at the edge using the mask'
+         do j=1,MAXSIZE
+            y = (j-1 - nsize(2)/2 ) * cell(2)
+            do i=1,MAXSIZE
+               x = (i-1 - nsize(1)/2 ) * cell(1)
+               if (masktest(MAXSIZE,mask,i,j)) then
+                  do jd=-size,size
+                     j1 = j + jd
+                     y0 = (j1-1 - nsize(2)/2 ) * cell(2)
+                     do id=-size,size
+                        i1 = i + id
+                        x0 = (i1-1 - nsize(1)/2 ) * cell(1)
+                        if (i1.ge.1 .and. i1.le.nsize(1) .and. 
+     *                      j1.ge.1 .and. j1.le.nsize(2) .and.
+     *                     .not.mask(i1,j1)) then
+                           w = (x-x0)*(x-x0)/beam3(1)+
+     *                         (y-y0)*(y-y0)/beam3(2)
+                           w = exp(-w)
+                           if (w.lt.cutoff) w = 0.0
+                           if (w.gt.0.0) then
+                              do k=1,nsize(3)
+                                 array(i1,j1,k) = 
+     *                             array(i1,j1,k) + w*array(i,j,k)
+                                 weight(i1,j1,k) = 
+     *                             weight(i1,j1,k) + 1.0
+                              end do
+                           end if
+                        end if
+                     end do
+                  end do
+               end if
+            end do
+         end do
+c--                          normalize the edge cells that got signal
+         if (.true.) then
+            do j=1,MAXSIZE
+               do i=1,MAXSIZE
+                  if (.not.mask(i,j)) then
+                     do k=1,nsize(3)
+                        if (weight(i,j,k).gt.0) then
+                           array(i,j,k) = array(i,j,k) / weight(i,j,k)
                         end if
                      end do
                   end if
@@ -863,3 +918,34 @@ c
 
       END
 c********1*********2*********3*********4*********5*********6*********7**
+      LOGICAL FUNCTION masktest(mdim, mask, i0, j0)
+      implicit none
+      integer mdim, i0, j0
+      logical mask(mdim,mdim)
+c
+      integer n,id,jd, i1,j1
+
+
+      masktest = .FALSE.
+      if (.not.mask(i0,j0)) return
+
+c+
+c      masktest = .TRUE.
+c      if(n.eq.0) return
+c-
+
+      n = 0
+      do jd=-1,1
+         j1 = j0+jd
+         do id=-1,1
+            i1=i0+id
+            if (.not.mask(i1,j1)) n = n + 1
+         end do
+      end do
+
+c   if there were any masked pixels, we're at an edge
+      if (n.gt.0) masktest = .TRUE.
+
+      return
+      end
+c-----------------------------------------------------------------------
