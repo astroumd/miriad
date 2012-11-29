@@ -133,15 +133,16 @@ c     pjt   4apr11  added scale=
 c     pjt   6sep11  added soft= 
 c     pjt  13nov12  fixed init problem in maps, rearrange pixel filling
 c     pjt  19nov12  masking with better tapering
+c     pjt  28nov12  more tapering tinkering and fixing
 c-----------------------------------------------------------------------
        include 'maxdim.h'
        include 'mirconst.h'
        character*(*) version
-       parameter(version='VARMAPS: version 26-nov-2012')
+       parameter(version='VARMAPS: version 28-nov-2012 v2')
        integer MAXSELS
        parameter(MAXSELS=512)
        integer MAXVIS
-       parameter(MAXVIS=10000)
+       parameter(MAXVIS=20000)
        integer MAXCHAN2
        parameter(MAXCHAN2=256)
        integer MAXVPP
@@ -169,13 +170,14 @@ c-----------------------------------------------------------------------
        real weight(MAXSIZE,MAXSIZE,MAXCHAN2)
        logical mask(MAXSIZE,MAXSIZE)
        real x,y,z,x0,y0,datamin,datamax,f,w,cutoff, xscale,yscale,scale
-       real softfac, wsum
+       real softfac, sumg2, sumg3, sumg2min, sumg3min
        character*1 xtype, ytype, type
        integer length, xlength, ylength, xindex, yindex, cnt, mode,nmask
        integer imin,jmin,imax,jmax
        logical updated,sum,debug,hasbeam,doweight,dotaper1,dotaper2,edge
        logical doimap,do0
 c
+
        integer nout, nopt
        parameter(nopt=8)
        character opts(nopt)*10
@@ -212,7 +214,8 @@ c
        call keyi ('mode',mode,0)
        call keyr ('cutoff',cutoff,0.00000001)
        call keyr ('soft', softfac, 1.0)
-       call GetOpt(sum,debug,dotaper1,edge,dotaper2,doimap,do0)
+c        options=  sum debug taper    edge soft     inttime none
+       call GetOpt(sum,debug,dotaper1,edge,dotaper2,doimap, do0)
        call keyfin
 c
 c  Check that the inputs are reasonable.
@@ -257,6 +260,28 @@ c              beam2 is for in-point smoothing, beam3 for softened edge smoothin
        beam2(2) = beam(2)*beam(2) / 2.77259
        beam3(1) = beam2(1)*softfac*softfac
        beam3(2) = beam2(2)*softfac*softfac
+       sumg2 = 0.0;
+       sumg3 = 0.0;
+       sumg2min = -1.0
+       sumg3min = -1.0
+       do jd=-size,size
+          do id=-size,size
+             w = (id*cell(1))**2/beam2(1) + (jd*cell(2))**2/beam2(2)
+             sumg2 = sumg2 + exp(-w)
+             if (jd.eq.-size .and. id.eq.-size) sumg2min = sumg2
+          enddo
+       enddo
+       do jd=-size,size
+          do id=-size,size
+             w = (id*cell(1))**2/beam3(1) + (jd*cell(2))**2/beam3(2)
+             sumg3 = sumg3 + exp(-w)
+             if (jd.eq.-size .and. id.eq.-size) sumg3min = sumg3
+          enddo
+       enddo
+       write(*,*) 'SUM G2,G3=',sumg2,sumg3,sumg2min,sumg3min
+       write(*,*) 'cell,beam: ',cell(1),beam(1)
+       write(*,*) 'beam2: ',beam2(1)
+       write(*,*) 'beam3: ',beam3(1)
 c
 c  Open an old visibility file, and apply selection criteria.
 c
@@ -490,10 +515,10 @@ c
                            if(debug)write(*,*) i,j,i1,j1,cnt,ng,w
                            if (w.gt.0.0) then
                               do k=1,nsize(3)
-                                 array(i1,j1,k) = 
-     *                                array(i1,j1,k) + w*stacks(ng,k)
-                                 weight(i1,j1,k) = 
-     *                                weight(i1,j1,k) + w
+                                 array(i1,j1,k) =  array(i1,j1,k) + 
+     *                                w*stacks(ng,k)
+c     *                                w*stacks(ng,k)/sumg2
+                                 weight(i1,j1,k) = weight(i1,j1,k) + w
                               end do
                            end if
                         end if
@@ -508,7 +533,7 @@ c--
 
 
 c     
-c  Average the data, compute final minmax
+c  Normalize the data back, and compute final minmax
 c  If you want to taper the edges by FWHM, it will do that
 c  when no original pointings were seen in those cells
 c  For this we need to compute the bounding box in cell space
@@ -563,72 +588,62 @@ c
          end do
       end do
 
-c--  now deal with the tapering off the masked area
+c--  now deal with the tapering off the outer masked (mask=false) area
 c    and only grab tapered signal from the inner (mask=true) regions
 c    need the gaussian taper sum to normalize by
 
 
       if (dotaper1) then
-
-      wsum = 0.0
-      do jd=-size,size
-         y = jd*cell(2)
-         do id=-size,size
-            x = id*cell(1)
-            w = x*x/beam3(1) + y*y/beam3(2)
-            wsum = wsum + exp(-w)
-         end do
-      end do
-      write(*,*)  'Integral under gaussian edge taper: ',wsum
-
-      do j=1,MAXSIZE
-         y = (j-1 - nsize(2)/2 ) * cell(2)
-         do i=1,MAXSIZE
-            x = (i-1 - nsize(1)/2 ) * cell(1)
-            if (.not.mask(i,j)) then
-               do jd=-size,size
-                  j1 = j + jd
-                  y0 = (j1-1 - nsize(2)/2 ) * cell(2)
-                  do id=-size,size
-                     i1 = i + id
-                     x0 = (i1-1 - nsize(1)/2 ) * cell(1)
-                     if (i1.ge.1 .and. i1.le.nsize(1) .and. 
-     *                   j1.ge.1 .and. j1.le.nsize(2) .and.
-     *                   mask(i1,j1)) then
-                        w = (x-x0)*(x-x0)/beam3(1)+
-     *                      (y-y0)*(y-y0)/beam3(2)
-                        w = exp(-w)
-                        if (w.lt.cutoff) w = 0.0
-                        if (w.gt.0.0) then
-                           do k=1,nsize(3)
-                              array(i,j,k) = 
+         write(*,*) 'Tapering at the edge using the mask'
+         do j=1,MAXSIZE
+            y = (j-1 - nsize(2)/2 ) * cell(2)
+            do i=1,MAXSIZE
+               x = (i-1 - nsize(1)/2 ) * cell(1)
+               if (.not.mask(i,j)) then
+                  do jd=-size,size
+                     j1 = j + jd
+                     y0 = (j1-1 - nsize(2)/2 ) * cell(2)
+                     do id=-size,size
+                        i1 = i + id
+                        x0 = (i1-1 - nsize(1)/2 ) * cell(1)
+                        if (i1.ge.1 .and. i1.le.nsize(1) .and. 
+     *                      j1.ge.1 .and. j1.le.nsize(2) .and.
+     *                     mask(i1,j1)) then
+                           w = (x-x0)*(x-x0)/beam3(1)+
+     *                         (y-y0)*(y-y0)/beam3(2)
+                           w = exp(-w)
+                           if (w.lt.cutoff) w = 0.0
+                           if (w.gt.0.0) then
+                              do k=1,nsize(3)
+                                 array(i,j,k) = 
      *                             array(i,j,k) + w*array(i1,j1,k)
-                              weight(i,j,k) = 
+                                 weight(i,j,k) = 
      *                             weight(i,j,k) + w
-                           end do
+                              end do
+                           end if
                         end if
-                     end if
+                     end do
                   end do
-               end do
-            end if
+               end if
+            end do
          end do
-      end do
-c                          normalize the edge cells that got signal
-      do j=1,MAXSIZE
-         do i=1,MAXSIZE
-            if (.not.mask(i,j)) then
-               do k=1,nsize(3)
-                  if (weight(i,j,k).gt.0) then
-                  array(i,j,k) = array(i,j,k) / wsum
-c                 array(i,j,k) = array(i,j,k) / weight(i,j,k)
+c--                          normalize the edge cells that got signal
+         if (.true.) then
+            do j=1,MAXSIZE
+               do i=1,MAXSIZE
+                  if (.not.mask(i,j)) then
+                     do k=1,nsize(3)
+                        if (weight(i,j,k).gt.0) then
+                           array(i,j,k) = array(i,j,k) / sumg3
+c                          array(i,j,k) = array(i,j,k) / weight(i,j,k)
+                        end if
+                     end do
                   end if
                end do
-            end if
-         end do
-      end do
-
+            end do
+         end if
       end if
-
+      
 c--   create super hard edges if so desired
 
       if (.not.doimap) then
