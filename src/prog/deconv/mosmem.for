@@ -196,8 +196,9 @@ c-----------------------------------------------------------------------
      *          Immin, J0, J1, OStLen1, OStLen2, Qa, Qb, Qest, Rmsa,
      *          Rmsb, rmsfaca, rmsfacb, StLen1, StLen2, StLim, temp,
      *          TFlux, Tol, TRms, Trms2
-      character BeamNam*64, BeamSin*64, DefNam*64, entropy*8, line*80,
-     *          MapNam*64, MapSin*64, ModelNam*64, OutNam*64, version*72
+      character BeamNam*128, BeamSin*128, DefNam*128, 
+     *          MapNam*128, MapSin*128, ModelNam*128, OutNam*128, 
+     *          line*128, version*72, entropy*8
 
       logical   hdprsnt
       integer   len1
