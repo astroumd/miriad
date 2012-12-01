@@ -117,9 +117,9 @@ c       This gives extra processing options. Several options can be given,
 c       each separated by commas. They may be abbreviated to the minimum
 c       needed to avoid ambiguity. Some options cannot be choosen together.
 c       sum     - not weights, only useful for regular grids.
-c       taper   - not used anymore
+c       taper1  - old style tapering,doesn't seem to work well
+c       taper2  - new style tapering using one boundary layer
 c       edge    - sharp edge, it will cut signal outside the bounding box 
-c       soft    - FWHM softened edge (only works well for rectangles)
 c       inttime - create integration time map in channel 1
 c       debug   - lots of verbose output 
 c       
@@ -134,11 +134,12 @@ c     pjt   6sep11  added soft=
 c     pjt  13nov12  fixed init problem in maps, rearrange pixel filling
 c     pjt  19nov12  masking with better tapering
 c     pjt  28nov12  more tapering tinkering and fixing
+c     pjt  30nov12  renameing to taper1 , taper2
 c-----------------------------------------------------------------------
        include 'maxdim.h'
        include 'mirconst.h'
        character*(*) version
-       parameter(version='VARMAPS: version 29-nov-2012 ')
+       parameter(version='VARMAPS: version 30-nov-2012 ')
        integer MAXSELS
        parameter(MAXSELS=512)
        integer MAXVIS
@@ -595,7 +596,7 @@ c    and only grab tapered signal from the inner (mask=true) regions
 c    need the gaussian taper sum to normalize by
 
 
-      if (dotaper2) then
+      if (dotaper1) then
          write(*,*) 'Old edge tapering using the mask'
          do j=1,MAXSIZE
             y = (j-1 - nsize(2)/2 ) * cell(2)
@@ -636,8 +637,8 @@ c--                          normalize the edge cells that got signal
                   if (.not.mask(i,j)) then
                      do k=1,nsize(3)
                         if (weight(i,j,k).gt.0) then
-                           array(i,j,k) = array(i,j,k) / sumg2
-c                          array(i,j,k) = array(i,j,k) / weight(i,j,k)
+c                          array(i,j,k) = array(i,j,k) / sumg2
+                           array(i,j,k) = array(i,j,k) / weight(i,j,k)
                         end if
                      end do
                   end if
@@ -649,7 +650,7 @@ c                          array(i,j,k) = array(i,j,k) / weight(i,j,k)
 
 c--  yet another try
       
-      if (dotaper1) then
+      if (dotaper2) then
          write(*,*) 'New tapering at the edge using the mask'
          do j=1,MAXSIZE
             y = (j-1 - nsize(2)/2 ) * cell(2)
@@ -674,7 +675,7 @@ c--  yet another try
                                  array(i1,j1,k) = 
      *                             array(i1,j1,k) + w*array(i,j,k)
                                  weight(i1,j1,k) = 
-     *                             weight(i1,j1,k) + 1.0
+     *                             weight(i1,j1,k) + 1
                               end do
                            end if
                         end if
@@ -857,9 +858,9 @@ c
       enddo
       end
 c********1*********2*********3*********4*********5*********6*********7**
-      subroutine GetOpt(sum,debug,taper,edge,soft,imap,do0)
+      subroutine GetOpt(sum,debug,taper1,edge,taper2,imap,do0)
       implicit none
-      logical sum,debug,taper,edge,soft,imap,do0
+      logical sum,debug,taper1,edge,taper2,imap,do0
 c     
 c  Determine extra processing options.
 c
@@ -873,18 +874,18 @@ c------------------------------------------------------------------------
       logical present(nopt)
       data opts/'sum     ',
      *          'debug   ',
-     *          'taper   ',
+     *          'taper1  ',
      *          'edge    ',
-     *          'soft    ',
+     *          'taper2  ',
      *          'inttime ',
      *          'none    '/
 c     
       call options('options',opts,present,nopt)
       sum     = present(1)
       debug   = present(2)
-      taper   = present(3)
+      taper1  = present(3)
       edge    = present(4)
-      soft    = present(5)
+      taper2  = present(5)
       imap    = present(6)
       do0     = present(7)
 c     
