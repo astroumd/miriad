@@ -9,3 +9,5 @@ c
 	parameter(maxTimes=2*MAXCHAN*MAXANT)
 	parameter(maxGains=2*MAXCHAN*MAXANT)
 
+        logical haveant(MAXANT)
+        common /haveants/haveant
