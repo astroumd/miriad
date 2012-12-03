@@ -117,7 +117,7 @@ c------------------------------------------------------------------------
 	integer MAXSELS
 	character version*(*)
 	parameter(MAXSELS=256)
-	parameter(version='GpPlt: version 15-oct-2012')
+	parameter(version='GpPlt: version 3-dec-2012')
 	include 'gpplt.h'
 	integer iostat,tIn,nx,ny,nfeeds,nants,nsols,ierr,symbol,nchan
 	integer ntau,length
@@ -187,6 +187,7 @@ c
 	  call bug('w','Error opening input '//vis)
 	  call bugno('f',iostat)
 	endif
+	if (doabsent) call absent(vis)
 c
 c  Check for the needed tables.
 c
@@ -1031,7 +1032,7 @@ c
 		length = len1(title)
 	        call pglab('Time',Label,Title(1:length))
 		nres = nres + 1
-              else if (doabsent .and. iant.le.nants)then
+              else if (doabsent .and. haveant(iant))then
 		call SetPG(time(1),time(nsols),y,ng,range,dodtime)
 		Title = 'Antenna '//itoaf(iant)//' Absent'
 		length = len1(title)
@@ -1158,7 +1159,7 @@ c
 		   rms = rms/ng - ave*ave
 		   if (rms.gt.0.0) rms=sqrt(rms)
 		   print *, Title, Label, 'ave, rms=', ave, rms
-		else if (doabsent) then
+		else if (doabsent .and. haveant(iant)) then
 		   call SetPG(freqmin,freqmax,y,ng,range,.true.)		   
 		   Title = 'Antenna '//itoaf(iant)// ' absent'
 		   call pglab('Frequency (GHz)',Label,Title)
@@ -1545,4 +1546,37 @@ c
         call pgpage
       end do
 c
+      end
+c***********************************************************************
+      subroutine absent(vis)
+c
+c     figure out which ants are never in the dataset, don't bother
+c     plotting them.
+c-----------------------------------------------------------------------
+      implicit none
+      character vis*(*)
+      include 'gpplt.h'
+c
+      integer tno,nread, ant1,ant2
+      complex data(MAXCHAN)
+      logical flags(MAXCHAN)
+      double precision preamble(5)
+
+      do ant1=1,MAXANT
+	 haveant(ant1) = .FALSE.
+      end do
+
+      call uvopen(tno,vis,'old')
+      call uvset(tno,'preamble','uv/time/baseline',0,0.,0.,0.)
+ 
+      call uvread(tno,preamble,data,flags,MAXCHAN,nread)
+      do while (nread.gt.0) 
+	 call basant(preamble(4),ant1,ant2)
+	 haveant(ant1) = .TRUE.
+	 haveant(ant2) = .TRUE.
+	 call uvread(tno,preamble,data,flags,MAXCHAN,nread)
+      end do
+  
+      call uvclose(tno)
+      return
       end
