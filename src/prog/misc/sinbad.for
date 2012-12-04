@@ -44,7 +44,7 @@ c       override the use of the "on" uv variable, which is how normal
 c       autocorrelation data are tagged for single dish work.
 c       This mode also disallows usage of Tsys hidden in on=-1 tagged
 c       data.
-c       Default: not used.
+c       Default: not used, since on/off tagging is done via the 'on' uv var
 c@ options 
 c       Different computational output options (mainly for debugging).
 c       Exclusively one of the following (minimum match):
@@ -104,6 +104,7 @@ c    pjt      1nov12  oops, bug in spectrum mode ever since 16may08
 c    pjt      2nov12  start work on mode=, but added options=tsys
 c    pjt      5nov12  added oaver=
 c    pjt     26nov12  implemented normalize=
+c    pjt      4dec12  fix variable copy when ending on an OFF in onoff=
 c---------------------------------------------------------------------------
 c  TODO:
 c    - integration time from listobs appears wrong
@@ -357,7 +358,12 @@ c  Since only the "on" scans are output, there's an
 c  un-intended side effect here: some variables are written
 c  twice (e.g. the "on" will be off, then on again).
 c
-         call VarCopy(lIn,lOut)
+c         call VarCopy(lIn,lOut)
+c  VarCopy now moved down, not clear how some options= now work 
+c  if you need other than 'on'
+
+
+
 c
 c  Now process the data.
 c
@@ -370,6 +376,7 @@ c
                call uvgetvra(lIn,'source',src)
                if (src.eq.srcon) then
                   on=1
+                  call VarCopy(lIn,lOut)
                else if (src.eq.srcoff) then
                   on=0
                else
@@ -377,6 +384,7 @@ c
                endif
                write(*,*) 'source: ',src,on
             else
+               call VarCopy(lIn,lOut)
                call uvgetvri(lIn,'on',on,1)
             endif
             ant = basein/256
