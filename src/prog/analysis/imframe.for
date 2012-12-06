@@ -68,17 +68,17 @@ c    rjs  24mar93  Halve the size of the MAXBUF arrays.
 c    rjs  31aug98  Fix call to rdhdd and eliminate flint complaints.
 c    pkgw 01dec11  Undo the halving of MAXBUF so we can handle bigger images
 c    pjt  23may12  merged ours and theirs.... joyful collaborations
+c    pjt   6dec12  vircubsz needs to be ptrdiff
 c------------------------------------------------------------------------
 c  @todo:  use mallop()
 
       character*80 version
-      parameter ( version = 'imframe version 23-may-2012' )
+      parameter ( version = 'imframe version 6-dec-2012' )
 
       include   'maxnax.h'
       include   'maxdim.h'
       integer   MAXBUF2
-c      parameter(MAXBUF2=MAXBUF/2)
-      parameter(MAXBUF2=MAXBUF)
+      parameter(MAXBUF2=MAXBUF/2)
 
       integer   tinp, tout
       integer   naxis
@@ -125,7 +125,8 @@ c Get inputs
       double precision     inpaxlen(MAXNAX), outaxlen(MAXNAX)
       double precision     inpblc(MAXNAX),   inptrc(MAXNAX)
       double precision     outblc(MAXNAX),   outtrc(MAXNAX), outoff
-      integer              viraxlen(MAXNAX), vircubsz(MAXNAX)
+      integer              viraxlen(MAXNAX)
+      ptrdiff              vircubsz(MAXNAX)
 
       integer              MAXBOXES
       parameter            ( MAXBOXES = 1024 )
