@@ -47,6 +47,8 @@
      rjs  18-sep-05  Added routine xyzdim_.
      mhw  09-mar-12  Replace a lot of int's with long's to cope with
                      large cubes (>8GB)
+     pjt  28-jun-12  Fixed get_buflen() , fix (?) usage of MAXBUF
+
 *******************************************************************************/
 
 /******************************************************************************/
@@ -131,10 +133,10 @@ static int     naxes;
 static int     imgsblc[ARRSIZ],   imgstrc[ARRSIZ];
 static int     imgslower[ARRSIZ], imgsupper[ARRSIZ];
 static int     imgsaxlen[ARRSIZ];
-static long  imgscubesize[ARRSIZ], imgscsz[ARRSIZ];
+static long    imgscubesize[ARRSIZ], imgscsz[ARRSIZ];
 static int     bufsblc[ARRSIZ],   bufstrc[ARRSIZ];
 static int     bufsaxlen[ARRSIZ];
-static long  bufscubesize[ARRSIZ], bufscsz[ARRSIZ];
+static long    bufscubesize[ARRSIZ], bufscsz[ARRSIZ];
 static int     axnumr[ARRSIZ],    inv_axnumr[ARRSIZ],   reverses[ARRSIZ];
 
 
@@ -143,10 +145,10 @@ static int     axnumr[ARRSIZ],    inv_axnumr[ARRSIZ],   reverses[ARRSIZ];
    Most if(.test) statements have been left active. Some, the ones in inner
    loops, are disabled. They can be found by searching for '/ * $ $' (without spaces) */
 
-static int     itest = 0; /* Information on buffers and datasets */
-static int     otest = 0; /* Information on subcubes */
-static int     rtest = 0; /* Information on each array element */
-static int     vtest = 0; /* Puts numbers in buffer without reading a dataset */
+static int     itest = 1; /* Information on buffers and datasets */
+static int     otest = 1; /* Information on subcubes */
+static int     rtest = 1; /* Information on each array element */
+static int     vtest = 1; /* Puts numbers in buffer without reading a dataset */
 static int     tcoo[ARRSIZ];
 static int     nfound, i;
 static char   *words[4] = { "get", "put", "filled", "emptied" };
@@ -308,7 +310,7 @@ This returns dimension information.
       tno	The image file handle.
    Output:
       naxis	Number of dimensions.
-      dumsub    Number of skipped subdimensions.                              */
+      dimsub    Number of skipped subdimensions.                              */
 /*--*/
 
 void xyzdim_c(int tno,int *naxis,int *subdim)
@@ -397,7 +399,8 @@ void xyzflush_c( int tno )
       integer       tno
       character*(*) subcube
       integer       blc(*), trc(*)
-      integer       viraxlen(*), vircubesize(*)
+      integer       viraxlen(*)
+      ptrdiff       vircubesize(*)
 
 This routine does the definitions necessary to allow reading or writing
 an arbitrary subcube in a n-dimensional datacube. It is used to define
@@ -459,7 +462,7 @@ void xyzsetup_c( int tno, Const char *subcube, Const int *blc, Const int *trc,
    dimsub:                dimension of subcube
    axnum:                 relation between axes
    imgs.blc, imgs.trc:    lower left and upper right used from input or
-			   written to output
+                          written to output
    bufs.axlen:            length of virtual axes
    imgs/bufs.cubesize:    cs(i) = (Prod)(d<i) axlen(d): # pix in line/plane etc
    viraxlen, vircubesize: info returned to caller
@@ -550,8 +553,7 @@ void xyzsetup_c( int tno, Const char *subcube, Const int *blc, Const int *trc,
 	 vircubesize[dim-1] = bufs[tno].cubesize[dim];
     }
 
-/* Set flag so that manage_buffer knows it has to (re)calculate the
-   buffersize */
+/* Set flag so that manage_buffer knows it has to (re)calculate the buffersize */
    allocatebuffer = TRUE;
 
 /* Testoutput only */
@@ -1343,13 +1345,16 @@ static void get_buflen(void)
     if(itest)printf("# bytes per real %ld\n",sizeof(float));
 
     maxsize = 0;
-    for( tno=1; tno<=MAXOPEN; tno++ ) {
+    for( tno=0; tno<MAXOPEN; tno++ ) {
       if( imgs[tno].itno != 0 ) {
 	 size    = bufs[tno].cubesize[bufs[tno].naxis];
 	 maxsize = ( (maxsize<size) ? size : maxsize );
+	 bugv_c( 'i', "xyzsetup: tno=%d         naxis=%d size=%d maxsize=%d",
+		                 tno, bufs[tno].naxis,   size,   maxsize);
       }
     }
     try = (ntno+1) * maxsize;
+    bugv_c( 'i', "xyzsetup: try=%ld ntno=%d maxsize=%ld",try,ntno,maxsize);
     if( (buffer==NULL) || (try>currentallocation) ) try = bufferallocation(try);
     allocatebuffer = FALSE;
 
@@ -1357,23 +1362,31 @@ static void get_buflen(void)
 
     for( tno=0; tno<MAXOPEN; tno++ ) {
       if( imgs[tno].itno != 0 ) {
-	 if( bufs[tno].cubesize[dimsub[tno]] > buffersize )
-	 bug_c( 'f', "xyzsetup: Requested subcube too big for buffer" );
+	if( bufs[tno].cubesize[dimsub[tno]] > buffersize ) {
+	  bugv_c( 'i', "xyzsetup: tno=%d itno=%d dimsub[tno]=%d",tno,imgs[tno].itno,dimsub[tno]);
+	  bugv_c( 'f', "xyzsetup: Requested subcube too big for buffer (%ld > %ld)",
+		  bufs[tno].cubesize[dimsub[tno]] ,buffersize);
+	}
       }
     }
 
-    /* set combined masking buffer to true, just in case no real mask
-	is read in */
+    /* set combined masking buffer to true, just in case no real mask is read in */
     mbufpt = mbuffr; cnt=0;
     while( cnt++ < try ) *mbufpt++ = FORT_TRUE;
 }
 
 static int bufferallocation( long n )
 {
+    long n0 = n;
+    long maxbuf = 4000;
+    if(itest)printf("Trying to allocate %ld \n",n);
+
     if( buffer != NULL ) { free( buffer ); buffer = NULL; }
     if( mbuffr != NULL ) { free( mbuffr ); mbuffr = NULL; }
 
-    n  = ( (n < MAXBUF) ? n : MAXBUF );
+    /* MAXBUF or maxbuf ? */
+
+    n  = ( (n < maxbuf) ? n : maxbuf );
     n *= 2;
     while( ( (buffer == NULL) || (mbuffr == NULL) ) && (n>1) ) {
 	 if( buffer != NULL ) { free( buffer ); buffer = NULL; }
@@ -1383,7 +1396,7 @@ static int bufferallocation( long n )
 	 buffer = (float *)malloc(n*sizeof(float));
 	 mbuffr = (int   *)malloc(n*sizeof(int));
     }
-    if( n == 1 ) bug_c( 'f', "xyzsetup: Failed to allocate any memory" );
+    if( n == 1 ) bugv_c( 'f', "xyzsetup: Failed to allocate memory for %ld pixels", n0 );
 
     if(itest)printf("Allocated %ld reals @ %p\n",n,(Void *)buffer);
     if(itest)printf("Allocated %ld ints  @ %p\n",n,(Void *)mbuffr);
