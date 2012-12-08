@@ -54,7 +54,8 @@ c	Default zaxis=real
 c	No calibration is applied by VARMAPS. 
 c
 c@ scale
-c       Scaling factor applied to the data. Default:  1 ????
+c       Scaling factor applied to the data. Default:  1.
+c       See also options=jyperk below.
 c
 c@ out
 c	Output image or image cube. No default.
@@ -112,6 +113,13 @@ c@ soft
 c     Factor by which FWHM should be multiplied for the soft edge
 c     under options=soft. Default: 1
 c
+c@ ants
+c     Antenna to use for options=systemp weights. Although this was
+c     likely given in select=ant(X) as well, due to the MIRIAD
+c     selection mechanism, it needs to be specified here as well.
+c     If multiple ants
+c     No default.
+c
 c@ options
 c       This gives extra processing options. Several options can be given,
 c       each separated by commas. They may be abbreviated to the minimum
@@ -122,6 +130,9 @@ c       taper2  - new style tapering using one boundary layer
 c       edge    - sharp edge, it will cut signal outside the bounding box 
 c       inttime - create integration time map in channel 1
 c       debug   - lots of verbose output 
+c       systemp - weight by systemp
+c       jyperk  - trust the Jy/K in the header and convert to Jy.
+c                 optionally scale= can be used to force
 c       
 c
 c--
@@ -134,12 +145,13 @@ c     pjt   6sep11  added soft=
 c     pjt  13nov12  fixed init problem in maps, rearrange pixel filling
 c     pjt  19nov12  masking with better tapering
 c     pjt  28nov12  more tapering tinkering and fixing
-c     pjt  30nov12  renameing to taper1 , taper2
+c     pjt  30nov12  renaming to taper1 , taper2
+c     pjt   4dec12  options=systemp,jyperk
 c-----------------------------------------------------------------------
        include 'maxdim.h'
        include 'mirconst.h'
        character*(*) version
-       parameter(version='VARMAPS: version 30-nov-2012 ')
+       parameter(version='VARMAPS: version 4-dec-2012 ')
        integer MAXSELS
        parameter(MAXSELS=512)
        integer MAXVIS
@@ -170,13 +182,14 @@ c-----------------------------------------------------------------------
        real array(MAXSIZE,MAXSIZE,MAXCHAN2)
        real weight(MAXSIZE,MAXSIZE,MAXCHAN2)
        logical mask(MAXSIZE,MAXSIZE)
+       real tsys(MAXANT), wtsys(MAXVIS), tsysmin, tsysmax, jyperk
        real x,y,z,x0,y0,datamin,datamax,f,w,cutoff, xscale,yscale,scale
        real softfac, sumg2, sumg3, sumg2min, sumg3min
        character*1 xtype, ytype, type
        integer length, xlength, ylength, xindex, yindex, cnt, mode,nmask
-       integer imin,jmin,imax,jmax
+       integer imin,jmin,imax,jmax,iant
        logical updated,sum,debug,hasbeam,doweight,dotaper1,dotaper2,edge
-       logical doimap,do0
+       logical doimap,dotsys,dojyperk,do0
        logical masktest
        external masktest
 c
@@ -217,8 +230,10 @@ c
        call keyi ('mode',mode,0)
        call keyr ('cutoff',cutoff,0.00000001)
        call keyr ('soft', softfac, 1.0)
+       call keyi ('ants',iant,-1)
 c        options=  sum debug taper    edge soft     inttime none
-       call GetOpt(sum,debug,dotaper1,edge,dotaper2,doimap, do0)
+       call GetOpt(sum,debug,dotaper1,edge,dotaper2,doimap,
+     *             dotsys,dojyperk,do0)
        call keyfin
 c
 c  Check that the inputs are reasonable.
@@ -253,6 +268,9 @@ c
        if (yunit.ne.' ') then
           call units(cell(2),yunit)
           call units(beam(2),yunit)
+       endif
+       if (dotsys .and. iant.lt.1) then
+          call bug('f','options=systemp needs ants=')
        endif
 
        xscale = 1.0
@@ -299,6 +317,11 @@ c  Read the first record and check the data type.
 c
        call uvread (lIn, preamble, data, flags, MAXCHAN2, nread)
        if(nread.le.0) call bug('f','No data found in the input.')
+
+c      @ todo: these appear to be read wrong?  3.5m instead of 10m
+       call uvgetvrr(lIn,'jyperk',jyperk,1)
+       write(*,*) 'first jyperk=',jyperk
+
        if(index(linetype,'wide').gt.0)then
          call uvprobvr(lIn,'wcorr',type,length,updated)
        else
@@ -331,7 +354,7 @@ c
       call output(line)
       call xyopen(lOut,Out,'new',3,nsize)
       call maphead(lIn,lOut,nsize,cell,xaxis,yaxis,
-     *   xunit,yunit,linetype)
+     *   xunit,yunit,linetype,dojyperk)
 
       do j=1,MAXSIZE
          do i=1,MAXSIZE
@@ -341,6 +364,10 @@ c
       enddo
       nvis = 0
       ngrid = 0 
+      tsysmin =  9999.
+      tsysmax = -9999.
+      jyperk = 1.0
+      if (dojyperk) write(*,*) "Jy/K scaling applied"
 
 c
 c  Read through the uvdata 
@@ -349,6 +376,9 @@ c
          nvis = nvis + 1
          if(nread.ne.nsize(3))
      *		 call bug('f','Number of channels has changed.')
+         if (dojyperk) call uvgetvrr(lIn,'jyperk',jyperk,1)
+c         write(*,*) 'jyperk=',jyperk
+
 c
 c  Get the selected axes.
 c
@@ -387,6 +417,11 @@ c
          endif
          x = xscale * x
          y = yscale * y
+
+c update the weights, if there are new tsys
+c         if(dotsys) call getwtsys(lIn, MAXANT, tsys)
+
+
 c
 c  Grid the data, and stack them away for later retrieval
 c  Note nsize()/2 needs to be integer division to make
@@ -403,8 +438,19 @@ c
                ystacks(ngrid) = y
                istacks(ngrid) = i
                jstacks(ngrid) = j
+c                  read the weights (update happened earlier)
+               if(dotsys) then
+                  call getwtsys(lIn, MAXANT, tsys)
+                  wtsys(ngrid) = 1000.0/tsys(iant)
+                  if (tsys(iant).gt.tsysmax) tsysmax = tsys(iant)
+                  if (tsys(iant).lt.tsysmin) tsysmin = tsys(iant)
+c                  write(*,*) 'TSYS: ',ngrid,(tsys(k),k=1,6),wtsys(ngrid)
+               else
+                  wtsys(ngrid) = 1.0
+               endif
+c
                cnt = idx(i,j,1) + 1
-               if (debug) write(*,*) 'Adding ',i,j,nvis,cnt,nread
+               if (debug) write(*,*) 'Adding ',i,j,nvis,ngrid,cnt,nread
                if (cnt.ge.MAXVPP) call bug('f',
      *                           'Too many scans for MAXVPP')
                idx(i,j,1) = cnt
@@ -422,7 +468,7 @@ c
                      else
                         call bug('f','Unknown zaxis')
                      end if
-                     stacks(ngrid,k) = z * scale
+                     stacks(ngrid,k) = z * scale * jyperk
                   else
                      stacks(ngrid,k) = 0.0
                   end if
@@ -516,12 +562,14 @@ c
                            if (w.lt.cutoff) w = 0.0
                            if (.NOT.mask(i1,j1)) w = 0.0
                            if(debug)write(*,*) i,j,i1,j1,cnt,ng,w
+                           if(debug)write(*,*) x,y,mask(i1,j1),cutoff
                            if (w.gt.0.0) then
+                              w = w * wtsys(ng)
                               do k=1,nsize(3)
                                  array(i1,j1,k) =  array(i1,j1,k) + 
      *                                w*stacks(ng,k)
-c     *                                w*stacks(ng,k)/sumg2
-                                 weight(i1,j1,k) = weight(i1,j1,k) + w
+                                 weight(i1,j1,k) = weight(i1,j1,k) + 
+     *                                w
                               end do
                            end if
                         end if
@@ -649,7 +697,7 @@ c                          array(i,j,k) = array(i,j,k) / sumg2
 
 
 c--  yet another try
-      
+        
       if (dotaper2) then
          write(*,*) 'New tapering at the edge using the mask'
          do j=1,MAXSIZE
@@ -676,6 +724,9 @@ c--  yet another try
      *                             array(i1,j1,k) + w*array(i,j,k)
                                  weight(i1,j1,k) = 
      *                             weight(i1,j1,k) + 1
+c     *                             weight(i1,j1,k) + w
+c                                if (k.eq.24.and.j1.eq.56.and.i1.gt.50)
+c     *               write(*,*) 'add:56,24:',i1,i,j,w,array(i,j,k)
                               end do
                            end if
                         end if
@@ -692,6 +743,8 @@ c--                          normalize the edge cells that got signal
                      do k=1,nsize(3)
                         if (weight(i,j,k).gt.0) then
                            array(i,j,k) = array(i,j,k) / weight(i,j,k)
+c                                 if (k.eq.24.and.j.eq.56.and.i.gt.50)
+c     *             write(*,*) 'sum:56,24:',i,weight(i,j,k),array(i,j,k)
                         end if
                      end do
                   end if
@@ -722,6 +775,13 @@ c
       call output(line)
       write(line,'(a,i6)') ' number of records mapped= ',ngrid
       call output(line)
+      write(line,'(a,f7.1,1x,f7.1)') 'Datamin/max: ',datamin,datamax
+      call output(line)
+      if (dotsys) then
+         write(line,'(a,f7.1,1x,f7.1)') 'Range in systemp: ',
+     *         tsysmin,tsysmax
+         call output(line)
+      endif
 c
 c  Write the history file.
 c
@@ -740,11 +800,12 @@ c
       end
 c********1*********2*********3*********4*********5*********6*********7**
       subroutine maphead(lIn,lOut,nsize,cell,xaxis,yaxis,
-     *   xunit,yunit,linetype)
+     *   xunit,yunit,linetype,jyperk)
       implicit none
       integer	lin,lout,nsize(3)
       real cell(2)
       character*(*) xaxis,yaxis,xunit,yunit,linetype
+      logical jyperk
 c  Inputs:
 c    lIn	The handle of the autocorrelation data.
 c    lOut	The handle of the output image.
@@ -769,6 +830,7 @@ c
       call uvrdvra(lIn,'telescop',telescop,' ')
 c
 c  Write header values.
+c  Note if jyperk is used, the beam is not specified
 c
       call wrhdi(lOut,'naxis',3)
       call wrhdi(lOut,'naxis1',nsize(1))
@@ -779,7 +841,11 @@ c
       call wrhdd(lOut,'crpix3',1.0d0)
       call wrhdd(lOut,'cdelt1',dble(-cell(1)))
       call wrhdd(lOut,'cdelt2',dble(cell(2)))
-      call wrhda(lOut,'bunit','K')
+      if (jyperk) then
+         call wrhda(lOut,'bunit','Jy')
+      else
+         call wrhda(lOut,'bunit','K')
+      endif
       call wrhdd(lOut,'crval1',ra)
       call wrhdd(lOut,'crval2',dec)
       call wrhdd(lOut,'restfreq',restfreq)
@@ -858,9 +924,10 @@ c
       enddo
       end
 c********1*********2*********3*********4*********5*********6*********7**
-      subroutine GetOpt(sum,debug,taper1,edge,taper2,imap,do0)
+      subroutine GetOpt(sum,debug,taper1,edge,taper2,imap,systemp,
+     *                  jyperk,do0)
       implicit none
-      logical sum,debug,taper1,edge,taper2,imap,do0
+      logical sum,debug,taper1,edge,taper2,imap,systemp,jyperk,do0
 c     
 c  Determine extra processing options.
 c
@@ -869,25 +936,29 @@ c    sum      Sum the data in each pixel. Default is to average.
 c    debug    More debug output
 c------------------------------------------------------------------------
       integer nopt
-      parameter(nopt=7)
+      parameter(nopt=9)
       character opts(nopt)*8
       logical present(nopt)
       data opts/'sum     ',
      *          'debug   ',
      *          'taper1  ',
-     *          'edge    ',
      *          'taper2  ',
+     *          'edge    ',
      *          'inttime ',
+     *          'systemp ',
+     *          'jyperk  ',
      *          'none    '/
 c     
       call options('options',opts,present,nopt)
       sum     = present(1)
       debug   = present(2)
       taper1  = present(3)
-      edge    = present(4)
-      taper2  = present(5)
+      taper2  = present(4)
+      edge    = present(5)
       imap    = present(6)
-      do0     = present(7)
+      systemp = present(7)
+      jyperk  = present(8)
+      do0     = present(9)
 c     
       end
 c********1*********2*********3*********4*********5*********6*********7**
@@ -948,5 +1019,33 @@ c   if there were any masked pixels, we're at an edge
       if (n.gt.0) masktest = .TRUE.
 
       return
+      end
+c-----------------------------------------------------------------------
+      subroutine getwtsys(lIn,mant,tsys)
+      implicit none
+      integer lIn, mant
+      real tsys(mant)
+c
+      include 'maxdim.h'
+c
+      logical updated
+      integer length,nants,nchan,nspect,i,j,i2
+      integer nschan(MAXWIN),ischan(MAXWIN)
+      real systemp(MAXWIN*MAXANT)
+      character type*1
+
+      call uvprobvr(lIn,'systemp',type,length,updated)
+      if (updated .and. length.gt.0) then
+         call uvgetvri(lIn,'nants',nants,1)
+         call uvgetvri(lIn,'nspect',nspect,1)
+         call uvgetvri(lIn,'nchan',nchan,1)
+         call uvgetvri(lIn,'nschan',nschan,nspect)
+         call uvgetvri(lIn,'ischan',ischan,nspect)
+         call uvgetvrr(lIn,'systemp',systemp,nants*nspect)
+         do i=1,nants
+            tsys(i) = systemp(i)
+         end do
+      end if
+
       end
 c-----------------------------------------------------------------------
