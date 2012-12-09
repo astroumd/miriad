@@ -163,6 +163,8 @@ c     input image and add the new history.
 c       Dataset existence test: use hopen????? Is that OK
         call hopen(lcont,cont,'old',iostat)
         ccreate = iostat.ne.0
+        call hclose(lcont)
+	lcont = 0
       else
         lcont = 0
         call output('No continuum map created.')
@@ -188,7 +190,7 @@ c       Copy header from the input image.
         call hisopen (lcont, 'append')
         call hiswrite(lcont, 'PCSUB: Miriad ' // version)
         call hisinput(lcont, 'PCSUB')
-      else
+      else if (lcont.ne.0) then
 c       Continuum supplied by user.
         call output('Reading existing continuum map: ' // cont)
         call xyopen(lcont, cont, 'old', MAXNAX, cnin)
@@ -213,7 +215,7 @@ c     Select a line of attack going into the cube and fit it to a
 c     polynomial, using in the fit only those planes selected by input
 c     as past of the continuum.  Then, subtract the polynomial fit from
 c     each point along the line of attack (parallel to the z-axis).
-      if (nterms.ne.1) then
+      if (nterms.ne.0) then
         do j = 1, nin(2)
           call polfits(planes, nplanes, nterms, lin, lout, lcont, nin,
      *                 j, MAXDIM, MAXCHAN, MPPLUS1, MAXEXP, bm, c, b, a,
