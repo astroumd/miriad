@@ -13,6 +13,7 @@ echo "   mchw. 20sep02 version"
 #  13jul10 mchw. Added default and joint deconvolutions.
 #  16jul10 mchw. Added gif plots. Changed rmsfac=200 to 1, same as carma version.
 #  29jul11 mchw. Added plot single dish and interferometer image
+#  09dec12 mchw. Use imgen and regrid to make bigger single dish image instead of imframe.
 
 goto start
 start:
@@ -53,7 +54,7 @@ set method  = $4
 # Nyquist sample rate for each pointing.
 calc '6/(pi*250)*12'
 set harange = -4,4,.013
-set select  = '-shadow(7)'
+set select  = '-shadow(12)'
 set freq    = 230
 set nchan   = 1
 set imsize  = 257
@@ -141,7 +142,14 @@ set pbfwhm = `pbplot telescop=alma freq=$freq | grep FWHM | awk '{print 60*$3}'`
 echo "Single dish FWHM = $pbfwhm arcsec at $freq GHz" >> timing
 
 rm -r single.$dec.cas.$cell.bigger
-imframe in=single.$dec.cas.$cell frame=-1024,1024,-1024,1024 out=single.$dec.cas.$cell.bigger
+#
+# imframe is currently broken in the current, DEC 2012, Miriad install.
+# imframe in=single.$dec.cas.$cell frame=-1024,1024,-1024,1024 out=single.$dec.cas.$cell.bigger
+#
+# so generate a bigger image using IMGEN and REGRID
+rm -r imgen.map
+imgen radec=23:23:25.803,$dec cell=$cell imsize=2048 object=level spar=0 out=imgen.map
+regrid in=single.$dec.cas.$cell out=single.$dec.cas.$cell.bigger tin=imgen.map axes=1,2
 rm -r single.$dec.cas.$cell.bigger.map
 convol map=single.$dec.cas.$cell.bigger fwhm=$pbfwhm,$pbfwhm out=single.$dec.cas.$cell.bigger.map
 rm -r single.$dec.cas.$cell.map
