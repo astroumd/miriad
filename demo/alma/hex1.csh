@@ -1,6 +1,6 @@
-#!/bin/csh -vf
-echo "   ---  ALMA Mosaicing  ---   "
-echo "  $0   mchw. 07jul2011 version.  `date`"
+#!/bin/csh -f
+echo "   ---  ALMA Mosaicing (Cas A model)   ---   "
+echo "   mchw. 20sep02 version"
 
 # History:
 #  june 02 mchw. ALMA script.
@@ -12,7 +12,9 @@ echo "  $0   mchw. 07jul2011 version.  `date`"
 #  24jun10 mchw. Added uv and image plots.
 #  13jul10 mchw. Added default and joint deconvolutions.
 #  16jul10 mchw. Added gif plots. Changed rmsfac=200 to 1, same as carma version.
-#  07jul11 mchw. hex1.csh edit from hex19.csh.
+#  29jul11 mchw. Added plot single dish and interferometer image
+#  09dec12 mchw. Use imgen and regrid to make bigger single dish image instead of imframe.
+#  11dec12 mchw. Remake hex1.csh from hex19.csh.
 
 goto start
 start:
@@ -20,7 +22,7 @@ start:
 # check inputs
   if($#argv<4) then
     echo " Usage:  $0 array declination cell "
-    echo "   e.g.  $0 config1 30 0.04"
+    echo "   e.g.  $0 config1 -30 0.04 mosmem"
     echo " Inputs :"
     echo "   array"
     echo "          Antenna array used by uvgen task."
@@ -38,7 +40,7 @@ start:
     exit 1
   endif
 
-# Cas A model, cas.vla, pixel=0.4", Cas A is about 320" diameter; image size 1024 == 409.6"
+# Cas A model, casc.vla, pixel=0.4", Cas A is about 320" diameter; image size 1024 == 409.6"
 # scale model size. eg. cell=0.1 arcsec -> 80" diameter
 
 # Saturn model, sat1mm.modj2, pixel=0.1", Saturn's rings are ~ 50" diameter; imsize=603 == 60"
@@ -46,19 +48,17 @@ start:
 set model   = sat1mm.modj2
 set model   = Halo3.mp
 set model   = casc.vla
-set model   = sgra3.5cm.icln
 set config  = $1
 set dec     = $2
 set cell    = $3
 set method  = $4
 # Nyquist sample rate for each pointing.
 calc '6/(pi*250)*12'
-set harange = -1,1,.1
+set harange = -4,4,.013
 set select  = '-shadow(12)'
 set freq    = 230
 set nchan   = 1
 set imsize  = 257
-set imsize  = 1025
 set region  = 'arcsec,box(20,-20,-20,20)'
 set region = `calc "$cell*500" | awk '{printf("arcsec,box(%.2f,-%.2f,-%.2f,%.2f)",$1,$1,$1,$1)}'`
 
@@ -80,8 +80,6 @@ echo " "                             >> timing
 echo "   ---  TIMING   ---   "       >> timing
 echo START: `date` >> timing
 
-goto debug
-
 if($method == plot) then
   goto plot
 endif
@@ -98,11 +96,12 @@ echo "Generate mosaic grid"
 #  lambda/2*antdiam (arcsec)
 calc "300/$freq/2/12e3*2e5"
 
-echo "  $0  mchw. 07jul2011 version.  `date`" >> $0.$model.results
+echo "Using hex19 mosaic with 12'' spacing" >> $0.$model.results
+
 
 echo "Generate uv-data. Tsys=40K, bandwidth=8 GHz " >> timing
 rm -r $config.uv
-uvgen ant=$config.ant baseunit=-3.33564 radec=17:45:40.051,-29:00:27.978 lat=-23.02 harange=$harange source=$MIRCAT/no.source systemp=40 jyperk=40 freq=$freq corr=$nchan,1,0,8000 out=$config.uv telescop=alma 
+uvgen ant=$config.ant baseunit=-3.33564 radec=23:23:25.803,$dec lat=-23.02 harange=$harange source=$MIRCAT/no.source systemp=40 jyperk=40 freq=$freq corr=$nchan,1,0,8000 out=$config.uv telescop=alma
 echo UVGEN: `date` >> timing
 uvindex vis=$config.uv
 
@@ -110,7 +109,7 @@ echo "Scale model size. from pixel 0.4 to $cell arcsec" >> timing
 # with 0.4 arcsec pixel size Cas A is about 320 arcsec diameter; image size 1024 == 409.6 arcsec
 # scale model size. eg. cell=0.1 arcsec -> 80 arcsec cell=.01 -> 8 arcsec diameter
 rm -r single.$dec.$model.$cell
-cp -r $model single.$dec.$model.$cell
+cp -r casc.vla single.$dec.$model.$cell
 puthd in=single.$dec.$model.$cell/crval2 value=$dec,dms
 puthd in=single.$dec.$model.$cell/crval3 value=$freq
 puthd in=single.$dec.$model.$cell/cdelt1 value=-$cell,arcsec
@@ -122,9 +121,9 @@ demos map=single.$dec.$model.$cell vis=$config.uv out=$config.$model.$cell.demos
 
 echo "Make model uv-data using VLA image of Cas A as a model (the model has the VLA primary beam)" >> timing
   rm -r $config.$dec.$model.$cell.uv*
- foreach i (1)
+ foreach i ( 1 )
     cgdisp device=/xs labtyp=arcsec range=0,0,lin,8 in=$config.$model.$cell.demos$i
-    uvmodel vis=$config.uv model=$config.$model.$cell.demos$i options=add,selradec out=$config.$dec.$model.$cell.uv$i line=chan,1,1,1,1
+    uvmodel vis=$config.uv model=$config.$model.$cell.demos$i options=add,selradec out=$config.$dec.$model.$cell.uv$i
   end
 echo UVMODEL: `date` add the model to the noisy sampled uv-data >> timing
 
@@ -144,7 +143,14 @@ set pbfwhm = `pbplot telescop=alma freq=$freq | grep FWHM | awk '{print 60*$3}'`
 echo "Single dish FWHM = $pbfwhm arcsec at $freq GHz" >> timing
 
 rm -r single.$dec.$model.$cell.bigger
-imframe in=single.$dec.$model.$cell frame=-1024,1024,-1024,1024 out=single.$dec.$model.$cell.bigger
+#
+# imframe is currently broken in the current, DEC 2012, Miriad install.
+# imframe in=single.$dec.$model.$cell frame=-1024,1024,-1024,1024 out=single.$dec.$model.$cell.bigger
+#
+# so generate a bigger image using IMGEN and REGRID
+rm -r imgen.map
+imgen radec=23:23:25.803,$dec cell=$cell imsize=2048 object=level spar=0 out=imgen.map
+regrid in=single.$dec.$model.$cell out=single.$dec.$model.$cell.bigger tin=imgen.map axes=1,2
 rm -r single.$dec.$model.$cell.bigger.map
 convol map=single.$dec.$model.$cell.bigger fwhm=$pbfwhm,$pbfwhm out=single.$dec.$model.$cell.bigger.map
 rm -r single.$dec.$model.$cell.map
@@ -154,6 +160,8 @@ imgen in=single.$dec.$model.$cell.map factor=0 object=gaussian spar=1,0,0,$pbfwh
 implot in=single.$dec.$model.$cell.map units=s device=/xs conflag=l conargs=2
 puthd in=single.$dec.$model.$cell.map/rms value=7.32
 
+# plot single dish and interferometer image
+cgdisp in=$config.$dec.$model.$cell.mp,single.$dec.$model.$cell.map region=$region device=/xs labtyp=arcsec
 
 goto mosmem
 
@@ -178,13 +186,7 @@ rm -r $config.$dec.$model.$cell.mem $config.$dec.$model.$cell.cm
 mosmem map=$config.$dec.$model.$cell.mp default=single.$dec.$model.$cell.map beam=$config.$dec.$model.$cell.bm out=$config.$dec.$model.$cell.mem region=$region niters=200 rmsfac=1
 goto restor
 
-clean:
-echo "CLEAN "  >> timing
-echo "CLEAN "  >> $0.$model.results
-rm -r $config.$dec.$model.$cell.mem $config.$dec.$model.$cell.cm
-clean map=$config.$dec.$model.$cell.mp beam=$config.$dec.$model.$cell.bm out=$config.$dec.$model.$cell.mem 
 
-debug:
 restor:
 restor map=$config.$dec.$model.$cell.mp beam=$config.$dec.$model.$cell.bm out=$config.$dec.$model.$cell.cm model=$config.$dec.$model.$cell.mem
 echo MOSMEM: `date` >> timing 
@@ -232,8 +234,8 @@ imcat in=$config.$dec.$model.$cell.cm,$config.$dec.$model.$cell.regrid out=$conf
 plot:
 rm -r $config.$dec.$model.$cell.imcat
 imcat in=$config.$dec.$model.$cell.cm,$config.$dec.$model.$cell.regrid options=relax out=$config.$dec.$model.$cell.imcat
-cgdisp range=0.0.lin,8 in=$config.$dec.$model.$cell.imcat labtyp=arcsec,arcsec options=beambl,wedge region=$region device=/xs
-cgdisp range=0.0.lin,8 in=$config.$dec.$model.$cell.imcat labtyp=arcsec,arcsec options=beambl,wedge region=$region device=$config.$dec.$model.$cell.imcat.gif/gif
+cgdisp range=0,0,lin,8 in=$config.$dec.$model.$cell.imcat labtyp=arcsec,arcsec options=beambl,wedge region=$region device=/xs
+cgdisp range=0,0,lin,8 in=$config.$dec.$model.$cell.imcat labtyp=arcsec,arcsec options=beambl,wedge region=$region device=$config.$dec.$model.$cell.imcat.gif/gif
 
 if($method == plot) then
   goto end
@@ -258,7 +260,7 @@ echo " Config  DEC  HA[hrs]    Beam[arcsec] scale Model_Flux,Peak  Image_Flux,Pe
 echo  "$config  $dec  $harange  $RMS   $b1 $b2    $cell  $Model_Flux $Model_Peak  $Flux $Peak   $SRMS  $SMAX  $SMIN  $Fidelity" >> timing
 echo  " "
 echo  "$config  $dec  $harange  $RMS   $b1 $b2    $cell  $Model_Flux $Model_Peak  $Flux $Peak   $SRMS  $SMAX  $SMIN  $Fidelity" >> $0.$model.results
-mv timing hex1.$config.$dec.$harange.$nchan.$imsize
+mv timing hex19.$config.$dec.$harange.$nchan.$imsize
 cat $config.$dec.$harange.$nchan.$imsize
 cat $0.$model.results
 #enscript -r $0.$model.results
