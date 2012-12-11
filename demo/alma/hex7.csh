@@ -12,6 +12,7 @@ echo "   mchw. 23apr2010 version"
 #  26aug08 mchw. merge hex, default and joint scripts.
 #  23apr10 mchw. 30 GHz with multiple models.
 #  20nov12 mchw. plot single dish and interferometer image.
+#  09dec12 mchw. Use imgen and regrid to make bigger single dish image instead of imframe.
 
 goto start
 start:
@@ -141,7 +142,14 @@ set pbfwhm = `pbplot telescop=alma freq=$freq | grep FWHM | awk '{print 60*$3}'`
 echo "Single dish FWHM = $pbfwhm arcsec at $freq GHz" >> timing
 
 rm -r single.$dec.$model.$cell.bigger
-imframe in=single.$dec.$model.$cell frame=-1024,1024,-1024,1024 out=single.$dec.$model.$cell.bigger
+#
+# imframe is currently broken in the current, DEC 2012, Miriad install.
+# imframe in=single.$dec.cas.$cell frame=-1024,1024,-1024,1024 out=single.$dec.cas.$cell.bigger
+#
+# so generate a bigger image using IMGEN and REGRID
+rm -r imgen.map
+imgen radec=23:23:25.803,$dec cell=$cell imsize=2048 object=level spar=0 out=imgen.map
+regrid in=single.$dec.$model.$cell out=single.$dec.$model.$cell.bigger tin=imgen.map axes=1,2
 rm -r single.$dec.$model.$cell.bigger.map
 convol map=single.$dec.$model.$cell.bigger fwhm=$pbfwhm,$pbfwhm out=single.$dec.$model.$cell.bigger.map
 rm -r single.$dec.$model.$cell.map
@@ -152,7 +160,7 @@ implot in=single.$dec.$model.$cell.map units=s device=/xs conflag=l conargs=2
 puthd in=single.$dec.$model.$cell.map/rms value=7.32
 
 # plot single dish and interferometer image
-cgdisp in=$config.$dec.$model.$cell.mp,single.$dec.$model.$cell.map region=$region device=/xs
+cgdisp in=$config.$dec.$model.$cell.mp,single.$dec.$model.$cell.map region=$region device=/xs labtyp=arcsec
 
 mosmem:
 echo " MOSMEM Interferometer only" >> timing
