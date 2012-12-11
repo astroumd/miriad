@@ -87,9 +87,10 @@ c     are "arcsec", "arcmin", "degrees" and "hours".
 c     Default is to use the same value and units as xcell.
 c
 c@ xbeam
-c     Smoothing beam in X. Will use same units are xcell.
+c     Smoothing beam in X. Will use same units are xcell. No default.
 c@ ybeam
-c     Smoothing beam in Y. Will use same units are ycell.
+c     Smoothing beam in Y. Will use same units are ycell. 
+c     Default is to use the same value and units as xbeam.
 c@ size
 c     One or two numbers:
 c     Number of neighbor pixels to look around for smoothing. This means
@@ -117,7 +118,6 @@ c@ ants
 c     Antenna to use for options=systemp weights. Although this was
 c     likely given in select=ant(X) as well, due to the MIRIAD
 c     selection mechanism, it needs to be specified here as well.
-c     If multiple ants
 c     No default.
 c
 c@ options
@@ -147,11 +147,12 @@ c     pjt  19nov12  masking with better tapering
 c     pjt  28nov12  more tapering tinkering and fixing
 c     pjt  30nov12  renaming to taper1 , taper2
 c     pjt   4dec12  options=systemp,jyperk
+c     pjt  11dec12  options=taper1 now better weighted
 c-----------------------------------------------------------------------
        include 'maxdim.h'
        include 'mirconst.h'
        character*(*) version
-       parameter(version='VARMAPS: version 4-dec-2012 ')
+       parameter(version='VARMAPS: version 11-dec-2012')
        integer MAXSELS
        parameter(MAXSELS=512)
        integer MAXVIS
@@ -184,7 +185,7 @@ c-----------------------------------------------------------------------
        logical mask(MAXSIZE,MAXSIZE)
        real tsys(MAXANT), wtsys(MAXVIS), tsysmin, tsysmax, jyperk
        real x,y,z,x0,y0,datamin,datamax,f,w,cutoff, xscale,yscale,scale
-       real softfac, sumg2, sumg3, sumg2min, sumg3min
+       real softfac, sumg2, sumg3, sumg2min, sumg3min,wmax
        character*1 xtype, ytype, type
        integer length, xlength, ylength, xindex, yindex, cnt, mode,nmask
        integer imin,jmin,imax,jmax,iant
@@ -641,15 +642,17 @@ c
 
 c--  now deal with the tapering off the outer masked (mask=false) area
 c    and only grab tapered signal from the inner (mask=true) regions
-c    need the gaussian taper sum to normalize by
 
+c    The dotaper1 loops over all points that have no signal yet, and 
+c    tries to steal some signal from the inner portion
 
       if (dotaper1) then
-         write(*,*) 'Old edge tapering using the mask'
+         write(*,*) 'Old edge tapering using the mask - new dec 2012'
          do j=1,MAXSIZE
             y = (j-1 - nsize(2)/2 ) * cell(2)
             do i=1,MAXSIZE
                x = (i-1 - nsize(1)/2 ) * cell(1)
+               wmax = 0.0
                if (.not.mask(i,j)) then
                   do jd=-size,size
                      j1 = j + jd
@@ -659,10 +662,12 @@ c    need the gaussian taper sum to normalize by
                         x0 = (i1-1 - nsize(1)/2 ) * cell(1)
                         if (i1.ge.1 .and. i1.le.nsize(1) .and. 
      *                      j1.ge.1 .and. j1.le.nsize(2) .and.
-     *                     mask(i1,j1)) then
+     *                      masktest(MAXSIZE,mask,i1,j1)) then
+c     *                     mask(i1,j1)) then
                            w = (x-x0)*(x-x0)/beam3(1)+
      *                         (y-y0)*(y-y0)/beam3(2)
                            w = exp(-w)
+                           if (w.gt.wmax) wmax = w
                            if (w.lt.cutoff) w = 0.0
                            if (w.gt.0.0) then
                               do k=1,nsize(3)
@@ -675,28 +680,20 @@ c    need the gaussian taper sum to normalize by
                         end if
                      end do
                   end do
+                  do k=1,nsize(3)
+                     if (weight(i,j,k).gt.0) then
+                        array(i,j,k) = array(i,j,k)/weight(i,j,k)*wmax
+c                        array(i,j,k) = array(i,j,k)/weight(i,j,k)
+                     end if
+                  end do
                end if
             end do
          end do
-c--                          normalize the edge cells that got signal
-         if (.true.) then
-            do j=1,MAXSIZE
-               do i=1,MAXSIZE
-                  if (.not.mask(i,j)) then
-                     do k=1,nsize(3)
-                        if (weight(i,j,k).gt.0) then
-c                          array(i,j,k) = array(i,j,k) / sumg2
-                           array(i,j,k) = array(i,j,k) / weight(i,j,k)
-                        end if
-                     end do
-                  end if
-               end do
-            end do
-         end if
       end if
 
 
-c--  yet another try
+c--  the dotaper2 loops over the signal edge and then tries to spill that
+c    into the non-signal area
         
       if (dotaper2) then
          write(*,*) 'New tapering at the edge using the mask'
@@ -724,9 +721,6 @@ c--  yet another try
      *                             array(i1,j1,k) + w*array(i,j,k)
                                  weight(i1,j1,k) = 
      *                             weight(i1,j1,k) + 1
-c     *                             weight(i1,j1,k) + w
-c                                if (k.eq.24.and.j1.eq.56.and.i1.gt.50)
-c     *               write(*,*) 'add:56,24:',i1,i,j,w,array(i,j,k)
                               end do
                            end if
                         end if
@@ -743,8 +737,6 @@ c--                          normalize the edge cells that got signal
                      do k=1,nsize(3)
                         if (weight(i,j,k).gt.0) then
                            array(i,j,k) = array(i,j,k) / weight(i,j,k)
-c                                 if (k.eq.24.and.j.eq.56.and.i.gt.50)
-c     *             write(*,*) 'sum:56,24:',i,weight(i,j,k),array(i,j,k)
                         end if
                      end do
                   end if
