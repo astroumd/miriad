@@ -1,6 +1,6 @@
 #!/bin/csh -f
 echo "   ---  ALMA Mosaicing (Cas A model)   ---   "
-echo "   mchw. 20sep02 version"
+echo "   mchw. 12dec2012 version"
 
 # History:
 #  june 02 mchw. ALMA script.
@@ -14,7 +14,7 @@ echo "   mchw. 20sep02 version"
 #  16jul10 mchw. Added gif plots. Changed rmsfac=200 to 1, same as carma version.
 #  29jul11 mchw. Added plot single dish and interferometer image
 #  09dec12 mchw. Use imgen and regrid to make bigger single dish image instead of imframe.
-#  11dec12 mchw. Remake hex1.csh from hex19.csh.
+#  12dec12 mchw. Remake hex1.csh from hex19.csh.
 
 goto start
 start:
@@ -96,7 +96,7 @@ echo "Generate mosaic grid"
 #  lambda/2*antdiam (arcsec)
 calc "300/$freq/2/12e3*2e5"
 
-echo "Using hex19 mosaic with 12'' spacing" >> $0.$model.results
+echo "Using hex1 mosaic with 12'' spacing" >> $0.$model.results
 
 
 echo "Generate uv-data. Tsys=40K, bandwidth=8 GHz " >> timing
