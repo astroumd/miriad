@@ -57,6 +57,9 @@ c         'tsys'         Tsys
 c@ slop
 c       Allow some fraction of channels bad for accepting
 c       Default: 0
+c@ debug
+c       Set to TRUE if you truely want to see lots of debugging output.
+c       Default: false
 c@ repair
 c       A list of bad channels (birdies) that need to be repaired by
 c       interpolating accross them. CLASSy data need 80 for each window
@@ -256,7 +259,7 @@ c
          call uvrepair(nchan,data,flags,nrepair,repair)
          if (dosrc) then
             call uvgetvra(lIn,'source',src)
-            write(*,*) "source: ",src
+            if (debug) write(*,*) "source: ",src
             if (src.eq.srcon) then
                on = 1
             else if (src.eq.srcoff) then
