@@ -385,7 +385,7 @@ c
                else
                   on=-1
                endif
-               write(*,*) 'source: ',src,on
+               if (debug) write(*,*) 'source: ',src,on
             else
                call VarCopy(lIn,lOut)
                call uvgetvri(lIn,'on',on,1)
