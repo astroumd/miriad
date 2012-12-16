@@ -3,7 +3,7 @@
 echo "   ---  Mosaicing with CARMA-15   ---   "
 echo "   $0"
 echo "This script assumes that the first 6 antennas are OVRO and the next 9 are hatcreek"
-echo "   mchw. version 16jul10"
+echo "   mchw. version 09dec12"
 
 # History:
 #  15aug02 mchw. edited from ALMA script.
@@ -14,6 +14,7 @@ echo "   mchw. version 16jul10"
 #  16jul10 mchw. Added gif plots.
 #  20oct11 mchw. added baseunit
 #  28jun12 mchw. added mossdi
+#  09dec12 mchw. Use imgen and regrid to make bigger single dish image instead of imframe.
 
 echo " "
 echo " telescop   antdiam   jyperk"
@@ -39,7 +40,7 @@ start:
 # check inputs
   if($#argv<5) then
     echo " Usage:  $0 array declination cell "
-    echo "   e.g.  $0 config1 30 0.04"
+    echo "   e.g.  $0 config1 30 0.04 1 mosmem"
     echo " Inputs :"
     echo "   array"
     echo "          Antenna array used by uvgen task."
@@ -189,19 +190,19 @@ uvcat vis="hatcreek.$dec.$model.$cell.uv*" out=hatcreek.$dec.$model.$cell.uv
 echo "Generate gains file for amplitude and phase noise"
 # Add gain noise to the sampled uv-data. Multiply gains to scale pointing errors.
 rm -r gains.uv
-uvgen ant=$config.ant baseunit=$baseunit radec=23:23:25.803,$dec lat=37.02 harange=-2,2,.5 source=$MIRCAT/point.source systemp=80,290,0.26 jyperk=73 freq=$freq corr=$nchan,1,0,4000 out=gains.uv telescop=carma ellim=$ellim gnoise=$gnoise
+uvgen ant=$config.ant baseunit=$baseunit radec=23:23:25.803,$dec lat=37.02 harange=$harange source=$MIRCAT/point.source systemp=80,290,0.26 jyperk=73 freq=$freq corr=$nchan,1,0,4000 out=gains.uv telescop=carma ellim=$ellim gnoise=$gnoise
 selfcal vis=gains.uv options=amp
 gpcopy vis=gains.uv out=ovro.$dec.$model.$cell.uv
 set anoise = `calc "$gnoise*1.0"`
 set anoise = `calc "$gnoise*0.8"`
 rm -r gains.uv
-uvgen ant=$config.ant baseunit=$baseunit radec=23:23:25.803,$dec lat=37.02 harange=-2,2,.5 source=$MIRCAT/point.source systemp=80,290,0.26 jyperk=73 freq=$freq corr=$nchan,1,0,4000 out=gains.uv telescop=carma ellim=$ellim gnoise=$anoise
+uvgen ant=$config.ant baseunit=$baseunit radec=23:23:25.803,$dec lat=37.02 harange=$harange source=$MIRCAT/point.source systemp=80,290,0.26 jyperk=73 freq=$freq corr=$nchan,1,0,4000 out=gains.uv telescop=carma ellim=$ellim gnoise=$anoise
 selfcal vis=gains.uv options=amp
 gpcopy vis=gains.uv out=carma.$dec.$model.$cell.uv
 set anoise = `calc "$gnoise*1.0"`
 set anoise = `calc "$gnoise*0.6"`
 rm -r gains.uv
-uvgen ant=$config.ant baseunit=$baseunit radec=23:23:25.803,$dec lat=37.02 harange=-2,2,.5 source=$MIRCAT/point.source systemp=80,290,0.26 jyperk=73 freq=$freq corr=$nchan,1,0,4000 out=gains.uv telescop=carma ellim=$ellim gnoise=$anoise
+uvgen ant=$config.ant baseunit=$baseunit radec=23:23:25.803,$dec lat=37.02 harange=$harange source=$MIRCAT/point.source systemp=80,290,0.26 jyperk=73 freq=$freq corr=$nchan,1,0,4000 out=gains.uv telescop=carma ellim=$ellim gnoise=$anoise
 selfcal vis=gains.uv options=amp
 gpcopy vis=gains.uv out=hatcreek.$dec.$model.$cell.uv
 
@@ -219,7 +220,15 @@ set pbfwhm = `pbplot telescop=ovro freq=$freq | grep FWHM | awk '{print 60*$3}'`
 echo "Single dish FWHM = $pbfwhm arcsec at $freq GHz" >> timing
 
 rm -r single.$dec.$model.$cell.bigger
-imframe in=single.$dec.$model.$cell frame=-1024,1024,-1024,1024 out=single.$dec.$model.$cell.bigger
+#
+# imframe is currently broken in the current, DEC 2012, Miriad install.
+# imframe in=single.$dec.$model.$cell frame=-1024,1024,-1024,1024 out=single.$dec.$model.$cell.bigger
+#
+# so generate a bigger image using IMGEN and REGRID
+rm -r imgen.map
+imgen radec=23:23:25.803,$dec cell=$cell imsize=2048 object=level spar=0 out=imgen.map
+puthd in=imgen.map/epoch value=2000
+regrid in=single.$dec.$model.$cell out=single.$dec.$model.$cell.bigger tin=imgen.map axes=1,2
 rm -r single.$dec.$model.$cell.bigger.map
 convol map=single.$dec.$model.$cell.bigger fwhm=$pbfwhm,$pbfwhm out=single.$dec.$model.$cell.bigger.map
 rm -r single.$dec.$model.$cell.map
@@ -230,6 +239,7 @@ implot in=single.$dec.$model.$cell.map units=s device=/xs conflag=l conargs=2
 
 # set rms for single dish data
 puthd in=single.$dec.$model.$cell.map/rms value=$sd_rms
+cgdisp in=$config.$dec.$model.$cell.mp,single.$dec.$model.$cell.map region=$region device=/xs labtyp=arcsec
 
 mosmem:
 echo " MOSMEM Interferometer only" >> timing
