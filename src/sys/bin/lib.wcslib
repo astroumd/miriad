@@ -36,6 +36,11 @@ endif
 #  (touching configure prevents it accidental remake if timestamps bad)
 cd $srcdir
 touch configure
+#  @todo
+#  it seems distclean doesn't clean things in e.g. wcslib/pgsbox
+#  it leaves some .a files in there, and if you then switch
+#  architectures (e.g. 32bit to 64bit), there will be errors.
+#  see also hack below
 make distclean
 ./configure --bindir=$bindir --libdir=$libdir --includedir=$incdir \
        --with-pgplotlib=$libdir --with-pgplotinc=$libdir  \
