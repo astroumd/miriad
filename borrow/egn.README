@@ -1,0 +1,17 @@
+if you don't see a directory 'egn' here, it probably means you did not
+get this added package for miriad. If you used CVS, you can plant
+the egn tree here (in CVS terms: egn is a separate module under CVS)
+
+If MIRIAD has been installed, the following commands should install EGN:
+
+	cd $MIR/borrow 		You need to have miriad loaded
+	cvs -Q checkout egn	plant the egn tree
+	cd egn
+	./configure
+
+
+If you need it right away, use
+
+        source $MIR/borrow/egn/egn_start.csh
+
+otherwise the next time you load MIRIAD, it will be loaded automatically.
