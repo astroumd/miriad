@@ -20,8 +20,8 @@ else
   set wcslib=""
 endif
 setenv Fcompile  "g77"
-setenv Foptions  "-O -fno-globals -fpic"
-setenv FoptionsN "-fno-globals -fpic"
+setenv Foptions  "-O -fno-globals -fpic -fno-second-underscore"
+setenv FoptionsN "-fno-globals -fpic -fno-second-underscore"
 setenv Flinkdir  "-L`echo $mmir/lib/$mhost $MIRXLIB | sed 's/ / -L/g'`"
 setenv Flinklib  "$lfs -lmir -llinpack -lpgplot $wcslib -lX11 -lm"
 setenv Finclude  "-I`echo $mmir/src/inc $MIRXINC | sed 's/ / -I/g'`"
