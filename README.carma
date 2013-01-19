@@ -1,0 +1,20 @@
+Miriad is a radio-astronomy data reduction package, developed by Bob
+Sault for BIMA, starting in 1987. Although it was originally developed
+to meet the needs of  the BIMA consortium; an ATNF version - derived
+from the same code base - is also available independantly. Apart from
+BIMA and ATNF, MIRIAD is also known to handle e.g. VLA and WSRT data.
+
+This CARMA release of MIRIAD is under CVS control, and daily snapshots
+are also available.  If you see a file 'VERSION.cvs' in the root directory,
+this is not an officially blessed MIRIAD release, but the "CVS"
+snapshot. The VERSION file contains the official release number (4.0.0
+or higher in CVS for CARMA, 3.x for older BIMA related releases)
+
+Typically every June we release a new blessed version of MIRIAD for
+the CARMA summer school, but despite that, there are important updates
+you should use the "cd $MIR; cvs update" method for, mostly because
+the fluxes and baseline files have been updated.
+
+					Peter Teuben
+					teuben@astro.umd.edu
+					January 2013
