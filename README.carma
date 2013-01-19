@@ -3,14 +3,17 @@ Sault for BIMA, starting in 1987. Although it was originally developed
 to meet the needs of  the BIMA consortium; an ATNF version - derived
 from the same code base - is also available independantly. Apart from
 BIMA and ATNF, MIRIAD is also known to handle e.g. VLA and WSRT data.
+With the move and incoorporation of (nine) BIMA antennas into the CARMA
+array, the BIMA version of miriad was retired, and the current version
+is called the CARMA version of MIRIAD.
 
 This CARMA release of MIRIAD is under CVS control, and daily snapshots
-are also available.  If you see a file 'VERSION.cvs' in the root directory,
-this is not an officially blessed MIRIAD release, but the "CVS"
+are available.  If you see a file 'VERSION.cvs' in the root directory,
+this is not an officially blessed MIRIAD release, but a "CVS"
 snapshot. The VERSION file contains the official release number (4.0.0
-or higher in CVS for CARMA, 3.x for older BIMA related releases)
+or higher in CVS for CARMA, 3.x for older BIMA related releases).
 
-Typically every June we release a new blessed version of MIRIAD for
+Starting in 2007 every June we release a new blessed version of MIRIAD for
 the CARMA summer school, but despite that, there are important updates
 you should use the "cd $MIR; cvs update" method for, mostly because
 the fluxes and baseline files have been updated.
