@@ -43,6 +43,8 @@ c       See also MIRSUBS/tabflux.for for implementation details.
 c@ in
 c	Name of the calibration data file (Default is the file
 c	FluxSource.cat in the directory MIRCAT).
+c       Note: not all calibrators are point sources, see 
+c       ExtendedSource.cat for some data and comments regarding this.
 c@ source
 c	Name of the calibration source to list (default is all sources).
 c	The source name is minimum match format.
