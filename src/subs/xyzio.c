@@ -1384,6 +1384,7 @@ static long bufferallocation( long n )
 #else
     long maxbuf = n;
 #endif
+    if (n > MAXBUF) bugv_c( 'i',"xyzsetup: Trying to allocate %ld pixels but MAXBUF=%d", n,MAXBUF);
     if(itest)printf("Trying to allocate %ld (maxbuf=%ld MAXBUF=%d)\n",n,maxbuf,MAXBUF);
 
     if( buffer != NULL ) { free( buffer ); buffer = NULL; }
