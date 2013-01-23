@@ -48,6 +48,7 @@
      mhw  09-mar-12  Replace a lot of int's with long's to cope with
                      large cubes (>8GB)
      pjt  28-jun-12  Fixed get_buflen() , fix (?) usage of MAXBUF
+     pjt  22-jan-13  bufferallocation() : another forgotten 64bit allocation 
 
 *******************************************************************************/
 
@@ -69,11 +70,12 @@
 /* There is only one buffer array, of a length determined at run-time by
    get_buflen.
    buffersize is size of the virtual buffer for a particular image,
-   which varies with the number of images handled */
-static long  buffersize;
-static int     allocatebuffer, currentallocation=0, neverfree=FALSE;
-static float  *buffer = NULL;
-static int    *mbuffr = NULL;
+   which varies with the number of images handled (ntno) */
+static long   buffersize;
+static int    allocatebuffer, neverfree=FALSE;
+static long   currentallocation=0;
+static float  *buffer = NULL;   /* data */
+static int    *mbuffr = NULL;   /* mask */
 
 
 /* Most of the code for reading and writing is exactly the same. Where a
@@ -145,10 +147,10 @@ static int     axnumr[ARRSIZ],    inv_axnumr[ARRSIZ],   reverses[ARRSIZ];
    Most if(.test) statements have been left active. Some, the ones in inner
    loops, are disabled. They can be found by searching for '/ * $ $' (without spaces) */
 
-static int     itest = 1; /* Information on buffers and datasets */
-static int     otest = 1; /* Information on subcubes */
-static int     rtest = 1; /* Information on each array element */
-static int     vtest = 1; /* Puts numbers in buffer without reading a dataset */
+static int     itest = 0; /* Information on buffers and datasets */
+static int     otest = 0; /* Information on subcubes */
+static int     rtest = 0; /* Information on each array element */
+static int     vtest = 0; /* Puts numbers in buffer without reading a dataset */
 static int     tcoo[ARRSIZ];
 static int     nfound, i;
 static char   *words[4] = { "get", "put", "filled", "emptied" };
@@ -163,7 +165,7 @@ static void do_copy(float *bufptr, float *bufend, int DIR, float *data, int *mas
 static void manage_buffer(int tno, long virpix_off);
 static void manage_the_buffer(int tno, long virpix_off);
 static void get_buflen(void);
-static int bufferallocation(long n);
+static long bufferallocation(long n);
 static void copy_to_one_d(int tno);
 static void set_bufs_limits(int tno, long virpix_off);
 static long get_last(long start, long finis);
@@ -330,7 +332,7 @@ This returns dimension information.
 
    Input:
       tno	The image file handle.
-      dim       Dimension information.
+      dim       Dimension information.                                        */
 /*--*/
 
 int xyzpix_c(int tno,int dims)
@@ -594,9 +596,8 @@ sure it is never deallocated.                                                 */
 
 void xyzmkbuf_c()
 {
-   int i;
-   i = bufferallocation( MAXBUF );
-   neverfree = TRUE;
+  (void) bufferallocation( MAXBUF );
+  neverfree = TRUE;
 }
 /******************************************************************************/
 /** xyzs2c - Get the fixed coordinates for a given subcube                    */
@@ -1342,19 +1343,19 @@ static void get_buflen(void)
     int  tno;
     long try, maxsize, size, cnt;
     int *mbufpt;
-    if(itest)printf("# bytes per real %ld\n",sizeof(float));
+    if(itest)printf("# bytes per real: %ld\n",sizeof(float));
 
     maxsize = 0;
     for( tno=0; tno<MAXOPEN; tno++ ) {
       if( imgs[tno].itno != 0 ) {
 	 size    = bufs[tno].cubesize[bufs[tno].naxis];
 	 maxsize = ( (maxsize<size) ? size : maxsize );
-	 bugv_c( 'i', "xyzsetup: tno=%d         naxis=%d size=%d maxsize=%d",
+	 if(itest)bugv_c( 'i', "xyzsetup: tno=%d         naxis=%d size=%d maxsize=%d",
 		                 tno, bufs[tno].naxis,   size,   maxsize);
       }
     }
     try = (ntno+1) * maxsize;
-    bugv_c( 'i', "xyzsetup: try=%ld ntno=%d maxsize=%ld",try,ntno,maxsize);
+    if(itest)bugv_c( 'i', "xyzsetup: try=%ld ntno=%d maxsize=%ld",try,ntno,maxsize);
     if( (buffer==NULL) || (try>currentallocation) ) try = bufferallocation(try);
     allocatebuffer = FALSE;
 
@@ -1375,16 +1376,18 @@ static void get_buflen(void)
     while( cnt++ < try ) *mbufpt++ = FORT_TRUE;
 }
 
-static int bufferallocation( long n )
+static long bufferallocation( long n )
 {
     long n0 = n;
-    long maxbuf = 4000;
-    if(itest)printf("Trying to allocate %ld \n",n);
+#if 0
+    long maxbuf = MAXBUF;
+#else
+    long maxbuf = n;
+#endif
+    if(itest)printf("Trying to allocate %ld (maxbuf=%ld MAXBUF=%d)\n",n,maxbuf,MAXBUF);
 
     if( buffer != NULL ) { free( buffer ); buffer = NULL; }
     if( mbuffr != NULL ) { free( mbuffr ); mbuffr = NULL; }
-
-    /* MAXBUF or maxbuf ? */
 
     n  = ( (n < maxbuf) ? n : maxbuf );
     n *= 2;
@@ -1402,7 +1405,7 @@ static int bufferallocation( long n )
     if(itest)printf("Allocated %ld ints  @ %p\n",n,(Void *)mbuffr);
 
     currentallocation = n;
-    return( n );
+    return n;
 }
 /******************************************************************************/
 static void copy_to_one_d( int tno )
