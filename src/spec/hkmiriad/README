@@ -1,26 +1,34 @@
 These are Jin Koda's miriad routines.
 
-See also http://www.astro.caltech.edu/~koda/hkmiriad/
+Formerly at http://www.astro.caltech.edu/~koda/hkmiriad/
+but now at Stony Brook
 
-They need the small ZENO library, which takes care of the
+Installation is normally done via $MIR/install/install.miriad
+by setting zeno=1 (the default). Some background:
+
+1) They need the small ZENO library, which takes care of the
 user interface. You can find this in $MIR/borrow/zeno, and
 you should be able to issue:
 	make install_miriad
-to get it installed (it need libZeno.a in $MIRLIB)
+to get it installed (it needs libZeno.a in $MIRLIB, which
+will contain clib, getparam and mathfns.
 
-The installation of the tools here is still a little shaky.
+2) The installation of the tools here is still a little shaky.
 Use the supplies Makefile.hk, copy it to Makefile and try
 and work with it. It is possible you need to modify the
 various LIBS and flags at the top a bit.
 
-Most notably, it will only work with the old build system.
+At some point we will supply a configure script to solve
+the Makefile portability issues.
 
+Most notably, it will only work with the old build system.
+There is no support for the full fledges automake/autoconf
+based system (aka new-style install).
 
 
 
 Portability issues:
 -------------------
-
 
 * some of the code are translations of corresponding fortran routines,
   this is not marked where they are from, and therefore fixes/updates
