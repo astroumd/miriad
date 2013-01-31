@@ -28,7 +28,7 @@ LIBX11    =  -L/usr/X11R6/lib -lX11
 # For Mac there is sometims a crt2.o reference, you may have
 # to remove that manually.
 # Missing saveFP/restFP symbols might need  -lcc_dynamic and/or -lSystemStubs
-FLIBS = -L/usr/lib/gcc/i386-redhat-linux/3.4.6 -L/usr/lib/gcc/i386-redhat-linux/3.4.6/../../.. -lfrtbegin -lg2c -lm -lgcc_s
+# FLIBS = -L/usr/lib/gcc/i386-redhat-linux/3.4.6 -L/usr/lib/gcc/i386-redhat-linux/3.4.6/../../.. -lfrtbegin -lg2c -lm -lgcc_s
 
 
 # warning: you might wind up stealing (c)pgpplot from another package
