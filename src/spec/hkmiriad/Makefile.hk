@@ -38,13 +38,6 @@ LIBX11    =  -L/usr/X11R6/lib -lX11
 PGLIBS_GEN      = -L$(MIRLIB) -lcpgplot -lpgplot $(FLIBS)
 PGLIBS_G77      = -L$(MIRLIB) -lcpgplot -lpgplot -lg2c     
 PGLIBS_GFORTRAN = -L$(MIRLIB) -lcpgplot -lpgplot -lgfortran
-PGLIBS_F2C      = -L$(MIRLIB) -lcpgplot -lpgplot -lf2c     
-
-# pick one from the above, but also need LIBX11
-PGLIBS = $(PGLIBS_GEN) $(LIBX11)
-
-SRC1 = hkimgen.c hkuvplt.c hkuvlist.c hkdoflg.c
-SRC2 = hkconvol.for hkdemos.for hkuvrandom.for 
 
 BINS = $(SRC1:.c=) $(SRC2:.for=)
 DOCS = $(SRC1:.c=.doc) $(SRC2:.for=.doc)
@@ -76,6 +69,10 @@ hkconvol: hkconvol.for
 hkdemos: hkdemos.for
 	$(MIRBIN)/debug hkdemos
 	doc -p hkdemos.for
+
+hkuvmodel: hkuvmodel.for
+	$(MIRBIN)/debug hkuvmodel
+	doc -p hkuvmodel.for
 
 hkuvrandom: hkuvrandom.for
 	$(MIRBIN)/debug hkuvrandom
