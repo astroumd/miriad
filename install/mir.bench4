@@ -1,47 +1,49 @@
-#! /bin/csh -f
+#! /bin/csh -fvx
 #
 #  MIR.BENCH4:  based on Shaye's Dec7, 2012 version of master_B1all.csh, 
 #               using channels 125-139 for N2H+ from the CLASSy project.
-#  prepared from big data:
+#
+#  prepared from big data as follows:
+#
 #    imsub in=N2H+.mean.cube     out=SD.cube 'region=im(125,139)'
 #    uvaver vis=oct16_narrow.mir out=UV.mir  'select=win(2)' line=chan,15,125,1,1
-
+#
+#  this last step takes some time. The input visdata is 15.6GB, output 1.1GB
+#
+#  Dante: 41.546u 2.992s 0:51.60 86.2%
+#
+#  The big CPU hogs in this script are (for those 15 channels)
+#  invert   208"
+#  mossen    94
+#  mossdi  3736
+#  mosmem 18000
+#  restor2  800 (2nd and 3rd)
 ########## START OF USER INPUT ###################################################
 
- # VIS should be the final calibrated uvdata
-set VIS           = UV.mir
- # Name of SD cube
-set SDMAP         = SD.cube
- # Create working directory for this run
-set COMB          = SD+UV
- # Name new directory extension name. All the files will live in $COMB.$EXT
-set EXT           = bench4
- # How many channels to run?
-set numchan       = 15
- # Starting velocity of first channel
-set startvel      = -0.568638
- # Channel velocity width
-set velwidth      = 0.1571
- # Channel velocity step
-set velstep       = -0.1571
+ # VIS should be the final calibrated uvdata 
+set VISIN         = UV.mir
+ # Name of SD cube, should be on the same velocity grid as UV data
+set SDIN          = SD.cube
+ # Name new directory extension name. All the files will live in $OUTDIR
+set OUTDIR        = SD+UV.bench4g
+
+ # How many channels to run and starting where  (no channel averaging allowed)
+set numchan       = 1
+set startchan     = 8
  # Invert robust
 set robust        = -0.5
  # Clean region sensitivty cut from mossen map
 set mossencut     = 0.26
  # SD interpolated resolution
-set SDRES         = 92
+set sdres         = 92
  # SD rms in Jy/bm
-set SDRMS         = 1.2
+set sdrms         = 1.2
  # Mossdi rms cutoff
 set cutoff        = 0.14
  # Mossdi gain
 set gain          = 0.2
  # Mossdi niters
 set iterations    = 5000
- # Channel range of SD cube you are working with
-set sdsubimage    = 1,15
- # Channel range of uv data you are working with
-set intsubimage   = 1,15
  # mosmem rmsfac
 set mosmem1rmsfac = 1.0,1.0
  # mosmem q
@@ -55,72 +57,65 @@ set mosmem1q      = 40,6300
 
 #INVERT
  # choose imsize based on 1/2 pwr of 3.5-m dishes
-set size = 228
- # since our beam is ~5'', cell size of 1'' is good
+set size     = 228
+ # since our beam is ~5", cell size of 1" is good
 set cellsize = 1
 
 #MOSSEN
-set mapmask = map.masked
-set sen = senmap
 
 #SD PREP
  # scale single-dish map by 65 Jy/K
-set JYPERK = 65.0
- # name the regridded, scaled single-dish map
-set SDOUT = sdmap.jy
-set sdmap = $SDOUT
+set jyperk   = 65.0
 
 #MOSMEM
 set mosmem1niters = 45 
 set mosmem1output = mosmem1.output
-set memsoln1 = mem1
 
 #MOSPSF
-set mospsfout = mospsfout
 
 #RESTOR
-set firstconv = mem1conv
-set firstresid = mem1resid
-set firstres = mem1res
+
 
 ########## END OF INPUT THAT WON'T CHANGE MUCH  #################################
+########## but allow key=val overrides via command line #########################
 
-
-
-
-
+foreach args ($*)
+  set $args
+end
 
 
 ###############################################################################
-# STEP 1: FILE PREP AND CREATE WORKING DIRECTORY FOR YOUR MOLECULE OF CHOICE
+# STEP 1: FILE PREP AND CREATE WORKING DIRECTORY FOR YOUR DATASET OF CHOICE
 ###############################################################################
 
-mkdir $COMB.$EXT
+mkdir -p $OUTDIR
+cd       $OUTDIR
+ln -sf   ../$VISIN VISIN
+ln -sf   ../$SDIN  SDIN
 
 #################################################################################################################################
-# STEP 2: CREATE DIRTY MAP AND DIRTY BEAM FOR 150 CHANNELS OF FULL-RESOLUTION UVDATA
+# STEP 2: CREATE DIRTY MAP AND DIRTY BEAM FOR numchan CHANNELS OF FULL-RESOLUTION UVDATA
 # Files needed: 
-# (1) calibrated narrowband uvdata (oct16_narrow.mir in this case -- make sure it is the same file you used in twoscaleprep.csh!)
+# (1) calibrated narrowband uvdata (oct16_narrow.mir in this case -- 
+#     make sure it is the same file you used in twoscaleprep.csh!)
 # MAKE SURE TO DE-SELECT 10M-3.5M BASELINES!
 # MAKE SURE TO CHECK THE STARTING VELOCITY OF THE SINGLE-DISH CUBE
 #################################################################################################################################
 #
-/bin/rm -rf $COMB.$EXT/map $COMB.$EXT/beam
-time invert vis=$VIS line=vel,$numchan,$startvel,$velwidth,$velstep \
-   map=$COMB.$EXT/map beam=$COMB.$EXT/beam \
-   imsize=$size,$size cell=$cellsize,$cellsize \
-   robust=$robust options=systemp,double,mosaic \
-   select='-ant(1,2,3,4,5,6)(16,17,18,19,20,21,22,23)'
+/bin/rm -rf map beam
+time invert vis=VISIN line=chan,$numchan,$startchan,1,1 \
+            map=map beam=beam \
+            imsize=$size,$size cell=$cellsize,$cellsize \
+            robust=$robust options=systemp,double,mosaic \
+            select='-ant(1,2,3,4,5,6)(16,17,18,19,20,21,22,23)'
 
 ##############################################
 # STEP 2B (MOSSEN): DETERMINE AREA TO CLEAN ##
 ##############################################
 
-/bin/rm -rf $COMB.$EXT/$sen $COMB.$EXT/$mapmask
-time mossen in=$COMB.$EXT/map sen=$COMB.$EXT/$sen
-cd $COMB.$EXT
-maths exp=map mask=$sen.lt.$mossencut out=$mapmask
-cd ..
+/bin/rm -rf sen map1
+time mossen in=map sen=sen
+     maths exp=map mask=sen.lt.$mossencut out=map1
 
 ###################################################################################
 # STEP 3: PREPARE SINGLE-DISH CUBE FOR MOSMEM
@@ -131,108 +126,85 @@ cd ..
 ###################################################################################
 
 # Regrid full single-dish cube to interferometer cells and map size
-/bin/rm -rf $COMB.$EXT/tmp1
-time regrid in=$SDMAP out=$COMB.$EXT/tmp1 tin=$COMB.$EXT/$mapmask \
-       options=noscale axes=1,2
+/bin/rm -rf tmp1
+time regrid in=SDIN out=tmp1 tin=map1 options=noscale # axes=1,2,3
 
 # Scale the map to Jy
-/bin/rm -rf $COMB.$EXT/$SDOUT
-cd $COMB.$EXT
-maths exp='(tmp1)*'$JYPERK'' out=$SDOUT
-cd ..
+/bin/rm -rf sdmap
+maths exp='tmp1*'$jyperk out=sdmap
+#/bin/rm -rf tmp1
 
 # Puthd beam and RMS info
-puthd in=$COMB.$EXT/$SDOUT/rms value=$SDRMS type=d
-puthd in=$COMB.$EXT/$SDOUT/bmaj value=$SDRES,arcsec type=d
-puthd in=$COMB.$EXT/$SDOUT/bmin value=$SDRES,arcsec type=d
-puthd in=$COMB.$EXT/$SDOUT/bpa value=0 type=d
-minmax in=$COMB.$EXT/$SDOUT
+puthd  in=sdmap/rms  value=$sdrms        type=d
+puthd  in=sdmap/bmaj value=$sdres,arcsec type=d
+puthd  in=sdmap/bmin value=$sdres,arcsec type=d
+puthd  in=sdmap/bpa  value=0             type=d
+minmax in=sdmap
 
 # Generate single-dish beam and truncate at 10% level
-/bin/rm -rf $COMB.$EXT/tmp.bm $COMB.$EXT/tmp.bm2 $COMB.$EXT/$SDOUT.bm
-imsub in=$COMB.$EXT/$mapmask out=$COMB.$EXT/tmp.bm region="image(1)"
-imgen in=$COMB.$EXT/tmp.bm out=$COMB.$EXT/tmp.bm2 factor=0 \
-      object=gaussian spar=1,0,0,$SDRES,$SDRES,0
-cd $COMB.$EXT/
-maths exp='<'tmp.bm2'>' mask='<'tmp.bm2'>'.ge.0.10 out=$SDOUT.bm
-cd ..
-minmax in=$COMB.$EXT/$SDOUT.bm
-/bin/rm -rf $COMB.$EXT/tmp.bm $COMB.$EXT/tmp.bm2 
-puthd in=$COMB.$EXT/$SDOUT.bm/bmaj value=$SDRES,arcsec type=d
-puthd in=$COMB.$EXT/$SDOUT.bm/bmin value=$SDRES,arcsec type=d
-puthd in=$COMB.$EXT/$SDOUT.bm/bpa value=0 type=d
-puthd in=$COMB.$EXT/$SDOUT.bm/btype value='BEAM' 
-minmax in=$COMB.$EXT/$SDOUT.bm
+/bin/rm -rf tmp2 tmp3 sdbeam
+imsub in=map1 out=tmp2 region="image(1)"
+imgen in=tmp2 out=tmp3 factor=0 object=gaussian spar=1,0,0,$sdres,$sdres,0
+maths exp=tmp3 mask=tmp3.ge.0.10 out=sdbeam
+minmax in=sdbeam
+#/bin/rm -rf tmp2 tmp3
+
+puthd  in=sdbeam/bmaj  value=$sdres,arcsec type=d
+puthd  in=sdbeam/bmin  value=$sdres,arcsec type=d
+puthd  in=sdbeam/bpa   value=0             type=d
+puthd  in=sdbeam/btype value='BEAM' 
+minmax in=sdbeam
 
 ###################################################################################
 # STEP 4: GET CLEAN COMPONENTS FROM DIRTY MAP DEEP CLEAN TO BE USED AS MOSMEM MODEL
 ###################################################################################
 
-/bin/rm -rf $COMB.$EXT/cln.sdi
-time mossdi map=$COMB.$EXT/$mapmask beam=$COMB.$EXT/beam out=$COMB.$EXT/cln.sdi \
-       gain=$gain cutoff=$cutoff niters=$iterations options=positive
+/bin/rm -rf clean
+time mossdi map=map1 beam=beam out=clean \
+            gain=$gain cutoff=$cutoff niters=$iterations options=positive
 
 ###################################################################################
-# STEP 5: PREPARE sd map, sd beam, int map, clean comp map for mosmem
-###################################################################################
-
-# sd map prep
-/bin/rm -rf $COMB.$EXT/sd.map
-imsub in=$COMB.$EXT/$sdmap out=$COMB.$EXT/sd.map region='image('$sdsubimage')'
-puthd in=$COMB.$EXT/sd.map/crval3 value=$startvel
-puthd in=$COMB.$EXT/sd.map/crpix3 value=1
-puthd in=$COMB.$EXT/sd.map/rms value=$SDRMS
-
-# uv map prep
-/bin/rm -rf $COMB.$EXT/int.map
-imsub in=$COMB.$EXT/$mapmask out=$COMB.$EXT/int.map region='image('$intsubimage')'
-puthd in=$COMB.$EXT/int.map/crval3 value=$startvel
-puthd in=$COMB.$EXT/int.map/crpix3 value=1
-
-# clean component map prep
-/bin/rm -rf $COMB.$EXT/sdi.cln
-imsub in=$COMB.$EXT/cln.sdi out=$COMB.$EXT/sdi.cln region='image('$intsubimage')'
-puthd in=$COMB.$EXT/sdi.cln/crval3 value=$startvel
-puthd in=$COMB.$EXT/sdi.cln/crpix3 value=1
-
-###################################################################################
-# STEP 6: MOSMEM
+# STEP 5: MOSMEM
 ###################################################################################
 
 #joint deconvolution
-/bin/rm -rf $COMB.$EXT/$memsoln1
-time mosmem map=$COMB.$EXT/int.map,$COMB.$EXT/sd.map \
-       beam=$COMB.$EXT/beam,$COMB.$EXT/sdmap.jy.bm \
-       out=$COMB.$EXT/$memsoln1 \
-       niters=$mosmem1niters rmsfac=$mosmem1rmsfac q=$mosmem1q \
-       > $COMB.$EXT/$mosmem1output
-minmax in=$COMB.$EXT/$memsoln1
+/bin/rm -rf memsol
+time mosmem map=map1,sdmap beam=beam,sdbeam out=memsol \
+            niters=$mosmem1niters rmsfac=$mosmem1rmsfac q=$mosmem1q \
+            > mosmem.log
+     minmax in=memsol
 
 ###################################################################################
-# STEP 7: MOSPSF
+# STEP 6: MOSPSF
 ###################################################################################
 
-/bin/rm -rf $COMB.$EXT/$mospsfout
-mospsf beam=$COMB.$EXT/beam out=$COMB.$EXT/$mospsfout
-imfit in=$COMB.$EXT/$mospsfout object=beam 'region=rel,box(-32,-32,31,31)' \
-      > $COMB.$EXT/psf.log
-cd $COMB.$EXT
+/bin/rm -rf psf
+mospsf beam=beam out=psf
+imfit in=psf object=beam 'region=rel,box(-32,-32,31,31)' > psf.log
 set bmaj=`grep "Major axis" psf.log | awk '{print $4}'`
 set bmin=`grep "Minor axis" psf.log | awk '{print $4}'`
 set bpa=`grep "Position angle" psf.log | awk '{print $4}'`
-cd ..
 echo $bmaj $bmin $bpa
 
 ###################################################################################
 # STEP 7: RESTOR
 ###################################################################################
 
-/bin/rm -rf $COMB.$EXT/$firstconv $COMB.$EXT/$firstresid $COMB.$EXT/$firstres
-time restor map=$COMB.$EXT/int.map beam=$COMB.$EXT/beam mode=convolve \
-       fwhm=$bmaj,$bmin pa=$bpa model=$COMB.$EXT/$memsoln1 out=$COMB.$EXT/$firstconv
-time restor map=$COMB.$EXT/int.map beam=$COMB.$EXT/beam mode=residual \
-       fwhm=$bmaj,$bmin pa=$bpa model=$COMB.$EXT/$memsoln1 out=$COMB.$EXT/$firstresid
-time restor map=$COMB.$EXT/int.map beam=$COMB.$EXT/beam \
-       fwhm=$bmaj,$bmin pa=$bpa model=$COMB.$EXT/$memsoln1 out=$COMB.$EXT/$firstres
+/bin/rm -rf conv resid cmap
+time restor map=map1 beam=beam mode=convolve \
+            fwhm=$bmaj,$bmin pa=$bpa model=memsol out=conv
+time restor map=map1 beam=beam mode=residual \
+            fwhm=$bmaj,$bmin pa=$bpa model=memsol out=resid
+time restor map=map1 beam=beam mode=clean \
+            fwhm=$bmaj,$bmin pa=$bpa model=memsol out=cmap
 
 # DONE!
+
+if (0) then
+  echo map, beam
+  echo map1
+  echo sdmap, sdbeam
+  echo clean
+  echo psf
+  echo memsol
+endif
