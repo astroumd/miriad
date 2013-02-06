@@ -16,7 +16,7 @@
 #
 #  uvaver    42"
 #
-#  The big CPU hogs in this script are (for those 15 channels)
+#  The big CPU hogs in this script are (for those 15 channels, numchan=15 startchan=1)
 #
 #  invert   208"
 #  mossen    94
@@ -32,7 +32,7 @@ set VISIN         = UV.mir
  # Name of SD cube, should be on the same velocity grid as UV data
 set SDIN          = SD.cube
  # Name new directory extension name. All the files will live in $OUTDIR
-set OUTDIR        = SD+UV.bench4
+set OUTDIR        = bench$$
 
  # How many channels to run and starting where  (no channel averaging allowed)
 set numchan       = 1
@@ -97,6 +97,15 @@ end
 # STEP 1: FILE PREP AND CREATE WORKING DIRECTORY FOR YOUR DATASET OF CHOICE
 ###############################################################################
 
+if (! -e $MIR/data/$VISIN && ! -e $VISIN) then
+  echo "Error: VISIN=$VISIN does not exist"
+  exit 1
+endif
+if (! -e $MIR/data/$SDIN && ! -e $SDIN) then
+  echo "Error: SDIN=$SDIN does not exist"
+  exit 1
+endif
+
 mkdir -p $OUTDIR
 cd       $OUTDIR
 if ( -e  $MIR/data/$VISIN ) then
@@ -108,6 +117,17 @@ if ( -e  $MIR/data/$SDIN ) then
   ln -sf $MIR/data/$SDIN SDIN
 else
   ln -sf        ../$SDIN SDIN
+endif
+
+echo "Checking input data integrity: "
+(cd VISIN; df . | tail -1 | awk '{print $1}' ) >& df_data.log
+           df . | tail -1 | awk '{print $1}'   >& df_work.log
+diff -s df_data.log df_work.log
+if ($status) then
+  echo "Warning:  your data and work directory are on the disk, this may affect performance"
+  echo "          of the INVERT and REGRID step"
+else
+  echo "[OK]"
 endif
 
 #################################################################################################################################
