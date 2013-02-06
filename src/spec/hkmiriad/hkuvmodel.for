@@ -2,11 +2,11 @@ c************************************************************************
 	program uvmodel
 	implicit none
 
-c= uvmodel - Add, subtract, etc, a model from a uv data set.
+c= hkuvmodel - Add, subtract, etc, a model from a uv data set.
 c& mchw
 c: uv analysis
 c+
-c	UVMODEL is a MIRIAD task which modifies a visibility dataset by a model.
+c	HKUVMODEL is a MIRIAD task which modifies a visibility dataset by a model.
 c	Allowed operations are adding, subtracting, multiplying, dividing,
 c	replacing, and polarization calibration or simulation.
 c	The model is specified in the image domain, so that its
