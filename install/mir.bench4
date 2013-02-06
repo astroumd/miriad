@@ -1,26 +1,33 @@
 #! /bin/csh -fvx
 #
 #  MIR.BENCH4:  based on Shaye's Dec7, 2012 version of master_B1all.csh, 
-#               using channels 125-139 for N2H+ from the CLASSy project.
+#               using channels 125-139 for N2H+ in B1S from the CLASSy project.
 #
-#  prepared from big data as follows:
+#  Needs mirbench4.tar, ideally untarred in $MIR/data
+#  prepared from original data as follows:
 #
 #    imsub in=N2H+.mean.cube     out=SD.cube 'region=im(125,139)'
 #    uvaver vis=oct16_narrow.mir out=UV.mir  'select=win(2)' line=chan,15,125,1,1
 #
-#  this last step takes some time. The input visdata is 15.6GB, output 1.1GB
+#  this last step takes some time. The input visdata for uvaver is 15.6GB, the
+#  output will be 1.1GB.
+#  mir.bench4 needs a total of 7.1 GB, if all 15 planes are used, but 3.1 GB if
+#  just one plane is processed. Most of this space is occupied by the beam.
 #
-#  Dante: 41.546u 2.992s 0:51.60 86.2%
+#  uvaver    42"
 #
 #  The big CPU hogs in this script are (for those 15 channels)
+#
 #  invert   208"
 #  mossen    94
 #  mossdi  3736
 #  mosmem 18000
 #  restor2  800 (2nd and 3rd)
+#
+#  
 ########## START OF USER INPUT ###################################################
 
- # VIS should be the final calibrated uvdata 
+ # VIS should be the final calibrated uvdata (ideally place them in $MIR/data)
 set VISIN         = UV.mir
  # Name of SD cube, should be on the same velocity grid as UV data
 set SDIN          = SD.cube
@@ -32,7 +39,7 @@ set numchan       = 1
 set startchan     = 8
  # Invert robust
 set robust        = -0.5
- # Clean region sensitivty cut from mossen map
+ # Clean region sensitivity cut from mossen map (sen=0.13 in central regions)
 set mossencut     = 0.26
  # SD interpolated resolution
 set sdres         = 92
@@ -75,6 +82,8 @@ set mosmem1output = mosmem1.output
 
 #RESTOR
 
+set testmask=0
+set testmodel=0
 
 ########## END OF INPUT THAT WON'T CHANGE MUCH  #################################
 ########## but allow key=val overrides via command line #########################
@@ -90,8 +99,16 @@ end
 
 mkdir -p $OUTDIR
 cd       $OUTDIR
-ln -sf   ../$VISIN VISIN
-ln -sf   ../$SDIN  SDIN
+if ( -e  $MIR/data/$VISIN ) then
+  ln -sf $MIR/data/$VISIN VISIN
+else
+  ln -sf        ../$VISIN VISIN
+endif
+if ( -e  $MIR/data/$SDIN ) then
+  ln -sf $MIR/data/$SDIN SDIN
+else
+  ln -sf        ../$SDIN SDIN
+endif
 
 #################################################################################################################################
 # STEP 2: CREATE DIRTY MAP AND DIRTY BEAM FOR numchan CHANNELS OF FULL-RESOLUTION UVDATA
@@ -114,7 +131,7 @@ time invert vis=VISIN line=chan,$numchan,$startchan,1,1 \
 ##############################################
 
 /bin/rm -rf sen map1
-time mossen in=map sen=sen
+time mossen in=map sen=sen gain=gain
      maths exp=map mask=sen.lt.$mossencut out=map1
 
 ###################################################################################
@@ -129,9 +146,10 @@ time mossen in=map sen=sen
 /bin/rm -rf tmp1
 time regrid in=SDIN out=tmp1 tin=map1 options=noscale # axes=1,2,3
 
-# Scale the map to Jy
+# Scale the map to Jy - add the same mask as int.map has
 /bin/rm -rf sdmap
-maths exp='tmp1*'$jyperk out=sdmap
+maths exp='tmp1*'$jyperk out=sdmap 
+if ($testmask) copyhd in=map1 out=sdmap items=mask
 #/bin/rm -rf tmp1
 
 # Puthd beam and RMS info
@@ -169,7 +187,9 @@ time mossdi map=map1 beam=beam out=clean \
 
 #joint deconvolution
 /bin/rm -rf memsol
-time mosmem map=map1,sdmap beam=beam,sdbeam out=memsol \
+set model=()
+if ($testmodel) set model=(model=clean)
+time mosmem map=map1,sdmap beam=beam,sdbeam out=memsol $model \
             niters=$mosmem1niters rmsfac=$mosmem1rmsfac q=$mosmem1q \
             > mosmem.log
      minmax in=memsol
