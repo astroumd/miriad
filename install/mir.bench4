@@ -1,4 +1,4 @@
-#! /bin/csh -fvx
+#! /bin/csh -f
 #
 #  MIR.BENCH4:  based on Shaye's Dec7, 2012 version of master_B1all.csh, 
 #               using channels 125-139 for N2H+ in B1S from the CLASSy project.
@@ -32,7 +32,7 @@ set VISIN         = UV.mir
  # Name of SD cube, should be on the same velocity grid as UV data
 set SDIN          = SD.cube
  # Name new directory extension name. All the files will live in $OUTDIR
-set OUTDIR        = SD+UV.bench4g
+set OUTDIR        = SD+UV.bench4
 
  # How many channels to run and starting where  (no channel averaging allowed)
 set numchan       = 1
