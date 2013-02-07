@@ -3,7 +3,12 @@
 #  MIR.BENCH4:  based on Shaye's Dec7, 2012 version of master_B1all.csh, 
 #               using channels 125-139 for N2H+ in B1S from the CLASSy project.
 #
+#  TODO:   
+#       - normalize names and reporting versions etc.
+#       - 
+#
 #  Needs mirbench4.tar, ideally untarred in $MIR/data
+#  e.g. curl ftp://ftp.astro.umd.edu/pub/carma/mirbench4.tar | tar xf -
 #  prepared from original data as follows:
 #
 #    imsub in=N2H+.mean.cube     out=SD.cube 'region=im(125,139)'
@@ -13,6 +18,7 @@
 #  output will be 1.1GB.
 #  mir.bench4 needs a total of 7.1 GB, if all 15 planes are used, but 3.1 GB if
 #  just one plane is processed. Most of this space is occupied by the beam.
+#  It is also memory intensive, and a minimum of 4GB is recommended.
 #
 #  uvaver    42"
 #
@@ -107,6 +113,7 @@ if (! -e $MIR/data/$SDIN && ! -e $SDIN) then
 endif
 
 mkdir -p $OUTDIR
+cp $0    $OUTDIR
 cd       $OUTDIR
 if ( -e  $MIR/data/$VISIN ) then
   ln -sf $MIR/data/$VISIN VISIN
