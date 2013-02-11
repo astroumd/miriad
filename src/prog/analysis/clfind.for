@@ -54,6 +54,8 @@ c   18-may-98 rjs/pjt  Moved over to a single-source file
 c   13-jul-98 pjt linux/g77 cleanup, and fixed CntLevs counting bug
 c   12-aug-05 pjt  use new clpars.h for common size
 c   13-aug-05 pjt  better error messages
+c   10-feb-2013  pjt  adjusted memory usage for more modern machines
+c                     printing more digits for wider scope problems
 c
 c  Note:
 c   This program comes with a testsuite dataset, which you should run
@@ -69,7 +71,7 @@ c         code won't pass FLINT.
 c
 c --------------------------------------------------------------------
       character version*(*)
-      parameter(version='version 13-aug-05' )
+      parameter(version='version 10-feb-2013' )
       include 'clfind.h'
 
       character*40 filein,filecf
@@ -106,8 +108,8 @@ c      call keyi('naxis',p3,3)
 
       badcl=16796
 
-      if(filein.eq.' ')call bug('f','Input file name missing')
-      if(p2.eq.0.0)call bug('f','No contour interval specified')
+      if(filein.eq.' ')call bug('f','Input file name missing (in=)')
+      if(p2.eq.0.0)call bug('f','No contour interval specified (dt=)')
       if(p3.lt.1 .or. p3.gt.3) call bug('f','Bad naxis')
 
       call output('Data file: '//filein)
@@ -115,10 +117,10 @@ c      call keyi('naxis',p3,3)
       nx = nsize(1)
       ny = nsize(2)
       nz = nsize(3)
-      if(nx.gt.maxdim) call bug('f','Image too big in x')
-      if(ny.gt.maxdim) call bug('f','Image too big in y')
-      if(nz.gt.maxdim) call bug('f','Image too big in v')
-      if(nx*ny*nz.gt.maxbuf) call bug('f','Image too big')
+      if(nx.gt.maxdim) call bug('f','maxdim: Image too big in x')
+      if(ny.gt.maxdim) call bug('f','maxdim: Image too big in y')
+      if(nz.gt.maxdim) call bug('f','maxdim: Image too big in v')
+      if(nx*ny*nz.gt.maxbuf) call bug('f','maxbuf: Image too big')
       call rdhd(lin)
 
 c.....Calculate the beam size in x and y
@@ -135,7 +137,7 @@ c.....Calculate the beam size in x and y
 	      beamy = real(bmin/cdelt(2))
         endif
         print 1000, beamx,beamy
- 1000   format('The beam size is: ',f4.2,' by ',f4.2,' pixels.')
+ 1000   format('The beam size is: ',f6.2,' by ',f6.2,' pixels.')
 c.......But we use beam radius to connect up pixels
         dx=0.5*beamx
         dy=0.5*beamy
@@ -176,7 +178,7 @@ c.....Start reading the input file
       print 1010, p1
       print 1011, p2
       print 1012, p3
- 1010 format(' Starting level:                   ',i4)
+ 1010 format(' Starting level:                   ',i5)
  1011 format(' Temperature increment:            ',f4.2,' K')
  1012 format(' Neighbourhood definition:         ',i1,' axes')
       call output(line1)
@@ -220,7 +222,7 @@ c........Number of clumps at level ngy
      *   call xtendclp(ngy,nclump,data(It),assign(Ia),
      *                  nlevs,npx2,pos(Ipos),reg(Ireg))
       enddo
- 1040 format(' Level ',i2,':',i5,' new clumps')
+ 1040 format(' Level ',i2,':',i7,' new clumps')
 
       call output(' ')
       call output('Extending to level 1')
@@ -286,6 +288,7 @@ c        print 1009, nps, t(nps)
 c        print 1010, ngy
 
          if(ngy.gt.maxlvl) then 
+            write(*,*) 'ngy=',ngy,' maxlvl=',maxlvl
             call bug('f','Too many contour levels')
          endif
 c        only count when in range, above the minimum (p1)
@@ -314,7 +317,7 @@ c           print 1011, ngx
       do ngy=nlevs,1,-1
          print 10, ngy+p1-1,npix(ngy)
       enddo
- 10   format(' Level ',i2,':',i5,' pixels')
+ 10   format(' Level ',i2,':',i7,' pixels')
 
       npx1=npix(1)
       npx2=npix(2)
@@ -635,8 +638,8 @@ c.....Repeat process until there are no new assigned pixels
 
       print 40,goodpix
       print 50,badpix
- 40   format(i5,' pixels added')
- 50   format(i5,' pixels unused')
+ 40   format(i7,' pixels added')
+ 50   format(i7,' pixels unused')
 
       return
       end
@@ -944,7 +947,7 @@ c.....and how they merge together at lower levels)
 
       integer maxmge
       parameter(maxmge=7)
-      integer list(5*maxmge)                  
+      integer list(9*maxmge)                  
 
 
       line='------------------------------------------'
@@ -961,7 +964,7 @@ c.....and how they merge together at lower levels)
             ngy0=int(t(nps)/p2)-p1+1
             if (ngy0.eq.ngy) then
                print 1100, n3,t(nps),clump(n3,4)
- 1100 format(' New clump ',i3,'  Tpeak = ',f4.2,'  Npix =',i4)
+ 1100 format(' New clump ',i4,'  Tpeak = ',f6.2,'  Npix =',i7)
             endif
          enddo
 
@@ -973,10 +976,10 @@ c.....and how they merge together at lower levels)
             do n3=1,nclump
                if (tree(ngy,n2,n3) .and. clump(n3,4).gt.1) then
                   nmerge=nmerge+1
-                  if (nmerge.le.5*maxmge) then
+                  if (nmerge.le.9*maxmge) then
                      list(nmerge)=n3
                   else
-                     list(5*maxmge)=9999
+                     list(9*maxmge)=9999
                   endif
                endif
             enddo
@@ -996,10 +999,23 @@ c.....and how they merge together at lower levels)
                print 1120, (list(i),i=4*maxmge+1,5*maxmge)
             endif
             if (nmerge.gt.5*maxmge) then
+               print 1120, (list(i),i=5*maxmge+1,6*maxmge)
+            endif
+            if (nmerge.gt.6*maxmge) then
+               print 1120, (list(i),i=6*maxmge+1,7*maxmge)
+            endif
+            if (nmerge.gt.7*maxmge) then
+               print 1120, (list(i),i=7*maxmge+1,8*maxmge)
+            endif
+            if (nmerge.gt.8*maxmge) then
+               print 1120, (list(i),i=8*maxmge+1,9*maxmge)
+            endif
+            if (nmerge.gt.9*maxmge) then
+               write(*,*) 'nmerge=',nmerge,' maxmge=',maxmge
                call bug('w',' output buffer Merged Clumps exhausted')
             endif
- 1110    format(' Merged clumps:',7(i3,1x))
- 1120    format('               ',7(i3,1x))
+ 1110    format(' Merged clumps:',7(i4,1x))
+ 1120    format('               ',7(i4,1x))
          enddo
 
       enddo
