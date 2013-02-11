@@ -17,6 +17,7 @@ set kc=karma-1.7.25-common.tar.bz2
 # linux
 set k64=karma-1.7.25-amd64_Linux_libc6.3.tar.bz2
 # mac
+set kc1=karma-1.7.20-common.tar.bz2
 set k11=karma-1.7.20-x86_64_Darwin-11.2.tar.bz2
 set k10=karma-1.7.20-x86_64_Darwin-10.8.tar.bz2
 
@@ -43,7 +44,7 @@ else if ($MIRHOST == darwin) then
   set r=`uname -r`
   echo Install for Mac $r in $dest
   cd $dest
-  curl $ftp/$kc | tar jxf -
+  curl $ftp/$kc1 | tar jxf -
   curl $ftp/$k11 | tar jxf -
   ln -s karma-1.7.20 karma
   set m=x86_64_Darwin-11.2
