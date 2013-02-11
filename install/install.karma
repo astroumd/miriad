@@ -6,6 +6,19 @@
 
 # note: $MIR needs to be present, it will install karma in $MIR/borrow
 
+# @todo:   this rsync method is broken
+# manually from http://www.atnf.csiro.au/computing/software/karma/
+# go directly to ftp://ftp.atnf.csiro.au/pub/software/karma/
+
+#
+set ftp=ftp://ftp.atnf.csiro.au/pub/software/karma/
+#
+set kc=karma-1.7.25-common.tar.bz2
+# linux
+set k64=karma-1.7.25-amd64_Linux_libc6.3.tar.bz2
+# mac
+set k11=karma-1.7.20-x86_64_Darwin-11.2.tar.bz2
+set k10=karma-1.7.20-x86_64_Darwin-10.8.tar.bz2
 
 if ($#argv == 1) then
   set dest=$1
@@ -22,5 +35,33 @@ if (! -e $dest) then
 endif
 
 
-rsync -a rsync.science-software.net::karma/common/ $dest/karma
-$dest/karma/csh_script/install-karma               $dest/karma
+if (0) then
+  # this is the old method, appears to be broken
+  rsync -a rsync.science-software.net::karma/common/ $dest/karma
+  $dest/karma/csh_script/install-karma               $dest/karma
+else if ($MIRHOST == darwin) then
+  set r=`uname -r`
+  echo Install for Mac $r in $dest
+  cd $dest
+  curl $ftp/$kc | tar jxf -
+  curl $ftp/$k11 | tar jxf -
+  ln -s karma-1.7.20 karma
+  set m=x86_64_Darwin-11.2
+  (cd karma; ln -s $m/lib;  ln -s $m/bin)
+else if ($MIRHOST == linux) then
+  set p=`uname -p`
+  echo Install for Linux $p in $dest
+  cd $dest
+  if ($p == x86_64) then
+    wget -O - $ftp/$kc | tar jxf -
+    wget -O - $ftp/$k64 | tar jxf -
+    ln -s karma-1.7.25 karma
+    set m=amd64_Linux_libc6.3
+    (cd karma; ln -s $m/lib;  ln -s $m/bin)
+  else 
+    echo NO KARMA FOR non-64 bit yet
+  endif
+
+else
+  echo Unsupported MIRHOST=$MIRHOST
+endif
