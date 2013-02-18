@@ -40,7 +40,7 @@ c       delhd in=ngc_289_6cm/mask
 c
 c   To mask all the pixels EXCEPT a chosen region (eg you want to blank out
 c   the nasty-looking edges of a CCD image)
-c       immask in=myimage flag=good region=@good.region logic=not
+c       immask in=myimage flag=false region=@good.region logic=not
 c   
 c   To change the masking, you must specify a value for the LOGIC keyword.
 c   Otherwise IMMASK merely reports the current numbers of masked and
