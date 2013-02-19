@@ -9,9 +9,9 @@ c MAXREG  = number of regions/level
 c MAXPIX  = number of pixels/level (level>2)
 c MAXCLP  = total number of clumps
 c MAXPIX1 = number of pixels in level 1 (dT < T < 2dT)
-      integer maxlvl,maxreg,maxpix,maxclp,maxpix1
-      parameter(MAXLVL=50,MAXREG=250,MAXCLP=250)
-      parameter(MAXPIX=250000,MAXPIX1=1000000)
+      integer MAXLVL,MAXREG,MAXCLP,MAXPIX,MAXPIX1
+      parameter(MAXLVL=100,MAXREG=250,MAXCLP=250)
+      parameter(MAXPIX=250000,MAXPIX1=2000000)
 
 c #pixels/level
       integer npix(MAXLVL)                    
