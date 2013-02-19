@@ -25,7 +25,9 @@ c@ dt
 c     The contour increment (no default)
 c
 c@ start
-c     The starting contour level (default=1)
+c     The starting contour level, which must be an integer. (default=1)
+c     It is not adviced to use start=0, as this will include a lot of
+c     noise. One option is to use maths and mask out low levels.
 c
 c@ nmin
 c     Minimum number of pixels in each clump.
@@ -68,13 +70,17 @@ c  ToDo:
 c      -  this code uses some equivalences and other old fortran habits
 c         that we are not supposed to use in miriad code, hence this
 c         code won't pass FLINT.
-c
+c  Interesting comment from a former author:
+c      The MIRIAD version is written in FORTRAN and dates back to the dark 
+c      ages when I was a graduate student. It is probably very slow and I 
+c      haven't used it in over a decade. I recommend working with the IDL version. 
+c  Rebuttal:
 c --------------------------------------------------------------------
       character version*(*)
-      parameter(version='version 10-feb-2013' )
+      parameter(version='version 11-feb-2013' )
       include 'clfind.h'
 
-      character*40 filein,filecf
+      character*128 filein,filecf
       character*80 line1,line2
       character xtension*3
       integer len1
@@ -123,7 +129,7 @@ c      call keyi('naxis',p3,3)
       if(nx*ny*nz.gt.maxbuf) call bug('f','maxbuf: Image too big')
       call rdhd(lin)
 
-c.....Calculate the beam size in x and y
+c.....Calculate the beam size in x and y (in units of pixels)
       if(bmaj .lt. 1.0e-7) then
         call bug('i','Beam size unspecified')
         beamx = 1.0
@@ -179,7 +185,7 @@ c.....Start reading the input file
       print 1011, p2
       print 1012, p3
  1010 format(' Starting level:                   ',i5)
- 1011 format(' Temperature increment:            ',f4.2,' K')
+ 1011 format(' Intensity/Temperature increment:  ',f6.2,' K')
  1012 format(' Neighbourhood definition:         ',i1,' axes')
       call output(line1)
  
@@ -964,7 +970,7 @@ c.....and how they merge together at lower levels)
             ngy0=int(t(nps)/p2)-p1+1
             if (ngy0.eq.ngy) then
                print 1100, n3,t(nps),clump(n3,4)
- 1100 format(' New clump ',i4,'  Tpeak = ',f6.2,'  Npix =',i7)
+ 1100 format(' New clump ',i4,'  Tpeak = ',f8.2,'  Npix =',i7)
             endif
          enddo
 

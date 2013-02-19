@@ -84,9 +84,10 @@ c  14mar00  ks/pjt format and output changes
 c  20nov01  pjt  minor output format change
 c  12aug05  pjt  using clpars.h
 c  24jul08  pjt  upgraded for bigger cubes and fix parsing bug in history
+c  13feb12  pjt  minor cleanup and print more digits 
 c-------------------------------------------------------------------------
       character version*(*)
-      parameter(version='version 24-jul-08' )
+      parameter(version='version 14-feb-2013' )
       include 'clstats.h'
 
       integer lenline,imax,ncmax
@@ -95,7 +96,7 @@ c-------------------------------------------------------------------------
       character*80 head1,head2
 
 c.....dynamic memory setup
-      integer It,Ic,Im
+      ptrdiff It,Ic,Im
       integer iData(maxbuf)
       real rData(maxbuf)
       logical lData(maxbuf)
@@ -122,7 +123,7 @@ c.....Get the parameters from the user.
       if(file.eq.' ')call bug('f','Input file name missing')
       if(dist.eq.0.0)call bug('f','Source distance must be given')
 
-      if(positns.eq.'abs') then
+      if(positns(1:1).eq.'a') then
          pos=.true.
       else
          pos=.false.
@@ -140,9 +141,9 @@ c.....Open data cube
       if(nx*ny*nv.gt.maxbuf) call bug('f','Image too big')
       call rdhd(lin1)
 
-      call memalloc(It,nx*ny*nv,'r')
-      call memalloc(Ic,nx*ny*nv,'i')
-      call memalloc(Im,nx*ny*nv,'l')
+      call memallop(It,nx*ny*nv,'r')
+      call memallop(Ic,nx*ny*nv,'i')
+      call memallop(Im,nx*ny*nv,'l')
 
       call prthead(pos)
 
@@ -160,9 +161,9 @@ c.....Open data cube
 
       call output(line(1:lenline(line))//line(1:lenline(line)))
 
-      call memfree(It,nx*ny*nv,'r')
-      call memfree(Ic,nx*ny*nv,'i')
-      call memfree(Im,nx*ny*nv,'l')
+      call memfrep(It,nx*ny*nv,'r')
+      call memfrep(Ic,nx*ny*nv,'i')
+      call memfrep(Im,nx*ny*nv,'l')
 
       end
 c------------------------------------------------------------------
@@ -365,10 +366,10 @@ c.......whether relative or absolute positions are requested
  20     continue
       enddo
 
- 200  format(i3,1x,f7.2,1x,f7.2,1x,f7.2,1x,f6.2,1x,f6.2,
+ 200  format(i3,1x,f7.2,1x,f7.2,1x,f7.2,1x,f6.2,1x,f8.2,
      *         1x,f7.2,1x,f7.2,1x,f7.2,1x,f7.2,1x,
      *         1pe9.2,1x,0pf7.1,1x,1pe9.2,2x,i4,1x,a4)
- 201    format(i3,1x,f7.2,1x,f7.2,1x,f7.2,1x,f6.2,1x,f6.2,
+ 201    format(i3,1x,f7.2,1x,f7.2,1x,f7.2,1x,f6.2,1x,f8.2,
      *         1x,f7.2,1x,f7.2,1x,f7.2,1x,f7.2,1x,
      *         1pe9.2,1x,0pf7.1,1x,1pe9.2,2x,i4,1x,a4)
 
@@ -544,8 +545,8 @@ c.....contour level and (nmin-1) at the first
  111  format('Distance to source =',i10,' pc (error = ',f8.2,')')
  120  format('Reference position (degrees) = (',f7.3,',',f7.3,')')
  140  format('Starting contour level =',i2)
- 141  format('Delta T = ',f5.3)
- 142  format('Delta T = ',f5.3,'  (rms = ',f5.3,')')
+ 141  format('Delta T = ',f8.3)
+ 142  format('Delta T = ',f8.3,'  (rms = ',f8.3,')')
  143  format('Naxis =',i2)
  150  format('X =',f5.3,'E20')
  151  format('X =',f5.3,'E20  (error = ',f5.3,')')
