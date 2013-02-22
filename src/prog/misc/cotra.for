@@ -10,8 +10,9 @@ c     07-aug-97   Correct use of epo2jul routine.		     RJS
 c      4-apr-08   Add some velocity reference frames                 PJT
 c     10-aug-09   Add some doppler calculations                      PJT
 c     25-jan-11   Add more doppler options, more obvious output      PJT
+c      4-feb-13   Using j2000 as the default type                    PJT
 c-----------------------------------------------------------------------
-c= cotra - coordinate transformations
+c= cotra - coordinate and doppler transformations
 c& pjt
 c: utility
 c+
@@ -26,19 +27,20 @@ c       dVgsr  = Vgsr  - Vlsr
 c       dVlgsr = Vlgsr - Vgsr
 c
 c       In addition, several conversions between doppler velocities
-c       can be calculated (optical, radio, relativistic)
+c       can be calculated (optical, radio, relativistic).
 c@ radec
 c	Input RA/DEC or longitude/latitude. RA is given in hours
 c	(or hh:mm:ss), whereas all the others are given in degrees
 c	(or dd:mm:ss). There is no default.
 c@ type
 c	Input coordinate system. Possible values are
-c	"b1950" (the default), "j2000", "galactic", "ecliptic"
+c	"b1950", "j2000" (the default), "galactic", "ecliptic"
 c	and "super-galactic". b1950 and j2000 are equatorial coordinates
 c	in the B1950 and J2000 frames. All other coordinates are in the
 c	B1950 frames.
 c@ epoch
-c	Epoch (in standard Miriad time format) of the coordinate. Note
+c	Epoch (in standard MIRIAD time format, i.e. 
+c       of the coordinate. Note
 c	that this is distinct from the equinox of the coordinate as given
 c	above. Varying epoch changes the coordinate values by less than an
 c	arcsecond. The default is b1950.
@@ -68,9 +70,11 @@ c vLSR = vBSR + 9 cos(l) cos(b) + 12 sin(l) cos(b) + 7 sin(b)
 c vGSR = vLSR + 220 sin(l) cos(b) 
 c vLGSR = vGSR − 62 cos(l) cos(b) + 40 sin(l) cos(b) − 35 sin(b) 
 c
+c Also of note:  http://patents.com/us-7083415.html
+c
 	INCLUDE 'mirconst.h'
 	CHARACTER  VERSION*(*)
-	PARAMETER (VERSION='Version 25-jan-2011')
+	PARAMETER (VERSION='Version 22-feb-2013')
 c
 	double precision lon,lat,blon,blat,dra,ddec,epoch
         double precision dvlsr, dvgsr, dvlgsr,uvw(3),theta0
@@ -94,7 +98,7 @@ c
 	CALL output('COTRA: '//VERSION)
 	CALL keyini
 	call keymatch('type',NTYPES,types,1,type,ntype)
-	if(ntype.eq.0)type = types(1)
+	if(ntype.eq.0)type = types(2)
 	if(type.eq.'b1950'.or.type.eq.'j2000')then
 	  CALL keyt('radec',blon,'hms',0.0d0)
 	else
