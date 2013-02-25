@@ -3131,7 +3131,7 @@ cc
       integer ierr, il1, il2, sym, ip, jf, lp, kp, k, ii,
      *  ipl1, ipl2, npol, i, j, cols1(ncol), cols2(ncol), cols(ncol),
      *  nb, np, ipt, il, ilen
-      character xlabel*100, ylabel*100, ans*1, devdef*80,
+      character xlabel*100, ylabel*100, ans*1, devdef*256,
      *  str*80, units*10
       character*2 fmt(2), polstr(12)*2, hard*3
       logical new, more, redef, none, dosmaplt
