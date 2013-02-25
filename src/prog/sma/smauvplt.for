@@ -490,8 +490,8 @@ c
      *  yvalr, paran, ww
       integer lin, ivis, nread, dayoff, j,  nx, ny, inc, hann, tunit,
      *  ofile, ifile, jfile, vupd, ip, nkeep, npnts
-      character in*64, xaxis*10, yaxis*10, pdev*80, comment*80,
-     *  logf*80, str*2, title*100, ops*9
+      character in*256, xaxis*10, yaxis*10, pdev*256, comment*80,
+     *  logf*256, str*2, title*100, ops*9
       logical xrtest, yrtest, more, dodoub, reset, doave, dowave,
      *  dovec(2), dorms(3), doall, doflag, dobase, doperr, dointer,
      *  dolog, dozero, doequal, donano, dosrc, doavall, bwarn(2),
@@ -521,7 +521,7 @@ c
       start_sid=0
       next_sid=0 
 c-----------------------------------------------------------------------
-      call output ('SmaUvPlt: version 1.8 1-dec-09')
+      call output ('SmaUvPlt: version 1.8 25-feb-2012')
 c
 c  Get the parameters given by the user and check them for blunders
 c
