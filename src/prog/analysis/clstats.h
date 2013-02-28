@@ -10,9 +10,10 @@ c-------------------------------------------------------------
       integer nmin
       real dist,disterr,xfact,xfacterr
       real meanmol,kpjy,rms
+      logical qscale
       character*80 file
       common /keyinn/ nmin,dist,disterr,xfact,xfacterr,
-     *               meanmol,kpjy,rms
+  *               meanmol,kpjy,rms,qscale
       common /keyinc/ file
 
       real x0,y0,delx,dely,delv

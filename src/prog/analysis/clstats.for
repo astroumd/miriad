@@ -15,12 +15,20 @@ c  which implies that to convert to a mass, multiply by
 c
 c  10^20 * meanmol * m(H_2) * Area
 c
+c  Clumps are flagged E/A/V/R depending on whether they are:
+c      E  near or on and edge
+c      A  have a high aspect ratio (> 2)
+c      V  unresolved in velocity
+c      R  unresolved in size
+c
 c@ in
 c       file name of data cube
 c       (no default)
 c
 c@ dist
-c       the distance to the object in pc
+c       the distance to the object in pc.  use -1 to not scale to
+c       interesting units at that given distance but just sum up
+c       the intensities.
 c       (no default)
 c
 c@ disterr
@@ -46,10 +54,15 @@ c       (default=1.38, corresponding to n(He)/n(H)=0.1)
 c
 c@ jyperk
 c       the number of Jansky's per Kelvin for these observations
+c       This number can also be used to scale the intensity units
+c       even in case of dist=-1 when the output format limits the
+c       number of digits printed.
 c       (default=1)
 c
 c@ xy
 c       "rel" or "abs" for the clump positions - v is always absolute
+c       Note: xy=rel always used for arcseconds. xy=abs always for
+c       units in degrees.
 c       (default=relative)
 c
 c@ rms
@@ -84,10 +97,11 @@ c  14mar00  ks/pjt format and output changes
 c  20nov01  pjt  minor output format change
 c  12aug05  pjt  using clpars.h
 c  24jul08  pjt  upgraded for bigger cubes and fix parsing bug in history
-c  13feb12  pjt  minor cleanup and print more digits 
+c  13feb13  pjt  minor cleanup and print more digits 
+c  19feb13  pjt  allow non-scaled quantities (using dist=-1), sum up masses
 c-------------------------------------------------------------------------
       character version*(*)
-      parameter(version='version 14-feb-2013' )
+      parameter(version='version 21-feb-2013' )
       include 'clstats.h'
 
       integer lenline,imax,ncmax
@@ -120,8 +134,14 @@ c.....Get the parameters from the user.
       call keyi('nmin',nmin,4)
       call keyfin
 
-      if(file.eq.' ')call bug('f','Input file name missing')
-      if(dist.eq.0.0)call bug('f','Source distance must be given')
+      if(file.eq.' ')call bug('f','Input file name missing (in=)')
+      if(dist.eq.0.0)call bug('f','Source distance (dist=) needed')
+      if(dist.gt.0.0) then
+         qscale = .TRUE.
+      else
+         qscale = .FALSE.
+         call bug('i','New feature: unscaled quantities')
+      endif
 
       if(positns(1:1).eq.'a') then
          pos=.true.
@@ -176,13 +196,13 @@ c---------------------------------------------------------------------
 
       integer i,j,k,nc,imax,ncmax
       integer i1,j1,k1,i2,j2,k2
-      integer nclump,npixels,lenline
+      integer nclump,npixels,lenline,sum3
       real pi,rad2asec
       real sx2,sx,sy2,sy,sv2,sv,dv
       real x1,y1,v1,xp,yp,vp,tp,tave,ts
       real mlte,masserr,mgrav,mvir,tsumerr
       real radius,beamr
-      real aspect
+      real aspect,sum1,sum2
       logical pos
       character flag*4
 
@@ -225,6 +245,11 @@ c.....edges (as defined by the mask)
 
 c.....clumps with Sx/Sy > aspect are flagged
       aspect=2.0
+
+c.....a few sum's
+      sum1 = 0.0
+      sum2 = 0.0
+      sum3 = 0
 
 c.....go thru clump numbers 1 to maximum
 c.....and find it's coded index
@@ -320,7 +345,9 @@ c          sv=dv/2.355
           radius = 0.5*beamr
         endif
 c.......change radius to pc
-        radius=radius*dist/rad2asec
+        if (qscale) then
+           radius=radius*dist/rad2asec
+        endif
 
 c.......Until now everything has been done in units of JY/BEAM.
 c.......The summation, however, has been done in pixels. So we
@@ -329,27 +356,49 @@ c.......correct for the effective beam area (beam area in pixels).
         tp = tp*kpjy
         tave = ts*kpjy/real(npixels)
 
-        mlte=1.60*meanmol*xfact*ts*kpjy*(dist**2)*delv*
+        if (qscale) then
+           mlte=1.60*meanmol*xfact*ts*kpjy*(dist**2)*delv*
      *       abs(delx)*dely/(rad2asec*rad2asec)
+        else
+           mlte=ts
+        endif
         tsumerr = 1.0+sqrt(real(npixels))*rms/ts
         masserr=disterr**2 * xfacterr * tsumerr
 c.... coefficient here is for 1d vel dispersion sx so 
 c.... divide again by 8*ln(2)
-        mvir=698.4*radius*(dv**2)/5.54518
-        mgrav=0.5*mvir
+        if (qscale) then
+           mvir=698.4*radius*(dv**2)/5.54518
+           mgrav=0.5*mvir
+        else
+           mvir=radius*(dv**2)
+           mgrav=0.5*mvir
+        endif
 
 c.......make dispersions into FWHM, and convert sizes to pc
-        sx=2.355*sx*dist/rad2asec
-        sy=2.355*sy*dist/rad2asec
+        if (qscale) then
+           sx=2.355*sx*dist/rad2asec
+           sy=2.355*sy*dist/rad2asec
+        else
+           sx=2.355*sx
+           sy=2.355*sy
+        endif
 c...        sv=2.355*sv
 
 c.......if beam size is smaller than 30" write output in arcseconds
 c.......else write output in arcminutes or degrees depending on
 c.......whether relative or absolute positions are requested
         if(sqrt(abs(beamx*beamy)).lt.30.0) then
-           print 201, nclump,xp,yp,vp,tave,
+           if(pos) then
+              xp=(x0+xp)/3600.0
+              if(xp.lt.0.0) xp=xp+360.0
+              print 201, nclump,xp,(y0+yp)/3600.,vp,tave,
      *           tp,sx,sy,radius,dv,
      *           mlte,masserr,mgrav,npixels,flag
+           else
+              print 201, nclump,xp,yp,vp,tave,
+     *           tp,sx,sy,radius,dv,
+     *           mlte,masserr,mgrav,npixels,flag
+           endif
         else
           if(pos) then
             xp=(x0+xp)/3600.0
@@ -363,19 +412,24 @@ c.......whether relative or absolute positions are requested
      *           mlte,masserr,mgrav,npixels,flag
           endif
         endif
+        sum1 = sum1 + mlte
+        sum2 = sum2 + mgrav
+        sum3 = sum3 + npixels
  20     continue
       enddo
+      print 203, sum1, sum2, sum3
 
  200  format(i3,1x,f7.2,1x,f7.2,1x,f7.2,1x,f6.2,1x,f8.2,
      *         1x,f7.2,1x,f7.2,1x,f7.2,1x,f7.2,1x,
      *         1pe9.2,1x,0pf7.1,1x,1pe9.2,2x,i4,1x,a4)
- 201    format(i3,1x,f7.2,1x,f7.2,1x,f7.2,1x,f6.2,1x,f8.2,
+ 201  format(i3,1x,f7.2,1x,f7.2,1x,f7.2,1x,f6.2,1x,f8.2,
      *         1x,f7.2,1x,f7.2,1x,f7.2,1x,f7.2,1x,
      *         1pe9.2,1x,0pf7.1,1x,1pe9.2,2x,i4,1x,a4)
 
+ 203  format('Total Mass: mlte= ',e10.4,' mgrav= ',e10.4,' Npixels=',i8)
       return
       end
-c---------------------------------------------------------------------
+c-----------------------------------------------------------------------
 	integer function lenline(string)
 c
 	implicit none
@@ -480,9 +534,10 @@ c.....print out some header information for the stats file
         else
           print 102,bmaj,bmin
         endif
+        pos = .FALSE.
 
         call output(
-     *       'Positions are RELATIVE and are in arcseconds')
+     *       'Positions are forced RELATIVE and are in arcseconds')
         print 120,refx,y0/3600.0
 
       else
