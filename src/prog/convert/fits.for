@@ -4996,7 +4996,7 @@ c
       character source*(*)
 c
       character tmp*20
-      integer i, j, n, len1
+      integer i, j, n, n1, len1
 c
       tmp = source
       n = len1(tmp)
@@ -5008,6 +5008,10 @@ c
             source(j:j) = tmp(i:i)
          endif
       enddo
+      n1 = len1(source)
+      if (n.ne.n1) then
+         call bug('w','Removed spaces from source name: '//source(1:n1))
+      endif
       return
       end
 c***********************************************************************
