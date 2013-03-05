@@ -154,6 +154,7 @@ c
 c  CARMA customizations:
 c
 c  2012jan03  pkgw  Convert FITS VOPT to MIRIAD FELO and vice versa
+c  2013mar05  pjt   Sanitize sourcename for uvin (no spaces)
 c-----------------------------------------------------------------------
       integer   MAXBOXES
       parameter (MAXBOXES=2048)
@@ -1762,6 +1763,7 @@ c
         call output('  Using source table information')
         call ftabGeti(lu,'ID. NO.',0,srcids)
         call ftabGeta(lu,'SOURCE',0,source)
+        call msource(source)
         call ftabGetd(lu,'RAEPO',0,raepo)
         call ftabGetd(lu,'DECEPO',0,decepo)
         call ftabGetd(lu,'RAAPP',0,raapp)
@@ -4980,3 +4982,32 @@ c       Handle what must be a numeric value.
       endif
 
       end
+
+c***********************************************************************
+      subroutine msource(source)
+c
+c  sanitize a source name for miriad
+c
+c  for now this means removing spaces to solve ALMA names
+c  where spaces are allowed, in miriad we cannot allow this.
+c  There is currently no restriction here to limit the source
+c  name to 8 chars
+c  
+      character source*(*)
+c
+      character tmp*20
+      integer i, j, n, len1
+c
+      tmp = source
+      n = len1(tmp)
+      j = 0
+      source = ' '
+      do i=1,n
+         if (tmp(i:i).ne.' ') then
+            j = j + 1
+            source(j:j) = tmp(i:i)
+         endif
+      enddo
+      return
+      end
+c***********************************************************************
