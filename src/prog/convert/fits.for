@@ -4995,7 +4995,7 @@ c  name to 8 chars
 c  
       character source*(*)
 c
-      character tmp*20
+      character tmp*80
       integer i, j, n, n1, len1
 c
       tmp = source
@@ -5010,7 +5010,8 @@ c
       enddo
       n1 = len1(source)
       if (n.ne.n1) then
-         call bug('w','Removed spaces from source name: '//source(1:n1))
+         tmp = 'Removed spaces from source name: '//source(1:n1)
+         call bug('w',tmp)
       endif
       return
       end
