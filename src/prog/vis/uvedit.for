@@ -60,6 +60,10 @@ c    pjt   16mar06    reformatted sma to keep the solaris compiler happy
 c                     and somehow linux allowed r>0 instead of r.gt.0
 c    pjt   26aug09    added options=time for CARMA time adjustment
 c    mchw  26aug09    Added CAVEAT in documentation for options=time.
+c    pjt   13mar13    fixed double precision handling of ra/dec
+c                     also fixed lots of SMA indentation mishaps
+c                     always force to uvgetvrX in getupX
+c                     This fixes source=  when that source is not first
 c***********************************************************************
 c= Uvedit - Editing of the baseline of a UV data set.
 c& pjt
@@ -265,7 +269,7 @@ c
       character PROG*(*)
       parameter (PROG = 'UVEDIT: ')
       character VERSION*(*)
-      parameter (VERSION = 'version 26-jan-10')
+      parameter (VERSION = 'version 14-mar-13')
 c
       double precision SECRAD, ASECRAD
 c  -------------(SECRAD = DPI / (12.d0 * 3600.d0))
@@ -297,13 +301,13 @@ c
       integer nspect, nwide
       integer ant1, ant2
       integer nschan(MAXCHAN), ischan(MAXCHAN)
-      real timeoff,inttime
+      real inttime
       real dra
       real wt, wtup, wtdn
       real phase, timphz, radphz, antphz, tmphaz, tmpdelay
       real delay(MAXANT)
       real wfreq(MAXCHAN)
-      double precision val1, val2
+      double precision timeoff, val1, val2
       double precision RA, dec, raoff, decoff, delra, deldec
       double precision freq, Lst, UT, obsra, obsdec, HA
       double precision lo1, lo2
@@ -377,11 +381,11 @@ c
 c
 c Time.
 c
-      timeoff = 0.0
+      timeoff = 0.0d0
       dotime = .FALSE.
       if (KeyPrsnt('time')) then
-        call Keyr('time', timeoff, -100001.0)
-        if (timeoff .le. -100000.0) then
+        call Keyd('time', timeoff, -100001.0d0)
+        if (timeoff .le. -100000.0d0) then
           errmsg = PROG // 'Incorrect time offset entered.'
           call Bug('f', errmsg)
         endif
@@ -401,10 +405,10 @@ c
       decabs = .FALSE.
 c RA.
       if (KeyPrsnt('ra')) then
-        call Keyd('ra', raoff, -100001.0)
+        call Keyd('ra', raoff, -100001.0d0)
         if (KeyPrsnt('ra')) then
-          call Keyd('ra', val1, -1.0)
-          call Keyd('ra', val2, -1.0)
+          call Keyd('ra', val1, -1.0d0)
+          call Keyd('ra', val2, -1.0d0)
           if ((val1 .lt. 0) .or. (val2 .lt. 0)) then
             errmsg = PROG // 'Incorrect RA entered.'
             call Bug('f', errmsg)
@@ -422,10 +426,10 @@ c RA.
       endif
 c Dec.
       if (KeyPrsnt('dec')) then
-        call Keyd('dec', decoff, -100001.0)
+        call Keyd('dec', decoff, -100001.0d0)
         if (KeyPrsnt('dec')) then
-          call Keyd('dec', val1, -1.0)
-          call Keyd('dec', val2, -1.0)
+          call Keyd('dec', val1, -1.0d0)
+          call Keyd('dec', val2, -1.0d0)
           if ((val1 .lt. 0) .or. (val2 .lt. 0)) then
             errmsg = PROG // 'Incorrect DEC entered.'
             call Bug('f', errmsg)
@@ -471,20 +475,19 @@ c
 c Antenna.
 c
       j = 0
-      if (KeyPrsnt('antpos')) j = j + 1
+      if (KeyPrsnt('antpos'))  j = j + 1
       if (KeyPrsnt('dantpos')) j = j + 1
-      if (KeyPrsnt('apfile')) j = j + 1
+      if (KeyPrsnt('apfile'))  j = j + 1
       if (j .gt. 1) then
-        errmsg = PROG //
-     *    'ANTPOS, DANTPOS, and APFILE are mutually exclusive options.'
-        call Bug('f', errmsg)
+         errmsg = 'ANTPOS=, DAN`TPOS=, APFILE= are mutually exclusive'
+         call Bug('f', PROG // errmsg)
       endif
-c for sma
-       if ((.not.KeyPrsnt('apfile')).and.dosma) then
-      errmsg = PROG // 'keyword APFILE must be specified for SMA data.'
-           call Bug('f', errmsg)
-       endif
+      if ((.not.KeyPrsnt('apfile')).and.dosma) then
+         errmsg = 'keyword APFILE must be specified for SMA data.'
+         call Bug('f', PROG // errmsg)
+      endif
 
+c deal with either apfile, antpos or dantpos
 
       doants = .FALSE.
       if (KeyPrsnt('apfile')) then
@@ -497,63 +500,65 @@ c for sma
 c
 c parse for refant of SMA
 c
-           refant=0
-           if(dosma) then
-           do j=1, nants
-           if((XYZ(j,1).eq.0).and.(XYZ(j,1).eq.0).
-     *     and.(XYZ(j,1).eq.0)) refant=j
-           end do
-           if((refant.gt.nants).or.(refant.lt.1)) then
-       errmsg=PROG//'no reference antenna can be found from the file: ' 
-     *            //  apFile
-           call Bug('f', errmsg)
-           end if
-           end if
+        refant=0
+        if(dosma) then
+          do j=1, nants
+            if((XYZ(j,1).eq.0).and.(XYZ(j,1).eq.0).
+     *            and.(XYZ(j,1).eq.0)) refant=j
+          end do
+          if((refant.gt.nants).or.(refant.lt.1)) then
+            errmsg=PROG
+     *          // 'no reference antenna can be found from the file: ' 
+     *          //  apFile
+            call Bug('f', errmsg)
+          end if
+        end if
 c
 c read keyword smaoffset
 c
-          if(dosma) then
-          Nantpos = 0
-          call Keyi('smaoffset', j, 0)
-        do while (j .gt. 0)
-          if (j .gt. nants) then
-            errmsg = PROG // 'Antenna number larger than expected.'
-            call Bug('f', errmsg)
-          endif
-          Nantpos = Nantpos + 1
-          call Keyd('smaoffset', smaoffxyz(j, 1), 0.0)
-          call Keyd('smaoffset', smaoffxyz(j, 2), 0.0)
-          call Keyd('smaoffset', smaoffxyz(j, 3), 0.0)
-          call Keyi('smaoffset', j, 0)
-        enddo
+        if(dosma) then
+           Nantpos = 0
+           call Keyi('smaoffset', j, 0)
+           do while (j .gt. 0)
+              if (j .gt. nants) then
+                 errmsg = PROG // 'Antenna number larger than expected.'
+                 call Bug('f', errmsg)
+              endif
+              Nantpos = Nantpos + 1
+              call Keyd('smaoffset', smaoffxyz(j, 1), 0.0d0)
+              call Keyd('smaoffset', smaoffxyz(j, 2), 0.0d0)
+              call Keyd('smaoffset', smaoffxyz(j, 3), 0.0d0)
+              call Keyi('smaoffset', j, 0)
+           enddo
           
-        if (j .lt. 0) then
-          errmsg = PROG // 'Incorrect antenna number entered.'
-          call Bug('f', errmsg)
-        endif
-        if (Nantpos .eq. 0) then
-          errmsg = PROG // 'No antenna offsets entered from smaoffsets.'
-           call Bug('w', errmsg)
-          errmsg = PROG // 'The file "' // apFile(1:8) // 
-     + '" is assumed to have been updated.' 
-          call Bug('w', errmsg)
-        endif
-        if (Nantpos .gt. nants) then
-          errmsg = PROG // 'More antennas entered than expected.'
-          call Bug('f', errmsg)
-        endif
+           if (j .lt. 0) then
+              errmsg = PROG // 'Incorrect antenna number entered.'
+              call Bug('f', errmsg)
+           endif
+           if (Nantpos .eq. 0) then
+              errmsg = PROG 
+     *            // 'No antenna offsets entered from smaoffsets.'
+              call Bug('w', errmsg)
+              errmsg = PROG // 'The file "' // apFile(1:8) 
+     *            // '" is assumed to have been updated.' 
+              call Bug('w', errmsg)
+           endif
+           if (Nantpos .gt. nants) then
+              errmsg = PROG // 'More antennas entered than expected.'
+              call Bug('f', errmsg)
+           endif
 c
 c add the smaoffset to the original absolute pos
 c reinitialize smaoffxyz
 c
-            do j = 1, nants
-            XYZ(j,1) = XYZ(j,1)  + smaoffxyz(j, 1)/1000.
-            XYZ(j,2) = XYZ(j,2)  + smaoffxyz(j, 2)/1000.
-            XYZ(j,3) = XYZ(j,3)  + smaoffxyz(j, 3)/1000.
-            smaoffxyz(j, 1) = 0.
-            smaoffxyz(j, 2) = 0.
-            smaoffxyz(j, 3) = 0.
-            end do
+           do j = 1, nants
+              XYZ(j,1) = XYZ(j,1)  + smaoffxyz(j, 1)/1000.
+              XYZ(j,2) = XYZ(j,2)  + smaoffxyz(j, 2)/1000.
+              XYZ(j,3) = XYZ(j,3)  + smaoffxyz(j, 3)/1000.
+              smaoffxyz(j, 1) = 0.
+              smaoffxyz(j, 2) = 0.
+              smaoffxyz(j, 3) = 0.
+           end do
         endif
 
         antabs = .TRUE.
@@ -581,9 +586,9 @@ c  Initialize the antenna arrays.
             call Bug('f', errmsg)
           endif
           Nantpos = Nantpos + 1
-          call Keyd(antkey, XYZ(j, 1), 0.0)
-          call Keyd(antkey, XYZ(j, 2), 0.0)
-          call Keyd(antkey, XYZ(j, 3), 0.0)
+          call Keyd(antkey, XYZ(j, 1), 0.0d0)
+          call Keyd(antkey, XYZ(j, 2), 0.0d0)
+          call Keyd(antkey, XYZ(j, 3), 0.0d0)
           call Keyi(antkey, j, 0)
         enddo
         if (j .lt. 0) then
@@ -630,7 +635,7 @@ c  Initialize the delay array.
 c
 c Options.
 c
-c      call GetOpt(douv, dodra, dosma)
+c     call GetOpt(douv, dodra, dosma)
       if ((.not. douv) .and. (dorad .or. dotime .or. doants))
      *  call Bug('w',
      *  'OPTIONS=NOUV possibly unsafe for these editing options.')
@@ -681,7 +686,7 @@ c
       if (.not. allsrc) then
         if ((.not. dorad) .or. dotime .or. doants .or. dodelay) then
           errmsg = PROG //
-     *      'Options selected for a single source might cause problems?'
+     *     'Options selected for a single source might cause problems?'
           call Bug('w', errmsg)
         endif
       endif
@@ -738,7 +743,7 @@ c
         call uvrdvri(Lin, 'coropt', coropt, 0)
         if (coropt .ne. 0) then
           errmsg = PROG //
-     *             'Correlator is not set in cross correlation mode.'
+     *           'Correlator is not set in cross correlation mode.'
           call Bug('w', errmsg)
           errmsg = PROG // 'Ignoring visibility file: ' // Vis(j)(1:k)
           call Bug('w', errmsg)
@@ -756,11 +761,11 @@ c
             if (dodelay) then
               k = Len1(Vis(j))
               errmsg = PROG //
-     *             'No narrow band data present in ' // Vis(j)(1:k)
+     *              'No narrow band data present in ' // Vis(j)(1:k)
               call Bug('w', errmsg)
               errmsg = PROG //
-     *             'No delay correction will be applied to ' //
-     *             Vis(j)(1:k)
+     *              'No delay correction will be applied to ' //
+     *              Vis(j)(1:k)
               call Bug('w', errmsg)
             endif
           endif
@@ -790,11 +795,11 @@ c
             call Output(mesg)
             call uvset(Lout,'preamble','uvw/time/baseline',0,0.,0.,0.)
             if (docorr)
-     *        call uvset(Lout, 'corr', corrtype, 0, 0.0, 0.0, 0.0)
+     *          call uvset(Lout, 'corr', corrtype, 0, 0.0, 0.0, 0.0)
 c
 c  Copy all calibration tables.
 c
-	    call CalCopy(Lin,Lout,PROG)
+            call CalCopy(Lin,Lout,PROG)
 c
 c  Copy the old history entries to the new file and then add a few
 c  additional history entries to the new file.
@@ -803,36 +808,36 @@ c
             call HisOpen(Lout, 'append')
             call HisWrite(Lout, PROG // ' Miriad '// PROG // VERSION)
             call HisInput(Lout, PROG)
-c
+c     
 c  Initialize the new coordinate array, but only if necessary.
 c
             if (doants) then
-              do k = 1, MAXANT
-                newxyz(k, 1) = 0.0
-                newxyz(k, 2) = 0.0
-                newxyz(k, 3) = 0.0
-              enddo
+               do k = 1, MAXANT
+                  newxyz(k, 1) = 0.0
+                  newxyz(k, 2) = 0.0
+                  newxyz(k, 3) = 0.0
+               enddo
             endif
-c
+c     
 c  If there are wide band channels but no narrowband channels, set up
 c  uvread and uvwrite to speak wide band channels
 c
             if(dowide .and. (.not. docorr)) then
-              call uvset(Lin, 'data','wide',0, 1.0, 1.0, 1.0)
-              call uvset(Lout,'data','wide',0, 1.0, 1.0, 1.0)
+               call uvset(Lin, 'data','wide',0, 1.0, 1.0, 1.0)
+               call uvset(Lout,'data','wide',0, 1.0, 1.0, 1.0)
             endif
-c
+c     
 c  See if the delay tracking or pointing center RA and DEC are present.
 c
-	    call UvProbvr(Lin, 'delra', type, k, updated)
-	    dodelra = type.eq.' '
-	    call UvProbvr(Lin, 'deldec',type, k, updated)
-	    dodeldec = type.eq.' '
-	    call UvProbvr(Lin, 'pntra', type, k, updated)
-	    dopntra = type.eq.' '
-	    call UvProbvr(Lin, 'pntdec',type, k, updated)
-	    dopntdec = type.eq.' '
-c
+            call UvProbvr(Lin, 'delra', type, k, updated)
+            dodelra = type.eq.' '
+            call UvProbvr(Lin, 'deldec',type, k, updated)
+            dodeldec = type.eq.' '
+            call UvProbvr(Lin, 'pntra', type, k, updated)
+            dopntra = type.eq.' '
+            call UvProbvr(Lin, 'pntdec',type, k, updated)
+            dopntdec = type.eq.' '
+c     
 c  Begin editing the input file.
 c
             call UvRewind(Lin)
@@ -842,7 +847,7 @@ c
               if (Nread .le. 0) then
                 more = .FALSE.
               else
-c
+c     
 c  Copy unchanged variables to the output data set.
 c
                 call UvCopyvr(Lin, Lout)
@@ -858,17 +863,17 @@ c               if (updated) then
 c--             call UvGetvri(Lin, 'nants', k, 1)
                 call uvrdvri(Lin, 'nants', k, 0)
                 if (k .ne. Nant) then
-                  if (Nant .eq. -1) then
-                    Nant = k
-                  else if (Nant .ne. k) then
-                    write(errmsg, '(A, A, I4, A, I4)') PROG,
-     *                'The number of antennas has changed from ',
-     *                Nant, ' to ', k
-                    call Bug('w', errmsg)
-                  endif
-                  Nant = k
+                   if (Nant .eq. -1) then
+                      Nant = k
+                   else if (Nant .ne. k) then
+                      write(errmsg, '(A, A, I4, A, I4)') PROG,
+     *               'The number of antennas has changed from ',
+     *               Nant, ' to ', k
+                      call Bug('w', errmsg)
+                   endif
+                   Nant = k
                 endif
-c
+c     
 c  Get lo1 and lo2 for use with delay corrections.
 c
                 call UvProbvr(Lin, 'lo1', type, k, updated)
@@ -897,16 +902,16 @@ c
                   if (updated) then
                     call UvGetvrd(Lin, 'antpos', dummy, Nant * 3)
                     do k = 1, Nant
-                      antpos(k, 1) = dummy(k)
-                      antpos(k, 2) = dummy(k + Nant)
-                      antpos(k, 3) = dummy(k + Nant + Nant)
+                       antpos(k, 1) = dummy(k)
+                       antpos(k, 2) = dummy(k + Nant)
+                       antpos(k, 3) = dummy(k + Nant + Nant)
                     enddo
                     call NewAnt(PROG, Lout, antpos, XYZ, MAXANT, Nant,
-     *                doants, antabs, newxyz)
+     *                     doants, antabs, newxyz)
                     do k = 1, Nant
-                      dummy(k) = newxyz(k, 1)
-                      dummy(k + Nant) = newxyz(k, 2)
-                      dummy(k + Nant + Nant) = newxyz(k, 3)
+                       dummy(k) = newxyz(k, 1)
+                       dummy(k + Nant) = newxyz(k, 2)
+                       dummy(k + Nant + Nant) = newxyz(k, 3)
                     enddo
                     call UvPutvrd(Lout, 'antpos', dummy, Nant * 3)
                   endif
@@ -915,19 +920,19 @@ c
                   BY = antpos(ant2, 2) - antpos(ant1, 2)
                   BZ = antpos(ant2, 3) - antpos(ant1, 3)
                   if (doants) then
-                    bxnew = newxyz(ant2, 1) - newxyz(ant1, 1)
-                    bynew = newxyz(ant2, 2) - newxyz(ant1, 2)
-                    bznew = newxyz(ant2, 3) - newxyz(ant1, 3)
-                    delX = bxnew - BX
-                    delY = bynew - BY
-                    delZ = bznew - BZ
+                     bxnew = newxyz(ant2, 1) - newxyz(ant1, 1)
+                     bynew = newxyz(ant2, 2) - newxyz(ant1, 2)
+                     bznew = newxyz(ant2, 3) - newxyz(ant1, 3)
+                     delX = bxnew - BX
+                     delY = bynew - BY
+                     delZ = bznew - BZ
                   else
-                    bxnew = BX
-                    bynew = BY
-                    bznew = BZ
-                    delX = 0.0
-                    delY = 0.0
-                    delZ = 0.0
+                     bxnew = BX
+                     bynew = BY
+                     bznew = BZ
+                     delX = 0.0
+                     delY = 0.0
+                     delZ = 0.0
                   endif
 c
 c  Get the declination and Hour Angle and position offsets.  If any
@@ -948,58 +953,58 @@ c
                   call GetUpd(Lin, 'ra', dorad, RA, updra)
                   call GetUpd(Lin, 'dec', dorad, dec, upddec)
                   call GetUpr(Lin, 'dra', dodra, dra, updodra) 
-   10             format(A, A, ' changed from ', G17.9, ' to ', G17.9)
+ 10               format(A, A, ' changed from ', G17.9, ' to ', G17.9)
                   if (updUT) then
-                    val1 = UT + timeoff
-                    call UvPutvrd(Lout, 'ut', val1, 1)
-                    write (mesg, 10) PROG, 'UT', UT, val1
-                    call HisWrite(Lout, mesg)
+                     val1 = UT + timeoff
+                     call UvPutvrd(Lout, 'ut', val1, 1)
+                     write (mesg, 10) PROG, 'UT', UT, val1
+                     call HisWrite(Lout, mesg)
                   endif
                   if (updLst) then
-                    val1 = Lst + timeoff
-                    call UvPutvrd(Lout, 'lst', val1, 1)
-                    write (mesg, 10) PROG, 'LST', Lst, val1
-                    call HisWrite(Lout, mesg)
+                     val1 = Lst + timeoff
+                     call UvPutvrd(Lout, 'lst', val1, 1)
+                     write (mesg, 10) PROG, 'LST', Lst, val1
+                     call HisWrite(Lout, mesg)
                   endif
                   if (updora) then
-                    val1 = obsra + raoff
-                    if (raabs) val1 = raoff - RA + obsra
-                    call UvPutvrd(Lout, 'obsra', val1, 1)
-                    write (mesg, 10) PROG, 'ObsRA', obsra, val1
-                    call HisWrite(Lout, mesg)
+                     val1 = obsra + raoff
+                     if (raabs) val1 = raoff - RA + obsra
+                     call UvPutvrd(Lout, 'obsra', val1, 1)
+                     write (mesg, 10) PROG, 'ObsRA', obsra, val1
+                     call HisWrite(Lout, mesg)
                   endif
                   if (updra) then
-                    val1 = RA + raoff
-                    if (raabs) val1 = raoff
-                    call UvPutvrd(Lout, 'ra', val1, 1)
-                    if(dopntra)call UvPutvrd(lOut, 'pntra', RA, 1)
-                    if(dodelra)call UvPutvrd(lOut, 'delra', RA, 1)
-                    write (mesg, 10) PROG, 'RA', RA, val1
-                    call HisWrite(Lout, mesg)
+                     val1 = RA + raoff
+                     if (raabs) val1 = raoff
+                     call UvPutvrd(Lout, 'ra', val1, 1)
+                     if(dopntra)call UvPutvrd(lOut, 'pntra', RA, 1)
+                     if(dodelra)call UvPutvrd(lOut, 'delra', RA, 1)
+                     write (mesg, 10) PROG, 'RA', RA, val1
+                     call HisWrite(Lout, mesg)
                   endif
                   if (updodec) then
-                    val1 = obsdec + decoff
-                    if (decabs) val1 = decoff - dec + obsdec
-                    call UvPutvrd(Lout, 'obsdec', val1, 1)
-                    write (mesg, 10) PROG, 'ObsDec', obsdec, val1
-                    call HisWrite(Lout, mesg)
+                     val1 = obsdec + decoff
+                     if (decabs) val1 = decoff - dec + obsdec
+                     call UvPutvrd(Lout, 'obsdec', val1, 1)
+                     write (mesg, 10) PROG, 'ObsDec', obsdec, val1
+                     call HisWrite(Lout, mesg)
                   endif
                   if (upddec) then
-                    val1 = dec + decoff
-                    if (decabs) val1 = decoff
-                    call UvPutvrd(Lout, 'dec', val1, 1)
-                    if(dopntdec)call UvPutvrd(lOut, 'pntdec', dec, 1)
-                    if(dodeldec)call UvPutvrd(lOut, 'deldec', dec, 1)
-                    write (mesg, 10) PROG, 'Dec', dec, val1
-                    call HisWrite(Lout, mesg)
+                     val1 = dec + decoff
+                     if (decabs) val1 = decoff
+                     call UvPutvrd(Lout, 'dec', val1, 1)
+                     if(dopntdec)call UvPutvrd(lOut, 'pntdec', dec, 1)
+                     if(dodeldec)call UvPutvrd(lOut, 'deldec', dec, 1)
+                     write (mesg, 10) PROG, 'Dec', dec, val1
+                     call HisWrite(Lout, mesg)
                   endif
                   if (updodra) then
-                    write (mesg, 10) PROG, 'DRA', dra, dra * cos(obsdec)
-                    dra = dra * cos(obsdec)
-                    call UvPutvrr(Lout, 'dra', dra, 1)
-                    call HisWrite(Lout, mesg)
+                     write (mesg, 10) PROG,'DRA',dra,dra*cos(obsdec)
+                     dra = dra * cos(obsdec)
+                     call UvPutvrr(Lout, 'dra', dra, 1)
+                     call HisWrite(Lout, mesg)
                   endif
-c
+c     
 c  Determine the phase increments for the various types of editing.
 c
                   HA = Lst - obsra
@@ -1011,7 +1016,7 @@ c
                   if (raabs) delra = raoff - RA
                   deldec = decoff
                   if (decabs) deldec = decoff - dec
-c Get original uv coordinates.
+c     Get original uv coordinates.
                   uu = preamble(1)
                   vv = preamble(2)
                   ww = preamble(3)
@@ -1021,19 +1026,19 @@ c Time.
                   if (dotime) phase = phase - timphz
 c Ra and Dec.
                   if (dorad) then
-                    call Getrdphz(Lin,RA+delra,dec+deldec,uu,vv,radphz)
-                    phase = phase - radphz
+                     call Getrdphz(Lin,RA+delra,dec+deldec,uu,vv,radphz)
+                     phase = phase - radphz
                   endif
 c Antenna.
                   antphz = (((delX * cosHA) - (delY * sinHA)) * cosdec)
-     *                     + (delZ * sindec)
+     *                  + (delZ * sindec)
                   if (doants) phase = phase - antphz
 c Delay (treated differently because of lo dependence).
                   tmpdelay = 0.0
                   if (dodelay .and. docorr) then
-                    tmpdelay = delay(ant2) - delay(ant1)
-                    if (abs(tmpdelay) .lt. 0.05) tmpdelay = 0.0
-                    tmpdelay = 2 * PI * tmpdelay
+                     tmpdelay = delay(ant2) - delay(ant1)
+                     if (abs(tmpdelay) .lt. 0.05) tmpdelay = 0.0
+                     tmpdelay = 2 * PI * tmpdelay
                   endif
 c
                   phase = 2 * PI * phase
@@ -1043,82 +1048,83 @@ c
 c  Get new uv coordinates...
 c  
                   if (dotime) then
-                    preamble(4) = preamble(4) + (timeoff / (2 * PI))
-                    HA = HA + timeoff
+                     preamble(4) = preamble(4) + (timeoff / (2 * PI))
+                     HA = HA + timeoff
                   endif
                   if (doatime) then
-                    call uvrdvrr(Lin, 'inttime', inttime, 0.0)
-                    preamble(4) = preamble(4) - inttime/(2.0*86400.0)
+                     call uvrdvrr(Lin, 'inttime', inttime, 0.0)
+                     preamble(4) = preamble(4) - inttime/(2.0*86400.0)
                   endif
                   if (dorad) HA = HA - delra
                   if (dotime .or. dorad) then
-                    cosHA = cos(HA)
-                    sinHA = sin(HA)
-                    cosdec = cos(obsdec + deldec)
-                    sindec = sin(obsdec + deldec)
+                     cosHA = cos(HA)
+                     sinHA = sin(HA)
+                     cosdec = cos(obsdec + deldec)
+                     sindec = sin(obsdec + deldec)
                   endif
                   if (douv) then
                     uu = (bxnew * sinHA) + (bynew * cosHA)
                     vv = (((-bxnew * cosHA) + (bynew * sinHA)) * sindec)
-     *                 + (bznew * cosdec)
+     *                     + (bznew * cosdec)
                     ww = (bxnew * cosHA - bynew * sinHA)*cosdec 
-     *                 + (bznew * sindec)
-c
+     *                     + (bznew * sindec)
+c     
                     if (douvrot) then
-                       call uvrdvrd(Lin, 'epoch', epoch, 2000.0d0)
-                       jepoch = epo2jul(epoch, ' ')
-                       call prerotat(jepoch, RA, dec, preamble(4),theta)
-                       costh = cos(theta)
-                       sinth = sin(theta)
-c
-                       preamble(1) = (uu * costh) + (vv * sinth)
-                       preamble(2) = (vv * costh) - (uu * sinth)
+                      call uvrdvrd(Lin, 'epoch', epoch, 2000.0d0)
+                      jepoch = epo2jul(epoch, ' ')
+                      call prerotat(jepoch, RA, dec, preamble(4),theta)
+                      costh = cos(theta)
+                      sinth = sin(theta)
+c     
+                      preamble(1) = (uu * costh) + (vv * sinth)
+                      preamble(2) = (vv * costh) - (uu * sinth)
                     else
-                       preamble(1) = uu
-                       preamble(2) = vv
+                      preamble(1) = uu
+                      preamble(2) = vv
                     endif
                     preamble(3) = ww
                   endif
-c
+
+c     
 c  Get particular headers necessary to do editing (these items have
 c  already been copied, so there is no need to write them again).
 c
                   if (dowide) call GetWide(Lin, MAXCHAN, nwide, wfreq)
                   if (docorr) call GetCoor(Lin, MAXCHAN, nspect, nschan,
-     *              ischan, sdf, sfreq)
+     *                  ischan, sdf, sfreq)
 c
 c  Apply corrections...
 c
                   if(dowide .and. (.not. docorr)) then
-                    if (phase .ne. 0.0) then
-                      changed = .TRUE.
-                      do k = 1, nwide
-                        tmphaz = phase * wfreq(k)
-                        delta = cmplx(cos(tmphaz), sin(tmphaz))
-                        data(k) = data(k) * delta
-                      enddo
-                    endif
+                     if (phase .ne. 0.0) then
+                        changed = .TRUE.
+                        do k = 1, nwide
+                           tmphaz = phase * wfreq(k)
+                           delta = cmplx(cos(tmphaz), sin(tmphaz))
+                           data(k) = data(k) * delta
+                        enddo
+                     endif
                   endif
-c
+c     
                   tmphaz = phase
                   if (dodelay) tmphaz = tmphaz - tmpdelay
                   if ((docorr) .and. (tmphaz .ne. 0.0)) then
-                    changed = .TRUE.
-                    do k = 1, nspect
-                      LastChn = ischan(k) + nschan(k) - 1
-                      do m = ischan(k), LastChn
-                        freq = sfreq(k) + (sdf(k) * (m - ischan(k)))
-                        tmphaz = phase * freq
-                        if (dodelay .and. (tmpdelay .ne. 0.0)) then
-                          freq = freq - lo1 - lo2
-                          tmphaz = tmphaz - (tmpdelay * freq)
-                        endif
-                        delta = cmplx(cos(tmphaz), sin(tmphaz))
-                        data(m) = data(m) * delta
-                      enddo
-                    enddo
+                     changed = .TRUE.
+                     do k = 1, nspect
+                        LastChn = ischan(k) + nschan(k) - 1
+                        do m = ischan(k), LastChn
+                           freq = sfreq(k) + (sdf(k) * (m - ischan(k)))
+                           tmphaz = phase * freq
+                           if (dodelay .and. (tmpdelay .ne. 0.0)) then
+                              freq = freq - lo1 - lo2
+                              tmphaz = tmphaz - (tmpdelay * freq)
+                           endif
+                           delta = cmplx(cos(tmphaz), sin(tmphaz))
+                           data(m) = data(m) * delta
+                        enddo
+                     enddo
                   endif
-c
+c     
                   if (dowide .and. docorr) then
                     call UvWread(Lin, wdata, wflags, MAXCHAN, Nwread)
                     if (Nwread .le. 0) then
@@ -1141,21 +1147,21 @@ c
                         wdata(1) = cmplx(0.0, 0.0)
                         wdata(2) = cmplx(0.0, 0.0)
                         do k = 1, nspect
-CC                        if (wflags(k)) then
-                            wt = abs(sdf(k) * nschan(k) / BANDWID)
-                            LastChn = ischan(k) + nschan(k) - 1 - ENDCHN
-                            do m = ischan(k) + ENDCHN, LastChn
-                              if (flags(m)) then
+C     C                        if (wflags(k)) then
+                          wt = abs(sdf(k) * nschan(k) / BANDWID)
+                          LastChn = ischan(k) + nschan(k) - 1 - ENDCHN
+                          do m = ischan(k) + ENDCHN, LastChn
+                             if (flags(m)) then
                                 if (sfreq(k) .gt. lo1) then
-                                  wdata(2) = wdata(2) + (data(m) * wt)
-                                  wtup = wtup + wt
+                                   wdata(2) = wdata(2) + (data(m) * wt)
+                                   wtup = wtup + wt
                                 else
-                                  wdata(1) = wdata(1) + (data(m) * wt)
-                                  wtdn = wtdn + wt
+                                   wdata(1) = wdata(1) + (data(m) * wt)
+                                   wtdn = wtdn + wt
                                 endif
-                              endif
-                            enddo
-CC                        endif
+                             endif
+                          enddo
+C     C                        endif
                         enddo
                         if (wtdn .gt. 0.0) wdata(1) = wdata(1) / wtdn
                         if (wtup .gt. 0.0) wdata(2) = wdata(2) / wtup
@@ -1173,13 +1179,13 @@ c  Simply apply same corrections to wide band data.
 c
 c  Not the correct source... (ie. allsrc=FALSE and source!=Selsrc).
 c  Just make sure to copy any wide band data.
-c
+c     
                 else
                   if (dowide .and. docorr) then
                     call UvWread(Lin, wdata, wflags, MAXCHAN, Nwread)
                     if (Nwread .le. 0) then
-                      errmsg = PROG // 'No wide band data?'
-                      call Bug('f', errmsg)
+                       errmsg = PROG // 'No wide band data?'
+                       call Bug('f', errmsg)
                     endif
                     call UvWwrite(Lout, wdata, wflags, Nwread)
                   endif
@@ -1198,7 +1204,7 @@ c
             enddo
 c
 c  Close the new history file and UV data set.
-c
+c     
             call HisClose(Lout)
             call UvClose(Lout)
 c
@@ -1209,7 +1215,7 @@ c
 c  End of cross/auto check if.
 c
         endif
-c
+c     
 c  Close the old UV data set.
 c
         call UvClose(Lin)
@@ -1220,10 +1226,10 @@ c
           k = Len1(Vis(j))
           m = Len1(Selsrc)
           errmsg = PROG // 'Source [' // Selsrc(1:m) //
-     *      '] not found in ' // Vis(j)(1:k)
+     *         '] not found in ' // Vis(j)(1:k)
           call bug('w', errmsg)
         endif
-c
+c     
 c  Warn if no apparent changes have been made.
 c
         if (.not. changed) then
@@ -1231,13 +1237,13 @@ c
           errmsg = PROG // 'No apparent changes made to ' // Vis(j)(1:k)
           call bug('w', errmsg)
         endif
-c
+c     
 c  End of Nfiles do loop.
-c
+c     
       enddo
 c
 c  End of main routine.
-c
+c     
       end
 c***********************************************************************
 	subroutine CalCopy(Lin,Lout,prog)
@@ -1583,8 +1589,9 @@ c
       if ((type .eq. ' ') .or. (length .le. 0)) then
         value = 0.0
       else if (updated) then
-c--     call UvGetvrd(Lin, variable, value, 1)
         call uvrdvrd(Lin, variable, value, 0.0D0)
+      else
+        call UvGetvrd(Lin, variable, value, 1)
       endif
       updated = updated .and. doedit
       return
@@ -1626,8 +1633,9 @@ c
       if ((type .eq. ' ') .or. (length .le. 0)) then
         value = 0.0
       else if (updated) then
-c--     call UvGetvrr(Lin, variable, value, 1)
         call uvrdvrr(Lin, variable, value, 0.0)
+      else
+        call UvGetvrr(Lin, variable, value, 1)
       endif
       updated = updated .and. doedit
       return
