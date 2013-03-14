@@ -30,7 +30,10 @@ set slib_flags=""
 #  -fno-stack-protector 
 # need -fno-second-undercore if your compiler adds them and you don't want them
 #  -fno-second-underscore
-if ($slib == linux) set slib_flags="-fPIC"
+if ($slib == linux) then
+  set slib_flags="-fPIC"
+  if (@F77@ == "g77") set slib_flags="$slib_flags -fno-second-underscore"
+endif
 
 # ubuntu 11+ needs this for linking (doesn't seem to hurt for those not needed it, yet)
 # see also:   https://wiki.ubuntu.com/NattyNarwhal/ToolchainTransition
