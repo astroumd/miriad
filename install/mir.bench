@@ -19,7 +19,6 @@ cd $tmp
 
 #			default parameters  (nchan=8, mapsize=512 for a test)
 set nchan=32
-set mapsize=1024
 set cell=0.5
 set standalone=0
 set clean=0
@@ -27,6 +26,9 @@ set fidelity=0
 set interval=0.01
 set uvcat=1
 set testcat=0
+#  the next two can be negative, in which case mapmaking and/or cleaning is skipped
+set mapsize=1024
+set niters=250
 
 foreach a ($*)
   set $a
@@ -92,6 +94,9 @@ if ($mapsize < 0)  goto done
 
 # echo May need to add 'line=channel,$nchan' to invert for the old versions...
 time invert vis=vis map=map1 beam=beam1 imsize=$mapsize cell=$cell > invert.log
+
+if ($niters < 0) goto done
+
 time clean map=map1 beam=beam1 out=clean1 > clean.log
 time restor model=clean1 beam=beam1 map=map1 out=cmap1 > restor.log
 echo The mirstones can now be obtained to divide 5 minutes by the total elapsed time:
