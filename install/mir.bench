@@ -42,7 +42,7 @@ if ($standalone) then
    setenv  LD_LIBRARY_PATH ..
 endif	
 
-echo "MIRBENCH: (2012-05-09) $tmp : nchan=$nchan mapsize=$mapsize"
+echo "MIRBENCH: (2013-03-15) $tmp : nchan=$nchan mapsize=$mapsize"
 echo hostname=`hostname` 
 echo benchdir=$tmp
 echo system=`uname -a`  
@@ -88,6 +88,8 @@ else
  mv vis1 vis
 endif
 
+if ($mapsize < 0)  goto done
+
 # echo May need to add 'line=channel,$nchan' to invert for the old versions...
 time invert vis=vis map=map1 beam=beam1 imsize=$mapsize cell=$cell > invert.log
 time clean map=map1 beam=beam1 out=clean1 > clean.log
@@ -107,5 +109,6 @@ if ($testcat) then
   histo in=map1d
 endif
 
+done:
 
 if ($clean) rm -rf $tmp.*
