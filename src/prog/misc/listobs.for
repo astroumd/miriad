@@ -108,12 +108,15 @@ c          11-feb-11 pjt systemp computation improved (nschan and flags)
 c          17-feb-11 pjt increased MAXSPECT for sci2 (needs 32)
 c           2-aug-11 pjt add options=allants
 c           7-dec-11 pjt add gap to tinker with less output records
+c          18-mar-13 pjt fix purpose reporting when same source changes in the middle
 c
 c
 c TODO:
 c      - remove old corr column - check with Doug Friedel
 c      - there is a strange bug (causing segfault) if the cal*h are replaced with maxdim.h
 c        suggesting somebody is writing over it's boundaries.
+c      - inttime can vary per baseline, and one needs to use MAX(inttime)
+c        not the first one found... (bugzilla 1058)
 c-----------------------------------------------------------------------
 	include 'mirconst.h'
         include 'caldefs.h'
@@ -127,7 +130,7 @@ c
         integer tin,k,nfocs,length,nhere,hereidx(MAXANT)
 	character dataset(MAXF)*128,outlog*128,text*256,dash*80
 	character radec*24,uthms*8,lsthms*8,oldsou*17,newsou*17
-	character type*1, sftime*30
+	character type*1, sftime*30,oldpur*2,newpur*2
 	real diff,totint,tint,baseline(MAXBASE),focus(MAXANT,50)
 	real focnew(MAXANT),focold(MAXANT),focdiff,rlst,uvd
         real bl
@@ -185,6 +188,7 @@ c --- check if focus is missing as it is in old data ----
 	   call uvprobvr(tin,'focus',type,length,fthere)
 c --- check source purpose
            call uvprobvr(tin,'purpose',type,length,pthere)
+           if (pthere) call uvgetvra(tin,'purpose',oldpur)
            ipt = ipt + 1
 	   if(ipt.gt.MAXP)CALL bug('f','Too many points')
 	   call getall(tin,ipt,pthere,nread,flags)
@@ -220,6 +224,7 @@ c --- check source purpose
 		 call uvgetvrd(tin,'time',jdnow,1)
 		 call uvgetvrr(tin,'inttime',tint,1)
                  call uvgetvra(tin,'source',newsou)
+                 call uvgetvra(tin,'purpose',newpur)
                  if (jdnow.gt.jdend) then
                     jdend = jdnow + tint/(3600.0*24.0)
                     call uvgetvrd(tin,'ut',utend,1)
@@ -230,13 +235,15 @@ c --- check source purpose
                  else
                     diff = jdnow - (jdold + (1.0d0-gap)*tint)
                  endif
-		 if(diff .gt. 0d0 .or. newsou .ne. oldsou) then
+		 if(diff.gt.0d0 .or. 
+     *                newsou.ne.oldsou .or. newpur.ne.oldpur) then
 		    dur(ipt) = totint/60.0
 		    ipt      = ipt + 1
 	            if(ipt.gt.MAXP)CALL bug('f','Too many points[MAXP]')
 		    call getall(tin,ipt,pthere,nread,flags)
 		    totint   = 86400.0 * tint
                     oldsou = newsou
+                    oldpur = newpur
                  else
                     totint = totint + 86400.0 * tint
 		 endif
@@ -565,7 +572,7 @@ c
         else
            purpose(ipt) = " "
         endif
-c        write(*,*) ipt,objs(ipt),purpose(ipt)
+c       write(*,*) ipt,objs(ipt),purpose(ipt)
 c	call uvgetvrd(tin,'ra',ra(ipt),1)
 c	call uvgetvrd(tin,'dec',dec(ipt),1)
 	call uvrdvrd(tin,'ra',ra(ipt),0.0d0)
