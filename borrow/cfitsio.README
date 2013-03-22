@@ -1,0 +1,14 @@
+
+only needed if you don't have CFITSIO and you want to install CASACORE 
+
+set version=3340
+
+wget ftp://heasarc.gsfc.nasa.gov/software/fitsio/c/cfitsio$version.tar.gz
+
+# make sure you have bin,lib,include linked in opt to 
+
+cd cfitsio
+./configure --prefix=$MIR/opt
+make clean
+make
+make install 
