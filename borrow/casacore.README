@@ -1,0 +1,26 @@
+if you don't see a directory 'casacore' here, it probably means you did not
+get this added package for miriad. It is only needed if you want to build
+the importmiriad routine to convert miriad visibility files into a CASA 
+Measurement Set.
+
+prep work:
+
+
+in $MIR/opt
+ln -s ../lib/linux lib
+ln -s ../bin/linux bin
+ln -s ../src/inc include
+
+wget  ftp://ftp.atnf.csiro.au/pub/software/measures_data/measures_data.tar.bz2
+      (about 8MB, expanding into 22 MB)
+svn co http://casacore.googlecode.com/svn/tags/casacore-1.5.0
+    (about 111MB)
+
+mkdir build
+cd build
+cmake -DWCSLIB_ROOT_DIR=$MIR/opt ..
+
+    -DCMAKE_INSTALL_PREFIX=$MIR/opt/casa
+    -DDATA_DIR=$MIR/opt/casa/data
+make
+
