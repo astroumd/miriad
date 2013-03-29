@@ -6,21 +6,52 @@ Measurement Set.
 prep work:
 
 
-in $MIR/opt
+1) symlinks in the "prefix" area: 
+
+cd $MIR/opt
 ln -s ../lib/linux lib
 ln -s ../bin/linux bin
 ln -s ../src/inc include
 
-wget  ftp://ftp.atnf.csiro.au/pub/software/measures_data/measures_data.tar.bz2
-      (about 8MB, expanding into 22 MB)
+2) install cfitsio if your system doesn't have it, casacore needs it
+   Here is an example for version 3.340 , see
+   http://heasarc.gsfc.nasa.gov/fitsio/   for the latest updates
+
+cd $MIR/borrow
+wget ftp://heasarc.gsfc.nasa.gov/software/fitsio/c/cfitsio3340.tar.gz
+tar zxf cfitsio3340.tar.gz 
+cd cfitsio
+./configure --prefix=$MIR/opt
+make 
+make install
+
+
+
+3) install casacore
+
+cd $MIR/borrow
 svn co http://casacore.googlecode.com/svn/tags/casacore-1.5.0
     (about 111MB)
 
+cd casacore-1.5.0/
 mkdir build
 cd build
-cmake -DWCSLIB_ROOT_DIR=$MIR/opt ..
-
-    -DCMAKE_INSTALL_PREFIX=$MIR/opt/casa
-    -DDATA_DIR=$MIR/opt/casa/data
+cmake -DWCSLIB_ROOT_DIR=$MIR/opt \
+      -DCMAKE_INSTALL_PREFIX=$MIR/opt/casa \
+      -DDATA_DIR=$MIR/opt/casa/data \
+      -DCFITSIO_ROOT_DIR=$MIR/opt \
+      ..
 make
+make install
+
+
+"make"  takes about 50 mins. on nemo2.
+
+4) install CASA measures data (ephemeris, dUT1 tables etc.)
+
+cd $MIR/opt/casa
+wget  ftp://ftp.atnf.csiro.au/pub/software/measures_data/measures_data.tar.bz2
+    (about 8MB, expanding into 22 MB)
+tar jxf measures_data.tar.bz2
+
 
