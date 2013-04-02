@@ -22,6 +22,20 @@
 # Enter new data here (1st 6 columns required, BEGIN WITH NO HASH), for example:
 # Source   Day.UT          Freq(GHz)  Flux(Jy)  RMS(Jy) Reference PrimaryCal PrimCalFlux(Jy)
 #
+0108+015   2013-MAR-19.0        31.4      3.04     0.05  CARMA22    NEPTUNE    -999.99   -0.14    0.11
+3C454.3    2013-MAR-19.0        31.4      5.37  -999.99  CARMA22    NEPTUNE    -999.99    0.02    0.11
+0108+015   2013-MAR-22.0        31.4      2.99     0.03  CARMA22    NEPTUNE    -999.99   -0.51    0.09
+3C454.3    2013-MAR-22.0        31.4      5.47  -999.99  CARMA22    NEPTUNE    -999.99   -0.10    0.13
+0108+015   2013-MAR-23.0        31.2      3.16     0.04  CARMA22    NEPTUNE    -999.99   -0.66    0.08
+3C454.3    2013-MAR-23.0        31.2      5.54  -999.99  CARMA22    NEPTUNE    -999.99   -0.29    0.07
+3C111      2013-MAR-24.0        92.8      3.39     0.13  CARMA13    URANUS   
+3C84       2013-MAR-24.0        92.8     18.50     0.91  CARMA13    URANUS   
+2348-165   2013-MAR-25.0        93.3      1.50     0.01  CARMA12    URANUS     -999.99   -0.54  -999.99
+2232+117   2013-MAR-25.0        93.3      4.00  -999.99  CARMA12    URANUS     -999.99   -0.53  -999.99
+2015+372   2013-MAR-26.0        31.4      6.41  -999.99  CARMA22    NEPTUNE    -999.99    0.04    0.15
+1800+784   2013-MAR-26.0        31.4      2.65     0.04  CARMA22    NEPTUNE    -999.99   -0.26    0.15
+2015+372   2013-MAR-27.0        31.4      6.62  -999.99  CARMA22    NEPTUNE    -999.99    0.04    0.14
+1800+784   2013-MAR-27.0        31.4      2.68     0.11  CARMA22    NEPTUNE    -999.99   -0.33    0.12
 3C454.3      2013-MAR-29.7   227.5     4.01     0.60   CARMA11    URANUS        -999.99     -999.99     -999.99 
 3C84         2013-MAR-29.7   227.5    11.27     1.69   CARMA11    URANUS        -999.99     -999.99     -999.99 
 3C345        2013-MAR-29.7   227.5     2.33     0.35   CARMA11    URANUS        -999.99     -999.99     -999.99 
