@@ -1,0 +1,11 @@
+Sometimes MIRIAD needs some 3rd party library or code.  You can either
+borrow them from your system, or if you don't have them, or want to
+use another version, you can install them using the familiar
+
+	  configure --prefix=$MIR/opt
+	  make
+	  make install
+
+procedure, by using $MIR/opt as the prefix.
+
+
