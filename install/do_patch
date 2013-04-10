@@ -27,6 +27,6 @@ set opt=$MIR/opt
 cd $opt
 ln -s ../bin/$MIRHOST bin
 ln -s ../lib/$MIRHOST lib
-ln -s ../inc          include
+ln -s ../src/inc      include
 
 
