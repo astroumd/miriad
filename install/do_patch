@@ -22,9 +22,11 @@ else
 endif
 
 
+#  $MIR/opt is now in CVS, but it needs symlinks to support --prefix installs here
 set opt=$MIR/opt
-mkdir -p $opt
-echo 'Optional bin/lib/include/.... can be used for 3rd things miriad needs' >  $opt/README
-
+cd $opt
+ln -s ../bin/$MIRHOST bin
+ln -s ../lib/$MIRHOST lib
+ln -s ../inc          include
 
 
