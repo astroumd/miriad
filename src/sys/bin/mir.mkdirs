@@ -83,6 +83,11 @@ stub.mkdirs1 $1/src/sys/bin
 stub.mkdirs1 $1/src/sys/files
 #
 stub.mkdirs1 $1/tmp
+#  new symlinks in $MIR/opt to allow this to be your standard $PREFIX tree
+cd $1;
+  ln -s $MIRBIN bin
+  ln -s $MIRLIB lib
+  ln -s $MIRINC include
 #
 unsetenv local_compile
 exit 0
