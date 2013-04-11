@@ -3,55 +3,76 @@ get this added package for miriad. It is only needed if you want to build
 the importmiriad routine to convert miriad visibility files into a CASA 
 Measurement Set.
 
-prep work:
+some optional prep work:
 
 
-1) symlinks in the "prefix" area: 
-
-cd $MIR/opt
-ln -s ../lib/linux lib
-ln -s ../bin/linux bin
-ln -s ../src/inc include
-
-2) install cfitsio if your system doesn't have it, casacore needs it
+1a) install cfitsio if your system doesn't have it, casacore needs it
    Here is an example for version 3.340 , see
    http://heasarc.gsfc.nasa.gov/fitsio/   for the latest updates
 
 cd $MIR/borrow
-wget ftp://heasarc.gsfc.nasa.gov/software/fitsio/c/cfitsio3340.tar.gz
-tar zxf cfitsio3340.tar.gz 
+set v=3340
+
+
+wget ftp://heasarc.gsfc.nasa.gov/software/fitsio/c/cfitsio$v.tar.gz
+tar zxf cfitsio$v.tar.gz 
+  or
+curl ftp://heasarc.gsfc.nasa.gov/software/fitsio/c/cfitsio$v.tar.gz | tar zxf -
+
 cd cfitsio
 ./configure --prefix=$MIR/opt
 make 
 make install
 
+1b) If your system does not come with lapack/blas, or flex/bison, you
+    may also find yourself in installing those.
+    gsl is a new dependency that was added recently.
+    wcslib is also needed, but since MIRIAD now needs this, we're going
+    to assume that we can use this version.
+    HDF5 and fftw3 are both optional, and currently not used in this 
+    MIRIAD build.
 
-
-3) install casacore
+2) install casacore, note the version number, and note if you 
+   need the extra -DCFITSIO_ROOT_DIR=$MIR/opt (see item 1)
 
 cd $MIR/borrow
-svn co http://casacore.googlecode.com/svn/tags/casacore-1.5.0
-    (about 111MB)
 
-cd casacore-1.5.0/
+svn -q co http://casacore.googlecode.com/svn/tags/casacore-1.5.0
+    (about 111MB)
+cd casacore-1.5.0
+
+    or something like
+
+svn co https://svn.cv.nrao.edu/svn/casa/branches/stable-2013-03/casacore
+cd casacore
+
+
+
 mkdir build
 cd build
 cmake -DWCSLIB_ROOT_DIR=$MIR/opt \
       -DCMAKE_INSTALL_PREFIX=$MIR/opt/casa \
       -DDATA_DIR=$MIR/opt/casa/data \
-      -DCFITSIO_ROOT_DIR=$MIR/opt \
       ..
-make
+make -j8
 make install
 
+# add this to cmake if you had to install CFITSIO in $MIR/opt
+#       -DCFITSIO_ROOT_DIR=$MIR/opt \
 
-"make"  takes about 50 mins. on nemo2.
+"make"  takes about 50 mins. on nemo2, but -j8 will go a lot faster.
 
-4) install CASA measures data (ephemeris, dUT1 tables etc.)
+3) install CASA measures data (ephemeris, dUT1 tables etc.)
 
 cd $MIR/opt/casa
 wget  ftp://ftp.atnf.csiro.au/pub/software/measures_data/measures_data.tar.bz2
-    (about 8MB, expanding into 22 MB)
 tar jxf measures_data.tar.bz2
+    (about 8MB, expanding into 22 MB)
+
+    or simply:
+
+curl ftp://ftp.atnf.csiro.au/pub/software/measures_data/measures_data.tar.bz2 | tar jxf -
 
 
+See also https://safe.nrao.edu/wiki/bin/view/Software/ObtainingCasaDataRepository 
+for potential updates to this developing story.
