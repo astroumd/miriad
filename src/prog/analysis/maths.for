@@ -112,15 +112,16 @@ c-----------------------------------------------------------------------
       integer ERROR, CONSTANT, SCALAR, VECTOR
       parameter (ERROR=0, CONSTANT=1, SCALAR=2, VECTOR=3)
       integer BUFLEN, MAXBOX
-      parameter (BUFLEN=256, MAXBOX=2048)
+      parameter (BUFLEN=512, MAXBOX=2048)
 
       logical   doExp, doMask, doRuns, unmask
       integer   boxes(MAXBOX), expbuf(BUFLEN), i, idx, k, l, lout,
      *          maskbuf(BUFLEN), nBuf, nERB, nMRB, nout(MAXNAX),
-     *          npixels, pnt, rbuflen, scratch(3,MAXRUNS), type, xblc,
+     *          npixels, rbuflen, scratch(3,MAXRUNS), type, xblc,
      *          xtrc, yblc, ytrc
+      ptrdiff   pnt
       real      exprbuf(BUFLEN), maskrbuf(BUFLEN), RBUF(MAXBUF)
-      character expr*256, mask*256, outNam*64, template*64, version*72
+      character expr*1024,mask*1024,outNam*256,template*64,version*72
 
       common    RBUF
 
