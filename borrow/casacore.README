@@ -1,9 +1,17 @@
-if you don't see a directory 'casacore' here, it probably means you did not
-get this added package for miriad. It is only needed if you want to build
-the importmiriad routine to convert miriad visibility files into a CASA 
-Measurement Set.
+if you don't see a directory 'casacore' or some version 'casacore-1.5'
+here, it probably means you did not get this added package for
+MIRIAD. It is only needed if you want to build the carmafiller program
+to convert miriad visibility files into a CASA Measurement Set. Currently
+the installation is manual, the instructions are below, but have not
+been tested on many machines.    
 
-some optional prep work:
+They have been tested on:
+     ubuntu 12.04 LTS
+     Scientific Linux 6.4
+
+
+
+First some optional prep work:
 
 
 1a) install cfitsio if your system doesn't have it, casacore needs it
@@ -25,42 +33,69 @@ make
 make install
 
 1b) If your system does not come with lapack/blas, or flex/bison, you
-    may also find yourself in installing those.
-    gsl is a new dependency that was added recently.
+    may also find yourself in having to install those.
+    gsl is a new dependency that was added recently. (NRAO version only?)
     wcslib is also needed, but since MIRIAD now needs this, we're going
-    to assume that we can use this version.
+    to assume that we can use this version, since it comes included.
     HDF5 and fftw3 are both optional, and currently not used in this 
     MIRIAD build.
+
+1c) If you plan to install carmafiller, do this:
+
+    cd $MIR/borrow
+    cvs co importmiriad
+    (cd importmiriad/miriad/ ; ln -s implement/Filling/)
+
+    and any CVS updates with
+    (cd $MIR/borrow/importmiriad; cvs update)
 
 2) install casacore, note the version number, and note if you 
    need the extra -DCFITSIO_ROOT_DIR=$MIR/opt (see item 1)
 
 cd $MIR/borrow
 
-svn -q co http://casacore.googlecode.com/svn/tags/casacore-1.5.0
+
+if (1) then
+  # grab the stable google code version
+  svn -q co http://casacore.googlecode.com/svn/tags/casacore-1.5.0
     (about 111MB)
-cd casacore-1.5.0
+  cd casacore-1.5.0
+else
+  # or something like the NRAO version [which doesn't work yet for me]
+  svn co https://svn.cv.nrao.edu/svn/casa/branches/stable-2013-03/casacore
+  cd casacore
+endif
 
-    or something like
-
-svn co https://svn.cv.nrao.edu/svn/casa/branches/stable-2013-03/casacore
-cd casacore
-
-
+# patch up to prepare for carmafiller
+ln -s ../importmiriad/miriad
+cp CMakeLists.txt CMakeLists.txt-orig
+sed "s/components/components miriad/" CMakeLists.txt-orig  > CMakeLists.txt
+diff CMakeLists.txt-orig CMakeLists.txt
+# you should only see one line where miriad was added... if not, might be broken
 
 mkdir build
 cd build
-cmake -DWCSLIB_ROOT_DIR=$MIR/opt \
+if (-e $MIR/opt/lib/libcfitsio.a) then
+  cmake -DWCSLIB_ROOT_DIR=$MIR/opt \
+      -DCMAKE_INSTALL_PREFIX=$MIR/opt/casa \
+      -DDATA_DIR=$MIR/opt/casa/data \
+      -DCFITSIO_ROOT_DIR=$MIR/opt \
+      ..
+else
+  cmake -DWCSLIB_ROOT_DIR=$MIR/opt \
       -DCMAKE_INSTALL_PREFIX=$MIR/opt/casa \
       -DDATA_DIR=$MIR/opt/casa/data \
       ..
+endif
+
 make -j8
 make install
 
-# add this to cmake if you had to install CFITSIO in $MIR/opt
-#       -DCFITSIO_ROOT_DIR=$MIR/opt \
+"make"  takes about 50 mins. on nemo2, but -j8 will go a lot faster.  12 mins on chara.
 
-"make"  takes about 50 mins. on nemo2, but -j8 will go a lot faster.
+Any CVS updates to e.g. importmiriad, do this:
+    (cd $MIR/borrow/importmiriad; cvs update)
+    (cd $MIR/borrow/casacore-1.5.0/build; make install)
 
 3) install CASA measures data (ephemeris, dUT1 tables etc.)
 
@@ -76,3 +111,17 @@ curl ftp://ftp.atnf.csiro.au/pub/software/measures_data/measures_data.tar.bz2 | 
 
 See also https://safe.nrao.edu/wiki/bin/view/Software/ObtainingCasaDataRepository 
 for potential updates to this developing story.
+
+cd $MIR/opt/casa
+svn co https://svn.cv.nrao.edu/svn/casa-data/trunk/ephemerides data/ephemerides
+svn co https://svn.cv.nrao.edu/svn/casa-data/trunk/geodetic    data/geodetic
+
+the next time you can simply update this data tree as follows:
+
+cd $MIR/opt/casa/data/ephemerides
+svn update
+cd $MIR/opt/casa/data/geodetic
+svn update
+
+And it will report what revision (version) number you have. This might be important
+information if you ever have an issue with 
