@@ -10,6 +10,9 @@ c	HISTO is a Miriad task which finds the minimum, maximum, mean and
 c	rms deviation from the mean for the selected region of the image.
 c	It also displays a simple histogram which is useful for determining
 c	the clip levels for clean and selfcal.
+c       If the beam is known, the beam area (pi/4/ln2*bmaj*bmin) is used
+c       to convert any JY/BEAM to a total flux in JY.
+c       See also:  IMHIST, IMSTAT
 c@ in
 c	The input file name. No default.
 c@ region
@@ -42,6 +45,9 @@ c    21oct03 pjt   check for JY/BEAM in the first 7 chars only
 c    14jun11 pjt   add SPITZER MJy/sr check
 c    15oct11 pjt   merged in '02jan05 rjs ' 
 c    01dec11 pkgw  Increase NBINMAX from 40 to 2048
+c
+c @todo
+c    is converting real to integer of  indx =   ok? or use RINT?
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	include 'maxnax.h'
@@ -49,9 +55,9 @@ c------------------------------------------------------------------------
 	character version*(*)
 	parameter(NBINDEF=16,NBINMAX=2048,MAXBOXES=2048)
 	parameter(MAXRUNS=40*MAXDIM)
-	parameter(VERSION = 'version 01-dec-2011' )
+	parameter(VERSION = 'version 25-dec-2013' )
 c
-	character file*128,asterisk*30,line*80,coord*64,bunit*32,
+	character file*128,asterisk*30,line*128,coord*64,bunit*32,
      +   object*32
 	integer nsize(MAXNAX),plane(MAXNAX),maxv(MAXNAX),minv(MAXNAX)
 	integer blc(MAXNAX),trc(MAXNAX)
@@ -202,6 +208,7 @@ c
         call rdhdr(lun,'cdelt1',cdelt1,0.0)
         call rdhdr(lun,'cdelt2',cdelt2,0.0)
         call rdhda(lun,'bunit',bunit,' ')
+c       beam area = pi/4/ln(2)*bmaj*bmin
         barea = 0.0
         if (cdelt1*cdelt2.ne.0.0) 
      *    barea = 1.1331 * bmaj * bmin / abs(cdelt1*cdelt2)
