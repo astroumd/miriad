@@ -94,6 +94,12 @@ if (-e $MIR/borrow/karma/.login) then
     else
       setenv DYLD_LIBRARY_PATH $KARMABASE/lib
     endif
+  else
+    if ($?LD_LIBRARY_PATH) then
+      setenv LD_LIBRARY_PATH $KARMABASE/lib:$LD_LIBRARY_PATH
+    else
+      setenv LD_LIBRARY_PATH $KARMABASE/lib
+    endif
   endif
 endif
 
@@ -101,6 +107,29 @@ endif
 if (-e   $MIR/borrow/nemo/nemo_start.csh) then
   source $MIR/borrow/nemo/nemo_start.csh
 endif
+
+#  MIS, if present
+if (-e   $MIR/borrow/mis/mis_start.csh) then
+  source $MIR/borrow/mis/mis_start.csh
+endif
+
+#  EGN, if present
+if (-e   $MIR/borrow/egn/egn_start.csh) then
+  source $MIR/borrow/egn/egn_start.csh
+endif
+
+#  warning: if EGN and MIS both exist, there's trouble.
+
+#  CASA(CORE), if present - this is where carmafiller likely lives (2013)
+if (-e   $MIR/opt/casa) then
+  set path = ($MIR/opt/casa/bin $path)
+  if ($?LD_LIBRARY_PATH) then
+    setenv LD_LIBRARY_PATH $MIR/opt/casa/lib:$LD_LIBRARY_PATH
+  else
+    setenv LD_LIBRARY_PATH $KARMABASE/lib
+  endif
+endif
+
 
 #
 #  If the file $MIR/MIRRC.local exists, execute it now.
