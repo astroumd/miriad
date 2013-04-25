@@ -1,14 +1,25 @@
 #! /bin/csh -f
 
-# can be run once miriad has been installed.
+# install the MIRIAD -> CASA-MS converter
+#
+# can only be run once miriad has been installed.
+#
+# this is one working example on e.g. ubuntu and scientific linux, see
+# $MIR/borrow/casacore.README for any other comments for other distro's
+# 
 # 
 
 
 if ($?MIR == 0) then
    echo MIR  not present
    exit 1
+else 
+   if (! -e $MIR/opt) then
+      echo $MIR/opt does not exist, you might have an older version of miriad:
+      cat $MIR/VERSION
+      exit 1
+   endif
 endif
-
 
 
 #  CFITSIO
@@ -40,7 +51,6 @@ sed "s/components/components miriad/" CMakeLists.txt-orig  > CMakeLists.txt
 diff CMakeLists.txt-orig CMakeLists.txt
 # you should only see one line where miriad was added... if not, might be broken
 
-
 mkdir build
 cd build
 cmake -DWCSLIB_ROOT_DIR=$MIR/opt \
@@ -51,6 +61,14 @@ cmake -DWCSLIB_ROOT_DIR=$MIR/opt \
 make -j8
 make install
 
+# CASA DATA
+
 cd $MIR/opt/casa
-svn co https://svn.cv.nrao.edu/svn/casa-data/trunk/ephemerides data/ephemerides
-svn co https://svn.cv.nrao.edu/svn/casa-data/trunk/geodetic    data/geodetic
+if (0) then
+  # the minimal suite (760MB)  [the ATNF measure set is only 14MB and may also work]
+  svn co https://svn.cv.nrao.edu/svn/casa-data/trunk/ephemerides data/ephemerides
+  svn co https://svn.cv.nrao.edu/svn/casa-data/trunk/geodetic    data/geodetic
+else
+  # this is what developers need to do regression testing (1.1GB)
+  svn co https://svn.cv.nrao.edu/svn/casa-data/distro            data
+endif
