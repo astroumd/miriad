@@ -1,0 +1,56 @@
+#! /bin/csh -f
+
+# can be run once miriad has been installed.
+# 
+
+
+if ($?MIR == 0) then
+   echo MIR  not present
+   exit 1
+endif
+
+
+
+#  CFITSIO
+
+cd $MIR/borrow
+set v=3340
+curl ftp://heasarc.gsfc.nasa.gov/software/fitsio/c/cfitsio$v.tar.gz | tar zxf -
+cd cfitsio
+./configure --prefix=$MIR/opt
+make 
+make install
+
+# IMPORTMIRIAD
+
+cd $MIR/borrow
+cvs co importmiriad
+(cd importmiriad/miriad/ ; ln -s implement/Filling/)
+
+
+# CASACORE
+
+cd $MIR/borrow
+svn -q co http://casacore.googlecode.com/svn/tags/casacore-1.5.0
+cd casacore-1.5.0
+# patch up to prepare for carmafiller
+ln -s ../importmiriad/miriad
+cp CMakeLists.txt CMakeLists.txt-orig
+sed "s/components/components miriad/" CMakeLists.txt-orig  > CMakeLists.txt
+diff CMakeLists.txt-orig CMakeLists.txt
+# you should only see one line where miriad was added... if not, might be broken
+
+
+mkdir build
+cd build
+cmake -DWCSLIB_ROOT_DIR=$MIR/opt \
+      -DCMAKE_INSTALL_PREFIX=$MIR/opt/casa \
+      -DDATA_DIR=$MIR/opt/casa/data \
+      -DCFITSIO_ROOT_DIR=$MIR/opt \
+      ..
+make -j8
+make install
+
+cd $MIR/opt/casa
+svn co https://svn.cv.nrao.edu/svn/casa-data/trunk/ephemerides data/ephemerides
+svn co https://svn.cv.nrao.edu/svn/casa-data/trunk/geodetic    data/geodetic
