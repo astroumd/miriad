@@ -9,6 +9,9 @@ They have been tested on:
      ubuntu 12.04 LTS
      Scientific Linux 6.4
 
+See $MIR/install/install.casacore for the current install script.  The text
+below are guidelines to alternative paths to success
+
 
 
 First some optional prep work:
@@ -20,7 +23,7 @@ First some optional prep work:
 
 cd $MIR/borrow
 set v=3340
-
+ (a request was made to make $v superfluous)
 
 wget ftp://heasarc.gsfc.nasa.gov/software/fitsio/c/cfitsio$v.tar.gz
 tar zxf cfitsio$v.tar.gz 
@@ -34,7 +37,8 @@ make install
 
 1b) If your system does not come with lapack/blas, or flex/bison, you
     may also find yourself in having to install those.
-    gsl is a new dependency that was added recently. (NRAO version only?)
+    You also need the 'cmake' tool.
+    gsl is a new dependency that was added recently. (NRAO version only for now)
     wcslib is also needed, but since MIRIAD now needs this, we're going
     to assume that we can use this version, since it comes included.
     HDF5 and fftw3 are both optional, and currently not used in this 
