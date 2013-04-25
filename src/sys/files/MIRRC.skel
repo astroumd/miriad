@@ -126,7 +126,7 @@ if (-e   $MIR/opt/casa) then
   if ($?LD_LIBRARY_PATH) then
     setenv LD_LIBRARY_PATH $MIR/opt/casa/lib:$LD_LIBRARY_PATH
   else
-    setenv LD_LIBRARY_PATH $KARMABASE/lib
+    setenv LD_LIBRARY_PATH $MIR/opt/casa/lib
   endif
 endif
 
