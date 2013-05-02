@@ -22,13 +22,11 @@ First some optional prep work:
    http://heasarc.gsfc.nasa.gov/fitsio/   for the latest updates
 
 cd $MIR/borrow
-set v=3340
- (a request was made to make $v superfluous)
 
-wget ftp://heasarc.gsfc.nasa.gov/software/fitsio/c/cfitsio$v.tar.gz
+wget ftp://heasarc.gsfc.nasa.gov/software/fitsio/c/cfitsio_latest.tar.gz
 tar zxf cfitsio$v.tar.gz 
   or
-curl ftp://heasarc.gsfc.nasa.gov/software/fitsio/c/cfitsio$v.tar.gz | tar zxf -
+curl ftp://heasarc.gsfc.nasa.gov/software/fitsio/c/cfitsio_latest.tar.gz | tar zxf -
 
 cd cfitsio
 ./configure --prefix=$MIR/opt
@@ -43,6 +41,14 @@ make install
     to assume that we can use this version, since it comes included.
     HDF5 and fftw3 are both optional, and currently not used in this 
     MIRIAD build.
+
+    CMAKE:
+    curl http://www.cmake.org/files/v2.8/cmake-2.8.10.2.tar.gz | tar zxf -
+    cd cmake-2.8.10.2/
+    ./configure --prefix=$MIR/opt
+    make
+    make install
+
 
 1c) If you plan to install carmafiller, do this:
 
@@ -60,13 +66,15 @@ cd $MIR/borrow
 
 
 if (1) then
-  # grab the stable google code version
+  # grab the stable google code version (rev 21337)
   svn -q co http://casacore.googlecode.com/svn/tags/casacore-1.5.0
     (about 111MB)
   cd casacore-1.5.0
 else
   # or something like the NRAO version [which doesn't work yet for me]
   svn co https://svn.cv.nrao.edu/svn/casa/branches/stable-2013-03/casacore
+  # or the google code again (rev 21347 or later)
+  # svn co http://casacore.googlecode.com/svn/trunk/ casacore
   cd casacore
 endif
 
@@ -129,3 +137,10 @@ svn update
 
 And it will report what revision (version) number you have. This might be important
 information if you ever have an issue with 
+
+
+On a MAC you'll need to wrap line 158.. of the CMakeLists.txt file 
+otherwise a bug on C compiler on MAC will silence cmake.
+if(USE_THREADS)
+....
+endif(USE_THREADS)
