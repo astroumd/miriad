@@ -2,7 +2,7 @@
 #  
 # script to tinker with a single calibrator (e.g. fringetest)
 #
-# see also arryay health:   fringeCheck.csh
+# see also array health:   CARMA/scripts/python/observer/arrayHealth/fringeCheck.csh
 #
 # Default: fringe.3C273.2008jun18.4
 # For default settingsf rms in the 6 windows is:  
@@ -12,26 +12,30 @@
 #
 set vis=fringe.3C273.2008jun18.4.miriad   #> IFILE  vis=fringe.3C273.2008jun18.4.miriad
 #
-set band4=1                               #> RADIO  band4=0        0,1
 set linecal=0                             #> RADIO  linecal=0      0,1
 set bandpassg=0                           #> RADIO  bandpassg=0    0,1
-set selfcal=1                             #> RADIO  selfcal=1      0,1
+set selfcal=1                             #> RADIO  selfcal=1      0,1,2
 set ampcal=0                              #> RADIO  ampcal=0       0,1
 #
 set interval=2                            #> SCALE  interval=2     0.05:4:0.05
 set refant=7                              #> RADIO  refant=7       1,2,3,4,5,6,7,8,9,10,11,12,13,14,15
+set badant=0                              #> CHECK  badant=0       1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0
 #
-set imsize=256                            #> RADIO  imsize=256     0,128,129,256,257,512,513
-set cell=1                                #> SCALE  cell=1.0       0:4:0.1
+set imsize=0                              #> RADIO  imsize=0       0,64,65,128,129,256,257,512,513,1024,1025
+set cell=0                                #> SCALE  cell=0         0:4:0.05
 set mfs=0                                 #> RADIO  mfs=0          0,1
-set dogsv=0                               #> RADIO  dogsv=0        0,1
+set gsv=0                                 #> RADIO  gsv=0          0,1
 set systemp=0                             #> RADIO  systemp=0      0,1
 set mosaic=0                              #> RADIO  mosaic=0       0,1
 set method=clean                          #> RADIO  method=clean   clean,maxen
 set niters=250                            #> SCALE  niters=250     0:1000:1
 set rms=0.03                              #> SCALE  rms=0.02       0:0.2:0.001
-set ds9=0                                 #> RADIO  ds9=0          0,1
-set mask=15                               #> SCALE  mask=15        0:30:1
+set ds9=0                                 #> RADIO  ds9=0          0,cm,res
+set gaincut=0.95                          #> SCALE  gaincut=0.95   0:1:0.01
+set win=0                                 #> CHECK  win=0          0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16
+set nchan=15                              #> SCALE  nchan=15       1:256:1
+set casa=0                                #> RADIO  casa=0         0:1
+
 #
 foreach arg ($*)
   set $arg
@@ -81,11 +85,19 @@ endif
 
 listobs vis=$dat > vis0.listobs
 
-uvcat vis=$dat out=vis0 "select=-source(noise),-auto"
+set select="-source(noise),-auto"
+if ($win != 0) then
+  set select="$select,win($win)"
+endif
+uvcat vis=$dat out=vis0 select=$select
+
+if ($badant != 0) then
+  uvflag vis=vis0 select="ant($badant)" flagval=flag
+endif
 
 # lINE calibration
 if ($linecal) linecal vis=vis0
-uvcat vis=vis0 out=vis1  # select="win(1,2,3,5,6,7)"
+uvcat vis=vis0 out=vis1 
 
 # PASSBAND calibration
 mfcal vis=vis1 refant=$refant interval=$interval
@@ -95,21 +107,26 @@ uvcat vis=vis1 out=vis2 $uvcat1_options
 
 # GAIN calibration
 if ($selfcal) then
-  selfcal vis=vis2 interval=$interval refant=$refant $selfcal_options 
+  if ($selfcal == 1) then
+    selfcal vis=vis2 interval=$interval refant=$refant $selfcal_options 
+  else
+    mselfcal vis=vis2 interval=$interval refant=$refant $selfcal_options 
+  endif
   gplist vis=vis2 options=phase
   gplist vis=vis2 options=amp
 endif
 
 
-closure vis=vis2
+echo closure vis=vis2
 
-if ($imsize == 0) exit 0
+if ($cell == 0.0) set cell=0
+if ($imsize == 0 && $cell != 0) exit 0
 
 #
 # ----------------------------------------------------------------------
 # Mapping
 
-if ($dogsv) puthd in=vis2/senmodel value=GSV type=ascii
+if ($gsv) puthd in=vis2/senmodel value=GSV type=ascii
 
 set vis=vis2
 
@@ -121,9 +138,16 @@ if (0) then
   uvedit vis=$vis.tmp out=$vis ra=12,29,8 dec=2,03,30
 endif
 
+# an extra copy
+if (1) then
+  rm -rf $vis.tmp
+  mv $vis $vis.tmp
+  uvcat vis=$vis.tmp out=$vis
+endif
+
 invert vis=$vis  map=$vis.mp beam=$vis.bm \
     imsize=$imsize cell=$cell \
-    line=chan,1,1,15,15 \
+    line=chan,1,1,$nchan,$nchan \
     $invert_options 
 
 
@@ -147,6 +171,10 @@ if ($mosaic) then
     out=$vis.cm fwhm=$bmaj,$bmin pa=$bpa
   restor model=$vis.cc beam=$vis.bm map=$vis.mp \
     out=$vis.res fwhm=$bmaj,$bmin pa=$bpa mode=residual
+
+  mossen in=$vis.mp sen=$vis.sen gain=$vis.gain
+  maths exp="<$vis.sen>" mask="<$vis.gain>".gt.$gaincut out=$vis.senc
+  # maths exp="<$vis.sen>" mask="<$vis.gain>".eq.1.0 out=$vis.senc
 else
   if ($method == clean) then
      #  hogbom clark steer any
@@ -165,18 +193,30 @@ else
     out=$vis.res mode=residual
 endif
 
+#
 
-# mask out the center where the beam should be
-if ($mask) then
-  set region="relpix,box(-$mask,-$mask,$mask,$mask)"
-  immask in=$vis.mp "region=$region" flag=false logic=and
-  immask in=$vis.cm "region=$region" flag=false logic=and
-  maths exp="<$vis.cm>" out=$vis.cmm
-endif
+if ($ds9 != 0) mirds9 $vis.$ds9
 
-if ($ds9) mirds9 $vis.cm
-
-echo IMSTAT on full image, with mask=$mask
+echo IMSTAT on full image, vis.cm
 imstat in=$vis.cm
-echo IMSTAT on inner quarter, with mask=$mask
+echo IMSTAT on inner quarter, vis.cm
 imstat in=$vis.cm "region=quarter"
+
+echo IMSTAT on full image, vis.res
+imstat in=$vis.res
+echo IMSTAT on inner quarter, vis.res
+imstat in=$vis.res "region=quarter"
+
+
+if ($casa) then
+  uvcat vis=$vis out=mir4ms
+  carmafiller vis=mir4ms ms=ms
+  set py=myclean.py
+  echo "# casapy script"             > $py
+  echo "# run as:   casapy -c $py"  >> $py
+  echo "clean('ms','im')"           >> $py
+  echo "viewer('im.image')"         >> $py
+  echo $py written, run as:   casapy -c $py
+  echo Or paste the following commands into your casapy shell:
+  cat $py
+endif
