@@ -1,8 +1,7 @@
 #! /bin/csh -f
 #
-#   Example of a script that assembles miriad from scratch and compiles
-#   could be part of a nightly script.
-#   Note this script gets miriad, with wip and rad as well.
+#   Example script that assembles miriad from scratch and compiles
+#   Note this script gets miriad, with wip, rad and a few other things as well.
 #
 #   Examples of use:
 #
@@ -31,6 +30,7 @@
 #   27-jun-11    add gold=0 default, to counter ld memory hog problems
 #   20-jul-11    add carmacookbook - hey, it's moonlanding #1 anniversary
 #    8-jun-12    various changes for school12
+#    4-jun-13    casa/carmafiller option (only works on linux?)
 #----
 
 
@@ -73,6 +73,9 @@ set debug=0
 
 # DSO linking hack
 set dsolink=0
+
+# CASACORE/carmafiller
+set casa=0
 
 #   tar file to grab from ftp (rootdir)
 set ftpdir=ftp://ftp.astro.umd.edu/pub/carma
@@ -244,6 +247,10 @@ if ($auto) then
 else
  cd $rootdir
  time install/install.miriad $opts generic=$generic gif=$gif brief=$brief telescope=$telescope
+ if ($casa) then
+    echo "Installing casacore and carmafiller....; this will take a while"
+    source miriad_start.csh
+    time install/install.carmafiller >& tmp/casacore.log
 endif
 
 #    patch the VERSION
