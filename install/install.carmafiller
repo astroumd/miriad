@@ -23,11 +23,12 @@ endif
 
 
 #  CFITSIO
+#  grep CFITSIO_VERSION fitsio.h
 
 cd $MIR/borrow
-set v=3340
-curl ftp://heasarc.gsfc.nasa.gov/software/fitsio/c/cfitsio$v.tar.gz | tar zxf -
+curl ftp://heasarc.gsfc.nasa.gov/software/fitsio/c/cfitsio_latest.tar.gz | tar zxf -
 cd cfitsio
+grep CFITSIO_VERSION fitsio.h
 ./configure --prefix=$MIR/opt
 make 
 make install
@@ -36,7 +37,7 @@ make install
 
 cd $MIR/borrow
 cvs co importmiriad
-(cd importmiriad/miriad/ ; ln -s implement/Filling/)
+(cd importmiriad/miriad/ ; ln -s implement/Filling)
 
 
 # CASACORE
@@ -44,7 +45,7 @@ cvs co importmiriad
 cd $MIR/borrow
 svn -q co http://casacore.googlecode.com/svn/tags/casacore-1.5.0
 cd casacore-1.5.0
-# patch up to prepare for carmafiller
+# patch up to prepare for carmafiller (only if you had not done this before)
 ln -s ../importmiriad/miriad
 cp CMakeLists.txt CMakeLists.txt-orig
 sed "s/components/components miriad/" CMakeLists.txt-orig  > CMakeLists.txt
