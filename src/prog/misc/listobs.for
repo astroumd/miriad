@@ -130,7 +130,7 @@ c
         integer tin,k,nfocs,length,nhere,hereidx(MAXANT)
 	character dataset(MAXF)*128,outlog*128,text*256,dash*80
 	character radec*24,uthms*8,lsthms*8,oldsou*17,newsou*17
-	character type*1, sftime*30,oldpur*2,newpur*2
+	character type*1, sftime*30,oldpur*5,newpur*5
 	real diff,totint,tint,baseline(MAXBASE),focus(MAXANT,50)
 	real focnew(MAXANT),focold(MAXANT),focdiff,rlst,uvd
         real bl
