@@ -604,16 +604,21 @@ if ($brief == 0) then
  make clean
  popd >& /dev/null
 
- echo Compiling atnf code: atlod
- pushd $MIR/tmp >& /dev/null
- cp -p $MIR/src/prog/atnf/atlod.* .
- make -f $MIRLIB/Makefile atlod EL=-lrpfits >& $MIR/tmp/atlod.$$.$hosttype 
- if ($status) echo Problems compiling ATLOD
- mv atlod $MIRBIN
- doc -p atlod.for
- mv atlod.doc $MIRPDOC
- rm -f atlod.*
- popd >& /dev/null
+ if (1) then
+   mir.prog atlod   
+ else
+   # older method, makefile not great anymore
+   echo Compiling atnf code: atlod
+   pushd $MIR/tmp >& /dev/null
+   cp -p $MIR/src/prog/atnf/atlod.* .
+   make -f $MIRLIB/Makefile atlod EL=-lrpfits >& $MIR/tmp/atlod.$$.$hosttype 
+   if ($status) echo Problems compiling ATLOD
+   mv atlod $MIRBIN
+   doc -p atlod.for
+   mv atlod.doc $MIRPDOC
+   rm -f atlod.*
+   popd >& /dev/null
+ endif
 
 endif
 
