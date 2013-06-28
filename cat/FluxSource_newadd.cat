@@ -22,6 +22,8 @@
 # Enter new data here (1st 6 columns required, BEGIN WITH NO HASH), for example:
 # Source   Day.UT          Freq(GHz)  Flux(Jy)  RMS(Jy) Reference PrimaryCal PrimCalFlux(Jy)
 #
+0237+288   2013-JUN-25.0        31.4      3.69  -999.99  CARMA23    URANUS     -999.99   -0.45    0.03
+0224+069   2013-JUN-25.0        31.4      1.60     0.03  CARMA23    URANUS     -999.99   -0.08    0.05
 3C84         2013-JUN-27.6   103.0    16.37     2.46   CARMA8     URANUS        -999.99     -999.99     -999.99
 MWC349       2013-JUN-27.6   103.0     1.31     0.20   CARMA8     URANUS        -999.99     -999.99     -999.99
 BLLAC        2013-JUN-27.6   103.0     8.70     1.30   CARMA8     URANUS        -999.99     -999.99     -999.99
