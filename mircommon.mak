@@ -11,7 +11,7 @@ RATTY=$(top_builddir)/src/tools/ratty
 F2C=$(top_builddir)/src/tools/intf2c
 
 %.c: %.f2c $(F2C)
-	$(AM_V_GEN)$(F2C) -s f2c $< $@
+	$(AM_V_GEN)$(F2C) -s f2c -a $< $@
 
 # Default for building tasks
 
