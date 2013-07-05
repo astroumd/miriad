@@ -1,11 +1,15 @@
 #! /bin/csh -f 
 #
 #  this script will generate new miriad_start.{csh,sh} files
+#  either from scratch, or edit existing ones. The idea is that only 
+#  this file should need an edit if MIRIAD has been relocated to another
+#  root directory.
+#
 #  it will detect if it is 
 #      MIR4, the Miriad V4 (both old and new install methods)
 #      ATNF-MIRIAD, the RCS based binary weekly builds
 #
-#  See also install.miriad_bin.atnf
+#  See also install/miriad_bin.atnf
 #
 # TODO:   optional argument to select old or new for MIR4 
 #         check if you run the 32bit on 64bit, which runs, but would not compile itself
