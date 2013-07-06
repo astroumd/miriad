@@ -1,4 +1,14 @@
 Imported essential routines from ZENO for Jin Koda's hkmiriad routines.
 See $MIR/spec/hkmiriad
 
+The full official distribution of ZENO is authored and maintained by
+Joshua Barnes,  see
+	http://www.ifa.hawaii.edu/faculty/barnes/software.html
+and/or
+	http://www.ifa.hawaii.edu/faculty/barnes/zeno/index.html
+
+The current MIRIAD routines only use a small layer to make a nice C main()
+compile and link, and may not be exactly the same version as you can find
+in Barnes' official distribution.
+His code follows the GNU license (http://www.gnu.org/licenses/)
 
