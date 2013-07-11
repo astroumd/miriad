@@ -336,6 +336,9 @@ c    mhw  23nov10 Fix for CABB 33 channel (64MHz) mode
 c    mhw  07feb11 Add edge keyword to control birdie/edge flagging
 c    mhw  29may12 Try to make opcorr more accurate for wide bands
 c    mhw  15jun12 Fix index errors in opcor change
+c    mhw  12sep12 Drop edge channels for 16cm data with birdie option
+c    mhw  07dec12 Fix 29may12 opcor code again - how did it ever work?
+c    mhw  29jan13 Fix nscans skip and read code - RPEOF call hangs
 c
 c $Id$
 c-----------------------------------------------------------------------
@@ -1957,7 +1960,7 @@ c
           do i=1,nchan
             i1 = 1+(i-1)/(nchan/(nop-1.0))
             i2 = i1+1
-            f = sfreq + (i-1)*sdf
+            f = (sfreq + (i-1)*sdf)*1d9
             df = freq(i2)-freq(i1)
             data(i) = (fac(i1)*(freq(i2)-f)/df+
      *                 fac(i2)*(f-freq(i1))/df)
@@ -2630,10 +2633,12 @@ c
 c
 c  Check if we have run out of records of interest. If so, skip to the
 c  end of the file and pretend we have hit EOF.
+c  Note: commented out because it fails - RPEOF call hangs indefinitely
+c  Replaced by code 2 blocks down.
 c
-          else if(scanproc.gt.0.and.scanno.gt.scanskip+scanproc)then
-            call RPEOF(jstat)
-            if(jstat.eq.0)jstat = 3
+c          else if(scanproc.gt.0.and.scanno.gt.scanskip+scanproc)then
+c            call RPEOF(jstat)
+c            if(jstat.eq.0)jstat = 3
 c
 c  Handle a SYSCAL record. If it appears to belong to this integration,
 c  send it through to the Poke routines right away. Otherwise, end the
@@ -2662,6 +2667,7 @@ c
             fgbad = fgbad + 1
           else
             ok = scanno.gt.scanskip
+            if (scanproc.gt.0) ok=ok.and.scanno.le.scanskip+scanproc
             if(ok.and.NewScan)then
               call dayjul(datobs,jday0)
               time = ut / (3600.d0*24.d0) + jday0
@@ -3706,15 +3712,20 @@ c-----------------------------------------------------------------------
         real edge
 c
         double precision c1,c2,tmp,cfreq,J17AUG10
-        integer MAXRFI, NBIRDIE1, nrfi,ch1,ch2,i,j,k,offset
-        parameter(MAXRFI=99,NBIRDIE1=11,J17AUG10=2455425.5)
+        integer MAXRFI, NBIRDIE1, NBIRDIE2, nrfi,ch1,ch2,i,j,k,offset
+        parameter(MAXRFI=99,NBIRDIE1=11,NBIRDIE2=3,J17AUG10=2455425.5)
         double precision rfifreq(2,MAXRFI)
         common/rficom/rfifreq,nrfi
 c
-c  CABB continuum mode birdies (2049*1 MHz)
+c  CABB 1MHz continuum mode birdies (2049*1 MHz)
 c        
         integer b1(NBIRDIE1)
         data b1/640,256,768,1408,1280,1920,1792,1176,156,128,1152/
+c
+c  CABB 64 MHz continuum mode birdies (33*64 MHz)
+c        
+        integer b2(NBIRDIE2)
+        data b2/8,16,24/
 c        
         if (nrfi.gt.0) then
           offset=1
@@ -3775,8 +3786,8 @@ c
                   c1=(1.05-sfreq(i))/sdf(i)
                   c2=(3.15-sfreq(i))/sdf(i)
                 endif
-                ch1=min(nint(c1),nint(c2))
-                ch2=max(nint(c1),nint(c2))
+                ch1=max(ch1,min(nint(c1),nint(c2)))
+                ch2=min(ch2,max(nint(c1),nint(c2)))
               endif
               do j=0,ch1
                 flags(offset+j)=.false.
@@ -3784,6 +3795,17 @@ c
               do j=ch2,nfreq(i)-1
                   flags(offset+j)=.false.
               enddo
+            else if (nfreq(i).eq.33.and.
+     *          abs(abs(sdf(i))-0.064).lt.1.e-4) then
+c          
+c             CABB Mode 32*64MHz
+c
+              do j=1,NBIRDIE2
+                flags(offset+b2(j))=.false.
+              enddo
+              ch1=33*edge/200
+              ch2=33*(1.0-edge/200)
+     
             else if (nfreq(i).ge.2049.and.
      *          abs(sdf(i)).lt.4.e-5) then
 c
