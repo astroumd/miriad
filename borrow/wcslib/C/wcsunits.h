@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.13 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2012, Mark Calabretta
+  WCSLIB 4.18 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2013, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -16,22 +16,16 @@
   more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with WCSLIB.  If not, see <http://www.gnu.org/licenses/>.
+  along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Correspondence concerning WCSLIB may be directed to:
-    Internet email: mcalabre@atnf.csiro.au
-    Postal address: Dr. Mark Calabretta
-                    Australia Telescope National Facility, CSIRO
-                    PO Box 76
-                    Epping NSW 1710
-                    AUSTRALIA
+  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
 
-  Author: Mark Calabretta, Australia Telescope National Facility
-  http://www.atnf.csiro.au/~mcalabre/index.html
+  Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
+  http://www.atnf.csiro.au/people/Mark.Calabretta
   $Id$
 *=============================================================================
 *
-* WCSLIB 4.13 - C routines that implement the FITS World Coordinate System
+* WCSLIB 4.18 - C routines that implement the FITS World Coordinate System
 * (WCS) standard.  Refer to
 *
 *   "Representations of world coordinates in FITS",
@@ -104,7 +98,8 @@
 *                       If enabled, for function return values > 1, this
 *                       struct will contain a detailed error message, see
 *                       wcserr_enable().  May be NULL if an error message is
-*                       not desired.
+*                       not desired.  Otherwise, the user is responsible for
+*                       deleting the memory allocated for the wcserr struct.
 *
 * Function return value:
 *             int       Status return value:
@@ -153,7 +148,8 @@
 *                       If enabled, for function return values > 1, this
 *                       struct will contain a detailed error message, see
 *                       wcserr_enable().  May be NULL if an error message is
-*                       not desired.
+*                       not desired.  Otherwise, the user is responsible for
+*                       deleting the memory allocated for the wcserr struct.
 *
 * Function return value:
 *             int       Status return value:
@@ -246,7 +242,8 @@
 *                       If enabled, for function return values > 1, this
 *                       struct will contain a detailed error message, see
 *                       wcserr_enable().  May be NULL if an error message is
-*                       not desired.
+*                       not desired.  Otherwise, the user is responsible for
+*                       deleting the memory allocated for the wcserr struct.
 *
 * Function return value:
 *             int       Status return value:
@@ -396,14 +393,15 @@ int wcsunitse(const char have[], const char want[], double *scale,
 
 int wcsutrne(int ctrl, char unitstr[], struct wcserr **err);
 
-int wcsulexe(const char unitstr[], int *func, double *scale, double units[],
-             struct wcserr **err);
+int wcsulexe(const char unitstr[], int *func, double *scale,
+             double units[WCSUNITS_NTYPE], struct wcserr **err);
 
 /* Deprecated. */
 int wcsunits(const char have[], const char want[], double *scale,
              double *offset, double *power);
 int wcsutrn(int ctrl, char unitstr[]);
-int wcsulex(const char unitstr[], int *func, double *scale, double units[]);
+int wcsulex(const char unitstr[], int *func, double *scale,
+            double units[WCSUNITS_NTYPE]);
 
 #ifdef __cplusplus
 }

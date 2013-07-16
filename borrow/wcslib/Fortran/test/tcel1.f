@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 4.13 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2012, Mark Calabretta
+* WCSLIB 4.18 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2013, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -18,16 +18,10 @@
 * You should have received a copy of the GNU Lesser General Public
 * License along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 *
-* Correspondence concerning WCSLIB may be directed to:
-*   Internet email: mcalabre@atnf.csiro.au
-*   Postal address: Dr. Mark Calabretta
-*                   Australia Telescope National Facility, CSIRO
-*                   PO Box 76
-*                   Epping NSW 1710
-*                   AUSTRALIA
+* Direct correspondence concerning WCSLIB to mark@calabretta.id.au
 *
-* Author: Mark Calabretta, Australia Telescope National Facility
-* http://www.atnf.csiro.au/~mcalabre/index.html
+* Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
+* http://www.atnf.csiro.au/people/Mark.Calabretta
 * $Id$
 *=======================================================================
 
@@ -182,8 +176,8 @@
                 END IF
 
                 K = K + 1
-                XR(K) = -X(J)
-                YR(K) =  Y(J)
+                XR(K) = -REAL(X(J))
+                YR(K) =  REAL(Y(J))
  50           CONTINUE
 
               CALL PGLINE (K, XR, YR)
@@ -216,8 +210,8 @@
                 END IF
 
                 K = K + 1
-                XR(K) = -X(J)
-                YR(K) =  Y(J)
+                XR(K) = -REAL(X(J))
+                YR(K) =  REAL(Y(J))
  80           CONTINUE
 
               CALL PGLINE (K, XR, YR)
@@ -272,8 +266,8 @@
                 END IF
 
                 K = K + 1
-                XR(K) = -X(J)
-                YR(K) =  Y(J)
+                XR(K) = -REAL(X(J))
+                YR(K) =  REAL(Y(J))
  110          CONTINUE
 
               CALL PGLINE (K, XR, YR)
@@ -327,8 +321,8 @@
                 END IF
 
                 K = K + 1
-                XR(K) = -X(J)
-                YR(K) =  Y(J)
+                XR(K) = -REAL(X(J))
+                YR(K) =  REAL(Y(J))
  140          CONTINUE
 
               CALL PGLINE (K, XR, YR)

@@ -1,5 +1,5 @@
 #-----------------------------------------------------------------------------
-# GNU makefile for building PGSBOX 4.13
+# GNU makefile for building PGSBOX 4.18
 #
 # Summary of the main targets
 # ---------------------------
@@ -26,11 +26,11 @@
 #      instead and re-run configure.
 #
 #   2) In compiling the test programs, this makefile assumes that the
-#      WCSLIB 4.13 sources reside in ../C and ../Fortran (as in the
+#      WCSLIB 4.18 sources reside in ../C and ../Fortran (as in the
 #      distribution kit).
 #
-# Author: Mark Calabretta, Australia Telescope National Facility
-# http://www.atnf.csiro.au/~mcalabre/index.html
+# Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
+# http://www.atnf.csiro.au/people/Mark.Calabretta
 # $Id$
 #-----------------------------------------------------------------------------
 # Get configure settings.

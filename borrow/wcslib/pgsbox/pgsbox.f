@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* PGSBOX 4.13 - draw curvilinear coordinate axes for PGPLOT.
-* Copyright (C) 1997-2012, Mark Calabretta
+* PGSBOX 4.18 - draw curvilinear coordinate axes for PGPLOT.
+* Copyright (C) 1997-2013, Mark Calabretta
 *
 * This file is part of PGSBOX.
 *
@@ -18,16 +18,10 @@
 * You should have received a copy of the GNU Lesser General Public
 * License along with PGSBOX.  If not, see http://www.gnu.org/licenses.
 *
-* Correspondence concerning PGSBOX may be directed to:
-*   Internet email: mcalabre@atnf.csiro.au
-*   Postal address: Dr. Mark Calabretta
-*                   Australia Telescope National Facility, CSIRO
-*                   PO Box 76
-*                   Epping NSW 1710
-*                   AUSTRALIA
+* Direct correspondence concerning PGSBOX to mark@calabretta.id.au
 *
-* Author: Mark Calabretta, Australia Telescope National Facility
-* http://www.atnf.csiro.au/~mcalabre/index.html
+* Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
+* http://www.atnf.csiro.au/people/Mark.Calabretta
 * $Id$
 *=======================================================================
 *
@@ -450,7 +444,7 @@
 *   3: Notwithstanding the fact that PGSBOX declares NLCPRM, NLIPRM,
 *      and NLDPRM as single dimension arrays of length NLC, NLI, and
 *      NLD, NLFUNC may treat these as higher-dimensional arrays, for
-*      example, NLDPRM(2,NLD).  (The FORTRAN standard requires that
+*      example, NLDPRM(2,NLD).  (The Fortran standard requires that
 *      only the last dimension is adjustable.)
 *
 *=======================================================================
@@ -667,7 +661,6 @@
                 END IF
 
                 W1PREV = WORLD(1)
-                IYPREV = IY
               END IF
 
               IF (ISANGL(2)) THEN
@@ -687,8 +680,9 @@
                 END IF
 
                 W2PREV = WORLD(2)
-                IYPREV = IY
               END IF
+
+              IYPREV = IY
 
               IF (WORLD(1).LT.WMIN(1)) WMIN(1) = WORLD(1)
               IF (WORLD(1).GT.WMAX(1)) WMAX(1) = WORLD(1)
@@ -1565,7 +1559,7 @@
 *   CACHE     D(4,0:NC) Table of points where the tick marks or grid
 *                       lines cross the frame (see PGSBOX).
 *
-* Author: Mark Calabretta, Australia Telescope National Facility
+* Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 *=======================================================================
       SUBROUTINE PGCRLB (BLC, TRC, IDENTS, FTYPE, LABCTL, CI, NC, IC,
      :                   CACHE)
@@ -2241,7 +2235,7 @@
           IF (MM.NE.1) THEN
             WRITE (TEXT, '(I1)') MM
           ELSE
-*           FORTRAN is really abysmal sometimes.
+*           Fortran is really abysmal sometimes.
             WRITE (TEXT, '(I8)') PP
             DO 240 K = 1, 8
               IF (TEXT(K:K).NE.' ') GO TO 250
@@ -2573,7 +2567,7 @@
 *   These algorithms are from D.A. Hatcher, QJRAS 25, 53-55, as modified
 *   by P.T. Wallace for use in SLALIB (subroutines CLDJ and DJCL).
 *
-*   Author: Mark Calabretta, Australia Telescope National Facility
+* Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 *-----------------------------------------------------------------------
       SUBROUTINE PGMJD (CODE, MJD, IY, IM, ID)
 *-----------------------------------------------------------------------
@@ -2613,10 +2607,10 @@
 
 
 *=======================================================================
-* This FORTRAN wrapper on PGSBOX exists solely to define fixed-length
+* This Fortran wrapper on PGSBOX exists solely to define fixed-length
 * CHARACTER arguments for cpgsbox().
 *
-* Author: Mark Calabretta, Australia Telescope National Facility
+* Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 *-----------------------------------------------------------------------
       SUBROUTINE PGSBOK (BLC, TRC, IDENTS, OPT, LABCTL, LABDEN, CI,
      :  GCODE, TIKLEN, NG1, GRID1, NG2, GRID2, DOEQ, NLFUNC, NLC, NLI,
@@ -2642,10 +2636,10 @@
 
 
 *=======================================================================
-* This FORTRAN wrapper on PGLBOX exists solely to define fixed-length
+* This Fortran wrapper on PGLBOX exists solely to define fixed-length
 * CHARACTER arguments for cpglbox().
 *
-* Author: Mark Calabretta, Australia Telescope National Facility
+* Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 *-----------------------------------------------------------------------
       SUBROUTINE PGLBOK (IDENTS, OPT, LABCTL, LABDEN, CI, GCODE, TIKLEN,
      :  NG1, GRID1, NG2, GRID2, DOEQ, NC, IC, CACHE, IERR)

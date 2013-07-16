@@ -3,13 +3,13 @@ Testing WCSLIB translator for non-standard usage (twcsfix.c)
 
 wcsfix status returns: (-1, 0, 0, 0, 0, -1)
 
-INFORMATIVE message from datfix() at line 386 of file wcsfix.c:
+INFORMATIVE message from datfix() at line 402 of file wcsfix.c:
 Changed '1957/02/15 01:10:00' to '1957-02-15T01:10:00'.
 
-INFORMATIVE message from unitfix() at line 421 of file wcsfix.c:
+INFORMATIVE message from unitfix() at line 437 of file wcsfix.c:
 Changed units: 'ARCSEC' -> 'arcsec', 'ARCSEC' -> 'arcsec', 'KM/SEC' -> 'km/s'.
 
-INFORMATIVE message from spcfix() at line 468 of file wcsfix.c:
+INFORMATIVE message from spcfix() at line 484 of file wcsfix.c:
 Changed CTYPE3 from 'FELO-HEL' to 'VOPT-F2W'.
 
        flag: 137

@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.13 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2012, Mark Calabretta
+  WCSLIB 4.18 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2013, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -16,18 +16,12 @@
   more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with WCSLIB.  If not, see <http://www.gnu.org/licenses/>.
+  along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Correspondence concerning WCSLIB may be directed to:
-    Internet email: mcalabre@atnf.csiro.au
-    Postal address: Dr. Mark Calabretta
-                    Australia Telescope National Facility, CSIRO
-                    PO Box 76
-                    Epping NSW 1710
-                    AUSTRALIA
+  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
 
-  Author: Mark Calabretta, Australia Telescope National Facility
-  http://www.atnf.csiro.au/~mcalabre/index.html
+  Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
+  http://www.atnf.csiro.au/people/Mark.Calabretta
   $Id$
 *=============================================================================
 *
@@ -86,6 +80,7 @@ UNITSTR \[[-+*/^(). 0-9a-zA-Z]+\]
 #include <string.h>
 
 #include "fitshdr.h"
+#include "wcsutil.h"
 
 #define YY_DECL int fitshdr(const char header[], int nkeyrec, int nkeyids, \
                             struct fitskeyid keyids[], int *nreject, \
@@ -266,7 +261,7 @@ const char *fitshdr_errmsg[] = {
 
 <VALUE>{INT64} {
 	  /* 64-bit signed integer keyvalue (up to 18 digits). */
-	  if (sscanf(yytext, "%lf", &dtmp) < 1) {
+	  if (wcsutil_str2double(yytext, "%lf", &dtmp)) {
 	    kptr->status |= FITSHDR_KEYVALUE;
 	    BEGIN(ERROR);
 	
@@ -349,7 +344,7 @@ const char *fitshdr_errmsg[] = {
 <VALUE>{FLOAT} {
 	  /* Float keyvalue. */
 	  kptr->type = 5;
-	  if (sscanf(yytext, "%lf", &(kptr->keyvalue.f)) < 1) {
+	  if (wcsutil_str2double(yytext, "%lf", &(kptr->keyvalue.f))) {
 	    kptr->status |= FITSHDR_KEYVALUE;
 	    BEGIN(ERROR);
 	  }
@@ -372,8 +367,23 @@ const char *fitshdr_errmsg[] = {
 <VALUE>{FCOMPLX} {
 	  /* Floating point complex keyvalue. */
 	  kptr->type = 7;
-	  if (sscanf(yytext, "(%lf,%lf)", kptr->keyvalue.c,
-	      kptr->keyvalue.c+1) < 2) {
+	
+	  for (cptr = ctmp, k = 1; yytext[k] != ','; cptr++, k++) {
+	    *cptr = yytext[k];
+	  }
+	  *cptr = '\0';
+	
+	  if (wcsutil_str2double(ctmp, "%lf", kptr->keyvalue.c)) {
+	    kptr->status |= FITSHDR_KEYVALUE;
+	    BEGIN(ERROR);
+	  }
+	
+	  for (cptr = ctmp, k++; yytext[k] != ')'; cptr++, k++) {
+	    *cptr = yytext[k];
+	  }
+	  *cptr = '\0';
+	
+	  if (wcsutil_str2double(ctmp, "%lf", kptr->keyvalue.c+1)) {
 	    kptr->status |= FITSHDR_KEYVALUE;
 	    BEGIN(ERROR);
 	  }

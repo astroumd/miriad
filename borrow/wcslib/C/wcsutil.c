@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.13 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2012, Mark Calabretta
+  WCSLIB 4.18 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2013, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -16,21 +16,17 @@
   more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with WCSLIB.  If not, see <http://www.gnu.org/licenses/>.
+  along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Correspondence concerning WCSLIB may be directed to:
-    Internet email: mcalabre@atnf.csiro.au
-    Postal address: Dr. Mark Calabretta
-                    Australia Telescope National Facility, CSIRO
-                    PO Box 76
-                    Epping NSW 1710
-                    AUSTRALIA
+  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
 
-  Author: Mark Calabretta, Australia Telescope National Facility
-  http://www.atnf.csiro.au/~mcalabre/index.html
+  Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
+  http://www.atnf.csiro.au/people/Mark.Calabretta
   $Id$
 *===========================================================================*/
 
+#include <ctype.h>
+#include <locale.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -151,7 +147,7 @@ void wcsutil_setBit(int nelem, const int *sel, int bits, int *array)
 
 /*--------------------------------------------------------------------------*/
 
-char *wcsutil_fptr2str(int (*func)(), char hext[])
+char *wcsutil_fptr2str(int (*func)(void), char hext[19])
 
 {
   unsigned char *p = (unsigned char *)(&func);
@@ -183,4 +179,75 @@ char *wcsutil_fptr2str(int (*func)(), char hext[])
   }
 
   return hext;
+}
+
+/*--------------------------------------------------------------------------*/
+
+static const char *wcsutil_dot_to_locale(const char *inbuf, char *outbuf)
+
+{
+  struct lconv *locale_data = localeconv();
+  const char *decimal_point = locale_data->decimal_point;
+
+  if (decimal_point[0] != '.' || decimal_point[1] != 0) {
+    char *out = outbuf;
+    size_t decimal_point_len = strlen(decimal_point);
+
+    for ( ; *inbuf; ++inbuf) {
+      if (*inbuf == '.') {
+        strncpy(out, decimal_point, decimal_point_len);
+        out += decimal_point_len;
+      } else {
+        *out++ = *inbuf;
+      }
+    }
+
+    *out = '\0';
+
+    return outbuf;
+  } else {
+    return inbuf;
+  }
+}
+
+
+int wcsutil_str2double(const char *buf, const char *format, double *value)
+
+{
+  char ctmp[72];
+  return sscanf(wcsutil_dot_to_locale(buf, ctmp), "%lf", value) < 1;
+}
+
+/*--------------------------------------------------------------------------*/
+
+static void wcsutil_locale_to_dot(char *buf)
+
+{
+  struct lconv *locale_data = localeconv();
+  const char *decimal_point = locale_data->decimal_point;
+
+  if (decimal_point[0] != '.' || decimal_point[1] != 0) {
+    size_t decimal_point_len = strlen(decimal_point);
+    char *inbuf = buf;
+    char *outbuf = buf;
+
+    for ( ; *inbuf; ++inbuf) {
+      if (strncmp(inbuf, decimal_point, decimal_point_len) == 0) {
+        *outbuf++ = '.';
+        inbuf += decimal_point_len - 1;
+      } else {
+        *outbuf++ = *inbuf;
+      }
+    }
+
+    *outbuf = '\0';
+  }
+}
+
+
+void wcsutil_double2str(char *buf, const char *format, double value)
+
+{
+  sprintf(buf, format, value);
+  wcsutil_locale_to_dot(buf);
 }

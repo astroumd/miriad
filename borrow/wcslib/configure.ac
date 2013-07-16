@@ -6,12 +6,12 @@
 # later to avoid spurious messages about deleting conftest.dSYM when
 # configuring in MacOSX 10.6.
 #
-# Author: Mark Calabretta, Australia Telescope National Facility
-# http://www.atnf.csiro.au/~mcalabre/index.html
+# Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
+# http://www.atnf.csiro.au/people/Mark.Calabretta
 # $Id$
 #-----------------------------------------------------------------------------
 
-AC_INIT([WCSLIB], [4.13.4], [mcalabre@atnf.csiro.au], [wcslib-4.13.4])
+AC_INIT([WCSLIB], [4.18], [mark@calabretta.id.au], [wcslib-4.18])
 AC_PREREQ([2.53])
 AC_REVISION([$Revision$])
 AC_SUBST([PACKAGE_VERSION])
@@ -79,8 +79,8 @@ AC_TYPE_UINT32_T
 
 # Check for ANSI C headers.
 AC_HEADER_STDC
-AC_CHECK_HEADERS([ctype.h errno.h limits.h math.h setjmp.h stdarg.h stdio.h \
-                  stdlib.h string.h])
+AC_CHECK_HEADERS([ctype.h errno.h limits.h locale.h math.h setjmp.h stdarg.h \
+                  stdio.h stdlib.h string.h])
 if test "x$ac_cv_header_stdc" = xno; then
   AC_MSG_ERROR([
     -------------------------------------------------------------------
@@ -100,7 +100,7 @@ AC_FUNC_REALLOC
 AC_FUNC_SETVBUF_REVERSED
 AC_FUNC_STAT
 AC_FUNC_VPRINTF
-AC_CHECK_FUNCS([floor memset pow sqrt strchr strstr])
+AC_CHECK_FUNCS([floor memset pow setlocale sqrt strchr strstr])
 
 # System libraries that may be required by WCSLIB itself.
 # SunOS, extra maths functions.

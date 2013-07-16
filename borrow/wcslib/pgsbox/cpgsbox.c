@@ -1,7 +1,7 @@
 /*============================================================================
 
-  PGSBOX 4.13 - draw curvilinear coordinate axes for PGPLOT.
-  Copyright (C) 1997-2012, Mark Calabretta
+  PGSBOX 4.18 - draw curvilinear coordinate axes for PGPLOT.
+  Copyright (C) 1997-2013, Mark Calabretta
 
   This file is part of PGSBOX.
 
@@ -16,18 +16,12 @@
   more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with PGSBOX.  If not, see <http://www.gnu.org/licenses/>.
+  along with PGSBOX.  If not, see http://www.gnu.org/licenses.
 
-  Correspondence concerning PGSBOX may be directed to:
-    Internet email: mcalabre@atnf.csiro.au
-    Postal address: Dr. Mark Calabretta
-                    Australia Telescope National Facility, CSIRO
-                    PO Box 76
-                    Epping NSW 1710
-                    AUSTRALIA
+  Direct correspondence concerning PGSBOX to mark@calabretta.id.au
 
-  Author: Mark Calabretta, Australia Telescope National Facility
-  http://www.atnf.csiro.au/~mcalabre/index.html
+  Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
+  http://www.atnf.csiro.au/people/Mark.Calabretta
   $Id$
 *===========================================================================*/
 

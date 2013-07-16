@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.13 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2012, Mark Calabretta
+  WCSLIB 4.18 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2013, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -16,18 +16,12 @@
   more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with WCSLIB.  If not, see <http://www.gnu.org/licenses/>.
+  along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Correspondence concerning WCSLIB may be directed to:
-    Internet email: mcalabre@atnf.csiro.au
-    Postal address: Dr. Mark Calabretta
-                    Australia Telescope National Facility, CSIRO
-                    PO Box 76
-                    Epping NSW 1710
-                    AUSTRALIA
+  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
 
-  Author: Mark Calabretta, Australia Telescope National Facility
-  http://www.atnf.csiro.au/~mcalabre/index.html
+  Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
+  http://www.atnf.csiro.au/people/Mark.Calabretta
   $Id$
 *===========================================================================*/
 
@@ -93,6 +87,47 @@ int wcsprintf(const char *format, ...)
   if (wcsprintf_buff == 0x0 && wcsprintf_file == 0x0) {
     /* Send output to stdout if wcsprintf_set() hasn't been called. */
     wcsprintf_file = stdout;
+  }
+
+  va_start(arg_list, format);
+
+  if (wcsprintf_file) {
+    /* Output to file. */
+    nbytes = vfprintf(wcsprintf_file, format, arg_list);
+
+  } else {
+    /* Output to buffer. */
+    used = wcsprintf_bufp - wcsprintf_buff;
+    if (wcsprintf_size - used < 128) {
+      /* Expand the buffer. */
+      wcsprintf_size += 1024;
+      wcsprintf_buff = realloc(wcsprintf_buff, wcsprintf_size);
+      if (wcsprintf_buff == NULL) {
+        return 1;
+      }
+      wcsprintf_bufp = wcsprintf_buff + used;
+    }
+
+    nbytes = vsprintf(wcsprintf_bufp, format, arg_list);
+    wcsprintf_bufp += nbytes;
+  }
+
+  va_end(arg_list);
+
+  return nbytes;
+}
+
+/*--------------------------------------------------------------------------*/
+
+int wcsfprintf(FILE *stream, const char *format, ...)
+{
+  int  nbytes;
+  size_t  used;
+  va_list arg_list;
+
+  if (wcsprintf_buff == 0x0 && wcsprintf_file == 0x0) {
+    /* Send output to stream if wcsprintf_set() hasn't been called. */
+    wcsprintf_file = stream;
   }
 
   va_start(arg_list, format);

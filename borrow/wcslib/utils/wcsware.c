@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.13 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2012, Mark Calabretta
+  WCSLIB 4.18 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2013, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -16,18 +16,12 @@
   more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with WCSLIB.  If not, see <http://www.gnu.org/licenses/>.
+  along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Correspondence concerning WCSLIB may be directed to:
-    Internet email: mcalabre@atnf.csiro.au
-    Postal address: Dr. Mark Calabretta
-                    Australia Telescope National Facility, CSIRO
-                    PO Box 76
-                    Epping NSW 1710
-                    AUSTRALIA
+  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
 
-  Author: Mark Calabretta, Australia Telescope National Facility
-  http://www.atnf.csiro.au/~mcalabre/index.html
+  Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
+  http://www.atnf.csiro.au/people/Mark.Calabretta
   $Id$
 *=============================================================================
 * wcsware extracts the WCS keywords for an image from the specified FITS file,
@@ -52,6 +46,7 @@ char usage[] =
 "  -h<hdu>      Move to HDU number (1-relative) which is expected to\n"
 "               contain an image array.  (Useful for input from stdin.)\n"
 "  -p           Print the struct(s) using wcsprt() (default operation).\n"
+"  -P           Same as -p but don't print a default struct.\n"
 "  -x           Convert pixel coordinates, obtained from stdin, to world\n"
 "               coordinates using wcsp2s().\n"
 "  -w           Convert world coordinates, obtained from stdin, to pixel\n"
@@ -73,7 +68,7 @@ char usage[] =
 int main(int argc, char **argv)
 
 {
-  char alt = ' ', *header, idents[3][80], *infile;
+  char alt = ' ', *header, *infile, wcsname[72];
   int  alts[27], c, dofix = 0, doprt = 0, dopix = 0, doworld = 0, hdunum = 1,
        hdutype, i, j, nelem, nkeyrec, nreject, nwcs, *stat = 0x0, status;
   double *imgcrd = 0x0, phi, *pixcrd = 0x0, theta, *world = 0x0;
@@ -100,6 +95,10 @@ int main(int argc, char **argv)
 
     case 'p':
       doprt = 1;
+      break;
+
+    case 'P':
+      doprt = -1;
       break;
 
     case 'x':
@@ -133,7 +132,7 @@ int main(int argc, char **argv)
     return 1;
   }
 
-  if (!dopix && !doworld) doprt = 1;
+  if (!dopix && !doworld && !doprt) doprt = 1;
 
 
   /* Open the FITS file and move to the required HDU. */
@@ -228,18 +227,25 @@ int main(int argc, char **argv)
     }
 
     /* Get WCSNAME out of the wcsprm struct. */
-    strcpy(idents[2], (wcs+i)->wcsname);
-    if (strlen(idents[2])) {
-      printf("\n%s\n", idents[2]);
-    }
+    strcpy(wcsname, (wcs+i)->wcsname);
 
     /* Print the struct. */
     if (doprt) {
-      wcsprt(wcs+i);
+      if (doprt == 1 || strcmp(wcsname, "DEFAULTS")) {
+        if (strlen(wcsname)) {
+          printf("\n%s\n", wcsname);
+        }
+
+        wcsprt(wcs+i);
+      }
     }
 
     /* Transform coordinates? */
     if (dopix || doworld) {
+      if (strlen(wcsname)) {
+        printf("\n%s\n", wcsname);
+      }
+
       nelem = (wcs+i)->naxis;
       world  = realloc(world,  nelem * sizeof(double));
       imgcrd = realloc(imgcrd, nelem * sizeof(double));

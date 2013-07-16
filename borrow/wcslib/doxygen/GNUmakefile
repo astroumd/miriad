@@ -1,5 +1,5 @@
 #-----------------------------------------------------------------------------
-# GNU makefile for building the documentation for WCSLIB 4.13
+# GNU makefile for building the documentation for WCSLIB 4.18
 #
 # Summary of the main targets
 # ---------------------------
@@ -13,8 +13,8 @@
 #   1) If you need to make changes then preferably modify ../makedefs.in
 #      instead and re-run configure.
 #
-# Author: Mark Calabretta, Australia Telescope National Facility
-# http://www.atnf.csiro.au/~mcalabre/index.html
+# Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
+# http://www.atnf.csiro.au/people/Mark.Calabretta
 # $Id$
 #-----------------------------------------------------------------------------
 # Get configure settings.

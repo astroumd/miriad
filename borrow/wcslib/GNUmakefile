@@ -1,5 +1,5 @@
 #-----------------------------------------------------------------------------
-# GNU makefile for building WCSLIB 4.13
+# GNU makefile for building WCSLIB 4.18
 #
 # Summary of the main targets
 # ---------------------------
@@ -30,8 +30,8 @@
 #   2) Refer also to the makefiles in subdirectories, particularly
 #      C/GNUmakefile.
 #
-# Author: Mark Calabretta, Australia Telescope National Facility
-# http://www.atnf.csiro.au/~mcalabre/index.html
+# Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
+# http://www.atnf.csiro.au/people/Mark.Calabretta
 # $Id$
 #-----------------------------------------------------------------------------
 # Get configure settings.
@@ -113,6 +113,7 @@ cleanest distclean realclean :
 	   done
 	-  $(RM) *.log
 	-  $(RM) -r autom4te.cache autoscan.log
+	-  $(RM) -r api-sanity-check
 	-  $(RM) confdefs.h conftest.*
 	-  $(RM) config.log config.status configure.lineno
 	-  $(RM) makedefs wcslib.pc
@@ -186,11 +187,11 @@ dist :
 	   chmod 444 $(WCSLIBPKG).tar.bz2
 
 install_dist :
-	   cp -fp $(WCSLIBPKG).tar.bz2 /nfs/ftp/software/wcslib/
+	   scp -p $(WCSLIBPKG).tar.bz2 cal103@venice:/nfs/ftp/software/wcslib/
 	   mv -f  $(WCSLIBPKG).tar.bz2 ../wcslib-releases/
-	   (cd /nfs/ftp/software/wcslib/ && \
+	   ssh cal103@venice "cd /nfs/ftp/software/wcslib/ && \
 	     rm -f wcslib.tar.bz2 && \
-	     ln -s $(WCSLIBPKG).tar.bz2 wcslib.tar.bz2)
+	     ln -s $(WCSLIBPKG).tar.bz2 wcslib.tar.bz2"
 	   cp -fp CHANGES wcslib.pdf ~/public_html/WCS/
 	   rsync --archive --delete html/ ~/public_html/WCS/wcslib/
 

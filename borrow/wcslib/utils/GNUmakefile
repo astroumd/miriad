@@ -1,5 +1,5 @@
 #-----------------------------------------------------------------------------
-# GNU makefile for WCSLIB 4.13 utilities: fitshdr, HPXcvt, wcsgrid and wcsware.
+# GNU makefile for WCSLIB 4.18 utilities: fitshdr, HPXcvt, wcsgrid and wcsware.
 #
 # Summary of the main targets
 # ---------------------------
@@ -12,11 +12,11 @@
 #   1: If you need to make changes then preferably modify ../makedefs.in
 #      instead and re-run configure.
 #
-#   2: In compiling these utilities, this makefile assumes that the WCSLIB 4.13
+#   2: In compiling these utilities, this makefile assumes that the WCSLIB 4.18
 #      sources reside in ../{pgsbox,C} (as in the distribution kit).
 #
-# Author: Mark Calabretta, Australia Telescope National Facility
-# http://www.atnf.csiro.au/~mcalabre/index.html
+# Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
+# http://www.atnf.csiro.au/people/Mark.Calabretta
 # $Id$
 #-----------------------------------------------------------------------------
 # Get configure settings.

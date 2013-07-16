@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.13 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2012, Mark Calabretta
+  WCSLIB 4.18 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2013, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -16,18 +16,12 @@
   more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with WCSLIB.  If not, see <http://www.gnu.org/licenses/>.
+  along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Correspondence concerning WCSLIB may be directed to:
-    Internet email: mcalabre@atnf.csiro.au
-    Postal address: Dr. Mark Calabretta
-                    Australia Telescope National Facility, CSIRO
-                    PO Box 76
-                    Epping NSW 1710
-                    AUSTRALIA
+  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
 
-  Author: Mark Calabretta, Australia Telescope National Facility
-  http://www.atnf.csiro.au/~mcalabre/index.html
+  Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
+  http://www.atnf.csiro.au/people/Mark.Calabretta
   $Id$
 *===========================================================================*/
 
@@ -223,6 +217,28 @@ next: ;
 
 /*--------------------------------------------------------------------------*/
 
+static int parse_date(const char *buf, int *hour, int *minute, double *sec)
+
+{
+  char ctmp[72];
+
+  if (sscanf(buf, "%2d:%2d:%s", hour, minute, ctmp) < 3 ||
+      wcsutil_str2double(ctmp, "%lf", sec)) {
+    return 1;
+  }
+
+  return 0;
+}
+
+static void write_date(char *buf, int hour, int minute, double sec)
+
+{
+  char ctmp[72];
+
+  wcsutil_double2str(ctmp, "%04.1f", sec);
+  sprintf(buf, "T%.2d:%.2d:%s", hour, minute, ctmp);
+}
+
 int datfix(struct wcsprm *wcs)
 
 {
@@ -295,7 +311,7 @@ int datfix(struct wcsprm *wcs)
       }
 
       if (dateobs[10] == 'T') {
-        if (sscanf(dateobs+11, "%2d:%2d:%lf", &hour, &minute, &sec) < 3) {
+        if (parse_date(dateobs+11, &hour, &minute, &sec)) {
           return wcserr_set(WCSERR_SET(FIXERR_BAD_PARAM),
             "Invalid parameter value: invalid time '%s'", dateobs+11);
         }
@@ -303,10 +319,10 @@ int datfix(struct wcsprm *wcs)
         hour = 0;
         minute = 0;
         sec = 0.0;
-        if (sscanf(dateobs+11, "%2d:%2d:%lf", &hour, &minute, &sec) == 3) {
-          dateobs[10] = 'T';
+        if (parse_date(dateobs+11, &hour, &minute, &sec)) {
+          write_date(dateobs+10, hour, minute, sec);
         } else {
-          sprintf(dateobs+10, "T%.2d:%.2d:%04.1f", hour, minute, sec);
+          dateobs[10] = 'T';
         }
       }
 
@@ -318,7 +334,7 @@ int datfix(struct wcsprm *wcs)
       }
 
       if (dateobs[10] == 'T') {
-        if (sscanf(dateobs+11, "%2d:%2d:%lf", &hour, &minute, &sec) < 3) {
+        if (parse_date(dateobs+11, &hour, &minute, &sec)) {
           return wcserr_set(WCSERR_SET(FIXERR_BAD_PARAM),
             "Invalid parameter value: invalid time '%s'", dateobs+11);
         }
@@ -326,10 +342,10 @@ int datfix(struct wcsprm *wcs)
         hour = 0;
         minute = 0;
         sec = 0.0;
-        if (sscanf(dateobs+11, "%2d:%2d:%lf", &hour, &minute, &sec) == 3) {
-          dateobs[10] = 'T';
+        if (parse_date(dateobs+11, &hour, &minute, &sec)) {
+          write_date(dateobs+10, hour, minute, sec);
         } else {
-          sprintf(dateobs+10, "T%.2d:%.2d:%04.1f", hour, minute, sec);
+          dateobs[10] = 'T';
         }
       }
 
@@ -567,7 +583,7 @@ int celfix(struct wcsprm *wcs)
          * might be effected by adjusting CRPIXja but that is complicated by
          * the linear transformation and instead is accomplished here by
          * setting theta_0. */
-        if (wcs->npvmax < wcs->npv + 2) {
+        if (wcs->npvmax < wcs->npv + 3) {
           /* Allocate space for three more PVi_ja keyvalues. */
           if (wcs->m_flag == WCSSET && wcs->pv == wcs->m_pv) {
             if (!(wcs->pv = calloc(wcs->npv+3, sizeof(struct pvcard)))) {
