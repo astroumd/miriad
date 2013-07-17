@@ -145,11 +145,12 @@ c    08jun09 mchw  fixed old bug: save vmax,vmin in subroutine velmap
 c    01dec09 mchw  fixed old bug: change caption on spectra to Jy/Beam.
 c    01jan10 mchw  write positions and info from cursor options to log.
 c    22jun12 mchw  format change in gausfit input.
+c    17jul13 mchw  enable FREQ axis.
 c----------------------------------------------------------------------c
 	include 'velplot.h'
 	include 'mem.h'
 	character*(*) version
-	parameter(version='(version 3.0 22-jun-2012)')
+	parameter(version='(version 3.0 17-Jul-20132)')
 	integer maxnax,maxboxes
 	parameter(maxnax=3,maxboxes=128)
 	integer boxes(maxboxes),nsize(maxnax),blc(maxnax),trc(maxnax)
@@ -381,12 +382,14 @@ c
 	call rdhdr(lIn,'crval3',crval,1.)
 	call rdhda(lIn,'ctype3',ctype3,' ')
 c mchw Jan 2010 -- try using original axes -- see what breaks -it did!
+        goto 123
 	if(ctype3(1:4).eq.'FREQ'.and.restfreq.ne.0.)then
 	  call output('Convert frequency axis to velocity')
 	  cdelt = cdelt/restfreq*ckms
 c mchw Jan 2010 OK. correct this next line instead.
 	  crval = (1.-(crval/restfreq))*ckms
 	endif
+123     continue
 	vel = crval + (blc(3)-crpix)*cdelt
 	delv = cdelt
 	do i=1,nc
