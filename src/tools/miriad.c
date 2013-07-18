@@ -1,4 +1,4 @@
-#define VERSION_ID "(version 3.1 [14-feb-00])"
+#define VERSION_ID "(version 3.1a [4-sep-2012])"
 
 /* The following section will be extracted by the doc program into a         */
 /* .doc file.  The Miriad package needs such files.                          */
@@ -197,6 +197,7 @@
 /*                   string terminator from NULL to Null ('\0').        */
 /*                   Also undef'd TRUE/FALSE if previously defined.     */
 /*   pjt   14feb00   preset compile defaults for linux			*/
+/*   pjt    4sep2012 also report the $MIR/VERSION contents              */
 /*                                                                      */
 /*    ToDo anyhow:                                                      */
 /*      check earlier if lastexit can be written, otherwise complain    */
@@ -355,6 +356,7 @@ char *ep[];     /* environment strings ENV=val */
   char *argv[MAXARGS];
 
   (void)printf("Miriad shell %s\n", VERSION_ID);
+  system("echo MIRIAD VERSION:;cat $MIR/VERSION");
 
   ini_miriad(ac, av, ep);                /* Initialize lot's of stuff. */
 
