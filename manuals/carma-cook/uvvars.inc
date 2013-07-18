@@ -291,7 +291,7 @@ corr(nchan)	\>J or  \>-
 \> Correlation data\\
 \>R\>\> {\tt corr} is really a complex quantity, but the \\
 \>\>\>  data stream variable can be stored otherwise \\
-\>\>\>  for efficiency.\\
+\>\>\>  for efficiency. See also {\tt tscale}.  \\
 
 cortaper	\>R	\>-
 \> On-line correlation taper (Hat Ck)\\
@@ -607,7 +607,7 @@ restfreq(nspect) \>D	\>GHz
 \>\>\>  This may be zero for continuum observations.\\
 
 rmspath		\>R     \>microns
-\>RMS path variation (CARMA, for Hat Ck units were \%)\\
+\>RMS path variation, a kind of seeing (CARMA, for Hat Ck units were \%)\\
 \>\>\> see also smonrms\\
 
 sctype	\>A	\>-
@@ -634,7 +634,7 @@ systemp		\>R	\>Kelvin
 \ \ or systemp(nants,nspect)\\
 
 tau230		\>R	\>-
-\> Optical depth at 230 GHz, as measured with the ... system (Hat Ck/CARMA) \\
+\> Optical depth (opacity) at 230 GHz, as measured with the ... system (Hat Ck/CARMA) \\
 
 tcorr		\>I	\>-
 \> HasTsys correction has been applied (0:none, 1:applied) (CARMA, ATNF) \\
