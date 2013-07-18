@@ -483,8 +483,11 @@ void xysetpl_c(int thandle,int naxis,Const int *axes)
      bug_c('f',"xysetpl_c: Too many dimensions");
   size = 0;
   for(i=naxis-1; i >= 0; i--){
-    if(axes[i] < 1 || axes[i] > images[thandle].axes[i+2])
-	bug_c('f',"Dimension error in XYSETPL");
+    if(axes[i] < 1 || axes[i] > images[thandle].axes[i+2]) {
+      printf("i=%d axis[i]=%d images[thandle].axes[i+2]=%d\n",
+	     i, axes[i], images[thandle].axes[i+2]);
+      bug_c('f',"Dimension error in XYSETPL");
+    }
     size = ( size + axes[i] - 1) * images[thandle].axes[i+1];
   }
   images[thandle].offset = size * images[thandle].axes[0];
