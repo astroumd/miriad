@@ -152,15 +152,17 @@ c-----------------------------------------------------------------------
        include 'maxdim.h'
        include 'mirconst.h'
        character*(*) version
-       parameter(version='VARMAPS: version 11-dec-2012')
+       parameter(version='VARMAPS: version 18-jul-2013')
        integer MAXSELS
        parameter(MAXSELS=512)
        integer MAXVIS
-       parameter(MAXVIS=20000)
+       parameter(MAXVIS=10000)
        integer MAXCHAN2
-       parameter(MAXCHAN2=256)
+       parameter(MAXCHAN2=384)
        integer MAXVPP
        parameter(MAXVPP=MAXVIS/4)
+       integer MAXSIZE
+       parameter(MAXSIZE=256)
        real sels(MAXSELS)
        complex data(MAXCHAN2)
        logical flags(MAXCHAN2)
@@ -174,8 +176,6 @@ c-----------------------------------------------------------------------
        double precision ddata(MAXANT)
        integer lout,nsize(3),i,j,k,l,ng,i1,j1,id,jd,size,size2
        real cell(2),beam(2),beam2(2),beam3(2)
-       integer MAXSIZE
-       parameter(MAXSIZE=256)
        real stacks(MAXVIS,MAXCHAN2), buffer(MAXCHAN2)
        real    xstacks(MAXVIS), ystacks(MAXVIS)
        integer istacks(MAXVIS), jstacks(MAXVIS)
