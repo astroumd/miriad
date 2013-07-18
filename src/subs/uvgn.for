@@ -833,8 +833,11 @@ c
      *	  'Invalid value for nchan, ngains or nspect, in uvDat')
 	Size = ngains*nchan
 	call MemAllop(pGains,Size,'c')
-	if(nspect.gt.maxspect)call bug('f',
+	if(nspect.gt.maxspect)then
+           write(*,*) 'nspect,maxspect=',nspect,maxspect
+           call bug('f',
      *	  'Too many spectral windows for me to handle, in uvDat')
+        endif
 c
 c  Load the frequency table.
 c
