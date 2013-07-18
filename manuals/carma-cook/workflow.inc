@@ -1621,6 +1621,11 @@ in the range 1999-2014, used as follows:\footnote{The 2012 version of this progr
 has new options to use two other tables with better models. CARMA Memo \#59 discusses
 this in more detail.}
 
+% todo:
+% CASA memo 
+% TB2 and TB3
+
+
 To find the model value:
 \footnotesize
 \begin{verbatim}
@@ -1667,6 +1672,9 @@ storms can't be accomodated in this model, but the Caltech model values
 should be more reliable than CARMA's previous model (10\% different in the
 example above from a month ago).
 
+TODO: describe example with marstb and bootflux how to improve this.
+what does SMAFLUX do?  SZACALCMARS ok?   SZACALCURANUS is bad
+Both Butler models.
 
 \subsection{Polarization}
 
