@@ -2,6 +2,9 @@
 #
 #   script reminder how to get ds9 and xpa
 #
+#   note also that as of ds9 v7.0 any file with the .ds9 extension
+#   is assumed to be an analysis menu file.
+#
 
 set url=http://hea-www.harvard.edu/saord/download/ds9/
 
