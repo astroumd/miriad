@@ -1,6 +1,7 @@
 In July 2010 the coordinate routines in $MIRSUBS/co.for have
 obtained a dependance on the WCS library the ATNF distributes
 with their version of miriad.
+
 Check $MIRSUBS/co.h and if you see the line
    include 'wcslib/cel.inc'
 you have the routines with the WCSLIB dependancy.
@@ -35,4 +36,5 @@ History:
     14-sep-2010    Upgraded to 4.5.1
     14-mar-2011    Upgraded to 4.7
     10-may-2012    Upgraded to 4.13.4
+    16-jul-2013    Upgraded to 4.18
 
