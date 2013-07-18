@@ -107,7 +107,7 @@ c---------------------------------------------------------------------------
 	implicit none
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='csflag: version 7-jun-2012')
+	parameter(version='csflag: version 18-jul-2013')
 c
 	complex data(MAXCHAN)
 	double precision preamble(5), antpos(3*MAXANT), lat
