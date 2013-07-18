@@ -248,7 +248,7 @@ else
  cd $rootdir
  time install/install.miriad $opts generic=$generic gif=$gif brief=$brief telescope=$telescope
  if ($casa) then
-    echo "Installing casacore and carmafiller....; this will take a while"
+    echo "Installing casacore and carmafiller....; this might take a while (20mins)"
     source miriad_start.csh
     time install/install.carmafiller >& tmp/casacore.log
 endif
