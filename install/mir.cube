@@ -52,6 +52,7 @@ echo Running cubetest in=$in
 echo $MIR/src/scripts/cubetest in=$in '$*' > runme
 chmod +x runme
 ./runme >& cubetest.log
+set err=$status
 
 echo Logfile in $tmp/cubetest.log
 
