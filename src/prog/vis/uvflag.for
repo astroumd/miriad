@@ -590,6 +590,7 @@ c If needed, build masking array of edge channels.
      *	  ( line(5).ne.0 .or. line(6).ne.0 .or. line(7).ne.0 ) )
      *then
 c     Read window info.
+c     BUG/WARNING: this assumes select=win() is not used  eg. bugzilla 1051
 	 call uvgetvri( unit, 'nspect', nwins,1     )
 	 call uvgetvri( unit, 'ischan', stwin,nwins )
 	 call uvgetvri( unit, 'nschan', chwin,nwins )
