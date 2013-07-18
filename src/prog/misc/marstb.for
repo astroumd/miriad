@@ -19,9 +19,9 @@ c     ranging from 30 to 260 GHz.  This is the ALMA model, used in CASA,
 c     derived from $CASA/data/alma/SolarSystemModels/Mars_Tb.dat
 c
 c     Typical use:
-c     marstb table=marstb  mode=1
-c     marstb table=marstb2 mode=2
-c     marstb table=marstb3 mode=3
+c     marstb table=$MIRCAT/marstb  mode=1
+c     marstb table=$MIRCAT/marstb2 mode=2
+c     marstb table=$MIRCAT/marstb3 mode=3
 c
 c
 c@ epoch The time (UTC) for which information is required, in standard
