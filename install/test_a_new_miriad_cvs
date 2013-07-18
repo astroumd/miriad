@@ -242,15 +242,17 @@ if ($auto) then
  ./configure --prefix=`pwd`/$build
  make
  make install
- (cd tmp ; ../install/mir.test; ../install/mir.tests)
+ source automiriad.csh
+ (mkdir tmp; cd tmp ; ../install/mir.test; ../install/mir.tests)
 
 else
  cd $rootdir
  time install/install.miriad $opts generic=$generic gif=$gif brief=$brief telescope=$telescope
  if ($casa) then
-    echo "Installing casacore and carmafiller....; this might take a while (20mins)"
+    echo "Installing casacore and carmafiller....; this will take a while"
     source miriad_start.csh
     time install/install.carmafiller >& tmp/casacore.log
+ endif
 endif
 
 #    patch the VERSION
