@@ -42,7 +42,8 @@ c     on the wide band flags, and vice versa.
 c
 c     Note: this program used to be BIMA specific, where the first two
 c     widebands were the global LSB/USB averages, CARMA uses nwide=nspect
-c     and thus the program is now generally usable.
+c     and thus the program is now generally usable, but once select=win()
+c     has been used nspec < nwide.
 c
 c     UVCAL can also be used to make wideband channels, using options=avechan.
 c
