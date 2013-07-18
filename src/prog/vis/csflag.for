@@ -39,16 +39,16 @@ c       Default: not used
 c@ carma
 c       Boolean, if set to true, the 23-antenna CARMA array is loaded
 c       in the antdiam array. Also it is then assumed the first 6
-c       are OVRO dishes (assumed 10.4m), the next 9 are BIMA 
-c       (assumed 6.1m), and final 8 for the SZA 3.5m dishes 
+c       are OVRO dishes (O, assumed 10.4m), the next 9 are BIMA 
+c       (B, assumed 6.1m), and final 8 for the SZA (S) 3.5m dishes.
 c       If selected, it will also print out the number of records
-c       flagged for O-O, B-B and O-B (labeled O/H/C) for 15-ants
-c       and labeled O/H/C/S/10/6 for 23-ants
+c       flagged for O-O, B-B and O-B (labeled OO/BB/OB) for 15-ants
+c       and labeled OO/BB/OB/SS/OS/BS for 23-ants
 c       This will also load the Swept Volume descriptors.
 c       The default is true.
 c@ cfraction
 c       Special CARMA option to multiply the antdiam array for
-c       OVRO and BIMA dishes by. Two or three numbers are expected here,
+c       different dishes by. Two or three numbers are allowed here,
 c       depending if SZA was set or found to be true: 
 c       fraction for OVRO, that for BIMA, and optionally that for SZA.
 c       You normally want this leave this at 1, but can experiment with
@@ -94,7 +94,7 @@ c                       auto-fill antdiam array
 c     pjt       23aug10 Allow subarray to see the other antennas
 c     pjt       26may11 fix up SZA looking only at non-SZA for all=true
 c     pjt       27may11 add sarray= and restore all= to old meaning
-c                       
+c     pjt        4jun12 documentation (bugzilla 947)
 c
 c  Todo:
 c     - options=noapply ???
@@ -107,7 +107,7 @@ c---------------------------------------------------------------------------
 	implicit none
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='csflag: version 27-may-11')
+	parameter(version='csflag: version 7-jun-2012')
 c
 	complex data(MAXCHAN)
 	double precision preamble(5), antpos(3*MAXANT), lat
@@ -316,10 +316,12 @@ c
 	call uvclose(lVis)
         if (carma) then
            write(*,*) 'Got ',ntot, ' recs, flgd ',
-     *                 nflag, ' O/H/C: ',ntoto,ntoth,ntotc
+     *                 nflag
+           write(*,*) ' OO/BB/OB: ',ntoto,ntoth,ntotc
         else if (sza) then
            write(*,*) 'Got ',ntot, ' recs, flgd ',
-     *                 nflag, ' O/H/C/S/10/6: ',
+     *                 nflag
+           write(*,*) ' OO/BB/OB/SS/OS/BS: ',
      *                 ntoto,ntoth,ntotc,ntots,ntota,ntot6
         else
            write(*,*) 'Got ',ntot, ' recs, flgd ',
@@ -484,6 +486,16 @@ c
       integer i0,i1,i2,i,j
 c     
       double precision antel(MAXANT), antaz(MAXANT)
+c
+      logical first
+      save first
+      data first/.true./
+      
+
+      if (first) then
+         write(*,*) 'SHADOW2:'
+         first = .false.
+      endif
       
       call uvgetvrd(lVis,'antel',antel,nants)
       call uvgetvrd(lVis,'antaz',antaz,nants)
@@ -562,6 +574,17 @@ c
       logical cross
 c     
       double precision antel(MAXANT), antaz(MAXANT)
+c
+      logical first
+      save first
+      data first/.true./
+      
+
+      if (first) then
+         write(*,*) 'SHADOW3:'
+         first = .false.
+      endif
+
       
       call uvgetvrd(lVis,'antel',antel,nants)
       call uvgetvrd(lVis,'antaz',antaz,nants)
