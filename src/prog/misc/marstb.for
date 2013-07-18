@@ -11,31 +11,40 @@ c     Mars from the Caltech thermal model (courtesy of Mark Gurwell)
 c
 c     MarsTB  4 freqs, 226 entries, in 25 day increments
 c             valid 1999 Aug 1 to 2014 Dec 25
+c
 c     MarsTB2 10 freqs, ranges from 26GHz to 115GHz, in 6 hour increments.
 c
 c     MarsTB3 ranges from 2010 to 2020 in 1 hour increments, 7 freqs for CARMA
+c     ranging from 30 to 260 GHz.  This is the ALMA model, used in CASA,
+c     derived from $CASA/data/alma/SolarSystemModels/Mars_Tb.dat
+c
+c     Typical use:
+c     marstb table=marstb  mode=1
+c     marstb table=marstb2 mode=2
+c     marstb table=marstb3 mode=3
 c
 c
-c@ epoch
-c	The time (UTC) for which information is required, in standard
-c	MIRIAD time format yymmmdd:hh:mm:ss. No default.
-c@ freq
-c	The frequency, in GHz. Default is 100 GHz.
-c@ table
-c       Optional table, to override the internal table (valid until 2014)
-c       Additional tables will need to be obtained and copied
-c       into $MIRCAT. Typically marstb, marstb2 and marstb3
-c@ mode
-c       Don't ask, it's a hack. Table mode (1=marstb, 2=marst2, 3=marstb3)
+c@ epoch The time (UTC) for which information is required, in standard
+c       MIRIAD time format yymmmdd:hh:mm:ss. No default.  
+c@ freq 
+c       The frequency, in GHz. Default is 100 GHz.  
+c@ table 
+c       Optional table, to override the internal table (valid until 2014) 
+c       Additional tables will need to be obtained and copied into $MIRCAT. 
+c       Typically marstb, marstb2 and marstb3
+c@ mode 
+c       Reading mode for 3 standard tables (marstb needs mode=1,
+c       marstb2 needs mode=2, marstb3 needs mode=3)
 c--
 c  History
 c    smw  08apr15 First version using 1999 Gurwell file good to 2014.
 c    pjt  10apr03 Fix minor fortran dialect issue 
 c    pjt  14sep11 Optional table
 c    pjt  12jun12 Added more table support, but a quick hack
+c    pjt  18jul13 Readied for school13 with ALMA flux models support
 c------------------------------------------------------------------------
       character version*(*)
-      parameter(version = 'MARSTB: version 13-jun-2012')
+      parameter(version = 'MARSTB: version 18-jul-2013')
 c
 c  jy2k is JD for 0 Jan 2000 (i.e. 31 Dec 1999); file is in MJD.
 c  which is jd-2400000.5
@@ -60,6 +69,8 @@ c
 	call keyfin
 c
 	if (table .eq. ' ') then
+	   call bug('w',
+     *         'Old -2014 mars model used, use table=marstb3 mode=3')
 	   call marsmod(jday,freq,tb)
 	else if (mode.eq.1) then
 	   call marsmod1(jday,freq,tb,table)
@@ -318,7 +329,7 @@ c     hardcoded for marsTB/table
       call tabgetr(tno, 1, val1)
       call tabgetr(tno, 2, val2)
 #ifdef DEBUG
-      write(*,*) 'Found ',nrow,' data rows ',ncol,' cols, tno=',tno
+      write(*,*) 'Found1 ',nrow,' data rows ',ncol,' cols, tno=',tno
       write(*,*) 'F:',(val1(i),i=1,ncol)
       write(*,*) 'F:',(val2(i),i=1,ncol)
 #endif
@@ -391,7 +402,7 @@ c     hardcoded for marsTB2/table
       call tabgetd(tno, 1, val1)
       call tabgetd(tno, 2, val2)
 #ifdef DEBUG
-      write(*,*) 'Found ',nrow,' data rows ',ncol,' cols, tno=',tno
+      write(*,*) 'Found2 ',nrow,' data rows ',ncol,' cols, tno=',tno
       write(*,*) 'F:',(val1(i),i=1,ncol)
       write(*,*) 'F:',(val2(i),i=1,ncol)
 #endif
@@ -464,7 +475,7 @@ c     hardcoded for marsTB3/table
       call tabgetd(tno, 1, val1)
       call tabgetd(tno, 2, val2)
 #ifdef DEBUG
-      write(*,*) 'Found ',nrow,' data rows ',ncol,' cols, tno=',tno
+      write(*,*) 'Found3 ',nrow,' data rows ',ncol,' cols, tno=',tno
       write(*,*) 'F:',(val1(i),i=1,ncol)
       write(*,*) 'F:',(val2(i),i=1,ncol)
 #endif
