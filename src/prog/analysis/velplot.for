@@ -382,6 +382,7 @@ c
 	call rdhdr(lIn,'crval3',crval,1.)
 	call rdhda(lIn,'ctype3',ctype3,' ')
 c mchw Jan 2010 -- try using original axes -- see what breaks -it did!
+c    17jul13 mchw  enable FREQ axis.
         goto 123
 	if(ctype3(1:4).eq.'FREQ'.and.restfreq.ne.0.)then
 	  call output('Convert frequency axis to velocity')
@@ -746,11 +747,12 @@ c
 	  endif
 	endif
 	dperjy = 1.
-	freqs = restfreq*(1.-vel/ckms)
-c	print *, 'restfreq, vel: ', restfreq, vel
-	if(freqs.ne.0.) then
+        if(ctype(3).eq.'FREQ') then
+	  freqs = vel
+        else
+	  freqs = restfreq*(1.-vel/ckms)
+        endif
 	  dperjy = (0.3/freqs)**2 / (2.*1.38e3*omega)
-	endif
 c	print *, 'xy,bmaj,bmin,freqs,dperj',xy,bmaj,bmin,freqs,dperj
 c
 c --- write out map header information ---
@@ -759,25 +761,25 @@ c
 	   return
         else if(ipr.eq.5)then
 	  write(line,100) object,ras,decs,
-     *	    ' cell:',xy,' vel:',vel,' delv:',delv
+     *	    ' cell:',xy,' crval3:',vel,' cdelt3:',delv
 	  call output(line(1:len1(line)))
 	  write(line,101) ctype,posx,posy,pospa,restfreq,bunit
 	  call output(line(1:len1(line)))
-	  write(line,102) bmaj*rts, bmin*rts, bpa, niters,dperjy,cbof
+	  write(line,102) bmaj*rts, bmin*rts, bpa, dperjy, cbof, niters
 	  call output(line(1:len1(line)))
         else if(ipr.eq.6)then
 	  write(line,100) object,ras,decs,
-     *	    ' cell:',xy,' vel:',vel,' delv:',delv
+     *	    ' cell:',xy,' crval3:',vel,' cdelt3:',delv
           call LogWrit(line(1:len1(line)))
           write(line,101) ctype,posx,posy,pospa,restfreq,bunit
           call LogWrit(line(1:len1(line)))
-          write(line,102) bmaj*rts, bmin*rts, bpa, niters,dperjy,cbof
+	  write(line,102) bmaj*rts, bmin*rts, bpa, dperjy, cbof, niters
           call LogWrit(line(1:len1(line)))
 	endif
 
 100	format(a,1x,a,1x,a,a,f8.3,a,f8.2,a,f8.2)
-101  	format(a,a,a,3f6.2,' freq:',f9.5,' unit:',a)
-102  	format('beam:',3f6.1,' niters:',i7,' K/Jy:',f9.2,' cbof:',f7.2)
+101  	format(a,a,a,3f6.2,' restfreq:',f9.5,' bunit:',a)
+102  	format('beam:',3f6.1,' K/Jy:',f9.2,' cbof:',f7.2, ' niters:',i7)
 
 	end
 c********1*********2*********3*********4*********5*********6*********7**
@@ -1075,9 +1077,15 @@ c
         write(line,'(a,4i6,a)') 'Integral and rms in box (',
      *				is-midx,ib-midy,ie-midx,it-midy, ')'
 	call output(line)
+        if(ctype(3).eq.'FREQ') then
+        write(line,'(a,a,a,a,a,a,a)') ' plane  ','  Frequency ',
+     *    ' Total Flux ','  Maximum   ','  Minimum   ','  Average   ',
+     *    '    rms     '
+        else
 	write(line,'(a,a,a,a,a,a,a)') ' plane  ','  Velocity  ',
      *    ' Total Flux ','  Maximum   ','  Minimum   ','  Average   ',
      *	  '    rms     '
+        endif
 	call output(line)
 	do k=1,nc
 	  call maxmap(ary(1,1,k),nx,ny,is,ie,ib,it,
@@ -1097,9 +1105,15 @@ c	call prompt(line,k,'>Type <cr> to continue')
           write(line,'(a,4i6,a)') 'Integral and rms in box (',
      *				is-midx,ib-midy,ie-midx,it-midy, ')'
 	  call LogWrit(line)
+        if(ctype(3).eq.'FREQ') then
+        write(line,'(a,a,a,a,a,a,a)') ' plane  ','  Frequency ',
+     *    ' Total Flux ','  Maximum   ','  Minimum   ','  Average   ',
+     *    '    rms     '
+        else
 	  write(line,'(a,a,a,a,a,a,a)') ' plane  ','  Velocity  ',
      *    ' Total Flux ','  Maximum   ','  Minimum   ','  Average   ',
      *	  '    rms     '
+        endif
 	  call LogWrit(line)
 	  do k=1,nc
 	    call maxmap(ary(1,1,k),nx,ny,is,ie,ib,it,
@@ -1132,9 +1146,15 @@ c
      *				is-midx,ib-midy,ie-midx,it-midy, ')'
 	  call output(line)
           call LogWrit(line)
-	write(line,'(a,a,a,a,a,a)') '  Velocity  ',
+        if(ctype(3).eq.'FREQ') then
+	  write(line,'(a,a,a,a,a,a)') '  Frequency ',
      *    ' Total Flux ','  Maximum   ','  Minimum   ','  Average   ',
      *	  '    rms     '
+        else
+	  write(line,'(a,a,a,a,a,a)') '  Velocity  ',
+     *    ' Total Flux ','  Maximum   ','  Minimum   ','  Average   ',
+     *	  '    rms     '
+        endif
 	  call output(line)
           call LogWrit(line)
 	call maxmap(ary,nx,ny,is,ie,ib,it,
@@ -1501,10 +1521,18 @@ c  freq
 	write(line,'(''RestFreq: '',F10.5,'' GHz'')') restfreq
         call pgtext(0.0,0.66,line)
 c  vel
-	write(line,'(''Velocity: '',F10.3,'' km/s'')') vel
+        if(ctype(3).eq.'FREQ') then
+	  write(line,'(''Frequency:'',F10.3,'' GHz '')') vel
+        else
+	  write(line,'(''Velocity: '',F10.3,'' km/s'')') vel
+        endif
         call pgtext(0.0,0.62,line)
 c  delv
-	write(line,'(''Width:    '',F10.3,'' km/s'')') abs(delv)
+        if(ctype(3).eq.'FREQ') then
+	  write(line,'(''Width:    '',F10.3,'' GHz '')') abs(delv)
+        else
+	  write(line,'(''Width:    '',F10.3,'' km/s'')') abs(delv)
+        endif
         call pgtext(0.0,0.58,line)
 c  file
         write(line,'(''filename:'',1x,A)') file(1:len1(file))
@@ -2171,7 +2199,11 @@ c
      *		//ychar(1:index(ychar,'.')+2)//')'
           endif
 c
-          xlabel='Velocity (km/s)'
+          if(ctype(3).eq.'FREQ') then
+            xlabel='Frequency (GHz)'
+          else
+            xlabel='Velocity (km/s)'
+          endif
           if (units.eq.'K') then
             ylabel='K'
           else if (units.eq.'J') then
@@ -4027,11 +4059,15 @@ c	  enddo
 c
 c  Set maptype to position-velocity; save plot device from command line.
 c
-	maptype = 'POS-VEL'
-        xlabel='velocity (km/s)'
-        ylabel='position (arcsec)'
-	oldevice=device
-	lwidth = 1
+	  maptype = 'POS-VEL'
+          if(ctype(3).eq.'FREQ') then
+            xlabel='Frequency (GHz)'
+          else
+            xlabel='Velocity (km/s)'
+          endif
+          ylabel='position (arcsec)'
+	  oldevice=device
+	  lwidth = 1
 c	
 c  Set up the plot windows.
 c
@@ -4210,7 +4246,12 @@ c  Set pg viewport to right side.
 c
         call pgswin(0.0,1.0,0.0,1.0)
 
-        write(line,'(''Velocities (km/s): '')') 
+          if(ctype(3).eq.'FREQ') then
+            write(line,'(''Frequency (GHz): '')') 
+          else
+            write(line,'(''Velocities (km/s): '')') 
+          endif
+
         call pgtext(0.0,0.30,line)
 c  levels
 	j=0
