@@ -28,6 +28,7 @@
 #  -------------------------------------------------------------
 #  The example shown below is a skeleton file.
 #  The install.miriad script will patch this file and place it in $MIR
+#  and rename it to $MIR/MIRRC.$MIRHOST
 #  -------------------------------------------------------------
 if ($?MIR == 0) then
   setenv MIR      "/mir_rootdir"
@@ -85,8 +86,8 @@ alias   mirfeedback     mir.bug.csh feedback
 #  -------------------------------------------------------------
 #  Karma, if present
 if (-e $MIR/borrow/karma/.login) then
-  echo Loading karma tools
   setenv KARMABASE $MIR/borrow/karma/
+  echo Loading karma tools
   source $KARMABASE/.login
   if ($MIRHOST == "darwin") then
     if ($?DYLD_LIBRARY_PATH) then
