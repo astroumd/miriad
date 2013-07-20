@@ -130,6 +130,7 @@ c
 c  History:
 c    Refer to the RCS log, v1.1 includes prior revision information.
 c    mhw  02jul12  Read/write of images with dimensions up to MAXDIM
+c    rjs  16feb13  Support really large FITS files (>200GB)
 c
 c $Id$
 c***********************************************************************
@@ -489,17 +490,24 @@ c
         if (BypPix(lu).eq.2) then
           call hread3j(item(lu),array,offset3,BypPix(lu)*length,
      *                                                        iostat)
-        else
+        else if (BypPix(lu).eq.4) then
           call hread3i(item(lu),array,offset3,BypPix(lu)*length,
+     *                                                        iostat)
+        else if (BypPix(lu).eq.8) then
+          call hread3d(item(lu),darray,offset3,BypPix(lu)*length,
      *                                                        iostat)
         endif
         if (iostat.ne.0) call bugno('f',iostat)
-        if (float(lu)) then
+        if (float(lu).and.BypPix(lu).eq.4) then
           do i = 1, length
             flags(i) = (2139095040.gt.array(i) .or.
      *                  array(i).gt.2147483647) .and.
      *                 (-8388608.gt.array(i) .or.
      *                  array(i).gt.-1)
+          enddo
+        else if (BypPix(lu).eq.8) then
+          do i = 1, length
+            flags(i) = darray(i).ne.blank
           enddo
         else
           do i = 1, length
@@ -2775,7 +2783,7 @@ c  Input:
 c    lu         The handle of the FITS file.
 c    off        Offset of the header block.
 c-----------------------------------------------------------------------
-      integer offset3(3),totsize3(3),size3(3)
+      integer offset3(3),totsize3(3),size3(3),bigint(3)
       integer bitpix,gcount,pcount,naxis
       integer iostat,i,axis,rem
       character string*8
@@ -2844,6 +2852,12 @@ c
 c         ... HdOff(lu) = offset
         call mpSet(HdSize3(1,lu),totsize3)
         call mpSubmm(HdSize3(1,lu),offset3)
+c
+c  If the size is really big, trim it back
+c        
+        call mpCvtim(bigint,2**30)
+        if(mpCmp(HdSize3(1,lu),bigint).gt.0) 
+     *    call mpSet(HdSize3(1,lu),bigint)
         call mpDivmi(HdSize3(1,lu),2880,rem)
         call mpMulmi(HdSize3(1,lu),2880)
 c         ... HdSize(lu) = 2880 * ( (totsize - offset) / 2880 )
@@ -2888,7 +2902,8 @@ c
 
         ncards(lu) = 0
         call mpAddmi(size3,pcount)
-        call mpMulmi(size3,gcount*abs(bitpix)/8)
+        call mpMulmi(size3,gcount)
+        call mpMulmi(size3, abs(bitpix)/8)
         call mpSet(DatSize3(1,lu),size3)
 c         DatSize(lu) = gcount*abs(bitpix)/8 * (pcount + size)
         call mpSubmm(totsize3,DatOff3(1,lu))
