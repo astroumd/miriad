@@ -10,7 +10,7 @@ c    jm    13sep91    Increased size of character strings to allow for
 c                     very long keyword inputs (eg. select=...).
 c    jm    08oct91    Added date of program execution to output.
 c    rjs   18aug93    More tolerant of funny input.
-c    pjt   23feb05    Change the timestamping format to a more y2k friendly?
+c    mhw   15jun12    Adopt T format time (from pjt)
 c***********************************************************************
 c* HisInput -- Copy task input parameters to a history file.
 c& jm
@@ -36,7 +36,7 @@ c--
 c-----------------------------------------------------------------------
 	integer narg,i,l1,l2,length,lu,iostat
 	logical dofile
-	character line*256,file*256
+	character line*1024,file*1024
 	double precision julian
 c
 c  Externals.
