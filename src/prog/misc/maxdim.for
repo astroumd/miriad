@@ -18,6 +18,7 @@ c: utility
 c+
 c	MAXDIM reports a number of MAXDIM related parameters that Fortran
 c       and C programs in Miriad use and limit memory usage.
+c       See also the MIRMAX program with similar functionality.
 c       Sometimes an obscure message (e.g. Hash table overflow) actually
 c       means the MAXBUF parameter needs to be increased.
 c 
@@ -119,6 +120,7 @@ c  and some not in maxdim.h but in maxdimc.h:   MAXNAX
       WRITE(*,*) 'MAXBASE      = ',MAXBASE
       WRITE(*,*) 'MAXBASE2     = ',MAXBASE2
       WRITE(*,*) 'MAXCHAN      = ',MAXCHAN
+c     WRITE(*,*) 'MAXCHAN2     = ',MAXCHAN2
       WRITE(*,*) 'MAXWIN       = ',MAXWIN
       WRITE(*,*) 'MAXWIDE      = ',MAXWIDE
 c     WRITE(*,*) 'MAXNAX       = ',MAXNAX
@@ -148,10 +150,10 @@ c     WRITE(*,*) 'MAXNAX       = ',MAXNAX
 
 	 DO j=1,m
 	 IF (m.GT.1) write(*,*) 'Summing iteration ',j,'/',m
-	 DO i=1,n
-	    IF (type(1:1).eq.'r') CALL myWorkR(memr(p(i)),nx,ny,nz,sr,i)
-	    IF (type(1:1).eq.'d') CALL myWorkD(memd(p(i)),nx,ny,nz,sd,i)
-	 ENDDO
+	   DO i=1,n
+	     IF (type(1:1).eq.'r') CALL myWorkR(memr(p(i)),nx,ny,nz,sr,i)
+	     IF (type(1:1).eq.'d') CALL myWorkD(memd(p(i)),nx,ny,nz,sd,i)
+	   ENDDO
 	 ENDDO
 
 	 DO i=1,n
