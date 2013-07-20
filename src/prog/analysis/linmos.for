@@ -137,7 +137,8 @@ c-----------------------------------------------------------------------
       logical   defrms, dosen, dogain, docar, exact, taper
       integer   axLen(3,MAXIN), i, itemp, k1(MAXIN), k2(MAXIN), length,
      *          lIn(MAXIN), lOut, lScr, lWts, nIn, nOpen, nOut(4),
-     *          naxis, offset, pOut, pWts
+     *          naxis, offset
+      ptrdiff   pOut, pWts
       real      blctrc(4,MAXIN), extent(4), rms(MAXIN), sigt, xoff,
      *          yoff, bw
       character inName*64, inbuf*(MAXLEN), outNam*64, version*80
@@ -274,8 +275,8 @@ c     Correct blctrc for the extent of the image.
       enddo
 
 c     Allocate memory.
-      call MemAlloc(pOut,nOut(1)*nOut(2),'r')
-      call MemAlloc(pWts,nOut(1)*nOut(2),'r')
+      call MemAllop(pOut,nOut(1)*nOut(2),'r')
+      call MemAllop(pWts,nOut(1)*nOut(2),'r')
 
 c     Process each of the files.
       call scrOpen(lScr)
@@ -306,8 +307,8 @@ c     change in the weights, and writing out the final data.
      *              nOut(1),nOut(2),nOut(3),dosen)
 
 c     Free memory.
-      call MemFree(pOut,nOut(1)*nOut(2),'r')
-      call MemFree(pWts,nOut(1)*nOut(2),'r')
+      call MemFrep(pOut,nOut(1)*nOut(2),'r')
+      call MemFrep(pWts,nOut(1)*nOut(2),'r')
 
 c     Close down.
       call scrClose(lScr)
@@ -606,11 +607,13 @@ c    n1,n2      Dimensions of the Out array.
 c    xlo,ylo    Blc of area to write.
 c    xhi,yhi    Trc of area to write.
 c-----------------------------------------------------------------------
-      integer j,offset,length
+      integer j,length
+      ptrdiff offset
 c-----------------------------------------------------------------------
 c     If the section of the x dimension that we want to right is pretty
 c     well the entire x axis, read the whole lot.
-      offset = (k-1)*n1*n2 + (ylo-1)*n1 + (xlo-1)
+      offset = (k-1)*n1
+      offset = offset*n2 + (ylo-1)*n1 + (xlo-1)
       if (10*(xhi-xlo+1).ge.8*n1) then
         length = n1*(yhi-ylo-1) + (n1-xlo+1) + xhi
         call scrRead(lScr,Out(xlo,ylo),offset,length)
@@ -641,10 +644,12 @@ c    n1,n2      Dimensions of the Out array.
 c    xlo,ylo    Blc of area to write.
 c    xhi,yhi    Trc of area to write.
 c-----------------------------------------------------------------------
-      integer j,offset,length
+      integer j,length
+      ptrdiff offset
 c-----------------------------------------------------------------------
 c     Try and block it into one call if that is possible.
-      offset = (k-1)*n1*n2 + (ylo-1)*n1 + (xlo-1)
+      offset = (k-1)*n1
+      offset = offset*n2 + (ylo-1)*n1 + (xlo-1)
       if (xlo.eq.1 .and. xhi.eq.n1) then
         length = n1*(yhi-ylo-1) + (n1-xlo+1) + xhi
         call scrWrite(lScr,Out(xlo,ylo),offset,length)
