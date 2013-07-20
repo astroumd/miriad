@@ -215,10 +215,15 @@ c                   descriptors is modified (shift and expansion or
 c                   contraction) by an integral number of pixels so that
 c                   it completely encloses the input.
 c         equisw    Switch the output coordinate system between J2000
-c                   and B1950 equatorial.
+c                   and B1950 equatorial.  The output map will be
+c                   reoriented so that north is upwards, though the
+c                   coordinate graticule may be oblique nonetheless.
 c         galeqsw   Switch the output coordinate system between galactic
 c                   and equatorial.  Galactic switches implicitly to
-c                   equatorial J2000.
+c                   equatorial J2000.  The output map will be reoriented
+c                   so that the north pole (equatorial or galactic) is
+c                   upwards, though the coordinate graticule may be
+c                   oblique nonetheless.
 c         nearest   Use nearest neighbour interpolation rather than the
 c                   default cubic interpolation.
 c       If the equatorial coordinate system is not specified in the
@@ -362,14 +367,16 @@ c     Axis defaults come initially from the input image.
       doTCel = .false.
       do i = 1, nIAxes
 c       Is this a celestial axis?
-        if (axMap(i).eq.ilng .or. axMap(i).eq.ilat) then
+        if (i.le.naxes) then
+          if (axMap(i).eq.ilng .or. axMap(i).eq.ilat) then
 c         Flag that celestial axes are being regridded.
-          doTCel = .true.
+            doTCel = .true.
 
-          if (doDesc) then
-c           Convert degrees to radians.
-            desc(1,i) = desc(1,i) * DD2R
-            desc(3,i) = desc(3,i) * DD2R
+            if (doDesc) then
+c             Convert degrees to radians.
+              desc(1,i) = desc(1,i) * DD2R
+              desc(3,i) = desc(3,i) * DD2R
+            endif
           endif
         endif
 
@@ -559,7 +566,7 @@ c       Allocate space used for the coordinate translation grid.
 
 c       Calculate the coordinates translation grid, and work out some
 c       statistics about it.
-        call GridGen(nAxOut(1),nAxOut(2),k,
+        call GridGen(nAxOut(1),nAxOut(2),nAxOut(3),k,
      *        memr(xv),memr(yv),memr(zv),meml(Valid),gnx,gny)
         call GridStat(doNear,memr(xv),memr(yv),memr(zv),meml(valid),
      *        gnx,gny,nAxIn(1),nAxIn(2),nAxIn(3),tol,minv,maxv,order)
@@ -645,6 +652,9 @@ c-----------------------------------------------------------------------
 c  Set up output celestial coordinates.
 c-----------------------------------------------------------------------
       include 'mirconst.h'
+
+      double precision UNDEF
+      parameter (UNDEF = 999d0)
 
       logical   doeqnx, gotone
       integer   ilat, ilng
@@ -825,6 +835,11 @@ c     Switch equatorial coordinates?
 
         call coAxSet(cOut,ilng,ctype1,crpix1,crval1,cdelt1)
         call coAxSet(cOut,ilat,ctype2,crpix2,crval2,cdelt2)
+
+c       Put coordinates in the normal orientation, i.e. with north up.
+        call coSetD(cOut,'lonpole',UNDEF)
+        call coSetD(cOut,'latpole',UNDEF)
+
         call coSetD(cOut,'epoch',eqnox)
         call coSetD(cOut,'obstime',obstime)
 
@@ -1113,9 +1128,9 @@ c-----------------------------------------------------------------------
 
 c***********************************************************************
 
-      subroutine GridGen(nx,ny,plane,xv,yv,zv,valid,gnx,gny)
+      subroutine GridGen(nx,ny,nz,plane,xv,yv,zv,valid,gnx,gny)
 
-      integer nx,ny,plane,gnx,gny
+      integer nx,ny,nz,plane,gnx,gny
       real xv(gnx,gny),yv(gnx,gny),zv(gnx,gny)
       logical valid(gnx,gny)
 c-----------------------------------------------------------------------
@@ -1123,7 +1138,7 @@ c  Determine the translation between the output and input pixel
 c  coordinates on a grid.
 c
 c  Input:
-c    nx,ny
+c    nx,ny,nz
 c    plane
 c    gnx,gny
 c  Output:
@@ -1144,7 +1159,11 @@ c-----------------------------------------------------------------------
           if (valid(i,j)) then
             xv(i,j) = out(1)
             yv(i,j) = out(2)
-            zv(i,j) = out(3)
+            if (nz.gt.1) then
+              zv(i,j) = out(3)
+            else
+              zv(i,j) = in(3)
+            endif            
           endif
         enddo
       enddo
