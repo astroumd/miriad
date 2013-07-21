@@ -31,6 +31,7 @@ endif
 #  place a map closer to the pole to view the WCS grid
 imgen out=map0/map0big imsize=256 cell=120 radec=0,80
 cgdisp in=map0/map0big labtyp=hms,dms options=trlab,grid device=big.ps/ps
+cgdisp in=map0/map0big labtyp=hms,dms options=trlab,grid device=big.gif/gif
 
 #  create a cube with a gaussian blob in the center
 rm -rf cube0 cube1
