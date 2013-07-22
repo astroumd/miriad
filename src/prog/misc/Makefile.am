@@ -15,7 +15,7 @@ ftasks = \
   addhis atmosph calc copyhd corset \
   cotra delhd design dwell gethd hex itemize \
   j2000 julian listobs marstb mathd maxdim \
-  mfplan moslst obsrms obstau planets pnt \
+  mfplan mirmax moslst obsrms obstau planets pnt \
   pntgen prthd prthis puthd remove rmdata \
   rmsfit sinbad sinpoly solar tacos taco telepar \
   warpfit xcorr	xfcor

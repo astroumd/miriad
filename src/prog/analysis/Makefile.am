@@ -30,7 +30,7 @@ EXTRA_DIST = $(ftasks:=.for)
 
 noinst_HEADERS = clfind.h clpars.h clplot.h clstats.h hermes.h \
   imblob.h imdiff.h imfit.h imhist.h imsad.h imsad2.h imspec.h \
-  imstat.h maths.h maxfld.h mfspin.h psrfix.h regrid.h velplot.h 
+  imstat.h maths.h maxfld.h mfspin.h psrfix.h velplot.h 
 
 dist-hook:
 	-rm -f $(distdir)/*.f
