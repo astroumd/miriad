@@ -16,6 +16,7 @@ set ftp=ftp://ftp.atnf.csiro.au/pub/software/karma/
 set kc=karma-1.7.25-common.tar.bz2
 # linux
 set k64=karma-1.7.25-amd64_Linux_libc6.3.tar.bz2
+set k32=karma-1.7.25-i386_Linux_libc6.tar.bz2
 # mac
 set kc1=karma-1.7.20-common.tar.bz2
 set k11=karma-1.7.20-x86_64_Darwin-11.2.tar.bz2
@@ -59,8 +60,16 @@ else if ($MIRHOST == linux) then
     ln -s karma-1.7.25 karma
     set m=amd64_Linux_libc6.3
     (cd karma; ln -s $m/lib;  ln -s $m/bin)
-  else 
-    echo NO KARMA FOR non-64 bit yet
+  else if ($p == i686) then
+    wget -O - $ftp/$kc | tar jxf -
+    wget -O - $ftp/$k32 | tar jxf -
+    ln -s karma-1.7.25 karma
+    set m=i386_Linux_libc6
+    (cd karma; ln -s $m/lib;  ln -s $m/bin)
+  else if ($p == i686) then
+
+  else
+    echo NO KARMA FOR p=$p yet
   endif
 
 else
