@@ -143,27 +143,27 @@ c     WRITE(*,*) 'MAXNAX       = ',MAXNAX
 
 	 DO i=1,n
 	    write(*,*) 'nxyz: ',nx,ny,nz
-	    IF (type(1:1).eq.'r') CALL MemAllop(p(i), nx*ny*nz, 'r')
-	    IF (type(1:1).eq.'d') CALL MemAllop(p(i), nx*ny*nz, 'd')
+	    IF (type(1:1).eq.'r')CALL MemAllop(p(i), nx*ny*nz, 'r')
+	    IF (type(1:1).eq.'d')CALL MemAllop(p(i), nx*ny*nz, 'd')
 	    write(*,*) 'pData(i)     =',i,p(i)
 	 ENDDO
 
 	 DO j=1,m
 	 IF (m.GT.1) write(*,*) 'Summing iteration ',j,'/',m
 	   DO i=1,n
-	     IF (type(1:1).eq.'r') CALL myWorkR(memr(p(i)),nx,ny,nz,sr,i)
-	     IF (type(1:1).eq.'d') CALL myWorkD(memd(p(i)),nx,ny,nz,sd,i)
+	     IF (type(1:1).eq.'r')CALL myWorkR(memr(p(i)),nx,ny,nz,sr,i)
+	     IF (type(1:1).eq.'d')CALL myWorkD(memd(p(i)),nx,ny,nz,sd,i)
 	   ENDDO
 	 ENDDO
 
 	 DO i=1,n
-	    IF (type(1:1).eq.'r') CALL chkWorkR(memr(p(i)),nx,ny,nz,i)
-	    IF (type(1:1).eq.'d') CALL chkWorkD(memd(p(i)),nx,ny,nz,i)
+	    IF (type(1:1).eq.'r')CALL chkWorkR(memr(p(i)),nx,ny,nz,i)
+	    IF (type(1:1).eq.'d')CALL chkWorkD(memd(p(i)),nx,ny,nz,i)
 	 ENDDO
 
 	 DO i=1,n
-	    IF (type(1:1).eq.'r') CALL MemFrep(p(i), nx*ny*nz, 'r')
-	    IF (type(1:1).eq.'d') CALL MemFrep(p(i), nx*ny*nz, 'd')
+	    IF (type(1:1).eq.'r')CALL MemFrep(p(i), nx*ny*nz, 'r')
+	    IF (type(1:1).eq.'d')CALL MemFrep(p(i), nx*ny*nz, 'd')
 	 ENDDO
 
 	 
