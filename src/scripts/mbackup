@@ -1,0 +1,55 @@
+#! /bin/csh -f
+#
+# backup a mask and/or flags/wflags file
+#
+# History:
+# 23-jul-2013    Peter Teuben
+#
+
+set label = `date +%Y%M%d%H%M%S`
+
+if ($#argv == 0) then
+ echo "Usage: $0 [-n] [-q] miriad_datasets"
+ echo "Will create date+time stamped backups of mask/flags/wflags in miriad datasets"
+ echo "Options:"
+ echo "    -n     dryrun, show, but don't apply"
+ echo "    -q     query, show what backup files exist"
+ exit 0
+endif
+
+set dryrun=0
+set query=0
+
+foreach d ($*)
+  # parse options
+  if (X$d == X-n) then 
+    set dryrun=1
+    continue
+  endif
+  if (X$d == X-q) then
+    set query=1
+    continue
+  endif
+
+  # check if it's a miriad file
+  if (-d $d && -e $d/header) then
+    if ($query) then
+      set fm=(`ls $d/{mask*,flags*,wflags*}`)
+      echo $d : $fm
+    else
+      foreach f ($d/{mask,flags,wflags})
+        if (-e $f) then
+          if ($dryrun) then
+            echo "$f -> $f.$label"
+          else
+            echo "$f => $f.$label"
+            cp -p $f $f.$label
+          endif
+        endif
+      end
+    endif
+  else
+    echo Skipping $d
+  endif
+end
+
