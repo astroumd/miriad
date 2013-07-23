@@ -1,7 +1,7 @@
 include $(top_srcdir)/mircommon.mak
 doc_prog = doc
 
-bin_PROGRAMS = doc docfmt docman flint ratty intf2c
+bin_PROGRAMS = doc docfmt docman flint intf2c ratty varsizes
 noinst_PROGRAMS = detab # used in building docs
 
 if HAVE_XAW
@@ -28,6 +28,7 @@ docman_SOURCES = docman.c
 flint_SOURCES = flint.c
 intf2c_SOURCES = intf2c.c
 ratty_SOURCES = ratty.c
+varsizes_SOURCES = varsizes.c
 
 xpanel_SOURCES = xpanel.c
 xpanel_CFLAGS = $(X_CFLAGS)
