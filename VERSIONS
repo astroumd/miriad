@@ -1,5 +1,8 @@
 CARMA miriad:   http://carma.astro.umd.edu/miriad/
 -------------
+
+note: the VERSION and configure.ac file should contain the current version.
+
 3.0.0  01mar13  First (only linux tested) release of CVS based MIRIAD/BIMA 
 3.0.1  01may16  not a real release (doc also broken)
 3.0.2  01jun15  Added ATNF code (and ATLOD for linux), $MIR/install
