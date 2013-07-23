@@ -58,6 +58,7 @@ c    pjt   3oct07 Report fluxes found if no planets
 c    pkgw 15mar11 Use scrrecsz() to allow very large scratchfiles
 c    pjt  10may12 Use memallop() and ptrdiff
 c    pjt  23may12 Better calling of scread/write
+c    pkgw 23jul13 Fix a mistaken argument to scrread()
 c************************************************************************
 c*ModelIni -- Ready the uv data file for processing by the Model routine.
 c&rjs
@@ -324,7 +325,7 @@ c
 	  a = sqrt(VisPow/ModPow)
 	  do j=1,nvis
 	    offs = j-1
-	    call scrread(tscr,Out,offset,1)
+	    call scrread(tscr,Out,offs,1)
 	    do i=nhead+1,nhead+5*nchan,5
 	      Out(i+2) = a*Out(i+2)
 	      Out(i+3) = a*Out(i+3)
