@@ -1,6 +1,6 @@
 #! /bin/csh -f
 #
-set version=28-may-2012
+set version=24-jul-2013
 #
 #  2-aug-99 Updated for Sebok's Mandrake setup
 #  1-aug-00 Updated to allow to build private PGPLOT version
@@ -635,6 +635,8 @@ if (-e checklist) then
   echo Checking binaries:
   set numbins=`ls $MIRBIN|wc -l`
   echo Found $numbins entries in MIRBIN
+  ls $MIRBIN > $MIR/tmp/checklist.$$.bin
+  diff $MIR/tmp/checklist.$$.bin $MIR/install/checklist > $MIR/tmp/checklist.$$.diff
   set bad=0
   set badlist=$MIR/tmp/checklist.$$.bad
   set all=`wc -l checklist | awk '{print $1}'`
@@ -660,7 +662,7 @@ if (-e checklist) then
         echo The ones you should not worry about are:  atlod, xcorf and velplotc.
     endif
   else
-    echo "Wow, they all compiled"
+    echo "Wow, they all compiled, it's a miracle"
   endif
 endif
 
