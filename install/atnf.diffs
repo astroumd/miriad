@@ -15,7 +15,7 @@ co.for :36      - replace atnf version
 co.for :2607    - wcslib error messages are extracted and reported
 defsmodl.for :2 - remove debug output in carma version?
 ephem.for :8    - carma to add leap second (CARMA FIXED)
-fitsio.for :24  - replace atnf version
+fitsio.for :24  - replace atnf version (now SYNC'd)
 gamma.for :12   - compiler bug workaround in atnf - maybe obsolete?
 headio.c :176   - differences in int8 read/write code
 hio.c :84       - better error reporting in carma -> replace atnf?
