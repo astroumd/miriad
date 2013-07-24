@@ -10,6 +10,9 @@
 #  improvement in the I/O portion of this benchmark. 
 #  Be aware you have enough memory allocated to this!
 #
+#  See also: $MIR/demo/carma/mfs.csh
+#
+#
 set tmp=bench$$
 mkdir $tmp
 cd $tmp
