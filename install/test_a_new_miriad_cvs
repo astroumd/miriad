@@ -12,6 +12,20 @@
 #   ./test_a_new_miriad_cvs reuse=3                    install old-style local
 #   ./test_a_new_miriad_cvs auto=1 dist=1              only create a tar ball
 #
+#   Typical use for a binary install with ds9 and karma tools:
+#
+#BB#! /bin/csh -f
+#BB   unsetenv CVSROOT
+#BB   set tar=miriad_linux64_u12_gfortran.tar.gz
+#BB   rm -rf miriad
+#BB   ./test_a_new_miriad_cvs gfortran=1 generic=1 casa=0 
+#BB   source miriad/miriad_start.csh
+#BB   cp ds9/*  $MIRBIN
+#BB   cp ./test_a_new_miriad_cvs do1g miriad/tmp
+#BB   miriad/install/install.karma $MIR/borrow
+#BB   tar zcf     $tar  miriad
+#BB#  grep ^#BB test_a_new_miriad_cvs | sed s/#BB//
+#
 #   dark-ages    -- written                      Peter Teuben
 #   23-nov-05    added to CVS                    PJT
 #   14-sep-06    added compile.generic support, can also re-compile current tree	PJT
