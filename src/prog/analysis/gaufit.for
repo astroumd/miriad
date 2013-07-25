@@ -323,6 +323,8 @@ c              el 4=max # gaussians, used when sorting a range
       real         cmpsort( 4)
       character*80 prnm
 
+      call bug('w','this version might crash, use GAUFIT2')
+
       call output(version)
       call inputs(units,prfinfo,runs,ngauss,limlist,cmpsort,prnm)
       call work(  units,prfinfo,runs,ngauss,limlist,cmpsort,prnm)
