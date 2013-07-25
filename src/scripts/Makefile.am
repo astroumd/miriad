@@ -1,7 +1,7 @@
 include $(top_srcdir)/mircommon.mak
 
 bin_SCRIPTS = antpat autocal beam beamcheck beamgen beamgen2 \
-  debug mir.bug.csh mir-config mirds9 mir.find mir.help \
+  debug fringemap mbackup mir.bug.csh mir-config mirds9 mir.find mir.help \
   mir.index mirpgmr mirprogd mirsao mir.sndex mirsubsd mirtng \
   mirupdate mosaical mrc passcal pbcorr plot_swflux.py polcal \
   replicate robust.csh smoothtobm uvshadow
@@ -33,6 +33,10 @@ beamgen.clone: beamgen
 beamgen2.clone: beamgen2
 	$(LN_S) $< $@
 debug.clone: debug
+	$(LN_S) $< $@
+fringemap.clone: fringemap
+	$(LN_S) $< $@
+mbackup.clone: mbackup
 	$(LN_S) $< $@
 mir.bug.csh.clone: mir.bug.csh
 	$(LN_S) $< $@
