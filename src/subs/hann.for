@@ -14,6 +14,9 @@ c    nebk 28oct92 Rewrite binomial coefficients with gamma function
 c                 removing RFACT along the way.
 c    nebk 03nov92 Break GAMMLN into GAMMA.FOR with some other gamma
 c                 function subroutines
+c
+c  @todo:  hcoeffs() is wrong for nsmth>3, hanning is not binominal
+c          but 0.5-0.5 cos(2.pi.N/(M-1))
 c************************************************************************
 c* Hcoeffs -- Calculated coefficients for Hanning smoothing.
 c& nebk
