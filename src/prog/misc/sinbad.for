@@ -249,9 +249,8 @@ c      call SelApply(lIn,sels,.true.)
       nvis = 0
 
 c     
-c  Scan the file once and pre-cache the first OFF positions
-c  for each antenna (danger: this could mean they're not
-c  all at taken at the same time)
+c  Scan the file and load the OFF positions
+c  for each antenna (we assume the data are time sorted)
 c     
       call uvread(lIn,uin,data,flags,MAXCHAN2,nchan)
       do while (nchan.gt.0)
@@ -371,7 +370,8 @@ c
 c  Now process the data.
 c
          if(doon)then
-            if (timein0.ne.timein) then
+            if (timein.ne.timein0) then
+               if (timein.lt.timein0) call bug('f','Not timesorted')
                timein0 = timein
                nt = nt + 1
             endif
