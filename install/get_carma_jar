@@ -1,0 +1,36 @@
+#! /bin/csh -f
+#
+#  Install jar's for CARMA
+#
+# SEE:   http://cedarflat.mmarray.org/observing/tools/
+
+
+set url=http://cedarflat.mmarray.org/observing/tools/
+set jar=(SCalc.jar astroutil.jar CGS.jar jrtd.jar)
+
+
+foreach a ($*)
+  set $a
+end
+
+
+cd $MIR/borrow
+mkdir -p jar
+cd jar
+
+foreach j ($jar)
+  if (-e $j) then
+    echo Removing old $j
+    mv $j $j.old
+  endif 
+  wget $url/$j
+end
+
+
+echo "The following commands can be executed from $MIR/borrow/jar "   > README
+echo "RTD:       java -jar jrtd.jar"    >> README
+echo "CGS:       java -jar CGS.jar"     >> README
+echo "RMS calc:  java -jar SCalc.jar"   >> README
+
+
+cat README
