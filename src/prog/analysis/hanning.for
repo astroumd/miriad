@@ -7,6 +7,9 @@ c   datasets. It figures out which axis this is from the header. If not
 c   given in the header it assumes that it is the z-axis.
 c   The width of the smooth is determined by the keyword width.
 c   If input data is masked, it is set to zero before smoothing is done.
+c
+c   Note there is no velocity gaussian smoothing option in MIRIAD, but
+c   using large enough width this will approach a gaussian.
 c@ in
 c        The input image. vxy and xyv images are acceptable inputs. 
 c        No default.
@@ -20,6 +23,11 @@ c        Default value is 3.
 c@ out
 c        The output image.
 c--
+c
+c   @todo
+c    this code can be very inefficient for low memory machines,
+c    the difference on a 1480 x 1482 x 150 between hanning in 210 sec
+c    and nemo's ccdsmooth in-core was 3 sec.
 c
 c   History:
 c
@@ -147,6 +155,10 @@ c------------------------------------------------------------------------
        else if(object.eq.'boxcar') then
          call bcoeffs( width, coeffs )
        end if
+
+c      note that hcoeffs() is wrong for width > 3
+c      
+c       write(*,*) (coeffs(i),i=1,width)
 
        do i = 1, nprofiles
           call xyzprfrd( tinp, i, data, mask, nchan )

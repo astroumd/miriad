@@ -6,11 +6,11 @@ c= imcmp - Compare two images
 c& pjt
 c: map analysis
 c+
-c	IMCMP is a MIRIAD task to compare two images. The maps must have
-c	the same dimensions.
-c	The two images are compared on a pixel by pixel basis, within a
+c	IMCMP is a MIRIAD task to compare two (or more) images. 
+c	The maps must have the same dimensions, and
+c	the images are compared on a pixel by pixel basis, within a
 c	user defined region.
-c       See also IMCORR
+c       See also IMCORR.
 c@ in1
 c	The first input image.	No default
 c@ in2
@@ -52,6 +52,7 @@ c    14may96 rjs   Fix bugs, implement region selection, better messages,
 c		   some tidying. Shoddy job pjt.
 c    02nov04 tw    Replace keyf with keya for output log file.
 c    28mar11 pjt   doc and fix cube handling
+c    15feb13 pjt   
 c
 c  Various things to do or to think about:
 c   - fit portions of data with LSQFIT
