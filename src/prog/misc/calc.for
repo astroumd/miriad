@@ -1,4 +1,26 @@
-c************************************************************************
+	subroutine chelp()
+c
+	write(*,*) 'Options: '
+c-----------------------------------------------------------------------
+	write(*,*) ' -i      Print the result as an integer.'
+	write(*,*) ' -f xxx  Print the result using FORTRAN format xxx.'
+	write(*,*) ' -r      Treat the input as a single integer,'
+	write(*,*) '         print it in various radix formats.'
+	write(*,*) '         The input integer can be in radix format.'
+	write(*,*) '         A %x introduces a hex number, %o an octal '
+	write(*,*) '         and %b a binary.'
+	write(*,*) ' -c      Treat the input as a single constant, and '
+	write(*,*) '         print out information on it.'
+	write(*,*) ' expr    A FORTRAN-like expression (except if the '
+	write(*,*) '         -r flag is given).'
+	write(*,*) '         NOTE: An asterisk and brackets are special'
+	write(*,*) '         characters to some UNIX shells. '
+
+	write(*,*) '         These characters may need to be escaped or'
+	write(*,*) '         quoted when giving the xpression.'
+	write(*,*) ' -h      this help'
+	end
+c***********************************************************************
 	program calc
 	implicit none
 c
@@ -77,6 +99,8 @@ c
 	  else if(in.eq.'-f')then
 	    i = i + 1
 	    if(i.le.narg)call getarg(i,format)
+	  else if(in.eq.'-h')then
+	    call chelp
 	  else
 	    if(out.ne.' ')call bug('f','Only one expression allowed')
 	    out = in
