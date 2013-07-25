@@ -595,6 +595,7 @@ c  History:
 c    Refer to the RCS log, v1.1 includes prior revision information.
 c  CARMA cusomizations:
 c    pkgw  2012may24  Sync with ATNF changes to chkaxco arguments
+c    pjt   2013jul24  committed ptrdiff based alloc/free
 c-----------------------------------------------------------------------
       include 'maxdim.h'
       include 'maxnax.h'
@@ -609,7 +610,8 @@ c     Plotting parameters.
       real    WEDWID, TFDISP
       parameter (NXDEF = 4, NYDEF = 4, WEDWID = 0.05, TFDISP = 0.5)
 
-      integer ipim, ipnim, ipim2, ipnim2, ipimm
+c      integer ipim, ipnim, ipim2, ipnim2, ipimm
+      ptrdiff ipim, ipnim, ipim2, ipnim2, ipimm
       integer csize(maxnax,MAXCON), gsize(maxnax), vsize(maxnax,2),
      *  msize(maxnax), bsize(maxnax), lc(MAXCON), lg, lv(2), lm, lb,
      *  lhead, concol(MAXCON), veccol, boxcol, bemcol, ovrcol, labcol
@@ -689,13 +691,13 @@ c     axis descriptors.
      *   ngrps, grpbeg, ngrp)
 
 c     Try to allocate memory for images.
-      call memalloc(ipim,  win(1)*win(2), 'r')
-      call memalloc(ipnim, win(1)*win(2), 'i')
+      call memallop(ipim,  win(1)*win(2), 'r')
+      call memallop(ipnim, win(1)*win(2), 'i')
       if (vin(1).ne.' ' .and. vin(2).ne.' ') then
-        call memalloc(ipim2,  win(1)*win(2), 'r')
-        call memalloc(ipnim2, win(1)*win(2), 'i')
+        call memallop(ipim2,  win(1)*win(2), 'r')
+        call memallop(ipnim2, win(1)*win(2), 'i')
       endif
-      if (mskin.ne.' ') call memalloc(ipimm,  win(1)*win(2), 'l')
+      if (mskin.ne.' ') call memallop(ipimm,  win(1)*win(2), 'l')
 
 c     Compute contour levels for each contour image.
       if (ncon.gt.0) then
@@ -1048,13 +1050,13 @@ c       Page plot device.
 c     Close down.
       call pgend
 
-      call memfree(ipim,  win(1)*win(2), 'r')
-      call memfree(ipnim, win(1)*win(2), 'i')
+      call memfrep(ipim,  win(1)*win(2), 'r')
+      call memfrep(ipnim, win(1)*win(2), 'i')
       if (vin(1).ne.' '  .and. vin(2).ne.' ') then
-        call memfree(ipim2,  win(1)*win(2), 'r')
-        call memfree(ipnim2, win(1)*win(2), 'i')
+        call memfrep(ipim2,  win(1)*win(2), 'r')
+        call memfrep(ipnim2, win(1)*win(2), 'i')
       endif
-      if (mskin.ne.' ') call memfree(ipimm, win(1)*win(2), 'i')
+      if (mskin.ne.' ') call memfrep(ipimm, win(1)*win(2), 'i')
 
       do i = 1, ncon
         call coFin(lc(i))
