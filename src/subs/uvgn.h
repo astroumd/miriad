@@ -12,9 +12,6 @@ c  solno	Gives the solution number of the solutions in memory.
 c  timetab	Gives the time of the gain solutions in memory.
 c  gains	The portion of the gain solutions in memory.
 c  gflag	Flags of whether the corresponding gain is good.
-c  nbpsols      Number of bandpass solutions in the bandpass file
-c  bpsolno      Gives the solution number of the bp solutions in memory.
-c  bptimes      Gives the time of the bandpass solutions in memory.
 c------------------------------------------------------------------------
 c  MCHW's baseline/channel number based bandpass correction.
 c
@@ -36,17 +33,13 @@ c  aver
 c  
 c
 	include 'maxdim.h'
-	integer MAXTAB,MAXFEEDS,MAXGAINS,MAXSPECT,MAXSOLN
-	parameter(MAXTAB=8096,MAXFEEDS=2,MAXSPECT=MAXWIN)
-	parameter(MAXGAINS=3*MAXANT, MAXSOLN=1024)
+	integer MAXTAB,MAXFEEDS,MAXGAINS,MAXSPECT
+	parameter(MAXTAB=2,MAXFEEDS=2,MAXSPECT=MAXWIN)
+	parameter(MAXGAINS=3*MAXANT)
 	integer t1,t2,nsols,nants,nfeeds,ntau,ngains,gitem,solno(MAXTAB)
-        integer nbpsols,bpsolno,nfbin
-        integer b(2,MAXCHAN)
-        real fac(MAXCHAN)
-	double precision timetab(0:MAXTAB),dtime,bptimes(MAXSOLN)
-        double precision freq(MAXFBIN)
-	complex gains(MAXGAINS,MAXTAB,0:MAXFBIN)
-	logical gflag(MAXGAINS,MAXTAB,0:MAXFBIN),dogains,dotau
+	double precision timetab(MAXTAB),dtime
+	complex gains(MAXGAINS,MAXTAB)
+	logical gflag(MAXGAINS,MAXTAB),dogains,dotau
 c
 	integer ncgains,ncbase,nwgains,nwbase
 	logical docgains,dowgains
@@ -57,18 +50,18 @@ c
 	double precision sfreq(MAXSPECT),sdf(MAXSPECT),freq0
 	ptrdiff pFlags(2),pDat(2),pTab,pFreq(2)
         integer nDat(2),nTab,nFreq(2)
+
 c
 c
 c  The common blocks.
 c
-	common/UvGnA/timetab,dtime,bptimes,gains,t1,t2,nsols,nants,
-     *	  nfeeds,ngains,ntau,nbpsols,gitem,solno,bpsolno,
-     *    gflag,dogains,dotau,freq,nfbin,b,fac
+	common/UvGnA/timetab,dtime,gains,t1,t2,nsols,nants,nfeeds,
+     *	  ngains,ntau,gitem,solno,gflag,dogains,dotau
 c
 	common/UvGnB/ncgains,nwgains,ncbase,nwbase,pCgains,pWgains,
      *		docgains,dowgains
 c
-	common/uvGnC/sfreq,sdf,freq0,pFlags,pDat,pTab,pFreq,
-     *    nDat,nTab,nFreq,tno,vwide,vline,nchan,nspect,
-     *	  nschan,dopass,aver,first
+	common/uvGnC/sfreq,sdf,freq0,tno,vwide,vline,nchan,nspect,
+     *	  nschan,pFlags,pDat,nDat,pTab,nTab,pFreq,nFreq,dopass,
+     *	  aver,first
 
