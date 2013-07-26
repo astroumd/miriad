@@ -1,7 +1,7 @@
 dnl Autoconf 2.59 was required before, but Automake 1.11 requires
 dnl Autoconf 2.62 -- see discussion below.
 AC_PREREQ(2.62)
-AC_INIT([MIRIAD],[4.3.6],[miriad-dev-bugs@astro.berkeley.edu])
+AC_INIT([MIRIAD],[4.3.7],[miriad-dev-bugs@astro.berkeley.edu])
 AC_REVISION([$Revision$])
 AC_CONFIG_SRCDIR([src/subs/uvio.c])
 AC_CONFIG_MACRO_DIR([src/sys/auto])
