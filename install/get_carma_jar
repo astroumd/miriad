@@ -23,7 +23,11 @@ foreach j ($jar)
     echo Removing old $j
     mv $j $j.old
   endif 
-  wget $url/$j
+  if ($MIRHOST == darwin) then
+    curl $url/$j > $j
+  else
+    wget $url/$j
+  endif
 end
 
 
