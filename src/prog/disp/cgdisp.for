@@ -593,8 +593,6 @@ c$Id$
 c--
 c  History:
 c    Refer to the RCS log, v1.1 includes prior revision information.
-c  CARMA cusomizations:
-c    pkgw  2012may24  Sync with ATNF changes to chkaxco arguments
 c    pjt   2013jul24  committed ptrdiff based alloc/free
 c-----------------------------------------------------------------------
       include 'maxdim.h'
@@ -610,7 +608,6 @@ c     Plotting parameters.
       real    WEDWID, TFDISP
       parameter (NXDEF = 4, NYDEF = 4, WEDWID = 0.05, TFDISP = 0.5)
 
-c      integer ipim, ipnim, ipim2, ipnim2, ipimm
       ptrdiff ipim, ipnim, ipim2, ipnim2, ipimm
       integer csize(maxnax,MAXCON), gsize(maxnax), vsize(maxnax,2),
      *  msize(maxnax), bsize(maxnax), lc(MAXCON), lg, lv(2), lm, lb,
