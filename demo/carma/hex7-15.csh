@@ -3,7 +3,7 @@
 echo "   ---  Mosaicing with CARMA-15   ---   "
 echo "   $0"
 echo "This script assumes that the first 6 antennas are OVRO and the next 9 are hatcreek"
-echo "   mchw. version 09dec12"
+echo "   mchw. version 09dec2012"
 
 # History:
 #  15aug02 mchw. edited from ALMA script.
@@ -241,6 +241,9 @@ implot in=single.$dec.$model.$cell.map units=s device=/xs conflag=l conargs=2
 puthd in=single.$dec.$model.$cell.map/rms value=$sd_rms
 cgdisp in=$config.$dec.$model.$cell.mp,single.$dec.$model.$cell.map region=$region device=/xs labtyp=arcsec
 
+# plot single dish and interferometer image
+cgdisp in=$config.$dec.$model.$cell.mp,single.$dec.$model.$cell.map region=$region device=/xs
+
 mosmem:
 echo " MOSMEM Interferometer only" >> timing
 echo " MOSMEM Interferometer only with niters=200 flux=$flux rmsfac=1." >> $model.results 
@@ -294,9 +297,6 @@ echo "regrid the convolved model to the deconvolved image template" >> timing
   rm -r $config.$dec.$model.$cell.regrid
   regrid in=$config.$dec.$model.$cell.conv out=$config.$dec.$model.$cell.regrid tin=$config.$dec.$model.$cell.cm axes=1,2
   implot in=$config.$dec.$model.$cell.regrid device=/xs units=s region=$region
-#  cgdisp range=0,0,lin,8 in=$config.$dec.$model.$cell.conv device=$config.$dec.$model.$cell.conv.gif/gif labtyp=arcsec,arcsec options=beambl,wedge  region=$region
-#  mv $config.$dec.$model.$cell.conv.gif ~/public_html
-
   rm -r $config.$dec.$model.$cell.resid
   imdiff in1=$config.$dec.$model.$cell.cm in2=$config.$dec.$model.$cell.regrid resid=$config.$dec.$model.$cell.resid options=nox,noy,noex
   implot device=/xs units=s in=$config.$dec.$model.$cell.resid region=$region
@@ -305,13 +305,9 @@ echo "regrid the convolved model to the deconvolved image template" >> timing
 plot:
 rm -r $config.$dec.$model.$cell.imcat
 imcat in=$config.$dec.$model.$cell.cm,$config.$dec.$model.$cell.regrid out=$config.$dec.$model.$cell.imcat options=relax
- cgdisp range=0,0,lin,8 in=$config.$dec.$model.$cell.imcat device=$config.$dec.$model.$cell.imcat.gif/gif labtyp=arcsec,arcsec options=beambl,wedge  region=$region device=/xs
- cgdisp range=0,0,lin,8 in=$config.$dec.$model.$cell.imcat device=$config.$dec.$model.$cell.imcat.gif/gif labtyp=arcsec,arcsec options=beambl,wedge region=$region
-
-  rm -r $config.$dec.$model.$cell.$method
-  imcat in=$config.$dec.$model.$cell.cm,$config.$dec.$model.$cell.regrid,$config.$dec.$model.$cell.resid options=relax out=$config.$dec.$model.$cell.$method
-#  cgdisp in=$config.$dec.$model.$cell.$method labtyp=arcsec,arcsec options=beambl,wedge region=$region device=/xs
-  cgdisp in=$config.$dec.$model.$cell.$method labtyp=arcsec,arcsec options=beambl,wedge region=$region device=$config.$dec.$model.$cell.$method.gif/gif
+rm -r $config.$dec.$model.$cell.$method
+imcat in=$config.$dec.$model.$cell.cm,$config.$dec.$model.$cell.regrid,$config.$dec.$model.$cell.resid options=relax out=$config.$dec.$model.$cell.$method
+cgdisp in=$config.$dec.$model.$cell.$method labtyp=arcsec,arcsec options=beambl,wedge region=$region device=/xs
 
 if($method == plot) then
   goto end
