@@ -189,6 +189,7 @@
 
 # Miscellaneous options
   set antpos        = ""  # Antenna position file. If blank, no solution is applied
+                          # file can be local or in $MIRCAT/baselines/carma
   set badant        = ""   # "bad" antenna; e.g. "4,7" to flag antennas 4 and 7
   set badres        = 30  # Minimum visibility percentage to use for bootflux
   set dotsize       = 15  # Dot size for plots
@@ -336,8 +337,19 @@ baseline:
   rm -rf $out
   if ($antpos != "") then
      echo ""
-     echo "*** Applying baseline solution   (vis=$vis out=$out antpos=$antpos)"
-     uvedit vis=$vis out=$out apfile=$starting_dir/$antpos
+     echo "*** Applying baseline solution   (vis=$vis out=$out)"
+     set apfile=$starting_dir/$antpos
+     if (-e $apfile) then
+       echo "    (apfile=$apfile)"
+     else
+       set apfile=$MIRCAT/baselines/carma/$antpos
+       if (-e $apfile) then
+         echo "    (apfile=$apfile)"
+       else
+         echo "    Warning: No antpos=$antpos found for uvedit"
+       endif
+     endif
+     uvedit vis=$vis out=$out apfile=$apfile
      set vis = $out
   endif
 
@@ -603,7 +615,7 @@ passband:
          if ($noise_bl == "0") then
             # Derive
               echo ""
-              echo "*** Deriving noise source passband"
+              echo "*** Deriving noise source passband (if this fails, see script for time select)"
               mfcal vis=$vis_noise interval=$interval_pb refant=$refant
 
             # Plot noise-source passband
