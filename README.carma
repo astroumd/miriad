@@ -19,7 +19,24 @@ you should use the "cd $MIR; cvs update" method for, mostly because
 the fluxes and baseline files have been updated.
 
 A github version is maintained in https://github.com/pkgw/carma-miriad
-but the umd-CVS version is the official version.
+but the umd-CVS version is the official version. 
+
+
+The preferred way to fork and contribute to GITHUB would be
+  (taking an example for teuben as user,and test123 as branchname,
+  all assuming teuben has forked via his github account)
+
+git clone https://github.com/teuben/carma-miriad
+cd carma-miriad
+git remote add upstream https://github.com/pkgw/carma-miriad
+git fetch upstream
+git branch test123
+git branch --edit-description test123
+git checkout test123
+edit VERSION
+git add VERSION
+git commit VERSION
+git push origin test123
 
 					Peter Teuben
 					teuben@astro.umd.edu
