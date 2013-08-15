@@ -38,6 +38,8 @@ git add VERSION
 git commit VERSION
 git push origin test123
 
+Pull requests can then be sent from a branch.
+
 					Peter Teuben
 					teuben@astro.umd.edu
 					January 2013
