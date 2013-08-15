@@ -7,7 +7,7 @@ c& mchw
 c: image analysis
 c+
 c	VELPLOT is an interactive task to analyse spectra, position-velocity
-c	slices, and integrated velocity maps from Miriad Images.
+c	slices, and integrated velocity or frequency maps from Miriad Images.
 c	There are three basic display options:
 c
 c	 - Velocity-averaged x-y images over selected velocity intervals.
@@ -146,11 +146,12 @@ c    01dec09 mchw  fixed old bug: change caption on spectra to Jy/Beam.
 c    01jan10 mchw  write positions and info from cursor options to log.
 c    22jun12 mchw  format change in gausfit input.
 c    17jul13 mchw  enable FREQ axis.
+c    15aug13 mchw  more FREQ labels on plots.
 c----------------------------------------------------------------------c
 	include 'velplot.h'
 	include 'mem.h'
 	character*(*) version
-	parameter(version='(version 3.0 17-Jul-20132)')
+	parameter(version='(version 3.0 15-Aug-2013)')
 	integer maxnax,maxboxes
 	parameter(maxnax=3,maxboxes=128)
 	integer boxes(maxboxes),nsize(maxnax),blc(maxnax),trc(maxnax)
@@ -382,7 +383,6 @@ c
 	call rdhdr(lIn,'crval3',crval,1.)
 	call rdhda(lIn,'ctype3',ctype3,' ')
 c mchw Jan 2010 -- try using original axes -- see what breaks -it did!
-c    17jul13 mchw  enable FREQ axis.
         goto 123
 	if(ctype3(1:4).eq.'FREQ'.and.restfreq.ne.0.)then
 	  call output('Convert frequency axis to velocity')
@@ -747,12 +747,11 @@ c
 	  endif
 	endif
 	dperjy = 1.
-        if(ctype(3).eq.'FREQ') then
-	  freqs = vel
-        else
-	  freqs = restfreq*(1.-vel/ckms)
-        endif
+	freqs = restfreq*(1.-vel/ckms)
+c	print *, 'restfreq, vel: ', restfreq, vel
+	if(freqs.ne.0.) then
 	  dperjy = (0.3/freqs)**2 / (2.*1.38e3*omega)
+	endif
 c	print *, 'xy,bmaj,bmin,freqs,dperj',xy,bmaj,bmin,freqs,dperj
 c
 c --- write out map header information ---
@@ -761,25 +760,25 @@ c
 	   return
         else if(ipr.eq.5)then
 	  write(line,100) object,ras,decs,
-     *	    ' cell:',xy,' crval3:',vel,' cdelt3:',delv
+     *	    ' cell:',xy,' vel:',vel,' delv:',delv
 	  call output(line(1:len1(line)))
 	  write(line,101) ctype,posx,posy,pospa,restfreq,bunit
 	  call output(line(1:len1(line)))
-	  write(line,102) bmaj*rts, bmin*rts, bpa, dperjy, cbof, niters
+	  write(line,102) bmaj*rts, bmin*rts, bpa, niters,dperjy,cbof
 	  call output(line(1:len1(line)))
         else if(ipr.eq.6)then
 	  write(line,100) object,ras,decs,
-     *	    ' cell:',xy,' crval3:',vel,' cdelt3:',delv
+     *	    ' cell:',xy,' vel:',vel,' delv:',delv
           call LogWrit(line(1:len1(line)))
           write(line,101) ctype,posx,posy,pospa,restfreq,bunit
           call LogWrit(line(1:len1(line)))
-	  write(line,102) bmaj*rts, bmin*rts, bpa, dperjy, cbof, niters
+          write(line,102) bmaj*rts, bmin*rts, bpa, niters,dperjy,cbof
           call LogWrit(line(1:len1(line)))
 	endif
 
 100	format(a,1x,a,1x,a,a,f8.3,a,f8.2,a,f8.2)
-101  	format(a,a,a,3f6.2,' restfreq:',f9.5,' bunit:',a)
-102  	format('beam:',3f6.1,' K/Jy:',f9.2,' cbof:',f7.2, ' niters:',i7)
+101  	format(a,a,a,3f6.2,' freq:',f9.5,' unit:',a)
+102  	format('beam:',3f6.1,' niters:',i7,' K/Jy:',f9.2,' cbof:',f7.2)
 
 	end
 c********1*********2*********3*********4*********5*********6*********7**
@@ -1077,15 +1076,9 @@ c
         write(line,'(a,4i6,a)') 'Integral and rms in box (',
      *				is-midx,ib-midy,ie-midx,it-midy, ')'
 	call output(line)
-        if(ctype(3).eq.'FREQ') then
-        write(line,'(a,a,a,a,a,a,a)') ' plane  ','  Frequency ',
-     *    ' Total Flux ','  Maximum   ','  Minimum   ','  Average   ',
-     *    '    rms     '
-        else
 	write(line,'(a,a,a,a,a,a,a)') ' plane  ','  Velocity  ',
      *    ' Total Flux ','  Maximum   ','  Minimum   ','  Average   ',
      *	  '    rms     '
-        endif
 	call output(line)
 	do k=1,nc
 	  call maxmap(ary(1,1,k),nx,ny,is,ie,ib,it,
@@ -1105,15 +1098,9 @@ c	call prompt(line,k,'>Type <cr> to continue')
           write(line,'(a,4i6,a)') 'Integral and rms in box (',
      *				is-midx,ib-midy,ie-midx,it-midy, ')'
 	  call LogWrit(line)
-        if(ctype(3).eq.'FREQ') then
-        write(line,'(a,a,a,a,a,a,a)') ' plane  ','  Frequency ',
-     *    ' Total Flux ','  Maximum   ','  Minimum   ','  Average   ',
-     *    '    rms     '
-        else
 	  write(line,'(a,a,a,a,a,a,a)') ' plane  ','  Velocity  ',
      *    ' Total Flux ','  Maximum   ','  Minimum   ','  Average   ',
      *	  '    rms     '
-        endif
 	  call LogWrit(line)
 	  do k=1,nc
 	    call maxmap(ary(1,1,k),nx,ny,is,ie,ib,it,
@@ -1146,15 +1133,9 @@ c
      *				is-midx,ib-midy,ie-midx,it-midy, ')'
 	  call output(line)
           call LogWrit(line)
-        if(ctype(3).eq.'FREQ') then
-	  write(line,'(a,a,a,a,a,a)') '  Frequency ',
+	write(line,'(a,a,a,a,a,a)') '  Velocity  ',
      *    ' Total Flux ','  Maximum   ','  Minimum   ','  Average   ',
      *	  '    rms     '
-        else
-	  write(line,'(a,a,a,a,a,a)') '  Velocity  ',
-     *    ' Total Flux ','  Maximum   ','  Minimum   ','  Average   ',
-     *	  '    rms     '
-        endif
 	  call output(line)
           call LogWrit(line)
 	call maxmap(ary,nx,ny,is,ie,ib,it,
@@ -1189,11 +1170,11 @@ c
 	call output(' ')
 	call output(' map computed:')
 	call output(' (0 = straight average [default])')
-        call output(' (1 = velocity centroid from 1st moment)')
-        call output(' (-1 = velocity of peak channel)')
-        call output(' (2 = velocity width or variance from 2nd moment)')
-        call output(' (3 = degree of skewness or asymmetry )')
-        call output(' (4 = degree of excess, or "peakiness" )')
+        call output(' (1 = centroid from 1st moment)')
+        call output(' (-1 = peak channel)')
+        call output(' (2 = width or variance from 2nd moment)')
+        call output(' (3 = skewness or asymmetry )')
+        call output(' (4 = "peakiness" )')
         call output('>Enter moment to compute (-1 to 4; default [0]): ')
 	read(*, '(I5)', err=222) nmom
 	if((nmom.lt.-1).or.(nmom.gt.4)) goto 222
@@ -1517,23 +1498,22 @@ c  epoch
 c  pixel 
 	write(line,'(f9.2,''  x'',f9.2)') xy, xy
         call pgtext(0.,0.82,line)
-c  freq
+c  RestFreq
 	write(line,'(''RestFreq: '',F10.5,'' GHz'')') restfreq
         call pgtext(0.0,0.66,line)
-c  vel
-        if(ctype(3).eq.'FREQ') then
-	  write(line,'(''Frequency:'',F10.3,'' GHz '')') vel
+c  frequency or velocity
+        if (ctype(3).eq.'FREQ') then
+	  write(line,'(''Frequency:'',F10.5,'' GHz'')') vel
+          call pgtext(0.0,0.62,line)
+	  write(line,'(''Width:    '',F10.5,'' GHz'')') abs(delv)
+          call pgtext(0.0,0.58,line)
         else
+c  velocity
 	  write(line,'(''Velocity: '',F10.3,'' km/s'')') vel
-        endif
-        call pgtext(0.0,0.62,line)
-c  delv
-        if(ctype(3).eq.'FREQ') then
-	  write(line,'(''Width:    '',F10.3,'' GHz '')') abs(delv)
-        else
+          call pgtext(0.0,0.62,line)
 	  write(line,'(''Width:    '',F10.3,'' km/s'')') abs(delv)
+          call pgtext(0.0,0.58,line)
         endif
-        call pgtext(0.0,0.58,line)
 c  file
         write(line,'(''filename:'',1x,A)') file(1:len1(file))
         call pgtext(0.0,0.54,line)
@@ -2199,7 +2179,7 @@ c
      *		//ychar(1:index(ychar,'.')+2)//')'
           endif
 c
-          if(ctype(3).eq.'FREQ') then
+          if (ctype(3).eq.'FREQ') then
             xlabel='Frequency (GHz)'
           else
             xlabel='Velocity (km/s)'
@@ -2494,8 +2474,8 @@ c              else
                 call plotcord(0,nx,ny,xmin,xmax,ymin,ymax)
                 call pgwnad(xmin,xmax,ymin,ymax)
                 call pgbox('BCNST',0.0,0,'BCNST',0.0,0)
-                xlabel='Relative R.A. (arcsec)'
-                ylabel='Relative Dec. (arcsec)'
+                xlabel='Relative RA (arcsec)'
+                ylabel='Relative DEC (arcsec)'
 c              endif
 c
 c  Set up transformation array for contour routine
@@ -4059,15 +4039,11 @@ c	  enddo
 c
 c  Set maptype to position-velocity; save plot device from command line.
 c
-	  maptype = 'POS-VEL'
-          if(ctype(3).eq.'FREQ') then
-            xlabel='Frequency (GHz)'
-          else
-            xlabel='Velocity (km/s)'
-          endif
-          ylabel='position (arcsec)'
-	  oldevice=device
-	  lwidth = 1
+	maptype = 'POS-VEL'
+        xlabel='velocity (km/s)'
+        ylabel='position (arcsec)'
+	oldevice=device
+	lwidth = 1
 c	
 c  Set up the plot windows.
 c
@@ -4246,12 +4222,7 @@ c  Set pg viewport to right side.
 c
         call pgswin(0.0,1.0,0.0,1.0)
 
-          if(ctype(3).eq.'FREQ') then
-            write(line,'(''Frequency (GHz): '')') 
-          else
-            write(line,'(''Velocities (km/s): '')') 
-          endif
-
+        write(line,'(''Velocities (km/s): '')') 
         call pgtext(0.0,0.30,line)
 c  levels
 	j=0
