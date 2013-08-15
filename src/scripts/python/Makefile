@@ -38,3 +38,13 @@ test:
 	$(CC) $(CFLAGS) -I$(PYTHONINC) -I$(LDIR) -c uvio_wrap.c 
 	$(CC) $(LDFLAGS) -shared $(LDIR)/libmir.so uvio_wrap.o -o _uvio.so 
 	python -c 'import uvio'
+
+
+# old style install
+miriad-python:
+	git clone https://github.com/pkgw/miriad-python
+#
+
+#       this one isn't working on old-style
+bad:
+	(cd miriad-python;  ACLOCAL="aclocal -I build-aux" autoreconf -fi; ./configure --with-miriad=$(MIR))
