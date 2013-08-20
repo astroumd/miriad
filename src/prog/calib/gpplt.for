@@ -47,6 +47,8 @@ c	               useful for listing files which are to be passed into
 c	               some other analysis or plotting tool.
 c	  wrap         Don't unwrap phase plots
 c         absent       Also try and place empty plots when antenna absent
+c                      This enforced a full scan through the visdata, as
+c                      this is where the non-absent antennas are hiding.
 c@ nxy
 c	Number of plots in the x and y directions. The default is 2,2.
 c@ select
@@ -108,6 +110,7 @@ c    mchw 23jun09 Print mean and rms value on plots.
 c    pjt  25aug10 fixed sqrt(rms) when < 0 roundoff, reindent a bit
 c    pjt   1sep10 narrower format to prevent wrapped phases eating it
 c    pjt  15oct12 options=absent (for time and freq plots)
+c    pjt  20aug13 options=absent cannot work if no vis data present
 c  Bugs:
 c  @TODO 
 c     options=
@@ -117,7 +120,7 @@ c------------------------------------------------------------------------
 	integer MAXSELS
 	character version*(*)
 	parameter(MAXSELS=256)
-	parameter(version='GpPlt: version 3-dec-2012')
+	parameter(version='GpPlt: version 20-aug-2013')
 	include 'gpplt.h'
 	integer iostat,tIn,nx,ny,nfeeds,nants,nsols,ierr,symbol,nchan
 	integer ntau,length
@@ -187,7 +190,7 @@ c
 	  call bug('w','Error opening input '//vis)
 	  call bugno('f',iostat)
 	endif
-	if (doabsent) call absent(vis)
+	if (doabsent) call absent(vis,doabsent)
 c
 c  Check for the needed tables.
 c
@@ -1548,19 +1551,36 @@ c
 c
       end
 c***********************************************************************
-      subroutine absent(vis)
+      subroutine absent(vis,doabsent)
 c
 c     figure out which ants are never in the dataset, don't bother
 c     plotting them.
 c-----------------------------------------------------------------------
       implicit none
       character vis*(*)
+      logical doabsent
       include 'gpplt.h'
 c
-      integer tno,nread, ant1,ant2
+      integer tno,iostat,nread,ant1,ant2
       complex data(MAXCHAN)
       logical flags(MAXCHAN)
       double precision preamble(5)
+c
+      logical hexists
+
+      if (doabsent) then
+	 call hopen(tno,vis,'old',iostat)
+	 if(iostat.ne.0) call bug('f','Cannot open vis=')
+	 if (.not.hexists(tno,'visdata')) then
+            doabsent = .false.
+	    call hclose(tno)
+	    call bug('w','options=absent ignored, no visdata to scan')
+            return
+         endif
+	 call hclose(tno)
+      else
+         return
+      endif
 
       do ant1=1,MAXANT
 	 haveant(ant1) = .FALSE.
