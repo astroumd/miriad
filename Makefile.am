@@ -24,6 +24,7 @@ SUBDIRS = \
   borrow/pgplot \
   borrow/linpack \
   borrow/wcslib \
+  borrow/rpfits \
   src/subs \
   src/scripts \
   src/scripts/ata/rapid \

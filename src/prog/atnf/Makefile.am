@@ -1,23 +1,25 @@
 include $(top_srcdir)/mircommon.mak
 
-# We do not build atlod, fakeotf, mopfix, or wblod, because they
-# require the rpfits library. This resides in borrow/rpfits/, but I
-# don't feel like hooking it up to autotools right now. If someone
-# needs one of these tasks, I'll look into hooking it up.
+# A few of these programs need the RPFITS library from borrow/rpfits.
 
 LDADD = $(prog_libs)
+rpfits_libs = $(top_builddir)/borrow/rpfits/libmir_rpfits.la
 
 ftasks = \
-  at_mfcal at_moment at_uvlist at_uvplt atfix atmos atrtfix atscfix attsys atwvr \
-  elevcor lagflg mbspect mfboot plboot plplt wbplt
+ at_mfcal at_moment at_uvlist at_uvplt atfix atlod atmos atrtfix atscfix \
+ attsys atwvr elevcor fakeotf lagflg mbspect mfboot mopfix plboot plplt \
+ wblod wbplt
 bin_PROGRAMS = $(ftasks)
 CLEANFILES = $(ftasks:=.f)
 EXTRA_DIST = $(ftasks:=.for)
 
-noinst_HEADERS = \
-  at_uvlist.h atfix.h atmos.h mbspect.h mfcal.h wbcomm.h
+atlod_LDADD = $(prog_libs) $(rpfits_libs)
+fakeotf_LDADD = $(prog_libs) $(rpfits_libs)
+mopfix_LDADD = $(prog_libs) $(rpfits_libs)
+wblod_LDADD = $(prog_libs) $(rpfits_libs)
 
-EXTRA_DIST += atlod.for atlod.h mopfix.for wblod.for wblod.h
+noinst_HEADERS = \
+  at_uvlist.h atfix.h atlod.h atmos.h mbspect.h mfcal.h wbcomm.h wblod.h
 
 dist-hook:
 	-rm -f $(distdir)/*.f
