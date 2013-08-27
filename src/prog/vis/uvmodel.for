@@ -166,13 +166,14 @@ c    mchw 09jan08 Add options=imaginary to handle imaginary image.
 c    mchw 20aug08  include 'mem.h'
 c    mchw 03apr09 out(1) = sqrt(abs(sigma2)) in subroutine header.
 c    pkgw 15mar11 Use scrrecsz() to allow very large scratchfiles
+c    pjt  27aug13 Ensure correct type ptrdiff for scrread
 c  Bugs:
 c    * Polarisation processing is pretty crude.
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	include 'mem.h'
 	character version*(*)
-	parameter(version='version 1.0 15-mar-2011')
+	parameter(version='version 1.0 27-aug-2013')
 	integer maxsels,nhead,nbuf
 	parameter(maxsels=1024,nhead=1,nbuf=5*maxchan+nhead)
 c
@@ -183,6 +184,7 @@ c
 	real sels(maxsels),offset(2),flux,clip,sigma,lstart,lstep,lwidth
 	integer nsize(3),nchan,nread,nvis,length,i
 	integer tvis,tmod,tscr,tout,vcopy,pol
+	ptrdiff ip
 	double precision preamble(5)
 	complex data(maxchan)
 	logical flags(maxchan)
@@ -325,7 +327,8 @@ c
 	  call uvread(tvis,preamble,data,flags,maxchan,nread)
 	  if(nread.ne.nchan) call bug('f',
      *	    'No. channels  unexpectedly changed, when rereading data')
-	  call scrread(tscr,buffer,i-1,1)
+	  ip = i-1
+	  call scrread(tscr,buffer,ip,1)
 	  call process(oper,buffer(1)*sigma,buffer(nhead+1),
      *		data,flags,nchan,tvis,preamble(5),maxant,polcor,doimag)
 	  if(imhead)then
