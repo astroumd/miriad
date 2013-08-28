@@ -11,6 +11,7 @@
 #   22-sep-01   summary.log file now contains $USER	PJT
 #   26-jan-03   add rad testing, if present		PJT
 #    8-oct-05   remove confusing verbosities if test passes       PJT
+#   28-aug-13   add a uvmodel
 #
 #-----------------------------------------------------------------------
 
@@ -199,6 +200,8 @@ map() {
   runt invert vis=vis1 map=map1 beam=beam1 imsize=512 cell=0.5 
   runt clean map=map1 beam=beam1 out=clean1
   runt restor model=clean1 beam=beam1 map=map1 out=cmap1
+  runt imgen out=map0
+  runt uvmodel vis=vis1 model=map0 options=replace out=vis2
   cd ..
   )
 }
