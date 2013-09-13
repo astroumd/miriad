@@ -16,6 +16,11 @@ include $(top_srcdir)/mircommon.mak
 # this causes the uninstall to fail and distcheck to barf, and is
 # generally not the thing to do.
 #
+# Our "make dist" logic updates the timestamp of Makefile.am relative
+# to what's in the source tree, which can cause problems because it
+# triggers a regeneration of Makefile.in, which may not be possible.
+# We therefore touch these two files in order to avoid this.
+#
 # Note that git archive will output what's been committed to the repo,
 # not any uncommitted changes in the working tree, so those won't
 # be captured when disting or installing. This seems like an awfully
@@ -47,6 +52,8 @@ dist-hook:
 	find "$(distdir)" -type f -print0 |xargs -0 chmod 0644
 	find "$(distdir)" -type d -print0 |xargs -0 chmod 0755
 	find "$(distdir)" -name CVS -print0 |xargs -0 rm -rf
+	touch "$(distdir)/Makefile.am"
+	touch "$(distdir)/Makefile.in"
 
 # Generate and install the keyword documentation files.
 
