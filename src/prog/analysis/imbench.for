@@ -13,25 +13,30 @@ c
 c
 c@ in
 c   The input image. 
-c@
 c@ in2
 c   Optional 2nd image
-c
 c@ out
 c   Optional output image. 
+c@ memalloc
+c   Use memalloc?  Default: false  [not implemented yet]
 c@
 c  mode
-c   Integer mode of operating the benchmark
-c   0=read
-c   1=stat
-c   2=hanning in x 
-c   3=hanning in y
-c   4=hanning in z (and looping over x, closest to z)
-c   5=hanning in z (but looping over y, closest to z)
-c   6=adding two images (needs in2=)
+c   The mode of operating the benchmark:
 c
-
+c  -1 = write out binary (implies reading a miriad file)
+c                      (this will bootstrap your file I/O)
+c   0 = read
+c   1 = stat (mean and rms)
+c   2 = hanning in x  (0.25,0.5,0.5 filter)
+c   3 = hanning in y
+c   4 = hanning in z (and looping over x, closest to z)
+c   5 = hanning in z (but looping over y, closest to z)
+c   6 = adding two images (needs in2=)
+c
 c-------------------------------------------------------------------
+c @todo
+c   - i/o from a binary file
+c   - use miriad's memalloc
 c
 c History:
 c   pjt     sep-2013     quick hack
@@ -46,7 +51,7 @@ c
       PARAMETER (VERSION='Version 23-sep-2013')
 c
       CHARACTER in*128,in2*128,out*128
-      INTEGER nin(MAXNAX),nout(MAXNAX),npadin(MAXNAX)
+      INTEGER nin(MAXNAX),nout(MAXNAX)
       INTEGER naxis,lin,lin2,lout,i,j,k,mode
       REAL data(MAXDIM*MAXDIM*MAXDIM),data2(MAXDIM*MAXDIM*MAXDIM)
       REAL tmp(MAXDIM*16)
@@ -77,6 +82,7 @@ c
          if (mode.eq.4) CALL myhanz(data,tmp,nin(1),nin(2),nin(3))
          if (mode.eq.5) CALL myhans(data,tmp,nin(1),nin(2),nin(3))
          if (mode.eq.6) CALL myadd(data,data,nin(1),nin(2),nin(3))
+         if (mode.eq.-1) WRITE(11) nin(1),nin(2),nin(3),data
       ELSE
          write(*,*) 'mode: ',mode,' (just reading file)'
       ENDIF
