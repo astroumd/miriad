@@ -41,7 +41,7 @@
                          }
 #define ERROR(sev,a) bug_c(sev,((void)sprintf a,message))
 
-#define MAXLINELEN 256
+#define MAXLINELEN 15000
 
 #if defined(DEBUG)
 static int debug_io = 1;
@@ -129,10 +129,12 @@ void tabopen_c(int *thandle,Const char *name,Const char *status,int *ncol, int *
     tables[tno].status = 0;
     nc = nr = nh = 0;
     if (*nrow > 0) {
+      if (debug_io) printf("Allocating %d row pointers\n",*nrow);
       tables[tno].rows = (char **) calloc( (*nrow) , sizeof(char **));
     }
     for (;;) {
       hreada_c(tables[tno].table,line,MAXLINELEN,&iostat);   
+      if (iostat) break;
       if (line[0] == '#') {
 	if (line[1] == '|') {
 	  if (nh==0) tables[tno].head1 = strdup(line);
@@ -141,6 +143,7 @@ void tabopen_c(int *thandle,Const char *name,Const char *status,int *ncol, int *
 	  if (nh==0) {
 	    for(cp=line; *cp; cp++)
 	      if (*cp=='|') nc++;
+	    nc--;
 	  }
 	  nh++;
 	  if (debug_io) printf("Header %d: %s\n",nh,line);
@@ -149,9 +152,8 @@ void tabopen_c(int *thandle,Const char *name,Const char *status,int *ncol, int *
       }
       if (*nrow > 0 || nr < *nrow) {
 	tables[tno].rows[nr] = strdup(line);
+	nr++;
       }
-      nr++;
-      if (iostat) break;
     }
     if (debug_io) printf("Found %d rows, and %d columns  (tno=%d)\n",nr,nc,tno);
     tables[tno].nrow = nr;
@@ -440,6 +442,8 @@ void tabgetr_c(int thandle, int row, float *data)
   int i,nc,nr;
   char *cp, line[MAXLINELEN];
 
+  //if (debug_io) printf("tabgetr %d %d\n",thandle,row);
+
   if (thandle<0) return;
 
   nc = tables[thandle].ncol;
@@ -449,6 +453,7 @@ void tabgetr_c(int thandle, int row, float *data)
 
   /* parse nc words and convert all to float */
   strcpy(line,tables[thandle].rows[row-1]);
+  //if (debug_io) printf("Line %d: %s\n",row,line);
   cp = line;
   while (*cp && isspace(*cp)) cp++;
   for(i=0; i<nc; i++) {
