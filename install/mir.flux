@@ -11,6 +11,7 @@ set ftp=ftp://ftp.astro.umd.edu/pub/carma/data/
 set flux=flux_test.miriad.tar.gz
 
 set keep=1
+set marstb=1
 
 foreach a ($*)
   set $a
@@ -45,7 +46,7 @@ echo Running fluxtest:
 
 echo $MIR/src/scripts/fluxtest vis=$vis '$*' > runme
 chmod +x runme
-./runme >& fluxtest.log
+./runme marstb=$marstb >& fluxtest.log
 
 echo Logfile in $tmp/fluxtest.log
 
