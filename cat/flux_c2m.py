@@ -9,7 +9,13 @@
 #   ./flux_c2m.py Jupiter_Tb.dat > jupitertb.tab
 #   ./flux_c2m.py Venus_Tb.dat   > venustb.tab
 #
+#   The _Tb.dat files are essentially transposed to
+#   tb.tab files, such that CARMA doesn't have to
+#   change.  Currently longest lines are in Jupiter,
+#   8540 characters !!!
+#
 #       11-jul-2013     written     Peter Teuben
+#    
 #
 import math,sys
 
@@ -17,7 +23,8 @@ import math,sys
 f0 = 20.0
 f1 = 300.0
 
-# date range
+# date range (it will write for times d0,d1,d2 [where d2=2*d1-d0] 
+#             to make interpolation work)
 d0 = 55197.0
 d1 = 59215.0
 
