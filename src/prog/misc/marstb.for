@@ -3,7 +3,7 @@ c************************************************************************
 	implicit none
 c
 c= marstb -- Print brightness temperature of Mars 
-c& smw
+c& pjt
 c: utility
 c+
 c     MARSTB is a MIRIAD task to report the brightness temperature of
@@ -23,8 +23,11 @@ c     marstb table=$MIRCAT/marstb  mode=1
 c     marstb table=$MIRCAT/marstb2 mode=2
 c     marstb table=$MIRCAT/marstb3 mode=3
 c
+c     Interpolation is done via a spline in frequency, and linear
+c     in the two bracketing times.
 c
-c@ epoch The time (UTC) for which information is required, in standard
+c@ epoch 
+c       The time (UTC) for which information is required, in standard
 c       MIRIAD time format yymmmdd:hh:mm:ss. No default.  
 c@ freq 
 c       The frequency, in GHz. Default is 100 GHz.  
@@ -44,7 +47,7 @@ c    pjt  12jun12 Added more table support, but a quick hack
 c    pjt  18jul13 Readied for school13 with ALMA flux models support
 c------------------------------------------------------------------------
       character version*(*)
-      parameter(version = 'MARSTB: version 18-jul-2013')
+      parameter(version = 'MARSTB: version 14-oct-2013')
 c
 c  jy2k is JD for 0 Jan 2000 (i.e. 31 Dec 1999); file is in MJD.
 c  which is jd-2400000.5
@@ -327,13 +330,13 @@ c     hardcoded for marsTB/table
       nrow=226
       call tabopen(tno ,marstab,'old',ncol,nrow)
       call tabgetr(tno, 1, val1)
-      call tabgetr(tno, 2, val2)
+      call tabgetr(tno, nrow, val2)
+      delta = (val2(1)-val1(1))/(nrow-1)
 #ifdef DEBUG
       write(*,*) 'Found1 ',nrow,' data rows ',ncol,' cols, tno=',tno
       write(*,*) 'F:',(val1(i),i=1,ncol)
       write(*,*) 'F:',(val2(i),i=1,ncol)
 #endif
-      delta = val2(1)-val1(1)
       mjd1 = val1(1)
       j = dint((jday-2400000.5d0-mjd1)/delta)+1
       if ((j.le.0).or.(j.gt.nrow)) call 
@@ -400,13 +403,13 @@ c     hardcoded for marsTB2/table
       nrow=35065
       call tabopen(tno ,marstab,'old',ncol,nrow)
       call tabgetd(tno, 1, val1)
-      call tabgetd(tno, 2, val2)
+      call tabgetd(tno, nrow, val2)
+      delta = (val2(1)-val1(1))/(nrow-1)
 #ifdef DEBUG
       write(*,*) 'Found2 ',nrow,' data rows ',ncol,' cols, tno=',tno
       write(*,*) 'F:',(val1(i),i=1,ncol)
       write(*,*) 'F:',(val2(i),i=1,ncol)
 #endif
-      delta = val2(1)-val1(1)
       mjd1 = val1(1)
       j = dint((jday-2400000.5d0-mjd1)/delta)+1
       if ((j.le.0).or.(j.gt.nrow)) call 
@@ -473,13 +476,13 @@ c     hardcoded for marsTB3/table
       nrow=96432
       call tabopen(tno ,marstab,'old',ncol,nrow)
       call tabgetd(tno, 1, val1)
-      call tabgetd(tno, 2, val2)
+      call tabgetd(tno, nrow, val2)
+      delta = (val2(1)-val1(1))/(nrow-1)
 #ifdef DEBUG
       write(*,*) 'Found3 ',nrow,' data rows ',ncol,' cols, tno=',tno
       write(*,*) 'F:',(val1(i),i=1,ncol)
       write(*,*) 'F:',(val2(i),i=1,ncol)
 #endif
-      delta = val2(1)-val1(1)
       mjd1 = val1(1)
       j = dint((jday-2400000.5d0-mjd1)/delta)+1
       if ((j.le.0).or.(j.gt.nrow)) call 
