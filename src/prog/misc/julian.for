@@ -11,6 +11,7 @@ c  History:
 c      mwp  27-aug-1999 original version
 c      pjt   2-dec-2005 added MJD
 c      pjt  12-dec-2012 cleaned up and added options=date
+c      pjt  15-oct-2013 jday becomes mjd if < 2400000
 c
 c------ Inline doc (retrieved with doc to a .doc file) --------------72]
 c
@@ -50,6 +51,8 @@ C	The Julian Day in floating point format. If given, the program
 C       will convert it to a date, formatted by FORMAT keyword specification.
 C	Leave this input unspecified if you are converting from date 
 C       to Julian Day.
+c       If the value is less than 2400000.5, it is assumed MJD is meant
+c       and 2400000.5 is added to get the true JD.
 c    
 c@ format 
 C 	The requested OUTPUT format for converting a Julian day to a 
@@ -83,7 +86,7 @@ C referenced routines
 	integer len1
 	logical islowerf
 C
-	parameter(version='(Version 15-nov-2012)')
+	parameter(version='(Version 15-oct-2013)')
 	parameter(jday0=2400000.5d0)
 c
 	call keyini
@@ -123,6 +126,7 @@ C
 	      forward = .false.
 	   endif
 	else 
+	   if (jday.lt.2000000d0) jday = jday + jday0
 	   if (thedate.ne.' ') then 
 	      call bug('w',
      *           'Specify only one of date= or jday=. Ignoring date.')
