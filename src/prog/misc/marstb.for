@@ -26,6 +26,13 @@ c
 c     Interpolation is done via a spline in frequency, and linear
 c     in the two bracketing times.
 c
+c     Note: at peak diurnal variations, Tb changes about 1K/hour (marstb3)
+c           at 100GHz, Tb changes about 0.05K per GHz
+c
+c     Use something like
+c        puthd in=mars.mir/pltb value=191.123 type=real
+c     to change the brightness temperature of a (mars) miriad file
+c
 c@ epoch 
 c       The time (UTC) for which information is required, in standard
 c       MIRIAD time format yymmmdd:hh:mm:ss. No default.  
@@ -45,9 +52,10 @@ c    pjt  10apr03 Fix minor fortran dialect issue
 c    pjt  14sep11 Optional table
 c    pjt  12jun12 Added more table support, but a quick hack
 c    pjt  18jul13 Readied for school13 with ALMA flux models support
+c    pjt  15oct13 Extra documentation
 c------------------------------------------------------------------------
       character version*(*)
-      parameter(version = 'MARSTB: version 14-oct-2013')
+      parameter(version = 'MARSTB: version 15-oct-2013')
 c
 c  jy2k is JD for 0 Jan 2000 (i.e. 31 Dec 1999); file is in MJD.
 c  which is jd-2400000.5
@@ -73,7 +81,7 @@ c
 c
 	if (table .eq. ' ') then
 	   call bug('w',
-     *         'Old -2014 mars model used, use table=marstb3 mode=3')
+     *         'Old mars model used, use table=$MIRCAT/marstb3 mode=3')
 	   call marsmod(jday,freq,tb)
 	else if (mode.eq.1) then
 	   call marsmod1(jday,freq,tb,table)
@@ -496,7 +504,7 @@ c     get the two that bracked the requested date
       call tabgetd(tno, j+1, val2)
 c     grab the header and derive frmod values
       call tabgeta(tno, -1, head1)
-c	
+c     @todo   check that dates are in range and no interpolation / rounding error
 
       do i=1,FTAB
          tst(i) = val1(i+1)
