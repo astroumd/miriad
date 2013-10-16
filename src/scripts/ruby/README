@@ -1,1 +1,6 @@
 See also: http://miriad.rubyforge.org/
+but basicaly you need to install this module via RubyGems:
+
+	sudo gem install miriad
+
+
