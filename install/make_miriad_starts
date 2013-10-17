@@ -83,16 +83,19 @@ else
 endif
 
 
-
-# deal with mac users, they love to install miriad on a new mac
-# and forget that a virgin mac is a useless doorstop
+# Sanity checks. Mostly for mac users, they love to install miriad
+# on a fresh new mac and forget that a virgin mac is a useless doorstop
+# Linux users also sometimes forget to install development support.
 
 set sname=`uname -s`
 
 if ($sname == Linux) then
-  echo Linux installed.
+  echo MIRIAD installed on a Linux system
+  if (! -e /usr/bin/cvs) echo "Warning: cvs not present."
+  if (! -e /usr/bin/make) echo "Warning: make not present."
+  if (! -e /usr/bin/gfortran) echo "Warning: gfortran not present."
 else if ($sname == Darwin) then
-  echo MIRIAD installed on a mac. Hold your breath.
+  echo MIRIAD installed on a mac. Hold your breath...
   # check if Xcode installed
   if (! -e /usr/bin/cvs) echo "Warning: cvs not present, did you not install Xcode?"
   if (! -e /usr/bin/make) echo "Warning: make not present, did you not install Xcode?"
@@ -100,6 +103,7 @@ else if ($sname == Darwin) then
   if (! -e /usr/local/bin/gfortran) then
     echo Warning: did not find HPC compiler in /usr/local/bin/gfortran
   endif
+  echo OK.
 else
   echo Warning, MIRIAD installed on an unknown system $sname
 endif
