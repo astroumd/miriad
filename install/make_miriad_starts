@@ -58,7 +58,7 @@ set start1=miriad_start.csh
 set start2=miriad_start.sh
 if (-e MIRRC) then
   # ATNF style
-  echo ATNF style
+  echo Found an ATNF style MIRIAD tree
   echo "# source this file to set MIR env"  > $start1
   echo "setenv MIR $MIR"                   >> $start1
   echo 'source $MIR/MIRRC'                 >> $start1
@@ -70,7 +70,7 @@ if (-e MIRRC) then
   echo "# this script was created by $0"   >> $start2
 else
   # CARMA style
-  echo CARMA style
+  echo Found a CARMA style MIRIAD tree
   echo "# source this file to set MIR env"  > $start1
   echo "setenv MIR $MIR"                   >> $start1
   echo 'source $MIR/MIRRC'."$hosttype"     >> $start1
@@ -80,4 +80,26 @@ else
   echo "export MIR=$MIR"                   >> $start2
   echo 'source $MIR/MIRSRC'."$hosttype"    >> $start2
   echo "# this script was created by $0"   >> $start2
+endif
+
+
+
+# deal with mac users, they love to install miriad on a new mac
+# and forget that a virgin mac is a useless doorstop
+
+set sname=`uname -s`
+
+if ($sname == Linux) then
+  echo Linux installed.
+else if ($sname == Darwin) then
+  echo MIRIAD installed on a mac. Hold your breath.
+  # check if Xcode installed
+  if (! -e /usr/bin/cvs) echo "Warning: cvs not present, did you not install Xcode?"
+  if (! -e /usr/bin/make) echo "Warning: make not present, did you not install Xcode?"
+  # check if HPC compiler installed
+  if (! -e /usr/local/bin/gfortran) then
+    echo Warning: did not find HPC compiler in /usr/local/bin/gfortran
+  endif
+else
+  echo Warning, MIRIAD installed on an unknown system $sname
 endif
