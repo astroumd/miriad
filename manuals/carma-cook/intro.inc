@@ -139,6 +139,7 @@ Google mailing list for MIRIAD users, at
 \item 21-jun-2008:   Summerschool 2008 version
 \item 12-jul-2009:   Largely Revised Summerschool 2009 version
 \item jun-2012:      Summerschool 2012 version (bfmask, polarization)
+\item oct-2013:      planet aided calibration added
 
 \end{itemize}
 
