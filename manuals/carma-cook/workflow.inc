@@ -30,7 +30,8 @@ well.
 
 \section{CARMA Data Retrieval}
 
-CARMA visibility data are normally multi-source MIRIAD
+CARMA data are normally multi-source 
+MIRIAD\footnote{both Visibility (cross correlation) and Single Dish (auto correlation) are supported}
 datasets, where all data from a  single track (a typical
 ``8'' hour observation) are in a single Miriad dataset.
 
@@ -45,7 +46,7 @@ The CARMA data archive at
 {\tt http://carma-server.ncsa.uiuc.edu:8181/} provides a web interface to 
 retrieve your data. Once you have located your data, there are two primary ways to
 download the data to your personal computer.
-The first is through a Java Web Start
+The first is through a Java Web Start\index{java}\index{DaRT}
 (jsp) application. Once launched (you may have to teach your
 browser where {\tt javaws}\footnote{javaws is part of the Java Development Kit (JDK)
 and if not present, you may have to install it. javaws should be in the installation bin directory }
@@ -1550,15 +1551,21 @@ first used in the winter 2009/2010 PACS campaign.
 
 \subsection{Absolute Flux Calibration}
 
-Although one can rely on known fluxes of strong calibrators such as
+Although you can rely on known fluxes of strong calibrators such as
 3C273 and 3C111, their actual flux varies with time and you will need
-to depend on what CARMA, or other observatories, have supplied for
-you.  The best method is to add a planet for bootstrapping the flux of
-your flux calibrator, at least if a planet in available during your
+to depend on what CARMA, or other observatories (SMA, ATCA, ALMA), 
+have supplied for you.   
+Under normal circumstances the ``fluxcal team'' at CARMA will
+have maintained fluxes for primary and secondary calibrators as
+a function of time.
+
+The best method is to add a planet for bootstrapping the flux of
+your flux calibrator, at least if a planet is available during your
 observation.  An alternative way is to use a planet, if available, in
 your observation and bootstrap its flux to scale the flux of your
 phase or amplitude calibrator.
 \footnote{http://www.astro.uiuc.edu/$^\sim$wkwon/CARMA/fluxcal}
+%% TODO: this is now an old link
 
 During commissioning 
 CARMA maintained a list of 12 ``secondary flux calibrators''\footnote{0319+415 (3C84), 
@@ -1598,18 +1605,31 @@ This calibration list consists of the older BIMA flux calibrator list
 (1985-2002), appended with new CARMA values. There is
 a gap between November 2002 and December 2006, which includes the time
 the BIMA dishes were moved from Hat Creek to Cedar Flat for the
-CARMA merge.
+CARMA merge (which occured Spring 2005).
 
-% hmmm, what happed between nov 2002 and the BIMA move ..???
+% hmmm, what happed between nov 2002 and the BIMA move in 2005 ..???
 
 Another source of information is the flux data maintained by
 ATCA\footnote{{\tt http://www.narrabri.atnf.csiro.au/calibrators/}}  and 
 SMA\footnote{{\tt http://sma1.sma.hawaii.edu/callist/callist.html}}.
 
 {\tt xplore} is a tool outside of miriad that also contains time-flux
-tables for each source based on the same table.
+tables for each source based on the same table, now superseded with the
+CalFind online 
+tool\footnote{{\tt http://carma.astro.umd.edu/cgi-bin/calfind.cgi}}.
 
-{\tt bootflux}... example
+\begin{figure}[ht]
+\begin{center}
+% \epsfxsize=10cm\leavevmode\epsffile{3c273.ps}
+\epsfxsize=10cm
+\begin{sideways}
+  \epsffile{3c273.ps}
+\end{sideways}
+\end{center}
+\caption{Time dependent flux of the calibrator 3C273}
+\label{fig:calflux}
+\end{figure}
+
 
 \subsection{Absolute Flux Calibration: MARS}
 
@@ -1619,7 +1639,8 @@ fine-tune your calibration.  The Miriad task {\tt marstb} \index{marstb}
 will interpolate a table of calculated values to a given frequency and date
 in the range 1999-2014, used as follows:\footnote{The 2012 version of this program
 has new options to use two other tables with better models. CARMA Memo \#59 discusses
-this in more detail.}
+this in more detail, as well as ALMA Memo \#594, which discusses the improved
+solar system object fluxes which CARMA has adopted in Summer 2013.}
 
 % todo:
 % CASA memo 
@@ -1627,6 +1648,7 @@ this in more detail.}
 
 
 To find the model value:
+
 \footnotesize
 \begin{verbatim}
    % marstb epoch=08mar02 freq=95.0
@@ -1637,6 +1659,7 @@ Brightness temperature at  95.0 GHz: 187.675
 to find the value of brightness temperature used in your data, read the
 variable PLTB using either the varplt log option or uvio if it is in your
 distribution, e.g.
+
 \footnotesize
 \begin{verbatim}
    % varplt vis=ct007.mars_88GHz.2006nov12.1.mir yaxis=pltb log=tblog
@@ -1650,38 +1673,142 @@ or
 \end{verbatim}
 \normalsize
 
-To change the value of PLTB in your file, use uvputhd (makes new file):
-\footnotesize
-\begin{verbatim}
-   % uvputhd vis=ct007.2008mar02_3mm.mars.1.mir hdvar=pltb varval=187.675 \
-           type=r out=ct007.2008mar02_3mm.mars.1.mir_fixed
-\end{verbatim}
-\normalsize       %%%   figure this out, puthd should work as well???
+To change the value of PLTB in your file, you can use {\tt puthd},
 
-This is actually an example where {\tt puthd} should work just as well:
 \footnotesize
 \begin{verbatim}
    % puthd in=ct007.2008mar02_3mm.mars.1.mir/pltb value=187.675 type=real
 \end{verbatim}
 \normalsize   
 
+although for wide band observations you probably want to use a band
+specific value, and for this {\tt bootflux} (see next Section) 
+can be given a brightness temperature per band that is calibrated.
+
 
 The model values are disk-averaged Planck brightness temperatures from the
-Caltech Thermal Model. As Mel noted, Mars isn't always a disk and dust
+Caltech Thermal Model. However, Mars isn't always a nice disk and dust
 storms can't be accomodated in this model, but the Caltech model values
 should be more reliable than CARMA's previous model (10\% different in the
 example above from a month ago).
 
-TODO: describe example with marstb and bootflux how to improve this.
-what does SMAFLUX do?  SZACALCMARS ok?   SZACALCURANUS is bad
-Both Butler models.
+\subsection{Absolute Flux Calibration: URANUS, NEPTUNE}
+
+
+
+\subsection{bootflux}
+
+% TODO: describe example with marstb and bootflux how to improve this.
+% what does SMAFLUX do?  SZACALCMARS ok?   SZACALCURANUS is bad
+% Both Butler models.
+
+%% what if bootflux/planet and calibrator are at different frequencies
+%% what about wide band, since LO1 is used
+
+In the case that you have a primary flux calibrator (usually a planet),
+you can bootstrap your other calibrator(s) (e.g. your gain calibrator)
+knowning the brightness temperature and size of the planet. The example below
+is taken from the MIRIAD fluxcal benchmark\footnote{See \$MIR/install/mir.flux,
+based on one of the observations from the EGNoG survey}
+
+We start with a visibility dataset in which two
+calibrators, {\tt MARS}, and {\tt 3C273}, plus 
+a source, {\tt B5}, are present in a datafile {\tt vis0}. We first compute
+a bandpass 
+
+
+\footnotesize
+\begin{verbatim}
+    % mfcal vis=vis0 interval=0.5 refant=8 select="source(3C273)"
+    ...
+    I flux density:    9.465
+\end{verbatim}
+\normalsize   
+
+Note the reported flux of 9.4 Jy, but this is based on an unknown gain.
+We then extract two copies for each calibrator, and phase-selfcal them
+with a short interval. The previously determined passband is also
+applied
+
+\footnotesize
+\begin{verbatim}
+    % uvcat vis=vis0 out=vis0.p options=nocal select="source(MARS)"
+    % uvcat vis=vis0 out=vis0.g options=nocal select="source(3C273)"
+
+    % selfcal vis=vis0.p refant=8 interval=0.5 options=phase,apriori
+    % selfcal vis=vis0.g refant=8 interval=0.5 options=phase,apriori
+\end{verbatim}
+\normalsize 
+
+Next we use {\tt bootflux} to compute the flux of 3C273, based on a known flux from
+the size and brightness temperature of {\tt MARS}:
+
+\footnotesize
+\begin{verbatim}
+    % bootflux vis=vis0.g,vis0.p select="source(3C273,MARS)" line=chan,1,1,39,39 taver=10 \
+      primary=MARS
+    ...
+    Average Flux:     6.890  0.019      Median Flux:     6.852
+\end{verbatim}
+\normalsize 
+
+During the summer of 2013, new ALMA models for the brightness temperatures
+of the planets have been introduced at CARMA.
+The example data here were taken in April 2012, and thus have a different (older) model for
+Mars, notably do not include diurnal variations of about 6K over a Martian Day\footnote{40 minutes
+longer than an Earth Day}. The {\tt marstb} program can be used to compute a more
+appropriate value for {\tt pltb}:
+
+\footnotesize
+\begin{verbatim}
+    % marstb epoch=12APR13:04:48:27.5 table=$MIRCAT/marstb3 mode=3 freq=92.74
+    Brightness temperature at  92.7 GHz: 190.860
+\end{verbatim}
+\normalsize 
+
+which is a bit lower than the 194.864 values from the older models. The min/max values in during that
+day were 185.97 and 191.80 K resp.
+
+\footnotesize
+\begin{verbatim}
+    % bootflux vis=vis0.g,vis0.p select="source(3C273,MARS)" line=chan,1,1,39,39 taver=10 \
+      primary=MARS,190.860
+    ...
+    Average Flux:     6.741  0.019      Median Flux:     6.705
+\end{verbatim}
+\normalsize 
+
+Now the full dataset is copied and the passband applied, after which  for the new
+value of the flux for 3C273 a gain solution is computed, with now an interval of 
+18 minutes (approximate length of the source-gain cal cycle):
+
+\footnotesize
+\begin{verbatim}
+    % uvcat vis=vis0 out=vis0.pb options=nocal 
+    % selfcal vis=vis0.pb refant=8 select="source(3C273)" interval=18 line=chan,1,1,39,39 \
+      options=amp,noscale flux=6.741 
+
+\end{verbatim}
+\normalsize 
+
+Now the data is ready for mapping:
+
+\footnotesize
+\begin{verbatim}
+    % invert vis=vis0.pb   select="source(B5)"  ...
+\end{verbatim}
+\normalsize 
+
+
+
+done.
 
 \subsection{Polarization}
 
 CARMA is able to observe in either dual polarization (LL and RR) as well
 as full stokes (LL, RR, LR and RL).
 
-{\bf An example:}\footnote{See also {\tt pol\_basic.csh}}
+{\bf An example:}\footnote{See also {\tt pol\_basic.csh} in {\tt \$MIR/examples/school}}
 This assumes FULLPOL correlator mode with 8 (500 MHz) wideband windows, 
 for CARMA this will
 be in the odd windows 1,3,5,7,9,11,13,15 (the even windows have 0 channels).
@@ -1850,8 +1977,8 @@ and as such will contribute 6 different types of baselines with
 OVRO-OVRO, BIMA-BIMA and OVRO-BIMA baselines. The latter is currently
 labeled in the visibility data as a {\tt CARMA} (nominally about 8m) antennae, 
 the first two simply being ``pure'' {\tt OVRO} (10m) and {\tt HATCREEK} (6m)
-\footnote{The future CARMA array with the additional SZA 8 antennae will thus
-have 6 different baseline types that contribute to a different primary
+\footnote{The CARMA-23 array with the additional SZA 8 antennae thus
+has 6 different baseline types that contribute to a different primary
 beam}.
 
 If you want to map anything but a point source in the phase center, 
