@@ -413,7 +413,8 @@ lst		\>D     \>radians
 
 modedesc         \>A     \>-
 \> Correlator mode description (CARMA only) \\
-\>\>\>\ Example: 500-32-8-X-X-X-X-X \\
+\>\>\>\ Example: 500-32-8-X-X-X-X-X (V1)\\
+\>\>\>\ Example: 8b3-8b3-500-500-8b3-8b3-8b3-8b3 (V2)\\
 
 mount		\>I	\>-
 \> The type of antenna mounts. \\
