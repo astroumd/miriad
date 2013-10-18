@@ -8,9 +8,10 @@ c: utility
 c+
 c     PLANETTB is a MIRIAD task to report the brightness temperature of
 c     some planets using the ALMA models. They are stored in tables
-c     in $MIRCAT
+c     in $MIRCAT.
 c     Currently non-MARS planets are all time-independant, and have 
-c     fairly good spectral resolution.
+c     fairly good spectral resolution, but differ in their frequency
+c     range (see below).
 c     MARS is an exception, with fairly poor spectral resolution, but 
 c     very good time (up to 6 hours) resolution. Use MARSTB to access
 c     these models.
@@ -23,20 +24,30 @@ c       MARS is a special case. For now, use the MARSTB task.
 c@ epoch
 c       The time (UTC) for which information is required, in standard
 c       MIRIAD time format yymmmdd:hh:mm:ss. 
-c       Currently not used, because PLANETTB are currently time independent 
-c       tables. Use MARSTB for time dependent MARS models
+c       Currently not used, because PLANETTB currently use time independent 
+c       tables. Use MARSTB for time dependent MARS models.
 c@ freq 
 c       The frequency, in GHz. Default is 100 GHz.  
 c       Valid frequencies differ per planet:
-c       venus:   30 - 1000 GHz
+c       venus:   30 - 1000   GHz
+c       jupiter: 30 - 1019.3 GHz  ** not yet **
 c       uranus:  60 - 1798.8 GHz
-c       neptune:  2 - 2001 GHz
+c       neptune:  2 - 2001   GHz
 c@ table 
 c       Optional ascii table, to override the table implied by the planet
 c       ($MIRCAT/<planet>tb/table)
+c@ mode
+c       mode=0   Old style BIMA/CARMA pre-2013 power law models. 
+c                Supported are:
+c                Uranus:  134.7 f_100**(-0.337) K
+c                Neptune: 129.8 f_100**(-0.350) K
+c       mode=1   ALMA models as found in tables in $MIRCAT. 
+c                Supported are:
+c                Uranus, Neptune, Venus
 c--
 c  History
-c    pjt  12sep13 Created
+c    pjt  12-sep-2013 Created
+c    pjt  17-oct-2013 Added mode=
 c
 c @todo
 c    use flux_c2m.py for tb(freq) table, or use a single row?
@@ -44,7 +55,7 @@ c    ala marstb with the funky freq decoding
 c    currently we use the ALMA table format hidden in a miriad table
 c------------------------------------------------------------------------
       character version*(*)
-      parameter(version = 'PLANETTB: version 8-oct-2013')
+      parameter(version = 'PLANETTB: version 17-oct-2013')
 c
 c  jy2k is JD for 0 Jan 2000 (i.e. 31 Dec 1999); file is in MJD.
 c  which is jd-2400000.5
@@ -62,10 +73,8 @@ c
 c
 	call output(version)
 	call keyini
-c  uranus=carma format
-c	call keya('planet',planet,'uranus')
-c  neptune=casa format
 	call keya('planet',planet,'neptune')
+	call lcase(planet)
 	if (keyprsnt('epoch')) then
 	   call keyt('epoch',jday,'atime',0.d0)
 	   if(jday.lt.1)call bug('f',
@@ -73,6 +82,7 @@ c  neptune=casa format
 	endif
 	call keyr('freq',freq,100.0)
 	call keya('table',table,' ')
+	call keyi('mode',mode,1)
 	call keyfin
 c
 c
@@ -81,10 +91,32 @@ c
 	call mgetenv(mircat,'MIRCAT')
 	ptb = mircat(1:len1(mircat)) // '/' // 
      *        planet(1:len1(planet)) // 'tb'
-	call planmod2(freq,tb,ptb)
+	
+	if (mode.eq.0) then
+	   call planmod0(freq,tb,planet(1:len1(planet)))
+	else
+	   call planmod2(freq,tb,ptb)
+	endif
+	
 c
 	write(*,*) tb
 	end
+c-----------------------------------------------------------------------
+      subroutine planmod0(freq,tb,planet)
+      implicit none
+      real freq,tb
+      character planet*(*)
+
+      if (planet(1:6).eq.'uranus') then
+	 tb = 134.7 * (freq/100.0)**(-0.337)
+      else if (planet(1:7).eq.'neptune') then
+	 tb = 129.8 * (freq/100.0)**(-0.350)
+      else
+	 call bug('f','mode=0 only supports uranus and neptune now:'//
+     *                planet)
+      endif
+
+      end
 c-----------------------------------------------------------------------
       subroutine planmod1(jday,freq,tb,plantab)
       implicit none
@@ -100,7 +132,7 @@ c     This is the CARMA preferred format, but not supported in MIRIAD
 c     see planmod2 to parse the ALMA style tables
 c
       integer MTAB,FTAB
-      parameter (MTAB=3,FTAB=1500)
+      parameter (MTAB=3,FTAB=10000)
 
       double precision frmod(FTAB), tst(FTAB), seval,mjd1
       integer i,j,tno,ncol,nrow
