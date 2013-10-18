@@ -18,6 +18,7 @@ c    mchw  01sep94    Added plot.
 c    mchw  10may96    Different plot symbols with frequency.
 c    rjs   22aug97    Better listing format.
 c    pjt   25apr12    Updated docs (see also tabflux.for)
+c    pjt   17oct12    Fix plotting bad error bars
 c***********************************************************************
 c= CalFlux - Print or plot flux data for a calibrator source.
 c& pjt
@@ -117,7 +118,7 @@ c End declarations.
 c-----------------------------------------------------------------------
 c Announce program.
 c
-      mesg = 'Calflux: version 25-apr-2012'
+      mesg = 'Calflux: version 17-oct-2013'
       nlen = len1(mesg)
       call output(mesg(1:nlen))
 c
@@ -240,6 +241,7 @@ c
         write(mesg,110) tmpsrc(1:nlen),sdate(1:ndate),freq,flux,rms
       else
         write(mesg,120) tmpsrc(1:nlen),sdate(1:ndate),freq,flux
+        rms = 0.0
       endif
   110 format('Flux of: ', a10, a,' at ', F5.1,
      *       ' GHz:', F6.2, ' Jy; rms:', F5.2, ' Jy')
