@@ -113,8 +113,7 @@ c-----------------------------------------------------------------------
       else if (planet(1:7).eq.'neptune') then
 	 tb = 129.8 * (freq/100.0)**(-0.350)
       else
-	 call bug('f','mode=0 only supports uranus and neptune now:'//
-     *                planet(1:len1(planet))
+	 call bug('f','mode=0 only supports uranus and neptune now:')
       endif
 
       end
