@@ -106,6 +106,7 @@ c-----------------------------------------------------------------------
       implicit none
       real freq,tb
       character planet*(*)
+      integer len1
 
       if (planet(1:6).eq.'uranus') then
 	 tb = 134.7 * (freq/100.0)**(-0.337)
@@ -113,7 +114,7 @@ c-----------------------------------------------------------------------
 	 tb = 129.8 * (freq/100.0)**(-0.350)
       else
 	 call bug('f','mode=0 only supports uranus and neptune now:'//
-     *                planet)
+     *                planet(1:len1(planet))
       endif
 
       end
