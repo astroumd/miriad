@@ -45,6 +45,7 @@ c    21oct03 pjt   check for JY/BEAM in the first 7 chars only
 c    14jun11 pjt   add SPITZER MJy/sr check
 c    15oct11 pjt   merged in '02jan05 rjs ' 
 c    01dec11 pkgw  Increase NBINMAX from 40 to 2048
+c    29oct13 pjt   Fix summing when range is selected
 c
 c @todo
 c    is converting real to integer of  indx =   ok? or use RINT?
@@ -54,8 +55,8 @@ c------------------------------------------------------------------------
 	integer NBINDEF,NBINMAX,MAXBOXES,MAXRUNS
 	character version*(*)
 	parameter(NBINDEF=16,NBINMAX=2048,MAXBOXES=2048)
-	parameter(MAXRUNS=40*MAXDIM)
-	parameter(VERSION = 'version 25-dec-2013' )
+	parameter(MAXRUNS=100*MAXDIM)
+	parameter(VERSION = 'version 29-oct-2013 PJT' )
 c
 	character file*128,asterisk*30,line*128,coord*64,bunit*32,
      +   object*32
@@ -66,8 +67,8 @@ c
 	integer boxes(MAXBOXES),runs(3,MAXRUNS),nruns
 	real dat(MAXDIM),rmax,rmin,blo,bhi,x,xinc,r
 	real bscale,bmaj,bmin,barea,cdelt1,cdelt2
-        double precision sum,sum2,av,rms
-	logical first, done, newmin, newmax, norange
+        double precision sum0,sum1,sum2,av,rms
+	logical first, done, newmin, newmax, norange,flg(MAXDIM)
 c
 c  Externals.
 c
@@ -119,7 +120,8 @@ c  Initialise.
 c
 	over = 0
 	under = 0
-	sum=0.
+	sum0=0.
+	sum1=0.
 	sum2=0.
 	first = .true.
 	done = .false.
@@ -184,8 +186,9 @@ c
 		  minv(2) = j
 		  newmin = .true.
 	        endif
-	        sum = sum + x
-	        sum2 = sum2 + x*x
+		sum0 = sum0 + 1.0
+		sum1 = sum1 + x
+		sum2 = sum2 + x*x
 	      endif
 	    enddo
 	  enddo
@@ -197,8 +200,8 @@ c
 c  Determine average, rms etc.
 c
         if (npoints.gt.0) then
-  	  av = sum/npoints
-  	  rms = sqrt(abs(sum2/npoints-av*av))
+  	  av = sum1/sum0
+  	  rms = sqrt(abs(sum2/sum0-av*av))
         else
           call bug ('f', 'No valid pixels in selected region')
         end if
@@ -219,13 +222,13 @@ c
         end if
 
         if (barea.gt.0.0 .and. bunit(1:7).eq.'JY/BEAM') then
-          write(line,100) av,rms,sum/barea
+          write(line,100) av,rms,sum1/barea
         else if (bunit.eq.'MJy/sr') then
-          write(line,100) av,rms,sum*abs(cdelt1*cdelt2)*1e6
+          write(line,100) av,rms,sum1*abs(cdelt1*cdelt2)*1e6
 	else if (bunit.eq.'JY/PIXEL') then
-	  write(line,100) av,rms,sum
+	  write(line,100) av,rms,sum1
         else
-          write(line,101)av,rms,sum
+          write(line,101)av,rms,sum1
         end if
  100    format('Mean', 1pe13.5,' Rms',1pe13.5,' Flux', 1pe13.5, ' Jy')
  101	format('Mean', 1pe14.6,' Rms',1pe15.5,' Sum ', 1pe13.5)
