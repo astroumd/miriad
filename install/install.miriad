@@ -51,6 +51,7 @@ set version=24-jul-2013
 # 30-apr-12 ubuntu 12.04, enable more DEBUG with debug=1
 #  1-may-12 debug=1 expanded to include -DDEBUG; brief=2
 # 28-may-12 DSO linking option (a quick fix to a deeper problem)
+# 30-oct-13 deal with new mac 10.9
 #-----------------------------------------------------------------------
 
 # sanity check: find out from the way it was called where the script lives
@@ -133,8 +134,13 @@ else if ($hosttype == darwin) then
   endif
   echo Output from the sw_vers command:
   sw_vers
-  set mirxinc="/usr/X11R6/include/X11"
-  set mirxlib="/usr/X11R6/lib"
+  if (-d /opt/X11) then
+    set mirxinc="/opt/X11/include"
+    set mirxlib="/opt/X11/lib"
+  else
+    set mirxinc="/usr/X11R6/include/X11"
+    set mirxlib="/usr/X11R6/lib"
+  endif
 else
   set mirxinc="/usr/include/X11"
   set mirxlib="/usr/X11R6/lib"
