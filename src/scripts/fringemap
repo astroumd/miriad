@@ -13,7 +13,7 @@
 set vis=fringe.3C273.2008jun18.4.miriad   #> IFILE  vis=fringe.3C273.2008jun18.4.miriad
 #
 set linecal=0                             #> RADIO  linecal=0      0,1
-set bandpassg=0                           #> RADIO  bandpassg=0    0,1
+set bandpassg=0                           #> RADIO  bandpassg=0    -1,0,1
 set selfcal=1                             #> RADIO  selfcal=1      0,1,2
 set ampcal=0                              #> RADIO  ampcal=0       0,1
 #
@@ -35,6 +35,7 @@ set gaincut=0.95                          #> SCALE  gaincut=0.95   0:1:0.01
 set win=0                                 #> CHECK  win=0          0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16
 set nchan=15                              #> SCALE  nchan=15       1:256:1
 set casa=0                                #> RADIO  casa=0         0:1
+set fits=0                                #> RADIO  fits=0         0:1
 
 #
 foreach arg ($*)
@@ -100,10 +101,14 @@ if ($linecal) linecal vis=vis0
 uvcat vis=vis0 out=vis1 
 
 # PASSBAND calibration
-mfcal vis=vis1 refant=$refant interval=$interval
-gplist vis=vis1 options=phase
-gplist vis=vis1 options=amp
-uvcat vis=vis1 out=vis2 $uvcat1_options
+if ($bandpassg >= 0) then
+  mfcal vis=vis1 refant=$refant interval=$interval
+  gplist vis=vis1 options=phase
+  gplist vis=vis1 options=amp
+  uvcat vis=vis1 out=vis2 $uvcat1_options
+else
+  uvcat vis=vis1 out=vis2 
+endif
 
 # GAIN calibration
 if ($selfcal) then
@@ -130,6 +135,18 @@ if ($gsv) puthd in=vis2/senmodel value=GSV type=ascii
 
 set vis=vis2
 
+# use an extra fits step (needs options=varwt to come back in miriad)
+# warning: fits can only use single spectral windows
+if ($fits) then
+  rm -rf $vis.tmp $vis.fits
+  mv $vis $vis.tmp 
+  fits in=$vis.tmp  out=$vis.fits op=uvout
+  fits in=$vis.fits out=$vis      op=uvin   options=varwt
+endif
+ 
+endif
+
+
 # HACK test: 
 if (0) then
   rm -rf $vis.tmp
@@ -138,12 +155,13 @@ if (0) then
   uvedit vis=$vis.tmp out=$vis ra=12,29,8 dec=2,03,30
 endif
 
-# an extra copy
+# an extra copy (this is a known issue not to produce same result, due to calibration tables)
 if (1) then
   rm -rf $vis.tmp
   mv $vis $vis.tmp
   uvcat vis=$vis.tmp out=$vis
 endif
+
 
 invert vis=$vis  map=$vis.mp beam=$vis.bm \
     imsize=$imsize cell=$cell \
