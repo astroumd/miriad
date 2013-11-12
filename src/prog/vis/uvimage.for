@@ -86,11 +86,12 @@ c
        include 'maxdim.h'
        include 'mirconst.h'
        character*(*) version
-       parameter(version='UVIMAGE: version 12-jun-2012')
+       parameter(version='UVIMAGE: version 12-nov-2013')
        integer MAXSELS
        parameter(MAXSELS=512)
        integer MAXSIZE
-       parameter(MAXSIZE=256*266*256)
+c       parameter(MAXSIZE=256*256*256)
+       parameter(MAXSIZE=512*512*256)
        integer MAXBIT
        parameter(MAXBIT=32)
 
@@ -246,8 +247,11 @@ c
 
 
        if (cube) then
-          if (nsize(1)*nsize(2)*nsize(3) .GT. MAXSIZE) call bug('f',
+          if (nsize(1)*nsize(2)*nsize(3) .GT. MAXSIZE) then
+             write(*,*) MAXSIZE,nsize(1),nsize(2),nsize(3)
+             call bug('f',
      *       'Too many data, use  uvaver, or select= to cut down')
+          endif
 
 
           call xyopen(lOut,Out,'new',3,nsize)
