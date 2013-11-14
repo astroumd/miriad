@@ -15,6 +15,14 @@ import pyfits as fits
 def printf(format, *args):
     sys.stdout.write(format % args)
 
+def np2array(sdata):
+    """ work around np 1.6 deficiency"""
+    n = len(sdata)
+    data = np.arange(n,dtype=float)
+    for i in range(n):
+        data[i] = float(sdata[i])
+    return data	
+
 def process(file,out='bfmask.txt'):
     fp = open(file,'r')
     lines = fp.readlines()
@@ -38,14 +46,17 @@ def process(file,out='bfmask.txt'):
                 counter[bit-1] = words
             elif bit==-1:
                 sum = words
-    nsum = np.array(sum[1:nants+1],dtype=float)
+    print "test: ",nants,sum[1:nants+1]
+    #nsum = np.array(sum[1:nants+1],dtype=float)
+    nsum = np2array(sum[1:nants+1])
     fp = open(out,'w')
     fp.write("BIT/      Percentage of mask BITs set per ANT:\n ANT ")
     for ant in range(nants):
         fp.write(" %2d  " % (ant+1))
     fp.write(" BITMASK-NAME\n\n");
     for bit in range(32):
-        val = np.array(counter[bit][1:nants+1],dtype=float)
+        #val = np.array(counter[bit][1:nants+1],dtype=float)
+        val = np2array(counter[bit][1:nants+1])
         r= (val/nsum)*100
         rm = r*10
         # print r
