@@ -140,6 +140,17 @@ case $TELESCOPE in
 	continue;;
      "wsrt")  echo "Selecting WSRT array"
 	continue;;
+     "apertif")  echo "Selecting APERTIF array"     
+     	def_maxdim=65536
+	def_maxdim2=8192
+	def_maxant=12
+	def_maxant2=12
+	def_maxbase=66
+	def_maxbase2=66
+	def_maxchan=16384
+	def_maxwin=8
+	def_maxwide=8
+	continue;;
      *) echo "Not a valid array"
 esac
 
