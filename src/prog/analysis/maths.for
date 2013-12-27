@@ -119,7 +119,7 @@ c-----------------------------------------------------------------------
      *          maskbuf(BUFLEN), nBuf, nERB, nMRB, nout(MAXNAX),
      *          npixels, rbuflen, scratch(3,MAXRUNS), type, xblc,
      *          xtrc, yblc, ytrc
-      ptrdiff   pnt
+      ptrdiff   pnt, pdidx
       real      exprbuf(BUFLEN), maskrbuf(BUFLEN), RBUF(MAXBUF)
       character expr*1024,mask*1024,outNam*256,template*64,version*72
 
@@ -235,8 +235,8 @@ c     Handle naxis > 4.
 
 c     Allocate memory.
       rbuflen = 6*nOut(1)*nOut(2)
-      call memalloc(pnt,rbuflen,'r')
-      idx = pnt
+      call memallop(pnt,rbuflen,'r')
+      pdidx = pnt
 
 c     Open the output and create the header.
       call xyOpen(lOut,outNam,'new',naxis,nOut)
@@ -268,8 +268,8 @@ c       The boxes specification (if doRuns) is in boxes,
               if (nMRB.gt.0) call moveData(nMRB,MaskRBuf,RBuf(pnt))
               call ariExec(VACTION,npixels,MaskBuf,BUFLEN,RBuf(pnt),
      *                     RBufLen,idx)
-              idx = idx + pnt - 1
-              call compRuns(RBuf(idx),
+              pdidx = idx + pnt - 1
+              call compRuns(RBuf(pdidx),
      *                          runs,MAXRUNS,nRuns,Scratch,MAXRUNS)
             endif
           endif
@@ -283,17 +283,17 @@ c       The boxes specification (if doRuns) is in boxes,
               if (nERB.gt.0) call moveData(nERB,ExpRBuf,RBuf(pnt))
               call ariExec(VACTION,npixels,ExpBuf,BUFLEN,RBuf(pnt),
      *                     RBufLen,idx)
-              idx = idx + pnt - 1
+              pdidx = idx + pnt - 1
             endif
 
             call putPlane(lOut,runs,nRuns,
-     *         1-blc(1),1-blc(2),nOut(1),nOut(2),RBuf(idx),npixels)
+     *         1-blc(1),1-blc(2),nOut(1),nOut(2),RBuf(pdidx),npixels)
           endif
         enddo
       enddo
 
 c     Free allocated memory.
-      call memfree(pnt,rbuflen,'r')
+      call memfrep(pnt,rbuflen,'r')
 
 c     Close files.
       do i = 1, nfiles
