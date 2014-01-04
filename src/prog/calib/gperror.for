@@ -26,6 +26,8 @@ c	Default is 0.
 c@ gnoise
 c       Antenna based rms gain noise, given as a percentage. 
 c	Default is 0.
+c@ seed
+c       Seed for the random number generator. Default is not used.
 c--
 c  History:
 c    rjs  20nov90 Original version.
@@ -39,12 +41,12 @@ c    * Needs a gnoise and leakage parameters as well.
 c    * Write gain table for two feeds.
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version='GpError: version 1.0 05-Feb-01')
+	parameter(version='GpError: version 4-jan-2014')
 	include 'maxdim.h'
 	include 'mirconst.h'
 c
 	character vis*64
-	integer lu,item,offset,nants,iostat,i,n,header(2),i1,i2
+	integer lu,item,offset,nants,iostat,i,n,header(2),i1,i2,seed
 	real interval,prms,arms,baseline
 	double precision time,tmin,tmax
 	real theta(maxant)
@@ -53,7 +55,7 @@ c
 c  Externals.
 c
 	integer uvscan
-	logical hdprsnt
+	logical hdprsnt, keyprsnt
 c
 c  Get the inputs.
 c
@@ -63,6 +65,10 @@ c
 	call keyr('interval',interval,5.0)
 	call keyr('pnoise',prms,0.0)
 	call keyr('gnoise',arms,0.0)
+	if (keyprsnt('seed')) then
+	   call keyi('seed',seed,0)
+	   call randset(seed)
+	endif
 	call keyfin
 c
 c  Check the inputs.
