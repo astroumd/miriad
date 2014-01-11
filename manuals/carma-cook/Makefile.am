@@ -26,6 +26,7 @@ samplescripts = \
   simple1b.csh
 
 EXTRA_DIST = $(texname).tex $(includes) $(samplescripts) \
+  3c273.ps \
   fig-systemp.ps \
   html.sty \
   titlepage.eps.in \
