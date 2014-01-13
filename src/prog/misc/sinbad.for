@@ -126,7 +126,7 @@ c  - does't handle missing ants too well?
       integer MAXSELS, MAXTIME, MAXOFF, MAXCHAN2, MAXBAD
       parameter(MAXSELS=1024)
       parameter(MAXTIME=1000)
-      parameter(MAXOFF=256)
+      parameter(MAXOFF=300)
       parameter(MAXCHAN2=1024)
       parameter(MAXBAD=16)
 c     
@@ -202,6 +202,7 @@ c     Check the on/off mode
 c
       dosrc =  srcon.ne.' '
       if (dosrc) then
+         call bug('i','Different source for on/off')
          if (srcoff.eq.' ') call bug('f','Need two sources for onoff=')
       endif
 c     
@@ -273,27 +274,33 @@ c
          if(on.eq.0)then
             n = ivisoff(1,ant) + 1
             if (debug) write(*,*) 'Reading off ant ',
-     *           ant,have_ant(ant),nvis,n
-            if (n.eq.MAXOFF) call bug('f','MAXOFF: too many offs')
-            ivisoff(n+1,ant) = nvis
+     *           ant,have_ant(ant),nvis,n,timein
             ivisoff(1,ant) = n
-            offsum(ant,n) = 0.0
-            do i=1,nchan
-               offsum(ant,n) = offsum(ant,n) + data(i)
-               off(i,ant,n) = data(i)
-               oflags(i,ant,n) = flags(i)
-            end do
+
+            if (n.le.MAXOFF) then            
+               ivisoff(n+1,ant) = nvis
+               offsum(ant,n) = 0.0
+               do i=1,nchan
+                  offsum(ant,n) = offsum(ant,n) + data(i)
+                  off(i,ant,n) = data(i)
+                  oflags(i,ant,n) = flags(i)
+               end do
 c                not sure if we should hang on to this?
-            if (allflags(nchan,flags,slop)) then
-               if (.not.have_ant(ant)) then
-                  if(debug)write(*,*) 'Saving off ant ',ant
-                  have_ant(ant) = .TRUE.
+               if (allflags(nchan,flags,slop)) then
+                  if (.not.have_ant(ant)) then
+                     if(debug)write(*,*) 'Saving off ant ',ant
+                     have_ant(ant) = .TRUE.
+                  endif
                endif
             endif
-
          endif
          call uvread(lIn,uin,data,flags,MAXCHAN2,nchan)
       end do
+
+      if (n.GT.MAXOFF) then
+         write(*,*) 'MAXOFF,noff=',MAXOFF,n
+         call bug('f','MAXOFF: too many offs')
+      endif
 
       call uvrewind(lIn)
       write(*,*) 'Rewinding file, reading ON'
