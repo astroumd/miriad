@@ -1,18 +1,19 @@
-# WSRT apertif - numbers still wrong
+# WSRT apertif short - distances in meter
+# first two telescopes have no APERTIF frontend
 #   N         W         U/D
 # fixed
 #0        0         0
 #0      100         0
-0      200         0
-0      300         0
-0      400         0
-0      500         0
-0      600         0
-0      700         0
-0      800         0
-0      900         0
-#  movables
-0     1200         0
-0     1300         0
-0     2400         0
-0     2500         0
+0  288 0
+0  432 0
+0  576 0
+0  720 0
+0  864 0
+0 1008 0
+0 1152 0
+0 1296 0
+# movables
+0 1332 0
+0 1386 0
+0 2628 0
+0 2700 0
