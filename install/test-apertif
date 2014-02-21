@@ -1,35 +1,38 @@
 #! /bin/csh -f
 #
-#  mir.bench: see also http://bima.astro.umd.edu/memo/abstracts.html#81
+#  testint apertif:
+#      37 compound beams
+#      32 bands (10MHz each)
 #
-#  The standard benchmark needs about 350 MB (and some scratch space)
+# see also:
+#   http://www.astron.nl/radio-observatory/call-expressions-interest-apertif-surveys
+#   nchan=16384 nwin=32 between 1000 and 1700 MHz tuning
+#   10 - 30 sec integration
 #
-#  if you  'setenv TMPDIR /dev/shm'   on linux,you can get extra
-#  improvement in the I/O portion of this benchmark. 
-#  Be aware you have enough memory allocated to this!
-#
-#  Note: this benchmark has flawed data,as the baseunit was not used
-#        resulting in the A and B array to be malformed. The C array is
-#        proper. For the sake of history we'll maintain this flaw
-#        for now.
 #
 set tmp=bench$$
 mkdir $tmp
+if (1) then
+   rm -f a
+   ln -s $tmp a   
+endif
 cd $tmp
 
 #			default parameters  (nchan=8, mapsize=512 for a test)
 set nchan=20
 set nwin=8
 set fwin=0,10,20,30,40,50,60,70
+set fwin=0,50,100,150,200,250,300,350
 set dfwin=10,10,10,10,10,10,10,10
-set cell=10
+set cell=5
 set standalone=0
 set clean=0
 set fidelity=0
-set interval=0.01
+set interval=0.00277777777777777777  #10sec
+set interval=0.00833333333333333333  #30sec
 set testcat=0
 #  the next two can be negative, in which case mapmaking and/or cleaning is skipped
-set mapsize=1024
+set mapsize=256
 set niters=250
 
 foreach a ($*)
@@ -46,7 +49,7 @@ if ($standalone) then
    setenv  LD_LIBRARY_PATH ..
 endif	
 
-echo "MIRBENCH-APERTIF: (2014-02-13) $tmp : nchan=$nchan mapsize=$mapsize"
+echo "MIRBENCH-APERTIF: (2014-02-21) $tmp : nchan=$nchan mapsize=$mapsize"
 echo hostname=`hostname` 
 echo benchdir=$tmp
 echo system=`uname -a`  
@@ -73,12 +76,19 @@ set ant=$MIRCAT/wsrt-ap1.ant
 set h=500
 set h2=`calc "2*$h"`
 set h3=`calc "sqrt(3)*$h"`
+set center=-$h,-$h3,$h,-$h3,-$h2,0,0,0,$h2,0,-$h,$h3,$h,$h3 
+set center=0,0
+set center=@$MIRCAT/wsrt-ap1.point
 
 time uvgen out=vis harange=$harange source=$MIRCAT/point.source \
- corr=$corr spectra=$spectra ant=$ant[1] telescop=WSRT lat=51.54 freq=1.420405752 \
- center=-$h,-$h3,$h,-$h3,-$h2,0,0,0,$h2,0,-$h,$h3,$h,$h3 \
+ corr=$corr spectra=$spectra \
+ ant=$ant baseunit=-3.335668 telescop=WSRT lat=51.54 freq=1.420405752 \
+ center=$center \
  gnoise=$gnoise pnoise=$pnoise systemp=$systemp tpower=$tpower jyperk=$jyperk \
  > uvgen1.log
+
+# patch for listobs
+puthd in=vis/purpose value=G
 
 if ($mapsize < 0)  goto done
 
@@ -88,6 +98,16 @@ echo INVERT1
 time invert vis=vis map=map1 beam=beam1 imsize=$mapsize cell=$cell \
      select='dra(0),ddec(0)' \
      options=mosaic,double > invert1.log
+
+echo INVERT1a - lowest freq band
+time invert vis=vis map=map1a beam=beam1a imsize=$mapsize cell=$cell \
+     select='dra(0),ddec(0),win(1)' \
+     options=mosaic,double > invert1a.log
+
+echo INVERT1a - highest freq band
+time invert vis=vis map=map1b beam=beam1b imsize=$mapsize cell=$cell \
+     select="dra(0),ddec(0),win($nwin)" \
+     options=mosaic,double > invert1b.log
 
 echo INVERT2
 time invert vis=vis map=map2 beam=beam2 imsize=$mapsize cell=$cell \
