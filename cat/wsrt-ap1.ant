@@ -1,9 +1,9 @@
-# WSRT apertif short - distances in meter
-# first two telescopes have no APERTIF frontend
+# WSRT apertif short - distances in meter (uvgen needs baseunit=-3.335668)
+# Note: first two telescopes have no APERTIF frontend, and are commented out here
 #   N         W         U/D
 # fixed
 #0        0         0
-#0      100         0
+#0      144         0
 0  288 0
 0  432 0
 0  576 0
