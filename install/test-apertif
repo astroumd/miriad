@@ -1,0 +1,122 @@
+#! /bin/csh -f
+#
+#  mir.bench: see also http://bima.astro.umd.edu/memo/abstracts.html#81
+#
+#  The standard benchmark needs about 350 MB (and some scratch space)
+#
+#  if you  'setenv TMPDIR /dev/shm'   on linux,you can get extra
+#  improvement in the I/O portion of this benchmark. 
+#  Be aware you have enough memory allocated to this!
+#
+#  Note: this benchmark has flawed data,as the baseunit was not used
+#        resulting in the A and B array to be malformed. The C array is
+#        proper. For the sake of history we'll maintain this flaw
+#        for now.
+#
+set tmp=bench$$
+mkdir $tmp
+cd $tmp
+
+#			default parameters  (nchan=8, mapsize=512 for a test)
+set nchan=20
+set nwin=8
+set fwin=0,10,20,30,40,50,60,70
+set dfwin=10,10,10,10,10,10,10,10
+set cell=10
+set standalone=0
+set clean=0
+set fidelity=0
+set interval=0.01
+set testcat=0
+#  the next two can be negative, in which case mapmaking and/or cleaning is skipped
+set mapsize=1024
+set niters=250
+
+foreach a ($*)
+  set $a
+end
+
+#			standalone version has attached bins + libs
+if ($standalone) then
+   #echo IFREDO: cp -a $MIRBIN/{uvgen,uvcat,invert,clean,restor} .
+   #echo IFREDO: cp -a $MIRLIB/libmir.so .
+   #echo IFREDO: cp -a /usr/lib/libpgplot.so* .
+   set path=(.. $path)
+   rehash
+   setenv  LD_LIBRARY_PATH ..
+endif	
+
+echo "MIRBENCH-APERTIF: (2014-02-13) $tmp : nchan=$nchan mapsize=$mapsize"
+echo hostname=`hostname` 
+echo benchdir=$tmp
+echo system=`uname -a`  
+echo date=`date`
+echo MIR=$MIR
+
+echo "1,0,0,0,0,0,0,0,0" > point.source
+#set corr=0,1,100.0,1000.0 
+set corr=$nchan,$nwin,$fwin,$dfwin
+set spectra=1.0,100.0,0.1
+set harange=-6,6,$interval
+set gnoise=0.1
+set pnoise=10,0,0,0
+set systemp=75,290,0.15
+set tpower=0,0
+set jyperk=150
+set ant=$MIRCAT/wsrt-ap1.ant
+
+# be careful, MIRIAD uses $TMPDIR, and better make sure this is a local disk
+# alternatively, you can set:
+# setenv TMPDIR /tmp
+
+#  hex7
+set h=500
+set h2=`calc "2*$h"`
+set h3=`calc "sqrt(3)*$h"`
+
+time uvgen out=vis harange=$harange source=$MIRCAT/point.source \
+ corr=$corr spectra=$spectra ant=$ant[1] telescop=WSRT lat=51.54 freq=1.420405752 \
+ center=-$h,-$h3,$h,-$h3,-$h2,0,0,0,$h2,0,-$h,$h3,$h,$h3 \
+ gnoise=$gnoise pnoise=$pnoise systemp=$systemp tpower=$tpower jyperk=$jyperk \
+ > uvgen1.log
+
+if ($mapsize < 0)  goto done
+
+# echo May need to add 'line=channel,$nchan' to invert for the old versions...
+
+echo INVERT1
+time invert vis=vis map=map1 beam=beam1 imsize=$mapsize cell=$cell \
+     select='dra(0),ddec(0)' \
+     options=mosaic,double > invert1.log
+
+echo INVERT2
+time invert vis=vis map=map2 beam=beam2 imsize=$mapsize cell=$cell \
+     options=mosaic,double > invert2.log
+
+echo INVERT3
+time invert vis=vis map=map3 beam=beam3 imsize=$mapsize cell=$cell \
+     select='dra(0),ddec(0)' \
+     options=mosaic,double,mfs > invert3.log
+
+if ($niters < 0) goto done
+
+time clean map=map1 beam=beam1 out=clean1 > clean.log
+time restor model=clean1 beam=beam1 map=map1 out=cmap1 > restor.log
+echo The mirstones can now be obtained to divide 5 minutes by the total elapsed time:
+
+if ($fidelity) then
+   time restor model=clean1 beam=beam1 map=map1 out=res1 mode=residual > restor2.log
+   set rms=(`histo in=res1  | grep Rms | awk '{print $4}'`)
+   set max=(`histo in=cmap1 | grep Max | awk '{print $3}'`)
+   echo Fidelity: `calc $max/$rms`
+endif
+
+if ($testcat) then
+  time invert vis=vis1,vis2,vis3 map=map1a beam=beam1a imsize=$mapsize cell=$cell > inverta.log
+  maths exp=map1a-map1 out=map1d
+  histo in=map1d
+endif
+
+done:
+
+if ($clean) rm -rf $tmp.*
