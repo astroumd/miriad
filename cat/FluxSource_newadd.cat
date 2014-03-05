@@ -20,7 +20,7 @@
 #
 # SOURCES (DO NOT DELETE THIS LINE)
 # Enter new data here (1st 6 columns required, BEGIN WITH NO HASH), for example:
-# Source   Day.UT          Freq(GHz)  Flux(Jy)  RMS(Jy) Reference PrimaryCal PrimCalFlux(Jy)
+# Source   Day.UT          Freq(GHz)  Flux(Jy)  RMS(Jy) Reference PrimaryCal PrimCalFlux(Jy) SpecIndx SpecIndxErr
 #
 0927+390     2014-FEB-23.3   227.0     1.77     0.27   CARMA8     MARS          -999.99     -999.99     -999.99
 0836-202     2014-FEB-23.3   227.0     0.58     0.09   CARMA8     MARS          -999.99     -999.99     -999.99
