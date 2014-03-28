@@ -7,20 +7,37 @@
 #  for viewing.  It is needed by quality
 #
 #  12-nov-2013   Peter Teuben   - Created based on earlier version
+#  14-nov-2013   PJT - fix if numpy 1.6 present, fix for WB data
 
 import os, sys
-import numpy as np
-import pyfits as fits
+try:
+    import numpy as np
+except:
+    print "No numpy installed"
+    sys.exit(1)
+
+try:
+    import pyfits as fits
+except:
+    print "Warning: no pyfits installed"
+    fits = None
+
 
 def printf(format, *args):
     sys.stdout.write(format % args)
 
 def np2array(sdata):
-    """ work around np 1.6 deficiency"""
-    n = len(sdata)
-    data = np.arange(n,dtype=float)
-    for i in range(n):
-        data[i] = float(sdata[i])
+    """ work around np 1.6 deficiency
+        where one cannot  np.array(['1','2','3'],dtype=float)
+    """
+    if True:
+        n = len(sdata)
+        data = np.arange(n,dtype=float)
+        for i in range(n):
+            data[i] = float(sdata[i])
+    else:
+        # this works in numpy 1.7
+        data = np.array(sdata,dtype=float)
     return data	
 
 def process(file,out='bfmask.txt'):
@@ -28,7 +45,7 @@ def process(file,out='bfmask.txt'):
     lines = fp.readlines()
     fp.close()
     nants = 0
-    c = np.arange(32*23,dtype=float).reshape(32,23)
+    c = np.zeros(32*23,dtype=float).reshape(32,23)
     counter = range(32)
     visname = None
     for line in lines:
