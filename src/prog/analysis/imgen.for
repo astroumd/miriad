@@ -84,8 +84,10 @@ c@ imsize
 c	If not input image is given, then this determines the size, in
 c	pixels, of the output image. Either one or two numbers can be
 c	given. If only one number is given, then the output is square.
-c       For testing purposes a third number can be given to create a cube,
-c       no good coordinate headers however are written for such cubes.
+c       For testing purposes a third and optional fourth number can be given 
+c       to create a cube (with replicated planes), no good coordinate headers 
+c       however are written for such cubes. The fourth number must be 1, 
+c       but a polarization is then written.
 c	The default is 256 pixels square. 
 c@ cell
 c	The increment between pixels, in arcseconds. This is only used if
@@ -164,16 +166,18 @@ c    pjt   11jul07  add some dummy but reasonable header items for 3D cubes
 c    sac   20jan09  added power law model and j0 for holography study
 c    pjt    1jun12  various ATNF WCS related changes
 c    pjt    1jun12  write fake restfreq so that WCSLIB doesn't complain anymore
+c    pjt   15nov12  allow simple 4D cube, for testing
+c    pjt   28apr14  finished a working 4D cube (after some testing done by S.Lai)
 c---
 c ToDo: 
-c    write better headers if 3D cubes written (WCSLIB is senstive now)
+c    write better headers if 3D/4D cubes written (WCSLIB is sensitive now)
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version='Imgen: version 1-jun-2012')
+	parameter(version='Imgen: version 28-apr-2014')
 	include 'mirconst.h'
 	include 'maxdim.h'
 	include 'maxnax.h'
-	integer n1,n2,n3,i,j,k,lIn,lOut,nsize(MAXNAX),naxis,seed
+	integer n1,n2,n3,n4,i,j,k,lIn,lOut,nsize(MAXNAX),naxis,seed
 	double precision crpix1,crpix2,cdelt1,cdelt2,crval1,crval2
 	double precision x1(3),x2(3)
 	real factor,bmaj,bmin,bpa,fac,fac3
@@ -299,7 +303,8 @@ c
 	cdelt2 =  abs(cdelt2/3600 * pi/180.)
 	call keyi('imsize',n1,256)
 	call keyi('imsize',n2,n1)
-	call keyi('imsize',n3,1)
+	call keyi('imsize',n3,0)
+	call keyi('imsize',n4,0)
 	call keyt('radec',crval1,'hms',0.d0)
 	call keyt('radec',crval2,'dms',dpi/6.0d0)
 	crpix1 = n1/2 + 1
@@ -318,14 +323,16 @@ c  Otherwise set the default parameters.
 c
 	if(Out.eq.' ')call bug('f','Output file name missing')
 	if(In.ne.' ')then
-	  call xyopen(lIn,in,'old',3,nsize)
+	  call xyopen(lIn,in,'old',4,nsize)
 	  n1 = nsize(1)
 	  n2 = nsize(2)
  	  n3 = nsize(3)
+ 	  n4 = nsize(4)
 	  if(nsize(3).ne.1)call bug('w','Crude handling of 3D images')
+	  if(nsize(4).ne.1)call bug('w','Crude handling of 4D images')
 	  call rdhdi(lIn,'naxis',naxis,1)
 	  naxis = min(naxis,MAXNAX)
-	  do i=4,naxis
+	  do i=5,naxis
 	    nsize(i) = 1
 	  enddo
 	  call rdhdr(lIn,'bmaj',bmaj,0.)
@@ -334,14 +341,24 @@ c
 	  call rdhdd(lIn,'cdelt1',cdelt1,1d0*cdelt1)
 	  call rdhdd(lIn,'cdelt2',cdelt2,1d0*cdelt2)
 	else
-	  if (n3.eq.1) then
+	  if (n3.eq.0) then
 	     naxis = 2
+	     n3 = 1
 	  else
-	     naxis = 3
+	     if (n4.eq.0) then
+		naxis = 3
+	     else
+		if (n4.eq.1) then
+		   naxis = 4
+		else
+		   call bug('f','4D hypercubes not allowed yet')
+		endif
+	     endif
 	  endif
 	  nsize(1) = n1
 	  nsize(2) = n2
 	  nsize(3) = n3
+	  nsize(4) = n4
 	  lIn = 0
 	  bmaj = 0
 	  bmin = 0
@@ -533,13 +550,19 @@ c
 	  call wrhdd(lOut,'crval2',crval2)
 	  call wrhda(lOut,'ctype1','RA---SIN')
 	  call wrhda(lOut,'ctype2','DEC--SIN')
-	  if (naxis.eq.3) then
+	  if (naxis.ge.3) then
 	     call wrhdd(lOut,'crpix3',1.0d0)
 	     call wrhdd(lOut,'cdelt3',1.0d0)
 	     call wrhdd(lOut,'crval3',0.0d0)
 	     call wrhdd(lOut,'restfreq',115.2712d0)
 	     call wrhda(lOut,'ctype3','VELO-LSR')
 	  endif
+	  if (naxis.ge.4) then
+	     call wrhdd(lOut,'crpix4',1.0d0)
+	     call wrhdd(lOut,'cdelt4',1.0d0)
+	     call wrhdd(lOut,'crval4',1.0d0)
+	     call wrhda(lOut,'ctype4','STOKES')
+	  endif	
 	  if(bmaj*bmin.gt.0)then
 	    call wrhda(lOut,'bunit','JY/BEAM')
 	    call wrhdr(lOut,'bmaj',bmaj)
