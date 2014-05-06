@@ -6,10 +6,10 @@ the installation is manual, the instructions are below, but have not
 been tested on many machines.    
 
 They have been tested on:
-     ubuntu 12.04 LTS
+     ubuntu 12.04 LTS, 14.04 LTS
      Scientific Linux 6.4
 
-See $MIR/install/install.casacore for the current install script.  The text
+See $MIR/install/install.carmafiller for the current install script.  The text
 below are guidelines to alternative paths to success
 
 
@@ -20,6 +20,7 @@ First some optional prep work:
 1a) install cfitsio if your system doesn't have it, casacore needs it
    Here is an example for version 3.340 , see
    http://heasarc.gsfc.nasa.gov/fitsio/   for the latest updates
+    (ubuntu:   sudo apt-get install cfitsio3)
 
 cd $MIR/borrow
 
@@ -41,6 +42,7 @@ make install
     to assume that we can use this version, since it comes included.
     HDF5 and fftw3 are both optional, and currently not used in this 
     MIRIAD build.
+    (ubuntu: liblapack-dev libblas-dev)
 
     CMAKE:
     curl http://www.cmake.org/files/v2.8/cmake-2.8.10.2.tar.gz | tar zxf -
@@ -67,9 +69,12 @@ cd $MIR/borrow
 
 if (1) then
   # grab the stable google code version (rev 21337)
+  # 21430 on 24-apr-2014 w/ Ubuntu 14.04
   svn -q co http://casacore.googlecode.com/svn/tags/casacore-1.5.0
     (about 111MB)
   cd casacore-1.5.0
+  # april-2014: the trunk now fails on U14, the nrao-nov12 branch is ok.
+  # svn switch http://casacore.googlecode.com/svn/branches/nrao-nov12/
 else
   # or something like the NRAO version [which doesn't work yet for me]
   svn co https://svn.cv.nrao.edu/svn/casa/branches/stable-2013-03/casacore
