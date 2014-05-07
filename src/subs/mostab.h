@@ -1,4 +1,5 @@
 	integer MAXPNT,MAXHASH
+c                 MAXPNT: see also pb.h::MAXOBJ
 	parameter(MAXPNT=100000,MAXHASH=4*MAXPNT+1)
 	integer nxy,coRef
         ptrdiff pX,pY

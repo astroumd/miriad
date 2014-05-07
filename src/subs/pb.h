@@ -1,6 +1,7 @@
 	integer POLY,GAUS,COS6,SINGLE,IPOLY,BLOCKED
 	parameter(POLY=1,GAUS=2,COS6=3,IPOLY=4,BLOCKED=5,SINGLE=6)
 	integer MAXPB,MAXVAL,MAXOBJ,NCONV
+c                                    MAXOBJ:  see also maxtab.h::MAXPNT
 	parameter(MAXPB=32,MAXVAL=64,MAXOBJ=100000,NCONV=10)
 c
 	character pb(MAXPB)*16,descrip(MAXPB)*32
