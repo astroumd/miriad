@@ -1,6 +1,6 @@
-	integer MAXPNT,MAXHASH
-c                 MAXPNT: see also pb.h::MAXOBJ
-	parameter(MAXPNT=100000,MAXHASH=4*MAXPNT+1)
+        include 'maxdim.h'
+	integer MAXHASH
+	parameter(MAXHASH=4*MAXPNT+1)
 	integer nxy,coRef
         ptrdiff pX,pY
 	integer pntno,npnt,vPntUpd,HashSize,Hash(MAXHASH),nx2,ny2

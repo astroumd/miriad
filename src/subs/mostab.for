@@ -370,9 +370,8 @@ c               set.
 c  Output:
 c    mnx,mny    Mosaiced image size.
 c-----------------------------------------------------------------------
-      include 'maxdim.h'
-      include 'mem.h'
       include 'mostab.h'
+      include 'mem.h'
 
       integer i
       double precision crpix1,crpix2,wcoeff(3)
@@ -540,9 +539,8 @@ c    Wts        Weights to be used -- used to determine rms noise.
 c  Input/Output:
 c    Vis        Visibility data.
 c-----------------------------------------------------------------------
-      include 'maxdim.h'
-      include 'mem.h'
       include 'mostab.h'
+      include 'mem.h'
 c-----------------------------------------------------------------------
 c     Call the routine that does the real work.
       call MosGeom1(size,n,nchan,npol,npnt,Vis,Wts,ucoeff,vcoeff,
@@ -1039,9 +1037,8 @@ c***********************************************************************
 c-----------------------------------------------------------------------
 c  Mosaic the different fields together.
 c-----------------------------------------------------------------------
-      include 'maxdim.h'
-      include 'mem.h'
       include 'mostab.h'
+      include 'mem.h'
 
       ptrdiff pWts
 c-----------------------------------------------------------------------
@@ -1301,7 +1298,6 @@ c  Output:
 c    gain       The gain response at the position.
 c    rms        The rms at the position.
 c-----------------------------------------------------------------------
-      include 'maxdim.h'
       include 'mostab.h'
 
       integer   runs(3)
@@ -1389,7 +1385,6 @@ c    wts        The weight array.
 c  Output:
 c    psf        The point-spread function.
 c-----------------------------------------------------------------------
-      include 'maxdim.h'
       include 'mostab.h'
 
       integer   i, imax, imin, j, jmax, jmin, k, xoff, yoff
