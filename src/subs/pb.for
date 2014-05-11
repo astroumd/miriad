@@ -976,12 +976,12 @@ c
       npbvals = 0
 
       pbHead = 1
-      do i = 1, MAXOBJ-1
+      do i = 1, MAXPNT-1
         pnt(i) = i + 1
         pnt2(i) = 0
       enddo
-      pnt(MAXOBJ) = 0
-      pnt2(MAXOBJ) = 0
+      pnt(MAXPNT) = 0
+      pnt2(MAXPNT) = 0
 c
 c  Make the list of known primary beam objects. The ATCA primary beams
 c  are taken from ATNF technical memo by Wieringa and Kesteven.
