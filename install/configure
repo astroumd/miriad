@@ -633,6 +633,7 @@ SLIB
 WARNING
 MAXBUF
 MAXNAX
+MAXPNT
 MAXWIDE
 MAXWIN
 MAXCHAN
@@ -728,6 +729,7 @@ with_maxbase2
 with_maxchan
 with_maxwin
 with_maxwide
+with_maxpnt
 with_maxnax
 with_maxbuf
 with_x
@@ -1385,6 +1387,7 @@ Optional Packages:
   --with-maxchan=MAXCHAN     Maximum number of spectral channels
   --with-maxwin=MAXWIN       Maximum number of spectral windows (BIMA)
   --with-maxwide=MAXWIDE     Maximum number of wideband channels
+  --with-maxpnt=MAXPNT       Maximum number of pointings
   --with-maxnax=MAXNAX       Maximum number of axis in images
   --with-maxbuf=MAXBUF       Maximum size, in words, of blank common buffer
   --with-x                use the X Window System
@@ -5943,6 +5946,7 @@ def_maxbase2=1058
 def_maxchan=4096	#
 def_maxwin=16		#
 def_maxwide=18		#
+def_maxpnt=100000
 def_maxnax=7
 def_maxbuf=10000000     ##
 
@@ -6016,6 +6020,7 @@ case $TELESCOPE in
 esac
 
 echo "DEBUG: def_maxdim=$def_maxdim"
+
 
 
 
@@ -6120,6 +6125,16 @@ else
 fi
 
 MAXWIDE=$with_maxwide
+
+
+# Check whether --with-maxpnt was given.
+if test "${with_maxpnt+set}" = set; then :
+  withval=$with_maxpnt; with_maxpnt=$withval
+else
+  with_maxpnt="$def_maxpnt"
+fi
+
+MAXPNT=$with_maxpnt
 
 
 # Check whether --with-maxnax was given.
@@ -7922,7 +7937,7 @@ else
     We can't simply define LARGE_OFF_T to be 9223372036854775807,
     since some C++ compilers masquerading as C compilers
     incorrectly reject 9223372036854775807.  */
-#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
+#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
 		       && LARGE_OFF_T % 2147483647 == 1)
 		      ? 1 : -1];
@@ -7968,7 +7983,7 @@ else
     We can't simply define LARGE_OFF_T to be 9223372036854775807,
     since some C++ compilers masquerading as C compilers
     incorrectly reject 9223372036854775807.  */
-#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
+#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
 		       && LARGE_OFF_T % 2147483647 == 1)
 		      ? 1 : -1];
@@ -7992,7 +8007,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
     We can't simply define LARGE_OFF_T to be 9223372036854775807,
     since some C++ compilers masquerading as C compilers
     incorrectly reject 9223372036854775807.  */
-#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
+#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
 		       && LARGE_OFF_T % 2147483647 == 1)
 		      ? 1 : -1];
@@ -8037,7 +8052,7 @@ else
     We can't simply define LARGE_OFF_T to be 9223372036854775807,
     since some C++ compilers masquerading as C compilers
     incorrectly reject 9223372036854775807.  */
-#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
+#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
 		       && LARGE_OFF_T % 2147483647 == 1)
 		      ? 1 : -1];
@@ -8061,7 +8076,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
     We can't simply define LARGE_OFF_T to be 9223372036854775807,
     since some C++ compilers masquerading as C compilers
     incorrectly reject 9223372036854775807.  */
-#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
+#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
 		       && LARGE_OFF_T % 2147483647 == 1)
 		      ? 1 : -1];
@@ -10203,6 +10218,7 @@ echo "MAXBASE2     : $MAXBASE2"
 echo "MAXCHAN      : $MAXCHAN"
 echo "MAXWIN       : $MAXWIN"
 echo "MAXWIDE      : $MAXWIDE"
+echo "MAXPNT       : $MAXPNT"
 echo "MAXNAX       : $MAXNAX"
 echo "MAXBUF       : $MAXBUF"
 

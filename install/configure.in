@@ -82,6 +82,7 @@ def_maxbase2=1058
 def_maxchan=4096	# 
 def_maxwin=16		# 
 def_maxwide=18		# 
+def_maxpnt=100000
 def_maxnax=7
 def_maxbuf=10000000     ##
 
@@ -169,6 +170,7 @@ AC_SUBST(MAXBASE2)
 AC_SUBST(MAXCHAN)
 AC_SUBST(MAXWIN)
 AC_SUBST(MAXWIDE)
+AC_SUBST(MAXPNT)
 AC_SUBST(MAXNAX)
 AC_SUBST(MAXBUF)
 
@@ -207,6 +209,10 @@ MAXWIN=$with_maxwin
 AC_ARG_WITH(maxwide, [  --with-maxwide=MAXWIDE     Maximum number of wideband channels],
 		    with_maxwide=$withval, with_maxwide="$def_maxwide")
 MAXWIDE=$with_maxwide
+
+AC_ARG_WITH(maxpnt,  [  --with-maxpnt=MAXPNT       Maximum number of pointings],
+		    with_maxpnt=$withval, with_maxpnt="$def_maxpnt")
+MAXPNT=$with_maxpnt
 
 AC_ARG_WITH(maxnax,  [  --with-maxnax=MAXNAX       Maximum number of axis in images],
 		    with_maxnax=$withval, with_maxnax="$def_maxnax")
@@ -313,6 +319,7 @@ echo "MAXBASE2     : $MAXBASE2"
 echo "MAXCHAN      : $MAXCHAN"
 echo "MAXWIN       : $MAXWIN"
 echo "MAXWIDE      : $MAXWIDE"
+echo "MAXPNT       : $MAXPNT"
 echo "MAXNAX       : $MAXNAX"
 echo "MAXBUF       : $MAXBUF"
 
