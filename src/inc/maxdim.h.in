@@ -28,5 +28,8 @@ c
 c
 	INTEGER   MAXFBIN
 	PARAMETER(MAXFBIN=@MAXWIN@)
+c
+	INTEGER   MAXPNT
+	PARAMETER(MAXPNT=@MAXPNT@)
 c=======================================================================
 
