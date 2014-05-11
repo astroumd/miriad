@@ -34,7 +34,7 @@ c  coordinate system used when initialising the primary beam object.
 c
 c  pbInfo returns information about the primary beam -- firstly its
 c  FWHM.  A primary beam is also assumed to cut-off at some value.  The
-c  minimum value and the radius at which it occurs are also give.
+c  minimum value and the radius at which it occurs are also given.
 c
 c  Similarly pbExtent returns information about a primary beam, such as
 c  its centre (x0,y0), and maximum extent in x and y (all in grid
@@ -79,6 +79,9 @@ c   12may11   mhw    Add bandwidth
 c   18apr12   mchw   Add GBT
 c   29June12  mchw   use FWHM values measured in CARMA memo 52
 c   18sep12   mhw    Use input frequencies for pb model
+c   26sep13   mhw    Add new ATCA 16cm fits - test as ATCA16 
+c   11oct13   mhw    Update ATCA 16cm fits, add freq interpolation
+c   08apr14   mhw    Fix freq interpolation in OTF mode
 c
 c $Id$
 c***********************************************************************
@@ -329,7 +332,11 @@ c-----------------------------------------------------------------------
       xn(pbObj)=x2c(1)
       yn(pbObj)=x2c(2)
       conv(pbObj)=.true.
-
+      if (pnt2(pbObj).gt.0) then
+        xn(pnt2(pbObj))=x2c(1)
+        yn(pnt2(pbObj))=x2c(2)
+        conv(pnt2(pbObj))=.true.
+      endif
       end
 
 c***********************************************************************
@@ -363,9 +370,9 @@ c-----------------------------------------------------------------------
       include 'mirconst.h'
       include 'pb.h'
 
-      logical more,ok
-      integer l1,l2,iax,k,kd
-      double precision dtemp,x2(2),antdiam,f
+      logical more,more2,ok
+      integer l1,l2,iax,k,kd,k2,kd2,pbObj2
+      double precision dtemp,x2(2),antdiam,f,df
       double precision crpix,crval,cdelt1,cdelt2
       real error,t,alpha
       character ctype*16,line*64
@@ -451,6 +458,25 @@ c
         call bug('w',line)
       endif
 c
+c  Find the nearest neighbouring matching primary beam.
+c  This assumes beam fits on the same feedhorn are defined
+c  over adjacent frequency ranges (without gaps)
+c
+      error = 0
+      kd2 = 0
+      k2 = 0
+      more2 = .true.
+      do while (more2 .and. k2.lt.npb)
+        k2 = k2 + 1
+        if (k2.ne.k.and.pb(k2).eq.ctype(1:l1)) then
+          if ((f1(k2).eq.f2(k).and.abs(f-f2(k)).lt.abs(f-f1(k))).or.
+     *        (f2(k2).eq.f1(k).and.abs(f-f1(k)).lt.abs(f-f2(k)))) then
+            kd2 = k2
+            more2=.false.
+          endif
+        endif
+      enddo
+c
 c  Fill in the details.
 c
       freq(pbObj) = f
@@ -466,6 +492,7 @@ c
       else
         fwhm(pbObj) = pbfwhm(k) / f
       endif
+        
 c
 c  Now set the scaling parameters.
 c
@@ -490,6 +517,29 @@ c
         yc(pbObj) = 0
       endif
       conv(pbObj) = .false.
+c
+c Deal with second closest pb (for freq interpolation)
+c      
+      df = f2(k)-f1(k)
+      if (kd2.gt.0.and.((abs(f-f1(kd2)).lt.df).or.
+     *   (abs(f-f2(kd)).lt.df))) then
+        pbObj2 = pbHead
+        if (pbObj2.eq.0) 
+     *    call bug('f','Exhausted all primary beam objects')
+        call bug('i','Interpolating beam models in frequency')
+        pbHead = pnt(pbHead)
+        pnt2(pbObj) = pbObj2
+        pnt(pbObj2) = kd2
+        freq(pbObj2) = freq(pbObj)
+        bandw(pbObj2) = bandw(pbObj)
+        fwhm(pbObj2) = pbfwhm(kd2) / f
+        x0(pbObj2) = x0(pbObj)
+        y0(pbObj2) = y0(pbObj)
+        xc(pbObj2) = xc(pbObj)
+        yc(pbObj2) = yc(pbObj)
+        conv(pbObj2) = .false.
+      endif
+      
 
       end
 
@@ -512,6 +562,11 @@ c-----------------------------------------------------------------------
 c-----------------------------------------------------------------------
       pnt(pbObj) = pbHead
       pbHead = pbObj
+      if (pnt2(pbObj).gt.0) then
+        pnt(pnt2(pbObj)) = pbHead
+        pbHead = pnt2(pbObj)
+        pnt2(pbObj)=0
+      endif
 
       end
 
@@ -536,13 +591,32 @@ c  Output:
 c    pbGet      Value of the primary beam.
 c-----------------------------------------------------------------------
       include 'pb.h'
+      integer pbObj2
+      real pbGet2
+      double precision f,fmid1,fmid2
 c-----------------------------------------------------------------------
       if (bandw(pbObj).gt.0) then
         pbGet = pbInt(pbObj,x,y)
       else
         pbGet = pbVal(pbObj,x,y)
+      endif       
+      pbObj2 = pnt2(pbObj)
+c
+c     Handle interpolation in frequency if needed
+c      
+      if (pbObj2.gt.0) then
+        if (bandw(pbObj2).gt.0) then
+          pbGet2 = pbInt(pbObj2,x,y)
+        else
+          pbGet2 = pbVal(pbObj2,x,y)
+        endif
+        f = freq(pbObj)
+        fmid1 = (f1(pnt(pbObj))+f2(pnt(pbObj)))/2
+        fmid2 = (f1(pnt(pbObj2))+f2(pnt(pbObj2)))/2
+        pbGet=pbGet*(f-fmid2)/(fmid1-fmid2)+
+     *       pbGet2*(f-fmid1)/(fmid2-fmid1)
+        if (pbGet.lt.cutoff(pnt(pbObj))) pbGet=0
       endif
-
       end
 
 c***********************************************************************
@@ -846,16 +920,17 @@ c-----------------------------------------------------------------------
       integer i
       logical init
       save init
+      real fl,fh
 c
 c Set coefficients for each telescope and frequency range
 c
-      integer NCOEFF,NATCAL1,NATCAL2,NATCAL3,NATCAK,NATCAW
+      integer NCOEFF,NATCAL1,NATCAL2,NATCAL3,NATCAK,NATCAW,NATCA16
       parameter (NCOEFF=5,NATCAL3=3,NATCAL1=5,NATCAL2=7)
-      parameter (NATCAK=4,NATCAW=4)
+      parameter (NATCAK=4,NATCAW=4,NATCA16=5)
       real atcas(NCOEFF),atcac(NCOEFF),atcax(NCOEFF)
       real atcak2(NATCAK),atcak(NCOEFF),atcaw(NATCAW)
       real atcal3(NATCAL3),atcal1(NATCAL1),atcal2(NATCAL2)
-      real vla(NCOEFF)
+      real atca16(NATCA16,7),vla(NCOEFF)
 
       data init/.false./
       data atcal1 /1.0, 8.99e-4, 2.15e-6, -2.23e-9,  1.56e-12/
@@ -866,6 +941,14 @@ c
      *                -7.5132629268134E-19,
      *                 1.9083641820123E-23/
       data atcal3/0.023, 0.631, 4.0/
+      data atca16/
+     * 1.0, 1.06274e-03, 1.32342e-06, -8.72013e-10, 1.08020e-12,
+     * 1.0, 9.80817e-04, 1.17898e-06, -7.83160e-10, 8.66199e-13,
+     * 1.0, 9.53553e-04, 9.33233e-07, -4.26759e-10, 5.63667e-13,
+     * 1.0, 9.78268e-04, 6.63231e-07, 4.18235e-11, 2.62297e-13,
+     * 1.0, 1.02424e-03, 6.12726e-07, 2.25733e-10, 2.04834e-13,
+     * 1.0, 1.05818e-03, 5.37473e-07, 4.22386e-10, 1.17530e-13,
+     * 1.0, 1.10650e-03, 5.11574e-07, 5.89732e-10, 8.13628e-14/
       data atcas /1.0, 1.02e-3, 9.48e-7, -3.68e-10, 4.88e-13/
       data atcac /1.0, 1.08e-3, 1.31e-6, -1.17e-9,  1.07e-12/
       data atcax /1.0, 1.04e-3,  8.36e-7,  -4.68e-10, 5.50e-13/
@@ -895,8 +978,10 @@ c
       pbHead = 1
       do i = 1, MAXOBJ-1
         pnt(i) = i + 1
+        pnt2(i) = 0
       enddo
       pnt(MAXOBJ) = 0
+      pnt2(MAXOBJ) = 0
 c
 c  Make the list of known primary beam objects. The ATCA primary beams
 c  are taken from ATNF technical memo by Wieringa and Kesteven.
@@ -908,11 +993,25 @@ c
       call pbAdd('ATCA.3',  1.15,1.88,    58.713*2*0.514497/1.22,
      *                1e-3,BLOCKED, NATCAL3,atcal3,
      *                'Blocked aperture J1(x)/x form')
+c
+c  The new 16cm ATCA beam fits based on data collected by Jamie Stevens
+c  Fit (using data from x=0-50) cutoff at 0.06 level since first 'null'
+c  only goes down to 0.055 around 2GHz. Non symmetric beyond first null.
+c     
+      fh = 1.204
+      do i=1, 7
+         fl = fh
+         fh = fl + 0.256
+         if (i.eq.1) fl=1.1
+         if (i.eq.7) fh=3.1
+        call pbAdd('ATCA16', fl,fh, 48.5, 0.06, IPOLY,
+     *                NATCA16,atca16(1,i),'Reciprocal 4th order poly')
+      enddo 
       call pbAdd('ATCA',    2.10,2.60,    49.7, 0.03,  IPOLY,
      *                NCOEFF,atcas,'Reciprocal 4th order poly')
       call pbAdd('ATCA',    4.00,6.90,    48.3, 0.03,  IPOLY,
      *                NCOEFF,atcac,'Reciprocal 4th order poly')
-      call pbAdd('ATCA',    7.90,9.90,    50.6, 0.03,  IPOLY,
+      call pbAdd('ATCA',    6.90,9.90,    50.6, 0.03,  IPOLY,
      *                NCOEFF,atcax,'Reciprocal 4th order poly')
       call pbAdd('ATCA.2',  15.5,25.5,    50.6, 0.10,  POLY,
      *                NATCAK,atcak2,'Fourth order poly')
@@ -921,7 +1020,7 @@ c
 c
 c  Assume the ATCA 7mm response is the same as the 12mm response.
 c
-      call pbAdd('ATCA',  25.5,45.5,    50.6, 0.03,  IPOLY,
+      call pbAdd('ATCA',  30.0,50.0,    50.6, 0.03,  IPOLY,
      *                NCOEFF,atcak,'Reciprocal 4th order poly')
       call pbAdd('ATCA',  80.0,120.0,   50.6, 0.03,  IPOLY,
      *                NATCAW,atcaw,'Reciprocal 3th order poly')
