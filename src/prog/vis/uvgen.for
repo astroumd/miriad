@@ -407,7 +407,7 @@ c
 	double precision freq,iffreq,dtemp
 	real wmaj,wmin,wpa,poln,polpa,polvv,x,z,h,sinha,cosha,ha,haend
 	double precision bxx,byy,bzz,bxy,byx
-	real pbfwhm(3),center(2,MAXPNT),evector
+	real pbfwhm(3),center(2,MAXPNTS),evector
 	integer mount
 	character telescop*16
 	integer n,nant,npnt,ipnt,i,jj,m,is,ic,nchan,nospect
@@ -532,7 +532,7 @@ c
 	call keyr('pbfwhm',pbfwhm(2),-1.)
 	pbfwhm(2) = pi/180/3600 * pbfwhm(2)
 	call keyr('pbfwhm',pbfwhm(3),0.2)
-	call mkeyr('center',center,2*MAXPNT,npnt)
+	call mkeyr('center',center,2*MAXPNTS,npnt)
 	if(mod(npnt,2).ne.0) call bug('f',
      *	  'There must be an even number of values for "center"')
 	npnt = npnt / 2
