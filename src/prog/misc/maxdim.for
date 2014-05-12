@@ -124,6 +124,7 @@ c     WRITE(*,*) 'MAXCHAN2     = ',MAXCHAN2
       WRITE(*,*) 'MAXWIN       = ',MAXWIN
       WRITE(*,*) 'MAXWIDE      = ',MAXWIDE
 c     WRITE(*,*) 'MAXNAX       = ',MAXNAX
+      WRITE(*,*) 'MAXPNT       = ',MAXPNT
 
 
       CALL output('static membuf (maxbuf) usage:')
