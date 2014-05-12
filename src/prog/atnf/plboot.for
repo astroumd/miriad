@@ -44,9 +44,9 @@ c    rjs     05jun05 Added plotting option.
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='Plboot: version 1.0 05-Jun-05')
-	integer MAXVIS,MAXPNT
-	parameter(MAXVIS=32,MAXPNT=10000)
+	parameter(version='Plboot: version 12-may-2014')
+	integer MAXVIS,MAXPNTS
+	parameter(MAXVIS=32,MAXPNTS=10000)
 c
 	character vis(MAXVIS)*64,source*32,line*64,device*64
 	logical vector,planet,noapply,nofqav
@@ -56,7 +56,7 @@ c
 	double precision sfreq(MAXCHAN)
 	complex data(MAXCHAN)
 	logical flags(MAXCHAN)
-	real xval(MAXPNT),ydval(MAXPNT),ymval(MAXPNT)
+	real xval(MAXPNTS),ydval(MAXPNTS),ymval(MAXPNTS)
 	integer npnt
 c
 c  Externals.
@@ -103,7 +103,7 @@ c
 	      call uvinfo(lVis,'sfreq',sfreq)
 	      call Acc(nofqav,vector,preamble,preamble(3),iplanet,
      *				data,flags,sfreq,nchan,SumXX,SumXY,
-     *				MAXPNT,npnt,xval,ydval,ymval)
+     *				MAXPNTS,npnt,xval,ydval,ymval)
 	    endif
 	    call uvDatRd(preamble,data,flags,MAXCHAN,nchan)
 	  enddo
@@ -200,7 +200,7 @@ c
 c************************************************************************
 	subroutine Acc(nofqav,vector,uv,time,iplanet,
      *		data,flags,sfreq,nchan,SumXX,SumXY,
-     *		MAXPNT,npnt,xval,ydval,ymval)
+     *		maxpnt,npnt,xval,ydval,ymval)
 c
 	implicit none
 	logical vector,nofqav
@@ -208,8 +208,8 @@ c
 	complex data(nchan)
 	logical flags(nchan)
 	double precision uv(2),time,sfreq(nchan),SumXX,SumXY
-	integer MAXPNT,npnt
-	real xval(MAXPNT),ydval(MAXPNT),ymval(MAXPNT)
+	integer maxpnt,npnt
+	real xval(maxpnt),ydval(maxpnt),ymval(maxpnt)
 c
 c  Accumulate info given the planetary data.
 c------------------------------------------------------------------------
@@ -256,7 +256,7 @@ c
         enddo
 	if(n.gt.0)then
 	  npnt = npnt + 1
-	  if(npnt.gt.MAXPNT)call bug('f','Too many points')
+	  if(npnt.gt.maxpnt)call bug('f','Too many points')
 	  xval(npnt) = CMKS*1e-9*sqrt(uv(1)*uv(1) + uv(2)*uv(2))
 	  ydval(npnt) = abs(avdata/n)
 	  ymval(npnt) = abs(avmodel/n)
