@@ -33,11 +33,12 @@ c	a single planet or point source. See the help on ``select'' for more
 c	information. For planets, you may wish to select just the shortest
 c	spacing, where the planet is strongest.
 c@ flux
-c       Three numbers, giving the source flux density, a reference frequency
-c       (in GHz) and the source spectral index. The flux and spectral index
-c       are at the reference frequency. If no values are given, then MFBOOT
-c       checks whether the source is one of a set of known sources or a planet, 
-c       and uses the appropriate flux variation with frequency. 
+c       Three to five numbers, giving the source flux density, a reference 
+c       frequency (in GHz), the source spectral index and optionally two
+c       higher order terms. The flux and spectral index are at the reference 
+c       frequency. If no values are given, then MFBOOT checks whether the
+c       source is one of a set of known sources or a planet, and uses
+c       the appropriate flux variation with frequency. 
 c       MFBOOT has built-in models for a few calibrators as well as the
 c	planets - see calplot and plplt.
 c
@@ -91,10 +92,11 @@ c    rjs     07jul06 Increase size of MAXPNT again.
 c    mhw     07sep09 Use central frequency for planet parameters
 c    mhw     24mar10 Correct spectral index too
 c    mhw     16jun11 Fix triple mode spectral index correction
+c    mhw     27jun13 Fix nospec option
+c    mhw     24apr14 Allow higher order flux models
 c------------------------------------------------------------------------
 	include 'maxdim.h'
-	character version*(*)
-	parameter(version='mfBoot: version 1.0 07-Jul-06')
+	character version*72
 	integer MAXVIS,MAXPNT
 	parameter(MAXVIS=32,MAXPNT=4000000)
 c
@@ -102,7 +104,7 @@ c
 	character psource*32
 	logical noapply,nospec
 	integer nvis,lVis,vsource,nchan,iplanet,i,n(2),nants
-	real fac,f(2),m(2),s,uflux(3),clip
+	real fac,f(2),m(2),s,uflux(5),clip
         real f0,f1,f2,fac1,fac2,alpha
 	double precision SumXX(2),SumXY(2),SumF(2),preamble(4),time0
 	complex data(MAXCHAN),d(2)
@@ -118,11 +120,14 @@ c  Externals.
 c
 	logical uvDatOpn,uvVarUpd,hdPrsnt
 	integer plLook
-	character streal*16
+	character streal*16, versan*72
+        
+        version = versan('mfboot',
+     *                   '$Revision$',  
+     *                   '$Date$')
 c
 c  Get the user input.
 c
-	call output(version)
 	call keyini
 	call uvDatInp('vis','xcefdwl')
 	call uvDatSet('stokes',0)
@@ -130,6 +135,8 @@ c
 	call keyr('flux',uflux(1),0.0)
 	call keyr('flux',uflux(2),0.0)
 	call keyr('flux',uflux(3),0.0)
+	call keyr('flux',uflux(4),0.0)
+	call keyr('flux',uflux(5),0.0)
 	call keyr('clip',clip,0.0)
 	call getopt(mode,noapply,nospec)
 	call keyfin
@@ -253,12 +260,14 @@ c
 	      call uvrdvri(lVis,'nants',nants,0)
 	      call gainWri(lVis,fac,time0,nants)
 	    endif
-            if(hdPrsnt(lVis,'bandpass')) then
-              call bpSca(lVis,f0,alpha)
-	    else
-	      call bug('w','Cannot adjust spectral slope because'//
-     *                     ' there is no bandpass table')        
-	    endif         
+            if (.not.nospec) then
+              if(hdPrsnt(lVis,'bandpass')) then
+                call bpSca(lVis,f0,alpha)
+	      else
+	        call bug('w','Cannot adjust spectral slope because'//
+     *                       ' there is no bandpass table')        
+	      endif 
+            endif        
 	    call hisopen(lVis,'append')
 	    call hiswrite(lVis,'MFBOOT: Miriad '//version)
 	    call hisinput(lVis,'MFBOOT')
@@ -345,9 +354,9 @@ c
      *		  	     nb(j,b23).gt.0
 	        if(ok)then
 		  td =  db(j,b12)*db(j,b23)*conjg(db(j,b13))/
-     *		       (nb(j,b12)*nb(j,b23)*      nb(j,b13))
+     *		        nb(j,b12)/nb(j,b23)/      nb(j,b13)
 		  tm =  mb(j,b12)*mb(j,b23)*      mb(j,b13) /
-     *		       (nb(j,b12)*nb(j,b23)*      nb(j,b13))
+     *		        nb(j,b12)/nb(j,b23)/      nb(j,b13)
 		  sigma2 = 1
 	          SumXX(j) = SumXX(j) +     (tm*tm/sigma2)
 	          SumXY(j) = SumXY(j) + real(tm*td/sigma2)
@@ -372,7 +381,7 @@ c
 	character source*(*)
 	double precision time,uv(2)
 	integer iplanet
-	real uflux(3),clip
+	real uflux(5),clip
 c
 	complex d(2)
 	real m(2),f(2),s
@@ -383,7 +392,7 @@ c------------------------------------------------------------------------
 	double precision sfreq(MAXCHAN),cfreq
 	real model(MAXCHAN),pltbv(MAXCHAN)
 	integer i,ierr
-	real a,b,cospa,sinpa,bmaj,bmin,bpa,rms2
+	real a,b,cospa,sinpa,bmaj,bmin,bpa,rms2,lfr,alpha
         double precision sub(3),dist
 	logical ok
 	character line*80
@@ -408,7 +417,9 @@ c
 	if(iplanet.ne.0)then
 	  if(uflux(1).gt.0)then
             do i=1,nchan
-              pltbv(i) = uflux(1)*(sfreq(i)/cfreq)**uflux(3)
+              lfr = log(sfreq(i)/cfreq)
+              alpha = uflux(3) + lfr*(uflux(4)+lfr*uflux(5))
+              pltbv(i) = uflux(1)*(sfreq(i)/cfreq)**alpha
             enddo
 	  else
             do i=1,nchan
@@ -431,7 +442,9 @@ c
 	  ok = abs(model(1)).ge.abs(clip*a*sfreq(1)*sfreq(1)*0.5)
 	else if(uflux(1).gt.0)then
 	  do i=1,nchan
-	    model(i) = uflux(1)*(sfreq(i)/cfreq)**uflux(3)
+            lfr = log(sfreq(i)/cfreq)
+            alpha = uflux(3) + lfr*(uflux(4)+lfr*uflux(5))
+	    model(i) = uflux(1)*(sfreq(i)/cfreq)**alpha
 	  enddo
 	else
 	  call calstoke(source,'i',sfreq,model,nchan,ierr)
@@ -601,51 +614,33 @@ c  Scale the gains table present in the data.
 c
 c------------------------------------------------------------------------
 	include 'maxdim.h'
-	complex Gains(3*MAXANT)
-	real scale(3*MAXANT)
-	integer item,iostat,nfeeds,ntau,nsols,ngains,offset,i,j
+        integer maxgains,maxtimes
+        parameter (MAXTIMES=10000,MAXGAINS=3*MAXANT*MAXTIMES*
+     *     MAXFBIN)
+	complex G(MAXGAINS)
+        double precision time(MAXTIMES),freq(0:MAXFBIN)
+	integer nfeeds,ntau,nsols,ngains,nfbin,i,j,k,l
+        
+        call uvGnRead(lVis,G,time,freq,ngains,nfeeds,ntau,nsols,nfbin,
+     *    maxgains,maxtimes,maxfbin)
+        if (ntau.gt.0.and.nfbin.gt.0) call bug('f','Cannot handle '//
+     *    ' combination of gains table with delays and gainsf table')
 c
-c  Externals.
+c        scale the gains
 c
-	integer hsize
-c
-	call haccess(lVis,item,'gains','append',iostat)
-	if(iostat.ne.0)then
-	  call bug('w','Error opening to modify gains item')
-	  call bugno('f',iostat)
-	endif
-	call rdhdi(lVis,'nfeeds',nfeeds,1)
-	call rdhdi(lVis,'ntau',ntau,0)
-	call rdhdi(lVis,'ngains',ngains,0)
-	if(mod(ngains,nfeeds+ntau).ne.0)
-     *	  call bug('f','Bad number of gains or feeds in table')
-	nsols = hsize(item)
-	if(mod(nsols-8,8*ngains+8).ne.0)
-     *	  call bug('f','Size of gain table looks wrong')
-	nsols = (nsols-8)/(8*ngains+8)
-c
-	if(ngains.gt.3*MAXANT)call bug('f','Too many gains for me!')
-	do i=1,ngains,nfeeds+ntau
-	  scale(i) = fac
-	  if(nfeeds.eq.2)scale(i+1) = fac
-	  if(ntau.eq.1)scale(i+nfeeds) = 1
-	enddo
-c
-c  Now correct the data.
-c
-	offset = 16
-	do i=1,nsols
-	  call hreadr(item,gains,offset,8*ngains,iostat)
-	  if(iostat.ne.0)call bugno('f',iostat)
-	  do j=1,ngains
-	    gains(j) = scale(j)*gains(j)
-	  enddo
-	  call hwriter(item,gains,offset,8*ngains,iostat)
-	  if(iostat.ne.0)call bugno('f',iostat)
-	  offset = offset + 8 + 8*ngains
-	enddo
-c
-	call hdaccess(item,iostat)
+        l=1
+        do k=0,nfbin
+          do j=1,nsols
+            do i=1,ngains,nfeeds+ntau
+              G(l) = G(l) * fac
+              if (nfeeds.eq.2) G(l+1)=G(l+1) * fac
+              l = l + nfeeds + ntau
+            enddo
+          enddo
+        enddo
+            
+        call uvGnWrit(lVis,G,time,freq,ngains,nsols,nfbin,maxgains,
+     *    maxtimes,maxfbin,.false.)
 	end
 c************************************************************************
 	subroutine bpSca(lVis,f0,alpha)
