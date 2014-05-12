@@ -80,18 +80,18 @@ c-----------------------------------------------------------------------
       include 'maxdim.h'
       include 'mirconst.h'
 
-      integer MAXSELS, MAXPNT, MAXVIS
-      parameter (MAXSELS=256, MAXPNT=2048, MAXVIS=128)
+      integer MAXSELS, MAXPNTS, MAXVIS
+      parameter (MAXSELS=256, MAXPNTS=2048, MAXVIS=128)
 
       logical   detaper
       integer   i, iax, imsize(2), lout, npnt, nsize(3), nvis, tmap
       real      sels(MAXSELS)
-      double precision dec(MAXPNT), ra(MAXPNT)
-      character map*64, name*64, out*64, pbtype(MAXPNT)*16, version*72,
+      double precision dec(MAXPNTS), ra(MAXPNTS)
+      character map*64, name*64, out*64, pbtype(MAXPNTS)*16, version*72,
      *          vis(MAXVIS)*64
 
       integer   len1
-      character itoaf*3, versan*80
+      character itoaf*3, versan*72
       external  itoaf, len1, versan
 c-----------------------------------------------------------------------
       version = versan('demos',
@@ -138,7 +138,7 @@ c
 c
 c  Get the pointing centres, etc, associated with the vis dataset.
 c
-      call GetPnt(vis,nvis,sels,MAXPNT,npnt,ra,dec,pbtype)
+      call GetPnt(vis,nvis,sels,MAXPNTS,npnt,ra,dec,pbtype)
       call output('Number of pointings: '//itoaf(npnt))
 c
 c  Process each of the pointings.
@@ -156,13 +156,13 @@ c
 
       end
 c***********************************************************************
-      subroutine GetPnt(vis,nvis,sels,MAXPNT,npnt,ra,dec,pbtype)
+      subroutine GetPnt(vis,nvis,sels,maxpnt,npnt,ra,dec,pbtype)
 
       integer npnt,MAXPNT,nvis
       character vis(nvis)*(*)
       real sels(*)
-      double precision ra(MAXPNT),dec(MAXPNT)
-      character pbtype(MAXPNT)*(*)
+      double precision ra(maxpnt),dec(maxpnt)
+      character pbtype(maxpnt)*(*)
 
 c  Get the pointing centers and primary beam types. The "mos" routines
 c  do the real work.
@@ -197,7 +197,7 @@ c
         do while (nread.ne.0)
           call mosChk(tvis,ipnt)
           npnt = max(npnt,ipnt)
-          if (npnt.gt.MAXPNT)
+          if (npnt.gt.maxpnt)
      *        call bug('f','Too many pointings for me')
           call uvread(tvis,preamble,data,flag,1,nread)
         enddo

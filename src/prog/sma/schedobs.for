@@ -126,7 +126,7 @@ c Plotting pointers, dimensions and masks
 c
       integer polmsk(-8:4) 
       integer nfiles, npols, nbases, pl1dim, pl2dim, pl3dim,
-     *  pl4dim, maxpnt, xo, yo, elo(2), eho(2), plfidx, pidx,
+     *  pl4dim, maxpnts, xo, yo, elo(2), eho(2), plfidx, pidx,
      *  plbidx, stbidx
 c
 c Plot counters
@@ -208,7 +208,7 @@ c Chop up the plot buffer according to what we have learned or think
 c is in the file.
 c
       call chopup ( maxbuf2,
-     *   pl1dim, pl2dim, pl3dim, pl4dim, maxpnt, xo, yo, elo, eho)
+     *   pl1dim, pl2dim, pl3dim, pl4dim, maxpnts, xo, yo, elo, eho)
         ifile =  1
         plfidx = 1
         nread=1
@@ -377,7 +377,7 @@ c
 c
 c Put points into plot buffer
 c
-                  if (npts(plbidx,pidx,plfidx).lt.maxpnt) then
+                  if (npts(plbidx,pidx,plfidx).lt.maxpnts) then
                     call bufput (pl1dim, pl2dim, pl3dim, pl4dim,
      *                 plbidx, pidx, plfidx,
      *                 xrtest, yrtest, xmin, xmax, ymin, ymax, xvalr,
@@ -544,7 +544,7 @@ c
 c
 c
       subroutine chopup (maxbuf2, 
-     *  pl1dim, pl2dim, pl3dim, pl4dim, maxpnt,
+     *  pl1dim, pl2dim, pl3dim, pl4dim, maxpnts,
      *   xo, yo, elo, eho)
 c-----------------------------------------------------------------------
 c     Chop up the allocated memory. Allow for error bars, as well as
@@ -557,7 +557,7 @@ c  Output:
 c               The plot buffer is dimensioned
 c                 buffer(pl1dim,pl2dim,pl3dim,pl4dim)
 c                        points  basel  pol    files
-c    maxpnt     Maximum number of points allowed to plot for each
+c    maxpnts    Maximum number of points allowed to plot for each
 c		baseline, polarization and file
 c    pl1dim     Dimensions of first index in BUFFER when passed to
 c               subroutines.  First dimension contains:
@@ -576,7 +576,7 @@ c
 c-----------------------------------------------------------------------
       integer maxbuf2
       integer pl1dim, pl2dim, pl3dim, pl4dim,
-     *maxpnt, xo, yo, elo(2), eho(2)
+     *maxpnts, xo, yo, elo(2), eho(2)
 cc
       integer nbuf, off
 c-----------------------------------------------------------------------
@@ -604,18 +604,18 @@ c
 c Compute maximum number of points allowed to plot for each
 c baseline, polarization and file
 c
-      maxpnt = maxbuf2 / (nbuf * pl2dim * pl3dim * pl4dim)
-      if (maxpnt.lt.1) call bug ('f',
+      maxpnts = maxbuf2 / (nbuf * pl2dim * pl3dim * pl4dim)
+      if (maxpnts.lt.1) call bug ('f',
      *  'Insufficient memory to do anything useful -- select less data')
 c
 c Dimension of first index of BUFFER when passed to subroutines
 c
-      pl1dim = nbuf * maxpnt
+      pl1dim = nbuf * maxpnts
 c
 c Offsets for X and Y points in BUFFER
 c
       xo = 0
-      yo = maxpnt
+      yo = maxpnts
 c
 c Offsets for X,Y lo and high errors in buffer.  Careful, do not
 c use these pointers when not asking for error bars, as they
@@ -625,7 +625,7 @@ c
       elo(2) = 0
       eho(1) = 0
       eho(2) = 0
-      off = maxpnt
+      off = maxpnts
 c
       nbases = 0
       npols = 0
