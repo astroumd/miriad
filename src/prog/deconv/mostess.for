@@ -74,28 +74,28 @@ c-----------------------------------------------------------------------
       integer gull,cornwell
       parameter (gull=1,cornwell=2)
 
-      integer MAXPNT
-      parameter (MAXPNT=350)
+      integer MAXPNTS
+      parameter (MAXPNTS=350)
 
       logical   converge, doflux, positive, verbose
       integer   i, icentre, jcentre, lBeam, lDef, lMap,
      *          lMod, lOut, maxniter, measure, mnx, mny, n, n1, n2,
      *          naxis, nBeam(2), nDef(3), niter, nMap(2), nMod(3),
-     *          nOut(MAXNAX), npnt, nx, ny, offset(3), pbObj(MAXPNT),
-     *          x0(MAXPNT), y0(MAXPNT)
+     *          nOut(MAXNAX), npnt, nx, ny, offset(3), pbObj(MAXPNTS),
+     *          x0(MAXPNTS), y0(MAXPNTS)
       ptrdiff   pDChi, pDef, pEst, pMap, pNewDChi
       ptrdiff   pNewEst, pNewRes, pRes
-      ptrdiff   pTmp, pWt, Cnvl(MAXPNT)
+      ptrdiff   pTmp, pWt, Cnvl(MAXPNTS)
       real      Alpha, Beta, ClipLev, De, Df, Flux, Grad11, GradEE,
      *          GradEF, GradEH, GradEJ, GradFF, GradFH, GradFJ, GradHH,
      *          GradJJ, Immax, Immin, J0, J1, OStLen1, OStLen2, Q, Qest,
-     *          Rms, rmsfac, sigma(MAXPNT), Sigt, StLen1, StLen2, StLim,
+     *          Rms, rmsfac, sigma(MAXPNTS), Sigt, StLen1, StLen2, StLim,
      *          TFlux, Tol
-      character BeamNam(MAXPNT)*64, DefNam*64, entropy*16, line*80,
-     *          MapNam(MAXPNT)*64, ModNam*64, OutNam*64, version*72
+      character BeamNam(MAXPNTS)*64, DefNam*64, entropy*16, line*80,
+     *          MapNam(MAXPNTS)*64, ModNam*64, OutNam*64, version*72
 
       integer   ismax
-      character itoaf*4, versan*80
+      character itoaf*4, versan*72
       external  ismax, itoaf, versan
 c-----------------------------------------------------------------------
       version = versan('mostess',
@@ -105,8 +105,8 @@ c
 c  Get the input parameters.
 c
       call keyini
-      call mkeyf('map',MapNam,MAXPNT,npnt)
-      call mkeyf('beam',BeamNam,MAXPNT,n)
+      call mkeyf('map',MapNam,MAXPNTS,npnt)
+      call mkeyf('beam',BeamNam,MAXPNTS,n)
       call keya('default',DefNam,' ')
       call keya('model',ModNam,' ')
       call keya('out',OutNam,' ')
