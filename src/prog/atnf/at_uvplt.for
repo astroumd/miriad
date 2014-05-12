@@ -356,7 +356,7 @@ c Externals
 c
       integer membuf
       logical uvdatopn
-      character itoaf*2, versan*80, version*80
+      character itoaf*2, versan*72, version*72
 c
 c Initialize
 c
@@ -508,7 +508,7 @@ c
 c Get info from preamble and frequency
 c
           if (dowave) then
-            call getwvl(donano, preamble, u, v, uvdist, uvpa)
+            call getwvl(preamble, u, v, uvdist, uvpa)
             call uvinfo(lin, 'sfreq', freq)
           else if (xaxis.eq.'freq' .or. yaxis.eq.'freq') then
             call uvinfo(lin, 'sfreq', freq)
@@ -584,10 +584,12 @@ c
 c
 c Set x and y values
 c
-              call setval(xaxis, ha, u, v, uvdist, uvpa, fday, fyear,
+              call setval(xaxis, ha, u, v, uvdist, uvpa, donano,
+     *			   fday, fyear,
      *                     paran, lst, az, el, jyperk, rms,
      *                     data(j), j, freq, xvalr, xgood)
-              call setval(yaxis, ha, u, v, uvdist, uvpa, fday, fyear,
+              call setval(yaxis, ha, u, v, uvdist, uvpa, donano,
+     *			   fday, fyear,
      *                     paran, lst, az, el, jyperk, rms,
      *                     data(j), j, freq, yvalr, ygood)
               if (xgood .and. ygood) then
@@ -2286,17 +2288,15 @@ c-----------------------------------------------------------------------
       end
 
 ************************************************************************
-      subroutine getwvl (donano, preamble, u, v, uvdist, uvpa)
+      subroutine getwvl (preamble, u, v, uvdist, uvpa)
 
       double precision preamble(2)
       real u, v, uvdist, uvpa
-      logical donano
 c-----------------------------------------------------------------------
 c     Get some things from the preamble
 c
 c  Input:
 c    lin          Handle of vis file
-c    donano       True for wavelengths in nanoseconds, else kilo-lambda
 c    preamble     u and v in raw form (nsec or lambda)
 c  Output:
 c    u,v          u and v in form selected by user (nsec or klambda)
@@ -2307,11 +2307,6 @@ c-----------------------------------------------------------------------
 c-----------------------------------------------------------------------
       u = preamble(1)
       v = preamble(2)
-
-      if (.not.donano) then
-        u = preamble(1) / 1000.0
-        v = preamble(2) / 1000.0
-      endif
 
       uvdist = sqrt(u*u + v*v)
 
@@ -2882,14 +2877,14 @@ cc
      *  nb, np, ipt, il, ilen, icol
       character xlabel*100, ylabel*100, ans*1, devdef*80,
      *  str*80, units*10
-      character*2 fmt(2), polstr(12)*2, hard*3
+      character*2 fmt(3), polstr(12)*2, hard*3
       logical new, more, redef, none, doauto
 
       integer pgbeg, len1
       character polsc2p*2
 
       save cols
-      data fmt /'i1', 'i2'/
+      data fmt /'i1', 'i2', 'i3'/
       data cols1 /1, 7, 2, 5, 3, 4, 6, 8, 9,  10, 11, 12/
       data cols2 /1, 2, 5, 3, 4, 6, 8, 9, 10, 11, 12, 13/
 c-----------------------------------------------------------------------
@@ -3338,9 +3333,9 @@ c-----------------------------------------------------------------------
      *  plfidx
       logical dobase
 cc
-      character str1*2,aline*80
+      character aline*80
       integer i, j
-      character itoaf*2,stcat*80
+      character itoaf*3,stcat*80
 c-----------------------------------------------------------------------
 c
 c Loop over size of BUFFER polarization dimension
@@ -3354,8 +3349,6 @@ c
 c
 c No more room for this combination
 c
-            str1 = itoaf(ifile)
-
             if (dobase) then
                if (pl4dim.gt.1) then
                  call bug('w',
@@ -3442,13 +3435,13 @@ c-----------------------------------------------------------------------
       else if (axis.eq.'uvangle') then
         label = 'uv p.a. (degrees)'
       else if (axis.eq.'amplitude') then
-        label = 'Amplitude'
+        label = 'Amplitude (Jy)'
       else if (axis.eq.'phase') then
         label = 'Phase (degrees)'
       else if (axis.eq.'real') then
-        label = 'Real'
+        label = 'Real (Jy)'
       else if (axis.eq.'imag') then
-        label = 'Imaginary'
+        label = 'Imaginary (Jy)'
       else
         call bug('w', 'Unrecognized '//xory//' axis')
         label = 'unknown'
@@ -3466,17 +3459,17 @@ c
       end
 
 ************************************************************************
-
-      subroutine setval (axis, ha, u, v, uvdist, uvpa, fday, fyear,
+      subroutine setval (axis, ha, u, v, uvdist, uvpa, donano,
+     *			 fday, fyear,
      *                   parang, lst, az, el, jyperk, rms,
      *                   data, ichan, freq, val, ok)
-
+c
       complex data
       double precision fday, fyear, freq(*), ha, lst, az, el
       real val, u, v, uvdist, uvpa, parang, jyperk, rms
       character axis*(*)
       integer ichan
-      logical ok
+      logical ok,donano
 c-----------------------------------------------------------------------
 c     Set the value of the desired quantity
 c
@@ -3498,21 +3491,25 @@ c    rms      Theoretical visibility noise variance, in flux units.
 c    data     Complex visibility
 c    ichan    CHannel number
 c    freq     Array of frequencies for each channel
+c    donano   True if the uv coordinates are to be in light nanosec.
 c  Output:
 c    val      Value
 c    ok       True if value is a valid number to plot
 c-----------------------------------------------------------------------
       include 'mirconst.h'
-c-----------------------------------------------------------------------
+c
       ok = .true.
       if (axis.eq.'uvdistance') then
-        val = uvdist * freq(ichan) / freq(1)
+        val = uvdist
+	if(.not.donano)val = val * freq(ichan) / freq(1) / 1000.0
       else if (axis.eq.'uu' .or. axis.eq.'uc') then
-        val = u * freq(ichan) / freq(1)
+        val = u
+	if(.not.donano)val = val * freq(ichan) / freq(1) / 1000.0
       else if (axis.eq.'freq') then
         val = freq(ichan)
       else if (axis.eq.'vv' .or. axis.eq.'vc') then
-        val = v * freq(ichan) / freq(1)
+        val = v
+	if(.not.donano)val = val * freq(ichan) / freq(1) / 1000.0
       else if (axis.eq.'uvangle') then
         val = uvpa
         if (uvpa.eq.999.0) ok = .false.
