@@ -493,9 +493,9 @@ c------------------------------------------------------------------------
 	include 'uvspec.h'
 	integer PolMin,PolMax
 	parameter(PolMin=-8,PolMax=4)
-	integer MAXPLT,MAXPNT
-	parameter(MAXPNT=1000000,MAXPLT=100000)
-	real xp(MAXPNT),yp(MAXPNT),xrange(2),inttime
+	integer MAXPLT,MAXPNTS
+	parameter(MAXPNTS=1000000,MAXPLT=100000)
+	real xp(MAXPNTS),yp(MAXPNTS),xrange(2),inttime
 	integer plot(MAXPLT+1)
 	double precision time
 	integer i,j,ngood,ng,ntime,npnts,nplts,nprev,p
@@ -569,12 +569,12 @@ c
 	      if(cntp(i,j).ge.1)then
 		if(dolag)then
 		  call LagExt(x,buf(p),count(p),nchan(i,j),n,
-     *		    xp,yp,MAXPNT,npnts)
+     *		    xp,yp,maxpnts,npnts)
 		else
 		  call VisExt(x,buf(p),buf2(p),bufr(p),count(p),
      *		    nchan(i,j),
      *		    doamp,doampsc,dorms,dophase,doreal,doimag,
-     *		    xp,yp,MAXPNT,npnts)
+     *		    xp,yp,maxpnts,npnts)
 		endif
 	      endif
 c
@@ -621,12 +621,12 @@ c
 c************************************************************************
 	subroutine VisExt(x,buf,buf2,bufr,count,nchan,
      *		    doamp,doampsc,dorms,dophase,doreal,doimag,
-     *		    xp,yp,MAXPNT,npnts)
+     *		    xp,yp,maxpnts,npnts)
 c
 	implicit none
-	integer nchan,npnts,MAXPNT,count(nchan)
+	integer nchan,npnts,maxpnts,count(nchan)
 	logical doamp,doampsc,dorms,dophase,doreal,doimag
-	real buf2(nchan),bufr(nchan),xp(MAXPNT),yp(MAXPNT)
+	real buf2(nchan),bufr(nchan),xp(maxpnts),yp(maxpnts)
 	double precision x(nchan)
 	complex buf(nchan)
 c------------------------------------------------------------------------
@@ -657,7 +657,7 @@ c
 	      temp = aimag(buf(k)) / count(k)
 	    endif
 	    npnts = npnts + 1
-	    if(npnts.gt.MAXPNT)call bug('f',
+	    if(npnts.gt.maxpnts)call bug('f',
      *	      'Buffer overflow(points), when accumulating plots')
 	    xp(npnts) = x(k)
 	    yp(npnts) = temp
@@ -667,12 +667,12 @@ c
 	end
 c************************************************************************
 	subroutine LagExt(x,buf,count,nchan,n,
-     *		    xp,yp,MAXPNT,npnts)
+     *		    xp,yp,maxpnts,npnts)
 c
 	implicit none
-	integer nchan,n,npnts,MAXPNT,count(nchan)
+	integer nchan,n,npnts,maxpnts,count(nchan)
 	double precision x(n)
-	real xp(MAXPNT),yp(MAXPNT)
+	real xp(maxpnts),yp(maxpnts)
 	complex buf(nchan)
 c------------------------------------------------------------------------
 	include 'maxdim.h'
@@ -700,7 +700,7 @@ c
 	  k0 = k0 + 1
 	  if(k0.gt.n)k0 = k0 - n
 	  npnts = npnts + 1
-	  if(npnts.gt.MAXPNT)call bug('f',
+	  if(npnts.gt.maxpnts)call bug('f',
      *		'Buffer overflow: Too many points to plot')
 	  xp(npnts) = x(k)
 	  yp(npnts) = rbuf(k0)
