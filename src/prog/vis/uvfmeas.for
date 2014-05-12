@@ -109,9 +109,9 @@ c  Bugs:
 c------------------------------------------------------------------------
 	include 'mirconst.h'
 	include 'maxdim.h'
-        integer maxco,MAXPOL,PolMin,PolMax,MAXPLT,MAXPNT
+        integer maxco,MAXPOL,PolMin,PolMax,MAXPLT,MAXPNTS
         parameter (maxco=15,MAXPOL=4,PolMin=-9,PolMax=4,MAXPLT=1024)
-	parameter (MAXPNT=10000000)
+	parameter (MAXPNTS=10000000)
 c
 	character version*80
 	character uvflags*8,device*64,xaxis*12,yaxis*12,logf*64
@@ -133,7 +133,7 @@ c
 	real vecamp(MAXCHAN),vecpha(MAXCHAN),vecscat(MAXCHAN),sig2
 	real work2(4*maxdim),weight(maxdim),fit(maxdim),serr
 	real xrange(2),yp(MAXCHAN),scalavga,vecavgs,scalavgs
-	real uvdist(MAXPNT),uvdistamp(MAXPNT),uvdistfreq(MAXPNT)
+	real uvdist(MAXPNTS),uvdistamp(MAXPNTS),uvdistfreq(MAXPNTS)
 	real sexpect,qualn,qualp,plotfit(11),ufit(maxdim)
 	real fitdiffsum,plfitx(maxdim),evxp,evfx,polyeval,feval
 	real a1,a2,a3
@@ -341,7 +341,7 @@ c
 		  u=preamble(1)/1000.0
 		  v=preamble(2)/1000.0
 		  if (douv) then
-		     if (nuvdist.lt.MAXPNT) then
+		     if (nuvdist.lt.MAXPNTS) then
 			uvdist(nuvdist)=real(sqrt(u*u+v*v)*
      *                    txf(i)/txf(1))
 			uvdistamp(nuvdist)=real(data(i))
@@ -357,7 +357,7 @@ c
 	       endif
 	    enddo
 	    if (douv) then
-	       if (nuvdist.le.MAXPNT) then
+	       if (nuvdist.le.MAXPNTS) then
 		  nuvdist=nuvdist-1
 	       endif
 	    endif
@@ -644,7 +644,7 @@ c
 	   call SetAxisD(xp,nchan,xrange)
 	   call Plotit(nchan,xp,yp,xrange,yrange,plot,
      *         nplts,xtitle,ytitle,0,dble(0.),real(0.),p,npol,hann,hc,
-     *         hw,logf,MAXPNT,poly,fit,fluxlines,2,i,uvdist,uvdistamp,
+     *         hw,logf,MAXPNTS,poly,fit,fluxlines,2,i,uvdist,uvdistamp,
      *         nuvdist,qualn,qualp,douv,dopfit,ufit,plfitx)
 	   if (douv) then
 	      write(line,'(a,1pe11.3,a,1pe11.3)') 
