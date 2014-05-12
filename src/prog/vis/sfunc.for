@@ -30,22 +30,23 @@ c--
 c  History:
 c    04oct97 rjs	Original version.
 c    21oct98 rjs	Significantly enhanced.
+c    12may2014   pjt    fix to MAXPNTS, but noted it's deprecated in ATNF
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	include 'mirconst.h'
 	character version*(*)
-	parameter(version='Sfunc: version 1.0 21-Oct-98')
-	integer MAXPNT
-	parameter(MAXPNT=30000)
+	parameter(version='Sfunc: version 12-may-2014')
+	integer MAXPNTS
+	parameter(MAXPNTS=30000)
 	integer npnt,n,nfile,tno
 	double precision S(MAXBASE),S2(MAXBASE),am(MAXBASE)
 	double precision tmin,tmax,preamble(4)
 	integer ncount(MAXBASE)
 	real d(MAXBASE),dmin,dmax
-	real D2l(MAXPNT),b(MAXPNT),mass(MAXPNT)
-	real x(MAXPNT),y(MAXPNT),w(MAXPNT)
+	real D2l(MAXPNTS),b(MAXPNTS),mass(MAXPNTS)
+	real x(MAXPNTS),y(MAXPNTS),w(MAXPNTS)
 	real xmin,xmax,ymin,ymax,temp,lambda
-	integer file(MAXPNT),ngood,i1,i2,bl,i,j,k,nchan,vUpd
+	integer file(MAXPNTS),ngood,i1,i2,bl,i,j,k,nchan,vUpd
 	complex data(MAXCHAN),fac(MAXBASE),sum
 	logical flags(MAXCHAN),docal,dolog,doplot
 	character device*64,logf*64,line*80
@@ -106,7 +107,7 @@ c
 	  dowhile(nchan.gt.0)
 	    if(uvvarUpd(vupd))then
 	      call flushit(0.5d0*(tmin+tmax),MAXBASE,ncount,S,S2,
-     *		d,am,nfile,D2l,b,mass,file,w,MAXPNT,npnt,docal,dolog)
+     *		d,am,nfile,D2l,b,mass,file,w,MAXPNTS,npnt,docal,dolog)
 	      call Setd(tno,d,MAXBASE)
 	    endif
 	    Sum = 0
@@ -125,7 +126,7 @@ c
 	      if(max(preamble(3),tmax)-min(preamble(3),tmin).gt.
      *							interval)then
      	    	call flushit(0.5d0*(tmin+tmax),MAXBASE,ncount,S,S2,d,
-     *		  am,nfile,D2l,b,mass,file,w,MAXPNT,npnt,docal,dolog)
+     *		  am,nfile,D2l,b,mass,file,w,MAXPNTS,npnt,docal,dolog)
 		tmin = preamble(3)
 		tmax = tmin
 	      endif
@@ -152,7 +153,7 @@ c
 	  enddo
 	  call uvDatCls
      	  call flushit(0.5d0*(tmin+tmax),MAXBASE,ncount,S,S2,d,
-     *	    am,nfile,D2l,b,mass,file,w,MAXPNT,npnt,docal,dolog)
+     *	    am,nfile,D2l,b,mass,file,w,MAXPNTS,npnt,docal,dolog)
 	enddo
 c
 c  Do the plot.
@@ -322,14 +323,14 @@ c
 	end
 c************************************************************************
 	subroutine flushit(time,MAXBASE,ncount,S,S2,d,am,nfile,
-     *			D2l,b,mass,file,w,MAXPNT,npnt,docal,dolog)
+     *			D2l,b,mass,file,w,maxpnt,npnt,docal,dolog)
 c
 	implicit none
-	integer MAXBASE,npnt,MAXPNT,nfile
-	integer file(MAXPNT),ncount(MAXBASE)
+	integer MAXBASE,npnt,maxpnt,nfile
+	integer file(maxpnt),ncount(MAXBASE)
 	double precision S(MAXBASE),S2(MAXBASE),am(MAXBASE),time
-	real d(MAXBASE),D2l(MAXPNT),b(MAXPNT),mass(MAXPNT)
-	real w(MAXPNT)
+	real d(MAXBASE),D2l(maxpnt),b(maxpnt),mass(maxpnt)
+	real w(maxpnt)
 	logical docal,dolog
 c------------------------------------------------------------------------
 	integer i,n0,ntmass,nd
@@ -344,7 +345,7 @@ c
 	do i=1,MAXBASE
 	  if(ncount(i).gt.10)then
 	    npnt = npnt + 1
-	    if(npnt.gt.MAXPNT)call bug('f','Too many points')
+	    if(npnt.gt.maxpnt)call bug('f','Too many points')
 	    if(docal)then
 	      D2l(npnt) = log10(S2(i)/ncount(i))
 	    else
