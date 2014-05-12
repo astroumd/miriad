@@ -353,7 +353,9 @@ c     2jul09  pjt   add veltype to make listobs work
 c    26aug09  pjt   doslip, to allow for integral times, and equate hour angle = clock hours
 c     3dec09  pjt   real (or even complex) corr storage option
 c    04nov11  mchw  added atmospheric phase noise for channel data.
+c    27aug13  pjt   add purpose, so listobs works
 c    31jan14  mchw  fixed bug in source HA limits.
+c    11may14  pjt   MAXPNTS instead of MAXPNT
 c
 c  Bugs/Shortcomings:
 c    * Frequency and time smearing is not simulated.
@@ -386,7 +388,7 @@ c	pbfwhm=76,137,-0.2 simulates a primary beam pattern between
 c	10m and 6m antennas at 100 GHz. 
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version = 'Uvgen: version 1.0 31-Jan-2014')
+	parameter(version = 'Uvgen: version 11-may-2014')
 	integer ALTAZ,EQUATOR
 	parameter(ALTAZ=0,EQUATOR=1)
 	integer PolRR,PolLL,PolRL,PolLR,PolXX,PolYY,PolXY,PolYX
@@ -782,6 +784,7 @@ c  Fill data header record.
 c
 	call wrhda(unit,'obstype','crosscorrelation')
 	call uvputvra(unit,'source',outfile)
+	call uvputvra(unit,'purpose','S')
 	call uvputvra(unit,'operator','uvgen')
 	call uvputvra(unit,'version',version)
 	call uvputvra(unit,'veltype','VELO-LSR')
