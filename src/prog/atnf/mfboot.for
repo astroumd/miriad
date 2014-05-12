@@ -94,11 +94,12 @@ c    mhw     24mar10 Correct spectral index too
 c    mhw     16jun11 Fix triple mode spectral index correction
 c    mhw     27jun13 Fix nospec option
 c    mhw     24apr14 Allow higher order flux models
+c    pjt     12may14 MAXPNT -> MAXPNTS since maxdim.h now carries it
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*72
-	integer MAXVIS,MAXPNT
-	parameter(MAXVIS=32,MAXPNT=4000000)
+	integer MAXVIS,MAXPNTS
+	parameter(MAXVIS=32,MAXPNTS=4000000)
 c
 	character vis(MAXVIS)*64,source*32,line*64,device*64,mode*8
 	character psource*32
@@ -109,7 +110,7 @@ c
 	double precision SumXX(2),SumXY(2),SumF(2),preamble(4),time0
 	complex data(MAXCHAN),d(2)
 	logical flags(MAXCHAN)
-	real xval(MAXPNT),ydval(MAXPNT),ymval(MAXPNT)
+	real xval(MAXPNTS),ydval(MAXPNTS),ymval(MAXPNTS)
 	integer npnt,SumN(2)
 c
 	complex db(2,MAXBASE)
@@ -198,7 +199,7 @@ c
      *         db,mb,fb,sb,nb,nbl)
 	    else
 	      call acc(mode.eq.'vector',preamble,d,m,f,s,n,
-     *		SumXX,SumXY,SumF,SumN,MAXPNT,npnt,xval,ydval,ymval)
+     *		SumXX,SumXY,SumF,SumN,MAXPNTS,npnt,xval,ydval,ymval)
 	    endif
 	    call uvDatRd(preamble,data,flags,MAXCHAN,nchan)
 	  enddo
@@ -533,7 +534,7 @@ c
 	end
 c************************************************************************
 	subroutine Acc(vector,uv,data,model,f,sigma2,n,SumXX,SumXY,
-     *		SumF,SumN,MAXPNT,npnt,xval,ydval,ymval)
+     *		SumF,SumN,maxpnt,npnt,xval,ydval,ymval)
 c
 	implicit none
 	logical vector
@@ -541,8 +542,8 @@ c
 	real model(2),f(2),sigma2
 	integer n(2)
 	double precision uv(2),SumXX(2),SumXY(2),SumF(2)
-	integer MAXPNT,npnt,SumN(2),j
-	real xval(MAXPNT),ydval(MAXPNT),ymval(MAXPNT)
+	integer maxpnt,npnt,SumN(2),j
+	real xval(maxpnt),ydval(maxpnt),ymval(maxpnt)
 c
 c  Accumulate info given the planetary data.
 c------------------------------------------------------------------------
@@ -550,7 +551,7 @@ c------------------------------------------------------------------------
 c
 	if(n(1)+n(2).gt.0)then
 	  npnt = npnt + 1
-	  if(npnt.gt.MAXPNT)call bug('f','Too many points')
+	  if(npnt.gt.maxpnt)call bug('f','Too many points')
 	  xval(npnt) = 1e-3*sqrt(uv(1)*uv(1) + uv(2)*uv(2))
 	  if(vector)then
 	    ydval(npnt) = real((data(1)+data(2))/(n(1)+n(2)))
