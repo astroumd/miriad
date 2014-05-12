@@ -43,19 +43,20 @@ c    rjs  31oct91  Check that the plot buffer is not overflowed.
 c    mjs  13mar93  pgplot subr names have less than 7 chars.
 c    rjs  12nov93  Call logclose.
 c    rjs  10oct97  Significant tidy up.
+c    pjt  12may14  MAXPNTS conversion
 c----------------------------------------------------------------------c
 	include 'maxdim.h'
-	integer MAXPNT
-	parameter(MAXPNT=100000)
+	integer MAXPNTS
+	parameter(MAXPNTS=100000)
 	character*(*) version
-	parameter(version='UVSTAT: version 1.0 10-Oct-97')
+	parameter(version='UVSTAT: version 12-may-2014')
 	double precision preamble(4),time0
 	integer lIn,nchan,nvis
 	character device*64,xaxis*64,yaxis*64
 	character date*18,line*80,uvflags*16
 	complex data(maxchan)
 	logical flags(maxchan),ok
-	real xx(MAXPNT),yy(MAXPNT)
+	real xx(MAXPNTS),yy(MAXPNTS)
 	real xlo,xhi,ylo,yhi,xmin,xmax,ymin,ymax,x,y
 	double precision dtemp
 c
@@ -117,7 +118,7 @@ c
 c
 	  if(ok)then
 	    nvis = nvis + 1
-	    if(nvis.gt.MAXPNT)call bug('f','Too many points to plot')
+	    if(nvis.gt.MAXPNTS)call bug('f','Too many points to plot')
 	    xx(nvis) = x
 	    yy(nvis) = y
 	  endif
