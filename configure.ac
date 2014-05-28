@@ -1,19 +1,19 @@
 dnl Autoconf 2.59 was required before, but Automake 1.11 requires
 dnl Autoconf 2.62 -- see discussion below.
 AC_PREREQ(2.62)
-AC_INIT([MIRIAD],[4.3.7],[miriad-dev-bugs@astro.berkeley.edu])
+AC_INIT([MIRIAD],[4.3.8],[miriad-dev-bugs@astro.berkeley.edu])
 AC_REVISION([$Revision$])
 AC_CONFIG_SRCDIR([src/subs/uvio.c])
 AC_CONFIG_MACRO_DIR([src/sys/auto])
 AC_CONFIG_AUX_DIR([src/sys/auto])
 
-dnl FIXME! Require Automake 1.11 for now, since we currently need 
+dnl FIXME! Require Automake 1.11 for now, since we currently need
 dnl AM_DEFAULT_SOURCE_EXT to build all of the tasks. A lot
 dnl of people don't have Automake this recent. We need to settle
 dnl on a policy, but given the current Makefile.am code, 1.11 is
 dnl what's required. If the requirement is downgraded, the
 dnl silent-rules option must be removed.
-AM_INIT_AUTOMAKE([1.11 -Wobsolete -Wgnu -Wunsupported -Wno-syntax 
+AM_INIT_AUTOMAKE([1.11 -Wobsolete -Wgnu -Wunsupported -Wno-syntax
 		  -Wno-portability foreign silent-rules])
 
 dnl Libtool. Required version number is made-up.
@@ -49,8 +49,8 @@ AC_PROG_SED dnl $(SED) used in cat/Makefile.am
 AC_PROG_LEX
 
 dnl Some basic compiler flags.
-dnl 
-dnl -fno-globals keeps g77 from returning an error code when 
+dnl
+dnl -fno-globals keeps g77 from returning an error code when
 dnl there are disagreements between subroutine parameter types and the
 dnl subroutine call.  Warnings are still printed.
 
@@ -84,7 +84,7 @@ AC_LANG_POP([Fortran 77])
 dnl OS X XCode >= 3.1 needs a special linker flag for dynamic libraries
 dnl and main programs to share common blocks. This is a required feature
 dnl for the MIRIAD 'mem' routines and possibly other parts of MIRIAD as well.
-dnl We'll just blindly supply the flag if the linker accepts it. 
+dnl We'll just blindly supply the flag if the linker accepts it.
 dnl
 dnl OS X XCode = 3.0 has the default behavior of XCode 3.1, which breaks
 dnl MIRIAD, but it doesn't have the flag that allows it to be overridden.
@@ -180,7 +180,7 @@ AM_CONDITIONAL(HAVE_XAW,$have_xaw)
 dnl Miscellaneous library functions, headers, etc
 dnl
 dnl Fortran linking means that we automatically get -lm, but
-dnl it seems smart to set it up for C programs as well, and 
+dnl it seems smart to set it up for C programs as well, and
 dnl this allows the wcslib check for sincos to succeed later.
 
 AC_CHECK_LIB(m, cos)
@@ -267,6 +267,7 @@ def_maxbase2=1058
 def_maxchan=4096
 def_maxwin=16
 def_maxwide=18
+def_maxpnt=100000
 def_maxnax=7
 def_maxbuf=10000000
 
@@ -316,6 +317,7 @@ AC_SUBST(MAXBASE2)
 AC_SUBST(MAXCHAN)
 AC_SUBST(MAXWIN)
 AC_SUBST(MAXWIDE)
+AC_SUBST(MAXPNT)
 AC_SUBST(MAXNAX)
 AC_SUBST(MAXBUF)
 
@@ -355,6 +357,10 @@ AC_ARG_WITH(maxwin,
 AC_ARG_WITH(maxwide,
     [AS_HELP_STRING([--with-maxwide=MAXWIDE],[Maximum number of wideband channels])],
     MAXWIDE=$withval, MAXWIDE="$def_maxwide")
+
+AC_ARG_WITH(maxpnt,
+    [AS_HELP_STRING([--with-maxpnt=MAXPNT],[Maximum number of pointings])],
+    MAXPNT=$withval, MAXPNT="$def_maxpnt")
 
 AC_ARG_WITH(maxnax,
     [AS_HELP_STRING([--with-maxnax=MAXNAX],[Maximum number of axis in images])],

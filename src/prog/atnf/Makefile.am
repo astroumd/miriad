@@ -1,13 +1,16 @@
 include $(top_srcdir)/mircommon.mak
 
 # A few of these programs need the RPFITS library from borrow/rpfits.
+#
+# mfboot is temporarily disabled since it requires functions from the
+# ATNF version of uvgn.for that have not yet been ported.
 
 LDADD = $(prog_libs)
 rpfits_libs = $(top_builddir)/borrow/rpfits/libmir_rpfits.la
 
 ftasks = \
  at_mfcal at_moment at_uvlist at_uvplt atfix atlod atmos atrtfix atscfix \
- attsys atwvr elevcor fakeotf lagflg mbspect mfboot mopfix plboot plplt \
+ attsys atwvr elevcor fakeotf lagflg mbspect mopfix plboot plplt \
  wblod wbplt
 bin_PROGRAMS = $(ftasks)
 CLEANFILES = $(ftasks:=.f)
