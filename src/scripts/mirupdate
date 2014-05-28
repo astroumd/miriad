@@ -2,7 +2,10 @@
 #
 #   Simplified ied "cvs update & install updated miriad subroutines and programs"
 #   This will only look at pure miriad code,it will not update libraries such
-#   as pgplot, wcslib etc.  
+#   as pgplot, wcslib etc. 
+#
+# @TODO
+#   should be allowed to run  (cd $MIR/install ; ./configure )
 #
 
 set tmp=/tmp/mirupdate$$
