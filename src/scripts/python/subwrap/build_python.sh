@@ -182,37 +182,37 @@ if test -z "$PYLIBDIR"; then
       # older versions don't have sys.lib  so the best we can do is assume lib
     #PYLIBDIR="lib"
     if test -r /lib64/lib$PYVERSION.so; then
-	PYLIBDIR="/lib64"
+	    PYLIBDIR="/lib64"
     elif test -r /lib64/lib$PYVERSION.a; then
-	PYLIBDIR="/lib64"
-	STATIC=1
+	    PYLIBDIR="/lib64"
+	    STATIC=1
     elif test -r /usr/lib64/lib$PYVERSION.so; then
-	PYLIBDIR="/usr/lib64"
+	    PYLIBDIR="/usr/lib64"
     elif test -r /usr/lib64/lib$PYVERSION.a; then
-	PYLIBDIR="/usr/lib64"
-	STATIC=1
+	    PYLIBDIR="/usr/lib64"
+	    STATIC=1
     elif test -r /usr/local/lib64/lib$PYVERSION.so; then
-	PYLIBDIR="/usr/local/lib64"
+	    PYLIBDIR="/usr/local/lib64"
     elif test -r /usr/local/lib64/lib$PYVERSION.a; then
-	PYLIBDIR="/usr/local/lib64"
-	STATIC=1
+	    PYLIBDIR="/usr/local/lib64"
+	    STATIC=1
     elif test -r /lib/lib$PYVERSION.so; then
-	PYLIBDIR="/lib"
+	    PYLIBDIR="/lib"
     elif test -r /lib/lib$PYVERSION.a; then
-	PYLIBDIR="/lib"
-	STATIC=1
+	    PYLIBDIR="/lib"
+	    STATIC=1
     elif test -r /usr/lib/lib$PYVERSION.so; then
-	PYLIBDIR="/usr/lib"
+	    PYLIBDIR="/usr/lib"
     elif test -r /usr/lib/lib$PYVERSION.a; then
-	PYLIBDIR="/usr/lib"
-	STATIC=1
+	    PYLIBDIR="/usr/lib"
+	    STATIC=1
     elif test -r /usr/local/lib/lib$PYVERSION.so; then
-	PYLIBDIR="/usr/local/lib"
+	    PYLIBDIR="/usr/local/lib"
     elif test -r /usr/local/lib/lib$PYVERSION.a; then
-	PYLIBDIR="/usr/local/lib"
-	STATIC=1
+	    PYLIBDIR="/usr/local/lib"
+	    STATIC=1
     else
-	PYLIBDIR="lib"
+	    PYLIBDIR="lib"
     fi
 fi
 echo "$as_me:$LINENO: result: $PYLIBDIR"
@@ -245,10 +245,10 @@ if f2c test.F; then
     echo "$as_me:$LINENO: result: found"
     echo "$as_me:$LINENO: checking for need for -K flag in f2c"
     if f2c -K test.F; then
-	F2CARG="-K"
-	echo "$as_me:$LINENO: result: needed"
+	    F2CARG="-K"
+	    echo "$as_me:$LINENO: result: needed"
     else
-	echo "$as_me:$LINENO: result: not needed"
+	    echo "$as_me:$LINENO: result: not needed"
     fi
 else
     echo "$as_me:$LINENO: result: not found"
@@ -258,21 +258,22 @@ else
     cd f2c
     make -f makefile.u
     mv f2c $MIRBIN/.
+    cp f2c.h $MIRINC/.
     cd ../libf2c
     if test $hosttype = "darwin"; then
-	make -f makefile.osx
+	    make -f makefile.osx
     else
-	make -f makefile.u
+	    make -f makefile.u
     fi
     mv libf2c.so $MIRLIB/.
     mv libf2c.a $MIRLIB/.
     cd ..
     echo "$as_me:$LINENO: checking for need for -K flag in f2c"
     if f2c -K test.F; then
-	F2CARG="-K"
-	echo "$as_me:$LINENO: result: needed"
+	    F2CARG="-K"
+	    echo "$as_me:$LINENO: result: needed"
     else
-	echo "$as_me:$LINENO: result: not needed"
+	    echo "$as_me:$LINENO: result: not needed"
     fi
 fi
 
@@ -291,7 +292,7 @@ else
 fi
 
 echo "Precompiling fortran code"
-for file in align calio deghms hann medfit pb refract tangle varmint amphase callinp ephem hdtab median pcvt rest velocity angles calphase expun headcopy lagwt mem pghline rtfmt title versan antennas calpoly fftsubs hisinput linetype model pkfit select calsetio fitsio hsort log modp plane sfetra wpfit calstoke fndaxnum imminmax lsearch mostab planet shadowed zed calsubs fullname inc lsf nearest plotone si tvsubs zeebin assert gamma intpio lspoly nextpow2 plproc sma_fsubs atjones gaupar iscoords lsqfit nllsqu pols sort utilities axistype cnvl getbeam lsqu1 noise polyfit sortidx uvdat basant co getfreq lsqu nswc poly spaxsw uvfitsubs bessel convl getpb mapper numbpg powell spline uvgetbl boxes cosubs getxy match obspar prime strf uvgn bsrch ctrl grid j1xbyx math ofm promptf string uvsubs btype defsmodl gsubs julday mc options tabflux var txtio keyf keyline tv
+for file in align calio deghms hann medfit pb refract tangle varmint amphase callinp ephem hdtab median pcvt rest velocity angles calphase expun headcopy lagwt mem pghline rtfmt title versan antennas calpoly fftsubs hisinput linetype model pkfit select calsetio fitsio hsort log modp plane sfetra wpfit calstoke fndaxnum imminmax lsearch mostab planet shadowed zed calsubs fullname inc lsf nearest plotone si tvsubs zeebin assert gamma intpio lspoly nextpow2 plproc sma_fsubs atjones gaupar iscoords lsqfit nllsqu pols sort utilities axistype cnvl getbeam lsqu1 noise polyfit sortidx uvdat basant co getfreq lsqu nswc poly spaxsw uvfitsubs bessel convl getpb mapper numbpg powell spline uvgetbl boxes cosubs getxy match obspar prime strf uvgn bsrch ctrl grid j1xbyx math ofm promptf string uvsubs btype defsmodl gsubs julday mc mp options tabflux var txtio keyf keyline tv
 do
     $MIRBIN/ratty -s f2c -b -D $hosttype -I $MIRSUBS -I $MIRINC $MIRSUBS/$file.for $file.f >& temp
     cat temp >> $MIRTMP
@@ -299,17 +300,17 @@ do
     cat temp >> $MIRTMP
 done
 
-$MIRBIN/ratty -s f2c -b -D $hosttype -I $MIRSUBS -I $MIRINC moduvdat.for moduvdat.f >& temp
-cat temp >> $MIRTMP
-f2c $F2CARG -I$MIRSUBS -I$MIRINC moduvdat.f >& temp
-cat temp >> $MIRTMP
+#$MIRBIN/ratty -s f2c -b -D $hosttype -I $MIRSUBS -I $MIRINC moduvdat.for moduvdat.f >& temp
+#cat temp >> $MIRTMP
+#f2c $F2CARG -I$MIRSUBS -I$MIRINC moduvdat.f >& temp
+#cat temp >> $MIRTMP
 
 
 
 rm temp
 
 echo "Building c wrappers"
-for i in iface wrap xyziowrap bugwrap keywrap packwrap tcpio oscalls mm
+for i in iface wrap xyziowrap bugwrap keywrap packwrap tcpio oscalls mm hio3
 do
     $MIRBIN/intf2c -s f2c $MIRSUBS/$i.f2c $i.c
 done
@@ -327,7 +328,7 @@ echo "Compiling..."
 if [ $SFBIT == 0 ]; then
     gcc -m64 -c -O -fPIC -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -I$MIRINC -I$MIRSUBS -I$MIRINC -I$MIRSUBS $PYINCLUDE *.c >& temp
 else
-    gcc -c -O -fPIC -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -I$MIRINC -I$MIRSUBS -I$MIRINC -I$MIRSUBS $PYINCLUDE *.c >& temp
+    gcc -c -O -fPIC -fno-second-underscore  -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -I$MIRINC -I$MIRSUBS -I$MIRINC -I$MIRSUBS $PYINCLUDE *.c >& temp
 fi
 cat temp >> $MIRTMP
 
@@ -337,14 +338,14 @@ if test $hosttype = "darwin"; then
 else
     if [ $SFBIT == 0 ]; then
     #ld -mi386linux -L/usr/lib -L/home/friedel/miriad/lib/32bit -shared *.o -o _miriad_io.so -L$MIRLIB -lf2c -llinpack -lpgplot -lgfortran -lX11 >& temp
-	ld -melf_x86_64 -shared *.o -o _miriad_io.so -L$MIRLIB -lf2c -llinpack -lpgplot -l$FORLIB -lX11 >& temp
+	    ld -melf_x86_64 -shared *.o -o _miriad_io.so -L$MIRLIB -lf2c -lwcs -llinpack -lpgplot -l$FORLIB -lX11 >& temp
     else
-	ld -shared *.o -o _miriad_io.so -L$MIRLIB -lf2c -llinpack -lpgplot -l$FORLIB -lX11 >& temp
+	    ld -shared *.o -o _miriad_io.so -L$MIRLIB -lf2c -llinpack -lwcs -lpgplot -l$FORLIB -lX11 >& temp
     fi
-cat temp >> $MIRTMP
+    cat temp >> $MIRTMP
 fi
 
-rm -f *.c *.o *.f
+rm -f *.o #*.c *.o #*.f
 
 # BUILD MXTOOLS
 echo "Building mxTools"
