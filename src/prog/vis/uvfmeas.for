@@ -77,6 +77,8 @@ c                        works for order=1 (linear fit).
 c          'malpha'      Output the alpha coefficients on a single line,
 c                        separated by spaces, suitable for parsing by
 c                        another program.
+c          'reshist'     Plot a histogram of the normalised residuals
+c                        from the fit.
 c@ yrange
 c	The min and max range along the y axis of the plots. The default
 c	is to autoscale.
@@ -119,7 +121,7 @@ c
 	character line*132,PolCode*2,oline*132
 	logical nobase,avall,first,buffered,doflush,qfirst
 	logical doshift,subpoly,dolog,dovec,douv,dopfit,domachine
-	logical domfflux,warnprint,domalpha
+	logical domfflux,warnprint,domalpha,doreshist
 	double precision interval,T0,T1,preamble(5),shift(2),lmn(3)
 	double precision fluxr(MAXPOL,MAXCHAN),fluxi(MAXPOL,MAXCHAN)
 	double precision amp(MAXPOL,MAXCHAN),amp2(MAXPOL,MAXCHAN)
@@ -128,15 +130,15 @@ c
 	integer tIn,vupd,poly,ncnt(MAXPOL,MAXCHAN),ipol,npol
 	integer nxy(2),nchan,nread,nplot,PolIndx(PolMin:PolMax)
 	integer p(MAXPOL),pp(MAXPOL),lmax,mnchan,vecavgn,scalavgn
-	integer dnx,dny,tcm(2*MAXCHAN-2)
+	integer dnx,dny,tcm(2*MAXCHAN-2),polynpts
 	real yrange(2),temp,scalamp(MAXCHAN),scalscat(MAXCHAN)
 	real vecamp(MAXCHAN),vecpha(MAXCHAN),vecscat(MAXCHAN),sig2
-	real work2(4*maxdim),weight(maxdim),fit(maxdim),serr
+	real work2(4*maxdim),weight(maxdim),fit(maxdim),serr,rchisq
 	real xrange(2),yp(MAXCHAN),scalavga,vecavgs,scalavgs
 	real uvdist(MAXPNTS),uvdistamp(MAXPNTS),uvdistfreq(MAXPNTS)
 	real sexpect,qualn,qualp,plotfit(11),ufit(maxdim)
 	real fitdiffsum,plfitx(maxdim),evxp,evfx,polyeval,feval
-	real a1,a2,a3
+	real a1,a2,a3,ypres(MAXCHAN),ksdfac,ksprob
 	double precision x(2*MAXCHAN-2),xf(2*MAXCHAN-2)
 	double precision xp(2*MAXCHAN-2),txf(2*MAXCHAN-2)
 	double precision mx(2*MAXCHAN-2)
@@ -163,7 +165,7 @@ c
 	call output(version)
 	call keyini
 	call GetOpt(uvflags,nobase,avall,dolog,dovec,douv,dopfit,
-     *              domachine,domfflux,domalpha)
+     *              domachine,domfflux,domalpha,doreshist)
 	call GetAxis(xaxis,yaxis)
 	call uvDatInp('vis',uvflags)
 	interval=99999.d0
@@ -172,7 +174,10 @@ c
 	dnx=1
 	dny=1
 	if (douv) then
-	   dny=2
+	   dny=dny+1
+	endif
+	if (doreshist) then
+	   dny=dny+1
 	endif
 	call keyi('nxy',nxy(1),dnx)
 	call keyi('nxy',nxy(2),dny)
@@ -467,11 +472,12 @@ c  Do a fit.
 	   nchan=0
 c	   do j=1,mnchan
 	   do j=1,nachan
-	      if (chplot(j).eq.1) then
+	      if (chplot(j).eq.1.and.ncnt(ipol,j).gt.0) then
 		 nchan=nchan+1
 		 xp(nchan)=x(j)
+		 weight(nchan) = 1./rms2(ipol,j)
 		 if (dovec) then
-		    yp(nchan)=fluxr(i,j)
+		    yp(nchan)=fluxr(ipol,j)
 		 else
 		    yp(nchan)=scalamp(j)
 		 endif
@@ -482,7 +488,8 @@ c	   do j=1,mnchan
 	   nplts=1
 	   if (poly.gt.0) then
 	      call polyfit(poly,nchan,xp,work2,weight,yp,fit,serr,dolog,
-     *          fitparams,dopfit,plotfit,ufit,plfitx)
+     *          fitparams,dopfit,plotfit,ufit,plfitx,polynpts,rchisq,
+     *          PolCode)
 	      if (dovec) then
 		 call output('Vector Average Fit Coefficients:')
 	      else
@@ -597,6 +604,23 @@ c              Evaluate at the integer frequency closest to the first.
 	      endif
 	      write(line,'(a,1pe11.3)') 'Scatter around fit: ',serr
 	      call output(line)
+	      write(line,'(a,1pe11.3)') 'Reduced chi squared: ', rchisq
+	      call output(line)
+c
+c       Form the normalised residuals.
+c
+	      do j=1,nchan
+		 if (ncnt(ipol,j).gt.0) then
+		    ypres(j) = (yp(j)-fit(j))
+c     *                          sqrt(2./real(ncnt(ipol,j)))
+c     *               sqrt(real(tncnt)/
+c     *               real(ncnt(ipol,j))))
+c     *               sqrt(real(tncnt)/real(ncnt(ipol,j)))
+		 else
+		    ypres(j) = 0.
+		 endif
+	      enddo
+c
 c	      write(line,'(a,1pe11.3)')
 c     *          'Scatter for single visibility: ',
 c     *          (serr*sqrt(real(nuvdist)))
@@ -645,10 +669,16 @@ c
 	   call Plotit(nchan,xp,yp,xrange,yrange,plot,
      *         nplts,xtitle,ytitle,0,dble(0.),real(0.),p,npol,hann,hc,
      *         hw,logf,MAXPNTS,poly,fit,fluxlines,2,i,uvdist,uvdistamp,
-     *         nuvdist,qualn,qualp,douv,dopfit,ufit,plfitx)
+     *         nuvdist,qualn,qualp,douv,dopfit,ufit,plfitx,doreshist,
+     *         ypres,ksdfac,ksprob,polynpts,osource)
 	   if (douv) then
 	      write(line,'(a,1pe11.3,a,1pe11.3)') 
      *          'Calibrator quality: value = ',qualn,' ratio = ',qualp
+	      call output(line)
+	   endif
+	   if (doreshist) then
+	      write(line,'(a,1pe11.3,a,1pe11.3)')
+     *          'KS Test D = ',ksdfac,' prob = ',ksprob
 	      call output(line)
 	   endif
 	   call output('---------------------------------------------'//
@@ -808,11 +838,11 @@ c
 	end
 c************************************************************************
 	subroutine GetOpt(uvflags,nobase,avall,dolog,dovec,douv,dopfit,
-     *                    domachine,domfflux,domalpha)
+     *                    domachine,domfflux,domalpha,doreshist)
 c
 	implicit none
         logical nobase,avall,dolog,dovec,douv,dopfit,domachine,domfflux
-	logical domalpha
+	logical domalpha,doreshist
 	character uvflags*(*)
 c
 c  Determine the flags to pass to the uvdat routines.
@@ -824,12 +854,12 @@ c    avall
 c    dolog
 c------------------------------------------------------------------------
 	integer nopts
-	parameter(nopts=10)
-	character opts(nopts)*10
+	parameter(nopts=11)
+	character opts(nopts)*11
 	logical present(nopts),docal,dopol,dopass
 	data opts/'nocal    ','nopol    ','nopass   ','log      ',
      *            'plotvec  ','uvhist   ','plotfit  ','machine  ',
-     *            'mfflux   ','malpha   '/
+     *            'mfflux   ','malpha   ','reshist  '/
 c
 	call options('options',opts,present,nopts)
 	docal = .not.present(1)
@@ -842,6 +872,7 @@ c
 	domachine=present(8)
 	domfflux=present(9)
 	domalpha=present(10)
+	doreshist=present(11)
 c
 c       malpha only makes sense with mfflux
 c
@@ -901,7 +932,7 @@ c
 	  call pgldev
 	  call bug('f','Error opening graphics device')
 	endif
-	call pgsch(real(max(nx,ny))**0.4)
+	call pgsch(real(max(nx,ny))**0.6)
 	call pgqinf('hardcopy',hard,hlen)
 	if(hard.eq.'YES')call pgscf(2)
 	end
@@ -970,45 +1001,50 @@ c
 c************************************************************************
 	subroutine Plotit(npnts,xp,yp,xrange,yrange,
      *		  plot,nplts,xtitle,ytitle,bl,time,inttime,
-     *		  pol,npol,hann,hc,hw,logf,MAXPNT,poly,fit,
+     *		  pol,npol,hann,hc,hw,logf,MAXPNTS,poly,fit,
      *            fluxlines,nflux,wpol,uvd,uva,nuvd,qualn,
-     *            qualp,plotuv,dopfit,ufit,plfitx)
+     *            qualp,plotuv,dopfit,ufit,plfitx,plotreshist,
+     *            ypres,ksdfac,ksprob,polynpts,srcname)
 c
 	implicit none
-	integer npnts,bl,nplts,plot(*),npol,pol(*),hann,MAXPNT
-	integer poly,nflux,wpol,nuvd
+	integer npnts,bl,nplts,plot(*),npol,pol(*),hann,MAXPNTS
+	integer poly,nflux,wpol,nuvd,polynpts
 	double precision time,xp(*)
-        real x(MAXPNT),fit(*),fluxlines(*)
+        real x(MAXPNTS),fit(*),fluxlines(*)
 	real inttime,hc(*),hw(*),xrange(2),yrange(2),yp(*)
 	real uvd(*),uva(*),qualn,qualp,ufit(*),plfitx(*)
-	character xtitle*(*),ytitle*(*),logf*(*)
-	logical plotuv,dopfit
+	real ypres(npnts),ksdfac,ksprob,probks
+	character xtitle*(*),ytitle*(*),logf*(*),srcname*32
+	logical plotuv,dopfit,plotreshist
 c
 c  Draw a plot
 c------------------------------------------------------------------------
-	integer NCOL,nd
-	parameter(NCOL=12,nd=100)
-        real TOL1,TOL2
+	integer NCOL,nd,nh
+	parameter(NCOL=12,nd=100,nh=1000)
+        real TOL1,TOL2,modypres(npnts)
         parameter(TOL1=1.e-5,TOL2=5.e-7)
 	integer hr,mins,sec,b1,b2,l,i,j,k,xl,yl,symbol,lp,lt
-	character title*64,baseline*12,tau*16,line*80
+	character title*80,baseline*12,tau*16,line*80
 	character pollab*32,xtitle2*80
 	double precision T0
-	real xranged(2),yranged(2),xoff,delta1,delta2
-	real xlen,ylen,xloc,size,linex(2),liney(2),dint
-	real qualat,qualt
-	integer k1,k2,bdn(nd)
-	real bda(nd),bdc(nd)
+	real xranged(2),yranged(2),xoff,delta1,delta2,tlowres,thighres
+	real xlen,ylen,xloc,size,linex(2),liney(2),dint,maxhist
+	real qualat,qualt,lowres,highres,resval(nh),resbin,reshist(nh)
+	integer k1,k2,bdn(nd),totn
+	real bda(nd),bdc(nd),rescdf(nh),gaucdf(nh),ksmaxdiff
 c
 c  Externals.
 c
 	integer len1
 	character itoaf*4,PolsC2P*2
+	real gauscdf
+	external gauscdf
 c
 c
         symbol = 17
 c
 	call pgpage
+c	call pgsch(2.)
 	call pgvstd
 c
         xoff = 0
@@ -1116,8 +1152,8 @@ c
 c	  write(title,'(a,i2.2,a,i2.2,a,i2.2)')
 c     *	    pollab(1:lp)//' \gt='//tau(lt:)//' min, T=',
 c     *	    hr,':',mins,':',sec
-	   write(title,'(a,a,a)') 'Stokes ',pollab(1:lp),
-     *      ' Spectrum Measurement'
+	   write(title,'(a,a,a,a)') 'Stokes ',pollab(1:lp),
+     *      ' Spectrum Measurement: Source ',srcname
 	else
 c
 c  Decode baseline number into antenna numbers.
@@ -1226,18 +1262,84 @@ c	call output(line)
      *                'Spectrally-corrected Residual Amplitude (Jy)',
      *                 title)
 	endif
+	if (plotreshist) then
+c
+c       Make the histogram manually.
+c
+	   tlowres=minval(ypres, npnts)
+	   thighres=maxval(ypres, npnts)
+	   lowres=min(tlowres,(-1.*abs(thighres)))
+	   highres=max(thighres,(abs(tlowres)))
+	   resbin=(highres-lowres)/real(nh-1)
+	   maxhist=0
+	   totn=0
+	   do j=1,npnts
+	      if (abs(ypres(j)).ge.1e-6) then
+		 totn = totn + 1
+		 modypres(totn) = ypres(j)
+	      endif
+	   enddo
+	   do j=1,nh
+	      resval(j)=lowres+((j-1)*resbin+resbin/2.)
+	      reshist(j)=0.
+	      do k=1,totn
+		 if ((modypres(k).ge.((resval(j)-resbin)/2.)).and.
+     *               (modypres(k).lt.((resval(j)+resbin)/2.))) then
+		    reshist(j) = reshist(j)+1.
+		 endif
+	      enddo
+	      if (reshist(j).gt.maxhist) then
+		 maxhist=reshist(j)
+	      endif
+	      if (j.eq.1) then
+		 rescdf(j) = reshist(j)
+	      else
+		 rescdf(j) = reshist(j) + rescdf(j-1)
+	      endif
+	   enddo
+	   maxhist = maxhist + (maxhist / 10)
+	   ksmaxdiff = 0.
+	   do j=1,nh
+	      rescdf(j) = rescdf(j) / rescdf(nh)
+	      gaucdf(j)=0.5*(1+erf(resval(j)/
+     *                       (sqrt(1./(polynpts-1-poly)))))
+	      if (abs(rescdf(j) - gaucdf(j)).gt.ksmaxdiff) then
+		 ksmaxdiff = abs(rescdf(j) - gaucdf(j))
+	      endif
+	   enddo
+	   ksdfac = ksmaxdiff
+	   ksprob = probks(sqrt(real(totn))*ksdfac)
+	   call pgpage
+	   call pgvstd
+	   call pgswin(lowres,highres,0.,maxhist)
+	   call pgbox('BCNST',0.,0.,'BNST',0.,0.)
+	   call pgbin(nh,resval,reshist,.true.)
+	   call pglab('Normalised residual','Count',
+     *                'Histogram of normalised residuals')
+	   call pgswin(lowres,highres,0.,1.)
+	   call pgsci(2)
+	   call pgbox('',0.,0.,'CMST',0.,0.)
+	   call pgbin(nh,resval,rescdf,.true.)
+	   call pgsci(3)
+	   call pgbin(nh,resval,gaucdf,.true.)
+	   call pgsci(1)
+c	   call pghist(npnts,ypres,-5.,5.,100,0)
+c	   call ksone(modypres,totn,ksdfac,ksprob)
+	endif
 c	call pghist(nuvd,uva,yranged(1),yranged(2),100,0)
 	end
 c***********************************************************************
 	subroutine polyfit(poly,nchan,value,work2,weight,
      *                     spec,fit,serr,dolog,fitparams,
-     *                     dopfit,ufitparams,ufit,plfitx)
+     *                     dopfit,ufitparams,ufit,plfitx,npts,rchisq,
+     *                     PolCode)
 
-	integer nchan,poly
+	integer nchan,poly,npts
 	real spec(*),fit(*),work2(*),weight(*),serr,ufit(*)
 	double precision value(*)
-	real fitparams(*),ufitparams(*),plfitx(*),polyeval
+	real fitparams(*),ufitparams(*),plfitx(*),polyeval,rchisq
 	logical dolog,dopfit
+	character PolCode*2
 c-----------------------------------------------------------------------
 c     Polynomial fit of spectrum
 c
@@ -1253,13 +1355,15 @@ c   Outputs:
 c     weight       Weight array (maxdim)
 c     fit          Polynomial fit
 c     serr         rms
+c     npts         The number of points used in the fit.
 c-----------------------------------------------------------------------
 	real clip
-	integer i,j,ifail,npts,niter,sn
+	integer i,j,ifail,niter,sn
 	double precision dfit
-	real coef(11),test2,work3(24),rvalue(nchan)
+	real coef(11),test2,test3,work3(24),rvalue(nchan)
 	real rspec(nchan),d(nchan),ss,sa,minx,maxx,tx
 	logical hasneg
+c	character line*80
 c-----------------------------------------------------------------------
 c  Number of clipping iterations
 	niter=10
@@ -1267,12 +1371,21 @@ c  Number of clipping iterations
 c  Clip level (sigma)
 	clip=3.0
 
+c  Initialise the fit parameters.
+        do i=1,11
+	   fitparams(i) = 0.
+	enddo
+
 c  Apply mask and check for negative numbers.
 	hasneg=.FALSE.
 	do i = 1, nchan
-	   weight(i)=1.0
+c	   weight(i)=1.0
 	   if (spec(i).le.0.) then
-	      hasneg=.TRUE.
+	      if (PolCode.eq.'I') then
+		 weight(i)=0.0
+	      else
+		 hasneg=.TRUE.
+	      endif
 	   endif
 	enddo
 	if (hasneg.and.dolog) then
@@ -1307,7 +1420,7 @@ c  Polynomial fit
 	      do i=1,nchan
 		 rvalue(i)=real(value(i))
 		 rspec(i)=spec(i)
-		 if (dolog) then
+		 if (dolog.and.weight(i).gt.0.0) then
 		    rvalue(i)=log10(rvalue(i))
 		    rspec(i)=log10(spec(i))
 		 endif
@@ -1329,20 +1442,16 @@ c  Polynomial fit
 	endif
 	if (ifail.ne.0) call bug('f', 'Clipped polynomial fit error')
 c
-c  RMS error corrected for dof (trap zero divides)
-c
-	if (npts.eq.11 .and. poly.eq.10) then
-	   serr=0.0
-	else
-	   serr=test2/sqrt(real(npts-poly-1))
-	endif
-c
 c  Evaluate polynomial
 c
+	test3=0.0
 	do i = 1, nchan
 	   d(i)=0.0
 	   dfit=dble(coef(1))
 	   fit(i)=polyeval(poly,dolog,rvalue(i),coef)
+	   if (weight(i).gt.0.0) then
+	      test3=test3+(weight(i)**2)*(spec(i)-fit(i))**2
+	   endif
 	   if (dopfit) then
 	      ufit(i)=polyeval(9,dolog,rvalue(i),ufitparams)
 	   endif
@@ -1357,6 +1466,16 @@ c
 	      d(i)=real(dble(spec(i))-10**dfit)
 	   endif
 	enddo
+c
+c  RMS error corrected for dof (trap zero divides)
+c
+	if (npts.eq.11 .and. poly.eq.10) then
+	   rchisq=0.0
+	   serr=0.0
+	else
+	   serr=test2/sqrt(real(npts-poly-1))
+	   rchisq=test3/real(npts-poly-1)
+	endif
 
 c  sigma clip
 	if (dolog) then
@@ -1417,6 +1536,7 @@ c
 c***********************************************************************
 	real function polyeval(poly,dolog,freq,fitparams)
 c
+	implicit none
 	integer poly
 	real fitparams(*),freq
 	logical dolog
@@ -1439,6 +1559,31 @@ c-----------------------------------------------------------------------
 	if (dolog) then
 	   polyeval=10**polyeval
 	endif
+	return
+c
+	end
+c***********************************************************************
+	real function probks(alam)
+c
+	implicit none
+	real alam,eps1,eps2,a2,fac,termbf,term
+	parameter (eps1=0.001, eps2=1.E-8)
+	integer j
+	a2 = -2.*alam**2
+	fac=2.
+	probks=0.
+	termbf=0.
+	do j=1,100
+	   term=fac*exp(a2*j**2)
+	   probks=probks+term
+	   if ((abs(term).le.eps1*termbf).or.
+     *         (abs(term).le.eps2*probks)) then
+	      return
+	   endif
+	   fac=-fac
+	   termbf=abs(term)
+	enddo
+	probks=1.
 	return
 c
 	end
