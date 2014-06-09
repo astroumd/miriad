@@ -2642,25 +2642,6 @@ def setoaco(lun,absoff,n,iax) :
     types = types.strip()
     return types
 
-def specco(lun,iax) :
-    """ Miriad wrapper - see miriad documentation for full description
-        input :
-            lun -
-            iax -
-        returns :   (as a tuple)
-            stype -
-    """
-    stype = "              "
-    lunX = miriad_io.copy_intp(lun)
-    iaxX = miriad_io.copy_intp(iax)
-    try :
-        XX = mx.safecall(miriad_io.specco_,(lunX,iaxX,stype,10))
-        del XX
-    except :
-        pass
-    stype = stype.strip()
-    return stype
-
 def sunitco(lun,iax,typeX) :
     """ Miriad wrapper - see miriad documentation for full description
         input :
@@ -10619,41 +10600,6 @@ def uvdatinp(key,flags) :
         del XX
     except :
         pass
-
-def uvdatpy(vis1,vis2,ltype=" ",nchan=0,lstart=1.0,lwidth=1.0,lstep=1.0,lflags=1.0,refline=" ",rstart=1.0,rwidth=1.0,flags="") :
-    """ Miriad wrapper for uvdatinp routine specifically adapted for python
-        input :
-            vis1,vis2 - the input visibility files
-            ltype,nchan,lstart,lwidth,lflags - line parameters
-            refline,,rstart,rwidth - refernce line parameters
-            flags - the input flags
-    """
-    if("elocity" in ltype) :
-        if(lstart == 1.0) :
-            lstart = 0.0
-        if(lwidth == 1.0) :
-            lwidth = 0.0
-        if(lstep == 1.0) :
-            lstep = 0.0
-    if("elocity" in refline) :
-        if(rstart == 1.0) :
-            rstart = 0.0
-        if(rwidth == 1.0) :
-            rwidth = 0.0
-    nchanX = miriad_io.copy_intp(nchan)
-    lstartX = miriad_io.copy_floatp(lstart)
-    lwidthX = miriad_io.copy_floatp(lwidth)
-    lstepX = miriad_io.copy_floatp(lstep)
-    lflagsX = miriad_io.copy_floatp(lflags)
-    rstartX = miriad_io.copy_floatp(rstart)
-    rwidthX = miriad_io.copy_floatp(rwidth)
-    #try :
-    XX = mx.safecall(miriad_io.uvdatpy_,(vis1,vis2,ltype,nchanX,lstartX,lwidthX,lstepX,lflagsX,refline,rstartX,rwidthX,flags,len(vis1),len(vis2),len(ltype),len(refline),len(flags)))
-    print XX
-    del XX
-    #except :
-    #    pass
-    return
 
 def uvpolinp(maxpol) :
     """ Miriad wrapper - see miriad documentation for full description

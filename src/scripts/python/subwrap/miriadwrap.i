@@ -175,7 +175,6 @@ extern int convl_(float *in,float *out,int *n,int *nx,int *ny,int *runs,int *nru
 extern int sctico_(char *type__,double *win,char *cti,short type_len,short cti_len);
 extern int sctoco_(char *type__,double *wout,short type_len);
 extern int setoaco_(int *lun,char *absoff,int *n,int *iax,char *types,short absoff_len,short types_len);
-extern int specco_(int *lun,int *iax,char *stype,short stype_len);
 extern int sunitco_(int *lun,int *iax,char *type__,char *units,short type_len,short units_len);
 extern int w2wcov_(int *lun,int *n,char *typei,double *win,char *typeo,double *wout,int *valid,short typei_len,short typeo_len);
 extern int w2wfco_(int *lun,int *n,char *typei,double *win,char *typeo,int *nounit,char *strout,int *strlen,short typei_len,short typeo_len,short strout_len);
@@ -540,7 +539,6 @@ extern int decangle_(char *angle,double *val,char *fmt,int *ok,short angle_len,s
 extern int title_(int *lin,int *naxis,int *blc,int *trc,float *cbof);
 extern int imscale_(float *map,int *mx,int *nx,int *ny,float *pmin,float *pmax);
 extern int uvdatinp_(char *key,char *flags,short key_len,short flags_len);
-extern int uvdatpy_(char *vis1, char* vis2,char *ltype, int *nc, float *ls, float *lw, float *lst, float *lf, char *refer, float *rs, float *rw, char *flags,short vis1_len,short vis2_len,short ltype_len,short refer_len,short flags_len);
 extern int uvpolinp_(int *maxpol,int *npol,int *pols);
 extern int uvdatopn_(int *tin);
 extern int uvdatrd_(double *preamble,Complex *data,int *flags,int *n,int *nread);
