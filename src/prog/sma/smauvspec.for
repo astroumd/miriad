@@ -234,6 +234,8 @@ c                 on-line doppler tracking for SMA from users input
 c                 'lsrvel'.
 c    jhz 19mar08  enable handling multiple input files. 
 c    pjt  8jul10  maxaver increased, but 3 times??? why not in .h file ???
+c   pkgw 18jun10  Avoid name clashes with new MAXPNT maxdim.h value.
+c
 c  Bugs:
 c------------------------------------------------------------------------
         include 'maxdim.h'
@@ -247,7 +249,7 @@ c
         character mname*8000, moln*16
         integer mtag(maxmline), nmline, j, jp, js, je, iline
         character version*(*)
-        parameter(version='SmaUvSpec: version 1.19 8-jul-2010')
+        parameter(version='SmaUvSpec: version 1.19 2010-Jun-18')
         character uvflags*8,device*64,xaxis*12,yaxis*12,logf*64
         character xtitle*64,ytitle*64, veldef*8
         character xtitlebuf*64, line*64
@@ -840,11 +842,11 @@ c  chnkpntr     The spectral chunk pntr.
      *    pols,cnt,cntp,free,mbase,chnkpntr
         integer polmin,polmax
         parameter(polmin=-8,polmax=4)
-        integer maxplt,maxpnt
-        parameter(maxpnt=1000000,maxplt=100000)
-        real xp(maxpnt),yp(maxpnt),xrange(2),inttime
-        real ypp(maxpnt)
-        integer plot(maxplt+1), sppntr(maxpnt)
+        integer maxplt,MAXUVPOINTS
+        parameter(MAXUVPOINTS=1000000,maxplt=100000)
+        real xp(MAXUVPOINTS),yp(MAXUVPOINTS),xrange(2),inttime
+        real ypp(MAXUVPOINTS)
+        integer plot(maxplt+1), sppntr(MAXUVPOINTS)
         double precision time
         integer i,j,ngood,ng,ntime,npnts,nplts,nprev,p
         logical doamp,doampsc,dorms,dophase,doreal,doimag,dopoint,dolag
@@ -939,12 +941,12 @@ c
                     if(dolag)then
                        call lagext(x,buf(p),count(p),nchan(i,j),
      *                      chnkpntr(p),n,
-     *                      xp,yp,maxpnt,npnts,sppntr)
+     *                      xp,yp,MAXUVPOINTS,npnts,sppntr)
                     else
                        call visext(x,buf(p),buf2(p),bufr(p),count(p),
      *                      nchan(i,j),chnkpntr(p),
      *                      doamp,doampsc,dorms,dophase,doreal,doimag,
-     *                      doboth,xp,yp,ypp,maxpnt,npnts,sppntr)
+     *                      doboth,xp,yp,ypp,MAXUVPOINTS,npnts,sppntr)
                     endif
                  endif
 
@@ -997,15 +999,15 @@ c
 c************************************************************************
         subroutine visext(x,buf,buf2,bufr,count,nchan,chnkpntr,
      *     doamp,doampsc,dorms,dophase,doreal,doimag,
-     *     doboth,xp,yp,ypp,maxpnt,npnts,sppntr)
+     *     doboth,xp,yp,ypp,maxuvp,npnts,sppntr)
         implicit none
 c
-        integer nchan,npnts,maxpnt,count(nchan)
+        integer nchan,npnts,maxuvp,count(nchan)
         logical doamp,doampsc,dorms,dophase,doreal,doimag
         logical doboth
-        real buf2(nchan),bufr(nchan),xp(maxpnt),yp(maxpnt)
-        real ypp(maxpnt)
-        integer sppntr(maxpnt),chnkpntr(nchan)
+        real buf2(nchan),bufr(nchan),xp(maxuvp),yp(maxuvp)
+        real ypp(maxuvp)
+        integer sppntr(maxuvp),chnkpntr(nchan)
         double precision x(nchan)
         complex buf(nchan)
         include 'mirconst.h'
@@ -1054,7 +1056,7 @@ c    phas
                  endif
               endif
               npnts = npnts + 1
-              if(npnts.gt.maxpnt)call bug('f',
+              if(npnts.gt.maxuvp)call bug('f',
      *             'Buffer overflow(points), when accumulating plots')
               xp(npnts) = x(k)
               yp(npnts) = temp
@@ -1065,13 +1067,13 @@ c    phas
         end
 c************************************************************************
         subroutine lagext(x,buf,count,nchan,chnkpntr,n,
-     *              xp,yp,maxpnt,npnts,sppntr)
+     *              xp,yp,maxuvp,npnts,sppntr)
         implicit none
 c
-        integer nchan,n,npnts,maxpnt,count(nchan)
+        integer nchan,n,npnts,maxuvp,count(nchan)
         double precision x(n)
-        real xp(maxpnt),yp(maxpnt)
-        integer sppntr(maxpnt),chnkpntr(nchan)
+        real xp(maxuvp),yp(maxuvp)
+        integer sppntr(maxuvp),chnkpntr(nchan)
         complex buf(nchan)
 c------------------------------------------------------------------------
         include 'maxdim.h' 
@@ -1100,7 +1102,7 @@ c
           k0 = k0 + 1
           if(k0.gt.n)k0 = k0 - n
           npnts = npnts + 1
-          if(npnts.gt.maxpnt)call bug('f',
+          if(npnts.gt.maxuvp)call bug('f',
      *          'Buffer overflow: Too many points to plot')
           xp(npnts) = x(k)
           yp(npnts) = rbuf(k0)
