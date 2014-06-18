@@ -108,22 +108,25 @@ c    pjt 18apr07  Increased maxpnts a bit for a typical 11hr carma track (see va
 c    jhz 07jun07  cleaned a few lines.
 c    pjt 23aug10  MAXRUNS 1024 for 23ant CARMA
 c    pjt  5jan11  no check for MAXINTE was done, and increased MAXINTE
+c   pkgw 18jun14  Avoid name clashes with new maxdim.h MAXPNT value. We still
+c                 use 'maxpnts' which is awfully close, but that seems like the
+c                 best choice for this program.
 c  Bugs:
 c    ?? Perfect?
 c------------------------------------------------------------------------
         character version*(*)
-        integer maxpnts
-        parameter(maxpnts=40000000)
-        parameter(version='SmaVarPlt: version 1.9 5-jan-2011')
+        integer MAXDATA
+        parameter(MAXDATA=40000000)
+        parameter(version='SmaVarPlt: version 1.9 2014-jun-18')
         logical doplot,dolog,dotime,dounwrap
         character vis*128,device*128,logfile*128,xaxis*16,yaxis*16
         character xtype*1,ytype*1,xunit*16,yunit*16,calday*24
-        real xrange(2),yrange(2),xvals(maxpnts),yvals(maxpnts)
+        real xrange(2),yrange(2),xvals(MAXDATA),yvals(MAXDATA)
         double precision xscale,xoff,yscale,yoff
         double precision xtime1,xtime2,ytime1,ytime2
-        integer nx,ny,tin,xdim1,xdim2,ydim1,ydim2,n0,n1,maxpnt,npnts
+        integer nx,ny,tin,xdim1,xdim2,ydim1,ydim2,n0,n1,maxpnts,npnts
         logical xaver,yaver,compress,dtime,overlay,more,equal,doflag
-        real flagvar(maxpnts)
+        real flagvar(MAXDATA)
         real rmsflag
         integer dofit, ylen, dotsize
         common/smfix/rmsflag, dofit
@@ -212,11 +215,11 @@ c
         if(n0.gt.1.and..not.xaver) n0 = n0 + 1
         n1 = ydim1*ydim2
         if(n1.gt.1.and..not.yaver) n1 = n1 + 1
-        maxpnt = maxpnts / max(n0,n1)
+        maxpnts = MAXDATA / max(n0,n1)
 c
 c  Read in the data.
 c
-         call datread(vis,maxpnt,npnts,flagvar,doflag,
+         call datread(vis,maxpnts,npnts,flagvar,doflag,
      *          xaxis,xvals,xdim1*xdim2,xscale,xoff,xtype,
      *          yaxis,yvals,ydim1*ydim2,yscale,yoff,ytype)
 c        call uvclose(tin)
@@ -989,13 +992,13 @@ c
         hival = hival + delta
         end
 c************************************************************************
-        subroutine datread(vis,maxpnt,npnts,flagvar,doflag,
+        subroutine datread(vis,maxpnts,npnts,flagvar,doflag,
      *          xaxis,xvals,xdim,xscale,xoff,xtype,
      *          yaxis,yvals,ydim,yscale,yoff,ytype)
-        integer tin,maxpnt,npnts,xdim,ydim
+        integer tin,maxpnts,npnts,xdim,ydim
         character xtype*1,ytype*1,xaxis*(*),yaxis*(*),vis*32
-        real xvals(xdim*maxpnt),yvals(ydim*maxpnt)
-        real flagvar(ydim*maxpnt)
+        real xvals(xdim*maxpnts),yvals(ydim*maxpnts)
+        real flagvar(ydim*maxpnts)
         double precision xscale,xoff,yscale,yoff
         integer soupnt(10000*10)
         integer maxsource
@@ -1141,7 +1144,7 @@ c
           ctime=0
           inhid=0
             iostat = uvscan(tin, ' ')
-          dowhile(iostat.eq.0.and.npnts.lt.maxpnt)
+          dowhile(iostat.eq.0.and.npnts.lt.maxpnts)
           call uvgetvra(tin,'source',souread)
           if (souread.ne.' '.and.sourid.eq.0) then
                   sourid=sourid+1
@@ -1177,7 +1180,7 @@ c
                  end if
           if((xupd.or.yupd).and.(xdims.eq.xdim.and.ydims.eq.ydim))then
             if(max(xpnt+xdim,ypnt+ydim).gt.maxruns)then
-              k = min(xpnt/xdim,maxpnt-npnts)
+              k = min(xpnt/xdim,maxpnts-npnts)
               call transf(k,npnts,flgrun,flagvar,
      *          xtype,xirun,xrrun,xdrun,xdim,xvals,xscale,xoff,
      *          ytype,yirun,yrrun,ydrun,ydim,yvals,yscale,yoff)
@@ -1230,7 +1233,7 @@ c
 c  Flush out anything remaining.
 c
         if(xpnt.gt.0) then
-          k = min(xpnt/xdim,maxpnt-npnts)
+          k = min(xpnt/xdim,maxpnts-npnts)
           call transf(k,npnts,flgrun,flagvar,
      *        xtype,xirun,xrrun,xdrun,xdim,xvals,xscale,xoff,
      *        ytype,yirun,yrrun,ydrun,ydim,yvals,yscale,yoff)
