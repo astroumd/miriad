@@ -172,24 +172,26 @@ c                 corrected a bug in source-color coding.
 c                 put include 'mirconst.h' back in several subs.
 c jhz: 2007-3-7   changed maxfit to 24 to reduce the memory requirements
 c                 in polynomial fitting to the el-tsys curves. 
+c pkgw 2014-06-18 Adjust naming to work with new MAXPNT in maxdim.h
 c------------------------------------------------------------------------
+        include 'maxdim.h'
         character version*(*)
-        integer maxpnts,maxfit
-        parameter(maxpnts=100000,maxfit=24)
-        parameter(version='SmaFix: version 1.15 07-Mar-07')
+        integer maxfit
+        parameter(maxfit=24)
+        parameter(version='SmaFix: version 1.15 14-Jun-18')
         logical doplot,dolog,dotime,dounwrap
         character vis*64,device*64,logfile*64,xaxis*16,yaxis*16
         character out*64
         character xtype*1,ytype*1,xunit*16,yunit*16,calday*24
-        real xrange(2),yrange(2),xvals(maxpnts),yvals(maxpnts)
+        real xrange(2),yrange(2),xvals(MAXPNT),yvals(MAXPNT)
         double precision xscale,xoff,yscale,yoff
         double precision xtime1,xtime2,ytime1,ytime2
-        integer nx,ny,tin,xdim1,xdim2,ydim1,ydim2,n0,n1,maxpnt,npnts
+        integer nx,ny,tin,xdim1,xdim2,ydim1,ydim2,n0,n1,mymaxpnt,npnts
         logical xaver,yaver,compress,dtime,overlay,more,equal
         real rmsflag
         integer dofit, antid, xaxisparm, nterms
         integer i,j,k,l,bant(10),gant(10),ggant
-        real flagvar(maxpnts),fant(10)
+        real flagvar(MAXPNT),fant(10)
         logical dotsys,tsysplt,dosour,dotswap,doflag,dotsysfix
         real apl(10,maxfit,10)
         double precision xapl(10,maxfit,10),bppl(10,maxfit,10,10)
@@ -323,11 +325,11 @@ c
         if(n0.gt.1.and..not.xaver) n0 = n0 + 1
         n1 = ydim1*ydim2
         if(n1.gt.1.and..not.yaver) n1 = n1 + 1
-        maxpnt = maxpnts / max(n0,n1)
+        mymaxpnt = MAXPNT / max(n0,n1)
 c
 c  Read in the data.
 c
-        call datread(vis,maxpnt,npnts,bant,fant,ggant,
+        call datread(vis,mymaxpnt,npnts,bant,fant,ggant,
      *          flagvar,doflag,
      *          xaxis,xvals,xdim1*xdim2,xscale,xoff,xtype,
      *          yaxis,yvals,ydim1*ydim2,yscale,yoff,ytype)
@@ -1571,15 +1573,15 @@ c        hival = vals(ismax(npnts,vals,1))
         end
 
 c************************************************************************
-        subroutine datread(vis,maxpnt,npnts,bant,fant,ggant,
+        subroutine datread(vis,mymaxpnt,npnts,bant,fant,ggant,
      *          flagvar,doflag, 
      *          xaxis,xvals,xdim,xscale,xoff,xtype,
      *          yaxis,yvals,ydim,yscale,yoff,ytype)
 c
-        integer tin,maxpnt,npnts,xdim,ydim,bant(10),ggant
+        integer tin,mymaxpnt,npnts,xdim,ydim,bant(10),ggant
         character xtype*1,ytype*1,xaxis*(*),yaxis*(*),vis*32
-        real xvals(xdim*maxpnt),yvals(ydim*maxpnt)
-        real flagvar(ydim*maxpnt),fant(10)
+        real xvals(xdim*mymaxpnt),yvals(ydim*mymaxpnt)
+        real flagvar(ydim*mymaxpnt),fant(10)
         double precision xscale,xoff,yscale,yoff
         integer soupnt(10000*10)
         integer maxsource
@@ -1706,7 +1708,7 @@ c
           ctime=0
           inhid=0
             iostat = uvscan(tin, ' ')
-          dowhile(iostat.eq.0.and.npnts.lt.maxpnt)
+          dowhile(iostat.eq.0.and.npnts.lt.mymaxpnt)
           call uvgetvra(tin,'source',souread)
           if (souread.ne.' '.and.sourid.eq.0) then
                   sourid=sourid+1
@@ -1743,7 +1745,7 @@ c
                  end if
           if((xupd.or.yupd).and.(xdims.eq.xdim.and.ydims.eq.ydim))then
             if(max(xpnt+xdim,ypnt+ydim).gt.maxruns)then
-              k = min(xpnt/xdim,maxpnt-npnts)
+              k = min(xpnt/xdim,mymaxpnt-npnts)
               call transf(k,npnts,flgrun,flagvar,
      *          xtype,xirun,xrrun,xdrun,xdim,xvals,xscale,xoff,
      *          ytype,yirun,yrrun,ydrun,ydim,yvals,yscale,yoff)
@@ -1804,7 +1806,7 @@ c
 c  Flush out anything remaining.
 c
         if(xpnt.gt.0) then
-          k = min(xpnt/xdim,maxpnt-npnts)
+          k = min(xpnt/xdim,mymaxpnt-npnts)
           call transf(k,npnts,flgrun,flagvar,
      *        xtype,xirun,xrrun,xdrun,xdim,xvals,xscale,xoff,
      *        ytype,yirun,yrrun,ydrun,ydim,yvals,yscale,yoff)
