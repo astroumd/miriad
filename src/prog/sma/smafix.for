@@ -172,7 +172,7 @@ c                 corrected a bug in source-color coding.
 c                 put include 'mirconst.h' back in several subs.
 c jhz: 2007-3-7   changed maxfit to 24 to reduce the memory requirements
 c                 in polynomial fitting to the el-tsys curves. 
-c pkgw 2014-06-18 Adjust naming to work with new MAXPNT in maxdim.h
+c pkgw 2014-06-18 Adjust naming to not clash with new MAXPNT in maxdim.h
 c------------------------------------------------------------------------
         include 'maxdim.h'
         character version*(*)
@@ -183,7 +183,7 @@ c------------------------------------------------------------------------
         character vis*64,device*64,logfile*64,xaxis*16,yaxis*16
         character out*64
         character xtype*1,ytype*1,xunit*16,yunit*16,calday*24
-        real xrange(2),yrange(2),xvals(MAXPNT),yvals(MAXPNT)
+        real xrange(2),yrange(2),xvals(MAXBUF),yvals(MAXBUF)
         double precision xscale,xoff,yscale,yoff
         double precision xtime1,xtime2,ytime1,ytime2
         integer nx,ny,tin,xdim1,xdim2,ydim1,ydim2,n0,n1,mymaxpnt,npnts
@@ -191,7 +191,7 @@ c------------------------------------------------------------------------
         real rmsflag
         integer dofit, antid, xaxisparm, nterms
         integer i,j,k,l,bant(10),gant(10),ggant
-        real flagvar(MAXPNT),fant(10)
+        real flagvar(MAXBUF),fant(10)
         logical dotsys,tsysplt,dosour,dotswap,doflag,dotsysfix
         real apl(10,maxfit,10)
         double precision xapl(10,maxfit,10),bppl(10,maxfit,10,10)
@@ -325,7 +325,7 @@ c
         if(n0.gt.1.and..not.xaver) n0 = n0 + 1
         n1 = ydim1*ydim2
         if(n1.gt.1.and..not.yaver) n1 = n1 + 1
-        mymaxpnt = MAXPNT / max(n0,n1)
+        mymaxpnt = MAXBUF / max(n0,n1)
 c
 c  Read in the data.
 c
