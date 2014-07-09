@@ -22,7 +22,7 @@
 #
 #  $Id$
 #
-set version="3.6 - 16-sep-2012 PJT"
+set version="3.6a - 9-jul-2014 PJT"
 
 if ($#argv == 0) then
     echo "Usage: $0 [-options] miriad_dataset [plane1] [plane2 ...]"
@@ -286,6 +286,9 @@ endif
 if ($debug) then
   echo Keeping $wcs
 else
+  if (! -e $wcs || -z $wcs) then
+    echo "WARNING: Your $wcs file appear corrupted.  Full /tmp perhaps?"
+  endif
   rm -f $wcs
 endif
 
