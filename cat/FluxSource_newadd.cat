@@ -1,3 +1,27 @@
+# HISTORY (DO NOT DELETE THIS LINE)
+# Enter history for new data here (BEGIN WITH HASH), for example:
+#
+# 08MAR31 - weekly updates of catalogs began - wk (14)
+# 11JUN07 - 3.5m 1cm updates - Tom Plagge
+# 11AUG24 - 3.5m 1cm updates - Tom Plagge
+# 11OCT17 - 3.5m 1cm updates - Tom Plagge
+# 11OCT25 - Planet primary cal. with the brightness temperature - wk: Woojin Kwon
+# 11NOV16 - 3.5m 1cm updates - Tom Plagge
+# 12JAN31 - 3.5m 1cm updates - Tom Plagge
+# 12JUN07 - 3.5m 1cm updates - Tom Plagge
+# 12AUG01 - 3.5m 1cm updates - Tom Plagge
+# 12AUG15 - 366 new entries at 3mm & 1mm - manuel fernandez (mfl)
+# 12AUG30 - 413 new entries at 3mm & 1mm - manuel fernandez (mfl)
+#
+# REFERENCES (DO NOT DELETE THIS LINE)
+# Enter reference for new data here (BEGIN WITH HASH), for example:
+#
+# 14 (Weekly automatic update) CARMA flux calibrator data; primary mainly Uranus
+#
+# SOURCES (DO NOT DELETE THIS LINE)
+# Enter new data here (1st 6 columns required, BEGIN WITH NO HASH), for example:
+# Source   Day.UT          Freq(GHz)  Flux(Jy)  RMS(Jy) Reference PrimaryCal PrimCalFlux(Jy) SpecIndx SpecIndxErr
+#
 0854+201     2014-JUN-19.1   103.0     6.82     1.02   CARMA2     MARS          -999.99       -0.26      0.04 
 0854+201     2014-JUN-26.1   103.0     6.71     1.01   CARMA2     MARS          -999.99       -0.37      0.06 
 0927+390     2014-JUN-19.0   103.0     3.95     0.59   CARMA2     MARS          -999.99       -0.65      0.10 
