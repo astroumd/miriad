@@ -994,7 +994,7 @@ FILE *f, *fd;
   while (1) {
     c = fgetc(f);
     if (feof(f))
-      return;
+      return 0;
     fputc(c, fd);
   }
 }
