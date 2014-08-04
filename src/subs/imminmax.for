@@ -12,6 +12,7 @@ c
 c  Determine the min and max values of a Miriad image. This first checks
 c  the image header for the information. If it is not present in the header,
 c  it calculates it directly from the data, and then stores it in the header.
+c  TODO: it ignores the masked values
 c
 c  Input:
 c    lun	The handle of the input image.
