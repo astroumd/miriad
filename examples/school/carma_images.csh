@@ -10,21 +10,27 @@ set cutoff = 0.5e-3  # Jansky's
 set out = $source
 
 # Remove any existing images since miriad will not overwrite them
-rm -rf $out.{map,beam,cc,cm,snr,sen,gain}
+rm -rf $out.{map,beam,cc,cm,snr,sen,gain,psf,psf.log}
 
 # Make dirty map
 invert vis=$vis map=$out.map beam=$out.beam \
        select="source($source)" cell=2 imsize=129 \
        robust=2 options=systemp,mfs,mosaic,double
 
+# Get FWHM beam size
+mospsf beam=$out.beam out=$out.psf
+set log = $out.psf.log
+imfit in=$out.psf object=beam 'region=arcsec,box(-5,-5,5,5)' > $log
+set bmaj=`grep "Major axis" $log | awk '{print $4}'`
+set bmin=`grep "Minor axis" $log | awk '{print $4}'`
+set bpa=`grep "  Position angle" $log | awk '{print $4}'`
+echo "Beam size = $bmaj x $bmin arcsec at PA = $bpa deg"
+
 # Clean image
 mossdi map=$out.map beam=$out.beam out=$out.cc cutoff=$cutoff $region niters=10000
 
-# Find out via mospsf and imfit what the restoring beam is, and use them
-# in restore with fwhm=$bmaj,$bmin pa=$pa   (see $MIRBIN/fringemap for an example)
-
 # Restore image
-restor map=$out.map beam=$out.beam model=$out.cc out=$out.cm
+restor map=$out.map beam=$out.beam model=$out.cc out=$out.cm fwhm=$bmaj,$bmin pa=$bpa
 
 # Create theoretical noise image
 rm -rf $out.sen $out.gain $out.snr

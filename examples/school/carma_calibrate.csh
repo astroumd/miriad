@@ -55,30 +55,31 @@
 #            images   : Produce dirty images
 #
 #    3) Most tracks will need custom flagging. This is best done as follows:
-#           a) Create a csh script file called "flag/<vis>.csh", where 
-#              "flag/<vis>" is the name of the miriad file (without the .miriad
-#              extension. For example, if your miriad is called names 
-#              c0940.1E_230HLTau.3.miriad, the flag file should be called 
-#              flag/c0940.1E_230HLTau.3.csh . 
+#           a) Create a csh script file called "myflag.<vis>", where "<vis>" is the name 
+#              of the miriad file. For example, if your miriad is called names 
+#              c0940.1E_230HLTau.3.miriad, the flags file should be called 
+#              myflag.c0940.1E_230HLTau.3.miriad.csh . 
 #
-#           b) The first line in the flag file should be "#!/bin/csh -fe",
-#              and the in the uvflag command, the vis file should be called
-#              $visflag. Here is an example script:
+#           b) The first lines in the csh script should be: 
 #                 #!/bin/csh -fe
 #
+#                 # Override user supplied parameters with command line arguments
+#                   set vis = ""
+#                   foreach a ( $* )
+#                     set $a
+#                   end
+#                   if ($vis == "") then
+#                      echo "Error setting visibility file"
+#                   endif
+#
 #                 # Example flagging commands
-#                 # uvflag vis=$visflag flagval=flag select="time(12:00:00,12:15:00:00)"
-#                 # uvflag vis=$visflag flagval=flag select="ant(12)"
-#                 # uvflag vis=$visflag flagval=flag select="ant(17),win(1)"
+#                 # uvflag vis=$vis flagval=flag select="time(12:00:00,12:15:00:00)"
+#                 # uvflag vis=$vis flagval=flag select="ant(12)"
+#                 # uvflag vis=$vis flagval=flag select="ant(17),win(1)"
 #
 #                 
 #           c) The file should be made executable by typing on the command line:
-#                 chmod 755 flag/c0940.1E_230HLTau.3.csh
-#
-#           d) Note for the advanced user making a semi-automated pipeline to
-#              process many scripts: In addition to flagging commands,
-#              custom variables can be set in this file. For example, to
-#              select a new reference antenna.
+#                 chmod 755 myflag.c0940.1E_230HLTau.3.miriad.csh
 #
 # Known bugs:
 #    1) If two or more windows have exactly the same mean frequency, then 
@@ -106,7 +107,7 @@
 
 # Raw visibility file. This file is NOT modified by the script. The file 
 # is assumed located in the directory specified by the variable $dir_raw.
-  set vis           = c1034.7E_95PTF7.1.mir
+  set vis           = c1189.18E_115NGC520.1.mir
   set sci           = 1  # 1 -> 6/10m track;  2 -> 3.5m track
   set iscarma23     = 0  # 1 -> Is a carma 23 track; 0 -> is not a carma23 track
 
@@ -131,7 +132,7 @@
 #       for source_gaincal is determined from the miriad flux table in 
 #       $MIR/cat/FluxSource.cat.
   set flux_gaincal    = ""
-  set source_fluxcal  = neptune
+  set source_fluxcal  = mars
   set flux_fluxcal    = ""
   set flux_uttime     = ""  # List utrange (e.g. time(20:00:00,20:50:00) "
   set flux_elevation  = ""  # List elevation range to select (e.g. 30,40). 
@@ -139,9 +140,9 @@
                             # It uses ant 1 to select elevations.
 
 # Source names
-  set source_passcal = 2232+117 # Passband calibrator
-  set source_gaincal = 2136+006 # Gain calibrators
-  set source_image   = 1221AB # Sources to image (comma separated list)
+  set source_passcal = 1927+739 # Passband calibrator
+  set source_gaincal = 1419+543 # Gain calibrators
+  set source_image   = NGC5204  # Sources to image (comma separated list)
 
 # Set windows.
 # win_wide : indicates the wideband windows used for gain calibration.
@@ -162,10 +163,10 @@
 #            If "0", then channel-by-channel calibration is done by the 
 #            passband calibrator.
 # noise_bl : Apply baseline-based noise passband calibration
-  set win_wide = ""
+  set win_wide = "6,7,8,14,15,16"
   set win_flag = ""
   set win_edge = ""
-  set edgechan = ""
+  set edgechan = "1"
   set split_pb = "1"
   set noise_bl = "0"
 
@@ -183,13 +184,12 @@
 
 # Image (invert) parameters
   set cell         = 2
-  set imsize       = 257
+  set imsize       = 129
   set robust       = 2
   set offset       = ""   # Choose the image reference pixel.
 
 # Miscellaneous options
   set antpos        = ""  # Antenna position file. If blank, no solution is applied
-                          # file can be local or in $MIRCAT/baselines/carma
   set badant        = ""   # "bad" antenna; e.g. "4,7" to flag antennas 4 and 7
   set badres        = 30  # Minimum visibility percentage to use for bootflux
   set dotsize       = 15  # Dot size for plots
@@ -337,19 +337,8 @@ baseline:
   rm -rf $out
   if ($antpos != "") then
      echo ""
-     echo "*** Applying baseline solution   (vis=$vis out=$out)"
-     set apfile=$starting_dir/$antpos
-     if (-e $apfile) then
-       echo "    (apfile=$apfile)"
-     else
-       set apfile=$MIRCAT/baselines/carma/$antpos
-       if (-e $apfile) then
-         echo "    (apfile=$apfile)"
-       else
-         echo "    Warning: No antpos=$antpos found for uvedit"
-       endif
-     endif
-     uvedit vis=$vis out=$out apfile=$apfile
+     echo "*** Applying baseline solution   (vis=$vis out=$out antpos=$antpos)"
+     uvedit vis=$vis out=$out apfile=$starting_dir/$antpos
      set vis = $out
   endif
 
@@ -441,16 +430,15 @@ flag:
     endif
 
 # *** PUT USER-SUPPLIED FLAGGING HERE ***
-# If a file called myflag.$orig_vis exists
+# If a file called $orig_vis.csh exists
 # in $starting_dir then it will be run to do the 
-# flagging.  myflag.$orig_vis must have execute 
-# permission.
+# flagging. 
 myflag:
   if ($vis == "") then
      set vis = $mir_baseline
      if ($antpos != "") set vis = $mir_raw
   endif
-  set flagfile = $starting_dir/flag/$root.csh
+  set flagfile = $starting_dir/$orig_vis:r.csh
   echo ""
   if ( -e $flagfile ) then
      echo "####  USING CUSTOM FLAGGING FOR $vis ($flagfile) ####"
@@ -615,7 +603,7 @@ passband:
          if ($noise_bl == "0") then
             # Derive
               echo ""
-              echo "*** Deriving noise source passband (if this fails, see script for time select)"
+              echo "*** Deriving noise source passband"
               mfcal vis=$vis_noise interval=$interval_pb refant=$refant
 
             # Plot noise-source passband
@@ -1223,17 +1211,17 @@ gaincal:
        endif
 
      # Closure phase on gain calibrator
-       echo ""
-       echo -n "*** Do you want to plot wide-band closure phases on the gain calibrator (Y/N)? "
-       set ans = "$<"
-       if ($ans == "Y" || $ans == "y" || $ans == "1") then 
-          echo ""
-          echo "*** Plotting closure phase on gain calibrator  (vis=$vis_wide)."
-          echo "*** Phases should be centered around zero."
-          closure device=/xs vis=$vis_wide select="source($source_gaincal)" nxy=3,3
-          echo -n "*** HIT RETURN TO CONTINUE ***"
-          set ans = "$<"
-       endif
+#      echo ""
+#      echo -n "*** Do you want to plot wide-band closure phases on the gain calibrator (Y/N)? "
+#      set ans = "$<"
+#      if ($ans == "Y" || $ans == "y" || $ans == "1") then 
+#         echo ""
+#         echo "*** Plotting closure phase on gain calibrator  (vis=$vis_wide)."
+#         echo "*** Phases should be centered around zero."
+#         closure device=/xs vis=$vis_wide select="source($source_gaincal)" nxy=3,3
+#         echo -n "*** HIT RETURN TO CONTINUE ***"
+#         set ans = "$<"
+#      endif
   endif
 
 # Create images
@@ -1323,5 +1311,4 @@ images:
 
 # Go back to starting directory
   cd $starting_dir
-
 
