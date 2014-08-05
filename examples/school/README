@@ -1,4 +1,8 @@
 Sample scripts from the CARMA summerschool:
 
-carma_uv.csh       John Carpenter's 2011 script to reduce CARMA uv data
-carma_images.csh   John Carpenter's 2011 script to produce CARMA images
+carma_calibrate_simple.csh       John Carpenter's 2011 script to reduce CARMA uv data - simple WB version
+carma_calibrate.csh              John Carpenter's 2014 script to reduce CARMA uv data
+myflag.csh                       John Carpenter's helper script to flag uv data
+carma_images.csh                 John Carpenter's 2014 script to produce CARMA images
+moment.csh                       Marc Pound's script to smartly make moment maps
+pol_basic.csh			 Dick Plambeck's script to calibration polarization data
