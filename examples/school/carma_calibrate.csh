@@ -55,31 +55,18 @@
 #            images   : Produce dirty images
 #
 #    3) Most tracks will need custom flagging. This is best done as follows:
-#           a) Create a csh script file called "myflag.<vis>", where "<vis>" is the name 
-#              of the miriad file. For example, if your miriad is called names 
-#              c0940.1E_230HLTau.3.miriad, the flags file should be called 
-#              myflag.c0940.1E_230HLTau.3.miriad.csh . 
+#           a) Create a csh script file called "<vis>.csh", where "<vis>" is 
+#              the name of the miriad file. For example, if your miriad is 
+#              called names c0940.1E_230HLTau.3.miriad, the flags file should 
+#              be called c0940.1E_230HLTau.3.csh . 
 #
 #           b) The first lines in the csh script should be: 
 #                 #!/bin/csh -fe
 #
-#                 # Override user supplied parameters with command line arguments
-#                   set vis = ""
-#                   foreach a ( $* )
-#                     set $a
-#                   end
-#                   if ($vis == "") then
-#                      echo "Error setting visibility file"
-#                   endif
-#
 #                 # Example flagging commands
-#                 # uvflag vis=$vis flagval=flag select="time(12:00:00,12:15:00:00)"
-#                 # uvflag vis=$vis flagval=flag select="ant(12)"
-#                 # uvflag vis=$vis flagval=flag select="ant(17),win(1)"
-#
-#                 
-#           c) The file should be made executable by typing on the command line:
-#                 chmod 755 myflag.c0940.1E_230HLTau.3.miriad.csh
+#                 uvflag vis=$vis flagval=flag select="time(12:00:00,12:15:00:00)"
+#                 uvflag vis=$vis flagval=flag select="ant(12)"
+#                 uvflag vis=$vis flagval=flag select="ant(17),win(1)"
 #
 # Known bugs:
 #    1) If two or more windows have exactly the same mean frequency, then 
@@ -98,8 +85,9 @@
 #       somethings think there are multiple correlator configurations in the
 #       track. mfcal will then fail since there are too many windows.
 #       The solution is to select a time range where only one noise cal 
-#       integration is present. Search the script for 
-#       "Derive noise source passband" for further instruction.
+#       integration is present, and flag the remaining noise integrations.
+#       These flagging commands can be placed the <vis>.csh flag file 
+#       described above.
 #
 # ************************************************
 # ******* START USER-SUPPLIED PARAMETERS ***********
@@ -1311,4 +1299,5 @@ images:
 
 # Go back to starting directory
   cd $starting_dir
+
 
