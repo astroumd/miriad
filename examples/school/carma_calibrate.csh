@@ -64,9 +64,9 @@
 #                 #!/bin/csh -fe
 #
 #                 # Example flagging commands
-#                 uvflag vis=$vis flagval=flag select="time(12:00:00,12:15:00:00)"
-#                 uvflag vis=$vis flagval=flag select="ant(12)"
-#                 uvflag vis=$vis flagval=flag select="ant(17),win(1)"
+#                 uvflag vis=$visflag flagval=flag select="time(12:00:00,12:15:00:00)"
+#                 uvflag vis=$visflag flagval=flag select="ant(12)"
+#                 uvflag vis=$visflag flagval=flag select="ant(17),win(1)"
 #
 # Known bugs:
 #    1) If two or more windows have exactly the same mean frequency, then 
