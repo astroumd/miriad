@@ -11,6 +11,7 @@ c  pjt     jun-2011   add option to use big bogus array, showing memory hog
 c  pjt     feb-2012   proper usage of mem.h space to go over 2GB arrays
 c  pjt     may-2012   made nx,ny,nz more reasonable for current testing
 c                     and filled arrays with better defaults for violations
+c  pjt     aug-2014   also use memallox/memfrex
 c
 c= maxdim - Report all known MAXDIM related parameters, and test memory usage
 c& pjt
@@ -38,7 +39,10 @@ c@ n
 c       Number of XYZ cubes that are to be allocated. There is room
 c       for up to 10000 (MAXP).
 c       The product is nx*ny*nz should not exceed 2,147,483,647
+c       Default: 0 (not used)
 c       as fortran integers could be negative.
+c       ** this is now fixed, but be aware this allocate a huge block of mem **
+c       ** using the new memallox() routine
 c@ m
 c       Repeat summing over the XYZ cubes a number of times.
 c       Perhaps only useful for benchmarking.
@@ -47,10 +51,13 @@ c@ type
 c       Data type of the array. Allowed are 'real' and 'double'. 
 c       Default: real
 c@ sum
-c       If 
+c       Calculate some sum, just to keep numbers crunching in case
+c       it is optimized out.
 c@ maxbuf2
 c       Allocate some memory before work.  Use -1 if none, use 0 for the
 c       max allowed. Default: -1
+c@ allox
+c       Allocate using the new 64bit memallox. Default: false
 c------------------------------------------------------------------------
 c
       IMPLICIT NONE
@@ -61,6 +68,7 @@ c
       PARAMETER(MAXP=10000,MAXN=512)
 
       PTRDIFF p0,p(MAXP)
+      PTRDIFF pnx, pny, pnz, pntot
       INTEGER nx,ny,nz,ntot,n,m,i,j
       CHARACTER type*10
 c the 3D array can take a lots of memory on some ld versions on linux?
@@ -71,6 +79,7 @@ c     REAL biga(MAXN,MAXN,MAXN)
       INTEGER membuf,size,maxbuf2
       REAL  sr
       DOUBLE PRECISION sd
+      LOGICAL allox
 
       EXTERNAL membuf
 
@@ -91,6 +100,7 @@ c
       IF(type(1:1).eq.'f') type='r'
       CALL keyd('sum',sd,0d0)
       CALL keyi('maxbuf2',maxbuf2,-1)
+      CALL keyl('allox',allox,.FALSE.)
       CALL keyfin
 
       CALL output('$MIR/VERSION:')
@@ -102,8 +112,15 @@ c
       CALL lcase(type)
       sr = sd
 
+      pnx = nx
+      pny = ny
+      pnz = nz
+      pntot = pnx * pny * pnz
       ntot = nx*ny*nz
-      IF(ntot.LE.0) CALL bug('f','Cube too big?')
+      IF(ntot.LE.0) THEN
+	 write(*,*) ntot, pntot
+	 if (.not.allox) CALL bug('f','Cube too big?  Try allox=.TRUE.')
+      ENDIF
 
 c  There are some variables that are only present in maxdim.h (fortran)
 c  and not in maxdimc.h (C): MAXWIDE
@@ -131,12 +148,46 @@ c     WRITE(*,*) 'MAXNAX       = ',MAXNAX
       size = membuf()
       WRITE(*,*) 'membuf()     =',size
       IF(maxbuf2.eq.0) THEN
-	 CALL memallop(p0, size, type)
+	 CALL MemAllop(p0, size, type)
       ELSE IF (maxbuf2.gt.0) THEN
-	 CALL memallop(p0, maxbuf2, type)
+	 CALL MemAllop(p0, maxbuf2, type)
       ENDIF
       
-      IF (n.gt.0) THEN
+      IF (allox .and. n.gt.0) THEN
+	 WRITE(*,*) 'nx*ny*nz[64] =',pnx*pny*pnz
+	 WRITE(*,*) 'ntot         =',pntot
+	 WRITE(*,*) 'n            =',n
+	 if (n.GT.MAXP) call bug('f','n too large (MAXN)')
+
+	 DO i=1,n
+	    write(*,*) 'nxyz: ',nx,ny,nz
+	    IF (type(1:1).eq.'r')CALL MemAllox(p(i), pntot, 'r')
+	    IF (type(1:1).eq.'d')CALL MemAllox(p(i), pntot, 'd')
+	    write(*,*) 'pData(i)     =',i,p(i)
+	 ENDDO
+
+	 DO j=1,m
+	 IF (m.GT.1) write(*,*) 'Summing iteration ',j,'/',m
+	   DO i=1,n
+	     IF (type(1:1).eq.'r')CALL myWorkR(memr(p(i)),nx,ny,nz,sr,i)
+	     IF (type(1:1).eq.'d')CALL myWorkD(memd(p(i)),nx,ny,nz,sd,i)
+	   ENDDO
+	 ENDDO
+
+	 DO i=1,n
+	    IF (type(1:1).eq.'r')CALL chkWorkR(memr(p(i)),nx,ny,nz,i)
+	    IF (type(1:1).eq.'d')CALL chkWorkD(memd(p(i)),nx,ny,nz,i)
+	 ENDDO
+
+	 DO i=1,n
+	    IF (type(1:1).eq.'r')CALL MemFrex(p(i), pntot, 'r')
+	    IF (type(1:1).eq.'d')CALL MemFrex(p(i), pntot, 'd')
+	 ENDDO
+
+	 
+	 IF (type(1:1).eq.'r') WRITE(*,*) 'SumR         = ',sr
+	 IF (type(1:1).eq.'d') WRITE(*,*) 'SumD         = ',sd
+      ELSE IF (n.gt.0) THEN
 	 WRITE(*,*) 'nx*ny*nz     =',nx*ny*nz
 	 WRITE(*,*) 'ntot         =',ntot
 	 WRITE(*,*) 'n            =',n
