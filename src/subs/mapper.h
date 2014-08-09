@@ -21,11 +21,12 @@ c
 	integer n1,n2,nu,nv,u0,v0,nextra,nxc,nyc
 	logical ginit
 	integer nBuff
-	ptrdiff pBuff
+        ptrdiff pBuff,nBuff8
 	character mode*8
 	common/mapcom/pBuff,scale,cgf,xcorr,ycorr,umax,vmax,
      *	  tscr,nvis,width,ncgf,offcorr,chan1,chan2,npnt,totchan,
      *	    nchan,nx,ny,nt,n1,n2,nu,nv,u0,v0,nextra,nxc,nyc,nBuff,
+     *      nBuff8,
      *	  ginit
 	common/mapcomc/mode
 c

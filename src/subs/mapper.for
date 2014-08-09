@@ -27,8 +27,9 @@ c
 c  Finish and tidy up.
 c------------------------------------------------------------------------
 	include 'mapper.h'
-	if(nBuff.gt.0)call memFrep(pBuff,nBuff,'r')
+	if(nBuff8.gt.0)call memFrex(pBuff,nBuff8,'r')
 	nBuff = 0
+	nBuff8 = 0
 	end
 c************************************************************************
 	subroutine MapIni(mode1,tscr1,nvis1,npnt1,umax1,vmax1,
@@ -57,6 +58,7 @@ c
 	chan1 = 0
 	chan2 = 0
 	nBuff = 0
+	nBuff8 = 0
 	nt = 0
 	ginit = .false.
 c
@@ -150,7 +152,8 @@ c------------------------------------------------------------------------
 	include 'mapper.h'
 	include 'mem.h'
 c
-	integer ioff,ooff,i,pcent
+	integer i,pcent
+	ptrdiff ioff,ooff
 	character line*64
 c
 c  Do a gridding pass if necessary.
@@ -203,6 +206,7 @@ c  Determine the size of the buffer, etc.
 c------------------------------------------------------------------------
 	include 'mapper.h'
 	integer it
+	ptrdiff n8
 c
 	chan2 = 0
 	chan1 = ichan
@@ -213,11 +217,18 @@ c
 	enddo
 	nxc = nx(it)
 	nyc = ny(it)
+	n8 = nxc
+	n8 = n8*nyc
+	n8 = n8 + 5*nvis
+	if (5*nvis.lt.0) call bug('f','mapbufs: need int*8')
 c
-	if(nBuff.lt.nxc*nyc+5*nvis)then
-	  if(nBuff.gt.0)call MemFrep(pBuff,nBuff,'r')
-	  nBuff = nxc*nyc + 5*nvis
-	  call MemAllop(pBuff,nBuff,'r')
+        write(*,*) 'PJT1 ',nxc,nyc,nxc*nyc,5*nvis,nBuff,nBuff8
+
+	if(nBuff8.lt.n8)then
+	  if(nBuff8.gt.0)call MemFrex(pBuff,nBuff8,'r')
+	  nBuff8 = n8
+	  write(*,*) 'PJT1a ',nxc,nyc,nxc*nyc,5*nvis,nBuff,nBuff8
+	  call MemAllox(pBuff,nBuff8,'r')
 	endif
 c
 	end
@@ -333,6 +344,7 @@ c    nBuff	The number of elements allocated.
 c------------------------------------------------------------------------
 	include 'mapper.h'
 	integer plsize,npass,it,maxplane,nplanes
+	ptrdiff n8
 c
 c  Externals.
 c
@@ -376,21 +388,30 @@ c
         if (log(2.0*nu)+log(1.0*nv)+log(1.0*npnt).gt.31*log(2.0)) 
      *   call bug('f','Too many pointings for this image size') 
 	plsize= 2*nu*nv*npnt
+	write(*,*) 'PJT2: ',nu,nv,npnt,plsize
 	nextra = max(0, npnt*nxc*nyc - 2*nu*((npnt-1)*nv+(v0+nyc/2-1)),
      *		        nxc*nyc-2*nu*nyc-2*((u0-1)+nu*(v0-(nyc/2+1))) )
+	if (nextra.lt.0) call bug('f','mapbuf-1: need int*8')
 	nextra = 2*((nextra+1)/2)
 c
-	nplanes = max(nBuff-nextra,memBuf()-nextra,plsize)/plsize
+	nplanes = max(nBuff8-nextra,memBuf()-nextra,plsize)/plsize
 	nplanes = min(nplanes,maxplane)
 	npass = (maxplane-1)/nplanes + 1
 	nplanes = (maxplane-1)/npass + 1
 c
 c  Is the current buffer big enough? If not, make it big enough.
 c
-	if(nplanes*plsize+nextra.gt.nBuff)then
-	  if(nBuff.gt.0)call memFrep(pBuff,nBuff,'r')
-	  nBuff = nplanes * plsize + nextra
-	  call memAllop(pBuff,nBuff,'r')
+	n8 = nplanes
+	n8 = n8*plsize
+	n8 = n8 + nextra
+	write(*,*) 'PJT2a ',nplanes,plsize,nplanes*plsize,nextra,nBuff8
+	if(n8.gt.nBuff8)then
+	  write(*,*) 'PJT2b ',nplanes,plsize,nplanes*plsize,nextra,nBuff8
+	  if(nBuff8.gt.0)call memFrex(pBuff,nBuff8,'r')
+c	  nBuff = nplanes * plsize + nextra
+	  nBuff8 = n8
+	  write(*,*) 'PJT2c ',nplanes,plsize,nplanes*plsize,nextra,nBuff8
+	  call memAllox(pBuff,nBuff8,'r')
 	endif
 c
 c  Set the channel range that we will grid.
@@ -651,7 +672,8 @@ c************************************************************************
      *							xCorr,yCorr)
 c
 	implicit none
-	integer nv,nu,nx,ny,u0,v0,n1,inoff,outoff
+	integer nv,nu,nx,ny,u0,v0,n1
+	ptrdiff inoff,outoff
 	real Scale,xCorr(nx),yCorr(ny)
 	real Grd(*)
 c
@@ -675,7 +697,8 @@ c------------------------------------------------------------------------
 	include 'maxdim.h'
 c
 	real cdata(maxdim+2),rdata(maxdim),scale1
-	integer i,j,offi,offo,nud,ioff
+	integer i,j,nud,ioff
+	ptrdiff i8, offi, offo
 c
 	offi = 2*( (u0-1) + nu*(v0-(ny/2 + 1)) ) + inoff
 	offo = outoff
@@ -688,22 +711,32 @@ c
 	enddo
 c
 	do j=1,ny
-	  if(offo.gt.offi)call bug('f',
-     *		'Memory conservation algorithm failed, in Mapper')
+	  if(offo.gt.offi)then
+	     write(*,*) offo,offi
+                 call bug('f',
+     *		'Memory conservation algorithm-1 failed, in Mapper')
+	  endif
 	  do i=1,2*nud
-	    cdata(i) = Grd(i+offi)
+	     i8 = i
+	     i8 = i8 + offi
+	    cdata(i) = Grd(i8)
 	  enddo
 	  call fftcr(cdata,rdata,-1,n1)
 	  scale1 = scale * ycorr(ny/2+1) * xcorr(nx/2+1) / ycorr(j)
 	  ioff = n1/2 - nx/2
 	  do i=1,nx
-	    Grd(i+offo) = rdata(i+ioff) * scale1 / xcorr(i)
+	     i8 = i
+	     i8 = i8 + offo
+	    Grd(i8) = rdata(i+ioff) * scale1 / xcorr(i)
 	  enddo
 c
 	  offi = offi + 2*nu
 	  offo = offo + nx
-	  if(offo.gt.offi)call bug('f',
-     *		'Memory conservation algorithm failed, in Mapper')
+	  if(offo.gt.offi) then
+	     write(*,*) offo,offi
+                 call bug('f',
+     *		'Memory conservation algorithm-2 failed, in Mapper')
+          endif
 	enddo
 c
 	end
