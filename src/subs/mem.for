@@ -242,7 +242,7 @@ c  We do not have a chunk of memory big enough. Allocate it using mmalloc.
 c
 	if(q.eq.0)then
 	  call mmAlloc(q,Data,sized)
-	  if(q.eq.0)call bug('f','Unable to allocate memory')
+	  if(q.eq.0)call bug('f','MemAlloc: unable to allocate memory')
 	  pntd = (q-1)*intsize + 1
 c
 c  We have a big enough bit of memory.
@@ -459,7 +459,7 @@ c  We do not have a chunk of memory big enough. Allocate it using mmalloc.
 c
 	if(q.eq.0)then
 	  call mmAlloc(q,Data,sized)
-	  if(q.eq.0)call bug('f','Unable to allocate memory')
+	  if(q.eq.0)call bug('f','MemAllop: Unable to allocate memory')
 	  pntd = (q-1)*intsize + 1
 c
 c  We have a big enough bit of memory.
@@ -671,7 +671,7 @@ c  We do not have a chunk of memory big enough. Allocate it using mmalloc.
 c
 	if(q.eq.0)then
 	  call mmAlloc(q,Data,sized)
-	  if(q.eq.0)call bug('f','Unable to allocate memory')
+	  if(q.eq.0)call bug('f','MemAllox: unable to allocate memory')
 	  pntd = (q-1)*intsize + 1
 c
 c  We have a big enough bit of memory.

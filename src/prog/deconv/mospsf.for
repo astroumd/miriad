@@ -36,6 +36,7 @@ c    rjs  25oct93 Adapted from LINMOS.
 c    nebk 22aug94 Adapt to GETFREQ error status change
 c    rjs  26oct94 Complete rewrite to cope with the new INVERT.
 c    rjs  24oct95 MOSPSF should not copy bmaj,bmin and bpa.
+c    pjt  16aug2014   Deal with larger buffers (use memallox/memfrex)
 c
 c  Bugs:
 c
@@ -44,14 +45,15 @@ c    maxIn	Maximum number of input files.
 c    maxlen	Size of buffer to hold all the input file names.
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version='MosPsf: version 1.0 26-Oct-94')
+	parameter(version='MosPsf: version 16-aug-2014')
 	include 'maxdim.h'
 	include 'maxnax.h'
 	include 'mem.h'
 	character beam*64,out*64,coin*12
 	double precision ra,dec,freq,x(3)
 	logical doradec,dofreq
-	integer i,nx,ny,npnt,naxis,nsize(MAXNAX),tIn,tOut,pIn,pOut
+	integer i,nx,ny,npnt,naxis,nsize(MAXNAX),tIn,tOut
+        ptrdiff pIn,pOut,np1,np2
 c
 c  Externals.
 c
@@ -99,8 +101,12 @@ c
 c
 c  Allocate memory and load the input PSF data.
 c
-	call memAlloc(pIn,nx*ny*npnt,'r')
-	call memAlloc(pOut,nx*ny,'r')
+	write(*,*) 'mallox: ', nx,ny,npnt
+	np2 = nx*ny
+	np1 = np2*npnt
+	write(*,*) 'mallox-2:' ,np1,np2
+	call memAllox(pIn,np1,'r')
+	call memAllox(pOut,np2,'r')
 c
 c  Read the input data.
 c
@@ -127,8 +133,8 @@ c
 c  All said and done. Close up.
 c
 	call xyclose(tOut)
-	call MemFree(pOut,nx*ny,'r')
-	call MemFree(pIn,nx*ny*npnt,'r')
+	call MemFrex(pOut,np2,'r')
+	call MemFrex(pIn,np1,'r')
 	call xyclose(tIn)
 c
 	end
