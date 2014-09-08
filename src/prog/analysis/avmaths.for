@@ -64,17 +64,18 @@ c    nebk 06may97 Comment out the "INcluding plane ..." message
 c    rjs  02jul97 cellscal change.
 c    rjs  23jul97 added pbtype.
 c    rjs  02apr98 Increase maxruns.
+c    mchw 08sep14 Replace MAXPLANE with MAXCHAN
 c-----------------------------------------------------------------------
       include 'maxdim.h'
       include 'maxnax.h'
 
-      integer MAXBOXES, MAXRUNS, MAXPLANE
-      parameter (MAXBOXES = 1024, MAXRUNS = 9*MAXDIM, MAXPLANE = 1024)
+      integer MAXBOXES, MAXRUNS
+      parameter (MAXBOXES = 1024, MAXRUNS = 9*MAXDIM)
 
       logical   domul, dood, dored, dorepl, dosub, flags(MAXDIM), more
-      integer   avpnt, blc(MAXNAX), boxes(MAXBOXES), i, iend(MAXPLANE),
-     *          isnext, istart(MAXPLANE), k, lin, lout, naxis, nplanes,
-     *          npnt, nruns, nsect, planes(MAXPLANE), runs(3,MAXRUNS),
+      integer   avpnt, blc(MAXNAX), boxes(MAXBOXES), i, iend(MAXCHAN),
+     *          isnext, istart(MAXCHAN), k, lin, lout, naxis, nplanes,
+     *          npnt, nruns, nsect, planes(MAXCHAN), runs(3,MAXRUNS),
      *          size(MAXNAX), size3, trc(MAXNAX), xblc, xtrc, yblc, ytrc
       real      buffer(MAXBUF), rline(MAXDIM)
       double precision cdelt3, zav
@@ -128,7 +129,7 @@ c
 
         if (nruns.ne.0) then
            nplanes = nplanes + 1
-           if (nplanes.gt.MAXPLANE)
+           if (nplanes.gt.MAXCHAN)
      *       call bug ('f', 'Too many channels to average')
            planes(nplanes) = k
         endif
