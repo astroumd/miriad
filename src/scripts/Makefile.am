@@ -4,7 +4,7 @@ bin_SCRIPTS = antpat autocal beam beamcheck beamgen beamgen2 \
   debug fringemap mbackup mir.bug.csh mir-config mirds9 mir.find mir.help \
   mir.index mirpgmr mirprogd mirsao mir.sndex mirsubsd mirtng \
   mirupdate mosaical mrc passcal pbcorr plot_swflux.py polcal \
-  replicate robust.csh smoothtobm uvshadow
+  replicate robust.csh runmiriad smoothtobm uvshadow
 
 EXTRA_DIST = $(bin_SCRIPTS) beamgen2.wip
 
