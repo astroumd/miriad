@@ -1,0 +1,29 @@
+#! /bin/csh -f
+#
+# started as a work around matlab prefixing DYLD... with locations of bad fortran shared libraries
+# but is a 'safe' way to run miriad commands in a shell environment where LD_LIBRARY_PATH was
+# changed
+#
+# 10-sep-2014     Created - thank you Rodrigo!              Peter Teuben
+#
+
+set s = `uname -s`
+if ("$s" == Linux) then
+  setenv LD_LIBRARY_PATH ${MIRLIB}
+  echo patching LD_LIBRARY_PATH = $LD_LIBRARY_PATH for $s
+else if ("$s" == Darwin) then
+  setenv DYLD_LIBRARY_PATH ${MIRLIB}
+  echo patching DYLD_LIBRARY_PATH = $DYLD_LIBRARY_PATH for $s
+else
+  echo Unknown uname system=$s 
+endif
+
+if ($#argv == 0) then
+  echo "Usage: $0 miriad_command [arguments]"
+  echo Run MIRIAD commands in a shell environment with the shared library search path only contains MIRLIB
+  echo Useful to run MIRIAD from alien programs ,.e.g.
+  echo "   matlab:      unix('runmiriad imhead in=mymap')"
+  echo "   python:      os.system('runmiriad imhead in=mymap')"
+else
+  exec $*
+endif
