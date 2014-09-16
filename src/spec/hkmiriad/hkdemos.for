@@ -73,9 +73,11 @@ c    rjs  02jul97 cellscal change.
 c    rjs  07jul97 Change coaxdesc to coaxget.
 c    rjs  17sep97 Doc change only.
 c    rjs  25sep98 Less fussy about freq axis for 1-plane files.
+c    ...
+c    pjt  15sep2014    needed 2 more args to pbInitc()  
 c------------------------------------------------------------------------
 	character version*(*)
-	parameter(version='version 25-Sep-98')
+	parameter(version='version 15-sep-2014')
 	integer MAXSELS,MAXPNT,MAXVIS
 	parameter(MAXSELS=256,MAXPNT=2048,MAXVIS=128)
 	include 'maxdim.h'
@@ -385,7 +387,7 @@ c
 	  xin(1) = ra
 	  xin(2) = dec
 	  xin(3) = k
-	  call pbInitc(pbObj,pbtype,tmap,'aw/aw/ap',xin)
+	  call pbInitc(pbObj,pbtype,tmap,'aw/aw/ap',xin,0d0,0.0)
 c
 	  if(detaper)then
 	    call mosMIni(tmap,real(k))
