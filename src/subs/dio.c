@@ -32,6 +32,7 @@
 /*                     use SSIZE_MAX to protect from bad casting ?      */
 /*       2-mar-05  pjt template->templat for C++, just in case          */
 /*      02-dec-11 pkgw Fix semantics of I/O syscalls in dread, dwrite   */
+/*    pjt  30sep14   MAXPATH, but also in hio.h !!!                     */
 /************************************************************************/
 
 #if defined(HAVE_CONFIG_H) && HAVE_CONFIG_H
@@ -53,7 +54,7 @@
 
 #include "miriad.h"
 
-#define MAXPATH 128
+#define MAXPATH 256
 
 #ifndef NULL
 #  define NULL 0
