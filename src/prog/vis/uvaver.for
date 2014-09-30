@@ -98,6 +98,8 @@ c    rjs  19sep04 Handle varying jyperk.
 c    pjt   4feb05 merged the last two changed (GRMPFFFF, cvs please!)
 c    mchw 05feb08 Increase buffer in averaging (MAXAVER=655360).
 c    mchw 17nov08 Increase buffer in averaging (MAXAVER=2e6).
+c    mwp  30sep14 Increase character buffer for output file. Required 
+c                 concomitant change in dio.c
 c
 c  Bugs:
 c    * The way of determining whether a source has changed is imperfect.
@@ -107,8 +109,8 @@ c    * Too much of this code worries about polarisations.
 c------------------------------------------------------------------------
 	include 'maxdim.h'
 	character version*(*)
-	parameter(version='UvAver: version 1.0 17-Nov-08')
-	character uvflags*12,ltype*16,out*64
+	parameter(version='UvAver: version 1.0 30-Nov-2014')
+	character uvflags*12,ltype*16,out*256
 	integer npol,Snpol,pol,tIn,tOut,vupd,nread,nrec,i,nbin
 	real inttime,jyperk
 	logical dotaver,doflush,buffered,PolVary,ampsc,vecamp,first
