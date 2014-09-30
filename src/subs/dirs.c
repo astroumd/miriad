@@ -10,10 +10,11 @@
 /*    pjt  16dec90   Added comment that this is VMS only...             */
 /*    rjs  25jun91   Improved the dexpand_c routine substantially.	*/
 /*    rjs  26aug93   Add drmdir.					*/
+/*    pjt  30sep14   MAXPATH, but also in hio.h !!!                     */
 /************************************************************************/
 
 #define private static
-#define MAXPATH 128
+#define MAXPATH 256
 #include <descrip.h>
 
 #define NULL 0
