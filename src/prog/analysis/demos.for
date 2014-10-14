@@ -81,7 +81,7 @@ c-----------------------------------------------------------------------
       include 'mirconst.h'
 
       integer MAXSELS, MAXPNTS, MAXVIS
-      parameter (MAXSELS=256, MAXPNTS=2048, MAXVIS=128)
+      parameter (MAXSELS=2048, MAXPNTS=2048, MAXVIS=128)
 
       logical   detaper
       integer   i, iax, imsize(2), lout, npnt, nsize(3), nvis, tmap
