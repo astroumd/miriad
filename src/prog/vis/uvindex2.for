@@ -44,7 +44,7 @@ c           MAXFREQ  = max number of freq setups we can handle
 c           MAXSPECT = max number of "channels" in the widebands to check for
 	parameter(MAXSRC=1000,MAXFREQ=32,MAXSPECT=MAXWIDE)
 	parameter(PolMin=-8,PolMax=4,PolI=1)
-	parameter(version='UVINDEX2: version 10-may-2012')
+	parameter(version='UVINDEX2: version 20-oct-2014')
 c
 	integer pols(PolMin:PolMax),pol
 	integer lIn,i,j,j1,nvis,nants,l
@@ -209,7 +209,6 @@ c
 	total = 24*total
 	write(line,'(a,f6.2,a)')'Total observing time is',total,' hours'
 	call LogWrit(line)
-	write(*,*) 'debug output total again',total
 
 c
 c  Pointing centers summary.
@@ -311,7 +310,6 @@ c
 c
 c  Is it a new source?
 c
-c	write(*,*) 'GETSRC() ',isrc,newsrc
 	refed = .false.
 	if(nsrc.eq.0)then
 	  osource = ' '
@@ -328,7 +326,6 @@ c	write(*,*) 'GETSRC() ',isrc,newsrc
 	    newsrc = .true.
 	  endif
 	endif
-c	write(*,*) 'GETSRC2',isrc,newsrc
 c
 c  Process a new source. 
 c  If the time is new, it should also be be considered a new source
@@ -339,7 +336,6 @@ c
 	    hash = 3*hash + ichar(source(i:i))
 	  enddo
 	  isrc = mod(hash,MAXSRC) + 1
-c	  write(*,*) 'NEW SOURCE',isrc
 	  more = .true.
 	  found = .false.
 	  dowhile(more)
@@ -373,8 +369,6 @@ c
 	    pntoff(2,isrc) = ddec
 	    pntoff(3,isrc) = inttime
   	  else
-c	     rpd=180*3600/3.141592d0
-c	     write(*,*) 'INTTIME:',isrc,dra*rpd,ddec*rpd,inttime,newtime
 	    pntoff(3,isrc) = pntoff(3,isrc) + inttime
 	  endif
 	endif
