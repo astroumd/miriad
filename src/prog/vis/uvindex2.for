@@ -2,12 +2,14 @@ c**********************************************************************c
 	program uvindex2
 	implicit none
 c
-c= UVINDEX2 - Scan a uvdata file, and note when uvvariables change.
+c= UVINDEX2 - Scan a uvdata file, and note when uv variables change.
 c& pjt
 c: uv analysis, checking
 c+
 c	UVINDEX2 is a Miriad program which scans a uvdata file.
-c       Makes a listing of integration times per pointing
+c       Makes a listing of integration times per pointing.
+c
+c       Mostly a specialized program for MIS pipeline processing.
 c 
 c@ vis
 c	The input visibility file. No default.
@@ -28,43 +30,9 @@ c	          of a mosaic.
 c--
 c
 c  History:
-c    mchw 29nov90  Initial version.
-c    mchw 14dec90  Cleaned up. Used LogWrit.
-c    mchw 08jan91  List pointing centers.
-c    mchw 19mar91  Initialized some variables for cray. Added recnum.
-c    rjs   9may92  Altered listing for multi-source/multi-pointing files.
-c    mchw 25jun92  Added count of polarizations.
-c    rjs  10jul92  Labelled polarisation counts.
-c    rjs  22jan93  Bug when there is no (0,0) offset pointing.
-c		   Various standardisation.
-c    mchw 09feb93  Changed ra,dec to double precision.
-c    mchw 19feb93  Format change for 2048 channels.
-c    pjt  10mar93  fixed problems with length in logwrit() - no need
-c    pjt  15apr93  maxpnt -> 512 for SUN etc. fixing wrong ddec table
-c    pjt  23apr93  need special case if data contain unknown polarization
-c    rjs  16jul93  Significant rewrite. More efficient scanning and treatment
-c		   of polarisations. Better freq summary.
-c    rjs  30aug93  Call logclose.
-c    rjs  16sep93  Rename bsrch to binsrch.
-c    rjs   5nov93  Longer source names.
-c    rjs  30nov93  Correct units of first pointing offset. Fix formating
-c		   bug.
-c    rjs  26jan94  New message when there is a jump in time.
-c    nebk 28mar94  Add keyword interval
-c    rjs  23aug94  Minor formatting change.
-c    rjs   2nov94  Changed the way sources were stored, and increased
-c		   the number of sources/pointings.
-c    rjs  16nov94  Fix bug introduced in the above.
-c    rjs   1may96  Compute and print out total observing time.
-c    mchw 01aug96  Increased MAXSPECT=18.
-c    rjs  18oct96  Don't output a line when just dra/ddec changes.
-c    rjs  08jan97  options=mosaic
-c    rjs  08jun97  Fix bug in error message
-c    rjs  15jun00  Simple handling of blank source name.
-c    pjt  11feb05  Adapt to use maxdim.h, MAXSPECT=MAXWIDE, not 18.
-c    pjt  11jan06  Scan for the new dazim/delev CARMA, and report if present (add refant=)
-c    pjt  14apr06  Change some bug() calls to assert*()
+c    pjt  ??   11  Cloned off uvindex
 c    pjt  25apr12  Fixed fixed for carma data with 0 length spectral windows
+c    pjt  20oct14  fixed bug under-reporting the mosaic turning points
 c----------------------------------------------------------------------c
 	include 'mirconst.h'
 	include 'maxdim.h'
@@ -76,7 +44,7 @@ c           MAXFREQ  = max number of freq setups we can handle
 c           MAXSPECT = max number of "channels" in the widebands to check for
 	parameter(MAXSRC=1000,MAXFREQ=32,MAXSPECT=MAXWIDE)
 	parameter(PolMin=-8,PolMax=4,PolI=1)
-	parameter(version='UVINDEX2: version 2-may-2012')
+	parameter(version='UVINDEX2: version 10-may-2012')
 c
 	integer pols(PolMin:PolMax),pol
 	integer lIn,i,j,j1,nvis,nants,l
@@ -85,7 +53,7 @@ c
 	real dra,ddec,interval,inttime
 c
 	integer ifreq,nfreq,vfreq
-	logical newfreq,mosaic
+	logical newfreq,newtime,mosaic
 	integer nwide(MAXFREQ),nchan(MAXFREQ),nspect(MAXFREQ)
 	integer nschan(MAXSPECT,MAXFREQ)
 	real wfreqs(MAXSPECT,3,MAXFREQ)
@@ -189,16 +157,15 @@ c
 	  call uvrdvri(lIn,'pol',pol,PolI)
 	  if(pol.lt.PolMin.or.Pol.gt.PolMax)pol = 0
 	  pols(pol) = pols(pol) + 1
+	  newtime = abs(time-tprev).gt.1.d0/86400.d0
 c
 c  Determine if anything has changed, and update the records
 c  accordingly.
 c
 	  newsrc = .false.
 	  newfreq= .false.
-c	  if(uvvarupd(vsource))call GetSrc(lIn,mosaic,newsrc,isrc,nsrc,
-c     *		sources,ra0,dec0,pntoff,solar,MAXSRC)
 	  call GetSrc(lIn,mosaic,newsrc,isrc,nsrc,
-     *		sources,ra0,dec0,pntoff,solar,MAXSRC)
+     *		sources,ra0,dec0,pntoff,solar,newtime,MAXSRC)
 	  if(uvvarupd(vfreq))  call GetFreq(lIn,newfreq,ifreq,nfreq,
      *		nchan,nspect,nschan,sfreqs,nwide,wfreqs,
      *		MAXFREQ,MAXSPECT)
@@ -220,7 +187,7 @@ c  Increment the total observing time if this is a new integration.
 c
 	  call uvrdvrr(lIn,'inttime',inttime,30.0)
 	  inttime = inttime/86400
-	  if(abs(time-tprev).gt.1.d0/86400.d0)then
+	  if(newtime) then
 	    tprev = time
 	    total = total + inttime
 	  endif
@@ -242,8 +209,10 @@ c
 	total = 24*total
 	write(line,'(a,f6.2,a)')'Total observing time is',total,' hours'
 	call LogWrit(line)
+	write(*,*) 'debug output total again',total
+
 c
-c  Pointing centres summary.
+c  Pointing centers summary.
 c
 	call LogWrit(' ')
 	call LogWrit('------------------------------------------------')
@@ -297,12 +266,12 @@ c
 	end
 c************************************************************************
 	subroutine GetSrc(lIn,mosaic,newsrc,isrc,nsrc,
-     *		sources,ra0,dec0,pntoff,solar,MAXSRC)
+     *		sources,ra0,dec0,pntoff,solar,newtime,MAXSRC)
 c
 	implicit none
 	integer MAXSRC
 	integer lIn,isrc,nsrc
-	logical newsrc,solar(MAXSRC),mosaic
+	logical newsrc,solar(MAXSRC),mosaic,newtime
 	character sources(MAXSRC)*(*)
 	double precision ra0(MAXSRC),dec0(MAXSRC)
 	real pntoff(3,MAXSRC)
@@ -321,7 +290,7 @@ c
 	real tol
 	parameter(tol=pi/180.0/3600.0)
 	character source*16,osource*16
-	double precision ra,dec
+	double precision ra,dec,rpd
 	real dra,ddec,inttime
 	logical more,refed,found
 	integer hash,i,i1,i2
@@ -342,6 +311,7 @@ c
 c
 c  Is it a new source?
 c
+c	write(*,*) 'GETSRC() ',isrc,newsrc
 	refed = .false.
 	if(nsrc.eq.0)then
 	  osource = ' '
@@ -358,15 +328,18 @@ c
 	    newsrc = .true.
 	  endif
 	endif
+c	write(*,*) 'GETSRC2',isrc,newsrc
 c
-c  Process a new source.
+c  Process a new source. 
+c  If the time is new, it should also be be considered a new source
 c
-	if(newsrc)then
+	if(newsrc .or. newtime)then
 	  hash = 0
 	  do i=1,len1(source)
 	    hash = 3*hash + ichar(source(i:i))
 	  enddo
 	  isrc = mod(hash,MAXSRC) + 1
+c	  write(*,*) 'NEW SOURCE',isrc
 	  more = .true.
 	  found = .false.
 	  dowhile(more)
@@ -400,6 +373,8 @@ c
 	    pntoff(2,isrc) = ddec
 	    pntoff(3,isrc) = inttime
   	  else
+c	     rpd=180*3600/3.141592d0
+c	     write(*,*) 'INTTIME:',isrc,dra*rpd,ddec*rpd,inttime,newtime
 	    pntoff(3,isrc) = pntoff(3,isrc) + inttime
 	  endif
 	endif
@@ -482,7 +457,7 @@ c
 	else
 	  call uvrdvrr(lIn,'plmaj',plmaj,0.)
 	  call uvrdvrr(lIn,'plmin',plmin,0.)
-	  DetSolar = abs(plmaj)+abs(plmin).gt.0
+	  DetSolar = (abs(plmaj)+abs(plmin)).gt.0
 	endif
 	end
 c************************************************************************
