@@ -307,6 +307,7 @@ c    pjt  11dec02  subroutine IZERO to bypass big DATA statement that makes big 
 c    mchw 14aug03  replace varmint.
 c    pjt   9may07  doc + debug cleanup
 c    pjt   1oct08  experiment with tabio and tab= keyword
+c    pjt  23oct14  fix to deal with fmt() when MAXANT > 99 (smartypants NBK?) for StephenW
 c
 c To do:
 c
@@ -437,7 +438,7 @@ c
 c      data npts, plpts, basmsk /ifac1*0, ifac1*0, ifac2*0/ -- see izero
       data polmsk /13*0/
 c-----------------------------------------------------------------------
-      call output ('UvPlt: version 1-oct-08')
+      call output ('UvPlt: version 23-oct-2014')
       call output ('New frequency behaviour '//
      *	'(see parameters line and options=nofqav)')
       call output (' ')
@@ -1123,7 +1124,7 @@ c
             call output (' ')
             write (msg, 200) pl2dim
 200         format ('Max. no. of baselines can plot singly (', 
-     +              i3, ') has been reached')
+     +              i4, ') has been reached')
             call bug ('w', msg)
             call output (' ')
             bwarn(1) = .true.
@@ -2827,14 +2828,15 @@ cc
      +  ipt, il, ilen, tabrowcnt
       character xlabel*100, ylabel*100, ans*1, devdef*80, 
      +  str*80, units*10
-      character*2 fmt(2), polstr(12)*2, hard*3
+      character   polstr(12)*2, hard*3
+      character*2 fmt(3)
       logical new, more, redef, none
 c   
       integer pgbeg, len1
       character polsc2p*2
 c
       save cols
-      data fmt /'i3', 'i3'/
+      data fmt /'i3', 'i3', 'i3'/
       data cols1 /1, 7, 2, 5, 3, 4, 6, 8, 9,  10, 11, 12/
       data cols2 /1, 2, 5, 3, 4, 6, 8, 9, 10, 11, 12, 13/
 c----------------------------------------------------------------------
