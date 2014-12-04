@@ -111,13 +111,12 @@ c    pjt  5jan11  no check for MAXINTE was done, and increased MAXINTE
 c   pkgw 18jun14  Avoid name clashes with new maxdim.h MAXPNT value. We still
 c                 use 'maxpnts' which is awfully close, but that seems like the
 c                 best choice for this program.
-c  Bugs:
-c    ?? Perfect?
+c    pjt  4dec14  increased MAXINTE a bit
 c------------------------------------------------------------------------
         character version*(*)
         integer MAXDATA
         parameter(MAXDATA=40000000)
-        parameter(version='SmaVarPlt: version 1.9 2014-jun-18')
+        parameter(version='SmaVarPlt: version 4-dec-2014')
         logical doplot,dolog,dotime,dounwrap
         character vis*128,device*128,logfile*128,xaxis*16,yaxis*16
         character xtype*1,ytype*1,xunit*16,yunit*16,calday*24
@@ -1006,8 +1005,11 @@ c************************************************************************
         character source(maxsource)*32
 c
 c------------------------------------------------------------------------
+c  @TODO   this is pretty bad, MAXSPECT should be from maxdim.h, not
+c          defined her. Some other horrible non-normalized code and 
+c          variables in common blocks as well. soupnt(10000*10), wtf.
         integer maxruns,xsoupnt,maxspect
-        parameter(maxruns=1024,maxspect=48, MAXINTE=10000)
+        parameter(maxruns=1024,maxspect=48, MAXINTE=20000)
         double precision xdrun(maxruns),ydrun(maxruns)
         integer xirun(maxruns),yirun(maxruns)
         real xrrun(maxruns),yrrun(maxruns)
