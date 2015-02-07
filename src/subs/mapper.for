@@ -19,6 +19,7 @@ c    rjs   4aug95 Check that the beam is non-zero. Bug out if not.
 c    rjs  13dec95 Set minimum transform size to be 16 (FFT limitation).
 c    rjs  07jan97 Fiddle memory conservation alogirthm yet again.
 c    rjs  03apr09 Change use of scratch file to help large file access.
+c    pjt   6feb15 Changes to deal with large (64bit) memory is needed
 c************************************************************************
 	subroutine MapFin
 c
@@ -28,7 +29,6 @@ c  Finish and tidy up.
 c------------------------------------------------------------------------
 	include 'mapper.h'
 	if(nBuff8.gt.0)call memFrex(pBuff,nBuff8,'r')
-	nBuff = 0
 	nBuff8 = 0
 	end
 c************************************************************************
@@ -57,7 +57,6 @@ c
 c
 	chan1 = 0
 	chan2 = 0
-	nBuff = 0
 	nBuff8 = 0
 	nt = 0
 	ginit = .false.
@@ -109,7 +108,7 @@ c------------------------------------------------------------------------
 	include 'mem.h'
 c
 	integer i
-	ptrdiff pMap
+	ptrdiff pMap,plsize8,p8
 	real Sum
 c
 c  Do a gridding pass if necessary, and determine the offset of the
@@ -117,9 +116,13 @@ c  plane of interest.
 c
 	if(mode.eq.'fft')then
 	  if(ichan.lt.chan1.or.ichan.gt.chan2)call MapGrid(ichan)
-	  pMap = pBuff + 2*nu*nv*npnt*(ichan-chan1) + nextra
+	  plsize8 = 2*nu*nv
+	  plsize8 = plsize8 * npnt
+	  pMap = pBuff + plsize8*(ichan-chan1) + nextra8
 	  do i=1,npnt
-	    call MapVSum(memr(pMap+(i-1)*2*nu*nv),nu*nv,Sum)
+	    p8 = 2*nu*nv
+	    p8 = p8 * (i-1)
+	    call MapVSum(memr(pMap+p8),nu*nv,Sum)
 	    if(Sum.eq.0)call bug('f','No data found for pointing')
 	    Scale(i) = 0.5/Sum
 	  enddo
@@ -153,7 +156,7 @@ c------------------------------------------------------------------------
 	include 'mem.h'
 c
 	integer i,pcent
-	ptrdiff ioff,ooff
+	ptrdiff ioff,ooff,plsize8
 	character line*64
 c
 c  Do a gridding pass if necessary.
@@ -163,7 +166,9 @@ c
 c
 c  Now do the Fourier transform and grid correction of this plane.
 c
-	  ioff = 2*nu*nv*npnt*(ichan-chan1) + nextra
+	  plsize8 = 2*nu*nv
+	  plsize8 = plsize8 * npnt
+	  ioff = plsize8*(ichan-chan1) + nextra8
 	  ooff = 0
 	  do i=1,npnt
 	    call MapFFT1(memr(pBuff+ioff),nu,nv,u0,v0,n2)
@@ -222,12 +227,12 @@ c
 	n8 = n8 + 5*nvis
 	if (5*nvis.lt.0) call bug('f','mapbufs: need int*8')
 c
-        write(*,*) 'PJT1 ',nxc,nyc,nxc*nyc,5*nvis,nBuff,nBuff8
+        write(*,*) 'PJT1 ',nxc,nyc,nxc*nyc,5*nvis,nBuff8
 
 	if(nBuff8.lt.n8)then
 	  if(nBuff8.gt.0)call MemFrex(pBuff,nBuff8,'r')
 	  nBuff8 = n8
-	  write(*,*) 'PJT1a ',nxc,nyc,nxc*nyc,5*nvis,nBuff,nBuff8
+	  write(*,*) 'PJT1a ',nxc,nyc,nxc*nyc,5*nvis,nBuff8
 	  call MemAllox(pBuff,nBuff8,'r')
 	endif
 c
@@ -276,7 +281,7 @@ c
 c  Now actually do the work.
 c
 	call MapVis(tscr,cgf,ncgf,width,nvis,offcorr+2*(chan1-1),
-     *	  chan2-chan1+1,offcorr+2*totchan-1,memr(pBuff+nextra),
+     *	  chan2-chan1+1,offcorr+2*totchan-1,memr(pBuff+nextra8),
      *	  nu,nv,npnt,u0,v0,n1,n2)
 c
 	end
@@ -337,14 +342,14 @@ c  Output (in common):
 c    chan1,chan2 Range of channels to grid.
 c    nu,nv	Grid size (in complex elements).
 c    u0,v0	Pixel coordinate of the origin of the uv plane.
-c    nextra	Number of "extra" things to allocate (to hold a final
+c    nextra8	Number of "extra" things to allocate (to hold a final
 c		image).
 c    pBuff	Pointer to the buffer.
 c    nBuff	The number of elements allocated.
 c------------------------------------------------------------------------
 	include 'mapper.h'
-	integer plsize,npass,it,maxplane,nplanes
-	ptrdiff n8
+	integer npass,it,maxplane,nplanes,nextra
+	ptrdiff n8,plsize8,n8a,n8b,n8c,n8d,n8e
 c
 c  Externals.
 c
@@ -376,8 +381,8 @@ c
 	v0 = nv/2 + 1
 c
 c  Determine some things ...
-c    plsize -- the size, in REALs of the grid needed for a plane.
-c    nextra -- the number of extra REALs needed so that we can hold a plane
+c    plsize8 -- the size, in REALs of the grid needed for a plane.
+c    nextra8 -- the number of extra REALs needed so that we can hold a plane
 c	       in place after FFTing.
 c    nplanes -- Number of planes we can fit in a reasonable amount of
 c		memory.
@@ -385,32 +390,49 @@ c    npass   -- Number of i/o passes needed to grid all these images.
 c
 c  Check for integer overflow 
 c
+	plsize8 = 2*nu*nv
+	plsize8 = plsize8 * npnt
+	write(*,*) 'PJT2:',nu,nv,npnt,plsize8
         if (log(2.0*nu)+log(1.0*nv)+log(1.0*npnt).gt.31*log(2.0)) 
-     *   call bug('f','Too many pointings for this image size') 
-	plsize= 2*nu*nv*npnt
-	write(*,*) 'PJT2: ',nu,nv,npnt,plsize
+     *   call bug('w','Too many pointings for this image size (32bit)') 
+
+c  BAD: the factors inside max() can overflow, thus nextra<0 is not sufficient
+c  npnt*nxc*nyc - 2*nu*(npnt*nv + (nv/2+nyc/2))
+c       nxc*nyc - 2*nu*nyc -2*(u0+nu*(nv/2-(nyc/2+1)))
+
+	n8a = nxc*nyc
+	n8a = n8a * npnt
+	n8b = ((npnt-1)*nv+(v0+nyc/2-1))
+	n8b = n8b * 2 * nu
+	n8c = nxc*nyc
+	n8d = 2*nu*nyc
+	n8e = 2*((u0-1)+nu*(v0-(nyc/2+1)))
+	write(*,*) 'PJT2a',n8a,n8b,n8c,n8d,n8e
 	nextra = max(0, npnt*nxc*nyc - 2*nu*((npnt-1)*nv+(v0+nyc/2-1)),
      *		        nxc*nyc-2*nu*nyc-2*((u0-1)+nu*(v0-(nyc/2+1))) )
-	if (nextra.lt.0) call bug('f','mapbuf-1: need int*8')
-	nextra = 2*((nextra+1)/2)
+	nextra8 = max(0,n8a-n8b, n8c-n8d-n8e)
+	write(*,*) 'PJT2b',nextra,nextra8
+	if (nextra8.lt.0) call bug('f','mapbuf-1: need int*8')
+	nextra8 = 2*((nextra8+1)/2)
 c
-	nplanes = max(nBuff8-nextra,memBuf()-nextra,plsize)/plsize
+	nplanes = max(nBuff8-nextra8,memBuf()-nextra8,plsize8)/plsize8
 	nplanes = min(nplanes,maxplane)
 	npass = (maxplane-1)/nplanes + 1
 	nplanes = (maxplane-1)/npass + 1
 c
 c  Is the current buffer big enough? If not, make it big enough.
+c  nBuff8 keeps a record how much we've used so far (0 @ first time here)
 c
 	n8 = nplanes
-	n8 = n8*plsize
-	n8 = n8 + nextra
-	write(*,*) 'PJT2a ',nplanes,plsize,nplanes*plsize,nextra,nBuff8
+	n8 = n8*plsize8
+	n8 = n8 + nextra8
+	write(*,*) 'PJT2c',nplanes,plsize8,nextra8,nBuff8
 	if(n8.gt.nBuff8)then
-	  write(*,*) 'PJT2b ',nplanes,plsize,nplanes*plsize,nextra,nBuff8
+	  write(*,*)'PJT2d',nplanes,plsize8,nextra8,nBuff8
 	  if(nBuff8.gt.0)call memFrex(pBuff,nBuff8,'r')
 c	  nBuff = nplanes * plsize + nextra
 	  nBuff8 = n8
-	  write(*,*) 'PJT2c ',nplanes,plsize,nplanes*plsize,nextra,nBuff8
+	  write(*,*)'PJT2e',nplanes,plsize8,nextra8,nBuff8
 	  call memAllox(pBuff,nBuff8,'r')
 	endif
 c
