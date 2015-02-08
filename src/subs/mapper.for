@@ -410,7 +410,13 @@ c       nxc*nyc - 2*nu*nyc -2*(u0+nu*(nv/2-(nyc/2+1)))
 	write(*,*) 'PJT2a',n8a,n8b,n8c,n8d,n8e
 	nextra = max(0, npnt*nxc*nyc - 2*nu*((npnt-1)*nv+(v0+nyc/2-1)),
      *		        nxc*nyc-2*nu*nyc-2*((u0-1)+nu*(v0-(nyc/2+1))) )
-	nextra8 = max(0,n8a-n8b, n8c-n8d-n8e)
+	n8a = n8a - n8b
+	n8c = n8c - n8d - n8e
+	write(*,*) 'PJT2aa',n8a,n8c 
+	nextra8 = max(0,n8a,n8c)
+c	nextra8 = 0
+c	if (n8a.gt.nextra8) nextra8 = n8a
+c	if (n8c.gt.nextra8) nextra8 = n8c
 	write(*,*) 'PJT2b',nextra,nextra8
 	if (nextra8.lt.0) call bug('f','mapbuf-1: need int*8')
 	nextra8 = 2*((nextra8+1)/2)
@@ -419,6 +425,7 @@ c
 	nplanes = min(nplanes,maxplane)
 	npass = (maxplane-1)/nplanes + 1
 	nplanes = (maxplane-1)/npass + 1
+	write(*,*) 'PJT2bb',nplanes,npass
 c
 c  Is the current buffer big enough? If not, make it big enough.
 c  nBuff8 keeps a record how much we've used so far (0 @ first time here)
@@ -725,6 +732,7 @@ c
 	offi = 2*( (u0-1) + nu*(v0-(ny/2 + 1)) ) + inoff
 	offo = outoff
 
+c	write(*,*) 'PJT-FFT2',offi,offo,offi-offo
 c
 	nud = nu - u0 + 1
 c
@@ -734,7 +742,7 @@ c
 c
 	do j=1,ny
 	  if(offo.gt.offi)then
-	     write(*,*) offo,offi
+	     write(*,*) j,ny,offo,offi
                  call bug('f',
      *		'Memory conservation algorithm-1 failed, in Mapper')
 	  endif
@@ -755,7 +763,8 @@ c
 	  offi = offi + 2*nu
 	  offo = offo + nx
 	  if(offo.gt.offi) then
-	     write(*,*) offo,offi
+	     write(*,*) nu,nv,u0,v0,nx,ny,inoff,outoff
+	     write(*,*) j,offo,offi
                  call bug('f',
      *		'Memory conservation algorithm-2 failed, in Mapper')
           endif
