@@ -25,14 +25,18 @@ c       Output beam (point-spread function) file name.  The default is
 c       not to make a beam.
 c@ imsize
 c       The size of the output dataset.  The default is to image out to
-c       primary beam half power points.  For options=mosaic, an image of
-c       this size is made for each pointing before a linear mosaic
-c       operation is performed.
+c       primary beam half power points. Add 'beam' as the third value
+c       to specify the image size in primary beam FWHMs (e.g., 
+c       imsize=2,2,beam).
+c     . For options=mosaic, an image of this size is made for each 
+c       pointing before a linear mosaic operation is performed.
 c@ cell
 c       Image cell size, in arcsec.  If two values are given, they give
 c       the RA and DEC cell sizes.  If only one value is given, the
-c       cells are made square.  The default is about one third of the
-c       resolution of the resultant images.
+c       cells are made square.  The default is about one third of the 
+c       resolution of the resultant images. Add 'res' as the third value,
+c       to specify the the cellsize in terms of the number of pixels per 
+c       resolution element (e.g., cell=5,5,res)
 c@ offset
 c       When not mosaicing, this gives the sky position to shift to the
 c       center of the output images.  The position is specified as an
@@ -184,7 +188,10 @@ c                   centre.  A similar result could be obtained by
 c                   running 'puthd' on the output map, e.g.
 c                     puthd in=<map>/ctype1 value=RA---SIN
 c                     puthd in=<map>/ctype2 value=DEC--SIN
-c                   and likewise for the beam.
+c                   and likewise for the beam
+c         ncp       Force invert to use the NCP projection even when
+c                   significant non E-W baselines are present. 
+c                   Use with care..
 c@ mode
 c       This determines the algorithm to be used in imaging.
 c       Possible values are:
@@ -353,6 +360,8 @@ c                   files.
 c    mhw   07nov11  Add warning for uniform weighting and mfs
 c    mhw   17jan12  Handle larger files by using ptrdiff type more
 c    mhw   06mar12  Add fsystemp option
+c    mhw   03jun13  Add beam and res options to imsize and cellsize
+c    mhw   03mar14  Fix bug in theoretical rms for large datasets
 c  Bugs:
 c-----------------------------------------------------------------------
       include 'mirconst.h'
@@ -362,33 +371,33 @@ c
       integer MAXPOL,MAXRUNS
       parameter(MAXPOL=4,MAXRUNS=4*MAXDIM)
 c
-      real cellx,celly,fwhmx,fwhmy,freq0,slop,supx,supy
+      real cellx,celly,fwhmx,fwhmy,freq0,slop,supx,supy,ppbx,ppby
       real umax,vmax,wdu,wdv,tu,tv,rms,robust
       real ChanWt(MAXPOL*MAXCHAN)
       character maps(MAXPOL)*64,beam*64,uvflags*16,mode*16,vis*64
-      character line*64, version*80
+      character line*64, version*72
       double precision ra0,dec0,offset(2),lmn(3),x(2)
       integer i,j,k,nmap,tscr,nvis,nchan,npol,npnt,coObj,pols(MAXPOL)
       integer nx,ny,bnx,bny,mnx,mny,wnu,wnv
       integer nbeam,nsave,ndiscard,offcorr,nout
       logical defWt,Natural,doset,systemp(2),mfs,doimag,mosaic,sdb,idb
-      logical double,doamp,dophase,dosin
+      logical double,doamp,dophase,dosin,doncp,dobeam,dores
 c
       integer tno,tvis
-      integer nUWts,nMMap
-      ptrdiff UWts,Map,MMap
+      integer nMMap
+      ptrdiff UWts,Map,MMap,nUWts
 c
       integer nRuns,Runs(3,MAXRUNS)
 c
       integer NSLOP
       parameter(NSLOP=2)
-      character slops(NSLOP)*12,slopmode*12
+      character slops(NSLOP)*12,slopmode*12,resstr*8,beamstr*8
 c
 c  Externals.
 c
       logical keyprsnt
       integer nextpow2
-      character itoaf*10, polsc2p*3, versan*80
+      character itoaf*10, polsc2p*3, versan*72
 c
       data slops/'zero        ','interpolate '/
 c-----------------------------------------------------------------------
@@ -405,7 +414,7 @@ c
       if(nmap.eq.0)call bug('f','An output must be given')
 
       call GetOpt(uvflags,double,systemp,mfs,sdb,mosaic,doimag,
-     *        doamp,dophase,dosin,mode)
+     *        doamp,dophase,dosin,doncp,mode)
       idb = beam.ne.' '.and.doimag
       sdb = beam.ne.' '.and.sdb
       call uvDatInp('vis',uvflags)
@@ -423,8 +432,18 @@ c
 c
       call keyr('cell',cellx,0.)
       call keyr('cell',celly,cellx)
-      cellx = abs(cellx * pi/180/3600)
-      celly = abs(celly * pi/180/3600)
+      call keya('cell',resstr,' ')
+      dores = resstr(1:1).eq.'r'
+      if (dores) then
+        if (cellx.lt.2.5.or.celly.lt.2.5) then
+          call bug('w','Adjusting cellsize to avoid undersampling')
+          cellx=max(2.5,cellx)
+          celly=max(2.5,celly)
+        endif
+      else
+        cellx = abs(cellx * pi/180/3600)
+        celly = abs(celly * pi/180/3600)
+      endif
       call keyr('fwhm',fwhmx,0.)
       call keyr('fwhm',fwhmy,fwhmx)
       fwhmx = fwhmx * pi/180/3600
@@ -432,6 +451,8 @@ c
 c
       call keyi('imsize',nx,0)
       call keyi('imsize',ny,nx)
+      call keya('imsize',beamstr,' ')
+      dobeam = beamstr(1:1).eq.'b'
       if(max(nx,ny).gt.MAXDIM)call bug('f','Output image too big')
 c
       defWt = .not.keyprsnt('sup')
@@ -480,7 +501,7 @@ c
 c
 c  Determine the max u and v values to map.
 c
-      if(cellx*celly.gt.0)then
+      if(cellx*celly.gt.0.and..not.dores)then
         umax = 0.5 / cellx
         vmax = 0.5 / celly
       else
@@ -500,9 +521,16 @@ c
 c  Set appropriate values for cellx and celly if needed. Try to make
 c  the pixels square if the X and Y resolutions are approx the same.
 c
-      if(cellx*celly.le.0)then
-        cellx = max( 0.25 / umax, 0.3*fwhmx)
-        celly = max( 0.25 / vmax, 0.3*fwhmy)
+      if (dores) then
+        ppbx = cellx
+        ppby = celly
+      else
+        ppbx = 3
+        ppby = 3
+      endif
+      if(cellx*celly.le.0..or.dores)then
+        cellx = max( 0.25 / umax, 0.3*fwhmx) *3/ppbx
+        celly = max( 0.25 / vmax, 0.3*fwhmy) *3/ppby
         if(max(cellx,celly).lt.2*min(cellx,celly))then
           cellx = min(cellx,celly)
           celly = cellx
@@ -525,12 +553,12 @@ c
       endif
       if(npnt.ne.1.and.mode.ne.'fft')
      *  call bug('f','Only mode=fft is supported with options=mosaic')
-      call HdSet(dosin,cellx,celly,ra0,dec0,freq0)
+      call HdSet(dosin,doncp,cellx,celly,ra0,dec0,freq0)
       call HdCoObj(coObj)
 c
 c  Determine the default image size, if needed.
 c
-      if(nx*ny.eq.0)call HdDefSiz(nx,ny)
+      if(nx*ny.eq.0.or.dobeam)call HdDefSiz(nx,ny)
 c
 c  Fiddle the sizes and determine the size of the output beam.
 c
@@ -584,8 +612,10 @@ c
 c
       if(.not.Natural)then
         call output('Calculating the weights ...')
-        nUWts = (wnu/2+1) * wnv * npnt
-        call Memallop(UWts,nUWts,'r')
+        nUWts = (wnu/2+1) * wnv
+        nUWts = nUWts * npnt
+        write(*,*) 'PJT1',wnu,wnv,npnt,nUWts
+        call Memallox(UWts,nUWts,'r')
         call WtCalc(tscr,memr(UWts),wdu,wdv,wnu,wnv,npnt,
      *                                        nvis,npol*nchan)
         if(robust.gt.-4)
@@ -607,7 +637,7 @@ c
      *  nvis,npol,nchan,mosaic,idb,sdb,doamp,dophase,freq0,Rms,
      *  ChanWt,lmn,umax,vmax,cellx,celly)
 c
-      if(nUWts.gt.0)call MemFrep(UWts,nUWts,'r')
+      if(nUWts.gt.0)call MemFrex(UWts,nUWts,'r')
       if(mosaic)call mosGFin
 c
 c  Tell the user about the noise level in the output images.
@@ -655,6 +685,7 @@ c
 c  Create space for the mosaiced image, if needed.
 c
       if(mosaic)then
+         write(*,*) 'PJT1 mosaic:',mnx,mny
         nMMap = mnx*mny
         call MemAllop(MMap,nMMap,'r')
       else
@@ -1138,20 +1169,22 @@ c  Output:
 c    Rms2       An estimate of the rms noise in the output map.
 c    umax,vmax  Maximum u and v values.
 c-----------------------------------------------------------------------
+      include 'maxdim.h'
       integer InU,InV,InW,InPnt,InRms,InFreq,InWt,InData
       parameter(InU=0,InV=1,InW=2,InPnt=3,InRms=4,InFreq=5,InWt=6,
      *          InData=8)
       integer maxrun
-      parameter(maxrun=8192)
+      parameter(maxrun=8*MAXCHAN+8)
 c
-      real Wts(maxrun/(InData+2)),Vis(maxrun),logFreq0,Wt,SumWt,t
+      double precision SumWt,RMS2d
+      real Wts(maxrun/(InData+2)),Vis(maxrun),logFreq0,Wt,t
       integer i,j,k,l,size,step,n,u,v,offcorr,nbeam,ncorr,ipnt
       logical doshift
       ptrdiff offset
 c
 c  Miscellaneous initialisation.
 c
-      RMS2 = 0
+      RMS2d = 0
       SumWt = 0
       doshift = abs(lmn(1)) + abs(lmn(2)).gt.0
 c
@@ -1235,7 +1268,7 @@ c
           umax = max( umax, abs(Vis(k+InU)) )
           vmax = max( vmax, abs(Vis(k+InV)) )
           SumWt = SumWt + Wts(i)
-          RMS2 = RMS2 + Wts(i)*Wts(i)*Vis(k+InRms)
+          RMS2d = RMS2d + Wts(i)*Wts(i)*Vis(k+InRms)
           k = k + Size
         enddo
 c
@@ -1314,7 +1347,7 @@ c
 c  Finish up the RMS noise estimates.
 c
       if(SumWt.gt.0)then
-        RMS2 = sqrt(RMS2 / SumWt/SumWt )
+        RMS2 = sqrt(RMS2d / SumWt/SumWt )
       else
         RMS2 = 0
       endif
@@ -1367,17 +1400,17 @@ c
       end
 c***********************************************************************
       subroutine GetOpt(uvflags,double,systemp,mfs,sdb,mosaic,doimag,
-     *        doamp,dophase,dosin,mode)
+     *        doamp,dophase,dosin,doncp,mode)
 c
       character uvflags*(*),mode*(*)
       logical systemp(2),mfs,sdb,doimag,mosaic,double,doamp,dophase,
-     * dosin
+     * dosin,doncp
 c
 c  Get extra processing options.
 c
 c-----------------------------------------------------------------------
       integer NOPTS, NMODES
-      parameter (NOPTS=13, NMODES=3)
+      parameter (NOPTS=14, NMODES=3)
 
       integer nmode
       logical present(NOPTS)
@@ -1386,7 +1419,7 @@ c-----------------------------------------------------------------------
       data opts/'nocal    ','nopol    ','nopass   ','double   ',
      *          'systemp  ','mfs      ','sdb      ','mosaic   ',
      *          'imaginary','amplitude','phase    ','sin      ',
-     *          'fsystemp '/
+     *          'ncp      ','fsystemp '/
       data modes/'fft     ','dft     ','median  '/
 c-----------------------------------------------------------------------
       call options('options',opts,present,NOPTS)
@@ -1407,7 +1440,8 @@ c     Extra processing options.
       doamp   = present(10)
       dophase = present(11)
       dosin   = present(12)
-      systemp(2) = present(13).and.mfs
+      doncp   = present(13)
+      systemp(2) = present(14).and.mfs
 
 c     Check options.
       if(sdb.and..not.mfs)call bug('f',
@@ -1417,8 +1451,10 @@ c     Check options.
      *  'I cannot cope with options=imaginary,sdb simultaneously')
       if(systemp(1).and.systemp(2)) call bug('f',
      *  'Please choose only one of systemp and fsystemp')
-      if(present(13).and..not.mfs) call bug('w',
+      if(present(14).and..not.mfs) call bug('w',
      *  'The fsystemp option is ignored unless mfs is specified')
+      if(present(12).and.present(13)) call bug('f',
+     *  'Choose at most one of options sin and ncp')
 
 c     Imaging algorithm.
       call keymatch('mode',NMODES,modes,1,mode,nmode)
@@ -1465,7 +1501,7 @@ c-----------------------------------------------------------------------
       logical flags(MAXCHAN,MAXPOL),more
       real uumax,vvmax,rms2,Wt,SumWt,rms2f(MAXCHAN),Wtf(MAXCHAN)
       double precision uvw(5),dSumWt,dfreq0
-      character num*8
+      character num*10
 c
 c  Externals.
 c
