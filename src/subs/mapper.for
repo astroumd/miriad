@@ -20,6 +20,7 @@ c    rjs  13dec95 Set minimum transform size to be 16 (FFT limitation).
 c    rjs  07jan97 Fiddle memory conservation alogirthm yet again.
 c    rjs  03apr09 Change use of scratch file to help large file access.
 c    pjt   6feb15 Changes to deal with large (64bit) memory is needed
+c                 lessons learned:  integer*8 support not like integer*4
 c************************************************************************
 	subroutine MapFin
 c
@@ -393,8 +394,8 @@ c
 	plsize8 = 2*nu*nv
 	plsize8 = plsize8 * npnt
 	write(*,*) 'PJT2:',nu,nv,npnt,plsize8
-        if (log(2.0*nu)+log(1.0*nv)+log(1.0*npnt).gt.31*log(2.0)) 
-     *   call bug('w','Too many pointings for this image size (32bit)') 
+c        if (log(2.0*nu)+log(1.0*nv)+log(1.0*npnt).gt.31*log(2.0)) 
+c     *   call bug('w','Too many pointings for this image size (32bit)') 
 
 c  BAD: the factors inside max() can overflow, thus nextra<0 is not sufficient
 c  npnt*nxc*nyc - 2*nu*(npnt*nv + (nv/2+nyc/2))
@@ -412,20 +413,16 @@ c       nxc*nyc - 2*nu*nyc -2*(u0+nu*(nv/2-(nyc/2+1)))
      *		        nxc*nyc-2*nu*nyc-2*((u0-1)+nu*(v0-(nyc/2+1))) )
 	n8a = n8a - n8b
 	n8c = n8c - n8d - n8e
-	write(*,*) 'PJT2aa',n8a,n8c 
 	nextra8 = max(0,n8a,n8c)
-c	nextra8 = 0
-c	if (n8a.gt.nextra8) nextra8 = n8a
-c	if (n8c.gt.nextra8) nextra8 = n8c
-	write(*,*) 'PJT2b',nextra,nextra8
-	if (nextra8.lt.0) call bug('f','mapbuf-1: need int*8')
+	write(*,*) 'PJT2b',n8a,n8c,nextra8
+	if (nextra8.lt.0) call bug('f','mapbuf-1: fatal sign error [int*8]')
 	nextra8 = 2*((nextra8+1)/2)
 c
 	nplanes = max(nBuff8-nextra8,memBuf()-nextra8,plsize8)/plsize8
 	nplanes = min(nplanes,maxplane)
 	npass = (maxplane-1)/nplanes + 1
 	nplanes = (maxplane-1)/npass + 1
-	write(*,*) 'PJT2bb',nplanes,npass
+	write(*,*) 'PJT2c',nplanes,npass
 c
 c  Is the current buffer big enough? If not, make it big enough.
 c  nBuff8 keeps a record how much we've used so far (0 @ first time here)
@@ -433,13 +430,13 @@ c
 	n8 = nplanes
 	n8 = n8*plsize8
 	n8 = n8 + nextra8
-	write(*,*) 'PJT2c',nplanes,plsize8,nextra8,nBuff8
+	write(*,*) 'PJT2d',nplanes,plsize8,nextra8,nBuff8
 	if(n8.gt.nBuff8)then
-	  write(*,*)'PJT2d',nplanes,plsize8,nextra8,nBuff8
+	  write(*,*)'PJT2e',nplanes,plsize8,nextra8,nBuff8
 	  if(nBuff8.gt.0)call memFrex(pBuff,nBuff8,'r')
 c	  nBuff = nplanes * plsize + nextra
 	  nBuff8 = n8
-	  write(*,*)'PJT2e',nplanes,plsize8,nextra8,nBuff8
+	  write(*,*)'PJT2f',nplanes,plsize8,nextra8,nBuff8
 	  call memAllox(pBuff,nBuff8,'r')
 	endif
 c
@@ -732,7 +729,6 @@ c
 	offi = 2*( (u0-1) + nu*(v0-(ny/2 + 1)) ) + inoff
 	offo = outoff
 
-c	write(*,*) 'PJT-FFT2',offi,offo,offi-offo
 c
 	nud = nu - u0 + 1
 c
@@ -743,13 +739,13 @@ c
 	do j=1,ny
 	  if(offo.gt.offi)then
 	     write(*,*) j,ny,offo,offi
-                 call bug('f',
+	     call bug('f',
      *		'Memory conservation algorithm-1 failed, in Mapper')
 	  endif
 	  do i=1,2*nud
 	     i8 = i
 	     i8 = i8 + offi
-	    cdata(i) = Grd(i8)
+	     cdata(i) = Grd(i8)
 	  enddo
 	  call fftcr(cdata,rdata,-1,n1)
 	  scale1 = scale * ycorr(ny/2+1) * xcorr(nx/2+1) / ycorr(j)
@@ -757,7 +753,7 @@ c
 	  do i=1,nx
 	     i8 = i
 	     i8 = i8 + offo
-	    Grd(i8) = rdata(i+ioff) * scale1 / xcorr(i)
+	     Grd(i8) = rdata(i+ioff) * scale1 / xcorr(i)
 	  enddo
 c
 	  offi = offi + 2*nu
@@ -765,7 +761,7 @@ c
 	  if(offo.gt.offi) then
 	     write(*,*) nu,nv,u0,v0,nx,ny,inoff,outoff
 	     write(*,*) j,offo,offi
-                 call bug('f',
+	     call bug('f',
      *		'Memory conservation algorithm-2 failed, in Mapper')
           endif
 	enddo
