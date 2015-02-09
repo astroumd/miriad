@@ -415,7 +415,7 @@ c       nxc*nyc - 2*nu*nyc -2*(u0+nu*(nv/2-(nyc/2+1)))
 	n8c = n8c - n8d - n8e
 	nextra8 = max(0,n8a,n8c)
 	write(*,*) 'PJT2b',n8a,n8c,nextra8
-	if (nextra8.lt.0) call bug('f','mapbuf-1: fatal sign error [int*8]')
+	if (nextra8.lt.0) call bug('f','mapbuf-1: fatal sign error')
 	nextra8 = 2*((nextra8+1)/2)
 c
 	nplanes = max(nBuff8-nextra8,memBuf()-nextra8,plsize8)/plsize8
