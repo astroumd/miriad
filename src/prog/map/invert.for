@@ -362,6 +362,7 @@ c    mhw   17jan12  Handle larger files by using ptrdiff type more
 c    mhw   06mar12  Add fsystemp option
 c    mhw   03jun13  Add beam and res options to imsize and cellsize
 c    mhw   03mar14  Fix bug in theoretical rms for large datasets
+c    pjt   10feb15  Handle large mosaics 
 c  Bugs:
 c-----------------------------------------------------------------------
       include 'mirconst.h'
@@ -375,7 +376,7 @@ c
       real umax,vmax,wdu,wdv,tu,tv,rms,robust
       real ChanWt(MAXPOL*MAXCHAN)
       character maps(MAXPOL)*64,beam*64,uvflags*16,mode*16,vis*64
-      character line*64, version*72
+      character line*64, version*72,smnx*10,smny*10
       double precision ra0,dec0,offset(2),lmn(3),x(2)
       integer i,j,k,nmap,tscr,nvis,nchan,npol,npnt,coObj,pols(MAXPOL)
       integer nx,ny,bnx,bny,mnx,mny,wnu,wnv
@@ -396,7 +397,7 @@ c
 c  Externals.
 c
       logical keyprsnt
-      integer nextpow2
+      integer nextpow2,len1
       character itoaf*10, polsc2p*3, versan*72
 c
       data slops/'zero        ','interpolate '/
@@ -592,8 +593,10 @@ c
         lmn(1) = 0
         lmn(2) = 0
         lmn(3) = 1
-        if(max(mnx,mny).gt.MAXDIM)
-     *    call bug('f','Mosaiced image is too big for me')
+        if(max(mnx,mny).gt.MAXDIM) then
+           write(*,*) 'MAXDIM:',MAXDIM,mnx,mny
+           call bug('f','Mosaiced image size is too big for MAXDIM')
+        endif
       else
         mnx = nx
         mny = ny
@@ -685,11 +688,16 @@ c
 c  Create space for the mosaiced image, if needed.
 c
       if(mosaic)then
-         write(*,*) 'PJT1 mosaic:',mnx,mny
-        nMMap = mnx*mny
-        call MemAllop(MMap,nMMap,'r')
+         smnx = itoaf(mnx)
+         smny = itoaf(mny)
+         call output('Mosaic image size: '//
+     *       smnx(1:len1(smnx)) // ' x ' //
+     *       smny(1:len1(smny)) )
+
+         nMMap = mnx*mny
+         call MemAllop(MMap,nMMap,'r')
       else
-        nMMap = 0
+         nMMap = 0
       endif
 c
 c  Make the appropriate beams.
