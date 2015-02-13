@@ -19,12 +19,15 @@ c@ region
 c       Standard region of interest.  See the help on "region" for
 c       more information.  The default is the entire input.
 c@ bin
-c       A pair of values for each axis.  These give the spatial
+c       A pair of (integer) values for each axis.  These give the spatial
 c       increment and binning size in pixels for each axis to be applied
 c       to the selected region.  If the binning size is not unity, it
 c       must equal the increment.  For example, to bin up the image by 2
 c       pixels in the x direction, and to pick out every third pixel in
 c       the z direction, set BIN=2,2, 1,1, 3,1
+c       Note that this bin=step,width convention is the opposite from the
+c       line=chan,nchan,start,width,step common in channel binning
+c       in visibility data.
 c       Defaults are 1,1 for each axis.
 c@ out
 c       Output image
@@ -47,6 +50,8 @@ c                  images.
 c    bmg  11may01  Added options=sum
 c   nebk  14nov01  Track change to readimcg interface
 c    rjs  19jan06  Fortran standardisation.
+c
+c  @todo   fix the CRPIX calculation for B=4 (2,3 seem ok)
 c-----------------------------------------------------------------------
       include 'maxdim.h'
       include 'maxnax.h'
@@ -151,6 +156,8 @@ c       Adjust the reference pixel and increment for sampling.
 c       Adjust the reference pixel for binning - not the reference
 c       value which must be left unchanged for non-linear axes.
         crpixo(i) = crpixo(i) - 0.5d0 * (bin(2,i) - 1d0) / bin(2,i)
+
+        write(*,*) 'BIN ',i,bin(1,i),bin(2,i),blc(i),crpixi(i),crpixo(i)
 
         str = itoaf(i)
         call wrhdd(lout, 'crpix'//str, crpixo(i))
