@@ -1,7 +1,7 @@
 ************************************************************************
 	program fits
 	implicit none
-c= fits - Conversion between MIRIAD and FITS image and uv formats
+c= ivcFits - Conversion between MIRIAD and FITS image and uv formats
 c& rjs
 c: data transfer
 c+
