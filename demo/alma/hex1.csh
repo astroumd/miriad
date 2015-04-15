@@ -1,6 +1,6 @@
 #!/bin/csh -f
-echo "   ---  ALMA Mosaicing (Cas A model)   ---   "
-echo "   mchw. 12dec2012 version"
+echo "   ---  ALMA Mosaicing  ---   "
+echo "   mchw. 15apr15 version"
 
 # History:
 #  june 02 mchw. ALMA script.
@@ -15,13 +15,14 @@ echo "   mchw. 12dec2012 version"
 #  29jul11 mchw. Added plot single dish and interferometer image
 #  09dec12 mchw. Use imgen and regrid to make bigger single dish image instead of imframe.
 #  12dec12 mchw. Remake hex1.csh from hex19.csh.
+#  15apr15 mchw. Add pp disk model and cycle 3 configs
 
 goto start
 start:
 
 # check inputs
   if($#argv<4) then
-    echo " Usage:  $0 array declination cell "
+    echo " Usage:  $0 array declination cell method "
     echo "   e.g.  $0 config1 -30 0.04 mosmem"
     echo " Inputs :"
     echo "   array"
@@ -46,7 +47,7 @@ start:
 # Saturn model, sat1mm.modj2, pixel=0.1", Saturn's rings are ~ 50" diameter; imsize=603 == 60"
 
 set model   = sat1mm.modj2
-set model   = Halo3.mp
+set model   = disk+cpd
 set model   = casc.vla
 set config  = $1
 set dec     = $2
@@ -54,7 +55,8 @@ set cell    = $3
 set method  = $4
 # Nyquist sample rate for each pointing.
 calc '6/(pi*250)*12'
-set harange = -4,4,.013
+set harange = 0,0.1,.1
+set harange = -.1,1.,.013
 set select  = '-shadow(12)'
 set freq    = 230
 set nchan   = 1
@@ -91,7 +93,7 @@ endif
 if($method == joint) then
   goto joint
 endif
-:
+
 echo "Generate mosaic grid"
 #  lambda/2*antdiam (arcsec)
 calc "300/$freq/2/12e3*2e5"
@@ -101,7 +103,7 @@ echo "Using hex1 mosaic with 12'' spacing" >> $0.$model.results
 
 echo "Generate uv-data. Tsys=40K, bandwidth=8 GHz " >> timing
 rm -r $config.uv
-uvgen ant=$config.ant baseunit=-3.33564 radec=23:23:25.803,$dec lat=-23.02 harange=$harange source=$MIRCAT/no.source systemp=40 jyperk=40 freq=$freq corr=$nchan,1,0,8000 out=$config.uv telescop=alma
+uvgen ant=$config.ant baseunit=-3.33564 radec=0.,$dec lat=-23.02 harange=$harange source=$MIRCAT/no.source systemp=40 jyperk=40 freq=$freq corr=$nchan,1,0,8000 out=$config.uv telescop=alma
 echo UVGEN: `date` >> timing
 uvindex vis=$config.uv
 
@@ -109,17 +111,20 @@ echo "Scale model size. from pixel 0.4 to $cell arcsec" >> timing
 # with 0.4 arcsec pixel size Cas A is about 320 arcsec diameter; image size 1024 == 409.6 arcsec
 # scale model size. eg. cell=0.1 arcsec -> 80 arcsec cell=.01 -> 8 arcsec diameter
 rm -r single.$dec.$model.$cell
-cp -r casc.vla single.$dec.$model.$cell
+cp -r $model single.$dec.$model.$cell
+puthd in=single.$dec.$model.$cell/crval1 value=0.d0
 puthd in=single.$dec.$model.$cell/crval2 value=$dec,dms
 puthd in=single.$dec.$model.$cell/crval3 value=$freq
 puthd in=single.$dec.$model.$cell/cdelt1 value=-$cell,arcsec
 puthd in=single.$dec.$model.$cell/cdelt2 value=$cell,arcsec
+imlist in=single.$dec.$model.$cell
 
 echo "Make model images for each pointing center" >> timing
 rm -r $config.$model.$cell.demos*
 demos map=single.$dec.$model.$cell vis=$config.uv out=$config.$model.$cell.demos
+#goto end
 
-echo "Make model uv-data using VLA image of Cas A as a model (the model has the VLA primary beam)" >> timing
+echo "Make model uv-data using the model image (casc.vla has the VLA primary beam)" >> timing
   rm -r $config.$dec.$model.$cell.uv*
  foreach i ( 1 )
     cgdisp device=/xs labtyp=arcsec range=0,0,lin,8 in=$config.$model.$cell.demos$i
