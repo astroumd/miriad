@@ -73,7 +73,7 @@ else if (0) then
   # this is what developers need to do regression testing (1.1GB)
   svn co https://svn.cv.nrao.edu/svn/casa-data/distro            data
 else
-  mkdir data
+  mkdir -p data
   cd data
   curl ftp://ftp.astron.nl/outgoing/Measures/WSRT_Measures.ztar | tar zxf -
 endif
