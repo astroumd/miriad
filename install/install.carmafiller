@@ -52,12 +52,14 @@ sed "s/mirlib/mirlib miriad/" CMakeLists.txt-orig  > CMakeLists.txt
 diff CMakeLists.txt-orig CMakeLists.txt
 # you should only see one line where miriad was added... if not, might be broken
 
+# note we are building with testing turned off, that saves about 50% time
 mkdir build
 cd build
 cmake -DWCSLIB_ROOT_DIR=$MIR/opt \
       -DCMAKE_INSTALL_PREFIX=$MIR/opt/casa \
       -DDATA_DIR=$MIR/opt/casa/data \
       -DCFITSIO_ROOT_DIR=$MIR/opt \
+      -DBUILD_TESTING=False \
       ..
 make -j8
 make install
