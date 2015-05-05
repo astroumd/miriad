@@ -170,4 +170,17 @@ endif(USE_THREADS)
  
 
 
+cmake -DWCSLIB_ROOT_DIR=$MIR/opt \
+      -DCMAKE_INSTALL_PREFIX=$MIR/opt/casa \
+      -DDATA_DIR=$MIR/opt/casa/data \
+      -DCFITSIO_ROOT_DIR=$MIR/opt \
+      ..
 
+make -j8
+
+6584.509u 233.766s 16:36.09 684.5%	0+0k 168976+3405680io 213pf+0w
+
+
+with -DBUILD_TESTING=False
+
+3265.707u 101.476s 8:34.24 654.7%	0+0k 103032+1630536io 96pf+0w
