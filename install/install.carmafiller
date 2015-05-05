@@ -43,12 +43,12 @@ cvs co importmiriad
 # CASACORE
 
 cd $MIR/borrow
-svn -q co http://casacore.googlecode.com/svn/tags/casacore-1.5.0
-cd casacore-1.5.0
+git clone https://github.com/casacore/casacore
+cd casacore
 # patch up to prepare for carmafiller (only if you had not done this before)
 ln -s ../importmiriad/miriad
 cp CMakeLists.txt CMakeLists.txt-orig
-sed "s/components/components miriad/" CMakeLists.txt-orig  > CMakeLists.txt
+sed "s/mirlib/mirlib miriad/" CMakeLists.txt-orig  > CMakeLists.txt
 diff CMakeLists.txt-orig CMakeLists.txt
 # you should only see one line where miriad was added... if not, might be broken
 
@@ -69,7 +69,11 @@ if (0) then
   # the minimal suite (760MB)  [the ATNF measure set is only 14MB and may also work]
   svn co https://svn.cv.nrao.edu/svn/casa-data/trunk/ephemerides data/ephemerides
   svn co https://svn.cv.nrao.edu/svn/casa-data/trunk/geodetic    data/geodetic
-else
+else if (0) then
   # this is what developers need to do regression testing (1.1GB)
   svn co https://svn.cv.nrao.edu/svn/casa-data/distro            data
+else
+  mkdir data
+  cd data
+  curl ftp://ftp.astron.nl/outgoing/Measures/WSRT_Measures.ztar | tar zxf -
 endif
