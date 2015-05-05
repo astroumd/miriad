@@ -1,9 +1,9 @@
-if you don't see a directory 'casacore' or some version 'casacore-1.5'
-here, it probably means you did not get this added package for
-MIRIAD. It is only needed if you want to build the carmafiller program
-to convert miriad visibility files into a CASA Measurement Set. Currently
-the installation is manual, the instructions are below, but have not
-been tested on many machines.    
+if you don't see a directory 'casacore' here, it probably means you
+did not get this added package for MIRIAD. It is only needed if you
+want to build the carmafiller program to convert miriad visibility
+data into a CASA Measurement Set. Currently the installation is
+manual, the instructions are below, and have not been tested on many
+machines.
 
 They have been tested on:
      ubuntu 12.04 LTS, 14.04 LTS
@@ -67,7 +67,7 @@ make install
 cd $MIR/borrow
 
 
-if (1) then
+if (0) then
   # grab the stable google code version (rev 21337)
   # 21430 on 24-apr-2014 w/ Ubuntu 14.04
   svn -q co http://casacore.googlecode.com/svn/tags/casacore-1.5.0
@@ -75,18 +75,23 @@ if (1) then
   cd casacore-1.5.0
   # april-2014: the trunk now fails on U14, the nrao-nov12 branch is ok.
   # svn switch http://casacore.googlecode.com/svn/branches/nrao-nov12/
-else
+else if (0) then
   # or something like the NRAO version [which doesn't work yet for me]
   svn co https://svn.cv.nrao.edu/svn/casa/branches/stable-2013-03/casacore
   # or the google code again (rev 21347 or later)
   # svn co http://casacore.googlecode.com/svn/trunk/ casacore
+  cd casacore
+else
+  # now the default, the two others should not exist anymore
+  git clone https://github.com/casacore/casacore
   cd casacore
 endif
 
 # patch up to prepare for carmafiller
 ln -s ../importmiriad/miriad
 cp CMakeLists.txt CMakeLists.txt-orig
-sed "s/components/components miriad/" CMakeLists.txt-orig  > CMakeLists.txt
+#sed "s/components/components miriad/" CMakeLists.txt-orig  > CMakeLists.txt
+sed "s/mirlib/mirlib miriad/" CMakeLists.txt-orig  > CMakeLists.txt
 diff CMakeLists.txt-orig CMakeLists.txt
 # you should only see one line where miriad was added... if not, might be broken
 
@@ -115,6 +120,12 @@ Any CVS updates to e.g. importmiriad, do this:
     (cd $MIR/borrow/casacore-1.5.0/build; make install)
 
 3) install CASA measures data (ephemeris, dUT1 tables etc.)
+
+
+cd $MIR/opt/casa/data
+curl ftp://ftp.astron.nl/outgoing/Measures/WSRT_Measures.ztar | tar zxf -
+
+or the old style (if that still works)
 
 cd $MIR/opt/casa
 wget  ftp://ftp.atnf.csiro.au/pub/software/measures_data/measures_data.tar.bz2
@@ -149,3 +160,14 @@ otherwise a bug on C compiler on MAC will silence cmake.
 if(USE_THREADS)
 ....
 endif(USE_THREADS)
+
+
+====
+
+
+
+
+ 
+
+
+
