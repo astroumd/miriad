@@ -4,7 +4,7 @@ RATTY=$(top_builddir)/src/tools/ratty
 
 # The "borrow" inclusion here gets includes of wcslib/foo.inc to work.
 %.f: %.for $(RATTY)
-	$(AM_V_GEN)$(RATTY) -p "@ptrdiff_ftype@" -D NOF90 -s gfortran \
+	$(AM_V_GEN)$(RATTY) -p "@ptrdiff_ftype@" -s gfortran \
 	  -I $(top_builddir)/src/inc -I $(top_srcdir)/src/inc \
 	  -I $(top_builddir)/borrow -I $(srcdir) $< $@
 
