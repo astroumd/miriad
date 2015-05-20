@@ -295,11 +295,45 @@ case $TELESCOPE in
 	def_maxchan=12288
 	def_maxwin=48
 	def_maxwide=50 ;;
+     jwst)
+     	def_maxdim=65536
+	def_maxdim2=8192
+	def_maxant=512
+	def_maxant2=512
+	def_maxbase=1024
+	def_maxbase2=1024
+	def_maxchan=128
+	def_maxwin=8
+	def_maxwide=8 ;;
+     test)
+        def_maxdim=1024
+	def_maxdim2=1024
+	def_maxant=9
+	def_maxbase=36
+	def_maxbase2=36
+	def_maxchan=1024
+	def_maxwin=16
+	def_maxwide=18 ;;
      wsrt) ;;
-     ral512)
-        def_maxant=512
-        def_maxant2=512
-        def_maxbase=4096 ;;
+     apertif)
+     	def_maxdim=65536
+	def_maxdim2=8192
+	def_maxant=12
+	def_maxant2=12
+	def_maxbase=66
+	def_maxbase2=66
+	def_maxchan=16384
+	def_maxwin=8
+	def_maxwide=8
+	continue ;;
+     big1)
+        def_maxant=256
+        def_maxant2=256
+        def_maxbase=16384
+	def_maxbase2=16384
+	def_maxchan=512
+	def_maxwin=64
+	def_maxwide=64 ;;
      *)
 	AC_MSG_ERROR([unknown telescope choice "$TELESCOPE"])
 esac
