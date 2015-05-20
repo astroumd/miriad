@@ -324,8 +324,7 @@ case $TELESCOPE in
 	def_maxbase2=66
 	def_maxchan=16384
 	def_maxwin=8
-	def_maxwide=8
-	continue ;;
+	def_maxwide=8 ;;
      big1)
         def_maxant=256
         def_maxant2=256
