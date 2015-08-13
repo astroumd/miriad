@@ -147,11 +147,12 @@ c    01jan10 mchw  write positions and info from cursor options to log.
 c    22jun12 mchw  format change in gausfit input.
 c    17jul13 mchw  enable FREQ axis.
 c    15aug13 mchw  more FREQ labels on plots.
+c    13aug15 mchw  format(i10.0) changed to format(i10) in posvel
 c----------------------------------------------------------------------c
 	include 'velplot.h'
 	include 'mem.h'
 	character*(*) version
-	parameter(version='(version 3.0 15-Aug-2013)')
+	parameter(version='(version 3.0 13-Aug-2015)')
 	integer maxnax,maxboxes
 	parameter(maxnax=3,maxboxes=128)
 	integer boxes(maxboxes),nsize(maxnax),blc(maxnax),trc(maxnax)
@@ -4012,7 +4013,10 @@ c
 	  nchan=1
 	  if(length.eq.0)goto 399
 	  read (line(1:length),101) nchan
-101	  format(i10.0)
+c 101	  format(i10.0) changed to format(i10) 13aug2015
+c some compiler in the past preferred i10.0
+c see code history - may have been Mark Stupar change for cray
+101	  format(i10)
 	  if(nchan.gt.nc)then
 	    call output('Cannot be more than there are in the image')
 	    goto 398
