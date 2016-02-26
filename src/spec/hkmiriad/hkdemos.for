@@ -75,21 +75,22 @@ c    rjs  17sep97 Doc change only.
 c    rjs  25sep98 Less fussy about freq axis for 1-plane files.
 c    ...
 c    pjt  15sep2014    needed 2 more args to pbInitc()  
+c    pjt  26feb2016    MAXPNT -> MAXPNT2 since it was using in maxdim.h 
 c------------------------------------------------------------------------
 	character version*(*)
 	parameter(version='version 15-sep-2014')
-	integer MAXSELS,MAXPNT,MAXVIS
-	parameter(MAXSELS=256,MAXPNT=2048,MAXVIS=128)
+	integer MAXSELS,MAXPNT2,MAXVIS
+	parameter(MAXSELS=256,MAXPNT2=2048,MAXVIS=128)
 	include 'maxdim.h'
         include 'mirconst.h'
 
 c
 	character map*64,vis(MAXVIS)*64,out*64,name*64
-	character pbtype(MAXPNT)*16
+	character pbtype(MAXPNT2)*16
 	integer imsize(2),nsize(3),npnt,lout,i,tmap,iax,nvis
 	logical detaper
 	real sels(MAXSELS)
-	double precision ra(MAXPNT),dec(MAXPNT)
+	double precision ra(MAXPNT2),dec(MAXPNT2)
 c
 c  Externals.
 c
@@ -137,7 +138,7 @@ c
 c
 c  Get the pointing centres, etc, associated with the vis dataset.
 c
-	call GetPnt(vis,nvis,sels,MAXPNT,npnt,ra,dec,pbtype)
+	call GetPnt(vis,nvis,sels,MAXPNT2,npnt,ra,dec,pbtype)
 	call output('Number of pointings: '//itoaf(npnt))
 
 c
