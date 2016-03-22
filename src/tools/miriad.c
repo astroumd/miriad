@@ -1249,7 +1249,8 @@ char *argv[];
     (void)fprintf(stderr,"### %s: Found no documentation on task [%s].\n",
       argv[0], task);
   } else {
-    (void)strcpy(taskname, task);
+    if (taskname != task) /* without this guard, we can crash on OS X */
+      (void)strcpy(taskname, task);
 
     dotput(1, argv);            /* Write out the task definition file. */
 
