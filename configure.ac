@@ -14,7 +14,7 @@ dnl on a policy, but given the current Makefile.am code, 1.11 is
 dnl what's required. If the requirement is downgraded, the
 dnl silent-rules option must be removed.
 AM_INIT_AUTOMAKE([1.11 -Wobsolete -Wgnu -Wunsupported -Wno-syntax
-		  -Wno-portability foreign silent-rules])
+		  -Wno-portability foreign silent-rules subdir-objects])
 
 dnl Libtool. Required version number is made-up.
 LT_PREREQ([2.2.1])
