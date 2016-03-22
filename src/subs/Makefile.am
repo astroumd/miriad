@@ -91,7 +91,7 @@ bin_PROGRAMS = uvio
 
 uvio_SOURCES = uvio.c
 uvio_CFLAGS = -DTESTBED $(includes)
-uvio_LDADD = libmir.la
+uvio_LDADD = libmir.la $(FLIBS)
 
 # Docs
 
