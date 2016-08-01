@@ -143,6 +143,7 @@ c    rjs  28mar90 Original version as uvmodel
 c    ....... many more changes
 c    mchw 05nov97 Add options=poleak.  (last uvmodel change)
 c    pjt  23mar00 uvmodel plus some uvgen subroutines -> uvgenmodel
+c    mwp  01aug16 Ensure correct type ptrdiff for scrread
 c  Bugs:
 c    * Polarisation processing is pretty crude.
 c------------------------------------------------------------------------
@@ -160,6 +161,7 @@ c
 	real sels(maxsels),offset(2),flux,clip,sigma,lstart,lstep,lwidth
 	integer nsize(3),nchan,nread,nvis,length,i,ii
 	integer tvis,tmod,tscr,tout,vcopy,pol,nants
+	ptrdiff ip
 	double precision preamble(5)
 	complex data(maxchan)
 	logical flags(maxchan)
@@ -324,16 +326,16 @@ c
 c  Perform the copying.
 c
 	length = 5*nchan + nhead
+	call scrrecsz(tscr,length)
 	do i=1,nvis
 	  call uvread(tvis,preamble,data,flags,maxchan,nread)
 	  if(nread.ne.nchan) call bug('f',
      *	    'No. channels  unexpectedly changed, when rereading data')
-c	  call scrread(tscr,buffer,(i-1)*length,length)
-c	  call process(oper,buffer(1)*sigma,buffer(nhead+1),
-c     *			data,flags,nchan,tvis,preamble(5),maxant,polcor)
-          do ii=1,nchan
-            data(ii) = 0
-          enddo
+c          call scrread(tscr,buffer,(i-1)*length,length)
+      ip = (i-1)
+      call scrread(tscr,buffer,ip,1)
+	  call process(oper,buffer(1)*sigma,buffer(nhead+1),
+     *			data,flags,nchan,tvis,preamble(5),maxant,polcor)
           call NoiseAdd(data,nchan,rrms)
           
 	  if(imhead)then
