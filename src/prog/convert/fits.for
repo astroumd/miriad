@@ -155,6 +155,7 @@ c  CARMA customizations:
 c
 c  2012jan03  pkgw  Convert FITS VOPT to MIRIAD FELO and vice versa
 c  2013mar05  pjt   Sanitize sourcename for uvin (no spaces)
+c  2016dec12  mwp   BPA should be written out even if zero.
 c-----------------------------------------------------------------------
       integer   MAXBOXES
       parameter (MAXBOXES=2048)
@@ -4614,7 +4615,7 @@ c     N.B. BPA is stored in degrees in the Miriad header!
       call rdhdr(lIn, 'bmin', rval, 0.0)
       if (rval.ne.0.0) call fitwrhdr(lOut, 'BMIN', rval*R2D)
       call rdhdr(lIn, 'bpa', rval,  0.0)
-      if (rval.ne.0.0) call fitwrhdr(lOut, 'BPA',  rval)
+      call fitwrhdr(lOut, 'BPA',  rval)
 
 
 c     Write residual Miriad header items.  Open the "special item" which
