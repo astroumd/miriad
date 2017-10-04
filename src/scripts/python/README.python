@@ -18,6 +18,11 @@ pyramid:
    See $MIR/src/scripts/python/Miriad.py
    author: Peter Teuben (CARMA/UMD)
 
+astrolyze:
+   http://astrolyze.readthedocs.io/en/latest/index.html
+   https://github.com/buchbend/astrolyze
+   author: Christof Buchbender
+
 
 ??
    See $MIR/src/scripts/python/{README, uvio.i, Makefile, mirlib.py}
