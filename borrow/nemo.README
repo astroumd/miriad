@@ -10,17 +10,12 @@ If MIRIAD has been installed, the following commands should install NEMO:
 	mir.install nemo	                      # compile nemo
 
 
-Or more  recently
-
-	cd $MIR/borrow/nemo
-	src/scripts/test_a_new_nemo_cvs reuse=1 quick=1 miriad=1 nemo=.
-
 Then check out the logfile in $MIR/tmp for any errors.  The next time when you
 load miriad, NEMO will also be loaded. If you need it right away, use
 
         source $MIR/borrow/nemo/nemo_start.csh
 
-for now.  A quick check if it works:
+for now.  Or the .sh version.   A quick check if it works:
 
     	mkplummer p10 10
 	snapprint p10 > p10.tab
@@ -28,5 +23,5 @@ for now.  A quick check if it works:
 	snapplot p10
 	hackcode1
 
-in paricular if the PGPLOT_DIR variable has been set properly.
+in particular if the PGPLOT_DIR variable has been set properly.
 
