@@ -1,17 +1,19 @@
 if you don't see a directory 'nemo' here, it probably means you did not
-get this added package for miriad. If you used CVS, you can plant
-the nemo tree here (in CVS terms: nemo is a separate module under CVS)
+get this added package for miriad. Since NEMO is now maintained in github,
+you can clone your nemo tree here:
 
 If MIRIAD has been installed, the following commands should install NEMO:
 
-	cd $MIR/borrow 		You need to have miriad loaded
-	cvs checkout nemo	plant the nemo tree
-	mirboss			become miriad boss
-	mir.install nemo	compile nemo
+	cd $MIR/borrow 		                      # You need to have miriad loaded
+	git clone https://github.com/teuben/nemo      # plant the nemo tree
+	mirboss	                                      # become miriad boss
+	mir.install nemo	                      # compile nemo
 
-or a cut and paste line:
 
-       cd $MIR/borrow ;  cvs -Q checkout nemo ; mirboss ; mir.install nemo
+Or more  recently
+
+	cd $MIR/borrow/nemo
+	src/scripts/test_a_new_nemo_cvs reuse=1 quick=1 miriad=1 nemo=.
 
 Then check out the logfile in $MIR/tmp for any errors.  The next time when you
 load miriad, NEMO will also be loaded. If you need it right away, use
@@ -26,4 +28,5 @@ for now.  A quick check if it works:
 	snapplot p10
 	hackcode1
 
+in paricular if the PGPLOT_DIR variable has been set properly.
 
