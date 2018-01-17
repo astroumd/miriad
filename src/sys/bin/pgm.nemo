@@ -8,7 +8,7 @@ set bindir = $mir/bin/$host
 set admdir = $mir/src/sys/bin
 set raddir = $mir/borrow/rad
 # -------------------------------------------------------------------
-if (! -d $mir/borrow/nemo || ! -e $mir/borrow/nemo/README) then
+if (! -d $mir/borrow/nemo || ! -e $mir/borrow/nemo/README.md) then
   echo NEMO does not seem to exist within your miriad distribution.
   echo Installation skipped  
   exit 0
@@ -31,7 +31,7 @@ endif
 # -------------------------------------------------------------------
 #
 cd $MIR/borrow/nemo
-source AAA_SOURCE_ME
+docs/test_a_new_nemo_git reuse=1 quick=1 miriad=1 nemo=.
 #
 # -------------------------------------------------------------------
 unsetenv local_compile
