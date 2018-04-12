@@ -50,6 +50,9 @@ c@ select
 c       Normal uv selection, used when op=uvout.
 c@ stokes
 c       Normal Stokes selection, used when op=uvout
+c@ evector
+c       If given, override the evector value that is normally obtained
+c       from the telescope info.      
 c@ options
 c       These options applies for op=uvin only.
 c         compress Store the data in compressed uv format.
@@ -156,6 +159,7 @@ c
 c  2012jan03  pkgw  Convert FITS VOPT to MIRIAD FELO and vice versa
 c  2013mar05  pjt   Sanitize sourcename for uvin (no spaces)
 c  2016dec12  mwp   BPA should be written out even if zero.
+c  2018apr12  pjt/mchw  Deal with evector-less data, such as ALMA
 c-----------------------------------------------------------------------
       integer   MAXBOXES
       parameter (MAXBOXES=2048)
@@ -163,7 +167,7 @@ c-----------------------------------------------------------------------
       logical   altr, compress, dobl, docal, dochi, dopass, dopol, dss,
      *          lefty, nod2, varwt
       integer   boxes(MAXBOXES), velsys
-      real      altrpix, altrval
+      real      altrpix, altrval, evector
       character in*128, op*8, out*128, uvdatop*12, version*72
 
       external  versan
@@ -182,7 +186,10 @@ c
       if (op.ne.'uvout') call keya('in',in,' ')
       if (op.ne.'print') call keya('out',out,' ')
 
-      if (op.eq.'uvin') call GetVel(velsys,altr,altrval,altrpix)
+      if (op.eq.'uvin')  then
+        call GetVel(velsys,altr,altrval,altrpix)
+        call keyr('evector',evector,-999)   
+      endif
       if (op.eq.'xyout') call BoxInput('region',in,boxes,MAXBOXES)
 c
 c  Get options.
@@ -207,7 +214,7 @@ c  Handle the five cases.
 c
       if (op.eq.'uvin') then
         call uvin(in,out,velsys,altr,altrpix,altrval,dochi,
-     *                          compress,lefty,varwt,dobl,version)
+     *                       compress,lefty,varwt,dobl,evector,version)
       else if (op.eq.'uvout') then
         call uvout(out,version)
       else if (op.eq.'xyin') then
@@ -381,12 +388,12 @@ c-----------------------------------------------------------------------
 c***********************************************************************
 
       subroutine uvin(in,out,velsys,altr,altrpix,altrval,dochi,
-     *                        compress,lefty,varwt,dobl,version)
+     *                        compress,lefty,varwt,dobl,evector,version)
 
       character in*(*),out*(*)
       integer velsys
       logical altr,dochi,compress,lefty,varwt,dobl
-      real altrpix,altrval
+      real altrpix,altrval,evector
       character version*(*)
 c-----------------------------------------------------------------------
 c  Read in a UV FITS file.
@@ -404,6 +411,7 @@ c    lefty      Assume the antenna table uses a left-handed system.
 c    varwt      Interpret the visibility weight as the reciprocal of the
 c               noise variance.
 c    dobl       Apply AIPS baseline-dependent calibration.
+c    evector    pre-set evector if between -180 and 180
 c-----------------------------------------------------------------------
       include 'maxdim.h'
       integer PolXX,PolYY,PolXY,PolYX
@@ -462,7 +470,7 @@ c  Load antenna, source and frequency information.  Set frequency
 c  information.
 c
       call TabLoad(lu,uvSrcId.ne.0,uvFreqId.ne.0,
-     *        telescop,anfound,Pol0,PolInc,nif,dochi,lefty,
+     *        telescop,anfound,Pol0,PolInc,nif,dochi,lefty,evector,
      *        nants)
       call TabVeloc(velsys,altr,altrval,altrpix)
 c
@@ -1396,10 +1404,11 @@ c
 c***********************************************************************
 
       subroutine TabLoad(lu,dosu,dofq,tel,anfound,Pol0,PolInc,nif0,
-     *  dochi,lefty,numants)
+     *  dochi,lefty,evector,numants)
 
       integer lu,Pol0,PolInc,nif0
       logical dosu,dofq,anfound,dochi,lefty
+      real    evector
       character tel*(*)
       integer numants
 c-----------------------------------------------------------------------
@@ -1418,6 +1427,7 @@ c    lu         Handle of the input FITS file.
 c    dosu,dofq  Expect a multisource/multi-freq file.
 c    dochi      Attempt to compute the parallactic angle.
 c    lefty      Assume the antenna table uses a left-handed system.
+c    evector    Pre-set evector if -180..180
 c  Output:
 c    tel        Telescope name.
 c    anfound    True if antenna tables were found.
@@ -1510,7 +1520,7 @@ c
 c  Set default values for reference freq, lat, long, mount, evector.
 c  Also determine the only values for systemp and jyperk.
 c
-      call telpar(telescop,systemp,systok,jyperk,jok,
+      call telpar(telescop,evector,systemp,systok,jyperk,jok,
      *  llok,lat,long,emok,evec,mount)
       if (.not.emok .and. dochi) call bug('w',
      *  'Insufficient information to determine parallactic angle')
@@ -2215,13 +2225,13 @@ c
 
 c***********************************************************************
 
-      subroutine telpar(telescop,systemp,systok,jyperk,jok,
+      subroutine telpar(telescop,evector,systemp,systok,jyperk,jok,
      *        latlong,latitude,longitud,polinfo,chioff,mount)
 
       character telescop*(*)
       integer mount
       double precision latitude,longitud
-      real chioff,systemp,jyperk
+      real chioff,systemp,jyperk,evector
       logical latlong,polinfo,systok,jok
 c-----------------------------------------------------------------------
 c  Determine default characteristics of the observatory (in case
@@ -2229,6 +2239,7 @@ c  no AIPS AN file exists).
 c
 c  Input:
 c    telescop   Telescope name.
+c    evector    Pre-set evector if -180..180
 c  Output:
 c    systok     True if systemp has been initialised.
 c    systemp    Typical system temperature.
@@ -2281,19 +2292,24 @@ c
         endif
 c
 c  Latitude, longitude, evector and mount type.
-c
+c<
         call obspar(telescop,'latitude',latitude,latlong)
         call obspar(telescop,'longitude',longitud,ok)
         latlong = latlong .and. ok
 c
-c  Mount and evector.
+c  Mount and evector. - or get evector from command line
 c
-        call obspar(telescop,'evector',dtemp,ok)
-        if (ok) then
-          chioff = dtemp
+        if (-180.le.evector .and. evector.le.180) then
+            call output('  Assuming feed angle from evector=')
+            chioff = evector
         else
-          chioff = 0
-          call output('  Assuming feed angle is 0 degrees')
+          call obspar(telescop,'evector',dtemp,ok)
+          if (ok) then
+            chioff = dtemp
+          else
+            chioff = 0
+            call output('  Assuming feed angle is 0 degrees')
+          endif
         endif
         call obspar(telescop,'mount',dtemp,polinfo)
         if (polinfo) mount = nint(dtemp)
