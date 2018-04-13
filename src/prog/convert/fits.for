@@ -52,7 +52,11 @@ c@ stokes
 c       Normal Stokes selection, used when op=uvout
 c@ evector
 c       If given, override the evector value that is normally obtained
-c       from the telescope info.      
+c       from the telescope info. For some arrays (e.g. ALMA) this information
+c       is not stored in the data stream, and in the case of ALMA is band
+c       dependant.      
+c       Units need to be degrees.
+c       By default telescope info should return the value.
 c@ options
 c       These options applies for op=uvin only.
 c         compress Store the data in compressed uv format.
@@ -2301,7 +2305,7 @@ c  Mount and evector. - or get evector from command line
 c
         if (-180.le.evector .and. evector.le.180) then
             call output('  Assuming feed angle from evector=')
-            chioff = evector
+            chioff = evector / 57.29577951308232
         else
           call obspar(telescop,'evector',dtemp,ok)
           if (ok) then
