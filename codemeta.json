@@ -1,0 +1,41 @@
+{
+    "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+    "@type": "SoftwareSourceCode",
+    "name": "MIRIAD: Multi-channel Image Reconstruction, Image Analysis, and Display",
+    "description": "MIRIAD is a radio interferometry data-reduction package, designed for taking raw visibility data through calibration to the image analysis stage. It has been designed to handle any interferometric array, with working examples for BIMA, CARMA, SMA, WSRT, and ATCA. A separate version for ATCA is available, which differs in a few minor ways from the CARMA version.",
+    "identifier": "ascl:1106.007",
+    "author": [
+        {
+            "@type": "Person",
+            "givenName": "Robert J.",
+            "familyName": "Sault",
+            "id": "PLACEHOLDER: Add ORCID (https://orcid.org/xxxxxx) here"
+        },
+        {
+            "@type": "Person",
+            "givenName": "Peter",
+            "familyName": "Teuben",
+            "id": "PLACEHOLDER: Add ORCID (https://orcid.org/xxxxxx) here"
+        },
+        {
+            "@type": "Person",
+            "givenName": "Melvyn C. H",
+            "familyName": "Wright",
+            "id": "PLACEHOLDER: Add ORCID (https://orcid.org/xxxxxx) here"
+        }
+    ],
+    "citation": "https://ui.adsabs.harvard.edu/abs/2011ascl.soft06007S",
+    "relatedLink": [
+        "http://carma.astro.umd.edu/miriad/"
+    ],
+    "codeRepository": "PLACEHOLDER: Add code repository here",
+    "referencePublication": [
+        {
+            "@type": "ScholarlyArticle",
+            "url": "http://adsabs.harvard.edu/abs/1995ASPC...77..433S",
+            "id": "PLACEHOLDER: Add DOI (https://doi.org/xxxxxx) here"
+        }
+    ],
+    "version": "PLACEHOLDER: Add version here",
+    "license": "PLACEHOLDER: Add license (ideally as a URL to the SPDX page - e.g. https://spdx.org/licenses/MIT.html) here"
+}
