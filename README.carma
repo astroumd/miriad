@@ -19,7 +19,11 @@ you should use the "cd $MIR; cvs update" method for, mostly because
 the fluxes and baseline files have been updated.
 
 A github version is maintained in https://github.com/pkgw/carma-miriad
-but the umd-CVS version is the official version. 
+but the umd-CVS version is the official version. This version was cloned
+into github as https://github.com/astroumd/miriad.  As of this writing
+it is unclear how we can sync these two versions, but seems to be a
+feature of how MIRIAD was developed spiced with the NIH syndrome,as
+there are at least 3 more versions of MIRIAD in the wild.
 
 
 The preferred way to fork and contribute to GITHUB would be
@@ -41,5 +45,6 @@ git push origin test123
 Pull requests can then be sent from this branch.
 
 					Peter Teuben
-					teuben@astro.umd.edu
+					teuben@umd.edu
 					August 2013
+					May 2020
