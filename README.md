@@ -1,18 +1,19 @@
 #  MIRIAD
 
-MIRIAD (the Multichannel ....) was originally developed for BIMA, and
-has been adopted for a number of radio telescopes (CARMA, SMA, WSRT,
-ATNF and perhaps more).  Sadly each of these has clones and diverged
-from the original version of MIRIAD.  So be it.  This is the original
-BIMA/CARMA version, as originally developed by Bob Sault in the late
-80s. 
-
+MIRIAD (Multi-channel Image Reconstruction, Image Analysis, and
+Display) was originally developed for BIMA, and has been adopted and
+expanded for a number of radio telescopes arrays (CARMA, SMA, WSRT,
+ATNF and perhaps more).  Sadly each of these have cloned and diverged
+from the original version of MIRIAD.  So be it. What you see here is
+the original BIMA/CARMA version, as originally developed by Bob Sault
+in the late 80s and was actively used for CARMA until 2015, and is still
+in some use.
 
 
 # Installation
 
-We have a csh script **install_miriad** and a much simpler bare bones
-**install_miriad.sh**. They may contain helpful comments to get you
+We have a csh script **[install_miriad](docs/install_miriad)** and a much simpler bare bones
+**[install_miriad.sh](docs/install_miriad.sh)**. They may contain helpful comments to get you
 past some hurdles, but here are briefly the steps on a linux machine,
 extracted from those scripts:
 
@@ -20,7 +21,7 @@ extracted from those scripts:
       cd miriad
       install/install.miriad gfortran=1  generic=1 gif=1 telescope=carma
 
-This installation will take about 3 minutes, and usually takes up about 
+This installation will take about 5 minutes, and usually takes up about 
 
 # Requirements
 
