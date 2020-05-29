@@ -1,0 +1,264 @@
+#! /bin/csh -f
+#
+#   Example script that assembles miriad from scratch and compiles (git version)
+#
+#
+#   Examples of use:
+#
+#   ./install_miriad                            install old-style
+#   ./install_miriad auto=1 reuse=1             install new-style inside old
+#   ./install_miriad auto=1                     install new-style
+#   ./install_miriad reuse=2                    install old-style wget
+#   ./install_miriad reuse=3                    install old-style local
+#   ./install_miriad auto=1 dist=1              only create a tar ball
+#
+#   Typical use for a binary install with ds9 and karma tools:
+#
+#BB#! /bin/csh -f
+#BB   unsetenv CVSROOT
+#BB   set tar=miriad_linux64_u12_gfortran.tar.gz
+#BB   rm -rf miriad
+#BB   ./test_a_new_miriad_cvs gfortran=1 generic=1 casa=0 
+#BB   source miriad/miriad_start.csh
+#BB   cp ds9/*  $MIRBIN
+#BB   cp ./test_a_new_miriad_cvs do1g miriad/tmp
+#BB   miriad/install/install.karma $MIR/borrow
+#BB   tar zcf     $tar  miriad
+#BB#  grep ^#BB test_a_new_miriad_cvs | sed s/#BB//
+#
+#   dark-ages    -- written                      Peter Teuben
+#   23-nov-05    added to CVS                    PJT
+#   14-sep-06    added compile.generic support, can also re-compile current tree	PJT
+#   23-jun-07    autotools based option to install                                      PJT
+#    8-oct-07    fixed minor VERSION reporing bug
+#    3-jun-08    optionally work from tar file with reuse=2
+#   15-may-09    only remove old rootdir when present
+#   11-jul-09    optionally grab a (local) file, optionally intel/gfortran
+#   10-jun-10    handle gif, add test for autobuild
+#    9-jul-10    add drpacs
+#   30-sep-10    fix forced fortran compiler selection for new-style
+#    6-oct-10    optional autotools pre-install (tools=0 remains default)
+#   19-nov-10    added m4 and flex to 'tools=1'  (useful for strict wcslib)
+#    3-jun-11    telescope= ,  gfortran=1 now default
+#   17-jun-11    add MIS pipeline (successor to drpacs)
+#   27-jun-11    add gold=0 default, to counter ld memory hog problems
+#   20-jul-11    add carmacookbook - hey, it's moonlanding #1 anniversary
+#    8-jun-12    various changes for school12
+#    4-jun-13    casa/carmafiller option (only works on linux?)
+#   29-may-2020  Converted for usage of git (MIRIAD V6)
+#----
+
+
+#   new auto tools based? And if so, should a distribution tar ball be created?
+set auto=0
+set tools=0
+set dist=0
+set build=build
+
+#   this should be a local directory, it will fail now if you
+#   give an absolute address
+#   
+set rootdir=miriad
+
+#   use autoconf generated compile.generic file (old style)
+set generic=1
+
+#   reuse the current rootdir directory, instead of removing it (0=git, 1=reuse the rootdir, 2=tar)
+set reuse=0
+
+#   brief will only do miriad, no other stuff (wip, rad ...)
+set brief=0
+
+#   pick a valid telescope  (telescope=test is useful for low memory compilations)
+set telescope=carma
+
+# pick a compiler (gfortran, intel, g77, g95) or trust a default
+set gfortran=1
+set intel=0
+set gold=0
+
+# sigh, some old gfortran cannot do gif, but default we try
+set gif=1
+
+# grab precompiled manuals
+set man=1
+
+# MIRDEBUG/debug
+set debug=0
+
+# DSO linking hack
+set dsolink=0
+
+# CASACORE/carmafiller
+set casa=0
+
+#   tar file to grab from ftp (rootdir)
+set ftpdir=ftp://ftp.astro.umd.edu/pub/carma
+set ftp=ftp://ftp.astro.umd.edu/progs/bima/miriad.tar.gz
+set autotools=(m4-1.4.15.tar.gz autoconf-2.68.tar.gz automake-1.11.1.tar.gz libtool-2.4.tar.gz  flex-2.5.35.tar.gz )
+set manuals=(userguide_US.pdf progguide_US.pdf carmacookbook.pdf)
+
+#   options directly passed to install.miriad
+set opts=()
+#set opts=(intel=1 bench=32,512,1)
+#set opts=(intel=1)
+
+#   set a branch (-r <something>) or date (-D <something>)   [CVS only]
+set branch=()
+#set branch=(-r MIR3)
+#set branch=(-r mir_3_1_1)
+#set branch=(-D 12/25/04)
+
+# set these if you don't want the system to try and figure it out
+# for now CXX is not used, but for good measure, use it
+# setenv CC  /usr/bin/gcc
+# setenv CXX /usr/bin/g++
+# setenv F77 /usr/bin/g77
+
+foreach arg ($*)
+  set $arg
+end
+
+if ($gfortran) set opts=(gfortran=1 $opts)
+if ($intel)    set opts=(intel=1    $opts)
+if ($debug)    set opts=(debug=1    $opts)
+if ($dsolink)  set opts=(dsolink=1  $opts)
+
+if ($?MIR) then
+  echo Cannot test if a MIR environment has been set 
+  echo MIR=$MIR
+  exit 1
+endif
+
+if ($gold == 0 && -e /usr/bin/gold) then
+  echo Warning: your linking might benefit from setting gold=1
+  echo Unless you have plenty of memory. Check your compile logs.
+endif
+
+if ($gfortran) then
+   if ($?F77) then
+      echo Overriding $F77 for gfortran
+   endif
+   setenv F77 gfortran
+   setenv CC  gcc
+   setenv CXX g++
+else if ($intel) then
+   if ($?F77) then
+      echo Overriding $F77 for intel
+   endif
+   setenv F77 ifort
+   setenv CC  icc
+   setenv CXX icc
+endif
+
+if ($?F77) then
+   echo Note: using F77=$F77 for fortran compiler
+endif
+
+if ($reuse == 0) then
+  echo "Using git"
+  if (-d $rootdir) then
+    echo -n "Removing your local $rootdir in 2 seconds..." 
+    sleep 2
+    rm -rf $rootdir
+    echo "...done".
+  endif
+  if ($brief == 0) then
+    echo "getting miriad,wip and rad via git"
+    git clone https://github.com/astroumd/miriad $rootdir
+    #(cd $rootdir/borrow; cvs -Q co wip rad drpacs mis)
+    #(cd $rootdir/borrow; cvs -Q co -d tkrun nemo/src/tools/tkrun)
+    if (0) then
+	echo "getting precompiled manuals"
+	pushd $rootdir/manuals
+	foreach m ($manuals)
+	wget $ftpdir/$m >& /dev/null
+	end
+	popd
+    endif
+  else
+    echo "getting miriad only git....".
+    git clone https://github.com/astroumd/miriad miriad    
+  endif
+else if ($reuse == 2) then
+  if (-d miriad) then
+    echo ERROR: miriad exists, cannot overwrite from tar file
+    exit 1
+  endif
+  wget -O - $ftp | tar zxf  -
+  if ($rootdir != miriad) then
+    mv miriad $rootdir
+  endif
+else if ($reuse == 3) then
+  if (-d miriad) then
+    echo ERROR: miriad exists, cannot overwrite from tar file
+    exit 1
+  endif
+  if (! -e $ftp:t) then
+    echo ERROR: ftp=$ftp:t not found
+    exit 1
+  endif
+  tar zxf $ftp:t
+  if ($rootdir != miriad) then
+    mv miriad $rootdir
+  endif
+else
+  if (! -e $rootdir) then
+    echo No directory $rootdir
+    exit 1
+  else
+    echo Reusing $rootdir
+  endif
+endif
+
+if (-e  $rootdir/src/tools/ercmd.c) rm $rootdir/src/tools/ercmd.c
+
+if ($auto) then
+ cd $rootdir
+ if ($tools) then
+   mkdir -p tmp
+   set adir=`pwd`/opt
+   set alog=`pwd`/tmp/autotools.$$.log
+   set path=($adir/bin $path) ; rehash
+   echo Installing autotools     >& $alog
+   foreach t ($autotools)
+     wget $ftpdir/tools/$t      >>& $alog
+     tar zxf $t
+     pushd $t:r:r
+     ./configure --prefix=$adir >>& $alog
+     make                       >>& $alog
+     make install               >>& $alog
+     popd
+     rehash
+   end
+ endif
+ # on the mac....
+ if (-e /Applications) setenv LIBTOOLIZE glibtoolize
+ if (! -e configure) ./autogen.sh
+ if ($dist) then
+    echo Creating $rootdir.tar.gz for new style build
+    (cd ..; tar zcf  $rootdir.tar.gz  $rootdir)
+    exit 0
+ endif
+ ./configure --prefix=`pwd`/$build
+ make
+ make install
+ source automiriad.csh
+ (mkdir tmp; cd tmp ; ../install/mir.test; ../install/mir.tests)
+
+else
+ cd $rootdir
+ time install/install.miriad $opts generic=$generic gif=$gif brief=$brief telescope=$telescope
+ if ($casa) then
+    echo "Installing casacore and carmafiller....; this will take a while"
+    source miriad_start.csh
+    time install/install.carmafiller >& tmp/casacore.log
+ endif
+endif
+
+#    patch the VERSION
+set version=(`cat VERSION`)
+echo "$version - [automated build `date`]" > VERSION
+
+
+
