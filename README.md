@@ -12,17 +12,20 @@ BIMA/CARMA version, as originally developed by Bob Sault in the late
 # Installation
 
 We have a csh script **install_miriad** and a much simpler bare bones
-**install_miriad.sh**, but they may contain helpful comments to get you
-past some hurdles.   These are briefly the steps on a linux machine:
+**install_miriad.sh**. They may contain helpful comments to get you
+past some hurdles, but here are briefly the steps on a linux machine,
+extracted from those scripts:
 
       git clone https://github.com/astroumd/miriad
       cd miriad
       install/install.miriad gfortran=1  generic=1 gif=1 telescope=carma
 
+This installation will take about 3 minutes, and usually takes up about 
+
 # Requirements
 
 The following tools should be present:  a Fortran and C compiler, make,
-csh, git, development libraries for X11
+csh, git, development libraries for X11, optionally automake and pgplot library.
 
 ## Ubuntu
 
@@ -36,7 +39,9 @@ Optionals:
 
 ## Centos
 
-# Versions
+Native pgplot needs a special install. Not tested.
+
+# History
 
 * V1 Original BIMA - Bob Sault (1987-1990)
 * V2 BIMA - RCS based (1990-2000)
