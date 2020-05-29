@@ -33,3 +33,7 @@ note: the VERSION and configure.ac file should contain the current version.
 
 ATNF miriad:    http://www.atnf.csiro.au/computing/software/miriad/
 ------------
+
+5.x             Never released - the MIR5 branch was meant to merge the ATNF and CARMA versions
+
+6.0.0  29may20  Moved the repo from CVS to GIT, finally. 
