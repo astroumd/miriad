@@ -88,17 +88,17 @@ def miriad(command,log=0,fatal=1):
     else:
         mycmd = cmd(command) + _logger;
     # debug
-    print "MIRIAD% ",cmd(command)
+    print("MIRIAD% ",cmd(command))
     retval = os.system(mycmd)
     if retval:
-        print "###: Error %d from %s" % (retval,command[0])
+        print("###: Error %d from %s" % (retval,command[0]))
         if fatal:
             os._exit(retval)
 
 def setlogger(log,append=0):
     """ set the logfile for the miriad() function. By default any old logfile is removed"""
     global _logger, _argv
-    print "setlogger: default logfile now " + log
+    print("setlogger: default logfile now " + log)
     _logger = '>> %s 2>&1' % log
     if append==0:
         zap(log)
@@ -109,7 +109,7 @@ def setlogger(log,append=0):
         fp.close()
         _argv = ""
     else:
-        print "WARNING: no argv???"
+        print("WARNING: no argv???")
 
 
 
@@ -126,9 +126,9 @@ def keyini(keyval,usage,show=0,gui=0):
        @return None"""
     global _quit, _mkeyval, _help, _debuglevel, _argv
 
-    print "%s: PYRAMID Version %s" % (sys.argv[0],_version)
+    print("%s: PYRAMID Version %s" % (sys.argv[0],_version))
     _help = keyval.copy()
-    for key in _help.keys():  # Parse for help comments if any
+    for key in list(_help.keys()):  # Parse for help comments if any
        idx = _help[key].find('\n')
        if idx >= 0: # Found help comment
           _help[key] = _help[key][idx+1:].strip()
@@ -155,7 +155,7 @@ def keyini(keyval,usage,show=0,gui=0):
             val = arg[i+1:]
             if len(val) == 0:
                error('keyword %s cannot have a blank value!' %key)
-            elif keyval.has_key(key):
+            elif key in keyval:
                 keyval[key] = val
             elif key == "help":
                 _quit=1
@@ -184,15 +184,15 @@ def check_required():
    usage="Usage: %s " %sys.argv[0]
    _missing=0
 
-   if '???' in _mkeyval.values():
-      print "### Fatal Error! Insufficient parameters.  Try --help or -h."
-      for i in _mkeyval.keys():
+   if '???' in list(_mkeyval.values()):
+      print("### Fatal Error! Insufficient parameters.  Try --help or -h.")
+      for i in list(_mkeyval.keys()):
          if _mkeyval[i]=='???':
             usage=usage+"%s=??? " %i
             _missing=_missing+1
-      if len(_mkeyval.keys())>_missing:
+      if len(list(_mkeyval.keys()))>_missing:
          usage=usage+"..."
-      print usage
+      print(usage)
       os._exit(0)
 
 def at_file(filename):
@@ -223,7 +223,7 @@ def keya(key):
    """return keyword value as a string and will give an error message if they
       keyword does not exist."""
    
-   if _mkeyval.has_key(key):
+   if key in _mkeyval:
       return _mkeyval[key]
    else:
       error('Invalid keyword "%s"!' %key)
@@ -290,16 +290,16 @@ def show_keyval(keyval,help=0,quit=0):
        one is present."""
 
     if help!=0:
-      if help.has_key('_msg_'):
-      	 print help['_msg_']
-    print "------------------------------------------------------------"
-    for k in keyval.keys():
+      if '_msg_' in help:
+      	 print(help['_msg_'])
+    print("------------------------------------------------------------")
+    for k in list(keyval.keys()):
        if k != '_msg_':   
           if help != 0:
-             print k + '=' + keyval[k] + '  '+help[k]
+             print(k + '=' + keyval[k] + '  '+help[k])
           else:
-             print k + '=' + keyval[k]
-    print "------------------------------------------------------------"
+             print(k + '=' + keyval[k])
+    print("------------------------------------------------------------")
     if quit:
         os._exit(0)
 
@@ -325,7 +325,7 @@ def dprint(level,text):
    except ValueError:
       error('%s is not a valid integer' %str(level))
    if x <= _debuglevel:
-      print text
+      print(text)
 
 def zap(file):
     """ remove a possibly existing miriad dataset (no wildcards)"""
@@ -343,7 +343,7 @@ def cmd(cmdlist,debug=0):
     str = cmdlist[0] 
     for arg in cmdlist[1:]:
         str = str + ' ' +  arg
-    if debug: print str
+    if debug: print(str)
     return str
 
 def doc(task):
@@ -380,7 +380,7 @@ def grepcmd(cmd,word,index=0):
             sa=string.split(s)
             # print 'Match ' + word + '=>' + sa[index]
             return sa[index]
-    print 'No match on' + word
+    print('No match on' + word)
     return "no-match"
 
 def greplog(log,word,index=0):
@@ -394,7 +394,7 @@ def greplog(log,word,index=0):
             sa=string.split(s)
             # print 'Match ' + word + '=>' + sa[index]
             return sa[index]
-    print 'No match on' + word
+    print('No match on' + word)
     return "no-match"
 
 class PGPLOTDeviceName(object):
@@ -412,7 +412,7 @@ class PGPLOTDeviceName(object):
         self.n = n
     def getn(self):
         return self.n
-    def next(self):
+    def __next__(self):
         self.n = self.n + 1
         if self.findp >= 0:
             dev = self.device % self.n
@@ -441,12 +441,12 @@ class Timer:
         self.timec.append(time.clock())
         self.timet.append(time.time())
     def show(self):
-        print "Currently have %d entries" % self.n
-        print time.clock()
-        print time.time()
+        print("Currently have %d entries" % self.n)
+        print(time.clock())
+        print(time.time())
     def showall(self):
-        print self.timec
-        print self.timet
+        print(self.timec)
+        print(self.timet)
     def clock(self,i):
         return self.timec[i]
     def time(self,i):
@@ -459,6 +459,6 @@ class Timer:
 
 #   If executed... probably they are in an interactive python shell
 if __name__ == '__main__':
-   print """This program provides commandline argument reading
+   print("""This program provides commandline argument reading
    for the various python programs.  It is not intended to be
-   used as a standalone program."""
+   used as a standalone program.""")
