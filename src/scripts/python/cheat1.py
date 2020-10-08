@@ -16,6 +16,7 @@ except:
 def mirread(mfile):
     cmd = "fits in=%s out=%s/fits op=xyout" % (mfile,mfile)
     os.system(cmd)
+    #  @todo if user has no write permission, should find some /tmp/ place
     hdu = fits.open("%s/fits" % mfile)
     h = hdu[0].header
     d = hdu[0].data
