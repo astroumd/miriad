@@ -20,6 +20,7 @@ def mirread(mfile):
     h = hdu[0].header
     d = hdu[0].data
     hdu.close()
+    #   @todo    should os.remove("%s/fits" % mfile)
     return(h,d)
 
 
