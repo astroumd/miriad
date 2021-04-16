@@ -51,6 +51,8 @@ This installation will take about 5 minutes, and usually takes up 300-400MB.
 
 The following tools should be present:  a Fortran and C compiler, make,
 csh, git, development libraries for X11, optionally automake and pgplot library.
+It is recommended to use the native pgplot, not the pgplot that miriad contains,
+because the former now supports PNG's.
 
 ## Ubuntu
 
