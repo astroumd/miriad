@@ -2,7 +2,7 @@ C-----------------------------------------------------------------------
 C
 C                     SUBROUTINE RPFITSOUT
 C
-C $Id$
+C $Id: rpfitsout.f,v 1.35 2015/01/19 05:13:00 rey052 Exp $
 C-----------------------------------------------------------------------
       subroutine RPFITSOUT (jstat, vis, weight, baseline, ut, u, v,
      +   w, flag, bin, if_no, sourceno)
@@ -54,6 +54,10 @@ C-----------------OTHER BITS & PIECES-----------------------------------
       equivalence (i_grphdr(1), grphdr(1))
       equivalence (sc_buf(1), sc_cal(1,1,1))
 
+      common /filelun/ lun
+
+      save buffer, bufptr
+
 C-------------------TEMPLATE FOR RPFITS HEADERS-------------------------
 
       integer    ACTUALDIM, MAX_HEADER
@@ -64,7 +68,7 @@ C-------------------TEMPLATE FOR RPFITS HEADERS-------------------------
       integer   ichr(640), j
       character mout(32)*80
       real      chr(640)
-      equivalence (ichr, chr)
+      equivalence (ichr, chr, mout)
 
       data illegal /32768/
       data bufptr  /1/
@@ -160,8 +164,6 @@ C-------------------TEMPLATE FOR RPFITS HEADERS-------------------------
      + 'PMRA    =                    0  / Proper motion RA (sect/day)',
      + 'PMDEC   =                    0  / Proper motion DEC (asec/day)',
      + 'PMEPOCH =                    0  / Ref epoch for proper motion'/
-
-      common /filelun/ lun
 
 C---------------------DECIDE ON FUNCTION--------------------------------
 
@@ -455,7 +457,8 @@ C        Write it all out.
             do j = 1, 32
                mout(j) = m(j + 32*(i-1))
             end do
-            read (mout, '(32(20a4,:,/))') (ichr(j), j=1,640)
+C           'ichr', 'chr' and 'mout' are equivalenced
+C           read (mout, '(32(20a4,:,/))') (ichr(j), j=1,640)
             rp_iostat = AT_WRITE (lun, chr, length)
             if (rp_iostat.ne.0) then
                jstat = -1
@@ -506,7 +509,7 @@ C     Flush buffer.
          do j = 1, 32
             mout(j) = m(j + 32*(i-1))
          end do
-         read (mout, '(32(20a4,:,/))') (ichr(j), j=1,640)
+C        'ichr', 'chr' and 'mout' are equivalenced
          rp_iostat = AT_WRITE (lun, chr, length)
          if (rp_iostat.ne.0) then
             jstat = -1

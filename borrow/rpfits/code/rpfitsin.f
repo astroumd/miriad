@@ -8,7 +8,7 @@ C
 C     Programmer: Ray Norris
 C     Date: 25 April 1985
 C
-C     $Id$
+C     $Id: rpfitsin.f,v 1.48 2018/10/26 03:03:37 wie017 Exp $
 C-----------------------------------------------------------------------
 
       subroutine RPFITSIN (jstat, vis, weight, baseline, ut, u, v, w,
@@ -831,9 +831,9 @@ C-----------------------------------------------------------------------
       include 'rpfits.inc'
 
       logical   ILLPARM
-      integer   baseline, bin, bufptr, flag, grpptr, i_grphdr(640),
+      integer   baseline, bin, bufptr, flag, grpptr, i_grphdr(11),
      :          iant, if_no, iif, iq, jstat, lun, pcount, sourceno
-      real      grphdr(640), buffer(640), rbase, u, v, w, ut
+      real      grphdr(11), buffer(640), rbase, u, v, w, ut
 
 C     First 5 parameters are always there - you hope!
       call VAXR4 (grphdr(grpptr),   u)

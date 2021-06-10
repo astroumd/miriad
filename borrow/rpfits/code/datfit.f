@@ -23,7 +23,7 @@
 *         at least once at the ATCA on 18/11/1998 when the date format
 *         was changed from DD/MM/YY to YYYY-MM-DD.
 *
-* $Id$
+* $Id: datfit.f,v 1.10 2006/10/25 01:48:04 cal103 Exp $
 *-----------------------------------------------------------------------
       INTEGER   IMON, IDAY, IYEAR, IERR
       CHARACTER INDATE*8, NEWDAT*12, OLDDAT*(*)

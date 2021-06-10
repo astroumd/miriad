@@ -34,7 +34,7 @@
 *   same address, e.g. CALL IV2B (B, B) is allowed.
 *
 *   Original: 1997/08/20 MRC
-*   $Id$
+*   $Id: dconv.f,v 1.6 2007/05/04 02:27:54 cal103 Exp $
 *=======================================================================
 *   Two's complement integer representation
 *-----------------------------------------------------------------------

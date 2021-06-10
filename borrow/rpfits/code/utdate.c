@@ -4,7 +4,7 @@
 *   Fortran intrinsics TIME and GMTIME for use by DATFIT.
 *
 *   Author: Mark Calabretta, Australia Telescope National Facility
-*   $Id$
+*   $Id: utdate.c,v 1.1 2006/10/25 01:50:07 cal103 Exp $
 *===========================================================================*/
 
 #include <time.h>

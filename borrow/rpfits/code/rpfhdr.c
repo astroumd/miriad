@@ -15,7 +15,7 @@
 * these are defined back to vanilla stdio calls.
 *
 * Original: 2006/06/28 by Mark Calabretta, ATNF
-* $Id$
+* $Id: rpfhdr.c,v 1.8 2010/02/04 05:16:16 cal103 Exp $
 *---------------------------------------------------------------------------*/
 
 char usage[] =
