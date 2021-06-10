@@ -16,7 +16,7 @@ C     3) Creation and writing of RPFITS files is normally done by the AT
 C        correlator which uses a linux system.  AT_CREATE,
 C        AT_REOPEN_WRITE and AT_WRITE are only here for testing.
 C
-C   $Id$
+C   $Id: atio.f,v 1.13 2007/07/16 01:11:50 cal103 Exp $
 C-----------------------------------------------------------------------
 
 
