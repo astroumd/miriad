@@ -164,6 +164,7 @@ c  2012jan03  pkgw  Convert FITS VOPT to MIRIAD FELO and vice versa
 c  2013mar05  pjt   Sanitize sourcename for uvin (no spaces)
 c  2016dec12  mwp   BPA should be written out even if zero.
 c  2018apr12  pjt/mchw  Deal with evector-less data, such as ALMA
+c  2021jun10  pjt   VRAD recognized so we get good km/s
 c-----------------------------------------------------------------------
       integer   MAXBOXES
       parameter (MAXBOXES=2048)
@@ -3798,7 +3799,8 @@ c     Get world coordinate information, convert units, and write out.
           crval(i) = crval(i) * 1d-9
           cdelt(i) = cdelt(i) * 1d-9
         else if (ctype(i)(1:4).eq.'VELO' .or.
-     *           ctype(i)(1:4).eq.'FELO') then
+     *           ctype(i)(1:4).eq.'FELO' .or.
+     *           ctype(i)(1:4).eq.'VRAD') then
           crval(i) = crval(i) * 1d-3
           cdelt(i) = cdelt(i) * 1d-3
         else if (ctype(i).eq.'STOKES') then
