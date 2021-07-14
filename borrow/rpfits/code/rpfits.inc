@@ -9,7 +9,7 @@ C
 C     DOUBLE PRECISION variables were also segregated into a separate
 C     COMMON block for reasons long forgotten.
 C
-C $Id$
+C $Id: rpfits.inc,v 1.20 2011/03/30 07:27:21 cal103 Exp $
 C-----------------------------------------------------------------------
 
 C     Maximum numbers that we can handle: antenna table (ant), RPFITS

@@ -18,7 +18,7 @@
 *                         suffixed with ', iostat =' and the number.
 *
 *     Original: 2008/09/11 Mark Calabretta
-*     $Id$
+*     $Id: rpferr.f,v 1.1 2008/09/11 06:36:57 cal103 Exp $
 *-----------------------------------------------------------------------
 
       character text*(*)

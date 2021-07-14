@@ -8,7 +8,7 @@
 *  DOUBLE PRECISION variables were also segregated into a separate COMMON
 *  block for reasons long forgotten.
 *
-* $Id$
+* $Id: RPFITS.h,v 1.9 2011/03/30 07:27:21 cal103 Exp $
 *---------------------------------------------------------------------------*/
 
 #ifndef ATNF_RPFITS_H

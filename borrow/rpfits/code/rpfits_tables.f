@@ -21,7 +21,7 @@
 *                               rp_iostat).
 *
 *     Original: Ray Norris 1988/09/29
-*     $Id$
+*     $Id: rpfits_tables.f,v 1.13 2011/03/29 03:53:36 cal103 Exp $
 *-----------------------------------------------------------------------
       include 'rpfits.inc'
 

@@ -8,7 +8,7 @@
 * C-library and unix system functions.
 *
 * Original: 2006/07/10 by Mark Calabretta, ATNF
-* $Id$
+* $Id: rpfex.c,v 1.6 2010/06/10 03:55:11 cal103 Exp $
 *---------------------------------------------------------------------------*/
 
 char usage[] =

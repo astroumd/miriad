@@ -10,7 +10,7 @@ C
 C        Refer to the notes in the prologue of the sun4sol version of
 C        atio.f for more information.
 C
-C   $Id$
+C   $Id: atio.f,v 1.13 2007/07/16 01:11:50 cal103 Exp $
 C-----------------------------------------------------------------------
 
 

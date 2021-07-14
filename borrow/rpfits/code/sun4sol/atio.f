@@ -23,7 +23,7 @@ C        Likewise, when opening a file for output, the SHARED keyword,
 C        necessary for realtime processing by the Parkes multibeam
 C        system, is ignored by SunOS.
 C
-C   $Id$
+C   $Id: atio.f,v 1.15 2007/07/16 01:11:50 cal103 Exp $
 C-----------------------------------------------------------------------
 
 

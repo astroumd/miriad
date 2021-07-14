@@ -3,7 +3,7 @@
                         --------------------
 
 File: RPFITS.DEFN
-$Id$
+$Id: rpfits.defn,v 1.14 2018/04/30 03:38:50 wie017 Exp $
 
    CONTENTS:
    --------
@@ -89,7 +89,7 @@ U,V,W    are the REAL*4 coordinates in metres
 FLAG     is an INTEGER*4 which is normally 0 for good data
 BIN      is an INTEGER*4 giving the pulsar bin number
 IF_NO    is a pointer to the IF table
-SOURCENO is a pointer to the SU table
+SOURCENO is a pointer to the SU or SX table
 
 These can all default to zero if not used.
 
@@ -134,10 +134,10 @@ b) Tables
 
 Tables are similar to headers in that they consist of a number of 80-character
 records, and start with the keyword TABLE and end with the keyword ENDTABLE.
-At present the following tables are used by RPFITS: Source (SU), IF, Index (NX),
-flag (FG), Antenna (AN), Meteorological (MT) and  Uncalibration (CU). However,
-in principle any number of tables can be inserted here, in any order. Each
-table must start with the line
+At present the following tables are used by RPFITS: Source (SU,SX), IF, Index 
+(NX), flag (FG), Antenna (AN), Meteorological (MT) and  Uncalibration (CU). 
+However, in principle any number of tables can be inserted here, in any order. 
+Each table must start with the line
 TABLE xxxx
 where xxxx is the name of the table, and must end with the line
 ENDTABLE
@@ -148,7 +148,7 @@ of table, as detailed in Appendix C.
 c) Data
 
 Data is written in binary real*4 format (VAX G_FLOATING)
-packed into the file with no gaps between diferent data. The data are divided
+packed into the file with no gaps between different data. The data are divided
 into groups. Each group of data represents all the data from the interferometer
 for one integration period and, in the case of multi-IF band data, for one IF.
 Thus, for multi-IF data, RPFITSOUT should be called once per IF (i.e. several
@@ -157,10 +157,17 @@ A new group will be written for each IF, and needn't be the same length. I.e.
 the length of each visibility group is no longer constant, but depends on the
 parameters associated with it.
 
+A data group may follow the scan header immediately, or, more typically, may 
+start at the beginning of the next 2560B data block. Likewise, the next data 
+group can (typically) follow the current one immediately, or be aligned to a 
+block start, leaving a gap after the end of the current group. To locate the 
+next data group, look for a valid data group immediately after the current scan 
+header or data group and, if not found, at the beginning of the next data block.
+
 The way the data are actually written out is as follows. Each data group
 consists of a number of header parameters followed by a hypercube of data.
 The number of header parameters is given by PCOUNT in the RPFITS scan header,
-and is usually either 5 or 9. In the latest version usually 5 or 10.
+and is usually 11 for normal data groups and 4 for calibration groups.
 
 The parameters are:
 	1) u in m (real*4)
@@ -182,7 +189,7 @@ Notes:
 	be inverted by RPLOD in AIPS.
 	ii) the flag may be set to 1 to flag bad data. It's normally
 	set to 0.
-	iii) the if_no and source_no point to the preceding IF and SU
+	iii) the if_no and source_no point to the preceding IF and SU or SX
 	tables respectively.
         iv) intbase is the integration time for the baseline.
         v) if this in present it overrides the value of data format in
@@ -335,7 +342,7 @@ The formal parameters when JSTAT=0 are as follows:
 	     IF_NO...... an IF channel number. Points to an entry in the
 			 preceding IF table
 	     SOURCENO... source number. Points to an entry in the
-			 preceding SU table
+			 preceding SU or SX table
 
 The array VIS
 		If there are NSTOK stokes parameters, and NFREQ
@@ -400,7 +407,8 @@ The formal parameters when JSTAT=0 are as follows:
 			 the pulsar BIN table.
 	     IF_NO...... an IF channel number. Points to an entry in the
 			 IF table
-	     SOURCENO... source number. Points to an entry in the SU table.
+	     SOURCENO... source number. Points to an entry in the SU or 
+                         SX table.
 
 The array VIS
 		If there are NSTOK stokes parameters, and NFREQ
@@ -433,7 +441,7 @@ C
 C     DOUBLE PRECISION variables were also segregated into a separate
 C     COMMON block for reasons long forgotten.
 C
-C $Id$
+C $Id: rpfits.defn,v 1.14 2018/04/30 03:38:50 wie017 Exp $
 C-----------------------------------------------------------------------
 
       INTEGER   ant_max, max_card, max_cu, max_fg, max_if, max_mt,
@@ -789,7 +797,7 @@ observations.
 		to 'MULTI'.
 
   Source or field centre information
-    SU_FOUND	True if an SU table was found, reset to false when a new
+    SU_FOUND	True if an SU or SX table was found, reset to false when a new
 		header is read.
     N_SU	Number of sources or fields.
     SU_NUM	Source number.
@@ -839,9 +847,9 @@ each IF band. The format is:
 
 TABLE IF
 HEADER     FREQ     INVERT    BW       NCHAN NSTOK TYPE SAM REF SIM CHAIN
-nnnaaaaaaaaaaaa.aaa bb cccccccccccc.ccc dddd ee ffgghhii j kkkk.k lllmm
-nnnaaaaaaaaaaaa.aaa bb cccccccccccc.ccc dddd ee ffgghhii j kkkk.k lllmm
-nnnaaaaaaaaaaaa.aaa bb cccccccccccc.ccc dddd ee ffgghhii j kkkk.k lllmm
+nnnaaaaaaaaaaaa.aaabbbccccccccccccc.cccdddddeee ffgghhiijjkkkkk.k lllmmm
+nnnaaaaaaaaaaaa.aaabbbccccccccccccc.cccdddddeee ffgghhiijjkkkkk.k lllmmm
+nnnaaaaaaaaaaaa.aaabbbccccccccccccc.cccdddddeee ffgghhiijjkkkkk.k lllmmm
 ENDTABLE
 
 where as many data records as necessary are included. n is the IF number,
@@ -856,13 +864,13 @@ lll is the simultaneous set
 mm is the down-converter chain used.
 
 The format for the data
-record is (I3,f16.3,1x,i2,1x,f16.3,1x,i4,1x,i2,1x,4a2,1x,i1,1x,f6.1,1x,i3,i2)
+record is (I3,f16.3,i3,f17.3,i5,i3,1x,4a2,i2,f7.1,1x,2i3)
 
 The data for the IF table in communicated to/from RPFITSOUT/RPFITSIN via the
 IF common, which is included in RPFITS.INC.
 
 
-C.2) The source (SU) table
+C.2) The source (SU or SX) table
 
 The SU table describes each of the sources or fields observed, and is of
 especial relevance when mosaicing. Its format is
@@ -885,6 +893,16 @@ calibrator.
 The pointing centre, if different from the phase centre, is not yet included
 in a table.
 The data for the source table is contained within the SU common in RPFITS.INC
+
+If the source table has more than 999 entries, the table is called SX and 
+an alternative format is used:
+
+TABLE SX
+HEADER NAME            RA2000     DEC2000    CALCODE  RA_DATE   DEC_DATE
+nnnn bbbbbbbbbbbbbbbb ccc.cccccccc ddd.dddddddd eeee ff.ffffffff gg.gggggggg
+nnnn bbbbbbbbbbbbbbbb ccc.cccccccc ddd.dddddddd eeee ff.ffffffff gg.gggggggg
+nnnn bbbbbbbbbbbbbbbb ccc.cccccccc ddd.dddddddd eeee ff.ffffffff gg.gggggggg
+ENDTABL
 
 
 C.3) The flag (FG) table
