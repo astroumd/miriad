@@ -231,7 +231,8 @@
 #endif
 
 #include <math.h>
-#include <rpc/rpc.h>
+//#include <rpc/rpc.h>    // in recent glibc header this was moved. Both redhat and ubuntu now  have issues finding it
+                          // which might be solved with the lib(n)tirpc-dev(el) - seems like a messy "upgrade" to me.
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
