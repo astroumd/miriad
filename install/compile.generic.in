@@ -55,8 +55,8 @@ endif
 #  DSO linking might need this patch for AS_NEEDED, X11 is the usual offender for libpgplot.so
 set X11=($need[1] -lX11 $need[2])
 setenv Fcompile  "@F77@"
-setenv Foptions  "-O $slib_flags"
-setenv FoptionsN "$slib_flags"
+setenv Foptions  "-O -std=legacy $slib_flags"
+setenv FoptionsN "-std=legacy $slib_flags"
 setenv Flinkdir  "-L`echo $mmir/lib/$mhost $MIRXLIB | sed 's/ / -L/g'`"
 setenv Flinklib  "$lfs -lmir -llinpack -lpgplot $wcslib $X11 -lm"
 setenv Finclude  "-I`echo $mmir/src/inc $MIRXINC | sed 's/ / -I/g'`"
