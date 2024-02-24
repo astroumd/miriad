@@ -15,3 +15,5 @@ bench:
 ## start:   make new miriad_start files for this location
 start:
 	./install/make_miriad_starts
+	@echo ""
+	@echo "You can now 'source miriad_start.sh' (the appropriate) start file to add MIRIAD to your shell"
