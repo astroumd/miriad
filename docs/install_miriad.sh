@@ -63,10 +63,12 @@ else
     git checkout $branch
 fi
 
-#                            default use the GNU compiler
-export F77=gfortran
-export  CC=gcc
-export CXX=g++
+#      default use the GNU compiler
+#      @todo some tools don't listen to this yet 
+export F77=${F77:-gfortran}
+export  FC=${FC:-gfortran}
+export  CC=${CC:-gcc}
+export CXX=${CXX:-g++}
 
 # if (-e  $rootdir/src/tools/ercmd.c) rm $rootdir/src/tools/ercmd.c
 time install/install.miriad gfortran=1  generic=1 gif=1 telescope=carma
