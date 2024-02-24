@@ -91,13 +91,11 @@ set sname=`uname -s`
 
 if ($sname == Linux) then
   echo MIRIAD installed on a Linux system
-  if (! -e /usr/bin/cvs) echo "Warning: cvs not present."
   if (! -e /usr/bin/make) echo "Warning: make not present."
   if (! -e /usr/bin/gfortran) echo "Warning: gfortran not present."
 else if ($sname == Darwin) then
   echo MIRIAD installed on a mac. Hold your breath...
   # check if Xcode installed
-  if (! -e /usr/bin/cvs) echo "Warning: cvs not present, did you not install Xcode?"
   if (! -e /usr/bin/make) echo "Warning: make not present, did you not install Xcode?"
   # check if HPC compiler installed
   if (! -e /usr/local/bin/gfortran) then
