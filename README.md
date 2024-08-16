@@ -9,6 +9,8 @@ the original BIMA/CARMA version, as originally developed by Bob Sault
 in the late 80s and was actively used for CARMA until 2015, and is still
 in some use.
 
+The CARMA pipeline (CADRE) can be found here:  https://github.com/astro-friedel/CADRE
+
 # Reference
 
 The original Sault et al. (1995) paper is https://ui.adsabs.harvard.edu/abs/1995ASPC...77..433S
