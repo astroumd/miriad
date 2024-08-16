@@ -26,8 +26,8 @@ else
   set gold=""
 endif
 setenv Fcompile  "gfortran"
-setenv Foptions  "$gold -O -fPIC"
-setenv FoptionsN "$gold -fPIC"
+setenv Foptions  "$gold -O -fPIC -std=legacy"
+setenv FoptionsN "$gold -fPIC -std=legacy"
 setenv Flinkdir  "-L`echo $mmir/lib/$mhost $MIRXLIB | sed 's/ / -L/g'`"
 setenv Flinklib  "$lfs -lmir -llinpack -lpgplot $wcslib -lX11 -lm"
 setenv Finclude  "-I`echo $mmir/src/inc $MIRXINC | sed 's/ / -I/g'`"

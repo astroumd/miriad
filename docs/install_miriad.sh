@@ -3,7 +3,7 @@
 #  new V6.0+ install
 #
 
-echo "install_miriad.sh:  Version 1.0 -- 29-may-2020"
+echo "install_miriad.sh:  Version 1.0 -- 28-jan-2023"
 
 opt=1
 miriad=miriad
@@ -49,16 +49,26 @@ fi
 
 date0=$(date)
 
-rm -rf $miriad
-git clone $url $miriad
-cd $miriad
-git checkout $branch
+if [ $miriad == "." ]; then
+    if [ -d .git ]; then
+	git pull
+    else
+	echo Not a miriad with git?
+	exit 0
+    fi
+else
+    rm -rf $miriad
+    git clone $url $miriad
+    cd $miriad
+    git checkout $branch
+fi
 
-
-#                            default use the GNU compiler
-export F77=gfortran
-export  CC=gcc
-export CXX=g++
+#      default use the GNU compiler
+#      @todo some tools don't listen to this yet 
+export F77=${F77:-gfortran}
+export  FC=${FC:-gfortran}
+export  CC=${CC:-gcc}
+export CXX=${CXX:-g++}
 
 # if (-e  $rootdir/src/tools/ercmd.c) rm $rootdir/src/tools/ercmd.c
 time install/install.miriad gfortran=1  generic=1 gif=1 telescope=carma
