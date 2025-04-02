@@ -3,12 +3,13 @@
 #  new V6.0+ install
 #
 
-echo "install_miriad.sh:  Version 1.0 -- 28-jan-2023"
+echo "install_miriad.sh:  Version 1.0 -- 2-apr-2025"
 
-opt=1
 miriad=miriad
 branch=master
-python=0
+opt=1           # TBD
+python=0        # TBD
+pgplot=0        # 0: borrow from system    1: build from our source
 url=https://github.com/astroumd/miriad
 
 help() {
@@ -35,6 +36,7 @@ echo "Using: "
 echo "  miriad=$miriad"
 echo "  branch=$branch"
 echo "  opt=$opt"
+echo "  pgplot=$pgplot"
 echo "  python=$python"
 echo "  url=$url"
 echo ""
@@ -71,7 +73,7 @@ export  CC=${CC:-gcc}
 export CXX=${CXX:-g++}
 
 # if (-e  $rootdir/src/tools/ercmd.c) rm $rootdir/src/tools/ercmd.c
-time install/install.miriad gfortran=1  generic=1 gif=1 telescope=carma
+time install/install.miriad gfortran=1  generic=1 gif=1 pgplot=$pgplot telescope=carma
 
 
 #    patch the VERSION
