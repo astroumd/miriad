@@ -16,6 +16,33 @@ char *catfil(int num);
 #include <stdlib.h>
 #include <string.h>
 
+
+#if 1
+        /*   prototypes for gcc-15 and up */
+void molselect_c(char *jplpath, int pathlen, int *mtag, char *nmline[], char *mname);
+void jpllinerd_c(double fmx, double fmn, double strl, int fnmol, int fmoltag[fnmol], char *mxnline[], float *freq, float *intensity, int *uqst, int *lqst, int *mtag);
+double stof(char *str, int len);
+int catfrq(int molec, char *cfreq, char *buff);
+int catrd(int molec, int line, char *buff);
+char *catfil(int num);
+int catlen(int molec);
+char *catdir(int molec, int *nline, double *qqln, int *iver);
+int nxtdir(int *molec);
+int getcat(char *buf, struct catdata *pdata);
+int readqn(const char *qnstr, short *iqn, const int n);
+int pcard(const char *card, double *val, const int nval, const int *fmtlen);
+void getword(char *word, char *line, int stop);
+char *makeword(char *line, int stop);
+char *fmakeword(FILE *f, int stop, int *cl);
+char x2c(char *what);
+void unescape_url(char *url);
+void plustospace(char *str);
+int rind(char *s, int c);
+int my_getline(char *s, int n, FILE *f);
+int send_fd(FILE *f, FILE *fd);
+int ind(char *s, int c);
+#endif
+
 #define OK 1
 
 char path[80];
@@ -30,7 +57,8 @@ char *mname;
 { int iver, moltag, i, nline, j, k, kp;
   char *molname, *catdir(), select[81], moln[16], mbuff[16*500];
   char *molnp;
-  float qrot[7];
+  //float qrot[7];
+  double qrot[7];
   extern char path[80];
   extern int length;
        sprintf(path, "%s", jplpath);
@@ -98,7 +126,8 @@ void jpllinerd_c(fmx,fmn,strl,fnmol,fmoltag,mxnline,freq,intensity,uqst,lqst,mta
   int outDR, outGUP, outTAG, outQNFMT, outQN1[6], outQN2[6];
   char *qbuff, stc, qstr[81];
   int nn, j, ibuff;
-  float qrot[7];
+  //float qrot[7];
+  double qrot[7];
   int uqsta[6][NLIM], lqstb[6][NLIM];
 /*    strlim = -500.; */
       
@@ -928,7 +957,7 @@ char *what;
   return (digit);
 }
 
-unescape_url(url)
+void unescape_url(url)
 char *url;
 {
   register int x, y;
@@ -942,7 +971,7 @@ char *url;
   url[x] = '\0';
 }
 
-plustospace(str)
+void plustospace(str)
 char *str;
 {
   register int x;
@@ -985,7 +1014,7 @@ FILE *f;
   }
 }
 
-send_fd(f, fd)
+int send_fd(f, fd)
 FILE *f, *fd;
 {
   int num_chars = 0;
@@ -1011,7 +1040,7 @@ char *s, c;
   return -1;
 }
 
-escape_shell_cmd(cmd)
+void escape_shell_cmd(cmd)
 char *cmd;
 {
   register int x, y, l;
