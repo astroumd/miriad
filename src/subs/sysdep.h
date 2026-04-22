@@ -81,7 +81,8 @@ typedef char Void;
 #endif /* MIRIAD_TYPES_DEFINED */
 
 typedef int int2;
-typedef long long int int8;
+//typedef long long int int8;
+typedef long int int8;
 
 /************************************************************************/
 /*									*/
