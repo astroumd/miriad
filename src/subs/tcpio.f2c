@@ -24,8 +24,10 @@
 #include <netdb.h>
 #include <ctype.h>
 #include <errno.h>
+#include <stdio.h>
 #include <unistd.h>
 #include <string.h>
+#include <strings.h>
 
 #ifdef sun
 #define bcopy(a,b,c) memcpy((b),(a),(c))
@@ -66,8 +68,12 @@ fortran subroutine tcpnode(character name,integer inet)
     s = inet_addr(p);
     bcopy((char *)&s,(char *)inet.addr,sizeof(s));
   } else {
-    h = gethostbyname(p);
+#if 0  
+    h = gethostbyname(p);  // deprecated Ubuntu26
     if(h != NULL)bcopy(h->h_addr,(char *)inet.addr,h->h_length);
+#else
+    printf("deprecated gethostbyname() in tcpio.f2c\n");
+#endif
 #ifdef unicos
     *(inet.addr) >>= 32;
 #endif
