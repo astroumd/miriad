@@ -24,6 +24,7 @@
 
 #include <stdio.h>
 #include <assert.h>
+#include <strings.h>
 #include "sma_data.h"
 
 int check_s2 = sizeof(short);
