@@ -1,6 +1,6 @@
 #! /bin/csh -f
 #
-set version=24-jul-2013
+set version=4-aug-2026
 #
 #  2-aug-99 Updated for Sebok's Mandrake setup
 #  1-aug-00 Updated to allow to build private PGPLOT version
@@ -711,13 +711,16 @@ endif
 if (-d /etc/selinux) then
    echo Checking to enable MIRIAD shared libraries for SELinux
    selinuxenabled
-   if ($status == 0) chcon -t texrel_shlib_t $MIR/lib/linux/*.so
+   if ($status == 0) then
+      chcon -t texrel_shlib_t $MIR/lib/linux/*.so
+   else
+      echo "No worries, SELinux is not enabled, and we probably do not need it"
+      echo "On some RedHat flavors you may need it"
+   endif
 endif
 
-# copy some interesting files to tmp
+# copy some interesting files to tmp for forensics
 cp /etc/*release /etc/shells  $MIR/tmp
-
-
 
 #   Now tag it, so we can 'find -newer' things that have been updated since creation!
 echo MIRIAD Installation done on `hostname` by `whoami` on `date` with `uname -a` > $MIRLIB/Installed.tag
